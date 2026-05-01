@@ -4,7 +4,7 @@
 
 项目目标不是预测市场，也不是自动交易，而是把“是否加仓、减仓、观望”变成可复盘、可验证、可控制风险的决策流程。
 
-产品定位详见 [docs/product_strategy.md](docs/product_strategy.md)：系统应服务于能力圈、产业链因果、仓位决策和复盘归因，而不是扩张成全市场万能分析器。
+产品定位详见 [docs/product_strategy.md](docs/product_strategy.md)：系统应服务于能力圈、产业链因果、仓位决策和复盘归因，而不是扩张成全市场万能分析器。工程落地拆解见 [docs/implementation_backlog.md](docs/implementation_backlog.md)。
 
 ## MVP 范围
 
@@ -29,6 +29,7 @@ data/processed/          清洗后的中间数据，不提交
 data/external/           外部导入数据，不提交
 docs/                    架构和开发计划
 docs/product_strategy.md 产品策略和模块原则
+docs/implementation_backlog.md 可落地模块和工程 backlog
 notebooks/               研究和临时分析
 outputs/backtests/       回测输出，不提交
 outputs/reports/         日报/周报输出，不提交

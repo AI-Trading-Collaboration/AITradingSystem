@@ -11,7 +11,7 @@
 4. 策略长期是否优于 QQQ、SMH/SOXX、SPY，并且最大回撤是否可接受。
 5. 本次收益或亏损来自市场 Beta、行业/主题 Beta、个股 Alpha、仓位错误还是运气。
 
-产品策略和模块原则见 `docs/product_strategy.md`。
+产品策略和模块原则见 `docs/product_strategy.md`。可落地模块、数据对象和命令拆解见 `docs/implementation_backlog.md`。
 
 ## 基础工程规则
 
@@ -120,7 +120,7 @@
 
 ## 近期迭代建议
 
-第一个开发迭代建议只做 5 件事：
+当前最小落地路径见 `docs/implementation_backlog.md`。第一个开发迭代建议只做 6 件事：
 
 1. 实现行情数据下载和本地缓存。状态：已实现基础版，命令为 `aits download-data`。
 2. 实现数据质量门禁。状态：已实现基础版，命令为 `aits validate-data`。
