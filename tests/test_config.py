@@ -6,10 +6,12 @@ from ai_trading_system.config import (
     load_data_quality,
     load_features,
     load_industry_chain,
+    load_market_regimes,
     load_portfolio,
     load_scoring_rules,
     load_universe,
     load_watchlist,
+    market_regime_by_id,
 )
 
 
@@ -117,3 +119,14 @@ def test_industry_chain_config_covers_watchlist_nodes() -> None:
     }
 
     assert watchlist_node_ids.issubset(node_ids)
+
+
+def test_market_regimes_default_to_ai_after_chatgpt() -> None:
+    config = load_market_regimes()
+
+    default_regime = market_regime_by_id(config, config.default_backtest_regime)
+
+    assert default_regime.regime_id == "ai_after_chatgpt"
+    assert default_regime.start_date.isoformat() == "2022-12-01"
+    assert default_regime.anchor_date.isoformat() == "2022-11-30"
+    assert "ChatGPT" in default_regime.anchor_event

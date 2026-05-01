@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+from datetime import date
 from pathlib import Path
 from typing import Any, Literal, Self
 
@@ -15,6 +16,7 @@ DEFAULT_FEATURE_CONFIG_PATH = PROJECT_ROOT / "config" / "features.yaml"
 DEFAULT_SCORING_RULES_CONFIG_PATH = PROJECT_ROOT / "config" / "scoring_rules.yaml"
 DEFAULT_WATCHLIST_CONFIG_PATH = PROJECT_ROOT / "config" / "watchlist.yaml"
 DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH = PROJECT_ROOT / "config" / "industry_chain.yaml"
+DEFAULT_MARKET_REGIMES_CONFIG_PATH = PROJECT_ROOT / "config" / "market_regimes.yaml"
 
 
 class MarketUniverse(BaseModel):
@@ -68,6 +70,41 @@ class IndustryChainNodeConfig(BaseModel):
 
 class IndustryChainConfig(BaseModel):
     nodes: list[IndustryChainNodeConfig]
+
+
+class MarketRegimeConfig(BaseModel):
+    regime_id: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    start_date: date
+    anchor_date: date
+    anchor_event: str = Field(min_length=1)
+    description: str = Field(min_length=1)
+    primary: bool = False
+
+
+class MarketRegimesConfig(BaseModel):
+    default_backtest_regime: str = Field(min_length=1)
+    regimes: list[MarketRegimeConfig] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_regimes(self) -> Self:
+        seen: set[str] = set()
+        duplicate_ids: set[str] = set()
+        for regime in self.regimes:
+            if regime.regime_id in seen:
+                duplicate_ids.add(regime.regime_id)
+            seen.add(regime.regime_id)
+
+        if duplicate_ids:
+            duplicates = ", ".join(sorted(duplicate_ids))
+            raise ValueError(f"market regime ids must be unique: {duplicates}")
+
+        if self.default_backtest_regime not in seen:
+            raise ValueError(
+                "default_backtest_regime must match one configured market regime id"
+            )
+
+        return self
 
 
 class DecisionConfig(BaseModel):
@@ -220,6 +257,26 @@ def load_industry_chain(
     with config_path.open("r", encoding="utf-8") as file:
         raw: dict[str, Any] = yaml.safe_load(file)
     return IndustryChainConfig.model_validate(raw)
+
+
+def load_market_regimes(
+    path: Path | str = DEFAULT_MARKET_REGIMES_CONFIG_PATH,
+) -> MarketRegimesConfig:
+    config_path = Path(path)
+    with config_path.open("r", encoding="utf-8") as file:
+        raw: dict[str, Any] = yaml.safe_load(file)
+    return MarketRegimesConfig.model_validate(raw)
+
+
+def market_regime_by_id(
+    config: MarketRegimesConfig,
+    regime_id: str,
+) -> MarketRegimeConfig:
+    for regime in config.regimes:
+        if regime.regime_id == regime_id:
+            return regime
+    configured_ids = ", ".join(regime.regime_id for regime in config.regimes)
+    raise ValueError(f"unknown market regime '{regime_id}', available: {configured_ids}")
 
 
 def load_portfolio(path: Path | str = DEFAULT_PORTFOLIO_CONFIG_PATH) -> PortfolioConfig:

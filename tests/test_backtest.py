@@ -84,6 +84,7 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     report_path = tmp_path / "backtest.md"
     daily_path = tmp_path / "backtest_daily.csv"
     quality_path = tmp_path / "quality.md"
+    regimes_path = tmp_path / "market_regimes.yaml"
     _sample_prices(configured_price_tickers(universe), periods=320).to_csv(
         prices_path,
         index=False,
@@ -91,6 +92,23 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     _sample_rates(configured_rate_series(universe), periods=320).to_csv(
         rates_path,
         index=False,
+    )
+    regimes_path.write_text(
+        "\n".join(
+            [
+                "default_backtest_regime: test_ai_regime",
+                "regimes:",
+                "  - regime_id: test_ai_regime",
+                "    name: 测试 AI 行情",
+                "    start_date: 2026-04-01",
+                "    anchor_date: 2026-03-31",
+                "    anchor_event: 测试锚定事件",
+                "    description: 测试用市场阶段。",
+                "    primary: true",
+                "",
+            ]
+        ),
+        encoding="utf-8",
     )
 
     result = CliRunner().invoke(
@@ -101,10 +119,10 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
             str(prices_path),
             "--rates-path",
             str(rates_path),
-            "--from",
-            "2026-04-01",
             "--to",
             "2026-04-30",
+            "--regimes-path",
+            str(regimes_path),
             "--quality-as-of",
             "2026-05-02",
             "--report-path",
@@ -123,6 +141,8 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert daily_path.exists()
     assert quality_path.exists()
     assert "回测状态：" in result.output
+    assert "市场阶段：测试 AI 行情" in result.output
+    assert "测试 AI 行情" in report_path.read_text(encoding="utf-8")
 
 
 def _quality_report() -> DataQualityReport:

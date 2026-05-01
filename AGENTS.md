@@ -3,6 +3,23 @@
 This project is an investment decision-support system. Data quality, auditability,
 and correctness are product requirements, not optional polish.
 
+## AI Regime Priority
+
+The project primarily studies U.S. AI-related trading after the public launch of
+ChatGPT. Strategy design, information collection, backtests, and report
+interpretation should prioritize the configured `ai_after_chatgpt` market regime:
+
+- anchor event: ChatGPT public launch on 2022-11-30;
+- default backtest start: 2022-12-01, the first full U.S. trading day after that
+  event;
+- pre-2022 history may be used for warm-up, stress testing, and regime
+  comparison, but it must not be treated as the default AI-cycle conclusion
+  window.
+
+Backtest and strategy reports should state the selected market regime and the
+actual requested date range. If a primary conclusion relies on data before the AI
+regime start, document why that older regime is relevant.
+
 ## No Silent Workarounds
 
 When development hits a blocker, do not bypass it with a temporary workaround by

@@ -1,0 +1,29 @@
+default_backtest_regime: ai_after_chatgpt
+regimes:
+  - regime_id: ai_after_chatgpt
+    name: ChatGPT 后 AI 主线行情
+    start_date: 2022-12-01
+    anchor_date: 2022-11-30
+    anchor_event: ChatGPT 公开发布
+    description: >
+      项目默认回测和策略解释区间。2022-11-30 是 ChatGPT 公开发布日，
+      2022-12-01 是其后的首个完整美股交易日。
+    primary: true
+  - regime_id: ai_infra_acceleration
+    name: AI 基建加速行情
+    start_date: 2023-05-25
+    anchor_date: 2023-05-24
+    anchor_event: NVDA FY2024 Q1 业绩后数据中心指引显著上修
+    description: >
+      更严格聚焦 AI 基建重新定价后的行情阶段，可用于验证 GPU、HBM、
+      先进封装、晶圆代工等链条的加速交易表现。
+    primary: false
+  - regime_id: cross_cycle_stress
+    name: 跨周期压力测试
+    start_date: 2019-01-01
+    anchor_date: 2018-01-01
+    anchor_event: 使用 2018 年历史作为长均线和 VIX 分位 warm-up
+    description: >
+      非默认解释区间，用于覆盖疫情、加息、风险偏好收缩等不同市场状态。
+      该阶段可用于压力测试，但不应作为 AI 主线行情的默认结论窗口。
+    primary: false

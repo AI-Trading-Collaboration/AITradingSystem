@@ -26,6 +26,7 @@ AGENTS.md                项目工程协作守则
 config/                  投资标的池、模块权重、运行参数
 config/watchlist.yaml    观察池和能力圈配置
 config/industry_chain.yaml 产业链节点和因果图配置
+config/market_regimes.yaml 市场阶段和默认回测区间配置
 data/raw/                原始数据缓存，不提交
 data/processed/          清洗后的中间数据，不提交
 data/external/           外部导入数据，不提交
@@ -87,10 +88,16 @@ aits score-daily --as-of 2026-05-01
 运行历史回测：
 
 ```powershell
-aits backtest --from 2019-01-01 --to 2026-05-02 --quality-as-of 2026-05-02
+aits backtest --to 2026-05-02 --quality-as-of 2026-05-02
 ```
 
-回测命令会先执行数据质量门禁。当前基础版使用每日评分得到的 AI 仓位区间中点作为目标仓位，以 `SMH` 作为默认 AI 代理标的，并与 `SPY`、`QQQ`、`SMH`、`SOXX` 买入持有基准对比。信号按收盘后生成、下一交易日生效，避免未来函数。
+回测命令会先执行数据质量门禁。默认市场阶段来自 `config/market_regimes.yaml`，当前为 `ai_after_chatgpt`，起点是 `2022-12-01`，即 ChatGPT 于 `2022-11-30` 公开发布后的首个完整美股交易日。当前基础版使用每日评分得到的 AI 仓位区间中点作为目标仓位，以 `SMH` 作为默认 AI 代理标的，并与 `SPY`、`QQQ`、`SMH`、`SOXX` 买入持有基准对比。信号按收盘后生成、下一交易日生效，避免未来函数。
+
+如需把 2019 年以来的历史作为非默认压力测试，可以显式指定：
+
+```powershell
+aits backtest --regime cross_cycle_stress --to 2026-05-02 --quality-as-of 2026-05-02
+```
 
 查看示例评分：
 

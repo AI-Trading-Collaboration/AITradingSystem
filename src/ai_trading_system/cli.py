@@ -11,6 +11,7 @@ from rich.table import Table
 
 from ai_trading_system.backtest.daily import (
     DEFAULT_BENCHMARK_TICKERS,
+    BacktestRegimeContext,
     default_backtest_daily_path,
     default_backtest_report_path,
     run_daily_score_backtest,
@@ -19,6 +20,7 @@ from ai_trading_system.backtest.daily import (
 )
 from ai_trading_system.config import (
     DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH,
+    DEFAULT_MARKET_REGIMES_CONFIG_PATH,
     DEFAULT_WATCHLIST_CONFIG_PATH,
     PROJECT_ROOT,
     configured_price_tickers,
@@ -26,10 +28,12 @@ from ai_trading_system.config import (
     load_data_quality,
     load_features,
     load_industry_chain,
+    load_market_regimes,
     load_portfolio,
     load_scoring_rules,
     load_universe,
     load_watchlist,
+    market_regime_by_id,
 )
 from ai_trading_system.data.download import download_daily_data
 from ai_trading_system.data.quality import (
@@ -215,9 +219,12 @@ def backtest(
         typer.Option(help="标准化日线利率 CSV 路径。"),
     ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     start: Annotated[
-        str,
-        typer.Option("--from", help="回测开始日期，格式为 YYYY-MM-DD。"),
-    ] = "2019-01-01",
+        str | None,
+        typer.Option(
+            "--from",
+            help="回测开始日期，格式为 YYYY-MM-DD；未提供时使用所选市场阶段起点。",
+        ),
+    ] = None,
     end: Annotated[
         str | None,
         typer.Option("--to", help="回测结束日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -234,6 +241,17 @@ def backtest(
         float,
         typer.Option(help="单边交易成本，单位 bps。"),
     ] = 5.0,
+    regime: Annotated[
+        str | None,
+        typer.Option(
+            "--regime",
+            help="市场阶段 ID，默认使用 config/market_regimes.yaml 的 default_backtest_regime。",
+        ),
+    ] = None,
+    regimes_path: Annotated[
+        Path,
+        typer.Option(help="市场阶段配置文件路径。"),
+    ] = DEFAULT_MARKET_REGIMES_CONFIG_PATH,
     daily_output_path: Annotated[
         Path | None,
         typer.Option(help="每日回测明细 CSV 输出路径。"),
@@ -264,7 +282,14 @@ def backtest(
     feature_config = load_features()
     scoring_rules = load_scoring_rules()
     portfolio = load_portfolio()
-    start_date = _parse_date(start)
+    market_regimes = load_market_regimes(regimes_path)
+    selected_regime_id = regime or market_regimes.default_backtest_regime
+    try:
+        selected_regime = market_regime_by_id(market_regimes, selected_regime_id)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    start_date = _parse_date(start) if start else selected_regime.start_date
     end_date = _parse_date(end) if end else date.today()
     quality_date = _parse_date(quality_as_of) if quality_as_of else date.today()
     benchmark_tickers = _parse_csv_items(benchmarks)
@@ -320,6 +345,14 @@ def backtest(
         strategy_ticker=strategy_ticker,
         benchmark_tickers=tuple(benchmark_tickers),
         cost_bps=cost_bps,
+        market_regime=BacktestRegimeContext(
+            regime_id=selected_regime.regime_id,
+            name=selected_regime.name,
+            start_date=selected_regime.start_date,
+            anchor_date=selected_regime.anchor_date,
+            anchor_event=selected_regime.anchor_event,
+            description=selected_regime.description,
+        ),
     )
     daily_output = write_backtest_daily_csv(result, backtest_daily_output)
     report_output = write_backtest_report(
@@ -330,6 +363,10 @@ def backtest(
     )
 
     console.print(f"[yellow]回测状态：{result.status}[/yellow]")
+    if result.market_regime is not None:
+        console.print(
+            f"市场阶段：{result.market_regime.name}（{result.market_regime.regime_id}）"
+        )
     console.print(f"策略总收益：{result.strategy_metrics.total_return:.1%}")
     console.print(f"策略 CAGR：{result.strategy_metrics.cagr:.1%}")
     console.print(f"策略最大回撤：{result.strategy_metrics.max_drawdown:.1%}")

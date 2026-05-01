@@ -17,6 +17,16 @@ DEFAULT_BENCHMARK_TICKERS = ("SPY", "QQQ", "SMH", "SOXX")
 
 
 @dataclass(frozen=True)
+class BacktestRegimeContext:
+    regime_id: str
+    name: str
+    start_date: date
+    anchor_date: date
+    anchor_event: str
+    description: str
+
+
+@dataclass(frozen=True)
 class BacktestDailyRow:
     signal_date: date
     return_date: date
@@ -68,6 +78,7 @@ class DailyBacktestResult:
     rows: tuple[BacktestDailyRow, ...]
     strategy_metrics: BacktestMetrics
     benchmark_metrics: dict[str, BacktestMetrics]
+    market_regime: BacktestRegimeContext | None = None
 
     @property
     def status(self) -> str:
@@ -87,6 +98,7 @@ def run_daily_score_backtest(
     strategy_ticker: str = "SMH",
     benchmark_tickers: tuple[str, ...] = DEFAULT_BENCHMARK_TICKERS,
     cost_bps: float = 5.0,
+    market_regime: BacktestRegimeContext | None = None,
 ) -> DailyBacktestResult:
     if start >= end:
         raise ValueError("回测开始日期必须早于结束日期")
@@ -183,6 +195,7 @@ def run_daily_score_backtest(
         rows=tuple(rows),
         strategy_metrics=strategy_metrics,
         benchmark_metrics=benchmark_metrics,
+        market_regime=market_regime,
     )
 
 
@@ -202,28 +215,55 @@ def render_backtest_report(
         "",
         f"- 状态：{result.status}",
         f"- 请求区间：{result.requested_start.isoformat()} 至 {result.requested_end.isoformat()}",
-        (
-            f"- 实际信号区间：{result.first_signal_date.isoformat()} "
-            f"至 {result.last_signal_date.isoformat()}"
-        ),
-        (
-            f"- 实际收益区间：{result.first_return_date.isoformat()} "
-            f"至 {result.last_return_date.isoformat()}"
-        ),
-        f"- 策略代理标的：{result.strategy_ticker}",
-        f"- 基准：{', '.join(result.benchmark_tickers)}",
-        f"- 单边交易成本：{result.cost_bps:.1f} bps",
-        f"- 最小调仓阈值：{result.minimum_action_delta:.0%}",
-        f"- 数据质量状态：{result.data_quality_report.status}",
-        f"- 数据质量报告：`{data_quality_report_path}`",
-        f"- 每日回测明细：`{daily_output_path}`",
-        "",
-        "## 核心指标",
-        "",
-        "| 组合 | 总收益 | CAGR | 最大回撤 | Sharpe | Sortino | Calmar | 在场比例 | 换手 |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
-        _metrics_row(f"策略（{result.strategy_ticker} 动态仓位）", result.strategy_metrics),
     ]
+    if result.market_regime is not None:
+        lines.extend(
+            [
+                (
+                    f"- 市场阶段：{result.market_regime.name}"
+                    f"（{result.market_regime.regime_id}）"
+                ),
+                f"- 阶段默认起点：{result.market_regime.start_date.isoformat()}",
+                (
+                    f"- 锚定事件：{result.market_regime.anchor_date.isoformat()} "
+                    f"{result.market_regime.anchor_event}"
+                ),
+            ]
+        )
+        if result.requested_start != result.market_regime.start_date:
+            lines.append(
+                "- 起点说明：本次请求起点与市场阶段默认起点不同，"
+                "结论应按实际请求区间解释。"
+            )
+
+    lines.extend(
+        [
+            (
+                f"- 实际信号区间：{result.first_signal_date.isoformat()} "
+                f"至 {result.last_signal_date.isoformat()}"
+            ),
+            (
+                f"- 实际收益区间：{result.first_return_date.isoformat()} "
+                f"至 {result.last_return_date.isoformat()}"
+            ),
+            f"- 策略代理标的：{result.strategy_ticker}",
+            f"- 基准：{', '.join(result.benchmark_tickers)}",
+            f"- 单边交易成本：{result.cost_bps:.1f} bps",
+            f"- 最小调仓阈值：{result.minimum_action_delta:.0%}",
+            f"- 数据质量状态：{result.data_quality_report.status}",
+            f"- 数据质量报告：`{data_quality_report_path}`",
+            f"- 每日回测明细：`{daily_output_path}`",
+            "",
+            "## 核心指标",
+            "",
+            "| 组合 | 总收益 | CAGR | 最大回撤 | Sharpe | Sortino | Calmar | 在场比例 | 换手 |",
+            "|---|---:|---:|---:|---:|---:|---:|---:|---:|",
+            _metrics_row(
+                f"策略（{result.strategy_ticker} 动态仓位）",
+                result.strategy_metrics,
+            ),
+        ]
+    )
 
     for ticker in result.benchmark_tickers:
         lines.append(_metrics_row(f"基准（{ticker} 买入持有）", result.benchmark_metrics[ticker]))

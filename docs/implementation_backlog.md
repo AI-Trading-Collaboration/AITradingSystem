@@ -9,6 +9,7 @@
 - 任何评分必须说明输入来源：硬数据、手工录入、占位默认值，还是 LLM 辅助抽取。
 - 不把新闻摘要直接变成交易动作；新闻只能改变假设、风险等级、人工审核状态或评分输入。
 - 所有仓位建议必须同时输出“风险资产内口径”和“总资产口径”。
+- 默认策略解释和回测优先使用 `ai_after_chatgpt` 市场阶段：锚定 `2022-11-30` ChatGPT 公开发布，默认起点 `2022-12-01`。2019 年以来的长窗口只作为跨周期压力测试或 warm-up。
 
 ## 当前已完成基础
 
@@ -36,7 +37,7 @@
 建议 CLI：
 
 ```powershell
-aits backtest --from 2019-01-01 --to 2026-05-02 --quality-as-of 2026-05-02
+aits backtest --to 2026-05-02 --quality-as-of 2026-05-02
 ```
 
 输出：
@@ -47,6 +48,8 @@ aits backtest --from 2019-01-01 --to 2026-05-02 --quality-as-of 2026-05-02
 当前规则：
 
 - 先执行数据质量门禁，失败则停止。
+- 未显式传入 `--from` 时，起点来自 `config/market_regimes.yaml` 的默认市场阶段。
+- 默认市场阶段为 `ai_after_chatgpt`，即 `2022-12-01` 开始的 ChatGPT 后 AI 主线行情。
 - 每日收盘后计算评分，目标仓位从下一交易日收益开始生效，避免未来函数。
 - 使用 AI 仓位区间中点作为目标仓位。
 - 变化小于 `config/scoring_rules.yaml` 的最小调仓阈值时维持原仓位。
@@ -57,7 +60,7 @@ aits backtest --from 2019-01-01 --to 2026-05-02 --quality-as-of 2026-05-02
 
 - 基本面、估值、政策/地缘仍是 MVP 占位输入，因此回测只能验证当前硬数据规则和仓位映射，不能视为完整策略结论。
 - 当前未计入税费、汇率、融资利率、盘口冲击和盘中执行偏差。
-- 如果要完整评估 2018 年初信号，需要从 2017 年或更早下载 warm-up 历史；当前示例用 2018 年作为 2019 年起始回测的 warm-up。
+- `cross_cycle_stress` 从 `2019-01-01` 开始，适合作为非默认压力测试；这类结果需要和默认 AI regime 结果分开解释。
 
 ### M1：市场环境特征模块
 
@@ -379,6 +382,7 @@ aits review-trades --from 2026-01-01 --to 2026-03-31
 |`config/features.yaml`|市场环境特征窗口、相对强弱组合和 VIX/利率设置|M1|
 |`config/watchlist.yaml`|观察池和能力圈|M3，已实现基础版|
 |`config/industry_chain.yaml`|产业链节点和因果图|M4，已实现基础版|
+|`config/market_regimes.yaml`|市场阶段、默认回测区间和压力测试区间|阶段 1，已实现基础版|
 |`config/risk_events.yaml`|风险事件等级和动作规则|M6|
 |`config/scoring_rules.yaml`|评分规则和权重|M2|
 |`data/processed/features_daily.csv`|每日特征|M1|
