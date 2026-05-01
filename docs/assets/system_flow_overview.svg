@@ -46,7 +46,7 @@
   <text class="box-text" x="92" y="395">universe / portfolio</text>
   <text class="box-text" x="92" y="417">data_quality / features</text>
   <text class="box-text" x="92" y="439">scoring_rules</text>
-  <text class="box-text" x="92" y="461">market_regimes</text>
+  <text class="box-text" x="92" y="461">market_regimes / risk_events</text>
 
   <rect class="input" x="70" y="515" width="190" height="80" />
   <text class="box-title" x="92" y="547">交易 Thesis</text>
@@ -93,7 +93,7 @@
   <text class="box-title" x="348" y="397">结构校验</text>
   <text class="box-text" x="348" y="425">watchlist validate</text>
   <text class="box-text" x="348" y="447">industry-chain validate</text>
-  <text class="box-text" x="348" y="469">能力圈 / 因果图</text>
+  <text class="box-text" x="348" y="469">risk-events validate</text>
 
   <rect class="govern" x="325" y="515" width="185" height="80" />
   <text class="box-title" x="348" y="547">假设复核</text>

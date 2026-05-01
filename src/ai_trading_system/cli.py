@@ -21,6 +21,7 @@ from ai_trading_system.backtest.daily import (
 from ai_trading_system.config import (
     DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH,
     DEFAULT_MARKET_REGIMES_CONFIG_PATH,
+    DEFAULT_RISK_EVENTS_CONFIG_PATH,
     DEFAULT_WATCHLIST_CONFIG_PATH,
     PROJECT_ROOT,
     configured_price_tickers,
@@ -30,6 +31,7 @@ from ai_trading_system.config import (
     load_industry_chain,
     load_market_regimes,
     load_portfolio,
+    load_risk_events,
     load_scoring_rules,
     load_universe,
     load_watchlist,
@@ -53,6 +55,11 @@ from ai_trading_system.industry_chain import (
     write_industry_chain_validation_report,
 )
 from ai_trading_system.reports.daily import render_recommendation_markdown
+from ai_trading_system.risk_events import (
+    default_risk_events_report_path,
+    validate_risk_events_config,
+    write_risk_events_validation_report,
+)
 from ai_trading_system.scoring.daily import (
     build_daily_score_report,
     default_daily_score_report_path,
@@ -79,9 +86,11 @@ app = typer.Typer(help="AI 产业链趋势分析和仓位管理工具。", no_ar
 watchlist_app = typer.Typer(help="观察池和能力圈管理。", no_args_is_help=True)
 industry_chain_app = typer.Typer(help="产业链节点和因果图管理。", no_args_is_help=True)
 thesis_app = typer.Typer(help="交易 thesis 和假设验证管理。", no_args_is_help=True)
+risk_events_app = typer.Typer(help="风险事件分级和动作规则管理。", no_args_is_help=True)
 app.add_typer(watchlist_app, name="watchlist")
 app.add_typer(industry_chain_app, name="industry-chain")
 app.add_typer(thesis_app, name="thesis")
+app.add_typer(risk_events_app, name="risk-events")
 console = Console()
 
 
@@ -685,6 +694,104 @@ def review_theses(
     )
 
     if not validation_report.passed:
+        raise typer.Exit(code=1)
+
+
+@risk_events_app.command("list")
+def list_risk_events(
+    config_path: Annotated[
+        Path,
+        typer.Option(help="风险事件配置文件路径。"),
+    ] = DEFAULT_RISK_EVENTS_CONFIG_PATH,
+    active_only: Annotated[
+        bool,
+        typer.Option("--active-only/--all", help="只显示活跃规则，或显示全部规则。"),
+    ] = True,
+) -> None:
+    """列出风险事件分级规则。"""
+    risk_events = load_risk_events(config_path)
+
+    levels_table = Table(title="风险等级")
+    levels_table.add_column("等级")
+    levels_table.add_column("名称")
+    levels_table.add_column("AI 仓位乘数")
+    levels_table.add_column("人工复核")
+    levels_table.add_column("默认动作")
+    for level in sorted(risk_events.levels, key=lambda item: item.level):
+        levels_table.add_row(
+            level.level,
+            level.name,
+            f"{level.target_ai_exposure_multiplier:.0%}",
+            "需要" if level.requires_manual_review else "不需要",
+            level.default_action,
+        )
+    console.print(levels_table)
+
+    rules_table = Table(title="风险事件规则")
+    rules_table.add_column("事件")
+    rules_table.add_column("等级")
+    rules_table.add_column("活跃")
+    rules_table.add_column("影响节点")
+    rules_table.add_column("相关标的")
+    for rule in sorted(risk_events.event_rules, key=lambda item: item.event_id):
+        if active_only and not rule.active:
+            continue
+        rules_table.add_row(
+            rule.event_id,
+            rule.level,
+            "是" if rule.active else "否",
+            ", ".join(rule.affected_nodes),
+            ", ".join(rule.related_tickers),
+        )
+    console.print(rules_table)
+
+
+@risk_events_app.command("validate")
+def validate_risk_events(
+    config_path: Annotated[
+        Path,
+        typer.Option(help="风险事件配置文件路径。"),
+    ] = DEFAULT_RISK_EVENTS_CONFIG_PATH,
+    industry_chain_path: Annotated[
+        Path,
+        typer.Option(help="产业链配置文件路径。"),
+    ] = DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH,
+    watchlist_path: Annotated[
+        Path,
+        typer.Option(help="观察池配置文件路径。"),
+    ] = DEFAULT_WATCHLIST_CONFIG_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 风险事件校验报告输出路径。"),
+    ] = None,
+) -> None:
+    """校验风险事件等级、产业链引用和动作规则。"""
+    universe = load_universe()
+    validation_date = _parse_date(as_of) if as_of else date.today()
+    report_path = output_path or default_risk_events_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        validation_date,
+    )
+    report = validate_risk_events_config(
+        risk_events=load_risk_events(config_path),
+        industry_chain=load_industry_chain(industry_chain_path),
+        watchlist=load_watchlist(watchlist_path),
+        universe=universe,
+        as_of=validation_date,
+    )
+    write_risk_events_validation_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]风险事件校验状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_path}")
+    console.print(f"风险事件规则数：{len(report.config.event_rules)}；活跃：{report.active_rule_count}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+
+    if not report.passed:
         raise typer.Exit(code=1)
 
 

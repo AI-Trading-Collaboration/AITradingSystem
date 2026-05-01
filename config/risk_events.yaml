@@ -1,0 +1,138 @@
+levels:
+  - level: L1
+    name: 普通噪音
+    description: >
+      单条媒体负面报道、普通分析师调评级、短期价格波动或未改变产业链现金流假设的信息。
+    default_action: 观察，不主动调整核心仓位
+    target_ai_exposure_multiplier: 1.00
+    requires_manual_review: false
+  - level: L2
+    name: 中等风险
+    description: >
+      可能削弱 AI 产业链预期、宏观流动性或单票基本面的事件，需要降低风险暴露或等待确认。
+    default_action: 降低部分风险暴露，等待数据或管理层确认
+    target_ai_exposure_multiplier: 0.70
+    requires_manual_review: true
+  - level: L3
+    name: 重大风险
+    description: >
+      可能改变 AI 主线现金流、估值体系或可交易性的事件，需要快速降风险并等待重新定价。
+    default_action: 快速降风险，保留现金，等待重新定价
+    target_ai_exposure_multiplier: 0.25
+    requires_manual_review: true
+
+event_rules:
+  - event_id: cloud_capex_cut
+    name: 云厂商 CapEx 明显下修
+    level: L2
+    description: 云厂商降低 AI 数据中心或加速计算 CapEx 指引，可能削弱 AI 基建需求链条。
+    affected_nodes:
+      - cloud_capex
+      - gpu_asic_demand
+      - advanced_packaging
+      - foundry_demand
+    related_tickers:
+      - MSFT
+      - GOOG
+      - NVDA
+      - AMD
+      - TSM
+    trigger_examples:
+      - 云厂商财报或电话会明确下修 AI 数据中心资本开支。
+      - 多家云厂商同时延后 AI 集群建设计划。
+    recommended_actions:
+      - 降低 AI 风险资产目标仓位区间。
+      - 标记相关 thesis 需要人工复核。
+      - 等待下一轮 CapEx 指引或订单数据确认。
+    escalation_conditions:
+      - 多家云厂商连续两个季度下修 AI CapEx。
+      - GPU/HBM/先进封装订单同步转弱。
+    deescalation_conditions:
+      - 后续财报重新上修 AI CapEx。
+      - 管理层确认延迟只是供应或项目节奏问题。
+    active: true
+  - event_id: ai_chip_export_control_upgrade
+    name: AI 芯片出口限制升级
+    level: L2
+    description: 美国或相关司法辖区升级先进 AI 芯片、设备或制造服务出口限制。
+    affected_nodes:
+      - export_controls
+      - gpu_asic_demand
+      - foundry_demand
+      - semiconductor_equipment
+    related_tickers:
+      - NVDA
+      - AMD
+      - TSM
+      - INTC
+    trigger_examples:
+      - 新规则限制更多 AI 芯片型号出口。
+      - 先进制程设备、EDA、代工服务的许可要求收紧。
+    recommended_actions:
+      - 降低相关单票风险权重。
+      - 检查收入地域敞口和管理层指引变化。
+      - 将事件映射到 export_controls 节点并进入日报显著位置。
+    escalation_conditions:
+      - 限制扩展到关键云厂商、代工或先进封装能力。
+      - 公司明确下修收入或毛利率指引。
+    deescalation_conditions:
+      - 公司确认替代产品或许可路径可消化影响。
+      - 政策细则低于市场最坏预期。
+    active: true
+  - event_id: taiwan_geopolitical_escalation
+    name: 台海或先进制造地缘风险升级
+    level: L3
+    description: 影响先进制程、封装、供应链物流或市场风险偏好的重大地缘事件。
+    affected_nodes:
+      - foundry_demand
+      - advanced_packaging
+      - semiconductor_equipment
+      - export_controls
+    related_tickers:
+      - TSM
+      - NVDA
+      - AMD
+      - INTC
+      - SMH
+      - SOXX
+    trigger_examples:
+      - 军事冲突、封锁风险或重大制裁预期显著上升。
+      - 关键生产或物流能力受到实质影响。
+    recommended_actions:
+      - 快速降低 AI 风险暴露。
+      - 暂停把技术面强势解读为高置信度加仓信号。
+      - 等待风险重新定价和供应链影响评估。
+    escalation_conditions:
+      - 生产、物流或出口许可出现实质中断。
+      - 风险事件从市场情绪扩展到公司现金流和供给能力。
+    deescalation_conditions:
+      - 事件没有影响生产与物流，且政策表述降温。
+      - 市场风险溢价回落并获得基本面数据确认。
+    active: true
+  - event_id: ai_demand_inventory_build
+    name: AI 芯片需求转为库存积压
+    level: L3
+    description: AI 芯片、HBM 或先进封装从供不应求转向库存积压，直接证伪部分 AI 基建假设。
+    affected_nodes:
+      - gpu_asic_demand
+      - hbm_supply_demand
+      - advanced_packaging
+      - foundry_demand
+    related_tickers:
+      - NVDA
+      - AMD
+      - TSM
+    trigger_examples:
+      - 龙头公司确认客户库存积压并下修未来订单。
+      - HBM 或先进封装紧缺指标快速逆转。
+    recommended_actions:
+      - 触发相关 thesis 证伪复核。
+      - 将 AI 风险资产仓位降至防守区间。
+      - 等待库存周期和新订单恢复信号。
+    escalation_conditions:
+      - 多个链条节点同时出现订单取消、价格下跌和库存上升。
+      - 龙头财报全面低于 AI 需求预期。
+    deescalation_conditions:
+      - 库存积压被证明是短期供应链错配。
+      - 新订单和价格重新稳定。
+    active: true

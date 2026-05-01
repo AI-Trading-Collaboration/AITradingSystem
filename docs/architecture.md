@@ -93,6 +93,8 @@
 
 交易 thesis 基础版已支持 `data/external/trade_theses/*.yaml`。校验命令为 `aits thesis validate`，复核命令为 `aits thesis review`。当前版本不自动判断 thesis 对错，而是检查结构、观察池引用、产业链节点、验证指标、证伪条件、复核新鲜度和已触发风险，确保主动交易假设可审计、可复盘。
 
+风险事件分级基础版已落在 `config/risk_events.yaml`。校验命令为 `aits risk-events validate`，用于确保 L1/L2/L3 等级、AI 仓位折扣、人工复核要求、影响产业链节点、相关标的、建议动作、升级条件和解除条件都可审计。风险事件不直接触发交易，只改变风险评估、仓位折扣或人工复核状态。
+
 ## 评分层
 
 沿用规划文档里的 100 分框架：

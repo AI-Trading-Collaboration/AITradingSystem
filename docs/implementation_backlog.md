@@ -25,6 +25,7 @@
 |历史回测|已完成基础版|`aits backtest`，每日评分动态仓位与 SPY/QQQ/SMH/SOXX 基准对比|
 |产业链因果图|已完成基础版|`aits industry-chain list/validate`，节点、父子关系、领先指标和观察池引用校验|
 |交易 thesis 与假设验证|已完成基础版|`aits thesis list/validate/review`，结构化假设、验证指标、证伪条件和复核报告|
+|风险事件分级|已完成基础版|`aits risk-events list/validate`，L1/L2/L3、影响节点、相关标的和动作规则|
 |产品策略|已完成文档|能力圈、产业链因果、假设验证、复盘归因|
 
 ## 推荐建设顺序
@@ -307,6 +308,8 @@ aits thesis review --as-of 2026-05-01
 
 ### M6：风险事件分级模块
 
+状态：已实现基础版。
+
 目的：把重大事件从主观恐慌转换成结构化风险动作。
 
 配置建议：
@@ -330,6 +333,26 @@ aits thesis review --as-of 2026-05-01
 - 每条风险事件必须有来源、时间、等级、影响节点和建议动作。
 - L2/L3 事件必须进入日报显著位置。
 - 风险事件动作不能绕过仓位上限和人工复核规则。
+
+当前基础版命令：
+
+```powershell
+aits risk-events list
+aits risk-events validate --as-of 2026-05-02
+```
+
+当前基础版输出：
+
+- `outputs/reports/risk_events_validation_YYYY-MM-DD.md`
+
+当前基础版校验：
+
+- L1/L2/L3 等级必须完整且唯一。
+- 风险等级越高，AI 仓位折扣乘数不能更高。
+- L2/L3 必须要求人工复核。
+- 事件影响的产业链节点必须存在。
+- 事件相关标的必须处于配置的数据 universe 或观察池中。
+- 活跃 L2/L3 事件建议配置升级条件和解除条件。
 
 ### M7：估值与拥挤度模块
 
@@ -402,7 +425,7 @@ aits review-trades --from 2026-01-01 --to 2026-03-31
 |`config/watchlist.yaml`|观察池和能力圈|M3，已实现基础版|
 |`config/industry_chain.yaml`|产业链节点和因果图|M4，已实现基础版|
 |`config/market_regimes.yaml`|市场阶段、默认回测区间和压力测试区间|阶段 1，已实现基础版|
-|`config/risk_events.yaml`|风险事件等级和动作规则|M6|
+|`config/risk_events.yaml`|风险事件等级和动作规则|M6，已实现基础版|
 |`config/scoring_rules.yaml`|评分规则和权重|M2|
 |`data/processed/features_daily.csv`|每日特征|M1|
 |`data/processed/scores_daily.csv`|每日评分|M2|
@@ -411,19 +434,20 @@ aits review-trades --from 2026-01-01 --to 2026-03-31
 |`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|历史回测报告|阶段 1，已实现基础版|
 |`outputs/reports/daily_score_YYYY-MM-DD.md`|每日评分报告|M2|
 |`outputs/reports/thesis_review_YYYY-MM-DD.md`|假设复核报告|M5|
+|`outputs/reports/risk_events_validation_YYYY-MM-DD.md`|风险事件规则校验报告|M6|
 |`outputs/reports/trade_review_YYYY-MM-DD.md`|复盘归因报告|M8|
 
 ## 近期最小落地路径
 
 接下来建议按这个顺序开发：
 
-1. M6：风险事件分级模块。
-2. M7：估值与拥挤度模块。
+1. M7：估值与拥挤度模块。
+2. M8：复盘归因模块。
 
 原因：
 
-- 阶段 1 的市场数据、评分、观察池、回测、产业链配置和交易 thesis 基础闭环已经完成；M6 会把风险事件从主观判断变成结构化动作规则。
-- M7-M8 需要更明确的持仓、交易记录和估值数据源，适合在日报闭环稳定后推进。
+- 阶段 1 的市场数据、评分、观察池、回测、产业链配置、交易 thesis 和风险事件分级基础闭环已经完成。
+- M7-M8 需要更明确的估值数据源、持仓和交易记录，适合在日报闭环稳定后推进。
 
 ## 不应马上做的事
 

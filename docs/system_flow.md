@@ -34,6 +34,7 @@ flowchart TD
         W["config/watchlist.yaml<br/>观察池与能力圈"]
         I["config/industry_chain.yaml<br/>产业链节点与因果图"]
         R["config/market_regimes.yaml<br/>AI regime 与压力测试区间"]
+        RE["config/risk_events.yaml<br/>L1/L2/L3 风险事件动作规则"]
         TH["data/external/trade_theses/*.yaml<br/>交易假设、验证指标、证伪条件"]
         MD["外部数据源<br/>Yahoo Finance / FRED"]
     end
@@ -73,6 +74,8 @@ flowchart TD
         WR["outputs/reports/watchlist_validation_YYYY-MM-DD.md"]
         IV["aits industry-chain validate"]
         IR["outputs/reports/industry_chain_validation_YYYY-MM-DD.md"]
+        RV["aits risk-events validate"]
+        RVR["outputs/reports/risk_events_validation_YYYY-MM-DD.md"]
     end
 
     subgraph Thesis["交易假设复核"]
@@ -128,6 +131,11 @@ flowchart TD
     I --> IV
     W --> IV
     IV --> IR
+    RE --> RV
+    I --> RV
+    W --> RV
+    U --> RV
+    RV --> RVR
 
     TH --> TL
     TH --> TV
@@ -220,10 +228,10 @@ flowchart TD
         F["观察池校验<br/>aits watchlist validate"]
         G["产业链图校验<br/>aits industry-chain validate"]
         H["交易 thesis<br/>aits thesis list/validate/review"]
+        I["风险事件分级<br/>aits risk-events list/validate"]
     end
 
     subgraph Next["后续模块"]
-        I["M6 风险事件<br/>L1 / L2 / L3 和仓位动作"]
         J["M7 估值与拥挤度<br/>估值分位、预期变化、过热信号"]
         K["M8 复盘归因<br/>市场 Beta、主题 Beta、Alpha、纪律问题"]
     end
@@ -232,6 +240,7 @@ flowchart TD
     D --> E
     F --> H
     G --> H
+    G --> I
     H --> I
     I --> J
     J --> K
@@ -257,10 +266,11 @@ flowchart TD
 |能力圈|`config/watchlist.yaml`|记录核心标的、能力圈和 thesis 要求|已实现基础版|
 |产业链|`config/industry_chain.yaml`|记录产业链节点和因果关系|已实现基础版|
 |市场阶段|`config/market_regimes.yaml`|记录默认 AI regime 和压力测试区间|已实现|
+|风险事件|`config/risk_events.yaml`|记录 L1/L2/L3 风险和动作规则|已实现基础版|
+|风险事件校验|`aits risk-events validate`|校验风险等级、产业链引用、相关标的和动作规则|已实现基础版|
 |交易假设|`data/external/trade_theses/`|记录交易 thesis、验证指标和证伪条件|已实现基础版|
 |交易假设模板|`docs/examples/trade_theses/`|提供可复制 YAML 模板，不提交个人记录|已实现基础版|
 |假设校验|`aits thesis validate`|校验 schema、观察池引用、产业链节点和证伪约束|已实现基础版|
 |假设复核|`aits thesis review`|输出 thesis 是否仍成立、是否需要人工复核、是否证伪触发|已实现基础版|
-|风险事件|`config/risk_events.yaml`|记录 L1/L2/L3 风险和动作规则|待实现|
 |估值拥挤度|待定|记录估值分位、预期变化和拥挤度|待实现|
 |复盘归因|待定|拆分 Beta、主题趋势、Alpha、仓位和纪律问题|待实现|

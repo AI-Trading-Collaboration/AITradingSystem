@@ -8,6 +8,7 @@ from ai_trading_system.config import (
     load_industry_chain,
     load_market_regimes,
     load_portfolio,
+    load_risk_events,
     load_scoring_rules,
     load_universe,
     load_watchlist,
@@ -130,3 +131,11 @@ def test_market_regimes_default_to_ai_after_chatgpt() -> None:
     assert default_regime.start_date.isoformat() == "2022-12-01"
     assert default_regime.anchor_date.isoformat() == "2022-11-30"
     assert "ChatGPT" in default_regime.anchor_event
+
+
+def test_risk_events_config_loads_levels_and_rules() -> None:
+    config = load_risk_events()
+
+    assert {level.level for level in config.levels} == {"L1", "L2", "L3"}
+    assert config.event_rules
+    assert any(rule.event_id == "ai_chip_export_control_upgrade" for rule in config.event_rules)

@@ -17,6 +17,7 @@ DEFAULT_SCORING_RULES_CONFIG_PATH = PROJECT_ROOT / "config" / "scoring_rules.yam
 DEFAULT_WATCHLIST_CONFIG_PATH = PROJECT_ROOT / "config" / "watchlist.yaml"
 DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH = PROJECT_ROOT / "config" / "industry_chain.yaml"
 DEFAULT_MARKET_REGIMES_CONFIG_PATH = PROJECT_ROOT / "config" / "market_regimes.yaml"
+DEFAULT_RISK_EVENTS_CONFIG_PATH = PROJECT_ROOT / "config" / "risk_events.yaml"
 
 
 class MarketUniverse(BaseModel):
@@ -103,6 +104,67 @@ class MarketRegimesConfig(BaseModel):
             raise ValueError(
                 "default_backtest_regime must match one configured market regime id"
             )
+
+        return self
+
+
+class RiskEventLevelConfig(BaseModel):
+    level: Literal["L1", "L2", "L3"]
+    name: str = Field(min_length=1)
+    description: str = Field(min_length=1)
+    default_action: str = Field(min_length=1)
+    target_ai_exposure_multiplier: float = Field(ge=0, le=1)
+    requires_manual_review: bool
+
+
+class RiskEventRuleConfig(BaseModel):
+    event_id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9_.-]+$")
+    name: str = Field(min_length=1)
+    level: Literal["L1", "L2", "L3"]
+    description: str = Field(min_length=1)
+    affected_nodes: list[str] = Field(min_length=1)
+    related_tickers: list[str] = Field(default_factory=list)
+    trigger_examples: list[str] = Field(min_length=1)
+    recommended_actions: list[str] = Field(min_length=1)
+    escalation_conditions: list[str] = Field(default_factory=list)
+    deescalation_conditions: list[str] = Field(default_factory=list)
+    active: bool = True
+
+
+class RiskEventsConfig(BaseModel):
+    levels: list[RiskEventLevelConfig] = Field(min_length=1)
+    event_rules: list[RiskEventRuleConfig] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_levels_and_rules(self) -> Self:
+        seen_levels: set[str] = set()
+        duplicate_levels: set[str] = set()
+        for level in self.levels:
+            if level.level in seen_levels:
+                duplicate_levels.add(level.level)
+            seen_levels.add(level.level)
+
+        if duplicate_levels:
+            duplicates = ", ".join(sorted(duplicate_levels))
+            raise ValueError(f"risk event levels must be unique: {duplicates}")
+
+        missing_levels = {"L1", "L2", "L3"} - seen_levels
+        if missing_levels:
+            missing = ", ".join(sorted(missing_levels))
+            raise ValueError(f"risk event levels must include: {missing}")
+
+        seen_rules: set[str] = set()
+        duplicate_rules: set[str] = set()
+        for rule in self.event_rules:
+            if rule.event_id in seen_rules:
+                duplicate_rules.add(rule.event_id)
+            seen_rules.add(rule.event_id)
+            if rule.level not in seen_levels:
+                raise ValueError(f"risk event rule {rule.event_id} references unknown level")
+
+        if duplicate_rules:
+            duplicates = ", ".join(sorted(duplicate_rules))
+            raise ValueError(f"risk event rule ids must be unique: {duplicates}")
 
         return self
 
@@ -266,6 +328,15 @@ def load_market_regimes(
     with config_path.open("r", encoding="utf-8") as file:
         raw: dict[str, Any] = yaml.safe_load(file)
     return MarketRegimesConfig.model_validate(raw)
+
+
+def load_risk_events(
+    path: Path | str = DEFAULT_RISK_EVENTS_CONFIG_PATH,
+) -> RiskEventsConfig:
+    config_path = Path(path)
+    with config_path.open("r", encoding="utf-8") as file:
+        raw: dict[str, Any] = yaml.safe_load(file)
+    return RiskEventsConfig.model_validate(raw)
 
 
 def market_regime_by_id(

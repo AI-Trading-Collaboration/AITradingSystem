@@ -27,6 +27,7 @@ config/                  投资标的池、模块权重、运行参数
 config/watchlist.yaml    观察池和能力圈配置
 config/industry_chain.yaml 产业链节点和因果图配置
 config/market_regimes.yaml 市场阶段和默认回测区间配置
+config/risk_events.yaml  风险事件等级和动作规则配置
 data/raw/                原始数据缓存，不提交
 data/processed/          清洗后的中间数据，不提交
 data/external/           外部导入数据，不提交
@@ -138,6 +139,15 @@ aits thesis review --as-of 2026-05-02
 ```
 
 交易 thesis 默认读取 `data/external/trade_theses/*.yaml`，该目录不提交。可参考 `docs/examples/trade_theses/nvda_ai_infra_template.yaml` 复制模板。校验会检查 schema、ticker 是否在观察池、产业链节点是否存在、验证指标和证伪条件是否完整；复核报告会输出原始假设是否仍成立、是否需要人工复核、是否已有证伪条件触发。
+
+查看和校验风险事件分级规则：
+
+```powershell
+aits risk-events list
+aits risk-events validate --as-of 2026-05-02
+```
+
+风险事件配置在 `config/risk_events.yaml`。当前基础版定义 L1/L2/L3 风险等级、AI 仓位折扣乘数、人工复核要求、影响产业链节点、相关标的、建议动作、升级条件和解除条件。风险事件不直接触发交易，只进入风险评估、thesis 复核和人工审核。
 
 ## 投资边界
 
