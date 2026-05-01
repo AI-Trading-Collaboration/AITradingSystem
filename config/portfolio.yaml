@@ -1,0 +1,14 @@
+decision:
+  frequency: daily
+  market_timezone: America/New_York
+  report_timezone: Asia/Tokyo
+  timing: after_us_market_close
+
+portfolio:
+  # Used to translate AI exposure from risk-asset scope into total-asset scope.
+  total_risk_asset_min: 0.60
+  total_risk_asset_max: 0.80
+
+position_limits:
+  max_single_stock_in_ai_bucket: 0.30
+  max_total_ai_exposure: 0.60

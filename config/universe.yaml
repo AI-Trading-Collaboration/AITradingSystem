@@ -1,0 +1,58 @@
+market:
+  decision_frequency: daily
+  benchmarks:
+    - SPY
+    - QQQ
+    - SMH
+    - SOXX
+  defensive:
+    - TLT
+    - SHY
+
+macro:
+  volatility:
+    - ^VIX
+  rates:
+    - DGS2
+    - DGS10
+  currency:
+    - DX-Y.NYB
+
+ai_chain:
+  core_watchlist:
+    - MSFT
+    - GOOG
+    - TSM
+    - INTC
+    - AMD
+    - NVDA
+  semiconductor_equipment:
+    - ASML
+    - AMAT
+    - LRCX
+  foundry_and_packaging:
+    - TSM
+    - ASX
+  accelerators_and_compute:
+    - NVDA
+    - AMD
+    - INTC
+    - AVGO
+    - MRVL
+  cloud_and_platform:
+    - MSFT
+    - GOOG
+    - AMZN
+    - META
+  software_and_apps:
+    - PLTR
+    - CRM
+    - NOW
+
+scoring_weights:
+  trend: 25
+  fundamentals: 25
+  macro_liquidity: 15
+  risk_sentiment: 15
+  valuation: 10
+  policy_geopolitics: 10
