@@ -43,6 +43,25 @@ For each data source integration:
 - treat provider inconsistencies as investigation items, not as values to smooth
   over silently.
 
+## Required Data Quality Gate
+
+`aits validate-data` is the required quality gate for cached market and macro
+data.
+
+Any command, workflow, or module that produces technical features, scoring
+outputs, backtest results, or daily reports from cached data must either:
+
+1. run `aits validate-data` first and stop on failure; or
+2. call the same validation code path directly and stop on failure.
+
+Passing validation must be visible in downstream outputs. Reports that depend on
+cached data must state the data quality status or link to the generated quality
+report.
+
+CI cannot validate local untracked market data because the cache is intentionally
+not committed. This does not weaken the runtime requirement: local data-dependent
+commands must enforce the gate themselves.
+
 ## Change Discipline
 
 - Prefer durable, well-tested fixes over local patches that only satisfy the
