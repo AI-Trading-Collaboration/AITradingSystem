@@ -1,0 +1,31 @@
+moving_average_windows:
+  - 20
+  - 50
+  - 100
+  - 200
+
+return_windows:
+  - 1
+  - 5
+  - 20
+
+relative_strength_pairs:
+  - numerator: SMH
+    denominator: SPY
+  - numerator: SOXX
+    denominator: SPY
+  - numerator: QQQ
+    denominator: SPY
+
+vix:
+  ticker: ^VIX
+  moving_average_window: 20
+  percentile_window: 252
+
+rates:
+  change_windows:
+    - 5
+    - 20
+
+core_breadth:
+  long_moving_average_window: 200

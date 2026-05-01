@@ -124,7 +124,7 @@
 
 1. 实现行情数据下载和本地缓存。状态：已实现基础版，命令为 `aits download-data`。
 2. 实现数据质量门禁。状态：已实现基础版，命令为 `aits validate-data`。
-3. 实现技术特征计算。
+3. 实现技术特征计算。状态：已实现基础版，命令为 `aits build-features`。
 4. 实现 100 分评分到仓位区间的规则。
 5. 实现简单回测引擎。
 6. 输出一份日报 Markdown。
@@ -154,6 +154,24 @@
 - 调整收盘价比例跳变。
 - 利率合理范围。
 - 利率单日异常变化。
+
+## 阶段 1 特征缓存约定
+
+市场环境特征命令为 `aits build-features`。该命令会先执行数据质量门禁，失败时停止。
+
+默认输出：
+
+- `data/processed/features_daily.csv`
+- `outputs/reports/feature_summary_YYYY-MM-DD.md`
+
+特征配置集中在 `config/features.yaml`，当前基础版包括：
+
+- 20/50/100/200 日均线。
+- 1/5/20 日收益率。
+- SMH/SPY、SOXX/SPY、QQQ/SPY 相对强弱。
+- VIX 20 日均值和 252 日分位。
+- DGS2、DGS10 的 5/20 日变化。
+- 核心观察池长期均线趋势宽度。
 
 ## 已确认的产品决策
 

@@ -4,6 +4,7 @@ from ai_trading_system.config import (
     configured_price_tickers,
     configured_rate_series,
     load_data_quality,
+    load_features,
     load_portfolio,
     load_universe,
 )
@@ -31,6 +32,15 @@ def test_data_quality_config_loads_thresholds() -> None:
     assert config.prices.suspicious_daily_return_abs == 0.20
     assert config.rates.min_plausible_value == -1.0
     assert config.rates.max_plausible_value == 25.0
+
+
+def test_feature_config_loads_market_feature_windows() -> None:
+    config = load_features()
+
+    assert config.moving_average_windows == [20, 50, 100, 200]
+    assert config.return_windows == [1, 5, 20]
+    assert config.vix.ticker == "^VIX"
+    assert config.core_breadth.long_moving_average_window == 200
 
 
 def test_configured_price_tickers_defaults_to_core_universe() -> None:

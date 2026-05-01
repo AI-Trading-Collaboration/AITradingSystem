@@ -64,6 +64,13 @@
 - 10 年期收益率短期变化。
 - 龙头股趋势一致性。
 
+特征构建命令为 `aits build-features`。命令必须先通过数据质量门禁，输出：
+
+- `data/processed/features_daily.csv`
+- `outputs/reports/feature_summary_YYYY-MM-DD.md`
+
+特征使用 tidy 格式存储，核心字段为 `as_of,source_date,category,subject,feature,value,unit,lookback,source,notes`，方便后续评分模块按 feature 名称读取。
+
 ## 产业链和假设层
 
 后续需要建立产业链因果图，而不是只按 ticker 或新闻来源组织信息：

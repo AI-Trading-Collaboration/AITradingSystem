@@ -11,6 +11,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG_PATH = PROJECT_ROOT / "config" / "universe.yaml"
 DEFAULT_PORTFOLIO_CONFIG_PATH = PROJECT_ROOT / "config" / "portfolio.yaml"
 DEFAULT_DATA_QUALITY_CONFIG_PATH = PROJECT_ROOT / "config" / "data_quality.yaml"
+DEFAULT_FEATURE_CONFIG_PATH = PROJECT_ROOT / "config" / "features.yaml"
 
 
 class MarketUniverse(BaseModel):
@@ -75,6 +76,34 @@ class DataQualityConfig(BaseModel):
     rates: RateQualityConfig
 
 
+class RelativeStrengthPairConfig(BaseModel):
+    numerator: str
+    denominator: str
+
+
+class VixFeatureConfig(BaseModel):
+    ticker: str
+    moving_average_window: int = Field(gt=0)
+    percentile_window: int = Field(gt=0)
+
+
+class RateFeatureConfig(BaseModel):
+    change_windows: list[int]
+
+
+class CoreBreadthFeatureConfig(BaseModel):
+    long_moving_average_window: int = Field(gt=0)
+
+
+class FeatureConfig(BaseModel):
+    moving_average_windows: list[int]
+    return_windows: list[int]
+    relative_strength_pairs: list[RelativeStrengthPairConfig]
+    vix: VixFeatureConfig
+    rates: RateFeatureConfig
+    core_breadth: CoreBreadthFeatureConfig
+
+
 def load_universe(path: Path | str = DEFAULT_CONFIG_PATH) -> UniverseConfig:
     config_path = Path(path)
     with config_path.open("r", encoding="utf-8") as file:
@@ -96,6 +125,13 @@ def load_data_quality(
     with config_path.open("r", encoding="utf-8") as file:
         raw: dict[str, Any] = yaml.safe_load(file)
     return DataQualityConfig.model_validate(raw)
+
+
+def load_features(path: Path | str = DEFAULT_FEATURE_CONFIG_PATH) -> FeatureConfig:
+    config_path = Path(path)
+    with config_path.open("r", encoding="utf-8") as file:
+        raw: dict[str, Any] = yaml.safe_load(file)
+    return FeatureConfig.model_validate(raw)
 
 
 def configured_price_tickers(

@@ -66,6 +66,14 @@ aits validate-data
 
 质量报告默认写入 `outputs/reports/data_quality_YYYY-MM-DD.md`。如果校验出现错误，命令会返回非零退出码，后续评分和回测流程不应继续使用这批数据。
 
+构建每日市场特征：
+
+```powershell
+aits build-features --as-of 2026-05-01
+```
+
+命令会先执行数据质量门禁，失败时停止。特征默认写入 `data/processed/features_daily.csv`，报告默认写入 `outputs/reports/feature_summary_YYYY-MM-DD.md`。
+
 查看示例评分：
 
 ```powershell
