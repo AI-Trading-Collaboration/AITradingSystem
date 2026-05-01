@@ -15,6 +15,7 @@ from ai_trading_system.config import (
     load_data_quality,
     load_features,
     load_portfolio,
+    load_scoring_rules,
     load_universe,
 )
 from ai_trading_system.data.download import download_daily_data
@@ -30,6 +31,12 @@ from ai_trading_system.features.market import (
     write_features_csv,
 )
 from ai_trading_system.reports.daily import render_recommendation_markdown
+from ai_trading_system.scoring.daily import (
+    build_daily_score_report,
+    default_daily_score_report_path,
+    write_daily_score_report,
+    write_scores_csv,
+)
 from ai_trading_system.scoring.position_model import ModuleScore, WeightedScoreModel
 
 app = typer.Typer(help="AI trading trend analysis toolkit.", no_args_is_help=True)
@@ -263,6 +270,133 @@ def build_features(
     console.print(f"Feature summary: {feature_summary_output}")
     console.print(f"Data quality report: {quality_output} ({data_quality_report.status})")
     console.print(f"Feature warnings: {len(feature_set.warnings)}")
+
+
+@app.command("score-daily")
+def score_daily(
+    prices_path: Annotated[
+        Path,
+        typer.Option(help="Path to standardized daily prices CSV."),
+    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    rates_path: Annotated[
+        Path,
+        typer.Option(help="Path to standardized daily rates CSV."),
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="Score date in YYYY-MM-DD format. Defaults to today."),
+    ] = None,
+    features_path: Annotated[
+        Path,
+        typer.Option(help="Feature CSV output path."),
+    ] = PROJECT_ROOT / "data" / "processed" / "features_daily.csv",
+    scores_path: Annotated[
+        Path,
+        typer.Option(help="Score CSV output path."),
+    ] = PROJECT_ROOT / "data" / "processed" / "scores_daily.csv",
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown daily score report output path."),
+    ] = None,
+    feature_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown feature summary output path."),
+    ] = None,
+    quality_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown data quality report output path."),
+    ] = None,
+    full_universe: Annotated[
+        bool,
+        typer.Option(
+            "--full-universe",
+            help="Validate and score every configured AI-chain ticker.",
+        ),
+    ] = False,
+) -> None:
+    """Build features and produce the daily market score report."""
+    universe = load_universe()
+    data_quality_config = load_data_quality()
+    feature_config = load_features()
+    scoring_rules = load_scoring_rules()
+    portfolio = load_portfolio()
+    score_date = _parse_date(as_of) if as_of else date.today()
+    expected_price_tickers = configured_price_tickers(
+        universe,
+        include_full_ai_chain=full_universe,
+    )
+    expected_rate_series = configured_rate_series(universe)
+    quality_output = quality_report_path or default_quality_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        score_date,
+    )
+    feature_report_output = feature_report_path or default_feature_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        score_date,
+    )
+    score_report_output = report_path or default_daily_score_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        score_date,
+    )
+
+    data_quality_report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=expected_price_tickers,
+        expected_rate_series=expected_rate_series,
+        quality_config=data_quality_config,
+        as_of=score_date,
+    )
+    write_data_quality_report(data_quality_report, quality_output)
+    if not data_quality_report.passed:
+        console.print("[red]Data quality gate failed. Daily score stopped.[/red]")
+        console.print(f"Data quality report: {quality_output}")
+        console.print(
+            f"Errors: {data_quality_report.error_count}; "
+            f"warnings: {data_quality_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+
+    feature_set = build_market_features(
+        prices=pd.read_csv(prices_path),
+        rates=pd.read_csv(rates_path),
+        config=feature_config,
+        as_of=score_date,
+        core_watchlist=universe.ai_chain.get("core_watchlist", []),
+    )
+    features_output = write_features_csv(feature_set, features_path)
+    feature_summary_output = write_feature_summary(
+        feature_set,
+        data_quality_report=data_quality_report,
+        data_quality_report_path=quality_output,
+        features_path=features_output,
+        output_path=feature_report_output,
+    )
+    score_report = build_daily_score_report(
+        feature_set=feature_set,
+        data_quality_report=data_quality_report,
+        rules=scoring_rules,
+        total_risk_asset_min=portfolio.portfolio.total_risk_asset_min,
+        total_risk_asset_max=portfolio.portfolio.total_risk_asset_max,
+    )
+    scores_output = write_scores_csv(score_report, scores_path)
+    daily_report_output = write_daily_score_report(
+        score_report,
+        data_quality_report_path=quality_output,
+        feature_report_path=feature_summary_output,
+        features_path=features_output,
+        scores_path=scores_output,
+        output_path=score_report_output,
+    )
+
+    status_style = "green" if score_report.status == "PASS" else "yellow"
+    console.print(f"[{status_style}]Daily score status: {score_report.status}[/{status_style}]")
+    console.print(f"Total score: {score_report.recommendation.total_score:.1f}")
+    console.print(f"Position state: {score_report.recommendation.label}")
+    console.print(f"Daily score report: {daily_report_output}")
+    console.print(f"Scores: {scores_output}")
+    console.print(f"Feature summary: {feature_summary_output}")
+    console.print(f"Data quality report: {quality_output} ({data_quality_report.status})")
 
 
 def _parse_date(value: str) -> date:

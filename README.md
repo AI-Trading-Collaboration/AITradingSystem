@@ -74,6 +74,14 @@ aits build-features --as-of 2026-05-01
 
 命令会先执行数据质量门禁，失败时停止。特征默认写入 `data/processed/features_daily.csv`，报告默认写入 `outputs/reports/feature_summary_YYYY-MM-DD.md`。
 
+生成每日市场评分报告：
+
+```powershell
+aits score-daily --as-of 2026-05-01
+```
+
+命令会先执行数据质量门禁，再构建特征，最后输出 `data/processed/scores_daily.csv` 和 `outputs/reports/daily_score_YYYY-MM-DD.md`。MVP 阶段的基本面、估值、政策地缘会在报告中明确标记为占位输入。
+
 查看示例评分：
 
 ```powershell

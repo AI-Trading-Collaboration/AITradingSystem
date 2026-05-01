@@ -6,6 +6,7 @@ from ai_trading_system.config import (
     load_data_quality,
     load_features,
     load_portfolio,
+    load_scoring_rules,
     load_universe,
 )
 
@@ -41,6 +42,15 @@ def test_feature_config_loads_market_feature_windows() -> None:
     assert config.return_windows == [1, 5, 20]
     assert config.vix.ticker == "^VIX"
     assert config.core_breadth.long_moving_average_window == 200
+
+
+def test_scoring_rules_config_loads_weights_and_placeholders() -> None:
+    config = load_scoring_rules()
+
+    assert config.weights["trend"] == 25
+    assert config.minimum_signal_coverage == 0.50
+    assert config.trend.signals[0].subject == "SPY"
+    assert config.placeholders["valuation"].score == 50
 
 
 def test_configured_price_tickers_defaults_to_core_universe() -> None:

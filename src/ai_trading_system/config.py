@@ -12,6 +12,7 @@ DEFAULT_CONFIG_PATH = PROJECT_ROOT / "config" / "universe.yaml"
 DEFAULT_PORTFOLIO_CONFIG_PATH = PROJECT_ROOT / "config" / "portfolio.yaml"
 DEFAULT_DATA_QUALITY_CONFIG_PATH = PROJECT_ROOT / "config" / "data_quality.yaml"
 DEFAULT_FEATURE_CONFIG_PATH = PROJECT_ROOT / "config" / "features.yaml"
+DEFAULT_SCORING_RULES_CONFIG_PATH = PROJECT_ROOT / "config" / "scoring_rules.yaml"
 
 
 class MarketUniverse(BaseModel):
@@ -104,6 +105,42 @@ class FeatureConfig(BaseModel):
     core_breadth: CoreBreadthFeatureConfig
 
 
+class ScoreSignalConfig(BaseModel):
+    subject: str
+    feature: str
+    points: float = Field(gt=0)
+    bullish_above: float | None = None
+    bullish_below: float | None = None
+    bearish_above: float | None = None
+    bearish_below: float | None = None
+    scale_min: float | None = None
+    scale_max: float | None = None
+
+
+class ScoreModuleRuleConfig(BaseModel):
+    neutral_score: float = Field(ge=0, le=100)
+    signals: list[ScoreSignalConfig]
+
+
+class PlaceholderScoreConfig(BaseModel):
+    score: float = Field(ge=0, le=100)
+    reason: str
+
+
+class PositionChangeConfig(BaseModel):
+    minimum_action_delta: float = Field(ge=0, le=1)
+
+
+class ScoringRulesConfig(BaseModel):
+    weights: dict[str, float]
+    minimum_signal_coverage: float = Field(ge=0, le=1)
+    trend: ScoreModuleRuleConfig
+    macro_liquidity: ScoreModuleRuleConfig
+    risk_sentiment: ScoreModuleRuleConfig
+    placeholders: dict[str, PlaceholderScoreConfig]
+    position_change: PositionChangeConfig
+
+
 def load_universe(path: Path | str = DEFAULT_CONFIG_PATH) -> UniverseConfig:
     config_path = Path(path)
     with config_path.open("r", encoding="utf-8") as file:
@@ -132,6 +169,15 @@ def load_features(path: Path | str = DEFAULT_FEATURE_CONFIG_PATH) -> FeatureConf
     with config_path.open("r", encoding="utf-8") as file:
         raw: dict[str, Any] = yaml.safe_load(file)
     return FeatureConfig.model_validate(raw)
+
+
+def load_scoring_rules(
+    path: Path | str = DEFAULT_SCORING_RULES_CONFIG_PATH,
+) -> ScoringRulesConfig:
+    config_path = Path(path)
+    with config_path.open("r", encoding="utf-8") as file:
+        raw: dict[str, Any] = yaml.safe_load(file)
+    return ScoringRulesConfig.model_validate(raw)
 
 
 def configured_price_tickers(

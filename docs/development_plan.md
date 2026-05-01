@@ -125,7 +125,7 @@
 1. 实现行情数据下载和本地缓存。状态：已实现基础版，命令为 `aits download-data`。
 2. 实现数据质量门禁。状态：已实现基础版，命令为 `aits validate-data`。
 3. 实现技术特征计算。状态：已实现基础版，命令为 `aits build-features`。
-4. 实现 100 分评分到仓位区间的规则。
+4. 实现 100 分评分到仓位区间的规则。状态：已实现基础版，命令为 `aits score-daily`。
 5. 实现简单回测引擎。
 6. 输出一份日报 Markdown。
 
@@ -172,6 +172,24 @@
 - VIX 20 日均值和 252 日分位。
 - DGS2、DGS10 的 5/20 日变化。
 - 核心观察池长期均线趋势宽度。
+
+## 阶段 1 每日评分约定
+
+每日评分命令为 `aits score-daily`。该命令会先执行数据质量门禁，再构建特征，最后生成评分。
+
+默认输出：
+
+- `data/processed/scores_daily.csv`
+- `outputs/reports/daily_score_YYYY-MM-DD.md`
+
+评分规则集中在 `config/scoring_rules.yaml`。当前基础版包括：
+
+- 趋势：指数趋势、半导体趋势、核心观察池宽度、SMH/SPY 相对强弱。
+- 宏观流动性：DGS10、DGS2、美元指数。
+- 风险情绪：VIX 当前值、VIX 分位、VIX 短期变化。
+- 基本面、估值、政策地缘：明确标记为 MVP 占位输入。
+
+如果某个硬数据模块的信号覆盖率低于配置阈值，模块使用中性分并标记为 `insufficient_data`，不能静默给出伪精确分数。
 
 ## 已确认的产品决策
 

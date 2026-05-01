@@ -1,0 +1,106 @@
+weights:
+  trend: 25
+  fundamentals: 25
+  macro_liquidity: 15
+  risk_sentiment: 15
+  valuation: 10
+  policy_geopolitics: 10
+
+minimum_signal_coverage: 0.50
+
+trend:
+  neutral_score: 50
+  signals:
+    - subject: SPY
+      feature: above_ma_100
+      bullish_above: 0.5
+      points: 10
+    - subject: SPY
+      feature: above_ma_200
+      bullish_above: 0.5
+      points: 10
+    - subject: QQQ
+      feature: above_ma_100
+      bullish_above: 0.5
+      points: 10
+    - subject: QQQ
+      feature: above_ma_200
+      bullish_above: 0.5
+      points: 10
+    - subject: SMH
+      feature: above_ma_100
+      bullish_above: 0.5
+      points: 12
+    - subject: SMH
+      feature: above_ma_200
+      bullish_above: 0.5
+      points: 12
+    - subject: SOXX
+      feature: above_ma_100
+      bullish_above: 0.5
+      points: 8
+    - subject: SOXX
+      feature: above_ma_200
+      bullish_above: 0.5
+      points: 8
+    - subject: AI_CORE_WATCHLIST
+      feature: above_ma_200_ratio
+      scale_min: 0.0
+      scale_max: 1.0
+      points: 10
+    - subject: SMH/SPY
+      feature: relative_strength_return_20d
+      bullish_above: 0.0
+      points: 10
+
+macro_liquidity:
+  neutral_score: 50
+  signals:
+    - subject: DGS10
+      feature: rate_change_20d
+      bearish_above: 0.25
+      bullish_below: -0.10
+      points: 40
+    - subject: DGS2
+      feature: rate_change_20d
+      bearish_above: 0.25
+      bullish_below: -0.10
+      points: 30
+    - subject: DX-Y.NYB
+      feature: return_20d
+      bearish_above: 0.03
+      bullish_below: -0.03
+      points: 30
+
+risk_sentiment:
+  neutral_score: 50
+  signals:
+    - subject: ^VIX
+      feature: vix_current
+      bullish_below: 16.0
+      bearish_above: 25.0
+      points: 35
+    - subject: ^VIX
+      feature: vix_percentile_252
+      bullish_below: 0.40
+      bearish_above: 0.80
+      points: 35
+    - subject: ^VIX
+      feature: return_5d
+      bullish_below: -0.10
+      bearish_above: 0.20
+      points: 30
+
+placeholders:
+  fundamentals:
+    score: 50
+    reason: "MVP placeholder: fundamental and earnings data are not integrated yet."
+  valuation:
+    score: 50
+    reason: "MVP placeholder: valuation and expectation data are not integrated yet."
+  policy_geopolitics:
+    score: 50
+    reason: "MVP placeholder: policy and geopolitics event workflow is not integrated yet."
+
+position_change:
+  minimum_action_delta: 0.05
