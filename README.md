@@ -20,6 +20,7 @@
 ## 工程结构
 
 ```text
+AGENTS.md                项目工程协作守则
 config/                  投资标的池、模块权重、运行参数
 data/raw/                原始数据缓存，不提交
 data/processed/          清洗后的中间数据，不提交
