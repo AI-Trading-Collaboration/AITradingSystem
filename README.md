@@ -24,6 +24,7 @@
 ```text
 AGENTS.md                项目工程协作守则
 config/                  投资标的池、模块权重、运行参数
+config/watchlist.yaml    观察池和能力圈配置
 data/raw/                原始数据缓存，不提交
 data/processed/          清洗后的中间数据，不提交
 data/external/           外部导入数据，不提交
@@ -92,6 +93,15 @@ aits score-example
 
 - AI 仓位（股票风险资产内）。
 - AI 仓位（总资产内），根据 `config/portfolio.yaml` 的风险资产预算换算。
+
+查看和校验观察池能力圈配置：
+
+```powershell
+aits watchlist list
+aits watchlist validate --as-of 2026-05-02
+```
+
+观察池校验会检查核心个股是否都在活跃观察池中、是否映射到 AI 产业链节点，以及高风险标的是否要求交易 thesis。
 
 ## 投资边界
 

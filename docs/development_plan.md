@@ -120,14 +120,15 @@
 
 ## 近期迭代建议
 
-当前最小落地路径见 `docs/implementation_backlog.md`。第一个开发迭代建议只做 6 件事：
+当前最小落地路径见 `docs/implementation_backlog.md`。第一个开发迭代建议先做这些闭环事项：
 
 1. 实现行情数据下载和本地缓存。状态：已实现基础版，命令为 `aits download-data`。
 2. 实现数据质量门禁。状态：已实现基础版，命令为 `aits validate-data`。
 3. 实现技术特征计算。状态：已实现基础版，命令为 `aits build-features`。
 4. 实现 100 分评分到仓位区间的规则。状态：已实现基础版，命令为 `aits score-daily`。
-5. 实现简单回测引擎。
-6. 输出一份日报 Markdown。
+5. 实现观察池与能力圈配置。状态：已实现基础版，命令为 `aits watchlist list/validate`。
+6. 实现简单回测引擎。
+7. 输出一份日报 Markdown。状态：已实现基础版，命令为 `aits score-daily`。
 
 ## 阶段 1 数据缓存约定
 
@@ -190,6 +191,17 @@
 - 基本面、估值、政策地缘：明确标记为 MVP 占位输入。
 
 如果某个硬数据模块的信号覆盖率低于配置阈值，模块使用中性分并标记为 `insufficient_data`，不能静默给出伪精确分数。
+
+## 观察池与能力圈约定
+
+观察池配置文件为 `config/watchlist.yaml`，用于记录核心个股是否处在能力圈内、映射到哪些 AI 产业链节点、默认风险等级和是否要求交易 thesis。
+
+命令：
+
+- `aits watchlist list`
+- `aits watchlist validate`
+
+校验报告默认写入 `outputs/reports/watchlist_validation_YYYY-MM-DD.md`。核心观察池中的每个个股都必须出现在活跃观察池中，并且必须映射到至少一个 AI 产业链节点。高风险或极高风险标的必须要求 thesis，避免后续报告把高风险单票当成无约束的高置信度输入。
 
 ## 已确认的产品决策
 

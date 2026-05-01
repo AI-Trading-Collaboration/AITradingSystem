@@ -1,0 +1,91 @@
+items:
+  - ticker: MSFT
+    company_name: Microsoft
+    instrument_type: single_stock
+    sector: cloud_and_platform
+    ai_chain_nodes:
+      - cloud_capex
+      - ai_inference_demand
+      - software_and_apps
+    competence_score: 82
+    competence_reason: "云基础设施、企业软件和 AI 平台能力与本项目能力圈高度相关。"
+    default_risk_level: medium
+    thesis_required: true
+    active: true
+    notes: "重点观察 Azure AI 需求、CapEx 指引和 Copilot 商业化进展。"
+
+  - ticker: GOOG
+    company_name: Alphabet
+    instrument_type: single_stock
+    sector: cloud_and_platform
+    ai_chain_nodes:
+      - cloud_capex
+      - ai_inference_demand
+      - ai_models
+    competence_score: 78
+    competence_reason: "云、TPU、搜索和 AI 应用层具备明确技术理解入口。"
+    default_risk_level: medium
+    thesis_required: true
+    active: true
+    notes: "重点观察 Google Cloud 增速、AI CapEx 和搜索商业模式压力。"
+
+  - ticker: TSM
+    company_name: Taiwan Semiconductor Manufacturing
+    instrument_type: single_stock
+    sector: foundry_and_packaging
+    ai_chain_nodes:
+      - foundry_demand
+      - advanced_packaging
+      - gpu_asic_demand
+    competence_score: 84
+    competence_reason: "先进制程、CoWoS 和 AI 芯片代工需求与半导体能力圈直接相关。"
+    default_risk_level: high
+    thesis_required: true
+    active: true
+    notes: "重点观察月度营收、先进封装产能和地缘风险折价。"
+
+  - ticker: INTC
+    company_name: Intel
+    instrument_type: single_stock
+    sector: accelerators_and_compute
+    ai_chain_nodes:
+      - gpu_asic_demand
+      - foundry_demand
+      - semiconductor_equipment
+    competence_score: 62
+    competence_reason: "CPU、制程追赶和代工转型可分析，但执行风险和商业模式不确定性较高。"
+    default_risk_level: high
+    thesis_required: true
+    active: true
+    notes: "能力圈内但置信度较低，必须有明确证伪条件。"
+
+  - ticker: AMD
+    company_name: Advanced Micro Devices
+    instrument_type: single_stock
+    sector: accelerators_and_compute
+    ai_chain_nodes:
+      - gpu_asic_demand
+      - ai_inference_demand
+      - hbm_supply_demand
+    competence_score: 80
+    competence_reason: "GPU、CPU、数据中心和推理需求与技术能力圈直接相关。"
+    default_risk_level: high
+    thesis_required: true
+    active: true
+    notes: "重点观察 MI 系列订单、毛利率和与 NVDA 的生态差距。"
+
+  - ticker: NVDA
+    company_name: NVIDIA
+    instrument_type: single_stock
+    sector: accelerators_and_compute
+    ai_chain_nodes:
+      - gpu_asic_demand
+      - hbm_supply_demand
+      - ai_inference_demand
+      - advanced_packaging
+    competence_score: 88
+    competence_reason: "GPU、CUDA 生态、推理和数据中心需求是本项目最核心的能力圈。"
+    default_risk_level: high
+    thesis_required: true
+    active: true
+    notes: "重点观察订单可持续性、推理需求、毛利率和估值透支程度。"

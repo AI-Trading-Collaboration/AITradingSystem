@@ -8,6 +8,7 @@ from ai_trading_system.config import (
     load_portfolio,
     load_scoring_rules,
     load_universe,
+    load_watchlist,
 )
 
 
@@ -93,3 +94,12 @@ def test_configured_rate_series() -> None:
     config = load_universe()
 
     assert configured_rate_series(config) == ["DGS2", "DGS10"]
+
+
+def test_watchlist_config_covers_core_watchlist() -> None:
+    universe = load_universe()
+    watchlist = load_watchlist()
+    active_tickers = {item.ticker for item in watchlist.items if item.active}
+
+    assert set(universe.ai_chain["core_watchlist"]).issubset(active_tickers)
+    assert all(item.competence_reason for item in watchlist.items)

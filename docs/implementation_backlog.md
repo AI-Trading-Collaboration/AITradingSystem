@@ -20,6 +20,7 @@
 |市场环境特征|已完成基础版|`aits build-features`，趋势、相对强弱、VIX、利率、核心池宽度|
 |每日市场评分|已完成基础版|`aits score-daily`，趋势、宏观流动性、风险情绪和占位项|
 |仓位评分骨架|已完成基础版|100 分映射到仓位区间，支持总资产换算|
+|观察池与能力圈|已完成基础版|`aits watchlist list/validate`，核心个股能力圈和产业链节点映射|
 |产品策略|已完成文档|能力圈、产业链因果、假设验证、复盘归因|
 
 ## 推荐建设顺序
@@ -107,6 +108,8 @@ aits score-daily --as-of 2026-05-01
 
 ### M3：观察池与能力圈模块
 
+状态：已实现基础版。
+
 目的：记录哪些标的在能力圈内，以及为什么值得观察或持有。
 
 配置建议：
@@ -137,6 +140,10 @@ aits score-daily --as-of 2026-05-01
 aits watchlist list
 aits watchlist validate
 ```
+
+当前基础版输出：
+
+- `outputs/reports/watchlist_validation_YYYY-MM-DD.md`
 
 验收标准：
 
@@ -322,7 +329,7 @@ aits review-trades --from 2026-01-01 --to 2026-03-31
 |路径|用途|阶段|
 |---|---|---|
 |`config/features.yaml`|市场环境特征窗口、相对强弱组合和 VIX/利率设置|M1|
-|`config/watchlist.yaml`|观察池和能力圈|M3|
+|`config/watchlist.yaml`|观察池和能力圈|M3，已实现基础版|
 |`config/industry_chain.yaml`|产业链节点和因果图|M4|
 |`config/risk_events.yaml`|风险事件等级和动作规则|M6|
 |`config/scoring_rules.yaml`|评分规则和权重|M2|
@@ -337,12 +344,12 @@ aits review-trades --from 2026-01-01 --to 2026-03-31
 
 接下来建议按这个顺序开发：
 
-1. M3：观察池与能力圈配置。
-2. M4：产业链节点配置。
+1. M4：产业链节点配置。
+2. M5：交易 thesis 与假设验证模块。
 
 原因：
 
-- M3/M4 会把产品策略中的能力圈和产业链因果落进配置，为后续基本面和新闻模块打地基。
+- M3 已完成基础版；M4 会继续把产品策略中的产业链因果落进配置，为后续基本面和新闻模块打地基。
 - M5-M8 需要更明确的持仓、交易记录和估值数据源，适合在日报闭环稳定后推进。
 
 ## 不应马上做的事

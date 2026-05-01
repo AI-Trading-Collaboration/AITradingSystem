@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Self
+from typing import Any, Literal, Self
 
 import yaml
 from pydantic import BaseModel, Field, model_validator
@@ -13,6 +13,7 @@ DEFAULT_PORTFOLIO_CONFIG_PATH = PROJECT_ROOT / "config" / "portfolio.yaml"
 DEFAULT_DATA_QUALITY_CONFIG_PATH = PROJECT_ROOT / "config" / "data_quality.yaml"
 DEFAULT_FEATURE_CONFIG_PATH = PROJECT_ROOT / "config" / "features.yaml"
 DEFAULT_SCORING_RULES_CONFIG_PATH = PROJECT_ROOT / "config" / "scoring_rules.yaml"
+DEFAULT_WATCHLIST_CONFIG_PATH = PROJECT_ROOT / "config" / "watchlist.yaml"
 
 
 class MarketUniverse(BaseModel):
@@ -32,6 +33,24 @@ class UniverseConfig(BaseModel):
     macro: MacroUniverse
     ai_chain: dict[str, list[str]]
     scoring_weights: dict[str, float]
+
+
+class WatchlistItem(BaseModel):
+    ticker: str = Field(min_length=1)
+    company_name: str = Field(min_length=1)
+    instrument_type: Literal["single_stock", "etf", "macro_proxy"]
+    sector: str = Field(min_length=1)
+    ai_chain_nodes: list[str] = Field(default_factory=list)
+    competence_score: float = Field(ge=0, le=100)
+    competence_reason: str = Field(min_length=1)
+    default_risk_level: Literal["low", "medium", "high", "critical"]
+    thesis_required: bool
+    active: bool = True
+    notes: str = ""
+
+
+class WatchlistConfig(BaseModel):
+    items: list[WatchlistItem]
 
 
 class DecisionConfig(BaseModel):
@@ -168,6 +187,13 @@ def load_universe(path: Path | str = DEFAULT_CONFIG_PATH) -> UniverseConfig:
     with config_path.open("r", encoding="utf-8") as file:
         raw: dict[str, Any] = yaml.safe_load(file)
     return UniverseConfig.model_validate(raw)
+
+
+def load_watchlist(path: Path | str = DEFAULT_WATCHLIST_CONFIG_PATH) -> WatchlistConfig:
+    config_path = Path(path)
+    with config_path.open("r", encoding="utf-8") as file:
+        raw: dict[str, Any] = yaml.safe_load(file)
+    return WatchlistConfig.model_validate(raw)
 
 
 def load_portfolio(path: Path | str = DEFAULT_PORTFOLIO_CONFIG_PATH) -> PortfolioConfig:
