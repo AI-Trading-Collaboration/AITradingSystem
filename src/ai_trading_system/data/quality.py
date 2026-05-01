@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from ai_trading_system.config import DataQualityConfig
+from ai_trading_system.config import DataQualityConfig, PriceQualityConfig
 
 PRICE_REQUIRED_COLUMNS = ("date", "ticker", "open", "high", "low", "close", "adj_close", "volume")
 RATE_REQUIRED_COLUMNS = ("date", "series", "value")
@@ -491,10 +491,16 @@ def _check_price_moves(
 
     data = data.sort_values(["ticker", "_date"])
     data["_return"] = data.groupby("ticker")["_adj_close"].pct_change()
+    data["_suspicious_return_threshold"] = data["ticker"].map(
+        lambda ticker: _suspicious_price_return_threshold(str(ticker), quality_config.prices)
+    )
+    data["_extreme_return_threshold"] = data["ticker"].map(
+        lambda ticker: _extreme_price_return_threshold(str(ticker), quality_config.prices)
+    )
     abs_return = data["_return"].abs()
 
-    extreme = abs_return > quality_config.prices.extreme_daily_return_abs
-    suspicious = (abs_return > quality_config.prices.suspicious_daily_return_abs) & ~extreme
+    extreme = abs_return > data["_extreme_return_threshold"]
+    suspicious = (abs_return > data["_suspicious_return_threshold"]) & ~extreme
 
     if extreme.any():
         issues.append(
@@ -503,7 +509,10 @@ def _check_price_moves(
                 "prices_extreme_adj_close_move",
                 "prices contains extreme adjusted-close daily moves",
                 rows=int(extreme.sum()),
-                sample=_sample_rows(data.loc[extreme], ["date", "ticker", "adj_close", "_return"]),
+                sample=_sample_rows(
+                    data.loc[extreme],
+                    ["date", "ticker", "adj_close", "_return", "_extreme_return_threshold"],
+                ),
             )
         )
     if suspicious.any():
@@ -515,7 +524,13 @@ def _check_price_moves(
                 rows=int(suspicious.sum()),
                 sample=_sample_rows(
                     data.loc[suspicious],
-                    ["date", "ticker", "adj_close", "_return"],
+                    [
+                        "date",
+                        "ticker",
+                        "adj_close",
+                        "_return",
+                        "_suspicious_return_threshold",
+                    ],
                 ),
             )
         )
@@ -539,6 +554,20 @@ def _check_price_moves(
                 ),
             )
         )
+
+
+def _suspicious_price_return_threshold(ticker: str, config: PriceQualityConfig) -> float:
+    override = config.ticker_return_threshold_overrides.get(ticker)
+    if override and override.suspicious_daily_return_abs is not None:
+        return override.suspicious_daily_return_abs
+    return config.suspicious_daily_return_abs
+
+
+def _extreme_price_return_threshold(ticker: str, config: PriceQualityConfig) -> float:
+    override = config.ticker_return_threshold_overrides.get(ticker)
+    if override and override.extreme_daily_return_abs is not None:
+        return override.extreme_daily_return_abs
+    return config.extreme_daily_return_abs
 
 
 def _check_rate_ranges(

@@ -114,6 +114,50 @@ def test_validate_data_cache_flags_suspicious_price_move(tmp_path: Path) -> None
     )
 
 
+def test_validate_data_cache_fails_extreme_stock_price_move(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    prices = pd.read_csv(prices_path)
+    move = (prices["ticker"] == "NVDA") & (prices["date"] == "2026-04-30")
+    prices.loc[move, ["open", "high", "low", "close", "adj_close"]] = [210, 212, 208, 210, 210]
+    prices.to_csv(prices_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert report.passed is False
+    assert "prices_extreme_adj_close_move" in _issue_codes(report)
+
+
+def test_validate_data_cache_uses_ticker_return_threshold_overrides(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path, tickers=["^VIX"])
+    prices = pd.read_csv(prices_path)
+    move = (prices["ticker"] == "^VIX") & (prices["date"] == "2026-04-30")
+    prices.loc[move, ["open", "high", "low", "close", "adj_close"]] = [220, 230, 215, 220, 220]
+    prices.to_csv(prices_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["^VIX"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert report.passed is True
+    assert "prices_extreme_adj_close_move" not in _issue_codes(report)
+    assert any(
+        issue.severity is Severity.WARNING and issue.code == "prices_suspicious_adj_close_move"
+        for issue in report.issues
+    )
+
+
 def test_validate_data_cache_fails_stale_data(tmp_path: Path) -> None:
     prices_path, rates_path = _write_valid_cache(tmp_path)
 

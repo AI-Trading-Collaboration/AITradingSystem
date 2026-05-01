@@ -1,8 +1,14 @@
 prices:
+  # Default thresholds apply to equities and ETFs. Volatility indexes can have
+  # structurally larger daily moves, so ticker-specific overrides are explicit.
   max_stale_calendar_days: 7
   suspicious_daily_return_abs: 0.20
   extreme_daily_return_abs: 0.50
   suspicious_adjustment_ratio_change_abs: 0.25
+  ticker_return_threshold_overrides:
+    "^VIX":
+      suspicious_daily_return_abs: 1.00
+      extreme_daily_return_abs: 2.00
 
 rates:
   max_stale_calendar_days: 7

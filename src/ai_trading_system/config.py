@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from pathlib import Path
-from typing import Any
+from typing import Any, Self
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG_PATH = PROJECT_ROOT / "config" / "universe.yaml"
@@ -57,11 +57,33 @@ class PortfolioConfig(BaseModel):
     position_limits: PositionLimitsConfig
 
 
+class PriceReturnThresholdOverrideConfig(BaseModel):
+    suspicious_daily_return_abs: float | None = Field(default=None, gt=0)
+    extreme_daily_return_abs: float | None = Field(default=None, gt=0)
+
+
 class PriceQualityConfig(BaseModel):
     max_stale_calendar_days: int = Field(gt=0)
     suspicious_daily_return_abs: float = Field(gt=0)
     extreme_daily_return_abs: float = Field(gt=0)
     suspicious_adjustment_ratio_change_abs: float = Field(gt=0)
+    ticker_return_threshold_overrides: dict[str, PriceReturnThresholdOverrideConfig] = Field(
+        default_factory=dict
+    )
+
+    @model_validator(mode="after")
+    def validate_return_thresholds(self) -> Self:
+        if self.suspicious_daily_return_abs >= self.extreme_daily_return_abs:
+            raise ValueError("prices suspicious_daily_return_abs must be below extreme threshold")
+
+        for ticker, override in self.ticker_return_threshold_overrides.items():
+            suspicious = override.suspicious_daily_return_abs or self.suspicious_daily_return_abs
+            extreme = override.extreme_daily_return_abs or self.extreme_daily_return_abs
+            if suspicious >= extreme:
+                raise ValueError(
+                    f"prices return thresholds for {ticker} must keep suspicious below extreme"
+                )
+        return self
 
 
 class RateQualityConfig(BaseModel):

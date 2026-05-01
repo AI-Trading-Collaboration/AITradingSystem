@@ -31,6 +31,7 @@ def test_data_quality_config_loads_thresholds() -> None:
 
     assert config.prices.max_stale_calendar_days == 7
     assert config.prices.suspicious_daily_return_abs == 0.20
+    assert config.prices.ticker_return_threshold_overrides["^VIX"].extreme_daily_return_abs == 2.00
     assert config.rates.min_plausible_value == -1.0
     assert config.rates.max_plausible_value == 25.0
 
