@@ -31,6 +31,7 @@ data/raw/                原始数据缓存，不提交
 data/processed/          清洗后的中间数据，不提交
 data/external/           外部导入数据，不提交
 docs/                    架构和开发计划
+docs/system_flow.md      数据输入、中间评估和输出结论示意图
 docs/product_strategy.md 产品策略和模块原则
 docs/implementation_backlog.md 可落地模块和工程 backlog
 notebooks/               研究和临时分析

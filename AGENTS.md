@@ -20,6 +20,17 @@ Backtest and strategy reports should state the selected market regime and the
 actual requested date range. If a primary conclusion relies on data before the AI
 regime start, document why that older regime is relevant.
 
+## System Flow Diagram Maintenance
+
+`docs/system_flow.md` is the source-of-truth diagram for the path from data
+inputs to intermediate evaluation and final conclusions. Any change that affects
+CLI commands, critical configuration files, cache schemas, report outputs, data
+quality gates, scoring modules, backtest behavior, market-regime interpretation,
+or major new modules must update that diagram in the same change.
+
+If a change intentionally does not affect the documented data flow, no diagram
+update is required.
+
 ## No Silent Workarounds
 
 When development hits a blocker, do not bypass it with a temporary workaround by
