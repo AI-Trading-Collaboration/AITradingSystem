@@ -1,0 +1,16 @@
+trade_id: trade_nvda_2026_04
+ticker: NVDA
+direction: long
+opened_at: 2026-04-01
+closed_at: 2026-04-15
+thesis_id: nvda_ai_infra_2026_q2
+entry_price: 100.0
+exit_price: 112.0
+position_size_pct: 0.12
+fees: 0.0
+tags:
+  - ai_infra
+  - example
+notes: >
+  示例模板只用于说明字段结构，不代表真实交易建议。实际使用时应复制到
+  data/external/trades/，并填入真实成交价格、仓位比例和 thesis_id。

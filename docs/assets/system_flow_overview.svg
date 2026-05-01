@@ -51,7 +51,7 @@
   <rect class="input" x="70" y="515" width="190" height="80" />
   <text class="box-title" x="92" y="547">人工复核输入</text>
   <text class="box-text" x="92" y="570">trade_theses</text>
-  <text class="box-text" x="92" y="590">valuation_snapshots</text>
+  <text class="box-text" x="92" y="590">valuation_snapshots / trades</text>
 
   <rect class="cache" x="325" y="188" width="185" height="110" />
   <text class="box-title" x="348" y="220">下载与缓存</text>
@@ -97,14 +97,14 @@
   <text class="box-text" x="348" y="469">risk-events validate</text>
 
   <rect class="govern" x="325" y="515" width="185" height="80" />
-  <text class="box-title" x="348" y="547">假设/估值复核</text>
+  <text class="box-title" x="348" y="547">假设/估值/复盘</text>
   <text class="box-text" x="348" y="570">thesis validate / review</text>
-  <text class="box-text" x="348" y="590">valuation validate / review</text>
+  <text class="box-text" x="348" y="590">valuation / review-trades</text>
 
   <rect class="output" x="575" y="515" width="210" height="80" />
   <text class="box-title" x="600" y="547">复核报告</text>
   <text class="box-text" x="600" y="570">假设是否仍成立</text>
-  <text class="box-text" x="600" y="590">估值是否偏贵或拥挤</text>
+  <text class="box-text" x="600" y="590">估值拥挤 / 交易归因</text>
 
   <rect class="badge" x="590" y="172" width="44" height="18" />
   <text class="badge-text" x="599" y="185">GATE</text>

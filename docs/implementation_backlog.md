@@ -27,6 +27,7 @@
 |交易 thesis 与假设验证|已完成基础版|`aits thesis list/validate/review`，结构化假设、验证指标、证伪条件和复核报告|
 |风险事件分级|已完成基础版|`aits risk-events list/validate`，L1/L2/L3、影响节点、相关标的和动作规则|
 |估值与拥挤度|已完成基础版|`aits valuation list/validate/review`，估值快照、预期指标、拥挤度信号和来源校验|
+|复盘归因|已完成基础版|`aits review-trades`，交易记录校验、数据质量门禁和 SPY/QQQ/SMH/SOXX 基础归因|
 |产品策略|已完成文档|能力圈、产业链因果、假设验证、复盘归因|
 
 ## 推荐建设顺序
@@ -419,6 +420,8 @@ aits valuation review --as-of 2026-05-02
 
 ### M8：复盘归因模块
 
+状态：已实现基础版。
+
 目的：区分市场 Beta、行业/主题 Beta、个股 Alpha、仓位错误和纪律问题。
 
 主要数据对象：
@@ -441,6 +444,30 @@ aits valuation review --as-of 2026-05-02
 aits review-trades --from 2026-01-01 --to 2026-03-31
 ```
 
+当前基础版命令：
+
+```powershell
+aits review-trades --as-of 2026-05-02
+```
+
+当前基础版输入：
+
+- `data/external/trades/*.yaml`。该目录不提交，用于本地交易记录。
+- `docs/examples/trades/` 提供可复制模板，不代表真实交易建议。
+- `data/raw/prices_daily.csv` 和 `data/raw/rates_daily.csv`，用于数据质量门禁和基准归因。
+
+当前基础版输出：
+
+- `outputs/reports/trade_review_YYYY-MM-DD.md`
+
+当前基础版校验和归因：
+
+- 命令必须先通过 `aits validate-data` 同一路径的数据质量门禁。
+- 交易记录必须包含 ticker、方向、开仓日期、入场价格；已关闭交易必须包含平仓日期和出场价格。
+- 交易记录建议关联 `thesis_id`，否则报告会警告。
+- 交易收益与同区间 `SPY`、`QQQ`、`SMH`、`SOXX` 对比。
+- 归因提示只做市场 Beta、AI 主题 Beta 和个股表现的规则化摘要。
+
 验收标准：
 
 - 赚钱也必须归因，不能只复盘亏损。
@@ -461,8 +488,10 @@ aits review-trades --from 2026-01-01 --to 2026-03-31
 |`data/processed/scores_daily.csv`|每日评分|M2|
 |`data/external/trade_theses/`|交易 thesis|M5，已实现基础版|
 |`data/external/valuation_snapshots/`|估值、预期和拥挤度快照|M7，已实现基础版|
+|`data/external/trades/`|交易记录|M8，已实现基础版|
 |`docs/examples/trade_theses/`|交易 thesis YAML 模板|M5，已实现基础版|
 |`docs/examples/valuation_snapshots/`|估值快照 YAML 模板|M7，已实现基础版|
+|`docs/examples/trades/`|交易记录 YAML 模板|M8，已实现基础版|
 |`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|历史回测报告|阶段 1，已实现基础版|
 |`outputs/reports/daily_score_YYYY-MM-DD.md`|每日评分报告|M2|
 |`outputs/reports/thesis_review_YYYY-MM-DD.md`|假设复核报告|M5|
@@ -475,13 +504,13 @@ aits review-trades --from 2026-01-01 --to 2026-03-31
 
 接下来建议按这个顺序开发：
 
-1. M8：复盘归因模块。
-2. 将 M5-M7 的手工快照输入接入日报的限制说明和人工复核摘要。
+1. 将 M5-M8 的手工快照输入接入日报的限制说明和人工复核摘要。
+2. 设计正式数据源接入方案，优先解决估值、财报和新闻事件的可审计来源。
 
 原因：
 
-- 阶段 1 的市场数据、评分、观察池、回测、产业链配置、交易 thesis、风险事件分级、估值与拥挤度快照基础闭环已经完成。
-- M8 需要更明确的持仓和交易记录；日报集成需要把已实现的人工复核模块纳入输出结论。
+- 阶段 1 的市场数据、评分、观察池、回测、产业链配置、交易 thesis、风险事件分级、估值与拥挤度快照、交易复盘基础闭环已经完成。
+- 下一步的主要价值是把这些人工复核模块汇总到每日结论，并在引入正式数据源前保持输入可审计。
 
 ## 不应马上做的事
 

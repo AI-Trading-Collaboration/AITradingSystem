@@ -37,6 +37,7 @@ flowchart TD
         RE["config/risk_events.yaml<br/>L1/L2/L3 风险事件动作规则"]
         TH["data/external/trade_theses/*.yaml<br/>交易假设、验证指标、证伪条件"]
         VS["data/external/valuation_snapshots/*.yaml<br/>估值、预期、拥挤度快照"]
+        TD["data/external/trades/*.yaml<br/>交易记录、价格、thesis_id"]
         MD["外部数据源<br/>Yahoo Finance / FRED"]
     end
 
@@ -93,6 +94,11 @@ flowchart TD
         VR["aits valuation review"]
         VVR["outputs/reports/valuation_validation_YYYY-MM-DD.md"]
         VRR["outputs/reports/valuation_review_YYYY-MM-DD.md"]
+    end
+
+    subgraph TradeReview["交易复盘归因"]
+        RT["aits review-trades"]
+        RTR["outputs/reports/trade_review_YYYY-MM-DD.md"]
     end
 
     MD --> DL
@@ -163,6 +169,12 @@ flowchart TD
     W --> VV
     VV --> VVR
     VR --> VRR
+
+    TD --> RT
+    PR --> RT
+    RR --> RT
+    QR --> RT
+    RT --> RTR
 ```
 
 ## 每日评分链路
@@ -224,6 +236,7 @@ flowchart LR
     F["能力圈和产业链配置<br/>watchlist / industry_chain"] --> E
     L["交易 thesis<br/>验证指标 / 证伪条件 / 风险事件"] --> E
     N["估值与拥挤度<br/>估值分位 / 预期 / 过热信号"] --> E
+    P["交易复盘<br/>市场 Beta / 主题 Beta / 个股表现"] --> E
 
     E --> G["必须说明<br/>本次数据质量是否通过"]
     E --> H["必须说明<br/>哪些分数来自硬数据"]
@@ -232,6 +245,7 @@ flowchart LR
     E --> K["必须说明<br/>回测区间和市场阶段"]
     E --> M["必须说明<br/>交易假设是否仍成立或需要复核"]
     E --> O["必须说明<br/>估值数据来源和是否只能作为辅助"]
+    E --> P2["必须说明<br/>收益来自基准 Beta 还是个股表现"]
 ```
 
 ## 当前已实现与待接入模块
@@ -249,10 +263,11 @@ flowchart TD
         H["交易 thesis<br/>aits thesis list/validate/review"]
         I["风险事件分级<br/>aits risk-events list/validate"]
         J["估值与拥挤度<br/>aits valuation list/validate/review"]
+        K["交易复盘归因<br/>aits review-trades"]
     end
 
     subgraph Next["后续模块"]
-        K["M8 复盘归因<br/>市场 Beta、主题 Beta、Alpha、纪律问题"]
+        L["日报集成<br/>汇总 thesis、风险、估值和复盘摘要"]
     end
 
     C --> D
@@ -263,6 +278,7 @@ flowchart TD
     H --> I
     I --> J
     J --> K
+    K --> L
 ```
 
 ## 文件和命令责任表
@@ -295,4 +311,5 @@ flowchart TD
 |估值模板|`docs/examples/valuation_snapshots/`|提供可复制 YAML 模板，不提交个人记录|已实现基础版|
 |估值校验|`aits valuation validate`|校验来源、日期、ticker、指标值和新鲜度|已实现基础版|
 |估值复核|`aits valuation review`|输出估值是否偏贵、拥挤或数据过期|已实现基础版|
-|复盘归因|待定|拆分 Beta、主题趋势、Alpha、仓位和纪律问题|待实现|
+|交易记录|`data/external/trades/`|记录真实交易、价格、仓位和 thesis_id|已实现基础版|
+|交易复盘|`aits review-trades`|先过数据质量门禁，再对比 SPY/QQQ/SMH/SOXX 做基础归因|已实现基础版|

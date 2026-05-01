@@ -135,6 +135,7 @@
 9. 实现交易 thesis 与假设验证。状态：已实现基础版，命令为 `aits thesis list/validate/review`。
 10. 实现风险事件分级规则。状态：已实现基础版，命令为 `aits risk-events list/validate`。
 11. 实现估值与拥挤度快照。状态：已实现基础版，命令为 `aits valuation list/validate/review`。
+12. 实现交易复盘归因。状态：已实现基础版，命令为 `aits review-trades`。
 
 ## 阶段 1 数据缓存约定
 
