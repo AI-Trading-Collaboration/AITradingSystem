@@ -95,6 +95,8 @@
 
 风险事件分级基础版已落在 `config/risk_events.yaml`。校验命令为 `aits risk-events validate`，用于确保 L1/L2/L3 等级、AI 仓位折扣、人工复核要求、影响产业链节点、相关标的、建议动作、升级条件和解除条件都可审计。风险事件不直接触发交易，只改变风险评估、仓位折扣或人工复核状态。
 
+估值与拥挤度基础版读取 `data/external/valuation_snapshots/*.yaml`。校验命令为 `aits valuation validate`，复核命令为 `aits valuation review`。当前版本不从网页或 LLM 自动抽取估值结论；手工录入、正式披露或付费供应商快照都必须带来源、日期、采集时间和字段说明。公开便利源只能作为人工备注或辅助证据，不能直接进入自动评分。
+
 ## 评分层
 
 沿用规划文档里的 100 分框架：

@@ -149,6 +149,15 @@ aits risk-events validate --as-of 2026-05-02
 
 风险事件配置在 `config/risk_events.yaml`。当前基础版定义 L1/L2/L3 风险等级、AI 仓位折扣乘数、人工复核要求、影响产业链节点、相关标的、建议动作、升级条件和解除条件。风险事件不直接触发交易，只进入风险评估、thesis 复核和人工审核。
 
+校验和复核估值、预期与拥挤度快照：
+
+```powershell
+aits valuation validate --as-of 2026-05-02
+aits valuation review --as-of 2026-05-02
+```
+
+估值快照默认读取 `data/external/valuation_snapshots/*.yaml`，该目录不提交。可参考 `docs/examples/valuation_snapshots/nvda_valuation_template.yaml` 复制模板。当前基础版要求估值和预期数据带有来源、日期、采集时间和字段说明；公开便利源只能作为辅助，不能直接进入自动评分。
+
 ## 投资边界
 
 系统输出只作为个人研究和仓位管理辅助，不构成投资建议。所有策略都需要回测、复盘，并显式考虑税费、滑点、汇率、交易延迟和极端风险。

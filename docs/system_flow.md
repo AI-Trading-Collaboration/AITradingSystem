@@ -36,6 +36,7 @@ flowchart TD
         R["config/market_regimes.yaml<br/>AI regime 与压力测试区间"]
         RE["config/risk_events.yaml<br/>L1/L2/L3 风险事件动作规则"]
         TH["data/external/trade_theses/*.yaml<br/>交易假设、验证指标、证伪条件"]
+        VS["data/external/valuation_snapshots/*.yaml<br/>估值、预期、拥挤度快照"]
         MD["外部数据源<br/>Yahoo Finance / FRED"]
     end
 
@@ -84,6 +85,14 @@ flowchart TD
         TR["aits thesis review"]
         TVR["outputs/reports/thesis_validation_YYYY-MM-DD.md"]
         TRR["outputs/reports/thesis_review_YYYY-MM-DD.md"]
+    end
+
+    subgraph Valuation["估值与拥挤度复核"]
+        VL["aits valuation list"]
+        VV["aits valuation validate"]
+        VR["aits valuation review"]
+        VVR["outputs/reports/valuation_validation_YYYY-MM-DD.md"]
+        VRR["outputs/reports/valuation_review_YYYY-MM-DD.md"]
     end
 
     MD --> DL
@@ -146,6 +155,14 @@ flowchart TD
     I --> TR
     TV --> TVR
     TR --> TRR
+
+    VS --> VL
+    VS --> VV
+    VS --> VR
+    U --> VV
+    W --> VV
+    VV --> VVR
+    VR --> VRR
 ```
 
 ## 每日评分链路
@@ -206,6 +223,7 @@ flowchart LR
     D["市场阶段<br/>ai_after_chatgpt / cross_cycle_stress"] --> E
     F["能力圈和产业链配置<br/>watchlist / industry_chain"] --> E
     L["交易 thesis<br/>验证指标 / 证伪条件 / 风险事件"] --> E
+    N["估值与拥挤度<br/>估值分位 / 预期 / 过热信号"] --> E
 
     E --> G["必须说明<br/>本次数据质量是否通过"]
     E --> H["必须说明<br/>哪些分数来自硬数据"]
@@ -213,6 +231,7 @@ flowchart LR
     E --> J["必须说明<br/>建议仓位的口径和限制"]
     E --> K["必须说明<br/>回测区间和市场阶段"]
     E --> M["必须说明<br/>交易假设是否仍成立或需要复核"]
+    E --> O["必须说明<br/>估值数据来源和是否只能作为辅助"]
 ```
 
 ## 当前已实现与待接入模块
@@ -229,10 +248,10 @@ flowchart TD
         G["产业链图校验<br/>aits industry-chain validate"]
         H["交易 thesis<br/>aits thesis list/validate/review"]
         I["风险事件分级<br/>aits risk-events list/validate"]
+        J["估值与拥挤度<br/>aits valuation list/validate/review"]
     end
 
     subgraph Next["后续模块"]
-        J["M7 估值与拥挤度<br/>估值分位、预期变化、过热信号"]
         K["M8 复盘归因<br/>市场 Beta、主题 Beta、Alpha、纪律问题"]
     end
 
@@ -272,5 +291,8 @@ flowchart TD
 |交易假设模板|`docs/examples/trade_theses/`|提供可复制 YAML 模板，不提交个人记录|已实现基础版|
 |假设校验|`aits thesis validate`|校验 schema、观察池引用、产业链节点和证伪约束|已实现基础版|
 |假设复核|`aits thesis review`|输出 thesis 是否仍成立、是否需要人工复核、是否证伪触发|已实现基础版|
-|估值拥挤度|待定|记录估值分位、预期变化和拥挤度|待实现|
+|估值拥挤度|`data/external/valuation_snapshots/`|记录估值分位、预期变化和拥挤度|已实现基础版|
+|估值模板|`docs/examples/valuation_snapshots/`|提供可复制 YAML 模板，不提交个人记录|已实现基础版|
+|估值校验|`aits valuation validate`|校验来源、日期、ticker、指标值和新鲜度|已实现基础版|
+|估值复核|`aits valuation review`|输出估值是否偏贵、拥挤或数据过期|已实现基础版|
 |复盘归因|待定|拆分 Beta、主题趋势、Alpha、仓位和纪律问题|待实现|

@@ -26,6 +26,7 @@
 |产业链因果图|已完成基础版|`aits industry-chain list/validate`，节点、父子关系、领先指标和观察池引用校验|
 |交易 thesis 与假设验证|已完成基础版|`aits thesis list/validate/review`，结构化假设、验证指标、证伪条件和复核报告|
 |风险事件分级|已完成基础版|`aits risk-events list/validate`，L1/L2/L3、影响节点、相关标的和动作规则|
+|估值与拥挤度|已完成基础版|`aits valuation list/validate/review`，估值快照、预期指标、拥挤度信号和来源校验|
 |产品策略|已完成文档|能力圈、产业链因果、假设验证、复盘归因|
 
 ## 推荐建设顺序
@@ -356,6 +357,8 @@ aits risk-events validate --as-of 2026-05-02
 
 ### M7：估值与拥挤度模块
 
+状态：已实现基础版。
+
 目的：避免“好公司但价格已经透支”的错误。
 
 数据来源优先级：
@@ -386,6 +389,33 @@ aits risk-events validate --as-of 2026-05-02
 - 估值数据必须有来源和更新时间。
 - 如果数据源不可审计，不能进入自动评分，只能进入人工备注。
 - 拥挤度只改变仓位折扣，不直接决定买卖。
+
+当前基础版命令：
+
+```powershell
+aits valuation list
+aits valuation validate --as-of 2026-05-02
+aits valuation review --as-of 2026-05-02
+```
+
+当前基础版输入：
+
+- `data/external/valuation_snapshots/*.yaml`。该目录不提交，用于本地手工或供应商估值快照。
+- `docs/examples/valuation_snapshots/` 提供可复制模板，不代表真实交易建议。
+
+当前基础版输出：
+
+- `outputs/reports/valuation_validation_YYYY-MM-DD.md`
+- `outputs/reports/valuation_review_YYYY-MM-DD.md`
+
+当前基础版校验：
+
+- 估值快照必须包含来源类型、来源名称、日期和采集时间。
+- ticker 必须处于数据 universe 或观察池中。
+- 估值倍数不能为负数。
+- 估值历史分位必须在 0-100 范围内。
+- 快照超过新鲜度阈值会警告。
+- `public_convenience` 来源只能作为辅助，不能直接进入自动评分。
 
 ### M8：复盘归因模块
 
@@ -430,24 +460,28 @@ aits review-trades --from 2026-01-01 --to 2026-03-31
 |`data/processed/features_daily.csv`|每日特征|M1|
 |`data/processed/scores_daily.csv`|每日评分|M2|
 |`data/external/trade_theses/`|交易 thesis|M5，已实现基础版|
+|`data/external/valuation_snapshots/`|估值、预期和拥挤度快照|M7，已实现基础版|
 |`docs/examples/trade_theses/`|交易 thesis YAML 模板|M5，已实现基础版|
+|`docs/examples/valuation_snapshots/`|估值快照 YAML 模板|M7，已实现基础版|
 |`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|历史回测报告|阶段 1，已实现基础版|
 |`outputs/reports/daily_score_YYYY-MM-DD.md`|每日评分报告|M2|
 |`outputs/reports/thesis_review_YYYY-MM-DD.md`|假设复核报告|M5|
 |`outputs/reports/risk_events_validation_YYYY-MM-DD.md`|风险事件规则校验报告|M6|
+|`outputs/reports/valuation_validation_YYYY-MM-DD.md`|估值快照校验报告|M7|
+|`outputs/reports/valuation_review_YYYY-MM-DD.md`|估值与拥挤度复核报告|M7|
 |`outputs/reports/trade_review_YYYY-MM-DD.md`|复盘归因报告|M8|
 
 ## 近期最小落地路径
 
 接下来建议按这个顺序开发：
 
-1. M7：估值与拥挤度模块。
-2. M8：复盘归因模块。
+1. M8：复盘归因模块。
+2. 将 M5-M7 的手工快照输入接入日报的限制说明和人工复核摘要。
 
 原因：
 
-- 阶段 1 的市场数据、评分、观察池、回测、产业链配置、交易 thesis 和风险事件分级基础闭环已经完成。
-- M7-M8 需要更明确的估值数据源、持仓和交易记录，适合在日报闭环稳定后推进。
+- 阶段 1 的市场数据、评分、观察池、回测、产业链配置、交易 thesis、风险事件分级、估值与拥挤度快照基础闭环已经完成。
+- M8 需要更明确的持仓和交易记录；日报集成需要把已实现的人工复核模块纳入输出结论。
 
 ## 不应马上做的事
 

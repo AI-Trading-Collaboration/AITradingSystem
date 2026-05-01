@@ -76,6 +76,15 @@ from ai_trading_system.thesis import (
     write_thesis_review_report,
     write_thesis_validation_report,
 )
+from ai_trading_system.valuation import (
+    build_valuation_review_report,
+    default_valuation_review_report_path,
+    default_valuation_validation_report_path,
+    load_valuation_snapshot_store,
+    validate_valuation_snapshot_store,
+    write_valuation_review_report,
+    write_valuation_validation_report,
+)
 from ai_trading_system.watchlist import (
     default_watchlist_report_path,
     validate_watchlist_config,
@@ -87,10 +96,12 @@ watchlist_app = typer.Typer(help="观察池和能力圈管理。", no_args_is_he
 industry_chain_app = typer.Typer(help="产业链节点和因果图管理。", no_args_is_help=True)
 thesis_app = typer.Typer(help="交易 thesis 和假设验证管理。", no_args_is_help=True)
 risk_events_app = typer.Typer(help="风险事件分级和动作规则管理。", no_args_is_help=True)
+valuation_app = typer.Typer(help="估值、预期和拥挤度快照管理。", no_args_is_help=True)
 app.add_typer(watchlist_app, name="watchlist")
 app.add_typer(industry_chain_app, name="industry-chain")
 app.add_typer(thesis_app, name="thesis")
 app.add_typer(risk_events_app, name="risk-events")
+app.add_typer(valuation_app, name="valuation")
 console = Console()
 
 
@@ -795,6 +806,138 @@ def validate_risk_events(
         raise typer.Exit(code=1)
 
 
+@valuation_app.command("list")
+def list_valuations(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="估值快照 YAML 文件或目录路径。"),
+    ] = PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+) -> None:
+    """列出估值、预期和拥挤度快照。"""
+    store = load_valuation_snapshot_store(input_path)
+
+    table = Table(title="估值与拥挤度快照")
+    table.add_column("Snapshot")
+    table.add_column("Ticker")
+    table.add_column("日期")
+    table.add_column("来源")
+    table.add_column("估值分位")
+    table.add_column("评估")
+    table.add_column("文件")
+
+    for loaded in sorted(store.loaded, key=lambda item: item.snapshot.snapshot_id):
+        snapshot = loaded.snapshot
+        percentile = (
+            "n/a"
+            if snapshot.valuation_percentile is None
+            else f"{snapshot.valuation_percentile:.0f}"
+        )
+        table.add_row(
+            snapshot.snapshot_id,
+            snapshot.ticker,
+            snapshot.as_of.isoformat(),
+            _valuation_source_type_label(snapshot.source_type),
+            percentile,
+            _valuation_assessment_label(snapshot.overall_assessment),
+            str(loaded.path),
+        )
+
+    console.print(table)
+    if not store.loaded:
+        console.print("未发现可读取的估值快照。")
+    if store.load_errors:
+        console.print(
+            f"[red]存在 {len(store.load_errors)} 个加载错误，请运行 validate 查看。[/red]"
+        )
+
+
+@valuation_app.command("validate")
+def validate_valuations(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="估值快照 YAML 文件或目录路径。"),
+    ] = PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 估值校验报告输出路径。"),
+    ] = None,
+) -> None:
+    """校验估值、预期和拥挤度快照。"""
+    validation_date = _parse_date(as_of) if as_of else date.today()
+    report_path = output_path or default_valuation_validation_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        validation_date,
+    )
+    report = validate_valuation_snapshot_store(
+        store=load_valuation_snapshot_store(input_path),
+        universe=load_universe(),
+        watchlist=load_watchlist(),
+        as_of=validation_date,
+    )
+    write_valuation_validation_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]估值快照校验状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_path}")
+    console.print(f"快照数量：{report.snapshot_count}；覆盖标的：{report.ticker_count}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+
+@valuation_app.command("review")
+def review_valuations(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="估值快照 YAML 文件或目录路径。"),
+    ] = PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="复核日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 估值复核报告输出路径。"),
+    ] = None,
+) -> None:
+    """复核估值、预期和拥挤度快照。"""
+    review_date = _parse_date(as_of) if as_of else date.today()
+    report_path = output_path or default_valuation_review_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        review_date,
+    )
+    validation_report = validate_valuation_snapshot_store(
+        store=load_valuation_snapshot_store(input_path),
+        universe=load_universe(),
+        watchlist=load_watchlist(),
+        as_of=review_date,
+    )
+    review_report = build_valuation_review_report(validation_report)
+    write_valuation_review_report(review_report, report_path)
+
+    status_style = "green" if review_report.status == "PASS" else (
+        "yellow" if validation_report.passed else "red"
+    )
+    console.print(f"[{status_style}]估值复核状态：{review_report.status}[/{status_style}]")
+    console.print(f"报告：{report_path}")
+    console.print(
+        f"快照数量：{validation_report.snapshot_count}；"
+        f"覆盖标的：{validation_report.ticker_count}"
+    )
+    console.print(
+        f"校验错误数：{validation_report.error_count}；"
+        f"校验警告数：{validation_report.warning_count}"
+    )
+
+    if not validation_report.passed:
+        raise typer.Exit(code=1)
+
+
 @app.command("build-features")
 def build_features(
     prices_path: Annotated[
@@ -1079,6 +1222,25 @@ def _thesis_review_frequency_label(value: str) -> str:
         "monthly": "每月",
         "quarterly": "每季",
         "event_driven": "事件驱动",
+    }.get(value, value)
+
+
+def _valuation_source_type_label(value: str) -> str:
+    return {
+        "primary_filing": "一手披露",
+        "paid_vendor": "付费供应商",
+        "manual_input": "手工录入",
+        "public_convenience": "公开便利源",
+    }.get(value, value)
+
+
+def _valuation_assessment_label(value: str) -> str:
+    return {
+        "cheap": "偏便宜",
+        "reasonable": "合理",
+        "expensive": "偏贵",
+        "extreme": "极端",
+        "unknown": "未知",
     }.get(value, value)
 
 

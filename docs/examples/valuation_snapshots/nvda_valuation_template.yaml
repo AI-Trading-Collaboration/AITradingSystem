@@ -1,0 +1,48 @@
+snapshot_id: nvda_valuation_2026_05_01
+ticker: NVDA
+as_of: 2026-05-01
+source_type: manual_input
+source_name: manual_valuation_sheet
+source_url: ""
+captured_at: 2026-05-01
+valuation_metrics:
+  - metric_id: forward_pe
+    value: 36.0
+    unit: ratio
+    period: next_12m
+    source_field: manual_forward_pe
+    notes: 示例值，不代表真实估值结论。
+  - metric_id: ev_sales
+    value: 18.0
+    unit: ratio
+    period: next_12m
+    source_field: manual_ev_sales
+expectation_metrics:
+  - metric_id: revenue_growth_next_12m_pct
+    value: 28.0
+    unit: percent
+    period: next_12m
+    source_field: manual_revenue_growth
+  - metric_id: eps_growth_next_12m_pct
+    value: 24.0
+    unit: percent
+    period: next_12m
+    source_field: manual_eps_growth
+crowding_signals:
+  - signal_id: valuation_percentile
+    name: 估值历史分位
+    status: elevated
+    evidence_source: manual_valuation_sheet
+    updated_at: 2026-05-01
+    notes: 示例信号，仅用于说明字段结构。
+  - signal_id: good_news_not_rising
+    name: 利好不涨
+    status: unknown
+    evidence_source: manual_market_review
+    updated_at: 2026-05-01
+valuation_percentile: 82
+overall_assessment: expensive
+notes: >
+  示例模板只用于说明字段结构，不代表真实交易建议。实际使用时应复制到
+  data/external/valuation_snapshots/，并按真实来源更新 source_name、
+  valuation_metrics、expectation_metrics 和 crowding_signals。
