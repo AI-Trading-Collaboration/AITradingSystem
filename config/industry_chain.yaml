@@ -1,0 +1,211 @@
+nodes:
+  - node_id: cloud_capex
+    name: 云厂商 CapEx
+    description: "云厂商 AI 基础设施资本开支，是 AI 算力链需求的上游驱动。"
+    parent_node_ids: []
+    leading_indicators:
+      - "MSFT/GOOG/AMZN/META CapEx 指引"
+      - "数据中心在建项目和服务器采购节奏"
+      - "管理层对 AI 基础设施供需的表述"
+    related_tickers:
+      - MSFT
+      - GOOG
+      - AMZN
+      - META
+      - NVDA
+      - AMD
+    impact_horizon: medium
+    cash_flow_relevance: high
+    sentiment_relevance: high
+
+  - node_id: ai_models
+    name: AI 模型能力
+    description: "基础模型和多模态能力提升，决定训练需求、推理需求和应用层商业化空间。"
+    parent_node_ids:
+      - cloud_capex
+    leading_indicators:
+      - "模型训练规模和推理成本变化"
+      - "企业 AI 产品采用率"
+      - "搜索、办公、开发工具中的 AI 功能使用强度"
+    related_tickers:
+      - MSFT
+      - GOOG
+      - NVDA
+    impact_horizon: medium
+    cash_flow_relevance: medium
+    sentiment_relevance: high
+
+  - node_id: ai_inference_demand
+    name: AI 推理需求
+    description: "应用使用量和推理成本共同决定持续算力需求，是 AI CapEx 能否变成收入的关键。"
+    parent_node_ids:
+      - ai_models
+      - cloud_capex
+    leading_indicators:
+      - "推理 token 使用量和单位成本"
+      - "云厂商 AI 收入披露"
+      - "企业 AI 应用付费转化和留存"
+    related_tickers:
+      - MSFT
+      - GOOG
+      - NVDA
+      - AMD
+    impact_horizon: medium
+    cash_flow_relevance: high
+    sentiment_relevance: high
+
+  - node_id: gpu_asic_demand
+    name: GPU/ASIC 需求
+    description: "训练和推理算力需求传导到 GPU、ASIC、CPU 和加速卡订单。"
+    parent_node_ids:
+      - cloud_capex
+      - ai_inference_demand
+    leading_indicators:
+      - "NVDA/AMD 数据中心收入和指引"
+      - "云厂商自研 ASIC 部署节奏"
+      - "加速卡交期、订单能见度和库存变化"
+    related_tickers:
+      - NVDA
+      - AMD
+      - INTC
+      - AVGO
+      - MRVL
+      - TSM
+    impact_horizon: short
+    cash_flow_relevance: high
+    sentiment_relevance: high
+
+  - node_id: hbm_supply_demand
+    name: HBM 供需
+    description: "HBM 是高端 AI 加速器的重要瓶颈，影响 GPU 出货、成本和毛利率。"
+    parent_node_ids:
+      - gpu_asic_demand
+    leading_indicators:
+      - "HBM 合约价格和产能利用率"
+      - "SK Hynix/Micron/Samsung HBM 指引"
+      - "GPU 封装 BOM 和供应瓶颈变化"
+    related_tickers:
+      - NVDA
+      - AMD
+      - MU
+      - TSM
+    impact_horizon: short
+    cash_flow_relevance: high
+    sentiment_relevance: medium
+
+  - node_id: advanced_packaging
+    name: 先进封装
+    description: "CoWoS 等先进封装产能决定高端 AI 芯片交付节奏，是供给侧关键约束。"
+    parent_node_ids:
+      - gpu_asic_demand
+      - hbm_supply_demand
+    leading_indicators:
+      - "TSMC CoWoS 产能扩张"
+      - "封装设备订单和交期"
+      - "客户预付款和产能预留"
+    related_tickers:
+      - TSM
+      - NVDA
+      - AMD
+      - AMAT
+      - ASML
+    impact_horizon: medium
+    cash_flow_relevance: high
+    sentiment_relevance: medium
+
+  - node_id: foundry_demand
+    name: 晶圆代工需求
+    description: "先进制程晶圆需求承接 GPU、ASIC、CPU 和云端芯片订单变化。"
+    parent_node_ids:
+      - gpu_asic_demand
+      - advanced_packaging
+    leading_indicators:
+      - "TSMC 月度营收"
+      - "先进制程产能利用率"
+      - "客户库存和流片节奏"
+    related_tickers:
+      - TSM
+      - NVDA
+      - AMD
+      - INTC
+      - ASML
+    impact_horizon: medium
+    cash_flow_relevance: high
+    sentiment_relevance: medium
+
+  - node_id: semiconductor_equipment
+    name: 半导体设备
+    description: "晶圆厂和先进封装扩产最终传导到光刻、刻蚀、沉积和检测设备订单。"
+    parent_node_ids:
+      - foundry_demand
+      - advanced_packaging
+    leading_indicators:
+      - "ASML/AMAT/LRCX 订单和 backlog"
+      - "晶圆厂 CapEx 指引"
+      - "先进封装设备订单"
+    related_tickers:
+      - ASML
+      - AMAT
+      - LRCX
+      - TSM
+      - INTC
+    impact_horizon: long
+    cash_flow_relevance: medium
+    sentiment_relevance: medium
+
+  - node_id: software_and_apps
+    name: 软件与应用商业化
+    description: "AI 功能能否在软件和应用层转化为收入，影响云和平台公司的长期现金流。"
+    parent_node_ids:
+      - ai_models
+      - ai_inference_demand
+    leading_indicators:
+      - "Copilot/Workspace AI 付费渗透"
+      - "企业 AI 软件 ARPU 和留存"
+      - "应用层 AI 毛利率变化"
+    related_tickers:
+      - MSFT
+      - GOOG
+      - PLTR
+      - CRM
+      - NOW
+    impact_horizon: long
+    cash_flow_relevance: high
+    sentiment_relevance: medium
+
+  - node_id: export_controls
+    name: 出口管制
+    description: "先进芯片和设备出口限制会改变可服务市场、产品结构和供应链风险溢价。"
+    parent_node_ids: []
+    leading_indicators:
+      - "美国先进芯片出口规则变化"
+      - "中国市场收入占比和替代产品披露"
+      - "许可证、实体清单和区域销售限制"
+    related_tickers:
+      - NVDA
+      - AMD
+      - INTC
+      - ASML
+      - TSM
+    impact_horizon: short
+    cash_flow_relevance: medium
+    sentiment_relevance: high
+
+  - node_id: power_and_data_center_capacity
+    name: 电力与数据中心容量
+    description: "电力、土地和机房供给决定 AI 基础设施扩张速度，并可能成为 CapEx 落地瓶颈。"
+    parent_node_ids:
+      - cloud_capex
+    leading_indicators:
+      - "数据中心电力接入周期"
+      - "PPA、核电和可再生能源采购"
+      - "机房建设延迟和区域容量约束"
+    related_tickers:
+      - MSFT
+      - GOOG
+      - AMZN
+      - META
+      - NVDA
+    impact_horizon: long
+    cash_flow_relevance: medium
+    sentiment_relevance: medium

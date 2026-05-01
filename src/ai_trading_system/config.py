@@ -14,6 +14,7 @@ DEFAULT_DATA_QUALITY_CONFIG_PATH = PROJECT_ROOT / "config" / "data_quality.yaml"
 DEFAULT_FEATURE_CONFIG_PATH = PROJECT_ROOT / "config" / "features.yaml"
 DEFAULT_SCORING_RULES_CONFIG_PATH = PROJECT_ROOT / "config" / "scoring_rules.yaml"
 DEFAULT_WATCHLIST_CONFIG_PATH = PROJECT_ROOT / "config" / "watchlist.yaml"
+DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH = PROJECT_ROOT / "config" / "industry_chain.yaml"
 
 
 class MarketUniverse(BaseModel):
@@ -51,6 +52,22 @@ class WatchlistItem(BaseModel):
 
 class WatchlistConfig(BaseModel):
     items: list[WatchlistItem]
+
+
+class IndustryChainNodeConfig(BaseModel):
+    node_id: str = Field(min_length=1)
+    name: str = Field(min_length=1)
+    description: str = Field(min_length=1)
+    parent_node_ids: list[str] = Field(default_factory=list)
+    leading_indicators: list[str] = Field(default_factory=list)
+    related_tickers: list[str] = Field(default_factory=list)
+    impact_horizon: Literal["short", "medium", "long"]
+    cash_flow_relevance: Literal["low", "medium", "high"]
+    sentiment_relevance: Literal["low", "medium", "high"]
+
+
+class IndustryChainConfig(BaseModel):
+    nodes: list[IndustryChainNodeConfig]
 
 
 class DecisionConfig(BaseModel):
@@ -194,6 +211,15 @@ def load_watchlist(path: Path | str = DEFAULT_WATCHLIST_CONFIG_PATH) -> Watchlis
     with config_path.open("r", encoding="utf-8") as file:
         raw: dict[str, Any] = yaml.safe_load(file)
     return WatchlistConfig.model_validate(raw)
+
+
+def load_industry_chain(
+    path: Path | str = DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH,
+) -> IndustryChainConfig:
+    config_path = Path(path)
+    with config_path.open("r", encoding="utf-8") as file:
+        raw: dict[str, Any] = yaml.safe_load(file)
+    return IndustryChainConfig.model_validate(raw)
 
 
 def load_portfolio(path: Path | str = DEFAULT_PORTFOLIO_CONFIG_PATH) -> PortfolioConfig:

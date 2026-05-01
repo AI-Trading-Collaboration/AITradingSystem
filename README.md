@@ -25,6 +25,7 @@
 AGENTS.md                项目工程协作守则
 config/                  投资标的池、模块权重、运行参数
 config/watchlist.yaml    观察池和能力圈配置
+config/industry_chain.yaml 产业链节点和因果图配置
 data/raw/                原始数据缓存，不提交
 data/processed/          清洗后的中间数据，不提交
 data/external/           外部导入数据，不提交
@@ -110,6 +111,15 @@ aits watchlist validate --as-of 2026-05-02
 ```
 
 观察池校验会检查核心个股是否都在活跃观察池中、是否映射到 AI 产业链节点，以及高风险标的是否要求交易 thesis。
+
+查看和校验产业链因果图：
+
+```powershell
+aits industry-chain list
+aits industry-chain validate --as-of 2026-05-02
+```
+
+产业链校验会检查节点是否重复、父节点是否存在、因果图是否有环、节点是否配置领先指标和相关标的，以及观察池引用的产业链节点是否存在。
 
 ## 投资边界
 

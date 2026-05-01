@@ -128,7 +128,8 @@
 4. 实现 100 分评分到仓位区间的规则。状态：已实现基础版，命令为 `aits score-daily`。
 5. 实现观察池与能力圈配置。状态：已实现基础版，命令为 `aits watchlist list/validate`。
 6. 实现简单回测引擎。状态：已实现基础版，命令为 `aits backtest`。
-7. 输出一份日报 Markdown。状态：已实现基础版，命令为 `aits score-daily`。
+7. 实现产业链节点与因果图配置。状态：已实现基础版，命令为 `aits industry-chain list/validate`。
+8. 输出一份日报 Markdown。状态：已实现基础版，命令为 `aits score-daily`。
 
 ## 阶段 1 数据缓存约定
 
@@ -224,6 +225,19 @@
 当前回测状态会标记为 `PASS_WITH_LIMITATIONS`，因为基本面、估值、政策/地缘模块仍是 MVP 占位输入。回测只能说明当前硬数据评分和仓位映射的历史表现，不能代表完整投资系统已经完成。
 
 如果要让 2018 年初的信号也具备完整 200 日均线和 252 日 VIX 分位历史，缓存需要从 2017 年或更早开始下载。当前本地缓存从 2018 年开始，因此推荐示例从 2019 年开始回测，使用 2018 年作为 warm-up 历史。
+
+## 产业链因果图约定
+
+产业链配置文件为 `config/industry_chain.yaml`，用于记录 AI 产业链节点、父子关系、领先指标、相关标的、影响周期、现金流相关性和情绪相关性。
+
+命令：
+
+- `aits industry-chain list`
+- `aits industry-chain validate`
+
+校验报告默认写入 `outputs/reports/industry_chain_validation_YYYY-MM-DD.md`。基础版校验会检查节点 ID 是否重复、父节点是否存在、因果图是否有环、每个节点是否配置领先指标和相关标的，以及观察池引用的产业链节点是否存在。
+
+产业链节点当前只作为信息组织和后续评分输入的结构基础，不直接触发交易动作。
 
 ## 已确认的产品决策
 

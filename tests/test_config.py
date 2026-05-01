@@ -5,6 +5,7 @@ from ai_trading_system.config import (
     configured_rate_series,
     load_data_quality,
     load_features,
+    load_industry_chain,
     load_portfolio,
     load_scoring_rules,
     load_universe,
@@ -103,3 +104,16 @@ def test_watchlist_config_covers_core_watchlist() -> None:
 
     assert set(universe.ai_chain["core_watchlist"]).issubset(active_tickers)
     assert all(item.competence_reason for item in watchlist.items)
+
+
+def test_industry_chain_config_covers_watchlist_nodes() -> None:
+    watchlist = load_watchlist()
+    industry_chain = load_industry_chain()
+    node_ids = {node.node_id for node in industry_chain.nodes}
+    watchlist_node_ids = {
+        node_id
+        for item in watchlist.items
+        for node_id in item.ai_chain_nodes
+    }
+
+    assert watchlist_node_ids.issubset(node_ids)
