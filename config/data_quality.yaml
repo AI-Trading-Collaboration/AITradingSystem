@@ -1,0 +1,12 @@
+prices:
+  max_stale_calendar_days: 7
+  suspicious_daily_return_abs: 0.20
+  extreme_daily_return_abs: 0.50
+  suspicious_adjustment_ratio_change_abs: 0.25
+
+rates:
+  max_stale_calendar_days: 7
+  min_plausible_value: -1.0
+  max_plausible_value: 25.0
+  suspicious_daily_change_abs: 0.75
+  extreme_daily_change_abs: 2.00

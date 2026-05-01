@@ -1,0 +1,277 @@
+from __future__ import annotations
+
+from datetime import date
+from pathlib import Path
+
+import pandas as pd
+from typer.testing import CliRunner
+
+from ai_trading_system.cli import app
+from ai_trading_system.config import configured_price_tickers, load_data_quality, load_universe
+from ai_trading_system.data.quality import (
+    DataQualityReport,
+    Severity,
+    render_data_quality_report,
+    validate_data_cache,
+    write_data_quality_report,
+)
+
+
+def test_validate_data_cache_passes_clean_data(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert report.passed is True
+    assert report.status == "PASS"
+    assert report.error_count == 0
+    assert report.price_summary.rows == 4
+    assert report.price_summary.sha256 is not None
+
+
+def test_validate_data_cache_fails_duplicate_price_keys(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    prices = pd.read_csv(prices_path)
+    prices = pd.concat([prices, prices.iloc[[0]]], ignore_index=True)
+    prices.to_csv(prices_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert report.passed is False
+    assert _issue_codes(report) == {"prices_duplicate_keys"}
+
+
+def test_validate_data_cache_fails_invalid_ohlc(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    prices = pd.read_csv(prices_path)
+    prices.loc[0, "high"] = 90
+    prices.to_csv(prices_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert report.passed is False
+    assert "prices_invalid_ohlc" in _issue_codes(report)
+
+
+def test_validate_data_cache_fails_missing_expected_ticker(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA", "AMD"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert report.passed is False
+    assert "prices_missing_expected_values" in _issue_codes(report)
+
+
+def test_validate_data_cache_flags_suspicious_price_move(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    prices = pd.read_csv(prices_path)
+    prices.loc[(prices["ticker"] == "NVDA") & (prices["date"] == "2026-04-30"), "adj_close"] = 145
+    prices.loc[(prices["ticker"] == "NVDA") & (prices["date"] == "2026-04-30"), "close"] = 145
+    prices.loc[(prices["ticker"] == "NVDA") & (prices["date"] == "2026-04-30"), "high"] = 146
+    prices.to_csv(prices_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert report.passed is True
+    assert any(
+        issue.severity is Severity.WARNING and issue.code == "prices_suspicious_adj_close_move"
+        for issue in report.issues
+    )
+
+
+def test_validate_data_cache_fails_stale_data(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 6, 1),
+    )
+
+    assert report.passed is False
+    assert "prices_stale" in _issue_codes(report)
+    assert "rates_stale" in _issue_codes(report)
+
+
+def test_render_and_write_data_quality_report(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 2),
+    )
+
+    markdown = render_data_quality_report(report)
+    output_path = write_data_quality_report(report, tmp_path / "report.md")
+
+    assert "- Status: PASS" in markdown
+    assert output_path.read_text(encoding="utf-8") == markdown
+
+
+def test_validate_data_cli_writes_report(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(
+        tmp_path,
+        tickers=configured_price_tickers(load_universe()),
+    )
+    output_path = tmp_path / "quality.md"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "validate-data",
+            "--prices-path",
+            str(prices_path),
+            "--rates-path",
+            str(rates_path),
+            "--as-of",
+            "2026-05-02",
+            "--output-path",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert output_path.exists()
+    assert "Data quality status: PASS" in result.output
+
+
+def test_validate_data_cli_returns_nonzero_on_failure(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(
+        tmp_path,
+        tickers=configured_price_tickers(load_universe()),
+    )
+    output_path = tmp_path / "quality.md"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "validate-data",
+            "--prices-path",
+            str(prices_path),
+            "--rates-path",
+            str(rates_path),
+            "--as-of",
+            "2026-06-01",
+            "--output-path",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert output_path.exists()
+    assert "Data quality status: FAIL" in result.output
+
+
+def _write_valid_cache(
+    tmp_path: Path,
+    tickers: list[str] | None = None,
+) -> tuple[Path, Path]:
+    selected_tickers = tickers or ["MSFT", "NVDA"]
+    price_rows: list[dict[str, object]] = []
+    for index, ticker in enumerate(selected_tickers):
+        base_price = 100.0 + index * 10.0
+        price_rows.extend(
+            [
+                _price_row(
+                    "2026-04-29",
+                    ticker,
+                    base_price,
+                    base_price + 5,
+                    base_price - 1,
+                    base_price + 4,
+                    base_price + 4,
+                    1000 + index,
+                ),
+                _price_row(
+                    "2026-04-30",
+                    ticker,
+                    base_price + 4,
+                    base_price + 6,
+                    base_price + 2,
+                    base_price + 5,
+                    base_price + 5,
+                    1100 + index,
+                ),
+            ]
+        )
+    prices = pd.DataFrame(price_rows)
+    rates = pd.DataFrame(
+        [
+            {"date": "2026-04-29", "series": "DGS2", "value": 4.1},
+            {"date": "2026-04-30", "series": "DGS2", "value": 4.2},
+            {"date": "2026-04-29", "series": "DGS10", "value": 4.4},
+            {"date": "2026-04-30", "series": "DGS10", "value": 4.5},
+        ]
+    )
+    prices_path = tmp_path / "prices_daily.csv"
+    rates_path = tmp_path / "rates_daily.csv"
+    prices.to_csv(prices_path, index=False)
+    rates.to_csv(rates_path, index=False)
+    return prices_path, rates_path
+
+
+def _price_row(
+    row_date: str,
+    ticker: str,
+    open_price: float,
+    high: float,
+    low: float,
+    close: float,
+    adj_close: float,
+    volume: int,
+) -> dict[str, object]:
+    return {
+        "date": row_date,
+        "ticker": ticker,
+        "open": open_price,
+        "high": high,
+        "low": low,
+        "close": close,
+        "adj_close": adj_close,
+        "volume": volume,
+    }
+
+
+def _issue_codes(report: DataQualityReport) -> set[str]:
+    return {issue.code for issue in report.issues}

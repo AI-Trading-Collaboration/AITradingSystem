@@ -10,6 +10,7 @@ from pydantic import BaseModel, Field
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG_PATH = PROJECT_ROOT / "config" / "universe.yaml"
 DEFAULT_PORTFOLIO_CONFIG_PATH = PROJECT_ROOT / "config" / "portfolio.yaml"
+DEFAULT_DATA_QUALITY_CONFIG_PATH = PROJECT_ROOT / "config" / "data_quality.yaml"
 
 
 class MarketUniverse(BaseModel):
@@ -54,6 +55,26 @@ class PortfolioConfig(BaseModel):
     position_limits: PositionLimitsConfig
 
 
+class PriceQualityConfig(BaseModel):
+    max_stale_calendar_days: int = Field(gt=0)
+    suspicious_daily_return_abs: float = Field(gt=0)
+    extreme_daily_return_abs: float = Field(gt=0)
+    suspicious_adjustment_ratio_change_abs: float = Field(gt=0)
+
+
+class RateQualityConfig(BaseModel):
+    max_stale_calendar_days: int = Field(gt=0)
+    min_plausible_value: float
+    max_plausible_value: float
+    suspicious_daily_change_abs: float = Field(gt=0)
+    extreme_daily_change_abs: float = Field(gt=0)
+
+
+class DataQualityConfig(BaseModel):
+    prices: PriceQualityConfig
+    rates: RateQualityConfig
+
+
 def load_universe(path: Path | str = DEFAULT_CONFIG_PATH) -> UniverseConfig:
     config_path = Path(path)
     with config_path.open("r", encoding="utf-8") as file:
@@ -66,6 +87,15 @@ def load_portfolio(path: Path | str = DEFAULT_PORTFOLIO_CONFIG_PATH) -> Portfoli
     with config_path.open("r", encoding="utf-8") as file:
         raw: dict[str, Any] = yaml.safe_load(file)
     return PortfolioConfig.model_validate(raw)
+
+
+def load_data_quality(
+    path: Path | str = DEFAULT_DATA_QUALITY_CONFIG_PATH,
+) -> DataQualityConfig:
+    config_path = Path(path)
+    with config_path.open("r", encoding="utf-8") as file:
+        raw: dict[str, Any] = yaml.safe_load(file)
+    return DataQualityConfig.model_validate(raw)
 
 
 def configured_price_tickers(

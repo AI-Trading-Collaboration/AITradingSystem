@@ -7,8 +7,20 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
-from ai_trading_system.config import PROJECT_ROOT, load_portfolio, load_universe
+from ai_trading_system.config import (
+    PROJECT_ROOT,
+    configured_price_tickers,
+    configured_rate_series,
+    load_data_quality,
+    load_portfolio,
+    load_universe,
+)
 from ai_trading_system.data.download import download_daily_data
+from ai_trading_system.data.quality import (
+    default_quality_report_path,
+    validate_data_cache,
+    write_data_quality_report,
+)
 from ai_trading_system.reports.daily import render_recommendation_markdown
 from ai_trading_system.scoring.position_model import ModuleScore, WeightedScoreModel
 
@@ -91,6 +103,63 @@ def download_data(
     console.print(f"Rates:  {summary.rates_path} ({summary.rate_rows} rows)")
     console.print(f"Price tickers: {', '.join(summary.price_tickers)}")
     console.print(f"Rate series: {', '.join(summary.rate_series)}")
+
+
+@app.command("validate-data")
+def validate_data(
+    prices_path: Annotated[
+        Path,
+        typer.Option(help="Path to standardized daily prices CSV."),
+    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    rates_path: Annotated[
+        Path,
+        typer.Option(help="Path to standardized daily rates CSV."),
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="Validation date in YYYY-MM-DD format. Defaults to today."),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown report output path."),
+    ] = None,
+    full_universe: Annotated[
+        bool,
+        typer.Option(
+            "--full-universe",
+            help="Validate every configured AI-chain ticker, not only the core watchlist.",
+        ),
+    ] = False,
+) -> None:
+    """Validate cached data and write a Markdown quality report."""
+    universe = load_universe()
+    quality_config = load_data_quality()
+    validation_date = _parse_date(as_of) if as_of else date.today()
+    report_path = output_path or default_quality_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        validation_date,
+    )
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=configured_price_tickers(
+            universe,
+            include_full_ai_chain=full_universe,
+        ),
+        expected_rate_series=configured_rate_series(universe),
+        quality_config=quality_config,
+        as_of=validation_date,
+    )
+    write_data_quality_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]Data quality status: {report.status}[/{status_style}]")
+    console.print(f"Report: {report_path}")
+    console.print(f"Errors: {report.error_count}; warnings: {report.warning_count}")
+
+    if not report.passed:
+        raise typer.Exit(code=1)
 
 
 def _parse_date(value: str) -> date:

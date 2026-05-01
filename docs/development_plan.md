@@ -95,10 +95,11 @@
 第一个开发迭代建议只做 5 件事：
 
 1. 实现行情数据下载和本地缓存。状态：已实现基础版，命令为 `aits download-data`。
-2. 实现技术特征计算。
-3. 实现 100 分评分到仓位区间的规则。
-4. 实现简单回测引擎。
-5. 输出一份日报 Markdown。
+2. 实现数据质量门禁。状态：已实现基础版，命令为 `aits validate-data`。
+3. 实现技术特征计算。
+4. 实现 100 分评分到仓位区间的规则。
+5. 实现简单回测引擎。
+6. 输出一份日报 Markdown。
 
 ## 阶段 1 数据缓存约定
 
@@ -108,6 +109,23 @@
 - `data/raw/rates_daily.csv`：FRED 利率数据，字段为 `date,series,value`。
 
 默认下载核心观察范围。`--full-universe` 会额外下载配置文件中的完整 AI 产业链标的。
+
+## 阶段 1 数据质量约定
+
+数据质量门禁命令为 `aits validate-data`，默认读取：
+
+- `data/raw/prices_daily.csv`
+- `data/raw/rates_daily.csv`
+
+报告默认写入 `outputs/reports/data_quality_YYYY-MM-DD.md`。如果报告状态为 `FAIL`，后续评分报告和回测不应继续使用这批数据。
+
+阈值集中配置在 `config/data_quality.yaml`，当前基础版包括：
+
+- 数据新鲜度。
+- 单日调整收盘价异常波动。
+- 调整收盘价比例跳变。
+- 利率合理范围。
+- 利率单日异常变化。
 
 ## 已确认的产品决策
 

@@ -54,6 +54,14 @@ aits download-data --start 2018-01-01
 aits download-data --start 2018-01-01 --full-universe
 ```
 
+校验本地数据缓存并生成质量报告：
+
+```powershell
+aits validate-data
+```
+
+质量报告默认写入 `outputs/reports/data_quality_YYYY-MM-DD.md`。如果校验出现错误，命令会返回非零退出码，后续评分和回测流程不应继续使用这批数据。
+
 查看示例评分：
 
 ```powershell
