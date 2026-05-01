@@ -34,6 +34,7 @@ docs/                    架构和开发计划
 docs/system_flow.md      数据输入、中间评估和输出结论示意图
 docs/product_strategy.md 产品策略和模块原则
 docs/implementation_backlog.md 可落地模块和工程 backlog
+docs/examples/           可复制的输入模板，不包含个人交易记录
 notebooks/               研究和临时分析
 outputs/backtests/       回测输出，不提交
 outputs/reports/         日报/周报输出，不提交
@@ -128,6 +129,15 @@ aits industry-chain validate --as-of 2026-05-02
 ```
 
 产业链校验会检查节点是否重复、父节点是否存在、因果图是否有环、节点是否配置领先指标和相关标的，以及观察池引用的产业链节点是否存在。
+
+校验和复核交易 thesis：
+
+```powershell
+aits thesis validate --as-of 2026-05-02
+aits thesis review --as-of 2026-05-02
+```
+
+交易 thesis 默认读取 `data/external/trade_theses/*.yaml`，该目录不提交。可参考 `docs/examples/trade_theses/nvda_ai_infra_template.yaml` 复制模板。校验会检查 schema、ticker 是否在观察池、产业链节点是否存在、验证指标和证伪条件是否完整；复核报告会输出原始假设是否仍成立、是否需要人工复核、是否已有证伪条件触发。
 
 ## 投资边界
 

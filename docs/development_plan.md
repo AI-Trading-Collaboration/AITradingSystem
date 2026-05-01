@@ -132,6 +132,7 @@
 6. 实现简单回测引擎。状态：已实现基础版，命令为 `aits backtest`。
 7. 实现产业链节点与因果图配置。状态：已实现基础版，命令为 `aits industry-chain list/validate`。
 8. 输出一份日报 Markdown。状态：已实现基础版，命令为 `aits score-daily`。
+9. 实现交易 thesis 与假设验证。状态：已实现基础版，命令为 `aits thesis list/validate/review`。
 
 ## 阶段 1 数据缓存约定
 

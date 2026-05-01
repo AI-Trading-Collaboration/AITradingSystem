@@ -24,6 +24,7 @@
 |观察池与能力圈|已完成基础版|`aits watchlist list/validate`，核心个股能力圈和产业链节点映射|
 |历史回测|已完成基础版|`aits backtest`，每日评分动态仓位与 SPY/QQQ/SMH/SOXX 基准对比|
 |产业链因果图|已完成基础版|`aits industry-chain list/validate`，节点、父子关系、领先指标和观察池引用校验|
+|交易 thesis 与假设验证|已完成基础版|`aits thesis list/validate/review`，结构化假设、验证指标、证伪条件和复核报告|
 |产品策略|已完成文档|能力圈、产业链因果、假设验证、复盘归因|
 
 ## 推荐建设顺序
@@ -245,11 +246,14 @@ aits watchlist validate
 
 ### M5：交易 thesis 与假设验证模块
 
+状态：已实现基础版。
+
 目的：把每笔重要交易变成可验证假设。
 
 存储建议：
 
-- `data/external/trade_theses/*.yaml` 或后续数据库表。
+- `data/external/trade_theses/*.yaml`。该目录不提交，用于本地个人交易假设。
+- `docs/examples/trade_theses/` 提供可复制模板，不代表真实交易建议。
 
 主要数据对象：
 
@@ -276,9 +280,24 @@ aits watchlist validate
 建议 CLI：
 
 ```powershell
+aits thesis list
 aits thesis validate
 aits thesis review --as-of 2026-05-01
 ```
+
+当前基础版输出：
+
+- `outputs/reports/thesis_validation_YYYY-MM-DD.md`
+- `outputs/reports/thesis_review_YYYY-MM-DD.md`
+
+当前基础版校验：
+
+- YAML schema 是否完整。
+- `thesis_id`、验证指标、证伪条件和风险事件 ID 是否重复。
+- 活跃 thesis 的 ticker 是否在活跃观察池中。
+- thesis 引用的产业链节点是否存在。
+- 验证指标是否超过复核频率。
+- 高强度证伪条件触发后，thesis 是否仍错误保持 active。
 
 验收标准：
 
@@ -387,7 +406,8 @@ aits review-trades --from 2026-01-01 --to 2026-03-31
 |`config/scoring_rules.yaml`|评分规则和权重|M2|
 |`data/processed/features_daily.csv`|每日特征|M1|
 |`data/processed/scores_daily.csv`|每日评分|M2|
-|`data/external/trade_theses/`|交易 thesis|M5|
+|`data/external/trade_theses/`|交易 thesis|M5，已实现基础版|
+|`docs/examples/trade_theses/`|交易 thesis YAML 模板|M5，已实现基础版|
 |`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|历史回测报告|阶段 1，已实现基础版|
 |`outputs/reports/daily_score_YYYY-MM-DD.md`|每日评分报告|M2|
 |`outputs/reports/thesis_review_YYYY-MM-DD.md`|假设复核报告|M5|
@@ -397,13 +417,13 @@ aits review-trades --from 2026-01-01 --to 2026-03-31
 
 接下来建议按这个顺序开发：
 
-1. M5：交易 thesis 与假设验证模块。
-2. M6：风险事件分级模块。
+1. M6：风险事件分级模块。
+2. M7：估值与拥挤度模块。
 
 原因：
 
-- 阶段 1 的市场数据、评分、观察池、回测和产业链配置基础闭环已经完成；M5 会把交易假设变成可验证对象。
-- M5-M8 需要更明确的持仓、交易记录和估值数据源，适合在日报闭环稳定后推进。
+- 阶段 1 的市场数据、评分、观察池、回测、产业链配置和交易 thesis 基础闭环已经完成；M6 会把风险事件从主观判断变成结构化动作规则。
+- M7-M8 需要更明确的持仓、交易记录和估值数据源，适合在日报闭环稳定后推进。
 
 ## 不应马上做的事
 

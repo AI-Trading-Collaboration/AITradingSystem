@@ -91,6 +91,8 @@
 
 产业链因果图配置已落在 `config/industry_chain.yaml`。校验命令为 `aits industry-chain validate`，用于确保节点 ID 唯一、父节点存在、因果图无环、每个节点有领先指标和相关标的，并且观察池引用的产业链节点都存在。产业链节点在基础版中不直接触发交易动作，只作为信息映射、假设验证和后续基本面/事件评分的结构基础。
 
+交易 thesis 基础版已支持 `data/external/trade_theses/*.yaml`。校验命令为 `aits thesis validate`，复核命令为 `aits thesis review`。当前版本不自动判断 thesis 对错，而是检查结构、观察池引用、产业链节点、验证指标、证伪条件、复核新鲜度和已触发风险，确保主动交易假设可审计、可复盘。
+
 ## 评分层
 
 沿用规划文档里的 100 分框架：

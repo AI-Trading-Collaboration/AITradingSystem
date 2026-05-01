@@ -13,7 +13,7 @@
 - 改变 `data/raw`、`data/processed`、`outputs/reports`、`outputs/backtests` 的核心文件结构。
 - 改变数据质量门禁位置、通过条件或失败后的停止行为。
 - 改变评分模块、仓位映射、回测默认市场阶段或报告结论结构。
-- M5 以后接入交易 thesis、风险事件、估值、新闻、复盘归因等新模块。
+- 接入或改变交易 thesis、风险事件、估值、新闻、复盘归因等模块。
 
 不需要更新本文件的情况：
 
@@ -34,6 +34,7 @@ flowchart TD
         W["config/watchlist.yaml<br/>观察池与能力圈"]
         I["config/industry_chain.yaml<br/>产业链节点与因果图"]
         R["config/market_regimes.yaml<br/>AI regime 与压力测试区间"]
+        TH["data/external/trade_theses/*.yaml<br/>交易假设、验证指标、证伪条件"]
         MD["外部数据源<br/>Yahoo Finance / FRED"]
     end
 
@@ -72,6 +73,14 @@ flowchart TD
         WR["outputs/reports/watchlist_validation_YYYY-MM-DD.md"]
         IV["aits industry-chain validate"]
         IR["outputs/reports/industry_chain_validation_YYYY-MM-DD.md"]
+    end
+
+    subgraph Thesis["交易假设复核"]
+        TL["aits thesis list"]
+        TV["aits thesis validate"]
+        TR["aits thesis review"]
+        TVR["outputs/reports/thesis_validation_YYYY-MM-DD.md"]
+        TRR["outputs/reports/thesis_review_YYYY-MM-DD.md"]
     end
 
     MD --> DL
@@ -119,6 +128,16 @@ flowchart TD
     I --> IV
     W --> IV
     IV --> IR
+
+    TH --> TL
+    TH --> TV
+    TH --> TR
+    W --> TV
+    I --> TV
+    W --> TR
+    I --> TR
+    TV --> TVR
+    TR --> TRR
 ```
 
 ## 每日评分链路
@@ -178,12 +197,14 @@ flowchart LR
     C["占位或手工输入<br/>基本面 / 估值 / 政策地缘"] --> E
     D["市场阶段<br/>ai_after_chatgpt / cross_cycle_stress"] --> E
     F["能力圈和产业链配置<br/>watchlist / industry_chain"] --> E
+    L["交易 thesis<br/>验证指标 / 证伪条件 / 风险事件"] --> E
 
     E --> G["必须说明<br/>本次数据质量是否通过"]
     E --> H["必须说明<br/>哪些分数来自硬数据"]
     E --> I["必须说明<br/>哪些模块仍是占位或限制"]
     E --> J["必须说明<br/>建议仓位的口径和限制"]
     E --> K["必须说明<br/>回测区间和市场阶段"]
+    E --> M["必须说明<br/>交易假设是否仍成立或需要复核"]
 ```
 
 ## 当前已实现与待接入模块
@@ -198,10 +219,10 @@ flowchart TD
         E["历史回测<br/>aits backtest"]
         F["观察池校验<br/>aits watchlist validate"]
         G["产业链图校验<br/>aits industry-chain validate"]
+        H["交易 thesis<br/>aits thesis list/validate/review"]
     end
 
     subgraph Next["后续模块"]
-        H["M5 交易 thesis<br/>假设、验证指标、证伪条件"]
         I["M6 风险事件<br/>L1 / L2 / L3 和仓位动作"]
         J["M7 估值与拥挤度<br/>估值分位、预期变化、过热信号"]
         K["M8 复盘归因<br/>市场 Beta、主题 Beta、Alpha、纪律问题"]
@@ -236,7 +257,10 @@ flowchart TD
 |能力圈|`config/watchlist.yaml`|记录核心标的、能力圈和 thesis 要求|已实现基础版|
 |产业链|`config/industry_chain.yaml`|记录产业链节点和因果关系|已实现基础版|
 |市场阶段|`config/market_regimes.yaml`|记录默认 AI regime 和压力测试区间|已实现|
-|交易假设|`data/external/trade_theses/`|记录交易 thesis 和证伪条件|待实现|
+|交易假设|`data/external/trade_theses/`|记录交易 thesis、验证指标和证伪条件|已实现基础版|
+|交易假设模板|`docs/examples/trade_theses/`|提供可复制 YAML 模板，不提交个人记录|已实现基础版|
+|假设校验|`aits thesis validate`|校验 schema、观察池引用、产业链节点和证伪约束|已实现基础版|
+|假设复核|`aits thesis review`|输出 thesis 是否仍成立、是否需要人工复核、是否证伪触发|已实现基础版|
 |风险事件|`config/risk_events.yaml`|记录 L1/L2/L3 风险和动作规则|待实现|
 |估值拥挤度|待定|记录估值分位、预期变化和拥挤度|待实现|
 |复盘归因|待定|拆分 Beta、主题趋势、Alpha、仓位和纪律问题|待实现|
