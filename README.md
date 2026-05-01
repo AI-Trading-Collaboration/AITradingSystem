@@ -83,6 +83,14 @@ aits score-daily --as-of 2026-05-01
 
 命令会先执行数据质量门禁，再构建特征，最后输出 `data/processed/scores_daily.csv` 和 `outputs/reports/daily_score_YYYY-MM-DD.md`。MVP 阶段的基本面、估值、政策地缘会在报告中明确标记为占位输入。
 
+运行历史回测：
+
+```powershell
+aits backtest --from 2019-01-01 --to 2026-05-02 --quality-as-of 2026-05-02
+```
+
+回测命令会先执行数据质量门禁。当前基础版使用每日评分得到的 AI 仓位区间中点作为目标仓位，以 `SMH` 作为默认 AI 代理标的，并与 `SPY`、`QQQ`、`SMH`、`SOXX` 买入持有基准对比。信号按收盘后生成、下一交易日生效，避免未来函数。
+
 查看示例评分：
 
 ```powershell

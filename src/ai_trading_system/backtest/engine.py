@@ -11,6 +11,8 @@ class BacktestMetrics:
     cagr: float
     max_drawdown: float
     sharpe: float | None
+    sortino: float | None
+    calmar: float | None
     time_in_market: float
     turnover: float
 
@@ -51,6 +53,29 @@ def calculate_sharpe(
     return mean(excess_returns) / volatility * sqrt(periods_per_year)
 
 
+def calculate_sortino(
+    daily_returns: list[float],
+    risk_free_rate: float = 0.0,
+    periods_per_year: int = 252,
+) -> float | None:
+    if len(daily_returns) < 2:
+        return None
+
+    excess_daily = risk_free_rate / periods_per_year
+    excess_returns = [value - excess_daily for value in daily_returns]
+    downside_returns = [min(value, 0.0) for value in excess_returns]
+    downside_deviation = sqrt(mean(value * value for value in downside_returns))
+    if downside_deviation == 0:
+        return None
+    return mean(excess_returns) / downside_deviation * sqrt(periods_per_year)
+
+
+def calculate_calmar(cagr: float, max_drawdown: float) -> float | None:
+    if max_drawdown == 0:
+        return None
+    return cagr / abs(max_drawdown)
+
+
 def summarize_long_only_backtest(
     strategy_returns: list[float],
     exposures: list[float],
@@ -69,11 +94,15 @@ def summarize_long_only_backtest(
         equity_curve.append(running_equity)
 
     total_return = prod(1.0 + period_return for period_return in strategy_returns) - 1.0
+    cagr = calculate_cagr(total_return, len(strategy_returns), periods_per_year)
+    max_drawdown = calculate_max_drawdown(equity_curve)
     return BacktestMetrics(
         total_return=total_return,
-        cagr=calculate_cagr(total_return, len(strategy_returns), periods_per_year),
-        max_drawdown=calculate_max_drawdown(equity_curve),
+        cagr=cagr,
+        max_drawdown=max_drawdown,
         sharpe=calculate_sharpe(strategy_returns, periods_per_year=periods_per_year),
+        sortino=calculate_sortino(strategy_returns, periods_per_year=periods_per_year),
+        calmar=calculate_calmar(cagr, max_drawdown),
         time_in_market=mean(1.0 if exposure > 0 else 0.0 for exposure in exposures),
         turnover=sum(abs(value) for value in turnovers),
     )

@@ -127,7 +127,7 @@
 3. 实现技术特征计算。状态：已实现基础版，命令为 `aits build-features`。
 4. 实现 100 分评分到仓位区间的规则。状态：已实现基础版，命令为 `aits score-daily`。
 5. 实现观察池与能力圈配置。状态：已实现基础版，命令为 `aits watchlist list/validate`。
-6. 实现简单回测引擎。
+6. 实现简单回测引擎。状态：已实现基础版，命令为 `aits backtest`。
 7. 输出一份日报 Markdown。状态：已实现基础版，命令为 `aits score-daily`。
 
 ## 阶段 1 数据缓存约定
@@ -202,6 +202,28 @@
 - `aits watchlist validate`
 
 校验报告默认写入 `outputs/reports/watchlist_validation_YYYY-MM-DD.md`。核心观察池中的每个个股都必须出现在活跃观察池中，并且必须映射到至少一个 AI 产业链节点。高风险或极高风险标的必须要求 thesis，避免后续报告把高风险单票当成无约束的高置信度输入。
+
+## 阶段 1 回测约定
+
+历史回测命令为 `aits backtest`。命令会先执行数据质量门禁，失败时停止。
+
+默认规则：
+
+- 使用 `SMH` 作为 AI 仓位代理标的。
+- 与 `SPY`、`QQQ`、`SMH`、`SOXX` 买入持有基准对比。
+- 每日收盘后生成信号，下一交易日生效。
+- 目标仓位使用评分模型输出的 AI 仓位区间中点。
+- 仓位变化低于最小调仓阈值时不调仓。
+- 默认扣除 5 bps 单边交易成本。
+
+默认输出：
+
+- `outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`
+- `outputs/backtests/backtest_daily_YYYY-MM-DD_YYYY-MM-DD.csv`
+
+当前回测状态会标记为 `PASS_WITH_LIMITATIONS`，因为基本面、估值、政策/地缘模块仍是 MVP 占位输入。回测只能说明当前硬数据评分和仓位映射的历史表现，不能代表完整投资系统已经完成。
+
+如果要让 2018 年初的信号也具备完整 200 日均线和 252 日 VIX 分位历史，缓存需要从 2017 年或更早开始下载。当前本地缓存从 2018 年开始，因此推荐示例从 2019 年开始回测，使用 2018 年作为 warm-up 历史。
 
 ## 已确认的产品决策
 

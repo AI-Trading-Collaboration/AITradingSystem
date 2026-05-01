@@ -21,9 +21,42 @@
 |每日市场评分|已完成基础版|`aits score-daily`，趋势、宏观流动性、风险情绪和占位项|
 |仓位评分骨架|已完成基础版|100 分映射到仓位区间，支持总资产换算|
 |观察池与能力圈|已完成基础版|`aits watchlist list/validate`，核心个股能力圈和产业链节点映射|
+|历史回测|已完成基础版|`aits backtest`，每日评分动态仓位与 SPY/QQQ/SMH/SOXX 基准对比|
 |产品策略|已完成文档|能力圈、产业链因果、假设验证、复盘归因|
 
 ## 推荐建设顺序
+
+### 阶段 1：历史回测命令
+
+状态：已实现基础版。
+
+目的：检验每日评分和仓位映射在历史行情中的收益、回撤和换手表现。
+
+建议 CLI：
+
+```powershell
+aits backtest --from 2019-01-01 --to 2026-05-02 --quality-as-of 2026-05-02
+```
+
+输出：
+
+- `outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`
+- `outputs/backtests/backtest_daily_YYYY-MM-DD_YYYY-MM-DD.csv`
+
+当前规则：
+
+- 先执行数据质量门禁，失败则停止。
+- 每日收盘后计算评分，目标仓位从下一交易日收益开始生效，避免未来函数。
+- 使用 AI 仓位区间中点作为目标仓位。
+- 变化小于 `config/scoring_rules.yaml` 的最小调仓阈值时维持原仓位。
+- 默认用 `SMH` 作为 AI 代理标的，并与 `SPY`、`QQQ`、`SMH`、`SOXX` 买入持有基准对比。
+- 默认扣除单边交易成本 5 bps。
+
+限制：
+
+- 基本面、估值、政策/地缘仍是 MVP 占位输入，因此回测只能验证当前硬数据规则和仓位映射，不能视为完整策略结论。
+- 当前未计入税费、汇率、融资利率、盘口冲击和盘中执行偏差。
+- 如果要完整评估 2018 年初信号，需要从 2017 年或更早下载 warm-up 历史；当前示例用 2018 年作为 2019 年起始回测的 warm-up。
 
 ### M1：市场环境特征模块
 
@@ -336,6 +369,7 @@ aits review-trades --from 2026-01-01 --to 2026-03-31
 |`data/processed/features_daily.csv`|每日特征|M1|
 |`data/processed/scores_daily.csv`|每日评分|M2|
 |`data/external/trade_theses/`|交易 thesis|M5|
+|`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|历史回测报告|阶段 1，已实现基础版|
 |`outputs/reports/daily_score_YYYY-MM-DD.md`|每日评分报告|M2|
 |`outputs/reports/thesis_review_YYYY-MM-DD.md`|假设复核报告|M5|
 |`outputs/reports/trade_review_YYYY-MM-DD.md`|复盘归因报告|M8|
@@ -349,7 +383,7 @@ aits review-trades --from 2026-01-01 --to 2026-03-31
 
 原因：
 
-- M3 已完成基础版；M4 会继续把产品策略中的产业链因果落进配置，为后续基本面和新闻模块打地基。
+- 阶段 1 的市场数据、评分、观察池和回测基础闭环已经完成；M4 会继续把产品策略中的产业链因果落进配置，为后续基本面和新闻模块打地基。
 - M5-M8 需要更明确的持仓、交易记录和估值数据源，适合在日报闭环稳定后推进。
 
 ## 不应马上做的事

@@ -9,6 +9,14 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from ai_trading_system.backtest.daily import (
+    DEFAULT_BENCHMARK_TICKERS,
+    default_backtest_daily_path,
+    default_backtest_report_path,
+    run_daily_score_backtest,
+    write_backtest_daily_csv,
+    write_backtest_report,
+)
 from ai_trading_system.config import (
     DEFAULT_WATCHLIST_CONFIG_PATH,
     PROJECT_ROOT,
@@ -185,6 +193,140 @@ def validate_data(
 
     if not report.passed:
         raise typer.Exit(code=1)
+
+
+@app.command("backtest")
+def backtest(
+    prices_path: Annotated[
+        Path,
+        typer.Option(help="标准化日线价格 CSV 路径。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    rates_path: Annotated[
+        Path,
+        typer.Option(help="标准化日线利率 CSV 路径。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    start: Annotated[
+        str,
+        typer.Option("--from", help="回测开始日期，格式为 YYYY-MM-DD。"),
+    ] = "2019-01-01",
+    end: Annotated[
+        str | None,
+        typer.Option("--to", help="回测结束日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    strategy_ticker: Annotated[
+        str,
+        typer.Option(help="用于承载 AI 仓位的策略代理标的。"),
+    ] = "SMH",
+    benchmarks: Annotated[
+        str,
+        typer.Option(help="逗号分隔的买入持有基准标的。"),
+    ] = ",".join(DEFAULT_BENCHMARK_TICKERS),
+    cost_bps: Annotated[
+        float,
+        typer.Option(help="单边交易成本，单位 bps。"),
+    ] = 5.0,
+    daily_output_path: Annotated[
+        Path | None,
+        typer.Option(help="每日回测明细 CSV 输出路径。"),
+    ] = None,
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 回测报告输出路径。"),
+    ] = None,
+    quality_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 数据质量报告输出路径。"),
+    ] = None,
+    quality_as_of: Annotated[
+        str | None,
+        typer.Option(help="数据质量校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    full_universe: Annotated[
+        bool,
+        typer.Option(
+            "--full-universe",
+            help="校验配置中的完整 AI 产业链标的，而不只校验核心观察池。",
+        ),
+    ] = False,
+) -> None:
+    """基于每日评分规则运行历史回测。"""
+    universe = load_universe()
+    data_quality_config = load_data_quality()
+    feature_config = load_features()
+    scoring_rules = load_scoring_rules()
+    portfolio = load_portfolio()
+    start_date = _parse_date(start)
+    end_date = _parse_date(end) if end else date.today()
+    quality_date = _parse_date(quality_as_of) if quality_as_of else date.today()
+    benchmark_tickers = _parse_csv_items(benchmarks)
+    if not benchmark_tickers:
+        raise typer.BadParameter("至少需要一个基准标的。")
+
+    quality_output = quality_report_path or default_quality_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        quality_date,
+    )
+    backtest_daily_output = daily_output_path or default_backtest_daily_path(
+        PROJECT_ROOT / "outputs" / "backtests",
+        start_date,
+        end_date,
+    )
+    backtest_report_output = report_path or default_backtest_report_path(
+        PROJECT_ROOT / "outputs" / "backtests",
+        start_date,
+        end_date,
+    )
+
+    data_quality_report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=configured_price_tickers(
+            universe,
+            include_full_ai_chain=full_universe,
+        ),
+        expected_rate_series=configured_rate_series(universe),
+        quality_config=data_quality_config,
+        as_of=quality_date,
+    )
+    write_data_quality_report(data_quality_report, quality_output)
+    if not data_quality_report.passed:
+        console.print("[red]数据质量门禁失败，已停止回测。[/red]")
+        console.print(f"数据质量报告：{quality_output}")
+        console.print(
+            f"错误数：{data_quality_report.error_count}；"
+            f"警告数：{data_quality_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+
+    result = run_daily_score_backtest(
+        prices=pd.read_csv(prices_path),
+        rates=pd.read_csv(rates_path),
+        feature_config=feature_config,
+        scoring_rules=scoring_rules,
+        portfolio_config=portfolio,
+        data_quality_report=data_quality_report,
+        core_watchlist=universe.ai_chain.get("core_watchlist", []),
+        start=start_date,
+        end=end_date,
+        strategy_ticker=strategy_ticker,
+        benchmark_tickers=tuple(benchmark_tickers),
+        cost_bps=cost_bps,
+    )
+    daily_output = write_backtest_daily_csv(result, backtest_daily_output)
+    report_output = write_backtest_report(
+        result,
+        data_quality_report_path=quality_output,
+        daily_output_path=daily_output,
+        output_path=backtest_report_output,
+    )
+
+    console.print(f"[yellow]回测状态：{result.status}[/yellow]")
+    console.print(f"策略总收益：{result.strategy_metrics.total_return:.1%}")
+    console.print(f"策略 CAGR：{result.strategy_metrics.cagr:.1%}")
+    console.print(f"策略最大回撤：{result.strategy_metrics.max_drawdown:.1%}")
+    console.print(f"回测报告：{report_output}")
+    console.print(f"每日明细：{daily_output}")
+    console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
 
 
 @watchlist_app.command("list")
@@ -493,6 +635,10 @@ def _parse_date(value: str) -> date:
         return date.fromisoformat(value)
     except ValueError as exc:
         raise typer.BadParameter("日期必须使用 YYYY-MM-DD 格式。") from exc
+
+
+def _parse_csv_items(value: str) -> list[str]:
+    return [item.strip() for item in value.split(",") if item.strip()]
 
 
 def _risk_level_label(level: str) -> str:
