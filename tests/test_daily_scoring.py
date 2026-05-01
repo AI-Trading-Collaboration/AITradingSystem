@@ -103,9 +103,9 @@ def test_render_daily_score_report_includes_data_gate_and_limitations(tmp_path: 
         scores_path=tmp_path / "scores.csv",
     )
 
-    assert "- Data quality status: PASS" in markdown
-    assert "fundamentals" in markdown
-    assert "MVP placeholder" in markdown
+    assert "- 数据质量状态：PASS" in markdown
+    assert "基本面（fundamentals）" in markdown
+    assert "MVP 阶段占位" in markdown
 
 
 def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
@@ -149,7 +149,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert daily_report_path.exists()
     assert scores_path.exists()
     assert features_path.exists()
-    assert "Daily score status:" in result.output
+    assert "每日评分状态：" in result.output
 
 
 def _feature_set() -> MarketFeatureSet:

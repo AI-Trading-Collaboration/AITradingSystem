@@ -19,6 +19,24 @@ from ai_trading_system.scoring.position_model import (
     WeightedScoreModel,
 )
 
+COMPONENT_LABELS = {
+    "trend": "趋势",
+    "fundamentals": "基本面",
+    "macro_liquidity": "宏观流动性",
+    "risk_sentiment": "风险情绪",
+    "valuation": "估值",
+    "policy_geopolitics": "政策/地缘",
+    "overall": "综合",
+}
+
+SOURCE_TYPE_LABELS = {
+    "hard_data": "硬数据",
+    "partial_hard_data": "部分硬数据",
+    "insufficient_data": "数据不足",
+    "placeholder": "占位输入",
+    "derived": "派生结果",
+}
+
 
 @dataclass(frozen=True)
 class SignalScore:
@@ -135,7 +153,7 @@ def write_scores_csv(report: DailyScoreReport, output_path: Path) -> Path:
                 "weight": 100.0,
                 "source_type": "derived",
                 "coverage": "",
-                "reason": f"Position band: {report.recommendation.label}",
+                "reason": f"仓位区间：{report.recommendation.label}",
             }
         ]
     )
@@ -162,64 +180,64 @@ def render_daily_score_report(
 ) -> str:
     recommendation = report.recommendation
     lines = [
-        "# Daily AI Sector Score",
+        "# AI 产业链每日评分",
         "",
-        f"- Status: {report.status}",
-        f"- As of: {report.as_of.isoformat()}",
-        f"- Total score: {recommendation.total_score:.1f}",
-        f"- Position state: {recommendation.label}",
+        f"- 状态：{report.status}",
+        f"- 评估日期：{report.as_of.isoformat()}",
+        f"- 总分：{recommendation.total_score:.1f}",
+        f"- 仓位状态：{recommendation.label}",
         (
-            "- AI position in risk assets: "
+            "- AI 仓位（股票风险资产内）："
             f"{recommendation.risk_asset_ai_band.min_position:.0%}-"
             f"{recommendation.risk_asset_ai_band.max_position:.0%}"
         ),
         (
-            "- Risk asset budget in total assets: "
+            "- 股票/风险资产预算（总资产内）："
             f"{recommendation.total_risk_asset_band.min_position:.0%}-"
             f"{recommendation.total_risk_asset_band.max_position:.0%}"
         ),
         (
-            "- AI position in total assets: "
+            "- AI 仓位（总资产内）："
             f"{recommendation.total_asset_ai_band.min_position:.0%}-"
             f"{recommendation.total_asset_ai_band.max_position:.0%}"
         ),
-        f"- Minimum action delta: {report.minimum_action_delta:.0%}",
+        f"- 最小操作变化阈值：{report.minimum_action_delta:.0%}",
         "",
-        "## Data Gate",
+        "## 数据门禁",
         "",
-        f"- Data quality status: {report.data_quality_report.status}",
-        f"- Data quality report: `{data_quality_report_path}`",
-        f"- Feature status: {report.feature_set.status}",
-        f"- Feature warnings: {len(report.feature_set.warnings)}",
-        f"- Feature report: `{feature_report_path}`",
-        f"- Feature data: `{features_path}`",
-        f"- Score data: `{scores_path}`",
+        f"- 数据质量状态：{report.data_quality_report.status}",
+        f"- 数据质量报告：`{data_quality_report_path}`",
+        f"- 特征状态：{report.feature_set.status}",
+        f"- 特征警告数：{len(report.feature_set.warnings)}",
+        f"- 特征报告：`{feature_report_path}`",
+        f"- 特征数据：`{features_path}`",
+        f"- 评分数据：`{scores_path}`",
         "",
-        "## Components",
+        "## 模块评分",
         "",
-        "| Component | Score | Weight | Source | Coverage | Reason |",
+        "| 模块 | 分数 | 权重 | 来源 | 覆盖率 | 说明 |",
         "|---|---:|---:|---|---:|---|",
     ]
 
     for component in report.components:
         lines.append(
             "| "
-            f"{component.name} | "
+            f"{_component_label(component.name)} | "
             f"{component.score:.1f} | "
             f"{component.weight:.1f} | "
-            f"{component.source_type} | "
+            f"{_source_type_label(component.source_type)} | "
             f"{component.coverage:.0%} | "
             f"{_escape_markdown_table(component.reason)} |"
         )
 
-    lines.extend(["", "## Hard Data Signals", ""])
+    lines.extend(["", "## 硬数据信号", ""])
     hard_signals = [signal for component in report.components for signal in component.signals]
     if not hard_signals:
-        lines.append("No hard-data signals were evaluated.")
+        lines.append("没有评估任何硬数据信号。")
     else:
         lines.extend(
             [
-                "| Subject | Feature | Value | Points | Earned | Available | Reason |",
+                "| 标的 | 特征 | 数值 | 满分 | 得分 | 可用 | 说明 |",
                 "|---|---|---:|---:|---:|---|---|",
             ]
         )
@@ -232,25 +250,25 @@ def render_daily_score_report(
                 f"{value} | "
                 f"{signal.points:.1f} | "
                 f"{signal.earned_points:.1f} | "
-                f"{'yes' if signal.available else 'no'} | "
+                f"{'是' if signal.available else '否'} | "
                 f"{_escape_markdown_table(signal.reason)} |"
             )
 
-    lines.extend(["", "## Limitations", ""])
+    lines.extend(["", "## 限制说明", ""])
     limitations = [
         component
         for component in report.components
         if component.source_type in {"placeholder", "insufficient_data"}
     ]
     if not limitations and not report.feature_set.warnings:
-        lines.append("No limitations detected.")
+        lines.append("未发现限制。")
     else:
         for component in limitations:
-            lines.append(f"- {component.name}: {component.reason}")
+            lines.append(f"- {_component_label(component.name)}：{component.reason}")
         if report.feature_set.warnings:
             lines.append(
-                f"- Feature warnings present: {len(report.feature_set.warnings)}. "
-                "See feature summary for missing windows or unavailable inputs."
+                f"- 存在特征警告：{len(report.feature_set.warnings)} 条。"
+                "请查看特征摘要，确认是否有历史窗口不足或输入不可用。"
             )
 
     return "\n".join(lines) + "\n"
@@ -299,8 +317,8 @@ def _score_hard_data_module(
         score = module_rules.neutral_score
         source_type = "insufficient_data"
         reason = (
-            f"Insufficient hard-data signal coverage ({coverage:.0%}); "
-            f"using neutral score {module_rules.neutral_score:.1f}."
+            f"硬数据信号覆盖率不足（{coverage:.0%}），"
+            f"使用中性分 {module_rules.neutral_score:.1f}。"
         )
     else:
         earned_points = sum(signal.earned_points for signal in signals if signal.available)
@@ -308,7 +326,7 @@ def _score_hard_data_module(
         neutral_points = missing_points * (module_rules.neutral_score / 100.0)
         score = ((earned_points + neutral_points) / total_points) * 100.0
         source_type = "hard_data" if coverage == 1.0 else "partial_hard_data"
-        reason = f"Evaluated {coverage:.0%} of configured hard-data signal weight."
+        reason = f"已评估配置硬数据信号权重的 {coverage:.0%}。"
 
     return DailyScoreComponent(
         name=name,
@@ -335,7 +353,7 @@ def _score_signal(
             points=signal.points,
             earned_points=0.0,
             available=False,
-            reason="missing feature",
+            reason="缺少特征",
         )
 
     normalized = _normalize_signal_value(value, signal)
@@ -346,7 +364,7 @@ def _score_signal(
         points=signal.points,
         earned_points=signal.points * normalized,
         available=True,
-        reason=f"normalized={normalized:.2f}",
+        reason=f"归一化得分={normalized:.2f}",
     )
 
 
@@ -404,6 +422,17 @@ def _score_component_record(as_of: date, component: DailyScoreComponent) -> dict
         "coverage": component.coverage,
         "reason": component.reason,
     }
+
+
+def _component_label(name: str) -> str:
+    label = COMPONENT_LABELS.get(name)
+    if label is None:
+        return name
+    return f"{label}（{name}）"
+
+
+def _source_type_label(source_type: str) -> str:
+    return SOURCE_TYPE_LABELS.get(source_type, source_type)
 
 
 def _clamp(value: float, lower: float, upper: float) -> float:

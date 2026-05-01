@@ -30,7 +30,7 @@ def render_recommendation_markdown(recommendation: PositionRecommendation) -> st
     ]
     for component in recommendation.components:
         lines.append(
-            f"- {component.name}: score={component.score:.1f}, "
-            f"weight={component.weight:.1f}, reason={component.reason}"
+            f"- {component.name}：分数={component.score:.1f}，"
+            f"权重={component.weight:.1f}，原因={component.reason}"
         )
     return "\n".join(lines)

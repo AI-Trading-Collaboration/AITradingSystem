@@ -70,3 +70,11 @@ commands must enforce the gate themselves.
   data, or backtest path.
 - If a design decision affects investment interpretation, record it in docs or
   configuration rather than leaving it implicit in code.
+
+## Output Language
+
+Project-facing conclusions, Markdown reports, and CLI result summaries should be
+written in Chinese by default. Keep standard identifiers such as ticker symbols,
+feature IDs, file names, schema columns, status codes, and established market
+terms in English when translating them would reduce precision or break data
+compatibility.

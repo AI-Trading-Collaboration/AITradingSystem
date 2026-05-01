@@ -109,8 +109,8 @@ def test_render_feature_summary_includes_data_quality_status(tmp_path: Path) -> 
         features_path=tmp_path / "features.csv",
     )
 
-    assert "- Data quality status: PASS" in markdown
-    assert "## Feature Rows By Category" in markdown
+    assert "- 数据质量状态：PASS" in markdown
+    assert "## 按类别统计" in markdown
 
 
 def test_build_features_cli_enforces_quality_gate_and_writes_outputs(tmp_path: Path) -> None:
@@ -148,7 +148,7 @@ def test_build_features_cli_enforces_quality_gate_and_writes_outputs(tmp_path: P
     assert features_path.exists()
     assert feature_report_path.exists()
     assert quality_report_path.exists()
-    assert "Feature build status: PASS" in result.output
+    assert "特征构建状态：PASS" in result.output
 
 
 def _small_feature_config() -> FeatureConfig:

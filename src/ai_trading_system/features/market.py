@@ -10,6 +10,14 @@ import pandas as pd
 from ai_trading_system.config import FeatureConfig
 from ai_trading_system.data.quality import DataQualityReport
 
+CATEGORY_LABELS = {
+    "macro_liquidity": "宏观流动性",
+    "price": "价格",
+    "relative_strength": "相对强弱",
+    "risk_sentiment": "风险情绪",
+    "trend": "趋势",
+}
+
 
 @dataclass(frozen=True)
 class MarketFeatureRow:
@@ -115,30 +123,30 @@ def render_feature_summary(
 ) -> str:
     rows_by_category = _count_by([row.category for row in feature_set.rows])
     lines = [
-        "# Market Feature Summary",
+        "# 市场特征摘要",
         "",
-        f"- Status: {feature_set.status}",
-        f"- As of: {feature_set.as_of.isoformat()}",
-        f"- Feature rows: {len(feature_set.rows)}",
-        f"- Feature warnings: {len(feature_set.warnings)}",
-        f"- Data quality status: {data_quality_report.status}",
-        f"- Data quality report: `{data_quality_report_path}`",
-        f"- Feature output: `{features_path}`",
+        f"- 状态：{feature_set.status}",
+        f"- 评估日期：{feature_set.as_of.isoformat()}",
+        f"- 特征行数：{len(feature_set.rows)}",
+        f"- 特征警告数：{len(feature_set.warnings)}",
+        f"- 数据质量状态：{data_quality_report.status}",
+        f"- 数据质量报告：`{data_quality_report_path}`",
+        f"- 特征输出：`{features_path}`",
         "",
-        "## Feature Rows By Category",
+        "## 按类别统计",
         "",
     ]
 
     for category, count in rows_by_category.items():
-        lines.append(f"- {category}: {count}")
+        lines.append(f"- {_category_label(category)}：{count}")
 
-    lines.extend(["", "## Warnings", ""])
+    lines.extend(["", "## 警告", ""])
     if not feature_set.warnings:
-        lines.append("No feature warnings.")
+        lines.append("未发现特征警告。")
     else:
         lines.extend(
             [
-                "| Code | Subject | Feature | Required | Available | Message |",
+                "| Code | 标的 | 特征 | 需要观测数 | 可用观测数 | 说明 |",
                 "|---|---|---|---:|---:|---|",
             ]
         )
@@ -184,7 +192,7 @@ def _prepare_prices(prices: pd.DataFrame, as_of: date) -> pd.DataFrame:
     required_columns = {"date", "ticker", "adj_close", "close"}
     missing = sorted(required_columns - set(prices.columns))
     if missing:
-        raise ValueError(f"prices missing required columns: {', '.join(missing)}")
+        raise ValueError(f"价格数据缺少必需字段：{', '.join(missing)}")
 
     frame = prices.copy()
     frame["_date"] = pd.to_datetime(frame["date"], errors="coerce")
@@ -203,7 +211,7 @@ def _prepare_rates(rates: pd.DataFrame, as_of: date) -> pd.DataFrame:
     required_columns = {"date", "series", "value"}
     missing = sorted(required_columns - set(rates.columns))
     if missing:
-        raise ValueError(f"rates missing required columns: {', '.join(missing)}")
+        raise ValueError(f"利率数据缺少必需字段：{', '.join(missing)}")
 
     frame = rates.copy()
     frame["_date"] = pd.to_datetime(frame["date"], errors="coerce")
@@ -335,7 +343,7 @@ def _append_relative_strength_features(
             warnings.append(
                 FeatureWarning(
                     code="relative_strength_missing_ticker",
-                    message="relative strength pair is missing one or both tickers",
+                    message="相对强弱组合缺少一个或两个标的",
                     subject=subject,
                     feature="relative_strength_ratio",
                     required_observations=1,
@@ -349,7 +357,7 @@ def _append_relative_strength_features(
             warnings.append(
                 FeatureWarning(
                     code="relative_strength_no_overlap",
-                    message="relative strength pair has no overlapping dates",
+                    message="相对强弱组合没有重叠日期",
                     subject=subject,
                     feature="relative_strength_ratio",
                     required_observations=1,
@@ -410,7 +418,7 @@ def _append_vix_features(
         warnings.append(
             FeatureWarning(
                 code="vix_missing",
-                message="VIX ticker is missing from prices",
+                message="价格数据缺少 VIX 标的",
                 subject=config.vix.ticker,
                 feature="vix_current",
                 required_observations=1,
@@ -554,7 +562,7 @@ def _append_core_breadth_features(
             warnings.append(
                 FeatureWarning(
                     code="core_breadth_missing_ticker",
-                    message="core watchlist ticker is missing from prices",
+                    message="价格数据缺少核心观察池标的",
                     subject=ticker,
                     feature=f"core_above_ma_{window}",
                     required_observations=window,
@@ -584,7 +592,7 @@ def _append_core_breadth_features(
         warnings.append(
             FeatureWarning(
                 code="core_breadth_no_evaluable_tickers",
-                message="no core watchlist tickers had enough history for breadth calculation",
+                message="没有核心观察池标的具备足够历史用于宽度计算",
                 subject="AI_CORE_WATCHLIST",
                 feature=f"above_ma_{window}_ratio",
                 required_observations=window,
@@ -606,7 +614,7 @@ def _append_core_breadth_features(
                 unit="ratio",
                 lookback=window,
                 source="prices_daily",
-                notes=f"evaluated={evaluated_count}; total={len(core_watchlist)}",
+                notes=f"已评估={evaluated_count}; 配置总数={len(core_watchlist)}",
             ),
             MarketFeatureRow(
                 as_of=as_of,
@@ -618,7 +626,7 @@ def _append_core_breadth_features(
                 unit="count",
                 lookback=window,
                 source="prices_daily",
-                notes=f"evaluated={evaluated_count}; total={len(core_watchlist)}",
+                notes=f"已评估={evaluated_count}; 配置总数={len(core_watchlist)}",
             ),
         ]
     )
@@ -656,7 +664,7 @@ def _trailing_return(
         warnings.append(
             FeatureWarning(
                 code="zero_return_base",
-                message="return base value is zero",
+                message="收益率基准值为零",
                 subject=subject,
                 feature=feature,
                 required_observations=required_observations,
@@ -706,7 +714,7 @@ def _insufficient_history_warning(
 ) -> FeatureWarning:
     return FeatureWarning(
         code="insufficient_history",
-        message="not enough observations to compute feature",
+        message="可用历史观测数不足，无法计算该特征",
         subject=subject,
         feature=feature,
         required_observations=required_observations,
@@ -723,6 +731,13 @@ def _count_by(values: list[str]) -> dict[str, int]:
     for value in values:
         counts[value] = counts.get(value, 0) + 1
     return dict(sorted(counts.items()))
+
+
+def _category_label(category: str) -> str:
+    label = CATEGORY_LABELS.get(category)
+    if label is None:
+        return category
+    return f"{label}（{category}）"
 
 
 def _escape_markdown_table(value: str) -> str:

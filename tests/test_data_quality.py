@@ -189,7 +189,7 @@ def test_render_and_write_data_quality_report(tmp_path: Path) -> None:
     markdown = render_data_quality_report(report)
     output_path = write_data_quality_report(report, tmp_path / "report.md")
 
-    assert "- Status: PASS" in markdown
+    assert "- 状态：PASS" in markdown
     assert output_path.read_text(encoding="utf-8") == markdown
 
 
@@ -217,7 +217,7 @@ def test_validate_data_cli_writes_report(tmp_path: Path) -> None:
 
     assert result.exit_code == 0
     assert output_path.exists()
-    assert "Data quality status: PASS" in result.output
+    assert "数据质量状态：PASS" in result.output
 
 
 def test_validate_data_cli_returns_nonzero_on_failure(tmp_path: Path) -> None:
@@ -244,7 +244,7 @@ def test_validate_data_cli_returns_nonzero_on_failure(tmp_path: Path) -> None:
 
     assert result.exit_code == 1
     assert output_path.exists()
-    assert "Data quality status: FAIL" in result.output
+    assert "数据质量状态：FAIL" in result.output
 
 
 def _write_valid_cache(

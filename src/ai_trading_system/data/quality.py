@@ -115,41 +115,41 @@ def validate_data_cache(
 
 def render_data_quality_report(report: DataQualityReport) -> str:
     lines = [
-        "# Data Quality Report",
+        "# 数据质量报告",
         "",
-        f"- Status: {report.status}",
-        f"- Checked at: {report.checked_at.isoformat()}",
-        f"- As of: {report.as_of.isoformat()}",
-        f"- Errors: {report.error_count}",
-        f"- Warnings: {report.warning_count}",
+        f"- 状态：{report.status}",
+        f"- 检查时间：{report.checked_at.isoformat()}",
+        f"- 评估日期：{report.as_of.isoformat()}",
+        f"- 错误数：{report.error_count}",
+        f"- 警告数：{report.warning_count}",
         "",
-        "## Files",
+        "## 文件",
         "",
-        _render_file_summary("Prices", report.price_summary),
-        _render_file_summary("Rates", report.rate_summary),
+        _render_file_summary("价格数据", report.price_summary),
+        _render_file_summary("利率数据", report.rate_summary),
         "",
-        "## Expected Coverage",
+        "## 预期覆盖范围",
         "",
-        f"- Price tickers: {', '.join(report.expected_price_tickers)}",
-        f"- Rate series: {', '.join(report.expected_rate_series)}",
+        f"- 价格标的：{', '.join(report.expected_price_tickers)}",
+        f"- 利率序列：{', '.join(report.expected_rate_series)}",
         "",
-        "## Issues",
+        "## 问题",
         "",
     ]
 
     if not report.issues:
-        lines.append("No issues found.")
+        lines.append("未发现问题。")
     else:
         lines.extend(
             [
-                "| Severity | Code | Rows | Message | Sample |",
+                "| 级别 | Code | 行数 | 说明 | 样例 |",
                 "|---|---|---:|---|---|",
             ]
         )
         for issue in report.issues:
             lines.append(
                 "| "
-                f"{issue.severity.value} | "
+                f"{_severity_label(issue.severity)} | "
                 f"{issue.code} | "
                 f"{issue.rows if issue.rows is not None else ''} | "
                 f"{_escape_markdown_table(issue.message)} | "
@@ -179,7 +179,7 @@ def _read_csv(
             DataQualityIssue(
                 Severity.ERROR,
                 f"{label}_file_missing",
-                f"{label} file does not exist: {path}",
+                f"{_data_label(label)}文件不存在：{path}",
             )
         )
         return None, DataFileSummary(path=path, exists=False)
@@ -191,7 +191,7 @@ def _read_csv(
             DataQualityIssue(
                 Severity.ERROR,
                 f"{label}_file_unreadable",
-                f"{label} file cannot be read as CSV: {exc}",
+                f"{_data_label(label)}文件无法按 CSV 读取：{exc}",
             )
         )
         return None, DataFileSummary(path=path, exists=True, sha256=_file_sha256(path))
@@ -213,7 +213,7 @@ def _validate_prices(
     issues: list[DataQualityIssue],
 ) -> DataFileSummary:
     if prices.empty:
-        issues.append(DataQualityIssue(Severity.ERROR, "prices_empty", "prices file has no rows"))
+        issues.append(DataQualityIssue(Severity.ERROR, "prices_empty", "价格数据没有任何行"))
         return summary
 
     if not _check_required_columns(prices, PRICE_REQUIRED_COLUMNS, "prices", issues):
@@ -227,7 +227,7 @@ def _validate_prices(
             DataQualityIssue(
                 Severity.ERROR,
                 "prices_invalid_date",
-                "prices contains invalid date values",
+                "价格数据包含无法解析的日期",
                 rows=int(invalid_dates.sum()),
                 sample=_sample_rows(frame.loc[invalid_dates], ["date", "ticker"]),
             )
@@ -252,7 +252,7 @@ def _validate_rates(
     issues: list[DataQualityIssue],
 ) -> DataFileSummary:
     if rates.empty:
-        issues.append(DataQualityIssue(Severity.ERROR, "rates_empty", "rates file has no rows"))
+        issues.append(DataQualityIssue(Severity.ERROR, "rates_empty", "利率数据没有任何行"))
         return summary
 
     if not _check_required_columns(rates, RATE_REQUIRED_COLUMNS, "rates", issues):
@@ -268,7 +268,7 @@ def _validate_rates(
             DataQualityIssue(
                 Severity.ERROR,
                 "rates_invalid_date",
-                "rates contains invalid date values",
+                "利率数据包含无法解析的日期",
                 rows=int(invalid_dates.sum()),
                 sample=_sample_rows(frame.loc[invalid_dates], ["date", "series"]),
             )
@@ -280,7 +280,7 @@ def _validate_rates(
             DataQualityIssue(
                 Severity.ERROR,
                 "rates_invalid_value",
-                "rates contains non-numeric or missing values",
+                "利率数据包含缺失或非数值",
                 rows=int(invalid_values.sum()),
                 sample=_sample_rows(frame.loc[invalid_values], ["date", "series", "value"]),
             )
@@ -308,7 +308,7 @@ def _check_required_columns(
             DataQualityIssue(
                 Severity.ERROR,
                 f"{label}_missing_columns",
-                f"{label} is missing required columns: {', '.join(missing)}",
+                f"{_data_label(label)}缺少必需字段：{', '.join(missing)}",
             )
         )
         return False
@@ -327,7 +327,7 @@ def _check_duplicate_keys(
             DataQualityIssue(
                 Severity.ERROR,
                 f"{label}_duplicate_keys",
-                f"{label} contains duplicate keys on {', '.join(key_columns)}",
+                f"{_data_label(label)}存在重复主键：{', '.join(key_columns)}",
                 rows=int(duplicates.sum()),
                 sample=_sample_rows(data.loc[duplicates], key_columns),
             )
@@ -348,7 +348,7 @@ def _check_expected_values(
             DataQualityIssue(
                 Severity.ERROR,
                 f"{label}_missing_expected_values",
-                f"{label} is missing expected {column} values: {', '.join(missing)}",
+                f"{_data_label(label)}缺少预期的 {column}：{', '.join(missing)}",
             )
         )
 
@@ -369,7 +369,7 @@ def _check_price_numeric_rules(
                 DataQualityIssue(
                     Severity.ERROR,
                     f"prices_invalid_{column}",
-                    f"prices contains missing or non-numeric {column}",
+                    f"价格数据的 {column} 包含缺失或非数值",
                     rows=int(invalid.sum()),
                     sample=_sample_rows(frame.loc[invalid], ["date", "ticker", column]),
                 )
@@ -381,7 +381,7 @@ def _check_price_numeric_rules(
                 DataQualityIssue(
                     Severity.ERROR,
                     f"prices_non_positive_{column}",
-                    f"prices contains non-positive {column}",
+                    f"价格数据的 {column} 包含非正数",
                     rows=int(non_positive.sum()),
                     sample=_sample_rows(frame.loc[non_positive], ["date", "ticker", column]),
                 )
@@ -393,7 +393,7 @@ def _check_price_numeric_rules(
             DataQualityIssue(
                 Severity.ERROR,
                 "prices_negative_volume",
-                "prices contains negative volume",
+                "价格数据包含负成交量",
                 rows=int(invalid_volume.sum()),
                 sample=_sample_rows(frame.loc[invalid_volume], ["date", "ticker", "volume"]),
             )
@@ -405,7 +405,7 @@ def _check_price_numeric_rules(
             DataQualityIssue(
                 Severity.WARNING,
                 "prices_missing_volume",
-                "prices contains missing or non-numeric volume",
+                "价格数据的成交量包含缺失或非数值",
                 rows=int(missing_volume.sum()),
                 sample=_sample_rows(frame.loc[missing_volume], ["date", "ticker", "volume"]),
             )
@@ -428,7 +428,7 @@ def _check_price_numeric_rules(
             DataQualityIssue(
                 Severity.ERROR,
                 "prices_invalid_ohlc",
-                "prices violates OHLC invariants",
+                "价格数据违反 OHLC 逻辑约束",
                 rows=int(ohlc_invalid.sum()),
                 sample=_sample_rows(
                     frame.loc[ohlc_invalid],
@@ -463,7 +463,7 @@ def _check_price_staleness(
             DataQualityIssue(
                 Severity.ERROR,
                 "prices_future_dates",
-                "prices contains dates after as_of",
+                "价格数据包含评估日期之后的数据",
                 sample=", ".join(future[:10]),
             )
         )
@@ -472,7 +472,7 @@ def _check_price_staleness(
             DataQualityIssue(
                 Severity.ERROR,
                 "prices_stale",
-                "prices latest dates are too old for scoring",
+                "价格数据最新日期过旧，不能用于评分",
                 sample=", ".join(stale[:10]),
             )
         )
@@ -507,7 +507,7 @@ def _check_price_moves(
             DataQualityIssue(
                 Severity.ERROR,
                 "prices_extreme_adj_close_move",
-                "prices contains extreme adjusted-close daily moves",
+                "价格数据包含极端的调整收盘价单日波动",
                 rows=int(extreme.sum()),
                 sample=_sample_rows(
                     data.loc[extreme],
@@ -520,7 +520,7 @@ def _check_price_moves(
             DataQualityIssue(
                 Severity.WARNING,
                 "prices_suspicious_adj_close_move",
-                "prices contains suspicious adjusted-close daily moves",
+                "价格数据包含可疑的调整收盘价单日波动",
                 rows=int(suspicious.sum()),
                 sample=_sample_rows(
                     data.loc[suspicious],
@@ -546,7 +546,7 @@ def _check_price_moves(
             DataQualityIssue(
                 Severity.WARNING,
                 "prices_adjustment_ratio_jump",
-                "prices adjusted-close ratio changed sharply",
+                "价格数据的复权比例出现明显跳变",
                 rows=int(ratio_jump.sum()),
                 sample=_sample_rows(
                     data.loc[ratio_jump],
@@ -584,7 +584,7 @@ def _check_rate_ranges(
             DataQualityIssue(
                 Severity.ERROR,
                 "rates_out_of_range",
-                "rates contains values outside configured plausible range",
+                "利率数据包含超出配置合理范围的数值",
                 rows=int(invalid.sum()),
                 sample=_sample_rows(frame.loc[invalid], ["date", "series", "value"]),
             )
@@ -616,7 +616,7 @@ def _check_rate_staleness(
             DataQualityIssue(
                 Severity.ERROR,
                 "rates_future_dates",
-                "rates contains dates after as_of",
+                "利率数据包含评估日期之后的数据",
                 sample=", ".join(future[:10]),
             )
         )
@@ -625,7 +625,7 @@ def _check_rate_staleness(
             DataQualityIssue(
                 Severity.ERROR,
                 "rates_stale",
-                "rates latest dates are too old for scoring",
+                "利率数据最新日期过旧，不能用于评分",
                 sample=", ".join(stale[:10]),
             )
         )
@@ -650,7 +650,7 @@ def _check_rate_moves(
             DataQualityIssue(
                 Severity.ERROR,
                 "rates_extreme_daily_change",
-                "rates contains extreme daily changes",
+                "利率数据包含极端单日变化",
                 rows=int(extreme.sum()),
                 sample=_sample_rows(data.loc[extreme], ["date", "series", "value", "_change"]),
             )
@@ -660,7 +660,7 @@ def _check_rate_moves(
             DataQualityIssue(
                 Severity.WARNING,
                 "rates_suspicious_daily_change",
-                "rates contains suspicious daily changes",
+                "利率数据包含可疑单日变化",
                 rows=int(suspicious.sum()),
                 sample=_sample_rows(data.loc[suspicious], ["date", "series", "value", "_change"]),
             )
@@ -698,14 +698,24 @@ def _file_sha256(path: Path) -> str:
 
 def _render_file_summary(label: str, summary: DataFileSummary) -> str:
     if not summary.exists:
-        return f"- {label}: missing at `{summary.path}`"
+        return f"- {label}：缺失，路径 `{summary.path}`"
     min_date = summary.min_date.isoformat() if summary.min_date else "n/a"
     max_date = summary.max_date.isoformat() if summary.max_date else "n/a"
     checksum = summary.sha256 or "n/a"
     return (
-        f"- {label}: `{summary.path}`, rows={summary.rows}, "
-        f"date_range={min_date} to {max_date}, sha256={checksum}"
+        f"- {label}：`{summary.path}`，行数={summary.rows}，"
+        f"日期范围={min_date} 至 {max_date}，sha256={checksum}"
     )
+
+
+def _severity_label(severity: Severity) -> str:
+    if severity == Severity.ERROR:
+        return "错误"
+    return "警告"
+
+
+def _data_label(label: str) -> str:
+    return {"prices": "价格数据", "rates": "利率数据"}.get(label, label)
 
 
 def _escape_markdown_table(value: str) -> str:

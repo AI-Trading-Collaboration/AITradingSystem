@@ -94,13 +94,13 @@ risk_sentiment:
 placeholders:
   fundamentals:
     score: 50
-    reason: "MVP placeholder: fundamental and earnings data are not integrated yet."
+    reason: "MVP 阶段占位：尚未接入基本面和财报数据。"
   valuation:
     score: 50
-    reason: "MVP placeholder: valuation and expectation data are not integrated yet."
+    reason: "MVP 阶段占位：尚未接入估值和预期数据。"
   policy_geopolitics:
     score: 50
-    reason: "MVP placeholder: policy and geopolitics event workflow is not integrated yet."
+    reason: "MVP 阶段占位：尚未接入政策和地缘事件流程。"
 
 position_change:
   minimum_action_delta: 0.05

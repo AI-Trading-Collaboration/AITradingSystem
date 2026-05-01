@@ -1,6 +1,6 @@
 prices:
-  # Default thresholds apply to equities and ETFs. Volatility indexes can have
-  # structurally larger daily moves, so ticker-specific overrides are explicit.
+  # 默认阈值用于股票和 ETF。波动率指数的单日变化天然更大，
+  # 因此必须显式配置 ticker 级别覆盖，而不是放宽所有标的。
   max_stale_calendar_days: 7
   suspicious_daily_return_abs: 0.20
   extreme_daily_return_abs: 0.50

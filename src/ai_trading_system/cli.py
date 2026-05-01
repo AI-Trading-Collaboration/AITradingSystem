@@ -39,18 +39,18 @@ from ai_trading_system.scoring.daily import (
 )
 from ai_trading_system.scoring.position_model import ModuleScore, WeightedScoreModel
 
-app = typer.Typer(help="AI trading trend analysis toolkit.", no_args_is_help=True)
+app = typer.Typer(help="AI 产业链趋势分析和仓位管理工具。", no_args_is_help=True)
 console = Console()
 
 
 @app.callback()
 def main() -> None:
-    """AI trading trend analysis toolkit."""
+    """AI 产业链趋势分析和仓位管理工具。"""
 
 
 @app.command("score-example")
 def score_example() -> None:
-    """Print an example position recommendation."""
+    """输出一份示例仓位建议。"""
     model = WeightedScoreModel()
     portfolio = load_portfolio()
     recommendation = model.recommend(
@@ -82,25 +82,25 @@ def score_example() -> None:
 def download_data(
     start: Annotated[
         str,
-        typer.Option(help="Start date, inclusive, in YYYY-MM-DD format."),
+        typer.Option(help="开始日期，包含当天，格式为 YYYY-MM-DD。"),
     ] = "2018-01-01",
     end: Annotated[
         str | None,
-        typer.Option(help="End date, inclusive, in YYYY-MM-DD format."),
+        typer.Option(help="结束日期，包含当天，格式为 YYYY-MM-DD。"),
     ] = None,
     output_dir: Annotated[
         Path,
-        typer.Option(help="Output cache directory."),
+        typer.Option(help="输出缓存目录。"),
     ] = PROJECT_ROOT / "data" / "raw",
     full_universe: Annotated[
         bool,
         typer.Option(
             "--full-universe",
-            help="Include every configured AI-chain ticker, not only the core watchlist.",
+            help="包含配置中的完整 AI 产业链标的，而不只下载核心观察池。",
         ),
     ] = False,
 ) -> None:
-    """Download daily market prices and FRED rate data into local CSV cache."""
+    """下载市场日线价格和 FRED 利率数据到本地 CSV 缓存。"""
     universe = load_universe()
     start_date = _parse_date(start)
     end_date = _parse_date(end) if end else date.today()
@@ -113,40 +113,40 @@ def download_data(
         include_full_ai_chain=full_universe,
     )
 
-    console.print("[green]Data cache updated.[/green]")
-    console.print(f"Prices: {summary.prices_path} ({summary.price_rows} rows)")
-    console.print(f"Rates:  {summary.rates_path} ({summary.rate_rows} rows)")
-    console.print(f"Price tickers: {', '.join(summary.price_tickers)}")
-    console.print(f"Rate series: {', '.join(summary.rate_series)}")
+    console.print("[green]数据缓存已更新。[/green]")
+    console.print(f"价格数据：{summary.prices_path}（{summary.price_rows} 行）")
+    console.print(f"利率数据：{summary.rates_path}（{summary.rate_rows} 行）")
+    console.print(f"价格标的：{', '.join(summary.price_tickers)}")
+    console.print(f"利率序列：{', '.join(summary.rate_series)}")
 
 
 @app.command("validate-data")
 def validate_data(
     prices_path: Annotated[
         Path,
-        typer.Option(help="Path to standardized daily prices CSV."),
+        typer.Option(help="标准化日线价格 CSV 路径。"),
     ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
     rates_path: Annotated[
         Path,
-        typer.Option(help="Path to standardized daily rates CSV."),
+        typer.Option(help="标准化日线利率 CSV 路径。"),
     ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     as_of: Annotated[
         str | None,
-        typer.Option(help="Validation date in YYYY-MM-DD format. Defaults to today."),
+        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
     ] = None,
     output_path: Annotated[
         Path | None,
-        typer.Option(help="Markdown report output path."),
+        typer.Option(help="Markdown 报告输出路径。"),
     ] = None,
     full_universe: Annotated[
         bool,
         typer.Option(
             "--full-universe",
-            help="Validate every configured AI-chain ticker, not only the core watchlist.",
+            help="校验配置中的完整 AI 产业链标的，而不只校验核心观察池。",
         ),
     ] = False,
 ) -> None:
-    """Validate cached data and write a Markdown quality report."""
+    """校验缓存数据并写入 Markdown 质量报告。"""
     universe = load_universe()
     quality_config = load_data_quality()
     validation_date = _parse_date(as_of) if as_of else date.today()
@@ -169,9 +169,9 @@ def validate_data(
     write_data_quality_report(report, report_path)
 
     status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
-    console.print(f"[{status_style}]Data quality status: {report.status}[/{status_style}]")
-    console.print(f"Report: {report_path}")
-    console.print(f"Errors: {report.error_count}; warnings: {report.warning_count}")
+    console.print(f"[{status_style}]数据质量状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_path}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
 
     if not report.passed:
         raise typer.Exit(code=1)
@@ -181,37 +181,37 @@ def validate_data(
 def build_features(
     prices_path: Annotated[
         Path,
-        typer.Option(help="Path to standardized daily prices CSV."),
+        typer.Option(help="标准化日线价格 CSV 路径。"),
     ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
     rates_path: Annotated[
         Path,
-        typer.Option(help="Path to standardized daily rates CSV."),
+        typer.Option(help="标准化日线利率 CSV 路径。"),
     ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     as_of: Annotated[
         str | None,
-        typer.Option(help="Feature date in YYYY-MM-DD format. Defaults to today."),
+        typer.Option(help="特征日期，格式为 YYYY-MM-DD，默认今天。"),
     ] = None,
     output_path: Annotated[
         Path,
-        typer.Option(help="Feature CSV output path."),
+        typer.Option(help="特征 CSV 输出路径。"),
     ] = PROJECT_ROOT / "data" / "processed" / "features_daily.csv",
     report_path: Annotated[
         Path | None,
-        typer.Option(help="Markdown feature summary output path."),
+        typer.Option(help="Markdown 特征摘要输出路径。"),
     ] = None,
     quality_report_path: Annotated[
         Path | None,
-        typer.Option(help="Markdown data quality report output path."),
+        typer.Option(help="Markdown 数据质量报告输出路径。"),
     ] = None,
     full_universe: Annotated[
         bool,
         typer.Option(
             "--full-universe",
-            help="Validate and build features for every configured AI-chain ticker.",
+            help="校验并构建配置中的完整 AI 产业链标的特征。",
         ),
     ] = False,
 ) -> None:
-    """Build daily market features after enforcing the data quality gate."""
+    """通过数据质量门禁后构建每日市场特征。"""
     universe = load_universe()
     data_quality_config = load_data_quality()
     feature_config = load_features()
@@ -240,11 +240,11 @@ def build_features(
     )
     write_data_quality_report(data_quality_report, quality_output)
     if not data_quality_report.passed:
-        console.print("[red]Data quality gate failed. Feature build stopped.[/red]")
-        console.print(f"Data quality report: {quality_output}")
+        console.print("[red]数据质量门禁失败，已停止特征构建。[/red]")
+        console.print(f"数据质量报告：{quality_output}")
         console.print(
-            f"Errors: {data_quality_report.error_count}; "
-            f"warnings: {data_quality_report.warning_count}"
+            f"错误数：{data_quality_report.error_count}；"
+            f"警告数：{data_quality_report.warning_count}"
         )
         raise typer.Exit(code=1)
 
@@ -265,56 +265,56 @@ def build_features(
     )
 
     status_style = "green" if feature_set.status == "PASS" else "yellow"
-    console.print(f"[{status_style}]Feature build status: {feature_set.status}[/{status_style}]")
-    console.print(f"Features: {features_output} ({len(feature_set.rows)} rows for {feature_date})")
-    console.print(f"Feature summary: {feature_summary_output}")
-    console.print(f"Data quality report: {quality_output} ({data_quality_report.status})")
-    console.print(f"Feature warnings: {len(feature_set.warnings)}")
+    console.print(f"[{status_style}]特征构建状态：{feature_set.status}[/{status_style}]")
+    console.print(f"特征数据：{features_output}（{feature_date} 共 {len(feature_set.rows)} 行）")
+    console.print(f"特征摘要：{feature_summary_output}")
+    console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
+    console.print(f"特征警告数：{len(feature_set.warnings)}")
 
 
 @app.command("score-daily")
 def score_daily(
     prices_path: Annotated[
         Path,
-        typer.Option(help="Path to standardized daily prices CSV."),
+        typer.Option(help="标准化日线价格 CSV 路径。"),
     ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
     rates_path: Annotated[
         Path,
-        typer.Option(help="Path to standardized daily rates CSV."),
+        typer.Option(help="标准化日线利率 CSV 路径。"),
     ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     as_of: Annotated[
         str | None,
-        typer.Option(help="Score date in YYYY-MM-DD format. Defaults to today."),
+        typer.Option(help="评分日期，格式为 YYYY-MM-DD，默认今天。"),
     ] = None,
     features_path: Annotated[
         Path,
-        typer.Option(help="Feature CSV output path."),
+        typer.Option(help="特征 CSV 输出路径。"),
     ] = PROJECT_ROOT / "data" / "processed" / "features_daily.csv",
     scores_path: Annotated[
         Path,
-        typer.Option(help="Score CSV output path."),
+        typer.Option(help="评分 CSV 输出路径。"),
     ] = PROJECT_ROOT / "data" / "processed" / "scores_daily.csv",
     report_path: Annotated[
         Path | None,
-        typer.Option(help="Markdown daily score report output path."),
+        typer.Option(help="Markdown 每日评分报告输出路径。"),
     ] = None,
     feature_report_path: Annotated[
         Path | None,
-        typer.Option(help="Markdown feature summary output path."),
+        typer.Option(help="Markdown 特征摘要输出路径。"),
     ] = None,
     quality_report_path: Annotated[
         Path | None,
-        typer.Option(help="Markdown data quality report output path."),
+        typer.Option(help="Markdown 数据质量报告输出路径。"),
     ] = None,
     full_universe: Annotated[
         bool,
         typer.Option(
             "--full-universe",
-            help="Validate and score every configured AI-chain ticker.",
+            help="校验并评分配置中的完整 AI 产业链标的。",
         ),
     ] = False,
 ) -> None:
-    """Build features and produce the daily market score report."""
+    """构建特征并生成每日市场评分报告。"""
     universe = load_universe()
     data_quality_config = load_data_quality()
     feature_config = load_features()
@@ -349,11 +349,11 @@ def score_daily(
     )
     write_data_quality_report(data_quality_report, quality_output)
     if not data_quality_report.passed:
-        console.print("[red]Data quality gate failed. Daily score stopped.[/red]")
-        console.print(f"Data quality report: {quality_output}")
+        console.print("[red]数据质量门禁失败，已停止每日评分。[/red]")
+        console.print(f"数据质量报告：{quality_output}")
         console.print(
-            f"Errors: {data_quality_report.error_count}; "
-            f"warnings: {data_quality_report.warning_count}"
+            f"错误数：{data_quality_report.error_count}；"
+            f"警告数：{data_quality_report.warning_count}"
         )
         raise typer.Exit(code=1)
 
@@ -390,20 +390,20 @@ def score_daily(
     )
 
     status_style = "green" if score_report.status == "PASS" else "yellow"
-    console.print(f"[{status_style}]Daily score status: {score_report.status}[/{status_style}]")
-    console.print(f"Total score: {score_report.recommendation.total_score:.1f}")
-    console.print(f"Position state: {score_report.recommendation.label}")
-    console.print(f"Daily score report: {daily_report_output}")
-    console.print(f"Scores: {scores_output}")
-    console.print(f"Feature summary: {feature_summary_output}")
-    console.print(f"Data quality report: {quality_output} ({data_quality_report.status})")
+    console.print(f"[{status_style}]每日评分状态：{score_report.status}[/{status_style}]")
+    console.print(f"总分：{score_report.recommendation.total_score:.1f}")
+    console.print(f"仓位状态：{score_report.recommendation.label}")
+    console.print(f"每日评分报告：{daily_report_output}")
+    console.print(f"评分数据：{scores_output}")
+    console.print(f"特征摘要：{feature_summary_output}")
+    console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
 
 
 def _parse_date(value: str) -> date:
     try:
         return date.fromisoformat(value)
     except ValueError as exc:
-        raise typer.BadParameter("Date must use YYYY-MM-DD format.") from exc
+        raise typer.BadParameter("日期必须使用 YYYY-MM-DD 格式。") from exc
 
 
 if __name__ == "__main__":
