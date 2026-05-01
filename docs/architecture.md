@@ -27,6 +27,13 @@
 
 财报、估值、新闻与政策事件放到第二期和第三期。
 
+本地缓存先采用 CSV：
+
+- `prices_daily.csv`：标准化后的日线 OHLCV 数据。
+- `rates_daily.csv`：长表格式的 FRED 利率数据。
+
+数据下载命令为 `aits download-data`。默认只抓核心观察池，`--full-universe` 才抓完整 AI 产业链配置，避免 MVP 阶段数据面过宽。
+
 ## 特征层
 
 第一期特征保持可解释：

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from pathlib import Path
 from typing import Any
 
@@ -65,3 +66,36 @@ def load_portfolio(path: Path | str = DEFAULT_PORTFOLIO_CONFIG_PATH) -> Portfoli
     with config_path.open("r", encoding="utf-8") as file:
         raw: dict[str, Any] = yaml.safe_load(file)
     return PortfolioConfig.model_validate(raw)
+
+
+def configured_price_tickers(
+    config: UniverseConfig,
+    include_full_ai_chain: bool = False,
+) -> list[str]:
+    tickers: list[str] = []
+    tickers.extend(config.market.benchmarks)
+    tickers.extend(config.market.defensive)
+    tickers.extend(config.macro.volatility)
+    tickers.extend(config.macro.currency)
+    tickers.extend(config.ai_chain.get("core_watchlist", []))
+
+    if include_full_ai_chain:
+        for group_name, group_tickers in config.ai_chain.items():
+            if group_name != "core_watchlist":
+                tickers.extend(group_tickers)
+
+    return dedupe_preserving_order(tickers)
+
+
+def configured_rate_series(config: UniverseConfig) -> list[str]:
+    return dedupe_preserving_order(config.macro.rates)
+
+
+def dedupe_preserving_order(items: Iterable[str]) -> list[str]:
+    seen: set[str] = set()
+    unique_items: list[str] = []
+    for item in items:
+        if item not in seen:
+            unique_items.append(item)
+            seen.add(item)
+    return unique_items

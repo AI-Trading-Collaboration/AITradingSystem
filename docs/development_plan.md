@@ -85,11 +85,20 @@
 
 第一个开发迭代建议只做 5 件事：
 
-1. 实现行情数据下载和本地缓存。
+1. 实现行情数据下载和本地缓存。状态：已实现基础版，命令为 `aits download-data`。
 2. 实现技术特征计算。
 3. 实现 100 分评分到仓位区间的规则。
 4. 实现简单回测引擎。
 5. 输出一份日报 Markdown。
+
+## 阶段 1 数据缓存约定
+
+第一版数据缓存使用 CSV，便于检查和调试：
+
+- `data/raw/prices_daily.csv`：日线价格，字段为 `date,ticker,open,high,low,close,adj_close,volume`。
+- `data/raw/rates_daily.csv`：FRED 利率数据，字段为 `date,series,value`。
+
+默认下载核心观察范围。`--full-universe` 会额外下载配置文件中的完整 AI 产业链标的。
 
 ## 已确认的产品决策
 

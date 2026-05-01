@@ -22,7 +22,7 @@ dependencies = [
 
 [project.optional-dependencies]
 data = [
-  "pandas-datareader>=0.10",
+  "requests>=2.31",
   "yfinance>=0.2.40",
 ]
 dashboard = [
@@ -33,6 +33,7 @@ dev = [
   "mypy>=1.10",
   "pytest>=8.2",
   "ruff>=0.5",
+  "pandas-stubs>=2.2",
   "types-PyYAML>=6.0.12",
 ]
 

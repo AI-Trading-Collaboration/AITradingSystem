@@ -41,6 +41,18 @@ python -m pip install -e ".[dev,data,dashboard]"
 python -m pytest
 ```
 
+下载阶段 1 所需的日线数据：
+
+```powershell
+aits download-data --start 2018-01-01
+```
+
+默认会缓存核心范围：`SPY`、`QQQ`、`SMH`、`SOXX`、防守 ETF、`^VIX`、美元指数、`MSFT`、`GOOG`、`TSM`、`INTC`、`AMD`、`NVDA`，以及 FRED 的 `DGS2`、`DGS10`。如需抓取配置里的完整 AI 产业链标的：
+
+```powershell
+aits download-data --start 2018-01-01 --full-universe
+```
+
 查看示例评分：
 
 ```powershell
