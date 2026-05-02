@@ -19,6 +19,8 @@ from ai_trading_system.config import (
 from ai_trading_system.fundamentals.sec_metrics import (
     build_sec_fundamental_metrics_report,
     render_sec_fundamental_metrics_report,
+    render_sec_fundamental_metrics_validation_report,
+    validate_sec_fundamental_metrics_csv,
     write_sec_fundamental_metrics_csv,
 )
 from ai_trading_system.fundamentals.sec_validation import validate_sec_companyfacts_cache
@@ -118,6 +120,50 @@ def test_write_sec_fundamental_metrics_csv_upserts_as_of(tmp_path: Path) -> None
     assert set(frame["metric_id"]) == {"revenue"}
 
 
+def test_validate_sec_fundamental_metrics_csv_rejects_future_filed_date(
+    tmp_path: Path,
+) -> None:
+    output_path = tmp_path / "sec_fundamentals.csv"
+    pd.DataFrame(
+        [
+            {
+                "as_of": "2026-05-02",
+                "ticker": "NVDA",
+                "cik": "0001045810",
+                "company_name": "NVIDIA Corporation",
+                "metric_id": "revenue",
+                "metric_name": "Revenue",
+                "period_type": "annual",
+                "fiscal_year": 2026,
+                "fiscal_period": "FY",
+                "end_date": "2026-01-31",
+                "filed_date": "2026-05-03",
+                "form": "10-K",
+                "taxonomy": "us-gaap",
+                "concept": "Revenues",
+                "unit": "USD",
+                "value": 1000,
+                "accession_number": "0001045810-26-000001",
+                "source_path": str(tmp_path / "nvda_companyfacts.json"),
+            }
+        ]
+    ).to_csv(output_path, index=False)
+
+    report = validate_sec_fundamental_metrics_csv(
+        companies=_sec_config(),
+        metrics=_metrics_config(),
+        input_path=output_path,
+        as_of=_date(),
+    )
+    markdown = render_sec_fundamental_metrics_validation_report(report)
+
+    assert not report.passed
+    assert "sec_fundamental_metrics_filed_date_after_as_of" in {
+        issue.code for issue in report.issues
+    }
+    assert "SEC 基本面指标 CSV 校验报告" in markdown
+
+
 def test_fundamentals_cli_extract_sec_metrics(tmp_path: Path) -> None:
     sec_config_path = tmp_path / "sec_companies.yaml"
     sec_config_path.write_text(
@@ -181,6 +227,73 @@ metrics:
     assert "SEC 基本面指标抽取状态：PASS" in result.output
     assert output_path.exists()
     assert report_path.exists()
+    assert validation_report_path.exists()
+
+
+def test_fundamentals_cli_validate_sec_metrics(tmp_path: Path) -> None:
+    sec_config_path = tmp_path / "sec_companies.yaml"
+    sec_config_path.write_text(
+        """
+companies:
+  - ticker: NVDA
+    cik: "0001045810"
+    company_name: NVIDIA Corporation
+    expected_taxonomies:
+      - us-gaap
+      - dei
+""",
+        encoding="utf-8",
+    )
+    metrics_path = tmp_path / "fundamental_metrics.yaml"
+    metrics_path.write_text(
+        """
+metrics:
+  - metric_id: revenue
+    name: Revenue
+    description: SEC companyfacts 披露的总收入。
+    preferred_periods:
+      - annual
+    concepts:
+      - taxonomy: us-gaap
+        concept: Revenues
+        unit: USD
+""",
+        encoding="utf-8",
+    )
+    json_path = _write_companyfacts(tmp_path, ticker="NVDA", cik="0001045810")
+    _write_manifest(tmp_path, ticker="NVDA", cik="0001045810", json_path=json_path)
+    validation = validate_sec_companyfacts_cache(_sec_config(), input_dir=tmp_path, as_of=_date())
+    report = build_sec_fundamental_metrics_report(
+        companies=_sec_config(),
+        metrics=_metrics_config(),
+        input_dir=tmp_path,
+        as_of=_date(),
+        validation_report=validation,
+    )
+    metrics_csv_path = tmp_path / "sec_fundamentals.csv"
+    write_sec_fundamental_metrics_csv(report, metrics_csv_path)
+    validation_report_path = tmp_path / "sec_fundamentals_validation.md"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "fundamentals",
+            "validate-sec-metrics",
+            "--sec-companies-path",
+            str(sec_config_path),
+            "--metrics-path",
+            str(metrics_path),
+            "--input-path",
+            str(metrics_csv_path),
+            "--as-of",
+            "2026-05-02",
+            "--output-path",
+            str(validation_report_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "SEC 基本面指标 CSV 校验状态：PASS" in result.output
     assert validation_report_path.exists()
 
 

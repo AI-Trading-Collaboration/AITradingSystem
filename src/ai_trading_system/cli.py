@@ -73,8 +73,11 @@ from ai_trading_system.fundamentals.sec_metrics import (
     build_sec_fundamental_metrics_report,
     default_sec_fundamental_metrics_csv_path,
     default_sec_fundamental_metrics_report_path,
+    default_sec_fundamental_metrics_validation_report_path,
+    validate_sec_fundamental_metrics_csv,
     write_sec_fundamental_metrics_csv,
     write_sec_fundamental_metrics_report,
+    write_sec_fundamental_metrics_validation_report,
 )
 from ai_trading_system.fundamentals.sec_validation import (
     default_sec_companyfacts_validation_report_path,
@@ -1129,6 +1132,62 @@ def extract_sec_metrics_command(
     console.print(f"指标 CSV：{csv_path}")
     console.print(f"指标报告：{markdown_path}")
     console.print(f"公司数：{report.company_count}；指标行数：{report.row_count}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+
+@fundamentals_app.command("validate-sec-metrics")
+def validate_sec_metrics_command(
+    sec_companies_path: Annotated[
+        Path,
+        typer.Option(help="SEC company CIK 配置文件路径。"),
+    ] = DEFAULT_SEC_COMPANIES_CONFIG_PATH,
+    metrics_path: Annotated[
+        Path,
+        typer.Option(help="SEC 指标映射配置文件路径。"),
+    ] = DEFAULT_FUNDAMENTAL_METRICS_CONFIG_PATH,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="SEC 基本面指标 CSV 输入路径。"),
+    ] = None,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown SEC 基本面指标 CSV 校验报告输出路径。"),
+    ] = None,
+) -> None:
+    """校验已抽取的 SEC 基本面指标 CSV。"""
+    validation_date = _parse_date(as_of) if as_of else date.today()
+    csv_input = input_path or default_sec_fundamental_metrics_csv_path(
+        PROJECT_ROOT / "data" / "processed",
+        validation_date,
+    )
+    report_output = output_path or default_sec_fundamental_metrics_validation_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        validation_date,
+    )
+    report = validate_sec_fundamental_metrics_csv(
+        companies=load_sec_companies(sec_companies_path),
+        metrics=load_fundamental_metrics(metrics_path),
+        input_path=csv_input,
+        as_of=validation_date,
+    )
+    write_sec_fundamental_metrics_validation_report(report, report_output)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]SEC 基本面指标 CSV 校验状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_output}")
+    console.print(f"输入文件：{csv_input}")
+    console.print(
+        f"覆盖率：{report.coverage:.0%}；"
+        f"当日行数：{report.as_of_row_count}；"
+        f"总行数：{report.row_count}"
+    )
     console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
 
     if not report.passed:

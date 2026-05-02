@@ -21,6 +21,7 @@
 |SEC 基本面原始数据|已完成基础版|`config/sec_companies.yaml` 和 `aits fundamentals download-sec-companyfacts`，下载 companyfacts JSON 并写入 manifest|
 |SEC 基本面缓存校验|已完成基础版|`aits fundamentals validate-sec-companyfacts`，校验 JSON、CIK、taxonomy 和 checksum|
 |SEC 基本面指标抽取|已完成基础版|`config/fundamental_metrics.yaml` 和 `aits fundamentals extract-sec-metrics`，先过 SEC 缓存质量门禁，再输出结构化指标摘要和中文报告|
+|SEC 基本面指标校验|已完成基础版|`aits fundamentals validate-sec-metrics`，校验指标 CSV 的 schema、重复键、未来披露日期、数值合法性和配置覆盖率|
 |数据质量门禁|已完成基础版|`aits validate-data`，失败时非零退出|
 |市场环境特征|已完成基础版|`aits build-features`，趋势、相对强弱、VIX、利率、核心池宽度|
 |每日市场评分|已完成基础版|`aits score-daily`，趋势、宏观流动性、风险情绪和占位项|
@@ -511,6 +512,7 @@ aits review-trades --as-of 2026-05-02
 |`outputs/reports/valuation_review_YYYY-MM-DD.md`|估值与拥挤度复核报告|M7|
 |`outputs/reports/trade_review_YYYY-MM-DD.md`|复盘归因报告|M8|
 |`outputs/reports/sec_fundamentals_YYYY-MM-DD.md`|SEC 基本面指标抽取报告，声明 SEC 缓存质量状态和缺失项|阶段 2，已实现基础版|
+|`outputs/reports/sec_fundamentals_validation_YYYY-MM-DD.md`|SEC 基本面指标 CSV 校验报告|阶段 2，已实现基础版|
 
 ## 近期最小落地路径
 

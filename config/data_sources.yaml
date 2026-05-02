@@ -193,6 +193,8 @@ sources:
       - checksum
       - fiscal_period_alignment
       - metric_mapping
+      - extracted_metrics_schema
+      - future_filing_date_rejection
       - restatement_detection
       - duplicate_keys
       - freshness

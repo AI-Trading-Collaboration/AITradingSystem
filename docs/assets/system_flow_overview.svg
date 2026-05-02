@@ -61,7 +61,7 @@
   <text class="box-text" x="348" y="270">data/raw/*.csv</text>
   <text class="box-text" x="348" y="292">download_manifest</text>
   <text class="box-text" x="348" y="314">sec_companyfacts</text>
-  <text class="box-text" x="348" y="336">extract-sec-metrics</text>
+  <text class="box-text" x="348" y="336">extract / validate metrics</text>
 
   <rect class="gate" x="575" y="188" width="210" height="110" />
   <text class="box-title" x="599" y="220">数据质量门禁</text>

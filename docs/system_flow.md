@@ -55,8 +55,10 @@ flowchart TD
         SFM["data/raw/sec_companyfacts/sec_companyfacts_manifest.csv"]
         SFVR["outputs/reports/sec_companyfacts_validation_YYYY-MM-DD.md"]
         SFE["aits fundamentals extract-sec-metrics"]
+        SFVC["aits fundamentals validate-sec-metrics"]
         SFC["data/processed/sec_fundamentals_YYYY-MM-DD.csv"]
         SFR["outputs/reports/sec_fundamentals_YYYY-MM-DD.md"]
+        SFCR["outputs/reports/sec_fundamentals_validation_YYYY-MM-DD.md"]
     end
 
     subgraph Gate["数据质量门禁"]
@@ -135,6 +137,10 @@ flowchart TD
     SFE --> SFVR
     SFE --> SFC
     SFE --> SFR
+    SFC --> SFVC
+    SEC --> SFVC
+    FM --> SFVC
+    SFVC --> SFCR
 
     U --> V
     Q --> V
@@ -306,7 +312,7 @@ flowchart TD
         L["日报集成<br/>汇总 thesis、风险、估值和复盘摘要"]
         M["数据源目录<br/>aits data-sources list/validate"]
         N["基本面一手数据<br/>aits fundamentals list-sec-companies / download-sec-companyfacts"]
-        O["SEC 基本面指标摘要<br/>aits fundamentals extract-sec-metrics"]
+        O["SEC 基本面指标摘要<br/>aits fundamentals extract-sec-metrics / validate-sec-metrics"]
     end
 
     C --> D
@@ -357,8 +363,10 @@ flowchart TD
 |SEC 基本面下载|`aits fundamentals download-sec-companyfacts`|下载 SEC companyfacts 原始 JSON 并写入审计 manifest；暂不进入自动评分|已实现基础版|
 |SEC 基本面校验|`aits fundamentals validate-sec-companyfacts`|校验 SEC companyfacts JSON、CIK、taxonomy 和 manifest checksum|已实现基础版|
 |SEC 指标抽取|`aits fundamentals extract-sec-metrics`|先执行 SEC companyfacts 质量门禁，通过后抽取收入、毛利、营业利润、净利润、研发和 CapEx 等结构化摘要|已实现基础版|
+|SEC 指标校验|`aits fundamentals validate-sec-metrics`|校验 SEC 基本面指标 CSV 的 schema、重复键、未来披露日期、数值合法性和配置覆盖率|已实现基础版|
 |SEC 指标缓存|`data/processed/sec_fundamentals_YYYY-MM-DD.csv`|保存 SEC 基本面指标结构化抽取结果，不直接等同于自动评分输入|已实现基础版|
 |SEC 指标报告|`outputs/reports/sec_fundamentals_YYYY-MM-DD.md`|输出 SEC 缓存校验状态、抽取行数、缺失指标和方法限制|已实现基础版|
+|SEC 指标校验报告|`outputs/reports/sec_fundamentals_validation_YYYY-MM-DD.md`|声明抽取后 CSV 是否可进入后续基本面评分开发|已实现基础版|
 |交易假设|`data/external/trade_theses/`|记录交易 thesis、验证指标和证伪条件|已实现基础版|
 |交易假设模板|`docs/examples/trade_theses/`|提供可复制 YAML 模板，不提交个人记录|已实现基础版|
 |假设校验|`aits thesis validate`|校验 schema、观察池引用、产业链节点和证伪约束|已实现基础版|

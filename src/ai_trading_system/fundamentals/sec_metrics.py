@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import json
+import math
 from dataclasses import dataclass, field
 from datetime import date
 from enum import StrEnum
+from numbers import Real
 from pathlib import Path
 from typing import Any, Literal
 
@@ -95,6 +97,43 @@ class SecFundamentalMetricsReport:
         return "PASS"
 
 
+@dataclass(frozen=True)
+class SecFundamentalMetricsCsvValidationReport:
+    as_of: date
+    input_path: Path
+    row_count: int
+    as_of_row_count: int
+    expected_observation_count: int
+    observed_observation_count: int
+    issues: tuple[SecMetricIssue, ...] = field(default_factory=tuple)
+
+    @property
+    def error_count(self) -> int:
+        return sum(1 for issue in self.issues if issue.severity == SecMetricIssueSeverity.ERROR)
+
+    @property
+    def warning_count(self) -> int:
+        return sum(1 for issue in self.issues if issue.severity == SecMetricIssueSeverity.WARNING)
+
+    @property
+    def coverage(self) -> float:
+        if self.expected_observation_count == 0:
+            return 0.0
+        return self.observed_observation_count / self.expected_observation_count
+
+    @property
+    def passed(self) -> bool:
+        return self.error_count == 0
+
+    @property
+    def status(self) -> str:
+        if self.error_count:
+            return "FAIL"
+        if self.warning_count:
+            return "PASS_WITH_WARNINGS"
+        return "PASS"
+
+
 def build_sec_fundamental_metrics_report(
     companies: SecCompaniesConfig,
     metrics: FundamentalMetricsConfig,
@@ -156,7 +195,7 @@ def write_sec_fundamental_metrics_csv(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     new_frame = pd.DataFrame(
         [_row_record(row) for row in report.rows],
-        columns=list(_SEC_FUNDAMENTAL_METRIC_COLUMNS),
+        columns=list(SEC_FUNDAMENTAL_METRIC_COLUMNS),
     )
     if output_path.exists():
         existing = pd.read_csv(output_path)
@@ -277,6 +316,195 @@ def write_sec_fundamental_metrics_report(
     return output_path
 
 
+def validate_sec_fundamental_metrics_csv(
+    companies: SecCompaniesConfig,
+    metrics: FundamentalMetricsConfig,
+    input_path: Path,
+    as_of: date,
+) -> SecFundamentalMetricsCsvValidationReport:
+    issues: list[SecMetricIssue] = []
+    if not input_path.exists():
+        issues.append(
+            SecMetricIssue(
+                severity=SecMetricIssueSeverity.ERROR,
+                code="sec_fundamental_metrics_file_missing",
+                path=input_path,
+                message="SEC 基本面指标 CSV 不存在；请先运行 extract-sec-metrics。",
+            )
+        )
+        return _csv_validation_report(
+            as_of=as_of,
+            input_path=input_path,
+            row_count=0,
+            as_of_row_count=0,
+            companies=companies,
+            metrics=metrics,
+            observed_keys=set(),
+            issues=issues,
+        )
+
+    try:
+        frame = pd.read_csv(input_path)
+    except Exception as exc:
+        issues.append(
+            SecMetricIssue(
+                severity=SecMetricIssueSeverity.ERROR,
+                code="sec_fundamental_metrics_csv_unreadable",
+                path=input_path,
+                message=f"SEC 基本面指标 CSV 无法读取：{exc}",
+            )
+        )
+        return _csv_validation_report(
+            as_of=as_of,
+            input_path=input_path,
+            row_count=0,
+            as_of_row_count=0,
+            companies=companies,
+            metrics=metrics,
+            observed_keys=set(),
+            issues=issues,
+        )
+
+    missing_columns = sorted(set(SEC_FUNDAMENTAL_METRIC_COLUMNS) - set(frame.columns))
+    if missing_columns:
+        issues.append(
+            SecMetricIssue(
+                severity=SecMetricIssueSeverity.ERROR,
+                code="sec_fundamental_metrics_missing_columns",
+                path=input_path,
+                message=f"SEC 基本面指标 CSV 缺少字段：{', '.join(missing_columns)}。",
+            )
+        )
+        return _csv_validation_report(
+            as_of=as_of,
+            input_path=input_path,
+            row_count=len(frame),
+            as_of_row_count=0,
+            companies=companies,
+            metrics=metrics,
+            observed_keys=set(),
+            issues=issues,
+        )
+
+    as_of_frame = frame.loc[frame["as_of"].astype(str) == as_of.isoformat()].copy()
+    if as_of_frame.empty:
+        issues.append(
+            SecMetricIssue(
+                severity=SecMetricIssueSeverity.ERROR,
+                code="sec_fundamental_metrics_as_of_missing",
+                path=input_path,
+                message=f"SEC 基本面指标 CSV 不包含评估日期 {as_of.isoformat()} 的记录。",
+            )
+        )
+
+    _validate_csv_duplicate_keys(as_of_frame, input_path, issues)
+    _validate_csv_values(as_of_frame, input_path, as_of, issues)
+    observed_keys = _observed_metric_keys(as_of_frame)
+    expected_keys = _expected_metric_keys(companies, metrics)
+    missing_keys = sorted(expected_keys - observed_keys)
+    if observed_keys.isdisjoint(expected_keys) and expected_keys:
+        issues.append(
+            SecMetricIssue(
+                severity=SecMetricIssueSeverity.ERROR,
+                code="sec_fundamental_metrics_no_expected_metrics",
+                path=input_path,
+                message="SEC 基本面指标 CSV 没有覆盖任何当前配置要求的指标。",
+            )
+        )
+    elif missing_keys:
+        missing_preview = ", ".join(
+            f"{ticker}:{metric_id}:{period_type}"
+            for ticker, metric_id, period_type in missing_keys[:12]
+        )
+        if len(missing_keys) > 12:
+            missing_preview += f" 等 {len(missing_keys)} 项"
+        issues.append(
+            SecMetricIssue(
+                severity=SecMetricIssueSeverity.WARNING,
+                code="sec_fundamental_metrics_coverage_incomplete",
+                path=input_path,
+                message=f"SEC 基本面指标覆盖不完整：{missing_preview}。",
+            )
+        )
+
+    return _csv_validation_report(
+        as_of=as_of,
+        input_path=input_path,
+        row_count=len(frame),
+        as_of_row_count=len(as_of_frame),
+        companies=companies,
+        metrics=metrics,
+        observed_keys=observed_keys,
+        issues=issues,
+    )
+
+
+def render_sec_fundamental_metrics_validation_report(
+    report: SecFundamentalMetricsCsvValidationReport,
+) -> str:
+    lines = [
+        "# SEC 基本面指标 CSV 校验报告",
+        "",
+        f"- 状态：{report.status}",
+        f"- 评估日期：{report.as_of.isoformat()}",
+        f"- 输入文件：`{report.input_path}`",
+        f"- 总行数：{report.row_count}",
+        f"- 当日行数：{report.as_of_row_count}",
+        f"- 预期观测数：{report.expected_observation_count}",
+        f"- 已覆盖观测数：{report.observed_observation_count}",
+        f"- 覆盖率：{report.coverage:.0%}",
+        f"- 错误数：{report.error_count}",
+        f"- 警告数：{report.warning_count}",
+        "",
+        "## 问题",
+        "",
+    ]
+    if not report.issues:
+        lines.append("未发现问题。")
+    else:
+        lines.extend(
+            [
+                "| 级别 | Code | Ticker | 指标 | 周期 | 文件 | 说明 |",
+                "|---|---|---|---|---|---|---|",
+            ]
+        )
+        for issue in report.issues:
+            lines.append(
+                "| "
+                f"{_severity_label(issue.severity)} | "
+                f"{issue.code} | "
+                f"{issue.ticker or ''} | "
+                f"{issue.metric_id or ''} | "
+                f"{issue.period_type or ''} | "
+                f"{_escape_markdown_table(str(issue.path or ''))} | "
+                f"{_escape_markdown_table(issue.message)} |"
+            )
+
+    lines.extend(
+        [
+            "",
+            "## 方法说明",
+            "",
+            "- 本校验只检查已抽取的 SEC 基本面指标 CSV，不替代原始 companyfacts 缓存校验。",
+            "- 进入评分前仍需保证指标 CSV 来自 `extract-sec-metrics`，且原始 SEC 缓存校验已通过。",
+            "- `filed_date` 晚于评估日期会被视为错误，避免历史报告和回测读取未来披露。",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def write_sec_fundamental_metrics_validation_report(
+    report: SecFundamentalMetricsCsvValidationReport,
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        render_sec_fundamental_metrics_validation_report(report),
+        encoding="utf-8",
+    )
+    return output_path
+
+
 def default_sec_fundamental_metrics_report_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"sec_fundamentals_{as_of.isoformat()}.md"
 
@@ -285,7 +513,14 @@ def default_sec_fundamental_metrics_csv_path(output_dir: Path, as_of: date) -> P
     return output_dir / f"sec_fundamentals_{as_of.isoformat()}.csv"
 
 
-_SEC_FUNDAMENTAL_METRIC_COLUMNS = (
+def default_sec_fundamental_metrics_validation_report_path(
+    output_dir: Path,
+    as_of: date,
+) -> Path:
+    return output_dir / f"sec_fundamentals_validation_{as_of.isoformat()}.md"
+
+
+SEC_FUNDAMENTAL_METRIC_COLUMNS = (
     "as_of",
     "ticker",
     "cik",
@@ -337,6 +572,143 @@ def _load_json(
         )
         return None
     return raw
+
+
+def _csv_validation_report(
+    as_of: date,
+    input_path: Path,
+    row_count: int,
+    as_of_row_count: int,
+    companies: SecCompaniesConfig,
+    metrics: FundamentalMetricsConfig,
+    observed_keys: set[tuple[str, str, str]],
+    issues: list[SecMetricIssue],
+) -> SecFundamentalMetricsCsvValidationReport:
+    expected_keys = _expected_metric_keys(companies, metrics)
+    return SecFundamentalMetricsCsvValidationReport(
+        as_of=as_of,
+        input_path=input_path,
+        row_count=row_count,
+        as_of_row_count=as_of_row_count,
+        expected_observation_count=len(expected_keys),
+        observed_observation_count=len(observed_keys & expected_keys),
+        issues=tuple(issues),
+    )
+
+
+def _expected_metric_keys(
+    companies: SecCompaniesConfig,
+    metrics: FundamentalMetricsConfig,
+) -> set[tuple[str, str, str]]:
+    return {
+        (company.ticker, metric.metric_id, period_type)
+        for company in companies.companies
+        if company.active
+        for metric in metrics.metrics
+        for period_type in metric.preferred_periods
+    }
+
+
+def _observed_metric_keys(frame: pd.DataFrame) -> set[tuple[str, str, str]]:
+    if frame.empty:
+        return set()
+    return {
+        (
+            str(record.get("ticker", "")).upper(),
+            str(record.get("metric_id", "")),
+            str(record.get("period_type", "")),
+        )
+        for record in frame.to_dict(orient="records")
+    }
+
+
+def _validate_csv_duplicate_keys(
+    frame: pd.DataFrame,
+    input_path: Path,
+    issues: list[SecMetricIssue],
+) -> None:
+    if frame.empty:
+        return
+    key_columns = ["as_of", "ticker", "metric_id", "period_type"]
+    duplicate_count = int(frame.duplicated(subset=key_columns, keep=False).sum())
+    if duplicate_count:
+        issues.append(
+            SecMetricIssue(
+                severity=SecMetricIssueSeverity.ERROR,
+                code="sec_fundamental_metrics_duplicate_keys",
+                path=input_path,
+                message=(
+                    "SEC 基本面指标 CSV 存在重复 as_of/ticker/metric_id/period_type "
+                    f"组合：{duplicate_count} 行。"
+                ),
+            )
+        )
+
+
+def _validate_csv_values(
+    frame: pd.DataFrame,
+    input_path: Path,
+    as_of: date,
+    issues: list[SecMetricIssue],
+) -> None:
+    for record in frame.to_dict(orient="records"):
+        ticker = str(record.get("ticker", "")).upper()
+        metric_id = str(record.get("metric_id", ""))
+        period_type = str(record.get("period_type", ""))
+        value = _numeric_value(record.get("value"))
+        if value is None:
+            issues.append(
+                SecMetricIssue(
+                    severity=SecMetricIssueSeverity.ERROR,
+                    code="sec_fundamental_metrics_value_invalid",
+                    ticker=ticker,
+                    metric_id=metric_id,
+                    period_type=period_type,
+                    path=input_path,
+                    message="SEC 基本面指标 value 不是有效数值。",
+                )
+            )
+        elif metric_id == "revenue" and value <= 0:
+            issues.append(
+                SecMetricIssue(
+                    severity=SecMetricIssueSeverity.ERROR,
+                    code="sec_fundamental_metrics_revenue_non_positive",
+                    ticker=ticker,
+                    metric_id=metric_id,
+                    period_type=period_type,
+                    path=input_path,
+                    message="SEC 基本面收入指标必须为正数。",
+                )
+            )
+
+        filed_date = _date_or_none(record.get("filed_date"))
+        if filed_date is None:
+            issues.append(
+                SecMetricIssue(
+                    severity=SecMetricIssueSeverity.ERROR,
+                    code="sec_fundamental_metrics_filed_date_missing",
+                    ticker=ticker,
+                    metric_id=metric_id,
+                    period_type=period_type,
+                    path=input_path,
+                    message="SEC 基本面指标缺少 filed_date，无法确认是否存在未来函数。",
+                )
+            )
+        elif filed_date > as_of:
+            issues.append(
+                SecMetricIssue(
+                    severity=SecMetricIssueSeverity.ERROR,
+                    code="sec_fundamental_metrics_filed_date_after_as_of",
+                    ticker=ticker,
+                    metric_id=metric_id,
+                    period_type=period_type,
+                    path=input_path,
+                    message=(
+                        f"SEC 基本面指标 filed_date={filed_date.isoformat()} "
+                        f"晚于评估日期 {as_of.isoformat()}。"
+                    ),
+                )
+            )
 
 
 def _extract_metric_row(
@@ -468,8 +840,9 @@ def _row_record(row: SecFundamentalMetricRow) -> dict[str, object]:
 def _numeric_value(value: Any) -> float | None:
     if isinstance(value, bool):
         return None
-    if isinstance(value, int | float):
-        return float(value)
+    if isinstance(value, Real):
+        numeric_value = float(value)
+        return numeric_value if math.isfinite(numeric_value) else None
     return None
 
 
