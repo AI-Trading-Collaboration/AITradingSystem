@@ -12,6 +12,16 @@ from ai_trading_system.config import DataQualityConfig, PriceQualityConfig
 
 PRICE_REQUIRED_COLUMNS = ("date", "ticker", "open", "high", "low", "close", "adj_close", "volume")
 RATE_REQUIRED_COLUMNS = ("date", "series", "value")
+MANIFEST_REQUIRED_COLUMNS = (
+    "downloaded_at",
+    "source_id",
+    "provider",
+    "endpoint",
+    "request_parameters",
+    "output_path",
+    "row_count",
+    "checksum_sha256",
+)
 
 
 class Severity(StrEnum):
@@ -46,6 +56,7 @@ class DataQualityReport:
     rate_summary: DataFileSummary
     expected_price_tickers: tuple[str, ...]
     expected_rate_series: tuple[str, ...]
+    manifest_summary: DataFileSummary | None = None
     issues: tuple[DataQualityIssue, ...] = field(default_factory=tuple)
 
     @property
@@ -76,11 +87,22 @@ def validate_data_cache(
     expected_rate_series: list[str],
     quality_config: DataQualityConfig,
     as_of: date,
+    manifest_path: Path | None = None,
 ) -> DataQualityReport:
     issues: list[DataQualityIssue] = []
 
     prices, price_summary = _read_csv(prices_path, issues, "prices")
     rates, rate_summary = _read_csv(rates_path, issues, "rates")
+    manifest_summary = (
+        _validate_download_manifest(
+            manifest_path,
+            price_summary=price_summary,
+            rate_summary=rate_summary,
+            issues=issues,
+        )
+        if manifest_path is not None
+        else None
+    )
 
     if prices is not None:
         price_summary = _validate_prices(
@@ -109,6 +131,7 @@ def validate_data_cache(
         rate_summary=rate_summary,
         expected_price_tickers=tuple(expected_price_tickers),
         expected_rate_series=tuple(expected_rate_series),
+        manifest_summary=manifest_summary,
         issues=tuple(issues),
     )
 
@@ -127,6 +150,11 @@ def render_data_quality_report(report: DataQualityReport) -> str:
         "",
         _render_file_summary("价格数据", report.price_summary),
         _render_file_summary("利率数据", report.rate_summary),
+        *(
+            [_render_file_summary("下载审计清单", report.manifest_summary)]
+            if report.manifest_summary is not None
+            else []
+        ),
         "",
         "## 预期覆盖范围",
         "",
@@ -201,6 +229,82 @@ def _read_csv(
         exists=True,
         rows=len(data),
         sha256=_file_sha256(path),
+    )
+
+
+def _validate_download_manifest(
+    path: Path,
+    price_summary: DataFileSummary,
+    rate_summary: DataFileSummary,
+    issues: list[DataQualityIssue],
+) -> DataFileSummary:
+    if not path.exists():
+        issues.append(
+            DataQualityIssue(
+                Severity.WARNING,
+                "download_manifest_missing",
+                f"下载审计清单不存在：{path}。请重新执行 download-data 生成审计记录。",
+            )
+        )
+        return DataFileSummary(path=path, exists=False)
+
+    try:
+        manifest = pd.read_csv(path)
+    except Exception as exc:
+        issues.append(
+            DataQualityIssue(
+                Severity.WARNING,
+                "download_manifest_unreadable",
+                f"下载审计清单无法按 CSV 读取：{exc}",
+            )
+        )
+        return DataFileSummary(path=path, exists=True, sha256=_file_sha256(path))
+
+    summary = DataFileSummary(
+        path=path,
+        exists=True,
+        rows=len(manifest),
+        sha256=_file_sha256(path),
+    )
+    missing_columns = [column for column in MANIFEST_REQUIRED_COLUMNS if column not in manifest]
+    if missing_columns:
+        issues.append(
+            DataQualityIssue(
+                Severity.WARNING,
+                "manifest_missing_columns",
+                f"下载审计清单缺少必需字段：{', '.join(missing_columns)}",
+            )
+        )
+        return summary
+
+    _check_manifest_covers_file(manifest, price_summary, "prices", issues)
+    _check_manifest_covers_file(manifest, rate_summary, "rates", issues)
+    return summary
+
+
+def _check_manifest_covers_file(
+    manifest: pd.DataFrame,
+    summary: DataFileSummary,
+    label: str,
+    issues: list[DataQualityIssue],
+) -> None:
+    if not summary.exists or summary.sha256 is None:
+        return
+
+    checksum_matches = manifest["checksum_sha256"].astype(str) == summary.sha256
+    if checksum_matches.any():
+        return
+
+    issues.append(
+        DataQualityIssue(
+            Severity.WARNING,
+            f"{label}_download_manifest_checksum_missing",
+            (
+                f"{_data_label(label)}当前文件 sha256 未出现在下载审计清单中；"
+                "请确认缓存是否由 download-data 生成。"
+            ),
+            sample=str(summary.path),
+        )
     )
 
 
@@ -715,7 +819,11 @@ def _severity_label(severity: Severity) -> str:
 
 
 def _data_label(label: str) -> str:
-    return {"prices": "价格数据", "rates": "利率数据"}.get(label, label)
+    return {
+        "prices": "价格数据",
+        "rates": "利率数据",
+        "manifest": "下载审计清单",
+    }.get(label, label)
 
 
 def _escape_markdown_table(value: str) -> str:

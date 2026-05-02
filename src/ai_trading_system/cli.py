@@ -251,6 +251,7 @@ def validate_data(
         expected_rate_series=configured_rate_series(universe),
         quality_config=quality_config,
         as_of=validation_date,
+        manifest_path=_download_manifest_path(prices_path),
     )
     write_data_quality_report(report, report_path)
 
@@ -376,6 +377,7 @@ def backtest(
         expected_rate_series=configured_rate_series(universe),
         quality_config=data_quality_config,
         as_of=quality_date,
+        manifest_path=_download_manifest_path(prices_path),
     )
     write_data_quality_report(data_quality_report, quality_output)
     if not data_quality_report.passed:
@@ -1098,6 +1100,7 @@ def review_trades(
         expected_rate_series=configured_rate_series(universe),
         quality_config=load_data_quality(),
         as_of=review_date,
+        manifest_path=_download_manifest_path(prices_path),
     )
     write_data_quality_report(data_quality_report, quality_output)
     if not data_quality_report.passed:
@@ -1203,6 +1206,7 @@ def build_features(
         expected_rate_series=expected_rate_series,
         quality_config=data_quality_config,
         as_of=feature_date,
+        manifest_path=_download_manifest_path(prices_path),
     )
     write_data_quality_report(data_quality_report, quality_output)
     if not data_quality_report.passed:
@@ -1338,6 +1342,7 @@ def score_daily(
         expected_rate_series=expected_rate_series,
         quality_config=data_quality_config,
         as_of=score_date,
+        manifest_path=_download_manifest_path(prices_path),
     )
     write_data_quality_report(data_quality_report, quality_output)
     if not data_quality_report.passed:
@@ -1607,6 +1612,10 @@ def _daily_review_exception_status(
         warning_count=0,
         source_path=source_path,
     )
+
+
+def _download_manifest_path(prices_path: Path) -> Path:
+    return prices_path.parent / "download_manifest.csv"
 
 
 def _parse_date(value: str) -> date:

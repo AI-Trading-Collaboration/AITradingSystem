@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import date
+from hashlib import sha256
 from pathlib import Path
 
 import pandas as pd
@@ -193,6 +194,33 @@ def test_render_and_write_data_quality_report(tmp_path: Path) -> None:
     assert output_path.read_text(encoding="utf-8") == markdown
 
 
+def test_validate_data_cache_checks_download_manifest(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    manifest_path = tmp_path / "download_manifest.csv"
+    pd.DataFrame(
+        [
+            _manifest_row("prices", prices_path),
+            _manifest_row("rates", rates_path),
+        ]
+    ).to_csv(manifest_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 2),
+        manifest_path=manifest_path,
+    )
+    markdown = render_data_quality_report(report)
+
+    assert report.status == "PASS"
+    assert report.manifest_summary is not None
+    assert report.manifest_summary.rows == 2
+    assert "下载审计清单" in markdown
+
+
 def test_validate_data_cli_writes_report(tmp_path: Path) -> None:
     prices_path, rates_path = _write_valid_cache(
         tmp_path,
@@ -217,7 +245,8 @@ def test_validate_data_cli_writes_report(tmp_path: Path) -> None:
 
     assert result.exit_code == 0
     assert output_path.exists()
-    assert "数据质量状态：PASS" in result.output
+    assert "数据质量状态：PASS_WITH_WARNINGS" in result.output
+    assert "download_manifest_missing" in output_path.read_text(encoding="utf-8")
 
 
 def test_validate_data_cli_returns_nonzero_on_failure(tmp_path: Path) -> None:
@@ -315,6 +344,27 @@ def _price_row(
         "adj_close": adj_close,
         "volume": volume,
     }
+
+
+def _manifest_row(source_id: str, output_path: Path) -> dict[str, object]:
+    return {
+        "downloaded_at": "2026-05-02T00:00:00+00:00",
+        "source_id": source_id,
+        "provider": "test",
+        "endpoint": "test",
+        "request_parameters": "{}",
+        "output_path": str(output_path),
+        "row_count": 1,
+        "checksum_sha256": _sha256_file(output_path),
+    }
+
+
+def _sha256_file(path: Path) -> str:
+    digest = sha256()
+    with path.open("rb") as file:
+        for chunk in iter(lambda: file.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def _issue_codes(report: DataQualityReport) -> set[str]:
