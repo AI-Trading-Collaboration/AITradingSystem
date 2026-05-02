@@ -28,6 +28,7 @@ config/watchlist.yaml    观察池和能力圈配置
 config/industry_chain.yaml 产业链节点和因果图配置
 config/market_regimes.yaml 市场阶段和默认回测区间配置
 config/risk_events.yaml  风险事件等级和动作规则配置
+config/data_sources.yaml 数据源目录、审计字段和来源限制
 data/raw/                原始数据缓存，不提交
 data/processed/          清洗后的中间数据，不提交
 data/external/           外部导入数据，不提交
@@ -71,6 +72,15 @@ aits validate-data
 ```
 
 质量报告默认写入 `outputs/reports/data_quality_YYYY-MM-DD.md`。如果校验出现错误，命令会返回非零退出码，后续评分和回测流程不应继续使用这批数据。
+
+查看和校验数据源目录：
+
+```powershell
+aits data-sources list
+aits data-sources validate --as-of 2026-05-02
+```
+
+数据源目录在 `config/data_sources.yaml`。它记录当前 Yahoo Finance、FRED、本地手工输入和计划接入来源的 provider、endpoint、缓存路径、审计字段、校验项和限制说明。这个命令不下载数据，只校验“来源是否可审计、限制是否明确”，用于后续接入财报、估值和新闻事件源前的来源纪律。
 
 构建每日市场特征：
 

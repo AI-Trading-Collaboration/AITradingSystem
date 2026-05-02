@@ -37,6 +37,8 @@
 
 财报、估值、新闻与政策事件放到第二期和第三期。
 
+数据源目录配置为 `config/data_sources.yaml`，校验命令为 `aits data-sources validate`。该目录记录每个来源的 provider、endpoint、缓存路径、审计字段、校验项、来源类型和限制说明。新增正式财报、估值、新闻或事件来源前，必须先补充该目录并通过校验。
+
 本地缓存先采用 CSV：
 
 - `prices_daily.csv`：标准化后的日线 OHLCV 数据。

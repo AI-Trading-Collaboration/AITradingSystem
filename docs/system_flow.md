@@ -35,6 +35,7 @@ flowchart TD
         I["config/industry_chain.yaml<br/>产业链节点与因果图"]
         R["config/market_regimes.yaml<br/>AI regime 与压力测试区间"]
         RE["config/risk_events.yaml<br/>L1/L2/L3 风险事件动作规则"]
+        DS["config/data_sources.yaml<br/>数据源目录、审计字段、来源限制"]
         TH["data/external/trade_theses/*.yaml<br/>交易假设、验证指标、证伪条件"]
         VS["data/external/valuation_snapshots/*.yaml<br/>估值、预期、拥挤度快照"]
         TD["data/external/trades/*.yaml<br/>交易记录、价格、thesis_id"]
@@ -78,6 +79,8 @@ flowchart TD
         IR["outputs/reports/industry_chain_validation_YYYY-MM-DD.md"]
         RV["aits risk-events validate"]
         RVR["outputs/reports/risk_events_validation_YYYY-MM-DD.md"]
+        DSV["aits data-sources validate"]
+        DSR["outputs/reports/data_sources_validation_YYYY-MM-DD.md"]
     end
 
     subgraph Thesis["交易假设复核"]
@@ -103,11 +106,13 @@ flowchart TD
 
     MD --> DL
     U --> DL
+    DS --> DL
     DL --> PR
     DL --> RR
 
     U --> V
     Q --> V
+    DS --> V
     PR --> V
     RR --> V
     V -->|通过或 PASS_WITH_WARNINGS| QR
@@ -155,6 +160,8 @@ flowchart TD
     W --> RV
     U --> RV
     RV --> RVR
+    DS --> DSV
+    DSV --> DSR
 
     TH --> TL
     TH --> TV
@@ -271,6 +278,7 @@ flowchart TD
         J["估值与拥挤度<br/>aits valuation list/validate/review"]
         K["交易复盘归因<br/>aits review-trades"]
         L["日报集成<br/>汇总 thesis、风险、估值和复盘摘要"]
+        M["数据源目录<br/>aits data-sources list/validate"]
     end
 
     C --> D
@@ -281,6 +289,7 @@ flowchart TD
     H --> I
     I --> J
     J --> K
+    M --> C
     H --> L
     I --> L
     J --> L
@@ -310,6 +319,8 @@ flowchart TD
 |市场阶段|`config/market_regimes.yaml`|记录默认 AI regime 和压力测试区间|已实现|
 |风险事件|`config/risk_events.yaml`|记录 L1/L2/L3 风险和动作规则|已实现基础版|
 |风险事件校验|`aits risk-events validate`|校验风险等级、产业链引用、相关标的和动作规则|已实现基础版|
+|数据源目录|`config/data_sources.yaml`|记录 provider、endpoint、缓存路径、审计字段、校验项和来源限制|已实现基础版|
+|数据源校验|`aits data-sources validate`|校验数据源目录是否可审计、活跃来源是否声明校验和限制|已实现基础版|
 |交易假设|`data/external/trade_theses/`|记录交易 thesis、验证指标和证伪条件|已实现基础版|
 |交易假设模板|`docs/examples/trade_theses/`|提供可复制 YAML 模板，不提交个人记录|已实现基础版|
 |假设校验|`aits thesis validate`|校验 schema、观察池引用、产业链节点和证伪约束|已实现基础版|

@@ -1,0 +1,230 @@
+sources:
+  - source_id: yahoo_finance_daily_prices
+    provider: Yahoo Finance via yfinance
+    source_type: public_convenience
+    status: active
+    domains:
+      - market_prices
+    endpoint: yfinance.download
+    adapter: YFinancePriceProvider
+    cadence: daily
+    requires_credentials: false
+    cache_paths:
+      - data/raw/prices_daily.csv
+    primary_for:
+      - daily_ohlcv
+      - adjusted_close
+      - volume
+    audit_fields:
+      - provider
+      - endpoint
+      - request_parameters
+      - download_timestamp
+      - row_count
+      - checksum
+    validation_checks:
+      - schema
+      - completeness
+      - freshness
+      - duplicate_keys
+      - suspicious_returns
+      - adjustment_ratio_changes
+    limitations:
+      - 公开便利源，不是交易所一手行情源。
+      - 公司行动和复权调整必须在下游评分前通过校验。
+    owner_notes: 当前 MVP 市场价格来源；数据质量门禁必须保持强制执行。
+
+  - source_id: fred_daily_rates
+    provider: Federal Reserve Economic Data
+    source_type: primary_source
+    status: active
+    domains:
+      - macro_rates
+    endpoint: https://fred.stlouisfed.org/graph/fredgraph.csv
+    adapter: FredRateProvider
+    cadence: daily
+    requires_credentials: false
+    cache_paths:
+      - data/raw/rates_daily.csv
+    primary_for:
+      - treasury_rates
+    audit_fields:
+      - provider
+      - endpoint
+      - request_parameters
+      - download_timestamp
+      - row_count
+      - checksum
+    validation_checks:
+      - schema
+      - completeness
+      - freshness
+      - duplicate_keys
+      - plausible_ranges
+      - suspicious_rate_changes
+    limitations:
+      - 利率序列可能在美股收盘后或非交易日更新。
+    owner_notes: 当前 MVP 宏观利率来源。
+
+  - source_id: local_trade_theses
+    provider: Local YAML input
+    source_type: manual_input
+    status: active
+    domains:
+      - trade_thesis
+    endpoint: data/external/trade_theses/*.yaml
+    adapter: load_trade_thesis_store
+    cadence: manual
+    requires_credentials: false
+    cache_paths:
+      - data/external/trade_theses
+    primary_for:
+      - trade_hypothesis
+      - falsification_conditions
+    audit_fields:
+      - provider
+      - file_path
+      - captured_at
+      - row_count
+      - checksum
+    validation_checks:
+      - schema
+      - duplicate_ids
+      - watchlist_references
+      - industry_chain_references
+      - review_freshness
+    limitations:
+      - 手工输入，证据来源质量取决于交易记录纪律。
+    owner_notes: 缺失时不能被报告视为高置信度交易假设。
+
+  - source_id: local_valuation_snapshots
+    provider: Local YAML input
+    source_type: manual_input
+    status: active
+    domains:
+      - valuation
+    endpoint: data/external/valuation_snapshots/*.yaml
+    adapter: load_valuation_snapshot_store
+    cadence: manual
+    requires_credentials: false
+    cache_paths:
+      - data/external/valuation_snapshots
+    primary_for:
+      - valuation_snapshot
+      - expectation_snapshot
+      - crowding_snapshot
+    audit_fields:
+      - provider
+      - source_name
+      - source_type
+      - captured_at
+      - file_path
+      - checksum
+    validation_checks:
+      - schema
+      - duplicate_ids
+      - source_type
+      - snapshot_freshness
+      - plausible_percentiles
+    limitations:
+      - 手工快照只作为复核输入，不能直接变成自动估值评分。
+    owner_notes: 自动评分前仍需接入正式供应商或一手披露数据。
+
+  - source_id: local_trade_records
+    provider: Local YAML input
+    source_type: manual_input
+    status: active
+    domains:
+      - trade_records
+    endpoint: data/external/trades/*.yaml
+    adapter: load_trade_record_store
+    cadence: manual
+    requires_credentials: false
+    cache_paths:
+      - data/external/trades
+    primary_for:
+      - trade_review
+      - attribution_inputs
+    audit_fields:
+      - provider
+      - file_path
+      - captured_at
+      - row_count
+      - checksum
+    validation_checks:
+      - schema
+      - duplicate_ids
+      - known_tickers
+      - date_bounds
+      - thesis_reference_presence
+    limitations:
+      - 手工交易记录依赖记录纪律；缺少 thesis 关联会降低归因质量。
+    owner_notes: 在市场数据质量门禁通过后供 review-trades 使用。
+
+  - source_id: sec_company_facts
+    provider: SEC EDGAR
+    source_type: primary_source
+    status: planned
+    domains:
+      - fundamentals
+    endpoint: companyfacts API
+    adapter: planned
+    cadence: quarterly
+    requires_credentials: false
+    cache_paths: []
+    primary_for:
+      - revenue
+      - gross_margin
+      - capex
+      - filing_fundamentals
+    audit_fields:
+      - provider
+      - endpoint
+      - request_parameters
+      - download_timestamp
+      - row_count
+      - checksum
+      - accession_number
+    validation_checks:
+      - schema
+      - fiscal_period_alignment
+      - restatement_detection
+      - duplicate_keys
+      - freshness
+    limitations:
+      - 计划接入来源；实现并通过校验前不能作为自动评分输入。
+    owner_notes: 基本面模块的一手来源候选。
+
+  - source_id: news_event_source_tbd
+    provider: To be selected
+    source_type: paid_vendor
+    status: planned
+    domains:
+      - news_events
+      - risk_events
+    endpoint: to_be_selected
+    adapter: planned
+    cadence: event_driven
+    requires_credentials: true
+    cache_paths: []
+    primary_for:
+      - policy_events
+      - geopolitical_events
+      - ai_capex_news
+    audit_fields:
+      - provider
+      - endpoint
+      - query
+      - published_at
+      - captured_at
+      - checksum
+      - source_url
+    validation_checks:
+      - source_attribution
+      - duplicate_detection
+      - timestamp_consistency
+      - relevance_review
+      - human_review_for_l2_l3
+    limitations:
+      - 供应商尚未确定；现阶段任何自动交易动作都不能依赖该来源。
+    owner_notes: 进入评分前必须支持引用、去重和人工复核。

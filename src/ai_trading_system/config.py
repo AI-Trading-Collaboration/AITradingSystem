@@ -18,6 +18,7 @@ DEFAULT_WATCHLIST_CONFIG_PATH = PROJECT_ROOT / "config" / "watchlist.yaml"
 DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH = PROJECT_ROOT / "config" / "industry_chain.yaml"
 DEFAULT_MARKET_REGIMES_CONFIG_PATH = PROJECT_ROOT / "config" / "market_regimes.yaml"
 DEFAULT_RISK_EVENTS_CONFIG_PATH = PROJECT_ROOT / "config" / "risk_events.yaml"
+DEFAULT_DATA_SOURCES_CONFIG_PATH = PROJECT_ROOT / "config" / "data_sources.yaml"
 
 
 class MarketUniverse(BaseModel):
@@ -168,6 +169,43 @@ class RiskEventsConfig(BaseModel):
 
         return self
 
+
+class DataSourceConfig(BaseModel):
+    source_id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9_.-]+$")
+    provider: str = Field(min_length=1)
+    source_type: Literal[
+        "primary_source",
+        "paid_vendor",
+        "public_convenience",
+        "manual_input",
+    ]
+    status: Literal["active", "planned", "inactive"]
+    domains: list[
+        Literal[
+            "market_prices",
+            "macro_rates",
+            "fundamentals",
+            "valuation",
+            "news_events",
+            "trade_records",
+            "trade_thesis",
+            "risk_events",
+        ]
+    ] = Field(min_length=1)
+    endpoint: str = ""
+    adapter: str = ""
+    cadence: Literal["daily", "weekly", "monthly", "quarterly", "event_driven", "manual"]
+    requires_credentials: bool = False
+    cache_paths: list[str] = Field(default_factory=list)
+    primary_for: list[str] = Field(default_factory=list)
+    audit_fields: list[str] = Field(default_factory=list)
+    validation_checks: list[str] = Field(default_factory=list)
+    limitations: list[str] = Field(default_factory=list)
+    owner_notes: str = ""
+
+
+class DataSourcesConfig(BaseModel):
+    sources: list[DataSourceConfig] = Field(min_length=1)
 
 class DecisionConfig(BaseModel):
     frequency: str
@@ -337,6 +375,15 @@ def load_risk_events(
     with config_path.open("r", encoding="utf-8") as file:
         raw: dict[str, Any] = yaml.safe_load(file)
     return RiskEventsConfig.model_validate(raw)
+
+
+def load_data_sources(
+    path: Path | str = DEFAULT_DATA_SOURCES_CONFIG_PATH,
+) -> DataSourcesConfig:
+    config_path = Path(path)
+    with config_path.open("r", encoding="utf-8") as file:
+        raw: dict[str, Any] = yaml.safe_load(file)
+    return DataSourcesConfig.model_validate(raw)
 
 
 def market_regime_by_id(

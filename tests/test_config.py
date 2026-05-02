@@ -4,6 +4,7 @@ from ai_trading_system.config import (
     configured_price_tickers,
     configured_rate_series,
     load_data_quality,
+    load_data_sources,
     load_features,
     load_industry_chain,
     load_market_regimes,
@@ -39,6 +40,16 @@ def test_data_quality_config_loads_thresholds() -> None:
     assert config.prices.ticker_return_threshold_overrides["^VIX"].extreme_daily_return_abs == 2.00
     assert config.rates.min_plausible_value == -1.0
     assert config.rates.max_plausible_value == 25.0
+
+
+def test_data_sources_config_loads_current_and_planned_sources() -> None:
+    config = load_data_sources()
+    source_ids = {source.source_id for source in config.sources}
+
+    assert "yahoo_finance_daily_prices" in source_ids
+    assert "fred_daily_rates" in source_ids
+    assert "sec_company_facts" in source_ids
+    assert any(source.status == "planned" for source in config.sources)
 
 
 def test_feature_config_loads_market_feature_windows() -> None:

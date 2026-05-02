@@ -20,6 +20,7 @@ from ai_trading_system.backtest.daily import (
     write_backtest_report,
 )
 from ai_trading_system.config import (
+    DEFAULT_DATA_SOURCES_CONFIG_PATH,
     DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH,
     DEFAULT_MARKET_REGIMES_CONFIG_PATH,
     DEFAULT_RISK_EVENTS_CONFIG_PATH,
@@ -31,6 +32,7 @@ from ai_trading_system.config import (
     configured_price_tickers,
     configured_rate_series,
     load_data_quality,
+    load_data_sources,
     load_features,
     load_industry_chain,
     load_market_regimes,
@@ -47,6 +49,11 @@ from ai_trading_system.data.quality import (
     default_quality_report_path,
     validate_data_cache,
     write_data_quality_report,
+)
+from ai_trading_system.data_sources import (
+    default_data_sources_report_path,
+    validate_data_sources_config,
+    write_data_sources_validation_report,
 )
 from ai_trading_system.features.market import (
     build_market_features,
@@ -111,11 +118,13 @@ industry_chain_app = typer.Typer(help="产业链节点和因果图管理。", no
 thesis_app = typer.Typer(help="交易 thesis 和假设验证管理。", no_args_is_help=True)
 risk_events_app = typer.Typer(help="风险事件分级和动作规则管理。", no_args_is_help=True)
 valuation_app = typer.Typer(help="估值、预期和拥挤度快照管理。", no_args_is_help=True)
+data_sources_app = typer.Typer(help="数据源目录和审计规则管理。", no_args_is_help=True)
 app.add_typer(watchlist_app, name="watchlist")
 app.add_typer(industry_chain_app, name="industry-chain")
 app.add_typer(thesis_app, name="thesis")
 app.add_typer(risk_events_app, name="risk-events")
 app.add_typer(valuation_app, name="valuation")
+app.add_typer(data_sources_app, name="data-sources")
 console = Console()
 
 
@@ -814,6 +823,78 @@ def validate_risk_events(
     console.print(f"[{status_style}]风险事件校验状态：{report.status}[/{status_style}]")
     console.print(f"报告：{report_path}")
     console.print(f"风险事件规则数：{len(report.config.event_rules)}；活跃：{report.active_rule_count}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+
+@data_sources_app.command("list")
+def list_data_sources(
+    config_path: Annotated[
+        Path,
+        typer.Option(help="数据源目录配置文件路径。"),
+    ] = DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    active_only: Annotated[
+        bool,
+        typer.Option("--active-only/--all", help="只显示活跃数据源，或显示全部数据源。"),
+    ] = False,
+) -> None:
+    """列出数据源目录。"""
+    data_sources = load_data_sources(config_path)
+
+    table = Table(title="数据源目录")
+    table.add_column("Source", overflow="fold")
+    table.add_column("Provider", overflow="fold")
+    table.add_column("类型")
+    table.add_column("状态")
+    table.add_column("领域", overflow="fold")
+    table.add_column("缓存", overflow="fold")
+    for source in sorted(data_sources.sources, key=lambda item: item.source_id):
+        if active_only and source.status != "active":
+            continue
+        table.add_row(
+            source.source_id,
+            source.provider,
+            _data_source_type_label(source.source_type),
+            _data_source_status_label(source.status),
+            ", ".join(source.domains),
+            ", ".join(source.cache_paths),
+        )
+    console.print(table)
+
+
+@data_sources_app.command("validate")
+def validate_data_sources(
+    config_path: Annotated[
+        Path,
+        typer.Option(help="数据源目录配置文件路径。"),
+    ] = DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 数据源目录校验报告输出路径。"),
+    ] = None,
+) -> None:
+    """校验数据源目录、审计字段和来源限制。"""
+    validation_date = _parse_date(as_of) if as_of else date.today()
+    report_path = output_path or default_data_sources_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        validation_date,
+    )
+    report = validate_data_sources_config(
+        config=load_data_sources(config_path),
+        as_of=validation_date,
+    )
+    write_data_sources_validation_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]数据源目录校验状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_path}")
+    console.print(f"数据源数量：{len(report.sources)}；活跃：{report.active_count}")
     console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
 
     if not report.passed:
@@ -1608,6 +1689,23 @@ def _valuation_assessment_label(value: str) -> str:
         "expensive": "偏贵",
         "extreme": "极端",
         "unknown": "未知",
+    }.get(value, value)
+
+
+def _data_source_type_label(value: str) -> str:
+    return {
+        "primary_source": "一手来源",
+        "paid_vendor": "付费供应商",
+        "public_convenience": "公开便利源",
+        "manual_input": "手工输入",
+    }.get(value, value)
+
+
+def _data_source_status_label(value: str) -> str:
+    return {
+        "active": "已启用",
+        "planned": "计划中",
+        "inactive": "停用",
     }.get(value, value)
 
 
