@@ -49,7 +49,7 @@ def test_build_sec_fundamental_metrics_report_extracts_latest_facts(tmp_path: Pa
     assert report.row_count == 2
     assert {(row.period_type, row.fiscal_year, row.value) for row in report.rows} == {
         ("annual", 2025, 2000.0),
-        ("quarterly", 2026, 650.0),
+        ("quarterly", 2026, 850.0),
     }
     assert "SEC 基本面指标摘要" in markdown
     assert "本报告只把 SEC companyfacts 原始 JSON 抽成结构化摘要" in markdown
@@ -80,6 +80,51 @@ def test_build_sec_fundamental_metrics_report_uses_only_filed_facts_as_of(
     assert annual_rows[0].fiscal_year == 2024
     assert annual_rows[0].filed_date == date(2024, 2, 21)
     assert "sec_metric_missing" in {issue.code for issue in report.issues}
+
+
+def test_build_sec_fundamental_metrics_report_chooses_latest_across_concepts(
+    tmp_path: Path,
+) -> None:
+    companies = _sec_config()
+    json_path = _write_companyfacts(tmp_path, ticker="NVDA", cik="0001045810")
+    _write_manifest(tmp_path, ticker="NVDA", cik="0001045810", json_path=json_path)
+    validation = validate_sec_companyfacts_cache(companies, input_dir=tmp_path, as_of=_date())
+
+    report = build_sec_fundamental_metrics_report(
+        companies=companies,
+        metrics=_metrics_config_with_preferred_old_concept(),
+        input_dir=tmp_path,
+        as_of=_date(),
+        validation_report=validation,
+    )
+
+    annual_rows = [row for row in report.rows if row.period_type == "annual"]
+    assert len(annual_rows) == 1
+    assert annual_rows[0].concept == "Revenues"
+    assert annual_rows[0].fiscal_year == 2025
+    assert annual_rows[0].value == 2000.0
+
+
+def test_build_sec_fundamental_metrics_report_uses_single_quarter_not_ytd(
+    tmp_path: Path,
+) -> None:
+    companies = _sec_config()
+    json_path = _write_companyfacts(tmp_path, ticker="NVDA", cik="0001045810")
+    _write_manifest(tmp_path, ticker="NVDA", cik="0001045810", json_path=json_path)
+    validation = validate_sec_companyfacts_cache(companies, input_dir=tmp_path, as_of=_date())
+
+    report = build_sec_fundamental_metrics_report(
+        companies=companies,
+        metrics=_metrics_config(),
+        input_dir=tmp_path,
+        as_of=_date(),
+        validation_report=validation,
+    )
+
+    quarterly_rows = [row for row in report.rows if row.period_type == "quarterly"]
+    assert len(quarterly_rows) == 1
+    assert quarterly_rows[0].fiscal_period == "Q3"
+    assert quarterly_rows[0].value == 850.0
 
 
 def test_build_sec_fundamental_metrics_report_requires_passing_validation(
@@ -330,6 +375,31 @@ def _metrics_config() -> FundamentalMetricsConfig:
     )
 
 
+def _metrics_config_with_preferred_old_concept() -> FundamentalMetricsConfig:
+    return FundamentalMetricsConfig(
+        metrics=[
+            FundamentalMetricConfig(
+                metric_id="revenue",
+                name="Revenue",
+                description="SEC companyfacts 披露的总收入。",
+                preferred_periods=["annual"],
+                concepts=[
+                    FundamentalMetricConceptConfig(
+                        taxonomy="us-gaap",
+                        concept="RevenueFromContractWithCustomerExcludingAssessedTax",
+                        unit="USD",
+                    ),
+                    FundamentalMetricConceptConfig(
+                        taxonomy="us-gaap",
+                        concept="Revenues",
+                        unit="USD",
+                    ),
+                ],
+            )
+        ]
+    )
+
+
 def _write_companyfacts(tmp_path: Path, ticker: str, cik: str) -> Path:
     json_path = tmp_path / f"{ticker.lower()}_companyfacts.json"
     json_path.write_text(
@@ -339,6 +409,22 @@ def _write_companyfacts(tmp_path: Path, ticker: str, cik: str) -> Path:
                 "entityName": f"{ticker} Test Entity",
                 "facts": {
                     "us-gaap": {
+                        "RevenueFromContractWithCustomerExcludingAssessedTax": {
+                            "units": {
+                                "USD": [
+                                    {
+                                        "fy": 2022,
+                                        "fp": "FY",
+                                        "form": "10-K",
+                                        "start": "2021-01-31",
+                                        "end": "2022-01-30",
+                                        "filed": "2022-03-18",
+                                        "val": 700,
+                                        "accn": "0001045810-22-000001",
+                                    }
+                                ]
+                            }
+                        },
                         "Revenues": {
                             "units": {
                                 "USD": [
@@ -364,10 +450,43 @@ def _write_companyfacts(tmp_path: Path, ticker: str, cik: str) -> Path:
                                         "fy": 2026,
                                         "fp": "Q1",
                                         "form": "10-Q",
+                                        "start": "2025-01-27",
                                         "end": "2025-04-27",
                                         "filed": "2025-05-28",
+                                        "val": 1600,
+                                        "accn": "0001045810-25-000010",
+                                    },
+                                    {
+                                        "fy": 2026,
+                                        "fp": "Q1",
+                                        "form": "10-Q",
+                                        "start": "2025-01-27",
+                                        "end": "2025-04-27",
+                                        "filed": "2025-05-28",
+                                        "frame": "CY2025Q1",
                                         "val": 650,
                                         "accn": "0001045810-25-000010",
+                                    },
+                                    {
+                                        "fy": 2026,
+                                        "fp": "Q3",
+                                        "form": "10-Q",
+                                        "start": "2025-01-27",
+                                        "end": "2025-10-26",
+                                        "filed": "2025-11-19",
+                                        "val": 1900,
+                                        "accn": "0001045810-25-000030",
+                                    },
+                                    {
+                                        "fy": 2026,
+                                        "fp": "Q3",
+                                        "form": "10-Q",
+                                        "start": "2025-07-28",
+                                        "end": "2025-10-26",
+                                        "filed": "2025-11-19",
+                                        "frame": "CY2025Q3",
+                                        "val": 850,
+                                        "accn": "0001045810-25-000030",
                                     },
                                 ]
                             }

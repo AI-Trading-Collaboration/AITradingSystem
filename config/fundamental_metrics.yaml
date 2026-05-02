@@ -97,6 +97,9 @@ metrics:
       - taxonomy: us-gaap
         concept: PaymentsToAcquirePropertyPlantAndEquipment
         unit: USD
+      - taxonomy: us-gaap
+        concept: PaymentsToAcquireProductiveAssets
+        unit: USD
       - taxonomy: ifrs-full
         concept: PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities
         unit: USD

@@ -78,6 +78,11 @@ def test_fundamental_metrics_config_loads_sec_metric_mappings() -> None:
         for metric in config.metrics
         for concept in metric.concepts
     )
+    assert any(
+        metric.metric_id == "capex" and concept.concept == "PaymentsToAcquireProductiveAssets"
+        for metric in config.metrics
+        for concept in metric.concepts
+    )
 
 
 def test_feature_config_loads_market_feature_windows() -> None:

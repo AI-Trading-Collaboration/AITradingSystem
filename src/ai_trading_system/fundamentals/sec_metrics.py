@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+import re
 from dataclasses import dataclass, field
 from datetime import date
 from enum import StrEnum
@@ -20,6 +21,9 @@ from ai_trading_system.config import (
 from ai_trading_system.fundamentals.sec_validation import SecCompanyFactsValidationReport
 
 PeriodType = Literal["annual", "quarterly"]
+_ANNUAL_FORMS = {"10-K", "20-F", "40-F"}
+_ANNUAL_FRAME_PATTERN = re.compile(r"^CY\d{4}$")
+_QUARTER_FRAME_PATTERN = re.compile(r"^CY\d{4}Q[1-4]$")
 
 
 class SecMetricIssueSeverity(StrEnum):
@@ -132,6 +136,15 @@ class SecFundamentalMetricsCsvValidationReport:
         if self.warning_count:
             return "PASS_WITH_WARNINGS"
         return "PASS"
+
+
+@dataclass(frozen=True)
+class _MetricFactCandidate:
+    fact: dict[str, Any]
+    taxonomy: str
+    concept: str
+    unit: str
+    concept_priority: int
 
 
 def build_sec_fundamental_metrics_report(
@@ -289,8 +302,10 @@ def render_sec_fundamental_metrics_report(
             "- 本报告只把 SEC companyfacts 原始 JSON 抽成结构化摘要，不直接进入自动评分。",
             "- 指标映射来自 `config/fundamental_metrics.yaml`，"
             "taxonomy 差异和缺失项必须先人工复核。",
-            "- 年度指标优先使用 FY 事实；季度指标优先使用 Q1/Q2/Q3/Q4 事实，"
-            "均选最新截止日和披露日。",
+            "- 年度指标只抽取年度持续期事实，排除 10-K 中披露的历史季度 frame。",
+            "- 季度指标只抽取单季事实，优先使用 SEC frame 或持续期判断排除 YTD 累计数。",
+            "- 同一指标会跨所有候选 taxonomy/concept/unit 选择最新可用事实，"
+            "同日事实再按配置顺序打破平局。",
             "- 只抽取 `filed` 日期不晚于评估日期的事实，避免历史回测和历史日报出现未来函数。",
             "- 数值保留 SEC companyfacts 原始符号，不在抽取层重写正负号。",
         ]
@@ -719,86 +734,130 @@ def _extract_metric_row(
     path: Path,
     as_of: date,
 ) -> SecFundamentalMetricRow | None:
-    for concept_config in metric.concepts:
-        fact = _latest_fact(
-            data,
-            concept_config.taxonomy,
-            concept_config.concept,
-            concept_config.unit,
-            period_type,
-            as_of,
+    candidates: list[_MetricFactCandidate] = []
+    for concept_priority, concept_config in enumerate(metric.concepts):
+        candidates.extend(
+            _candidate_facts(
+                data,
+                concept_config.taxonomy,
+                concept_config.concept,
+                concept_config.unit,
+                period_type,
+                as_of,
+                concept_priority,
+            )
         )
-        if fact is None:
-            continue
-        value = _numeric_value(fact.get("val"))
-        if value is None:
-            continue
-        return SecFundamentalMetricRow(
-            as_of=as_of,
-            ticker=company.ticker,
-            cik=company.cik,
-            company_name=company.company_name,
-            metric_id=metric.metric_id,
-            metric_name=metric.name,
-            period_type=period_type,
-            fiscal_year=_int_or_none(fact.get("fy")),
-            fiscal_period=str(fact.get("fp") or ""),
-            end_date=_date_or_none(fact.get("end")),
-            filed_date=_date_or_none(fact.get("filed")),
-            form=str(fact.get("form") or ""),
-            taxonomy=concept_config.taxonomy,
-            concept=concept_config.concept,
-            unit=concept_config.unit,
-            value=value,
-            accession_number=str(fact.get("accn") or ""),
-            source_path=path,
-        )
-    return None
+
+    if not candidates:
+        return None
+
+    selected = max(candidates, key=_candidate_sort_key)
+    value = _numeric_value(selected.fact.get("val"))
+    if value is None:
+        return None
+    return SecFundamentalMetricRow(
+        as_of=as_of,
+        ticker=company.ticker,
+        cik=company.cik,
+        company_name=company.company_name,
+        metric_id=metric.metric_id,
+        metric_name=metric.name,
+        period_type=period_type,
+        fiscal_year=_int_or_none(selected.fact.get("fy")),
+        fiscal_period=str(selected.fact.get("fp") or ""),
+        end_date=_date_or_none(selected.fact.get("end")),
+        filed_date=_date_or_none(selected.fact.get("filed")),
+        form=str(selected.fact.get("form") or ""),
+        taxonomy=selected.taxonomy,
+        concept=selected.concept,
+        unit=selected.unit,
+        value=value,
+        accession_number=str(selected.fact.get("accn") or ""),
+        source_path=path,
+    )
 
 
-def _latest_fact(
+def _candidate_facts(
     data: dict[str, Any],
     taxonomy: str,
     concept: str,
     unit: str,
     period_type: PeriodType,
     as_of: date,
-) -> dict[str, Any] | None:
+    concept_priority: int,
+) -> list[_MetricFactCandidate]:
     facts = data.get("facts")
     if not isinstance(facts, dict):
-        return None
+        return []
     taxonomy_facts = facts.get(taxonomy)
     if not isinstance(taxonomy_facts, dict):
-        return None
+        return []
     concept_facts = taxonomy_facts.get(concept)
     if not isinstance(concept_facts, dict):
-        return None
+        return []
     units = concept_facts.get("units")
     if not isinstance(units, dict):
-        return None
+        return []
     unit_facts = units.get(unit)
     if not isinstance(unit_facts, list):
-        return None
+        return []
 
-    candidates = [
-        fact
+    return [
+        _MetricFactCandidate(
+            fact=fact,
+            taxonomy=taxonomy,
+            concept=concept,
+            unit=unit,
+            concept_priority=concept_priority,
+        )
         for fact in unit_facts
         if isinstance(fact, dict)
         and _numeric_value(fact.get("val")) is not None
         and _period_matches(fact, period_type)
         and _is_available_as_of(fact, as_of)
     ]
-    if not candidates:
-        return None
-    return max(candidates, key=_fact_sort_key)
 
 
 def _period_matches(fact: dict[str, Any], period_type: PeriodType) -> bool:
     fiscal_period = str(fact.get("fp") or "").upper()
     form = str(fact.get("form") or "").upper()
     if period_type == "annual":
-        return fiscal_period == "FY" or form in {"10-K", "20-F", "40-F"}
-    return fiscal_period in {"Q1", "Q2", "Q3", "Q4"} and form not in {"10-K", "20-F", "40-F"}
+        return (fiscal_period == "FY" or form in _ANNUAL_FORMS) and _is_annual_fact(fact)
+    return (
+        fiscal_period in {"Q1", "Q2", "Q3", "Q4"}
+        and form not in _ANNUAL_FORMS
+        and _is_single_quarter_fact(fact)
+    )
+
+
+def _is_annual_fact(fact: dict[str, Any]) -> bool:
+    frame = str(fact.get("frame") or "").upper()
+    if frame:
+        return bool(_ANNUAL_FRAME_PATTERN.fullmatch(frame))
+
+    duration_days = _duration_days(fact)
+    if duration_days is None:
+        return True
+    return duration_days >= 300
+
+
+def _is_single_quarter_fact(fact: dict[str, Any]) -> bool:
+    frame = str(fact.get("frame") or "").upper()
+    if frame:
+        return bool(_QUARTER_FRAME_PATTERN.fullmatch(frame))
+
+    duration_days = _duration_days(fact)
+    if duration_days is None:
+        return False
+    return 60 <= duration_days <= 120
+
+
+def _duration_days(fact: dict[str, Any]) -> int | None:
+    start_date = _date_or_none(fact.get("start"))
+    end_date = _date_or_none(fact.get("end"))
+    if start_date is None or end_date is None or end_date < start_date:
+        return None
+    return (end_date - start_date).days + 1
 
 
 def _is_available_as_of(fact: dict[str, Any], as_of: date) -> bool:
@@ -806,11 +865,13 @@ def _is_available_as_of(fact: dict[str, Any], as_of: date) -> bool:
     return filed_date is not None and filed_date <= as_of
 
 
-def _fact_sort_key(fact: dict[str, Any]) -> tuple[date, date, int]:
+def _candidate_sort_key(candidate: _MetricFactCandidate) -> tuple[date, date, int, int]:
+    fact = candidate.fact
     return (
         _date_or_none(fact.get("end")) or date.min,
         _date_or_none(fact.get("filed")) or date.min,
         _int_or_none(fact.get("fy")) or 0,
+        -candidate.concept_priority,
     )
 
 
