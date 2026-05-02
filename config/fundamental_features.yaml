@@ -1,0 +1,44 @@
+features:
+  - feature_id: gross_margin
+    name: Gross Margin
+    description: 毛利除以收入，衡量核心业务毛利率。
+    numerator_metric_id: gross_profit
+    denominator_metric_id: revenue
+    preferred_periods:
+      - annual
+      - quarterly
+
+  - feature_id: operating_margin
+    name: Operating Margin
+    description: 营业利润除以收入，衡量经营杠杆和费用控制。
+    numerator_metric_id: operating_income
+    denominator_metric_id: revenue
+    preferred_periods:
+      - annual
+      - quarterly
+
+  - feature_id: net_margin
+    name: Net Margin
+    description: 净利润除以收入，衡量最终盈利能力。
+    numerator_metric_id: net_income
+    denominator_metric_id: revenue
+    preferred_periods:
+      - annual
+      - quarterly
+
+  - feature_id: research_and_development_intensity
+    name: R&D Intensity
+    description: 研发费用除以收入，衡量技术投入强度。
+    numerator_metric_id: research_and_development
+    denominator_metric_id: revenue
+    preferred_periods:
+      - annual
+      - quarterly
+
+  - feature_id: capex_intensity
+    name: CapEx Intensity
+    description: 年度 CapEx 除以年度收入，衡量资本开支强度；保留 SEC 抽取层原始符号。
+    numerator_metric_id: capex
+    denominator_metric_id: revenue
+    preferred_periods:
+      - annual

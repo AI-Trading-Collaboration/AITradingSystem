@@ -22,6 +22,7 @@
 |SEC 基本面缓存校验|已完成基础版|`aits fundamentals validate-sec-companyfacts`，校验 JSON、CIK、taxonomy 和 checksum|
 |SEC 基本面指标抽取|已完成基础版|`config/fundamental_metrics.yaml` 和 `aits fundamentals extract-sec-metrics`，先过 SEC 缓存质量门禁，再输出结构化指标摘要和中文报告；支持显式派生指标和公司级 SEC 周期覆盖声明|
 |SEC 基本面指标校验|已完成基础版|`aits fundamentals validate-sec-metrics`，校验指标 CSV 的 schema、重复键、未来披露日期、数值合法性和配置覆盖率|
+|SEC 基本面特征|已完成基础版|`config/fundamental_features.yaml` 和 `aits fundamentals build-sec-features`，先过 SEC 指标 CSV 门禁，再生成毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度|
 |数据质量门禁|已完成基础版|`aits validate-data`，失败时非零退出|
 |市场环境特征|已完成基础版|`aits build-features`，趋势、相对强弱、VIX、利率、核心池宽度|
 |每日市场评分|已完成基础版|`aits score-daily`，趋势、宏观流动性、风险情绪和占位项|
@@ -492,10 +493,12 @@ aits review-trades --as-of 2026-05-02
 |`config/risk_events.yaml`|风险事件等级和动作规则|M6，已实现基础版|
 |`config/sec_companies.yaml`|SEC companyfacts ticker/CIK 映射|阶段 2，已实现基础版|
 |`config/fundamental_metrics.yaml`|SEC taxonomy/concept/unit 到内部基本面指标的映射、支撑指标和显式派生规则|阶段 2，已实现基础版|
+|`config/fundamental_features.yaml`|SEC 基本面特征公式和周期偏好|阶段 2，已实现基础版|
 |`config/scoring_rules.yaml`|评分规则和权重|M2|
 |`data/raw/download_manifest.csv`|下载审计清单，记录 provider、endpoint、请求参数、下载时间、行数和 checksum|M1，已实现基础版|
 |`data/raw/sec_companyfacts/`|SEC companyfacts 原始 JSON 和下载 manifest|阶段 2，已实现基础版|
 |`data/processed/sec_fundamentals_YYYY-MM-DD.csv`|SEC 基本面指标抽取结果，暂不直接进入自动评分|阶段 2，已实现基础版|
+|`data/processed/sec_fundamental_features_YYYY-MM-DD.csv`|SEC 基本面比率特征，暂不直接进入每日评分|阶段 2，已实现基础版|
 |`data/processed/features_daily.csv`|每日特征|M1|
 |`data/processed/scores_daily.csv`|每日评分|M2|
 |`data/external/trade_theses/`|交易 thesis|M5，已实现基础版|
@@ -513,6 +516,7 @@ aits review-trades --as-of 2026-05-02
 |`outputs/reports/trade_review_YYYY-MM-DD.md`|复盘归因报告|M8|
 |`outputs/reports/sec_fundamentals_YYYY-MM-DD.md`|SEC 基本面指标抽取报告，声明 SEC 缓存质量状态和缺失项|阶段 2，已实现基础版|
 |`outputs/reports/sec_fundamentals_validation_YYYY-MM-DD.md`|SEC 基本面指标 CSV 校验报告|阶段 2，已实现基础版|
+|`outputs/reports/sec_fundamental_features_YYYY-MM-DD.md`|SEC 基本面特征摘要，声明指标 CSV 质量状态、特征公式和限制|阶段 2，已实现基础版|
 
 ## 近期最小落地路径
 
@@ -524,7 +528,7 @@ aits review-trades --as-of 2026-05-02
 原因：
 
 - 阶段 1 的市场数据、评分、观察池、回测、产业链配置、交易 thesis、风险事件分级、估值与拥挤度快照、交易复盘基础闭环，以及日报复核摘要集成已经完成。
-- 下一步的主要价值是把已抽取的 SEC 指标转成可解释、可校验的基本面评分，并继续保证字段映射、taxonomy 差异和 restatement 风险可控。
+- 下一步的主要价值是把已生成的 SEC 基本面特征转成可解释、可校验的基本面评分，并继续保证字段映射、taxonomy 差异和 restatement 风险可控。
 
 ## 不应马上做的事
 

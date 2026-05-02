@@ -31,6 +31,7 @@ config/risk_events.yaml  风险事件等级和动作规则配置
 config/data_sources.yaml 数据源目录、审计字段和来源限制
 config/sec_companies.yaml SEC companyfacts CIK 映射
 config/fundamental_metrics.yaml SEC 基本面指标映射
+config/fundamental_features.yaml SEC 基本面特征公式
 data/raw/                原始数据缓存，不提交
 data/processed/          清洗后的中间数据，不提交
 data/external/           外部导入数据，不提交
@@ -179,9 +180,10 @@ aits fundamentals download-sec-companyfacts --tickers NVDA,MSFT
 aits fundamentals validate-sec-companyfacts --as-of 2026-05-02
 aits fundamentals extract-sec-metrics --as-of 2026-05-02
 aits fundamentals validate-sec-metrics --as-of 2026-05-02
+aits fundamentals build-sec-features --as-of 2026-05-02
 ```
 
-该命令读取 `config/sec_companies.yaml` 的 ticker/CIK 映射，下载 SEC EDGAR companyfacts JSON 到 `data/raw/sec_companyfacts/`，并追加写入 `sec_companyfacts_manifest.csv`。校验命令会检查 JSON、CIK、taxonomy 和 checksum。`extract-sec-metrics` 会先执行同一条 SEC 缓存质量门禁，通过后按 `config/fundamental_metrics.yaml` 抽取收入、毛利、营业利润、净利润、研发和 CapEx 等指标，默认输出 `data/processed/sec_fundamentals_YYYY-MM-DD.csv` 和 `outputs/reports/sec_fundamentals_YYYY-MM-DD.md`。显式派生指标只允许使用配置声明的组件，例如 `gross_profit = revenue - cost_of_revenue`，且必须满足周期、单位、截止日、财年、财期和 accession number 一致。`config/sec_companies.yaml` 可以声明单家公司在 SEC companyfacts 路径可用的指标周期；当前 TSM 在该路径只要求年度指标，季度指标需后续接入 TSM 官方 IR 等可审计来源。`validate-sec-metrics` 会校验抽取后 CSV 的 schema、重复键、未来披露日期、数值合法性和配置覆盖率。当前只生成可复核的结构化摘要，保留 SEC 原始币种和符号，不直接进入基本面自动评分。
+该命令读取 `config/sec_companies.yaml` 的 ticker/CIK 映射，下载 SEC EDGAR companyfacts JSON 到 `data/raw/sec_companyfacts/`，并追加写入 `sec_companyfacts_manifest.csv`。校验命令会检查 JSON、CIK、taxonomy 和 checksum。`extract-sec-metrics` 会先执行同一条 SEC 缓存质量门禁，通过后按 `config/fundamental_metrics.yaml` 抽取收入、毛利、营业利润、净利润、研发和 CapEx 等指标，默认输出 `data/processed/sec_fundamentals_YYYY-MM-DD.csv` 和 `outputs/reports/sec_fundamentals_YYYY-MM-DD.md`。显式派生指标只允许使用配置声明的组件，例如 `gross_profit = revenue - cost_of_revenue`，且必须满足周期、单位、截止日、财年、财期和 accession number 一致。`config/sec_companies.yaml` 可以声明单家公司在 SEC companyfacts 路径可用的指标周期；当前 TSM 在该路径只要求年度指标，季度指标需后续接入 TSM 官方 IR 等可审计来源。`validate-sec-metrics` 会校验抽取后 CSV 的 schema、重复键、未来披露日期、数值合法性和配置覆盖率。`build-sec-features` 会先复用同一条 SEC 指标 CSV 校验门禁，通过后按 `config/fundamental_features.yaml` 生成毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度，默认输出 `data/processed/sec_fundamental_features_YYYY-MM-DD.csv` 和 `outputs/reports/sec_fundamental_features_YYYY-MM-DD.md`。当前只生成可复核的结构化摘要和基本面特征，保留 SEC 原始币种和符号，尚未直接进入每日基本面评分。
 
 复盘交易记录并做基础归因：
 

@@ -21,6 +21,9 @@ DEFAULT_RISK_EVENTS_CONFIG_PATH = PROJECT_ROOT / "config" / "risk_events.yaml"
 DEFAULT_DATA_SOURCES_CONFIG_PATH = PROJECT_ROOT / "config" / "data_sources.yaml"
 DEFAULT_SEC_COMPANIES_CONFIG_PATH = PROJECT_ROOT / "config" / "sec_companies.yaml"
 DEFAULT_FUNDAMENTAL_METRICS_CONFIG_PATH = PROJECT_ROOT / "config" / "fundamental_metrics.yaml"
+DEFAULT_FUNDAMENTAL_FEATURES_CONFIG_PATH = (
+    PROJECT_ROOT / "config" / "fundamental_features.yaml"
+)
 
 
 class MarketUniverse(BaseModel):
@@ -376,6 +379,45 @@ class FundamentalMetricsConfig(BaseModel):
         return self
 
 
+class FundamentalRatioFeatureConfig(BaseModel):
+    feature_id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9_.-]+$")
+    name: str = Field(min_length=1)
+    description: str = Field(min_length=1)
+    numerator_metric_id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9_.-]+$")
+    denominator_metric_id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9_.-]+$")
+    preferred_periods: list[Literal["annual", "quarterly"]] = Field(min_length=1)
+    unit: Literal["ratio"] = "ratio"
+
+    @model_validator(mode="after")
+    def validate_ratio_feature(self) -> Self:
+        duplicate_periods = _duplicates(self.preferred_periods)
+        if duplicate_periods:
+            raise ValueError(
+                f"fundamental feature {self.feature_id} has duplicate periods: "
+                f"{', '.join(duplicate_periods)}"
+            )
+        if self.numerator_metric_id == self.denominator_metric_id:
+            raise ValueError(
+                f"fundamental feature {self.feature_id} numerator and denominator "
+                "must be distinct"
+            )
+        return self
+
+
+class FundamentalFeaturesConfig(BaseModel):
+    features: list[FundamentalRatioFeatureConfig] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_feature_ids(self) -> Self:
+        feature_ids = [feature.feature_id for feature in self.features]
+        duplicate_ids = _duplicates(feature_ids)
+        if duplicate_ids:
+            raise ValueError(
+                f"fundamental feature ids must be unique: {', '.join(duplicate_ids)}"
+            )
+        return self
+
+
 class DecisionConfig(BaseModel):
     frequency: str
     market_timezone: str
@@ -571,6 +613,15 @@ def load_fundamental_metrics(
     with config_path.open("r", encoding="utf-8") as file:
         raw: dict[str, Any] = yaml.safe_load(file)
     return FundamentalMetricsConfig.model_validate(raw)
+
+
+def load_fundamental_features(
+    path: Path | str = DEFAULT_FUNDAMENTAL_FEATURES_CONFIG_PATH,
+) -> FundamentalFeaturesConfig:
+    config_path = Path(path)
+    with config_path.open("r", encoding="utf-8") as file:
+        raw: dict[str, Any] = yaml.safe_load(file)
+    return FundamentalFeaturesConfig.model_validate(raw)
 
 
 def market_regime_by_id(

@@ -140,6 +140,7 @@
 12. 实现交易复盘归因。状态：已实现基础版，命令为 `aits review-trades`。
 13. 实现 SEC companyfacts 原始基本面数据下载和缓存校验。状态：已实现基础版，命令为 `aits fundamentals download-sec-companyfacts` 和 `aits fundamentals validate-sec-companyfacts`。
 14. 实现 SEC companyfacts 基础指标抽取和派生指标校验。状态：已实现基础版，命令为 `aits fundamentals extract-sec-metrics` 和 `aits fundamentals validate-sec-metrics`，输出结构化 CSV 和中文 Markdown 报告，暂不进入自动评分。
+15. 实现 SEC 基本面比率特征。状态：已实现基础版，命令为 `aits fundamentals build-sec-features`，先复用 SEC 指标 CSV 校验门禁，再输出毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度。
 
 ## 阶段 1 数据缓存约定
 

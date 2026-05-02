@@ -6,6 +6,7 @@ from ai_trading_system.config import (
     load_data_quality,
     load_data_sources,
     load_features,
+    load_fundamental_features,
     load_fundamental_metrics,
     load_industry_chain,
     load_market_regimes,
@@ -93,6 +94,17 @@ def test_fundamental_metrics_config_loads_sec_metric_mappings() -> None:
         and derived.subtrahend_metric_id == "cost_of_revenue"
         for derived in config.derived_metrics
     )
+
+
+def test_fundamental_features_config_loads_ratio_formulas() -> None:
+    config = load_fundamental_features()
+    by_id = {feature.feature_id: feature for feature in config.features}
+
+    assert {"gross_margin", "operating_margin", "net_margin"}.issubset(by_id)
+    assert by_id["gross_margin"].numerator_metric_id == "gross_profit"
+    assert by_id["gross_margin"].denominator_metric_id == "revenue"
+    assert by_id["capex_intensity"].unit == "ratio"
+    assert by_id["capex_intensity"].preferred_periods == ["annual"]
 
 
 def test_feature_config_loads_market_feature_windows() -> None:

@@ -21,6 +21,7 @@ from ai_trading_system.backtest.daily import (
 )
 from ai_trading_system.config import (
     DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    DEFAULT_FUNDAMENTAL_FEATURES_CONFIG_PATH,
     DEFAULT_FUNDAMENTAL_METRICS_CONFIG_PATH,
     DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH,
     DEFAULT_MARKET_REGIMES_CONFIG_PATH,
@@ -36,6 +37,7 @@ from ai_trading_system.config import (
     load_data_quality,
     load_data_sources,
     load_features,
+    load_fundamental_features,
     load_fundamental_metrics,
     load_industry_chain,
     load_market_regimes,
@@ -68,6 +70,13 @@ from ai_trading_system.features.market import (
 from ai_trading_system.fundamentals.sec_companyfacts import (
     SecEdgarCompanyFactsProvider,
     download_sec_companyfacts,
+)
+from ai_trading_system.fundamentals.sec_features import (
+    build_sec_fundamental_features_report,
+    default_sec_fundamental_features_csv_path,
+    default_sec_fundamental_features_report_path,
+    write_sec_fundamental_features_csv,
+    write_sec_fundamental_features_report,
 )
 from ai_trading_system.fundamentals.sec_metrics import (
     build_sec_fundamental_metrics_report,
@@ -1190,6 +1199,124 @@ def validate_sec_metrics_command(
         f"当日行数：{report.as_of_row_count}；"
         f"总行数：{report.row_count}"
     )
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+
+@fundamentals_app.command("build-sec-features")
+def build_sec_features_command(
+    sec_companies_path: Annotated[
+        Path,
+        typer.Option(help="SEC company CIK 配置文件路径。"),
+    ] = DEFAULT_SEC_COMPANIES_CONFIG_PATH,
+    metrics_path: Annotated[
+        Path,
+        typer.Option(help="SEC 指标映射配置文件路径，用于先校验指标 CSV。"),
+    ] = DEFAULT_FUNDAMENTAL_METRICS_CONFIG_PATH,
+    feature_config_path: Annotated[
+        Path,
+        typer.Option(help="SEC 基本面特征公式配置文件路径。"),
+    ] = DEFAULT_FUNDAMENTAL_FEATURES_CONFIG_PATH,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="SEC 基本面指标 CSV 输入路径。"),
+    ] = None,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="特征日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="SEC 基本面特征 CSV 输出路径。"),
+    ] = None,
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown SEC 基本面特征报告输出路径。"),
+    ] = None,
+    validation_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown SEC 基本面指标 CSV 校验报告输出路径。"),
+    ] = None,
+) -> None:
+    """在 SEC 指标 CSV 校验通过后构建基本面比率特征。"""
+    feature_date = _parse_date(as_of) if as_of else date.today()
+    csv_input = input_path or default_sec_fundamental_metrics_csv_path(
+        PROJECT_ROOT / "data" / "processed",
+        feature_date,
+    )
+    validation_output = (
+        validation_report_path
+        or default_sec_fundamental_metrics_validation_report_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            feature_date,
+        )
+    )
+    feature_csv_output = output_path or default_sec_fundamental_features_csv_path(
+        PROJECT_ROOT / "data" / "processed",
+        feature_date,
+    )
+    feature_report_output = report_path or default_sec_fundamental_features_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        feature_date,
+    )
+
+    sec_companies = load_sec_companies(sec_companies_path)
+    metrics = load_fundamental_metrics(metrics_path)
+    validation_report = validate_sec_fundamental_metrics_csv(
+        companies=sec_companies,
+        metrics=metrics,
+        input_path=csv_input,
+        as_of=feature_date,
+    )
+    write_sec_fundamental_metrics_validation_report(validation_report, validation_output)
+    if not validation_report.passed:
+        console.print("[red]SEC 基本面指标 CSV 校验失败，已停止特征构建。[/red]")
+        console.print(f"SEC 指标 CSV 校验报告：{validation_output}")
+        console.print(
+            f"错误数：{validation_report.error_count}；"
+            f"警告数：{validation_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+
+    report = build_sec_fundamental_features_report(
+        companies=sec_companies,
+        feature_config=load_fundamental_features(feature_config_path),
+        input_path=csv_input,
+        as_of=feature_date,
+        validation_report=validation_report,
+    )
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    if not report.passed:
+        markdown_path = write_sec_fundamental_features_report(
+            report=report,
+            validation_report_path=validation_output,
+            output_csv_path=feature_csv_output,
+            output_path=feature_report_output,
+        )
+        console.print(
+            f"[{status_style}]SEC 基本面特征构建状态：{report.status}[/{status_style}]"
+        )
+        console.print(f"SEC 指标 CSV 校验报告：{validation_output}（{validation_report.status}）")
+        console.print(f"基本面特征 CSV 未写入：{feature_csv_output}")
+        console.print(f"基本面特征报告：{markdown_path}")
+        console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+        raise typer.Exit(code=1)
+
+    csv_path = write_sec_fundamental_features_csv(report, feature_csv_output)
+    markdown_path = write_sec_fundamental_features_report(
+        report=report,
+        validation_report_path=validation_output,
+        output_csv_path=csv_path,
+        output_path=feature_report_output,
+    )
+
+    console.print(f"[{status_style}]SEC 基本面特征构建状态：{report.status}[/{status_style}]")
+    console.print(f"SEC 指标 CSV 校验报告：{validation_output}（{validation_report.status}）")
+    console.print(f"基本面特征 CSV：{csv_path}")
+    console.print(f"基本面特征报告：{markdown_path}")
+    console.print(f"公司数：{report.company_count}；特征行数：{report.row_count}")
     console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
 
     if not report.passed:
