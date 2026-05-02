@@ -76,7 +76,7 @@
   <rect class="work" x="850" y="305" width="185" height="125" />
   <text class="box-title" x="872" y="337">每日评分</text>
   <text class="box-text" x="872" y="365">趋势 / SEC 基本面</text>
-  <text class="box-text" x="872" y="387">宏观流动性 / 风险情绪</text>
+  <text class="box-text" x="872" y="387">宏观 / 风险 / 估值</text>
   <text class="box-text" x="872" y="409">scores_daily.csv</text>
   <text class="box-text" x="872" y="425">人工复核摘要</text>
 

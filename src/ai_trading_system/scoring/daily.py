@@ -20,6 +20,7 @@ from ai_trading_system.scoring.position_model import (
     PositionRecommendation,
     WeightedScoreModel,
 )
+from ai_trading_system.valuation import ValuationReviewReport
 
 COMPONENT_LABELS = {
     "trend": "趋势",
@@ -36,6 +37,8 @@ SOURCE_TYPE_LABELS = {
     "partial_hard_data": "部分硬数据",
     "insufficient_data": "数据不足",
     "placeholder": "占位输入",
+    "manual_input": "手工/审计输入",
+    "partial_manual_input": "部分手工/审计输入",
     "derived": "派生结果",
 }
 
@@ -113,6 +116,7 @@ class DailyScoreReport:
     feature_set: MarketFeatureSet
     minimum_action_delta: float
     fundamental_feature_report: SecFundamentalFeaturesReport | None = None
+    valuation_review_report: ValuationReviewReport | None = None
     review_summary: DailyReviewSummary | None = None
 
     @property
@@ -141,9 +145,15 @@ def build_daily_score_report(
     total_risk_asset_max: float,
     review_summary: DailyReviewSummary | None = None,
     fundamental_feature_report: SecFundamentalFeaturesReport | None = None,
+    valuation_review_report: ValuationReviewReport | None = None,
 ) -> DailyScoreReport:
     if fundamental_feature_report is not None and not fundamental_feature_report.passed:
         raise ValueError("SEC 基本面特征报告未通过，不能进入每日评分")
+    if (
+        valuation_review_report is not None
+        and not valuation_review_report.validation_report.passed
+    ):
+        raise ValueError("估值快照校验未通过，不能进入每日评分")
 
     components = [
         _score_hard_data_module("trend", rules.weights["trend"], rules.trend, feature_set, rules),
@@ -165,8 +175,12 @@ def build_daily_score_report(
             feature_set,
             rules,
         ),
+        _score_valuation_module(
+            rules=rules,
+            valuation_review_report=valuation_review_report,
+        ),
     ]
-    for name in ["valuation", "policy_geopolitics"]:
+    for name in ["policy_geopolitics"]:
         placeholder = rules.placeholders[name]
         components.append(
             DailyScoreComponent(
@@ -193,6 +207,7 @@ def build_daily_score_report(
         feature_set=feature_set,
         minimum_action_delta=rules.position_change.minimum_action_delta,
         fundamental_feature_report=fundamental_feature_report,
+        valuation_review_report=valuation_review_report,
         review_summary=review_summary,
     )
 
@@ -285,6 +300,11 @@ def render_daily_score_report(
             lines.append(f"- SEC 基本面特征报告：`{sec_fundamental_feature_report_path}`")
         if sec_fundamental_features_path is not None:
             lines.append(f"- SEC 基本面特征数据：`{sec_fundamental_features_path}`")
+    if report.valuation_review_report is not None:
+        valuation_validation = report.valuation_review_report.validation_report
+        lines.append(f"- 估值快照校验状态：{valuation_validation.status}")
+        lines.append(f"- 估值快照数量：{valuation_validation.snapshot_count}")
+        lines.append(f"- 估值覆盖标的数：{valuation_validation.ticker_count}")
 
     lines.extend(
         [
@@ -461,6 +481,46 @@ def _score_fundamental_module(
     )
 
 
+def _score_valuation_module(
+    rules: ScoringRulesConfig,
+    valuation_review_report: ValuationReviewReport | None,
+) -> DailyScoreComponent:
+    placeholder = rules.placeholders["valuation"]
+    if valuation_review_report is None or rules.valuation is None:
+        return DailyScoreComponent(
+            name="valuation",
+            score=placeholder.score,
+            weight=rules.weights["valuation"],
+            source_type="placeholder",
+            coverage=0.0,
+            reason=placeholder.reason,
+            signals=(),
+        )
+
+    component = _score_signal_module(
+        name="valuation",
+        weight=rules.weights["valuation"],
+        module_rules=rules.valuation,
+        feature_index=_valuation_feature_index(valuation_review_report),
+        rules=rules,
+        source_description="估值与拥挤度快照",
+    )
+    source_type = component.source_type
+    if source_type == "hard_data":
+        source_type = "manual_input"
+    elif source_type == "partial_hard_data":
+        source_type = "partial_manual_input"
+    return DailyScoreComponent(
+        name=component.name,
+        score=component.score,
+        weight=component.weight,
+        source_type=source_type,
+        coverage=component.coverage,
+        reason=component.reason,
+        signals=component.signals,
+    )
+
+
 def _score_signal_module(
     name: str,
     weight: float,
@@ -586,6 +646,32 @@ def _fundamental_feature_index(
     for feature_name, values in aggregate_values.items():
         index[("AI_CORE_MEDIAN", f"{feature_name}_median")] = float(median(values))
     return index
+
+
+def _valuation_feature_index(report: ValuationReviewReport) -> dict[tuple[str, str], float]:
+    usable_items = [
+        item
+        for item in report.items
+        if item.source_type != "public_convenience"
+        and item.health != "STALE"
+        and item.valuation_percentile is not None
+    ]
+    if not usable_items:
+        return {}
+
+    valuation_percentiles = [
+        item.valuation_percentile
+        for item in usable_items
+        if item.valuation_percentile is not None
+    ]
+    overheated_count = sum(
+        item.health in {"EXPENSIVE_OR_CROWDED", "EXTREME_OVERHEATED"}
+        for item in usable_items
+    )
+    return {
+        ("AI_CORE_MEDIAN", "valuation_percentile"): float(median(valuation_percentiles)),
+        ("AI_CORE", "overheated_snapshot_ratio"): overheated_count / len(usable_items),
+    }
 
 
 def _score_component_record(as_of: date, component: DailyScoreComponent) -> dict[str, object]:

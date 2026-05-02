@@ -32,6 +32,13 @@ from ai_trading_system.scoring.daily import (
     render_daily_score_report,
     write_scores_csv,
 )
+from ai_trading_system.valuation import (
+    LoadedValuationSnapshot,
+    SnapshotMetric,
+    ValuationSnapshot,
+    ValuationValidationReport,
+    build_valuation_review_report,
+)
 
 
 def test_build_daily_score_report_uses_hard_data_and_placeholders() -> None:
@@ -70,6 +77,23 @@ def test_build_daily_score_report_uses_sec_fundamental_features() -> None:
         and signal.feature == "gross_margin_quarterly_median"
         for signal in fundamentals.signals
     )
+
+
+def test_build_daily_score_report_uses_valuation_snapshots() -> None:
+    report = build_daily_score_report(
+        feature_set=_feature_set(),
+        data_quality_report=_quality_report(),
+        rules=load_scoring_rules(),
+        total_risk_asset_min=0.60,
+        total_risk_asset_max=0.80,
+        valuation_review_report=_valuation_review_report(),
+    )
+
+    valuation = _component(report, "valuation")
+
+    assert valuation.source_type == "manual_input"
+    assert valuation.coverage == 1.0
+    assert valuation.score < 50
 
 
 def test_build_daily_score_report_marks_insufficient_data() -> None:
@@ -298,6 +322,38 @@ def _fundamental_feature_report() -> SecFundamentalFeaturesReport:
         ),
         rows=rows,
     )
+
+
+def _valuation_review_report():
+    as_of = date(2026, 4, 30)
+    validation_report = ValuationValidationReport(
+        as_of=as_of,
+        input_path=Path("valuation_snapshots"),
+        snapshots=(
+            LoadedValuationSnapshot(
+                snapshot=ValuationSnapshot(
+                    snapshot_id="nvda_valuation",
+                    ticker="NVDA",
+                    as_of=as_of,
+                    source_type="manual_input",
+                    source_name="manual_sheet",
+                    captured_at=as_of,
+                    valuation_metrics=(
+                        SnapshotMetric(
+                            metric_id="forward_pe",
+                            value=36.0,
+                            unit="ratio",
+                            period="next_12m",
+                        ),
+                    ),
+                    valuation_percentile=82.0,
+                    overall_assessment="expensive",
+                ),
+                path=Path("nvda_valuation.yaml"),
+            ),
+        ),
+    )
+    return build_valuation_review_report(validation_report)
 
 
 def _fundamental_feature(

@@ -258,6 +258,7 @@ flowchart TD
     F --> G["写入特征缓存<br/>features_daily.csv"]
     F --> H["写入特征摘要<br/>feature_summary_YYYY-MM-DD.md"]
     F --> R["复用已通过的数据质量结果<br/>汇总 thesis / 风险事件 / 估值 / 交易复盘状态"]
+    R --> V1["估值快照校验和复核<br/>validate_valuation_snapshot_store"]
     F --> S1["校验 SEC 指标 CSV<br/>validate_sec_fundamental_metrics_csv"]
     S1 -->|FAIL| S2["停止<br/>输出 SEC 指标 CSV 校验报告"]
     S1 -->|PASS 或 PASS_WITH_WARNINGS| S3["构建 SEC 基本面特征<br/>build_sec_fundamental_features_report"]
@@ -266,14 +267,17 @@ flowchart TD
     G --> I["构建每日评分<br/>build_daily_score_report"]
     H --> I
     R --> I
+    V1 --> I
     S5 --> I
     I --> J["趋势评分<br/>指数趋势、半导体趋势、核心池宽度、相对强弱"]
     I --> F1["基本面评分<br/>SEC 特征中位数：毛利率、营业利润率、净利率、R&D、CapEx"]
+    I --> V2["估值评分<br/>估值分位和拥挤比例；排除过期和 public_convenience"]
     I --> K["宏观流动性评分<br/>DGS10、DGS2、美元指数"]
     I --> L["风险情绪评分<br/>VIX 水平、分位、变化速度"]
-    I --> M["占位评分<br/>估值、政策/地缘"]
+    I --> M["占位评分<br/>政策/地缘"]
     J --> N["总分和仓位区间<br/>风险资产内 AI 仓位"]
     F1 --> N
+    V2 --> N
     K --> N
     L --> N
     M --> N
@@ -339,7 +343,7 @@ flowchart TD
         A["数据下载<br/>aits download-data"]
         B["数据质量门禁<br/>aits validate-data"]
         C["市场特征<br/>aits build-features"]
-        D["每日评分<br/>aits score-daily<br/>含 SEC 基本面和人工复核摘要"]
+        D["每日评分<br/>aits score-daily<br/>含 SEC 基本面、估值快照和人工复核摘要"]
         E["历史回测<br/>aits backtest<br/>含 SEC point-in-time 基本面"]
         F["观察池校验<br/>aits watchlist validate"]
         G["产业链图校验<br/>aits industry-chain validate"]
@@ -387,7 +391,7 @@ flowchart TD
 |质量报告|`outputs/reports/data_quality_YYYY-MM-DD.md`|声明数据是否可用于下游结论|已实现|
 |特征|`aits build-features`|生成可解释市场特征|已实现|
 |特征缓存|`data/processed/features_daily.csv`|保存 tidy 格式特征|已实现|
-|评分|`aits score-daily`|先执行市场数据质量门禁，再校验 SEC 指标 CSV、构建 SEC 基本面特征，并输出评分、仓位区间和日报|已实现|
+|评分|`aits score-daily`|先执行市场数据质量门禁，再校验 SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照，并输出评分、仓位区间和日报|已实现|
 |评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果|已实现|
 |日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|输出中文结论、市场数据质量状态、SEC 基本面质量状态、限制说明和人工复核摘要|已实现|
 |回测|`aits backtest`|基于每日评分动态仓位回测，并按 signal_date 构建 point-in-time SEC 基本面特征|已实现|

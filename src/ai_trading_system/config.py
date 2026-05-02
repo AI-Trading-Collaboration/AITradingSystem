@@ -544,6 +544,7 @@ class ScoringRulesConfig(BaseModel):
     fundamentals: ScoreModuleRuleConfig | None = None
     macro_liquidity: ScoreModuleRuleConfig
     risk_sentiment: ScoreModuleRuleConfig
+    valuation: ScoreModuleRuleConfig | None = None
     placeholders: dict[str, PlaceholderScoreConfig]
     position_change: PositionChangeConfig
 

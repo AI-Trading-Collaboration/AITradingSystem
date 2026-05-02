@@ -133,6 +133,7 @@ from ai_trading_system.trade_review import (
     write_trade_review_report,
 )
 from ai_trading_system.valuation import (
+    ValuationReviewReport,
     build_valuation_review_report,
     default_valuation_review_report_path,
     default_valuation_validation_report_path,
@@ -1954,10 +1955,26 @@ def score_daily(
         output_csv_path=sec_fundamental_features_output,
         output_path=sec_fundamental_feature_report_output,
     )
+    valuation_validation_report = validate_valuation_snapshot_store(
+        store=load_valuation_snapshot_store(valuation_path),
+        universe=universe,
+        watchlist=watchlist,
+        as_of=score_date,
+    )
+    valuation_review_report = build_valuation_review_report(valuation_validation_report)
+    if not valuation_validation_report.passed:
+        console.print("[red]估值快照校验失败，已停止每日评分。[/red]")
+        console.print(
+            f"错误数：{valuation_validation_report.error_count}；"
+            f"警告数：{valuation_validation_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+
     review_summary = _build_daily_review_summary(
         thesis_path=thesis_path,
         risk_events_path=risk_events_path,
         valuation_path=valuation_path,
+        valuation_review_report=valuation_review_report,
         trades_path=trades_path,
         score_date=score_date,
         universe=universe,
@@ -1975,6 +1992,7 @@ def score_daily(
         total_risk_asset_max=portfolio.portfolio.total_risk_asset_max,
         review_summary=review_summary,
         fundamental_feature_report=sec_fundamental_feature_report,
+        valuation_review_report=valuation_review_report,
     )
     scores_output = write_scores_csv(score_report, scores_path)
     daily_report_output = write_daily_score_report(
@@ -2007,6 +2025,7 @@ def _build_daily_review_summary(
     thesis_path: Path,
     risk_events_path: Path,
     valuation_path: Path,
+    valuation_review_report: ValuationReviewReport,
     trades_path: Path,
     score_date: date,
     universe: UniverseConfig,
@@ -2032,9 +2051,7 @@ def _build_daily_review_summary(
         ),
         valuation=_build_daily_valuation_status(
             input_path=valuation_path,
-            universe=universe,
-            watchlist=watchlist,
-            score_date=score_date,
+            review_report=valuation_review_report,
         ),
         trades=_build_daily_trade_review_status(
             input_path=trades_path,
@@ -2119,18 +2136,9 @@ def _build_daily_risk_events_status(
 
 def _build_daily_valuation_status(
     input_path: Path,
-    universe: UniverseConfig,
-    watchlist: WatchlistConfig,
-    score_date: date,
+    review_report: ValuationReviewReport,
 ) -> DailyManualReviewStatus:
-    validation_report = validate_valuation_snapshot_store(
-        store=load_valuation_snapshot_store(input_path),
-        universe=universe,
-        watchlist=watchlist,
-        as_of=score_date,
-    )
-    review_report = build_valuation_review_report(validation_report)
-
+    validation_report = review_report.validation_report
     overheated_count = sum(
         item.health in {"EXPENSIVE_OR_CROWDED", "EXTREME_OVERHEATED"}
         for item in review_report.items

@@ -120,6 +120,20 @@ risk_sentiment:
       bearish_above: 0.20
       points: 30
 
+valuation:
+  neutral_score: 50
+  signals:
+    - subject: AI_CORE_MEDIAN
+      feature: valuation_percentile
+      bullish_below: 35
+      bearish_above: 85
+      points: 60
+    - subject: AI_CORE
+      feature: overheated_snapshot_ratio
+      bullish_below: 0.10
+      bearish_above: 0.50
+      points: 40
+
 placeholders:
   fundamentals:
     score: 50

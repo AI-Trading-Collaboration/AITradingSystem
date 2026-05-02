@@ -143,6 +143,7 @@
 15. 实现 SEC 基本面比率特征。状态：已实现基础版，命令为 `aits fundamentals build-sec-features`，先复用 SEC 指标 CSV 校验门禁，再输出毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度。
 16. 接入 SEC 基本面硬数据评分。状态：已实现基础版，`aits score-daily` 会先校验 SEC 指标 CSV、构建 SEC 基本面特征，通过后按 `config/scoring_rules.yaml` 的 `fundamentals` 规则评分；失败时停止日报评分。
 17. 接入回测 point-in-time SEC 基本面。状态：已实现基础版，`aits backtest` 会校验 SEC companyfacts 缓存，并按每个 signal_date 只使用 `filed_date <= signal_date` 的 SEC 事实生成基本面特征。
+18. 接入估值快照评分。状态：已实现基础版，`aits score-daily` 会在估值快照校验通过后，用合规且未过期的估值快照按估值分位和拥挤比例评分；`public_convenience` 来源不会进入自动评分。
 
 ## 阶段 1 数据缓存约定
 
@@ -203,7 +204,8 @@
 - 基本面：已通过校验的 AI 核心观察池 SEC 特征中位数，包括季度毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度。
 - 宏观流动性：DGS10、DGS2、美元指数。
 - 风险情绪：VIX 当前值、VIX 分位、VIX 短期变化。
-- 估值、政策地缘：明确标记为 MVP 占位输入。
+- 估值：已通过校验且来源合规的估值快照，使用估值分位和拥挤比例；缺少有效快照时标记为数据不足。
+- 政策地缘：明确标记为 MVP 占位输入。
 - 人工复核摘要：汇总 thesis、风险事件、估值快照和交易复盘状态；交易复盘复用同一份数据质量门禁结果。
 
 如果某个硬数据模块的信号覆盖率低于配置阈值，模块使用中性分并标记为 `insufficient_data`，不能静默给出伪精确分数。
