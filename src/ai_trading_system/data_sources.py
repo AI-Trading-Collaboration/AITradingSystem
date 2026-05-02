@@ -300,6 +300,8 @@ def _check_planned_source_readiness(
 def _required_audit_fields(source: DataSourceConfig) -> set[str]:
     if source.source_type == "manual_input":
         return {"provider", "file_path", "checksum"}
+    if source.source_id == "sec_company_facts":
+        return {"provider", "endpoint", "request_parameters", "downloaded_at", "fact_count"}
     return {"provider", "endpoint", "request_parameters", "downloaded_at", "row_count"}
 
 

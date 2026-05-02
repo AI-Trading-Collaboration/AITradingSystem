@@ -19,6 +19,7 @@ DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH = PROJECT_ROOT / "config" / "industry_chain.y
 DEFAULT_MARKET_REGIMES_CONFIG_PATH = PROJECT_ROOT / "config" / "market_regimes.yaml"
 DEFAULT_RISK_EVENTS_CONFIG_PATH = PROJECT_ROOT / "config" / "risk_events.yaml"
 DEFAULT_DATA_SOURCES_CONFIG_PATH = PROJECT_ROOT / "config" / "data_sources.yaml"
+DEFAULT_SEC_COMPANIES_CONFIG_PATH = PROJECT_ROOT / "config" / "sec_companies.yaml"
 
 
 class MarketUniverse(BaseModel):
@@ -207,6 +208,51 @@ class DataSourceConfig(BaseModel):
 class DataSourcesConfig(BaseModel):
     sources: list[DataSourceConfig] = Field(min_length=1)
 
+
+class SecCompanyConfig(BaseModel):
+    ticker: str = Field(min_length=1)
+    cik: str = Field(pattern=r"^\d{10}$")
+    company_name: str = Field(min_length=1)
+    active: bool = True
+    expected_taxonomies: list[str] = Field(default_factory=list)
+    notes: str = ""
+
+    @model_validator(mode="after")
+    def normalize_ticker(self) -> Self:
+        self.ticker = self.ticker.upper()
+        return self
+
+
+class SecCompaniesConfig(BaseModel):
+    companies: list[SecCompanyConfig] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_company_ids(self) -> Self:
+        tickers: set[str] = set()
+        duplicate_tickers: set[str] = set()
+        ciks: set[str] = set()
+        duplicate_ciks: set[str] = set()
+
+        for company in self.companies:
+            if company.ticker in tickers:
+                duplicate_tickers.add(company.ticker)
+            tickers.add(company.ticker)
+
+            if company.cik in ciks:
+                duplicate_ciks.add(company.cik)
+            ciks.add(company.cik)
+
+        if duplicate_tickers:
+            raise ValueError(
+                f"SEC company tickers must be unique: {', '.join(sorted(duplicate_tickers))}"
+            )
+        if duplicate_ciks:
+            raise ValueError(
+                f"SEC company CIKs must be unique: {', '.join(sorted(duplicate_ciks))}"
+            )
+        return self
+
+
 class DecisionConfig(BaseModel):
     frequency: str
     market_timezone: str
@@ -384,6 +430,15 @@ def load_data_sources(
     with config_path.open("r", encoding="utf-8") as file:
         raw: dict[str, Any] = yaml.safe_load(file)
     return DataSourcesConfig.model_validate(raw)
+
+
+def load_sec_companies(
+    path: Path | str = DEFAULT_SEC_COMPANIES_CONFIG_PATH,
+) -> SecCompaniesConfig:
+    config_path = Path(path)
+    with config_path.open("r", encoding="utf-8") as file:
+        raw: dict[str, Any] = yaml.safe_load(file)
+    return SecCompaniesConfig.model_validate(raw)
 
 
 def market_regime_by_id(

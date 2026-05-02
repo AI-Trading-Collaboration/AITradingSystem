@@ -1,0 +1,48 @@
+companies:
+  - ticker: MSFT
+    cik: "0000789019"
+    company_name: Microsoft Corporation
+    expected_taxonomies:
+      - us-gaap
+      - dei
+    notes: Core AI cloud and platform company.
+
+  - ticker: GOOG
+    cik: "0001652044"
+    company_name: Alphabet Inc.
+    expected_taxonomies:
+      - us-gaap
+      - dei
+    notes: Core AI cloud and platform company.
+
+  - ticker: TSM
+    cik: "0001046179"
+    company_name: Taiwan Semiconductor Manufacturing Company Limited
+    expected_taxonomies:
+      - ifrs-full
+      - dei
+    notes: Foreign issuer; financial taxonomy can differ from US GAAP peers.
+
+  - ticker: INTC
+    cik: "0000050863"
+    company_name: Intel Corporation
+    expected_taxonomies:
+      - us-gaap
+      - dei
+    notes: Core semiconductor manufacturing and design company.
+
+  - ticker: AMD
+    cik: "0000002488"
+    company_name: Advanced Micro Devices, Inc.
+    expected_taxonomies:
+      - us-gaap
+      - dei
+    notes: Core AI accelerator and CPU company.
+
+  - ticker: NVDA
+    cik: "0001045810"
+    company_name: NVIDIA Corporation
+    expected_taxonomies:
+      - us-gaap
+      - dei
+    notes: Core AI accelerator and networking company.

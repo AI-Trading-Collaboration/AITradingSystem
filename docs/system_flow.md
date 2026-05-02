@@ -36,6 +36,7 @@ flowchart TD
         R["config/market_regimes.yaml<br/>AI regime 与压力测试区间"]
         RE["config/risk_events.yaml<br/>L1/L2/L3 风险事件动作规则"]
         DS["config/data_sources.yaml<br/>数据源目录、审计字段、来源限制"]
+        SEC["config/sec_companies.yaml<br/>SEC CIK 映射和 taxonomy 预期"]
         TH["data/external/trade_theses/*.yaml<br/>交易假设、验证指标、证伪条件"]
         VS["data/external/valuation_snapshots/*.yaml<br/>估值、预期、拥挤度快照"]
         TD["data/external/trades/*.yaml<br/>交易记录、价格、thesis_id"]
@@ -47,6 +48,9 @@ flowchart TD
         PR["data/raw/prices_daily.csv"]
         RR["data/raw/rates_daily.csv"]
         DM["data/raw/download_manifest.csv<br/>provider / endpoint / 参数 / checksum"]
+        SFD["aits fundamentals download-sec-companyfacts"]
+        SFJ["data/raw/sec_companyfacts/*.json"]
+        SFM["data/raw/sec_companyfacts/sec_companyfacts_manifest.csv"]
     end
 
     subgraph Gate["数据质量门禁"]
@@ -111,6 +115,10 @@ flowchart TD
     DL --> PR
     DL --> RR
     DL --> DM
+    SEC --> SFD
+    DS --> SFD
+    SFD --> SFJ
+    SFD --> SFM
 
     U --> V
     Q --> V
@@ -281,6 +289,7 @@ flowchart TD
         K["交易复盘归因<br/>aits review-trades"]
         L["日报集成<br/>汇总 thesis、风险、估值和复盘摘要"]
         M["数据源目录<br/>aits data-sources list/validate"]
+        N["基本面一手数据<br/>aits fundamentals list-sec-companies / download-sec-companyfacts"]
     end
 
     C --> D
@@ -292,6 +301,7 @@ flowchart TD
     I --> J
     J --> K
     M --> C
+    M --> N
     H --> L
     I --> L
     J --> L
@@ -324,6 +334,8 @@ flowchart TD
 |风险事件校验|`aits risk-events validate`|校验风险等级、产业链引用、相关标的和动作规则|已实现基础版|
 |数据源目录|`config/data_sources.yaml`|记录 provider、endpoint、缓存路径、审计字段、校验项和来源限制|已实现基础版|
 |数据源校验|`aits data-sources validate`|校验数据源目录是否可审计、活跃来源是否声明校验和限制|已实现基础版|
+|SEC 公司映射|`config/sec_companies.yaml`|记录核心标的 ticker、CIK 和 taxonomy 预期|已实现基础版|
+|SEC 基本面下载|`aits fundamentals download-sec-companyfacts`|下载 SEC companyfacts 原始 JSON 并写入审计 manifest；暂不进入自动评分|已实现基础版|
 |交易假设|`data/external/trade_theses/`|记录交易 thesis、验证指标和证伪条件|已实现基础版|
 |交易假设模板|`docs/examples/trade_theses/`|提供可复制 YAML 模板，不提交个人记录|已实现基础版|
 |假设校验|`aits thesis validate`|校验 schema、观察池引用、产业链节点和证伪约束|已实现基础版|

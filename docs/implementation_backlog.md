@@ -18,6 +18,7 @@
 |工程骨架|已完成|Python package、CLI、测试、CI、文档|
 |数据下载|已完成基础版|`aits download-data`，价格、VIX、DXY、FRED 利率，并写入 `download_manifest.csv` 审计清单|
 |数据源目录|已完成基础版|`config/data_sources.yaml` 和 `aits data-sources list/validate`，记录来源类型、审计字段、校验项和限制说明|
+|SEC 基本面原始数据|已完成基础版|`config/sec_companies.yaml` 和 `aits fundamentals download-sec-companyfacts`，下载 companyfacts JSON 并写入 manifest|
 |数据质量门禁|已完成基础版|`aits validate-data`，失败时非零退出|
 |市场环境特征|已完成基础版|`aits build-features`，趋势、相对强弱、VIX、利率、核心池宽度|
 |每日市场评分|已完成基础版|`aits score-daily`，趋势、宏观流动性、风险情绪和占位项|
@@ -486,8 +487,10 @@ aits review-trades --as-of 2026-05-02
 |`config/industry_chain.yaml`|产业链节点和因果图|M4，已实现基础版|
 |`config/market_regimes.yaml`|市场阶段、默认回测区间和压力测试区间|阶段 1，已实现基础版|
 |`config/risk_events.yaml`|风险事件等级和动作规则|M6，已实现基础版|
+|`config/sec_companies.yaml`|SEC companyfacts ticker/CIK 映射|阶段 2，已实现基础版|
 |`config/scoring_rules.yaml`|评分规则和权重|M2|
 |`data/raw/download_manifest.csv`|下载审计清单，记录 provider、endpoint、请求参数、下载时间、行数和 checksum|M1，已实现基础版|
+|`data/raw/sec_companyfacts/`|SEC companyfacts 原始 JSON 和下载 manifest|阶段 2，已实现基础版|
 |`data/processed/features_daily.csv`|每日特征|M1|
 |`data/processed/scores_daily.csv`|每日评分|M2|
 |`data/external/trade_theses/`|交易 thesis|M5，已实现基础版|
@@ -508,13 +511,13 @@ aits review-trades --as-of 2026-05-02
 
 接下来建议按这个顺序开发：
 
-1. 基于 `config/data_sources.yaml` 选择并实现第一个正式基本面数据源，优先从 SEC EDGAR company facts 开始。
-2. 在正式数据源通过质量校验后，把基本面或估值从占位项逐步转为可评分模块。
+1. 实现 SEC companyfacts 缓存校验和基础财报指标抽取，先输出结构化财报摘要，不进入自动评分。
+2. 在 SEC 指标抽取通过质量校验后，把基本面从占位项逐步转为可评分模块。
 
 原因：
 
 - 阶段 1 的市场数据、评分、观察池、回测、产业链配置、交易 thesis、风险事件分级、估值与拥挤度快照、交易复盘基础闭环，以及日报复核摘要集成已经完成。
-- 下一步的主要价值是让估值、财报和事件输入从手工快照走向已实现的数据源适配器，并在进入自动评分前先保证来源、字段和质量校验可靠。
+- 下一步的主要价值是把 SEC companyfacts 原始 JSON 转成可解释、可校验的基本面指标，并在进入自动评分前先保证字段映射、taxonomy 差异和 restatement 风险可控。
 
 ## 不应马上做的事
 

@@ -24,6 +24,7 @@ from ai_trading_system.config import (
     DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH,
     DEFAULT_MARKET_REGIMES_CONFIG_PATH,
     DEFAULT_RISK_EVENTS_CONFIG_PATH,
+    DEFAULT_SEC_COMPANIES_CONFIG_PATH,
     DEFAULT_WATCHLIST_CONFIG_PATH,
     PROJECT_ROOT,
     IndustryChainConfig,
@@ -39,6 +40,7 @@ from ai_trading_system.config import (
     load_portfolio,
     load_risk_events,
     load_scoring_rules,
+    load_sec_companies,
     load_universe,
     load_watchlist,
     market_regime_by_id,
@@ -60,6 +62,10 @@ from ai_trading_system.features.market import (
     default_feature_report_path,
     write_feature_summary,
     write_features_csv,
+)
+from ai_trading_system.fundamentals.sec_companyfacts import (
+    SecEdgarCompanyFactsProvider,
+    download_sec_companyfacts,
 )
 from ai_trading_system.industry_chain import (
     default_industry_chain_report_path,
@@ -119,12 +125,14 @@ thesis_app = typer.Typer(help="交易 thesis 和假设验证管理。", no_args_
 risk_events_app = typer.Typer(help="风险事件分级和动作规则管理。", no_args_is_help=True)
 valuation_app = typer.Typer(help="估值、预期和拥挤度快照管理。", no_args_is_help=True)
 data_sources_app = typer.Typer(help="数据源目录和审计规则管理。", no_args_is_help=True)
+fundamentals_app = typer.Typer(help="基本面数据源下载和审计。", no_args_is_help=True)
 app.add_typer(watchlist_app, name="watchlist")
 app.add_typer(industry_chain_app, name="industry-chain")
 app.add_typer(thesis_app, name="thesis")
 app.add_typer(risk_events_app, name="risk-events")
 app.add_typer(valuation_app, name="valuation")
 app.add_typer(data_sources_app, name="data-sources")
+app.add_typer(fundamentals_app, name="fundamentals")
 console = Console()
 
 
@@ -902,6 +910,84 @@ def validate_data_sources(
 
     if not report.passed:
         raise typer.Exit(code=1)
+
+
+@fundamentals_app.command("list-sec-companies")
+def list_sec_companies(
+    config_path: Annotated[
+        Path,
+        typer.Option(help="SEC company CIK 配置文件路径。"),
+    ] = DEFAULT_SEC_COMPANIES_CONFIG_PATH,
+    active_only: Annotated[
+        bool,
+        typer.Option("--active-only/--all", help="只显示活跃公司，或显示全部公司。"),
+    ] = True,
+) -> None:
+    """列出 SEC companyfacts 下载配置。"""
+    config = load_sec_companies(config_path)
+
+    table = Table(title="SEC Company Facts 公司映射")
+    table.add_column("Ticker")
+    table.add_column("CIK")
+    table.add_column("公司")
+    table.add_column("活跃")
+    table.add_column("Taxonomy")
+    for company in sorted(config.companies, key=lambda item: item.ticker):
+        if active_only and not company.active:
+            continue
+        table.add_row(
+            company.ticker,
+            company.cik,
+            company.company_name,
+            "是" if company.active else "否",
+            ", ".join(company.expected_taxonomies),
+        )
+    console.print(table)
+
+
+@fundamentals_app.command("download-sec-companyfacts")
+def download_sec_companyfacts_command(
+    config_path: Annotated[
+        Path,
+        typer.Option(help="SEC company CIK 配置文件路径。"),
+    ] = DEFAULT_SEC_COMPANIES_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="SEC companyfacts 原始 JSON 输出目录。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "sec_companyfacts",
+    tickers: Annotated[
+        str | None,
+        typer.Option(help="逗号分隔的 ticker；未提供时下载全部活跃配置。"),
+    ] = None,
+    user_agent: Annotated[
+        str | None,
+        typer.Option(
+            "--user-agent",
+            envvar="SEC_USER_AGENT",
+            help="SEC fair access 要求的 User-Agent；也可使用 SEC_USER_AGENT 环境变量。",
+        ),
+    ] = None,
+) -> None:
+    """下载 SEC companyfacts 原始 JSON，并写入审计 manifest。"""
+    if user_agent is None or not user_agent.strip():
+        raise typer.BadParameter(
+            "SEC companyfacts 下载必须提供 --user-agent 或 SEC_USER_AGENT；"
+            "格式建议包含项目/组织名称和联系邮箱。"
+        )
+
+    selected_tickers = _parse_csv_items(tickers) if tickers else None
+    summary = download_sec_companyfacts(
+        config=load_sec_companies(config_path),
+        output_dir=output_dir,
+        provider=SecEdgarCompanyFactsProvider(user_agent=user_agent),
+        tickers=selected_tickers,
+    )
+
+    console.print("[green]SEC companyfacts 缓存已更新。[/green]")
+    console.print(f"公司数量：{summary.company_count}")
+    console.print(f"事实数量：{summary.total_fact_count}")
+    console.print(f"输出目录：{summary.output_dir}")
+    console.print(f"下载审计清单：{summary.manifest_path}")
 
 
 @valuation_app.command("list")

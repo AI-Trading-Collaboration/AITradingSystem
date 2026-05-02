@@ -164,14 +164,15 @@ sources:
   - source_id: sec_company_facts
     provider: SEC EDGAR
     source_type: primary_source
-    status: planned
+    status: active
     domains:
       - fundamentals
-    endpoint: companyfacts API
-    adapter: planned
+    endpoint: https://data.sec.gov/api/xbrl/companyfacts/CIK##########.json
+    adapter: SecEdgarCompanyFactsProvider
     cadence: quarterly
     requires_credentials: false
-    cache_paths: []
+    cache_paths:
+      - data/raw/sec_companyfacts
     primary_for:
       - revenue
       - gross_margin
@@ -182,18 +183,21 @@ sources:
       - endpoint
       - request_parameters
       - downloaded_at
-      - row_count
+      - fact_count
       - checksum
-      - accession_number
+      - cik
     validation_checks:
       - schema
+      - user_agent_required
+      - checksum
       - fiscal_period_alignment
       - restatement_detection
       - duplicate_keys
       - freshness
     limitations:
-      - 计划接入来源；实现并通过校验前不能作为自动评分输入。
-    owner_notes: 基本面模块的一手来源候选。
+      - 当前仅落地原始 companyfacts JSON 下载和审计清单；尚未进入自动基本面评分。
+      - SEC XBRL taxonomy 在 US GAAP 和 IFRS 公司之间可能不同，进入评分前必须做字段映射校验。
+    owner_notes: 基本面模块一手来源；下载必须提供符合 SEC fair access 要求的 User-Agent。
 
   - source_id: news_event_source_tbd
     provider: To be selected

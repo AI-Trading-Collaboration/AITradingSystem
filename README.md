@@ -29,6 +29,7 @@ config/industry_chain.yaml 产业链节点和因果图配置
 config/market_regimes.yaml 市场阶段和默认回测区间配置
 config/risk_events.yaml  风险事件等级和动作规则配置
 config/data_sources.yaml 数据源目录、审计字段和来源限制
+config/sec_companies.yaml SEC companyfacts CIK 映射
 data/raw/                原始数据缓存，不提交
 data/processed/          清洗后的中间数据，不提交
 data/external/           外部导入数据，不提交
@@ -167,6 +168,16 @@ aits valuation review --as-of 2026-05-02
 ```
 
 估值快照默认读取 `data/external/valuation_snapshots/*.yaml`，该目录不提交。可参考 `docs/examples/valuation_snapshots/nvda_valuation_template.yaml` 复制模板。当前基础版要求估值和预期数据带有来源、日期、采集时间和字段说明；公开便利源只能作为辅助，不能直接进入自动评分。
+
+下载 SEC companyfacts 原始基本面数据：
+
+```powershell
+aits fundamentals list-sec-companies
+$env:SEC_USER_AGENT="AITradingSystem your_email@example.com"
+aits fundamentals download-sec-companyfacts --tickers NVDA,MSFT
+```
+
+该命令读取 `config/sec_companies.yaml` 的 ticker/CIK 映射，下载 SEC EDGAR companyfacts JSON 到 `data/raw/sec_companyfacts/`，并追加写入 `sec_companyfacts_manifest.csv`。当前只落地一手数据缓存和审计清单，不直接进入基本面评分。
 
 复盘交易记录并做基础归因：
 

@@ -11,6 +11,7 @@ from ai_trading_system.config import (
     load_portfolio,
     load_risk_events,
     load_scoring_rules,
+    load_sec_companies,
     load_universe,
     load_watchlist,
     market_regime_by_id,
@@ -50,6 +51,15 @@ def test_data_sources_config_loads_current_and_planned_sources() -> None:
     assert "fred_daily_rates" in source_ids
     assert "sec_company_facts" in source_ids
     assert any(source.status == "planned" for source in config.sources)
+
+
+def test_sec_companies_config_covers_core_watchlist() -> None:
+    config = load_sec_companies()
+    by_ticker = {company.ticker: company for company in config.companies}
+
+    assert {"MSFT", "GOOG", "TSM", "INTC", "AMD", "NVDA"}.issubset(by_ticker)
+    assert by_ticker["NVDA"].cik == "0001045810"
+    assert by_ticker["TSM"].expected_taxonomies == ["ifrs-full", "dei"]
 
 
 def test_feature_config_loads_market_feature_windows() -> None:
