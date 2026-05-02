@@ -11,6 +11,7 @@ from ai_trading_system.cli import app
 from ai_trading_system.config import (
     configured_price_tickers,
     configured_rate_series,
+    load_risk_events,
     load_scoring_rules,
     load_universe,
 )
@@ -24,6 +25,13 @@ from ai_trading_system.fundamentals.sec_metrics import (
     SEC_FUNDAMENTAL_METRIC_COLUMNS,
     PeriodType,
     SecFundamentalMetricsCsvValidationReport,
+)
+from ai_trading_system.risk_events import (
+    LoadedRiskEventOccurrence,
+    RiskEventEvidenceSource,
+    RiskEventOccurrence,
+    RiskEventOccurrenceValidationReport,
+    build_risk_event_occurrence_review_report,
 )
 from ai_trading_system.scoring.daily import (
     DailyManualReviewStatus,
@@ -94,6 +102,29 @@ def test_build_daily_score_report_uses_valuation_snapshots() -> None:
     assert valuation.source_type == "manual_input"
     assert valuation.coverage == 1.0
     assert valuation.score < 50
+
+
+def test_build_daily_score_report_uses_risk_event_occurrences() -> None:
+    report = build_daily_score_report(
+        feature_set=_feature_set(),
+        data_quality_report=_quality_report(),
+        rules=load_scoring_rules(),
+        total_risk_asset_min=0.60,
+        total_risk_asset_max=0.80,
+        risk_event_occurrence_review_report=_risk_event_occurrence_review_report(),
+    )
+
+    policy = _component(report, "policy_geopolitics")
+
+    assert policy.source_type == "manual_input"
+    assert policy.coverage == 1.0
+    assert policy.score < 50
+    assert any(
+        signal.subject == "POLICY_GEOPOLITICS"
+        and signal.feature == "active_or_watch_l3_count"
+        and signal.value == 1.0
+        for signal in policy.signals
+    )
 
 
 def test_build_daily_score_report_marks_insufficient_data() -> None:
@@ -280,7 +311,38 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert sec_validation_report_path.exists()
     assert "人工复核摘要" in daily_report_path.read_text(encoding="utf-8")
     assert "SEC 基本面特征状态：PASS" in daily_report_path.read_text(encoding="utf-8")
+    assert "风险事件发生记录状态：" in daily_report_path.read_text(encoding="utf-8")
     assert "每日评分状态：" in result.output
+
+
+def _risk_event_occurrence_review_report():
+    as_of = date(2026, 4, 30)
+    validation_report = RiskEventOccurrenceValidationReport(
+        as_of=as_of,
+        input_path=Path("risk_event_occurrences"),
+        config=load_risk_events(),
+        occurrences=(
+            LoadedRiskEventOccurrence(
+                occurrence=RiskEventOccurrence(
+                    occurrence_id="taiwan_geopolitical_escalation_2026_04_30",
+                    event_id="taiwan_geopolitical_escalation",
+                    status="active",
+                    triggered_at=as_of,
+                    last_confirmed_at=as_of,
+                    evidence_sources=[
+                        RiskEventEvidenceSource(
+                            source_name="manual_policy_review",
+                            source_type="manual_input",
+                            captured_at=as_of,
+                        )
+                    ],
+                    summary="测试用 L3 风险事件。",
+                ),
+                path=Path("risk_event_occurrences/taiwan.yaml"),
+            ),
+        ),
+    )
+    return build_risk_event_occurrence_review_report(validation_report)
 
 
 def _fundamental_feature_report() -> SecFundamentalFeaturesReport:

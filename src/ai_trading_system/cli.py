@@ -8,7 +8,6 @@ import pandas as pd
 import typer
 from rich.console import Console
 from rich.table import Table
-from yaml import YAMLError
 
 from ai_trading_system.backtest.daily import (
     DEFAULT_BENCHMARK_TICKERS,
@@ -103,8 +102,15 @@ from ai_trading_system.industry_chain import (
 )
 from ai_trading_system.reports.daily import render_recommendation_markdown
 from ai_trading_system.risk_events import (
+    RiskEventOccurrenceReviewReport,
+    RiskEventsValidationReport,
+    build_risk_event_occurrence_review_report,
+    default_risk_event_occurrence_report_path,
     default_risk_events_report_path,
+    load_risk_event_occurrence_store,
+    validate_risk_event_occurrence_store,
     validate_risk_events_config,
+    write_risk_event_occurrence_review_report,
     write_risk_events_validation_report,
 )
 from ai_trading_system.scoring.daily import (
@@ -164,6 +170,9 @@ app.add_typer(valuation_app, name="valuation")
 app.add_typer(data_sources_app, name="data-sources")
 app.add_typer(fundamentals_app, name="fundamentals")
 console = Console()
+DEFAULT_RISK_EVENT_OCCURRENCES_PATH = (
+    PROJECT_ROOT / "data" / "external" / "risk_event_occurrences"
+)
 
 
 @app.callback()
@@ -920,6 +929,100 @@ def validate_risk_events(
     console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
 
     if not report.passed:
+        raise typer.Exit(code=1)
+
+
+@risk_events_app.command("list-occurrences")
+def list_risk_event_occurrences(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="风险事件发生记录 YAML 文件或目录路径。"),
+    ] = DEFAULT_RISK_EVENT_OCCURRENCES_PATH,
+) -> None:
+    """列出本地风险事件发生记录。"""
+    store = load_risk_event_occurrence_store(input_path)
+
+    table = Table(title="风险事件发生记录")
+    table.add_column("Occurrence", overflow="fold")
+    table.add_column("事件", overflow="fold")
+    table.add_column("状态")
+    table.add_column("触发日期")
+    table.add_column("最近确认")
+    table.add_column("证据数")
+    table.add_column("文件", overflow="fold")
+    for loaded in sorted(store.loaded, key=lambda item: item.occurrence.occurrence_id):
+        occurrence = loaded.occurrence
+        table.add_row(
+            occurrence.occurrence_id,
+            occurrence.event_id,
+            occurrence.status,
+            occurrence.triggered_at.isoformat(),
+            occurrence.last_confirmed_at.isoformat(),
+            str(len(occurrence.evidence_sources)),
+            str(loaded.path),
+        )
+    console.print(table)
+    if not store.loaded:
+        console.print("未发现可读取的风险事件发生记录。")
+    if store.load_errors:
+        console.print(
+            "[red]存在 "
+            f"{len(store.load_errors)} 个加载错误，请运行 validate-occurrences 查看。[/red]"
+        )
+
+
+@risk_events_app.command("validate-occurrences")
+def validate_risk_event_occurrences(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="风险事件发生记录 YAML 文件或目录路径。"),
+    ] = DEFAULT_RISK_EVENT_OCCURRENCES_PATH,
+    config_path: Annotated[
+        Path,
+        typer.Option(help="风险事件规则配置文件路径。"),
+    ] = DEFAULT_RISK_EVENTS_CONFIG_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 风险事件发生记录报告输出路径。"),
+    ] = None,
+) -> None:
+    """校验实际发生的风险事件记录，并生成可供日报评分引用的报告。"""
+    validation_date = _parse_date(as_of) if as_of else date.today()
+    report_path = output_path or default_risk_event_occurrence_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        validation_date,
+    )
+    validation_report = validate_risk_event_occurrence_store(
+        store=load_risk_event_occurrence_store(input_path),
+        risk_events=load_risk_events(config_path),
+        as_of=validation_date,
+    )
+    review_report = build_risk_event_occurrence_review_report(validation_report)
+    write_risk_event_occurrence_review_report(review_report, report_path)
+
+    status_style = (
+        "green"
+        if review_report.status == "PASS"
+        else "yellow"
+        if validation_report.passed
+        else "red"
+    )
+    console.print(
+        f"[{status_style}]风险事件发生记录状态：{review_report.status}[/{status_style}]"
+    )
+    console.print(f"报告：{report_path}")
+    console.print(
+        f"发生记录数：{validation_report.occurrence_count}；"
+        f"活跃/观察：{validation_report.active_occurrence_count}；"
+        f"可评分：{len(review_report.score_eligible_active_items)}"
+    )
+    console.print(f"错误数：{validation_report.error_count}；警告数：{validation_report.warning_count}")
+
+    if not validation_report.passed:
         raise typer.Exit(code=1)
 
 
@@ -1788,6 +1891,14 @@ def score_daily(
         Path,
         typer.Option(help="风险事件配置路径，用于写入日报复核摘要。"),
     ] = DEFAULT_RISK_EVENTS_CONFIG_PATH,
+    risk_event_occurrences_path: Annotated[
+        Path,
+        typer.Option(help="风险事件发生记录 YAML 文件或目录路径，用于政策/地缘评分。"),
+    ] = DEFAULT_RISK_EVENT_OCCURRENCES_PATH,
+    risk_event_occurrence_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 风险事件发生记录报告输出路径。"),
+    ] = None,
     valuation_path: Annotated[
         Path,
         typer.Option(help="估值快照 YAML 文件或目录路径，用于写入日报复核摘要。"),
@@ -1859,6 +1970,13 @@ def score_daily(
     sec_fundamental_feature_report_output = (
         sec_fundamental_feature_report_path
         or default_sec_fundamental_features_report_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            score_date,
+        )
+    )
+    risk_event_occurrence_report_output = (
+        risk_event_occurrence_report_path
+        or default_risk_event_occurrence_report_path(
             PROJECT_ROOT / "outputs" / "reports",
             score_date,
         )
@@ -1969,10 +2087,48 @@ def score_daily(
             f"警告数：{valuation_validation_report.warning_count}"
         )
         raise typer.Exit(code=1)
+    risk_events_config = load_risk_events(risk_events_path)
+    risk_events_validation_report = validate_risk_events_config(
+        risk_events=risk_events_config,
+        industry_chain=industry_chain,
+        watchlist=watchlist,
+        universe=universe,
+        as_of=score_date,
+    )
+    if not risk_events_validation_report.passed:
+        console.print("[red]风险事件规则校验失败，已停止每日评分。[/red]")
+        console.print(
+            f"错误数：{risk_events_validation_report.error_count}；"
+            f"警告数：{risk_events_validation_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+    risk_event_occurrence_validation_report = validate_risk_event_occurrence_store(
+        store=load_risk_event_occurrence_store(risk_event_occurrences_path),
+        risk_events=risk_events_config,
+        as_of=score_date,
+    )
+    risk_event_occurrence_review_report = build_risk_event_occurrence_review_report(
+        risk_event_occurrence_validation_report
+    )
+    write_risk_event_occurrence_review_report(
+        risk_event_occurrence_review_report,
+        risk_event_occurrence_report_output,
+    )
+    if not risk_event_occurrence_validation_report.passed:
+        console.print("[red]风险事件发生记录校验失败，已停止每日评分。[/red]")
+        console.print(f"风险事件发生记录报告：{risk_event_occurrence_report_output}")
+        console.print(
+            f"错误数：{risk_event_occurrence_validation_report.error_count}；"
+            f"警告数：{risk_event_occurrence_validation_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
 
     review_summary = _build_daily_review_summary(
         thesis_path=thesis_path,
         risk_events_path=risk_events_path,
+        risk_event_occurrences_path=risk_event_occurrences_path,
+        risk_events_validation_report=risk_events_validation_report,
+        risk_event_occurrence_review_report=risk_event_occurrence_review_report,
         valuation_path=valuation_path,
         valuation_review_report=valuation_review_report,
         trades_path=trades_path,
@@ -1993,6 +2149,7 @@ def score_daily(
         review_summary=review_summary,
         fundamental_feature_report=sec_fundamental_feature_report,
         valuation_review_report=valuation_review_report,
+        risk_event_occurrence_review_report=risk_event_occurrence_review_report,
     )
     scores_output = write_scores_csv(score_report, scores_path)
     daily_report_output = write_daily_score_report(
@@ -2005,6 +2162,7 @@ def score_daily(
         sec_metrics_validation_report_path=sec_metrics_validation_output,
         sec_fundamental_feature_report_path=sec_fundamental_feature_report_output,
         sec_fundamental_features_path=sec_fundamental_features_output,
+        risk_event_occurrence_report_path=risk_event_occurrence_report_output,
     )
 
     status_style = "green" if score_report.status == "PASS" else "yellow"
@@ -2018,12 +2176,19 @@ def score_daily(
         f"SEC 基本面特征：{sec_fundamental_features_output}"
         f"（{sec_fundamental_feature_report.status}）"
     )
+    console.print(
+        f"风险事件发生记录：{risk_event_occurrence_report_output}"
+        f"（{risk_event_occurrence_review_report.status}）"
+    )
     console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
 
 
 def _build_daily_review_summary(
     thesis_path: Path,
     risk_events_path: Path,
+    risk_event_occurrences_path: Path,
+    risk_events_validation_report: RiskEventsValidationReport,
+    risk_event_occurrence_review_report: RiskEventOccurrenceReviewReport,
     valuation_path: Path,
     valuation_review_report: ValuationReviewReport,
     trades_path: Path,
@@ -2043,11 +2208,10 @@ def _build_daily_review_summary(
             score_date=score_date,
         ),
         risk_events=_build_daily_risk_events_status(
-            input_path=risk_events_path,
-            universe=universe,
-            industry_chain=industry_chain,
-            watchlist=watchlist,
-            score_date=score_date,
+            rules_path=risk_events_path,
+            occurrences_path=risk_event_occurrences_path,
+            rules_validation_report=risk_events_validation_report,
+            occurrence_review_report=risk_event_occurrence_review_report,
         ),
         valuation=_build_daily_valuation_status(
             input_path=valuation_path,
@@ -2097,40 +2261,40 @@ def _build_daily_thesis_status(
 
 
 def _build_daily_risk_events_status(
-    input_path: Path,
-    universe: UniverseConfig,
-    industry_chain: IndustryChainConfig,
-    watchlist: WatchlistConfig,
-    score_date: date,
+    rules_path: Path,
+    occurrences_path: Path,
+    rules_validation_report: RiskEventsValidationReport,
+    occurrence_review_report: RiskEventOccurrenceReviewReport,
 ) -> DailyManualReviewStatus:
-    try:
-        validation_report = validate_risk_events_config(
-            risk_events=load_risk_events(input_path),
-            industry_chain=industry_chain,
-            watchlist=watchlist,
-            universe=universe,
-            as_of=score_date,
-        )
-    except (OSError, ValueError, YAMLError) as exc:
-        return _daily_review_exception_status("风险事件", input_path, exc)
-
     active_l2_l3_count = sum(
         1
-        for rule in validation_report.config.event_rules
+        for rule in rules_validation_report.config.event_rules
         if rule.active and rule.level in {"L2", "L3"}
     )
+    occurrence_validation = occurrence_review_report.validation_report
+    error_count = rules_validation_report.error_count + occurrence_validation.error_count
+    warning_count = (
+        rules_validation_report.warning_count + occurrence_validation.warning_count
+    )
+    status = "PASS"
+    if error_count:
+        status = "FAIL"
+    elif warning_count or occurrence_review_report.status == "PASS_WITH_WARNINGS":
+        status = "PASS_WITH_WARNINGS"
     summary = (
-        f"风险规则 {len(validation_report.config.event_rules)} 条，活跃 "
-        f"{validation_report.active_rule_count} 条；活跃 L2/L3 规则 "
-        f"{active_l2_l3_count} 条。"
+        f"风险规则 {len(rules_validation_report.config.event_rules)} 条，活跃 "
+        f"{rules_validation_report.active_rule_count} 条；活跃 L2/L3 规则 "
+        f"{active_l2_l3_count} 条。发生记录 {occurrence_validation.occurrence_count} 条，"
+        f"活跃/观察 {occurrence_validation.active_occurrence_count} 条，可评分 "
+        f"{len(occurrence_review_report.score_eligible_active_items)} 条。"
     )
     return DailyManualReviewStatus(
         name="风险事件",
-        status=validation_report.status,
+        status=status,
         summary=summary,
-        error_count=validation_report.error_count,
-        warning_count=validation_report.warning_count,
-        source_path=input_path,
+        error_count=error_count,
+        warning_count=warning_count,
+        source_path=occurrences_path if occurrences_path.exists() else rules_path,
     )
 
 

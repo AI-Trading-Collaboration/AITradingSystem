@@ -130,6 +130,48 @@ sources:
       - 手工快照只作为复核输入，不能直接变成自动估值评分。
     owner_notes: 自动评分前仍需接入正式供应商或一手披露数据。
 
+  - source_id: local_risk_event_occurrences
+    provider: Local YAML input
+    source_type: manual_input
+    status: active
+    domains:
+      - risk_events
+      - news_events
+    endpoint: data/external/risk_event_occurrences/*.yaml
+    adapter: load_risk_event_occurrence_store
+    cadence: event_driven
+    requires_credentials: false
+    cache_paths:
+      - data/external/risk_event_occurrences
+    primary_for:
+      - policy_event_occurrences
+      - geopolitical_event_occurrences
+      - risk_event_scoring_inputs
+    audit_fields:
+      - provider
+      - event_id
+      - occurrence_id
+      - status
+      - triggered_at
+      - last_confirmed_at
+      - evidence_sources
+      - captured_at
+      - source_url
+      - file_path
+      - checksum
+    validation_checks:
+      - schema
+      - duplicate_ids
+      - known_event_id
+      - date_bounds
+      - source_attribution
+      - active_event_freshness
+      - public_convenience_exclusion
+    limitations:
+      - 手工发生记录只说明已审计的触发事件；空目录不能证明当前没有政策或地缘风险。
+      - public_convenience 证据只能作为辅助线索，不能单独进入评分。
+    owner_notes: 日报政策/地缘评分只读取已通过校验的发生记录，不读取监控规则的 active 字段。
+
   - source_id: local_trade_records
     provider: Local YAML input
     source_type: manual_input

@@ -15,6 +15,7 @@ from ai_trading_system.config import (
 from ai_trading_system.data.quality import DataQualityReport
 from ai_trading_system.features.market import MarketFeatureSet
 from ai_trading_system.fundamentals.sec_features import SecFundamentalFeaturesReport
+from ai_trading_system.risk_events import RiskEventOccurrenceReviewReport
 from ai_trading_system.scoring.position_model import (
     ModuleScore,
     PositionRecommendation,
@@ -117,6 +118,7 @@ class DailyScoreReport:
     minimum_action_delta: float
     fundamental_feature_report: SecFundamentalFeaturesReport | None = None
     valuation_review_report: ValuationReviewReport | None = None
+    risk_event_occurrence_review_report: RiskEventOccurrenceReviewReport | None = None
     review_summary: DailyReviewSummary | None = None
 
     @property
@@ -146,6 +148,7 @@ def build_daily_score_report(
     review_summary: DailyReviewSummary | None = None,
     fundamental_feature_report: SecFundamentalFeaturesReport | None = None,
     valuation_review_report: ValuationReviewReport | None = None,
+    risk_event_occurrence_review_report: RiskEventOccurrenceReviewReport | None = None,
 ) -> DailyScoreReport:
     if fundamental_feature_report is not None and not fundamental_feature_report.passed:
         raise ValueError("SEC 基本面特征报告未通过，不能进入每日评分")
@@ -154,6 +157,11 @@ def build_daily_score_report(
         and not valuation_review_report.validation_report.passed
     ):
         raise ValueError("估值快照校验未通过，不能进入每日评分")
+    if (
+        risk_event_occurrence_review_report is not None
+        and not risk_event_occurrence_review_report.validation_report.passed
+    ):
+        raise ValueError("风险事件发生记录校验未通过，不能进入每日评分")
 
     components = [
         _score_hard_data_module("trend", rules.weights["trend"], rules.trend, feature_set, rules),
@@ -179,20 +187,11 @@ def build_daily_score_report(
             rules=rules,
             valuation_review_report=valuation_review_report,
         ),
+        _score_policy_geopolitics_module(
+            rules=rules,
+            risk_event_occurrence_review_report=risk_event_occurrence_review_report,
+        ),
     ]
-    for name in ["policy_geopolitics"]:
-        placeholder = rules.placeholders[name]
-        components.append(
-            DailyScoreComponent(
-                name=name,
-                score=placeholder.score,
-                weight=rules.weights[name],
-                source_type="placeholder",
-                coverage=0.0,
-                reason=placeholder.reason,
-                signals=(),
-            )
-        )
 
     recommendation = WeightedScoreModel().recommend(
         [component.to_module_score() for component in components],
@@ -208,6 +207,7 @@ def build_daily_score_report(
         minimum_action_delta=rules.position_change.minimum_action_delta,
         fundamental_feature_report=fundamental_feature_report,
         valuation_review_report=valuation_review_report,
+        risk_event_occurrence_review_report=risk_event_occurrence_review_report,
         review_summary=review_summary,
     )
 
@@ -253,6 +253,7 @@ def render_daily_score_report(
     sec_metrics_validation_report_path: Path | None = None,
     sec_fundamental_feature_report_path: Path | None = None,
     sec_fundamental_features_path: Path | None = None,
+    risk_event_occurrence_report_path: Path | None = None,
 ) -> str:
     recommendation = report.recommendation
     lines = [
@@ -305,6 +306,17 @@ def render_daily_score_report(
         lines.append(f"- 估值快照校验状态：{valuation_validation.status}")
         lines.append(f"- 估值快照数量：{valuation_validation.snapshot_count}")
         lines.append(f"- 估值覆盖标的数：{valuation_validation.ticker_count}")
+    if report.risk_event_occurrence_review_report is not None:
+        occurrence_validation = report.risk_event_occurrence_review_report.validation_report
+        lines.append(f"- 风险事件发生记录状态：{report.risk_event_occurrence_review_report.status}")
+        lines.append(f"- 风险事件发生记录校验状态：{occurrence_validation.status}")
+        lines.append(f"- 风险事件发生记录数：{occurrence_validation.occurrence_count}")
+        lines.append(
+            "- 可进入评分的活跃/观察风险事件数："
+            f"{len(report.risk_event_occurrence_review_report.score_eligible_active_items)}"
+        )
+        if risk_event_occurrence_report_path is not None:
+            lines.append(f"- 风险事件发生记录报告：`{risk_event_occurrence_report_path}`")
 
     lines.extend(
         [
@@ -416,6 +428,7 @@ def write_daily_score_report(
     sec_metrics_validation_report_path: Path | None = None,
     sec_fundamental_feature_report_path: Path | None = None,
     sec_fundamental_features_path: Path | None = None,
+    risk_event_occurrence_report_path: Path | None = None,
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
@@ -428,6 +441,7 @@ def write_daily_score_report(
             sec_metrics_validation_report_path=sec_metrics_validation_report_path,
             sec_fundamental_feature_report_path=sec_fundamental_feature_report_path,
             sec_fundamental_features_path=sec_fundamental_features_path,
+            risk_event_occurrence_report_path=risk_event_occurrence_report_path,
         ),
         encoding="utf-8",
     )
@@ -521,6 +535,67 @@ def _score_valuation_module(
     )
 
 
+def _score_policy_geopolitics_module(
+    rules: ScoringRulesConfig,
+    risk_event_occurrence_review_report: RiskEventOccurrenceReviewReport | None,
+) -> DailyScoreComponent:
+    placeholder = rules.placeholders["policy_geopolitics"]
+    if (
+        risk_event_occurrence_review_report is None
+        or rules.policy_geopolitics is None
+    ):
+        return DailyScoreComponent(
+            name="policy_geopolitics",
+            score=placeholder.score,
+            weight=rules.weights["policy_geopolitics"],
+            source_type="placeholder",
+            coverage=0.0,
+            reason=placeholder.reason,
+            signals=(),
+        )
+
+    eligible_active_items = (
+        risk_event_occurrence_review_report.score_eligible_active_items
+    )
+    component = _score_signal_module(
+        name="policy_geopolitics",
+        weight=rules.weights["policy_geopolitics"],
+        module_rules=rules.policy_geopolitics,
+        feature_index=_risk_event_occurrence_feature_index(
+            risk_event_occurrence_review_report
+        ),
+        rules=rules,
+        source_description="政策/地缘风险事件发生记录",
+    )
+    source_type = component.source_type
+    reason = component.reason
+    if not eligible_active_items:
+        source_type = "insufficient_data"
+        reason = (
+            "未发现可进入评分的活跃/观察政策或地缘风险事件发生记录；"
+            "为避免把空记录当作无风险证明，本模块使用中性分。"
+        )
+    elif source_type == "hard_data":
+        source_type = "manual_input"
+        reason = (
+            f"已评估 {len(eligible_active_items)} 个经审计的活跃/观察风险事件发生记录。"
+        )
+    elif source_type == "partial_hard_data":
+        source_type = "partial_manual_input"
+        reason = (
+            f"已部分评估 {len(eligible_active_items)} 个经审计的活跃/观察风险事件发生记录。"
+        )
+    return DailyScoreComponent(
+        name=component.name,
+        score=component.score,
+        weight=component.weight,
+        source_type=source_type,
+        coverage=component.coverage,
+        reason=reason,
+        signals=component.signals,
+    )
+
+
 def _score_signal_module(
     name: str,
     weight: float,
@@ -547,7 +622,7 @@ def _score_signal_module(
         neutral_points = missing_points * (module_rules.neutral_score / 100.0)
         score = ((earned_points + neutral_points) / total_points) * 100.0
         source_type = "hard_data" if coverage == 1.0 else "partial_hard_data"
-        reason = f"已评估 {source_description} 配置权重的 {coverage:.0%}。"
+        reason = f"已按{source_description}评估配置权重的 {coverage:.0%}。"
 
     return DailyScoreComponent(
         name=name,
@@ -671,6 +746,26 @@ def _valuation_feature_index(report: ValuationReviewReport) -> dict[tuple[str, s
     return {
         ("AI_CORE_MEDIAN", "valuation_percentile"): float(median(valuation_percentiles)),
         ("AI_CORE", "overheated_snapshot_ratio"): overheated_count / len(usable_items),
+    }
+
+
+def _risk_event_occurrence_feature_index(
+    report: RiskEventOccurrenceReviewReport,
+) -> dict[tuple[str, str], float]:
+    active_items = report.score_eligible_active_items
+    if not active_items:
+        return {}
+
+    return {
+        ("POLICY_GEOPOLITICS", "active_or_watch_l3_count"): float(
+            sum(item.level == "L3" for item in active_items)
+        ),
+        ("POLICY_GEOPOLITICS", "active_or_watch_l2_count"): float(
+            sum(item.level == "L2" for item in active_items)
+        ),
+        ("POLICY_GEOPOLITICS", "minimum_exposure_multiplier"): min(
+            item.target_ai_exposure_multiplier for item in active_items
+        ),
     }
 
 

@@ -1,0 +1,20 @@
+occurrence_id: ai_chip_export_control_upgrade_2026_05_template
+event_id: ai_chip_export_control_upgrade
+status: watch
+triggered_at: 2026-05-01
+last_confirmed_at: 2026-05-01
+resolved_at:
+evidence_sources:
+  - source_name: manual_policy_review
+    source_type: manual_input
+    source_url: ""
+    published_at: 2026-05-01
+    captured_at: 2026-05-01
+    notes: 示例证据，不代表真实政策事件。
+summary: >
+  示例模板只用于说明字段结构。实际使用时应复制到
+  data/external/risk_event_occurrences/，并只记录已经人工确认触发或正在观察的
+  真实事件。
+notes: >
+  event_id 必须匹配 config/risk_events.yaml 中的规则。仅 public_convenience
+  证据不能单独进入政策/地缘评分。

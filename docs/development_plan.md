@@ -144,6 +144,7 @@
 16. 接入 SEC 基本面硬数据评分。状态：已实现基础版，`aits score-daily` 会先校验 SEC 指标 CSV、构建 SEC 基本面特征，通过后按 `config/scoring_rules.yaml` 的 `fundamentals` 规则评分；失败时停止日报评分。
 17. 接入回测 point-in-time SEC 基本面。状态：已实现基础版，`aits backtest` 会校验 SEC companyfacts 缓存，并按每个 signal_date 只使用 `filed_date <= signal_date` 的 SEC 事实生成基本面特征。
 18. 接入估值快照评分。状态：已实现基础版，`aits score-daily` 会在估值快照校验通过后，用合规且未过期的估值快照按估值分位和拥挤比例评分；`public_convenience` 来源不会进入自动评分。
+19. 接入政策/地缘风险发生记录评分。状态：已实现基础版，`aits risk-events validate-occurrences` 会校验实际发生记录；`aits score-daily` 只用已通过校验、来源合规且处于 active/watch 的发生记录按 L2/L3 数量和最低 AI 仓位乘数评分，不把监控规则配置当作已发生风险。
 
 ## 阶段 1 数据缓存约定
 
@@ -191,7 +192,7 @@
 
 ## 阶段 1 每日评分约定
 
-每日评分命令为 `aits score-daily`。该命令会先执行市场数据质量门禁，再构建市场特征，并校验 SEC 指标 CSV、构建 SEC 基本面特征，最后把交易 thesis、风险事件、估值快照和交易复盘状态写入日报复核摘要。
+每日评分命令为 `aits score-daily`。该命令会先执行市场数据质量门禁，再构建市场特征，并校验 SEC 指标 CSV、构建 SEC 基本面特征，随后校验估值快照和风险事件发生记录，最后把交易 thesis、风险事件、估值快照和交易复盘状态写入日报复核摘要。
 
 默认输出：
 
@@ -205,7 +206,7 @@
 - 宏观流动性：DGS10、DGS2、美元指数。
 - 风险情绪：VIX 当前值、VIX 分位、VIX 短期变化。
 - 估值：已通过校验且来源合规的估值快照，使用估值分位和拥挤比例；缺少有效快照时标记为数据不足。
-- 政策地缘：明确标记为 MVP 占位输入。
+- 政策地缘：已通过校验且来源合规的风险事件发生记录，使用活跃/观察 L2/L3 数量和最低 AI 仓位乘数；缺少有效发生记录时标记为数据不足。
 - 人工复核摘要：汇总 thesis、风险事件、估值快照和交易复盘状态；交易复盘复用同一份数据质量门禁结果。
 
 如果某个硬数据模块的信号覆盖率低于配置阈值，模块使用中性分并标记为 `insufficient_data`，不能静默给出伪精确分数。
@@ -240,7 +241,7 @@
 - `outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`
 - `outputs/backtests/backtest_daily_YYYY-MM-DD_YYYY-MM-DD.csv`
 
-当前回测状态会标记为 `PASS_WITH_LIMITATIONS`，因为估值和政策/地缘模块仍是 MVP 占位输入。回测已经按 signal_date 接入 point-in-time SEC 基本面特征，但仍不能代表完整投资系统已经完成。
+当前回测状态会标记为 `PASS_WITH_LIMITATIONS`，因为估值和政策/地缘在回测中仍未接入 point-in-time 历史快照或事件库。回测已经按 signal_date 接入 point-in-time SEC 基本面特征，但仍不能代表完整投资系统已经完成。
 
 如果要运行跨周期压力测试，可以使用 `--regime cross_cycle_stress`，其默认起点为 `2019-01-01`，使用 2018 年历史作为 200 日均线和 252 日 VIX 分位的 warm-up。该区间覆盖更多宏观压力环境，但不应替代 ChatGPT 之后 AI 主线行情的默认解释窗口。
 

@@ -1,12 +1,19 @@
 from __future__ import annotations
 
+from collections import defaultdict
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import date
 from enum import StrEnum
 from pathlib import Path
+from typing import Any, Literal
+
+import yaml
+from pydantic import BaseModel, Field, ValidationError
 
 from ai_trading_system.config import (
     IndustryChainConfig,
+    RiskEventLevelConfig,
     RiskEventRuleConfig,
     RiskEventsConfig,
     UniverseConfig,
@@ -14,10 +21,58 @@ from ai_trading_system.config import (
     configured_price_tickers,
 )
 
+RiskEventOccurrenceStatus = Literal["active", "watch", "resolved", "dismissed"]
+RiskEventOccurrenceSourceType = Literal[
+    "primary_source",
+    "paid_vendor",
+    "manual_input",
+    "public_convenience",
+]
+
 
 class RiskEventIssueSeverity(StrEnum):
     ERROR = "ERROR"
     WARNING = "WARNING"
+
+
+class RiskEventEvidenceSource(BaseModel):
+    source_name: str = Field(min_length=1)
+    source_type: RiskEventOccurrenceSourceType
+    source_url: str = ""
+    published_at: date | None = None
+    captured_at: date
+    notes: str = ""
+
+
+class RiskEventOccurrence(BaseModel):
+    occurrence_id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9_.-]+$")
+    event_id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9_.-]+$")
+    status: RiskEventOccurrenceStatus
+    triggered_at: date
+    last_confirmed_at: date
+    resolved_at: date | None = None
+    evidence_sources: list[RiskEventEvidenceSource] = Field(min_length=1)
+    summary: str = Field(min_length=1)
+    notes: str = ""
+
+
+@dataclass(frozen=True)
+class LoadedRiskEventOccurrence:
+    occurrence: RiskEventOccurrence
+    path: Path
+
+
+@dataclass(frozen=True)
+class RiskEventOccurrenceLoadError:
+    path: Path
+    message: str
+
+
+@dataclass(frozen=True)
+class RiskEventOccurrenceStore:
+    input_path: Path
+    loaded: tuple[LoadedRiskEventOccurrence, ...]
+    load_errors: tuple[RiskEventOccurrenceLoadError, ...]
 
 
 @dataclass(frozen=True)
@@ -27,6 +82,7 @@ class RiskEventIssue:
     message: str
     event_id: str | None = None
     level: str | None = None
+    path: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -58,6 +114,209 @@ class RiskEventsValidationReport:
         if self.warning_count:
             return "PASS_WITH_WARNINGS"
         return "PASS"
+
+
+@dataclass(frozen=True)
+class RiskEventOccurrenceReviewItem:
+    occurrence_id: str
+    event_id: str
+    level: str
+    status: RiskEventOccurrenceStatus
+    triggered_at: date
+    last_confirmed_at: date
+    source_types: tuple[RiskEventOccurrenceSourceType, ...]
+    target_ai_exposure_multiplier: float
+    score_eligible: bool
+    health: str
+    reason: str
+
+
+@dataclass(frozen=True)
+class RiskEventOccurrenceValidationReport:
+    as_of: date
+    input_path: Path
+    config: RiskEventsConfig
+    occurrences: tuple[LoadedRiskEventOccurrence, ...]
+    issues: tuple[RiskEventIssue, ...] = field(default_factory=tuple)
+
+    @property
+    def occurrence_count(self) -> int:
+        return len(self.occurrences)
+
+    @property
+    def active_occurrence_count(self) -> int:
+        return sum(
+            1
+            for loaded in self.occurrences
+            if loaded.occurrence.status in {"active", "watch"}
+        )
+
+    @property
+    def error_count(self) -> int:
+        return sum(1 for issue in self.issues if issue.severity == RiskEventIssueSeverity.ERROR)
+
+    @property
+    def warning_count(self) -> int:
+        return sum(1 for issue in self.issues if issue.severity == RiskEventIssueSeverity.WARNING)
+
+    @property
+    def passed(self) -> bool:
+        return self.error_count == 0
+
+    @property
+    def status(self) -> str:
+        if self.error_count:
+            return "FAIL"
+        if self.warning_count:
+            return "PASS_WITH_WARNINGS"
+        return "PASS"
+
+
+@dataclass(frozen=True)
+class RiskEventOccurrenceReviewReport:
+    as_of: date
+    validation_report: RiskEventOccurrenceValidationReport
+    items: tuple[RiskEventOccurrenceReviewItem, ...]
+
+    @property
+    def active_items(self) -> tuple[RiskEventOccurrenceReviewItem, ...]:
+        return tuple(item for item in self.items if item.status in {"active", "watch"})
+
+    @property
+    def score_eligible_active_items(self) -> tuple[RiskEventOccurrenceReviewItem, ...]:
+        return tuple(item for item in self.active_items if item.score_eligible)
+
+    @property
+    def status(self) -> str:
+        if self.validation_report.error_count:
+            return "FAIL"
+        if self.validation_report.warning_count:
+            return "PASS_WITH_WARNINGS"
+        if any(item.level in {"L2", "L3"} for item in self.active_items):
+            return "PASS_WITH_WARNINGS"
+        return "PASS"
+
+
+def load_risk_event_occurrence_store(input_path: Path | str) -> RiskEventOccurrenceStore:
+    path = Path(input_path)
+    loaded: list[LoadedRiskEventOccurrence] = []
+    load_errors: list[RiskEventOccurrenceLoadError] = []
+
+    for yaml_path in _occurrence_yaml_paths(path):
+        try:
+            raw = _load_yaml(yaml_path)
+        except OSError as exc:
+            load_errors.append(RiskEventOccurrenceLoadError(path=yaml_path, message=str(exc)))
+            continue
+        except yaml.YAMLError as exc:
+            load_errors.append(
+                RiskEventOccurrenceLoadError(path=yaml_path, message=f"YAML 解析失败：{exc}")
+            )
+            continue
+
+        for raw_item in _raw_occurrence_items(raw):
+            try:
+                occurrence = RiskEventOccurrence.model_validate(raw_item)
+            except ValidationError as exc:
+                load_errors.append(
+                    RiskEventOccurrenceLoadError(
+                        path=yaml_path,
+                        message=_compact_validation_error(exc),
+                    )
+                )
+                continue
+            loaded.append(
+                LoadedRiskEventOccurrence(occurrence=occurrence, path=yaml_path)
+            )
+
+    return RiskEventOccurrenceStore(
+        input_path=path,
+        loaded=tuple(loaded),
+        load_errors=tuple(load_errors),
+    )
+
+
+def validate_risk_event_occurrence_store(
+    store: RiskEventOccurrenceStore,
+    risk_events: RiskEventsConfig,
+    as_of: date,
+    max_active_age_days: int = 14,
+) -> RiskEventOccurrenceValidationReport:
+    issues: list[RiskEventIssue] = []
+    rules_by_id = {rule.event_id: rule for rule in risk_events.event_rules}
+
+    for load_error in store.load_errors:
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.ERROR,
+                code="risk_event_occurrence_load_error",
+                path=load_error.path,
+                message=load_error.message,
+            )
+        )
+
+    if not store.input_path.exists():
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.WARNING,
+                code="risk_event_occurrence_path_missing",
+                path=store.input_path,
+                message=(
+                    "风险事件发生记录目录或文件不存在；政策/地缘模块不能证明当前没有风险。"
+                ),
+            )
+        )
+    elif not store.loaded and not store.load_errors:
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.WARNING,
+                code="no_risk_event_occurrences",
+                path=store.input_path,
+                message=(
+                    "未发现风险事件发生记录 YAML；评分不会把监控规则配置当作实际风险或无风险证明。"
+                ),
+            )
+        )
+
+    _check_duplicate_occurrence_ids(store.loaded, issues)
+    for loaded in store.loaded:
+        _check_occurrence(
+            loaded=loaded,
+            rules_by_id=rules_by_id,
+            as_of=as_of,
+            max_active_age_days=max_active_age_days,
+            issues=issues,
+        )
+
+    return RiskEventOccurrenceValidationReport(
+        as_of=as_of,
+        input_path=store.input_path,
+        config=risk_events,
+        occurrences=store.loaded,
+        issues=tuple(issues),
+    )
+
+
+def build_risk_event_occurrence_review_report(
+    validation_report: RiskEventOccurrenceValidationReport,
+) -> RiskEventOccurrenceReviewReport:
+    rules_by_id = {rule.event_id: rule for rule in validation_report.config.event_rules}
+    levels_by_id: dict[str, RiskEventLevelConfig] = {
+        str(level.level): level for level in validation_report.config.levels
+    }
+
+    return RiskEventOccurrenceReviewReport(
+        as_of=validation_report.as_of,
+        validation_report=validation_report,
+        items=tuple(
+            _occurrence_review_item(
+                loaded=loaded,
+                rules_by_id=rules_by_id,
+                levels_by_id=levels_by_id,
+            )
+            for loaded in validation_report.occurrences
+        ),
+    )
 
 
 def validate_risk_events_config(
@@ -177,6 +436,354 @@ def default_risk_events_report_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"risk_events_validation_{as_of.isoformat()}.md"
 
 
+def render_risk_event_occurrence_review_report(
+    report: RiskEventOccurrenceReviewReport,
+) -> str:
+    validation = report.validation_report
+    lines = [
+        "# 风险事件发生记录校验报告",
+        "",
+        f"- 状态：{report.status}",
+        f"- 校验状态：{validation.status}",
+        f"- 评估日期：{report.as_of.isoformat()}",
+        f"- 输入路径：`{validation.input_path}`",
+        f"- 发生记录数：{validation.occurrence_count}",
+        f"- 活跃/观察记录数：{validation.active_occurrence_count}",
+        f"- 可进入评分的活跃/观察记录数：{len(report.score_eligible_active_items)}",
+        f"- 错误数：{validation.error_count}",
+        f"- 警告数：{validation.warning_count}",
+        "",
+        "## 发生记录",
+        "",
+    ]
+    if not report.items:
+        lines.append("未发现可读取的风险事件发生记录。")
+    else:
+        lines.extend(
+            [
+                "| Occurrence | 事件 | 等级 | 状态 | 触发日期 | 最近确认 | 来源 | 评分 | 结论 |",
+                "|---|---|---|---|---|---|---|---|---|",
+            ]
+        )
+        for item in sorted(report.items, key=lambda value: value.occurrence_id):
+            lines.append(
+                "| "
+                f"{item.occurrence_id} | "
+                f"{item.event_id} | "
+                f"{item.level} | "
+                f"{_occurrence_status_label(item.status)} | "
+                f"{item.triggered_at.isoformat()} | "
+                f"{item.last_confirmed_at.isoformat()} | "
+                f"{', '.join(_source_type_label(value) for value in item.source_types)} | "
+                f"{'可用' if item.score_eligible else '不可用'} | "
+                f"{_escape_markdown_table(item.reason)} |"
+            )
+
+    lines.extend(["", "## 问题", ""])
+    if not validation.issues:
+        lines.append("未发现问题。")
+    else:
+        lines.extend(
+            [
+                "| 级别 | Code | 事件 | 文件 | 说明 |",
+                "|---|---|---|---|---|",
+            ]
+        )
+        for issue in validation.issues:
+            lines.append(
+                "| "
+                f"{_severity_label(issue.severity)} | "
+                f"{issue.code} | "
+                f"{issue.event_id or ''} | "
+                f"{_escape_markdown_table(str(issue.path or ''))} | "
+                f"{_escape_markdown_table(issue.message)} |"
+            )
+
+    lines.extend(
+        [
+            "",
+            "## 方法说明",
+            "",
+            "- `config/risk_events.yaml` 只定义需要监控的风险规则，不代表风险事件已经发生。",
+            "- 政策/地缘评分只读取本报告中已通过校验的发生记录；没有发生记录时显示数据不足。",
+            "- 仅 `primary_source`、`paid_vendor` 或 `manual_input` 证据可进入评分；"
+            "`public_convenience` 只能作为辅助线索。",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def write_risk_event_occurrence_review_report(
+    report: RiskEventOccurrenceReviewReport,
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        render_risk_event_occurrence_review_report(report),
+        encoding="utf-8",
+    )
+    return output_path
+
+
+def default_risk_event_occurrence_report_path(output_dir: Path, as_of: date) -> Path:
+    return output_dir / f"risk_event_occurrences_{as_of.isoformat()}.md"
+
+
+def _occurrence_yaml_paths(path: Path) -> list[Path]:
+    if path.is_file():
+        return [path]
+    if path.is_dir():
+        return sorted([*path.glob("*.yaml"), *path.glob("*.yml")])
+    return []
+
+
+def _load_yaml(path: Path) -> Any:
+    with path.open("r", encoding="utf-8") as file:
+        return yaml.safe_load(file)
+
+
+def _raw_occurrence_items(raw: Any) -> list[Any]:
+    if raw is None:
+        return []
+    if isinstance(raw, dict) and "occurrences" in raw:
+        occurrences = raw["occurrences"]
+        if isinstance(occurrences, list):
+            return occurrences
+        return [occurrences]
+    return [raw]
+
+
+def _compact_validation_error(exc: ValidationError) -> str:
+    first_error = exc.errors()[0] if exc.errors() else None
+    if not first_error:
+        return "risk event occurrence schema validation failed"
+    location = ".".join(str(part) for part in first_error.get("loc", ()))
+    message = str(first_error.get("msg", "schema validation failed"))
+    return f"{location}: {message}" if location else message
+
+
+def _check_duplicate_occurrence_ids(
+    occurrences: tuple[LoadedRiskEventOccurrence, ...],
+    issues: list[RiskEventIssue],
+) -> None:
+    paths_by_id: dict[str, list[Path]] = defaultdict(list)
+    for loaded in occurrences:
+        paths_by_id[loaded.occurrence.occurrence_id].append(loaded.path)
+
+    for occurrence_id, paths in sorted(paths_by_id.items()):
+        if len(paths) <= 1:
+            continue
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.ERROR,
+                code="duplicate_risk_event_occurrence_id",
+                event_id=occurrence_id,
+                path=paths[0],
+                message="风险事件 occurrence_id 重复，后续评分无法可靠引用。",
+            )
+        )
+
+
+def _check_occurrence(
+    loaded: LoadedRiskEventOccurrence,
+    rules_by_id: dict[str, RiskEventRuleConfig],
+    as_of: date,
+    max_active_age_days: int,
+    issues: list[RiskEventIssue],
+) -> None:
+    occurrence = loaded.occurrence
+    path = loaded.path
+    rule = rules_by_id.get(occurrence.event_id)
+    if rule is None:
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.ERROR,
+                code="unknown_risk_event_id",
+                event_id=occurrence.event_id,
+                path=path,
+                message="发生记录引用了未配置的风险事件规则。",
+            )
+        )
+    elif not rule.active:
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.WARNING,
+                code="inactive_risk_event_rule",
+                event_id=occurrence.event_id,
+                path=path,
+                message="发生记录引用的风险事件规则已关闭监控，需要确认是否仍应保留记录。",
+            )
+        )
+
+    if occurrence.triggered_at > as_of or occurrence.last_confirmed_at > as_of:
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.ERROR,
+                code="risk_event_occurrence_date_in_future",
+                event_id=occurrence.event_id,
+                path=path,
+                message="触发日期或最近确认日期晚于评估日期。",
+            )
+        )
+    if occurrence.resolved_at is not None and occurrence.resolved_at > as_of:
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.ERROR,
+                code="risk_event_resolved_date_in_future",
+                event_id=occurrence.event_id,
+                path=path,
+                message="解除日期晚于评估日期。",
+            )
+        )
+    if occurrence.last_confirmed_at < occurrence.triggered_at:
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.ERROR,
+                code="last_confirmed_before_triggered",
+                event_id=occurrence.event_id,
+                path=path,
+                message="最近确认日期不能早于触发日期。",
+            )
+        )
+    if occurrence.resolved_at is not None and occurrence.resolved_at < occurrence.triggered_at:
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.ERROR,
+                code="resolved_before_triggered",
+                event_id=occurrence.event_id,
+                path=path,
+                message="解除日期不能早于触发日期。",
+            )
+        )
+    if occurrence.status in {"active", "watch"} and occurrence.resolved_at is not None:
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.ERROR,
+                code="active_occurrence_has_resolved_at",
+                event_id=occurrence.event_id,
+                path=path,
+                message="active/watch 状态不能同时填写 resolved_at。",
+            )
+        )
+    if occurrence.status in {"resolved", "dismissed"} and occurrence.resolved_at is None:
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.WARNING,
+                code="resolved_occurrence_missing_resolved_at",
+                event_id=occurrence.event_id,
+                path=path,
+                message="resolved/dismissed 状态建议填写 resolved_at，便于复盘时间线。",
+            )
+        )
+    if (
+        occurrence.status in {"active", "watch"}
+        and (as_of - occurrence.last_confirmed_at).days > max_active_age_days
+    ):
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.WARNING,
+                code="active_risk_event_occurrence_stale",
+                event_id=occurrence.event_id,
+                path=path,
+                message="活跃/观察风险事件超过新鲜度阈值未确认，需要更新证据。",
+            )
+        )
+
+    for source in occurrence.evidence_sources:
+        if (
+            source.source_type in {"primary_source", "paid_vendor", "public_convenience"}
+            and not source.source_url
+        ):
+            issues.append(
+                RiskEventIssue(
+                    severity=RiskEventIssueSeverity.WARNING,
+                    code="missing_risk_event_evidence_url",
+                    event_id=occurrence.event_id,
+                    path=path,
+                    message="非手工证据建议提供 source_url，便于复核来源和发布时间。",
+                )
+            )
+        if source.captured_at > as_of or (
+            source.published_at is not None and source.published_at > as_of
+        ):
+            issues.append(
+                RiskEventIssue(
+                    severity=RiskEventIssueSeverity.ERROR,
+                    code="risk_event_evidence_date_in_future",
+                    event_id=occurrence.event_id,
+                    path=path,
+                    message="证据发布日期或采集日期晚于评估日期。",
+                )
+            )
+        if source.source_type == "public_convenience":
+            issues.append(
+                RiskEventIssue(
+                    severity=RiskEventIssueSeverity.WARNING,
+                    code="public_convenience_risk_event_source",
+                    event_id=occurrence.event_id,
+                    path=path,
+                    message="公开便利来源只能作为辅助，不能单独进入政策/地缘评分。",
+                )
+            )
+
+
+def _occurrence_review_item(
+    loaded: LoadedRiskEventOccurrence,
+    rules_by_id: dict[str, RiskEventRuleConfig],
+    levels_by_id: Mapping[str, RiskEventLevelConfig],
+) -> RiskEventOccurrenceReviewItem:
+    occurrence = loaded.occurrence
+    rule = rules_by_id.get(occurrence.event_id)
+    level_id = rule.level if rule is not None else "UNKNOWN"
+    level_config = levels_by_id.get(level_id)
+    multiplier = (
+        float(level_config.target_ai_exposure_multiplier)
+        if level_config is not None
+        else 1.0
+    )
+    source_types = tuple(
+        sorted({source.source_type for source in occurrence.evidence_sources})
+    )
+    has_score_source = any(
+        source_type != "public_convenience" for source_type in source_types
+    )
+    active_for_scoring = occurrence.status in {"active", "watch"}
+    score_eligible = rule is not None and active_for_scoring and has_score_source
+
+    if rule is None:
+        health = "UNKNOWN_RULE"
+        reason = "发生记录引用了未知风险规则，不能进入评分。"
+    elif not has_score_source:
+        health = "INELIGIBLE_SOURCE"
+        reason = "只有 public_convenience 证据，不能进入自动评分。"
+    elif occurrence.status == "watch":
+        health = "WATCH"
+        reason = f"{rule.level} 风险处于观察状态，需要人工确认是否升级。"
+    elif occurrence.status == "active":
+        health = f"ACTIVE_{rule.level}"
+        reason = f"{rule.level} 风险已触发，AI 仓位乘数参考 {multiplier:.0%}。"
+    elif occurrence.status == "resolved":
+        health = "RESOLVED"
+        reason = "风险事件已解除，只保留复盘记录。"
+    else:
+        health = "DISMISSED"
+        reason = "风险事件已排除，只保留审计记录。"
+
+    return RiskEventOccurrenceReviewItem(
+        occurrence_id=occurrence.occurrence_id,
+        event_id=occurrence.event_id,
+        level=level_id,
+        status=occurrence.status,
+        triggered_at=occurrence.triggered_at,
+        last_confirmed_at=occurrence.last_confirmed_at,
+        source_types=source_types,
+        target_ai_exposure_multiplier=multiplier,
+        score_eligible=score_eligible,
+        health=health,
+        reason=reason,
+    )
+
+
 def _check_level_actions(
     risk_events: RiskEventsConfig,
     issues: list[RiskEventIssue],
@@ -269,6 +876,24 @@ def _severity_label(severity: RiskEventIssueSeverity) -> str:
     if severity == RiskEventIssueSeverity.ERROR:
         return "错误"
     return "警告"
+
+
+def _occurrence_status_label(value: str) -> str:
+    return {
+        "active": "活跃",
+        "watch": "观察",
+        "resolved": "已解除",
+        "dismissed": "已排除",
+    }.get(value, value)
+
+
+def _source_type_label(value: str) -> str:
+    return {
+        "primary_source": "一手来源",
+        "paid_vendor": "付费供应商",
+        "manual_input": "人工审计",
+        "public_convenience": "公开便利源",
+    }.get(value, value)
 
 
 def _escape_markdown_table(value: str) -> str:

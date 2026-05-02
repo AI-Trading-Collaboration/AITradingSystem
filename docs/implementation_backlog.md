@@ -26,7 +26,7 @@
 |SEC 基本面评分|已完成基础版|`aits score-daily` 会校验 SEC 指标 CSV、构建 SEC 特征，并用 AI 核心观察池 SEC 特征中位数进行基本面硬数据评分|
 |数据质量门禁|已完成基础版|`aits validate-data`，失败时非零退出|
 |市场环境特征|已完成基础版|`aits build-features`，趋势、相对强弱、VIX、利率、核心池宽度|
-|每日市场评分|已完成基础版|`aits score-daily`，趋势、SEC 基本面、宏观流动性、风险情绪和估值/政策占位项|
+|每日市场评分|已完成基础版|`aits score-daily`，趋势、SEC 基本面、宏观流动性、风险情绪、估值快照和政策/地缘发生记录评分|
 |仓位评分骨架|已完成基础版|100 分映射到仓位区间，支持总资产换算|
 |观察池与能力圈|已完成基础版|`aits watchlist list/validate`，核心个股能力圈和产业链节点映射|
 |历史回测|已完成基础版|`aits backtest`，每日评分动态仓位与 SPY/QQQ/SMH/SOXX 基准对比|
@@ -34,10 +34,11 @@
 |产业链因果图|已完成基础版|`aits industry-chain list/validate`，节点、父子关系、领先指标和观察池引用校验|
 |交易 thesis 与假设验证|已完成基础版|`aits thesis list/validate/review`，结构化假设、验证指标、证伪条件和复核报告|
 |风险事件分级|已完成基础版|`aits risk-events list/validate`，L1/L2/L3、影响节点、相关标的和动作规则|
+|风险事件发生记录|已完成基础版|`aits risk-events list-occurrences/validate-occurrences`，校验实际触发事件、证据来源、日期和 active/watch/resolved 状态|
 |估值与拥挤度|已完成基础版|`aits valuation list/validate/review`，估值快照、预期指标、拥挤度信号和来源校验|
 |估值评分|已完成基础版|`aits score-daily` 使用已通过校验、未过期且来源合规的估值快照，对估值分位和拥挤比例评分；`public_convenience` 不进入自动评分|
 |复盘归因|已完成基础版|`aits review-trades`，交易记录校验、数据质量门禁和 SPY/QQQ/SMH/SOXX 基础归因|
-|日报复核摘要|已完成基础版|`aits score-daily` 汇总 thesis、风险事件、估值快照和交易复盘状态，交易复盘复用同一份数据质量门禁结果|
+|日报复核摘要|已完成基础版|`aits score-daily` 汇总 thesis、风险事件规则与发生记录、估值快照和交易复盘状态，交易复盘复用同一份数据质量门禁结果|
 |产品策略|已完成文档|能力圈、产业链因果、假设验证、复盘归因|
 
 ## 推荐建设顺序
@@ -72,7 +73,7 @@ aits backtest --to 2026-05-02 --quality-as-of 2026-05-02
 
 限制：
 
-- 回测已接入 point-in-time SEC 基本面特征；估值和政策/地缘仍是 MVP 占位输入，因此回测仍不能视为完整策略结论。
+- 回测已接入 point-in-time SEC 基本面特征；估值和政策/地缘在回测中仍未接入 point-in-time 历史快照或事件库，因此回测仍不能视为完整策略结论。
 - 当前未计入税费、汇率、融资利率、盘口冲击和盘中执行偏差。
 - `cross_cycle_stress` 从 `2019-01-01` 开始，适合作为非默认压力测试；这类结果需要和默认 AI regime 结果分开解释。
 
@@ -150,7 +151,8 @@ aits score-daily --as-of 2026-05-01
 - 基本面评分：基于 AI 核心观察池 SEC 特征中位数，先覆盖季度毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度。
 - 宏观流动性评分：10Y、2Y、美元指数趋势。
 - 风险情绪评分：VIX 水平、VIX 分位、波动上升速度。
-- 估值、政策地缘：明确标记为中性占位或手工输入。
+- 估值评分：使用已通过校验、未过期且来源合规的估值快照。
+- 政策/地缘评分：使用已通过校验、来源合规且处于 active/watch 的风险事件发生记录；缺少有效记录时标记为数据不足。
 
 验收标准：
 
@@ -329,12 +331,16 @@ aits thesis review --as-of 2026-05-01
 配置建议：
 
 - `config/risk_events.yaml`
+- `data/external/risk_event_occurrences/*.yaml`
+- `docs/examples/risk_event_occurrences/`
 
 主要数据对象：
 
 - `RiskEvent`
 - `RiskEventLevel`
 - `RiskActionRule`
+- `RiskEventOccurrence`
+- `RiskEventEvidenceSource`
 
 等级：
 
@@ -344,20 +350,25 @@ aits thesis review --as-of 2026-05-01
 
 验收标准：
 
-- 每条风险事件必须有来源、时间、等级、影响节点和建议动作。
+- 每条风险事件规则必须有等级、影响节点和建议动作。
+- 每条实际发生记录必须有来源、时间、状态和判断摘要。
 - L2/L3 事件必须进入日报显著位置。
 - 风险事件动作不能绕过仓位上限和人工复核规则。
+- 不能把 `config/risk_events.yaml` 的 `active` 监控标记当作事件已经发生。
 
 当前基础版命令：
 
 ```powershell
 aits risk-events list
 aits risk-events validate --as-of 2026-05-02
+aits risk-events list-occurrences
+aits risk-events validate-occurrences --as-of 2026-05-02
 ```
 
 当前基础版输出：
 
 - `outputs/reports/risk_events_validation_YYYY-MM-DD.md`
+- `outputs/reports/risk_event_occurrences_YYYY-MM-DD.md`
 
 当前基础版校验：
 
@@ -367,6 +378,9 @@ aits risk-events validate --as-of 2026-05-02
 - 事件影响的产业链节点必须存在。
 - 事件相关标的必须处于配置的数据 universe 或观察池中。
 - 活跃 L2/L3 事件建议配置升级条件和解除条件。
+- 发生记录的 `event_id` 必须引用已配置规则。
+- 发生记录日期不能晚于评估日期，active/watch 记录超过新鲜度阈值会警告。
+- 只有 `primary_source`、`paid_vendor` 或 `manual_input` 证据可以进入评分；单独的 `public_convenience` 证据只能作为辅助。
 
 ### M7：估值与拥挤度模块
 
@@ -507,14 +521,17 @@ aits review-trades --as-of 2026-05-02
 |`data/processed/scores_daily.csv`|每日评分|M2|
 |`data/external/trade_theses/`|交易 thesis|M5，已实现基础版|
 |`data/external/valuation_snapshots/`|估值、预期和拥挤度快照|M7，已实现基础版|
+|`data/external/risk_event_occurrences/`|实际触发或观察中的政策/地缘风险事件发生记录|M6，已实现基础版|
 |`data/external/trades/`|交易记录|M8，已实现基础版|
 |`docs/examples/trade_theses/`|交易 thesis YAML 模板|M5，已实现基础版|
 |`docs/examples/valuation_snapshots/`|估值快照 YAML 模板|M7，已实现基础版|
+|`docs/examples/risk_event_occurrences/`|风险事件发生记录 YAML 模板|M6，已实现基础版|
 |`docs/examples/trades/`|交易记录 YAML 模板|M8，已实现基础版|
 |`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|历史回测报告|阶段 1，已实现基础版|
 |`outputs/reports/daily_score_YYYY-MM-DD.md`|每日评分报告|M2|
 |`outputs/reports/thesis_review_YYYY-MM-DD.md`|假设复核报告|M5|
 |`outputs/reports/risk_events_validation_YYYY-MM-DD.md`|风险事件规则校验报告|M6|
+|`outputs/reports/risk_event_occurrences_YYYY-MM-DD.md`|风险事件发生记录校验和复核报告|M6|
 |`outputs/reports/valuation_validation_YYYY-MM-DD.md`|估值快照校验报告|M7|
 |`outputs/reports/valuation_review_YYYY-MM-DD.md`|估值与拥挤度复核报告|M7|
 |`outputs/reports/trade_review_YYYY-MM-DD.md`|复盘归因报告|M8|
@@ -527,12 +544,12 @@ aits review-trades --as-of 2026-05-02
 接下来建议按这个顺序开发：
 
 1. 接入估值/预期的正式数据源，减少手工快照维护成本，并继续保留来源审计。
-2. 扩展政策/地缘风险从人工复核摘要进入可审计评分，但不得直接用新闻摘要触发交易动作。
+2. 为政策/地缘发生记录接入正式新闻或政策数据源目录，减少手工维护成本，但不得直接用新闻摘要触发交易动作。
 
 原因：
 
 - 阶段 1 的市场数据、评分、观察池、回测、产业链配置、交易 thesis、风险事件分级、估值与拥挤度快照、交易复盘基础闭环，以及日报复核摘要集成已经完成。
-- SEC 基本面特征已经接入当日日报评分和 point-in-time 回测，回测报告也会声明 SEC 基本面质量摘要；估值快照已可进入日报评分。下一步的主要价值是减少手工估值数据维护成本，并推进政策/地缘风险评分。
+- SEC 基本面特征已经接入当日日报评分和 point-in-time 回测，回测报告也会声明 SEC 基本面质量摘要；估值快照和风险事件发生记录已可进入日报评分。下一步的主要价值是减少手工估值和事件记录维护成本。
 
 ## 不应马上做的事
 
@@ -540,4 +557,4 @@ aits review-trades --as-of 2026-05-02
 - 不应直接接新闻并让 LLM 输出买卖建议。
 - 不应在没有估值数据来源审计的情况下做估值自动评分。
 - 不应在没有交易记录结构的情况下做复杂绩效归因。
-- 不应把估值、政策地缘继续长期保留为无说明的中性占位。
+- 不应把估值、政策地缘继续长期依赖无来源审计的手工输入。

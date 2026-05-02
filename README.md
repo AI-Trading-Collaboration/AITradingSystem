@@ -17,7 +17,7 @@
 5. 与 QQQ、SMH/SOXX、SPY 的回测对比。
 6. 每日 Markdown 报告。
 
-SEC 基本面已经接入基础硬数据评分；估值、新闻/NLP、LLM 事件抽取继续放到后续阶段。
+SEC 基本面已经接入基础硬数据评分；估值快照和政策/地缘风险发生记录已经接入可审计的手工输入评分。新闻/NLP、LLM 事件抽取继续放到后续阶段，不能直接触发交易动作。
 
 ## 工程结构
 
@@ -99,7 +99,7 @@ aits build-features --as-of 2026-05-01
 aits score-daily --as-of 2026-05-01
 ```
 
-命令会先执行市场数据质量门禁，再构建市场特征，并校验 `data/processed/sec_fundamentals_YYYY-MM-DD.csv`、生成 SEC 基本面特征，最后输出 `data/processed/scores_daily.csv` 和 `outputs/reports/daily_score_YYYY-MM-DD.md`。日报会同时汇总交易 thesis、风险事件、估值快照和交易复盘的复核状态；缺少本地手工输入会显示为警告，配置或 YAML 错误会显示为复核失败。SEC 基本面特征通过校验后会进入基本面硬数据评分；估值快照通过校验后会以估值分位和拥挤比例进入手工/审计输入评分，过期快照和 `public_convenience` 来源不会进入自动评分；政策地缘仍会在报告中明确标记为占位输入。
+命令会先执行市场数据质量门禁，再构建市场特征，并校验 `data/processed/sec_fundamentals_YYYY-MM-DD.csv`、生成 SEC 基本面特征，最后输出 `data/processed/scores_daily.csv` 和 `outputs/reports/daily_score_YYYY-MM-DD.md`。日报会同时汇总交易 thesis、风险事件、估值快照和交易复盘的复核状态；缺少本地手工输入会显示为警告，配置或 YAML 错误会显示为复核失败。SEC 基本面特征通过校验后会进入基本面硬数据评分；估值快照通过校验后会以估值分位和拥挤比例进入手工/审计输入评分，过期快照和 `public_convenience` 来源不会进入自动评分；政策/地缘评分只读取已校验的 `data/external/risk_event_occurrences/*.yaml` 发生记录，没有合格发生记录时显示为数据不足，不把 `config/risk_events.yaml` 的监控规则当作已发生风险或无风险证明。
 
 运行历史回测：
 
@@ -158,9 +158,11 @@ aits thesis review --as-of 2026-05-02
 ```powershell
 aits risk-events list
 aits risk-events validate --as-of 2026-05-02
+aits risk-events list-occurrences
+aits risk-events validate-occurrences --as-of 2026-05-02
 ```
 
-风险事件配置在 `config/risk_events.yaml`。当前基础版定义 L1/L2/L3 风险等级、AI 仓位折扣乘数、人工复核要求、影响产业链节点、相关标的、建议动作、升级条件和解除条件。风险事件不直接触发交易，只进入风险评估、thesis 复核和人工审核。
+风险事件配置在 `config/risk_events.yaml`，只定义需要监控的 L1/L2/L3 规则、AI 仓位折扣乘数、人工复核要求、影响产业链节点、相关标的、建议动作、升级条件和解除条件。实际发生记录默认读取 `data/external/risk_event_occurrences/*.yaml`，该目录不提交；可参考 `docs/examples/risk_event_occurrences/export_control_active_template.yaml` 复制模板。政策/地缘评分只读取已通过校验的发生记录，`public_convenience` 证据只能作为辅助，不能单独进入自动评分。
 
 校验和复核估值、预期与拥挤度快照：
 

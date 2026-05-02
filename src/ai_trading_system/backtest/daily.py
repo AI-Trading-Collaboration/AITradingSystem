@@ -319,13 +319,13 @@ def render_backtest_report(
         lines.append(_metrics_row(f"基准（{ticker} 买入持有）", result.benchmark_metrics[ticker]))
 
     limitation_note = (
-        "- 回测暂未接入历史 SEC 基本面特征；估值、政策/地缘模块仍是 MVP 占位输入，"
-        "因此回测状态标记为 PASS_WITH_LIMITATIONS。"
+        "- 回测暂未接入历史 SEC 基本面特征；估值和政策/地缘尚未接入 "
+        "point-in-time 历史快照或事件库，因此回测状态标记为 PASS_WITH_LIMITATIONS。"
     )
     if result.fundamental_feature_report_count:
         limitation_note = (
             "- SEC 基本面特征已按 signal_date point-in-time 接入；"
-            "估值、政策/地缘模块仍是 MVP 占位输入，"
+            "估值和政策/地缘尚未接入 point-in-time 历史快照或事件库，"
             "因此回测状态标记为 PASS_WITH_LIMITATIONS。"
         )
         status_summary = ", ".join(

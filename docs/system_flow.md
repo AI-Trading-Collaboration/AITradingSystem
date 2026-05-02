@@ -35,6 +35,7 @@ flowchart TD
         I["config/industry_chain.yaml<br/>产业链节点与因果图"]
         R["config/market_regimes.yaml<br/>AI regime 与压力测试区间"]
         RE["config/risk_events.yaml<br/>L1/L2/L3 风险事件动作规则"]
+        REX["data/external/risk_event_occurrences/*.yaml<br/>已触发/观察的风险事件发生记录"]
         DS["config/data_sources.yaml<br/>数据源目录、审计字段、来源限制"]
         SEC["config/sec_companies.yaml<br/>SEC CIK、taxonomy 预期和指标周期"]
         FM["config/fundamental_metrics.yaml<br/>SEC 指标映射、支撑指标和派生规则"]
@@ -97,6 +98,8 @@ flowchart TD
         IR["outputs/reports/industry_chain_validation_YYYY-MM-DD.md"]
         RV["aits risk-events validate"]
         RVR["outputs/reports/risk_events_validation_YYYY-MM-DD.md"]
+        ROV["aits risk-events validate-occurrences"]
+        ROR["outputs/reports/risk_event_occurrences_YYYY-MM-DD.md"]
         DSV["aits data-sources validate"]
         DSR["outputs/reports/data_sources_validation_YYYY-MM-DD.md"]
     end
@@ -180,6 +183,7 @@ flowchart TD
     SFC --> SD
     TH --> SD
     RE --> SD
+    REX --> SD
     VS --> SD
     TD --> SD
     SD --> SFCR
@@ -218,6 +222,9 @@ flowchart TD
     W --> RV
     U --> RV
     RV --> RVR
+    RE --> ROV
+    REX --> ROV
+    ROV --> ROR
     DS --> DSV
     DSV --> DSR
 
@@ -259,6 +266,7 @@ flowchart TD
     F --> H["写入特征摘要<br/>feature_summary_YYYY-MM-DD.md"]
     F --> R["复用已通过的数据质量结果<br/>汇总 thesis / 风险事件 / 估值 / 交易复盘状态"]
     R --> V1["估值快照校验和复核<br/>validate_valuation_snapshot_store"]
+    R --> G1["风险事件发生记录校验<br/>validate_risk_event_occurrence_store"]
     F --> S1["校验 SEC 指标 CSV<br/>validate_sec_fundamental_metrics_csv"]
     S1 -->|FAIL| S2["停止<br/>输出 SEC 指标 CSV 校验报告"]
     S1 -->|PASS 或 PASS_WITH_WARNINGS| S3["构建 SEC 基本面特征<br/>build_sec_fundamental_features_report"]
@@ -268,13 +276,14 @@ flowchart TD
     H --> I
     R --> I
     V1 --> I
+    G1 --> I
     S5 --> I
     I --> J["趋势评分<br/>指数趋势、半导体趋势、核心池宽度、相对强弱"]
     I --> F1["基本面评分<br/>SEC 特征中位数：毛利率、营业利润率、净利率、R&D、CapEx"]
     I --> V2["估值评分<br/>估值分位和拥挤比例；排除过期和 public_convenience"]
     I --> K["宏观流动性评分<br/>DGS10、DGS2、美元指数"]
     I --> L["风险情绪评分<br/>VIX 水平、分位、变化速度"]
-    I --> M["占位评分<br/>政策/地缘"]
+    I --> M["政策/地缘评分<br/>只读已校验的实际发生记录"]
     J --> N["总分和仓位区间<br/>风险资产内 AI 仓位"]
     F1 --> N
     V2 --> N
@@ -318,11 +327,12 @@ flowchart TD
 flowchart LR
     A["数据质量状态"] --> E["报告结论"]
     B["硬数据评分<br/>趋势 / 基本面 / 宏观流动性 / 风险情绪"] --> E
-    C["占位或手工输入<br/>估值 / 政策地缘"] --> E
+    C["手工/审计输入<br/>估值 / 政策地缘发生记录"] --> E
     D["市场阶段<br/>ai_after_chatgpt / cross_cycle_stress"] --> E
     F["能力圈和产业链配置<br/>watchlist / industry_chain"] --> E
     L["交易 thesis<br/>验证指标 / 证伪条件 / 风险事件"] --> E
     N["估值与拥挤度<br/>估值分位 / 预期 / 过热信号"] --> E
+    Q["风险事件发生记录<br/>active/watch / 证据来源 / 仓位乘数"] --> E
     P["交易复盘<br/>市场 Beta / 主题 Beta / 个股表现"] --> E
 
     E --> G["必须说明<br/>本次数据质量是否通过"]
@@ -332,6 +342,7 @@ flowchart LR
     E --> K["必须说明<br/>回测区间和市场阶段"]
     E --> M["必须说明<br/>交易假设是否仍成立或需要复核"]
     E --> O["必须说明<br/>估值数据来源和是否只能作为辅助"]
+    E --> Q2["必须说明<br/>政策/地缘是否来自已校验发生记录"]
     E --> P2["必须说明<br/>收益来自基准 Beta 还是个股表现"]
 ```
 
@@ -343,15 +354,16 @@ flowchart TD
         A["数据下载<br/>aits download-data"]
         B["数据质量门禁<br/>aits validate-data"]
         C["市场特征<br/>aits build-features"]
-        D["每日评分<br/>aits score-daily<br/>含 SEC 基本面、估值快照和人工复核摘要"]
+        D["每日评分<br/>aits score-daily<br/>含 SEC 基本面、估值快照、政策/地缘发生记录和人工复核摘要"]
         E["历史回测<br/>aits backtest<br/>含 SEC point-in-time 基本面"]
         F["观察池校验<br/>aits watchlist validate"]
         G["产业链图校验<br/>aits industry-chain validate"]
         H["交易 thesis<br/>aits thesis list/validate/review"]
         I["风险事件分级<br/>aits risk-events list/validate"]
+        I2["风险事件发生记录<br/>aits risk-events list-occurrences/validate-occurrences"]
         J["估值与拥挤度<br/>aits valuation list/validate/review"]
         K["交易复盘归因<br/>aits review-trades"]
-        L["日报集成<br/>汇总 thesis、风险、估值和复盘摘要"]
+        L["日报集成<br/>汇总 thesis、风险规则与发生记录、估值和复盘摘要"]
         M["数据源目录<br/>aits data-sources list/validate"]
         N["基本面一手数据<br/>aits fundamentals list-sec-companies / download-sec-companyfacts"]
         O["SEC 基本面指标摘要<br/>aits fundamentals extract-sec-metrics / validate-sec-metrics"]
@@ -363,8 +375,10 @@ flowchart TD
     F --> H
     G --> H
     G --> I
+    I --> I2
     H --> I
     I --> J
+    I2 --> L
     J --> K
     M --> C
     M --> N
@@ -391,9 +405,9 @@ flowchart TD
 |质量报告|`outputs/reports/data_quality_YYYY-MM-DD.md`|声明数据是否可用于下游结论|已实现|
 |特征|`aits build-features`|生成可解释市场特征|已实现|
 |特征缓存|`data/processed/features_daily.csv`|保存 tidy 格式特征|已实现|
-|评分|`aits score-daily`|先执行市场数据质量门禁，再校验 SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照，并输出评分、仓位区间和日报|已实现|
+|评分|`aits score-daily`|先执行市场数据质量门禁，再校验 SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照和风险事件发生记录，并输出评分、仓位区间和日报|已实现|
 |评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果|已实现|
-|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|输出中文结论、市场数据质量状态、SEC 基本面质量状态、限制说明和人工复核摘要|已实现|
+|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|输出中文结论、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、限制说明和人工复核摘要|已实现|
 |回测|`aits backtest`|基于每日评分动态仓位回测，并按 signal_date 构建 point-in-time SEC 基本面特征|已实现|
 |回测报告|`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|输出市场阶段、市场数据质量状态、SEC 基本面质量摘要和绩效指标|已实现|
 |能力圈|`config/watchlist.yaml`|记录核心标的、能力圈和 thesis 要求|已实现基础版|
@@ -401,6 +415,8 @@ flowchart TD
 |市场阶段|`config/market_regimes.yaml`|记录默认 AI regime 和压力测试区间|已实现|
 |风险事件|`config/risk_events.yaml`|记录 L1/L2/L3 风险和动作规则|已实现基础版|
 |风险事件校验|`aits risk-events validate`|校验风险等级、产业链引用、相关标的和动作规则|已实现基础版|
+|风险事件发生记录|`data/external/risk_event_occurrences/`|记录真实触发或观察中的政策/地缘事件、状态、证据来源和时间线|已实现基础版|
+|风险事件发生记录校验|`aits risk-events validate-occurrences`|校验实际发生记录 schema、event_id、日期、新鲜度和证据来源；日报政策/地缘评分只读该校验结果|已实现基础版|
 |数据源目录|`config/data_sources.yaml`|记录 provider、endpoint、缓存路径、审计字段、校验项和来源限制|已实现基础版|
 |数据源校验|`aits data-sources validate`|校验数据源目录是否可审计、活跃来源是否声明校验和限制|已实现基础版|
 |SEC 公司映射|`config/sec_companies.yaml`|记录核心标的 ticker、CIK、taxonomy 预期和 SEC companyfacts 指标周期覆盖范围|已实现基础版|
@@ -426,4 +442,4 @@ flowchart TD
 |估值复核|`aits valuation review`|输出估值是否偏贵、拥挤或数据过期|已实现基础版|
 |交易记录|`data/external/trades/`|记录真实交易、价格、仓位和 thesis_id|已实现基础版|
 |交易复盘|`aits review-trades`|先过数据质量门禁，再对比 SPY/QQQ/SMH/SOXX 做基础归因|已实现基础版|
-|日报复核摘要|`aits score-daily`|汇总 thesis、风险事件、估值快照和交易复盘状态；交易复盘复用同一份数据质量门禁结果|已实现基础版|
+|日报复核摘要|`aits score-daily`|汇总 thesis、风险事件规则与发生记录、估值快照和交易复盘状态；交易复盘复用同一份数据质量门禁结果|已实现基础版|

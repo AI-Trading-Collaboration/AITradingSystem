@@ -134,6 +134,25 @@ valuation:
       bearish_above: 0.50
       points: 40
 
+policy_geopolitics:
+  neutral_score: 50
+  signals:
+    - subject: POLICY_GEOPOLITICS
+      feature: active_or_watch_l3_count
+      bullish_below: 0.5
+      bearish_above: 1.0
+      points: 45
+    - subject: POLICY_GEOPOLITICS
+      feature: active_or_watch_l2_count
+      bullish_below: 0.5
+      bearish_above: 2.0
+      points: 35
+    - subject: POLICY_GEOPOLITICS
+      feature: minimum_exposure_multiplier
+      bullish_above: 0.95
+      bearish_below: 0.25
+      points: 20
+
 placeholders:
   fundamentals:
     score: 50
@@ -143,7 +162,7 @@ placeholders:
     reason: "MVP 阶段占位：尚未接入估值和预期数据。"
   policy_geopolitics:
     score: 50
-    reason: "MVP 阶段占位：尚未接入政策和地缘事件流程。"
+    reason: "政策/地缘占位：未向评分流程传入已校验的风险事件发生记录。"
 
 position_change:
   minimum_action_delta: 0.05

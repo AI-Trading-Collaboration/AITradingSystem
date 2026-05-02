@@ -15,8 +15,13 @@ from ai_trading_system.config import (
     load_watchlist,
 )
 from ai_trading_system.risk_events import (
+    build_risk_event_occurrence_review_report,
+    load_risk_event_occurrence_store,
+    render_risk_event_occurrence_review_report,
     render_risk_events_validation_report,
+    validate_risk_event_occurrence_store,
     validate_risk_events_config,
+    write_risk_event_occurrence_review_report,
     write_risk_events_validation_report,
 )
 
@@ -125,6 +130,65 @@ def test_render_and_write_risk_events_report(tmp_path: Path) -> None:
     assert output_path.read_text(encoding="utf-8") == markdown
 
 
+def test_validate_risk_event_occurrence_store_passes_active_manual_record(
+    tmp_path: Path,
+) -> None:
+    input_path = tmp_path / "occurrence.yaml"
+    _write_risk_event_occurrence(input_path)
+
+    validation_report = validate_risk_event_occurrence_store(
+        store=load_risk_event_occurrence_store(input_path),
+        risk_events=load_risk_events(),
+        as_of=date(2026, 5, 2),
+    )
+    review_report = build_risk_event_occurrence_review_report(validation_report)
+
+    assert validation_report.status == "PASS"
+    assert validation_report.occurrence_count == 1
+    assert review_report.status == "PASS_WITH_WARNINGS"
+    assert len(review_report.score_eligible_active_items) == 1
+    assert review_report.score_eligible_active_items[0].event_id == (
+        "ai_chip_export_control_upgrade"
+    )
+
+
+def test_validate_risk_event_occurrence_store_rejects_unknown_event_id(
+    tmp_path: Path,
+) -> None:
+    input_path = tmp_path / "occurrence.yaml"
+    _write_risk_event_occurrence(input_path, event_id="unknown_policy_event")
+
+    validation_report = validate_risk_event_occurrence_store(
+        store=load_risk_event_occurrence_store(input_path),
+        risk_events=load_risk_events(),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert validation_report.passed is False
+    assert "unknown_risk_event_id" in {issue.code for issue in validation_report.issues}
+
+
+def test_render_and_write_risk_event_occurrence_report(tmp_path: Path) -> None:
+    input_path = tmp_path / "occurrence.yaml"
+    _write_risk_event_occurrence(input_path)
+    validation_report = validate_risk_event_occurrence_store(
+        store=load_risk_event_occurrence_store(input_path),
+        risk_events=load_risk_events(),
+        as_of=date(2026, 5, 2),
+    )
+    review_report = build_risk_event_occurrence_review_report(validation_report)
+
+    markdown = render_risk_event_occurrence_review_report(review_report)
+    output_path = write_risk_event_occurrence_review_report(
+        review_report,
+        tmp_path / "risk_event_occurrences.md",
+    )
+
+    assert "- 状态：PASS_WITH_WARNINGS" in markdown
+    assert "ai_chip_export_control_upgrade" in markdown
+    assert output_path.read_text(encoding="utf-8") == markdown
+
+
 def test_risk_events_cli_validate_and_list(tmp_path: Path) -> None:
     output_path = tmp_path / "risk_events_validation.md"
 
@@ -147,3 +211,62 @@ def test_risk_events_cli_validate_and_list(tmp_path: Path) -> None:
     assert "风险事件校验状态：PASS" in validate_result.output
     assert "风险事件规则" in list_result.output
     assert "L2" in list_result.output
+
+
+def test_risk_events_cli_validate_occurrences(tmp_path: Path) -> None:
+    input_path = tmp_path / "occurrences"
+    input_path.mkdir()
+    _write_risk_event_occurrence(input_path / "occurrence.yaml")
+    output_path = tmp_path / "risk_event_occurrences.md"
+
+    validate_result = CliRunner().invoke(
+        app,
+        [
+            "risk-events",
+            "validate-occurrences",
+            "--input-path",
+            str(input_path),
+            "--as-of",
+            "2026-05-02",
+            "--output-path",
+            str(output_path),
+        ],
+    )
+    list_result = CliRunner().invoke(
+        app,
+        [
+            "risk-events",
+            "list-occurrences",
+            "--input-path",
+            str(input_path),
+        ],
+    )
+
+    assert validate_result.exit_code == 0
+    assert list_result.exit_code == 0
+    assert output_path.exists()
+    assert "风险事件发生记录状态：PASS_WITH_WARNINGS" in validate_result.output
+    assert "风险事件发生记录" in list_result.output
+
+
+def _write_risk_event_occurrence(
+    output_path: Path,
+    event_id: str = "ai_chip_export_control_upgrade",
+) -> None:
+    output_path.write_text(
+        f"""
+occurrence_id: {event_id}_2026_05_01
+event_id: {event_id}
+status: active
+triggered_at: 2026-05-01
+last_confirmed_at: 2026-05-02
+evidence_sources:
+  - source_name: manual_policy_review
+    source_type: manual_input
+    source_url: ""
+    published_at: 2026-05-01
+    captured_at: 2026-05-02
+summary: 人工确认的测试风险事件。
+""",
+        encoding="utf-8",
+    )
