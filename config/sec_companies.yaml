@@ -21,6 +21,8 @@ companies:
     expected_taxonomies:
       - ifrs-full
       - dei
+    sec_metric_periods:
+      - annual
     notes: Foreign issuer; financial taxonomy can differ from US GAAP peers.
 
   - ticker: INTC

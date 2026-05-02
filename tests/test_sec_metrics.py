@@ -10,6 +10,7 @@ from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
 from ai_trading_system.config import (
+    FundamentalDerivedMetricConfig,
     FundamentalMetricConceptConfig,
     FundamentalMetricConfig,
     FundamentalMetricsConfig,
@@ -125,6 +126,93 @@ def test_build_sec_fundamental_metrics_report_uses_single_quarter_not_ytd(
     assert len(quarterly_rows) == 1
     assert quarterly_rows[0].fiscal_period == "Q3"
     assert quarterly_rows[0].value == 850.0
+
+
+def test_build_sec_fundamental_metrics_report_derives_missing_gross_profit(
+    tmp_path: Path,
+) -> None:
+    companies = SecCompaniesConfig(
+        companies=[
+            SecCompanyConfig(
+                ticker="GOOG",
+                cik="0001652044",
+                company_name="Alphabet Inc.",
+                expected_taxonomies=["us-gaap", "dei"],
+            )
+        ]
+    )
+    json_path = _write_companyfacts_without_gross_profit(
+        tmp_path,
+        ticker="GOOG",
+        cik="0001652044",
+    )
+    _write_manifest(tmp_path, ticker="GOOG", cik="0001652044", json_path=json_path)
+    validation = validate_sec_companyfacts_cache(companies, input_dir=tmp_path, as_of=_date())
+
+    report = build_sec_fundamental_metrics_report(
+        companies=companies,
+        metrics=_metrics_config_with_derived_gross_profit(),
+        input_dir=tmp_path,
+        as_of=_date(),
+        validation_report=validation,
+    )
+    gross_profit_rows = {
+        row.period_type: row for row in report.rows if row.metric_id == "gross_profit"
+    }
+
+    assert report.status == "PASS"
+    assert report.row_count == 4
+    assert not report.issues
+    assert gross_profit_rows["annual"].value == 600.0
+    assert gross_profit_rows["quarterly"].value == 250.0
+    assert gross_profit_rows["annual"].taxonomy == "derived"
+    assert gross_profit_rows["annual"].concept == "derived:revenue-cost_of_revenue"
+
+
+def test_build_sec_fundamental_metrics_report_respects_company_sec_periods(
+    tmp_path: Path,
+) -> None:
+    companies = SecCompaniesConfig(
+        companies=[
+            SecCompanyConfig(
+                ticker="TSM",
+                cik="0001046179",
+                company_name="Taiwan Semiconductor Manufacturing Company Limited",
+                expected_taxonomies=["ifrs-full", "dei"],
+                sec_metric_periods=["annual"],
+            )
+        ]
+    )
+    json_path = _write_ifrs_annual_companyfacts(
+        tmp_path,
+        ticker="TSM",
+        cik="0001046179",
+    )
+    _write_manifest(tmp_path, ticker="TSM", cik="0001046179", json_path=json_path)
+    validation = validate_sec_companyfacts_cache(companies, input_dir=tmp_path, as_of=_date())
+
+    report = build_sec_fundamental_metrics_report(
+        companies=companies,
+        metrics=_ifrs_metrics_config(),
+        input_dir=tmp_path,
+        as_of=_date(),
+        validation_report=validation,
+    )
+    output_path = tmp_path / "sec_fundamentals.csv"
+    write_sec_fundamental_metrics_csv(report, output_path)
+    csv_validation = validate_sec_fundamental_metrics_csv(
+        companies=companies,
+        metrics=_ifrs_metrics_config(),
+        input_path=output_path,
+        as_of=_date(),
+    )
+
+    assert report.status == "PASS"
+    assert report.row_count == 1
+    assert {issue.code for issue in report.issues} == set()
+    assert csv_validation.status == "PASS"
+    assert csv_validation.expected_observation_count == 1
+    assert csv_validation.observed_observation_count == 1
 
 
 def test_build_sec_fundamental_metrics_report_requires_passing_validation(
@@ -400,6 +488,82 @@ def _metrics_config_with_preferred_old_concept() -> FundamentalMetricsConfig:
     )
 
 
+def _ifrs_metrics_config() -> FundamentalMetricsConfig:
+    return FundamentalMetricsConfig(
+        metrics=[
+            FundamentalMetricConfig(
+                metric_id="revenue",
+                name="Revenue",
+                description="SEC companyfacts 披露的总收入。",
+                preferred_periods=["annual", "quarterly"],
+                concepts=[
+                    FundamentalMetricConceptConfig(
+                        taxonomy="ifrs-full",
+                        concept="Revenue",
+                        unit="TWD",
+                    )
+                ],
+            )
+        ]
+    )
+
+
+def _metrics_config_with_derived_gross_profit() -> FundamentalMetricsConfig:
+    return FundamentalMetricsConfig(
+        metrics=[
+            FundamentalMetricConfig(
+                metric_id="revenue",
+                name="Revenue",
+                description="SEC companyfacts 披露的总收入。",
+                preferred_periods=["annual", "quarterly"],
+                concepts=[
+                    FundamentalMetricConceptConfig(
+                        taxonomy="us-gaap",
+                        concept="Revenues",
+                        unit="USD",
+                    )
+                ],
+            ),
+            FundamentalMetricConfig(
+                metric_id="gross_profit",
+                name="Gross Profit",
+                description="收入扣除收入成本后的毛利。",
+                preferred_periods=["annual", "quarterly"],
+                concepts=[
+                    FundamentalMetricConceptConfig(
+                        taxonomy="us-gaap",
+                        concept="GrossProfit",
+                        unit="USD",
+                    )
+                ],
+            ),
+        ],
+        supporting_metrics=[
+            FundamentalMetricConfig(
+                metric_id="cost_of_revenue",
+                name="Cost of Revenue",
+                description="派生毛利时使用的收入成本。",
+                preferred_periods=["annual", "quarterly"],
+                concepts=[
+                    FundamentalMetricConceptConfig(
+                        taxonomy="us-gaap",
+                        concept="CostOfRevenue",
+                        unit="USD",
+                    )
+                ],
+            )
+        ],
+        derived_metrics=[
+            FundamentalDerivedMetricConfig(
+                metric_id="gross_profit",
+                operation="difference",
+                minuend_metric_id="revenue",
+                subtrahend_metric_id="cost_of_revenue",
+            )
+        ],
+    )
+
+
 def _write_companyfacts(tmp_path: Path, ticker: str, cik: str) -> Path:
     json_path = tmp_path / f"{ticker.lower()}_companyfacts.json"
     json_path.write_text(
@@ -488,6 +652,118 @@ def _write_companyfacts(tmp_path: Path, ticker: str, cik: str) -> Path:
                                         "val": 850,
                                         "accn": "0001045810-25-000030",
                                     },
+                                ]
+                            }
+                        }
+                    },
+                    "dei": {},
+                },
+            },
+        ),
+        encoding="utf-8",
+    )
+    return json_path
+
+
+def _write_companyfacts_without_gross_profit(
+    tmp_path: Path,
+    ticker: str,
+    cik: str,
+) -> Path:
+    json_path = tmp_path / f"{ticker.lower()}_companyfacts.json"
+    json_path.write_text(
+        json.dumps(
+            {
+                "cik": int(cik),
+                "entityName": f"{ticker} Test Entity",
+                "facts": {
+                    "us-gaap": {
+                        "Revenues": {
+                            "units": {
+                                "USD": [
+                                    {
+                                        "fy": 2025,
+                                        "fp": "FY",
+                                        "form": "10-K",
+                                        "end": "2025-12-31",
+                                        "filed": "2026-02-05",
+                                        "frame": "CY2025",
+                                        "val": 1000,
+                                        "accn": "0001652044-26-000001",
+                                    },
+                                    {
+                                        "fy": 2026,
+                                        "fp": "Q1",
+                                        "form": "10-Q",
+                                        "start": "2026-01-01",
+                                        "end": "2026-03-31",
+                                        "filed": "2026-04-30",
+                                        "frame": "CY2026Q1",
+                                        "val": 400,
+                                        "accn": "0001652044-26-000010",
+                                    },
+                                ]
+                            }
+                        },
+                        "CostOfRevenue": {
+                            "units": {
+                                "USD": [
+                                    {
+                                        "fy": 2025,
+                                        "fp": "FY",
+                                        "form": "10-K",
+                                        "end": "2025-12-31",
+                                        "filed": "2026-02-05",
+                                        "frame": "CY2025",
+                                        "val": 400,
+                                        "accn": "0001652044-26-000001",
+                                    },
+                                    {
+                                        "fy": 2026,
+                                        "fp": "Q1",
+                                        "form": "10-Q",
+                                        "start": "2026-01-01",
+                                        "end": "2026-03-31",
+                                        "filed": "2026-04-30",
+                                        "frame": "CY2026Q1",
+                                        "val": 150,
+                                        "accn": "0001652044-26-000010",
+                                    },
+                                ]
+                            }
+                        },
+                    },
+                    "dei": {},
+                },
+            },
+        ),
+        encoding="utf-8",
+    )
+    return json_path
+
+
+def _write_ifrs_annual_companyfacts(tmp_path: Path, ticker: str, cik: str) -> Path:
+    json_path = tmp_path / f"{ticker.lower()}_companyfacts.json"
+    json_path.write_text(
+        json.dumps(
+            {
+                "cik": int(cik),
+                "entityName": f"{ticker} Test Entity",
+                "facts": {
+                    "ifrs-full": {
+                        "Revenue": {
+                            "units": {
+                                "TWD": [
+                                    {
+                                        "fy": 2024,
+                                        "fp": "FY",
+                                        "form": "20-F",
+                                        "end": "2024-12-31",
+                                        "filed": "2025-04-17",
+                                        "frame": "CY2024",
+                                        "val": 2894307000,
+                                        "accn": "0001046179-25-000010",
+                                    }
                                 ]
                             }
                         }

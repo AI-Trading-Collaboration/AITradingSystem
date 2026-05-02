@@ -13,6 +13,7 @@ from typing import Any, Literal
 import pandas as pd
 
 from ai_trading_system.config import (
+    FundamentalDerivedMetricConfig,
     FundamentalMetricConfig,
     FundamentalMetricsConfig,
     SecCompaniesConfig,
@@ -160,6 +161,13 @@ def build_sec_fundamental_metrics_report(
     if not validation_report.passed:
         raise ValueError("SEC companyfacts 缓存校验必须通过后才能抽取基本面指标")
 
+    all_source_metrics = [*metrics.metrics, *metrics.supporting_metrics]
+    source_metrics_by_id = {metric.metric_id: metric for metric in all_source_metrics}
+    derived_metrics_by_id = {
+        derived_metric.metric_id: derived_metric
+        for derived_metric in metrics.derived_metrics
+    }
+
     for company in companies.companies:
         if not company.active:
             continue
@@ -167,16 +175,35 @@ def build_sec_fundamental_metrics_report(
         data = _load_json(path, company, issues)
         if data is None:
             continue
-        for metric in metrics.metrics:
-            for period_type in metric.preferred_periods:
+
+        extracted_rows: dict[tuple[str, PeriodType], SecFundamentalMetricRow] = {}
+        for source_metric in all_source_metrics:
+            for period_type in _metric_periods_for_company(company, source_metric):
                 row = _extract_metric_row(
                     company=company,
-                    metric=metric,
+                    metric=source_metric,
                     period_type=period_type,
                     data=data,
                     path=path,
                     as_of=as_of,
                 )
+                if row is not None:
+                    extracted_rows[(source_metric.metric_id, period_type)] = row
+
+        for metric in metrics.metrics:
+            for period_type in _metric_periods_for_company(company, metric):
+                row = extracted_rows.get((metric.metric_id, period_type))
+                if row is None:
+                    row = _derive_metric_row(
+                        company=company,
+                        metric=metric,
+                        derived_metric=derived_metrics_by_id.get(metric.metric_id),
+                        period_type=period_type,
+                        path=path,
+                        as_of=as_of,
+                        extracted_rows=extracted_rows,
+                        source_metrics_by_id=source_metrics_by_id,
+                    )
                 if row is None:
                     issues.append(
                         SecMetricIssue(
@@ -258,6 +285,9 @@ def render_sec_fundamental_metrics_report(
         ):
             end_date = row.end_date.isoformat() if row.end_date else ""
             filed_date = row.filed_date.isoformat() if row.filed_date else ""
+            source_label = f"{row.taxonomy}:{row.concept} ({row.unit})"
+            if row.taxonomy == "derived":
+                source_label = f"{row.concept} ({row.unit})"
             lines.append(
                 "| "
                 f"{row.ticker} | "
@@ -269,7 +299,7 @@ def render_sec_fundamental_metrics_report(
                 f"{filed_date} | "
                 f"{row.form} | "
                 f"{row.value:.2f} | "
-                f"{row.taxonomy}:{row.concept} ({row.unit}) |"
+                f"{_escape_markdown_table(source_label)} |"
             )
 
     lines.extend(["", "## 问题", ""])
@@ -302,6 +332,10 @@ def render_sec_fundamental_metrics_report(
             "- 本报告只把 SEC companyfacts 原始 JSON 抽成结构化摘要，不直接进入自动评分。",
             "- 指标映射来自 `config/fundamental_metrics.yaml`，"
             "taxonomy 差异和缺失项必须先人工复核。",
+            "- 派生指标必须在 `config/fundamental_metrics.yaml` 显式声明，并且只在组件指标周期、"
+            "单位、截止日、财年、财期和 accession number 一致时生成。",
+            "- `config/sec_companies.yaml` 可声明 SEC companyfacts 对单个公司的可用指标周期；"
+            "未声明季度覆盖的公司不会被要求从 SEC companyfacts 生成季度指标。",
             "- 年度指标只抽取年度持续期事实，排除 10-K 中披露的历史季度 frame。",
             "- 季度指标只抽取单季事实，优先使用 SEC frame 或持续期判断排除 YTD 累计数。",
             "- 同一指标会跨所有候选 taxonomy/concept/unit 选择最新可用事实，"
@@ -620,8 +654,20 @@ def _expected_metric_keys(
         for company in companies.companies
         if company.active
         for metric in metrics.metrics
-        for period_type in metric.preferred_periods
+        for period_type in _metric_periods_for_company(company, metric)
     }
+
+
+def _metric_periods_for_company(
+    company: SecCompanyConfig,
+    metric: FundamentalMetricConfig,
+) -> list[PeriodType]:
+    supported_periods = set(company.sec_metric_periods)
+    return [
+        period_type
+        for period_type in metric.preferred_periods
+        if period_type in supported_periods
+    ]
 
 
 def _observed_metric_keys(frame: pd.DataFrame) -> set[tuple[str, str, str]]:
@@ -724,6 +770,75 @@ def _validate_csv_values(
                     ),
                 )
             )
+
+
+def _derive_metric_row(
+    company: SecCompanyConfig,
+    metric: FundamentalMetricConfig,
+    derived_metric: FundamentalDerivedMetricConfig | None,
+    period_type: PeriodType,
+    path: Path,
+    as_of: date,
+    extracted_rows: dict[tuple[str, PeriodType], SecFundamentalMetricRow],
+    source_metrics_by_id: dict[str, FundamentalMetricConfig],
+) -> SecFundamentalMetricRow | None:
+    if derived_metric is None:
+        return None
+    if (
+        derived_metric.minuend_metric_id not in source_metrics_by_id
+        or derived_metric.subtrahend_metric_id not in source_metrics_by_id
+    ):
+        return None
+
+    minuend_row = extracted_rows.get((derived_metric.minuend_metric_id, period_type))
+    subtrahend_row = extracted_rows.get(
+        (derived_metric.subtrahend_metric_id, period_type)
+    )
+    if minuend_row is None or subtrahend_row is None:
+        return None
+    if not _rows_can_derive_difference(minuend_row, subtrahend_row):
+        return None
+
+    return SecFundamentalMetricRow(
+        as_of=as_of,
+        ticker=company.ticker,
+        cik=company.cik,
+        company_name=company.company_name,
+        metric_id=metric.metric_id,
+        metric_name=metric.name,
+        period_type=period_type,
+        fiscal_year=minuend_row.fiscal_year,
+        fiscal_period=minuend_row.fiscal_period,
+        end_date=minuend_row.end_date,
+        filed_date=minuend_row.filed_date,
+        form=minuend_row.form,
+        taxonomy="derived",
+        concept=(
+            "derived:"
+            f"{derived_metric.minuend_metric_id}-{derived_metric.subtrahend_metric_id}"
+        ),
+        unit=minuend_row.unit,
+        value=minuend_row.value - subtrahend_row.value,
+        accession_number=minuend_row.accession_number,
+        source_path=path,
+    )
+
+
+def _rows_can_derive_difference(
+    minuend_row: SecFundamentalMetricRow,
+    subtrahend_row: SecFundamentalMetricRow,
+) -> bool:
+    return (
+        minuend_row.period_type == subtrahend_row.period_type
+        and minuend_row.fiscal_year == subtrahend_row.fiscal_year
+        and minuend_row.fiscal_period == subtrahend_row.fiscal_period
+        and minuend_row.end_date == subtrahend_row.end_date
+        and minuend_row.filed_date == subtrahend_row.filed_date
+        and minuend_row.form == subtrahend_row.form
+        and minuend_row.unit == subtrahend_row.unit
+        and bool(minuend_row.accession_number)
+        and minuend_row.accession_number == subtrahend_row.accession_number
+    )
 
 
 def _extract_metric_row(

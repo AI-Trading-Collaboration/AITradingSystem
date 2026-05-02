@@ -106,3 +106,30 @@ metrics:
       - taxonomy: ifrs-full
         concept: PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities
         unit: TWD
+
+supporting_metrics:
+  - metric_id: cost_of_revenue
+    name: Cost of Revenue
+    description: 显式派生毛利时使用的营业成本或收入成本，不作为当前输出指标。
+    preferred_periods:
+      - annual
+      - quarterly
+    concepts:
+      - taxonomy: us-gaap
+        concept: CostOfRevenue
+        unit: USD
+      - taxonomy: us-gaap
+        concept: CostOfGoodsAndServicesSold
+        unit: USD
+      - taxonomy: ifrs-full
+        concept: CostOfRevenue
+        unit: USD
+      - taxonomy: ifrs-full
+        concept: CostOfRevenue
+        unit: TWD
+
+derived_metrics:
+  - metric_id: gross_profit
+    operation: difference
+    minuend_metric_id: revenue
+    subtrahend_metric_id: cost_of_revenue

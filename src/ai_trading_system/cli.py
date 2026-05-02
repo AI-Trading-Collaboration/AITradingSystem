@@ -949,6 +949,7 @@ def list_sec_companies(
     table.add_column("公司")
     table.add_column("活跃")
     table.add_column("Taxonomy")
+    table.add_column("SEC 指标周期")
     for company in sorted(config.companies, key=lambda item: item.ticker):
         if active_only and not company.active:
             continue
@@ -958,6 +959,7 @@ def list_sec_companies(
             company.company_name,
             "是" if company.active else "否",
             ", ".join(company.expected_taxonomies),
+            ", ".join(company.sec_metric_periods),
         )
     console.print(table)
 

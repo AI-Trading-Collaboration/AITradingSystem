@@ -210,17 +210,31 @@ class DataSourcesConfig(BaseModel):
     sources: list[DataSourceConfig] = Field(min_length=1)
 
 
+def _default_sec_metric_periods() -> list[Literal["annual", "quarterly"]]:
+    return ["annual", "quarterly"]
+
+
 class SecCompanyConfig(BaseModel):
     ticker: str = Field(min_length=1)
     cik: str = Field(pattern=r"^\d{10}$")
     company_name: str = Field(min_length=1)
     active: bool = True
     expected_taxonomies: list[str] = Field(default_factory=list)
+    sec_metric_periods: list[Literal["annual", "quarterly"]] = Field(
+        default_factory=_default_sec_metric_periods,
+        min_length=1,
+    )
     notes: str = ""
 
     @model_validator(mode="after")
-    def normalize_ticker(self) -> Self:
+    def validate_sec_company(self) -> Self:
         self.ticker = self.ticker.upper()
+        duplicate_periods = _duplicates(self.sec_metric_periods)
+        if duplicate_periods:
+            raise ValueError(
+                f"SEC company {self.ticker} has duplicate metric periods: "
+                f"{', '.join(duplicate_periods)}"
+            )
         return self
 
 
@@ -289,14 +303,35 @@ class FundamentalMetricConfig(BaseModel):
         return self
 
 
+class FundamentalDerivedMetricConfig(BaseModel):
+    metric_id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9_.-]+$")
+    operation: Literal["difference"]
+    minuend_metric_id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9_.-]+$")
+    subtrahend_metric_id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9_.-]+$")
+
+    @model_validator(mode="after")
+    def validate_derived_metric(self) -> Self:
+        if self.metric_id in {self.minuend_metric_id, self.subtrahend_metric_id}:
+            raise ValueError(
+                f"derived metric {self.metric_id} must not reference itself as a component"
+            )
+        if self.minuend_metric_id == self.subtrahend_metric_id:
+            raise ValueError(
+                f"derived metric {self.metric_id} must use two distinct components"
+            )
+        return self
+
+
 class FundamentalMetricsConfig(BaseModel):
     metrics: list[FundamentalMetricConfig] = Field(min_length=1)
+    supporting_metrics: list[FundamentalMetricConfig] = Field(default_factory=list)
+    derived_metrics: list[FundamentalDerivedMetricConfig] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def validate_metric_ids(self) -> Self:
         seen: set[str] = set()
         duplicate_ids: set[str] = set()
-        for metric in self.metrics:
+        for metric in [*self.metrics, *self.supporting_metrics]:
             if metric.metric_id in seen:
                 duplicate_ids.add(metric.metric_id)
             seen.add(metric.metric_id)
@@ -304,6 +339,39 @@ class FundamentalMetricsConfig(BaseModel):
         if duplicate_ids:
             raise ValueError(
                 f"fundamental metric ids must be unique: {', '.join(sorted(duplicate_ids))}"
+            )
+
+        output_metric_ids = {metric.metric_id for metric in self.metrics}
+        available_metric_ids = {
+            metric.metric_id for metric in [*self.metrics, *self.supporting_metrics]
+        }
+        seen_derived_ids: set[str] = set()
+        duplicate_derived_ids: set[str] = set()
+        for derived_metric in self.derived_metrics:
+            if derived_metric.metric_id in seen_derived_ids:
+                duplicate_derived_ids.add(derived_metric.metric_id)
+            seen_derived_ids.add(derived_metric.metric_id)
+            if derived_metric.metric_id not in output_metric_ids:
+                raise ValueError(
+                    f"derived metric {derived_metric.metric_id} must target an output metric"
+                )
+            missing_components = sorted(
+                {
+                    derived_metric.minuend_metric_id,
+                    derived_metric.subtrahend_metric_id,
+                }
+                - available_metric_ids
+            )
+            if missing_components:
+                raise ValueError(
+                    f"derived metric {derived_metric.metric_id} references unknown "
+                    f"components: {', '.join(missing_components)}"
+                )
+
+        if duplicate_derived_ids:
+            raise ValueError(
+                "derived fundamental metric ids must be unique: "
+                f"{', '.join(sorted(duplicate_derived_ids))}"
             )
         return self
 

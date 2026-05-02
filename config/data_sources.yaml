@@ -201,7 +201,46 @@ sources:
     limitations:
       - 当前已落地原始 companyfacts JSON、审计清单和基础指标抽取；尚未进入自动基本面评分。
       - SEC XBRL taxonomy 在 US GAAP 和 IFRS 公司之间可能不同，进入评分前必须做字段映射校验。
+      - TSM 当前在 SEC companyfacts 路径只作为年度基本面来源；季度基本面需接入 TSM 官方 IR 或其他可审计来源。
     owner_notes: 基本面模块一手来源；下载必须提供符合 SEC fair access 要求的 User-Agent。
+
+  - source_id: tsm_investor_relations_quarterly_results
+    provider: TSMC Investor Relations
+    source_type: primary_source
+    status: planned
+    domains:
+      - fundamentals
+    endpoint: https://investor.tsmc.com/english/quarterly-results
+    adapter: planned
+    cadence: quarterly
+    requires_credentials: false
+    cache_paths: []
+    primary_for:
+      - TSM quarterly revenue
+      - TSM quarterly gross margin
+      - TSM quarterly operating income
+      - TSM quarterly net income
+      - TSM quarterly capex
+    audit_fields:
+      - provider
+      - endpoint
+      - fiscal_year
+      - fiscal_quarter
+      - source_url
+      - captured_at
+      - row_count
+      - checksum
+    validation_checks:
+      - schema
+      - source_url_presence
+      - fiscal_period_alignment
+      - duplicate_keys
+      - numeric_units
+      - freshness
+    limitations:
+      - 当前仅登记为计划来源，尚未实现下载、解析或校验命令，不能进入自动评分。
+      - 季度财报页面、PDF、简报或 transcript 的字段口径必须逐项映射后才能合并进基本面指标。
+    owner_notes: 用于补齐 TSM 在 SEC companyfacts 中缺失的当前季度基本面；接入前不能用半年度 6-K 拆分替代季度数据。
 
   - source_id: news_event_source_tbd
     provider: To be selected

@@ -61,6 +61,7 @@ def test_sec_companies_config_covers_core_watchlist() -> None:
     assert {"MSFT", "GOOG", "TSM", "INTC", "AMD", "NVDA"}.issubset(by_ticker)
     assert by_ticker["NVDA"].cik == "0001045810"
     assert by_ticker["TSM"].expected_taxonomies == ["ifrs-full", "dei"]
+    assert by_ticker["TSM"].sec_metric_periods == ["annual"]
 
 
 def test_fundamental_metrics_config_loads_sec_metric_mappings() -> None:
@@ -82,6 +83,15 @@ def test_fundamental_metrics_config_loads_sec_metric_mappings() -> None:
         metric.metric_id == "capex" and concept.concept == "PaymentsToAcquireProductiveAssets"
         for metric in config.metrics
         for concept in metric.concepts
+    )
+    assert {metric.metric_id for metric in config.supporting_metrics} == {
+        "cost_of_revenue"
+    }
+    assert any(
+        derived.metric_id == "gross_profit"
+        and derived.minuend_metric_id == "revenue"
+        and derived.subtrahend_metric_id == "cost_of_revenue"
+        for derived in config.derived_metrics
     )
 
 

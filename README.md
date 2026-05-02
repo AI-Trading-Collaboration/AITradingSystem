@@ -174,14 +174,14 @@ aits valuation review --as-of 2026-05-02
 
 ```powershell
 aits fundamentals list-sec-companies
-$env:SEC_USER_AGENT="AITradingSystem your_email@example.com"
+$env:SEC_USER_AGENT="AITradingSystem wakare_no_kaze@outlook.com"
 aits fundamentals download-sec-companyfacts --tickers NVDA,MSFT
 aits fundamentals validate-sec-companyfacts --as-of 2026-05-02
 aits fundamentals extract-sec-metrics --as-of 2026-05-02
 aits fundamentals validate-sec-metrics --as-of 2026-05-02
 ```
 
-该命令读取 `config/sec_companies.yaml` 的 ticker/CIK 映射，下载 SEC EDGAR companyfacts JSON 到 `data/raw/sec_companyfacts/`，并追加写入 `sec_companyfacts_manifest.csv`。校验命令会检查 JSON、CIK、taxonomy 和 checksum。`extract-sec-metrics` 会先执行同一条 SEC 缓存质量门禁，通过后按 `config/fundamental_metrics.yaml` 抽取收入、毛利、营业利润、净利润、研发和 CapEx 等指标，默认输出 `data/processed/sec_fundamentals_YYYY-MM-DD.csv` 和 `outputs/reports/sec_fundamentals_YYYY-MM-DD.md`。`validate-sec-metrics` 会校验抽取后 CSV 的 schema、重复键、未来披露日期、数值合法性和配置覆盖率。当前只生成可复核的结构化摘要，保留 SEC 原始币种和符号，不直接进入基本面自动评分。
+该命令读取 `config/sec_companies.yaml` 的 ticker/CIK 映射，下载 SEC EDGAR companyfacts JSON 到 `data/raw/sec_companyfacts/`，并追加写入 `sec_companyfacts_manifest.csv`。校验命令会检查 JSON、CIK、taxonomy 和 checksum。`extract-sec-metrics` 会先执行同一条 SEC 缓存质量门禁，通过后按 `config/fundamental_metrics.yaml` 抽取收入、毛利、营业利润、净利润、研发和 CapEx 等指标，默认输出 `data/processed/sec_fundamentals_YYYY-MM-DD.csv` 和 `outputs/reports/sec_fundamentals_YYYY-MM-DD.md`。显式派生指标只允许使用配置声明的组件，例如 `gross_profit = revenue - cost_of_revenue`，且必须满足周期、单位、截止日、财年、财期和 accession number 一致。`config/sec_companies.yaml` 可以声明单家公司在 SEC companyfacts 路径可用的指标周期；当前 TSM 在该路径只要求年度指标，季度指标需后续接入 TSM 官方 IR 等可审计来源。`validate-sec-metrics` 会校验抽取后 CSV 的 schema、重复键、未来披露日期、数值合法性和配置覆盖率。当前只生成可复核的结构化摘要，保留 SEC 原始币种和符号，不直接进入基本面自动评分。
 
 复盘交易记录并做基础归因：
 

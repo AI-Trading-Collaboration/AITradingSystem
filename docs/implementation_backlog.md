@@ -20,7 +20,7 @@
 |数据源目录|已完成基础版|`config/data_sources.yaml` 和 `aits data-sources list/validate`，记录来源类型、审计字段、校验项和限制说明|
 |SEC 基本面原始数据|已完成基础版|`config/sec_companies.yaml` 和 `aits fundamentals download-sec-companyfacts`，下载 companyfacts JSON 并写入 manifest|
 |SEC 基本面缓存校验|已完成基础版|`aits fundamentals validate-sec-companyfacts`，校验 JSON、CIK、taxonomy 和 checksum|
-|SEC 基本面指标抽取|已完成基础版|`config/fundamental_metrics.yaml` 和 `aits fundamentals extract-sec-metrics`，先过 SEC 缓存质量门禁，再输出结构化指标摘要和中文报告|
+|SEC 基本面指标抽取|已完成基础版|`config/fundamental_metrics.yaml` 和 `aits fundamentals extract-sec-metrics`，先过 SEC 缓存质量门禁，再输出结构化指标摘要和中文报告；支持显式派生指标和公司级 SEC 周期覆盖声明|
 |SEC 基本面指标校验|已完成基础版|`aits fundamentals validate-sec-metrics`，校验指标 CSV 的 schema、重复键、未来披露日期、数值合法性和配置覆盖率|
 |数据质量门禁|已完成基础版|`aits validate-data`，失败时非零退出|
 |市场环境特征|已完成基础版|`aits build-features`，趋势、相对强弱、VIX、利率、核心池宽度|
@@ -491,7 +491,7 @@ aits review-trades --as-of 2026-05-02
 |`config/market_regimes.yaml`|市场阶段、默认回测区间和压力测试区间|阶段 1，已实现基础版|
 |`config/risk_events.yaml`|风险事件等级和动作规则|M6，已实现基础版|
 |`config/sec_companies.yaml`|SEC companyfacts ticker/CIK 映射|阶段 2，已实现基础版|
-|`config/fundamental_metrics.yaml`|SEC taxonomy/concept/unit 到内部基本面指标的映射|阶段 2，已实现基础版|
+|`config/fundamental_metrics.yaml`|SEC taxonomy/concept/unit 到内部基本面指标的映射、支撑指标和显式派生规则|阶段 2，已实现基础版|
 |`config/scoring_rules.yaml`|评分规则和权重|M2|
 |`data/raw/download_manifest.csv`|下载审计清单，记录 provider、endpoint、请求参数、下载时间、行数和 checksum|M1，已实现基础版|
 |`data/raw/sec_companyfacts/`|SEC companyfacts 原始 JSON 和下载 manifest|阶段 2，已实现基础版|
