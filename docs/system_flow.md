@@ -46,6 +46,7 @@ flowchart TD
         DL["aits download-data"]
         PR["data/raw/prices_daily.csv"]
         RR["data/raw/rates_daily.csv"]
+        DM["data/raw/download_manifest.csv<br/>provider / endpoint / 参数 / checksum"]
     end
 
     subgraph Gate["数据质量门禁"]
@@ -109,6 +110,7 @@ flowchart TD
     DS --> DL
     DL --> PR
     DL --> RR
+    DL --> DM
 
     U --> V
     Q --> V
@@ -302,9 +304,10 @@ flowchart TD
 |层级|命令或文件|责任|当前状态|
 |---|---|---|---|
 |数据源|Yahoo Finance / FRED|提供价格、VIX、DXY、利率原始输入|已接入基础版|
-|下载|`aits download-data`|拉取并标准化为本地 CSV 缓存|已实现|
+|下载|`aits download-data`|拉取并标准化为本地 CSV 缓存，同时追加下载审计 manifest|已实现|
 |原始缓存|`data/raw/prices_daily.csv`|日线 OHLCV 和调整收盘价|已实现|
 |原始缓存|`data/raw/rates_daily.csv`|FRED 利率长表|已实现|
+|下载审计|`data/raw/download_manifest.csv`|记录 provider、endpoint、请求参数、下载时间、行数、输出路径和 checksum|已实现|
 |质量门禁|`aits validate-data`|校验 schema、完整性、新鲜度、重复键和异常值|已实现|
 |质量报告|`outputs/reports/data_quality_YYYY-MM-DD.md`|声明数据是否可用于下游结论|已实现|
 |特征|`aits build-features`|生成可解释市场特征|已实现|

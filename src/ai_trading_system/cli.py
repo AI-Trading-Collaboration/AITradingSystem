@@ -201,6 +201,7 @@ def download_data(
     console.print("[green]数据缓存已更新。[/green]")
     console.print(f"价格数据：{summary.prices_path}（{summary.price_rows} 行）")
     console.print(f"利率数据：{summary.rates_path}（{summary.rate_rows} 行）")
+    console.print(f"下载审计清单：{summary.manifest_path}")
     console.print(f"价格标的：{', '.join(summary.price_tickers)}")
     console.print(f"利率序列：{', '.join(summary.rate_series)}")
 

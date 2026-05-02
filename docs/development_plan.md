@@ -126,7 +126,7 @@
 
 当前最小落地路径见 `docs/implementation_backlog.md`。第一个开发迭代建议先做这些闭环事项：
 
-1. 实现行情数据下载和本地缓存。状态：已实现基础版，命令为 `aits download-data`。
+1. 实现行情数据下载和本地缓存。状态：已实现基础版，命令为 `aits download-data`，并写入 `download_manifest.csv` 审计清单。
 2. 实现数据质量门禁。状态：已实现基础版，命令为 `aits validate-data`。
 3. 实现技术特征计算。状态：已实现基础版，命令为 `aits build-features`。
 4. 实现 100 分评分到仓位区间的规则。状态：已实现基础版，命令为 `aits score-daily`。

@@ -58,6 +58,7 @@
   <text class="box-title" x="348" y="220">下载与缓存</text>
   <text class="box-text" x="348" y="248">aits download-data</text>
   <text class="box-text" x="348" y="270">data/raw/*.csv</text>
+  <text class="box-text" x="348" y="292">download_manifest</text>
 
   <rect class="gate" x="575" y="188" width="210" height="110" />
   <text class="box-title" x="599" y="220">数据质量门禁</text>

@@ -16,7 +16,7 @@
 |能力|状态|说明|
 |---|---|---|
 |工程骨架|已完成|Python package、CLI、测试、CI、文档|
-|数据下载|已完成基础版|`aits download-data`，价格、VIX、DXY、FRED 利率|
+|数据下载|已完成基础版|`aits download-data`，价格、VIX、DXY、FRED 利率，并写入 `download_manifest.csv` 审计清单|
 |数据源目录|已完成基础版|`config/data_sources.yaml` 和 `aits data-sources list/validate`，记录来源类型、审计字段、校验项和限制说明|
 |数据质量门禁|已完成基础版|`aits validate-data`，失败时非零退出|
 |市场环境特征|已完成基础版|`aits build-features`，趋势、相对强弱、VIX、利率、核心池宽度|
@@ -78,6 +78,7 @@ aits backtest --to 2026-05-02 --quality-as-of 2026-05-02
 
 - `data/raw/prices_daily.csv`
 - `data/raw/rates_daily.csv`
+- `data/raw/download_manifest.csv`
 - `outputs/reports/data_quality_YYYY-MM-DD.md`
 
 主要数据对象：
@@ -486,6 +487,7 @@ aits review-trades --as-of 2026-05-02
 |`config/market_regimes.yaml`|市场阶段、默认回测区间和压力测试区间|阶段 1，已实现基础版|
 |`config/risk_events.yaml`|风险事件等级和动作规则|M6，已实现基础版|
 |`config/scoring_rules.yaml`|评分规则和权重|M2|
+|`data/raw/download_manifest.csv`|下载审计清单，记录 provider、endpoint、请求参数、下载时间、行数和 checksum|M1，已实现基础版|
 |`data/processed/features_daily.csv`|每日特征|M1|
 |`data/processed/scores_daily.csv`|每日评分|M2|
 |`data/external/trade_theses/`|交易 thesis|M5，已实现基础版|

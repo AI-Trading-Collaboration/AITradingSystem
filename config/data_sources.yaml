@@ -19,7 +19,7 @@ sources:
       - provider
       - endpoint
       - request_parameters
-      - download_timestamp
+      - downloaded_at
       - row_count
       - checksum
     validation_checks:
@@ -52,7 +52,7 @@ sources:
       - provider
       - endpoint
       - request_parameters
-      - download_timestamp
+      - downloaded_at
       - row_count
       - checksum
     validation_checks:
@@ -181,7 +181,7 @@ sources:
       - provider
       - endpoint
       - request_parameters
-      - download_timestamp
+      - downloaded_at
       - row_count
       - checksum
       - accession_number

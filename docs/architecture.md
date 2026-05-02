@@ -43,6 +43,7 @@
 
 - `prices_daily.csv`：标准化后的日线 OHLCV 数据。
 - `rates_daily.csv`：长表格式的 FRED 利率数据。
+- `download_manifest.csv`：追加式下载审计清单，记录 provider、endpoint、请求参数、下载时间、行数、输出路径和 sha256。
 
 数据下载命令为 `aits download-data`。默认只抓核心观察池，`--full-universe` 才抓完整 AI 产业链配置，避免 MVP 阶段数据面过宽。
 

@@ -52,9 +52,15 @@ def test_download_daily_data_writes_core_universe_cache(tmp_path: Path) -> None:
 
     assert summary.prices_path == tmp_path / "prices_daily.csv"
     assert summary.rates_path == tmp_path / "rates_daily.csv"
+    assert summary.manifest_path == tmp_path / "download_manifest.csv"
     assert summary.price_rows == len(summary.price_tickers)
     assert summary.rate_rows == len(summary.rate_series)
     assert "MSFT" in summary.price_tickers
     assert "NVDA" in summary.price_tickers
     assert "ASML" not in summary.price_tickers
     assert summary.rate_series == ("DGS2", "DGS10")
+
+    manifest = pd.read_csv(summary.manifest_path)
+    assert list(manifest["source_id"]) == ["fake_price_provider", "fake_rate_provider"]
+    assert set(manifest["row_count"]) == {summary.price_rows, summary.rate_rows}
+    assert all(manifest["checksum_sha256"].str.len() == 64)
