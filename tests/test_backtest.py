@@ -86,6 +86,8 @@ def test_run_daily_score_backtest_uses_point_in_time_sec_features() -> None:
 
     assert result.fundamental_feature_report_count == len(result.rows)
     assert result.rows[0].component_scores["fundamentals"] > 50
+    assert result.rows[0].component_source_types["fundamentals"] == "hard_data"
+    assert result.rows[0].component_coverages["fundamentals"] == 1.0
 
 
 def test_render_and_write_backtest_outputs(tmp_path: Path) -> None:
@@ -114,6 +116,7 @@ def test_render_and_write_backtest_outputs(tmp_path: Path) -> None:
     assert daily_path.exists()
     assert "# 历史回测报告" in markdown
     assert "基准（SPY 买入持有）" in markdown
+    assert "fundamentals_source_type" in daily_path.read_text(encoding="utf-8")
 
 
 def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
@@ -202,7 +205,9 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert "回测状态：" in result.output
     assert "SEC 基本面切片：" in result.output
     assert "市场阶段：测试 AI 行情" in result.output
-    assert "测试 AI 行情" in report_path.read_text(encoding="utf-8")
+    report_text = report_path.read_text(encoding="utf-8")
+    assert "测试 AI 行情" in report_text
+    assert "SEC 基本面质量摘要" in report_text
 
 
 def _quality_report() -> DataQualityReport:

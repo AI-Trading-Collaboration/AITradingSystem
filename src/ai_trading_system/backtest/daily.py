@@ -43,6 +43,8 @@ class BacktestDailyRow:
     strategy_return: float
     strategy_equity: float
     component_scores: dict[str, float]
+    component_source_types: dict[str, str]
+    component_coverages: dict[str, float]
 
     def to_record(self) -> dict[str, object]:
         record: dict[str, object] = {
@@ -61,6 +63,10 @@ class BacktestDailyRow:
         }
         for component, score in self.component_scores.items():
             record[f"{component}_score"] = score
+        for component, source_type in self.component_source_types.items():
+            record[f"{component}_source_type"] = source_type
+        for component, coverage in self.component_coverages.items():
+            record[f"{component}_coverage"] = coverage
         return record
 
 
@@ -82,6 +88,10 @@ class DailyBacktestResult:
     benchmark_metrics: dict[str, BacktestMetrics]
     market_regime: BacktestRegimeContext | None = None
     fundamental_feature_report_count: int = 0
+    fundamental_feature_status_counts: dict[str, int] | None = None
+    fundamental_feature_warning_count: int = 0
+    fundamental_feature_row_count_min: int | None = None
+    fundamental_feature_row_count_max: int | None = None
 
     @property
     def status(self) -> str:
@@ -120,6 +130,9 @@ def run_daily_score_backtest(
     running_equity = 1.0
     rows: list[BacktestDailyRow] = []
     fundamental_feature_report_count = 0
+    fundamental_feature_status_counts: dict[str, int] = {}
+    fundamental_feature_warning_count = 0
+    fundamental_feature_row_counts: list[int] = []
 
     for signal_date, return_date in periods:
         fundamental_feature_report = None
@@ -131,6 +144,11 @@ def run_daily_score_backtest(
                     f"{signal_date.isoformat()}"
                 )
             fundamental_feature_report_count += 1
+            fundamental_feature_status_counts[fundamental_feature_report.status] = (
+                fundamental_feature_status_counts.get(fundamental_feature_report.status, 0) + 1
+            )
+            fundamental_feature_warning_count += fundamental_feature_report.warning_count
+            fundamental_feature_row_counts.append(fundamental_feature_report.row_count)
         feature_set = build_market_features(
             prices=prices,
             rates=rates,
@@ -182,6 +200,12 @@ def run_daily_score_backtest(
                 component_scores={
                     component.name: component.score for component in score_report.components
                 },
+                component_source_types={
+                    component.name: component.source_type for component in score_report.components
+                },
+                component_coverages={
+                    component.name: component.coverage for component in score_report.components
+                },
             )
         )
         previous_exposure = target_exposure
@@ -212,6 +236,14 @@ def run_daily_score_backtest(
         benchmark_metrics=benchmark_metrics,
         market_regime=market_regime,
         fundamental_feature_report_count=fundamental_feature_report_count,
+        fundamental_feature_status_counts=fundamental_feature_status_counts or None,
+        fundamental_feature_warning_count=fundamental_feature_warning_count,
+        fundamental_feature_row_count_min=(
+            min(fundamental_feature_row_counts) if fundamental_feature_row_counts else None
+        ),
+        fundamental_feature_row_count_max=(
+            max(fundamental_feature_row_counts) if fundamental_feature_row_counts else None
+        ),
     )
 
 
@@ -286,6 +318,40 @@ def render_backtest_report(
     for ticker in result.benchmark_tickers:
         lines.append(_metrics_row(f"基准（{ticker} 买入持有）", result.benchmark_metrics[ticker]))
 
+    limitation_note = (
+        "- 回测暂未接入历史 SEC 基本面特征；估值、政策/地缘模块仍是 MVP 占位输入，"
+        "因此回测状态标记为 PASS_WITH_LIMITATIONS。"
+    )
+    if result.fundamental_feature_report_count:
+        limitation_note = (
+            "- SEC 基本面特征已按 signal_date point-in-time 接入；"
+            "估值、政策/地缘模块仍是 MVP 占位输入，"
+            "因此回测状态标记为 PASS_WITH_LIMITATIONS。"
+        )
+        status_summary = ", ".join(
+            f"{status}={count}"
+            for status, count in sorted((result.fundamental_feature_status_counts or {}).items())
+        )
+        row_count_range = "n/a"
+        if (
+            result.fundamental_feature_row_count_min is not None
+            and result.fundamental_feature_row_count_max is not None
+        ):
+            row_count_range = (
+                f"{result.fundamental_feature_row_count_min}-"
+                f"{result.fundamental_feature_row_count_max}"
+            )
+        lines.extend(
+            [
+                "",
+                "## SEC 基本面质量摘要",
+                "",
+                f"- 切片状态统计：{status_summary or '无'}",
+                f"- 特征行数范围：{row_count_range}",
+                f"- 特征警告数：{result.fundamental_feature_warning_count}",
+            ]
+        )
+
     lines.extend(
         [
             "",
@@ -294,31 +360,12 @@ def render_backtest_report(
             "- 每个交易日收盘后计算评分，目标仓位从下一交易日收益开始生效，避免未来函数。",
             "- 目标仓位使用 AI 仓位区间中点；变化小于最小调仓阈值时维持原仓位。",
             "- 策略收益按目标仓位乘以策略代理标的下一交易日收益，并扣除单边换手成本。",
+            limitation_note,
             "- 当前版本未计入税费、汇率、融资利率、盘口冲击和盘中执行偏差。",
         ]
     )
-    if result.fundamental_feature_report_count:
-        lines.insert(
-            -1,
-            (
-                "- SEC 基本面特征已按 signal_date point-in-time 接入；"
-                "估值、政策/地缘模块仍是 MVP 占位输入，"
-                "因此回测状态标记为 PASS_WITH_LIMITATIONS。"
-            ),
-        )
-    else:
-        lines.insert(
-            -1,
-            (
-                "- 回测暂未接入历史 SEC 基本面特征；估值、政策/地缘模块仍是 MVP 占位输入，"
-                "因此回测状态标记为 PASS_WITH_LIMITATIONS。"
-            ),
-        )
     if sec_companyfacts_validation_report_path is not None:
-        lines.insert(
-            -1,
-            f"- SEC companyfacts 校验报告：`{sec_companyfacts_validation_report_path}`",
-        )
+        lines.append(f"- SEC companyfacts 校验报告：`{sec_companyfacts_validation_report_path}`")
 
     return "\n".join(lines) + "\n"
 

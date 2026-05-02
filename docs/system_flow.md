@@ -391,7 +391,7 @@ flowchart TD
 |评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果|已实现|
 |日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|输出中文结论、市场数据质量状态、SEC 基本面质量状态、限制说明和人工复核摘要|已实现|
 |回测|`aits backtest`|基于每日评分动态仓位回测，并按 signal_date 构建 point-in-time SEC 基本面特征|已实现|
-|回测报告|`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|输出市场阶段、市场数据质量状态、SEC 基本面切片数和绩效指标|已实现|
+|回测报告|`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|输出市场阶段、市场数据质量状态、SEC 基本面质量摘要和绩效指标|已实现|
 |能力圈|`config/watchlist.yaml`|记录核心标的、能力圈和 thesis 要求|已实现基础版|
 |产业链|`config/industry_chain.yaml`|记录产业链节点和因果关系|已实现基础版|
 |市场阶段|`config/market_regimes.yaml`|记录默认 AI regime 和压力测试区间|已实现|

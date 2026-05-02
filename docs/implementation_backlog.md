@@ -30,7 +30,7 @@
 |仓位评分骨架|已完成基础版|100 分映射到仓位区间，支持总资产换算|
 |观察池与能力圈|已完成基础版|`aits watchlist list/validate`，核心个股能力圈和产业链节点映射|
 |历史回测|已完成基础版|`aits backtest`，每日评分动态仓位与 SPY/QQQ/SMH/SOXX 基准对比|
-|回测 SEC 基本面|已完成基础版|`aits backtest` 按 signal_date 从 SEC companyfacts 构建 point-in-time 基本面特征，避免使用未来披露|
+|回测 SEC 基本面|已完成基础版|`aits backtest` 按 signal_date 从 SEC companyfacts 构建 point-in-time 基本面特征，避免使用未来披露，并输出 SEC 基本面质量摘要|
 |产业链因果图|已完成基础版|`aits industry-chain list/validate`，节点、父子关系、领先指标和观察池引用校验|
 |交易 thesis 与假设验证|已完成基础版|`aits thesis list/validate/review`，结构化假设、验证指标、证伪条件和复核报告|
 |风险事件分级|已完成基础版|`aits risk-events list/validate`，L1/L2/L3、影响节点、相关标的和动作规则|
@@ -526,12 +526,12 @@ aits review-trades --as-of 2026-05-02
 接下来建议按这个顺序开发：
 
 1. 接入估值/预期的正式数据源或审计化手工快照，把估值从占位项转为可评分模块。
-2. 为回测 point-in-time SEC 基本面输出单独的审计摘要，统计每个 signal_date 的覆盖率、警告和缺失特征。
+2. 扩展政策/地缘风险从人工复核摘要进入可审计评分，但不得直接用新闻摘要触发交易动作。
 
 原因：
 
 - 阶段 1 的市场数据、评分、观察池、回测、产业链配置、交易 thesis、风险事件分级、估值与拥挤度快照、交易复盘基础闭环，以及日报复核摘要集成已经完成。
-- SEC 基本面特征已经接入当日日报评分和 point-in-time 回测；下一步的主要价值是让估值模块具备同等的数据质量、来源审计和解释能力，并把回测 SEC 覆盖质量展示得更清楚。
+- SEC 基本面特征已经接入当日日报评分和 point-in-time 回测，回测报告也会声明 SEC 基本面质量摘要；下一步的主要价值是让估值模块具备同等的数据质量、来源审计和解释能力。
 
 ## 不应马上做的事
 
