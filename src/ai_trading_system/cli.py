@@ -67,6 +67,11 @@ from ai_trading_system.fundamentals.sec_companyfacts import (
     SecEdgarCompanyFactsProvider,
     download_sec_companyfacts,
 )
+from ai_trading_system.fundamentals.sec_validation import (
+    default_sec_companyfacts_validation_report_path,
+    validate_sec_companyfacts_cache,
+    write_sec_companyfacts_validation_report,
+)
 from ai_trading_system.industry_chain import (
     default_industry_chain_report_path,
     validate_industry_chain_config,
@@ -988,6 +993,48 @@ def download_sec_companyfacts_command(
     console.print(f"事实数量：{summary.total_fact_count}")
     console.print(f"输出目录：{summary.output_dir}")
     console.print(f"下载审计清单：{summary.manifest_path}")
+
+
+@fundamentals_app.command("validate-sec-companyfacts")
+def validate_sec_companyfacts_command(
+    config_path: Annotated[
+        Path,
+        typer.Option(help="SEC company CIK 配置文件路径。"),
+    ] = DEFAULT_SEC_COMPANIES_CONFIG_PATH,
+    input_dir: Annotated[
+        Path,
+        typer.Option(help="SEC companyfacts 原始 JSON 输入目录。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "sec_companyfacts",
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown SEC companyfacts 校验报告输出路径。"),
+    ] = None,
+) -> None:
+    """校验 SEC companyfacts 原始缓存、CIK、taxonomy 和 manifest。"""
+    validation_date = _parse_date(as_of) if as_of else date.today()
+    report_path = output_path or default_sec_companyfacts_validation_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        validation_date,
+    )
+    report = validate_sec_companyfacts_cache(
+        config=load_sec_companies(config_path),
+        input_dir=input_dir,
+        as_of=validation_date,
+    )
+    write_sec_companyfacts_validation_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]SEC companyfacts 校验状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_path}")
+    console.print(f"配置公司数：{report.file_count}；已缓存：{report.available_count}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+
+    if not report.passed:
+        raise typer.Exit(code=1)
 
 
 @valuation_app.command("list")

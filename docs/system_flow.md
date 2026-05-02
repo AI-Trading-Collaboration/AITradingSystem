@@ -49,6 +49,7 @@ flowchart TD
         RR["data/raw/rates_daily.csv"]
         DM["data/raw/download_manifest.csv<br/>provider / endpoint / 参数 / checksum"]
         SFD["aits fundamentals download-sec-companyfacts"]
+        SFV["aits fundamentals validate-sec-companyfacts"]
         SFJ["data/raw/sec_companyfacts/*.json"]
         SFM["data/raw/sec_companyfacts/sec_companyfacts_manifest.csv"]
     end
@@ -119,6 +120,8 @@ flowchart TD
     DS --> SFD
     SFD --> SFJ
     SFD --> SFM
+    SFJ --> SFV
+    SFM --> SFV
 
     U --> V
     Q --> V
@@ -336,6 +339,7 @@ flowchart TD
 |数据源校验|`aits data-sources validate`|校验数据源目录是否可审计、活跃来源是否声明校验和限制|已实现基础版|
 |SEC 公司映射|`config/sec_companies.yaml`|记录核心标的 ticker、CIK 和 taxonomy 预期|已实现基础版|
 |SEC 基本面下载|`aits fundamentals download-sec-companyfacts`|下载 SEC companyfacts 原始 JSON 并写入审计 manifest；暂不进入自动评分|已实现基础版|
+|SEC 基本面校验|`aits fundamentals validate-sec-companyfacts`|校验 SEC companyfacts JSON、CIK、taxonomy 和 manifest checksum|已实现基础版|
 |交易假设|`data/external/trade_theses/`|记录交易 thesis、验证指标和证伪条件|已实现基础版|
 |交易假设模板|`docs/examples/trade_theses/`|提供可复制 YAML 模板，不提交个人记录|已实现基础版|
 |假设校验|`aits thesis validate`|校验 schema、观察池引用、产业链节点和证伪约束|已实现基础版|

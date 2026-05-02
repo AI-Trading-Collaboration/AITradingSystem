@@ -175,9 +175,10 @@ aits valuation review --as-of 2026-05-02
 aits fundamentals list-sec-companies
 $env:SEC_USER_AGENT="AITradingSystem your_email@example.com"
 aits fundamentals download-sec-companyfacts --tickers NVDA,MSFT
+aits fundamentals validate-sec-companyfacts --as-of 2026-05-02
 ```
 
-该命令读取 `config/sec_companies.yaml` 的 ticker/CIK 映射，下载 SEC EDGAR companyfacts JSON 到 `data/raw/sec_companyfacts/`，并追加写入 `sec_companyfacts_manifest.csv`。当前只落地一手数据缓存和审计清单，不直接进入基本面评分。
+该命令读取 `config/sec_companies.yaml` 的 ticker/CIK 映射，下载 SEC EDGAR companyfacts JSON 到 `data/raw/sec_companyfacts/`，并追加写入 `sec_companyfacts_manifest.csv`。校验命令会检查 JSON、CIK、taxonomy 和 checksum。当前只落地一手数据缓存和审计清单，不直接进入基本面评分。
 
 复盘交易记录并做基础归因：
 

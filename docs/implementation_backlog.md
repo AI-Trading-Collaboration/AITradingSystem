@@ -19,6 +19,7 @@
 |数据下载|已完成基础版|`aits download-data`，价格、VIX、DXY、FRED 利率，并写入 `download_manifest.csv` 审计清单|
 |数据源目录|已完成基础版|`config/data_sources.yaml` 和 `aits data-sources list/validate`，记录来源类型、审计字段、校验项和限制说明|
 |SEC 基本面原始数据|已完成基础版|`config/sec_companies.yaml` 和 `aits fundamentals download-sec-companyfacts`，下载 companyfacts JSON 并写入 manifest|
+|SEC 基本面缓存校验|已完成基础版|`aits fundamentals validate-sec-companyfacts`，校验 JSON、CIK、taxonomy 和 checksum|
 |数据质量门禁|已完成基础版|`aits validate-data`，失败时非零退出|
 |市场环境特征|已完成基础版|`aits build-features`，趋势、相对强弱、VIX、利率、核心池宽度|
 |每日市场评分|已完成基础版|`aits score-daily`，趋势、宏观流动性、风险情绪和占位项|
@@ -511,7 +512,7 @@ aits review-trades --as-of 2026-05-02
 
 接下来建议按这个顺序开发：
 
-1. 实现 SEC companyfacts 缓存校验和基础财报指标抽取，先输出结构化财报摘要，不进入自动评分。
+1. 实现 SEC companyfacts 基础财报指标抽取，先输出结构化财报摘要，不进入自动评分。
 2. 在 SEC 指标抽取通过质量校验后，把基本面从占位项逐步转为可评分模块。
 
 原因：
