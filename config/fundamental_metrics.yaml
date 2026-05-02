@@ -1,0 +1,105 @@
+metrics:
+  - metric_id: revenue
+    name: Revenue
+    description: SEC companyfacts 披露的总收入。
+    preferred_periods:
+      - annual
+      - quarterly
+    concepts:
+      - taxonomy: us-gaap
+        concept: RevenueFromContractWithCustomerExcludingAssessedTax
+        unit: USD
+      - taxonomy: us-gaap
+        concept: Revenues
+        unit: USD
+      - taxonomy: ifrs-full
+        concept: Revenue
+        unit: USD
+      - taxonomy: ifrs-full
+        concept: Revenue
+        unit: TWD
+
+  - metric_id: gross_profit
+    name: Gross Profit
+    description: 已披露时使用收入扣除营业成本后的毛利。
+    preferred_periods:
+      - annual
+      - quarterly
+    concepts:
+      - taxonomy: us-gaap
+        concept: GrossProfit
+        unit: USD
+      - taxonomy: ifrs-full
+        concept: GrossProfit
+        unit: USD
+      - taxonomy: ifrs-full
+        concept: GrossProfit
+        unit: TWD
+
+  - metric_id: operating_income
+    name: Operating Income
+    description: 持续经营口径的营业利润或亏损。
+    preferred_periods:
+      - annual
+      - quarterly
+    concepts:
+      - taxonomy: us-gaap
+        concept: OperatingIncomeLoss
+        unit: USD
+      - taxonomy: ifrs-full
+        concept: ProfitLossFromOperatingActivities
+        unit: USD
+      - taxonomy: ifrs-full
+        concept: ProfitLossFromOperatingActivities
+        unit: TWD
+
+  - metric_id: net_income
+    name: Net Income
+    description: 归属于报告公司的净利润或损益。
+    preferred_periods:
+      - annual
+      - quarterly
+    concepts:
+      - taxonomy: us-gaap
+        concept: NetIncomeLoss
+        unit: USD
+      - taxonomy: ifrs-full
+        concept: ProfitLoss
+        unit: USD
+      - taxonomy: ifrs-full
+        concept: ProfitLoss
+        unit: TWD
+
+  - metric_id: research_and_development
+    name: Research and Development
+    description: 已披露时使用研发费用。
+    preferred_periods:
+      - annual
+      - quarterly
+    concepts:
+      - taxonomy: us-gaap
+        concept: ResearchAndDevelopmentExpense
+        unit: USD
+      - taxonomy: ifrs-full
+        concept: ResearchAndDevelopmentExpense
+        unit: USD
+      - taxonomy: ifrs-full
+        concept: ResearchAndDevelopmentExpense
+        unit: TWD
+
+  - metric_id: capex
+    name: Capital Expenditures
+    description: 购置物业、厂房及设备支付的现金。
+    preferred_periods:
+      - annual
+      - quarterly
+    concepts:
+      - taxonomy: us-gaap
+        concept: PaymentsToAcquirePropertyPlantAndEquipment
+        unit: USD
+      - taxonomy: ifrs-full
+        concept: PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities
+        unit: USD
+      - taxonomy: ifrs-full
+        concept: PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities
+        unit: TWD

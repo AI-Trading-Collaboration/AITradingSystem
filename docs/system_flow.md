@@ -37,6 +37,7 @@ flowchart TD
         RE["config/risk_events.yaml<br/>L1/L2/L3 风险事件动作规则"]
         DS["config/data_sources.yaml<br/>数据源目录、审计字段、来源限制"]
         SEC["config/sec_companies.yaml<br/>SEC CIK 映射和 taxonomy 预期"]
+        FM["config/fundamental_metrics.yaml<br/>SEC 指标映射和周期偏好"]
         TH["data/external/trade_theses/*.yaml<br/>交易假设、验证指标、证伪条件"]
         VS["data/external/valuation_snapshots/*.yaml<br/>估值、预期、拥挤度快照"]
         TD["data/external/trades/*.yaml<br/>交易记录、价格、thesis_id"]
@@ -52,6 +53,10 @@ flowchart TD
         SFV["aits fundamentals validate-sec-companyfacts"]
         SFJ["data/raw/sec_companyfacts/*.json"]
         SFM["data/raw/sec_companyfacts/sec_companyfacts_manifest.csv"]
+        SFVR["outputs/reports/sec_companyfacts_validation_YYYY-MM-DD.md"]
+        SFE["aits fundamentals extract-sec-metrics"]
+        SFC["data/processed/sec_fundamentals_YYYY-MM-DD.csv"]
+        SFR["outputs/reports/sec_fundamentals_YYYY-MM-DD.md"]
     end
 
     subgraph Gate["数据质量门禁"]
@@ -122,6 +127,14 @@ flowchart TD
     SFD --> SFM
     SFJ --> SFV
     SFM --> SFV
+    SFV --> SFVR
+    SEC --> SFE
+    FM --> SFE
+    SFJ --> SFE
+    SFM --> SFE
+    SFE --> SFVR
+    SFE --> SFC
+    SFE --> SFR
 
     U --> V
     Q --> V
@@ -293,6 +306,7 @@ flowchart TD
         L["日报集成<br/>汇总 thesis、风险、估值和复盘摘要"]
         M["数据源目录<br/>aits data-sources list/validate"]
         N["基本面一手数据<br/>aits fundamentals list-sec-companies / download-sec-companyfacts"]
+        O["SEC 基本面指标摘要<br/>aits fundamentals extract-sec-metrics"]
     end
 
     C --> D
@@ -305,6 +319,7 @@ flowchart TD
     J --> K
     M --> C
     M --> N
+    N --> O
     H --> L
     I --> L
     J --> L
@@ -338,8 +353,12 @@ flowchart TD
 |数据源目录|`config/data_sources.yaml`|记录 provider、endpoint、缓存路径、审计字段、校验项和来源限制|已实现基础版|
 |数据源校验|`aits data-sources validate`|校验数据源目录是否可审计、活跃来源是否声明校验和限制|已实现基础版|
 |SEC 公司映射|`config/sec_companies.yaml`|记录核心标的 ticker、CIK 和 taxonomy 预期|已实现基础版|
+|SEC 指标映射|`config/fundamental_metrics.yaml`|记录 SEC taxonomy/concept/unit 到内部基本面指标的映射和年度/季度偏好|已实现基础版|
 |SEC 基本面下载|`aits fundamentals download-sec-companyfacts`|下载 SEC companyfacts 原始 JSON 并写入审计 manifest；暂不进入自动评分|已实现基础版|
 |SEC 基本面校验|`aits fundamentals validate-sec-companyfacts`|校验 SEC companyfacts JSON、CIK、taxonomy 和 manifest checksum|已实现基础版|
+|SEC 指标抽取|`aits fundamentals extract-sec-metrics`|先执行 SEC companyfacts 质量门禁，通过后抽取收入、毛利、营业利润、净利润、研发和 CapEx 等结构化摘要|已实现基础版|
+|SEC 指标缓存|`data/processed/sec_fundamentals_YYYY-MM-DD.csv`|保存 SEC 基本面指标结构化抽取结果，不直接等同于自动评分输入|已实现基础版|
+|SEC 指标报告|`outputs/reports/sec_fundamentals_YYYY-MM-DD.md`|输出 SEC 缓存校验状态、抽取行数、缺失指标和方法限制|已实现基础版|
 |交易假设|`data/external/trade_theses/`|记录交易 thesis、验证指标和证伪条件|已实现基础版|
 |交易假设模板|`docs/examples/trade_theses/`|提供可复制 YAML 模板，不提交个人记录|已实现基础版|
 |假设校验|`aits thesis validate`|校验 schema、观察池引用、产业链节点和证伪约束|已实现基础版|

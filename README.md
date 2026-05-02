@@ -30,6 +30,7 @@ config/market_regimes.yaml 市场阶段和默认回测区间配置
 config/risk_events.yaml  风险事件等级和动作规则配置
 config/data_sources.yaml 数据源目录、审计字段和来源限制
 config/sec_companies.yaml SEC companyfacts CIK 映射
+config/fundamental_metrics.yaml SEC 基本面指标映射
 data/raw/                原始数据缓存，不提交
 data/processed/          清洗后的中间数据，不提交
 data/external/           外部导入数据，不提交
@@ -176,9 +177,10 @@ aits fundamentals list-sec-companies
 $env:SEC_USER_AGENT="AITradingSystem your_email@example.com"
 aits fundamentals download-sec-companyfacts --tickers NVDA,MSFT
 aits fundamentals validate-sec-companyfacts --as-of 2026-05-02
+aits fundamentals extract-sec-metrics --as-of 2026-05-02
 ```
 
-该命令读取 `config/sec_companies.yaml` 的 ticker/CIK 映射，下载 SEC EDGAR companyfacts JSON 到 `data/raw/sec_companyfacts/`，并追加写入 `sec_companyfacts_manifest.csv`。校验命令会检查 JSON、CIK、taxonomy 和 checksum。当前只落地一手数据缓存和审计清单，不直接进入基本面评分。
+该命令读取 `config/sec_companies.yaml` 的 ticker/CIK 映射，下载 SEC EDGAR companyfacts JSON 到 `data/raw/sec_companyfacts/`，并追加写入 `sec_companyfacts_manifest.csv`。校验命令会检查 JSON、CIK、taxonomy 和 checksum。`extract-sec-metrics` 会先执行同一条 SEC 缓存质量门禁，通过后按 `config/fundamental_metrics.yaml` 抽取收入、毛利、营业利润、净利润、研发和 CapEx 等指标，默认输出 `data/processed/sec_fundamentals_YYYY-MM-DD.csv` 和 `outputs/reports/sec_fundamentals_YYYY-MM-DD.md`。当前只生成可复核的结构化摘要，保留 SEC 原始币种和符号，不直接进入基本面自动评分。
 
 复盘交易记录并做基础归因：
 

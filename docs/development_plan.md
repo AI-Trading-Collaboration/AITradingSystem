@@ -75,7 +75,7 @@
 
 - 建立持仓与观察池管理，记录能力圈、买入理由、目标周期和风险等级。
 - 建立产业链节点模型，覆盖云厂商 CapEx、GPU/ASIC、HBM、先进封装、晶圆代工、设备材料。
-- 建立财报数据结构。状态：已实现 SEC companyfacts 原始 JSON 下载、审计清单和缓存校验基础版。
+- 建立财报数据结构。状态：已实现 SEC companyfacts 原始 JSON 下载、审计清单、缓存校验和基础指标抽取。
 - 跟踪收入增速、毛利率、EPS 预期、CapEx、数据中心收入。
 - 跟踪 Forward P/E、PEG、EV/Sales 和历史分位。
 - 跟踪拥挤度和预期过热信号。
@@ -139,6 +139,7 @@
 11. 实现估值与拥挤度快照。状态：已实现基础版，命令为 `aits valuation list/validate/review`。
 12. 实现交易复盘归因。状态：已实现基础版，命令为 `aits review-trades`。
 13. 实现 SEC companyfacts 原始基本面数据下载和缓存校验。状态：已实现基础版，命令为 `aits fundamentals download-sec-companyfacts` 和 `aits fundamentals validate-sec-companyfacts`。
+14. 实现 SEC companyfacts 基础指标抽取。状态：已实现基础版，命令为 `aits fundamentals extract-sec-metrics`，输出结构化 CSV 和中文 Markdown 报告，暂不进入自动评分。
 
 ## 阶段 1 数据缓存约定
 

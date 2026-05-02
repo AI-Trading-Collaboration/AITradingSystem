@@ -20,6 +20,7 @@
 |数据源目录|已完成基础版|`config/data_sources.yaml` 和 `aits data-sources list/validate`，记录来源类型、审计字段、校验项和限制说明|
 |SEC 基本面原始数据|已完成基础版|`config/sec_companies.yaml` 和 `aits fundamentals download-sec-companyfacts`，下载 companyfacts JSON 并写入 manifest|
 |SEC 基本面缓存校验|已完成基础版|`aits fundamentals validate-sec-companyfacts`，校验 JSON、CIK、taxonomy 和 checksum|
+|SEC 基本面指标抽取|已完成基础版|`config/fundamental_metrics.yaml` 和 `aits fundamentals extract-sec-metrics`，先过 SEC 缓存质量门禁，再输出结构化指标摘要和中文报告|
 |数据质量门禁|已完成基础版|`aits validate-data`，失败时非零退出|
 |市场环境特征|已完成基础版|`aits build-features`，趋势、相对强弱、VIX、利率、核心池宽度|
 |每日市场评分|已完成基础版|`aits score-daily`，趋势、宏观流动性、风险情绪和占位项|
@@ -489,9 +490,11 @@ aits review-trades --as-of 2026-05-02
 |`config/market_regimes.yaml`|市场阶段、默认回测区间和压力测试区间|阶段 1，已实现基础版|
 |`config/risk_events.yaml`|风险事件等级和动作规则|M6，已实现基础版|
 |`config/sec_companies.yaml`|SEC companyfacts ticker/CIK 映射|阶段 2，已实现基础版|
+|`config/fundamental_metrics.yaml`|SEC taxonomy/concept/unit 到内部基本面指标的映射|阶段 2，已实现基础版|
 |`config/scoring_rules.yaml`|评分规则和权重|M2|
 |`data/raw/download_manifest.csv`|下载审计清单，记录 provider、endpoint、请求参数、下载时间、行数和 checksum|M1，已实现基础版|
 |`data/raw/sec_companyfacts/`|SEC companyfacts 原始 JSON 和下载 manifest|阶段 2，已实现基础版|
+|`data/processed/sec_fundamentals_YYYY-MM-DD.csv`|SEC 基本面指标抽取结果，暂不直接进入自动评分|阶段 2，已实现基础版|
 |`data/processed/features_daily.csv`|每日特征|M1|
 |`data/processed/scores_daily.csv`|每日评分|M2|
 |`data/external/trade_theses/`|交易 thesis|M5，已实现基础版|
@@ -507,18 +510,19 @@ aits review-trades --as-of 2026-05-02
 |`outputs/reports/valuation_validation_YYYY-MM-DD.md`|估值快照校验报告|M7|
 |`outputs/reports/valuation_review_YYYY-MM-DD.md`|估值与拥挤度复核报告|M7|
 |`outputs/reports/trade_review_YYYY-MM-DD.md`|复盘归因报告|M8|
+|`outputs/reports/sec_fundamentals_YYYY-MM-DD.md`|SEC 基本面指标抽取报告，声明 SEC 缓存质量状态和缺失项|阶段 2，已实现基础版|
 
 ## 近期最小落地路径
 
 接下来建议按这个顺序开发：
 
-1. 实现 SEC companyfacts 基础财报指标抽取，先输出结构化财报摘要，不进入自动评分。
-2. 在 SEC 指标抽取通过质量校验后，把基本面从占位项逐步转为可评分模块。
+1. 在 SEC 指标抽取通过质量校验后，把基本面从占位项逐步转为可评分模块。
+2. 设计基本面评分只读已通过抽取报告和 CSV 的规则，先覆盖收入增长、毛利率、经营利润、研发强度和 CapEx 变化。
 
 原因：
 
 - 阶段 1 的市场数据、评分、观察池、回测、产业链配置、交易 thesis、风险事件分级、估值与拥挤度快照、交易复盘基础闭环，以及日报复核摘要集成已经完成。
-- 下一步的主要价值是把 SEC companyfacts 原始 JSON 转成可解释、可校验的基本面指标，并在进入自动评分前先保证字段映射、taxonomy 差异和 restatement 风险可控。
+- 下一步的主要价值是把已抽取的 SEC 指标转成可解释、可校验的基本面评分，并继续保证字段映射、taxonomy 差异和 restatement 风险可控。
 
 ## 不应马上做的事
 

@@ -6,6 +6,7 @@ from ai_trading_system.config import (
     load_data_quality,
     load_data_sources,
     load_features,
+    load_fundamental_metrics,
     load_industry_chain,
     load_market_regimes,
     load_portfolio,
@@ -60,6 +61,23 @@ def test_sec_companies_config_covers_core_watchlist() -> None:
     assert {"MSFT", "GOOG", "TSM", "INTC", "AMD", "NVDA"}.issubset(by_ticker)
     assert by_ticker["NVDA"].cik == "0001045810"
     assert by_ticker["TSM"].expected_taxonomies == ["ifrs-full", "dei"]
+
+
+def test_fundamental_metrics_config_loads_sec_metric_mappings() -> None:
+    config = load_fundamental_metrics()
+    metric_ids = {metric.metric_id for metric in config.metrics}
+
+    assert {"revenue", "gross_profit", "operating_income", "net_income"}.issubset(metric_ids)
+    assert any(
+        concept.taxonomy == "us-gaap" and concept.concept == "Revenues"
+        for metric in config.metrics
+        for concept in metric.concepts
+    )
+    assert any(
+        concept.taxonomy == "ifrs-full" and concept.unit == "TWD"
+        for metric in config.metrics
+        for concept in metric.concepts
+    )
 
 
 def test_feature_config_loads_market_feature_windows() -> None:

@@ -31,7 +31,7 @@
 
   <rect class="bg" x="0" y="0" width="1280" height="760" />
   <text class="title" x="54" y="58">AI Trading System 数据流总览</text>
-  <text class="subtitle" x="54" y="86">所有评分、回测和报告必须先通过数据质量门禁；默认解释区间为 ChatGPT 后 AI 主线行情（ai_after_chatgpt）。</text>
+  <text class="subtitle" x="54" y="86">所有评分、回测和报告必须先通过数据质量门禁；SEC 指标抽取必须先通过 companyfacts 缓存校验。</text>
 
   <rect class="lane" x="40" y="120" width="1200" height="515" />
   <text class="lane-title" x="64" y="152">主链路：从数据输入到结论输出</text>
@@ -48,19 +48,20 @@
   <text class="box-text" x="92" y="439">scoring_rules</text>
   <text class="box-text" x="92" y="461">market_regimes / risk_events</text>
   <text class="box-text" x="92" y="481">data_sources</text>
-  <text class="box-text" x="92" y="497">sec_companies</text>
+  <text class="box-text" x="92" y="497">sec_companies / metrics</text>
 
   <rect class="input" x="70" y="515" width="190" height="80" />
   <text class="box-title" x="92" y="547">人工复核输入</text>
   <text class="box-text" x="92" y="570">trade_theses</text>
   <text class="box-text" x="92" y="590">valuation_snapshots / trades</text>
 
-  <rect class="cache" x="325" y="188" width="185" height="110" />
+  <rect class="cache" x="325" y="188" width="185" height="155" />
   <text class="box-title" x="348" y="220">下载与缓存</text>
   <text class="box-text" x="348" y="248">aits download-data</text>
   <text class="box-text" x="348" y="270">data/raw/*.csv</text>
   <text class="box-text" x="348" y="292">download_manifest</text>
-  <text class="box-text" x="348" y="310">sec_companyfacts</text>
+  <text class="box-text" x="348" y="314">sec_companyfacts</text>
+  <text class="box-text" x="348" y="336">extract-sec-metrics</text>
 
   <rect class="gate" x="575" y="188" width="210" height="110" />
   <text class="box-title" x="599" y="220">数据质量门禁</text>
@@ -136,5 +137,5 @@
 
   <rect class="lane" x="40" y="665" width="1200" height="62" />
   <text class="lane-title" x="64" y="704">输出解释要求</text>
-  <text class="small-text" x="210" y="704">报告必须说明：数据质量是否通过、数据源限制、哪些评分来自硬数据、哪些模块仍是占位、人工复核摘要、仓位口径、回测区间和市场阶段。</text>
+  <text class="small-text" x="210" y="704">报告必须说明：数据质量是否通过、数据源限制、哪些评分来自硬数据、哪些模块仍是占位、SEC 指标映射限制、人工复核摘要、仓位口径、回测区间和市场阶段。</text>
 </svg>

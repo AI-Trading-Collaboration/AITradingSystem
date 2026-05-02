@@ -173,6 +173,7 @@ sources:
     requires_credentials: false
     cache_paths:
       - data/raw/sec_companyfacts
+      - data/processed/sec_fundamentals_YYYY-MM-DD.csv
     primary_for:
       - revenue
       - gross_margin
@@ -191,11 +192,12 @@ sources:
       - user_agent_required
       - checksum
       - fiscal_period_alignment
+      - metric_mapping
       - restatement_detection
       - duplicate_keys
       - freshness
     limitations:
-      - 当前仅落地原始 companyfacts JSON 下载和审计清单；尚未进入自动基本面评分。
+      - 当前已落地原始 companyfacts JSON、审计清单和基础指标抽取；尚未进入自动基本面评分。
       - SEC XBRL taxonomy 在 US GAAP 和 IFRS 公司之间可能不同，进入评分前必须做字段映射校验。
     owner_notes: 基本面模块一手来源；下载必须提供符合 SEC fair access 要求的 User-Agent。
 

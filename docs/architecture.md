@@ -47,7 +47,7 @@
 
 数据下载命令为 `aits download-data`。默认只抓核心观察池，`--full-universe` 才抓完整 AI 产业链配置，避免 MVP 阶段数据面过宽。
 
-基本面一手数据第一步接入 SEC EDGAR companyfacts。公司映射配置为 `config/sec_companies.yaml`，下载命令为 `aits fundamentals download-sec-companyfacts`。该命令要求显式提供 `--user-agent` 或 `SEC_USER_AGENT`，输出原始 JSON 到 `data/raw/sec_companyfacts/` 并写入 `sec_companyfacts_manifest.csv`。缓存校验命令为 `aits fundamentals validate-sec-companyfacts`，检查 JSON、CIK、taxonomy 和 checksum。当前只做缓存和审计，不直接进入自动基本面评分。
+基本面一手数据第一步接入 SEC EDGAR companyfacts。公司映射配置为 `config/sec_companies.yaml`，下载命令为 `aits fundamentals download-sec-companyfacts`。该命令要求显式提供 `--user-agent` 或 `SEC_USER_AGENT`，输出原始 JSON 到 `data/raw/sec_companyfacts/` 并写入 `sec_companyfacts_manifest.csv`。缓存校验命令为 `aits fundamentals validate-sec-companyfacts`，检查 JSON、CIK、taxonomy 和 checksum。指标映射配置为 `config/fundamental_metrics.yaml`，抽取命令为 `aits fundamentals extract-sec-metrics`；该命令会先执行 SEC 缓存质量门禁，通过后输出 `data/processed/sec_fundamentals_YYYY-MM-DD.csv` 和 `outputs/reports/sec_fundamentals_YYYY-MM-DD.md`。当前只做结构化基本面摘要和审计，不直接进入自动基本面评分。
 
 ## 数据质量门禁
 

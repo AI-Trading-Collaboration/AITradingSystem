@@ -20,6 +20,7 @@ DEFAULT_MARKET_REGIMES_CONFIG_PATH = PROJECT_ROOT / "config" / "market_regimes.y
 DEFAULT_RISK_EVENTS_CONFIG_PATH = PROJECT_ROOT / "config" / "risk_events.yaml"
 DEFAULT_DATA_SOURCES_CONFIG_PATH = PROJECT_ROOT / "config" / "data_sources.yaml"
 DEFAULT_SEC_COMPANIES_CONFIG_PATH = PROJECT_ROOT / "config" / "sec_companies.yaml"
+DEFAULT_FUNDAMENTAL_METRICS_CONFIG_PATH = PROJECT_ROOT / "config" / "fundamental_metrics.yaml"
 
 
 class MarketUniverse(BaseModel):
@@ -253,6 +254,60 @@ class SecCompaniesConfig(BaseModel):
         return self
 
 
+class FundamentalMetricConceptConfig(BaseModel):
+    taxonomy: str = Field(min_length=1)
+    concept: str = Field(min_length=1)
+    unit: str = Field(min_length=1)
+
+
+class FundamentalMetricConfig(BaseModel):
+    metric_id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9_.-]+$")
+    name: str = Field(min_length=1)
+    description: str = Field(min_length=1)
+    preferred_periods: list[Literal["annual", "quarterly"]] = Field(min_length=1)
+    concepts: list[FundamentalMetricConceptConfig] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_metric_mapping(self) -> Self:
+        duplicate_periods = _duplicates(self.preferred_periods)
+        if duplicate_periods:
+            raise ValueError(
+                f"fundamental metric {self.metric_id} has duplicate periods: "
+                f"{', '.join(duplicate_periods)}"
+            )
+
+        concept_keys = [
+            f"{concept.taxonomy}:{concept.concept}:{concept.unit}"
+            for concept in self.concepts
+        ]
+        duplicate_concepts = _duplicates(concept_keys)
+        if duplicate_concepts:
+            raise ValueError(
+                f"fundamental metric {self.metric_id} has duplicate concepts: "
+                f"{', '.join(duplicate_concepts)}"
+            )
+        return self
+
+
+class FundamentalMetricsConfig(BaseModel):
+    metrics: list[FundamentalMetricConfig] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_metric_ids(self) -> Self:
+        seen: set[str] = set()
+        duplicate_ids: set[str] = set()
+        for metric in self.metrics:
+            if metric.metric_id in seen:
+                duplicate_ids.add(metric.metric_id)
+            seen.add(metric.metric_id)
+
+        if duplicate_ids:
+            raise ValueError(
+                f"fundamental metric ids must be unique: {', '.join(sorted(duplicate_ids))}"
+            )
+        return self
+
+
 class DecisionConfig(BaseModel):
     frequency: str
     market_timezone: str
@@ -441,6 +496,15 @@ def load_sec_companies(
     return SecCompaniesConfig.model_validate(raw)
 
 
+def load_fundamental_metrics(
+    path: Path | str = DEFAULT_FUNDAMENTAL_METRICS_CONFIG_PATH,
+) -> FundamentalMetricsConfig:
+    config_path = Path(path)
+    with config_path.open("r", encoding="utf-8") as file:
+        raw: dict[str, Any] = yaml.safe_load(file)
+    return FundamentalMetricsConfig.model_validate(raw)
+
+
 def market_regime_by_id(
     config: MarketRegimesConfig,
     regime_id: str,
@@ -515,3 +579,13 @@ def dedupe_preserving_order(items: Iterable[str]) -> list[str]:
             unique_items.append(item)
             seen.add(item)
     return unique_items
+
+
+def _duplicates(items: Iterable[str]) -> list[str]:
+    seen: set[str] = set()
+    duplicates: list[str] = []
+    for item in items:
+        if item in seen and item not in duplicates:
+            duplicates.append(item)
+        seen.add(item)
+    return duplicates

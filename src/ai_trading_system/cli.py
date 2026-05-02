@@ -21,6 +21,7 @@ from ai_trading_system.backtest.daily import (
 )
 from ai_trading_system.config import (
     DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    DEFAULT_FUNDAMENTAL_METRICS_CONFIG_PATH,
     DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH,
     DEFAULT_MARKET_REGIMES_CONFIG_PATH,
     DEFAULT_RISK_EVENTS_CONFIG_PATH,
@@ -35,6 +36,7 @@ from ai_trading_system.config import (
     load_data_quality,
     load_data_sources,
     load_features,
+    load_fundamental_metrics,
     load_industry_chain,
     load_market_regimes,
     load_portfolio,
@@ -66,6 +68,13 @@ from ai_trading_system.features.market import (
 from ai_trading_system.fundamentals.sec_companyfacts import (
     SecEdgarCompanyFactsProvider,
     download_sec_companyfacts,
+)
+from ai_trading_system.fundamentals.sec_metrics import (
+    build_sec_fundamental_metrics_report,
+    default_sec_fundamental_metrics_csv_path,
+    default_sec_fundamental_metrics_report_path,
+    write_sec_fundamental_metrics_csv,
+    write_sec_fundamental_metrics_report,
 )
 from ai_trading_system.fundamentals.sec_validation import (
     default_sec_companyfacts_validation_report_path,
@@ -1031,6 +1040,95 @@ def validate_sec_companyfacts_command(
     console.print(f"[{status_style}]SEC companyfacts 校验状态：{report.status}[/{status_style}]")
     console.print(f"报告：{report_path}")
     console.print(f"配置公司数：{report.file_count}；已缓存：{report.available_count}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+
+@fundamentals_app.command("extract-sec-metrics")
+def extract_sec_metrics_command(
+    sec_companies_path: Annotated[
+        Path,
+        typer.Option(help="SEC company CIK 配置文件路径。"),
+    ] = DEFAULT_SEC_COMPANIES_CONFIG_PATH,
+    metrics_path: Annotated[
+        Path,
+        typer.Option(help="SEC 指标映射配置文件路径。"),
+    ] = DEFAULT_FUNDAMENTAL_METRICS_CONFIG_PATH,
+    input_dir: Annotated[
+        Path,
+        typer.Option(help="SEC companyfacts 原始 JSON 输入目录。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "sec_companyfacts",
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="抽取日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="SEC 基本面指标 CSV 输出路径。"),
+    ] = None,
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown SEC 基本面指标报告输出路径。"),
+    ] = None,
+    validation_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown SEC companyfacts 校验报告输出路径。"),
+    ] = None,
+) -> None:
+    """在 SEC 缓存校验通过后抽取结构化基本面指标。"""
+    extraction_date = _parse_date(as_of) if as_of else date.today()
+    validation_output = validation_report_path or default_sec_companyfacts_validation_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        extraction_date,
+    )
+    csv_output = output_path or default_sec_fundamental_metrics_csv_path(
+        PROJECT_ROOT / "data" / "processed",
+        extraction_date,
+    )
+    markdown_output = report_path or default_sec_fundamental_metrics_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        extraction_date,
+    )
+
+    sec_companies = load_sec_companies(sec_companies_path)
+    validation_report = validate_sec_companyfacts_cache(
+        config=sec_companies,
+        input_dir=input_dir,
+        as_of=extraction_date,
+    )
+    write_sec_companyfacts_validation_report(validation_report, validation_output)
+    if not validation_report.passed:
+        console.print("[red]SEC companyfacts 质量门禁失败，已停止指标抽取。[/red]")
+        console.print(f"SEC 缓存校验报告：{validation_output}")
+        console.print(
+            f"错误数：{validation_report.error_count}；"
+            f"警告数：{validation_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+
+    report = build_sec_fundamental_metrics_report(
+        companies=sec_companies,
+        metrics=load_fundamental_metrics(metrics_path),
+        input_dir=input_dir,
+        as_of=extraction_date,
+        validation_report=validation_report,
+    )
+    csv_path = write_sec_fundamental_metrics_csv(report, csv_output)
+    markdown_path = write_sec_fundamental_metrics_report(
+        report=report,
+        validation_report_path=validation_output,
+        output_csv_path=csv_path,
+        output_path=markdown_output,
+    )
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]SEC 基本面指标抽取状态：{report.status}[/{status_style}]")
+    console.print(f"SEC 缓存校验报告：{validation_output}（{validation_report.status}）")
+    console.print(f"指标 CSV：{csv_path}")
+    console.print(f"指标报告：{markdown_path}")
+    console.print(f"公司数：{report.company_count}；指标行数：{report.row_count}")
     console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
 
     if not report.passed:
