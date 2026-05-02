@@ -23,9 +23,10 @@
 |SEC 基本面指标抽取|已完成基础版|`config/fundamental_metrics.yaml` 和 `aits fundamentals extract-sec-metrics`，先过 SEC 缓存质量门禁，再输出结构化指标摘要和中文报告；支持显式派生指标和公司级 SEC 周期覆盖声明|
 |SEC 基本面指标校验|已完成基础版|`aits fundamentals validate-sec-metrics`，校验指标 CSV 的 schema、重复键、未来披露日期、数值合法性和配置覆盖率|
 |SEC 基本面特征|已完成基础版|`config/fundamental_features.yaml` 和 `aits fundamentals build-sec-features`，先过 SEC 指标 CSV 门禁，再生成毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度|
+|SEC 基本面评分|已完成基础版|`aits score-daily` 会校验 SEC 指标 CSV、构建 SEC 特征，并用 AI 核心观察池 SEC 特征中位数进行基本面硬数据评分|
 |数据质量门禁|已完成基础版|`aits validate-data`，失败时非零退出|
 |市场环境特征|已完成基础版|`aits build-features`，趋势、相对强弱、VIX、利率、核心池宽度|
-|每日市场评分|已完成基础版|`aits score-daily`，趋势、宏观流动性、风险情绪和占位项|
+|每日市场评分|已完成基础版|`aits score-daily`，趋势、SEC 基本面、宏观流动性、风险情绪和估值/政策占位项|
 |仓位评分骨架|已完成基础版|100 分映射到仓位区间，支持总资产换算|
 |观察池与能力圈|已完成基础版|`aits watchlist list/validate`，核心个股能力圈和产业链节点映射|
 |历史回测|已完成基础版|`aits backtest`，每日评分动态仓位与 SPY/QQQ/SMH/SOXX 基准对比|
@@ -69,7 +70,7 @@ aits backtest --to 2026-05-02 --quality-as-of 2026-05-02
 
 限制：
 
-- 基本面、估值、政策/地缘仍是 MVP 占位输入，因此回测只能验证当前硬数据规则和仓位映射，不能视为完整策略结论。
+- 回测暂未接入历史 SEC 基本面特征，估值和政策/地缘仍是 MVP 占位输入，因此回测只能验证当前市场硬数据规则和仓位映射，不能视为完整策略结论。
 - 当前未计入税费、汇率、融资利率、盘口冲击和盘中执行偏差。
 - `cross_cycle_stress` 从 `2019-01-01` 开始，适合作为非默认压力测试；这类结果需要和默认 AI regime 结果分开解释。
 
@@ -122,7 +123,7 @@ aits build-features --as-of 2026-05-01
 
 状态：已实现基础版。
 
-目的：把 M1 特征转成趋势、宏观流动性、风险情绪评分。
+目的：把 M1 特征和已通过校验的 SEC 基本面特征转成趋势、基本面、宏观流动性、风险情绪评分。
 
 主要数据对象：
 
@@ -144,13 +145,14 @@ aits score-daily --as-of 2026-05-01
 第一版评分：
 
 - 趋势评分：指数趋势、半导体趋势、核心个股趋势一致性、相对强弱。
+- 基本面评分：基于 AI 核心观察池 SEC 特征中位数，先覆盖季度毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度。
 - 宏观流动性评分：10Y、2Y、美元指数趋势。
 - 风险情绪评分：VIX 水平、VIX 分位、波动上升速度。
-- 基本面、估值、政策地缘：明确标记为中性占位或手工输入。
+- 估值、政策地缘：明确标记为中性占位或手工输入。
 
 验收标准：
 
-- 报告必须声明数据质量状态。
+- 报告必须声明市场数据质量状态和 SEC 基本面质量状态。
 - 报告必须区分硬数据评分和占位评分。
 - 仓位建议必须同时输出风险资产内 AI 仓位和总资产 AI 仓位。
 - 低于最小仓位变化阈值时，输出“信号变化”但不输出交易动作。
@@ -497,8 +499,8 @@ aits review-trades --as-of 2026-05-02
 |`config/scoring_rules.yaml`|评分规则和权重|M2|
 |`data/raw/download_manifest.csv`|下载审计清单，记录 provider、endpoint、请求参数、下载时间、行数和 checksum|M1，已实现基础版|
 |`data/raw/sec_companyfacts/`|SEC companyfacts 原始 JSON 和下载 manifest|阶段 2，已实现基础版|
-|`data/processed/sec_fundamentals_YYYY-MM-DD.csv`|SEC 基本面指标抽取结果，暂不直接进入自动评分|阶段 2，已实现基础版|
-|`data/processed/sec_fundamental_features_YYYY-MM-DD.csv`|SEC 基本面比率特征，暂不直接进入每日评分|阶段 2，已实现基础版|
+|`data/processed/sec_fundamentals_YYYY-MM-DD.csv`|SEC 基本面指标抽取结果，是日报 SEC 基本面评分的输入|阶段 2，已实现基础版|
+|`data/processed/sec_fundamental_features_YYYY-MM-DD.csv`|SEC 基本面比率特征，是日报基本面硬数据评分的审计输出|阶段 2，已实现基础版|
 |`data/processed/features_daily.csv`|每日特征|M1|
 |`data/processed/scores_daily.csv`|每日评分|M2|
 |`data/external/trade_theses/`|交易 thesis|M5，已实现基础版|
@@ -522,13 +524,13 @@ aits review-trades --as-of 2026-05-02
 
 接下来建议按这个顺序开发：
 
-1. 在 SEC 指标抽取通过质量校验后，把基本面从占位项逐步转为可评分模块。
-2. 设计基本面评分只读已通过抽取报告和 CSV 的规则，先覆盖收入增长、毛利率、经营利润、研发强度和 CapEx 变化。
+1. 为历史回测补充可审计的历史 SEC 基本面特征切片，避免回测长期只使用市场硬数据和占位基本面。
+2. 接入估值/预期的正式数据源或审计化手工快照，把估值从占位项转为可评分模块。
 
 原因：
 
 - 阶段 1 的市场数据、评分、观察池、回测、产业链配置、交易 thesis、风险事件分级、估值与拥挤度快照、交易复盘基础闭环，以及日报复核摘要集成已经完成。
-- 下一步的主要价值是把已生成的 SEC 基本面特征转成可解释、可校验的基本面评分，并继续保证字段映射、taxonomy 差异和 restatement 风险可控。
+- SEC 基本面特征已经接入当日日报评分；下一步的主要价值是让回测和估值模块也具备同等的数据质量、来源审计和解释能力。
 
 ## 不应马上做的事
 
@@ -536,4 +538,4 @@ aits review-trades --as-of 2026-05-02
 - 不应直接接新闻并让 LLM 输出买卖建议。
 - 不应在没有估值数据来源审计的情况下做估值自动评分。
 - 不应在没有交易记录结构的情况下做复杂绩效归因。
-- 不应把基本面、估值、政策地缘继续长期保留为无说明的中性占位。
+- 不应把估值、政策地缘继续长期保留为无说明的中性占位。

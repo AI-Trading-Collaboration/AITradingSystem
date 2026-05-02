@@ -47,7 +47,7 @@
 
 数据下载命令为 `aits download-data`。默认只抓核心观察池，`--full-universe` 才抓完整 AI 产业链配置，避免 MVP 阶段数据面过宽。
 
-基本面一手数据第一步接入 SEC EDGAR companyfacts。公司映射配置为 `config/sec_companies.yaml`，下载命令为 `aits fundamentals download-sec-companyfacts`。该命令要求显式提供 `--user-agent` 或 `SEC_USER_AGENT`，输出原始 JSON 到 `data/raw/sec_companyfacts/` 并写入 `sec_companyfacts_manifest.csv`。缓存校验命令为 `aits fundamentals validate-sec-companyfacts`，检查 JSON、CIK、taxonomy 和 checksum。指标映射配置为 `config/fundamental_metrics.yaml`，抽取命令为 `aits fundamentals extract-sec-metrics`；该命令会先执行 SEC 缓存质量门禁，通过后输出 `data/processed/sec_fundamentals_YYYY-MM-DD.csv` 和 `outputs/reports/sec_fundamentals_YYYY-MM-DD.md`。显式派生指标必须写在配置中，并且要求组件指标的周期、单位、截止日、财年、财期和 accession number 一致。`config/sec_companies.yaml` 还声明单家公司在 SEC companyfacts 路径可用的指标周期；例如 TSM 只要求年度指标，季度指标后续必须接入 TSM 官方 IR 或其他可审计来源，不能用半年度 6-K 临时拆分。派生指标校验命令为 `aits fundamentals validate-sec-metrics`，用于检查 CSV schema、重复键、未来披露日期、数值合法性和配置覆盖率。基本面特征配置为 `config/fundamental_features.yaml`，构建命令为 `aits fundamentals build-sec-features`；该命令会先复用 SEC 指标 CSV 校验门禁，再输出 `data/processed/sec_fundamental_features_YYYY-MM-DD.csv` 和 `outputs/reports/sec_fundamental_features_YYYY-MM-DD.md`。当前只做结构化基本面摘要、比率特征和审计，不直接进入自动基本面评分；季度 CapEx 强度需要多期共同周期对齐，当前只生成年度 CapEx 强度。
+基本面一手数据第一步接入 SEC EDGAR companyfacts。公司映射配置为 `config/sec_companies.yaml`，下载命令为 `aits fundamentals download-sec-companyfacts`。该命令要求显式提供 `--user-agent` 或 `SEC_USER_AGENT`，输出原始 JSON 到 `data/raw/sec_companyfacts/` 并写入 `sec_companyfacts_manifest.csv`。缓存校验命令为 `aits fundamentals validate-sec-companyfacts`，检查 JSON、CIK、taxonomy 和 checksum。指标映射配置为 `config/fundamental_metrics.yaml`，抽取命令为 `aits fundamentals extract-sec-metrics`；该命令会先执行 SEC 缓存质量门禁，通过后输出 `data/processed/sec_fundamentals_YYYY-MM-DD.csv` 和 `outputs/reports/sec_fundamentals_YYYY-MM-DD.md`。显式派生指标必须写在配置中，并且要求组件指标的周期、单位、截止日、财年、财期和 accession number 一致。`config/sec_companies.yaml` 还声明单家公司在 SEC companyfacts 路径可用的指标周期；例如 TSM 只要求年度指标，季度指标后续必须接入 TSM 官方 IR 或其他可审计来源，不能用半年度 6-K 临时拆分。派生指标校验命令为 `aits fundamentals validate-sec-metrics`，用于检查 CSV schema、重复键、未来披露日期、数值合法性和配置覆盖率。基本面特征配置为 `config/fundamental_features.yaml`，构建命令为 `aits fundamentals build-sec-features`；该命令会先复用 SEC 指标 CSV 校验门禁，再输出 `data/processed/sec_fundamental_features_YYYY-MM-DD.csv` 和 `outputs/reports/sec_fundamental_features_YYYY-MM-DD.md`。`aits score-daily` 也会复用同一条 SEC 指标 CSV 校验和特征构建路径，校验失败时停止日报评分，通过后把 SEC 特征接入基本面硬数据评分。季度 CapEx 强度需要多期共同周期对齐，当前只生成年度 CapEx 强度。
 
 ## 数据质量门禁
 
@@ -115,14 +115,14 @@
 |估值|10|
 |政策/地缘|10|
 
-MVP 阶段先实现趋势、宏观流动性、风险情绪三类硬数据，基本面、估值、政策地缘先用中性分或手工输入。
+当前基础版已实现趋势、SEC 基本面、宏观流动性、风险情绪四类硬数据。基本面评分第一版只使用已通过校验的 AI 核心观察池 SEC 特征中位数，包括季度毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度；阈值写在 `config/scoring_rules.yaml`，用于先形成可审计规则，不把单家公司估值或财报解读硬编码进代码。估值和政策地缘仍使用中性占位或手工复核摘要。
 
-每日评分命令为 `aits score-daily`。命令会先执行数据质量门禁并构建市场特征，再汇总交易 thesis、风险事件、估值快照和交易复盘状态，最后输出：
+每日评分命令为 `aits score-daily`。命令会先执行市场数据质量门禁并构建市场特征，再校验 SEC 指标 CSV、构建 SEC 基本面特征，之后汇总交易 thesis、风险事件、估值快照和交易复盘状态，最后输出：
 
 - `data/processed/scores_daily.csv`
 - `outputs/reports/daily_score_YYYY-MM-DD.md`
 
-评分报告必须区分硬数据信号、部分硬数据、历史不足、占位输入和人工复核摘要。基本面、估值、政策地缘在未接入正式数据前不得伪装成自动评分。
+评分报告必须区分硬数据信号、部分硬数据、历史不足、占位输入和人工复核摘要。基本面只有在 SEC 指标 CSV 校验和 SEC 特征构建通过后才能显示为硬数据评分；估值和政策地缘在未接入正式数据前不得伪装成自动评分。
 
 ## 仓位映射
 

@@ -541,6 +541,7 @@ class ScoringRulesConfig(BaseModel):
     weights: dict[str, float]
     minimum_signal_coverage: float = Field(ge=0, le=1)
     trend: ScoreModuleRuleConfig
+    fundamentals: ScoreModuleRuleConfig | None = None
     macro_liquidity: ScoreModuleRuleConfig
     risk_sentiment: ScoreModuleRuleConfig
     placeholders: dict[str, PlaceholderScoreConfig]

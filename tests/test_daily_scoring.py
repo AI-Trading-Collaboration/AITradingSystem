@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
+from typing import cast
 
 import pandas as pd
 from typer.testing import CliRunner
@@ -15,6 +16,15 @@ from ai_trading_system.config import (
 )
 from ai_trading_system.data.quality import DataFileSummary, DataQualityReport
 from ai_trading_system.features.market import MarketFeatureRow, MarketFeatureSet
+from ai_trading_system.fundamentals.sec_features import (
+    SecFundamentalFeatureRow,
+    SecFundamentalFeaturesReport,
+)
+from ai_trading_system.fundamentals.sec_metrics import (
+    SEC_FUNDAMENTAL_METRIC_COLUMNS,
+    PeriodType,
+    SecFundamentalMetricsCsvValidationReport,
+)
 from ai_trading_system.scoring.daily import (
     DailyManualReviewStatus,
     DailyReviewSummary,
@@ -38,6 +48,28 @@ def test_build_daily_score_report_uses_hard_data_and_placeholders() -> None:
     assert _component(report, "fundamentals").source_type == "placeholder"
     assert report.status == "PASS_WITH_LIMITATIONS"
     assert report.recommendation.total_asset_ai_band.min_position >= 0.24
+
+
+def test_build_daily_score_report_uses_sec_fundamental_features() -> None:
+    report = build_daily_score_report(
+        feature_set=_feature_set(),
+        data_quality_report=_quality_report(),
+        rules=load_scoring_rules(),
+        total_risk_asset_min=0.60,
+        total_risk_asset_max=0.80,
+        fundamental_feature_report=_fundamental_feature_report(),
+    )
+
+    fundamentals = _component(report, "fundamentals")
+
+    assert fundamentals.source_type == "hard_data"
+    assert fundamentals.coverage == 1.0
+    assert fundamentals.score > 50
+    assert any(
+        signal.subject == "AI_CORE_MEDIAN"
+        and signal.feature == "gross_margin_quarterly_median"
+        for signal in fundamentals.signals
+    )
 
 
 def test_build_daily_score_report_marks_insufficient_data() -> None:
@@ -124,7 +156,33 @@ def test_render_daily_score_report_includes_data_gate_and_limitations(tmp_path: 
     assert "## 人工复核摘要" in markdown
     assert "交易 thesis" in markdown
     assert "基本面（fundamentals）" in markdown
-    assert "MVP 阶段占位" in markdown
+    assert "基本面硬数据占位" in markdown
+
+
+def test_render_daily_score_report_includes_sec_feature_gate(tmp_path: Path) -> None:
+    report = build_daily_score_report(
+        feature_set=_feature_set(),
+        data_quality_report=_quality_report(),
+        rules=load_scoring_rules(),
+        total_risk_asset_min=0.60,
+        total_risk_asset_max=0.80,
+        fundamental_feature_report=_fundamental_feature_report(),
+    )
+
+    markdown = render_daily_score_report(
+        report,
+        data_quality_report_path=tmp_path / "quality.md",
+        feature_report_path=tmp_path / "features.md",
+        features_path=tmp_path / "features.csv",
+        scores_path=tmp_path / "scores.csv",
+        sec_metrics_validation_report_path=tmp_path / "sec_validation.md",
+        sec_fundamental_feature_report_path=tmp_path / "sec_features.md",
+        sec_fundamental_features_path=tmp_path / "sec_features.csv",
+    )
+
+    assert "- SEC 指标 CSV 校验状态：PASS" in markdown
+    assert "- SEC 基本面特征状态：PASS" in markdown
+    assert "sec_features.csv" in markdown
 
 
 def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
@@ -138,8 +196,19 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     daily_report_path = tmp_path / "daily_score.md"
     feature_report_path = tmp_path / "feature_summary.md"
     quality_report_path = tmp_path / "quality.md"
+    sec_companies_path = tmp_path / "sec_companies.yaml"
+    sec_metrics_path = tmp_path / "fundamental_metrics.yaml"
+    fundamental_feature_config_path = tmp_path / "fundamental_features.yaml"
+    sec_fundamentals_path = tmp_path / "sec_fundamentals.csv"
+    sec_features_path = tmp_path / "sec_fundamental_features.csv"
+    sec_feature_report_path = tmp_path / "sec_fundamental_features.md"
+    sec_validation_report_path = tmp_path / "sec_fundamentals_validation.md"
     _sample_prices(tickers, periods=260).to_csv(prices_path, index=False)
     _sample_rates(rate_series, periods=260).to_csv(rates_path, index=False)
+    _write_sec_companies_config(sec_companies_path)
+    _write_sec_metrics_config(sec_metrics_path)
+    _write_sec_features_config(fundamental_feature_config_path)
+    _write_sec_metrics_csv(sec_fundamentals_path)
 
     result = CliRunner().invoke(
         app,
@@ -161,6 +230,20 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
             str(feature_report_path),
             "--quality-report-path",
             str(quality_report_path),
+            "--sec-companies-path",
+            str(sec_companies_path),
+            "--sec-metrics-path",
+            str(sec_metrics_path),
+            "--fundamental-feature-config-path",
+            str(fundamental_feature_config_path),
+            "--sec-fundamentals-path",
+            str(sec_fundamentals_path),
+            "--sec-fundamental-features-path",
+            str(sec_features_path),
+            "--sec-fundamental-feature-report-path",
+            str(sec_feature_report_path),
+            "--sec-metrics-validation-report-path",
+            str(sec_validation_report_path),
         ],
     )
 
@@ -168,8 +251,81 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert daily_report_path.exists()
     assert scores_path.exists()
     assert features_path.exists()
+    assert sec_features_path.exists()
+    assert sec_feature_report_path.exists()
+    assert sec_validation_report_path.exists()
     assert "人工复核摘要" in daily_report_path.read_text(encoding="utf-8")
+    assert "SEC 基本面特征状态：PASS" in daily_report_path.read_text(encoding="utf-8")
     assert "每日评分状态：" in result.output
+
+
+def _fundamental_feature_report() -> SecFundamentalFeaturesReport:
+    as_of = date(2026, 4, 30)
+    rows = (
+        _fundamental_feature(as_of, "NVDA", "gross_margin", "quarterly", 0.72),
+        _fundamental_feature(as_of, "MSFT", "gross_margin", "quarterly", 0.69),
+        _fundamental_feature(as_of, "NVDA", "operating_margin", "quarterly", 0.43),
+        _fundamental_feature(as_of, "MSFT", "operating_margin", "quarterly", 0.42),
+        _fundamental_feature(as_of, "NVDA", "net_margin", "quarterly", 0.35),
+        _fundamental_feature(as_of, "MSFT", "net_margin", "quarterly", 0.34),
+        _fundamental_feature(
+            as_of,
+            "NVDA",
+            "research_and_development_intensity",
+            "quarterly",
+            0.12,
+        ),
+        _fundamental_feature(
+            as_of,
+            "MSFT",
+            "research_and_development_intensity",
+            "quarterly",
+            0.13,
+        ),
+        _fundamental_feature(as_of, "NVDA", "capex_intensity", "annual", 0.14),
+        _fundamental_feature(as_of, "MSFT", "capex_intensity", "annual", 0.16),
+    )
+    return SecFundamentalFeaturesReport(
+        as_of=as_of,
+        input_path=Path("sec_fundamentals.csv"),
+        validation_report=SecFundamentalMetricsCsvValidationReport(
+            as_of=as_of,
+            input_path=Path("sec_fundamentals.csv"),
+            row_count=20,
+            as_of_row_count=20,
+            expected_observation_count=20,
+            observed_observation_count=20,
+        ),
+        rows=rows,
+    )
+
+
+def _fundamental_feature(
+    as_of: date,
+    ticker: str,
+    feature_id: str,
+    period_type: str,
+    value: float,
+) -> SecFundamentalFeatureRow:
+    return SecFundamentalFeatureRow(
+        as_of=as_of,
+        ticker=ticker,
+        period_type=cast(PeriodType, period_type),
+        fiscal_year=2026,
+        fiscal_period="Q1" if period_type == "quarterly" else "FY",
+        end_date=as_of,
+        filed_date=as_of,
+        feature_id=feature_id,
+        feature_name=feature_id.replace("_", " ").title(),
+        value=value,
+        unit="ratio",
+        numerator_metric_id="numerator",
+        denominator_metric_id="revenue",
+        numerator_value=value * 1000,
+        denominator_value=1000,
+        source_metric_accessions="0000000000-26-000001",
+        source_path=Path("sec_fundamentals.csv"),
+    )
 
 
 def _feature_set() -> MarketFeatureSet:
@@ -271,3 +427,95 @@ def _sample_rates(series_ids: list[str], periods: int) -> pd.DataFrame:
                 }
             )
     return pd.DataFrame(rows)
+
+
+def _write_sec_companies_config(output_path: Path) -> None:
+    output_path.write_text(
+        """
+companies:
+  - ticker: NVDA
+    cik: "0001045810"
+    company_name: NVIDIA Corporation
+    sec_metric_periods:
+      - annual
+    expected_taxonomies:
+      - us-gaap
+""",
+        encoding="utf-8",
+    )
+
+
+def _write_sec_metrics_config(output_path: Path) -> None:
+    output_path.write_text(
+        """
+metrics:
+  - metric_id: revenue
+    name: Revenue
+    description: SEC companyfacts 披露的总收入。
+    preferred_periods:
+      - annual
+    concepts:
+      - taxonomy: us-gaap
+        concept: Revenues
+        unit: USD
+  - metric_id: gross_profit
+    name: Gross Profit
+    description: 已披露时使用收入扣除营业成本后的毛利。
+    preferred_periods:
+      - annual
+    concepts:
+      - taxonomy: us-gaap
+        concept: GrossProfit
+        unit: USD
+""",
+        encoding="utf-8",
+    )
+
+
+def _write_sec_features_config(output_path: Path) -> None:
+    output_path.write_text(
+        """
+features:
+  - feature_id: gross_margin
+    name: Gross Margin
+    description: 毛利除以收入。
+    numerator_metric_id: gross_profit
+    denominator_metric_id: revenue
+    preferred_periods:
+      - annual
+""",
+        encoding="utf-8",
+    )
+
+
+def _write_sec_metrics_csv(output_path: Path) -> None:
+    pd.DataFrame(
+        [
+            _sec_metric_record("revenue", "Revenue", 1000),
+            _sec_metric_record("gross_profit", "Gross Profit", 650),
+        ],
+        columns=list(SEC_FUNDAMENTAL_METRIC_COLUMNS),
+    ).to_csv(output_path, index=False)
+
+
+def _sec_metric_record(metric_id: str, metric_name: str, value: float) -> dict[str, object]:
+    return {
+        "as_of": "2026-04-30",
+        "ticker": "NVDA",
+        "cik": "0001045810",
+        "company_name": "NVIDIA Corporation",
+        "metric_id": metric_id,
+        "metric_name": metric_name,
+        "period_type": "annual",
+        "fiscal_year": 2026,
+        "fiscal_period": "FY",
+        "end_date": "2026-01-31",
+        "filed_date": "2026-02-27",
+        "form": "10-K",
+        "taxonomy": "us-gaap",
+        "concept": "Revenues" if metric_id == "revenue" else "GrossProfit",
+        "unit": "USD",
+        "value": value,
+        "accession_number": "0001045810-26-000001",
+        "source_path": "nvda_companyfacts.json",
+    }

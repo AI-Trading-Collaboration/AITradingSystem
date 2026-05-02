@@ -173,10 +173,17 @@ flowchart TD
     QR --> SD
     S --> SD
     P --> SD
+    SEC --> SD
+    FM --> SD
+    FF --> SD
+    SFC --> SD
     TH --> SD
     RE --> SD
     VS --> SD
     TD --> SD
+    SD --> SFCR
+    SD --> SFFC
+    SD --> SFFR
     SD --> SC
     SD --> DR
 
@@ -243,14 +250,22 @@ flowchart TD
     F --> G["写入特征缓存<br/>features_daily.csv"]
     F --> H["写入特征摘要<br/>feature_summary_YYYY-MM-DD.md"]
     F --> R["复用已通过的数据质量结果<br/>汇总 thesis / 风险事件 / 估值 / 交易复盘状态"]
+    F --> S1["校验 SEC 指标 CSV<br/>validate_sec_fundamental_metrics_csv"]
+    S1 -->|FAIL| S2["停止<br/>输出 SEC 指标 CSV 校验报告"]
+    S1 -->|PASS 或 PASS_WITH_WARNINGS| S3["构建 SEC 基本面特征<br/>build_sec_fundamental_features_report"]
+    S3 -->|FAIL| S4["停止<br/>输出 SEC 特征报告"]
+    S3 -->|PASS 或 PASS_WITH_WARNINGS| S5["写入 SEC 特征 CSV 和报告<br/>sec_fundamental_features_YYYY-MM-DD.*"]
     G --> I["构建每日评分<br/>build_daily_score_report"]
     H --> I
     R --> I
+    S5 --> I
     I --> J["趋势评分<br/>指数趋势、半导体趋势、核心池宽度、相对强弱"]
+    I --> F1["基本面评分<br/>SEC 特征中位数：毛利率、营业利润率、净利率、R&D、CapEx"]
     I --> K["宏观流动性评分<br/>DGS10、DGS2、美元指数"]
     I --> L["风险情绪评分<br/>VIX 水平、分位、变化速度"]
-    I --> M["占位评分<br/>基本面、估值、政策/地缘"]
+    I --> M["占位评分<br/>估值、政策/地缘"]
     J --> N["总分和仓位区间<br/>风险资产内 AI 仓位"]
+    F1 --> N
     K --> N
     L --> N
     M --> N
@@ -286,8 +301,8 @@ flowchart TD
 ```mermaid
 flowchart LR
     A["数据质量状态"] --> E["报告结论"]
-    B["硬数据评分<br/>趋势 / 宏观流动性 / 风险情绪"] --> E
-    C["占位或手工输入<br/>基本面 / 估值 / 政策地缘"] --> E
+    B["硬数据评分<br/>趋势 / 基本面 / 宏观流动性 / 风险情绪"] --> E
+    C["占位或手工输入<br/>估值 / 政策地缘"] --> E
     D["市场阶段<br/>ai_after_chatgpt / cross_cycle_stress"] --> E
     F["能力圈和产业链配置<br/>watchlist / industry_chain"] --> E
     L["交易 thesis<br/>验证指标 / 证伪条件 / 风险事件"] --> E
@@ -312,7 +327,7 @@ flowchart TD
         A["数据下载<br/>aits download-data"]
         B["数据质量门禁<br/>aits validate-data"]
         C["市场特征<br/>aits build-features"]
-        D["每日评分<br/>aits score-daily<br/>含人工复核摘要"]
+        D["每日评分<br/>aits score-daily<br/>含 SEC 基本面和人工复核摘要"]
         E["历史回测<br/>aits backtest"]
         F["观察池校验<br/>aits watchlist validate"]
         G["产业链图校验<br/>aits industry-chain validate"]
@@ -339,6 +354,7 @@ flowchart TD
     M --> N
     N --> O
     O --> P
+    P --> D
     H --> L
     I --> L
     J --> L
@@ -359,9 +375,9 @@ flowchart TD
 |质量报告|`outputs/reports/data_quality_YYYY-MM-DD.md`|声明数据是否可用于下游结论|已实现|
 |特征|`aits build-features`|生成可解释市场特征|已实现|
 |特征缓存|`data/processed/features_daily.csv`|保存 tidy 格式特征|已实现|
-|评分|`aits score-daily`|输出评分、仓位区间和日报|已实现|
+|评分|`aits score-daily`|先执行市场数据质量门禁，再校验 SEC 指标 CSV、构建 SEC 基本面特征，并输出评分、仓位区间和日报|已实现|
 |评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果|已实现|
-|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|输出中文结论、数据质量状态、限制说明和人工复核摘要|已实现|
+|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|输出中文结论、市场数据质量状态、SEC 基本面质量状态、限制说明和人工复核摘要|已实现|
 |回测|`aits backtest`|基于每日评分动态仓位回测|已实现|
 |回测报告|`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|输出市场阶段、质量状态和绩效指标|已实现|
 |能力圈|`config/watchlist.yaml`|记录核心标的、能力圈和 thesis 要求|已实现基础版|
@@ -374,15 +390,15 @@ flowchart TD
 |SEC 公司映射|`config/sec_companies.yaml`|记录核心标的 ticker、CIK、taxonomy 预期和 SEC companyfacts 指标周期覆盖范围|已实现基础版|
 |SEC 指标映射|`config/fundamental_metrics.yaml`|记录 SEC taxonomy/concept/unit 到内部基本面指标的映射、年度/季度偏好、支撑指标和显式派生规则|已实现基础版|
 |SEC 特征公式|`config/fundamental_features.yaml`|记录 SEC 基本面比率特征公式和周期偏好|已实现基础版|
-|SEC 基本面下载|`aits fundamentals download-sec-companyfacts`|下载 SEC companyfacts 原始 JSON 并写入审计 manifest；暂不进入自动评分|已实现基础版|
+|SEC 基本面下载|`aits fundamentals download-sec-companyfacts`|下载 SEC companyfacts 原始 JSON 并写入审计 manifest|已实现基础版|
 |SEC 基本面校验|`aits fundamentals validate-sec-companyfacts`|校验 SEC companyfacts JSON、CIK、taxonomy 和 manifest checksum|已实现基础版|
 |SEC 指标抽取|`aits fundamentals extract-sec-metrics`|先执行 SEC companyfacts 质量门禁，通过后抽取收入、毛利、营业利润、净利润、研发和 CapEx 等结构化摘要；只在显式配置且组件事实完全对齐时生成派生指标|已实现基础版|
 |SEC 指标校验|`aits fundamentals validate-sec-metrics`|校验 SEC 基本面指标 CSV 的 schema、重复键、未来披露日期、数值合法性和按公司周期覆盖声明计算的配置覆盖率|已实现基础版|
-|SEC 特征构建|`aits fundamentals build-sec-features`|先复用 SEC 指标 CSV 校验门禁，通过后生成毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度|已实现基础版|
-|SEC 指标缓存|`data/processed/sec_fundamentals_YYYY-MM-DD.csv`|保存 SEC 基本面指标结构化抽取结果，不直接等同于自动评分输入|已实现基础版|
-|SEC 特征缓存|`data/processed/sec_fundamental_features_YYYY-MM-DD.csv`|保存 SEC 基本面比率特征，暂不直接等同于自动评分输入|已实现基础版|
+|SEC 特征构建|`aits fundamentals build-sec-features` / `aits score-daily`|先复用 SEC 指标 CSV 校验门禁，通过后生成毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度；日报也会运行同一条特征构建路径|已实现基础版|
+|SEC 指标缓存|`data/processed/sec_fundamentals_YYYY-MM-DD.csv`|保存 SEC 基本面指标结构化抽取结果，是日报 SEC 基本面评分的输入|已实现基础版|
+|SEC 特征缓存|`data/processed/sec_fundamental_features_YYYY-MM-DD.csv`|保存 SEC 基本面比率特征，是日报基本面硬数据评分的审计输出|已实现基础版|
 |SEC 指标报告|`outputs/reports/sec_fundamentals_YYYY-MM-DD.md`|输出 SEC 缓存校验状态、抽取行数、缺失指标和方法限制|已实现基础版|
-|SEC 指标校验报告|`outputs/reports/sec_fundamentals_validation_YYYY-MM-DD.md`|声明抽取后 CSV 是否可进入后续基本面评分开发|已实现基础版|
+|SEC 指标校验报告|`outputs/reports/sec_fundamentals_validation_YYYY-MM-DD.md`|声明抽取后 CSV 是否可进入基本面特征构建和日报评分|已实现基础版|
 |SEC 特征报告|`outputs/reports/sec_fundamental_features_YYYY-MM-DD.md`|输出 SEC 指标 CSV 校验状态、特征公式、特征行数和限制说明|已实现基础版|
 |交易假设|`data/external/trade_theses/`|记录交易 thesis、验证指标和证伪条件|已实现基础版|
 |交易假设模板|`docs/examples/trade_theses/`|提供可复制 YAML 模板，不提交个人记录|已实现基础版|

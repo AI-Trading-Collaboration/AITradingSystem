@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
+from statistics import median
 
 import pandas as pd
 
@@ -13,6 +14,7 @@ from ai_trading_system.config import (
 )
 from ai_trading_system.data.quality import DataQualityReport
 from ai_trading_system.features.market import MarketFeatureSet
+from ai_trading_system.fundamentals.sec_features import SecFundamentalFeaturesReport
 from ai_trading_system.scoring.position_model import (
     ModuleScore,
     PositionRecommendation,
@@ -110,16 +112,22 @@ class DailyScoreReport:
     data_quality_report: DataQualityReport
     feature_set: MarketFeatureSet
     minimum_action_delta: float
+    fundamental_feature_report: SecFundamentalFeaturesReport | None = None
     review_summary: DailyReviewSummary | None = None
 
     @property
     def status(self) -> str:
+        if self.fundamental_feature_report and not self.fundamental_feature_report.passed:
+            return "FAIL"
         if self.review_summary and self.review_summary.has_failures:
             return "PASS_WITH_LIMITATIONS"
         if any(component.source_type != "hard_data" for component in self.components):
             return "PASS_WITH_LIMITATIONS"
         if self.feature_set.warnings or (
             self.review_summary and self.review_summary.has_warnings
+        ) or (
+            self.fundamental_feature_report
+            and self.fundamental_feature_report.warning_count
         ):
             return "PASS_WITH_WARNINGS"
         return "PASS"
@@ -132,9 +140,17 @@ def build_daily_score_report(
     total_risk_asset_min: float,
     total_risk_asset_max: float,
     review_summary: DailyReviewSummary | None = None,
+    fundamental_feature_report: SecFundamentalFeaturesReport | None = None,
 ) -> DailyScoreReport:
+    if fundamental_feature_report is not None and not fundamental_feature_report.passed:
+        raise ValueError("SEC 基本面特征报告未通过，不能进入每日评分")
+
     components = [
         _score_hard_data_module("trend", rules.weights["trend"], rules.trend, feature_set, rules),
+        _score_fundamental_module(
+            rules=rules,
+            fundamental_feature_report=fundamental_feature_report,
+        ),
         _score_hard_data_module(
             "macro_liquidity",
             rules.weights["macro_liquidity"],
@@ -150,7 +166,7 @@ def build_daily_score_report(
             rules,
         ),
     ]
-    for name in ["fundamentals", "valuation", "policy_geopolitics"]:
+    for name in ["valuation", "policy_geopolitics"]:
         placeholder = rules.placeholders[name]
         components.append(
             DailyScoreComponent(
@@ -176,6 +192,7 @@ def build_daily_score_report(
         data_quality_report=data_quality_report,
         feature_set=feature_set,
         minimum_action_delta=rules.position_change.minimum_action_delta,
+        fundamental_feature_report=fundamental_feature_report,
         review_summary=review_summary,
     )
 
@@ -218,6 +235,9 @@ def render_daily_score_report(
     feature_report_path: Path,
     features_path: Path,
     scores_path: Path,
+    sec_metrics_validation_report_path: Path | None = None,
+    sec_fundamental_feature_report_path: Path | None = None,
+    sec_fundamental_features_path: Path | None = None,
 ) -> str:
     recommendation = report.recommendation
     lines = [
@@ -253,12 +273,28 @@ def render_daily_score_report(
         f"- 特征报告：`{feature_report_path}`",
         f"- 特征数据：`{features_path}`",
         f"- 评分数据：`{scores_path}`",
-        "",
-        "## 模块评分",
-        "",
-        "| 模块 | 分数 | 权重 | 来源 | 覆盖率 | 说明 |",
-        "|---|---:|---:|---|---:|---|",
     ]
+    if report.fundamental_feature_report is not None:
+        lines.append(
+            f"- SEC 指标 CSV 校验状态：{report.fundamental_feature_report.validation_report.status}"
+        )
+        if sec_metrics_validation_report_path is not None:
+            lines.append(f"- SEC 指标 CSV 校验报告：`{sec_metrics_validation_report_path}`")
+        lines.append(f"- SEC 基本面特征状态：{report.fundamental_feature_report.status}")
+        if sec_fundamental_feature_report_path is not None:
+            lines.append(f"- SEC 基本面特征报告：`{sec_fundamental_feature_report_path}`")
+        if sec_fundamental_features_path is not None:
+            lines.append(f"- SEC 基本面特征数据：`{sec_fundamental_features_path}`")
+
+    lines.extend(
+        [
+            "",
+            "## 模块评分",
+            "",
+            "| 模块 | 分数 | 权重 | 来源 | 覆盖率 | 说明 |",
+            "|---|---:|---:|---|---:|---|",
+        ]
+    )
 
     for component in report.components:
         lines.append(
@@ -357,6 +393,9 @@ def write_daily_score_report(
     features_path: Path,
     scores_path: Path,
     output_path: Path,
+    sec_metrics_validation_report_path: Path | None = None,
+    sec_fundamental_feature_report_path: Path | None = None,
+    sec_fundamental_features_path: Path | None = None,
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
@@ -366,6 +405,9 @@ def write_daily_score_report(
             feature_report_path=feature_report_path,
             features_path=features_path,
             scores_path=scores_path,
+            sec_metrics_validation_report_path=sec_metrics_validation_report_path,
+            sec_fundamental_feature_report_path=sec_fundamental_feature_report_path,
+            sec_fundamental_features_path=sec_fundamental_features_path,
         ),
         encoding="utf-8",
     )
@@ -383,7 +425,50 @@ def _score_hard_data_module(
     feature_set: MarketFeatureSet,
     rules: ScoringRulesConfig,
 ) -> DailyScoreComponent:
-    feature_index = _feature_index(feature_set)
+    return _score_signal_module(
+        name=name,
+        weight=weight,
+        module_rules=module_rules,
+        feature_index=_feature_index(feature_set),
+        rules=rules,
+        source_description="市场硬数据",
+    )
+
+
+def _score_fundamental_module(
+    rules: ScoringRulesConfig,
+    fundamental_feature_report: SecFundamentalFeaturesReport | None,
+) -> DailyScoreComponent:
+    placeholder = rules.placeholders["fundamentals"]
+    if fundamental_feature_report is None or rules.fundamentals is None:
+        return DailyScoreComponent(
+            name="fundamentals",
+            score=placeholder.score,
+            weight=rules.weights["fundamentals"],
+            source_type="placeholder",
+            coverage=0.0,
+            reason=placeholder.reason,
+            signals=(),
+        )
+
+    return _score_signal_module(
+        name="fundamentals",
+        weight=rules.weights["fundamentals"],
+        module_rules=rules.fundamentals,
+        feature_index=_fundamental_feature_index(fundamental_feature_report),
+        rules=rules,
+        source_description="SEC 基本面硬数据",
+    )
+
+
+def _score_signal_module(
+    name: str,
+    weight: float,
+    module_rules: ScoreModuleRuleConfig,
+    feature_index: dict[tuple[str, str], float],
+    rules: ScoringRulesConfig,
+    source_description: str,
+) -> DailyScoreComponent:
     signals = tuple(_score_signal(signal, feature_index) for signal in module_rules.signals)
     total_points = sum(signal.points for signal in signals)
     available_points = sum(signal.points for signal in signals if signal.available)
@@ -393,7 +478,7 @@ def _score_hard_data_module(
         score = module_rules.neutral_score
         source_type = "insufficient_data"
         reason = (
-            f"硬数据信号覆盖率不足（{coverage:.0%}），"
+            f"{source_description}信号覆盖率不足（{coverage:.0%}），"
             f"使用中性分 {module_rules.neutral_score:.1f}。"
         )
     else:
@@ -402,7 +487,7 @@ def _score_hard_data_module(
         neutral_points = missing_points * (module_rules.neutral_score / 100.0)
         score = ((earned_points + neutral_points) / total_points) * 100.0
         source_type = "hard_data" if coverage == 1.0 else "partial_hard_data"
-        reason = f"已评估配置硬数据信号权重的 {coverage:.0%}。"
+        reason = f"已评估 {source_description} 配置权重的 {coverage:.0%}。"
 
     return DailyScoreComponent(
         name=name,
@@ -486,6 +571,21 @@ def _normalize_signal_value(value: float, signal: ScoreSignalConfig) -> float:
 
 def _feature_index(feature_set: MarketFeatureSet) -> dict[tuple[str, str], float]:
     return {(row.subject, row.feature): row.value for row in feature_set.rows}
+
+
+def _fundamental_feature_index(
+    report: SecFundamentalFeaturesReport,
+) -> dict[tuple[str, str], float]:
+    index: dict[tuple[str, str], float] = {}
+    aggregate_values: dict[str, list[float]] = {}
+    for row in report.rows:
+        feature_name = f"{row.feature_id}_{row.period_type}"
+        index[(row.ticker, feature_name)] = row.value
+        aggregate_values.setdefault(feature_name, []).append(row.value)
+
+    for feature_name, values in aggregate_values.items():
+        index[("AI_CORE_MEDIAN", f"{feature_name}_median")] = float(median(values))
+    return index
 
 
 def _score_component_record(as_of: date, component: DailyScoreComponent) -> dict[str, object]:

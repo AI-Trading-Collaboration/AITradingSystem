@@ -1695,6 +1695,34 @@ def score_daily(
         Path | None,
         typer.Option(help="Markdown 数据质量报告输出路径。"),
     ] = None,
+    sec_companies_path: Annotated[
+        Path,
+        typer.Option(help="SEC company CIK 配置文件路径，用于日报基本面评分。"),
+    ] = DEFAULT_SEC_COMPANIES_CONFIG_PATH,
+    sec_metrics_path: Annotated[
+        Path,
+        typer.Option(help="SEC 指标映射配置文件路径，用于日报基本面评分。"),
+    ] = DEFAULT_FUNDAMENTAL_METRICS_CONFIG_PATH,
+    fundamental_feature_config_path: Annotated[
+        Path,
+        typer.Option(help="SEC 基本面特征公式配置文件路径，用于日报基本面评分。"),
+    ] = DEFAULT_FUNDAMENTAL_FEATURES_CONFIG_PATH,
+    sec_fundamentals_path: Annotated[
+        Path | None,
+        typer.Option(help="SEC 基本面指标 CSV 输入路径，用于日报基本面评分。"),
+    ] = None,
+    sec_fundamental_features_path: Annotated[
+        Path | None,
+        typer.Option(help="SEC 基本面特征 CSV 输出路径，用于日报基本面评分。"),
+    ] = None,
+    sec_fundamental_feature_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown SEC 基本面特征报告输出路径。"),
+    ] = None,
+    sec_metrics_validation_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown SEC 基本面指标 CSV 校验报告输出路径。"),
+    ] = None,
     thesis_path: Annotated[
         Path,
         typer.Option(help="交易 thesis YAML 文件或目录路径，用于写入日报复核摘要。"),
@@ -1753,6 +1781,31 @@ def score_daily(
         PROJECT_ROOT / "outputs" / "reports",
         score_date,
     )
+    sec_fundamentals_input = sec_fundamentals_path or default_sec_fundamental_metrics_csv_path(
+        PROJECT_ROOT / "data" / "processed",
+        score_date,
+    )
+    sec_metrics_validation_output = (
+        sec_metrics_validation_report_path
+        or default_sec_fundamental_metrics_validation_report_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            score_date,
+        )
+    )
+    sec_fundamental_features_output = (
+        sec_fundamental_features_path
+        or default_sec_fundamental_features_csv_path(
+            PROJECT_ROOT / "data" / "processed",
+            score_date,
+        )
+    )
+    sec_fundamental_feature_report_output = (
+        sec_fundamental_feature_report_path
+        or default_sec_fundamental_features_report_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            score_date,
+        )
+    )
 
     data_quality_report = validate_data_cache(
         prices_path=prices_path,
@@ -1790,6 +1843,61 @@ def score_daily(
         features_path=features_output,
         output_path=feature_report_output,
     )
+    sec_companies = load_sec_companies(sec_companies_path)
+    sec_metrics = load_fundamental_metrics(sec_metrics_path)
+    sec_metrics_validation_report = validate_sec_fundamental_metrics_csv(
+        companies=sec_companies,
+        metrics=sec_metrics,
+        input_path=sec_fundamentals_input,
+        as_of=score_date,
+    )
+    write_sec_fundamental_metrics_validation_report(
+        sec_metrics_validation_report,
+        sec_metrics_validation_output,
+    )
+    if not sec_metrics_validation_report.passed:
+        console.print("[red]SEC 基本面指标 CSV 校验失败，已停止每日评分。[/red]")
+        console.print(f"SEC 指标 CSV 校验报告：{sec_metrics_validation_output}")
+        console.print(f"SEC 指标 CSV：{sec_fundamentals_input}")
+        console.print(
+            f"错误数：{sec_metrics_validation_report.error_count}；"
+            f"警告数：{sec_metrics_validation_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+
+    sec_fundamental_feature_report = build_sec_fundamental_features_report(
+        companies=sec_companies,
+        feature_config=load_fundamental_features(fundamental_feature_config_path),
+        input_path=sec_fundamentals_input,
+        as_of=score_date,
+        validation_report=sec_metrics_validation_report,
+    )
+    if not sec_fundamental_feature_report.passed:
+        write_sec_fundamental_features_report(
+            report=sec_fundamental_feature_report,
+            validation_report_path=sec_metrics_validation_output,
+            output_csv_path=sec_fundamental_features_output,
+            output_path=sec_fundamental_feature_report_output,
+        )
+        console.print("[red]SEC 基本面特征构建失败，已停止每日评分。[/red]")
+        console.print(f"SEC 基本面特征报告：{sec_fundamental_feature_report_output}")
+        console.print(f"SEC 指标 CSV 校验报告：{sec_metrics_validation_output}")
+        console.print(
+            f"错误数：{sec_fundamental_feature_report.error_count}；"
+            f"警告数：{sec_fundamental_feature_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+
+    sec_fundamental_features_output = write_sec_fundamental_features_csv(
+        sec_fundamental_feature_report,
+        sec_fundamental_features_output,
+    )
+    sec_fundamental_feature_report_output = write_sec_fundamental_features_report(
+        report=sec_fundamental_feature_report,
+        validation_report_path=sec_metrics_validation_output,
+        output_csv_path=sec_fundamental_features_output,
+        output_path=sec_fundamental_feature_report_output,
+    )
     review_summary = _build_daily_review_summary(
         thesis_path=thesis_path,
         risk_events_path=risk_events_path,
@@ -1810,6 +1918,7 @@ def score_daily(
         total_risk_asset_min=portfolio.portfolio.total_risk_asset_min,
         total_risk_asset_max=portfolio.portfolio.total_risk_asset_max,
         review_summary=review_summary,
+        fundamental_feature_report=sec_fundamental_feature_report,
     )
     scores_output = write_scores_csv(score_report, scores_path)
     daily_report_output = write_daily_score_report(
@@ -1819,6 +1928,9 @@ def score_daily(
         features_path=features_output,
         scores_path=scores_output,
         output_path=score_report_output,
+        sec_metrics_validation_report_path=sec_metrics_validation_output,
+        sec_fundamental_feature_report_path=sec_fundamental_feature_report_output,
+        sec_fundamental_features_path=sec_fundamental_features_output,
     )
 
     status_style = "green" if score_report.status == "PASS" else "yellow"
@@ -1828,6 +1940,10 @@ def score_daily(
     console.print(f"每日评分报告：{daily_report_output}")
     console.print(f"评分数据：{scores_output}")
     console.print(f"特征摘要：{feature_summary_output}")
+    console.print(
+        f"SEC 基本面特征：{sec_fundamental_features_output}"
+        f"（{sec_fundamental_feature_report.status}）"
+    )
     console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
 
 

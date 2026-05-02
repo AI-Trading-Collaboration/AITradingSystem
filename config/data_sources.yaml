@@ -201,7 +201,7 @@ sources:
       - duplicate_keys
       - freshness
     limitations:
-      - 当前已落地原始 companyfacts JSON、审计清单和基础指标抽取；尚未进入自动基本面评分。
+      - 当前已落地原始 companyfacts JSON、审计清单、基础指标抽取、特征构建和日报基本面评分；历史回测暂未接入历史 SEC 特征切片。
       - SEC XBRL taxonomy 在 US GAAP 和 IFRS 公司之间可能不同，进入评分前必须做字段映射校验。
       - TSM 当前在 SEC companyfacts 路径只作为年度基本面来源；季度基本面需接入 TSM 官方 IR 或其他可审计来源。
     owner_notes: 基本面模块一手来源；下载必须提供符合 SEC fair access 要求的 User-Agent。

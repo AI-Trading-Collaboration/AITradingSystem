@@ -53,6 +53,35 @@ trend:
       bullish_above: 0.0
       points: 10
 
+fundamentals:
+  neutral_score: 50
+  signals:
+    - subject: AI_CORE_MEDIAN
+      feature: gross_margin_quarterly_median
+      scale_min: 0.35
+      scale_max: 0.70
+      points: 25
+    - subject: AI_CORE_MEDIAN
+      feature: operating_margin_quarterly_median
+      scale_min: 0.05
+      scale_max: 0.40
+      points: 25
+    - subject: AI_CORE_MEDIAN
+      feature: net_margin_quarterly_median
+      scale_min: 0.00
+      scale_max: 0.30
+      points: 20
+    - subject: AI_CORE_MEDIAN
+      feature: research_and_development_intensity_quarterly_median
+      scale_min: 0.05
+      scale_max: 0.18
+      points: 15
+    - subject: AI_CORE_MEDIAN
+      feature: capex_intensity_annual_median
+      scale_min: 0.05
+      scale_max: 0.30
+      points: 15
+
 macro_liquidity:
   neutral_score: 50
   signals:
@@ -94,7 +123,7 @@ risk_sentiment:
 placeholders:
   fundamentals:
     score: 50
-    reason: "MVP 阶段占位：尚未接入基本面和财报数据。"
+    reason: "基本面硬数据占位：未向评分流程传入已通过校验的 SEC 基本面特征。"
   valuation:
     score: 50
     reason: "MVP 阶段占位：尚未接入估值和预期数据。"

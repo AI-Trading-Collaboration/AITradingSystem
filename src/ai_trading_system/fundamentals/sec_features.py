@@ -321,7 +321,7 @@ def render_sec_fundamental_features_report(
             "- CapEx 强度当前只按年度生成。季度 CapEx 与收入需要多期共同周期对齐，"
             "不能把不同季度的最新值直接相除。",
             "- CapEx 强度保留 SEC 指标抽取层原始符号，不在特征层取绝对值。",
-            "- 本阶段只生成可复核的基本面特征，尚未把基本面特征接入每日评分。",
+            "- 已通过校验的 SEC 基本面特征会进入 `score-daily` 的基本面硬数据评分。",
         ]
     )
     return "\n".join(lines) + "\n"

@@ -75,7 +75,7 @@
 
 - 建立持仓与观察池管理，记录能力圈、买入理由、目标周期和风险等级。
 - 建立产业链节点模型，覆盖云厂商 CapEx、GPU/ASIC、HBM、先进封装、晶圆代工、设备材料。
-- 建立财报数据结构。状态：已实现 SEC companyfacts 原始 JSON 下载、审计清单、缓存校验和基础指标抽取。
+- 建立财报数据结构。状态：已实现 SEC companyfacts 原始 JSON 下载、审计清单、缓存校验、基础指标抽取、特征构建和日报基本面评分接入。
 - 跟踪收入增速、毛利率、EPS 预期、CapEx、数据中心收入。
 - 跟踪 Forward P/E、PEG、EV/Sales 和历史分位。
 - 跟踪拥挤度和预期过热信号。
@@ -139,8 +139,9 @@
 11. 实现估值与拥挤度快照。状态：已实现基础版，命令为 `aits valuation list/validate/review`。
 12. 实现交易复盘归因。状态：已实现基础版，命令为 `aits review-trades`。
 13. 实现 SEC companyfacts 原始基本面数据下载和缓存校验。状态：已实现基础版，命令为 `aits fundamentals download-sec-companyfacts` 和 `aits fundamentals validate-sec-companyfacts`。
-14. 实现 SEC companyfacts 基础指标抽取和派生指标校验。状态：已实现基础版，命令为 `aits fundamentals extract-sec-metrics` 和 `aits fundamentals validate-sec-metrics`，输出结构化 CSV 和中文 Markdown 报告，暂不进入自动评分。
+14. 实现 SEC companyfacts 基础指标抽取和派生指标校验。状态：已实现基础版，命令为 `aits fundamentals extract-sec-metrics` 和 `aits fundamentals validate-sec-metrics`，输出结构化 CSV 和中文 Markdown 报告。
 15. 实现 SEC 基本面比率特征。状态：已实现基础版，命令为 `aits fundamentals build-sec-features`，先复用 SEC 指标 CSV 校验门禁，再输出毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度。
+16. 接入 SEC 基本面硬数据评分。状态：已实现基础版，`aits score-daily` 会先校验 SEC 指标 CSV、构建 SEC 基本面特征，通过后按 `config/scoring_rules.yaml` 的 `fundamentals` 规则评分；失败时停止日报评分。
 
 ## 阶段 1 数据缓存约定
 
@@ -188,7 +189,7 @@
 
 ## 阶段 1 每日评分约定
 
-每日评分命令为 `aits score-daily`。该命令会先执行数据质量门禁，再构建特征，并把交易 thesis、风险事件、估值快照和交易复盘状态写入日报复核摘要。
+每日评分命令为 `aits score-daily`。该命令会先执行市场数据质量门禁，再构建市场特征，并校验 SEC 指标 CSV、构建 SEC 基本面特征，最后把交易 thesis、风险事件、估值快照和交易复盘状态写入日报复核摘要。
 
 默认输出：
 
@@ -198,9 +199,10 @@
 评分规则集中在 `config/scoring_rules.yaml`。当前基础版包括：
 
 - 趋势：指数趋势、半导体趋势、核心观察池宽度、SMH/SPY 相对强弱。
+- 基本面：已通过校验的 AI 核心观察池 SEC 特征中位数，包括季度毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度。
 - 宏观流动性：DGS10、DGS2、美元指数。
 - 风险情绪：VIX 当前值、VIX 分位、VIX 短期变化。
-- 基本面、估值、政策地缘：明确标记为 MVP 占位输入。
+- 估值、政策地缘：明确标记为 MVP 占位输入。
 - 人工复核摘要：汇总 thesis、风险事件、估值快照和交易复盘状态；交易复盘复用同一份数据质量门禁结果。
 
 如果某个硬数据模块的信号覆盖率低于配置阈值，模块使用中性分并标记为 `insufficient_data`，不能静默给出伪精确分数。
@@ -235,7 +237,7 @@
 - `outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`
 - `outputs/backtests/backtest_daily_YYYY-MM-DD_YYYY-MM-DD.csv`
 
-当前回测状态会标记为 `PASS_WITH_LIMITATIONS`，因为基本面、估值、政策/地缘模块仍是 MVP 占位输入。回测只能说明当前硬数据评分和仓位映射的历史表现，不能代表完整投资系统已经完成。
+当前回测状态会标记为 `PASS_WITH_LIMITATIONS`，因为回测暂未接入历史 SEC 基本面特征，估值和政策/地缘模块也仍是 MVP 占位输入。回测只能说明当前市场硬数据评分和仓位映射的历史表现，不能代表完整投资系统已经完成。
 
 如果要运行跨周期压力测试，可以使用 `--regime cross_cycle_stress`，其默认起点为 `2019-01-01`，使用 2018 年历史作为 200 日均线和 252 日 VIX 分位的 warm-up。该区间覆盖更多宏观压力环境，但不应替代 ChatGPT 之后 AI 主线行情的默认解释窗口。
 
