@@ -252,6 +252,7 @@ def render_sec_fundamental_metrics_report(
             "taxonomy 差异和缺失项必须先人工复核。",
             "- 年度指标优先使用 FY 事实；季度指标优先使用 Q1/Q2/Q3/Q4 事实，"
             "均选最新截止日和披露日。",
+            "- 只抽取 `filed` 日期不晚于评估日期的事实，避免历史回测和历史日报出现未来函数。",
             "- 数值保留 SEC companyfacts 原始符号，不在抽取层重写正负号。",
         ]
     )
@@ -353,6 +354,7 @@ def _extract_metric_row(
             concept_config.concept,
             concept_config.unit,
             period_type,
+            as_of,
         )
         if fact is None:
             continue
@@ -388,6 +390,7 @@ def _latest_fact(
     concept: str,
     unit: str,
     period_type: PeriodType,
+    as_of: date,
 ) -> dict[str, Any] | None:
     facts = data.get("facts")
     if not isinstance(facts, dict):
@@ -411,6 +414,7 @@ def _latest_fact(
         if isinstance(fact, dict)
         and _numeric_value(fact.get("val")) is not None
         and _period_matches(fact, period_type)
+        and _is_available_as_of(fact, as_of)
     ]
     if not candidates:
         return None
@@ -423,6 +427,11 @@ def _period_matches(fact: dict[str, Any], period_type: PeriodType) -> bool:
     if period_type == "annual":
         return fiscal_period == "FY" or form in {"10-K", "20-F", "40-F"}
     return fiscal_period in {"Q1", "Q2", "Q3", "Q4"} and form not in {"10-K", "20-F", "40-F"}
+
+
+def _is_available_as_of(fact: dict[str, Any], as_of: date) -> bool:
+    filed_date = _date_or_none(fact.get("filed"))
+    return filed_date is not None and filed_date <= as_of
 
 
 def _fact_sort_key(fact: dict[str, Any]) -> tuple[date, date, int]:

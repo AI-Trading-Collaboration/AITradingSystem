@@ -53,6 +53,33 @@ def test_build_sec_fundamental_metrics_report_extracts_latest_facts(tmp_path: Pa
     assert "本报告只把 SEC companyfacts 原始 JSON 抽成结构化摘要" in markdown
 
 
+def test_build_sec_fundamental_metrics_report_uses_only_filed_facts_as_of(
+    tmp_path: Path,
+) -> None:
+    companies = _sec_config()
+    json_path = _write_companyfacts(tmp_path, ticker="NVDA", cik="0001045810")
+    _write_manifest(tmp_path, ticker="NVDA", cik="0001045810", json_path=json_path)
+    validation = validate_sec_companyfacts_cache(
+        companies,
+        input_dir=tmp_path,
+        as_of=date(2025, 2, 1),
+    )
+
+    report = build_sec_fundamental_metrics_report(
+        companies=companies,
+        metrics=_metrics_config(),
+        input_dir=tmp_path,
+        as_of=date(2025, 2, 1),
+        validation_report=validation,
+    )
+
+    annual_rows = [row for row in report.rows if row.period_type == "annual"]
+    assert len(annual_rows) == 1
+    assert annual_rows[0].fiscal_year == 2024
+    assert annual_rows[0].filed_date == date(2024, 2, 21)
+    assert "sec_metric_missing" in {issue.code for issue in report.issues}
+
+
 def test_build_sec_fundamental_metrics_report_requires_passing_validation(
     tmp_path: Path,
 ) -> None:
