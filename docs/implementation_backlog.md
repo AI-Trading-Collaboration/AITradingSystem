@@ -30,6 +30,7 @@
 |仓位评分骨架|已完成基础版|100 分映射到仓位区间，支持总资产换算|
 |观察池与能力圈|已完成基础版|`aits watchlist list/validate`，核心个股能力圈和产业链节点映射|
 |历史回测|已完成基础版|`aits backtest`，每日评分动态仓位与 SPY/QQQ/SMH/SOXX 基准对比|
+|回测 SEC 基本面|已完成基础版|`aits backtest` 按 signal_date 从 SEC companyfacts 构建 point-in-time 基本面特征，避免使用未来披露|
 |产业链因果图|已完成基础版|`aits industry-chain list/validate`，节点、父子关系、领先指标和观察池引用校验|
 |交易 thesis 与假设验证|已完成基础版|`aits thesis list/validate/review`，结构化假设、验证指标、证伪条件和复核报告|
 |风险事件分级|已完成基础版|`aits risk-events list/validate`，L1/L2/L3、影响节点、相关标的和动作规则|
@@ -70,7 +71,7 @@ aits backtest --to 2026-05-02 --quality-as-of 2026-05-02
 
 限制：
 
-- 回测暂未接入历史 SEC 基本面特征，估值和政策/地缘仍是 MVP 占位输入，因此回测只能验证当前市场硬数据规则和仓位映射，不能视为完整策略结论。
+- 回测已接入 point-in-time SEC 基本面特征；估值和政策/地缘仍是 MVP 占位输入，因此回测仍不能视为完整策略结论。
 - 当前未计入税费、汇率、融资利率、盘口冲击和盘中执行偏差。
 - `cross_cycle_stress` 从 `2019-01-01` 开始，适合作为非默认压力测试；这类结果需要和默认 AI regime 结果分开解释。
 
@@ -500,7 +501,7 @@ aits review-trades --as-of 2026-05-02
 |`data/raw/download_manifest.csv`|下载审计清单，记录 provider、endpoint、请求参数、下载时间、行数和 checksum|M1，已实现基础版|
 |`data/raw/sec_companyfacts/`|SEC companyfacts 原始 JSON 和下载 manifest|阶段 2，已实现基础版|
 |`data/processed/sec_fundamentals_YYYY-MM-DD.csv`|SEC 基本面指标抽取结果，是日报 SEC 基本面评分的输入|阶段 2，已实现基础版|
-|`data/processed/sec_fundamental_features_YYYY-MM-DD.csv`|SEC 基本面比率特征，是日报基本面硬数据评分的审计输出|阶段 2，已实现基础版|
+|`data/processed/sec_fundamental_features_YYYY-MM-DD.csv`|SEC 基本面比率特征，是日报基本面硬数据评分的审计输出；回测会按 signal_date 在内存中生成 point-in-time 特征|阶段 2，已实现基础版|
 |`data/processed/features_daily.csv`|每日特征|M1|
 |`data/processed/scores_daily.csv`|每日评分|M2|
 |`data/external/trade_theses/`|交易 thesis|M5，已实现基础版|
@@ -524,13 +525,13 @@ aits review-trades --as-of 2026-05-02
 
 接下来建议按这个顺序开发：
 
-1. 为历史回测补充可审计的历史 SEC 基本面特征切片，避免回测长期只使用市场硬数据和占位基本面。
-2. 接入估值/预期的正式数据源或审计化手工快照，把估值从占位项转为可评分模块。
+1. 接入估值/预期的正式数据源或审计化手工快照，把估值从占位项转为可评分模块。
+2. 为回测 point-in-time SEC 基本面输出单独的审计摘要，统计每个 signal_date 的覆盖率、警告和缺失特征。
 
 原因：
 
 - 阶段 1 的市场数据、评分、观察池、回测、产业链配置、交易 thesis、风险事件分级、估值与拥挤度快照、交易复盘基础闭环，以及日报复核摘要集成已经完成。
-- SEC 基本面特征已经接入当日日报评分；下一步的主要价值是让回测和估值模块也具备同等的数据质量、来源审计和解释能力。
+- SEC 基本面特征已经接入当日日报评分和 point-in-time 回测；下一步的主要价值是让估值模块具备同等的数据质量、来源审计和解释能力，并把回测 SEC 覆盖质量展示得更清楚。
 
 ## 不应马上做的事
 

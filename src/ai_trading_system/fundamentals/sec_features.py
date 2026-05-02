@@ -19,7 +19,9 @@ from ai_trading_system.config import (
 from ai_trading_system.fundamentals.sec_metrics import (
     SEC_FUNDAMENTAL_METRIC_COLUMNS,
     PeriodType,
+    SecFundamentalMetricRow,
     SecFundamentalMetricsCsvValidationReport,
+    sec_fundamental_metric_rows_to_frame,
 )
 
 
@@ -155,7 +157,6 @@ def build_sec_fundamental_features_report(
     validation_report: SecFundamentalMetricsCsvValidationReport,
 ) -> SecFundamentalFeaturesReport:
     issues: list[SecFundamentalFeatureIssue] = []
-    rows: list[SecFundamentalFeatureRow] = []
 
     if not validation_report.passed:
         raise ValueError("SEC 基本面指标 CSV 校验必须通过后才能构建基本面特征")
@@ -170,6 +171,51 @@ def build_sec_fundamental_features_report(
             issues=tuple(issues),
         )
 
+    return _build_sec_fundamental_features_report_from_frame(
+        companies=companies,
+        feature_config=feature_config,
+        frame=frame,
+        input_path=input_path,
+        as_of=as_of,
+        validation_report=validation_report,
+        issues=issues,
+    )
+
+
+def build_sec_fundamental_features_report_from_metric_rows(
+    companies: SecCompaniesConfig,
+    feature_config: FundamentalFeaturesConfig,
+    metric_rows: tuple[SecFundamentalMetricRow, ...],
+    source_path: Path,
+    as_of: date,
+    validation_report: SecFundamentalMetricsCsvValidationReport,
+) -> SecFundamentalFeaturesReport:
+    if not validation_report.passed:
+        raise ValueError("SEC 基本面指标行校验必须通过后才能构建基本面特征")
+
+    frame = sec_fundamental_metric_rows_to_frame(metric_rows)
+    frame = frame.loc[frame["as_of"].astype(str) == as_of.isoformat()].copy()
+    return _build_sec_fundamental_features_report_from_frame(
+        companies=companies,
+        feature_config=feature_config,
+        frame=frame,
+        input_path=source_path,
+        as_of=as_of,
+        validation_report=validation_report,
+        issues=[],
+    )
+
+
+def _build_sec_fundamental_features_report_from_frame(
+    companies: SecCompaniesConfig,
+    feature_config: FundamentalFeaturesConfig,
+    frame: pd.DataFrame,
+    input_path: Path,
+    as_of: date,
+    validation_report: SecFundamentalMetricsCsvValidationReport,
+    issues: list[SecFundamentalFeatureIssue],
+) -> SecFundamentalFeaturesReport:
+    rows: list[SecFundamentalFeatureRow] = []
     metric_index = _metric_index(frame)
     for company in companies.companies:
         if not company.active:

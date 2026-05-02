@@ -247,6 +247,15 @@ def write_sec_fundamental_metrics_csv(
     return output_path
 
 
+def sec_fundamental_metric_rows_to_frame(
+    rows: tuple[SecFundamentalMetricRow, ...],
+) -> pd.DataFrame:
+    return pd.DataFrame(
+        [_row_record(row) for row in rows],
+        columns=list(SEC_FUNDAMENTAL_METRIC_COLUMNS),
+    )
+
+
 def render_sec_fundamental_metrics_report(
     report: SecFundamentalMetricsReport,
     validation_report_path: Path,
@@ -414,6 +423,41 @@ def validate_sec_fundamental_metrics_csv(
             issues=issues,
         )
 
+    return _validate_sec_fundamental_metrics_frame(
+        companies=companies,
+        metrics=metrics,
+        input_path=input_path,
+        frame=frame,
+        as_of=as_of,
+        issues=issues,
+    )
+
+
+def validate_sec_fundamental_metric_rows(
+    companies: SecCompaniesConfig,
+    metrics: FundamentalMetricsConfig,
+    rows: tuple[SecFundamentalMetricRow, ...],
+    source_path: Path,
+    as_of: date,
+) -> SecFundamentalMetricsCsvValidationReport:
+    return _validate_sec_fundamental_metrics_frame(
+        companies=companies,
+        metrics=metrics,
+        input_path=source_path,
+        frame=sec_fundamental_metric_rows_to_frame(rows),
+        as_of=as_of,
+        issues=[],
+    )
+
+
+def _validate_sec_fundamental_metrics_frame(
+    companies: SecCompaniesConfig,
+    metrics: FundamentalMetricsConfig,
+    input_path: Path,
+    frame: pd.DataFrame,
+    as_of: date,
+    issues: list[SecMetricIssue],
+) -> SecFundamentalMetricsCsvValidationReport:
     missing_columns = sorted(set(SEC_FUNDAMENTAL_METRIC_COLUMNS) - set(frame.columns))
     if missing_columns:
         issues.append(

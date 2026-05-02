@@ -131,7 +131,7 @@
 3. 实现技术特征计算。状态：已实现基础版，命令为 `aits build-features`。
 4. 实现 100 分评分到仓位区间的规则。状态：已实现基础版，命令为 `aits score-daily`。
 5. 实现观察池与能力圈配置。状态：已实现基础版，命令为 `aits watchlist list/validate`。
-6. 实现简单回测引擎。状态：已实现基础版，命令为 `aits backtest`。
+6. 实现简单回测引擎。状态：已实现基础版，命令为 `aits backtest`，包含 signal_date 级 point-in-time SEC 基本面特征。
 7. 实现产业链节点与因果图配置。状态：已实现基础版，命令为 `aits industry-chain list/validate`。
 8. 输出一份日报 Markdown。状态：已实现基础版，命令为 `aits score-daily`。
 9. 实现交易 thesis 与假设验证。状态：已实现基础版，命令为 `aits thesis list/validate/review`。
@@ -142,6 +142,7 @@
 14. 实现 SEC companyfacts 基础指标抽取和派生指标校验。状态：已实现基础版，命令为 `aits fundamentals extract-sec-metrics` 和 `aits fundamentals validate-sec-metrics`，输出结构化 CSV 和中文 Markdown 报告。
 15. 实现 SEC 基本面比率特征。状态：已实现基础版，命令为 `aits fundamentals build-sec-features`，先复用 SEC 指标 CSV 校验门禁，再输出毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度。
 16. 接入 SEC 基本面硬数据评分。状态：已实现基础版，`aits score-daily` 会先校验 SEC 指标 CSV、构建 SEC 基本面特征，通过后按 `config/scoring_rules.yaml` 的 `fundamentals` 规则评分；失败时停止日报评分。
+17. 接入回测 point-in-time SEC 基本面。状态：已实现基础版，`aits backtest` 会校验 SEC companyfacts 缓存，并按每个 signal_date 只使用 `filed_date <= signal_date` 的 SEC 事实生成基本面特征。
 
 ## 阶段 1 数据缓存约定
 
@@ -237,7 +238,7 @@
 - `outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`
 - `outputs/backtests/backtest_daily_YYYY-MM-DD_YYYY-MM-DD.csv`
 
-当前回测状态会标记为 `PASS_WITH_LIMITATIONS`，因为回测暂未接入历史 SEC 基本面特征，估值和政策/地缘模块也仍是 MVP 占位输入。回测只能说明当前市场硬数据评分和仓位映射的历史表现，不能代表完整投资系统已经完成。
+当前回测状态会标记为 `PASS_WITH_LIMITATIONS`，因为估值和政策/地缘模块仍是 MVP 占位输入。回测已经按 signal_date 接入 point-in-time SEC 基本面特征，但仍不能代表完整投资系统已经完成。
 
 如果要运行跨周期压力测试，可以使用 `--regime cross_cycle_stress`，其默认起点为 `2019-01-01`，使用 2018 年历史作为 200 日均线和 252 日 VIX 分位的 warm-up。该区间覆盖更多宏观压力环境，但不应替代 ChatGPT 之后 AI 主线行情的默认解释窗口。
 

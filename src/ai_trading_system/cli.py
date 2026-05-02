@@ -72,7 +72,9 @@ from ai_trading_system.fundamentals.sec_companyfacts import (
     download_sec_companyfacts,
 )
 from ai_trading_system.fundamentals.sec_features import (
+    SecFundamentalFeaturesReport,
     build_sec_fundamental_features_report,
+    build_sec_fundamental_features_report_from_metric_rows,
     default_sec_fundamental_features_csv_path,
     default_sec_fundamental_features_report_path,
     write_sec_fundamental_features_csv,
@@ -83,6 +85,7 @@ from ai_trading_system.fundamentals.sec_metrics import (
     default_sec_fundamental_metrics_csv_path,
     default_sec_fundamental_metrics_report_path,
     default_sec_fundamental_metrics_validation_report_path,
+    validate_sec_fundamental_metric_rows,
     validate_sec_fundamental_metrics_csv,
     write_sec_fundamental_metrics_csv,
     write_sec_fundamental_metrics_report,
@@ -354,6 +357,26 @@ def backtest(
         Path | None,
         typer.Option(help="Markdown 数据质量报告输出路径。"),
     ] = None,
+    sec_companies_path: Annotated[
+        Path,
+        typer.Option(help="SEC company CIK 配置文件路径，用于 point-in-time 基本面回测。"),
+    ] = DEFAULT_SEC_COMPANIES_CONFIG_PATH,
+    sec_metrics_path: Annotated[
+        Path,
+        typer.Option(help="SEC 指标映射配置文件路径，用于 point-in-time 基本面回测。"),
+    ] = DEFAULT_FUNDAMENTAL_METRICS_CONFIG_PATH,
+    fundamental_feature_config_path: Annotated[
+        Path,
+        typer.Option(help="SEC 基本面特征公式配置文件路径，用于 point-in-time 基本面回测。"),
+    ] = DEFAULT_FUNDAMENTAL_FEATURES_CONFIG_PATH,
+    sec_companyfacts_dir: Annotated[
+        Path,
+        typer.Option(help="SEC companyfacts 原始 JSON 缓存目录。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "sec_companyfacts",
+    sec_companyfacts_validation_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown SEC companyfacts 缓存校验报告输出路径。"),
+    ] = None,
     quality_as_of: Annotated[
         str | None,
         typer.Option(help="数据质量校验日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -400,6 +423,13 @@ def backtest(
         start_date,
         end_date,
     )
+    sec_companyfacts_validation_output = (
+        sec_companyfacts_validation_report_path
+        or default_sec_companyfacts_validation_report_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            quality_date,
+        )
+    )
 
     data_quality_report = validate_data_cache(
         prices_path=prices_path,
@@ -423,9 +453,27 @@ def backtest(
         )
         raise typer.Exit(code=1)
 
+    prices_frame = pd.read_csv(prices_path)
+    rates_frame = pd.read_csv(rates_path)
+    signal_dates = _backtest_signal_dates(
+        prices=prices_frame,
+        strategy_ticker=strategy_ticker,
+        start=start_date,
+        end=end_date,
+    )
+    sec_fundamental_feature_reports = _build_backtest_sec_fundamental_feature_reports(
+        signal_dates=signal_dates,
+        sec_companies_path=sec_companies_path,
+        sec_metrics_path=sec_metrics_path,
+        fundamental_feature_config_path=fundamental_feature_config_path,
+        sec_companyfacts_dir=sec_companyfacts_dir,
+        validation_as_of=quality_date,
+        validation_report_output=sec_companyfacts_validation_output,
+    )
+
     result = run_daily_score_backtest(
-        prices=pd.read_csv(prices_path),
-        rates=pd.read_csv(rates_path),
+        prices=prices_frame,
+        rates=rates_frame,
         feature_config=feature_config,
         scoring_rules=scoring_rules,
         portfolio_config=portfolio,
@@ -436,6 +484,7 @@ def backtest(
         strategy_ticker=strategy_ticker,
         benchmark_tickers=tuple(benchmark_tickers),
         cost_bps=cost_bps,
+        fundamental_feature_reports=sec_fundamental_feature_reports,
         market_regime=BacktestRegimeContext(
             regime_id=selected_regime.regime_id,
             name=selected_regime.name,
@@ -451,6 +500,7 @@ def backtest(
         data_quality_report_path=quality_output,
         daily_output_path=daily_output,
         output_path=backtest_report_output,
+        sec_companyfacts_validation_report_path=sec_companyfacts_validation_output,
     )
 
     console.print(f"[yellow]回测状态：{result.status}[/yellow]")
@@ -463,6 +513,12 @@ def backtest(
     console.print(f"策略最大回撤：{result.strategy_metrics.max_drawdown:.1%}")
     console.print(f"回测报告：{report_output}")
     console.print(f"每日明细：{daily_output}")
+    console.print(
+        f"SEC 基本面切片：{result.fundamental_feature_report_count} 个 signal_date"
+    )
+    console.print(
+        f"SEC companyfacts 校验报告：{sec_companyfacts_validation_output}"
+    )
     console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
 
 
@@ -2151,6 +2207,122 @@ def _daily_review_exception_status(
 
 def _download_manifest_path(prices_path: Path) -> Path:
     return prices_path.parent / "download_manifest.csv"
+
+
+def _backtest_signal_dates(
+    prices: pd.DataFrame,
+    strategy_ticker: str,
+    start: date,
+    end: date,
+) -> tuple[date, ...]:
+    required_columns = {"date", "ticker", "adj_close"}
+    missing = sorted(required_columns - set(prices.columns))
+    if missing:
+        raise typer.BadParameter(f"价格数据缺少必需字段：{', '.join(missing)}")
+
+    frame = prices.loc[prices["ticker"].astype(str) == strategy_ticker].copy()
+    if frame.empty:
+        raise typer.BadParameter(f"回测缺少策略代理标的价格：{strategy_ticker}")
+
+    frame["_date"] = pd.to_datetime(frame["date"], errors="coerce")
+    frame["_adj_close"] = pd.to_numeric(frame["adj_close"], errors="coerce")
+    frame = frame.loc[frame["_date"].notna() & frame["_adj_close"].notna()].sort_values("_date")
+    timestamps = list(frame["_date"])
+    signal_dates: list[date] = []
+    for index in range(len(timestamps) - 1):
+        signal_date = pd.Timestamp(timestamps[index]).date()
+        return_date = pd.Timestamp(timestamps[index + 1]).date()
+        if signal_date >= start and return_date <= end:
+            signal_dates.append(signal_date)
+    if not signal_dates:
+        raise typer.BadParameter("回测区间内没有可用的下一交易日收益")
+    return tuple(signal_dates)
+
+
+def _build_backtest_sec_fundamental_feature_reports(
+    signal_dates: tuple[date, ...],
+    sec_companies_path: Path,
+    sec_metrics_path: Path,
+    fundamental_feature_config_path: Path,
+    sec_companyfacts_dir: Path,
+    validation_as_of: date,
+    validation_report_output: Path,
+) -> dict[date, SecFundamentalFeaturesReport]:
+    sec_companies = load_sec_companies(sec_companies_path)
+    sec_metrics = load_fundamental_metrics(sec_metrics_path)
+    feature_config = load_fundamental_features(fundamental_feature_config_path)
+    companyfacts_validation_report = validate_sec_companyfacts_cache(
+        sec_companies,
+        input_dir=sec_companyfacts_dir,
+        as_of=validation_as_of,
+    )
+    write_sec_companyfacts_validation_report(
+        companyfacts_validation_report,
+        validation_report_output,
+    )
+    if not companyfacts_validation_report.passed:
+        console.print("[red]SEC companyfacts 缓存校验失败，已停止回测。[/red]")
+        console.print(f"SEC companyfacts 校验报告：{validation_report_output}")
+        console.print(
+            f"错误数：{companyfacts_validation_report.error_count}；"
+            f"警告数：{companyfacts_validation_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+
+    reports: dict[date, SecFundamentalFeaturesReport] = {}
+    for signal_date in signal_dates:
+        metrics_report = build_sec_fundamental_metrics_report(
+            companies=sec_companies,
+            metrics=sec_metrics,
+            input_dir=sec_companyfacts_dir,
+            as_of=signal_date,
+            validation_report=companyfacts_validation_report,
+        )
+        if not metrics_report.passed:
+            console.print("[red]SEC point-in-time 指标抽取失败，已停止回测。[/red]")
+            console.print(f"失败日期：{signal_date.isoformat()}")
+            console.print(
+                f"错误数：{metrics_report.error_count}；"
+                f"警告数：{metrics_report.warning_count}"
+            )
+            raise typer.Exit(code=1)
+        metrics_source_path = (
+            sec_companyfacts_dir / f"point_in_time_metrics_{signal_date.isoformat()}.csv"
+        )
+        metrics_validation_report = validate_sec_fundamental_metric_rows(
+            companies=sec_companies,
+            metrics=sec_metrics,
+            rows=metrics_report.rows,
+            source_path=metrics_source_path,
+            as_of=signal_date,
+        )
+        if not metrics_validation_report.passed:
+            console.print("[red]SEC point-in-time 指标校验失败，已停止回测。[/red]")
+            console.print(f"失败日期：{signal_date.isoformat()}")
+            console.print(
+                f"错误数：{metrics_validation_report.error_count}；"
+                f"警告数：{metrics_validation_report.warning_count}"
+            )
+            raise typer.Exit(code=1)
+
+        feature_report = build_sec_fundamental_features_report_from_metric_rows(
+            companies=sec_companies,
+            feature_config=feature_config,
+            metric_rows=metrics_report.rows,
+            source_path=metrics_source_path,
+            as_of=signal_date,
+            validation_report=metrics_validation_report,
+        )
+        if not feature_report.passed:
+            console.print("[red]SEC point-in-time 基本面特征构建失败，已停止回测。[/red]")
+            console.print(f"失败日期：{signal_date.isoformat()}")
+            console.print(
+                f"错误数：{feature_report.error_count}；"
+                f"警告数：{feature_report.warning_count}"
+            )
+            raise typer.Exit(code=1)
+        reports[signal_date] = feature_report
+    return reports
 
 
 def _parse_date(value: str) -> date:

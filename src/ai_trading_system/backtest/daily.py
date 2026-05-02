@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -11,6 +12,7 @@ from ai_trading_system.backtest.engine import BacktestMetrics, summarize_long_on
 from ai_trading_system.config import FeatureConfig, PortfolioConfig, ScoringRulesConfig
 from ai_trading_system.data.quality import DataQualityReport
 from ai_trading_system.features.market import build_market_features
+from ai_trading_system.fundamentals.sec_features import SecFundamentalFeaturesReport
 from ai_trading_system.scoring.daily import build_daily_score_report
 
 DEFAULT_BENCHMARK_TICKERS = ("SPY", "QQQ", "SMH", "SOXX")
@@ -79,6 +81,7 @@ class DailyBacktestResult:
     strategy_metrics: BacktestMetrics
     benchmark_metrics: dict[str, BacktestMetrics]
     market_regime: BacktestRegimeContext | None = None
+    fundamental_feature_report_count: int = 0
 
     @property
     def status(self) -> str:
@@ -99,6 +102,7 @@ def run_daily_score_backtest(
     benchmark_tickers: tuple[str, ...] = DEFAULT_BENCHMARK_TICKERS,
     cost_bps: float = 5.0,
     market_regime: BacktestRegimeContext | None = None,
+    fundamental_feature_reports: Mapping[date, SecFundamentalFeaturesReport] | None = None,
 ) -> DailyBacktestResult:
     if start >= end:
         raise ValueError("回测开始日期必须早于结束日期")
@@ -115,8 +119,18 @@ def run_daily_score_backtest(
     previous_exposure = 0.0
     running_equity = 1.0
     rows: list[BacktestDailyRow] = []
+    fundamental_feature_report_count = 0
 
     for signal_date, return_date in periods:
+        fundamental_feature_report = None
+        if fundamental_feature_reports is not None:
+            fundamental_feature_report = fundamental_feature_reports.get(signal_date)
+            if fundamental_feature_report is None:
+                raise ValueError(
+                    "回测缺少 point-in-time SEC 基本面特征："
+                    f"{signal_date.isoformat()}"
+                )
+            fundamental_feature_report_count += 1
         feature_set = build_market_features(
             prices=prices,
             rates=rates,
@@ -130,6 +144,7 @@ def run_daily_score_backtest(
             rules=scoring_rules,
             total_risk_asset_min=portfolio_config.portfolio.total_risk_asset_min,
             total_risk_asset_max=portfolio_config.portfolio.total_risk_asset_max,
+            fundamental_feature_report=fundamental_feature_report,
         )
         recommendation = score_report.recommendation
         raw_target_exposure = _position_midpoint(
@@ -196,6 +211,7 @@ def run_daily_score_backtest(
         strategy_metrics=strategy_metrics,
         benchmark_metrics=benchmark_metrics,
         market_regime=market_regime,
+        fundamental_feature_report_count=fundamental_feature_report_count,
     )
 
 
@@ -209,6 +225,7 @@ def render_backtest_report(
     result: DailyBacktestResult,
     data_quality_report_path: Path,
     daily_output_path: Path,
+    sec_companyfacts_validation_report_path: Path | None = None,
 ) -> str:
     lines = [
         "# 历史回测报告",
@@ -252,6 +269,7 @@ def render_backtest_report(
             f"- 最小调仓阈值：{result.minimum_action_delta:.0%}",
             f"- 数据质量状态：{result.data_quality_report.status}",
             f"- 数据质量报告：`{data_quality_report_path}`",
+            f"- SEC 基本面切片数：{result.fundamental_feature_report_count}",
             f"- 每日回测明细：`{daily_output_path}`",
             "",
             "## 核心指标",
@@ -276,13 +294,31 @@ def render_backtest_report(
             "- 每个交易日收盘后计算评分，目标仓位从下一交易日收益开始生效，避免未来函数。",
             "- 目标仓位使用 AI 仓位区间中点；变化小于最小调仓阈值时维持原仓位。",
             "- 策略收益按目标仓位乘以策略代理标的下一交易日收益，并扣除单边换手成本。",
+            "- 当前版本未计入税费、汇率、融资利率、盘口冲击和盘中执行偏差。",
+        ]
+    )
+    if result.fundamental_feature_report_count:
+        lines.insert(
+            -1,
+            (
+                "- SEC 基本面特征已按 signal_date point-in-time 接入；"
+                "估值、政策/地缘模块仍是 MVP 占位输入，"
+                "因此回测状态标记为 PASS_WITH_LIMITATIONS。"
+            ),
+        )
+    else:
+        lines.insert(
+            -1,
             (
                 "- 回测暂未接入历史 SEC 基本面特征；估值、政策/地缘模块仍是 MVP 占位输入，"
                 "因此回测状态标记为 PASS_WITH_LIMITATIONS。"
             ),
-            "- 当前版本未计入税费、汇率、融资利率、盘口冲击和盘中执行偏差。",
-        ]
-    )
+        )
+    if sec_companyfacts_validation_report_path is not None:
+        lines.insert(
+            -1,
+            f"- SEC companyfacts 校验报告：`{sec_companyfacts_validation_report_path}`",
+        )
 
     return "\n".join(lines) + "\n"
 
@@ -292,6 +328,7 @@ def write_backtest_report(
     data_quality_report_path: Path,
     daily_output_path: Path,
     output_path: Path,
+    sec_companyfacts_validation_report_path: Path | None = None,
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
@@ -299,6 +336,7 @@ def write_backtest_report(
             result,
             data_quality_report_path=data_quality_report_path,
             daily_output_path=daily_output_path,
+            sec_companyfacts_validation_report_path=sec_companyfacts_validation_report_path,
         ),
         encoding="utf-8",
     )

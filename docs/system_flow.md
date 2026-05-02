@@ -85,6 +85,7 @@ flowchart TD
 
     subgraph Backtest["历史回测"]
         BT["aits backtest"]
+        BSEC["point-in-time SEC 基本面特征<br/>按 signal_date 只读已披露 companyfacts"]
         BD["outputs/backtests/backtest_daily_YYYY-MM-DD_YYYY-MM-DD.csv"]
         BR["outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md"]
     end
@@ -195,6 +196,13 @@ flowchart TD
     W --> BT
     R --> BT
     QR --> BT
+    SEC --> BT
+    FM --> BT
+    FF --> BT
+    SFJ --> BT
+    SFM --> BT
+    BT --> BSEC
+    BSEC --> BD
     BT --> BD
     BT --> BR
 
@@ -283,9 +291,13 @@ flowchart TD
     C --> D["读取 prices_daily.csv / rates_daily.csv"]
     D --> E["调用数据质量门禁<br/>validate_data_cache"]
     E -->|FAIL| F["停止回测<br/>输出 data_quality 报告"]
-    E -->|PASS 或 PASS_WITH_WARNINGS| G["生成交易日序列<br/>signal_date -> return_date"]
-    G --> H["逐日构建特征<br/>只使用 signal_date 当日及之前数据"]
+    E -->|PASS 或 PASS_WITH_WARNINGS| S1["校验 SEC companyfacts 缓存<br/>validate_sec_companyfacts_cache"]
+    S1 -->|FAIL| S2["停止回测<br/>输出 SEC companyfacts 校验报告"]
+    S1 -->|PASS 或 PASS_WITH_WARNINGS| G["生成交易日序列<br/>signal_date -> return_date"]
+    G --> H["逐日构建市场特征<br/>只使用 signal_date 当日及之前数据"]
+    G --> H2["逐日构建 point-in-time SEC 特征<br/>只使用 filed_date <= signal_date 的事实"]
     H --> I["逐日评分<br/>使用同一套 scoring_rules"]
+    H2 --> I
     I --> J["评分映射到 AI 仓位区间中点"]
     J --> K["应用最小调仓阈值<br/>低于阈值维持原仓位"]
     K --> L["下一交易日收益生效<br/>避免未来函数"]
@@ -328,7 +340,7 @@ flowchart TD
         B["数据质量门禁<br/>aits validate-data"]
         C["市场特征<br/>aits build-features"]
         D["每日评分<br/>aits score-daily<br/>含 SEC 基本面和人工复核摘要"]
-        E["历史回测<br/>aits backtest"]
+        E["历史回测<br/>aits backtest<br/>含 SEC point-in-time 基本面"]
         F["观察池校验<br/>aits watchlist validate"]
         G["产业链图校验<br/>aits industry-chain validate"]
         H["交易 thesis<br/>aits thesis list/validate/review"]
@@ -378,8 +390,8 @@ flowchart TD
 |评分|`aits score-daily`|先执行市场数据质量门禁，再校验 SEC 指标 CSV、构建 SEC 基本面特征，并输出评分、仓位区间和日报|已实现|
 |评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果|已实现|
 |日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|输出中文结论、市场数据质量状态、SEC 基本面质量状态、限制说明和人工复核摘要|已实现|
-|回测|`aits backtest`|基于每日评分动态仓位回测|已实现|
-|回测报告|`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|输出市场阶段、质量状态和绩效指标|已实现|
+|回测|`aits backtest`|基于每日评分动态仓位回测，并按 signal_date 构建 point-in-time SEC 基本面特征|已实现|
+|回测报告|`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|输出市场阶段、市场数据质量状态、SEC 基本面切片数和绩效指标|已实现|
 |能力圈|`config/watchlist.yaml`|记录核心标的、能力圈和 thesis 要求|已实现基础版|
 |产业链|`config/industry_chain.yaml`|记录产业链节点和因果关系|已实现基础版|
 |市场阶段|`config/market_regimes.yaml`|记录默认 AI regime 和压力测试区间|已实现|
