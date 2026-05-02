@@ -86,7 +86,7 @@ aits build-features --as-of 2026-05-01
 aits score-daily --as-of 2026-05-01
 ```
 
-命令会先执行数据质量门禁，再构建特征，最后输出 `data/processed/scores_daily.csv` 和 `outputs/reports/daily_score_YYYY-MM-DD.md`。MVP 阶段的基本面、估值、政策地缘会在报告中明确标记为占位输入。
+命令会先执行数据质量门禁，再构建特征，最后输出 `data/processed/scores_daily.csv` 和 `outputs/reports/daily_score_YYYY-MM-DD.md`。日报会同时汇总交易 thesis、风险事件、估值快照和交易复盘的复核状态；缺少本地手工输入会显示为警告，配置或 YAML 错误会显示为复核失败。MVP 阶段的基本面、估值自动评分、政策地缘会在报告中明确标记为占位输入。
 
 运行历史回测：
 

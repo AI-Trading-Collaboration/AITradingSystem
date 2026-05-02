@@ -8,6 +8,7 @@ import pandas as pd
 import typer
 from rich.console import Console
 from rich.table import Table
+from yaml import YAMLError
 
 from ai_trading_system.backtest.daily import (
     DEFAULT_BENCHMARK_TICKERS,
@@ -24,6 +25,9 @@ from ai_trading_system.config import (
     DEFAULT_RISK_EVENTS_CONFIG_PATH,
     DEFAULT_WATCHLIST_CONFIG_PATH,
     PROJECT_ROOT,
+    IndustryChainConfig,
+    UniverseConfig,
+    WatchlistConfig,
     configured_price_tickers,
     configured_rate_series,
     load_data_quality,
@@ -39,6 +43,7 @@ from ai_trading_system.config import (
 )
 from ai_trading_system.data.download import download_daily_data
 from ai_trading_system.data.quality import (
+    DataQualityReport,
     default_quality_report_path,
     validate_data_cache,
     write_data_quality_report,
@@ -61,6 +66,8 @@ from ai_trading_system.risk_events import (
     write_risk_events_validation_report,
 )
 from ai_trading_system.scoring.daily import (
+    DailyManualReviewStatus,
+    DailyReviewSummary,
     build_daily_score_report,
     default_daily_score_report_path,
     write_daily_score_report,
@@ -1183,6 +1190,26 @@ def score_daily(
         Path | None,
         typer.Option(help="Markdown 数据质量报告输出路径。"),
     ] = None,
+    thesis_path: Annotated[
+        Path,
+        typer.Option(help="交易 thesis YAML 文件或目录路径，用于写入日报复核摘要。"),
+    ] = PROJECT_ROOT / "data" / "external" / "trade_theses",
+    risk_events_path: Annotated[
+        Path,
+        typer.Option(help="风险事件配置路径，用于写入日报复核摘要。"),
+    ] = DEFAULT_RISK_EVENTS_CONFIG_PATH,
+    valuation_path: Annotated[
+        Path,
+        typer.Option(help="估值快照 YAML 文件或目录路径，用于写入日报复核摘要。"),
+    ] = PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+    trades_path: Annotated[
+        Path,
+        typer.Option(help="交易记录 YAML 文件或目录路径，用于写入日报复盘摘要。"),
+    ] = PROJECT_ROOT / "data" / "external" / "trades",
+    review_benchmarks: Annotated[
+        str,
+        typer.Option(help="逗号分隔的日报交易复盘归因基准标的。"),
+    ] = ",".join(DEFAULT_BENCHMARK_TICKERS),
     full_universe: Annotated[
         bool,
         typer.Option(
@@ -1193,15 +1220,21 @@ def score_daily(
 ) -> None:
     """构建特征并生成每日市场评分报告。"""
     universe = load_universe()
+    industry_chain = load_industry_chain()
+    watchlist = load_watchlist()
     data_quality_config = load_data_quality()
     feature_config = load_features()
     scoring_rules = load_scoring_rules()
     portfolio = load_portfolio()
     score_date = _parse_date(as_of) if as_of else date.today()
+    benchmark_tickers = tuple(_parse_csv_items(review_benchmarks))
+    if not benchmark_tickers:
+        raise typer.BadParameter("日报交易复盘至少需要一个归因基准标的。")
     expected_price_tickers = configured_price_tickers(
         universe,
         include_full_ai_chain=full_universe,
     )
+    expected_price_tickers = list(dict.fromkeys([*expected_price_tickers, *benchmark_tickers]))
     expected_rate_series = configured_rate_series(universe)
     quality_output = quality_report_path or default_quality_report_path(
         PROJECT_ROOT / "outputs" / "reports",
@@ -1234,9 +1267,11 @@ def score_daily(
         )
         raise typer.Exit(code=1)
 
+    prices_frame = pd.read_csv(prices_path)
+    rates_frame = pd.read_csv(rates_path)
     feature_set = build_market_features(
-        prices=pd.read_csv(prices_path),
-        rates=pd.read_csv(rates_path),
+        prices=prices_frame,
+        rates=rates_frame,
         config=feature_config,
         as_of=score_date,
         core_watchlist=universe.ai_chain.get("core_watchlist", []),
@@ -1249,12 +1284,26 @@ def score_daily(
         features_path=features_output,
         output_path=feature_report_output,
     )
+    review_summary = _build_daily_review_summary(
+        thesis_path=thesis_path,
+        risk_events_path=risk_events_path,
+        valuation_path=valuation_path,
+        trades_path=trades_path,
+        score_date=score_date,
+        universe=universe,
+        industry_chain=industry_chain,
+        watchlist=watchlist,
+        prices=prices_frame,
+        data_quality_report=data_quality_report,
+        benchmark_tickers=benchmark_tickers,
+    )
     score_report = build_daily_score_report(
         feature_set=feature_set,
         data_quality_report=data_quality_report,
         rules=scoring_rules,
         total_risk_asset_min=portfolio.portfolio.total_risk_asset_min,
         total_risk_asset_max=portfolio.portfolio.total_risk_asset_max,
+        review_summary=review_summary,
     )
     scores_output = write_scores_csv(score_report, scores_path)
     daily_report_output = write_daily_score_report(
@@ -1274,6 +1323,208 @@ def score_daily(
     console.print(f"评分数据：{scores_output}")
     console.print(f"特征摘要：{feature_summary_output}")
     console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
+
+
+def _build_daily_review_summary(
+    thesis_path: Path,
+    risk_events_path: Path,
+    valuation_path: Path,
+    trades_path: Path,
+    score_date: date,
+    universe: UniverseConfig,
+    industry_chain: IndustryChainConfig,
+    watchlist: WatchlistConfig,
+    prices: pd.DataFrame,
+    data_quality_report: DataQualityReport,
+    benchmark_tickers: tuple[str, ...],
+) -> DailyReviewSummary:
+    return DailyReviewSummary(
+        thesis=_build_daily_thesis_status(
+            input_path=thesis_path,
+            watchlist=watchlist,
+            industry_chain=industry_chain,
+            score_date=score_date,
+        ),
+        risk_events=_build_daily_risk_events_status(
+            input_path=risk_events_path,
+            universe=universe,
+            industry_chain=industry_chain,
+            watchlist=watchlist,
+            score_date=score_date,
+        ),
+        valuation=_build_daily_valuation_status(
+            input_path=valuation_path,
+            universe=universe,
+            watchlist=watchlist,
+            score_date=score_date,
+        ),
+        trades=_build_daily_trade_review_status(
+            input_path=trades_path,
+            universe=universe,
+            watchlist=watchlist,
+            score_date=score_date,
+            prices=prices,
+            data_quality_report=data_quality_report,
+            benchmark_tickers=benchmark_tickers,
+        ),
+    )
+
+
+def _build_daily_thesis_status(
+    input_path: Path,
+    watchlist: WatchlistConfig,
+    industry_chain: IndustryChainConfig,
+    score_date: date,
+) -> DailyManualReviewStatus:
+    validation_report = validate_trade_thesis_store(
+        store=load_trade_thesis_store(input_path),
+        watchlist=watchlist,
+        industry_chain=industry_chain,
+        as_of=score_date,
+    )
+    review_report = build_thesis_review_report(validation_report)
+
+    watch_count = sum(item.health == "WATCH" for item in review_report.items)
+    invalidated_count = sum(item.health == "INVALIDATED" for item in review_report.items)
+    summary = (
+        f"Thesis {validation_report.thesis_count} 个，活跃 "
+        f"{validation_report.active_count} 个；需关注 {watch_count} 个，"
+        f"已证伪 {invalidated_count} 个。"
+    )
+    return DailyManualReviewStatus(
+        name="交易 thesis",
+        status=review_report.status,
+        summary=summary,
+        error_count=validation_report.error_count,
+        warning_count=validation_report.warning_count,
+        source_path=input_path,
+    )
+
+
+def _build_daily_risk_events_status(
+    input_path: Path,
+    universe: UniverseConfig,
+    industry_chain: IndustryChainConfig,
+    watchlist: WatchlistConfig,
+    score_date: date,
+) -> DailyManualReviewStatus:
+    try:
+        validation_report = validate_risk_events_config(
+            risk_events=load_risk_events(input_path),
+            industry_chain=industry_chain,
+            watchlist=watchlist,
+            universe=universe,
+            as_of=score_date,
+        )
+    except (OSError, ValueError, YAMLError) as exc:
+        return _daily_review_exception_status("风险事件", input_path, exc)
+
+    active_l2_l3_count = sum(
+        1
+        for rule in validation_report.config.event_rules
+        if rule.active and rule.level in {"L2", "L3"}
+    )
+    summary = (
+        f"风险规则 {len(validation_report.config.event_rules)} 条，活跃 "
+        f"{validation_report.active_rule_count} 条；活跃 L2/L3 规则 "
+        f"{active_l2_l3_count} 条。"
+    )
+    return DailyManualReviewStatus(
+        name="风险事件",
+        status=validation_report.status,
+        summary=summary,
+        error_count=validation_report.error_count,
+        warning_count=validation_report.warning_count,
+        source_path=input_path,
+    )
+
+
+def _build_daily_valuation_status(
+    input_path: Path,
+    universe: UniverseConfig,
+    watchlist: WatchlistConfig,
+    score_date: date,
+) -> DailyManualReviewStatus:
+    validation_report = validate_valuation_snapshot_store(
+        store=load_valuation_snapshot_store(input_path),
+        universe=universe,
+        watchlist=watchlist,
+        as_of=score_date,
+    )
+    review_report = build_valuation_review_report(validation_report)
+
+    overheated_count = sum(
+        item.health in {"EXPENSIVE_OR_CROWDED", "EXTREME_OVERHEATED"}
+        for item in review_report.items
+    )
+    summary = (
+        f"估值快照 {validation_report.snapshot_count} 个，覆盖 "
+        f"{validation_report.ticker_count} 个标的；偏贵或拥挤 "
+        f"{overheated_count} 个。"
+    )
+    return DailyManualReviewStatus(
+        name="估值与拥挤度",
+        status=review_report.status,
+        summary=summary,
+        error_count=validation_report.error_count,
+        warning_count=validation_report.warning_count,
+        source_path=input_path,
+    )
+
+
+def _build_daily_trade_review_status(
+    input_path: Path,
+    universe: UniverseConfig,
+    watchlist: WatchlistConfig,
+    score_date: date,
+    prices: pd.DataFrame,
+    data_quality_report: DataQualityReport,
+    benchmark_tickers: tuple[str, ...],
+) -> DailyManualReviewStatus:
+    try:
+        validation_report = validate_trade_record_store(
+            store=load_trade_record_store(input_path),
+            universe=universe,
+            watchlist=watchlist,
+            as_of=score_date,
+        )
+        review_report = build_trade_review_report(
+            validation_report=validation_report,
+            prices=prices,
+            data_quality_report=data_quality_report,
+            benchmark_tickers=benchmark_tickers,
+        )
+    except ValueError as exc:
+        return _daily_review_exception_status("交易复盘归因", input_path, exc)
+
+    summary = (
+        f"交易记录 {validation_report.trade_count} 笔，已关闭 "
+        f"{validation_report.closed_count} 笔；生成基准归因 "
+        f"{len(review_report.items)} 条。"
+    )
+    return DailyManualReviewStatus(
+        name="交易复盘归因",
+        status=review_report.status,
+        summary=summary,
+        error_count=validation_report.error_count,
+        warning_count=validation_report.warning_count,
+        source_path=input_path,
+    )
+
+
+def _daily_review_exception_status(
+    name: str,
+    source_path: Path,
+    exc: Exception,
+) -> DailyManualReviewStatus:
+    return DailyManualReviewStatus(
+        name=name,
+        status="FAIL",
+        summary=f"模块加载或复核失败：{exc}",
+        error_count=1,
+        warning_count=0,
+        source_path=source_path,
+    )
 
 
 def _parse_date(value: str) -> date:

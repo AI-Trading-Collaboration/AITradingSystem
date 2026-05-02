@@ -16,6 +16,8 @@ from ai_trading_system.config import (
 from ai_trading_system.data.quality import DataFileSummary, DataQualityReport
 from ai_trading_system.features.market import MarketFeatureRow, MarketFeatureSet
 from ai_trading_system.scoring.daily import (
+    DailyManualReviewStatus,
+    DailyReviewSummary,
     build_daily_score_report,
     render_daily_score_report,
     write_scores_csv,
@@ -93,6 +95,21 @@ def test_render_daily_score_report_includes_data_gate_and_limitations(tmp_path: 
         rules=load_scoring_rules(),
         total_risk_asset_min=0.60,
         total_risk_asset_max=0.80,
+        review_summary=DailyReviewSummary(
+            thesis=DailyManualReviewStatus(
+                name="交易 thesis",
+                status="PASS_WITH_WARNINGS",
+                summary="Thesis 1 个，活跃 1 个；需关注 1 个，已证伪 0 个。",
+                warning_count=1,
+                source_path=tmp_path / "trade_theses",
+            ),
+            risk_events=DailyManualReviewStatus(
+                name="风险事件",
+                status="PASS",
+                summary="风险规则 3 条，活跃 1 条；活跃 L2/L3 规则 0 条。",
+                source_path=tmp_path / "risk_events.yaml",
+            ),
+        ),
     )
 
     markdown = render_daily_score_report(
@@ -104,6 +121,8 @@ def test_render_daily_score_report_includes_data_gate_and_limitations(tmp_path: 
     )
 
     assert "- 数据质量状态：PASS" in markdown
+    assert "## 人工复核摘要" in markdown
+    assert "交易 thesis" in markdown
     assert "基本面（fundamentals）" in markdown
     assert "MVP 阶段占位" in markdown
 
@@ -149,6 +168,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert daily_report_path.exists()
     assert scores_path.exists()
     assert features_path.exists()
+    assert "人工复核摘要" in daily_report_path.read_text(encoding="utf-8")
     assert "每日评分状态：" in result.output
 
 

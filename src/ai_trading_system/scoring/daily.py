@@ -69,6 +69,40 @@ class DailyScoreComponent:
 
 
 @dataclass(frozen=True)
+class DailyManualReviewStatus:
+    name: str
+    status: str
+    summary: str
+    error_count: int = 0
+    warning_count: int = 0
+    source_path: Path | None = None
+
+
+@dataclass(frozen=True)
+class DailyReviewSummary:
+    thesis: DailyManualReviewStatus | None = None
+    risk_events: DailyManualReviewStatus | None = None
+    valuation: DailyManualReviewStatus | None = None
+    trades: DailyManualReviewStatus | None = None
+
+    @property
+    def items(self) -> tuple[DailyManualReviewStatus, ...]:
+        return tuple(
+            item
+            for item in (self.thesis, self.risk_events, self.valuation, self.trades)
+            if item is not None
+        )
+
+    @property
+    def has_failures(self) -> bool:
+        return any(item.status == "FAIL" or item.error_count for item in self.items)
+
+    @property
+    def has_warnings(self) -> bool:
+        return any("WARNING" in item.status or item.warning_count for item in self.items)
+
+
+@dataclass(frozen=True)
 class DailyScoreReport:
     as_of: date
     components: tuple[DailyScoreComponent, ...]
@@ -76,12 +110,17 @@ class DailyScoreReport:
     data_quality_report: DataQualityReport
     feature_set: MarketFeatureSet
     minimum_action_delta: float
+    review_summary: DailyReviewSummary | None = None
 
     @property
     def status(self) -> str:
+        if self.review_summary and self.review_summary.has_failures:
+            return "PASS_WITH_LIMITATIONS"
         if any(component.source_type != "hard_data" for component in self.components):
             return "PASS_WITH_LIMITATIONS"
-        if self.feature_set.warnings:
+        if self.feature_set.warnings or (
+            self.review_summary and self.review_summary.has_warnings
+        ):
             return "PASS_WITH_WARNINGS"
         return "PASS"
 
@@ -92,6 +131,7 @@ def build_daily_score_report(
     rules: ScoringRulesConfig,
     total_risk_asset_min: float,
     total_risk_asset_max: float,
+    review_summary: DailyReviewSummary | None = None,
 ) -> DailyScoreReport:
     components = [
         _score_hard_data_module("trend", rules.weights["trend"], rules.trend, feature_set, rules),
@@ -136,6 +176,7 @@ def build_daily_score_report(
         data_quality_report=data_quality_report,
         feature_set=feature_set,
         minimum_action_delta=rules.position_change.minimum_action_delta,
+        review_summary=review_summary,
     )
 
 
@@ -254,13 +295,39 @@ def render_daily_score_report(
                 f"{_escape_markdown_table(signal.reason)} |"
             )
 
+    lines.extend(["", "## 人工复核摘要", ""])
+    if report.review_summary is None or not report.review_summary.items:
+        lines.append("未接入交易 thesis、风险事件、估值或交易复盘摘要。")
+    else:
+        lines.extend(
+            [
+                "| 模块 | 状态 | 错误 | 警告 | 输入 | 摘要 |",
+                "|---|---|---:|---:|---|---|",
+            ]
+        )
+        for item in report.review_summary.items:
+            source_path = "" if item.source_path is None else f"`{item.source_path}`"
+            lines.append(
+                "| "
+                f"{_escape_markdown_table(item.name)} | "
+                f"{item.status} | "
+                f"{item.error_count} | "
+                f"{item.warning_count} | "
+                f"{_escape_markdown_table(source_path)} | "
+                f"{_escape_markdown_table(item.summary)} |"
+            )
+
     lines.extend(["", "## 限制说明", ""])
     limitations = [
         component
         for component in report.components
         if component.source_type in {"placeholder", "insufficient_data"}
     ]
-    if not limitations and not report.feature_set.warnings:
+    has_review_issues = bool(
+        report.review_summary
+        and (report.review_summary.has_failures or report.review_summary.has_warnings)
+    )
+    if not limitations and not report.feature_set.warnings and not has_review_issues:
         lines.append("未发现限制。")
     else:
         for component in limitations:
@@ -269,6 +336,15 @@ def render_daily_score_report(
             lines.append(
                 f"- 存在特征警告：{len(report.feature_set.warnings)} 条。"
                 "请查看特征摘要，确认是否有历史窗口不足或输入不可用。"
+            )
+        if report.review_summary and report.review_summary.has_failures:
+            lines.append(
+                "- 人工复核摘要存在错误，日报结论不能视为完整交易结论；"
+                "请先修复对应输入或配置。"
+            )
+        elif report.review_summary and report.review_summary.has_warnings:
+            lines.append(
+                "- 人工复核摘要存在警告，日报结论需要结合 thesis、风险、估值或复盘记录人工确认。"
             )
 
     return "\n".join(lines) + "\n"

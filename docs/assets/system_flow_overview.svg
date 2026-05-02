@@ -73,11 +73,13 @@
   <text class="box-text" x="872" y="365">趋势 / 宏观流动性</text>
   <text class="box-text" x="872" y="387">风险情绪 / 占位项</text>
   <text class="box-text" x="872" y="409">scores_daily.csv</text>
+  <text class="box-text" x="872" y="425">人工复核摘要</text>
 
   <rect class="output" x="1090" y="155" width="120" height="105" />
   <text class="box-title" x="1112" y="187">日报结论</text>
   <text class="box-text" x="1112" y="215">仓位区间</text>
   <text class="box-text" x="1112" y="237">数据质量状态</text>
+  <text class="box-text" x="1112" y="253">复核摘要</text>
 
   <rect class="output" x="1090" y="305" width="120" height="125" />
   <text class="box-title" x="1112" y="337">回测报告</text>
@@ -125,8 +127,9 @@
   <path class="soft-line" d="M510 425 C625 500 760 500 872 430" />
   <path class="soft-line" d="M260 555 L325 555" />
   <path class="soft-line" d="M510 555 L575 555" />
+  <path class="soft-line" d="M785 555 C900 555 845 425 850 425" />
 
   <rect class="lane" x="40" y="665" width="1200" height="62" />
   <text class="lane-title" x="64" y="704">输出解释要求</text>
-  <text class="small-text" x="210" y="704">报告必须说明：数据质量是否通过、哪些评分来自硬数据、哪些模块仍是占位、仓位口径、回测区间和市场阶段。</text>
+  <text class="small-text" x="210" y="704">报告必须说明：数据质量是否通过、哪些评分来自硬数据、哪些模块仍是占位、人工复核摘要、仓位口径、回测区间和市场阶段。</text>
 </svg>

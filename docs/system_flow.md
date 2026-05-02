@@ -125,6 +125,10 @@ flowchart TD
     QR --> SD
     S --> SD
     P --> SD
+    TH --> SD
+    RE --> SD
+    VS --> SD
+    TD --> SD
     SD --> SC
     SD --> DR
 
@@ -181,15 +185,17 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["用户执行<br/>aits score-daily --as-of YYYY-MM-DD"] --> B["读取配置<br/>universe / data_quality / features / scoring_rules / portfolio"]
+    A["用户执行<br/>aits score-daily --as-of YYYY-MM-DD"] --> B["读取配置<br/>universe / data_quality / features / scoring_rules / portfolio / risk_events"]
     B --> C["读取缓存<br/>prices_daily.csv / rates_daily.csv"]
     C --> D["调用数据质量门禁<br/>validate_data_cache"]
     D -->|FAIL| E["停止<br/>输出 data_quality 报告和错误数量"]
     D -->|PASS 或 PASS_WITH_WARNINGS| F["构建当日市场特征<br/>build_market_features"]
     F --> G["写入特征缓存<br/>features_daily.csv"]
     F --> H["写入特征摘要<br/>feature_summary_YYYY-MM-DD.md"]
+    F --> R["复用已通过的数据质量结果<br/>汇总 thesis / 风险事件 / 估值 / 交易复盘状态"]
     G --> I["构建每日评分<br/>build_daily_score_report"]
     H --> I
+    R --> I
     I --> J["趋势评分<br/>指数趋势、半导体趋势、核心池宽度、相对强弱"]
     I --> K["宏观流动性评分<br/>DGS10、DGS2、美元指数"]
     I --> L["风险情绪评分<br/>VIX 水平、分位、变化速度"]
@@ -200,7 +206,7 @@ flowchart TD
     M --> N
     N --> O["总资产口径换算<br/>portfolio 风险资产预算"]
     O --> P["写入 scores_daily.csv"]
-    O --> Q["写入 daily_score_YYYY-MM-DD.md"]
+    O --> Q["写入 daily_score_YYYY-MM-DD.md<br/>含人工复核摘要"]
 ```
 
 ## 回测链路
@@ -256,7 +262,7 @@ flowchart TD
         A["数据下载<br/>aits download-data"]
         B["数据质量门禁<br/>aits validate-data"]
         C["市场特征<br/>aits build-features"]
-        D["每日评分<br/>aits score-daily"]
+        D["每日评分<br/>aits score-daily<br/>含人工复核摘要"]
         E["历史回测<br/>aits backtest"]
         F["观察池校验<br/>aits watchlist validate"]
         G["产业链图校验<br/>aits industry-chain validate"]
@@ -264,9 +270,6 @@ flowchart TD
         I["风险事件分级<br/>aits risk-events list/validate"]
         J["估值与拥挤度<br/>aits valuation list/validate/review"]
         K["交易复盘归因<br/>aits review-trades"]
-    end
-
-    subgraph Next["后续模块"]
         L["日报集成<br/>汇总 thesis、风险、估值和复盘摘要"]
     end
 
@@ -278,7 +281,11 @@ flowchart TD
     H --> I
     I --> J
     J --> K
+    H --> L
+    I --> L
+    J --> L
     K --> L
+    L --> D
 ```
 
 ## 文件和命令责任表
@@ -295,7 +302,7 @@ flowchart TD
 |特征缓存|`data/processed/features_daily.csv`|保存 tidy 格式特征|已实现|
 |评分|`aits score-daily`|输出评分、仓位区间和日报|已实现|
 |评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果|已实现|
-|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|输出中文结论和限制说明|已实现|
+|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|输出中文结论、数据质量状态、限制说明和人工复核摘要|已实现|
 |回测|`aits backtest`|基于每日评分动态仓位回测|已实现|
 |回测报告|`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|输出市场阶段、质量状态和绩效指标|已实现|
 |能力圈|`config/watchlist.yaml`|记录核心标的、能力圈和 thesis 要求|已实现基础版|
@@ -313,3 +320,4 @@ flowchart TD
 |估值复核|`aits valuation review`|输出估值是否偏贵、拥挤或数据过期|已实现基础版|
 |交易记录|`data/external/trades/`|记录真实交易、价格、仓位和 thesis_id|已实现基础版|
 |交易复盘|`aits review-trades`|先过数据质量门禁，再对比 SPY/QQQ/SMH/SOXX 做基础归因|已实现基础版|
+|日报复核摘要|`aits score-daily`|汇总 thesis、风险事件、估值快照和交易复盘状态；交易复盘复用同一份数据质量门禁结果|已实现基础版|
