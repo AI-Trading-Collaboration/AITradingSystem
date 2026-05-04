@@ -1286,9 +1286,33 @@ def backtest(
         float,
         typer.Option(help="单边交易成本，单位 bps。"),
     ] = 5.0,
+    spread_bps: Annotated[
+        float,
+        typer.Option(help="Bid-ask spread 假设，单位 bps；默认不额外扣除。"),
+    ] = 0.0,
     slippage_bps: Annotated[
         float,
-        typer.Option(help="线性滑点或盘口冲击估算，单位 bps；默认不额外扣除。"),
+        typer.Option(help="线性滑点估算，单位 bps；默认不额外扣除。"),
+    ] = 0.0,
+    market_impact_bps: Annotated[
+        float,
+        typer.Option(help="市场冲击估算，单位 bps；默认不额外扣除。"),
+    ] = 0.0,
+    tax_bps: Annotated[
+        float,
+        typer.Option(help="卖出侧税费假设，单位 bps；默认不额外扣除。"),
+    ] = 0.0,
+    fx_bps: Annotated[
+        float,
+        typer.Option(help="换汇成本假设，单位 bps；默认不额外扣除。"),
+    ] = 0.0,
+    financing_annual_bps: Annotated[
+        float,
+        typer.Option(help="融资或持仓资金年化成本，单位 bps；默认不额外扣除。"),
+    ] = 0.0,
+    etf_delay_bps: Annotated[
+        float,
+        typer.Option(help="ETF 成交延迟或申赎成本假设，单位 bps；默认不额外扣除。"),
     ] = 0.0,
     regime: Annotated[
         str | None,
@@ -1578,7 +1602,13 @@ def backtest(
         strategy_ticker=strategy_ticker,
         benchmark_tickers=tuple(benchmark_tickers),
         cost_bps=cost_bps,
+        spread_bps=spread_bps,
         slippage_bps=slippage_bps,
+        market_impact_bps=market_impact_bps,
+        tax_bps=tax_bps,
+        fx_bps=fx_bps,
+        financing_annual_bps=financing_annual_bps,
+        etf_delay_bps=etf_delay_bps,
         fundamental_feature_reports=sec_fundamental_feature_reports,
         valuation_review_reports=valuation_review_reports,
         risk_event_occurrence_review_reports=risk_event_occurrence_review_reports,

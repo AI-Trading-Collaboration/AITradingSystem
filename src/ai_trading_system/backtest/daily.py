@@ -109,7 +109,13 @@ class BacktestDailyRow:
     gross_return: float
     turnover: float
     commission_cost: float
+    spread_cost: float
     slippage_cost: float
+    market_impact_cost: float
+    tax_cost: float
+    fx_cost: float
+    financing_cost: float
+    etf_delay_cost: float
     transaction_cost: float
     strategy_return: float
     strategy_equity: float
@@ -135,7 +141,13 @@ class BacktestDailyRow:
             "gross_return": self.gross_return,
             "turnover": self.turnover,
             "commission_cost": self.commission_cost,
+            "spread_cost": self.spread_cost,
             "slippage_cost": self.slippage_cost,
+            "market_impact_cost": self.market_impact_cost,
+            "tax_cost": self.tax_cost,
+            "fx_cost": self.fx_cost,
+            "financing_cost": self.financing_cost,
+            "etf_delay_cost": self.etf_delay_cost,
             "transaction_cost": self.transaction_cost,
             "strategy_return": self.strategy_return,
             "strategy_equity": self.strategy_equity,
@@ -164,7 +176,13 @@ class DailyBacktestResult:
     strategy_ticker: str
     benchmark_tickers: tuple[str, ...]
     cost_bps: float
+    spread_bps: float
     slippage_bps: float
+    market_impact_bps: float
+    tax_bps: float
+    fx_bps: float
+    financing_annual_bps: float
+    etf_delay_bps: float
     minimum_action_delta: float
     data_quality_report: DataQualityReport
     rows: tuple[BacktestDailyRow, ...]
@@ -217,7 +235,13 @@ def run_daily_score_backtest(
     strategy_ticker: str = "SMH",
     benchmark_tickers: tuple[str, ...] = DEFAULT_BENCHMARK_TICKERS,
     cost_bps: float = 5.0,
+    spread_bps: float = 0.0,
     slippage_bps: float = 0.0,
+    market_impact_bps: float = 0.0,
+    tax_bps: float = 0.0,
+    fx_bps: float = 0.0,
+    financing_annual_bps: float = 0.0,
+    etf_delay_bps: float = 0.0,
     market_regime: BacktestRegimeContext | None = None,
     fundamental_feature_reports: Mapping[date, SecFundamentalFeaturesReport] | None = None,
     valuation_review_reports: Mapping[date, ValuationReviewReport] | None = None,
@@ -231,8 +255,15 @@ def run_daily_score_backtest(
         raise ValueError("回测开始日期必须早于结束日期")
     if cost_bps < 0:
         raise ValueError("交易成本 bps 不能为负数")
-    if slippage_bps < 0:
-        raise ValueError("滑点 bps 不能为负数")
+    _validate_cost_bps(
+        spread_bps=spread_bps,
+        slippage_bps=slippage_bps,
+        market_impact_bps=market_impact_bps,
+        tax_bps=tax_bps,
+        fx_bps=fx_bps,
+        financing_annual_bps=financing_annual_bps,
+        etf_delay_bps=etf_delay_bps,
+    )
 
     close_pivot = _prepare_adjusted_close_pivot(prices)
     _check_required_tickers(close_pivot, (strategy_ticker, *benchmark_tickers))
@@ -241,7 +272,13 @@ def run_daily_score_backtest(
         raise ValueError("回测区间内没有可用的下一交易日收益")
 
     cost_rate = cost_bps / 10_000.0
+    spread_rate = spread_bps / 10_000.0
     slippage_rate = slippage_bps / 10_000.0
+    market_impact_rate = market_impact_bps / 10_000.0
+    tax_rate = tax_bps / 10_000.0
+    fx_rate = fx_bps / 10_000.0
+    financing_daily_rate = financing_annual_bps / 10_000.0 / 252.0
+    etf_delay_rate = etf_delay_bps / 10_000.0
     previous_exposure = 0.0
     running_equity = 1.0
     rows: list[BacktestDailyRow] = []
@@ -455,9 +492,25 @@ def run_daily_score_backtest(
         asset_return = _period_return(close_pivot, strategy_ticker, signal_date, return_date)
         gross_return = target_exposure * asset_return
         turnover = abs(target_exposure - previous_exposure)
+        sell_turnover = max(previous_exposure - target_exposure, 0.0)
         commission_cost = turnover * cost_rate
+        spread_cost = turnover * spread_rate
         slippage_cost = turnover * slippage_rate
-        transaction_cost = commission_cost + slippage_cost
+        market_impact_cost = turnover * market_impact_rate
+        tax_cost = sell_turnover * tax_rate
+        fx_cost = turnover * fx_rate
+        financing_cost = target_exposure * financing_daily_rate
+        etf_delay_cost = turnover * etf_delay_rate
+        transaction_cost = (
+            commission_cost
+            + spread_cost
+            + slippage_cost
+            + market_impact_cost
+            + tax_cost
+            + fx_cost
+            + financing_cost
+            + etf_delay_cost
+        )
         strategy_return = gross_return - transaction_cost
         running_equity *= 1.0 + strategy_return
 
@@ -477,7 +530,13 @@ def run_daily_score_backtest(
                 gross_return=gross_return,
                 turnover=turnover,
                 commission_cost=commission_cost,
+                spread_cost=spread_cost,
                 slippage_cost=slippage_cost,
+                market_impact_cost=market_impact_cost,
+                tax_cost=tax_cost,
+                fx_cost=fx_cost,
+                financing_cost=financing_cost,
+                etf_delay_cost=etf_delay_cost,
                 transaction_cost=transaction_cost,
                 strategy_return=strategy_return,
                 strategy_equity=running_equity,
@@ -519,7 +578,13 @@ def run_daily_score_backtest(
         strategy_ticker=strategy_ticker,
         benchmark_tickers=benchmark_tickers,
         cost_bps=cost_bps,
+        spread_bps=spread_bps,
         slippage_bps=slippage_bps,
+        market_impact_bps=market_impact_bps,
+        tax_bps=tax_bps,
+        fx_bps=fx_bps,
+        financing_annual_bps=financing_annual_bps,
+        etf_delay_bps=etf_delay_bps,
         minimum_action_delta=scoring_rules.position_change.minimum_action_delta,
         data_quality_report=data_quality_report,
         rows=tuple(rows),
@@ -663,7 +728,13 @@ def render_backtest_report(
             f"- 基准：{', '.join(result.benchmark_tickers)}",
             f"- 基准政策状态：{_benchmark_policy_status(result)}",
             f"- 单边交易成本：{result.cost_bps:.1f} bps",
-            f"- 线性滑点/盘口冲击估算：{result.slippage_bps:.1f} bps",
+            f"- Bid-ask spread：{result.spread_bps:.1f} bps",
+            f"- 线性滑点：{result.slippage_bps:.1f} bps",
+            f"- 市场冲击估算：{result.market_impact_bps:.1f} bps",
+            f"- 税费假设：{result.tax_bps:.1f} bps",
+            f"- FX 换汇成本：{result.fx_bps:.1f} bps",
+            f"- 融资年化成本：{result.financing_annual_bps:.1f} bps",
+            f"- ETF 延迟/申赎成本：{result.etf_delay_bps:.1f} bps",
             f"- 最小调仓阈值：{result.minimum_action_delta:.0%}",
             f"- 数据质量状态：{result.data_quality_report.status}",
             f"- 数据质量报告：`{data_quality_report_path}`",
@@ -948,10 +1019,12 @@ def render_backtest_report(
             ),
             (
                 "- 策略收益按目标仓位乘以策略代理标的下一交易日收益，"
-                "并扣除单边交易成本和可配置线性滑点。"
+                "并扣除显式成本假设：commission、spread、slippage、market impact、"
+                "tax、FX、financing 和 ETF delay。"
             ),
             limitation_note,
-            "- 当前版本未计入税费、汇率、融资利率、非线性盘口冲击、容量约束和盘中执行偏差。",
+            "- 当前成本模型仍是参数化假设，不等同于券商成交回报；"
+            "尚未计入容量约束、逐笔盘口和盘中执行偏差。",
         ]
     )
     if sec_companyfacts_validation_report_path is not None:
@@ -1293,6 +1366,12 @@ def _position_midpoint(min_position: float, max_position: float) -> float:
     return (min_position + max_position) / 2.0
 
 
+def _validate_cost_bps(**costs: float) -> None:
+    for name, value in costs.items():
+        if value < 0:
+            raise ValueError(f"{name} 不能为负数")
+
+
 def _benchmark_policy_status(result: DailyBacktestResult) -> str:
     if result.benchmark_policy_report is None:
         return "未连接"
@@ -1316,7 +1395,13 @@ def _metrics_row(label: str, metrics: BacktestMetrics) -> str:
 
 def _execution_cost_summary_lines(result: DailyBacktestResult) -> list[str]:
     commission_cost = sum(row.commission_cost for row in result.rows)
+    spread_cost = sum(row.spread_cost for row in result.rows)
     slippage_cost = sum(row.slippage_cost for row in result.rows)
+    market_impact_cost = sum(row.market_impact_cost for row in result.rows)
+    tax_cost = sum(row.tax_cost for row in result.rows)
+    fx_cost = sum(row.fx_cost for row in result.rows)
+    financing_cost = sum(row.financing_cost for row in result.rows)
+    etf_delay_cost = sum(row.etf_delay_cost for row in result.rows)
     transaction_cost = sum(row.transaction_cost for row in result.rows)
     turnover = sum(row.turnover for row in result.rows)
     return [
@@ -1327,8 +1412,17 @@ def _execution_cost_summary_lines(result: DailyBacktestResult) -> list[str]:
         "|---|---:|",
         f"| 累计换手 | {turnover:.1f} |",
         f"| 单边交易成本扣减 | {commission_cost:.2%} |",
+        f"| Bid-ask spread 扣减 | {spread_cost:.2%} |",
         f"| 线性滑点扣减 | {slippage_cost:.2%} |",
+        f"| 市场冲击扣减 | {market_impact_cost:.2%} |",
+        f"| 税费扣减 | {tax_cost:.2%} |",
+        f"| FX 换汇扣减 | {fx_cost:.2%} |",
+        f"| 融资成本扣减 | {financing_cost:.2%} |",
+        f"| ETF 延迟/申赎成本扣减 | {etf_delay_cost:.2%} |",
         f"| 总执行成本扣减 | {transaction_cost:.2%} |",
+        "",
+        "当前成本模型为显式假设拆分，不等同于真实券商成交回报；"
+        "真实生产执行仍需成交样本、盘口/容量约束、税务和融资条款验证。",
     ]
 
 
@@ -1990,8 +2084,8 @@ def _backtest_limitation_note(result: DailyBacktestResult) -> str:
         )
     return (
         "- SEC 基本面、估值快照和政策/地缘风险事件发生记录已按 "
-        "signal_date point-in-time 接入；回测状态仍因税费、汇率、融资、容量约束"
-        "和非线性执行冲击等简化假设标记为 PASS_WITH_LIMITATIONS。"
+        "signal_date point-in-time 接入；回测状态仍因成本假设、容量约束、"
+        "逐笔盘口和盘中执行偏差等简化假设标记为 PASS_WITH_LIMITATIONS。"
     )
 
 

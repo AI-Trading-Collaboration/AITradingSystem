@@ -471,6 +471,7 @@ def build_backtest_trace_bundle(
         date_window=date_window,
         market_regime=result.market_regime,
         config_paths=config_paths,
+        parameters={"cost_assumptions": _backtest_cost_assumptions(result)},
         output_artifacts=_artifact_paths(
             report_path,
             daily_output_path,
@@ -750,8 +751,9 @@ def _run_manifest(
     market_regime: BacktestRegimeContext | None,
     config_paths: dict[str, Path],
     output_artifacts: list[str],
+    parameters: TraceRecord | None = None,
 ) -> TraceRecord:
-    return {
+    manifest = {
         "run_id": run_id,
         "command": command,
         "date_window": date_window,
@@ -759,6 +761,23 @@ def _run_manifest(
         "config_ids": sorted(config_paths),
         "config_paths": {key: str(path) for key, path in sorted(config_paths.items())},
         "output_artifacts": output_artifacts,
+    }
+    if parameters is not None:
+        manifest["parameters"] = parameters
+    return manifest
+
+
+def _backtest_cost_assumptions(result: DailyBacktestResult) -> TraceRecord:
+    return {
+        "commission_bps": result.cost_bps,
+        "spread_bps": result.spread_bps,
+        "slippage_bps": result.slippage_bps,
+        "market_impact_bps": result.market_impact_bps,
+        "tax_bps": result.tax_bps,
+        "fx_bps": result.fx_bps,
+        "financing_annual_bps": result.financing_annual_bps,
+        "etf_delay_bps": result.etf_delay_bps,
+        "model_scope": "explicit_assumptions_not_broker_fills",
     }
 
 

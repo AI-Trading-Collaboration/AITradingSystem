@@ -415,6 +415,12 @@
 - 报告显示成本敏感性，并说明哪些假设适用于研究、模拟或真实执行。
 - 所有成本假设写入 run manifest 和 evidence bundle。
 
+当前实现状态：
+
+- 2026-05-04：进入基础实现；第一阶段先扩展回测成本假设拆分，不接入券商成交回报或逐笔盘口。
+- 2026-05-04 基础版已完成：`aits backtest` 支持 commission、bid-ask spread、linear slippage、market impact、tax、FX、annual financing carry 和 ETF delay 假设；`backtest_daily.csv` 保存每类成本扣减，回测报告输出成本假设和执行成本摘要，trace run manifest 写入 `cost_assumptions`。
+- 当前完成态为 `BASELINE_DONE`：成本假设可审计、可复现；完整 `DONE` 仍需要真实成交样本、券商费率/税费规则、容量约束、最小交易单位和成交质量验证。
+
 ## PROXY-001
 
 标题：AI proxy 与 benchmark 治理

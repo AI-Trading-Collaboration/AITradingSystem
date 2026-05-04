@@ -306,7 +306,8 @@ def test_render_and_write_backtest_outputs(tmp_path: Path) -> None:
     assert "基准（SPY 买入持有）" in markdown
     assert "历史输入覆盖诊断" in markdown
     assert "输入审计报告" in markdown
-    assert "线性滑点/盘口冲击估算：0.0 bps" in markdown
+    assert "线性滑点：0.0 bps" in markdown
+    assert "市场冲击估算：0.0 bps" in markdown
     assert "## 结论使用等级" in markdown
     assert "结论等级：回测覆盖不足，结论降级（`backtest_limited`）" in markdown
     assert "## 执行成本摘要" in markdown
@@ -1105,8 +1106,20 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
             str(quality_path),
             "--benchmarks",
             "SPY,QQQ",
+            "--spread-bps",
+            "1.5",
             "--slippage-bps",
             "2.5",
+            "--market-impact-bps",
+            "3.0",
+            "--tax-bps",
+            "4.0",
+            "--fx-bps",
+            "0.5",
+            "--financing-annual-bps",
+            "25.0",
+            "--etf-delay-bps",
+            "1.0",
             "--sec-companies-path",
             str(sec_companies_path),
             "--sec-metrics-path",
@@ -1137,7 +1150,19 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     daily_frame = pd.read_csv(daily_path)
     assert "risk_budget_gate_cap" in daily_frame.columns
     assert "risk_budget_gate_triggered" in daily_frame.columns
+    assert {
+        "spread_cost",
+        "market_impact_cost",
+        "tax_cost",
+        "fx_cost",
+        "financing_cost",
+        "etf_delay_cost",
+    }.issubset(daily_frame.columns)
     trace = json.loads(trace_path.read_text(encoding="utf-8"))
+    cost_assumptions = trace["run_manifest"]["parameters"]["cost_assumptions"]
+    assert cost_assumptions["spread_bps"] == 1.5
+    assert cost_assumptions["market_impact_bps"] == 3.0
+    assert cost_assumptions["model_scope"] == "explicit_assumptions_not_broker_fills"
     claim_ids = {claim["claim_id"] for claim in trace["claims"]}
     assert "backtest:2026-04-01:2026-04-30:performance" in claim_ids
     assert quality_path.exists()
@@ -1149,7 +1174,11 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert "市场阶段：测试 AI 行情" in result.output
     report_text = report_path.read_text(encoding="utf-8")
     assert "测试 AI 行情" in report_text
-    assert "线性滑点/盘口冲击估算：2.5 bps" in report_text
+    assert "Bid-ask spread：1.5 bps" in report_text
+    assert "线性滑点：2.5 bps" in report_text
+    assert "市场冲击估算：3.0 bps" in report_text
+    assert "ETF 延迟/申赎成本：1.0 bps" in report_text
+    assert "真实券商成交回报" in report_text
     assert "## 基准政策与解释边界" in report_text
     assert "SEC 基本面质量摘要" in report_text
     assert "## 可追溯引用" in report_text
