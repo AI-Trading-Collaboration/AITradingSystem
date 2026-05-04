@@ -189,7 +189,7 @@ flowchart TD
         ROIR["outputs/reports/risk_event_occurrence_import_YYYY-MM-DD.md"]
         RPI["aits risk-events import-prereview-csv<br/>OpenAI 输出只进入待人工复核队列"]
         RPO["aits risk-events precheck-openai<br/>Responses API live 风险事件整理<br/>默认 gpt-5.5-pro / reasoning.effort=xhigh<br/>provider 权限 fail closed"]
-        RPQ["data/processed/risk_event_prereview_queue.json<br/>llm_extracted / pending_review 预审队列"]
+        RPQ["data/processed/risk_event_prereview_queue.json<br/>schema v2：llm_extracted / pending_review 预审队列<br/>记录 model 与 reasoning effort"]
         RPIR["outputs/reports/risk_event_prereview_import_YYYY-MM-DD.md"]
         RPOR["outputs/reports/risk_event_prereview_openai_YYYY-MM-DD.md<br/>request id、response id、checksum 和权限边界"]
         LLMP["aits llm precheck-claims<br/>Responses API + Structured Outputs<br/>默认 gpt-5.5-pro / reasoning.effort=xhigh<br/>provider 权限 fail closed"]
