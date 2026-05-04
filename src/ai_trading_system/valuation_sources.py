@@ -226,7 +226,9 @@ class FmpValuationFetchReport:
     requested_tickers: tuple[str, ...]
     analyst_estimate_limit: int
     analyst_history_input_path: Path | None
+    pit_normalized_input_path: Path | None
     historical_analyst_snapshot_count: int
+    pit_analyst_snapshot_count: int
     valuation_history_input_path: Path | None
     historical_valuation_snapshot_count: int
     minimum_valuation_history_points: int
@@ -635,6 +637,7 @@ def fetch_fmp_valuation_snapshots(
     *,
     provider: FmpValuationProvider | None = None,
     analyst_history_dir: Path | str | None = None,
+    pit_normalized_path: Path | str | None = None,
     valuation_history_dir: Path | str | None = None,
     captured_at: date | None = None,
     downloaded_at: datetime | None = None,
@@ -661,10 +664,23 @@ def fetch_fmp_valuation_snapshots(
     download_time = downloaded_at or datetime.now(tz=UTC)
     fetch_date = captured_at or download_time.date()
     history_path = Path(analyst_history_dir) if analyst_history_dir is not None else None
-    historical_estimates = (
+    legacy_historical_estimates = (
         load_fmp_analyst_estimate_history_snapshots(history_path, normalized_tickers)
         if history_path is not None
         else ()
+    )
+    pit_path = Path(pit_normalized_path) if pit_normalized_path is not None else None
+    pit_historical_estimates = (
+        load_fmp_forward_pit_analyst_estimate_history(
+            pit_path,
+            tickers=normalized_tickers,
+            decision_time=_daily_decision_time(as_of),
+        )
+        if pit_path is not None
+        else ()
+    )
+    historical_estimates = (
+        pit_historical_estimates if pit_path is not None else legacy_historical_estimates
     )
     issues: list[FmpValuationFetchIssue] = []
     valuation_history_path = (
@@ -745,7 +761,9 @@ def fetch_fmp_valuation_snapshots(
         requested_tickers=normalized_tickers,
         analyst_estimate_limit=analyst_estimate_limit,
         analyst_history_input_path=history_path,
+        pit_normalized_input_path=pit_path,
         historical_analyst_snapshot_count=len(historical_estimates),
+        pit_analyst_snapshot_count=len(pit_historical_estimates),
         valuation_history_input_path=valuation_history_path,
         historical_valuation_snapshot_count=len(valuation_history),
         minimum_valuation_history_points=minimum_valuation_history_points,
@@ -1153,6 +1171,85 @@ def load_fmp_analyst_estimate_history_snapshots(
     return tuple(sorted(snapshots, key=lambda item: (item.ticker, item.captured_at)))
 
 
+def load_fmp_forward_pit_analyst_estimate_history(
+    input_path: Path | str,
+    *,
+    tickers: list[str] | tuple[str, ...] | None = None,
+    decision_time: datetime,
+) -> tuple[FmpAnalystEstimateHistorySnapshot, ...]:
+    path = Path(input_path)
+    if not path.exists():
+        return ()
+    selected_tickers = None if tickers is None else set(_normalize_tickers(tickers))
+    grouped_records: dict[
+        tuple[str, date, datetime, str],
+        list[dict[str, Any]],
+    ] = {}
+    metadata: dict[tuple[str, date, datetime, str], dict[str, Any]] = {}
+    for csv_path in _fmp_forward_pit_normalized_paths(path):
+        with csv_path.open(encoding="utf-8", newline="") as file:
+            for row in csv.DictReader(file):
+                if row.get("endpoint_category") != "analyst_estimates":
+                    continue
+                ticker = (row.get("canonical_ticker") or "").strip().upper()
+                if selected_tickers is not None and ticker not in selected_tickers:
+                    continue
+                available_time = _parse_optional_iso_datetime(
+                    row.get("available_time") or ""
+                )
+                if available_time is None or available_time > decision_time.astimezone(UTC):
+                    continue
+                try:
+                    captured_at = date.fromisoformat(row.get("captured_at") or "")
+                    downloaded_at = _parse_optional_iso_datetime(
+                        row.get("downloaded_at") or ""
+                    )
+                    record = json.loads(row.get("normalized_values_json") or "{}")
+                except (ValueError, json.JSONDecodeError):
+                    continue
+                if downloaded_at is None or not isinstance(record, dict):
+                    continue
+                raw_payload_path = row.get("raw_payload_path") or str(csv_path)
+                key = (ticker, captured_at, downloaded_at, raw_payload_path)
+                grouped_records.setdefault(key, []).append(record)
+                metadata[key] = {
+                    "as_of": row.get("as_of") or captured_at.isoformat(),
+                    "endpoint": row.get("endpoint") or f"{FMP_BASE_URL}/analyst-estimates",
+                    "provider_symbol": row.get("provider_symbol") or ticker,
+                    "raw_payload_sha256": row.get("raw_payload_sha256") or "",
+                    "source_path": Path(raw_payload_path),
+                }
+
+    snapshots: list[FmpAnalystEstimateHistorySnapshot] = []
+    for key, records in grouped_records.items():
+        ticker, captured_at, downloaded_at, _raw_payload_path = key
+        item_metadata = metadata[key]
+        try:
+            as_of_date = date.fromisoformat(str(item_metadata["as_of"]))
+        except ValueError:
+            as_of_date = captured_at
+        snapshots.append(
+            FmpAnalystEstimateHistorySnapshot(
+                ticker=ticker,
+                as_of=as_of_date,
+                captured_at=captured_at,
+                downloaded_at=downloaded_at,
+                endpoint=str(item_metadata["endpoint"]),
+                request_parameters={
+                    "symbol": str(item_metadata["provider_symbol"]),
+                    "period": FMP_ANALYST_ESTIMATE_PERIOD,
+                    "page": FMP_ANALYST_ESTIMATE_PAGE,
+                    "source": "fmp_forward_pit_normalized",
+                },
+                row_count=len(records),
+                checksum_sha256=str(item_metadata["raw_payload_sha256"]),
+                records=tuple(records),
+                source_path=cast(Path, item_metadata["source_path"]),
+            )
+        )
+    return tuple(sorted(snapshots, key=lambda item: (item.ticker, item.captured_at)))
+
+
 def validate_fmp_analyst_estimate_history(
     input_path: Path | str,
     as_of: date,
@@ -1520,7 +1617,14 @@ def render_fmp_valuation_fetch_report(report: FmpValuationFetchReport) -> str:
             if report.analyst_history_input_path is not None
             else "- Analyst history 输入：未配置"
         ),
+        (
+            f"- PIT normalized 输入："
+            f"`{report.pit_normalized_input_path}`"
+            if report.pit_normalized_input_path is not None
+            else "- PIT normalized 输入：未配置"
+        ),
         f"- 已读取历史 analyst 快照数：{report.historical_analyst_snapshot_count}",
+        f"- 已读取 PIT analyst 快照数：{report.pit_analyst_snapshot_count}",
         f"- 本次待写入 analyst 快照数：{len(report.analyst_estimate_history_snapshots)}",
         (
             f"- Valuation history 输入："
@@ -1604,8 +1708,14 @@ def render_fmp_valuation_fetch_report(report: FmpValuationFetchReport) -> str:
                 "最近未来 annual revenueAvg 相对上一年度 revenueAvg。"
             ),
             (
+                "- 配置 PIT normalized 输入时，`eps_revision_90d_pct` 只使用 "
+                "`available_time <= decision_time` 的自建 forward-only analyst-estimates "
+                "as-of 索引；未配置时保留 legacy analyst history 路径。"
+            ),
+            (
                 "- `eps_revision_90d_pct` 使用同一 fiscal estimate date 的历史 "
-                "analyst-estimates.epsAvg，与当前值比较；历史快照必须接近 90 天回看窗口。"
+                "analyst-estimates.epsAvg，与当前值比较；历史快照必须接近 90 天回看窗口，"
+                "样本不足时明确降级。"
             ),
             (
                 "- `valuation_percentile` 使用本地 point-in-time 估值快照历史计算；"
@@ -1826,6 +1936,25 @@ def _fmp_analyst_history_paths(path: Path) -> list[Path]:
     if path.is_file():
         return [path]
     return sorted(path.rglob("fmp_analyst_estimates_*.json"))
+
+
+def _fmp_forward_pit_normalized_paths(path: Path) -> list[Path]:
+    if path.is_file():
+        return [path]
+    return sorted(path.rglob("fmp_forward_pit_*.csv"))
+
+
+def _daily_decision_time(as_of: date) -> datetime:
+    return datetime(
+        as_of.year,
+        as_of.month,
+        as_of.day,
+        23,
+        59,
+        59,
+        999999,
+        tzinfo=UTC,
+    )
 
 
 def _check_fmp_analyst_history_snapshot(
@@ -3262,6 +3391,13 @@ def _parse_iso_datetime(value: str) -> datetime:
     if parsed.tzinfo is None:
         return parsed.replace(tzinfo=UTC)
     return parsed
+
+
+def _parse_optional_iso_datetime(value: str) -> datetime | None:
+    try:
+        return _parse_iso_datetime(value)
+    except ValueError:
+        return None
 
 
 def _sanitize_fmp_error_message(exc: Exception) -> str:

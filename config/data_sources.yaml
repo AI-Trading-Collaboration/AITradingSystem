@@ -221,6 +221,7 @@ sources:
       - fmp_forward_pit_raw_payload
       - fmp_forward_pit_available_time
       - fmp_forward_pit_normalized_schema
+      - fmp_forward_pit_as_of_query
       - downstream_snapshot_validation
     limitations:
       - forward_pe 使用当前 quote 与最近未来 annual EPS estimate 计算。
@@ -229,10 +230,11 @@ sources:
       - valuation_percentile 使用本地估值快照历史计算；historical key metrics/ratios endpoint 权限不足时，不伪造供应商历史分位。
       - fetch-fmp-valuation-history 可用 FMP historical key-metrics/ratios 回填历史估值分布；这些快照的 captured_at 固定为采集日，历史回测在采集日前不可见。
       - historical key-metrics/ratios 是当前供应商历史接口返回的历史倍数，不替代真实 point-in-time vendor archive。
-      - 内部 ticker 与 FMP provider symbol 不一致时必须用显式 alias；当前 `GOOG` 请求 FMP 使用 `GOOGL`，快照仍归属内部 ticker `GOOG`。
+      - "内部 ticker 与 FMP provider symbol 不一致时必须用显式 alias；当前 `GOOG` 请求 FMP 使用 `GOOGL`，快照仍归属内部 ticker `GOOG`。"
       - FMP 返回负数估值倍数时记录警告并跳过该指标，避免把不可解释倍数写入自动评分输入。
       - HTTPS 连接、SSL、超时、429 和 5xx 临时错误会有限重试；402 等权限错误不重试，必须按 entitlement 问题处理。
       - forward-only PIT 抓取的 analyst estimates、price target、ratings 和 earnings calendar 只从采集日后可见，不改变当前评分语义；下游必须使用 available_time <= decision_time。
+      - "`eps_revision_90d_pct` 只有在自建 PIT normalized 索引存在足够 90 天历史时才可计算；样本不足时必须降级。"
       - API plan 或 entitlement 可能限制 endpoint 字段和请求频率。
     llm_permission:
       license_scope: paid_vendor_terms_not_reviewed_for_external_llm

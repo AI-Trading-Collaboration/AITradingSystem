@@ -11,6 +11,13 @@ from typer.testing import CliRunner
 import ai_trading_system.cli as cli_module
 from ai_trading_system.cli import app
 from ai_trading_system.config import load_universe, load_watchlist
+from ai_trading_system.fmp_forward_pit import (
+    attach_fmp_forward_pit_raw_paths,
+    fetch_fmp_forward_pit_snapshots,
+    normalize_fmp_forward_pit_payloads,
+    write_fmp_forward_pit_normalized_csv,
+    write_fmp_forward_pit_raw_payloads,
+)
 from ai_trading_system.valuation import (
     SnapshotMetric,
     ValuationIssueSeverity,
@@ -28,6 +35,7 @@ from ai_trading_system.valuation_sources import (
     fetch_fmp_valuation_snapshots,
     import_valuation_snapshots_from_csv,
     load_fmp_analyst_estimate_history_snapshots,
+    load_fmp_forward_pit_analyst_estimate_history,
     render_eodhd_earnings_trends_fetch_report,
     render_fmp_historical_valuation_fetch_report,
     render_fmp_valuation_fetch_report,
@@ -253,6 +261,67 @@ def test_fetch_fmp_valuation_snapshots_calculates_eps_revision_from_history(
     }
     assert expectation_metrics["eps_revision_90d_pct"].value == approx(100)
     assert "missing_eps_revision_history" not in {issue.code for issue in report.issues}
+
+
+def test_fetch_fmp_valuation_snapshots_calculates_eps_revision_from_pit_asof(
+    tmp_path: Path,
+) -> None:
+    pit_path = _write_fmp_forward_pit_normalized_csv(
+        tmp_path,
+        [
+            (datetime(2026, 2, 1, 12, 0, tzinfo=UTC), 2.0),
+            (datetime(2026, 5, 3, 12, 0, tzinfo=UTC), 1.0),
+        ],
+    )
+    pit_history = load_fmp_forward_pit_analyst_estimate_history(
+        pit_path,
+        tickers=["NVDA"],
+        decision_time=datetime(2026, 5, 2, 23, 59, 59, tzinfo=UTC),
+    )
+
+    report = fetch_fmp_valuation_snapshots(
+        ["NVDA"],
+        "test-key",
+        date(2026, 5, 2),
+        provider=_FakeFmpProvider(),
+        pit_normalized_path=pit_path,
+        captured_at=date(2026, 5, 2),
+    )
+
+    expectation_metrics = {
+        metric.metric_id: metric for metric in report.snapshots[0].expectation_metrics
+    }
+    assert len(pit_history) == 1
+    assert pit_history[0].records[0]["epsAvg"] == 2.0
+    assert report.pit_analyst_snapshot_count == 1
+    assert report.historical_analyst_snapshot_count == 1
+    assert expectation_metrics["eps_revision_90d_pct"].value == approx(100)
+    assert "PIT normalized 输入" in render_fmp_valuation_fetch_report(report)
+
+
+def test_fetch_fmp_valuation_snapshots_downgrades_when_pit_history_not_visible(
+    tmp_path: Path,
+) -> None:
+    pit_path = _write_fmp_forward_pit_normalized_csv(
+        tmp_path,
+        [(datetime(2026, 5, 3, 12, 0, tzinfo=UTC), 1.0)],
+    )
+
+    report = fetch_fmp_valuation_snapshots(
+        ["NVDA"],
+        "test-key",
+        date(2026, 5, 2),
+        provider=_FakeFmpProvider(),
+        pit_normalized_path=pit_path,
+        captured_at=date(2026, 5, 2),
+    )
+    expectation_metrics = {
+        metric.metric_id: metric for metric in report.snapshots[0].expectation_metrics
+    }
+
+    assert report.pit_analyst_snapshot_count == 0
+    assert "eps_revision_90d_pct" not in expectation_metrics
+    assert "missing_eps_revision_history" in {issue.code for issue in report.issues}
 
 
 def test_fetch_fmp_valuation_snapshots_calculates_local_valuation_percentile(
@@ -526,6 +595,7 @@ def test_valuation_fetch_fmp_cli_writes_yaml_and_reports(
         as_of: date,
         *,
         analyst_history_dir: Path | str | None = None,
+        pit_normalized_path: Path | str | None = None,
         valuation_history_dir: Path | str | None = None,
         captured_at: date | None = None,
         analyst_estimate_limit: int = 10,
@@ -536,6 +606,7 @@ def test_valuation_fetch_fmp_cli_writes_yaml_and_reports(
             as_of,
             provider=_FakeFmpProvider(),
             analyst_history_dir=analyst_history_dir,
+            pit_normalized_path=pit_normalized_path,
             valuation_history_dir=valuation_history_dir,
             captured_at=captured_at or as_of,
             analyst_estimate_limit=analyst_estimate_limit,
@@ -950,6 +1021,57 @@ class _FakeFmpProvider:
         ]
 
 
+class _FakeFmpForwardPitProvider(_FakeFmpProvider):
+    def __init__(self, *, eps_avg: float) -> None:
+        super().__init__()
+        self.eps_avg = eps_avg
+
+    def fetch_analyst_estimates(
+        self,
+        ticker: str,
+        *,
+        period: str,
+        limit: int,
+    ) -> list[dict[str, Any]]:
+        return [
+            {
+                "symbol": ticker,
+                "date": "2027-01-31",
+                "revenueAvg": 120.0,
+                "epsAvg": self.eps_avg,
+            },
+            {
+                "symbol": ticker,
+                "date": "2026-01-31",
+                "revenueAvg": 100.0,
+                "epsAvg": 3.0,
+            },
+        ][:limit]
+
+    def fetch_price_target_summary(self, ticker: str) -> list[dict[str, Any]]:
+        return [{"symbol": ticker, "lastMonth": 950.0}]
+
+    def fetch_price_target_consensus(self, ticker: str) -> list[dict[str, Any]]:
+        return [{"symbol": ticker, "targetConsensus": 1000.0}]
+
+    def fetch_grades(self, ticker: str) -> list[dict[str, Any]]:
+        return [{"symbol": ticker, "publishedDate": "2026-05-01", "newGrade": "Buy"}]
+
+    def fetch_grades_consensus(self, ticker: str) -> list[dict[str, Any]]:
+        return [{"symbol": ticker, "buy": 20}]
+
+    def fetch_ratings_snapshot(self, ticker: str) -> list[dict[str, Any]]:
+        return [{"symbol": ticker, "rating": "A-"}]
+
+    def fetch_earnings_calendar(
+        self,
+        *,
+        from_date: date,
+        to_date: date,
+    ) -> list[dict[str, Any]]:
+        return [{"symbol": "NVDA", "date": "2026-05-28", "epsEstimated": 1.0}]
+
+
 class _FailingFmpProvider:
     def fetch_quote_short(self, ticker: str) -> list[dict[str, Any]]:
         raise RuntimeError(
@@ -1099,6 +1221,35 @@ def _base_current_valuation_snapshot() -> ValuationSnapshot:
         valuation_percentile=70,
         overall_assessment="expensive",
         notes="Base FMP snapshot.",
+    )
+
+
+def _write_fmp_forward_pit_normalized_csv(
+    tmp_path: Path,
+    snapshots: list[tuple[datetime, float]],
+) -> Path:
+    raw_dir = tmp_path / "raw" / "fmp_forward_pit"
+    normalized_rows = []
+    for downloaded_at, eps_avg in snapshots:
+        report = fetch_fmp_forward_pit_snapshots(
+            ["NVDA"],
+            "test-key",
+            downloaded_at.date(),
+            provider=_FakeFmpForwardPitProvider(eps_avg=eps_avg),
+            captured_at=downloaded_at.date(),
+            downloaded_at=downloaded_at,
+            analyst_estimate_limit=2,
+        )
+        raw_paths = write_fmp_forward_pit_raw_payloads(report.raw_payloads, raw_dir)
+        attached_payloads = attach_fmp_forward_pit_raw_paths(
+            report.raw_payloads,
+            raw_paths,
+            project_root=tmp_path,
+        )
+        normalized_rows.extend(normalize_fmp_forward_pit_payloads(attached_payloads))
+    return write_fmp_forward_pit_normalized_csv(
+        tuple(normalized_rows),
+        tmp_path / "processed" / "pit_snapshots" / "fmp_forward_pit.csv",
     )
 
 

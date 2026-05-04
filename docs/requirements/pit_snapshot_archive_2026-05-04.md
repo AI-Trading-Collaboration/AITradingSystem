@@ -122,7 +122,7 @@ WHERE available_time <= decision_time
 |5|更新系统流图、数据源目录和 README 日常流程|DONE|文档明确 PIT capture 位于 `score-daily` 之前，缺跑不能事后补成 strict PIT，报告默认中文|
 |6|补充测试和最小样例数据|DONE|覆盖 manifest 通过、checksum mismatch、未来 `available_time`、重复快照、missing payload 和 CLI 退出码|
 |7|阶段 2 接入 FMP forward-only 抓取归档|DONE|`analyst estimates`、`price target`、`ratings`、`earnings calendar` 写 raw payload 和 normalized 输出，`available_time` 从采集成功时间开始|
-|8|阶段 3 接入 valuation/revision as-of 查询|PENDING|`eps_revision_90d_pct` 只使用 `available_time <= decision_time` 的自建快照；样本不足 90 天时明确降级|
+|8|阶段 3 接入 valuation/revision as-of 查询|DONE|`eps_revision_90d_pct` 只使用 `available_time <= decision_time` 的自建快照；样本不足 90 天时明确降级|
 |9|阶段 4 接入日常健康检查和告警|PENDING|`ops health` / alerts 检查 PIT 快照缺跑、断更、row count 异常和 checksum 异常|
 |10|阶段 5 评估 SEC accession-level 增强|PENDING|形成是否接入 accession-level filing archive 的设计结论或后续任务|
 
@@ -182,3 +182,5 @@ WHERE available_time <= decision_time
 - 2026-05-05：从 IN_PROGRESS 改为 BASELINE_DONE，原因：阶段 1 已实现 `pit_snapshots` manifest schema/校验、`aits pit-snapshots validate`、`aits pit-snapshots build-manifest`、现有 FMP/EODHD raw cache 发现入口、中文质量报告、数据源目录、系统流图、README 和测试；真实本地运行 `aits pit-snapshots build-manifest --as-of 2026-05-05` 生成 13 条快照且质量状态为 PASS。阶段 2-5 继续保留为后续开发。
 - 2026-05-05：从 BASELINE_DONE 改回 IN_PROGRESS，原因：继续推进阶段 2，接入 FMP analyst estimates、price target、ratings 和 earnings calendar 的 forward-only PIT 抓取归档。
 - 2026-05-05：从 IN_PROGRESS 改为 BASELINE_DONE，原因：阶段 2 已实现 `aits pit-snapshots fetch-fmp-forward`、`data/raw/fmp_forward_pit/` 原始归档、`data/processed/pit_snapshots/fmp_forward_pit_YYYY-MM-DD.csv` 标准化 as-of 索引、自动刷新 PIT manifest、中文抓取报告、数据源目录、系统流图、README 和测试；全量 pytest 与 Ruff 通过。阶段 3-5 继续保留为后续开发。
+- 2026-05-05：从 BASELINE_DONE 改回 IN_PROGRESS，原因：继续推进阶段 3，将 valuation/revision 计算接入 `available_time <= decision_time` 的自建 PIT 标准化索引。
+- 2026-05-05：从 IN_PROGRESS 改为 BASELINE_DONE，原因：阶段 3 已实现 FMP PIT normalized analyst-estimates as-of loader，并让 `fetch_fmp_valuation_snapshots` / `aits valuation fetch-fmp` 默认通过 `available_time <= decision_time` 的自建快照计算 `eps_revision_90d_pct`；未来快照会被过滤，自建历史不足 90 天时保留明确降级。阶段 4-5 继续保留为后续开发。

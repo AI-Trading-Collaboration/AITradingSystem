@@ -4950,6 +4950,15 @@ def fetch_fmp_valuations(
         Path,
         typer.Option(help="读取并写入 FMP analyst-estimates 原始历史快照的目录。"),
     ] = DEFAULT_FMP_ANALYST_ESTIMATE_HISTORY_DIR,
+    pit_normalized_path: Annotated[
+        Path | None,
+        typer.Option(
+            help=(
+                "读取 FMP forward-only PIT 标准化 CSV 的文件或目录；"
+                "默认使用 data/processed/pit_snapshots。"
+            )
+        ),
+    ] = DEFAULT_FMP_FORWARD_PIT_NORMALIZED_DIR,
     as_of: Annotated[
         str | None,
         typer.Option(help="估值评估日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -4998,6 +5007,7 @@ def fetch_fmp_valuations(
             api_key,
             fetch_date,
             analyst_history_dir=analyst_history_dir,
+            pit_normalized_path=pit_normalized_path,
             valuation_history_dir=output_dir,
             captured_at=fetch_date,
             analyst_estimate_limit=analyst_estimate_limit,
