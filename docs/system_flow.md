@@ -130,6 +130,10 @@ flowchart TD
         FBC["aits feedback calibrate<br/>先执行数据质量门禁，再观察历史 decision_snapshot"]
         DOCSV["data/processed/decision_outcomes.csv<br/>1D/5D/20D/60D/120D outcome"]
         DCR["outputs/reports/decision_calibration_YYYY-MM-DD.md<br/>分桶校准和样本限制"]
+        FCC["aits feedback build-causal-chain<br/>串联 snapshot、trace evidence、模块变化、gate 和 outcome"]
+        DCC["data/processed/decision_causal_chains.json<br/>signal_time_context + post_signal_observations"]
+        DCCR["outputs/reports/decision_causal_chains_YYYY-MM-DD.md<br/>因果链摘要和质量状态"]
+        FCL["aits feedback lookup-chain<br/>按 chain_id 查询因果链"]
     end
 
     subgraph Governance["结构校验"]
@@ -147,6 +151,8 @@ flowchart TD
         ROR["outputs/reports/risk_event_occurrences_YYYY-MM-DD.md"]
         DSV["aits data-sources validate"]
         DSR["outputs/reports/data_sources_validation_YYYY-MM-DD.md"]
+        DSH["aits data-sources health<br/>provider health score + reconciliation 覆盖"]
+        DSHR["outputs/reports/data_sources_health_YYYY-MM-DD.md<br/>manifest/cache/checksum/freshness/coverage"]
         EVI["aits evidence import-csv"]
         EV["aits evidence validate"]
         EVIR["outputs/reports/market_evidence_import_YYYY-MM-DD.md"]
@@ -315,6 +321,12 @@ flowchart TD
     RR --> FBC
     FBC --> DOCSV
     FBC --> DCR
+    DSNAP --> FCC
+    DOCSV --> FCC
+    DRT --> FCC
+    FCC --> DCC
+    FCC --> DCCR
+    DCC --> FCL
 
     U --> WV
     W --> WV
@@ -341,6 +353,8 @@ flowchart TD
     ROV --> ROR
     DS --> DSV
     DSV --> DSR
+    DS --> DSH
+    DSH --> DSHR
     MECSV --> EVI
     EVI --> ME
     EVI --> EVIR
@@ -538,7 +552,8 @@ flowchart TD
     B0 --> RPT["daily_score 报告<br/>中文认知状态摘要"]
 
     D0 --> O0["aits feedback calibrate<br/>decision_outcomes<br/>1D / 5D / 20D / 60D / 120D"]
-    O0 --> CA0["decision_causal_chain<br/>证据、状态变化、gate、outcome 串联"]
+    O0 --> CA0["aits feedback build-causal-chain<br/>decision_causal_chains<br/>signal_time_context / post_signal_observations"]
+    CA0 --> CAQ["aits feedback lookup-chain<br/>按 chain_id 查询因果链"]
     CA0 --> L0["learning_queue<br/>错误归因和成功样本归因"]
     L0 --> RC0["rule_candidate<br/>候选规则建议"]
     RC0 --> SH0["shadow mode / historical replay<br/>不影响 production 输出"]
@@ -571,9 +586,11 @@ flowchart TD
         EV0["新市场信息证据账本<br/>aits evidence import-csv / validate"]
         FB1["决策快照<br/>decision_snapshot_YYYY-MM-DD.json<br/>保存评分、置信度、仓位、gate、质量和 trace 引用"]
         FB2["结果观察与校准<br/>aits feedback calibrate<br/>生成 decision_outcomes 和 calibration report"]
+        FB3["决策因果链 ledger<br/>aits feedback build-causal-chain / lookup-chain<br/>串联 evidence、模块变化、gate、snapshot 和 outcome"]
         K["交易复盘归因<br/>aits review-trades"]
         L["日报集成<br/>汇总 thesis、风险规则与发生记录、估值和复盘摘要"]
         M["数据源目录<br/>aits data-sources list/validate"]
+        M2["数据源健康与 reconciliation 覆盖<br/>aits data-sources health"]
         N["基本面一手数据<br/>aits fundamentals list-sec-companies / download-sec-companyfacts"]
         O["SEC 基本面指标摘要<br/>aits fundamentals extract-sec-metrics / validate-sec-metrics"]
         P["SEC 基本面特征<br/>aits fundamentals build-sec-features"]
@@ -586,14 +603,16 @@ flowchart TD
 
     subgraph Planned["规划/待接入"]
         R0["认知状态层<br/>COGNITION-001 belief_state<br/>只读，不直接改评分或仓位"]
-        R1["证据下游自动联动<br/>LLM-001 / CAUSE-001<br/>不得绕过人工复核"]
-        R3["因果链、学习队列和候选规则<br/>CAUSE-001 / LEARNING-001 / EXPERIMENT-001"]
+        R1["证据下游自动联动<br/>LLM-001<br/>不得绕过人工复核"]
+        R3["学习队列和候选规则<br/>LEARNING-001 / EXPERIMENT-001"]
         R4["规则生命周期治理<br/>GOV-001 rule card / manual approval"]
     end
 
     C --> D
     D --> FB1
     FB1 --> FB2
+    FB2 --> FB3
+    FB3 --> R3
     D --> E
     F --> H
     F2 --> E
@@ -604,6 +623,7 @@ flowchart TD
     H --> I
     M --> J3
     M --> J4
+    M --> M2
     J4 --> J3
     J4 --> J
     J3 --> J
@@ -663,6 +683,10 @@ flowchart TD
 |决策结果校准|`aits feedback calibrate`|先复用 `aits validate-data` 同一质量门禁，再从历史 `decision_snapshot` 和 `prices_daily.csv` 生成 1D/5D/20D/60D/120D outcome，按总分、置信度、gate、thesis、风险等级和估值状态分桶输出校准报告；结果只能进入规则复核，不能自动修改生产规则|已实现基础版|
 |决策结果缓存|`data/processed/decision_outcomes.csv`|保存每个 `snapshot_id`、观察窗口、AI proxy return、最大回撤、实现波动、SPY/QQQ/SMH/SOXX return 与超额收益、hit/miss、分桶字段、gate/thesis/risk/valuation 状态和 `belief_state` 路径|已实现基础版|
 |决策校准报告|`outputs/reports/decision_calibration_YYYY-MM-DD.md`|输出市场阶段、样本数量、观察窗口、数据质量状态、样本不足限制、重叠窗口限制、全局摘要和各分桶平均收益/回撤/波动/胜率/超额收益|已实现基础版|
+|决策因果链构建|`aits feedback build-causal-chain`|读取历史 `decision_snapshot`、`decision_outcomes.csv` 和 trace bundle 引用，生成 `decision_causal_chain`；`signal_time_context` 只记录 signal_date 当时可见的 evidence、模块分变化、置信度变化、gate 和仓位变化，后验 outcome 只能进入 `post_signal_observations`|已实现基础版|
+|决策因果链缓存|`data/processed/decision_causal_chains.json`|保存 `chain_id`、market regime、linked evidence、linked decision snapshot、quality、affected modules、score/confidence/position delta、triggered gates、append-only outcome windows、review status 和预留 `linked_rule_candidate`|已实现基础版|
+|决策因果链报告|`outputs/reports/decision_causal_chains_YYYY-MM-DD.md`|输出因果链摘要、数据质量状态、触发 gate、outcome 窗口数量和未来 outcome 不得改写 signal-time 因果解释的治理边界|已实现基础版|
+|决策因果链查询|`aits feedback lookup-chain`|按 `chain_id` 从 `decision_causal_chains.json` 反查单条链路，显示市场阶段、质量状态、decision snapshot、evidence、受影响模块、触发 gate 和 outcome 窗口|已实现基础版|
 |认知模型需求|`docs/requirements/cognitive_model_2026-05-04.md`|定义 AI 产业链可审计认知模型边界、`belief_state` 第一阶段、阶段路线、禁止自动改生产规则的治理边界和关联任务|已登记|
 |认知状态缓存|`data/processed/belief_state/belief_state_YYYY-MM-DD.json`|只读认知状态快照，结构化记录市场状态、产业链节点状态、估值、风险、thesis、仓位边界、限制因素、多维置信度、trace 引用和 `decision_snapshot` 引用；明确不直接改变评分、闸门、回测仓位或交易建议|已实现基础版|
 |认知状态历史|`data/processed/belief_state_history.csv`|认知状态历史索引，按 `signal_date` upsert，记录 `belief_state_id`、路径、生成时间、production_effect、置信度、数据质量、最终仓位边界、限制数量、trace 路径和 decision snapshot 路径|已实现基础版|
@@ -673,6 +697,8 @@ flowchart TD
 |回测输入审计报告|`outputs/backtests/backtest_audit_YYYY-MM-DD_YYYY-MM-DD.md`|输出 PASS/PASS_WITH_WARNINGS/FAIL、数据质量、point-in-time 输入、模块覆盖率、来源类型、执行假设、审计发现和修复建议，判断本次回测是否可解释；`--fail-on-audit-warning` 可把非 PASS 审计状态转为命令失败|已实现|
 |回测 Evidence Bundle|`outputs/backtests/evidence/backtest_YYYY-MM-DD_YYYY-MM-DD_trace.json`|记录回测 `claim`、`evidence`、`dataset`、`quality` 和 `run_manifest`，用于从绩效、数据质量和输入覆盖结论反查上下文|已实现|
 |报告反查|`aits trace lookup`|按 claim/evidence/dataset/quality/run id 读取 evidence bundle 并输出中文摘要和原始 JSON 上下文|已实现|
+|数据源健康|`aits data-sources health`|读取 `config/data_sources.yaml` 和 `data/raw/download_manifest.csv`，输出 provider health score、cache path 存在性、latest manifest downloaded_at/row_count/checksum、checksum drift、manifest/cache 新鲜度和 qualified source reconciliation 覆盖状态；跨供应商不足只标记 `NOT_COVERED`，不自动平滑数据|已实现基础版|
+|数据源健康报告|`outputs/reports/data_sources_health_YYYY-MM-DD.md`|中文报告展示方法边界、领域级 reconciliation 覆盖、provider health、latest manifest 明细、缓存问题和调查项；当前低成本版达到 `BASELINE_DONE`，生产级跨源校验仍依赖 owner 提供长期可用第二来源和授权策略|已实现基础版|
 |能力圈|`config/watchlist.yaml`|记录核心标的、能力圈和 thesis 要求|已实现基础版|
 |观察池生命周期|`config/watchlist_lifecycle.yaml`|记录 ticker 的 `added_at`、`removed_at`、`active_from`、`active_until`、能力圈状态、节点映射可见日期、thesis 要求可见日期、来源和复核人，用于回测防幸存者偏差|已实现基础版|
 |观察池生命周期校验|`aits watchlist validate-lifecycle`|校验当前核心/活跃观察池是否都有 point-in-time lifecycle 记录、是否存在重复记录，以及当前活跃 ticker 在评估日是否可用于评分/回测|已实现基础版|

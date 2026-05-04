@@ -79,9 +79,22 @@ from ai_trading_system.data.quality import (
     write_data_quality_report,
 )
 from ai_trading_system.data_sources import (
+    build_data_source_health_report,
+    default_data_source_health_report_path,
     default_data_sources_report_path,
     validate_data_sources_config,
+    write_data_source_health_report,
     write_data_sources_validation_report,
+)
+from ai_trading_system.decision_causal_chains import (
+    DEFAULT_DECISION_CAUSAL_CHAIN_PATH,
+    build_decision_causal_chain_ledger,
+    default_decision_causal_chain_report_path,
+    load_decision_outcomes_frame,
+    lookup_decision_causal_chain,
+    render_decision_causal_chain_lookup,
+    write_decision_causal_chain_ledger,
+    write_decision_causal_chain_report,
 )
 from ai_trading_system.decision_outcomes import (
     DEFAULT_DECISION_OUTCOMES_PATH,
@@ -275,7 +288,7 @@ data_sources_app = typer.Typer(help="数据源目录和审计规则管理。", n
 fundamentals_app = typer.Typer(help="基本面数据源下载和审计。", no_args_is_help=True)
 trace_app = typer.Typer(help="报告 evidence bundle 反查。", no_args_is_help=True)
 evidence_app = typer.Typer(help="新市场信息 evidence 账本。", no_args_is_help=True)
-feedback_app = typer.Typer(help="决策结果观察和校准。", no_args_is_help=True)
+feedback_app = typer.Typer(help="决策结果观察、校准和因果链查询。", no_args_is_help=True)
 app.add_typer(watchlist_app, name="watchlist")
 app.add_typer(industry_chain_app, name="industry-chain")
 app.add_typer(thesis_app, name="thesis")
@@ -511,6 +524,77 @@ def calibrate_decision_outcomes(
     console.print(f"校准报告：{calibration_report_output}")
     console.print(f"Outcome CSV：{outcomes_output}")
     console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
+
+
+@feedback_app.command("build-causal-chain")
+def build_decision_causal_chains_command(
+    decision_snapshot_path: Annotated[
+        Path,
+        typer.Option(help="decision_snapshot JSON 文件或目录路径。"),
+    ] = DEFAULT_DECISION_SNAPSHOT_DIR,
+    outcomes_path: Annotated[
+        Path,
+        typer.Option(help="decision_outcomes CSV 路径；不存在时只生成 signal-time 链条。"),
+    ] = DEFAULT_DECISION_OUTCOMES_PATH,
+    output_path: Annotated[
+        Path,
+        typer.Option(help="decision_causal_chain ledger JSON 输出路径。"),
+    ] = DEFAULT_DECISION_CAUSAL_CHAIN_PATH,
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 因果链报告输出路径。"),
+    ] = None,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="报告日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+) -> None:
+    """构建 decision causal chain ledger。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    snapshots = load_decision_snapshots(decision_snapshot_path)
+    if not snapshots:
+        raise typer.BadParameter(f"未找到 decision_snapshot：{decision_snapshot_path}")
+    outcomes = load_decision_outcomes_frame(outcomes_path)
+    ledger = build_decision_causal_chain_ledger(
+        snapshots=snapshots,
+        outcomes=outcomes,
+    )
+    ledger_output = write_decision_causal_chain_ledger(ledger, output_path)
+    report_output = report_path or default_decision_causal_chain_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        report_date,
+    )
+    report_output = write_decision_causal_chain_report(
+        ledger,
+        ledger_path=ledger_output,
+        output_path=report_output,
+    )
+
+    console.print("[green]决策因果链已生成。[/green]")
+    console.print(f"链条数：{ledger.chain_count}")
+    console.print(f"Ledger：{ledger_output}")
+    console.print(f"报告：{report_output}")
+
+
+@feedback_app.command("lookup-chain")
+def lookup_decision_causal_chain_command(
+    chain_id: Annotated[
+        str,
+        typer.Option("--id", help="decision causal chain id。"),
+    ],
+    input_path: Annotated[
+        Path,
+        typer.Option(help="decision_causal_chain ledger JSON 路径。"),
+    ] = DEFAULT_DECISION_CAUSAL_CHAIN_PATH,
+) -> None:
+    """按 chain_id 反查 decision causal chain。"""
+    try:
+        chain = lookup_decision_causal_chain(input_path, chain_id)
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(f"decision causal chain ledger 不存在：{input_path}") from exc
+    except KeyError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(render_decision_causal_chain_lookup(chain))
 
 
 @app.callback()
@@ -1740,6 +1824,48 @@ def validate_data_sources(
     console.print(f"[{status_style}]数据源目录校验状态：{report.status}[/{status_style}]")
     console.print(f"报告：{report_path}")
     console.print(f"数据源数量：{len(report.sources)}；活跃：{report.active_count}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+
+@data_sources_app.command("health")
+def data_source_health(
+    config_path: Annotated[
+        Path,
+        typer.Option(help="数据源目录配置文件路径。"),
+    ] = DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    manifest_path: Annotated[
+        Path,
+        typer.Option(help="download_manifest.csv 路径。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "download_manifest.csv",
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="评估日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 数据源健康报告输出路径。"),
+    ] = None,
+) -> None:
+    """生成 provider health 和 reconciliation 覆盖报告。"""
+    evaluation_date = _parse_date(as_of) if as_of else date.today()
+    report_path = output_path or default_data_source_health_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        evaluation_date,
+    )
+    report = build_data_source_health_report(
+        config=load_data_sources(config_path),
+        as_of=evaluation_date,
+        manifest_path=manifest_path,
+    )
+    write_data_source_health_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]数据源健康状态：{report.status}[/{status_style}]")
+    console.print(f"Provider health score：{report.health_score}")
+    console.print(f"报告：{report_path}")
     console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
 
     if not report.passed:

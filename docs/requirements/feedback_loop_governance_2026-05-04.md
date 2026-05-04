@@ -83,6 +83,13 @@
 3. 在 `FEEDBACK-002` outcome 生成后回填对应观察窗口结果。
 4. 将因果链条纳入 `trace lookup` 或等价查询入口。
 
+当前实现状态：
+
+- 2026-05-04 基础版已完成：新增 `decision_causal_chains` 模块和 `aits feedback build-causal-chain`，从历史 `decision_snapshot`、trace bundle evidence 引用和 `decision_outcomes.csv` 构建 `data/processed/decision_causal_chains.json`。
+- `signal_time_context` 固定保存 signal_date 当时可见的 evidence、模块分/置信度变化、触发 gate、仓位变化、质量状态和 snapshot 引用；`post_signal_observations` 只追加 outcome 窗口，避免未来 outcome 改写当时因果解释。
+- 新增 `aits feedback lookup-chain` 作为等价查询入口，按 `chain_id` 展示市场阶段、质量状态、决策快照、evidence、受影响模块、触发 gate 和 outcome 窗口。
+- 仍预留 `linked_rule_candidate`，后续由 `LEARNING-001` 和 `EXPERIMENT-001` 在错误归因和候选规则验证完成后回填。
+
 验收标准：
 
 - 每个核心仓位变化或结论降级都能对应至少一个 `chain_id`。
@@ -223,18 +230,27 @@
 
 价值判断：值得做，但真实跨供应商校验依赖 owner 选择可长期使用的数据源和权限。当前 `aits validate-data` 已覆盖 schema、完整性、新鲜度、重复键和异常值；下一层需要识别供应商之间价格、估值、财报、宏观数据的口径冲突、字段漂移、延迟更新和 ticker alias 风险。
 
+2026-05-04 owner 决策：初版先走低成本框架方案，不直接订阅 Intrinio `US Fundamentals` 等高价年付来源。第一阶段使用 SEC EDGAR、FRED、现有 FMP/Yahoo 和低成本或试用来源搭建 adapter、数据源目录、provider health score、差异报告和未覆盖声明；后续按实际缺口订阅 Intrinio、Sharadar、Databento 或企业级来源。该阶段的完成态只能是 `BASELINE_DONE`，不能把价格、估值、财报、宏观的完整生产级 cross-provider reconciliation 标成 `DONE`。
+
 分步开发：
 
 1. 定义 provider health score，覆盖 freshness、schema drift、row count anomaly、checksum change、alias risk、cross-provider deviation、permission status。
-2. 先为已有 provider 输出单源健康报告，再在 owner 提供第二来源后接入差异检测。
-3. 对价格、估值、财报和宏观数据分别定义容忍区间和调查门槛。
-4. 把 provider health 引入数据质量报告和日报限制说明；严重问题应停止下游使用或降级结论。
+2. 先为已有 provider 输出单源健康报告，并把无第二来源的域标记为 reconciliation 未覆盖。
+3. 接入一个低成本或试用第二来源作为框架验证源，优先验证价格、估值、财报和宏观数据的差异报告、调查项和降级路径，不把低成本源自动视为生产裁判。
+4. 对价格、估值、财报和宏观数据分别定义容忍区间和调查门槛。
+5. 把 provider health 引入数据质量报告和日报限制说明；严重问题应停止下游使用或降级结论。
+
+当前实现状态：
+
+- 2026-05-04 低成本基础版已完成：新增 `aits data-sources health`，读取 `config/data_sources.yaml` 和 `data/raw/download_manifest.csv`，输出 provider health score、cache path 状态、latest manifest `downloaded_at`/`row_count`/`checksum`、checksum drift、新鲜度和问题表。
+- 报告按 `market_prices`、`macro_rates`、`fundamentals`、`valuation` 输出 qualified source 覆盖状态；少于两个 qualified source 的领域标记为 `NOT_COVERED`，不把单源通过伪装成 cross-provider reconciliation 通过。
+- 当前完成态为 `BASELINE_DONE`：框架、审计字段和失败路径已具备，但完整 `DONE` 仍依赖 owner 提供长期可用第二来源、API key、商业授权/再分发限制和生产口径策略。
 
 验收标准：
 
 - 报告显示 provider、endpoint、请求参数、下载时间、row count、checksum、新鲜度、字段漂移、alias 风险和跨来源差异。
 - 跨供应商冲突进入调查项，不被自动平滑。
-- 没有合格第二来源时，系统明确标记 cross-provider reconciliation 未覆盖，而不是伪造通过。
+- 没有合格第二来源时，系统明确标记 cross-provider reconciliation 未覆盖，而不是伪造通过；低成本初版只能标 `BASELINE_DONE`。
 - 实现时同步更新 `docs/system_flow.md` 并补充数据源健康测试。
 
 ## SCENARIO-001
@@ -478,5 +494,7 @@
 - 2026-05-04：`EVIDENCE-001` 已完成基础实现：新增 `market_evidence` schema、YAML/CSV 导入、`aits evidence import-csv/validate`、来源等级校验、重复检查、LLM 待复核隔离和 public_convenience 不可自动评分测试。
 - 2026-05-04：`FEEDBACK-001` 已完成基础实现：`aits score-daily` 在数据质量门禁通过后写入 deterministic `decision_snapshot_YYYY-MM-DD.json`，快照包含 market regime、评分、置信度、仓位、position gates、质量状态、人工复核、估值/风险状态、trace bundle 引用和配置路径。
 - 2026-05-04：`FEEDBACK-002` 已完成基础实现：新增 `aits feedback calibrate`，先复用数据质量门禁，再从历史 `decision_snapshot` 和 `prices_daily.csv` 生成 `decision_outcomes.csv` 与中文校准报告；支持 1D/5D/20D/60D/120D 窗口、AI proxy/benchmark return、超额收益、最大回撤、实现波动、hit/miss，并按总分、置信度、gate、thesis、风险等级和估值状态分桶；报告明确样本不足、窗口重叠和不得自动修改生产规则。
+- 2026-05-04：`CAUSE-001` 已完成基础实现：新增 `decision_causal_chains` ledger、`aits feedback build-causal-chain` 和 `aits feedback lookup-chain`，把 evidence、模块 score/confidence 变化、position gate、decision snapshot、quality 和后验 outcome 串成可查询链路；测试覆盖未来 outcome 只能进入 `post_signal_observations`，不得改写 `signal_time_context`。
+- 2026-05-04：`DATA-002` 已完成低成本基础版：新增 `aits data-sources health` 和 `outputs/reports/data_sources_health_YYYY-MM-DD.md`，覆盖 provider health score、cache/manifest/row count/checksum/freshness 检查、manifest checksum mismatch 失败，以及 qualified source 不足时的 reconciliation `NOT_COVERED` 声明；完整 `DONE` 仍依赖 owner 提供生产级第二来源和授权策略。
 - 2026-05-04：`UNIVERSE-001` 已完成基础实现：新增 `config/watchlist_lifecycle.yaml`、`aits watchlist validate-lifecycle` 和回测 signal_date lifecycle 过滤，测试覆盖尚未进入观察池的 ticker 不参与历史市场特征。
 - 2026-05-04：`TEST-001` 已推进为完成状态：系统级不变量测试覆盖 watch 风险事件不自动评分、低证据等级/公开便利源隔离、LLM evidence 隔离、watchlist point-in-time 过滤、decision snapshot 写入、评分置信度和估值 PIT 可信度。
