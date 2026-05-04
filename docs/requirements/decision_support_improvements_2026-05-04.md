@@ -238,3 +238,4 @@
 - 2026-05-04：`SCORE-002` 已完成基础实现：每日评分和回测将 AI 产业链评分与判断置信度分开输出，`scores_daily.csv`、日报、decision snapshot 和回测明细/报告均记录 confidence 字段与低置信度原因。
 - 2026-05-04：`REPORT-002` 已完成首版实现：`scores_daily.csv` 的 overall 行保存模型/最终/置信度调整仓位区间和总资产 AI 仓位区间；日报新增“变化原因树”和“什么情况会改变判断”，从上期 overall 评分记录读取仓位、总分和置信度变化，并按趋势、风险情绪、估值、基本面、thesis、风险事件、数据质量和仓位闸门解释最终动作约束。
 - 2026-05-04：补充风险事件 OpenAI 预审边界：OpenAI API 只做结构化预审和人工复核提示，不替代人工确认；`RISK-004` 承接具体实现，完整流程见 `docs/requirements/risk_event_review_workflow_2026-05-04.md`。
+- 2026-05-04：`BACKTEST-001` 已完成第一阶段基础实现：`aits backtest` 新增 `--robustness-report` / `--robustness-report-path`，可生成中文回测稳健性报告，复用同一 point-in-time 输入对比基础动态策略、成本压力、起点后移和买入持有基准；报告明确 `production_effect=none`，完整防过拟合仍需权重扰动、固定仓位/趋势-only/随机基线、机器可读摘要和样本外验证。

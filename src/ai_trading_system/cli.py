@@ -19,6 +19,7 @@ from ai_trading_system.backtest.audit import (
 from ai_trading_system.backtest.daily import (
     DEFAULT_BENCHMARK_TICKERS,
     BacktestRegimeContext,
+    DailyBacktestResult,
     default_backtest_daily_path,
     default_backtest_input_coverage_path,
     default_backtest_report_path,
@@ -26,6 +27,12 @@ from ai_trading_system.backtest.daily import (
     write_backtest_daily_csv,
     write_backtest_input_coverage_csv,
     write_backtest_report,
+)
+from ai_trading_system.backtest.robustness import (
+    BacktestRobustnessReport,
+    BacktestRobustnessScenario,
+    default_backtest_robustness_report_path,
+    write_backtest_robustness_report,
 )
 from ai_trading_system.belief_state import (
     DEFAULT_BELIEF_STATE_DIR,
@@ -1356,6 +1363,30 @@ def backtest(
         Path | None,
         typer.Option(help="Markdown 回测报告输出路径。"),
     ] = None,
+    robustness_report_path: Annotated[
+        Path | None,
+        typer.Option(
+            help=(
+                "Markdown 回测稳健性报告输出路径；提供时运行第一阶段成本压力、"
+                "起点后移和买入持有基准对比。"
+            ),
+        ),
+    ] = None,
+    robustness_report: Annotated[
+        bool,
+        typer.Option(
+            "--robustness-report",
+            help="按默认 outputs/backtests 路径生成回测稳健性报告。",
+        ),
+    ] = False,
+    robustness_shift_days: Annotated[
+        int,
+        typer.Option(help="稳健性报告的起点后移天数。"),
+    ] = 20,
+    robustness_cost_stress_bps: Annotated[
+        float,
+        typer.Option(help="稳健性报告中交易执行成本压力的额外 bps。"),
+    ] = 5.0,
     quality_report_path: Annotated[
         Path | None,
         typer.Option(help="Markdown 数据质量报告输出路径。"),
@@ -1440,6 +1471,11 @@ def backtest(
         raise typer.BadParameter("至少需要一个基准标的。")
     if not 0.0 <= minimum_component_coverage <= 1.0:
         raise typer.BadParameter("审计覆盖率阈值必须在 0 到 1 之间。")
+    if robustness_shift_days <= 0:
+        raise typer.BadParameter("稳健性报告起点后移天数必须为正数。")
+    if robustness_cost_stress_bps < 0:
+        raise typer.BadParameter("稳健性报告成本压力 bps 不能为负数。")
+    should_write_robustness_report = robustness_report or robustness_report_path is not None
     benchmark_policy_report = validate_benchmark_policy(
         load_benchmark_policy(benchmark_policy_path),
         as_of=quality_date,
@@ -1479,6 +1515,14 @@ def backtest(
         PROJECT_ROOT / "outputs" / "backtests",
         start_date,
         end_date,
+    )
+    backtest_robustness_output = (
+        robustness_report_path
+        or default_backtest_robustness_report_path(
+            PROJECT_ROOT / "outputs" / "backtests",
+            start_date,
+            end_date,
+        )
     )
     backtest_audit_output = audit_output_path or default_backtest_audit_report_path(
         PROJECT_ROOT / "outputs" / "backtests",
@@ -1589,39 +1633,65 @@ def backtest(
         )
     )
 
-    result = run_daily_score_backtest(
-        prices=prices_frame,
-        rates=rates_frame,
-        feature_config=feature_config,
-        scoring_rules=scoring_rules,
-        portfolio_config=portfolio,
-        data_quality_report=data_quality_report,
-        core_watchlist=universe.ai_chain.get("core_watchlist", []),
-        start=start_date,
-        end=end_date,
-        strategy_ticker=strategy_ticker,
-        benchmark_tickers=tuple(benchmark_tickers),
-        cost_bps=cost_bps,
-        spread_bps=spread_bps,
-        slippage_bps=slippage_bps,
-        market_impact_bps=market_impact_bps,
-        tax_bps=tax_bps,
-        fx_bps=fx_bps,
-        financing_annual_bps=financing_annual_bps,
-        etf_delay_bps=etf_delay_bps,
-        fundamental_feature_reports=sec_fundamental_feature_reports,
-        valuation_review_reports=valuation_review_reports,
-        risk_event_occurrence_review_reports=risk_event_occurrence_review_reports,
-        watchlist_lifecycle=watchlist_lifecycle,
-        benchmark_policy_report=benchmark_policy_report,
-        market_regime=BacktestRegimeContext(
-            regime_id=selected_regime.regime_id,
-            name=selected_regime.name,
-            start_date=selected_regime.start_date,
-            anchor_date=selected_regime.anchor_date,
-            anchor_event=selected_regime.anchor_event,
-            description=selected_regime.description,
-        ),
+    backtest_regime_context = BacktestRegimeContext(
+        regime_id=selected_regime.regime_id,
+        name=selected_regime.name,
+        start_date=selected_regime.start_date,
+        anchor_date=selected_regime.anchor_date,
+        anchor_event=selected_regime.anchor_event,
+        description=selected_regime.description,
+    )
+
+    def run_configured_backtest(
+        *,
+        scenario_start: date,
+        scenario_cost_bps: float,
+        scenario_spread_bps: float,
+        scenario_slippage_bps: float,
+        scenario_market_impact_bps: float,
+        scenario_tax_bps: float,
+        scenario_fx_bps: float,
+        scenario_financing_annual_bps: float,
+        scenario_etf_delay_bps: float,
+    ) -> DailyBacktestResult:
+        return run_daily_score_backtest(
+            prices=prices_frame,
+            rates=rates_frame,
+            feature_config=feature_config,
+            scoring_rules=scoring_rules,
+            portfolio_config=portfolio,
+            data_quality_report=data_quality_report,
+            core_watchlist=universe.ai_chain.get("core_watchlist", []),
+            start=scenario_start,
+            end=end_date,
+            strategy_ticker=strategy_ticker,
+            benchmark_tickers=tuple(benchmark_tickers),
+            cost_bps=scenario_cost_bps,
+            spread_bps=scenario_spread_bps,
+            slippage_bps=scenario_slippage_bps,
+            market_impact_bps=scenario_market_impact_bps,
+            tax_bps=scenario_tax_bps,
+            fx_bps=scenario_fx_bps,
+            financing_annual_bps=scenario_financing_annual_bps,
+            etf_delay_bps=scenario_etf_delay_bps,
+            fundamental_feature_reports=sec_fundamental_feature_reports,
+            valuation_review_reports=valuation_review_reports,
+            risk_event_occurrence_review_reports=risk_event_occurrence_review_reports,
+            watchlist_lifecycle=watchlist_lifecycle,
+            benchmark_policy_report=benchmark_policy_report,
+            market_regime=backtest_regime_context,
+        )
+
+    result = run_configured_backtest(
+        scenario_start=start_date,
+        scenario_cost_bps=cost_bps,
+        scenario_spread_bps=spread_bps,
+        scenario_slippage_bps=slippage_bps,
+        scenario_market_impact_bps=market_impact_bps,
+        scenario_tax_bps=tax_bps,
+        scenario_fx_bps=fx_bps,
+        scenario_financing_annual_bps=financing_annual_bps,
+        scenario_etf_delay_bps=etf_delay_bps,
     )
     daily_output = write_backtest_daily_csv(result, backtest_daily_output)
     input_coverage_output = write_backtest_input_coverage_csv(
@@ -1674,6 +1744,79 @@ def backtest(
             backtest_trace_output,
         ),
     )
+    robustness_output = None
+    if should_write_robustness_report:
+        robustness_scenarios = [
+            BacktestRobustnessScenario(
+                scenario_id="cost_stress_execution",
+                label="成本压力",
+                category="cost",
+                description=(
+                    "commission、spread、slippage、market impact 和 ETF delay "
+                    f"各增加 {robustness_cost_stress_bps:.1f} bps；税费、FX 和融资保持基础假设。"
+                ),
+                result=run_configured_backtest(
+                    scenario_start=start_date,
+                    scenario_cost_bps=cost_bps + robustness_cost_stress_bps,
+                    scenario_spread_bps=spread_bps + robustness_cost_stress_bps,
+                    scenario_slippage_bps=slippage_bps + robustness_cost_stress_bps,
+                    scenario_market_impact_bps=(
+                        market_impact_bps + robustness_cost_stress_bps
+                    ),
+                    scenario_tax_bps=tax_bps,
+                    scenario_fx_bps=fx_bps,
+                    scenario_financing_annual_bps=financing_annual_bps,
+                    scenario_etf_delay_bps=etf_delay_bps + robustness_cost_stress_bps,
+                ),
+            )
+        ]
+        shifted_start = start_date + timedelta(days=robustness_shift_days)
+        if shifted_start >= result.last_signal_date:
+            robustness_scenarios.append(
+                BacktestRobustnessScenario(
+                    scenario_id="shifted_start",
+                    label="起点后移",
+                    category="window",
+                    description="将请求起点后移后复用相同 point-in-time 输入。",
+                    skipped_reason=(
+                        f"后移 {robustness_shift_days} 天后的起点 "
+                        f"{shifted_start.isoformat()} 已不早于基础回测最后信号日 "
+                        f"{result.last_signal_date.isoformat()}。"
+                    ),
+                )
+            )
+        else:
+            robustness_scenarios.append(
+                BacktestRobustnessScenario(
+                    scenario_id="shifted_start",
+                    label="起点后移",
+                    category="window",
+                    description=(
+                        f"将请求起点后移 {robustness_shift_days} 天，"
+                        "价格、PIT 输入、评分规则和成本假设保持不变。"
+                    ),
+                    result=run_configured_backtest(
+                        scenario_start=shifted_start,
+                        scenario_cost_bps=cost_bps,
+                        scenario_spread_bps=spread_bps,
+                        scenario_slippage_bps=slippage_bps,
+                        scenario_market_impact_bps=market_impact_bps,
+                        scenario_tax_bps=tax_bps,
+                        scenario_fx_bps=fx_bps,
+                        scenario_financing_annual_bps=financing_annual_bps,
+                        scenario_etf_delay_bps=etf_delay_bps,
+                    ),
+                )
+            )
+        robustness_output = write_backtest_robustness_report(
+            BacktestRobustnessReport(
+                base_result=result,
+                scenarios=tuple(robustness_scenarios),
+                cost_stress_increment_bps=robustness_cost_stress_bps,
+                shifted_start_days=robustness_shift_days,
+            ),
+            backtest_robustness_output,
+        )
 
     console.print(f"[yellow]回测状态：{result.status}[/yellow]")
     audit_style = "green" if audit_report.status == "PASS" else "yellow"
@@ -1686,6 +1829,8 @@ def backtest(
     console.print(f"策略 CAGR：{result.strategy_metrics.cagr:.1%}")
     console.print(f"策略最大回撤：{result.strategy_metrics.max_drawdown:.1%}")
     console.print(f"回测报告：{report_output}")
+    if robustness_output is not None:
+        console.print(f"稳健性报告：{robustness_output}")
     console.print(f"观察池 lifecycle 报告：{watchlist_lifecycle_report_output}")
     console.print(f"Evidence bundle：{backtest_trace_output}")
     console.print(f"输入审计报告：{audit_output}")

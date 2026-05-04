@@ -1035,6 +1035,7 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     prices_path = tmp_path / "prices_daily.csv"
     rates_path = tmp_path / "rates_daily.csv"
     report_path = tmp_path / "backtest.md"
+    robustness_path = tmp_path / "backtest_robustness.md"
     daily_path = tmp_path / "backtest_daily.csv"
     input_coverage_path = tmp_path / "backtest_input_coverage.csv"
     audit_path = tmp_path / "backtest_audit.md"
@@ -1096,6 +1097,12 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
             "2026-05-02",
             "--report-path",
             str(report_path),
+            "--robustness-report-path",
+            str(robustness_path),
+            "--robustness-cost-stress-bps",
+            "6.0",
+            "--robustness-shift-days",
+            "10",
             "--daily-output-path",
             str(daily_path),
             "--input-coverage-output-path",
@@ -1141,6 +1148,7 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
 
     assert result.exit_code == 0
     assert report_path.exists()
+    assert robustness_path.exists()
     assert daily_path.exists()
     assert input_coverage_path.exists()
     assert audit_path.exists()
@@ -1169,6 +1177,7 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert sec_companyfacts_validation_path.exists()
     assert "回测状态：" in result.output
     assert "输入审计状态：" in result.output
+    assert "稳健性报告：" in result.output
     assert "SEC 基本面切片：" in result.output
     assert "历史输入覆盖诊断：" in result.output
     assert "市场阶段：测试 AI 行情" in result.output
@@ -1185,6 +1194,13 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert "backtest:2026-04-01:2026-04-30:performance" in report_text
     assert str(input_coverage_path) in report_text
     assert str(audit_path) in report_text
+    robustness_text = robustness_path.read_text(encoding="utf-8")
+    assert "# 回测稳健性报告" in robustness_text
+    assert "production_effect=none" in robustness_text
+    assert "cost_stress_execution" in robustness_text
+    assert "shifted_start" in robustness_text
+    assert "买入持有基准" in robustness_text
+    assert "6.0 bps" in robustness_text
     audit_text = audit_path.read_text(encoding="utf-8")
     assert "# 回测输入审计报告" in audit_text
     assert str(report_path) in audit_text
