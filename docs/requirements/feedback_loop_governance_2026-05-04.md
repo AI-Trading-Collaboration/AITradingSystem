@@ -1,6 +1,6 @@
 # 反馈闭环与治理能力改进需求
 
-状态：PROPOSED
+状态：IN_PROGRESS
 
 最后更新：2026-05-04
 
@@ -139,6 +139,13 @@
 2. 建立历史 replay 输出，比较 production vs candidate 在收益、回撤、换手、置信度、触发 gate、结论等级和主要失败样本上的差异。
 3. 建立 forward shadow 记录，不影响正式日报仓位，只记录候选规则如果上线会如何改变判断。
 4. 通过 `GOV-001` rule card 批准后才允许进入 production。
+
+当前实现状态：
+
+- 2026-05-04：进入基础实现；第一阶段先从 `decision_learning_queue` 中 `rule_candidate_required=true` 的复核项生成 rule experiment ledger，记录候选原因、关联 causal chain、replay 计划、forward shadow 计划、样本限制、风险和 production 隔离边界。
+- 第一阶段不执行真实历史重放、不改变 scoring / position_gate / thesis / daily report；所有候选规则默认 `production_effect=none`，等待后续 replay runner、shadow observation 和 `GOV-001` rule card 批准。
+- 2026-05-04 基础版已完成：新增 `rule_experiments` 模块、`aits feedback build-rule-experiments`、`aits feedback lookup-rule-experiment`、`data/processed/rule_experiments.json` 和 `outputs/reports/rule_experiments_YYYY-MM-DD.md`；`feedback loop-review` 已读取 rule experiment ledger 并显示候选规则、未运行 replay 和待前向 shadow 状态。
+- 当前完成态为 `BASELINE_DONE`：候选规则登记、验证计划、隔离边界和查询入口已具备；完整 `DONE` 仍需要真实 replay runner、forward shadow 观测记录和 `GOV-001` rule card 审批。
 
 验收标准：
 
@@ -511,6 +518,8 @@
 - 2026-05-04：`CAUSE-001` 已完成基础实现：新增 `decision_causal_chains` ledger、`aits feedback build-causal-chain` 和 `aits feedback lookup-chain`，把 evidence、模块 score/confidence 变化、position gate、decision snapshot、quality 和后验 outcome 串成可查询链路；测试覆盖未来 outcome 只能进入 `post_signal_observations`，不得改写 `signal_time_context`。
 - 2026-05-04：`LEARNING-001` 已完成基础实现：新增 `decision_learning_queue`、`aits feedback build-learning-queue` 和 `aits feedback lookup-learning`，从 causal chain 生成失败/成功样本复核队列，记录归因分类、evidence、owner、next step 和规则候选需求；测试覆盖 `rule_issue`、`data_issue`、`sample_limited` 和样本不足不生成规则候选。
 - 2026-05-04：`LOOP-001` 已完成基础实现：新增 `aits feedback loop-review` 和闭环复核报告，汇总 market evidence、decision snapshots、decision_outcomes、causal chains、learning queue、rule candidate 接入状态、blocked tasks 和 task register 状态；报告声明 `ai_after_chatgpt` 和执行/复核/研究用途边界。
+- 2026-05-04：`EXPERIMENT-001` 进入实现；第一阶段目标是 rule experiment ledger 和 candidate isolation，不伪造已完成历史 replay 或 production rule approval。
+- 2026-05-04：`EXPERIMENT-001` 达到 `BASELINE_DONE`：候选规则实验台账、CLI、中文报告、loop-review 接入和 candidate isolation 测试完成；`python -m ruff check src tests`、`python -m pytest -q` 通过。真实 replay runner、forward shadow 观测和 GOV-001 rule card 批准仍待后续实现。
 - 2026-05-04：`DATA-002` 已完成低成本基础版：新增 `aits data-sources health` 和 `outputs/reports/data_sources_health_YYYY-MM-DD.md`，覆盖 provider health score、cache/manifest/row count/checksum/freshness 检查、manifest checksum mismatch 失败，以及 qualified source 不足时的 reconciliation `NOT_COVERED` 声明；owner 已验证 SEC User-Agent、FMP、FRED、Tiingo EOD 和 EODHD Fundamentals 初版权限可访问，EODHD EOD 价格未订阅且价格核验使用 Tiingo；完整 `DONE` 仍依赖生产级第二来源、商业授权/再分发限制和长期口径策略。
 - 2026-05-04：`UNIVERSE-001` 已完成基础实现：新增 `config/watchlist_lifecycle.yaml`、`aits watchlist validate-lifecycle` 和回测 signal_date lifecycle 过滤，测试覆盖尚未进入观察池的 ticker 不参与历史市场特征。
 - 2026-05-04：`TEST-001` 已推进为完成状态：系统级不变量测试覆盖 watch 风险事件不自动评分、低证据等级/公开便利源隔离、LLM evidence 隔离、watchlist point-in-time 过滤、decision snapshot 写入、评分置信度和估值 PIT 可信度。

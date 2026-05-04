@@ -11,6 +11,7 @@ import pandas as pd
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.decision_outcomes import load_decision_snapshots
 from ai_trading_system.market_evidence import load_market_evidence_store
+from ai_trading_system.rule_experiments import DEFAULT_RULE_EXPERIMENT_LEDGER_PATH
 
 DEFAULT_FEEDBACK_LOOP_REVIEW_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
 
@@ -62,6 +63,7 @@ def build_feedback_loop_review_report(
     causal_chain_path: Path,
     learning_queue_path: Path,
     task_register_path: Path,
+    rule_experiment_path: Path = DEFAULT_RULE_EXPERIMENT_LEDGER_PATH,
     since: date | None = None,
     market_regime_id: str = "ai_after_chatgpt",
 ) -> FeedbackLoopReviewReport:
@@ -76,7 +78,7 @@ def build_feedback_loop_review_report(
         decision_outcomes=_outcome_section(outcomes_path),
         causal_chains=_ledger_section(causal_chain_path, "chains"),
         learning_queue=_ledger_section(learning_queue_path, "items"),
-        rule_candidates=_rule_candidate_section(),
+        rule_candidates=_rule_candidate_section(rule_experiment_path),
         task_register=_task_register_section(task_register_path),
     )
 
@@ -130,6 +132,10 @@ def render_feedback_loop_review_report(report: FeedbackLoopReviewReport) -> str:
         "",
         f"- 状态：{report.rule_candidates['status']}",
         f"- 说明：{report.rule_candidates['summary']}",
+        _count_line("候选规则数", report.rule_candidates, "total_count"),
+        _count_line("未运行 replay", report.rule_candidates, "pending_replay_count"),
+        _count_line("待前向 shadow", report.rule_candidates, "pending_shadow_count"),
+        _warning_lines(report.rule_candidates),
         "",
         "## Task Register",
         "",
@@ -240,11 +246,42 @@ def _ledger_section(path: Path, key: str) -> dict[str, Any]:
     }
 
 
-def _rule_candidate_section() -> dict[str, Any]:
+def _rule_candidate_section(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {
+            "status": "NOT_CONNECTED",
+            "summary": "EXPERIMENT-001 / GOV-001 尚未实现，学习队列只能标记候选规则需求。",
+            "total_count": 0,
+            "pending_replay_count": 0,
+            "pending_shadow_count": 0,
+            "warnings": ["rule candidate 流程尚未接入。"],
+        }
+    ledger = json.loads(path.read_text(encoding="utf-8"))
+    candidates = ledger.get("candidates", [])
+    pending_replay = sum(
+        1
+        for candidate in candidates
+        if (candidate.get("replay_plan") or {}).get("status") == "NOT_RUN"
+    )
+    pending_shadow = sum(
+        1
+        for candidate in candidates
+        if (candidate.get("forward_shadow_plan") or {}).get("status") == "PENDING"
+    )
     return {
-        "status": "NOT_CONNECTED",
-        "summary": "EXPERIMENT-001 / GOV-001 尚未实现，学习队列只能标记候选规则需求。",
-        "warnings": ["rule candidate 流程尚未接入。"],
+        "status": "CONNECTED_PENDING_VALIDATION",
+        "summary": (
+            "EXPERIMENT-001 rule experiment ledger 已接入；候选规则仍需历史 replay、"
+            "前向 shadow 和 GOV-001 rule card 批准，不能影响 production。"
+        ),
+        "total_count": len(candidates),
+        "pending_replay_count": pending_replay,
+        "pending_shadow_count": pending_shadow,
+        "warnings": (
+            ["存在候选规则尚未完成 replay/shadow 验证。"]
+            if pending_replay or pending_shadow
+            else []
+        ),
     }
 
 

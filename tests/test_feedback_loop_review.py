@@ -27,6 +27,7 @@ def test_build_feedback_loop_review_report_covers_feedback_artifacts(
         outcomes_path=paths["outcomes"],
         causal_chain_path=paths["causal"],
         learning_queue_path=paths["learning"],
+        rule_experiment_path=paths["rule_experiments_missing"],
         task_register_path=paths["task_register"],
     )
     markdown = render_feedback_loop_review_report(report)
@@ -62,6 +63,8 @@ def test_feedback_loop_review_cli_writes_report(tmp_path: Path) -> None:
             str(paths["causal"]),
             "--learning-queue-path",
             str(paths["learning"]),
+            "--rule-experiment-path",
+            str(paths["rule_experiments_missing"]),
             "--task-register-path",
             str(paths["task_register"]),
             "--as-of",
@@ -77,6 +80,46 @@ def test_feedback_loop_review_cli_writes_report(tmp_path: Path) -> None:
     assert "反馈闭环复核状态：PASS_WITH_LIMITATIONS" in result.output
     assert report_path.exists()
     assert "反馈闭环周期复核报告" in report_path.read_text(encoding="utf-8")
+
+
+def test_feedback_loop_review_reads_rule_experiment_ledger(tmp_path: Path) -> None:
+    paths = _write_feedback_artifacts(tmp_path)
+    paths["rule_experiments"].write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "candidate_count": 1,
+                "pending_replay_count": 1,
+                "pending_shadow_count": 1,
+                "candidates": [
+                    {
+                        "candidate_id": "rule_experiment:2026-04-02_overall_position",
+                        "replay_plan": {"status": "NOT_RUN"},
+                        "forward_shadow_plan": {"status": "PENDING"},
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    report = build_feedback_loop_review_report(
+        as_of=date(2026, 4, 10),
+        since=date(2026, 4, 1),
+        evidence_path=paths["evidence"],
+        decision_snapshot_path=paths["snapshots"],
+        outcomes_path=paths["outcomes"],
+        causal_chain_path=paths["causal"],
+        learning_queue_path=paths["learning"],
+        rule_experiment_path=paths["rule_experiments"],
+        task_register_path=paths["task_register"],
+    )
+    markdown = render_feedback_loop_review_report(report)
+
+    assert "CONNECTED_PENDING_VALIDATION" in markdown
+    assert "候选规则数：1" in markdown
+    assert "未运行 replay：1" in markdown
 
 
 def _write_feedback_artifacts(tmp_path: Path) -> dict[str, Path]:
@@ -133,6 +176,7 @@ def _write_feedback_artifacts(tmp_path: Path) -> dict[str, Path]:
         ),
         encoding="utf-8",
     )
+    rule_experiments_path = tmp_path / "rule_experiments.json"
     task_register_path = tmp_path / "task_register.md"
     task_register_path.write_text(
         "\n".join(
@@ -151,5 +195,7 @@ def _write_feedback_artifacts(tmp_path: Path) -> dict[str, Path]:
         "outcomes": outcomes_path,
         "causal": causal_path,
         "learning": learning_path,
+        "rule_experiments": rule_experiments_path,
+        "rule_experiments_missing": tmp_path / "missing_rule_experiments.json",
         "task_register": task_register_path,
     }

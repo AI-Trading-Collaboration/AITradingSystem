@@ -101,6 +101,7 @@ from ai_trading_system.decision_learning_queue import (
     DEFAULT_DECISION_LEARNING_QUEUE_PATH,
     build_decision_learning_queue,
     default_decision_learning_queue_report_path,
+    load_decision_learning_queue,
     lookup_decision_learning_item,
     render_decision_learning_item_lookup,
     write_decision_learning_queue,
@@ -231,6 +232,15 @@ from ai_trading_system.risk_events import (
     validate_risk_events_config,
     write_risk_event_occurrence_review_report,
     write_risk_events_validation_report,
+)
+from ai_trading_system.rule_experiments import (
+    DEFAULT_RULE_EXPERIMENT_LEDGER_PATH,
+    build_rule_experiment_ledger,
+    default_rule_experiment_report_path,
+    lookup_rule_experiment,
+    render_rule_experiment_lookup,
+    write_rule_experiment_ledger,
+    write_rule_experiment_report,
 )
 from ai_trading_system.scoring.daily import (
     DailyManualReviewStatus,
@@ -694,6 +704,95 @@ def lookup_decision_learning_queue_command(
     console.print(render_decision_learning_item_lookup(item))
 
 
+@feedback_app.command("build-rule-experiments")
+def build_rule_experiments_command(
+    learning_queue_path: Annotated[
+        Path,
+        typer.Option(help="decision learning queue JSON 输入路径。"),
+    ] = DEFAULT_DECISION_LEARNING_QUEUE_PATH,
+    output_path: Annotated[
+        Path,
+        typer.Option(help="rule experiment ledger JSON 输出路径。"),
+    ] = DEFAULT_RULE_EXPERIMENT_LEDGER_PATH,
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 规则实验台账报告输出路径。"),
+    ] = None,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="报告日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    replay_start: Annotated[
+        str,
+        typer.Option(help="历史 replay 计划起点，格式为 YYYY-MM-DD。"),
+    ] = "2022-12-01",
+    replay_end: Annotated[
+        str | None,
+        typer.Option(help="历史 replay 计划终点，格式为 YYYY-MM-DD，默认 as-of。"),
+    ] = None,
+    shadow_start: Annotated[
+        str | None,
+        typer.Option(help="前向 shadow 计划起点，格式为 YYYY-MM-DD，默认 as-of。"),
+    ] = None,
+    shadow_days: Annotated[
+        int,
+        typer.Option(help="前向 shadow 最少观察天数。"),
+    ] = 20,
+) -> None:
+    """从 learning queue 生成候选规则实验台账。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    try:
+        learning_ledger = load_decision_learning_queue(learning_queue_path)
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(f"decision learning queue 不存在：{learning_queue_path}") from exc
+    replay_start_date = _parse_date(replay_start)
+    replay_end_date = _parse_date(replay_end) if replay_end else report_date
+    shadow_start_date = _parse_date(shadow_start) if shadow_start else report_date
+    ledger = build_rule_experiment_ledger(
+        learning_items=tuple(learning_ledger.get("items", [])),
+        replay_start=replay_start_date,
+        replay_end=replay_end_date,
+        shadow_start=shadow_start_date,
+        shadow_days=shadow_days,
+    )
+    ledger_output = write_rule_experiment_ledger(ledger, output_path)
+    report_output = report_path or default_rule_experiment_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        report_date,
+    )
+    report_output = write_rule_experiment_report(
+        ledger,
+        ledger_path=ledger_output,
+        output_path=report_output,
+    )
+
+    console.print("[green]候选规则实验台账已生成。[/green]")
+    console.print(f"候选规则数：{ledger.candidate_count}")
+    console.print(f"Ledger：{ledger_output}")
+    console.print(f"报告：{report_output}")
+
+
+@feedback_app.command("lookup-rule-experiment")
+def lookup_rule_experiment_command(
+    candidate_id: Annotated[
+        str,
+        typer.Option("--id", help="rule experiment candidate id。"),
+    ],
+    input_path: Annotated[
+        Path,
+        typer.Option(help="rule experiment ledger JSON 路径。"),
+    ] = DEFAULT_RULE_EXPERIMENT_LEDGER_PATH,
+) -> None:
+    """按 candidate_id 反查候选规则实验。"""
+    try:
+        candidate = lookup_rule_experiment(input_path, candidate_id)
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(f"rule experiment ledger 不存在：{input_path}") from exc
+    except KeyError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(render_rule_experiment_lookup(candidate))
+
+
 @feedback_app.command("loop-review")
 def feedback_loop_review_command(
     evidence_path: Annotated[
@@ -716,6 +815,10 @@ def feedback_loop_review_command(
         Path,
         typer.Option(help="decision learning queue JSON 路径。"),
     ] = DEFAULT_DECISION_LEARNING_QUEUE_PATH,
+    rule_experiment_path: Annotated[
+        Path,
+        typer.Option(help="rule experiment ledger JSON 路径。"),
+    ] = DEFAULT_RULE_EXPERIMENT_LEDGER_PATH,
     task_register_path: Annotated[
         Path,
         typer.Option(help="任务登记 Markdown 路径。"),
@@ -744,6 +847,7 @@ def feedback_loop_review_command(
         outcomes_path=outcomes_path,
         causal_chain_path=causal_chain_path,
         learning_queue_path=learning_queue_path,
+        rule_experiment_path=rule_experiment_path,
         task_register_path=task_register_path,
     )
     report_path = output_path or default_feedback_loop_review_report_path(
