@@ -549,6 +549,14 @@
 - 供应商权限、缓存限制、再分发限制和 LLM 处理限制记录在 data source catalog。
 - 新数据源接入必须通过安全与权限检查。
 
+当前实现状态：
+
+- 2026-05-04：进入基础实现；第一阶段提供本地 secret hygiene 扫描报告，检查配置、文档、报告、manifest、trace bundle 中的疑似 API key、token、secret 或 bearer credential。
+- 第一阶段不接入企业级密钥管理、pre-commit hook 或供应商权限审批流；只提供可审计的本地扫描和问题清单。
+- 完整 `DONE` 仍需要供应商权限治理、日志脱敏策略、pre-commit/CI 集成和 owner 审批流程；当前目标完成态预计为 `BASELINE_DONE`。
+- 2026-05-04 基础版已完成：新增 `secret_hygiene` 模块、`aits security scan-secrets` 和 `outputs/reports/secret_hygiene_YYYY-MM-DD.md`，疑似密钥只输出脱敏片段。
+- 当前完成态为 `BASELINE_DONE`：本地扫描、脱敏报告和 CLI 已具备；完整 `DONE` 仍需要供应商权限治理、日志脱敏策略、pre-commit/CI 集成和 owner 审批流程。
+
 ## DOC-001
 
 标题：系统使用边界与结论等级
@@ -605,6 +613,7 @@
 - 2026-05-04：根据最终报告呈现形式讨论，补充 `EXEC-001` 的 advisory action taxonomy、`DOC-001` 的“双层状态”设计和 `UI-001` 的三类读者模式；完整报告结构由 `docs/requirements/report_decision_chain_presentation_2026-05-04.md` 与 `REPORT-003/004` 承接。
 - 2026-05-04：`DOC-001` 达到 `BASELINE_DONE`：日报和回测报告输出结论使用等级，低置信度、来源不足、人工复核问题和回测覆盖不足会降级；投资姿态标签与结论等级分开解释。
 - 2026-05-04：`OPS-001` 达到 `BASELINE_DONE`：新增 pipeline health 只读报告和 CLI，检查关键 artifact 并输出排查入口；报告明确运行健康不等于投资结论有效。
+- 2026-05-04：`SECURITY-001` 达到 `BASELINE_DONE`：新增 secret hygiene 扫描 CLI 和脱敏报告；企业级密钥管理、pre-commit/CI 和供应商权限审批仍待后续。
 - 2026-05-04：`DATA-002` 已完成低成本基础版：新增 `aits data-sources health` 和 `outputs/reports/data_sources_health_YYYY-MM-DD.md`，覆盖 provider health score、cache/manifest/row count/checksum/freshness 检查、manifest checksum mismatch 失败，以及 qualified source 不足时的 reconciliation `NOT_COVERED` 声明；owner 已验证 SEC User-Agent、FMP、FRED、Tiingo EOD 和 EODHD Fundamentals 初版权限可访问，EODHD EOD 价格未订阅且价格核验使用 Tiingo；完整 `DONE` 仍依赖生产级第二来源、商业授权/再分发限制和长期口径策略。
 - 2026-05-04：`UNIVERSE-001` 已完成基础实现：新增 `config/watchlist_lifecycle.yaml`、`aits watchlist validate-lifecycle` 和回测 signal_date lifecycle 过滤，测试覆盖尚未进入观察池的 ticker 不参与历史市场特征。
 - 2026-05-04：`TEST-001` 已推进为完成状态：系统级不变量测试覆盖 watch 风险事件不自动评分、低证据等级/公开便利源隔离、LLM evidence 隔离、watchlist point-in-time 过滤、decision snapshot 写入、评分置信度和估值 PIT 可信度。
