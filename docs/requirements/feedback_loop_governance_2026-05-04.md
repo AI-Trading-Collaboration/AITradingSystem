@@ -329,6 +329,14 @@
 - 事件后自动要求复核相关 thesis、risk event 或 valuation state。
 - 实现时同步更新 `docs/system_flow.md` 并补充日历 schema 和报告测试。
 
+当前实现状态：
+
+- 2026-05-04：进入基础实现；第一阶段建立手工/审计 `catalyst_calendar` 配置、来源/采集时间/复核人字段、校验报告、未来 5/20/60 天分桶报告和查询入口。
+- 第一阶段不编造真实事件日期，不自动接入第三方日历源，不直接改变生产评分、`position_gate` 或日报仓位；重大事件前限制只作为报告和人工复核提示。
+- 完整 `DONE` 仍需要 owner 提供可信事件数据源或正式手工维护流程，并把日历摘要接入日报和事件后 thesis/risk/valuation 复核队列。
+- 2026-05-04 基础版已完成：新增 `config/catalyst_calendar.yaml`、`catalyst_calendar` 模块、`aits catalysts validate`、`aits catalysts upcoming`、`aits catalysts lookup` 和 `outputs/reports/catalyst_calendar_YYYY-MM-DD.md`。报告按 5/20/60 天窗口输出 upcoming catalyst、事件前动作、事件后复核目标、来源和治理边界。
+- 当前完成态为 `BASELINE_DONE`：schema、重复 id、来源/采集/复核元数据、ticker/节点/risk event 引用、高重要性事件前后复核要求、报告和查询入口已具备；完整 `DONE` 仍需要真实事件数据源或 owner 手工维护流程，并接入日报摘要和事件后复核队列。
+
 ## PORTFOLIO-002
 
 标题：组合暴露分解

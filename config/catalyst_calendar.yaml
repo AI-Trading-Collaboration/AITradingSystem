@@ -1,0 +1,12 @@
+calendar_id: ai_catalyst_calendar.v1
+version: v1
+status: baseline_empty
+owner: project_owner
+description: >
+  Manual/audited upcoming catalyst calendar for AI value-chain reports. This
+  baseline defines the schema and review policy; production events require
+  explicit source, captured_at, and reviewer metadata.
+source_policy: manual_review_required
+last_reviewed_at: 2026-05-04
+next_review_due: 2026-05-11
+events: []
