@@ -524,6 +524,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     daily_report_path = tmp_path / "daily_score.md"
     feature_report_path = tmp_path / "feature_summary.md"
     quality_report_path = tmp_path / "quality.md"
+    execution_policy_report_path = tmp_path / "execution_policy.md"
     sec_companies_path = tmp_path / "sec_companies.yaml"
     sec_metrics_path = tmp_path / "fundamental_metrics.yaml"
     fundamental_feature_config_path = tmp_path / "fundamental_features.yaml"
@@ -562,6 +563,8 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
             str(feature_report_path),
             "--quality-report-path",
             str(quality_report_path),
+            "--execution-policy-report-path",
+            str(execution_policy_report_path),
             "--sec-companies-path",
             str(sec_companies_path),
             "--sec-metrics-path",
@@ -590,6 +593,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert result.exit_code == 0
     assert daily_report_path.exists()
     assert scores_path.exists()
+    assert execution_policy_report_path.exists()
     trace_path = tmp_path / "evidence" / "daily_score_trace.json"
     assert trace_path.exists()
     trace = json.loads(trace_path.read_text(encoding="utf-8"))
@@ -621,9 +625,13 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert "风险事件发生记录状态：" in daily_text
     assert "## 变化原因树" in daily_text
     assert "## 认知状态" in daily_text
+    assert "## 执行建议" in daily_text
+    assert "- 生产影响：none" in daily_text
+    assert "执行政策校验：PASS" in daily_text
     assert "## 可追溯引用" in daily_text
     assert "daily_score:2026-04-30:overall_position" in daily_text
     assert "每日评分状态：" in result.output
+    assert "执行建议：" in result.output
     assert "belief_state.json" in result.output
     lookup_result = CliRunner().invoke(
         app,

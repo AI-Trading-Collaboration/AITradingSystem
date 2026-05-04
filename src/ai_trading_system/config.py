@@ -20,6 +20,7 @@ DEFAULT_MARKET_REGIMES_CONFIG_PATH = PROJECT_ROOT / "config" / "market_regimes.y
 DEFAULT_BENCHMARK_POLICY_CONFIG_PATH = PROJECT_ROOT / "config" / "benchmark_policy.yaml"
 DEFAULT_SCENARIO_LIBRARY_CONFIG_PATH = PROJECT_ROOT / "config" / "scenario_library.yaml"
 DEFAULT_CATALYST_CALENDAR_CONFIG_PATH = PROJECT_ROOT / "config" / "catalyst_calendar.yaml"
+DEFAULT_EXECUTION_POLICY_CONFIG_PATH = PROJECT_ROOT / "config" / "execution_policy.yaml"
 DEFAULT_RISK_EVENTS_CONFIG_PATH = PROJECT_ROOT / "config" / "risk_events.yaml"
 DEFAULT_DATA_SOURCES_CONFIG_PATH = PROJECT_ROOT / "config" / "data_sources.yaml"
 DEFAULT_SEC_COMPANIES_CONFIG_PATH = PROJECT_ROOT / "config" / "sec_companies.yaml"

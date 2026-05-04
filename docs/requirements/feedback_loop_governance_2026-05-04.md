@@ -385,6 +385,14 @@
 - 规则必须可配置、可回测、可审计，不能在报告层临时写死。
 - 实现时同步更新 `docs/system_flow.md` 并补充执行纪律测试。
 
+当前实现状态：
+
+- 2026-05-04：进入基础实现；第一阶段建立 `execution_policy` 配置、固定 advisory action taxonomy、校验报告、查询入口，并把日报接入执行建议章节。
+- 第一阶段只改变报告解释层：执行建议声明 `production_effect=none`，不改变 scoring、`position_gate`、决策快照或回测持仓计算。
+- 完整 `DONE` 仍需要把冷却期、连续信号确认、成本、事件窗口和回测成交假设接入统一执行模拟；当前目标完成态预计为 `BASELINE_DONE`。
+- 2026-05-04 基础版已完成：新增 `config/execution_policy.yaml`、`execution_policy` 模块、`aits execution validate`、`aits execution lookup` 和 `outputs/reports/execution_policy_YYYY-MM-DD.md`。`score-daily` 在数据质量门禁通过后校验执行政策，并在日报输出“执行建议”章节。
+- 当前完成态为 `BASELINE_DONE`：固定动作词表、最小再平衡阈值、低置信度人工复核、禁止主动加仓 gate、校验报告、查询入口和日报 advisory language 已具备；完整 `DONE` 仍需要把冷却期、连续信号确认、成本模型、事件窗口和回测执行模拟统一接入。
+
 ## COST-001
 
 标题：更真实的交易摩擦模型

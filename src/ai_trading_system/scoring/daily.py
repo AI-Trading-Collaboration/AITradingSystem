@@ -394,6 +394,7 @@ def render_daily_score_report(
     risk_event_occurrence_report_path: Path | None = None,
     previous_score_snapshot: PreviousDailyScoreSnapshot | None = None,
     belief_state_section: str | None = None,
+    execution_advisory_section: str | None = None,
     traceability_section: str | None = None,
 ) -> str:
     recommendation = report.recommendation
@@ -441,6 +442,8 @@ def render_daily_score_report(
     ]
     if belief_state_section is not None:
         lines.extend(["", belief_state_section.rstrip()])
+    if execution_advisory_section is not None:
+        lines.extend(["", execution_advisory_section.rstrip()])
     lines.extend(
         [
             "",
@@ -637,6 +640,7 @@ def write_daily_score_report(
     risk_event_occurrence_report_path: Path | None = None,
     previous_score_snapshot: PreviousDailyScoreSnapshot | None = None,
     belief_state_section: str | None = None,
+    execution_advisory_section: str | None = None,
     traceability_section: str | None = None,
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -653,6 +657,7 @@ def write_daily_score_report(
             risk_event_occurrence_report_path=risk_event_occurrence_report_path,
             previous_score_snapshot=previous_score_snapshot,
             belief_state_section=belief_state_section,
+            execution_advisory_section=execution_advisory_section,
             traceability_section=traceability_section,
         ),
         encoding="utf-8",

@@ -58,6 +58,7 @@ from ai_trading_system.config import (
     DEFAULT_CONFIG_PATH,
     DEFAULT_DATA_QUALITY_CONFIG_PATH,
     DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    DEFAULT_EXECUTION_POLICY_CONFIG_PATH,
     DEFAULT_FEATURE_CONFIG_PATH,
     DEFAULT_FUNDAMENTAL_FEATURES_CONFIG_PATH,
     DEFAULT_FUNDAMENTAL_METRICS_CONFIG_PATH,
@@ -140,6 +141,16 @@ from ai_trading_system.decision_snapshots import (
     build_decision_snapshot,
     default_decision_snapshot_path,
     write_decision_snapshot,
+)
+from ai_trading_system.execution_policy import (
+    build_execution_advisory,
+    default_execution_policy_report_path,
+    load_execution_policy,
+    lookup_execution_action,
+    render_execution_action_lookup,
+    render_execution_advisory_section,
+    validate_execution_policy,
+    write_execution_policy_report,
 )
 from ai_trading_system.features.market import (
     build_market_features,
@@ -358,6 +369,7 @@ evidence_app = typer.Typer(help="新市场信息 evidence 账本。", no_args_is
 feedback_app = typer.Typer(help="决策结果观察、校准和因果链查询。", no_args_is_help=True)
 scenarios_app = typer.Typer(help="AI 产业链情景压力测试库。", no_args_is_help=True)
 catalysts_app = typer.Typer(help="未来催化剂日历和事件前复核。", no_args_is_help=True)
+execution_app = typer.Typer(help="Advisory execution policy 和执行纪律。", no_args_is_help=True)
 app.add_typer(watchlist_app, name="watchlist")
 app.add_typer(industry_chain_app, name="industry-chain")
 app.add_typer(thesis_app, name="thesis")
@@ -370,6 +382,7 @@ app.add_typer(evidence_app, name="evidence")
 app.add_typer(feedback_app, name="feedback")
 app.add_typer(scenarios_app, name="scenarios")
 app.add_typer(catalysts_app, name="catalysts")
+app.add_typer(execution_app, name="execution")
 console = Console()
 DEFAULT_RISK_EVENT_OCCURRENCES_PATH = (
     PROJECT_ROOT / "data" / "external" / "risk_event_occurrences"
@@ -2038,6 +2051,63 @@ def lookup_catalyst_command(
     except (KeyError, ValueError) as exc:
         raise typer.BadParameter(str(exc)) from exc
     console.print(render_catalyst_lookup(event))
+
+
+@execution_app.command("validate")
+def validate_execution_policy_command(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="execution policy YAML 路径。"),
+    ] = DEFAULT_EXECUTION_POLICY_CONFIG_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown execution policy 校验报告输出路径。"),
+    ] = None,
+) -> None:
+    """校验 advisory execution policy 和固定动作词表。"""
+    validation_date = _parse_date(as_of) if as_of else date.today()
+    report = validate_execution_policy(
+        load_execution_policy(input_path),
+        as_of=validation_date,
+    )
+    report_path = output_path or default_execution_policy_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        validation_date,
+    )
+    write_execution_policy_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]执行政策状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_path}")
+    console.print(f"动作数：{report.action_count}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+
+@execution_app.command("lookup")
+def lookup_execution_action_command(
+    action_id: Annotated[
+        str,
+        typer.Option("--id", help="execution action id。"),
+    ],
+    input_path: Annotated[
+        Path,
+        typer.Option(help="execution policy YAML 路径。"),
+    ] = DEFAULT_EXECUTION_POLICY_CONFIG_PATH,
+) -> None:
+    """按 execution action id 反查动作定义。"""
+    try:
+        action = lookup_execution_action(input_path, action_id)
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(f"execution policy 不存在：{input_path}") from exc
+    except (KeyError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(render_execution_action_lookup(action))
 
 
 @thesis_app.command("list")
@@ -4217,6 +4287,14 @@ def score_daily(
         Path | None,
         typer.Option(help="Markdown 数据质量报告输出路径。"),
     ] = None,
+    execution_policy_path: Annotated[
+        Path,
+        typer.Option(help="execution policy YAML 路径，用于日报执行建议。"),
+    ] = DEFAULT_EXECUTION_POLICY_CONFIG_PATH,
+    execution_policy_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown execution policy 校验报告输出路径。"),
+    ] = None,
     sec_companies_path: Annotated[
         Path,
         typer.Option(help="SEC company CIK 配置文件路径，用于日报基本面评分。"),
@@ -4362,6 +4440,13 @@ def score_daily(
             score_date,
         )
     )
+    execution_policy_report_output = (
+        execution_policy_report_path
+        or default_execution_policy_report_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            score_date,
+        )
+    )
 
     data_quality_report = validate_data_cache(
         prices_path=prices_path,
@@ -4380,6 +4465,26 @@ def score_daily(
             f"错误数：{data_quality_report.error_count}；"
             f"警告数：{data_quality_report.warning_count}"
         )
+        raise typer.Exit(code=1)
+
+    execution_policy_report = validate_execution_policy(
+        load_execution_policy(execution_policy_path),
+        as_of=score_date,
+    )
+    write_execution_policy_report(
+        execution_policy_report,
+        execution_policy_report_output,
+    )
+    if not execution_policy_report.passed:
+        console.print("[red]执行政策校验失败，已停止每日评分。[/red]")
+        console.print(f"执行政策报告：{execution_policy_report_output}")
+        console.print(
+            f"错误数：{execution_policy_report.error_count}；"
+            f"警告数：{execution_policy_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+    if execution_policy_report.store.policy is None:
+        console.print("[red]执行政策为空，已停止每日评分。[/red]")
         raise typer.Exit(code=1)
 
     prices_frame = pd.read_csv(prices_path)
@@ -4534,6 +4639,34 @@ def score_daily(
         risk_event_occurrence_review_report=risk_event_occurrence_review_report,
     )
     previous_score_snapshot = load_previous_daily_score_snapshot(scores_path, score_date)
+    previous_execution_band = None
+    if (
+        previous_score_snapshot is not None
+        and previous_score_snapshot.final_risk_asset_ai_min is not None
+        and previous_score_snapshot.final_risk_asset_ai_max is not None
+    ):
+        previous_execution_band = (
+            previous_score_snapshot.final_risk_asset_ai_min,
+            previous_score_snapshot.final_risk_asset_ai_max,
+        )
+    execution_advisory = build_execution_advisory(
+        policy=execution_policy_report.store.policy,
+        current_band=(
+            score_report.recommendation.risk_asset_ai_band.min_position,
+            score_report.recommendation.risk_asset_ai_band.max_position,
+        ),
+        previous_band=previous_execution_band,
+        confidence_level=score_report.confidence_assessment.level,
+        triggered_gate_ids=tuple(
+            gate.gate_id for gate in score_report.recommendation.triggered_position_gates
+        ),
+        report_status=score_report.status,
+    )
+    execution_advisory_section = render_execution_advisory_section(
+        execution_advisory,
+        validation_status=execution_policy_report.status,
+        validation_report_path=execution_policy_report_output,
+    )
     scores_output = write_scores_csv(score_report, scores_path)
     daily_market_regime = BacktestRegimeContext(
         regime_id=default_market_regime.regime_id,
@@ -4548,6 +4681,7 @@ def score_daily(
         sec_metrics_path=sec_metrics_path,
         fundamental_feature_config_path=fundamental_feature_config_path,
         risk_events_path=risk_events_path,
+        execution_policy_path=execution_policy_path,
     )
     daily_trace_bundle = build_daily_score_trace_bundle(
         report=score_report,
@@ -4604,6 +4738,7 @@ def score_daily(
             belief_state,
             belief_state_output,
         ),
+        execution_advisory_section=execution_advisory_section,
         traceability_section=render_traceability_section(
             daily_trace_bundle,
             daily_trace_output,
@@ -4619,6 +4754,7 @@ def score_daily(
         f"（{score_report.confidence_assessment.level}）"
     )
     console.print(f"仓位状态：{score_report.recommendation.label}")
+    console.print(f"执行建议：{execution_advisory.label}（{execution_advisory.action_id}）")
     console.print(f"每日评分报告：{daily_report_output}")
     console.print(f"Evidence bundle：{daily_trace_output}")
     console.print(f"Decision snapshot：{daily_decision_snapshot_output}")
@@ -4633,6 +4769,10 @@ def score_daily(
     console.print(
         f"风险事件发生记录：{risk_event_occurrence_report_output}"
         f"（{risk_event_occurrence_review_report.status}）"
+    )
+    console.print(
+        f"执行政策报告：{execution_policy_report_output}"
+        f"（{execution_policy_report.status}）"
     )
     console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
 
@@ -4657,6 +4797,7 @@ def _daily_trace_config_paths(
     sec_metrics_path: Path,
     fundamental_feature_config_path: Path,
     risk_events_path: Path,
+    execution_policy_path: Path,
 ) -> dict[str, Path]:
     return {
         **_base_trace_config_paths(),
@@ -4665,6 +4806,7 @@ def _daily_trace_config_paths(
         "fundamental_metrics": sec_metrics_path,
         "fundamental_features": fundamental_feature_config_path,
         "risk_events": risk_events_path,
+        "execution_policy": execution_policy_path,
     }
 
 

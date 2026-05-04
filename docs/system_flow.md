@@ -38,6 +38,7 @@ flowchart TD
         BPC["config/benchmark_policy.yaml<br/>AI proxy 与 benchmark 解释口径"]
         SCC["config/scenario_library.yaml<br/>AI 产业链情景压力测试库"]
         CTC["config/catalyst_calendar.yaml<br/>未来催化剂日历和事件前/后复核要求"]
+        EPC["config/execution_policy.yaml<br/>advisory execution action taxonomy 和执行纪律"]
         GOVC["config/rule_cards.yaml<br/>production / candidate / retired rule cards"]
         RE["config/risk_events.yaml<br/>L1/L2/L3 风险事件动作规则"]
         REX["data/external/risk_event_occurrences/*.yaml<br/>已触发/观察的风险事件发生记录<br/>S/A/B/C/D/X、严重性、概率、动作等级"]
@@ -108,7 +109,9 @@ flowchart TD
         PG["position_gate<br/>评分仓位、组合限制、风险事件、估值拥挤、thesis 和数据置信度取最严格上限"]
         CONF["判断置信度<br/>按模块来源、覆盖率、质量门禁和人工复核汇总"]
         SC["data/processed/scores_daily.csv<br/>模块分、整体分、confidence、仓位区间和 gate 摘要"]
-        DR["outputs/reports/daily_score_YYYY-MM-DD.md<br/>评分、置信度、变化原因树、认知状态和仓位闸门"]
+        EADV["执行建议<br/>execution_policy + 最终仓位变化 + confidence/gate<br/>production_effect=none"]
+        EPR["outputs/reports/execution_policy_YYYY-MM-DD.md<br/>动作词表校验和问题清单"]
+        DR["outputs/reports/daily_score_YYYY-MM-DD.md<br/>评分、置信度、变化原因树、认知状态、执行建议和仓位闸门"]
         DSNAP["data/processed/decision_snapshots/decision_snapshot_YYYY-MM-DD.json<br/>当日判断快照和 belief_state_ref"]
         BS["data/processed/belief_state/belief_state_YYYY-MM-DD.json<br/>只读认知状态"]
         BSH["data/processed/belief_state_history.csv<br/>只读认知状态历史索引"]
@@ -187,6 +190,9 @@ flowchart TD
         CTV["aits catalysts validate / upcoming<br/>未来 5/20/60 天催化剂分桶"]
         CTR["outputs/reports/catalyst_calendar_YYYY-MM-DD.md<br/>upcoming catalyst 和复核要求"]
         CTL["aits catalysts lookup<br/>按 catalyst_id 查询事件"]
+        EPV["aits execution validate<br/>校验 advisory action taxonomy"]
+        EPRG["outputs/reports/execution_policy_YYYY-MM-DD.md<br/>执行政策校验报告"]
+        EPL["aits execution lookup<br/>按 action_id 查询执行动作"]
     end
 
     subgraph Thesis["交易假设复核"]
@@ -292,6 +298,7 @@ flowchart TD
     QR --> SD
     S --> SD
     P --> SD
+    EPC --> SD
     SEC --> SD
     FM --> SD
     FF --> SD
@@ -304,14 +311,20 @@ flowchart TD
     SD --> SFCR
     SD --> SFFC
     SD --> SFFR
+    SD --> EPR
     SD --> PG
     PG --> SC
     PG --> DR
     PG --> DRT
     PG --> CONF
+    PG --> EADV
     CONF --> SC
     CONF --> DR
     CONF --> DSNAP
+    CONF --> EADV
+    EPC --> EADV
+    EADV --> DR
+    EADV --> DRT
     DRT --> DSNAP
 
     PR --> BT
@@ -432,6 +445,9 @@ flowchart TD
     RE --> CTV
     CTV --> CTR
     CTC --> CTL
+    EPC --> EPV
+    EPV --> EPRG
+    EPC --> EPL
 
     TH --> TL
     TH --> TV
@@ -484,11 +500,13 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["用户执行<br/>aits score-daily --as-of YYYY-MM-DD"] --> B["读取配置<br/>universe / data_quality / features / scoring_rules / portfolio / risk_events"]
+    A["用户执行<br/>aits score-daily --as-of YYYY-MM-DD"] --> B["读取配置<br/>universe / data_quality / features / scoring_rules / portfolio / risk_events / execution_policy"]
     B --> C["读取缓存<br/>prices_daily.csv / rates_daily.csv"]
     C --> D["调用数据质量门禁<br/>validate_data_cache"]
     D -->|FAIL| E["停止<br/>输出 data_quality 报告和错误数量"]
-    D -->|PASS 或 PASS_WITH_WARNINGS| F["构建当日市场特征<br/>build_market_features"]
+    D -->|PASS 或 PASS_WITH_WARNINGS| EP0["校验 execution_policy<br/>固定 advisory action taxonomy，输出 execution_policy 报告"]
+    EP0 -->|FAIL| EPF["停止<br/>输出 execution policy 错误和报告路径"]
+    EP0 -->|PASS 或 PASS_WITH_WARNINGS| F["构建当日市场特征<br/>build_market_features"]
     F --> G["写入特征缓存<br/>features_daily.csv"]
     F --> H["写入特征摘要<br/>feature_summary_YYYY-MM-DD.md"]
     F --> R["复用已通过的数据质量结果<br/>汇总 thesis / 风险事件 / 估值 / 交易复盘状态"]
@@ -521,6 +539,9 @@ flowchart TD
     G2 --> O["总资产口径换算<br/>portfolio 风险资产预算"]
     O --> C1["判断置信度汇总<br/>按模块来源、覆盖率、质量门禁和人工复核状态扣减"]
     C1 --> P["写入 scores_daily.csv<br/>记录模块分、整体分、confidence、仓位区间和触发 gate 摘要"]
+    O --> EP1["生成执行建议<br/>当前最终区间 + 上一期最终区间 + confidence/gate + execution_policy<br/>production_effect=none"]
+    C1 --> EP1
+    EP0 --> EP1
     O --> T["写入 evidence bundle<br/>claim/evidence/dataset/quality/run manifest，含 belief_state dataset/claim 引用"]
     C1 --> T
     T --> D0["写入 decision_snapshot JSON<br/>保存评分、置信度、仓位、gate、质量、trace 引用和 belief_state_ref"]
@@ -529,9 +550,10 @@ flowchart TD
     T --> BS
     BS --> BH["更新 belief_state_history.csv<br/>按 signal_date upsert 历史索引"]
     BS --> D0
-    T --> Q["写入 daily_score_YYYY-MM-DD.md<br/>含变化原因树、认知状态、人工复核摘要、仓位闸门和可追溯引用"]
+    T --> Q["写入 daily_score_YYYY-MM-DD.md<br/>含变化原因树、认知状态、执行建议、人工复核摘要、仓位闸门和可追溯引用"]
     C1 --> Q
     BS --> Q
+    EP1 --> Q
 ```
 
 ## 回测链路
@@ -590,6 +612,7 @@ flowchart LR
     U2["决策快照<br/>score / confidence / gate / quality / trace refs"] --> E
     P["交易复盘<br/>市场 Beta / 主题 Beta / 个股表现"] --> E
     S["认知状态<br/>belief_state / 多维置信度 / 仓位边界 / 改变判断条件"] --> E
+    X["执行建议<br/>execution_policy / 上期最终区间 / advisory action"] --> E
 
     E --> G["必须说明<br/>本次数据质量是否通过"]
     E --> H["必须说明<br/>哪些分数来自硬数据"]
@@ -604,6 +627,7 @@ flowchart LR
     E --> T2["必须说明<br/>市场吸引力评分和判断置信度不是同一件事"]
     E --> U3["必须保存<br/>可复原当日判断的 decision_snapshot"]
     E --> S2["必须说明<br/>认知状态是只读解释层还是已批准的 production 规则输入"]
+    E --> X2["必须说明<br/>执行建议不是自动交易指令，production_effect=none"]
 ```
 
 ## 认知状态层
@@ -648,7 +672,7 @@ flowchart TD
         A["数据下载<br/>aits download-data"]
         B["数据质量门禁<br/>aits validate-data"]
         C["市场特征<br/>aits build-features"]
-        D["每日评分<br/>aits score-daily<br/>含 SEC 基本面、估值快照、政策/地缘发生记录、置信度和人工复核摘要"]
+        D["每日评分<br/>aits score-daily<br/>含 SEC 基本面、估值快照、政策/地缘发生记录、置信度、执行建议和人工复核摘要"]
         E["历史回测<br/>aits backtest<br/>含 point-in-time 输入、覆盖率、来源类型、输入问题、URL、ticker 和证据来源下钻"]
         F["观察池校验<br/>aits watchlist validate"]
         F2["观察池生命周期<br/>aits watchlist validate-lifecycle"]
@@ -670,6 +694,7 @@ flowchart TD
         BP1["基准政策治理<br/>aits feedback validate-benchmark-policy / lookup-benchmark-policy<br/>AI proxy 与 benchmark 解释口径"]
         SC1["情景压力测试库<br/>aits scenarios validate / lookup<br/>节点、ticker、risk event 和 gate 映射"]
         CT1["未来催化剂日历<br/>aits catalysts validate / upcoming / lookup<br/>5/20/60 天事件前后复核"]
+        EX1["执行纪律政策<br/>aits execution validate / lookup<br/>advisory action taxonomy"]
         K["交易复盘归因<br/>aits review-trades"]
         L["日报集成<br/>汇总 thesis、风险规则与发生记录、估值和复盘摘要"]
         M["数据源目录<br/>aits data-sources list/validate"]
@@ -692,6 +717,7 @@ flowchart TD
     end
 
     C --> D
+    EX1 --> D
     D --> FB1
     FB1 --> FB2
     BP1 --> FB2
@@ -762,9 +788,9 @@ flowchart TD
 |质量报告|`outputs/reports/data_quality_YYYY-MM-DD.md`|声明数据是否可用于下游结论|已实现|
 |特征|`aits build-features`|生成可解释市场特征|已实现|
 |特征缓存|`data/processed/features_daily.csv`|保存 tidy 格式特征|已实现|
-|评分|`aits score-daily`|先执行市场数据质量门禁，再校验 SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照和风险事件发生记录，并通过 `position_gate` 把评分仓位、组合限制、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限，输出 AI 产业链评分、判断置信度、最终仓位区间、日报、decision snapshot 和只读 `belief_state`|已实现|
+|评分|`aits score-daily`|先执行市场数据质量门禁，再校验 `execution_policy`、SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照和风险事件发生记录，并通过 `position_gate` 把评分仓位、组合限制、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限，输出 AI 产业链评分、判断置信度、最终仓位区间、advisory 执行建议、日报、decision snapshot 和只读 `belief_state`|已实现|
 |评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果，component 行记录模块 confidence，overall 行记录整体 confidence、模型/最终/置信度调整仓位区间、总资产 AI 仓位区间和触发的仓位闸门摘要，用于日报上期对比|已实现|
-|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|输出中文结论、AI 产业链评分、判断置信度、变化原因树、什么情况会改变判断、认知状态摘要、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、估值 PIT 可信度、评分模型仓位、置信度调整后建议仓位、最终仓位、仓位闸门来源/上限/触发状态、限制说明、人工复核摘要和可追溯引用章节|已实现|
+|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|输出中文结论、AI 产业链评分、判断置信度、变化原因树、什么情况会改变判断、认知状态摘要、执行建议、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、估值 PIT 可信度、评分模型仓位、置信度调整后建议仓位、最终仓位、仓位闸门来源/上限/触发状态、限制说明、人工复核摘要和可追溯引用章节；执行建议明确 `production_effect=none`，不是自动交易指令|已实现|
 |日报 Evidence Bundle|`outputs/reports/evidence/daily_score_YYYY-MM-DD_trace.json`|记录日报 `claim`、`evidence`、`dataset`、`quality` 和 `run_manifest`，包括 `belief_state` dataset/claim 引用，用于从核心结论反查输入上下文、数据快照和只读认知状态|已实现|
 |决策快照|`data/processed/decision_snapshots/decision_snapshot_YYYY-MM-DD.json`|每次 `score-daily` 通过质量门禁后保存 signal_date、market regime、整体分、模块分、判断置信度、模型/最终/置信度调整仓位、position gates、质量状态、人工复核、估值状态、风险事件状态、trace bundle 引用、`belief_state_ref` 和配置路径|已实现基础版|
 |决策结果校准|`aits feedback calibrate`|先校验 `benchmark_policy`，再复用 `aits validate-data` 同一质量门禁，从历史 `decision_snapshot` 和 `prices_daily.csv` 生成 1D/5D/20D/60D/120D outcome，按总分、置信度、gate、thesis、风险等级和估值状态分桶输出校准报告；结果只能进入规则复核，不能自动修改生产规则|已实现基础版|
@@ -798,6 +824,10 @@ flowchart TD
 |未来催化剂日历校验|`aits catalysts validate`|校验日历 schema、重复 id、review due、未来采集/复核时间、已过期 scheduled 事件、ticker/节点/risk event 引用、高重要性事件前后复核要求和高重要性 public convenience 来源|已实现基础版|
 |未来催化剂日历报告|`outputs/reports/catalyst_calendar_YYYY-MM-DD.md`|中文报告输出日历状态、事件数量、未来 5/20/60 天 upcoming catalyst、事件前动作、事件后复核目标、来源和治理边界|已实现基础版|
 |未来催化剂查询|`aits catalysts lookup`|按 `catalyst_id` 反查事件日期、类型、重要性、相关 ticker/节点、风险事件、事件前动作、事件后复核目标、来源和复核元数据|已实现基础版|
+|执行纪律配置|`config/execution_policy.yaml`|登记 advisory execution policy、再平衡阈值、加仓/减仓阈值、低置信度人工复核、禁止主动加仓 gate、冷却期和固定 action taxonomy|已实现基础版|
+|执行纪律校验|`aits execution validate`|校验 execution policy schema、必需 action id、重复 action、报告可用性和复核到期状态；该政策只影响报告动作语言，不改变 production scoring、`position_gate` 或回测仓位|已实现基础版|
+|执行纪律报告|`outputs/reports/execution_policy_YYYY-MM-DD.md`|中文报告输出政策版本、阈值、冷却期、advisory action taxonomy 和问题清单；`score-daily` 会写入该报告并在日报执行建议章节引用校验状态|已实现基础版|
+|执行动作查询|`aits execution lookup`|按 `action_id` 反查固定动作定义，例如 `maintain`、`small_increase`、`no_new_position`、`reduce_to_target_range`、`wait_manual_review`、`observe_only`|已实现基础版|
 |反馈闭环复核|`aits feedback loop-review`|按复核窗口汇总 market evidence、decision snapshots、decision_outcomes、decision_causal_chains、decision_learning_queue、rule_experiments 和 task register 状态；声明 `ai_after_chatgpt` 市场阶段和可执行/需复核/研究用途边界|已实现基础版|
 |反馈闭环复核报告|`outputs/reports/feedback_loop_review_YYYY-MM-DD.md`|中文周期报告输出新证据、快照、outcome、因果链、学习队列、规则候选、blocked task 和状态统计；不直接生成调仓建议，也不自动修改生产规则|已实现基础版|
 |认知模型需求|`docs/requirements/cognitive_model_2026-05-04.md`|定义 AI 产业链可审计认知模型边界、`belief_state` 第一阶段、阶段路线、禁止自动改生产规则的治理边界和关联任务|已登记|

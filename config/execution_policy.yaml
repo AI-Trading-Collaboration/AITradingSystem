@@ -1,0 +1,49 @@
+policy_id: advisory_execution_policy.v1
+version: v1
+status: production
+owner: system_review
+description: >
+  Advisory execution discipline for AI risk-asset position recommendations.
+  This policy standardizes action language and separates position target
+  changes from whether a rebalance is worth acting on.
+minimum_rebalance_delta: 0.05
+small_increase_delta: 0.10
+reduce_delta: 0.05
+low_confidence_levels:
+  - low
+manual_review_gate_ids:
+  - risk_events
+  - thesis
+  - data_confidence
+no_new_position_gate_ids:
+  - valuation
+  - risk_events
+  - thesis
+cooldown_trading_days: 1
+last_reviewed_at: 2026-05-04
+next_review_due: 2026-06-04
+actions:
+  - action_id: maintain
+    label: 维持
+    description: 当前仓位建议变化不足以形成执行动作，维持原目标区间。
+    allowed_in_reports: true
+  - action_id: small_increase
+    label: 小幅加仓
+    description: 目标区间明显上移且未触发禁止新增仓位条件，只能作为人工复核后的增配提示。
+    allowed_in_reports: true
+  - action_id: no_new_position
+    label: 禁止主动加仓
+    description: 评分或趋势可能仍强，但估值、风险、thesis 或事件前状态限制新增仓位。
+    allowed_in_reports: true
+  - action_id: reduce_to_target_range
+    label: 减仓到目标区间
+    description: 最终目标区间明显低于上一期，应复核是否把风险资产 AI 仓位降至新目标范围。
+    allowed_in_reports: true
+  - action_id: wait_manual_review
+    label: 等待人工复核
+    description: 低置信度、关键 gate 或人工复核要求存在时，不把仓位变化解释为可直接执行动作。
+    allowed_in_reports: true
+  - action_id: observe_only
+    label: 观察，不形成交易结论
+    description: 输入不足、缺少上一期基线或结论用途受限时，只保留观察和审计记录。
+    allowed_in_reports: true
