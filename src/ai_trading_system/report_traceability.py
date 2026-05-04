@@ -155,7 +155,10 @@ def build_daily_score_trace_bundle(
     evidence_cards = (
         {
             "evidence_id": f"evidence:daily_score:{report.as_of.isoformat()}:position",
-            "summary": "综合评分、仓位模型和 position_gate 共同支持最终 AI 仓位结论。",
+            "summary": (
+                "综合评分、宏观总风险资产预算、仓位模型和 position_gate "
+                "共同支持最终 AI 仓位结论。"
+            ),
             "signal_ids": [
                 f"position_gate:{gate.gate_id}"
                 for gate in report.recommendation.position_gates
@@ -229,9 +232,15 @@ def build_daily_score_trace_bundle(
                 "最终 AI 仓位为 "
                 f"{report.recommendation.risk_asset_ai_band.min_position:.0%}-"
                 f"{report.recommendation.risk_asset_ai_band.max_position:.0%}，"
+                "宏观调整后总风险资产预算为 "
+                f"{report.recommendation.total_risk_asset_band.min_position:.0%}-"
+                f"{report.recommendation.total_risk_asset_band.max_position:.0%}，"
+                "总资产内 AI 仓位为 "
+                f"{report.recommendation.total_asset_ai_band.min_position:.0%}-"
+                f"{report.recommendation.total_asset_ai_band.max_position:.0%}，"
                 f"仓位状态为 {report.recommendation.label}。"
             ),
-            "report_section": "顶部摘要 / 仓位闸门",
+            "report_section": "顶部摘要 / 宏观风险资产预算 / 仓位闸门",
             "evidence_ids": [evidence_cards[0]["evidence_id"]],
             "dataset_ids": _dataset_ids(dataset_refs),
             "quality_ids": _quality_ids(quality_refs),

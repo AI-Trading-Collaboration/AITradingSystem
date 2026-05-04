@@ -154,6 +154,10 @@ def render_belief_state_summary(
             "- 仓位边界："
             f"模型 {_format_band_record(position_boundary['model_risk_asset_ai_band'])}；"
             f"最终 {_format_band_record(position_boundary['final_risk_asset_ai_band'])}；"
+            "总风险资产预算 "
+            f"{_format_band_record(position_boundary['final_total_risk_asset_band'])}；"
+            "总资产内 AI "
+            f"{_format_band_record(position_boundary['total_asset_ai_band'])}；"
             "置信度调整后 "
             f"{_format_band_record(position_boundary['confidence_adjusted_band'])}。"
         ),
@@ -330,6 +334,18 @@ def _position_boundary_record(report: DailyScoreReport) -> dict[str, Any]:
         "confidence_adjusted_band": _band_record(
             confidence.adjusted_risk_asset_ai_band
         ),
+        "static_total_risk_asset_band": _band_record(
+            report.macro_risk_asset_budget.static_total_risk_asset_band
+        ),
+        "final_total_risk_asset_band": _band_record(
+            recommendation.total_risk_asset_band
+        ),
+        "macro_risk_asset_budget": {
+            "level": report.macro_risk_asset_budget.level,
+            "triggered": report.macro_risk_asset_budget.triggered,
+            "source": report.macro_risk_asset_budget.source,
+            "reasons": list(report.macro_risk_asset_budget.reasons),
+        },
         "total_asset_ai_band": _band_record(recommendation.total_asset_ai_band),
         "minimum_action_delta": report.minimum_action_delta,
         "limiting_gates": [

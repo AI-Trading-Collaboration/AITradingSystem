@@ -9,6 +9,28 @@ portfolio:
   total_risk_asset_min: 0.60
   total_risk_asset_max: 0.80
 
+macro_risk_asset_budget:
+  enabled: true
+  vix_subject: ^VIX
+  vix_current_feature: vix_current
+  vix_percentile_feature: vix_percentile_252
+  rate_subject: DGS10
+  rate_change_feature: rate_change_20d
+  dollar_subject: DX-Y.NYB
+  dollar_return_feature: return_20d
+  elevated_vix_current: 25.0
+  stress_vix_current: 32.0
+  elevated_vix_percentile: 0.65
+  stress_vix_percentile: 0.85
+  elevated_rate_change_20d: 0.25
+  stress_rate_change_20d: 0.50
+  elevated_dollar_return_20d: 0.03
+  stress_dollar_return_20d: 0.06
+  elevated_total_risk_asset_min: 0.50
+  elevated_total_risk_asset_max: 0.70
+  stress_total_risk_asset_min: 0.35
+  stress_total_risk_asset_max: 0.55
+
 position_limits:
   max_single_stock_in_ai_bucket: 0.30
   max_total_ai_exposure: 0.60

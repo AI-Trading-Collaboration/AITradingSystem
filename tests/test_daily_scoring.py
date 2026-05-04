@@ -300,6 +300,42 @@ def test_risk_budget_gate_caps_real_portfolio_concentration(
     assert "单票 AI 暴露集中度" in risk_budget_gate.reason
 
 
+def test_macro_risk_asset_budget_cuts_total_budget_not_ai_relative_weight() -> None:
+    portfolio = load_portfolio()
+    report = build_daily_score_report(
+        feature_set=_feature_set_with_macro_stress(
+            dgs10_rate_change_20d=0.55,
+            dollar_return_20d=0.01,
+        ),
+        data_quality_report=_quality_report(),
+        rules=load_scoring_rules(),
+        total_risk_asset_min=portfolio.portfolio.total_risk_asset_min,
+        total_risk_asset_max=portfolio.portfolio.total_risk_asset_max,
+        macro_risk_asset_budget=portfolio.macro_risk_asset_budget,
+    )
+
+    adjustment = report.macro_risk_asset_budget
+
+    assert adjustment.triggered
+    assert adjustment.level == "stress"
+    assert (
+        report.recommendation.total_risk_asset_band.min_position
+        == portfolio.macro_risk_asset_budget.stress_total_risk_asset_min
+    )
+    assert (
+        report.recommendation.total_risk_asset_band.max_position
+        == portfolio.macro_risk_asset_budget.stress_total_risk_asset_max
+    )
+    assert (
+        report.recommendation.risk_asset_ai_band.max_position
+        == report.recommendation.model_risk_asset_ai_band.max_position
+    )
+    assert report.recommendation.total_asset_ai_band.max_position == (
+        report.recommendation.risk_asset_ai_band.max_position
+        * portfolio.macro_risk_asset_budget.stress_total_risk_asset_max
+    )
+
+
 def test_build_daily_score_report_marks_insufficient_data() -> None:
     report = build_daily_score_report(
         feature_set=MarketFeatureSet(
@@ -358,6 +394,13 @@ def test_write_scores_csv_upserts_as_of_rows(tmp_path: Path) -> None:
         "confidence_adjusted_risk_asset_ai_max",
         "total_asset_ai_min",
         "total_asset_ai_max",
+        "static_total_risk_asset_min",
+        "static_total_risk_asset_max",
+        "final_total_risk_asset_min",
+        "final_total_risk_asset_max",
+        "macro_risk_asset_budget_level",
+        "macro_risk_asset_budget_triggered",
+        "macro_risk_asset_budget_reasons",
         "triggered_position_gates",
     }.issubset(stored.columns)
     overall = stored.loc[stored["component"] == "overall"].iloc[0]
@@ -492,6 +535,7 @@ def test_render_daily_score_report_includes_data_gate_and_limitations(tmp_path: 
     assert "### 最大限制" in markdown
     assert "### 下一步触发条件" in markdown
     assert "## 人工复核摘要" in markdown
+    assert "## 宏观风险资产预算" in markdown
     assert "## 仓位闸门" in markdown
     assert "## 变化原因树" in markdown
     assert markdown.index("## 今日结论卡") < markdown.index("## 变化原因树")
@@ -558,6 +602,7 @@ def test_belief_state_is_read_only_and_keeps_position_unchanged(
     )
     assert "只读解释层" in summary
     assert "不改变正式评分" in summary
+    assert "总风险资产预算" in summary
 
 
 def test_render_daily_score_report_includes_sec_feature_gate(tmp_path: Path) -> None:
@@ -990,6 +1035,23 @@ def _feature_set_with_vix(
             rows.append(replace(row, value=vix_current))
         elif row.subject == "^VIX" and row.feature == "vix_percentile_252":
             rows.append(replace(row, value=vix_percentile))
+        else:
+            rows.append(row)
+    return MarketFeatureSet(as_of=base.as_of, rows=tuple(rows), warnings=base.warnings)
+
+
+def _feature_set_with_macro_stress(
+    *,
+    dgs10_rate_change_20d: float,
+    dollar_return_20d: float,
+) -> MarketFeatureSet:
+    base = _feature_set()
+    rows = []
+    for row in base.rows:
+        if row.subject == "DGS10" and row.feature == "rate_change_20d":
+            rows.append(replace(row, value=dgs10_rate_change_20d))
+        elif row.subject == "DX-Y.NYB" and row.feature == "return_20d":
+            rows.append(replace(row, value=dollar_return_20d))
         else:
             rows.append(row)
     return MarketFeatureSet(as_of=base.as_of, rows=tuple(rows), warnings=base.warnings)

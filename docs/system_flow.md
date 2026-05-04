@@ -108,6 +108,7 @@ flowchart TD
 
     subgraph Score["中间评估：评分和仓位"]
         SD["aits score-daily"]
+        MBG["macro_risk_asset_budget<br/>VIX、DGS10、DXY 触发总风险资产预算下调"]
         PG["position_gate<br/>评分仓位、组合限制、风险预算、风险事件、估值拥挤、thesis 和数据置信度取最严格上限"]
         CONF["判断置信度<br/>按模块来源、覆盖率、质量门禁和人工复核汇总"]
         NH["产业链节点热度<br/>industry_chain/watchlist + 市场特征<br/>production_effect=none"]
@@ -335,7 +336,12 @@ flowchart TD
     SD --> SFFC
     SD --> SFFR
     SD --> EPR
+    SD --> MBG
     SD --> PG
+    MBG --> SC
+    MBG --> DR
+    MBG --> DRT
+    MBG --> CONF
     PG --> SC
     PG --> DR
     PG --> DRT
@@ -590,8 +596,11 @@ flowchart TD
     K --> N
     L --> N
     M --> N
+    K --> MB["宏观总风险资产预算<br/>静态 portfolio 预算基础上只允许下调"]
+    L --> MB
     N --> G2["position_gate<br/>组合限制、risk_budget、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限"]
-    G2 --> O["总资产口径换算<br/>portfolio 风险资产预算"]
+    G2 --> O["总资产口径换算<br/>宏观调整后的 portfolio 风险资产预算"]
+    MB --> O
     O --> C1["判断置信度汇总<br/>按模块来源、覆盖率、质量门禁和人工复核状态扣减"]
     C1 --> P["写入 scores_daily.csv<br/>记录模块分、整体分、confidence、仓位区间和触发 gate 摘要"]
     O --> EP1["生成执行建议<br/>当前最终区间 + 上一期最终区间 + confidence/gate + execution_policy<br/>production_effect=none"]
@@ -638,7 +647,8 @@ flowchart TD
     I --> C0["判断置信度<br/>保存 confidence_score / confidence_level"]
     I --> J["评分映射到评分模型 AI 仓位区间"]
     J --> PG["应用 position_gate<br/>取组合限制、risk_budget、风险事件、估值拥挤、thesis 和数据置信度的最严格上限"]
-    PG --> K["使用最终 AI 仓位区间中点并应用最小调仓阈值<br/>低于阈值维持原仓位"]
+    PG --> MB["应用 macro_risk_asset_budget<br/>VIX、DGS10、DXY 可下调总风险资产预算"]
+    MB --> K["使用总资产内 AI exposure 中点并应用最小调仓阈值<br/>低于阈值维持原仓位"]
     K --> L["下一交易日收益生效<br/>避免未来函数"]
     L --> M["扣除显式交易摩擦假设<br/>commission / spread / slippage / market impact / tax / FX / financing / ETF delay"]
     M --> N["汇总策略指标<br/>CAGR / Max Drawdown / Sharpe / Sortino / Calmar / Turnover"]
@@ -857,10 +867,10 @@ flowchart TD
 |质量报告|`outputs/reports/data_quality_YYYY-MM-DD.md`|声明数据是否可用于下游结论|已实现|
 |特征|`aits build-features`|生成可解释市场特征|已实现|
 |特征缓存|`data/processed/features_daily.csv`|保存 tidy 格式特征|已实现|
-|组合与风险预算配置|`config/portfolio.yaml`|定义总风险资产预算、AI 总资产上限、真实组合集中度提示阈值和 `risk_budget` gate 参数；risk_budget 基础版使用 VIX 压力、真实组合集中度和 ETF beta 覆盖率约束风险资产内 AI 仓位上限|已实现基础版|
-|评分|`aits score-daily`|先执行市场数据质量门禁，再校验 `execution_policy`、SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照、风险事件发生记录和当前有效复核声明，读取真实持仓 CSV 生成只读组合暴露，并通过 `position_gate` 把评分仓位、组合限制、风险预算、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限，输出 AI 产业链评分、判断置信度、最终仓位区间、advisory 执行建议、日报、decision snapshot 和只读 `belief_state`|已实现|
-|评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果，component 行记录模块 confidence，overall 行记录整体 confidence、模型/最终/置信度调整仓位区间、总资产 AI 仓位区间和触发的仓位闸门摘要，用于日报上期对比|已实现|
-|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|开头输出“今日结论卡”，固定呈现状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、执行动作、主结论、三个核心原因、最大限制和下一步触发条件；正文继续输出结论使用等级、变化原因树、什么情况会改变判断、产业链节点热度、组合暴露、认知状态摘要、执行建议、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、当前有效风险事件复核声明数量、估值 PIT 可信度、仓位闸门来源/上限/触发状态、限制说明、人工复核摘要和可追溯引用章节；执行建议、节点热度和组合暴露均明确 `production_effect=none`，不是自动交易指令|已实现|
+|组合与风险预算配置|`config/portfolio.yaml`|定义静态总风险资产预算、`macro_risk_asset_budget` 下调阈值、AI 总资产上限、真实组合集中度提示阈值和 `risk_budget` gate 参数；宏观预算层用 VIX、DGS10 和 DXY 下调总风险资产预算，`risk_budget` gate 继续约束风险资产内 AI 仓位上限|已实现基础版|
+|评分|`aits score-daily`|先执行市场数据质量门禁，再校验 `execution_policy`、SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照、风险事件发生记录和当前有效复核声明，读取真实持仓 CSV 生成只读组合暴露，先用 `macro_risk_asset_budget` 下调总风险资产预算，再通过 `position_gate` 把评分仓位、组合限制、风险预算、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限，输出 AI 产业链评分、判断置信度、最终仓位区间、advisory 执行建议、日报、decision snapshot 和只读 `belief_state`|已实现|
+|评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果，component 行记录模块 confidence，overall 行记录整体 confidence、模型/最终/置信度调整仓位区间、静态和宏观调整后总风险资产预算、总资产 AI 仓位区间、宏观预算触发等级和仓位闸门摘要，用于日报上期对比|已实现|
+|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|开头输出“今日结论卡”，固定呈现状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、总风险资产预算、执行动作、主结论、三个核心原因、最大限制和下一步触发条件；正文继续输出结论使用等级、变化原因树、什么情况会改变判断、产业链节点热度、组合暴露、认知状态摘要、执行建议、宏观风险资产预算、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、当前有效风险事件复核声明数量、估值 PIT 可信度、仓位闸门来源/上限/触发状态、限制说明、人工复核摘要和可追溯引用章节；执行建议、节点热度和组合暴露均明确 `production_effect=none`，不是自动交易指令|已实现|
 |结论使用等级|`outputs/reports/daily_score_YYYY-MM-DD.md#结论使用等级` / `outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md#结论使用等级`|报告输出 `actionable`、`review_required`、`research_only`、`data_limited` 或 `backtest_limited` 等使用边界，并与投资姿态标签分开；低置信度、人工复核失败、来源不足、数据质量失败和回测覆盖不足会自动降级，说明原因、解除条件和证据引用|已实现基础版|
 |Pipeline health|`aits ops health`|只读检查关键 pipeline artifact，包括价格缓存、利率缓存、数据质量报告、特征缓存、评分缓存和日报是否存在、是否为空、mtime 和排查入口；不把运行健康解释为投资结论有效|已实现基础版|
 |Pipeline health 报告|`outputs/reports/pipeline_health_YYYY-MM-DD.md`|中文输出 artifact 检查表、错误/警告数量、问题清单和方法边界；第一阶段未接入结构化 run log、后台调度器、异常栈或 API 错误采集|已实现基础版|
@@ -871,7 +881,7 @@ flowchart TD
 |组合暴露报告|`outputs/reports/portfolio_exposure_YYYY-MM-DD.md`|中文输出持仓快照日期、总市值、AI 名义暴露、AI 占比、最大单票占 AI 暴露、ETF beta 覆盖率、暴露分组表和问题清单；第一阶段 `production_effect=none`，不改变评分、仓位闸门、执行建议或回测仓位|已实现基础版|
 |风险预算 gate|`score-daily` / `backtest` 仓位闸门|在共享 `position_gate` 层读取 `config/portfolio.yaml:risk_budget`；高 VIX 或高 VIX 分位会压低最终 AI 仓位上限，真实持仓接入后单票、节点、相关性簇集中或 ETF beta 覆盖不足也会压低上限；缺少真实持仓时不使用观察池替代组合集中度|已实现基础版|
 |日报 Evidence Bundle|`outputs/reports/evidence/daily_score_YYYY-MM-DD_trace.json`|记录日报 `claim`、`evidence`、`dataset`、`quality` 和 `run_manifest`，包括 `belief_state` dataset/claim 引用和本次运行适用的 production rule version manifest，用于从核心结论反查输入上下文、数据快照、只读认知状态和规则版本|已实现|
-|决策快照|`data/processed/decision_snapshots/decision_snapshot_YYYY-MM-DD.json`|每次 `score-daily` 通过质量门禁后保存 signal_date、market regime、整体分、模块分、判断置信度、模型/最终/置信度调整仓位、position gates、质量状态、人工复核、估值状态、风险事件状态、trace bundle 引用、`belief_state_ref`、rule version manifest 和配置路径|已实现基础版|
+|决策快照|`data/processed/decision_snapshots/decision_snapshot_YYYY-MM-DD.json`|每次 `score-daily` 通过质量门禁后保存 signal_date、market regime、整体分、模块分、判断置信度、模型/最终/置信度调整仓位、静态和宏观调整后总风险资产预算、position gates、质量状态、人工复核、估值状态、风险事件状态、trace bundle 引用、`belief_state_ref`、rule version manifest 和配置路径|已实现基础版|
 |决策结果校准|`aits feedback calibrate`|先校验 `benchmark_policy`，再复用 `aits validate-data` 同一质量门禁，从历史 `decision_snapshot` 和 `prices_daily.csv` 生成 1D/5D/20D/60D/120D outcome，按总分、置信度、gate、thesis、风险等级和估值状态分桶输出校准报告；结果只能进入规则复核，不能自动修改生产规则|已实现基础版|
 |决策结果缓存|`data/processed/decision_outcomes.csv`|保存每个 `snapshot_id`、观察窗口、AI proxy return、最大回撤、实现波动、SPY/QQQ/SMH/SOXX return 与超额收益、hit/miss、分桶字段、gate/thesis/risk/valuation 状态和 `belief_state` 路径|已实现基础版|
 |决策校准报告|`outputs/reports/decision_calibration_YYYY-MM-DD.md`|输出市场阶段、样本数量、观察窗口、数据质量状态、benchmark policy 状态、基准解释边界、样本不足限制、重叠窗口限制、全局摘要和各分桶平均收益/回撤/波动/胜率/超额收益|已实现基础版|
@@ -910,14 +920,14 @@ flowchart TD
 |反馈闭环复核|`aits feedback loop-review`|按复核窗口汇总 market evidence、decision snapshots、decision_outcomes、decision_causal_chains、decision_learning_queue、rule_experiments 和 task register 状态；声明 `ai_after_chatgpt` 市场阶段和可执行/需复核/研究用途边界|已实现基础版|
 |反馈闭环复核报告|`outputs/reports/feedback_loop_review_YYYY-MM-DD.md`|中文周期报告输出新证据、快照、outcome、因果链、学习队列、规则候选、blocked task 和状态统计；不直接生成调仓建议，也不自动修改生产规则|已实现基础版|
 |认知模型需求|`docs/requirements/cognitive_model_2026-05-04.md`|定义 AI 产业链可审计认知模型边界、`belief_state` 第一阶段、阶段路线、禁止自动改生产规则的治理边界和关联任务|已登记|
-|认知状态缓存|`data/processed/belief_state/belief_state_YYYY-MM-DD.json`|只读认知状态快照，结构化记录市场状态、产业链节点状态、估值、风险、thesis、仓位边界、限制因素、多维置信度、trace 引用和 `decision_snapshot` 引用；明确不直接改变评分、闸门、回测仓位或交易建议|已实现基础版|
+|认知状态缓存|`data/processed/belief_state/belief_state_YYYY-MM-DD.json`|只读认知状态快照，结构化记录市场状态、产业链节点状态、估值、风险、thesis、仓位边界、宏观总风险资产预算、限制因素、多维置信度、trace 引用和 `decision_snapshot` 引用；明确不直接改变评分、闸门、回测仓位或交易建议|已实现基础版|
 |认知状态历史|`data/processed/belief_state_history.csv`|认知状态历史索引，按 `signal_date` upsert，记录 `belief_state_id`、路径、生成时间、production_effect、置信度、数据质量、最终仓位边界、限制数量、trace 路径和 decision snapshot 路径|已实现基础版|
 |认知状态报告|`outputs/reports/daily_score_YYYY-MM-DD.md#认知状态`|日报中的中文认知状态摘要，明确 `belief_state` 是只读解释层，而不是已批准进入 production 规则的输入|已实现基础版|
-|回测|`aits backtest`|先校验 `benchmark_policy` 和数据质量门禁，再基于每日评分和同一套 `position_gate` 最终仓位动态回测，按显式成本假设扣除 commission、bid-ask spread、linear slippage、market impact、tax、FX、annual financing carry 和 ETF delay，并按 signal_date 构建 point-in-time watchlist lifecycle、SEC 基本面特征、TSM IR 季度补充、估值快照切片、风险事件发生记录和复核声明切片；可通过 `--robustness-report` 或 `--robustness-report-path` 额外生成第一阶段稳健性报告|已实现|
+|回测|`aits backtest`|先校验 `benchmark_policy` 和数据质量门禁，再基于每日评分、`macro_risk_asset_budget` 和同一套 `position_gate` 动态回测；策略实际敞口使用总资产内 AI exposure，风险资产内 AI 相对权重和总风险资产预算在每日明细中分别保留；按显式成本假设扣除 commission、bid-ask spread、linear slippage、market impact、tax、FX、annual financing carry 和 ETF delay，并按 signal_date 构建 point-in-time watchlist lifecycle、SEC 基本面特征、TSM IR 季度补充、估值快照切片、风险事件发生记录和复核声明切片；可通过 `--robustness-report` 或 `--robustness-report-path` 额外生成第一阶段稳健性报告|已实现|
 |回测历史输入缺口诊断|`aits backtest-input-gaps`|先执行数据质量门禁，再按回测 signal_date 诊断历史估值快照、严格 PIT 估值、风险事件 occurrence 和人工复核声明覆盖；报告只列缺口和补数入口，不生成或伪造历史估值/风险事件/无风险声明|已实现基础版|
 |回测历史输入缺口报告|`outputs/backtests/backtest_input_gaps_YYYY-MM-DD_YYYY-MM-DD.md`|中文报告列出每个 signal_date 的估值状态、估值快照数量、严格 PIT 估值数量、风险事件 occurrence 数量、当前有效人工复核声明数量和风险覆盖状态；明确 occurrence 为 0 不能自动代表历史无事件|已实现基础版|
 |回测输入覆盖诊断|`outputs/backtests/backtest_input_coverage_YYYY-MM-DD_YYYY-MM-DD.csv`|机器可读输出评分模块覆盖、来源类型、输入问题、证据 URL、ticker 输入、SEC 特征、风险事件证据和来源类型聚合，便于跨月审计和回归分析|已实现|
-|回测报告|`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|输出市场阶段、结论使用等级、绩效指标、benchmark policy 状态、基准解释边界、执行成本摘要、仓位闸门摘要、判断置信度分桶、数据质量门禁摘要、SEC 基本面、估值快照、风险事件质量摘要、模块覆盖率摘要、月度覆盖率趋势、月度来源类型趋势、月度输入问题下钻、月度输入证据 URL 摘要、月度风险事件证据 URL 明细、月度 ticker 输入摘要、月度 ticker SEC 特征明细、月度估值快照来源和月度风险事件证据来源分布|已实现|
+|回测报告|`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|输出市场阶段、结论使用等级、绩效指标、benchmark policy 状态、基准解释边界、执行成本摘要、宏观风险资产预算摘要、仓位闸门摘要、判断置信度分桶、数据质量门禁摘要、SEC 基本面、估值快照、风险事件质量摘要、模块覆盖率摘要、月度覆盖率趋势、月度来源类型趋势、月度输入问题下钻、月度输入证据 URL 摘要、月度风险事件证据 URL 明细、月度 ticker 输入摘要、月度 ticker SEC 特征明细、月度估值快照来源和月度风险事件证据来源分布|已实现|
 |回测成本假设|`aits backtest --cost-bps --spread-bps --slippage-bps --market-impact-bps --tax-bps --fx-bps --financing-annual-bps --etf-delay-bps`|成本模型第一阶段是显式假设拆分，不等同于真实券商成交回报；每日明细保存每类成本扣减，回测报告显示成本摘要，trace run manifest 记录 `cost_assumptions` 便于复现|已实现基础版|
 |回测稳健性报告|`outputs/backtests/backtest_robustness_YYYY-MM-DD_YYYY-MM-DD.md`|可选输出，复用同一 point-in-time 输入运行基础动态策略、成本压力和起点后移实验，并把结果与买入持有 SPY/QQQ/SMH/SOXX 或用户配置基准对比；报告声明 `production_effect=none` 和剩余防过拟合缺口|已实现基础版|
 |回测输入审计报告|`outputs/backtests/backtest_audit_YYYY-MM-DD_YYYY-MM-DD.md`|输出 PASS/PASS_WITH_WARNINGS/FAIL、数据质量、point-in-time 输入、模块覆盖率、来源类型、执行假设、审计发现和修复建议，判断本次回测是否可解释；`--fail-on-audit-warning` 可把非 PASS 审计状态转为命令失败|已实现|

@@ -103,6 +103,14 @@ class BacktestDailyRow:
     position_label: str
     model_target_exposure: float
     gated_target_exposure: float
+    total_asset_model_target_exposure: float
+    total_asset_gated_target_exposure: float
+    static_total_risk_asset_min: float
+    static_total_risk_asset_max: float
+    total_risk_asset_min: float
+    total_risk_asset_max: float
+    macro_risk_asset_budget_level: str
+    macro_risk_asset_budget_triggered: bool
     raw_target_exposure: float
     target_exposure: float
     asset_return: float
@@ -135,6 +143,16 @@ class BacktestDailyRow:
             "position_label": self.position_label,
             "model_target_exposure": self.model_target_exposure,
             "gated_target_exposure": self.gated_target_exposure,
+            "total_asset_model_target_exposure": self.total_asset_model_target_exposure,
+            "total_asset_gated_target_exposure": self.total_asset_gated_target_exposure,
+            "static_total_risk_asset_min": self.static_total_risk_asset_min,
+            "static_total_risk_asset_max": self.static_total_risk_asset_max,
+            "total_risk_asset_min": self.total_risk_asset_min,
+            "total_risk_asset_max": self.total_risk_asset_max,
+            "macro_risk_asset_budget_level": self.macro_risk_asset_budget_level,
+            "macro_risk_asset_budget_triggered": (
+                self.macro_risk_asset_budget_triggered
+            ),
             "raw_target_exposure": self.raw_target_exposure,
             "target_exposure": self.target_exposure,
             "asset_return": self.asset_return,
@@ -466,6 +484,7 @@ def run_daily_score_backtest(
             total_risk_asset_min=portfolio_config.portfolio.total_risk_asset_min,
             total_risk_asset_max=portfolio_config.portfolio.total_risk_asset_max,
             max_total_ai_exposure=portfolio_config.position_limits.max_total_ai_exposure,
+            macro_risk_asset_budget=portfolio_config.macro_risk_asset_budget,
             risk_budget=portfolio_config.risk_budget,
             fundamental_feature_report=fundamental_feature_report,
             valuation_review_report=valuation_review_report,
@@ -481,11 +500,25 @@ def run_daily_score_backtest(
             recommendation.risk_asset_ai_band.min_position,
             recommendation.risk_asset_ai_band.max_position,
         )
-        raw_target_exposure = gated_target_exposure
-        if not rows or abs(gated_target_exposure - previous_exposure) >= (
+        total_asset_model_target_exposure = _position_midpoint(
+            (
+                recommendation.model_risk_asset_ai_band.min_position
+                * recommendation.total_risk_asset_band.min_position
+            ),
+            (
+                recommendation.model_risk_asset_ai_band.max_position
+                * recommendation.total_risk_asset_band.max_position
+            ),
+        )
+        total_asset_gated_target_exposure = _position_midpoint(
+            recommendation.total_asset_ai_band.min_position,
+            recommendation.total_asset_ai_band.max_position,
+        )
+        raw_target_exposure = total_asset_gated_target_exposure
+        if not rows or abs(raw_target_exposure - previous_exposure) >= (
             scoring_rules.position_change.minimum_action_delta
         ):
-            target_exposure = gated_target_exposure
+            target_exposure = raw_target_exposure
         else:
             target_exposure = previous_exposure
 
@@ -524,6 +557,30 @@ def run_daily_score_backtest(
                 position_label=recommendation.label,
                 model_target_exposure=model_target_exposure,
                 gated_target_exposure=gated_target_exposure,
+                total_asset_model_target_exposure=total_asset_model_target_exposure,
+                total_asset_gated_target_exposure=total_asset_gated_target_exposure,
+                static_total_risk_asset_min=(
+                    score_report.macro_risk_asset_budget
+                    .static_total_risk_asset_band
+                    .min_position
+                ),
+                static_total_risk_asset_max=(
+                    score_report.macro_risk_asset_budget
+                    .static_total_risk_asset_band
+                    .max_position
+                ),
+                total_risk_asset_min=(
+                    recommendation.total_risk_asset_band.min_position
+                ),
+                total_risk_asset_max=(
+                    recommendation.total_risk_asset_band.max_position
+                ),
+                macro_risk_asset_budget_level=(
+                    score_report.macro_risk_asset_budget.level
+                ),
+                macro_risk_asset_budget_triggered=(
+                    score_report.macro_risk_asset_budget.triggered
+                ),
                 raw_target_exposure=raw_target_exposure,
                 target_exposure=target_exposure,
                 asset_return=asset_return,
@@ -736,6 +793,7 @@ def render_backtest_report(
             f"- 融资年化成本：{result.financing_annual_bps:.1f} bps",
             f"- ETF 延迟/申赎成本：{result.etf_delay_bps:.1f} bps",
             f"- 最小调仓阈值：{result.minimum_action_delta:.0%}",
+            "- 策略仓位口径：总资产内 AI exposure；风险资产内 AI 相对权重保留在每日明细。",
             f"- 数据质量状态：{result.data_quality_report.status}",
             f"- 数据质量报告：`{data_quality_report_path}`",
             f"- SEC 基本面切片数：{result.fundamental_feature_report_count}",
@@ -790,6 +848,18 @@ def render_backtest_report(
         lines.extend(["", benchmark_policy_section.rstrip()])
 
     lines.extend(_execution_cost_summary_lines(result))
+    macro_budget_rows = _macro_budget_summary_rows(result)
+    if macro_budget_rows:
+        lines.extend(
+            [
+                "",
+                "## 宏观风险资产预算摘要",
+                "",
+                "| 状态 | 样本数 | 触发天数 | 最低预算上限 | 平均预算上限 |",
+                "|---|---:|---:|---:|---:|",
+                *macro_budget_rows,
+            ]
+        )
     position_gate_rows = _position_gate_summary_rows(result)
     if position_gate_rows:
         lines.extend(
@@ -1015,7 +1085,8 @@ def render_backtest_report(
             "- 每个交易日收盘后计算评分，目标仓位从下一交易日收益开始生效，避免未来函数。",
             (
                 "- 评分模型仓位先经过仓位闸门取最严格上限，"
-                "再使用最终 AI 仓位区间中点；变化小于最小调仓阈值时维持原仓位。"
+                "再乘以宏观调整后的总风险资产预算，使用总资产内 AI 仓位区间中点；"
+                "变化小于最小调仓阈值时维持原仓位。"
             ),
             (
                 "- 策略收益按目标仓位乘以策略代理标的下一交易日收益，"
@@ -1447,6 +1518,28 @@ def _position_gate_summary_rows(result: DailyBacktestResult) -> list[str]:
         )
         for gate_id, caps in sorted(gate_caps.items())
     ]
+
+
+def _macro_budget_summary_rows(result: DailyBacktestResult) -> list[str]:
+    grouped_rows: dict[str, list[BacktestDailyRow]] = {}
+    for row in result.rows:
+        grouped_rows.setdefault(row.macro_risk_asset_budget_level, []).append(row)
+
+    rows: list[str] = []
+    for level, level_rows in sorted(grouped_rows.items()):
+        max_values = [row.total_risk_asset_max for row in level_rows]
+        trigger_count = sum(
+            1 for row in level_rows if row.macro_risk_asset_budget_triggered
+        )
+        rows.append(
+            "| "
+            f"{level} | "
+            f"{len(level_rows)} | "
+            f"{trigger_count} | "
+            f"{min(max_values):.0%} | "
+            f"{(sum(max_values) / len(max_values)):.0%} |"
+        )
+    return rows
 
 
 def _confidence_summary_rows(result: DailyBacktestResult) -> list[str]:

@@ -434,6 +434,14 @@ class PortfolioBudgetConfig(BaseModel):
     total_risk_asset_min: float
     total_risk_asset_max: float
 
+    @model_validator(mode="after")
+    def validate_budget_range(self) -> Self:
+        if not 0 <= self.total_risk_asset_min <= self.total_risk_asset_max <= 1:
+            raise ValueError(
+                "portfolio total risk asset budget must satisfy 0 <= min <= max <= 1"
+            )
+        return self
+
 
 class PositionLimitsConfig(BaseModel):
     max_single_stock_in_ai_bucket: float
@@ -468,6 +476,53 @@ class ConcentrationRiskBudgetConfig(BaseModel):
     missing_etf_beta_max_position: float = Field(default=0.70, ge=0, le=1)
 
 
+class MacroRiskAssetBudgetConfig(BaseModel):
+    enabled: bool = True
+    vix_subject: str = "^VIX"
+    vix_current_feature: str = "vix_current"
+    vix_percentile_feature: str = "vix_percentile_252"
+    rate_subject: str = "DGS10"
+    rate_change_feature: str = "rate_change_20d"
+    dollar_subject: str = "DX-Y.NYB"
+    dollar_return_feature: str = "return_20d"
+    elevated_vix_current: float = Field(default=25.0, ge=0)
+    stress_vix_current: float = Field(default=32.0, ge=0)
+    elevated_vix_percentile: float = Field(default=0.65, ge=0, le=1)
+    stress_vix_percentile: float = Field(default=0.85, ge=0, le=1)
+    elevated_rate_change_20d: float = Field(default=0.25, ge=0)
+    stress_rate_change_20d: float = Field(default=0.50, ge=0)
+    elevated_dollar_return_20d: float = Field(default=0.03, ge=0)
+    stress_dollar_return_20d: float = Field(default=0.06, ge=0)
+    elevated_total_risk_asset_min: float = Field(default=0.50, ge=0, le=1)
+    elevated_total_risk_asset_max: float = Field(default=0.70, ge=0, le=1)
+    stress_total_risk_asset_min: float = Field(default=0.35, ge=0, le=1)
+    stress_total_risk_asset_max: float = Field(default=0.55, ge=0, le=1)
+
+    @model_validator(mode="after")
+    def validate_macro_budget_thresholds(self) -> Self:
+        if self.stress_vix_current < self.elevated_vix_current:
+            raise ValueError("stress_vix_current must be >= elevated_vix_current")
+        if self.stress_vix_percentile < self.elevated_vix_percentile:
+            raise ValueError("stress_vix_percentile must be >= elevated_vix_percentile")
+        if self.stress_rate_change_20d < self.elevated_rate_change_20d:
+            raise ValueError("stress_rate_change_20d must be >= elevated_rate_change_20d")
+        if self.stress_dollar_return_20d < self.elevated_dollar_return_20d:
+            raise ValueError(
+                "stress_dollar_return_20d must be >= elevated_dollar_return_20d"
+            )
+        if self.elevated_total_risk_asset_min > self.elevated_total_risk_asset_max:
+            raise ValueError(
+                "elevated total risk asset budget must satisfy min <= max"
+            )
+        if self.stress_total_risk_asset_min > self.stress_total_risk_asset_max:
+            raise ValueError("stress total risk asset budget must satisfy min <= max")
+        if self.stress_total_risk_asset_max > self.elevated_total_risk_asset_max:
+            raise ValueError(
+                "stress_total_risk_asset_max must be <= elevated_total_risk_asset_max"
+            )
+        return self
+
+
 class RiskBudgetConfig(BaseModel):
     enabled: bool = True
     market_stress: MarketStressRiskBudgetConfig = Field(
@@ -483,6 +538,9 @@ class PortfolioConfig(BaseModel):
     portfolio: PortfolioBudgetConfig
     position_limits: PositionLimitsConfig
     risk_budget: RiskBudgetConfig = Field(default_factory=RiskBudgetConfig)
+    macro_risk_asset_budget: MacroRiskAssetBudgetConfig = Field(
+        default_factory=MacroRiskAssetBudgetConfig
+    )
 
 
 class PriceReturnThresholdOverrideConfig(BaseModel):

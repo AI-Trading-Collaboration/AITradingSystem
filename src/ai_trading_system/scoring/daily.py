@@ -12,6 +12,7 @@ from ai_trading_system.conclusion_boundary import (
     render_conclusion_boundary_section,
 )
 from ai_trading_system.config import (
+    MacroRiskAssetBudgetConfig,
     RiskBudgetConfig,
     ScoreModuleRuleConfig,
     ScoreSignalConfig,
@@ -22,6 +23,10 @@ from ai_trading_system.features.market import MarketFeatureSet
 from ai_trading_system.fundamentals.sec_features import SecFundamentalFeaturesReport
 from ai_trading_system.portfolio_exposure import PortfolioExposureReport
 from ai_trading_system.risk_events import RiskEventOccurrenceReviewReport
+from ai_trading_system.scoring.macro_budget import (
+    MacroRiskAssetBudgetAdjustment,
+    build_macro_risk_asset_budget_adjustment,
+)
 from ai_trading_system.scoring.position_gates import build_position_gates
 from ai_trading_system.scoring.position_model import (
     ModuleScore,
@@ -149,6 +154,7 @@ class DailyScoreReport:
     as_of: date
     components: tuple[DailyScoreComponent, ...]
     recommendation: PositionRecommendation
+    macro_risk_asset_budget: MacroRiskAssetBudgetAdjustment
     data_quality_report: DataQualityReport
     feature_set: MarketFeatureSet
     minimum_action_delta: float
@@ -186,6 +192,7 @@ def build_daily_score_report(
     total_risk_asset_min: float,
     total_risk_asset_max: float,
     max_total_ai_exposure: float | None = None,
+    macro_risk_asset_budget: MacroRiskAssetBudgetConfig | None = None,
     risk_budget: RiskBudgetConfig | None = None,
     portfolio_exposure_report: PortfolioExposureReport | None = None,
     review_summary: DailyReviewSummary | None = None,
@@ -238,15 +245,27 @@ def build_daily_score_report(
 
     score_model = WeightedScoreModel()
     module_scores = [component.to_module_score() for component in components]
+    macro_budget_adjustment = build_macro_risk_asset_budget_adjustment(
+        static_total_risk_asset_min=total_risk_asset_min,
+        static_total_risk_asset_max=total_risk_asset_max,
+        feature_set=feature_set,
+        config=macro_risk_asset_budget,
+    )
+    adjusted_total_risk_asset_min = (
+        macro_budget_adjustment.adjusted_total_risk_asset_band.min_position
+    )
+    adjusted_total_risk_asset_max = (
+        macro_budget_adjustment.adjusted_total_risk_asset_band.max_position
+    )
     model_recommendation = score_model.recommend(
         module_scores,
-        total_risk_asset_min=total_risk_asset_min,
-        total_risk_asset_max=total_risk_asset_max,
+        total_risk_asset_min=adjusted_total_risk_asset_min,
+        total_risk_asset_max=adjusted_total_risk_asset_max,
     )
     thesis_review_status = review_summary.thesis if review_summary is not None else None
     position_gates = build_position_gates(
         score_band=model_recommendation.model_risk_asset_ai_band,
-        total_risk_asset_max=total_risk_asset_max,
+        total_risk_asset_max=adjusted_total_risk_asset_max,
         max_total_ai_exposure=max_total_ai_exposure,
         gate_rules=rules.position_gates,
         data_quality_status=data_quality_report.status,
@@ -266,14 +285,15 @@ def build_daily_score_report(
     )
     recommendation = score_model.recommend(
         module_scores,
-        total_risk_asset_min=total_risk_asset_min,
-        total_risk_asset_max=total_risk_asset_max,
+        total_risk_asset_min=adjusted_total_risk_asset_min,
+        total_risk_asset_max=adjusted_total_risk_asset_max,
         position_gates=position_gates,
     )
     return DailyScoreReport(
         as_of=feature_set.as_of,
         components=tuple(components),
         recommendation=recommendation,
+        macro_risk_asset_budget=macro_budget_adjustment,
         data_quality_report=data_quality_report,
         feature_set=feature_set,
         minimum_action_delta=rules.position_change.minimum_action_delta,
@@ -321,6 +341,27 @@ def write_scores_csv(report: DailyScoreReport, output_path: Path) -> Path:
                 ),
                 "total_asset_ai_min": report.recommendation.total_asset_ai_band.min_position,
                 "total_asset_ai_max": report.recommendation.total_asset_ai_band.max_position,
+                "static_total_risk_asset_min": (
+                    report.macro_risk_asset_budget.static_total_risk_asset_band.min_position
+                ),
+                "static_total_risk_asset_max": (
+                    report.macro_risk_asset_budget.static_total_risk_asset_band.max_position
+                ),
+                "final_total_risk_asset_min": (
+                    report.recommendation.total_risk_asset_band.min_position
+                ),
+                "final_total_risk_asset_max": (
+                    report.recommendation.total_risk_asset_band.max_position
+                ),
+                "macro_risk_asset_budget_level": (
+                    report.macro_risk_asset_budget.level
+                ),
+                "macro_risk_asset_budget_triggered": (
+                    report.macro_risk_asset_budget.triggered
+                ),
+                "macro_risk_asset_budget_reasons": "；".join(
+                    report.macro_risk_asset_budget.reasons
+                ),
                 "triggered_position_gates": _triggered_position_gate_summary(report),
                 "reason": (
                     f"最终仓位区间：{report.recommendation.label}；"
@@ -443,6 +484,7 @@ def render_daily_score_report(
             f"{recommendation.total_risk_asset_band.min_position:.0%}-"
             f"{recommendation.total_risk_asset_band.max_position:.0%}"
         ),
+        f"- 宏观风险资产预算状态：{_macro_budget_summary(report)}",
         (
             "- AI 仓位（总资产内）："
             f"{recommendation.total_asset_ai_band.min_position:.0%}-"
@@ -471,6 +513,7 @@ def render_daily_score_report(
         lines.extend(["", execution_advisory_section.rstrip()])
     if portfolio_exposure_section is not None:
         lines.extend(["", portfolio_exposure_section.rstrip()])
+    lines.extend(["", render_macro_risk_asset_budget_section(report).rstrip()])
     lines.extend(
         [
             "",
@@ -738,6 +781,7 @@ def render_daily_conclusion_card(
             f"{report.recommendation.risk_asset_ai_band.min_position:.0%}-"
             f"{report.recommendation.risk_asset_ai_band.max_position:.0%} |"
         ),
+        f"| 总风险资产预算 | {_escape_markdown_table(_macro_budget_summary(report))} |",
         f"| 执行动作 | {_escape_markdown_table(action)} |",
         "",
         "### 一句话主结论",
@@ -786,6 +830,32 @@ def render_daily_conclusion_boundary(report: DailyScoreReport) -> str:
         ),
     )
     return render_conclusion_boundary_section(boundary)
+
+
+def render_macro_risk_asset_budget_section(report: DailyScoreReport) -> str:
+    adjustment = report.macro_risk_asset_budget
+    static_band = adjustment.static_total_risk_asset_band
+    adjusted_band = adjustment.adjusted_total_risk_asset_band
+    reason = "；".join(adjustment.reasons)
+    lines = [
+        "## 宏观风险资产预算",
+        "",
+        "| 项目 | 内容 |",
+        "|---|---|",
+        (
+            "| 静态总风险资产预算 | "
+            f"{static_band.min_position:.0%}-{static_band.max_position:.0%} |"
+        ),
+        (
+            "| 宏观调整后总风险资产预算 | "
+            f"{adjusted_band.min_position:.0%}-{adjusted_band.max_position:.0%} |"
+        ),
+        f"| 状态 | {adjustment.level} |",
+        f"| 触发下调 | {'是' if adjustment.triggered else '否'} |",
+        f"| 来源 | `{adjustment.source}` |",
+        f"| 说明 | {_escape_markdown_table(reason)} |",
+    ]
+    return "\n".join(lines) + "\n"
 
 
 def render_daily_change_explanation(
@@ -1201,6 +1271,22 @@ def _confidence_card_summary(report: DailyScoreReport) -> str:
     return (
         f"{_confidence_level_label(confidence.level)}，"
         f"{confidence.score:.1f}/100；{_confidence_reason_summary(confidence)}"
+    )
+
+
+def _macro_budget_summary(report: DailyScoreReport) -> str:
+    adjustment = report.macro_risk_asset_budget
+    static_band = adjustment.static_total_risk_asset_band
+    adjusted_band = adjustment.adjusted_total_risk_asset_band
+    if adjustment.triggered:
+        return (
+            f"{static_band.min_position:.0%}-{static_band.max_position:.0%} -> "
+            f"{adjusted_band.min_position:.0%}-{adjusted_band.max_position:.0%}"
+            f"（{adjustment.level}）"
+        )
+    return (
+        f"{adjusted_band.min_position:.0%}-{adjusted_band.max_position:.0%}"
+        f"（{adjustment.level}）"
     )
 
 

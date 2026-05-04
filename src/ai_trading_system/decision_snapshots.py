@@ -61,6 +61,18 @@ def build_decision_snapshot(
             "confidence_adjusted_risk_asset_ai_band": _band_record(
                 confidence.adjusted_risk_asset_ai_band
             ),
+            "static_total_risk_asset_band": _band_record(
+                report.macro_risk_asset_budget.static_total_risk_asset_band
+            ),
+            "final_total_risk_asset_band": _band_record(
+                recommendation.total_risk_asset_band
+            ),
+            "macro_risk_asset_budget": {
+                "level": report.macro_risk_asset_budget.level,
+                "triggered": report.macro_risk_asset_budget.triggered,
+                "source": report.macro_risk_asset_budget.source,
+                "reasons": list(report.macro_risk_asset_budget.reasons),
+            },
             "total_asset_ai_band": _band_record(recommendation.total_asset_ai_band),
             "minimum_action_delta": report.minimum_action_delta,
             "position_gates": [

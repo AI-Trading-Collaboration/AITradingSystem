@@ -103,6 +103,32 @@ def test_run_daily_score_backtest_uses_next_day_returns() -> None:
     assert set(result.benchmark_metrics) == {"SPY", "QQQ"}
 
 
+def test_run_daily_score_backtest_uses_total_asset_ai_exposure() -> None:
+    universe = load_universe()
+    prices = _sample_prices(configured_price_tickers(universe), periods=320)
+    rates = _sample_rates(configured_rate_series(universe), periods=320)
+
+    result = run_daily_score_backtest(
+        prices=prices,
+        rates=rates,
+        feature_config=load_features(),
+        scoring_rules=load_scoring_rules(),
+        portfolio_config=load_portfolio(),
+        data_quality_report=_quality_report(),
+        core_watchlist=universe.ai_chain["core_watchlist"],
+        start=date(2026, 4, 1),
+        end=date(2026, 4, 30),
+        strategy_ticker="SMH",
+        benchmark_tickers=("SPY",),
+    )
+
+    first_row = result.rows[0]
+
+    assert first_row.target_exposure == first_row.total_asset_gated_target_exposure
+    assert first_row.target_exposure < first_row.gated_target_exposure
+    assert first_row.total_risk_asset_max <= first_row.static_total_risk_asset_max
+
+
 def test_run_daily_score_backtest_deducts_configured_slippage() -> None:
     universe = load_universe()
     prices = _sample_prices(configured_price_tickers(universe), periods=320)
@@ -1158,6 +1184,16 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     daily_frame = pd.read_csv(daily_path)
     assert "risk_budget_gate_cap" in daily_frame.columns
     assert "risk_budget_gate_triggered" in daily_frame.columns
+    assert {
+        "total_asset_model_target_exposure",
+        "total_asset_gated_target_exposure",
+        "static_total_risk_asset_min",
+        "static_total_risk_asset_max",
+        "total_risk_asset_min",
+        "total_risk_asset_max",
+        "macro_risk_asset_budget_level",
+        "macro_risk_asset_budget_triggered",
+    }.issubset(daily_frame.columns)
     assert {
         "spread_cost",
         "market_impact_cost",
