@@ -7,6 +7,7 @@ import pandas as pd
 
 from ai_trading_system.alerts import (
     build_daily_alert_report,
+    build_pipeline_health_alert_report,
     render_alert_report,
     render_alert_summary_section,
 )
@@ -24,6 +25,12 @@ from ai_trading_system.data.quality import (
     Severity,
 )
 from ai_trading_system.features.market import MarketFeatureRow, MarketFeatureSet
+from ai_trading_system.pipeline_health import (
+    PipelineArtifactCheck,
+    PipelineArtifactSpec,
+    PipelineHealthReport,
+    PipelineHealthSeverity,
+)
 from ai_trading_system.risk_events import (
     LoadedRiskEventOccurrence,
     RiskEventEvidenceSource,
@@ -141,6 +148,45 @@ def test_alert_report_and_daily_summary_render_chinese_sections() -> None:
     assert "去重键" in full_report
     assert "## 告警摘要" in daily_report
     assert "production_effect=none" in daily_report
+
+
+def test_pipeline_health_alert_report_converts_failed_checks() -> None:
+    as_of = date(2026, 5, 4)
+    health_report = PipelineHealthReport(
+        as_of=as_of,
+        generated_at=datetime(2026, 5, 4, tzinfo=UTC),
+        checks=(
+            PipelineArtifactCheck(
+                spec=PipelineArtifactSpec(
+                    "pit_manifest_checksum",
+                    "PIT manifest raw payload checksum",
+                    Path("data/raw/pit_snapshots/manifest.csv"),
+                    True,
+                    "运行 `aits pit-snapshots validate`。",
+                ),
+                exists=True,
+                size_bytes=100,
+                modified_at=datetime(2026, 5, 4, tzinfo=UTC),
+                severity=PipelineHealthSeverity.ERROR,
+                message="PIT raw payload checksum 异常 1 条。",
+            ),
+        ),
+    )
+
+    alert_report = build_pipeline_health_alert_report(
+        health_report,
+        pipeline_health_report_path=Path("outputs/reports/pipeline_health.md"),
+    )
+    markdown = render_alert_report(alert_report)
+
+    assert alert_report.status == "ACTIVE_WARNINGS"
+    assert alert_report.data_system_count == 1
+    assert alert_report.high_count == 1
+    assert alert_report.alerts[0].production_effect == "none"
+    assert "pipeline_health:2026-05-04:pit_manifest_checksum" in alert_report.alerts[
+        0
+    ].claim_refs
+    assert "PIT manifest raw payload checksum 异常" in markdown
 
 
 def _feature_set_with_warning(as_of: date) -> MarketFeatureSet:

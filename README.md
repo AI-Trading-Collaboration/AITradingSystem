@@ -98,6 +98,14 @@ aits pit-snapshots validate --as-of 2026-05-02
 
 后续 `aits valuation fetch-fmp` 默认读取 `data/processed/pit_snapshots/` 的 FMP PIT 标准化索引计算 `eps_revision_90d_pct`，只使用 `available_time <= decision_time` 的自建快照；自建历史不足 90 天时会明确降级，不用未来快照或供应商当前历史视图补洞。
 
+日常运行健康检查会检查 PIT 快照是否缺跑、断更、row count 是否低于阈值，以及 manifest 中 raw payload checksum 是否仍能复核：
+
+```powershell
+aits ops health --as-of 2026-05-02
+```
+
+该命令默认检查 `data/raw/pit_snapshots/manifest.csv`、当日 `data/processed/pit_snapshots/fmp_forward_pit_YYYY-MM-DD.csv` 和 `outputs/reports/pit_snapshots_validation_YYYY-MM-DD.md`，并输出 `outputs/reports/pipeline_health_YYYY-MM-DD.md` 与 `outputs/reports/pipeline_health_alerts_YYYY-MM-DD.md`。告警只做 data/system 复核提示，`production_effect=none`，不改变评分、仓位、回测或执行建议。
+
 构建每日市场特征：
 
 ```powershell

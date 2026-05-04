@@ -6,6 +6,10 @@ from pathlib import Path
 from typing import Literal
 
 from ai_trading_system.catalyst_calendar import CatalystCalendarValidationReport
+from ai_trading_system.pipeline_health import (
+    PipelineHealthReport,
+    PipelineHealthSeverity,
+)
 from ai_trading_system.scoring.daily import DailyScoreReport, PreviousDailyScoreSnapshot
 
 AlertCategory = Literal["data_system", "investment_risk"]
@@ -68,6 +72,42 @@ class AlertReport:
 
 def default_alert_report_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"alerts_{as_of.isoformat()}.md"
+
+
+def default_pipeline_health_alert_report_path(output_dir: Path, as_of: date) -> Path:
+    return output_dir / f"pipeline_health_alerts_{as_of.isoformat()}.md"
+
+
+def build_pipeline_health_alert_report(
+    report: PipelineHealthReport,
+    *,
+    pipeline_health_report_path: Path | None = None,
+) -> AlertReport:
+    alerts = [
+        _alert(
+            as_of=report.as_of,
+            category="data_system",
+            severity="high"
+            if check.severity == PipelineHealthSeverity.ERROR
+            else "warning",
+            source="aits ops health",
+            code=f"pipeline_health_{check.spec.artifact_id}",
+            title=f"{check.spec.label} 异常",
+            trigger_condition=f"health_status={check.severity.value}；{check.message}",
+            clear_condition=(
+                "修复输入或重新运行对应步骤后，重新执行 `aits ops health`，"
+                f"`{check.spec.artifact_id}` 状态恢复 OK。"
+            ),
+            message=f"{check.message} 排查入口：{check.spec.investigation_hint}",
+            claim_refs=(
+                f"pipeline_health:{report.as_of.isoformat()}:{check.spec.artifact_id}",
+            ),
+            evidence_refs=_path_refs(pipeline_health_report_path, str(check.spec.path)),
+        )
+        for check in report.checks
+        if check.severity is not None
+    ]
+    return AlertReport(as_of=report.as_of, alerts=tuple(sorted(alerts, key=_alert_sort_key)))
 
 
 def build_daily_alert_report(

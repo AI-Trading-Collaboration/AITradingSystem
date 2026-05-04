@@ -13,7 +13,9 @@ from rich.table import Table
 
 from ai_trading_system.alerts import (
     build_daily_alert_report,
+    build_pipeline_health_alert_report,
     default_alert_report_path,
+    default_pipeline_health_alert_report_path,
     render_alert_summary_section,
     write_alert_report,
 )
@@ -291,6 +293,7 @@ from ai_trading_system.periodic_investment_review import (
 from ai_trading_system.pipeline_health import (
     PipelineArtifactSpec,
     build_pipeline_health_report,
+    build_pit_snapshot_health_checks,
     default_pipeline_health_report_path,
     write_pipeline_health_report,
 )
@@ -3167,12 +3170,40 @@ def pipeline_health_command(
         Path | None,
         typer.Option(help="Markdown 每日评分报告路径。"),
     ] = None,
+    pit_manifest_path: Annotated[
+        Path,
+        typer.Option(help="PIT raw snapshot manifest 路径。"),
+    ] = DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH,
+    pit_normalized_path: Annotated[
+        Path | None,
+        typer.Option(help="FMP PIT 标准化 as-of CSV 路径，默认按 as-of 日期生成。"),
+    ] = None,
+    pit_validation_report_path: Annotated[
+        Path | None,
+        typer.Option(help="PIT 快照质量报告路径，默认按 as-of 日期生成。"),
+    ] = None,
+    min_pit_manifest_records: Annotated[
+        int,
+        typer.Option(help="PIT manifest 最低记录数。"),
+    ] = 1,
+    min_pit_normalized_rows: Annotated[
+        int,
+        typer.Option(help="FMP PIT 标准化 as-of CSV 最低行数。"),
+    ] = 1,
+    max_pit_snapshot_age_days: Annotated[
+        int,
+        typer.Option(help="PIT latest available_time 最大允许日龄，超出后告警。"),
+    ] = 3,
     output_path: Annotated[
         Path | None,
         typer.Option(help="Markdown pipeline health 报告输出路径。"),
     ] = None,
+    alert_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown pipeline health 告警报告输出路径。"),
+    ] = None,
 ) -> None:
-    """检查关键 pipeline 输入/输出 artifact。"""
+    """检查关键 pipeline 输入/输出 artifact 和 PIT 快照归档健康。"""
     health_date = _parse_date(as_of) if as_of else date.today()
     quality_report = data_quality_report_path or default_quality_report_path(
         PROJECT_ROOT / "outputs" / "reports",
@@ -3185,6 +3216,34 @@ def pipeline_health_command(
     report_path = output_path or default_pipeline_health_report_path(
         PROJECT_ROOT / "outputs" / "reports",
         health_date,
+    )
+    pit_normalized = pit_normalized_path or default_fmp_forward_pit_normalized_path(
+        DEFAULT_FMP_FORWARD_PIT_NORMALIZED_DIR,
+        health_date,
+    )
+    pit_validation_report = (
+        pit_validation_report_path
+        or default_pit_snapshot_validation_report_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            health_date,
+        )
+    )
+    pipeline_alert_report_path = (
+        alert_output_path
+        or default_pipeline_health_alert_report_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            health_date,
+        )
+    )
+    pit_checks = build_pit_snapshot_health_checks(
+        as_of=health_date,
+        manifest_path=pit_manifest_path,
+        normalized_path=pit_normalized,
+        validation_report_path=pit_validation_report,
+        project_root=PROJECT_ROOT,
+        min_manifest_records=min_pit_manifest_records,
+        min_normalized_rows=min_pit_normalized_rows,
+        max_snapshot_age_days=max_pit_snapshot_age_days,
     )
     report = build_pipeline_health_report(
         as_of=health_date,
@@ -3232,14 +3291,22 @@ def pipeline_health_command(
                 "运行 `aits score-daily` 并检查数据质量、SEC、风险事件和估值报告。",
             ),
         ),
+        extra_checks=pit_checks,
     )
     write_pipeline_health_report(report, report_path)
+    alert_report = build_pipeline_health_alert_report(
+        report,
+        pipeline_health_report_path=report_path,
+    )
+    write_alert_report(alert_report, pipeline_alert_report_path)
 
     style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
     console.print(f"[{style}]Pipeline health：{report.status}[/{style}]")
     console.print(f"报告：{report_path}")
+    console.print(f"告警报告：{pipeline_alert_report_path}")
     console.print(f"检查项：{len(report.checks)}")
     console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    console.print(f"活跃告警数：{len(alert_report.alerts)}")
     if not report.passed:
         raise typer.Exit(code=1)
 
