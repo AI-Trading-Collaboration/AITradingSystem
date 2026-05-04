@@ -634,6 +634,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert "## 认知状态" in daily_text
     assert "## 执行建议" in daily_text
     assert "## 今日结论卡" in daily_text
+    assert "## 产业链节点热度" in daily_text
     assert "执行动作 | 观察，不形成交易结论（`observe_only`）" in daily_text
     assert "- 生产影响：none" in daily_text
     assert "执行政策校验：PASS" in daily_text
@@ -641,6 +642,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert "daily_score:2026-04-30:overall_position" in daily_text
     assert "每日评分状态：" in result.output
     assert "执行建议：" in result.output
+    assert "产业链节点热度：" in result.output
     assert "belief_state.json" in result.output
     lookup_result = CliRunner().invoke(
         app,

@@ -221,6 +221,10 @@ from ai_trading_system.industry_chain import (
     validate_industry_chain_config,
     write_industry_chain_validation_report,
 )
+from ai_trading_system.industry_node_state import (
+    build_industry_node_heat_report,
+    render_industry_node_heat_section,
+)
 from ai_trading_system.market_evidence import (
     default_market_evidence_report_path,
     import_market_evidence_csv,
@@ -4504,6 +4508,14 @@ def score_daily(
         features_path=features_output,
         output_path=feature_report_output,
     )
+    industry_node_heat_report = build_industry_node_heat_report(
+        industry_chain=industry_chain,
+        watchlist=watchlist,
+        feature_set=feature_set,
+    )
+    industry_node_heat_section = render_industry_node_heat_section(
+        industry_node_heat_report
+    )
     sec_companies = load_sec_companies(sec_companies_path)
     sec_metrics = load_fundamental_metrics(sec_metrics_path)
     sec_metrics_validation_report = validate_sec_fundamental_metrics_csv(
@@ -4740,6 +4752,7 @@ def score_daily(
         ),
         execution_action_label=execution_advisory.label,
         execution_action_id=execution_advisory.action_id,
+        industry_node_heat_section=industry_node_heat_section,
         execution_advisory_section=execution_advisory_section,
         traceability_section=render_traceability_section(
             daily_trace_bundle,
@@ -4757,6 +4770,10 @@ def score_daily(
     )
     console.print(f"仓位状态：{score_report.recommendation.label}")
     console.print(f"执行建议：{execution_advisory.label}（{execution_advisory.action_id}）")
+    console.print(
+        f"产业链节点热度：{industry_node_heat_report.status}"
+        f"（{industry_node_heat_report.node_count} 个节点）"
+    )
     console.print(f"每日评分报告：{daily_report_output}")
     console.print(f"Evidence bundle：{daily_trace_output}")
     console.print(f"Decision snapshot：{daily_decision_snapshot_output}")
