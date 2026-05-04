@@ -38,6 +38,7 @@ flowchart TD
         RE["config/risk_events.yaml<br/>L1/L2/L3 风险事件动作规则"]
         REX["data/external/risk_event_occurrences/*.yaml<br/>已触发/观察的风险事件发生记录<br/>S/A/B/C/D/X、严重性、概率、动作等级"]
         REXCSV["data/external/risk_event_imports/*.csv<br/>人工复核后的风险事件发生记录导入表"]
+        RPRCSV["data/external/risk_event_prereview_imports/*.csv<br/>OpenAI 结构化预审结果导入表"]
         ME["data/external/market_evidence/*.yaml<br/>新市场信息证据账本"]
         MECSV["data/external/market_evidence_imports/*.csv<br/>人工复核或 LLM 分类后的 evidence 导入表"]
         DS["config/data_sources.yaml<br/>数据源目录、审计字段、来源限制"]
@@ -153,6 +154,9 @@ flowchart TD
         RVR["outputs/reports/risk_events_validation_YYYY-MM-DD.md"]
         ROI["aits risk-events import-occurrences-csv"]
         ROIR["outputs/reports/risk_event_occurrence_import_YYYY-MM-DD.md"]
+        RPI["aits risk-events import-prereview-csv<br/>OpenAI 输出只进入待人工复核队列"]
+        RPQ["data/processed/risk_event_prereview_queue.json<br/>llm_extracted / pending_review 预审队列"]
+        RPIR["outputs/reports/risk_event_prereview_import_YYYY-MM-DD.md"]
         ROV["aits risk-events validate-occurrences"]
         ROR["outputs/reports/risk_event_occurrences_YYYY-MM-DD.md"]
         DSV["aits data-sources validate"]
@@ -360,6 +364,12 @@ flowchart TD
     W --> RV
     U --> RV
     RV --> RVR
+    RPRCSV --> RPI
+    RE --> RPI
+    RPI --> RPQ
+    RPI --> RPIR
+    RPQ -->|人工确认后才可整理为 occurrence CSV| REXCSV
+    RPQ --> FLR
     REXCSV --> ROI
     ROI --> REX
     ROI --> ROIR
@@ -735,10 +745,14 @@ flowchart TD
 |市场阶段|`config/market_regimes.yaml`|记录默认 AI regime 和压力测试区间|已实现|
 |风险事件|`config/risk_events.yaml`|记录 L1/L2/L3 风险和动作规则|已实现基础版|
 |风险事件校验|`aits risk-events validate`|校验风险等级、产业链引用、相关标的和动作规则|已实现基础版|
-|风险事件发生记录|`data/external/risk_event_occurrences/`|记录真实触发或观察中的政策/地缘事件、状态、证据来源、S/A/B/C/D/X 证据等级、严重性、概率、影响范围、时效性、可逆性、动作等级和时间线；保守 source policy 下 `S/A` 可支持评分和仓位闸门，`B` 只支持普通评分，`C/D/X` 只复核|已实现基础版|
-|风险事件发生记录 CSV 导入|`aits risk-events import-occurrences-csv`|导入人工复核后的事件发生记录 CSV，多证据行按 `occurrence_id` 合并并写入 YAML；关键字段、证据等级和动作等级冲突时停止；缺失 `action_class` 默认 `manual_review`|已实现基础版|
+|风险事件发生记录|`data/external/risk_event_occurrences/`|记录真实触发或观察中的政策/地缘事件、状态、证据来源、S/A/B/C/D/X 证据等级、严重性、概率、影响范围、时效性、可逆性、动作等级、人工复核人、复核日期、复核决策、理由、下次复核日期和时间线；保守 source policy 下 `S/A` 可支持评分和仓位闸门，`B` 只支持普通评分，`C/D/X` 只复核|已实现基础版|
+|风险事件发生记录 CSV 导入|`aits risk-events import-occurrences-csv`|导入人工复核后的事件发生记录 CSV，多证据行按 `occurrence_id` 合并并写入 YAML；关键字段、证据等级、动作等级和人工复核元数据冲突时停止；缺失 `action_class` 默认 `manual_review`|已实现基础版|
 |风险事件发生记录导入报告|`outputs/reports/risk_event_occurrence_import_YYYY-MM-DD.md`|记录 CSV 行数、checksum、导入记录数、错误和警告|已实现基础版|
 |风险事件发生记录校验|`aits risk-events validate-occurrences`|校验实际发生记录 schema、event_id、日期、新鲜度、证据来源、证据等级和动作等级；`watch` 默认只进入报告和人工复核，`B` 级 active 证据只能普通评分，`C/D/X` 或 public convenience 单源不得自动评分或触发仓位闸门|已实现基础版|
+|风险事件 OpenAI 预审导入|`aits risk-events import-prereview-csv`|导入固定结构化输出，保存 model、prompt version、request id、request timestamp、source URL、输入/输出 checksum、候选 risk_id、ticker/产业链节点映射和人工复核问题；输出强制为 `llm_extracted` / `pending_review`，不写入正式发生记录|已实现基础版|
+|风险事件 OpenAI 预审队列|`data/processed/risk_event_prereview_queue.json`|保存待人工复核预审记录；L2/L3 或 active 候选只作为 review queue，不得直接进入评分、仓位闸门或回测；人工确认后必须通过 reviewed occurrence CSV 和 `validate-occurrences` 进入正式发生记录|已实现基础版|
+|风险事件 OpenAI 预审报告|`outputs/reports/risk_event_prereview_import_YYYY-MM-DD.md`|中文报告输出 CSV 行数、checksum、待复核数量、L2/L3 候选、active 候选、错误和警告；声明本命令不发起 OpenAI API 请求，只导入结构化预审结果|已实现基础版|
+|风险事件 OpenAI 预审模板|`docs/examples/risk_event_prereview/openai_prereview_template.csv`|提供固定结构化输出字段示例；付费供应商内容只有 `external_llm_permitted=true` 时才允许进入外部 LLM 预审|已实现基础版|
 |数据源目录|`config/data_sources.yaml`|记录 provider、endpoint、缓存路径、审计字段、校验项和来源限制|已实现基础版|
 |数据源校验|`aits data-sources validate`|校验数据源目录是否可审计、活跃来源是否声明校验和限制|已实现基础版|
 |SEC 公司映射|`config/sec_companies.yaml`|记录核心标的 ticker、CIK、taxonomy 预期和统一指标周期覆盖范围；TSM 季度通过 TSM IR 合并补齐|已实现基础版|

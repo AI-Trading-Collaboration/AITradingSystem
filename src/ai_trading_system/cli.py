@@ -209,6 +209,12 @@ from ai_trading_system.report_traceability import (
     write_trace_bundle,
 )
 from ai_trading_system.reports.daily import render_recommendation_markdown
+from ai_trading_system.risk_event_prereview import (
+    default_risk_event_prereview_report_path,
+    import_risk_event_prereview_csv,
+    write_risk_event_prereview_import_report,
+    write_risk_event_prereview_queue,
+)
 from ai_trading_system.risk_event_sources import (
     import_risk_event_occurrences_csv,
     write_risk_event_occurrence_import_report,
@@ -317,6 +323,9 @@ app.add_typer(feedback_app, name="feedback")
 console = Console()
 DEFAULT_RISK_EVENT_OCCURRENCES_PATH = (
     PROJECT_ROOT / "data" / "external" / "risk_event_occurrences"
+)
+DEFAULT_RISK_EVENT_PREREVIEW_QUEUE_PATH = (
+    PROJECT_ROOT / "data" / "processed" / "risk_event_prereview_queue.json"
 )
 DEFAULT_MARKET_EVIDENCE_PATH = PROJECT_ROOT / "data" / "external" / "market_evidence"
 DEFAULT_FMP_ANALYST_ESTIMATE_HISTORY_DIR = default_fmp_analyst_estimate_history_dir(
@@ -1853,6 +1862,64 @@ def import_risk_event_occurrences_csv_command(
     console.print(f"校验报告：{validation_output}")
     if not validation_report.passed:
         raise typer.Exit(code=1)
+
+
+@risk_events_app.command("import-prereview-csv")
+def import_risk_event_prereview_csv_command(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="OpenAI 结构化预审结果 CSV 输入路径。"),
+    ],
+    queue_path: Annotated[
+        Path,
+        typer.Option(help="写入风险事件预审待复核队列 JSON 的路径。"),
+    ] = DEFAULT_RISK_EVENT_PREREVIEW_QUEUE_PATH,
+    risk_events_path: Annotated[
+        Path,
+        typer.Option(help="风险事件配置路径，用于检查 matched_risk_ids。"),
+    ] = DEFAULT_RISK_EVENTS_CONFIG_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="导入和校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 预审导入报告输出路径。"),
+    ] = None,
+) -> None:
+    """导入 OpenAI 风险事件预审结果，并写入人工复核队列。"""
+    import_date = _parse_date(as_of) if as_of else date.today()
+    report_path = output_path or default_risk_event_prereview_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        import_date,
+    )
+    import_report = import_risk_event_prereview_csv(
+        input_path,
+        risk_events=load_risk_events(risk_events_path),
+        as_of=import_date,
+    )
+    write_risk_event_prereview_import_report(import_report, report_path)
+
+    status_style = (
+        "green" if import_report.status == "PASS" else "yellow" if import_report.passed else "red"
+    )
+    console.print(
+        f"[{status_style}]风险事件 OpenAI 预审导入状态："
+        f"{import_report.status}[/{status_style}]"
+    )
+    console.print(f"导入报告：{report_path}")
+    console.print(
+        f"CSV 行数：{import_report.row_count}；"
+        f"预审记录：{import_report.record_count}；"
+        f"L2/L3 候选：{import_report.high_level_candidate_count}"
+    )
+    console.print(f"错误数：{import_report.error_count}；警告数：{import_report.warning_count}")
+    if not import_report.passed:
+        raise typer.Exit(code=1)
+
+    written_path = write_risk_event_prereview_queue(import_report, queue_path)
+    console.print(f"预审待复核队列：{written_path}")
+    console.print("预审记录保持 llm_extracted / pending_review，不进入评分或仓位闸门。")
 
 
 @risk_events_app.command("validate-occurrences")

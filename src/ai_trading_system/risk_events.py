@@ -57,6 +57,13 @@ RiskEventActionClass = Literal[
     "score_eligible",
     "position_gate_eligible",
 ]
+RiskEventReviewDecision = Literal[
+    "confirmed_active",
+    "confirmed_watch",
+    "confirmed_resolved",
+    "dismissed",
+    "needs_more_evidence",
+]
 
 
 class RiskEventIssueSeverity(StrEnum):
@@ -87,6 +94,11 @@ class RiskEventOccurrence(BaseModel):
     time_sensitivity: RiskEventTimeSensitivity = "unknown"
     reversibility: RiskEventReversibility = "unknown"
     action_class: RiskEventActionClass = "manual_review"
+    reviewer: str = ""
+    reviewed_at: date | None = None
+    review_decision: RiskEventReviewDecision | str = ""
+    rationale: str = ""
+    next_review_due: date | None = None
     evidence_sources: list[RiskEventEvidenceSource] = Field(min_length=1)
     summary: str = Field(min_length=1)
     notes: str = ""
@@ -165,6 +177,10 @@ class RiskEventOccurrenceReviewItem:
     time_sensitivity: RiskEventTimeSensitivity
     reversibility: RiskEventReversibility
     action_class: RiskEventActionClass
+    reviewer: str
+    reviewed_at: date | None
+    review_decision: str
+    next_review_due: date | None
     triggered_at: date
     last_confirmed_at: date
     source_types: tuple[RiskEventOccurrenceSourceType, ...]
@@ -513,8 +529,9 @@ def render_risk_event_occurrence_review_report(
         lines.extend(
             [
                 "| Occurrence | 事件 | 等级 | 状态 | 证据等级 | 严重性 | 概率 | "
-                "影响范围 | 动作等级 | 触发日期 | 最近确认 | 来源 | 评分 | 仓位闸门 | 结论 |",
-                "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
+                "影响范围 | 动作等级 | 触发日期 | 最近确认 | 来源 | 评分 | 仓位闸门 | "
+                "复核人 | 下次复核 | 结论 |",
+                "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
             ]
         )
         for item in sorted(report.items, key=lambda value: value.occurrence_id):
@@ -534,6 +551,8 @@ def render_risk_event_occurrence_review_report(
                 f"{', '.join(_source_type_label(value) for value in item.source_types)} | "
                 f"{'可用' if item.score_eligible else '不可用'} | "
                 f"{'可用' if item.position_gate_eligible else '不可用'} | "
+                f"{_escape_markdown_table(item.reviewer)} | "
+                f"{item.next_review_due.isoformat() if item.next_review_due else ''} | "
                 f"{_escape_markdown_table(item.reason)} |"
             )
 
@@ -748,6 +767,31 @@ def _check_occurrence(
                 event_id=occurrence.event_id,
                 path=path,
                 message="活跃/观察风险事件超过新鲜度阈值未确认，需要更新证据。",
+                )
+            )
+
+    missing_review_fields = _missing_occurrence_review_fields(occurrence)
+    if missing_review_fields:
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.ERROR,
+                code="risk_event_occurrence_missing_review_metadata",
+                event_id=occurrence.event_id,
+                path=path,
+                message=(
+                    "活跃/观察风险事件发生记录必须包含人工复核元数据："
+                    f"{', '.join(missing_review_fields)}。"
+                ),
+            )
+        )
+    if occurrence.reviewed_at is not None and occurrence.reviewed_at > as_of:
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.ERROR,
+                code="risk_event_review_date_in_future",
+                event_id=occurrence.event_id,
+                path=path,
+                message="人工复核日期晚于评估日期，不能作为 point-in-time 输入。",
             )
         )
 
@@ -919,6 +963,10 @@ def _occurrence_review_item(
         time_sensitivity=occurrence.time_sensitivity,
         reversibility=occurrence.reversibility,
         action_class=occurrence.action_class,
+        reviewer=occurrence.reviewer,
+        reviewed_at=occurrence.reviewed_at,
+        review_decision=str(occurrence.review_decision),
+        next_review_due=occurrence.next_review_due,
         triggered_at=occurrence.triggered_at,
         last_confirmed_at=occurrence.last_confirmed_at,
         source_types=source_types,
@@ -928,6 +976,23 @@ def _occurrence_review_item(
         health=health,
         reason=reason,
     )
+
+
+def _missing_occurrence_review_fields(occurrence: RiskEventOccurrence) -> list[str]:
+    if occurrence.status not in {"active", "watch"}:
+        return []
+    missing: list[str] = []
+    if not occurrence.reviewer.strip():
+        missing.append("reviewer")
+    if occurrence.reviewed_at is None:
+        missing.append("reviewed_at")
+    if not str(occurrence.review_decision).strip():
+        missing.append("review_decision")
+    if not occurrence.rationale.strip():
+        missing.append("rationale")
+    if occurrence.next_review_due is None:
+        missing.append("next_review_due")
+    return missing
 
 
 def _check_level_actions(

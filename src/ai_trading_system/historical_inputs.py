@@ -146,6 +146,7 @@ def _risk_event_occurrence_as_of(
         update={
             "status": status,
             "last_confirmed_at": last_confirmed_at,
+            "reviewed_at": last_confirmed_at,
             "resolved_at": None,
             "evidence_sources": visible_evidence,
         }

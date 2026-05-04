@@ -257,6 +257,45 @@ def test_public_convenience_risk_event_occurrence_is_not_scoreable(
     assert review_report.items[0].score_eligible is False
 
 
+def test_active_risk_event_occurrence_requires_human_review_metadata(
+    tmp_path: Path,
+) -> None:
+    input_path = tmp_path / "occurrence.yaml"
+    input_path.write_text(
+        """
+occurrence_id: ai_chip_export_control_upgrade_2026_05_01
+event_id: ai_chip_export_control_upgrade
+status: active
+triggered_at: 2026-05-01
+last_confirmed_at: 2026-05-02
+evidence_grade: A
+severity: high
+probability: confirmed
+scope: ai_bucket
+time_sensitivity: high
+reversibility: partly_reversible
+action_class: position_gate_eligible
+evidence_sources:
+  - source_name: manual_policy_review
+    source_type: manual_input
+    captured_at: 2026-05-02
+summary: 缺少人工复核元数据的测试风险事件。
+""",
+        encoding="utf-8",
+    )
+
+    validation_report = validate_risk_event_occurrence_store(
+        store=load_risk_event_occurrence_store(input_path),
+        risk_events=load_risk_events(),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert validation_report.passed is False
+    assert "risk_event_occurrence_missing_review_metadata" in {
+        issue.code for issue in validation_report.issues
+    }
+
+
 def test_validate_risk_event_occurrence_store_rejects_unknown_event_id(
     tmp_path: Path,
 ) -> None:
@@ -377,6 +416,11 @@ scope: ai_bucket
 time_sensitivity: high
 reversibility: partly_reversible
 action_class: {action_class}
+reviewer: policy_owner
+reviewed_at: 2026-05-02
+review_decision: confirmed_active
+rationale: 一手来源和人工复核均确认该测试风险事件。
+next_review_due: 2026-05-09
 evidence_sources:
   - source_name: manual_policy_review
     source_type: {source_type}

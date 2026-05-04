@@ -4,7 +4,7 @@
 
 最后更新：2026-05-04
 
-关联任务：`THESIS-001`、`LLM-001`、`BACKTEST-001`、`VALUATION-002`、`REPORT-002`
+关联任务：`THESIS-001`、`LLM-001`、`RISK-004`、`BACKTEST-001`、`VALUATION-002`、`REPORT-002`
 
 ## 背景
 
@@ -68,6 +68,14 @@
 - 直接输出看多/看空结论。
 - 直接输出买入、卖出、加仓、减仓建议。
 - 在没有结构化证据和人工复核门槛时直接修改评分或仓位。
+
+风险事件第一版落地边界：
+
+- OpenAI API 可作为风险事件预审助手，使用 Responses API + Structured Outputs 生成固定 JSON schema；夜间或非紧急批量分类可使用 Batch API。
+- 预审输出只能作为 `llm_extracted` / `pending_review` 线索，不能替代实际人工复核。
+- 预审可建议 `risk_id` 匹配、`watch/active` 候选、L1/L2/L3 候选、影响 ticker/产业链节点和人工复核问题，但这些字段均不得自动写入可评分发生记录。
+- L2、L3、`position_gate_eligible`、来源冲突、低置信度或无法追到一手来源的候选事件，必须进入人工复核；L3 或仓位闸门候选需要投资 owner 与系统/数据 owner 双确认。
+- 详细流程和实施拆解见 `docs/requirements/risk_event_review_workflow_2026-05-04.md`。
 
 分步开发：
 
@@ -229,3 +237,4 @@
 - 2026-05-04：`VALUATION-002` 已完成基础实现：估值快照支持 `point_in_time_class`、`history_source_class`、`confidence_level`、`confidence_reason` 和 `backtest_use`；FMP historical 快照标记为低可信回填历史分布，估值校验/复核/日报/回测审计输出 PIT 可信度边界。
 - 2026-05-04：`SCORE-002` 已完成基础实现：每日评分和回测将 AI 产业链评分与判断置信度分开输出，`scores_daily.csv`、日报、decision snapshot 和回测明细/报告均记录 confidence 字段与低置信度原因。
 - 2026-05-04：`REPORT-002` 已完成首版实现：`scores_daily.csv` 的 overall 行保存模型/最终/置信度调整仓位区间和总资产 AI 仓位区间；日报新增“变化原因树”和“什么情况会改变判断”，从上期 overall 评分记录读取仓位、总分和置信度变化，并按趋势、风险情绪、估值、基本面、thesis、风险事件、数据质量和仓位闸门解释最终动作约束。
+- 2026-05-04：补充风险事件 OpenAI 预审边界：OpenAI API 只做结构化预审和人工复核提示，不替代人工确认；`RISK-004` 承接具体实现，完整流程见 `docs/requirements/risk_event_review_workflow_2026-05-04.md`。

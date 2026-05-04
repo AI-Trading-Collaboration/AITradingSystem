@@ -36,6 +36,11 @@ REQUIRED_COLUMNS = frozenset(
         "source_type",
         "captured_at",
         "summary",
+        "reviewer",
+        "reviewed_at",
+        "review_decision",
+        "rationale",
+        "next_review_due",
     }
 )
 OPTIONAL_COLUMNS = frozenset(
@@ -118,6 +123,11 @@ class _OccurrenceBuilder:
     time_sensitivity: RiskEventTimeSensitivity
     reversibility: RiskEventReversibility
     action_class: RiskEventActionClass
+    reviewer: str
+    reviewed_at: date
+    review_decision: str
+    rationale: str
+    next_review_due: date
     summary: str
     notes: str
     evidence_sources: list[RiskEventEvidenceSource] = field(default_factory=list)
@@ -136,6 +146,11 @@ class _OccurrenceBuilder:
             self.time_sensitivity,
             self.reversibility,
             self.action_class,
+            self.reviewer,
+            self.reviewed_at,
+            self.review_decision,
+            self.rationale,
+            self.next_review_due,
             self.summary,
         )
 
@@ -238,8 +253,8 @@ def render_risk_event_occurrence_import_report(
     if report.occurrences:
         lines.extend(
             [
-                "| Occurrence | 事件 | 状态 | 触发日期 | 最近确认 | 证据数 |",
-                "|---|---|---|---|---|---:|",
+                "| Occurrence | 事件 | 状态 | 触发日期 | 最近确认 | 复核人 | 下次复核 | 证据数 |",
+                "|---|---|---|---|---|---|---|---:|",
             ]
         )
         for occurrence in report.occurrences:
@@ -250,6 +265,8 @@ def render_risk_event_occurrence_import_report(
                 f"{occurrence.status} | "
                 f"{occurrence.triggered_at.isoformat()} | "
                 f"{occurrence.last_confirmed_at.isoformat()} | "
+                f"{_escape_markdown_table(occurrence.reviewer)} | "
+                f"{occurrence.next_review_due.isoformat() if occurrence.next_review_due else ''} | "
                 f"{len(occurrence.evidence_sources)} |"
             )
     else:
@@ -407,10 +424,18 @@ def _parse_row(
         row, "last_confirmed_at", row_number, occurrence_id, issues
     )
     captured_at = _parse_required_date(row, "captured_at", row_number, occurrence_id, issues)
+    reviewed_at = _parse_required_date(row, "reviewed_at", row_number, occurrence_id, issues)
+    next_review_due = _parse_required_date(
+        row,
+        "next_review_due",
+        row_number,
+        occurrence_id,
+        issues,
+    )
     resolved_at = _parse_optional_date(row, "resolved_at", row_number, occurrence_id, issues)
     published_at = _parse_optional_date(row, "published_at", row_number, occurrence_id, issues)
 
-    if None in (triggered_at, last_confirmed_at, captured_at):
+    if None in (triggered_at, last_confirmed_at, captured_at, reviewed_at, next_review_due):
         row_errors += 1
     if len(issues) > issue_count_before_dates:
         row_errors += 1
@@ -427,7 +452,13 @@ def _parse_row(
 
     if row_errors:
         return None
-    if triggered_at is None or last_confirmed_at is None or captured_at is None:
+    if (
+        triggered_at is None
+        or last_confirmed_at is None
+        or captured_at is None
+        or reviewed_at is None
+        or next_review_due is None
+    ):
         return None
 
     try:
@@ -473,6 +504,11 @@ def _parse_row(
                 RiskEventActionClass,
                 row.get("action_class", "") or "manual_review",
             ),
+            reviewer=row["reviewer"],
+            reviewed_at=reviewed_at,
+            review_decision=row["review_decision"],
+            rationale=row["rationale"],
+            next_review_due=next_review_due,
             summary=row["summary"],
             notes=row.get("notes", ""),
         ),
@@ -502,6 +538,11 @@ def _build_occurrences(
                     time_sensitivity=builder.time_sensitivity,
                     reversibility=builder.reversibility,
                     action_class=builder.action_class,
+                    reviewer=builder.reviewer,
+                    reviewed_at=builder.reviewed_at,
+                    review_decision=builder.review_decision,
+                    rationale=builder.rationale,
+                    next_review_due=builder.next_review_due,
                     evidence_sources=builder.evidence_sources,
                     summary=builder.summary,
                     notes=builder.notes,

@@ -323,6 +323,11 @@ def _risk_occurrence(
         triggered_at=triggered_at,
         last_confirmed_at=last_confirmed_at,
         resolved_at=resolved_at,
+        reviewer="policy_owner",
+        reviewed_at=last_confirmed_at,
+        review_decision="confirmed_active" if status == "active" else "confirmed_watch",
+        rationale="测试风险事件已由人工复核。",
+        next_review_due=last_confirmed_at,
         evidence_sources=evidence_sources,
         summary="人工确认的测试风险事件。",
     )

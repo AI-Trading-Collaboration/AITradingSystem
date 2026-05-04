@@ -11,6 +11,12 @@ scope: industry_chain_node
 time_sensitivity: high
 reversibility: partly_reversible
 action_class: manual_review
+reviewer: policy_owner
+reviewed_at: 2026-05-01
+review_decision: confirmed_watch
+rationale: >
+  示例：人工确认该来源值得继续观察，但尚未达到 active 或仓位闸门条件。
+next_review_due: 2026-05-08
 evidence_sources:
   - source_name: manual_policy_review
     source_type: manual_input

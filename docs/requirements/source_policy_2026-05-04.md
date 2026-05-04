@@ -16,6 +16,18 @@
 | `public_convenience` | 聚合站、公开便利 API、二次转载或口径不完整来源 | 不得单独评分，只能报告或辅助复核 |
 | `llm_extracted` | LLM 从原始文本抽取或分类出的结构化线索 | 不得单独评分，只能待复核 |
 
+## OpenAI API 预审边界
+
+OpenAI API 可以用于风险事件和市场证据的预审，但预审输出在当前 source policy 下仍属于 `llm_extracted`：
+
+- 允许：抽取结构化字段、匹配已有 `risk_id`、映射 ticker/产业链节点、判断是否需要人工复核、列出不确定点和复核问题。
+- 禁止：直接确认风险事件、把候选事件升级为 L2/L3、修改 `action_class`、触发评分、触发仓位闸门、输出交易动作。
+- 预审输出必须保持 `manual_review_status=pending_review`；人工确认前不得写成可评分证据。
+- 如果 OpenAI 预审结果和 deterministic source policy 冲突，以 source policy 的保守规则为准。
+- 付费新闻或供应商内容只有在授权允许外部 LLM API 处理时，才可作为 OpenAI 预审输入。
+
+风险事件的完整预审与人工复核流程见 `docs/requirements/risk_event_review_workflow_2026-05-04.md`。
+
 ## Evidence Grade
 
 | 等级 | 定义 | 自动评分 | 仓位闸门 | 报告/复核 |
@@ -54,4 +66,5 @@
 ## 状态记录
 
 - 2026-05-04：创建 source policy 文档；owner 已批准保守方案，开始实现评分资格、仓位闸门和报告校验同步。
-- 2026-05-04：基础实现完成：新增 `source_policy` helper；`market_evidence` 报告输出自动普通评分资格数量并警告 `C/D/X`、未确认 `B`、`public_convenience` 和 `llm_extracted`；`risk_event_occurrence` 复核报告区分普通评分资格和仓位闸门资格；position gate 只读取 `S/A` active 且 `action_class=position_gate_eligible` 的风险事件；CSV 导入缺省 `action_class` 改为 `manual_review`；测试覆盖保守边界。
+- 2026-05-04：基础实现完成：新增 `source_policy` helper；`market_evidence` 报告输出自动普通评分资格数量并警告 `C/D/X`、未确认 `B`、`public_convenience` 和 `llm_extracted`；`risk_event_occurrence` 复核报告区分普通评分资格和仓位闸门资格；position gate 只读取 `S/A` active 且 `action_class=position_gate_eligible` 的风险事件；CSV 导入缺省 `action_class` 改为 `manual_review`；测试覆盖保守边界；`python -m pytest -q` 通过 239 项测试，`python -m ruff check .` 通过。
+- 2026-05-04：补充 OpenAI API 预审边界：OpenAI 只能生成 `llm_extracted` / `pending_review` 结构化线索，不能替代人工复核，不能直接评分或触发仓位闸门；风险事件细化流程转入 `RISK-003/RISK-004` 需求文档。
