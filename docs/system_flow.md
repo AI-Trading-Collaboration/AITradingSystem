@@ -194,6 +194,8 @@ flowchart TD
         EPV["aits execution validate<br/>校验 advisory action taxonomy"]
         EPRG["outputs/reports/execution_policy_YYYY-MM-DD.md<br/>执行政策校验报告"]
         EPL["aits execution lookup<br/>按 action_id 查询执行动作"]
+        OPH["aits ops health<br/>关键 pipeline artifact 健康检查"]
+        OPR["outputs/reports/pipeline_health_YYYY-MM-DD.md<br/>存在性、mtime、大小和排查入口"]
     end
 
     subgraph Thesis["交易假设复核"]
@@ -454,6 +456,13 @@ flowchart TD
     EPC --> EPV
     EPV --> EPRG
     EPC --> EPL
+    PR --> OPH
+    RR --> OPH
+    FT --> OPH
+    SC --> OPH
+    QR --> OPH
+    DR --> OPH
+    OPH --> OPR
 
     TH --> TL
     TH --> TV
@@ -704,6 +713,7 @@ flowchart TD
         SC1["情景压力测试库<br/>aits scenarios validate / lookup<br/>节点、ticker、risk event 和 gate 映射"]
         CT1["未来催化剂日历<br/>aits catalysts validate / upcoming / lookup<br/>5/20/60 天事件前后复核"]
         EX1["执行纪律政策<br/>aits execution validate / lookup<br/>advisory action taxonomy"]
+        OPS1["Pipeline health<br/>aits ops health<br/>关键 artifact 存在性、mtime、大小和排查入口"]
         K["交易复盘归因<br/>aits review-trades"]
         L["日报集成<br/>汇总 thesis、风险规则与发生记录、估值和复盘摘要"]
         M["数据源目录<br/>aits data-sources list/validate"]
@@ -726,6 +736,7 @@ flowchart TD
     end
 
     C --> D
+    C --> OPS1
     EX1 --> D
     D --> FB1
     FB1 --> FB2
@@ -801,6 +812,8 @@ flowchart TD
 |评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果，component 行记录模块 confidence，overall 行记录整体 confidence、模型/最终/置信度调整仓位区间、总资产 AI 仓位区间和触发的仓位闸门摘要，用于日报上期对比|已实现|
 |日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|开头输出“今日结论卡”，固定呈现状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、执行动作、主结论、三个核心原因、最大限制和下一步触发条件；正文继续输出结论使用等级、变化原因树、什么情况会改变判断、产业链节点热度、认知状态摘要、执行建议、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、估值 PIT 可信度、仓位闸门来源/上限/触发状态、限制说明、人工复核摘要和可追溯引用章节；执行建议和节点热度均明确 `production_effect=none`，不是自动交易指令|已实现|
 |结论使用等级|`outputs/reports/daily_score_YYYY-MM-DD.md#结论使用等级` / `outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md#结论使用等级`|报告输出 `actionable`、`review_required`、`research_only`、`data_limited` 或 `backtest_limited` 等使用边界，并与投资姿态标签分开；低置信度、人工复核失败、来源不足、数据质量失败和回测覆盖不足会自动降级，说明原因、解除条件和证据引用|已实现基础版|
+|Pipeline health|`aits ops health`|只读检查关键 pipeline artifact，包括价格缓存、利率缓存、数据质量报告、特征缓存、评分缓存和日报是否存在、是否为空、mtime 和排查入口；不把运行健康解释为投资结论有效|已实现基础版|
+|Pipeline health 报告|`outputs/reports/pipeline_health_YYYY-MM-DD.md`|中文输出 artifact 检查表、错误/警告数量、问题清单和方法边界；第一阶段未接入结构化 run log、后台调度器、异常栈或 API 错误采集|已实现基础版|
 |产业链节点热度|`score-daily` 日报章节|基于 `config/industry_chain.yaml`、`config/watchlist.yaml` 和已通过门禁的市场趋势特征，按节点输出热度等级、覆盖率、集中度和主要贡献 ticker；第一阶段只做解释和诊断，不把价格热度写成基本面健康度，也不改变 production scoring、`position_gate` 或执行建议|已实现基础版|
 |日报 Evidence Bundle|`outputs/reports/evidence/daily_score_YYYY-MM-DD_trace.json`|记录日报 `claim`、`evidence`、`dataset`、`quality` 和 `run_manifest`，包括 `belief_state` dataset/claim 引用，用于从核心结论反查输入上下文、数据快照和只读认知状态|已实现|
 |决策快照|`data/processed/decision_snapshots/decision_snapshot_YYYY-MM-DD.json`|每次 `score-daily` 通过质量门禁后保存 signal_date、market regime、整体分、模块分、判断置信度、模型/最终/置信度调整仓位、position gates、质量状态、人工复核、估值状态、风险事件状态、trace bundle 引用、`belief_state_ref` 和配置路径|已实现基础版|

@@ -458,6 +458,14 @@
 - 失败时输出明确排查入口和相关日志引用。
 - 不把运行成功误写成投资结论有效；投资结论仍受数据质量和覆盖限制约束。
 
+当前实现状态：
+
+- 2026-05-04：进入基础实现；第一阶段提供只读 `pipeline health` 报告，检查关键输入/输出文件存在性、mtime、大小和排查入口。
+- 第一阶段不接入后台调度器或日志采集系统，也不把运行成功解释为投资结论有效；投资结论仍由数据质量、结论使用等级和报告覆盖决定。
+- 完整 `DONE` 仍需要每次命令运行的结构化 run log、耗时、异常栈、API 错误和自动化调度状态；当前目标完成态预计为 `BASELINE_DONE`。
+- 2026-05-04 基础版已完成：新增 `pipeline_health` 模块、`aits ops health` 和 `outputs/reports/pipeline_health_YYYY-MM-DD.md`，检查价格缓存、利率缓存、数据质量报告、特征缓存、评分缓存和日报 artifact。
+- 当前完成态为 `BASELINE_DONE`：关键 artifact 存在性、mtime、文件大小、问题清单和排查入口已具备；完整 `DONE` 仍需要结构化 run log、耗时、异常栈、API 错误和调度状态采集。
+
 ## ALERT-001
 
 标题：投资与数据告警系统
@@ -596,6 +604,7 @@
 - 2026-05-04：`GOV-001` 达到 `BASELINE_DONE`：rule card registry、治理校验 CLI、查询 CLI、中文报告、系统流图和测试完成；`python -m ruff check src tests`、`python -m pytest -q` 通过。正式 owner approval/promotion/retirement 流程和 rule version 注入仍待后续实现。
 - 2026-05-04：根据最终报告呈现形式讨论，补充 `EXEC-001` 的 advisory action taxonomy、`DOC-001` 的“双层状态”设计和 `UI-001` 的三类读者模式；完整报告结构由 `docs/requirements/report_decision_chain_presentation_2026-05-04.md` 与 `REPORT-003/004` 承接。
 - 2026-05-04：`DOC-001` 达到 `BASELINE_DONE`：日报和回测报告输出结论使用等级，低置信度、来源不足、人工复核问题和回测覆盖不足会降级；投资姿态标签与结论等级分开解释。
+- 2026-05-04：`OPS-001` 达到 `BASELINE_DONE`：新增 pipeline health 只读报告和 CLI，检查关键 artifact 并输出排查入口；报告明确运行健康不等于投资结论有效。
 - 2026-05-04：`DATA-002` 已完成低成本基础版：新增 `aits data-sources health` 和 `outputs/reports/data_sources_health_YYYY-MM-DD.md`，覆盖 provider health score、cache/manifest/row count/checksum/freshness 检查、manifest checksum mismatch 失败，以及 qualified source 不足时的 reconciliation `NOT_COVERED` 声明；owner 已验证 SEC User-Agent、FMP、FRED、Tiingo EOD 和 EODHD Fundamentals 初版权限可访问，EODHD EOD 价格未订阅且价格核验使用 Tiingo；完整 `DONE` 仍依赖生产级第二来源、商业授权/再分发限制和长期口径策略。
 - 2026-05-04：`UNIVERSE-001` 已完成基础实现：新增 `config/watchlist_lifecycle.yaml`、`aits watchlist validate-lifecycle` 和回测 signal_date lifecycle 过滤，测试覆盖尚未进入观察池的 ticker 不参与历史市场特征。
 - 2026-05-04：`TEST-001` 已推进为完成状态：系统级不变量测试覆盖 watch 风险事件不自动评分、低证据等级/公开便利源隔离、LLM evidence 隔离、watchlist point-in-time 过滤、decision snapshot 写入、评分置信度和估值 PIT 可信度。

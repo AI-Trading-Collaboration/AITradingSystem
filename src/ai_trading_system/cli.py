@@ -234,6 +234,12 @@ from ai_trading_system.market_evidence import (
     write_market_evidence_validation_report,
     write_market_evidence_yaml,
 )
+from ai_trading_system.pipeline_health import (
+    PipelineArtifactSpec,
+    build_pipeline_health_report,
+    default_pipeline_health_report_path,
+    write_pipeline_health_report,
+)
 from ai_trading_system.report_traceability import (
     build_backtest_trace_bundle,
     build_daily_score_trace_bundle,
@@ -374,6 +380,7 @@ feedback_app = typer.Typer(help="决策结果观察、校准和因果链查询�
 scenarios_app = typer.Typer(help="AI 产业链情景压力测试库。", no_args_is_help=True)
 catalysts_app = typer.Typer(help="未来催化剂日历和事件前复核。", no_args_is_help=True)
 execution_app = typer.Typer(help="Advisory execution policy 和执行纪律。", no_args_is_help=True)
+ops_app = typer.Typer(help="运行监控和 pipeline health。", no_args_is_help=True)
 app.add_typer(watchlist_app, name="watchlist")
 app.add_typer(industry_chain_app, name="industry-chain")
 app.add_typer(thesis_app, name="thesis")
@@ -387,6 +394,7 @@ app.add_typer(feedback_app, name="feedback")
 app.add_typer(scenarios_app, name="scenarios")
 app.add_typer(catalysts_app, name="catalysts")
 app.add_typer(execution_app, name="execution")
+app.add_typer(ops_app, name="ops")
 console = Console()
 DEFAULT_RISK_EVENT_OCCURRENCES_PATH = (
     PROJECT_ROOT / "data" / "external" / "risk_event_occurrences"
@@ -2112,6 +2120,113 @@ def lookup_execution_action_command(
     except (KeyError, ValueError) as exc:
         raise typer.BadParameter(str(exc)) from exc
     console.print(render_execution_action_lookup(action))
+
+
+@ops_app.command("health")
+def pipeline_health_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="检查日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    prices_path: Annotated[
+        Path,
+        typer.Option(help="标准化日线价格 CSV 路径。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    rates_path: Annotated[
+        Path,
+        typer.Option(help="标准化日线利率 CSV 路径。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    features_path: Annotated[
+        Path,
+        typer.Option(help="每日特征 CSV 路径。"),
+    ] = PROJECT_ROOT / "data" / "processed" / "features_daily.csv",
+    scores_path: Annotated[
+        Path,
+        typer.Option(help="每日评分 CSV 路径。"),
+    ] = PROJECT_ROOT / "data" / "processed" / "scores_daily.csv",
+    data_quality_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 数据质量报告路径。"),
+    ] = None,
+    daily_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 每日评分报告路径。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown pipeline health 报告输出路径。"),
+    ] = None,
+) -> None:
+    """检查关键 pipeline 输入/输出 artifact。"""
+    health_date = _parse_date(as_of) if as_of else date.today()
+    quality_report = data_quality_report_path or default_quality_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        health_date,
+    )
+    daily_report = daily_report_path or default_daily_score_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        health_date,
+    )
+    report_path = output_path or default_pipeline_health_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        health_date,
+    )
+    report = build_pipeline_health_report(
+        as_of=health_date,
+        artifacts=(
+            PipelineArtifactSpec(
+                "prices_daily",
+                "价格缓存",
+                prices_path,
+                True,
+                "运行 `aits download-data` 并检查 download manifest。",
+            ),
+            PipelineArtifactSpec(
+                "rates_daily",
+                "利率缓存",
+                rates_path,
+                True,
+                "运行 `aits download-data` 并检查 FRED 下载状态。",
+            ),
+            PipelineArtifactSpec(
+                "data_quality_report",
+                "数据质量报告",
+                quality_report,
+                True,
+                "运行 `aits validate-data` 或 `aits score-daily`。",
+            ),
+            PipelineArtifactSpec(
+                "features_daily",
+                "每日特征缓存",
+                features_path,
+                True,
+                "运行 `aits build-features` 或 `aits score-daily`。",
+            ),
+            PipelineArtifactSpec(
+                "scores_daily",
+                "每日评分缓存",
+                scores_path,
+                True,
+                "运行 `aits score-daily`。",
+            ),
+            PipelineArtifactSpec(
+                "daily_score_report",
+                "每日评分报告",
+                daily_report,
+                True,
+                "运行 `aits score-daily` 并检查数据质量、SEC、风险事件和估值报告。",
+            ),
+        ),
+    )
+    write_pipeline_health_report(report, report_path)
+
+    style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{style}]Pipeline health：{report.status}[/{style}]")
+    console.print(f"报告：{report_path}")
+    console.print(f"检查项：{len(report.checks)}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if not report.passed:
+        raise typer.Exit(code=1)
 
 
 @thesis_app.command("list")
