@@ -398,9 +398,16 @@ def test_render_daily_score_report_includes_data_gate_and_limitations(tmp_path: 
     )
 
     assert "- 数据质量状态：PASS" in markdown
+    assert "## 今日结论卡" in markdown
+    assert "### 三个核心原因" in markdown
+    assert "### 最大限制" in markdown
+    assert "### 下一步触发条件" in markdown
     assert "## 人工复核摘要" in markdown
     assert "## 仓位闸门" in markdown
     assert "## 变化原因树" in markdown
+    assert markdown.index("## 今日结论卡") < markdown.index("## 变化原因树")
+    assert markdown.index("## 今日结论卡") < markdown.index("## 数据门禁")
+    assert markdown.index("## 今日结论卡") < markdown.index("## 模块评分")
     assert "### 什么情况会改变判断" in markdown
     assert "分模块变化：" in markdown
     assert "趋势（trend）" in markdown
@@ -626,6 +633,8 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert "## 变化原因树" in daily_text
     assert "## 认知状态" in daily_text
     assert "## 执行建议" in daily_text
+    assert "## 今日结论卡" in daily_text
+    assert "执行动作 | 观察，不形成交易结论（`observe_only`）" in daily_text
     assert "- 生产影响：none" in daily_text
     assert "执行政策校验：PASS" in daily_text
     assert "## 可追溯引用" in daily_text

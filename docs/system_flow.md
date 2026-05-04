@@ -111,7 +111,7 @@ flowchart TD
         SC["data/processed/scores_daily.csv<br/>模块分、整体分、confidence、仓位区间和 gate 摘要"]
         EADV["执行建议<br/>execution_policy + 最终仓位变化 + confidence/gate<br/>production_effect=none"]
         EPR["outputs/reports/execution_policy_YYYY-MM-DD.md<br/>动作词表校验和问题清单"]
-        DR["outputs/reports/daily_score_YYYY-MM-DD.md<br/>评分、置信度、变化原因树、认知状态、执行建议和仓位闸门"]
+        DR["outputs/reports/daily_score_YYYY-MM-DD.md<br/>今日结论卡、变化原因树、认知状态、执行建议和仓位闸门"]
         DSNAP["data/processed/decision_snapshots/decision_snapshot_YYYY-MM-DD.json<br/>当日判断快照和 belief_state_ref"]
         BS["data/processed/belief_state/belief_state_YYYY-MM-DD.json<br/>只读认知状态"]
         BSH["data/processed/belief_state_history.csv<br/>只读认知状态历史索引"]
@@ -550,7 +550,7 @@ flowchart TD
     T --> BS
     BS --> BH["更新 belief_state_history.csv<br/>按 signal_date upsert 历史索引"]
     BS --> D0
-    T --> Q["写入 daily_score_YYYY-MM-DD.md<br/>含变化原因树、认知状态、执行建议、人工复核摘要、仓位闸门和可追溯引用"]
+    T --> Q["写入 daily_score_YYYY-MM-DD.md<br/>含今日结论卡、变化原因树、认知状态、执行建议、人工复核摘要、仓位闸门和可追溯引用"]
     C1 --> Q
     BS --> Q
     EP1 --> Q
@@ -672,7 +672,7 @@ flowchart TD
         A["数据下载<br/>aits download-data"]
         B["数据质量门禁<br/>aits validate-data"]
         C["市场特征<br/>aits build-features"]
-        D["每日评分<br/>aits score-daily<br/>含 SEC 基本面、估值快照、政策/地缘发生记录、置信度、执行建议和人工复核摘要"]
+        D["每日评分<br/>aits score-daily<br/>含结论卡、SEC 基本面、估值快照、政策/地缘发生记录、置信度、执行建议和人工复核摘要"]
         E["历史回测<br/>aits backtest<br/>含 point-in-time 输入、覆盖率、来源类型、输入问题、URL、ticker 和证据来源下钻"]
         F["观察池校验<br/>aits watchlist validate"]
         F2["观察池生命周期<br/>aits watchlist validate-lifecycle"]
@@ -790,7 +790,7 @@ flowchart TD
 |特征缓存|`data/processed/features_daily.csv`|保存 tidy 格式特征|已实现|
 |评分|`aits score-daily`|先执行市场数据质量门禁，再校验 `execution_policy`、SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照和风险事件发生记录，并通过 `position_gate` 把评分仓位、组合限制、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限，输出 AI 产业链评分、判断置信度、最终仓位区间、advisory 执行建议、日报、decision snapshot 和只读 `belief_state`|已实现|
 |评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果，component 行记录模块 confidence，overall 行记录整体 confidence、模型/最终/置信度调整仓位区间、总资产 AI 仓位区间和触发的仓位闸门摘要，用于日报上期对比|已实现|
-|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|输出中文结论、AI 产业链评分、判断置信度、变化原因树、什么情况会改变判断、认知状态摘要、执行建议、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、估值 PIT 可信度、评分模型仓位、置信度调整后建议仓位、最终仓位、仓位闸门来源/上限/触发状态、限制说明、人工复核摘要和可追溯引用章节；执行建议明确 `production_effect=none`，不是自动交易指令|已实现|
+|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|开头输出“今日结论卡”，固定呈现状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、执行动作、主结论、三个核心原因、最大限制和下一步触发条件；正文继续输出变化原因树、什么情况会改变判断、认知状态摘要、执行建议、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、估值 PIT 可信度、仓位闸门来源/上限/触发状态、限制说明、人工复核摘要和可追溯引用章节；执行建议明确 `production_effect=none`，不是自动交易指令|已实现|
 |日报 Evidence Bundle|`outputs/reports/evidence/daily_score_YYYY-MM-DD_trace.json`|记录日报 `claim`、`evidence`、`dataset`、`quality` 和 `run_manifest`，包括 `belief_state` dataset/claim 引用，用于从核心结论反查输入上下文、数据快照和只读认知状态|已实现|
 |决策快照|`data/processed/decision_snapshots/decision_snapshot_YYYY-MM-DD.json`|每次 `score-daily` 通过质量门禁后保存 signal_date、market regime、整体分、模块分、判断置信度、模型/最终/置信度调整仓位、position gates、质量状态、人工复核、估值状态、风险事件状态、trace bundle 引用、`belief_state_ref` 和配置路径|已实现基础版|
 |决策结果校准|`aits feedback calibrate`|先校验 `benchmark_policy`，再复用 `aits validate-data` 同一质量门禁，从历史 `decision_snapshot` 和 `prices_daily.csv` 生成 1D/5D/20D/60D/120D outcome，按总分、置信度、gate、thesis、风险等级和估值状态分桶输出校准报告；结果只能进入规则复核，不能自动修改生产规则|已实现基础版|

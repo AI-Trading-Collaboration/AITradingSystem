@@ -394,6 +394,8 @@ def render_daily_score_report(
     risk_event_occurrence_report_path: Path | None = None,
     previous_score_snapshot: PreviousDailyScoreSnapshot | None = None,
     belief_state_section: str | None = None,
+    execution_action_label: str | None = None,
+    execution_action_id: str | None = None,
     execution_advisory_section: str | None = None,
     traceability_section: str | None = None,
 ) -> str:
@@ -434,6 +436,12 @@ def render_daily_score_report(
             f"{recommendation.total_asset_ai_band.max_position:.0%}"
         ),
         f"- 最小操作变化阈值：{report.minimum_action_delta:.0%}",
+        "",
+        render_daily_conclusion_card(
+            report,
+            execution_action_label=execution_action_label,
+            execution_action_id=execution_action_id,
+        ).rstrip(),
         "",
         render_daily_change_explanation(
             report,
@@ -640,6 +648,8 @@ def write_daily_score_report(
     risk_event_occurrence_report_path: Path | None = None,
     previous_score_snapshot: PreviousDailyScoreSnapshot | None = None,
     belief_state_section: str | None = None,
+    execution_action_label: str | None = None,
+    execution_action_id: str | None = None,
     execution_advisory_section: str | None = None,
     traceability_section: str | None = None,
 ) -> Path:
@@ -657,6 +667,8 @@ def write_daily_score_report(
             risk_event_occurrence_report_path=risk_event_occurrence_report_path,
             previous_score_snapshot=previous_score_snapshot,
             belief_state_section=belief_state_section,
+            execution_action_label=execution_action_label,
+            execution_action_id=execution_action_id,
             execution_advisory_section=execution_advisory_section,
             traceability_section=traceability_section,
         ),
@@ -667,6 +679,60 @@ def write_daily_score_report(
 
 def default_daily_score_report_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"daily_score_{as_of.isoformat()}.md"
+
+
+def render_daily_conclusion_card(
+    report: DailyScoreReport,
+    *,
+    execution_action_label: str | None = None,
+    execution_action_id: str | None = None,
+) -> str:
+    action = _execution_action_summary(execution_action_label, execution_action_id)
+    posture = _daily_posture_label(report)
+    lines = [
+        "## 今日结论卡",
+        "",
+        "| 项目 | 结论 |",
+        "|---|---|",
+        f"| 状态标签 | {_escape_markdown_table(posture)} |",
+        f"| 市场吸引力 | {_escape_markdown_table(_market_attractiveness_summary(report))} |",
+        (
+            "| 判断置信度 | "
+            f"{_escape_markdown_table(_confidence_card_summary(report))} |"
+        ),
+        (
+            "| 评分映射仓位 | "
+            f"{report.recommendation.model_risk_asset_ai_band.min_position:.0%}-"
+            f"{report.recommendation.model_risk_asset_ai_band.max_position:.0%} |"
+        ),
+        (
+            "| 风险闸门后最终仓位 | "
+            f"{report.recommendation.risk_asset_ai_band.min_position:.0%}-"
+            f"{report.recommendation.risk_asset_ai_band.max_position:.0%} |"
+        ),
+        f"| 执行动作 | {_escape_markdown_table(action)} |",
+        "",
+        "### 一句话主结论",
+        "",
+        f"- {_daily_main_conclusion(report, posture)}",
+        "",
+        "### 三个核心原因",
+        "",
+    ]
+    lines.extend(f"- {reason}" for reason in _daily_core_reasons(report))
+    lines.extend(
+        [
+            "",
+            "### 最大限制",
+            "",
+            f"- {_daily_largest_limitation(report)}",
+            "",
+            "### 下一步触发条件",
+            "",
+            f"- {_daily_next_trigger(report)}",
+        ]
+    )
+    return "\n".join(lines) + "\n"
 
 
 def render_daily_change_explanation(
@@ -1015,6 +1081,137 @@ def _eps_revision_count(report: ValuationReviewReport) -> int:
             for metric in snapshot.expectation_metrics
         )
     )
+
+
+def _execution_action_summary(
+    execution_action_label: str | None,
+    execution_action_id: str | None,
+) -> str:
+    if execution_action_label is None:
+        return "未接入执行政策"
+    if execution_action_id is None:
+        return execution_action_label
+    return f"{execution_action_label}（`{execution_action_id}`）"
+
+
+def _daily_posture_label(report: DailyScoreReport) -> str:
+    non_score_gates = [
+        gate
+        for gate in report.recommendation.triggered_position_gates
+        if gate.gate_id != "score_model"
+    ]
+    if report.review_summary and report.review_summary.has_failures:
+        return "人工复核"
+    if report.confidence_assessment.level == "low":
+        return "人工复核"
+    if report.recommendation.total_score < 45:
+        return "防守降仓"
+    if non_score_gates and report.recommendation.total_score >= 55:
+        return "中高配但受限"
+    if (
+        report.recommendation.total_score >= 65
+        and report.confidence_assessment.level == "high"
+        and not non_score_gates
+    ):
+        return "积极进攻"
+    if report.recommendation.total_score >= 55:
+        return "中高配"
+    return "中性观察"
+
+
+def _market_attractiveness_summary(report: DailyScoreReport) -> str:
+    score = report.recommendation.total_score
+    if score >= 65:
+        label = "较强"
+    elif score >= 55:
+        label = "中等偏强"
+    elif score >= 45:
+        label = "中性"
+    else:
+        label = "偏弱"
+    return f"{label}，AI 产业链评分 {score:.1f}/100。"
+
+
+def _confidence_card_summary(report: DailyScoreReport) -> str:
+    confidence = report.confidence_assessment
+    return (
+        f"{_confidence_level_label(confidence.level)}，"
+        f"{confidence.score:.1f}/100；{_confidence_reason_summary(confidence)}"
+    )
+
+
+def _daily_main_conclusion(report: DailyScoreReport, posture: str) -> str:
+    final_band = _format_position_range(
+        report.recommendation.risk_asset_ai_band.min_position,
+        report.recommendation.risk_asset_ai_band.max_position,
+    )
+    return (
+        f"{posture}：市场吸引力为 {report.recommendation.total_score:.1f} 分，"
+        f"判断置信度为 {_confidence_level_label(report.confidence_assessment.level)}，"
+        f"风险闸门后最终 AI 仓位为 {final_band}；"
+        f"{_action_constraint_summary(report)}"
+    )
+
+
+def _daily_core_reasons(report: DailyScoreReport) -> tuple[str, str, str]:
+    support = _primary_support_component(report)
+    support_text = (
+        "核心支撑："
+        f"{_component_label(support.name)} {support.score:.1f} 分，"
+        f"{support.reason}"
+    )
+    return (
+        f"市场吸引力：{_market_attractiveness_summary(report)}",
+        support_text,
+        f"主要约束：{_action_constraint_summary(report)}",
+    )
+
+
+def _primary_support_component(report: DailyScoreReport) -> DailyScoreComponent:
+    return max(
+        report.components,
+        key=lambda component: (
+            component.score * component.weight,
+            component.confidence,
+        ),
+    )
+
+
+def _daily_largest_limitation(report: DailyScoreReport) -> str:
+    if report.review_summary and report.review_summary.has_failures:
+        return "人工复核摘要存在错误，日报结论不能作为完整仓位复核依据。"
+    if report.review_summary and report.review_summary.has_warnings:
+        return "人工复核摘要存在警告，thesis、风险、估值或交易复盘需要人工确认。"
+    triggered = [
+        gate
+        for gate in report.recommendation.triggered_position_gates
+        if gate.gate_id != "score_model"
+    ]
+    if triggered:
+        gate = min(triggered, key=lambda item: item.max_position)
+        return f"{gate.label} 将最终仓位上限压到 {gate.max_position:.0%}：{gate.reason}"
+    if report.confidence_assessment.level != "high":
+        return _confidence_reason_summary(report.confidence_assessment)
+    limited_components = [
+        component
+        for component in report.components
+        if component.source_type in {"placeholder", "insufficient_data"}
+    ]
+    if limited_components:
+        labels = "、".join(_component_label(component.name) for component in limited_components)
+        return f"仍有模块缺少硬数据或覆盖不足：{labels}。"
+    return "未发现超出最小操作变化阈值外的主要限制。"
+
+
+def _daily_next_trigger(report: DailyScoreReport) -> str:
+    if report.confidence_assessment.level != "high" or (
+        report.review_summary
+        and (report.review_summary.has_failures or report.review_summary.has_warnings)
+    ):
+        return _add_condition_summary(report)
+    if report.recommendation.total_score < 55:
+        return _add_condition_summary(report)
+    return _watch_condition_summary(report)
 
 
 def _valuation_confidence_summary(report: ValuationReviewReport) -> str:

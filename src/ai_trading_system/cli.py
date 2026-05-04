@@ -4738,6 +4738,8 @@ def score_daily(
             belief_state,
             belief_state_output,
         ),
+        execution_action_label=execution_advisory.label,
+        execution_action_id=execution_advisory.action_id,
         execution_advisory_section=execution_advisory_section,
         traceability_section=render_traceability_section(
             daily_trace_bundle,
