@@ -505,6 +505,19 @@
 - 每条告警有等级、来源、触发条件、解除条件、对应 claim/evidence 引用和去重策略。
 - 报告显示告警摘要，通知渠道接入必须可关闭、可审计。
 
+当前实现计划：
+
+- 2026-05-04：进入基础实现；第一阶段新增只读 `alert` 记录和报告，来源包括数据质量/特征警告、低可信模块、估值快照健康、L2/L3 或可触发仓位闸门的 risk event、thesis 复核警告、仓位上限大幅下降和未来 5 天 high/critical catalyst。
+- 第一阶段输出单独 Markdown 告警报告，并在 `score-daily` 日报中加入告警摘要；告警记录必须声明 `production_effect=none`，不能直接改变评分、`position_gate`、回测仓位或执行建议。
+- 第一阶段不接入邮件、IM、桌面推送或后台调度；通知渠道、静默时间、确认/解除流和重复抑制持久化留待后续。
+
+当前实现状态：
+
+- 2026-05-04 基础版已完成：新增 `alerts` 模块、`outputs/reports/alerts_YYYY-MM-DD.md` 和 `score-daily` 日报“告警摘要”；每条告警包含 category、severity、source、trigger_condition、clear_condition、claim_refs、evidence_refs、dedupe_key 和 `production_effect=none`。
+- 第一阶段覆盖 data/system 告警和 investment/risk 告警：数据质量、特征警告、低可信模块、估值快照低可信/过期、估值拥挤、可触发仓位闸门的 L2/L3 risk event、thesis 复核警告、非日常 position gate、仓位上限大幅下降和未来 5 天 high/critical catalyst。
+- 为降低噪声，`score_model` 与静态 `portfolio_limits` 这类日常约束不作为告警触发；它们仍保留在日报仓位解释和 gate 明细中。
+- 当前完成态为 `BASELINE_DONE`：真实 2026-05-04 日报可生成告警报告，状态为 `ACTIVE_WARNINGS`。完整 `DONE` 仍需要通知渠道、确认/解除状态、持久化去重、调度状态和 owner 告警策略。
+
 ## TEST-001
 
 标题：系统级不变量测试

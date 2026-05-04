@@ -11,6 +11,12 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from ai_trading_system.alerts import (
+    build_daily_alert_report,
+    default_alert_report_path,
+    render_alert_summary_section,
+    write_alert_report,
+)
 from ai_trading_system.backtest.audit import (
     build_backtest_audit_report,
     default_backtest_audit_report_path,
@@ -5125,6 +5131,10 @@ def score_daily(
         Path | None,
         typer.Option(help="Markdown 每日评分报告输出路径。"),
     ] = None,
+    alert_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 投资与数据告警报告输出路径。"),
+    ] = None,
     portfolio_positions_path: Annotated[
         Path,
         typer.Option(help="真实持仓 CSV 路径，用于日报只读组合暴露分解。"),
@@ -5213,6 +5223,10 @@ def score_daily(
         Path | None,
         typer.Option(help="Markdown 风险事件发生记录报告输出路径。"),
     ] = None,
+    catalyst_calendar_path: Annotated[
+        Path,
+        typer.Option(help="未来催化剂日历 YAML 路径，用于日报告警摘要。"),
+    ] = DEFAULT_CATALYST_CALENDAR_CONFIG_PATH,
     valuation_path: Annotated[
         Path,
         typer.Option(help="估值快照 YAML 文件或目录路径，用于写入日报复核摘要。"),
@@ -5285,6 +5299,10 @@ def score_daily(
         score_date,
     )
     score_report_output = report_path or default_daily_score_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        score_date,
+    )
+    alert_report_output = alert_report_path or default_alert_report_path(
         PROJECT_ROOT / "outputs" / "reports",
         score_date,
     )
@@ -5535,6 +5553,13 @@ def score_daily(
             f"警告数：{risk_event_occurrence_validation_report.warning_count}"
         )
         raise typer.Exit(code=1)
+    catalyst_calendar_report = validate_catalyst_calendar(
+        load_catalyst_calendar(catalyst_calendar_path),
+        as_of=score_date,
+        industry_chain=industry_chain,
+        watchlist=watchlist,
+        risk_events=risk_events_config,
+    )
 
     review_summary = _build_daily_review_summary(
         thesis_path=thesis_path,
@@ -5569,6 +5594,16 @@ def score_daily(
         risk_event_occurrence_review_report=risk_event_occurrence_review_report,
     )
     previous_score_snapshot = load_previous_daily_score_snapshot(scores_path, score_date)
+    daily_alert_report = build_daily_alert_report(
+        score_report,
+        previous_score_snapshot=previous_score_snapshot,
+        catalyst_calendar_report=catalyst_calendar_report,
+        data_quality_report_path=quality_output,
+        risk_event_occurrence_report_path=risk_event_occurrence_report_output,
+        valuation_report_path=valuation_path,
+        catalyst_calendar_path=catalyst_calendar_path,
+    )
+    daily_alert_output = write_alert_report(daily_alert_report, alert_report_output)
     previous_execution_band = None
     if (
         previous_score_snapshot is not None
@@ -5679,6 +5714,10 @@ def score_daily(
             render_portfolio_exposure_section(portfolio_exposure_report).rstrip()
             + f"\n- 独立报告：`{portfolio_exposure_output}`"
         ),
+        alert_summary_section=render_alert_summary_section(
+            daily_alert_report,
+            report_path=daily_alert_output,
+        ),
         traceability_section=render_traceability_section(
             daily_trace_bundle,
             daily_trace_output,
@@ -5703,7 +5742,12 @@ def score_daily(
         f"组合暴露：{portfolio_exposure_report.status}"
         f"（AI 占比 {portfolio_exposure_report.ai_exposure_pct_total:.1%}）"
     )
+    console.print(
+        f"告警状态：{daily_alert_report.status}"
+        f"（{len(daily_alert_report.alerts)} 条）"
+    )
     console.print(f"每日评分报告：{daily_report_output}")
+    console.print(f"告警报告：{daily_alert_output}")
     console.print(f"Evidence bundle：{daily_trace_output}")
     console.print(f"Decision snapshot：{daily_decision_snapshot_output}")
     console.print(f"Belief state：{belief_state_output}")
