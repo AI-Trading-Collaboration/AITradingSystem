@@ -307,6 +307,8 @@ def test_render_and_write_backtest_outputs(tmp_path: Path) -> None:
     assert "历史输入覆盖诊断" in markdown
     assert "输入审计报告" in markdown
     assert "线性滑点/盘口冲击估算：0.0 bps" in markdown
+    assert "## 结论使用等级" in markdown
+    assert "结论等级：回测覆盖不足，结论降级（`backtest_limited`）" in markdown
     assert "## 执行成本摘要" in markdown
     assert "## 仓位闸门摘要" in markdown
     assert "## 判断置信度摘要" in markdown

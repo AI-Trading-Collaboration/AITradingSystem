@@ -112,7 +112,7 @@ flowchart TD
         SC["data/processed/scores_daily.csv<br/>模块分、整体分、confidence、仓位区间和 gate 摘要"]
         EADV["执行建议<br/>execution_policy + 最终仓位变化 + confidence/gate<br/>production_effect=none"]
         EPR["outputs/reports/execution_policy_YYYY-MM-DD.md<br/>动作词表校验和问题清单"]
-        DR["outputs/reports/daily_score_YYYY-MM-DD.md<br/>今日结论卡、变化原因树、认知状态、执行建议和仓位闸门"]
+        DR["outputs/reports/daily_score_YYYY-MM-DD.md<br/>今日结论卡、结论使用等级、变化原因树、认知状态、执行建议和仓位闸门"]
         DSNAP["data/processed/decision_snapshots/decision_snapshot_YYYY-MM-DD.json<br/>当日判断快照和 belief_state_ref"]
         BS["data/processed/belief_state/belief_state_YYYY-MM-DD.json<br/>只读认知状态"]
         BSH["data/processed/belief_state_history.csv<br/>只读认知状态历史索引"]
@@ -126,7 +126,7 @@ flowchart TD
         BVAL["point-in-time 估值快照<br/>按 signal_date 过滤 as_of/captured_at"]
         BRISK["point-in-time 风险事件发生记录<br/>按 signal_date 过滤证据和 resolved_at"]
         BD["outputs/backtests/backtest_daily_YYYY-MM-DD_YYYY-MM-DD.csv<br/>含 confidence_score / confidence_level"]
-        BR["outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md<br/>含判断置信度分桶和基准政策解释"]
+        BR["outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md<br/>含结论使用等级、判断置信度分桶和基准政策解释"]
         BA["outputs/backtests/backtest_audit_YYYY-MM-DD_YYYY-MM-DD.md<br/>输入审计状态、发现和修复建议"]
         BRT["outputs/backtests/evidence/backtest_YYYY-MM-DD_YYYY-MM-DD_trace.json<br/>claim / evidence / dataset / quality / run manifest"]
     end
@@ -557,7 +557,7 @@ flowchart TD
     T --> BS
     BS --> BH["更新 belief_state_history.csv<br/>按 signal_date upsert 历史索引"]
     BS --> D0
-    T --> Q["写入 daily_score_YYYY-MM-DD.md<br/>含今日结论卡、变化原因树、产业链节点热度、认知状态、执行建议、人工复核摘要、仓位闸门和可追溯引用"]
+    T --> Q["写入 daily_score_YYYY-MM-DD.md<br/>含今日结论卡、结论使用等级、变化原因树、产业链节点热度、认知状态、执行建议、人工复核摘要、仓位闸门和可追溯引用"]
     C1 --> Q
     NH --> Q
     BS --> Q
@@ -597,7 +597,7 @@ flowchart TD
     BP0 --> Q
     C0 --> P["写入每日明细 CSV<br/>含 confidence_score / confidence_level"]
     O --> P
-    O --> Q["写入回测报告 Markdown<br/>包含市场阶段、数据质量和置信度分桶"]
+    O --> Q["写入回测报告 Markdown<br/>包含市场阶段、结论使用等级、数据质量和置信度分桶"]
     C0 --> Q
     O --> R["写入输入覆盖诊断 CSV<br/>component / ticker / issue / source_url"]
     O --> S["写入输入审计报告 Markdown<br/>数据质量 / PIT 输入 / 来源 / 执行假设"]
@@ -623,6 +623,7 @@ flowchart LR
     X["执行建议<br/>execution_policy / 上期最终区间 / advisory action"] --> E
 
     E --> G["必须说明<br/>本次数据质量是否通过"]
+    E --> V2["必须说明<br/>结论使用等级和投资姿态标签，并区分两者含义"]
     E --> H["必须说明<br/>哪些分数来自硬数据"]
     E --> I["必须说明<br/>哪些模块仍是占位或限制"]
     E --> J["必须说明<br/>建议仓位的口径和限制"]
@@ -798,7 +799,8 @@ flowchart TD
 |特征缓存|`data/processed/features_daily.csv`|保存 tidy 格式特征|已实现|
 |评分|`aits score-daily`|先执行市场数据质量门禁，再校验 `execution_policy`、SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照和风险事件发生记录，并通过 `position_gate` 把评分仓位、组合限制、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限，输出 AI 产业链评分、判断置信度、最终仓位区间、advisory 执行建议、日报、decision snapshot 和只读 `belief_state`|已实现|
 |评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果，component 行记录模块 confidence，overall 行记录整体 confidence、模型/最终/置信度调整仓位区间、总资产 AI 仓位区间和触发的仓位闸门摘要，用于日报上期对比|已实现|
-|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|开头输出“今日结论卡”，固定呈现状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、执行动作、主结论、三个核心原因、最大限制和下一步触发条件；正文继续输出变化原因树、什么情况会改变判断、产业链节点热度、认知状态摘要、执行建议、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、估值 PIT 可信度、仓位闸门来源/上限/触发状态、限制说明、人工复核摘要和可追溯引用章节；执行建议和节点热度均明确 `production_effect=none`，不是自动交易指令|已实现|
+|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|开头输出“今日结论卡”，固定呈现状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、执行动作、主结论、三个核心原因、最大限制和下一步触发条件；正文继续输出结论使用等级、变化原因树、什么情况会改变判断、产业链节点热度、认知状态摘要、执行建议、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、估值 PIT 可信度、仓位闸门来源/上限/触发状态、限制说明、人工复核摘要和可追溯引用章节；执行建议和节点热度均明确 `production_effect=none`，不是自动交易指令|已实现|
+|结论使用等级|`outputs/reports/daily_score_YYYY-MM-DD.md#结论使用等级` / `outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md#结论使用等级`|报告输出 `actionable`、`review_required`、`research_only`、`data_limited` 或 `backtest_limited` 等使用边界，并与投资姿态标签分开；低置信度、人工复核失败、来源不足、数据质量失败和回测覆盖不足会自动降级，说明原因、解除条件和证据引用|已实现基础版|
 |产业链节点热度|`score-daily` 日报章节|基于 `config/industry_chain.yaml`、`config/watchlist.yaml` 和已通过门禁的市场趋势特征，按节点输出热度等级、覆盖率、集中度和主要贡献 ticker；第一阶段只做解释和诊断，不把价格热度写成基本面健康度，也不改变 production scoring、`position_gate` 或执行建议|已实现基础版|
 |日报 Evidence Bundle|`outputs/reports/evidence/daily_score_YYYY-MM-DD_trace.json`|记录日报 `claim`、`evidence`、`dataset`、`quality` 和 `run_manifest`，包括 `belief_state` dataset/claim 引用，用于从核心结论反查输入上下文、数据快照和只读认知状态|已实现|
 |决策快照|`data/processed/decision_snapshots/decision_snapshot_YYYY-MM-DD.json`|每次 `score-daily` 通过质量门禁后保存 signal_date、market regime、整体分、模块分、判断置信度、模型/最终/置信度调整仓位、position gates、质量状态、人工复核、估值状态、风险事件状态、trace bundle 引用、`belief_state_ref` 和配置路径|已实现基础版|
@@ -845,7 +847,7 @@ flowchart TD
 |认知状态报告|`outputs/reports/daily_score_YYYY-MM-DD.md#认知状态`|日报中的中文认知状态摘要，明确 `belief_state` 是只读解释层，而不是已批准进入 production 规则的输入|已实现基础版|
 |回测|`aits backtest`|先校验 `benchmark_policy` 和数据质量门禁，再基于每日评分和同一套 `position_gate` 最终仓位动态回测，默认扣除单边交易成本，可用 `--slippage-bps` 加入线性滑点/盘口冲击估算，并按 signal_date 构建 point-in-time watchlist lifecycle、SEC 基本面特征、TSM IR 季度补充、估值快照切片和风险事件发生记录切片|已实现|
 |回测输入覆盖诊断|`outputs/backtests/backtest_input_coverage_YYYY-MM-DD_YYYY-MM-DD.csv`|机器可读输出评分模块覆盖、来源类型、输入问题、证据 URL、ticker 输入、SEC 特征、风险事件证据和来源类型聚合，便于跨月审计和回归分析|已实现|
-|回测报告|`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|输出市场阶段、绩效指标、benchmark policy 状态、基准解释边界、执行成本摘要、仓位闸门摘要、判断置信度分桶、数据质量门禁摘要、SEC 基本面、估值快照、风险事件质量摘要、模块覆盖率摘要、月度覆盖率趋势、月度来源类型趋势、月度输入问题下钻、月度输入证据 URL 摘要、月度风险事件证据 URL 明细、月度 ticker 输入摘要、月度 ticker SEC 特征明细、月度估值快照来源和月度风险事件证据来源分布|已实现|
+|回测报告|`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|输出市场阶段、结论使用等级、绩效指标、benchmark policy 状态、基准解释边界、执行成本摘要、仓位闸门摘要、判断置信度分桶、数据质量门禁摘要、SEC 基本面、估值快照、风险事件质量摘要、模块覆盖率摘要、月度覆盖率趋势、月度来源类型趋势、月度输入问题下钻、月度输入证据 URL 摘要、月度风险事件证据 URL 明细、月度 ticker 输入摘要、月度 ticker SEC 特征明细、月度估值快照来源和月度风险事件证据来源分布|已实现|
 |回测输入审计报告|`outputs/backtests/backtest_audit_YYYY-MM-DD_YYYY-MM-DD.md`|输出 PASS/PASS_WITH_WARNINGS/FAIL、数据质量、point-in-time 输入、模块覆盖率、来源类型、执行假设、审计发现和修复建议，判断本次回测是否可解释；`--fail-on-audit-warning` 可把非 PASS 审计状态转为命令失败|已实现|
 |回测 Evidence Bundle|`outputs/backtests/evidence/backtest_YYYY-MM-DD_YYYY-MM-DD_trace.json`|记录回测 `claim`、`evidence`、`dataset`、`quality`、`run_manifest` 和 `benchmark_policy` 配置引用，用于从绩效、数据质量和输入覆盖结论反查上下文|已实现|
 |报告反查|`aits trace lookup`|按 claim/evidence/dataset/quality/run id 读取 evidence bundle 并输出中文摘要和原始 JSON 上下文|已实现|

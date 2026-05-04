@@ -14,6 +14,10 @@ from ai_trading_system.benchmark_policy import (
     BenchmarkPolicyReport,
     render_benchmark_policy_summary_section,
 )
+from ai_trading_system.conclusion_boundary import (
+    classify_conclusion_boundary,
+    render_conclusion_boundary_section,
+)
 from ai_trading_system.config import FeatureConfig, PortfolioConfig, ScoringRulesConfig
 from ai_trading_system.data.quality import DataFileSummary, DataQualityReport
 from ai_trading_system.features.market import build_market_features
@@ -679,6 +683,20 @@ def render_backtest_report(
     lines.extend(
         [
             "",
+            render_conclusion_boundary_section(
+                _backtest_conclusion_boundary(
+                    result,
+                    data_quality_report_path=data_quality_report_path,
+                    input_coverage_output_path=input_coverage_output_path,
+                    audit_report_path=audit_report_path,
+                )
+            ).rstrip(),
+        ]
+    )
+
+    lines.extend(
+        [
+            "",
             "## 核心指标",
             "",
             "| 组合 | 总收益 | CAGR | 最大回撤 | Sharpe | Sortino | Calmar | 在场比例 | 换手 |",
@@ -981,6 +999,46 @@ def default_backtest_input_coverage_path(
     end: date,
 ) -> Path:
     return output_dir / f"backtest_input_coverage_{start.isoformat()}_{end.isoformat()}.csv"
+
+
+def _backtest_conclusion_boundary(
+    result: DailyBacktestResult,
+    *,
+    data_quality_report_path: Path,
+    input_coverage_output_path: Path | None,
+    audit_report_path: Path | None,
+):
+    evidence_refs = [f"quality:data_cache:{result.requested_end.isoformat()}"]
+    evidence_refs.append(str(data_quality_report_path))
+    if input_coverage_output_path is not None:
+        evidence_refs.append(str(input_coverage_output_path))
+    if audit_report_path is not None:
+        evidence_refs.append(str(audit_report_path))
+    return classify_conclusion_boundary(
+        report_status=result.status,
+        data_quality_status=result.data_quality_report.status,
+        posture_label="历史回测结论",
+        has_backtest_limitations=_has_backtest_input_limitations(result),
+        evidence_refs=tuple(evidence_refs),
+    )
+
+
+def _has_backtest_input_limitations(result: DailyBacktestResult) -> bool:
+    if result.status != "PASS":
+        return True
+    if result.fundamental_feature_report_count == 0:
+        return True
+    if result.valuation_review_report_count == 0:
+        return True
+    if result.risk_event_occurrence_review_report_count == 0:
+        return True
+    if result.fundamental_feature_warning_count:
+        return True
+    if result.valuation_review_warning_count:
+        return True
+    if result.risk_event_occurrence_warning_count:
+        return True
+    return False
 
 
 def _component_input_coverage_records(

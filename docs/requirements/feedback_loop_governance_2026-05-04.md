@@ -573,6 +573,14 @@
 - 低置信度、数据不足、来源不足、回测覆盖不足、事件前状态会自动降级。
 - 报告清楚说明降级原因、解除条件和可追溯证据。
 
+当前实现状态：
+
+- 2026-05-04：进入基础实现；第一阶段在日报和回测报告中输出结论使用等级，把 `actionable`、`review_required`、`research_only`、`data_limited`、`backtest_limited` 与投资姿态标签分开。
+- 第一阶段只改变报告解释边界，不改变 scoring、`position_gate`、execution policy、回测仓位或交易成本计算。
+- 完整 `DONE` 仍需要把状态 taxonomy 配置化、接入未来事件窗口和更完整的 owner review policy；当前目标完成态预计为 `BASELINE_DONE`。
+- 2026-05-04 基础版已完成：新增 `conclusion_boundary` taxonomy，日报和回测报告均输出“结论使用等级”章节，说明结论等级、投资姿态标签、降级原因、解除条件和证据引用。
+- 当前完成态为 `BASELINE_DONE`：`review_required`、`data_limited`、`backtest_limited` 等降级路径已具备；完整 `DONE` 仍需要 taxonomy 配置化、未来 catalyst/event window 降级和正式 owner review policy。
+
 ## 状态记录
 
 - 2026-05-04：创建需求文档，完成价值评估并登记任务。当前仅完成需求评估和任务拆解，尚未实现。
@@ -587,6 +595,7 @@
 - 2026-05-04：`GOV-001` 进入实现；第一阶段目标是 rule card registry、校验报告和查询入口，先补齐现有 production 规则的版本与审计登记。
 - 2026-05-04：`GOV-001` 达到 `BASELINE_DONE`：rule card registry、治理校验 CLI、查询 CLI、中文报告、系统流图和测试完成；`python -m ruff check src tests`、`python -m pytest -q` 通过。正式 owner approval/promotion/retirement 流程和 rule version 注入仍待后续实现。
 - 2026-05-04：根据最终报告呈现形式讨论，补充 `EXEC-001` 的 advisory action taxonomy、`DOC-001` 的“双层状态”设计和 `UI-001` 的三类读者模式；完整报告结构由 `docs/requirements/report_decision_chain_presentation_2026-05-04.md` 与 `REPORT-003/004` 承接。
+- 2026-05-04：`DOC-001` 达到 `BASELINE_DONE`：日报和回测报告输出结论使用等级，低置信度、来源不足、人工复核问题和回测覆盖不足会降级；投资姿态标签与结论等级分开解释。
 - 2026-05-04：`DATA-002` 已完成低成本基础版：新增 `aits data-sources health` 和 `outputs/reports/data_sources_health_YYYY-MM-DD.md`，覆盖 provider health score、cache/manifest/row count/checksum/freshness 检查、manifest checksum mismatch 失败，以及 qualified source 不足时的 reconciliation `NOT_COVERED` 声明；owner 已验证 SEC User-Agent、FMP、FRED、Tiingo EOD 和 EODHD Fundamentals 初版权限可访问，EODHD EOD 价格未订阅且价格核验使用 Tiingo；完整 `DONE` 仍依赖生产级第二来源、商业授权/再分发限制和长期口径策略。
 - 2026-05-04：`UNIVERSE-001` 已完成基础实现：新增 `config/watchlist_lifecycle.yaml`、`aits watchlist validate-lifecycle` 和回测 signal_date lifecycle 过滤，测试覆盖尚未进入观察池的 ticker 不参与历史市场特征。
 - 2026-05-04：`TEST-001` 已推进为完成状态：系统级不变量测试覆盖 watch 风险事件不自动评分、低证据等级/公开便利源隔离、LLM evidence 隔离、watchlist point-in-time 过滤、decision snapshot 写入、评分置信度和估值 PIT 可信度。

@@ -7,6 +7,10 @@ from statistics import median
 
 import pandas as pd
 
+from ai_trading_system.conclusion_boundary import (
+    classify_conclusion_boundary,
+    render_conclusion_boundary_section,
+)
 from ai_trading_system.config import (
     ScoreModuleRuleConfig,
     ScoreSignalConfig,
@@ -444,6 +448,8 @@ def render_daily_score_report(
             execution_action_id=execution_action_id,
         ).rstrip(),
         "",
+        render_daily_conclusion_boundary(report).rstrip(),
+        "",
         render_daily_change_explanation(
             report,
             previous_score_snapshot=previous_score_snapshot,
@@ -738,6 +744,31 @@ def render_daily_conclusion_card(
         ]
     )
     return "\n".join(lines) + "\n"
+
+
+def render_daily_conclusion_boundary(report: DailyScoreReport) -> str:
+    boundary = classify_conclusion_boundary(
+        report_status=report.status,
+        data_quality_status=report.data_quality_report.status,
+        posture_label=_daily_posture_label(report),
+        confidence_level=report.confidence_assessment.level,
+        has_review_failures=bool(
+            report.review_summary and report.review_summary.has_failures
+        ),
+        has_review_warnings=bool(
+            report.review_summary and report.review_summary.has_warnings
+        ),
+        has_source_limitations=any(
+            component.source_type in {"placeholder", "insufficient_data"}
+            for component in report.components
+        ),
+        evidence_refs=(
+            f"quality:data_cache:{report.as_of.isoformat()}",
+            f"daily_score:{report.as_of.isoformat()}:overall_position",
+            f"daily_score:{report.as_of.isoformat()}:confidence",
+        ),
+    )
+    return render_conclusion_boundary_section(boundary)
 
 
 def render_daily_change_explanation(
