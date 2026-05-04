@@ -7,6 +7,7 @@ from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
 from ai_trading_system.rule_governance import (
+    build_rule_version_manifest,
     load_rule_card_store,
     lookup_rule_card,
     render_rule_governance_report,
@@ -26,6 +27,14 @@ def test_default_rule_cards_validate_as_baseline_registry() -> None:
     assert report.candidate_count == 0
     assert "baseline_recorded" in markdown
     assert "scoring.weighted_score.v1" in markdown
+    manifest = build_rule_version_manifest(report, applies_to="score-daily")
+    assert manifest["registry_status"] in {"PASS", "PASS_WITH_WARNINGS"}
+    assert manifest["production_rule_count"] >= 1
+    assert manifest["manifest_scope"] == (
+        "current_rule_registry_for_this_run_not_historical_approval_proof"
+    )
+    rule_ids = {rule["rule_id"] for rule in manifest["rules"]}
+    assert "scoring.weighted_score.v1" in rule_ids
 
 
 def test_rule_card_validation_rejects_duplicate_rule_ids(tmp_path: Path) -> None:

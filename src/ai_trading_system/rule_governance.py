@@ -299,6 +299,35 @@ def default_rule_governance_report_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"rule_governance_{as_of.isoformat()}.md"
 
 
+def build_rule_version_manifest(
+    report: RuleGovernanceReport,
+    *,
+    applies_to: str,
+) -> dict[str, Any]:
+    production_cards = tuple(
+        sorted(
+            (
+                card
+                for card in report.store.cards
+                if card.status == "production" and applies_to in card.applies_to
+            ),
+            key=lambda card: card.rule_id,
+        )
+    )
+    return {
+        "schema_version": 1,
+        "registry_status": report.status,
+        "registry_as_of": report.as_of.isoformat(),
+        "source_path": str(report.store.input_path),
+        "applies_to": applies_to,
+        "manifest_scope": (
+            "current_rule_registry_for_this_run_not_historical_approval_proof"
+        ),
+        "production_rule_count": len(production_cards),
+        "rules": [_rule_version_record(card) for card in production_cards],
+    }
+
+
 def render_rule_card_lookup(card: RuleCard) -> str:
     lines = [
         f"# {card.rule_id}",
@@ -328,6 +357,28 @@ def _raw_cards(raw: Any) -> list[Any]:
         cards = raw["cards"]
         return cards if isinstance(cards, list) else [cards]
     return [raw]
+
+
+def _rule_version_record(card: RuleCard) -> dict[str, Any]:
+    return {
+        "rule_id": card.rule_id,
+        "rule_name": card.rule_name,
+        "rule_type": card.rule_type,
+        "version": card.version,
+        "status": card.status,
+        "owner": card.owner,
+        "applies_to": list(card.applies_to),
+        "source_config_paths": list(card.source_config_paths),
+        "approval_status": card.approval.approval_status,
+        "validation_status": card.validation.validation_status,
+        "validation_refs": list(card.validation.validation_refs),
+        "production_since": (
+            None if card.production_since is None else card.production_since.isoformat()
+        ),
+        "last_reviewed_at": card.last_reviewed_at.isoformat(),
+        "next_review_due": card.next_review_due.isoformat(),
+        "known_limitations": list(card.known_limitations),
+    }
 
 
 def _check_duplicate_rule_ids(

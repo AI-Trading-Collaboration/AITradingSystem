@@ -61,6 +61,7 @@ def build_daily_score_trace_bundle(
     scores_path: Path,
     market_regime: BacktestRegimeContext | None,
     config_paths: dict[str, Path],
+    rule_version_manifest: TraceRecord | None = None,
     sec_metrics_validation_report_path: Path | None = None,
     sec_fundamental_feature_report_path: Path | None = None,
     sec_fundamental_features_path: Path | None = None,
@@ -272,6 +273,7 @@ def build_daily_score_trace_bundle(
         date_window=date_window,
         market_regime=market_regime,
         config_paths=config_paths,
+        parameters=_run_parameters(rule_version_manifest=rule_version_manifest),
         output_artifacts=_artifact_paths(
             report_path,
             data_quality_report_path,
@@ -309,6 +311,7 @@ def build_backtest_trace_bundle(
     input_coverage_output_path: Path,
     audit_report_path: Path,
     config_paths: dict[str, Path],
+    rule_version_manifest: TraceRecord | None = None,
     sec_companyfacts_validation_report_path: Path | None = None,
 ) -> ReportTraceBundle:
     report_id = (
@@ -471,7 +474,10 @@ def build_backtest_trace_bundle(
         date_window=date_window,
         market_regime=result.market_regime,
         config_paths=config_paths,
-        parameters={"cost_assumptions": _backtest_cost_assumptions(result)},
+        parameters=_run_parameters(
+            cost_assumptions=_backtest_cost_assumptions(result),
+            rule_version_manifest=rule_version_manifest,
+        ),
         output_artifacts=_artifact_paths(
             report_path,
             daily_output_path,
@@ -765,6 +771,19 @@ def _run_manifest(
     if parameters is not None:
         manifest["parameters"] = parameters
     return manifest
+
+
+def _run_parameters(
+    *,
+    cost_assumptions: TraceRecord | None = None,
+    rule_version_manifest: TraceRecord | None = None,
+) -> TraceRecord | None:
+    parameters: TraceRecord = {}
+    if cost_assumptions is not None:
+        parameters["cost_assumptions"] = cost_assumptions
+    if rule_version_manifest is not None:
+        parameters["rule_versions"] = rule_version_manifest
+    return parameters or None
 
 
 def _backtest_cost_assumptions(result: DailyBacktestResult) -> TraceRecord:

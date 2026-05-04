@@ -1171,6 +1171,11 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert cost_assumptions["spread_bps"] == 1.5
     assert cost_assumptions["market_impact_bps"] == 3.0
     assert cost_assumptions["model_scope"] == "explicit_assumptions_not_broker_fills"
+    rule_versions = trace["run_manifest"]["parameters"]["rule_versions"]
+    assert rule_versions["applies_to"] == "backtest"
+    assert rule_versions["production_rule_count"] >= 1
+    rule_ids = {rule["rule_id"] for rule in rule_versions["rules"]}
+    assert "scoring.weighted_score.v1" in rule_ids
     claim_ids = {claim["claim_id"] for claim in trace["claims"]}
     assert "backtest:2026-04-01:2026-04-30:performance" in claim_ids
     assert quality_path.exists()

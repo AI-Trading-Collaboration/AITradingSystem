@@ -461,6 +461,7 @@
 - 第一阶段目标是 rule card 校验、报告和查询，不把 baseline 记录伪装成完整 owner 批准流程；未来规则变更仍必须先经过 `EXPERIMENT-001` replay/shadow，再进入 `GOV-001` 审批。
 - 2026-05-04 基础版已完成：新增 `config/rule_cards.yaml`、`rule_governance` 模块、`aits feedback validate-rule-cards`、`aits feedback lookup-rule-card` 和 `outputs/reports/rule_governance_YYYY-MM-DD.md`。默认 rule cards 覆盖 scoring、position_gate、source_policy、risk_events、thesis_state、data_quality 和 feedback_loop。
 - 当前完成态为 `BASELINE_DONE`：rule card registry、schema 校验、重复 id 检查、来源路径检查、复核到期警告、报告和查询入口已具备；完整 `DONE` 仍需要正式 owner approval/promotion/retirement 流程，以及 `score-daily`、回测、decision snapshot/evidence bundle 写入 rule version。
+- 2026-05-04：`GOV-002` 已完成基础实现：`score-daily` 和 `backtest` 会校验 rule card registry，并把适用于本次命令的 production rule versions 写入 trace run manifest；decision snapshot 保存同一 manifest。该 manifest 表示本次运行使用的当前规则登记，不是历史时点审批证明；正式 approval/promotion/retirement 仍留在 `GOV-001` 后续 owner 流程。
 
 ## OPS-001
 

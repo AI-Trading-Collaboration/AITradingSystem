@@ -299,6 +299,7 @@ from ai_trading_system.rule_experiments import (
 )
 from ai_trading_system.rule_governance import (
     DEFAULT_RULE_CARDS_PATH,
+    build_rule_version_manifest,
     default_rule_governance_report_path,
     load_rule_card_store,
     lookup_rule_card,
@@ -1289,6 +1290,10 @@ def backtest(
         Path | None,
         typer.Option(help="可选：Markdown benchmark policy 校验报告输出路径。"),
     ] = None,
+    rule_cards_path: Annotated[
+        Path,
+        typer.Option(help="rule card registry YAML 路径，用于记录本次回测规则版本。"),
+    ] = DEFAULT_RULE_CARDS_PATH,
     cost_bps: Annotated[
         float,
         typer.Option(help="单边交易成本，单位 bps。"),
@@ -1476,6 +1481,24 @@ def backtest(
     if robustness_cost_stress_bps < 0:
         raise typer.BadParameter("稳健性报告成本压力 bps 不能为负数。")
     should_write_robustness_report = robustness_report or robustness_report_path is not None
+    rule_governance_report = validate_rule_card_store(
+        load_rule_card_store(rule_cards_path),
+        as_of=date.today(),
+    )
+    if not rule_governance_report.passed:
+        console.print("[red]规则治理校验失败，已停止回测。[/red]")
+        console.print(
+            f"错误数：{rule_governance_report.error_count}；"
+            f"警告数：{rule_governance_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+    backtest_rule_version_manifest = build_rule_version_manifest(
+        rule_governance_report,
+        applies_to="backtest",
+    )
+    if backtest_rule_version_manifest["production_rule_count"] == 0:
+        console.print("[red]未找到适用于 backtest 的 production rule card，已停止回测。[/red]")
+        raise typer.Exit(code=1)
     benchmark_policy_report = validate_benchmark_policy(
         load_benchmark_policy(benchmark_policy_path),
         as_of=quality_date,
@@ -1724,7 +1747,9 @@ def backtest(
             fundamental_feature_config_path=fundamental_feature_config_path,
             risk_events_path=risk_events_path,
             watchlist_lifecycle_path=watchlist_lifecycle_path,
+            rule_cards_path=rule_cards_path,
         ),
+        rule_version_manifest=backtest_rule_version_manifest,
         sec_companyfacts_validation_report_path=sec_companyfacts_validation_output,
     )
     backtest_trace_output = write_trace_bundle(
@@ -1850,6 +1875,11 @@ def backtest(
         f"SEC companyfacts 校验报告：{sec_companyfacts_validation_output}"
     )
     console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
+    console.print(
+        "规则版本："
+        f"{backtest_rule_version_manifest['production_rule_count']} 个 production rule cards"
+        f"（{rule_governance_report.status}）"
+    )
     console.print(f"基准政策状态：{benchmark_policy_report.status}")
     if benchmark_policy_report_path is not None:
         console.print(f"基准政策报告：{benchmark_policy_report_path}")
@@ -4842,6 +4872,10 @@ def score_daily(
         Path | None,
         typer.Option(help="Markdown execution policy 校验报告输出路径。"),
     ] = None,
+    rule_cards_path: Annotated[
+        Path,
+        typer.Option(help="rule card registry YAML 路径，用于记录本次日报规则版本。"),
+    ] = DEFAULT_RULE_CARDS_PATH,
     sec_companies_path: Annotated[
         Path,
         typer.Option(help="SEC company CIK 配置文件路径，用于日报基本面评分。"),
@@ -4923,6 +4957,26 @@ def score_daily(
     benchmark_tickers = tuple(_parse_csv_items(review_benchmarks))
     if not benchmark_tickers:
         raise typer.BadParameter("日报交易复盘至少需要一个归因基准标的。")
+    rule_governance_report = validate_rule_card_store(
+        load_rule_card_store(rule_cards_path),
+        as_of=date.today(),
+    )
+    if not rule_governance_report.passed:
+        console.print("[red]规则治理校验失败，已停止日报评分。[/red]")
+        console.print(
+            f"错误数：{rule_governance_report.error_count}；"
+            f"警告数：{rule_governance_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+    daily_rule_version_manifest = build_rule_version_manifest(
+        rule_governance_report,
+        applies_to="score-daily",
+    )
+    if daily_rule_version_manifest["production_rule_count"] == 0:
+        console.print(
+            "[red]未找到适用于 score-daily 的 production rule card，已停止日报评分。[/red]"
+        )
+        raise typer.Exit(code=1)
     expected_price_tickers = configured_price_tickers(
         universe,
         include_full_ai_chain=full_universe,
@@ -5264,6 +5318,7 @@ def score_daily(
         fundamental_feature_config_path=fundamental_feature_config_path,
         risk_events_path=risk_events_path,
         execution_policy_path=execution_policy_path,
+        rule_cards_path=rule_cards_path,
     )
     daily_trace_bundle = build_daily_score_trace_bundle(
         report=score_report,
@@ -5274,6 +5329,7 @@ def score_daily(
         scores_path=scores_output,
         market_regime=daily_market_regime,
         config_paths=daily_config_paths,
+        rule_version_manifest=daily_rule_version_manifest,
         sec_metrics_validation_report_path=sec_metrics_validation_output,
         sec_fundamental_feature_report_path=sec_fundamental_feature_report_output,
         sec_fundamental_features_path=sec_fundamental_features_output,
@@ -5301,6 +5357,7 @@ def score_daily(
             market_regime=daily_market_regime,
             config_paths=daily_config_paths,
             belief_state_path=belief_state_output,
+            rule_version_manifest=daily_rule_version_manifest,
         ),
         decision_snapshot_output,
     )
@@ -5376,6 +5433,11 @@ def score_daily(
         f"（{execution_policy_report.status}）"
     )
     console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
+    console.print(
+        "规则版本："
+        f"{daily_rule_version_manifest['production_rule_count']} 个 production rule cards"
+        f"（{rule_governance_report.status}）"
+    )
 
 
 def _base_trace_config_paths() -> dict[str, Path]:
@@ -5399,6 +5461,7 @@ def _daily_trace_config_paths(
     fundamental_feature_config_path: Path,
     risk_events_path: Path,
     execution_policy_path: Path,
+    rule_cards_path: Path,
 ) -> dict[str, Path]:
     return {
         **_base_trace_config_paths(),
@@ -5408,6 +5471,7 @@ def _daily_trace_config_paths(
         "fundamental_features": fundamental_feature_config_path,
         "risk_events": risk_events_path,
         "execution_policy": execution_policy_path,
+        "rule_cards": rule_cards_path,
     }
 
 
@@ -5420,6 +5484,7 @@ def _backtest_trace_config_paths(
     fundamental_feature_config_path: Path,
     risk_events_path: Path,
     watchlist_lifecycle_path: Path,
+    rule_cards_path: Path,
 ) -> dict[str, Path]:
     return {
         **_base_trace_config_paths(),
@@ -5430,6 +5495,7 @@ def _backtest_trace_config_paths(
         "fundamental_features": fundamental_feature_config_path,
         "risk_events": risk_events_path,
         "watchlist_lifecycle": watchlist_lifecycle_path,
+        "rule_cards": rule_cards_path,
     }
 
 

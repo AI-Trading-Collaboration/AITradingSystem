@@ -25,6 +25,7 @@ def build_decision_snapshot(
     market_regime: BacktestRegimeContext | None,
     config_paths: dict[str, Path],
     belief_state_path: Path | None = None,
+    rule_version_manifest: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     confidence = report.confidence_assessment
     recommendation = report.recommendation
@@ -102,6 +103,7 @@ def build_decision_snapshot(
             "trace_bundle_path": str(trace_bundle_path),
             "overall_claim_id": f"daily_score:{report.as_of.isoformat()}:overall_position",
         },
+        "rule_versions": rule_version_manifest,
         "config_paths": {key: str(path) for key, path in sorted(config_paths.items())},
     }
 

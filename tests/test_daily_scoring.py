@@ -713,6 +713,13 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert snapshot["trace"]["trace_bundle_path"] == str(trace_path)
     assert snapshot["belief_state_ref"]["path"] == str(belief_state_path)
     assert snapshot["belief_state_ref"]["production_effect"] == "none"
+    trace_rule_versions = trace["run_manifest"]["parameters"]["rule_versions"]
+    snapshot_rule_versions = snapshot["rule_versions"]
+    assert trace_rule_versions["applies_to"] == "score-daily"
+    assert trace_rule_versions["production_rule_count"] >= 1
+    assert snapshot_rule_versions["applies_to"] == "score-daily"
+    rule_ids = {rule["rule_id"] for rule in snapshot_rule_versions["rules"]}
+    assert "scoring.weighted_score.v1" in rule_ids
     assert belief_state["belief_state_id"] == "belief_state:2026-04-30"
     assert belief_state["production_effect"] == "none"
     assert set(belief_history["belief_state_id"]) == {"belief_state:2026-04-30"}
