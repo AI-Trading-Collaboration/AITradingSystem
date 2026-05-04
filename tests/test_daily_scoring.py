@@ -562,6 +562,8 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     feature_report_path = tmp_path / "feature_summary.md"
     quality_report_path = tmp_path / "quality.md"
     execution_policy_report_path = tmp_path / "execution_policy.md"
+    portfolio_positions_path = tmp_path / "portfolio_positions.csv"
+    portfolio_exposure_report_path = tmp_path / "portfolio_exposure.md"
     sec_companies_path = tmp_path / "sec_companies.yaml"
     sec_metrics_path = tmp_path / "fundamental_metrics.yaml"
     fundamental_feature_config_path = tmp_path / "fundamental_features.yaml"
@@ -602,6 +604,10 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
             str(quality_report_path),
             "--execution-policy-report-path",
             str(execution_policy_report_path),
+            "--portfolio-positions-path",
+            str(portfolio_positions_path),
+            "--portfolio-exposure-report-path",
+            str(portfolio_exposure_report_path),
             "--sec-companies-path",
             str(sec_companies_path),
             "--sec-metrics-path",
@@ -631,6 +637,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert daily_report_path.exists()
     assert scores_path.exists()
     assert execution_policy_report_path.exists()
+    assert portfolio_exposure_report_path.exists()
     trace_path = tmp_path / "evidence" / "daily_score_trace.json"
     assert trace_path.exists()
     trace = json.loads(trace_path.read_text(encoding="utf-8"))
@@ -663,6 +670,8 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert "## 变化原因树" in daily_text
     assert "## 认知状态" in daily_text
     assert "## 执行建议" in daily_text
+    assert "## 组合暴露" in daily_text
+    assert "NOT_CONNECTED" in daily_text
     assert "## 今日结论卡" in daily_text
     assert "## 结论使用等级" in daily_text
     assert "## 产业链节点热度" in daily_text
@@ -674,6 +683,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert "每日评分状态：" in result.output
     assert "执行建议：" in result.output
     assert "产业链节点热度：" in result.output
+    assert "组合暴露：" in result.output
     assert "belief_state.json" in result.output
     lookup_result = CliRunner().invoke(
         app,

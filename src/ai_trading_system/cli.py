@@ -240,6 +240,12 @@ from ai_trading_system.pipeline_health import (
     default_pipeline_health_report_path,
     write_pipeline_health_report,
 )
+from ai_trading_system.portfolio_exposure import (
+    build_portfolio_exposure_report,
+    default_portfolio_exposure_report_path,
+    render_portfolio_exposure_section,
+    write_portfolio_exposure_report,
+)
 from ai_trading_system.report_traceability import (
     build_backtest_trace_bundle,
     build_daily_score_trace_bundle,
@@ -387,6 +393,7 @@ feedback_app = typer.Typer(help="决策结果观察、校准和因果链查询�
 scenarios_app = typer.Typer(help="AI 产业链情景压力测试库。", no_args_is_help=True)
 catalysts_app = typer.Typer(help="未来催化剂日历和事件前复核。", no_args_is_help=True)
 execution_app = typer.Typer(help="Advisory execution policy 和执行纪律。", no_args_is_help=True)
+portfolio_app = typer.Typer(help="真实组合持仓和暴露解释。", no_args_is_help=True)
 ops_app = typer.Typer(help="运行监控和 pipeline health。", no_args_is_help=True)
 security_app = typer.Typer(help="密钥卫生和供应商权限治理。", no_args_is_help=True)
 app.add_typer(watchlist_app, name="watchlist")
@@ -402,6 +409,7 @@ app.add_typer(feedback_app, name="feedback")
 app.add_typer(scenarios_app, name="scenarios")
 app.add_typer(catalysts_app, name="catalysts")
 app.add_typer(execution_app, name="execution")
+app.add_typer(portfolio_app, name="portfolio")
 app.add_typer(ops_app, name="ops")
 app.add_typer(security_app, name="security")
 console = Console()
@@ -412,6 +420,9 @@ DEFAULT_RISK_EVENT_PREREVIEW_QUEUE_PATH = (
     PROJECT_ROOT / "data" / "processed" / "risk_event_prereview_queue.json"
 )
 DEFAULT_MARKET_EVIDENCE_PATH = PROJECT_ROOT / "data" / "external" / "market_evidence"
+DEFAULT_PORTFOLIO_POSITIONS_PATH = (
+    PROJECT_ROOT / "data" / "external" / "portfolio_positions" / "current_positions.csv"
+)
 DEFAULT_FMP_ANALYST_ESTIMATE_HISTORY_DIR = default_fmp_analyst_estimate_history_dir(
     PROJECT_ROOT / "data" / "raw"
 )
@@ -2129,6 +2140,48 @@ def lookup_execution_action_command(
     except (KeyError, ValueError) as exc:
         raise typer.BadParameter(str(exc)) from exc
     console.print(render_execution_action_lookup(action))
+
+
+@portfolio_app.command("exposure")
+def portfolio_exposure_command(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="真实持仓 CSV 路径。"),
+    ] = DEFAULT_PORTFOLIO_POSITIONS_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="评估日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 组合暴露报告输出路径。"),
+    ] = None,
+) -> None:
+    """基于真实持仓文件生成只读组合暴露分解。"""
+    evaluation_date = _parse_date(as_of) if as_of else date.today()
+    report = build_portfolio_exposure_report(
+        input_path=input_path,
+        as_of=evaluation_date,
+        industry_chain=load_industry_chain(),
+        watchlist=load_watchlist(),
+    )
+    report_path = output_path or default_portfolio_exposure_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        evaluation_date,
+    )
+    write_portfolio_exposure_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]组合暴露状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_path}")
+    console.print(
+        f"总市值：{report.total_market_value:.2f}；"
+        f"AI 名义暴露：{report.ai_market_value:.2f}；"
+        f"AI 占比：{report.ai_exposure_pct_total:.1%}"
+    )
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if not report.passed:
+        raise typer.Exit(code=1)
 
 
 @ops_app.command("health")
@@ -4574,6 +4627,14 @@ def score_daily(
         Path | None,
         typer.Option(help="Markdown 每日评分报告输出路径。"),
     ] = None,
+    portfolio_positions_path: Annotated[
+        Path,
+        typer.Option(help="真实持仓 CSV 路径，用于日报只读组合暴露分解。"),
+    ] = DEFAULT_PORTFOLIO_POSITIONS_PATH,
+    portfolio_exposure_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 组合暴露报告输出路径。"),
+    ] = None,
     trace_bundle_path: Annotated[
         Path | None,
         typer.Option(help="JSON evidence bundle 输出路径。"),
@@ -4705,6 +4766,13 @@ def score_daily(
         PROJECT_ROOT / "outputs" / "reports",
         score_date,
     )
+    portfolio_exposure_output = (
+        portfolio_exposure_report_path
+        or default_portfolio_exposure_report_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            score_date,
+        )
+    )
     daily_trace_output = trace_bundle_path or default_report_trace_bundle_path(
         score_report_output
     )
@@ -4823,6 +4891,24 @@ def score_daily(
     industry_node_heat_section = render_industry_node_heat_section(
         industry_node_heat_report
     )
+    portfolio_exposure_report = build_portfolio_exposure_report(
+        input_path=portfolio_positions_path,
+        as_of=score_date,
+        industry_chain=industry_chain,
+        watchlist=watchlist,
+    )
+    write_portfolio_exposure_report(
+        portfolio_exposure_report,
+        portfolio_exposure_output,
+    )
+    if not portfolio_exposure_report.passed:
+        console.print("[red]组合持仓输入校验失败，已停止每日评分。[/red]")
+        console.print(f"组合暴露报告：{portfolio_exposure_output}")
+        console.print(
+            f"错误数：{portfolio_exposure_report.error_count}；"
+            f"警告数：{portfolio_exposure_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
     sec_companies = load_sec_companies(sec_companies_path)
     sec_metrics = load_fundamental_metrics(sec_metrics_path)
     sec_metrics_validation_report = validate_sec_fundamental_metrics_csv(
@@ -5061,6 +5147,10 @@ def score_daily(
         execution_action_id=execution_advisory.action_id,
         industry_node_heat_section=industry_node_heat_section,
         execution_advisory_section=execution_advisory_section,
+        portfolio_exposure_section=(
+            render_portfolio_exposure_section(portfolio_exposure_report).rstrip()
+            + f"\n- 独立报告：`{portfolio_exposure_output}`"
+        ),
         traceability_section=render_traceability_section(
             daily_trace_bundle,
             daily_trace_output,
@@ -5081,6 +5171,10 @@ def score_daily(
         f"产业链节点热度：{industry_node_heat_report.status}"
         f"（{industry_node_heat_report.node_count} 个节点）"
     )
+    console.print(
+        f"组合暴露：{portfolio_exposure_report.status}"
+        f"（AI 占比 {portfolio_exposure_report.ai_exposure_pct_total:.1%}）"
+    )
     console.print(f"每日评分报告：{daily_report_output}")
     console.print(f"Evidence bundle：{daily_trace_output}")
     console.print(f"Decision snapshot：{daily_decision_snapshot_output}")
@@ -5095,6 +5189,10 @@ def score_daily(
     console.print(
         f"风险事件发生记录：{risk_event_occurrence_report_output}"
         f"（{risk_event_occurrence_review_report.status}）"
+    )
+    console.print(
+        f"组合暴露报告：{portfolio_exposure_output}"
+        f"（{portfolio_exposure_report.status}）"
     )
     console.print(
         f"执行政策报告：{execution_policy_report_output}"

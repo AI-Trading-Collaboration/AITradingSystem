@@ -58,6 +58,7 @@ flowchart TD
         VS["data/external/valuation_snapshots/*.yaml<br/>估值、预期、拥挤度快照<br/>PIT 可信度和回测用途"]
         VSCSV["data/external/valuation_imports/*.csv<br/>结构化估值/预期导入表"]
         TD["data/external/trades/*.yaml<br/>交易记录、价格、thesis_id"]
+        POS["data/external/portfolio_positions/current_positions.csv<br/>真实账户持仓快照<br/>ticker、市值、AI 暴露、节点/地区/因子/相关性标签"]
         MD["外部数据源<br/>Yahoo Finance / FRED"]
         FMP["Financial Modeling Prep API<br/>quote / TTM metrics / historical metrics / ratios / estimates<br/>provider symbol alias 可审计记录"]
     end
@@ -110,6 +111,8 @@ flowchart TD
         PG["position_gate<br/>评分仓位、组合限制、风险事件、估值拥挤、thesis 和数据置信度取最严格上限"]
         CONF["判断置信度<br/>按模块来源、覆盖率、质量门禁和人工复核汇总"]
         NH["产业链节点热度<br/>industry_chain/watchlist + 市场特征<br/>production_effect=none"]
+        PEX["组合暴露分解<br/>真实持仓 CSV + industry_chain/watchlist 映射<br/>production_effect=none"]
+        PER["outputs/reports/portfolio_exposure_YYYY-MM-DD.md<br/>ticker / node / region / customer chain / factor / correlation cluster"]
         SC["data/processed/scores_daily.csv<br/>模块分、整体分、confidence、仓位区间和 gate 摘要"]
         EADV["执行建议<br/>execution_policy + 最终仓位变化 + confidence/gate<br/>production_effect=none"]
         EPR["outputs/reports/execution_policy_YYYY-MM-DD.md<br/>动作词表校验和问题清单"]
@@ -196,6 +199,7 @@ flowchart TD
         EPV["aits execution validate<br/>校验 advisory action taxonomy"]
         EPRG["outputs/reports/execution_policy_YYYY-MM-DD.md<br/>执行政策校验报告"]
         EPL["aits execution lookup<br/>按 action_id 查询执行动作"]
+        PEV["aits portfolio exposure<br/>真实持仓只读暴露分解；缺少文件时 NOT_CONNECTED"]
         OPH["aits ops health<br/>关键 pipeline artifact 健康检查"]
         OPR["outputs/reports/pipeline_health_YYYY-MM-DD.md<br/>存在性、mtime、大小和排查入口"]
         SCS["aits security scan-secrets<br/>本地 secret hygiene 扫描"]
@@ -316,9 +320,13 @@ flowchart TD
     REXATT --> SD
     VS --> SD
     TD --> SD
+    POS --> SD
     I --> NH
     W --> NH
     FT --> NH
+    POS --> PEX
+    I --> PEX
+    W --> PEX
     SD --> SFCR
     SD --> SFFC
     SD --> SFFR
@@ -336,6 +344,8 @@ flowchart TD
     EPC --> EADV
     NH --> DR
     NH --> DRT
+    PEX --> PER
+    PEX --> DR
     EADV --> DR
     EADV --> DRT
     DRT --> DSNAP
@@ -465,6 +475,10 @@ flowchart TD
     EPC --> EPV
     EPV --> EPRG
     EPC --> EPL
+    POS --> PEV
+    I --> PEV
+    W --> PEV
+    PEV --> PER
     PR --> OPH
     RR --> OPH
     FT --> OPH
@@ -535,7 +549,9 @@ flowchart TD
     F --> G["写入特征缓存<br/>features_daily.csv"]
     F --> H["写入特征摘要<br/>feature_summary_YYYY-MM-DD.md"]
     F --> NH["构建产业链节点热度<br/>industry_chain + watchlist + 市场趋势特征<br/>只读解释层"]
+    F --> PE["读取真实持仓 CSV 并构建组合暴露<br/>缺少文件为 NOT_CONNECTED；存在但格式错误则停止"]
     F --> R["复用已通过的数据质量结果<br/>汇总 thesis / 风险事件 / 估值 / 交易复盘状态"]
+    PE --> PE1["写入 portfolio_exposure_YYYY-MM-DD.md<br/>ticker、产业链节点、地区、客户链、因子、相关性簇"]
     R --> V1["估值快照校验和复核<br/>validate_valuation_snapshot_store<br/>输出 PIT 可信度、历史来源和回测用途"]
     R --> G1["风险事件发生记录和复核声明校验<br/>validate_risk_event_occurrence_store<br/>watch 不评分；B 只普通评分；C/D/X 只复核；有效复核声明只补足空记录证明"]
     F --> S1["校验 SEC 指标 CSV<br/>validate_sec_fundamental_metrics_csv"]
@@ -576,9 +592,10 @@ flowchart TD
     T --> BS
     BS --> BH["更新 belief_state_history.csv<br/>按 signal_date upsert 历史索引"]
     BS --> D0
-    T --> Q["写入 daily_score_YYYY-MM-DD.md<br/>含今日结论卡、结论使用等级、变化原因树、产业链节点热度、认知状态、执行建议、人工复核摘要、仓位闸门和可追溯引用"]
+    T --> Q["写入 daily_score_YYYY-MM-DD.md<br/>含今日结论卡、结论使用等级、变化原因树、产业链节点热度、组合暴露、认知状态、执行建议、人工复核摘要、仓位闸门和可追溯引用"]
     C1 --> Q
     NH --> Q
+    PE1 --> Q
     BS --> Q
     EP1 --> Q
 ```
@@ -636,6 +653,7 @@ flowchart LR
     L["交易 thesis<br/>验证指标 / 证伪条件 / 风险事件"] --> E
     N["估值与拥挤度<br/>估值分位 / 预期 / 过热信号 / PIT 可信度"] --> E
     Q["风险事件发生记录<br/>active/watch / 证据等级 / 动作等级 / 仓位乘数"] --> E
+    Y["真实组合暴露<br/>持仓 CSV / 单票 / 节点 / 地区 / 因子 / 相关性簇"] --> E
     U2["决策快照<br/>score / confidence / gate / quality / trace refs"] --> E
     P["交易复盘<br/>市场 Beta / 主题 Beta / 个股表现"] --> E
     S["认知状态<br/>belief_state / 多维置信度 / 仓位边界 / 改变判断条件"] --> E
@@ -653,6 +671,7 @@ flowchart LR
     E --> P2["必须说明<br/>收益来自基准 Beta 还是个股表现"]
     E --> R2["必须说明<br/>仓位闸门来源、上限和是否触发"]
     E --> T2["必须说明<br/>市场吸引力评分和判断置信度不是同一件事"]
+    E --> Y2["必须说明<br/>组合暴露是否接入真实持仓；NOT_CONNECTED 时不能把模型仓位当作账户交易数量"]
     E --> U3["必须保存<br/>可复原当日判断的 decision_snapshot"]
     E --> S2["必须说明<br/>认知状态是只读解释层还是已批准的 production 规则输入"]
     E --> X2["必须说明<br/>执行建议不是自动交易指令，production_effect=none"]
@@ -700,7 +719,7 @@ flowchart TD
         A["数据下载<br/>aits download-data"]
         B["数据质量门禁<br/>aits validate-data"]
         C["市场特征<br/>aits build-features"]
-        D["每日评分<br/>aits score-daily<br/>含结论卡、产业链节点热度、SEC 基本面、估值快照、政策/地缘发生记录和复核声明、置信度、执行建议和人工复核摘要"]
+        D["每日评分<br/>aits score-daily<br/>含结论卡、产业链节点热度、组合暴露、SEC 基本面、估值快照、政策/地缘发生记录和复核声明、置信度、执行建议和人工复核摘要"]
         E["历史回测<br/>aits backtest<br/>含 point-in-time 输入、覆盖率、来源类型、输入问题、URL、ticker 和证据来源下钻"]
         F["观察池校验<br/>aits watchlist validate"]
         F2["观察池生命周期<br/>aits watchlist validate-lifecycle"]
@@ -714,6 +733,7 @@ flowchart TD
         J3["FMP 估值/预期 API<br/>aits valuation fetch-fmp"]
         J4["FMP 历史估值 API<br/>aits valuation fetch-fmp-valuation-history"]
         J2["估值 CSV 导入<br/>aits valuation import-csv"]
+        PF1["组合暴露分解<br/>aits portfolio exposure<br/>真实持仓 CSV 只读报告；缺少文件时 NOT_CONNECTED"]
         EV0["新市场信息证据账本<br/>aits evidence import-csv / validate"]
         FB1["决策快照<br/>decision_snapshot_YYYY-MM-DD.json<br/>保存评分、置信度、仓位、gate、质量和 trace 引用"]
         FB2["结果观察与校准<br/>aits feedback calibrate<br/>生成 decision_outcomes 和 calibration report"]
@@ -774,6 +794,8 @@ flowchart TD
     J4 --> J
     J3 --> J
     J2 --> J
+    M --> PF1
+    PF1 --> D
     EV0 --> R0
     I --> J
     I2 --> L
@@ -821,15 +843,17 @@ flowchart TD
 |质量报告|`outputs/reports/data_quality_YYYY-MM-DD.md`|声明数据是否可用于下游结论|已实现|
 |特征|`aits build-features`|生成可解释市场特征|已实现|
 |特征缓存|`data/processed/features_daily.csv`|保存 tidy 格式特征|已实现|
-|评分|`aits score-daily`|先执行市场数据质量门禁，再校验 `execution_policy`、SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照、风险事件发生记录和当前有效复核声明，并通过 `position_gate` 把评分仓位、组合限制、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限，输出 AI 产业链评分、判断置信度、最终仓位区间、advisory 执行建议、日报、decision snapshot 和只读 `belief_state`|已实现|
+|评分|`aits score-daily`|先执行市场数据质量门禁，再校验 `execution_policy`、SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照、风险事件发生记录和当前有效复核声明，读取真实持仓 CSV 生成只读组合暴露，并通过 `position_gate` 把评分仓位、组合限制、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限，输出 AI 产业链评分、判断置信度、最终仓位区间、advisory 执行建议、日报、decision snapshot 和只读 `belief_state`|已实现|
 |评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果，component 行记录模块 confidence，overall 行记录整体 confidence、模型/最终/置信度调整仓位区间、总资产 AI 仓位区间和触发的仓位闸门摘要，用于日报上期对比|已实现|
-|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|开头输出“今日结论卡”，固定呈现状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、执行动作、主结论、三个核心原因、最大限制和下一步触发条件；正文继续输出结论使用等级、变化原因树、什么情况会改变判断、产业链节点热度、认知状态摘要、执行建议、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、当前有效风险事件复核声明数量、估值 PIT 可信度、仓位闸门来源/上限/触发状态、限制说明、人工复核摘要和可追溯引用章节；执行建议和节点热度均明确 `production_effect=none`，不是自动交易指令|已实现|
+|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|开头输出“今日结论卡”，固定呈现状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、执行动作、主结论、三个核心原因、最大限制和下一步触发条件；正文继续输出结论使用等级、变化原因树、什么情况会改变判断、产业链节点热度、组合暴露、认知状态摘要、执行建议、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、当前有效风险事件复核声明数量、估值 PIT 可信度、仓位闸门来源/上限/触发状态、限制说明、人工复核摘要和可追溯引用章节；执行建议、节点热度和组合暴露均明确 `production_effect=none`，不是自动交易指令|已实现|
 |结论使用等级|`outputs/reports/daily_score_YYYY-MM-DD.md#结论使用等级` / `outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md#结论使用等级`|报告输出 `actionable`、`review_required`、`research_only`、`data_limited` 或 `backtest_limited` 等使用边界，并与投资姿态标签分开；低置信度、人工复核失败、来源不足、数据质量失败和回测覆盖不足会自动降级，说明原因、解除条件和证据引用|已实现基础版|
 |Pipeline health|`aits ops health`|只读检查关键 pipeline artifact，包括价格缓存、利率缓存、数据质量报告、特征缓存、评分缓存和日报是否存在、是否为空、mtime 和排查入口；不把运行健康解释为投资结论有效|已实现基础版|
 |Pipeline health 报告|`outputs/reports/pipeline_health_YYYY-MM-DD.md`|中文输出 artifact 检查表、错误/警告数量、问题清单和方法边界；第一阶段未接入结构化 run log、后台调度器、异常栈或 API 错误采集|已实现基础版|
 |Secret hygiene 扫描|`aits security scan-secrets`|扫描配置、文档、报告、manifest、trace bundle 等文本文件中的疑似 API key、token、secret、password 或 bearer credential；报告只输出脱敏片段，不输出完整疑似密钥|已实现基础版|
 |Secret hygiene 报告|`outputs/reports/secret_hygiene_YYYY-MM-DD.md`|中文输出扫描入口、扫描文件数、疑似 secret 脱敏问题清单和方法边界；第一阶段不替代企业密钥管理、pre-commit hook、CI secret scan 或供应商权限审批|已实现基础版|
 |产业链节点热度|`score-daily` 日报章节|基于 `config/industry_chain.yaml`、`config/watchlist.yaml` 和已通过门禁的市场趋势特征，按节点输出热度等级、覆盖率、集中度和主要贡献 ticker；第一阶段只做解释和诊断，不把价格热度写成基本面健康度，也不改变 production scoring、`position_gate` 或执行建议|已实现基础版|
+|组合暴露分解|`aits portfolio exposure` / `score-daily` 日报章节|基于 `data/external/portfolio_positions/current_positions.csv` 或显式传入的真实持仓 CSV，按 ticker、产业链节点、地区、客户链、因子和相关性簇分解 AI 名义暴露；缺少持仓文件时显示 `NOT_CONNECTED`，存在但格式错误时停止；不得用观察池、模型建议仓位或 AI 产业链评分替代真实账户持仓|已实现基础版|
+|组合暴露报告|`outputs/reports/portfolio_exposure_YYYY-MM-DD.md`|中文输出持仓快照日期、总市值、AI 名义暴露、AI 占比、最大单票占 AI 暴露、ETF beta 覆盖率、暴露分组表和问题清单；第一阶段 `production_effect=none`，不改变评分、仓位闸门、执行建议或回测仓位|已实现基础版|
 |日报 Evidence Bundle|`outputs/reports/evidence/daily_score_YYYY-MM-DD_trace.json`|记录日报 `claim`、`evidence`、`dataset`、`quality` 和 `run_manifest`，包括 `belief_state` dataset/claim 引用，用于从核心结论反查输入上下文、数据快照和只读认知状态|已实现|
 |决策快照|`data/processed/decision_snapshots/decision_snapshot_YYYY-MM-DD.json`|每次 `score-daily` 通过质量门禁后保存 signal_date、market regime、整体分、模块分、判断置信度、模型/最终/置信度调整仓位、position gates、质量状态、人工复核、估值状态、风险事件状态、trace bundle 引用、`belief_state_ref` 和配置路径|已实现基础版|
 |决策结果校准|`aits feedback calibrate`|先校验 `benchmark_policy`，再复用 `aits validate-data` 同一质量门禁，从历史 `decision_snapshot` 和 `prices_daily.csv` 生成 1D/5D/20D/60D/120D outcome，按总分、置信度、gate、thesis、风险等级和估值状态分桶输出校准报告；结果只能进入规则复核，不能自动修改生产规则|已实现基础版|

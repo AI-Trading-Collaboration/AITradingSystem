@@ -402,6 +402,7 @@ def render_daily_score_report(
     execution_action_id: str | None = None,
     industry_node_heat_section: str | None = None,
     execution_advisory_section: str | None = None,
+    portfolio_exposure_section: str | None = None,
     traceability_section: str | None = None,
 ) -> str:
     recommendation = report.recommendation
@@ -461,6 +462,8 @@ def render_daily_score_report(
         lines.extend(["", belief_state_section.rstrip()])
     if execution_advisory_section is not None:
         lines.extend(["", execution_advisory_section.rstrip()])
+    if portfolio_exposure_section is not None:
+        lines.extend(["", portfolio_exposure_section.rstrip()])
     lines.extend(
         [
             "",
@@ -666,6 +669,7 @@ def write_daily_score_report(
     execution_action_id: str | None = None,
     industry_node_heat_section: str | None = None,
     execution_advisory_section: str | None = None,
+    portfolio_exposure_section: str | None = None,
     traceability_section: str | None = None,
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -686,6 +690,7 @@ def write_daily_score_report(
             execution_action_id=execution_action_id,
             industry_node_heat_section=industry_node_heat_section,
             execution_advisory_section=execution_advisory_section,
+            portfolio_exposure_section=portfolio_exposure_section,
             traceability_section=traceability_section,
         ),
         encoding="utf-8",

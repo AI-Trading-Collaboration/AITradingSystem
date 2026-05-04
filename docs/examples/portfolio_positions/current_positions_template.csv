@@ -1,0 +1,5 @@
+as_of,ticker,instrument_type,quantity,market_value,currency,ai_exposure_pct,region,customer_chain,factor_tags,correlation_cluster,etf_beta_to_ai_proxy,notes
+2026-05-04,NVDA,single_stock,10,10000,USD,1.0,US,hyperscaler_capex,growth;semiconductor,ai_semis,,template row only; replace with real account position
+2026-05-04,MSFT,single_stock,12,6000,USD,0.35,US,cloud_ai,growth;mega_cap,mega_cap_ai,,template row only; replace with real account position
+2026-05-04,SMH,etf,20,5000,USD,0.70,US,semiconductor_cycle,semiconductor;etf,ai_semis,0.85,template row only; ETF beta should be owner reviewed
+2026-05-04,USD_CASH,cash,1,15000,USD,0.0,US,cash,cash,cash,,template row only; cash has no AI exposure

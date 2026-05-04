@@ -387,6 +387,43 @@ sources:
       - 手工交易记录依赖记录纪律；缺少 thesis 关联会降低归因质量。
     owner_notes: 在市场数据质量门禁通过后供 review-trades 使用。
 
+  - source_id: local_portfolio_positions
+    provider: Local CSV input
+    source_type: manual_input
+    status: active
+    domains:
+      - portfolio_positions
+    endpoint: data/external/portfolio_positions/current_positions.csv
+    adapter: build_portfolio_exposure_report
+    cadence: manual
+    requires_credentials: false
+    cache_paths:
+      - data/external/portfolio_positions/current_positions.csv
+    primary_for:
+      - portfolio_exposure
+      - daily_report_read_only_context
+    audit_fields:
+      - provider
+      - file_path
+      - as_of
+      - ticker
+      - market_value
+      - currency
+      - ai_exposure_pct
+      - checksum
+    validation_checks:
+      - required_columns
+      - row_schema
+      - snapshot_selection
+      - non_usd_warning
+      - node_mapping_coverage
+      - no_watchlist_substitution
+    limitations:
+      - 只接受项目 owner 提供的真实持仓文件，不能用观察池、模型建议仓位或 AI 产业链评分替代。
+      - 基础版只做只读暴露分解，不改变评分、仓位闸门、执行建议或回测仓位。
+      - 非 USD 持仓只提示风险，基础版不做 FX 换算。
+    owner_notes: PORTFOLIO-002 第一阶段输入；缺少文件时日报显示 NOT_CONNECTED。
+
   - source_id: sec_company_facts
     provider: SEC EDGAR
     source_type: primary_source

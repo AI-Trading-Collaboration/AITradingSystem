@@ -197,6 +197,7 @@ class DataSourceConfig(BaseModel):
             "valuation",
             "news_events",
             "trade_records",
+            "portfolio_positions",
             "trade_thesis",
             "risk_events",
         ]

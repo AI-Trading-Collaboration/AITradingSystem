@@ -343,12 +343,22 @@
 
 价值判断：值得做，但应定位为 `SCORE-003` 的解释层和输入准备，而不是另起一套仓位优化器。AI 仓位风险可能集中在单票、节点、地区、客户链、估值因子、ETF beta 或相关性簇。
 
+2026-05-04 生产就绪复盘追加边界：日报不能把 `config/watchlist.yaml`、模型建议仓位或 AI 产业链评分伪装成真实账户持仓。第一阶段必须只读取用户/owner 提供的持仓文件；没有真实持仓输入时，组合暴露章节应明确 `NOT_CONNECTED`，并维持只读解释层。
+
 验收标准：
 
 - 日报显示当前 AI 仓位的 ticker、产业链节点、地区、客户链、因子、ETF beta、相关性簇和集中度。
 - 报告能解释“AI 仓位 60%”背后的主要集中风险，而不是只显示总百分比。
 - 第一版不直接改变仓位；进入仓位约束前必须和 `SCORE-003`、`GOV-001` 协同验证。
 - 实现时同步更新 `docs/system_flow.md` 并补充暴露计算测试。
+
+当前实现状态：
+
+- 2026-05-04：进入基础实现；第一阶段目标是持仓 CSV schema、暴露计算、中文报告、CLI 和日报只读章节。
+- 第一阶段不改变 `score-daily` 评分、`position_gate`、执行建议或回测仓位；`production_effect=none`。
+- 2026-05-04 基础版已完成：新增 `portfolio_exposure` 模块、`aits portfolio exposure`、`docs/examples/portfolio_positions/current_positions_template.csv`、`outputs/reports/portfolio_exposure_YYYY-MM-DD.md` 和日报“组合暴露”章节。
+- 基础版只读取真实持仓 CSV；缺少文件时输出 `NOT_CONNECTED`，存在但 schema/数值错误时停止。它会按 ticker、产业链节点、地区、客户链、因子、相关性簇和 ETF beta 覆盖率分解 AI 名义暴露，但不会使用观察池、模型建议仓位或 AI 产业链评分替代真实持仓。
+- 当前完成态为 `BASELINE_DONE`：解释层和审计边界已具备；完整 `DONE` 仍需要 owner 提供真实账户持仓文件，并在 `SCORE-003` 中评估是否把单票、节点、相关性、FX、流动性和税费纳入风险预算。
 
 ## EXEC-001
 
