@@ -188,3 +188,4 @@
 - 2026-05-04：`RISK-004` 达到 `BASELINE_DONE`：固定结构化输出导入、预审队列、中文报告、人工复核元数据校验、系统流图和测试完成；`python -m ruff check src tests`、`python -m pytest -q` 通过。剩余 live OpenAI API 调用适配器和真实样本验证依赖 API key、来源授权与 owner 批准样本。
 - 2026-05-04：新增 `RISK-005`，原因：日报生产就绪复盘发现“空 occurrence 目录不能证明无风险”会持续压低政策/地缘模块置信度；第一阶段实现可审计复核声明链路，不由系统代填真实复核结论。
 - 2026-05-04：`RISK-005` 达到 `BASELINE_DONE`：复核声明 schema、CLI、校验报告、日报识别、历史切片、数据源目录、系统流图和测试已完成；真实每日复核的 owner、来源清单和运行纪律仍是生产使用前置条件。
+- 2026-05-04：`RISK-003` 达到 `BASELINE_DONE`：来源分层、预审隔离、人工确认元数据、复核声明、日报识别和回测 point-in-time 切片已由 `SOURCE-001/RISK-004/RISK-005` 形成基础闭环；完整 `DONE` 仍依赖 live OpenAI Responses API 适配器、真实授权来源样本、付费供应商授权策略和 owner 每日复核运行纪律。
