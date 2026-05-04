@@ -165,10 +165,10 @@
 
 ### DOC-001
 
-`DOC-001` 已覆盖 `actionable`、`review_required`、`research_only`、`data_limited`、`backtest_limited` 等使用边界等级。应补充“双层状态”设计：
+`DOC-001` 已覆盖 `trend_only`、`actionable`、`review_required`、`research_only`、`data_limited`、`backtest_limited` 等使用边界等级。应补充“双层状态”设计：
 
 - 投资姿态标签回答“当前 AI 产业链处于什么投资状态”，例如积极进攻、中高配但受限、中性观察、防守降仓。
-- 结论使用等级回答“这个结论能不能作为仓位复核依据”，例如 actionable、review_required、research_only。
+- 结论使用等级回答“这个结论能用于什么范围”，例如 trend_only、actionable、review_required、research_only。
 
 两者必须分开，避免把市场状态和结论可靠性混在一起。
 

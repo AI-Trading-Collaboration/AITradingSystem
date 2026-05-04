@@ -5,17 +5,22 @@ from typing import Literal
 
 ConclusionUsageLevel = Literal[
     "actionable",
+    "trend_only",
     "review_required",
     "research_only",
     "data_limited",
     "backtest_limited",
 ]
 
+DecisionScope = Literal["position_review", "trend_judgment"]
+
 
 @dataclass(frozen=True)
 class ConclusionBoundary:
     usage_level: ConclusionUsageLevel
     usage_label: str
+    decision_scope: DecisionScope
+    scope_label: str
     posture_label: str | None
     reasons: tuple[str, ...]
     release_conditions: tuple[str, ...]
@@ -33,6 +38,7 @@ def classify_conclusion_boundary(
     has_review_warnings: bool = False,
     has_source_limitations: bool = False,
     has_backtest_limitations: bool = False,
+    decision_scope: DecisionScope = "position_review",
     evidence_refs: tuple[str, ...] = (),
 ) -> ConclusionBoundary:
     reasons: list[str] = []
@@ -40,6 +46,7 @@ def classify_conclusion_boundary(
         return _boundary(
             "data_limited",
             posture_label,
+            decision_scope=decision_scope,
             reasons=("数据质量门禁失败，不能把结论用于仓位复核。",),
             evidence_refs=evidence_refs,
         )
@@ -48,6 +55,7 @@ def classify_conclusion_boundary(
         return _boundary(
             "backtest_limited",
             posture_label,
+            decision_scope=decision_scope,
             reasons=tuple(reasons),
             evidence_refs=evidence_refs,
         )
@@ -56,6 +64,7 @@ def classify_conclusion_boundary(
         return _boundary(
             "review_required",
             posture_label,
+            decision_scope=decision_scope,
             reasons=tuple(reasons),
             evidence_refs=evidence_refs,
         )
@@ -64,6 +73,7 @@ def classify_conclusion_boundary(
         return _boundary(
             "review_required",
             posture_label,
+            decision_scope=decision_scope,
             reasons=tuple(reasons),
             evidence_refs=evidence_refs,
         )
@@ -75,6 +85,7 @@ def classify_conclusion_boundary(
         return _boundary(
             "data_limited",
             posture_label,
+            decision_scope=decision_scope,
             reasons=tuple(reasons),
             evidence_refs=evidence_refs,
         )
@@ -83,12 +94,22 @@ def classify_conclusion_boundary(
         return _boundary(
             "review_required",
             posture_label,
+            decision_scope=decision_scope,
             reasons=tuple(reasons),
+            evidence_refs=evidence_refs,
+        )
+    if decision_scope == "trend_judgment":
+        return _boundary(
+            "trend_only",
+            posture_label,
+            decision_scope=decision_scope,
+            reasons=("当前项目范围限定为趋势判断和投研复核辅助，不触发交易或账户调仓。",),
             evidence_refs=evidence_refs,
         )
     return _boundary(
         "actionable",
         posture_label,
+        decision_scope=decision_scope,
         reasons=("数据质量、置信度、来源覆盖和人工复核未触发降级条件。",),
         evidence_refs=evidence_refs,
     )
@@ -99,9 +120,10 @@ def render_conclusion_boundary_section(boundary: ConclusionBoundary) -> str:
         "## 结论使用等级",
         "",
         f"- 结论等级：{boundary.usage_label}（`{boundary.usage_level}`）",
+        f"- 适用范围：{boundary.scope_label}（`{boundary.decision_scope}`）",
         f"- 投资姿态标签：{boundary.posture_label or '未记录'}",
         f"- 生产影响：{boundary.production_effect}",
-        "- 边界说明：结论等级回答“能不能作为仓位复核依据”，"
+        "- 边界说明：结论等级回答“这个结论能用于什么范围”，"
         "投资姿态回答“当前 AI 产业链处于什么状态”；两者不能互相替代。",
         "",
         "### 降级原因",
@@ -122,12 +144,15 @@ def _boundary(
     usage_level: ConclusionUsageLevel,
     posture_label: str | None,
     *,
+    decision_scope: DecisionScope,
     reasons: tuple[str, ...],
     evidence_refs: tuple[str, ...],
 ) -> ConclusionBoundary:
     return ConclusionBoundary(
         usage_level=usage_level,
         usage_label=_usage_label(usage_level),
+        decision_scope=decision_scope,
+        scope_label=_scope_label(decision_scope),
         posture_label=posture_label,
         reasons=reasons,
         release_conditions=_release_conditions(usage_level),
@@ -138,6 +163,7 @@ def _boundary(
 def _usage_label(level: ConclusionUsageLevel) -> str:
     return {
         "actionable": "可作为仓位复核依据",
+        "trend_only": "趋势判断，不触发交易",
         "review_required": "必须人工复核",
         "research_only": "仅研究观察",
         "data_limited": "数据不足，结论降级",
@@ -145,9 +171,20 @@ def _usage_label(level: ConclusionUsageLevel) -> str:
     }[level]
 
 
+def _scope_label(scope: DecisionScope) -> str:
+    return {
+        "position_review": "仓位复核",
+        "trend_judgment": "趋势判断/投研辅助，不触发交易",
+    }[scope]
+
+
 def _release_conditions(level: ConclusionUsageLevel) -> tuple[str, ...]:
     return {
         "actionable": ("保持数据质量门禁通过，并持续复核新增证据和风险事件。",),
+        "trend_only": (
+            "保持数据质量门禁通过，并持续复核新增证据、风险事件和趋势变化。",
+            "如未来需要仓位复核或交易执行，必须重新提高范围并补齐账户、执行和审批要求。",
+        ),
         "review_required": (
             "完成人工复核并解除失败/警告项。",
             "置信度回到中或高，且关键 gate 不再要求人工确认。",

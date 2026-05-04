@@ -38,3 +38,19 @@ def test_conclusion_boundary_downgrades_low_confidence_and_backtest_gaps() -> No
 
     assert low_confidence.usage_level == "review_required"
     assert backtest_limited.usage_level == "backtest_limited"
+
+
+def test_conclusion_boundary_supports_trend_judgment_scope() -> None:
+    boundary = classify_conclusion_boundary(
+        report_status="PASS",
+        data_quality_status="PASS",
+        posture_label="中高配但受限",
+        confidence_level="high",
+        decision_scope="trend_judgment",
+    )
+    markdown = render_conclusion_boundary_section(boundary)
+
+    assert boundary.usage_level == "trend_only"
+    assert boundary.decision_scope == "trend_judgment"
+    assert "结论等级：趋势判断，不触发交易（`trend_only`）" in markdown
+    assert "适用范围：趋势判断/投研辅助，不触发交易（`trend_judgment`）" in markdown

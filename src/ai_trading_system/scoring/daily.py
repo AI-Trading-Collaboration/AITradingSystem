@@ -828,6 +828,7 @@ def render_daily_conclusion_boundary(report: DailyScoreReport) -> str:
             component.source_type in {"placeholder", "insufficient_data"}
             for component in report.components
         ),
+        decision_scope="trend_judgment",
         evidence_refs=(
             f"quality:data_cache:{report.as_of.isoformat()}",
             f"daily_score:{report.as_of.isoformat()}:overall_position",

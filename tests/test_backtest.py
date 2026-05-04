@@ -28,10 +28,12 @@ from ai_trading_system.config import (
     configured_price_tickers,
     configured_rate_series,
     load_features,
+    load_industry_chain,
     load_portfolio,
     load_risk_events,
     load_scoring_rules,
     load_universe,
+    load_watchlist,
 )
 from ai_trading_system.data.quality import (
     DataFileSummary,
@@ -307,6 +309,8 @@ def test_render_and_write_backtest_outputs(tmp_path: Path) -> None:
         portfolio_config=load_portfolio(),
         data_quality_report=_quality_report(),
         core_watchlist=universe.ai_chain["core_watchlist"],
+        industry_chain=load_industry_chain(),
+        watchlist=load_watchlist(),
         start=date(2026, 4, 1),
         end=date(2026, 4, 30),
         strategy_ticker="SMH",
@@ -336,9 +340,12 @@ def test_render_and_write_backtest_outputs(tmp_path: Path) -> None:
     assert "市场冲击估算：0.0 bps" in markdown
     assert "## 结论使用等级" in markdown
     assert "结论等级：回测覆盖不足，结论降级（`backtest_limited`）" in markdown
+    assert "适用范围：趋势判断/投研辅助，不触发交易（`trend_judgment`）" in markdown
     assert "## 执行成本摘要" in markdown
     assert "## 仓位闸门摘要" in markdown
     assert "## 判断置信度摘要" in markdown
+    assert "## 产业链节点历史状态摘要" in markdown
+    assert "不改变评分、仓位闸门或回测仓位" in markdown
     assert "| 单边交易成本扣减 |" in markdown
     assert "| 线性滑点扣减 |" in markdown
     assert "fundamentals_source_type" in daily_path.read_text(encoding="utf-8")
@@ -348,6 +355,9 @@ def test_render_and_write_backtest_outputs(tmp_path: Path) -> None:
     assert "commission_cost" in daily_text
     assert "slippage_cost" in daily_text
     assert "risk_events_gate_triggered" in daily_text
+    assert "industry_node_status" in daily_text
+    assert "top_industry_node_id" in daily_text
+    assert "industry_node_data_gap_count" in daily_text
     assert "component_coverage" in input_coverage_path.read_text(encoding="utf-8")
 
 

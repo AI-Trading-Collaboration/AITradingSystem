@@ -163,6 +163,11 @@ from ai_trading_system.decision_snapshots import (
     default_decision_snapshot_path,
     write_decision_snapshot,
 )
+from ai_trading_system.evidence_dashboard import (
+    build_evidence_dashboard_report,
+    default_evidence_dashboard_path,
+    write_evidence_dashboard,
+)
 from ai_trading_system.execution_policy import (
     build_execution_advisory,
     default_execution_policy_report_path,
@@ -363,6 +368,7 @@ from ai_trading_system.secret_hygiene import (
     write_secret_scan_report,
 )
 from ai_trading_system.thesis import (
+    ThesisReviewReport,
     build_thesis_review_report,
     default_thesis_review_report_path,
     default_thesis_validation_report_path,
@@ -1839,6 +1845,8 @@ def backtest(
             valuation_review_reports=valuation_review_reports,
             risk_event_occurrence_review_reports=risk_event_occurrence_review_reports,
             watchlist_lifecycle=watchlist_lifecycle,
+            industry_chain=industry_chain,
+            watchlist=watchlist,
             benchmark_policy_report=benchmark_policy_report,
             market_regime=backtest_regime_context,
         )
@@ -2779,6 +2787,74 @@ def investment_periodic_review_command(
     console.print(
         f"区间：{report.since.isoformat()} 至 {report.as_of.isoformat()}；"
         f"样本：{len(report.score_rows)}"
+    )
+
+
+@reports_app.command("dashboard")
+def evidence_dashboard_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="Dashboard 评估日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    daily_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 日报路径；不传时按 as_of 使用默认日报路径。"),
+    ] = None,
+    trace_bundle_path: Annotated[
+        Path | None,
+        typer.Option(help="日报 evidence bundle JSON 路径；不传时按日报路径推导。"),
+    ] = None,
+    decision_snapshot_path: Annotated[
+        Path | None,
+        typer.Option(help="decision snapshot JSON 路径；不传时按 as_of 使用默认路径。"),
+    ] = None,
+    belief_state_path: Annotated[
+        Path | None,
+        typer.Option(help="belief_state JSON 路径；不传时从 decision snapshot 读取。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="HTML dashboard 输出路径。"),
+    ] = None,
+) -> None:
+    """生成只读 evidence-first HTML dashboard。"""
+    dashboard_date = _parse_date(as_of) if as_of else date.today()
+    daily_path = daily_report_path or default_daily_score_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        dashboard_date,
+    )
+    trace_path = trace_bundle_path or default_report_trace_bundle_path(daily_path)
+    snapshot_path = decision_snapshot_path or default_decision_snapshot_path(
+        DEFAULT_DECISION_SNAPSHOT_DIR,
+        dashboard_date,
+    )
+    dashboard_output = output_path or default_evidence_dashboard_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        dashboard_date,
+    )
+    try:
+        report = build_evidence_dashboard_report(
+            as_of=dashboard_date,
+            daily_report_path=daily_path,
+            trace_bundle_path=trace_path,
+            decision_snapshot_path=snapshot_path,
+            belief_state_path=belief_state_path,
+        )
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    dashboard_path = write_evidence_dashboard(report, dashboard_output)
+    style = "green" if report.status == "PASS" else "yellow"
+    claim_count = len(report.trace_bundle.get("claims", []))
+    dataset_count = len(report.trace_bundle.get("dataset_refs", []))
+    console.print(f"[{style}]Evidence dashboard：{report.status}[/{style}]")
+    console.print(f"Dashboard：{dashboard_path}")
+    console.print(
+        f"核心 claim：{claim_count}；"
+        f"输入 dataset：{dataset_count}；"
+        f"警告：{len(report.warnings)}"
     )
 
 
@@ -5717,14 +5793,6 @@ def score_daily(
         features_path=features_output,
         output_path=feature_report_output,
     )
-    industry_node_heat_report = build_industry_node_heat_report(
-        industry_chain=industry_chain,
-        watchlist=watchlist,
-        feature_set=feature_set,
-    )
-    industry_node_heat_section = render_industry_node_heat_section(
-        industry_node_heat_report
-    )
     portfolio_exposure_report = build_portfolio_exposure_report(
         input_path=portfolio_positions_path,
         as_of=score_date,
@@ -5854,9 +5922,16 @@ def score_daily(
         watchlist=watchlist,
         risk_events=risk_events_config,
     )
+    thesis_review_report = _build_daily_thesis_review_report(
+        input_path=thesis_path,
+        watchlist=watchlist,
+        industry_chain=industry_chain,
+        score_date=score_date,
+    )
 
     review_summary = _build_daily_review_summary(
         thesis_path=thesis_path,
+        thesis_review_report=thesis_review_report,
         risk_events_path=risk_events_path,
         risk_event_occurrences_path=risk_event_occurrences_path,
         risk_events_validation_report=risk_events_validation_report,
@@ -5871,6 +5946,18 @@ def score_daily(
         prices=prices_frame,
         data_quality_report=data_quality_report,
         benchmark_tickers=benchmark_tickers,
+    )
+    industry_node_heat_report = build_industry_node_heat_report(
+        industry_chain=industry_chain,
+        watchlist=watchlist,
+        feature_set=feature_set,
+        fundamental_feature_report=sec_fundamental_feature_report,
+        valuation_review_report=valuation_review_report,
+        risk_event_occurrence_review_report=risk_event_occurrence_review_report,
+        thesis_review_report=thesis_review_report,
+    )
+    industry_node_heat_section = render_industry_node_heat_section(
+        industry_node_heat_report
     )
     score_report = build_daily_score_report(
         feature_set=feature_set,
@@ -6029,7 +6116,7 @@ def score_daily(
     console.print(f"仓位状态：{score_report.recommendation.label}")
     console.print(f"执行建议：{execution_advisory.label}（{execution_advisory.action_id}）")
     console.print(
-        f"产业链节点热度：{industry_node_heat_report.status}"
+        f"产业链节点热度与健康度：{industry_node_heat_report.status}"
         f"（{industry_node_heat_report.node_count} 个节点）"
     )
     console.print(
@@ -6133,6 +6220,7 @@ def _backtest_trace_config_paths(
 
 def _build_daily_review_summary(
     thesis_path: Path,
+    thesis_review_report: ThesisReviewReport,
     risk_events_path: Path,
     risk_event_occurrences_path: Path,
     risk_events_validation_report: RiskEventsValidationReport,
@@ -6151,9 +6239,7 @@ def _build_daily_review_summary(
     return DailyReviewSummary(
         thesis=_build_daily_thesis_status(
             input_path=thesis_path,
-            watchlist=watchlist,
-            industry_chain=industry_chain,
-            score_date=score_date,
+            review_report=thesis_review_report,
         ),
         risk_events=_build_daily_risk_events_status(
             rules_path=risk_events_path,
@@ -6177,20 +6263,26 @@ def _build_daily_review_summary(
     )
 
 
-def _build_daily_thesis_status(
+def _build_daily_thesis_review_report(
     input_path: Path,
     watchlist: WatchlistConfig,
     industry_chain: IndustryChainConfig,
     score_date: date,
-) -> DailyManualReviewStatus:
+) -> ThesisReviewReport:
     validation_report = validate_trade_thesis_store(
         store=load_trade_thesis_store(input_path),
         watchlist=watchlist,
         industry_chain=industry_chain,
         as_of=score_date,
     )
-    review_report = build_thesis_review_report(validation_report)
+    return build_thesis_review_report(validation_report)
 
+
+def _build_daily_thesis_status(
+    input_path: Path,
+    review_report: ThesisReviewReport,
+) -> DailyManualReviewStatus:
+    validation_report = review_report.validation_report
     watch_count = sum(item.health == "WATCH" for item in review_report.items)
     challenged_count = sum(item.health == "CHALLENGED" for item in review_report.items)
     invalidated_count = sum(item.health == "INVALIDATED" for item in review_report.items)

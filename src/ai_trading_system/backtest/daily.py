@@ -18,10 +18,17 @@ from ai_trading_system.conclusion_boundary import (
     classify_conclusion_boundary,
     render_conclusion_boundary_section,
 )
-from ai_trading_system.config import FeatureConfig, PortfolioConfig, ScoringRulesConfig
+from ai_trading_system.config import (
+    FeatureConfig,
+    IndustryChainConfig,
+    PortfolioConfig,
+    ScoringRulesConfig,
+    WatchlistConfig,
+)
 from ai_trading_system.data.quality import DataFileSummary, DataQualityReport
 from ai_trading_system.features.market import build_market_features
 from ai_trading_system.fundamentals.sec_features import SecFundamentalFeaturesReport
+from ai_trading_system.industry_node_state import build_industry_node_heat_report
 from ai_trading_system.risk_events import RiskEventOccurrenceReviewReport
 from ai_trading_system.scoring.daily import (
     COMPONENT_LABELS,
@@ -132,6 +139,14 @@ class BacktestDailyRow:
     component_coverages: dict[str, float]
     position_gate_caps: dict[str, float]
     position_gate_triggers: dict[str, bool]
+    industry_node_status: str
+    top_industry_node_id: str
+    top_industry_node_heat_score: float | None
+    top_industry_node_health_level: str
+    industry_node_supported_count: int
+    industry_node_risk_limited_count: int
+    industry_node_price_only_count: int
+    industry_node_data_gap_count: int
 
     def to_record(self) -> dict[str, object]:
         record: dict[str, object] = {
@@ -169,6 +184,14 @@ class BacktestDailyRow:
             "transaction_cost": self.transaction_cost,
             "strategy_return": self.strategy_return,
             "strategy_equity": self.strategy_equity,
+            "industry_node_status": self.industry_node_status,
+            "top_industry_node_id": self.top_industry_node_id,
+            "top_industry_node_heat_score": self.top_industry_node_heat_score,
+            "top_industry_node_health_level": self.top_industry_node_health_level,
+            "industry_node_supported_count": self.industry_node_supported_count,
+            "industry_node_risk_limited_count": self.industry_node_risk_limited_count,
+            "industry_node_price_only_count": self.industry_node_price_only_count,
+            "industry_node_data_gap_count": self.industry_node_data_gap_count,
         }
         for component, score in self.component_scores.items():
             record[f"{component}_score"] = score
@@ -181,6 +204,18 @@ class BacktestDailyRow:
         for gate_id, triggered in self.position_gate_triggers.items():
             record[f"{gate_id}_gate_triggered"] = triggered
         return record
+
+
+@dataclass(frozen=True)
+class _IndustryNodeBacktestState:
+    status: str
+    top_node_id: str
+    top_heat_score: float | None
+    top_health_level: str
+    supported_count: int
+    risk_limited_count: int
+    price_only_count: int
+    data_gap_count: int
 
 
 @dataclass(frozen=True)
@@ -267,6 +302,8 @@ def run_daily_score_backtest(
         Mapping[date, RiskEventOccurrenceReviewReport] | None
     ) = None,
     watchlist_lifecycle: WatchlistLifecycleConfig | None = None,
+    industry_chain: IndustryChainConfig | None = None,
+    watchlist: WatchlistConfig | None = None,
     benchmark_policy_report: BenchmarkPolicyReport | None = None,
 ) -> DailyBacktestResult:
     if start >= end:
@@ -490,6 +527,14 @@ def run_daily_score_backtest(
             valuation_review_report=valuation_review_report,
             risk_event_occurrence_review_report=risk_event_occurrence_review_report,
         )
+        industry_node_state = _build_industry_node_backtest_state(
+            industry_chain=industry_chain,
+            watchlist=watchlist,
+            feature_set=feature_set,
+            fundamental_feature_report=fundamental_feature_report,
+            valuation_review_report=valuation_review_report,
+            risk_event_occurrence_review_report=risk_event_occurrence_review_report,
+        )
         recommendation = score_report.recommendation
         confidence = score_report.confidence_assessment
         model_target_exposure = _position_midpoint(
@@ -612,6 +657,14 @@ def run_daily_score_backtest(
                 position_gate_triggers={
                     gate.gate_id: gate.triggered for gate in recommendation.position_gates
                 },
+                industry_node_status=industry_node_state.status,
+                top_industry_node_id=industry_node_state.top_node_id,
+                top_industry_node_heat_score=industry_node_state.top_heat_score,
+                top_industry_node_health_level=industry_node_state.top_health_level,
+                industry_node_supported_count=industry_node_state.supported_count,
+                industry_node_risk_limited_count=industry_node_state.risk_limited_count,
+                industry_node_price_only_count=industry_node_state.price_only_count,
+                industry_node_data_gap_count=industry_node_state.data_gap_count,
             )
         )
         previous_exposure = target_exposure
@@ -734,6 +787,56 @@ def backtest_input_coverage_records(
     records.extend(_risk_event_evidence_url_coverage_records(result))
     records.extend(_input_source_type_coverage_records(result))
     return tuple(records)
+
+
+def _build_industry_node_backtest_state(
+    *,
+    industry_chain: IndustryChainConfig | None,
+    watchlist: WatchlistConfig | None,
+    feature_set: Any,
+    fundamental_feature_report: SecFundamentalFeaturesReport | None,
+    valuation_review_report: ValuationReviewReport | None,
+    risk_event_occurrence_review_report: RiskEventOccurrenceReviewReport | None,
+) -> _IndustryNodeBacktestState:
+    if industry_chain is None or watchlist is None:
+        return _IndustryNodeBacktestState(
+            status="not_assessed",
+            top_node_id="",
+            top_heat_score=None,
+            top_health_level="not_assessed",
+            supported_count=0,
+            risk_limited_count=0,
+            price_only_count=0,
+            data_gap_count=0,
+        )
+
+    report = build_industry_node_heat_report(
+        industry_chain=industry_chain,
+        watchlist=watchlist,
+        feature_set=feature_set,
+        fundamental_feature_report=fundamental_feature_report,
+        valuation_review_report=valuation_review_report,
+        risk_event_occurrence_review_report=risk_event_occurrence_review_report,
+    )
+    top_item = max(
+        (item for item in report.items if item.heat_score is not None),
+        key=lambda item: cast(float, item.heat_score),
+        default=None,
+    )
+    return _IndustryNodeBacktestState(
+        status=report.status,
+        top_node_id=top_item.node_id if top_item is not None else "",
+        top_heat_score=top_item.heat_score if top_item is not None else None,
+        top_health_level=(
+            top_item.health_level if top_item is not None else "insufficient_data"
+        ),
+        supported_count=sum(1 for item in report.items if item.health_level == "supported"),
+        risk_limited_count=sum(
+            1 for item in report.items if item.health_level == "risk_limited"
+        ),
+        price_only_count=sum(1 for item in report.items if item.health_level == "price_only"),
+        data_gap_count=sum(len(item.data_gaps) for item in report.items),
+    )
 
 
 def render_backtest_report(
@@ -882,6 +985,24 @@ def render_backtest_report(
                 "| 置信度分桶 | 样本数 | 平均总分 | 平均最终仓位 | 平均收益 |",
                 "|---|---:|---:|---:|---:|",
                 *confidence_rows,
+            ]
+        )
+    industry_node_rows = _industry_node_history_summary_rows(result)
+    if industry_node_rows:
+        lines.extend(
+            [
+                "",
+                "## 产业链节点历史状态摘要",
+                "",
+                "- 解释边界：本节按回测 `signal_date` 重建节点热度/健康度，"
+                "只用于历史审计和解释，不改变评分、仓位闸门或回测仓位。",
+                "",
+                (
+                    "| Top 节点 | 样本数 | 平均热度 | 支持天数 | 风险限制天数 | "
+                    "仅价格热度天数 | 数据缺口数 |"
+                ),
+                "|---|---:|---:|---:|---:|---:|---:|",
+                *industry_node_rows,
             ]
         )
     lines.extend(_data_quality_gate_summary_lines(result.data_quality_report))
@@ -1164,6 +1285,7 @@ def _backtest_conclusion_boundary(
         data_quality_status=result.data_quality_report.status,
         posture_label="历史回测结论",
         has_backtest_limitations=_has_backtest_input_limitations(result),
+        decision_scope="trend_judgment",
         evidence_refs=tuple(evidence_refs),
     )
 
@@ -1562,6 +1684,34 @@ def _confidence_summary_rows(result: DailyBacktestResult) -> list[str]:
             f"{average_score:.1f} | "
             f"{average_position:.0%} | "
             f"{average_return:.2%} |"
+        )
+    return rows
+
+
+def _industry_node_history_summary_rows(result: DailyBacktestResult) -> list[str]:
+    grouped_rows: dict[str, list[BacktestDailyRow]] = {}
+    for row in result.rows:
+        if row.industry_node_status == "not_assessed" or not row.top_industry_node_id:
+            continue
+        grouped_rows.setdefault(row.top_industry_node_id, []).append(row)
+
+    rows: list[str] = []
+    for node_id, node_rows in sorted(grouped_rows.items()):
+        heat_scores = [
+            row.top_industry_node_heat_score
+            for row in node_rows
+            if row.top_industry_node_heat_score is not None
+        ]
+        average_heat = sum(heat_scores) / len(heat_scores) if heat_scores else 0.0
+        rows.append(
+            "| "
+            f"{node_id} | "
+            f"{len(node_rows)} | "
+            f"{average_heat:.0%} | "
+            f"{sum(row.industry_node_supported_count for row in node_rows)} | "
+            f"{sum(row.industry_node_risk_limited_count for row in node_rows)} | "
+            f"{sum(row.industry_node_price_only_count for row in node_rows)} | "
+            f"{sum(row.industry_node_data_gap_count for row in node_rows)} |"
         )
     return rows
 

@@ -2,7 +2,7 @@
 
 面向美股 AI 产业链的投资认知、趋势分析、风险评分、回测与仓位建议系统。
 
-项目目标不是预测市场，也不是自动交易，而是把“是否加仓、减仓、观望”变成可复盘、可验证、可控制风险的决策流程。长期方向是可审计认知模型：持续记录 `belief_state`、证据、置信度、风险边界和规则改进建议，但生产规则必须经过回测、shadow mode 和人工批准。
+项目目标不是预测市场，也不是自动交易。当前阶段只做 AI 产业链趋势判断和投研复核辅助，不实际触发交易；仓位区间、gate 和执行动作都是解释语言，不能直接转成账户买卖。长期方向是可审计认知模型：持续记录 `belief_state`、证据、置信度、风险边界和规则改进建议，但生产规则必须经过回测、shadow mode 和人工批准。
 
 产品定位详见 [docs/product_strategy.md](docs/product_strategy.md)：系统应服务于能力圈、产业链因果、仓位决策和复盘归因，而不是扩张成全市场万能分析器。工程落地拆解见 [docs/implementation_backlog.md](docs/implementation_backlog.md)，具体未完成任务和优先级见 [docs/task_register.md](docs/task_register.md)。
 

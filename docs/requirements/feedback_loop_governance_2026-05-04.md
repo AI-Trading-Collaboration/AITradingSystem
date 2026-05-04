@@ -566,6 +566,8 @@
 - 支持三类读者模式：快速读者只看结论卡、动作建议、最大风险和改变判断条件；投资复核者查看变化原因树、产业链节点、thesis 状态、risk gate 和仓位上限来源；系统审计者查看 claim/evidence/dataset/quality refs、trace lookup、数据质量门禁和 source policy。
 - 不替代 Markdown 报告的审计责任；关键结论仍需可导出和可追溯。
 
+2026-05-04 第一阶段实现范围：主要使用者是项目 owner 本人，优先关注报告结论与实际输入数据的联系以及论证逻辑，视觉风格保持简约。第一版先生成本地静态 evidence-first HTML，不引入后台服务、实时刷新或新投资计算；详细拆解见 `docs/requirements/ui_evidence_dashboard_2026-05-04.md`。
+
 ## SECURITY-001
 
 标题：密钥、日志和供应商权限治理
@@ -595,13 +597,14 @@
 
 建议等级：
 
-- `actionable`：可作为仓位复核依据。
+- `trend_only`：当前范围下只用于趋势判断和投研辅助，不触发交易。
+- `actionable`：可作为仓位复核依据；当前系统范围不默认输出该成功态，除非 owner 未来重新提高到仓位复核/交易执行范围。
 - `review_required`：必须人工复核。
 - `research_only`：仅研究观察，不应用于仓位。
 - `data_limited`：数据不足，结论降级。
 - `backtest_limited`：回测输入覆盖不足。
 
-结论等级只回答“这个结论能不能作为仓位复核依据”。报告还需要独立的投资姿态标签，回答“当前 AI 产业链处于什么状态”。建议第一版投资姿态标签：
+结论等级只回答“这个结论能用于什么范围”。当前 owner 决策是趋势判断/投研辅助，不触发交易；报告还需要独立的投资姿态标签，回答“当前 AI 产业链处于什么状态”。建议第一版投资姿态标签：
 
 - 积极进攻。
 - 中高配。
@@ -626,6 +629,7 @@
 - 完整 `DONE` 仍需要把状态 taxonomy 配置化、接入未来事件窗口和更完整的 owner review policy；当前目标完成态预计为 `BASELINE_DONE`。
 - 2026-05-04 基础版已完成：新增 `conclusion_boundary` taxonomy，日报和回测报告均输出“结论使用等级”章节，说明结论等级、投资姿态标签、降级原因、解除条件和证据引用。
 - 当前完成态为 `BASELINE_DONE`：`review_required`、`data_limited`、`backtest_limited` 等降级路径已具备；完整 `DONE` 仍需要 taxonomy 配置化、未来 catalyst/event window 降级和正式 owner review policy。
+- 2026-05-04：根据 owner 最新范围，结论等级新增 `trend_only`，`score-daily` 和回测以 `trend_judgment` 范围运行；数据质量全绿时也只能显示趋势判断，不自动升级为仓位复核或交易执行。
 
 ## 状态记录
 
@@ -642,8 +646,11 @@
 - 2026-05-04：`GOV-001` 达到 `BASELINE_DONE`：rule card registry、治理校验 CLI、查询 CLI、中文报告、系统流图和测试完成；`python -m ruff check src tests`、`python -m pytest -q` 通过。正式 owner approval/promotion/retirement 流程和 rule version 注入仍待后续实现。
 - 2026-05-04：根据最终报告呈现形式讨论，补充 `EXEC-001` 的 advisory action taxonomy、`DOC-001` 的“双层状态”设计和 `UI-001` 的三类读者模式；完整报告结构由 `docs/requirements/report_decision_chain_presentation_2026-05-04.md` 与 `REPORT-003/004` 承接。
 - 2026-05-04：`DOC-001` 达到 `BASELINE_DONE`：日报和回测报告输出结论使用等级，低置信度、来源不足、人工复核问题和回测覆盖不足会降级；投资姿态标签与结论等级分开解释。
+- 2026-05-04：补充 `trend_only` 范围边界，原因：owner 明确当前系统只做趋势判断，不需要实际触发交易。
 - 2026-05-04：`OPS-001` 达到 `BASELINE_DONE`：新增 pipeline health 只读报告和 CLI，检查关键 artifact 并输出排查入口；报告明确运行健康不等于投资结论有效。
 - 2026-05-04：`SECURITY-001` 达到 `BASELINE_DONE`：新增 secret hygiene 扫描 CLI 和脱敏报告；企业级密钥管理、pre-commit/CI 和供应商权限审批仍待后续。
 - 2026-05-04：`DATA-002` 已完成低成本基础版：新增 `aits data-sources health` 和 `outputs/reports/data_sources_health_YYYY-MM-DD.md`，覆盖 provider health score、cache/manifest/row count/checksum/freshness 检查、manifest checksum mismatch 失败，以及 qualified source 不足时的 reconciliation `NOT_COVERED` 声明；owner 已验证 SEC User-Agent、FMP、FRED、Tiingo EOD 和 EODHD Fundamentals 初版权限可访问，EODHD EOD 价格未订阅且价格核验使用 Tiingo；完整 `DONE` 仍依赖生产级第二来源、商业授权/再分发限制和长期口径策略。
+- 2026-05-04：`UI-001` 进入第一阶段实现；owner 明确第一版主要服务个人复核，优先连接报告结论、论证链、trace evidence 和实际输入数据，风格保持简约。
+- 2026-05-04：`UI-001` 达到 `BASELINE_DONE`：新增 `aits reports dashboard` 静态 HTML 输出，按快速读者、投资复核者和系统审计者分层展示结论、论证链、gate、thesis/risk/valuation 状态、claim/evidence/dataset/quality refs、输入路径、checksum 和 trace lookup；完整 `DONE` 仍需要更完整交互服务、跨日报对比和 reader mode 配置。
 - 2026-05-04：`UNIVERSE-001` 已完成基础实现：新增 `config/watchlist_lifecycle.yaml`、`aits watchlist validate-lifecycle` 和回测 signal_date lifecycle 过滤，测试覆盖尚未进入观察池的 ticker 不参与历史市场特征。
 - 2026-05-04：`TEST-001` 已推进为完成状态：系统级不变量测试覆盖 watch 风险事件不自动评分、低证据等级/公开便利源隔离、LLM evidence 隔离、watchlist point-in-time 过滤、decision snapshot 写入、评分置信度和估值 PIT 可信度。

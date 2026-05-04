@@ -594,9 +594,10 @@ aits review-trades --as-of 2026-05-02
 
 1. 用 `aits valuation fetch-fmp` 为 AI 核心观察池生成第一批真实 paid vendor 估值快照，并检查 `valuation_validation_*.md` 的警告是否只来自预期内的估值历史样本不足或 EPS revision 历史窗口不足。
 2. 在基础估值快照存在后运行 `aits valuation fetch-eodhd-trends`，用 EODHD Earnings Trends 先补当前日报的 `eps_revision_90d_pct` baseline；该结果只从采集日后可见。
-3. 等本地 FMP 估值快照历史达到 3 个以上观测后，检查 `valuation_percentile` 是否开始稳定生成；等 analyst-estimates 历史缓存覆盖 90 天或接入真实 PIT estimates archive 后，检查严格历史 `eps_revision_90d_pct` 是否开始稳定生成，并评估是否需要把 tolerance 从 15 天调窄。
-4. 为风险事件发生记录接入正式供应商或一手来源 API，并复用现有 CSV/YAML 的来源审计字段。
-5. 用真实历史数据持续验证 `backtest_audit_*.md` 和输入覆盖诊断 CSV；如果审计报告长期需要按日下钻，再评估是否把覆盖诊断 CSV 拆分为更细的日频文件。
+3. 按 `DATA-003` 建设 forward-only PIT 快照归档，先把 analyst estimates、price target、ratings 和 earnings calendar 的 raw payload、manifest、checksum、parser version 与 `available_time` 留存下来；等自建 analyst-estimates 快照自然覆盖 90 天后，再评估严格采集日后可见的 `eps_revision_90d_pct` 是否开始稳定生成。
+4. 按 `BACKTEST-002` 为回测报告增加 A/B/C 数据可信度标签和 0/1/3/5/10/20 交易日滞后敏感性，防止把供应商回填历史误写成严格 PIT 结论。
+5. 为风险事件发生记录接入正式供应商或一手来源 API，并复用现有 CSV/YAML 的来源审计字段。
+6. 用真实历史数据持续验证 `backtest_audit_*.md` 和输入覆盖诊断 CSV；如果审计报告长期需要按日下钻，再评估是否把覆盖诊断 CSV 拆分为更细的日频文件。
 
 原因：
 
