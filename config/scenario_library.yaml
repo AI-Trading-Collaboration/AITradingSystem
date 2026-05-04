@@ -1,0 +1,406 @@
+library_id: ai_scenario_library.v1
+version: v1
+status: production
+owner: system_review
+description: >
+  Baseline AI value-chain scenario library for audit, thesis review, and
+  pressure-test interpretation. Scenarios are not probability forecasts.
+last_reviewed_at: 2026-05-04
+next_review_due: 2026-06-04
+scenarios:
+  - scenario_id: cloud_capex_downshift
+    name: 云厂商 AI CapEx 下修
+    status: active
+    scenario_type: hypothetical_shock
+    shock_direction: negative
+    severity: high
+    affected_nodes:
+      - cloud_capex
+      - gpu_asic_demand
+      - advanced_packaging
+      - foundry_demand
+    affected_tickers:
+      - MSFT
+      - GOOG
+      - AMZN
+      - META
+      - NVDA
+      - AMD
+      - TSM
+    linked_risk_event_ids:
+      - cloud_capex_cut
+    linked_thesis_ids: []
+    position_gate_impacts:
+      - gate_id: risk_events
+        expected_effect: cap_lower
+        max_ai_exposure_hint: 0.55
+        rationale: 多家云厂商下修 AI CapEx 会削弱 AI 基建需求链条。
+      - gate_id: thesis
+        expected_effect: manual_review
+        max_ai_exposure_hint:
+        rationale: 需要复核云 CapEx 驱动的 AI 需求 thesis 是否仍成立。
+    observation_conditions:
+      - 云厂商财报、电话会或 10-Q 明确下修 AI 数据中心 CapEx。
+      - GPU、HBM、先进封装订单同步转弱。
+    review_requirements:
+      - 复核 cloud_capex、gpu_asic_demand 和 foundry_demand 节点健康度。
+      - 检查相关 thesis 的证伪条件是否被触发。
+    evidence_requirements:
+      - S/A 级一手披露或已授权付费供应商证据。
+      - 至少记录 source URL、captured_at、row count 或人工复核人。
+    interpretation_boundary: 情景用于压力测试和复核提示，不代表 CapEx 下修概率。
+    not_probability_forecast: true
+
+  - scenario_id: gpu_margin_compression
+    name: GPU 毛利率压缩
+    status: active
+    scenario_type: hypothetical_shock
+    shock_direction: negative
+    severity: medium
+    affected_nodes:
+      - gpu_asic_demand
+      - hbm_supply_demand
+      - foundry_demand
+    affected_tickers:
+      - NVDA
+      - AMD
+      - TSM
+    linked_risk_event_ids:
+      - ai_demand_inventory_build
+    linked_thesis_ids: []
+    position_gate_impacts:
+      - gate_id: valuation
+        expected_effect: no_new_position
+        max_ai_exposure_hint: 0.60
+        rationale: 高估值状态下毛利率压缩会降低新增仓位容错。
+      - gate_id: thesis
+        expected_effect: manual_review
+        max_ai_exposure_hint:
+        rationale: 龙头毛利率承压需要复核竞争、BOM 和客户议价能力假设。
+    observation_conditions:
+      - NVDA/AMD 数据中心毛利率或指引低于 AI 高景气假设。
+      - HBM、封装、代工成本上升无法向客户转嫁。
+    review_requirements:
+      - 复核 GPU/ASIC demand thesis 和估值拥挤状态。
+      - 检查是否只是产品切换期还是需求/竞争结构恶化。
+    evidence_requirements:
+      - 财报、10-Q/10-K、电话会或已授权付费供应商毛利率证据。
+    interpretation_boundary: 情景只描述利润率压力传导，不单独证伪 AI 总需求。
+    not_probability_forecast: true
+
+  - scenario_id: hbm_oversupply
+    name: HBM 供应过剩
+    status: active
+    scenario_type: hypothetical_shock
+    shock_direction: negative
+    severity: medium
+    affected_nodes:
+      - hbm_supply_demand
+      - gpu_asic_demand
+      - advanced_packaging
+    affected_tickers:
+      - NVDA
+      - AMD
+      - TSM
+      - MU
+    linked_risk_event_ids:
+      - ai_demand_inventory_build
+    linked_thesis_ids: []
+    position_gate_impacts:
+      - gate_id: risk_events
+        expected_effect: cap_lower
+        max_ai_exposure_hint: 0.65
+        rationale: HBM 供需逆转可能提示 AI 芯片订单或库存周期转弱。
+      - gate_id: data_confidence
+        expected_effect: confidence_downgrade
+        max_ai_exposure_hint:
+        rationale: 需要确认 HBM 价格和库存数据来源质量。
+    observation_conditions:
+      - HBM 合约价、交期或产能利用率明显转弱。
+      - GPU 订单、先进封装需求和 HBM 数据同步恶化。
+    review_requirements:
+      - 复核 HBM 供需节点和 GPU 订单能见度。
+      - 标记低可信供应链传闻为人工复核，不直接进仓位闸门。
+    evidence_requirements:
+      - S/A/B 级供应链、公司披露或已授权供应商证据。
+    interpretation_boundary: 单一 HBM 传闻不得直接触发 production gate。
+    not_probability_forecast: true
+
+  - scenario_id: advanced_packaging_bottleneck
+    name: 先进封装瓶颈恶化
+    status: active
+    scenario_type: hypothetical_shock
+    shock_direction: mixed
+    severity: medium
+    affected_nodes:
+      - advanced_packaging
+      - foundry_demand
+      - gpu_asic_demand
+      - semiconductor_equipment
+    affected_tickers:
+      - TSM
+      - NVDA
+      - AMD
+      - AMAT
+      - ASML
+    linked_risk_event_ids: []
+    linked_thesis_ids: []
+    position_gate_impacts:
+      - gate_id: thesis
+        expected_effect: manual_review
+        max_ai_exposure_hint:
+        rationale: 封装瓶颈可能利好定价但限制出货，需要按节点复核。
+      - gate_id: data_confidence
+        expected_effect: confidence_downgrade
+        max_ai_exposure_hint:
+        rationale: 产能、交期和客户预付款数据常来自非标准来源。
+    observation_conditions:
+      - CoWoS 或类似先进封装扩产延期。
+      - 交期拉长与客户订单强度同时出现。
+    review_requirements:
+      - 区分需求强导致的瓶颈和供给故障导致的出货限制。
+      - 复核 TSM、NVDA、AMD 和设备链节点的不同影响方向。
+    evidence_requirements:
+      - 公司披露、投资者会议、设备订单或已授权供应商证据。
+    interpretation_boundary: mixed 情景不能机械映射为看多或看空。
+    not_probability_forecast: true
+
+  - scenario_id: export_control_upgrade
+    name: 出口管制升级
+    status: active
+    scenario_type: active_risk_event_linked
+    shock_direction: negative
+    severity: high
+    affected_nodes:
+      - export_controls
+      - gpu_asic_demand
+      - foundry_demand
+      - semiconductor_equipment
+    affected_tickers:
+      - NVDA
+      - AMD
+      - INTC
+      - ASML
+      - TSM
+    linked_risk_event_ids:
+      - ai_chip_export_control_upgrade
+    linked_thesis_ids: []
+    position_gate_impacts:
+      - gate_id: risk_events
+        expected_effect: cap_lower
+        max_ai_exposure_hint: 0.55
+        rationale: 已登记 L2 风险事件可进入风险事件复核和仓位上限讨论。
+      - gate_id: thesis
+        expected_effect: manual_review
+        max_ai_exposure_hint:
+        rationale: 需要复核中国收入、替代产品和许可路径假设。
+    observation_conditions:
+      - 新规则扩大受限 AI 芯片、设备、EDA 或代工服务范围。
+      - 公司明确下修收入、毛利率或可服务市场。
+    review_requirements:
+      - 将事件发生记录按 source policy 复核后再决定是否触发 gate。
+      - 更新 export_controls 节点和相关 thesis。
+    evidence_requirements:
+      - 官方规则、公司披露或 S/A 级已授权供应商证据。
+    interpretation_boundary: 风险事件 linked 不等于当前已经 active，仍需 occurrence 证据。
+    not_probability_forecast: true
+
+  - scenario_id: taiwan_geopolitical_escalation
+    name: 台海或先进制造地缘风险升级
+    status: active
+    scenario_type: active_risk_event_linked
+    shock_direction: negative
+    severity: critical
+    affected_nodes:
+      - foundry_demand
+      - advanced_packaging
+      - semiconductor_equipment
+      - export_controls
+    affected_tickers:
+      - TSM
+      - NVDA
+      - AMD
+      - INTC
+      - SMH
+      - SOXX
+    linked_risk_event_ids:
+      - taiwan_geopolitical_escalation
+    linked_thesis_ids: []
+    position_gate_impacts:
+      - gate_id: risk_events
+        expected_effect: cap_lower
+        max_ai_exposure_hint: 0.25
+        rationale: L3 地缘风险可能要求快速降低 AI 风险暴露。
+      - gate_id: data_confidence
+        expected_effect: confidence_downgrade
+        max_ai_exposure_hint:
+        rationale: 高噪声阶段需要提高证据等级和人工复核要求。
+    observation_conditions:
+      - 生产、物流、出口许可或市场可交易性受到实质影响。
+      - 风险溢价上升并扩散到先进制造供应链。
+    review_requirements:
+      - 快速复核风险事件 occurrence 是否已达到 L3 active 条件。
+      - 暂停把技术面强势单独解释为高置信度加仓信号。
+    evidence_requirements:
+      - 官方、一手披露或 S/A 级已授权供应商证据；低等级来源只进入复核。
+    interpretation_boundary: 该情景是尾部风险复核，不是常态基本面预测。
+    not_probability_forecast: true
+
+  - scenario_id: rates_repricing
+    name: 美债利率快速上行
+    status: active
+    scenario_type: hypothetical_shock
+    shock_direction: negative
+    severity: medium
+    affected_nodes:
+      - cloud_capex
+      - software_and_apps
+      - ai_inference_demand
+    affected_tickers:
+      - MSFT
+      - GOOG
+      - AMZN
+      - META
+      - NVDA
+      - AMD
+    linked_risk_event_ids: []
+    linked_thesis_ids: []
+    position_gate_impacts:
+      - gate_id: valuation
+        expected_effect: no_new_position
+        max_ai_exposure_hint: 0.55
+        rationale: 利率上行提高久期资产估值折现压力。
+      - gate_id: data_confidence
+        expected_effect: confidence_downgrade
+        max_ai_exposure_hint:
+        rationale: 需要区分宏观贴现率冲击和 AI 基本面恶化。
+    observation_conditions:
+      - DGS10 快速上行并伴随成长股估值压缩。
+      - AI 主题强势来自拥挤动量而非基本面上修。
+    review_requirements:
+      - 复核估值拥挤 gate 和宏观流动性模块。
+      - 报告中区分 beta/估值压缩和 thesis 证伪。
+    evidence_requirements:
+      - FRED 利率数据、价格数据和估值快照质量门禁通过。
+    interpretation_boundary: 宏观冲击不自动等同 AI thesis 失效。
+    not_probability_forecast: true
+
+  - scenario_id: ai_leader_valuation_compression
+    name: AI 龙头估值压缩
+    status: active
+    scenario_type: hypothetical_shock
+    shock_direction: negative
+    severity: medium
+    affected_nodes:
+      - gpu_asic_demand
+      - software_and_apps
+      - ai_models
+    affected_tickers:
+      - NVDA
+      - MSFT
+      - GOOG
+      - AMD
+      - PLTR
+      - CRM
+      - NOW
+    linked_risk_event_ids: []
+    linked_thesis_ids: []
+    position_gate_impacts:
+      - gate_id: valuation
+        expected_effect: no_new_position
+        max_ai_exposure_hint: 0.50
+        rationale: 估值压缩阶段应限制新增仓位并要求更高证据质量。
+      - gate_id: thesis
+        expected_effect: manual_review
+        max_ai_exposure_hint:
+        rationale: 区分估值去泡沫和基本面证伪。
+    observation_conditions:
+      - AI 龙头估值分位快速下行且没有同步基本面恶化。
+      - 高分信号仍强但新增仓位风险回报变差。
+    review_requirements:
+      - 报告必须说明趋势仍强但估值 gate 限制新增仓位。
+      - 检查 valuation PIT 可信度。
+    evidence_requirements:
+      - 通过估值快照校验的数据或已审计手工估值输入。
+    interpretation_boundary: 估值压缩不是自动卖出信号，必须结合 gate 和 thesis。
+    not_probability_forecast: true
+
+  - scenario_id: power_capacity_constraint
+    name: 数据中心电力或容量限制
+    status: active
+    scenario_type: hypothetical_shock
+    shock_direction: negative
+    severity: medium
+    affected_nodes:
+      - power_and_data_center_capacity
+      - cloud_capex
+      - ai_inference_demand
+    affected_tickers:
+      - MSFT
+      - GOOG
+      - AMZN
+      - META
+      - NVDA
+    linked_risk_event_ids: []
+    linked_thesis_ids: []
+    position_gate_impacts:
+      - gate_id: thesis
+        expected_effect: manual_review
+        max_ai_exposure_hint:
+        rationale: 电力和机房瓶颈会改变 CapEx 落地节奏和推理需求兑现。
+      - gate_id: data_confidence
+        expected_effect: confidence_downgrade
+        max_ai_exposure_hint:
+        rationale: 地区容量、电力接入和 PPA 数据需要来源复核。
+    observation_conditions:
+      - 数据中心项目延期、电力接入周期拉长或能源成本显著上行。
+      - 云厂商确认 AI capacity 成为收入交付瓶颈。
+    review_requirements:
+      - 复核 power_and_data_center_capacity 与 cloud_capex 节点。
+      - 区分短期供给瓶颈和长期需求弱化。
+    evidence_requirements:
+      - 公司披露、监管文件、项目公告或已授权供应商证据。
+    interpretation_boundary: 该情景可同时限制短期收入和支持长期 CapEx，不可单向解释。
+    not_probability_forecast: true
+
+  - scenario_id: ai_application_demand_shortfall
+    name: AI 应用需求低于预期
+    status: active
+    scenario_type: hypothetical_shock
+    shock_direction: negative
+    severity: high
+    affected_nodes:
+      - ai_models
+      - ai_inference_demand
+      - software_and_apps
+      - cloud_capex
+    affected_tickers:
+      - MSFT
+      - GOOG
+      - PLTR
+      - CRM
+      - NOW
+      - NVDA
+      - AMD
+    linked_risk_event_ids:
+      - cloud_capex_cut
+    linked_thesis_ids: []
+    position_gate_impacts:
+      - gate_id: thesis
+        expected_effect: manual_review
+        max_ai_exposure_hint:
+        rationale: 应用需求不及预期会挑战 AI CapEx 转化为收入的核心 thesis。
+      - gate_id: risk_events
+        expected_effect: cap_lower
+        max_ai_exposure_hint: 0.60
+        rationale: 若需求疲弱传导至 CapEx 下修，可升级为风险事件复核。
+    observation_conditions:
+      - AI 软件付费转化、留存或云 AI 收入低于管理层预期。
+      - 推理使用量增长不足以支撑持续 CapEx。
+    review_requirements:
+      - 复核软件与应用商业化、推理需求和云 CapEx 节点。
+      - 检查是否需要生成 thesis warning 或 challenged 状态。
+    evidence_requirements:
+      - 公司披露、usage 指标、财报或已授权供应商证据。
+    interpretation_boundary: 应用需求疲弱需要和短期采购节奏区分。
+    not_probability_forecast: true

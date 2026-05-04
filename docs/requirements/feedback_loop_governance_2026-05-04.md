@@ -300,6 +300,14 @@
 - 场景不伪装成概率预测；必须区分历史压力、假设冲击和真实 active 风险事件。
 - 实现时同步更新 `docs/system_flow.md` 并补充场景映射测试。
 
+当前实现状态：
+
+- 2026-05-04：进入基础实现；第一阶段建立 `scenario_library` 配置和校验报告，覆盖首批 AI 产业链压力场景、产业链节点、ticker、risk event、position gate 影响、观察条件和人工复核要求。
+- 第一阶段只做审计和解释层，不把情景当作概率预测，不直接修改生产评分、`position_gate`、日报仓位或回测仓位；正式仓位影响仍需经过规则治理和人工复核。
+- 完整 `DONE` 仍需要把情景结果接入日报/回测审计的当前组合暴露、可量化冲击参数和历史压力样本。
+- 2026-05-04 基础版已完成：新增 `config/scenario_library.yaml`、`scenario_library` 模块、`aits scenarios validate`、`aits scenarios lookup` 和 `outputs/reports/scenario_library_YYYY-MM-DD.md`。默认情景库覆盖云 CapEx 下修、GPU 毛利率压缩、HBM 供应过剩、先进封装瓶颈、出口管制、台海地缘、利率重定价、AI 龙头估值压缩、电力/数据中心容量限制和 AI 应用需求低于预期。
+- 当前完成态为 `BASELINE_DONE`：schema 校验、重复 id、节点/ticker/risk event/gate 引用、`not_probability_forecast=true`、复核到期、报告和查询入口已具备；完整 `DONE` 仍需要日报/回测的当前组合暴露、量化冲击参数和历史压力样本接入。
+
 ## CATALYST-001
 
 标题：未来催化剂日历与事件前模式
