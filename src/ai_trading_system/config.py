@@ -179,6 +179,22 @@ class RiskEventsConfig(BaseModel):
         return self
 
 
+class DataSourceLlmPermissionConfig(BaseModel):
+    license_scope: str = "unknown"
+    personal_use_only: bool = True
+    external_llm_allowed: bool = False
+    cache_allowed: bool = False
+    redistribution_allowed: bool = False
+    max_content_sent_level: Literal[
+        "metadata_only",
+        "short_excerpt",
+        "summary_only",
+        "full_text",
+    ] = "metadata_only"
+    approval_ref: str = ""
+    reviewed_at: date | None = None
+
+
 class DataSourceConfig(BaseModel):
     source_id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9_.-]+$")
     provider: str = Field(min_length=1)
@@ -211,6 +227,9 @@ class DataSourceConfig(BaseModel):
     audit_fields: list[str] = Field(default_factory=list)
     validation_checks: list[str] = Field(default_factory=list)
     limitations: list[str] = Field(default_factory=list)
+    llm_permission: DataSourceLlmPermissionConfig = Field(
+        default_factory=DataSourceLlmPermissionConfig
+    )
     owner_notes: str = ""
 
 

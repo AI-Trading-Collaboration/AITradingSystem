@@ -30,6 +30,13 @@
 
 第一版应使用 OpenAI Responses API 和 Structured Outputs，要求模型只输出固定 JSON schema。非紧急批量分类可使用 Batch API；紧急事件仍使用同步调用并立即进入人工复核。
 
+API 使用边界：
+
+- OpenAI API 只用于关键信息校验、抽取、分类、去重、ticker/产业链节点映射和人工复核问题生成。
+- 请求应显式关闭或避免不必要的服务端存储；付费供应商内容不得写入 Assistants/Threads/Vector Stores/Files 或外部工具链。
+- 报告不得复制付费供应商长文或完整原文，只能输出来源引用、结构化摘要和人工确认结论。
+- 任何模型输出都必须保留为 `llm_extracted` / `pending_review`，不能替代人工确认或触发生产评分、仓位闸门和交易动作。
+
 预审输入必须来自可审计文本或元数据：
 
 - 原始 URL、标题、发布时间、发布主体；
@@ -37,6 +44,9 @@
 - 采集时间、输入 checksum；
 - 当前 `config/risk_events.yaml` 中可匹配的 `risk_id` 列表；
 - 当前观察池 ticker 和产业链节点列表。
+- source permission envelope，包括 provider、授权范围、`personal_use_only`、`external_llm_allowed`、`cache_allowed`、`redistribution_allowed`、`content_sent_level` 和 `approval_ref`。
+
+付费新闻或供应商内容可以在 owner 个人投资决策支持目的下进入 OpenAI 预审，但必须满足 provider 级授权标记。授权未知或 `external_llm_allowed=false` 时，不得发送供应商全文或长摘录；只能进入人工复核，或在授权允许时发送元数据/人工摘要。
 
 预审输出建议包含：
 
@@ -56,10 +66,10 @@
 
 预审运行记录必须保存：
 
-- model、prompt version、request timestamp；
+- model、reasoning effort、prompt version、request timestamp；
 - 输入来源、输入 checksum、输出 checksum；
 - OpenAI response id 或等价请求追踪 ID；
-- 是否包含付费供应商内容，以及是否有明确授权允许发送给外部 LLM API。
+- 是否包含付费供应商内容，以及 provider、授权范围、`external_llm_allowed`、`content_sent_level` 和 `approval_ref`。
 
 ## 人工复核流程
 
@@ -118,7 +128,7 @@
 第一阶段只实现预审和复核队列，不改变现有评分、仓位闸门或回测行为。
 
 1. 设计 OpenAI 预审 JSON schema 和 prompt version，输出只允许映射、分类和人工复核问题。
-2. 增加预审运行记录，保存 model、prompt version、输入 checksum、输出 checksum、source URL 和 OpenAI response id。
+2. 增加预审运行记录，保存 model、reasoning effort、prompt version、输入 checksum、输出 checksum、source URL 和 OpenAI response id。
 3. 将预审结果写入 `market_evidence` 待复核记录或单独待复核队列；`source_type` 必须是 `llm_extracted`，`manual_review_status` 必须是 `pending_review`。
 4. 增加人工复核字段和校验，确认后的风险事件发生记录必须包含 reviewer、reviewed_at、review_decision、rationale、next_review_due。
 5. 更新报告，区分 OpenAI 预审、人工确认和可评分输入。
@@ -128,11 +138,39 @@
 ## RISK-004 基础实现进展
 
 - 新增 `aits risk-events import-prereview-csv`，导入固定结构化预审结果 CSV。
-- 新增 `data/processed/risk_event_prereview_queue.json` 队列格式，记录 schema version、source CSV checksum、model、prompt version、request id、request timestamp、输入/输出 checksum、source URL、候选 risk_id、ticker/节点映射和人工复核问题。
+- 新增 `data/processed/risk_event_prereview_queue.json` 队列格式，记录 schema version、source CSV checksum、model、reasoning effort、prompt version、request id、request timestamp、输入/输出 checksum、source URL、候选 risk_id、ticker/节点映射和人工复核问题。
 - 预审记录强制为 `source_type=llm_extracted` 和 `manual_review_status=pending_review`；`prohibited_actions_ack` 必须为 true。
 - L2/L3 或 `active_candidate` 预审结果只生成警告和人工复核项，不写入正式 `risk_event_occurrence`。
 - 正式风险事件发生记录增加 `reviewer`、`reviewed_at`、`review_decision`、`rationale`、`next_review_due` 校验；缺少元数据的 active/watch 记录失败。
-- 未完成缺口：本阶段不在本地发起 OpenAI API 请求；live Responses API 调用适配器、真实请求追踪和真实授权来源样本验证仍需后续实现和 owner 提供 API key / 可发送外部 LLM 的来源样本。
+- 未完成缺口：风险事件专用 `import-prereview-csv` 仍只导入结构化结果；通用 live OpenAI Responses API 调用已由 `LLM-001` 的 claim 预审入口提供，但风险事件专用生产样本验证、真实请求追踪复盘和真实授权来源样本仍需 owner 批准样本。
+
+## RISK-004 第二阶段推进范围
+
+状态：BASELINE_DONE
+
+本阶段把风险事件整理从“先在外部生成 CSV 再导入”推进到“系统内调用 OpenAI Responses API 并直接写入风险事件待复核队列”。边界不变：OpenAI 只做候选整理，不能替代人工确认。
+
+### 验收标准
+
+- 新增 `aits risk-events precheck-openai` 或等价 CLI，读取 source-permission envelope 或数据源目录中的 `llm_permission`。
+- OpenAI live 预审默认使用 `gpt-5.5-pro` 和 `reasoning.effort=xhigh`；CLI 可显式覆盖用于对比实验，但队列和报告必须记录实际 model 与 reasoning effort。
+- provider 授权未知或 `external_llm_allowed=false` 时 fail closed，不发起 API 请求，不写入队列。
+- API 请求使用固定结构化输出和 `store=false`，记录 model、reasoning effort、prompt version、OpenAI request/response id、输入/输出 checksum、source URL、source permission 和 request timestamp。
+- 只把 `risk_event` claim 或含风险事件候选的输出转换成 `risk_event_prereview_queue.json` 记录。
+- 转换后的记录强制为 `source_type=llm_extracted`、`manual_review_status=pending_review`，不得自动评分、触发仓位闸门或写入正式 occurrence。
+- 中文报告区分 live API 预审、待人工复核候选和不可执行边界。
+- 更新 `docs/system_flow.md`、示例输入和测试，覆盖权限 fail closed、成功写入待复核队列、高影响候选隔离和 CLI 行为。
+
+### 第二阶段实现进展
+
+- 新增 `aits risk-events precheck-openai`，读取与 `aits llm precheck-claims` 相同的 JSON/YAML source-permission 输入。
+- live API 调用复用 `LLM-001` 的 provider LLM 权限检查、Responses API Structured Outputs、`store=false`、request id/response id、输入/输出 checksum、model 和 reasoning effort 审计。
+- 新增从 LLM claim report 到 `risk_event_prereview_queue.json` 的转换，只保留 `risk_event` claim 或带风险事件候选的输出。
+- 队列记录新增 `source_kind=openai_live`、`source_input_path`、`source_input_checksum_sha256`、`response_id`、`client_request_id` 和 `source_permission`；仍保留 CSV 导入兼容字段。
+- 中文报告会区分 CSV 导入和 live API 预审；live 报告说明 Responses API 调用边界和 `llm_extracted / pending_review` 隔离。
+- 新增 `docs/examples/risk_event_prereview/openai_live_precheck_template.yaml`。
+- 测试覆盖 live API 成功写入待复核队列、不保存 source text/API key、provider 权限 fail closed、CLI 失败不写队列，以及高影响候选仍只进入人工复核。
+- 未完成缺口：尚未用真实 owner 批准来源样本运行生产预审；provider 授权目录和每日人工复核纪律仍是 `RISK-003/RISK-005` 的生产前置条件。
 
 ## RISK-005
 
@@ -175,7 +213,7 @@
 
 - 风险事件正式来源和人工复核 owner、频率、SLA、升级标准已文档化。
 - OpenAI API 预审只产生结构化 `pending_review` 结果，并保留输入/输出审计信息。
-- 付费新闻或供应商内容只有在授权允许外部 LLM 处理时才可进入 OpenAI API。
+- 付费新闻或供应商内容只有在 provider 级授权允许外部 LLM 处理时才可进入 OpenAI API；授权未知时 fail closed。
 - 人工确认后的记录才能进入 `risk_event_occurrence` 发生记录。
 - `S/A active position_gate_eligible` 仍是触发仓位闸门的最低条件；`B/C/D/X`、`public_convenience` 和 `llm_extracted` 不得触发 gate。
 - 日报和校验报告能区分：预审候选、待人工复核、已确认可评分、已确认可触发 gate。
@@ -185,7 +223,9 @@
 
 - 2026-05-04：owner 确认可引入 OpenAI API 做简单预审，但预审不替代实际人工复核；正式流程采用官方/一手来源、已授权供应商线索、OpenAI 结构化预审和人工确认的组合。新增 `RISK-004` 承接实施。
 - 2026-05-04：`RISK-004` 进入实现；第一阶段先落结构化预审结果导入、`llm_extracted` / `pending_review` 复核队列和隔离测试，不接入生产评分、仓位闸门或回测输入。
-- 2026-05-04：`RISK-004` 达到 `BASELINE_DONE`：固定结构化输出导入、预审队列、中文报告、人工复核元数据校验、系统流图和测试完成；`python -m ruff check src tests`、`python -m pytest -q` 通过。剩余 live OpenAI API 调用适配器和真实样本验证依赖 API key、来源授权与 owner 批准样本。
+- 2026-05-04：`RISK-004` 达到 `BASELINE_DONE`：固定结构化输出导入、预审队列、中文报告、人工复核元数据校验、系统流图和测试完成；`python -m ruff check src tests`、`python -m pytest -q` 通过。剩余风险事件专用真实样本验证依赖来源授权与 owner 批准样本；通用 live OpenAI 调用由 `LLM-001` 第一阶段入口承接。
 - 2026-05-04：新增 `RISK-005`，原因：日报生产就绪复盘发现“空 occurrence 目录不能证明无风险”会持续压低政策/地缘模块置信度；第一阶段实现可审计复核声明链路，不由系统代填真实复核结论。
 - 2026-05-04：`RISK-005` 达到 `BASELINE_DONE`：复核声明 schema、CLI、校验报告、日报识别、历史切片、数据源目录、系统流图和测试已完成；真实每日复核的 owner、来源清单和运行纪律仍是生产使用前置条件。
-- 2026-05-04：`RISK-003` 达到 `BASELINE_DONE`：来源分层、预审隔离、人工确认元数据、复核声明、日报识别和回测 point-in-time 切片已由 `SOURCE-001/RISK-004/RISK-005` 形成基础闭环；完整 `DONE` 仍依赖 live OpenAI Responses API 适配器、真实授权来源样本、付费供应商授权策略和 owner 每日复核运行纪律。
+- 2026-05-04：`RISK-003` 达到 `BASELINE_DONE`：来源分层、预审隔离、人工确认元数据、复核声明、日报识别和回测 point-in-time 切片已由 `SOURCE-001/RISK-004/RISK-005` 形成基础闭环；完整 `DONE` 仍依赖真实授权来源样本、provider 级外部 LLM 授权记录、风险事件专用生产样本验证和 owner 每日复核运行纪律。
+- 2026-05-04：owner 确认风险事件预审可使用 OpenAI API 做关键信息校验，并允许在个人使用目的下处理付费新闻/供应商内容；流程同步增加 source permission envelope，要求 provider 级外部 LLM 授权、缓存和报告摘要边界，授权未知时不得发送全文或长摘录。
+- 2026-05-04：`RISK-004` 第二阶段达到 `BASELINE_DONE`：新增 `aits risk-events precheck-openai`、live API 到风险事件待复核队列转换、source permission 审计、中文报告、示例输入、系统流图和隔离测试；随后按 owner 模型策略补充默认 `gpt-5.5-pro`、`reasoning.effort=xhigh` 和 reasoning effort 队列/报告审计字段。真实授权来源生产样本验证仍需 owner 批准样本。

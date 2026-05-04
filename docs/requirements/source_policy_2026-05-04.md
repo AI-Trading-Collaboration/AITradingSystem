@@ -24,7 +24,8 @@ OpenAI API 可以用于风险事件和市场证据的预审，但预审输出在
 - 禁止：直接确认风险事件、把候选事件升级为 L2/L3、修改 `action_class`、触发评分、触发仓位闸门、输出交易动作。
 - 预审输出必须保持 `manual_review_status=pending_review`；人工确认前不得写成可评分证据。
 - 如果 OpenAI 预审结果和 deterministic source policy 冲突，以 source policy 的保守规则为准。
-- 付费新闻或供应商内容只有在授权允许外部 LLM API 处理时，才可作为 OpenAI 预审输入。
+- 付费新闻或供应商内容可以在 owner 个人投资决策支持目的下进入 OpenAI 预审，但必须先在数据源目录或请求 envelope 中显式记录 provider、授权范围、`external_llm_allowed`、`cache_allowed`、`redistribution_allowed`、`content_sent_level` 和 `approval_ref`。
+- 如果供应商授权未知或 `external_llm_allowed=false`，系统不得发送供应商全文或长摘录给外部 LLM API；最多只能在授权允许时发送元数据或人工摘要，并保留 checksum 与人工复核记录。
 
 风险事件的完整预审与人工复核流程见 `docs/requirements/risk_event_review_workflow_2026-05-04.md`。
 
@@ -68,3 +69,5 @@ OpenAI API 可以用于风险事件和市场证据的预审，但预审输出在
 - 2026-05-04：创建 source policy 文档；owner 已批准保守方案，开始实现评分资格、仓位闸门和报告校验同步。
 - 2026-05-04：基础实现完成：新增 `source_policy` helper；`market_evidence` 报告输出自动普通评分资格数量并警告 `C/D/X`、未确认 `B`、`public_convenience` 和 `llm_extracted`；`risk_event_occurrence` 复核报告区分普通评分资格和仓位闸门资格；position gate 只读取 `S/A` active 且 `action_class=position_gate_eligible` 的风险事件；CSV 导入缺省 `action_class` 改为 `manual_review`；测试覆盖保守边界；`python -m pytest -q` 通过 239 项测试，`python -m ruff check .` 通过。
 - 2026-05-04：补充 OpenAI API 预审边界：OpenAI 只能生成 `llm_extracted` / `pending_review` 结构化线索，不能替代人工复核，不能直接评分或触发仓位闸门；风险事件细化流程转入 `RISK-003/RISK-004` 需求文档。
+- 2026-05-04：owner 确认付费新闻/供应商内容可在个人使用目的下进入 OpenAI 预审；source policy 仍要求 provider 级外部 LLM 授权标记，未知授权 fail closed，避免把个人使用目的误当成所有供应商条款的通用许可。
+- 2026-05-04：`LLM-001` 第一阶段实现把 provider LLM 授权落到 `config/data_sources.yaml` 的 `llm_permission`，并由 `aits llm precheck-claims` 在调用 OpenAI 前执行 fail closed 检查；待复核队列只保存结构化 claim、权限 envelope、request id、model、reasoning effort、prompt version 和 checksum，不保存未授权全文。2026-05-04：owner 指定默认 OpenAI 请求策略为 `gpt-5.5-pro` 和 `reasoning.effort=xhigh`。

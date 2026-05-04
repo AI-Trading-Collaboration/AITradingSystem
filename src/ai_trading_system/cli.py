@@ -246,6 +246,15 @@ from ai_trading_system.industry_node_state import (
     build_industry_node_heat_report,
     render_industry_node_heat_section,
 )
+from ai_trading_system.llm_precheck import (
+    DEFAULT_OPENAI_LLM_MODEL,
+    DEFAULT_OPENAI_REASONING_EFFORT,
+    default_llm_claim_precheck_report_path,
+    load_llm_claim_precheck_input,
+    run_openai_claim_precheck,
+    write_llm_claim_precheck_report,
+    write_llm_claim_prereview_queue,
+)
 from ai_trading_system.market_evidence import (
     default_market_evidence_report_path,
     import_market_evidence_csv,
@@ -285,8 +294,10 @@ from ai_trading_system.report_traceability import (
 )
 from ai_trading_system.reports.daily import render_recommendation_markdown
 from ai_trading_system.risk_event_prereview import (
+    default_risk_event_openai_prereview_report_path,
     default_risk_event_prereview_report_path,
     import_risk_event_prereview_csv,
+    run_openai_risk_event_prereview,
     write_risk_event_prereview_import_report,
     write_risk_event_prereview_queue,
 )
@@ -431,6 +442,7 @@ portfolio_app = typer.Typer(help="真实组合持仓和暴露解释。", no_args
 reports_app = typer.Typer(help="投资报告和周期复盘。", no_args_is_help=True)
 ops_app = typer.Typer(help="运行监控和 pipeline health。", no_args_is_help=True)
 security_app = typer.Typer(help="密钥卫生和供应商权限治理。", no_args_is_help=True)
+llm_app = typer.Typer(help="LLM 结构化预审和待复核队列。", no_args_is_help=True)
 app.add_typer(watchlist_app, name="watchlist")
 app.add_typer(industry_chain_app, name="industry-chain")
 app.add_typer(thesis_app, name="thesis")
@@ -448,12 +460,16 @@ app.add_typer(portfolio_app, name="portfolio")
 app.add_typer(reports_app, name="reports")
 app.add_typer(ops_app, name="ops")
 app.add_typer(security_app, name="security")
+app.add_typer(llm_app, name="llm")
 console = Console()
 DEFAULT_RISK_EVENT_OCCURRENCES_PATH = (
     PROJECT_ROOT / "data" / "external" / "risk_event_occurrences"
 )
 DEFAULT_RISK_EVENT_PREREVIEW_QUEUE_PATH = (
     PROJECT_ROOT / "data" / "processed" / "risk_event_prereview_queue.json"
+)
+DEFAULT_LLM_CLAIM_PREREVIEW_QUEUE_PATH = (
+    PROJECT_ROOT / "data" / "processed" / "llm_claim_prereview_queue.json"
 )
 DEFAULT_MARKET_EVIDENCE_PATH = PROJECT_ROOT / "data" / "external" / "market_evidence"
 DEFAULT_PORTFOLIO_POSITIONS_PATH = (
@@ -558,6 +574,76 @@ def import_market_evidence_command(
     console.print(f"导入报告：{import_report_output}")
     console.print(f"写入证据数：{len(written_paths)}")
     console.print(f"输出目录：{output_dir}")
+
+
+@llm_app.command("precheck-claims")
+def precheck_llm_claims_command(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="LLM 预审输入 JSON/YAML，包含 source_id 或 source_permission envelope。"),
+    ],
+    queue_path: Annotated[
+        Path,
+        typer.Option(help="写入 LLM claim 待复核队列 JSON 的路径。"),
+    ] = DEFAULT_LLM_CLAIM_PREREVIEW_QUEUE_PATH,
+    data_sources_path: Annotated[
+        Path,
+        typer.Option(help="数据源目录路径，用于解析 provider LLM 权限。"),
+    ] = DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="报告日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown LLM 预审报告输出路径。"),
+    ] = None,
+    api_key_env: Annotated[
+        str,
+        typer.Option(help="读取 OpenAI API key 的环境变量名。"),
+    ] = "OPENAI_API_KEY",
+    model: Annotated[
+        str,
+        typer.Option(help="OpenAI Responses API 模型。"),
+    ] = DEFAULT_OPENAI_LLM_MODEL,
+    reasoning_effort: Annotated[
+        str,
+        typer.Option(help="OpenAI Responses API reasoning.effort。"),
+    ] = DEFAULT_OPENAI_REASONING_EFFORT,
+) -> None:
+    """调用 OpenAI 结构化输出生成 claim 待复核队列。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    report_path = output_path or default_llm_claim_precheck_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        report_date,
+    )
+    try:
+        packet = load_llm_claim_precheck_input(input_path)
+    except (OSError, ValueError) as exc:
+        console.print(f"[red]LLM 预审输入无法读取或校验失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+    report = run_openai_claim_precheck(
+        packet,
+        api_key=os.getenv(api_key_env, ""),
+        data_sources=load_data_sources(data_sources_path),
+        input_path=input_path,
+        model=model,
+        reasoning_effort=reasoning_effort,
+    )
+    write_llm_claim_precheck_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]LLM 证据预审状态：{report.status}[/{status_style}]")
+    console.print(f"预审报告：{report_path}")
+    console.print(f"预审记录：{report.record_count}；待复核 claim：{report.pending_review_count}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+    written_path = write_llm_claim_prereview_queue(report, queue_path)
+    console.print(f"LLM claim 待复核队列：{written_path}")
+    console.print("LLM 输出保持 llm_extracted / pending_review，不进入评分或仓位闸门。")
 
 
 @feedback_app.command("calibrate")
@@ -3343,6 +3429,89 @@ def import_risk_event_occurrences_csv_command(
     console.print(f"校验报告：{validation_output}")
     if not validation_report.passed:
         raise typer.Exit(code=1)
+
+
+@risk_events_app.command("precheck-openai")
+def precheck_risk_events_with_openai_command(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="LLM 预审输入 JSON/YAML，包含 source_id 或 source_permission envelope。"),
+    ],
+    queue_path: Annotated[
+        Path,
+        typer.Option(help="写入风险事件预审待复核队列 JSON 的路径。"),
+    ] = DEFAULT_RISK_EVENT_PREREVIEW_QUEUE_PATH,
+    data_sources_path: Annotated[
+        Path,
+        typer.Option(help="数据源目录路径，用于解析 provider LLM 权限。"),
+    ] = DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    risk_events_path: Annotated[
+        Path,
+        typer.Option(help="风险事件配置路径，用于检查 matched_risk_ids。"),
+    ] = DEFAULT_RISK_EVENTS_CONFIG_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="预审和校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 风险事件 OpenAI 预审报告输出路径。"),
+    ] = None,
+    api_key_env: Annotated[
+        str,
+        typer.Option(help="读取 OpenAI API key 的环境变量名。"),
+    ] = "OPENAI_API_KEY",
+    model: Annotated[
+        str,
+        typer.Option(help="OpenAI Responses API 模型。"),
+    ] = DEFAULT_OPENAI_LLM_MODEL,
+    reasoning_effort: Annotated[
+        str,
+        typer.Option(help="OpenAI Responses API reasoning.effort。"),
+    ] = DEFAULT_OPENAI_REASONING_EFFORT,
+) -> None:
+    """调用 OpenAI API 整理风险事件候选，并写入人工复核队列。"""
+    precheck_date = _parse_date(as_of) if as_of else date.today()
+    report_path = output_path or default_risk_event_openai_prereview_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        precheck_date,
+    )
+    try:
+        packet = load_llm_claim_precheck_input(input_path)
+    except (OSError, ValueError) as exc:
+        console.print(f"[red]风险事件 OpenAI 预审输入无法读取或校验失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+    report = run_openai_risk_event_prereview(
+        packet,
+        api_key=os.getenv(api_key_env, ""),
+        data_sources=load_data_sources(data_sources_path),
+        risk_events=load_risk_events(risk_events_path),
+        input_path=input_path,
+        as_of=precheck_date,
+        model=model,
+        reasoning_effort=reasoning_effort,
+    )
+    write_risk_event_prereview_import_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(
+        f"[{status_style}]风险事件 OpenAI 预审状态："
+        f"{report.status}[/{status_style}]"
+    )
+    console.print(f"预审报告：{report_path}")
+    console.print(
+        f"LLM claim 数：{report.row_count}；"
+        f"风险事件候选：{report.record_count}；"
+        f"L2/L3 候选：{report.high_level_candidate_count}"
+    )
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+    written_path = write_risk_event_prereview_queue(report, queue_path)
+    console.print(f"预审待复核队列：{written_path}")
+    console.print("OpenAI 输出保持 llm_extracted / pending_review，不进入评分或仓位闸门。")
 
 
 @risk_events_app.command("import-prereview-csv")

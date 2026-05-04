@@ -223,6 +223,15 @@ sources:
       - FMP 返回负数估值倍数时记录警告并跳过该指标，避免把不可解释倍数写入自动评分输入。
       - HTTPS 连接、SSL、超时、429 和 5xx 临时错误会有限重试；402 等权限错误不重试，必须按 entitlement 问题处理。
       - API plan 或 entitlement 可能限制 endpoint 字段和请求频率。
+    llm_permission:
+      license_scope: paid_vendor_terms_not_reviewed_for_external_llm
+      personal_use_only: true
+      external_llm_allowed: false
+      cache_allowed: true
+      redistribution_allowed: false
+      max_content_sent_level: metadata_only
+      approval_ref: not_approved_for_external_llm_2026-05-04
+      reviewed_at: 2026-05-04
     owner_notes: FMP_API_KEY 只从环境变量读取，命令、报告和错误信息不得输出密钥。
 
   - source_id: eodhd_earnings_trends
@@ -525,6 +534,15 @@ sources:
       - 当前已落地原始 companyfacts JSON、审计清单、基础指标抽取、特征构建、日报基本面评分和 signal_date 级 point-in-time 回测特征。
       - SEC XBRL taxonomy 在 US GAAP 和 IFRS 公司之间可能不同，进入评分前必须做字段映射校验。
       - TSM 在 SEC companyfacts 路径仍主要作为年度基本面来源；季度基本面通过 TSM 官方 IR 合并进统一指标 CSV。
+    llm_permission:
+      license_scope: public_primary_source_owner_review
+      personal_use_only: true
+      external_llm_allowed: true
+      cache_allowed: true
+      redistribution_allowed: true
+      max_content_sent_level: full_text
+      approval_ref: owner_primary_source_llm_policy_2026-05-04
+      reviewed_at: 2026-05-04
     owner_notes: 基本面模块一手来源；下载必须提供符合 SEC fair access 要求的 User-Agent。
 
   - source_id: tsm_investor_relations_quarterly_results
@@ -594,6 +612,15 @@ sources:
       - "filed_date 代表 TSMC IR Management Report 公开/披露日期；回测按 signal_date 只选择当时最新已披露季度，不能用采集日覆盖公开日期。"
       - 合并命令按评估日期选择最新已披露 TSM quarterly，只替换重复的 TSM quarterly as_of/ticker/metric_id/period_type 行，不覆盖 TSM annual 或其他公司 SEC 指标。
       - CapEx 缺失时只记录警告，不能从其他字段推断。
+    llm_permission:
+      license_scope: public_primary_source_owner_review
+      personal_use_only: true
+      external_llm_allowed: true
+      cache_allowed: true
+      redistribution_allowed: true
+      max_content_sent_level: full_text
+      approval_ref: owner_primary_source_llm_policy_2026-05-04
+      reviewed_at: 2026-05-04
     owner_notes: 用于补齐 TSM 在 SEC companyfacts 中缺失的当前季度基本面；不能用半年度 6-K 拆分替代季度数据。
 
   - source_id: news_event_source_tbd
@@ -630,4 +657,61 @@ sources:
     limitations:
       - 供应商尚未确定；现阶段任何自动交易动作都不能依赖该来源。
       - 进入自动评分前必须能映射到 S/A/B 证据等级；B 级只能普通评分，C/D/X 只能报告或人工复核。
+      - provider 授权未知时不得发送全文或长摘录给外部 LLM API。
+    llm_permission:
+      license_scope: provider_not_selected
+      personal_use_only: true
+      external_llm_allowed: false
+      cache_allowed: false
+      redistribution_allowed: false
+      max_content_sent_level: metadata_only
+      approval_ref: provider_not_selected_2026-05-04
+      reviewed_at: 2026-05-04
     owner_notes: 进入评分前必须支持引用、去重、人工复核和 source policy grade。
+
+  - source_id: openai_llm_claim_prereview
+    provider: OpenAI
+    source_type: paid_vendor
+    status: active
+    domains:
+      - news_events
+      - risk_events
+    endpoint: https://api.openai.com/v1/responses
+    adapter: run_openai_claim_precheck
+    cadence: event_driven
+    requires_credentials: true
+    cache_paths:
+      - data/processed/llm_claim_prereview_queue.json
+      - outputs/reports/llm_claim_prereview_YYYY-MM-DD.md
+    primary_for:
+      - llm_claim_prereview
+      - evidence_classification_pending_review
+    audit_fields:
+      - provider
+      - endpoint
+      - request_parameters
+      - downloaded_at
+      - row_count
+      - checksum
+      - model
+      - reasoning_effort
+      - prompt_version
+      - request_id
+      - input_checksum_sha256
+      - output_checksum_sha256
+      - source_permission
+    validation_checks:
+      - provider_permission_fail_closed
+      - structured_output_schema
+      - request_id_presence
+      - checksum_presence
+      - pending_review_only
+      - no_trade_action_output
+      - no_score_or_gate_write
+    limitations:
+      - OpenAI API 只做关键信息校验、结构化抽取、节点映射、去重和人工复核问题生成。
+      - 输出强制写入 `llm_extracted` / `pending_review`，不得直接改变评分、thesis 状态、仓位闸门或交易建议。
+      - 付费供应商内容只有在原始 provider 的 `llm_permission.external_llm_allowed=true` 且内容级别不超过授权范围时才可发送。
+      - 默认请求策略为 `gpt-5.5-pro` + `reasoning.effort=xhigh`，实际请求值必须写入报告和队列。
+      - 请求默认 `store=false`，本地队列只保存结构化字段和 checksum，不保存未授权全文。
+    owner_notes: OPENAI_API_KEY 只从环境变量读取；命令、报告和错误信息不得输出密钥。

@@ -45,9 +45,10 @@ flowchart TD
         REXATT["data/external/risk_event_occurrences/review_attestation_*.yaml<br/>人工复核声明：覆盖窗口、复核人、来源范围和下次复核"]
         REXCSV["data/external/risk_event_imports/*.csv<br/>人工复核后的风险事件发生记录导入表"]
         RPRCSV["data/external/risk_event_prereview_imports/*.csv<br/>OpenAI 结构化预审结果导入表"]
+        LLMI["docs/examples/llm_claim_prereview/*.yaml<br/>LLM claim 预审输入：source_id、source URL、采集时间和待发送内容级别"]
         ME["data/external/market_evidence/*.yaml<br/>新市场信息证据账本"]
         MECSV["data/external/market_evidence_imports/*.csv<br/>人工复核或 LLM 分类后的 evidence 导入表"]
-        DS["config/data_sources.yaml<br/>数据源目录、审计字段、来源限制"]
+        DS["config/data_sources.yaml<br/>数据源目录、审计字段、来源限制和 provider LLM 权限"]
         SEC["config/sec_companies.yaml<br/>SEC CIK、taxonomy 预期和指标周期"]
         FM["config/fundamental_metrics.yaml<br/>SEC 指标映射、支撑指标和派生规则"]
         FF["config/fundamental_features.yaml<br/>SEC 基本面特征公式和周期偏好"]
@@ -187,8 +188,13 @@ flowchart TD
         ROI["aits risk-events import-occurrences-csv"]
         ROIR["outputs/reports/risk_event_occurrence_import_YYYY-MM-DD.md"]
         RPI["aits risk-events import-prereview-csv<br/>OpenAI 输出只进入待人工复核队列"]
+        RPO["aits risk-events precheck-openai<br/>Responses API live 风险事件整理<br/>默认 gpt-5.5-pro / reasoning.effort=xhigh<br/>provider 权限 fail closed"]
         RPQ["data/processed/risk_event_prereview_queue.json<br/>llm_extracted / pending_review 预审队列"]
         RPIR["outputs/reports/risk_event_prereview_import_YYYY-MM-DD.md"]
+        RPOR["outputs/reports/risk_event_prereview_openai_YYYY-MM-DD.md<br/>request id、response id、checksum 和权限边界"]
+        LLMP["aits llm precheck-claims<br/>Responses API + Structured Outputs<br/>默认 gpt-5.5-pro / reasoning.effort=xhigh<br/>provider 权限 fail closed"]
+        LLMQ["data/processed/llm_claim_prereview_queue.json<br/>schema v2：claim-centric llm_extracted / pending_review 队列<br/>记录 model 与 reasoning effort"]
+        LLMR["outputs/reports/llm_claim_prereview_YYYY-MM-DD.md<br/>request id、model、reasoning effort、prompt version、checksum 和权限边界"]
         RAT["aits risk-events record-review-attestation<br/>人工确认无未记录重大风险事件"]
         ROV["aits risk-events validate-occurrences"]
         ROR["outputs/reports/risk_event_occurrences_YYYY-MM-DD.md"]
@@ -481,8 +487,20 @@ flowchart TD
     RE --> RPI
     RPI --> RPQ
     RPI --> RPIR
+    LLMI --> RPO
+    DS --> RPO
+    RE --> RPO
+    RPO --> RPQ
+    RPO --> RPOR
     RPQ -->|人工确认后才可整理为 occurrence CSV| REXCSV
     RPQ --> FLR
+    LLMI --> LLMP
+    DS --> LLMP
+    LLMP --> LLMQ
+    LLMP --> LLMR
+    LLMQ -->|人工确认后才可整理为 evidence CSV| MECSV
+    LLMQ -->|风险事件人工确认后才可整理为 occurrence CSV| REXCSV
+    LLMQ --> FLR
     RAT --> REXATT
     RAT --> ROR
     REXCSV --> ROI
@@ -982,12 +1000,17 @@ flowchart TD
 |风险事件发生记录 CSV 导入|`aits risk-events import-occurrences-csv`|导入人工复核后的事件发生记录 CSV，多证据行按 `occurrence_id` 合并并写入 YAML；关键字段、证据等级、动作等级和人工复核元数据冲突时停止；缺失 `action_class` 默认 `manual_review`|已实现基础版|
 |风险事件发生记录导入报告|`outputs/reports/risk_event_occurrence_import_YYYY-MM-DD.md`|记录 CSV 行数、checksum、导入记录数、错误和警告|已实现基础版|
 |风险事件发生记录校验|`aits risk-events validate-occurrences`|校验实际发生记录 schema、event_id、日期、新鲜度、证据来源、证据等级和动作等级，并校验复核声明的覆盖窗口、复核人、结论、来源范围和过期状态；`watch` 默认只进入报告和人工复核，`B` 级 active 证据只能普通评分，`C/D/X` 或 public convenience 单源不得自动评分或触发仓位闸门；只有当前有效复核声明才能让空发生记录脱离 `insufficient_data`|已实现基础版|
-|风险事件 OpenAI 预审导入|`aits risk-events import-prereview-csv`|导入固定结构化输出，保存 model、prompt version、request id、request timestamp、source URL、输入/输出 checksum、候选 risk_id、ticker/产业链节点映射和人工复核问题；输出强制为 `llm_extracted` / `pending_review`，不写入正式发生记录|已实现基础版|
-|风险事件 OpenAI 预审队列|`data/processed/risk_event_prereview_queue.json`|保存待人工复核预审记录；L2/L3 或 active 候选只作为 review queue，不得直接进入评分、仓位闸门或回测；人工确认后必须通过 reviewed occurrence CSV 和 `validate-occurrences` 进入正式发生记录|已实现基础版|
-|风险事件 OpenAI 预审报告|`outputs/reports/risk_event_prereview_import_YYYY-MM-DD.md`|中文报告输出 CSV 行数、checksum、待复核数量、L2/L3 候选、active 候选、错误和警告；声明本命令不发起 OpenAI API 请求，只导入结构化预审结果|已实现基础版|
-|风险事件 OpenAI 预审模板|`docs/examples/risk_event_prereview/openai_prereview_template.csv`|提供固定结构化输出字段示例；付费供应商内容只有 `external_llm_permitted=true` 时才允许进入外部 LLM 预审|已实现基础版|
-|数据源目录|`config/data_sources.yaml`|记录 provider、endpoint、缓存路径、审计字段、校验项和来源限制|已实现基础版|
-|数据源校验|`aits data-sources validate`|校验数据源目录是否可审计、活跃来源是否声明校验和限制|已实现基础版|
+|风险事件 OpenAI 预审导入|`aits risk-events import-prereview-csv`|导入固定结构化输出，保存 model、reasoning effort、prompt version、request id、request timestamp、source URL、输入/输出 checksum、候选 risk_id、ticker/产业链节点映射和人工复核问题；输出强制为 `llm_extracted` / `pending_review`，不写入正式发生记录|已实现基础版|
+|风险事件 OpenAI live 预审|`aits risk-events precheck-openai`|读取 JSON/YAML source-permission 输入，按 provider `llm_permission` fail closed 后调用 OpenAI Responses API；默认使用 `gpt-5.5-pro` 和 `reasoning.effort=xhigh`，仅将 `risk_event` claim 或风险事件候选转换为 `llm_extracted` / `pending_review` 队列记录，保存 request/response id、model、reasoning effort、prompt version、source permission、输入/输出 checksum、候选 risk_id、ticker/节点映射和人工复核问题|已实现基础版|
+|风险事件 OpenAI 预审队列|`data/processed/risk_event_prereview_queue.json`|保存 schema v2 的待人工复核预审记录、model 与 reasoning effort；L2/L3 或 active 候选只作为 review queue，不得直接进入评分、仓位闸门或回测；人工确认后必须通过 reviewed occurrence CSV 和 `validate-occurrences` 进入正式发生记录|已实现基础版|
+|风险事件 OpenAI 预审报告|`outputs/reports/risk_event_prereview_import_YYYY-MM-DD.md` / `outputs/reports/risk_event_prereview_openai_YYYY-MM-DD.md`|中文报告输出输入行数或 LLM claim 数、model、reasoning effort、checksum、待复核数量、L2/L3 候选、active 候选、错误和警告；live 报告显示 Responses API 调用边界，CSV 报告声明不发起 API 请求|已实现基础版|
+|风险事件 OpenAI 预审模板|`docs/examples/risk_event_prereview/openai_prereview_template.csv` / `docs/examples/risk_event_prereview/openai_live_precheck_template.yaml`|提供固定结构化 CSV 导入示例和 live API source-permission 输入示例；付费供应商内容只有 `external_llm_permitted=true` 或 provider `llm_permission.external_llm_allowed=true` 时才允许进入外部 LLM 预审|已实现基础版|
+|LLM claim 预审|`aits llm precheck-claims`|从 JSON/YAML 输入读取 source_id、来源引用、采集时间和待发送内容，先按 `config/data_sources.yaml` 的 provider LLM 权限 fail closed，再调用 OpenAI Responses API 固定结构化输出；默认使用 `gpt-5.5-pro` 和 `reasoning.effort=xhigh`，请求默认 `store=false`，报告和队列只保存 request id、model、reasoning effort、prompt version、输入/输出 checksum、source permission 和结构化 claim|已实现基础版|
+|LLM claim 预审队列|`data/processed/llm_claim_prereview_queue.json`|保存 schema v2 的 claim-centric `llm_extracted` / `pending_review` 记录、model、reasoning effort、risk_event_candidate 和 thesis_signal_match 候选；不得直接进入评分、thesis 状态迁移、仓位闸门或回测；人工确认后才可整理为 market_evidence 或 reviewed risk occurrence 导入|已实现基础版|
+|LLM claim 预审报告|`outputs/reports/llm_claim_prereview_YYYY-MM-DD.md`|中文报告输出 provider、source、model、reasoning effort、request id、内容发送级别、claim 数量、错误/警告和“不得评分/不得触发仓位闸门”边界；不输出 API key 或未授权全文|已实现基础版|
+|LLM claim 输入模板|`docs/examples/llm_claim_prereview/openai_claim_precheck_template.yaml`|提供 source-permission envelope/catalog 驱动输入示例；真实运行前必须确认 provider 的 `llm_permission.external_llm_allowed=true` 且内容级别不超过授权范围|已实现基础版|
+|数据源目录|`config/data_sources.yaml`|记录 provider、endpoint、缓存路径、审计字段、校验项、来源限制和 provider 级 LLM 处理权限；外部 LLM 授权未知时默认 fail closed|已实现基础版|
+|数据源校验|`aits data-sources validate`|校验数据源目录是否可审计、活跃来源是否声明校验和限制，并校验外部 LLM 处理授权是否有 approval_ref、reviewed_at 和付费供应商 license_scope|已实现基础版|
 |SEC 公司映射|`config/sec_companies.yaml`|记录核心标的 ticker、CIK、taxonomy 预期和统一指标周期覆盖范围；TSM 季度通过 TSM IR 合并补齐|已实现基础版|
 |SEC 指标映射|`config/fundamental_metrics.yaml`|记录 SEC/TSMC IR taxonomy/concept/unit 到内部基本面指标的映射、年度/季度偏好、支撑指标和显式派生规则；TSMC IR 保留 Management Report 的 `TWD_billions`/`USD_billions` 等披露尺度|已实现基础版|
 |SEC 特征公式|`config/fundamental_features.yaml`|记录 SEC 基本面比率特征公式和周期偏好|已实现基础版|

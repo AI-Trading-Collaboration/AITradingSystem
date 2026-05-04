@@ -183,6 +183,7 @@ def validate_data_sources_config(
     for source in sources:
         _check_active_source_auditability(source, issues)
         _check_source_type_constraints(source, issues)
+        _check_llm_permission_constraints(source, issues)
         _check_planned_source_readiness(source, issues)
 
     return DataSourcesValidationReport(
@@ -385,8 +386,8 @@ def render_data_sources_validation_report(report: DataSourcesValidationReport) -
         "",
         "## 数据源目录",
         "",
-        "| Source | Provider | 类型 | 状态 | 领域 | Cadence | 缓存 |",
-        "|---|---|---|---|---|---|---|",
+        "| Source | Provider | 类型 | 状态 | 领域 | Cadence | LLM 权限 | 缓存 |",
+        "|---|---|---|---|---|---|---|---|",
     ]
 
     for source in sorted(report.sources, key=lambda item: item.source_id):
@@ -398,6 +399,7 @@ def render_data_sources_validation_report(report: DataSourcesValidationReport) -
             f"{_status_label(source.status)} | "
             f"{', '.join(source.domains)} | "
             f"{source.cadence} | "
+            f"{_llm_permission_label(source)} | "
             f"{_escape_markdown_table(', '.join(source.cache_paths))} |"
         )
 
@@ -976,6 +978,43 @@ def _check_source_type_constraints(
         )
 
 
+def _check_llm_permission_constraints(
+    source: DataSourceConfig,
+    issues: list[DataSourceIssue],
+) -> None:
+    permission = source.llm_permission
+    if not permission.external_llm_allowed:
+        return
+
+    if not permission.approval_ref:
+        issues.append(
+            DataSourceIssue(
+                severity=DataSourceIssueSeverity.ERROR,
+                code="external_llm_permission_missing_approval_ref",
+                source_id=source.source_id,
+                message="允许外部 LLM 处理的 provider 必须记录 approval_ref。",
+            )
+        )
+    if permission.reviewed_at is None:
+        issues.append(
+            DataSourceIssue(
+                severity=DataSourceIssueSeverity.ERROR,
+                code="external_llm_permission_missing_reviewed_at",
+                source_id=source.source_id,
+                message="允许外部 LLM 处理的 provider 必须记录 reviewed_at。",
+            )
+        )
+    if source.source_type == "paid_vendor" and permission.license_scope == "unknown":
+        issues.append(
+            DataSourceIssue(
+                severity=DataSourceIssueSeverity.ERROR,
+                code="paid_vendor_llm_permission_unknown_license_scope",
+                source_id=source.source_id,
+                message="付费供应商允许外部 LLM 处理前必须记录 license_scope。",
+            )
+        )
+
+
 def _check_planned_source_readiness(
     source: DataSourceConfig,
     issues: list[DataSourceIssue],
@@ -1018,6 +1057,13 @@ def _source_type_label(source_type: str) -> str:
         "public_convenience": "公开便利源",
         "manual_input": "手工输入",
     }.get(source_type, source_type)
+
+
+def _llm_permission_label(source: DataSourceConfig) -> str:
+    permission = source.llm_permission
+    if not permission.external_llm_allowed:
+        return "fail_closed"
+    return f"allowed:{permission.max_content_sent_level}"
 
 
 def _status_label(status: str) -> str:

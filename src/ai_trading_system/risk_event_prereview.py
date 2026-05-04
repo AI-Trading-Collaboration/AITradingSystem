@@ -11,9 +11,21 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
-from ai_trading_system.config import RiskEventsConfig
+from ai_trading_system.config import DataSourcesConfig, RiskEventsConfig
+from ai_trading_system.llm_precheck import (
+    DEFAULT_OPENAI_LLM_MODEL,
+    DEFAULT_OPENAI_REASONING_EFFORT,
+    DEFAULT_OPENAI_RESPONSES_ENDPOINT,
+    HttpPostJson,
+    LlmClaimPrecheckInput,
+    LlmClaimPrecheckRecord,
+    LlmClaimPrecheckReport,
+    LlmPrecheckIssueSeverity,
+    OpenAIReasoningEffort,
+    run_openai_claim_precheck,
+)
 
-RISK_EVENT_PREREVIEW_SCHEMA_VERSION = "risk_event_prereview_queue.v1"
+RISK_EVENT_PREREVIEW_SCHEMA_VERSION = "risk_event_prereview_queue.v2"
 RISK_EVENT_PREREVIEW_PROMPT_VERSION = "risk_event_prereview_v1"
 
 RiskEventPreReviewSourceType = Literal["llm_extracted"]
@@ -33,6 +45,7 @@ RiskEventPreReviewStatusSuggestion = Literal[
 ]
 RiskEventPreReviewLevelSuggestion = Literal["none", "L1", "L2", "L3"]
 RiskEventPreReviewEvidenceGradeSuggestion = Literal["S", "A", "B", "C", "D", "X"]
+RiskEventPreReviewSourceKind = Literal["csv_import", "openai_live"]
 
 REQUIRED_CSV_COLUMNS = frozenset(
     {
@@ -41,6 +54,7 @@ REQUIRED_CSV_COLUMNS = frozenset(
         "source_name",
         "captured_at",
         "model",
+        "reasoning_effort",
         "prompt_version",
         "request_id",
         "request_timestamp",
@@ -84,6 +98,7 @@ OPENAI_RISK_EVENT_PREREVIEW_SCHEMA: dict[str, Any] = {
             "source_name",
             "captured_at",
             "model",
+            "reasoning_effort",
             "prompt_version",
             "request_id",
             "request_timestamp",
@@ -115,6 +130,10 @@ OPENAI_RISK_EVENT_PREREVIEW_SCHEMA: dict[str, Any] = {
             "source_type": {"const": "llm_extracted"},
             "manual_review_status": {"const": "pending_review"},
             "model": {"type": "string"},
+            "reasoning_effort": {
+                "type": "string",
+                "enum": ["none", "minimal", "low", "medium", "high", "xhigh"],
+            },
             "prompt_version": {"type": "string"},
             "request_id": {"type": "string"},
             "request_timestamp": {"type": "string", "format": "date-time"},
@@ -171,11 +190,15 @@ class RiskEventPreReviewRecord(BaseModel):
     source_type: RiskEventPreReviewSourceType = "llm_extracted"
     manual_review_status: RiskEventPreReviewManualReviewStatus = "pending_review"
     model: str = Field(min_length=1)
+    reasoning_effort: OpenAIReasoningEffort
     prompt_version: str = Field(min_length=1)
     request_id: str = Field(min_length=1)
+    response_id: str = ""
+    client_request_id: str = ""
     request_timestamp: datetime
     input_checksum_sha256: str = Field(pattern=r"^[a-fA-F0-9]{64}$")
     output_checksum_sha256: str = Field(pattern=r"^[a-fA-F0-9]{64}$")
+    source_permission: dict[str, Any] = Field(default_factory=dict)
     matched_risk_ids: list[str] = Field(default_factory=list)
     status_suggestion: RiskEventPreReviewStatusSuggestion
     level_suggestion: RiskEventPreReviewLevelSuggestion
@@ -232,6 +255,7 @@ class RiskEventPreReviewImportReport:
     row_count: int
     checksum_sha256: str
     records: tuple[RiskEventPreReviewRecord, ...]
+    source_kind: RiskEventPreReviewSourceKind = "csv_import"
     issues: tuple[RiskEventPreReviewIssue, ...] = field(default_factory=tuple)
 
     @property
@@ -338,15 +362,116 @@ def import_risk_event_prereview_csv(
     )
 
 
+def run_openai_risk_event_prereview(
+    input_packet: LlmClaimPrecheckInput,
+    *,
+    api_key: str,
+    data_sources: DataSourcesConfig | None = None,
+    risk_events: RiskEventsConfig | None = None,
+    input_path: Path | str = Path("<memory>"),
+    as_of: date | None = None,
+    model: str = DEFAULT_OPENAI_LLM_MODEL,
+    reasoning_effort: str = DEFAULT_OPENAI_REASONING_EFFORT,
+    endpoint: str = DEFAULT_OPENAI_RESPONSES_ENDPOINT,
+    timeout_seconds: float = 60.0,
+    generated_at: datetime | None = None,
+    http_post_json: HttpPostJson | None = None,
+) -> RiskEventPreReviewImportReport:
+    claim_report = run_openai_claim_precheck(
+        input_packet,
+        api_key=api_key,
+        data_sources=data_sources,
+        input_path=input_path,
+        model=model,
+        reasoning_effort=reasoning_effort,
+        endpoint=endpoint,
+        timeout_seconds=timeout_seconds,
+        generated_at=generated_at,
+        http_post_json=http_post_json,
+    )
+    return build_risk_event_prereview_from_llm_claim_report(
+        claim_report,
+        risk_events=risk_events,
+        as_of=as_of,
+    )
+
+
+def build_risk_event_prereview_from_llm_claim_report(
+    claim_report: LlmClaimPrecheckReport,
+    *,
+    risk_events: RiskEventsConfig | None = None,
+    as_of: date | None = None,
+) -> RiskEventPreReviewImportReport:
+    issues = [_issue_from_llm_precheck(issue) for issue in claim_report.issues]
+    if claim_report.error_count:
+        return RiskEventPreReviewImportReport(
+            input_path=claim_report.input_path,
+            row_count=claim_report.claim_count,
+            checksum_sha256=_claim_report_checksum(claim_report),
+            records=(),
+            source_kind="openai_live",
+            issues=tuple(issues),
+        )
+
+    known_risk_ids = (
+        {rule.event_id for rule in risk_events.event_rules}
+        if risk_events is not None
+        else set()
+    )
+    records: list[RiskEventPreReviewRecord] = []
+    for llm_record in claim_report.records:
+        for claim_index, claim in enumerate(llm_record.claims, start=1):
+            candidate = claim.risk_event_candidate
+            if not _claim_has_risk_event_candidate(claim.claim_type, candidate):
+                continue
+            row_number = len(records) + 1
+            try:
+                record = _record_from_llm_claim(llm_record, claim_index)
+            except (ValidationError, ValueError) as exc:
+                issues.append(
+                    RiskEventPreReviewIssue(
+                        severity=RiskEventPreReviewIssueSeverity.ERROR,
+                        code="risk_event_prereview_llm_claim_invalid",
+                        row_number=row_number,
+                        precheck_id=llm_record.precheck_id,
+                        message=_error_message(exc),
+                    )
+                )
+                continue
+            _check_record(record, row_number, known_risk_ids, as_of, issues)
+            records.append(record)
+
+    if claim_report.record_count and not records:
+        issues.append(
+            RiskEventPreReviewIssue(
+                severity=RiskEventPreReviewIssueSeverity.WARNING,
+                code="risk_event_prereview_no_risk_event_candidates",
+                message="OpenAI 预审未输出可写入风险事件待复核队列的候选。",
+            )
+        )
+
+    _check_duplicate_records(records, issues)
+    has_error = any(issue.severity == RiskEventPreReviewIssueSeverity.ERROR for issue in issues)
+    return RiskEventPreReviewImportReport(
+        input_path=claim_report.input_path,
+        row_count=claim_report.claim_count,
+        checksum_sha256=_claim_report_checksum(claim_report),
+        records=tuple(sorted(records, key=lambda item: item.precheck_id)) if not has_error else (),
+        source_kind="openai_live",
+        issues=tuple(issues),
+    )
+
+
 def render_risk_event_prereview_import_report(
     report: RiskEventPreReviewImportReport,
 ) -> str:
+    is_live = report.source_kind == "openai_live"
     lines = [
-        "# 风险事件 OpenAI 预审导入报告",
+        "# 风险事件 OpenAI 预审报告" if is_live else "# 风险事件 OpenAI 预审导入报告",
         "",
         f"- 状态：{report.status}",
         f"- 输入路径：`{report.input_path}`",
-        f"- CSV 行数：{report.row_count}",
+        f"- {'LLM claim 数' if is_live else 'CSV 行数'}：{report.row_count}",
         f"- SHA256：`{report.checksum_sha256}`",
         f"- 预审记录数：{report.record_count}",
         f"- 待人工复核：{report.pending_review_count}",
@@ -361,9 +486,9 @@ def render_risk_event_prereview_import_report(
     if report.records:
         lines.extend(
             [
-                "| Precheck | Source | Model | Request | Status | Level | Risk IDs | "
+                "| Precheck | Source | Model | Reasoning | Request | Status | Level | Risk IDs | "
                 "Tickers | Nodes | Confidence | Policy |",
-                "|---|---|---|---|---|---|---|---|---|---:|---|",
+                "|---|---|---|---|---|---|---|---|---|---|---:|---|",
             ]
         )
         for record in report.records:
@@ -372,6 +497,7 @@ def render_risk_event_prereview_import_report(
                 f"{record.precheck_id} | "
                 f"{_escape_markdown_table(record.source_name)} | "
                 f"{_escape_markdown_table(record.model)} | "
+                f"{record.reasoning_effort} | "
                 f"{_escape_markdown_table(record.request_id)} | "
                 f"{_status_suggestion_label(record.status_suggestion)} | "
                 f"{record.level_suggestion} | "
@@ -404,7 +530,12 @@ def render_risk_event_prereview_import_report(
             "",
             "## 方法说明",
             "",
-            "- 本命令导入固定结构化输出，不在本地发起 OpenAI API 请求。",
+            (
+                "- 本命令在本地调用 OpenAI Responses API 固定结构化输出，"
+                "请求使用 `store=false`。"
+                if is_live
+                else "- 本命令导入固定结构化输出，不在本地发起 OpenAI API 请求。"
+            ),
             "- 每条预审记录强制为 `source_type=llm_extracted` 和 "
             "`manual_review_status=pending_review`。",
             "- 预审只做抽取、分类、去重、ticker/产业链节点映射和人工复核问题生成。",
@@ -439,6 +570,9 @@ def write_risk_event_prereview_queue(
     payload = {
         "schema_version": RISK_EVENT_PREREVIEW_SCHEMA_VERSION,
         "generated_at": timestamp.isoformat(),
+        "source_kind": report.source_kind,
+        "source_input_path": str(report.input_path),
+        "source_input_checksum_sha256": report.checksum_sha256,
         "source_csv_path": str(report.input_path),
         "source_csv_checksum_sha256": report.checksum_sha256,
         "row_count": report.row_count,
@@ -455,6 +589,213 @@ def write_risk_event_prereview_queue(
 
 def default_risk_event_prereview_report_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"risk_event_prereview_import_{as_of.isoformat()}.md"
+
+
+def default_risk_event_openai_prereview_report_path(output_dir: Path, as_of: date) -> Path:
+    return output_dir / f"risk_event_prereview_openai_{as_of.isoformat()}.md"
+
+
+def _record_from_llm_claim(
+    llm_record: LlmClaimPrecheckRecord,
+    claim_index: int,
+) -> RiskEventPreReviewRecord:
+    claim = llm_record.claims[claim_index - 1]
+    candidate = claim.risk_event_candidate
+    review_questions = _unique_nonempty(
+        [
+            *claim.required_review_questions,
+            *candidate.review_questions,
+            *[f"缺失确认：{item}" for item in candidate.missing_confirmations],
+        ]
+    )
+    if not review_questions:
+        review_questions = ["人工确认该 OpenAI 线索是否构成风险事件。"]
+
+    matched_risk_ids = _unique_nonempty(candidate.risk_id_candidate)
+    uncertainty_reasons = _unique_nonempty(
+        [*claim.conflicts_or_uncertainties, *candidate.missing_confirmations]
+    )
+    notes = "; ".join(
+        _unique_nonempty(
+            [
+                f"derived_from={llm_record.precheck_id}",
+                f"source_span_ref={claim.source_span_ref}",
+                f"severity_candidate={candidate.severity_candidate}",
+                f"probability_candidate={candidate.probability_candidate}",
+                f"scope_candidate={candidate.scope_candidate}",
+                f"time_sensitivity_candidate={candidate.time_sensitivity_candidate}",
+                f"action_class_candidate={candidate.action_class_candidate}",
+                (
+                    "thesis_signal_match="
+                    f"{','.join(claim.thesis_signal_match)}"
+                    if claim.thesis_signal_match
+                    else ""
+                ),
+                llm_record.notes,
+            ]
+        )
+    )
+    return RiskEventPreReviewRecord(
+        precheck_id=(
+            f"{_safe_id_segment(llm_record.precheck_id)}:"
+            f"{_safe_id_segment(claim.claim_id or str(claim_index))}"
+        ),
+        source_url=llm_record.source_url,
+        source_name=llm_record.source_name,
+        source_title=llm_record.source_title,
+        published_at=llm_record.published_at,
+        captured_at=llm_record.captured_at,
+        original_source_type=llm_record.source_permission.source_type,
+        external_llm_permitted=llm_record.source_permission.external_llm_allowed,
+        source_type="llm_extracted",
+        manual_review_status="pending_review",
+        model=llm_record.model,
+        reasoning_effort=llm_record.reasoning_effort,
+        prompt_version=llm_record.prompt_version,
+        request_id=llm_record.request_id,
+        response_id=llm_record.response_id,
+        client_request_id=llm_record.client_request_id,
+        request_timestamp=llm_record.request_timestamp,
+        input_checksum_sha256=llm_record.input_checksum_sha256,
+        output_checksum_sha256=llm_record.output_checksum_sha256,
+        source_permission=llm_record.source_permission.model_dump(mode="json"),
+        matched_risk_ids=matched_risk_ids,
+        status_suggestion=_status_suggestion_from_candidate(
+            str(claim.claim_type),
+            candidate.status_candidate,
+        ),
+        level_suggestion=_level_suggestion_from_candidate(candidate.level_candidate),
+        affected_tickers=claim.affected_tickers,
+        affected_nodes=claim.affected_nodes,
+        evidence_grade_suggestion=claim.evidence_grade_suggestion,
+        confidence=claim.confidence,
+        uncertainty_reasons=uncertainty_reasons,
+        human_review_questions=review_questions,
+        dedupe_key=_dedupe_key(llm_record, matched_risk_ids, claim.source_span_ref),
+        prohibited_actions_ack=claim.prohibited_actions_ack,
+        raw_summary=claim.claim_text_zh,
+        notes=notes,
+    )
+
+
+def _claim_has_risk_event_candidate(claim_type: str, candidate: Any) -> bool:
+    return (
+        claim_type == "risk_event"
+        or candidate.status_candidate != "none"
+        or candidate.level_candidate != "none"
+        or bool(candidate.risk_id_candidate)
+    )
+
+
+def _status_suggestion_from_candidate(
+    claim_type: str,
+    status_candidate: str,
+) -> RiskEventPreReviewStatusSuggestion:
+    if status_candidate in {
+        "irrelevant",
+        "candidate",
+        "watch",
+        "active_candidate",
+        "resolved_candidate",
+    }:
+        return status_candidate  # type: ignore[return-value]
+    if claim_type == "risk_event":
+        return "candidate"
+    return "irrelevant"
+
+
+def _level_suggestion_from_candidate(
+    level_candidate: str,
+) -> RiskEventPreReviewLevelSuggestion:
+    if level_candidate in {"none", "L1", "L2", "L3"}:
+        return level_candidate  # type: ignore[return-value]
+    return "none"
+
+
+def _issue_from_llm_precheck(issue: Any) -> RiskEventPreReviewIssue:
+    severity = (
+        RiskEventPreReviewIssueSeverity.ERROR
+        if issue.severity == LlmPrecheckIssueSeverity.ERROR
+        else RiskEventPreReviewIssueSeverity.WARNING
+    )
+    return RiskEventPreReviewIssue(
+        severity=severity,
+        code=issue.code,
+        message=issue.message,
+        precheck_id=issue.precheck_id,
+    )
+
+
+def _claim_report_checksum(report: LlmClaimPrecheckReport) -> str:
+    payload = {
+        "input_path": str(report.input_path),
+        "generated_at": report.generated_at.isoformat(),
+        "records": [
+            {
+                "precheck_id": record.precheck_id,
+                "model": record.model,
+                "reasoning_effort": record.reasoning_effort,
+                "request_id": record.request_id,
+                "response_id": record.response_id,
+                "input_checksum_sha256": record.input_checksum_sha256,
+                "output_checksum_sha256": record.output_checksum_sha256,
+                "claim_count": record.claim_count,
+            }
+            for record in report.records
+        ],
+        "issues": [
+            {
+                "severity": str(issue.severity),
+                "code": issue.code,
+                "precheck_id": issue.precheck_id,
+                "message": issue.message,
+            }
+            for issue in report.issues
+        ],
+    }
+    serialized = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+
+def _dedupe_key(
+    llm_record: LlmClaimPrecheckRecord,
+    matched_risk_ids: list[str],
+    source_span_ref: str,
+) -> str:
+    return "|".join(
+        _unique_nonempty(
+            [
+                llm_record.source_url,
+                ",".join(matched_risk_ids),
+                source_span_ref,
+            ]
+        )
+    )
+
+
+def _safe_id_segment(value: str) -> str:
+    normalized = "".join(
+        character if character.isalnum() or character in {"_", ".", ":", "-"} else "-"
+        for character in value.strip()
+    ).strip("-")
+    return normalized or "item"
+
+
+def _unique_nonempty(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        item = value.strip()
+        if not item or item in seen:
+            continue
+        seen.add(item)
+        result.append(item)
+    return result
 
 
 def _check_csv_schema(
@@ -507,6 +848,7 @@ def _record_from_csv_row(row: dict[str, str]) -> RiskEventPreReviewRecord:
         source_type=row.get("source_type") or "llm_extracted",
         manual_review_status=row.get("manual_review_status") or "pending_review",
         model=row["model"],
+        reasoning_effort=row["reasoning_effort"],
         prompt_version=row["prompt_version"],
         request_id=row["request_id"],
         request_timestamp=_parse_datetime(row["request_timestamp"]),

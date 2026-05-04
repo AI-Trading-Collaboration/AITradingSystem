@@ -55,6 +55,15 @@
 
 价值判断：有价值，但必须严格限权。LLM 不应直接输出看多、看空、加仓或减仓；它适合做信息抽取、节点映射、证据归档和人工复核提示。这样能提升处理效率，同时避免把交易评分变成黑箱。
 
+2026-05-04 owner 决策：
+
+- OpenAI API 的主要用途确定为关键信息校验、新闻/公告抽取、ticker/产业链节点映射、风险事件候选分类、重复线索合并和人工复核问题生成。
+- 项目级使用目的限定为 owner 个人投资决策支持，不提供给其他人，不做对外再分发。
+- 付费新闻和供应商内容可以进入 LLM 预审，但每个 provider 必须显式记录是否允许发送给外部 LLM API、是否允许缓存、是否允许摘要进入报告，以及授权依据；授权未知时不得发送全文或长摘录。
+- LLM 输出统一保持 `llm_extracted` / `pending_review`，人工确认前不得作为自动评分、仓位闸门、thesis 状态迁移或日报可执行结论的输入。
+- 预审 schema 采用“source-permission envelope + claim-centric payload”为通用底座；风险事件继续使用 `risk_event_candidate` 专用 payload。
+- OpenAI 默认请求策略统一为 `gpt-5.5-pro` 和 `reasoning.effort=xhigh`；命令可显式覆盖用于对比实验，但报告和队列必须记录实际 model 与 reasoning effort。
+
 允许任务：
 
 - 判断新闻或公告影响哪个产业链节点。
@@ -69,6 +78,14 @@
 - 直接输出买入、卖出、加仓、减仓建议。
 - 在没有结构化证据和人工复核门槛时直接修改评分或仓位。
 
+OpenAI API 使用边界：
+
+- API 调用必须使用固定结构化输出 schema，优先采用 Responses API + Structured Outputs；非紧急批量分类可使用 Batch API。
+- 默认请求不应要求 OpenAI 存储供应商内容；不得把付费全文写入 Assistants/Threads/Vector Stores/Files 或外部工具链。
+- 本地运行记录必须保存 model、reasoning effort、prompt version、request id、request timestamp、输入 checksum、输出 checksum、source URL、provider、授权标记和是否包含付费供应商内容。
+- 报告不得复制付费供应商长文或完整原文，只能输出来源引用、短摘要、结构化字段和人工确认结论。
+- OpenAI 官方边界参考：API 数据默认不用于训练，但客户仍需确保自己有权把 Input 提供给服务；金融高影响场景必须保留人工复核，不得自动作出交易决策。
+
 风险事件第一版落地边界：
 
 - OpenAI API 可作为风险事件预审助手，使用 Responses API + Structured Outputs 生成固定 JSON schema；夜间或非紧急批量分类可使用 Batch API。
@@ -77,12 +94,62 @@
 - L2、L3、`position_gate_eligible`、来源冲突、低置信度或无法追到一手来源的候选事件，必须进入人工复核；L3 或仓位闸门候选需要投资 owner 与系统/数据 owner 双确认。
 - 详细流程和实施拆解见 `docs/requirements/risk_event_review_workflow_2026-05-04.md`。
 
+预审 schema 确定方案：
+
+第一版通用预审记录由两层组成。
+
+### Source permission envelope
+
+该层先决定内容能不能发送给外部 LLM API。建议字段：
+
+|字段|含义|
+|---|---|
+|`provider`|来源 provider 或发布主体|
+|`source_type`|`primary_source`、`paid_vendor`、`manual_input`、`public_convenience` 等|
+|`license_scope`|订阅或来源授权范围|
+|`personal_use_only`|是否限定 owner 个人使用|
+|`external_llm_allowed`|是否允许发送给外部 LLM API；未知视为 false|
+|`cache_allowed`|是否允许本地保存输入片段或仅保存 checksum|
+|`redistribution_allowed`|是否允许在报告中展示摘要或引用|
+|`content_sent_level`|`metadata_only`、`short_excerpt`、`summary_only`、`full_text`|
+|`approval_ref`|授权依据、人工批准或供应商条款引用|
+
+如果 `external_llm_allowed=false` 或未知，系统不得发送供应商全文或长摘录给 OpenAI API；只能进入人工复核，或在授权允许时发送元数据/人工摘要。
+
+### Claim-centric payload
+
+该层只承载 LLM 抽取出的待复核事实断言。建议字段：
+
+|字段|含义|
+|---|---|
+|`precheck_id`|稳定预审记录 ID|
+|`claims`|结构化 claim 数组|
+|`claim_id`|单条 claim 的稳定 ID|
+|`claim_text_zh`|中文事实断言，不得写成交易建议|
+|`source_span_ref`|原文位置、段落编号或可审计片段引用|
+|`published_at` / `captured_at`|发布时间和采集时间|
+|`affected_tickers` / `affected_nodes`|影响 ticker 和产业链节点|
+|`claim_type`|`risk_event`、`thesis_signal`、`catalyst`、`fundamental`、`valuation`、`supply_chain`、`macro` 等|
+|`novelty`|`new`、`confirming`、`duplicate`、`conflicting`、`unclear`|
+|`impact_horizon`|`intraday`、`short_term`、`medium_term`、`long_term`、`unclear`|
+|`evidence_grade_suggestion`|仅供人工参考，不得自动写成最终等级|
+|`confidence`|模型分类置信度|
+|`conflicts_or_uncertainties`|冲突、不确定点和缺失来源|
+|`required_review_questions`|人工复核必须回答的问题|
+|`manual_review_status`|固定为 `pending_review`|
+|`prohibited_actions_ack`|确认不得直接评分、不得触发仓位闸门|
+
+### Risk-event candidate payload
+
+风险事件仍使用更贴近 `RISK-004` 的专用 payload：`risk_id_candidate`、`status_candidate`、`level_candidate`、`severity_candidate`、`probability_candidate`、`scope_candidate`、`time_sensitivity_candidate`、`action_class_candidate`、`missing_confirmations`、`review_questions`。所有字段都是 candidate，不得自动写入正式 `risk_event_occurrence`。
+
 分步开发：
 
-1. 设计证据分类 schema，覆盖 source、published_at、captured_at、ticker、industry_chain_node、evidence_grade、novelty、impact_horizon、risk_event_match、thesis_signal_match、manual_review_required。
-2. 建立新闻/公告输入来源策略，明确一手来源、付费新闻、公开便利源和人工输入的使用边界。
-3. 输出 evidence card 或结构化待复核队列，只进入报告和人工复核，不直接进入交易评分。
-4. 经人工复核和回归测试稳定后，再评估是否允许高等级结构化证据触发既有 risk event 或 thesis 状态迁移。
+1. 在数据源目录中增加 LLM 处理授权字段，覆盖 provider、授权范围、外部 LLM 处理、缓存、报告摘要和批准引用；授权未知时 fail closed。
+2. 设计并实现通用 `source-permission envelope + claim-centric payload` schema，覆盖 source、published_at、captured_at、ticker、industry_chain_node、evidence_grade_suggestion、novelty、impact_horizon、risk_event_match、thesis_signal_match、manual_review_required。
+3. 为风险事件保留 `risk_event_candidate` 专用 schema，并和现有 `risk_event_prereview_queue` 对齐。
+4. 输出 evidence card 或结构化待复核队列，只进入报告和人工复核，不直接进入交易评分。
+5. 经人工复核、供应商授权验证和回归测试稳定后，再评估是否允许人工确认后的高等级结构化证据触发既有 risk event 或 thesis 状态迁移。
 
 验收标准：
 
@@ -94,7 +161,7 @@
 开放问题：
 
 - 新闻或公告数据源、授权范围和成本。
-- 是否允许使用外部 LLM API 处理付费新闻或供应商内容。
+- 具体供应商条款如何记录为 `approval_ref`，以及哪些 provider 只能发送 metadata 或人工摘要。
 - 人工复核队列的 owner、SLA 和留痕方式。
 
 ## BACKTEST-001
@@ -238,6 +305,11 @@
 - 2026-05-04：`SCORE-002` 已完成基础实现：每日评分和回测将 AI 产业链评分与判断置信度分开输出，`scores_daily.csv`、日报、decision snapshot 和回测明细/报告均记录 confidence 字段与低置信度原因。
 - 2026-05-04：`REPORT-002` 已完成首版实现：`scores_daily.csv` 的 overall 行保存模型/最终/置信度调整仓位区间和总资产 AI 仓位区间；日报新增“变化原因树”和“什么情况会改变判断”，从上期 overall 评分记录读取仓位、总分和置信度变化，并按趋势、风险情绪、估值、基本面、thesis、风险事件、数据质量和仓位闸门解释最终动作约束。
 - 2026-05-04：补充风险事件 OpenAI 预审边界：OpenAI API 只做结构化预审和人工复核提示，不替代人工确认；`RISK-004` 承接具体实现，完整流程见 `docs/requirements/risk_event_review_workflow_2026-05-04.md`。
+- 2026-05-04：owner 确认 `LLM-001` 使用边界：OpenAI API 用于关键信息校验和结构化预审；付费新闻/供应商内容可在 owner 个人使用目的下处理，但必须有 provider 级外部 LLM 授权标记；预审 schema 确定为通用 `source-permission envelope + claim-centric payload`，风险事件沿用专用 candidate payload。
+- 2026-05-04：`LLM-001` 进入实现。owner 已把 OpenAI API key 设置为环境变量；剩余阻塞项按保守默认落地：第一阶段真实样本优先使用官方/一手来源和 owner 手工摘要，provider 授权未知时不得发送全文或长摘录，所有 LLM 输出只进入 `llm_extracted` / `pending_review` 队列。
+- 2026-05-04：`LLM-001` 第一阶段达到 `BASELINE_DONE`：新增 provider 级 `llm_permission` schema、`aits llm precheck-claims`、OpenAI Responses API `store=false` 结构化调用、claim-centric 待复核队列、中文审计报告、输入模板和隔离测试；未执行真实生产样本调用，完整运行仍依赖 owner 批准样本、provider 授权条款覆盖和人工复核 SLA。
+- 2026-05-04：`LLM-001` 再次进入实现：owner 指定 OpenAI 默认请求策略统一升级为 `gpt-5.5-pro` 和 `reasoning.effort=xhigh`；实现必须保持 Responses API Structured Outputs、`store=false`、provider 权限 fail closed、LLM 输出不得直连评分/仓位闸门，并把 reasoning effort 纳入请求审计、报告和待复核队列。
+- 2026-05-04：`LLM-001` 模型策略更新达到 `BASELINE_DONE`：`aits llm precheck-claims` 和 `aits risk-events precheck-openai` 默认使用 `gpt-5.5-pro` 与 `reasoning.effort=xhigh`，CLI 可显式覆盖；claim/risk 预审队列、中文报告、数据源目录、示例和系统流图均记录 reasoning effort；`.venv\Scripts\python.exe -m pytest -q` 通过 311 项测试，`ruff check config src tests` 通过。
 - 2026-05-04：`BACKTEST-001` 已完成第一阶段基础实现：`aits backtest` 新增 `--robustness-report` / `--robustness-report-path`，可生成中文回测稳健性报告，复用同一 point-in-time 输入对比基础动态策略、成本压力、起点后移和买入持有基准；报告明确 `production_effect=none`，完整防过拟合仍需权重扰动、固定仓位/趋势-only/随机基线、机器可读摘要和样本外验证。
 - 2026-05-04：`BACKTEST-001` 第二阶段进入实现：增加固定 60% 总资产 AI exposure
   基线和机器可读 JSON 摘要；基线复用基础回测的下一交易日收益和显式成本假设，不读取额外数据；
