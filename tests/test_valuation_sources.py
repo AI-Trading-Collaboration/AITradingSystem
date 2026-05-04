@@ -19,17 +19,21 @@ from ai_trading_system.valuation import (
     validate_valuation_snapshot_store,
 )
 from ai_trading_system.valuation_sources import (
+    EodhdEarningsTrendsFetchReport,
     FmpAnalystEstimateHistorySnapshot,
     FmpHistoricalValuationFetchReport,
     FmpHttpValuationProvider,
+    fetch_eodhd_earnings_trend_snapshots,
     fetch_fmp_historical_valuation_snapshots,
     fetch_fmp_valuation_snapshots,
     import_valuation_snapshots_from_csv,
     load_fmp_analyst_estimate_history_snapshots,
+    render_eodhd_earnings_trends_fetch_report,
     render_fmp_historical_valuation_fetch_report,
     render_fmp_valuation_fetch_report,
     render_valuation_csv_import_report,
     validate_fmp_analyst_estimate_history,
+    write_eodhd_earnings_trends_raw_payload,
     write_fmp_analyst_estimate_history_snapshots,
     write_fmp_historical_valuation_raw_payloads,
     write_valuation_snapshots_as_yaml,
@@ -637,6 +641,148 @@ def test_valuation_fetch_fmp_valuation_history_cli_writes_raw_yaml_and_reports(
     assert validation_report_path.exists()
 
 
+def test_fetch_eodhd_earnings_trends_merges_eps_revision_into_base_snapshot(
+    tmp_path: Path,
+) -> None:
+    base_dir = tmp_path / "valuation_snapshots"
+    write_valuation_snapshots_as_yaml(
+        [_base_current_valuation_snapshot()],
+        base_dir,
+    )
+
+    report = fetch_eodhd_earnings_trend_snapshots(
+        ["NVDA"],
+        "test-token",
+        date(2026, 5, 2),
+        provider=_FakeEodhdProvider(),
+        base_valuation_dir=base_dir,
+        captured_at=date(2026, 5, 2),
+        downloaded_at=datetime(2026, 5, 2, tzinfo=UTC),
+    )
+
+    assert report.status == "PASS"
+    assert report.row_count == 2
+    assert report.imported_count == 1
+    assert len(report.checksum_sha256) == 64
+    snapshot = report.snapshots[0]
+    assert snapshot.snapshot_id == "merged_nvda_valuation_eodhd_trends_2026_05_02"
+    assert snapshot.source_type == "paid_vendor"
+    assert snapshot.source_name == "EODHD Earnings Trends + Financial Modeling Prep"
+    assert snapshot.history_source_class == "vendor_current_trend"
+    assert snapshot.backtest_use == "captured_at_forward_only"
+    assert snapshot.valuation_percentile == 70
+    assert {metric.metric_id for metric in snapshot.valuation_metrics} == {
+        "forward_pe",
+        "ev_sales",
+    }
+    expectation_metrics = {
+        metric.metric_id: metric for metric in snapshot.expectation_metrics
+    }
+    assert expectation_metrics["revenue_growth_next_12m_pct"].value == 20
+    assert expectation_metrics["eps_revision_90d_pct"].value == approx(20)
+    assert "EODHD Earnings Trends" in render_eodhd_earnings_trends_fetch_report(report)
+
+    raw_paths = write_eodhd_earnings_trends_raw_payload(
+        report.raw_payload,
+        tmp_path / "raw",
+    )
+    raw_payload = json.loads(raw_paths[0].read_text(encoding="utf-8"))
+    assert raw_payload["provider"] == "EODHD Earnings Trends"
+    assert raw_payload["request_parameters"]["symbols"] == "NVDA.US"
+    assert raw_payload["row_count"] == 2
+
+
+def test_fetch_eodhd_earnings_trends_reports_missing_90d_input(
+    tmp_path: Path,
+) -> None:
+    base_dir = tmp_path / "valuation_snapshots"
+    write_valuation_snapshots_as_yaml(
+        [_base_current_valuation_snapshot()],
+        base_dir,
+    )
+
+    report = fetch_eodhd_earnings_trend_snapshots(
+        ["NVDA"],
+        "test-token",
+        date(2026, 5, 2),
+        provider=_FakeEodhdProvider(missing_90d=True),
+        base_valuation_dir=base_dir,
+        captured_at=date(2026, 5, 2),
+    )
+
+    assert report.status == "PASS_WITH_WARNINGS"
+    assert report.imported_count == 0
+    assert "missing_eodhd_eps_trend_90d" in {issue.code for issue in report.issues}
+
+
+def test_valuation_fetch_eodhd_trends_cli_writes_raw_yaml_and_reports(
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
+    output_dir = tmp_path / "valuation_snapshots"
+    raw_output_dir = tmp_path / "eodhd_earnings_trends"
+    fetch_report_path = tmp_path / "eodhd_fetch.md"
+    validation_report_path = tmp_path / "valuation_validation.md"
+    write_valuation_snapshots_as_yaml(
+        [_base_current_valuation_snapshot()],
+        output_dir,
+    )
+
+    def fake_fetch(
+        tickers: list[str] | tuple[str, ...],
+        api_key: str,
+        as_of: date,
+        *,
+        base_valuation_dir: Path | str | None = None,
+        captured_at: date | None = None,
+    ) -> EodhdEarningsTrendsFetchReport:
+        return fetch_eodhd_earnings_trend_snapshots(
+            tickers,
+            api_key,
+            as_of,
+            provider=_FakeEodhdProvider(),
+            base_valuation_dir=base_valuation_dir,
+            captured_at=captured_at or as_of,
+            downloaded_at=datetime(2026, 5, 2, tzinfo=UTC),
+        )
+
+    monkeypatch.setenv("EODHD_API_KEY", "test-token")
+    monkeypatch.setattr(cli_module, "fetch_eodhd_earnings_trend_snapshots", fake_fetch)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "valuation",
+            "fetch-eodhd-trends",
+            "--tickers",
+            "NVDA",
+            "--output-dir",
+            str(output_dir),
+            "--raw-output-dir",
+            str(raw_output_dir),
+            "--as-of",
+            "2026-05-02",
+            "--output-path",
+            str(fetch_report_path),
+            "--validation-report-path",
+            str(validation_report_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "EODHD trends 拉取状态：PASS" in result.output
+    assert (
+        output_dir / "merged_nvda_valuation_eodhd_trends_2026_05_02.yaml"
+    ).exists()
+    assert (
+        raw_output_dir
+        / "nvda"
+        / "eodhd_earnings_trends_nvda_2026-05-02.json"
+    ).exists()
+    assert fetch_report_path.exists()
+    assert validation_report_path.exists()
+
+
 def test_valuation_validate_fmp_history_cli_writes_report(tmp_path: Path) -> None:
     history_dir = tmp_path / "fmp_history"
     report_path = tmp_path / "fmp_history_validation.md"
@@ -681,6 +827,39 @@ def test_valuation_validate_fmp_history_cli_writes_report(tmp_path: Path) -> Non
     assert result.exit_code == 0
     assert "FMP analyst history 校验状态：PASS" in result.output
     assert report_path.exists()
+
+
+class _FakeEodhdProvider:
+    def __init__(self, *, missing_90d: bool = False) -> None:
+        self.missing_90d = missing_90d
+
+    def fetch_earnings_trends(self, provider_symbols: tuple[str, ...]) -> dict[str, Any]:
+        assert provider_symbols == ("NVDA.US",)
+        eps_90d = None if self.missing_90d else "5.0000"
+        return {
+            "type": "Trends",
+            "description": "Historical and upcoming earning trends",
+            "symbols": "NVDA.US",
+            "trends": [
+                [
+                    {
+                        "code": "NVDA.US",
+                        "date": "2027-01-31",
+                        "period": "+1y",
+                        "epsTrendCurrent": "6.0000",
+                        "epsTrend90daysAgo": eps_90d,
+                        "revenueEstimateGrowth": "0.25",
+                    },
+                    {
+                        "code": "NVDA.US",
+                        "date": "2026-07-31",
+                        "period": "+1q",
+                        "epsTrendCurrent": "1.5000",
+                        "epsTrend90daysAgo": "1.2500",
+                    },
+                ]
+            ],
+        }
 
 
 class _FakeFmpProvider:
@@ -871,6 +1050,55 @@ def _fmp_history_snapshot(
                 period="next_12m",
             ),
         ],
+    )
+
+
+def _base_current_valuation_snapshot() -> ValuationSnapshot:
+    return ValuationSnapshot(
+        snapshot_id="fmp_nvda_valuation_2026_05_02",
+        ticker="NVDA",
+        as_of=date(2026, 5, 2),
+        source_type="paid_vendor",
+        source_name="Financial Modeling Prep",
+        source_url="https://financialmodelingprep.com/stable/quote-short",
+        captured_at=date(2026, 5, 2),
+        point_in_time_class="captured_snapshot",
+        history_source_class="captured_snapshot_history",
+        confidence_level="medium",
+        confidence_reason="FMP current snapshot test input.",
+        backtest_use="captured_at_forward_only",
+        valuation_metrics=[
+            SnapshotMetric(
+                metric_id="forward_pe",
+                value=30.0,
+                unit="ratio",
+                period="next_annual_estimate",
+            ),
+            SnapshotMetric(
+                metric_id="ev_sales",
+                value=18.0,
+                unit="ratio",
+                period="ttm",
+            ),
+        ],
+        expectation_metrics=[
+            SnapshotMetric(
+                metric_id="revenue_growth_next_12m_pct",
+                value=20.0,
+                unit="percent",
+                period="next_annual_estimate",
+            ),
+            SnapshotMetric(
+                metric_id="eps_revision_90d_pct",
+                value=1.0,
+                unit="percent",
+                period="trailing_90d",
+                source_field="analyst-estimates.epsAvg",
+            ),
+        ],
+        valuation_percentile=70,
+        overall_assessment="expensive",
+        notes="Base FMP snapshot.",
     )
 
 

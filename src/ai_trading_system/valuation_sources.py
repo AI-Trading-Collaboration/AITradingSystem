@@ -91,6 +91,10 @@ FMP_SYMBOL_ALIASES = {
 }
 FMP_ANALYST_ESTIMATE_PERIOD = "annual"
 FMP_ANALYST_ESTIMATE_PAGE = 0
+EODHD_SOURCE_NAME = "EODHD Earnings Trends"
+EODHD_BASE_URL = "https://eodhd.com/api"
+EODHD_EARNINGS_TRENDS_ENDPOINT = "calendar/trends"
+EODHD_SYMBOL_ALIASES: dict[str, str] = {}
 DEFAULT_EPS_REVISION_LOOKBACK_DAYS = 90
 DEFAULT_EPS_REVISION_TOLERANCE_DAYS = 15
 DEFAULT_MINIMUM_VALUATION_HISTORY_POINTS = 3
@@ -318,6 +322,66 @@ class FmpHistoricalValuationFetchReport:
         return "PASS"
 
 
+@dataclass(frozen=True)
+class EodhdEarningsTrendsRawPayload:
+    as_of: date
+    captured_at: date
+    downloaded_at: datetime
+    requested_tickers: tuple[str, ...]
+    provider_symbols: tuple[str, ...]
+    endpoint: str
+    request_parameters: dict[str, object]
+    records_by_ticker: dict[str, tuple[dict[str, Any], ...]]
+    checksum_sha256: str
+    source_path: Path | None = None
+
+    @property
+    def row_count(self) -> int:
+        return sum(len(records) for records in self.records_by_ticker.values())
+
+
+@dataclass(frozen=True)
+class EodhdEarningsTrendsFetchReport:
+    as_of: date
+    captured_at: date
+    downloaded_at: datetime
+    requested_tickers: tuple[str, ...]
+    provider_symbols: tuple[str, ...]
+    base_valuation_input_path: Path | None
+    base_valuation_snapshot_count: int
+    raw_payload: EodhdEarningsTrendsRawPayload | None
+    row_count: int
+    checksum_sha256: str
+    snapshots: tuple[ValuationSnapshot, ...]
+    issues: tuple[FmpValuationFetchIssue, ...] = field(default_factory=tuple)
+    source_name: str = EODHD_SOURCE_NAME
+    source_type: str = "paid_vendor"
+
+    @property
+    def imported_count(self) -> int:
+        return len(self.snapshots)
+
+    @property
+    def error_count(self) -> int:
+        return sum(1 for issue in self.issues if issue.severity == ValuationIssueSeverity.ERROR)
+
+    @property
+    def warning_count(self) -> int:
+        return sum(1 for issue in self.issues if issue.severity == ValuationIssueSeverity.WARNING)
+
+    @property
+    def passed(self) -> bool:
+        return self.error_count == 0
+
+    @property
+    def status(self) -> str:
+        if self.error_count:
+            return "FAIL"
+        if self.warning_count:
+            return "PASS_WITH_WARNINGS"
+        return "PASS"
+
+
 class FmpValuationProvider(Protocol):
     def fetch_quote_short(self, ticker: str) -> list[dict[str, Any]]:
         """Fetch current quote records for one ticker."""
@@ -356,6 +420,11 @@ class FmpHistoricalValuationProvider(Protocol):
         limit: int,
     ) -> list[dict[str, Any]]:
         """Fetch historical ratio records for one ticker."""
+
+
+class EodhdEarningsTrendsProvider(Protocol):
+    def fetch_earnings_trends(self, provider_symbols: tuple[str, ...]) -> dict[str, Any]:
+        """Fetch EODHD earnings trends records for one or more provider symbols."""
 
 
 class FmpHttpValuationProvider:
@@ -466,6 +535,71 @@ class FmpHttpValuationProvider:
                 raise ValueError(f"FMP {endpoint} returned an error: {message}")
             return [cast(dict[str, Any], data)]
         raise TypeError(f"FMP {endpoint} response was not JSON object/list")
+
+
+class EodhdHttpEarningsTrendsProvider:
+    def __init__(
+        self,
+        api_key: str,
+        *,
+        base_url: str = EODHD_BASE_URL,
+        timeout: int = 30,
+        max_attempts: int = 3,
+        retry_backoff_seconds: float = 0.5,
+        requests_module: Any | None = None,
+    ) -> None:
+        if not api_key.strip():
+            raise ValueError("EODHD API key must not be empty")
+        if max_attempts < 1:
+            raise ValueError("EODHD max_attempts must be at least 1")
+        if retry_backoff_seconds < 0:
+            raise ValueError("EODHD retry_backoff_seconds must be non-negative")
+        self._api_key = api_key.strip()
+        self._base_url = base_url.rstrip("/")
+        self._timeout = timeout
+        self._max_attempts = max_attempts
+        self._retry_backoff_seconds = retry_backoff_seconds
+        self._requests_module = requests_module
+
+    def fetch_earnings_trends(self, provider_symbols: tuple[str, ...]) -> dict[str, Any]:
+        return self._get(
+            EODHD_EARNINGS_TRENDS_ENDPOINT,
+            {
+                "symbols": ",".join(provider_symbols),
+                "fmt": "json",
+            },
+        )
+
+    def endpoint_for(self, endpoint: str) -> str:
+        return f"{self._base_url}/{endpoint}"
+
+    def _get(self, endpoint: str, params: dict[str, object]) -> dict[str, Any]:
+        requests = self._requests_module or cast(Any, import_module("requests"))
+        request_params = {**params, "api_token": self._api_key}
+        response: Any | None = None
+        for attempt in range(1, self._max_attempts + 1):
+            try:
+                response = requests.get(
+                    self.endpoint_for(endpoint),
+                    params=request_params,
+                    timeout=self._timeout,
+                )
+                response.raise_for_status()
+                break
+            except Exception as exc:
+                if not _should_retry_fmp_http_error(exc) or attempt >= self._max_attempts:
+                    raise
+                if self._retry_backoff_seconds:
+                    time.sleep(self._retry_backoff_seconds * attempt)
+        if response is None:
+            raise RuntimeError(f"EODHD {endpoint} request did not return a response")
+        data = response.json()
+        if isinstance(data, dict):
+            if "Error Message" in data or "error" in data:
+                message = str(data.get("Error Message") or data.get("error"))
+                raise ValueError(f"EODHD {endpoint} returned an error: {message}")
+            return cast(dict[str, Any], data)
+        raise TypeError(f"EODHD {endpoint} response was not a JSON object")
 
 
 def fetch_fmp_valuation_snapshots(
@@ -711,6 +845,130 @@ def fetch_fmp_historical_valuation_snapshots(
         raw_payloads=tuple(raw_payloads),
         row_count=sum(payload.row_count for payload in raw_payloads),
         checksum_sha256=checksum,
+        snapshots=tuple(sorted(snapshots, key=lambda item: item.snapshot_id)),
+        issues=tuple(issues),
+    )
+
+
+def fetch_eodhd_earnings_trend_snapshots(
+    tickers: list[str] | tuple[str, ...],
+    api_key: str,
+    as_of: date,
+    *,
+    provider: EodhdEarningsTrendsProvider | None = None,
+    base_valuation_dir: Path | str | None = None,
+    captured_at: date | None = None,
+    downloaded_at: datetime | None = None,
+) -> EodhdEarningsTrendsFetchReport:
+    normalized_tickers = tuple(_normalize_tickers(tickers))
+    if not normalized_tickers:
+        raise ValueError("EODHD earnings trends fetch requires at least one ticker")
+    if not api_key.strip():
+        raise ValueError("EODHD API key must not be empty")
+
+    provider_symbols = tuple(_eodhd_provider_symbol(ticker) for ticker in normalized_tickers)
+    fetch_provider = provider or EodhdHttpEarningsTrendsProvider(api_key)
+    download_time = downloaded_at or datetime.now(tz=UTC)
+    fetch_date = captured_at or download_time.date()
+    issues: list[FmpValuationFetchIssue] = []
+    base_path = Path(base_valuation_dir) if base_valuation_dir is not None else None
+    base_snapshots = (
+        _latest_visible_base_valuation_snapshots(base_path, normalized_tickers, as_of, issues)
+        if base_path is not None
+        else {}
+    )
+
+    try:
+        raw_response = fetch_provider.fetch_earnings_trends(provider_symbols)
+    except Exception as exc:
+        issue = FmpValuationFetchIssue(
+            severity=ValuationIssueSeverity.ERROR,
+            code="eodhd_earnings_trends_request_failed",
+            endpoint=EODHD_EARNINGS_TRENDS_ENDPOINT,
+            message=f"EODHD Earnings Trends 请求失败：{_sanitize_eodhd_error_message(exc)}",
+        )
+        return EodhdEarningsTrendsFetchReport(
+            as_of=as_of,
+            captured_at=fetch_date,
+            downloaded_at=download_time,
+            requested_tickers=normalized_tickers,
+            provider_symbols=provider_symbols,
+            base_valuation_input_path=base_path,
+            base_valuation_snapshot_count=len(base_snapshots),
+            raw_payload=None,
+            row_count=0,
+            checksum_sha256=_json_checksum({}),
+            snapshots=(),
+            issues=(issue,),
+        )
+
+    records_by_ticker = _eodhd_trend_records_by_ticker(
+        raw_response=raw_response,
+        tickers=normalized_tickers,
+        provider_symbols=provider_symbols,
+        issues=issues,
+    )
+    request_parameters = {
+        "symbols": ",".join(provider_symbols),
+        "fmt": "json",
+    }
+    raw_payload = EodhdEarningsTrendsRawPayload(
+        as_of=as_of,
+        captured_at=fetch_date,
+        downloaded_at=download_time,
+        requested_tickers=normalized_tickers,
+        provider_symbols=provider_symbols,
+        endpoint=f"{EODHD_BASE_URL}/{EODHD_EARNINGS_TRENDS_ENDPOINT}",
+        request_parameters=request_parameters,
+        records_by_ticker=records_by_ticker,
+        checksum_sha256=_json_checksum(raw_response),
+    )
+
+    snapshots: list[ValuationSnapshot] = []
+    for ticker in normalized_tickers:
+        base = base_snapshots.get(ticker)
+        if base is None:
+            issues.append(
+                FmpValuationFetchIssue(
+                    severity=ValuationIssueSeverity.WARNING,
+                    code="missing_base_valuation_snapshot",
+                    ticker=ticker,
+                    message=(
+                        "缺少当前可见基础估值快照，EODHD trend 不能单独生成评分快照；"
+                        "请先运行 FMP 或 CSV 估值快照导入。"
+                    ),
+                )
+            )
+            continue
+        trend_metric = _eodhd_eps_revision_metric(
+            ticker=ticker,
+            as_of=as_of,
+            records=records_by_ticker.get(ticker, ()),
+            issues=issues,
+        )
+        if trend_metric is None:
+            continue
+        snapshots.append(
+            _merged_eodhd_trend_snapshot(
+                base=base.snapshot,
+                as_of=as_of,
+                captured_at=fetch_date,
+                downloaded_at=download_time,
+                trend_metric=trend_metric,
+            )
+        )
+
+    return EodhdEarningsTrendsFetchReport(
+        as_of=as_of,
+        captured_at=fetch_date,
+        downloaded_at=download_time,
+        requested_tickers=normalized_tickers,
+        provider_symbols=provider_symbols,
+        base_valuation_input_path=base_path,
+        base_valuation_snapshot_count=len(base_snapshots),
+        raw_payload=raw_payload,
+        row_count=raw_payload.row_count,
+        checksum_sha256=raw_payload.checksum_sha256,
         snapshots=tuple(sorted(snapshots, key=lambda item: item.snapshot_id)),
         issues=tuple(issues),
     )
@@ -1349,6 +1607,154 @@ def default_fmp_analyst_estimate_history_dir(output_dir: Path) -> Path:
     return output_dir / "fmp_analyst_estimates"
 
 
+def render_eodhd_earnings_trends_fetch_report(
+    report: EodhdEarningsTrendsFetchReport,
+) -> str:
+    alias_summary = _eodhd_symbol_alias_summary(report.requested_tickers)
+    lines = [
+        "# EODHD Earnings Trends 拉取报告",
+        "",
+        f"- 状态：{report.status}",
+        f"- 来源：{report.source_name}",
+        f"- 来源类型：{report.source_type}",
+        f"- 评估日期：{report.as_of.isoformat()}",
+        f"- 采集日期：{report.captured_at.isoformat()}",
+        f"- 下载时间：{report.downloaded_at.isoformat()}",
+        f"- 请求标的：{', '.join(report.requested_tickers)}",
+        f"- Provider symbols：{', '.join(report.provider_symbols)}",
+        f"- Provider symbol aliases：{alias_summary or '无'}",
+        f"- Endpoint：{EODHD_BASE_URL}/{EODHD_EARNINGS_TRENDS_ENDPOINT}",
+        "- 请求参数：symbols=<provider_symbols>, fmt=json",
+        (
+            f"- 基础估值快照输入：`{report.base_valuation_input_path}`"
+            if report.base_valuation_input_path is not None
+            else "- 基础估值快照输入：未配置"
+        ),
+        f"- 已读取基础估值快照数：{report.base_valuation_snapshot_count}",
+        f"- 返回 trend 记录数：{report.row_count}",
+        f"- 生成合并估值快照数：{report.imported_count}",
+        f"- SHA256：`{report.checksum_sha256}`",
+        f"- 错误数：{report.error_count}",
+        f"- 警告数：{report.warning_count}",
+        "",
+        "## 快照概览",
+        "",
+    ]
+    if not report.snapshots:
+        lines.append("未生成 EODHD trend 合并快照。")
+    else:
+        lines.extend(
+            [
+                "| Snapshot | Ticker | 估值指标 | 预期指标 | 说明 |",
+                "|---|---|---|---|---|",
+            ]
+        )
+        for snapshot in report.snapshots:
+            valuation_ids = ", ".join(
+                metric.metric_id for metric in snapshot.valuation_metrics
+            )
+            expectation_ids = ", ".join(
+                metric.metric_id for metric in snapshot.expectation_metrics
+            )
+            lines.append(
+                "| "
+                f"{snapshot.snapshot_id} | "
+                f"{snapshot.ticker} | "
+                f"{_escape_markdown_table(valuation_ids)} | "
+                f"{_escape_markdown_table(expectation_ids or 'n/a')} | "
+                f"{_escape_markdown_table(snapshot.notes)} |"
+            )
+
+    lines.extend(["", "## 问题", ""])
+    if not report.issues:
+        lines.append("未发现问题。")
+    else:
+        lines.extend(
+            [
+                "| 级别 | Code | Ticker | Endpoint | 说明 |",
+                "|---|---|---|---|---|",
+            ]
+        )
+        for issue in report.issues:
+            level = "错误" if issue.severity == ValuationIssueSeverity.ERROR else "警告"
+            lines.append(
+                "| "
+                f"{level} | "
+                f"{issue.code} | "
+                f"{issue.ticker or ''} | "
+                f"{issue.endpoint or ''} | "
+                f"{_escape_markdown_table(issue.message)} |"
+            )
+
+    lines.extend(
+        [
+            "",
+            "## 方法说明",
+            "",
+            (
+                "- 本报告使用 EODHD Earnings Trends 的 `epsTrendCurrent` 和 "
+                "`epsTrend90daysAgo` 生成 `eps_revision_90d_pct`。"
+            ),
+            (
+                "- EODHD trend 只增强当前可见基础估值快照；估值倍数、估值分位和拥挤度"
+                "继承基础快照，不由 EODHD trends 推断。"
+            ),
+            (
+                "- 生成快照标记为采集日后可见，不能作为采集日前严格 point-in-time "
+                "回测输入，也不能替代真实 estimates archive。"
+            ),
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def write_eodhd_earnings_trends_fetch_report(
+    report: EodhdEarningsTrendsFetchReport,
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        render_eodhd_earnings_trends_fetch_report(report),
+        encoding="utf-8",
+    )
+    return output_path
+
+
+def default_eodhd_earnings_trends_fetch_report_path(output_dir: Path, as_of: date) -> Path:
+    return output_dir / f"eodhd_earnings_trends_fetch_{as_of.isoformat()}.md"
+
+
+def default_eodhd_earnings_trends_raw_dir(output_dir: Path) -> Path:
+    return output_dir / "eodhd_earnings_trends"
+
+
+def write_eodhd_earnings_trends_raw_payload(
+    payload: EodhdEarningsTrendsRawPayload | None,
+    output_dir: Path | str,
+) -> tuple[Path, ...]:
+    if payload is None:
+        return ()
+    directory = Path(output_dir)
+    tickers_token = "_".join(ticker.lower() for ticker in payload.requested_tickers)
+    output_path = (
+        directory
+        / tickers_token
+        / f"eodhd_earnings_trends_{tickers_token}_{payload.captured_at.isoformat()}.json"
+    )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(
+            _eodhd_earnings_trends_payload_to_raw(payload),
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return (output_path,)
+
+
 def write_valuation_snapshots_as_yaml(
     snapshots: tuple[ValuationSnapshot, ...] | list[ValuationSnapshot],
     output_dir: Path | str,
@@ -1868,6 +2274,288 @@ def _fmp_historical_valuation_payload_to_raw(
             for endpoint, records in payload.endpoint_records.items()
         },
     }
+
+
+def _eodhd_earnings_trends_payload_to_raw(
+    payload: EodhdEarningsTrendsRawPayload,
+) -> dict[str, Any]:
+    checksum = payload.checksum_sha256 or _json_checksum(payload.records_by_ticker)
+    return {
+        "provider": EODHD_SOURCE_NAME,
+        "source_type": "paid_vendor",
+        "as_of": payload.as_of.isoformat(),
+        "captured_at": payload.captured_at.isoformat(),
+        "downloaded_at": payload.downloaded_at.isoformat(),
+        "requested_tickers": list(payload.requested_tickers),
+        "provider_symbols": list(payload.provider_symbols),
+        "endpoint": payload.endpoint,
+        "request_parameters": payload.request_parameters,
+        "row_count": payload.row_count,
+        "checksum_sha256": checksum,
+        "records_by_ticker": {
+            ticker: list(records)
+            for ticker, records in sorted(payload.records_by_ticker.items())
+        },
+    }
+
+
+def _latest_visible_base_valuation_snapshots(
+    input_path: Path,
+    tickers: tuple[str, ...],
+    as_of: date,
+    issues: list[FmpValuationFetchIssue],
+) -> dict[str, LoadedValuationSnapshot]:
+    store = load_valuation_snapshot_store(input_path)
+    for load_error in store.load_errors:
+        issues.append(
+            FmpValuationFetchIssue(
+                severity=ValuationIssueSeverity.WARNING,
+                code="base_valuation_load_error",
+                message=f"{load_error.path}: {load_error.message}",
+            )
+        )
+    ticker_set = set(tickers)
+    latest_by_ticker: dict[str, LoadedValuationSnapshot] = {}
+    for loaded in store.loaded:
+        snapshot = loaded.snapshot
+        ticker = snapshot.ticker.upper()
+        if (
+            ticker not in ticker_set
+            or snapshot.as_of > as_of
+            or snapshot.captured_at > as_of
+            or snapshot.source_type == "public_convenience"
+            or _is_eodhd_trend_merged_snapshot(snapshot)
+        ):
+            continue
+        current = latest_by_ticker.get(ticker)
+        if current is None or _valuation_snapshot_sort_key(snapshot) > _valuation_snapshot_sort_key(
+            current.snapshot
+        ):
+            latest_by_ticker[ticker] = loaded
+    return latest_by_ticker
+
+
+def _is_eodhd_trend_merged_snapshot(snapshot: ValuationSnapshot) -> bool:
+    return snapshot.snapshot_id.startswith("merged_") and EODHD_SOURCE_NAME in snapshot.source_name
+
+
+def _valuation_snapshot_sort_key(snapshot: ValuationSnapshot) -> tuple[date, date, str]:
+    return (snapshot.as_of, snapshot.captured_at, snapshot.snapshot_id)
+
+
+def _eodhd_trend_records_by_ticker(
+    *,
+    raw_response: dict[str, Any],
+    tickers: tuple[str, ...],
+    provider_symbols: tuple[str, ...],
+    issues: list[FmpValuationFetchIssue],
+) -> dict[str, tuple[dict[str, Any], ...]]:
+    raw_trends = raw_response.get("trends")
+    if not isinstance(raw_trends, list):
+        issues.append(
+            FmpValuationFetchIssue(
+                severity=ValuationIssueSeverity.ERROR,
+                code="invalid_eodhd_trends_schema",
+                endpoint=EODHD_EARNINGS_TRENDS_ENDPOINT,
+                message="EODHD Earnings Trends response 缺少 trends array。",
+            )
+        )
+        return {}
+
+    records_by_ticker: dict[str, tuple[dict[str, Any], ...]] = {}
+    for index, ticker in enumerate(tickers):
+        provider_symbol = provider_symbols[index]
+        raw_records = raw_trends[index] if index < len(raw_trends) else []
+        if not isinstance(raw_records, list):
+            issues.append(
+                FmpValuationFetchIssue(
+                    severity=ValuationIssueSeverity.WARNING,
+                    code="invalid_eodhd_ticker_trend_records",
+                    ticker=ticker,
+                    endpoint=EODHD_EARNINGS_TRENDS_ENDPOINT,
+                    message="EODHD trends 中该 ticker 的 records 不是数组，已跳过。",
+                )
+            )
+            records_by_ticker[ticker] = ()
+            continue
+        records: list[dict[str, Any]] = []
+        for raw_record in raw_records:
+            if not isinstance(raw_record, dict):
+                issues.append(
+                    FmpValuationFetchIssue(
+                        severity=ValuationIssueSeverity.WARNING,
+                        code="invalid_eodhd_trend_record",
+                        ticker=ticker,
+                        endpoint=EODHD_EARNINGS_TRENDS_ENDPOINT,
+                        message="EODHD trend record 不是 object，已跳过。",
+                    )
+                )
+                continue
+            code = str(raw_record.get("code") or "").upper()
+            if code and code not in {provider_symbol.upper(), ticker.upper()}:
+                issues.append(
+                    FmpValuationFetchIssue(
+                        severity=ValuationIssueSeverity.WARNING,
+                        code="eodhd_trend_symbol_mismatch",
+                        ticker=ticker,
+                        endpoint=EODHD_EARNINGS_TRENDS_ENDPOINT,
+                        message=(
+                            f"EODHD trend code={code} 与请求 symbol "
+                            f"{provider_symbol} 不一致，仍按响应顺序保留。"
+                        ),
+                    )
+                )
+            records.append(cast(dict[str, Any], raw_record))
+        records_by_ticker[ticker] = tuple(records)
+    return records_by_ticker
+
+
+def _eodhd_eps_revision_metric(
+    *,
+    ticker: str,
+    as_of: date,
+    records: tuple[dict[str, Any], ...],
+    issues: list[FmpValuationFetchIssue],
+) -> SnapshotMetric | None:
+    trend_record = _select_eodhd_eps_trend_record(records, as_of)
+    if trend_record is None:
+        issues.append(
+            FmpValuationFetchIssue(
+                severity=ValuationIssueSeverity.WARNING,
+                code="missing_eodhd_eps_trend_record",
+                ticker=ticker,
+                endpoint=EODHD_EARNINGS_TRENDS_ENDPOINT,
+                message="EODHD trends 未返回可用 annual/quarter EPS trend record。",
+            )
+        )
+        return None
+    current_eps = _numeric_fmp_field(trend_record, "epsTrendCurrent")
+    base_eps = _numeric_fmp_field(trend_record, "epsTrend90daysAgo")
+    if current_eps is None or current_eps <= 0:
+        issues.append(
+            FmpValuationFetchIssue(
+                severity=ValuationIssueSeverity.WARNING,
+                code="missing_eodhd_eps_trend_current",
+                ticker=ticker,
+                endpoint=EODHD_EARNINGS_TRENDS_ENDPOINT,
+                message="EODHD trends 缺少正数 epsTrendCurrent，未生成 eps_revision_90d_pct。",
+            )
+        )
+        return None
+    if base_eps is None or base_eps <= 0:
+        issues.append(
+            FmpValuationFetchIssue(
+                severity=ValuationIssueSeverity.WARNING,
+                code="missing_eodhd_eps_trend_90d",
+                ticker=ticker,
+                endpoint=EODHD_EARNINGS_TRENDS_ENDPOINT,
+                message="EODHD trends 缺少正数 epsTrend90daysAgo，未生成 eps_revision_90d_pct。",
+            )
+        )
+        return None
+    period = str(trend_record.get("period") or "").strip() or "unknown"
+    estimate_date = str(trend_record.get("date") or "").strip() or "unknown"
+    return SnapshotMetric(
+        metric_id="eps_revision_90d_pct",
+        value=(current_eps / base_eps - 1.0) * 100.0,
+        unit="percent",
+        period="trailing_90d",
+        source_field="calendar/trends.epsTrendCurrent / epsTrend90daysAgo",
+        notes=(
+            f"EODHD trend period={period}; estimate date={estimate_date}; "
+            f"baseline epsTrend90daysAgo={base_eps}."
+        ),
+    )
+
+
+def _select_eodhd_eps_trend_record(
+    records: tuple[dict[str, Any], ...],
+    as_of: date,
+) -> dict[str, Any] | None:
+    dated_records: list[tuple[date | None, str, dict[str, Any]]] = []
+    for record in records:
+        raw_date = str(record.get("date") or "").strip()
+        record_date: date | None = None
+        if raw_date:
+            try:
+                record_date = date.fromisoformat(raw_date)
+            except ValueError:
+                record_date = None
+        period = str(record.get("period") or "").strip()
+        if period not in {"+1y", "0y", "+1q", "0q"}:
+            continue
+        dated_records.append((record_date, period, record))
+    if not dated_records:
+        return None
+
+    future_or_current = [
+        item for item in dated_records if item[0] is None or item[0] >= as_of
+    ]
+    candidates = future_or_current or dated_records
+    period_rank = {"+1y": 0, "0y": 1, "+1q": 2, "0q": 3}
+    return sorted(
+        candidates,
+        key=lambda item: (
+            period_rank.get(item[1], 99),
+            item[0] or date.max,
+        ),
+    )[0][2]
+
+
+def _merged_eodhd_trend_snapshot(
+    *,
+    base: ValuationSnapshot,
+    as_of: date,
+    captured_at: date,
+    downloaded_at: datetime,
+    trend_metric: SnapshotMetric,
+) -> ValuationSnapshot:
+    expectation_metrics = [
+        metric
+        for metric in base.expectation_metrics
+        if metric.metric_id != trend_metric.metric_id
+    ]
+    expectation_metrics.append(trend_metric)
+    date_token = as_of.isoformat().replace("-", "_")
+    source_url = "; ".join(
+        item
+        for item in (
+            base.source_url,
+            f"{EODHD_BASE_URL}/{EODHD_EARNINGS_TRENDS_ENDPOINT}",
+        )
+        if item
+    )
+    base_note = f"base_snapshot={base.snapshot_id}"
+    notes = (
+        f"{base.notes} "
+        if base.notes
+        else ""
+    ) + (
+        "EODHD Earnings Trends overlay refreshed eps_revision_90d_pct; "
+        f"{base_note}; downloaded_at={downloaded_at.isoformat()}."
+    )
+    return base.model_copy(
+        update={
+            "snapshot_id": (
+                f"merged_{base.ticker.lower()}_valuation_eodhd_trends_{date_token}"
+            ),
+            "as_of": as_of,
+            "source_type": "paid_vendor",
+            "source_name": f"{EODHD_SOURCE_NAME} + {base.source_name}",
+            "source_url": source_url,
+            "captured_at": captured_at,
+            "point_in_time_class": "captured_snapshot",
+            "history_source_class": "vendor_current_trend",
+            "confidence_reason": (
+                "估值指标、估值分位和拥挤度继承基础快照；"
+                "eps_revision_90d_pct 来自 EODHD 当前 trend 字段，"
+                "只表示采集日可见的供应商趋势摘要，不是严格 PIT estimates archive。"
+            ),
+            "backtest_use": "captured_at_forward_only",
+            "expectation_metrics": expectation_metrics,
+            "notes": notes,
+        }
+    )
 
 
 def _fmp_analyst_history_snapshot_from_raw(
@@ -2502,11 +3190,29 @@ def _fmp_provider_symbol(ticker: str) -> str:
     return FMP_SYMBOL_ALIASES.get(normalized, normalized)
 
 
+def _eodhd_provider_symbol(ticker: str) -> str:
+    normalized = ticker.strip().upper()
+    if normalized in EODHD_SYMBOL_ALIASES:
+        return EODHD_SYMBOL_ALIASES[normalized]
+    if "." in normalized:
+        return normalized
+    return f"{normalized}.US"
+
+
 def _fmp_symbol_alias_summary(tickers: tuple[str, ...]) -> str:
     aliases = [
         f"{ticker}->{_fmp_provider_symbol(ticker)}"
         for ticker in tickers
         if _fmp_provider_symbol(ticker) != ticker
+    ]
+    return ", ".join(aliases)
+
+
+def _eodhd_symbol_alias_summary(tickers: tuple[str, ...]) -> str:
+    aliases = [
+        f"{ticker}->{_eodhd_provider_symbol(ticker)}"
+        for ticker in tickers
+        if _eodhd_provider_symbol(ticker) != ticker
     ]
     return ", ".join(aliases)
 
@@ -2536,6 +3242,16 @@ def _sanitize_fmp_error_message(exc: Exception) -> str:
     message = str(exc)
     return re.sub(
         r"(apikey=)[^&\s]+",
+        r"\1<redacted>",
+        message,
+        flags=re.IGNORECASE,
+    )
+
+
+def _sanitize_eodhd_error_message(exc: Exception) -> str:
+    message = str(exc)
+    return re.sub(
+        r"(api_token=)[^&\s]+",
         r"\1<redacted>",
         message,
         flags=re.IGNORECASE,

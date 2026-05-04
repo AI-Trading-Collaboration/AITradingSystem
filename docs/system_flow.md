@@ -61,6 +61,7 @@ flowchart TD
         POS["data/external/portfolio_positions/current_positions.csv<br/>真实账户持仓快照<br/>ticker、市值、AI 暴露、节点/地区/因子/相关性标签"]
         MD["外部数据源<br/>Yahoo Finance / FRED"]
         FMP["Financial Modeling Prep API<br/>quote / TTM metrics / historical metrics / ratios / estimates<br/>provider symbol alias 可审计记录"]
+        EODHDT["EODHD Earnings Trends API<br/>calendar/trends<br/>epsTrendCurrent / epsTrend90daysAgo"]
     end
 
     subgraph Cache["本地缓存"]
@@ -92,6 +93,7 @@ flowchart TD
         TSMBR["outputs/reports/tsm_ir_quarterly_batch_YYYY-MM-DD.md"]
         FMPH["data/raw/fmp_analyst_estimates/*.json<br/>FMP analyst estimates 原始历史快照"]
         FMPVH["data/raw/fmp_historical_valuation/*.json<br/>FMP historical key-metrics/ratios 原始响应"]
+        EODHDTR["data/raw/eodhd_earnings_trends/*.json<br/>EODHD Earnings Trends 原始响应"]
     end
 
     subgraph Gate["数据质量门禁"]
@@ -225,8 +227,10 @@ flowchart TD
     subgraph Valuation["估值与拥挤度复核"]
         VF["aits valuation fetch-fmp"]
         VHF["aits valuation fetch-fmp-valuation-history"]
+        VET["aits valuation fetch-eodhd-trends"]
         VFR["outputs/reports/fmp_valuation_fetch_YYYY-MM-DD.md"]
         VHFR["outputs/reports/fmp_historical_valuation_fetch_YYYY-MM-DD.md"]
+        VETR["outputs/reports/eodhd_earnings_trends_fetch_YYYY-MM-DD.md"]
         VI["aits valuation import-csv"]
         VIR["outputs/reports/valuation_import_YYYY-MM-DD.md"]
         VFH["aits valuation validate-fmp-history"]
@@ -538,10 +542,13 @@ flowchart TD
 
     FMP --> VF
     FMP --> VHF
+    EODHDT --> VET
     DS --> VF
     DS --> VHF
+    DS --> VET
     U --> VF
     U --> VHF
+    U --> VET
     VHF --> FMPVH
     VHF --> VS
     VHF --> VHFR
@@ -552,6 +559,11 @@ flowchart TD
     VF --> FMPH
     VF --> VFR
     VF --> VVR
+    VS --> VET
+    VET --> EODHDTR
+    VET --> VS
+    VET --> VETR
+    VET --> VVR
     FMPH --> VFH
     VFH --> VFHR
     VSCSV --> VI
@@ -775,6 +787,7 @@ flowchart TD
         J["估值与拥挤度<br/>aits valuation list/validate/review"]
         J3["FMP 估值/预期 API<br/>aits valuation fetch-fmp"]
         J4["FMP 历史估值 API<br/>aits valuation fetch-fmp-valuation-history"]
+        J5["EODHD EPS trend baseline<br/>aits valuation fetch-eodhd-trends"]
         J2["估值 CSV 导入<br/>aits valuation import-csv"]
         PF1["组合暴露分解<br/>aits portfolio exposure<br/>真实持仓 CSV 只读报告；缺少文件时 NOT_CONNECTED"]
         EV0["新市场信息证据账本<br/>aits evidence import-csv / validate"]
@@ -1011,6 +1024,9 @@ flowchart TD
 |FMP 估值/预期拉取|`aits valuation fetch-fmp`|从 Financial Modeling Prep 拉取 quote、TTM key metrics、TTM ratios 和 annual analyst estimates，按显式 provider symbol alias 处理 `GOOG -> GOOGL`，对负数估值倍数记录警告并跳过该指标，读取历史 analyst 快照计算 `eps_revision_90d_pct`，读取本地估值快照历史计算 `valuation_percentile`，生成 paid_vendor 当前采集快照 YAML，并复用估值快照校验；本地历史可来自真实 point-in-time 快照或 `fetch-fmp-valuation-history` 的 captured_at 审计回填|已实现基础版|
 |FMP 拉取报告|`outputs/reports/fmp_valuation_fetch_YYYY-MM-DD.md`|记录 provider、endpoint、请求标的、provider symbol alias、下载时间、返回记录数、checksum、历史 analyst 快照读取数、本地估值历史读取数、生成快照数、字段口径限制、错误和警告；不输出 API key|已实现基础版|
 |FMP analyst history 校验报告|`outputs/reports/fmp_analyst_history_validation_YYYY-MM-DD.md`|记录原始历史快照数量、ticker 覆盖、记录数、checksum 校验结果、错误和警告|已实现基础版|
+|EODHD Earnings Trends 原始缓存|`data/raw/eodhd_earnings_trends/`|保存 EODHD `calendar/trends` 原始响应、请求参数、下载时间、row count 和 checksum，用于当前采集日可见的 EPS 90 日修正 baseline|已实现基础版|
+|EODHD EPS trend baseline 拉取|`aits valuation fetch-eodhd-trends`|从 EODHD Earnings Trends 拉取 `epsTrendCurrent` 和 `epsTrend90daysAgo`，合并进当前可见基础估值快照，生成带 `vendor_current_trend` 和 `captured_at_forward_only` 的 paid vendor 快照；估值倍数、估值分位和拥挤度继承基础快照，不由 trends 推断|已实现基础版|
+|EODHD EPS trend baseline 报告|`outputs/reports/eodhd_earnings_trends_fetch_YYYY-MM-DD.md`|记录 provider、endpoint、请求标的、provider symbol、下载时间、trend 记录数、checksum、基础估值快照读取数、生成合并快照数、错误和警告；不输出 API key；报告声明采集日前严格回测不可见|已实现基础版|
 |估值 CSV 导入|`aits valuation import-csv`|导入结构化估值/预期 CSV，转换为估值快照 YAML，并复用现有快照校验|已实现基础版|
 |估值导入报告|`outputs/reports/valuation_import_YYYY-MM-DD.md`|记录 CSV 行数、checksum、导入快照数、错误和警告|已实现基础版|
 |估值模板|`docs/examples/valuation_snapshots/`|提供可复制 YAML 模板，不提交个人记录|已实现基础版|

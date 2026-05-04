@@ -446,8 +446,10 @@ aits valuation review --as-of 2026-05-02
 当前基础版输入：
 
 - `FMP_API_KEY` 环境变量。命令只读取 key，不输出、不落盘。
+- `EODHD_API_KEY` 环境变量。`fetch-eodhd-trends` 只读取 key，不输出、不落盘。
 - FMP provider symbol alias。内部核心观察池保留 `GOOG`，FMP 请求使用 `GOOG -> GOOGL`，并在拉取报告和 analyst history 请求参数中显式记录。
 - `data/raw/fmp_analyst_estimates/`。保存 FMP analyst-estimates 原始响应、请求参数、下载时间、row count 和 checksum，用于 90 日 EPS revision。
+- `data/raw/eodhd_earnings_trends/`。保存 EODHD Earnings Trends 原始响应、请求参数、下载时间、row count 和 checksum，用于当前采集日可见的 EPS 90 日修正 baseline。
 - `data/external/valuation_snapshots/*.yaml`。该目录不提交，用于本地手工或供应商估值快照。
 - `data/external/valuation_imports/*.csv`。结构化宽表导入源，每行必须声明真实来源、采集日期和来源类型。
 - `docs/examples/valuation_snapshots/` 提供可复制模板，不代表真实交易建议。
@@ -455,6 +457,7 @@ aits valuation review --as-of 2026-05-02
 当前基础版输出：
 
 - `outputs/reports/fmp_valuation_fetch_YYYY-MM-DD.md`
+- `outputs/reports/eodhd_earnings_trends_fetch_YYYY-MM-DD.md`
 - `outputs/reports/fmp_analyst_history_validation_YYYY-MM-DD.md`
 - `outputs/reports/valuation_validation_YYYY-MM-DD.md`
 - `outputs/reports/valuation_import_YYYY-MM-DD.md`
@@ -467,6 +470,7 @@ aits valuation review --as-of 2026-05-02
 - FMP analyst history 校验必须检查原始 JSON schema、checksum、row_count、ticker、请求参数、日期和重复 estimate date。
 - FMP 返回负数估值倍数时必须在拉取报告中记录警告，并跳过该指标，不写入会导致估值快照校验失败的负倍数字段。
 - FMP `eps_revision_90d_pct` 必须读取接近 90 天前、同一 fiscal estimate date 的历史 `epsAvg`；历史不足时报告警告并跳过。
+- EODHD baseline `eps_revision_90d_pct` 使用 `calendar/trends` 的 `epsTrendCurrent` 和 `epsTrend90daysAgo` 合并进当前可见基础估值快照；必须标记为 `captured_at_forward_only`，不能作为采集日前严格 PIT 回测输入。
 - FMP `valuation_percentile` 使用本地 point-in-time 估值快照历史计算；每个 metric 至少需要 3 个历史点，历史不足时报告警告并跳过。
 - 当日估值复核和日报评分只使用每个 ticker 截至评估日最新的可见快照；历史快照只用于分位计算和 point-in-time 回测，不能重复计入当日评分。
 - CSV 导入必须通过必填列、日期、数值和来源类型校验，导入失败时不写入快照 YAML。
@@ -589,9 +593,10 @@ aits review-trades --as-of 2026-05-02
 接下来建议按这个顺序开发：
 
 1. 用 `aits valuation fetch-fmp` 为 AI 核心观察池生成第一批真实 paid vendor 估值快照，并检查 `valuation_validation_*.md` 的警告是否只来自预期内的估值历史样本不足或 EPS revision 历史窗口不足。
-2. 等本地 FMP 估值快照历史达到 3 个以上观测后，检查 `valuation_percentile` 是否开始稳定生成；等 analyst-estimates 历史缓存覆盖 90 天后，检查 `eps_revision_90d_pct` 是否开始稳定生成，并评估是否需要把 tolerance 从 15 天调窄。
-3. 为风险事件发生记录接入正式供应商或一手来源 API，并复用现有 CSV/YAML 的来源审计字段。
-4. 用真实历史数据持续验证 `backtest_audit_*.md` 和输入覆盖诊断 CSV；如果审计报告长期需要按日下钻，再评估是否把覆盖诊断 CSV 拆分为更细的日频文件。
+2. 在基础估值快照存在后运行 `aits valuation fetch-eodhd-trends`，用 EODHD Earnings Trends 先补当前日报的 `eps_revision_90d_pct` baseline；该结果只从采集日后可见。
+3. 等本地 FMP 估值快照历史达到 3 个以上观测后，检查 `valuation_percentile` 是否开始稳定生成；等 analyst-estimates 历史缓存覆盖 90 天或接入真实 PIT estimates archive 后，检查严格历史 `eps_revision_90d_pct` 是否开始稳定生成，并评估是否需要把 tolerance 从 15 天调窄。
+4. 为风险事件发生记录接入正式供应商或一手来源 API，并复用现有 CSV/YAML 的来源审计字段。
+5. 用真实历史数据持续验证 `backtest_audit_*.md` 和输入覆盖诊断 CSV；如果审计报告长期需要按日下钻，再评估是否把覆盖诊断 CSV 拆分为更细的日频文件。
 
 原因：
 

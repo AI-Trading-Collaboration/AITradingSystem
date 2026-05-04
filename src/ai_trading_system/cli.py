@@ -378,15 +378,20 @@ from ai_trading_system.valuation import (
     write_valuation_validation_report,
 )
 from ai_trading_system.valuation_sources import (
+    default_eodhd_earnings_trends_fetch_report_path,
+    default_eodhd_earnings_trends_raw_dir,
     default_fmp_analyst_estimate_history_dir,
     default_fmp_analyst_history_validation_report_path,
     default_fmp_historical_valuation_fetch_report_path,
     default_fmp_historical_valuation_raw_dir,
     default_fmp_valuation_fetch_report_path,
+    fetch_eodhd_earnings_trend_snapshots,
     fetch_fmp_historical_valuation_snapshots,
     fetch_fmp_valuation_snapshots,
     import_valuation_snapshots_from_csv,
     validate_fmp_analyst_estimate_history,
+    write_eodhd_earnings_trends_fetch_report,
+    write_eodhd_earnings_trends_raw_payload,
     write_fmp_analyst_estimate_history_snapshots,
     write_fmp_analyst_history_validation_report,
     write_fmp_historical_valuation_fetch_report,
@@ -458,6 +463,9 @@ DEFAULT_FMP_ANALYST_ESTIMATE_HISTORY_DIR = default_fmp_analyst_estimate_history_
     PROJECT_ROOT / "data" / "raw"
 )
 DEFAULT_FMP_HISTORICAL_VALUATION_RAW_DIR = default_fmp_historical_valuation_raw_dir(
+    PROJECT_ROOT / "data" / "raw"
+)
+DEFAULT_EODHD_EARNINGS_TRENDS_RAW_DIR = default_eodhd_earnings_trends_raw_dir(
     PROJECT_ROOT / "data" / "raw"
 )
 
@@ -4631,6 +4639,123 @@ def fetch_fmp_valuation_history(
     )
     console.print(f"写入原始历史 payload：{len(raw_paths)} 个文件 -> {raw_output_dir}")
     console.print(f"写入历史估值 YAML：{len(written_paths)} 个文件 -> {output_dir}")
+    console.print(
+        f"[{validation_style}]估值快照校验状态："
+        f"{validation_report.status}[/{validation_style}]"
+    )
+    console.print(f"校验报告：{validation_output}")
+    if not validation_report.passed:
+        raise typer.Exit(code=1)
+
+
+@valuation_app.command("fetch-eodhd-trends")
+def fetch_eodhd_valuation_trends(
+    tickers: Annotated[
+        str | None,
+        typer.Option(help="逗号分隔 ticker；未提供时使用 universe 的 AI core_watchlist。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="写入 EODHD trend 合并估值快照 YAML 的目录。"),
+    ] = PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+    base_valuation_dir: Annotated[
+        Path | None,
+        typer.Option(help="读取基础估值快照的目录；默认与 output_dir 相同。"),
+    ] = None,
+    raw_output_dir: Annotated[
+        Path,
+        typer.Option(help="写入 EODHD Earnings Trends 原始 JSON 的目录。"),
+    ] = DEFAULT_EODHD_EARNINGS_TRENDS_RAW_DIR,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="拉取评估日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown EODHD trends 拉取报告输出路径。"),
+    ] = None,
+    validation_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 估值快照校验报告输出路径。"),
+    ] = None,
+    api_key_env: Annotated[
+        str,
+        typer.Option(help="读取 EODHD API key 的环境变量名。"),
+    ] = "EODHD_API_KEY",
+) -> None:
+    """从 EODHD Earnings Trends 拉取当前 EPS trend，合并进估值快照。"""
+    fetch_date = _parse_date(as_of) if as_of else date.today()
+    selected_tickers = (
+        _parse_csv_items(tickers)
+        if tickers
+        else load_universe().ai_chain.get("core_watchlist", [])
+    )
+    api_key = os.getenv(api_key_env)
+    if not api_key:
+        console.print(f"[red]未找到环境变量 {api_key_env}，已停止 EODHD trends 拉取。[/red]")
+        raise typer.Exit(code=1)
+
+    fetch_report_output = output_path or default_eodhd_earnings_trends_fetch_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        fetch_date,
+    )
+    validation_output = validation_report_path or default_valuation_validation_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        fetch_date,
+    )
+    base_input_dir = base_valuation_dir or output_dir
+
+    try:
+        fetch_report = fetch_eodhd_earnings_trend_snapshots(
+            selected_tickers,
+            api_key,
+            fetch_date,
+            base_valuation_dir=base_input_dir,
+            captured_at=fetch_date,
+        )
+    except ValueError as exc:
+        console.print(f"[red]EODHD trends 参数错误：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+    write_eodhd_earnings_trends_fetch_report(fetch_report, fetch_report_output)
+    status_style = (
+        "green" if fetch_report.status == "PASS" else "yellow" if fetch_report.passed else "red"
+    )
+    console.print(
+        f"[{status_style}]EODHD trends 拉取状态："
+        f"{fetch_report.status}[/{status_style}]"
+    )
+    console.print(f"拉取报告：{fetch_report_output}")
+    console.print(
+        f"请求标的：{', '.join(fetch_report.requested_tickers)}；"
+        f"返回记录：{fetch_report.row_count}；生成合并快照：{fetch_report.imported_count}"
+    )
+    console.print(f"错误数：{fetch_report.error_count}；警告数：{fetch_report.warning_count}")
+    if not fetch_report.passed:
+        raise typer.Exit(code=1)
+
+    raw_paths = write_eodhd_earnings_trends_raw_payload(
+        fetch_report.raw_payload,
+        raw_output_dir,
+    )
+    written_paths = write_valuation_snapshots_as_yaml(fetch_report.snapshots, output_dir)
+    validation_report = validate_valuation_snapshot_store(
+        store=load_valuation_snapshot_store(output_dir),
+        universe=load_universe(),
+        watchlist=load_watchlist(),
+        as_of=fetch_date,
+    )
+    write_valuation_validation_report(validation_report, validation_output)
+
+    validation_style = (
+        "green"
+        if validation_report.status == "PASS"
+        else "yellow"
+        if validation_report.passed
+        else "red"
+    )
+    console.print(f"写入原始 trend payload：{len(raw_paths)} 个文件 -> {raw_output_dir}")
+    console.print(f"写入合并估值 YAML：{len(written_paths)} 个文件 -> {output_dir}")
     console.print(
         f"[{validation_style}]估值快照校验状态："
         f"{validation_report.status}[/{validation_style}]"

@@ -136,7 +136,7 @@
 8. 输出一份日报 Markdown。状态：已实现基础版，命令为 `aits score-daily`。
 9. 实现交易 thesis 与假设验证。状态：已实现基础版，命令为 `aits thesis list/validate/review`。
 10. 实现风险事件分级规则。状态：已实现基础版，命令为 `aits risk-events list/validate`。
-11. 实现估值与拥挤度快照。状态：已实现基础版，命令为 `aits valuation fetch-fmp/validate-fmp-history/import-csv/list/validate/review`；FMP 拉取会生成 paid vendor 快照、checksum 报告和原始 analyst estimate 历史缓存，`validate-fmp-history` 校验原始缓存质量，`eps_revision_90d_pct` 使用接近 90 天前的同一 fiscal estimate date 历史 `epsAvg` 计算，`valuation_percentile` 使用本地 point-in-time 估值快照历史计算。
+11. 实现估值与拥挤度快照。状态：已实现基础版，命令为 `aits valuation fetch-fmp/fetch-fmp-valuation-history/fetch-eodhd-trends/validate-fmp-history/import-csv/list/validate/review`；FMP 拉取会生成 paid vendor 快照、checksum 报告和原始 analyst estimate 历史缓存，`validate-fmp-history` 校验原始缓存质量，`eps_revision_90d_pct` 可由 FMP 本地历史快照或 EODHD Earnings Trends baseline 生成；EODHD baseline 只从采集日后可见，不替代真实 PIT estimates archive；`valuation_percentile` 使用本地 point-in-time 估值快照历史计算。
 12. 实现交易复盘归因。状态：已实现基础版，命令为 `aits review-trades`。
 13. 实现 SEC companyfacts 原始基本面数据下载和缓存校验。状态：已实现基础版，命令为 `aits fundamentals download-sec-companyfacts` 和 `aits fundamentals validate-sec-companyfacts`。
 14. 实现 SEC companyfacts 基础指标抽取和派生指标校验。状态：已实现基础版，命令为 `aits fundamentals extract-sec-metrics` 和 `aits fundamentals validate-sec-metrics`，输出结构化 CSV 和中文 Markdown 报告。
