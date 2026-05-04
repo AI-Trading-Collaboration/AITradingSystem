@@ -167,6 +167,8 @@ flowchart TD
         FBPL["aits feedback lookup-benchmark-policy<br/>按 ticker 或 basket 查询基准口径"]
         FLR["aits feedback loop-review<br/>周期性闭环复核"]
         FLRR["outputs/reports/feedback_loop_review_YYYY-MM-DD.md<br/>证据、快照、outcome、因果链、学习队列和任务状态"]
+        PIR["aits reports investment-review<br/>周报/月报投资复盘"]
+        PIRR["outputs/reports/investment_weekly/monthly_review_YYYY-MM-DD.md<br/>判断变化、仓位变化、证据、outcome 和规则学习"]
     end
 
     subgraph Governance["结构校验"]
@@ -437,6 +439,13 @@ flowchart TD
     DLQ --> FLR
     REXP --> FLR
     FLR --> FLRR
+    SC --> PIR
+    DSNAP --> PIR
+    DOCSV --> PIR
+    DLQ --> PIR
+    REXP --> PIR
+    BS --> PIR
+    PIR --> PIRR
 
     U --> WV
     W --> WV
@@ -919,6 +928,7 @@ flowchart TD
 |执行动作查询|`aits execution lookup`|按 `action_id` 反查固定动作定义，例如 `maintain`、`small_increase`、`no_new_position`、`reduce_to_target_range`、`wait_manual_review`、`observe_only`|已实现基础版|
 |反馈闭环复核|`aits feedback loop-review`|按复核窗口汇总 market evidence、decision snapshots、decision_outcomes、decision_causal_chains、decision_learning_queue、rule_experiments 和 task register 状态；声明 `ai_after_chatgpt` 市场阶段和可执行/需复核/研究用途边界|已实现基础版|
 |反馈闭环复核报告|`outputs/reports/feedback_loop_review_YYYY-MM-DD.md`|中文周期报告输出新证据、快照、outcome、因果链、学习队列、规则候选、blocked task 和状态统计；不直接生成调仓建议，也不自动修改生产规则|已实现基础版|
+|投资周报/月报复盘|`aits reports investment-review` / `outputs/reports/investment_weekly_review_YYYY-MM-DD.md` / `investment_monthly_review_YYYY-MM-DD.md`|读取 `scores_daily.csv`、decision snapshots、belief_state、decision outcomes、learning queue 和 rule experiments，面向投资复核者回答本期结论/仓位是否变化、前三个证据、产业链节点状态、thesis/risk/valuation 状态、市场验证和规则学习；`production_effect=none`，不改变评分、仓位、回测或执行建议|已实现基础版|
 |认知模型需求|`docs/requirements/cognitive_model_2026-05-04.md`|定义 AI 产业链可审计认知模型边界、`belief_state` 第一阶段、阶段路线、禁止自动改生产规则的治理边界和关联任务|已登记|
 |认知状态缓存|`data/processed/belief_state/belief_state_YYYY-MM-DD.json`|只读认知状态快照，结构化记录市场状态、产业链节点状态、估值、风险、thesis、仓位边界、宏观总风险资产预算、限制因素、多维置信度、trace 引用和 `decision_snapshot` 引用；明确不直接改变评分、闸门、回测仓位或交易建议|已实现基础版|
 |认知状态历史|`data/processed/belief_state_history.csv`|认知状态历史索引，按 `signal_date` upsert，记录 `belief_state_id`、路径、生成时间、production_effect、置信度、数据质量、最终仓位边界、限制数量、trace 路径和 decision snapshot 路径|已实现基础版|

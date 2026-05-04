@@ -249,6 +249,13 @@ from ai_trading_system.market_evidence import (
     write_market_evidence_validation_report,
     write_market_evidence_yaml,
 )
+from ai_trading_system.periodic_investment_review import (
+    DEFAULT_PERIODIC_INVESTMENT_REVIEW_REPORT_DIR,
+    DEFAULT_SCORES_DAILY_PATH,
+    build_periodic_investment_review_report,
+    default_periodic_investment_review_report_path,
+    write_periodic_investment_review_report,
+)
 from ai_trading_system.pipeline_health import (
     PipelineArtifactSpec,
     build_pipeline_health_report,
@@ -410,6 +417,7 @@ scenarios_app = typer.Typer(help="AI 产业链情景压力测试库。", no_args
 catalysts_app = typer.Typer(help="未来催化剂日历和事件前复核。", no_args_is_help=True)
 execution_app = typer.Typer(help="Advisory execution policy 和执行纪律。", no_args_is_help=True)
 portfolio_app = typer.Typer(help="真实组合持仓和暴露解释。", no_args_is_help=True)
+reports_app = typer.Typer(help="投资报告和周期复盘。", no_args_is_help=True)
 ops_app = typer.Typer(help="运行监控和 pipeline health。", no_args_is_help=True)
 security_app = typer.Typer(help="密钥卫生和供应商权限治理。", no_args_is_help=True)
 app.add_typer(watchlist_app, name="watchlist")
@@ -426,6 +434,7 @@ app.add_typer(scenarios_app, name="scenarios")
 app.add_typer(catalysts_app, name="catalysts")
 app.add_typer(execution_app, name="execution")
 app.add_typer(portfolio_app, name="portfolio")
+app.add_typer(reports_app, name="reports")
 app.add_typer(ops_app, name="ops")
 app.add_typer(security_app, name="security")
 console = Console()
@@ -2597,6 +2606,80 @@ def portfolio_exposure_command(
     console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
     if not report.passed:
         raise typer.Exit(code=1)
+
+
+@reports_app.command("investment-review")
+def investment_periodic_review_command(
+    period: Annotated[
+        str,
+        typer.Option(help="复盘周期：weekly 或 monthly。"),
+    ] = "weekly",
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="复盘截止日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    since: Annotated[
+        str | None,
+        typer.Option(help="复盘起始日期，格式为 YYYY-MM-DD；不传时按周期默认。"),
+    ] = None,
+    scores_path: Annotated[
+        Path,
+        typer.Option(help="scores_daily.csv 路径。"),
+    ] = DEFAULT_SCORES_DAILY_PATH,
+    decision_snapshot_path: Annotated[
+        Path,
+        typer.Option(help="decision snapshot 文件或目录。"),
+    ] = DEFAULT_DECISION_SNAPSHOT_DIR,
+    outcomes_path: Annotated[
+        Path,
+        typer.Option(help="decision_outcomes.csv 路径。"),
+    ] = DEFAULT_DECISION_OUTCOMES_PATH,
+    learning_queue_path: Annotated[
+        Path,
+        typer.Option(help="decision learning queue JSON 路径。"),
+    ] = DEFAULT_DECISION_LEARNING_QUEUE_PATH,
+    rule_experiment_path: Annotated[
+        Path,
+        typer.Option(help="rule experiment ledger JSON 路径。"),
+    ] = DEFAULT_RULE_EXPERIMENT_LEDGER_PATH,
+    market_regime_id: Annotated[
+        str,
+        typer.Option(help="报告声明使用的市场阶段 id。"),
+    ] = "ai_after_chatgpt",
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 周报/月报复盘报告输出路径。"),
+    ] = None,
+) -> None:
+    """生成周报/月报投资复盘报告。"""
+    if period not in {"weekly", "monthly"}:
+        raise typer.BadParameter("period 必须是 weekly 或 monthly")
+    review_date = _parse_date(as_of) if as_of else date.today()
+    since_date = _parse_date(since) if since else None
+    report = build_periodic_investment_review_report(
+        period=period,  # type: ignore[arg-type]
+        as_of=review_date,
+        since=since_date,
+        market_regime_id=market_regime_id,
+        scores_path=scores_path,
+        decision_snapshot_path=decision_snapshot_path,
+        outcomes_path=outcomes_path,
+        learning_queue_path=learning_queue_path,
+        rule_experiment_path=rule_experiment_path,
+    )
+    report_path = output_path or default_periodic_investment_review_report_path(
+        DEFAULT_PERIODIC_INVESTMENT_REVIEW_REPORT_DIR,
+        period,  # type: ignore[arg-type]
+        review_date,
+    )
+    write_periodic_investment_review_report(report, report_path)
+    style = "green" if report.status == "PASS" else "yellow"
+    console.print(f"[{style}]投资复盘状态：{report.status}[/{style}]")
+    console.print(f"报告：{report_path}")
+    console.print(
+        f"区间：{report.since.isoformat()} 至 {report.as_of.isoformat()}；"
+        f"样本：{len(report.score_rows)}"
+    )
 
 
 @ops_app.command("health")
