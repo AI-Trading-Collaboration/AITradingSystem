@@ -1,6 +1,6 @@
 # 自建 forward-only PIT 快照归档方案
 
-状态：BASELINE_DONE
+状态：DONE
 
 最后更新：2026-05-05
 
@@ -124,7 +124,20 @@ WHERE available_time <= decision_time
 |7|阶段 2 接入 FMP forward-only 抓取归档|DONE|`analyst estimates`、`price target`、`ratings`、`earnings calendar` 写 raw payload 和 normalized 输出，`available_time` 从采集成功时间开始|
 |8|阶段 3 接入 valuation/revision as-of 查询|DONE|`eps_revision_90d_pct` 只使用 `available_time <= decision_time` 的自建快照；样本不足 90 天时明确降级|
 |9|阶段 4 接入日常健康检查和告警|DONE|`ops health` / alerts 检查 PIT 快照缺跑、断更、row count 异常和 checksum 异常|
-|10|阶段 5 评估 SEC accession-level 增强|PENDING|形成是否接入 accession-level filing archive 的设计结论或后续任务|
+|10|阶段 5 评估 SEC accession-level 增强|DONE|形成是否接入 accession-level filing archive 的设计结论或后续任务|
+
+### 阶段 5 设计结论
+
+当前 SEC companyfacts 基本面链路已保留 `accession_number` 和 `filed_date`，并在
+`validate-sec-metrics` 中阻止 `filed_date > as_of` 的事实进入历史日报或回测。这是日频
+趋势判断可接受的 baseline。
+
+缺口是该链路尚不能追溯到 SEC accession 原始 filing directory、accepted time、primary
+document、complete submission text 或 raw payload checksum。该能力影响 SEC 基本面下载、
+指标抽取、验证、报告追溯和回测审计，不应塞入 DATA-003 的通用 PIT 快照实现中。
+
+结论：DATA-003 到阶段 5 已完成；SEC accession-level filing archive 拆为独立
+`DATA-004`，详见 `docs/requirements/sec_accession_archive_2026-05-05.md`。
 
 ## BACKTEST-002
 
@@ -186,3 +199,5 @@ WHERE available_time <= decision_time
 - 2026-05-05：从 IN_PROGRESS 改为 BASELINE_DONE，原因：阶段 3 已实现 FMP PIT normalized analyst-estimates as-of loader，并让 `fetch_fmp_valuation_snapshots` / `aits valuation fetch-fmp` 默认通过 `available_time <= decision_time` 的自建快照计算 `eps_revision_90d_pct`；未来快照会被过滤，自建历史不足 90 天时保留明确降级。阶段 4-5 继续保留为后续开发。
 - 2026-05-05：从 BASELINE_DONE 改回 IN_PROGRESS，原因：继续推进阶段 4，把 PIT 快照缺跑、断更、row count 和 checksum 异常接入本地运行健康检查与告警。
 - 2026-05-05：从 IN_PROGRESS 改为 BASELINE_DONE，原因：阶段 4 已把 PIT manifest、PIT 质量报告和当日 FMP PIT normalized CSV 接入 `aits ops health`，并将缺失、row count、新鲜度和 checksum 异常输出到 `pipeline_health_alerts_YYYY-MM-DD.md` data/system 告警；阶段 5 继续保留。
+- 2026-05-05：从 BASELINE_DONE 改回 IN_PROGRESS，原因：继续推进阶段 5，评估 SEC accession-level filing raw archive 是否应进入 DATA-003 后续实施范围。
+- 2026-05-05：从 IN_PROGRESS 改为 DONE，原因：阶段 5 已形成设计结论，SEC accession-level filing archive 拆为独立 `DATA-004`；DATA-003 的 forward-only PIT 快照归档、FMP 抓取、as-of 查询、health/alerts 和后续任务登记已完成。
