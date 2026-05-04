@@ -1,0 +1,105 @@
+policy_id: ai_benchmark_policy.v1
+version: v1
+status: production
+owner: system_review
+description: >
+  Defines the benchmark and AI proxy interpretation boundary for AI-cycle
+  backtests, calibration reports, and trade review attribution.
+default_ai_proxy: SMH
+default_benchmarks:
+  - SPY
+  - QQQ
+  - SMH
+  - SOXX
+minimum_roles:
+  - broad_market_beta
+  - nasdaq_growth_beta
+  - semiconductor_beta
+last_reviewed_at: 2026-05-04
+next_review_due: 2026-06-04
+instruments:
+  - benchmark_id: SPY
+    ticker: SPY
+    name: SPDR S&P 500 ETF Trust
+    instrument_type: etf
+    role: broad_market_beta
+    default_ai_proxy_eligible: false
+    default_benchmark: true
+    source_config_paths:
+      - config/universe.yaml
+      - config/data_sources.yaml
+    use_cases:
+      - Broad U.S. equity beta comparison.
+      - Check whether AI-cycle returns are only market-wide risk appetite.
+    interpretation: Represents broad U.S. equity market beta.
+    limitations:
+      - Not an AI theme benchmark.
+      - Mega-cap technology exposure exists but is not isolated.
+  - benchmark_id: QQQ
+    ticker: QQQ
+    name: Invesco QQQ Trust
+    instrument_type: etf
+    role: nasdaq_growth_beta
+    default_ai_proxy_eligible: false
+    default_benchmark: true
+    source_config_paths:
+      - config/universe.yaml
+      - config/data_sources.yaml
+    use_cases:
+      - Compare against large-cap growth and Nasdaq beta.
+      - Separate AI system value from general technology momentum.
+    interpretation: Represents Nasdaq-100 growth and mega-cap technology beta.
+    limitations:
+      - Not limited to AI supply-chain exposure.
+      - Constituents and weights are not controlled by this system.
+  - benchmark_id: SMH
+    ticker: SMH
+    name: VanEck Semiconductor ETF
+    instrument_type: etf
+    role: semiconductor_beta
+    default_ai_proxy_eligible: true
+    default_benchmark: true
+    source_config_paths:
+      - config/universe.yaml
+      - config/data_sources.yaml
+    use_cases:
+      - Baseline AI proxy for current dynamic AI risk-asset exposure.
+      - Compare dynamic allocation with semiconductor buy-and-hold beta.
+    interpretation: Represents semiconductor-heavy AI infrastructure beta.
+    limitations:
+      - Not a complete AI value-chain basket.
+      - Can overstate GPU and semiconductor exposure versus software or cloud nodes.
+  - benchmark_id: SOXX
+    ticker: SOXX
+    name: iShares Semiconductor ETF
+    instrument_type: etf
+    role: semiconductor_cross_check
+    default_ai_proxy_eligible: false
+    default_benchmark: true
+    source_config_paths:
+      - config/universe.yaml
+      - config/data_sources.yaml
+    use_cases:
+      - Cross-check semiconductor beta against SMH.
+      - Detect ETF-specific concentration artifacts.
+    interpretation: Represents alternate semiconductor ETF beta.
+    limitations:
+      - Still not a complete AI value-chain basket.
+      - ETF methodology can differ from SMH.
+custom_ai_baskets:
+  - basket_id: ai_chain_pit_basket.v0
+    name: Point-in-time AI value-chain basket
+    status: planned
+    description: >
+      Future custom basket for AI theme beta after lifecycle snapshots,
+      weights, and data-source policy are approved.
+    point_in_time_lifecycle: false
+    lifecycle_path: ""
+    weighting_method: ""
+    rebalance_frequency: ""
+    source_config_paths:
+      - config/watchlist_lifecycle.yaml
+      - config/industry_chain.yaml
+    limitations:
+      - Not production-ready.
+      - Must not be used for official basket returns until lifecycle and weight history are available.

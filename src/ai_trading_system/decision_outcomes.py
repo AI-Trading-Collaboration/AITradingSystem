@@ -10,6 +10,10 @@ from typing import Any
 import pandas as pd
 
 from ai_trading_system.backtest.daily import DEFAULT_BENCHMARK_TICKERS, BacktestRegimeContext
+from ai_trading_system.benchmark_policy import (
+    BenchmarkPolicyReport,
+    render_benchmark_policy_summary_section,
+)
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data.quality import DataQualityReport
 
@@ -30,6 +34,7 @@ class DecisionOutcomeBuildResult:
     benchmark_tickers: tuple[str, ...]
     market_regime: BacktestRegimeContext | None
     data_quality_report: DataQualityReport
+    benchmark_policy_report: BenchmarkPolicyReport | None = None
 
 
 def default_decision_calibration_report_path(output_dir: Path, as_of: date) -> Path:
@@ -54,6 +59,7 @@ def build_decision_outcomes(
     benchmark_tickers: tuple[str, ...] = DEFAULT_BENCHMARK_TICKERS,
     market_regime: BacktestRegimeContext | None = None,
     data_quality_report: DataQualityReport,
+    benchmark_policy_report: BenchmarkPolicyReport | None = None,
 ) -> DecisionOutcomeBuildResult:
     if not horizons:
         raise ValueError("至少需要一个 outcome 观察窗口")
@@ -93,6 +99,7 @@ def build_decision_outcomes(
         benchmark_tickers=benchmark_tickers,
         market_regime=market_regime,
         data_quality_report=data_quality_report,
+        benchmark_policy_report=benchmark_policy_report,
     )
 
 
@@ -155,6 +162,7 @@ def render_decision_calibration_report(
         f"- 观察窗口：{', '.join(f'{horizon}D' for horizon in result.horizons)}",
         f"- AI proxy：{result.strategy_ticker}",
         f"- 对比基准：{', '.join(result.benchmark_tickers)}",
+        f"- 基准政策状态：{_benchmark_policy_status(result)}",
         f"- 数据质量状态：{result.data_quality_report.status}",
         f"- 数据质量报告：`{data_quality_report_path}`",
         f"- 机器可读 outcome：`{outcomes_path}`",
@@ -169,9 +177,18 @@ def render_decision_calibration_report(
         "",
         _summary_table(result.available_rows, result.benchmark_tickers),
         "",
-        "## 分桶校准",
-        "",
     ]
+    benchmark_policy_section = render_benchmark_policy_summary_section(
+        result.benchmark_policy_report
+    )
+    if benchmark_policy_section:
+        lines.extend([benchmark_policy_section.rstrip(), ""])
+    lines.extend(
+        [
+            "## 分桶校准",
+            "",
+        ]
+    )
     bucket_specs = (
         ("总分分桶", "score_bucket"),
         ("置信度分桶", "confidence_level"),
@@ -449,6 +466,12 @@ def _sample_limitation_text(result: DecisionOutcomeBuildResult) -> str:
     limitations.append("- 1D/5D/20D/60D/120D 窗口可能重叠，不能当作独立样本。")
     limitations.append("- 校准发现只能进入规则复核；生产规则变更必须走 `GOV-001`。")
     return "\n".join(limitations)
+
+
+def _benchmark_policy_status(result: DecisionOutcomeBuildResult) -> str:
+    if result.benchmark_policy_report is None:
+        return "未连接"
+    return result.benchmark_policy_report.status
 
 
 def _summary_table(rows: tuple[dict[str, Any], ...], benchmark_tickers: tuple[str, ...]) -> str:

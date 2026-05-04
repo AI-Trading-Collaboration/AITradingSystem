@@ -36,6 +36,15 @@ from ai_trading_system.belief_state import (
     render_belief_state_summary,
     write_belief_state,
 )
+from ai_trading_system.benchmark_policy import (
+    DEFAULT_BENCHMARK_POLICY_CONFIG_PATH,
+    default_benchmark_policy_report_path,
+    load_benchmark_policy,
+    lookup_benchmark_policy_entry,
+    render_benchmark_policy_lookup,
+    validate_benchmark_policy,
+    write_benchmark_policy_report,
+)
 from ai_trading_system.config import (
     DEFAULT_CONFIG_PATH,
     DEFAULT_DATA_QUALITY_CONFIG_PATH,
@@ -475,6 +484,14 @@ def calibrate_decision_outcomes(
         str,
         typer.Option(help="逗号分隔的对比基准 ticker。"),
     ] = ",".join(DEFAULT_BENCHMARK_TICKERS),
+    benchmark_policy_path: Annotated[
+        Path,
+        typer.Option(help="benchmark policy YAML 路径，用于审计 AI proxy / benchmark 解释口径。"),
+    ] = DEFAULT_BENCHMARK_POLICY_CONFIG_PATH,
+    benchmark_policy_report_path: Annotated[
+        Path | None,
+        typer.Option(help="可选：Markdown benchmark policy 校验报告输出路径。"),
+    ] = None,
     outcomes_path: Annotated[
         Path,
         typer.Option(help="decision_outcomes CSV 输出路径。"),
@@ -494,6 +511,23 @@ def calibrate_decision_outcomes(
     benchmark_tickers = tuple(_parse_csv_items(benchmarks))
     if not benchmark_tickers:
         raise typer.BadParameter("至少需要一个对比基准 ticker。")
+    benchmark_policy_report = validate_benchmark_policy(
+        load_benchmark_policy(benchmark_policy_path),
+        as_of=calibration_date,
+        selected_strategy_ticker=strategy_ticker,
+        selected_benchmark_tickers=benchmark_tickers,
+    )
+    if benchmark_policy_report_path is not None:
+        write_benchmark_policy_report(benchmark_policy_report, benchmark_policy_report_path)
+    if not benchmark_policy_report.passed:
+        console.print("[red]基准政策校验失败，已停止决策校准。[/red]")
+        console.print(
+            f"错误数：{benchmark_policy_report.error_count}；"
+            f"警告数：{benchmark_policy_report.warning_count}"
+        )
+        if benchmark_policy_report_path is not None:
+            console.print(f"基准政策报告：{benchmark_policy_report_path}")
+        raise typer.Exit(code=1)
     tickers = list(dict.fromkeys([strategy_ticker, *benchmark_tickers]))
     universe = load_universe()
     data_quality_config = load_data_quality()
@@ -546,6 +580,7 @@ def calibrate_decision_outcomes(
         benchmark_tickers=benchmark_tickers,
         market_regime=market_regime,
         data_quality_report=data_quality_report,
+        benchmark_policy_report=benchmark_policy_report,
     )
     outcomes_output = write_decision_outcomes_csv(result, outcomes_path)
     calibration_report_output = report_path or default_decision_calibration_report_path(
@@ -567,6 +602,9 @@ def calibrate_decision_outcomes(
     console.print(f"校准报告：{calibration_report_output}")
     console.print(f"Outcome CSV：{outcomes_output}")
     console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
+    console.print(f"基准政策状态：{benchmark_policy_report.status}")
+    if benchmark_policy_report_path is not None:
+        console.print(f"基准政策报告：{benchmark_policy_report_path}")
 
 
 @feedback_app.command("build-causal-chain")
@@ -862,6 +900,79 @@ def lookup_rule_card_command(
     console.print(render_rule_card_lookup(card))
 
 
+@feedback_app.command("validate-benchmark-policy")
+def validate_benchmark_policy_command(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="benchmark policy YAML 路径。"),
+    ] = DEFAULT_BENCHMARK_POLICY_CONFIG_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    strategy_ticker: Annotated[
+        str | None,
+        typer.Option(help="可选：本次回测或校准使用的 AI proxy / strategy ticker。"),
+    ] = None,
+    benchmarks: Annotated[
+        str | None,
+        typer.Option(help="可选：逗号分隔的本次对比基准 ticker。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown benchmark policy 校验报告输出路径。"),
+    ] = None,
+) -> None:
+    """校验 AI proxy 与 benchmark policy registry。"""
+    validation_date = _parse_date(as_of) if as_of else date.today()
+    benchmark_tickers = (
+        tuple(_parse_csv_items(benchmarks)) if benchmarks is not None else None
+    )
+    report = validate_benchmark_policy(
+        load_benchmark_policy(input_path),
+        as_of=validation_date,
+        selected_strategy_ticker=strategy_ticker,
+        selected_benchmark_tickers=benchmark_tickers,
+    )
+    report_path = output_path or default_benchmark_policy_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        validation_date,
+    )
+    write_benchmark_policy_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]基准政策状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_path}")
+    console.print(
+        f"Benchmark：{report.instrument_count}；"
+        f"Custom AI basket：{report.custom_basket_count}"
+    )
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+
+@feedback_app.command("lookup-benchmark-policy")
+def lookup_benchmark_policy_command(
+    entry_id: Annotated[
+        str,
+        typer.Option("--id", help="benchmark id、ticker 或 custom basket id。"),
+    ],
+    input_path: Annotated[
+        Path,
+        typer.Option(help="benchmark policy YAML 路径。"),
+    ] = DEFAULT_BENCHMARK_POLICY_CONFIG_PATH,
+) -> None:
+    """按 ticker、benchmark id 或 basket id 反查 benchmark policy 条目。"""
+    try:
+        entry = lookup_benchmark_policy_entry(input_path, entry_id)
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(f"benchmark policy 不存在：{input_path}") from exc
+    except (KeyError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(render_benchmark_policy_lookup(entry))
+
+
 @feedback_app.command("loop-review")
 def feedback_loop_review_command(
     evidence_path: Annotated[
@@ -1096,6 +1207,14 @@ def backtest(
         str,
         typer.Option(help="逗号分隔的买入持有基准标的。"),
     ] = ",".join(DEFAULT_BENCHMARK_TICKERS),
+    benchmark_policy_path: Annotated[
+        Path,
+        typer.Option(help="benchmark policy YAML 路径，用于审计 AI proxy / benchmark 解释口径。"),
+    ] = DEFAULT_BENCHMARK_POLICY_CONFIG_PATH,
+    benchmark_policy_report_path: Annotated[
+        Path | None,
+        typer.Option(help="可选：Markdown benchmark policy 校验报告输出路径。"),
+    ] = None,
     cost_bps: Annotated[
         float,
         typer.Option(help="单边交易成本，单位 bps。"),
@@ -1230,6 +1349,23 @@ def backtest(
         raise typer.BadParameter("至少需要一个基准标的。")
     if not 0.0 <= minimum_component_coverage <= 1.0:
         raise typer.BadParameter("审计覆盖率阈值必须在 0 到 1 之间。")
+    benchmark_policy_report = validate_benchmark_policy(
+        load_benchmark_policy(benchmark_policy_path),
+        as_of=quality_date,
+        selected_strategy_ticker=strategy_ticker,
+        selected_benchmark_tickers=tuple(benchmark_tickers),
+    )
+    if benchmark_policy_report_path is not None:
+        write_benchmark_policy_report(benchmark_policy_report, benchmark_policy_report_path)
+    if not benchmark_policy_report.passed:
+        console.print("[red]基准政策校验失败，已停止回测。[/red]")
+        console.print(
+            f"错误数：{benchmark_policy_report.error_count}；"
+            f"警告数：{benchmark_policy_report.warning_count}"
+        )
+        if benchmark_policy_report_path is not None:
+            console.print(f"基准政策报告：{benchmark_policy_report_path}")
+        raise typer.Exit(code=1)
 
     quality_output = quality_report_path or default_quality_report_path(
         PROJECT_ROOT / "outputs" / "reports",
@@ -1279,9 +1415,17 @@ def backtest(
     data_quality_report = validate_data_cache(
         prices_path=prices_path,
         rates_path=rates_path,
-        expected_price_tickers=configured_price_tickers(
-            universe,
-            include_full_ai_chain=full_universe,
+        expected_price_tickers=list(
+            dict.fromkeys(
+                [
+                    *configured_price_tickers(
+                        universe,
+                        include_full_ai_chain=full_universe,
+                    ),
+                    strategy_ticker,
+                    *benchmark_tickers,
+                ]
+            )
         ),
         expected_rate_series=configured_rate_series(universe),
         quality_config=data_quality_config,
@@ -1372,6 +1516,7 @@ def backtest(
         valuation_review_reports=valuation_review_reports,
         risk_event_occurrence_review_reports=risk_event_occurrence_review_reports,
         watchlist_lifecycle=watchlist_lifecycle,
+        benchmark_policy_report=benchmark_policy_report,
         market_regime=BacktestRegimeContext(
             regime_id=selected_regime.regime_id,
             name=selected_regime.name,
@@ -1406,6 +1551,7 @@ def backtest(
         audit_report_path=audit_output,
         config_paths=_backtest_trace_config_paths(
             regimes_path=regimes_path,
+            benchmark_policy_path=benchmark_policy_path,
             sec_companies_path=sec_companies_path,
             sec_metrics_path=sec_metrics_path,
             fundamental_feature_config_path=fundamental_feature_config_path,
@@ -1462,6 +1608,9 @@ def backtest(
         f"SEC companyfacts 校验报告：{sec_companyfacts_validation_output}"
     )
     console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
+    console.print(f"基准政策状态：{benchmark_policy_report.status}")
+    if benchmark_policy_report_path is not None:
+        console.print(f"基准政策报告：{benchmark_policy_report_path}")
     if fail_on_audit_warning and audit_report.status != "PASS":
         console.print(
             "[red]输入审计未达到 PASS，严格审计门禁已返回失败。[/red]"
@@ -4305,6 +4454,7 @@ def _daily_trace_config_paths(
 def _backtest_trace_config_paths(
     *,
     regimes_path: Path,
+    benchmark_policy_path: Path,
     sec_companies_path: Path,
     sec_metrics_path: Path,
     fundamental_feature_config_path: Path,
@@ -4314,6 +4464,7 @@ def _backtest_trace_config_paths(
     return {
         **_base_trace_config_paths(),
         "market_regimes": regimes_path,
+        "benchmark_policy": benchmark_policy_path,
         "sec_companies": sec_companies_path,
         "fundamental_metrics": sec_metrics_path,
         "fundamental_features": fundamental_feature_config_path,

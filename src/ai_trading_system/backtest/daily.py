@@ -10,6 +10,10 @@ from typing import Any, cast
 import pandas as pd
 
 from ai_trading_system.backtest.engine import BacktestMetrics, summarize_long_only_backtest
+from ai_trading_system.benchmark_policy import (
+    BenchmarkPolicyReport,
+    render_benchmark_policy_summary_section,
+)
 from ai_trading_system.config import FeatureConfig, PortfolioConfig, ScoringRulesConfig
 from ai_trading_system.data.quality import DataFileSummary, DataQualityReport
 from ai_trading_system.features.market import build_market_features
@@ -189,6 +193,7 @@ class DailyBacktestResult:
     ) = None
     monthly_valuation_source_type_counts: dict[tuple[str, str], int] | None = None
     monthly_risk_event_source_type_counts: dict[tuple[str, str], int] | None = None
+    benchmark_policy_report: BenchmarkPolicyReport | None = None
 
     @property
     def status(self) -> str:
@@ -216,6 +221,7 @@ def run_daily_score_backtest(
         Mapping[date, RiskEventOccurrenceReviewReport] | None
     ) = None,
     watchlist_lifecycle: WatchlistLifecycleConfig | None = None,
+    benchmark_policy_report: BenchmarkPolicyReport | None = None,
 ) -> DailyBacktestResult:
     if start >= end:
         raise ValueError("回测开始日期必须早于结束日期")
@@ -567,6 +573,7 @@ def run_daily_score_backtest(
         monthly_risk_event_source_type_counts=(
             dict(monthly_risk_event_source_type_counts) or None
         ),
+        benchmark_policy_report=benchmark_policy_report,
     )
 
 
@@ -649,6 +656,7 @@ def render_backtest_report(
             ),
             f"- 策略代理标的：{result.strategy_ticker}",
             f"- 基准：{', '.join(result.benchmark_tickers)}",
+            f"- 基准政策状态：{_benchmark_policy_status(result)}",
             f"- 单边交易成本：{result.cost_bps:.1f} bps",
             f"- 线性滑点/盘口冲击估算：{result.slippage_bps:.1f} bps",
             f"- 最小调仓阈值：{result.minimum_action_delta:.0%}",
@@ -684,6 +692,12 @@ def render_backtest_report(
 
     for ticker in result.benchmark_tickers:
         lines.append(_metrics_row(f"基准（{ticker} 买入持有）", result.benchmark_metrics[ticker]))
+
+    benchmark_policy_section = render_benchmark_policy_summary_section(
+        result.benchmark_policy_report
+    )
+    if benchmark_policy_section:
+        lines.extend(["", benchmark_policy_section.rstrip()])
 
     lines.extend(_execution_cost_summary_lines(result))
     position_gate_rows = _position_gate_summary_rows(result)
@@ -1218,6 +1232,12 @@ def _benchmark_metrics(
 
 def _position_midpoint(min_position: float, max_position: float) -> float:
     return (min_position + max_position) / 2.0
+
+
+def _benchmark_policy_status(result: DailyBacktestResult) -> str:
+    if result.benchmark_policy_report is None:
+        return "未连接"
+    return result.benchmark_policy_report.status
 
 
 def _metrics_row(label: str, metrics: BacktestMetrics) -> str:

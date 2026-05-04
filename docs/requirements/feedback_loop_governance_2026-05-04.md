@@ -350,10 +350,22 @@
 - 连续信号确认。
 - 高波动期降低交易频率。
 
+报告动作语言应保持 advisory 边界，默认使用：
+
+- 维持。
+- 小幅加仓。
+- 禁止主动加仓。
+- 减仓到目标区间。
+- 等待人工复核。
+- 观察，不形成交易结论。
+
+除非项目 owner 明确改变产品边界，否则日报不应默认输出“买入/卖出”式交易指令。
+
 验收标准：
 
 - 日报区分仓位建议变化和执行建议。
 - 小幅仓位变化、低置信度、高波动或重大事件前状态可触发维持不动、等待确认或人工复核。
+- 执行动作必须使用固定、可配置、可回测的 advisory action taxonomy，避免同一状态在不同报告中写成不同交易含义。
 - 规则必须可配置、可回测、可审计，不能在报告层临时写死。
 - 实现时同步更新 `docs/system_flow.md` 并补充执行纪律测试。
 
@@ -381,6 +393,14 @@
 - 自定义 AI basket 必须具备 point-in-time lifecycle，不能事后挑选赢家。
 - 回测、校准和报告能说明收益来自半导体 beta、纳指 beta、AI 主题 beta 还是系统动态仓位。
 - 实现时同步更新 `docs/system_flow.md` 并补充基准治理测试。
+
+当前实现状态：
+
+- 2026-05-04：进入基础实现；第一阶段建立 `benchmark_policy` 配置和校验报告，明确 SPY、QQQ、SMH、SOXX 的解释角色、适用场景和限制。
+- 第一阶段把回测和决策校准报告接入基准政策摘要，避免把 `SMH` 误写成完整 AI 产业链表现；自定义 AI basket 先要求登记 point-in-time lifecycle、权重方法和数据来源，暂不生成正式 basket return。
+- 完整 `DONE` 仍需要可复算的自定义 AI basket 历史收益、成员 lifecycle 与权重快照接入回测/校准。
+- 2026-05-04 基础版已完成：新增 `config/benchmark_policy.yaml`、`benchmark_policy` 模块、`aits feedback validate-benchmark-policy`、`aits feedback lookup-benchmark-policy` 和 `outputs/reports/benchmark_policy_YYYY-MM-DD.md`。回测与决策校准报告会输出 benchmark policy 状态、选中 proxy/benchmark 的角色和解释限制。
+- 当前完成态为 `BASELINE_DONE`：SPY/QQQ/SMH/SOXX 的基准治理、schema 校验、重复 ticker/id 检查、source path 检查、本次选择口径校验、报告和查询入口已具备；完整 `DONE` 仍需要 custom AI basket 的 point-in-time 成员 lifecycle、权重快照和可复算 basket return。
 
 ## GOV-001
 
@@ -481,6 +501,7 @@
 
 - 仪表盘可从结论下钻到模块分、gate、risk event、thesis、数据源、原始证据和质量报告。
 - 支持本期/上期差异、仓位限制原因和未来观察条件。
+- 支持三类读者模式：快速读者只看结论卡、动作建议、最大风险和改变判断条件；投资复核者查看变化原因树、产业链节点、thesis 状态、risk gate 和仓位上限来源；系统审计者查看 claim/evidence/dataset/quality refs、trace lookup、数据质量门禁和 source policy。
 - 不替代 Markdown 报告的审计责任；关键结论仍需可导出和可追溯。
 
 ## SECURITY-001
@@ -510,9 +531,21 @@
 - `data_limited`：数据不足，结论降级。
 - `backtest_limited`：回测输入覆盖不足。
 
+结论等级只回答“这个结论能不能作为仓位复核依据”。报告还需要独立的投资姿态标签，回答“当前 AI 产业链处于什么状态”。建议第一版投资姿态标签：
+
+- 积极进攻。
+- 中高配。
+- 中高配但受限。
+- 中性观察。
+- 防守降仓。
+- 人工复核。
+
+两层状态必须分开输出，避免把市场状态、分数、仓位和结论可靠性混为一个答案。
+
 验收标准：
 
 - 每份日报和回测报告都有结论等级。
+- 每份日报有独立投资姿态标签，并能解释该标签与结论等级、评分、置信度和仓位 gate 的关系。
 - 低置信度、数据不足、来源不足、回测覆盖不足、事件前状态会自动降级。
 - 报告清楚说明降级原因、解除条件和可追溯证据。
 
@@ -529,6 +562,7 @@
 - 2026-05-04：`EXPERIMENT-001` 达到 `BASELINE_DONE`：候选规则实验台账、CLI、中文报告、loop-review 接入和 candidate isolation 测试完成；`python -m ruff check src tests`、`python -m pytest -q` 通过。真实 replay runner、forward shadow 观测和 GOV-001 rule card 批准仍待后续实现。
 - 2026-05-04：`GOV-001` 进入实现；第一阶段目标是 rule card registry、校验报告和查询入口，先补齐现有 production 规则的版本与审计登记。
 - 2026-05-04：`GOV-001` 达到 `BASELINE_DONE`：rule card registry、治理校验 CLI、查询 CLI、中文报告、系统流图和测试完成；`python -m ruff check src tests`、`python -m pytest -q` 通过。正式 owner approval/promotion/retirement 流程和 rule version 注入仍待后续实现。
+- 2026-05-04：根据最终报告呈现形式讨论，补充 `EXEC-001` 的 advisory action taxonomy、`DOC-001` 的“双层状态”设计和 `UI-001` 的三类读者模式；完整报告结构由 `docs/requirements/report_decision_chain_presentation_2026-05-04.md` 与 `REPORT-003/004` 承接。
 - 2026-05-04：`DATA-002` 已完成低成本基础版：新增 `aits data-sources health` 和 `outputs/reports/data_sources_health_YYYY-MM-DD.md`，覆盖 provider health score、cache/manifest/row count/checksum/freshness 检查、manifest checksum mismatch 失败，以及 qualified source 不足时的 reconciliation `NOT_COVERED` 声明；owner 已验证 SEC User-Agent、FMP、FRED、Tiingo EOD 和 EODHD Fundamentals 初版权限可访问，EODHD EOD 价格未订阅且价格核验使用 Tiingo；完整 `DONE` 仍依赖生产级第二来源、商业授权/再分发限制和长期口径策略。
 - 2026-05-04：`UNIVERSE-001` 已完成基础实现：新增 `config/watchlist_lifecycle.yaml`、`aits watchlist validate-lifecycle` 和回测 signal_date lifecycle 过滤，测试覆盖尚未进入观察池的 ticker 不参与历史市场特征。
 - 2026-05-04：`TEST-001` 已推进为完成状态：系统级不变量测试覆盖 watch 风险事件不自动评分、低证据等级/公开便利源隔离、LLM evidence 隔离、watchlist point-in-time 过滤、decision snapshot 写入、评分置信度和估值 PIT 可信度。

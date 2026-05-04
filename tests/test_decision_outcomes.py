@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 from typer.testing import CliRunner
 
+from ai_trading_system.benchmark_policy import load_benchmark_policy, validate_benchmark_policy
 from ai_trading_system.cli import app
 from ai_trading_system.config import configured_rate_series, load_universe
 from ai_trading_system.data.quality import DataFileSummary, DataQualityReport
@@ -29,6 +30,12 @@ def test_build_decision_outcomes_calculates_returns_and_buckets(tmp_path: Path) 
         strategy_ticker="SMH",
         benchmark_tickers=("SPY", "QQQ", "SMH", "SOXX"),
         data_quality_report=_quality_report(),
+        benchmark_policy_report=validate_benchmark_policy(
+            load_benchmark_policy(),
+            as_of=date(2026, 4, 9),
+            selected_strategy_ticker="SMH",
+            selected_benchmark_tickers=("SPY", "QQQ", "SMH", "SOXX"),
+        ),
     )
 
     assert len(result.available_rows) == 2
@@ -52,6 +59,7 @@ def test_build_decision_outcomes_calculates_returns_and_buckets(tmp_path: Path) 
     assert "# 决策结果校准报告" in markdown
     assert "PASS_WITH_LIMITATIONS" in markdown
     assert "## 分桶校准" in markdown
+    assert "## 基准政策与解释边界" in markdown
     assert "总分分桶" in markdown
     assert "GOV-001" in markdown
 
@@ -107,6 +115,7 @@ def test_feedback_calibrate_cli_writes_outcomes_and_report(tmp_path: Path) -> No
     assert set(outcomes["horizon_days"]) == {1, 5}
     assert set(outcomes["outcome_status"]) == {"AVAILABLE"}
     assert "决策结果校准报告" in report_text
+    assert "基准政策与解释边界" in report_text
     assert "样本限制" in report_text
     assert "决策校准完成" in result.output
 

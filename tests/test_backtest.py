@@ -1145,6 +1145,7 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     report_text = report_path.read_text(encoding="utf-8")
     assert "测试 AI 行情" in report_text
     assert "线性滑点/盘口冲击估算：2.5 bps" in report_text
+    assert "## 基准政策与解释边界" in report_text
     assert "SEC 基本面质量摘要" in report_text
     assert "## 可追溯引用" in report_text
     assert "backtest:2026-04-01:2026-04-30:performance" in report_text
