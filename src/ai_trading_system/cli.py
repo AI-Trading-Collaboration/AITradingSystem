@@ -5038,6 +5038,8 @@ def score_daily(
         total_risk_asset_min=portfolio.portfolio.total_risk_asset_min,
         total_risk_asset_max=portfolio.portfolio.total_risk_asset_max,
         max_total_ai_exposure=portfolio.position_limits.max_total_ai_exposure,
+        risk_budget=portfolio.risk_budget,
+        portfolio_exposure_report=portfolio_exposure_report,
         review_summary=review_summary,
         fundamental_feature_report=sec_fundamental_feature_report,
         valuation_review_report=valuation_review_report,

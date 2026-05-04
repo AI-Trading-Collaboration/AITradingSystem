@@ -27,7 +27,7 @@
 flowchart TD
     subgraph Source["数据输入"]
         U["config/universe.yaml<br/>标的池、基准、利率序列"]
-        P["config/portfolio.yaml<br/>风险资产预算和仓位上限"]
+        P["config/portfolio.yaml<br/>风险资产预算、仓位上限和 risk_budget gate 参数"]
         Q["config/data_quality.yaml<br/>质量阈值"]
         F["config/features.yaml<br/>特征窗口和相对强弱组合"]
         S["config/scoring_rules.yaml<br/>评分权重、仓位动作阈值和 position_gates 上限"]
@@ -108,7 +108,7 @@ flowchart TD
 
     subgraph Score["中间评估：评分和仓位"]
         SD["aits score-daily"]
-        PG["position_gate<br/>评分仓位、组合限制、风险事件、估值拥挤、thesis 和数据置信度取最严格上限"]
+        PG["position_gate<br/>评分仓位、组合限制、风险预算、风险事件、估值拥挤、thesis 和数据置信度取最严格上限"]
         CONF["判断置信度<br/>按模块来源、覆盖率、质量门禁和人工复核汇总"]
         NH["产业链节点热度<br/>industry_chain/watchlist + 市场特征<br/>production_effect=none"]
         PEX["组合暴露分解<br/>真实持仓 CSV + industry_chain/watchlist 映射<br/>production_effect=none"]
@@ -577,7 +577,7 @@ flowchart TD
     K --> N
     L --> N
     M --> N
-    N --> G2["position_gate<br/>组合限制、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限"]
+    N --> G2["position_gate<br/>组合限制、risk_budget、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限"]
     G2 --> O["总资产口径换算<br/>portfolio 风险资产预算"]
     O --> C1["判断置信度汇总<br/>按模块来源、覆盖率、质量门禁和人工复核状态扣减"]
     C1 --> P["写入 scores_daily.csv<br/>记录模块分、整体分、confidence、仓位区间和触发 gate 摘要"]
@@ -624,7 +624,7 @@ flowchart TD
     H2 --> I
     I --> C0["判断置信度<br/>保存 confidence_score / confidence_level"]
     I --> J["评分映射到评分模型 AI 仓位区间"]
-    J --> PG["应用 position_gate<br/>取组合限制、风险事件、估值拥挤、thesis 和数据置信度的最严格上限"]
+    J --> PG["应用 position_gate<br/>取组合限制、risk_budget、风险事件、估值拥挤、thesis 和数据置信度的最严格上限"]
     PG --> K["使用最终 AI 仓位区间中点并应用最小调仓阈值<br/>低于阈值维持原仓位"]
     K --> L["下一交易日收益生效<br/>避免未来函数"]
     L --> M["扣除单边交易成本和可配置线性滑点"]
@@ -719,7 +719,7 @@ flowchart TD
         A["数据下载<br/>aits download-data"]
         B["数据质量门禁<br/>aits validate-data"]
         C["市场特征<br/>aits build-features"]
-        D["每日评分<br/>aits score-daily<br/>含结论卡、产业链节点热度、组合暴露、SEC 基本面、估值快照、政策/地缘发生记录和复核声明、置信度、执行建议和人工复核摘要"]
+        D["每日评分<br/>aits score-daily<br/>含结论卡、产业链节点热度、组合暴露、risk_budget gate、SEC 基本面、估值快照、政策/地缘发生记录和复核声明、置信度、执行建议和人工复核摘要"]
         E["历史回测<br/>aits backtest<br/>含 point-in-time 输入、覆盖率、来源类型、输入问题、URL、ticker 和证据来源下钻"]
         F["观察池校验<br/>aits watchlist validate"]
         F2["观察池生命周期<br/>aits watchlist validate-lifecycle"]
@@ -843,7 +843,8 @@ flowchart TD
 |质量报告|`outputs/reports/data_quality_YYYY-MM-DD.md`|声明数据是否可用于下游结论|已实现|
 |特征|`aits build-features`|生成可解释市场特征|已实现|
 |特征缓存|`data/processed/features_daily.csv`|保存 tidy 格式特征|已实现|
-|评分|`aits score-daily`|先执行市场数据质量门禁，再校验 `execution_policy`、SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照、风险事件发生记录和当前有效复核声明，读取真实持仓 CSV 生成只读组合暴露，并通过 `position_gate` 把评分仓位、组合限制、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限，输出 AI 产业链评分、判断置信度、最终仓位区间、advisory 执行建议、日报、decision snapshot 和只读 `belief_state`|已实现|
+|组合与风险预算配置|`config/portfolio.yaml`|定义总风险资产预算、AI 总资产上限、真实组合集中度提示阈值和 `risk_budget` gate 参数；risk_budget 基础版使用 VIX 压力、真实组合集中度和 ETF beta 覆盖率约束风险资产内 AI 仓位上限|已实现基础版|
+|评分|`aits score-daily`|先执行市场数据质量门禁，再校验 `execution_policy`、SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照、风险事件发生记录和当前有效复核声明，读取真实持仓 CSV 生成只读组合暴露，并通过 `position_gate` 把评分仓位、组合限制、风险预算、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限，输出 AI 产业链评分、判断置信度、最终仓位区间、advisory 执行建议、日报、decision snapshot 和只读 `belief_state`|已实现|
 |评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果，component 行记录模块 confidence，overall 行记录整体 confidence、模型/最终/置信度调整仓位区间、总资产 AI 仓位区间和触发的仓位闸门摘要，用于日报上期对比|已实现|
 |日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|开头输出“今日结论卡”，固定呈现状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、执行动作、主结论、三个核心原因、最大限制和下一步触发条件；正文继续输出结论使用等级、变化原因树、什么情况会改变判断、产业链节点热度、组合暴露、认知状态摘要、执行建议、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、当前有效风险事件复核声明数量、估值 PIT 可信度、仓位闸门来源/上限/触发状态、限制说明、人工复核摘要和可追溯引用章节；执行建议、节点热度和组合暴露均明确 `production_effect=none`，不是自动交易指令|已实现|
 |结论使用等级|`outputs/reports/daily_score_YYYY-MM-DD.md#结论使用等级` / `outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md#结论使用等级`|报告输出 `actionable`、`review_required`、`research_only`、`data_limited` 或 `backtest_limited` 等使用边界，并与投资姿态标签分开；低置信度、人工复核失败、来源不足、数据质量失败和回测覆盖不足会自动降级，说明原因、解除条件和证据引用|已实现基础版|
@@ -854,6 +855,7 @@ flowchart TD
 |产业链节点热度|`score-daily` 日报章节|基于 `config/industry_chain.yaml`、`config/watchlist.yaml` 和已通过门禁的市场趋势特征，按节点输出热度等级、覆盖率、集中度和主要贡献 ticker；第一阶段只做解释和诊断，不把价格热度写成基本面健康度，也不改变 production scoring、`position_gate` 或执行建议|已实现基础版|
 |组合暴露分解|`aits portfolio exposure` / `score-daily` 日报章节|基于 `data/external/portfolio_positions/current_positions.csv` 或显式传入的真实持仓 CSV，按 ticker、产业链节点、地区、客户链、因子和相关性簇分解 AI 名义暴露；缺少持仓文件时显示 `NOT_CONNECTED`，存在但格式错误时停止；不得用观察池、模型建议仓位或 AI 产业链评分替代真实账户持仓|已实现基础版|
 |组合暴露报告|`outputs/reports/portfolio_exposure_YYYY-MM-DD.md`|中文输出持仓快照日期、总市值、AI 名义暴露、AI 占比、最大单票占 AI 暴露、ETF beta 覆盖率、暴露分组表和问题清单；第一阶段 `production_effect=none`，不改变评分、仓位闸门、执行建议或回测仓位|已实现基础版|
+|风险预算 gate|`score-daily` / `backtest` 仓位闸门|在共享 `position_gate` 层读取 `config/portfolio.yaml:risk_budget`；高 VIX 或高 VIX 分位会压低最终 AI 仓位上限，真实持仓接入后单票、节点、相关性簇集中或 ETF beta 覆盖不足也会压低上限；缺少真实持仓时不使用观察池替代组合集中度|已实现基础版|
 |日报 Evidence Bundle|`outputs/reports/evidence/daily_score_YYYY-MM-DD_trace.json`|记录日报 `claim`、`evidence`、`dataset`、`quality` 和 `run_manifest`，包括 `belief_state` dataset/claim 引用，用于从核心结论反查输入上下文、数据快照和只读认知状态|已实现|
 |决策快照|`data/processed/decision_snapshots/decision_snapshot_YYYY-MM-DD.json`|每次 `score-daily` 通过质量门禁后保存 signal_date、market regime、整体分、模块分、判断置信度、模型/最终/置信度调整仓位、position gates、质量状态、人工复核、估值状态、风险事件状态、trace bundle 引用、`belief_state_ref` 和配置路径|已实现基础版|
 |决策结果校准|`aits feedback calibrate`|先校验 `benchmark_policy`，再复用 `aits validate-data` 同一质量门禁，从历史 `decision_snapshot` 和 `prices_daily.csv` 生成 1D/5D/20D/60D/120D outcome，按总分、置信度、gate、thesis、风险等级和估值状态分桶输出校准报告；结果只能进入规则复核，不能自动修改生产规则|已实现基础版|

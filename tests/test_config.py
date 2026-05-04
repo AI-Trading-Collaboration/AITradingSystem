@@ -33,6 +33,9 @@ def test_portfolio_config_loads_total_asset_budget() -> None:
     assert config.decision.frequency == "daily"
     assert config.portfolio.total_risk_asset_min == 0.60
     assert config.portfolio.total_risk_asset_max == 0.80
+    assert config.risk_budget.enabled is True
+    assert config.risk_budget.market_stress.stress_max_position == 0.45
+    assert config.risk_budget.concentration.max_single_ticker_share_of_ai == 0.30
 
 
 def test_data_quality_config_loads_thresholds() -> None:

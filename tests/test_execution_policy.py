@@ -90,6 +90,14 @@ def test_execution_advisory_uses_fixed_action_taxonomy_for_band_changes() -> Non
         triggered_gate_ids=("valuation",),
         report_status="PASS",
     )
+    risk_budget_no_new = build_execution_advisory(
+        policy=policy,
+        current_band=(0.50, 0.70),
+        previous_band=(0.30, 0.50),
+        confidence_level="high",
+        triggered_gate_ids=("risk_budget",),
+        report_status="PASS",
+    )
     increase = build_execution_advisory(
         policy=policy,
         current_band=(0.50, 0.70),
@@ -116,6 +124,7 @@ def test_execution_advisory_uses_fixed_action_taxonomy_for_band_changes() -> Non
     )
 
     assert no_new.action_id == "no_new_position"
+    assert risk_budget_no_new.action_id == "no_new_position"
     assert increase.action_id == "small_increase"
     assert reduce.action_id == "reduce_to_target_range"
     assert maintain.action_id == "maintain"

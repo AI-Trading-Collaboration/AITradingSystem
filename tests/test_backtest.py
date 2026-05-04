@@ -1134,6 +1134,9 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert watchlist_lifecycle_report_path.exists()
     trace_path = tmp_path / "evidence" / "backtest_trace.json"
     assert trace_path.exists()
+    daily_frame = pd.read_csv(daily_path)
+    assert "risk_budget_gate_cap" in daily_frame.columns
+    assert "risk_budget_gate_triggered" in daily_frame.columns
     trace = json.loads(trace_path.read_text(encoding="utf-8"))
     claim_ids = {claim["claim_id"] for claim in trace["claims"]}
     assert "backtest:2026-04-01:2026-04-30:performance" in claim_ids

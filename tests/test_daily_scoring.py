@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from datetime import date
 from pathlib import Path
 from typing import cast
@@ -16,9 +17,12 @@ from ai_trading_system.cli import app
 from ai_trading_system.config import (
     configured_price_tickers,
     configured_rate_series,
+    load_industry_chain,
+    load_portfolio,
     load_risk_events,
     load_scoring_rules,
     load_universe,
+    load_watchlist,
 )
 from ai_trading_system.data.quality import DataFileSummary, DataQualityReport
 from ai_trading_system.features.market import MarketFeatureRow, MarketFeatureSet
@@ -30,6 +34,10 @@ from ai_trading_system.fundamentals.sec_metrics import (
     SEC_FUNDAMENTAL_METRIC_COLUMNS,
     PeriodType,
     SecFundamentalMetricsCsvValidationReport,
+)
+from ai_trading_system.portfolio_exposure import (
+    PortfolioExposureReport,
+    build_portfolio_exposure_report,
 )
 from ai_trading_system.risk_events import (
     LoadedRiskEventOccurrence,
@@ -238,6 +246,58 @@ def test_build_daily_score_report_uses_current_risk_event_review_attestation() -
     assert "已完成覆盖评估日" in policy.reason
     assert risk_gate.triggered is False
     assert risk_gate.max_position == 1.0
+
+
+def test_risk_budget_gate_caps_high_vix_market_stress() -> None:
+    portfolio = load_portfolio()
+    report = build_daily_score_report(
+        feature_set=_feature_set_with_vix(vix_current=34.0, vix_percentile=0.90),
+        data_quality_report=_quality_report(),
+        rules=load_scoring_rules(),
+        total_risk_asset_min=0.60,
+        total_risk_asset_max=0.80,
+        max_total_ai_exposure=portfolio.position_limits.max_total_ai_exposure,
+        risk_budget=portfolio.risk_budget,
+    )
+
+    risk_budget_gate = _position_gate(report, "risk_budget")
+
+    assert risk_budget_gate.triggered
+    assert (
+        risk_budget_gate.max_position
+        == portfolio.risk_budget.market_stress.stress_max_position
+    )
+    assert "市场压力达到 stress 阈值" in risk_budget_gate.reason
+    assert report.recommendation.risk_asset_ai_band.max_position <= (
+        risk_budget_gate.max_position
+    )
+
+
+def test_risk_budget_gate_caps_real_portfolio_concentration(
+    tmp_path: Path,
+) -> None:
+    portfolio = load_portfolio()
+    exposure_report = _concentrated_portfolio_exposure_report(tmp_path)
+    report = build_daily_score_report(
+        feature_set=_feature_set(),
+        data_quality_report=_quality_report(),
+        rules=load_scoring_rules(),
+        total_risk_asset_min=0.60,
+        total_risk_asset_max=0.80,
+        max_total_ai_exposure=portfolio.position_limits.max_total_ai_exposure,
+        risk_budget=portfolio.risk_budget,
+        portfolio_exposure_report=exposure_report,
+    )
+
+    risk_budget_gate = _position_gate(report, "risk_budget")
+
+    assert exposure_report.status == "PASS"
+    assert risk_budget_gate.triggered
+    assert (
+        risk_budget_gate.max_position
+        == portfolio.risk_budget.concentration.concentration_max_position
+    )
+    assert "单票 AI 暴露集中度" in risk_budget_gate.reason
 
 
 def test_build_daily_score_report_marks_insufficient_data() -> None:
@@ -672,6 +732,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert "## 执行建议" in daily_text
     assert "## 组合暴露" in daily_text
     assert "NOT_CONNECTED" in daily_text
+    assert "风险预算" in daily_text
     assert "## 今日结论卡" in daily_text
     assert "## 结论使用等级" in daily_text
     assert "## 产业链节点热度" in daily_text
@@ -908,6 +969,51 @@ def _feature_set() -> MarketFeatureSet:
         _feature(as_of, "trend", "^VIX", "return_5d", -0.05),
     ]
     return MarketFeatureSet(as_of=as_of, rows=tuple(rows), warnings=())
+
+
+def _feature_set_with_vix(
+    *,
+    vix_current: float,
+    vix_percentile: float,
+) -> MarketFeatureSet:
+    base = _feature_set()
+    rows = []
+    for row in base.rows:
+        if row.subject == "^VIX" and row.feature == "vix_current":
+            rows.append(replace(row, value=vix_current))
+        elif row.subject == "^VIX" and row.feature == "vix_percentile_252":
+            rows.append(replace(row, value=vix_percentile))
+        else:
+            rows.append(row)
+    return MarketFeatureSet(as_of=base.as_of, rows=tuple(rows), warnings=base.warnings)
+
+
+def _concentrated_portfolio_exposure_report(tmp_path: Path) -> PortfolioExposureReport:
+    input_path = tmp_path / "positions.csv"
+    input_path.write_text(
+        "\n".join(
+            [
+                (
+                    "as_of,ticker,instrument_type,quantity,market_value,currency,"
+                    "ai_exposure_pct,region,customer_chain,factor_tags,"
+                    "correlation_cluster,etf_beta_to_ai_proxy,notes"
+                ),
+                (
+                    "2026-04-30,NVDA,single_stock,10,10000,USD,1.0,US,"
+                    "hyperscaler_capex,growth;semiconductor,ai_semis,,test"
+                ),
+                "2026-04-30,USD_CASH,cash,1,5000,USD,0,US,cash,cash,cash,,cash",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return build_portfolio_exposure_report(
+        input_path=input_path,
+        as_of=date(2026, 4, 30),
+        industry_chain=load_industry_chain(),
+        watchlist=load_watchlist(),
+    )
 
 
 def _feature(

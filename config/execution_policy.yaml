@@ -17,6 +17,7 @@ manual_review_gate_ids:
   - data_confidence
 no_new_position_gate_ids:
   - valuation
+  - risk_budget
   - risk_events
   - thesis
 cooldown_trading_days: 1

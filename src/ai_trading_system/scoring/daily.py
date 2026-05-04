@@ -12,6 +12,7 @@ from ai_trading_system.conclusion_boundary import (
     render_conclusion_boundary_section,
 )
 from ai_trading_system.config import (
+    RiskBudgetConfig,
     ScoreModuleRuleConfig,
     ScoreSignalConfig,
     ScoringRulesConfig,
@@ -19,6 +20,7 @@ from ai_trading_system.config import (
 from ai_trading_system.data.quality import DataQualityReport
 from ai_trading_system.features.market import MarketFeatureSet
 from ai_trading_system.fundamentals.sec_features import SecFundamentalFeaturesReport
+from ai_trading_system.portfolio_exposure import PortfolioExposureReport
 from ai_trading_system.risk_events import RiskEventOccurrenceReviewReport
 from ai_trading_system.scoring.position_gates import build_position_gates
 from ai_trading_system.scoring.position_model import (
@@ -184,6 +186,8 @@ def build_daily_score_report(
     total_risk_asset_min: float,
     total_risk_asset_max: float,
     max_total_ai_exposure: float | None = None,
+    risk_budget: RiskBudgetConfig | None = None,
+    portfolio_exposure_report: PortfolioExposureReport | None = None,
     review_summary: DailyReviewSummary | None = None,
     fundamental_feature_report: SecFundamentalFeaturesReport | None = None,
     valuation_review_report: ValuationReviewReport | None = None,
@@ -254,6 +258,9 @@ def build_daily_score_report(
         thesis_warning_count=(
             0 if thesis_review_status is None else thesis_review_status.warning_count
         ),
+        risk_budget=risk_budget,
+        feature_set=feature_set,
+        portfolio_exposure_report=portfolio_exposure_report,
         valuation_review_report=valuation_review_report,
         risk_event_occurrence_review_report=risk_event_occurrence_review_report,
     )

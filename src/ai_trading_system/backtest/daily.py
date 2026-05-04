@@ -429,6 +429,7 @@ def run_daily_score_backtest(
             total_risk_asset_min=portfolio_config.portfolio.total_risk_asset_min,
             total_risk_asset_max=portfolio_config.portfolio.total_risk_asset_max,
             max_total_ai_exposure=portfolio_config.position_limits.max_total_ai_exposure,
+            risk_budget=portfolio_config.risk_budget,
             fundamental_feature_report=fundamental_feature_report,
             valuation_review_report=valuation_review_report,
             risk_event_occurrence_review_report=risk_event_occurrence_review_report,

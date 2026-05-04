@@ -54,8 +54,8 @@ cards:
       - config/scoring_rules.yaml
       - config/portfolio.yaml
     description: >
-      将评分仓位、组合限制、风险事件、估值拥挤、thesis 状态和数据置信度
-      取最严格上限，形成最终风险资产内 AI 仓位区间。
+      将评分仓位、组合限制、风险预算、风险事件、估值拥挤、thesis 状态
+      和数据置信度取最严格上限，形成最终风险资产内 AI 仓位区间。
     production_since: 2026-05-04
     retired_at:
     linked_rule_experiment: ""
@@ -71,14 +71,14 @@ cards:
         - tests/test_daily_scoring.py
         - tests/test_backtest.py
       sample_limitations:
-        - SCORE-003 风险预算模型尚未完成。
+        - SCORE-003 风险预算当前为基础版，仍需真实持仓、长期 replay 和 shadow 验证。
     rollback:
       procedure: 恢复上一版 position gate 参数并重跑日报/回测测试。
       trigger_conditions:
         - gate 未按最严格上限约束仓位。
         - watch 或低可信来源错误触发仓位闸门。
     known_limitations:
-      - 当前只做硬上限，不做完整波动率或相关性预算。
+      - 风险预算基础版只使用 VIX 压力、真实组合集中度和 ETF beta 覆盖阈值，不做完整协方差、流动性或税费预算。
     last_reviewed_at: 2026-05-04
     next_review_due: 2026-06-04
 

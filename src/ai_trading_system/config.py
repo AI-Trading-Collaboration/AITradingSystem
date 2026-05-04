@@ -440,10 +440,49 @@ class PositionLimitsConfig(BaseModel):
     max_total_ai_exposure: float
 
 
+class MarketStressRiskBudgetConfig(BaseModel):
+    elevated_vix_current: float = Field(default=25.0, ge=0)
+    stress_vix_current: float = Field(default=32.0, ge=0)
+    elevated_vix_percentile: float = Field(default=0.65, ge=0, le=1)
+    stress_vix_percentile: float = Field(default=0.85, ge=0, le=1)
+    elevated_max_position: float = Field(default=0.70, ge=0, le=1)
+    stress_max_position: float = Field(default=0.45, ge=0, le=1)
+
+    @model_validator(mode="after")
+    def validate_market_stress_thresholds(self) -> Self:
+        if self.stress_vix_current < self.elevated_vix_current:
+            raise ValueError("stress_vix_current must be >= elevated_vix_current")
+        if self.stress_vix_percentile < self.elevated_vix_percentile:
+            raise ValueError("stress_vix_percentile must be >= elevated_vix_percentile")
+        if self.stress_max_position > self.elevated_max_position:
+            raise ValueError("stress_max_position must be <= elevated_max_position")
+        return self
+
+
+class ConcentrationRiskBudgetConfig(BaseModel):
+    max_single_ticker_share_of_ai: float = Field(default=0.30, ge=0, le=1)
+    max_industry_node_share_of_ai: float = Field(default=0.50, ge=0, le=1)
+    max_correlation_cluster_share_of_ai: float = Field(default=0.60, ge=0, le=1)
+    min_etf_beta_coverage: float = Field(default=0.80, ge=0, le=1)
+    concentration_max_position: float = Field(default=0.70, ge=0, le=1)
+    missing_etf_beta_max_position: float = Field(default=0.70, ge=0, le=1)
+
+
+class RiskBudgetConfig(BaseModel):
+    enabled: bool = True
+    market_stress: MarketStressRiskBudgetConfig = Field(
+        default_factory=MarketStressRiskBudgetConfig
+    )
+    concentration: ConcentrationRiskBudgetConfig = Field(
+        default_factory=ConcentrationRiskBudgetConfig
+    )
+
+
 class PortfolioConfig(BaseModel):
     decision: DecisionConfig
     portfolio: PortfolioBudgetConfig
     position_limits: PositionLimitsConfig
+    risk_budget: RiskBudgetConfig = Field(default_factory=RiskBudgetConfig)
 
 
 class PriceReturnThresholdOverrideConfig(BaseModel):

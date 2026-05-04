@@ -12,3 +12,20 @@ portfolio:
 position_limits:
   max_single_stock_in_ai_bucket: 0.30
   max_total_ai_exposure: 0.60
+
+risk_budget:
+  enabled: true
+  market_stress:
+    elevated_vix_current: 25.0
+    stress_vix_current: 32.0
+    elevated_vix_percentile: 0.65
+    stress_vix_percentile: 0.85
+    elevated_max_position: 0.70
+    stress_max_position: 0.45
+  concentration:
+    max_single_ticker_share_of_ai: 0.30
+    max_industry_node_share_of_ai: 0.50
+    max_correlation_cluster_share_of_ai: 0.60
+    min_etf_beta_coverage: 0.80
+    concentration_max_position: 0.70
+    missing_etf_beta_max_position: 0.70
