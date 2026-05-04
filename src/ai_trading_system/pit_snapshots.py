@@ -319,6 +319,7 @@ def discover_existing_pit_raw_snapshots(
     fmp_analyst_history_dir: Path,
     fmp_historical_valuation_dir: Path,
     eodhd_earnings_trends_dir: Path,
+    fmp_forward_pit_dir: Path | None = None,
     data_sources: DataSourcesConfig | None = None,
     project_root: Path = PROJECT_ROOT,
 ) -> tuple[PitSnapshotManifestRecord, ...]:
@@ -358,6 +359,23 @@ def discover_existing_pit_raw_snapshots(
             project_root=project_root,
         )
     )
+    if fmp_forward_pit_dir is not None:
+        records.extend(
+            _discover_raw_json_records(
+                input_dir=fmp_forward_pit_dir,
+                source_id="fmp_valuation_expectations",
+                snapshot_kind="fmp_forward_pit",
+                point_in_time_class="captured_snapshot",
+                history_source_class="captured_snapshot_history",
+                confidence_level="medium",
+                confidence_reason=(
+                    "FMP analyst estimates、price target、ratings 和 earnings calendar "
+                    "forward-only raw cache；available_time 使用 downloaded_at。"
+                ),
+                source_catalog=source_catalog,
+                project_root=project_root,
+            )
+        )
     records.extend(
         _discover_raw_json_records(
             input_dir=eodhd_earnings_trends_dir,
@@ -1077,6 +1095,9 @@ def _canonical_ticker(raw: dict[str, Any]) -> str:
 
 
 def _provider_symbol(raw: dict[str, Any]) -> str:
+    provider_symbol = raw.get("provider_symbol")
+    if isinstance(provider_symbol, str) and provider_symbol.strip():
+        return provider_symbol.strip().upper()
     request_parameters = raw.get("request_parameters")
     if isinstance(request_parameters, dict) and request_parameters.get("symbol"):
         return str(request_parameters["symbol"]).upper()

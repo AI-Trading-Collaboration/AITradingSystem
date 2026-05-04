@@ -181,15 +181,22 @@ sources:
     cache_paths:
       - data/raw/fmp_analyst_estimates
       - data/raw/fmp_historical_valuation
+      - data/raw/fmp_forward_pit
       - data/external/valuation_snapshots
+      - data/processed/pit_snapshots/fmp_forward_pit_YYYY-MM-DD.csv
       - outputs/reports/fmp_valuation_fetch_YYYY-MM-DD.md
       - outputs/reports/fmp_historical_valuation_fetch_YYYY-MM-DD.md
+      - outputs/reports/fmp_forward_pit_fetch_YYYY-MM-DD.md
       - outputs/reports/fmp_analyst_history_validation_YYYY-MM-DD.md
       - outputs/reports/valuation_validation_YYYY-MM-DD.md
     primary_for:
       - valuation_snapshot
       - valuation_history_snapshot
       - expectation_snapshot
+      - price_target_snapshot
+      - analyst_rating_snapshot
+      - earnings_calendar_snapshot
+      - forward_only_pit_archive
     audit_fields:
       - provider
       - endpoint
@@ -211,6 +218,9 @@ sources:
       - eps_revision_history_window
       - valuation_percentile_local_history
       - historical_valuation_captured_at
+      - fmp_forward_pit_raw_payload
+      - fmp_forward_pit_available_time
+      - fmp_forward_pit_normalized_schema
       - downstream_snapshot_validation
     limitations:
       - forward_pe 使用当前 quote 与最近未来 annual EPS estimate 计算。
@@ -222,6 +232,7 @@ sources:
       - 内部 ticker 与 FMP provider symbol 不一致时必须用显式 alias；当前 `GOOG` 请求 FMP 使用 `GOOGL`，快照仍归属内部 ticker `GOOG`。
       - FMP 返回负数估值倍数时记录警告并跳过该指标，避免把不可解释倍数写入自动评分输入。
       - HTTPS 连接、SSL、超时、429 和 5xx 临时错误会有限重试；402 等权限错误不重试，必须按 entitlement 问题处理。
+      - forward-only PIT 抓取的 analyst estimates、price target、ratings 和 earnings calendar 只从采集日后可见，不改变当前评分语义；下游必须使用 available_time <= decision_time。
       - API plan 或 entitlement 可能限制 endpoint 字段和请求频率。
     llm_permission:
       license_scope: paid_vendor_terms_not_reviewed_for_external_llm
@@ -304,6 +315,7 @@ sources:
     requires_credentials: false
     cache_paths:
       - data/raw/pit_snapshots/manifest.csv
+      - data/processed/pit_snapshots/fmp_forward_pit_YYYY-MM-DD.csv
       - outputs/reports/pit_snapshots_validation_YYYY-MM-DD.md
     primary_for:
       - raw_snapshot_manifest

@@ -189,6 +189,18 @@ from ai_trading_system.feedback_loop_review import (
     default_feedback_loop_review_report_path,
     write_feedback_loop_review_report,
 )
+from ai_trading_system.fmp_forward_pit import (
+    DEFAULT_FMP_FORWARD_PIT_NORMALIZED_DIR,
+    DEFAULT_FMP_FORWARD_PIT_RAW_DIR,
+    attach_fmp_forward_pit_raw_paths,
+    default_fmp_forward_pit_fetch_report_path,
+    default_fmp_forward_pit_normalized_path,
+    fetch_fmp_forward_pit_snapshots,
+    normalize_fmp_forward_pit_payloads,
+    write_fmp_forward_pit_fetch_report,
+    write_fmp_forward_pit_normalized_csv,
+    write_fmp_forward_pit_raw_payloads,
+)
 from ai_trading_system.fundamentals.sec_companyfacts import (
     SecEdgarCompanyFactsProvider,
     download_sec_companyfacts,
@@ -566,6 +578,10 @@ def build_pit_snapshot_manifest_command(
         Path,
         typer.Option(help="EODHD Earnings Trends 原始 payload 目录。"),
     ] = DEFAULT_EODHD_EARNINGS_TRENDS_RAW_DIR,
+    fmp_forward_pit_dir: Annotated[
+        Path,
+        typer.Option(help="FMP forward-only PIT 原始 payload 目录。"),
+    ] = DEFAULT_FMP_FORWARD_PIT_RAW_DIR,
     as_of: Annotated[
         str | None,
         typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -582,6 +598,7 @@ def build_pit_snapshot_manifest_command(
         fmp_analyst_history_dir=fmp_analyst_history_dir,
         fmp_historical_valuation_dir=fmp_historical_valuation_dir,
         eodhd_earnings_trends_dir=eodhd_earnings_trends_dir,
+        fmp_forward_pit_dir=fmp_forward_pit_dir,
         data_sources=data_sources,
     )
     manifest_path = write_pit_snapshot_manifest(records, output_path)
@@ -603,6 +620,154 @@ def build_pit_snapshot_manifest_command(
     console.print(f"快照数：{report.snapshot_count}；原始记录数：{report.row_count}")
     console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
     if not report.passed:
+        raise typer.Exit(code=1)
+
+
+@pit_snapshots_app.command("fetch-fmp-forward")
+def fetch_fmp_forward_pit_command(
+    tickers: Annotated[
+        str | None,
+        typer.Option(help="逗号分隔 ticker；未提供时使用 universe 的 AI core_watchlist。"),
+    ] = None,
+    raw_output_dir: Annotated[
+        Path,
+        typer.Option(help="写入 FMP forward-only PIT 原始 JSON 的目录。"),
+    ] = DEFAULT_FMP_FORWARD_PIT_RAW_DIR,
+    normalized_output_path: Annotated[
+        Path | None,
+        typer.Option(help="写入 FMP forward-only PIT 标准化 CSV 的路径。"),
+    ] = None,
+    manifest_path: Annotated[
+        Path,
+        typer.Option(help="写入或刷新 PIT raw snapshot manifest CSV 的路径。"),
+    ] = DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="抓取评估日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown FMP forward PIT 抓取报告输出路径。"),
+    ] = None,
+    pit_validation_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown PIT 快照质量报告输出路径。"),
+    ] = None,
+    data_sources_path: Annotated[
+        Path,
+        typer.Option(help="数据源目录 YAML 路径，用于补充 PIT manifest 授权字段。"),
+    ] = DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    api_key_env: Annotated[
+        str,
+        typer.Option(help="读取 FMP API key 的环境变量名。"),
+    ] = "FMP_API_KEY",
+    analyst_estimate_limit: Annotated[
+        int,
+        typer.Option(help="每个 ticker 拉取的 annual analyst estimate 记录数。"),
+    ] = 10,
+    earnings_calendar_lookback_days: Annotated[
+        int,
+        typer.Option(help="earnings-calendar 向前覆盖天数。"),
+    ] = 7,
+    earnings_calendar_forward_days: Annotated[
+        int,
+        typer.Option(help="earnings-calendar 向后覆盖天数。"),
+    ] = 90,
+) -> None:
+    """抓取 FMP forward-only PIT raw archive 和标准化 as-of 索引。"""
+    fetch_date = _parse_date(as_of) if as_of else date.today()
+    selected_tickers = (
+        _parse_csv_items(tickers)
+        if tickers
+        else load_universe().ai_chain.get("core_watchlist", [])
+    )
+    api_key = os.getenv(api_key_env)
+    if not api_key:
+        console.print(f"[red]未找到环境变量 {api_key_env}，已停止 FMP PIT 抓取。[/red]")
+        raise typer.Exit(code=1)
+
+    fetch_report_output = output_path or default_fmp_forward_pit_fetch_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        fetch_date,
+    )
+    normalized_output = normalized_output_path or default_fmp_forward_pit_normalized_path(
+        DEFAULT_FMP_FORWARD_PIT_NORMALIZED_DIR,
+        fetch_date,
+    )
+    pit_report_output = pit_validation_report_path or default_pit_snapshot_validation_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        fetch_date,
+    )
+    data_sources = load_data_sources(data_sources_path)
+
+    try:
+        fetch_report = fetch_fmp_forward_pit_snapshots(
+            selected_tickers,
+            api_key,
+            fetch_date,
+            captured_at=fetch_date,
+            analyst_estimate_limit=analyst_estimate_limit,
+            earnings_calendar_lookback_days=earnings_calendar_lookback_days,
+            earnings_calendar_forward_days=earnings_calendar_forward_days,
+        )
+    except ValueError as exc:
+        console.print(f"[red]FMP PIT 参数错误：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+    if not fetch_report.passed:
+        write_fmp_forward_pit_fetch_report(fetch_report, fetch_report_output)
+        status_style = "red"
+        console.print(
+            f"[{status_style}]FMP PIT 抓取状态："
+            f"{fetch_report.status}[/{status_style}]"
+        )
+        console.print(f"抓取报告：{fetch_report_output}")
+        console.print(f"错误数：{fetch_report.error_count}；警告数：{fetch_report.warning_count}")
+        raise typer.Exit(code=1)
+
+    raw_paths = write_fmp_forward_pit_raw_payloads(fetch_report.raw_payloads, raw_output_dir)
+    attached_payloads = attach_fmp_forward_pit_raw_paths(fetch_report.raw_payloads, raw_paths)
+    normalized_rows = normalize_fmp_forward_pit_payloads(attached_payloads)
+    fetch_report = replace(
+        fetch_report,
+        raw_payloads=attached_payloads,
+        normalized_rows=normalized_rows,
+    )
+    write_fmp_forward_pit_normalized_csv(normalized_rows, normalized_output)
+    write_fmp_forward_pit_fetch_report(fetch_report, fetch_report_output)
+
+    manifest_records = discover_existing_pit_raw_snapshots(
+        fmp_analyst_history_dir=DEFAULT_FMP_ANALYST_ESTIMATE_HISTORY_DIR,
+        fmp_historical_valuation_dir=DEFAULT_FMP_HISTORICAL_VALUATION_RAW_DIR,
+        eodhd_earnings_trends_dir=DEFAULT_EODHD_EARNINGS_TRENDS_RAW_DIR,
+        fmp_forward_pit_dir=raw_output_dir,
+        data_sources=data_sources,
+    )
+    manifest_output = write_pit_snapshot_manifest(manifest_records, manifest_path)
+    pit_report = validate_pit_snapshot_manifest(
+        input_path=manifest_output,
+        as_of=fetch_date,
+        data_sources=data_sources,
+    )
+    write_pit_snapshot_validation_report(pit_report, pit_report_output)
+
+    status_style = (
+        "green" if fetch_report.status == "PASS" else "yellow" if fetch_report.passed else "red"
+    )
+    console.print(f"[{status_style}]FMP PIT 抓取状态：{fetch_report.status}[/{status_style}]")
+    console.print(f"抓取报告：{fetch_report_output}")
+    console.print(f"写入 raw payload：{len(raw_paths)} 个文件 -> {raw_output_dir}")
+    console.print(f"写入 normalized CSV：{normalized_output}")
+    console.print(f"刷新 PIT manifest：{manifest_output}")
+    console.print(f"PIT 快照质量报告：{pit_report_output}")
+    console.print(
+        f"原始记录：{fetch_report.row_count}；标准化行：{fetch_report.normalized_row_count}"
+    )
+    console.print(
+        f"PIT manifest 状态：{pit_report.status}；"
+        f"错误数：{pit_report.error_count}；警告数：{pit_report.warning_count}"
+    )
+    if not pit_report.passed:
         raise typer.Exit(code=1)
 
 

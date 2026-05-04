@@ -501,6 +501,32 @@ class FmpHttpValuationProvider:
             },
         )
 
+    def fetch_price_target_summary(self, ticker: str) -> list[dict[str, Any]]:
+        return self._get("price-target-summary", {"symbol": ticker})
+
+    def fetch_price_target_consensus(self, ticker: str) -> list[dict[str, Any]]:
+        return self._get("price-target-consensus", {"symbol": ticker})
+
+    def fetch_grades(self, ticker: str) -> list[dict[str, Any]]:
+        return self._get("grades", {"symbol": ticker})
+
+    def fetch_grades_consensus(self, ticker: str) -> list[dict[str, Any]]:
+        return self._get("grades-consensus", {"symbol": ticker})
+
+    def fetch_ratings_snapshot(self, ticker: str) -> list[dict[str, Any]]:
+        return self._get("ratings-snapshot", {"symbol": ticker})
+
+    def fetch_earnings_calendar(
+        self,
+        *,
+        from_date: date,
+        to_date: date,
+    ) -> list[dict[str, Any]]:
+        return self._get(
+            "earnings-calendar",
+            {"from": from_date.isoformat(), "to": to_date.isoformat()},
+        )
+
     def endpoint_for(self, endpoint: str) -> str:
         return f"{self._base_url}/{endpoint}"
 

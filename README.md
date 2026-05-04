@@ -89,11 +89,12 @@ aits data-sources validate --as-of 2026-05-02
 建立并校验 forward-only PIT raw snapshot manifest：
 
 ```powershell
+aits pit-snapshots fetch-fmp-forward --as-of 2026-05-02
 aits pit-snapshots build-manifest --as-of 2026-05-02
 aits pit-snapshots validate --as-of 2026-05-02
 ```
 
-`build-manifest` 第一阶段会把现有 FMP analyst estimates、FMP historical valuation 和 EODHD Earnings Trends 原始缓存登记到 `data/raw/pit_snapshots/manifest.csv`，记录 raw payload 路径、sha256、row count、请求参数、`ingested_at`、`available_time`、PIT 可信度和 provider 授权字段。`validate` 会生成 `outputs/reports/pit_snapshots_validation_YYYY-MM-DD.md`；严重错误时后续评分、回测或报告不得使用这些快照。PIT 快照是 forward-only 日常前置步骤，缺跑日期不能事后补写成 strict PIT。
+`fetch-fmp-forward` 会抓取 FMP analyst estimates、price target、ratings 和 earnings calendar，写入 `data/raw/fmp_forward_pit/` 与 `data/processed/pit_snapshots/fmp_forward_pit_YYYY-MM-DD.csv`，并刷新 PIT manifest。`build-manifest` 会把现有 FMP analyst estimates、FMP historical valuation、FMP forward PIT 和 EODHD Earnings Trends 原始缓存登记到 `data/raw/pit_snapshots/manifest.csv`，记录 raw payload 路径、sha256、row count、请求参数、`ingested_at`、`available_time`、PIT 可信度和 provider 授权字段。`validate` 会生成 `outputs/reports/pit_snapshots_validation_YYYY-MM-DD.md`；严重错误时后续评分、回测或报告不得使用这些快照。PIT 快照是 forward-only 日常前置步骤，缺跑日期不能事后补写成 strict PIT。
 
 构建每日市场特征：
 
