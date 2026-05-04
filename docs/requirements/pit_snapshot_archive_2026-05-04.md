@@ -1,6 +1,6 @@
 # 自建 forward-only PIT 快照归档方案
 
-状态：IN_PROGRESS
+状态：BASELINE_DONE
 
 最后更新：2026-05-05
 
@@ -115,12 +115,12 @@ WHERE available_time <= decision_time
 
 |顺序|任务|状态|验收标准|
 |---:|---|---|---|
-|1|新增通用 PIT raw snapshot 数据模型与 manifest schema|IN_PROGRESS|定义 `snapshot_id`、provider、endpoint、request params、raw payload、checksum、row count、`ingested_at`、`available_time`、PIT 可信度和授权字段；schema 字段有单元测试|
-|2|实现 raw snapshot manifest 读取、写入和校验 helper|PENDING|校验必填字段、日期约束、payload 文件存在性、sha256、row count、重复 `snapshot_id` 和低可信数据误标 strict PIT|
-|3|新增 `aits pit-snapshots validate` 命令和中文质量报告|PENDING|默认读取 `data/raw/pit_snapshots/manifest.csv` 或显式路径；输出状态、错误/警告、provider 摘要、payload 校验问题和下游使用边界；严重错误返回非零退出码|
-|4|把现有 FMP/EODHD raw cache 纳入阶段 1 校验入口|PENDING|能对已存在 `data/raw/fmp_analyst_estimates/`、`data/raw/fmp_historical_valuation/`、`data/raw/eodhd_earnings_trends/` 生成或校验 manifest；不改变当前评分语义|
-|5|更新系统流图、数据源目录和 README 日常流程|PENDING|文档明确 PIT capture 位于 `score-daily` 之前，缺跑不能事后补成 strict PIT，报告默认中文|
-|6|补充测试和最小样例数据|PENDING|覆盖 manifest 通过、checksum mismatch、未来 `available_time`、重复快照、missing payload 和 CLI 退出码|
+|1|新增通用 PIT raw snapshot 数据模型与 manifest schema|DONE|定义 `snapshot_id`、provider、endpoint、request params、raw payload、checksum、row count、`ingested_at`、`available_time`、PIT 可信度和授权字段；schema 字段有单元测试|
+|2|实现 raw snapshot manifest 读取、写入和校验 helper|DONE|校验必填字段、日期约束、payload 文件存在性、sha256、row count、重复 `snapshot_id` 和低可信数据误标 strict PIT|
+|3|新增 `aits pit-snapshots validate` 命令和中文质量报告|DONE|默认读取 `data/raw/pit_snapshots/manifest.csv` 或显式路径；输出状态、错误/警告、provider 摘要、payload 校验问题和下游使用边界；严重错误返回非零退出码|
+|4|把现有 FMP/EODHD raw cache 纳入阶段 1 校验入口|DONE|能对已存在 `data/raw/fmp_analyst_estimates/`、`data/raw/fmp_historical_valuation/`、`data/raw/eodhd_earnings_trends/` 生成或校验 manifest；不改变当前评分语义|
+|5|更新系统流图、数据源目录和 README 日常流程|DONE|文档明确 PIT capture 位于 `score-daily` 之前，缺跑不能事后补成 strict PIT，报告默认中文|
+|6|补充测试和最小样例数据|DONE|覆盖 manifest 通过、checksum mismatch、未来 `available_time`、重复快照、missing payload 和 CLI 退出码|
 |7|阶段 2 接入 FMP forward-only 抓取归档|PENDING|`analyst estimates`、`price target`、`ratings`、`earnings calendar` 写 raw payload 和 normalized 输出，`available_time` 从采集成功时间开始|
 |8|阶段 3 接入 valuation/revision as-of 查询|PENDING|`eps_revision_90d_pct` 只使用 `available_time <= decision_time` 的自建快照；样本不足 90 天时明确降级|
 |9|阶段 4 接入日常健康检查和告警|PENDING|`ops health` / alerts 检查 PIT 快照缺跑、断更、row count 异常和 checksum 异常|
@@ -179,3 +179,4 @@ WHERE available_time <= decision_time
 
 - 2026-05-04：新增本方案。结论是暂不采购昂贵 historical PIT estimates archive，先建设 forward-only 自建快照层，并用数据可信度标签和 lag sensitivity 约束历史回测解释。
 - 2026-05-05：从 READY 改为 IN_PROGRESS，原因：owner 确认优先开发 `DATA-003`，先把 PIT 快照归档纳入日常执行前置链路；本次先实施阶段 1 的通用 raw snapshot manifest、校验命令、中文质量报告、文档和测试。
+- 2026-05-05：从 IN_PROGRESS 改为 BASELINE_DONE，原因：阶段 1 已实现 `pit_snapshots` manifest schema/校验、`aits pit-snapshots validate`、`aits pit-snapshots build-manifest`、现有 FMP/EODHD raw cache 发现入口、中文质量报告、数据源目录、系统流图、README 和测试；真实本地运行 `aits pit-snapshots build-manifest --as-of 2026-05-05` 生成 13 条快照且质量状态为 PASS。阶段 2-5 继续保留为后续开发。

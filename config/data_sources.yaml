@@ -291,6 +291,68 @@ sources:
       reviewed_at: 2026-05-04
     owner_notes: EODHD_API_KEY 只从环境变量读取，命令、报告和错误信息不得输出密钥；该来源是 DATA-001 baseline，不是完整 PIT 完成条件。
 
+  - source_id: self_archived_pit_snapshots
+    provider: Local forward-only PIT snapshot archive
+    source_type: manual_input
+    status: active
+    domains:
+      - valuation
+      - fundamentals
+    endpoint: data/raw/pit_snapshots/manifest.csv
+    adapter: pit_snapshots.validate
+    cadence: daily
+    requires_credentials: false
+    cache_paths:
+      - data/raw/pit_snapshots/manifest.csv
+      - outputs/reports/pit_snapshots_validation_YYYY-MM-DD.md
+    primary_for:
+      - raw_snapshot_manifest
+      - self_archived_as_of_inputs
+      - forward_only_pit_evidence
+    audit_fields:
+      - snapshot_id
+      - source_id
+      - provider
+      - file_path
+      - endpoint
+      - request_parameters
+      - raw_payload_path
+      - raw_payload_sha256
+      - checksum
+      - raw_payload_bytes
+      - row_count
+      - ingested_at
+      - available_time
+      - point_in_time_class
+      - backtest_use
+      - license_use_class
+    validation_checks:
+      - manifest_schema
+      - required_fields
+      - raw_payload_exists
+      - raw_payload_checksum
+      - raw_payload_bytes
+      - row_count
+      - duplicate_snapshot_id
+      - available_time
+      - strict_point_in_time_claims
+      - provider_permissions
+      - no_secret_leakage
+    limitations:
+      - forward-only 自建 PIT 快照只能从采集日向后积累，漏跑日期不能事后补写成严格 PIT。
+      - 第一阶段只校验 manifest 和 raw payload，不改变 `score-daily` 评分语义。
+      - 供应商 raw payload 的缓存、再分发和外部 LLM 处理权限仍以原始 provider 条款为准。
+    llm_permission:
+      license_scope: local_metadata_manifest_only
+      personal_use_only: true
+      external_llm_allowed: false
+      cache_allowed: true
+      redistribution_allowed: false
+      max_content_sent_level: metadata_only
+      approval_ref: pit_manifest_metadata_only_2026-05-05
+      reviewed_at: 2026-05-05
+    owner_notes: DATA-003 阶段 1 的通用自建 PIT raw snapshot manifest；下游只能通过 available_time <= decision_time 查询。
+
   - source_id: local_risk_event_occurrences
     provider: Local YAML input
     source_type: manual_input

@@ -282,6 +282,14 @@ from ai_trading_system.pipeline_health import (
     default_pipeline_health_report_path,
     write_pipeline_health_report,
 )
+from ai_trading_system.pit_snapshots import (
+    DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH,
+    default_pit_snapshot_validation_report_path,
+    discover_existing_pit_raw_snapshots,
+    validate_pit_snapshot_manifest,
+    write_pit_snapshot_manifest,
+    write_pit_snapshot_validation_report,
+)
 from ai_trading_system.portfolio_exposure import (
     build_portfolio_exposure_report,
     default_portfolio_exposure_report_path,
@@ -449,6 +457,7 @@ reports_app = typer.Typer(help="投资报告和周期复盘。", no_args_is_help
 ops_app = typer.Typer(help="运行监控和 pipeline health。", no_args_is_help=True)
 security_app = typer.Typer(help="密钥卫生和供应商权限治理。", no_args_is_help=True)
 llm_app = typer.Typer(help="LLM 结构化预审和待复核队列。", no_args_is_help=True)
+pit_snapshots_app = typer.Typer(help="Forward-only PIT raw snapshot 归档。", no_args_is_help=True)
 app.add_typer(watchlist_app, name="watchlist")
 app.add_typer(industry_chain_app, name="industry-chain")
 app.add_typer(thesis_app, name="thesis")
@@ -467,6 +476,7 @@ app.add_typer(reports_app, name="reports")
 app.add_typer(ops_app, name="ops")
 app.add_typer(security_app, name="security")
 app.add_typer(llm_app, name="llm")
+app.add_typer(pit_snapshots_app, name="pit-snapshots")
 console = Console()
 DEFAULT_RISK_EVENT_OCCURRENCES_PATH = (
     PROJECT_ROOT / "data" / "external" / "risk_event_occurrences"
@@ -490,6 +500,110 @@ DEFAULT_FMP_HISTORICAL_VALUATION_RAW_DIR = default_fmp_historical_valuation_raw_
 DEFAULT_EODHD_EARNINGS_TRENDS_RAW_DIR = default_eodhd_earnings_trends_raw_dir(
     PROJECT_ROOT / "data" / "raw"
 )
+
+
+@pit_snapshots_app.command("validate")
+def validate_pit_snapshots_command(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="PIT raw snapshot manifest CSV 路径。"),
+    ] = DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH,
+    data_sources_path: Annotated[
+        Path,
+        typer.Option(help="数据源目录 YAML 路径，用于校验授权和 provider 信息。"),
+    ] = DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown PIT 快照质量报告输出路径。"),
+    ] = None,
+) -> None:
+    """校验 forward-only PIT raw snapshot manifest。"""
+    validation_date = _parse_date(as_of) if as_of else date.today()
+    report_path = output_path or default_pit_snapshot_validation_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        validation_date,
+    )
+    report = validate_pit_snapshot_manifest(
+        input_path=input_path,
+        as_of=validation_date,
+        data_sources=load_data_sources(data_sources_path),
+    )
+    write_pit_snapshot_validation_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]PIT 快照归档状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_path}")
+    console.print(f"Manifest：{input_path}")
+    console.print(f"快照数：{report.snapshot_count}；原始记录数：{report.row_count}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+
+@pit_snapshots_app.command("build-manifest")
+def build_pit_snapshot_manifest_command(
+    output_path: Annotated[
+        Path,
+        typer.Option(help="生成的 PIT raw snapshot manifest CSV 路径。"),
+    ] = DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH,
+    data_sources_path: Annotated[
+        Path,
+        typer.Option(help="数据源目录 YAML 路径，用于补充授权字段。"),
+    ] = DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    fmp_analyst_history_dir: Annotated[
+        Path,
+        typer.Option(help="FMP analyst estimates 原始历史快照目录。"),
+    ] = DEFAULT_FMP_ANALYST_ESTIMATE_HISTORY_DIR,
+    fmp_historical_valuation_dir: Annotated[
+        Path,
+        typer.Option(help="FMP historical valuation 原始 payload 目录。"),
+    ] = DEFAULT_FMP_HISTORICAL_VALUATION_RAW_DIR,
+    eodhd_earnings_trends_dir: Annotated[
+        Path,
+        typer.Option(help="EODHD Earnings Trends 原始 payload 目录。"),
+    ] = DEFAULT_EODHD_EARNINGS_TRENDS_RAW_DIR,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    validation_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown PIT 快照质量报告输出路径。"),
+    ] = None,
+) -> None:
+    """从现有 FMP/EODHD raw cache 生成通用 PIT raw snapshot manifest。"""
+    manifest_date = _parse_date(as_of) if as_of else date.today()
+    data_sources = load_data_sources(data_sources_path)
+    records = discover_existing_pit_raw_snapshots(
+        fmp_analyst_history_dir=fmp_analyst_history_dir,
+        fmp_historical_valuation_dir=fmp_historical_valuation_dir,
+        eodhd_earnings_trends_dir=eodhd_earnings_trends_dir,
+        data_sources=data_sources,
+    )
+    manifest_path = write_pit_snapshot_manifest(records, output_path)
+    report_path = validation_report_path or default_pit_snapshot_validation_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        manifest_date,
+    )
+    report = validate_pit_snapshot_manifest(
+        input_path=manifest_path,
+        as_of=manifest_date,
+        data_sources=data_sources,
+    )
+    write_pit_snapshot_validation_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"生成 PIT manifest：{manifest_path}")
+    console.print(f"[{status_style}]PIT 快照归档状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_path}")
+    console.print(f"快照数：{report.snapshot_count}；原始记录数：{report.row_count}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if not report.passed:
+        raise typer.Exit(code=1)
 
 
 @trace_app.command("lookup")

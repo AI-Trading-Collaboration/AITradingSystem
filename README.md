@@ -86,6 +86,15 @@ aits data-sources validate --as-of 2026-05-02
 
 数据源目录在 `config/data_sources.yaml`。它记录当前 Yahoo Finance、FRED、本地手工输入和计划接入来源的 provider、endpoint、缓存路径、审计字段、校验项、限制说明和 provider 级 LLM 处理权限。这个命令不下载数据，只校验“来源是否可审计、限制是否明确”，用于后续接入财报、估值和新闻事件源前的来源纪律；外部 LLM 授权未知时默认 fail closed。
 
+建立并校验 forward-only PIT raw snapshot manifest：
+
+```powershell
+aits pit-snapshots build-manifest --as-of 2026-05-02
+aits pit-snapshots validate --as-of 2026-05-02
+```
+
+`build-manifest` 第一阶段会把现有 FMP analyst estimates、FMP historical valuation 和 EODHD Earnings Trends 原始缓存登记到 `data/raw/pit_snapshots/manifest.csv`，记录 raw payload 路径、sha256、row count、请求参数、`ingested_at`、`available_time`、PIT 可信度和 provider 授权字段。`validate` 会生成 `outputs/reports/pit_snapshots_validation_YYYY-MM-DD.md`；严重错误时后续评分、回测或报告不得使用这些快照。PIT 快照是 forward-only 日常前置步骤，缺跑日期不能事后补写成 strict PIT。
+
 构建每日市场特征：
 
 ```powershell
