@@ -125,10 +125,12 @@ flowchart TD
 
     subgraph Backtest["历史回测"]
         BT["aits backtest"]
+        BTG["aits backtest-input-gaps"]
         BWATCH["point-in-time 观察池<br/>按 signal_date 过滤 lifecycle 可见 ticker"]
         BSEC["point-in-time SEC 基本面特征<br/>按 signal_date 只读已披露 companyfacts 与 TSM IR"]
         BVAL["point-in-time 估值快照<br/>按 signal_date 过滤 as_of/captured_at"]
         BRISK["point-in-time 风险事件发生记录和复核声明<br/>按 signal_date 过滤证据、resolved_at 和 reviewed_at"]
+        BIG["outputs/backtests/backtest_input_gaps_YYYY-MM-DD_YYYY-MM-DD.md<br/>历史估值/风险事件输入缺口诊断"]
         BD["outputs/backtests/backtest_daily_YYYY-MM-DD_YYYY-MM-DD.csv<br/>含 confidence_score / confidence_level"]
         BR["outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md<br/>含结论使用等级、判断置信度分桶和基准政策解释"]
         BROB["outputs/backtests/backtest_robustness_YYYY-MM-DD_YYYY-MM-DD.md<br/>成本压力、起点后移和买入持有基准对比"]
@@ -373,6 +375,13 @@ flowchart TD
     RE --> BT
     REX --> BT
     REXATT --> BT
+    PR --> BTG
+    RR --> BTG
+    VS --> BTG
+    RE --> BTG
+    REX --> BTG
+    REXATT --> BTG
+    BTG --> BIG
     BT --> BSEC
     BT --> BVAL
     BT --> BRISK
@@ -905,6 +914,8 @@ flowchart TD
 |认知状态历史|`data/processed/belief_state_history.csv`|认知状态历史索引，按 `signal_date` upsert，记录 `belief_state_id`、路径、生成时间、production_effect、置信度、数据质量、最终仓位边界、限制数量、trace 路径和 decision snapshot 路径|已实现基础版|
 |认知状态报告|`outputs/reports/daily_score_YYYY-MM-DD.md#认知状态`|日报中的中文认知状态摘要，明确 `belief_state` 是只读解释层，而不是已批准进入 production 规则的输入|已实现基础版|
 |回测|`aits backtest`|先校验 `benchmark_policy` 和数据质量门禁，再基于每日评分和同一套 `position_gate` 最终仓位动态回测，按显式成本假设扣除 commission、bid-ask spread、linear slippage、market impact、tax、FX、annual financing carry 和 ETF delay，并按 signal_date 构建 point-in-time watchlist lifecycle、SEC 基本面特征、TSM IR 季度补充、估值快照切片、风险事件发生记录和复核声明切片；可通过 `--robustness-report` 或 `--robustness-report-path` 额外生成第一阶段稳健性报告|已实现|
+|回测历史输入缺口诊断|`aits backtest-input-gaps`|先执行数据质量门禁，再按回测 signal_date 诊断历史估值快照、严格 PIT 估值、风险事件 occurrence 和人工复核声明覆盖；报告只列缺口和补数入口，不生成或伪造历史估值/风险事件/无风险声明|已实现基础版|
+|回测历史输入缺口报告|`outputs/backtests/backtest_input_gaps_YYYY-MM-DD_YYYY-MM-DD.md`|中文报告列出每个 signal_date 的估值状态、估值快照数量、严格 PIT 估值数量、风险事件 occurrence 数量、当前有效人工复核声明数量和风险覆盖状态；明确 occurrence 为 0 不能自动代表历史无事件|已实现基础版|
 |回测输入覆盖诊断|`outputs/backtests/backtest_input_coverage_YYYY-MM-DD_YYYY-MM-DD.csv`|机器可读输出评分模块覆盖、来源类型、输入问题、证据 URL、ticker 输入、SEC 特征、风险事件证据和来源类型聚合，便于跨月审计和回归分析|已实现|
 |回测报告|`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|输出市场阶段、结论使用等级、绩效指标、benchmark policy 状态、基准解释边界、执行成本摘要、仓位闸门摘要、判断置信度分桶、数据质量门禁摘要、SEC 基本面、估值快照、风险事件质量摘要、模块覆盖率摘要、月度覆盖率趋势、月度来源类型趋势、月度输入问题下钻、月度输入证据 URL 摘要、月度风险事件证据 URL 明细、月度 ticker 输入摘要、月度 ticker SEC 特征明细、月度估值快照来源和月度风险事件证据来源分布|已实现|
 |回测成本假设|`aits backtest --cost-bps --spread-bps --slippage-bps --market-impact-bps --tax-bps --fx-bps --financing-annual-bps --etf-delay-bps`|成本模型第一阶段是显式假设拆分，不等同于真实券商成交回报；每日明细保存每类成本扣减，回测报告显示成本摘要，trace run manifest 记录 `cost_assumptions` 便于复现|已实现基础版|

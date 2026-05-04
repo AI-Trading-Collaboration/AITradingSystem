@@ -1275,6 +1275,61 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert "策略总收益" in lookup_result.output
 
 
+def test_backtest_input_gaps_cli_writes_gap_report(tmp_path: Path) -> None:
+    universe = load_universe()
+    prices_path = tmp_path / "prices_daily.csv"
+    rates_path = tmp_path / "rates_daily.csv"
+    valuation_dir = tmp_path / "valuation_snapshots"
+    risk_occurrences_dir = tmp_path / "risk_event_occurrences"
+    output_path = tmp_path / "backtest_input_gaps.md"
+    quality_path = tmp_path / "quality.md"
+    valuation_dir.mkdir()
+    risk_occurrences_dir.mkdir()
+    _sample_prices(configured_price_tickers(universe), periods=320).to_csv(
+        prices_path,
+        index=False,
+    )
+    _sample_rates(configured_rate_series(universe), periods=320).to_csv(
+        rates_path,
+        index=False,
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "backtest-input-gaps",
+            "--prices-path",
+            str(prices_path),
+            "--rates-path",
+            str(rates_path),
+            "--from",
+            "2026-04-01",
+            "--to",
+            "2026-04-10",
+            "--quality-as-of",
+            "2026-05-04",
+            "--valuation-path",
+            str(valuation_dir),
+            "--risk-event-occurrences-path",
+            str(risk_occurrences_dir),
+            "--output-path",
+            str(output_path),
+            "--quality-report-path",
+            str(quality_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert output_path.exists()
+    assert quality_path.exists()
+    assert "历史输入缺口状态：" in result.output
+    text = output_path.read_text(encoding="utf-8")
+    assert "# 回测历史输入缺口报告" in text
+    assert "风险事件发生记录为 0 不能自动解释为历史无事件" in text
+    assert "missing_or_not_reviewed" in text
+    assert "aits valuation import-csv" in text
+
+
 def _quality_report() -> DataQualityReport:
     return DataQualityReport(
         checked_at=pd.Timestamp("2026-05-01T00:00:00Z").to_pydatetime(),

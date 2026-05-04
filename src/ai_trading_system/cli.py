@@ -28,6 +28,11 @@ from ai_trading_system.backtest.daily import (
     write_backtest_input_coverage_csv,
     write_backtest_report,
 )
+from ai_trading_system.backtest.input_gaps import (
+    build_backtest_input_gap_report,
+    default_backtest_input_gap_report_path,
+    write_backtest_input_gap_report,
+)
 from ai_trading_system.backtest.robustness import (
     BacktestRobustnessReport,
     BacktestRobustnessScenario,
@@ -1888,6 +1893,177 @@ def backtest(
             "[red]输入审计未达到 PASS，严格审计门禁已返回失败。[/red]"
         )
         raise typer.Exit(code=1)
+
+
+@app.command("backtest-input-gaps")
+def backtest_input_gaps(
+    prices_path: Annotated[
+        Path,
+        typer.Option(help="标准化日线价格 CSV 路径，用于确定回测 signal_date。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    rates_path: Annotated[
+        Path,
+        typer.Option(help="标准化日线利率 CSV 路径，用于数据质量门禁。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    start: Annotated[
+        str | None,
+        typer.Option(
+            "--from",
+            help="诊断开始日期，格式为 YYYY-MM-DD；未提供时使用所选市场阶段起点。",
+        ),
+    ] = None,
+    end: Annotated[
+        str | None,
+        typer.Option("--to", help="诊断结束日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    strategy_ticker: Annotated[
+        str,
+        typer.Option(help="用于确定回测信号日的策略代理标的。"),
+    ] = "SMH",
+    regime: Annotated[
+        str | None,
+        typer.Option(
+            "--regime",
+            help="市场阶段 ID，默认使用 config/market_regimes.yaml 的 default_backtest_regime。",
+        ),
+    ] = None,
+    regimes_path: Annotated[
+        Path,
+        typer.Option(help="市场阶段配置文件路径。"),
+    ] = DEFAULT_MARKET_REGIMES_CONFIG_PATH,
+    valuation_path: Annotated[
+        Path,
+        typer.Option(help="估值快照 YAML 文件或目录路径，用于历史覆盖诊断。"),
+    ] = PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+    risk_events_path: Annotated[
+        Path,
+        typer.Option(help="风险事件配置路径，用于历史覆盖诊断。"),
+    ] = DEFAULT_RISK_EVENTS_CONFIG_PATH,
+    risk_event_occurrences_path: Annotated[
+        Path,
+        typer.Option(help="风险事件发生记录 YAML 文件或目录路径，用于历史覆盖诊断。"),
+    ] = DEFAULT_RISK_EVENT_OCCURRENCES_PATH,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 历史输入缺口报告输出路径。"),
+    ] = None,
+    quality_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 数据质量报告输出路径。"),
+    ] = None,
+    quality_as_of: Annotated[
+        str | None,
+        typer.Option(help="数据质量校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    full_universe: Annotated[
+        bool,
+        typer.Option(
+            "--full-universe",
+            help="校验配置中的完整 AI 产业链标的，而不只校验核心观察池。",
+        ),
+    ] = False,
+) -> None:
+    """诊断回测所需历史估值和风险事件输入覆盖缺口。"""
+    universe = load_universe()
+    industry_chain = load_industry_chain()
+    watchlist = load_watchlist()
+    quality_config = load_data_quality()
+    market_regimes = load_market_regimes(regimes_path)
+    selected_regime_id = regime or market_regimes.default_backtest_regime
+    try:
+        selected_regime = market_regime_by_id(market_regimes, selected_regime_id)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    start_date = _parse_date(start) if start else selected_regime.start_date
+    end_date = _parse_date(end) if end else date.today()
+    quality_date = _parse_date(quality_as_of) if quality_as_of else date.today()
+    quality_output = quality_report_path or default_quality_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        quality_date,
+    )
+    gap_output = output_path or default_backtest_input_gap_report_path(
+        PROJECT_ROOT / "outputs" / "backtests",
+        start_date,
+        end_date,
+    )
+    data_quality_report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=list(
+            dict.fromkeys(
+                [
+                    *configured_price_tickers(
+                        universe,
+                        include_full_ai_chain=full_universe,
+                    ),
+                    strategy_ticker,
+                ]
+            )
+        ),
+        expected_rate_series=configured_rate_series(universe),
+        quality_config=quality_config,
+        as_of=quality_date,
+        manifest_path=_download_manifest_path(prices_path),
+    )
+    write_data_quality_report(data_quality_report, quality_output)
+    if not data_quality_report.passed:
+        console.print("[red]数据质量门禁失败，已停止历史输入缺口诊断。[/red]")
+        console.print(f"数据质量报告：{quality_output}")
+        console.print(
+            f"错误数：{data_quality_report.error_count}；"
+            f"警告数：{data_quality_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+
+    prices_frame = pd.read_csv(prices_path)
+    signal_dates = _backtest_signal_dates(
+        prices=prices_frame,
+        strategy_ticker=strategy_ticker,
+        start=start_date,
+        end=end_date,
+    )
+    valuation_reports = _build_backtest_valuation_review_reports(
+        signal_dates=signal_dates,
+        valuation_path=valuation_path,
+        universe=universe,
+        watchlist=watchlist,
+    )
+    risk_event_reports = _build_backtest_risk_event_occurrence_review_reports(
+        signal_dates=signal_dates,
+        risk_events_path=risk_events_path,
+        risk_event_occurrences_path=risk_event_occurrences_path,
+        universe=universe,
+        industry_chain=industry_chain,
+        watchlist=watchlist,
+        validation_as_of=quality_date,
+    )
+    report = build_backtest_input_gap_report(
+        signal_dates=signal_dates,
+        requested_start=start_date,
+        requested_end=end_date,
+        valuation_reports=valuation_reports,
+        risk_event_reports=risk_event_reports,
+        valuation_path=valuation_path,
+        risk_event_occurrences_path=risk_event_occurrences_path,
+        market_regime=BacktestRegimeContext(
+            regime_id=selected_regime.regime_id,
+            name=selected_regime.name,
+            start_date=selected_regime.start_date,
+            anchor_date=selected_regime.anchor_date,
+            anchor_event=selected_regime.anchor_event,
+            description=selected_regime.description,
+        ),
+    )
+    report_output = write_backtest_input_gap_report(report, gap_output)
+
+    status_style = "green" if report.status == "PASS" else "yellow"
+    console.print(f"[{status_style}]历史输入缺口状态：{report.status}[/{status_style}]")
+    console.print(f"信号日数量：{len(report.signal_dates)}")
+    console.print(f"估值缺口信号日：{report.valuation_gap_count}")
+    console.print(f"风险事件/复核声明缺口信号日：{report.risk_event_gap_count}")
+    console.print(f"历史输入缺口报告：{report_output}")
+    console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
 
 
 @watchlist_app.command("list")
