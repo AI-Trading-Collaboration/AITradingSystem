@@ -168,6 +168,28 @@ def test_build_daily_score_report_uses_risk_event_occurrences() -> None:
     )
 
 
+def test_build_daily_score_report_keeps_b_grade_risk_events_out_of_gate() -> None:
+    report = build_daily_score_report(
+        feature_set=_feature_set(),
+        data_quality_report=_quality_report(),
+        rules=load_scoring_rules(),
+        total_risk_asset_min=0.60,
+        total_risk_asset_max=0.80,
+        risk_event_occurrence_review_report=_risk_event_occurrence_review_report(
+            evidence_grade="B",
+            action_class="position_gate_eligible",
+        ),
+    )
+
+    policy = _component(report, "policy_geopolitics")
+    risk_gate = _position_gate(report, "risk_events")
+
+    assert policy.source_type == "manual_input"
+    assert policy.score < 50
+    assert risk_gate.triggered is False
+    assert risk_gate.max_position == 1.0
+
+
 def test_build_daily_score_report_keeps_watch_risk_events_out_of_score_and_gate() -> None:
     report = build_daily_score_report(
         feature_set=_feature_set(),
@@ -621,7 +643,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
 def _risk_event_occurrence_review_report(
     *,
     status: str = "active",
-    evidence_grade: str = "B",
+    evidence_grade: str = "A",
     action_class: str = "position_gate_eligible",
 ) -> RiskEventOccurrenceReviewReport:
     as_of = date(2026, 4, 30)

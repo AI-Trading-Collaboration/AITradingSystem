@@ -94,10 +94,12 @@ def _risk_event_gate(
         max_position = 1.0
         reason = "未传入已校验的风险事件发生记录，本 gate 不额外限制。"
     else:
-        eligible_items = risk_event_occurrence_review_report.score_eligible_active_items
+        eligible_items = (
+            risk_event_occurrence_review_report.position_gate_eligible_active_items
+        )
         if not eligible_items:
             max_position = 1.0
-            reason = "没有可进入评分的 active 风险事件发生记录，本 gate 不额外限制。"
+            reason = "没有可触发仓位闸门的 active 风险事件发生记录，本 gate 不额外限制。"
         else:
             minimum_multiplier = min(
                 item.target_ai_exposure_multiplier for item in eligible_items
@@ -111,7 +113,7 @@ def _risk_event_gate(
                 for item in eligible_items
             )
             reason = (
-                "按可评分 active 风险事件的最低 AI 仓位乘数 "
+                "按可触发仓位闸门的 active 风险事件最低 AI 仓位乘数 "
                 f"{minimum_multiplier:.0%} 约束评分仓位上限；事件："
                 f"{event_summary}。"
             )

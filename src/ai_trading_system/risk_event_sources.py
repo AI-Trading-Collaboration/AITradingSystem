@@ -471,7 +471,7 @@ def _parse_row(
             ),
             action_class=cast(
                 RiskEventActionClass,
-                row.get("action_class", "") or "position_gate_eligible",
+                row.get("action_class", "") or "manual_review",
             ),
             summary=row["summary"],
             notes=row.get("notes", ""),

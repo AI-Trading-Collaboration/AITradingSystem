@@ -101,7 +101,7 @@
 
 交易 thesis 基础版已支持 `data/external/trade_theses/*.yaml`。校验命令为 `aits thesis validate`，复核命令为 `aits thesis review`。当前版本不自动判断 thesis 对错，而是检查结构、观察池引用、产业链节点、验证指标、证伪条件、复核新鲜度和已触发风险，确保主动交易假设可审计、可复盘。
 
-风险事件分级基础版已落在 `config/risk_events.yaml`。校验命令为 `aits risk-events validate`，用于确保 L1/L2/L3 等级、AI 仓位折扣、人工复核要求、影响产业链节点、相关标的、建议动作、升级条件和解除条件都可审计。这个配置只代表“需要监控的规则”，不代表风险已经发生。实际发生记录读取 `data/external/risk_event_occurrences/*.yaml`，命令为 `aits risk-events list-occurrences` 和 `aits risk-events validate-occurrences`；日报政策/地缘评分只读取已通过校验的发生记录。没有合格发生记录时模块显示数据不足，`public_convenience` 证据不能单独进入自动评分。
+风险事件分级基础版已落在 `config/risk_events.yaml`。校验命令为 `aits risk-events validate`，用于确保 L1/L2/L3 等级、AI 仓位折扣、人工复核要求、影响产业链节点、相关标的、建议动作、升级条件和解除条件都可审计。这个配置只代表“需要监控的规则”，不代表风险已经发生。实际发生记录读取 `data/external/risk_event_occurrences/*.yaml`，命令为 `aits risk-events list-occurrences` 和 `aits risk-events validate-occurrences`；日报政策/地缘评分只读取已通过校验的 active 发生记录。保守 source policy 下 `S/A` 级证据可支持普通评分和仓位闸门，`B` 级只支持普通评分，`C/D/X`、`watch` 或 `public_convenience` 单源只能进入报告和人工复核。
 
 估值与拥挤度基础版读取 `data/external/valuation_snapshots/*.yaml`。FMP 接入命令为 `aits valuation fetch-fmp`，会从 `quote-short`、`key-metrics-ttm`、`ratios-ttm` 和 annual `analyst-estimates` 生成 `paid_vendor` 快照，并输出 `outputs/reports/fmp_valuation_fetch_YYYY-MM-DD.md` 记录 endpoint、请求标的、provider symbol alias、下载时间、row count、checksum、历史 analyst 快照读取数、本地估值历史读取数和字段限制；API key 只从 `FMP_API_KEY` 环境变量读取，不写入报告。内部核心观察池保留 `GOOG`，FMP 请求参数使用显式 alias `GOOG -> GOOGL`，生成的估值快照仍归属内部 ticker `GOOG`。FMP 返回负数估值倍数时不会写入快照字段，而是在拉取报告中记录 provider 值不可用警告。每次成功拉取会把原始 `analyst-estimates` 响应写入 `data/raw/fmp_analyst_estimates/`，`aits valuation validate-fmp-history` 会校验原始 JSON 的 schema、checksum、row_count、ticker、请求参数、日期和重复 estimate date；通过后才能可靠用于 `eps_revision_90d_pct`。`valuation_percentile` 使用本地 point-in-time 估值快照历史计算，每个 metric 至少需要 3 个历史点；如果缺少真实历史快照，可先运行 `aits valuation fetch-fmp-valuation-history` 从 FMP historical `key-metrics` / `ratios` 拉取历史 `ev_sales` 和 `peg` 分布，原始响应写入 `data/raw/fmp_historical_valuation/`，生成的历史估值快照 `captured_at` 固定为采集日，因此历史回测在采集日前不可见。这是当前供应商历史接口回填，不等同于真实 point-in-time vendor archive，不能用于伪造 `eps_revision_90d_pct`。校验命令为 `aits valuation validate`，复核命令为 `aits valuation review`；当前评分和复核按 `as_of/captured_at` 只选择每个 ticker 最新可见快照，历史快照保留给分位计算和 point-in-time 回测，不会重复计入当日日报评分。当前版本不从网页或 LLM 自动抽取估值结论；手工录入、正式披露或付费供应商快照都必须带来源、日期、采集时间和字段说明。公开便利源只能作为人工备注或辅助证据，不能直接进入自动评分。FMP 的 `forward_pe` 由当前 quote 与最近未来 annual EPS estimate 计算，`revenue_growth_next_12m_pct` 是 annual estimate 代理口径。
 
@@ -118,7 +118,7 @@
 |估值|10|
 |政策/地缘|10|
 
-当前基础版已实现趋势、SEC 基本面、宏观流动性、风险情绪四类硬数据，并接入估值快照和政策/地缘发生记录的手工/审计输入评分。基本面评分第一版只使用已通过校验的 AI 核心观察池 SEC 特征中位数，包括季度毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度；估值评分第一版只使用已通过校验、未过期、且不是 `public_convenience` 来源的估值快照，按估值分位和过热快照比例打分；政策/地缘评分第一版只读取已通过校验的活跃或观察状态发生记录，按 L2/L3 数量和最低 AI 仓位乘数打分。阈值写在 `config/scoring_rules.yaml`，用于先形成可审计规则，不把单家公司估值、财报解读或新闻判断硬编码进代码。
+当前基础版已实现趋势、SEC 基本面、宏观流动性、风险情绪四类硬数据，并接入估值快照和政策/地缘发生记录的手工/审计输入评分。基本面评分第一版只使用已通过校验的 AI 核心观察池 SEC 特征中位数，包括季度毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度；估值评分第一版只使用已通过校验、未过期、且不是 `public_convenience` 来源的估值快照，按估值分位和过热快照比例打分；政策/地缘评分第一版只读取已通过校验、来源合格且证据等级为 `S/A/B` 的 active 发生记录，按 L2/L3 数量和最低 AI 仓位乘数打分；`B` 级记录只能影响普通评分，仓位闸门只读取 `S/A` 且 `action_class=position_gate_eligible` 的 active 记录。阈值写在 `config/scoring_rules.yaml`，用于先形成可审计规则，不把单家公司估值、财报解读或新闻判断硬编码进代码。
 
 每日评分命令为 `aits score-daily`。命令会先执行市场数据质量门禁并构建市场特征，再校验 SEC 指标 CSV、构建 SEC 基本面特征，之后校验估值快照和风险事件发生记录，并汇总交易 thesis、风险事件、估值快照和交易复盘状态，最后输出：
 

@@ -1326,6 +1326,8 @@ def _risk_event_occurrence_review_report(
                     status="active",
                     triggered_at=as_of,
                     last_confirmed_at=as_of,
+                    evidence_grade="A",
+                    action_class="position_gate_eligible",
                     evidence_sources=[
                         RiskEventEvidenceSource(
                             source_name=f"{source_type}_review",

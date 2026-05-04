@@ -20,6 +20,12 @@ from ai_trading_system.config import (
     WatchlistConfig,
     configured_price_tickers,
 )
+from ai_trading_system.source_policy import (
+    evidence_grade_allows_automatic_scoring,
+    evidence_grade_allows_position_gate,
+    evidence_grade_is_report_only,
+    source_type_allows_automatic_scoring,
+)
 
 RiskEventOccurrenceStatus = Literal["active", "watch", "resolved", "dismissed"]
 RiskEventOccurrenceSourceType = Literal[
@@ -80,7 +86,7 @@ class RiskEventOccurrence(BaseModel):
     scope: RiskEventScope = "unknown"
     time_sensitivity: RiskEventTimeSensitivity = "unknown"
     reversibility: RiskEventReversibility = "unknown"
-    action_class: RiskEventActionClass = "position_gate_eligible"
+    action_class: RiskEventActionClass = "manual_review"
     evidence_sources: list[RiskEventEvidenceSource] = Field(min_length=1)
     summary: str = Field(min_length=1)
     notes: str = ""
@@ -164,6 +170,7 @@ class RiskEventOccurrenceReviewItem:
     source_types: tuple[RiskEventOccurrenceSourceType, ...]
     target_ai_exposure_multiplier: float
     score_eligible: bool
+    position_gate_eligible: bool
     health: str
     reason: str
 
@@ -222,6 +229,12 @@ class RiskEventOccurrenceReviewReport:
     @property
     def score_eligible_active_items(self) -> tuple[RiskEventOccurrenceReviewItem, ...]:
         return tuple(item for item in self.active_items if item.score_eligible)
+
+    @property
+    def position_gate_eligible_active_items(
+        self,
+    ) -> tuple[RiskEventOccurrenceReviewItem, ...]:
+        return tuple(item for item in self.active_items if item.position_gate_eligible)
 
     @property
     def status(self) -> str:
@@ -486,7 +499,8 @@ def render_risk_event_occurrence_review_report(
         f"- 输入路径：`{validation.input_path}`",
         f"- 发生记录数：{validation.occurrence_count}",
         f"- 活跃/观察记录数：{validation.active_occurrence_count}",
-        f"- 可进入评分的活跃/观察记录数：{len(report.score_eligible_active_items)}",
+        f"- 可进入普通评分的活跃记录数：{len(report.score_eligible_active_items)}",
+        f"- 可触发仓位闸门的活跃记录数：{len(report.position_gate_eligible_active_items)}",
         f"- 错误数：{validation.error_count}",
         f"- 警告数：{validation.warning_count}",
         "",
@@ -499,8 +513,8 @@ def render_risk_event_occurrence_review_report(
         lines.extend(
             [
                 "| Occurrence | 事件 | 等级 | 状态 | 证据等级 | 严重性 | 概率 | "
-                "影响范围 | 动作等级 | 触发日期 | 最近确认 | 来源 | 评分 | 结论 |",
-                "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
+                "影响范围 | 动作等级 | 触发日期 | 最近确认 | 来源 | 评分 | 仓位闸门 | 结论 |",
+                "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
             ]
         )
         for item in sorted(report.items, key=lambda value: value.occurrence_id):
@@ -519,6 +533,7 @@ def render_risk_event_occurrence_review_report(
                 f"{item.last_confirmed_at.isoformat()} | "
                 f"{', '.join(_source_type_label(value) for value in item.source_types)} | "
                 f"{'可用' if item.score_eligible else '不可用'} | "
+                f"{'可用' if item.position_gate_eligible else '不可用'} | "
                 f"{_escape_markdown_table(item.reason)} |"
             )
 
@@ -549,6 +564,8 @@ def render_risk_event_occurrence_review_report(
             "",
             "- `config/risk_events.yaml` 只定义需要监控的风险规则，不代表风险事件已经发生。",
             "- 政策/地缘评分只读取本报告中已通过校验的发生记录；没有发生记录时显示数据不足。",
+            "- 保守 source policy：`S/A` 级 active 风险证据可进入普通评分并支持仓位闸门；"
+            "`B` 级 active 风险证据只能进入普通评分；`C/D/X` 只能报告或人工复核。",
             "- 仅 `primary_source`、`paid_vendor` 或 `manual_input` 证据可进入评分；"
             "`public_convenience` 只能作为辅助线索。",
             "- `watch` 状态默认只进入报告和人工复核；只有 `active` 且证据来源、证据等级和 "
@@ -749,7 +766,7 @@ def _check_occurrence(
                 ),
             )
         )
-    if occurrence.evidence_grade in {"D", "X"} and occurrence.action_class in {
+    if evidence_grade_is_report_only(occurrence.evidence_grade) and occurrence.action_class in {
         "score_eligible",
         "position_gate_eligible",
     }:
@@ -760,7 +777,19 @@ def _check_occurrence(
                 event_id=occurrence.event_id,
                 path=path,
                 message=(
-                    "D/X 级证据只能进入人工复核；即使 action_class 较高，也不会自动评分。"
+                    "C/D/X 级证据只能进入人工复核；即使 action_class 较高，也不会自动评分。"
+                ),
+            )
+        )
+    if occurrence.evidence_grade == "B" and occurrence.action_class == "position_gate_eligible":
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.WARNING,
+                code="b_grade_risk_event_not_position_gate_eligible",
+                event_id=occurrence.event_id,
+                path=path,
+                message=(
+                    "B 级风险证据可在 active 后进入普通评分，但不能单独触发仓位闸门。"
                 ),
             )
         )
@@ -821,19 +850,30 @@ def _occurrence_review_item(
         sorted({source.source_type for source in occurrence.evidence_sources})
     )
     has_score_source = any(
-        source_type != "public_convenience" for source_type in source_types
+        source_type_allows_automatic_scoring(source_type) for source_type in source_types
     )
     action_allows_scoring = occurrence.action_class in {
         "score_eligible",
         "position_gate_eligible",
     }
-    evidence_allows_scoring = occurrence.evidence_grade not in {"D", "X"}
+    evidence_allows_scoring = evidence_grade_allows_automatic_scoring(
+        occurrence.evidence_grade
+    )
+    action_allows_position_gate = occurrence.action_class == "position_gate_eligible"
+    evidence_allows_position_gate = evidence_grade_allows_position_gate(
+        occurrence.evidence_grade
+    )
     score_eligible = (
         rule is not None
         and occurrence.status == "active"
         and has_score_source
         and action_allows_scoring
         and evidence_allows_scoring
+    )
+    position_gate_eligible = (
+        score_eligible
+        and action_allows_position_gate
+        and evidence_allows_position_gate
     )
 
     if rule is None:
@@ -844,13 +884,19 @@ def _occurrence_review_item(
         reason = "只有 public_convenience 证据，不能进入自动评分。"
     elif not evidence_allows_scoring:
         health = "LOW_EVIDENCE_GRADE"
-        reason = "证据等级为 D/X，只进入人工复核，不进入自动评分。"
+        reason = "证据等级为 C/D/X，只进入人工复核，不进入自动评分。"
     elif occurrence.action_class in {"monitor_only", "manual_review"}:
         health = "MANUAL_REVIEW_ONLY"
         reason = "action_class 要求只监控或人工复核，不进入自动评分。"
     elif occurrence.status == "watch":
         health = "WATCH"
         reason = f"{rule.level} 风险处于观察状态，只进入报告和人工复核。"
+    elif score_eligible and not position_gate_eligible and occurrence.evidence_grade == "B":
+        health = f"ACTIVE_{rule.level}_SCORE_ONLY"
+        reason = (
+            f"{rule.level} 风险已触发且 B 级证据可进入普通评分；"
+            "保守 source policy 下不能单独触发仓位闸门。"
+        )
     elif occurrence.status == "active":
         health = f"ACTIVE_{rule.level}"
         reason = f"{rule.level} 风险已触发，AI 仓位乘数参考 {multiplier:.0%}。"
@@ -878,6 +924,7 @@ def _occurrence_review_item(
         source_types=source_types,
         target_ai_exposure_multiplier=multiplier,
         score_eligible=score_eligible,
+        position_gate_eligible=position_gate_eligible,
         health=health,
         reason=reason,
     )

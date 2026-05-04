@@ -273,7 +273,8 @@ def _risk_state_record(report: DailyScoreReport) -> dict[str, Any]:
         "status": review.status,
         "summary": (
             f"active {len(active_items)}，watch {len(watch_items)}，"
-            f"可评分 active {len(review.score_eligible_active_items)}。"
+            f"可评分 active {len(review.score_eligible_active_items)}，"
+            f"可触发仓位闸门 active {len(review.position_gate_eligible_active_items)}。"
         ),
         "items": [
             {
@@ -289,6 +290,7 @@ def _risk_state_record(report: DailyScoreReport) -> dict[str, Any]:
                 "reversibility": item.reversibility,
                 "action_class": item.action_class,
                 "score_eligible": item.score_eligible,
+                "position_gate_eligible": item.position_gate_eligible,
                 "reason": item.reason,
                 "reference": f"risk_event_occurrence:{item.occurrence_id}",
             }

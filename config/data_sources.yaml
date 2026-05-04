@@ -260,11 +260,13 @@ sources:
       - known_event_id
       - date_bounds
       - source_attribution
+      - source_policy_grade
       - active_event_freshness
       - public_convenience_exclusion
     limitations:
       - 手工发生记录只说明已审计的触发事件；空目录不能证明当前没有政策或地缘风险。
       - public_convenience 证据只能作为辅助线索，不能单独进入评分。
+      - 保守 source policy 下，S/A 级 active 风险证据可支持普通评分和仓位闸门；B 级只可进入普通评分；C/D/X 只能进入报告或人工复核。
     owner_notes: 日报政策/地缘评分只读取已通过校验的发生记录，不读取监控规则的 active 字段。
 
   - source_id: reviewed_risk_event_occurrence_csv_imports
@@ -298,12 +300,14 @@ sources:
       - required_columns
       - duplicate_occurrence_merge
       - source_type
+      - source_policy_grade
       - date_parsing
       - source_attribution
       - downstream_occurrence_validation
     limitations:
       - CSV 必须是人工复核后的事件发生记录，不能把原始新闻自动转换为交易动作。
       - 多行同一 occurrence_id 只用于合并证据来源，关键字段不一致会停止导入。
+      - 缺失 action_class 时默认 manual_review；B 级证据不得单独触发 position gate。
     owner_notes: 用于减少风险事件 YAML 手工维护；L2/L3 仍必须经过人工复核。
 
   - source_id: local_trade_records
@@ -482,6 +486,8 @@ sources:
       - timestamp_consistency
       - relevance_review
       - human_review_for_l2_l3
+      - source_policy_grade
     limitations:
       - 供应商尚未确定；现阶段任何自动交易动作都不能依赖该来源。
-    owner_notes: 进入评分前必须支持引用、去重和人工复核。
+      - 进入自动评分前必须能映射到 S/A/B 证据等级；B 级只能普通评分，C/D/X 只能报告或人工复核。
+    owner_notes: 进入评分前必须支持引用、去重、人工复核和 source policy grade。

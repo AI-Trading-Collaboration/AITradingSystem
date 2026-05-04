@@ -113,6 +113,13 @@
 - `exogenous_unforecastable`：无法合理提前识别的外部冲击。
 - `sample_limited`：样本不足，不足以形成规则结论。
 
+当前实现状态：
+
+- 2026-05-04 基础版已完成：新增 `decision_learning_queue` 模块、`aits feedback build-learning-queue` 和 `aits feedback lookup-learning`，从 `decision_causal_chains.json` 生成 `data/processed/decision_learning_queue.json` 与中文学习队列报告。
+- 每个复核项记录 `review_id`、关联 `chain_id`、signal_date、market regime、decision snapshot、evidence、触发 gate、受影响模块、outcome summary、成功/失败方向、归因分类、owner、next step、是否需要规则候选和治理边界。
+- 失败样本优先按数据质量、低置信模块、已触发 gate、缺失 evidence 和外生冲击顺序归因；成功样本也进入复核队列，用于后续规则有效性观察。
+- `sample_limited` 项明确不生成规则候选；即便 `rule_candidate_required=true`，也只能进入 `EXPERIMENT-001` 和 `GOV-001`，不得自动修改 production 规则。
+
 验收标准：
 
 - 校准报告和重大偏差样本能生成 review queue，记录归因分类、证据、owner、下一步和是否需要规则候选。
@@ -158,6 +165,13 @@
 - 报告声明市场阶段，默认以 `ai_after_chatgpt` 作为主要结论窗口。
 - 报告明确哪些结论可执行、哪些仅研究、哪些因数据或样本不足降级。
 - 实现时同步更新 `docs/system_flow.md` 并补充周期报告测试。
+
+当前实现状态：
+
+- 2026-05-04 基础版已完成：新增 `feedback_loop_review` 模块和 `aits feedback loop-review`，生成 `outputs/reports/feedback_loop_review_YYYY-MM-DD.md`。
+- 报告覆盖 market evidence、decision snapshots、decision_outcomes、decision_causal_chains、decision_learning_queue、rule candidate 接入状态、blocked tasks 和 task register 状态统计。
+- 报告默认声明 `ai_after_chatgpt` 市场阶段，并明确“无自动交易动作”“学习队列规则候选需复核”“样本不足或未验证结论仅研究用途”。
+- `rule_candidates` 目前显示 `NOT_CONNECTED`，等待 `EXPERIMENT-001/GOV-001` 接入。
 
 ## FEEDBACK-001
 
@@ -495,6 +509,8 @@
 - 2026-05-04：`FEEDBACK-001` 已完成基础实现：`aits score-daily` 在数据质量门禁通过后写入 deterministic `decision_snapshot_YYYY-MM-DD.json`，快照包含 market regime、评分、置信度、仓位、position gates、质量状态、人工复核、估值/风险状态、trace bundle 引用和配置路径。
 - 2026-05-04：`FEEDBACK-002` 已完成基础实现：新增 `aits feedback calibrate`，先复用数据质量门禁，再从历史 `decision_snapshot` 和 `prices_daily.csv` 生成 `decision_outcomes.csv` 与中文校准报告；支持 1D/5D/20D/60D/120D 窗口、AI proxy/benchmark return、超额收益、最大回撤、实现波动、hit/miss，并按总分、置信度、gate、thesis、风险等级和估值状态分桶；报告明确样本不足、窗口重叠和不得自动修改生产规则。
 - 2026-05-04：`CAUSE-001` 已完成基础实现：新增 `decision_causal_chains` ledger、`aits feedback build-causal-chain` 和 `aits feedback lookup-chain`，把 evidence、模块 score/confidence 变化、position gate、decision snapshot、quality 和后验 outcome 串成可查询链路；测试覆盖未来 outcome 只能进入 `post_signal_observations`，不得改写 `signal_time_context`。
-- 2026-05-04：`DATA-002` 已完成低成本基础版：新增 `aits data-sources health` 和 `outputs/reports/data_sources_health_YYYY-MM-DD.md`，覆盖 provider health score、cache/manifest/row count/checksum/freshness 检查、manifest checksum mismatch 失败，以及 qualified source 不足时的 reconciliation `NOT_COVERED` 声明；完整 `DONE` 仍依赖 owner 提供生产级第二来源和授权策略。
+- 2026-05-04：`LEARNING-001` 已完成基础实现：新增 `decision_learning_queue`、`aits feedback build-learning-queue` 和 `aits feedback lookup-learning`，从 causal chain 生成失败/成功样本复核队列，记录归因分类、evidence、owner、next step 和规则候选需求；测试覆盖 `rule_issue`、`data_issue`、`sample_limited` 和样本不足不生成规则候选。
+- 2026-05-04：`LOOP-001` 已完成基础实现：新增 `aits feedback loop-review` 和闭环复核报告，汇总 market evidence、decision snapshots、decision_outcomes、causal chains、learning queue、rule candidate 接入状态、blocked tasks 和 task register 状态；报告声明 `ai_after_chatgpt` 和执行/复核/研究用途边界。
+- 2026-05-04：`DATA-002` 已完成低成本基础版：新增 `aits data-sources health` 和 `outputs/reports/data_sources_health_YYYY-MM-DD.md`，覆盖 provider health score、cache/manifest/row count/checksum/freshness 检查、manifest checksum mismatch 失败，以及 qualified source 不足时的 reconciliation `NOT_COVERED` 声明；owner 已验证 SEC User-Agent、FMP、FRED、Tiingo EOD 和 EODHD Fundamentals 初版权限可访问，EODHD EOD 价格未订阅且价格核验使用 Tiingo；完整 `DONE` 仍依赖生产级第二来源、商业授权/再分发限制和长期口径策略。
 - 2026-05-04：`UNIVERSE-001` 已完成基础实现：新增 `config/watchlist_lifecycle.yaml`、`aits watchlist validate-lifecycle` 和回测 signal_date lifecycle 过滤，测试覆盖尚未进入观察池的 ticker 不参与历史市场特征。
 - 2026-05-04：`TEST-001` 已推进为完成状态：系统级不变量测试覆盖 watch 风险事件不自动评分、低证据等级/公开便利源隔离、LLM evidence 隔离、watchlist point-in-time 过滤、decision snapshot 写入、评分置信度和估值 PIT 可信度。

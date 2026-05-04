@@ -119,6 +119,19 @@ def test_import_risk_event_occurrences_csv_warns_on_missing_url_for_non_manual_s
     assert "missing_risk_event_evidence_url" in {issue.code for issue in report.issues}
 
 
+def test_import_risk_event_occurrences_csv_defaults_missing_action_to_manual_review(
+    tmp_path: Path,
+) -> None:
+    input_path = tmp_path / "reviewed_occurrences.csv"
+    _write_csv(input_path, [_row(action_class="")])
+
+    report = import_risk_event_occurrences_csv(input_path)
+
+    assert report.status == "PASS"
+    assert report.occurrence_count == 1
+    assert report.occurrences[0].action_class == "manual_review"
+
+
 def test_write_imported_occurrences_yaml_round_trips_through_existing_validation(
     tmp_path: Path,
 ) -> None:

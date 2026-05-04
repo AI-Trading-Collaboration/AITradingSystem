@@ -90,11 +90,21 @@ from ai_trading_system.decision_causal_chains import (
     DEFAULT_DECISION_CAUSAL_CHAIN_PATH,
     build_decision_causal_chain_ledger,
     default_decision_causal_chain_report_path,
+    load_decision_causal_chain_ledger,
     load_decision_outcomes_frame,
     lookup_decision_causal_chain,
     render_decision_causal_chain_lookup,
     write_decision_causal_chain_ledger,
     write_decision_causal_chain_report,
+)
+from ai_trading_system.decision_learning_queue import (
+    DEFAULT_DECISION_LEARNING_QUEUE_PATH,
+    build_decision_learning_queue,
+    default_decision_learning_queue_report_path,
+    lookup_decision_learning_item,
+    render_decision_learning_item_lookup,
+    write_decision_learning_queue,
+    write_decision_learning_queue_report,
 )
 from ai_trading_system.decision_outcomes import (
     DEFAULT_DECISION_OUTCOMES_PATH,
@@ -116,6 +126,11 @@ from ai_trading_system.features.market import (
     default_feature_report_path,
     write_feature_summary,
     write_features_csv,
+)
+from ai_trading_system.feedback_loop_review import (
+    build_feedback_loop_review_report,
+    default_feedback_loop_review_report_path,
+    write_feedback_loop_review_report,
 )
 from ai_trading_system.fundamentals.sec_companyfacts import (
     SecEdgarCompanyFactsProvider,
@@ -595,6 +610,143 @@ def lookup_decision_causal_chain_command(
     except KeyError as exc:
         raise typer.BadParameter(str(exc)) from exc
     console.print(render_decision_causal_chain_lookup(chain))
+
+
+@feedback_app.command("build-learning-queue")
+def build_decision_learning_queue_command(
+    causal_chain_path: Annotated[
+        Path,
+        typer.Option(help="decision_causal_chain ledger JSON 输入路径。"),
+    ] = DEFAULT_DECISION_CAUSAL_CHAIN_PATH,
+    output_path: Annotated[
+        Path,
+        typer.Option(help="decision learning queue JSON 输出路径。"),
+    ] = DEFAULT_DECISION_LEARNING_QUEUE_PATH,
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 学习队列报告输出路径。"),
+    ] = None,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="报告日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    min_available_windows: Annotated[
+        int,
+        typer.Option(help="形成非 sample_limited 归因所需的最少可用 outcome 窗口。"),
+    ] = 1,
+) -> None:
+    """从 decision causal chain 生成学习复核队列。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    try:
+        causal_ledger = load_decision_causal_chain_ledger(causal_chain_path)
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(
+            f"decision causal chain ledger 不存在：{causal_chain_path}"
+        ) from exc
+    ledger = build_decision_learning_queue(
+        chains=tuple(causal_ledger.get("chains", [])),
+        min_available_windows=min_available_windows,
+    )
+    queue_output = write_decision_learning_queue(ledger, output_path)
+    report_output = report_path or default_decision_learning_queue_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        report_date,
+    )
+    report_output = write_decision_learning_queue_report(
+        ledger,
+        ledger_path=queue_output,
+        output_path=report_output,
+    )
+
+    console.print("[green]决策学习队列已生成。[/green]")
+    console.print(f"复核项数：{ledger.item_count}")
+    console.print(f"Queue：{queue_output}")
+    console.print(f"报告：{report_output}")
+
+
+@feedback_app.command("lookup-learning")
+def lookup_decision_learning_queue_command(
+    review_id: Annotated[
+        str,
+        typer.Option("--id", help="learning review id。"),
+    ],
+    input_path: Annotated[
+        Path,
+        typer.Option(help="decision learning queue JSON 路径。"),
+    ] = DEFAULT_DECISION_LEARNING_QUEUE_PATH,
+) -> None:
+    """按 review_id 反查 learning queue 项。"""
+    try:
+        item = lookup_decision_learning_item(input_path, review_id)
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(f"decision learning queue 不存在：{input_path}") from exc
+    except KeyError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(render_decision_learning_item_lookup(item))
+
+
+@feedback_app.command("loop-review")
+def feedback_loop_review_command(
+    evidence_path: Annotated[
+        Path,
+        typer.Option(help="market evidence YAML 文件或目录路径。"),
+    ] = PROJECT_ROOT / "data" / "external" / "market_evidence",
+    decision_snapshot_path: Annotated[
+        Path,
+        typer.Option(help="decision_snapshot JSON 文件或目录路径。"),
+    ] = DEFAULT_DECISION_SNAPSHOT_DIR,
+    outcomes_path: Annotated[
+        Path,
+        typer.Option(help="decision_outcomes CSV 路径。"),
+    ] = DEFAULT_DECISION_OUTCOMES_PATH,
+    causal_chain_path: Annotated[
+        Path,
+        typer.Option(help="decision_causal_chain ledger JSON 路径。"),
+    ] = DEFAULT_DECISION_CAUSAL_CHAIN_PATH,
+    learning_queue_path: Annotated[
+        Path,
+        typer.Option(help="decision learning queue JSON 路径。"),
+    ] = DEFAULT_DECISION_LEARNING_QUEUE_PATH,
+    task_register_path: Annotated[
+        Path,
+        typer.Option(help="任务登记 Markdown 路径。"),
+    ] = PROJECT_ROOT / "docs" / "task_register.md",
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="复核日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    since: Annotated[
+        str | None,
+        typer.Option(help="复核窗口起始日期，格式为 YYYY-MM-DD，默认 as_of 前 7 天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 闭环复核报告输出路径。"),
+    ] = None,
+) -> None:
+    """生成反馈闭环周期复核报告。"""
+    review_date = _parse_date(as_of) if as_of else date.today()
+    since_date = _parse_date(since) if since else None
+    report = build_feedback_loop_review_report(
+        as_of=review_date,
+        since=since_date,
+        evidence_path=evidence_path,
+        decision_snapshot_path=decision_snapshot_path,
+        outcomes_path=outcomes_path,
+        causal_chain_path=causal_chain_path,
+        learning_queue_path=learning_queue_path,
+        task_register_path=task_register_path,
+    )
+    report_path = output_path or default_feedback_loop_review_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        review_date,
+    )
+    write_feedback_loop_review_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow"
+    console.print(f"[{status_style}]反馈闭环复核状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_path}")
+    console.print(f"警告数：{report.warning_count}")
 
 
 @app.callback()
@@ -1750,7 +1902,8 @@ def validate_risk_event_occurrences(
     console.print(
         f"发生记录数：{validation_report.occurrence_count}；"
         f"活跃/观察：{validation_report.active_occurrence_count}；"
-        f"可评分：{len(review_report.score_eligible_active_items)}"
+        f"可评分：{len(review_report.score_eligible_active_items)}；"
+        f"可触发仓位闸门：{len(review_report.position_gate_eligible_active_items)}"
     )
     console.print(f"错误数：{validation_report.error_count}；警告数：{validation_report.warning_count}")
 
@@ -4035,7 +4188,8 @@ def _build_daily_risk_events_status(
         f"{rules_validation_report.active_rule_count} 条；活跃 L2/L3 规则 "
         f"{active_l2_l3_count} 条。发生记录 {occurrence_validation.occurrence_count} 条，"
         f"活跃/观察 {occurrence_validation.active_occurrence_count} 条，可评分 "
-        f"{len(occurrence_review_report.score_eligible_active_items)} 条。"
+        f"{len(occurrence_review_report.score_eligible_active_items)} 条，可触发仓位闸门 "
+        f"{len(occurrence_review_report.position_gate_eligible_active_items)} 条。"
     )
     return DailyManualReviewStatus(
         name="风险事件",

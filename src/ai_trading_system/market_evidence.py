@@ -11,6 +11,13 @@ from typing import Any, Literal
 import yaml
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
+from ai_trading_system.source_policy import (
+    evidence_grade_allows_automatic_scoring,
+    evidence_grade_allows_position_gate,
+    evidence_grade_is_report_only,
+    source_type_allows_automatic_scoring,
+)
+
 EvidenceSourceType = Literal[
     "primary_source",
     "paid_vendor",
@@ -162,6 +169,14 @@ class MarketEvidenceValidationReport:
         )
 
     @property
+    def automatic_score_eligible_count(self) -> int:
+        return sum(
+            1
+            for loaded in self.evidence
+            if _market_evidence_can_auto_score(loaded.evidence)
+        )
+
+    @property
     def error_count(self) -> int:
         return sum(
             1 for issue in self.issues if issue.severity == MarketEvidenceIssueSeverity.ERROR
@@ -299,6 +314,47 @@ def validate_market_evidence_store(
                     message="公开便利源只能作为辅助证据，不能单独进入自动评分。",
                 )
             )
+        if evidence_grade_is_report_only(evidence.evidence_grade):
+            issues.append(
+                MarketEvidenceIssue(
+                    severity=MarketEvidenceIssueSeverity.WARNING,
+                    code="market_evidence_grade_review_only",
+                    evidence_id=evidence.evidence_id,
+                    path=loaded.path,
+                    message=(
+                        "C/D/X 级证据只能进入报告或人工复核，不能直接进入自动评分。"
+                    ),
+                )
+            )
+        if (
+            evidence.evidence_grade == "B"
+            and evidence.manual_review_status != "confirmed"
+        ):
+            issues.append(
+                MarketEvidenceIssue(
+                    severity=MarketEvidenceIssueSeverity.WARNING,
+                    code="b_grade_market_evidence_requires_confirmation",
+                    evidence_id=evidence.evidence_id,
+                    path=loaded.path,
+                    message="B 级证据必须人工确认为 confirmed 后才可作为普通评分输入。",
+                )
+            )
+        if evidence.evidence_grade in {"S", "A"} and (
+            evidence.manual_review_status != "confirmed"
+            or not source_type_allows_automatic_scoring(evidence.source_type)
+        ):
+            issues.append(
+                MarketEvidenceIssue(
+                    severity=MarketEvidenceIssueSeverity.WARNING,
+                    code="high_grade_market_evidence_not_auto_scoreable",
+                    evidence_id=evidence.evidence_id,
+                    path=loaded.path,
+                    message=(
+                        "S/A 级证据仍需来源类型允许自动评分且 review 状态为 confirmed；"
+                        "否则只能进入报告或人工复核。"
+                    ),
+                )
+            )
     return MarketEvidenceValidationReport(
         as_of=as_of,
         input_path=store.input_path,
@@ -382,6 +438,8 @@ def render_market_evidence_validation_report(report: MarketEvidenceValidationRep
         f"- 证据数：{report.evidence_count}",
         f"- 已确认：{report.confirmed_count}",
         f"- 待复核：{report.pending_review_count}",
+        "- 按保守 source policy 可作为普通评分输入的证据数："
+        f"{report.automatic_score_eligible_count}",
         f"- 错误数：{report.error_count}",
         f"- 警告数：{report.warning_count}",
         "",
@@ -393,8 +451,8 @@ def render_market_evidence_validation_report(report: MarketEvidenceValidationRep
     else:
         lines.extend(
             [
-                "| Evidence | Source | Grade | Review | Topic | Tickers | Nodes | Links |",
-                "|---|---|---|---|---|---|---|---|",
+                "| Evidence | Source | Grade | Review | Policy | Topic | Tickers | Nodes | Links |",
+                "|---|---|---|---|---|---|---|---|---|",
             ]
         )
         for loaded in sorted(report.evidence, key=lambda item: item.evidence.evidence_id):
@@ -405,6 +463,7 @@ def render_market_evidence_validation_report(report: MarketEvidenceValidationRep
                 f"{evidence.source_type} | "
                 f"{evidence.evidence_grade} | "
                 f"{evidence.manual_review_status} | "
+                f"{_market_evidence_policy_label(evidence)} | "
                 f"{_escape_markdown_table(evidence.topic)} | "
                 f"{', '.join(evidence.tickers)} | "
                 f"{', '.join(evidence.industry_chain_nodes)} | "
@@ -429,6 +488,8 @@ def render_market_evidence_validation_report(report: MarketEvidenceValidationRep
             "## 方法说明",
             "",
             "- market_evidence 是新信息进入系统的证据账本，不直接改变评分、仓位或交易建议。",
+            "- 保守 source policy：`S/A` 可作为自动评分输入并可支持仓位闸门；"
+            "`B` 在 confirmed 后只能作为普通评分输入；`C/D/X` 只能报告或人工复核。",
             "- `llm_extracted` 和 `public_convenience` 默认只进入人工复核或辅助解释。",
         ]
     )
@@ -479,6 +540,24 @@ def _evidence_yaml_paths(path: Path) -> list[Path]:
     if path.is_dir():
         return sorted([*path.glob("*.yaml"), *path.glob("*.yml")])
     return []
+
+
+def _market_evidence_can_auto_score(evidence: MarketEvidence) -> bool:
+    return (
+        evidence.manual_review_status == "confirmed"
+        and source_type_allows_automatic_scoring(evidence.source_type)
+        and evidence_grade_allows_automatic_scoring(evidence.evidence_grade)
+    )
+
+
+def _market_evidence_policy_label(evidence: MarketEvidence) -> str:
+    if not source_type_allows_automatic_scoring(evidence.source_type):
+        return "复核/辅助"
+    if evidence_grade_allows_position_gate(evidence.evidence_grade):
+        return "可评分/可支持闸门" if evidence.manual_review_status == "confirmed" else "待复核"
+    if evidence.evidence_grade == "B":
+        return "普通评分" if evidence.manual_review_status == "confirmed" else "待复核"
+    return "报告/人工复核"
 
 
 def _load_yaml(path: Path) -> Any:

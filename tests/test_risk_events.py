@@ -147,9 +147,36 @@ def test_validate_risk_event_occurrence_store_passes_active_manual_record(
     assert validation_report.occurrence_count == 1
     assert review_report.status == "PASS_WITH_WARNINGS"
     assert len(review_report.score_eligible_active_items) == 1
+    assert len(review_report.position_gate_eligible_active_items) == 1
     assert review_report.score_eligible_active_items[0].event_id == (
         "ai_chip_export_control_upgrade"
     )
+
+
+def test_b_grade_risk_event_scores_but_does_not_trigger_position_gate(
+    tmp_path: Path,
+) -> None:
+    input_path = tmp_path / "occurrence.yaml"
+    _write_risk_event_occurrence(
+        input_path,
+        evidence_grade="B",
+        action_class="position_gate_eligible",
+    )
+
+    validation_report = validate_risk_event_occurrence_store(
+        store=load_risk_event_occurrence_store(input_path),
+        risk_events=load_risk_events(),
+        as_of=date(2026, 5, 2),
+    )
+    review_report = build_risk_event_occurrence_review_report(validation_report)
+
+    assert validation_report.passed is True
+    assert "b_grade_risk_event_not_position_gate_eligible" in {
+        issue.code for issue in validation_report.issues
+    }
+    assert len(review_report.score_eligible_active_items) == 1
+    assert review_report.position_gate_eligible_active_items == ()
+    assert review_report.items[0].health.endswith("_SCORE_ONLY")
 
 
 def test_watch_risk_event_occurrence_requires_review_not_scoring(
@@ -333,7 +360,7 @@ def _write_risk_event_occurrence(
     status: str = "active",
     source_type: str = "manual_input",
     source_url: str = "",
-    evidence_grade: str = "B",
+    evidence_grade: str = "A",
     action_class: str = "position_gate_eligible",
 ) -> None:
     output_path.write_text(

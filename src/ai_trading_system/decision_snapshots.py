@@ -169,6 +169,9 @@ def _risk_event_state_record(report: DailyScoreReport) -> dict[str, Any] | None:
         "status": review.status,
         "occurrence_count": review.validation_report.occurrence_count,
         "score_eligible_active_count": len(review.score_eligible_active_items),
+        "position_gate_eligible_active_count": len(
+            review.position_gate_eligible_active_items
+        ),
         "items": [
             {
                 "occurrence_id": item.occurrence_id,
@@ -178,6 +181,7 @@ def _risk_event_state_record(report: DailyScoreReport) -> dict[str, Any] | None:
                 "evidence_grade": item.evidence_grade,
                 "action_class": item.action_class,
                 "score_eligible": item.score_eligible,
+                "position_gate_eligible": item.position_gate_eligible,
                 "reason": item.reason,
             }
             for item in review.items

@@ -34,7 +34,33 @@ def test_market_evidence_validation_passes_confirmed_primary_source(
 
     assert report.status == "PASS"
     assert report.confirmed_count == 1
+    assert report.automatic_score_eligible_count == 1
     assert "nvda_capex_watch_2026_05_02" in markdown
+
+
+def test_c_grade_market_evidence_is_report_only(
+    tmp_path: Path,
+) -> None:
+    evidence_path = tmp_path / "evidence.yaml"
+    _write_evidence_yaml(
+        evidence_path,
+        source_type="primary_source",
+        source_url="https://example.test/company-release",
+        manual_review_status="confirmed",
+        manual_review_required=False,
+        evidence_grade="C",
+    )
+
+    report = validate_market_evidence_store(
+        load_market_evidence_store(evidence_path),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert report.status == "PASS_WITH_WARNINGS"
+    assert report.automatic_score_eligible_count == 0
+    assert "market_evidence_grade_review_only" in {
+        issue.code for issue in report.issues
+    }
 
 
 def test_llm_market_evidence_is_forced_to_pending_review(
@@ -134,6 +160,7 @@ def _write_evidence_yaml(
     source_url: str,
     manual_review_status: str,
     manual_review_required: bool = True,
+    evidence_grade: str = "B",
 ) -> None:
     path.write_text(
         f"""evidence_id: {evidence_id}
@@ -147,7 +174,7 @@ tickers:
 industry_chain_nodes:
   - gpu_asic_demand
 topic: 云 CapEx 分歧观察
-evidence_grade: B
+evidence_grade: {evidence_grade}
 novelty: new
 impact_horizon: medium
 direction: mixed

@@ -491,8 +491,12 @@ def render_daily_score_report(
         lines.append(f"- 风险事件发生记录校验状态：{occurrence_validation.status}")
         lines.append(f"- 风险事件发生记录数：{occurrence_validation.occurrence_count}")
         lines.append(
-            "- 可进入评分的活跃/观察风险事件数："
+            "- 可进入普通评分的活跃风险事件数："
             f"{len(report.risk_event_occurrence_review_report.score_eligible_active_items)}"
+        )
+        lines.append(
+            "- 可触发仓位闸门的活跃风险事件数："
+            f"{len(report.risk_event_occurrence_review_report.position_gate_eligible_active_items)}"
         )
         if risk_event_occurrence_report_path is not None:
             lines.append(f"- 风险事件发生记录报告：`{risk_event_occurrence_report_path}`")
@@ -1147,10 +1151,12 @@ def _risk_event_change_summary(report: DailyScoreReport) -> str:
     active_items = [item for item in review.items if item.status == "active"]
     watch_items = [item for item in review.items if item.status == "watch"]
     eligible_count = len(review.score_eligible_active_items)
+    gate_count = len(review.position_gate_eligible_active_items)
     highest = _highest_risk_level([item.level for item in active_items])
     return (
         f"{review.status}；active {len(active_items)}，watch {len(watch_items)}，"
-        f"可进入评分 active {eligible_count}，最高 active 等级 {highest}。"
+        f"可进入评分 active {eligible_count}，可触发仓位闸门 active {gate_count}，"
+        f"最高 active 等级 {highest}。"
     )
 
 
@@ -1178,7 +1184,9 @@ def _judgement_type(report: DailyScoreReport) -> str:
         return "thesis 承压"
 
     risk_review = report.risk_event_occurrence_review_report
-    if risk_review and any(item.level == "L3" for item in risk_review.score_eligible_active_items):
+    if risk_review and any(
+        item.level == "L3" for item in risk_review.position_gate_eligible_active_items
+    ):
         return "风险事件主导的仓位限制"
 
     fundamentals = _component_by_name(report, "fundamentals")

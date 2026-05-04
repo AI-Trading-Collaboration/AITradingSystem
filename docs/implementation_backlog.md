@@ -395,7 +395,7 @@ aits risk-events validate-occurrences --as-of 2026-05-02
 - 发生记录的 `event_id` 必须引用已配置规则。
 - CSV 导入只接受人工复核后的结构化发生记录；同一 `occurrence_id` 的多行只用于合并证据来源。
 - 发生记录日期不能晚于评估日期，active/watch 记录超过新鲜度阈值会警告。
-- 只有 `primary_source`、`paid_vendor` 或 `manual_input` 证据可以进入评分；单独的 `public_convenience` 证据只能作为辅助。
+- 只有 `primary_source`、`paid_vendor` 或 `manual_input` 且证据等级为 `S/A/B` 的 active 发生记录可以进入普通评分；`B` 级不能单独触发仓位闸门，`C/D/X` 和单独的 `public_convenience` 证据只能作为辅助或人工复核。
 
 ### M7：估值与拥挤度模块
 
