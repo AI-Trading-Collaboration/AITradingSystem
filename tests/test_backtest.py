@@ -1062,6 +1062,7 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     rates_path = tmp_path / "rates_daily.csv"
     report_path = tmp_path / "backtest.md"
     robustness_path = tmp_path / "backtest_robustness.md"
+    robustness_summary_path = robustness_path.with_suffix(".json")
     daily_path = tmp_path / "backtest_daily.csv"
     input_coverage_path = tmp_path / "backtest_input_coverage.csv"
     audit_path = tmp_path / "backtest_audit.md"
@@ -1175,6 +1176,7 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert result.exit_code == 0
     assert report_path.exists()
     assert robustness_path.exists()
+    assert robustness_summary_path.exists()
     assert daily_path.exists()
     assert input_coverage_path.exists()
     assert audit_path.exists()
@@ -1219,6 +1221,7 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert "回测状态：" in result.output
     assert "输入审计状态：" in result.output
     assert "稳健性报告：" in result.output
+    assert "稳健性摘要：" in result.output
     assert "SEC 基本面切片：" in result.output
     assert "历史输入覆盖诊断：" in result.output
     assert "市场阶段：测试 AI 行情" in result.output
@@ -1239,9 +1242,17 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert "# 回测稳健性报告" in robustness_text
     assert "production_effect=none" in robustness_text
     assert "cost_stress_execution" in robustness_text
+    assert "fixed_60pct_total_asset_ai" in robustness_text
     assert "shifted_start" in robustness_text
     assert "买入持有基准" in robustness_text
     assert "6.0 bps" in robustness_text
+    robustness_summary = json.loads(robustness_summary_path.read_text(encoding="utf-8"))
+    assert robustness_summary["production_effect"] == "none"
+    scenario_ids = {
+        scenario["scenario_id"] for scenario in robustness_summary["scenarios"]
+    }
+    assert "fixed_60pct_total_asset_ai" in scenario_ids
+    assert "base_dynamic" in robustness_summary
     audit_text = audit_path.read_text(encoding="utf-8")
     assert "# 回测输入审计报告" in audit_text
     assert str(report_path) in audit_text

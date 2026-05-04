@@ -239,3 +239,10 @@
 - 2026-05-04：`REPORT-002` 已完成首版实现：`scores_daily.csv` 的 overall 行保存模型/最终/置信度调整仓位区间和总资产 AI 仓位区间；日报新增“变化原因树”和“什么情况会改变判断”，从上期 overall 评分记录读取仓位、总分和置信度变化，并按趋势、风险情绪、估值、基本面、thesis、风险事件、数据质量和仓位闸门解释最终动作约束。
 - 2026-05-04：补充风险事件 OpenAI 预审边界：OpenAI API 只做结构化预审和人工复核提示，不替代人工确认；`RISK-004` 承接具体实现，完整流程见 `docs/requirements/risk_event_review_workflow_2026-05-04.md`。
 - 2026-05-04：`BACKTEST-001` 已完成第一阶段基础实现：`aits backtest` 新增 `--robustness-report` / `--robustness-report-path`，可生成中文回测稳健性报告，复用同一 point-in-time 输入对比基础动态策略、成本压力、起点后移和买入持有基准；报告明确 `production_effect=none`，完整防过拟合仍需权重扰动、固定仓位/趋势-only/随机基线、机器可读摘要和样本外验证。
+- 2026-05-04：`BACKTEST-001` 第二阶段进入实现：增加固定 60% 总资产 AI exposure
+  基线和机器可读 JSON 摘要；基线复用基础回测的下一交易日收益和显式成本假设，不读取额外数据；
+  JSON 摘要输出 base/scenario/benchmark 指标、相对基础收益差、市场阶段和剩余缺口，便于后续复盘自动引用。
+- 2026-05-04：`BACKTEST-001` 第二阶段基础版已完成：`aits backtest --robustness-report`
+  会同时生成 Markdown 报告和 `.json` 摘要，新增 `--robustness-summary-path` 可单独指定机器可读输出；
+  真实短区间验证显示固定 60% 总资产 AI exposure 在 2026-04-01 至 2026-05-01 样本中跑赢动态策略，
+  因此当前动态仓位价值仍不能解释为收益增强，需要继续做趋势-only、趋势+风险情绪、权重扰动、随机同换手率和样本外实验。

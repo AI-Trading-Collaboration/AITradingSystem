@@ -37,7 +37,10 @@ from ai_trading_system.backtest.robustness import (
     BacktestRobustnessReport,
     BacktestRobustnessScenario,
     default_backtest_robustness_report_path,
+    default_backtest_robustness_summary_path,
+    fixed_total_asset_exposure_scenario,
     write_backtest_robustness_report,
+    write_backtest_robustness_summary,
 )
 from ai_trading_system.belief_state import (
     DEFAULT_BELIEF_STATE_DIR,
@@ -1378,9 +1381,13 @@ def backtest(
         typer.Option(
             help=(
                 "Markdown 回测稳健性报告输出路径；提供时运行第一阶段成本压力、"
-                "起点后移和买入持有基准对比。"
+                "起点后移、固定仓位和买入持有基准对比。"
             ),
         ),
+    ] = None,
+    robustness_summary_path: Annotated[
+        Path | None,
+        typer.Option(help="机器可读回测稳健性 JSON 摘要输出路径。"),
     ] = None,
     robustness_report: Annotated[
         bool,
@@ -1485,7 +1492,12 @@ def backtest(
         raise typer.BadParameter("稳健性报告起点后移天数必须为正数。")
     if robustness_cost_stress_bps < 0:
         raise typer.BadParameter("稳健性报告成本压力 bps 不能为负数。")
-    should_write_robustness_report = robustness_report or robustness_report_path is not None
+    should_run_robustness = (
+        robustness_report
+        or robustness_report_path is not None
+        or robustness_summary_path is not None
+    )
+    should_write_robustness_markdown = robustness_report or robustness_report_path is not None
     rule_governance_report = validate_rule_card_store(
         load_rule_card_store(rule_cards_path),
         as_of=date.today(),
@@ -1550,6 +1562,18 @@ def backtest(
             PROJECT_ROOT / "outputs" / "backtests",
             start_date,
             end_date,
+        )
+    )
+    backtest_robustness_summary_output = (
+        robustness_summary_path
+        or (
+            backtest_robustness_output.with_suffix(".json")
+            if should_write_robustness_markdown
+            else default_backtest_robustness_summary_path(
+                PROJECT_ROOT / "outputs" / "backtests",
+                start_date,
+                end_date,
+            )
         )
     )
     backtest_audit_output = audit_output_path or default_backtest_audit_report_path(
@@ -1775,7 +1799,8 @@ def backtest(
         ),
     )
     robustness_output = None
-    if should_write_robustness_report:
+    robustness_summary_output = None
+    if should_run_robustness:
         robustness_scenarios = [
             BacktestRobustnessScenario(
                 scenario_id="cost_stress_execution",
@@ -1798,7 +1823,8 @@ def backtest(
                     scenario_financing_annual_bps=financing_annual_bps,
                     scenario_etf_delay_bps=etf_delay_bps + robustness_cost_stress_bps,
                 ),
-            )
+            ),
+            fixed_total_asset_exposure_scenario(result, exposure=0.60),
         ]
         shifted_start = start_date + timedelta(days=robustness_shift_days)
         if shifted_start >= result.last_signal_date:
@@ -1838,14 +1864,20 @@ def backtest(
                     ),
                 )
             )
-        robustness_output = write_backtest_robustness_report(
-            BacktestRobustnessReport(
-                base_result=result,
-                scenarios=tuple(robustness_scenarios),
-                cost_stress_increment_bps=robustness_cost_stress_bps,
-                shifted_start_days=robustness_shift_days,
-            ),
-            backtest_robustness_output,
+        robustness_report_data = BacktestRobustnessReport(
+            base_result=result,
+            scenarios=tuple(robustness_scenarios),
+            cost_stress_increment_bps=robustness_cost_stress_bps,
+            shifted_start_days=robustness_shift_days,
+        )
+        if should_write_robustness_markdown:
+            robustness_output = write_backtest_robustness_report(
+                robustness_report_data,
+                backtest_robustness_output,
+            )
+        robustness_summary_output = write_backtest_robustness_summary(
+            robustness_report_data,
+            backtest_robustness_summary_output,
         )
 
     console.print(f"[yellow]回测状态：{result.status}[/yellow]")
@@ -1861,6 +1893,8 @@ def backtest(
     console.print(f"回测报告：{report_output}")
     if robustness_output is not None:
         console.print(f"稳健性报告：{robustness_output}")
+    if robustness_summary_output is not None:
+        console.print(f"稳健性摘要：{robustness_summary_output}")
     console.print(f"观察池 lifecycle 报告：{watchlist_lifecycle_report_output}")
     console.print(f"Evidence bundle：{backtest_trace_output}")
     console.print(f"输入审计报告：{audit_output}")

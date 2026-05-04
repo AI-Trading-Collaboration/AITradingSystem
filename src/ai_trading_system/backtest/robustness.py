@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
 from ai_trading_system.backtest.daily import DailyBacktestResult
-from ai_trading_system.backtest.engine import BacktestMetrics
+from ai_trading_system.backtest.engine import BacktestMetrics, summarize_long_only_backtest
 
 
 @dataclass(frozen=True)
@@ -15,15 +16,20 @@ class BacktestRobustnessScenario:
     category: str
     description: str
     result: DailyBacktestResult | None = None
+    metrics: BacktestMetrics | None = None
+    first_signal_date: date | None = None
+    last_signal_date: date | None = None
     skipped_reason: str | None = None
 
     @property
     def status(self) -> str:
         if self.skipped_reason:
             return "SKIPPED"
-        if self.result is None:
+        if self.result is None and self.metrics is None:
             return "NOT_RUN"
-        return self.result.status
+        if self.result is not None:
+            return self.result.status
+        return "PASS_WITH_LIMITATIONS"
 
 
 @dataclass(frozen=True)
@@ -35,7 +41,11 @@ class BacktestRobustnessReport:
 
     @property
     def status(self) -> str:
-        completed = [scenario for scenario in self.scenarios if scenario.result is not None]
+        completed = [
+            scenario
+            for scenario in self.scenarios
+            if scenario.result is not None or scenario.metrics is not None
+        ]
         if not completed:
             return "INSUFFICIENT_SCENARIOS"
         return "PASS_WITH_LIMITATIONS"
@@ -49,6 +59,14 @@ def default_backtest_robustness_report_path(
     return output_dir / f"backtest_robustness_{start.isoformat()}_{end.isoformat()}.md"
 
 
+def default_backtest_robustness_summary_path(
+    output_dir: Path,
+    start: date,
+    end: date,
+) -> Path:
+    return output_dir / f"backtest_robustness_{start.isoformat()}_{end.isoformat()}.json"
+
+
 def write_backtest_robustness_report(
     report: BacktestRobustnessReport,
     output_path: Path,
@@ -56,6 +74,95 @@ def write_backtest_robustness_report(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(render_backtest_robustness_report(report), encoding="utf-8")
     return output_path
+
+
+def write_backtest_robustness_summary(
+    report: BacktestRobustnessReport,
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(
+            backtest_robustness_summary_record(report),
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+    return output_path
+
+
+def fixed_total_asset_exposure_scenario(
+    result: DailyBacktestResult,
+    *,
+    exposure: float = 0.60,
+) -> BacktestRobustnessScenario:
+    metrics = _fixed_exposure_metrics(result, exposure=exposure)
+    return BacktestRobustnessScenario(
+        scenario_id=f"fixed_{int(exposure * 100)}pct_total_asset_ai",
+        label=f"固定 {exposure:.0%} 总资产 AI exposure",
+        category="baseline",
+        description=(
+            f"每天使用固定 {exposure:.0%} 总资产 AI exposure，复用基础回测的"
+            "下一交易日收益、显式成本假设和信号日期；不读取额外数据。"
+        ),
+        metrics=metrics,
+        first_signal_date=result.first_signal_date,
+        last_signal_date=result.last_signal_date,
+    )
+
+
+def backtest_robustness_summary_record(
+    report: BacktestRobustnessReport,
+) -> dict[str, object]:
+    result = report.base_result
+    return {
+        "schema_version": 1,
+        "report_type": "backtest_robustness",
+        "production_effect": "none",
+        "status": report.status,
+        "requested_start": result.requested_start.isoformat(),
+        "requested_end": result.requested_end.isoformat(),
+        "first_signal_date": result.first_signal_date.isoformat(),
+        "last_signal_date": result.last_signal_date.isoformat(),
+        "market_regime": (
+            None
+            if result.market_regime is None
+            else {
+                "regime_id": result.market_regime.regime_id,
+                "name": result.market_regime.name,
+                "start_date": result.market_regime.start_date.isoformat(),
+                "anchor_date": result.market_regime.anchor_date.isoformat(),
+                "anchor_event": result.market_regime.anchor_event,
+            }
+        ),
+        "data_quality_status": result.data_quality_report.status,
+        "cost_stress_increment_bps": report.cost_stress_increment_bps,
+        "shifted_start_days": report.shifted_start_days,
+        "base_dynamic": _summary_metrics_record(result.strategy_metrics),
+        "scenarios": [
+            _scenario_summary_record(scenario, result.strategy_metrics)
+            for scenario in report.scenarios
+        ],
+        "benchmarks": [
+            {
+                "benchmark": ticker,
+                **_summary_metrics_record(metrics),
+                "total_return_delta_vs_base": (
+                    metrics.total_return - result.strategy_metrics.total_return
+                ),
+            }
+            for ticker, metrics in sorted(result.benchmark_metrics.items())
+        ],
+        "remaining_gaps": (
+            "module_weight_perturbation",
+            "trend_only_baseline",
+            "trend_plus_risk_sentiment_baseline",
+            "same_turnover_random_strategy",
+            "out_of_sample_validation",
+        ),
+    }
 
 
 def render_backtest_robustness_report(report: BacktestRobustnessReport) -> str:
@@ -92,8 +199,8 @@ def render_backtest_robustness_report(report: BacktestRobustnessReport) -> str:
             "## 方法边界",
             "",
             (
-                "第一阶段仅复用同一批 point-in-time 输入运行成本压力、起点后移和"
-                "买入持有基准对比；它不是完整的防过拟合证明。"
+                "第二阶段复用同一批 point-in-time 输入运行成本压力、起点后移、"
+                "固定总资产 AI exposure 和买入持有基准对比；它不是完整的防过拟合证明。"
             ),
             (
                 "成本压力实验只改变显式成本假设，不改变价格、基本面、估值、风险事件、"
@@ -148,7 +255,7 @@ def render_backtest_robustness_report(report: BacktestRobustnessReport) -> str:
             "## 剩余缺口",
             "",
             "- 尚未运行不同再平衡频率实验。",
-            "- 尚未运行模块权重扰动、趋势-only、趋势+风险情绪和固定 60% AI 仓位基线。",
+            "- 尚未运行模块权重扰动、趋势-only 和趋势+风险情绪基线。",
             "- 尚未运行同换手率随机策略和显著性表达。",
             "- 历史估值快照和风险事件发生记录覆盖不足时，投资解释仍应降级。",
         ]
@@ -160,11 +267,25 @@ def _scenario_row(
     scenario: BacktestRobustnessScenario,
     base_metrics: BacktestMetrics,
 ) -> str:
-    if scenario.result is None:
+    if scenario.result is None and scenario.metrics is None:
         note = scenario.skipped_reason or scenario.description
         return (
             f"| {scenario.scenario_id} | {scenario.status} | n/a | n/a | n/a | "
             f"n/a | n/a | n/a | {note} |"
+        )
+    if scenario.result is None:
+        if scenario.metrics is None:
+            raise ValueError("scenario metrics unexpectedly missing")
+        if scenario.first_signal_date is None or scenario.last_signal_date is None:
+            raise ValueError("scenario date window unexpectedly missing")
+        return _result_row(
+            label=scenario.scenario_id,
+            status=scenario.status,
+            metrics=scenario.metrics,
+            first_signal_date=scenario.first_signal_date,
+            last_signal_date=scenario.last_signal_date,
+            base_metrics=base_metrics,
+            note=scenario.description,
         )
     return _result_row(
         label=scenario.scenario_id,
@@ -259,6 +380,88 @@ def _interpretation_lines(report: BacktestRobustnessReport) -> list[str]:
         "- 当前结论仍是研究和审计输入；完整生产信任需要剩余稳健性实验和 owner 审批。"
     )
     return lines
+
+
+def _fixed_exposure_metrics(
+    result: DailyBacktestResult,
+    *,
+    exposure: float,
+) -> BacktestMetrics:
+    if not 0 <= exposure <= 1:
+        raise ValueError("fixed exposure must satisfy 0 <= exposure <= 1")
+    commission_rate = result.cost_bps / 10_000.0
+    spread_rate = result.spread_bps / 10_000.0
+    slippage_rate = result.slippage_bps / 10_000.0
+    market_impact_rate = result.market_impact_bps / 10_000.0
+    tax_rate = result.tax_bps / 10_000.0
+    fx_rate = result.fx_bps / 10_000.0
+    financing_daily_rate = result.financing_annual_bps / 10_000.0 / 252.0
+    etf_delay_rate = result.etf_delay_bps / 10_000.0
+
+    previous_exposure = 0.0
+    returns: list[float] = []
+    exposures: list[float] = []
+    turnovers: list[float] = []
+    for row in result.rows:
+        turnover = abs(exposure - previous_exposure)
+        sell_turnover = max(previous_exposure - exposure, 0.0)
+        transaction_cost = (
+            turnover * commission_rate
+            + turnover * spread_rate
+            + turnover * slippage_rate
+            + turnover * market_impact_rate
+            + sell_turnover * tax_rate
+            + turnover * fx_rate
+            + exposure * financing_daily_rate
+            + turnover * etf_delay_rate
+        )
+        returns.append(exposure * row.asset_return - transaction_cost)
+        exposures.append(exposure)
+        turnovers.append(turnover)
+        previous_exposure = exposure
+    return summarize_long_only_backtest(
+        strategy_returns=returns,
+        exposures=exposures,
+        turnovers=turnovers,
+    )
+
+
+def _scenario_summary_record(
+    scenario: BacktestRobustnessScenario,
+    base_metrics: BacktestMetrics,
+) -> dict[str, object]:
+    metrics = (
+        scenario.result.strategy_metrics
+        if scenario.result is not None
+        else scenario.metrics
+    )
+    record: dict[str, object] = {
+        "scenario_id": scenario.scenario_id,
+        "label": scenario.label,
+        "category": scenario.category,
+        "status": scenario.status,
+        "description": scenario.description,
+        "skipped_reason": scenario.skipped_reason,
+    }
+    if metrics is not None:
+        record.update(_summary_metrics_record(metrics))
+        record["total_return_delta_vs_base"] = (
+            metrics.total_return - base_metrics.total_return
+        )
+    return record
+
+
+def _summary_metrics_record(metrics: BacktestMetrics) -> dict[str, object]:
+    return {
+        "total_return": metrics.total_return,
+        "cagr": metrics.cagr,
+        "max_drawdown": metrics.max_drawdown,
+        "sharpe": metrics.sharpe,
+        "sortino": metrics.sortino,
+        "calmar": metrics.calmar,
+        "time_in_market": metrics.time_in_market,
+        "turnover": metrics.turnover,
+    }
 
 
 def _find_scenario(
