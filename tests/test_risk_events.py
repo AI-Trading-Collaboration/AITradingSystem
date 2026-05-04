@@ -16,12 +16,14 @@ from ai_trading_system.config import (
 )
 from ai_trading_system.risk_events import (
     build_risk_event_occurrence_review_report,
+    build_risk_event_review_attestation,
     load_risk_event_occurrence_store,
     render_risk_event_occurrence_review_report,
     render_risk_events_validation_report,
     validate_risk_event_occurrence_store,
     validate_risk_events_config,
     write_risk_event_occurrence_review_report,
+    write_risk_event_review_attestation,
     write_risk_events_validation_report,
 )
 
@@ -312,6 +314,63 @@ def test_validate_risk_event_occurrence_store_rejects_unknown_event_id(
     assert "unknown_risk_event_id" in {issue.code for issue in validation_report.issues}
 
 
+def test_current_review_attestation_allows_empty_occurrence_store(
+    tmp_path: Path,
+) -> None:
+    input_path = tmp_path / "occurrences"
+    attestation = build_risk_event_review_attestation(
+        as_of=date(2026, 5, 2),
+        reviewer="policy_owner",
+        rationale="人工复核官方来源和预审队列，未发现未记录重大风险事件。",
+        checked_source_names=("official_policy_sources", "openai_prereview_queue"),
+        next_review_due=date(2026, 5, 3),
+    )
+    write_risk_event_review_attestation(attestation, input_path)
+
+    validation_report = validate_risk_event_occurrence_store(
+        store=load_risk_event_occurrence_store(input_path),
+        risk_events=load_risk_events(),
+        as_of=date(2026, 5, 2),
+    )
+    review_report = build_risk_event_occurrence_review_report(validation_report)
+    markdown = render_risk_event_occurrence_review_report(review_report)
+
+    assert validation_report.status == "PASS"
+    assert validation_report.occurrence_count == 0
+    assert validation_report.review_attestation_count == 1
+    assert validation_report.current_review_attestation_count == 1
+    assert review_report.status == "PASS"
+    assert "当前有效复核声明数：1" in markdown
+    assert "确认无未记录重大事件" in markdown
+
+
+def test_stale_review_attestation_does_not_remove_empty_store_warning(
+    tmp_path: Path,
+) -> None:
+    input_path = tmp_path / "occurrences"
+    attestation = build_risk_event_review_attestation(
+        as_of=date(2026, 5, 1),
+        reviewer="policy_owner",
+        rationale="前一日复核声明。",
+        checked_source_names=("official_policy_sources",),
+        next_review_due=date(2026, 5, 1),
+    )
+    write_risk_event_review_attestation(attestation, input_path)
+
+    validation_report = validate_risk_event_occurrence_store(
+        store=load_risk_event_occurrence_store(input_path),
+        risk_events=load_risk_events(),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert validation_report.passed is True
+    assert validation_report.current_review_attestation_count == 0
+    assert {
+        "risk_event_current_review_attestation_missing",
+        "risk_event_review_attestation_stale",
+    }.issubset({issue.code for issue in validation_report.issues})
+
+
 def test_render_and_write_risk_event_occurrence_report(tmp_path: Path) -> None:
     input_path = tmp_path / "occurrence.yaml"
     _write_risk_event_occurrence(input_path)
@@ -391,6 +450,37 @@ def test_risk_events_cli_validate_occurrences(tmp_path: Path) -> None:
     assert output_path.exists()
     assert "风险事件发生记录状态：PASS_WITH_WARNINGS" in validate_result.output
     assert "风险事件发生记录" in list_result.output
+
+
+def test_risk_events_cli_record_review_attestation(tmp_path: Path) -> None:
+    input_path = tmp_path / "occurrences"
+    output_path = tmp_path / "risk_event_occurrences.md"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "risk-events",
+            "record-review-attestation",
+            "--output-dir",
+            str(input_path),
+            "--as-of",
+            "2026-05-02",
+            "--reviewer",
+            "policy_owner",
+            "--rationale",
+            "人工复核官方来源和预审队列，未发现未记录重大风险事件。",
+            "--checked-sources",
+            "official_policy_sources,openai_prereview_queue",
+            "--output-path",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "风险事件复核声明" in result.output
+    assert "当前有效：1" in result.output
+    assert output_path.exists()
+    assert len(list(input_path.glob("*.yaml"))) == 1
 
 
 def _write_risk_event_occurrence(

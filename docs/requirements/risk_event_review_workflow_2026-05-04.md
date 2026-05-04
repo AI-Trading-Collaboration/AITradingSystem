@@ -4,7 +4,7 @@
 
 最后更新：2026-05-04
 
-关联任务：`RISK-003`、`RISK-004`、`SOURCE-001`、`LLM-001`、`EVIDENCE-001`
+关联任务：`RISK-003`、`RISK-004`、`RISK-005`、`SOURCE-001`、`LLM-001`、`EVIDENCE-001`
 
 ## 结论
 
@@ -134,6 +134,43 @@
 - 正式风险事件发生记录增加 `reviewer`、`reviewed_at`、`review_decision`、`rationale`、`next_review_due` 校验；缺少元数据的 active/watch 记录失败。
 - 未完成缺口：本阶段不在本地发起 OpenAI API 请求；live Responses API 调用适配器、真实请求追踪和真实授权来源样本验证仍需后续实现和 owner 提供 API key / 可发送外部 LLM 的来源样本。
 
+## RISK-005
+
+状态：BASELINE_DONE
+
+### 问题
+
+2026-05-04 日报中，风险事件发生记录目录不存在，政策/地缘模块只能输出数据不足。现有行为是正确的：空目录或空 YAML 不能证明当前没有政策/地缘风险，也不能让系统把监控规则配置误读成“无事件”。
+
+生产前还需要一条可审计的“复核已完成”输入链路。该链路记录的是：复核人在指定覆盖窗口内检查了约定来源范围，未发现需要写入正式 occurrence 的未记录重大风险事件。它不是自动风险消除证明，也不能替代后续 active/watch occurrence。
+
+### 设计边界
+
+- 复核声明只说明“按声明列出的来源和窗口完成了检查”；不代表世界上不存在风险。
+- 声明必须包含 `reviewer`、`reviewed_at`、`review_decision`、`coverage_start`、`coverage_end`、`next_review_due`、`checked_sources` 和 `rationale`。
+- 只有 `review_decision=confirmed_no_unrecorded_material_events`、覆盖 `as_of`、未过期、没有未来日期且至少包含 `primary_source`、`paid_vendor` 或 `manual_input` 来源范围时，才算当前有效。
+- 如果存在有效声明且没有可评分 active occurrence，政策/地缘模块可以把 L2/L3 active 计数视为 0，并以 `manual_input` 置信度进入评分；否则仍保持 `insufficient_data`。
+- 有效声明不触发仓位闸门，不降低已记录 active 风险事件的影响，不改变 `watch` 默认只进报告和人工复核的规则。
+- 系统不得自动生成真实声明；CLI 只能在用户显式提供复核人、来源范围和理由时写入声明文件。
+
+### 第一阶段验收标准
+
+- 支持风险事件复核声明 YAML schema 与加载。
+- `aits risk-events record-review-attestation` 可写入声明文件。
+- `aits risk-events validate-occurrences` 报告显示复核声明数量、当前有效声明数量、覆盖窗口、复核人、来源范围和状态。
+- 空 occurrence 目录在存在当前有效声明时不再触发“空目录不能证明无风险”的警告；过期、未来日期、来源范围不足或 `needs_more_evidence` 声明仍不能解除降级。
+- `score-daily` 在有效声明覆盖评估日时，将政策/地缘模块标为 `manual_input` 而不是 `insufficient_data`，但不触发风险事件仓位闸门。
+- 更新 `docs/system_flow.md`，补充测试覆盖有效声明、过期声明、日报评分和 gate 隔离。
+
+### 第一阶段实现进展
+
+- 新增 `review_attestation` YAML schema，和正式 occurrence 共用 `data/external/risk_event_occurrences/` 加载入口。
+- 新增 `aits risk-events record-review-attestation`，只有显式提供复核人、来源范围和理由时才写入声明文件。
+- `aits risk-events validate-occurrences` 报告输出复核声明数量、当前有效声明数量、覆盖窗口、复核人、来源范围、过期状态和方法边界。
+- `score-daily` 在无可评分 active occurrence 且存在当前有效复核声明时，将政策/地缘模块作为 `manual_input` 处理；没有有效声明时仍为 `insufficient_data`。
+- point-in-time 回测切片会按 `review_date`、`reviewed_at` 和 checked source `captured_at` 过滤复核声明，避免未来复核声明进入历史信号日。
+- 声明不触发风险事件仓位闸门，不覆盖已记录的 active/watch occurrence，也不由系统自动生成真实复核内容。
+
 ## 验收标准
 
 - 风险事件正式来源和人工复核 owner、频率、SLA、升级标准已文档化。
@@ -149,3 +186,5 @@
 - 2026-05-04：owner 确认可引入 OpenAI API 做简单预审，但预审不替代实际人工复核；正式流程采用官方/一手来源、已授权供应商线索、OpenAI 结构化预审和人工确认的组合。新增 `RISK-004` 承接实施。
 - 2026-05-04：`RISK-004` 进入实现；第一阶段先落结构化预审结果导入、`llm_extracted` / `pending_review` 复核队列和隔离测试，不接入生产评分、仓位闸门或回测输入。
 - 2026-05-04：`RISK-004` 达到 `BASELINE_DONE`：固定结构化输出导入、预审队列、中文报告、人工复核元数据校验、系统流图和测试完成；`python -m ruff check src tests`、`python -m pytest -q` 通过。剩余 live OpenAI API 调用适配器和真实样本验证依赖 API key、来源授权与 owner 批准样本。
+- 2026-05-04：新增 `RISK-005`，原因：日报生产就绪复盘发现“空 occurrence 目录不能证明无风险”会持续压低政策/地缘模块置信度；第一阶段实现可审计复核声明链路，不由系统代填真实复核结论。
+- 2026-05-04：`RISK-005` 达到 `BASELINE_DONE`：复核声明 schema、CLI、校验报告、日报识别、历史切片、数据源目录、系统流图和测试已完成；真实每日复核的 owner、来源清单和运行纪律仍是生产使用前置条件。

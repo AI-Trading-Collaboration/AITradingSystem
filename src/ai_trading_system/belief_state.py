@@ -274,7 +274,9 @@ def _risk_state_record(report: DailyScoreReport) -> dict[str, Any]:
         "summary": (
             f"active {len(active_items)}，watch {len(watch_items)}，"
             f"可评分 active {len(review.score_eligible_active_items)}，"
-            f"可触发仓位闸门 active {len(review.position_gate_eligible_active_items)}。"
+            f"可触发仓位闸门 active {len(review.position_gate_eligible_active_items)}，"
+            f"当前有效复核声明 "
+            f"{review.validation_report.current_review_attestation_count}。"
         ),
         "items": [
             {

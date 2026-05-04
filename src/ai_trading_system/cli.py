@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import replace
-from datetime import UTC, date, datetime, time
+from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
 from typing import Annotated
 
@@ -265,12 +265,14 @@ from ai_trading_system.risk_events import (
     RiskEventOccurrenceReviewReport,
     RiskEventsValidationReport,
     build_risk_event_occurrence_review_report,
+    build_risk_event_review_attestation,
     default_risk_event_occurrence_report_path,
     default_risk_events_report_path,
     load_risk_event_occurrence_store,
     validate_risk_event_occurrence_store,
     validate_risk_events_config,
     write_risk_event_occurrence_review_report,
+    write_risk_event_review_attestation,
     write_risk_events_validation_report,
 )
 from ai_trading_system.rule_experiments import (
@@ -2547,11 +2549,154 @@ def list_risk_event_occurrences(
     console.print(table)
     if not store.loaded:
         console.print("未发现可读取的风险事件发生记录。")
+    if store.review_attestations:
+        attestation_table = Table(title="风险事件复核声明")
+        attestation_table.add_column("Attestation", overflow="fold")
+        attestation_table.add_column("复核日期")
+        attestation_table.add_column("覆盖窗口")
+        attestation_table.add_column("复核人", overflow="fold")
+        attestation_table.add_column("结论", overflow="fold")
+        attestation_table.add_column("文件", overflow="fold")
+        for loaded in sorted(
+            store.review_attestations,
+            key=lambda item: item.attestation.attestation_id,
+        ):
+            attestation = loaded.attestation
+            attestation_table.add_row(
+                attestation.attestation_id,
+                attestation.review_date.isoformat(),
+                (
+                    f"{attestation.coverage_start.isoformat()} 至 "
+                    f"{attestation.coverage_end.isoformat()}"
+                ),
+                attestation.reviewer,
+                attestation.review_decision,
+                str(loaded.path),
+            )
+        console.print(attestation_table)
     if store.load_errors:
         console.print(
             "[red]存在 "
             f"{len(store.load_errors)} 个加载错误，请运行 validate-occurrences 查看。[/red]"
         )
+
+
+@risk_events_app.command("record-review-attestation")
+def record_risk_event_review_attestation_command(
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="写入风险事件复核声明 YAML 的目录。"),
+    ] = DEFAULT_RISK_EVENT_OCCURRENCES_PATH,
+    config_path: Annotated[
+        Path,
+        typer.Option(help="风险事件规则配置文件路径，用于写入后校验。"),
+    ] = DEFAULT_RISK_EVENTS_CONFIG_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="复核日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    reviewer: Annotated[
+        str,
+        typer.Option(help="复核人或复核角色，必须是真实人工复核责任方。"),
+    ] = "",
+    rationale: Annotated[
+        str,
+        typer.Option(help="复核结论理由，说明为何确认没有未记录重大风险事件。"),
+    ] = "",
+    checked_sources: Annotated[
+        str,
+        typer.Option(
+            help=(
+                "逗号分隔的已检查来源范围，例如 official_sources,"
+                "paid_vendor_queue,openai_prereview_queue。"
+            )
+        ),
+    ] = "manual_daily_risk_review",
+    review_scope: Annotated[
+        str,
+        typer.Option(help="逗号分隔的复核范围。"),
+    ] = "policy_event_occurrences,geopolitical_event_occurrences,risk_event_prereview_queue",
+    coverage_start: Annotated[
+        str | None,
+        typer.Option(help="复核覆盖窗口开始日期，格式为 YYYY-MM-DD，默认等于 as_of。"),
+    ] = None,
+    coverage_end: Annotated[
+        str | None,
+        typer.Option(help="复核覆盖窗口结束日期，格式为 YYYY-MM-DD，默认等于 as_of。"),
+    ] = None,
+    reviewed_at: Annotated[
+        str | None,
+        typer.Option(help="人工复核日期，格式为 YYYY-MM-DD，默认等于 as_of。"),
+    ] = None,
+    next_review_due: Annotated[
+        str | None,
+        typer.Option(help="下次复核日期，格式为 YYYY-MM-DD，默认 as_of 后 1 天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 风险事件发生记录校验报告输出路径。"),
+    ] = None,
+) -> None:
+    """记录“已复核且未发现未记录重大风险事件”的人工声明。"""
+    review_date = _parse_date(as_of) if as_of else date.today()
+    if not reviewer.strip():
+        raise typer.BadParameter("必须提供 --reviewer，不能由系统匿名生成复核声明。")
+    if not rationale.strip():
+        raise typer.BadParameter("必须提供 --rationale，说明人工复核结论依据。")
+    checked_source_names = tuple(_parse_csv_items(checked_sources))
+    if not checked_source_names:
+        raise typer.BadParameter("至少需要一个 --checked-sources 来源范围。")
+    scope_items = tuple(_parse_csv_items(review_scope))
+    if not scope_items:
+        raise typer.BadParameter("至少需要一个 --review-scope 复核范围。")
+
+    attestation = build_risk_event_review_attestation(
+        as_of=review_date,
+        reviewer=reviewer.strip(),
+        rationale=rationale.strip(),
+        checked_source_names=checked_source_names,
+        coverage_start=_parse_date(coverage_start) if coverage_start else review_date,
+        coverage_end=_parse_date(coverage_end) if coverage_end else review_date,
+        reviewed_at=_parse_date(reviewed_at) if reviewed_at else review_date,
+        next_review_due=(
+            _parse_date(next_review_due)
+            if next_review_due
+            else review_date + timedelta(days=1)
+        ),
+        review_scope=scope_items,
+    )
+    written_path = write_risk_event_review_attestation(attestation, output_dir)
+
+    report_path = output_path or default_risk_event_occurrence_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        review_date,
+    )
+    validation_report = validate_risk_event_occurrence_store(
+        store=load_risk_event_occurrence_store(output_dir),
+        risk_events=load_risk_events(config_path),
+        as_of=review_date,
+    )
+    review_report = build_risk_event_occurrence_review_report(validation_report)
+    write_risk_event_occurrence_review_report(review_report, report_path)
+
+    status_style = (
+        "green"
+        if review_report.status == "PASS"
+        else "yellow"
+        if validation_report.passed
+        else "red"
+    )
+    console.print(f"风险事件复核声明：{written_path}")
+    console.print(
+        f"[{status_style}]风险事件发生记录状态：{review_report.status}[/{status_style}]"
+    )
+    console.print(f"校验报告：{report_path}")
+    console.print(
+        f"复核声明数：{validation_report.review_attestation_count}；"
+        f"当前有效：{validation_report.current_review_attestation_count}"
+    )
+    if not validation_report.passed:
+        raise typer.Exit(code=1)
 
 
 @risk_events_app.command("import-occurrences-csv")
@@ -2742,6 +2887,10 @@ def validate_risk_event_occurrences(
         f"活跃/观察：{validation_report.active_occurrence_count}；"
         f"可评分：{len(review_report.score_eligible_active_items)}；"
         f"可触发仓位闸门：{len(review_report.position_gate_eligible_active_items)}"
+    )
+    console.print(
+        f"复核声明数：{validation_report.review_attestation_count}；"
+        f"当前有效：{validation_report.current_review_attestation_count}"
     )
     console.print(f"错误数：{validation_report.error_count}；警告数：{validation_report.warning_count}")
 

@@ -34,6 +34,13 @@ RiskEventOccurrenceSourceType = Literal[
     "manual_input",
     "public_convenience",
 ]
+RiskEventReviewAttestationSourceType = Literal[
+    "primary_source",
+    "paid_vendor",
+    "manual_input",
+    "public_convenience",
+    "llm_extracted",
+]
 RiskEventEvidenceGrade = Literal["S", "A", "B", "C", "D", "X"]
 RiskEventSeverity = Literal["low", "medium", "high", "critical", "unknown"]
 RiskEventProbability = Literal["low", "medium", "high", "confirmed", "unknown"]
@@ -62,6 +69,10 @@ RiskEventReviewDecision = Literal[
     "confirmed_watch",
     "confirmed_resolved",
     "dismissed",
+    "needs_more_evidence",
+]
+RiskEventReviewAttestationDecision = Literal[
+    "confirmed_no_unrecorded_material_events",
     "needs_more_evidence",
 ]
 
@@ -104,9 +115,38 @@ class RiskEventOccurrence(BaseModel):
     notes: str = ""
 
 
+class RiskEventReviewAttestationSource(BaseModel):
+    source_name: str = Field(min_length=1)
+    source_type: RiskEventReviewAttestationSourceType
+    source_url: str = ""
+    captured_at: date
+    notes: str = ""
+
+
+class RiskEventReviewAttestation(BaseModel):
+    attestation_id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9_.-]+$")
+    review_date: date
+    coverage_start: date
+    coverage_end: date
+    reviewer: str = Field(min_length=1)
+    reviewed_at: date
+    review_decision: RiskEventReviewAttestationDecision
+    rationale: str = Field(min_length=1)
+    next_review_due: date
+    review_scope: list[str] = Field(min_length=1)
+    checked_sources: list[RiskEventReviewAttestationSource] = Field(min_length=1)
+    notes: str = ""
+
+
 @dataclass(frozen=True)
 class LoadedRiskEventOccurrence:
     occurrence: RiskEventOccurrence
+    path: Path
+
+
+@dataclass(frozen=True)
+class LoadedRiskEventReviewAttestation:
+    attestation: RiskEventReviewAttestation
     path: Path
 
 
@@ -119,8 +159,11 @@ class RiskEventOccurrenceLoadError:
 @dataclass(frozen=True)
 class RiskEventOccurrenceStore:
     input_path: Path
-    loaded: tuple[LoadedRiskEventOccurrence, ...]
-    load_errors: tuple[RiskEventOccurrenceLoadError, ...]
+    loaded: tuple[LoadedRiskEventOccurrence, ...] = field(default_factory=tuple)
+    review_attestations: tuple[LoadedRiskEventReviewAttestation, ...] = field(
+        default_factory=tuple
+    )
+    load_errors: tuple[RiskEventOccurrenceLoadError, ...] = field(default_factory=tuple)
 
 
 @dataclass(frozen=True)
@@ -197,6 +240,9 @@ class RiskEventOccurrenceValidationReport:
     input_path: Path
     config: RiskEventsConfig
     occurrences: tuple[LoadedRiskEventOccurrence, ...]
+    review_attestations: tuple[LoadedRiskEventReviewAttestation, ...] = field(
+        default_factory=tuple
+    )
     issues: tuple[RiskEventIssue, ...] = field(default_factory=tuple)
 
     @property
@@ -210,6 +256,28 @@ class RiskEventOccurrenceValidationReport:
             for loaded in self.occurrences
             if loaded.occurrence.status in {"active", "watch"}
         )
+
+    @property
+    def review_attestation_count(self) -> int:
+        return len(self.review_attestations)
+
+    @property
+    def current_review_attestations(
+        self,
+    ) -> tuple[LoadedRiskEventReviewAttestation, ...]:
+        return tuple(
+            loaded
+            for loaded in self.review_attestations
+            if _review_attestation_is_current(loaded.attestation, self.as_of)
+        )
+
+    @property
+    def current_review_attestation_count(self) -> int:
+        return len(self.current_review_attestations)
+
+    @property
+    def has_current_review_attestation(self) -> bool:
+        return self.current_review_attestation_count > 0
 
     @property
     def error_count(self) -> int:
@@ -262,10 +330,15 @@ class RiskEventOccurrenceReviewReport:
             return "PASS_WITH_WARNINGS"
         return "PASS"
 
+    @property
+    def has_current_review_attestation(self) -> bool:
+        return self.validation_report.has_current_review_attestation
+
 
 def load_risk_event_occurrence_store(input_path: Path | str) -> RiskEventOccurrenceStore:
     path = Path(input_path)
     loaded: list[LoadedRiskEventOccurrence] = []
+    attestations: list[LoadedRiskEventReviewAttestation] = []
     load_errors: list[RiskEventOccurrenceLoadError] = []
 
     for yaml_path in _occurrence_yaml_paths(path):
@@ -295,9 +368,28 @@ def load_risk_event_occurrence_store(input_path: Path | str) -> RiskEventOccurre
                 LoadedRiskEventOccurrence(occurrence=occurrence, path=yaml_path)
             )
 
+        for raw_item in _raw_review_attestation_items(raw):
+            try:
+                attestation = RiskEventReviewAttestation.model_validate(raw_item)
+            except ValidationError as exc:
+                load_errors.append(
+                    RiskEventOccurrenceLoadError(
+                        path=yaml_path,
+                        message=_compact_validation_error(exc),
+                    )
+                )
+                continue
+            attestations.append(
+                LoadedRiskEventReviewAttestation(
+                    attestation=attestation,
+                    path=yaml_path,
+                )
+            )
+
     return RiskEventOccurrenceStore(
         input_path=path,
         loaded=tuple(loaded),
+        review_attestations=tuple(attestations),
         load_errors=tuple(load_errors),
     )
 
@@ -321,6 +413,12 @@ def validate_risk_event_occurrence_store(
             )
         )
 
+    current_attestations = tuple(
+        loaded
+        for loaded in store.review_attestations
+        if _review_attestation_is_current(loaded.attestation, as_of)
+    )
+
     if not store.input_path.exists():
         issues.append(
             RiskEventIssue(
@@ -332,7 +430,7 @@ def validate_risk_event_occurrence_store(
                 ),
             )
         )
-    elif not store.loaded and not store.load_errors:
+    elif not store.loaded and not store.review_attestations and not store.load_errors:
         issues.append(
             RiskEventIssue(
                 severity=RiskEventIssueSeverity.WARNING,
@@ -340,6 +438,24 @@ def validate_risk_event_occurrence_store(
                 path=store.input_path,
                 message=(
                     "未发现风险事件发生记录 YAML；评分不会把监控规则配置当作实际风险或无风险证明。"
+                ),
+            )
+        )
+    elif (
+        not any(
+            loaded.occurrence.status in {"active", "watch"}
+            for loaded in store.loaded
+        )
+        and not current_attestations
+    ):
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.WARNING,
+                code="risk_event_current_review_attestation_missing",
+                path=store.input_path,
+                message=(
+                    "未发现覆盖评估日且未过期的风险事件复核声明；空发生记录不能证明当前没有"
+                    "政策或地缘风险。"
                 ),
             )
         )
@@ -354,11 +470,20 @@ def validate_risk_event_occurrence_store(
             issues=issues,
         )
 
+    _check_duplicate_attestation_ids(store.review_attestations, issues)
+    for loaded in store.review_attestations:
+        _check_review_attestation(
+            loaded=loaded,
+            as_of=as_of,
+            issues=issues,
+        )
+
     return RiskEventOccurrenceValidationReport(
         as_of=as_of,
         input_path=store.input_path,
         config=risk_events,
         occurrences=store.loaded,
+        review_attestations=store.review_attestations,
         issues=tuple(issues),
     )
 
@@ -517,6 +642,8 @@ def render_risk_event_occurrence_review_report(
         f"- 活跃/观察记录数：{validation.active_occurrence_count}",
         f"- 可进入普通评分的活跃记录数：{len(report.score_eligible_active_items)}",
         f"- 可触发仓位闸门的活跃记录数：{len(report.position_gate_eligible_active_items)}",
+        f"- 风险事件复核声明数：{validation.review_attestation_count}",
+        f"- 当前有效复核声明数：{validation.current_review_attestation_count}",
         f"- 错误数：{validation.error_count}",
         f"- 警告数：{validation.warning_count}",
         "",
@@ -556,6 +683,43 @@ def render_risk_event_occurrence_review_report(
                 f"{_escape_markdown_table(item.reason)} |"
             )
 
+    lines.extend(["", "## 复核声明", ""])
+    if not validation.review_attestations:
+        lines.append("未发现风险事件复核声明。")
+    else:
+        lines.extend(
+            [
+                "| Attestation | 复核日期 | 覆盖窗口 | 复核人 | 结论 | 下次复核 | "
+                "来源范围 | 当前有效 | 说明 |",
+                "|---|---|---|---|---|---|---|---|---|",
+            ]
+        )
+        current_ids = {
+            loaded.attestation.attestation_id
+            for loaded in validation.current_review_attestations
+        }
+        for loaded in sorted(
+            validation.review_attestations,
+            key=lambda value: value.attestation.attestation_id,
+        ):
+            attestation = loaded.attestation
+            source_names = ", ".join(
+                source.source_name for source in attestation.checked_sources
+            )
+            lines.append(
+                "| "
+                f"{attestation.attestation_id} | "
+                f"{attestation.review_date.isoformat()} | "
+                f"{attestation.coverage_start.isoformat()} 至 "
+                f"{attestation.coverage_end.isoformat()} | "
+                f"{_escape_markdown_table(attestation.reviewer)} | "
+                f"{_review_attestation_decision_label(attestation.review_decision)} | "
+                f"{attestation.next_review_due.isoformat()} | "
+                f"{_escape_markdown_table(source_names)} | "
+                f"{'是' if attestation.attestation_id in current_ids else '否'} | "
+                f"{_escape_markdown_table(attestation.rationale)} |"
+            )
+
     lines.extend(["", "## 问题", ""])
     if not validation.issues:
         lines.append("未发现问题。")
@@ -589,6 +753,8 @@ def render_risk_event_occurrence_review_report(
             "`public_convenience` 只能作为辅助线索。",
             "- `watch` 状态默认只进入报告和人工复核；只有 `active` 且证据来源、证据等级和 "
             "`action_class` 满足条件时，才进入自动评分和仓位闸门。",
+            "- 复核声明只表示复核人在指定覆盖窗口内检查了列出的来源范围；它不是自动风险消除"
+            "证明，也不会触发仓位闸门或覆盖已记录的 active/watch 风险事件。",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -608,6 +774,65 @@ def write_risk_event_occurrence_review_report(
 
 def default_risk_event_occurrence_report_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"risk_event_occurrences_{as_of.isoformat()}.md"
+
+
+def build_risk_event_review_attestation(
+    *,
+    as_of: date,
+    reviewer: str,
+    rationale: str,
+    checked_source_names: tuple[str, ...],
+    coverage_start: date | None = None,
+    coverage_end: date | None = None,
+    reviewed_at: date | None = None,
+    next_review_due: date | None = None,
+    review_scope: tuple[str, ...] = (
+        "policy_event_occurrences",
+        "geopolitical_event_occurrences",
+        "risk_event_prereview_queue",
+    ),
+    source_type: RiskEventReviewAttestationSourceType = "manual_input",
+    review_decision: RiskEventReviewAttestationDecision = (
+        "confirmed_no_unrecorded_material_events"
+    ),
+    notes: str = "",
+) -> RiskEventReviewAttestation:
+    checked_at = reviewed_at or as_of
+    return RiskEventReviewAttestation(
+        attestation_id=f"risk_event_review_attestation_{as_of.isoformat()}",
+        review_date=as_of,
+        coverage_start=coverage_start or as_of,
+        coverage_end=coverage_end or as_of,
+        reviewer=reviewer,
+        reviewed_at=checked_at,
+        review_decision=review_decision,
+        rationale=rationale,
+        next_review_due=next_review_due or as_of,
+        review_scope=list(review_scope),
+        checked_sources=[
+            RiskEventReviewAttestationSource(
+                source_name=source_name,
+                source_type=source_type,
+                captured_at=checked_at,
+            )
+            for source_name in checked_source_names
+        ],
+        notes=notes,
+    )
+
+
+def write_risk_event_review_attestation(
+    attestation: RiskEventReviewAttestation,
+    output_dir: Path,
+) -> Path:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / f"{attestation.attestation_id}.yaml"
+    payload = {
+        "review_attestation": attestation.model_dump(mode="json"),
+    }
+    with output_path.open("w", encoding="utf-8") as file:
+        yaml.safe_dump(payload, file, allow_unicode=True, sort_keys=False)
+    return output_path
 
 
 def _occurrence_yaml_paths(path: Path) -> list[Path]:
@@ -631,7 +856,35 @@ def _raw_occurrence_items(raw: Any) -> list[Any]:
         if isinstance(occurrences, list):
             return occurrences
         return [occurrences]
+    if isinstance(raw, dict) and (
+        "review_attestation" in raw
+        or "review_attestations" in raw
+        or "no_material_events_attestation" in raw
+        or "no_material_events_attestations" in raw
+        or ("attestation_id" in raw and "event_id" not in raw)
+    ):
+        return []
     return [raw]
+
+
+def _raw_review_attestation_items(raw: Any) -> list[Any]:
+    if raw is None or not isinstance(raw, dict):
+        return []
+    for key in (
+        "review_attestations",
+        "review_attestation",
+        "no_material_events_attestations",
+        "no_material_events_attestation",
+    ):
+        if key not in raw:
+            continue
+        value = raw[key]
+        if isinstance(value, list):
+            return value
+        return [value]
+    if "attestation_id" in raw and "event_id" not in raw:
+        return [raw]
+    return []
 
 
 def _compact_validation_error(exc: ValidationError) -> str:
@@ -661,6 +914,28 @@ def _check_duplicate_occurrence_ids(
                 event_id=occurrence_id,
                 path=paths[0],
                 message="风险事件 occurrence_id 重复，后续评分无法可靠引用。",
+            )
+        )
+
+
+def _check_duplicate_attestation_ids(
+    attestations: tuple[LoadedRiskEventReviewAttestation, ...],
+    issues: list[RiskEventIssue],
+) -> None:
+    paths_by_id: dict[str, list[Path]] = defaultdict(list)
+    for loaded in attestations:
+        paths_by_id[loaded.attestation.attestation_id].append(loaded.path)
+
+    for attestation_id, paths in sorted(paths_by_id.items()):
+        if len(paths) <= 1:
+            continue
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.ERROR,
+                code="duplicate_risk_event_review_attestation_id",
+                event_id=attestation_id,
+                path=paths[0],
+                message="风险事件复核声明 attestation_id 重复，后续评分无法可靠引用。",
             )
         )
 
@@ -975,6 +1250,132 @@ def _occurrence_review_item(
         position_gate_eligible=position_gate_eligible,
         health=health,
         reason=reason,
+            )
+
+
+def _check_review_attestation(
+    loaded: LoadedRiskEventReviewAttestation,
+    as_of: date,
+    issues: list[RiskEventIssue],
+) -> None:
+    attestation = loaded.attestation
+    path = loaded.path
+
+    if attestation.coverage_start > attestation.coverage_end:
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.ERROR,
+                code="risk_event_review_attestation_invalid_window",
+                event_id=attestation.attestation_id,
+                path=path,
+                message="复核声明 coverage_start 不能晚于 coverage_end。",
+            )
+        )
+    if attestation.review_date > as_of or attestation.reviewed_at > as_of:
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.ERROR,
+                code="risk_event_review_attestation_date_in_future",
+                event_id=attestation.attestation_id,
+                path=path,
+                message=(
+                    "复核声明 review_date 或 reviewed_at 晚于评估日期，"
+                    "不能作为 point-in-time 输入。"
+                ),
+            )
+        )
+    if attestation.coverage_end > as_of:
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.ERROR,
+                code="risk_event_review_attestation_future_coverage",
+                event_id=attestation.attestation_id,
+                path=path,
+                message="复核声明不能覆盖评估日之后的未来窗口。",
+            )
+        )
+    if attestation.next_review_due < as_of:
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.WARNING,
+                code="risk_event_review_attestation_stale",
+                event_id=attestation.attestation_id,
+                path=path,
+                message="风险事件复核声明已超过 next_review_due，需要重新复核。",
+            )
+        )
+    if attestation.review_decision != "confirmed_no_unrecorded_material_events":
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.WARNING,
+                code="risk_event_review_attestation_not_confirmed",
+                event_id=attestation.attestation_id,
+                path=path,
+                message="复核声明未确认没有未记录重大风险事件，不能解除政策/地缘模块数据不足。",
+            )
+        )
+    if not _review_attestation_has_authoritative_source(attestation):
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.WARNING,
+                code="risk_event_review_attestation_no_authoritative_source",
+                event_id=attestation.attestation_id,
+                path=path,
+                message=(
+                    "复核声明缺少 primary_source、paid_vendor 或 manual_input 来源范围，"
+                    "不能作为完整复核输入。"
+                ),
+            )
+        )
+
+    for source in attestation.checked_sources:
+        if source.captured_at > as_of:
+            issues.append(
+                RiskEventIssue(
+                    severity=RiskEventIssueSeverity.ERROR,
+                    code="risk_event_review_attestation_source_in_future",
+                    event_id=attestation.attestation_id,
+                    path=path,
+                    message="复核声明 checked_sources 中存在晚于评估日期的 captured_at。",
+                )
+            )
+        if (
+            source.source_type in {"primary_source", "paid_vendor", "public_convenience"}
+            and not source.source_url
+        ):
+            issues.append(
+                RiskEventIssue(
+                    severity=RiskEventIssueSeverity.WARNING,
+                    code="risk_event_review_attestation_missing_source_url",
+                    event_id=attestation.attestation_id,
+                    path=path,
+                    message="非人工来源建议提供 source_url，便于复核来源范围。",
+                )
+            )
+
+
+def _review_attestation_is_current(
+    attestation: RiskEventReviewAttestation,
+    as_of: date,
+) -> bool:
+    return (
+        attestation.review_decision == "confirmed_no_unrecorded_material_events"
+        and attestation.coverage_start <= as_of
+        and as_of <= attestation.coverage_end
+        and attestation.coverage_end <= as_of
+        and attestation.review_date <= as_of
+        and attestation.reviewed_at <= as_of
+        and attestation.next_review_due >= as_of
+        and _review_attestation_has_authoritative_source(attestation)
+    )
+
+
+def _review_attestation_has_authoritative_source(
+    attestation: RiskEventReviewAttestation,
+) -> bool:
+    return any(
+        source.source_type in {"primary_source", "paid_vendor", "manual_input"}
+        for source in attestation.checked_sources
     )
 
 
@@ -1143,6 +1544,13 @@ def _risk_action_class_label(value: str) -> str:
         "manual_review": "人工复核",
         "score_eligible": "可评分",
         "position_gate_eligible": "可触发仓位闸门",
+    }.get(value, value)
+
+
+def _review_attestation_decision_label(value: str) -> str:
+    return {
+        "confirmed_no_unrecorded_material_events": "确认无未记录重大事件",
+        "needs_more_evidence": "需要更多证据",
     }.get(value, value)
 
 

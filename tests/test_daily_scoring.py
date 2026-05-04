@@ -33,10 +33,13 @@ from ai_trading_system.fundamentals.sec_metrics import (
 )
 from ai_trading_system.risk_events import (
     LoadedRiskEventOccurrence,
+    LoadedRiskEventReviewAttestation,
     RiskEventEvidenceSource,
     RiskEventOccurrence,
     RiskEventOccurrenceReviewReport,
     RiskEventOccurrenceValidationReport,
+    RiskEventReviewAttestation,
+    RiskEventReviewAttestationSource,
     build_risk_event_occurrence_review_report,
 )
 from ai_trading_system.scoring.daily import (
@@ -211,6 +214,30 @@ def test_build_daily_score_report_keeps_watch_risk_events_out_of_score_and_gate(
     assert risk_gate.triggered is False
     assert risk_gate.max_position == 1.0
     assert not any(signal.value == 1.0 for signal in policy.signals)
+
+
+def test_build_daily_score_report_uses_current_risk_event_review_attestation() -> None:
+    report = build_daily_score_report(
+        feature_set=_feature_set(),
+        data_quality_report=_quality_report(),
+        rules=load_scoring_rules(),
+        total_risk_asset_min=0.60,
+        total_risk_asset_max=0.80,
+        risk_event_occurrence_review_report=(
+            _empty_risk_event_occurrence_review_report_with_attestation()
+        ),
+    )
+
+    policy = _component(report, "policy_geopolitics")
+    risk_gate = _position_gate(report, "risk_events")
+
+    assert policy.source_type == "manual_input"
+    assert policy.coverage == 1.0
+    assert policy.score == 100.0
+    assert policy.confidence == 0.75
+    assert "已完成覆盖评估日" in policy.reason
+    assert risk_gate.triggered is False
+    assert risk_gate.max_position == 1.0
 
 
 def test_build_daily_score_report_marks_insufficient_data() -> None:
@@ -699,6 +726,46 @@ def _risk_event_occurrence_review_report(
                     summary="测试用 L3 风险事件。",
                 ),
                 path=Path("risk_event_occurrences/taiwan.yaml"),
+            ),
+        ),
+    )
+    return build_risk_event_occurrence_review_report(validation_report)
+
+
+def _empty_risk_event_occurrence_review_report_with_attestation() -> (
+    RiskEventOccurrenceReviewReport
+):
+    as_of = date(2026, 4, 30)
+    validation_report = RiskEventOccurrenceValidationReport(
+        as_of=as_of,
+        input_path=Path("risk_event_occurrences"),
+        config=load_risk_events(),
+        occurrences=(),
+        review_attestations=(
+            LoadedRiskEventReviewAttestation(
+                attestation=RiskEventReviewAttestation(
+                    attestation_id="risk_event_review_attestation_2026_04_30",
+                    review_date=as_of,
+                    coverage_start=as_of,
+                    coverage_end=as_of,
+                    reviewer="policy_owner",
+                    reviewed_at=as_of,
+                    review_decision="confirmed_no_unrecorded_material_events",
+                    rationale="人工复核官方来源和预审队列，未发现未记录重大风险事件。",
+                    next_review_due=date(2026, 5, 1),
+                    review_scope=[
+                        "policy_event_occurrences",
+                        "geopolitical_event_occurrences",
+                    ],
+                    checked_sources=[
+                        RiskEventReviewAttestationSource(
+                            source_name="manual_daily_risk_review",
+                            source_type="manual_input",
+                            captured_at=as_of,
+                        )
+                    ],
+                ),
+                path=Path("risk_event_occurrences/review_attestation.yaml"),
             ),
         ),
     )

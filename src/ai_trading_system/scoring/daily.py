@@ -510,6 +510,11 @@ def render_daily_score_report(
         lines.append(f"- 风险事件发生记录状态：{report.risk_event_occurrence_review_report.status}")
         lines.append(f"- 风险事件发生记录校验状态：{occurrence_validation.status}")
         lines.append(f"- 风险事件发生记录数：{occurrence_validation.occurrence_count}")
+        lines.append(f"- 风险事件复核声明数：{occurrence_validation.review_attestation_count}")
+        lines.append(
+            "- 当前有效风险事件复核声明数："
+            f"{occurrence_validation.current_review_attestation_count}"
+        )
         lines.append(
             "- 可进入普通评分的活跃风险事件数："
             f"{len(report.risk_event_occurrence_review_report.score_eligible_active_items)}"
@@ -904,6 +909,9 @@ def _score_policy_geopolitics_module(
     eligible_active_items = (
         risk_event_occurrence_review_report.score_eligible_active_items
     )
+    has_current_review_attestation = (
+        risk_event_occurrence_review_report.has_current_review_attestation
+    )
     component = _score_signal_module(
         name="policy_geopolitics",
         weight=rules.weights["policy_geopolitics"],
@@ -917,12 +925,20 @@ def _score_policy_geopolitics_module(
     source_type = component.source_type
     reason = component.reason
     if not eligible_active_items:
-        source_type = "insufficient_data"
-        reason = (
-            "未发现可进入评分的 active 政策或地缘风险事件发生记录；"
-            "watch 记录只进入报告和人工复核。为避免把空记录当作无风险证明，"
-            "本模块使用中性分。"
-        )
+        if has_current_review_attestation:
+            source_type = "manual_input"
+            reason = (
+                "已完成覆盖评估日且未过期的风险事件复核声明；未发现可进入评分的 "
+                "active 政策或地缘风险事件发生记录。该声明只代表已检查的来源范围，"
+                "不是自动风险消除证明。"
+            )
+        else:
+            source_type = "insufficient_data"
+            reason = (
+                "未发现可进入评分的 active 政策或地缘风险事件发生记录；"
+                "watch 记录只进入报告和人工复核。为避免把空记录当作无风险证明，"
+                "本模块使用中性分。"
+            )
     elif source_type == "hard_data":
         source_type = "manual_input"
         reason = (
@@ -1394,6 +1410,7 @@ def _risk_event_change_summary(report: DailyScoreReport) -> str:
     return (
         f"{review.status}；active {len(active_items)}，watch {len(watch_items)}，"
         f"可进入评分 active {eligible_count}，可触发仓位闸门 active {gate_count}，"
+        f"当前有效复核声明 {review.validation_report.current_review_attestation_count}，"
         f"最高 active 等级 {highest}。"
     )
 
@@ -1587,6 +1604,12 @@ def _risk_event_occurrence_feature_index(
 ) -> dict[tuple[str, str], float]:
     active_items = report.score_eligible_active_items
     if not active_items:
+        if report.has_current_review_attestation:
+            return {
+                ("POLICY_GEOPOLITICS", "active_or_watch_l3_count"): 0.0,
+                ("POLICY_GEOPOLITICS", "active_or_watch_l2_count"): 0.0,
+                ("POLICY_GEOPOLITICS", "minimum_exposure_multiplier"): 1.0,
+            }
         return {}
 
     return {

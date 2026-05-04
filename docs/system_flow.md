@@ -42,6 +42,7 @@ flowchart TD
         GOVC["config/rule_cards.yaml<br/>production / candidate / retired rule cards"]
         RE["config/risk_events.yaml<br/>L1/L2/L3 风险事件动作规则"]
         REX["data/external/risk_event_occurrences/*.yaml<br/>已触发/观察的风险事件发生记录<br/>S/A/B/C/D/X、严重性、概率、动作等级"]
+        REXATT["data/external/risk_event_occurrences/review_attestation_*.yaml<br/>人工复核声明：覆盖窗口、复核人、来源范围和下次复核"]
         REXCSV["data/external/risk_event_imports/*.csv<br/>人工复核后的风险事件发生记录导入表"]
         RPRCSV["data/external/risk_event_prereview_imports/*.csv<br/>OpenAI 结构化预审结果导入表"]
         ME["data/external/market_evidence/*.yaml<br/>新市场信息证据账本"]
@@ -124,7 +125,7 @@ flowchart TD
         BWATCH["point-in-time 观察池<br/>按 signal_date 过滤 lifecycle 可见 ticker"]
         BSEC["point-in-time SEC 基本面特征<br/>按 signal_date 只读已披露 companyfacts 与 TSM IR"]
         BVAL["point-in-time 估值快照<br/>按 signal_date 过滤 as_of/captured_at"]
-        BRISK["point-in-time 风险事件发生记录<br/>按 signal_date 过滤证据和 resolved_at"]
+        BRISK["point-in-time 风险事件发生记录和复核声明<br/>按 signal_date 过滤证据、resolved_at 和 reviewed_at"]
         BD["outputs/backtests/backtest_daily_YYYY-MM-DD_YYYY-MM-DD.csv<br/>含 confidence_score / confidence_level"]
         BR["outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md<br/>含结论使用等级、判断置信度分桶和基准政策解释"]
         BA["outputs/backtests/backtest_audit_YYYY-MM-DD_YYYY-MM-DD.md<br/>输入审计状态、发现和修复建议"]
@@ -175,6 +176,7 @@ flowchart TD
         RPI["aits risk-events import-prereview-csv<br/>OpenAI 输出只进入待人工复核队列"]
         RPQ["data/processed/risk_event_prereview_queue.json<br/>llm_extracted / pending_review 预审队列"]
         RPIR["outputs/reports/risk_event_prereview_import_YYYY-MM-DD.md"]
+        RAT["aits risk-events record-review-attestation<br/>人工确认无未记录重大风险事件"]
         ROV["aits risk-events validate-occurrences"]
         ROR["outputs/reports/risk_event_occurrences_YYYY-MM-DD.md"]
         DSV["aits data-sources validate"]
@@ -311,6 +313,7 @@ flowchart TD
     TH --> SD
     RE --> SD
     REX --> SD
+    REXATT --> SD
     VS --> SD
     TD --> SD
     I --> NH
@@ -356,6 +359,7 @@ flowchart TD
     VS --> BT
     RE --> BT
     REX --> BT
+    REXATT --> BT
     BT --> BSEC
     BT --> BVAL
     BT --> BRISK
@@ -427,12 +431,15 @@ flowchart TD
     RPI --> RPIR
     RPQ -->|人工确认后才可整理为 occurrence CSV| REXCSV
     RPQ --> FLR
+    RAT --> REXATT
+    RAT --> ROR
     REXCSV --> ROI
     ROI --> REX
     ROI --> ROIR
     ROI --> ROR
     RE --> ROV
     REX --> ROV
+    REXATT --> ROV
     ROV --> ROR
     DS --> DSV
     DSV --> DSR
@@ -530,7 +537,7 @@ flowchart TD
     F --> NH["构建产业链节点热度<br/>industry_chain + watchlist + 市场趋势特征<br/>只读解释层"]
     F --> R["复用已通过的数据质量结果<br/>汇总 thesis / 风险事件 / 估值 / 交易复盘状态"]
     R --> V1["估值快照校验和复核<br/>validate_valuation_snapshot_store<br/>输出 PIT 可信度、历史来源和回测用途"]
-    R --> G1["风险事件发生记录校验<br/>validate_risk_event_occurrence_store<br/>watch 不评分；B 只普通评分；C/D/X 只复核"]
+    R --> G1["风险事件发生记录和复核声明校验<br/>validate_risk_event_occurrence_store<br/>watch 不评分；B 只普通评分；C/D/X 只复核；有效复核声明只补足空记录证明"]
     F --> S1["校验 SEC 指标 CSV<br/>validate_sec_fundamental_metrics_csv"]
     S1 -->|FAIL| S2["停止<br/>输出 SEC 指标 CSV 校验报告"]
     S1 -->|PASS 或 PASS_WITH_WARNINGS| S3["构建 SEC 基本面特征<br/>build_sec_fundamental_features_report"]
@@ -547,7 +554,7 @@ flowchart TD
     I --> V2["估值评分<br/>估值分位和拥挤比例；排除过期和 public_convenience"]
     I --> K["宏观流动性评分<br/>DGS10、DGS2、美元指数"]
     I --> L["风险情绪评分<br/>VIX 水平、分位、变化速度"]
-    I --> M["政策/地缘评分<br/>只读可评分 active 发生记录"]
+    I --> M["政策/地缘评分<br/>只读可评分 active 发生记录；无 active 时必须有当前有效复核声明才脱离 insufficient_data"]
     J --> N["AI 产业链评分和评分模型仓位区间<br/>风险资产内 AI 仓位"]
     F1 --> N
     V2 --> N
@@ -693,7 +700,7 @@ flowchart TD
         A["数据下载<br/>aits download-data"]
         B["数据质量门禁<br/>aits validate-data"]
         C["市场特征<br/>aits build-features"]
-        D["每日评分<br/>aits score-daily<br/>含结论卡、产业链节点热度、SEC 基本面、估值快照、政策/地缘发生记录、置信度、执行建议和人工复核摘要"]
+        D["每日评分<br/>aits score-daily<br/>含结论卡、产业链节点热度、SEC 基本面、估值快照、政策/地缘发生记录和复核声明、置信度、执行建议和人工复核摘要"]
         E["历史回测<br/>aits backtest<br/>含 point-in-time 输入、覆盖率、来源类型、输入问题、URL、ticker 和证据来源下钻"]
         F["观察池校验<br/>aits watchlist validate"]
         F2["观察池生命周期<br/>aits watchlist validate-lifecycle"]
@@ -702,6 +709,7 @@ flowchart TD
         I["风险事件分级<br/>aits risk-events list/validate"]
         I2["风险事件发生记录<br/>aits risk-events list-occurrences/validate-occurrences"]
         I3["风险事件 CSV 导入<br/>aits risk-events import-occurrences-csv"]
+        I4["风险事件每日复核声明<br/>aits risk-events record-review-attestation"]
         J["估值与拥挤度<br/>aits valuation list/validate/review"]
         J3["FMP 估值/预期 API<br/>aits valuation fetch-fmp"]
         J4["FMP 历史估值 API<br/>aits valuation fetch-fmp-valuation-history"]
@@ -813,9 +821,9 @@ flowchart TD
 |质量报告|`outputs/reports/data_quality_YYYY-MM-DD.md`|声明数据是否可用于下游结论|已实现|
 |特征|`aits build-features`|生成可解释市场特征|已实现|
 |特征缓存|`data/processed/features_daily.csv`|保存 tidy 格式特征|已实现|
-|评分|`aits score-daily`|先执行市场数据质量门禁，再校验 `execution_policy`、SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照和风险事件发生记录，并通过 `position_gate` 把评分仓位、组合限制、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限，输出 AI 产业链评分、判断置信度、最终仓位区间、advisory 执行建议、日报、decision snapshot 和只读 `belief_state`|已实现|
+|评分|`aits score-daily`|先执行市场数据质量门禁，再校验 `execution_policy`、SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照、风险事件发生记录和当前有效复核声明，并通过 `position_gate` 把评分仓位、组合限制、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限，输出 AI 产业链评分、判断置信度、最终仓位区间、advisory 执行建议、日报、decision snapshot 和只读 `belief_state`|已实现|
 |评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果，component 行记录模块 confidence，overall 行记录整体 confidence、模型/最终/置信度调整仓位区间、总资产 AI 仓位区间和触发的仓位闸门摘要，用于日报上期对比|已实现|
-|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|开头输出“今日结论卡”，固定呈现状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、执行动作、主结论、三个核心原因、最大限制和下一步触发条件；正文继续输出结论使用等级、变化原因树、什么情况会改变判断、产业链节点热度、认知状态摘要、执行建议、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、估值 PIT 可信度、仓位闸门来源/上限/触发状态、限制说明、人工复核摘要和可追溯引用章节；执行建议和节点热度均明确 `production_effect=none`，不是自动交易指令|已实现|
+|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|开头输出“今日结论卡”，固定呈现状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、执行动作、主结论、三个核心原因、最大限制和下一步触发条件；正文继续输出结论使用等级、变化原因树、什么情况会改变判断、产业链节点热度、认知状态摘要、执行建议、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、当前有效风险事件复核声明数量、估值 PIT 可信度、仓位闸门来源/上限/触发状态、限制说明、人工复核摘要和可追溯引用章节；执行建议和节点热度均明确 `production_effect=none`，不是自动交易指令|已实现|
 |结论使用等级|`outputs/reports/daily_score_YYYY-MM-DD.md#结论使用等级` / `outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md#结论使用等级`|报告输出 `actionable`、`review_required`、`research_only`、`data_limited` 或 `backtest_limited` 等使用边界，并与投资姿态标签分开；低置信度、人工复核失败、来源不足、数据质量失败和回测覆盖不足会自动降级，说明原因、解除条件和证据引用|已实现基础版|
 |Pipeline health|`aits ops health`|只读检查关键 pipeline artifact，包括价格缓存、利率缓存、数据质量报告、特征缓存、评分缓存和日报是否存在、是否为空、mtime 和排查入口；不把运行健康解释为投资结论有效|已实现基础版|
 |Pipeline health 报告|`outputs/reports/pipeline_health_YYYY-MM-DD.md`|中文输出 artifact 检查表、错误/警告数量、问题清单和方法边界；第一阶段未接入结构化 run log、后台调度器、异常栈或 API 错误采集|已实现基础版|
@@ -865,7 +873,7 @@ flowchart TD
 |认知状态缓存|`data/processed/belief_state/belief_state_YYYY-MM-DD.json`|只读认知状态快照，结构化记录市场状态、产业链节点状态、估值、风险、thesis、仓位边界、限制因素、多维置信度、trace 引用和 `decision_snapshot` 引用；明确不直接改变评分、闸门、回测仓位或交易建议|已实现基础版|
 |认知状态历史|`data/processed/belief_state_history.csv`|认知状态历史索引，按 `signal_date` upsert，记录 `belief_state_id`、路径、生成时间、production_effect、置信度、数据质量、最终仓位边界、限制数量、trace 路径和 decision snapshot 路径|已实现基础版|
 |认知状态报告|`outputs/reports/daily_score_YYYY-MM-DD.md#认知状态`|日报中的中文认知状态摘要，明确 `belief_state` 是只读解释层，而不是已批准进入 production 规则的输入|已实现基础版|
-|回测|`aits backtest`|先校验 `benchmark_policy` 和数据质量门禁，再基于每日评分和同一套 `position_gate` 最终仓位动态回测，默认扣除单边交易成本，可用 `--slippage-bps` 加入线性滑点/盘口冲击估算，并按 signal_date 构建 point-in-time watchlist lifecycle、SEC 基本面特征、TSM IR 季度补充、估值快照切片和风险事件发生记录切片|已实现|
+|回测|`aits backtest`|先校验 `benchmark_policy` 和数据质量门禁，再基于每日评分和同一套 `position_gate` 最终仓位动态回测，默认扣除单边交易成本，可用 `--slippage-bps` 加入线性滑点/盘口冲击估算，并按 signal_date 构建 point-in-time watchlist lifecycle、SEC 基本面特征、TSM IR 季度补充、估值快照切片、风险事件发生记录和复核声明切片|已实现|
 |回测输入覆盖诊断|`outputs/backtests/backtest_input_coverage_YYYY-MM-DD_YYYY-MM-DD.csv`|机器可读输出评分模块覆盖、来源类型、输入问题、证据 URL、ticker 输入、SEC 特征、风险事件证据和来源类型聚合，便于跨月审计和回归分析|已实现|
 |回测报告|`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|输出市场阶段、结论使用等级、绩效指标、benchmark policy 状态、基准解释边界、执行成本摘要、仓位闸门摘要、判断置信度分桶、数据质量门禁摘要、SEC 基本面、估值快照、风险事件质量摘要、模块覆盖率摘要、月度覆盖率趋势、月度来源类型趋势、月度输入问题下钻、月度输入证据 URL 摘要、月度风险事件证据 URL 明细、月度 ticker 输入摘要、月度 ticker SEC 特征明细、月度估值快照来源和月度风险事件证据来源分布|已实现|
 |回测输入审计报告|`outputs/backtests/backtest_audit_YYYY-MM-DD_YYYY-MM-DD.md`|输出 PASS/PASS_WITH_WARNINGS/FAIL、数据质量、point-in-time 输入、模块覆盖率、来源类型、执行假设、审计发现和修复建议，判断本次回测是否可解释；`--fail-on-audit-warning` 可把非 PASS 审计状态转为命令失败|已实现|
@@ -881,10 +889,11 @@ flowchart TD
 |市场阶段|`config/market_regimes.yaml`|记录默认 AI regime 和压力测试区间|已实现|
 |风险事件|`config/risk_events.yaml`|记录 L1/L2/L3 风险和动作规则|已实现基础版|
 |风险事件校验|`aits risk-events validate`|校验风险等级、产业链引用、相关标的和动作规则|已实现基础版|
-|风险事件发生记录|`data/external/risk_event_occurrences/`|记录真实触发或观察中的政策/地缘事件、状态、证据来源、S/A/B/C/D/X 证据等级、严重性、概率、影响范围、时效性、可逆性、动作等级、人工复核人、复核日期、复核决策、理由、下次复核日期和时间线；保守 source policy 下 `S/A` 可支持评分和仓位闸门，`B` 只支持普通评分，`C/D/X` 只复核|已实现基础版|
+|风险事件发生记录|`data/external/risk_event_occurrences/`|记录真实触发或观察中的政策/地缘事件、状态、证据来源、S/A/B/C/D/X 证据等级、严重性、概率、影响范围、时效性、可逆性、动作等级、人工复核人、复核日期、复核决策、理由、下次复核日期和时间线；也可记录人工复核声明，说明指定窗口内已检查来源范围且未发现未记录重大风险事件；保守 source policy 下 `S/A` 可支持评分和仓位闸门，`B` 只支持普通评分，`C/D/X` 只复核|已实现基础版|
+|风险事件每日复核声明|`aits risk-events record-review-attestation`|在用户显式提供复核人、来源范围和理由后写入 `review_attestation` YAML；声明只表示人工复核覆盖窗口和列出的来源范围，不会自动触发仓位闸门，也不会覆盖已记录 active/watch 发生记录|已实现基础版|
 |风险事件发生记录 CSV 导入|`aits risk-events import-occurrences-csv`|导入人工复核后的事件发生记录 CSV，多证据行按 `occurrence_id` 合并并写入 YAML；关键字段、证据等级、动作等级和人工复核元数据冲突时停止；缺失 `action_class` 默认 `manual_review`|已实现基础版|
 |风险事件发生记录导入报告|`outputs/reports/risk_event_occurrence_import_YYYY-MM-DD.md`|记录 CSV 行数、checksum、导入记录数、错误和警告|已实现基础版|
-|风险事件发生记录校验|`aits risk-events validate-occurrences`|校验实际发生记录 schema、event_id、日期、新鲜度、证据来源、证据等级和动作等级；`watch` 默认只进入报告和人工复核，`B` 级 active 证据只能普通评分，`C/D/X` 或 public convenience 单源不得自动评分或触发仓位闸门|已实现基础版|
+|风险事件发生记录校验|`aits risk-events validate-occurrences`|校验实际发生记录 schema、event_id、日期、新鲜度、证据来源、证据等级和动作等级，并校验复核声明的覆盖窗口、复核人、结论、来源范围和过期状态；`watch` 默认只进入报告和人工复核，`B` 级 active 证据只能普通评分，`C/D/X` 或 public convenience 单源不得自动评分或触发仓位闸门；只有当前有效复核声明才能让空发生记录脱离 `insufficient_data`|已实现基础版|
 |风险事件 OpenAI 预审导入|`aits risk-events import-prereview-csv`|导入固定结构化输出，保存 model、prompt version、request id、request timestamp、source URL、输入/输出 checksum、候选 risk_id、ticker/产业链节点映射和人工复核问题；输出强制为 `llm_extracted` / `pending_review`，不写入正式发生记录|已实现基础版|
 |风险事件 OpenAI 预审队列|`data/processed/risk_event_prereview_queue.json`|保存待人工复核预审记录；L2/L3 或 active 候选只作为 review queue，不得直接进入评分、仓位闸门或回测；人工确认后必须通过 reviewed occurrence CSV 和 `validate-occurrences` 进入正式发生记录|已实现基础版|
 |风险事件 OpenAI 预审报告|`outputs/reports/risk_event_prereview_import_YYYY-MM-DD.md`|中文报告输出 CSV 行数、checksum、待复核数量、L2/L3 候选、active 候选、错误和警告；声明本命令不发起 OpenAI API 请求，只导入结构化预审结果|已实现基础版|
@@ -933,7 +942,7 @@ flowchart TD
 |估值校验|`aits valuation validate`|校验来源、日期、ticker、指标值、新鲜度、PIT 可信度和回测用途；回填历史分布输出警告，低可信快照不得声明 strict point-in-time 回测用途|已实现基础版|
 |估值复核|`aits valuation review`|按 `as_of/captured_at` 选择每个 ticker 最新可见快照，输出估值是否偏贵、拥挤或数据过期，并显示 `valuation_percentile`、`eps_revision_90d_pct` 当前覆盖、PIT 等级、可信度和回测用途|已实现基础版|
 |历史估值切片|`src/ai_trading_system/historical_inputs.py`|回测中按 signal_date 过滤估值快照，只保留 as_of/captured_at 不晚于信号日且每个 ticker 最新的快照|已实现基础版|
-|历史风险事件切片|`src/ai_trading_system/historical_inputs.py`|回测中按 signal_date 过滤风险事件证据，排除当时已解决事件，并把未来 resolved/dismissed 状态重解释为 active/watch|已实现基础版|
+|历史风险事件切片|`src/ai_trading_system/historical_inputs.py`|回测中按 signal_date 过滤风险事件证据和复核声明，排除当时已解决事件，并把未来 resolved/dismissed 状态重解释为 active/watch；复核声明只保留当时已 review 且 checked_sources 已可见的记录|已实现基础版|
 |市场证据账本|`data/external/market_evidence/`|记录新市场信息 evidence_id、来源类型、采集时间、去重键、影响 ticker/产业链节点、S/A/B/C/D/X 证据等级、方向、置信度、人工复核状态和可链接对象；LLM 抽取证据强制 pending_review|已实现基础版|
 |市场证据导入|`aits evidence import-csv`|从人工复核或 LLM 分类后的 CSV 导入 market_evidence YAML，记录 CSV 行数、checksum、导入数量和错误|已实现基础版|
 |市场证据校验|`aits evidence validate`|校验证据账本 schema、重复 evidence_id/source key、未来日期和来源策略；报告显示按保守 source policy 可作为普通评分输入的 evidence 数；`B` 级须 confirmed 后才能普通评分，`C/D/X`、`llm_extracted` 与 `public_convenience` 只能进入待复核或辅助解释|已实现基础版|

@@ -1,0 +1,26 @@
+review_attestation:
+  attestation_id: risk_event_review_attestation_2026-05-04
+  review_date: 2026-05-04
+  coverage_start: 2026-05-04
+  coverage_end: 2026-05-04
+  reviewer: policy_owner
+  reviewed_at: 2026-05-04
+  review_decision: confirmed_no_unrecorded_material_events
+  rationale: >
+    示例：人工复核指定官方来源、供应商线索和预审队列后，未发现需要写入
+    active/watch occurrence 的未记录重大风险事件。
+  next_review_due: 2026-05-05
+  review_scope:
+    - policy_event_occurrences
+    - geopolitical_event_occurrences
+    - risk_event_prereview_queue
+  checked_sources:
+    - source_name: manual_daily_risk_review
+      source_type: manual_input
+      source_url: ""
+      captured_at: 2026-05-04
+      notes: >
+        示例来源范围，不代表真实复核已经完成。实际使用前必须替换为真实复核记录。
+  notes: >
+    该模板只说明字段结构。不要把模板直接当作真实“无风险”证明；正式使用时应通过
+    aits risk-events record-review-attestation 写入，或复制后填入真实复核人、来源范围和理由。

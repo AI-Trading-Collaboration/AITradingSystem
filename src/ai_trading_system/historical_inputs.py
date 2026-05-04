@@ -5,10 +5,12 @@ from datetime import date
 from ai_trading_system.config import RiskEventsConfig, UniverseConfig, WatchlistConfig
 from ai_trading_system.risk_events import (
     LoadedRiskEventOccurrence,
+    LoadedRiskEventReviewAttestation,
     RiskEventOccurrence,
     RiskEventOccurrenceReviewReport,
     RiskEventOccurrenceStatus,
     RiskEventOccurrenceStore,
+    RiskEventReviewAttestation,
     build_risk_event_occurrence_review_report,
     validate_risk_event_occurrence_store,
 )
@@ -75,6 +77,7 @@ def risk_event_occurrence_store_as_of(
 ) -> RiskEventOccurrenceStore:
     """Return risk event occurrences with only evidence visible at a historical date."""
     loaded_occurrences: list[LoadedRiskEventOccurrence] = []
+    loaded_attestations: list[LoadedRiskEventReviewAttestation] = []
     for loaded in store.loaded:
         historical_occurrence = _risk_event_occurrence_as_of(
             occurrence=loaded.occurrence,
@@ -89,9 +92,24 @@ def risk_event_occurrence_store_as_of(
             )
         )
 
+    for loaded in store.review_attestations:
+        historical_attestation = _risk_event_review_attestation_as_of(
+            attestation=loaded.attestation,
+            as_of=as_of,
+        )
+        if historical_attestation is None:
+            continue
+        loaded_attestations.append(
+            LoadedRiskEventReviewAttestation(
+                attestation=historical_attestation,
+                path=loaded.path,
+            )
+        )
+
     return RiskEventOccurrenceStore(
         input_path=store.input_path,
         loaded=tuple(loaded_occurrences),
+        review_attestations=tuple(loaded_attestations),
         load_errors=store.load_errors,
     )
 
@@ -163,3 +181,17 @@ def _risk_event_status_as_of(
         if occurrence.status == "dismissed":
             return "watch"
     return occurrence.status
+
+
+def _risk_event_review_attestation_as_of(
+    attestation: RiskEventReviewAttestation,
+    as_of: date,
+) -> RiskEventReviewAttestation | None:
+    if attestation.review_date > as_of or attestation.reviewed_at > as_of:
+        return None
+    visible_sources = [
+        source for source in attestation.checked_sources if source.captured_at <= as_of
+    ]
+    if not visible_sources:
+        return None
+    return attestation.model_copy(update={"checked_sources": visible_sources})
