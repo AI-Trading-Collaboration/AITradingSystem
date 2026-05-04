@@ -242,6 +242,15 @@ from ai_trading_system.rule_experiments import (
     write_rule_experiment_ledger,
     write_rule_experiment_report,
 )
+from ai_trading_system.rule_governance import (
+    DEFAULT_RULE_CARDS_PATH,
+    default_rule_governance_report_path,
+    load_rule_card_store,
+    lookup_rule_card,
+    render_rule_card_lookup,
+    validate_rule_card_store,
+    write_rule_governance_report,
+)
 from ai_trading_system.scoring.daily import (
     DailyManualReviewStatus,
     DailyReviewSummary,
@@ -791,6 +800,66 @@ def lookup_rule_experiment_command(
     except KeyError as exc:
         raise typer.BadParameter(str(exc)) from exc
     console.print(render_rule_experiment_lookup(candidate))
+
+
+@feedback_app.command("validate-rule-cards")
+def validate_rule_cards_command(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="rule cards YAML 路径。"),
+    ] = DEFAULT_RULE_CARDS_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 规则治理校验报告输出路径。"),
+    ] = None,
+) -> None:
+    """校验 production / candidate / retired rule card registry。"""
+    validation_date = _parse_date(as_of) if as_of else date.today()
+    report = validate_rule_card_store(
+        load_rule_card_store(input_path),
+        as_of=validation_date,
+    )
+    report_path = output_path or default_rule_governance_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        validation_date,
+    )
+    write_rule_governance_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]规则治理状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_path}")
+    console.print(
+        f"Rule cards：{report.card_count}；"
+        f"Production：{report.production_count}；Candidate：{report.candidate_count}"
+    )
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+
+@feedback_app.command("lookup-rule-card")
+def lookup_rule_card_command(
+    rule_id: Annotated[
+        str,
+        typer.Option("--id", help="rule card id。"),
+    ],
+    input_path: Annotated[
+        Path,
+        typer.Option(help="rule cards YAML 路径。"),
+    ] = DEFAULT_RULE_CARDS_PATH,
+) -> None:
+    """按 rule_id 反查 rule card。"""
+    try:
+        card = lookup_rule_card(input_path, rule_id)
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(f"rule card registry 不存在：{input_path}") from exc
+    except (KeyError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(render_rule_card_lookup(card))
 
 
 @feedback_app.command("loop-review")

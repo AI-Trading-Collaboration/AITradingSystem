@@ -1,0 +1,293 @@
+cards:
+  - rule_id: scoring.weighted_score.v1
+    rule_name: 加权模块评分规则
+    rule_type: scoring
+    status: production
+    version: v1
+    owner: system_review
+    applies_to:
+      - score-daily
+      - backtest
+    source_config_paths:
+      - config/scoring_rules.yaml
+    description: >
+      使用趋势、基本面、宏观流动性、风险情绪、估值和政策/地缘模块形成
+      AI 产业链评分，再映射到模型仓位区间。
+    production_since: 2026-05-04
+    retired_at:
+    linked_rule_experiment: ""
+    approval:
+      approval_status: baseline_recorded
+      approved_by: system_implementation
+      approved_at: 2026-05-04
+      rationale: >
+        已有 production 路径规则的 baseline 登记；后续变更必须走
+        EXPERIMENT-001 和 GOV-001。
+    validation:
+      validation_status: baseline_tested
+      validation_refs:
+        - python -m pytest -q
+        - python -m ruff check src tests
+      sample_limitations:
+        - 回测稳健性和参数敏感性仍由 BACKTEST-001 承接。
+    rollback:
+      procedure: 恢复上一版 config/scoring_rules.yaml 并重新运行 score-daily/backtest 验证。
+      trigger_conditions:
+        - replay 或 shadow 显示候选规则扩大回撤或换手。
+        - 数据质量或 source policy 边界被破坏。
+    known_limitations:
+      - 仍是可审计规则，不是黑箱优化器。
+      - 基本面和估值覆盖仍受本地数据可用性限制。
+    last_reviewed_at: 2026-05-04
+    next_review_due: 2026-06-04
+
+  - rule_id: position_gate.shared_caps.v1
+    rule_name: 共享仓位硬闸门
+    rule_type: position_gate
+    status: production
+    version: v1
+    owner: system_review
+    applies_to:
+      - score-daily
+      - backtest
+    source_config_paths:
+      - config/scoring_rules.yaml
+      - config/portfolio.yaml
+    description: >
+      将评分仓位、组合限制、风险事件、估值拥挤、thesis 状态和数据置信度
+      取最严格上限，形成最终风险资产内 AI 仓位区间。
+    production_since: 2026-05-04
+    retired_at:
+    linked_rule_experiment: ""
+    approval:
+      approval_status: baseline_recorded
+      approved_by: system_implementation
+      approved_at: 2026-05-04
+      rationale: 当前 production gate 行为已由系统测试覆盖，先登记为 baseline。
+    validation:
+      validation_status: baseline_tested
+      validation_refs:
+        - tests/test_position_model.py
+        - tests/test_daily_scoring.py
+        - tests/test_backtest.py
+      sample_limitations:
+        - SCORE-003 风险预算模型尚未完成。
+    rollback:
+      procedure: 恢复上一版 position gate 参数并重跑日报/回测测试。
+      trigger_conditions:
+        - gate 未按最严格上限约束仓位。
+        - watch 或低可信来源错误触发仓位闸门。
+    known_limitations:
+      - 当前只做硬上限，不做完整波动率或相关性预算。
+    last_reviewed_at: 2026-05-04
+    next_review_due: 2026-06-04
+
+  - rule_id: source_policy.risk_and_evidence.v1
+    rule_name: 证据来源与自动评分资格规则
+    rule_type: source_policy
+    status: production
+    version: v1
+    owner: system_review
+    applies_to:
+      - market_evidence
+      - risk_events
+      - score-daily
+      - backtest
+    source_config_paths:
+      - config/data_sources.yaml
+    description: >
+      约束 S/A/B/C/D/X 证据等级、source_type、LLM/public convenience 隔离、
+      普通评分资格和仓位闸门资格。
+    production_since: 2026-05-04
+    retired_at:
+    linked_rule_experiment: ""
+    approval:
+      approval_status: baseline_recorded
+      approved_by: system_implementation
+      approved_at: 2026-05-04
+      rationale: 当前 source policy 已完成基础实现并保护数据来源边界。
+    validation:
+      validation_status: baseline_tested
+      validation_refs:
+        - tests/test_market_evidence.py
+        - tests/test_risk_events.py
+        - tests/test_risk_event_prereview.py
+      sample_limitations:
+        - 真实付费供应商授权和 OpenAI live API 样本仍需 owner 验证。
+    rollback:
+      procedure: 恢复上一版 source_policy helper 和相关导入校验。
+      trigger_conditions:
+        - llm_extracted 或 public_convenience 进入自动评分。
+        - B/C/D/X 证据错误触发仓位闸门。
+    known_limitations:
+      - 生产级跨供应商 reconciliation 仍依赖 DATA-002 后续数据源。
+    last_reviewed_at: 2026-05-04
+    next_review_due: 2026-06-04
+
+  - rule_id: risk_events.occurrence_review.v1
+    rule_name: 风险事件发生记录与人工复核规则
+    rule_type: risk_event
+    status: production
+    version: v1
+    owner: system_review
+    applies_to:
+      - risk-events
+      - score-daily
+      - backtest
+    source_config_paths:
+      - config/risk_events.yaml
+    description: >
+      风险事件配置只定义规则；正式评分和仓位闸门只读取已校验、来源合格、
+      人工复核元数据完整且 point-in-time 可见的 occurrence。
+    production_since: 2026-05-04
+    retired_at:
+    linked_rule_experiment: ""
+    approval:
+      approval_status: baseline_recorded
+      approved_by: system_implementation
+      approved_at: 2026-05-04
+      rationale: 当前风险事件 schema 和校验已形成保守基础闭环。
+    validation:
+      validation_status: baseline_tested
+      validation_refs:
+        - tests/test_risk_events.py
+        - tests/test_risk_event_sources.py
+        - tests/test_historical_inputs.py
+      sample_limitations:
+        - 历史真实风险事件库覆盖仍由 BTINPUT-001 承接。
+    rollback:
+      procedure: 恢复上一版 risk_event occurrence schema 和校验规则。
+      trigger_conditions:
+        - 未人工确认的风险事件进入评分或仓位闸门。
+        - 回测读取 signal_date 之后才可见的风险事件。
+    known_limitations:
+      - 真实来源和复核人需要在生产运行中持续补齐。
+    last_reviewed_at: 2026-05-04
+    next_review_due: 2026-06-04
+
+  - rule_id: thesis.state_machine.v1
+    rule_name: 交易 thesis 状态机
+    rule_type: thesis_state
+    status: production
+    version: v1
+    owner: system_review
+    applies_to:
+      - thesis
+      - score-daily
+      - position_gate
+    source_config_paths:
+      - data/external/trade_theses
+    description: >
+      使用 draft、active、warning、challenged、invalidated 和 closed 区分
+      thesis 生命周期，并把 warning/challenged/invalidated 进入报告和仓位约束。
+    production_since: 2026-05-04
+    retired_at:
+    linked_rule_experiment: ""
+    approval:
+      approval_status: baseline_recorded
+      approved_by: system_implementation
+      approved_at: 2026-05-04
+      rationale: thesis 状态机已接入校验、报告和 position gate 基础路径。
+    validation:
+      validation_status: baseline_tested
+      validation_refs:
+        - tests/test_thesis.py
+        - tests/test_daily_scoring.py
+      sample_limitations:
+        - 自动迁移规则粒度和 owner 手工确认边界仍需后续治理。
+    rollback:
+      procedure: 恢复上一版 thesis schema 和状态迁移规则。
+      trigger_conditions:
+        - draft thesis 进入正式评分。
+        - challenged/invalidated 未进入人工复核或仓位限制。
+    known_limitations:
+      - 第一版仍偏人工复核，自动状态迁移有限。
+    last_reviewed_at: 2026-05-04
+    next_review_due: 2026-06-04
+
+  - rule_id: data_quality.runtime_gate.v1
+    rule_name: 运行时数据质量门禁
+    rule_type: data_quality
+    status: production
+    version: v1
+    owner: system_review
+    applies_to:
+      - validate-data
+      - build-features
+      - score-daily
+      - backtest
+      - feedback calibrate
+    source_config_paths:
+      - config/data_quality.yaml
+      - config/data_sources.yaml
+    description: >
+      所有从 cached market/macro data 生成特征、评分、回测或报告的路径必须先通过
+      数据质量门禁，并在失败时停止。
+    production_since: 2026-05-04
+    retired_at:
+    linked_rule_experiment: ""
+    approval:
+      approval_status: baseline_recorded
+      approved_by: system_implementation
+      approved_at: 2026-05-04
+      rationale: 数据质量门禁是当前系统核心不变量。
+    validation:
+      validation_status: baseline_tested
+      validation_refs:
+        - tests/test_data_quality.py
+        - tests/test_backtest.py
+        - tests/test_daily_scoring.py
+      sample_limitations:
+        - CI 不包含本地未提交缓存数据，只验证代码路径和 fixture。
+    rollback:
+      procedure: 恢复上一版数据质量配置和门禁调用路径。
+      trigger_conditions:
+        - 数据质量 FAIL 后仍生成完整评分、回测或报告。
+        - report 未声明数据质量状态。
+    known_limitations:
+      - 本地真实缓存需要用户运行 validate-data 才能审计。
+    last_reviewed_at: 2026-05-04
+    next_review_due: 2026-06-04
+
+  - rule_id: feedback.learning_loop.v1
+    rule_name: 反馈学习和候选规则隔离规则
+    rule_type: feedback_loop
+    status: production
+    version: v1
+    owner: system_review
+    applies_to:
+      - feedback build-causal-chain
+      - feedback build-learning-queue
+      - feedback build-rule-experiments
+      - feedback loop-review
+    source_config_paths:
+      - docs/requirements/feedback_loop_governance_2026-05-04.md
+    description: >
+      反馈闭环可以生成因果链、学习队列和候选规则实验，但不得自动修改 production
+      scoring、position_gate、thesis 或日报结论。
+    production_since: 2026-05-04
+    retired_at:
+    linked_rule_experiment: ""
+    approval:
+      approval_status: baseline_recorded
+      approved_by: system_implementation
+      approved_at: 2026-05-04
+      rationale: 反馈闭环基础路径已完成，候选规则隔离由测试覆盖。
+    validation:
+      validation_status: baseline_tested
+      validation_refs:
+        - tests/test_decision_causal_chains.py
+        - tests/test_decision_learning_queue.py
+        - tests/test_rule_experiments.py
+        - tests/test_feedback_loop_review.py
+      sample_limitations:
+        - 规则实验 replay runner 和正式审批仍未完成。
+    rollback:
+      procedure: 暂停 feedback rule candidate 输出，只保留只读校准和报告。
+      trigger_conditions:
+        - 学习队列或规则实验尝试修改 production 规则。
+        - outcome 被用于改写 signal-time context。
+    known_limitations:
+      - rule experiments 当前只有计划和隔离台账，尚未执行 replay/shadow。
+    last_reviewed_at: 2026-05-04
+    next_review_due: 2026-06-04

@@ -395,6 +395,13 @@
 - `score-daily`、回测、decision snapshot 和 evidence bundle 能记录 rule version。
 - 实现时同步更新 `docs/system_flow.md` 并补充规则版本测试。
 
+当前实现状态：
+
+- 2026-05-04：进入基础实现；第一阶段先建立 rule card registry，把当前已在 production 路径中使用的 scoring、position gate、risk event、valuation gate、thesis state、data quality 与 feedback learning 规则登记为 baseline rule cards。
+- 第一阶段目标是 rule card 校验、报告和查询，不把 baseline 记录伪装成完整 owner 批准流程；未来规则变更仍必须先经过 `EXPERIMENT-001` replay/shadow，再进入 `GOV-001` 审批。
+- 2026-05-04 基础版已完成：新增 `config/rule_cards.yaml`、`rule_governance` 模块、`aits feedback validate-rule-cards`、`aits feedback lookup-rule-card` 和 `outputs/reports/rule_governance_YYYY-MM-DD.md`。默认 rule cards 覆盖 scoring、position_gate、source_policy、risk_events、thesis_state、data_quality 和 feedback_loop。
+- 当前完成态为 `BASELINE_DONE`：rule card registry、schema 校验、重复 id 检查、来源路径检查、复核到期警告、报告和查询入口已具备；完整 `DONE` 仍需要正式 owner approval/promotion/retirement 流程，以及 `score-daily`、回测、decision snapshot/evidence bundle 写入 rule version。
+
 ## OPS-001
 
 标题：运行监控与 pipeline health report
@@ -520,6 +527,8 @@
 - 2026-05-04：`LOOP-001` 已完成基础实现：新增 `aits feedback loop-review` 和闭环复核报告，汇总 market evidence、decision snapshots、decision_outcomes、causal chains、learning queue、rule candidate 接入状态、blocked tasks 和 task register 状态；报告声明 `ai_after_chatgpt` 和执行/复核/研究用途边界。
 - 2026-05-04：`EXPERIMENT-001` 进入实现；第一阶段目标是 rule experiment ledger 和 candidate isolation，不伪造已完成历史 replay 或 production rule approval。
 - 2026-05-04：`EXPERIMENT-001` 达到 `BASELINE_DONE`：候选规则实验台账、CLI、中文报告、loop-review 接入和 candidate isolation 测试完成；`python -m ruff check src tests`、`python -m pytest -q` 通过。真实 replay runner、forward shadow 观测和 GOV-001 rule card 批准仍待后续实现。
+- 2026-05-04：`GOV-001` 进入实现；第一阶段目标是 rule card registry、校验报告和查询入口，先补齐现有 production 规则的版本与审计登记。
+- 2026-05-04：`GOV-001` 达到 `BASELINE_DONE`：rule card registry、治理校验 CLI、查询 CLI、中文报告、系统流图和测试完成；`python -m ruff check src tests`、`python -m pytest -q` 通过。正式 owner approval/promotion/retirement 流程和 rule version 注入仍待后续实现。
 - 2026-05-04：`DATA-002` 已完成低成本基础版：新增 `aits data-sources health` 和 `outputs/reports/data_sources_health_YYYY-MM-DD.md`，覆盖 provider health score、cache/manifest/row count/checksum/freshness 检查、manifest checksum mismatch 失败，以及 qualified source 不足时的 reconciliation `NOT_COVERED` 声明；owner 已验证 SEC User-Agent、FMP、FRED、Tiingo EOD 和 EODHD Fundamentals 初版权限可访问，EODHD EOD 价格未订阅且价格核验使用 Tiingo；完整 `DONE` 仍依赖生产级第二来源、商业授权/再分发限制和长期口径策略。
 - 2026-05-04：`UNIVERSE-001` 已完成基础实现：新增 `config/watchlist_lifecycle.yaml`、`aits watchlist validate-lifecycle` 和回测 signal_date lifecycle 过滤，测试覆盖尚未进入观察池的 ticker 不参与历史市场特征。
 - 2026-05-04：`TEST-001` 已推进为完成状态：系统级不变量测试覆盖 watch 风险事件不自动评分、低证据等级/公开便利源隔离、LLM evidence 隔离、watchlist point-in-time 过滤、decision snapshot 写入、评分置信度和估值 PIT 可信度。
