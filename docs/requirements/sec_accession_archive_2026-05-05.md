@@ -1,6 +1,6 @@
 # SEC accession-level filing archive 设计评估
 
-状态：READY
+状态：BASELINE_DONE
 
 最后更新：2026-05-05
 
@@ -95,6 +95,23 @@ accession number。这样能满足审计追溯，同时遵守 fair access 和本
    - 回测审计报告能区分 `companyfacts_only` 与 `accession_archived`；
    - `docs/system_flow.md` 在实现时新增 SEC submissions/archive 节点。
 
+## Baseline 实施结果
+
+- 已新增 `sec_filings` 模块。
+- 已新增 `aits fundamentals download-sec-submissions`，下载 active CIK 的 submissions
+  JSON，写入 `data/raw/sec_submissions/` 和 `sec_submissions_manifest.csv`。
+- 已新增 `aits fundamentals download-sec-filing-archive`，按当日
+  `sec_fundamentals_YYYY-MM-DD.csv` 已使用的 accession 下载 directory `index.json`，
+  写入 `data/raw/sec_filings/<ticker>/<accession>/index.json` 和
+  `sec_filing_archive_manifest.csv`。
+- 已新增 `aits fundamentals sec-accession-coverage`，检查 SEC 指标 CSV 中已使用
+  accession 的 submissions metadata、accepted time 和 archive index checksum 覆盖，
+  输出 `outputs/reports/sec_accession_coverage_YYYY-MM-DD.md`。
+- 已更新数据源目录、README、系统流图和测试。
+
+Baseline 仍不默认下载全部 exhibit、primary document 或 complete submission text；这些属于
+owner 决策点和后续增强。
+
 ## Owner 决策点
 
 - 第一版是否只保存 `index.json`，还是同时保存 primary HTML/XML 和 complete submission
@@ -112,3 +129,8 @@ accession number。这样能满足审计追溯，同时遵守 fair access 和本
 - 至少 `index.json` 的 raw payload 路径、sha256、bytes 和下载时间可复核。
 - 报告明确 accepted time / filed date 的可见性规则和剩余限制。
 - 实现时同步更新 `docs/system_flow.md`、README、测试和任务状态。
+
+## 状态记录
+
+- 2026-05-05：从 READY 改为 IN_PROGRESS，原因：开始实现 baseline submissions 下载、accession coverage 和 accession directory index 归档。
+- 2026-05-05：从 IN_PROGRESS 改为 BASELINE_DONE，原因：已实现 `download-sec-submissions`、`download-sec-filing-archive`、`sec-accession-coverage`、数据源目录、README、系统流图和测试；完整 DONE 仍取决于 owner 是否要求归档 primary document、complete submission text 或全部 exhibit。

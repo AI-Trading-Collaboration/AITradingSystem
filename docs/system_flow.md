@@ -75,6 +75,12 @@ flowchart TD
         SFV["aits fundamentals validate-sec-companyfacts"]
         SFJ["data/raw/sec_companyfacts/*.json"]
         SFM["data/raw/sec_companyfacts/sec_companyfacts_manifest.csv"]
+        SFSD["aits fundamentals download-sec-submissions"]
+        SFSJ["data/raw/sec_submissions/*.json<br/>filing history / accepted time metadata"]
+        SFAD["aits fundamentals download-sec-filing-archive"]
+        SFAJ["data/raw/sec_filings/<ticker>/<accession>/index.json<br/>accession directory raw index"]
+        SFAC["aits fundamentals sec-accession-coverage"]
+        SFACR["outputs/reports/sec_accession_coverage_YYYY-MM-DD.md"]
         SFVR["outputs/reports/sec_companyfacts_validation_YYYY-MM-DD.md"]
         SFE["aits fundamentals extract-sec-metrics"]
         SFVC["aits fundamentals validate-sec-metrics"]
@@ -277,6 +283,16 @@ flowchart TD
     DS --> SFD
     SFD --> SFJ
     SFD --> SFM
+    SEC --> SFSD
+    DS --> SFSD
+    SFSD --> SFSJ
+    SFC --> SFAD
+    DS --> SFAD
+    SFAD --> SFAJ
+    SFC --> SFAC
+    SFSJ --> SFAC
+    SFAJ --> SFAC
+    SFAC --> SFACR
     SFJ --> SFV
     SFM --> SFV
     SFV --> SFVR
@@ -880,7 +896,7 @@ flowchart TD
         L["日报集成<br/>汇总 thesis、风险规则与发生记录、估值和复盘摘要"]
         M["数据源目录<br/>aits data-sources list/validate"]
         M2["数据源健康与 reconciliation 覆盖<br/>aits data-sources health"]
-        N["基本面一手数据<br/>aits fundamentals list-sec-companies / download-sec-companyfacts"]
+        N["基本面一手数据<br/>aits fundamentals list-sec-companies / download-sec-companyfacts / download-sec-submissions / download-sec-filing-archive"]
         O["SEC 基本面指标摘要<br/>aits fundamentals extract-sec-metrics / validate-sec-metrics"]
         P["SEC 基本面特征<br/>aits fundamentals build-sec-features"]
         QP["TSMC IR PDF 文本抽取<br/>aits fundamentals extract-tsm-ir-pdf-text"]
@@ -1083,6 +1099,9 @@ flowchart TD
 |SEC 基本面校验|`aits fundamentals validate-sec-companyfacts`|校验 SEC companyfacts JSON、CIK、taxonomy 和 manifest checksum|已实现基础版|
 |SEC 指标抽取|`aits fundamentals extract-sec-metrics`|先执行 SEC companyfacts 质量门禁，通过后抽取收入、毛利、营业利润、净利润、研发和 CapEx 等结构化摘要；只在显式配置且组件事实完全对齐时生成派生指标|已实现基础版|
 |SEC 指标校验|`aits fundamentals validate-sec-metrics`|校验 SEC 基本面指标 CSV 的 schema、重复键、未来披露日期、数值合法性和按公司周期覆盖声明计算的配置覆盖率，并输出缺失 `ticker / metric_id / period_type` 观测清单|已实现基础版|
+|SEC submissions 下载|`aits fundamentals download-sec-submissions`|下载 active CIK 的 submissions filing history JSON，写入 `data/raw/sec_submissions/` 和 manifest，记录 filing count、additional files、checksum 和请求参数|已实现基础版|
+|SEC accession archive 下载|`aits fundamentals download-sec-filing-archive`|按 SEC 指标 CSV 当日实际使用的 accession 下载 accession directory `index.json`，写入 `data/raw/sec_filings/<ticker>/<accession>/index.json` 和 manifest；默认节流低于 SEC fair access 限制，不下载全量历史 filing|已实现基础版|
+|SEC accession 覆盖报告|`aits fundamentals sec-accession-coverage` / `outputs/reports/sec_accession_coverage_YYYY-MM-DD.md`|检查 SEC 指标 CSV 已使用 accession 是否有 submissions metadata、accepted time 和 archive index checksum 覆盖；报告 `production_effect=none`，只提高审计追溯，不直接改变评分|已实现基础版|
 |SEC 特征构建|`aits fundamentals build-sec-features` / `aits score-daily`|先复用 SEC 指标 CSV 校验门禁，通过后生成毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度；分子/分母周期、单位或披露来源不一致时记录覆盖警告并跳过该特征，分母非正数仍作为错误停止；日报也会运行同一条特征构建路径|已实现基础版|
 |SEC 指标缓存|`data/processed/sec_fundamentals_YYYY-MM-DD.csv`|保存 SEC 基本面指标结构化抽取结果，是日报 SEC 基本面评分的输入|已实现基础版|
 |SEC 特征缓存|`data/processed/sec_fundamental_features_YYYY-MM-DD.csv`|保存 SEC 基本面比率特征，是日报基本面硬数据评分的审计输出|已实现基础版|

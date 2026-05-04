@@ -621,6 +621,58 @@ sources:
       reviewed_at: 2026-05-04
     owner_notes: 基本面模块一手来源；下载必须提供符合 SEC fair access 要求的 User-Agent。
 
+  - source_id: sec_accession_filing_archive
+    provider: SEC EDGAR
+    source_type: primary_source
+    status: active
+    domains:
+      - fundamentals
+    endpoint: https://data.sec.gov/submissions/CIK##########.json; https://www.sec.gov/Archives/edgar/data/{cik}/{accession_without_dashes}/index.json
+    adapter: SecEdgarFilingArchiveProvider
+    cadence: quarterly
+    requires_credentials: false
+    cache_paths:
+      - data/raw/sec_submissions
+      - data/raw/sec_filings
+      - outputs/reports/sec_accession_coverage_YYYY-MM-DD.md
+    primary_for:
+      - sec_accession_metadata
+      - accepted_time
+      - filing_archive_traceability
+    audit_fields:
+      - provider
+      - endpoint
+      - request_parameters
+      - downloaded_at
+      - ticker
+      - cik
+      - accession_number
+      - output_path
+      - item_count
+      - row_count
+      - checksum
+    validation_checks:
+      - user_agent_required
+      - submissions_metadata_coverage
+      - accession_index_presence
+      - accepted_time_visibility
+      - checksum
+      - fair_access_request_delay
+    limitations:
+      - 第一版只覆盖当前 SEC 指标 CSV 实际用到的 accession，不下载全量历史 filing。
+      - 第一版默认保存 submissions JSON 和 accession directory index.json，不默认保存全部 exhibit 或 complete submission text。
+      - accepted time 用于更严格 PIT 审计；日频 SEC 指标可见性仍由 `validate-sec-metrics` 的 `filed_date <= as_of` 门禁执行。
+    llm_permission:
+      license_scope: public_primary_source_owner_review
+      personal_use_only: true
+      external_llm_allowed: true
+      cache_allowed: true
+      redistribution_allowed: true
+      max_content_sent_level: metadata_only
+      approval_ref: owner_primary_source_llm_policy_2026-05-04
+      reviewed_at: 2026-05-04
+    owner_notes: DATA-004 baseline；请求必须符合 SEC fair access，默认节流低于每秒 10 次。
+
   - source_id: tsm_investor_relations_quarterly_results
     provider: TSMC Investor Relations
     source_type: primary_source

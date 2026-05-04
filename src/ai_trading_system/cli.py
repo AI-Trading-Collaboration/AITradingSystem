@@ -216,6 +216,16 @@ from ai_trading_system.fundamentals.sec_features import (
     write_sec_fundamental_features_csv,
     write_sec_fundamental_features_report,
 )
+from ai_trading_system.fundamentals.sec_filings import (
+    DEFAULT_SEC_FILING_ARCHIVE_DIR,
+    DEFAULT_SEC_SUBMISSIONS_DIR,
+    SecEdgarFilingArchiveProvider,
+    build_sec_accession_coverage_report,
+    default_sec_accession_coverage_report_path,
+    download_sec_filing_archive_indexes,
+    download_sec_submissions,
+    write_sec_accession_coverage_report,
+)
 from ai_trading_system.fundamentals.sec_metrics import (
     build_sec_fundamental_metrics_report,
     default_sec_fundamental_metrics_csv_path,
@@ -4246,6 +4256,160 @@ def download_sec_companyfacts_command(
     console.print(f"事实数量：{summary.total_fact_count}")
     console.print(f"输出目录：{summary.output_dir}")
     console.print(f"下载审计清单：{summary.manifest_path}")
+
+
+@fundamentals_app.command("download-sec-submissions")
+def download_sec_submissions_command(
+    config_path: Annotated[
+        Path,
+        typer.Option(help="SEC company CIK 配置文件路径。"),
+    ] = DEFAULT_SEC_COMPANIES_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="SEC submissions 原始 JSON 输出目录。"),
+    ] = DEFAULT_SEC_SUBMISSIONS_DIR,
+    tickers: Annotated[
+        str | None,
+        typer.Option(help="逗号分隔的 ticker；未提供时下载全部活跃配置。"),
+    ] = None,
+    user_agent: Annotated[
+        str | None,
+        typer.Option(
+            "--user-agent",
+            envvar="SEC_USER_AGENT",
+            help="SEC fair access 要求的 User-Agent；也可使用 SEC_USER_AGENT 环境变量。",
+        ),
+    ] = None,
+) -> None:
+    """下载 SEC submissions filing history，并写入审计 manifest。"""
+    if user_agent is None or not user_agent.strip():
+        raise typer.BadParameter(
+            "SEC submissions 下载必须提供 --user-agent 或 SEC_USER_AGENT；"
+            "格式建议包含项目/组织名称和联系邮箱。"
+        )
+
+    selected_tickers = _parse_csv_items(tickers) if tickers else None
+    summary = download_sec_submissions(
+        config=load_sec_companies(config_path),
+        output_dir=output_dir,
+        provider=SecEdgarFilingArchiveProvider(user_agent=user_agent),
+        tickers=selected_tickers,
+    )
+
+    console.print("[green]SEC submissions 缓存已更新。[/green]")
+    console.print(f"公司数量：{summary.company_count}")
+    console.print(f"Filing 数量：{summary.filing_count}")
+    console.print(f"输出目录：{summary.output_dir}")
+    console.print(f"下载审计清单：{summary.manifest_path}")
+
+
+@fundamentals_app.command("download-sec-filing-archive")
+def download_sec_filing_archive_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="评估日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    metrics_path: Annotated[
+        Path | None,
+        typer.Option(help="SEC 基本面指标 CSV 输入路径。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="SEC accession directory index.json 输出目录。"),
+    ] = DEFAULT_SEC_FILING_ARCHIVE_DIR,
+    tickers: Annotated[
+        str | None,
+        typer.Option(help="逗号分隔的 ticker；未提供时读取当日全部 accession。"),
+    ] = None,
+    request_delay_seconds: Annotated[
+        float,
+        typer.Option(help="每个 SEC archive 请求之间的等待秒数。"),
+    ] = 0.2,
+    user_agent: Annotated[
+        str | None,
+        typer.Option(
+            "--user-agent",
+            envvar="SEC_USER_AGENT",
+            help="SEC fair access 要求的 User-Agent；也可使用 SEC_USER_AGENT 环境变量。",
+        ),
+    ] = None,
+) -> None:
+    """按 SEC 指标 CSV 已使用 accession 下载 archive index.json。"""
+    if user_agent is None or not user_agent.strip():
+        raise typer.BadParameter(
+            "SEC filing archive 下载必须提供 --user-agent 或 SEC_USER_AGENT；"
+            "格式建议包含项目/组织名称和联系邮箱。"
+        )
+
+    archive_date = _parse_date(as_of) if as_of else date.today()
+    metrics_input = metrics_path or default_sec_fundamental_metrics_csv_path(
+        PROJECT_ROOT / "data" / "processed",
+        archive_date,
+    )
+    selected_tickers = _parse_csv_items(tickers) if tickers else None
+    summary = download_sec_filing_archive_indexes(
+        metrics_path=metrics_input,
+        as_of=archive_date,
+        output_dir=output_dir,
+        provider=SecEdgarFilingArchiveProvider(user_agent=user_agent),
+        tickers=selected_tickers,
+        request_delay_seconds=request_delay_seconds,
+    )
+
+    console.print("[green]SEC filing archive index 已更新。[/green]")
+    console.print(f"Accession 数量：{summary.accession_count}")
+    console.print(f"输出目录：{summary.output_dir}")
+    console.print(f"下载审计清单：{summary.manifest_path}")
+
+
+@fundamentals_app.command("sec-accession-coverage")
+def sec_accession_coverage_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="评估日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    metrics_path: Annotated[
+        Path | None,
+        typer.Option(help="SEC 基本面指标 CSV 输入路径。"),
+    ] = None,
+    submissions_dir: Annotated[
+        Path,
+        typer.Option(help="SEC submissions 原始 JSON 输入目录。"),
+    ] = DEFAULT_SEC_SUBMISSIONS_DIR,
+    filing_archive_dir: Annotated[
+        Path,
+        typer.Option(help="SEC accession directory index.json 输入目录。"),
+    ] = DEFAULT_SEC_FILING_ARCHIVE_DIR,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown SEC accession archive 覆盖报告输出路径。"),
+    ] = None,
+) -> None:
+    """检查 SEC 指标 CSV 已用 accession 的 submissions/archive 覆盖。"""
+    coverage_date = _parse_date(as_of) if as_of else date.today()
+    metrics_input = metrics_path or default_sec_fundamental_metrics_csv_path(
+        PROJECT_ROOT / "data" / "processed",
+        coverage_date,
+    )
+    report_output = output_path or default_sec_accession_coverage_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        coverage_date,
+    )
+    report = build_sec_accession_coverage_report(
+        metrics_path=metrics_input,
+        submissions_dir=submissions_dir,
+        filing_archive_dir=filing_archive_dir,
+        as_of=coverage_date,
+    )
+    write_sec_accession_coverage_report(report, report_output)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]SEC accession 覆盖状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_output}")
+    console.print(f"Accession 数：{report.accession_count}；已覆盖：{report.covered_count}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if not report.passed:
+        raise typer.Exit(code=1)
 
 
 @fundamentals_app.command("validate-sec-companyfacts")
