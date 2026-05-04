@@ -62,7 +62,7 @@ def test_sec_companies_config_covers_core_watchlist() -> None:
     assert {"MSFT", "GOOG", "TSM", "INTC", "AMD", "NVDA"}.issubset(by_ticker)
     assert by_ticker["NVDA"].cik == "0001045810"
     assert by_ticker["TSM"].expected_taxonomies == ["ifrs-full", "dei"]
-    assert by_ticker["TSM"].sec_metric_periods == ["annual"]
+    assert by_ticker["TSM"].sec_metric_periods == ["annual", "quarterly"]
 
 
 def test_fundamental_metrics_config_loads_sec_metric_mappings() -> None:

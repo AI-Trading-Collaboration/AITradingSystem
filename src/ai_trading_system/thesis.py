@@ -15,7 +15,15 @@ from ai_trading_system.config import IndustryChainConfig, WatchlistConfig, Watch
 ThesisDirection = Literal["long", "short", "hedge", "watch"]
 ThesisTimeHorizon = Literal["short", "medium", "long"]
 ThesisReviewFrequency = Literal["daily", "weekly", "monthly", "quarterly", "event_driven"]
-ThesisStatus = Literal["draft", "active", "paused", "closed", "invalidated"]
+ThesisStatus = Literal[
+    "draft",
+    "active",
+    "warning",
+    "challenged",
+    "paused",
+    "closed",
+    "invalidated",
+]
 ValidationMetricStatus = Literal["pending", "confirmed", "weakened", "falsified", "not_applicable"]
 FalsificationSeverity = Literal["medium", "high", "critical"]
 RiskEventLevel = Literal["L1", "L2", "L3"]
@@ -76,6 +84,11 @@ class TradeThesis(BaseModel):
     risk_events: list[ThesisRiskEvent] = Field(default_factory=list)
     review_frequency: ThesisReviewFrequency
     status: ThesisStatus
+    previous_status: ThesisStatus | None = None
+    status_updated_at: date | None = None
+    status_reason: str = ""
+    status_evidence: str = ""
+    manual_review_required: bool = False
     notes: str = ""
 
     @model_validator(mode="after")
@@ -126,7 +139,11 @@ class ThesisValidationReport:
 
     @property
     def active_count(self) -> int:
-        return sum(1 for loaded in self.theses if loaded.thesis.status == "active")
+        return sum(
+            1
+            for loaded in self.theses
+            if loaded.thesis.status in {"active", "warning", "challenged"}
+        )
 
     @property
     def error_count(self) -> int:
@@ -177,7 +194,7 @@ class ThesisReviewReport:
             return "FAIL"
         if self.validation_report.warning_count:
             return "PASS_WITH_WARNINGS"
-        if any(item.health in {"WATCH", "INVALIDATED"} for item in self.items):
+        if any(item.health in {"WATCH", "CHALLENGED", "INVALIDATED"} for item in self.items):
             return "PASS_WITH_WARNINGS"
         return "PASS"
 
@@ -264,7 +281,7 @@ def validate_trade_thesis_store(
     active_thesis_by_ticker: dict[str, list[TradeThesis]] = defaultdict(list)
     for loaded in store.loaded:
         thesis = loaded.thesis
-        if thesis.status == "active":
+        if thesis.status in {"active", "warning", "challenged"}:
             active_thesis_by_ticker[thesis.ticker].append(thesis)
 
         _check_thesis_dates(thesis, loaded.path, as_of, issues)
@@ -278,6 +295,7 @@ def validate_trade_thesis_store(
         )
         _check_internal_ids(thesis, loaded.path, issues)
         _check_active_thesis_consistency(thesis, loaded.path, issues)
+        _check_thesis_status_metadata(thesis, loaded.path, issues)
         _check_review_freshness(thesis, loaded.path, as_of, issues)
 
     _check_watchlist_thesis_expectations(
@@ -326,9 +344,9 @@ def render_thesis_validation_report(report: ThesisValidationReport) -> str:
     else:
         lines.extend(
             [
-                "| Thesis | Ticker | 方向 | 状态 | 创建日期 | 周期 | 复核频率 | "
-                "验证指标 | 证伪条件 |",
-                "|---|---|---|---|---|---|---|---:|---:|",
+                "| Thesis | Ticker | 方向 | 状态 | 前状态 | 状态更新 | 人工复核 | "
+                "创建日期 | 周期 | 复核频率 | 验证指标 | 证伪条件 |",
+                "|---|---|---|---|---|---|---|---|---|---|---:|---:|",
             ]
         )
         for loaded in sorted(report.theses, key=lambda item: item.thesis.thesis_id):
@@ -339,6 +357,9 @@ def render_thesis_validation_report(report: ThesisValidationReport) -> str:
                 f"{thesis.ticker} | "
                 f"{_direction_label(thesis.direction)} | "
                 f"{_status_label(thesis.status)} | "
+                f"{_status_label(thesis.previous_status) if thesis.previous_status else ''} | "
+                f"{thesis.status_updated_at.isoformat() if thesis.status_updated_at else ''} | "
+                f"{'需要' if thesis.manual_review_required else '不需要'} | "
                 f"{thesis.created_at.isoformat()} | "
                 f"{_horizon_label(thesis.time_horizon)} | "
                 f"{_review_frequency_label(thesis.review_frequency)} | "
@@ -447,6 +468,7 @@ def render_thesis_review_report(report: ThesisReviewReport) -> str:
             "",
             "- 本报告只复核结构化 thesis 的状态，不自动替代人工交易判断。",
             "- `WATCH` 表示存在待确认、转弱、过期指标或活跃风险事件，需要人工复核。",
+            "- `CHALLENGED` 表示 thesis 已显式进入受挑战状态，至少应限制主动加仓。",
             "- `证伪触发` 表示至少一个验证指标或证伪条件已经破坏原始假设。",
         ]
     )
@@ -597,7 +619,7 @@ def _check_thesis_references(
     active_item = active_watchlist.get(thesis.ticker)
     known_item = all_watchlist.get(thesis.ticker)
 
-    if thesis.status in {"active", "paused"} and active_item is None:
+    if thesis.status in {"active", "warning", "challenged", "paused"} and active_item is None:
         issues.append(
             ThesisIssue(
                 severity=ThesisIssueSeverity.ERROR,
@@ -747,13 +769,96 @@ def _check_active_thesis_consistency(
         )
 
 
+def _check_thesis_status_metadata(
+    thesis: TradeThesis,
+    path: Path,
+    issues: list[ThesisIssue],
+) -> None:
+    if thesis.previous_status is not None and thesis.previous_status == thesis.status:
+        issues.append(
+            ThesisIssue(
+                severity=ThesisIssueSeverity.WARNING,
+                code="thesis_previous_status_same_as_current",
+                thesis_id=thesis.thesis_id,
+                ticker=thesis.ticker,
+                path=path,
+                message="previous_status 与当前 status 相同，状态迁移审计价值有限。",
+            )
+        )
+
+    if thesis.previous_status is not None and not _is_allowed_status_transition(
+        thesis.previous_status,
+        thesis.status,
+    ):
+        issues.append(
+            ThesisIssue(
+                severity=ThesisIssueSeverity.ERROR,
+                code="invalid_thesis_status_transition",
+                thesis_id=thesis.thesis_id,
+                ticker=thesis.ticker,
+                path=path,
+                message=(
+                    f"不允许的 thesis 状态迁移：{thesis.previous_status} -> {thesis.status}。"
+                ),
+            )
+        )
+
+    if thesis.status in {"warning", "challenged", "invalidated", "closed"}:
+        if thesis.status_updated_at is None:
+            issues.append(
+                ThesisIssue(
+                    severity=ThesisIssueSeverity.WARNING,
+                    code="missing_thesis_status_updated_at",
+                    thesis_id=thesis.thesis_id,
+                    ticker=thesis.ticker,
+                    path=path,
+                    message="非初始 thesis 状态建议记录 status_updated_at。",
+                )
+            )
+        if not thesis.status_reason:
+            issues.append(
+                ThesisIssue(
+                    severity=ThesisIssueSeverity.WARNING,
+                    code="missing_thesis_status_reason",
+                    thesis_id=thesis.thesis_id,
+                    ticker=thesis.ticker,
+                    path=path,
+                    message="非初始 thesis 状态必须能解释状态变化原因。",
+                )
+            )
+        if not thesis.status_evidence:
+            issues.append(
+                ThesisIssue(
+                    severity=ThesisIssueSeverity.WARNING,
+                    code="missing_thesis_status_evidence",
+                    thesis_id=thesis.thesis_id,
+                    ticker=thesis.ticker,
+                    path=path,
+                    message="非初始 thesis 状态建议引用证据来源或 evidence_id。",
+                )
+            )
+    if thesis.status in {"warning", "challenged", "invalidated"} and not (
+        thesis.manual_review_required
+    ):
+        issues.append(
+            ThesisIssue(
+                severity=ThesisIssueSeverity.WARNING,
+                code="thesis_state_requires_manual_review",
+                thesis_id=thesis.thesis_id,
+                ticker=thesis.ticker,
+                path=path,
+                message="warning/challenged/invalidated thesis 应要求人工复核。",
+            )
+        )
+
+
 def _check_review_freshness(
     thesis: TradeThesis,
     path: Path,
     as_of: date,
     issues: list[ThesisIssue],
 ) -> None:
-    if thesis.status not in {"active", "paused"}:
+    if thesis.status not in {"active", "warning", "challenged", "paused"}:
         return
 
     for metric in thesis.validation_metrics:
@@ -817,12 +922,22 @@ def _review_item(thesis: TradeThesis, as_of: date) -> ThesisReviewItem:
     if thesis.status == "invalidated" or falsified or triggered_conditions:
         health = "INVALIDATED"
         reason = "至少一个验证指标或证伪条件已经破坏原始假设。"
+    elif thesis.status == "challenged":
+        health = "CHALLENGED"
+        reason = "该 thesis 已进入 challenged 状态，需要限制主动加仓并人工复核。"
     elif thesis.status in {"closed", "draft"}:
         health = "INACTIVE"
         reason = "该 thesis 当前不是活跃交易假设。"
-    elif weakened or pending or stale_metric_ids or active_risks or thesis.status == "paused":
+    elif (
+        thesis.status == "warning"
+        or weakened
+        or pending
+        or stale_metric_ids
+        or active_risks
+        or thesis.status == "paused"
+    ):
         health = "WATCH"
-        reason = "存在待确认、转弱、过期指标、暂停状态或活跃风险事件。"
+        reason = "存在 warning、待确认、转弱、过期指标、暂停状态或活跃风险事件。"
     else:
         health = "INTACT"
         reason = "当前结构化验证指标未破坏原始假设。"
@@ -875,6 +990,8 @@ def _status_label(value: str) -> str:
     return {
         "draft": "草稿",
         "active": "活跃",
+        "warning": "警告",
+        "challenged": "受挑战",
         "paused": "暂停",
         "closed": "已关闭",
         "invalidated": "已证伪",
@@ -903,9 +1020,25 @@ def _health_label(value: str) -> str:
     return {
         "INTACT": "假设仍成立",
         "WATCH": "需要复核",
+        "CHALLENGED": "假设受挑战",
         "INVALIDATED": "证伪触发",
         "INACTIVE": "非活跃",
     }.get(value, value)
+
+
+def _is_allowed_status_transition(previous: ThesisStatus, current: ThesisStatus) -> bool:
+    if previous == current:
+        return True
+    allowed: dict[str, set[str]] = {
+        "draft": {"active", "warning", "closed"},
+        "active": {"warning", "challenged", "invalidated", "closed", "paused"},
+        "warning": {"active", "challenged", "invalidated", "closed", "paused"},
+        "challenged": {"warning", "invalidated", "closed"},
+        "paused": {"active", "warning", "closed"},
+        "invalidated": {"closed"},
+        "closed": set(),
+    }
+    return current in allowed.get(previous, set())
 
 
 def _severity_label(severity: ThesisIssueSeverity) -> str:

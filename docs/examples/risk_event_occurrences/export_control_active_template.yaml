@@ -4,6 +4,13 @@ status: watch
 triggered_at: 2026-05-01
 last_confirmed_at: 2026-05-01
 resolved_at:
+evidence_grade: B
+severity: high
+probability: medium
+scope: industry_chain_node
+time_sensitivity: high
+reversibility: partly_reversible
+action_class: manual_review
 evidence_sources:
   - source_name: manual_policy_review
     source_type: manual_input
@@ -17,4 +24,5 @@ summary: >
   真实事件。
 notes: >
   event_id 必须匹配 config/risk_events.yaml 中的规则。仅 public_convenience
-  证据不能单独进入政策/地缘评分。
+  证据不能单独进入政策/地缘评分。watch 状态默认只进入报告和人工复核；
+  确认后应改为 active，且 action_class / evidence_grade 满足条件后才可自动评分。

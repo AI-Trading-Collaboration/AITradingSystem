@@ -19,13 +19,25 @@ class PositionBand:
 
 
 @dataclass(frozen=True)
+class PositionGate:
+    gate_id: str
+    label: str
+    source: str
+    max_position: float
+    triggered: bool
+    reason: str
+
+
+@dataclass(frozen=True)
 class PositionRecommendation:
     total_score: float
+    model_risk_asset_ai_band: PositionBand
     risk_asset_ai_band: PositionBand
     total_asset_ai_band: PositionBand
     total_risk_asset_band: PositionBand
     label: str
     components: tuple[ModuleScore, ...]
+    position_gates: tuple[PositionGate, ...]
 
     @property
     def min_position(self) -> float:
@@ -35,6 +47,10 @@ class PositionRecommendation:
     def max_position(self) -> float:
         return self.risk_asset_ai_band.max_position
 
+    @property
+    def triggered_position_gates(self) -> tuple[PositionGate, ...]:
+        return tuple(gate for gate in self.position_gates if gate.triggered)
+
 
 class WeightedScoreModel:
     def recommend(
@@ -42,6 +58,7 @@ class WeightedScoreModel:
         components: list[ModuleScore],
         total_risk_asset_min: float = 1.0,
         total_risk_asset_max: float = 1.0,
+        position_gates: tuple[PositionGate, ...] = (),
     ) -> PositionRecommendation:
         if not components:
             raise ValueError("components must not be empty")
@@ -57,7 +74,30 @@ class WeightedScoreModel:
         total_score = sum(
             component.score * component.weight for component in components
         ) / total_weight
-        risk_asset_ai_band = self._position_band(total_score)
+        model_risk_asset_ai_band = self._position_band(total_score)
+        all_position_gates = (
+            PositionGate(
+                gate_id="score_model",
+                label="评分模型仓位",
+                source="weighted_score_model",
+                max_position=model_risk_asset_ai_band.max_position,
+                triggered=True,
+                reason=(
+                    "综合评分映射出的 AI 仓位区间上限："
+                    f"{model_risk_asset_ai_band.max_position:.0%}。"
+                ),
+            ),
+            *position_gates,
+        )
+        for gate in all_position_gates:
+            self._validate_position_range(0.0, gate.max_position)
+
+        final_max_position = min(gate.max_position for gate in all_position_gates)
+        risk_asset_ai_band = PositionBand(
+            min(model_risk_asset_ai_band.min_position, final_max_position),
+            final_max_position,
+            self._final_label(model_risk_asset_ai_band, final_max_position),
+        )
         total_risk_asset_band = PositionBand(
             total_risk_asset_min,
             total_risk_asset_max,
@@ -70,11 +110,13 @@ class WeightedScoreModel:
         )
         return PositionRecommendation(
             total_score=total_score,
+            model_risk_asset_ai_band=model_risk_asset_ai_band,
             risk_asset_ai_band=risk_asset_ai_band,
             total_asset_ai_band=total_asset_ai_band,
             total_risk_asset_band=total_risk_asset_band,
             label=risk_asset_ai_band.label,
             components=tuple(components),
+            position_gates=all_position_gates,
         )
 
     @staticmethod
@@ -100,3 +142,9 @@ class WeightedScoreModel:
         if score >= 35:
             return PositionBand(0.2, 0.4, "防守")
         return PositionBand(0.0, 0.2, "极端防守")
+
+    @staticmethod
+    def _final_label(model_band: PositionBand, final_max_position: float) -> str:
+        if final_max_position >= model_band.max_position:
+            return model_band.label
+        return f"{model_band.label}/仓位受限"

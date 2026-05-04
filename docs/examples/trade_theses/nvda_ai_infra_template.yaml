@@ -41,7 +41,13 @@ risk_events:
     updated_at: 2026-05-01
 review_frequency: weekly
 status: draft
+previous_status:
+status_updated_at:
+status_reason: ""
+status_evidence: ""
+manual_review_required: false
 notes: >
   示例模板只用于说明字段结构，不代表真实交易建议。实际使用时应复制到
   data/external/trade_theses/，并按真实证据更新 validation_metrics 和
-  falsification_conditions。
+  falsification_conditions。warning/challenged/invalidated 状态必须记录
+  status_reason、status_evidence，并要求人工复核。

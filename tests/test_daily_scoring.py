@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import date
 from pathlib import Path
 from typing import cast
@@ -7,6 +8,10 @@ from typing import cast
 import pandas as pd
 from typer.testing import CliRunner
 
+from ai_trading_system.belief_state import (
+    build_belief_state,
+    render_belief_state_summary,
+)
 from ai_trading_system.cli import app
 from ai_trading_system.config import (
     configured_price_tickers,
@@ -30,6 +35,7 @@ from ai_trading_system.risk_events import (
     LoadedRiskEventOccurrence,
     RiskEventEvidenceSource,
     RiskEventOccurrence,
+    RiskEventOccurrenceReviewReport,
     RiskEventOccurrenceValidationReport,
     build_risk_event_occurrence_review_report,
 )
@@ -37,12 +43,14 @@ from ai_trading_system.scoring.daily import (
     DailyManualReviewStatus,
     DailyReviewSummary,
     build_daily_score_report,
+    load_previous_daily_score_snapshot,
     render_daily_score_report,
     write_scores_csv,
 )
 from ai_trading_system.valuation import (
     LoadedValuationSnapshot,
     SnapshotMetric,
+    ValuationReviewReport,
     ValuationSnapshot,
     ValuationValidationReport,
     build_valuation_review_report,
@@ -104,6 +112,33 @@ def test_build_daily_score_report_uses_valuation_snapshots() -> None:
     assert valuation.score < 50
 
 
+def test_valuation_crowding_gate_caps_position_without_thesis_break() -> None:
+    rules = load_scoring_rules()
+    report = build_daily_score_report(
+        feature_set=_feature_set(),
+        data_quality_report=_quality_report(),
+        rules=rules,
+        total_risk_asset_min=0.60,
+        total_risk_asset_max=0.80,
+        valuation_review_report=_valuation_review_report(
+            valuation_percentile=96.0,
+            overall_assessment="extreme",
+        ),
+    )
+
+    valuation_gate = _position_gate(report, "valuation")
+    valuation = _component(report, "valuation")
+
+    assert valuation_gate.triggered
+    assert (
+        valuation_gate.max_position
+        == rules.position_gates.valuation.extreme_overheated_max_position
+    )
+    assert report.recommendation.risk_asset_ai_band.max_position <= valuation_gate.max_position
+    assert valuation.source_type == "manual_input"
+    assert valuation.score < 50
+
+
 def test_build_daily_score_report_uses_risk_event_occurrences() -> None:
     report = build_daily_score_report(
         feature_set=_feature_set(),
@@ -119,12 +154,41 @@ def test_build_daily_score_report_uses_risk_event_occurrences() -> None:
     assert policy.source_type == "manual_input"
     assert policy.coverage == 1.0
     assert policy.score < 50
+    assert report.recommendation.model_risk_asset_ai_band.max_position > (
+        report.recommendation.risk_asset_ai_band.max_position
+    )
+    risk_gate = _position_gate(report, "risk_events")
+    assert risk_gate.triggered
+    assert risk_gate.max_position < report.recommendation.model_risk_asset_ai_band.max_position
     assert any(
         signal.subject == "POLICY_GEOPOLITICS"
         and signal.feature == "active_or_watch_l3_count"
         and signal.value == 1.0
         for signal in policy.signals
     )
+
+
+def test_build_daily_score_report_keeps_watch_risk_events_out_of_score_and_gate() -> None:
+    report = build_daily_score_report(
+        feature_set=_feature_set(),
+        data_quality_report=_quality_report(),
+        rules=load_scoring_rules(),
+        total_risk_asset_min=0.60,
+        total_risk_asset_max=0.80,
+        risk_event_occurrence_review_report=_risk_event_occurrence_review_report(
+            status="watch",
+            action_class="position_gate_eligible",
+        ),
+    )
+
+    policy = _component(report, "policy_geopolitics")
+    risk_gate = _position_gate(report, "risk_events")
+
+    assert policy.source_type == "insufficient_data"
+    assert policy.score == 50
+    assert risk_gate.triggered is False
+    assert risk_gate.max_position == 1.0
+    assert not any(signal.value == 1.0 for signal in policy.signals)
 
 
 def test_build_daily_score_report_marks_insufficient_data() -> None:
@@ -173,6 +237,89 @@ def test_write_scores_csv_upserts_as_of_rows(tmp_path: Path) -> None:
 
     assert set(stored["as_of"]) == {"2026-04-30"}
     assert len(stored) == len(report.components) + 1
+    assert {"confidence", "confidence_level", "confidence_reasons"}.issubset(
+        stored.columns
+    )
+    assert {
+        "model_risk_asset_ai_min",
+        "model_risk_asset_ai_max",
+        "final_risk_asset_ai_min",
+        "final_risk_asset_ai_max",
+        "confidence_adjusted_risk_asset_ai_min",
+        "confidence_adjusted_risk_asset_ai_max",
+        "total_asset_ai_min",
+        "total_asset_ai_max",
+        "triggered_position_gates",
+    }.issubset(stored.columns)
+    overall = stored.loc[stored["component"] == "overall"].iloc[0]
+    assert overall["confidence_level"] in {"high", "medium", "low"}
+    assert overall["confidence_reasons"]
+    assert overall["final_risk_asset_ai_max"] == report.recommendation.max_position
+
+
+def test_daily_score_confidence_is_reported_separately_from_market_score() -> None:
+    report = build_daily_score_report(
+        feature_set=_feature_set(),
+        data_quality_report=_quality_report(),
+        rules=load_scoring_rules(),
+        total_risk_asset_min=0.60,
+        total_risk_asset_max=0.80,
+    )
+
+    confidence = report.confidence_assessment
+
+    assert report.recommendation.total_score > 50
+    assert 0 <= confidence.score <= 100
+    assert confidence.level in {"high", "medium", "low"}
+    assert any("低置信度模块" in reason for reason in confidence.reasons)
+    assert (
+        confidence.adjusted_risk_asset_ai_band.max_position
+        <= report.recommendation.risk_asset_ai_band.max_position
+    )
+
+
+def test_load_previous_daily_score_snapshot_reads_latest_prior_overall(
+    tmp_path: Path,
+) -> None:
+    scores_path = tmp_path / "scores_daily.csv"
+    pd.DataFrame(
+        [
+            {
+                "as_of": "2026-04-29",
+                "component": "overall",
+                "score": 55.0,
+                "confidence": 61.0,
+                "confidence_level": "medium",
+                "final_risk_asset_ai_min": 0.40,
+                "final_risk_asset_ai_max": 0.60,
+            },
+            {
+                "as_of": "2026-04-30",
+                "component": "overall",
+                "score": 65.0,
+                "confidence": 75.0,
+                "confidence_level": "high",
+                "final_risk_asset_ai_min": 0.60,
+                "final_risk_asset_ai_max": 0.80,
+            },
+            {
+                "as_of": "2026-04-30",
+                "component": "trend",
+                "score": 70.0,
+                "confidence": 0.9,
+            },
+        ]
+    ).to_csv(scores_path, index=False)
+
+    snapshot = load_previous_daily_score_snapshot(scores_path, date(2026, 5, 1))
+
+    assert snapshot is not None
+    assert snapshot.as_of == date(2026, 4, 30)
+    assert snapshot.overall_score == 65.0
+    assert snapshot.confidence_level == "high"
+    assert snapshot.final_risk_asset_ai_max == 0.80
+    assert snapshot.component_scores["trend"] == 70.0
+    assert snapshot.component_confidence_scores["trend"] == 0.9
 
 
 def test_render_daily_score_report_includes_data_gate_and_limitations(tmp_path: Path) -> None:
@@ -198,20 +345,100 @@ def test_render_daily_score_report_includes_data_gate_and_limitations(tmp_path: 
             ),
         ),
     )
+    scores_path = tmp_path / "scores.csv"
+    pd.DataFrame(
+        [
+            {
+                "as_of": "2026-04-29",
+                "component": "overall",
+                "score": 50.0,
+                "confidence": 55.0,
+                "final_risk_asset_ai_min": 0.40,
+                "final_risk_asset_ai_max": 0.60,
+            },
+            {
+                "as_of": "2026-04-29",
+                "component": "trend",
+                "score": 60.0,
+                "confidence": 0.80,
+            },
+        ]
+    ).to_csv(scores_path, index=False)
+    previous = load_previous_daily_score_snapshot(scores_path, date(2026, 4, 30))
 
     markdown = render_daily_score_report(
         report,
         data_quality_report_path=tmp_path / "quality.md",
         feature_report_path=tmp_path / "features.md",
         features_path=tmp_path / "features.csv",
-        scores_path=tmp_path / "scores.csv",
+        scores_path=scores_path,
+        previous_score_snapshot=previous,
     )
 
     assert "- 数据质量状态：PASS" in markdown
     assert "## 人工复核摘要" in markdown
+    assert "## 仓位闸门" in markdown
+    assert "## 变化原因树" in markdown
+    assert "### 什么情况会改变判断" in markdown
+    assert "分模块变化：" in markdown
+    assert "趋势（trend）" in markdown
+    assert "最终动作约束" in markdown
+    assert "thesis 承压" in markdown
+    assert "- AI 产业链评分：" in markdown
+    assert "- 判断置信度：" in markdown
+    assert "- 置信度调整后建议仓位" in markdown
+    assert "| 模块 | 分数 | 权重 | 来源 | 覆盖率 | 置信度 | 说明 |" in markdown
+    assert "评分模型仓位（score_model）" in markdown
     assert "交易 thesis" in markdown
     assert "基本面（fundamentals）" in markdown
     assert "基本面硬数据占位" in markdown
+
+
+def test_belief_state_is_read_only_and_keeps_position_unchanged(
+    tmp_path: Path,
+) -> None:
+    report = build_daily_score_report(
+        feature_set=_feature_set(),
+        data_quality_report=_quality_report(),
+        rules=load_scoring_rules(),
+        total_risk_asset_min=0.60,
+        total_risk_asset_max=0.80,
+        risk_event_occurrence_review_report=_risk_event_occurrence_review_report(),
+    )
+    before = (
+        report.recommendation.risk_asset_ai_band.min_position,
+        report.recommendation.risk_asset_ai_band.max_position,
+        tuple(gate.max_position for gate in report.recommendation.position_gates),
+    )
+
+    belief_state = build_belief_state(
+        report=report,
+        trace_bundle_path=tmp_path / "daily_trace.json",
+        decision_snapshot_path=tmp_path / "decision_snapshot.json",
+        market_regime=None,
+        config_paths={"scoring_rules": tmp_path / "scoring_rules.yaml"},
+    )
+    summary = render_belief_state_summary(
+        belief_state,
+        tmp_path / "belief_state.json",
+    )
+
+    after = (
+        report.recommendation.risk_asset_ai_band.min_position,
+        report.recommendation.risk_asset_ai_band.max_position,
+        tuple(gate.max_position for gate in report.recommendation.position_gates),
+    )
+    assert after == before
+    assert belief_state["read_only"] is True
+    assert belief_state["production_effect"] == "none"
+    assert belief_state["position_boundary"]["final_risk_asset_ai_band"][
+        "max_position"
+    ] == report.recommendation.risk_asset_ai_band.max_position
+    assert belief_state["references"]["overall_claim_id"] == (
+        "daily_score:2026-04-30:overall_position"
+    )
+    assert "只读解释层" in summary
+    assert "不改变正式评分" in summary
 
 
 def test_render_daily_score_report_includes_sec_feature_gate(tmp_path: Path) -> None:
@@ -240,6 +467,30 @@ def test_render_daily_score_report_includes_sec_feature_gate(tmp_path: Path) -> 
     assert "sec_features.csv" in markdown
 
 
+def test_render_daily_score_report_includes_valuation_history_coverage(
+    tmp_path: Path,
+) -> None:
+    report = build_daily_score_report(
+        feature_set=_feature_set(),
+        data_quality_report=_quality_report(),
+        rules=load_scoring_rules(),
+        total_risk_asset_min=0.60,
+        total_risk_asset_max=0.80,
+        valuation_review_report=_valuation_review_report(),
+    )
+
+    markdown = render_daily_score_report(
+        report,
+        data_quality_report_path=tmp_path / "quality.md",
+        feature_report_path=tmp_path / "features.md",
+        features_path=tmp_path / "features.csv",
+        scores_path=tmp_path / "scores.csv",
+    )
+
+    assert "- 当前估值复核快照数：1" in markdown
+    assert "- 估值历史指标覆盖：valuation_percentile 1/1；eps_revision_90d_pct 0/1" in markdown
+
+
 def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     universe = load_universe()
     tickers = configured_price_tickers(universe)
@@ -258,6 +509,10 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     sec_features_path = tmp_path / "sec_fundamental_features.csv"
     sec_feature_report_path = tmp_path / "sec_fundamental_features.md"
     sec_validation_report_path = tmp_path / "sec_fundamentals_validation.md"
+    valuation_path = tmp_path / "valuation_snapshots"
+    decision_snapshot_path = tmp_path / "decision_snapshot.json"
+    belief_state_path = tmp_path / "belief_state.json"
+    belief_state_history_path = tmp_path / "belief_state_history.csv"
     _sample_prices(tickers, periods=260).to_csv(prices_path, index=False)
     _sample_rates(rate_series, periods=260).to_csv(rates_path, index=False)
     _write_sec_companies_config(sec_companies_path)
@@ -299,23 +554,76 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
             str(sec_feature_report_path),
             "--sec-metrics-validation-report-path",
             str(sec_validation_report_path),
+            "--valuation-path",
+            str(valuation_path),
+            "--decision-snapshot-path",
+            str(decision_snapshot_path),
+            "--belief-state-path",
+            str(belief_state_path),
+            "--belief-state-history-path",
+            str(belief_state_history_path),
         ],
     )
 
     assert result.exit_code == 0
     assert daily_report_path.exists()
     assert scores_path.exists()
+    trace_path = tmp_path / "evidence" / "daily_score_trace.json"
+    assert trace_path.exists()
+    trace = json.loads(trace_path.read_text(encoding="utf-8"))
+    snapshot = json.loads(decision_snapshot_path.read_text(encoding="utf-8"))
+    belief_state = json.loads(belief_state_path.read_text(encoding="utf-8"))
+    belief_history = pd.read_csv(belief_state_history_path)
+    claim_ids = {claim["claim_id"] for claim in trace["claims"]}
+    dataset_ids = {dataset["dataset_id"] for dataset in trace["dataset_refs"]}
+    assert "daily_score:2026-04-30:overall_position" in claim_ids
+    assert "daily_score:2026-04-30:belief_state" in claim_ids
+    assert "dataset:belief_state:2026-04-30" in dataset_ids
+    assert snapshot["snapshot_id"] == "decision_snapshot:2026-04-30"
+    assert snapshot["trace"]["trace_bundle_path"] == str(trace_path)
+    assert snapshot["belief_state_ref"]["path"] == str(belief_state_path)
+    assert snapshot["belief_state_ref"]["production_effect"] == "none"
+    assert belief_state["belief_state_id"] == "belief_state:2026-04-30"
+    assert belief_state["production_effect"] == "none"
+    assert set(belief_history["belief_state_id"]) == {"belief_state:2026-04-30"}
+    assert belief_history.iloc[0]["production_effect"] == "none"
+    assert snapshot["scores"]["confidence_level"] in {"high", "medium", "low"}
+    assert snapshot["positions"]["position_gates"]
     assert features_path.exists()
     assert sec_features_path.exists()
     assert sec_feature_report_path.exists()
     assert sec_validation_report_path.exists()
-    assert "人工复核摘要" in daily_report_path.read_text(encoding="utf-8")
-    assert "SEC 基本面特征状态：PASS" in daily_report_path.read_text(encoding="utf-8")
-    assert "风险事件发生记录状态：" in daily_report_path.read_text(encoding="utf-8")
+    daily_text = daily_report_path.read_text(encoding="utf-8")
+    assert "人工复核摘要" in daily_text
+    assert "SEC 基本面特征状态：PASS" in daily_text
+    assert "风险事件发生记录状态：" in daily_text
+    assert "## 变化原因树" in daily_text
+    assert "## 认知状态" in daily_text
+    assert "## 可追溯引用" in daily_text
+    assert "daily_score:2026-04-30:overall_position" in daily_text
     assert "每日评分状态：" in result.output
+    assert "belief_state.json" in result.output
+    lookup_result = CliRunner().invoke(
+        app,
+        [
+            "trace",
+            "lookup",
+            "--bundle-path",
+            str(trace_path),
+            "--id",
+            "daily_score:2026-04-30:overall_position",
+        ],
+    )
+    assert lookup_result.exit_code == 0
+    assert "最终 AI 仓位" in lookup_result.output
 
 
-def _risk_event_occurrence_review_report():
+def _risk_event_occurrence_review_report(
+    *,
+    status: str = "active",
+    evidence_grade: str = "B",
+    action_class: str = "position_gate_eligible",
+) -> RiskEventOccurrenceReviewReport:
     as_of = date(2026, 4, 30)
     validation_report = RiskEventOccurrenceValidationReport(
         as_of=as_of,
@@ -326,9 +634,16 @@ def _risk_event_occurrence_review_report():
                 occurrence=RiskEventOccurrence(
                     occurrence_id="taiwan_geopolitical_escalation_2026_04_30",
                     event_id="taiwan_geopolitical_escalation",
-                    status="active",
+                    status=status,
                     triggered_at=as_of,
                     last_confirmed_at=as_of,
+                    evidence_grade=evidence_grade,
+                    severity="high",
+                    probability="confirmed",
+                    scope="ai_bucket",
+                    time_sensitivity="high",
+                    reversibility="partly_reversible",
+                    action_class=action_class,
                     evidence_sources=[
                         RiskEventEvidenceSource(
                             source_name="manual_policy_review",
@@ -386,7 +701,11 @@ def _fundamental_feature_report() -> SecFundamentalFeaturesReport:
     )
 
 
-def _valuation_review_report():
+def _valuation_review_report(
+    *,
+    valuation_percentile: float = 82.0,
+    overall_assessment: str = "expensive",
+) -> ValuationReviewReport:
     as_of = date(2026, 4, 30)
     validation_report = ValuationValidationReport(
         as_of=as_of,
@@ -400,16 +719,16 @@ def _valuation_review_report():
                     source_type="manual_input",
                     source_name="manual_sheet",
                     captured_at=as_of,
-                    valuation_metrics=(
+                    valuation_metrics=[
                         SnapshotMetric(
                             metric_id="forward_pe",
                             value=36.0,
                             unit="ratio",
                             period="next_12m",
                         ),
-                    ),
-                    valuation_percentile=82.0,
-                    overall_assessment="expensive",
+                    ],
+                    valuation_percentile=valuation_percentile,
+                    overall_assessment=overall_assessment,
                 ),
                 path=Path("nvda_valuation.yaml"),
             ),
@@ -494,6 +813,13 @@ def _component(report, name: str):  # type: ignore[no-untyped-def]
         if component.name == name:
             return component
     raise AssertionError(f"component not found: {name}")
+
+
+def _position_gate(report, gate_id: str):  # type: ignore[no-untyped-def]
+    for gate in report.recommendation.position_gates:
+        if gate.gate_id == gate_id:
+            return gate
+    raise AssertionError(f"position gate not found: {gate_id}")
 
 
 def _quality_report() -> DataQualityReport:

@@ -1,0 +1,3 @@
+fiscal_year,fiscal_period,source_url,input_path,filed_date
+2026,Q1,https://investor.tsmc.com/english/quarterly-results/2026/q1,../../../data/external/fundamentals/tsm_ir/2026_q1_management_report.txt,2026-04-16
+2026,Q2,https://investor.tsmc.com/english/quarterly-results/2026/q2,../../../data/external/fundamentals/tsm_ir/2026_q2_management_report.txt,2026-07-16

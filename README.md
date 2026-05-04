@@ -1,10 +1,10 @@
 # AI Trading System
 
-面向美股 AI 产业链的趋势分析、风险评分、回测与仓位建议系统。
+面向美股 AI 产业链的投资认知、趋势分析、风险评分、回测与仓位建议系统。
 
-项目目标不是预测市场，也不是自动交易，而是把“是否加仓、减仓、观望”变成可复盘、可验证、可控制风险的决策流程。
+项目目标不是预测市场，也不是自动交易，而是把“是否加仓、减仓、观望”变成可复盘、可验证、可控制风险的决策流程。长期方向是可审计认知模型：持续记录 `belief_state`、证据、置信度、风险边界和规则改进建议，但生产规则必须经过回测、shadow mode 和人工批准。
 
-产品定位详见 [docs/product_strategy.md](docs/product_strategy.md)：系统应服务于能力圈、产业链因果、仓位决策和复盘归因，而不是扩张成全市场万能分析器。工程落地拆解见 [docs/implementation_backlog.md](docs/implementation_backlog.md)。
+产品定位详见 [docs/product_strategy.md](docs/product_strategy.md)：系统应服务于能力圈、产业链因果、仓位决策和复盘归因，而不是扩张成全市场万能分析器。工程落地拆解见 [docs/implementation_backlog.md](docs/implementation_backlog.md)，具体未完成任务和优先级见 [docs/task_register.md](docs/task_register.md)。
 
 ## MVP 范围
 
@@ -17,7 +17,7 @@
 5. 与 QQQ、SMH/SOXX、SPY 的回测对比。
 6. 每日 Markdown 报告。
 
-SEC 基本面已经接入基础硬数据评分；估值快照和政策/地缘风险发生记录已经接入可审计的手工输入评分。新闻/NLP、LLM 事件抽取继续放到后续阶段，不能直接触发交易动作。
+SEC 基本面已经接入基础硬数据评分；估值快照和政策/地缘风险发生记录已经接入可审计的手工输入评分，并支持从结构化 CSV 导入来减少手工 YAML 维护。TSMC IR 季度基本面已支持从官方 Management Report 文本或 PDF 可抽取文本层导入，并可显式合并到统一 SEC-style 指标 CSV；新闻/NLP、LLM 事件抽取继续放到后续阶段，不能直接触发交易动作。
 
 ## 工程结构
 
@@ -39,6 +39,7 @@ docs/                    架构和开发计划
 docs/system_flow.md      数据输入、中间评估和输出结论示意图
 docs/product_strategy.md 产品策略和模块原则
 docs/implementation_backlog.md 可落地模块和工程 backlog
+docs/task_register.md   未完成任务、优先级、状态和阻塞项登记表
 docs/examples/           可复制的输入模板，不包含个人交易记录
 notebooks/               研究和临时分析
 outputs/backtests/       回测输出，不提交
@@ -107,7 +108,7 @@ aits score-daily --as-of 2026-05-01
 aits backtest --to 2026-05-02 --quality-as-of 2026-05-02
 ```
 
-回测命令会先执行市场数据质量门禁和 SEC companyfacts 缓存校验。默认市场阶段来自 `config/market_regimes.yaml`，当前为 `ai_after_chatgpt`，起点是 `2022-12-01`，即 ChatGPT 于 `2022-11-30` 公开发布后的首个完整美股交易日。当前基础版使用每日评分得到的 AI 仓位区间中点作为目标仓位，以 `SMH` 作为默认 AI 代理标的，并与 `SPY`、`QQQ`、`SMH`、`SOXX` 买入持有基准对比。每个 signal_date 会按 `filed_date <= signal_date` 生成 point-in-time SEC 基本面特征，并在回测报告中声明 SEC 基本面质量摘要；信号按收盘后生成、下一交易日生效，避免未来函数。
+回测命令会先执行市场数据质量门禁和 SEC companyfacts 缓存校验。默认市场阶段来自 `config/market_regimes.yaml`，当前为 `ai_after_chatgpt`，起点是 `2022-12-01`，即 ChatGPT 于 `2022-11-30` 公开发布后的首个完整美股交易日。当前基础版使用每日评分得到的 AI 仓位区间中点作为目标仓位，以 `SMH` 作为默认 AI 代理标的，并与 `SPY`、`QQQ`、`SMH`、`SOXX` 买入持有基准对比。每个 signal_date 会按 `filed_date <= signal_date` 生成 point-in-time SEC 基本面特征，也会按 `as_of/captured_at <= signal_date` 过滤估值快照，并按当时可见证据重建风险事件发生记录；回测报告会声明数据质量门禁错误/警告计数、缓存文件摘要、SEC、估值和风险事件质量摘要，并输出执行成本摘要、评分模块覆盖率摘要、月度覆盖率趋势、月度来源类型趋势、月度输入问题下钻、月度输入证据 URL 摘要、月度风险事件证据 URL 明细、月度 ticker 输入摘要、月度 ticker SEC 特征明细、月度估值快照来源和月度风险事件证据来源分布，同时写出机器可读的 `backtest_input_coverage_YYYY-MM-DD_YYYY-MM-DD.csv` 覆盖诊断和中文 `backtest_audit_YYYY-MM-DD_YYYY-MM-DD.md` 输入审计报告。审计报告会汇总数据质量门禁、point-in-time 输入切片、模块覆盖率、来源类型、历史输入问题和执行假设，帮助判断这次回测是否可解释；如需把审计 WARNING 作为本地门禁失败，可加 `--fail-on-audit-warning`。信号按收盘后生成、下一交易日生效，避免未来函数。默认扣除 5 bps 单边交易成本；如需保守执行假设，可用 `--slippage-bps` 显式加入线性滑点或盘口冲击估算。
 
 如需把 2019 年以来的历史作为非默认压力测试，可以显式指定：
 
@@ -158,20 +159,25 @@ aits thesis review --as-of 2026-05-02
 ```powershell
 aits risk-events list
 aits risk-events validate --as-of 2026-05-02
+aits risk-events import-occurrences-csv --input-path data/external/risk_event_imports/reviewed_events.csv --as-of 2026-05-02
 aits risk-events list-occurrences
 aits risk-events validate-occurrences --as-of 2026-05-02
 ```
 
-风险事件配置在 `config/risk_events.yaml`，只定义需要监控的 L1/L2/L3 规则、AI 仓位折扣乘数、人工复核要求、影响产业链节点、相关标的、建议动作、升级条件和解除条件。实际发生记录默认读取 `data/external/risk_event_occurrences/*.yaml`，该目录不提交；可参考 `docs/examples/risk_event_occurrences/export_control_active_template.yaml` 复制模板。政策/地缘评分只读取已通过校验的发生记录，`public_convenience` 证据只能作为辅助，不能单独进入自动评分。
+风险事件配置在 `config/risk_events.yaml`，只定义需要监控的 L1/L2/L3 规则、AI 仓位折扣乘数、人工复核要求、影响产业链节点、相关标的、建议动作、升级条件和解除条件。实际发生记录默认读取 `data/external/risk_event_occurrences/*.yaml`，该目录不提交；可参考 `docs/examples/risk_event_occurrences/export_control_active_template.yaml` 复制模板。`import-occurrences-csv` 只接受人工复核后的结构化 CSV，同一 `occurrence_id` 的多行用于合并证据来源，关键字段冲突会停止导入。政策/地缘评分只读取已通过校验的发生记录，`public_convenience` 证据只能作为辅助，不能单独进入自动评分。
 
 校验和复核估值、预期与拥挤度快照：
 
 ```powershell
+aits valuation fetch-fmp --tickers NVDA,MSFT --as-of 2026-05-02
+aits valuation fetch-fmp-valuation-history --tickers NVDA,MSFT --as-of 2026-05-02
+aits valuation validate-fmp-history --as-of 2026-05-02
+aits valuation import-csv --input-path data/external/valuation_imports/vendor_export.csv --as-of 2026-05-02
 aits valuation validate --as-of 2026-05-02
 aits valuation review --as-of 2026-05-02
 ```
 
-估值快照默认读取 `data/external/valuation_snapshots/*.yaml`，该目录不提交。可参考 `docs/examples/valuation_snapshots/nvda_valuation_template.yaml` 复制模板。当前基础版要求估值和预期数据带有来源、日期、采集时间和字段说明；公开便利源只能作为辅助，不能直接进入自动评分。
+估值快照默认读取 `data/external/valuation_snapshots/*.yaml`，该目录不提交。可参考 `docs/examples/valuation_snapshots/nvda_valuation_template.yaml` 复制模板。`fetch-fmp` 从 Financial Modeling Prep 读取 `quote-short`、`key-metrics-ttm`、`ratios-ttm` 和 annual `analyst-estimates`，API key 只从 `FMP_API_KEY` 读取，不会写入报告；命令会生成 `outputs/reports/fmp_valuation_fetch_YYYY-MM-DD.md`，再写入估值快照 YAML 并复用 `valuation validate`。核心观察池内部 ticker 保持 `GOOG`，但 FMP 请求会使用显式 provider symbol alias `GOOG -> GOOGL`，并在拉取报告和 analyst history 请求参数中记录。FMP 返回负数估值倍数时不会写入快照，会在拉取报告中记录警告。每次成功拉取都会把原始 `analyst-estimates` 响应写入 `data/raw/fmp_analyst_estimates/`，用于后续按同一 fiscal estimate date 计算 `eps_revision_90d_pct`；`validate-fmp-history` 会校验这些原始 JSON 的 schema、checksum、row_count、ticker、请求参数、日期和重复 estimate date。`fetch-fmp-valuation-history` 会从 FMP historical `key-metrics` / `ratios` 拉取历史 `ev_sales` 和 `peg` 分布，原始响应写入 `data/raw/fmp_historical_valuation/`，并生成带 `captured_at` 审计日期的 paid vendor 历史估值快照，用于后续 `fetch-fmp` 计算 `valuation_percentile`；这不等同于真实 point-in-time vendor archive，历史回测在采集日前不可见，也不能用于伪造 `eps_revision_90d_pct`。`valuation_percentile` 使用本地估值快照历史计算；每个估值 metric 至少需要 3 个历史点，样本不足时不会伪造分位。日报和 `valuation review` 会按 `as_of/captured_at` 只选择每个 ticker 的最新可见快照进入当日评分，并在报告中显示 `valuation_percentile` 与 `eps_revision_90d_pct` 的当前覆盖。`import-csv` 可把结构化宽表导入为估值快照 YAML，并生成 `outputs/reports/valuation_import_YYYY-MM-DD.md`；CSV 每行仍必须声明真实 `source_name`、`source_type` 和采集日期。当前基础版要求估值和预期数据带有来源、日期、采集时间和字段说明；公开便利源只能作为辅助，不能直接进入自动评分。
 
 下载 SEC companyfacts 原始基本面数据：
 
@@ -183,9 +189,15 @@ aits fundamentals validate-sec-companyfacts --as-of 2026-05-02
 aits fundamentals extract-sec-metrics --as-of 2026-05-02
 aits fundamentals validate-sec-metrics --as-of 2026-05-02
 aits fundamentals build-sec-features --as-of 2026-05-02
+aits fundamentals fetch-tsm-ir-quarterly --source-url https://investor.tsmc.com/english/quarterly-results/2026/q1 --fiscal-year 2026 --fiscal-period Q1 --as-of 2026-05-02
+aits fundamentals extract-tsm-ir-pdf-text --input-path data/external/fundamentals/tsm_ir/2026_q1_management_report.pdf --source-url https://investor.tsmc.com/english/quarterly-results/2026/q1/management-report.pdf --output-path data/external/fundamentals/tsm_ir/2026_q1_management_report.txt --as-of 2026-05-02
+aits fundamentals import-tsm-ir-quarterly --input-path data/external/fundamentals/tsm_ir/2026_q1_management_report.txt --source-url https://investor.tsmc.com/english/quarterly-results/2026/q1 --fiscal-year 2026 --fiscal-period Q1 --filed-date 2026-04-16 --as-of 2026-05-02
+# 历史季度回填：先按模板准备真实本地文本路径，再运行批量导入。
+aits fundamentals import-tsm-ir-quarterly-batch --manifest-path data/external/fundamentals/tsm_ir/tsm_ir_quarterly_manifest.csv --as-of 2026-05-02
+aits fundamentals merge-tsm-ir-sec-metrics --as-of 2026-05-02
 ```
 
-该命令读取 `config/sec_companies.yaml` 的 ticker/CIK 映射，下载 SEC EDGAR companyfacts JSON 到 `data/raw/sec_companyfacts/`，并追加写入 `sec_companyfacts_manifest.csv`。校验命令会检查 JSON、CIK、taxonomy 和 checksum。`extract-sec-metrics` 会先执行同一条 SEC 缓存质量门禁，通过后按 `config/fundamental_metrics.yaml` 抽取收入、毛利、营业利润、净利润、研发和 CapEx 等指标，默认输出 `data/processed/sec_fundamentals_YYYY-MM-DD.csv` 和 `outputs/reports/sec_fundamentals_YYYY-MM-DD.md`。显式派生指标只允许使用配置声明的组件，例如 `gross_profit = revenue - cost_of_revenue`，且必须满足周期、单位、截止日、财年、财期和 accession number 一致。`config/sec_companies.yaml` 可以声明单家公司在 SEC companyfacts 路径可用的指标周期；当前 TSM 在该路径只要求年度指标，季度指标需后续接入 TSM 官方 IR 等可审计来源。`validate-sec-metrics` 会校验抽取后 CSV 的 schema、重复键、未来披露日期、数值合法性和配置覆盖率。`build-sec-features` 会先复用同一条 SEC 指标 CSV 校验门禁，通过后按 `config/fundamental_features.yaml` 生成毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度，默认输出 `data/processed/sec_fundamental_features_YYYY-MM-DD.csv` 和 `outputs/reports/sec_fundamental_features_YYYY-MM-DD.md`。`score-daily` 会复用同一条 SEC 指标校验和特征构建路径，校验失败时停止日报评分；通过后按 `config/scoring_rules.yaml` 的 `fundamentals` 规则使用 AI 核心观察池 SEC 特征中位数进行基本面硬数据评分。
+该命令读取 `config/sec_companies.yaml` 的 ticker/CIK 映射，下载 SEC EDGAR companyfacts JSON 到 `data/raw/sec_companyfacts/`，并追加写入 `sec_companyfacts_manifest.csv`。校验命令会检查 JSON、CIK、taxonomy 和 checksum。`extract-sec-metrics` 会先执行同一条 SEC 缓存质量门禁，通过后按 `config/fundamental_metrics.yaml` 抽取收入、毛利、营业利润、净利润、研发和 CapEx 等指标，默认输出 `data/processed/sec_fundamentals_YYYY-MM-DD.csv` 和 `outputs/reports/sec_fundamentals_YYYY-MM-DD.md`。显式派生指标只允许使用配置声明的组件，例如 `gross_profit = revenue - cost_of_revenue`，且必须满足周期、单位、截止日、财年、财期和 accession number 一致。`validate-sec-metrics` 会输出完整缺失观测清单，格式为 `ticker / metric_id / period_type`，便于回测报告按月下钻缺口。TSM 季度指标可以用 `fetch-tsm-ir-quarterly` 从 TSMC Investor Relations 官方季度页面发现并下载 Management Report 文本；若官方资源是 PDF 或二进制，先用 `extract-tsm-ir-pdf-text` 从本地官方 PDF 的文本层生成可审计文本，再用 `import-tsm-ir-quarterly` 导入本地文本。`filed_date` 代表 Management Report 公开/披露日期，用于历史回测 point-in-time 可见性；历史季度回填可用 `import-tsm-ir-quarterly-batch` 读取 manifest CSV，字段为 `fiscal_year,fiscal_period,source_url,input_path,filed_date`，相对路径按 manifest 所在目录解析；模板在 `docs/examples/fundamentals/tsm_ir_quarterly_manifest_template.csv`；同一批次重复季度、缺文件或非官方 URL 会失败且不写入 CSV。PDF 抽取依赖可选依赖 `pypdf`（安装 `.[data]` 会包含它）；扫描件或无文本层 PDF 会停止并要求 OCR 或人工抽取，不能生成伪文本。TSM IR 默认写入 `data/processed/tsm_ir_quarterly_metrics.csv`、`outputs/reports/tsm_ir_pdf_text_YYYY-MM-DD.md`、`outputs/reports/tsm_ir_quarterly_YYYY_Qn_YYYY-MM-DD.md` 和 `outputs/reports/tsm_ir_quarterly_batch_YYYY-MM-DD.md`；`merge-tsm-ir-sec-metrics` 和 `aits backtest` 会按评估日或 `signal_date` 选择当时最新已披露 TSM 季度，再把收入、毛利、营业利润、净利、研发和 CapEx 转为 SEC-style 指标行；当前日报只合并最新可用季度，历史回测按每个信号日选择当时可见季度。金额单位保留 Management Report 披露尺度，例如 `TWD_billions` 或 `USD_billions`。不能用半年度 6-K 拆分替代季度数据。`build-sec-features` 会先复用同一条 SEC 指标 CSV 校验门禁，通过后按 `config/fundamental_features.yaml` 生成毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度，默认输出 `data/processed/sec_fundamental_features_YYYY-MM-DD.csv` 和 `outputs/reports/sec_fundamental_features_YYYY-MM-DD.md`。`score-daily` 会复用同一条 SEC 指标校验和特征构建路径，校验失败时停止日报评分；通过后按 `config/scoring_rules.yaml` 的 `fundamentals` 规则使用 AI 核心观察池 SEC 特征中位数进行基本面硬数据评分。
 
 复盘交易记录并做基础归因：
 

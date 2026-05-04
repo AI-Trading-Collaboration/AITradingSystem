@@ -111,6 +111,7 @@ class SecFundamentalMetricsCsvValidationReport:
     expected_observation_count: int
     observed_observation_count: int
     issues: tuple[SecMetricIssue, ...] = field(default_factory=tuple)
+    missing_observation_keys: tuple[tuple[str, str, str], ...] = ()
 
     @property
     def error_count(self) -> int:
@@ -244,6 +245,31 @@ def write_sec_fundamental_metrics_csv(
         existing = existing.loc[existing["as_of"] != report.as_of.isoformat()]
         new_frame = pd.concat([existing, new_frame], ignore_index=True)
     new_frame.to_csv(output_path, index=False)
+    return output_path
+
+
+def load_sec_fundamental_metric_rows_csv(input_path: Path) -> tuple[SecFundamentalMetricRow, ...]:
+    if not input_path.exists():
+        return ()
+    frame = pd.read_csv(input_path)
+    missing_columns = sorted(set(SEC_FUNDAMENTAL_METRIC_COLUMNS) - set(frame.columns))
+    if missing_columns:
+        raise ValueError(
+            f"SEC 基本面指标 CSV 缺少字段：{', '.join(missing_columns)}。"
+        )
+    records = [
+        {str(key): value for key, value in record.items()}
+        for record in frame.to_dict(orient="records")
+    ]
+    return tuple(_row_from_record(record, input_path) for record in records)
+
+
+def write_sec_fundamental_metric_rows_csv(
+    rows: tuple[SecFundamentalMetricRow, ...],
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    sec_fundamental_metric_rows_to_frame(rows).to_csv(output_path, index=False)
     return output_path
 
 
@@ -545,6 +571,7 @@ def render_sec_fundamental_metrics_validation_report(
         f"- 当日行数：{report.as_of_row_count}",
         f"- 预期观测数：{report.expected_observation_count}",
         f"- 已覆盖观测数：{report.observed_observation_count}",
+        f"- 缺失观测数：{len(report.missing_observation_keys)}",
         f"- 覆盖率：{report.coverage:.0%}",
         f"- 错误数：{report.error_count}",
         f"- 警告数：{report.warning_count}",
@@ -572,6 +599,19 @@ def render_sec_fundamental_metrics_validation_report(
                 f"{_escape_markdown_table(str(issue.path or ''))} | "
                 f"{_escape_markdown_table(issue.message)} |"
             )
+
+    if report.missing_observation_keys:
+        lines.extend(
+            [
+                "",
+                "## 缺失观测",
+                "",
+                "| Ticker | 指标 | 周期 |",
+                "|---|---|---|",
+            ]
+        )
+        for ticker, metric_id, period_type in report.missing_observation_keys:
+            lines.append(f"| {ticker} | {metric_id} | {period_type} |")
 
     lines.extend(
         [
@@ -678,6 +718,7 @@ def _csv_validation_report(
     issues: list[SecMetricIssue],
 ) -> SecFundamentalMetricsCsvValidationReport:
     expected_keys = _expected_metric_keys(companies, metrics)
+    missing_keys = tuple(sorted(expected_keys - observed_keys))
     return SecFundamentalMetricsCsvValidationReport(
         as_of=as_of,
         input_path=input_path,
@@ -686,6 +727,7 @@ def _csv_validation_report(
         expected_observation_count=len(expected_keys),
         observed_observation_count=len(observed_keys & expected_keys),
         issues=tuple(issues),
+        missing_observation_keys=missing_keys,
     )
 
 
@@ -1055,6 +1097,101 @@ def _row_record(row: SecFundamentalMetricRow) -> dict[str, object]:
         "accession_number": row.accession_number,
         "source_path": str(row.source_path),
     }
+
+
+def _row_from_record(
+    record: dict[str, object],
+    input_path: Path,
+) -> SecFundamentalMetricRow:
+    period_type_value = _string_record_value(record, "period_type")
+    if period_type_value not in {"annual", "quarterly"}:
+        raise ValueError(
+            "SEC 基本面指标 CSV period_type 必须是 annual 或 quarterly："
+            f"{period_type_value}"
+        )
+    value = _float_record_value(record, "value")
+    if value is None:
+        raise ValueError("SEC 基本面指标 CSV value 不是有效数值。")
+    return SecFundamentalMetricRow(
+        as_of=_required_date_record_value(record, "as_of"),
+        ticker=_string_record_value(record, "ticker").upper(),
+        cik=_string_record_value(record, "cik"),
+        company_name=_string_record_value(record, "company_name"),
+        metric_id=_string_record_value(record, "metric_id"),
+        metric_name=_string_record_value(record, "metric_name"),
+        period_type="annual" if period_type_value == "annual" else "quarterly",
+        fiscal_year=_int_record_value(record, "fiscal_year"),
+        fiscal_period=_string_record_value(record, "fiscal_period"),
+        end_date=_date_record_value(record, "end_date"),
+        filed_date=_date_record_value(record, "filed_date"),
+        form=_string_record_value(record, "form"),
+        taxonomy=_string_record_value(record, "taxonomy"),
+        concept=_string_record_value(record, "concept"),
+        unit=_string_record_value(record, "unit"),
+        value=value,
+        accession_number=_string_record_value(record, "accession_number"),
+        source_path=Path(_string_record_value(record, "source_path") or input_path),
+    )
+
+
+def _string_record_value(record: dict[str, object], key: str) -> str:
+    value = record.get(key)
+    if value is None or _is_missing_cell(value):
+        return ""
+    return str(value)
+
+
+def _required_date_record_value(record: dict[str, object], key: str) -> date:
+    parsed = _date_record_value(record, key)
+    if parsed is None:
+        raise ValueError(f"SEC 基本面指标 CSV 缺少有效日期字段：{key}")
+    return parsed
+
+
+def _date_record_value(record: dict[str, object], key: str) -> date | None:
+    value = _string_record_value(record, key)
+    if not value:
+        return None
+    try:
+        return date.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError(f"SEC 基本面指标 CSV 日期字段无效：{key}={value}") from exc
+
+
+def _int_record_value(record: dict[str, object], key: str) -> int | None:
+    value = record.get(key)
+    if value is None or _is_missing_cell(value):
+        return None
+    if not isinstance(value, bool) and isinstance(value, Real):
+        numeric_value = float(value)
+        if not math.isfinite(numeric_value):
+            return None
+        return int(numeric_value)
+    text_value = str(value).strip()
+    if not text_value:
+        return None
+    try:
+        return int(float(text_value))
+    except ValueError as exc:
+        raise ValueError(f"SEC 基本面指标 CSV 整数字段无效：{key}={value}") from exc
+
+
+def _float_record_value(record: dict[str, object], key: str) -> float | None:
+    value = record.get(key)
+    if value is None or _is_missing_cell(value):
+        return None
+    if not isinstance(value, bool) and isinstance(value, Real):
+        numeric_value = float(value)
+    else:
+        try:
+            numeric_value = float(str(value).strip())
+        except ValueError:
+            return None
+    return numeric_value if math.isfinite(numeric_value) else None
+
+
+def _is_missing_cell(value: object) -> bool:
+    return not isinstance(value, bool) and isinstance(value, Real) and math.isnan(float(value))
 
 
 def _numeric_value(value: Any) -> float | None:

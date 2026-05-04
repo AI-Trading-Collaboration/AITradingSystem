@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from datetime import date
+import os
+from dataclasses import replace
+from datetime import UTC, date, datetime, time
 from pathlib import Path
 from typing import Annotated
 
@@ -9,22 +11,43 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
+from ai_trading_system.backtest.audit import (
+    build_backtest_audit_report,
+    default_backtest_audit_report_path,
+    write_backtest_audit_report,
+)
 from ai_trading_system.backtest.daily import (
     DEFAULT_BENCHMARK_TICKERS,
     BacktestRegimeContext,
     default_backtest_daily_path,
+    default_backtest_input_coverage_path,
     default_backtest_report_path,
     run_daily_score_backtest,
     write_backtest_daily_csv,
+    write_backtest_input_coverage_csv,
     write_backtest_report,
 )
+from ai_trading_system.belief_state import (
+    DEFAULT_BELIEF_STATE_DIR,
+    DEFAULT_BELIEF_STATE_HISTORY_PATH,
+    append_belief_state_history,
+    build_belief_state,
+    default_belief_state_path,
+    render_belief_state_summary,
+    write_belief_state,
+)
 from ai_trading_system.config import (
+    DEFAULT_CONFIG_PATH,
+    DEFAULT_DATA_QUALITY_CONFIG_PATH,
     DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    DEFAULT_FEATURE_CONFIG_PATH,
     DEFAULT_FUNDAMENTAL_FEATURES_CONFIG_PATH,
     DEFAULT_FUNDAMENTAL_METRICS_CONFIG_PATH,
     DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH,
     DEFAULT_MARKET_REGIMES_CONFIG_PATH,
+    DEFAULT_PORTFOLIO_CONFIG_PATH,
     DEFAULT_RISK_EVENTS_CONFIG_PATH,
+    DEFAULT_SCORING_RULES_CONFIG_PATH,
     DEFAULT_SEC_COMPANIES_CONFIG_PATH,
     DEFAULT_WATCHLIST_CONFIG_PATH,
     PROJECT_ROOT,
@@ -60,6 +83,21 @@ from ai_trading_system.data_sources import (
     validate_data_sources_config,
     write_data_sources_validation_report,
 )
+from ai_trading_system.decision_outcomes import (
+    DEFAULT_DECISION_OUTCOMES_PATH,
+    DEFAULT_OUTCOME_HORIZONS,
+    build_decision_outcomes,
+    default_decision_calibration_report_path,
+    load_decision_snapshots,
+    write_decision_calibration_report,
+    write_decision_outcomes_csv,
+)
+from ai_trading_system.decision_snapshots import (
+    DEFAULT_DECISION_SNAPSHOT_DIR,
+    build_decision_snapshot,
+    default_decision_snapshot_path,
+    write_decision_snapshot,
+)
 from ai_trading_system.features.market import (
     build_market_features,
     default_feature_report_path,
@@ -84,8 +122,10 @@ from ai_trading_system.fundamentals.sec_metrics import (
     default_sec_fundamental_metrics_csv_path,
     default_sec_fundamental_metrics_report_path,
     default_sec_fundamental_metrics_validation_report_path,
+    load_sec_fundamental_metric_rows_csv,
     validate_sec_fundamental_metric_rows,
     validate_sec_fundamental_metrics_csv,
+    write_sec_fundamental_metric_rows_csv,
     write_sec_fundamental_metrics_csv,
     write_sec_fundamental_metrics_report,
     write_sec_fundamental_metrics_validation_report,
@@ -95,12 +135,57 @@ from ai_trading_system.fundamentals.sec_validation import (
     validate_sec_companyfacts_cache,
     write_sec_companyfacts_validation_report,
 )
+from ai_trading_system.fundamentals.tsm_ir import (
+    TsmIrHttpProvider,
+    TsmIrQuarterlyMetricRow,
+    build_tsm_ir_quarterly_batch_import_report,
+    build_tsm_ir_sec_metric_conversion_report,
+    extract_tsm_ir_pdf_text,
+    load_tsm_ir_quarterly_metric_rows_csv,
+    merge_tsm_ir_quarterly_rows_into_sec_metrics,
+    merge_tsm_ir_quarterly_rows_into_sec_metrics_as_of,
+    parse_tsm_ir_management_report_text,
+    select_tsm_ir_management_report_resource,
+    select_tsm_ir_quarterly_metric_rows_as_of,
+    write_tsm_ir_pdf_text_extraction_report,
+    write_tsm_ir_quarterly_batch_import_report,
+    write_tsm_ir_quarterly_batch_metrics_csv,
+    write_tsm_ir_quarterly_metrics_csv,
+    write_tsm_ir_quarterly_report,
+)
+from ai_trading_system.historical_inputs import (
+    build_historical_risk_event_occurrence_review_report,
+    build_historical_valuation_review_report,
+)
 from ai_trading_system.industry_chain import (
     default_industry_chain_report_path,
     validate_industry_chain_config,
     write_industry_chain_validation_report,
 )
+from ai_trading_system.market_evidence import (
+    default_market_evidence_report_path,
+    import_market_evidence_csv,
+    load_market_evidence_store,
+    validate_market_evidence_store,
+    write_market_evidence_import_report,
+    write_market_evidence_validation_report,
+    write_market_evidence_yaml,
+)
+from ai_trading_system.report_traceability import (
+    build_backtest_trace_bundle,
+    build_daily_score_trace_bundle,
+    default_report_trace_bundle_path,
+    lookup_trace_record,
+    render_trace_lookup,
+    render_traceability_section,
+    write_trace_bundle,
+)
 from ai_trading_system.reports.daily import render_recommendation_markdown
+from ai_trading_system.risk_event_sources import (
+    import_risk_event_occurrences_csv,
+    write_risk_event_occurrence_import_report,
+    write_risk_event_occurrences_yaml,
+)
 from ai_trading_system.risk_events import (
     RiskEventOccurrenceReviewReport,
     RiskEventsValidationReport,
@@ -118,6 +203,7 @@ from ai_trading_system.scoring.daily import (
     DailyReviewSummary,
     build_daily_score_report,
     default_daily_score_report_path,
+    load_previous_daily_score_snapshot,
     write_daily_score_report,
     write_scores_csv,
 )
@@ -148,10 +234,35 @@ from ai_trading_system.valuation import (
     write_valuation_review_report,
     write_valuation_validation_report,
 )
+from ai_trading_system.valuation_sources import (
+    default_fmp_analyst_estimate_history_dir,
+    default_fmp_analyst_history_validation_report_path,
+    default_fmp_historical_valuation_fetch_report_path,
+    default_fmp_historical_valuation_raw_dir,
+    default_fmp_valuation_fetch_report_path,
+    fetch_fmp_historical_valuation_snapshots,
+    fetch_fmp_valuation_snapshots,
+    import_valuation_snapshots_from_csv,
+    validate_fmp_analyst_estimate_history,
+    write_fmp_analyst_estimate_history_snapshots,
+    write_fmp_analyst_history_validation_report,
+    write_fmp_historical_valuation_fetch_report,
+    write_fmp_historical_valuation_raw_payloads,
+    write_fmp_valuation_fetch_report,
+    write_valuation_csv_import_report,
+    write_valuation_snapshots_as_yaml,
+)
 from ai_trading_system.watchlist import (
     default_watchlist_report_path,
     validate_watchlist_config,
     write_watchlist_validation_report,
+)
+from ai_trading_system.watchlist_lifecycle import (
+    DEFAULT_WATCHLIST_LIFECYCLE_PATH,
+    default_watchlist_lifecycle_report_path,
+    load_watchlist_lifecycle,
+    validate_watchlist_lifecycle,
+    write_watchlist_lifecycle_report,
 )
 
 app = typer.Typer(help="AI 产业链趋势分析和仓位管理工具。", no_args_is_help=True)
@@ -162,6 +273,9 @@ risk_events_app = typer.Typer(help="风险事件分级和动作规则管理。",
 valuation_app = typer.Typer(help="估值、预期和拥挤度快照管理。", no_args_is_help=True)
 data_sources_app = typer.Typer(help="数据源目录和审计规则管理。", no_args_is_help=True)
 fundamentals_app = typer.Typer(help="基本面数据源下载和审计。", no_args_is_help=True)
+trace_app = typer.Typer(help="报告 evidence bundle 反查。", no_args_is_help=True)
+evidence_app = typer.Typer(help="新市场信息 evidence 账本。", no_args_is_help=True)
+feedback_app = typer.Typer(help="决策结果观察和校准。", no_args_is_help=True)
 app.add_typer(watchlist_app, name="watchlist")
 app.add_typer(industry_chain_app, name="industry-chain")
 app.add_typer(thesis_app, name="thesis")
@@ -169,10 +283,234 @@ app.add_typer(risk_events_app, name="risk-events")
 app.add_typer(valuation_app, name="valuation")
 app.add_typer(data_sources_app, name="data-sources")
 app.add_typer(fundamentals_app, name="fundamentals")
+app.add_typer(trace_app, name="trace")
+app.add_typer(evidence_app, name="evidence")
+app.add_typer(feedback_app, name="feedback")
 console = Console()
 DEFAULT_RISK_EVENT_OCCURRENCES_PATH = (
     PROJECT_ROOT / "data" / "external" / "risk_event_occurrences"
 )
+DEFAULT_MARKET_EVIDENCE_PATH = PROJECT_ROOT / "data" / "external" / "market_evidence"
+DEFAULT_FMP_ANALYST_ESTIMATE_HISTORY_DIR = default_fmp_analyst_estimate_history_dir(
+    PROJECT_ROOT / "data" / "raw"
+)
+DEFAULT_FMP_HISTORICAL_VALUATION_RAW_DIR = default_fmp_historical_valuation_raw_dir(
+    PROJECT_ROOT / "data" / "raw"
+)
+
+
+@trace_app.command("lookup")
+def trace_lookup(
+    bundle_path: Annotated[
+        Path,
+        typer.Option(help="evidence bundle JSON 路径。"),
+    ],
+    object_id: Annotated[
+        str,
+        typer.Option("--id", help="claim/evidence/dataset/quality/run id。"),
+    ],
+) -> None:
+    """按 ID 反查报告 evidence bundle 中的上下文。"""
+    try:
+        record_type, record = lookup_trace_record(bundle_path, object_id)
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(f"evidence bundle 不存在：{bundle_path}") from exc
+    except KeyError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(render_trace_lookup(record_type, record))
+
+
+@evidence_app.command("validate")
+def validate_market_evidence(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="market_evidence YAML 文件或目录路径。"),
+    ] = DEFAULT_MARKET_EVIDENCE_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown evidence 校验报告输出路径。"),
+    ] = None,
+) -> None:
+    """校验新市场信息 evidence 账本。"""
+    validation_date = _parse_date(as_of) if as_of else date.today()
+    report_path = output_path or default_market_evidence_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        validation_date,
+    )
+    report = validate_market_evidence_store(
+        load_market_evidence_store(input_path),
+        as_of=validation_date,
+    )
+    write_market_evidence_validation_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]Market evidence 状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_path}")
+    console.print(f"证据数：{report.evidence_count}；待复核：{report.pending_review_count}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+
+@evidence_app.command("import-csv")
+def import_market_evidence_command(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="人工复核或 LLM 分类后的 market_evidence CSV 路径。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="写入 market_evidence YAML 的目录。"),
+    ] = DEFAULT_MARKET_EVIDENCE_PATH,
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 导入报告输出路径。"),
+    ] = None,
+) -> None:
+    """从 CSV 导入 market_evidence YAML。"""
+    import_report = import_market_evidence_csv(input_path)
+    import_report_output = report_path or (
+        PROJECT_ROOT / "outputs" / "reports" / f"market_evidence_import_{date.today()}.md"
+    )
+    write_market_evidence_import_report(import_report, import_report_output)
+    if not import_report.passed:
+        console.print("[red]Market evidence CSV 导入失败，未写入 YAML。[/red]")
+        console.print(f"导入报告：{import_report_output}")
+        raise typer.Exit(code=1)
+
+    written_paths = write_market_evidence_yaml(import_report.evidence, output_dir)
+    console.print("[green]Market evidence 已导入。[/green]")
+    console.print(f"导入报告：{import_report_output}")
+    console.print(f"写入证据数：{len(written_paths)}")
+    console.print(f"输出目录：{output_dir}")
+
+
+@feedback_app.command("calibrate")
+def calibrate_decision_outcomes(
+    decision_snapshot_path: Annotated[
+        Path,
+        typer.Option(help="decision_snapshot JSON 文件或目录路径。"),
+    ] = DEFAULT_DECISION_SNAPSHOT_DIR,
+    prices_path: Annotated[
+        Path,
+        typer.Option(help="标准化日线价格 CSV 路径。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    rates_path: Annotated[
+        Path,
+        typer.Option(help="标准化日线利率 CSV 路径，用于复用数据质量门禁。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="校准截止日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    horizons: Annotated[
+        str,
+        typer.Option(help="逗号分隔的 outcome 观察窗口，单位为交易日。"),
+    ] = ",".join(str(item) for item in DEFAULT_OUTCOME_HORIZONS),
+    strategy_ticker: Annotated[
+        str,
+        typer.Option(help="AI proxy 或策略代理标的。"),
+    ] = "SMH",
+    benchmarks: Annotated[
+        str,
+        typer.Option(help="逗号分隔的对比基准 ticker。"),
+    ] = ",".join(DEFAULT_BENCHMARK_TICKERS),
+    outcomes_path: Annotated[
+        Path,
+        typer.Option(help="decision_outcomes CSV 输出路径。"),
+    ] = DEFAULT_DECISION_OUTCOMES_PATH,
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 校准报告输出路径。"),
+    ] = None,
+    quality_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 数据质量报告输出路径。"),
+    ] = None,
+) -> None:
+    """从历史 decision_snapshot 生成 outcome 和评分校准报告。"""
+    calibration_date = _parse_date(as_of) if as_of else date.today()
+    horizon_values = _parse_positive_int_csv(horizons, "outcome 观察窗口")
+    benchmark_tickers = tuple(_parse_csv_items(benchmarks))
+    if not benchmark_tickers:
+        raise typer.BadParameter("至少需要一个对比基准 ticker。")
+    tickers = list(dict.fromkeys([strategy_ticker, *benchmark_tickers]))
+    universe = load_universe()
+    data_quality_config = load_data_quality()
+    quality_output = quality_report_path or default_quality_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        calibration_date,
+    )
+    data_quality_report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=tickers,
+        expected_rate_series=configured_rate_series(universe),
+        quality_config=data_quality_config,
+        as_of=calibration_date,
+        manifest_path=_download_manifest_path(prices_path),
+    )
+    write_data_quality_report(data_quality_report, quality_output)
+    if not data_quality_report.passed:
+        console.print("[red]数据质量门禁失败，已停止决策校准。[/red]")
+        console.print(f"数据质量报告：{quality_output}")
+        console.print(
+            f"错误数：{data_quality_report.error_count}；"
+            f"警告数：{data_quality_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+
+    snapshots = load_decision_snapshots(decision_snapshot_path)
+    if not snapshots:
+        raise typer.BadParameter(f"未找到 decision_snapshot：{decision_snapshot_path}")
+    prices_frame = pd.read_csv(prices_path)
+    market_regimes = load_market_regimes(DEFAULT_MARKET_REGIMES_CONFIG_PATH)
+    default_market_regime = market_regime_by_id(
+        market_regimes,
+        market_regimes.default_backtest_regime,
+    )
+    market_regime = BacktestRegimeContext(
+        regime_id=default_market_regime.regime_id,
+        name=default_market_regime.name,
+        start_date=default_market_regime.start_date,
+        anchor_date=default_market_regime.anchor_date,
+        anchor_event=default_market_regime.anchor_event,
+        description=default_market_regime.description,
+    )
+    result = build_decision_outcomes(
+        snapshots=snapshots,
+        prices=prices_frame,
+        as_of=calibration_date,
+        horizons=tuple(horizon_values),
+        strategy_ticker=strategy_ticker,
+        benchmark_tickers=benchmark_tickers,
+        market_regime=market_regime,
+        data_quality_report=data_quality_report,
+    )
+    outcomes_output = write_decision_outcomes_csv(result, outcomes_path)
+    calibration_report_output = report_path or default_decision_calibration_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        calibration_date,
+    )
+    calibration_report_output = write_decision_calibration_report(
+        result,
+        outcomes_path=outcomes_output,
+        data_quality_report_path=quality_output,
+        output_path=calibration_report_output,
+    )
+
+    status_style = "green" if len(result.available_rows) >= 30 else "yellow"
+    console.print(
+        f"[{status_style}]决策校准完成。可用 outcome："
+        f"{len(result.available_rows)}[/{status_style}]"
+    )
+    console.print(f"校准报告：{calibration_report_output}")
+    console.print(f"Outcome CSV：{outcomes_output}")
+    console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
 
 
 @app.callback()
@@ -344,6 +682,10 @@ def backtest(
         float,
         typer.Option(help="单边交易成本，单位 bps。"),
     ] = 5.0,
+    slippage_bps: Annotated[
+        float,
+        typer.Option(help="线性滑点或盘口冲击估算，单位 bps；默认不额外扣除。"),
+    ] = 0.0,
     regime: Annotated[
         str | None,
         typer.Option(
@@ -359,6 +701,29 @@ def backtest(
         Path | None,
         typer.Option(help="每日回测明细 CSV 输出路径。"),
     ] = None,
+    input_coverage_output_path: Annotated[
+        Path | None,
+        typer.Option(help="机器可读历史输入覆盖诊断 CSV 输出路径。"),
+    ] = None,
+    audit_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 回测输入审计报告输出路径。"),
+    ] = None,
+    trace_bundle_path: Annotated[
+        Path | None,
+        typer.Option(help="JSON evidence bundle 输出路径。"),
+    ] = None,
+    minimum_component_coverage: Annotated[
+        float,
+        typer.Option(help="审计用评分模块最低平均覆盖率阈值，范围 0-1。"),
+    ] = 0.9,
+    fail_on_audit_warning: Annotated[
+        bool,
+        typer.Option(
+            "--fail-on-audit-warning",
+            help="输入审计状态不是 PASS 时返回非零退出码，适合严格本地门禁。",
+        ),
+    ] = False,
     report_path: Annotated[
         Path | None,
         typer.Option(help="Markdown 回测报告输出路径。"),
@@ -383,9 +748,33 @@ def backtest(
         Path,
         typer.Option(help="SEC companyfacts 原始 JSON 缓存目录。"),
     ] = PROJECT_ROOT / "data" / "raw" / "sec_companyfacts",
+    tsm_ir_input_path: Annotated[
+        Path,
+        typer.Option(help="TSMC IR 季度指标 CSV，用于补齐 TSM point-in-time 回测基本面。"),
+    ] = PROJECT_ROOT / "data" / "processed" / "tsm_ir_quarterly_metrics.csv",
     sec_companyfacts_validation_report_path: Annotated[
         Path | None,
         typer.Option(help="Markdown SEC companyfacts 缓存校验报告输出路径。"),
+    ] = None,
+    valuation_path: Annotated[
+        Path,
+        typer.Option(help="估值快照 YAML 文件或目录路径，用于 point-in-time 回测评分。"),
+    ] = PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+    risk_events_path: Annotated[
+        Path,
+        typer.Option(help="风险事件配置路径，用于 point-in-time 回测评分。"),
+    ] = DEFAULT_RISK_EVENTS_CONFIG_PATH,
+    risk_event_occurrences_path: Annotated[
+        Path,
+        typer.Option(help="风险事件发生记录 YAML 文件或目录路径，用于 point-in-time 回测评分。"),
+    ] = DEFAULT_RISK_EVENT_OCCURRENCES_PATH,
+    watchlist_lifecycle_path: Annotated[
+        Path,
+        typer.Option(help="观察池 point-in-time lifecycle 配置路径，用于回测按 signal_date 过滤。"),
+    ] = DEFAULT_WATCHLIST_LIFECYCLE_PATH,
+    watchlist_lifecycle_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 观察池 lifecycle 校验报告输出路径。"),
     ] = None,
     quality_as_of: Annotated[
         str | None,
@@ -401,6 +790,9 @@ def backtest(
 ) -> None:
     """基于每日评分规则运行历史回测。"""
     universe = load_universe()
+    industry_chain = load_industry_chain()
+    watchlist = load_watchlist()
+    watchlist_lifecycle = load_watchlist_lifecycle(watchlist_lifecycle_path)
     data_quality_config = load_data_quality()
     feature_config = load_features()
     scoring_rules = load_scoring_rules()
@@ -418,6 +810,8 @@ def backtest(
     benchmark_tickers = _parse_csv_items(benchmarks)
     if not benchmark_tickers:
         raise typer.BadParameter("至少需要一个基准标的。")
+    if not 0.0 <= minimum_component_coverage <= 1.0:
+        raise typer.BadParameter("审计覆盖率阈值必须在 0 到 1 之间。")
 
     quality_output = quality_report_path or default_quality_report_path(
         PROJECT_ROOT / "outputs" / "reports",
@@ -428,14 +822,37 @@ def backtest(
         start_date,
         end_date,
     )
+    backtest_input_coverage_output = (
+        input_coverage_output_path
+        or default_backtest_input_coverage_path(
+            PROJECT_ROOT / "outputs" / "backtests",
+            start_date,
+            end_date,
+        )
+    )
     backtest_report_output = report_path or default_backtest_report_path(
         PROJECT_ROOT / "outputs" / "backtests",
         start_date,
         end_date,
     )
+    backtest_audit_output = audit_output_path or default_backtest_audit_report_path(
+        PROJECT_ROOT / "outputs" / "backtests",
+        start_date,
+        end_date,
+    )
+    backtest_trace_output = trace_bundle_path or default_report_trace_bundle_path(
+        backtest_report_output
+    )
     sec_companyfacts_validation_output = (
         sec_companyfacts_validation_report_path
         or default_sec_companyfacts_validation_report_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            quality_date,
+        )
+    )
+    watchlist_lifecycle_report_output = (
+        watchlist_lifecycle_report_path
+        or default_watchlist_lifecycle_report_path(
             PROJECT_ROOT / "outputs" / "reports",
             quality_date,
         )
@@ -463,6 +880,26 @@ def backtest(
         )
         raise typer.Exit(code=1)
 
+    watchlist_lifecycle_report = validate_watchlist_lifecycle(
+        lifecycle=watchlist_lifecycle,
+        input_path=watchlist_lifecycle_path,
+        watchlist=watchlist,
+        universe=universe,
+        as_of=quality_date,
+    )
+    write_watchlist_lifecycle_report(
+        watchlist_lifecycle_report,
+        watchlist_lifecycle_report_output,
+    )
+    if not watchlist_lifecycle_report.passed:
+        console.print("[red]观察池 lifecycle 校验失败，已停止回测。[/red]")
+        console.print(f"观察池 lifecycle 报告：{watchlist_lifecycle_report_output}")
+        console.print(
+            f"错误数：{watchlist_lifecycle_report.error_count}；"
+            f"警告数：{watchlist_lifecycle_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+
     prices_frame = pd.read_csv(prices_path)
     rates_frame = pd.read_csv(rates_path)
     signal_dates = _backtest_signal_dates(
@@ -477,8 +914,26 @@ def backtest(
         sec_metrics_path=sec_metrics_path,
         fundamental_feature_config_path=fundamental_feature_config_path,
         sec_companyfacts_dir=sec_companyfacts_dir,
+        tsm_ir_input_path=tsm_ir_input_path,
         validation_as_of=quality_date,
         validation_report_output=sec_companyfacts_validation_output,
+    )
+    valuation_review_reports = _build_backtest_valuation_review_reports(
+        signal_dates=signal_dates,
+        valuation_path=valuation_path,
+        universe=universe,
+        watchlist=watchlist,
+    )
+    risk_event_occurrence_review_reports = (
+        _build_backtest_risk_event_occurrence_review_reports(
+            signal_dates=signal_dates,
+            risk_events_path=risk_events_path,
+            risk_event_occurrences_path=risk_event_occurrences_path,
+            universe=universe,
+            industry_chain=industry_chain,
+            watchlist=watchlist,
+            validation_as_of=quality_date,
+        )
     )
 
     result = run_daily_score_backtest(
@@ -494,7 +949,11 @@ def backtest(
         strategy_ticker=strategy_ticker,
         benchmark_tickers=tuple(benchmark_tickers),
         cost_bps=cost_bps,
+        slippage_bps=slippage_bps,
         fundamental_feature_reports=sec_fundamental_feature_reports,
+        valuation_review_reports=valuation_review_reports,
+        risk_event_occurrence_review_reports=risk_event_occurrence_review_reports,
+        watchlist_lifecycle=watchlist_lifecycle,
         market_regime=BacktestRegimeContext(
             regime_id=selected_regime.regime_id,
             name=selected_regime.name,
@@ -505,15 +964,59 @@ def backtest(
         ),
     )
     daily_output = write_backtest_daily_csv(result, backtest_daily_output)
+    input_coverage_output = write_backtest_input_coverage_csv(
+        result,
+        backtest_input_coverage_output,
+    )
+    audit_report = build_backtest_audit_report(
+        result=result,
+        data_quality_report_path=quality_output,
+        backtest_report_path=backtest_report_output,
+        daily_output_path=daily_output,
+        input_coverage_output_path=input_coverage_output,
+        sec_companyfacts_validation_report_path=sec_companyfacts_validation_output,
+        minimum_component_coverage=minimum_component_coverage,
+    )
+    audit_output = write_backtest_audit_report(audit_report, backtest_audit_output)
+    backtest_trace_bundle = build_backtest_trace_bundle(
+        result=result,
+        audit_report=audit_report,
+        report_path=backtest_report_output,
+        data_quality_report_path=quality_output,
+        daily_output_path=daily_output,
+        input_coverage_output_path=input_coverage_output,
+        audit_report_path=audit_output,
+        config_paths=_backtest_trace_config_paths(
+            regimes_path=regimes_path,
+            sec_companies_path=sec_companies_path,
+            sec_metrics_path=sec_metrics_path,
+            fundamental_feature_config_path=fundamental_feature_config_path,
+            risk_events_path=risk_events_path,
+            watchlist_lifecycle_path=watchlist_lifecycle_path,
+        ),
+        sec_companyfacts_validation_report_path=sec_companyfacts_validation_output,
+    )
+    backtest_trace_output = write_trace_bundle(
+        backtest_trace_bundle,
+        backtest_trace_output,
+    )
     report_output = write_backtest_report(
         result,
         data_quality_report_path=quality_output,
         daily_output_path=daily_output,
         output_path=backtest_report_output,
         sec_companyfacts_validation_report_path=sec_companyfacts_validation_output,
+        input_coverage_output_path=input_coverage_output,
+        audit_report_path=audit_output,
+        traceability_section=render_traceability_section(
+            backtest_trace_bundle,
+            backtest_trace_output,
+        ),
     )
 
     console.print(f"[yellow]回测状态：{result.status}[/yellow]")
+    audit_style = "green" if audit_report.status == "PASS" else "yellow"
+    console.print(f"[{audit_style}]输入审计状态：{audit_report.status}[/{audit_style}]")
     if result.market_regime is not None:
         console.print(
             f"市场阶段：{result.market_regime.name}（{result.market_regime.regime_id}）"
@@ -522,14 +1025,30 @@ def backtest(
     console.print(f"策略 CAGR：{result.strategy_metrics.cagr:.1%}")
     console.print(f"策略最大回撤：{result.strategy_metrics.max_drawdown:.1%}")
     console.print(f"回测报告：{report_output}")
+    console.print(f"观察池 lifecycle 报告：{watchlist_lifecycle_report_output}")
+    console.print(f"Evidence bundle：{backtest_trace_output}")
+    console.print(f"输入审计报告：{audit_output}")
     console.print(f"每日明细：{daily_output}")
+    console.print(f"历史输入覆盖诊断：{input_coverage_output}")
     console.print(
         f"SEC 基本面切片：{result.fundamental_feature_report_count} 个 signal_date"
+    )
+    console.print(
+        f"估值快照切片：{result.valuation_review_report_count} 个 signal_date"
+    )
+    console.print(
+        "风险事件发生记录切片："
+        f"{result.risk_event_occurrence_review_report_count} 个 signal_date"
     )
     console.print(
         f"SEC companyfacts 校验报告：{sec_companyfacts_validation_output}"
     )
     console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
+    if fail_on_audit_warning and audit_report.status != "PASS":
+        console.print(
+            "[red]输入审计未达到 PASS，严格审计门禁已返回失败。[/red]"
+        )
+        raise typer.Exit(code=1)
 
 
 @watchlist_app.command("list")
@@ -605,6 +1124,54 @@ def validate_watchlist(
     console.print(f"[{status_style}]观察池校验状态：{report.status}[/{status_style}]")
     console.print(f"报告：{report_path}")
     console.print(f"活跃标的数：{report.active_count}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+
+@watchlist_app.command("validate-lifecycle")
+def validate_watchlist_lifecycle_command(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="观察池 lifecycle YAML 配置路径。"),
+    ] = DEFAULT_WATCHLIST_LIFECYCLE_PATH,
+    watchlist_path: Annotated[
+        Path,
+        typer.Option(help="当前观察池配置路径，用于一致性校验。"),
+    ] = DEFAULT_WATCHLIST_CONFIG_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown lifecycle 校验报告输出路径。"),
+    ] = None,
+) -> None:
+    """校验观察池 point-in-time 生命周期。"""
+    universe = load_universe()
+    watchlist = load_watchlist(watchlist_path)
+    validation_date = _parse_date(as_of) if as_of else date.today()
+    report_path = output_path or default_watchlist_lifecycle_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        validation_date,
+    )
+    report = validate_watchlist_lifecycle(
+        lifecycle=load_watchlist_lifecycle(input_path),
+        input_path=input_path,
+        watchlist=watchlist,
+        universe=universe,
+        as_of=validation_date,
+    )
+    write_watchlist_lifecycle_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(
+        f"[{status_style}]观察池 lifecycle 校验状态：{report.status}[/{status_style}]"
+    )
+    console.print(f"报告：{report_path}")
+    console.print(f"生命周期记录数：{report.entry_count}；当前活跃：{report.active_entry_count}")
     console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
 
     if not report.passed:
@@ -969,6 +1536,87 @@ def list_risk_event_occurrences(
             "[red]存在 "
             f"{len(store.load_errors)} 个加载错误，请运行 validate-occurrences 查看。[/red]"
         )
+
+
+@risk_events_app.command("import-occurrences-csv")
+def import_risk_event_occurrences_csv_command(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="人工复核后的风险事件发生记录 CSV 输入路径。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="写入风险事件发生记录 YAML 的目录。"),
+    ] = DEFAULT_RISK_EVENT_OCCURRENCES_PATH,
+    risk_events_path: Annotated[
+        Path,
+        typer.Option(help="风险事件配置路径，用于导入后校验 event_id。"),
+    ] = DEFAULT_RISK_EVENTS_CONFIG_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="导入和校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown CSV 导入报告输出路径。"),
+    ] = None,
+    validation_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 风险事件发生记录校验报告输出路径。"),
+    ] = None,
+) -> None:
+    """导入人工复核后的风险事件发生记录 CSV，并写入可审计 YAML。"""
+    import_date = _parse_date(as_of) if as_of else date.today()
+    import_report_output = output_path or (
+        PROJECT_ROOT / "outputs" / "reports" / f"risk_event_occurrence_import_{import_date}.md"
+    )
+    validation_output = validation_report_path or default_risk_event_occurrence_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        import_date,
+    )
+    import_report = import_risk_event_occurrences_csv(input_path)
+    write_risk_event_occurrence_import_report(import_report, import_report_output)
+
+    status_style = (
+        "green" if import_report.status == "PASS" else "yellow" if import_report.passed else "red"
+    )
+    console.print(
+        f"[{status_style}]风险事件发生记录 CSV 导入状态："
+        f"{import_report.status}[/{status_style}]"
+    )
+    console.print(f"导入报告：{import_report_output}")
+    console.print(
+        f"CSV 行数：{import_report.row_count}；"
+        f"发生记录：{import_report.occurrence_count}"
+    )
+    console.print(f"错误数：{import_report.error_count}；警告数：{import_report.warning_count}")
+    if not import_report.passed:
+        raise typer.Exit(code=1)
+
+    written_paths = write_risk_event_occurrences_yaml(import_report, output_dir)
+    validation_report = validate_risk_event_occurrence_store(
+        store=load_risk_event_occurrence_store(output_dir),
+        risk_events=load_risk_events(risk_events_path),
+        as_of=import_date,
+    )
+    review_report = build_risk_event_occurrence_review_report(validation_report)
+    write_risk_event_occurrence_review_report(review_report, validation_output)
+
+    validation_style = (
+        "green"
+        if validation_report.status == "PASS"
+        else "yellow"
+        if validation_report.passed
+        else "red"
+    )
+    console.print(f"写入 YAML：{len(written_paths)} 个文件 -> {output_dir}")
+    console.print(
+        f"[{validation_style}]风险事件发生记录校验状态："
+        f"{validation_report.status}[/{validation_style}]"
+    )
+    console.print(f"校验报告：{validation_output}")
+    if not validation_report.passed:
+        raise typer.Exit(code=1)
 
 
 @risk_events_app.command("validate-occurrences")
@@ -1483,6 +2131,819 @@ def build_sec_features_command(
         raise typer.Exit(code=1)
 
 
+@fundamentals_app.command("extract-tsm-ir-pdf-text")
+def extract_tsm_ir_pdf_text_command(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="本地 TSMC IR Management Report 官方 PDF 输入路径。"),
+    ],
+    source_url: Annotated[
+        str,
+        typer.Option(help="TSMC Investor Relations 官方 PDF URL。"),
+    ],
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="抽取后的 Management Report 文本输出路径。"),
+    ] = None,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="报告日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    extracted_at: Annotated[
+        str | None,
+        typer.Option(help="抽取时间，ISO datetime 或 YYYY-MM-DD；默认当前 UTC 时间。"),
+    ] = None,
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown TSMC IR PDF 文本抽取报告输出路径。"),
+    ] = None,
+) -> None:
+    """从 TSMC IR 官方 PDF 的可抽取文本层生成 Management Report 文本。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    extraction_datetime = _parse_datetime(extracted_at) if extracted_at else datetime.now(tz=UTC)
+    text_output = output_path or (
+        PROJECT_ROOT
+        / "data"
+        / "external"
+        / "fundamentals"
+        / "tsm_ir"
+        / f"{input_path.stem}.txt"
+    )
+    markdown_output = report_path or (
+        PROJECT_ROOT / "outputs" / "reports" / f"tsm_ir_pdf_text_{report_date}.md"
+    )
+
+    report = extract_tsm_ir_pdf_text(
+        input_path=input_path,
+        source_url=source_url,
+        output_path=text_output,
+        extracted_at=extraction_datetime,
+    )
+    markdown_path = write_tsm_ir_pdf_text_extraction_report(report, markdown_output)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]TSMC IR PDF 文本抽取状态：{report.status}[/{status_style}]")
+    console.print(f"Source URL：{source_url}")
+    console.print(f"PDF：{input_path}")
+    console.print(f"抽取文本：{text_output}")
+    console.print(f"报告：{markdown_path}")
+    console.print(f"页数：{report.page_count}；字符数：{report.character_count}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if not report.passed:
+        console.print("[red]TSMC IR PDF 文本抽取未通过，未生成可用于导入的可信文本。[/red]")
+        raise typer.Exit(code=1)
+
+
+@fundamentals_app.command("import-tsm-ir-quarterly")
+def import_tsm_ir_quarterly(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="TSMC IR Management Report 已抽取文本输入路径。"),
+    ],
+    source_url: Annotated[
+        str,
+        typer.Option(help="TSMC Investor Relations 官方季度页面或 Management Report URL。"),
+    ],
+    fiscal_year: Annotated[
+        int,
+        typer.Option(help="财年，例如 2026。"),
+    ],
+    fiscal_period: Annotated[
+        str,
+        typer.Option(help="财期，例如 Q1、Q2、Q3 或 Q4。"),
+    ],
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="导入评估日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    captured_at: Annotated[
+        str | None,
+        typer.Option(help="采集时间，ISO datetime 或 YYYY-MM-DD；默认当前 UTC 时间。"),
+    ] = None,
+    filed_date: Annotated[
+        str | None,
+        typer.Option(
+            help=(
+                "TSMC IR Management Report 公开/披露日期，格式为 YYYY-MM-DD；"
+                "未提供时使用 captured_at 日期。"
+            ),
+        ),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="TSMC IR 季度指标 CSV 输出路径。"),
+    ] = None,
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown TSMC IR 季度基本面报告输出路径。"),
+    ] = None,
+) -> None:
+    """从 TSMC IR 官方 Management Report 文本导入季度基本面指标。"""
+    import_date = _parse_date(as_of) if as_of else date.today()
+    captured_datetime = _parse_datetime(captured_at) if captured_at else datetime.now(tz=UTC)
+    disclosed_date = _parse_date(filed_date) if filed_date else None
+    csv_output = output_path or (
+        PROJECT_ROOT / "data" / "processed" / "tsm_ir_quarterly_metrics.csv"
+    )
+    normalized_period = fiscal_period.upper()
+    if normalized_period not in {"Q1", "Q2", "Q3", "Q4"}:
+        raise typer.BadParameter("财期必须是 Q1、Q2、Q3 或 Q4。")
+    markdown_output = report_path or (
+        PROJECT_ROOT
+        / "outputs"
+        / "reports"
+        / f"tsm_ir_quarterly_{fiscal_year}_{normalized_period}_{import_date}.md"
+    )
+    report = parse_tsm_ir_management_report_text(
+        text=input_path.read_text(encoding="utf-8"),
+        source_url=source_url,
+        fiscal_year=fiscal_year,
+        fiscal_period=normalized_period,
+        as_of=import_date,
+        captured_at=captured_datetime,
+        source_path=input_path,
+        filed_date=disclosed_date,
+    )
+    markdown_path = write_tsm_ir_quarterly_report(report, markdown_output)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]TSMC IR 季度基本面导入状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{markdown_path}")
+    console.print(f"指标行数：{report.row_count}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if not report.passed:
+        console.print("[red]TSMC IR 季度基本面报告未通过，指标 CSV 未写入。[/red]")
+        raise typer.Exit(code=1)
+
+    csv_path = write_tsm_ir_quarterly_metrics_csv(report, csv_output)
+    console.print(f"指标 CSV：{csv_path}")
+
+
+@fundamentals_app.command("import-tsm-ir-quarterly-batch")
+def import_tsm_ir_quarterly_batch(
+    manifest_path: Annotated[
+        Path,
+        typer.Option(
+            help=(
+                "TSMC IR 批量导入 manifest CSV，字段为 fiscal_year,"
+                "fiscal_period,source_url,input_path。"
+            ),
+        ),
+    ],
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="导入评估日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    captured_at: Annotated[
+        str | None,
+        typer.Option(help="采集时间，ISO datetime 或 YYYY-MM-DD；默认当前 UTC 时间。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="TSMC IR 季度指标 CSV 输出路径。"),
+    ] = None,
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown TSMC IR 批量季度基本面报告输出路径。"),
+    ] = None,
+) -> None:
+    """按 manifest 批量导入多个 TSMC IR Management Report 文本。"""
+    import_date = _parse_date(as_of) if as_of else date.today()
+    captured_datetime = _parse_datetime(captured_at) if captured_at else datetime.now(tz=UTC)
+    csv_output = output_path or (
+        PROJECT_ROOT / "data" / "processed" / "tsm_ir_quarterly_metrics.csv"
+    )
+    markdown_output = report_path or (
+        PROJECT_ROOT
+        / "outputs"
+        / "reports"
+        / f"tsm_ir_quarterly_batch_{import_date}.md"
+    )
+
+    report = build_tsm_ir_quarterly_batch_import_report(
+        manifest_path=manifest_path,
+        as_of=import_date,
+        captured_at=captured_datetime,
+        output_path=csv_output,
+    )
+    markdown_path = write_tsm_ir_quarterly_batch_import_report(report, markdown_output)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(
+        f"[{status_style}]TSMC IR 批量季度基本面导入状态："
+        f"{report.status}[/{status_style}]"
+    )
+    console.print(f"Manifest：{manifest_path}")
+    console.print(f"报告：{markdown_path}")
+    console.print(f"季度条目数：{report.entry_count}；指标行数：{report.row_count}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if not report.passed:
+        console.print("[red]TSMC IR 批量季度基本面报告未通过，指标 CSV 未写入。[/red]")
+        raise typer.Exit(code=1)
+
+    csv_path = write_tsm_ir_quarterly_batch_metrics_csv(report, csv_output)
+    console.print(f"指标 CSV：{csv_path}")
+
+
+@fundamentals_app.command("fetch-tsm-ir-quarterly")
+def fetch_tsm_ir_quarterly(
+    source_url: Annotated[
+        str,
+        typer.Option(help="TSMC Investor Relations 官方季度页面 URL。"),
+    ],
+    fiscal_year: Annotated[
+        int,
+        typer.Option(help="财年，例如 2026。"),
+    ],
+    fiscal_period: Annotated[
+        str,
+        typer.Option(help="财期，例如 Q1、Q2、Q3 或 Q4。"),
+    ],
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="导入评估日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    captured_at: Annotated[
+        str | None,
+        typer.Option(help="采集时间，ISO datetime 或 YYYY-MM-DD；默认当前 UTC 时间。"),
+    ] = None,
+    filed_date: Annotated[
+        str | None,
+        typer.Option(
+            help=(
+                "TSMC IR Management Report 公开/披露日期，格式为 YYYY-MM-DD；"
+                "未提供时使用 captured_at 日期。"
+            ),
+        ),
+    ] = None,
+    source_text_path: Annotated[
+        Path | None,
+        typer.Option(help="保存下载到的 Management Report 文本路径。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="TSMC IR 季度指标 CSV 输出路径。"),
+    ] = None,
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown TSMC IR 季度基本面报告输出路径。"),
+    ] = None,
+    timeout: Annotated[
+        float,
+        typer.Option(help="TSMC IR HTTP 请求超时时间，单位秒。"),
+    ] = 30.0,
+    user_agent: Annotated[
+        str,
+        typer.Option(
+            "--user-agent",
+            envvar="TSM_IR_USER_AGENT",
+            help="TSMC IR HTTP User-Agent；也可使用 TSM_IR_USER_AGENT 环境变量。",
+        ),
+    ] = "ai-trading-system tsm-ir/0.1",
+) -> None:
+    """从 TSMC IR 官方季度页面发现并下载 Management Report 文本后导入指标。"""
+    import_date = _parse_date(as_of) if as_of else date.today()
+    captured_datetime = _parse_datetime(captured_at) if captured_at else datetime.now(tz=UTC)
+    disclosed_date = _parse_date(filed_date) if filed_date else None
+    normalized_period = fiscal_period.upper()
+    if normalized_period not in {"Q1", "Q2", "Q3", "Q4"}:
+        raise typer.BadParameter("财期必须是 Q1、Q2、Q3 或 Q4。")
+
+    text_output = source_text_path or (
+        PROJECT_ROOT
+        / "data"
+        / "external"
+        / "fundamentals"
+        / "tsm_ir"
+        / f"{fiscal_year}_{normalized_period}_management_report_{import_date}.txt"
+    )
+    csv_output = output_path or (
+        PROJECT_ROOT / "data" / "processed" / "tsm_ir_quarterly_metrics.csv"
+    )
+    markdown_output = report_path or (
+        PROJECT_ROOT
+        / "outputs"
+        / "reports"
+        / f"tsm_ir_quarterly_{fiscal_year}_{normalized_period}_{import_date}.md"
+    )
+
+    provider = TsmIrHttpProvider(timeout=timeout, user_agent=user_agent)
+    try:
+        management_resource = select_tsm_ir_management_report_resource(
+            provider=provider,
+            source_url=source_url,
+        )
+        management_text = provider.download_text(management_resource.url)
+    except Exception as exc:
+        console.print("[red]TSMC IR 官方页面或 Management Report 文本下载失败。[/red]")
+        console.print(str(exc))
+        raise typer.Exit(code=1) from exc
+
+    text_output.parent.mkdir(parents=True, exist_ok=True)
+    text_output.write_text(management_text, encoding="utf-8")
+    report = parse_tsm_ir_management_report_text(
+        text=management_text,
+        source_url=management_resource.url,
+        fiscal_year=fiscal_year,
+        fiscal_period=normalized_period,
+        as_of=import_date,
+        captured_at=captured_datetime,
+        source_path=text_output,
+        filed_date=disclosed_date,
+    )
+    markdown_path = write_tsm_ir_quarterly_report(report, markdown_output)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]TSMC IR 季度基本面抓取状态：{report.status}[/{status_style}]")
+    console.print(f"季度页面：{source_url}")
+    console.print(f"Management Report URL：{management_resource.url}")
+    console.print(f"原始文本：{text_output}")
+    console.print(f"报告：{markdown_path}")
+    console.print(f"指标行数：{report.row_count}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if not report.passed:
+        console.print("[red]TSMC IR 季度基本面报告未通过，指标 CSV 未写入。[/red]")
+        raise typer.Exit(code=1)
+
+    csv_path = write_tsm_ir_quarterly_metrics_csv(report, csv_output)
+    console.print(f"指标 CSV：{csv_path}")
+
+
+@fundamentals_app.command("merge-tsm-ir-sec-metrics")
+def merge_tsm_ir_sec_metrics(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="TSMC IR 季度指标 CSV 输入路径。"),
+    ] = PROJECT_ROOT / "data" / "processed" / "tsm_ir_quarterly_metrics.csv",
+    sec_companies_path: Annotated[
+        Path,
+        typer.Option(help="SEC company CIK 配置文件路径；TSM 必须声明 quarterly。"),
+    ] = DEFAULT_SEC_COMPANIES_CONFIG_PATH,
+    metrics_path: Annotated[
+        Path,
+        typer.Option(help="SEC 指标映射配置文件路径，用于合并后校验。"),
+    ] = DEFAULT_FUNDAMENTAL_METRICS_CONFIG_PATH,
+    sec_input_path: Annotated[
+        Path | None,
+        typer.Option(help="既有 SEC 基本面指标 CSV；未提供时使用 as_of 默认路径。"),
+    ] = None,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="合并评估日期，格式为 YYYY-MM-DD；默认使用 TSM IR 输入最新 as_of。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="合并后的 SEC-style 基本面指标 CSV 输出路径。"),
+    ] = None,
+    validation_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown SEC 指标 CSV 校验报告输出路径。"),
+    ] = None,
+) -> None:
+    """把 TSMC IR 季度指标合并到统一 SEC-style 基本面指标 CSV。"""
+    if not input_path.exists():
+        raise typer.BadParameter(f"TSMC IR 季度指标 CSV 不存在：{input_path}")
+
+    all_tsm_rows = load_tsm_ir_quarterly_metric_rows_csv(input_path)
+    if not all_tsm_rows:
+        raise typer.BadParameter("TSMC IR 季度指标 CSV 没有可合并的指标行。")
+    merge_date = _parse_date(as_of) if as_of else max(row.as_of for row in all_tsm_rows)
+    tsm_rows = tuple(
+        replace(row, as_of=merge_date)
+        for row in select_tsm_ir_quarterly_metric_rows_as_of(
+            all_tsm_rows,
+            merge_date,
+        )
+    )
+    if not tsm_rows:
+        raise typer.BadParameter(
+            f"TSMC IR 季度指标 CSV 不包含 {merge_date.isoformat()} 可用的已披露季度记录。"
+        )
+
+    sec_input = sec_input_path or default_sec_fundamental_metrics_csv_path(
+        PROJECT_ROOT / "data" / "processed",
+        merge_date,
+    )
+    csv_output = output_path or sec_input
+    validation_output = (
+        validation_report_path
+        or default_sec_fundamental_metrics_validation_report_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            merge_date,
+        )
+    )
+    sec_companies = load_sec_companies(sec_companies_path)
+    conversion_report = build_tsm_ir_sec_metric_conversion_report(tsm_rows, sec_companies)
+    if not conversion_report.passed:
+        console.print("[red]TSMC IR 转换为 SEC-style 指标失败，已停止合并。[/red]")
+        console.print(
+            f"错误数：{conversion_report.error_count}；"
+            f"警告数：{conversion_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+
+    existing_rows = load_sec_fundamental_metric_rows_csv(sec_input)
+    merged_rows = merge_tsm_ir_quarterly_rows_into_sec_metrics(
+        existing_rows=existing_rows,
+        tsm_rows=tsm_rows,
+        tsm_company=sec_companies,
+    )
+    csv_path = write_sec_fundamental_metric_rows_csv(merged_rows, csv_output)
+    validation_report = validate_sec_fundamental_metric_rows(
+        companies=sec_companies,
+        metrics=load_fundamental_metrics(metrics_path),
+        rows=merged_rows,
+        source_path=csv_path,
+        as_of=merge_date,
+    )
+    write_sec_fundamental_metrics_validation_report(validation_report, validation_output)
+
+    status_style = (
+        "green"
+        if validation_report.status == "PASS"
+        else "yellow"
+        if validation_report.passed
+        else "red"
+    )
+    console.print(
+        f"[{status_style}]TSMC IR 合并后 SEC 指标校验状态："
+        f"{validation_report.status}[/{status_style}]"
+    )
+    console.print(f"合并日期：{merge_date.isoformat()}")
+    console.print(f"TSMC IR 转换行数：{len(conversion_report.rows)}")
+    console.print(f"既有 SEC 指标行数：{len(existing_rows)}；合并后行数：{len(merged_rows)}")
+    console.print(f"输出 CSV：{csv_path}")
+    console.print(f"校验报告：{validation_output}")
+    console.print(
+        f"错误数：{validation_report.error_count}；警告数：{validation_report.warning_count}"
+    )
+    if not validation_report.passed:
+        raise typer.Exit(code=1)
+
+
+@valuation_app.command("fetch-fmp")
+def fetch_fmp_valuations(
+    tickers: Annotated[
+        str | None,
+        typer.Option(help="逗号分隔 ticker；未提供时使用 universe 的 AI core_watchlist。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="写入 FMP 估值快照 YAML 的目录。"),
+    ] = PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+    analyst_history_dir: Annotated[
+        Path,
+        typer.Option(help="读取并写入 FMP analyst-estimates 原始历史快照的目录。"),
+    ] = DEFAULT_FMP_ANALYST_ESTIMATE_HISTORY_DIR,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="估值评估日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown FMP 拉取报告输出路径。"),
+    ] = None,
+    validation_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 估值快照校验报告输出路径。"),
+    ] = None,
+    api_key_env: Annotated[
+        str,
+        typer.Option(help="读取 FMP API key 的环境变量名。"),
+    ] = "FMP_API_KEY",
+    analyst_estimate_limit: Annotated[
+        int,
+        typer.Option(help="每个 ticker 拉取的 annual analyst estimate 记录数。"),
+    ] = 10,
+) -> None:
+    """从 Financial Modeling Prep 拉取估值和预期快照。"""
+    fetch_date = _parse_date(as_of) if as_of else date.today()
+    selected_tickers = (
+        _parse_csv_items(tickers)
+        if tickers
+        else load_universe().ai_chain.get("core_watchlist", [])
+    )
+    api_key = os.getenv(api_key_env)
+    if not api_key:
+        console.print(f"[red]未找到环境变量 {api_key_env}，已停止 FMP 拉取。[/red]")
+        raise typer.Exit(code=1)
+
+    fetch_report_output = output_path or default_fmp_valuation_fetch_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        fetch_date,
+    )
+    validation_output = validation_report_path or default_valuation_validation_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        fetch_date,
+    )
+
+    try:
+        fetch_report = fetch_fmp_valuation_snapshots(
+            selected_tickers,
+            api_key,
+            fetch_date,
+            analyst_history_dir=analyst_history_dir,
+            valuation_history_dir=output_dir,
+            captured_at=fetch_date,
+            analyst_estimate_limit=analyst_estimate_limit,
+        )
+    except ValueError as exc:
+        console.print(f"[red]FMP 参数错误：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+    write_fmp_valuation_fetch_report(fetch_report, fetch_report_output)
+    status_style = (
+        "green" if fetch_report.status == "PASS" else "yellow" if fetch_report.passed else "red"
+    )
+    console.print(f"[{status_style}]FMP 估值拉取状态：{fetch_report.status}[/{status_style}]")
+    console.print(f"拉取报告：{fetch_report_output}")
+    console.print(
+        f"请求标的：{', '.join(fetch_report.requested_tickers)}；"
+        f"返回记录：{fetch_report.row_count}；生成快照：{fetch_report.imported_count}"
+    )
+    console.print(f"错误数：{fetch_report.error_count}；警告数：{fetch_report.warning_count}")
+    if not fetch_report.passed:
+        raise typer.Exit(code=1)
+
+    history_paths = write_fmp_analyst_estimate_history_snapshots(
+        fetch_report.analyst_estimate_history_snapshots,
+        analyst_history_dir,
+    )
+    written_paths = write_valuation_snapshots_as_yaml(fetch_report.snapshots, output_dir)
+    validation_report = validate_valuation_snapshot_store(
+        store=load_valuation_snapshot_store(output_dir),
+        universe=load_universe(),
+        watchlist=load_watchlist(),
+        as_of=fetch_date,
+    )
+    write_valuation_validation_report(validation_report, validation_output)
+
+    validation_style = (
+        "green"
+        if validation_report.status == "PASS"
+        else "yellow"
+        if validation_report.passed
+        else "red"
+    )
+    console.print(f"写入 YAML：{len(written_paths)} 个文件 -> {output_dir}")
+    console.print(f"写入 analyst history：{len(history_paths)} 个文件 -> {analyst_history_dir}")
+    console.print(
+        f"[{validation_style}]估值快照校验状态："
+        f"{validation_report.status}[/{validation_style}]"
+    )
+    console.print(f"校验报告：{validation_output}")
+    if not validation_report.passed:
+        raise typer.Exit(code=1)
+
+
+@valuation_app.command("fetch-fmp-valuation-history")
+def fetch_fmp_valuation_history(
+    tickers: Annotated[
+        str | None,
+        typer.Option(help="逗号分隔 ticker；未提供时使用 universe 的 AI core_watchlist。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="写入历史估值快照 YAML 的目录。"),
+    ] = PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+    raw_output_dir: Annotated[
+        Path,
+        typer.Option(help="写入 FMP historical key-metrics/ratios 原始 JSON 的目录。"),
+    ] = DEFAULT_FMP_HISTORICAL_VALUATION_RAW_DIR,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="拉取评估日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown FMP 历史估值拉取报告输出路径。"),
+    ] = None,
+    validation_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 估值快照校验报告输出路径。"),
+    ] = None,
+    api_key_env: Annotated[
+        str,
+        typer.Option(help="读取 FMP API key 的环境变量名。"),
+    ] = "FMP_API_KEY",
+    period: Annotated[
+        str,
+        typer.Option(help="FMP historical key-metrics/ratios period，annual 或 quarter。"),
+    ] = "annual",
+    limit: Annotated[
+        int,
+        typer.Option(help="每个 ticker 拉取的历史记录数，至少 3。"),
+    ] = 5,
+) -> None:
+    """从 FMP 拉取 historical key-metrics/ratios，回填估值分位历史。"""
+    fetch_date = _parse_date(as_of) if as_of else date.today()
+    selected_tickers = (
+        _parse_csv_items(tickers)
+        if tickers
+        else load_universe().ai_chain.get("core_watchlist", [])
+    )
+    api_key = os.getenv(api_key_env)
+    if not api_key:
+        console.print(f"[red]未找到环境变量 {api_key_env}，已停止 FMP 历史估值拉取。[/red]")
+        raise typer.Exit(code=1)
+
+    fetch_report_output = output_path or default_fmp_historical_valuation_fetch_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        fetch_date,
+    )
+    validation_output = validation_report_path or default_valuation_validation_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        fetch_date,
+    )
+
+    try:
+        fetch_report = fetch_fmp_historical_valuation_snapshots(
+            selected_tickers,
+            api_key,
+            fetch_date,
+            captured_at=fetch_date,
+            period=period,
+            limit=limit,
+        )
+    except ValueError as exc:
+        console.print(f"[red]FMP 历史估值参数错误：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+    write_fmp_historical_valuation_fetch_report(fetch_report, fetch_report_output)
+    status_style = (
+        "green" if fetch_report.status == "PASS" else "yellow" if fetch_report.passed else "red"
+    )
+    console.print(
+        f"[{status_style}]FMP 历史估值拉取状态："
+        f"{fetch_report.status}[/{status_style}]"
+    )
+    console.print(f"拉取报告：{fetch_report_output}")
+    console.print(
+        f"请求标的：{', '.join(fetch_report.requested_tickers)}；"
+        f"返回记录：{fetch_report.row_count}；生成历史快照：{fetch_report.imported_count}"
+    )
+    console.print(f"错误数：{fetch_report.error_count}；警告数：{fetch_report.warning_count}")
+    if not fetch_report.passed:
+        raise typer.Exit(code=1)
+
+    raw_paths = write_fmp_historical_valuation_raw_payloads(
+        fetch_report.raw_payloads,
+        raw_output_dir,
+    )
+    written_paths = write_valuation_snapshots_as_yaml(fetch_report.snapshots, output_dir)
+    validation_report = validate_valuation_snapshot_store(
+        store=load_valuation_snapshot_store(output_dir),
+        universe=load_universe(),
+        watchlist=load_watchlist(),
+        as_of=fetch_date,
+    )
+    write_valuation_validation_report(validation_report, validation_output)
+
+    validation_style = (
+        "green"
+        if validation_report.status == "PASS"
+        else "yellow"
+        if validation_report.passed
+        else "red"
+    )
+    console.print(f"写入原始历史 payload：{len(raw_paths)} 个文件 -> {raw_output_dir}")
+    console.print(f"写入历史估值 YAML：{len(written_paths)} 个文件 -> {output_dir}")
+    console.print(
+        f"[{validation_style}]估值快照校验状态："
+        f"{validation_report.status}[/{validation_style}]"
+    )
+    console.print(f"校验报告：{validation_output}")
+    if not validation_report.passed:
+        raise typer.Exit(code=1)
+
+
+@valuation_app.command("validate-fmp-history")
+def validate_fmp_analyst_history_command(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="FMP analyst-estimates 原始历史快照目录或 JSON 文件。"),
+    ] = DEFAULT_FMP_ANALYST_ESTIMATE_HISTORY_DIR,
+    tickers: Annotated[
+        str | None,
+        typer.Option(help="逗号分隔 ticker；未提供时校验全部历史快照。"),
+    ] = None,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown FMP analyst history 校验报告输出路径。"),
+    ] = None,
+    max_snapshot_age_days: Annotated[
+        int,
+        typer.Option(help="历史快照新鲜度警告阈值，单位天。"),
+    ] = 7,
+) -> None:
+    """校验 FMP analyst-estimates 原始历史缓存。"""
+    validation_date = _parse_date(as_of) if as_of else date.today()
+    report_path = output_path or default_fmp_analyst_history_validation_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        validation_date,
+    )
+    selected_tickers = _parse_csv_items(tickers) if tickers else None
+    try:
+        report = validate_fmp_analyst_estimate_history(
+            input_path,
+            validation_date,
+            tickers=selected_tickers,
+            max_snapshot_age_days=max_snapshot_age_days,
+        )
+    except ValueError as exc:
+        console.print(f"[red]FMP analyst history 参数错误：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+    write_fmp_analyst_history_validation_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]FMP analyst history 校验状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_path}")
+    console.print(
+        f"快照数量：{report.snapshot_count}；覆盖标的：{report.ticker_count}；"
+        f"记录数：{report.record_count}"
+    )
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+
+@valuation_app.command("import-csv")
+def import_valuation_csv(
+    input_path: Annotated[
+        Path,
+        typer.Option(help="估值、预期和拥挤度结构化 CSV 输入路径。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="写入估值快照 YAML 的目录。"),
+    ] = PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="导入后校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown CSV 导入报告输出路径。"),
+    ] = None,
+    validation_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 估值快照校验报告输出路径。"),
+    ] = None,
+) -> None:
+    """导入结构化估值 CSV，并写入可审计估值快照 YAML。"""
+    import_date = _parse_date(as_of) if as_of else date.today()
+    import_report_output = output_path or (
+        PROJECT_ROOT / "outputs" / "reports" / f"valuation_import_{import_date}.md"
+    )
+    validation_output = validation_report_path or default_valuation_validation_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        import_date,
+    )
+    import_report = import_valuation_snapshots_from_csv(input_path)
+    write_valuation_csv_import_report(import_report, import_report_output)
+
+    status_style = (
+        "green" if import_report.status == "PASS" else "yellow" if import_report.passed else "red"
+    )
+    console.print(f"[{status_style}]估值 CSV 导入状态：{import_report.status}[/{status_style}]")
+    console.print(f"导入报告：{import_report_output}")
+    console.print(
+        f"CSV 行数：{import_report.row_count}；导入快照：{import_report.imported_count}"
+    )
+    console.print(f"错误数：{import_report.error_count}；警告数：{import_report.warning_count}")
+    if not import_report.passed:
+        raise typer.Exit(code=1)
+
+    written_paths = write_valuation_snapshots_as_yaml(import_report.snapshots, output_dir)
+    validation_report = validate_valuation_snapshot_store(
+        store=load_valuation_snapshot_store(output_dir),
+        universe=load_universe(),
+        watchlist=load_watchlist(),
+        as_of=import_date,
+    )
+    write_valuation_validation_report(validation_report, validation_output)
+
+    validation_style = (
+        "green"
+        if validation_report.status == "PASS"
+        else "yellow"
+        if validation_report.passed
+        else "red"
+    )
+    console.print(f"写入 YAML：{len(written_paths)} 个文件 -> {output_dir}")
+    console.print(
+        f"[{validation_style}]估值快照校验状态："
+        f"{validation_report.status}[/{validation_style}]"
+    )
+    console.print(f"校验报告：{validation_output}")
+    if not validation_report.passed:
+        raise typer.Exit(code=1)
+
+
 @valuation_app.command("list")
 def list_valuations(
     input_path: Annotated[
@@ -1847,6 +3308,22 @@ def score_daily(
         Path | None,
         typer.Option(help="Markdown 每日评分报告输出路径。"),
     ] = None,
+    trace_bundle_path: Annotated[
+        Path | None,
+        typer.Option(help="JSON evidence bundle 输出路径。"),
+    ] = None,
+    decision_snapshot_path: Annotated[
+        Path | None,
+        typer.Option(help="JSON 决策快照输出路径。"),
+    ] = None,
+    belief_state_path: Annotated[
+        Path | None,
+        typer.Option(help="JSON 只读认知状态输出路径。"),
+    ] = None,
+    belief_state_history_path: Annotated[
+        Path | None,
+        typer.Option(help="CSV 只读认知状态历史索引输出路径。"),
+    ] = None,
     feature_report_path: Annotated[
         Path | None,
         typer.Option(help="Markdown 特征摘要输出路径。"),
@@ -1927,6 +3404,11 @@ def score_daily(
     feature_config = load_features()
     scoring_rules = load_scoring_rules()
     portfolio = load_portfolio()
+    market_regimes = load_market_regimes(DEFAULT_MARKET_REGIMES_CONFIG_PATH)
+    default_market_regime = market_regime_by_id(
+        market_regimes,
+        market_regimes.default_backtest_regime,
+    )
     score_date = _parse_date(as_of) if as_of else date.today()
     benchmark_tickers = tuple(_parse_csv_items(review_benchmarks))
     if not benchmark_tickers:
@@ -1948,6 +3430,20 @@ def score_daily(
     score_report_output = report_path or default_daily_score_report_path(
         PROJECT_ROOT / "outputs" / "reports",
         score_date,
+    )
+    daily_trace_output = trace_bundle_path or default_report_trace_bundle_path(
+        score_report_output
+    )
+    decision_snapshot_output = decision_snapshot_path or default_decision_snapshot_path(
+        DEFAULT_DECISION_SNAPSHOT_DIR,
+        score_date,
+    )
+    belief_state_output = belief_state_path or default_belief_state_path(
+        DEFAULT_BELIEF_STATE_DIR,
+        score_date,
+    )
+    belief_state_history_output = (
+        belief_state_history_path or DEFAULT_BELIEF_STATE_HISTORY_PATH
     )
     sec_fundamentals_input = sec_fundamentals_path or default_sec_fundamental_metrics_csv_path(
         PROJECT_ROOT / "data" / "processed",
@@ -2146,12 +3642,67 @@ def score_daily(
         rules=scoring_rules,
         total_risk_asset_min=portfolio.portfolio.total_risk_asset_min,
         total_risk_asset_max=portfolio.portfolio.total_risk_asset_max,
+        max_total_ai_exposure=portfolio.position_limits.max_total_ai_exposure,
         review_summary=review_summary,
         fundamental_feature_report=sec_fundamental_feature_report,
         valuation_review_report=valuation_review_report,
         risk_event_occurrence_review_report=risk_event_occurrence_review_report,
     )
+    previous_score_snapshot = load_previous_daily_score_snapshot(scores_path, score_date)
     scores_output = write_scores_csv(score_report, scores_path)
+    daily_market_regime = BacktestRegimeContext(
+        regime_id=default_market_regime.regime_id,
+        name=default_market_regime.name,
+        start_date=default_market_regime.start_date,
+        anchor_date=default_market_regime.anchor_date,
+        anchor_event=default_market_regime.anchor_event,
+        description=default_market_regime.description,
+    )
+    daily_config_paths = _daily_trace_config_paths(
+        sec_companies_path=sec_companies_path,
+        sec_metrics_path=sec_metrics_path,
+        fundamental_feature_config_path=fundamental_feature_config_path,
+        risk_events_path=risk_events_path,
+    )
+    daily_trace_bundle = build_daily_score_trace_bundle(
+        report=score_report,
+        report_path=score_report_output,
+        data_quality_report_path=quality_output,
+        feature_report_path=feature_summary_output,
+        features_path=features_output,
+        scores_path=scores_output,
+        market_regime=daily_market_regime,
+        config_paths=daily_config_paths,
+        sec_metrics_validation_report_path=sec_metrics_validation_output,
+        sec_fundamental_feature_report_path=sec_fundamental_feature_report_output,
+        sec_fundamental_features_path=sec_fundamental_features_output,
+        risk_event_occurrence_report_path=risk_event_occurrence_report_output,
+        belief_state_path=belief_state_output,
+    )
+    daily_trace_output = write_trace_bundle(daily_trace_bundle, daily_trace_output)
+    belief_state = build_belief_state(
+        report=score_report,
+        trace_bundle_path=daily_trace_output,
+        decision_snapshot_path=decision_snapshot_output,
+        market_regime=daily_market_regime,
+        config_paths=daily_config_paths,
+    )
+    belief_state_output = write_belief_state(belief_state, belief_state_output)
+    belief_state_history_output = append_belief_state_history(
+        belief_state,
+        belief_state_output,
+        belief_state_history_output,
+    )
+    daily_decision_snapshot_output = write_decision_snapshot(
+        build_decision_snapshot(
+            report=score_report,
+            trace_bundle_path=daily_trace_output,
+            market_regime=daily_market_regime,
+            config_paths=daily_config_paths,
+            belief_state_path=belief_state_output,
+        ),
+        decision_snapshot_output,
+    )
     daily_report_output = write_daily_score_report(
         score_report,
         data_quality_report_path=quality_output,
@@ -2163,13 +3714,31 @@ def score_daily(
         sec_fundamental_feature_report_path=sec_fundamental_feature_report_output,
         sec_fundamental_features_path=sec_fundamental_features_output,
         risk_event_occurrence_report_path=risk_event_occurrence_report_output,
+        previous_score_snapshot=previous_score_snapshot,
+        belief_state_section=render_belief_state_summary(
+            belief_state,
+            belief_state_output,
+        ),
+        traceability_section=render_traceability_section(
+            daily_trace_bundle,
+            daily_trace_output,
+        ),
     )
 
     status_style = "green" if score_report.status == "PASS" else "yellow"
     console.print(f"[{status_style}]每日评分状态：{score_report.status}[/{status_style}]")
-    console.print(f"总分：{score_report.recommendation.total_score:.1f}")
+    console.print(f"AI 产业链评分：{score_report.recommendation.total_score:.1f}")
+    console.print(
+        "判断置信度："
+        f"{score_report.confidence_assessment.score:.1f}"
+        f"（{score_report.confidence_assessment.level}）"
+    )
     console.print(f"仓位状态：{score_report.recommendation.label}")
     console.print(f"每日评分报告：{daily_report_output}")
+    console.print(f"Evidence bundle：{daily_trace_output}")
+    console.print(f"Decision snapshot：{daily_decision_snapshot_output}")
+    console.print(f"Belief state：{belief_state_output}")
+    console.print(f"Belief state history：{belief_state_history_output}")
     console.print(f"评分数据：{scores_output}")
     console.print(f"特征摘要：{feature_summary_output}")
     console.print(
@@ -2181,6 +3750,57 @@ def score_daily(
         f"（{risk_event_occurrence_review_report.status}）"
     )
     console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
+
+
+def _base_trace_config_paths() -> dict[str, Path]:
+    return {
+        "universe": DEFAULT_CONFIG_PATH,
+        "portfolio": DEFAULT_PORTFOLIO_CONFIG_PATH,
+        "data_quality": DEFAULT_DATA_QUALITY_CONFIG_PATH,
+        "features": DEFAULT_FEATURE_CONFIG_PATH,
+        "scoring_rules": DEFAULT_SCORING_RULES_CONFIG_PATH,
+        "watchlist": DEFAULT_WATCHLIST_CONFIG_PATH,
+        "watchlist_lifecycle": DEFAULT_WATCHLIST_LIFECYCLE_PATH,
+        "industry_chain": DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH,
+        "data_sources": DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    }
+
+
+def _daily_trace_config_paths(
+    *,
+    sec_companies_path: Path,
+    sec_metrics_path: Path,
+    fundamental_feature_config_path: Path,
+    risk_events_path: Path,
+) -> dict[str, Path]:
+    return {
+        **_base_trace_config_paths(),
+        "market_regimes": DEFAULT_MARKET_REGIMES_CONFIG_PATH,
+        "sec_companies": sec_companies_path,
+        "fundamental_metrics": sec_metrics_path,
+        "fundamental_features": fundamental_feature_config_path,
+        "risk_events": risk_events_path,
+    }
+
+
+def _backtest_trace_config_paths(
+    *,
+    regimes_path: Path,
+    sec_companies_path: Path,
+    sec_metrics_path: Path,
+    fundamental_feature_config_path: Path,
+    risk_events_path: Path,
+    watchlist_lifecycle_path: Path,
+) -> dict[str, Path]:
+    return {
+        **_base_trace_config_paths(),
+        "market_regimes": regimes_path,
+        "sec_companies": sec_companies_path,
+        "fundamental_metrics": sec_metrics_path,
+        "fundamental_features": fundamental_feature_config_path,
+        "risk_events": risk_events_path,
+        "watchlist_lifecycle": watchlist_lifecycle_path,
+    }
 
 
 def _build_daily_review_summary(
@@ -2244,17 +3864,20 @@ def _build_daily_thesis_status(
     review_report = build_thesis_review_report(validation_report)
 
     watch_count = sum(item.health == "WATCH" for item in review_report.items)
+    challenged_count = sum(item.health == "CHALLENGED" for item in review_report.items)
     invalidated_count = sum(item.health == "INVALIDATED" for item in review_report.items)
     summary = (
         f"Thesis {validation_report.thesis_count} 个，活跃 "
         f"{validation_report.active_count} 个；需关注 {watch_count} 个，"
-        f"已证伪 {invalidated_count} 个。"
+        f"受挑战 {challenged_count} 个，已证伪 {invalidated_count} 个。"
     )
+    status = "FAIL" if invalidated_count else review_report.status
+    error_count = validation_report.error_count + (1 if invalidated_count else 0)
     return DailyManualReviewStatus(
         name="交易 thesis",
-        status=review_report.status,
+        status=status,
         summary=summary,
-        error_count=validation_report.error_count,
+        error_count=error_count,
         warning_count=validation_report.warning_count,
         source_path=input_path,
     )
@@ -2417,6 +4040,7 @@ def _build_backtest_sec_fundamental_feature_reports(
     sec_metrics_path: Path,
     fundamental_feature_config_path: Path,
     sec_companyfacts_dir: Path,
+    tsm_ir_input_path: Path,
     validation_as_of: date,
     validation_report_output: Path,
 ) -> dict[date, SecFundamentalFeaturesReport]:
@@ -2441,6 +4065,17 @@ def _build_backtest_sec_fundamental_feature_reports(
         )
         raise typer.Exit(code=1)
 
+    tsm_ir_enabled = any(
+        company.active
+        and company.ticker.upper() == "TSM"
+        and "quarterly" in company.sec_metric_periods
+        for company in sec_companies.companies
+    )
+    tsm_ir_rows: tuple[TsmIrQuarterlyMetricRow, ...] = (
+        load_tsm_ir_quarterly_metric_rows_csv(tsm_ir_input_path)
+        if tsm_ir_enabled and tsm_ir_input_path.exists()
+        else tuple()
+    )
     reports: dict[date, SecFundamentalFeaturesReport] = {}
     for signal_date in signal_dates:
         metrics_report = build_sec_fundamental_metrics_report(
@@ -2458,13 +4093,29 @@ def _build_backtest_sec_fundamental_feature_reports(
                 f"警告数：{metrics_report.warning_count}"
             )
             raise typer.Exit(code=1)
+        metric_rows = metrics_report.rows
+        if tsm_ir_rows:
+            try:
+                metric_rows = merge_tsm_ir_quarterly_rows_into_sec_metrics_as_of(
+                    existing_rows=metric_rows,
+                    tsm_rows=tsm_ir_rows,
+                    tsm_company=sec_companies,
+                    as_of=signal_date,
+                )
+            except ValueError as exc:
+                console.print(
+                    "[red]TSMC IR point-in-time 指标合并失败，已停止回测。[/red]"
+                )
+                console.print(f"失败日期：{signal_date.isoformat()}")
+                console.print(str(exc))
+                raise typer.Exit(code=1) from exc
         metrics_source_path = (
             sec_companyfacts_dir / f"point_in_time_metrics_{signal_date.isoformat()}.csv"
         )
         metrics_validation_report = validate_sec_fundamental_metric_rows(
             companies=sec_companies,
             metrics=sec_metrics,
-            rows=metrics_report.rows,
+            rows=metric_rows,
             source_path=metrics_source_path,
             as_of=signal_date,
         )
@@ -2480,7 +4131,7 @@ def _build_backtest_sec_fundamental_feature_reports(
         feature_report = build_sec_fundamental_features_report_from_metric_rows(
             companies=sec_companies,
             feature_config=feature_config,
-            metric_rows=metrics_report.rows,
+            metric_rows=metric_rows,
             source_path=metrics_source_path,
             as_of=signal_date,
             validation_report=metrics_validation_report,
@@ -2497,6 +4148,80 @@ def _build_backtest_sec_fundamental_feature_reports(
     return reports
 
 
+def _build_backtest_valuation_review_reports(
+    signal_dates: tuple[date, ...],
+    valuation_path: Path,
+    universe: UniverseConfig,
+    watchlist: WatchlistConfig,
+) -> dict[date, ValuationReviewReport]:
+    store = load_valuation_snapshot_store(valuation_path)
+    reports: dict[date, ValuationReviewReport] = {}
+    for signal_date in signal_dates:
+        report = build_historical_valuation_review_report(
+            store=store,
+            universe=universe,
+            watchlist=watchlist,
+            as_of=signal_date,
+        )
+        if not report.validation_report.passed:
+            console.print("[red]point-in-time 估值快照校验失败，已停止回测。[/red]")
+            console.print(f"失败日期：{signal_date.isoformat()}")
+            console.print(
+                f"错误数：{report.validation_report.error_count}；"
+                f"警告数：{report.validation_report.warning_count}"
+            )
+            raise typer.Exit(code=1)
+        reports[signal_date] = report
+    return reports
+
+
+def _build_backtest_risk_event_occurrence_review_reports(
+    signal_dates: tuple[date, ...],
+    risk_events_path: Path,
+    risk_event_occurrences_path: Path,
+    universe: UniverseConfig,
+    industry_chain: IndustryChainConfig,
+    watchlist: WatchlistConfig,
+    validation_as_of: date,
+) -> dict[date, RiskEventOccurrenceReviewReport]:
+    risk_events_config = load_risk_events(risk_events_path)
+    rules_validation_report = validate_risk_events_config(
+        risk_events=risk_events_config,
+        industry_chain=industry_chain,
+        watchlist=watchlist,
+        universe=universe,
+        as_of=validation_as_of,
+    )
+    if not rules_validation_report.passed:
+        console.print("[red]风险事件规则校验失败，已停止回测。[/red]")
+        console.print(
+            f"错误数：{rules_validation_report.error_count}；"
+            f"警告数：{rules_validation_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+
+    store = load_risk_event_occurrence_store(risk_event_occurrences_path)
+    reports: dict[date, RiskEventOccurrenceReviewReport] = {}
+    for signal_date in signal_dates:
+        report = build_historical_risk_event_occurrence_review_report(
+            store=store,
+            risk_events=risk_events_config,
+            as_of=signal_date,
+        )
+        if not report.validation_report.passed:
+            console.print(
+                "[red]point-in-time 风险事件发生记录校验失败，已停止回测。[/red]"
+            )
+            console.print(f"失败日期：{signal_date.isoformat()}")
+            console.print(
+                f"错误数：{report.validation_report.error_count}；"
+                f"警告数：{report.validation_report.warning_count}"
+            )
+            raise typer.Exit(code=1)
+        reports[signal_date] = report
+    return reports
+
+
 def _parse_date(value: str) -> date:
     try:
         return date.fromisoformat(value)
@@ -2504,8 +4229,42 @@ def _parse_date(value: str) -> date:
         raise typer.BadParameter("日期必须使用 YYYY-MM-DD 格式。") from exc
 
 
+def _parse_datetime(value: str) -> datetime:
+    normalized = value.strip()
+    if not normalized:
+        raise typer.BadParameter("时间不能为空。")
+    if normalized.endswith("Z"):
+        normalized = f"{normalized[:-1]}+00:00"
+    try:
+        if "T" not in normalized and " " not in normalized:
+            parsed_date = date.fromisoformat(normalized)
+            return datetime.combine(parsed_date, time.min, tzinfo=UTC)
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError as exc:
+        raise typer.BadParameter("时间必须使用 ISO datetime 或 YYYY-MM-DD 格式。") from exc
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=UTC)
+    return parsed
+
+
 def _parse_csv_items(value: str) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
+
+
+def _parse_positive_int_csv(value: str, label: str) -> list[int]:
+    items = _parse_csv_items(value)
+    if not items:
+        raise typer.BadParameter(f"{label}不能为空。")
+    parsed: list[int] = []
+    for item in items:
+        try:
+            integer = int(item)
+        except ValueError as exc:
+            raise typer.BadParameter(f"{label}必须是逗号分隔的正整数。") from exc
+        if integer <= 0:
+            raise typer.BadParameter(f"{label}必须是正整数。")
+        parsed.append(integer)
+    return parsed
 
 
 def _risk_level_label(level: str) -> str:
@@ -2546,6 +4305,8 @@ def _thesis_status_label(value: str) -> str:
     return {
         "draft": "草稿",
         "active": "活跃",
+        "warning": "警告",
+        "challenged": "受挑战",
         "paused": "暂停",
         "closed": "已关闭",
         "invalidated": "已证伪",

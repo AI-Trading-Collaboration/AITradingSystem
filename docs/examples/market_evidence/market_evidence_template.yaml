@@ -1,0 +1,29 @@
+evidence_id: evidence:manual:2026-05-04:nvda_capex_check
+source_name: manual_capex_review
+source_type: manual_input
+source_url: ""
+published_at:
+captured_at: 2026-05-04
+tickers:
+  - NVDA
+industry_chain_nodes:
+  - gpu_asic_demand
+topic: cloud_capex_demand_check
+evidence_grade: B
+novelty: new
+impact_horizon: medium
+direction: positive
+confidence: 0.70
+manual_review_status: pending_review
+manual_review_required: true
+linked_risk_event: ""
+linked_thesis: nvda_ai_infra_2026_q2
+linked_valuation_snapshot: ""
+linked_catalyst: ""
+linked_claim: ""
+raw_summary: >
+  示例证据只用于说明 market_evidence 字段结构，不代表真实投资结论。
+llm_model: ""
+llm_prompt_hash: ""
+notes: >
+  market_evidence 只负责归档新信息和复核状态，不直接改变评分、仓位或交易建议。

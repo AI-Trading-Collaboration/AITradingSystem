@@ -297,6 +297,50 @@ def test_validate_sec_fundamental_metrics_csv_rejects_future_filed_date(
     assert "SEC 基本面指标 CSV 校验报告" in markdown
 
 
+def test_validate_sec_fundamental_metrics_csv_reports_missing_observation_keys(
+    tmp_path: Path,
+) -> None:
+    output_path = tmp_path / "sec_fundamentals.csv"
+    pd.DataFrame(
+        [
+            {
+                "as_of": "2026-05-02",
+                "ticker": "NVDA",
+                "cik": "0001045810",
+                "company_name": "NVIDIA Corporation",
+                "metric_id": "revenue",
+                "metric_name": "Revenue",
+                "period_type": "annual",
+                "fiscal_year": 2025,
+                "fiscal_period": "FY",
+                "end_date": "2026-01-31",
+                "filed_date": "2026-03-15",
+                "form": "10-K",
+                "taxonomy": "us-gaap",
+                "concept": "Revenues",
+                "unit": "USD",
+                "value": 1000,
+                "accession_number": "0001045810-26-000001",
+                "source_path": str(tmp_path / "nvda_companyfacts.json"),
+            }
+        ]
+    ).to_csv(output_path, index=False)
+
+    report = validate_sec_fundamental_metrics_csv(
+        companies=_sec_config(),
+        metrics=_metrics_config(),
+        input_path=output_path,
+        as_of=_date(),
+    )
+    markdown = render_sec_fundamental_metrics_validation_report(report)
+
+    assert report.status == "PASS_WITH_WARNINGS"
+    assert report.missing_observation_keys == (("NVDA", "revenue", "quarterly"),)
+    assert "- 缺失观测数：1" in markdown
+    assert "## 缺失观测" in markdown
+    assert "| NVDA | revenue | quarterly |" in markdown
+
+
 def test_fundamentals_cli_extract_sec_metrics(tmp_path: Path) -> None:
     sec_config_path = tmp_path / "sec_companies.yaml"
     sec_config_path.write_text(

@@ -2,7 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from ai_trading_system.scoring.position_model import ModuleScore, WeightedScoreModel
+from ai_trading_system.scoring.position_model import (
+    ModuleScore,
+    PositionGate,
+    WeightedScoreModel,
+)
 
 
 def test_weighted_score_maps_to_position_band() -> None:
@@ -36,6 +40,31 @@ def test_recommendation_includes_total_asset_exposure() -> None:
     assert recommendation.risk_asset_ai_band.max_position == 1.0
     assert recommendation.total_asset_ai_band.min_position == 0.48
     assert recommendation.total_asset_ai_band.max_position == 0.8
+
+
+def test_position_gate_caps_final_position_without_changing_model_band() -> None:
+    model = WeightedScoreModel()
+
+    recommendation = model.recommend(
+        [ModuleScore("trend", score=85, weight=25, reason="trend strong")],
+        position_gates=(
+            PositionGate(
+                gate_id="risk_events",
+                label="风险事件",
+                source="risk_event_occurrences",
+                max_position=0.25,
+                triggered=True,
+                reason="L3 risk event",
+            ),
+        ),
+    )
+
+    assert recommendation.model_risk_asset_ai_band.min_position == 0.8
+    assert recommendation.model_risk_asset_ai_band.max_position == 1.0
+    assert recommendation.risk_asset_ai_band.min_position == 0.25
+    assert recommendation.risk_asset_ai_band.max_position == 0.25
+    assert recommendation.label == "重仓/仓位受限"
+    assert recommendation.triggered_position_gates[-1].gate_id == "risk_events"
 
 
 def test_invalid_score_is_rejected() -> None:

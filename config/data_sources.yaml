@@ -130,6 +130,101 @@ sources:
       - 手工快照只作为复核输入，不能直接变成自动估值评分。
     owner_notes: 自动评分前仍需接入正式供应商或一手披露数据。
 
+  - source_id: structured_valuation_csv_imports
+    provider: Structured valuation CSV export
+    source_type: manual_input
+    status: active
+    domains:
+      - valuation
+    endpoint: data/external/valuation_imports/*.csv
+    adapter: import_valuation_snapshots_from_csv
+    cadence: manual
+    requires_credentials: false
+    cache_paths:
+      - data/external/valuation_snapshots
+      - outputs/reports/valuation_import_YYYY-MM-DD.md
+    primary_for:
+      - valuation_snapshot
+      - expectation_snapshot
+      - crowding_snapshot
+    audit_fields:
+      - provider
+      - file_path
+      - source_name
+      - source_type
+      - captured_at
+      - row_count
+      - checksum
+    validation_checks:
+      - required_columns
+      - date_parsing
+      - numeric_parsing
+      - source_type
+      - public_convenience_warning
+      - downstream_snapshot_validation
+    limitations:
+      - 导入器只接受结构化宽表 CSV，不抓取网页，也不使用 LLM 生成估值结论。
+      - CSV 每行仍必须声明真实 source_name 和 source_type；公开便利源只能作为辅助。
+    owner_notes: 用于减少估值 YAML 手工维护；正式 vendor/API 接入前仍需保留来源审计。
+
+  - source_id: fmp_valuation_expectations
+    provider: Financial Modeling Prep
+    source_type: paid_vendor
+    status: active
+    domains:
+      - valuation
+      - fundamentals
+    endpoint: https://financialmodelingprep.com/stable/{quote-short,key-metrics-ttm,ratios-ttm,analyst-estimates,key-metrics,ratios}
+    adapter: fetch_fmp_valuation_snapshots
+    cadence: daily
+    requires_credentials: true
+    cache_paths:
+      - data/raw/fmp_analyst_estimates
+      - data/raw/fmp_historical_valuation
+      - data/external/valuation_snapshots
+      - outputs/reports/fmp_valuation_fetch_YYYY-MM-DD.md
+      - outputs/reports/fmp_historical_valuation_fetch_YYYY-MM-DD.md
+      - outputs/reports/fmp_analyst_history_validation_YYYY-MM-DD.md
+      - outputs/reports/valuation_validation_YYYY-MM-DD.md
+    primary_for:
+      - valuation_snapshot
+      - valuation_history_snapshot
+      - expectation_snapshot
+    audit_fields:
+      - provider
+      - endpoint
+      - request_parameters
+      - downloaded_at
+      - row_count
+      - checksum
+      - source_name
+      - source_type
+    validation_checks:
+      - endpoint_response
+      - fmp_analyst_history_validation
+      - fmp_historical_valuation_raw_payload
+      - snapshot_schema
+      - numeric_parsing
+      - source_type
+      - checksum
+      - analyst_estimate_history_checksum
+      - eps_revision_history_window
+      - valuation_percentile_local_history
+      - historical_valuation_captured_at
+      - downstream_snapshot_validation
+    limitations:
+      - forward_pe 使用当前 quote 与最近未来 annual EPS estimate 计算。
+      - revenue_growth_next_12m_pct 是 annual estimate 代理口径，不是真正滚动 NTM 共识增速。
+      - eps_revision_90d_pct 需要读取接近 90 天前的同一 fiscal estimate date 历史 analyst-estimates 快照；历史不足时会明确警告并跳过该指标。
+      - valuation_percentile 使用本地估值快照历史计算；historical key metrics/ratios endpoint 权限不足时，不伪造供应商历史分位。
+      - fetch-fmp-valuation-history 可用 FMP historical key-metrics/ratios 回填历史估值分布；这些快照的 captured_at 固定为采集日，历史回测在采集日前不可见。
+      - historical key-metrics/ratios 是当前供应商历史接口返回的历史倍数，不替代真实 point-in-time vendor archive。
+      - 内部 ticker 与 FMP provider symbol 不一致时必须用显式 alias；当前 `GOOG` 请求 FMP 使用 `GOOGL`，快照仍归属内部 ticker `GOOG`。
+      - FMP 返回负数估值倍数时记录警告并跳过该指标，避免把不可解释倍数写入自动评分输入。
+      - HTTPS 连接、SSL、超时、429 和 5xx 临时错误会有限重试；402 等权限错误不重试，必须按 entitlement 问题处理。
+      - API plan 或 entitlement 可能限制 endpoint 字段和请求频率。
+    owner_notes: FMP_API_KEY 只从环境变量读取，命令、报告和错误信息不得输出密钥。
+
   - source_id: local_risk_event_occurrences
     provider: Local YAML input
     source_type: manual_input
@@ -171,6 +266,45 @@ sources:
       - 手工发生记录只说明已审计的触发事件；空目录不能证明当前没有政策或地缘风险。
       - public_convenience 证据只能作为辅助线索，不能单独进入评分。
     owner_notes: 日报政策/地缘评分只读取已通过校验的发生记录，不读取监控规则的 active 字段。
+
+  - source_id: reviewed_risk_event_occurrence_csv_imports
+    provider: Human-reviewed event occurrence CSV
+    source_type: manual_input
+    status: active
+    domains:
+      - risk_events
+      - news_events
+    endpoint: data/external/risk_event_imports/*.csv
+    adapter: import_risk_event_occurrences_csv
+    cadence: event_driven
+    requires_credentials: false
+    cache_paths:
+      - data/external/risk_event_occurrences
+      - outputs/reports/risk_event_occurrence_import_YYYY-MM-DD.md
+    primary_for:
+      - policy_event_occurrences
+      - geopolitical_event_occurrences
+      - risk_event_scoring_inputs
+    audit_fields:
+      - provider
+      - file_path
+      - occurrence_id
+      - event_id
+      - status
+      - captured_at
+      - row_count
+      - checksum
+    validation_checks:
+      - required_columns
+      - duplicate_occurrence_merge
+      - source_type
+      - date_parsing
+      - source_attribution
+      - downstream_occurrence_validation
+    limitations:
+      - CSV 必须是人工复核后的事件发生记录，不能把原始新闻自动转换为交易动作。
+      - 多行同一 occurrence_id 只用于合并证据来源，关键字段不一致会停止导入。
+    owner_notes: 用于减少风险事件 YAML 手工维护；L2/L3 仍必须经过人工复核。
 
   - source_id: local_trade_records
     provider: Local YAML input
@@ -241,50 +375,82 @@ sources:
       - fundamental_feature_formula_alignment
       - restatement_detection
       - duplicate_keys
+      - missing_observation_keys
       - freshness
     limitations:
       - 当前已落地原始 companyfacts JSON、审计清单、基础指标抽取、特征构建、日报基本面评分和 signal_date 级 point-in-time 回测特征。
       - SEC XBRL taxonomy 在 US GAAP 和 IFRS 公司之间可能不同，进入评分前必须做字段映射校验。
-      - TSM 当前在 SEC companyfacts 路径只作为年度基本面来源；季度基本面需接入 TSM 官方 IR 或其他可审计来源。
+      - TSM 在 SEC companyfacts 路径仍主要作为年度基本面来源；季度基本面通过 TSM 官方 IR 合并进统一指标 CSV。
     owner_notes: 基本面模块一手来源；下载必须提供符合 SEC fair access 要求的 User-Agent。
 
   - source_id: tsm_investor_relations_quarterly_results
     provider: TSMC Investor Relations
     source_type: primary_source
-    status: planned
+    status: active
     domains:
       - fundamentals
     endpoint: https://investor.tsmc.com/english/quarterly-results
-    adapter: planned
+    adapter: extract_tsm_ir_pdf_text, fetch_tsm_ir_quarterly, import_tsm_ir_quarterly, import_tsm_ir_quarterly_batch, merge_tsm_ir_sec_metrics
     cadence: quarterly
     requires_credentials: false
-    cache_paths: []
+    cache_paths:
+      - data/external/fundamentals/tsm_ir/*_management_report_YYYY-MM-DD.txt
+      - data/external/fundamentals/tsm_ir/tsm_ir_quarterly_manifest.csv
+      - data/processed/tsm_ir_quarterly_metrics.csv
+      - data/processed/sec_fundamentals_YYYY-MM-DD.csv
+      - outputs/reports/tsm_ir_pdf_text_YYYY-MM-DD.md
+      - outputs/reports/tsm_ir_quarterly_YYYY_Qn_YYYY-MM-DD.md
+      - outputs/reports/tsm_ir_quarterly_batch_YYYY-MM-DD.md
+      - outputs/reports/sec_fundamentals_validation_YYYY-MM-DD.md
     primary_for:
       - TSM quarterly revenue
       - TSM quarterly gross margin
       - TSM quarterly operating income
       - TSM quarterly net income
+      - TSM quarterly research and development
       - TSM quarterly capex
     audit_fields:
       - provider
       - endpoint
+      - request_parameters
+      - downloaded_at
       - fiscal_year
       - fiscal_quarter
+      - filed_date
       - source_url
+      - management_report_url
+      - batch_manifest_path
+      - source_pdf_path
       - captured_at
+      - extracted_at
+      - page_count
+      - character_count
       - row_count
       - checksum
     validation_checks:
       - schema
+      - official_domain
       - source_url_presence
+      - pdf_text_layer_presence
+      - pdf_extraction_dependency
       - fiscal_period_alignment
       - duplicate_keys
+      - batch_manifest_schema
+      - batch_manifest_duplicate_quarter
+      - point_in_time_latest_disclosed_quarter_selection
+      - batch_all_or_none_write
+      - tsm_quarterly_upsert_keys
+      - sec_style_metric_validation
       - numeric_units
       - freshness
     limitations:
-      - 当前仅登记为计划来源，尚未实现下载、解析或校验命令，不能进入自动评分。
-      - 季度财报页面、PDF、简报或 transcript 的字段口径必须逐项映射后才能合并进基本面指标。
-    owner_notes: 用于补齐 TSM 在 SEC companyfacts 中缺失的当前季度基本面；接入前不能用半年度 6-K 拆分替代季度数据。
+      - fetch 命令只下载官方页面和已抽取文本/HTML Management Report；PDF 或二进制资源必须先通过可审计 PDF 文本抽取命令生成文本，不能静默伪解析。
+      - PDF 文本抽取依赖可抽取文本层；扫描件或无文本层 PDF 必须停止并要求 OCR 或人工抽取，不能生成伪文本。
+      - 批量导入只读取 manifest 指向的本地已抽取官方文本；任一季度失败、缺文件或重复季度时整批停止写入，避免部分历史回填污染统一指标缓存。
+      - "filed_date 代表 TSMC IR Management Report 公开/披露日期；回测按 signal_date 只选择当时最新已披露季度，不能用采集日覆盖公开日期。"
+      - 合并命令按评估日期选择最新已披露 TSM quarterly，只替换重复的 TSM quarterly as_of/ticker/metric_id/period_type 行，不覆盖 TSM annual 或其他公司 SEC 指标。
+      - CapEx 缺失时只记录警告，不能从其他字段推断。
+    owner_notes: 用于补齐 TSM 在 SEC companyfacts 中缺失的当前季度基本面；不能用半年度 6-K 拆分替代季度数据。
 
   - source_id: news_event_source_tbd
     provider: To be selected

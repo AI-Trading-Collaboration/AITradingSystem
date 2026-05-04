@@ -23,6 +23,7 @@ companies:
       - dei
     sec_metric_periods:
       - annual
+      - quarterly
     notes: Foreign issuer; financial taxonomy can differ from US GAAP peers.
 
   - ticker: INTC

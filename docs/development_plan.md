@@ -136,7 +136,7 @@
 8. 输出一份日报 Markdown。状态：已实现基础版，命令为 `aits score-daily`。
 9. 实现交易 thesis 与假设验证。状态：已实现基础版，命令为 `aits thesis list/validate/review`。
 10. 实现风险事件分级规则。状态：已实现基础版，命令为 `aits risk-events list/validate`。
-11. 实现估值与拥挤度快照。状态：已实现基础版，命令为 `aits valuation list/validate/review`。
+11. 实现估值与拥挤度快照。状态：已实现基础版，命令为 `aits valuation fetch-fmp/validate-fmp-history/import-csv/list/validate/review`；FMP 拉取会生成 paid vendor 快照、checksum 报告和原始 analyst estimate 历史缓存，`validate-fmp-history` 校验原始缓存质量，`eps_revision_90d_pct` 使用接近 90 天前的同一 fiscal estimate date 历史 `epsAvg` 计算，`valuation_percentile` 使用本地 point-in-time 估值快照历史计算。
 12. 实现交易复盘归因。状态：已实现基础版，命令为 `aits review-trades`。
 13. 实现 SEC companyfacts 原始基本面数据下载和缓存校验。状态：已实现基础版，命令为 `aits fundamentals download-sec-companyfacts` 和 `aits fundamentals validate-sec-companyfacts`。
 14. 实现 SEC companyfacts 基础指标抽取和派生指标校验。状态：已实现基础版，命令为 `aits fundamentals extract-sec-metrics` 和 `aits fundamentals validate-sec-metrics`，输出结构化 CSV 和中文 Markdown 报告。
@@ -234,14 +234,16 @@
 - 每日收盘后生成信号，下一交易日生效。
 - 目标仓位使用评分模型输出的 AI 仓位区间中点。
 - 仓位变化低于最小调仓阈值时不调仓。
-- 默认扣除 5 bps 单边交易成本。
+- 默认扣除 5 bps 单边交易成本；可用 `--slippage-bps` 显式加入线性滑点或盘口冲击估算。
 
 默认输出：
 
 - `outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`
 - `outputs/backtests/backtest_daily_YYYY-MM-DD_YYYY-MM-DD.csv`
+- `outputs/backtests/backtest_input_coverage_YYYY-MM-DD_YYYY-MM-DD.csv`
+- `outputs/backtests/backtest_audit_YYYY-MM-DD_YYYY-MM-DD.md`
 
-当前回测状态会标记为 `PASS_WITH_LIMITATIONS`，因为估值和政策/地缘在回测中仍未接入 point-in-time 历史快照或事件库。回测已经按 signal_date 接入 point-in-time SEC 基本面特征，但仍不能代表完整投资系统已经完成。
+当前回测状态仍会标记为 `PASS_WITH_LIMITATIONS`。SEC 基本面、估值快照和政策/地缘风险事件发生记录已经按 signal_date 接入 point-in-time 历史切片；限制主要来自税费、汇率、融资利率、非线性盘口冲击、容量约束和盘中执行偏差等简化假设。`backtest_audit_*.md` 会单独判断数据质量、输入覆盖率、来源类型和执行假设是否足以支撑解释本次回测；`--fail-on-audit-warning` 可把非 PASS 审计状态升级为本地门禁失败。
 
 如果要运行跨周期压力测试，可以使用 `--regime cross_cycle_stress`，其默认起点为 `2019-01-01`，使用 2018 年历史作为 200 日均线和 252 日 VIX 分位的 warm-up。该区间覆盖更多宏观压力环境，但不应替代 ChatGPT 之后 AI 主线行情的默认解释窗口。
 

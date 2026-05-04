@@ -1,0 +1,482 @@
+# 反馈闭环与治理能力改进需求
+
+状态：PROPOSED
+
+最后更新：2026-05-04
+
+关联任务：`EVIDENCE-001`、`CAUSE-001`、`LEARNING-001`、`EXPERIMENT-001`、`LOOP-001`、`FEEDBACK-001`、`FEEDBACK-002`、`UNIVERSE-001`、`DATA-002`、`SCENARIO-001`、`CATALYST-001`、`PORTFOLIO-002`、`EXEC-001`、`COST-001`、`PROXY-001`、`GOV-001`、`OPS-001`、`ALERT-001`、`TEST-001`、`STORAGE-001`、`UI-001`、`SECURITY-001`、`DOC-001`
+
+## 背景
+
+本轮评估来自 2026-05-04 的反馈闭环强化讨论。现有任务登记表已经覆盖评分、`position_gate`、评分/置信度拆分、风险事件 schema、watch/active 区分、source policy、估值可信度、回测防过拟合、thesis 状态机、产业链节点状态和 LLM 证据分类边界。
+
+新增任务不应继续堆叠短期评分因子，而应补足第二层能力：
+
+- 记录系统当时为什么判断。
+- 观察判断后的真实结果。
+- 防止观察池、基准和数据源把回测带偏。
+- 把规则变更、执行纪律、系统不变量和运行健康纳入治理。
+- 将报告从单次结论扩展为可复盘、可校准、可审计的运营链路。
+
+总体判断：本轮建议没有需要直接 `DROPPED` 的项；但优先级和独立性不同。`FEEDBACK-001`、`FEEDBACK-002`、`UNIVERSE-001`、`DATA-002`、`SCENARIO-001`、`CATALYST-001`、`GOV-001`、`TEST-001` 应进入近期 P1/P0 队列。`PORTFOLIO-002`、`EXEC-001`、`PROXY-001` 有明确投资解释价值，也应登记，但需要和 `SCORE-003`、`REPORT-002`、`BACKTEST-001` 协同。`COST-001`、`OPS-001`、`ALERT-001`、`UI-001`、`STORAGE-001`、`SECURITY-001`、`DOC-001` 更偏长期治理、运营或产品边界，暂列 P2/P3。
+
+2026-05-04 追加判断：要把“基于新市场信息进行回测和决策因果链条认知迭代”落成工程闭环，现有任务还缺 5 个承接层。`EVIDENCE-001` 负责把新市场信息先变成可审计证据账本；`CAUSE-001` 负责把证据、模块变化、gate、决策快照和结果连接成因果链；`LEARNING-001` 负责把判断失误或成功样本归因到数据、规则、thesis、执行或不可预测冲击；`EXPERIMENT-001` 负责候选规则的历史重放和前向 shadow 验证；`LOOP-001` 负责周期性闭环复核报告。它们不是替代 `FEEDBACK-001/002` 和 `GOV-001`，而是把这些部件串成持续迭代流程。
+
+## 价值评估摘要
+
+|建议|处理结论|原因|
+|---|---|---|
+|`FEEDBACK-001` 决策快照|新增 P1|没有结构化快照，就无法做结果归因、评分校准和规则复盘。|
+|`FEEDBACK-002` 结果观察与评分校准|新增 P1|直接验证分数、置信度、gate、thesis 状态和风险事件是否有预测或风控价值。|
+|`UNIVERSE-001` point-in-time 观察池生命周期|新增 P0|防止扩展 universe 后产生幸存者偏差，影响回测正确性。|
+|`DATA-002` 跨供应商校验与数据源健康评分|新增 P1，依赖 owner 数据源选择|单一供应商错误会直接污染评分、回测和报告；不能用临时公共源假装完成。|
+|`SCENARIO-001` 情景压力测试库|新增 P1|补足历史回测不能覆盖的 AI 产业链尾部风险和非重复冲击。|
+|`CATALYST-001` 未来催化剂日历|新增 P1|报告需要说明未来哪些事件会改变判断，并支持事件前/后复核纪律。|
+|`PORTFOLIO-002` 组合暴露分解|新增 P1|与 `SCORE-003` 重叠但不是重复；第一版可作为解释层，后续再进入风险预算。|
+|`EXEC-001` 再平衡与执行纪律规则|新增 P1|当前系统已输出仓位建议，需要防止把小幅变化误当成交易指令。|
+|`COST-001` 真实交易摩擦模型|新增 P2|当前回测已有基础交易成本和滑点；更细成本模型有价值但不应挤占 P1 正确性任务。|
+|`PROXY-001` AI proxy / benchmark 治理|新增 P1|避免把半导体 ETF beta 误解释成完整 AI 产业链判断。|
+|`GOV-001` 规则变更生命周期与 rule card|新增 P1|支持系统自我优化，但防止无验证、无审计地修改生产规则。|
+|`OPS-001` 运行监控与失败告警|新增 P2|日常自动化后很重要；当前还不是投资解释的第一阻塞。|
+|`ALERT-001` 投资与数据告警系统|新增 P2|适合在报告链路和触发条件稳定后接入，避免早期重复刷屏。|
+|`TEST-001` 系统级不变量测试|新增 P1|保护 source policy、point-in-time、gate 优先级、LLM 隔离等核心原则。|
+|`STORAGE-001` DuckDB / Parquet 评估|新增 P3|CSV 对当前规模仍可接受；应在 schema 演进、查询性能或历史快照压力出现时升级。|
+|`UI-001` 证据下钻型仪表盘|新增 P2|有价值，但应等 evidence bundle、报告结构和结论等级稳定后推进。|
+|`SECURITY-001` 密钥、日志和供应商权限治理|新增 P2|数据源扩展后必要；当前已有 FMP key 不入报告的基础约束。|
+|`DOC-001` 系统使用边界与结论等级|新增 P2|减少误用风险，但应与 `SCORE-002` 置信度和 `REPORT-002` 解释输出协同。|
+|`EVIDENCE-001` 新市场信息证据账本|新增 P1|新信息必须先结构化、分级、去重和归档，才能进入 risk event、thesis、valuation、catalyst 或报告解释。|
+|`CAUSE-001` 决策因果链条 ledger|新增 P1|把证据、模块变化、gate、快照、outcome 和规则候选串起来，支持事后判断“为什么对/错”。|
+|`LEARNING-001` 错误归因与学习队列|新增 P1|校准报告告诉哪里表现差，归因队列负责区分数据问题、规则问题、thesis 问题、执行问题和不可预测冲击。|
+|`EXPERIMENT-001` 候选规则实验与 shadow replay|新增 P1|规则改动必须先以候选版本重放历史并前向 shadow 观察，不能由单次复盘直接改生产。|
+|`LOOP-001` 闭环复核编排与周期报告|新增 P1|把 evidence、snapshot、outcome、calibration、rule card 和待办状态汇总成固定复核节奏。|
+
+## EVIDENCE-001
+
+标题：新市场信息证据账本与影响分类
+
+价值判断：值得优先做。新市场信息不能直接跳到评分或规则改动，必须先进入结构化证据账本，记录来源、时间、影响对象、证据等级、是否新增信息、是否需要人工确认，以及可能影响的 risk event、thesis、valuation、catalyst 或产业链节点。
+
+分步开发：
+
+1. 设计 `market_evidence` schema，覆盖 `evidence_id`、source、source_type、published_at、captured_at、ticker、industry_chain_node、topic、evidence_grade、novelty、impact_horizon、direction、confidence、manual_review_required、linked_risk_event、linked_thesis、linked_valuation_snapshot、linked_catalyst。
+2. 建立人工录入或 CSV/YAML 导入基础版，并复用 `SOURCE-001` 的来源等级和 `REPORT-001` 的 evidence 引用。
+3. 对重复信息、低可信来源、来源冲突和过期信息输出校验警告。
+4. 允许 `LLM-001` 后续只作为证据分类辅助写入待复核队列，不允许直接改评分。
+
+验收标准：
+
+- 新市场信息进入系统前都有结构化证据记录、来源等级、采集时间和去重键。
+- 报告能区分已确认证据、待人工复核证据和不能进入自动评分的低可信证据。
+- 证据可追溯到 risk event、thesis、valuation、catalyst、industry_chain_node 或日报 claim。
+- 实现时同步更新 `docs/system_flow.md` 并补充证据 schema、去重、来源等级和 LLM 隔离测试。
+
+## CAUSE-001
+
+标题：决策因果链条 ledger
+
+价值判断：值得优先做。`REPORT-001` 能从报告 claim 反查 evidence，`FEEDBACK-001` 能保存当日决策快照；但认知迭代还需要把“哪个证据导致哪个模块变化、哪个 gate 生效、最终仓位如何变化、后续结果如何、是否形成规则候选”串成稳定链条。
+
+分步开发：
+
+1. 设计 `decision_causal_chain` schema，覆盖 `chain_id`、signal_date、market_regime、linked_evidence_ids、affected_modules、score_delta、confidence_delta、triggered_gates、position_delta、linked_decision_snapshot、linked_outcome_windows、review_status、linked_rule_candidate。
+2. 在 `score-daily` 或日报解释链路中输出本期主要因果链条，第一版可以从模块变化、gate 和 evidence 引用生成。
+3. 在 `FEEDBACK-002` outcome 生成后回填对应观察窗口结果。
+4. 将因果链条纳入 `trace lookup` 或等价查询入口。
+
+验收标准：
+
+- 每个核心仓位变化或结论降级都能对应至少一个 `chain_id`。
+- 因果链能连接 evidence、module score/confidence 变化、gate、decision snapshot、outcome 和后续规则复核。
+- 不允许用未来 outcome 改写 signal_date 当时的 causal chain，只能追加后验观察字段。
+- 实现时同步更新 `docs/system_flow.md` 并补充因果链可见性和未来函数防护测试。
+
+## LEARNING-001
+
+标题：结果归因、错误分类与学习队列
+
+价值判断：值得做。`FEEDBACK-002` 能量化表现，但“认知迭代”需要把表现好坏归因到可行动类别：数据质量、来源问题、规则过度敏感、规则过度迟钝、thesis 错误、执行纪律、观察池偏差、基准误选或不可预测外生冲击。
+
+建议分类：
+
+- `data_issue`：数据缺失、延迟、字段漂移、来源冲突或质量门未覆盖。
+- `rule_issue`：评分、gate、阈值、置信度或执行规则需要复核。
+- `thesis_issue`：核心假设错误、验证指标不足或证伪条件过弱。
+- `execution_issue`：建议正确但调仓纪律或成本假设影响结果。
+- `universe_or_proxy_issue`：观察池、AI proxy 或基准选择导致误读。
+- `exogenous_unforecastable`：无法合理提前识别的外部冲击。
+- `sample_limited`：样本不足，不足以形成规则结论。
+
+验收标准：
+
+- 校准报告和重大偏差样本能生成 review queue，记录归因分类、证据、owner、下一步和是否需要规则候选。
+- 成功样本也能归因，避免系统只从失败样本学习。
+- 样本不足必须标记为 `sample_limited`，不能强行生成规则修改建议。
+- 实现时同步更新 `docs/system_flow.md` 并补充归因分类和学习队列测试。
+
+## EXPERIMENT-001
+
+标题：候选规则实验、历史重放与前向 shadow 验证
+
+价值判断：值得优先做。`GOV-001` 管规则生命周期，但还需要规则进入 production 前的实验路径。候选规则应先在 `ai_after_chatgpt` 窗口和指定压力窗口重放，再前向 shadow 一段时间，比较 production 和 candidate 的差异。
+
+分步开发：
+
+1. 定义 `rule_candidate` schema，记录候选规则、触发原因、关联 causal chain、预期改善、风险、验证窗口、回滚条件。
+2. 建立历史 replay 输出，比较 production vs candidate 在收益、回撤、换手、置信度、触发 gate、结论等级和主要失败样本上的差异。
+3. 建立 forward shadow 记录，不影响正式日报仓位，只记录候选规则如果上线会如何改变判断。
+4. 通过 `GOV-001` rule card 批准后才允许进入 production。
+
+验收标准：
+
+- 每个候选规则都有历史重放结果、前向 shadow 计划、样本限制说明和回滚条件。
+- 报告显示 candidate 相对 production 的收益、回撤、换手、错误归因和规则复杂度变化。
+- 候选规则未批准前不得影响正式评分、仓位或日报结论。
+- 实现时同步更新 `docs/system_flow.md` 并补充 candidate isolation 和 replay 测试。
+
+## LOOP-001
+
+标题：闭环复核编排与周期报告
+
+价值判断：值得做。单个任务分别解决证据、快照、outcome、规则和报告，但还需要固定节奏的闭环报告，明确本期新信息、哪些判断已到观察窗口、哪些规则需要复核、哪些任务被阻塞、哪些结论仍不能升级。
+
+建议复核节奏：
+
+- 每日：新证据、数据质量、催化剂、risk/thesis/valuation 状态和当日 decision snapshot。
+- 每周：已成熟的 5D/20D outcome、主要偏差样本、执行纪律和新 rule candidate。
+- 每月或每个财报季后：60D/120D outcome、calibration、backtest robustness、scenario stress 和 rule card 复核。
+
+验收标准：
+
+- 生成闭环复核报告，覆盖 new evidence、decision snapshots、due outcomes、calibration findings、causal chains、learning queue、rule candidates、blocked owner inputs 和 task register 状态变化。
+- 报告声明市场阶段，默认以 `ai_after_chatgpt` 作为主要结论窗口。
+- 报告明确哪些结论可执行、哪些仅研究、哪些因数据或样本不足降级。
+- 实现时同步更新 `docs/system_flow.md` 并补充周期报告测试。
+
+## FEEDBACK-001
+
+标题：决策快照与结果观察窗口基础
+
+价值判断：值得优先做。现有 `scores_daily.csv`、日报 evidence bundle 和回测明细已经具备部分审计能力，但还没有把每一次当日判断固化为面向后续复盘的 `decision_snapshot`。没有这个快照，后续很难系统性回答当时哪些 gate 生效、置信度如何、主要解释因子是什么，以及后续结果是否验证了判断。
+
+分步开发：
+
+1. 设计 `decision_snapshot` schema，覆盖 signal_date、market_regime、requested_range、overall score、module scores、confidence、model position range、final position range、triggered gates、thesis state、risk events、valuation state、major explanation factors、config version、data quality refs、trace bundle refs。
+2. 在 `aits score-daily` 成功通过数据质量门禁并生成日报后追加或重写当日快照。
+3. 将快照与 `REPORT-001` evidence bundle、`SCORE-002` 置信度拆分和 `REPORT-002` 变化原因树兼容。
+4. 为重复运行同一 signal_date 设计幂等策略，避免同一天多份冲突快照。
+
+验收标准：
+
+- 每次评分都会生成机器可读 `decision_snapshot`，且包含数据质量状态、配置版本和 evidence 引用。
+- 快照能复原当日总分、模块分、置信度、仓位区间、触发 gate、thesis、风险事件、估值状态和主要解释因子。
+- 报告或 trace 反查能定位对应快照。
+- 实现时同步更新 `docs/system_flow.md` 并补充快照 schema、幂等写入和报告引用测试。
+
+## FEEDBACK-002
+
+标题：结果归因与评分校准报告
+
+价值判断：值得做，但依赖 `FEEDBACK-001`。该任务不是普通回测，而是对真实系统判断做后验观察，用来检验 80-100 分是否真的优于 65-80 分、低置信高分是否容易失误、估值或风险 gate 是否降低回撤、thesis warning 是否有提前量。
+
+观察窗口：
+
+- 1D、5D、20D、60D、120D。
+- AI proxy return、SPY return、QQQ return、SMH/SOXX return、excess return、max drawdown、realized volatility、hit/miss。
+
+分步开发：
+
+1. 从历史 `decision_snapshot` 生成 `decision_outcome`，按 signal_date 之后的交易窗口计算收益、回撤和超额收益。
+2. 建立 score bucket、confidence bucket、gate state、thesis state、risk level、valuation state 分组统计。
+3. 输出机器可读 outcome CSV 和中文 Markdown calibration report。
+4. 将校准结果用于规则复核，而不是自动改生产规则；规则变更必须走 `GOV-001`。
+
+验收标准：
+
+- 能按总分、置信度、gate、thesis、风险等级和估值状态分桶统计未来收益、回撤、波动、胜率和超额收益。
+- 报告声明市场阶段、样本数量、观察窗口、数据质量状态和样本不足限制。
+- 不把样本不足或重叠窗口误解释为稳定结论。
+- 实现时同步更新 `docs/system_flow.md` 并补充 outcome 计算和分桶报告测试。
+
+## UNIVERSE-001
+
+标题：Point-in-time 观察池生命周期
+
+价值判断：应列为 P0。当前 `config/watchlist.yaml` 适合记录现时观察池和能力圈，但扩展回测时必须知道某个 ticker 在历史上何时被纳入、移除、为什么纳入、当时是否已在能力圈、是否已有产业链节点映射和 thesis。否则长期回测会倾向于只包含后来幸存的 AI 龙头。
+
+分步开发：
+
+1. 设计 `watchlist_lifecycle` schema，记录 `ticker`、`added_at`、`removed_at`、`reason`、`active_from`、`active_until`、`competence_status`、`node_mapping_valid_from`、`thesis_required_from`、来源和复核人。
+2. 更新 `aits watchlist validate`，校验当前 `watchlist.yaml` 与 lifecycle 的一致性。
+3. 在回测中按 signal_date 只允许使用当时已进入观察池且映射有效的 ticker。
+4. 对历史扩展 universe 输出覆盖和限制说明。
+
+验收标准：
+
+- 每个进入评分、回测或报告的 ticker 都能追溯观察池生命周期。
+- 回测不能使用 signal_date 尚未进入观察池或尚未有效映射的 ticker。
+- 报告能区分主动移除、并购/退市、失去相关性、能力圈不足和数据源不足。
+- 实现时同步更新 `docs/system_flow.md` 并补充防幸存者偏差测试。
+
+## DATA-002
+
+标题：跨供应商数据校验与数据源健康评分
+
+价值判断：值得做，但真实跨供应商校验依赖 owner 选择可长期使用的数据源和权限。当前 `aits validate-data` 已覆盖 schema、完整性、新鲜度、重复键和异常值；下一层需要识别供应商之间价格、估值、财报、宏观数据的口径冲突、字段漂移、延迟更新和 ticker alias 风险。
+
+分步开发：
+
+1. 定义 provider health score，覆盖 freshness、schema drift、row count anomaly、checksum change、alias risk、cross-provider deviation、permission status。
+2. 先为已有 provider 输出单源健康报告，再在 owner 提供第二来源后接入差异检测。
+3. 对价格、估值、财报和宏观数据分别定义容忍区间和调查门槛。
+4. 把 provider health 引入数据质量报告和日报限制说明；严重问题应停止下游使用或降级结论。
+
+验收标准：
+
+- 报告显示 provider、endpoint、请求参数、下载时间、row count、checksum、新鲜度、字段漂移、alias 风险和跨来源差异。
+- 跨供应商冲突进入调查项，不被自动平滑。
+- 没有合格第二来源时，系统明确标记 cross-provider reconciliation 未覆盖，而不是伪造通过。
+- 实现时同步更新 `docs/system_flow.md` 并补充数据源健康测试。
+
+## SCENARIO-001
+
+标题：AI 产业链情景压力测试库
+
+价值判断：值得做。`BACKTEST-001` 回答历史规则表现，情景压力测试回答当前仓位和 thesis 在指定冲击下的脆弱点。两者互补。
+
+建议首批场景：
+
+- 云厂商 CapEx 下修。
+- GPU 毛利率压缩。
+- HBM 供应过剩。
+- 先进封装瓶颈缓解或恶化。
+- 出口管制升级。
+- 台海或地缘风险升级。
+- 美债利率快速上行。
+- AI 龙头估值压缩。
+- 数据中心电力或能源限制。
+- AI 应用需求低于预期。
+
+验收标准：
+
+- 每个场景能映射到产业链节点、ticker、thesis、风险事件和仓位 gate。
+- 报告输出当前组合在该场景下的主要脆弱点、受影响 ticker、观察条件和人工复核要求。
+- 场景不伪装成概率预测；必须区分历史压力、假设冲击和真实 active 风险事件。
+- 实现时同步更新 `docs/system_flow.md` 并补充场景映射测试。
+
+## CATALYST-001
+
+标题：未来催化剂日历与事件前模式
+
+价值判断：值得做。当前系统偏重已发生风险和当日评分，未来催化剂日历能让日报说明未来 5/20/60 天哪些事件可能改变判断，并支持事件前不主动加仓、事件后 thesis 复核等纪律。
+
+候选事件类型：
+
+- 财报日和业绩指引。
+- CPI、FOMC、非农等宏观事件。
+- 大型科技公司 CapEx 说明。
+- 芯片新品发布和重要行业会议。
+- 监管听证、出口管制评论期或执行日。
+
+验收标准：
+
+- 日报显示未来 5/20/60 天重要催化剂、关联 ticker/节点、影响范围、来源和可信度。
+- 重大事件前可触发 `pre_event_review`、禁止主动加仓或降低结论等级。
+- 事件后自动要求复核相关 thesis、risk event 或 valuation state。
+- 实现时同步更新 `docs/system_flow.md` 并补充日历 schema 和报告测试。
+
+## PORTFOLIO-002
+
+标题：组合暴露分解
+
+价值判断：值得做，但应定位为 `SCORE-003` 的解释层和输入准备，而不是另起一套仓位优化器。AI 仓位风险可能集中在单票、节点、地区、客户链、估值因子、ETF beta 或相关性簇。
+
+验收标准：
+
+- 日报显示当前 AI 仓位的 ticker、产业链节点、地区、客户链、因子、ETF beta、相关性簇和集中度。
+- 报告能解释“AI 仓位 60%”背后的主要集中风险，而不是只显示总百分比。
+- 第一版不直接改变仓位；进入仓位约束前必须和 `SCORE-003`、`GOV-001` 协同验证。
+- 实现时同步更新 `docs/system_flow.md` 并补充暴露计算测试。
+
+## EXEC-001
+
+标题：再平衡与执行纪律规则
+
+价值判断：值得做。系统不是自动交易，但只要输出仓位建议，就需要区分“模型建议区间变化”和“是否值得执行调仓”。否则用户容易把每天的小幅变化当成交易指令。
+
+建议规则：
+
+- 再平衡阈值。
+- 最小调仓幅度。
+- 冷却期。
+- 禁止追涨条件。
+- 事件前不新增仓位。
+- 连续信号确认。
+- 高波动期降低交易频率。
+
+验收标准：
+
+- 日报区分仓位建议变化和执行建议。
+- 小幅仓位变化、低置信度、高波动或重大事件前状态可触发维持不动、等待确认或人工复核。
+- 规则必须可配置、可回测、可审计，不能在报告层临时写死。
+- 实现时同步更新 `docs/system_flow.md` 并补充执行纪律测试。
+
+## COST-001
+
+标题：更真实的交易摩擦模型
+
+价值判断：有价值但列 P2。当前回测已支持基础单边交易成本和线性滑点，短期不应因成本模型扩展挤占 point-in-time、反馈闭环和数据源健康任务。后续真实资金规模化时，应支持 spread、滑点、冲击、税费、汇率、融资利率、ETF 延迟和最小交易单位。
+
+验收标准：
+
+- 回测支持 bid-ask spread、滑点、市场冲击、汇率、税费、融资利率、ETF 申赎或成交延迟、最小交易单位。
+- 报告显示成本敏感性，并说明哪些假设适用于研究、模拟或真实执行。
+- 所有成本假设写入 run manifest 和 evidence bundle。
+
+## PROXY-001
+
+标题：AI proxy 与 benchmark 治理
+
+价值判断：值得做。`SMH` 是重要半导体 proxy，但不是完整 AI 产业链；回测和校准报告需要区分半导体 beta、纳指 beta 和 AI 主题 beta。
+
+验收标准：
+
+- 形成 `benchmark_policy`，说明何时使用 SPY、QQQ、SMH、SOXX 或自定义 AI basket。
+- 自定义 AI basket 必须具备 point-in-time lifecycle，不能事后挑选赢家。
+- 回测、校准和报告能说明收益来自半导体 beta、纳指 beta、AI 主题 beta 还是系统动态仓位。
+- 实现时同步更新 `docs/system_flow.md` 并补充基准治理测试。
+
+## GOV-001
+
+标题：规则变更生命周期与 rule card
+
+价值判断：值得优先做。反馈闭环可以提出规则改进，但不能自动无审计地改生产规则。核心评分、`position_gate`、risk event、valuation gate、thesis 状态机都需要规则版本、适用范围、上线原因、验证报告、已知失败模式和回滚方式。
+
+验收标准：
+
+- 核心规则具备 production / candidate / retired 生命周期。
+- 每次规则变更能追溯 rule card、验证报告、批准记录和回滚方式。
+- `score-daily`、回测、decision snapshot 和 evidence bundle 能记录 rule version。
+- 实现时同步更新 `docs/system_flow.md` 并补充规则版本测试。
+
+## OPS-001
+
+标题：运行监控与 pipeline health report
+
+价值判断：有价值但列 P2。当前重点仍是数据质量和投资解释；自动日常运行稳定后，应补运行状态、耗时、输入版本、质量门禁状态、API 错误、缺失数据和报告生成状态。
+
+验收标准：
+
+- 每次运行记录成功/失败、耗时、输入文件版本、质量门禁状态、API 错误、缺失数据和报告生成状态。
+- 失败时输出明确排查入口和相关日志引用。
+- 不把运行成功误写成投资结论有效；投资结论仍受数据质量和覆盖限制约束。
+
+## ALERT-001
+
+标题：投资与数据告警系统
+
+价值判断：有价值但应在触发规则稳定后推进。告警必须有等级、来源、触发条件、解除条件和引用，避免重复刷屏。
+
+候选告警：
+
+- 数据源断更。
+- 估值快照过期。
+- risk event 从 watch 升级 active。
+- L2/L3 风险触发。
+- thesis 从 active 变 warning/challenged。
+- 仓位上限下降超过阈值。
+- 未来 5 天有重大财报或政策事件。
+
+验收标准：
+
+- 告警有 data/system 和 investment/risk 两类。
+- 每条告警有等级、来源、触发条件、解除条件、对应 claim/evidence 引用和去重策略。
+- 报告显示告警摘要，通知渠道接入必须可关闭、可审计。
+
+## TEST-001
+
+标题：系统级不变量测试
+
+价值判断：值得优先做。该系统的核心风险不是单个函数 bug，而是后续改动破坏关键投资原则。必须用测试保护 source policy、point-in-time、gate 优先级、LLM 隔离和 watch/active 区分。
+
+首批不变量：
+
+- `watch` 风险事件不应直接触发重仓位扣减。
+- `public_convenience` 来源不能自动评分。
+- LLM 输出不能直接影响仓位。
+- `position_gate` 必须取最严格上限。
+- 回测不能使用未来估值快照。
+- SEC 指标必须满足 `filed_date <= signal_date`。
+- 估值采集日之后才可见。
+- 缺少数据质量通过状态时，评分、回测和报告不能输出完整结论。
+
+验收标准：
+
+- 每条核心投资原则都有系统级测试。
+- 规则改动不能破坏 source policy、point-in-time、gate 优先级、LLM 隔离、watch/active 区分。
+- 新增关键规则时必须同步补不变量测试或说明不适用原因。
+
+## STORAGE-001
+
+标题：从 CSV 逐步评估 DuckDB / Parquet
+
+价值判断：有价值但列 P3。CSV 对当前本地 MVP 足够透明；只有当 schema 演进、join 性能、历史快照、字段类型约束或审计查询压力出现时，才应推进内部存储升级。
+
+验收标准：
+
+- 不破坏现有 CSV 输入输出和用户可审计路径。
+- 内部可用 typed schema 存储，报告和回测仍可追溯 checksum、数据版本和来源。
+- 迁移计划包含兼容期、回滚方式和数据验证。
+
+## UI-001
+
+标题：证据下钻型仪表盘
+
+价值判断：有价值但列 P2。仪表盘不应只展示曲线，而应围绕结论下钻、gate、thesis、risk event、数据源和 evidence bundle 设计。应等报告结构和 evidence 引用稳定后推进。
+
+验收标准：
+
+- 仪表盘可从结论下钻到模块分、gate、risk event、thesis、数据源、原始证据和质量报告。
+- 支持本期/上期差异、仓位限制原因和未来观察条件。
+- 不替代 Markdown 报告的审计责任；关键结论仍需可导出和可追溯。
+
+## SECURITY-001
+
+标题：密钥、日志和供应商权限治理
+
+价值判断：有价值。当前 FMP API key 已要求从环境变量读取且不写入报告；随着数据源扩展，需要 secret hygiene、日志脱敏、供应商权限和内容使用限制治理。
+
+验收标准：
+
+- API key 不进入报告、日志、manifest、trace bundle 或错误输出。
+- 支持 secret scan 或等价检查。
+- 供应商权限、缓存限制、再分发限制和 LLM 处理限制记录在 data source catalog。
+- 新数据源接入必须通过安全与权限检查。
+
+## DOC-001
+
+标题：系统使用边界与结论等级
+
+价值判断：有价值但应与 `SCORE-002` 和 `REPORT-002` 协同。系统是投资决策支持，不是自动交易；报告需要将结论等级标准化，避免用户把所有分数当成同等可靠信号。
+
+建议等级：
+
+- `actionable`：可作为仓位复核依据。
+- `review_required`：必须人工复核。
+- `research_only`：仅研究观察，不应用于仓位。
+- `data_limited`：数据不足，结论降级。
+- `backtest_limited`：回测输入覆盖不足。
+
+验收标准：
+
+- 每份日报和回测报告都有结论等级。
+- 低置信度、数据不足、来源不足、回测覆盖不足、事件前状态会自动降级。
+- 报告清楚说明降级原因、解除条件和可追溯证据。
+
+## 状态记录
+
+- 2026-05-04：创建需求文档，完成价值评估并登记任务。当前仅完成需求评估和任务拆解，尚未实现。
+- 2026-05-04：`EVIDENCE-001` 已完成基础实现：新增 `market_evidence` schema、YAML/CSV 导入、`aits evidence import-csv/validate`、来源等级校验、重复检查、LLM 待复核隔离和 public_convenience 不可自动评分测试。
+- 2026-05-04：`FEEDBACK-001` 已完成基础实现：`aits score-daily` 在数据质量门禁通过后写入 deterministic `decision_snapshot_YYYY-MM-DD.json`，快照包含 market regime、评分、置信度、仓位、position gates、质量状态、人工复核、估值/风险状态、trace bundle 引用和配置路径。
+- 2026-05-04：`FEEDBACK-002` 已完成基础实现：新增 `aits feedback calibrate`，先复用数据质量门禁，再从历史 `decision_snapshot` 和 `prices_daily.csv` 生成 `decision_outcomes.csv` 与中文校准报告；支持 1D/5D/20D/60D/120D 窗口、AI proxy/benchmark return、超额收益、最大回撤、实现波动、hit/miss，并按总分、置信度、gate、thesis、风险等级和估值状态分桶；报告明确样本不足、窗口重叠和不得自动修改生产规则。
+- 2026-05-04：`UNIVERSE-001` 已完成基础实现：新增 `config/watchlist_lifecycle.yaml`、`aits watchlist validate-lifecycle` 和回测 signal_date lifecycle 过滤，测试覆盖尚未进入观察池的 ticker 不参与历史市场特征。
+- 2026-05-04：`TEST-001` 已推进为完成状态：系统级不变量测试覆盖 watch 风险事件不自动评分、低证据等级/公开便利源隔离、LLM evidence 隔离、watchlist point-in-time 过滤、decision snapshot 写入、评分置信度和估值 PIT 可信度。

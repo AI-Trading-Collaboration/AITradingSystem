@@ -60,7 +60,7 @@ def test_build_sec_fundamental_features_report_generates_ratio_features(
     assert "config/fundamental_features.yaml" in markdown
 
 
-def test_build_sec_fundamental_features_report_rejects_misaligned_metrics(
+def test_build_sec_fundamental_features_report_warns_and_skips_misaligned_metrics(
     tmp_path: Path,
 ) -> None:
     input_path = tmp_path / "sec_fundamentals.csv"
@@ -80,8 +80,9 @@ def test_build_sec_fundamental_features_report_rejects_misaligned_metrics(
         validation_report=validation,
     )
 
-    assert report.status == "FAIL"
+    assert report.status == "PASS_WITH_WARNINGS"
     assert report.row_count == 0
+    assert report.warning_count == 1
     assert "sec_fundamental_feature_metric_alignment_mismatch" in {
         issue.code for issue in report.issues
     }
@@ -89,7 +90,7 @@ def test_build_sec_fundamental_features_report_rejects_misaligned_metrics(
 
 def test_write_sec_fundamental_features_csv_rejects_failed_report(tmp_path: Path) -> None:
     input_path = tmp_path / "sec_fundamentals.csv"
-    _write_metrics_csv(input_path, denominator_accession="0001045810-26-999999")
+    _write_metrics_csv(input_path, gross_profit_value=0)
     validation = validate_sec_fundamental_metrics_csv(
         companies=_companies_config(),
         metrics=_metrics_config(),
@@ -98,7 +99,18 @@ def test_write_sec_fundamental_features_csv_rejects_failed_report(tmp_path: Path
     )
     report = build_sec_fundamental_features_report(
         companies=_companies_config(),
-        feature_config=_features_config(),
+        feature_config=FundamentalFeaturesConfig(
+            features=[
+                FundamentalRatioFeatureConfig(
+                    feature_id="revenue_to_gross_profit",
+                    name="Revenue to Gross Profit",
+                    description="收入除以毛利。",
+                    numerator_metric_id="revenue",
+                    denominator_metric_id="gross_profit",
+                    preferred_periods=["annual"],
+                )
+            ]
+        ),
         input_path=input_path,
         as_of=_date(),
         validation_report=validation,
@@ -295,6 +307,7 @@ def _features_config() -> FundamentalFeaturesConfig:
 def _write_metrics_csv(
     output_path: Path,
     denominator_accession: str = "0001045810-26-000001",
+    gross_profit_value: float = 650,
 ) -> None:
     pd.DataFrame(
         [
@@ -307,7 +320,7 @@ def _write_metrics_csv(
             _metric_record(
                 metric_id="gross_profit",
                 metric_name="Gross Profit",
-                value=650,
+                value=gross_profit_value,
                 accession_number="0001045810-26-000001",
             ),
         ],

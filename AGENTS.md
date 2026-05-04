@@ -99,6 +99,93 @@ commands must enforce the gate themselves.
 - If a design decision affects investment interpretation, record it in docs or
   configuration rather than leaving it implicit in code.
 
+## Task Register Discipline
+
+`docs/task_register.md` is the source of truth for unfinished work, deferred
+enhancements, owner-dependent data tasks, and baseline implementations that are
+not yet complete enough for long-term system quality.
+
+Any non-trivial TODO, planned enhancement, accepted workaround, or follow-up
+from a review must be recorded there instead of being left only in code comments,
+chat history, or an ad hoc checklist. Each item should include:
+
+- stable task id;
+- priority;
+- status;
+- owner or next responsible party;
+- blocker or dependency, if any;
+- acceptance criteria;
+- last update date or reason for status change.
+
+Before implementing any non-trivial requirement, bug fix, scoring change, data
+pipeline change, or report behavior change discussed with the project owner,
+first create or update the relevant task-register item with priority, status,
+next owner, blocker/dependency, and acceptance criteria. Do not move directly
+from discussion to implementation unless the change is trivial housekeeping that
+does not affect system behavior, investment interpretation, data flow, data
+quality, scoring, backtests, or reports.
+
+When a requirement has too much context for a concise task-register row, create
+a supporting Markdown document, preferably under `docs/requirements/` or another
+clearly named `docs/` subdirectory. The task-register row should then contain a
+short summary and link to that document. The supporting document should preserve
+the longer context, design decisions, open questions, acceptance criteria,
+progress notes, and status transitions. Implementation progress must update both
+the task-register summary/status and the linked document when the detailed
+context changes.
+
+When a task needs to be split into multiple development steps, create or update
+a supporting Markdown document before implementation. The document must record
+the step breakdown, dependencies, sequencing, acceptance criteria for each
+stage, open questions, and status changes. The task-register row must link to
+that document instead of trying to carry the full plan in one table cell.
+
+Priority should reflect long-term system risk, not implementation convenience:
+correctness, data quality, auditability, investment interpretation, and backtest
+validity rank above UI polish or developer ergonomics. When a basic version is
+implemented only to keep other work moving, mark it as `BASELINE_DONE` and record
+the remaining data-source, validation, or design dependency. When progress
+depends on the project owner providing a more credible data source, access,
+policy decision, or manual review, mark the blocker explicitly instead of
+treating the task as complete.
+
+Whenever a task moves forward, becomes blocked, is superseded, or is completed,
+update the register in the same change as the code or documentation change that
+caused the status transition.
+
+## Local Commit Discipline
+
+When completing work that was explicitly selected from `docs/task_register.md`
+or another project TODO list, the finished change may be committed directly to
+the current local branch after the relevant validation has passed. The commit
+must include the task-register/status update, supporting documentation updates,
+and the implementation or test changes that caused the task to move forward.
+
+This permission applies to local commits only. Pushing a branch, opening or
+updating a pull request, rewriting history, or including unrelated user changes
+still requires an explicit project-owner request.
+
+## Parallel Development Discipline
+
+When multiple missing modules or feature slices can be developed independently,
+prefer parallel development. Split work by clear ownership boundaries such as
+data source adapter, schema validation, scoring integration, backtest history
+support, reports, or tests.
+
+Parallel work must remain reviewable:
+
+- assign each worker a concrete module responsibility and a mostly disjoint file
+  scope before implementation starts;
+- avoid parallel edits to shared integration files such as CLI wiring, central
+  scoring rules, global config, and `docs/system_flow.md` unless coordination is
+  explicit;
+- keep shared documentation, configuration, and final integration under one
+  coordinating change so that data flow, audit requirements, and tests stay
+  consistent;
+- do not duplicate logic across parallel branches just to move faster; extract
+  shared helpers during integration when the duplication affects correctness or
+  auditability.
+
 ## Output Language
 
 Project-facing conclusions, Markdown reports, and CLI result summaries should be

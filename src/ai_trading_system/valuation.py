@@ -24,6 +24,27 @@ ValuationSourceType = Literal[
 ]
 CrowdingStatus = Literal["normal", "elevated", "extreme", "unknown"]
 ValuationAssessment = Literal["cheap", "reasonable", "expensive", "extreme", "unknown"]
+ValuationPointInTimeClass = Literal[
+    "true_point_in_time",
+    "captured_snapshot",
+    "backfilled_history_distribution",
+    "unknown",
+]
+ValuationHistorySourceClass = Literal[
+    "vendor_archive",
+    "captured_snapshot_history",
+    "vendor_historical_endpoint",
+    "manual_backfill",
+    "none",
+    "unknown",
+]
+ValuationConfidenceLevel = Literal["high", "medium", "low"]
+ValuationBacktestUse = Literal[
+    "strict_point_in_time",
+    "captured_at_forward_only",
+    "auxiliary_current_only",
+    "not_for_backtest",
+]
 
 
 class ValuationIssueSeverity(StrEnum):
@@ -57,6 +78,11 @@ class ValuationSnapshot(BaseModel):
     source_name: str = Field(min_length=1)
     source_url: str = ""
     captured_at: date
+    point_in_time_class: ValuationPointInTimeClass = "captured_snapshot"
+    history_source_class: ValuationHistorySourceClass = "unknown"
+    confidence_level: ValuationConfidenceLevel = "medium"
+    confidence_reason: str = ""
+    backtest_use: ValuationBacktestUse = "captured_at_forward_only"
     valuation_metrics: list[SnapshotMetric] = Field(min_length=1)
     expectation_metrics: list[SnapshotMetric] = Field(default_factory=list)
     crowding_signals: list[CrowdingSignal] = Field(default_factory=list)
@@ -136,6 +162,11 @@ class ValuationReviewItem:
     ticker: str
     source_type: ValuationSourceType
     as_of: date
+    point_in_time_class: ValuationPointInTimeClass
+    history_source_class: ValuationHistorySourceClass
+    confidence_level: ValuationConfidenceLevel
+    confidence_reason: str
+    backtest_use: ValuationBacktestUse
     health: str
     reason: str
     valuation_percentile: float | None
@@ -242,12 +273,20 @@ def validate_valuation_snapshot_store(
         )
 
     _check_duplicate_snapshot_ids(store.loaded, issues)
+    current_snapshot_ids = {
+        id(loaded)
+        for loaded in _latest_visible_snapshots_by_ticker(
+            store.loaded,
+            as_of=as_of,
+        )
+    }
     for loaded in store.loaded:
         _check_snapshot(
             loaded=loaded,
             known_tickers=known_tickers,
             as_of=as_of,
             max_snapshot_age_days=max_snapshot_age_days,
+            check_current_readiness=id(loaded) in current_snapshot_ids,
             issues=issues,
         )
 
@@ -262,12 +301,16 @@ def validate_valuation_snapshot_store(
 def build_valuation_review_report(
     validation_report: ValuationValidationReport,
 ) -> ValuationReviewReport:
+    review_snapshots = _latest_visible_snapshots_by_ticker(
+        validation_report.snapshots,
+        as_of=validation_report.as_of,
+    )
     return ValuationReviewReport(
         as_of=validation_report.as_of,
         validation_report=validation_report,
         items=tuple(
             _review_item(loaded.snapshot, validation_report.as_of)
-            for loaded in validation_report.snapshots
+            for loaded in review_snapshots
         ),
     )
 
@@ -284,6 +327,10 @@ def render_valuation_validation_report(report: ValuationValidationReport) -> str
         f"- 错误数：{report.error_count}",
         f"- 警告数：{report.warning_count}",
         "",
+        "## 当前评分指标覆盖",
+        "",
+        *_current_valuation_metric_coverage_lines(report),
+        "",
         "## 快照概览",
         "",
     ]
@@ -292,9 +339,9 @@ def render_valuation_validation_report(report: ValuationValidationReport) -> str
     else:
         lines.extend(
             [
-                "| Snapshot | Ticker | 日期 | 来源类型 | 来源 | 估值分位 | 评估 | "
-                "指标数 | 拥挤度信号 |",
-                "|---|---|---|---|---|---:|---|---:|---:|",
+                "| Snapshot | Ticker | 日期 | 来源类型 | PIT 等级 | 历史来源 | 可信度 | "
+                "回测用途 | 来源 | 估值分位 | 评估 | 指标数 | 拥挤度信号 |",
+                "|---|---|---|---|---|---|---|---|---|---:|---|---:|---:|",
             ]
         )
         for loaded in sorted(report.snapshots, key=lambda item: item.snapshot.snapshot_id):
@@ -310,6 +357,10 @@ def render_valuation_validation_report(report: ValuationValidationReport) -> str
                 f"{snapshot.ticker} | "
                 f"{snapshot.as_of.isoformat()} | "
                 f"{_source_type_label(snapshot.source_type)} | "
+                f"{_point_in_time_class_label(snapshot.point_in_time_class)} | "
+                f"{_history_source_class_label(snapshot.history_source_class)} | "
+                f"{_confidence_level_label(snapshot.confidence_level)} | "
+                f"{_backtest_use_label(snapshot.backtest_use)} | "
                 f"{_escape_markdown_table(snapshot.source_name)} | "
                 f"{percentile} | "
                 f"{_assessment_label(snapshot.overall_assessment)} | "
@@ -350,6 +401,7 @@ def render_valuation_review_report(report: ValuationReviewReport) -> str:
         f"- 评估日期：{report.as_of.isoformat()}",
         f"- 输入路径：`{validation.input_path}`",
         f"- 快照数量：{validation.snapshot_count}",
+        f"- 当前复核快照数：{len(report.items)}",
         f"- 覆盖标的数：{validation.ticker_count}",
         f"- 校验错误数：{validation.error_count}",
         f"- 校验警告数：{validation.warning_count}",
@@ -362,9 +414,9 @@ def render_valuation_review_report(report: ValuationReviewReport) -> str:
     else:
         lines.extend(
             [
-                "| Snapshot | Ticker | 来源 | 日期 | 复核结论 | 原因 | 估值分位 | "
-                "评估 | 极端拥挤 | 偏热信号 |",
-                "|---|---|---|---|---|---|---:|---|---|---|",
+                "| Snapshot | Ticker | 来源 | 日期 | PIT 等级 | 可信度 | 回测用途 | "
+                "复核结论 | 原因 | 估值分位 | 评估 | 极端拥挤 | 偏热信号 |",
+                "|---|---|---|---|---|---|---|---|---|---:|---|---|---|",
             ]
         )
         for item in sorted(report.items, key=lambda value: value.snapshot_id):
@@ -379,8 +431,11 @@ def render_valuation_review_report(report: ValuationReviewReport) -> str:
                 f"{item.ticker} | "
                 f"{_source_type_label(item.source_type)} | "
                 f"{item.as_of.isoformat()} | "
+                f"{_point_in_time_class_label(item.point_in_time_class)} | "
+                f"{_confidence_level_label(item.confidence_level)} | "
+                f"{_backtest_use_label(item.backtest_use)} | "
                 f"{_health_label(item.health)} | "
-                f"{_escape_markdown_table(item.reason)} | "
+                f"{_escape_markdown_table(_valuation_reason_with_confidence(item))} | "
                 f"{percentile} | "
                 f"{_assessment_label(item.overall_assessment)} | "
                 f"{', '.join(item.extreme_crowding_signals)} | "
@@ -394,7 +449,8 @@ def render_valuation_review_report(report: ValuationReviewReport) -> str:
             "",
             "- 估值和拥挤度只用于仓位折扣和人工复核，不直接触发买卖。",
             "- `public_convenience` 来源只能作为辅助，不能直接进入自动评分。",
-            "- 当前基础版复核依赖人工或供应商快照，后续再接正式数据源。",
+            "- PIT 等级区分真实 point-in-time、采集日快照和回填历史分布；"
+            "低可信回填分布不能被解释成历史时点当时可见的 vendor archive。",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -413,6 +469,46 @@ def write_valuation_review_report(report: ValuationReviewReport, output_path: Pa
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(render_valuation_review_report(report), encoding="utf-8")
     return output_path
+
+
+def _current_valuation_metric_coverage_lines(report: ValuationValidationReport) -> list[str]:
+    current_snapshots = _latest_visible_snapshots_by_ticker(
+        report.snapshots,
+        as_of=report.as_of,
+    )
+    total = len(current_snapshots)
+    if total == 0:
+        return [
+            "- 当前可见快照数：0",
+            "- 没有可用于当日评分的估值快照。",
+        ]
+
+    percentile_count = sum(
+        1 for loaded in current_snapshots if loaded.snapshot.valuation_percentile is not None
+    )
+    eps_revision_count = sum(
+        1
+        for loaded in current_snapshots
+        if _snapshot_has_metric(loaded.snapshot, "eps_revision_90d_pct")
+    )
+    return [
+        f"- 当前可见快照数：{total}（按 ticker 选择不晚于评估日的最新快照）",
+        "",
+        "| 指标 | 覆盖 | 评分/复核用途 | 缺口说明 |",
+        "|---|---:|---|---|",
+        (
+            "| valuation_percentile | "
+            f"{percentile_count}/{total} | "
+            "估值模块自动评分 | "
+            "需要每个估值 metric 至少 3 个 point-in-time 历史点 |"
+        ),
+        (
+            "| eps_revision_90d_pct | "
+            f"{eps_revision_count}/{total} | "
+            "预期变化复核 | "
+            "需要约 90 日前同一 fiscal estimate date 的 analyst-estimates 历史快照 |"
+        ),
+    ]
 
 
 def default_valuation_validation_report_path(output_dir: Path, as_of: date) -> Path:
@@ -478,11 +574,40 @@ def _check_duplicate_snapshot_ids(
         )
 
 
+def _latest_visible_snapshots_by_ticker(
+    snapshots: tuple[LoadedValuationSnapshot, ...],
+    *,
+    as_of: date,
+) -> tuple[LoadedValuationSnapshot, ...]:
+    latest_by_ticker: dict[str, LoadedValuationSnapshot] = {}
+    for loaded in snapshots:
+        snapshot = loaded.snapshot
+        if snapshot.as_of > as_of or snapshot.captured_at > as_of:
+            continue
+        current = latest_by_ticker.get(snapshot.ticker)
+        if current is None or _valuation_snapshot_sort_key(loaded) > (
+            _valuation_snapshot_sort_key(current)
+        ):
+            latest_by_ticker[snapshot.ticker] = loaded
+    return tuple(
+        sorted(
+            latest_by_ticker.values(),
+            key=lambda loaded: (loaded.snapshot.ticker, loaded.snapshot.snapshot_id),
+        )
+    )
+
+
+def _valuation_snapshot_sort_key(loaded: LoadedValuationSnapshot) -> tuple[date, date, str]:
+    snapshot = loaded.snapshot
+    return (snapshot.as_of, snapshot.captured_at, snapshot.snapshot_id)
+
+
 def _check_snapshot(
     loaded: LoadedValuationSnapshot,
     known_tickers: set[str],
     as_of: date,
     max_snapshot_age_days: int,
+    check_current_readiness: bool,
     issues: list[ValuationIssue],
 ) -> None:
     snapshot = loaded.snapshot
@@ -511,7 +636,7 @@ def _check_snapshot(
             )
         )
 
-    if (as_of - snapshot.as_of).days > max_snapshot_age_days:
+    if check_current_readiness and (as_of - snapshot.as_of).days > max_snapshot_age_days:
         issues.append(
             ValuationIssue(
                 severity=ValuationIssueSeverity.WARNING,
@@ -535,7 +660,36 @@ def _check_snapshot(
             )
         )
 
-    if snapshot.valuation_percentile is None:
+    if snapshot.point_in_time_class == "backfilled_history_distribution":
+        issues.append(
+            ValuationIssue(
+                severity=ValuationIssueSeverity.WARNING,
+                code="backfilled_valuation_not_strict_point_in_time",
+                snapshot_id=snapshot.snapshot_id,
+                ticker=snapshot.ticker,
+                path=path,
+                message=(
+                    "该估值快照来自回填历史分布，只能作为采集日之后的辅助参考，"
+                    "不能当作严格 point-in-time 历史估值输入。"
+                ),
+            )
+        )
+    if (
+        snapshot.confidence_level == "low"
+        and snapshot.backtest_use == "strict_point_in_time"
+    ):
+        issues.append(
+            ValuationIssue(
+                severity=ValuationIssueSeverity.ERROR,
+                code="low_confidence_strict_backtest_use",
+                snapshot_id=snapshot.snapshot_id,
+                ticker=snapshot.ticker,
+                path=path,
+                message="低可信估值快照不能声明为 strict_point_in_time 回测输入。",
+            )
+        )
+
+    if check_current_readiness and snapshot.valuation_percentile is None:
         issues.append(
             ValuationIssue(
                 severity=ValuationIssueSeverity.WARNING,
@@ -624,6 +778,13 @@ def _check_metric_values(
             )
 
 
+def _snapshot_has_metric(snapshot: ValuationSnapshot, metric_id: str) -> bool:
+    return any(
+        metric.metric_id == metric_id
+        for metric in (*snapshot.valuation_metrics, *snapshot.expectation_metrics)
+    )
+
+
 def _review_item(snapshot: ValuationSnapshot, as_of: date) -> ValuationReviewItem:
     extreme_signals = tuple(
         signal.signal_id for signal in snapshot.crowding_signals if signal.status == "extreme"
@@ -660,6 +821,11 @@ def _review_item(snapshot: ValuationSnapshot, as_of: date) -> ValuationReviewIte
         ticker=snapshot.ticker,
         source_type=snapshot.source_type,
         as_of=snapshot.as_of,
+        point_in_time_class=snapshot.point_in_time_class,
+        history_source_class=snapshot.history_source_class,
+        confidence_level=snapshot.confidence_level,
+        confidence_reason=snapshot.confidence_reason,
+        backtest_use=snapshot.backtest_use,
         health=health,
         reason=reason,
         valuation_percentile=percentile,
@@ -696,6 +862,49 @@ def _health_label(value: str) -> str:
         "POTENTIAL_VALUE": "可能有性价比",
         "NEUTRAL": "中性",
     }.get(value, value)
+
+
+def _point_in_time_class_label(value: str) -> str:
+    return {
+        "true_point_in_time": "真实 PIT",
+        "captured_snapshot": "采集日快照",
+        "backfilled_history_distribution": "回填历史分布",
+        "unknown": "未知",
+    }.get(value, value)
+
+
+def _history_source_class_label(value: str) -> str:
+    return {
+        "vendor_archive": "供应商历史档案",
+        "captured_snapshot_history": "本地采集快照历史",
+        "vendor_historical_endpoint": "供应商 historical 接口",
+        "manual_backfill": "人工回填",
+        "none": "无",
+        "unknown": "未知",
+    }.get(value, value)
+
+
+def _confidence_level_label(value: str) -> str:
+    return {
+        "high": "高",
+        "medium": "中",
+        "low": "低",
+    }.get(value, value)
+
+
+def _backtest_use_label(value: str) -> str:
+    return {
+        "strict_point_in_time": "严格 PIT",
+        "captured_at_forward_only": "采集日后可见",
+        "auxiliary_current_only": "仅辅助参考",
+        "not_for_backtest": "不用于回测",
+    }.get(value, value)
+
+
+def _valuation_reason_with_confidence(item: ValuationReviewItem) -> str:
+    if item.confidence_reason:
+        return f"{item.reason} 可信度限制：{item.confidence_reason}"
+    return item.reason
 
 
 def _severity_label(severity: ValuationIssueSeverity) -> str:

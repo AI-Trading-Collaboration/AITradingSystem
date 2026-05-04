@@ -537,6 +537,32 @@ class PositionChangeConfig(BaseModel):
     minimum_action_delta: float = Field(ge=0, le=1)
 
 
+class ValuationPositionGateConfig(BaseModel):
+    expensive_or_crowded_max_position: float = Field(default=0.70, ge=0, le=1)
+    extreme_overheated_max_position: float = Field(default=0.40, ge=0, le=1)
+
+
+class ThesisPositionGateConfig(BaseModel):
+    warning_max_position: float = Field(default=0.70, ge=0, le=1)
+    failure_max_position: float = Field(default=0.0, ge=0, le=1)
+
+
+class DataConfidencePositionGateConfig(BaseModel):
+    data_quality_warning_max_position: float = Field(default=0.80, ge=0, le=1)
+    insufficient_data_max_position: float = Field(default=0.60, ge=0, le=1)
+    placeholder_max_position: float = Field(default=0.80, ge=0, le=1)
+
+
+class PositionGateRulesConfig(BaseModel):
+    valuation: ValuationPositionGateConfig = Field(
+        default_factory=ValuationPositionGateConfig
+    )
+    thesis: ThesisPositionGateConfig = Field(default_factory=ThesisPositionGateConfig)
+    data_confidence: DataConfidencePositionGateConfig = Field(
+        default_factory=DataConfidencePositionGateConfig
+    )
+
+
 class ScoringRulesConfig(BaseModel):
     weights: dict[str, float]
     minimum_signal_coverage: float = Field(ge=0, le=1)
@@ -548,6 +574,7 @@ class ScoringRulesConfig(BaseModel):
     policy_geopolitics: ScoreModuleRuleConfig | None = None
     placeholders: dict[str, PlaceholderScoreConfig]
     position_change: PositionChangeConfig
+    position_gates: PositionGateRulesConfig = Field(default_factory=PositionGateRulesConfig)
 
 
 def load_universe(path: Path | str = DEFAULT_CONFIG_PATH) -> UniverseConfig:

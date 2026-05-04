@@ -13,7 +13,7 @@
 - 改变 `data/raw`、`data/processed`、`outputs/reports`、`outputs/backtests` 的核心文件结构。
 - 改变数据质量门禁位置、通过条件或失败后的停止行为。
 - 改变评分模块、仓位映射、回测默认市场阶段或报告结论结构。
-- 接入或改变交易 thesis、风险事件、估值、新闻、复盘归因等模块。
+- 接入或改变交易 thesis、风险事件、估值、新闻、认知状态、复盘归因等模块。
 
 不需要更新本文件的情况：
 
@@ -30,20 +30,29 @@ flowchart TD
         P["config/portfolio.yaml<br/>风险资产预算和仓位上限"]
         Q["config/data_quality.yaml<br/>质量阈值"]
         F["config/features.yaml<br/>特征窗口和相对强弱组合"]
-        S["config/scoring_rules.yaml<br/>评分权重和仓位动作阈值"]
+        S["config/scoring_rules.yaml<br/>评分权重、仓位动作阈值和 position_gates 上限"]
         W["config/watchlist.yaml<br/>观察池与能力圈"]
+        WL["config/watchlist_lifecycle.yaml<br/>观察池 point-in-time 生命周期"]
         I["config/industry_chain.yaml<br/>产业链节点与因果图"]
         R["config/market_regimes.yaml<br/>AI regime 与压力测试区间"]
         RE["config/risk_events.yaml<br/>L1/L2/L3 风险事件动作规则"]
-        REX["data/external/risk_event_occurrences/*.yaml<br/>已触发/观察的风险事件发生记录"]
+        REX["data/external/risk_event_occurrences/*.yaml<br/>已触发/观察的风险事件发生记录<br/>证据等级、严重性、概率、动作等级"]
+        REXCSV["data/external/risk_event_imports/*.csv<br/>人工复核后的风险事件发生记录导入表"]
+        ME["data/external/market_evidence/*.yaml<br/>新市场信息证据账本"]
+        MECSV["data/external/market_evidence_imports/*.csv<br/>人工复核或 LLM 分类后的 evidence 导入表"]
         DS["config/data_sources.yaml<br/>数据源目录、审计字段、来源限制"]
         SEC["config/sec_companies.yaml<br/>SEC CIK、taxonomy 预期和指标周期"]
         FM["config/fundamental_metrics.yaml<br/>SEC 指标映射、支撑指标和派生规则"]
         FF["config/fundamental_features.yaml<br/>SEC 基本面特征公式和周期偏好"]
+        TSMPDF["TSMC IR Management Report PDF<br/>官方季度资料 PDF"]
+        TSMTXT["TSMC IR Management Report 文本<br/>官方季度资料的已抽取文本"]
+        TSMMAN["TSMC IR 批量导入 manifest CSV<br/>季度、官方 URL 和本地文本路径"]
         TH["data/external/trade_theses/*.yaml<br/>交易假设、验证指标、证伪条件"]
-        VS["data/external/valuation_snapshots/*.yaml<br/>估值、预期、拥挤度快照"]
+        VS["data/external/valuation_snapshots/*.yaml<br/>估值、预期、拥挤度快照<br/>PIT 可信度和回测用途"]
+        VSCSV["data/external/valuation_imports/*.csv<br/>结构化估值/预期导入表"]
         TD["data/external/trades/*.yaml<br/>交易记录、价格、thesis_id"]
         MD["外部数据源<br/>Yahoo Finance / FRED"]
+        FMP["Financial Modeling Prep API<br/>quote / TTM metrics / historical metrics / ratios / estimates<br/>provider symbol alias 可审计记录"]
     end
 
     subgraph Cache["本地缓存"]
@@ -64,6 +73,17 @@ flowchart TD
         SFF["aits fundamentals build-sec-features"]
         SFFC["data/processed/sec_fundamental_features_YYYY-MM-DD.csv"]
         SFFR["outputs/reports/sec_fundamental_features_YYYY-MM-DD.md"]
+        TSMP["aits fundamentals extract-tsm-ir-pdf-text"]
+        TSMF["aits fundamentals fetch-tsm-ir-quarterly"]
+        TSMI["aits fundamentals import-tsm-ir-quarterly"]
+        TSMIB["aits fundamentals import-tsm-ir-quarterly-batch"]
+        TSMM["aits fundamentals merge-tsm-ir-sec-metrics"]
+        TSMC["data/processed/tsm_ir_quarterly_metrics.csv"]
+        TSMPR["outputs/reports/tsm_ir_pdf_text_YYYY-MM-DD.md"]
+        TSMR["outputs/reports/tsm_ir_quarterly_YYYY_Qn_YYYY-MM-DD.md"]
+        TSMBR["outputs/reports/tsm_ir_quarterly_batch_YYYY-MM-DD.md"]
+        FMPH["data/raw/fmp_analyst_estimates/*.json<br/>FMP analyst estimates 原始历史快照"]
+        FMPVH["data/raw/fmp_historical_valuation/*.json<br/>FMP historical key-metrics/ratios 原始响应"]
     end
 
     subgraph Gate["数据质量门禁"]
@@ -80,28 +100,57 @@ flowchart TD
 
     subgraph Score["中间评估：评分和仓位"]
         SD["aits score-daily"]
-        SC["data/processed/scores_daily.csv"]
-        DR["outputs/reports/daily_score_YYYY-MM-DD.md"]
+        PG["position_gate<br/>评分仓位、组合限制、风险事件、估值拥挤、thesis 和数据置信度取最严格上限"]
+        CONF["判断置信度<br/>按模块来源、覆盖率、质量门禁和人工复核汇总"]
+        SC["data/processed/scores_daily.csv<br/>模块分、整体分、confidence、仓位区间和 gate 摘要"]
+        DR["outputs/reports/daily_score_YYYY-MM-DD.md<br/>评分、置信度、变化原因树、认知状态和仓位闸门"]
+        DSNAP["data/processed/decision_snapshots/decision_snapshot_YYYY-MM-DD.json<br/>当日判断快照和 belief_state_ref"]
+        BS["data/processed/belief_state/belief_state_YYYY-MM-DD.json<br/>只读认知状态"]
+        BSH["data/processed/belief_state_history.csv<br/>只读认知状态历史索引"]
+        DRT["outputs/reports/evidence/daily_score_YYYY-MM-DD_trace.json<br/>claim / evidence / dataset / quality / run manifest / belief_state"]
     end
 
     subgraph Backtest["历史回测"]
         BT["aits backtest"]
-        BSEC["point-in-time SEC 基本面特征<br/>按 signal_date 只读已披露 companyfacts"]
-        BD["outputs/backtests/backtest_daily_YYYY-MM-DD_YYYY-MM-DD.csv"]
-        BR["outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md"]
+        BWATCH["point-in-time 观察池<br/>按 signal_date 过滤 lifecycle 可见 ticker"]
+        BSEC["point-in-time SEC 基本面特征<br/>按 signal_date 只读已披露 companyfacts 与 TSM IR"]
+        BVAL["point-in-time 估值快照<br/>按 signal_date 过滤 as_of/captured_at"]
+        BRISK["point-in-time 风险事件发生记录<br/>按 signal_date 过滤证据和 resolved_at"]
+        BD["outputs/backtests/backtest_daily_YYYY-MM-DD_YYYY-MM-DD.csv<br/>含 confidence_score / confidence_level"]
+        BR["outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md<br/>含判断置信度分桶摘要"]
+        BA["outputs/backtests/backtest_audit_YYYY-MM-DD_YYYY-MM-DD.md<br/>输入审计状态、发现和修复建议"]
+        BRT["outputs/backtests/evidence/backtest_YYYY-MM-DD_YYYY-MM-DD_trace.json<br/>claim / evidence / dataset / quality / run manifest"]
+    end
+
+    subgraph Trace["报告反查"]
+        TLK["aits trace lookup<br/>按 claim/evidence/dataset/quality/run id 反查 evidence bundle"]
+    end
+
+    subgraph Feedback["反馈校准"]
+        FBC["aits feedback calibrate<br/>先执行数据质量门禁，再观察历史 decision_snapshot"]
+        DOCSV["data/processed/decision_outcomes.csv<br/>1D/5D/20D/60D/120D outcome"]
+        DCR["outputs/reports/decision_calibration_YYYY-MM-DD.md<br/>分桶校准和样本限制"]
     end
 
     subgraph Governance["结构校验"]
         WV["aits watchlist validate"]
         WR["outputs/reports/watchlist_validation_YYYY-MM-DD.md"]
+        WVL["aits watchlist validate-lifecycle"]
+        WLR["outputs/reports/watchlist_lifecycle_YYYY-MM-DD.md"]
         IV["aits industry-chain validate"]
         IR["outputs/reports/industry_chain_validation_YYYY-MM-DD.md"]
         RV["aits risk-events validate"]
         RVR["outputs/reports/risk_events_validation_YYYY-MM-DD.md"]
+        ROI["aits risk-events import-occurrences-csv"]
+        ROIR["outputs/reports/risk_event_occurrence_import_YYYY-MM-DD.md"]
         ROV["aits risk-events validate-occurrences"]
         ROR["outputs/reports/risk_event_occurrences_YYYY-MM-DD.md"]
         DSV["aits data-sources validate"]
         DSR["outputs/reports/data_sources_validation_YYYY-MM-DD.md"]
+        EVI["aits evidence import-csv"]
+        EV["aits evidence validate"]
+        EVIR["outputs/reports/market_evidence_import_YYYY-MM-DD.md"]
+        EVR["outputs/reports/market_evidence_YYYY-MM-DD.md"]
     end
 
     subgraph Thesis["交易假设复核"]
@@ -113,6 +162,14 @@ flowchart TD
     end
 
     subgraph Valuation["估值与拥挤度复核"]
+        VF["aits valuation fetch-fmp"]
+        VHF["aits valuation fetch-fmp-valuation-history"]
+        VFR["outputs/reports/fmp_valuation_fetch_YYYY-MM-DD.md"]
+        VHFR["outputs/reports/fmp_historical_valuation_fetch_YYYY-MM-DD.md"]
+        VI["aits valuation import-csv"]
+        VIR["outputs/reports/valuation_import_YYYY-MM-DD.md"]
+        VFH["aits valuation validate-fmp-history"]
+        VFHR["outputs/reports/fmp_analyst_history_validation_YYYY-MM-DD.md"]
         VL["aits valuation list"]
         VV["aits valuation validate"]
         VR["aits valuation review"]
@@ -156,6 +213,28 @@ flowchart TD
     SFF --> SFCR
     SFF --> SFFC
     SFF --> SFFR
+    DS --> TSMP
+    TSMPDF --> TSMP
+    TSMP --> TSMTXT
+    TSMP --> TSMPR
+    DS --> TSMF
+    TSMF --> TSMTXT
+    TSMF --> TSMC
+    TSMF --> TSMR
+    TSMTXT --> TSMI
+    DS --> TSMI
+    TSMI --> TSMC
+    TSMI --> TSMR
+    TSMTXT --> TSMIB
+    TSMMAN --> TSMIB
+    DS --> TSMIB
+    TSMIB --> TSMC
+    TSMIB --> TSMBR
+    TSMC --> TSMM
+    SEC --> TSMM
+    FM --> TSMM
+    TSMM --> SFC
+    TSMM --> SFCR
 
     U --> V
     Q --> V
@@ -189,8 +268,15 @@ flowchart TD
     SD --> SFCR
     SD --> SFFC
     SD --> SFFR
-    SD --> SC
-    SD --> DR
+    SD --> PG
+    PG --> SC
+    PG --> DR
+    PG --> DRT
+    PG --> CONF
+    CONF --> SC
+    CONF --> DR
+    CONF --> DSNAP
+    DRT --> DSNAP
 
     PR --> BT
     RR --> BT
@@ -198,6 +284,7 @@ flowchart TD
     S --> BT
     P --> BT
     W --> BT
+    WL --> BT
     R --> BT
     QR --> BT
     SEC --> BT
@@ -205,15 +292,38 @@ flowchart TD
     FF --> BT
     SFJ --> BT
     SFM --> BT
+    TSMC --> BT
+    VS --> BT
+    RE --> BT
+    REX --> BT
     BT --> BSEC
+    BT --> BVAL
+    BT --> BRISK
+    BT --> BWATCH
+    BWATCH --> BD
     BSEC --> BD
+    BVAL --> BD
+    BRISK --> BD
     BT --> BD
     BT --> BR
+    BT --> BA
+    BT --> BRT
+    DRT --> TLK
+    BRT --> TLK
+    DSNAP --> FBC
+    PR --> FBC
+    RR --> FBC
+    FBC --> DOCSV
+    FBC --> DCR
 
     U --> WV
     W --> WV
     I --> WV
     WV --> WR
+    WL --> WVL
+    W --> WVL
+    U --> WVL
+    WVL --> WLR
     I --> IV
     W --> IV
     IV --> IR
@@ -222,11 +332,20 @@ flowchart TD
     W --> RV
     U --> RV
     RV --> RVR
+    REXCSV --> ROI
+    ROI --> REX
+    ROI --> ROIR
+    ROI --> ROR
     RE --> ROV
     REX --> ROV
     ROV --> ROR
     DS --> DSV
     DSV --> DSR
+    MECSV --> EVI
+    EVI --> ME
+    EVI --> EVIR
+    ME --> EV
+    EV --> EVR
 
     TH --> TL
     TH --> TV
@@ -238,6 +357,28 @@ flowchart TD
     TV --> TVR
     TR --> TRR
 
+    FMP --> VF
+    FMP --> VHF
+    DS --> VF
+    DS --> VHF
+    U --> VF
+    U --> VHF
+    VHF --> FMPVH
+    VHF --> VS
+    VHF --> VHFR
+    VHF --> VVR
+    FMPH --> VF
+    FMPVH --> VF
+    VF --> VS
+    VF --> FMPH
+    VF --> VFR
+    VF --> VVR
+    FMPH --> VFH
+    VFH --> VFHR
+    VSCSV --> VI
+    VI --> VS
+    VI --> VIR
+    VI --> VVR
     VS --> VL
     VS --> VV
     VS --> VR
@@ -265,8 +406,8 @@ flowchart TD
     F --> G["写入特征缓存<br/>features_daily.csv"]
     F --> H["写入特征摘要<br/>feature_summary_YYYY-MM-DD.md"]
     F --> R["复用已通过的数据质量结果<br/>汇总 thesis / 风险事件 / 估值 / 交易复盘状态"]
-    R --> V1["估值快照校验和复核<br/>validate_valuation_snapshot_store"]
-    R --> G1["风险事件发生记录校验<br/>validate_risk_event_occurrence_store"]
+    R --> V1["估值快照校验和复核<br/>validate_valuation_snapshot_store<br/>输出 PIT 可信度、历史来源和回测用途"]
+    R --> G1["风险事件发生记录校验<br/>validate_risk_event_occurrence_store<br/>watch 默认不自动评分，低证据等级只复核"]
     F --> S1["校验 SEC 指标 CSV<br/>validate_sec_fundamental_metrics_csv"]
     S1 -->|FAIL| S2["停止<br/>输出 SEC 指标 CSV 校验报告"]
     S1 -->|PASS 或 PASS_WITH_WARNINGS| S3["构建 SEC 基本面特征<br/>build_sec_fundamental_features_report"]
@@ -283,16 +424,28 @@ flowchart TD
     I --> V2["估值评分<br/>估值分位和拥挤比例；排除过期和 public_convenience"]
     I --> K["宏观流动性评分<br/>DGS10、DGS2、美元指数"]
     I --> L["风险情绪评分<br/>VIX 水平、分位、变化速度"]
-    I --> M["政策/地缘评分<br/>只读已校验的实际发生记录"]
-    J --> N["总分和仓位区间<br/>风险资产内 AI 仓位"]
+    I --> M["政策/地缘评分<br/>只读可评分 active 发生记录"]
+    J --> N["AI 产业链评分和评分模型仓位区间<br/>风险资产内 AI 仓位"]
     F1 --> N
     V2 --> N
     K --> N
     L --> N
     M --> N
-    N --> O["总资产口径换算<br/>portfolio 风险资产预算"]
-    O --> P["写入 scores_daily.csv"]
-    O --> Q["写入 daily_score_YYYY-MM-DD.md<br/>含人工复核摘要"]
+    N --> G2["position_gate<br/>组合限制、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限"]
+    G2 --> O["总资产口径换算<br/>portfolio 风险资产预算"]
+    O --> C1["判断置信度汇总<br/>按模块来源、覆盖率、质量门禁和人工复核状态扣减"]
+    C1 --> P["写入 scores_daily.csv<br/>记录模块分、整体分、confidence、仓位区间和触发 gate 摘要"]
+    O --> T["写入 evidence bundle<br/>claim/evidence/dataset/quality/run manifest，含 belief_state dataset/claim 引用"]
+    C1 --> T
+    T --> D0["写入 decision_snapshot JSON<br/>保存评分、置信度、仓位、gate、质量、trace 引用和 belief_state_ref"]
+    C1 --> D0
+    O --> BS["写入 belief_state JSON<br/>只读认知状态，不直接改变评分或仓位"]
+    T --> BS
+    BS --> BH["更新 belief_state_history.csv<br/>按 signal_date upsert 历史索引"]
+    BS --> D0
+    T --> Q["写入 daily_score_YYYY-MM-DD.md<br/>含变化原因树、认知状态、人工复核摘要、仓位闸门和可追溯引用"]
+    C1 --> Q
+    BS --> Q
 ```
 
 ## 回测链路
@@ -304,21 +457,32 @@ flowchart TD
     C --> D["读取 prices_daily.csv / rates_daily.csv"]
     D --> E["调用数据质量门禁<br/>validate_data_cache"]
     E -->|FAIL| F["停止回测<br/>输出 data_quality 报告"]
-    E -->|PASS 或 PASS_WITH_WARNINGS| S1["校验 SEC companyfacts 缓存<br/>validate_sec_companyfacts_cache"]
+    E -->|PASS 或 PASS_WITH_WARNINGS| W0["校验 watchlist_lifecycle<br/>缺少当前核心 ticker 或重复记录时停止"]
+    W0 -->|FAIL| WF["停止回测<br/>输出 watchlist_lifecycle 报告"]
+    W0 -->|PASS 或 PASS_WITH_WARNINGS| S1["校验 SEC companyfacts 缓存<br/>validate_sec_companyfacts_cache"]
     S1 -->|FAIL| S2["停止回测<br/>输出 SEC companyfacts 校验报告"]
-    S1 -->|PASS 或 PASS_WITH_WARNINGS| G["生成交易日序列<br/>signal_date -> return_date"]
-    G --> H["逐日构建市场特征<br/>只使用 signal_date 当日及之前数据"]
-    G --> H2["逐日构建 point-in-time SEC 特征<br/>只使用 filed_date <= signal_date 的事实"]
+    S1 -->|PASS 或 PASS_WITH_WARNINGS| TSM["读取 TSM IR 季度缓存<br/>按 filed_date 参与 TSM quarterly 补齐"]
+    TSM --> G["生成交易日序列<br/>signal_date -> return_date"]
+    G --> WL0["按 signal_date 过滤观察池 lifecycle<br/>只使用当日已进入且节点映射可见的 ticker"]
+    WL0 --> H["逐日构建市场特征<br/>只使用 signal_date 当日及之前数据"]
+    G --> H2["逐日构建 point-in-time SEC 特征<br/>只使用 filed_date <= signal_date 的 SEC facts 与 TSM IR 季度"]
     H --> I["逐日评分<br/>使用同一套 scoring_rules"]
     H2 --> I
-    I --> J["评分映射到 AI 仓位区间中点"]
-    J --> K["应用最小调仓阈值<br/>低于阈值维持原仓位"]
+    I --> C0["判断置信度<br/>保存 confidence_score / confidence_level"]
+    I --> J["评分映射到评分模型 AI 仓位区间"]
+    J --> PG["应用 position_gate<br/>取组合限制、风险事件、估值拥挤、thesis 和数据置信度的最严格上限"]
+    PG --> K["使用最终 AI 仓位区间中点并应用最小调仓阈值<br/>低于阈值维持原仓位"]
     K --> L["下一交易日收益生效<br/>避免未来函数"]
-    L --> M["扣除单边交易成本"]
+    L --> M["扣除单边交易成本和可配置线性滑点"]
     M --> N["汇总策略指标<br/>CAGR / Max Drawdown / Sharpe / Sortino / Calmar / Turnover"]
     N --> O["对比基准<br/>SPY / QQQ / SMH / SOXX 买入持有"]
-    O --> P["写入每日明细 CSV"]
-    O --> Q["写入回测报告 Markdown<br/>包含市场阶段和数据质量状态"]
+    C0 --> P["写入每日明细 CSV<br/>含 confidence_score / confidence_level"]
+    O --> P
+    O --> Q["写入回测报告 Markdown<br/>包含市场阶段、数据质量和置信度分桶"]
+    C0 --> Q
+    O --> R["写入输入覆盖诊断 CSV<br/>component / ticker / issue / source_url"]
+    O --> S["写入输入审计报告 Markdown<br/>数据质量 / PIT 输入 / 来源 / 执行假设"]
+    O --> T["写入 evidence bundle<br/>claim/evidence/dataset/quality/run manifest"]
 ```
 
 ## 结论输出与解释责任
@@ -326,14 +490,17 @@ flowchart TD
 ```mermaid
 flowchart LR
     A["数据质量状态"] --> E["报告结论"]
-    B["硬数据评分<br/>趋势 / 基本面 / 宏观流动性 / 风险情绪"] --> E
+    B["AI 产业链评分<br/>趋势 / 基本面 / 宏观流动性 / 风险情绪"] --> E
+    C2["判断置信度<br/>模块来源 / 覆盖率 / 质量门禁 / 人工复核"] --> E
     C["手工/审计输入<br/>估值 / 政策地缘发生记录"] --> E
     D["市场阶段<br/>ai_after_chatgpt / cross_cycle_stress"] --> E
     F["能力圈和产业链配置<br/>watchlist / industry_chain"] --> E
     L["交易 thesis<br/>验证指标 / 证伪条件 / 风险事件"] --> E
-    N["估值与拥挤度<br/>估值分位 / 预期 / 过热信号"] --> E
-    Q["风险事件发生记录<br/>active/watch / 证据来源 / 仓位乘数"] --> E
+    N["估值与拥挤度<br/>估值分位 / 预期 / 过热信号 / PIT 可信度"] --> E
+    Q["风险事件发生记录<br/>active/watch / 证据等级 / 动作等级 / 仓位乘数"] --> E
+    U2["决策快照<br/>score / confidence / gate / quality / trace refs"] --> E
     P["交易复盘<br/>市场 Beta / 主题 Beta / 个股表现"] --> E
+    S["认知状态<br/>belief_state / 多维置信度 / 仓位边界 / 改变判断条件"] --> E
 
     E --> G["必须说明<br/>本次数据质量是否通过"]
     E --> H["必须说明<br/>哪些分数来自硬数据"]
@@ -344,6 +511,40 @@ flowchart LR
     E --> O["必须说明<br/>估值数据来源和是否只能作为辅助"]
     E --> Q2["必须说明<br/>政策/地缘是否来自已校验发生记录"]
     E --> P2["必须说明<br/>收益来自基准 Beta 还是个股表现"]
+    E --> R2["必须说明<br/>仓位闸门来源、上限和是否触发"]
+    E --> T2["必须说明<br/>市场吸引力评分和判断置信度不是同一件事"]
+    E --> U3["必须保存<br/>可复原当日判断的 decision_snapshot"]
+    E --> S2["必须说明<br/>认知状态是只读解释层还是已批准的 production 规则输入"]
+```
+
+## 认知状态层
+
+该层对应 `COGNITION-001` 和 `docs/requirements/cognitive_model_2026-05-04.md`。第一版是只读解释层，用于把系统当日“相信什么、依据什么、置信度如何、哪些风险限制仓位、哪些条件会改变判断”结构化保存下来。它不得直接改变生产评分、`position_gate`、回测仓位或交易建议。
+
+```mermaid
+flowchart TD
+    E0["market_evidence<br/>新市场信息证据账本<br/>LLM 与 public_convenience 不直接评分"] --> B0["belief_state<br/>只读认知状态"]
+    C0["industry_node_state<br/>node_heat / node_health / coverage / concentration"] --> B0
+    T0["thesis state<br/>draft / active / warning / challenged / invalidated / closed"] --> B0
+    R0["risk event state<br/>watch / active / severity / evidence grade"] --> B0
+    V0["valuation state<br/>crowding / PIT confidence / action bias"] --> B0
+    S0["score + position_gate<br/>模型区间 / 最终区间 / 限制因素"] --> B0
+    Q0["data quality + trace bundle<br/>quality refs / evidence refs / run manifest"] --> B0
+
+    B0 --> B1["data/processed/belief_state/belief_state_YYYY-MM-DD.json"]
+    B0 --> B2["data/processed/belief_state_history.csv"]
+    B0 --> B3["daily_score evidence bundle<br/>belief_state dataset / claim 引用"]
+    B0 --> D0["decision_snapshot<br/>保存 score / confidence / gate / quality / trace / belief_state_ref"]
+    B0 --> RPT["daily_score 报告<br/>中文认知状态摘要"]
+
+    D0 --> O0["aits feedback calibrate<br/>decision_outcomes<br/>1D / 5D / 20D / 60D / 120D"]
+    O0 --> CA0["decision_causal_chain<br/>证据、状态变化、gate、outcome 串联"]
+    CA0 --> L0["learning_queue<br/>错误归因和成功样本归因"]
+    L0 --> RC0["rule_candidate<br/>候选规则建议"]
+    RC0 --> SH0["shadow mode / historical replay<br/>不影响 production 输出"]
+    SH0 --> GOV0["rule card + manual approval<br/>批准后才可进入 production rules"]
+
+    GOV0 -.-> PROD0["production scoring / position_gate rules"]
 ```
 
 ## 当前已实现与待接入模块
@@ -354,42 +555,91 @@ flowchart TD
         A["数据下载<br/>aits download-data"]
         B["数据质量门禁<br/>aits validate-data"]
         C["市场特征<br/>aits build-features"]
-        D["每日评分<br/>aits score-daily<br/>含 SEC 基本面、估值快照、政策/地缘发生记录和人工复核摘要"]
-        E["历史回测<br/>aits backtest<br/>含 SEC point-in-time 基本面"]
+        D["每日评分<br/>aits score-daily<br/>含 SEC 基本面、估值快照、政策/地缘发生记录、置信度和人工复核摘要"]
+        E["历史回测<br/>aits backtest<br/>含 point-in-time 输入、覆盖率、来源类型、输入问题、URL、ticker 和证据来源下钻"]
         F["观察池校验<br/>aits watchlist validate"]
+        F2["观察池生命周期<br/>aits watchlist validate-lifecycle"]
         G["产业链图校验<br/>aits industry-chain validate"]
         H["交易 thesis<br/>aits thesis list/validate/review"]
         I["风险事件分级<br/>aits risk-events list/validate"]
         I2["风险事件发生记录<br/>aits risk-events list-occurrences/validate-occurrences"]
+        I3["风险事件 CSV 导入<br/>aits risk-events import-occurrences-csv"]
         J["估值与拥挤度<br/>aits valuation list/validate/review"]
+        J3["FMP 估值/预期 API<br/>aits valuation fetch-fmp"]
+        J4["FMP 历史估值 API<br/>aits valuation fetch-fmp-valuation-history"]
+        J2["估值 CSV 导入<br/>aits valuation import-csv"]
+        EV0["新市场信息证据账本<br/>aits evidence import-csv / validate"]
+        FB1["决策快照<br/>decision_snapshot_YYYY-MM-DD.json<br/>保存评分、置信度、仓位、gate、质量和 trace 引用"]
+        FB2["结果观察与校准<br/>aits feedback calibrate<br/>生成 decision_outcomes 和 calibration report"]
         K["交易复盘归因<br/>aits review-trades"]
         L["日报集成<br/>汇总 thesis、风险规则与发生记录、估值和复盘摘要"]
         M["数据源目录<br/>aits data-sources list/validate"]
         N["基本面一手数据<br/>aits fundamentals list-sec-companies / download-sec-companyfacts"]
         O["SEC 基本面指标摘要<br/>aits fundamentals extract-sec-metrics / validate-sec-metrics"]
         P["SEC 基本面特征<br/>aits fundamentals build-sec-features"]
+        QP["TSMC IR PDF 文本抽取<br/>aits fundamentals extract-tsm-ir-pdf-text"]
+        Q0["TSMC IR 官方页面抓取<br/>aits fundamentals fetch-tsm-ir-quarterly"]
+        Q["TSMC IR 季度基本面导入<br/>aits fundamentals import-tsm-ir-quarterly"]
+        Q3["TSMC IR 批量季度导入<br/>aits fundamentals import-tsm-ir-quarterly-batch"]
+        Q2["TSMC IR 合并到统一指标<br/>aits fundamentals merge-tsm-ir-sec-metrics"]
+    end
+
+    subgraph Planned["规划/待接入"]
+        R0["认知状态层<br/>COGNITION-001 belief_state<br/>只读，不直接改评分或仓位"]
+        R1["证据下游自动联动<br/>LLM-001 / CAUSE-001<br/>不得绕过人工复核"]
+        R3["因果链、学习队列和候选规则<br/>CAUSE-001 / LEARNING-001 / EXPERIMENT-001"]
+        R4["规则生命周期治理<br/>GOV-001 rule card / manual approval"]
     end
 
     C --> D
+    D --> FB1
+    FB1 --> FB2
     D --> E
     F --> H
+    F2 --> E
     G --> H
     G --> I
     I --> I2
+    I3 --> I2
     H --> I
+    M --> J3
+    M --> J4
+    J4 --> J3
+    J4 --> J
+    J3 --> J
+    J2 --> J
+    EV0 --> R0
     I --> J
     I2 --> L
     J --> K
     M --> C
     M --> N
+    M --> QP
+    QP --> Q
+    M --> Q0
+    M --> Q
+    M --> Q3
     N --> O
+    Q0 --> Q2
+    Q --> Q2
+    Q3 --> Q2
     O --> P
+    Q2 --> P
     P --> D
     H --> L
     I --> L
     J --> L
     K --> L
     L --> D
+    D --> R0
+    H --> R0
+    I2 --> R0
+    J --> R0
+    R1 --> R0
+    FB1 --> FB2
+    R0 --> FB2
+    FB2 --> R3
+    R3 --> R4
 ```
 
 ## 文件和命令责任表
@@ -405,41 +655,85 @@ flowchart TD
 |质量报告|`outputs/reports/data_quality_YYYY-MM-DD.md`|声明数据是否可用于下游结论|已实现|
 |特征|`aits build-features`|生成可解释市场特征|已实现|
 |特征缓存|`data/processed/features_daily.csv`|保存 tidy 格式特征|已实现|
-|评分|`aits score-daily`|先执行市场数据质量门禁，再校验 SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照和风险事件发生记录，并输出评分、仓位区间和日报|已实现|
-|评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果|已实现|
-|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|输出中文结论、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、限制说明和人工复核摘要|已实现|
-|回测|`aits backtest`|基于每日评分动态仓位回测，并按 signal_date 构建 point-in-time SEC 基本面特征|已实现|
-|回测报告|`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|输出市场阶段、市场数据质量状态、SEC 基本面质量摘要和绩效指标|已实现|
+|评分|`aits score-daily`|先执行市场数据质量门禁，再校验 SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照和风险事件发生记录，并通过 `position_gate` 把评分仓位、组合限制、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限，输出 AI 产业链评分、判断置信度、最终仓位区间、日报、decision snapshot 和只读 `belief_state`|已实现|
+|评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果，component 行记录模块 confidence，overall 行记录整体 confidence、模型/最终/置信度调整仓位区间、总资产 AI 仓位区间和触发的仓位闸门摘要，用于日报上期对比|已实现|
+|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|输出中文结论、AI 产业链评分、判断置信度、变化原因树、什么情况会改变判断、认知状态摘要、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、估值 PIT 可信度、评分模型仓位、置信度调整后建议仓位、最终仓位、仓位闸门来源/上限/触发状态、限制说明、人工复核摘要和可追溯引用章节|已实现|
+|日报 Evidence Bundle|`outputs/reports/evidence/daily_score_YYYY-MM-DD_trace.json`|记录日报 `claim`、`evidence`、`dataset`、`quality` 和 `run_manifest`，包括 `belief_state` dataset/claim 引用，用于从核心结论反查输入上下文、数据快照和只读认知状态|已实现|
+|决策快照|`data/processed/decision_snapshots/decision_snapshot_YYYY-MM-DD.json`|每次 `score-daily` 通过质量门禁后保存 signal_date、market regime、整体分、模块分、判断置信度、模型/最终/置信度调整仓位、position gates、质量状态、人工复核、估值状态、风险事件状态、trace bundle 引用、`belief_state_ref` 和配置路径|已实现基础版|
+|决策结果校准|`aits feedback calibrate`|先复用 `aits validate-data` 同一质量门禁，再从历史 `decision_snapshot` 和 `prices_daily.csv` 生成 1D/5D/20D/60D/120D outcome，按总分、置信度、gate、thesis、风险等级和估值状态分桶输出校准报告；结果只能进入规则复核，不能自动修改生产规则|已实现基础版|
+|决策结果缓存|`data/processed/decision_outcomes.csv`|保存每个 `snapshot_id`、观察窗口、AI proxy return、最大回撤、实现波动、SPY/QQQ/SMH/SOXX return 与超额收益、hit/miss、分桶字段、gate/thesis/risk/valuation 状态和 `belief_state` 路径|已实现基础版|
+|决策校准报告|`outputs/reports/decision_calibration_YYYY-MM-DD.md`|输出市场阶段、样本数量、观察窗口、数据质量状态、样本不足限制、重叠窗口限制、全局摘要和各分桶平均收益/回撤/波动/胜率/超额收益|已实现基础版|
+|认知模型需求|`docs/requirements/cognitive_model_2026-05-04.md`|定义 AI 产业链可审计认知模型边界、`belief_state` 第一阶段、阶段路线、禁止自动改生产规则的治理边界和关联任务|已登记|
+|认知状态缓存|`data/processed/belief_state/belief_state_YYYY-MM-DD.json`|只读认知状态快照，结构化记录市场状态、产业链节点状态、估值、风险、thesis、仓位边界、限制因素、多维置信度、trace 引用和 `decision_snapshot` 引用；明确不直接改变评分、闸门、回测仓位或交易建议|已实现基础版|
+|认知状态历史|`data/processed/belief_state_history.csv`|认知状态历史索引，按 `signal_date` upsert，记录 `belief_state_id`、路径、生成时间、production_effect、置信度、数据质量、最终仓位边界、限制数量、trace 路径和 decision snapshot 路径|已实现基础版|
+|认知状态报告|`outputs/reports/daily_score_YYYY-MM-DD.md#认知状态`|日报中的中文认知状态摘要，明确 `belief_state` 是只读解释层，而不是已批准进入 production 规则的输入|已实现基础版|
+|回测|`aits backtest`|基于每日评分和同一套 `position_gate` 最终仓位动态回测，默认扣除单边交易成本，可用 `--slippage-bps` 加入线性滑点/盘口冲击估算，并按 signal_date 构建 point-in-time watchlist lifecycle、SEC 基本面特征、TSM IR 季度补充、估值快照切片和风险事件发生记录切片|已实现|
+|回测输入覆盖诊断|`outputs/backtests/backtest_input_coverage_YYYY-MM-DD_YYYY-MM-DD.csv`|机器可读输出评分模块覆盖、来源类型、输入问题、证据 URL、ticker 输入、SEC 特征、风险事件证据和来源类型聚合，便于跨月审计和回归分析|已实现|
+|回测报告|`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|输出市场阶段、绩效指标、执行成本摘要、仓位闸门摘要、判断置信度分桶、数据质量门禁摘要、SEC 基本面、估值快照、风险事件质量摘要、模块覆盖率摘要、月度覆盖率趋势、月度来源类型趋势、月度输入问题下钻、月度输入证据 URL 摘要、月度风险事件证据 URL 明细、月度 ticker 输入摘要、月度 ticker SEC 特征明细、月度估值快照来源和月度风险事件证据来源分布|已实现|
+|回测输入审计报告|`outputs/backtests/backtest_audit_YYYY-MM-DD_YYYY-MM-DD.md`|输出 PASS/PASS_WITH_WARNINGS/FAIL、数据质量、point-in-time 输入、模块覆盖率、来源类型、执行假设、审计发现和修复建议，判断本次回测是否可解释；`--fail-on-audit-warning` 可把非 PASS 审计状态转为命令失败|已实现|
+|回测 Evidence Bundle|`outputs/backtests/evidence/backtest_YYYY-MM-DD_YYYY-MM-DD_trace.json`|记录回测 `claim`、`evidence`、`dataset`、`quality` 和 `run_manifest`，用于从绩效、数据质量和输入覆盖结论反查上下文|已实现|
+|报告反查|`aits trace lookup`|按 claim/evidence/dataset/quality/run id 读取 evidence bundle 并输出中文摘要和原始 JSON 上下文|已实现|
 |能力圈|`config/watchlist.yaml`|记录核心标的、能力圈和 thesis 要求|已实现基础版|
+|观察池生命周期|`config/watchlist_lifecycle.yaml`|记录 ticker 的 `added_at`、`removed_at`、`active_from`、`active_until`、能力圈状态、节点映射可见日期、thesis 要求可见日期、来源和复核人，用于回测防幸存者偏差|已实现基础版|
+|观察池生命周期校验|`aits watchlist validate-lifecycle`|校验当前核心/活跃观察池是否都有 point-in-time lifecycle 记录、是否存在重复记录，以及当前活跃 ticker 在评估日是否可用于评分/回测|已实现基础版|
+|观察池生命周期报告|`outputs/reports/watchlist_lifecycle_YYYY-MM-DD.md`|输出生命周期记录、当前活跃记录数、错误和警告；回测先校验该报告，失败则停止|已实现基础版|
 |产业链|`config/industry_chain.yaml`|记录产业链节点和因果关系|已实现基础版|
 |市场阶段|`config/market_regimes.yaml`|记录默认 AI regime 和压力测试区间|已实现|
 |风险事件|`config/risk_events.yaml`|记录 L1/L2/L3 风险和动作规则|已实现基础版|
 |风险事件校验|`aits risk-events validate`|校验风险等级、产业链引用、相关标的和动作规则|已实现基础版|
-|风险事件发生记录|`data/external/risk_event_occurrences/`|记录真实触发或观察中的政策/地缘事件、状态、证据来源和时间线|已实现基础版|
-|风险事件发生记录校验|`aits risk-events validate-occurrences`|校验实际发生记录 schema、event_id、日期、新鲜度和证据来源；日报政策/地缘评分只读该校验结果|已实现基础版|
+|风险事件发生记录|`data/external/risk_event_occurrences/`|记录真实触发或观察中的政策/地缘事件、状态、证据来源、证据等级、严重性、概率、影响范围、时效性、可逆性、动作等级和时间线|已实现基础版|
+|风险事件发生记录 CSV 导入|`aits risk-events import-occurrences-csv`|导入人工复核后的事件发生记录 CSV，多证据行按 `occurrence_id` 合并并写入 YAML；关键字段、证据等级和动作等级冲突时停止|已实现基础版|
+|风险事件发生记录导入报告|`outputs/reports/risk_event_occurrence_import_YYYY-MM-DD.md`|记录 CSV 行数、checksum、导入记录数、错误和警告|已实现基础版|
+|风险事件发生记录校验|`aits risk-events validate-occurrences`|校验实际发生记录 schema、event_id、日期、新鲜度、证据来源、证据等级和动作等级；`watch` 默认只进入报告和人工复核，D/X 级证据或 public convenience 单源不得自动评分或触发仓位闸门|已实现基础版|
 |数据源目录|`config/data_sources.yaml`|记录 provider、endpoint、缓存路径、审计字段、校验项和来源限制|已实现基础版|
 |数据源校验|`aits data-sources validate`|校验数据源目录是否可审计、活跃来源是否声明校验和限制|已实现基础版|
-|SEC 公司映射|`config/sec_companies.yaml`|记录核心标的 ticker、CIK、taxonomy 预期和 SEC companyfacts 指标周期覆盖范围|已实现基础版|
-|SEC 指标映射|`config/fundamental_metrics.yaml`|记录 SEC taxonomy/concept/unit 到内部基本面指标的映射、年度/季度偏好、支撑指标和显式派生规则|已实现基础版|
+|SEC 公司映射|`config/sec_companies.yaml`|记录核心标的 ticker、CIK、taxonomy 预期和统一指标周期覆盖范围；TSM 季度通过 TSM IR 合并补齐|已实现基础版|
+|SEC 指标映射|`config/fundamental_metrics.yaml`|记录 SEC/TSMC IR taxonomy/concept/unit 到内部基本面指标的映射、年度/季度偏好、支撑指标和显式派生规则；TSMC IR 保留 Management Report 的 `TWD_billions`/`USD_billions` 等披露尺度|已实现基础版|
 |SEC 特征公式|`config/fundamental_features.yaml`|记录 SEC 基本面比率特征公式和周期偏好|已实现基础版|
 |SEC 基本面下载|`aits fundamentals download-sec-companyfacts`|下载 SEC companyfacts 原始 JSON 并写入审计 manifest|已实现基础版|
 |SEC 基本面校验|`aits fundamentals validate-sec-companyfacts`|校验 SEC companyfacts JSON、CIK、taxonomy 和 manifest checksum|已实现基础版|
 |SEC 指标抽取|`aits fundamentals extract-sec-metrics`|先执行 SEC companyfacts 质量门禁，通过后抽取收入、毛利、营业利润、净利润、研发和 CapEx 等结构化摘要；只在显式配置且组件事实完全对齐时生成派生指标|已实现基础版|
-|SEC 指标校验|`aits fundamentals validate-sec-metrics`|校验 SEC 基本面指标 CSV 的 schema、重复键、未来披露日期、数值合法性和按公司周期覆盖声明计算的配置覆盖率|已实现基础版|
-|SEC 特征构建|`aits fundamentals build-sec-features` / `aits score-daily`|先复用 SEC 指标 CSV 校验门禁，通过后生成毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度；日报也会运行同一条特征构建路径|已实现基础版|
+|SEC 指标校验|`aits fundamentals validate-sec-metrics`|校验 SEC 基本面指标 CSV 的 schema、重复键、未来披露日期、数值合法性和按公司周期覆盖声明计算的配置覆盖率，并输出缺失 `ticker / metric_id / period_type` 观测清单|已实现基础版|
+|SEC 特征构建|`aits fundamentals build-sec-features` / `aits score-daily`|先复用 SEC 指标 CSV 校验门禁，通过后生成毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度；分子/分母周期、单位或披露来源不一致时记录覆盖警告并跳过该特征，分母非正数仍作为错误停止；日报也会运行同一条特征构建路径|已实现基础版|
 |SEC 指标缓存|`data/processed/sec_fundamentals_YYYY-MM-DD.csv`|保存 SEC 基本面指标结构化抽取结果，是日报 SEC 基本面评分的输入|已实现基础版|
 |SEC 特征缓存|`data/processed/sec_fundamental_features_YYYY-MM-DD.csv`|保存 SEC 基本面比率特征，是日报基本面硬数据评分的审计输出|已实现基础版|
 |SEC 指标报告|`outputs/reports/sec_fundamentals_YYYY-MM-DD.md`|输出 SEC 缓存校验状态、抽取行数、缺失指标和方法限制|已实现基础版|
-|SEC 指标校验报告|`outputs/reports/sec_fundamentals_validation_YYYY-MM-DD.md`|声明抽取后 CSV 是否可进入基本面特征构建和日报评分|已实现基础版|
+|SEC 指标校验报告|`outputs/reports/sec_fundamentals_validation_YYYY-MM-DD.md`|声明抽取后 CSV 是否可进入基本面特征构建和日报评分，并列出缺失观测清单供回测下钻使用|已实现基础版|
 |SEC 特征报告|`outputs/reports/sec_fundamental_features_YYYY-MM-DD.md`|输出 SEC 指标 CSV 校验状态、特征公式、特征行数和限制说明|已实现基础版|
-|交易假设|`data/external/trade_theses/`|记录交易 thesis、验证指标和证伪条件|已实现基础版|
+|TSMC IR PDF 文本抽取|`aits fundamentals extract-tsm-ir-pdf-text`|从本地官方 TSMC IR PDF 的可抽取文本层生成 Management Report 文本，并记录官方 URL、输入/输出路径、页数、字符数和 checksum；无文本层时停止|已实现基础版|
+|TSMC IR PDF 文本抽取报告|`outputs/reports/tsm_ir_pdf_text_YYYY-MM-DD.md`|声明 PDF 文本抽取状态、官方来源、输入 PDF、输出文本、页数、字符数、checksum 和错误/警告|已实现基础版|
+|TSMC IR 官方页面抓取|`aits fundamentals fetch-tsm-ir-quarterly`|从 TSMC Investor Relations 官方季度页面发现并下载 Management Report 文本，保存原始文本审计证据后生成季度指标；PDF/二进制资源会停止并要求使用 PDF 文本抽取命令|已实现基础版|
+|TSMC IR 季度基本面导入|`aits fundamentals import-tsm-ir-quarterly`|解析 TSMC Investor Relations 官方 Management Report 已抽取文本，生成收入、毛利、营业利润、净利、研发、利润率和 CapEx 等季度指标；`--filed-date` 记录公开/披露日期，用于 point-in-time 回测可见性；金额保留来源披露尺度|已实现基础版|
+|TSMC IR 批量季度导入|`aits fundamentals import-tsm-ir-quarterly-batch`|读取 manifest CSV 中的 `fiscal_year/fiscal_period/source_url/input_path/filed_date`，批量解析多个本地官方 Management Report 文本；重复季度、缺文件、非官方 URL 或任一季度解析错误时整批停止写入|已实现基础版|
+|TSMC IR 批量 manifest 模板|`docs/examples/fundamentals/tsm_ir_quarterly_manifest_template.csv`|提供历史季度回填的 CSV 字段示例；相对 `input_path` 按 manifest 所在目录解析，`filed_date` 作为历史回测可见日期|已实现基础版|
+|TSMC IR 季度指标缓存|`data/processed/tsm_ir_quarterly_metrics.csv`|保存 TSM 官方季度基本面指标、source URL、公开/披露日期、采集时间和 checksum；可通过显式合并命令进入当前统一 SEC-style 指标 CSV，也可被 `aits backtest` 按 signal_date 选择当时最新已披露季度|已实现基础版|
+|TSMC IR 季度报告|`outputs/reports/tsm_ir_quarterly_YYYY_Qn_YYYY-MM-DD.md`|输出 TSMC IR 来源、指标行数、checksum、缺失指标和限制说明|已实现基础版|
+|TSMC IR 批量季度报告|`outputs/reports/tsm_ir_quarterly_batch_YYYY-MM-DD.md`|输出批量 manifest、每个季度的状态、source URL、source path、checksum、行数和错误/警告；只有整批通过才写 CSV|已实现基础版|
+|TSMC IR 指标合并|`aits fundamentals merge-tsm-ir-sec-metrics`|按评估日期选择最新已披露 TSM IR 季度，把收入、毛利、营业利润、净利、研发和 CapEx 转为 SEC-style 指标行，只替换重复 TSM quarterly 键，并复用 SEC 指标 CSV 校验报告|已实现基础版|
+|交易假设|`data/external/trade_theses/`|记录交易 thesis、验证指标、证伪条件、状态机当前状态、前状态、状态变化原因、证据引用和人工复核要求|已实现基础版|
 |交易假设模板|`docs/examples/trade_theses/`|提供可复制 YAML 模板，不提交个人记录|已实现基础版|
-|假设校验|`aits thesis validate`|校验 schema、观察池引用、产业链节点和证伪约束|已实现基础版|
-|假设复核|`aits thesis review`|输出 thesis 是否仍成立、是否需要人工复核、是否证伪触发|已实现基础版|
-|估值拥挤度|`data/external/valuation_snapshots/`|记录估值分位、预期变化和拥挤度|已实现基础版|
+|假设校验|`aits thesis validate`|校验 schema、观察池引用、产业链节点、证伪约束、状态迁移、状态变化元数据和人工复核要求|已实现基础版|
+|假设复核|`aits thesis review`|输出 thesis 是否仍成立、处于 warning/challenged、是否需要人工复核或是否证伪触发；日报将 invalidated 视为人工复核失败输入|已实现基础版|
+|估值拥挤度|`data/external/valuation_snapshots/`|记录估值分位、预期变化、拥挤度、point-in-time 等级、历史来源等级、可信度、可信度原因和回测用途|已实现基础版|
+|FMP historical valuation 原始缓存|`data/raw/fmp_historical_valuation/`|保存 FMP historical `key-metrics` / `ratios` 原始响应、请求参数、下载时间、row count 和 checksum，用于回填当前估值分位的本地历史分布|已实现基础版|
+|FMP 历史估值拉取|`aits valuation fetch-fmp-valuation-history`|从 Financial Modeling Prep historical `key-metrics` 和 `ratios` 拉取年度或季度历史倍数，生成 paid vendor 历史估值快照；快照标记为 `backfilled_history_distribution`、`low` confidence 和 `captured_at_forward_only`，不能伪装为严格 point-in-time 历史输入|已实现基础版|
+|FMP 历史估值拉取报告|`outputs/reports/fmp_historical_valuation_fetch_YYYY-MM-DD.md`|记录 provider、endpoint、period、limit、请求标的、provider symbol alias、下载时间、原始记录数、checksum、生成历史估值快照数、错误和警告；不输出 API key|已实现基础版|
+|FMP analyst estimates 历史缓存|`data/raw/fmp_analyst_estimates/`|保存原始 annual analyst-estimates 响应、请求参数、下载时间、row count 和 checksum，用于同一 fiscal estimate date 的 90 日 EPS revision|已实现基础版|
+|FMP analyst history 校验|`aits valuation validate-fmp-history`|校验原始 analyst-estimates JSON 的 schema、checksum、row_count、ticker、请求参数、日期和重复 estimate date|已实现基础版|
+|FMP 估值/预期拉取|`aits valuation fetch-fmp`|从 Financial Modeling Prep 拉取 quote、TTM key metrics、TTM ratios 和 annual analyst estimates，按显式 provider symbol alias 处理 `GOOG -> GOOGL`，对负数估值倍数记录警告并跳过该指标，读取历史 analyst 快照计算 `eps_revision_90d_pct`，读取本地估值快照历史计算 `valuation_percentile`，生成 paid_vendor 当前采集快照 YAML，并复用估值快照校验；本地历史可来自真实 point-in-time 快照或 `fetch-fmp-valuation-history` 的 captured_at 审计回填|已实现基础版|
+|FMP 拉取报告|`outputs/reports/fmp_valuation_fetch_YYYY-MM-DD.md`|记录 provider、endpoint、请求标的、provider symbol alias、下载时间、返回记录数、checksum、历史 analyst 快照读取数、本地估值历史读取数、生成快照数、字段口径限制、错误和警告；不输出 API key|已实现基础版|
+|FMP analyst history 校验报告|`outputs/reports/fmp_analyst_history_validation_YYYY-MM-DD.md`|记录原始历史快照数量、ticker 覆盖、记录数、checksum 校验结果、错误和警告|已实现基础版|
+|估值 CSV 导入|`aits valuation import-csv`|导入结构化估值/预期 CSV，转换为估值快照 YAML，并复用现有快照校验|已实现基础版|
+|估值导入报告|`outputs/reports/valuation_import_YYYY-MM-DD.md`|记录 CSV 行数、checksum、导入快照数、错误和警告|已实现基础版|
 |估值模板|`docs/examples/valuation_snapshots/`|提供可复制 YAML 模板，不提交个人记录|已实现基础版|
-|估值校验|`aits valuation validate`|校验来源、日期、ticker、指标值和新鲜度|已实现基础版|
-|估值复核|`aits valuation review`|输出估值是否偏贵、拥挤或数据过期|已实现基础版|
+|估值校验|`aits valuation validate`|校验来源、日期、ticker、指标值、新鲜度、PIT 可信度和回测用途；回填历史分布输出警告，低可信快照不得声明 strict point-in-time 回测用途|已实现基础版|
+|估值复核|`aits valuation review`|按 `as_of/captured_at` 选择每个 ticker 最新可见快照，输出估值是否偏贵、拥挤或数据过期，并显示 `valuation_percentile`、`eps_revision_90d_pct` 当前覆盖、PIT 等级、可信度和回测用途|已实现基础版|
+|历史估值切片|`src/ai_trading_system/historical_inputs.py`|回测中按 signal_date 过滤估值快照，只保留 as_of/captured_at 不晚于信号日且每个 ticker 最新的快照|已实现基础版|
+|历史风险事件切片|`src/ai_trading_system/historical_inputs.py`|回测中按 signal_date 过滤风险事件证据，排除当时已解决事件，并把未来 resolved/dismissed 状态重解释为 active/watch|已实现基础版|
+|市场证据账本|`data/external/market_evidence/`|记录新市场信息 evidence_id、来源类型、采集时间、去重键、影响 ticker/产业链节点、证据等级、方向、置信度、人工复核状态和可链接对象；LLM 抽取证据强制 pending_review|已实现基础版|
+|市场证据导入|`aits evidence import-csv`|从人工复核或 LLM 分类后的 CSV 导入 market_evidence YAML，记录 CSV 行数、checksum、导入数量和错误|已实现基础版|
+|市场证据校验|`aits evidence validate`|校验证据账本 schema、重复 evidence_id/source key、未来日期和来源策略；`llm_extracted` 与 `public_convenience` 只能进入待复核或辅助解释，不直接改变评分或仓位|已实现基础版|
+|市场证据报告|`outputs/reports/market_evidence_YYYY-MM-DD.md`|输出 evidence 记录、来源类型、证据等级、复核状态、关联对象和问题清单|已实现基础版|
 |交易记录|`data/external/trades/`|记录真实交易、价格、仓位和 thesis_id|已实现基础版|
 |交易复盘|`aits review-trades`|先过数据质量门禁，再对比 SPY/QQQ/SMH/SOXX 做基础归因|已实现基础版|
 |日报复核摘要|`aits score-daily`|汇总 thesis、风险事件规则与发生记录、估值快照和交易复盘状态；交易复盘复用同一份数据质量门禁结果|已实现基础版|

@@ -73,6 +73,63 @@ def test_validate_trade_thesis_store_rejects_triggered_active_thesis(tmp_path: P
     }
 
 
+def test_validate_trade_thesis_store_accepts_warning_state_metadata(
+    tmp_path: Path,
+) -> None:
+    thesis_path = tmp_path / "nvda.yaml"
+    _write_valid_thesis(
+        thesis_path,
+        status="warning",
+        previous_status="active",
+        status_updated_at="2026-05-02",
+        status_reason="云 CapEx 指引出现分歧，需要降低结论确定性。",
+        status_evidence="market_evidence:nvda_capex_watch_2026_05_02",
+        manual_review_required=True,
+    )
+
+    validation_report = validate_trade_thesis_store(
+        store=load_trade_thesis_store(thesis_path),
+        watchlist=load_watchlist(),
+        industry_chain=load_industry_chain(),
+        as_of=date(2026, 5, 2),
+    )
+    review_report = build_thesis_review_report(validation_report)
+    markdown = render_thesis_validation_report(validation_report)
+
+    assert validation_report.passed is True
+    assert "missing_thesis_status_reason" not in {
+        issue.code for issue in validation_report.issues
+    }
+    assert validation_report.active_count == 1
+    assert review_report.items[0].health == "WATCH"
+    assert "警告" in markdown
+    assert "需要" in markdown
+
+
+def test_validate_trade_thesis_store_rejects_invalid_status_transition(
+    tmp_path: Path,
+) -> None:
+    thesis_path = tmp_path / "nvda.yaml"
+    _write_valid_thesis(
+        thesis_path,
+        status="active",
+        previous_status="invalidated",
+        status_updated_at="2026-05-02",
+        status_reason="试图恢复已证伪 thesis。",
+        status_evidence="manual_review",
+    )
+
+    report = validate_trade_thesis_store(
+        store=load_trade_thesis_store(thesis_path),
+        watchlist=load_watchlist(),
+        industry_chain=load_industry_chain(),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert report.passed is False
+    assert "invalid_thesis_status_transition" in {issue.code for issue in report.issues}
+
+
 def test_render_and_write_thesis_reports(tmp_path: Path) -> None:
     thesis_path = tmp_path / "nvda.yaml"
     _write_valid_thesis(thesis_path)
@@ -157,14 +214,27 @@ def _write_valid_thesis(
     node_id: str = "gpu_asic_demand",
     triggered: bool = False,
     triggered_at: str | None = None,
+    status: str = "active",
+    previous_status: str | None = None,
+    status_updated_at: str | None = None,
+    status_reason: str = "",
+    status_evidence: str = "",
+    manual_review_required: bool = False,
 ) -> None:
     triggered_at_line = f"    triggered_at: {triggered_at}\n" if triggered_at else ""
+    previous_status_line = f"previous_status: {previous_status}\n" if previous_status else ""
+    status_updated_at_line = (
+        f"status_updated_at: {status_updated_at}\n" if status_updated_at else ""
+    )
     path.write_text(
         f"""thesis_id: nvda_ai_infra_2026_q2
 ticker: NVDA
 direction: long
 created_at: 2026-05-01
 time_horizon: medium
+{previous_status_line}{status_updated_at_line}status_reason: "{status_reason}"
+status_evidence: "{status_evidence}"
+manual_review_required: {str(manual_review_required).lower()}
 position_scope: core_ai_bucket
 entry_reason:
   - AI 基础设施需求仍在扩大，GPU 需求和生态优势尚未被证伪。
@@ -190,7 +260,7 @@ falsification_conditions:
     active: false
     updated_at: 2026-05-01
 review_frequency: weekly
-status: active
+status: {status}
 """,
         encoding="utf-8",
     )

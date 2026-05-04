@@ -493,13 +493,16 @@ def _build_ratio_feature_row(
     if not _records_can_form_ratio(numerator, denominator):
         issues.append(
             SecFundamentalFeatureIssue(
-                severity=SecFundamentalFeatureIssueSeverity.ERROR,
+                severity=SecFundamentalFeatureIssueSeverity.WARNING,
                 code="sec_fundamental_feature_metric_alignment_mismatch",
                 ticker=company.ticker,
                 feature_id=feature.feature_id,
                 period_type=period_type,
                 path=input_path,
-                message="分子和分母指标的周期、单位或披露来源不一致，已停止生成该特征。",
+                message=(
+                    "分子和分母指标的周期、单位或披露来源不一致，"
+                    "未生成该特征。"
+                ),
             )
         )
         return None

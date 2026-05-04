@@ -152,6 +152,84 @@ def test_validate_risk_event_occurrence_store_passes_active_manual_record(
     )
 
 
+def test_watch_risk_event_occurrence_requires_review_not_scoring(
+    tmp_path: Path,
+) -> None:
+    input_path = tmp_path / "occurrence.yaml"
+    _write_risk_event_occurrence(
+        input_path,
+        status="watch",
+        action_class="position_gate_eligible",
+    )
+
+    validation_report = validate_risk_event_occurrence_store(
+        store=load_risk_event_occurrence_store(input_path),
+        risk_events=load_risk_events(),
+        as_of=date(2026, 5, 2),
+    )
+    review_report = build_risk_event_occurrence_review_report(validation_report)
+
+    assert validation_report.passed is True
+    assert "watch_risk_event_not_auto_scored" in {
+        issue.code for issue in validation_report.issues
+    }
+    assert review_report.score_eligible_active_items == ()
+    assert review_report.items[0].health == "WATCH"
+    assert review_report.items[0].score_eligible is False
+
+
+def test_low_grade_risk_event_occurrence_never_auto_scores(
+    tmp_path: Path,
+) -> None:
+    input_path = tmp_path / "occurrence.yaml"
+    _write_risk_event_occurrence(
+        input_path,
+        evidence_grade="D",
+        action_class="position_gate_eligible",
+    )
+
+    validation_report = validate_risk_event_occurrence_store(
+        store=load_risk_event_occurrence_store(input_path),
+        risk_events=load_risk_events(),
+        as_of=date(2026, 5, 2),
+    )
+    review_report = build_risk_event_occurrence_review_report(validation_report)
+
+    assert validation_report.passed is True
+    assert "low_grade_risk_event_not_auto_scored" in {
+        issue.code for issue in validation_report.issues
+    }
+    assert review_report.score_eligible_active_items == ()
+    assert review_report.items[0].health == "LOW_EVIDENCE_GRADE"
+    assert review_report.items[0].score_eligible is False
+
+
+def test_public_convenience_risk_event_occurrence_is_not_scoreable(
+    tmp_path: Path,
+) -> None:
+    input_path = tmp_path / "occurrence.yaml"
+    _write_risk_event_occurrence(
+        input_path,
+        source_type="public_convenience",
+        source_url="https://example.test/public-risk-note",
+    )
+
+    validation_report = validate_risk_event_occurrence_store(
+        store=load_risk_event_occurrence_store(input_path),
+        risk_events=load_risk_events(),
+        as_of=date(2026, 5, 2),
+    )
+    review_report = build_risk_event_occurrence_review_report(validation_report)
+
+    assert validation_report.passed is True
+    assert "public_convenience_risk_event_source" in {
+        issue.code for issue in validation_report.issues
+    }
+    assert review_report.score_eligible_active_items == ()
+    assert review_report.items[0].health == "INELIGIBLE_SOURCE"
+    assert review_report.items[0].score_eligible is False
+
+
 def test_validate_risk_event_occurrence_store_rejects_unknown_event_id(
     tmp_path: Path,
 ) -> None:
@@ -252,18 +330,30 @@ def test_risk_events_cli_validate_occurrences(tmp_path: Path) -> None:
 def _write_risk_event_occurrence(
     output_path: Path,
     event_id: str = "ai_chip_export_control_upgrade",
+    status: str = "active",
+    source_type: str = "manual_input",
+    source_url: str = "",
+    evidence_grade: str = "B",
+    action_class: str = "position_gate_eligible",
 ) -> None:
     output_path.write_text(
         f"""
 occurrence_id: {event_id}_2026_05_01
 event_id: {event_id}
-status: active
+status: {status}
 triggered_at: 2026-05-01
 last_confirmed_at: 2026-05-02
+evidence_grade: {evidence_grade}
+severity: high
+probability: confirmed
+scope: ai_bucket
+time_sensitivity: high
+reversibility: partly_reversible
+action_class: {action_class}
 evidence_sources:
   - source_name: manual_policy_review
-    source_type: manual_input
-    source_url: ""
+    source_type: {source_type}
+    source_url: "{source_url}"
     published_at: 2026-05-01
     captured_at: 2026-05-02
 summary: 人工确认的测试风险事件。

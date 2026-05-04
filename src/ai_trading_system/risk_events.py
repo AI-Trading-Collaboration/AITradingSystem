@@ -28,6 +28,29 @@ RiskEventOccurrenceSourceType = Literal[
     "manual_input",
     "public_convenience",
 ]
+RiskEventEvidenceGrade = Literal["S", "A", "B", "C", "D", "X"]
+RiskEventSeverity = Literal["low", "medium", "high", "critical", "unknown"]
+RiskEventProbability = Literal["low", "medium", "high", "confirmed", "unknown"]
+RiskEventScope = Literal[
+    "single_ticker",
+    "industry_chain_node",
+    "ai_bucket",
+    "market_wide",
+    "unknown",
+]
+RiskEventTimeSensitivity = Literal["low", "medium", "high", "immediate", "unknown"]
+RiskEventReversibility = Literal[
+    "reversible",
+    "partly_reversible",
+    "hard_to_reverse",
+    "unknown",
+]
+RiskEventActionClass = Literal[
+    "monitor_only",
+    "manual_review",
+    "score_eligible",
+    "position_gate_eligible",
+]
 
 
 class RiskEventIssueSeverity(StrEnum):
@@ -51,6 +74,13 @@ class RiskEventOccurrence(BaseModel):
     triggered_at: date
     last_confirmed_at: date
     resolved_at: date | None = None
+    evidence_grade: RiskEventEvidenceGrade = "B"
+    severity: RiskEventSeverity = "unknown"
+    probability: RiskEventProbability = "unknown"
+    scope: RiskEventScope = "unknown"
+    time_sensitivity: RiskEventTimeSensitivity = "unknown"
+    reversibility: RiskEventReversibility = "unknown"
+    action_class: RiskEventActionClass = "position_gate_eligible"
     evidence_sources: list[RiskEventEvidenceSource] = Field(min_length=1)
     summary: str = Field(min_length=1)
     notes: str = ""
@@ -122,6 +152,13 @@ class RiskEventOccurrenceReviewItem:
     event_id: str
     level: str
     status: RiskEventOccurrenceStatus
+    evidence_grade: RiskEventEvidenceGrade
+    severity: RiskEventSeverity
+    probability: RiskEventProbability
+    scope: RiskEventScope
+    time_sensitivity: RiskEventTimeSensitivity
+    reversibility: RiskEventReversibility
+    action_class: RiskEventActionClass
     triggered_at: date
     last_confirmed_at: date
     source_types: tuple[RiskEventOccurrenceSourceType, ...]
@@ -461,8 +498,9 @@ def render_risk_event_occurrence_review_report(
     else:
         lines.extend(
             [
-                "| Occurrence | 事件 | 等级 | 状态 | 触发日期 | 最近确认 | 来源 | 评分 | 结论 |",
-                "|---|---|---|---|---|---|---|---|---|",
+                "| Occurrence | 事件 | 等级 | 状态 | 证据等级 | 严重性 | 概率 | "
+                "影响范围 | 动作等级 | 触发日期 | 最近确认 | 来源 | 评分 | 结论 |",
+                "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
             ]
         )
         for item in sorted(report.items, key=lambda value: value.occurrence_id):
@@ -472,6 +510,11 @@ def render_risk_event_occurrence_review_report(
                 f"{item.event_id} | "
                 f"{item.level} | "
                 f"{_occurrence_status_label(item.status)} | "
+                f"{item.evidence_grade} | "
+                f"{_risk_severity_label(item.severity)} | "
+                f"{_risk_probability_label(item.probability)} | "
+                f"{_risk_scope_label(item.scope)} | "
+                f"{_risk_action_class_label(item.action_class)} | "
                 f"{item.triggered_at.isoformat()} | "
                 f"{item.last_confirmed_at.isoformat()} | "
                 f"{', '.join(_source_type_label(value) for value in item.source_types)} | "
@@ -508,6 +551,8 @@ def render_risk_event_occurrence_review_report(
             "- 政策/地缘评分只读取本报告中已通过校验的发生记录；没有发生记录时显示数据不足。",
             "- 仅 `primary_source`、`paid_vendor` 或 `manual_input` 证据可进入评分；"
             "`public_convenience` 只能作为辅助线索。",
+            "- `watch` 状态默认只进入报告和人工复核；只有 `active` 且证据来源、证据等级和 "
+            "`action_class` 满足条件时，才进入自动评分和仓位闸门。",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -689,6 +734,37 @@ def _check_occurrence(
             )
         )
 
+    if occurrence.status == "watch" and occurrence.action_class in {
+        "score_eligible",
+        "position_gate_eligible",
+    }:
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.WARNING,
+                code="watch_risk_event_not_auto_scored",
+                event_id=occurrence.event_id,
+                path=path,
+                message=(
+                    "watch 状态不会直接进入自动评分；如已确认风险，请先将状态升级为 active。"
+                ),
+            )
+        )
+    if occurrence.evidence_grade in {"D", "X"} and occurrence.action_class in {
+        "score_eligible",
+        "position_gate_eligible",
+    }:
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.WARNING,
+                code="low_grade_risk_event_not_auto_scored",
+                event_id=occurrence.event_id,
+                path=path,
+                message=(
+                    "D/X 级证据只能进入人工复核；即使 action_class 较高，也不会自动评分。"
+                ),
+            )
+        )
+
     for source in occurrence.evidence_sources:
         if (
             source.source_type in {"primary_source", "paid_vendor", "public_convenience"}
@@ -747,8 +823,18 @@ def _occurrence_review_item(
     has_score_source = any(
         source_type != "public_convenience" for source_type in source_types
     )
-    active_for_scoring = occurrence.status in {"active", "watch"}
-    score_eligible = rule is not None and active_for_scoring and has_score_source
+    action_allows_scoring = occurrence.action_class in {
+        "score_eligible",
+        "position_gate_eligible",
+    }
+    evidence_allows_scoring = occurrence.evidence_grade not in {"D", "X"}
+    score_eligible = (
+        rule is not None
+        and occurrence.status == "active"
+        and has_score_source
+        and action_allows_scoring
+        and evidence_allows_scoring
+    )
 
     if rule is None:
         health = "UNKNOWN_RULE"
@@ -756,9 +842,15 @@ def _occurrence_review_item(
     elif not has_score_source:
         health = "INELIGIBLE_SOURCE"
         reason = "只有 public_convenience 证据，不能进入自动评分。"
+    elif not evidence_allows_scoring:
+        health = "LOW_EVIDENCE_GRADE"
+        reason = "证据等级为 D/X，只进入人工复核，不进入自动评分。"
+    elif occurrence.action_class in {"monitor_only", "manual_review"}:
+        health = "MANUAL_REVIEW_ONLY"
+        reason = "action_class 要求只监控或人工复核，不进入自动评分。"
     elif occurrence.status == "watch":
         health = "WATCH"
-        reason = f"{rule.level} 风险处于观察状态，需要人工确认是否升级。"
+        reason = f"{rule.level} 风险处于观察状态，只进入报告和人工复核。"
     elif occurrence.status == "active":
         health = f"ACTIVE_{rule.level}"
         reason = f"{rule.level} 风险已触发，AI 仓位乘数参考 {multiplier:.0%}。"
@@ -774,6 +866,13 @@ def _occurrence_review_item(
         event_id=occurrence.event_id,
         level=level_id,
         status=occurrence.status,
+        evidence_grade=occurrence.evidence_grade,
+        severity=occurrence.severity,
+        probability=occurrence.probability,
+        scope=occurrence.scope,
+        time_sensitivity=occurrence.time_sensitivity,
+        reversibility=occurrence.reversibility,
+        action_class=occurrence.action_class,
         triggered_at=occurrence.triggered_at,
         last_confirmed_at=occurrence.last_confirmed_at,
         source_types=source_types,
@@ -893,6 +992,45 @@ def _source_type_label(value: str) -> str:
         "paid_vendor": "付费供应商",
         "manual_input": "人工审计",
         "public_convenience": "公开便利源",
+    }.get(value, value)
+
+
+def _risk_severity_label(value: str) -> str:
+    return {
+        "low": "低",
+        "medium": "中",
+        "high": "高",
+        "critical": "极高",
+        "unknown": "未知",
+    }.get(value, value)
+
+
+def _risk_probability_label(value: str) -> str:
+    return {
+        "low": "低",
+        "medium": "中",
+        "high": "高",
+        "confirmed": "已确认",
+        "unknown": "未知",
+    }.get(value, value)
+
+
+def _risk_scope_label(value: str) -> str:
+    return {
+        "single_ticker": "单一标的",
+        "industry_chain_node": "产业链节点",
+        "ai_bucket": "AI 组合",
+        "market_wide": "全市场",
+        "unknown": "未知",
+    }.get(value, value)
+
+
+def _risk_action_class_label(value: str) -> str:
+    return {
+        "monitor_only": "仅监控",
+        "manual_review": "人工复核",
+        "score_eligible": "可评分",
+        "position_gate_eligible": "可触发仓位闸门",
     }.get(value, value)
 
 

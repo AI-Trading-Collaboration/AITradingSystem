@@ -166,3 +166,15 @@ placeholders:
 
 position_change:
   minimum_action_delta: 0.05
+
+position_gates:
+  valuation:
+    expensive_or_crowded_max_position: 0.70
+    extreme_overheated_max_position: 0.40
+  thesis:
+    warning_max_position: 0.70
+    failure_max_position: 0.00
+  data_confidence:
+    data_quality_warning_max_position: 0.80
+    insufficient_data_max_position: 0.60
+    placeholder_max_position: 0.80

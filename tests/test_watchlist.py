@@ -12,6 +12,13 @@ from ai_trading_system.watchlist import (
     validate_watchlist_config,
     write_watchlist_validation_report,
 )
+from ai_trading_system.watchlist_lifecycle import (
+    WatchlistLifecycleConfig,
+    WatchlistLifecycleEntry,
+    active_watchlist_tickers_as_of,
+    load_watchlist_lifecycle,
+    validate_watchlist_lifecycle,
+)
 
 
 def test_validate_watchlist_config_passes_default_watchlist() -> None:
@@ -93,6 +100,86 @@ def test_watchlist_cli_validate_writes_report(tmp_path: Path) -> None:
     assert result.exit_code == 0
     assert output_path.exists()
     assert "观察池校验状态：PASS" in result.output
+
+
+def test_validate_watchlist_lifecycle_passes_default_config() -> None:
+    report = validate_watchlist_lifecycle(
+        lifecycle=load_watchlist_lifecycle(),
+        input_path=Path("config/watchlist_lifecycle.yaml"),
+        watchlist=load_watchlist(),
+        universe=load_universe(),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert report.status == "PASS"
+    assert report.entry_count == 6
+    assert report.active_entry_count == 6
+
+
+def test_active_watchlist_tickers_as_of_filters_future_and_node_mapping() -> None:
+    lifecycle = WatchlistLifecycleConfig(
+        entries=[
+            WatchlistLifecycleEntry(
+                ticker="NVDA",
+                added_at=date(2026, 4, 1),
+                reason="测试新增。",
+                active_from=date(2026, 4, 1),
+                competence_status="in_competence",
+                node_mapping_valid_from=date(2026, 4, 1),
+                thesis_required_from=date(2026, 4, 1),
+                source="unit_test",
+            ),
+            WatchlistLifecycleEntry(
+                ticker="AMD",
+                added_at=date(2026, 4, 1),
+                reason="节点映射稍后生效。",
+                active_from=date(2026, 4, 1),
+                competence_status="in_competence",
+                node_mapping_valid_from=date(2026, 4, 15),
+                source="unit_test",
+            ),
+            WatchlistLifecycleEntry(
+                ticker="MSFT",
+                added_at=date(2026, 5, 1),
+                reason="未来才加入。",
+                active_from=date(2026, 5, 1),
+                competence_status="in_competence",
+                node_mapping_valid_from=date(2026, 5, 1),
+                source="unit_test",
+            ),
+        ]
+    )
+
+    assert active_watchlist_tickers_as_of(
+        lifecycle=lifecycle,
+        tickers=("NVDA", "AMD", "MSFT"),
+        as_of=date(2026, 4, 10),
+    ) == ["NVDA"]
+    assert active_watchlist_tickers_as_of(
+        lifecycle=lifecycle,
+        tickers=("NVDA", "AMD", "MSFT"),
+        as_of=date(2026, 4, 16),
+    ) == ["NVDA", "AMD"]
+
+
+def test_watchlist_cli_validate_lifecycle_writes_report(tmp_path: Path) -> None:
+    output_path = tmp_path / "watchlist_lifecycle.md"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "watchlist",
+            "validate-lifecycle",
+            "--as-of",
+            "2026-05-02",
+            "--output-path",
+            str(output_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert output_path.exists()
+    assert "观察池 lifecycle 校验状态：PASS" in result.output
 
 
 def test_watchlist_cli_list_outputs_core_tickers() -> None:

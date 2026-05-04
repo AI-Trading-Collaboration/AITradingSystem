@@ -18,6 +18,12 @@ metrics:
       - taxonomy: ifrs-full
         concept: Revenue
         unit: TWD
+      - taxonomy: tsm-ir
+        concept: management_report:revenue
+        unit: TWD_millions
+      - taxonomy: tsm-ir
+        concept: management_report:revenue
+        unit: TWD_billions
 
   - metric_id: gross_profit
     name: Gross Profit
@@ -35,6 +41,12 @@ metrics:
       - taxonomy: ifrs-full
         concept: GrossProfit
         unit: TWD
+      - taxonomy: tsm-ir
+        concept: management_report:gross_profit
+        unit: TWD_millions
+      - taxonomy: tsm-ir
+        concept: management_report:gross_profit
+        unit: TWD_billions
 
   - metric_id: operating_income
     name: Operating Income
@@ -52,6 +64,12 @@ metrics:
       - taxonomy: ifrs-full
         concept: ProfitLossFromOperatingActivities
         unit: TWD
+      - taxonomy: tsm-ir
+        concept: management_report:operating_income
+        unit: TWD_millions
+      - taxonomy: tsm-ir
+        concept: management_report:operating_income
+        unit: TWD_billions
 
   - metric_id: net_income
     name: Net Income
@@ -69,6 +87,12 @@ metrics:
       - taxonomy: ifrs-full
         concept: ProfitLoss
         unit: TWD
+      - taxonomy: tsm-ir
+        concept: management_report:net_income
+        unit: TWD_millions
+      - taxonomy: tsm-ir
+        concept: management_report:net_income
+        unit: TWD_billions
 
   - metric_id: research_and_development
     name: Research and Development
@@ -86,6 +110,9 @@ metrics:
       - taxonomy: ifrs-full
         concept: ResearchAndDevelopmentExpense
         unit: TWD
+      - taxonomy: tsm-ir
+        concept: management_report:research_and_development
+        unit: TWD_billions
 
   - metric_id: capex
     name: Capital Expenditures
@@ -106,6 +133,12 @@ metrics:
       - taxonomy: ifrs-full
         concept: PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities
         unit: TWD
+      - taxonomy: tsm-ir
+        concept: management_report:capex
+        unit: USD_billions
+      - taxonomy: tsm-ir
+        concept: management_report:capex
+        unit: TWD_billions
 
 supporting_metrics:
   - metric_id: cost_of_revenue
