@@ -31,7 +31,7 @@
 - 静态预算仍来自 `config/portfolio.yaml:portfolio.total_risk_asset_min/max`。
 - 宏观预算层只允许在静态预算基础上下调，不允许放大总风险资产预算。
 - 触发信号来自已通过数据质量门禁的 `^VIX` 水平、`^VIX` 分位、`DGS10`
-  20 日变化和 `DX-Y.NYB` 20 日收益。
+  20 日变化和 FRED `DTWEXBGS` 广义美元指数 20 日收益。
 - 触发 `elevated` 或 `stress` 时，先下调总风险资产预算，再把最终风险资产内
   AI 仓位换算为总资产内 AI 仓位。
 - AI 在风险资产内部的相对权重仍由评分模型和 `position_gate` 单独解释，避免把

@@ -2,9 +2,9 @@
 
 状态：BASELINE_DONE
 
-最后更新：2026-05-04
+最后更新：2026-05-05
 
-关联任务：`RISK-003`、`RISK-004`、`RISK-005`、`SOURCE-001`、`LLM-001`、`EVIDENCE-001`
+关联任务：`RISK-003`、`RISK-004`、`RISK-005`、`RISK-006`、`SOURCE-001`、`LLM-001`、`EVIDENCE-001`
 
 ## 结论
 
@@ -208,6 +208,60 @@ API 使用边界：
 - `score-daily` 在无可评分 active occurrence 且存在当前有效复核声明时，将政策/地缘模块作为 `manual_input` 处理；没有有效声明时仍为 `insufficient_data`。
 - point-in-time 回测切片会按 `review_date`、`reviewed_at` 和 checked source `captured_at` 过滤复核声明，避免未来复核声明进入历史信号日。
 - 声明不触发风险事件仓位闸门，不覆盖已记录的 active/watch occurrence，也不由系统自动生成真实复核内容。
+
+## RISK-006
+
+状态：BASELINE_DONE
+
+### 问题
+
+当前 `policy_geopolitics` 的低置信度不是模型参数问题，而是输入证据问题：系统缺少可持续、授权清晰、可审计的政策/地缘事件来源，以及覆盖评估日的真实人工复核声明。没有这类输入时，系统只能把空发生记录解释为 `insufficient_data` 或低置信结论，不能把“没有记录到事件”当成“没有政策或地缘风险”。
+
+### 已确认范围
+
+- owner 已确认低成本官方来源组合：Federal Register/BIS/OFAC/USTR/Congress.gov/GovInfo/Trade.gov CSL。
+- 第一版先不接付费供应商，不使用未授权新闻源或模型推断来修复置信度。
+- owner 负责提供 `CONGRESS_API_KEY`、`GOVINFO_API_KEY` 和每日复核声明。
+- 系统负责抓取、原始缓存、row count/checksum 审计、待人工复核候选和中文报告。
+
+### 剩余生产前置条件
+
+- Congress.gov 和 GovInfo API key 需要由 owner 配置在本机环境变量中。
+- 每日复核声明仍需 owner 按真实复核窗口、来源范围和理由填写，系统不会自动生成“无事件”结论。
+- 需要至少一批真实样本进入 `risk_event_occurrence` 或 `review_attestation` 流程，并通过 `aits risk-events validate-occurrences`。
+- `score-daily` 继续只承认可评分 occurrence 或当前有效复核声明；官方来源候选本身仍是 `pending_review`。
+
+### 第一版官方来源组合
+
+|来源|第一版用途|凭证|
+|---|---|---|
+|Federal Register API|AI/半导体/出口管制政策文件发现；需回到 govinfo 或 PDF 复核法律版本|不需要 API key|
+|BIS via Federal Register|Entity List、Unverified List、EAR、advanced computing 相关公告发现|不需要 API key|
+|OFAC SDN XML|SDN 制裁清单快照监控|不需要 API key|
+|OFAC Consolidated XML|Non-SDN / CMIC / sectoral sanctions 线索监控|不需要 API key|
+|USTR press releases|Section 301、tariff 和贸易政策线索|不需要 API key|
+|Trade.gov CSL JSON|多部门 restricted party screening cross-check；命中需回官方清单尽调|不需要 API key|
+|Congress.gov bills|AI chip、出口管制、制裁和地缘相关法案 watch|需要 `CONGRESS_API_KEY`|
+|GovInfo Federal Register collection|Federal Register 官方包级 metadata 校验|需要 `GOVINFO_API_KEY`|
+
+### 完整 DONE 条件
+
+1. owner 提供 API key，并完成至少一轮真实每日复核声明。
+2. 抓取报告显示 provider、captured_at、row count/checksum、跳过来源和候选摘要。
+3. 至少一批真实样本通过 source policy、occurrence/attestation 校验。
+4. `score-daily` 能明确区分“已复核无重大事件”和“没有可靠来源输入”；前者可作为经复核低风险输入，后者必须继续降级。
+
+### 边界
+
+- 不使用 `public_convenience`、未授权供应商文本或 `llm_extracted` 输出直接修复置信度。
+- 不用 OpenAI 预审替代人工确认；预审只能产生待复核候选和复核问题。
+- 不因短期缺少事件记录而提高 `policy_geopolitics` 置信度。
+
+### 进展记录
+
+- 2026-05-05：新增本任务，原因：owner 指出当前 `policy_geopolitics` 置信度很低，后续需要可靠数据源才能正确分析。当前正确处理是保守降级并显式登记 owner 数据源阻塞，而不是引入临时新闻源或模型推断绕过。
+- 2026-05-05：进入实现，原因：owner 确认采用低成本官方来源组合，第一版监控 Federal Register/BIS/OFAC/USTR/Congress.gov/GovInfo/Trade.gov CSL；owner 负责提供 API key 和每日复核声明，系统实现负责官方来源抓取、原始缓存、审计报告和待人工复核入口。
+- 2026-05-05：达到 `BASELINE_DONE`，原因：新增 `aits risk-events fetch-official-sources`、官方来源 raw payload 缓存、`download_manifest.csv` 审计、待人工复核候选 CSV、中文抓取报告、数据源目录、系统流图、`.env.example` API key 提示、Federal Register live smoke test 和全量测试；完整生产使用仍依赖 owner API key、每日复核声明和真实样本验证。
 
 ## 验收标准
 

@@ -650,6 +650,381 @@ sources:
       - 缺失 action_class 时默认 manual_review；B 级证据不得单独触发 position gate。
     owner_notes: 用于减少风险事件 YAML 手工维护；L2/L3 仍必须经过人工复核。
 
+  - source_id: official_federal_register_policy_documents
+    provider: Federal Register API
+    source_type: primary_source
+    status: active
+    domains:
+      - risk_events
+      - news_events
+    endpoint: https://www.federalregister.gov/api/v1/documents.json
+    adapter: fetch_official_policy_sources
+    cadence: daily
+    requires_credentials: false
+    cache_paths:
+      - data/raw/official_policy_sources
+      - data/processed/official_policy_source_candidates_YYYY-MM-DD.csv
+      - outputs/reports/official_policy_sources_YYYY-MM-DD.md
+    primary_for:
+      - policy_geopolitics_official_source_review
+      - export_control_policy_documents
+    audit_fields:
+      - provider
+      - endpoint
+      - request_parameters
+      - downloaded_at
+      - output_path
+      - row_count
+      - checksum
+      - candidate_count
+    validation_checks:
+      - official_domain
+      - checksum
+      - row_count
+      - source_policy_grade
+      - pending_review_only
+    limitations:
+      - FederalRegister.gov API 不需要 API key，但网页原型本身不是正式法律版本；法律效力需回到 govinfo 官方版本或 Federal Register PDF 复核。
+      - 抓取结果只生成待人工复核候选，不直接写入 active occurrence、评分或 position gate。
+    llm_permission:
+      license_scope: public_primary_source_owner_review
+      personal_use_only: true
+      external_llm_allowed: true
+      cache_allowed: true
+      redistribution_allowed: true
+      max_content_sent_level: full_text
+      approval_ref: owner_low_cost_official_policy_sources_2026-05-05
+      reviewed_at: 2026-05-05
+    owner_notes: RISK-006 第一版官方来源组合；AI/半导体/出口管制主题文件进入人工复核。
+
+  - source_id: official_bis_federal_register_notices
+    provider: Federal Register API / BIS notices
+    source_type: primary_source
+    status: active
+    domains:
+      - risk_events
+      - news_events
+    endpoint: https://www.federalregister.gov/api/v1/documents.json?conditions[term]=Bureau%20of%20Industry%20and%20Security
+    adapter: fetch_official_policy_sources
+    cadence: daily
+    requires_credentials: false
+    cache_paths:
+      - data/raw/official_policy_sources
+      - data/processed/official_policy_source_candidates_YYYY-MM-DD.csv
+      - outputs/reports/official_policy_sources_YYYY-MM-DD.md
+    primary_for:
+      - bis_export_control_notices
+      - entity_list_unverified_list_monitoring
+    audit_fields:
+      - provider
+      - endpoint
+      - request_parameters
+      - downloaded_at
+      - output_path
+      - row_count
+      - checksum
+      - candidate_count
+    validation_checks:
+      - official_domain
+      - checksum
+      - row_count
+      - source_policy_grade
+      - pending_review_only
+    limitations:
+      - 该来源通过 Federal Register 检索 BIS 相关公告；BIS 官网页面仍可作为人工复核辅助入口。
+      - 只有人工确认后的 occurrence 才能进入评分或仓位闸门。
+    llm_permission:
+      license_scope: public_primary_source_owner_review
+      personal_use_only: true
+      external_llm_allowed: true
+      cache_allowed: true
+      redistribution_allowed: true
+      max_content_sent_level: full_text
+      approval_ref: owner_low_cost_official_policy_sources_2026-05-05
+      reviewed_at: 2026-05-05
+    owner_notes: 重点监控 Entity List、Unverified List、EAR、advanced computing 和 AI chip export controls。
+
+  - source_id: official_ofac_sdn_xml
+    provider: OFAC Sanctions List Service
+    source_type: primary_source
+    status: active
+    domains:
+      - risk_events
+      - news_events
+    endpoint: https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/SDN.XML
+    adapter: fetch_official_policy_sources
+    cadence: daily
+    requires_credentials: false
+    cache_paths:
+      - data/raw/official_policy_sources
+      - data/processed/official_policy_source_candidates_YYYY-MM-DD.csv
+      - outputs/reports/official_policy_sources_YYYY-MM-DD.md
+    primary_for:
+      - ofac_sdn_monitoring
+      - sanctions_policy_events
+    audit_fields:
+      - provider
+      - endpoint
+      - request_parameters
+      - downloaded_at
+      - output_path
+      - row_count
+      - checksum
+      - candidate_count
+    validation_checks:
+      - official_domain
+      - user_agent_required
+      - checksum
+      - row_count
+      - pending_review_only
+    limitations:
+      - OFAC SLS bulk file是制裁清单快照；命中候选仍需人工确认其对 AI 标的、产业链节点或 thesis 的投资含义。
+      - 本来源不会单独触发评分或仓位闸门。
+    llm_permission:
+      license_scope: public_primary_source_owner_review
+      personal_use_only: true
+      external_llm_allowed: true
+      cache_allowed: true
+      redistribution_allowed: true
+      max_content_sent_level: full_text
+      approval_ref: owner_low_cost_official_policy_sources_2026-05-05
+      reviewed_at: 2026-05-05
+    owner_notes: 作为 sanctions 监控的一手官方 bulk source。
+
+  - source_id: official_ofac_consolidated_xml
+    provider: OFAC Sanctions List Service
+    source_type: primary_source
+    status: active
+    domains:
+      - risk_events
+      - news_events
+    endpoint: https://sanctionslistservice.ofac.treas.gov/api/PublicationPreview/exports/CONSOLIDATED.XML
+    adapter: fetch_official_policy_sources
+    cadence: daily
+    requires_credentials: false
+    cache_paths:
+      - data/raw/official_policy_sources
+      - data/processed/official_policy_source_candidates_YYYY-MM-DD.csv
+      - outputs/reports/official_policy_sources_YYYY-MM-DD.md
+    primary_for:
+      - ofac_non_sdn_monitoring
+      - cmic_and_sectoral_sanctions_monitoring
+    audit_fields:
+      - provider
+      - endpoint
+      - request_parameters
+      - downloaded_at
+      - output_path
+      - row_count
+      - checksum
+      - candidate_count
+    validation_checks:
+      - official_domain
+      - user_agent_required
+      - checksum
+      - row_count
+      - pending_review_only
+    limitations:
+      - Consolidated Non-SDN 清单用于发现制裁/CMIC/sectoral sanctions 线索；正式投资影响必须人工映射。
+      - 本来源不会单独触发评分或仓位闸门。
+    llm_permission:
+      license_scope: public_primary_source_owner_review
+      personal_use_only: true
+      external_llm_allowed: true
+      cache_allowed: true
+      redistribution_allowed: true
+      max_content_sent_level: full_text
+      approval_ref: owner_low_cost_official_policy_sources_2026-05-05
+      reviewed_at: 2026-05-05
+    owner_notes: 与 SDN 分开登记，便于独立 row count/checksum 和更新追踪。
+
+  - source_id: official_ustr_press_releases
+    provider: United States Trade Representative
+    source_type: primary_source
+    status: active
+    domains:
+      - risk_events
+      - news_events
+    endpoint: https://ustr.gov/about-us/policy-offices/press-office/press-releases
+    adapter: fetch_official_policy_sources
+    cadence: daily
+    requires_credentials: false
+    cache_paths:
+      - data/raw/official_policy_sources
+      - data/processed/official_policy_source_candidates_YYYY-MM-DD.csv
+      - outputs/reports/official_policy_sources_YYYY-MM-DD.md
+    primary_for:
+      - section_301_tariff_trade_policy_monitoring
+      - ustr_trade_policy_review
+    audit_fields:
+      - provider
+      - endpoint
+      - request_parameters
+      - downloaded_at
+      - output_path
+      - row_count
+      - checksum
+      - candidate_count
+    validation_checks:
+      - official_domain
+      - checksum
+      - row_count
+      - pending_review_only
+    limitations:
+      - USTR press releases are official policy communications but may precede legally effective Federal Register or agency action.
+      - Section 301、tariff 和 critical minerals 线索进入人工复核，不直接评分。
+    llm_permission:
+      license_scope: public_primary_source_owner_review
+      personal_use_only: true
+      external_llm_allowed: true
+      cache_allowed: true
+      redistribution_allowed: true
+      max_content_sent_level: full_text
+      approval_ref: owner_low_cost_official_policy_sources_2026-05-05
+      reviewed_at: 2026-05-05
+    owner_notes: 第一版用页面抓取而非付费新闻源，输出仅作复核线索。
+
+  - source_id: official_trade_csl_json
+    provider: International Trade Administration
+    source_type: primary_source
+    status: active
+    domains:
+      - risk_events
+      - news_events
+    endpoint: https://data.trade.gov/downloadable_consolidated_screening_list/v1/consolidated.json
+    adapter: fetch_official_policy_sources
+    cadence: daily
+    requires_credentials: false
+    cache_paths:
+      - data/raw/official_policy_sources
+      - data/processed/official_policy_source_candidates_YYYY-MM-DD.csv
+      - outputs/reports/official_policy_sources_YYYY-MM-DD.md
+    primary_for:
+      - consolidated_screening_list_monitoring
+      - entity_list_unverified_list_csl_crosscheck
+    audit_fields:
+      - provider
+      - endpoint
+      - request_parameters
+      - downloaded_at
+      - output_path
+      - row_count
+      - checksum
+      - candidate_count
+    validation_checks:
+      - official_domain
+      - checksum
+      - row_count
+      - source_information_url_presence
+      - pending_review_only
+    limitations:
+      - CSL 是多个美国政府限制清单的便利整合；Trade.gov 明确要求潜在命中需回到 Federal Register 和各部门官方清单做进一步尽调。
+      - 本来源只能生成复核候选，不直接形成 active 风险事件。
+    llm_permission:
+      license_scope: public_primary_source_owner_review
+      personal_use_only: true
+      external_llm_allowed: true
+      cache_allowed: true
+      redistribution_allowed: true
+      max_content_sent_level: full_text
+      approval_ref: owner_low_cost_official_policy_sources_2026-05-05
+      reviewed_at: 2026-05-05
+    owner_notes: 用于低成本 Entity List/Unverified List/OFAC/State Department screening cross-check。
+
+  - source_id: official_congress_bills
+    provider: Congress.gov API
+    source_type: primary_source
+    status: active
+    domains:
+      - risk_events
+      - news_events
+    endpoint: https://api.congress.gov/v3/bill
+    adapter: fetch_official_policy_sources
+    cadence: daily
+    requires_credentials: true
+    cache_paths:
+      - data/raw/official_policy_sources
+      - data/processed/official_policy_source_candidates_YYYY-MM-DD.csv
+      - outputs/reports/official_policy_sources_YYYY-MM-DD.md
+    primary_for:
+      - congressional_policy_watch
+      - ai_chip_legislation_watch
+    audit_fields:
+      - provider
+      - endpoint
+      - request_parameters
+      - downloaded_at
+      - output_path
+      - row_count
+      - checksum
+      - candidate_count
+    validation_checks:
+      - api_key_required
+      - official_domain
+      - checksum
+      - row_count
+      - pending_review_only
+    limitations:
+      - Congress.gov 用于提前监控法案和政策方向；未成法或未被行政/监管执行前通常只能作为 watch / review_required。
+      - API key 必须由 owner 通过本机环境变量提供，不能写入报告或 manifest。
+    llm_permission:
+      license_scope: public_primary_source_owner_review
+      personal_use_only: true
+      external_llm_allowed: true
+      cache_allowed: true
+      redistribution_allowed: true
+      max_content_sent_level: full_text
+      approval_ref: owner_low_cost_official_policy_sources_2026-05-05
+      reviewed_at: 2026-05-05
+    owner_notes: 缺少 CONGRESS_API_KEY 时 fetch 命令显式跳过并保留警告。
+
+  - source_id: official_govinfo_federal_register
+    provider: GovInfo API
+    source_type: primary_source
+    status: active
+    domains:
+      - risk_events
+      - news_events
+    endpoint: https://api.govinfo.gov/collections/FR/{since}
+    adapter: fetch_official_policy_sources
+    cadence: daily
+    requires_credentials: true
+    cache_paths:
+      - data/raw/official_policy_sources
+      - data/processed/official_policy_source_candidates_YYYY-MM-DD.csv
+      - outputs/reports/official_policy_sources_YYYY-MM-DD.md
+    primary_for:
+      - official_federal_register_package_verification
+      - policy_document_traceability
+    audit_fields:
+      - provider
+      - endpoint
+      - request_parameters
+      - downloaded_at
+      - output_path
+      - row_count
+      - checksum
+      - candidate_count
+    validation_checks:
+      - api_key_required
+      - official_domain
+      - checksum
+      - row_count
+      - pending_review_only
+    limitations:
+      - GovInfo 是官方发布/包级验证来源；第一版只抓 Federal Register package metadata，不下载全部 granule/PDF。
+      - API key 必须由 owner 通过本机环境变量提供，不能写入报告或 manifest。
+    llm_permission:
+      license_scope: public_primary_source_owner_review
+      personal_use_only: true
+      external_llm_allowed: true
+      cache_allowed: true
+      redistribution_allowed: true
+      max_content_sent_level: full_text
+      approval_ref: owner_low_cost_official_policy_sources_2026-05-05
+      reviewed_at: 2026-05-05
+    owner_notes: 用于补 FederalRegister.gov 原型 API 的官方包级校验链路；缺 GOVINFO_API_KEY 时显式跳过。
+
   - source_id: local_trade_records
     provider: Local YAML input
     source_type: manual_input

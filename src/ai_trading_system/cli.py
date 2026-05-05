@@ -298,6 +298,13 @@ from ai_trading_system.market_evidence import (
     write_market_evidence_validation_report,
     write_market_evidence_yaml,
 )
+from ai_trading_system.official_policy_sources import (
+    DEFAULT_OFFICIAL_POLICY_PROCESSED_DIR,
+    DEFAULT_OFFICIAL_POLICY_RAW_DIR,
+    default_official_policy_fetch_report_path,
+    fetch_official_policy_sources,
+    write_official_policy_fetch_report,
+)
 from ai_trading_system.periodic_investment_review import (
     DEFAULT_PERIODIC_INVESTMENT_REVIEW_REPORT_DIR,
     DEFAULT_SCORES_DAILY_PATH,
@@ -3921,6 +3928,82 @@ def import_risk_event_occurrences_csv_command(
     )
     console.print(f"校验报告：{validation_output}")
     if not validation_report.passed:
+        raise typer.Exit(code=1)
+
+
+@risk_events_app.command("fetch-official-sources")
+def fetch_official_policy_sources_command(
+    raw_dir: Annotated[
+        Path,
+        typer.Option(help="官方政策/地缘来源 raw payload 输出目录。"),
+    ] = DEFAULT_OFFICIAL_POLICY_RAW_DIR,
+    processed_dir: Annotated[
+        Path,
+        typer.Option(help="官方来源待人工复核候选 CSV 输出目录。"),
+    ] = DEFAULT_OFFICIAL_POLICY_PROCESSED_DIR,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="抓取评估日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    since: Annotated[
+        str | None,
+        typer.Option(help="抓取窗口起始日期，格式为 YYYY-MM-DD，默认 as_of 前 3 天。"),
+    ] = None,
+    source_ids: Annotated[
+        str,
+        typer.Option(help="可选：逗号分隔的 source_id 白名单；为空时抓取全部官方来源。"),
+    ] = "",
+    limit: Annotated[
+        int,
+        typer.Option(help="每个可分页来源最多请求的记录数。"),
+    ] = 50,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 官方来源抓取报告输出路径。"),
+    ] = None,
+    download_manifest_path: Annotated[
+        Path,
+        typer.Option(help="统一 download_manifest.csv 路径。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "download_manifest.csv",
+    congress_api_key_env: Annotated[
+        str,
+        typer.Option(help="读取 Congress.gov API key 的环境变量名。"),
+    ] = "CONGRESS_API_KEY",
+    govinfo_api_key_env: Annotated[
+        str,
+        typer.Option(help="读取 GovInfo API key 的环境变量名。"),
+    ] = "GOVINFO_API_KEY",
+) -> None:
+    """抓取低成本官方政策/地缘来源，生成待人工复核候选。"""
+    fetch_date = _parse_date(as_of) if as_of else date.today()
+    since_date = _parse_date(since) if since else None
+    selected_source_ids = _parse_csv_items(source_ids) if source_ids else None
+    report_path = output_path or default_official_policy_fetch_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        fetch_date,
+    )
+    report = fetch_official_policy_sources(
+        as_of=fetch_date,
+        since=since_date,
+        raw_dir=raw_dir,
+        processed_dir=processed_dir,
+        api_keys={
+            "CONGRESS_API_KEY": os.getenv(congress_api_key_env, ""),
+            "GOVINFO_API_KEY": os.getenv(govinfo_api_key_env, ""),
+        },
+        selected_source_ids=selected_source_ids,
+        limit=limit,
+        download_manifest_path=download_manifest_path,
+    )
+    write_official_policy_fetch_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]官方政策/地缘来源抓取状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_path}")
+    console.print(f"Raw payload：{report.payload_count}；待复核候选：{report.candidate_count}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    console.print("候选记录保持 pending_review，未写入评分或仓位闸门。")
+    if not report.passed:
         raise typer.Exit(code=1)
 
 
