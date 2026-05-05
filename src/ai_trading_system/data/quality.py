@@ -59,6 +59,8 @@ class DataQualityReport:
     expected_rate_series: tuple[str, ...]
     secondary_price_summary: DataFileSummary | None = None
     manifest_summary: DataFileSummary | None = None
+    price_consistency_start_date: date | None = None
+    rate_consistency_start_date: date | None = None
     issues: tuple[DataQualityIssue, ...] = field(default_factory=tuple)
 
     @property
@@ -168,6 +170,8 @@ def validate_data_cache(
         expected_rate_series=tuple(expected_rate_series),
         secondary_price_summary=secondary_price_summary,
         manifest_summary=manifest_summary,
+        price_consistency_start_date=quality_config.prices.consistency_start_date,
+        rate_consistency_start_date=quality_config.rates.consistency_start_date,
         issues=tuple(issues),
     )
 
@@ -201,6 +205,8 @@ def render_data_quality_report(report: DataQualityReport) -> str:
         "",
         f"- 价格标的：{', '.join(report.expected_price_tickers)}",
         f"- FRED 宏观序列：{', '.join(report.expected_rate_series)}",
+        f"- 价格一致性检查起点：{_consistency_start_label(report)}",
+        f"- 宏观变化检查起点：{_rate_consistency_start_label(report)}",
         "",
         "## 问题",
         "",
@@ -728,6 +734,7 @@ def _check_price_moves(
     data = frame.loc[
         frame["_date"].notna() & frame["_adj_close"].notna() & (frame["_adj_close"] > 0)
     ].copy()
+    data = _filter_price_consistency_window(data, quality_config)
     if data.empty:
         return
 
@@ -841,6 +848,8 @@ def _check_secondary_price_reconciliation(
 
     primary["_date"] = pd.to_datetime(primary["date"], errors="coerce")
     secondary["_date"] = pd.to_datetime(secondary["date"], errors="coerce")
+    primary = _filter_price_consistency_window(primary, quality_config)
+    secondary = _filter_price_consistency_window(secondary, quality_config)
     primary["_primary_close"] = pd.to_numeric(primary["close"], errors="coerce")
     secondary["_secondary_close"] = pd.to_numeric(secondary["close"], errors="coerce")
     primary["_primary_adj_close"] = pd.to_numeric(primary["adj_close"], errors="coerce")
@@ -1034,6 +1043,26 @@ def _extreme_price_return_threshold(ticker: str, config: PriceQualityConfig) -> 
     return config.extreme_daily_return_abs
 
 
+def _filter_price_consistency_window(
+    frame: pd.DataFrame,
+    quality_config: DataQualityConfig,
+) -> pd.DataFrame:
+    consistency_start = quality_config.prices.consistency_start_date
+    if consistency_start is None or "_date" not in frame:
+        return frame
+    return frame.loc[frame["_date"] >= pd.Timestamp(consistency_start)].copy()
+
+
+def _filter_rate_consistency_window(
+    frame: pd.DataFrame,
+    quality_config: DataQualityConfig,
+) -> pd.DataFrame:
+    consistency_start = quality_config.rates.consistency_start_date
+    if consistency_start is None or "_date" not in frame:
+        return frame
+    return frame.loc[frame["_date"] >= pd.Timestamp(consistency_start)].copy()
+
+
 def _check_rate_ranges(
     frame: pd.DataFrame,
     quality_config: DataQualityConfig,
@@ -1109,6 +1138,7 @@ def _check_rate_moves(
     issues: list[DataQualityIssue],
 ) -> None:
     data = frame.loc[frame["_date"].notna() & frame["_value"].notna()].copy()
+    data = _filter_rate_consistency_window(data, quality_config)
     if data.empty:
         return
 
@@ -1220,6 +1250,24 @@ def _severity_label(severity: Severity) -> str:
     if severity == Severity.ERROR:
         return "错误"
     return "警告"
+
+
+def _consistency_start_label(report: DataQualityReport) -> str:
+    if report.price_consistency_start_date is None:
+        return "未限制，使用全部缓存历史"
+    return (
+        f"{report.price_consistency_start_date.isoformat()}"
+        "（早于该日期的价格一致性差异不阻断默认日报）"
+    )
+
+
+def _rate_consistency_start_label(report: DataQualityReport) -> str:
+    if report.rate_consistency_start_date is None:
+        return "未限制，使用全部缓存历史"
+    return (
+        f"{report.rate_consistency_start_date.isoformat()}"
+        "（早于该日期的宏观变化差异不提示默认日报）"
+    )
 
 
 def _issue_source(issue: DataQualityIssue) -> str:

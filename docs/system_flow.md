@@ -28,7 +28,7 @@ flowchart TD
     subgraph Source["数据输入"]
         U["config/universe.yaml<br/>标的池、基准、FRED 宏观序列"]
         P["config/portfolio.yaml<br/>风险资产预算、仓位上限和 risk_budget gate 参数"]
-        Q["config/data_quality.yaml<br/>质量阈值"]
+        Q["config/data_quality.yaml<br/>质量阈值 + 价格一致性窗口"]
         F["config/features.yaml<br/>特征窗口和相对强弱组合"]
         S["config/scoring_rules.yaml<br/>评分权重、仓位动作阈值和 position_gates 上限"]
         W["config/watchlist.yaml<br/>观察池与能力圈"]
@@ -117,8 +117,8 @@ flowchart TD
     end
 
     subgraph Gate["数据质量门禁"]
-        V["aits validate-data<br/>schema / completeness / freshness / duplicate keys / suspicious values<br/>Marketstack 第二来源自检 + close reconciliation / adjusted basis warning"]
-        QR["outputs/reports/data_quality_YYYY-MM-DD.md<br/>问题表标注价格主源 / 第二行情源 / 跨源核验 / FRED / manifest 来源"]
+        V["aits validate-data<br/>schema / completeness / freshness / duplicate keys / suspicious values<br/>按 consistency_start_date 执行价格波动/复权、宏观变化和 Marketstack reconciliation"]
+        QR["outputs/reports/data_quality_YYYY-MM-DD.md<br/>声明一致性/宏观变化窗口；问题表标注价格主源 / 第二行情源 / 跨源核验 / FRED / manifest 来源"]
         Stop["停止后续评分、特征、回测或报告"]
     end
 
@@ -1006,8 +1006,8 @@ flowchart TD
 |原始缓存|`data/raw/prices_marketstack_daily.csv`|Marketstack 股票/ETF 日线第二来源缓存，用于 cross-provider reconciliation；不覆盖主价格缓存|已实现基础版|
 |原始缓存|`data/raw/rates_daily.csv`|FRED 宏观序列长表，当前包含 DGS2、DGS10 和 `DTWEXBGS`；`DTWEXBGS` 不是 ICE DXY|已实现|
 |下载审计|`data/raw/download_manifest.csv`|记录 provider、endpoint、请求参数、下载时间、行数、输出路径和 checksum|已实现|
-|质量门禁|`aits validate-data`|校验 schema、完整性、新鲜度、重复键、异常值，并对主价格缓存与 Marketstack 第二来源执行 raw `close` 重叠覆盖和价差核验；adjusted close 分红复权口径差异作为限制或调查项显式输出|已实现|
-|质量报告|`outputs/reports/data_quality_YYYY-MM-DD.md`|声明数据是否可用于下游结论，并在问题表标注价格主源、第二行情源、跨源核验、FRED 宏观序列或下载审计清单来源|已实现|
+|质量门禁|`aits validate-data`|校验 schema、完整性、新鲜度、重复键、异常值；价格波动、复权比例和主价格缓存与 Marketstack 第二来源 reconciliation 默认只统计 `config/data_quality.yaml:prices.consistency_start_date` 以来样本；宏观单日变化默认只统计 `config/data_quality.yaml:rates.consistency_start_date` 以来样本；adjusted close 分红复权口径差异作为限制或调查项显式输出|已实现|
+|质量报告|`outputs/reports/data_quality_YYYY-MM-DD.md`|声明数据是否可用于下游结论，显示价格一致性和宏观变化检查窗口，并在问题表标注价格主源、第二行情源、跨源核验、FRED 宏观序列或下载审计清单来源|已实现|
 |特征|`aits build-features`|生成可解释市场特征|已实现|
 |特征缓存|`data/processed/features_daily.csv`|保存 tidy 格式特征|已实现|
 |组合与风险预算配置|`config/portfolio.yaml`|定义静态总风险资产预算、`macro_risk_asset_budget` 下调阈值、AI 总资产上限、真实组合集中度提示阈值和 `risk_budget` gate 参数；宏观预算层用 VIX、DGS10 和 `DTWEXBGS` 广义美元指数下调总风险资产预算，`risk_budget` gate 继续约束风险资产内 AI 仓位上限|已实现基础版|

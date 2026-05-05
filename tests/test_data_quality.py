@@ -135,6 +135,28 @@ def test_validate_data_cache_fails_extreme_stock_price_move(tmp_path: Path) -> N
     assert "prices_extreme_adj_close_move" in _issue_codes(report)
 
 
+def test_validate_data_cache_ignores_price_moves_before_consistency_window(
+    tmp_path: Path,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    prices = pd.read_csv(prices_path)
+    move = (prices["ticker"] == "NVDA") & (prices["date"] == "2026-04-30")
+    prices.loc[move, ["open", "high", "low", "close", "adj_close"]] = [210, 212, 208, 210, 210]
+    prices.to_csv(prices_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=_quality_config_with_consistency_start(date(2026, 5, 1)),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert report.passed is True
+    assert "prices_extreme_adj_close_move" not in _issue_codes(report)
+
+
 def test_validate_data_cache_uses_ticker_return_threshold_overrides(tmp_path: Path) -> None:
     prices_path, rates_path = _write_valid_cache(tmp_path, tickers=["^VIX"])
     prices = pd.read_csv(prices_path)
@@ -180,6 +202,30 @@ def test_validate_data_cache_uses_fred_series_change_overrides(tmp_path: Path) -
     assert report.passed is True
     assert "rates_extreme_daily_change" not in _issue_codes(report)
     assert "rates_suspicious_daily_change" in _issue_codes(report)
+
+
+def test_validate_data_cache_ignores_rate_moves_before_consistency_window(
+    tmp_path: Path,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    rates = pd.read_csv(rates_path)
+    rates.loc[
+        (rates["series"] == "DTWEXBGS") & (rates["date"] == "2026-04-30"),
+        "value",
+    ] = 122.5
+    rates.to_csv(rates_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10", "DTWEXBGS"],
+        quality_config=_quality_config_with_consistency_start(date(2026, 5, 1)),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert report.passed is True
+    assert "rates_suspicious_daily_change" not in _issue_codes(report)
 
 
 def test_validate_data_cache_fails_stale_data(tmp_path: Path) -> None:
@@ -242,6 +288,8 @@ def test_validate_data_cache_checks_download_manifest(tmp_path: Path) -> None:
     assert report.manifest_summary is not None
     assert report.manifest_summary.rows == 2
     assert "下载审计清单" in markdown
+    assert "价格一致性检查起点：2022-12-01" in markdown
+    assert "宏观变化检查起点：2022-12-01" in markdown
 
 
 def test_validate_data_cache_checks_secondary_price_source(tmp_path: Path) -> None:
@@ -273,12 +321,8 @@ def test_validate_data_cache_fails_secondary_price_mismatch(tmp_path: Path) -> N
     secondary = pd.read_csv(prices_path)
     secondary.loc[
         (secondary["ticker"] == "NVDA") & (secondary["date"] == "2026-04-30"),
-        "close",
-    ] = 1.0
-    secondary.loc[
-        (secondary["ticker"] == "NVDA") & (secondary["date"] == "2026-04-30"),
-        "adj_close",
-    ] = 1.0
+        ["open", "high", "low", "close", "adj_close"],
+    ] = [1.0, 1.0, 1.0, 1.0, 1.0]
     secondary.to_csv(secondary_path, index=False)
 
     report = validate_data_cache(
@@ -297,6 +341,33 @@ def test_validate_data_cache_fails_secondary_price_mismatch(tmp_path: Path) -> N
     assert _issue_by_code(report, "secondary_prices_adj_close_mismatch").source == (
         "跨源核验：主价格源 vs Marketstack"
     )
+
+
+def test_validate_data_cache_ignores_secondary_mismatch_before_consistency_window(
+    tmp_path: Path,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    secondary_path = tmp_path / "prices_marketstack_daily.csv"
+    secondary = pd.read_csv(prices_path)
+    secondary.loc[
+        (secondary["ticker"] == "NVDA") & (secondary["date"] == "2026-04-30"),
+        ["open", "high", "low", "close", "adj_close"],
+    ] = [1.0, 1.0, 1.0, 1.0, 1.0]
+    secondary.to_csv(secondary_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=_quality_config_with_consistency_start(date(2026, 5, 1)),
+        as_of=date(2026, 5, 2),
+        secondary_prices_path=secondary_path,
+        require_secondary_prices=True,
+    )
+
+    assert report.passed is True
+    assert "secondary_prices_adj_close_mismatch" not in _issue_codes(report)
 
 
 def test_validate_data_cache_labels_secondary_self_check_source(tmp_path: Path) -> None:
@@ -528,3 +599,13 @@ def _issue_codes(report: DataQualityReport) -> set[str]:
 
 def _issue_by_code(report: DataQualityReport, code: str):
     return next(issue for issue in report.issues if issue.code == code)
+
+
+def _quality_config_with_consistency_start(start: date):
+    config = load_data_quality()
+    return config.model_copy(
+        update={
+            "prices": config.prices.model_copy(update={"consistency_start_date": start}),
+            "rates": config.rates.model_copy(update={"consistency_start_date": start}),
+        }
+    )

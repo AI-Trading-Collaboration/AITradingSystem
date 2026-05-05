@@ -572,6 +572,7 @@ class PriceQualityConfig(BaseModel):
     suspicious_daily_return_abs: float = Field(gt=0)
     extreme_daily_return_abs: float = Field(gt=0)
     suspicious_adjustment_ratio_change_abs: float = Field(gt=0)
+    consistency_start_date: date | None = None
     secondary_source_min_overlap_ratio: float = Field(default=0.80, ge=0, le=1)
     secondary_source_adj_close_warning_pct: float = Field(default=0.01, gt=0)
     secondary_source_adj_close_error_pct: float = Field(default=0.05, gt=0)
@@ -612,6 +613,7 @@ class RateQualityConfig(BaseModel):
     max_plausible_value: float
     suspicious_daily_change_abs: float = Field(gt=0)
     extreme_daily_change_abs: float = Field(gt=0)
+    consistency_start_date: date | None = None
     series_overrides: dict[str, RateSeriesQualityOverrideConfig] = Field(default_factory=dict)
 
     @model_validator(mode="after")

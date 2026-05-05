@@ -5,6 +5,9 @@ prices:
   suspicious_daily_return_abs: 0.20
   extreme_daily_return_abs: 0.50
   suspicious_adjustment_ratio_change_abs: 0.25
+  # 默认研究窗口为 ChatGPT 后 AI 主线行情。早于该日期的复权比例、
+  # adjusted close 波动和跨源一致性差异不阻断默认日报质量门禁。
+  consistency_start_date: 2022-12-01
   # 第二来源核验使用同一组阈值：raw close 超阈值会阻塞；
   # adjusted close 若仅因分红复权口径不同而 raw close 对齐，则输出警告。
   secondary_source_min_overlap_ratio: 0.80
@@ -23,6 +26,9 @@ rates:
   max_plausible_value: 25.0
   suspicious_daily_change_abs: 0.75
   extreme_daily_change_abs: 2.00
+  # 与价格一致性窗口保持一致；早于默认 AI 研究窗口的宏观单日变化
+  # 不阻断或提示默认日报。
+  consistency_start_date: 2022-12-01
   series_overrides:
     DTWEXBGS:
       min_plausible_value: 0.0
