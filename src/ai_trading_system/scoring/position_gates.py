@@ -432,6 +432,8 @@ def _data_confidence_gate(
         max_position=max_position,
         score_band=score_band,
         reason=reason,
+        gate_class="hard_block" if data_quality_status == "FAIL" else "hard_cap",
+        target_effect="position_cap_and_conclusion_downgrade",
     )
 
 
@@ -482,6 +484,9 @@ def _gate(
     max_position: float,
     score_band: PositionBand,
     reason: str,
+    gate_class: str = "hard_cap",
+    target_effect: str = "max_position_cap",
+    execution_effect: str = "final_position_limit",
 ) -> PositionGate:
     capped_max_position = _clamp(max_position)
     return PositionGate(
@@ -491,6 +496,9 @@ def _gate(
         max_position=capped_max_position,
         triggered=capped_max_position < score_band.max_position - _EPSILON,
         reason=reason,
+        gate_class=gate_class,
+        target_effect=target_effect,
+        execution_effect=execution_effect,
     )
 
 

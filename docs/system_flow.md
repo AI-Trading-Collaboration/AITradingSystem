@@ -32,6 +32,8 @@ flowchart TD
         F["config/features.yaml<br/>特征窗口和相对强弱组合"]
         FAVC["config/feature_availability.yaml<br/>PIT feature availability 目录<br/>event_time / available_time / decision_time"]
         S["config/scoring_rules.yaml<br/>评分权重、仓位动作阈值和 position_gates 上限"]
+        WPC["config/weights/weight_profile_current.yaml<br/>回测校准基础权重 profile、bounds、score-point confidence delta 语义"]
+        WPM["config/weights/calibration_protocol.yaml<br/>调权实验 protocol manifest：数据、成本、执行、切分、trial 和 benchmark"]
         W["config/watchlist.yaml<br/>观察池与能力圈"]
         WL["config/watchlist_lifecycle.yaml<br/>观察池 point-in-time 生命周期"]
         I["config/industry_chain.yaml<br/>产业链节点与因果图"]
@@ -42,7 +44,7 @@ flowchart TD
         EPC["config/execution_policy.yaml<br/>advisory execution action taxonomy 和执行纪律"]
         GOVC["config/rule_cards.yaml<br/>production / candidate / retired rule cards"]
         RE["config/risk_events.yaml<br/>L1/L2/L3 风险事件动作规则"]
-        REX["data/external/risk_event_occurrences/*.yaml<br/>已触发/观察的风险事件发生记录<br/>S/A/B/C/D/X、严重性、概率、动作等级"]
+        REX["data/external/risk_event_occurrences/*.yaml<br/>已触发/观察的风险事件发生记录<br/>S/A/B/C/D/X、严重性、概率、动作等级、lifecycle_state、dedup_group、expiry_time"]
         REXATT["data/external/risk_event_occurrences/review_attestation_*.yaml<br/>人工复核声明：覆盖窗口、复核人、来源范围和下次复核"]
         REXCSV["data/external/risk_event_imports/*.csv<br/>人工复核后的风险事件发生记录导入表"]
         RPRCSV["data/external/risk_event_prereview_imports/*.csv<br/>OpenAI 结构化预审结果导入表"]
@@ -63,6 +65,7 @@ flowchart TD
         TD["data/external/trades/*.yaml<br/>交易记录、价格、thesis_id"]
         POS["data/external/portfolio_positions/current_positions.csv<br/>真实账户持仓快照<br/>ticker、市值、AI 暴露、节点/地区/因子/相关性标签"]
         MD["外部数据源<br/>FMP / Cboe VIX / Marketstack / FRED"]
+        YFD["Yahoo Finance<br/>public_convenience 诊断性第三来源<br/>production_effect=none"]
         FMP["Financial Modeling Prep API<br/>historical-price-eod/non-split-adjusted + dividend-adjusted / quote / TTM metrics / ratios / estimates<br/>price target / ratings / earnings calendar<br/>provider symbol alias 可审计记录"]
         CBOEVIX["Cboe VIX official historical data<br/>VIX_History.csv<br/>^VIX OHLC / no volume"]
         EODHDT["EODHD Earnings Trends API<br/>calendar/trends<br/>epsTrendCurrent / epsTrend90daysAgo"]
@@ -120,6 +123,8 @@ flowchart TD
     subgraph Gate["数据质量门禁"]
         V["aits validate-data<br/>schema / completeness / freshness / duplicate keys / suspicious values<br/>按 consistency_start_date 执行价格波动/复权、宏观变化和 Marketstack reconciliation<br/>Marketstack self-check 默认记录告警，主源和 raw close 冲突仍 fail closed"]
         QR["outputs/reports/data_quality_YYYY-MM-DD.md<br/>声明一致性/宏观变化窗口；问题表标注价格主源 / 第二行情源告警 / 跨源核验 / FRED / manifest 来源"]
+        YDG["aits data-sources yahoo-price-diagnostic<br/>只对 Marketstack self-check 异常 ticker/date 拉取 Yahoo raw OHLC<br/>不写主缓存、二源缓存、评分或回测真值"]
+        YDR["outputs/reports/yahoo_price_diagnostic_YYYY-MM-DD.md<br/>provider、endpoint、request params、row count、checksum、FMP/Marketstack/Yahoo 对比"]
         Stop["错误时停止后续评分、特征、回测或报告"]
     end
 
@@ -133,7 +138,7 @@ flowchart TD
     subgraph Score["中间评估：评分和仓位"]
         SD["aits score-daily<br/>默认运行日报前官方来源抓取 + OpenAI 风险事件预审<br/>可用 --skip-risk-event-openai-precheck 跳过"]
         MBG["macro_risk_asset_budget<br/>VIX、DGS10、DTWEXBGS 广义美元指数触发总风险资产预算下调"]
-        PG["position_gate<br/>评分仓位、组合限制、风险预算、风险事件、估值拥挤、thesis 和数据置信度取最严格上限"]
+        PG["position_gate<br/>评分仓位、组合限制、风险预算、风险事件、估值拥挤、thesis 和数据置信度取最严格上限<br/>输出 gate_class / target_effect / execution_effect 审计"]
         CONF["判断置信度<br/>按模块来源、覆盖率、质量门禁和人工复核汇总"]
         FST["关注股票趋势分析<br/>core_watchlist ticker 的 1/5/20 日收益 + MA20/50/100/200 位置<br/>production_effect=none"]
         NH["产业链节点热度与健康度<br/>industry_chain/watchlist + 市场特征 + 基本面/估值/风险/thesis 复核<br/>production_effect=none"]
@@ -142,8 +147,8 @@ flowchart TD
         SC["data/processed/scores_daily.csv<br/>模块分、整体分、confidence、仓位区间和 gate 摘要"]
         EADV["执行建议<br/>execution_policy + 最终仓位变化 + confidence/gate<br/>production_effect=none"]
         EPR["outputs/reports/execution_policy_YYYY-MM-DD.md<br/>动作词表校验和问题清单"]
-        DR["outputs/reports/daily_score_YYYY-MM-DD.md<br/>今日结论卡、结论使用等级、变化原因树、关注股票趋势、认知状态、执行建议和仓位闸门"]
-        DSNAP["data/processed/decision_snapshots/decision_snapshot_YYYY-MM-DD.json<br/>当日判断快照和 belief_state_ref"]
+        DR["outputs/reports/daily_score_YYYY-MM-DD.md<br/>今日结论卡、Base Signal / Risk Caps、结论使用等级、变化原因树、关注股票趋势、认知状态、执行建议和仓位闸门"]
+        DSNAP["data/processed/decision_snapshots/decision_snapshot_YYYY-MM-DD.json<br/>当日判断快照、score_architecture、risk lifecycle 和 belief_state_ref"]
         PLED["data/processed/prediction_ledger.csv<br/>append-only production/challenger prediction ledger"]
         BS["data/processed/belief_state/belief_state_YYYY-MM-DD.json<br/>只读认知状态"]
         BSH["data/processed/belief_state_history.csv<br/>只读认知状态历史索引"]
@@ -161,10 +166,13 @@ flowchart TD
         BRISK["point-in-time 风险事件发生记录和复核声明<br/>按 signal_date 过滤证据、resolved_at 和 reviewed_at"]
         BIG["outputs/backtests/backtest_input_gaps_YYYY-MM-DD_YYYY-MM-DD.md<br/>历史估值/风险事件输入缺口诊断"]
         BD["outputs/backtests/backtest_daily_YYYY-MM-DD_YYYY-MM-DD.csv<br/>含 confidence_score / confidence_level / feature_as_of / universe_as_of / industry_node 状态"]
+        BIC["outputs/backtests/backtest_input_coverage_YYYY-MM-DD_YYYY-MM-DD.csv<br/>signal_date 输入覆盖、source_type 和 PIT 字段"]
         BR["outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md<br/>含结论使用等级、Backtest Data Quality、判断置信度分桶、产业链节点历史状态和基准政策解释"]
         BROB["outputs/backtests/backtest_robustness_YYYY-MM-DD_YYYY-MM-DD.md/json<br/>成本压力、起点后移、固定仓位、再平衡频率、趋势基线、权重扰动、随机同换手率、样本外切分和买入持有基准对比"]
         BLAG["outputs/backtests/backtest_lag_sensitivity_YYYY-MM-DD_YYYY-MM-DD.md/json<br/>feature/universe lag 0/1/3/5/10/20 敏感性"]
         BMP["outputs/backtests/model_promotion_YYYY-MM-DD_YYYY-MM-DD.md/json<br/>数据可信度、robustness、lag、shadow outcome 和 rule governance 晋级门槛"]
+        BGA["aits backtest-gate-attribution<br/>读取 backtest daily + input coverage；production_effect=none"]
+        BGAR["outputs/backtests/gate_event_attribution_YYYY-MM-DD_YYYY-MM-DD.md<br/>gate avoided_drawdown / missed_upside 与 event label readiness"]
         BA["outputs/backtests/backtest_audit_YYYY-MM-DD_YYYY-MM-DD.md<br/>输入审计状态、发现和修复建议"]
         BRT["outputs/backtests/evidence/backtest_YYYY-MM-DD_YYYY-MM-DD_trace.json<br/>claim / evidence / dataset / quality / run manifest / rule_versions"]
     end
@@ -180,6 +188,11 @@ flowchart TD
         FPC["aits feedback calibrate-predictions<br/>先执行数据质量门禁，再观察 prediction ledger"]
         POCSV["data/processed/prediction_outcomes.csv<br/>production/challenger prediction outcome"]
         POR["outputs/reports/prediction_outcomes_YYYY-MM-DD.md<br/>按 candidate/model version 分桶"]
+        FCO["aits feedback apply-calibration-overlay<br/>读取 context + weight profile + approved overlays<br/>只计算 effective_weights，不改 production scoring"]
+        ACO["data/processed/approved_calibration_overlay.json<br/>approved_soft / approved_hard 历史校准 overlay<br/>candidate 或过期项不得影响 production"]
+        EW["outputs/current_effective_weights.json<br/>matched overlays、base/effective weights、confidence_delta、position_multiplier 和审计原因"]
+        FCP["aits feedback validate-calibration-protocol<br/>校验 nested walk-forward、purging/embargo、trial、benchmark 和 production boundary"]
+        FCPR["outputs/reports/calibration_protocol_YYYY-MM-DD.md<br/>调权防过拟合 protocol 校验报告"]
         FSH["aits feedback run-shadow<br/>从 production snapshot/trace 派生 challenger prediction；production_effect=none"]
         FSM["aits feedback shadow-maturity<br/>按 candidate/horizon 评估 forward shadow 样本成熟度"]
         FSMR["outputs/reports/shadow_maturity_YYYY-MM-DD.md<br/>READY_FOR_SHADOW / READY_FOR_GOV_REVIEW 样本门槛"]
@@ -368,11 +381,22 @@ flowchart TD
     U --> V
     Q --> V
     DS --> V
+    WPC --> FCO
+    WPM --> FCP
+    FCP --> FCPR
+    ACO --> FCO
+    FCO --> EW
     PR --> V
     MSPR --> V
     RR --> V
     V -->|通过或 PASS_WITH_WARNINGS| QR
     V -->|FAIL| Stop
+    QR --> YDG
+    PR --> YDG
+    MSPR --> YDG
+    RR --> YDG
+    YFD --> YDG
+    YDG --> YDR
 
     PR --> BF
     RR --> BF
@@ -479,6 +503,7 @@ flowchart TD
     BVAL --> BD
     BRISK --> BD
     BT --> BD
+    BT --> BIC
     BT --> BR
     BT --> BROB
     BT --> BLAG
@@ -486,6 +511,10 @@ flowchart TD
     BT --> BMP
     BT --> BA
     BT --> BRT
+    BD --> BGA
+    BIC --> BGA
+    BGA --> BGAR
+    FCPR -. "实验准入证据" .-> REXP
     DRT --> TLK
     BRT --> TLK
     DSNAP --> FBC
@@ -1105,6 +1134,8 @@ flowchart TD
 |证据下钻 dashboard|`aits reports dashboard` / `outputs/reports/evidence_dashboard_YYYY-MM-DD.html`|读取日报 Markdown、日报 evidence bundle、decision snapshot 和可选 belief_state，生成本地静态 HTML；按快速读者、投资复核者和系统审计者分层展示结论卡、执行动作、论证链、仓位 gate、thesis/risk/valuation 状态、claim/evidence/dataset/quality refs、输入路径、row count、checksum 和 trace lookup 命令；`production_effect=none`，不改变评分、仓位、回测或执行建议，也不替代 Markdown 日报和 trace bundle 的审计责任|已实现基础版|
 |决策结果校准|`aits feedback calibrate`|先校验 `benchmark_policy`，再复用 `aits validate-data` 同一质量门禁，从历史 `decision_snapshot` 和 `prices_daily.csv` 生成 1D/5D/20D/60D/120D outcome，按总分、置信度、gate、thesis、风险等级和估值状态分桶输出校准报告；结果只能进入规则复核，不能自动修改生产规则|已实现基础版|
 |Prediction outcome 校准|`aits feedback calibrate-predictions`|先复用 `aits validate-data` 同一质量门禁，从 append-only prediction ledger 和 `prices_daily.csv` 生成指定 horizon 的 `prediction_outcomes.csv`，按 candidate、model version、production/shadow、置信度和 benchmark excess return 分桶输出报告；结果只能进入 promotion gate、复盘和规则治理，不能改写 prediction ledger 的 signal-time 字段|已实现基础版|
+|调权协议校验|`aits feedback validate-calibration-protocol` / `outputs/reports/calibration_protocol_YYYY-MM-DD.md`|读取调权实验 protocol manifest，校验必填数据/配置版本、`ai_after_chatgpt` 日期范围、nested walk-forward、purging/embargo、trial 次数、benchmark set、参数分层、多重测试折扣和 `production_effect=none` 边界；通过只表示实验协议可进入后续研究，不批准 overlay、不改变 production scoring、position_gate 或回测仓位|已实现基础版|
+|Gate/event 归因报告|`aits backtest-gate-attribution` / `outputs/backtests/gate_event_attribution_YYYY-MM-DD_YYYY-MM-DD.md`|读取已生成的 `backtest_daily_*.csv` 和 `backtest_input_coverage_*.csv`，按 gate 估算 trigger_count、average_position_reduction、avoided_drawdown、missed_upside、net_effect、false_alarm 和 late_trigger，并汇总风险事件 label readiness；结果是一阶历史解释，不是完整反事实回测，不得相加为生产收益结论|已实现基础版|
 |Challenger shadow runner|`aits feedback run-shadow` / `outputs/reports/shadow_predictions_YYYY-MM-DD.md`|读取 `rule_experiments.json` 中 forward shadow 状态可运行的 candidate，复用 production `decision_snapshot`、trace、feature snapshot 和 data quality 引用，追加 challenger prediction 到 `prediction_ledger.csv`；不写正式日报动作、不改变 `scores_daily.csv`、position gate、belief_state 或 production rule|已实现基础版|
 |Forward shadow 样本成熟度|`aits feedback shadow-maturity` / `outputs/reports/shadow_maturity_YYYY-MM-DD.md`|读取 `prediction_outcomes.csv`，按 candidate、horizon、market regime 和 `production_effect` 汇总 available/pending/missing、平均收益、胜率、最大回撤和 benchmark excess；样本不足时保持 `READY_FOR_SHADOW` 或 `MISSING`，不能作为 production rule 晋级证据|已实现基础版|
 |决策结果缓存|`data/processed/decision_outcomes.csv`|保存每个 `snapshot_id`、观察窗口、AI proxy return、最大回撤、实现波动、SPY/QQQ/SMH/SOXX return 与超额收益、hit/miss、分桶字段、gate/thesis/risk/valuation 状态和 `belief_state` 路径|已实现基础版|

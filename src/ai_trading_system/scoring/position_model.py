@@ -26,6 +26,9 @@ class PositionGate:
     max_position: float
     triggered: bool
     reason: str
+    gate_class: str = "hard_cap"
+    target_effect: str = "max_position_cap"
+    execution_effect: str = "final_position_limit"
 
 
 @dataclass(frozen=True)
@@ -86,6 +89,9 @@ class WeightedScoreModel:
                     "综合评分映射出的 AI 仓位区间上限："
                     f"{model_risk_asset_ai_band.max_position:.0%}。"
                 ),
+                gate_class="score_mapping",
+                target_effect="raw_position_mapping",
+                execution_effect="base_signal_to_raw_position",
             ),
             *position_gates,
         )

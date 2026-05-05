@@ -207,6 +207,44 @@ def test_watch_risk_event_occurrence_requires_review_not_scoring(
     assert review_report.items[0].score_eligible is False
 
 
+def test_risk_event_lifecycle_fields_and_expiry_are_audited(tmp_path: Path) -> None:
+    input_path = tmp_path / "occurrence.yaml"
+    _write_risk_event_occurrence(
+        input_path,
+        extra_fields="""
+lifecycle_state: confirmed_high
+dedup_group: export_control_2026_may
+primary_channel: risk_gate
+used_in_alpha: false
+used_in_gate: true
+decay_half_life_days: 30
+expiry_time: 2026-05-01
+resolution_reason: ""
+""",
+    )
+
+    validation_report = validate_risk_event_occurrence_store(
+        store=load_risk_event_occurrence_store(input_path),
+        risk_events=load_risk_events(),
+        as_of=date(2026, 5, 2),
+    )
+    review_report = build_risk_event_occurrence_review_report(validation_report)
+    markdown = render_risk_event_occurrence_review_report(review_report)
+    item = review_report.items[0]
+
+    assert "risk_event_occurrence_expired" in {
+        issue.code for issue in validation_report.issues
+    }
+    assert item.lifecycle_state == "expired"
+    assert item.dedup_group == "export_control_2026_may"
+    assert item.used_in_gate is True
+    assert item.score_eligible is False
+    assert item.position_gate_eligible is False
+    assert item.health == "EXPIRED"
+    assert "Dedup group" in markdown
+    assert "export_control_2026_may" in markdown
+
+
 def test_low_grade_risk_event_occurrence_never_auto_scores(
     tmp_path: Path,
 ) -> None:
@@ -491,6 +529,7 @@ def _write_risk_event_occurrence(
     source_url: str = "",
     evidence_grade: str = "A",
     action_class: str = "position_gate_eligible",
+    extra_fields: str = "",
 ) -> None:
     output_path.write_text(
         f"""
@@ -506,6 +545,7 @@ scope: ai_bucket
 time_sensitivity: high
 reversibility: partly_reversible
 action_class: {action_class}
+{extra_fields.strip()}
 reviewer: policy_owner
 reviewed_at: 2026-05-02
 review_decision: confirmed_active

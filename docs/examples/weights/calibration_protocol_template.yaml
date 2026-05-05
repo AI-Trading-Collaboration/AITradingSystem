@@ -1,0 +1,31 @@
+protocol_id: "calibration_protocol_template"
+experiment_id: "calibration_YYYY_MM_walk_forward"
+git_commit: "REPLACE_WITH_COMMIT"
+feature_version: "market_features_v1"
+prompt_version: "risk_event_prereview_v1"
+model_version: "score_model_current"
+data_snapshot_hash: "sha256:REPLACE_WITH_DATA_SNAPSHOT_HASH"
+yaml_hash: "sha256:REPLACE_WITH_CONFIG_HASH"
+cost_model_version: "cost_v1"
+execution_assumption_version: "exec_v1"
+market_regime: "ai_after_chatgpt"
+date_range:
+  start: "2022-12-01"
+  end: "YYYY-MM-DD"
+label_horizon: "20D"
+train_validation_test_scheme: "nested_walk_forward"
+purge_days: 20
+embargo_days: 5
+objective_version: "multi_objective_drawdown_turnover_tail_stability_v1"
+benchmark_set:
+  - "current_production_model"
+  - "buy_and_hold"
+  - "trend_only_model"
+  - "no_gate_model"
+parameter_family_scope: "signal_weights"
+parameter_search_space_hash: "sha256:REPLACE_WITH_SEARCH_SPACE_HASH"
+number_of_trials: 1
+trial_registry_ref: "outputs/reports/trial_registry_YYYY-MM-DD.json"
+multiple_testing_adjustment: "deflated_sharpe_and_pbo"
+approval_owner: "system_review"
+production_effect: "none"

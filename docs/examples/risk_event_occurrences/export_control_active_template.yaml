@@ -11,6 +11,14 @@ scope: industry_chain_node
 time_sensitivity: high
 reversibility: partly_reversible
 action_class: manual_review
+lifecycle_state: pending_review
+dedup_group: export_control_2026_05_template
+primary_channel: report_only
+used_in_alpha: false
+used_in_gate: false
+decay_half_life_days: 30
+expiry_time:
+resolution_reason: ""
 reviewer: policy_owner
 reviewed_at: 2026-05-01
 review_decision: confirmed_watch

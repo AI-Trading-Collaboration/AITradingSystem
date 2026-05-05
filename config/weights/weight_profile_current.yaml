@@ -1,0 +1,34 @@
+version: "2026-05-06"
+status: "production"
+owner: "system_review"
+valid_from: "2026-05-06"
+
+base_weights:
+  trend: 0.25
+  fundamentals: 0.25
+  macro_liquidity: 0.15
+  risk_sentiment: 0.15
+  valuation: 0.10
+  policy_geopolitics: 0.10
+
+bounds:
+  min_weight: 0.00
+  max_weight: 0.45
+  min_single_overlay_multiplier: 0.30
+  max_single_overlay_multiplier: 1.50
+  min_total_overlay_multiplier: 0.20
+  max_total_overlay_multiplier: 2.00
+  min_total_confidence_delta: -15.00
+  max_total_confidence_delta: 10.00
+  min_total_position_multiplier: 0.20
+  max_total_position_multiplier: 1.00
+
+normalization:
+  enabled: true
+  method: "sum_to_one"
+
+metadata:
+  created_by: "baseline_calibration_infrastructure"
+  source_task: "CALIBRATION-001"
+  confidence_delta_unit: "score_points"
+  production_effect: "none_until_score_daily_integration"

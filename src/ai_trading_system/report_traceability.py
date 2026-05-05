@@ -212,6 +212,33 @@ def build_daily_score_trace_bundle(
             "artifact_paths": _artifact_paths(data_quality_report_path),
         },
     )
+    architecture_evidence_id = (
+        f"evidence:daily_score:{report.as_of.isoformat()}:score_architecture"
+    )
+    evidence_cards = (
+        *evidence_cards,
+        {
+            "evidence_id": architecture_evidence_id,
+            "summary": (
+                "Base signal、risk state、raw position、risk caps 和 final position "
+                "拆分审计；production_effect=none。"
+            ),
+            "signal_ids": [
+                "score_architecture:base_signal",
+                "score_architecture:risk_state",
+                *[
+                    f"position_gate:{gate.gate_id}:{gate.gate_class}"
+                    for gate in report.recommendation.position_gates
+                ],
+            ],
+            "ticker_ids": _daily_signal_tickers(report),
+            "date_window": date_window,
+            "dataset_ids": _dataset_ids(dataset_refs),
+            "quality_ids": _quality_ids(quality_refs),
+            "config_ids": sorted(config_paths),
+            "artifact_paths": _artifact_paths(report_path, scores_path),
+        },
+    )
     if belief_state_path is not None:
         belief_evidence_id = f"evidence:daily_score:{report.as_of.isoformat()}:belief_state"
         evidence_cards = (
@@ -299,6 +326,17 @@ def build_daily_score_trace_bundle(
             "statement": "日报模块评分来自市场特征、基本面、估值和风险事件输入。",
             "report_section": "模块评分 / 硬数据信号",
             "evidence_ids": [evidence_cards[1]["evidence_id"]],
+            "dataset_ids": _dataset_ids(dataset_refs),
+            "quality_ids": _quality_ids(quality_refs),
+        },
+        {
+            "claim_id": f"daily_score:{report.as_of.isoformat()}:score_architecture",
+            "statement": (
+                "日报将基础信号、风险状态、原始仓位、风险上限和最终仓位分开审计；"
+                "该拆分不改变 production scoring 或 position_gate。"
+            ),
+            "report_section": "Base Signal / Risk Caps",
+            "evidence_ids": [architecture_evidence_id],
             "dataset_ids": _dataset_ids(dataset_refs),
             "quality_ids": _quality_ids(quality_refs),
         },

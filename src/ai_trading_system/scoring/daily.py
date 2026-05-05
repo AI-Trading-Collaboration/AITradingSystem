@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from statistics import median
+from typing import Any
 
 import pandas as pd
 
@@ -55,6 +56,47 @@ SOURCE_TYPE_LABELS = {
     "partial_manual_input": "部分手工/审计输入",
     "derived": "派生结果",
 }
+
+COMPONENT_ARCHITECTURE = {
+    "trend": {
+        "semantic_role": "alpha",
+        "primary_channel": "base_signal",
+        "horizon": "1D-60D",
+        "confidence_usage": "降低方向信号可靠性或结论使用等级；不释放未确认风险。",
+    },
+    "fundamentals": {
+        "semantic_role": "alpha",
+        "primary_channel": "base_signal",
+        "horizon": "quarterly_to_annual",
+        "confidence_usage": "降低方向信号可靠性或结论使用等级；不释放未确认风险。",
+    },
+    "macro_liquidity": {
+        "semantic_role": "risk_state",
+        "primary_channel": "risk_adjustment",
+        "horizon": "1D-60D",
+        "confidence_usage": "降低宏观风险状态可靠性；低置信不能解释为低风险。",
+    },
+    "risk_sentiment": {
+        "semantic_role": "risk_state",
+        "primary_channel": "risk_adjustment",
+        "horizon": "1D-20D",
+        "confidence_usage": "降低风险情绪可靠性；低置信不能解释为低风险。",
+    },
+    "valuation": {
+        "semantic_role": "valuation_risk",
+        "primary_channel": "risk_adjustment_and_gate",
+        "horizon": "20D-120D",
+        "confidence_usage": "降低估值结论可靠性；估值拥挤仍由独立 gate 审计。",
+    },
+    "policy_geopolitics": {
+        "semantic_role": "risk_state",
+        "primary_channel": "risk_adjustment_and_gate",
+        "horizon": "event_driven",
+        "confidence_usage": "未确认风险只能降低结论使用等级或进入人工复核，不能当作无风险证明。",
+    },
+}
+
+BASE_SIGNAL_ROLES = frozenset({"alpha"})
 
 
 @dataclass(frozen=True)
@@ -183,6 +225,10 @@ class DailyScoreReport:
     @property
     def confidence_assessment(self) -> DailyConfidenceAssessment:
         return _confidence_assessment(self)
+
+    @property
+    def score_architecture_audit(self) -> dict[str, Any]:
+        return build_score_architecture_audit(self)
 
 
 def build_daily_score_report(
@@ -434,6 +480,73 @@ def load_previous_daily_score_snapshot(
     )
 
 
+def build_score_architecture_audit(report: DailyScoreReport) -> dict[str, Any]:
+    base_signal_components = tuple(
+        component
+        for component in report.components
+        if _component_architecture(component.name)["semantic_role"] in BASE_SIGNAL_ROLES
+    )
+    risk_state_components = tuple(
+        component
+        for component in report.components
+        if _component_architecture(component.name)["semantic_role"] not in BASE_SIGNAL_ROLES
+    )
+    return {
+        "production_effect": "none",
+        "base_signal_score": _weighted_component_score(base_signal_components),
+        "base_signal_components": [component.name for component in base_signal_components],
+        "risk_state_score": _weighted_component_score(risk_state_components),
+        "risk_state_components": [component.name for component in risk_state_components],
+        "risk_adjusted_score": report.recommendation.total_score,
+        "posture": _daily_posture_label(report),
+        "raw_position": _band_audit_record(
+            report.recommendation.model_risk_asset_ai_band
+        ),
+        "confidence_adjusted_position": _band_audit_record(
+            report.confidence_assessment.adjusted_risk_asset_ai_band
+        ),
+        "final_position": _band_audit_record(report.recommendation.risk_asset_ai_band),
+        "total_asset_ai_position": _band_audit_record(
+            report.recommendation.total_asset_ai_band
+        ),
+        "components": [
+            {
+                "component": component.name,
+                "label": COMPONENT_LABELS.get(component.name, component.name),
+                "score": component.score,
+                "weight": component.weight,
+                "source_type": component.source_type,
+                "coverage": component.coverage,
+                "confidence": component.confidence,
+                **_component_architecture(component.name),
+            }
+            for component in report.components
+        ],
+        "risk_caps": [
+            {
+                "gate_id": gate.gate_id,
+                "label": gate.label,
+                "gate_class": gate.gate_class,
+                "target_effect": gate.target_effect,
+                "execution_effect": gate.execution_effect,
+                "source": gate.source,
+                "max_position": gate.max_position,
+                "triggered": gate.triggered,
+                "reason": gate.reason,
+            }
+            for gate in report.recommendation.position_gates
+        ],
+        "confidence_boundary": (
+            "confidence 只能降低方向信号权重、结论使用等级或要求确认；"
+            "不能把低置信风险解释为低风险。"
+        ),
+        "double_counting_boundary": (
+            "本审计层显式区分 base_signal、risk_adjustment 和 gate；"
+            "同一 evidence/dedup_group 的强约束检查由 SCORE-004/RISK-009 后续阶段扩展。"
+        ),
+    }
+
+
 def render_daily_score_report(
     report: DailyScoreReport,
     data_quality_report_path: Path,
@@ -497,6 +610,12 @@ def render_daily_score_report(
         f"- 最小操作变化阈值：{report.minimum_action_delta:.0%}",
         "",
         render_daily_conclusion_card(
+            report,
+            execution_action_label=execution_action_label,
+            execution_action_id=execution_action_id,
+        ).rstrip(),
+        "",
+        render_base_signal_risk_caps_section(
             report,
             execution_action_label=execution_action_label,
             execution_action_id=execution_action_id,
@@ -851,6 +970,107 @@ def render_daily_conclusion_boundary(report: DailyScoreReport) -> str:
         ),
     )
     return render_conclusion_boundary_section(boundary)
+
+
+def render_base_signal_risk_caps_section(
+    report: DailyScoreReport,
+    *,
+    execution_action_label: str | None = None,
+    execution_action_id: str | None = None,
+) -> str:
+    audit = report.score_architecture_audit
+    base_signal_score = audit["base_signal_score"]
+    risk_state_score = audit["risk_state_score"]
+    action_label = execution_action_label or "未传入 execution_policy 输出"
+    action_id = execution_action_id or "not_connected"
+    lines = [
+        "## Base Signal / Risk Caps",
+        "",
+        "- 生产影响：`production_effect=none`；本节只把现有评分、置信度和 "
+        "position gate 拆成审计视图，不改变 production scoring、仓位闸门或回测仓位。",
+        f"- 判断姿态：{audit['posture']}",
+        f"- Confidence 使用边界：{audit['confidence_boundary']}",
+        "",
+        "### Base Signal",
+        "",
+        (
+            "- Base signal score："
+            f"{_optional_score_label(base_signal_score)}；"
+            f"组件：{', '.join(audit['base_signal_components']) or '无'}。"
+        ),
+        (
+            "- Risk state score："
+            f"{_optional_score_label(risk_state_score)}；"
+            f"组件：{', '.join(audit['risk_state_components']) or '无'}。"
+        ),
+        f"- Risk-adjusted score：{report.recommendation.total_score:.1f}",
+        "",
+        "### Raw Position",
+        "",
+        (
+            "- Score-mapped position："
+            f"{report.recommendation.model_risk_asset_ai_band.min_position:.0%}-"
+            f"{report.recommendation.model_risk_asset_ai_band.max_position:.0%}"
+        ),
+        (
+            "- Confidence-adjusted position："
+            f"{report.confidence_assessment.adjusted_risk_asset_ai_band.min_position:.0%}-"
+            f"{report.confidence_assessment.adjusted_risk_asset_ai_band.max_position:.0%}"
+        ),
+        "",
+        "### Risk Caps",
+        "",
+        "| Gate | Class | Target effect | Triggered | Max | Source | Reason |",
+        "|---|---|---|---|---:|---|---|",
+    ]
+    for gate in report.recommendation.position_gates:
+        lines.append(
+            "| "
+            f"{_escape_markdown_table(gate.label)} (`{gate.gate_id}`) | "
+            f"`{gate.gate_class}` | "
+            f"`{gate.target_effect}` | "
+            f"{'是' if gate.triggered else '否'} | "
+            f"{gate.max_position:.0%} | "
+            f"{_escape_markdown_table(gate.source)} | "
+            f"{_escape_markdown_table(gate.reason)} |"
+        )
+    lines.extend(
+        [
+            "",
+            "### Final Position",
+            "",
+            (
+                "- Final risk-asset AI position："
+                f"{report.recommendation.risk_asset_ai_band.min_position:.0%}-"
+                f"{report.recommendation.risk_asset_ai_band.max_position:.0%}"
+            ),
+            (
+                "- Total-asset AI position："
+                f"{report.recommendation.total_asset_ai_band.min_position:.0%}-"
+                f"{report.recommendation.total_asset_ai_band.max_position:.0%}"
+            ),
+            f"- Execution action：{action_label} (`{action_id}`)",
+            "",
+            "### Channel Audit",
+            "",
+            "| Module | Role | Channel | Horizon | Score | Coverage | Confidence | Source type |",
+            "|---|---|---|---|---:|---:|---:|---|",
+        ]
+    )
+    for item in audit["components"]:
+        lines.append(
+            "| "
+            f"{_escape_markdown_table(item['label'])} (`{item['component']}`) | "
+            f"`{item['semantic_role']}` | "
+            f"`{item['primary_channel']}` | "
+            f"`{item['horizon']}` | "
+            f"{item['score']:.1f} | "
+            f"{item['coverage']:.0%} | "
+            f"{item['confidence']:.0%} | "
+            f"{_source_type_label(str(item['source_type']))} |"
+        )
+    lines.extend(["", f"- 防双重计分边界：{audit['double_counting_boundary']}"])
+    return "\n".join(lines) + "\n"
 
 
 def render_macro_risk_asset_budget_section(report: DailyScoreReport) -> str:
@@ -1247,6 +1467,39 @@ def _execution_action_summary(
     if execution_action_id is None:
         return execution_action_label
     return f"{execution_action_label}（`{execution_action_id}`）"
+
+
+def _component_architecture(component_name: str) -> dict[str, str]:
+    return COMPONENT_ARCHITECTURE.get(
+        component_name,
+        {
+            "semantic_role": "report_only",
+            "primary_channel": "report_only",
+            "horizon": "unknown",
+            "confidence_usage": "只用于报告解释，不改变正式仓位。",
+        },
+    )
+
+
+def _weighted_component_score(components: tuple[DailyScoreComponent, ...]) -> float | None:
+    total_weight = sum(component.weight for component in components)
+    if total_weight <= 0:
+        return None
+    return sum(component.score * component.weight for component in components) / total_weight
+
+
+def _band_audit_record(band: PositionBand) -> dict[str, Any]:
+    return {
+        "min_position": band.min_position,
+        "max_position": band.max_position,
+        "label": band.label,
+    }
+
+
+def _optional_score_label(value: object) -> str:
+    if value is None:
+        return "n/a"
+    return f"{float(value):.1f}"
 
 
 def _daily_posture_label(report: DailyScoreReport) -> str:

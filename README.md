@@ -78,6 +78,14 @@ aits validate-data
 质量报告默认写入 `outputs/reports/data_quality_YYYY-MM-DD.md`。如果校验出现错误，命令会返回非零退出码，后续评分和回测流程不应继续使用这批数据。
 当 `data/raw/prices_marketstack_daily.csv` 存在或默认生产路径要求第二来源时，质量门禁会校验 Marketstack 缓存 schema、覆盖、新鲜度、重复键、异常值，并比较主价格缓存和 Marketstack 的 raw `close` 价差。Marketstack 对部分 ETF 的 `adj_close` 与 FMP 主源分红复权口径可能不同，报告会把 adjusted close 差异列为限制或调查项，但不会自动平滑或修正任何价格。
 
+当质量报告显示 Marketstack 第二源自身坏行时，可运行只读诊断复查：
+
+```powershell
+aits data-sources yahoo-price-diagnostic --as-of 2026-05-02
+```
+
+该命令只针对 Marketstack self-check 异常的 `ticker/date` 附近样本拉取 Yahoo raw OHLC/close，输出 `outputs/reports/yahoo_price_diagnostic_YYYY-MM-DD.md`。Yahoo 保持 `public_convenience` / `production_effect=none`，不会写入 `prices_daily.csv`、`prices_marketstack_daily.csv`、评分、仓位闸门或回测真值；失败、空结果或与 FMP 不一致只进入调查报告。
+
 查看和校验数据源目录：
 
 ```powershell
@@ -146,6 +154,22 @@ aits backtest --to 2026-05-02 --quality-as-of 2026-05-02
 ```
 
 回测命令会先执行市场数据质量门禁和 SEC companyfacts 缓存校验。默认市场阶段来自 `config/market_regimes.yaml`，当前为 `ai_after_chatgpt`，起点是 `2022-12-01`，即 ChatGPT 于 `2022-11-30` 公开发布后的首个完整美股交易日。当前基础版使用每日评分得到的 AI 仓位区间中点作为目标仓位，以 `SMH` 作为默认 AI 代理标的，并与 `SPY`、`QQQ`、`SMH`、`SOXX` 买入持有基准对比。每个 signal_date 会按 `filed_date <= signal_date` 生成 point-in-time SEC 基本面特征，也会按 `as_of/captured_at <= signal_date` 过滤估值快照，并按当时可见证据重建风险事件发生记录；回测报告会声明数据质量门禁错误/警告计数、缓存文件摘要、SEC、估值和风险事件质量摘要，并输出执行成本摘要、评分模块覆盖率摘要、月度覆盖率趋势、月度来源类型趋势、月度输入问题下钻、月度输入证据 URL 摘要、月度风险事件证据 URL 明细、月度 ticker 输入摘要、月度 ticker SEC 特征明细、月度估值快照来源和月度风险事件证据来源分布，同时写出机器可读的 `backtest_input_coverage_YYYY-MM-DD_YYYY-MM-DD.csv` 覆盖诊断和中文 `backtest_audit_YYYY-MM-DD_YYYY-MM-DD.md` 输入审计报告。审计报告会汇总数据质量门禁、point-in-time 输入切片、模块覆盖率、来源类型、历史输入问题和执行假设，帮助判断这次回测是否可解释；如需把审计 WARNING 作为本地门禁失败，可加 `--fail-on-audit-warning`。信号按收盘后生成、下一交易日生效，避免未来函数。默认扣除 5 bps 单边交易成本；如需保守执行假设，可用 `--slippage-bps` 显式加入线性滑点或盘口冲击估算。
+
+回测完成后，可以单独生成 gate 与事件效果归因审计：
+
+```powershell
+aits backtest-gate-attribution --backtest-daily-path outputs/backtests/backtest_daily_2026-04-01_2026-05-05.csv --input-coverage-path outputs/backtests/backtest_input_coverage_2026-04-01_2026-05-05.csv --as-of 2026-05-06
+```
+
+该报告只读使用已生成的回测 daily 和 input coverage CSV，按 gate 输出 trigger count、平均仓位降幅、avoided drawdown、missed upside、net effect、false alarm 和 late trigger，并显示风险事件/LLM 标签可用性。它是 `production_effect=none` 的一阶解释报告，不改变回测、评分、仓位闸门或执行策略，也不能把多个 gate 的净效应相加为生产收益结论。
+
+任何回测调权或权重优化实验进入 shadow / promotion 前，先校验调权协议 manifest；模板见 `docs/examples/weights/calibration_protocol_template.yaml`：
+
+```powershell
+aits feedback validate-calibration-protocol --manifest-path config/weights/calibration_protocol.yaml --as-of 2026-05-06
+```
+
+协议校验会要求固定数据快照、配置版本、成本和执行假设、`ai_after_chatgpt` 日期范围、nested walk-forward、purging/embargo、trial 次数、benchmark set、参数分层和多重测试折扣。通过校验只表示实验协议可用于研究，不批准 overlay、不修改 production scoring、`position_gate` 或回测仓位。
 
 如需把 2019 年以来的历史作为非默认压力测试，可以显式指定：
 

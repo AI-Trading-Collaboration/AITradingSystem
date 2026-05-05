@@ -87,6 +87,7 @@ def build_decision_snapshot(
                 for gate in recommendation.position_gates
             ],
         },
+        "score_architecture": report.score_architecture_audit,
         "quality": {
             "market_data_status": report.data_quality_report.status,
             "market_data_error_count": report.data_quality_report.error_count,
@@ -194,6 +195,16 @@ def _risk_event_state_record(report: DailyScoreReport) -> dict[str, Any] | None:
                 "level": item.level,
                 "evidence_grade": item.evidence_grade,
                 "action_class": item.action_class,
+                "lifecycle_state": item.lifecycle_state,
+                "dedup_group": item.dedup_group,
+                "primary_channel": item.primary_channel,
+                "used_in_alpha": item.used_in_alpha,
+                "used_in_gate": item.used_in_gate,
+                "decay_half_life_days": item.decay_half_life_days,
+                "expiry_time": (
+                    item.expiry_time.isoformat() if item.expiry_time is not None else None
+                ),
+                "resolution_reason": item.resolution_reason,
                 "score_eligible": item.score_eligible,
                 "position_gate_eligible": item.position_gate_eligible,
                 "reason": item.reason,

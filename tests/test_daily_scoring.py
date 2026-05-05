@@ -536,6 +536,12 @@ def test_render_daily_score_report_includes_data_gate_and_limitations(tmp_path: 
 
     assert "- 数据质量状态：PASS" in markdown
     assert "## 今日结论卡" in markdown
+    assert "## Base Signal / Risk Caps" in markdown
+    assert "Base signal score" in markdown
+    assert "### Risk Caps" in markdown
+    assert "`score_mapping`" in markdown
+    assert "### Channel Audit" in markdown
+    assert "`alpha`" in markdown
     assert "## 结论使用等级" in markdown
     assert "适用范围：趋势判断/投研辅助，不触发交易（`trend_judgment`）" in markdown
     assert "结论等级：必须人工复核（`review_required`）" in markdown
@@ -549,6 +555,8 @@ def test_render_daily_score_report_includes_data_gate_and_limitations(tmp_path: 
     assert "## 仓位闸门" in markdown
     assert "## 变化原因树" in markdown
     assert markdown.index("## 今日结论卡") < markdown.index("## 变化原因树")
+    assert markdown.index("## 今日结论卡") < markdown.index("## Base Signal / Risk Caps")
+    assert markdown.index("## Base Signal / Risk Caps") < markdown.index("## 结论使用等级")
     assert markdown.index("## 结论使用等级") < markdown.index("## 变化原因树")
     assert markdown.index("## 今日结论卡") < markdown.index("## 数据门禁")
     assert markdown.index("## 今日结论卡") < markdown.index("## 模块评分")
@@ -804,6 +812,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     claim_ids = {claim["claim_id"] for claim in trace["claims"]}
     dataset_ids = {dataset["dataset_id"] for dataset in trace["dataset_refs"]}
     assert "daily_score:2026-04-30:overall_position" in claim_ids
+    assert "daily_score:2026-04-30:score_architecture" in claim_ids
     assert "daily_score:2026-04-30:belief_state" in claim_ids
     assert "daily_score:2026-04-30:focus_stock_trends" in claim_ids
     assert "dataset:belief_state:2026-04-30" in dataset_ids
@@ -829,6 +838,11 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert set(belief_history["belief_state_id"]) == {"belief_state:2026-04-30"}
     assert belief_history.iloc[0]["production_effect"] == "none"
     assert snapshot["scores"]["confidence_level"] in {"high", "medium", "low"}
+    assert snapshot["score_architecture"]["production_effect"] == "none"
+    assert snapshot["score_architecture"]["base_signal_components"] == [
+        "trend",
+        "fundamentals",
+    ]
     assert snapshot["positions"]["position_gates"]
     assert features_path.exists()
     assert sec_features_path.exists()
@@ -845,6 +859,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert "NOT_CONNECTED" in daily_text
     assert "风险预算" in daily_text
     assert "## 今日结论卡" in daily_text
+    assert "## Base Signal / Risk Caps" in daily_text
     assert "## 结论使用等级" in daily_text
     assert "适用范围：趋势判断/投研辅助，不触发交易（`trend_judgment`）" in daily_text
     assert "## 关注股票趋势分析" in daily_text

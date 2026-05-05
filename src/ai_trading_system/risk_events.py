@@ -28,6 +28,17 @@ from ai_trading_system.source_policy import (
 )
 
 RiskEventOccurrenceStatus = Literal["active", "watch", "resolved", "dismissed"]
+RiskEventLifecycleState = Literal[
+    "extracted",
+    "pending_review",
+    "confirmed_low",
+    "confirmed_medium",
+    "confirmed_high",
+    "confirmed_thesis_break",
+    "resolved",
+    "expired",
+    "rejected",
+]
 RiskEventOccurrenceSourceType = Literal[
     "primary_source",
     "paid_vendor",
@@ -105,6 +116,14 @@ class RiskEventOccurrence(BaseModel):
     time_sensitivity: RiskEventTimeSensitivity = "unknown"
     reversibility: RiskEventReversibility = "unknown"
     action_class: RiskEventActionClass = "manual_review"
+    lifecycle_state: RiskEventLifecycleState | None = None
+    dedup_group: str = ""
+    primary_channel: str = ""
+    used_in_alpha: bool = False
+    used_in_gate: bool = False
+    decay_half_life_days: int | None = Field(default=None, ge=1)
+    expiry_time: date | None = None
+    resolution_reason: str = ""
     reviewer: str = ""
     reviewed_at: date | None = None
     review_decision: RiskEventReviewDecision | str = ""
@@ -232,6 +251,14 @@ class RiskEventOccurrenceReviewItem:
     position_gate_eligible: bool
     health: str
     reason: str
+    lifecycle_state: str = "pending_review"
+    dedup_group: str = ""
+    primary_channel: str = ""
+    used_in_alpha: bool = False
+    used_in_gate: bool = False
+    decay_half_life_days: int | None = None
+    expiry_time: date | None = None
+    resolution_reason: str = ""
 
 
 @dataclass(frozen=True)
@@ -504,6 +531,7 @@ def build_risk_event_occurrence_review_report(
                 loaded=loaded,
                 rules_by_id=rules_by_id,
                 levels_by_id=levels_by_id,
+                as_of=validation_report.as_of,
             )
             for loaded in validation_report.occurrences
         ),
@@ -656,9 +684,9 @@ def render_risk_event_occurrence_review_report(
         lines.extend(
             [
                 "| Occurrence | 事件 | 等级 | 状态 | 证据等级 | 严重性 | 概率 | "
-                "影响范围 | 动作等级 | 触发日期 | 最近确认 | 来源 | 评分 | 仓位闸门 | "
-                "复核人 | 下次复核 | 结论 |",
-                "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
+                "影响范围 | 动作等级 | 生命周期 | Dedup group | Alpha | Gate | "
+                "触发日期 | 最近确认 | 过期 | 来源 | 评分 | 仓位闸门 | 复核人 | 下次复核 | 结论 |",
+                "|" + "|".join(["---"] * 22) + "|",
             ]
         )
         for item in sorted(report.items, key=lambda value: value.occurrence_id):
@@ -673,8 +701,13 @@ def render_risk_event_occurrence_review_report(
                 f"{_risk_probability_label(item.probability)} | "
                 f"{_risk_scope_label(item.scope)} | "
                 f"{_risk_action_class_label(item.action_class)} | "
+                f"{item.lifecycle_state} | "
+                f"{_escape_markdown_table(item.dedup_group)} | "
+                f"{'是' if item.used_in_alpha else '否'} | "
+                f"{'是' if item.used_in_gate else '否'} | "
                 f"{item.triggered_at.isoformat()} | "
                 f"{item.last_confirmed_at.isoformat()} | "
+                f"{item.expiry_time.isoformat() if item.expiry_time else ''} | "
                 f"{', '.join(_source_type_label(value) for value in item.source_types)} | "
                 f"{'可用' if item.score_eligible else '不可用'} | "
                 f"{'可用' if item.position_gate_eligible else '不可用'} | "
@@ -991,6 +1024,23 @@ def _check_occurrence(
                 message="解除日期晚于评估日期。",
             )
         )
+    if (
+        occurrence.expiry_time is not None
+        and occurrence.expiry_time < as_of
+        and occurrence.status in {"active", "watch"}
+    ):
+        issues.append(
+            RiskEventIssue(
+                severity=RiskEventIssueSeverity.WARNING,
+                code="risk_event_occurrence_expired",
+                event_id=occurrence.event_id,
+                path=path,
+                message=(
+                    "风险事件已超过 expiry_time；默认不应继续作为 active/watch "
+                    "风险压制评分或仓位，需要人工更新状态或重新确认。"
+                ),
+            )
+        )
     if occurrence.last_confirmed_at < occurrence.triggered_at:
         issues.append(
             RiskEventIssue(
@@ -1151,10 +1201,29 @@ def _check_occurrence(
             )
 
 
+def _risk_event_lifecycle_state(occurrence: RiskEventOccurrence) -> str:
+    if occurrence.lifecycle_state is not None:
+        return occurrence.lifecycle_state
+    if occurrence.expiry_time is not None and occurrence.status in {"active", "watch"}:
+        return "confirmed_medium"
+    if occurrence.status == "active":
+        if occurrence.action_class == "position_gate_eligible":
+            return "confirmed_high"
+        if occurrence.action_class == "score_eligible":
+            return "confirmed_medium"
+        return "confirmed_low"
+    if occurrence.status == "watch":
+        return "pending_review"
+    if occurrence.status == "resolved":
+        return "resolved"
+    return "rejected"
+
+
 def _occurrence_review_item(
     loaded: LoadedRiskEventOccurrence,
     rules_by_id: dict[str, RiskEventRuleConfig],
     levels_by_id: Mapping[str, RiskEventLevelConfig],
+    as_of: date,
 ) -> RiskEventOccurrenceReviewItem:
     occurrence = loaded.occurrence
     rule = rules_by_id.get(occurrence.event_id)
@@ -1182,9 +1251,11 @@ def _occurrence_review_item(
     evidence_allows_position_gate = evidence_grade_allows_position_gate(
         occurrence.evidence_grade
     )
+    expired = occurrence.expiry_time is not None and occurrence.expiry_time < as_of
     score_eligible = (
         rule is not None
         and occurrence.status == "active"
+        and not expired
         and has_score_source
         and action_allows_scoring
         and evidence_allows_scoring
@@ -1195,7 +1266,12 @@ def _occurrence_review_item(
         and evidence_allows_position_gate
     )
 
-    if rule is None:
+    if expired:
+        health = "EXPIRED"
+        reason = (
+            "风险事件已超过 expiry_time；默认只保留审计和复核提示，不进入自动评分或仓位闸门。"
+        )
+    elif rule is None:
         health = "UNKNOWN_RULE"
         reason = "发生记录引用了未知风险规则，不能进入评分。"
     elif not has_score_source:
@@ -1238,6 +1314,14 @@ def _occurrence_review_item(
         time_sensitivity=occurrence.time_sensitivity,
         reversibility=occurrence.reversibility,
         action_class=occurrence.action_class,
+        lifecycle_state="expired" if expired else _risk_event_lifecycle_state(occurrence),
+        dedup_group=occurrence.dedup_group,
+        primary_channel=occurrence.primary_channel,
+        used_in_alpha=occurrence.used_in_alpha,
+        used_in_gate=occurrence.used_in_gate,
+        decay_half_life_days=occurrence.decay_half_life_days,
+        expiry_time=occurrence.expiry_time,
+        resolution_reason=occurrence.resolution_reason,
         reviewer=occurrence.reviewer,
         reviewed_at=occurrence.reviewed_at,
         review_decision=str(occurrence.review_decision),

@@ -9,6 +9,7 @@ from typing import Annotated
 
 import pandas as pd
 import typer
+import yaml
 from rich.console import Console
 from rich.table import Table
 
@@ -36,6 +37,12 @@ from ai_trading_system.backtest.daily import (
     write_backtest_daily_csv,
     write_backtest_input_coverage_csv,
     write_backtest_report,
+)
+from ai_trading_system.backtest.gate_attribution import (
+    build_gate_event_attribution_report,
+    default_gate_event_attribution_report_path,
+    infer_input_coverage_path,
+    write_gate_event_attribution_report,
 )
 from ai_trading_system.backtest.input_gaps import (
     build_backtest_input_gap_report,
@@ -92,6 +99,13 @@ from ai_trading_system.benchmark_policy import (
     render_benchmark_policy_lookup,
     validate_benchmark_policy,
     write_benchmark_policy_report,
+)
+from ai_trading_system.calibration_protocol import (
+    DEFAULT_CALIBRATION_PROTOCOL_PATH,
+    default_calibration_protocol_report_path,
+    load_calibration_protocol_manifest,
+    validate_calibration_protocol_manifest,
+    write_calibration_protocol_report,
 )
 from ai_trading_system.catalyst_calendar import (
     default_catalyst_calendar_report_path,
@@ -400,6 +414,11 @@ from ai_trading_system.prediction_ledger import (
     write_shadow_maturity_report,
     write_shadow_prediction_run_report,
 )
+from ai_trading_system.price_source_diagnostics import (
+    build_yahoo_price_diagnostic_report,
+    default_yahoo_price_diagnostic_report_path,
+    write_yahoo_price_diagnostic_report,
+)
 from ai_trading_system.report_traceability import (
     build_backtest_trace_bundle,
     build_daily_score_trace_bundle,
@@ -545,6 +564,15 @@ from ai_trading_system.watchlist_lifecycle import (
     load_watchlist_lifecycle,
     validate_watchlist_lifecycle,
     write_watchlist_lifecycle_report,
+)
+from ai_trading_system.weight_calibration import (
+    DEFAULT_APPROVED_CALIBRATION_OVERLAY_PATH,
+    DEFAULT_EFFECTIVE_WEIGHTS_PATH,
+    DEFAULT_WEIGHT_PROFILE_PATH,
+    apply_calibration_overlays,
+    load_calibration_overlays,
+    load_weight_profile,
+    write_effective_weights,
 )
 
 app = typer.Typer(help="AI 产业链趋势分析和仓位管理工具。", no_args_is_help=True)
@@ -1038,6 +1066,101 @@ def precheck_llm_claims_command(
     written_path = write_llm_claim_prereview_queue(report, queue_path)
     console.print(f"LLM claim 待复核队列：{written_path}")
     console.print("LLM 输出保持 llm_extracted / pending_review，不进入评分或仓位闸门。")
+
+
+@feedback_app.command("apply-calibration-overlay")
+def apply_calibration_overlay_command(
+    context_path: Annotated[
+        Path,
+        typer.Option(help="当前 decision context JSON 路径。"),
+    ] = PROJECT_ROOT / "outputs" / "current_context.json",
+    weight_profile_path: Annotated[
+        Path,
+        typer.Option(help="当前基础权重 profile YAML 路径。"),
+    ] = DEFAULT_WEIGHT_PROFILE_PATH,
+    overlays_path: Annotated[
+        Path,
+        typer.Option(help="approved calibration overlay JSON 路径。"),
+    ] = DEFAULT_APPROVED_CALIBRATION_OVERLAY_PATH,
+    output_path: Annotated[
+        Path,
+        typer.Option(help="effective weights JSON 输出路径。"),
+    ] = DEFAULT_EFFECTIVE_WEIGHTS_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="校准匹配日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+) -> None:
+    """根据 context、weight profile 和 approved overlays 计算 effective weights。"""
+    calibration_date = _parse_date(as_of) if as_of else date.today()
+    try:
+        context = json.loads(context_path.read_text(encoding="utf-8"))
+        if not isinstance(context, dict):
+            raise ValueError("context JSON must contain an object")
+        profile = load_weight_profile(weight_profile_path)
+        overlays = load_calibration_overlays(overlays_path)
+        application = apply_calibration_overlays(
+            context=context,
+            profile=profile,
+            overlays=overlays,
+            as_of=calibration_date,
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        console.print(f"[red]历史校准 overlay 计算失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+    written_path = write_effective_weights(application, output_path)
+    console.print("[green]历史校准 effective weights 已生成。[/green]")
+    console.print(f"Weight profile version：{application.weight_profile_version}")
+    console.print(
+        "Matched overlays："
+        f"{', '.join(application.matched_overlays) if application.matched_overlays else '无'}"
+    )
+    console.print(f"Confidence delta：{application.confidence_delta:+.2f}")
+    console.print(f"Position multiplier：{application.position_multiplier:.2f}")
+    console.print(f"输出：{written_path}")
+    console.print("治理边界：本命令只计算校准结果，不修改 production scoring 或 position_gate。")
+
+
+@feedback_app.command("validate-calibration-protocol")
+def validate_calibration_protocol_command(
+    manifest_path: Annotated[
+        Path,
+        typer.Option(help="调权实验 protocol manifest YAML 路径。"),
+    ] = DEFAULT_CALIBRATION_PROTOCOL_PATH,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 校验报告输出路径。"),
+    ] = None,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+) -> None:
+    """校验回测调权 protocol manifest，防止无审计调参。"""
+    validation_date = _parse_date(as_of) if as_of else date.today()
+    try:
+        manifest = load_calibration_protocol_manifest(manifest_path)
+    except (OSError, ValueError, yaml.YAMLError) as exc:
+        console.print(f"[red]调权协议 manifest 读取失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+    report = validate_calibration_protocol_manifest(
+        manifest,
+        manifest_path=manifest_path,
+        as_of=validation_date,
+    )
+    report_output = output_path or default_calibration_protocol_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        validation_date,
+    )
+    report_output = write_calibration_protocol_report(report, report_output)
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]调权协议校验状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_output}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    console.print("治理边界：本命令不修改 production scoring、position_gate、overlay 或回测仓位。")
+    if not report.passed:
+        raise typer.Exit(code=1)
 
 
 @feedback_app.command("calibrate")
@@ -3377,6 +3500,63 @@ def backtest(
         raise typer.Exit(code=1)
 
 
+@app.command("backtest-gate-attribution")
+def backtest_gate_attribution(
+    backtest_daily_path: Annotated[
+        Path | None,
+        typer.Option(help="backtest_daily CSV 路径；默认使用 outputs/backtests 最新文件。"),
+    ] = None,
+    input_coverage_path: Annotated[
+        Path | None,
+        typer.Option(help="backtest_input_coverage CSV 路径；默认按 daily 文件名推断。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 归因报告输出路径。"),
+    ] = None,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="报告日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    left_tail_threshold: Annotated[
+        float,
+        typer.Option(help="左尾收益阈值，例如 -0.03 表示 -3%。"),
+    ] = -0.03,
+) -> None:
+    """基于已生成回测 CSV 输出 gate 与事件效果归因报告。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    selected_daily_path = backtest_daily_path or _latest_backtest_daily_path(
+        PROJECT_ROOT / "outputs" / "backtests"
+    )
+    if selected_daily_path is None:
+        console.print("[red]未找到 backtest_daily_*.csv；请先运行 aits backtest。[/red]")
+        raise typer.Exit(code=1)
+    selected_coverage_path = input_coverage_path or infer_input_coverage_path(
+        selected_daily_path
+    )
+    report = build_gate_event_attribution_report(
+        backtest_daily_path=selected_daily_path,
+        input_coverage_path=selected_coverage_path,
+        as_of=report_date,
+        left_tail_threshold=left_tail_threshold,
+    )
+    report_output = output_path or default_gate_event_attribution_report_path(
+        PROJECT_ROOT / "outputs" / "backtests",
+        report,
+    )
+    report_output = write_gate_event_attribution_report(report, report_output)
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]Gate/event 归因状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_output}")
+    console.print(
+        f"Gate 数：{len(report.gate_rows)}；"
+        f"事件记录：{report.event_summary.risk_event_record_count}"
+    )
+    console.print("治理边界：本命令只读解释历史样本，不改变回测、评分或仓位闸门。")
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+
 @app.command("backtest-input-gaps")
 def backtest_input_gaps(
     prices_path: Annotated[
@@ -5471,6 +5651,96 @@ def data_source_health(
 
     if not report.passed:
         raise typer.Exit(code=1)
+
+
+@data_sources_app.command("yahoo-price-diagnostic")
+def yahoo_price_diagnostic(
+    prices_path: Annotated[
+        Path,
+        typer.Option(help="FMP 主价格缓存 CSV 路径。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    rates_path: Annotated[
+        Path,
+        typer.Option(help="FRED 宏观序列 CSV 路径，用于复用数据质量报告。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    marketstack_prices_path: Annotated[
+        Path | None,
+        typer.Option(help="Marketstack 第二行情源 CSV 路径；默认跟随主价格缓存目录。"),
+    ] = None,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="诊断日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown Yahoo 诊断报告输出路径。"),
+    ] = None,
+    full_universe: Annotated[
+        bool,
+        typer.Option(
+            "--full-universe",
+            help="复用完整 AI 产业链标的的数据质量上下文。",
+        ),
+    ] = False,
+    window_days: Annotated[
+        int,
+        typer.Option(help="围绕异常 ticker/date 拉取 Yahoo 样本的前后自然日窗口。"),
+    ] = 3,
+    max_targets: Annotated[
+        int,
+        typer.Option(help="最多复查的 Marketstack 异常 ticker/date 数量。"),
+    ] = 20,
+) -> None:
+    """对 Marketstack 自检坏行执行只读 Yahoo 诊断复查。"""
+    universe = load_universe()
+    quality_config = load_data_quality()
+    diagnostic_date = _parse_date(as_of) if as_of else date.today()
+    secondary_path = marketstack_prices_path or _marketstack_prices_path(prices_path)
+    report_path = output_path or default_yahoo_price_diagnostic_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        diagnostic_date,
+    )
+    quality_report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=configured_price_tickers(
+            universe,
+            include_full_ai_chain=full_universe,
+        ),
+        expected_rate_series=configured_rate_series(universe),
+        quality_config=quality_config,
+        as_of=diagnostic_date,
+        manifest_path=_download_manifest_path(prices_path),
+        secondary_prices_path=secondary_path,
+        require_secondary_prices=_requires_marketstack_prices(prices_path),
+    )
+    diagnostic_report = build_yahoo_price_diagnostic_report(
+        primary_prices_path=prices_path,
+        marketstack_prices_path=secondary_path,
+        quality_report=quality_report,
+        quality_config=quality_config,
+        yahoo_provider=YFinancePriceProvider(),
+        as_of=diagnostic_date,
+        window_days=window_days,
+        max_targets=max_targets,
+    )
+    write_yahoo_price_diagnostic_report(diagnostic_report, report_path)
+
+    status_style = (
+        "green"
+        if diagnostic_report.status == "PASS"
+        else "yellow"
+        if diagnostic_report.status != "DIAGNOSTIC_FAILED"
+        else "red"
+    )
+    console.print(
+        f"[{status_style}]Yahoo 价格诊断状态："
+        f"{diagnostic_report.status}[/{status_style}]"
+    )
+    console.print(f"报告：{report_path}")
+    console.print(f"诊断目标：{len(diagnostic_report.targets)}")
+    console.print(f"Yahoo 返回行数：{diagnostic_report.row_count}")
+    console.print("治理边界：diagnostic only / production_effect=none，不写价格缓存或评分。")
 
 
 @fundamentals_app.command("list-sec-companies")
@@ -8808,6 +9078,17 @@ def _parse_backtest_lag_days(value: str) -> tuple[int, ...]:
     if not lag_days:
         raise typer.BadParameter("至少需要一个滞后交易日。")
     return tuple(sorted(dict.fromkeys(lag_days)))
+
+
+def _latest_backtest_daily_path(output_dir: Path) -> Path | None:
+    candidates = [
+        path
+        for path in output_dir.glob("backtest_daily_*.csv")
+        if path.name.startswith("backtest_daily_")
+    ]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda path: path.stat().st_mtime)
 
 
 def _backtest_required_input_signal_dates(
