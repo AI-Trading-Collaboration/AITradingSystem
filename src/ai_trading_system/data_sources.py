@@ -260,6 +260,8 @@ def render_data_source_health_report(report: DataSourceHealthReport) -> str:
         "- 跨供应商冲突必须进入调查项；本报告不会自动平滑、覆盖或修正供应商数值。",
         "- 没有两个 qualified source 的领域会标记为 `NOT_COVERED`，"
         "不能视为生产级 cross-provider reconciliation 已完成。",
+        "- Inactive/diagnostic-only 来源的历史 manifest checksum 漂移只作为调查警告；"
+        "active 来源的 checksum mismatch 仍然 fail closed。",
         "",
         "## Reconciliation 覆盖",
         "",
@@ -732,6 +734,19 @@ def _check_manifest_record_consistency(
         return
     actual_checksum = _file_sha256(output_path)
     if record.checksum_sha256 and actual_checksum != record.checksum_sha256:
+        if source.status != "active":
+            issues.append(
+                DataSourceHealthIssue(
+                    severity=DataSourceIssueSeverity.WARNING,
+                    code="inactive_manifest_checksum_mismatch",
+                    source_id=source.source_id,
+                    message=(
+                        "Inactive/diagnostic-only 来源的历史 manifest checksum "
+                        "与当前缓存文件不一致；记录为调查项，不阻断 active 主数据源。"
+                    ),
+                )
+            )
+            return
         issues.append(
             DataSourceHealthIssue(
                 severity=DataSourceIssueSeverity.ERROR,

@@ -265,6 +265,7 @@
 
 - 2026-05-04 低成本基础版已完成：新增 `aits data-sources health`，读取 `config/data_sources.yaml` 和 `data/raw/download_manifest.csv`，输出 provider health score、cache path 状态、latest manifest `downloaded_at`/`row_count`/`checksum`、checksum drift、新鲜度和问题表。
 - 报告按 `market_prices`、`macro_rates`、`fundamentals`、`valuation` 输出 qualified source 覆盖状态；少于两个 qualified source 的领域标记为 `NOT_COVERED`，不把单源通过伪装成 cross-provider reconciliation 通过。
+- 2026-05-05 修正健康检查语义：active 来源的 manifest checksum mismatch 继续 fail closed；inactive/diagnostic-only 来源的历史 manifest checksum 漂移降为调查警告，避免旧 Yahoo 记录在 FMP/Cboe 主缓存接管后误阻断 provider health。
 - 当前完成态为 `BASELINE_DONE`：框架、审计字段和失败路径已具备，但完整 `DONE` 仍依赖 owner 提供长期可用第二来源、API key、商业授权/再分发限制和生产口径策略。
 
 验收标准：

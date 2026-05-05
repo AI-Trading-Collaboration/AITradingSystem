@@ -188,6 +188,51 @@ def test_build_data_source_health_report_fails_on_checksum_mismatch(
     assert any(issue.code == "manifest_checksum_mismatch" for issue in report.issues)
 
 
+def test_build_data_source_health_report_warns_on_inactive_checksum_mismatch(
+    tmp_path: Path,
+) -> None:
+    prices_path = _write_price_cache(tmp_path / "prices_daily.csv")
+    manifest_path = _write_manifest(
+        tmp_path / "download_manifest.csv",
+        source_id="inactive_prices",
+        provider="Inactive Prices",
+        endpoint="test.download",
+        output_path=prices_path,
+        row_count=1,
+        checksum="bad-checksum",
+    )
+    config = DataSourcesConfig(
+        sources=[
+            _source(
+                source_id="inactive_prices",
+                provider="Inactive Prices",
+                source_type="public_convenience",
+                status="inactive",
+                domains=["market_prices"],
+                cache_paths=[str(prices_path)],
+            )
+        ]
+    )
+
+    report = build_data_source_health_report(
+        config=config,
+        as_of=date(2026, 5, 2),
+        manifest_path=manifest_path,
+        project_root=tmp_path,
+    )
+
+    assert report.status == "PASS_WITH_WARNINGS"
+    assert not any(
+        issue.code == "manifest_checksum_mismatch" for issue in report.issues
+    )
+    inactive_issue = next(
+        issue
+        for issue in report.issues
+        if issue.code == "inactive_manifest_checksum_mismatch"
+    )
+    assert inactive_issue.severity == DataSourceIssueSeverity.WARNING
+
+
 def test_data_sources_cli_validate_and_list(tmp_path: Path) -> None:
     report_path = tmp_path / "data_sources.md"
 
@@ -272,12 +317,13 @@ def _source(
     source_type: str,
     domains: list[str],
     cache_paths: list[str],
+    status: str = "active",
 ) -> DataSourceConfig:
     return DataSourceConfig(
         source_id=source_id,
         provider=provider,
         source_type=source_type,
-        status="active",
+        status=status,
         domains=domains,
         endpoint="test.download",
         adapter="TestProvider",
