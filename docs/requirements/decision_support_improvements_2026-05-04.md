@@ -319,3 +319,13 @@ OpenAI API 使用边界：
   会同时生成 Markdown 报告和 `.json` 摘要，新增 `--robustness-summary-path` 可单独指定机器可读输出；
   真实短区间验证显示固定 60% 总资产 AI exposure 在 2026-04-01 至 2026-05-01 样本中跑赢动态策略，
   因此当前动态仓位价值仍不能解释为收益增强，需要继续做趋势-only、趋势+风险情绪、权重扰动、随机同换手率和样本外实验。
+- 2026-05-05：`BACKTEST-001` 第三阶段进入实现：补充再平衡频率稳健性场景，先覆盖每 5 个交易日和每 21 个交易日再平衡；该实验复用基础回测的每日目标仓位、下一交易日收益、显式成本假设和 PIT 输入，不新增数据源，也不改变 production scoring 或 `position_gate`。
+- 2026-05-05：`BACKTEST-001` 第三阶段达到 BASELINE_DONE：`backtest_robustness` 默认新增 `rebalance_every_5d` 和 `rebalance_every_21d` 场景，Markdown 与 JSON 摘要均输出收益、回撤、Sharpe、换手和相对基础收益；系统流图和测试已同步，Ruff 与全量 pytest 371 项通过。剩余缺口继续保留为权重扰动、趋势-only/趋势+风险情绪、随机同换手率和样本外验证。
+- 2026-05-05：`BACKTEST-001` 第四阶段进入实现：补充趋势-only 与趋势+风险情绪基线；基线复用基础回测已保存的模块分数、`config/scoring_rules.yaml` 模块权重、每日宏观总风险资产预算、下一交易日收益、最小调仓阈值和显式成本假设，不新增数据源，不重跑 production scoring，也不改变日报或 `position_gate`。
+- 2026-05-05：`BACKTEST-001` 第四阶段达到 BASELINE_DONE：`backtest_robustness` 默认新增 `trend_only_baseline` 和 `trend_plus_risk_sentiment_baseline` 场景，Markdown 与 JSON 摘要均输出简化信号族相对基础动态策略的收益、回撤、Sharpe 和换手差异；系统流图和测试已同步，Ruff 与回测测试通过。剩余缺口继续保留为权重扰动、随机同换手率和样本外验证。
+- 2026-05-05：`BACKTEST-001` 第五阶段进入实现：补充模块权重扰动；默认对每个已配置评分模块分别做上调/下调扰动，并使用扰动后的 `ScoringRulesConfig` 重新运行同一 PIT 输入、成本假设、宏观预算和 position gate 规则，避免只复用已生成 gate 上限造成近似偏差。
+- 2026-05-05：`BACKTEST-001` 第五阶段达到 BASELINE_DONE：`backtest_robustness` 默认新增每个评分模块上下扰动场景，并记录 `weight_perturbation_pct`；Markdown 解释权重扰动是否明显改变本次收益方向，JSON 剩余缺口移除 `module_weight_perturbation`。剩余缺口继续保留为随机同换手率和样本外验证。
+- 2026-05-05：`BACKTEST-001` 第六阶段进入实现：补充同换手率随机策略；默认固定随机种子起点和样本数，随机决定每个交易日加/减仓方向，但每日 absolute turnover 复用基础策略，收益、融资和交易成本仍按随机路径逐日计算。
+- 2026-05-05：`BACKTEST-001` 第六阶段达到 BASELINE_DONE：`backtest_robustness` 默认新增同换手率随机策略场景，并记录 `random_seed_start` 和 `random_seed_count`；Markdown 解释动态策略相对随机同换手率路径的胜出比例，JSON 剩余缺口移除 `same_turnover_random_strategy`。剩余缺口继续保留为样本外验证。
+- 2026-05-05：`BACKTEST-001` 第七阶段进入实现：补充时间顺序样本外验证；默认按基础回测信号日期做 70%/30% 切分，分别运行 in-sample 窗口和 out-of-sample holdout，样本不足时显式 SKIPPED。
+- 2026-05-05：`BACKTEST-001` 第七阶段完成并标记 DONE：`backtest_robustness` 默认新增 `in_sample_window` 和 `out_of_sample_holdout` 场景，并记录 `oos_split_ratio`；Markdown 解释样本外 holdout 是否立即暴露方向性失效，JSON `remaining_gaps` 为空。`ruff check src tests` 和全量 `.venv\Scripts\python.exe -m pytest -q` 通过 371 项测试。

@@ -6,7 +6,10 @@ from datetime import date
 from pathlib import Path
 from typing import Literal
 
-from ai_trading_system.backtest.daily import DailyBacktestResult
+from ai_trading_system.backtest.daily import (
+    DailyBacktestResult,
+    build_backtest_data_credibility,
+)
 from ai_trading_system.scoring.daily import COMPONENT_LABELS, SOURCE_TYPE_LABELS
 
 AuditSeverity = Literal["ERROR", "WARNING"]
@@ -68,6 +71,7 @@ def build_backtest_audit_report(
     issues: list[BacktestAuditIssue] = []
     _append_data_quality_issues(issues, result)
     _append_point_in_time_input_issues(issues, result)
+    _append_data_credibility_issues(issues, result)
     _append_component_coverage_issues(issues, result, minimum_component_coverage)
     _append_source_type_issues(issues, result)
     _append_input_issue_summaries(issues, result)
@@ -120,6 +124,7 @@ def render_backtest_audit_report(report: BacktestAuditReport) -> str:
         )
 
     lines.extend(_data_quality_section(report))
+    lines.extend(_data_credibility_section(report))
     lines.extend(_point_in_time_section(report))
     lines.extend(_component_coverage_section(report))
     lines.extend(_source_type_section(report))
@@ -247,6 +252,37 @@ def _append_point_in_time_input_issues(
         )
 
 
+def _append_data_credibility_issues(
+    issues: list[BacktestAuditIssue],
+    result: DailyBacktestResult,
+) -> None:
+    credibility = build_backtest_data_credibility(result)
+    if credibility.grade == "C":
+        issues.append(
+            BacktestAuditIssue(
+                severity="WARNING",
+                code="backtest_data_quality_c_exploratory",
+                subject="Backtest Data Quality",
+                message=(
+                    "本次回测被标记为 C 级探索性输入，不能输出无条件 Sharpe 或绩效结论。"
+                ),
+                recommendation=(
+                    "先补齐 PIT 输入覆盖、运行 lag sensitivity，并在报告中逐项说明降级原因。"
+                ),
+            )
+        )
+    elif credibility.grade == "B":
+        issues.append(
+            BacktestAuditIssue(
+                severity="WARNING",
+                code="backtest_data_quality_b_requires_lag_review",
+                subject="Backtest Data Quality",
+                message="本次回测为 B 级保守近似，需要结合 lag sensitivity 解释。",
+                recommendation="解释策略有效性前检查 3-5 个交易日滞后后是否仍保持方向。",
+            )
+        )
+
+
 def _append_component_coverage_issues(
     issues: list[BacktestAuditIssue],
     result: DailyBacktestResult,
@@ -364,6 +400,38 @@ def _data_quality_section(report: BacktestAuditReport) -> list[str]:
             f"{quality.manifest_summary.rows if quality.manifest_summary else 'n/a'}"
         ),
     ]
+
+
+def _data_credibility_section(report: BacktestAuditReport) -> list[str]:
+    credibility = build_backtest_data_credibility(report.result)
+    lines = [
+        "",
+        "## 回测数据可信度",
+        "",
+        f"- Backtest Data Quality：{credibility.label}（{credibility.grade}）",
+        (
+            "- Uses Vendor Historical Estimates："
+            f"{_yes_no(credibility.uses_vendor_historical_estimates)}"
+        ),
+        (
+            "- Uses Self-Archived Snapshots："
+            f"{_yes_no(credibility.uses_self_archived_snapshots)}"
+        ),
+        f"- Minimum Feature Lag：{credibility.minimum_feature_lag_days} 个交易日",
+        f"- Universe PIT：{_yes_no(credibility.universe_pit)}",
+        "",
+        "| 输入 | 覆盖率 | point_in_time_class | backtest_use |",
+        "|---|---:|---|---|",
+    ]
+    for item in credibility.core_inputs:
+        lines.append(
+            "| "
+            f"{item.input_name} | "
+            f"{item.coverage:.0%} | "
+            f"{_counts(item.point_in_time_class_counts)} | "
+            f"{_counts(item.backtest_use_counts)} |"
+        )
+    return lines
 
 
 def _point_in_time_section(report: BacktestAuditReport) -> list[str]:
@@ -558,6 +626,16 @@ def _status_counts(status_counts: dict[str, int] | None) -> str:
     if not status_counts:
         return "无"
     return "；".join(f"{status}={count}" for status, count in sorted(status_counts.items()))
+
+
+def _yes_no(value: bool) -> str:
+    return "是" if value else "否"
+
+
+def _counts(counts: dict[str, int]) -> str:
+    if not counts:
+        return "无"
+    return "；".join(f"{key}={count}" for key, count in sorted(counts.items()))
 
 
 def _range(min_value: int | None, max_value: int | None) -> str:

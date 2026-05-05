@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import replace
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import cast
 
@@ -18,6 +18,7 @@ from ai_trading_system.backtest.audit import (
 )
 from ai_trading_system.backtest.daily import (
     backtest_input_coverage_records,
+    build_backtest_data_credibility,
     render_backtest_report,
     run_daily_score_backtest,
     write_backtest_daily_csv,
@@ -50,6 +51,10 @@ from ai_trading_system.fundamentals.sec_metrics import (
     SecFundamentalMetricsCsvValidationReport,
     SecMetricIssue,
     SecMetricIssueSeverity,
+)
+from ai_trading_system.pit_snapshots import (
+    PitSnapshotManifestRecord,
+    write_pit_snapshot_manifest,
 )
 from ai_trading_system.risk_events import (
     LoadedRiskEventOccurrence,
@@ -299,6 +304,65 @@ def test_run_daily_score_backtest_filters_watchlist_by_lifecycle(
     assert captured_by_date[date(2026, 4, 2)] == ("NVDA",)
 
 
+def test_run_daily_score_backtest_applies_feature_and_universe_lag(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    universe = load_universe()
+    prices = _sample_prices(configured_price_tickers(universe), periods=320)
+    rates = _sample_rates(configured_rate_series(universe), periods=320)
+    captured_feature_dates: list[date] = []
+    captured_watchlists: list[tuple[date, tuple[str, ...]]] = []
+    original_build_market_features = backtest_daily_module.build_market_features
+
+    def wrapped_build_market_features(**kwargs):  # type: ignore[no-untyped-def]
+        captured_feature_dates.append(kwargs["as_of"])
+        captured_watchlists.append((kwargs["as_of"], tuple(kwargs["core_watchlist"])))
+        return original_build_market_features(**kwargs)
+
+    monkeypatch.setattr(
+        backtest_daily_module,
+        "build_market_features",
+        wrapped_build_market_features,
+    )
+    lifecycle = WatchlistLifecycleConfig(
+        entries=[
+            WatchlistLifecycleEntry(
+                ticker="NVDA",
+                added_at=date(2026, 4, 2),
+                reason="测试 lag 后 universe 才可见。",
+                active_from=date(2026, 4, 2),
+                competence_status="in_competence",
+                node_mapping_valid_from=date(2026, 4, 2),
+                thesis_required_from=date(2026, 4, 2),
+                source="unit_test",
+            )
+        ]
+    )
+
+    result = run_daily_score_backtest(
+        prices=prices,
+        rates=rates,
+        feature_config=load_features(),
+        scoring_rules=load_scoring_rules(),
+        portfolio_config=load_portfolio(),
+        data_quality_report=_quality_report(),
+        core_watchlist=universe.ai_chain["core_watchlist"],
+        start=date(2026, 4, 2),
+        end=date(2026, 4, 5),
+        strategy_ticker="SMH",
+        benchmark_tickers=("SPY",),
+        watchlist_lifecycle=lifecycle,
+        feature_lag_days=1,
+        universe_lag_days=1,
+    )
+
+    assert result.feature_lag_days == 1
+    assert result.universe_lag_days == 1
+    assert result.rows[0].feature_as_of < result.rows[0].signal_date
+    assert captured_feature_dates[0] == result.rows[0].feature_as_of
+    assert captured_watchlists[0][1] == ()
+
+
 def test_render_and_write_backtest_outputs(tmp_path: Path) -> None:
     universe = load_universe()
     result = run_daily_score_backtest(
@@ -342,6 +406,10 @@ def test_render_and_write_backtest_outputs(tmp_path: Path) -> None:
     assert "结论等级：回测覆盖不足，结论降级（`backtest_limited`）" in markdown
     assert "适用范围：趋势判断/投研辅助，不触发交易（`trend_judgment`）" in markdown
     assert "## 执行成本摘要" in markdown
+    assert "## 回测数据可信度" in markdown
+    assert "Backtest Data Quality：C 级" in markdown
+    assert "Sharpe、CAGR 和收益表不构成无条件绩效结论" in markdown
+    assert "| 观察池 Universe | 0% | unknown=" in markdown
     assert "## 仓位闸门摘要" in markdown
     assert "## 判断置信度摘要" in markdown
     assert "## 产业链节点历史状态摘要" in markdown
@@ -359,6 +427,48 @@ def test_render_and_write_backtest_outputs(tmp_path: Path) -> None:
     assert "top_industry_node_id" in daily_text
     assert "industry_node_data_gap_count" in daily_text
     assert "component_coverage" in input_coverage_path.read_text(encoding="utf-8")
+
+
+def test_backtest_data_credibility_summarizes_pit_inputs() -> None:
+    universe = load_universe()
+    signal_dates = [date(2026, 4, day) for day in range(1, 3)]
+    result = run_daily_score_backtest(
+        prices=_sample_prices(configured_price_tickers(universe), periods=320),
+        rates=_sample_rates(configured_rate_series(universe), periods=320),
+        feature_config=load_features(),
+        scoring_rules=load_scoring_rules(),
+        portfolio_config=load_portfolio(),
+        data_quality_report=_quality_report(),
+        core_watchlist=universe.ai_chain["core_watchlist"],
+        start=date(2026, 4, 1),
+        end=date(2026, 4, 3),
+        strategy_ticker="SMH",
+        benchmark_tickers=("SPY",),
+        fundamental_feature_reports={
+            signal_date: _fundamental_feature_report(signal_date)
+            for signal_date in signal_dates
+        },
+        valuation_review_reports={
+            signal_date: _valuation_review_report(signal_date)
+            for signal_date in signal_dates
+        },
+        risk_event_occurrence_review_reports={
+            signal_date: _risk_event_occurrence_review_report(signal_date)
+            for signal_date in signal_dates
+        },
+        watchlist_lifecycle=WatchlistLifecycleConfig(entries=[]),
+    )
+
+    credibility = build_backtest_data_credibility(result)
+
+    assert credibility.universe_pit
+    assert credibility.uses_self_archived_snapshots
+    assert credibility.grade == "B"
+    valuation_input = {
+        item.input_name: item for item in credibility.core_inputs
+    }["估值快照"]
+    assert valuation_input.point_in_time_class_counts["captured_snapshot"] == 2
+    assert valuation_input.backtest_use_counts["captured_at_forward_only"] == 2
 
 
 def test_backtest_audit_report_flags_input_gaps(tmp_path: Path) -> None:
@@ -389,6 +499,8 @@ def test_backtest_audit_report_flags_input_gaps(tmp_path: Path) -> None:
 
     assert audit_report.status == "PASS_WITH_WARNINGS"
     assert "# 回测输入审计报告" in markdown
+    assert "## 回测数据可信度" in markdown
+    assert "backtest_data_quality_c_exploratory" in markdown
     assert "## Point-in-Time 输入" in markdown
     assert "sec_point_in_time_slice_incomplete" in markdown
     assert "valuation_point_in_time_slice_incomplete" in markdown
@@ -451,6 +563,8 @@ def test_backtest_input_coverage_csv_includes_audit_records(tmp_path: Path) -> N
         "ticker_sec_feature",
         "valuation_source_type",
         "risk_event_source_type",
+        "valuation_point_in_time_class",
+        "valuation_backtest_use",
     }.issubset(record_types)
     ticker_feature = frame.loc[
         (frame["record_type"] == "ticker_sec_feature")
@@ -465,6 +579,14 @@ def test_backtest_input_coverage_csv_includes_audit_records(tmp_path: Path) -> N
     ]
     assert "https://policy.example/release" in set(risk_url["source_url"])
     assert "True" in set(risk_url["score_eligible"].astype(str))
+    valuation_pit = frame.loc[
+        frame["record_type"] == "valuation_point_in_time_class"
+    ]
+    assert "captured_snapshot" in set(valuation_pit["point_in_time_class"])
+    valuation_backtest_use = frame.loc[
+        frame["record_type"] == "valuation_backtest_use"
+    ]
+    assert "captured_at_forward_only" in set(valuation_backtest_use["backtest_use"])
     assert backtest_input_coverage_records(result)
 
 
@@ -1073,6 +1195,8 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     report_path = tmp_path / "backtest.md"
     robustness_path = tmp_path / "backtest_robustness.md"
     robustness_summary_path = robustness_path.with_suffix(".json")
+    lag_sensitivity_path = tmp_path / "backtest_lag_sensitivity.md"
+    lag_sensitivity_summary_path = lag_sensitivity_path.with_suffix(".json")
     daily_path = tmp_path / "backtest_daily.csv"
     input_coverage_path = tmp_path / "backtest_input_coverage.csv"
     audit_path = tmp_path / "backtest_audit.md"
@@ -1140,6 +1264,12 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
             "6.0",
             "--robustness-shift-days",
             "10",
+            "--robustness-random-seed-count",
+            "3",
+            "--lag-sensitivity-report-path",
+            str(lag_sensitivity_path),
+            "--lag-sensitivity-days",
+            "0,1,3",
             "--daily-output-path",
             str(daily_path),
             "--input-coverage-output-path",
@@ -1187,6 +1317,8 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert report_path.exists()
     assert robustness_path.exists()
     assert robustness_summary_path.exists()
+    assert lag_sensitivity_path.exists()
+    assert lag_sensitivity_summary_path.exists()
     assert daily_path.exists()
     assert input_coverage_path.exists()
     assert audit_path.exists()
@@ -1232,6 +1364,8 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert "输入审计状态：" in result.output
     assert "稳健性报告：" in result.output
     assert "稳健性摘要：" in result.output
+    assert "滞后敏感性报告：" in result.output
+    assert "滞后敏感性摘要：" in result.output
     assert "SEC 基本面切片：" in result.output
     assert "历史输入覆盖诊断：" in result.output
     assert "市场阶段：测试 AI 行情" in result.output
@@ -1253,6 +1387,16 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert "production_effect=none" in robustness_text
     assert "cost_stress_execution" in robustness_text
     assert "fixed_60pct_total_asset_ai" in robustness_text
+    assert "rebalance_every_5d" in robustness_text
+    assert "rebalance_every_21d" in robustness_text
+    assert "trend_only_baseline" in robustness_text
+    assert "trend_plus_risk_sentiment_baseline" in robustness_text
+    assert "weight_perturb_trend_up_20pct" in robustness_text
+    assert "模块权重扰动比例：±20%" in robustness_text
+    assert "same_turnover_random_seed_42" in robustness_text
+    assert "同换手率随机策略：seed 42 起，3 组" in robustness_text
+    assert "out_of_sample_holdout" in robustness_text
+    assert "样本外切分比例：70% in-sample" in robustness_text
     assert "shifted_start" in robustness_text
     assert "买入持有基准" in robustness_text
     assert "6.0 bps" in robustness_text
@@ -1262,7 +1406,48 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
         scenario["scenario_id"] for scenario in robustness_summary["scenarios"]
     }
     assert "fixed_60pct_total_asset_ai" in scenario_ids
+    assert "rebalance_every_5d" in scenario_ids
+    assert "rebalance_every_21d" in scenario_ids
+    assert "trend_only_baseline" in scenario_ids
+    assert "trend_plus_risk_sentiment_baseline" in scenario_ids
+    assert "weight_perturb_trend_up_20pct" in scenario_ids
+    assert "weight_perturb_trend_down_20pct" in scenario_ids
+    assert "same_turnover_random_seed_42" in scenario_ids
+    assert "same_turnover_random_seed_44" in scenario_ids
+    assert "in_sample_window" in scenario_ids
+    assert "out_of_sample_holdout" in scenario_ids
     assert "base_dynamic" in robustness_summary
+    assert robustness_summary["weight_perturbation_pct"] == 0.20
+    assert robustness_summary["random_seed_start"] == 42
+    assert robustness_summary["random_seed_count"] == 3
+    assert robustness_summary["oos_split_ratio"] == 0.70
+    remaining_gaps = set(robustness_summary["remaining_gaps"])
+    assert "module_weight_perturbation" not in remaining_gaps
+    assert "same_turnover_random_strategy" not in remaining_gaps
+    assert "out_of_sample_validation" not in remaining_gaps
+    assert "rebalance_frequency" not in remaining_gaps
+    assert "trend_only_baseline" not in remaining_gaps
+    assert "trend_plus_risk_sentiment_baseline" not in remaining_gaps
+    lag_sensitivity_text = lag_sensitivity_path.read_text(encoding="utf-8")
+    assert "# 回测滞后敏感性报告" in lag_sensitivity_text
+    assert "feature_lag_1_universe_lag_0" in lag_sensitivity_text
+    assert "feature_lag_0_universe_lag_1" in lag_sensitivity_text
+    assert "feature_lag_1_universe_lag_1" in lag_sensitivity_text
+    assert "feature_lag_3_universe_lag_3" in lag_sensitivity_text
+    assert "Backtest Data Quality" in lag_sensitivity_text
+    lag_summary = json.loads(lag_sensitivity_summary_path.read_text(encoding="utf-8"))
+    assert lag_summary["report_type"] == "backtest_lag_sensitivity"
+    assert lag_summary["tested_lag_days"] == [0, 1, 3]
+    assert {
+        scenario["scenario_id"] for scenario in lag_summary["scenarios"]
+    } == {
+        "feature_lag_1_universe_lag_0",
+        "feature_lag_0_universe_lag_1",
+        "feature_lag_1_universe_lag_1",
+        "feature_lag_3_universe_lag_0",
+        "feature_lag_0_universe_lag_3",
+        "feature_lag_3_universe_lag_3",
+    }
     audit_text = audit_path.read_text(encoding="utf-8")
     assert "# 回测输入审计报告" in audit_text
     assert str(report_path) in audit_text
@@ -1385,6 +1570,107 @@ def test_backtest_input_gaps_cli_writes_gap_report(tmp_path: Path) -> None:
     assert "风险事件发生记录为 0 不能自动解释为历史无事件" in text
     assert "missing_or_not_reviewed" in text
     assert "aits valuation import-csv" in text
+
+
+def test_backtest_pit_coverage_cli_reports_forward_archive_readiness(
+    tmp_path: Path,
+) -> None:
+    raw_dir = tmp_path / "raw"
+    raw_dir.mkdir()
+    payload_paths = [
+        _write_pit_payload(raw_dir / f"nvda_{day}.json")
+        for day in ("2026-05-01", "2026-05-02", "2026-05-03")
+    ]
+    records = tuple(
+        _pit_snapshot_record(
+            payload_path=payload_path,
+            snapshot_id=f"fmp_forward_pit_nvda_{index}",
+            available_at=datetime(2026, 5, index, 12, 0, tzinfo=UTC),
+        )
+        for index, payload_path in enumerate(payload_paths, start=1)
+    )
+    manifest_path = write_pit_snapshot_manifest(
+        records,
+        tmp_path / "pit_snapshots" / "manifest.csv",
+    )
+    output_path = tmp_path / "backtest_pit_coverage.md"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "backtest-pit-coverage",
+            "--manifest-path",
+            str(manifest_path),
+            "--as-of",
+            "2026-05-04",
+            "--output-path",
+            str(output_path),
+            "--min-forward-days",
+            "2",
+            "--max-staleness-days",
+            "2",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "PIT 覆盖验证状态：PASS" in result.output
+    text = output_path.read_text(encoding="utf-8")
+    assert "# Forward-only PIT 覆盖持续验证报告" in text
+    assert "valuation_expectations" in text
+    assert "2026-05-02" in text
+    assert "没有 strict PIT vendor archive" in text
+    assert "captured_at_forward_only=3" in text
+
+
+def _write_pit_payload(path: Path) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps({"records": [{"symbol": "NVDA"}]}), encoding="utf-8")
+    return path
+
+
+def _pit_snapshot_record(
+    *,
+    payload_path: Path,
+    snapshot_id: str,
+    available_at: datetime,
+) -> PitSnapshotManifestRecord:
+    checksum = hashlib.sha256(payload_path.read_bytes()).hexdigest()
+    timestamp = available_at.isoformat()
+    return PitSnapshotManifestRecord(
+        snapshot_id=snapshot_id,
+        source_id="fmp_valuation_expectations",
+        source_name="Financial Modeling Prep",
+        source_type="paid_vendor",
+        source_quality_tier="qualified",
+        endpoint="https://financialmodelingprep.com/stable/analyst-estimates",
+        request_params='{"symbol":"NVDA"}',
+        provider_symbol="NVDA",
+        canonical_ticker="NVDA",
+        provider_symbol_alias="NVDA",
+        http_status="200",
+        content_type="application/json",
+        response_headers="{}",
+        raw_payload_path=str(payload_path),
+        raw_payload_sha256=checksum,
+        raw_payload_bytes=payload_path.stat().st_size,
+        snapshot_time=timestamp,
+        ingested_at=timestamp,
+        vendor_timestamp="",
+        available_time=timestamp,
+        row_count=1,
+        parser_version="unit_test",
+        schema_version="1",
+        license_use_class="internal_research",
+        redistribution_allowed=False,
+        llm_processing_allowed=False,
+        point_in_time_class="captured_snapshot",
+        history_source_class="captured_snapshot_history",
+        backtest_use="captured_at_forward_only",
+        confidence_level="medium",
+        confidence_reason="unit test forward-only archive",
+        validation_status="PASS",
+        validation_report_path="",
+    )
 
 
 def _quality_report() -> DataQualityReport:

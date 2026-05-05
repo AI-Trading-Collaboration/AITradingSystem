@@ -82,6 +82,10 @@ BACKTEST_INPUT_COVERAGE_COLUMNS = (
     "related_tickers",
     "source_type",
     "source_url",
+    "point_in_time_class",
+    "history_source_class",
+    "backtest_use",
+    "confidence_level",
     "issue_code",
     "subject",
     "metric",
@@ -101,9 +105,33 @@ class BacktestRegimeContext:
 
 
 @dataclass(frozen=True)
+class BacktestCoreInputCredibility:
+    input_name: str
+    coverage: float
+    point_in_time_class_counts: dict[str, int]
+    backtest_use_counts: dict[str, int]
+    note: str
+
+
+@dataclass(frozen=True)
+class BacktestDataCredibility:
+    grade: str
+    label: str
+    uses_vendor_historical_estimates: bool
+    uses_self_archived_snapshots: bool
+    minimum_feature_lag_days: int
+    universe_pit: bool
+    corporate_actions_handling: str
+    reasons: tuple[str, ...]
+    core_inputs: tuple[BacktestCoreInputCredibility, ...]
+
+
+@dataclass(frozen=True)
 class BacktestDailyRow:
     signal_date: date
     return_date: date
+    feature_as_of: date
+    universe_as_of: date
     total_score: float
     confidence_score: float
     confidence_level: str
@@ -152,6 +180,8 @@ class BacktestDailyRow:
         record: dict[str, object] = {
             "signal_date": self.signal_date.isoformat(),
             "return_date": self.return_date.isoformat(),
+            "feature_as_of": self.feature_as_of.isoformat(),
+            "universe_as_of": self.universe_as_of.isoformat(),
             "total_score": self.total_score,
             "confidence_score": self.confidence_score,
             "confidence_level": self.confidence_level,
@@ -268,7 +298,15 @@ class DailyBacktestResult:
     ) = None
     monthly_valuation_source_type_counts: dict[tuple[str, str], int] | None = None
     monthly_risk_event_source_type_counts: dict[tuple[str, str], int] | None = None
+    valuation_point_in_time_class_counts: dict[str, int] | None = None
+    valuation_history_source_class_counts: dict[str, int] | None = None
+    valuation_backtest_use_counts: dict[str, int] | None = None
+    valuation_confidence_level_counts: dict[str, int] | None = None
     benchmark_policy_report: BenchmarkPolicyReport | None = None
+    feature_lag_days: int = 0
+    universe_lag_days: int = 0
+    rebalance_delay_days: int = 1
+    universe_pit: bool = False
 
     @property
     def status(self) -> str:
@@ -305,11 +343,20 @@ def run_daily_score_backtest(
     industry_chain: IndustryChainConfig | None = None,
     watchlist: WatchlistConfig | None = None,
     benchmark_policy_report: BenchmarkPolicyReport | None = None,
+    feature_lag_days: int = 0,
+    universe_lag_days: int = 0,
+    rebalance_delay_days: int = 1,
 ) -> DailyBacktestResult:
     if start >= end:
         raise ValueError("回测开始日期必须早于结束日期")
     if cost_bps < 0:
         raise ValueError("交易成本 bps 不能为负数")
+    if feature_lag_days < 0:
+        raise ValueError("feature_lag_days 不能为负数")
+    if universe_lag_days < 0:
+        raise ValueError("universe_lag_days 不能为负数")
+    if rebalance_delay_days != 1:
+        raise ValueError("当前回测只支持 1 个交易日 rebalance delay")
     _validate_cost_bps(
         spread_bps=spread_bps,
         slippage_bps=slippage_bps,
@@ -322,7 +369,13 @@ def run_daily_score_backtest(
 
     close_pivot = _prepare_adjusted_close_pivot(prices)
     _check_required_tickers(close_pivot, (strategy_ticker, *benchmark_tickers))
-    periods = _backtest_periods(close_pivot[strategy_ticker], start, end)
+    periods = _backtest_periods_with_lag(
+        close_pivot[strategy_ticker],
+        start,
+        end,
+        feature_lag_days=feature_lag_days,
+        universe_lag_days=universe_lag_days,
+    )
     if not periods:
         raise ValueError("回测区间内没有可用的下一交易日收益")
 
@@ -359,15 +412,19 @@ def run_daily_score_backtest(
     ] = Counter()
     monthly_valuation_source_type_counts: Counter[tuple[str, str]] = Counter()
     monthly_risk_event_source_type_counts: Counter[tuple[str, str]] = Counter()
+    valuation_point_in_time_class_counts: Counter[str] = Counter()
+    valuation_history_source_class_counts: Counter[str] = Counter()
+    valuation_backtest_use_counts: Counter[str] = Counter()
+    valuation_confidence_level_counts: Counter[str] = Counter()
 
-    for signal_date, return_date in periods:
+    for signal_date, return_date, feature_as_of, universe_as_of in periods:
         fundamental_feature_report = None
         if fundamental_feature_reports is not None:
-            fundamental_feature_report = fundamental_feature_reports.get(signal_date)
+            fundamental_feature_report = fundamental_feature_reports.get(feature_as_of)
             if fundamental_feature_report is None:
                 raise ValueError(
                     "回测缺少 point-in-time SEC 基本面特征："
-                    f"{signal_date.isoformat()}"
+                    f"{feature_as_of.isoformat()}"
                 )
             fundamental_feature_report_count += 1
             fundamental_feature_status_counts[fundamental_feature_report.status] = (
@@ -411,11 +468,11 @@ def run_daily_score_backtest(
             )
         valuation_review_report = None
         if valuation_review_reports is not None:
-            valuation_review_report = valuation_review_reports.get(signal_date)
+            valuation_review_report = valuation_review_reports.get(feature_as_of)
             if valuation_review_report is None:
                 raise ValueError(
                     "回测缺少 point-in-time 估值快照复核报告："
-                    f"{signal_date.isoformat()}"
+                    f"{feature_as_of.isoformat()}"
                 )
             valuation_review_report_count += 1
             valuation_review_status_counts[valuation_review_report.status] = (
@@ -431,6 +488,13 @@ def run_daily_score_backtest(
                 monthly_valuation_source_type_counts,
                 signal_date=signal_date,
                 report=valuation_review_report,
+            )
+            _record_valuation_credibility_counts(
+                valuation_point_in_time_class_counts,
+                valuation_history_source_class_counts,
+                valuation_backtest_use_counts,
+                valuation_confidence_level_counts,
+                valuation_review_report,
             )
             _record_monthly_valuation_ticker_inputs(
                 monthly_ticker_input_counts,
@@ -451,12 +515,12 @@ def run_daily_score_backtest(
         risk_event_occurrence_review_report = None
         if risk_event_occurrence_review_reports is not None:
             risk_event_occurrence_review_report = risk_event_occurrence_review_reports.get(
-                signal_date
+                feature_as_of
             )
             if risk_event_occurrence_review_report is None:
                 raise ValueError(
                     "回测缺少 point-in-time 风险事件发生记录复核报告："
-                    f"{signal_date.isoformat()}"
+                    f"{feature_as_of.isoformat()}"
                 )
             risk_event_occurrence_review_report_count += 1
             status = risk_event_occurrence_review_report.status
@@ -502,7 +566,7 @@ def run_daily_score_backtest(
             active_watchlist_tickers_as_of(
                 lifecycle=watchlist_lifecycle,
                 tickers=core_watchlist,
-                as_of=signal_date,
+                as_of=universe_as_of,
             )
             if watchlist_lifecycle is not None
             else core_watchlist
@@ -511,7 +575,7 @@ def run_daily_score_backtest(
             prices=prices,
             rates=rates,
             config=feature_config,
-            as_of=signal_date,
+            as_of=feature_as_of,
             core_watchlist=effective_core_watchlist,
         )
         score_report = build_daily_score_report(
@@ -596,6 +660,8 @@ def run_daily_score_backtest(
             BacktestDailyRow(
                 signal_date=signal_date,
                 return_date=return_date,
+                feature_as_of=feature_as_of,
+                universe_as_of=universe_as_of,
                 total_score=recommendation.total_score,
                 confidence_score=confidence.score,
                 confidence_level=confidence.level,
@@ -674,8 +740,13 @@ def run_daily_score_backtest(
         exposures=[row.target_exposure for row in rows],
         turnovers=[row.turnover for row in rows],
     )
+    benchmark_periods = [
+        (signal_date, return_date)
+        for signal_date, return_date, _feature_as_of, _universe_as_of in periods
+    ]
     benchmark_metrics = {
-        ticker: _benchmark_metrics(close_pivot, ticker, periods) for ticker in benchmark_tickers
+        ticker: _benchmark_metrics(close_pivot, ticker, benchmark_periods)
+        for ticker in benchmark_tickers
     }
 
     return DailyBacktestResult(
@@ -753,7 +824,21 @@ def run_daily_score_backtest(
         monthly_risk_event_source_type_counts=(
             dict(monthly_risk_event_source_type_counts) or None
         ),
+        valuation_point_in_time_class_counts=(
+            dict(valuation_point_in_time_class_counts) or None
+        ),
+        valuation_history_source_class_counts=(
+            dict(valuation_history_source_class_counts) or None
+        ),
+        valuation_backtest_use_counts=dict(valuation_backtest_use_counts) or None,
+        valuation_confidence_level_counts=(
+            dict(valuation_confidence_level_counts) or None
+        ),
         benchmark_policy_report=benchmark_policy_report,
+        feature_lag_days=feature_lag_days,
+        universe_lag_days=universe_lag_days,
+        rebalance_delay_days=rebalance_delay_days,
+        universe_pit=watchlist_lifecycle is not None,
     )
 
 
@@ -786,6 +871,7 @@ def backtest_input_coverage_records(
     records.extend(_ticker_feature_coverage_records(result))
     records.extend(_risk_event_evidence_url_coverage_records(result))
     records.extend(_input_source_type_coverage_records(result))
+    records.extend(_valuation_credibility_coverage_records(result))
     return tuple(records)
 
 
@@ -926,6 +1012,8 @@ def render_backtest_report(
             ).rstrip(),
         ]
     )
+
+    lines.extend(_backtest_data_credibility_section(result))
 
     lines.extend(
         [
@@ -1308,6 +1396,314 @@ def _has_backtest_input_limitations(result: DailyBacktestResult) -> bool:
     return False
 
 
+def _component_coverage_values(result: DailyBacktestResult) -> dict[str, list[float]]:
+    values_by_component: dict[str, list[float]] = {}
+    for row in result.rows:
+        for component, coverage in row.component_coverages.items():
+            values_by_component.setdefault(component, []).append(coverage)
+    return values_by_component
+
+
+def _component_source_type_counts(
+    result: DailyBacktestResult,
+) -> Counter[tuple[str, str]]:
+    counts: Counter[tuple[str, str]] = Counter()
+    for row in result.rows:
+        for component, source_type in row.component_source_types.items():
+            counts[(component, source_type)] += 1
+    return counts
+
+
+def build_backtest_data_credibility(result: DailyBacktestResult) -> BacktestDataCredibility:
+    signal_count = len(result.rows)
+    reasons: list[str] = []
+    component_values = _component_coverage_values(result)
+    minimum_component_coverage = min(
+        (min(values) for values in component_values.values() if values),
+        default=0.0,
+    )
+    average_component_coverage = min(
+        (sum(values) / len(values) for values in component_values.values() if values),
+        default=0.0,
+    )
+
+    valuation_backtest_use_counts = result.valuation_backtest_use_counts or {}
+    valuation_pit_counts = result.valuation_point_in_time_class_counts or {}
+    valuation_history_counts = result.valuation_history_source_class_counts or {}
+    valuation_confidence_counts = result.valuation_confidence_level_counts or {}
+    valuation_source_counts = result.monthly_valuation_source_type_counts or {}
+
+    uses_vendor_historical_estimates = _has_any_count(
+        valuation_history_counts,
+        {
+            "vendor_archive",
+            "vendor_historical_endpoint",
+            "vendor_current_trend",
+        },
+    ) or any(source_type == "paid_vendor" for (_month, source_type) in valuation_source_counts)
+    uses_self_archived_snapshots = _has_any_count(
+        valuation_history_counts,
+        {"captured_snapshot_history"},
+    ) or _has_any_count(
+        valuation_pit_counts,
+        {"captured_snapshot"},
+    ) or _has_any_count(
+        valuation_backtest_use_counts,
+        {"captured_at_forward_only"},
+    )
+
+    if not result.data_quality_report.passed:
+        reasons.append("市场数据质量门禁失败。")
+    elif result.data_quality_report.warning_count:
+        reasons.append("市场数据质量门禁存在 warning，需结合质量报告解释。")
+    if not result.universe_pit:
+        reasons.append("观察池未接入 point-in-time lifecycle，存在幸存者偏差风险。")
+    if result.fundamental_feature_report_count != signal_count:
+        reasons.append("SEC 基本面 PIT 切片没有覆盖全部 signal_date。")
+    if result.valuation_snapshot_count_max == 0:
+        reasons.append("历史估值快照全区间为空，估值模块只能按数据不足解释。")
+    if result.risk_event_occurrence_count_max == 0:
+        reasons.append("风险事件 occurrence/attestation 全区间为空，不能解释为历史无风险。")
+    if minimum_component_coverage < 0.9 or average_component_coverage < 0.9:
+        reasons.append("至少一个评分模块覆盖率低于 90%。")
+    if _has_any_count(
+        valuation_backtest_use_counts,
+        {"auxiliary_current_only", "not_for_backtest"},
+    ):
+        reasons.append("估值输入包含不能用于严格历史回测的快照。")
+    if _has_any_count(valuation_pit_counts, {"backfilled_history_distribution"}):
+        reasons.append("估值输入包含回填历史分布，不能当作当时可交易视图。")
+    if _has_any_count(valuation_confidence_counts, {"low"}):
+        reasons.append("估值输入包含低可信度记录。")
+
+    source_type_counts = _component_source_type_counts(result)
+    if any(
+        source_type in {"insufficient_data", "placeholder"}
+        for (_component, source_type) in source_type_counts
+    ):
+        reasons.append("评分组件使用了数据不足或占位输入。")
+
+    if (
+        not result.data_quality_report.passed
+        or not result.universe_pit
+        or result.valuation_snapshot_count_max == 0
+        or result.risk_event_occurrence_count_max == 0
+        or minimum_component_coverage < 0.9
+        or _has_any_count(
+            valuation_backtest_use_counts,
+            {"auxiliary_current_only", "not_for_backtest"},
+        )
+        or _has_any_count(valuation_pit_counts, {"backfilled_history_distribution"})
+        or _has_any_count(valuation_confidence_counts, {"low"})
+        or any(
+            source_type in {"insufficient_data", "placeholder"}
+            for (_component, source_type) in source_type_counts
+        )
+    ):
+        grade = "C"
+    elif (
+        result.data_quality_report.warning_count
+        or result.fundamental_feature_warning_count
+        or result.valuation_review_warning_count
+        or result.risk_event_occurrence_warning_count
+        or _has_any_count(valuation_backtest_use_counts, {"captured_at_forward_only"})
+        or _has_any_count(valuation_pit_counts, {"captured_snapshot", "unknown"})
+        or any(
+            source_type in _SOURCE_TYPES_REQUIRING_EXPLANATION
+            for (_component, source_type) in source_type_counts
+        )
+    ):
+        grade = "B"
+    else:
+        grade = "A"
+
+    if not reasons:
+        reasons.append("核心输入已通过当前审计规则，仍需结合执行成本和容量假设解释。")
+
+    return BacktestDataCredibility(
+        grade=grade,
+        label=_backtest_data_quality_label(grade),
+        uses_vendor_historical_estimates=uses_vendor_historical_estimates,
+        uses_self_archived_snapshots=uses_self_archived_snapshots,
+        minimum_feature_lag_days=result.feature_lag_days,
+        universe_pit=result.universe_pit,
+        corporate_actions_handling=(
+            "使用价格缓存的 adj_close 作为回测收益口径；复权、异常波动和跨源一致性"
+            "由 aits validate-data 审计，未用回测逻辑静默修正价格。"
+        ),
+        reasons=tuple(dict.fromkeys(reasons)),
+        core_inputs=tuple(_core_input_credibility_rows(result)),
+    )
+
+
+def _backtest_data_credibility_section(result: DailyBacktestResult) -> list[str]:
+    credibility = build_backtest_data_credibility(result)
+    lines = [
+        "",
+        "## 回测数据可信度",
+        "",
+        f"- Backtest Data Quality：{credibility.label}（{credibility.grade}）",
+        (
+            "- Uses Vendor Historical Estimates："
+            f"{_yes_no(credibility.uses_vendor_historical_estimates)}"
+        ),
+        (
+            "- Uses Self-Archived Snapshots："
+            f"{_yes_no(credibility.uses_self_archived_snapshots)}"
+        ),
+        f"- Minimum Feature Lag：{credibility.minimum_feature_lag_days} 个交易日",
+        f"- Universe PIT：{_yes_no(credibility.universe_pit)}",
+        f"- Corporate Actions Handling：{credibility.corporate_actions_handling}",
+        "",
+        "### 可信度原因",
+        "",
+    ]
+    lines.extend(f"- {reason}" for reason in credibility.reasons)
+    if credibility.grade == "C":
+        lines.append(
+            "- C 级回测只能作为探索性研究和工程审计输入；Sharpe、CAGR "
+            "和收益表不构成无条件绩效结论。"
+        )
+    lines.extend(
+        [
+            "",
+            "### 核心输入 PIT 覆盖",
+            "",
+            "| 输入 | 覆盖率 | point_in_time_class | backtest_use | 说明 |",
+            "|---|---:|---|---|---|",
+        ]
+    )
+    for item in credibility.core_inputs:
+        lines.append(
+            "| "
+            f"{item.input_name} | "
+            f"{item.coverage:.0%} | "
+            f"{_counts_summary(item.point_in_time_class_counts)} | "
+            f"{_counts_summary(item.backtest_use_counts)} | "
+            f"{_escape_markdown_table(item.note)} |"
+        )
+    return lines
+
+
+def _core_input_credibility_rows(
+    result: DailyBacktestResult,
+) -> list[BacktestCoreInputCredibility]:
+    signal_count = max(len(result.rows), 1)
+    rows: list[BacktestCoreInputCredibility] = []
+    sec_coverage = result.fundamental_feature_report_count / signal_count
+    rows.append(
+        BacktestCoreInputCredibility(
+            input_name="SEC 基本面特征",
+            coverage=sec_coverage,
+            point_in_time_class_counts=(
+                {"sec_filed_date_point_in_time": result.fundamental_feature_report_count}
+                if result.fundamental_feature_report_count
+                else {"insufficient_data": signal_count}
+            ),
+            backtest_use_counts=(
+                {"strict_point_in_time": result.fundamental_feature_report_count}
+                if result.fundamental_feature_report_count
+                else {"not_for_backtest": signal_count}
+            ),
+            note="按 filed_date / signal_date 过滤 SEC companyfacts 与 TSM IR 输入。",
+        )
+    )
+    valuation_coverage_values = [
+        row.component_coverages.get("valuation", 0.0) for row in result.rows
+    ]
+    rows.append(
+        BacktestCoreInputCredibility(
+            input_name="估值快照",
+            coverage=(
+                sum(valuation_coverage_values) / len(valuation_coverage_values)
+                if valuation_coverage_values
+                else 0.0
+            ),
+            point_in_time_class_counts=(
+                result.valuation_point_in_time_class_counts
+                or {"insufficient_data": signal_count}
+            ),
+            backtest_use_counts=(
+                result.valuation_backtest_use_counts or {"not_for_backtest": signal_count}
+            ),
+            note="按 as_of/captured_at 过滤；回填历史分布不得伪装为 strict PIT。",
+        )
+    )
+    risk_coverage_values = [
+        row.component_coverages.get("policy_geopolitics", 0.0) for row in result.rows
+    ]
+    has_risk_occurrences = (result.risk_event_occurrence_count_max or 0) > 0
+    rows.append(
+        BacktestCoreInputCredibility(
+            input_name="风险事件 occurrence / attestation",
+            coverage=(
+                sum(risk_coverage_values) / len(risk_coverage_values)
+                if risk_coverage_values
+                else 0.0
+            ),
+            point_in_time_class_counts=(
+                {
+                    "evidence_captured_at_point_in_time": (
+                        result.risk_event_occurrence_review_report_count
+                    )
+                }
+                if has_risk_occurrences
+                else {"insufficient_data": signal_count}
+            ),
+            backtest_use_counts=(
+                {
+                    "strict_point_in_time_or_reviewed_occurrence": (
+                        result.risk_event_occurrence_review_report_count
+                    )
+                }
+                if has_risk_occurrences
+                else {"not_for_backtest": signal_count}
+            ),
+            note="按 triggered_at、published_at、captured_at、reviewed_at 和 resolved_at 切片。",
+        )
+    )
+    rows.append(
+        BacktestCoreInputCredibility(
+            input_name="观察池 Universe",
+            coverage=1.0 if result.universe_pit else 0.0,
+            point_in_time_class_counts=(
+                {"watchlist_lifecycle_signal_date": signal_count}
+                if result.universe_pit
+                else {"unknown": signal_count}
+            ),
+            backtest_use_counts=(
+                {"strict_point_in_time": signal_count}
+                if result.universe_pit
+                else {"not_for_backtest": signal_count}
+            ),
+            note="按 watchlist_lifecycle 在 signal_date/universe_as_of 过滤，防止幸存者偏差。",
+        )
+    )
+    return rows
+
+
+def _has_any_count(counts: dict[str, int], keys: set[str]) -> bool:
+    return any(counts.get(key, 0) > 0 for key in keys)
+
+
+def _backtest_data_quality_label(grade: str) -> str:
+    return {
+        "A": "A 级：严格 PIT / 自建快照可证明",
+        "B": "B 级：保守近似，需要 lag sensitivity 支撑",
+        "C": "C 级：探索性历史研究，不可作无条件绩效结论",
+    }.get(grade, grade)
+
+
+def _yes_no(value: bool) -> str:
+    return "是" if value else "否"
+
+
+def _counts_summary(counts: dict[str, int]) -> str:
+    if not counts:
+        return "无"
+    return "；".join(f"{key}={count}" for key, count in sorted(counts.items()))
+
+
 def _component_input_coverage_records(
     result: DailyBacktestResult,
 ) -> list[dict[str, object]]:
@@ -1480,6 +1876,55 @@ def _input_source_type_coverage_records(
     return records
 
 
+def _valuation_credibility_coverage_records(
+    result: DailyBacktestResult,
+) -> list[dict[str, object]]:
+    records: list[dict[str, object]] = []
+    for point_in_time_class, count in sorted(
+        (result.valuation_point_in_time_class_counts or {}).items()
+    ):
+        records.append(
+            _input_coverage_record(
+                "valuation_point_in_time_class",
+                input="估值快照",
+                point_in_time_class=point_in_time_class,
+                count=count,
+            )
+        )
+    for history_source_class, count in sorted(
+        (result.valuation_history_source_class_counts or {}).items()
+    ):
+        records.append(
+            _input_coverage_record(
+                "valuation_history_source_class",
+                input="估值快照",
+                history_source_class=history_source_class,
+                count=count,
+            )
+        )
+    for backtest_use, count in sorted((result.valuation_backtest_use_counts or {}).items()):
+        records.append(
+            _input_coverage_record(
+                "valuation_backtest_use",
+                input="估值快照",
+                backtest_use=backtest_use,
+                count=count,
+            )
+        )
+    for confidence_level, count in sorted(
+        (result.valuation_confidence_level_counts or {}).items()
+    ):
+        records.append(
+            _input_coverage_record(
+                "valuation_confidence_level",
+                input="估值快照",
+                confidence_level=confidence_level,
+                count=count,
+            )
+        )
+    return records
+
+
 def _input_coverage_record(
     record_type: str,
     **updates: object,
@@ -1515,14 +1960,40 @@ def _check_required_tickers(close_pivot: pd.DataFrame, tickers: tuple[str, ...])
 
 
 def _backtest_periods(series: pd.Series, start: date, end: date) -> list[tuple[date, date]]:
+    return [
+        (signal_date, return_date)
+        for signal_date, return_date, _feature_as_of, _universe_as_of in (
+            _backtest_periods_with_lag(
+                series,
+                start,
+                end,
+                feature_lag_days=0,
+                universe_lag_days=0,
+            )
+        )
+    ]
+
+
+def _backtest_periods_with_lag(
+    series: pd.Series,
+    start: date,
+    end: date,
+    *,
+    feature_lag_days: int,
+    universe_lag_days: int,
+) -> list[tuple[date, date, date, date]]:
     history = series.dropna().sort_index()
     timestamps = list(history.index)
-    periods: list[tuple[date, date]] = []
+    periods: list[tuple[date, date, date, date]] = []
     for index in range(len(timestamps) - 1):
         signal_date = pd.Timestamp(timestamps[index]).date()
         return_date = pd.Timestamp(timestamps[index + 1]).date()
         if signal_date >= start and return_date <= end:
-            periods.append((signal_date, return_date))
+            if index < feature_lag_days or index < universe_lag_days:
+                continue
+            feature_as_of = pd.Timestamp(timestamps[index - feature_lag_days]).date()
+            universe_as_of = pd.Timestamp(timestamps[index - universe_lag_days]).date()
+            periods.append((signal_date, return_date, feature_as_of, universe_as_of))
     return periods
 
 
@@ -2069,6 +2540,21 @@ def _record_monthly_valuation_source_types(
     for loaded in report.validation_report.snapshots:
         source_type = loaded.snapshot.source_type
         monthly_valuation_source_type_counts[(month, source_type)] += 1
+
+
+def _record_valuation_credibility_counts(
+    point_in_time_class_counts: Counter[str],
+    history_source_class_counts: Counter[str],
+    backtest_use_counts: Counter[str],
+    confidence_level_counts: Counter[str],
+    report: ValuationReviewReport,
+) -> None:
+    for loaded in report.validation_report.snapshots:
+        snapshot = loaded.snapshot
+        point_in_time_class_counts[snapshot.point_in_time_class] += 1
+        history_source_class_counts[snapshot.history_source_class] += 1
+        backtest_use_counts[snapshot.backtest_use] += 1
+        confidence_level_counts[snapshot.confidence_level] += 1
 
 
 def _record_monthly_risk_event_source_urls(

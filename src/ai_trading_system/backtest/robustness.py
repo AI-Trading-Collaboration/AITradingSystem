@@ -1,12 +1,15 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
+from random import Random
 
 from ai_trading_system.backtest.daily import DailyBacktestResult
 from ai_trading_system.backtest.engine import BacktestMetrics, summarize_long_only_backtest
+from ai_trading_system.scoring.position_model import ModuleScore, WeightedScoreModel
 
 
 @dataclass(frozen=True)
@@ -38,6 +41,10 @@ class BacktestRobustnessReport:
     scenarios: tuple[BacktestRobustnessScenario, ...]
     cost_stress_increment_bps: float
     shifted_start_days: int
+    weight_perturbation_pct: float = 0.20
+    random_seed_start: int = 42
+    random_seed_count: int = 20
+    oos_split_ratio: float = 0.70
 
     @property
     def status(self) -> str:
@@ -113,6 +120,74 @@ def fixed_total_asset_exposure_scenario(
     )
 
 
+def rebalance_interval_scenario(
+    result: DailyBacktestResult,
+    *,
+    interval_days: int,
+) -> BacktestRobustnessScenario:
+    if interval_days <= 1:
+        raise ValueError("rebalance interval_days must be greater than 1")
+    metrics = _rebalance_interval_metrics(result, interval_days=interval_days)
+    return BacktestRobustnessScenario(
+        scenario_id=f"rebalance_every_{interval_days}d",
+        label=f"每 {interval_days} 个交易日再平衡",
+        category="rebalance_frequency",
+        description=(
+            f"只在首个 signal_date 和之后每 {interval_days} 个交易日读取一次"
+            "基础动态目标仓位，其余日期维持上一仓位；复用同一下一交易日收益、"
+            "显式成本假设和 point-in-time 输入。"
+        ),
+        metrics=metrics,
+        first_signal_date=result.first_signal_date,
+        last_signal_date=result.last_signal_date,
+    )
+
+
+def module_subset_baseline_scenario(
+    result: DailyBacktestResult,
+    *,
+    scenario_id: str,
+    label: str,
+    modules: tuple[str, ...],
+    weights: Mapping[str, float],
+) -> BacktestRobustnessScenario:
+    metrics = _module_subset_metrics(result, modules=modules, weights=weights)
+    module_label = " + ".join(modules)
+    return BacktestRobustnessScenario(
+        scenario_id=scenario_id,
+        label=label,
+        category="signal_family_baseline",
+        description=(
+            f"只使用 {module_label} 模块分数和配置权重映射仓位，复用每日宏观总风险"
+            "资产预算、最小调仓阈值、下一交易日收益和显式成本假设；不重跑 "
+            "production scoring，也不新增数据源。"
+        ),
+        metrics=metrics,
+        first_signal_date=result.first_signal_date,
+        last_signal_date=result.last_signal_date,
+    )
+
+
+def same_turnover_random_scenario(
+    result: DailyBacktestResult,
+    *,
+    seed: int,
+) -> BacktestRobustnessScenario:
+    metrics = _same_turnover_random_metrics(result, seed=seed)
+    return BacktestRobustnessScenario(
+        scenario_id=f"same_turnover_random_seed_{seed}",
+        label=f"同换手率随机策略 seed {seed}",
+        category="same_turnover_random_strategy",
+        description=(
+            f"使用固定随机种子 {seed} 生成随机加/减仓方向，但每日 absolute turnover "
+            "与基础动态策略一致；逐日重新计算收益、融资和交易成本。"
+        ),
+        metrics=metrics,
+        first_signal_date=result.first_signal_date,
+        last_signal_date=result.last_signal_date,
+    )
+
+
 def backtest_robustness_summary_record(
     report: BacktestRobustnessReport,
 ) -> dict[str, object]:
@@ -140,6 +215,10 @@ def backtest_robustness_summary_record(
         "data_quality_status": result.data_quality_report.status,
         "cost_stress_increment_bps": report.cost_stress_increment_bps,
         "shifted_start_days": report.shifted_start_days,
+        "weight_perturbation_pct": report.weight_perturbation_pct,
+        "random_seed_start": report.random_seed_start,
+        "random_seed_count": report.random_seed_count,
+        "oos_split_ratio": report.oos_split_ratio,
         "base_dynamic": _summary_metrics_record(result.strategy_metrics),
         "scenarios": [
             _scenario_summary_record(scenario, result.strategy_metrics)
@@ -155,13 +234,7 @@ def backtest_robustness_summary_record(
             }
             for ticker, metrics in sorted(result.benchmark_metrics.items())
         ],
-        "remaining_gaps": (
-            "module_weight_perturbation",
-            "trend_only_baseline",
-            "trend_plus_risk_sentiment_baseline",
-            "same_turnover_random_strategy",
-            "out_of_sample_validation",
-        ),
+        "remaining_gaps": (),
     }
 
 
@@ -195,12 +268,19 @@ def render_backtest_robustness_report(report: BacktestRobustnessReport) -> str:
             f"- 数据质量状态：{result.data_quality_report.status}",
             f"- 成本压力增量：{report.cost_stress_increment_bps:.1f} bps",
             f"- 起点后移天数：{report.shifted_start_days}",
+            f"- 模块权重扰动比例：±{report.weight_perturbation_pct:.0%}",
+            (
+                f"- 同换手率随机策略：seed {report.random_seed_start} 起，"
+                f"{report.random_seed_count} 组"
+            ),
+            f"- 样本外切分比例：{report.oos_split_ratio:.0%} in-sample",
             "",
             "## 方法边界",
             "",
             (
-                "第二阶段复用同一批 point-in-time 输入运行成本压力、起点后移、"
-                "固定总资产 AI exposure 和买入持有基准对比；它不是完整的防过拟合证明。"
+                "当前基础版复用同一批 point-in-time 输入运行成本压力、起点后移、"
+                "固定总资产 AI exposure、再平衡频率、趋势信号族基线和买入持有"
+                "基准对比；它不是完整的防过拟合证明。"
             ),
             (
                 "成本压力实验只改变显式成本假设，不改变价格、基本面、估值、风险事件、"
@@ -208,8 +288,7 @@ def render_backtest_robustness_report(report: BacktestRobustnessReport) -> str:
             ),
             (
                 "本报告不改变 production scoring、position_gate、日报结论或任何执行建议；"
-                "完整生产信任仍需要历史估值/风险事件覆盖、权重扰动、随机基线、"
-                "再平衡频率和样本外验证。"
+                "完整生产信任仍需要历史估值/风险事件覆盖、随机基线和样本外验证。"
             ),
             "",
             "## 稳健性实验",
@@ -254,10 +333,11 @@ def render_backtest_robustness_report(report: BacktestRobustnessReport) -> str:
             "",
             "## 剩余缺口",
             "",
-            "- 尚未运行不同再平衡频率实验。",
-            "- 尚未运行模块权重扰动、趋势-only 和趋势+风险情绪基线。",
-            "- 尚未运行同换手率随机策略和显著性表达。",
-            "- 历史估值快照和风险事件发生记录覆盖不足时，投资解释仍应降级。",
+            "- BACKTEST-001 已登记的稳健性实验缺口本阶段已覆盖。",
+            (
+                "- 历史估值快照和风险事件发生记录覆盖不足时，投资解释仍应降级；"
+                "生产信任仍需 owner 审批。"
+            ),
         ]
     )
     return "\n".join(lines) + "\n"
@@ -376,8 +456,112 @@ def _interpretation_lines(report: BacktestRobustnessReport) -> list[str]:
             )
         else:
             lines.append("- 起点后移后总收益变化有限，窗口敏感性在第一阶段实验中未明显恶化。")
+    rebalance_scenarios = [
+        scenario
+        for scenario in report.scenarios
+        if scenario.category == "rebalance_frequency" and scenario.metrics is not None
+    ]
+    if rebalance_scenarios:
+        best_rebalance_delta = max(
+            scenario.metrics.total_return - strategy.total_return
+            for scenario in rebalance_scenarios
+            if scenario.metrics is not None
+        )
+        if best_rebalance_delta >= 0:
+            lines.append(
+                "- 较低再平衡频率未降低本次总收益，动态仓位价值不能只归因于高频调仓。"
+            )
+        else:
+            lines.append(
+                "- 较低再平衡频率削弱本次总收益，需确认策略是否过度依赖每日调仓。"
+            )
+    signal_baselines = [
+        scenario
+        for scenario in report.scenarios
+        if scenario.category == "signal_family_baseline" and scenario.metrics is not None
+    ]
+    if signal_baselines:
+        best_signal_delta = max(
+            scenario.metrics.total_return - strategy.total_return
+            for scenario in signal_baselines
+            if scenario.metrics is not None
+        )
+        if best_signal_delta > 0:
+            lines.append(
+                "- 至少一个趋势信号族基线跑赢动态策略，复杂模块增益仍需权重扰动和样本外验证。"
+            )
+        else:
+            lines.append(
+                "- 动态策略本次收益不低于趋势信号族基线，复杂模块未在该样本削弱总收益。"
+            )
+    weight_scenarios = [
+        scenario
+        for scenario in report.scenarios
+        if scenario.category == "module_weight_perturbation"
+        and scenario.result is not None
+    ]
+    if weight_scenarios:
+        max_abs_delta = max(
+            abs(scenario.result.strategy_metrics.total_return - strategy.total_return)
+            for scenario in weight_scenarios
+            if scenario.result is not None
+        )
+        if max_abs_delta > 0.05:
+            lines.append(
+                "- 模块权重扰动对总收益影响较大，当前参数仍需要样本外验证和 owner 审批。"
+            )
+        else:
+            lines.append("- 模块权重扰动未明显改变本次总收益方向，参数敏感性初步可控。")
+    random_scenarios = [
+        scenario
+        for scenario in report.scenarios
+        if scenario.category == "same_turnover_random_strategy"
+        and scenario.metrics is not None
+    ]
+    if random_scenarios:
+        random_returns = [
+            scenario.metrics.total_return
+            for scenario in random_scenarios
+            if scenario.metrics is not None
+        ]
+        random_beats = sum(1 for item in random_returns if item >= strategy.total_return)
+        if random_beats == 0:
+            lines.append(
+                "- 动态策略跑赢全部同换手率随机策略，信号方向价值在本次随机基线中可见。"
+            )
+        else:
+            lines.append(
+                f"- {random_beats}/{len(random_returns)} 组同换手率随机策略不低于动态策略，"
+                "信号显著性仍需更长样本和样本外验证。"
+            )
+    in_sample = _find_scenario(report, "in_sample_window")
+    out_sample = _find_scenario(report, "out_of_sample_holdout")
+    if in_sample is not None and out_sample is not None:
+        in_metrics = (
+            in_sample.result.strategy_metrics
+            if in_sample.result is not None
+            else in_sample.metrics
+        )
+        out_metrics = (
+            out_sample.result.strategy_metrics
+            if out_sample.result is not None
+            else out_sample.metrics
+        )
+        if in_metrics is not None and out_metrics is not None:
+            if out_metrics.total_return >= 0:
+                lines.append(
+                    "- 样本外 holdout 总收益为正，时间切分下未立即暴露方向性失效。"
+                )
+            else:
+                lines.append(
+                    "- 样本外 holdout 总收益为负，需把全样本结果降级为窗口内诊断。"
+                )
+            if out_metrics.total_return < in_metrics.total_return - 0.05:
+                lines.append(
+                    "- 样本外收益明显弱于 in-sample，参数与市场阶段稳定性仍需人工复核。"
+                )
     lines.append(
-        "- 当前结论仍是研究和审计输入；完整生产信任需要剩余稳健性实验和 owner 审批。"
+        "- 当前结论仍是研究和审计输入；完整生产信任还取决于数据可信度、样本长度和 owner 审批。"
     )
     return lines
 
@@ -423,6 +607,195 @@ def _fixed_exposure_metrics(
         strategy_returns=returns,
         exposures=exposures,
         turnovers=turnovers,
+    )
+
+
+def _rebalance_interval_metrics(
+    result: DailyBacktestResult,
+    *,
+    interval_days: int,
+) -> BacktestMetrics:
+    previous_exposure = 0.0
+    current_exposure = 0.0
+    returns: list[float] = []
+    exposures: list[float] = []
+    turnovers: list[float] = []
+    for index, row in enumerate(result.rows):
+        if index == 0 or index % interval_days == 0:
+            desired_exposure = row.raw_target_exposure
+            if index == 0 or abs(desired_exposure - previous_exposure) >= (
+                result.minimum_action_delta
+            ):
+                current_exposure = desired_exposure
+        turnover = abs(current_exposure - previous_exposure)
+        transaction_cost = _transaction_cost_for_turnover(
+            result=result,
+            exposure=current_exposure,
+            previous_exposure=previous_exposure,
+            turnover=turnover,
+        )
+        returns.append(current_exposure * row.asset_return - transaction_cost)
+        exposures.append(current_exposure)
+        turnovers.append(turnover)
+        previous_exposure = current_exposure
+    return summarize_long_only_backtest(
+        strategy_returns=returns,
+        exposures=exposures,
+        turnovers=turnovers,
+    )
+
+
+def _module_subset_metrics(
+    result: DailyBacktestResult,
+    *,
+    modules: tuple[str, ...],
+    weights: Mapping[str, float],
+) -> BacktestMetrics:
+    if not modules:
+        raise ValueError("module subset must not be empty")
+    if len(set(modules)) != len(modules):
+        raise ValueError("module subset must not contain duplicates")
+
+    score_model = WeightedScoreModel()
+    previous_exposure = 0.0
+    returns: list[float] = []
+    exposures: list[float] = []
+    turnovers: list[float] = []
+    for row in result.rows:
+        components: list[ModuleScore] = []
+        for module in modules:
+            if module not in row.component_scores:
+                raise ValueError(f"missing component score for module {module!r}")
+            if module not in weights:
+                raise ValueError(f"missing scoring weight for module {module!r}")
+            components.append(
+                ModuleScore(
+                    name=module,
+                    score=row.component_scores[module],
+                    weight=weights[module],
+                    reason="backtest_robustness_signal_family_baseline",
+                )
+            )
+        recommendation = score_model.recommend(
+            components,
+            total_risk_asset_min=row.total_risk_asset_min,
+            total_risk_asset_max=row.total_risk_asset_max,
+        )
+        desired_exposure = _position_midpoint(
+            recommendation.total_asset_ai_band.min_position,
+            recommendation.total_asset_ai_band.max_position,
+        )
+        if not returns or abs(desired_exposure - previous_exposure) >= (
+            result.minimum_action_delta
+        ):
+            current_exposure = desired_exposure
+        else:
+            current_exposure = previous_exposure
+        turnover = abs(current_exposure - previous_exposure)
+        transaction_cost = _transaction_cost_for_turnover(
+            result=result,
+            exposure=current_exposure,
+            previous_exposure=previous_exposure,
+            turnover=turnover,
+        )
+        returns.append(current_exposure * row.asset_return - transaction_cost)
+        exposures.append(current_exposure)
+        turnovers.append(turnover)
+        previous_exposure = current_exposure
+    return summarize_long_only_backtest(
+        strategy_returns=returns,
+        exposures=exposures,
+        turnovers=turnovers,
+    )
+
+
+def _same_turnover_random_metrics(
+    result: DailyBacktestResult,
+    *,
+    seed: int,
+) -> BacktestMetrics:
+    exposures = _same_turnover_random_exposures(
+        tuple(row.turnover for row in result.rows),
+        seed=seed,
+    )
+    previous_exposure = 0.0
+    returns: list[float] = []
+    turnovers: list[float] = []
+    for row, exposure in zip(result.rows, exposures, strict=True):
+        turnover = abs(exposure - previous_exposure)
+        transaction_cost = _transaction_cost_for_turnover(
+            result=result,
+            exposure=exposure,
+            previous_exposure=previous_exposure,
+            turnover=turnover,
+        )
+        returns.append(exposure * row.asset_return - transaction_cost)
+        turnovers.append(turnover)
+        previous_exposure = exposure
+    return summarize_long_only_backtest(
+        strategy_returns=returns,
+        exposures=list(exposures),
+        turnovers=turnovers,
+    )
+
+
+def _same_turnover_random_exposures(
+    turnovers: tuple[float, ...],
+    *,
+    seed: int,
+) -> tuple[float, ...]:
+    rng = Random(seed)
+    states = {0.0}
+    predecessor_steps: list[dict[float, list[float]]] = []
+    for turnover in turnovers:
+        step_predecessors: dict[float, list[float]] = {}
+        rounded_turnover = _round_exposure(turnover)
+        for previous in states:
+            for direction in (-1.0, 1.0):
+                candidate = previous + direction * rounded_turnover
+                if -1e-9 <= candidate <= 1.0 + 1e-9:
+                    exposure = _round_exposure(_clamp_exposure(candidate))
+                    step_predecessors.setdefault(exposure, []).append(previous)
+        if not step_predecessors:
+            raise ValueError(
+                "same-turnover random path is infeasible for the base turnover sequence"
+            )
+        predecessor_steps.append(step_predecessors)
+        states = set(step_predecessors)
+
+    state = rng.choice(sorted(states))
+    reversed_path: list[float] = []
+    for predecessors in reversed(predecessor_steps):
+        reversed_path.append(state)
+        state = rng.choice(sorted(predecessors[state]))
+    return tuple(reversed(reversed_path))
+
+
+def _transaction_cost_for_turnover(
+    *,
+    result: DailyBacktestResult,
+    exposure: float,
+    previous_exposure: float,
+    turnover: float,
+) -> float:
+    commission_rate = result.cost_bps / 10_000.0
+    spread_rate = result.spread_bps / 10_000.0
+    slippage_rate = result.slippage_bps / 10_000.0
+    market_impact_rate = result.market_impact_bps / 10_000.0
+    tax_rate = result.tax_bps / 10_000.0
+    fx_rate = result.fx_bps / 10_000.0
+    financing_daily_rate = result.financing_annual_bps / 10_000.0 / 252.0
+    etf_delay_rate = result.etf_delay_bps / 10_000.0
+    sell_turnover = max(previous_exposure - exposure, 0.0)
+    return (
+        turnover * commission_rate
+        + turnover * spread_rate
+        + turnover * slippage_rate
+        + turnover * market_impact_rate
+        + sell_turnover * tax_rate
+        + turnover * fx_rate
+        + exposure * financing_daily_rate
+        + turnover * etf_delay_rate
     )
 
 
@@ -492,3 +865,15 @@ def _format_optional(value: float | None) -> str:
     if value is None:
         return "n/a"
     return f"{value:.2f}"
+
+
+def _position_midpoint(min_position: float, max_position: float) -> float:
+    return (min_position + max_position) / 2.0
+
+
+def _clamp_exposure(value: float) -> float:
+    return min(max(value, 0.0), 1.0)
+
+
+def _round_exposure(value: float) -> float:
+    return round(value, 10)

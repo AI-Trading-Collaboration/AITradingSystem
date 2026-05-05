@@ -181,6 +181,26 @@ document、complete submission text 或 raw payload checksum。该能力影响 S
 - lag sensitivity 使用同一交易成本、同一 universe PIT 规则和同一数据质量门禁。
 - `backtest_audit_*.md` 能解释哪些模块因缺少 PIT estimates 被降级。
 
+## BTINPUT-001
+
+标题：forward-only PIT 覆盖持续验证
+
+价值判断：在暂不采购 historical PIT estimates archive 的前提下，应把自建
+forward-only 快照积累进度变成固定报告。该报告不补造历史数据，而是回答三个问题：
+
+- 当前自建 PIT 快照覆盖了哪些 source、ticker、可见日期和 row count；
+- 历史回测为什么仍是 C 级或只能作为探索性诊断；
+- 从哪一天开始，某个输入族可以从 C 级升级为 B 级 forward-only 样本，A 级仍需真实
+  strict point-in-time vendor archive 或等价一手可见时间证明。
+
+### 阶段拆解
+
+|阶段|目标|验收|
+|---|---|---|
+|1|读取并校验 PIT manifest 后生成覆盖报告|报告输出 source、ticker、available_date 覆盖、latest staleness、row count 和 checksum 校验状态|
+|2|输出历史 C 级原因和升级日期|报告说明 pre-archive 历史仍为 C 级，给出 B/A readiness、first eligible date 和解除条件|
+|3|接入 CLI 和测试|新增中文命令输出，严重 manifest 校验失败时返回非零退出码；系统流图同步|
+
 ## Owner 依赖
 
 - 确认第一阶段供应商和 endpoint 清单。
@@ -201,3 +221,6 @@ document、complete submission text 或 raw payload checksum。该能力影响 S
 - 2026-05-05：从 IN_PROGRESS 改为 BASELINE_DONE，原因：阶段 4 已把 PIT manifest、PIT 质量报告和当日 FMP PIT normalized CSV 接入 `aits ops health`，并将缺失、row count、新鲜度和 checksum 异常输出到 `pipeline_health_alerts_YYYY-MM-DD.md` data/system 告警；阶段 5 继续保留。
 - 2026-05-05：从 BASELINE_DONE 改回 IN_PROGRESS，原因：继续推进阶段 5，评估 SEC accession-level filing raw archive 是否应进入 DATA-003 后续实施范围。
 - 2026-05-05：从 IN_PROGRESS 改为 DONE，原因：阶段 5 已形成设计结论，SEC accession-level filing archive 拆为独立 `DATA-004`；DATA-003 的 forward-only PIT 快照归档、FMP 抓取、as-of 查询、health/alerts 和后续任务登记已完成。
+- 2026-05-05：`BACKTEST-002` 从 READY 改为 IN_PROGRESS，原因：开始实现回测 A/B/C 数据可信度标签、核心输入 `point_in_time_class/backtest_use` 覆盖和 lag sensitivity 报告；本阶段不补造历史估值或风险事件输入，只约束历史回测解释。
+- 2026-05-05：`BACKTEST-002` 从 IN_PROGRESS 改为 DONE，原因：`aits backtest` 报告已输出 Backtest Data Quality、vendor historical estimates / self-archived snapshots、Minimum Feature Lag、Universe PIT、Corporate Actions Handling 和核心输入 PIT 覆盖；可选 lag sensitivity Markdown/JSON 支持 0/1/3/5/10/20 交易日 feature-only、universe-only 和 combined 场景；C 级输入明确把 Sharpe/CAGR/收益表降级为探索性诊断；Ruff 与全量 pytest 371 项通过。
+- 2026-05-05：`BTINPUT-001` 第二阶段从 IN_PROGRESS 回到 BASELINE_DONE，原因：新增 `aits backtest-pit-coverage` 持续验证入口，读取并校验 PIT manifest 后输出 source/ticker/date 覆盖、历史 C 级原因、B/A readiness、first eligible date 和解除条件；manifest 校验失败时返回非零退出码，不把未通过快照计入覆盖。Ruff 与全量 pytest 372 项通过。

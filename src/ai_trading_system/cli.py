@@ -41,12 +41,28 @@ from ai_trading_system.backtest.input_gaps import (
     default_backtest_input_gap_report_path,
     write_backtest_input_gap_report,
 )
+from ai_trading_system.backtest.lag_sensitivity import (
+    BacktestLagSensitivityReport,
+    BacktestLagSensitivityScenario,
+    default_backtest_lag_sensitivity_report_path,
+    default_backtest_lag_sensitivity_summary_path,
+    write_backtest_lag_sensitivity_report,
+    write_backtest_lag_sensitivity_summary,
+)
+from ai_trading_system.backtest.pit_coverage import (
+    build_backtest_pit_coverage_report,
+    default_backtest_pit_coverage_report_path,
+    write_backtest_pit_coverage_report,
+)
 from ai_trading_system.backtest.robustness import (
     BacktestRobustnessReport,
     BacktestRobustnessScenario,
     default_backtest_robustness_report_path,
     default_backtest_robustness_summary_path,
     fixed_total_asset_exposure_scenario,
+    module_subset_baseline_scenario,
+    rebalance_interval_scenario,
+    same_turnover_random_scenario,
     write_backtest_robustness_report,
     write_backtest_robustness_summary,
 )
@@ -95,6 +111,7 @@ from ai_trading_system.config import (
     DEFAULT_WATCHLIST_CONFIG_PATH,
     PROJECT_ROOT,
     IndustryChainConfig,
+    ScoringRulesConfig,
     UniverseConfig,
     WatchlistConfig,
     configured_price_tickers,
@@ -1867,8 +1884,8 @@ def backtest(
         Path | None,
         typer.Option(
             help=(
-                "Markdown 回测稳健性报告输出路径；提供时运行第一阶段成本压力、"
-                "起点后移、固定仓位和买入持有基准对比。"
+                "Markdown 回测稳健性报告输出路径；提供时运行成本压力、起点后移、"
+                "固定仓位、再平衡频率、趋势基线、权重扰动和买入持有基准对比。"
             ),
         ),
     ] = None,
@@ -1891,6 +1908,41 @@ def backtest(
         float,
         typer.Option(help="稳健性报告中交易执行成本压力的额外 bps。"),
     ] = 5.0,
+    robustness_weight_perturbation_pct: Annotated[
+        float,
+        typer.Option(help="稳健性报告中单模块权重上调/下调扰动比例，0.20 表示 20%。"),
+    ] = 0.20,
+    robustness_random_seed_start: Annotated[
+        int,
+        typer.Option(help="稳健性报告中同换手率随机策略的起始随机种子。"),
+    ] = 42,
+    robustness_random_seed_count: Annotated[
+        int,
+        typer.Option(help="稳健性报告中同换手率随机策略的种子数量。"),
+    ] = 20,
+    robustness_oos_split_ratio: Annotated[
+        float,
+        typer.Option(help="稳健性报告中时间顺序样本外验证的 in-sample 切分比例。"),
+    ] = 0.70,
+    lag_sensitivity_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 回测滞后敏感性报告输出路径。"),
+    ] = None,
+    lag_sensitivity_summary_path: Annotated[
+        Path | None,
+        typer.Option(help="机器可读回测滞后敏感性 JSON 摘要输出路径。"),
+    ] = None,
+    lag_sensitivity_report: Annotated[
+        bool,
+        typer.Option(
+            "--lag-sensitivity-report",
+            help="按默认 outputs/backtests 路径生成回测滞后敏感性报告。",
+        ),
+    ] = False,
+    lag_sensitivity_days: Annotated[
+        str,
+        typer.Option(help="逗号分隔的 feature/universe 滞后交易日列表。"),
+    ] = "0,1,3,5,10,20",
     quality_report_path: Annotated[
         Path | None,
         typer.Option(help="Markdown 数据质量报告输出路径。"),
@@ -1979,12 +2031,27 @@ def backtest(
         raise typer.BadParameter("稳健性报告起点后移天数必须为正数。")
     if robustness_cost_stress_bps < 0:
         raise typer.BadParameter("稳健性报告成本压力 bps 不能为负数。")
+    if not 0 < robustness_weight_perturbation_pct < 1:
+        raise typer.BadParameter("稳健性报告权重扰动比例必须大于 0 且小于 1。")
+    if robustness_random_seed_count <= 0:
+        raise typer.BadParameter("同换手率随机策略种子数量必须为正数。")
+    if not 0 < robustness_oos_split_ratio < 1:
+        raise typer.BadParameter("样本外验证 in-sample 切分比例必须大于 0 且小于 1。")
+    lag_days = _parse_backtest_lag_days(lag_sensitivity_days)
     should_run_robustness = (
         robustness_report
         or robustness_report_path is not None
         or robustness_summary_path is not None
     )
     should_write_robustness_markdown = robustness_report or robustness_report_path is not None
+    should_run_lag_sensitivity = (
+        lag_sensitivity_report
+        or lag_sensitivity_report_path is not None
+        or lag_sensitivity_summary_path is not None
+    )
+    should_write_lag_sensitivity_markdown = (
+        lag_sensitivity_report or lag_sensitivity_report_path is not None
+    )
     rule_governance_report = validate_rule_card_store(
         load_rule_card_store(rule_cards_path),
         as_of=date.today(),
@@ -2057,6 +2124,26 @@ def backtest(
             backtest_robustness_output.with_suffix(".json")
             if should_write_robustness_markdown
             else default_backtest_robustness_summary_path(
+                PROJECT_ROOT / "outputs" / "backtests",
+                start_date,
+                end_date,
+            )
+        )
+    )
+    backtest_lag_sensitivity_output = (
+        lag_sensitivity_report_path
+        or default_backtest_lag_sensitivity_report_path(
+            PROJECT_ROOT / "outputs" / "backtests",
+            start_date,
+            end_date,
+        )
+    )
+    backtest_lag_sensitivity_summary_output = (
+        lag_sensitivity_summary_path
+        or (
+            backtest_lag_sensitivity_output.with_suffix(".json")
+            if should_write_lag_sensitivity_markdown
+            else default_backtest_lag_sensitivity_summary_path(
                 PROJECT_ROOT / "outputs" / "backtests",
                 start_date,
                 end_date,
@@ -2146,8 +2233,19 @@ def backtest(
         start=start_date,
         end=end_date,
     )
+    input_signal_dates = (
+        _backtest_required_input_signal_dates(
+            prices=prices_frame,
+            strategy_ticker=strategy_ticker,
+            start=start_date,
+            end=end_date,
+            lag_days=lag_days,
+        )
+        if should_run_lag_sensitivity
+        else signal_dates
+    )
     sec_fundamental_feature_reports = _build_backtest_sec_fundamental_feature_reports(
-        signal_dates=signal_dates,
+        signal_dates=input_signal_dates,
         sec_companies_path=sec_companies_path,
         sec_metrics_path=sec_metrics_path,
         fundamental_feature_config_path=fundamental_feature_config_path,
@@ -2157,14 +2255,14 @@ def backtest(
         validation_report_output=sec_companyfacts_validation_output,
     )
     valuation_review_reports = _build_backtest_valuation_review_reports(
-        signal_dates=signal_dates,
+        signal_dates=input_signal_dates,
         valuation_path=valuation_path,
         universe=universe,
         watchlist=watchlist,
     )
     risk_event_occurrence_review_reports = (
         _build_backtest_risk_event_occurrence_review_reports(
-            signal_dates=signal_dates,
+            signal_dates=input_signal_dates,
             risk_events_path=risk_events_path,
             risk_event_occurrences_path=risk_event_occurrences_path,
             universe=universe,
@@ -2194,17 +2292,25 @@ def backtest(
         scenario_fx_bps: float,
         scenario_financing_annual_bps: float,
         scenario_etf_delay_bps: float,
+        scenario_end: date | None = None,
+        scenario_feature_lag_days: int = 0,
+        scenario_universe_lag_days: int = 0,
+        scenario_scoring_rules: ScoringRulesConfig | None = None,
     ) -> DailyBacktestResult:
         return run_daily_score_backtest(
             prices=prices_frame,
             rates=rates_frame,
             feature_config=feature_config,
-            scoring_rules=scoring_rules,
+            scoring_rules=(
+                scoring_rules
+                if scenario_scoring_rules is None
+                else scenario_scoring_rules
+            ),
             portfolio_config=portfolio,
             data_quality_report=data_quality_report,
             core_watchlist=universe.ai_chain.get("core_watchlist", []),
             start=scenario_start,
-            end=end_date,
+            end=end_date if scenario_end is None else scenario_end,
             strategy_ticker=strategy_ticker,
             benchmark_tickers=tuple(benchmark_tickers),
             cost_bps=scenario_cost_bps,
@@ -2223,6 +2329,8 @@ def backtest(
             watchlist=watchlist,
             benchmark_policy_report=benchmark_policy_report,
             market_regime=backtest_regime_context,
+            feature_lag_days=scenario_feature_lag_days,
+            universe_lag_days=scenario_universe_lag_days,
         )
 
     result = run_configured_backtest(
@@ -2316,8 +2424,71 @@ def backtest(
                 ),
             ),
             fixed_total_asset_exposure_scenario(result, exposure=0.60),
+            rebalance_interval_scenario(result, interval_days=5),
+            rebalance_interval_scenario(result, interval_days=21),
+            module_subset_baseline_scenario(
+                result,
+                scenario_id="trend_only_baseline",
+                label="趋势-only 基线",
+                modules=("trend",),
+                weights=scoring_rules.weights,
+            ),
+            module_subset_baseline_scenario(
+                result,
+                scenario_id="trend_plus_risk_sentiment_baseline",
+                label="趋势 + 风险情绪基线",
+                modules=("trend", "risk_sentiment"),
+                weights=scoring_rules.weights,
+            ),
         ]
+        for module_name in scoring_rules.weights:
+            for direction, multiplier in (
+                ("down", 1.0 - robustness_weight_perturbation_pct),
+                ("up", 1.0 + robustness_weight_perturbation_pct),
+            ):
+                direction_label = "下调" if direction == "down" else "上调"
+                robustness_scenarios.append(
+                    BacktestRobustnessScenario(
+                        scenario_id=_weight_perturbation_scenario_id(
+                            module_name,
+                            direction,
+                            robustness_weight_perturbation_pct,
+                        ),
+                        label=(
+                            f"{module_name} 权重{direction_label} "
+                            f"{robustness_weight_perturbation_pct:.0%}"
+                        ),
+                        category="module_weight_perturbation",
+                        description=(
+                            f"将 {module_name} 模块权重{direction_label} "
+                            f"{robustness_weight_perturbation_pct:.0%}，"
+                            "其他模块权重保持配置值；重新运行同一 PIT 输入、"
+                            "评分规则、position gate、成本假设和收益生效规则。"
+                        ),
+                        result=run_configured_backtest(
+                            scenario_start=start_date,
+                            scenario_cost_bps=cost_bps,
+                            scenario_spread_bps=spread_bps,
+                            scenario_slippage_bps=slippage_bps,
+                            scenario_market_impact_bps=market_impact_bps,
+                            scenario_tax_bps=tax_bps,
+                            scenario_fx_bps=fx_bps,
+                            scenario_financing_annual_bps=financing_annual_bps,
+                            scenario_etf_delay_bps=etf_delay_bps,
+                            scenario_scoring_rules=_perturbed_scoring_rules(
+                                scoring_rules,
+                                module_name=module_name,
+                                multiplier=multiplier,
+                            ),
+                        ),
+                    )
+                )
         shifted_start = start_date + timedelta(days=robustness_shift_days)
+        for seed in range(
+            robustness_random_seed_start,
+            robustness_random_seed_start + robustness_random_seed_count,
+        ):
+            robustness_scenarios.append(same_turnover_random_scenario(result, seed=seed))
         if shifted_start >= result.last_signal_date:
             robustness_scenarios.append(
                 BacktestRobustnessScenario(
@@ -2355,11 +2526,89 @@ def backtest(
                     ),
                 )
             )
+        oos_split = _backtest_oos_split_dates(
+            signal_dates,
+            split_ratio=robustness_oos_split_ratio,
+        )
+        if oos_split is None:
+            skipped_reason = (
+                "基础信号样本不足，无法按时间顺序切出至少 5 个 in-sample "
+                "和 5 个 out-of-sample 信号日。"
+            )
+            robustness_scenarios.extend(
+                [
+                    BacktestRobustnessScenario(
+                        scenario_id="in_sample_window",
+                        label="in-sample 窗口",
+                        category="out_of_sample_validation",
+                        description="时间顺序样本外验证的前段窗口。",
+                        skipped_reason=skipped_reason,
+                    ),
+                    BacktestRobustnessScenario(
+                        scenario_id="out_of_sample_holdout",
+                        label="out-of-sample holdout",
+                        category="out_of_sample_validation",
+                        description="时间顺序样本外验证的后段 holdout。",
+                        skipped_reason=skipped_reason,
+                    ),
+                ]
+            )
+        else:
+            in_sample_end, out_of_sample_start = oos_split
+            robustness_scenarios.extend(
+                [
+                    BacktestRobustnessScenario(
+                        scenario_id="in_sample_window",
+                        label="in-sample 窗口",
+                        category="out_of_sample_validation",
+                        description=(
+                            f"按 {robustness_oos_split_ratio:.0%} 时间顺序切分的"
+                            f"前段窗口，区间截至 {in_sample_end.isoformat()}。"
+                        ),
+                        result=run_configured_backtest(
+                            scenario_start=start_date,
+                            scenario_end=in_sample_end,
+                            scenario_cost_bps=cost_bps,
+                            scenario_spread_bps=spread_bps,
+                            scenario_slippage_bps=slippage_bps,
+                            scenario_market_impact_bps=market_impact_bps,
+                            scenario_tax_bps=tax_bps,
+                            scenario_fx_bps=fx_bps,
+                            scenario_financing_annual_bps=financing_annual_bps,
+                            scenario_etf_delay_bps=etf_delay_bps,
+                        ),
+                    ),
+                    BacktestRobustnessScenario(
+                        scenario_id="out_of_sample_holdout",
+                        label="out-of-sample holdout",
+                        category="out_of_sample_validation",
+                        description=(
+                            f"按 {robustness_oos_split_ratio:.0%} 时间顺序切分的"
+                            f"后段 holdout，起点为 {out_of_sample_start.isoformat()}。"
+                        ),
+                        result=run_configured_backtest(
+                            scenario_start=out_of_sample_start,
+                            scenario_cost_bps=cost_bps,
+                            scenario_spread_bps=spread_bps,
+                            scenario_slippage_bps=slippage_bps,
+                            scenario_market_impact_bps=market_impact_bps,
+                            scenario_tax_bps=tax_bps,
+                            scenario_fx_bps=fx_bps,
+                            scenario_financing_annual_bps=financing_annual_bps,
+                            scenario_etf_delay_bps=etf_delay_bps,
+                        ),
+                    ),
+                ]
+            )
         robustness_report_data = BacktestRobustnessReport(
             base_result=result,
             scenarios=tuple(robustness_scenarios),
             cost_stress_increment_bps=robustness_cost_stress_bps,
             shifted_start_days=robustness_shift_days,
+            weight_perturbation_pct=robustness_weight_perturbation_pct,
+            random_seed_start=robustness_random_seed_start,
+            random_seed_count=robustness_random_seed_count,
+            oos_split_ratio=robustness_oos_split_ratio,
         )
         if should_write_robustness_markdown:
             robustness_output = write_backtest_robustness_report(
@@ -2369,6 +2618,64 @@ def backtest(
         robustness_summary_output = write_backtest_robustness_summary(
             robustness_report_data,
             backtest_robustness_summary_output,
+        )
+
+    lag_sensitivity_output = None
+    lag_sensitivity_summary_output = None
+    if should_run_lag_sensitivity:
+        lag_scenarios: list[BacktestLagSensitivityScenario] = []
+        for lag_day in lag_days:
+            if lag_day == 0:
+                continue
+            for feature_lag_days, universe_lag_days in (
+                (lag_day, 0),
+                (0, lag_day),
+                (lag_day, lag_day),
+            ):
+                try:
+                    scenario_result = run_configured_backtest(
+                        scenario_start=start_date,
+                        scenario_cost_bps=cost_bps,
+                        scenario_spread_bps=spread_bps,
+                        scenario_slippage_bps=slippage_bps,
+                        scenario_market_impact_bps=market_impact_bps,
+                        scenario_tax_bps=tax_bps,
+                        scenario_fx_bps=fx_bps,
+                        scenario_financing_annual_bps=financing_annual_bps,
+                        scenario_etf_delay_bps=etf_delay_bps,
+                        scenario_feature_lag_days=feature_lag_days,
+                        scenario_universe_lag_days=universe_lag_days,
+                    )
+                    lag_scenarios.append(
+                        BacktestLagSensitivityScenario(
+                            feature_lag_days=feature_lag_days,
+                            universe_lag_days=universe_lag_days,
+                            rebalance_delay_days=1,
+                            result=scenario_result,
+                        )
+                    )
+                except ValueError as exc:
+                    lag_scenarios.append(
+                        BacktestLagSensitivityScenario(
+                            feature_lag_days=feature_lag_days,
+                            universe_lag_days=universe_lag_days,
+                            rebalance_delay_days=1,
+                            skipped_reason=str(exc),
+                        )
+                    )
+        lag_sensitivity_report_data = BacktestLagSensitivityReport(
+            base_result=result,
+            scenarios=tuple(lag_scenarios),
+            tested_lag_days=lag_days,
+        )
+        if should_write_lag_sensitivity_markdown:
+            lag_sensitivity_output = write_backtest_lag_sensitivity_report(
+                lag_sensitivity_report_data,
+                backtest_lag_sensitivity_output,
+            )
+        lag_sensitivity_summary_output = write_backtest_lag_sensitivity_summary(
+            lag_sensitivity_report_data,
+            backtest_lag_sensitivity_summary_output,
         )
 
     console.print(f"[yellow]回测状态：{result.status}[/yellow]")
@@ -2386,6 +2693,10 @@ def backtest(
         console.print(f"稳健性报告：{robustness_output}")
     if robustness_summary_output is not None:
         console.print(f"稳健性摘要：{robustness_summary_output}")
+    if lag_sensitivity_output is not None:
+        console.print(f"滞后敏感性报告：{lag_sensitivity_output}")
+    if lag_sensitivity_summary_output is not None:
+        console.print(f"滞后敏感性摘要：{lag_sensitivity_summary_output}")
     console.print(f"观察池 lifecycle 报告：{watchlist_lifecycle_report_output}")
     console.print(f"Evidence bundle：{backtest_trace_output}")
     console.print(f"输入审计报告：{audit_output}")
@@ -2591,6 +2902,67 @@ def backtest_input_gaps(
     console.print(f"风险事件/复核声明缺口信号日：{report.risk_event_gap_count}")
     console.print(f"历史输入缺口报告：{report_output}")
     console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
+
+
+@app.command("backtest-pit-coverage")
+def backtest_pit_coverage(
+    manifest_path: Annotated[
+        Path,
+        typer.Option(help="PIT raw snapshot manifest CSV 路径。"),
+    ] = DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH,
+    data_sources_path: Annotated[
+        Path,
+        typer.Option(help="数据源目录 YAML 路径，用于校验授权和 provider 信息。"),
+    ] = DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="评估日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown forward-only PIT 覆盖报告输出路径。"),
+    ] = None,
+    min_forward_days: Annotated[
+        int,
+        typer.Option(help="升级为 B 级 forward-only 样本所需的最小覆盖日期数。"),
+    ] = 60,
+    max_staleness_days: Annotated[
+        int,
+        typer.Option(help="最新快照最大允许日龄，超出后保持 C 级或警告。"),
+    ] = 3,
+) -> None:
+    """评估 forward-only PIT 快照积累进度和回测输入等级升级日期。"""
+    coverage_date = _parse_date(as_of) if as_of else date.today()
+    coverage_output = output_path or default_backtest_pit_coverage_report_path(
+        PROJECT_ROOT / "outputs" / "backtests",
+        coverage_date,
+    )
+    if min_forward_days <= 0:
+        raise typer.BadParameter("B 级最小覆盖日期数必须为正数。")
+    if max_staleness_days < 0:
+        raise typer.BadParameter("最新快照最大允许日龄不能为负数。")
+
+    validation_report = validate_pit_snapshot_manifest(
+        input_path=manifest_path,
+        as_of=coverage_date,
+        data_sources=load_data_sources(data_sources_path),
+    )
+    report = build_backtest_pit_coverage_report(
+        validation_report,
+        min_forward_days=min_forward_days,
+        max_staleness_days=max_staleness_days,
+    )
+    report_output = write_backtest_pit_coverage_report(report, coverage_output)
+
+    status_style = (
+        "green" if report.status == "PASS" else "yellow" if report.status != "FAIL" else "red"
+    )
+    console.print(f"[{status_style}]PIT 覆盖验证状态：{report.status}[/{status_style}]")
+    console.print(f"Manifest 状态：{report.manifest_status}")
+    console.print(f"快照数：{report.snapshot_count}；原始记录数：{report.row_count}")
+    console.print(f"覆盖验证报告：{report_output}")
+    if not validation_report.passed:
+        raise typer.Exit(code=1)
 
 
 @watchlist_app.command("list")
@@ -7383,6 +7755,96 @@ def _backtest_signal_dates(
     if not signal_dates:
         raise typer.BadParameter("回测区间内没有可用的下一交易日收益")
     return tuple(signal_dates)
+
+
+def _perturbed_scoring_rules(
+    rules: ScoringRulesConfig,
+    *,
+    module_name: str,
+    multiplier: float,
+) -> ScoringRulesConfig:
+    if module_name not in rules.weights:
+        raise typer.BadParameter(f"未找到评分模块权重：{module_name}")
+    if multiplier <= 0:
+        raise typer.BadParameter("权重扰动倍数必须为正数。")
+    weights = dict(rules.weights)
+    weights[module_name] = weights[module_name] * multiplier
+    return rules.model_copy(update={"weights": weights})
+
+
+def _weight_perturbation_scenario_id(
+    module_name: str,
+    direction: str,
+    perturbation_pct: float,
+) -> str:
+    percent_token = f"{perturbation_pct * 100:g}".replace(".", "p")
+    module_token = "".join(
+        char if char.isalnum() else "_" for char in module_name.lower()
+    ).strip("_")
+    return f"weight_perturb_{module_token}_{direction}_{percent_token}pct"
+
+
+def _backtest_oos_split_dates(
+    signal_dates: tuple[date, ...],
+    *,
+    split_ratio: float,
+    min_in_sample_signals: int = 5,
+    min_out_sample_signals: int = 5,
+) -> tuple[date, date] | None:
+    if len(signal_dates) < min_in_sample_signals + min_out_sample_signals:
+        return None
+    split_index = int(len(signal_dates) * split_ratio)
+    split_index = max(min_in_sample_signals, split_index)
+    split_index = min(split_index, len(signal_dates) - min_out_sample_signals)
+    if split_index <= 0 or split_index >= len(signal_dates):
+        return None
+    return signal_dates[split_index - 1], signal_dates[split_index]
+
+
+def _parse_backtest_lag_days(value: str) -> tuple[int, ...]:
+    lag_days: list[int] = []
+    for raw_item in value.split(","):
+        item = raw_item.strip()
+        if not item:
+            continue
+        try:
+            lag_day = int(item)
+        except ValueError as exc:
+            raise typer.BadParameter("滞后交易日列表必须为逗号分隔整数。") from exc
+        if lag_day < 0:
+            raise typer.BadParameter("滞后交易日不能为负数。")
+        lag_days.append(lag_day)
+    if not lag_days:
+        raise typer.BadParameter("至少需要一个滞后交易日。")
+    return tuple(sorted(dict.fromkeys(lag_days)))
+
+
+def _backtest_required_input_signal_dates(
+    prices: pd.DataFrame,
+    strategy_ticker: str,
+    start: date,
+    end: date,
+    lag_days: tuple[int, ...],
+) -> tuple[date, ...]:
+    frame = prices.loc[prices["ticker"].astype(str) == strategy_ticker].copy()
+    frame["_date"] = pd.to_datetime(frame["date"], errors="coerce")
+    frame["_adj_close"] = pd.to_numeric(frame["adj_close"], errors="coerce")
+    frame = frame.loc[frame["_date"].notna() & frame["_adj_close"].notna()].sort_values("_date")
+    timestamps = list(frame["_date"])
+    trading_signal_dates = [
+        pd.Timestamp(timestamps[index]).date() for index in range(len(timestamps) - 1)
+    ]
+    base_signal_dates = set(_backtest_signal_dates(prices, strategy_ticker, start, end))
+    index_by_signal_date = {
+        signal_date: index for index, signal_date in enumerate(trading_signal_dates)
+    }
+    required_dates = set(base_signal_dates)
+    for signal_date in base_signal_dates:
+        index = index_by_signal_date[signal_date]
+        for lag_day in lag_days:
+            if index >= lag_day:
+                required_dates.add(trading_signal_dates[index - lag_day])
+    return tuple(sorted(required_dates))
 
 
 def _build_backtest_sec_fundamental_feature_reports(
