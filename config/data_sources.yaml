@@ -1370,6 +1370,6 @@ sources:
       - OpenAI API 只做关键信息校验、结构化抽取、节点映射、去重和人工复核问题生成。
       - 输出强制写入 `llm_extracted` / `pending_review`，不得直接改变评分、thesis 状态、仓位闸门或交易建议。
       - 付费供应商内容只有在原始 provider 的 `llm_permission.external_llm_allowed=true` 且内容级别不超过授权范围时才可发送。
-      - 默认请求策略为 `gpt-5.5-pro` + `reasoning.effort=xhigh`，实际请求值必须写入报告和队列。
+      - 默认请求策略为 `gpt-5.5` + `reasoning.effort=high`，单请求失败最多重试 2 次，实际请求值必须写入报告和队列。
       - 请求默认 `store=false`，本地队列只保存结构化字段和 checksum，不保存未授权全文。
     owner_notes: OPENAI_API_KEY 只从环境变量读取；命令、报告和错误信息不得输出密钥。

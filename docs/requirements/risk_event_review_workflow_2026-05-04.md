@@ -153,7 +153,7 @@ API 使用边界：
 ### 验收标准
 
 - 新增 `aits risk-events precheck-openai` 或等价 CLI，读取 source-permission envelope 或数据源目录中的 `llm_permission`。
-- OpenAI live 预审默认使用 `gpt-5.5-pro` 和 `reasoning.effort=xhigh`；CLI 可显式覆盖用于对比实验，但队列和报告必须记录实际 model 与 reasoning effort。
+- OpenAI live 预审默认使用 `gpt-5.5` 和 `reasoning.effort=high`；单请求失败最多重试 2 次，第 3 次仍失败时整批 fail closed；CLI 可显式覆盖用于对比实验，但队列和报告必须记录实际 model 与 reasoning effort。
 - provider 授权未知或 `external_llm_allowed=false` 时 fail closed，不发起 API 请求，不写入队列。
 - API 请求使用固定结构化输出和 `store=false`，记录 model、reasoning effort、prompt version、OpenAI request/response id、输入/输出 checksum、source URL、source permission 和 request timestamp。
 - 只把 `risk_event` claim 或含风险事件候选的输出转换成 `risk_event_prereview_queue.json` 记录。
@@ -282,4 +282,4 @@ API 使用边界：
 - 2026-05-04：`RISK-005` 达到 `BASELINE_DONE`：复核声明 schema、CLI、校验报告、日报识别、历史切片、数据源目录、系统流图和测试已完成；真实每日复核的 owner、来源清单和运行纪律仍是生产使用前置条件。
 - 2026-05-04：`RISK-003` 达到 `BASELINE_DONE`：来源分层、预审隔离、人工确认元数据、复核声明、日报识别和回测 point-in-time 切片已由 `SOURCE-001/RISK-004/RISK-005` 形成基础闭环；完整 `DONE` 仍依赖真实授权来源样本、provider 级外部 LLM 授权记录、风险事件专用生产样本验证和 owner 每日复核运行纪律。
 - 2026-05-04：owner 确认风险事件预审可使用 OpenAI API 做关键信息校验，并允许在个人使用目的下处理付费新闻/供应商内容；流程同步增加 source permission envelope，要求 provider 级外部 LLM 授权、缓存和报告摘要边界，授权未知时不得发送全文或长摘录。
-- 2026-05-04：`RISK-004` 第二阶段达到 `BASELINE_DONE`：新增 `aits risk-events precheck-openai`、live API 到风险事件待复核队列转换、source permission 审计、中文报告、示例输入、系统流图和隔离测试；随后按 owner 模型策略补充默认 `gpt-5.5-pro`、`reasoning.effort=xhigh` 和 reasoning effort 队列/报告审计字段。真实授权来源生产样本验证仍需 owner 批准样本。
+- 2026-05-04：`RISK-004` 第二阶段达到 `BASELINE_DONE`：新增 `aits risk-events precheck-openai`、live API 到风险事件待复核队列转换、source permission 审计、中文报告、示例输入、系统流图和隔离测试；随后按 owner 模型策略补充默认 `gpt-5.5`、`reasoning.effort=high` 和 reasoning effort 队列/报告审计字段。2026-05-05：owner 批准单请求失败最多重试 2 次，仍失败则整批 fail closed。真实授权来源生产样本验证仍需 owner 批准样本。

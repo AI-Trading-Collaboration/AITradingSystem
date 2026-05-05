@@ -12,4 +12,4 @@ content_text: |
 notes: >
   本输入只生成 llm_extracted / pending_review 风险事件候选；不能直接写入
   risk_event_occurrence，不能评分，不能触发仓位闸门。默认 OpenAI 请求使用
-  gpt-5.5-pro 和 reasoning.effort=xhigh，实际值会写入报告和队列。
+  gpt-5.5 和 reasoning.effort=high，单请求失败最多重试 2 次，实际值会写入报告和队列。

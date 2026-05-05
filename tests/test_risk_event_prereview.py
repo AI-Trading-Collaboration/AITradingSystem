@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
+from dataclasses import replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -19,15 +20,19 @@ from ai_trading_system.config import (
 )
 from ai_trading_system.llm_precheck import (
     DEFAULT_OPENAI_LLM_MODEL,
+    DEFAULT_OPENAI_MAX_RETRIES,
     DEFAULT_OPENAI_REASONING_EFFORT,
+    DEFAULT_OPENAI_TIMEOUT_SECONDS,
     LlmClaimPrecheckInput,
     OpenAIJsonResponse,
 )
+from ai_trading_system.official_policy_sources import OfficialPolicyCandidate
 from ai_trading_system.risk_event_prereview import (
     OPENAI_RISK_EVENT_PREREVIEW_SCHEMA,
     import_risk_event_prereview_csv,
     render_risk_event_prereview_import_report,
     run_openai_risk_event_prereview,
+    run_openai_risk_event_prereview_for_official_candidates,
     write_risk_event_prereview_queue,
 )
 
@@ -148,14 +153,16 @@ def test_run_openai_risk_event_prereview_writes_pending_queue_without_source_tex
     source_text = "Official release says export controls now require extra licenses."
     packet = _packet(content_text=source_text, content_sent_level="full_text")
     captured_payload: dict[str, Any] = {}
+    captured_timeout: list[float] = []
 
     def fake_post(
         _url: str,
         headers: Mapping[str, str],
         payload: Mapping[str, Any],
-        _timeout: float,
+        timeout_seconds: float,
     ) -> OpenAIJsonResponse:
         captured_payload.update(dict(payload))
+        captured_timeout.append(timeout_seconds)
         return _openai_response(request_id=headers["X-Client-Request-Id"])
 
     report = run_openai_risk_event_prereview(
@@ -189,6 +196,7 @@ def test_run_openai_risk_event_prereview_writes_pending_queue_without_source_tex
     assert report.record_count == 1
     assert captured_payload["model"] == DEFAULT_OPENAI_LLM_MODEL
     assert captured_payload["reasoning"] == {"effort": DEFAULT_OPENAI_REASONING_EFFORT}
+    assert captured_timeout == [DEFAULT_OPENAI_TIMEOUT_SECONDS]
     assert report.records[0].source_type == "llm_extracted"
     assert report.records[0].manual_review_status == "pending_review"
     assert report.records[0].model == DEFAULT_OPENAI_LLM_MODEL
@@ -266,6 +274,223 @@ def test_openai_prereview_schema_keeps_output_pending_review_only() -> None:
     assert properties["manual_review_status"]["const"] == "pending_review"
     assert "reasoning_effort" in properties
     assert properties["prohibited_actions_ack"]["const"] is True
+
+
+def test_official_candidates_auto_precheck_writes_only_pending_review(
+    tmp_path: Path,
+) -> None:
+    captured_payloads: list[dict[str, Any]] = []
+    captured_timeout: list[float] = []
+
+    def fake_post(
+        _url: str,
+        headers: Mapping[str, str],
+        payload: Mapping[str, Any],
+        timeout_seconds: float,
+    ) -> OpenAIJsonResponse:
+        captured_payloads.append(dict(payload))
+        captured_timeout.append(timeout_seconds)
+        return _openai_response(request_id=headers["X-Client-Request-Id"])
+
+    report = run_openai_risk_event_prereview_for_official_candidates(
+        (_official_candidate(tmp_path),),
+        api_key="sk-test",
+        data_sources=DataSourcesConfig(
+            sources=[
+                _source(
+                    source_id="official_bis_federal_register_notices",
+                    source_type="primary_source",
+                    external_llm_allowed=True,
+                    max_content_sent_level="metadata_only",
+                )
+            ]
+        ),
+        risk_events=load_risk_events(),
+        input_path=tmp_path / "official_policy_source_candidates_2026-05-04.csv",
+        as_of=datetime(2026, 5, 4, tzinfo=UTC).date(),
+        http_post_json=fake_post,
+        generated_at=datetime(2026, 5, 4, tzinfo=UTC),
+    )
+    queue_path = write_risk_event_prereview_queue(report, tmp_path / "queue.json")
+    payload = json.loads(queue_path.read_text(encoding="utf-8"))
+    request_payload = json.loads(captured_payloads[0]["input"][1]["content"])
+
+    assert report.status == "PASS_WITH_WARNINGS"
+    assert report.record_count == 1
+    assert report.records[0].source_type == "llm_extracted"
+    assert report.records[0].manual_review_status == "pending_review"
+    assert report.records[0].automatic_score_eligible is False
+    assert report.records[0].position_gate_eligible is False
+    assert payload["record_count"] == 1
+    assert request_payload["content_sent_level"] == "metadata_only"
+    assert captured_timeout == [DEFAULT_OPENAI_TIMEOUT_SECONDS]
+    assert "sk-test" not in queue_path.read_text(encoding="utf-8")
+
+
+def test_official_candidates_auto_precheck_prioritizes_ai_policy_candidates(
+    tmp_path: Path,
+) -> None:
+    captured_payloads: list[dict[str, Any]] = []
+
+    def fake_post(
+        _url: str,
+        headers: Mapping[str, str],
+        payload: Mapping[str, Any],
+        _timeout: float,
+    ) -> OpenAIJsonResponse:
+        captured_payloads.append(dict(payload))
+        return _openai_irrelevant_response(request_id=headers["X-Client-Request-Id"])
+
+    low_priority = replace(
+        _official_candidate(tmp_path),
+        candidate_id="aaa:congress:china-only",
+        source_id="official_congress_bills",
+        provider="Congress.gov API",
+        source_name="Congress.gov API",
+        source_title="Resolution about China economic influence",
+        matched_topics=("china_technology",),
+        affected_tickers=(),
+        affected_nodes=(),
+    )
+    high_priority = replace(
+        _official_candidate(tmp_path),
+        candidate_id="zzz:bis:export-controls",
+        source_id="official_bis_federal_register_notices",
+        provider="Federal Register API / BIS notices",
+        source_name="Federal Register API / BIS notices",
+        source_title="BIS advanced computing export controls update",
+        matched_topics=("export_controls", "ai_policy"),
+        affected_tickers=("NVDA", "AMD"),
+        affected_nodes=("export_controls",),
+    )
+
+    report = run_openai_risk_event_prereview_for_official_candidates(
+        (low_priority, high_priority),
+        api_key="sk-test",
+        data_sources=DataSourcesConfig(
+            sources=[
+                _source(
+                    source_id="official_bis_federal_register_notices",
+                    source_type="primary_source",
+                    external_llm_allowed=True,
+                    max_content_sent_level="metadata_only",
+                ),
+                _source(
+                    source_id="official_congress_bills",
+                    source_type="primary_source",
+                    external_llm_allowed=True,
+                    max_content_sent_level="metadata_only",
+                ),
+            ]
+        ),
+        risk_events=load_risk_events(),
+        input_path=tmp_path / "official_policy_source_candidates_2026-05-04.csv",
+        as_of=datetime(2026, 5, 4, tzinfo=UTC).date(),
+        http_post_json=fake_post,
+        generated_at=datetime(2026, 5, 4, tzinfo=UTC),
+        max_candidates=1,
+    )
+    request_payload = json.loads(captured_payloads[0]["input"][1]["content"])
+
+    assert report.status == "PASS_WITH_WARNINGS"
+    assert request_payload["source_name"] == "Federal Register API / BIS notices"
+    assert "BIS advanced computing export controls" in request_payload["source_title"]
+    assert any(
+        issue.code == "risk_event_prereview_candidate_limit_applied"
+        for issue in report.issues
+    )
+
+
+def test_official_candidates_irrelevant_output_does_not_add_review_queue(
+    tmp_path: Path,
+) -> None:
+    def fake_post(
+        _url: str,
+        headers: Mapping[str, str],
+        _payload: Mapping[str, Any],
+        _timeout: float,
+    ) -> OpenAIJsonResponse:
+        return _openai_irrelevant_response(request_id=headers["X-Client-Request-Id"])
+
+    report = run_openai_risk_event_prereview_for_official_candidates(
+        (_official_candidate(tmp_path),),
+        api_key="sk-test",
+        data_sources=DataSourcesConfig(
+            sources=[
+                _source(
+                    source_id="official_bis_federal_register_notices",
+                    source_type="primary_source",
+                    external_llm_allowed=True,
+                    max_content_sent_level="metadata_only",
+                )
+            ]
+        ),
+        risk_events=load_risk_events(),
+        input_path=tmp_path / "official_policy_source_candidates_2026-05-04.csv",
+        as_of=datetime(2026, 5, 4, tzinfo=UTC).date(),
+        http_post_json=fake_post,
+        generated_at=datetime(2026, 5, 4, tzinfo=UTC),
+    )
+    queue_path = write_risk_event_prereview_queue(report, tmp_path / "queue.json")
+    payload = json.loads(queue_path.read_text(encoding="utf-8"))
+
+    assert report.status == "PASS"
+    assert report.record_count == 0
+    assert report.pending_review_count == 0
+    assert payload["record_count"] == 0
+
+
+def test_official_candidates_auto_precheck_reports_openai_timeout(
+    tmp_path: Path,
+) -> None:
+    call_count = 0
+
+    def timeout_post(
+        _url: str,
+        _headers: Mapping[str, str],
+        _payload: Mapping[str, Any],
+        _timeout: float,
+    ) -> OpenAIJsonResponse:
+        nonlocal call_count
+        call_count += 1
+        raise TimeoutError("read timed out")
+
+    first_candidate = _official_candidate(tmp_path)
+    second_candidate = replace(first_candidate, candidate_id=f"{first_candidate.candidate_id}:2")
+    report = run_openai_risk_event_prereview_for_official_candidates(
+        (first_candidate, second_candidate),
+        api_key="sk-test",
+        data_sources=DataSourcesConfig(
+            sources=[
+                _source(
+                    source_id="official_bis_federal_register_notices",
+                    source_type="primary_source",
+                    external_llm_allowed=True,
+                    max_content_sent_level="metadata_only",
+                )
+            ]
+        ),
+        risk_events=load_risk_events(),
+        input_path=tmp_path / "official_policy_source_candidates_2026-05-04.csv",
+        as_of=datetime(2026, 5, 4, tzinfo=UTC).date(),
+        http_post_json=timeout_post,
+        generated_at=datetime(2026, 5, 4, tzinfo=UTC),
+    )
+
+    assert report.status == "FAIL"
+    assert report.record_count == 0
+    assert call_count == DEFAULT_OPENAI_MAX_RETRIES + 1
+    assert "openai_responses_api_request_failed" in {
+        issue.code for issue in report.issues
+    }
+
+
+def test_score_daily_help_exposes_risk_event_openai_precheck_option() -> None:
+    result = CliRunner().invoke(app, ["score-daily", "--help"])
+
+    assert result.exit_code == 0
+    assert "OpenAI 预审" in result.output
+    assert "--skip-risk-event-" in result.output
 
 
 def _write_csv(input_path: Path, rows: list[dict[str, str]]) -> None:
@@ -457,4 +682,85 @@ def _openai_response(request_id: str = "req_test") -> OpenAIJsonResponse:
                 }
             ],
         },
+    )
+
+
+def _openai_irrelevant_response(request_id: str = "req_test") -> OpenAIJsonResponse:
+    output = {
+        "overall_summary_zh": "该来源没有可复核风险事件。",
+        "prohibited_actions_ack": True,
+        "claims": [
+            {
+                "claim_id": "claim:irrelevant:2026-05-04",
+                "claim_text_zh": "该公告不构成 AI 投资相关政策或地缘风险事件。",
+                "source_span_ref": "metadata:title",
+                "affected_tickers": [],
+                "affected_nodes": [],
+                "claim_type": "risk_event",
+                "novelty": "duplicate",
+                "impact_horizon": "unclear",
+                "evidence_grade_suggestion": "C",
+                "confidence": 0.80,
+                "conflicts_or_uncertainties": [],
+                "required_review_questions": ["无需人工复核。"],
+                "risk_event_candidate": {
+                    "risk_id_candidate": ["ai_chip_export_control_upgrade"],
+                    "status_candidate": "irrelevant",
+                    "level_candidate": "none",
+                    "severity_candidate": "none",
+                    "probability_candidate": "none",
+                    "scope_candidate": "none",
+                    "time_sensitivity_candidate": "none",
+                    "action_class_candidate": "none",
+                    "missing_confirmations": [],
+                    "review_questions": [],
+                },
+                "thesis_signal_match": [],
+                "manual_review_status": "pending_review",
+                "prohibited_actions_ack": True,
+            }
+        ],
+    }
+    return OpenAIJsonResponse(
+        status_code=200,
+        headers={"x-request-id": request_id},
+        body={
+            "id": "resp_irrelevant",
+            "output": [
+                {
+                    "type": "message",
+                    "content": [
+                        {
+                            "type": "output_text",
+                            "text": json.dumps(output, ensure_ascii=False),
+                        }
+                    ],
+                }
+            ],
+        },
+    )
+
+
+def _official_candidate(tmp_path: Path) -> OfficialPolicyCandidate:
+    return OfficialPolicyCandidate(
+        candidate_id="official:official_bis_federal_register_notices:test",
+        as_of=datetime(2026, 5, 4, tzinfo=UTC).date(),
+        source_id="official_bis_federal_register_notices",
+        provider="Federal Register API / BIS notices",
+        source_type="primary_source",
+        source_name="Federal Register API / BIS notices",
+        source_url="https://www.federalregister.gov/d/2026-00001",
+        source_title="BIS updates Entity List rules for advanced computing chips",
+        published_at=datetime(2026, 5, 4, tzinfo=UTC).date(),
+        captured_at=datetime(2026, 5, 4, tzinfo=UTC).date(),
+        matched_topics=("export_controls",),
+        matched_risk_ids=("ai_chip_export_control_upgrade",),
+        affected_tickers=("NVDA", "AMD"),
+        affected_nodes=("export_controls",),
+        evidence_grade_floor="A",
+        review_status="pending_review",
+        review_questions=("是否影响 NVDA/AMD 出口许可？",),
+        raw_payload_path=tmp_path / "raw.json",
+        raw_payload_sha256="c" * 64,
+        row_count=1,
     )

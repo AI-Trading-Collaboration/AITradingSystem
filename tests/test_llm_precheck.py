@@ -17,7 +17,9 @@ from ai_trading_system.config import (
 )
 from ai_trading_system.llm_precheck import (
     DEFAULT_OPENAI_LLM_MODEL,
+    DEFAULT_OPENAI_MAX_RETRIES,
     DEFAULT_OPENAI_REASONING_EFFORT,
+    DEFAULT_OPENAI_TIMEOUT_SECONDS,
     OPENAI_LLM_CLAIM_RESPONSE_FORMAT,
     LlmClaimPrecheckInput,
     OpenAIJsonResponse,
@@ -66,6 +68,13 @@ def test_llm_claim_precheck_fails_closed_without_provider_permission(
     assert "llm_precheck_permission_denied" in {issue.code for issue in report.issues}
 
 
+def test_openai_precheck_defaults_are_daily_safe() -> None:
+    assert DEFAULT_OPENAI_LLM_MODEL == "gpt-5.5"
+    assert DEFAULT_OPENAI_REASONING_EFFORT == "high"
+    assert DEFAULT_OPENAI_TIMEOUT_SECONDS == 120.0
+    assert DEFAULT_OPENAI_MAX_RETRIES == 2
+
+
 def test_llm_claim_precheck_rejects_unsupported_reasoning_effort(
     tmp_path: Path,
 ) -> None:
@@ -112,14 +121,16 @@ def test_llm_claim_precheck_writes_pending_review_queue_without_source_text(
     source_text = "Official release says export controls now require extra licenses."
     packet = _packet(content_text=source_text, content_sent_level="full_text")
     captured_payload: dict[str, Any] = {}
+    captured_timeout: list[float] = []
 
     def fake_post(
         _url: str,
         headers: Mapping[str, str],
         payload: Mapping[str, Any],
-        _timeout: float,
+        timeout_seconds: float,
     ) -> OpenAIJsonResponse:
         captured_payload.update(dict(payload))
+        captured_timeout.append(timeout_seconds)
         return _openai_response(request_id=headers["X-Client-Request-Id"])
 
     report = run_openai_claim_precheck(
@@ -149,6 +160,7 @@ def test_llm_claim_precheck_writes_pending_review_queue_without_source_text(
     assert report.status == "PASS_WITH_WARNINGS"
     assert captured_payload["model"] == DEFAULT_OPENAI_LLM_MODEL
     assert captured_payload["reasoning"] == {"effort": DEFAULT_OPENAI_REASONING_EFFORT}
+    assert captured_timeout == [DEFAULT_OPENAI_TIMEOUT_SECONDS]
     assert report.records[0].model == DEFAULT_OPENAI_LLM_MODEL
     assert report.records[0].reasoning_effort == DEFAULT_OPENAI_REASONING_EFFORT
     assert report.records[0].source_type == "llm_extracted"
@@ -162,6 +174,96 @@ def test_llm_claim_precheck_writes_pending_review_queue_without_source_text(
     assert payload["records"][0]["reasoning_effort"] == DEFAULT_OPENAI_REASONING_EFFORT
     assert source_text not in queue_text
     assert "sk-test" not in queue_text
+
+
+def test_llm_claim_precheck_retries_retryable_http_error_before_success(
+    tmp_path: Path,
+) -> None:
+    packet = _packet(content_text="Official release says export controls changed.")
+    captured_timeout: list[float] = []
+
+    def fake_post(
+        _url: str,
+        _headers: Mapping[str, str],
+        _payload: Mapping[str, Any],
+        timeout_seconds: float,
+    ) -> OpenAIJsonResponse:
+        captured_timeout.append(timeout_seconds)
+        if len(captured_timeout) < 3:
+            return OpenAIJsonResponse(
+                status_code=502,
+                headers={},
+                body={"error": {"message": "bad gateway"}},
+            )
+        return _openai_response()
+
+    report = run_openai_claim_precheck(
+        packet,
+        api_key="sk-test",
+        data_sources=DataSourcesConfig(
+            sources=[
+                _source(
+                    source_id="sec_company_facts",
+                    source_type="primary_source",
+                    external_llm_allowed=True,
+                    max_content_sent_level="full_text",
+                )
+            ]
+        ),
+        input_path=tmp_path / "input.yaml",
+        http_post_json=fake_post,
+        generated_at=datetime(2026, 5, 4, tzinfo=UTC),
+    )
+
+    assert captured_timeout == [DEFAULT_OPENAI_TIMEOUT_SECONDS] * 3
+    assert report.status == "PASS_WITH_WARNINGS"
+    assert report.record_count == 1
+    assert "openai_responses_api_retry_succeeded" in {
+        issue.code for issue in report.issues
+    }
+
+
+def test_llm_claim_precheck_fails_after_retry_exhaustion(tmp_path: Path) -> None:
+    packet = _packet(content_text="Official release says export controls changed.")
+    call_count = 0
+
+    def fake_post(
+        _url: str,
+        _headers: Mapping[str, str],
+        _payload: Mapping[str, Any],
+        _timeout_seconds: float,
+    ) -> OpenAIJsonResponse:
+        nonlocal call_count
+        call_count += 1
+        return OpenAIJsonResponse(
+            status_code=502,
+            headers={},
+            body={"error": {"message": "bad gateway"}},
+        )
+
+    report = run_openai_claim_precheck(
+        packet,
+        api_key="sk-test",
+        data_sources=DataSourcesConfig(
+            sources=[
+                _source(
+                    source_id="sec_company_facts",
+                    source_type="primary_source",
+                    external_llm_allowed=True,
+                    max_content_sent_level="full_text",
+                )
+            ]
+        ),
+        input_path=tmp_path / "input.yaml",
+        http_post_json=fake_post,
+        generated_at=datetime(2026, 5, 4, tzinfo=UTC),
+    )
+
+    assert call_count == DEFAULT_OPENAI_MAX_RETRIES + 1
+    assert report.status == "FAIL"
+    assert report.record_count == 0
+    assert "openai_responses_api_error" in {issue.code for issue in report.issues}
+    assert any("已重试 2 次" in issue.message for issue in report.issues)
 
 
 def test_openai_claim_schema_cannot_emit_trade_action_fields() -> None:

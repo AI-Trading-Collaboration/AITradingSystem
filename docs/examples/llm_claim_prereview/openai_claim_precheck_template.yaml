@@ -10,5 +10,5 @@ content_text: |
   示例输入只用于说明 OpenAI claim 预审字段结构。
   真实运行前必须确认 source_id 对应 provider 的 llm_permission 允许外部 LLM 处理。
 notes: >
-  示例模板，不代表真实投资结论。默认 OpenAI 请求使用 gpt-5.5-pro 和
-  reasoning.effort=xhigh，实际值会写入报告和队列。
+  示例模板，不代表真实投资结论。默认 OpenAI 请求使用 gpt-5.5 和
+  reasoning.effort=high，单请求失败最多重试 2 次，实际值会写入报告和队列。

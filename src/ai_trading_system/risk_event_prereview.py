@@ -16,6 +16,7 @@ from ai_trading_system.llm_precheck import (
     DEFAULT_OPENAI_LLM_MODEL,
     DEFAULT_OPENAI_REASONING_EFFORT,
     DEFAULT_OPENAI_RESPONSES_ENDPOINT,
+    DEFAULT_OPENAI_TIMEOUT_SECONDS,
     HttpPostJson,
     LlmClaimPrecheckInput,
     LlmClaimPrecheckRecord,
@@ -24,6 +25,7 @@ from ai_trading_system.llm_precheck import (
     OpenAIReasoningEffort,
     run_openai_claim_precheck,
 )
+from ai_trading_system.official_policy_sources import OfficialPolicyCandidate
 
 RISK_EVENT_PREREVIEW_SCHEMA_VERSION = "risk_event_prereview_queue.v2"
 RISK_EVENT_PREREVIEW_PROMPT_VERSION = "risk_event_prereview_v1"
@@ -373,7 +375,7 @@ def run_openai_risk_event_prereview(
     model: str = DEFAULT_OPENAI_LLM_MODEL,
     reasoning_effort: str = DEFAULT_OPENAI_REASONING_EFFORT,
     endpoint: str = DEFAULT_OPENAI_RESPONSES_ENDPOINT,
-    timeout_seconds: float = 60.0,
+    timeout_seconds: float = DEFAULT_OPENAI_TIMEOUT_SECONDS,
     generated_at: datetime | None = None,
     http_post_json: HttpPostJson | None = None,
 ) -> RiskEventPreReviewImportReport:
@@ -393,6 +395,144 @@ def run_openai_risk_event_prereview(
         claim_report,
         risk_events=risk_events,
         as_of=as_of,
+    )
+
+
+def run_openai_risk_event_prereview_for_official_candidates(
+    candidates: tuple[OfficialPolicyCandidate, ...],
+    *,
+    api_key: str,
+    data_sources: DataSourcesConfig | None = None,
+    risk_events: RiskEventsConfig | None = None,
+    input_path: Path | str = Path("<official_policy_candidates>"),
+    as_of: date | None = None,
+    model: str = DEFAULT_OPENAI_LLM_MODEL,
+    reasoning_effort: str = DEFAULT_OPENAI_REASONING_EFFORT,
+    endpoint: str = DEFAULT_OPENAI_RESPONSES_ENDPOINT,
+    timeout_seconds: float = DEFAULT_OPENAI_TIMEOUT_SECONDS,
+    generated_at: datetime | None = None,
+    http_post_json: HttpPostJson | None = None,
+    max_candidates: int | None = None,
+) -> RiskEventPreReviewImportReport:
+    records: list[RiskEventPreReviewRecord] = []
+    issues: list[RiskEventPreReviewIssue] = []
+    row_count = 0
+    packet_checksums: list[dict[str, str]] = []
+    selected_candidates = sorted(candidates, key=_official_candidate_priority_key)
+    if max_candidates is not None:
+        if max_candidates < 0:
+            raise ValueError("max_candidates must be non-negative")
+        if len(selected_candidates) > max_candidates:
+            issues.append(
+                RiskEventPreReviewIssue(
+                    severity=RiskEventPreReviewIssueSeverity.WARNING,
+                    code="risk_event_prereview_candidate_limit_applied",
+                    message=(
+                        f"官方候选数 {len(selected_candidates)} 超过本次 OpenAI 预审上限 "
+                        f"{max_candidates}；仅预审优先级排序后的前 {max_candidates} 条。"
+                    ),
+                )
+            )
+            selected_candidates = selected_candidates[:max_candidates]
+
+    for candidate in selected_candidates:
+        packet = official_policy_candidate_to_llm_input(candidate)
+        packet_checksum = _packet_checksum(packet)
+        packet_checksums.append(
+            {
+                "candidate_id": candidate.candidate_id,
+                "packet_checksum_sha256": packet_checksum,
+            }
+        )
+        report = run_openai_risk_event_prereview(
+            packet,
+            api_key=api_key,
+            data_sources=data_sources,
+            risk_events=risk_events,
+            input_path=input_path,
+            as_of=as_of,
+            model=model,
+            reasoning_effort=reasoning_effort,
+            endpoint=endpoint,
+            timeout_seconds=timeout_seconds,
+            generated_at=generated_at,
+            http_post_json=http_post_json,
+        )
+        row_count += report.row_count
+        records.extend(report.records)
+        issues.extend(
+            issue
+            for issue in report.issues
+            if issue.code != "risk_event_prereview_no_risk_event_candidates"
+        )
+        if report.error_count:
+            break
+
+    _check_duplicate_records(records, issues)
+    has_error = any(issue.severity == RiskEventPreReviewIssueSeverity.ERROR for issue in issues)
+    return RiskEventPreReviewImportReport(
+        input_path=Path(input_path),
+        row_count=row_count,
+        checksum_sha256=_official_candidate_batch_checksum(packet_checksums),
+        records=tuple(sorted(records, key=lambda item: item.precheck_id)) if not has_error else (),
+        source_kind="openai_live",
+        issues=tuple(issues),
+    )
+
+
+def official_policy_candidate_to_llm_input(
+    candidate: OfficialPolicyCandidate,
+) -> LlmClaimPrecheckInput:
+    return LlmClaimPrecheckInput(
+        precheck_id=f"precheck:{_safe_id_segment(candidate.candidate_id)}",
+        source_id=candidate.source_id,
+        source_url=candidate.source_url,
+        source_name=candidate.source_name,
+        source_title=candidate.source_title,
+        published_at=candidate.published_at,
+        captured_at=candidate.captured_at,
+        content_sent_level="metadata_only",
+        content_text=_official_candidate_content(candidate),
+        notes=(
+            "official_policy_candidate_auto_precheck; metadata_only; "
+            "do_not_create_occurrence_or_attestation"
+        ),
+    )
+
+
+def _official_candidate_priority_key(candidate: OfficialPolicyCandidate) -> tuple[object, ...]:
+    topic_weights = {
+        "export_controls": 0,
+        "ai_policy": 1,
+        "trade_policy": 2,
+        "sanctions": 3,
+        "taiwan_geopolitics": 4,
+        "china_technology": 5,
+        "russia_geopolitics": 6,
+    }
+    source_weights = {
+        "official_bis_federal_register_notices": 0,
+        "official_federal_register_policy_documents": 1,
+        "official_govinfo_federal_register": 2,
+        "official_ustr_press_releases": 3,
+        "official_congress_bills": 4,
+        "official_trade_csl_json": 5,
+        "official_ofac_sdn_xml": 6,
+        "official_ofac_consolidated_xml": 7,
+    }
+    topic_rank = min(
+        (topic_weights.get(topic, 99) for topic in candidate.matched_topics),
+        default=99,
+    )
+    published_rank = -candidate.published_at.toordinal() if candidate.published_at else 0
+    return (
+        0 if candidate.matched_risk_ids else 1,
+        topic_rank,
+        source_weights.get(candidate.source_id, 50),
+        0 if candidate.affected_tickers else 1,
+        0 if candidate.affected_nodes else 1,
+        published_rank,
+        candidate.candidate_id,
     )
 
 
@@ -535,6 +675,12 @@ def render_risk_event_prereview_import_report(
                 "请求使用 `store=false`。"
                 if is_live
                 else "- 本命令导入固定结构化输出，不在本地发起 OpenAI API 请求。"
+            ),
+            (
+                "- 单个 OpenAI 请求遇到超时、429 或 5xx 等瞬时失败时最多重试 2 次；"
+                "第 3 次仍失败则整批 fail closed。"
+                if is_live
+                else "- 导入模式不会重试外部 API 请求。"
             ),
             "- 每条预审记录强制为 `source_type=llm_extracted` 和 "
             "`manual_review_status=pending_review`。",
@@ -679,10 +825,17 @@ def _record_from_llm_claim(
 
 
 def _claim_has_risk_event_candidate(claim_type: str, candidate: Any) -> bool:
+    if (
+        candidate.status_candidate in {"none", "irrelevant"}
+        and candidate.level_candidate == "none"
+        and candidate.action_class_candidate == "none"
+    ):
+        return False
     return (
         claim_type == "risk_event"
-        or candidate.status_candidate != "none"
+        or candidate.status_candidate not in {"none", "irrelevant"}
         or candidate.level_candidate != "none"
+        or candidate.action_class_candidate != "none"
         or bool(candidate.risk_id_candidate)
     )
 
@@ -784,6 +937,52 @@ def _safe_id_segment(value: str) -> str:
         for character in value.strip()
     ).strip("-")
     return normalized or "item"
+
+
+def _official_candidate_content(candidate: OfficialPolicyCandidate) -> str:
+    pieces = [
+        "官方政策/地缘候选元数据。",
+        f"source_id: {candidate.source_id}",
+        f"provider: {candidate.provider}",
+        f"source_type: {candidate.source_type}",
+        f"source_url: {candidate.source_url}",
+        f"source_title: {candidate.source_title}",
+        (
+            "published_at: "
+            f"{candidate.published_at.isoformat() if candidate.published_at else ''}"
+        ),
+        f"captured_at: {candidate.captured_at.isoformat()}",
+        f"matched_topics: {', '.join(candidate.matched_topics)}",
+        f"matched_risk_ids: {', '.join(candidate.matched_risk_ids)}",
+        f"affected_tickers: {', '.join(candidate.affected_tickers)}",
+        f"affected_nodes: {', '.join(candidate.affected_nodes)}",
+        f"evidence_grade_floor: {candidate.evidence_grade_floor}",
+        f"review_questions: {'; '.join(candidate.review_questions)}",
+        f"raw_payload_sha256: {candidate.raw_payload_sha256}",
+        "请只判断这条候选是否可能构成需要人工复核的政策/地缘风险事件。",
+        "如果只是正常公告、无关条目或证据不足，请输出 irrelevant/none，避免增加人工队列。",
+    ]
+    return "\n".join(piece for piece in pieces if piece)
+
+
+def _packet_checksum(packet: LlmClaimPrecheckInput) -> str:
+    serialized = json.dumps(
+        packet.model_dump(mode="json"),
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+
+def _official_candidate_batch_checksum(packet_checksums: list[dict[str, str]]) -> str:
+    serialized = json.dumps(
+        packet_checksums,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
 
 def _unique_nonempty(values: list[str]) -> list[str]:

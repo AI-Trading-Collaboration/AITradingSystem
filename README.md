@@ -17,7 +17,7 @@
 5. 与 QQQ、SMH/SOXX、SPY 的回测对比。
 6. 每日 Markdown 报告。
 
-SEC 基本面已经接入基础硬数据评分；估值快照和政策/地缘风险发生记录已经接入可审计的手工输入评分，并支持从结构化 CSV 导入来减少手工 YAML 维护。TSMC IR 季度基本面已支持从官方 Management Report 文本或 PDF 可抽取文本层导入，并可显式合并到统一 SEC-style 指标 CSV；LLM claim 预审已支持 OpenAI Responses API 结构化输出和待复核队列，默认使用 `gpt-5.5-pro` 与 `reasoning.effort=xhigh` 并记录审计字段，但只能生成 `llm_extracted` / `pending_review` 线索，不能直接触发交易动作。
+SEC 基本面已经接入基础硬数据评分；估值快照和政策/地缘风险发生记录已经接入可审计的手工输入评分，并支持从结构化 CSV 导入来减少手工 YAML 维护。TSMC IR 季度基本面已支持从官方 Management Report 文本或 PDF 可抽取文本层导入，并可显式合并到统一 SEC-style 指标 CSV；LLM claim 预审已支持 OpenAI Responses API 结构化输出和待复核队列，默认使用 `gpt-5.5` 与 `reasoning.effort=high`，单请求失败最多重试 2 次，并记录审计字段，但只能生成 `llm_extracted` / `pending_review` 线索，不能直接触发交易动作。
 
 ## 工程结构
 
@@ -123,6 +123,14 @@ aits score-daily --as-of 2026-05-01
 
 命令会先执行市场数据质量门禁，再构建市场特征，并校验 `data/processed/sec_fundamentals_YYYY-MM-DD.csv`、生成 SEC 基本面特征，最后输出 `data/processed/scores_daily.csv` 和 `outputs/reports/daily_score_YYYY-MM-DD.md`。日报会同时汇总交易 thesis、风险事件、估值快照和交易复盘的复核状态；缺少本地手工输入会显示为警告，配置或 YAML 错误会显示为复核失败。SEC 基本面特征通过校验后会进入基本面硬数据评分；估值快照通过校验后会以估值分位和拥挤比例进入手工/审计输入评分，过期快照和 `public_convenience` 来源不会进入自动评分；政策/地缘评分只读取已校验的 `data/external/risk_event_occurrences/*.yaml` 发生记录，没有合格发生记录时显示为数据不足，不把 `config/risk_events.yaml` 的监控规则当作已发生风险或无风险证明。
 
+日报评分默认启用官方来源 + OpenAI 风险事件预审；如需排查或离线运行，可显式传入 `--skip-risk-event-openai-precheck`：
+
+```powershell
+aits score-daily --as-of 2026-05-05 --skip-risk-event-openai-precheck
+```
+
+该流程会先抓取 Federal Register/BIS/OFAC/USTR/Congress.gov/GovInfo/Trade.gov CSL 等官方政策/地缘来源，再用 `OPENAI_API_KEY` 调用 OpenAI Responses API 做 `metadata_only` 预审；为控制成本和延迟，默认最多处理 20 条官方候选，可用 `--risk-event-openai-precheck-max-candidates` 调整；默认模型为 `gpt-5.5`、`reasoning.effort=high`、请求读超时为 120 秒，可用 `--openai-model`、`--openai-reasoning-effort` 和 `--openai-timeout-seconds` 调整；单个 OpenAI 请求遇到超时、429 或 5xx 等瞬时失败时最多重试 2 次，第 3 次仍失败则整批 fail closed。输出只写入 `data/processed/risk_event_prereview_queue.json` 和 `outputs/reports/risk_event_prereview_openai_YYYY-MM-DD.md`，并保持 `llm_extracted / pending_review`；无关或默认无风险结果不增加人工队列。它不会自动写入 `risk_event_occurrence`、不会生成复核声明、不会直接评分或触发仓位闸门。缺少 OpenAI key、官方来源抓取失败、provider LLM 权限失败或 OpenAI 请求最终失败时，默认日报前预审会停止日报评分。
+
 运行历史回测：
 
 ```powershell
@@ -187,7 +195,7 @@ aits risk-events list-occurrences
 aits risk-events validate-occurrences --as-of 2026-05-02
 ```
 
-风险事件配置在 `config/risk_events.yaml`，只定义需要监控的 L1/L2/L3 规则、AI 仓位折扣乘数、人工复核要求、影响产业链节点、相关标的、建议动作、升级条件和解除条件。OpenAI 只能通过 `precheck-openai` 或 `import-prereview-csv` 整理 `llm_extracted / pending_review` 候选；provider 授权未知时 fail closed，输出不得直接评分、触发仓位闸门或写入正式发生记录。实际发生记录默认读取 `data/external/risk_event_occurrences/*.yaml`，该目录不提交；可参考 `docs/examples/risk_event_occurrences/export_control_active_template.yaml` 复制模板。`import-occurrences-csv` 只接受人工复核后的结构化 CSV，同一 `occurrence_id` 的多行用于合并证据来源，关键字段冲突会停止导入。政策/地缘评分只读取已通过校验的发生记录，`public_convenience` 证据只能作为辅助，不能单独进入自动评分。
+风险事件配置在 `config/risk_events.yaml`，只定义需要监控的 L1/L2/L3 规则、AI 仓位折扣乘数、人工复核要求、影响产业链节点、相关标的、建议动作、升级条件和解除条件。OpenAI 只能通过 `precheck-openai`、`import-prereview-csv` 或 `score-daily --risk-event-openai-precheck` 整理 `llm_extracted / pending_review` 候选；provider 授权未知时 fail closed，输出不得直接评分、触发仓位闸门或写入正式发生记录。实际发生记录默认读取 `data/external/risk_event_occurrences/*.yaml`，该目录不提交；可参考 `docs/examples/risk_event_occurrences/export_control_active_template.yaml` 复制模板。`import-occurrences-csv` 只接受人工复核后的结构化 CSV，同一 `occurrence_id` 的多行用于合并证据来源，关键字段冲突会停止导入。政策/地缘评分只读取已通过校验的发生记录，`public_convenience` 证据只能作为辅助，不能单独进入自动评分。
 
 校验和复核估值、预期与拥挤度快照：
 

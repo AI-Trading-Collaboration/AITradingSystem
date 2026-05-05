@@ -62,7 +62,7 @@
 - 付费新闻和供应商内容可以进入 LLM 预审，但每个 provider 必须显式记录是否允许发送给外部 LLM API、是否允许缓存、是否允许摘要进入报告，以及授权依据；授权未知时不得发送全文或长摘录。
 - LLM 输出统一保持 `llm_extracted` / `pending_review`，人工确认前不得作为自动评分、仓位闸门、thesis 状态迁移或日报可执行结论的输入。
 - 预审 schema 采用“source-permission envelope + claim-centric payload”为通用底座；风险事件继续使用 `risk_event_candidate` 专用 payload。
-- OpenAI 默认请求策略统一为 `gpt-5.5-pro` 和 `reasoning.effort=xhigh`；命令可显式覆盖用于对比实验，但报告和队列必须记录实际 model 与 reasoning effort。
+- OpenAI 默认请求策略统一为 `gpt-5.5` 和 `reasoning.effort=high`，单请求失败最多重试 2 次；命令可显式覆盖 model/reasoning/timeout 用于对比实验，但报告和队列必须记录实际 model 与 reasoning effort。
 
 允许任务：
 
@@ -308,8 +308,9 @@ OpenAI API 使用边界：
 - 2026-05-04：owner 确认 `LLM-001` 使用边界：OpenAI API 用于关键信息校验和结构化预审；付费新闻/供应商内容可在 owner 个人使用目的下处理，但必须有 provider 级外部 LLM 授权标记；预审 schema 确定为通用 `source-permission envelope + claim-centric payload`，风险事件沿用专用 candidate payload。
 - 2026-05-04：`LLM-001` 进入实现。owner 已把 OpenAI API key 设置为环境变量；剩余阻塞项按保守默认落地：第一阶段真实样本优先使用官方/一手来源和 owner 手工摘要，provider 授权未知时不得发送全文或长摘录，所有 LLM 输出只进入 `llm_extracted` / `pending_review` 队列。
 - 2026-05-04：`LLM-001` 第一阶段达到 `BASELINE_DONE`：新增 provider 级 `llm_permission` schema、`aits llm precheck-claims`、OpenAI Responses API `store=false` 结构化调用、claim-centric 待复核队列、中文审计报告、输入模板和隔离测试；未执行真实生产样本调用，完整运行仍依赖 owner 批准样本、provider 授权条款覆盖和人工复核 SLA。
-- 2026-05-04：`LLM-001` 再次进入实现：owner 指定 OpenAI 默认请求策略统一升级为 `gpt-5.5-pro` 和 `reasoning.effort=xhigh`；实现必须保持 Responses API Structured Outputs、`store=false`、provider 权限 fail closed、LLM 输出不得直连评分/仓位闸门，并把 reasoning effort 纳入请求审计、报告和待复核队列。
-- 2026-05-04：`LLM-001` 模型策略更新达到 `BASELINE_DONE`：`aits llm precheck-claims` 和 `aits risk-events precheck-openai` 默认使用 `gpt-5.5-pro` 与 `reasoning.effort=xhigh`，CLI 可显式覆盖；claim/risk 预审队列、中文报告、数据源目录、示例和系统流图均记录 reasoning effort；`.venv\Scripts\python.exe -m pytest -q` 通过 311 项测试，`ruff check config src tests` 通过。
+- 2026-05-04：`LLM-001` 再次进入实现：owner 指定 OpenAI 默认请求策略统一升级为 `gpt-5.5` 和 `reasoning.effort=high`；实现必须保持 Responses API Structured Outputs、`store=false`、provider 权限 fail closed、LLM 输出不得直连评分/仓位闸门，并把 reasoning effort 纳入请求审计、报告和待复核队列。
+- 2026-05-04：`LLM-001` 模型策略更新达到 `BASELINE_DONE`：`aits llm precheck-claims` 和 `aits risk-events precheck-openai` 默认使用 `gpt-5.5` 与 `reasoning.effort=high`，CLI 可显式覆盖；claim/risk 预审队列、中文报告、数据源目录、示例和系统流图均记录 reasoning effort；`.venv\Scripts\python.exe -m pytest -q` 通过 311 项测试，`ruff check config src tests` 通过。
+- 2026-05-05：owner 批准 OpenAI 单请求失败最多重试 2 次；第 3 次仍失败时保持 fail closed，不写部分队列、不进入评分或仓位闸门。
 - 2026-05-04：`BACKTEST-001` 已完成第一阶段基础实现：`aits backtest` 新增 `--robustness-report` / `--robustness-report-path`，可生成中文回测稳健性报告，复用同一 point-in-time 输入对比基础动态策略、成本压力、起点后移和买入持有基准；报告明确 `production_effect=none`，完整防过拟合仍需权重扰动、固定仓位/趋势-only/随机基线、机器可读摘要和样本外验证。
 - 2026-05-04：`BACKTEST-001` 第二阶段进入实现：增加固定 60% 总资产 AI exposure
   基线和机器可读 JSON 摘要；基线复用基础回测的下一交易日收益和显式成本假设，不读取额外数据；

@@ -452,6 +452,7 @@ def render_daily_score_report(
     execution_advisory_section: str | None = None,
     portfolio_exposure_section: str | None = None,
     alert_summary_section: str | None = None,
+    risk_event_openai_precheck_section: str | None = None,
     traceability_section: str | None = None,
 ) -> str:
     recommendation = report.recommendation
@@ -581,6 +582,8 @@ def render_daily_score_report(
         )
         if risk_event_occurrence_report_path is not None:
             lines.append(f"- 风险事件发生记录报告：`{risk_event_occurrence_report_path}`")
+    if risk_event_openai_precheck_section is not None:
+        lines.extend(["", risk_event_openai_precheck_section.rstrip()])
 
     lines.extend(
         [
@@ -724,6 +727,7 @@ def write_daily_score_report(
     execution_advisory_section: str | None = None,
     portfolio_exposure_section: str | None = None,
     alert_summary_section: str | None = None,
+    risk_event_openai_precheck_section: str | None = None,
     traceability_section: str | None = None,
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -746,6 +750,7 @@ def write_daily_score_report(
             execution_advisory_section=execution_advisory_section,
             portfolio_exposure_section=portfolio_exposure_section,
             alert_summary_section=alert_summary_section,
+            risk_event_openai_precheck_section=risk_event_openai_precheck_section,
             traceability_section=traceability_section,
         ),
         encoding="utf-8",

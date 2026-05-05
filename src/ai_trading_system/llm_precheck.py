@@ -22,9 +22,12 @@ OpenAIReasoningEffort = Literal["none", "minimal", "low", "medium", "high", "xhi
 LLM_CLAIM_PREREVIEW_SCHEMA_VERSION = "llm_claim_prereview_queue.v2"
 LLM_CLAIM_PREREVIEW_PROMPT_VERSION = "llm_claim_precheck_v1"
 DEFAULT_OPENAI_RESPONSES_ENDPOINT = "https://api.openai.com/v1/responses"
-DEFAULT_OPENAI_LLM_MODEL = "gpt-5.5-pro"
-DEFAULT_OPENAI_REASONING_EFFORT: OpenAIReasoningEffort = "xhigh"
+DEFAULT_OPENAI_LLM_MODEL = "gpt-5.5"
+DEFAULT_OPENAI_REASONING_EFFORT: OpenAIReasoningEffort = "high"
+DEFAULT_OPENAI_TIMEOUT_SECONDS = 120.0
+DEFAULT_OPENAI_MAX_RETRIES = 2
 _SUPPORTED_OPENAI_REASONING_EFFORTS = {"none", "minimal", "low", "medium", "high", "xhigh"}
+_OPENAI_RETRYABLE_STATUS_CODES = {408, 409, 425, 429, 500, 502, 503, 504}
 
 ContentSentLevel = Literal["metadata_only", "short_excerpt", "summary_only", "full_text"]
 SourceType = Literal["primary_source", "paid_vendor", "manual_input", "public_convenience"]
@@ -462,6 +465,12 @@ class OpenAIJsonResponse:
     body: dict[str, Any]
 
 
+@dataclass(frozen=True)
+class _OpenAIRequestResult:
+    response: OpenAIJsonResponse | None
+    issues: tuple[LlmPrecheckIssue, ...] = field(default_factory=tuple)
+
+
 HttpPostJson = Callable[
     [str, Mapping[str, str], Mapping[str, Any], float],
     OpenAIJsonResponse,
@@ -487,7 +496,7 @@ def run_openai_claim_precheck(
     model: str = DEFAULT_OPENAI_LLM_MODEL,
     reasoning_effort: str = DEFAULT_OPENAI_REASONING_EFFORT,
     endpoint: str = DEFAULT_OPENAI_RESPONSES_ENDPOINT,
-    timeout_seconds: float = 60.0,
+    timeout_seconds: float = DEFAULT_OPENAI_TIMEOUT_SECONDS,
     generated_at: datetime | None = None,
     http_post_json: HttpPostJson | None = None,
 ) -> LlmClaimPrecheckReport:
@@ -564,24 +573,23 @@ def run_openai_claim_precheck(
         "X-Client-Request-Id": client_request_id,
     }
     post_json = http_post_json or _post_json_stdlib
-    response = post_json(endpoint, headers, request_payload, timeout_seconds)
-    if response.status_code >= 400:
+    request_result = _post_openai_json_with_retries(
+        post_json=post_json,
+        endpoint=endpoint,
+        headers=headers,
+        payload=request_payload,
+        timeout_seconds=timeout_seconds,
+        precheck_id=input_packet.precheck_id,
+    )
+    issues.extend(request_result.issues)
+    if request_result.response is None:
         return LlmClaimPrecheckReport(
             input_path=Path(input_path),
             generated_at=timestamp,
             records=(),
-            issues=(
-                LlmPrecheckIssue(
-                    severity=LlmPrecheckIssueSeverity.ERROR,
-                    code="openai_responses_api_error",
-                    precheck_id=input_packet.precheck_id,
-                    message=(
-                        f"OpenAI Responses API 返回 HTTP {response.status_code}，"
-                        "已停止写入队列。"
-                    ),
-                ),
-            ),
+            issues=tuple(issues),
         )
+    response = request_result.response
 
     try:
         output_text = _extract_output_text(response.body)
@@ -750,6 +758,8 @@ def render_llm_claim_precheck_report(report: LlmClaimPrecheckReport) -> str:
             "",
             "- 本命令使用 OpenAI Responses API 固定 JSON schema 做结构化预审，"
             "请求默认 `store=false`。",
+            "- 单个 OpenAI 请求遇到超时、429 或 5xx 等瞬时失败时最多重试 2 次；"
+            "第 3 次仍失败则 fail closed。",
             "- API key 只从环境变量读取，不写入报告、队列或错误信息。",
             "- provider 授权未知或 `external_llm_allowed=false` 时 fail closed，不发起 API 请求。",
             "- 输出只作为 `llm_extracted` / `pending_review` 证据分类结果，"
@@ -958,6 +968,88 @@ def _post_json_stdlib(
             headers=dict(exc.headers.items()),
             body=body,
         )
+
+
+def _post_openai_json_with_retries(
+    *,
+    post_json: HttpPostJson,
+    endpoint: str,
+    headers: Mapping[str, str],
+    payload: Mapping[str, Any],
+    timeout_seconds: float,
+    precheck_id: str,
+    max_retries: int = DEFAULT_OPENAI_MAX_RETRIES,
+) -> _OpenAIRequestResult:
+    max_attempts = max_retries + 1
+    transient_failures: list[str] = []
+    for attempt in range(1, max_attempts + 1):
+        try:
+            response = post_json(endpoint, headers, payload, timeout_seconds)
+        except (OSError, TimeoutError, urllib.error.URLError) as exc:
+            failure = f"{type(exc).__name__}: {exc}"
+            if attempt < max_attempts:
+                transient_failures.append(f"第 {attempt} 次尝试失败：{failure}")
+                continue
+            return _OpenAIRequestResult(
+                response=None,
+                issues=(
+                    LlmPrecheckIssue(
+                        severity=LlmPrecheckIssueSeverity.ERROR,
+                        code="openai_responses_api_request_failed",
+                        precheck_id=precheck_id,
+                        message=(
+                            f"OpenAI Responses API 请求在 {max_attempts} 次尝试后仍失败，"
+                            f"已停止写入队列：{failure}"
+                        ),
+                    ),
+                ),
+            )
+
+        if response.status_code in _OPENAI_RETRYABLE_STATUS_CODES and attempt < max_attempts:
+            transient_failures.append(
+                f"第 {attempt} 次尝试返回 HTTP {response.status_code}"
+            )
+            continue
+        if response.status_code >= 400:
+            retry_phrase = (
+                f"已重试 {max_retries} 次后仍失败，"
+                if transient_failures
+                else ""
+            )
+            return _OpenAIRequestResult(
+                response=None,
+                issues=(
+                    LlmPrecheckIssue(
+                        severity=LlmPrecheckIssueSeverity.ERROR,
+                        code="openai_responses_api_error",
+                        precheck_id=precheck_id,
+                        message=(
+                            f"OpenAI Responses API 返回 HTTP {response.status_code}，"
+                            f"{retry_phrase}已停止写入队列。"
+                        ),
+                    ),
+                ),
+            )
+
+        if not transient_failures:
+            return _OpenAIRequestResult(response=response)
+
+        return _OpenAIRequestResult(
+            response=response,
+            issues=(
+                LlmPrecheckIssue(
+                    severity=LlmPrecheckIssueSeverity.WARNING,
+                    code="openai_responses_api_retry_succeeded",
+                    precheck_id=precheck_id,
+                    message=(
+                        f"OpenAI Responses API 在第 {attempt} 次尝试成功；此前失败 "
+                        f"{len(transient_failures)} 次：{'; '.join(transient_failures)}。"
+                    ),
+                ),
+            ),
+        )
+
+    raise AssertionError("OpenAI retry loop exited unexpectedly")
 
 
 def _extract_output_text(body: Mapping[str, Any]) -> str:

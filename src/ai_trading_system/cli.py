@@ -283,6 +283,7 @@ from ai_trading_system.industry_node_state import (
 from ai_trading_system.llm_precheck import (
     DEFAULT_OPENAI_LLM_MODEL,
     DEFAULT_OPENAI_REASONING_EFFORT,
+    DEFAULT_OPENAI_TIMEOUT_SECONDS,
     default_llm_claim_precheck_report_path,
     load_llm_claim_precheck_input,
     run_openai_claim_precheck,
@@ -301,6 +302,7 @@ from ai_trading_system.market_evidence import (
 from ai_trading_system.official_policy_sources import (
     DEFAULT_OFFICIAL_POLICY_PROCESSED_DIR,
     DEFAULT_OFFICIAL_POLICY_RAW_DIR,
+    default_official_policy_candidates_path,
     default_official_policy_fetch_report_path,
     fetch_official_policy_sources,
     write_official_policy_fetch_report,
@@ -348,6 +350,7 @@ from ai_trading_system.risk_event_prereview import (
     default_risk_event_prereview_report_path,
     import_risk_event_prereview_csv,
     run_openai_risk_event_prereview,
+    run_openai_risk_event_prereview_for_official_candidates,
     write_risk_event_prereview_import_report,
     write_risk_event_prereview_queue,
 )
@@ -920,8 +923,14 @@ def precheck_llm_claims_command(
         str,
         typer.Option(help="OpenAI Responses API reasoning.effort。"),
     ] = DEFAULT_OPENAI_REASONING_EFFORT,
+    timeout_seconds: Annotated[
+        float,
+        typer.Option(help="OpenAI Responses API 请求读超时秒数。"),
+    ] = DEFAULT_OPENAI_TIMEOUT_SECONDS,
 ) -> None:
     """调用 OpenAI 结构化输出生成 claim 待复核队列。"""
+    if timeout_seconds <= 0:
+        raise typer.BadParameter("OpenAI 请求超时秒数必须为正数。")
     report_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_llm_claim_precheck_report_path(
         PROJECT_ROOT / "outputs" / "reports",
@@ -940,6 +949,7 @@ def precheck_llm_claims_command(
         input_path=input_path,
         model=model,
         reasoning_effort=reasoning_effort,
+        timeout_seconds=timeout_seconds,
     )
     write_llm_claim_precheck_report(report, report_path)
 
@@ -4045,8 +4055,14 @@ def precheck_risk_events_with_openai_command(
         str,
         typer.Option(help="OpenAI Responses API reasoning.effort。"),
     ] = DEFAULT_OPENAI_REASONING_EFFORT,
+    timeout_seconds: Annotated[
+        float,
+        typer.Option(help="OpenAI Responses API 请求读超时秒数。"),
+    ] = DEFAULT_OPENAI_TIMEOUT_SECONDS,
 ) -> None:
     """调用 OpenAI API 整理风险事件候选，并写入人工复核队列。"""
+    if timeout_seconds <= 0:
+        raise typer.BadParameter("OpenAI 请求超时秒数必须为正数。")
     precheck_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_risk_event_openai_prereview_report_path(
         PROJECT_ROOT / "outputs" / "reports",
@@ -4067,6 +4083,7 @@ def precheck_risk_events_with_openai_command(
         as_of=precheck_date,
         model=model,
         reasoning_effort=reasoning_effort,
+        timeout_seconds=timeout_seconds,
     )
     write_risk_event_prereview_import_report(report, report_path)
 
@@ -6261,6 +6278,56 @@ def score_daily(
         Path | None,
         typer.Option(help="Markdown 风险事件发生记录报告输出路径。"),
     ] = None,
+    risk_event_openai_precheck: Annotated[
+        bool,
+        typer.Option(
+            "--risk-event-openai-precheck/--skip-risk-event-openai-precheck",
+            help=(
+                "默认在日报评分前抓取官方政策/地缘来源并调用 OpenAI 风险事件预审；"
+                "输出只进入 llm_extracted / pending_review 队列。"
+            ),
+        ),
+    ] = True,
+    risk_event_prereview_queue_path: Annotated[
+        Path,
+        typer.Option(help="风险事件 OpenAI 预审待复核队列 JSON 输出路径。"),
+    ] = DEFAULT_RISK_EVENT_PREREVIEW_QUEUE_PATH,
+    risk_event_openai_precheck_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 风险事件 OpenAI 自动预审报告输出路径。"),
+    ] = None,
+    official_policy_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 官方政策/地缘来源自动抓取报告输出路径。"),
+    ] = None,
+    official_policy_source_ids: Annotated[
+        str | None,
+        typer.Option(help="日报前官方来源抓取 source_id 白名单，逗号分隔；为空抓取全部。"),
+    ] = None,
+    official_policy_limit: Annotated[
+        int,
+        typer.Option(help="日报前官方来源抓取每个可分页来源最多请求的记录数。"),
+    ] = 50,
+    risk_event_openai_precheck_max_candidates: Annotated[
+        int,
+        typer.Option(help="日报前 OpenAI 风险事件预审最多处理的官方候选数，避免成本失控。"),
+    ] = 20,
+    openai_api_key_env: Annotated[
+        str,
+        typer.Option(help="日报前风险事件 OpenAI 预审读取 API key 的环境变量名。"),
+    ] = "OPENAI_API_KEY",
+    openai_model: Annotated[
+        str,
+        typer.Option(help="日报前风险事件 OpenAI 预审使用的 Responses API 模型。"),
+    ] = DEFAULT_OPENAI_LLM_MODEL,
+    openai_reasoning_effort: Annotated[
+        str,
+        typer.Option(help="日报前风险事件 OpenAI 预审 reasoning.effort。"),
+    ] = DEFAULT_OPENAI_REASONING_EFFORT,
+    openai_timeout_seconds: Annotated[
+        float,
+        typer.Option(help="日报前风险事件 OpenAI 预审 Responses API 请求读超时秒数。"),
+    ] = DEFAULT_OPENAI_TIMEOUT_SECONDS,
     catalyst_calendar_path: Annotated[
         Path,
         typer.Option(help="未来催化剂日历 YAML 路径，用于日报告警摘要。"),
@@ -6400,6 +6467,20 @@ def score_daily(
     execution_policy_report_output = (
         execution_policy_report_path
         or default_execution_policy_report_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            score_date,
+        )
+    )
+    official_policy_report_output = (
+        official_policy_report_path
+        or default_official_policy_fetch_report_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            score_date,
+        )
+    )
+    risk_event_openai_precheck_report_output = (
+        risk_event_openai_precheck_report_path
+        or default_risk_event_openai_prereview_report_path(
             PROJECT_ROOT / "outputs" / "reports",
             score_date,
         )
@@ -6565,6 +6646,90 @@ def score_daily(
             f"警告数：{risk_events_validation_report.warning_count}"
         )
         raise typer.Exit(code=1)
+    official_policy_fetch_report = None
+    risk_event_prereview_report = None
+    if risk_event_openai_precheck:
+        if risk_event_openai_precheck_max_candidates < 0:
+            raise typer.BadParameter("OpenAI 风险事件预审候选上限不能为负数。")
+        if openai_timeout_seconds <= 0:
+            raise typer.BadParameter("OpenAI 风险事件预审超时秒数必须为正数。")
+        if not os.getenv(openai_api_key_env, ""):
+            console.print("[red]缺少 OpenAI API key，已停止日报前风险事件预审。[/red]")
+            console.print(f"需要环境变量：{openai_api_key_env}")
+            raise typer.Exit(code=1)
+        selected_official_source_ids = (
+            _parse_csv_items(official_policy_source_ids)
+            if official_policy_source_ids
+            else None
+        )
+        official_policy_fetch_report = fetch_official_policy_sources(
+            as_of=score_date,
+            since=None,
+            raw_dir=DEFAULT_OFFICIAL_POLICY_RAW_DIR,
+            processed_dir=DEFAULT_OFFICIAL_POLICY_PROCESSED_DIR,
+            api_keys={
+                "CONGRESS_API_KEY": os.getenv("CONGRESS_API_KEY", ""),
+                "GOVINFO_API_KEY": os.getenv("GOVINFO_API_KEY", ""),
+            },
+            selected_source_ids=selected_official_source_ids,
+            limit=official_policy_limit,
+            download_manifest_path=PROJECT_ROOT / "data" / "raw" / "download_manifest.csv",
+        )
+        write_official_policy_fetch_report(
+            official_policy_fetch_report,
+            official_policy_report_output,
+        )
+        if not official_policy_fetch_report.passed:
+            console.print("[red]官方政策/地缘来源抓取失败，已停止每日评分。[/red]")
+            console.print(f"官方来源抓取报告：{official_policy_report_output}")
+            console.print(
+                f"错误数：{official_policy_fetch_report.error_count}；"
+                f"警告数：{official_policy_fetch_report.warning_count}"
+            )
+            raise typer.Exit(code=1)
+        official_candidates_path = default_official_policy_candidates_path(
+            DEFAULT_OFFICIAL_POLICY_PROCESSED_DIR,
+            score_date,
+        )
+        risk_event_prereview_report = (
+            run_openai_risk_event_prereview_for_official_candidates(
+                official_policy_fetch_report.candidates,
+                api_key=os.getenv(openai_api_key_env, ""),
+                data_sources=load_data_sources(DEFAULT_DATA_SOURCES_CONFIG_PATH),
+                risk_events=risk_events_config,
+                input_path=official_candidates_path,
+                as_of=score_date,
+                model=openai_model,
+                reasoning_effort=openai_reasoning_effort,
+                timeout_seconds=openai_timeout_seconds,
+                max_candidates=risk_event_openai_precheck_max_candidates,
+            )
+        )
+        write_risk_event_prereview_import_report(
+            risk_event_prereview_report,
+            risk_event_openai_precheck_report_output,
+        )
+        if not risk_event_prereview_report.passed:
+            console.print("[red]风险事件 OpenAI 自动预审失败，已停止每日评分。[/red]")
+            console.print(f"OpenAI 预审报告：{risk_event_openai_precheck_report_output}")
+            console.print(
+                f"错误数：{risk_event_prereview_report.error_count}；"
+                f"警告数：{risk_event_prereview_report.warning_count}"
+            )
+            raise typer.Exit(code=1)
+        write_risk_event_prereview_queue(
+            risk_event_prereview_report,
+            risk_event_prereview_queue_path,
+        )
+        console.print(
+            "[green]日报前风险事件 OpenAI 自动预审完成。[/green] "
+            f"官方候选 {official_policy_fetch_report.candidate_count}；"
+            f"待复核队列 {risk_event_prereview_report.record_count}；"
+            f"L2/L3 候选 {risk_event_prereview_report.high_level_candidate_count}"
+        )
+        console.print(f"官方来源抓取报告：{official_policy_report_output}")
+        console.print(f"OpenAI 预审报告：{risk_event_openai_precheck_report_output}")
+        console.print(f"预审待复核队列：{risk_event_prereview_queue_path}")
     risk_event_occurrence_validation_report = validate_risk_event_occurrence_store(
         store=load_risk_event_occurrence_store(risk_event_occurrences_path),
         risk_events=risk_events_config,
@@ -6769,6 +6934,25 @@ def score_daily(
             daily_alert_report,
             report_path=daily_alert_output,
         ),
+        risk_event_openai_precheck_section=(
+            _risk_event_openai_precheck_daily_section(
+                official_policy_fetch_report=official_policy_fetch_report,
+                risk_event_prereview_report=risk_event_prereview_report,
+                official_policy_report_output=official_policy_report_output,
+                risk_event_openai_precheck_report_output=(
+                    risk_event_openai_precheck_report_output
+                ),
+                risk_event_prereview_queue_path=risk_event_prereview_queue_path,
+                model=openai_model,
+                reasoning_effort=openai_reasoning_effort,
+                timeout_seconds=openai_timeout_seconds,
+                max_candidates=risk_event_openai_precheck_max_candidates,
+            )
+            if risk_event_openai_precheck
+            and official_policy_fetch_report is not None
+            and risk_event_prereview_report is not None
+            else None
+        ),
         traceability_section=render_traceability_section(
             daily_trace_bundle,
             daily_trace_output,
@@ -6813,6 +6997,10 @@ def score_daily(
         f"风险事件发生记录：{risk_event_occurrence_report_output}"
         f"（{risk_event_occurrence_review_report.status}）"
     )
+    if risk_event_openai_precheck:
+        console.print(f"官方政策/地缘抓取报告：{official_policy_report_output}")
+        console.print(f"风险事件 OpenAI 预审报告：{risk_event_openai_precheck_report_output}")
+        console.print(f"风险事件预审队列：{risk_event_prereview_queue_path}")
     console.print(
         f"组合暴露报告：{portfolio_exposure_output}"
         f"（{portfolio_exposure_report.status}）"
@@ -6826,6 +7014,43 @@ def score_daily(
         "规则版本："
         f"{daily_rule_version_manifest['production_rule_count']} 个 production rule cards"
         f"（{rule_governance_report.status}）"
+    )
+
+
+def _risk_event_openai_precheck_daily_section(
+    *,
+    official_policy_fetch_report,
+    risk_event_prereview_report,
+    official_policy_report_output: Path,
+    risk_event_openai_precheck_report_output: Path,
+    risk_event_prereview_queue_path: Path,
+    model: str,
+    reasoning_effort: str,
+    timeout_seconds: float,
+    max_candidates: int,
+) -> str:
+    return "\n".join(
+        [
+            "## 日报前 OpenAI 风险事件预审",
+            "",
+            f"- 官方来源抓取状态：{official_policy_fetch_report.status}",
+            f"- 官方 payload 数：{official_policy_fetch_report.payload_count}",
+            f"- 官方候选数：{official_policy_fetch_report.candidate_count}",
+            f"- OpenAI 预审状态：{risk_event_prereview_report.status}",
+            f"- OpenAI 模型：{model}",
+            f"- reasoning.effort：{reasoning_effort}",
+            f"- 请求读超时：{timeout_seconds:g} 秒",
+            f"- 本次候选上限：{max_candidates}",
+            f"- LLM claim 数：{risk_event_prereview_report.row_count}",
+            f"- 待人工复核队列记录数：{risk_event_prereview_report.record_count}",
+            f"- L2/L3 候选数：{risk_event_prereview_report.high_level_candidate_count}",
+            f"- active 候选数：{risk_event_prereview_report.active_candidate_count}",
+            f"- 官方来源抓取报告：`{official_policy_report_output}`",
+            f"- OpenAI 预审报告：`{risk_event_openai_precheck_report_output}`",
+            f"- 预审待复核队列：`{risk_event_prereview_queue_path}`",
+            "- 边界：预审输出只作为 `llm_extracted / pending_review` 线索，"
+            "不会写入 occurrence、复核声明、评分或仓位闸门。",
+        ]
     )
 
 

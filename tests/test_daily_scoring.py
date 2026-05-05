@@ -525,6 +525,11 @@ def test_render_daily_score_report_includes_data_gate_and_limitations(tmp_path: 
         features_path=tmp_path / "features.csv",
         scores_path=scores_path,
         previous_score_snapshot=previous,
+        risk_event_openai_precheck_section=(
+            "## 日报前 OpenAI 风险事件预审\n\n"
+            "- OpenAI 预审状态：PASS\n"
+            "- 待人工复核队列记录数：0"
+        ),
     )
 
     assert "- 数据质量状态：PASS" in markdown
@@ -536,6 +541,8 @@ def test_render_daily_score_report_includes_data_gate_and_limitations(tmp_path: 
     assert "### 最大限制" in markdown
     assert "### 下一步触发条件" in markdown
     assert "## 人工复核摘要" in markdown
+    assert "## 日报前 OpenAI 风险事件预审" in markdown
+    assert "- 待人工复核队列记录数：0" in markdown
     assert "## 宏观风险资产预算" in markdown
     assert "## 仓位闸门" in markdown
     assert "## 变化原因树" in markdown
@@ -692,6 +699,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
         app,
         [
             "score-daily",
+            "--skip-risk-event-openai-precheck",
             "--prices-path",
             str(prices_path),
             "--rates-path",
