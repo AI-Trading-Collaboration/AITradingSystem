@@ -63,7 +63,7 @@ python -m pytest
 aits download-data --start 2018-01-01
 ```
 
-默认会缓存核心范围：`SPY`、`QQQ`、`SMH`、`SOXX`、防守 ETF、`^VIX`、美元指数、`MSFT`、`GOOG`、`TSM`、`INTC`、`AMD`、`NVDA`，以及 FRED 的 `DGS2`、`DGS10`。每次下载会追加写入 `data/raw/download_manifest.csv`，记录 provider、endpoint、请求参数、下载时间、行数、输出路径和 sha256。如需抓取配置里的完整 AI 产业链标的：
+默认会缓存核心范围：`SPY`、`QQQ`、`SMH`、`SOXX`、防守 ETF、`^VIX`、美元指数、`MSFT`、`GOOG`、`TSM`、`INTC`、`AMD`、`NVDA`，以及 FRED 的 `DGS2`、`DGS10`。`download-data` 默认要求 `MARKETSTACK_API_KEY` 并写入 `data/raw/prices_marketstack_daily.csv` 作为股票/ETF 第二行情源；如需在无 key 的临时环境只更新主缓存，必须显式传入 `--without-marketstack`，且默认生产路径的 `validate-data` 仍会要求第二来源文件。Marketstack Basic 不覆盖 `^VIX` 等所有 Yahoo 风格宏观代理，因此第二来源只用于可覆盖标的的 cross-provider reconciliation，不会覆盖主价格缓存。每次下载会追加写入 `data/raw/download_manifest.csv`，记录 provider、endpoint、请求参数、下载时间、行数、输出路径和 sha256。如需抓取配置里的完整 AI 产业链标的：
 
 ```powershell
 aits download-data --start 2018-01-01 --full-universe
@@ -76,6 +76,7 @@ aits validate-data
 ```
 
 质量报告默认写入 `outputs/reports/data_quality_YYYY-MM-DD.md`。如果校验出现错误，命令会返回非零退出码，后续评分和回测流程不应继续使用这批数据。
+当 `data/raw/prices_marketstack_daily.csv` 存在或默认生产路径要求第二来源时，质量门禁会校验 Marketstack 缓存 schema、覆盖、新鲜度、重复键、异常值，并比较主价格缓存和 Marketstack 的 raw `close` 价差。Marketstack 对部分 ETF 的 `adj_close` 与 Yahoo 分红复权口径不同，报告会把 adjusted close 差异列为限制或调查项，但不会自动平滑或修正任何价格。
 
 查看和校验数据源目录：
 

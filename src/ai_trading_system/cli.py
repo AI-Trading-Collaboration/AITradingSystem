@@ -115,6 +115,7 @@ from ai_trading_system.config import (
     market_regime_by_id,
 )
 from ai_trading_system.data.download import download_daily_data
+from ai_trading_system.data.market_data import MarketstackPriceProvider
 from ai_trading_system.data.quality import (
     DataQualityReport,
     default_quality_report_path,
@@ -1033,6 +1034,8 @@ def calibrate_decision_outcomes(
         quality_config=data_quality_config,
         as_of=calibration_date,
         manifest_path=_download_manifest_path(prices_path),
+        secondary_prices_path=_marketstack_prices_path(prices_path),
+        require_secondary_prices=_requires_marketstack_prices(prices_path),
     )
     write_data_quality_report(data_quality_report, quality_output)
     if not data_quality_report.passed:
@@ -1588,11 +1591,31 @@ def download_data(
             help="包含配置中的完整 AI 产业链标的，而不只下载核心观察池。",
         ),
     ] = False,
+    with_marketstack: Annotated[
+        bool,
+        typer.Option(
+            "--with-marketstack/--without-marketstack",
+            help="是否同时下载 Marketstack 第二行情源缓存。",
+        ),
+    ] = True,
+    marketstack_api_key_env: Annotated[
+        str,
+        typer.Option(help="读取 Marketstack API key 的环境变量名。"),
+    ] = "MARKETSTACK_API_KEY",
 ) -> None:
     """下载市场日线价格和 FRED 利率数据到本地 CSV 缓存。"""
     universe = load_universe()
     start_date = _parse_date(start)
     end_date = _parse_date(end) if end else date.today()
+    marketstack_provider = None
+    if with_marketstack:
+        api_key = os.getenv(marketstack_api_key_env, "")
+        if not api_key:
+            console.print(
+                f"[red]未设置 {marketstack_api_key_env}，无法下载 Marketstack 第二行情源。[/red]"
+            )
+            raise typer.Exit(code=1)
+        marketstack_provider = MarketstackPriceProvider(api_key=api_key)
 
     summary = download_daily_data(
         universe,
@@ -1600,10 +1623,16 @@ def download_data(
         end=end_date,
         output_dir=output_dir,
         include_full_ai_chain=full_universe,
+        secondary_price_provider=marketstack_provider,
     )
 
     console.print("[green]数据缓存已更新。[/green]")
     console.print(f"价格数据：{summary.prices_path}（{summary.price_rows} 行）")
+    if summary.secondary_prices_path is not None:
+        console.print(
+            f"Marketstack 第二行情源：{summary.secondary_prices_path}"
+            f"（{summary.secondary_price_rows} 行）"
+        )
     console.print(f"利率数据：{summary.rates_path}（{summary.rate_rows} 行）")
     console.print(f"下载审计清单：{summary.manifest_path}")
     console.print(f"价格标的：{', '.join(summary.price_tickers)}")
@@ -1656,6 +1685,8 @@ def validate_data(
         quality_config=quality_config,
         as_of=validation_date,
         manifest_path=_download_manifest_path(prices_path),
+        secondary_prices_path=_marketstack_prices_path(prices_path),
+        require_secondary_prices=_requires_marketstack_prices(prices_path),
     )
     write_data_quality_report(report, report_path)
 
@@ -2025,6 +2056,8 @@ def backtest(
         quality_config=data_quality_config,
         as_of=quality_date,
         manifest_path=_download_manifest_path(prices_path),
+        secondary_prices_path=_marketstack_prices_path(prices_path),
+        require_secondary_prices=_requires_marketstack_prices(prices_path),
     )
     write_data_quality_report(data_quality_report, quality_output)
     if not data_quality_report.passed:
@@ -2448,6 +2481,8 @@ def backtest_input_gaps(
         quality_config=quality_config,
         as_of=quality_date,
         manifest_path=_download_manifest_path(prices_path),
+        secondary_prices_path=_marketstack_prices_path(prices_path),
+        require_secondary_prices=_requires_marketstack_prices(prices_path),
     )
     write_data_quality_report(data_quality_report, quality_output)
     if not data_quality_report.passed:
@@ -5854,6 +5889,8 @@ def review_trades(
         quality_config=load_data_quality(),
         as_of=review_date,
         manifest_path=_download_manifest_path(prices_path),
+        secondary_prices_path=_marketstack_prices_path(prices_path),
+        require_secondary_prices=_requires_marketstack_prices(prices_path),
     )
     write_data_quality_report(data_quality_report, quality_output)
     if not data_quality_report.passed:
@@ -5960,6 +5997,8 @@ def build_features(
         quality_config=data_quality_config,
         as_of=feature_date,
         manifest_path=_download_manifest_path(prices_path),
+        secondary_prices_path=_marketstack_prices_path(prices_path),
+        require_secondary_prices=_requires_marketstack_prices(prices_path),
     )
     write_data_quality_report(data_quality_report, quality_output)
     if not data_quality_report.passed:
@@ -6265,6 +6304,8 @@ def score_daily(
         quality_config=data_quality_config,
         as_of=score_date,
         manifest_path=_download_manifest_path(prices_path),
+        secondary_prices_path=_marketstack_prices_path(prices_path),
+        require_secondary_prices=_requires_marketstack_prices(prices_path),
     )
     write_data_quality_report(data_quality_report, quality_output)
     if not data_quality_report.passed:
@@ -6943,6 +6984,18 @@ def _daily_review_exception_status(
 
 def _download_manifest_path(prices_path: Path) -> Path:
     return prices_path.parent / "download_manifest.csv"
+
+
+def _marketstack_prices_path(prices_path: Path) -> Path:
+    return prices_path.parent / "prices_marketstack_daily.csv"
+
+
+def _requires_marketstack_prices(prices_path: Path) -> bool:
+    default_prices_path = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
+    try:
+        return prices_path.resolve() == default_prices_path.resolve()
+    except OSError:
+        return prices_path == default_prices_path
 
 
 def _backtest_signal_dates(

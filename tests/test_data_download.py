@@ -64,3 +64,27 @@ def test_download_daily_data_writes_core_universe_cache(tmp_path: Path) -> None:
     assert list(manifest["source_id"]) == ["fake_price_provider", "fake_rate_provider"]
     assert set(manifest["row_count"]) == {summary.price_rows, summary.rate_rows}
     assert all(manifest["checksum_sha256"].str.len() == 64)
+
+
+def test_download_daily_data_writes_secondary_price_cache(tmp_path: Path) -> None:
+    summary = download_daily_data(
+        load_universe(),
+        start=date(2026, 4, 29),
+        end=date(2026, 4, 30),
+        output_dir=tmp_path,
+        price_provider=FakePriceProvider(),
+        secondary_price_provider=FakePriceProvider(),
+        rate_provider=FakeRateProvider(),
+    )
+
+    assert summary.secondary_prices_path == tmp_path / "prices_marketstack_daily.csv"
+    assert summary.secondary_price_rows == summary.price_rows
+    assert summary.secondary_prices_path.exists()
+
+    manifest = pd.read_csv(summary.manifest_path)
+    assert list(manifest["source_id"]) == [
+        "fake_price_provider",
+        "fake_rate_provider",
+        "fake_price_provider",
+    ]
+    assert str(summary.secondary_prices_path) in set(manifest["output_path"].astype(str))

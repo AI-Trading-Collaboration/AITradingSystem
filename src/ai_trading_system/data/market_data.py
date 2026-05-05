@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, timedelta
 from importlib import import_module
 from io import StringIO
@@ -8,6 +8,11 @@ from pathlib import Path
 from typing import Any, Protocol, cast
 
 import pandas as pd
+
+MARKETSTACK_EOD_URL = "https://api.marketstack.com/v2/eod"
+MARKETSTACK_DEFAULT_SYMBOL_ALIASES: dict[str, str | None] = {
+    "^VIX": None,
+}
 
 
 @dataclass(frozen=True)
@@ -69,6 +74,81 @@ class YFinancePriceProvider:
         if not isinstance(raw, pd.DataFrame):
             raise TypeError("yfinance.download did not return a pandas DataFrame")
         return normalize_yfinance_prices(raw, request.tickers)
+
+
+@dataclass(frozen=True)
+class MarketstackPriceProvider:
+    api_key: str
+    base_url: str = MARKETSTACK_EOD_URL
+    page_limit: int = 1000
+    symbol_aliases: dict[str, str | None] = field(
+        default_factory=lambda: dict(MARKETSTACK_DEFAULT_SYMBOL_ALIASES)
+    )
+
+    def __post_init__(self) -> None:
+        if not self.api_key:
+            raise ValueError("Marketstack API key must not be empty")
+        if self.page_limit <= 0:
+            raise ValueError("Marketstack page_limit must be positive")
+
+    def download_prices(self, request: PriceRequest) -> pd.DataFrame:
+        requests = cast(Any, import_module("requests"))
+        provider_symbols, provider_to_ticker = self._provider_symbols(request.tickers)
+        if not provider_symbols:
+            raise ValueError("Marketstack request has no supported tickers")
+
+        records: list[dict[str, Any]] = []
+        offset = 0
+        while True:
+            params = {
+                "access_key": self.api_key,
+                "symbols": ",".join(provider_symbols),
+                "date_from": request.start.isoformat(),
+                "date_to": request.end.isoformat(),
+                "limit": str(self.page_limit),
+                "offset": str(offset),
+            }
+            response = requests.get(self.base_url, params=params, timeout=30)
+            try:
+                payload = response.json()
+            except ValueError:
+                payload = {}
+            if not response.ok:
+                raise ValueError(
+                    "Marketstack request failed: "
+                    f"http_status={response.status_code}, "
+                    f"error_code={_marketstack_error_code(payload)}"
+                )
+            if isinstance(payload, dict) and payload.get("error"):
+                raise ValueError(
+                    "Marketstack response returned an error: "
+                    f"error_code={_marketstack_error_code(payload)}"
+                )
+
+            page_records = payload.get("data", []) if isinstance(payload, dict) else []
+            if not isinstance(page_records, list):
+                raise ValueError("Marketstack response data is not a list")
+            records.extend(record for record in page_records if isinstance(record, dict))
+
+            pagination = payload.get("pagination", {}) if isinstance(payload, dict) else {}
+            count = int(pagination.get("count") or len(page_records))
+            total = int(pagination.get("total") or len(records))
+            if count <= 0 or len(records) >= total:
+                break
+            offset += count
+
+        return normalize_marketstack_prices(records, provider_to_ticker)
+
+    def _provider_symbols(self, tickers: list[str]) -> tuple[list[str], dict[str, str]]:
+        provider_symbols: list[str] = []
+        provider_to_ticker: dict[str, str] = {}
+        for ticker in tickers:
+            provider_symbol = self.symbol_aliases.get(ticker, ticker)
+            if provider_symbol is None:
+                continue
+            provider_symbols.append(provider_symbol)
+            provider_to_ticker[provider_symbol] = ticker
+        return provider_symbols, provider_to_ticker
 
 
 class FredRateProvider:
@@ -137,6 +217,42 @@ def normalize_yfinance_prices(raw: pd.DataFrame, tickers: list[str]) -> pd.DataF
     return prices.sort_values(["ticker", "date"]).reset_index(drop=True)
 
 
+def normalize_marketstack_prices(
+    records: list[dict[str, Any]],
+    provider_to_ticker: dict[str, str],
+) -> pd.DataFrame:
+    if not records:
+        raise ValueError("Marketstack price data is empty")
+    if not provider_to_ticker:
+        raise ValueError("Marketstack provider symbol mapping must not be empty")
+
+    raw = pd.DataFrame(records)
+    required_columns = {"date", "symbol", "open", "high", "low", "close"}
+    missing = sorted(required_columns - set(raw.columns))
+    if missing:
+        raise ValueError(f"Marketstack response missing columns: {', '.join(missing)}")
+
+    frame = raw.copy()
+    frame["ticker"] = frame["symbol"].map(provider_to_ticker)
+    frame = frame.loc[frame["ticker"].notna()].copy()
+    if frame.empty:
+        raise ValueError("Marketstack response did not include requested tickers")
+
+    frame["date"] = pd.to_datetime(frame["date"], errors="coerce").dt.strftime("%Y-%m-%d")
+    if "adj_close" not in frame.columns:
+        frame["adj_close"] = frame["close"]
+    if "volume" not in frame.columns:
+        frame["volume"] = frame["adj_volume"] if "adj_volume" in frame.columns else pd.NA
+
+    columns = ["date", "ticker", "open", "high", "low", "close", "adj_close", "volume"]
+    return (
+        frame[columns]
+        .dropna(subset=["date", "close"])
+        .sort_values(["ticker", "date"])
+        .reset_index(drop=True)
+    )
+
+
 def normalize_fred_rates(raw: pd.DataFrame) -> pd.DataFrame:
     if raw.empty:
         raise ValueError("rate data is empty")
@@ -175,3 +291,13 @@ def _normalize_single_ticker_prices(data: pd.DataFrame, ticker: str) -> pd.DataF
 
 def _normalize_column_name(column: str) -> str:
     return column.strip().lower().replace(" ", "_")
+
+
+def _marketstack_error_code(payload: Any) -> str:
+    if not isinstance(payload, dict):
+        return "unknown"
+    error = payload.get("error")
+    if isinstance(error, dict):
+        code = error.get("code")
+        return "unknown" if code is None else str(code)
+    return "unknown"

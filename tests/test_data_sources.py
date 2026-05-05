@@ -105,6 +105,53 @@ def test_build_data_source_health_report_flags_reconciliation_gap(
     assert _sha256_file(prices_path)[:12] in markdown
 
 
+def test_build_data_source_health_report_marks_market_prices_baseline_covered(
+    tmp_path: Path,
+) -> None:
+    prices_path = _write_price_cache(tmp_path / "prices_daily.csv")
+    secondary_path = _write_price_cache(tmp_path / "prices_marketstack_daily.csv")
+    manifest_path = _write_manifest(
+        tmp_path / "download_manifest.csv",
+        source_id="marketstack_prices",
+        provider="Marketstack",
+        endpoint="https://api.marketstack.com/v2/eod",
+        output_path=secondary_path,
+        row_count=1,
+        checksum=_sha256_file(secondary_path),
+    )
+    config = DataSourcesConfig(
+        sources=[
+            _source(
+                source_id="yahoo_prices",
+                provider="Yahoo Finance",
+                source_type="public_convenience",
+                domains=["market_prices"],
+                cache_paths=[str(prices_path)],
+            ),
+            _source(
+                source_id="marketstack_prices",
+                provider="Marketstack",
+                source_type="paid_vendor",
+                domains=["market_prices"],
+                cache_paths=[str(secondary_path)],
+            ),
+        ]
+    )
+
+    report = build_data_source_health_report(
+        config=config,
+        as_of=date(2026, 5, 2),
+        manifest_path=manifest_path,
+        project_root=tmp_path,
+    )
+    market_prices = next(
+        item for item in report.domain_reconciliation if item.domain == "market_prices"
+    )
+
+    assert market_prices.status == "COVERED_BASELINE"
+    assert market_prices.qualified_source_ids == ("marketstack_prices",)
+
+
 def test_build_data_source_health_report_fails_on_checksum_mismatch(
     tmp_path: Path,
 ) -> None:

@@ -34,6 +34,58 @@ sources:
       - 公司行动和复权调整必须在下游评分前通过校验。
     owner_notes: 当前 MVP 市场价格来源；数据质量门禁必须保持强制执行。
 
+  - source_id: marketstack_eod_daily_prices
+    provider: Marketstack
+    source_type: paid_vendor
+    status: active
+    domains:
+      - market_prices
+    endpoint: https://api.marketstack.com/v2/eod
+    adapter: MarketstackPriceProvider
+    cadence: daily
+    requires_credentials: true
+    cache_paths:
+      - data/raw/prices_marketstack_daily.csv
+    primary_for:
+      - daily_ohlcv_second_source
+      - raw_close_reconciliation
+      - adjusted_close_basis_crosscheck
+    audit_fields:
+      - provider
+      - endpoint
+      - request_parameters
+      - downloaded_at
+      - row_count
+      - checksum
+    validation_checks:
+      - schema
+      - completeness
+      - freshness
+      - duplicate_keys
+      - suspicious_returns
+      - cross_provider_close_reconciliation
+      - adjusted_close_basis_warning
+      - manifest_checksum
+      - provider_symbol_alias
+      - no_secret_leakage
+    limitations:
+      - Marketstack Basic 当前作为股票和 ETF 日线第二来源，不替代一手交易所行情。
+      - Basic 历史深度约 10 年，足够覆盖 `ai_after_chatgpt` 默认窗口和当前 warm-up，但不支持更长历史压力测试。
+      - "`^VIX` 等 Yahoo 风格宏观代理不在当前 Marketstack Basic 覆盖内，质量门禁需显式排除或标记限制。"
+      - Marketstack 对部分 ETF 的 `adj_close` 与 Yahoo 分红复权口径不同；质量门禁以 raw `close` 作为阻塞核验，adjusted close 差异作为限制或调查项输出。
+      - 第二来源只用于 cross-provider reconciliation，不自动平滑、覆盖或修正主价格缓存。
+      - API plan 可能限制请求量、历史深度和字段覆盖。
+    llm_permission:
+      license_scope: paid_vendor_terms_not_reviewed_for_external_llm
+      personal_use_only: true
+      external_llm_allowed: false
+      cache_allowed: true
+      redistribution_allowed: false
+      max_content_sent_level: metadata_only
+      approval_ref: not_approved_for_external_llm_2026-05-05
+      reviewed_at: 2026-05-05
+    owner_notes: MARKETSTACK_API_KEY 只从环境变量读取；请求和报告不得输出密钥。
+
   - source_id: fred_daily_rates
     provider: Federal Reserve Economic Data
     source_type: primary_source

@@ -17,6 +17,7 @@ from ai_trading_system.config import (
 from ai_trading_system.data.market_data import (
     CsvDataCache,
     FredRateProvider,
+    MarketstackPriceProvider,
     PriceDataProvider,
     PriceRequest,
     RateDataProvider,
@@ -34,6 +35,8 @@ class DataDownloadSummary:
     rate_rows: int
     price_tickers: tuple[str, ...]
     rate_series: tuple[str, ...]
+    secondary_prices_path: Path | None = None
+    secondary_price_rows: int = 0
 
 
 def download_daily_data(
@@ -43,6 +46,7 @@ def download_daily_data(
     output_dir: Path,
     include_full_ai_chain: bool = False,
     price_provider: PriceDataProvider | None = None,
+    secondary_price_provider: PriceDataProvider | None = None,
     rate_provider: RateDataProvider | None = None,
 ) -> DataDownloadSummary:
     if start > end:
@@ -68,12 +72,32 @@ def download_daily_data(
 
     prices_path = cache.write_prices(prices)
     rates_path = cache.write_rates(rates)
+    secondary_prices_path: Path | None = None
+    secondary_price_rows = 0
+    manifest_records = [
+        _manifest_record_for_prices(price_provider, price_request, prices_path, len(prices)),
+        _manifest_record_for_rates(rate_provider, rate_request, rates_path, len(rates)),
+    ]
+
+    if secondary_price_provider is not None:
+        secondary_prices = secondary_price_provider.download_prices(price_request)
+        secondary_prices_path = cache.write_prices(
+            secondary_prices,
+            filename="prices_marketstack_daily.csv",
+        )
+        secondary_price_rows = len(secondary_prices)
+        manifest_records.append(
+            _manifest_record_for_prices(
+                secondary_price_provider,
+                price_request,
+                secondary_prices_path,
+                secondary_price_rows,
+            )
+        )
+
     manifest_path = write_download_manifest(
         output_dir=output_dir,
-        records=(
-            _manifest_record_for_prices(price_provider, price_request, prices_path, len(prices)),
-            _manifest_record_for_rates(rate_provider, rate_request, rates_path, len(rates)),
-        ),
+        records=tuple(manifest_records),
     )
 
     return DataDownloadSummary(
@@ -84,6 +108,8 @@ def download_daily_data(
         rate_rows=len(rates),
         price_tickers=tuple(price_tickers),
         rate_series=tuple(rate_series),
+        secondary_prices_path=secondary_prices_path,
+        secondary_price_rows=secondary_price_rows,
     )
 
 
@@ -174,6 +200,8 @@ def _manifest_record(
 def _price_provider_metadata(provider: PriceDataProvider) -> tuple[str, str, str]:
     if isinstance(provider, YFinancePriceProvider):
         return ("yahoo_finance_daily_prices", "Yahoo Finance via yfinance", "yfinance.download")
+    if isinstance(provider, MarketstackPriceProvider):
+        return ("marketstack_eod_daily_prices", "Marketstack", provider.base_url)
     provider_name = provider.__class__.__name__
     return (_source_id_from_provider(provider_name), provider_name, provider_name)
 

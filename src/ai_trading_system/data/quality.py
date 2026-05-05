@@ -56,6 +56,7 @@ class DataQualityReport:
     rate_summary: DataFileSummary
     expected_price_tickers: tuple[str, ...]
     expected_rate_series: tuple[str, ...]
+    secondary_price_summary: DataFileSummary | None = None
     manifest_summary: DataFileSummary | None = None
     issues: tuple[DataQualityIssue, ...] = field(default_factory=tuple)
 
@@ -88,16 +89,24 @@ def validate_data_cache(
     quality_config: DataQualityConfig,
     as_of: date,
     manifest_path: Path | None = None,
+    secondary_prices_path: Path | None = None,
+    require_secondary_prices: bool = False,
 ) -> DataQualityReport:
     issues: list[DataQualityIssue] = []
 
     prices, price_summary = _read_csv(prices_path, issues, "prices")
     rates, rate_summary = _read_csv(rates_path, issues, "rates")
+    secondary_prices, secondary_price_summary = _read_secondary_prices_csv(
+        secondary_prices_path,
+        issues,
+        required=require_secondary_prices,
+    )
     manifest_summary = (
         _validate_download_manifest(
             manifest_path,
             price_summary=price_summary,
             rate_summary=rate_summary,
+            secondary_price_summary=secondary_price_summary,
             issues=issues,
         )
         if manifest_path is not None
@@ -113,6 +122,29 @@ def validate_data_cache(
             as_of,
             issues,
         )
+
+    if secondary_prices is not None and secondary_price_summary is not None:
+        secondary_expected_tickers = _secondary_expected_price_tickers(
+            expected_price_tickers,
+            quality_config,
+        )
+        secondary_price_summary = _validate_prices(
+            secondary_prices,
+            secondary_price_summary,
+            secondary_expected_tickers,
+            quality_config,
+            as_of,
+            issues,
+        )
+        if prices is not None:
+            _check_secondary_price_reconciliation(
+                primary_prices=prices,
+                secondary_prices=secondary_prices,
+                expected_tickers=secondary_expected_tickers,
+                quality_config=quality_config,
+                required=require_secondary_prices,
+                issues=issues,
+            )
 
     if rates is not None:
         rate_summary = _validate_rates(
@@ -131,6 +163,7 @@ def validate_data_cache(
         rate_summary=rate_summary,
         expected_price_tickers=tuple(expected_price_tickers),
         expected_rate_series=tuple(expected_rate_series),
+        secondary_price_summary=secondary_price_summary,
         manifest_summary=manifest_summary,
         issues=tuple(issues),
     )
@@ -149,6 +182,11 @@ def render_data_quality_report(report: DataQualityReport) -> str:
         "## 文件",
         "",
         _render_file_summary("价格数据", report.price_summary),
+        *(
+            [_render_file_summary("第二行情源 Marketstack", report.secondary_price_summary)]
+            if report.secondary_price_summary is not None
+            else []
+        ),
         _render_file_summary("利率数据", report.rate_summary),
         *(
             [_render_file_summary("下载审计清单", report.manifest_summary)]
@@ -232,10 +270,49 @@ def _read_csv(
     )
 
 
+def _read_secondary_prices_csv(
+    path: Path | None,
+    issues: list[DataQualityIssue],
+    *,
+    required: bool,
+) -> tuple[pd.DataFrame | None, DataFileSummary | None]:
+    if path is None:
+        return None, None
+    if not path.exists():
+        issues.append(
+            DataQualityIssue(
+                Severity.ERROR if required else Severity.WARNING,
+                "secondary_prices_file_missing",
+                f"第二行情源 Marketstack 文件不存在：{path}",
+            )
+        )
+        return None, DataFileSummary(path=path, exists=False)
+
+    try:
+        data = pd.read_csv(path)
+    except Exception as exc:
+        issues.append(
+            DataQualityIssue(
+                Severity.ERROR,
+                "secondary_prices_file_unreadable",
+                f"第二行情源 Marketstack 文件无法按 CSV 读取：{exc}",
+            )
+        )
+        return None, DataFileSummary(path=path, exists=True, sha256=_file_sha256(path))
+
+    return data, DataFileSummary(
+        path=path,
+        exists=True,
+        rows=len(data),
+        sha256=_file_sha256(path),
+    )
+
+
 def _validate_download_manifest(
     path: Path,
     price_summary: DataFileSummary,
     rate_summary: DataFileSummary,
+    secondary_price_summary: DataFileSummary | None,
     issues: list[DataQualityIssue],
 ) -> DataFileSummary:
     if not path.exists():
@@ -279,6 +356,13 @@ def _validate_download_manifest(
 
     _check_manifest_covers_file(manifest, price_summary, "prices", issues)
     _check_manifest_covers_file(manifest, rate_summary, "rates", issues)
+    if secondary_price_summary is not None:
+        _check_manifest_covers_file(
+            manifest,
+            secondary_price_summary,
+            "secondary_prices",
+            issues,
+        )
     return summary
 
 
@@ -660,6 +744,218 @@ def _check_price_moves(
         )
 
 
+def _secondary_expected_price_tickers(
+    expected_tickers: list[str],
+    quality_config: DataQualityConfig,
+) -> list[str]:
+    excluded = set(quality_config.prices.secondary_source_excluded_tickers)
+    return [ticker for ticker in expected_tickers if ticker not in excluded]
+
+
+def _check_secondary_price_reconciliation(
+    primary_prices: pd.DataFrame,
+    secondary_prices: pd.DataFrame,
+    expected_tickers: list[str],
+    quality_config: DataQualityConfig,
+    *,
+    required: bool,
+    issues: list[DataQualityIssue],
+) -> None:
+    if not expected_tickers:
+        return
+    required_columns = {"date", "ticker", "close", "adj_close"}
+    if not required_columns.issubset(primary_prices.columns) or not required_columns.issubset(
+        secondary_prices.columns
+    ):
+        return
+
+    primary = primary_prices.loc[primary_prices["ticker"].isin(expected_tickers)].copy()
+    secondary = secondary_prices.loc[secondary_prices["ticker"].isin(expected_tickers)].copy()
+    if primary.empty or secondary.empty:
+        issues.append(
+            DataQualityIssue(
+                Severity.ERROR if required else Severity.WARNING,
+                "secondary_prices_no_reconciliation_overlap",
+                "第二行情源与主价格缓存没有可核验的重叠 ticker/date。",
+            )
+        )
+        return
+
+    primary["_date"] = pd.to_datetime(primary["date"], errors="coerce")
+    secondary["_date"] = pd.to_datetime(secondary["date"], errors="coerce")
+    primary["_primary_close"] = pd.to_numeric(primary["close"], errors="coerce")
+    secondary["_secondary_close"] = pd.to_numeric(secondary["close"], errors="coerce")
+    primary["_primary_adj_close"] = pd.to_numeric(primary["adj_close"], errors="coerce")
+    secondary["_secondary_adj_close"] = pd.to_numeric(secondary["adj_close"], errors="coerce")
+
+    primary = primary.loc[
+        primary["_date"].notna()
+        & primary["_primary_close"].notna()
+        & (primary["_primary_close"] > 0)
+        & primary["_primary_adj_close"].notna()
+        & (primary["_primary_adj_close"] > 0),
+        ["date", "ticker", "_primary_close", "_primary_adj_close"],
+    ].drop_duplicates(subset=["date", "ticker"])
+    secondary = secondary.loc[
+        secondary["_date"].notna()
+        & secondary["_secondary_close"].notna()
+        & (secondary["_secondary_close"] > 0)
+        & secondary["_secondary_adj_close"].notna()
+        & (secondary["_secondary_adj_close"] > 0),
+        ["date", "ticker", "_secondary_close", "_secondary_adj_close"],
+    ].drop_duplicates(subset=["date", "ticker"])
+
+    expected_pairs = len(primary)
+    if expected_pairs == 0:
+        return
+    merged = primary.merge(secondary, on=["date", "ticker"], how="inner")
+    overlap_ratio = len(merged) / expected_pairs
+    if overlap_ratio < quality_config.prices.secondary_source_min_overlap_ratio:
+        issues.append(
+            DataQualityIssue(
+                Severity.ERROR if required else Severity.WARNING,
+                "secondary_prices_overlap_below_threshold",
+                (
+                    "第二行情源与主价格缓存重叠样本不足："
+                    f"{len(merged)}/{expected_pairs}="
+                    f"{overlap_ratio:.1%}，阈值 "
+                    f"{quality_config.prices.secondary_source_min_overlap_ratio:.1%}。"
+                ),
+            )
+        )
+    if merged.empty:
+        return
+
+    warning_threshold = quality_config.prices.secondary_source_adj_close_warning_pct
+    error_threshold = quality_config.prices.secondary_source_adj_close_error_pct
+    merged["_close_diff_pct"] = (
+        (merged["_primary_close"] - merged["_secondary_close"]).abs() / merged["_primary_close"]
+    )
+    merged["_adj_close_diff_pct"] = (
+        (merged["_primary_adj_close"] - merged["_secondary_adj_close"]).abs()
+        / merged["_primary_adj_close"]
+    )
+    close_error_diff = merged["_close_diff_pct"] > error_threshold
+    close_warning_diff = (merged["_close_diff_pct"] > warning_threshold) & ~close_error_diff
+    close_reconciled = merged["_close_diff_pct"] <= warning_threshold
+    adj_error_diff = merged["_adj_close_diff_pct"] > error_threshold
+    adj_warning_diff = (merged["_adj_close_diff_pct"] > warning_threshold) & ~adj_error_diff
+    adj_adjustment_basis_diff = adj_error_diff & close_reconciled
+    adj_unresolved_error_diff = adj_error_diff & ~close_reconciled
+
+    if close_error_diff.any():
+        issues.append(
+            DataQualityIssue(
+                Severity.ERROR,
+                "secondary_prices_close_mismatch",
+                "主价格缓存与 Marketstack 的未调整收盘价差异超过错误阈值。",
+                rows=int(close_error_diff.sum()),
+                sample=_sample_rows(
+                    merged.loc[close_error_diff],
+                    [
+                        "date",
+                        "ticker",
+                        "_primary_close",
+                        "_secondary_close",
+                        "_close_diff_pct",
+                    ],
+                ),
+            )
+        )
+    if close_warning_diff.any():
+        issues.append(
+            DataQualityIssue(
+                Severity.WARNING,
+                "secondary_prices_close_warning",
+                "主价格缓存与 Marketstack 的未调整收盘价差异超过警告阈值。",
+                rows=int(close_warning_diff.sum()),
+                sample=_sample_rows(
+                    merged.loc[close_warning_diff],
+                    [
+                        "date",
+                        "ticker",
+                        "_primary_close",
+                        "_secondary_close",
+                        "_close_diff_pct",
+                    ],
+                ),
+            )
+        )
+    if adj_unresolved_error_diff.any():
+        issues.append(
+            DataQualityIssue(
+                Severity.ERROR,
+                "secondary_prices_adj_close_mismatch",
+                (
+                    "主价格缓存与 Marketstack 的调整收盘价差异超过错误阈值，"
+                    "且未调整收盘价也未通过警告阈值核验。"
+                ),
+                rows=int(adj_unresolved_error_diff.sum()),
+                sample=_sample_rows(
+                    merged.loc[adj_unresolved_error_diff],
+                    [
+                        "date",
+                        "ticker",
+                        "_primary_close",
+                        "_secondary_close",
+                        "_close_diff_pct",
+                        "_primary_adj_close",
+                        "_secondary_adj_close",
+                        "_adj_close_diff_pct",
+                    ],
+                ),
+            )
+        )
+    if adj_adjustment_basis_diff.any():
+        issues.append(
+            DataQualityIssue(
+                Severity.WARNING,
+                "secondary_prices_adjustment_basis_warning",
+                (
+                    "Marketstack 调整收盘价与主缓存差异超过错误阈值，"
+                    "但未调整收盘价通过核验；这通常表示供应商 adjusted close "
+                    "分红调整口径不同，需在报告中保留限制说明。"
+                ),
+                rows=int(adj_adjustment_basis_diff.sum()),
+                sample=_sample_rows(
+                    merged.loc[adj_adjustment_basis_diff],
+                    [
+                        "date",
+                        "ticker",
+                        "_primary_close",
+                        "_secondary_close",
+                        "_close_diff_pct",
+                        "_primary_adj_close",
+                        "_secondary_adj_close",
+                        "_adj_close_diff_pct",
+                    ],
+                ),
+            )
+        )
+    if adj_warning_diff.any():
+        issues.append(
+            DataQualityIssue(
+                Severity.WARNING,
+                "secondary_prices_adj_close_warning",
+                "主价格缓存与 Marketstack 的调整收盘价差异超过警告阈值。",
+                rows=int(adj_warning_diff.sum()),
+                sample=_sample_rows(
+                    merged.loc[adj_warning_diff],
+                    [
+                        "date",
+                        "ticker",
+                        "_primary_close",
+                        "_secondary_close",
+                        "_close_diff_pct",
+                        "_primary_adj_close",
+                        "_secondary_adj_close",
+                        "_adj_close_diff_pct",
+                    ],
+                ),
+            )
+        )
+
+
 def _suspicious_price_return_threshold(ticker: str, config: PriceQualityConfig) -> float:
     override = config.ticker_return_threshold_overrides.get(ticker)
     if override and override.suspicious_daily_return_abs is not None:
@@ -821,6 +1117,7 @@ def _severity_label(severity: Severity) -> str:
 def _data_label(label: str) -> str:
     return {
         "prices": "价格数据",
+        "secondary_prices": "第二行情源 Marketstack",
         "rates": "利率数据",
         "manifest": "下载审计清单",
     }.get(label, label)

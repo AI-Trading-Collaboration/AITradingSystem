@@ -572,6 +572,10 @@ class PriceQualityConfig(BaseModel):
     suspicious_daily_return_abs: float = Field(gt=0)
     extreme_daily_return_abs: float = Field(gt=0)
     suspicious_adjustment_ratio_change_abs: float = Field(gt=0)
+    secondary_source_min_overlap_ratio: float = Field(default=0.80, ge=0, le=1)
+    secondary_source_adj_close_warning_pct: float = Field(default=0.01, gt=0)
+    secondary_source_adj_close_error_pct: float = Field(default=0.05, gt=0)
+    secondary_source_excluded_tickers: list[str] = Field(default_factory=lambda: ["^VIX"])
     ticker_return_threshold_overrides: dict[str, PriceReturnThresholdOverrideConfig] = Field(
         default_factory=dict
     )
@@ -580,6 +584,10 @@ class PriceQualityConfig(BaseModel):
     def validate_return_thresholds(self) -> Self:
         if self.suspicious_daily_return_abs >= self.extreme_daily_return_abs:
             raise ValueError("prices suspicious_daily_return_abs must be below extreme threshold")
+        if self.secondary_source_adj_close_warning_pct >= self.secondary_source_adj_close_error_pct:
+            raise ValueError(
+                "prices secondary source warning threshold must be below error threshold"
+            )
 
         for ticker, override in self.ticker_return_threshold_overrides.items():
             suspicious = override.suspicious_daily_return_abs or self.suspicious_daily_return_abs

@@ -8,6 +8,7 @@ import pandas as pd
 from ai_trading_system.data.market_data import (
     CsvDataCache,
     normalize_fred_rates,
+    normalize_marketstack_prices,
     normalize_yfinance_prices,
 )
 
@@ -69,6 +70,45 @@ def test_normalize_fred_rates_to_long_format() -> None:
         {"date": "2026-04-29", "series": "DGS10", "value": 4.6},
         {"date": "2026-04-30", "series": "DGS10", "value": 4.7},
         {"date": "2026-04-29", "series": "DGS2", "value": 4.5},
+    ]
+
+
+def test_normalize_marketstack_prices_maps_provider_symbol_to_internal_ticker() -> None:
+    prices = normalize_marketstack_prices(
+        [
+            {
+                "date": "2026-05-01T00:00:00+0000",
+                "symbol": "NVDA",
+                "open": 100.0,
+                "high": 102.0,
+                "low": 99.0,
+                "close": 101.0,
+                "adj_close": 100.5,
+                "volume": 1234,
+            },
+            {
+                "date": "2026-05-01T00:00:00+0000",
+                "symbol": "UNREQUESTED",
+                "open": 1.0,
+                "high": 1.0,
+                "low": 1.0,
+                "close": 1.0,
+            },
+        ],
+        {"NVDA": "NVDA"},
+    )
+
+    assert prices.to_dict(orient="records") == [
+        {
+            "date": "2026-05-01",
+            "ticker": "NVDA",
+            "open": 100.0,
+            "high": 102.0,
+            "low": 99.0,
+            "close": 101.0,
+            "adj_close": 100.5,
+            "volume": 1234,
+        }
     ]
 
 

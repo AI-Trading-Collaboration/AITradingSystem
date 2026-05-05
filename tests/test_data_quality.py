@@ -221,6 +221,105 @@ def test_validate_data_cache_checks_download_manifest(tmp_path: Path) -> None:
     assert "下载审计清单" in markdown
 
 
+def test_validate_data_cache_checks_secondary_price_source(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    secondary_path = tmp_path / "prices_marketstack_daily.csv"
+    pd.read_csv(prices_path).to_csv(secondary_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 2),
+        secondary_prices_path=secondary_path,
+        require_secondary_prices=True,
+    )
+    markdown = render_data_quality_report(report)
+
+    assert report.status == "PASS"
+    assert report.secondary_price_summary is not None
+    assert report.secondary_price_summary.rows == 4
+    assert "第二行情源 Marketstack" in markdown
+
+
+def test_validate_data_cache_fails_secondary_price_mismatch(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    secondary_path = tmp_path / "prices_marketstack_daily.csv"
+    secondary = pd.read_csv(prices_path)
+    secondary.loc[
+        (secondary["ticker"] == "NVDA") & (secondary["date"] == "2026-04-30"),
+        "close",
+    ] = 1.0
+    secondary.loc[
+        (secondary["ticker"] == "NVDA") & (secondary["date"] == "2026-04-30"),
+        "adj_close",
+    ] = 1.0
+    secondary.to_csv(secondary_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 2),
+        secondary_prices_path=secondary_path,
+        require_secondary_prices=True,
+    )
+
+    assert report.passed is False
+    assert "secondary_prices_adj_close_mismatch" in _issue_codes(report)
+
+
+def test_validate_data_cache_warns_when_secondary_adjustment_basis_differs(
+    tmp_path: Path,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    prices = pd.read_csv(prices_path)
+    prices["adj_close"] = prices["close"] * 0.90
+    prices.to_csv(prices_path, index=False)
+
+    secondary_path = tmp_path / "prices_marketstack_daily.csv"
+    secondary = prices.copy()
+    secondary["adj_close"] = secondary["close"]
+    secondary.to_csv(secondary_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 2),
+        secondary_prices_path=secondary_path,
+        require_secondary_prices=True,
+    )
+
+    assert report.passed is True
+    assert "secondary_prices_adjustment_basis_warning" in _issue_codes(report)
+    assert "secondary_prices_adj_close_mismatch" not in _issue_codes(report)
+
+
+def test_validate_data_cache_fails_missing_required_secondary_source(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 2),
+        secondary_prices_path=tmp_path / "prices_marketstack_daily.csv",
+        require_secondary_prices=True,
+    )
+
+    assert report.passed is False
+    assert "secondary_prices_file_missing" in _issue_codes(report)
+
+
 def test_validate_data_cli_writes_report(tmp_path: Path) -> None:
     prices_path, rates_path = _write_valid_cache(
         tmp_path,

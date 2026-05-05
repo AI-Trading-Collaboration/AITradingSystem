@@ -758,6 +758,13 @@ def _build_domain_reconciliation(
             if source.source_type in {"primary_source", "paid_vendor"}
         )
         status = "COVERED" if len(qualified_sources) >= 2 else "NOT_COVERED"
+        if (
+            status == "NOT_COVERED"
+            and domain == "market_prices"
+            and len(qualified_sources) >= 1
+            and len(domain_sources) >= 2
+        ):
+            status = "COVERED_BASELINE"
         records.append(
             DomainReconciliationRecord(
                 domain=domain,
@@ -784,7 +791,12 @@ def _provider_health_score(errors: int, warnings: int) -> int:
 
 def _requires_download_manifest(source: DataSourceConfig) -> bool:
     return any(
-        path.replace("\\", "/") in {"data/raw/prices_daily.csv", "data/raw/rates_daily.csv"}
+        path.replace("\\", "/")
+        in {
+            "data/raw/prices_daily.csv",
+            "data/raw/prices_marketstack_daily.csv",
+            "data/raw/rates_daily.csv",
+        }
         for path in source.cache_paths
     )
 

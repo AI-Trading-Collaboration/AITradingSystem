@@ -60,7 +60,7 @@ flowchart TD
         VSCSV["data/external/valuation_imports/*.csv<br/>结构化估值/预期导入表"]
         TD["data/external/trades/*.yaml<br/>交易记录、价格、thesis_id"]
         POS["data/external/portfolio_positions/current_positions.csv<br/>真实账户持仓快照<br/>ticker、市值、AI 暴露、节点/地区/因子/相关性标签"]
-        MD["外部数据源<br/>Yahoo Finance / FRED"]
+        MD["外部数据源<br/>Yahoo Finance / Marketstack / FRED"]
         FMP["Financial Modeling Prep API<br/>quote / TTM metrics / historical metrics / ratios / estimates<br/>price target / ratings / earnings calendar<br/>provider symbol alias 可审计记录"]
         EODHDT["EODHD Earnings Trends API<br/>calendar/trends<br/>epsTrendCurrent / epsTrend90daysAgo"]
         PITMAN["data/raw/pit_snapshots/manifest.csv<br/>forward-only PIT raw snapshot manifest<br/>available_time / checksum / row count"]
@@ -69,6 +69,7 @@ flowchart TD
     subgraph Cache["本地缓存"]
         DL["aits download-data"]
         PR["data/raw/prices_daily.csv"]
+        MSPR["data/raw/prices_marketstack_daily.csv<br/>Marketstack 第二行情源<br/>cross-provider reconciliation"]
         RR["data/raw/rates_daily.csv"]
         DM["data/raw/download_manifest.csv<br/>provider / endpoint / 参数 / checksum"]
         SFD["aits fundamentals download-sec-companyfacts"]
@@ -112,7 +113,7 @@ flowchart TD
     end
 
     subgraph Gate["数据质量门禁"]
-        V["aits validate-data<br/>schema / completeness / freshness / duplicate keys / suspicious values"]
+        V["aits validate-data<br/>schema / completeness / freshness / duplicate keys / suspicious values<br/>Marketstack 第二来源 close reconciliation / adjusted basis warning"]
         QR["outputs/reports/data_quality_YYYY-MM-DD.md"]
         Stop["停止后续评分、特征、回测或报告"]
     end
@@ -277,6 +278,7 @@ flowchart TD
     U --> DL
     DS --> DL
     DL --> PR
+    DL --> MSPR
     DL --> RR
     DL --> DM
     SEC --> SFD
@@ -341,6 +343,7 @@ flowchart TD
     Q --> V
     DS --> V
     PR --> V
+    MSPR --> V
     RR --> V
     V -->|通过或 PASS_WITH_WARNINGS| QR
     V -->|FAIL| Stop
@@ -672,7 +675,7 @@ flowchart TD
 ```mermaid
 flowchart TD
     A["用户执行<br/>aits score-daily --as-of YYYY-MM-DD"] --> B["读取配置<br/>universe / data_quality / features / scoring_rules / portfolio / risk_events / execution_policy"]
-    B --> C["读取缓存<br/>prices_daily.csv / rates_daily.csv"]
+    B --> C["读取缓存<br/>prices_daily.csv / prices_marketstack_daily.csv / rates_daily.csv"]
     C --> D["调用数据质量门禁<br/>validate_data_cache"]
     D -->|FAIL| E["停止<br/>输出 data_quality 报告和错误数量"]
     D -->|PASS 或 PASS_WITH_WARNINGS| EP0["校验 execution_policy<br/>固定 advisory action taxonomy，输出 execution_policy 报告"]
@@ -747,7 +750,7 @@ flowchart TD
     B --> C["确定回测起点<br/>默认 2022-12-01"]
     C --> BP0["读取 benchmark_policy<br/>校验 strategy_ticker / benchmark 解释口径"]
     BP0 -->|FAIL| BPF["停止回测<br/>输出 benchmark policy 错误"]
-    BP0 -->|PASS 或 PASS_WITH_WARNINGS| D["读取 prices_daily.csv / rates_daily.csv"]
+    BP0 -->|PASS 或 PASS_WITH_WARNINGS| D["读取 prices_daily.csv / prices_marketstack_daily.csv / rates_daily.csv"]
     D --> E["调用数据质量门禁<br/>validate_data_cache"]
     E -->|FAIL| F["停止回测<br/>输出 data_quality 报告"]
     E -->|PASS 或 PASS_WITH_WARNINGS| W0["校验 watchlist_lifecycle<br/>缺少当前核心 ticker 或重复记录时停止"]
@@ -980,12 +983,13 @@ flowchart TD
 
 |层级|命令或文件|责任|当前状态|
 |---|---|---|---|
-|数据源|Yahoo Finance / FRED|提供价格、VIX、DXY、利率原始输入|已接入基础版|
-|下载|`aits download-data`|拉取并标准化为本地 CSV 缓存，同时追加下载审计 manifest|已实现|
+|数据源|Yahoo Finance / Marketstack / FRED|Yahoo 提供主价格、VIX、DXY；Marketstack 提供股票/ETF 第二行情源；FRED 提供利率原始输入|已接入基础版|
+|下载|`aits download-data`|拉取并标准化为本地 CSV 缓存，同时追加下载审计 manifest；默认要求 `MARKETSTACK_API_KEY` 并写入 Marketstack 第二行情源缓存，临时无 key 环境必须显式 `--without-marketstack`|已实现|
 |原始缓存|`data/raw/prices_daily.csv`|日线 OHLCV 和调整收盘价|已实现|
+|原始缓存|`data/raw/prices_marketstack_daily.csv`|Marketstack 股票/ETF 日线第二来源缓存，用于 cross-provider reconciliation；不覆盖主价格缓存|已实现基础版|
 |原始缓存|`data/raw/rates_daily.csv`|FRED 利率长表|已实现|
 |下载审计|`data/raw/download_manifest.csv`|记录 provider、endpoint、请求参数、下载时间、行数、输出路径和 checksum|已实现|
-|质量门禁|`aits validate-data`|校验 schema、完整性、新鲜度、重复键和异常值|已实现|
+|质量门禁|`aits validate-data`|校验 schema、完整性、新鲜度、重复键、异常值，并对主价格缓存与 Marketstack 第二来源执行 raw `close` 重叠覆盖和价差核验；adjusted close 分红复权口径差异作为限制或调查项显式输出|已实现|
 |质量报告|`outputs/reports/data_quality_YYYY-MM-DD.md`|声明数据是否可用于下游结论|已实现|
 |特征|`aits build-features`|生成可解释市场特征|已实现|
 |特征缓存|`data/processed/features_daily.csv`|保存 tidy 格式特征|已实现|
@@ -1059,7 +1063,7 @@ flowchart TD
 |回测输入审计报告|`outputs/backtests/backtest_audit_YYYY-MM-DD_YYYY-MM-DD.md`|输出 PASS/PASS_WITH_WARNINGS/FAIL、数据质量、point-in-time 输入、模块覆盖率、来源类型、执行假设、审计发现和修复建议，判断本次回测是否可解释；`--fail-on-audit-warning` 可把非 PASS 审计状态转为命令失败|已实现|
 |回测 Evidence Bundle|`outputs/backtests/evidence/backtest_YYYY-MM-DD_YYYY-MM-DD_trace.json`|记录回测 `claim`、`evidence`、`dataset`、`quality`、`run_manifest`、`benchmark_policy` 配置引用和本次运行适用的 production rule version manifest，用于从绩效、数据质量、输入覆盖和规则版本结论反查上下文|已实现|
 |报告反查|`aits trace lookup`|按 claim/evidence/dataset/quality/run id 读取 evidence bundle 并输出中文摘要和原始 JSON 上下文|已实现|
-|数据源健康|`aits data-sources health`|读取 `config/data_sources.yaml` 和 `data/raw/download_manifest.csv`，输出 provider health score、cache path 存在性、latest manifest downloaded_at/row_count/checksum、checksum drift、manifest/cache 新鲜度和 qualified source reconciliation 覆盖状态；跨供应商不足只标记 `NOT_COVERED`，不自动平滑数据|已实现基础版|
+|数据源健康|`aits data-sources health`|读取 `config/data_sources.yaml` 和 `data/raw/download_manifest.csv`，输出 provider health score、cache path 存在性、latest manifest downloaded_at/row_count/checksum、checksum drift、manifest/cache 新鲜度和 source reconciliation 覆盖状态；`market_prices` 在 Yahoo + Marketstack 低成本组合下标记 `COVERED_BASELINE`，跨供应商不足不自动平滑数据|已实现基础版|
 |数据源健康报告|`outputs/reports/data_sources_health_YYYY-MM-DD.md`|中文报告展示方法边界、领域级 reconciliation 覆盖、provider health、latest manifest 明细、缓存问题和调查项；当前低成本版达到 `BASELINE_DONE`，生产级跨源校验仍依赖 owner 提供长期可用第二来源和授权策略|已实现基础版|
 |PIT raw snapshot manifest|`data/raw/pit_snapshots/manifest.csv`|forward-only 自建 PIT 快照索引，记录 source、endpoint、request params、canonical/provider symbol、raw payload path、sha256、bytes、row count、`ingested_at`、`available_time`、PIT 可信度、回测用途和 provider 授权字段；缺跑日期不能事后补写成 strict PIT|已实现基础版|
 |FMP forward-only PIT 抓取|`aits pit-snapshots fetch-fmp-forward`|抓取 FMP analyst estimates、price target、ratings 和 earnings calendar，写入 `data/raw/fmp_forward_pit/` 与 `data/processed/pit_snapshots/fmp_forward_pit_YYYY-MM-DD.csv`，`available_time` 固定为本系统下载写入时间；不改变当前评分语义|已实现基础版|
