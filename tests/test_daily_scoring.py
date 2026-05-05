@@ -595,6 +595,9 @@ def test_risk_event_openai_daily_section_includes_transport_client() -> None:
 
     assert "- HTTP client：requests" in section
     assert "- 待人工复核队列记录数：7" in section
+    assert "backlog-only" in section
+    assert "`execution_policy.manual_review_gate_ids`" in section
+    assert "不会单独把执行动作改成 `wait_manual_review`" in section
 
 
 def test_belief_state_is_read_only_and_keeps_position_unchanged(

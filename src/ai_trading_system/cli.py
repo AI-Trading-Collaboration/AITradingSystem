@@ -7064,11 +7064,15 @@ def _risk_event_openai_precheck_daily_section(
             f"- 待人工复核队列记录数：{risk_event_prereview_report.record_count}",
             f"- L2/L3 候选数：{risk_event_prereview_report.high_level_candidate_count}",
             f"- active 候选数：{risk_event_prereview_report.active_candidate_count}",
+            "- 复核模式：backlog-only；未确认 OpenAI 候选不进入 "
+            "`execution_policy.manual_review_gate_ids`，不会单独把执行动作改成 "
+            "`wait_manual_review`。",
             f"- 官方来源抓取报告：`{official_policy_report_output}`",
             f"- OpenAI 预审报告：`{risk_event_openai_precheck_report_output}`",
             f"- 预审待复核队列：`{risk_event_prereview_queue_path}`",
             "- 边界：预审输出只作为 `llm_extracted / pending_review` 线索，"
-            "不会写入 occurrence、复核声明、评分或仓位闸门。",
+            "不会写入 occurrence、复核声明、评分、仓位闸门或 thesis 状态；"
+            "无人复核时保留为未确认 backlog。",
         ]
     )
 
