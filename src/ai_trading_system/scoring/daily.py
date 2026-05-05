@@ -448,6 +448,7 @@ def render_daily_score_report(
     belief_state_section: str | None = None,
     execution_action_label: str | None = None,
     execution_action_id: str | None = None,
+    focus_stock_trend_section: str | None = None,
     industry_node_heat_section: str | None = None,
     execution_advisory_section: str | None = None,
     portfolio_exposure_section: str | None = None,
@@ -508,6 +509,8 @@ def render_daily_score_report(
             previous_score_snapshot=previous_score_snapshot,
         ).rstrip(),
     ]
+    if focus_stock_trend_section is not None:
+        lines.extend(["", focus_stock_trend_section.rstrip()])
     if industry_node_heat_section is not None:
         lines.extend(["", industry_node_heat_section.rstrip()])
     if belief_state_section is not None:
@@ -726,6 +729,7 @@ def write_daily_score_report(
     belief_state_section: str | None = None,
     execution_action_label: str | None = None,
     execution_action_id: str | None = None,
+    focus_stock_trend_section: str | None = None,
     industry_node_heat_section: str | None = None,
     execution_advisory_section: str | None = None,
     portfolio_exposure_section: str | None = None,
@@ -750,6 +754,7 @@ def write_daily_score_report(
             belief_state_section=belief_state_section,
             execution_action_label=execution_action_label,
             execution_action_id=execution_action_id,
+            focus_stock_trend_section=focus_stock_trend_section,
             industry_node_heat_section=industry_node_heat_section,
             execution_advisory_section=execution_advisory_section,
             portfolio_exposure_section=portfolio_exposure_section,

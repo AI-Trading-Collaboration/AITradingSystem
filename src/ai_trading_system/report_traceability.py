@@ -69,6 +69,7 @@ def build_daily_score_trace_bundle(
     belief_state_path: Path | None = None,
     feature_availability_report_path: Path | None = None,
     feature_availability_summary: TraceRecord | None = None,
+    focus_stock_trend_tickers: tuple[str, ...] = (),
 ) -> ReportTraceBundle:
     report_id = f"daily_score:{report.as_of.isoformat()}"
     date_window = _date_window(report.as_of, report.as_of)
@@ -236,6 +237,35 @@ def build_daily_score_trace_bundle(
                 "artifact_paths": _artifact_paths(belief_state_path),
             },
         )
+    if focus_stock_trend_tickers:
+        trend_evidence_id = (
+            f"evidence:daily_score:{report.as_of.isoformat()}:focus_stock_trends"
+        )
+        evidence_cards = (
+            *evidence_cards,
+            {
+                "evidence_id": trend_evidence_id,
+                "summary": (
+                    "核心观察池逐 ticker 趋势分析来自已通过门禁的价格缓存和 "
+                    "features_daily 趋势特征；production_effect=none。"
+                ),
+                "signal_ids": [
+                    "focus_stock_trend:return_1d",
+                    "focus_stock_trend:return_5d",
+                    "focus_stock_trend:return_20d",
+                    "focus_stock_trend:moving_average_position",
+                ],
+                "ticker_ids": list(focus_stock_trend_tickers),
+                "date_window": date_window,
+                "dataset_ids": [
+                    "dataset:prices_daily",
+                    f"dataset:features_daily:{report.as_of.isoformat()}",
+                ],
+                "quality_ids": _quality_ids(quality_refs),
+                "config_ids": ["universe", "watchlist", "features"],
+                "artifact_paths": _artifact_paths(report_path, features_path),
+            },
+        )
     claims = (
         {
             "claim_id": f"daily_score:{report.as_of.isoformat()}:overall_position",
@@ -284,6 +314,27 @@ def build_daily_score_trace_bundle(
                     f"evidence:daily_score:{report.as_of.isoformat()}:belief_state"
                 ],
                 "dataset_ids": [f"dataset:belief_state:{report.as_of.isoformat()}"],
+                "quality_ids": _quality_ids(quality_refs),
+            },
+        )
+    if focus_stock_trend_tickers:
+        claims = (
+            *claims,
+            {
+                "claim_id": f"daily_score:{report.as_of.isoformat()}:focus_stock_trends",
+                "statement": (
+                    "日报关注股票趋势分析覆盖 "
+                    f"{len(focus_stock_trend_tickers)} 个 core_watchlist ticker，"
+                    "只读解释价格/趋势状态，不改变评分、仓位闸门或执行建议。"
+                ),
+                "report_section": "关注股票趋势分析",
+                "evidence_ids": [
+                    f"evidence:daily_score:{report.as_of.isoformat()}:focus_stock_trends"
+                ],
+                "dataset_ids": [
+                    "dataset:prices_daily",
+                    f"dataset:features_daily:{report.as_of.isoformat()}",
+                ],
                 "quality_ids": _quality_ids(quality_refs),
             },
         )

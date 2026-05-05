@@ -244,6 +244,10 @@ from ai_trading_system.fmp_forward_pit import (
     write_fmp_forward_pit_normalized_csv,
     write_fmp_forward_pit_raw_payloads,
 )
+from ai_trading_system.focus_stock_trends import (
+    build_focus_stock_trend_report,
+    render_focus_stock_trend_section,
+)
 from ai_trading_system.fundamentals.sec_companyfacts import (
     SecEdgarCompanyFactsProvider,
     download_sec_companyfacts,
@@ -7934,6 +7938,15 @@ def score_daily(
         data_quality_report=data_quality_report,
         benchmark_tickers=benchmark_tickers,
     )
+    core_watchlist_tickers = tuple(universe.ai_chain.get("core_watchlist", []))
+    focus_stock_trend_report = build_focus_stock_trend_report(
+        feature_set=feature_set,
+        tickers=core_watchlist_tickers,
+        watchlist=watchlist,
+    )
+    focus_stock_trend_section = render_focus_stock_trend_section(
+        focus_stock_trend_report
+    )
     industry_node_heat_report = build_industry_node_heat_report(
         industry_chain=industry_chain,
         watchlist=watchlist,
@@ -8038,6 +8051,7 @@ def score_daily(
             feature_availability_report,
             feature_availability_output,
         ),
+        focus_stock_trend_tickers=core_watchlist_tickers,
     )
     daily_trace_output = write_trace_bundle(daily_trace_bundle, daily_trace_output)
     belief_state = build_belief_state(
@@ -8098,6 +8112,7 @@ def score_daily(
         ),
         execution_action_label=execution_advisory.label,
         execution_action_id=execution_advisory.action_id,
+        focus_stock_trend_section=focus_stock_trend_section,
         industry_node_heat_section=industry_node_heat_section,
         execution_advisory_section=execution_advisory_section,
         portfolio_exposure_section=(
@@ -8147,6 +8162,10 @@ def score_daily(
     console.print(
         f"产业链节点热度与健康度：{industry_node_heat_report.status}"
         f"（{industry_node_heat_report.node_count} 个节点）"
+    )
+    console.print(
+        f"关注股票趋势分析：{focus_stock_trend_report.status}"
+        f"（{focus_stock_trend_report.ticker_count} 个 ticker）"
     )
     console.print(
         f"组合暴露：{portfolio_exposure_report.status}"

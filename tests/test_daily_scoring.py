@@ -805,6 +805,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     dataset_ids = {dataset["dataset_id"] for dataset in trace["dataset_refs"]}
     assert "daily_score:2026-04-30:overall_position" in claim_ids
     assert "daily_score:2026-04-30:belief_state" in claim_ids
+    assert "daily_score:2026-04-30:focus_stock_trends" in claim_ids
     assert "dataset:belief_state:2026-04-30" in dataset_ids
     assert "dataset:feature_availability:2026-04-30" in dataset_ids
     feature_availability_params = trace["run_manifest"]["parameters"][
@@ -846,6 +847,8 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert "## 今日结论卡" in daily_text
     assert "## 结论使用等级" in daily_text
     assert "适用范围：趋势判断/投研辅助，不触发交易（`trend_judgment`）" in daily_text
+    assert "## 关注股票趋势分析" in daily_text
+    assert "MSFT" in daily_text
     assert "## 产业链节点热度与健康度" in daily_text
     assert "健康度边界" in daily_text
     assert "执行动作 | 观察，不形成交易结论（`observe_only`）" in daily_text
@@ -867,6 +870,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert "每日评分状态：" in result.output
     assert "执行建议：" in result.output
     assert "产业链节点热度与健康度：" in result.output
+    assert "关注股票趋势分析：" in result.output
     assert "组合暴露：" in result.output
     assert "Prediction" in result.output
     assert "belief_state.json" in result.output
