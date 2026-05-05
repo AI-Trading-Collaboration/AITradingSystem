@@ -26,7 +26,7 @@
 ```mermaid
 flowchart TD
     subgraph Source["数据输入"]
-        U["config/universe.yaml<br/>标的池、基准、利率序列"]
+        U["config/universe.yaml<br/>标的池、基准、FRED 宏观序列"]
         P["config/portfolio.yaml<br/>风险资产预算、仓位上限和 risk_budget gate 参数"]
         Q["config/data_quality.yaml<br/>质量阈值"]
         F["config/features.yaml<br/>特征窗口和相对强弱组合"]
@@ -60,17 +60,17 @@ flowchart TD
         VSCSV["data/external/valuation_imports/*.csv<br/>结构化估值/预期导入表"]
         TD["data/external/trades/*.yaml<br/>交易记录、价格、thesis_id"]
         POS["data/external/portfolio_positions/current_positions.csv<br/>真实账户持仓快照<br/>ticker、市值、AI 暴露、节点/地区/因子/相关性标签"]
-        MD["外部数据源<br/>Yahoo Finance / Marketstack / FRED"]
-        FMP["Financial Modeling Prep API<br/>quote / TTM metrics / historical metrics / ratios / estimates<br/>price target / ratings / earnings calendar<br/>provider symbol alias 可审计记录"]
+        MD["外部数据源<br/>FMP / Marketstack / FRED"]
+        FMP["Financial Modeling Prep API<br/>historical-price-eod/non-split-adjusted + dividend-adjusted / quote / TTM metrics / ratios / estimates<br/>price target / ratings / earnings calendar<br/>provider symbol alias 可审计记录"]
         EODHDT["EODHD Earnings Trends API<br/>calendar/trends<br/>epsTrendCurrent / epsTrend90daysAgo"]
         PITMAN["data/raw/pit_snapshots/manifest.csv<br/>forward-only PIT raw snapshot manifest<br/>available_time / checksum / row count"]
     end
 
     subgraph Cache["本地缓存"]
         DL["aits download-data"]
-        PR["data/raw/prices_daily.csv"]
+        PR["data/raw/prices_daily.csv<br/>FMP 主价格缓存"]
         MSPR["data/raw/prices_marketstack_daily.csv<br/>Marketstack 第二行情源<br/>cross-provider reconciliation"]
-        RR["data/raw/rates_daily.csv"]
+        RR["data/raw/rates_daily.csv<br/>FRED DGS2 / DGS10 / DTWEXBGS"]
         DM["data/raw/download_manifest.csv<br/>provider / endpoint / 参数 / checksum"]
         SFD["aits fundamentals download-sec-companyfacts"]
         SFV["aits fundamentals validate-sec-companyfacts"]
@@ -126,7 +126,7 @@ flowchart TD
 
     subgraph Score["中间评估：评分和仓位"]
         SD["aits score-daily"]
-        MBG["macro_risk_asset_budget<br/>VIX、DGS10、DXY 触发总风险资产预算下调"]
+        MBG["macro_risk_asset_budget<br/>VIX、DGS10、DTWEXBGS 广义美元指数触发总风险资产预算下调"]
         PG["position_gate<br/>评分仓位、组合限制、风险预算、风险事件、估值拥挤、thesis 和数据置信度取最严格上限"]
         CONF["判断置信度<br/>按模块来源、覆盖率、质量门禁和人工复核汇总"]
         NH["产业链节点热度与健康度<br/>industry_chain/watchlist + 市场特征 + 基本面/估值/风险/thesis 复核<br/>production_effect=none"]
@@ -275,6 +275,7 @@ flowchart TD
     end
 
     MD --> DL
+    FMP --> DL
     U --> DL
     DS --> DL
     DL --> PR
@@ -703,7 +704,7 @@ flowchart TD
     I --> J["趋势评分<br/>指数趋势、半导体趋势、核心池宽度、相对强弱"]
     I --> F1["基本面评分<br/>SEC 特征中位数：毛利率、营业利润率、净利率、R&D、CapEx"]
     I --> V2["估值评分<br/>估值分位和拥挤比例；排除过期和 public_convenience"]
-    I --> K["宏观流动性评分<br/>DGS10、DGS2、美元指数"]
+    I --> K["宏观流动性评分<br/>DGS10、DGS2、DTWEXBGS 广义美元指数"]
     I --> L["风险情绪评分<br/>VIX 水平、分位、变化速度"]
     I --> M["政策/地缘评分<br/>只读可评分 active 发生记录；无 active 时必须有当前有效复核声明才脱离 insufficient_data"]
     J --> N["AI 产业链评分和评分模型仓位区间<br/>风险资产内 AI 仓位"]
@@ -769,7 +770,7 @@ flowchart TD
     H2 --> NH0
     I --> J["评分映射到评分模型 AI 仓位区间"]
     J --> PG["应用 position_gate<br/>取组合限制、risk_budget、风险事件、估值拥挤、thesis 和数据置信度的最严格上限"]
-    PG --> MB["应用 macro_risk_asset_budget<br/>VIX、DGS10、DXY 可下调总风险资产预算"]
+    PG --> MB["应用 macro_risk_asset_budget<br/>VIX、DGS10、DTWEXBGS 广义美元指数可下调总风险资产预算"]
     MB --> K["使用总资产内 AI exposure 中点并应用最小调仓阈值<br/>低于阈值维持原仓位"]
     K --> L["下一交易日收益生效<br/>避免未来函数"]
     L --> M["扣除显式交易摩擦假设<br/>commission / spread / slippage / market impact / tax / FX / financing / ETF delay"]
@@ -983,17 +984,17 @@ flowchart TD
 
 |层级|命令或文件|责任|当前状态|
 |---|---|---|---|
-|数据源|Yahoo Finance / Marketstack / FRED|Yahoo 提供主价格、VIX、DXY；Marketstack 提供股票/ETF 第二行情源；FRED 提供利率原始输入|已接入基础版|
-|下载|`aits download-data`|拉取并标准化为本地 CSV 缓存，同时追加下载审计 manifest；默认要求 `MARKETSTACK_API_KEY` 并写入 Marketstack 第二行情源缓存，临时无 key 环境必须显式 `--without-marketstack`|已实现|
-|原始缓存|`data/raw/prices_daily.csv`|日线 OHLCV 和调整收盘价|已实现|
+|数据源|FMP / Marketstack / FRED|FMP 提供股票/ETF 主价格；Marketstack 提供股票/ETF 第二行情源；FRED 提供 DGS2、DGS10 和 `DTWEXBGS` 广义美元指数原始输入；`^VIX` 后续需接入 Cboe official historical data|已实现基础版；质量门禁仍阻断|
+|下载|`aits download-data`|拉取并标准化为本地 CSV 缓存，同时追加下载审计 manifest；默认要求 `FMP_API_KEY` 写入 FMP 主价格缓存，并要求 `MARKETSTACK_API_KEY` 写入 Marketstack 第二行情源缓存，临时无 Marketstack key 环境必须显式 `--without-marketstack`；Yahoo 仅可通过 `--price-provider yahoo` 显式迁移调查使用|已实现基础版|
+|原始缓存|`data/raw/prices_daily.csv`|FMP 股票/ETF 日线 OHLCV 和调整收盘价主缓存；当前不覆盖 `^VIX`，真实烟测仍有 SPY/SOXX/OHLC 供应商异常需处理|已实现基础版；质量门禁仍阻断|
 |原始缓存|`data/raw/prices_marketstack_daily.csv`|Marketstack 股票/ETF 日线第二来源缓存，用于 cross-provider reconciliation；不覆盖主价格缓存|已实现基础版|
-|原始缓存|`data/raw/rates_daily.csv`|FRED 利率长表|已实现|
+|原始缓存|`data/raw/rates_daily.csv`|FRED 宏观序列长表，当前包含 DGS2、DGS10 和 `DTWEXBGS`；`DTWEXBGS` 不是 ICE DXY|已实现|
 |下载审计|`data/raw/download_manifest.csv`|记录 provider、endpoint、请求参数、下载时间、行数、输出路径和 checksum|已实现|
 |质量门禁|`aits validate-data`|校验 schema、完整性、新鲜度、重复键、异常值，并对主价格缓存与 Marketstack 第二来源执行 raw `close` 重叠覆盖和价差核验；adjusted close 分红复权口径差异作为限制或调查项显式输出|已实现|
 |质量报告|`outputs/reports/data_quality_YYYY-MM-DD.md`|声明数据是否可用于下游结论|已实现|
 |特征|`aits build-features`|生成可解释市场特征|已实现|
 |特征缓存|`data/processed/features_daily.csv`|保存 tidy 格式特征|已实现|
-|组合与风险预算配置|`config/portfolio.yaml`|定义静态总风险资产预算、`macro_risk_asset_budget` 下调阈值、AI 总资产上限、真实组合集中度提示阈值和 `risk_budget` gate 参数；宏观预算层用 VIX、DGS10 和 DXY 下调总风险资产预算，`risk_budget` gate 继续约束风险资产内 AI 仓位上限|已实现基础版|
+|组合与风险预算配置|`config/portfolio.yaml`|定义静态总风险资产预算、`macro_risk_asset_budget` 下调阈值、AI 总资产上限、真实组合集中度提示阈值和 `risk_budget` gate 参数；宏观预算层用 VIX、DGS10 和 `DTWEXBGS` 广义美元指数下调总风险资产预算，`risk_budget` gate 继续约束风险资产内 AI 仓位上限|已实现基础版|
 |评分|`aits score-daily`|先执行市场数据质量门禁，再校验 `execution_policy`、SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照、风险事件发生记录和当前有效复核声明，读取真实持仓 CSV 生成只读组合暴露，基于已通过校验/复核的市场特征、SEC/TSM 基本面、估值、风险事件和 thesis 生成只读产业链节点热度与健康度，再用 `macro_risk_asset_budget` 下调总风险资产预算，并通过 `position_gate` 把评分仓位、组合限制、风险预算、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限，输出 AI 产业链评分、判断置信度、最终仓位区间、advisory 执行建议、日报、decision snapshot 和只读 `belief_state`|已实现|
 |评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果，component 行记录模块 confidence，overall 行记录整体 confidence、模型/最终/置信度调整仓位区间、静态和宏观调整后总风险资产预算、总资产 AI 仓位区间、宏观预算触发等级和仓位闸门摘要，用于日报上期对比|已实现|
 |日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|开头输出“今日结论卡”，固定呈现状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、总风险资产预算、执行动作、主结论、三个核心原因、最大限制和下一步触发条件；正文继续输出结论使用等级、适用范围、变化原因树、什么情况会改变判断、产业链节点热度与健康度、组合暴露、认知状态摘要、执行建议、宏观风险资产预算、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、当前有效风险事件复核声明数量、估值 PIT 可信度、仓位闸门来源/上限/触发状态、限制说明、人工复核摘要和可追溯引用章节；当前项目范围为趋势判断/投研辅助，不触发交易；执行建议、节点热度/健康度和组合暴露均明确 `production_effect=none`，不是自动交易指令|已实现|
@@ -1063,7 +1064,7 @@ flowchart TD
 |回测输入审计报告|`outputs/backtests/backtest_audit_YYYY-MM-DD_YYYY-MM-DD.md`|输出 PASS/PASS_WITH_WARNINGS/FAIL、数据质量、point-in-time 输入、模块覆盖率、来源类型、执行假设、审计发现和修复建议，判断本次回测是否可解释；`--fail-on-audit-warning` 可把非 PASS 审计状态转为命令失败|已实现|
 |回测 Evidence Bundle|`outputs/backtests/evidence/backtest_YYYY-MM-DD_YYYY-MM-DD_trace.json`|记录回测 `claim`、`evidence`、`dataset`、`quality`、`run_manifest`、`benchmark_policy` 配置引用和本次运行适用的 production rule version manifest，用于从绩效、数据质量、输入覆盖和规则版本结论反查上下文|已实现|
 |报告反查|`aits trace lookup`|按 claim/evidence/dataset/quality/run id 读取 evidence bundle 并输出中文摘要和原始 JSON 上下文|已实现|
-|数据源健康|`aits data-sources health`|读取 `config/data_sources.yaml` 和 `data/raw/download_manifest.csv`，输出 provider health score、cache path 存在性、latest manifest downloaded_at/row_count/checksum、checksum drift、manifest/cache 新鲜度和 source reconciliation 覆盖状态；`market_prices` 在 Yahoo + Marketstack 低成本组合下标记 `COVERED_BASELINE`，跨供应商不足不自动平滑数据|已实现基础版|
+|数据源健康|`aits data-sources health`|读取 `config/data_sources.yaml` 和 `data/raw/download_manifest.csv`，输出 provider health score、cache path 存在性、latest manifest downloaded_at/row_count/checksum、checksum drift、manifest/cache 新鲜度和 source reconciliation 覆盖状态；`market_prices` 在 FMP + Marketstack 低成本组合下评估覆盖，跨供应商不足不自动平滑数据|已实现基础版|
 |数据源健康报告|`outputs/reports/data_sources_health_YYYY-MM-DD.md`|中文报告展示方法边界、领域级 reconciliation 覆盖、provider health、latest manifest 明细、缓存问题和调查项；当前低成本版达到 `BASELINE_DONE`，生产级跨源校验仍依赖 owner 提供长期可用第二来源和授权策略|已实现基础版|
 |PIT raw snapshot manifest|`data/raw/pit_snapshots/manifest.csv`|forward-only 自建 PIT 快照索引，记录 source、endpoint、request params、canonical/provider symbol、raw payload path、sha256、bytes、row count、`ingested_at`、`available_time`、PIT 可信度、回测用途和 provider 授权字段；缺跑日期不能事后补写成 strict PIT|已实现基础版|
 |FMP forward-only PIT 抓取|`aits pit-snapshots fetch-fmp-forward`|抓取 FMP analyst estimates、price target、ratings 和 earnings calendar，写入 `data/raw/fmp_forward_pit/` 与 `data/processed/pit_snapshots/fmp_forward_pit_YYYY-MM-DD.csv`，`available_time` 固定为本系统下载写入时间；不改变当前评分语义|已实现基础版|

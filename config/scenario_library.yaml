@@ -281,7 +281,7 @@ scenarios:
       - 复核估值拥挤 gate 和宏观流动性模块。
       - 报告中区分 beta/估值压缩和 thesis 证伪。
     evidence_requirements:
-      - FRED 利率数据、价格数据和估值快照质量门禁通过。
+      - FRED 宏观序列、价格数据和估值快照质量门禁通过。
     interpretation_boundary: 宏观冲击不自动等同 AI thesis 失效。
     not_probability_forecast: true
 

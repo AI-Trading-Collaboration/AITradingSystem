@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
 import pandas as pd
+from typer.testing import CliRunner
 
+from ai_trading_system.cli import app
 from ai_trading_system.config import load_universe
 from ai_trading_system.data.download import download_daily_data
-from ai_trading_system.data.market_data import PriceRequest, RateRequest
+from ai_trading_system.data.market_data import FmpPriceProvider, PriceRequest, RateRequest
 
 
 @dataclass(frozen=True)
@@ -58,7 +61,7 @@ def test_download_daily_data_writes_core_universe_cache(tmp_path: Path) -> None:
     assert "MSFT" in summary.price_tickers
     assert "NVDA" in summary.price_tickers
     assert "ASML" not in summary.price_tickers
-    assert summary.rate_series == ("DGS2", "DGS10")
+    assert summary.rate_series == ("DGS2", "DGS10", "DTWEXBGS")
 
     manifest = pd.read_csv(summary.manifest_path)
     assert list(manifest["source_id"]) == ["fake_price_provider", "fake_rate_provider"]
@@ -88,3 +91,80 @@ def test_download_daily_data_writes_secondary_price_cache(tmp_path: Path) -> Non
         "fake_price_provider",
     ]
     assert str(summary.secondary_prices_path) in set(manifest["output_path"].astype(str))
+
+
+def test_download_daily_data_records_fmp_primary_source_without_key(tmp_path: Path) -> None:
+    summary = download_daily_data(
+        load_universe(),
+        start=date(2026, 4, 29),
+        end=date(2026, 4, 30),
+        output_dir=tmp_path,
+        price_provider=FmpPriceProvider(
+            api_key="test-key",
+            requests_module=_FakeRequests(
+                [
+                    {
+                        "date": "2026-04-30",
+                        "adjOpen": 1.0,
+                        "adjHigh": 1.0,
+                        "adjLow": 1.0,
+                        "adjClose": 1.0,
+                        "volume": 1,
+                    }
+                ]
+            ),
+        ),
+        rate_provider=FakeRateProvider(),
+    )
+
+    manifest = pd.read_csv(summary.manifest_path)
+    price_manifest = manifest.loc[manifest["source_id"] == "fmp_eod_daily_prices"].iloc[0]
+    request_parameters = json.loads(str(price_manifest["request_parameters"]))
+
+    assert price_manifest["provider"] == "Financial Modeling Prep"
+    assert "test-key" not in str(price_manifest["request_parameters"])
+    assert request_parameters["provider_symbol_aliases"]["GOOG"] == "GOOGL"
+    assert request_parameters["provider_symbol_aliases"]["^VIX"] is None
+
+
+def test_download_data_cli_requires_fmp_key_by_default(tmp_path: Path, monkeypatch) -> None:
+    monkeypatch.delenv("FMP_API_KEY", raising=False)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "download-data",
+            "--output-dir",
+            str(tmp_path),
+            "--without-marketstack",
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "未设置 FMP_API_KEY" in result.output
+
+
+class _FakeResponse:
+    def __init__(self, payload: object) -> None:
+        self._payload = payload
+        self.ok = True
+        self.status_code = 200
+
+    def json(self) -> object:
+        return self._payload
+
+
+class _FakeRequests:
+    def __init__(self, payload: object) -> None:
+        self._payload = payload
+
+    def get(
+        self,
+        _url: str,
+        *,
+        params: dict[str, object],
+        timeout: int,
+    ) -> _FakeResponse:
+        assert params["apikey"] == "test-key"
+        assert timeout == 30
+        return _FakeResponse(self._payload)

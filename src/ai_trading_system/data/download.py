@@ -16,6 +16,7 @@ from ai_trading_system.config import (
 )
 from ai_trading_system.data.market_data import (
     CsvDataCache,
+    FmpPriceProvider,
     FredRateProvider,
     MarketstackPriceProvider,
     PriceDataProvider,
@@ -137,16 +138,20 @@ def _manifest_record_for_prices(
     row_count: int,
 ) -> dict[str, object]:
     source_id, provider_name, endpoint = _price_provider_metadata(provider)
+    request_parameters: dict[str, object] = {
+        "tickers": request.tickers,
+        "start": request.start.isoformat(),
+        "end": request.end.isoformat(),
+        "interval": request.interval,
+    }
+    provider_symbol_aliases = _price_provider_symbol_aliases(provider, request.tickers)
+    if provider_symbol_aliases:
+        request_parameters["provider_symbol_aliases"] = provider_symbol_aliases
     return _manifest_record(
         source_id=source_id,
         provider=provider_name,
         endpoint=endpoint,
-        request_parameters={
-            "tickers": request.tickers,
-            "start": request.start.isoformat(),
-            "end": request.end.isoformat(),
-            "interval": request.interval,
-        },
+        request_parameters=request_parameters,
         output_path=output_path,
         row_count=row_count,
     )
@@ -198,12 +203,27 @@ def _manifest_record(
 
 
 def _price_provider_metadata(provider: PriceDataProvider) -> tuple[str, str, str]:
+    if isinstance(provider, FmpPriceProvider):
+        return ("fmp_eod_daily_prices", "Financial Modeling Prep", provider.endpoint_summary())
     if isinstance(provider, YFinancePriceProvider):
         return ("yahoo_finance_daily_prices", "Yahoo Finance via yfinance", "yfinance.download")
     if isinstance(provider, MarketstackPriceProvider):
         return ("marketstack_eod_daily_prices", "Marketstack", provider.base_url)
     provider_name = provider.__class__.__name__
     return (_source_id_from_provider(provider_name), provider_name, provider_name)
+
+
+def _price_provider_symbol_aliases(
+    provider: PriceDataProvider,
+    tickers: list[str],
+) -> dict[str, str | None]:
+    if isinstance(provider, FmpPriceProvider):
+        return {
+            ticker: provider.provider_symbol_for(ticker)
+            for ticker in tickers
+            if provider.provider_symbol_for(ticker) != ticker
+        }
+    return {}
 
 
 def _rate_provider_metadata(provider: RateDataProvider) -> tuple[str, str, str]:

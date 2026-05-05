@@ -159,6 +159,29 @@ def test_validate_data_cache_uses_ticker_return_threshold_overrides(tmp_path: Pa
     )
 
 
+def test_validate_data_cache_uses_fred_series_change_overrides(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    rates = pd.read_csv(rates_path)
+    rates.loc[
+        (rates["series"] == "DTWEXBGS") & (rates["date"] == "2026-04-30"),
+        "value",
+    ] = 122.5
+    rates.to_csv(rates_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10", "DTWEXBGS"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert report.passed is True
+    assert "rates_extreme_daily_change" not in _issue_codes(report)
+    assert "rates_suspicious_daily_change" in _issue_codes(report)
+
+
 def test_validate_data_cache_fails_stale_data(tmp_path: Path) -> None:
     prices_path, rates_path = _write_valid_cache(tmp_path)
 
@@ -414,6 +437,8 @@ def _write_valid_cache(
             {"date": "2026-04-30", "series": "DGS2", "value": 4.2},
             {"date": "2026-04-29", "series": "DGS10", "value": 4.4},
             {"date": "2026-04-30", "series": "DGS10", "value": 4.5},
+            {"date": "2026-04-29", "series": "DTWEXBGS", "value": 120.0},
+            {"date": "2026-04-30", "series": "DTWEXBGS", "value": 120.2},
         ]
     )
     prices_path = tmp_path / "prices_daily.csv"

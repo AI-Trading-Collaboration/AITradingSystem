@@ -203,7 +203,7 @@ def _feature_set_with_warning(as_of: date) -> MarketFeatureSet:
         _feature(as_of, "relative_strength", "SMH/SPY", "relative_strength_return_20d", 0.04),
         _feature(as_of, "macro_liquidity", "DGS10", "rate_change_20d", -0.05),
         _feature(as_of, "macro_liquidity", "DGS2", "rate_change_20d", 0.05),
-        _feature(as_of, "trend", "DX-Y.NYB", "return_20d", -0.02),
+        _feature(as_of, "macro_liquidity", "DTWEXBGS", "return_20d", -0.02),
         _feature(as_of, "risk_sentiment", "^VIX", "vix_current", 17.0),
         _feature(as_of, "risk_sentiment", "^VIX", "vix_percentile_252", 0.35),
         _feature(as_of, "trend", "^VIX", "return_5d", -0.05),

@@ -1,8 +1,60 @@
 sources:
+  - source_id: fmp_eod_daily_prices
+    provider: Financial Modeling Prep
+    source_type: paid_vendor
+    status: active
+    domains:
+      - market_prices
+    endpoint: https://financialmodelingprep.com/stable/historical-price-eod/non-split-adjusted; https://financialmodelingprep.com/stable/historical-price-eod/dividend-adjusted
+    adapter: FmpPriceProvider
+    cadence: daily
+    requires_credentials: true
+    cache_paths:
+      - data/raw/prices_daily.csv
+    primary_for:
+      - daily_ohlcv_primary
+      - adjusted_close
+      - volume
+    audit_fields:
+      - provider
+      - endpoint
+      - request_parameters
+      - downloaded_at
+      - row_count
+      - checksum
+      - provider_symbol_alias
+      - adjusted_price_endpoint
+    validation_checks:
+      - schema
+      - completeness
+      - freshness
+      - duplicate_keys
+      - suspicious_returns
+      - adjustment_ratio_changes
+      - manifest_checksum
+      - no_secret_leakage
+    limitations:
+      - FMP Starter plan 当前用于低成本股票/ETF 日线主源；历史深度上限按 plan 约束，长历史压力测试可能不足。
+      - "`^VIX` 不通过 FMP 股票价格主源抓取，需后续接入 Cboe official historical data。"
+      - "`GOOG` 请求 FMP 使用 provider symbol alias `GOOGL`，标准化缓存仍归属内部 ticker `GOOG`。"
+      - 2026-05-05 真实烟测中，FMP 对 SPY、INTC、MSFT、SOXX 仍返回会触发质量门禁的异常价格或 OHLC 记录；必须作为供应商数据质量问题处理，不能本地静默修正。
+      - 与 Marketstack 的 adjusted close 分红复权口径差异必须保留为质量门禁限制或调查项，不能自动平滑。
+      - API plan 可能限制历史深度、请求频率和字段覆盖。
+    llm_permission:
+      license_scope: paid_vendor_terms_not_reviewed_for_external_llm
+      personal_use_only: true
+      external_llm_allowed: false
+      cache_allowed: true
+      redistribution_allowed: false
+      max_content_sent_level: metadata_only
+      approval_ref: not_approved_for_external_llm_2026-05-05
+      reviewed_at: 2026-05-05
+    owner_notes: FMP_API_KEY 只从环境变量读取；默认 `aits download-data` 使用该来源写入主价格缓存，命令、报告和 manifest 不得输出密钥。
+
   - source_id: yahoo_finance_daily_prices
     provider: Yahoo Finance via yfinance
     source_type: public_convenience
-    status: active
+    status: inactive
     domains:
       - market_prices
     endpoint: yfinance.download
@@ -32,7 +84,8 @@ sources:
     limitations:
       - 公开便利源，不是交易所一手行情源。
       - 公司行动和复权调整必须在下游评分前通过校验。
-    owner_notes: 当前 MVP 市场价格来源；数据质量门禁必须保持强制执行。
+      - 2026-05-05 数据质量门禁发现 SPY 非正价格、OHLC 逻辑异常和供应商复权口径冲突，已从默认生产主源移除。
+    owner_notes: 仅保留为显式 `--price-provider yahoo` 迁移调查选项；默认生产主源已切换为 FMP。
 
   - source_id: marketstack_eod_daily_prices
     provider: Marketstack
@@ -100,6 +153,7 @@ sources:
       - data/raw/rates_daily.csv
     primary_for:
       - treasury_rates
+      - broad_usd_index
     audit_fields:
       - provider
       - endpoint
@@ -112,11 +166,12 @@ sources:
       - completeness
       - freshness
       - duplicate_keys
-      - plausible_ranges
-      - suspicious_rate_changes
+      - series_specific_plausible_ranges
+      - suspicious_rate_or_index_changes
     limitations:
-      - 利率序列可能在美股收盘后或非交易日更新。
-    owner_notes: 当前 MVP 宏观利率来源。
+      - FRED 宏观序列可能在美股收盘后或非交易日更新。
+      - "`DTWEXBGS` 是 Federal Reserve 广义美元指数代理，不是 ICE DXY；报告不得把它称为 official DXY。"
+    owner_notes: 当前 MVP 宏观利率和广义美元指数来源。
 
   - source_id: local_trade_theses
     provider: Local YAML input

@@ -16,7 +16,7 @@ macro_risk_asset_budget:
   vix_percentile_feature: vix_percentile_252
   rate_subject: DGS10
   rate_change_feature: rate_change_20d
-  dollar_subject: DX-Y.NYB
+  dollar_subject: DTWEXBGS
   dollar_return_feature: return_20d
   elevated_vix_current: 25.0
   stress_vix_current: 32.0

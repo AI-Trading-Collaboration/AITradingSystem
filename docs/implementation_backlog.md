@@ -18,7 +18,7 @@
 |能力|状态|说明|
 |---|---|---|
 |工程骨架|已完成|Python package、CLI、测试、CI、文档|
-|数据下载|已完成基础版|`aits download-data`，价格、VIX、DXY、FRED 利率，并写入 `download_manifest.csv` 审计清单|
+|数据下载|已完成基础版|`aits download-data`，FMP 股票/ETF 主价格、Marketstack 第二行情源、FRED DGS2/DGS10/`DTWEXBGS`，并写入 `download_manifest.csv` 审计清单；`^VIX` 仍待 Cboe official historical data|
 |数据源目录|已完成基础版|`config/data_sources.yaml` 和 `aits data-sources list/validate`，记录来源类型、审计字段、校验项和限制说明|
 |SEC 基本面原始数据|已完成基础版|`config/sec_companies.yaml` 和 `aits fundamentals download-sec-companyfacts`，下载 companyfacts JSON 并写入 manifest|
 |SEC 基本面缓存校验|已完成基础版|`aits fundamentals validate-sec-companyfacts`，校验 JSON、CIK、taxonomy 和 checksum|
@@ -161,7 +161,7 @@ aits score-daily --as-of 2026-05-01
 
 - 趋势评分：指数趋势、半导体趋势、核心个股趋势一致性、相对强弱。
 - 基本面评分：基于 AI 核心观察池 SEC 特征中位数，先覆盖季度毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度。
-- 宏观流动性评分：10Y、2Y、美元指数趋势。
+- 宏观流动性评分：10Y、2Y、`DTWEXBGS` 广义美元指数代理趋势。
 - 风险情绪评分：VIX 水平、VIX 分位、波动上升速度。
 - 估值评分：使用已通过校验、未过期且来源合规的估值快照。
 - 政策/地缘评分：使用已通过校验、来源合规且处于 active/watch 的风险事件发生记录；缺少有效记录时标记为数据不足。

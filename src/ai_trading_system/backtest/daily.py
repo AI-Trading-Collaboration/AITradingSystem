@@ -1725,12 +1725,12 @@ def _data_quality_gate_summary_lines(report: DataQualityReport) -> list[str]:
         f"- 评估日期：{report.as_of.isoformat()}",
         f"- 错误数：{report.error_count}；警告数：{report.warning_count}",
         f"- 预期价格标的数：{len(report.expected_price_tickers)}",
-        f"- 预期利率序列数：{len(report.expected_rate_series)}",
+        f"- 预期 FRED 宏观序列数：{len(report.expected_rate_series)}",
         "",
         "| 文件 | 路径 | 行数 | 日期范围 | Sha256 |",
         "|---|---|---:|---|---|",
         _data_quality_file_row("价格数据", report.price_summary),
-        _data_quality_file_row("利率数据", report.rate_summary),
+        _data_quality_file_row("FRED 宏观序列", report.rate_summary),
     ]
     if report.manifest_summary is not None:
         lines.append(_data_quality_file_row("下载审计清单", report.manifest_summary))

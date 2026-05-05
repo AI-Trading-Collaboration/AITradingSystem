@@ -23,9 +23,16 @@ vix:
   percentile_window: 252
 
 rates:
+  change_series:
+    - DGS2
+    - DGS10
   change_windows:
     - 5
     - 20
+  return_windows:
+    - 20
+  return_series:
+    - DTWEXBGS
 
 core_breadth:
   long_moving_average_window: 200

@@ -115,7 +115,11 @@ from ai_trading_system.config import (
     market_regime_by_id,
 )
 from ai_trading_system.data.download import download_daily_data
-from ai_trading_system.data.market_data import MarketstackPriceProvider
+from ai_trading_system.data.market_data import (
+    FmpPriceProvider,
+    MarketstackPriceProvider,
+    YFinancePriceProvider,
+)
 from ai_trading_system.data.quality import (
     DataQualityReport,
     default_quality_report_path,
@@ -1591,6 +1595,14 @@ def download_data(
             help="包含配置中的完整 AI 产业链标的，而不只下载核心观察池。",
         ),
     ] = False,
+    price_provider: Annotated[
+        str,
+        typer.Option(help="主价格源：fmp 或 yahoo。默认 fmp。"),
+    ] = "fmp",
+    fmp_api_key_env: Annotated[
+        str,
+        typer.Option(help="读取 FMP API key 的环境变量名。"),
+    ] = "FMP_API_KEY",
     with_marketstack: Annotated[
         bool,
         typer.Option(
@@ -1603,10 +1615,22 @@ def download_data(
         typer.Option(help="读取 Marketstack API key 的环境变量名。"),
     ] = "MARKETSTACK_API_KEY",
 ) -> None:
-    """下载市场日线价格和 FRED 利率数据到本地 CSV 缓存。"""
+    """下载市场日线价格和 FRED 宏观序列到本地 CSV 缓存。"""
     universe = load_universe()
     start_date = _parse_date(start)
     end_date = _parse_date(end) if end else date.today()
+    normalized_price_provider = price_provider.strip().lower()
+    if normalized_price_provider == "fmp":
+        fmp_api_key = os.getenv(fmp_api_key_env, "")
+        if not fmp_api_key:
+            console.print(f"[red]未设置 {fmp_api_key_env}，无法下载 FMP 主价格源。[/red]")
+            raise typer.Exit(code=1)
+        primary_price_provider = FmpPriceProvider(api_key=fmp_api_key)
+    elif normalized_price_provider == "yahoo":
+        primary_price_provider = YFinancePriceProvider()
+    else:
+        raise typer.BadParameter("主价格源必须是 fmp 或 yahoo。")
+
     marketstack_provider = None
     if with_marketstack:
         api_key = os.getenv(marketstack_api_key_env, "")
@@ -1623,20 +1647,22 @@ def download_data(
         end=end_date,
         output_dir=output_dir,
         include_full_ai_chain=full_universe,
+        price_provider=primary_price_provider,
         secondary_price_provider=marketstack_provider,
     )
 
     console.print("[green]数据缓存已更新。[/green]")
+    console.print(f"主价格源：{normalized_price_provider}")
     console.print(f"价格数据：{summary.prices_path}（{summary.price_rows} 行）")
     if summary.secondary_prices_path is not None:
         console.print(
             f"Marketstack 第二行情源：{summary.secondary_prices_path}"
             f"（{summary.secondary_price_rows} 行）"
         )
-    console.print(f"利率数据：{summary.rates_path}（{summary.rate_rows} 行）")
+    console.print(f"FRED 宏观序列：{summary.rates_path}（{summary.rate_rows} 行）")
     console.print(f"下载审计清单：{summary.manifest_path}")
     console.print(f"价格标的：{', '.join(summary.price_tickers)}")
-    console.print(f"利率序列：{', '.join(summary.rate_series)}")
+    console.print(f"FRED 宏观序列：{', '.join(summary.rate_series)}")
 
 
 @app.command("validate-data")
@@ -1647,7 +1673,7 @@ def validate_data(
     ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
     rates_path: Annotated[
         Path,
-        typer.Option(help="标准化日线利率 CSV 路径。"),
+        typer.Option(help="标准化 FRED 宏观序列 CSV 路径。"),
     ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
     as_of: Annotated[
         str | None,

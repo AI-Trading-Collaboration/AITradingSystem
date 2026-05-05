@@ -1018,7 +1018,7 @@ def _feature_set() -> MarketFeatureSet:
         _feature(as_of, "relative_strength", "SMH/SPY", "relative_strength_return_20d", 0.04),
         _feature(as_of, "macro_liquidity", "DGS10", "rate_change_20d", -0.05),
         _feature(as_of, "macro_liquidity", "DGS2", "rate_change_20d", 0.05),
-        _feature(as_of, "trend", "DX-Y.NYB", "return_20d", -0.02),
+        _feature(as_of, "macro_liquidity", "DTWEXBGS", "return_20d", -0.02),
         _feature(as_of, "risk_sentiment", "^VIX", "vix_current", 17.0),
         _feature(as_of, "risk_sentiment", "^VIX", "vix_percentile_252", 0.35),
         _feature(as_of, "trend", "^VIX", "return_5d", -0.05),
@@ -1053,7 +1053,7 @@ def _feature_set_with_macro_stress(
     for row in base.rows:
         if row.subject == "DGS10" and row.feature == "rate_change_20d":
             rows.append(replace(row, value=dgs10_rate_change_20d))
-        elif row.subject == "DX-Y.NYB" and row.feature == "return_20d":
+        elif row.subject == "DTWEXBGS" and row.feature == "return_20d":
             rows.append(replace(row, value=dollar_return_20d))
         else:
             rows.append(row)

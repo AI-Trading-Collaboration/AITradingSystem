@@ -95,7 +95,7 @@ macro_liquidity:
       bearish_above: 0.25
       bullish_below: -0.10
       points: 30
-    - subject: DX-Y.NYB
+    - subject: DTWEXBGS
       feature: return_20d
       bearish_above: 0.03
       bullish_below: -0.03

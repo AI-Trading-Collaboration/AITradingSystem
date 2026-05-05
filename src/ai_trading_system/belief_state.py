@@ -186,7 +186,15 @@ def _market_state_record(report: DailyScoreReport) -> dict[str, Any]:
 def _industry_chain_state_record(report: DailyScoreReport) -> dict[str, Any]:
     nodes: dict[str, dict[str, Any]] = {}
     for row in report.feature_set.rows:
-        if row.subject.startswith("^") or row.subject in {"DXY", "USD", "US10Y", "FEDFUNDS"}:
+        if row.subject.startswith("^") or row.subject in {
+            "DGS2",
+            "DGS10",
+            "DTWEXBGS",
+            "DXY",
+            "FEDFUNDS",
+            "USD",
+            "US10Y",
+        }:
             continue
         node = nodes.setdefault(
             row.subject,

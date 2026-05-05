@@ -46,6 +46,8 @@ def test_data_quality_config_loads_thresholds() -> None:
     assert config.prices.ticker_return_threshold_overrides["^VIX"].extreme_daily_return_abs == 2.00
     assert config.rates.min_plausible_value == -1.0
     assert config.rates.max_plausible_value == 25.0
+    assert config.rates.series_overrides["DTWEXBGS"].max_plausible_value == 250.0
+    assert config.rates.series_overrides["DTWEXBGS"].extreme_daily_change_abs == 5.0
 
 
 def test_data_sources_config_loads_current_and_planned_sources() -> None:
@@ -116,6 +118,9 @@ def test_feature_config_loads_market_feature_windows() -> None:
     assert config.moving_average_windows == [20, 50, 100, 200]
     assert config.return_windows == [1, 5, 20]
     assert config.vix.ticker == "^VIX"
+    assert config.rates.change_series == ["DGS2", "DGS10"]
+    assert config.rates.return_windows == [20]
+    assert config.rates.return_series == ["DTWEXBGS"]
     assert config.core_breadth.long_moving_average_window == 200
 
 
@@ -142,7 +147,6 @@ def test_configured_price_tickers_defaults_to_core_universe() -> None:
         "TLT",
         "SHY",
         "^VIX",
-        "DX-Y.NYB",
         "MSFT",
         "GOOG",
         "TSM",
@@ -166,7 +170,7 @@ def test_configured_price_tickers_can_include_full_ai_chain_without_duplicates()
 def test_configured_rate_series() -> None:
     config = load_universe()
 
-    assert configured_rate_series(config) == ["DGS2", "DGS10"]
+    assert configured_rate_series(config) == ["DGS2", "DGS10", "DTWEXBGS"]
 
 
 def test_watchlist_config_covers_core_watchlist() -> None:

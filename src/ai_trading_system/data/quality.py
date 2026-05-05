@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from ai_trading_system.config import DataQualityConfig, PriceQualityConfig
+from ai_trading_system.config import DataQualityConfig, PriceQualityConfig, RateQualityConfig
 
 PRICE_REQUIRED_COLUMNS = ("date", "ticker", "open", "high", "low", "close", "adj_close", "volume")
 RATE_REQUIRED_COLUMNS = ("date", "series", "value")
@@ -187,7 +187,7 @@ def render_data_quality_report(report: DataQualityReport) -> str:
             if report.secondary_price_summary is not None
             else []
         ),
-        _render_file_summary("利率数据", report.rate_summary),
+        _render_file_summary("FRED 宏观序列", report.rate_summary),
         *(
             [_render_file_summary("下载审计清单", report.manifest_summary)]
             if report.manifest_summary is not None
@@ -197,7 +197,7 @@ def render_data_quality_report(report: DataQualityReport) -> str:
         "## 预期覆盖范围",
         "",
         f"- 价格标的：{', '.join(report.expected_price_tickers)}",
-        f"- 利率序列：{', '.join(report.expected_rate_series)}",
+        f"- FRED 宏观序列：{', '.join(report.expected_rate_series)}",
         "",
         "## 问题",
         "",
@@ -440,7 +440,7 @@ def _validate_rates(
     issues: list[DataQualityIssue],
 ) -> DataFileSummary:
     if rates.empty:
-        issues.append(DataQualityIssue(Severity.ERROR, "rates_empty", "利率数据没有任何行"))
+        issues.append(DataQualityIssue(Severity.ERROR, "rates_empty", "FRED 宏观序列没有任何行"))
         return summary
 
     if not _check_required_columns(rates, RATE_REQUIRED_COLUMNS, "rates", issues):
@@ -456,7 +456,7 @@ def _validate_rates(
             DataQualityIssue(
                 Severity.ERROR,
                 "rates_invalid_date",
-                "利率数据包含无法解析的日期",
+                "FRED 宏观序列包含无法解析的日期",
                 rows=int(invalid_dates.sum()),
                 sample=_sample_rows(frame.loc[invalid_dates], ["date", "series"]),
             )
@@ -468,7 +468,7 @@ def _validate_rates(
             DataQualityIssue(
                 Severity.ERROR,
                 "rates_invalid_value",
-                "利率数据包含缺失或非数值",
+                "FRED 宏观序列包含缺失或非数值",
                 rows=int(invalid_values.sum()),
                 sample=_sample_rows(frame.loc[invalid_values], ["date", "series", "value"]),
             )
@@ -975,16 +975,21 @@ def _check_rate_ranges(
     quality_config: DataQualityConfig,
     issues: list[DataQualityIssue],
 ) -> None:
+    min_values = frame["series"].map(
+        lambda series: _rate_min_plausible_value(str(series), quality_config.rates)
+    )
+    max_values = frame["series"].map(
+        lambda series: _rate_max_plausible_value(str(series), quality_config.rates)
+    )
     invalid = frame["_value"].notna() & (
-        (frame["_value"] < quality_config.rates.min_plausible_value)
-        | (frame["_value"] > quality_config.rates.max_plausible_value)
+        (frame["_value"] < min_values) | (frame["_value"] > max_values)
     )
     if invalid.any():
         issues.append(
             DataQualityIssue(
                 Severity.ERROR,
                 "rates_out_of_range",
-                "利率数据包含超出配置合理范围的数值",
+                "FRED 宏观序列包含超出配置合理范围的数值",
                 rows=int(invalid.sum()),
                 sample=_sample_rows(frame.loc[invalid], ["date", "series", "value"]),
             )
@@ -1016,7 +1021,7 @@ def _check_rate_staleness(
             DataQualityIssue(
                 Severity.ERROR,
                 "rates_future_dates",
-                "利率数据包含评估日期之后的数据",
+                "FRED 宏观序列包含评估日期之后的数据",
                 sample=", ".join(future[:10]),
             )
         )
@@ -1025,7 +1030,7 @@ def _check_rate_staleness(
             DataQualityIssue(
                 Severity.ERROR,
                 "rates_stale",
-                "利率数据最新日期过旧，不能用于评分",
+                "FRED 宏观序列最新日期过旧，不能用于评分",
                 sample=", ".join(stale[:10]),
             )
         )
@@ -1042,15 +1047,21 @@ def _check_rate_moves(
 
     data = data.sort_values(["series", "_date"])
     data["_change"] = data.groupby("series")["_value"].diff().abs()
-    extreme = data["_change"] > quality_config.rates.extreme_daily_change_abs
-    suspicious = (data["_change"] > quality_config.rates.suspicious_daily_change_abs) & ~extreme
+    suspicious_thresholds = data["series"].map(
+        lambda series: _rate_suspicious_daily_change_abs(str(series), quality_config.rates)
+    )
+    extreme_thresholds = data["series"].map(
+        lambda series: _rate_extreme_daily_change_abs(str(series), quality_config.rates)
+    )
+    extreme = data["_change"] > extreme_thresholds
+    suspicious = (data["_change"] > suspicious_thresholds) & ~extreme
 
     if extreme.any():
         issues.append(
             DataQualityIssue(
                 Severity.ERROR,
                 "rates_extreme_daily_change",
-                "利率数据包含极端单日变化",
+                "FRED 宏观序列包含极端单日变化",
                 rows=int(extreme.sum()),
                 sample=_sample_rows(data.loc[extreme], ["date", "series", "value", "_change"]),
             )
@@ -1060,7 +1071,7 @@ def _check_rate_moves(
             DataQualityIssue(
                 Severity.WARNING,
                 "rates_suspicious_daily_change",
-                "利率数据包含可疑单日变化",
+                "FRED 宏观序列包含可疑单日变化",
                 rows=int(suspicious.sum()),
                 sample=_sample_rows(data.loc[suspicious], ["date", "series", "value", "_change"]),
             )
@@ -1078,6 +1089,34 @@ def _summary_with_dates(summary: DataFileSummary, dates: pd.Series) -> DataFileS
         min_date=dates.min().date(),
         max_date=dates.max().date(),
     )
+
+
+def _rate_min_plausible_value(series: str, config: RateQualityConfig) -> float:
+    override = config.series_overrides.get(series)
+    if override and override.min_plausible_value is not None:
+        return override.min_plausible_value
+    return config.min_plausible_value
+
+
+def _rate_max_plausible_value(series: str, config: RateQualityConfig) -> float:
+    override = config.series_overrides.get(series)
+    if override and override.max_plausible_value is not None:
+        return override.max_plausible_value
+    return config.max_plausible_value
+
+
+def _rate_suspicious_daily_change_abs(series: str, config: RateQualityConfig) -> float:
+    override = config.series_overrides.get(series)
+    if override and override.suspicious_daily_change_abs is not None:
+        return override.suspicious_daily_change_abs
+    return config.suspicious_daily_change_abs
+
+
+def _rate_extreme_daily_change_abs(series: str, config: RateQualityConfig) -> float:
+    override = config.series_overrides.get(series)
+    if override and override.extreme_daily_change_abs is not None:
+        return override.extreme_daily_change_abs
+    return config.extreme_daily_change_abs
 
 
 def _sample_rows(data: pd.DataFrame, columns: list[str], max_rows: int = 3) -> str:
@@ -1118,7 +1157,7 @@ def _data_label(label: str) -> str:
     return {
         "prices": "价格数据",
         "secondary_prices": "第二行情源 Marketstack",
-        "rates": "利率数据",
+        "rates": "FRED 宏观序列",
         "manifest": "下载审计清单",
     }.get(label, label)
 

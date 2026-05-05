@@ -502,7 +502,7 @@ class MacroRiskAssetBudgetConfig(BaseModel):
     vix_percentile_feature: str = "vix_percentile_252"
     rate_subject: str = "DGS10"
     rate_change_feature: str = "rate_change_20d"
-    dollar_subject: str = "DX-Y.NYB"
+    dollar_subject: str = "DTWEXBGS"
     dollar_return_feature: str = "return_20d"
     elevated_vix_current: float = Field(default=25.0, ge=0)
     stress_vix_current: float = Field(default=32.0, ge=0)
@@ -599,12 +599,56 @@ class PriceQualityConfig(BaseModel):
         return self
 
 
+class RateSeriesQualityOverrideConfig(BaseModel):
+    min_plausible_value: float | None = None
+    max_plausible_value: float | None = None
+    suspicious_daily_change_abs: float | None = Field(default=None, gt=0)
+    extreme_daily_change_abs: float | None = Field(default=None, gt=0)
+
+
 class RateQualityConfig(BaseModel):
     max_stale_calendar_days: int = Field(gt=0)
     min_plausible_value: float
     max_plausible_value: float
     suspicious_daily_change_abs: float = Field(gt=0)
     extreme_daily_change_abs: float = Field(gt=0)
+    series_overrides: dict[str, RateSeriesQualityOverrideConfig] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_rate_thresholds(self) -> Self:
+        if self.min_plausible_value >= self.max_plausible_value:
+            raise ValueError("rates min_plausible_value must be below max_plausible_value")
+        if self.suspicious_daily_change_abs >= self.extreme_daily_change_abs:
+            raise ValueError("rates suspicious_daily_change_abs must be below extreme threshold")
+
+        for series, override in self.series_overrides.items():
+            min_value = (
+                override.min_plausible_value
+                if override.min_plausible_value is not None
+                else self.min_plausible_value
+            )
+            max_value = (
+                override.max_plausible_value
+                if override.max_plausible_value is not None
+                else self.max_plausible_value
+            )
+            if min_value >= max_value:
+                raise ValueError(f"rates plausible range for {series} must keep min below max")
+            suspicious_change = (
+                override.suspicious_daily_change_abs
+                if override.suspicious_daily_change_abs is not None
+                else self.suspicious_daily_change_abs
+            )
+            extreme_change = (
+                override.extreme_daily_change_abs
+                if override.extreme_daily_change_abs is not None
+                else self.extreme_daily_change_abs
+            )
+            if suspicious_change >= extreme_change:
+                raise ValueError(
+                    f"rates daily change thresholds for {series} must keep suspicious below extreme"
+                )
+        return self
 
 
 class DataQualityConfig(BaseModel):
@@ -624,7 +668,10 @@ class VixFeatureConfig(BaseModel):
 
 
 class RateFeatureConfig(BaseModel):
+    change_series: list[str] = Field(default_factory=list)
     change_windows: list[int]
+    return_windows: list[int] = Field(default_factory=list)
+    return_series: list[str] = Field(default_factory=list)
 
 
 class CoreBreadthFeatureConfig(BaseModel):

@@ -211,7 +211,7 @@ def _prepare_rates(rates: pd.DataFrame, as_of: date) -> pd.DataFrame:
     required_columns = {"date", "series", "value"}
     missing = sorted(required_columns - set(rates.columns))
     if missing:
-        raise ValueError(f"利率数据缺少必需字段：{', '.join(missing)}")
+        raise ValueError(f"FRED 宏观序列缺少必需字段：{', '.join(missing)}")
 
     frame = rates.copy()
     frame["_date"] = pd.to_datetime(frame["date"], errors="coerce")
@@ -496,7 +496,10 @@ def _append_rate_features(
     rows: list[MarketFeatureRow],
     warnings: list[FeatureWarning],
 ) -> None:
+    change_series = set(config.rates.change_series)
+    return_series = set(config.rates.return_series)
     for series, group in rates.groupby("series", sort=True):
+        series_id = str(series)
         history = group.sort_values("_date").reset_index(drop=True)
         if history.empty:
             continue
@@ -504,39 +507,68 @@ def _append_rate_features(
         latest = history.iloc[-1]
         source_date = _as_date(latest["_date"])
         latest_value = float(latest["_value"])
-        rows.append(
-            MarketFeatureRow(
-                as_of=as_of,
-                source_date=source_date,
-                category="macro_liquidity",
-                subject=str(series),
-                feature="rate_current",
-                value=latest_value,
-                unit="percent",
-                lookback=None,
-                source="rates_daily",
+        build_rate_change_features = not change_series or series_id in change_series
+        if build_rate_change_features:
+            rows.append(
+                MarketFeatureRow(
+                    as_of=as_of,
+                    source_date=source_date,
+                    category="macro_liquidity",
+                    subject=series_id,
+                    feature="rate_current",
+                    value=latest_value,
+                    unit="percent",
+                    lookback=None,
+                    source="rates_daily",
+                )
             )
-        )
 
-        for window in config.rates.change_windows:
-            change = _trailing_difference(
+            for window in config.rates.change_windows:
+                change = _trailing_difference(
+                    history["_value"],
+                    window,
+                    series_id,
+                    f"rate_change_{window}d",
+                    warnings,
+                )
+                if change is None:
+                    continue
+                rows.append(
+                    MarketFeatureRow(
+                        as_of=as_of,
+                        source_date=source_date,
+                        category="macro_liquidity",
+                        subject=series_id,
+                        feature=f"rate_change_{window}d",
+                        value=change,
+                        unit="percentage_points",
+                        lookback=window,
+                        source="rates_daily",
+                    )
+                )
+
+        if series_id not in return_series:
+            continue
+
+        for window in config.rates.return_windows:
+            period_return = _trailing_return(
                 history["_value"],
                 window,
-                str(series),
-                f"rate_change_{window}d",
+                series_id,
+                f"return_{window}d",
                 warnings,
             )
-            if change is None:
+            if period_return is None:
                 continue
             rows.append(
                 MarketFeatureRow(
                     as_of=as_of,
                     source_date=source_date,
                     category="macro_liquidity",
-                    subject=str(series),
-                    feature=f"rate_change_{window}d",
-                    value=change,
-                    unit="percentage_points",
+                    subject=series_id,
+                    feature=f"return_{window}d",
+                    value=period_return,
+                    unit="ratio",
                     lookback=window,
                     source="rates_daily",
                 )

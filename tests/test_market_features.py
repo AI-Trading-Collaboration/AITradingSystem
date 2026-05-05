@@ -29,7 +29,7 @@ from ai_trading_system.features.market import (
 def test_build_market_features_generates_expected_rows() -> None:
     feature_set = build_market_features(
         prices=_sample_prices(["SPY", "SMH", "QQQ", "MSFT", "NVDA", "^VIX"], periods=5),
-        rates=_sample_rates(["DGS2", "DGS10"], periods=5),
+        rates=_sample_rates(["DGS2", "DGS10", "DTWEXBGS"], periods=5),
         config=_small_feature_config(),
         as_of=date(2026, 4, 30),
         core_watchlist=["MSFT", "NVDA"],
@@ -40,6 +40,8 @@ def test_build_market_features_generates_expected_rows() -> None:
     assert isinstance(_feature_value(feature_set, "SMH/SPY", "relative_strength_return_2d"), float)
     assert _feature_value(feature_set, "^VIX", "vix_percentile_3") == 1.0
     assert _feature_value(feature_set, "DGS10", "rate_change_2d") > 0
+    assert _feature_value(feature_set, "DTWEXBGS", "return_2d") > 0
+    assert not _has_feature(feature_set, "DTWEXBGS", "rate_change_2d")
     assert _feature_value(feature_set, "AI_CORE_WATCHLIST", "above_ma_3_ratio") == 1.0
 
 
@@ -157,7 +159,12 @@ def _small_feature_config() -> FeatureConfig:
         return_windows=[1, 2],
         relative_strength_pairs=[RelativeStrengthPairConfig(numerator="SMH", denominator="SPY")],
         vix=VixFeatureConfig(ticker="^VIX", moving_average_window=3, percentile_window=3),
-        rates=RateFeatureConfig(change_windows=[1, 2]),
+        rates=RateFeatureConfig(
+            change_series=["DGS2", "DGS10"],
+            change_windows=[1, 2],
+            return_windows=[1, 2],
+            return_series=["DTWEXBGS"],
+        ),
         core_breadth=CoreBreadthFeatureConfig(long_moving_average_window=3),
     )
 
@@ -206,6 +213,10 @@ def _feature_value(feature_set: MarketFeatureSet, subject: str, feature: str) ->
         if row.subject == subject and row.feature == feature:
             return row.value
     raise AssertionError(f"feature not found: {subject} {feature}")
+
+
+def _has_feature(feature_set: MarketFeatureSet, subject: str, feature: str) -> bool:
+    return any(row.subject == subject and row.feature == feature for row in feature_set.rows)
 
 
 def _dummy_quality_report() -> DataQualityReport:

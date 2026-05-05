@@ -44,7 +44,7 @@
 
 范围：
 
-- 拉取价格、VIX、利率数据。
+- 拉取价格、VIX、FRED 利率和广义美元指数数据。
 - 计算均线、相对强弱、波动和利率变化特征。
 - 实现趋势、宏观流动性、风险情绪评分。
 - 基本面、估值、政策地缘先支持手工输入或中性默认值。
@@ -150,8 +150,8 @@
 
 第一版数据缓存使用 CSV，便于检查和调试：
 
-- `data/raw/prices_daily.csv`：日线价格，字段为 `date,ticker,open,high,low,close,adj_close,volume`。
-- `data/raw/rates_daily.csv`：FRED 利率数据，字段为 `date,series,value`。
+- `data/raw/prices_daily.csv`：FMP 股票/ETF 日线主价格，字段为 `date,ticker,open,high,low,close,adj_close,volume`；`^VIX` 后续由 Cboe official historical data 单独接入。
+- `data/raw/rates_daily.csv`：FRED 宏观序列数据，字段为 `date,series,value`，当前包含 DGS2、DGS10 和 `DTWEXBGS`。
 
 默认下载核心观察范围。`--full-universe` 会额外下载配置文件中的完整 AI 产业链标的。
 
@@ -169,8 +169,8 @@
 - 数据新鲜度。
 - 单日调整收盘价异常波动。
 - 调整收盘价比例跳变。
-- 利率合理范围。
-- 利率单日异常变化。
+- FRED 宏观序列合理范围。
+- FRED 宏观序列单日异常变化。
 
 ## 阶段 1 特征缓存约定
 
@@ -187,7 +187,7 @@
 - 1/5/20 日收益率。
 - SMH/SPY、SOXX/SPY、QQQ/SPY 相对强弱。
 - VIX 20 日均值和 252 日分位。
-- DGS2、DGS10 的 5/20 日变化。
+- DGS2、DGS10 的 5/20 日变化，以及 `DTWEXBGS` 20 日收益率。
 - 核心观察池长期均线趋势宽度。
 
 ## 阶段 1 每日评分约定
@@ -203,7 +203,7 @@
 
 - 趋势：指数趋势、半导体趋势、核心观察池宽度、SMH/SPY 相对强弱。
 - 基本面：已通过校验的 AI 核心观察池 SEC 特征中位数，包括季度毛利率、营业利润率、净利率、R&D 强度和年度 CapEx 强度。
-- 宏观流动性：DGS10、DGS2、美元指数。
+- 宏观流动性：DGS10、DGS2、`DTWEXBGS` 广义美元指数代理。
 - 风险情绪：VIX 当前值、VIX 分位、VIX 短期变化。
 - 估值：已通过校验且来源合规的估值快照，使用估值分位和拥挤比例；缺少有效快照时标记为数据不足。
 - 政策地缘：已通过校验且来源合规的风险事件发生记录，使用活跃/观察 L2/L3 数量和最低 AI 仓位乘数；缺少有效发生记录时标记为数据不足。

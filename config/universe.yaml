@@ -15,8 +15,8 @@ macro:
   rates:
     - DGS2
     - DGS10
-  currency:
-    - DX-Y.NYB
+    - DTWEXBGS
+  currency: []
 
 ai_chain:
   core_watchlist:
