@@ -117,8 +117,8 @@ flowchart TD
     end
 
     subgraph Gate["数据质量门禁"]
-        V["aits validate-data<br/>schema / completeness / freshness / duplicate keys / suspicious values<br/>Marketstack 第二来源 close reconciliation / adjusted basis warning"]
-        QR["outputs/reports/data_quality_YYYY-MM-DD.md"]
+        V["aits validate-data<br/>schema / completeness / freshness / duplicate keys / suspicious values<br/>Marketstack 第二来源自检 + close reconciliation / adjusted basis warning"]
+        QR["outputs/reports/data_quality_YYYY-MM-DD.md<br/>问题表标注价格主源 / 第二行情源 / 跨源核验 / FRED / manifest 来源"]
         Stop["停止后续评分、特征、回测或报告"]
     end
 
@@ -1000,14 +1000,14 @@ flowchart TD
 
 |层级|命令或文件|责任|当前状态|
 |---|---|---|---|
-|数据源|FMP / Cboe VIX / Marketstack / FRED|FMP 提供股票/ETF 主价格；Cboe VIX official historical data 提供内部 `^VIX`；Marketstack 提供股票/ETF 第二行情源；FRED 提供 DGS2、DGS10 和 `DTWEXBGS` 广义美元指数原始输入|已实现基础版；FMP 供应商异常仍可能阻断质量门禁|
+|数据源|FMP / Cboe VIX / Marketstack / FRED|FMP 提供股票/ETF 主价格；Cboe VIX official historical data 提供内部 `^VIX`；Marketstack 提供股票/ETF 第二行情源；FRED 提供 DGS2、DGS10 和 `DTWEXBGS` 广义美元指数原始输入|已实现基础版；价格源自身异常或跨源口径差异仍可能阻断质量门禁|
 |下载|`aits download-data`|拉取并标准化为本地 CSV 缓存，同时追加下载审计 manifest；默认要求 `FMP_API_KEY` 写入 FMP 股票/ETF 主价格，并从 Cboe 补 `^VIX` 到主价格缓存；默认要求 `MARKETSTACK_API_KEY` 写入 Marketstack 第二行情源缓存，临时无 Marketstack key 环境必须显式 `--without-marketstack`；Yahoo 仅可通过 `--price-provider yahoo` 显式迁移调查使用|已实现基础版|
-|原始缓存|`data/raw/prices_daily.csv`|FMP 股票/ETF 日线 OHLCV 和调整收盘价主缓存，加 Cboe `^VIX` OHLC；真实烟测仍有 SPY/SOXX/OHLC 供应商异常需处理|已实现基础版；质量门禁仍可能被 FMP 异常阻断|
+|原始缓存|`data/raw/prices_daily.csv`|FMP 股票/ETF 日线 OHLCV 和调整收盘价主缓存，加 Cboe `^VIX` OHLC；价格主源、Marketstack 第二源和跨源核验问题需在质量报告中分源归因|已实现基础版；质量门禁仍可能被价格源异常或跨源口径差异阻断|
 |原始缓存|`data/raw/prices_marketstack_daily.csv`|Marketstack 股票/ETF 日线第二来源缓存，用于 cross-provider reconciliation；不覆盖主价格缓存|已实现基础版|
 |原始缓存|`data/raw/rates_daily.csv`|FRED 宏观序列长表，当前包含 DGS2、DGS10 和 `DTWEXBGS`；`DTWEXBGS` 不是 ICE DXY|已实现|
 |下载审计|`data/raw/download_manifest.csv`|记录 provider、endpoint、请求参数、下载时间、行数、输出路径和 checksum|已实现|
 |质量门禁|`aits validate-data`|校验 schema、完整性、新鲜度、重复键、异常值，并对主价格缓存与 Marketstack 第二来源执行 raw `close` 重叠覆盖和价差核验；adjusted close 分红复权口径差异作为限制或调查项显式输出|已实现|
-|质量报告|`outputs/reports/data_quality_YYYY-MM-DD.md`|声明数据是否可用于下游结论|已实现|
+|质量报告|`outputs/reports/data_quality_YYYY-MM-DD.md`|声明数据是否可用于下游结论，并在问题表标注价格主源、第二行情源、跨源核验、FRED 宏观序列或下载审计清单来源|已实现|
 |特征|`aits build-features`|生成可解释市场特征|已实现|
 |特征缓存|`data/processed/features_daily.csv`|保存 tidy 格式特征|已实现|
 |组合与风险预算配置|`config/portfolio.yaml`|定义静态总风险资产预算、`macro_risk_asset_budget` 下调阈值、AI 总资产上限、真实组合集中度提示阈值和 `risk_budget` gate 参数；宏观预算层用 VIX、DGS10 和 `DTWEXBGS` 广义美元指数下调总风险资产预算，`risk_budget` gate 继续约束风险资产内 AI 仓位上限|已实现基础版|

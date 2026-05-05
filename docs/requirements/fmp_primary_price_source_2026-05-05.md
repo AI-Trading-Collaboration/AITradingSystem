@@ -29,8 +29,9 @@ close/adj_close、OHLC 逻辑错误、SOXX 极端复权价格波动，以及与 
 - raw OHLC/volume 使用 FMP `non-split-adjusted` endpoint；`adj_close` 使用 FMP
   `dividend-adjusted` endpoint 的 `adjClose`。若 `adjClose` 缺失则必须显式失败，
   不能静默用 `close` 伪装复权价格。
-- `GOOG` 请求 FMP 时使用现有 provider alias `GOOG -> GOOGL`，标准化输出仍归属
-  内部 ticker `GOOG`。
+- 价格路径直接按内部 ticker 请求 FMP；`GOOG` 不再映射为 `GOOGL`，避免把
+  Alphabet C share 与 A share 混在一起。估值、分析师预期和 forward-only PIT
+  路径的 provider alias 独立维护。
 - `^VIX` 不通过 FMP 主价格源抓取；由 Cboe VIX official historical data
   单独接入并合并进主价格缓存。
 - `DTWEXBGS` 继续通过 FRED 宏观序列路径，不进入价格缓存。
@@ -54,7 +55,7 @@ close/adj_close、OHLC 逻辑错误、SOXX 极端复权价格波动，以及与 
 - `prices_daily.csv` 不包含 Yahoo `DX-Y.NYB`，并从 FMP 标准化 `adjClose`。
 - Marketstack 第二源仍写入独立缓存并参与质量门禁。
 - 若 `FMP_API_KEY` 缺失，命令 fail closed，不回退到 Yahoo。
-- 测试覆盖 FMP response normalization、provider symbol alias、CLI 默认主源参数和
+- 测试覆盖 FMP response normalization、价格 alias 排除、CLI 默认主源参数和
   manifest source id。
 
 ## 开放问题
@@ -63,8 +64,9 @@ close/adj_close、OHLC 逻辑错误、SOXX 极端复权价格波动，以及与 
   warm-up，但不够更长历史压力测试；若需要 2018 起完整长期重建，应升级或另接
   更长历史的供应商。
 - `^VIX` 已由 Cboe official historical data 接入；FMP 主源切换仍不能解释为
-  全数据质量门禁完成，因为 FMP 真实烟测中仍有 SPY/SOXX/OHLC 供应商异常。
-- FMP 与 Marketstack 的 ETF adjusted close 分红复权口径仍需通过真实样本验收。
+  全数据质量门禁完成，因为 Marketstack 第二源自检和跨源复权口径仍需真实样本验收。
+- FMP 与 Marketstack 的 ETF adjusted close 分红复权口径仍需通过真实样本验收；
+  Marketstack 第二源自身硬错误需单独归因，不能写成主源错误。
 
 ## 进展记录
 
@@ -81,5 +83,8 @@ close/adj_close、OHLC 逻辑错误、SOXX 极端复权价格波动，以及与 
   FMP/Marketstack adjusted close mismatch。`aits score-daily` 已按数据质量门禁停止；
   不能用本地补写、回填或平滑绕过。
 - 2026-05-05：后续 DATA-008 已接入 Cboe VIX official historical data。`^VIX`
-  缺失不应再作为 FMP 主源自身 blocker；剩余生产阻断聚焦 FMP 返回的 SPY/SOXX/OHLC
-  异常和跨源口径差异。
+  缺失不应再作为 FMP 主源自身 blocker；剩余生产阻断需要按 DATA-009 区分
+  FMP 主源、Marketstack 第二源自检和跨源口径差异。
+- 2026-05-05：DATA-009 复核后拆分价格 alias 与估值/PIT alias。FMP 价格路径默认
+  直接请求 `GOOG`；此前 SPY/INTC/MSFT/SOXX 的硬错误主要落在 Marketstack 第二源
+  缓存，后续质量报告需用“来源”列区分主源、第二源和跨源核验。

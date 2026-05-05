@@ -20,7 +20,6 @@ FMP_EOD_DIVIDEND_ADJUSTED_URL = (
     "https://financialmodelingprep.com/stable/historical-price-eod/dividend-adjusted"
 )
 FMP_DEFAULT_SYMBOL_ALIASES: dict[str, str | None] = {
-    "GOOG": "GOOGL",
     "^VIX": None,
 }
 CBOE_VIX_DAILY_PRICES_URL = "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv"

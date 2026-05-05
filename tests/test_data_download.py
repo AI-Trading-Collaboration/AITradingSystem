@@ -173,7 +173,7 @@ def test_download_daily_data_records_fmp_primary_source_without_key(tmp_path: Pa
 
     assert price_manifest["provider"] == "Financial Modeling Prep"
     assert "test-key" not in str(price_manifest["request_parameters"])
-    assert request_parameters["provider_symbol_aliases"]["GOOG"] == "GOOGL"
+    assert "GOOG" not in request_parameters["provider_symbol_aliases"]
     assert request_parameters["provider_symbol_aliases"]["^VIX"] is None
 
 

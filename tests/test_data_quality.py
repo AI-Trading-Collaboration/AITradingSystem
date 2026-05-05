@@ -294,6 +294,37 @@ def test_validate_data_cache_fails_secondary_price_mismatch(tmp_path: Path) -> N
 
     assert report.passed is False
     assert "secondary_prices_adj_close_mismatch" in _issue_codes(report)
+    assert _issue_by_code(report, "secondary_prices_adj_close_mismatch").source == (
+        "跨源核验：主价格源 vs Marketstack"
+    )
+
+
+def test_validate_data_cache_labels_secondary_self_check_source(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    secondary_path = tmp_path / "prices_marketstack_daily.csv"
+    secondary = pd.read_csv(prices_path)
+    secondary.loc[
+        (secondary["ticker"] == "NVDA") & (secondary["date"] == "2026-04-30"),
+        "close",
+    ] = 0.0
+    secondary.to_csv(secondary_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 2),
+        secondary_prices_path=secondary_path,
+        require_secondary_prices=True,
+    )
+    issue = _issue_by_code(report, "prices_non_positive_close")
+    markdown = render_data_quality_report(report)
+
+    assert report.passed is False
+    assert issue.source == "第二行情源 Marketstack"
+    assert "| 错误 | 第二行情源 Marketstack | prices_non_positive_close |" in markdown
 
 
 def test_validate_data_cache_warns_when_secondary_adjustment_basis_differs(
@@ -493,3 +524,7 @@ def _sha256_file(path: Path) -> str:
 
 def _issue_codes(report: DataQualityReport) -> set[str]:
     return {issue.code for issue in report.issues}
+
+
+def _issue_by_code(report: DataQualityReport, code: str):
+    return next(issue for issue in report.issues if issue.code == code)

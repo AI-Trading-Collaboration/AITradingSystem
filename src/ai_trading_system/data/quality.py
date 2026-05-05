@@ -36,6 +36,7 @@ class DataQualityIssue:
     message: str
     rows: int | None = None
     sample: str | None = None
+    source: str | None = None
 
 
 @dataclass(frozen=True)
@@ -121,6 +122,7 @@ def validate_data_cache(
             quality_config,
             as_of,
             issues,
+            source="价格主源",
         )
 
     if secondary_prices is not None and secondary_price_summary is not None:
@@ -135,6 +137,7 @@ def validate_data_cache(
             quality_config,
             as_of,
             issues,
+            source="第二行情源 Marketstack",
         )
         if prices is not None:
             _check_secondary_price_reconciliation(
@@ -208,14 +211,15 @@ def render_data_quality_report(report: DataQualityReport) -> str:
     else:
         lines.extend(
             [
-                "| 级别 | Code | 行数 | 说明 | 样例 |",
-                "|---|---|---:|---|---|",
+                "| 级别 | 来源 | Code | 行数 | 说明 | 样例 |",
+                "|---|---|---|---:|---|---|",
             ]
         )
         for issue in report.issues:
             lines.append(
                 "| "
                 f"{_severity_label(issue.severity)} | "
+                f"{_escape_markdown_table(_issue_source(issue))} | "
                 f"{issue.code} | "
                 f"{issue.rows if issue.rows is not None else ''} | "
                 f"{_escape_markdown_table(issue.message)} | "
@@ -246,6 +250,7 @@ def _read_csv(
                 Severity.ERROR,
                 f"{label}_file_missing",
                 f"{_data_label(label)}文件不存在：{path}",
+                source=_source_label(label),
             )
         )
         return None, DataFileSummary(path=path, exists=False)
@@ -258,6 +263,7 @@ def _read_csv(
                 Severity.ERROR,
                 f"{label}_file_unreadable",
                 f"{_data_label(label)}文件无法按 CSV 读取：{exc}",
+                source=_source_label(label),
             )
         )
         return None, DataFileSummary(path=path, exists=True, sha256=_file_sha256(path))
@@ -284,6 +290,7 @@ def _read_secondary_prices_csv(
                 Severity.ERROR if required else Severity.WARNING,
                 "secondary_prices_file_missing",
                 f"第二行情源 Marketstack 文件不存在：{path}",
+                source="第二行情源 Marketstack",
             )
         )
         return None, DataFileSummary(path=path, exists=False)
@@ -296,6 +303,7 @@ def _read_secondary_prices_csv(
                 Severity.ERROR,
                 "secondary_prices_file_unreadable",
                 f"第二行情源 Marketstack 文件无法按 CSV 读取：{exc}",
+                source="第二行情源 Marketstack",
             )
         )
         return None, DataFileSummary(path=path, exists=True, sha256=_file_sha256(path))
@@ -321,6 +329,7 @@ def _validate_download_manifest(
                 Severity.WARNING,
                 "download_manifest_missing",
                 f"下载审计清单不存在：{path}。请重新执行 download-data 生成审计记录。",
+                source="下载审计清单",
             )
         )
         return DataFileSummary(path=path, exists=False)
@@ -333,6 +342,7 @@ def _validate_download_manifest(
                 Severity.WARNING,
                 "download_manifest_unreadable",
                 f"下载审计清单无法按 CSV 读取：{exc}",
+                source="下载审计清单",
             )
         )
         return DataFileSummary(path=path, exists=True, sha256=_file_sha256(path))
@@ -350,6 +360,7 @@ def _validate_download_manifest(
                 Severity.WARNING,
                 "manifest_missing_columns",
                 f"下载审计清单缺少必需字段：{', '.join(missing_columns)}",
+                source="下载审计清单",
             )
         )
         return summary
@@ -388,6 +399,7 @@ def _check_manifest_covers_file(
                 "请确认缓存是否由 download-data 生成。"
             ),
             sample=str(summary.path),
+            source="下载审计清单",
         )
     )
 
@@ -399,12 +411,18 @@ def _validate_prices(
     quality_config: DataQualityConfig,
     as_of: date,
     issues: list[DataQualityIssue],
+    *,
+    source: str = "价格主源",
 ) -> DataFileSummary:
     if prices.empty:
-        issues.append(DataQualityIssue(Severity.ERROR, "prices_empty", "价格数据没有任何行"))
+        issues.append(
+            DataQualityIssue(Severity.ERROR, "prices_empty", "价格数据没有任何行", source=source)
+        )
         return summary
 
-    if not _check_required_columns(prices, PRICE_REQUIRED_COLUMNS, "prices", issues):
+    if not _check_required_columns(
+        prices, PRICE_REQUIRED_COLUMNS, "prices", issues, source=source
+    ):
         return summary
 
     frame = prices.copy()
@@ -418,14 +436,15 @@ def _validate_prices(
                 "价格数据包含无法解析的日期",
                 rows=int(invalid_dates.sum()),
                 sample=_sample_rows(frame.loc[invalid_dates], ["date", "ticker"]),
+                source=source,
             )
         )
 
-    _check_duplicate_keys(frame, ["date", "ticker"], "prices", issues)
-    _check_expected_values(frame, "ticker", expected_tickers, "prices", issues)
-    _check_price_numeric_rules(frame, issues)
-    _check_price_staleness(frame, expected_tickers, quality_config, as_of, issues)
-    _check_price_moves(frame, quality_config, issues)
+    _check_duplicate_keys(frame, ["date", "ticker"], "prices", issues, source=source)
+    _check_expected_values(frame, "ticker", expected_tickers, "prices", issues, source=source)
+    _check_price_numeric_rules(frame, issues, source=source)
+    _check_price_staleness(frame, expected_tickers, quality_config, as_of, issues, source=source)
+    _check_price_moves(frame, quality_config, issues, source=source)
 
     valid_dates = frame.loc[frame["_date"].notna(), "_date"]
     return _summary_with_dates(summary, valid_dates)
@@ -440,10 +459,19 @@ def _validate_rates(
     issues: list[DataQualityIssue],
 ) -> DataFileSummary:
     if rates.empty:
-        issues.append(DataQualityIssue(Severity.ERROR, "rates_empty", "FRED 宏观序列没有任何行"))
+        issues.append(
+            DataQualityIssue(
+                Severity.ERROR,
+                "rates_empty",
+                "FRED 宏观序列没有任何行",
+                source="FRED 宏观序列",
+            )
+        )
         return summary
 
-    if not _check_required_columns(rates, RATE_REQUIRED_COLUMNS, "rates", issues):
+    if not _check_required_columns(
+        rates, RATE_REQUIRED_COLUMNS, "rates", issues, source="FRED 宏观序列"
+    ):
         return summary
 
     frame = rates.copy()
@@ -459,6 +487,7 @@ def _validate_rates(
                 "FRED 宏观序列包含无法解析的日期",
                 rows=int(invalid_dates.sum()),
                 sample=_sample_rows(frame.loc[invalid_dates], ["date", "series"]),
+                source="FRED 宏观序列",
             )
         )
 
@@ -471,11 +500,14 @@ def _validate_rates(
                 "FRED 宏观序列包含缺失或非数值",
                 rows=int(invalid_values.sum()),
                 sample=_sample_rows(frame.loc[invalid_values], ["date", "series", "value"]),
+                source="FRED 宏观序列",
             )
         )
 
-    _check_duplicate_keys(frame, ["date", "series"], "rates", issues)
-    _check_expected_values(frame, "series", expected_series, "rates", issues)
+    _check_duplicate_keys(frame, ["date", "series"], "rates", issues, source="FRED 宏观序列")
+    _check_expected_values(
+        frame, "series", expected_series, "rates", issues, source="FRED 宏观序列"
+    )
     _check_rate_ranges(frame, quality_config, issues)
     _check_rate_staleness(frame, expected_series, quality_config, as_of, issues)
     _check_rate_moves(frame, quality_config, issues)
@@ -489,6 +521,8 @@ def _check_required_columns(
     required_columns: tuple[str, ...],
     label: str,
     issues: list[DataQualityIssue],
+    *,
+    source: str | None = None,
 ) -> bool:
     missing = [column for column in required_columns if column not in data.columns]
     if missing:
@@ -497,6 +531,7 @@ def _check_required_columns(
                 Severity.ERROR,
                 f"{label}_missing_columns",
                 f"{_data_label(label)}缺少必需字段：{', '.join(missing)}",
+                source=source or _source_label(label),
             )
         )
         return False
@@ -508,6 +543,8 @@ def _check_duplicate_keys(
     key_columns: list[str],
     label: str,
     issues: list[DataQualityIssue],
+    *,
+    source: str | None = None,
 ) -> None:
     duplicates = data.duplicated(subset=key_columns, keep=False)
     if duplicates.any():
@@ -518,6 +555,7 @@ def _check_duplicate_keys(
                 f"{_data_label(label)}存在重复主键：{', '.join(key_columns)}",
                 rows=int(duplicates.sum()),
                 sample=_sample_rows(data.loc[duplicates], key_columns),
+                source=source or _source_label(label),
             )
         )
 
@@ -528,6 +566,8 @@ def _check_expected_values(
     expected_values: list[str],
     label: str,
     issues: list[DataQualityIssue],
+    *,
+    source: str | None = None,
 ) -> None:
     present = set(str(value) for value in data[column].dropna().unique())
     missing = [value for value in expected_values if value not in present]
@@ -537,6 +577,7 @@ def _check_expected_values(
                 Severity.ERROR,
                 f"{label}_missing_expected_values",
                 f"{_data_label(label)}缺少预期的 {column}：{', '.join(missing)}",
+                source=source or _source_label(label),
             )
         )
 
@@ -544,6 +585,8 @@ def _check_expected_values(
 def _check_price_numeric_rules(
     frame: pd.DataFrame,
     issues: list[DataQualityIssue],
+    *,
+    source: str,
 ) -> None:
     numeric_columns = ["open", "high", "low", "close", "adj_close", "volume"]
     for column in numeric_columns:
@@ -560,6 +603,7 @@ def _check_price_numeric_rules(
                     f"价格数据的 {column} 包含缺失或非数值",
                     rows=int(invalid.sum()),
                     sample=_sample_rows(frame.loc[invalid], ["date", "ticker", column]),
+                    source=source,
                 )
             )
 
@@ -572,6 +616,7 @@ def _check_price_numeric_rules(
                     f"价格数据的 {column} 包含非正数",
                     rows=int(non_positive.sum()),
                     sample=_sample_rows(frame.loc[non_positive], ["date", "ticker", column]),
+                    source=source,
                 )
             )
 
@@ -584,6 +629,7 @@ def _check_price_numeric_rules(
                 "价格数据包含负成交量",
                 rows=int(invalid_volume.sum()),
                 sample=_sample_rows(frame.loc[invalid_volume], ["date", "ticker", "volume"]),
+                source=source,
             )
         )
 
@@ -596,6 +642,7 @@ def _check_price_numeric_rules(
                 "价格数据的成交量包含缺失或非数值",
                 rows=int(missing_volume.sum()),
                 sample=_sample_rows(frame.loc[missing_volume], ["date", "ticker", "volume"]),
+                source=source,
             )
         )
 
@@ -622,6 +669,7 @@ def _check_price_numeric_rules(
                     frame.loc[ohlc_invalid],
                     ["date", "ticker", "open", "high", "low", "close"],
                 ),
+                source=source,
             )
         )
 
@@ -632,6 +680,8 @@ def _check_price_staleness(
     quality_config: DataQualityConfig,
     as_of: date,
     issues: list[DataQualityIssue],
+    *,
+    source: str,
 ) -> None:
     latest_by_ticker = frame.loc[frame["_date"].notna()].groupby("ticker")["_date"].max()
     stale: list[str] = []
@@ -653,6 +703,7 @@ def _check_price_staleness(
                 "prices_future_dates",
                 "价格数据包含评估日期之后的数据",
                 sample=", ".join(future[:10]),
+                source=source,
             )
         )
     if stale:
@@ -662,6 +713,7 @@ def _check_price_staleness(
                 "prices_stale",
                 "价格数据最新日期过旧，不能用于评分",
                 sample=", ".join(stale[:10]),
+                source=source,
             )
         )
 
@@ -670,6 +722,8 @@ def _check_price_moves(
     frame: pd.DataFrame,
     quality_config: DataQualityConfig,
     issues: list[DataQualityIssue],
+    *,
+    source: str,
 ) -> None:
     data = frame.loc[
         frame["_date"].notna() & frame["_adj_close"].notna() & (frame["_adj_close"] > 0)
@@ -701,6 +755,7 @@ def _check_price_moves(
                     data.loc[extreme],
                     ["date", "ticker", "adj_close", "_return", "_extreme_return_threshold"],
                 ),
+                source=source,
             )
         )
     if suspicious.any():
@@ -720,6 +775,7 @@ def _check_price_moves(
                         "_suspicious_return_threshold",
                     ],
                 ),
+                source=source,
             )
         )
 
@@ -740,6 +796,7 @@ def _check_price_moves(
                     data.loc[ratio_jump],
                     ["date", "ticker", "_adjustment_ratio", "_adjustment_ratio_change"],
                 ),
+                source=source,
             )
         )
 
@@ -777,6 +834,7 @@ def _check_secondary_price_reconciliation(
                 Severity.ERROR if required else Severity.WARNING,
                 "secondary_prices_no_reconciliation_overlap",
                 "第二行情源与主价格缓存没有可核验的重叠 ticker/date。",
+                source="跨源核验：主价格源 vs Marketstack",
             )
         )
         return
@@ -821,6 +879,7 @@ def _check_secondary_price_reconciliation(
                     f"{overlap_ratio:.1%}，阈值 "
                     f"{quality_config.prices.secondary_source_min_overlap_ratio:.1%}。"
                 ),
+                source="跨源核验：主价格源 vs Marketstack",
             )
         )
     if merged.empty:
@@ -860,6 +919,7 @@ def _check_secondary_price_reconciliation(
                         "_close_diff_pct",
                     ],
                 ),
+                source="跨源核验：主价格源 vs Marketstack",
             )
         )
     if close_warning_diff.any():
@@ -879,6 +939,7 @@ def _check_secondary_price_reconciliation(
                         "_close_diff_pct",
                     ],
                 ),
+                source="跨源核验：主价格源 vs Marketstack",
             )
         )
     if adj_unresolved_error_diff.any():
@@ -904,6 +965,7 @@ def _check_secondary_price_reconciliation(
                         "_adj_close_diff_pct",
                     ],
                 ),
+                source="跨源核验：主价格源 vs Marketstack",
             )
         )
     if adj_adjustment_basis_diff.any():
@@ -930,6 +992,7 @@ def _check_secondary_price_reconciliation(
                         "_adj_close_diff_pct",
                     ],
                 ),
+                source="跨源核验：主价格源 vs Marketstack",
             )
         )
     if adj_warning_diff.any():
@@ -952,6 +1015,7 @@ def _check_secondary_price_reconciliation(
                         "_adj_close_diff_pct",
                     ],
                 ),
+                source="跨源核验：主价格源 vs Marketstack",
             )
         )
 
@@ -992,6 +1056,7 @@ def _check_rate_ranges(
                 "FRED 宏观序列包含超出配置合理范围的数值",
                 rows=int(invalid.sum()),
                 sample=_sample_rows(frame.loc[invalid], ["date", "series", "value"]),
+                source="FRED 宏观序列",
             )
         )
 
@@ -1023,6 +1088,7 @@ def _check_rate_staleness(
                 "rates_future_dates",
                 "FRED 宏观序列包含评估日期之后的数据",
                 sample=", ".join(future[:10]),
+                source="FRED 宏观序列",
             )
         )
     if stale:
@@ -1032,6 +1098,7 @@ def _check_rate_staleness(
                 "rates_stale",
                 "FRED 宏观序列最新日期过旧，不能用于评分",
                 sample=", ".join(stale[:10]),
+                source="FRED 宏观序列",
             )
         )
 
@@ -1064,6 +1131,7 @@ def _check_rate_moves(
                 "FRED 宏观序列包含极端单日变化",
                 rows=int(extreme.sum()),
                 sample=_sample_rows(data.loc[extreme], ["date", "series", "value", "_change"]),
+                source="FRED 宏观序列",
             )
         )
     if suspicious.any():
@@ -1074,6 +1142,7 @@ def _check_rate_moves(
                 "FRED 宏观序列包含可疑单日变化",
                 rows=int(suspicious.sum()),
                 sample=_sample_rows(data.loc[suspicious], ["date", "series", "value", "_change"]),
+                source="FRED 宏观序列",
             )
         )
 
@@ -1153,9 +1222,38 @@ def _severity_label(severity: Severity) -> str:
     return "警告"
 
 
+def _issue_source(issue: DataQualityIssue) -> str:
+    if issue.source:
+        return issue.source
+    if issue.code.startswith("secondary_prices_close") or issue.code.startswith(
+        "secondary_prices_adj"
+    ) or issue.code.startswith("secondary_prices_overlap") or issue.code.startswith(
+        "secondary_prices_no_reconciliation"
+    ):
+        return "跨源核验：主价格源 vs Marketstack"
+    if issue.code.startswith("secondary_prices_"):
+        return "第二行情源 Marketstack"
+    if issue.code.startswith("prices_"):
+        return "价格主源"
+    if issue.code.startswith("rates_"):
+        return "FRED 宏观序列"
+    if issue.code.startswith("download_manifest_") or issue.code.startswith("manifest_"):
+        return "下载审计清单"
+    return "未标注"
+
+
 def _data_label(label: str) -> str:
     return {
         "prices": "价格数据",
+        "secondary_prices": "第二行情源 Marketstack",
+        "rates": "FRED 宏观序列",
+        "manifest": "下载审计清单",
+    }.get(label, label)
+
+
+def _source_label(label: str) -> str:
+    return {
+        "prices": "价格主源",
         "secondary_prices": "第二行情源 Marketstack",
         "rates": "FRED 宏观序列",
         "manifest": "下载审计清单",

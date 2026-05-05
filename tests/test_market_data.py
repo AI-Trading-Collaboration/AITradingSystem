@@ -170,7 +170,7 @@ def test_normalize_cboe_vix_prices_filters_range_and_sets_internal_ticker() -> N
     assert pd.isna(prices.loc[0, "volume"])
 
 
-def test_fmp_price_provider_skips_unsupported_vix_and_uses_provider_alias() -> None:
+def test_fmp_price_provider_skips_unsupported_vix_and_uses_price_symbol() -> None:
     fake_requests = _FakeRequests(
         [
             {
@@ -193,7 +193,7 @@ def test_fmp_price_provider_skips_unsupported_vix_and_uses_provider_alias() -> N
     assert prices.loc[0, "close"] == 101.0
     assert prices.loc[0, "adj_close"] == 101.0
     expected_params = {
-        "symbol": "GOOGL",
+        "symbol": "GOOG",
         "from": "2026-05-01",
         "to": "2026-05-01",
         "apikey": "test-key",

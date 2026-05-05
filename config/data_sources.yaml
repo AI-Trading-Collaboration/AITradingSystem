@@ -36,8 +36,8 @@ sources:
     limitations:
       - FMP Starter plan 当前用于低成本股票/ETF 日线主源；历史深度上限按 plan 约束，长历史压力测试可能不足。
       - "`^VIX` 不通过 FMP 股票价格主源抓取，由 `cboe_vix_daily_prices` 单独补入主价格缓存。"
-      - "`GOOG` 请求 FMP 使用 provider symbol alias `GOOGL`，标准化缓存仍归属内部 ticker `GOOG`。"
-      - 2026-05-05 真实烟测中，FMP 对 SPY、INTC、MSFT、SOXX 仍返回会触发质量门禁的异常价格或 OHLC 记录；必须作为供应商数据质量问题处理，不能本地静默修正。
+      - "股票/ETF 价格路径直接按内部 ticker 请求；`GOOG` 不再映射为 `GOOGL`。估值/PIT 路径的 provider alias 独立维护，不能复用到价格路径。"
+      - 2026-05-05 质量复核显示，此前 SPY、INTC、MSFT、SOXX 的硬错误主要落在 Marketstack 第二源缓存；下一次真实下载后仍必须用质量门禁重新验证 FMP 主源，不能本地静默修正。
       - 与 Marketstack 的 adjusted close 分红复权口径差异必须保留为质量门禁限制或调查项，不能自动平滑。
       - API plan 可能限制历史深度、请求频率和字段覆盖。
     llm_permission:
@@ -171,6 +171,7 @@ sources:
       - Basic 历史深度约 10 年，足够覆盖 `ai_after_chatgpt` 默认窗口和当前 warm-up，但不支持更长历史压力测试。
       - "`^VIX` 等 Yahoo 风格宏观代理不在当前 Marketstack Basic 覆盖内，质量门禁需显式排除或标记限制。"
       - Marketstack 对部分 ETF 的 `adj_close` 与 Yahoo 分红复权口径不同；质量门禁以 raw `close` 作为阻塞核验，adjusted close 差异作为限制或调查项输出。
+      - 2026-05-05 真实缓存复核发现 SPY 非正价格、INTC/MSFT OHLC 异常和 SOXX split 日 adjusted close 异常主要落在 Marketstack 第二源；第二源自身硬错误必须显式报告，不得自动覆盖或修正主价格缓存。
       - 第二来源只用于 cross-provider reconciliation，不自动平滑、覆盖或修正主价格缓存。
       - API plan 可能限制请求量、历史深度和字段覆盖。
     llm_permission:
