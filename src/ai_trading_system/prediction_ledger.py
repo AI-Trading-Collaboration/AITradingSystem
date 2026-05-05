@@ -16,6 +16,8 @@ from ai_trading_system.data.quality import DataQualityReport
 
 DEFAULT_PREDICTION_LEDGER_PATH = PROJECT_ROOT / "data" / "processed" / "prediction_ledger.csv"
 DEFAULT_PREDICTION_OUTCOMES_PATH = PROJECT_ROOT / "data" / "processed" / "prediction_outcomes.csv"
+DEFAULT_SHADOW_RUN_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
+DEFAULT_SHADOW_MATURITY_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
 PREDICTION_LEDGER_COLUMNS = (
     "prediction_id",
     "run_id",
@@ -62,8 +64,51 @@ class PredictionOutcomeBuildResult:
     data_quality_report: DataQualityReport
 
 
+@dataclass(frozen=True)
+class ShadowPredictionRunReport:
+    as_of: date
+    decision_snapshot_path: Path
+    trace_bundle_path: Path
+    rule_experiment_path: Path
+    prediction_ledger_path: Path
+    candidate_count: int
+    appended_count: int
+    records: tuple[dict[str, Any], ...]
+    warnings: tuple[str, ...]
+    production_effect: str = "none"
+
+    @property
+    def status(self) -> str:
+        if self.warnings or self.appended_count == 0:
+            return "PASS_WITH_LIMITATIONS"
+        return "PASS"
+
+
+@dataclass(frozen=True)
+class ShadowMaturityReport:
+    as_of: date
+    outcomes_path: Path
+    min_available_samples: int
+    groups: tuple[dict[str, Any], ...]
+    production_effect: str = "none"
+
+    @property
+    def status(self) -> str:
+        if any(group["maturity_status"] == "READY_FOR_GOV_REVIEW" for group in self.groups):
+            return "PASS"
+        return "PASS_WITH_LIMITATIONS"
+
+
 def default_prediction_outcome_report_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"prediction_outcomes_{as_of.isoformat()}.md"
+
+
+def default_shadow_prediction_report_path(output_dir: Path, as_of: date) -> Path:
+    return output_dir / f"shadow_predictions_{as_of.isoformat()}.md"
+
+
+def default_shadow_maturity_report_path(output_dir: Path, as_of: date) -> Path:
+    return output_dir / f"shadow_maturity_{as_of.isoformat()}.md"
 
 
 def build_prediction_record_from_decision_snapshot(
@@ -174,6 +219,129 @@ def load_prediction_ledger(input_path: Path) -> tuple[dict[str, Any], ...]:
     return tuple(frame.to_dict(orient="records"))
 
 
+def load_prediction_outcomes(input_path: Path) -> tuple[dict[str, Any], ...]:
+    if not input_path.exists():
+        return ()
+    frame = pd.read_csv(input_path, dtype=str, keep_default_na=False)
+    return tuple(frame.to_dict(orient="records"))
+
+
+def build_shadow_prediction_records(
+    *,
+    snapshot: dict[str, Any],
+    trace_bundle: dict[str, Any],
+    trace_bundle_path: Path,
+    features_path: Path,
+    data_quality_report_path: Path,
+    rule_experiment_ledger: dict[str, Any],
+    as_of: date,
+    selected_candidate_ids: tuple[str, ...] = (),
+) -> tuple[dict[str, Any], ...]:
+    selected = set(selected_candidate_ids)
+    records: list[dict[str, Any]] = []
+    for candidate in rule_experiment_ledger.get("candidates", []):
+        candidate_id = str(candidate.get("candidate_id") or "")
+        if not candidate_id:
+            continue
+        if selected and candidate_id not in selected:
+            continue
+        if not _candidate_shadow_is_runnable(candidate, as_of=as_of):
+            continue
+        shadow_plan = candidate.get("forward_shadow_plan") or {}
+        label_horizon = _positive_int_or_none(shadow_plan.get("min_observation_days"))
+        record = build_prediction_record_from_decision_snapshot(
+            snapshot=snapshot,
+            trace_bundle=trace_bundle,
+            trace_bundle_path=trace_bundle_path,
+            features_path=features_path,
+            data_quality_report_path=data_quality_report_path,
+            candidate_id=candidate_id,
+            production_effect="none",
+            label_horizon_days=label_horizon,
+        )
+        record["execution_assumption"] = "shadow_candidate_no_order_no_position_change"
+        records.append(record)
+    return tuple(records)
+
+
+def build_shadow_prediction_run_report(
+    *,
+    as_of: date,
+    decision_snapshot_path: Path,
+    trace_bundle_path: Path,
+    rule_experiment_path: Path,
+    prediction_ledger_path: Path,
+    records: tuple[dict[str, Any], ...],
+    candidate_count: int,
+    warnings: tuple[str, ...] = (),
+) -> ShadowPredictionRunReport:
+    return ShadowPredictionRunReport(
+        as_of=as_of,
+        decision_snapshot_path=decision_snapshot_path,
+        trace_bundle_path=trace_bundle_path,
+        rule_experiment_path=rule_experiment_path,
+        prediction_ledger_path=prediction_ledger_path,
+        candidate_count=candidate_count,
+        appended_count=len(records),
+        records=records,
+        warnings=warnings,
+    )
+
+
+def write_shadow_prediction_run_report(
+    report: ShadowPredictionRunReport,
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(render_shadow_prediction_run_report(report), encoding="utf-8")
+    return output_path
+
+
+def render_shadow_prediction_run_report(report: ShadowPredictionRunReport) -> str:
+    lines = [
+        "# Challenger Shadow Runner 报告",
+        "",
+        f"- 状态：{report.status}",
+        f"- 运行日期：{report.as_of.isoformat()}",
+        f"- 候选规则数：{report.candidate_count}",
+        f"- 写入 prediction 行数：{report.appended_count}",
+        f"- Decision snapshot：`{report.decision_snapshot_path}`",
+        f"- Trace bundle：`{report.trace_bundle_path}`",
+        f"- Rule experiment ledger：`{report.rule_experiment_path}`",
+        f"- Prediction ledger：`{report.prediction_ledger_path}`",
+        f"- production_effect={report.production_effect}",
+        "- 治理边界：shadow runner 只追加 candidate-only prediction；不写正式日报动作，"
+        "不改变 `scores_daily.csv`、position gate、belief_state 或 production rule。",
+        "",
+        "## 写入记录",
+        "",
+    ]
+    if not report.records:
+        lines.append("本次没有可写入的 challenger prediction。")
+    else:
+        lines.extend(
+            [
+                "| Prediction | Candidate | Model Version | Decision Date | Production Effect |",
+                "|---|---|---|---|---|",
+            ]
+        )
+        for record in report.records:
+            lines.append(
+                "| "
+                f"`{record.get('prediction_id')}` | "
+                f"`{record.get('candidate_id')}` | "
+                f"`{record.get('model_version')}` | "
+                f"{record.get('decision_date')} | "
+                f"{record.get('production_effect')} |"
+            )
+    lines.extend(["", "## 警告", ""])
+    if report.warnings:
+        lines.extend(f"- {warning}" for warning in report.warnings)
+    else:
+        lines.append("- 无")
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def build_prediction_outcomes(
     *,
     prediction_rows: tuple[dict[str, Any], ...],
@@ -223,6 +391,96 @@ def build_prediction_outcomes(
         market_regime=market_regime,
         data_quality_report=data_quality_report,
     )
+
+
+def build_shadow_maturity_report(
+    *,
+    outcome_rows: tuple[dict[str, Any], ...],
+    outcomes_path: Path,
+    as_of: date,
+    min_available_samples: int = 30,
+) -> ShadowMaturityReport:
+    if min_available_samples <= 0:
+        raise ValueError("min_available_samples must be positive")
+    grouped: dict[tuple[str, str, str, str], list[dict[str, Any]]] = {}
+    for row in outcome_rows:
+        key = (
+            str(row.get("candidate_id") or "unknown"),
+            str(row.get("horizon_days") or "unknown"),
+            str(row.get("market_regime_id") or "unknown"),
+            str(row.get("production_effect") or "unknown"),
+        )
+        grouped.setdefault(key, []).append(row)
+    groups = tuple(
+        _shadow_maturity_group(
+            key=key,
+            rows=tuple(rows),
+            min_available_samples=min_available_samples,
+        )
+        for key, rows in sorted(grouped.items())
+    )
+    return ShadowMaturityReport(
+        as_of=as_of,
+        outcomes_path=outcomes_path,
+        min_available_samples=min_available_samples,
+        groups=groups,
+    )
+
+
+def write_shadow_maturity_report(
+    report: ShadowMaturityReport,
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(render_shadow_maturity_report(report), encoding="utf-8")
+    return output_path
+
+
+def render_shadow_maturity_report(report: ShadowMaturityReport) -> str:
+    lines = [
+        "# Forward Shadow 样本成熟度报告",
+        "",
+        f"- 状态：{report.status}",
+        f"- 评估日期：{report.as_of.isoformat()}",
+        f"- 最低可用样本：{report.min_available_samples}",
+        f"- Prediction outcomes：`{report.outcomes_path}`",
+        f"- production_effect={report.production_effect}",
+        "- 治理边界：样本不足、pending outcome 或 missing data 时只能保持 "
+        "`READY_FOR_SHADOW` / `MISSING`，不能作为 production rule 晋级证据。",
+        "",
+        "## Candidate / Horizon 成熟度",
+        "",
+    ]
+    if not report.groups:
+        lines.append("暂无 prediction outcome，所有候选规则均不能晋级。")
+    else:
+        lines.extend(
+            [
+                (
+                    "| Candidate | Horizon | Regime | Production Effect | 状态 | Total | "
+                    "Available | Pending | Missing | Avg Return | Hit Rate | Avg MDD | Avg Excess |"
+                ),
+                "|---|---|---|---|---|---:|---:|---:|---:|---:|---:|---:|---|",
+            ]
+        )
+        for group in report.groups:
+            lines.append(
+                "| "
+                f"`{group['candidate_id']}` | "
+                f"{group['horizon_days']} | "
+                f"{group['market_regime_id']} | "
+                f"{group['production_effect']} | "
+                f"{group['maturity_status']} | "
+                f"{group['total_count']} | "
+                f"{group['available_count']} | "
+                f"{group['pending_count']} | "
+                f"{group['missing_count']} | "
+                f"{_format_pct(group['average_ai_proxy_return'])} | "
+                f"{_format_pct(group['hit_rate'])} | "
+                f"{_format_pct(group['average_ai_proxy_max_drawdown'])} | "
+                f"{group['average_excess_return_text']} |"
+            )
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def write_prediction_outcomes_csv(
@@ -477,6 +735,124 @@ def _prediction_report_status(result: PredictionOutcomeBuildResult) -> str:
     if len(result.available_rows) >= 30:
         return "PASS"
     return "PASS_WITH_LIMITATIONS"
+
+
+def _candidate_shadow_is_runnable(candidate: dict[str, Any], *, as_of: date) -> bool:
+    if candidate.get("production_effect") not in {None, "", "none"}:
+        return False
+    if candidate.get("approved_for_production") is True:
+        return False
+    shadow_plan = candidate.get("forward_shadow_plan") or {}
+    if shadow_plan.get("production_effect") not in {None, "", "none"}:
+        return False
+    if str(shadow_plan.get("status") or "").upper() not in {"PENDING", "ACTIVE", "RUNNING"}:
+        return False
+    start = _date_or_none(shadow_plan.get("start_date"))
+    end = _date_or_none(shadow_plan.get("end_date"))
+    if start is not None and as_of < start:
+        return False
+    if end is not None and as_of > end:
+        return False
+    return True
+
+
+def _shadow_maturity_group(
+    *,
+    key: tuple[str, str, str, str],
+    rows: tuple[dict[str, Any], ...],
+    min_available_samples: int,
+) -> dict[str, Any]:
+    candidate_id, horizon_days, market_regime_id, production_effect = key
+    available = tuple(row for row in rows if row.get("outcome_status") == "AVAILABLE")
+    pending = tuple(row for row in rows if row.get("outcome_status") == "PENDING")
+    missing = tuple(row for row in rows if row.get("outcome_status") == "MISSING_DATA")
+    return {
+        "candidate_id": candidate_id,
+        "horizon_days": horizon_days,
+        "market_regime_id": market_regime_id,
+        "production_effect": production_effect,
+        "total_count": len(rows),
+        "available_count": len(available),
+        "pending_count": len(pending),
+        "missing_count": len(missing),
+        "min_available_samples": min_available_samples,
+        "maturity_status": _shadow_maturity_status(
+            available_count=len(available),
+            total_count=len(rows),
+            min_available_samples=min_available_samples,
+        ),
+        "average_ai_proxy_return": _mean(_row_float_values(available, "ai_proxy_return")),
+        "average_ai_proxy_max_drawdown": _mean(
+            _row_float_values(available, "ai_proxy_max_drawdown")
+        ),
+        "hit_rate": _hit_rate(available),
+        "average_excess_return_text": _average_excess_text(available),
+    }
+
+
+def _shadow_maturity_status(
+    *,
+    available_count: int,
+    total_count: int,
+    min_available_samples: int,
+) -> str:
+    if total_count == 0 or available_count == 0:
+        return "MISSING"
+    if available_count < min_available_samples:
+        return "READY_FOR_SHADOW"
+    return "READY_FOR_GOV_REVIEW"
+
+
+def _row_float_values(rows: tuple[dict[str, Any], ...], column: str) -> list[float]:
+    values: list[float] = []
+    for row in rows:
+        value = _float_or_none(row.get(column))
+        if value is not None:
+            values.append(value)
+    return values
+
+
+def _hit_rate(rows: tuple[dict[str, Any], ...]) -> float | None:
+    if not rows:
+        return None
+    return sum(str(row.get("hit")).lower() == "true" for row in rows) / len(rows)
+
+
+def _average_excess_text(rows: tuple[dict[str, Any], ...]) -> str:
+    if not rows:
+        return "无"
+    columns = sorted(
+        {
+            column
+            for row in rows
+            for column in row
+            if column.startswith("excess_") and column.endswith("_return")
+        }
+    )
+    parts = []
+    for column in columns:
+        values = _row_float_values(rows, column)
+        if values:
+            label = column.removeprefix("excess_").removesuffix("_return")
+            parts.append(f"{label} {_format_pct(_mean(values))}")
+    return "；".join(parts) if parts else "无"
+
+
+def _positive_int_or_none(value: object) -> int | None:
+    try:
+        parsed = int(str(value))
+    except (TypeError, ValueError):
+        return None
+    return parsed if parsed > 0 else None
+
+
+def _date_or_none(value: object) -> date | None:
+    if value is None or value == "":
+        return None
+    try:
+        return date.fromisoformat(str(value)[:10])
+    except ValueError:
+        return None
 
 
 def _group_table(

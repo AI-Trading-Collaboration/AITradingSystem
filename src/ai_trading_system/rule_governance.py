@@ -157,6 +157,22 @@ class RuleGovernanceReport:
         return "PASS"
 
 
+@dataclass(frozen=True)
+class RuleLifecycleActionReport:
+    action: str
+    as_of: date
+    input_path: Path
+    output_path: Path
+    rule_id: str
+    validation_report: RuleGovernanceReport
+    messages: tuple[str, ...]
+    production_effect: str = "rule_card_registry_update"
+
+    @property
+    def status(self) -> str:
+        return self.validation_report.status
+
+
 def load_rule_card_store(input_path: Path | str = DEFAULT_RULE_CARDS_PATH) -> RuleCardStore:
     path = Path(input_path)
     if not path.exists():
@@ -207,6 +223,131 @@ def lookup_rule_card(input_path: Path, rule_id: str) -> RuleCard:
         if card.rule_id == rule_id:
             return card
     raise KeyError(f"rule card not found: {rule_id}")
+
+
+def write_rule_card_store(store: RuleCardStore, output_path: Path) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"cards": [card.model_dump(mode="json") for card in store.cards]}
+    output_path.write_text(
+        yaml.safe_dump(payload, allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
+    )
+    return output_path
+
+
+def promote_rule_card(
+    *,
+    input_path: Path,
+    output_path: Path,
+    rule_id: str,
+    as_of: date,
+    approved_by: str,
+    approval_rationale: str,
+    promotion_report_ref: str,
+    outcome_refs: tuple[str, ...],
+    production_since: date | None = None,
+) -> RuleLifecycleActionReport:
+    if not approved_by.strip():
+        raise ValueError("approved_by is required for promotion")
+    if not approval_rationale.strip():
+        raise ValueError("approval_rationale is required for promotion")
+    if not promotion_report_ref.strip():
+        raise ValueError("promotion_report_ref is required for promotion")
+    if not outcome_refs:
+        raise ValueError("at least one outcome_ref is required for promotion")
+    store = load_rule_card_store(input_path)
+    if store.load_errors:
+        raise ValueError("; ".join(store.load_errors))
+    card = _find_rule_card(store, rule_id)
+    if card.status != "candidate":
+        raise ValueError("only candidate rule cards can be promoted")
+    if not card.linked_rule_experiment:
+        raise ValueError("candidate promotion requires linked_rule_experiment")
+    validation_refs = _unique_strings(
+        (
+            *card.validation.validation_refs,
+            promotion_report_ref,
+            *outcome_refs,
+        )
+    )
+    promoted = card.model_copy(
+        update={
+            "status": "production",
+            "production_since": production_since or as_of,
+            "retired_at": None,
+            "approval": RuleCardApproval(
+                approval_status="approved",
+                approved_by=approved_by,
+                approved_at=as_of,
+                rationale=approval_rationale,
+            ),
+            "validation": RuleCardValidation(
+                validation_status="shadow_passed",
+                validation_refs=list(validation_refs),
+                sample_limitations=list(card.validation.sample_limitations),
+            ),
+            "last_reviewed_at": as_of,
+        }
+    )
+    new_store = _replace_card(store, promoted, input_path=output_path)
+    written = write_rule_card_store(new_store, output_path)
+    validation = validate_rule_card_store(load_rule_card_store(written), as_of=as_of)
+    return RuleLifecycleActionReport(
+        action="promote",
+        as_of=as_of,
+        input_path=input_path,
+        output_path=written,
+        rule_id=rule_id,
+        validation_report=validation,
+        messages=(
+            "candidate rule card 已升级为 production。",
+            "promotion 记录包含 owner approval、shadow outcome、promotion report 和回滚条件。",
+        ),
+    )
+
+
+def retire_rule_card(
+    *,
+    input_path: Path,
+    output_path: Path,
+    rule_id: str,
+    as_of: date,
+    retired_at: date | None = None,
+    reason: str,
+) -> RuleLifecycleActionReport:
+    if not reason.strip():
+        raise ValueError("retirement reason is required")
+    store = load_rule_card_store(input_path)
+    if store.load_errors:
+        raise ValueError("; ".join(store.load_errors))
+    card = _find_rule_card(store, rule_id)
+    if card.status != "production":
+        raise ValueError("only production rule cards can be retired")
+    retired = card.model_copy(
+        update={
+            "status": "retired",
+            "retired_at": retired_at or as_of,
+            "known_limitations": list(
+                _unique_strings((*card.known_limitations, f"retired_reason: {reason}"))
+            ),
+            "last_reviewed_at": as_of,
+        }
+    )
+    new_store = _replace_card(store, retired, input_path=output_path)
+    written = write_rule_card_store(new_store, output_path)
+    validation = validate_rule_card_store(load_rule_card_store(written), as_of=as_of)
+    return RuleLifecycleActionReport(
+        action="retire",
+        as_of=as_of,
+        input_path=input_path,
+        output_path=written,
+        rule_id=rule_id,
+        validation_report=validation,
+        messages=(
+            "production rule card 已标记 retired。",
+            "retired rule 不再参与 production rule version manifest。",
+        ),
+    )
 
 
 def render_rule_governance_report(report: RuleGovernanceReport) -> str:
@@ -286,6 +427,50 @@ def render_rule_governance_report(report: RuleGovernanceReport) -> str:
     return "\n".join(lines) + "\n"
 
 
+def render_rule_lifecycle_action_report(report: RuleLifecycleActionReport) -> str:
+    lines = [
+        "# Rule Card 生命周期操作报告",
+        "",
+        f"- 状态：{report.status}",
+        f"- 操作：{report.action}",
+        f"- 日期：{report.as_of.isoformat()}",
+        f"- Rule：`{report.rule_id}`",
+        f"- 输入：`{report.input_path}`",
+        f"- 输出：`{report.output_path}`",
+        f"- 输出 registry 校验：{report.validation_report.status}",
+        f"- production_effect={report.production_effect}",
+        "",
+        "## 操作说明",
+        "",
+        *[f"- {message}" for message in report.messages],
+        "",
+        "## 输出校验问题",
+        "",
+    ]
+    if not report.validation_report.issues:
+        lines.append("未发现问题。")
+    else:
+        lines.extend(["| 级别 | Code | Rule | 说明 |", "|---|---|---|---|"])
+        for issue in report.validation_report.issues:
+            lines.append(
+                "| "
+                f"{_severity_label(issue.severity)} | "
+                f"{issue.code} | "
+                f"{issue.rule_id or ''} | "
+                f"{_escape_markdown_table(issue.message)} |"
+            )
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def write_rule_lifecycle_action_report(
+    report: RuleLifecycleActionReport,
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(render_rule_lifecycle_action_report(report), encoding="utf-8")
+    return output_path
+
+
 def write_rule_governance_report(
     report: RuleGovernanceReport,
     output_path: Path,
@@ -357,6 +542,32 @@ def _raw_cards(raw: Any) -> list[Any]:
         cards = raw["cards"]
         return cards if isinstance(cards, list) else [cards]
     return [raw]
+
+
+def _find_rule_card(store: RuleCardStore, rule_id: str) -> RuleCard:
+    for card in store.cards:
+        if card.rule_id == rule_id:
+            return card
+    raise KeyError(f"rule card not found: {rule_id}")
+
+
+def _replace_card(
+    store: RuleCardStore,
+    updated_card: RuleCard,
+    *,
+    input_path: Path,
+) -> RuleCardStore:
+    return RuleCardStore(
+        input_path=input_path,
+        cards=tuple(
+            updated_card if card.rule_id == updated_card.rule_id else card
+            for card in store.cards
+        ),
+    )
+
+
+def _unique_strings(values: tuple[str, ...]) -> tuple[str, ...]:
+    return tuple(dict.fromkeys(str(value) for value in values if str(value).strip()))
 
 
 def _rule_version_record(card: RuleCard) -> dict[str, Any]:

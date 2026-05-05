@@ -25,6 +25,7 @@ def test_build_feedback_loop_review_report_covers_feedback_artifacts(
         evidence_path=paths["evidence"],
         decision_snapshot_path=paths["snapshots"],
         outcomes_path=paths["outcomes"],
+        prediction_outcomes_path=paths["prediction_outcomes"],
         causal_chain_path=paths["causal"],
         learning_queue_path=paths["learning"],
         rule_experiment_path=paths["rule_experiments_missing"],
@@ -36,6 +37,7 @@ def test_build_feedback_loop_review_report_covers_feedback_artifacts(
     assert "市场阶段：ai_after_chatgpt" in markdown
     assert "## 新证据" in markdown
     assert "## Outcome 与校准" in markdown
+    assert "## Prediction / Shadow Outcome" in markdown
     assert "## 因果链" in markdown
     assert "## 学习队列" in markdown
     assert "## Task Register" in markdown
@@ -59,6 +61,8 @@ def test_feedback_loop_review_cli_writes_report(tmp_path: Path) -> None:
             str(paths["snapshots"]),
             "--outcomes-path",
             str(paths["outcomes"]),
+            "--prediction-outcomes-path",
+            str(paths["prediction_outcomes"]),
             "--causal-chain-path",
             str(paths["causal"]),
             "--learning-queue-path",
@@ -110,6 +114,7 @@ def test_feedback_loop_review_reads_rule_experiment_ledger(tmp_path: Path) -> No
         evidence_path=paths["evidence"],
         decision_snapshot_path=paths["snapshots"],
         outcomes_path=paths["outcomes"],
+        prediction_outcomes_path=paths["prediction_outcomes"],
         causal_chain_path=paths["causal"],
         learning_queue_path=paths["learning"],
         rule_experiment_path=paths["rule_experiments"],
@@ -120,6 +125,7 @@ def test_feedback_loop_review_reads_rule_experiment_ledger(tmp_path: Path) -> No
     assert "CONNECTED_PENDING_VALIDATION" in markdown
     assert "候选规则数：1" in markdown
     assert "未运行 replay：1" in markdown
+    assert "Challenger 分组数：1" in markdown
 
 
 def _write_feedback_artifacts(tmp_path: Path) -> dict[str, Path]:
@@ -151,6 +157,17 @@ def _write_feedback_artifacts(tmp_path: Path) -> dict[str, Path]:
             },
         ]
     ).to_csv(outcomes_path, index=False)
+    prediction_outcomes_path = tmp_path / "prediction_outcomes.csv"
+    pd.DataFrame(
+        [
+            {
+                "prediction_id": "prediction:shadow",
+                "candidate_id": "rule_experiment:2026-04-02_overall_position",
+                "production_effect": "none",
+                "outcome_status": "AVAILABLE",
+            }
+        ]
+    ).to_csv(prediction_outcomes_path, index=False)
     causal_path = tmp_path / "decision_causal_chains.json"
     causal_path.write_text(
         json.dumps(
@@ -193,6 +210,7 @@ def _write_feedback_artifacts(tmp_path: Path) -> dict[str, Path]:
         "evidence": evidence_dir,
         "snapshots": snapshot_dir,
         "outcomes": outcomes_path,
+        "prediction_outcomes": prediction_outcomes_path,
         "causal": causal_path,
         "learning": learning_path,
         "rule_experiments": rule_experiments_path,

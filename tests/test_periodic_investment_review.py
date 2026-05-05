@@ -24,6 +24,7 @@ def test_periodic_investment_review_renders_weekly_sections(tmp_path: Path) -> N
         scores_path=inputs["scores"],
         decision_snapshot_path=inputs["snapshots"],
         outcomes_path=inputs["outcomes"],
+        prediction_outcomes_path=inputs["prediction_outcomes"],
         learning_queue_path=inputs["learning"],
         rule_experiment_path=inputs["experiments"],
     )
@@ -34,6 +35,8 @@ def test_periodic_investment_review_renders_weekly_sections(tmp_path: Path) -> N
     assert "本期结论是否变化" in markdown
     assert "改变判断的前三个证据" in markdown
     assert "下周最重要的观察事件" in markdown
+    assert "Production vs Challenger Shadow" in markdown
+    assert "rule_experiment:test_gate" in markdown
     assert "daily_trace.json" in markdown
     assert "production_effect=none" in markdown
 
@@ -59,6 +62,8 @@ def test_reports_investment_review_cli_writes_monthly_report(tmp_path: Path) -> 
             str(inputs["snapshots"]),
             "--outcomes-path",
             str(inputs["outcomes"]),
+            "--prediction-outcomes-path",
+            str(inputs["prediction_outcomes"]),
             "--learning-queue-path",
             str(inputs["learning"]),
             "--rule-experiment-path",
@@ -74,6 +79,7 @@ def test_reports_investment_review_cli_writes_monthly_report(tmp_path: Path) -> 
     assert "# AI 产业链月报投资复盘" in text
     assert "本月系统校准和规则学习" in text
     assert "Rule experiments" in text
+    assert "Prediction shadow" in text
     assert "投资复盘状态：PASS" in result.output
 
 
@@ -139,6 +145,34 @@ def _write_periodic_review_inputs(tmp_path: Path) -> dict[str, Path]:
         ]
     ).to_csv(outcomes_path, index=False)
 
+    prediction_outcomes_path = tmp_path / "prediction_outcomes.csv"
+    pd.DataFrame(
+        [
+            {
+                "prediction_id": "prediction:production",
+                "candidate_id": "production",
+                "production_effect": "production",
+                "decision_date": "2026-05-01",
+                "market_regime_id": "ai_after_chatgpt",
+                "horizon_days": 5,
+                "outcome_status": "AVAILABLE",
+                "ai_proxy_return": 0.03,
+                "ai_proxy_max_drawdown": -0.02,
+                "hit": True,
+                "excess_SPY_return": 0.01,
+            },
+            {
+                "prediction_id": "prediction:shadow",
+                "candidate_id": "rule_experiment:test_gate",
+                "production_effect": "none",
+                "decision_date": "2026-05-01",
+                "market_regime_id": "ai_after_chatgpt",
+                "horizon_days": 5,
+                "outcome_status": "PENDING",
+            },
+        ]
+    ).to_csv(prediction_outcomes_path, index=False)
+
     learning_path = tmp_path / "learning.json"
     learning_path.write_text(
         json.dumps(
@@ -171,6 +205,7 @@ def _write_periodic_review_inputs(tmp_path: Path) -> dict[str, Path]:
         "scores": scores_path,
         "snapshots": snapshots_dir,
         "outcomes": outcomes_path,
+        "prediction_outcomes": prediction_outcomes_path,
         "learning": learning_path,
         "experiments": experiments_path,
     }

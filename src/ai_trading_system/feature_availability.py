@@ -6,6 +6,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+import pandas as pd
 import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
@@ -42,6 +43,31 @@ class FeatureAvailabilityIssue:
 
 
 @dataclass(frozen=True)
+class FeatureAvailabilitySourceCheck:
+    source: str
+    input_path: Path | None
+    row_count: int
+    decision_time: date
+    event_time_column: str
+    available_time_column: str
+    available_time_coverage_pct: float
+    missing_available_time_count: int
+    future_available_time_count: int
+    fallback_policy: str = ""
+    notes: str = ""
+
+    @property
+    def status(self) -> str:
+        if self.future_available_time_count:
+            return "FAIL"
+        if self.row_count and not self.available_time_column and not self.fallback_policy:
+            return "FAIL"
+        if self.missing_available_time_count:
+            return "PASS_WITH_WARNINGS"
+        return "PASS"
+
+
+@dataclass(frozen=True)
 class FeatureAvailabilityReport:
     as_of: date
     input_path: Path
@@ -50,6 +76,7 @@ class FeatureAvailabilityReport:
     issues: tuple[FeatureAvailabilityIssue, ...]
     observed_sources: tuple[str, ...]
     required_sources: tuple[str, ...]
+    source_checks: tuple[FeatureAvailabilitySourceCheck, ...] = ()
     production_effect: str = "none"
 
     @property
@@ -83,6 +110,7 @@ def build_feature_availability_report(
     as_of: date,
     observed_sources: tuple[str, ...] = (),
     required_sources: tuple[str, ...] = (),
+    source_checks: tuple[FeatureAvailabilitySourceCheck, ...] = (),
 ) -> FeatureAvailabilityReport:
     issues: list[FeatureAvailabilityIssue] = []
     rules: tuple[FeatureAvailabilityRule, ...] = ()
@@ -107,6 +135,7 @@ def build_feature_availability_report(
                 )
             )
     issues.extend(_coverage_issues(rules, observed_sources, required_sources))
+    issues.extend(_source_check_issues(rules, source_checks))
     return FeatureAvailabilityReport(
         as_of=as_of,
         input_path=input_path,
@@ -115,6 +144,60 @@ def build_feature_availability_report(
         issues=tuple(issues),
         observed_sources=tuple(sorted(set(observed_sources))),
         required_sources=tuple(sorted(set(required_sources))),
+        source_checks=tuple(sorted(source_checks, key=lambda item: item.source)),
+    )
+
+
+def build_feature_source_check(
+    *,
+    source: str,
+    frame: pd.DataFrame,
+    decision_time: date,
+    input_path: Path | None = None,
+    event_time_columns: tuple[str, ...] = ("event_time", "date", "as_of", "end_date"),
+    available_time_columns: tuple[str, ...] = (
+        "available_time",
+        "vendor_available_at",
+        "captured_at",
+        "ingested_at",
+        "downloaded_at",
+        "filed_date",
+        "accepted_time",
+        "reviewed_at",
+    ),
+    fallback_policy: str = "",
+    notes: str = "",
+) -> FeatureAvailabilitySourceCheck:
+    """Inspect one concrete input frame for signal-time available_time discipline."""
+
+    row_count = len(frame)
+    event_time_column = _first_present_column(frame, event_time_columns)
+    available_time_column = _first_present_column(frame, available_time_columns)
+    missing_count = 0
+    future_count = 0
+    coverage = 0.0 if row_count else 1.0
+    if available_time_column:
+        available = pd.to_datetime(
+            frame[available_time_column],
+            errors="coerce",
+            utc=True,
+        )
+        missing_count = int(available.isna().sum())
+        coverage = 1.0 - (missing_count / row_count) if row_count else 1.0
+        available_dates = available.dt.date
+        future_count = int((available_dates > decision_time).sum())
+    return FeatureAvailabilitySourceCheck(
+        source=source,
+        input_path=input_path,
+        row_count=row_count,
+        decision_time=decision_time,
+        event_time_column=event_time_column,
+        available_time_column=available_time_column,
+        available_time_coverage_pct=coverage,
+        missing_available_time_count=missing_count,
+        future_available_time_count=future_count,
+        fallback_policy=fallback_policy,
+        notes=notes,
     )
 
 
@@ -137,6 +220,7 @@ def render_feature_availability_report(report: FeatureAvailabilityReport) -> str
         f"- 规则数：{len(report.rules)}",
         f"- 观察到的 source：{_join(report.observed_sources)}",
         f"- 必需 source：{_join(report.required_sources)}",
+        f"- 字段级 source 检查：{len(report.source_checks)}",
         f"- production_effect={report.production_effect}",
         "",
         "## 规则目录",
@@ -172,6 +256,22 @@ def render_feature_availability_report(report: FeatureAvailabilityReport) -> str
                 f"{_escape(issue.message)} |"
             )
 
+    lines.extend(["", "## 字段级 Source 检查", ""])
+    if not report.source_checks:
+        lines.append("未提供字段级 source 检查。")
+    else:
+        lines.extend(
+            [
+                (
+                    "| Source | 状态 | 行数 | Event Time 字段 | Available Time 字段 | "
+                    "覆盖率 | 未来可见时间 | Fallback | 输入 |"
+                ),
+                "|---|---|---:|---|---|---:|---:|---|---|",
+            ]
+        )
+        for check in report.source_checks:
+            lines.append(_source_check_row(check))
+
     lines.extend(
         [
             "",
@@ -197,6 +297,7 @@ def render_feature_availability_section(
         "",
         f"- 状态：{report.status}",
         f"- 规则数：{len(report.rules)}",
+        f"- 字段级 source 检查：{len(report.source_checks)}",
         f"- 观察 source：{_join(report.observed_sources)}",
         f"- 错误/警告：{report.error_count}/{report.warning_count}",
         "- A/B 级约束：缺少 `available_time` 的特征不得进入主结论。",
@@ -232,6 +333,22 @@ def feature_availability_summary_record(
         "required_sources": list(report.required_sources),
         "error_count": report.error_count,
         "warning_count": report.warning_count,
+        "source_checks": [
+            {
+                "source": check.source,
+                "status": check.status,
+                "input_path": None if check.input_path is None else str(check.input_path),
+                "row_count": check.row_count,
+                "decision_time": check.decision_time.isoformat(),
+                "event_time_column": check.event_time_column,
+                "available_time_column": check.available_time_column,
+                "available_time_coverage_pct": check.available_time_coverage_pct,
+                "missing_available_time_count": check.missing_available_time_count,
+                "future_available_time_count": check.future_available_time_count,
+                "fallback_policy": check.fallback_policy,
+            }
+            for check in report.source_checks
+        ],
         "rules": [
             {
                 "rule_id": rule.rule_id,
@@ -400,6 +517,67 @@ def _coverage_issues(
     return tuple(issues)
 
 
+def _source_check_issues(
+    rules: tuple[FeatureAvailabilityRule, ...],
+    checks: tuple[FeatureAvailabilitySourceCheck, ...],
+) -> tuple[FeatureAvailabilityIssue, ...]:
+    rule_by_source = {
+        source: rule
+        for rule in rules
+        for source in rule.sources
+    }
+    issues: list[FeatureAvailabilityIssue] = []
+    for check in checks:
+        rule = rule_by_source.get(check.source)
+        if rule is None:
+            continue
+        if check.future_available_time_count:
+            issues.append(
+                FeatureAvailabilityIssue(
+                    severity="ERROR",
+                    code="feature_source_available_time_after_decision_time",
+                    rule_id=rule.rule_id,
+                    source=check.source,
+                    message=(
+                        f"{check.future_available_time_count} 行 available_time 晚于 "
+                        f"decision_time={check.decision_time.isoformat()}。"
+                    ),
+                )
+            )
+        if check.row_count and not check.available_time_column:
+            if not check.fallback_policy:
+                issues.append(
+                    FeatureAvailabilityIssue(
+                        severity="ERROR",
+                        code="feature_source_available_time_column_missing",
+                        rule_id=rule.rule_id,
+                        source=check.source,
+                        message=(
+                            "输入缺少显式 available_time 字段，不能进入 A/B 级主结论。"
+                        ),
+                    )
+                )
+        if check.missing_available_time_count:
+            severity = (
+                "ERROR"
+                if rule.missing_available_time_policy == "exclude_from_a_b"
+                else "WARNING"
+            )
+            issues.append(
+                FeatureAvailabilityIssue(
+                    severity=severity,
+                    code="feature_source_available_time_values_missing",
+                    rule_id=rule.rule_id,
+                    source=check.source,
+                    message=(
+                        f"{check.missing_available_time_count} 行 available_time 为空；"
+                        f"策略={rule.missing_available_time_policy}。"
+                    ),
+                )
+            )
+    return tuple(issues)
+
+
 def _rule_row(rule: FeatureAvailabilityRule) -> str:
     return (
         "| "
@@ -414,6 +592,28 @@ def _rule_row(rule: FeatureAvailabilityRule) -> str:
         f"{rule.missing_available_time_policy} | "
         f"{rule.minimum_backtest_grade} |"
     )
+
+
+def _source_check_row(check: FeatureAvailabilitySourceCheck) -> str:
+    return (
+        "| "
+        f"{check.source} | "
+        f"{check.status} | "
+        f"{check.row_count} | "
+        f"{check.event_time_column or 'missing'} | "
+        f"{check.available_time_column or 'missing'} | "
+        f"{check.available_time_coverage_pct:.0%} | "
+        f"{check.future_available_time_count} | "
+        f"{_escape(check.fallback_policy) if check.fallback_policy else '无'} | "
+        f"{_escape(str(check.input_path or ''))} |"
+    )
+
+
+def _first_present_column(frame: pd.DataFrame, candidates: tuple[str, ...]) -> str:
+    for column in candidates:
+        if column in frame.columns:
+            return column
+    return ""
 
 
 def _join(values: tuple[str, ...]) -> str:

@@ -11,6 +11,7 @@ import pandas as pd
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.decision_outcomes import load_decision_snapshots
 from ai_trading_system.market_evidence import load_market_evidence_store
+from ai_trading_system.prediction_ledger import DEFAULT_PREDICTION_OUTCOMES_PATH
 from ai_trading_system.rule_experiments import DEFAULT_RULE_EXPERIMENT_LEDGER_PATH
 
 DEFAULT_FEEDBACK_LOOP_REVIEW_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
@@ -25,6 +26,7 @@ class FeedbackLoopReviewReport:
     evidence: dict[str, Any]
     decision_snapshots: dict[str, Any]
     decision_outcomes: dict[str, Any]
+    prediction_outcomes: dict[str, Any]
     causal_chains: dict[str, Any]
     learning_queue: dict[str, Any]
     rule_candidates: dict[str, Any]
@@ -36,6 +38,7 @@ class FeedbackLoopReviewReport:
             self.evidence,
             self.decision_snapshots,
             self.decision_outcomes,
+            self.prediction_outcomes,
             self.causal_chains,
             self.learning_queue,
             self.rule_candidates,
@@ -63,6 +66,7 @@ def build_feedback_loop_review_report(
     causal_chain_path: Path,
     learning_queue_path: Path,
     task_register_path: Path,
+    prediction_outcomes_path: Path = DEFAULT_PREDICTION_OUTCOMES_PATH,
     rule_experiment_path: Path = DEFAULT_RULE_EXPERIMENT_LEDGER_PATH,
     since: date | None = None,
     market_regime_id: str = "ai_after_chatgpt",
@@ -76,6 +80,7 @@ def build_feedback_loop_review_report(
         evidence=_evidence_section(evidence_path, since, as_of),
         decision_snapshots=_snapshot_section(decision_snapshot_path, since, as_of),
         decision_outcomes=_outcome_section(outcomes_path),
+        prediction_outcomes=_prediction_outcome_section(prediction_outcomes_path),
         causal_chains=_ledger_section(causal_chain_path, "chains"),
         learning_queue=_ledger_section(learning_queue_path, "items"),
         rule_candidates=_rule_candidate_section(rule_experiment_path),
@@ -116,6 +121,15 @@ def render_feedback_loop_review_report(report: FeedbackLoopReviewReport) -> str:
         _count_line("等待完成", report.decision_outcomes, "pending_count"),
         _count_line("缺失数据", report.decision_outcomes, "missing_count"),
         _warning_lines(report.decision_outcomes),
+        "",
+        "## Prediction / Shadow Outcome",
+        "",
+        _count_line("Prediction outcome 行数", report.prediction_outcomes, "total_count"),
+        _count_line("可用 prediction outcome", report.prediction_outcomes, "available_count"),
+        _count_line("等待 shadow 窗口", report.prediction_outcomes, "pending_count"),
+        _count_line("缺失 prediction 数据", report.prediction_outcomes, "missing_count"),
+        _count_line("Challenger 分组数", report.prediction_outcomes, "challenger_count"),
+        _warning_lines(report.prediction_outcomes),
         "",
         "## 因果链",
         "",
@@ -222,6 +236,39 @@ def _outcome_section(path: Path) -> dict[str, Any]:
         "pending_count": int((status == "PENDING").sum()),
         "missing_count": int((status == "MISSING_DATA").sum()),
         "warnings": [],
+    }
+
+
+def _prediction_outcome_section(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {
+            "total_count": 0,
+            "available_count": 0,
+            "pending_count": 0,
+            "missing_count": 0,
+            "challenger_count": 0,
+            "warnings": [f"prediction outcomes 不存在：{path}"],
+        }
+    outcomes = pd.read_csv(path)
+    status = outcomes["outcome_status"] if "outcome_status" in outcomes else pd.Series(dtype=str)
+    candidate = outcomes["candidate_id"] if "candidate_id" in outcomes else pd.Series(dtype=str)
+    production_effect = (
+        outcomes["production_effect"] if "production_effect" in outcomes else pd.Series(dtype=str)
+    )
+    challenger_count = len(
+        set(candidate.loc[(candidate != "production") | (production_effect == "none")])
+    )
+    warnings = []
+    available_count = int((status == "AVAILABLE").sum())
+    if available_count < 30:
+        warnings.append("prediction/shadow 可用样本不足 30，不能作为 production 晋级证据。")
+    return {
+        "total_count": len(outcomes),
+        "available_count": available_count,
+        "pending_count": int((status == "PENDING").sum()),
+        "missing_count": int((status == "MISSING_DATA").sum()),
+        "challenger_count": challenger_count,
+        "warnings": warnings,
     }
 
 

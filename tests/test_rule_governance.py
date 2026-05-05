@@ -10,7 +10,9 @@ from ai_trading_system.rule_governance import (
     build_rule_version_manifest,
     load_rule_card_store,
     lookup_rule_card,
+    promote_rule_card,
     render_rule_governance_report,
+    retire_rule_card,
     validate_rule_card_store,
 )
 
@@ -113,6 +115,98 @@ def test_feedback_rule_card_cli_validates_and_looks_up_card(tmp_path: Path) -> N
     assert "加权模块评分规则" in lookup.output
 
 
+def test_rule_card_promotion_and_retirement_are_controlled(tmp_path: Path) -> None:
+    input_path = tmp_path / "rule_cards.yaml"
+    promoted_path = tmp_path / "promoted_rule_cards.yaml"
+    retired_path = tmp_path / "retired_rule_cards.yaml"
+    input_path.write_text(
+        "cards:\n"
+        + _card("scoring.weighted_score.v1")
+        + _card(
+            "candidate.position_gate.v2",
+            status="candidate",
+            approval_status="pending_approval",
+            validation_status="pending_validation",
+            production_since="",
+            linked_rule_experiment="rule_experiment:test_gate",
+        ),
+        encoding="utf-8",
+    )
+
+    promotion = promote_rule_card(
+        input_path=input_path,
+        output_path=promoted_path,
+        rule_id="candidate.position_gate.v2",
+        as_of=date(2026, 5, 4),
+        approved_by="owner",
+        approval_rationale="shadow outcome passed owner review",
+        promotion_report_ref="outputs/backtests/model_promotion.md",
+        outcome_refs=("outputs/reports/shadow_maturity.md",),
+    )
+    promoted = lookup_rule_card(promoted_path, "candidate.position_gate.v2")
+
+    assert promotion.validation_report.passed
+    assert promoted.status == "production"
+    assert promoted.approval.approval_status == "approved"
+    assert promoted.validation.validation_status == "shadow_passed"
+    assert "outputs/backtests/model_promotion.md" in promoted.validation.validation_refs
+
+    retirement = retire_rule_card(
+        input_path=promoted_path,
+        output_path=retired_path,
+        rule_id="candidate.position_gate.v2",
+        as_of=date(2026, 5, 5),
+        reason="superseded by stricter rule",
+    )
+    retired = lookup_rule_card(retired_path, "candidate.position_gate.v2")
+
+    assert retirement.validation_report.passed
+    assert retired.status == "retired"
+    assert retired.retired_at == date(2026, 5, 5)
+    manifest = build_rule_version_manifest(
+        validate_rule_card_store(
+            load_rule_card_store(retired_path),
+            as_of=date(2026, 5, 5),
+        ),
+        applies_to="score-daily",
+    )
+    assert "candidate.position_gate.v2" not in {
+        rule["rule_id"] for rule in manifest["rules"]
+    }
+
+
+def test_rule_card_promotion_requires_owner_and_outcome_refs(tmp_path: Path) -> None:
+    input_path = tmp_path / "rule_cards.yaml"
+    input_path.write_text(
+        "cards:\n"
+        + _card(
+            "candidate.position_gate.v2",
+            status="candidate",
+            approval_status="pending_approval",
+            validation_status="pending_validation",
+            production_since="",
+            linked_rule_experiment="rule_experiment:test_gate",
+        ),
+        encoding="utf-8",
+    )
+
+    try:
+        promote_rule_card(
+            input_path=input_path,
+            output_path=tmp_path / "out.yaml",
+            rule_id="candidate.position_gate.v2",
+            as_of=date(2026, 5, 4),
+            approved_by="",
+            approval_rationale="",
+            promotion_report_ref="",
+            outcome_refs=(),
+        )
+    except ValueError as exc:
+        assert "approved_by" in str(exc)
+    else:
+        raise AssertionError("promotion without owner approval should fail")
+
+
 def _card(
     rule_id: str,
     *,
@@ -120,6 +214,7 @@ def _card(
     approval_status: str = "baseline_recorded",
     validation_status: str = "baseline_tested",
     production_since: str = "2026-05-04",
+    linked_rule_experiment: str = "",
 ) -> str:
     production_line = f"    production_since: {production_since}\n" if production_since else ""
     return f"""  - rule_id: {rule_id}
@@ -134,7 +229,7 @@ def _card(
       - pyproject.toml
     description: 测试规则卡。
 {production_line}    retired_at:
-    linked_rule_experiment: ""
+    linked_rule_experiment: "{linked_rule_experiment}"
     approval:
       approval_status: {approval_status}
       approved_by: system_implementation

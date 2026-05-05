@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from dataclasses import replace
 from datetime import UTC, date, datetime, time, timedelta
@@ -212,7 +213,9 @@ from ai_trading_system.execution_policy import (
 )
 from ai_trading_system.feature_availability import (
     DEFAULT_FEATURE_AVAILABILITY_CONFIG_PATH,
+    FeatureAvailabilitySourceCheck,
     build_feature_availability_report,
+    build_feature_source_check,
     default_feature_availability_report_path,
     feature_availability_summary_record,
     render_feature_availability_section,
@@ -375,10 +378,18 @@ from ai_trading_system.prediction_ledger import (
     append_prediction_records,
     build_prediction_outcomes,
     build_prediction_record_from_decision_snapshot,
+    build_shadow_maturity_report,
+    build_shadow_prediction_records,
+    build_shadow_prediction_run_report,
     default_prediction_outcome_report_path,
+    default_shadow_maturity_report_path,
+    default_shadow_prediction_report_path,
     load_prediction_ledger,
+    load_prediction_outcomes,
     write_prediction_outcome_report,
     write_prediction_outcomes_csv,
+    write_shadow_maturity_report,
+    write_shadow_prediction_run_report,
 )
 from ai_trading_system.report_traceability import (
     build_backtest_trace_bundle,
@@ -422,6 +433,7 @@ from ai_trading_system.rule_experiments import (
     DEFAULT_RULE_EXPERIMENT_LEDGER_PATH,
     build_rule_experiment_ledger,
     default_rule_experiment_report_path,
+    load_rule_experiment_ledger,
     lookup_rule_experiment,
     render_rule_experiment_lookup,
     write_rule_experiment_ledger,
@@ -433,9 +445,12 @@ from ai_trading_system.rule_governance import (
     default_rule_governance_report_path,
     load_rule_card_store,
     lookup_rule_card,
+    promote_rule_card,
     render_rule_card_lookup,
+    retire_rule_card,
     validate_rule_card_store,
     write_rule_governance_report,
+    write_rule_lifecycle_action_report,
 )
 from ai_trading_system.scenario_library import (
     default_scenario_library_report_path,
@@ -1296,6 +1311,148 @@ def calibrate_prediction_outcomes(
     console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
 
 
+@feedback_app.command("run-shadow")
+def run_shadow_predictions_command(
+    rule_experiment_path: Annotated[
+        Path,
+        typer.Option(help="rule experiment ledger JSON 路径。"),
+    ] = DEFAULT_RULE_EXPERIMENT_LEDGER_PATH,
+    decision_snapshot_path: Annotated[
+        Path | None,
+        typer.Option(help="production decision_snapshot JSON 路径；不传时按 as-of 推导。"),
+    ] = None,
+    trace_bundle_path: Annotated[
+        Path | None,
+        typer.Option(help="production trace bundle JSON 路径；不传时从 snapshot.trace 推导。"),
+    ] = None,
+    features_path: Annotated[
+        Path | None,
+        typer.Option(help="特征快照 CSV 路径；不传时从 trace dataset_refs 推导。"),
+    ] = None,
+    data_quality_report_path: Annotated[
+        Path | None,
+        typer.Option(help="数据质量报告路径；不传时从 trace quality_refs 推导。"),
+    ] = None,
+    prediction_ledger_path: Annotated[
+        Path,
+        typer.Option(help="append-only prediction ledger CSV 输出路径。"),
+    ] = DEFAULT_PREDICTION_LEDGER_PATH,
+    candidate_ids: Annotated[
+        str | None,
+        typer.Option(help="可选：逗号分隔的 candidate_id 白名单。"),
+    ] = None,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="shadow 运行日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown shadow runner 报告输出路径。"),
+    ] = None,
+) -> None:
+    """把 rule experiment challenger 追加到 prediction ledger，production_effect=none。"""
+    run_date = _parse_date(as_of) if as_of else date.today()
+    snapshot_path = decision_snapshot_path or default_decision_snapshot_path(
+        DEFAULT_DECISION_SNAPSHOT_DIR,
+        run_date,
+    )
+    if not snapshot_path.exists():
+        raise typer.BadParameter(f"decision_snapshot 不存在：{snapshot_path}")
+    snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    trace_path = trace_bundle_path or _path_from_snapshot_trace(snapshot)
+    if trace_path is None or not trace_path.exists():
+        raise typer.BadParameter(f"trace bundle 不存在：{trace_path}")
+    trace_bundle = json.loads(trace_path.read_text(encoding="utf-8"))
+    feature_snapshot_path = features_path or _trace_dataset_path(
+        trace_bundle,
+        "processed_feature_cache",
+    )
+    if feature_snapshot_path is None:
+        raise typer.BadParameter("无法从 trace bundle 推导 feature snapshot 路径。")
+    quality_path = data_quality_report_path or _trace_quality_report_path(trace_bundle)
+    if quality_path is None:
+        raise typer.BadParameter("无法从 trace bundle 推导 data quality report 路径。")
+    try:
+        rule_experiment_ledger = load_rule_experiment_ledger(rule_experiment_path)
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(f"rule experiment ledger 不存在：{rule_experiment_path}") from exc
+    selected = tuple(_parse_csv_items(candidate_ids)) if candidate_ids else ()
+    records = build_shadow_prediction_records(
+        snapshot=snapshot,
+        trace_bundle=trace_bundle,
+        trace_bundle_path=trace_path,
+        features_path=feature_snapshot_path,
+        data_quality_report_path=quality_path,
+        rule_experiment_ledger=rule_experiment_ledger,
+        as_of=run_date,
+        selected_candidate_ids=selected,
+    )
+    ledger_output = append_prediction_records(records, prediction_ledger_path)
+    report = build_shadow_prediction_run_report(
+        as_of=run_date,
+        decision_snapshot_path=snapshot_path,
+        trace_bundle_path=trace_path,
+        rule_experiment_path=rule_experiment_path,
+        prediction_ledger_path=ledger_output,
+        records=records,
+        candidate_count=len(rule_experiment_ledger.get("candidates", [])),
+        warnings=(
+            ("没有可运行的 challenger；请检查 forward_shadow_plan 状态和日期窗口。",)
+            if not records
+            else ()
+        ),
+    )
+    output_report = report_path or default_shadow_prediction_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        run_date,
+    )
+    output_report = write_shadow_prediction_run_report(report, output_report)
+    style = "green" if report.status == "PASS" else "yellow"
+    console.print(f"[{style}]Shadow runner 状态：{report.status}[/{style}]")
+    console.print(f"写入 prediction：{report.appended_count}")
+    console.print(f"Prediction ledger：{ledger_output}")
+    console.print(f"Shadow runner 报告：{output_report}")
+
+
+@feedback_app.command("shadow-maturity")
+def shadow_maturity_command(
+    prediction_outcomes_path: Annotated[
+        Path,
+        typer.Option(help="prediction_outcomes CSV 路径。"),
+    ] = DEFAULT_PREDICTION_OUTCOMES_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="成熟度评估日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    min_available_samples: Annotated[
+        int,
+        typer.Option(help="进入 owner/rule card 审批前所需最低可用 outcome 样本数。"),
+    ] = 30,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown shadow maturity 报告输出路径。"),
+    ] = None,
+) -> None:
+    """按 candidate/horizon 汇总 forward shadow outcome 样本成熟度。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    rows = load_prediction_outcomes(prediction_outcomes_path)
+    report = build_shadow_maturity_report(
+        outcome_rows=rows,
+        outcomes_path=prediction_outcomes_path,
+        as_of=report_date,
+        min_available_samples=min_available_samples,
+    )
+    report_output = output_path or default_shadow_maturity_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        report_date,
+    )
+    report_output = write_shadow_maturity_report(report, report_output)
+    style = "green" if report.status == "PASS" else "yellow"
+    console.print(f"[{style}]Shadow 样本成熟度：{report.status}[/{style}]")
+    console.print(f"分组数：{len(report.groups)}")
+    console.print(f"报告：{report_output}")
+
+
 @feedback_app.command("build-causal-chain")
 def build_decision_causal_chains_command(
     decision_snapshot_path: Annotated[
@@ -1589,6 +1746,159 @@ def lookup_rule_card_command(
     console.print(render_rule_card_lookup(card))
 
 
+@feedback_app.command("promote-rule-card")
+def promote_rule_card_command(
+    rule_id: Annotated[
+        str,
+        typer.Option("--id", help="candidate rule card id。"),
+    ],
+    input_path: Annotated[
+        Path,
+        typer.Option(help="rule cards YAML 输入路径。"),
+    ] = DEFAULT_RULE_CARDS_PATH,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="rule cards YAML 输出路径；不传则覆盖输入路径。"),
+    ] = None,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="批准日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    approved_by: Annotated[
+        str,
+        typer.Option(help="owner / reviewer 标识。"),
+    ] = "",
+    approval_rationale: Annotated[
+        str,
+        typer.Option(help="owner 批准理由。"),
+    ] = "",
+    promotion_report_ref: Annotated[
+        str,
+        typer.Option(help="model promotion report 或等价审计引用。"),
+    ] = "",
+    outcome_refs: Annotated[
+        str,
+        typer.Option(help="逗号分隔的 prediction outcome / shadow maturity 引用。"),
+    ] = "",
+    production_since: Annotated[
+        str | None,
+        typer.Option(help="production rule 生效日期，格式为 YYYY-MM-DD；默认 as-of。"),
+    ] = None,
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 生命周期操作报告输出路径。"),
+    ] = None,
+) -> None:
+    """把已批准 candidate rule card 受控升级为 production。"""
+    promotion_date = _parse_date(as_of) if as_of else date.today()
+    output = output_path or input_path
+    try:
+        report = promote_rule_card(
+            input_path=input_path,
+            output_path=output,
+            rule_id=rule_id,
+            as_of=promotion_date,
+            approved_by=approved_by,
+            approval_rationale=approval_rationale,
+            promotion_report_ref=promotion_report_ref,
+            outcome_refs=tuple(_parse_csv_items(outcome_refs)),
+            production_since=_parse_date(production_since) if production_since else None,
+        )
+    except (KeyError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    lifecycle_report_path = report_path or (
+        PROJECT_ROOT
+        / "outputs"
+        / "reports"
+        / f"rule_lifecycle_promote_{promotion_date.isoformat()}.md"
+    )
+    lifecycle_report_path = write_rule_lifecycle_action_report(
+        report,
+        lifecycle_report_path,
+    )
+    style = (
+        "green"
+        if report.status == "PASS"
+        else "yellow"
+        if report.validation_report.passed
+        else "red"
+    )
+    console.print(f"[{style}]Rule promotion 状态：{report.status}[/{style}]")
+    console.print(f"Rule cards：{report.output_path}")
+    console.print(f"操作报告：{lifecycle_report_path}")
+    if not report.validation_report.passed:
+        raise typer.Exit(code=1)
+
+
+@feedback_app.command("retire-rule-card")
+def retire_rule_card_command(
+    rule_id: Annotated[
+        str,
+        typer.Option("--id", help="production rule card id。"),
+    ],
+    input_path: Annotated[
+        Path,
+        typer.Option(help="rule cards YAML 输入路径。"),
+    ] = DEFAULT_RULE_CARDS_PATH,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="rule cards YAML 输出路径；不传则覆盖输入路径。"),
+    ] = None,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="操作日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    retired_at: Annotated[
+        str | None,
+        typer.Option(help="退役生效日期，格式为 YYYY-MM-DD；默认 as-of。"),
+    ] = None,
+    reason: Annotated[
+        str,
+        typer.Option(help="退役原因。"),
+    ] = "",
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 生命周期操作报告输出路径。"),
+    ] = None,
+) -> None:
+    """把 production rule card 标记为 retired。"""
+    action_date = _parse_date(as_of) if as_of else date.today()
+    output = output_path or input_path
+    try:
+        report = retire_rule_card(
+            input_path=input_path,
+            output_path=output,
+            rule_id=rule_id,
+            as_of=action_date,
+            retired_at=_parse_date(retired_at) if retired_at else None,
+            reason=reason,
+        )
+    except (KeyError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    lifecycle_report_path = report_path or (
+        PROJECT_ROOT
+        / "outputs"
+        / "reports"
+        / f"rule_lifecycle_retire_{action_date.isoformat()}.md"
+    )
+    lifecycle_report_path = write_rule_lifecycle_action_report(
+        report,
+        lifecycle_report_path,
+    )
+    style = (
+        "green"
+        if report.status == "PASS"
+        else "yellow"
+        if report.validation_report.passed
+        else "red"
+    )
+    console.print(f"[{style}]Rule retirement 状态：{report.status}[/{style}]")
+    console.print(f"Rule cards：{report.output_path}")
+    console.print(f"操作报告：{lifecycle_report_path}")
+    if not report.validation_report.passed:
+        raise typer.Exit(code=1)
+
+
 @feedback_app.command("validate-benchmark-policy")
 def validate_benchmark_policy_command(
     input_path: Annotated[
@@ -1676,6 +1986,10 @@ def feedback_loop_review_command(
         Path,
         typer.Option(help="decision_outcomes CSV 路径。"),
     ] = DEFAULT_DECISION_OUTCOMES_PATH,
+    prediction_outcomes_path: Annotated[
+        Path,
+        typer.Option(help="prediction_outcomes CSV 路径，用于 production vs challenger 复核。"),
+    ] = DEFAULT_PREDICTION_OUTCOMES_PATH,
     causal_chain_path: Annotated[
         Path,
         typer.Option(help="decision_causal_chain ledger JSON 路径。"),
@@ -1714,6 +2028,7 @@ def feedback_loop_review_command(
         evidence_path=evidence_path,
         decision_snapshot_path=decision_snapshot_path,
         outcomes_path=outcomes_path,
+        prediction_outcomes_path=prediction_outcomes_path,
         causal_chain_path=causal_chain_path,
         learning_queue_path=learning_queue_path,
         rule_experiment_path=rule_experiment_path,
@@ -2419,6 +2734,8 @@ def backtest(
         )
         raise typer.Exit(code=1)
 
+    prices_frame = pd.read_csv(prices_path)
+    rates_frame = pd.read_csv(rates_path)
     backtest_feature_availability_report = build_feature_availability_report(
         input_path=feature_availability_path,
         as_of=quality_date,
@@ -2437,6 +2754,13 @@ def backtest(
             "sec_fundamental_features",
             "valuation_snapshots",
             "risk_event_occurrences",
+        ),
+        source_checks=_market_feature_source_checks(
+            prices_frame=prices_frame,
+            rates_frame=rates_frame,
+            prices_path=prices_path,
+            rates_path=rates_path,
+            decision_time=quality_date,
         ),
     )
     write_feature_availability_report(
@@ -3803,6 +4127,10 @@ def investment_periodic_review_command(
         Path,
         typer.Option(help="decision_outcomes.csv 路径。"),
     ] = DEFAULT_DECISION_OUTCOMES_PATH,
+    prediction_outcomes_path: Annotated[
+        Path,
+        typer.Option(help="prediction_outcomes.csv 路径，用于 production vs challenger 复盘。"),
+    ] = DEFAULT_PREDICTION_OUTCOMES_PATH,
     learning_queue_path: Annotated[
         Path,
         typer.Option(help="decision learning queue JSON 路径。"),
@@ -3833,6 +4161,7 @@ def investment_periodic_review_command(
         scores_path=scores_path,
         decision_snapshot_path=decision_snapshot_path,
         outcomes_path=outcomes_path,
+        prediction_outcomes_path=prediction_outcomes_path,
         learning_queue_path=learning_queue_path,
         rule_experiment_path=rule_experiment_path,
     )
@@ -6847,9 +7176,11 @@ def build_features(
         )
         raise typer.Exit(code=1)
 
+    prices_frame = pd.read_csv(prices_path)
+    rates_frame = pd.read_csv(rates_path)
     feature_set = build_market_features(
-        prices=pd.read_csv(prices_path),
-        rates=pd.read_csv(rates_path),
+        prices=prices_frame,
+        rates=rates_frame,
         config=feature_config,
         as_of=feature_date,
         core_watchlist=universe.ai_chain.get("core_watchlist", []),
@@ -6859,6 +7190,13 @@ def build_features(
         as_of=feature_date,
         observed_sources=tuple(sorted({row.source for row in feature_set.rows})),
         required_sources=("prices_daily", "rates_daily"),
+        source_checks=_market_feature_source_checks(
+            prices_frame=prices_frame,
+            rates_frame=rates_frame,
+            prices_path=prices_path,
+            rates_path=rates_path,
+            decision_time=feature_date,
+        ),
     )
     write_feature_availability_report(
         feature_availability_report,
@@ -7323,6 +7661,13 @@ def score_daily(
             "sec_fundamental_features",
             "valuation_snapshots",
             "risk_event_occurrences",
+        ),
+        source_checks=_market_feature_source_checks(
+            prices_frame=prices_frame,
+            rates_frame=rates_frame,
+            prices_path=prices_path,
+            rates_path=rates_path,
+            decision_time=score_date,
         ),
     )
     write_feature_availability_report(
@@ -8175,6 +8520,78 @@ def _requires_marketstack_prices(prices_path: Path) -> bool:
         return prices_path.resolve() == default_prices_path.resolve()
     except OSError:
         return prices_path == default_prices_path
+
+
+def _market_feature_source_checks(
+    *,
+    prices_frame: pd.DataFrame,
+    rates_frame: pd.DataFrame,
+    prices_path: Path,
+    rates_path: Path,
+    decision_time: date,
+) -> tuple[FeatureAvailabilitySourceCheck, ...]:
+    return (
+        build_feature_source_check(
+            source="prices_daily",
+            frame=prices_frame,
+            decision_time=decision_time,
+            input_path=prices_path,
+            event_time_columns=("date",),
+            available_time_columns=(
+                "available_time",
+                "vendor_available_at",
+                "ingested_at",
+                "downloaded_at",
+            ),
+            fallback_policy="download_manifest.downloaded_at；若缺失则按下一交易日可用保守处理",
+        ),
+        build_feature_source_check(
+            source="rates_daily",
+            frame=rates_frame,
+            decision_time=decision_time,
+            input_path=rates_path,
+            event_time_columns=("date",),
+            available_time_columns=(
+                "available_time",
+                "vendor_available_at",
+                "ingested_at",
+                "downloaded_at",
+            ),
+            fallback_policy="download_manifest.downloaded_at；若缺失则按下一交易日可用保守处理",
+        ),
+    )
+
+
+def _path_from_snapshot_trace(snapshot: dict[str, object]) -> Path | None:
+    trace = snapshot.get("trace")
+    if not isinstance(trace, dict):
+        return None
+    path_text = trace.get("trace_bundle_path")
+    return Path(str(path_text)) if path_text else None
+
+
+def _trace_dataset_path(trace_bundle: dict[str, object], dataset_type: str) -> Path | None:
+    dataset_refs = trace_bundle.get("dataset_refs")
+    if not isinstance(dataset_refs, list):
+        return None
+    for dataset in dataset_refs:
+        if not isinstance(dataset, dict):
+            continue
+        if dataset.get("dataset_type") == dataset_type and dataset.get("path"):
+            return Path(str(dataset["path"]))
+    return None
+
+
+def _trace_quality_report_path(trace_bundle: dict[str, object]) -> Path | None:
+    quality_refs = trace_bundle.get("quality_refs")
+    if not isinstance(quality_refs, list):
+        return None
+    for quality in quality_refs:
+        if not isinstance(quality, dict):
+            continue
+        if quality.get("report_path"):
+            return Path(str(quality["report_path"]))
+    return None
 
 
 def _backtest_signal_dates(

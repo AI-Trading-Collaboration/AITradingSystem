@@ -13,6 +13,11 @@ from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.decision_learning_queue import DEFAULT_DECISION_LEARNING_QUEUE_PATH
 from ai_trading_system.decision_outcomes import DEFAULT_DECISION_OUTCOMES_PATH
 from ai_trading_system.decision_snapshots import DEFAULT_DECISION_SNAPSHOT_DIR
+from ai_trading_system.prediction_ledger import (
+    DEFAULT_PREDICTION_OUTCOMES_PATH,
+    build_shadow_maturity_report,
+    load_prediction_outcomes,
+)
 from ai_trading_system.rule_experiments import DEFAULT_RULE_EXPERIMENT_LEDGER_PATH
 
 DEFAULT_PERIODIC_INVESTMENT_REVIEW_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
@@ -30,6 +35,7 @@ class PeriodicInvestmentReviewReport:
     snapshots: tuple[dict[str, Any], ...]
     belief_states: tuple[dict[str, Any], ...]
     outcome_summary: dict[str, Any]
+    prediction_outcome_summary: dict[str, Any]
     learning_summary: dict[str, Any]
     rule_experiment_summary: dict[str, Any]
     warnings: tuple[str, ...]
@@ -58,6 +64,7 @@ def build_periodic_investment_review_report(
     scores_path: Path = DEFAULT_SCORES_DAILY_PATH,
     decision_snapshot_path: Path = DEFAULT_DECISION_SNAPSHOT_DIR,
     outcomes_path: Path = DEFAULT_DECISION_OUTCOMES_PATH,
+    prediction_outcomes_path: Path = DEFAULT_PREDICTION_OUTCOMES_PATH,
     learning_queue_path: Path = DEFAULT_DECISION_LEARNING_QUEUE_PATH,
     rule_experiment_path: Path = DEFAULT_RULE_EXPERIMENT_LEDGER_PATH,
 ) -> PeriodicInvestmentReviewReport:
@@ -80,6 +87,12 @@ def build_periodic_investment_review_report(
         snapshots=tuple(snapshots),
         belief_states=tuple(belief_states),
         outcome_summary=_outcome_summary(outcomes_path, since, as_of, warnings),
+        prediction_outcome_summary=_prediction_outcome_summary(
+            prediction_outcomes_path,
+            since,
+            as_of,
+            warnings,
+        ),
         learning_summary=_learning_summary(learning_queue_path, since, as_of, warnings),
         rule_experiment_summary=_rule_experiment_summary(rule_experiment_path, warnings),
         warnings=tuple(warnings),
@@ -124,6 +137,10 @@ def render_periodic_investment_review_report(
         "## 系统判断是否被市场验证",
         "",
         *(_outcome_lines(report)),
+        "",
+        "## Production vs Challenger Shadow",
+        "",
+        *(_prediction_outcome_lines(report)),
     ]
     if report.period == "weekly":
         lines.extend(
@@ -270,6 +287,40 @@ def _outcome_summary(
             available,
             "ai_proxy_max_drawdown",
         ),
+    }
+
+
+def _prediction_outcome_summary(
+    path: Path,
+    since: date,
+    as_of: date,
+    warnings: list[str],
+) -> dict[str, Any]:
+    if not path.exists():
+        warnings.append(f"prediction outcomes 不存在：{path}")
+        return {"total": 0, "available": 0, "pending": 0, "missing": 0, "groups": []}
+    rows = list(load_prediction_outcomes(path))
+    filtered: list[dict[str, Any]] = []
+    for row in rows:
+        decision_date_text = str(row.get("decision_date") or "")
+        if decision_date_text:
+            decision_date = date.fromisoformat(decision_date_text[:10])
+            if not (since <= decision_date <= as_of):
+                continue
+        filtered.append(row)
+    status_values = [row.get("outcome_status") for row in filtered]
+    maturity = build_shadow_maturity_report(
+        outcome_rows=tuple(filtered),
+        outcomes_path=path,
+        as_of=as_of,
+        min_available_samples=30,
+    )
+    return {
+        "total": len(filtered),
+        "available": sum(value == "AVAILABLE" for value in status_values),
+        "pending": sum(value == "PENDING" for value in status_values),
+        "missing": sum(value == "MISSING_DATA" for value in status_values),
+        "groups": list(maturity.groups),
     }
 
 
@@ -426,9 +477,51 @@ def _outcome_lines(report: PeriodicInvestmentReviewReport) -> list[str]:
     ]
 
 
+def _prediction_outcome_lines(report: PeriodicInvestmentReviewReport) -> list[str]:
+    summary = report.prediction_outcome_summary
+    lines = [
+        (
+            "- Prediction outcome 覆盖："
+            f"total={summary['total']}，available={summary['available']}，"
+            f"pending={summary['pending']}，missing={summary['missing']}。"
+        )
+    ]
+    groups = summary.get("groups", [])
+    if not groups:
+        lines.append("- 暂无 production/challenger prediction outcome，不能判断候选规则晋级价值。")
+        return lines
+    lines.extend(
+        [
+            (
+                "| Candidate | Horizon | Production Effect | Maturity | Available | Pending | "
+                "Missing | Avg Return | Avg MDD |"
+            ),
+            "|---|---|---|---|---:|---:|---:|---:|---:|",
+        ]
+    )
+    for group in groups:
+        lines.append(
+            "| "
+            f"`{group['candidate_id']}` | "
+            f"{group['horizon_days']} | "
+            f"{group['production_effect']} | "
+            f"{group['maturity_status']} | "
+            f"{group['available_count']} | "
+            f"{group['pending_count']} | "
+            f"{group['missing_count']} | "
+            f"{_format_optional_pct(group['average_ai_proxy_return'])} | "
+            f"{_format_optional_pct(group['average_ai_proxy_max_drawdown'])} |"
+        )
+    lines.append(
+        "- `READY_FOR_SHADOW` 或 `MISSING` 只允许继续观察，不能作为 production rule 批准证据。"
+    )
+    return lines
+
+
 def _monthly_learning_lines(report: PeriodicInvestmentReviewReport) -> list[str]:
     learning = report.learning_summary
     experiments = report.rule_experiment_summary
+    prediction = report.prediction_outcome_summary
     return [
         (
             "- Learning queue："
@@ -439,6 +532,11 @@ def _monthly_learning_lines(report: PeriodicInvestmentReviewReport) -> list[str]
             "- Rule experiments："
             f"total={experiments['total']}，pending replay={experiments['pending_replay']}，"
             f"pending shadow={experiments['pending_shadow']}。"
+        ),
+        (
+            "- Prediction shadow："
+            f"available={prediction['available']}，pending={prediction['pending']}，"
+            f"missing={prediction['missing']}。"
         ),
         "- 高分信号、gate 松紧和 thesis warning 提前量仍需结合 outcome 样本数解释，"
         "不能由单月报告自动改 production 规则。",
