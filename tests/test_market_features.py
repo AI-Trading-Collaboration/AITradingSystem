@@ -123,6 +123,7 @@ def test_build_features_cli_enforces_quality_gate_and_writes_outputs(tmp_path: P
     rates_path = tmp_path / "rates_daily.csv"
     features_path = tmp_path / "features_daily.csv"
     feature_report_path = tmp_path / "feature_summary.md"
+    feature_availability_report_path = tmp_path / "feature_availability.md"
     quality_report_path = tmp_path / "quality.md"
     _sample_prices(tickers, periods=260).to_csv(prices_path, index=False)
     _sample_rates(rate_series, periods=260).to_csv(rates_path, index=False)
@@ -143,13 +144,17 @@ def test_build_features_cli_enforces_quality_gate_and_writes_outputs(tmp_path: P
             str(feature_report_path),
             "--quality-report-path",
             str(quality_report_path),
+            "--feature-availability-report-path",
+            str(feature_availability_report_path),
         ],
     )
 
     assert result.exit_code == 0
     assert features_path.exists()
     assert feature_report_path.exists()
+    assert feature_availability_report_path.exists()
     assert quality_report_path.exists()
+    assert "## PIT 特征可见时间" in feature_report_path.read_text(encoding="utf-8")
     assert "特征构建状态：PASS" in result.output
 
 

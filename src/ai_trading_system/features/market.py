@@ -120,6 +120,7 @@ def render_feature_summary(
     data_quality_report: DataQualityReport,
     data_quality_report_path: Path,
     features_path: Path,
+    feature_availability_section: str | None = None,
 ) -> str:
     rows_by_category = _count_by([row.category for row in feature_set.rows])
     lines = [
@@ -139,6 +140,9 @@ def render_feature_summary(
 
     for category, count in rows_by_category.items():
         lines.append(f"- {_category_label(category)}：{count}")
+
+    if feature_availability_section is not None:
+        lines.extend(["", feature_availability_section.rstrip()])
 
     lines.extend(["", "## 警告", ""])
     if not feature_set.warnings:
@@ -170,6 +174,7 @@ def write_feature_summary(
     data_quality_report_path: Path,
     features_path: Path,
     output_path: Path,
+    feature_availability_section: str | None = None,
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
@@ -178,6 +183,7 @@ def write_feature_summary(
             data_quality_report=data_quality_report,
             data_quality_report_path=data_quality_report_path,
             features_path=features_path,
+            feature_availability_section=feature_availability_section,
         ),
         encoding="utf-8",
     )

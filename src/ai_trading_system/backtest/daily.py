@@ -932,6 +932,8 @@ def render_backtest_report(
     sec_companyfacts_validation_report_path: Path | None = None,
     input_coverage_output_path: Path | None = None,
     audit_report_path: Path | None = None,
+    feature_availability_section: str | None = None,
+    promotion_gate_section: str | None = None,
     traceability_section: str | None = None,
 ) -> str:
     lines = [
@@ -1094,6 +1096,8 @@ def render_backtest_report(
             ]
         )
     lines.extend(_data_quality_gate_summary_lines(result.data_quality_report))
+    if feature_availability_section is not None:
+        lines.extend(["", feature_availability_section.rstrip()])
 
     component_coverage_rows = _component_coverage_summary_rows(result)
     if component_coverage_rows:
@@ -1283,6 +1287,9 @@ def render_backtest_report(
             ]
         )
 
+    if promotion_gate_section is not None:
+        lines.extend(["", promotion_gate_section.rstrip()])
+
     if traceability_section is not None:
         lines.append(traceability_section)
 
@@ -1321,6 +1328,8 @@ def write_backtest_report(
     sec_companyfacts_validation_report_path: Path | None = None,
     input_coverage_output_path: Path | None = None,
     audit_report_path: Path | None = None,
+    feature_availability_section: str | None = None,
+    promotion_gate_section: str | None = None,
     traceability_section: str | None = None,
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1332,6 +1341,8 @@ def write_backtest_report(
             sec_companyfacts_validation_report_path=sec_companyfacts_validation_report_path,
             input_coverage_output_path=input_coverage_output_path,
             audit_report_path=audit_report_path,
+            feature_availability_section=feature_availability_section,
+            promotion_gate_section=promotion_gate_section,
             traceability_section=traceability_section,
         ),
         encoding="utf-8",

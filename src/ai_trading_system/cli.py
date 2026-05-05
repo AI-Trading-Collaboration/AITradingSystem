@@ -54,6 +54,14 @@ from ai_trading_system.backtest.pit_coverage import (
     default_backtest_pit_coverage_report_path,
     write_backtest_pit_coverage_report,
 )
+from ai_trading_system.backtest.promotion_gate import (
+    build_model_promotion_report,
+    default_model_promotion_report_path,
+    default_model_promotion_summary_path,
+    render_model_promotion_report,
+    write_model_promotion_report,
+    write_model_promotion_summary,
+)
 from ai_trading_system.backtest.robustness import (
     BacktestRobustnessReport,
     BacktestRobustnessScenario,
@@ -201,6 +209,14 @@ from ai_trading_system.execution_policy import (
     render_execution_advisory_section,
     validate_execution_policy,
     write_execution_policy_report,
+)
+from ai_trading_system.feature_availability import (
+    DEFAULT_FEATURE_AVAILABILITY_CONFIG_PATH,
+    build_feature_availability_report,
+    default_feature_availability_report_path,
+    feature_availability_summary_record,
+    render_feature_availability_section,
+    write_feature_availability_report,
 )
 from ai_trading_system.features.market import (
     build_market_features,
@@ -352,6 +368,17 @@ from ai_trading_system.portfolio_exposure import (
     default_portfolio_exposure_report_path,
     render_portfolio_exposure_section,
     write_portfolio_exposure_report,
+)
+from ai_trading_system.prediction_ledger import (
+    DEFAULT_PREDICTION_LEDGER_PATH,
+    DEFAULT_PREDICTION_OUTCOMES_PATH,
+    append_prediction_records,
+    build_prediction_outcomes,
+    build_prediction_record_from_decision_snapshot,
+    default_prediction_outcome_report_path,
+    load_prediction_ledger,
+    write_prediction_outcome_report,
+    write_prediction_outcomes_csv,
 )
 from ai_trading_system.report_traceability import (
     build_backtest_trace_bundle,
@@ -1142,6 +1169,131 @@ def calibrate_decision_outcomes(
     console.print(f"基准政策状态：{benchmark_policy_report.status}")
     if benchmark_policy_report_path is not None:
         console.print(f"基准政策报告：{benchmark_policy_report_path}")
+
+
+@feedback_app.command("calibrate-predictions")
+def calibrate_prediction_outcomes(
+    prediction_ledger_path: Annotated[
+        Path,
+        typer.Option(help="prediction/shadow ledger CSV 路径。"),
+    ] = DEFAULT_PREDICTION_LEDGER_PATH,
+    prices_path: Annotated[
+        Path,
+        typer.Option(help="标准化日线价格 CSV 路径。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    rates_path: Annotated[
+        Path,
+        typer.Option(help="标准化日线利率 CSV 路径，用于复用数据质量门禁。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="校准截止日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    horizons: Annotated[
+        str,
+        typer.Option(help="逗号分隔的 prediction outcome 观察窗口，单位为交易日。"),
+    ] = ",".join(str(item) for item in DEFAULT_OUTCOME_HORIZONS),
+    strategy_ticker: Annotated[
+        str,
+        typer.Option(help="AI proxy 或策略代理标的。"),
+    ] = "SMH",
+    benchmarks: Annotated[
+        str,
+        typer.Option(help="逗号分隔的对比基准 ticker。"),
+    ] = ",".join(DEFAULT_BENCHMARK_TICKERS),
+    outcomes_path: Annotated[
+        Path,
+        typer.Option(help="prediction_outcomes CSV 输出路径。"),
+    ] = DEFAULT_PREDICTION_OUTCOMES_PATH,
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown prediction outcome 报告输出路径。"),
+    ] = None,
+    quality_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 数据质量报告输出路径。"),
+    ] = None,
+) -> None:
+    """从 prediction/shadow ledger 生成前向 outcome 和模型版本分桶报告。"""
+    calibration_date = _parse_date(as_of) if as_of else date.today()
+    horizon_values = _parse_positive_int_csv(horizons, "prediction outcome 观察窗口")
+    benchmark_tickers = tuple(_parse_csv_items(benchmarks))
+    if not benchmark_tickers:
+        raise typer.BadParameter("至少需要一个对比基准 ticker。")
+    prediction_rows = load_prediction_ledger(prediction_ledger_path)
+    if not prediction_rows:
+        raise typer.BadParameter(f"未找到 prediction ledger：{prediction_ledger_path}")
+    tickers = list(dict.fromkeys([strategy_ticker, *benchmark_tickers]))
+    universe = load_universe()
+    data_quality_config = load_data_quality()
+    quality_output = quality_report_path or default_quality_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        calibration_date,
+    )
+    data_quality_report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=tickers,
+        expected_rate_series=configured_rate_series(universe),
+        quality_config=data_quality_config,
+        as_of=calibration_date,
+        manifest_path=_download_manifest_path(prices_path),
+        secondary_prices_path=_marketstack_prices_path(prices_path),
+        require_secondary_prices=_requires_marketstack_prices(prices_path),
+    )
+    write_data_quality_report(data_quality_report, quality_output)
+    if not data_quality_report.passed:
+        console.print("[red]数据质量门禁失败，已停止 prediction outcome 校准。[/red]")
+        console.print(f"数据质量报告：{quality_output}")
+        console.print(
+            f"错误数：{data_quality_report.error_count}；"
+            f"警告数：{data_quality_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+
+    market_regimes = load_market_regimes(DEFAULT_MARKET_REGIMES_CONFIG_PATH)
+    default_market_regime = market_regime_by_id(
+        market_regimes,
+        market_regimes.default_backtest_regime,
+    )
+    market_regime = BacktestRegimeContext(
+        regime_id=default_market_regime.regime_id,
+        name=default_market_regime.name,
+        start_date=default_market_regime.start_date,
+        anchor_date=default_market_regime.anchor_date,
+        anchor_event=default_market_regime.anchor_event,
+        description=default_market_regime.description,
+    )
+    result = build_prediction_outcomes(
+        prediction_rows=prediction_rows,
+        prices=pd.read_csv(prices_path),
+        as_of=calibration_date,
+        horizons=tuple(horizon_values),
+        strategy_ticker=strategy_ticker,
+        benchmark_tickers=benchmark_tickers,
+        market_regime=market_regime,
+        data_quality_report=data_quality_report,
+    )
+    outcomes_output = write_prediction_outcomes_csv(result, outcomes_path)
+    report_output = report_path or default_prediction_outcome_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        calibration_date,
+    )
+    report_output = write_prediction_outcome_report(
+        result,
+        outcomes_path=outcomes_output,
+        data_quality_report_path=quality_output,
+        output_path=report_output,
+    )
+
+    status_style = "green" if len(result.available_rows) >= 30 else "yellow"
+    console.print(
+        f"[{status_style}]Prediction outcome 校准完成。可用 outcome："
+        f"{len(result.available_rows)}[/{status_style}]"
+    )
+    console.print(f"Prediction outcome 报告：{report_output}")
+    console.print(f"Prediction outcome CSV：{outcomes_output}")
+    console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
 
 
 @feedback_app.command("build-causal-chain")
@@ -1943,6 +2095,33 @@ def backtest(
         str,
         typer.Option(help="逗号分隔的 feature/universe 滞后交易日列表。"),
     ] = "0,1,3,5,10,20",
+    feature_availability_path: Annotated[
+        Path,
+        typer.Option(help="PIT feature availability catalog YAML 路径。"),
+    ] = DEFAULT_FEATURE_AVAILABILITY_CONFIG_PATH,
+    feature_availability_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown PIT 特征可见时间报告输出路径。"),
+    ] = None,
+    promotion_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 模型晋级门槛报告输出路径。"),
+    ] = None,
+    promotion_summary_path: Annotated[
+        Path | None,
+        typer.Option(help="机器可读模型晋级门槛 JSON 摘要输出路径。"),
+    ] = None,
+    promotion_report: Annotated[
+        bool,
+        typer.Option(
+            "--promotion-report",
+            help="按默认 outputs/backtests 路径生成模型晋级门槛报告。",
+        ),
+    ] = False,
+    promotion_prediction_outcomes_path: Annotated[
+        Path,
+        typer.Option(help="prediction/shadow outcome CSV，用于模型晋级门槛评估。"),
+    ] = DEFAULT_PREDICTION_OUTCOMES_PATH,
     quality_report_path: Annotated[
         Path | None,
         typer.Option(help="Markdown 数据质量报告输出路径。"),
@@ -2038,16 +2217,24 @@ def backtest(
     if not 0 < robustness_oos_split_ratio < 1:
         raise typer.BadParameter("样本外验证 in-sample 切分比例必须大于 0 且小于 1。")
     lag_days = _parse_backtest_lag_days(lag_sensitivity_days)
+    should_run_promotion = (
+        promotion_report
+        or promotion_report_path is not None
+        or promotion_summary_path is not None
+    )
+    should_write_promotion_markdown = promotion_report or promotion_report_path is not None
     should_run_robustness = (
         robustness_report
         or robustness_report_path is not None
         or robustness_summary_path is not None
+        or should_run_promotion
     )
     should_write_robustness_markdown = robustness_report or robustness_report_path is not None
     should_run_lag_sensitivity = (
         lag_sensitivity_report
         or lag_sensitivity_report_path is not None
         or lag_sensitivity_summary_path is not None
+        or should_run_promotion
     )
     should_write_lag_sensitivity_markdown = (
         lag_sensitivity_report or lag_sensitivity_report_path is not None
@@ -2150,6 +2337,33 @@ def backtest(
             )
         )
     )
+    backtest_feature_availability_output = (
+        feature_availability_report_path
+        or default_feature_availability_report_path(
+            PROJECT_ROOT / "outputs" / "backtests",
+            quality_date,
+        )
+    )
+    backtest_promotion_output = (
+        promotion_report_path
+        or default_model_promotion_report_path(
+            PROJECT_ROOT / "outputs" / "backtests",
+            start_date,
+            end_date,
+        )
+    )
+    backtest_promotion_summary_output = (
+        promotion_summary_path
+        or (
+            backtest_promotion_output.with_suffix(".json")
+            if promotion_report or promotion_report_path is not None
+            else default_model_promotion_summary_path(
+                PROJECT_ROOT / "outputs" / "backtests",
+                start_date,
+                end_date,
+            )
+        )
+    )
     backtest_audit_output = audit_output_path or default_backtest_audit_report_path(
         PROJECT_ROOT / "outputs" / "backtests",
         start_date,
@@ -2204,6 +2418,43 @@ def backtest(
             f"警告数：{data_quality_report.warning_count}"
         )
         raise typer.Exit(code=1)
+
+    backtest_feature_availability_report = build_feature_availability_report(
+        input_path=feature_availability_path,
+        as_of=quality_date,
+        observed_sources=(
+            "prices_daily",
+            "rates_daily",
+            "watchlist_lifecycle",
+            "sec_fundamental_features",
+            "valuation_snapshots",
+            "risk_event_occurrences",
+        ),
+        required_sources=(
+            "prices_daily",
+            "rates_daily",
+            "watchlist_lifecycle",
+            "sec_fundamental_features",
+            "valuation_snapshots",
+            "risk_event_occurrences",
+        ),
+    )
+    write_feature_availability_report(
+        backtest_feature_availability_report,
+        backtest_feature_availability_output,
+    )
+    if not backtest_feature_availability_report.passed:
+        console.print("[red]PIT 特征可见时间校验失败，已停止回测。[/red]")
+        console.print(f"PIT 特征可见时间报告：{backtest_feature_availability_output}")
+        console.print(
+            f"错误数：{backtest_feature_availability_report.error_count}；"
+            f"警告数：{backtest_feature_availability_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+    backtest_feature_availability_section = render_feature_availability_section(
+        backtest_feature_availability_report,
+        backtest_feature_availability_output,
+    )
 
     watchlist_lifecycle_report = validate_watchlist_lifecycle(
         lifecycle=watchlist_lifecycle,
@@ -2376,9 +2627,15 @@ def backtest(
             risk_events_path=risk_events_path,
             watchlist_lifecycle_path=watchlist_lifecycle_path,
             rule_cards_path=rule_cards_path,
+            feature_availability_path=feature_availability_path,
         ),
         rule_version_manifest=backtest_rule_version_manifest,
         sec_companyfacts_validation_report_path=sec_companyfacts_validation_output,
+        feature_availability_report_path=backtest_feature_availability_output,
+        feature_availability_summary=feature_availability_summary_record(
+            backtest_feature_availability_report,
+            backtest_feature_availability_output,
+        ),
     )
     backtest_trace_output = write_trace_bundle(
         backtest_trace_bundle,
@@ -2392,11 +2649,13 @@ def backtest(
         sec_companyfacts_validation_report_path=sec_companyfacts_validation_output,
         input_coverage_output_path=input_coverage_output,
         audit_report_path=audit_output,
+        feature_availability_section=backtest_feature_availability_section,
         traceability_section=render_traceability_section(
             backtest_trace_bundle,
             backtest_trace_output,
         ),
     )
+    robustness_report_data = None
     robustness_output = None
     robustness_summary_output = None
     if should_run_robustness:
@@ -2620,6 +2879,7 @@ def backtest(
             backtest_robustness_summary_output,
         )
 
+    lag_sensitivity_report_data = None
     lag_sensitivity_output = None
     lag_sensitivity_summary_output = None
     if should_run_lag_sensitivity:
@@ -2678,6 +2938,51 @@ def backtest(
             backtest_lag_sensitivity_summary_output,
         )
 
+    promotion_report_data = None
+    promotion_output = None
+    promotion_summary_output = None
+    if should_run_promotion:
+        promotion_report_data = build_model_promotion_report(
+            result=result,
+            as_of=quality_date,
+            robustness_report=robustness_report_data,
+            robustness_report_path=robustness_output or robustness_summary_output,
+            lag_sensitivity_report=lag_sensitivity_report_data,
+            lag_sensitivity_report_path=(
+                lag_sensitivity_output or lag_sensitivity_summary_output
+            ),
+            prediction_outcomes_path=promotion_prediction_outcomes_path,
+            rule_governance_status=rule_governance_report.status,
+        )
+        if should_write_promotion_markdown:
+            promotion_output = write_model_promotion_report(
+                promotion_report_data,
+                backtest_promotion_output,
+            )
+        promotion_summary_output = write_model_promotion_summary(
+            promotion_report_data,
+            backtest_promotion_summary_output,
+        )
+        report_output = write_backtest_report(
+            result,
+            data_quality_report_path=quality_output,
+            daily_output_path=daily_output,
+            output_path=backtest_report_output,
+            sec_companyfacts_validation_report_path=(
+                sec_companyfacts_validation_output
+            ),
+            input_coverage_output_path=input_coverage_output,
+            audit_report_path=audit_output,
+            feature_availability_section=backtest_feature_availability_section,
+            promotion_gate_section=render_model_promotion_report(
+                promotion_report_data
+            ).replace("# 模型晋级门槛报告", "## 模型晋级门槛", 1),
+            traceability_section=render_traceability_section(
+                backtest_trace_bundle,
+                backtest_trace_output,
+            ),
+        )
+
     console.print(f"[yellow]回测状态：{result.status}[/yellow]")
     audit_style = "green" if audit_report.status == "PASS" else "yellow"
     console.print(f"[{audit_style}]输入审计状态：{audit_report.status}[/{audit_style}]")
@@ -2697,6 +3002,14 @@ def backtest(
         console.print(f"滞后敏感性报告：{lag_sensitivity_output}")
     if lag_sensitivity_summary_output is not None:
         console.print(f"滞后敏感性摘要：{lag_sensitivity_summary_output}")
+    if promotion_output is not None:
+        console.print(f"模型晋级门槛报告：{promotion_output}")
+    if promotion_summary_output is not None:
+        console.print(f"模型晋级门槛摘要：{promotion_summary_output}")
+    console.print(
+        f"PIT 特征可见时间报告：{backtest_feature_availability_output}"
+        f"（{backtest_feature_availability_report.status}）"
+    )
     console.print(f"观察池 lifecycle 报告：{watchlist_lifecycle_report_output}")
     console.print(f"Evidence bundle：{backtest_trace_output}")
     console.print(f"输入审计报告：{audit_output}")
@@ -6471,6 +6784,14 @@ def build_features(
         Path | None,
         typer.Option(help="Markdown 数据质量报告输出路径。"),
     ] = None,
+    feature_availability_path: Annotated[
+        Path,
+        typer.Option(help="PIT feature availability catalog YAML 路径。"),
+    ] = DEFAULT_FEATURE_AVAILABILITY_CONFIG_PATH,
+    feature_availability_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown PIT 特征可见时间报告输出路径。"),
+    ] = None,
     full_universe: Annotated[
         bool,
         typer.Option(
@@ -6496,6 +6817,13 @@ def build_features(
     feature_report_output = report_path or default_feature_report_path(
         PROJECT_ROOT / "outputs" / "reports",
         feature_date,
+    )
+    feature_availability_output = (
+        feature_availability_report_path
+        or default_feature_availability_report_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            feature_date,
+        )
     )
 
     data_quality_report = validate_data_cache(
@@ -6526,6 +6854,24 @@ def build_features(
         as_of=feature_date,
         core_watchlist=universe.ai_chain.get("core_watchlist", []),
     )
+    feature_availability_report = build_feature_availability_report(
+        input_path=feature_availability_path,
+        as_of=feature_date,
+        observed_sources=tuple(sorted({row.source for row in feature_set.rows})),
+        required_sources=("prices_daily", "rates_daily"),
+    )
+    write_feature_availability_report(
+        feature_availability_report,
+        feature_availability_output,
+    )
+    if not feature_availability_report.passed:
+        console.print("[red]PIT 特征可见时间校验失败，已停止特征构建。[/red]")
+        console.print(f"PIT 特征可见时间报告：{feature_availability_output}")
+        console.print(
+            f"错误数：{feature_availability_report.error_count}；"
+            f"警告数：{feature_availability_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
     features_output = write_features_csv(feature_set, output_path)
     feature_summary_output = write_feature_summary(
         feature_set,
@@ -6533,12 +6879,20 @@ def build_features(
         data_quality_report_path=quality_output,
         features_path=features_output,
         output_path=feature_report_output,
+        feature_availability_section=render_feature_availability_section(
+            feature_availability_report,
+            feature_availability_output,
+        ),
     )
 
     status_style = "green" if feature_set.status == "PASS" else "yellow"
     console.print(f"[{status_style}]特征构建状态：{feature_set.status}[/{status_style}]")
     console.print(f"特征数据：{features_output}（{feature_date} 共 {len(feature_set.rows)} 行）")
     console.print(f"特征摘要：{feature_summary_output}")
+    console.print(
+        f"PIT 特征可见时间报告：{feature_availability_output}"
+        f"（{feature_availability_report.status}）"
+    )
     console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
     console.print(f"特征警告数：{len(feature_set.warnings)}")
 
@@ -6605,6 +6959,26 @@ def score_daily(
         Path | None,
         typer.Option(help="Markdown 数据质量报告输出路径。"),
     ] = None,
+    feature_availability_path: Annotated[
+        Path,
+        typer.Option(help="PIT feature availability catalog YAML 路径。"),
+    ] = DEFAULT_FEATURE_AVAILABILITY_CONFIG_PATH,
+    feature_availability_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown PIT 特征可见时间报告输出路径。"),
+    ] = None,
+    prediction_ledger_path: Annotated[
+        Path,
+        typer.Option(help="append-only prediction/shadow ledger CSV 输出路径。"),
+    ] = DEFAULT_PREDICTION_LEDGER_PATH,
+    prediction_candidate_id: Annotated[
+        str,
+        typer.Option(help="写入 prediction ledger 的模型候选 ID。"),
+    ] = "production",
+    prediction_production_effect: Annotated[
+        str,
+        typer.Option(help="prediction ledger 生产影响标记：production 或 none。"),
+    ] = "production",
     execution_policy_path: Annotated[
         Path,
         typer.Option(help="execution policy YAML 路径，用于日报执行建议。"),
@@ -6756,6 +7130,15 @@ def score_daily(
     benchmark_tickers = tuple(_parse_csv_items(review_benchmarks))
     if not benchmark_tickers:
         raise typer.BadParameter("日报交易复盘至少需要一个归因基准标的。")
+    if prediction_production_effect not in {"production", "none"}:
+        raise typer.BadParameter("prediction_production_effect 只能是 production 或 none。")
+    if (
+        prediction_candidate_id != "production"
+        and prediction_production_effect == "production"
+    ):
+        raise typer.BadParameter(
+            "非 production 候选模型必须使用 prediction_production_effect=none。"
+        )
     rule_governance_report = validate_rule_card_store(
         load_rule_card_store(rule_cards_path),
         as_of=date.today(),
@@ -6789,6 +7172,13 @@ def score_daily(
     feature_report_output = feature_report_path or default_feature_report_path(
         PROJECT_ROOT / "outputs" / "reports",
         score_date,
+    )
+    feature_availability_output = (
+        feature_availability_report_path
+        or default_feature_availability_report_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            score_date,
+        )
     )
     score_report_output = report_path or default_daily_score_report_path(
         PROJECT_ROOT / "outputs" / "reports",
@@ -6923,6 +7313,34 @@ def score_daily(
         as_of=score_date,
         core_watchlist=universe.ai_chain.get("core_watchlist", []),
     )
+    feature_availability_report = build_feature_availability_report(
+        input_path=feature_availability_path,
+        as_of=score_date,
+        observed_sources=tuple(sorted({row.source for row in feature_set.rows})),
+        required_sources=(
+            "prices_daily",
+            "rates_daily",
+            "sec_fundamental_features",
+            "valuation_snapshots",
+            "risk_event_occurrences",
+        ),
+    )
+    write_feature_availability_report(
+        feature_availability_report,
+        feature_availability_output,
+    )
+    if not feature_availability_report.passed:
+        console.print("[red]PIT 特征可见时间校验失败，已停止每日评分。[/red]")
+        console.print(f"PIT 特征可见时间报告：{feature_availability_output}")
+        console.print(
+            f"错误数：{feature_availability_report.error_count}；"
+            f"警告数：{feature_availability_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+    feature_availability_section = render_feature_availability_section(
+        feature_availability_report,
+        feature_availability_output,
+    )
     features_output = write_features_csv(feature_set, features_path)
     feature_summary_output = write_feature_summary(
         feature_set,
@@ -6930,6 +7348,7 @@ def score_daily(
         data_quality_report_path=quality_output,
         features_path=features_output,
         output_path=feature_report_output,
+        feature_availability_section=feature_availability_section,
     )
     portfolio_exposure_report = build_portfolio_exposure_report(
         input_path=portfolio_positions_path,
@@ -7252,6 +7671,7 @@ def score_daily(
         risk_events_path=risk_events_path,
         execution_policy_path=execution_policy_path,
         rule_cards_path=rule_cards_path,
+        feature_availability_path=feature_availability_path,
     )
     daily_trace_bundle = build_daily_score_trace_bundle(
         report=score_report,
@@ -7268,6 +7688,11 @@ def score_daily(
         sec_fundamental_features_path=sec_fundamental_features_output,
         risk_event_occurrence_report_path=risk_event_occurrence_report_output,
         belief_state_path=belief_state_output,
+        feature_availability_report_path=feature_availability_output,
+        feature_availability_summary=feature_availability_summary_record(
+            feature_availability_report,
+            feature_availability_output,
+        ),
     )
     daily_trace_output = write_trace_bundle(daily_trace_bundle, daily_trace_output)
     belief_state = build_belief_state(
@@ -7283,16 +7708,31 @@ def score_daily(
         belief_state_output,
         belief_state_history_output,
     )
+    decision_snapshot = build_decision_snapshot(
+        report=score_report,
+        trace_bundle_path=daily_trace_output,
+        market_regime=daily_market_regime,
+        config_paths=daily_config_paths,
+        belief_state_path=belief_state_output,
+        rule_version_manifest=daily_rule_version_manifest,
+    )
     daily_decision_snapshot_output = write_decision_snapshot(
-        build_decision_snapshot(
-            report=score_report,
-            trace_bundle_path=daily_trace_output,
-            market_regime=daily_market_regime,
-            config_paths=daily_config_paths,
-            belief_state_path=belief_state_output,
-            rule_version_manifest=daily_rule_version_manifest,
-        ),
+        decision_snapshot,
         decision_snapshot_output,
+    )
+    prediction_ledger_output = append_prediction_records(
+        (
+            build_prediction_record_from_decision_snapshot(
+                snapshot=decision_snapshot,
+                trace_bundle=daily_trace_bundle.to_dict(),
+                trace_bundle_path=daily_trace_output,
+                features_path=features_output,
+                data_quality_report_path=quality_output,
+                candidate_id=prediction_candidate_id,
+                production_effect=prediction_production_effect,
+            ),
+        ),
+        prediction_ledger_path,
     )
     daily_report_output = write_daily_score_report(
         score_report,
@@ -7305,6 +7745,7 @@ def score_daily(
         sec_fundamental_feature_report_path=sec_fundamental_feature_report_output,
         sec_fundamental_features_path=sec_fundamental_features_output,
         risk_event_occurrence_report_path=risk_event_occurrence_report_output,
+        feature_availability_section=feature_availability_section,
         previous_score_snapshot=previous_score_snapshot,
         belief_state_section=render_belief_state_summary(
             belief_state,
@@ -7374,10 +7815,15 @@ def score_daily(
     console.print(f"告警报告：{daily_alert_output}")
     console.print(f"Evidence bundle：{daily_trace_output}")
     console.print(f"Decision snapshot：{daily_decision_snapshot_output}")
+    console.print(f"Prediction ledger：{prediction_ledger_output}")
     console.print(f"Belief state：{belief_state_output}")
     console.print(f"Belief state history：{belief_state_history_output}")
     console.print(f"评分数据：{scores_output}")
     console.print(f"特征摘要：{feature_summary_output}")
+    console.print(
+        f"PIT 特征可见时间报告：{feature_availability_output}"
+        f"（{feature_availability_report.status}）"
+    )
     console.print(
         f"SEC 基本面特征：{sec_fundamental_features_output}"
         f"（{sec_fundamental_feature_report.status}）"
@@ -7471,6 +7917,7 @@ def _daily_trace_config_paths(
     risk_events_path: Path,
     execution_policy_path: Path,
     rule_cards_path: Path,
+    feature_availability_path: Path,
 ) -> dict[str, Path]:
     return {
         **_base_trace_config_paths(),
@@ -7481,6 +7928,7 @@ def _daily_trace_config_paths(
         "risk_events": risk_events_path,
         "execution_policy": execution_policy_path,
         "rule_cards": rule_cards_path,
+        "feature_availability": feature_availability_path,
     }
 
 
@@ -7494,6 +7942,7 @@ def _backtest_trace_config_paths(
     risk_events_path: Path,
     watchlist_lifecycle_path: Path,
     rule_cards_path: Path,
+    feature_availability_path: Path,
 ) -> dict[str, Path]:
     return {
         **_base_trace_config_paths(),
@@ -7505,6 +7954,7 @@ def _backtest_trace_config_paths(
         "risk_events": risk_events_path,
         "watchlist_lifecycle": watchlist_lifecycle_path,
         "rule_cards": rule_cards_path,
+        "feature_availability": feature_availability_path,
     }
 
 

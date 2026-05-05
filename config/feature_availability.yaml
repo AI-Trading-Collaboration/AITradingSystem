@@ -1,0 +1,121 @@
+schema_version: 1
+rules:
+  - rule_id: market_prices_daily
+    family: market_prices
+    label: Daily OHLCV and adjusted close
+    sources:
+      - prices_daily
+    event_time: bar close date
+    source_published_at: exchange close or official index publication
+    available_time: download_manifest.downloaded_at; if absent, next session after source_date
+    decision_time: score/backtest signal_date
+    default_lag_days: 1
+    minimum_backtest_grade: B
+    missing_available_time_policy: downgrade_to_c
+    enforced_in:
+      - build-features
+      - score-daily
+      - backtest
+    notes: Signals may use daily bars as of signal_date, but trading exposure starts on the next return date.
+  - rule_id: macro_rates_daily
+    family: macro_rates
+    label: FRED macro and rate series
+    sources:
+      - rates_daily
+    event_time: observation date
+    source_published_at: FRED release or update timestamp
+    available_time: download_manifest.downloaded_at; vintage data required for strict macro PIT
+    decision_time: score/backtest signal_date
+    default_lag_days: 1
+    minimum_backtest_grade: B
+    missing_available_time_policy: downgrade_to_c
+    enforced_in:
+      - build-features
+      - score-daily
+      - backtest
+    notes: Revised macro history without vintage support remains approximate PIT.
+  - rule_id: watchlist_lifecycle
+    family: universe
+    label: Point-in-time watchlist lifecycle
+    sources:
+      - watchlist_lifecycle
+    event_time: active_from / active_until
+    source_published_at: owner review date
+    available_time: lifecycle visibility dates in config/watchlist_lifecycle.yaml
+    decision_time: score/backtest signal_date
+    default_lag_days: 0
+    minimum_backtest_grade: B
+    missing_available_time_policy: exclude_from_a_b
+    enforced_in:
+      - backtest
+    notes: Universe membership must be visible as of signal_date/universe_as_of.
+  - rule_id: sec_fundamentals_filing
+    family: fundamentals
+    label: SEC and TSM IR fundamentals
+    sources:
+      - sec_fundamental_features
+      - tsm_ir_quarterly_metrics
+    event_time: fiscal period end
+    source_published_at: SEC accepted time or official IR filed_date
+    available_time: filed_date or accepted_time, with conservative daily availability
+    decision_time: score/backtest signal_date
+    default_lag_days: 1
+    minimum_backtest_grade: B
+    missing_available_time_policy: downgrade_to_c
+    enforced_in:
+      - score-daily
+      - backtest
+    notes: Period end alone is never sufficient for historical availability.
+  - rule_id: valuation_snapshots
+    family: valuation
+    label: Valuation and analyst expectation snapshots
+    sources:
+      - valuation_snapshots
+      - fmp_forward_pit
+      - pit_snapshot_manifest
+    event_time: vendor estimate date or valuation as_of
+    source_published_at: vendor timestamp when available
+    available_time: captured_at or PIT normalized available_time
+    decision_time: score/backtest signal_date
+    default_lag_days: 0
+    minimum_backtest_grade: B
+    missing_available_time_policy: downgrade_to_c
+    enforced_in:
+      - score-daily
+      - backtest
+    notes: Vendor historical endpoints without available_time remain C-grade exploration inputs.
+  - rule_id: risk_event_occurrences
+    family: risk_events
+    label: Risk event occurrences and review attestations
+    sources:
+      - risk_event_occurrences
+      - risk_event_review_attestations
+    event_time: triggered_at / last_confirmed_at
+    source_published_at: evidence captured_at or reviewed_at
+    available_time: captured_at, reviewed_at, resolved_at, and checked source visibility
+    decision_time: score/backtest signal_date
+    default_lag_days: 0
+    minimum_backtest_grade: B
+    missing_available_time_policy: exclude_from_a_b
+    enforced_in:
+      - score-daily
+      - backtest
+    notes: LLM prereview backlog is not an occurrence and cannot enter scoring before human confirmation.
+  - rule_id: market_evidence
+    family: news_evidence
+    label: Market evidence, news, policy, and manual claims
+    sources:
+      - market_evidence
+      - official_policy_sources
+      - risk_event_prereview_queue
+    event_time: source event or publication time
+    source_published_at: source published_at when available
+    available_time: captured_at / ingested_at / human reviewed_at
+    decision_time: score/backtest signal_date
+    default_lag_days: 0
+    minimum_backtest_grade: B
+    missing_available_time_policy: exclude_from_a_b
+    enforced_in:
+      - score-daily
+      - backtest
+    notes: Unreviewed LLM output remains backlog-only and production_effect=none.

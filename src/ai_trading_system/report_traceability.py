@@ -67,6 +67,8 @@ def build_daily_score_trace_bundle(
     sec_fundamental_features_path: Path | None = None,
     risk_event_occurrence_report_path: Path | None = None,
     belief_state_path: Path | None = None,
+    feature_availability_report_path: Path | None = None,
+    feature_availability_summary: TraceRecord | None = None,
 ) -> ReportTraceBundle:
     report_id = f"daily_score:{report.as_of.isoformat()}"
     date_window = _date_window(report.as_of, report.as_of)
@@ -141,6 +143,15 @@ def build_daily_score_trace_bundle(
                 label="只读认知状态",
                 dataset_type="processed_belief_state",
                 path=belief_state_path,
+            )
+        )
+    if feature_availability_report_path is not None:
+        dataset_refs.append(
+            _file_dataset_ref(
+                dataset_id=f"dataset:feature_availability:{report.as_of.isoformat()}",
+                label="PIT 特征可见时间报告",
+                dataset_type="feature_availability_report",
+                path=feature_availability_report_path,
             )
         )
     dataset_refs.extend(_config_dataset_refs(config_paths))
@@ -282,7 +293,10 @@ def build_daily_score_trace_bundle(
         date_window=date_window,
         market_regime=market_regime,
         config_paths=config_paths,
-        parameters=_run_parameters(rule_version_manifest=rule_version_manifest),
+        parameters=_run_parameters(
+            rule_version_manifest=rule_version_manifest,
+            feature_availability=feature_availability_summary,
+        ),
         output_artifacts=_artifact_paths(
             report_path,
             data_quality_report_path,
@@ -294,6 +308,7 @@ def build_daily_score_trace_bundle(
             sec_fundamental_features_path,
             risk_event_occurrence_report_path,
             belief_state_path,
+            feature_availability_report_path,
         ),
     )
     return ReportTraceBundle(
@@ -322,6 +337,8 @@ def build_backtest_trace_bundle(
     config_paths: dict[str, Path],
     rule_version_manifest: TraceRecord | None = None,
     sec_companyfacts_validation_report_path: Path | None = None,
+    feature_availability_report_path: Path | None = None,
+    feature_availability_summary: TraceRecord | None = None,
 ) -> ReportTraceBundle:
     report_id = (
         f"backtest:{result.requested_start.isoformat()}:{result.requested_end.isoformat()}"
@@ -364,6 +381,18 @@ def build_backtest_trace_bundle(
     ]
     if manifest_ref := _optional_manifest_dataset_ref(result.data_quality_report):
         dataset_refs.append(manifest_ref)
+    if feature_availability_report_path is not None:
+        dataset_refs.append(
+            _file_dataset_ref(
+                dataset_id=(
+                    f"dataset:feature_availability:{result.requested_start.isoformat()}:"
+                    f"{result.requested_end.isoformat()}"
+                ),
+                label="PIT 特征可见时间报告",
+                dataset_type="feature_availability_report",
+                path=feature_availability_report_path,
+            )
+        )
     dataset_refs.extend(_config_dataset_refs(config_paths))
 
     quality_refs = (
@@ -486,6 +515,7 @@ def build_backtest_trace_bundle(
         parameters=_run_parameters(
             cost_assumptions=_backtest_cost_assumptions(result),
             rule_version_manifest=rule_version_manifest,
+            feature_availability=feature_availability_summary,
         ),
         output_artifacts=_artifact_paths(
             report_path,
@@ -494,6 +524,7 @@ def build_backtest_trace_bundle(
             audit_report_path,
             data_quality_report_path,
             sec_companyfacts_validation_report_path,
+            feature_availability_report_path,
         ),
     )
     return ReportTraceBundle(
@@ -786,12 +817,15 @@ def _run_parameters(
     *,
     cost_assumptions: TraceRecord | None = None,
     rule_version_manifest: TraceRecord | None = None,
+    feature_availability: TraceRecord | None = None,
 ) -> TraceRecord | None:
     parameters: TraceRecord = {}
     if cost_assumptions is not None:
         parameters["cost_assumptions"] = cost_assumptions
     if rule_version_manifest is not None:
         parameters["rule_versions"] = rule_version_manifest
+    if feature_availability is not None:
+        parameters["feature_availability"] = feature_availability
     return parameters or None
 
 

@@ -708,6 +708,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     scores_path = tmp_path / "scores_daily.csv"
     daily_report_path = tmp_path / "daily_score.md"
     feature_report_path = tmp_path / "feature_summary.md"
+    feature_availability_report_path = tmp_path / "feature_availability.md"
     quality_report_path = tmp_path / "quality.md"
     execution_policy_report_path = tmp_path / "execution_policy.md"
     portfolio_positions_path = tmp_path / "portfolio_positions.csv"
@@ -721,6 +722,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     sec_validation_report_path = tmp_path / "sec_fundamentals_validation.md"
     valuation_path = tmp_path / "valuation_snapshots"
     decision_snapshot_path = tmp_path / "decision_snapshot.json"
+    prediction_ledger_path = tmp_path / "prediction_ledger.csv"
     belief_state_path = tmp_path / "belief_state.json"
     belief_state_history_path = tmp_path / "belief_state_history.csv"
     _sample_prices(tickers, periods=260).to_csv(prices_path, index=False)
@@ -749,6 +751,8 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
             str(daily_report_path),
             "--feature-report-path",
             str(feature_report_path),
+            "--feature-availability-report-path",
+            str(feature_availability_report_path),
             "--quality-report-path",
             str(quality_report_path),
             "--execution-policy-report-path",
@@ -775,6 +779,8 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
             str(valuation_path),
             "--decision-snapshot-path",
             str(decision_snapshot_path),
+            "--prediction-ledger-path",
+            str(prediction_ledger_path),
             "--belief-state-path",
             str(belief_state_path),
             "--belief-state-history-path",
@@ -787,6 +793,8 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert scores_path.exists()
     assert execution_policy_report_path.exists()
     assert portfolio_exposure_report_path.exists()
+    assert feature_availability_report_path.exists()
+    assert prediction_ledger_path.exists()
     trace_path = tmp_path / "evidence" / "daily_score_trace.json"
     assert trace_path.exists()
     trace = json.loads(trace_path.read_text(encoding="utf-8"))
@@ -798,6 +806,12 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert "daily_score:2026-04-30:overall_position" in claim_ids
     assert "daily_score:2026-04-30:belief_state" in claim_ids
     assert "dataset:belief_state:2026-04-30" in dataset_ids
+    assert "dataset:feature_availability:2026-04-30" in dataset_ids
+    feature_availability_params = trace["run_manifest"]["parameters"][
+        "feature_availability"
+    ]
+    assert feature_availability_params["status"] == "PASS"
+    assert "sec_fundamental_features" in feature_availability_params["required_sources"]
     assert snapshot["snapshot_id"] == "decision_snapshot:2026-04-30"
     assert snapshot["trace"]["trace_bundle_path"] == str(trace_path)
     assert snapshot["belief_state_ref"]["path"] == str(belief_state_path)
@@ -838,11 +852,23 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert "- 生产影响：none" in daily_text
     assert "执行政策校验：PASS" in daily_text
     assert "## 可追溯引用" in daily_text
+    assert "## PIT 特征可见时间" in daily_text
     assert "daily_score:2026-04-30:overall_position" in daily_text
+    feature_text = feature_report_path.read_text(encoding="utf-8")
+    assert "## PIT 特征可见时间" in feature_text
+    feature_availability_text = feature_availability_report_path.read_text(
+        encoding="utf-8"
+    )
+    assert "# PIT 特征可见时间报告" in feature_availability_text
+    prediction_frame = pd.read_csv(prediction_ledger_path)
+    assert set(prediction_frame["candidate_id"]) == {"production"}
+    assert set(prediction_frame["production_effect"]) == {"production"}
+    assert set(prediction_frame["outcome_status"]) == {"PENDING"}
     assert "每日评分状态：" in result.output
     assert "执行建议：" in result.output
     assert "产业链节点热度与健康度：" in result.output
     assert "组合暴露：" in result.output
+    assert "Prediction" in result.output
     assert "belief_state.json" in result.output
     lookup_result = CliRunner().invoke(
         app,

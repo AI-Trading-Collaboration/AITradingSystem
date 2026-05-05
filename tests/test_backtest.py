@@ -1197,6 +1197,10 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     robustness_summary_path = robustness_path.with_suffix(".json")
     lag_sensitivity_path = tmp_path / "backtest_lag_sensitivity.md"
     lag_sensitivity_summary_path = lag_sensitivity_path.with_suffix(".json")
+    feature_availability_path = tmp_path / "feature_availability.md"
+    promotion_path = tmp_path / "model_promotion.md"
+    promotion_summary_path = tmp_path / "model_promotion.json"
+    prediction_outcomes_path = tmp_path / "prediction_outcomes.csv"
     daily_path = tmp_path / "backtest_daily.csv"
     input_coverage_path = tmp_path / "backtest_input_coverage.csv"
     audit_path = tmp_path / "backtest_audit.md"
@@ -1270,6 +1274,14 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
             str(lag_sensitivity_path),
             "--lag-sensitivity-days",
             "0,1,3",
+            "--feature-availability-report-path",
+            str(feature_availability_path),
+            "--promotion-report-path",
+            str(promotion_path),
+            "--promotion-summary-path",
+            str(promotion_summary_path),
+            "--promotion-prediction-outcomes-path",
+            str(prediction_outcomes_path),
             "--daily-output-path",
             str(daily_path),
             "--input-coverage-output-path",
@@ -1319,6 +1331,9 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert robustness_summary_path.exists()
     assert lag_sensitivity_path.exists()
     assert lag_sensitivity_summary_path.exists()
+    assert feature_availability_path.exists()
+    assert promotion_path.exists()
+    assert promotion_summary_path.exists()
     assert daily_path.exists()
     assert input_coverage_path.exists()
     assert audit_path.exists()
@@ -1356,6 +1371,12 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert rule_versions["production_rule_count"] >= 1
     rule_ids = {rule["rule_id"] for rule in rule_versions["rules"]}
     assert "scoring.weighted_score.v1" in rule_ids
+    feature_availability_params = trace["run_manifest"]["parameters"][
+        "feature_availability"
+    ]
+    assert feature_availability_params["status"] == "PASS"
+    dataset_ids = {dataset["dataset_id"] for dataset in trace["dataset_refs"]}
+    assert "dataset:feature_availability:2026-04-01:2026-04-30" in dataset_ids
     claim_ids = {claim["claim_id"] for claim in trace["claims"]}
     assert "backtest:2026-04-01:2026-04-30:performance" in claim_ids
     assert quality_path.exists()
@@ -1366,6 +1387,8 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert "稳健性摘要：" in result.output
     assert "滞后敏感性报告：" in result.output
     assert "滞后敏感性摘要：" in result.output
+    assert "模型晋级门槛报告：" in result.output
+    assert "模型晋级门槛摘要：" in result.output
     assert "SEC 基本面切片：" in result.output
     assert "历史输入覆盖诊断：" in result.output
     assert "市场阶段：测试 AI 行情" in result.output
@@ -1379,6 +1402,8 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert "## 基准政策与解释边界" in report_text
     assert "SEC 基本面质量摘要" in report_text
     assert "## 可追溯引用" in report_text
+    assert "## PIT 特征可见时间" in report_text
+    assert "## 模型晋级门槛" in report_text
     assert "backtest:2026-04-01:2026-04-30:performance" in report_text
     assert str(input_coverage_path) in report_text
     assert str(audit_path) in report_text
@@ -1451,6 +1476,23 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     audit_text = audit_path.read_text(encoding="utf-8")
     assert "# 回测输入审计报告" in audit_text
     assert str(report_path) in audit_text
+    feature_availability_text = feature_availability_path.read_text(encoding="utf-8")
+    assert "# PIT 特征可见时间报告" in feature_availability_text
+    promotion_text = promotion_path.read_text(encoding="utf-8")
+    assert "# 模型晋级门槛报告" in promotion_text
+    assert "shadow_outcome" in promotion_text
+    promotion_summary = json.loads(promotion_summary_path.read_text(encoding="utf-8"))
+    assert promotion_summary["report_type"] == "model_promotion_gate"
+    assert promotion_summary["production_effect"] == "none"
+    assert {
+        check["check_id"] for check in promotion_summary["checks"]
+    } >= {
+        "data_credibility",
+        "robustness",
+        "lag_sensitivity",
+        "shadow_outcome",
+        "rule_governance",
+    }
 
     strict_audit_path = tmp_path / "backtest_audit_strict.md"
     strict_result = CliRunner().invoke(
@@ -1477,6 +1519,8 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
             str(strict_audit_path),
             "--quality-report-path",
             str(tmp_path / "quality_strict.md"),
+            "--feature-availability-report-path",
+            str(tmp_path / "feature_availability_strict.md"),
             "--benchmarks",
             "SPY,QQQ",
             "--sec-companies-path",
