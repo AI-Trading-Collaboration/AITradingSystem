@@ -31,7 +31,8 @@ close/adj_close、OHLC 逻辑错误、SOXX 极端复权价格波动，以及与 
   不能静默用 `close` 伪装复权价格。
 - `GOOG` 请求 FMP 时使用现有 provider alias `GOOG -> GOOGL`，标准化输出仍归属
   内部 ticker `GOOG`。
-- `^VIX` 不通过 FMP 主价格源抓取；后续由 Cboe official historical data 单独接入。
+- `^VIX` 不通过 FMP 主价格源抓取；由 Cboe VIX official historical data
+  单独接入并合并进主价格缓存。
 - `DTWEXBGS` 继续通过 FRED 宏观序列路径，不进入价格缓存。
 
 ## 实施步骤
@@ -40,8 +41,8 @@ close/adj_close、OHLC 逻辑错误、SOXX 极端复权价格波动，以及与 
    endpoints，校验响应 schema、空结果、HTTP error 和 provider error。
 2. `aits download-data` 默认使用 FMP 主源，要求 `FMP_API_KEY`；保留
    `--price-provider yahoo` 作为显式迁移选项。
-3. 由于 FMP Starter 当前是 US coverage，默认主价格下载应排除 `^VIX` 等非股票/ETF
-   宏观代理；`^VIX` 独立源接入前，数据质量门禁会继续因缺少 `^VIX` 阻断评分。
+3. 由于 FMP Starter 当前是 US coverage，默认 FMP 请求应排除 `^VIX` 等非股票/ETF
+   宏观代理；`^VIX` 由 `cboe_vix_daily_prices` 单独补入主价格缓存。
 4. 下载 manifest 记录 FMP provider、endpoint、内部 ticker 列表、provider symbol
    alias、start/end、row count 和 checksum，但不记录 API key。
 5. 数据源目录、README 和 `docs/system_flow.md` 同步更新。
@@ -61,8 +62,8 @@ close/adj_close、OHLC 逻辑错误、SOXX 极端复权价格波动，以及与 
 - FMP Starter 的 5 年历史足够覆盖当前 `ai_after_chatgpt` 默认 regime 和 200 日
   warm-up，但不够更长历史压力测试；若需要 2018 起完整长期重建，应升级或另接
   更长历史的供应商。
-- `^VIX` 仍需 Cboe official historical data 接入；在此之前不能把 FMP 主源切换
-  解释为全数据质量门禁完成。
+- `^VIX` 已由 Cboe official historical data 接入；FMP 主源切换仍不能解释为
+  全数据质量门禁完成，因为 FMP 真实烟测中仍有 SPY/SOXX/OHLC 供应商异常。
 - FMP 与 Marketstack 的 ETF adjusted close 分红复权口径仍需通过真实样本验收。
 
 ## 进展记录
@@ -79,3 +80,6 @@ close/adj_close、OHLC 逻辑错误、SOXX 极端复权价格波动，以及与 
   OHLC 逻辑异常，SOXX 2024-03-07 极端 adjusted close 波动，以及 GOOG 少量
   FMP/Marketstack adjusted close mismatch。`aits score-daily` 已按数据质量门禁停止；
   不能用本地补写、回填或平滑绕过。
+- 2026-05-05：后续 DATA-008 已接入 Cboe VIX official historical data。`^VIX`
+  缺失不应再作为 FMP 主源自身 blocker；剩余生产阻断聚焦 FMP 返回的 SPY/SOXX/OHLC
+  异常和跨源口径差异。

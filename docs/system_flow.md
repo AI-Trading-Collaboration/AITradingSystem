@@ -60,15 +60,16 @@ flowchart TD
         VSCSV["data/external/valuation_imports/*.csv<br/>结构化估值/预期导入表"]
         TD["data/external/trades/*.yaml<br/>交易记录、价格、thesis_id"]
         POS["data/external/portfolio_positions/current_positions.csv<br/>真实账户持仓快照<br/>ticker、市值、AI 暴露、节点/地区/因子/相关性标签"]
-        MD["外部数据源<br/>FMP / Marketstack / FRED"]
+        MD["外部数据源<br/>FMP / Cboe VIX / Marketstack / FRED"]
         FMP["Financial Modeling Prep API<br/>historical-price-eod/non-split-adjusted + dividend-adjusted / quote / TTM metrics / ratios / estimates<br/>price target / ratings / earnings calendar<br/>provider symbol alias 可审计记录"]
+        CBOEVIX["Cboe VIX official historical data<br/>VIX_History.csv<br/>^VIX OHLC / no volume"]
         EODHDT["EODHD Earnings Trends API<br/>calendar/trends<br/>epsTrendCurrent / epsTrend90daysAgo"]
         PITMAN["data/raw/pit_snapshots/manifest.csv<br/>forward-only PIT raw snapshot manifest<br/>available_time / checksum / row count"]
     end
 
     subgraph Cache["本地缓存"]
         DL["aits download-data"]
-        PR["data/raw/prices_daily.csv<br/>FMP 主价格缓存"]
+        PR["data/raw/prices_daily.csv<br/>FMP 股票/ETF + Cboe ^VIX 主价格缓存"]
         MSPR["data/raw/prices_marketstack_daily.csv<br/>Marketstack 第二行情源<br/>cross-provider reconciliation"]
         RR["data/raw/rates_daily.csv<br/>FRED DGS2 / DGS10 / DTWEXBGS"]
         DM["data/raw/download_manifest.csv<br/>provider / endpoint / 参数 / checksum"]
@@ -276,6 +277,7 @@ flowchart TD
 
     MD --> DL
     FMP --> DL
+    CBOEVIX --> DL
     U --> DL
     DS --> DL
     DL --> PR
@@ -984,9 +986,9 @@ flowchart TD
 
 |层级|命令或文件|责任|当前状态|
 |---|---|---|---|
-|数据源|FMP / Marketstack / FRED|FMP 提供股票/ETF 主价格；Marketstack 提供股票/ETF 第二行情源；FRED 提供 DGS2、DGS10 和 `DTWEXBGS` 广义美元指数原始输入；`^VIX` 后续需接入 Cboe official historical data|已实现基础版；质量门禁仍阻断|
-|下载|`aits download-data`|拉取并标准化为本地 CSV 缓存，同时追加下载审计 manifest；默认要求 `FMP_API_KEY` 写入 FMP 主价格缓存，并要求 `MARKETSTACK_API_KEY` 写入 Marketstack 第二行情源缓存，临时无 Marketstack key 环境必须显式 `--without-marketstack`；Yahoo 仅可通过 `--price-provider yahoo` 显式迁移调查使用|已实现基础版|
-|原始缓存|`data/raw/prices_daily.csv`|FMP 股票/ETF 日线 OHLCV 和调整收盘价主缓存；当前不覆盖 `^VIX`，真实烟测仍有 SPY/SOXX/OHLC 供应商异常需处理|已实现基础版；质量门禁仍阻断|
+|数据源|FMP / Cboe VIX / Marketstack / FRED|FMP 提供股票/ETF 主价格；Cboe VIX official historical data 提供内部 `^VIX`；Marketstack 提供股票/ETF 第二行情源；FRED 提供 DGS2、DGS10 和 `DTWEXBGS` 广义美元指数原始输入|已实现基础版；FMP 供应商异常仍可能阻断质量门禁|
+|下载|`aits download-data`|拉取并标准化为本地 CSV 缓存，同时追加下载审计 manifest；默认要求 `FMP_API_KEY` 写入 FMP 股票/ETF 主价格，并从 Cboe 补 `^VIX` 到主价格缓存；默认要求 `MARKETSTACK_API_KEY` 写入 Marketstack 第二行情源缓存，临时无 Marketstack key 环境必须显式 `--without-marketstack`；Yahoo 仅可通过 `--price-provider yahoo` 显式迁移调查使用|已实现基础版|
+|原始缓存|`data/raw/prices_daily.csv`|FMP 股票/ETF 日线 OHLCV 和调整收盘价主缓存，加 Cboe `^VIX` OHLC；真实烟测仍有 SPY/SOXX/OHLC 供应商异常需处理|已实现基础版；质量门禁仍可能被 FMP 异常阻断|
 |原始缓存|`data/raw/prices_marketstack_daily.csv`|Marketstack 股票/ETF 日线第二来源缓存，用于 cross-provider reconciliation；不覆盖主价格缓存|已实现基础版|
 |原始缓存|`data/raw/rates_daily.csv`|FRED 宏观序列长表，当前包含 DGS2、DGS10 和 `DTWEXBGS`；`DTWEXBGS` 不是 ICE DXY|已实现|
 |下载审计|`data/raw/download_manifest.csv`|记录 provider、endpoint、请求参数、下载时间、行数、输出路径和 checksum|已实现|

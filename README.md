@@ -63,7 +63,7 @@ python -m pytest
 aits download-data --start 2018-01-01
 ```
 
-默认会缓存核心范围：`SPY`、`QQQ`、`SMH`、`SOXX`、防守 ETF、`^VIX`、`MSFT`、`GOOG`、`TSM`、`INTC`、`AMD`、`NVDA`，以及 FRED 的 `DGS2`、`DGS10`、`DTWEXBGS`。`DTWEXBGS` 是 Federal Reserve 广义美元指数代理，不是 ICE DXY。`download-data` 默认要求 `FMP_API_KEY`，使用 FMP 写入 `data/raw/prices_daily.csv` 主价格缓存；默认也要求 `MARKETSTACK_API_KEY` 并写入 `data/raw/prices_marketstack_daily.csv` 作为股票/ETF 第二行情源。Yahoo Finance 仅保留为显式 `--price-provider yahoo` 迁移调查选项，不再是默认生产主源。如需在无 Marketstack key 的临时环境只更新主缓存，必须显式传入 `--without-marketstack`，且默认生产路径的 `validate-data` 仍会要求第二来源文件。FMP Starter 和 Marketstack Basic 当前不覆盖 `^VIX`，后续需接入 Cboe official historical data；第二来源只用于可覆盖标的的 cross-provider reconciliation，不会覆盖主价格缓存。每次下载会追加写入 `data/raw/download_manifest.csv`，记录 provider、endpoint、请求参数、下载时间、行数、输出路径和 sha256，但不记录 API key。如需抓取配置里的完整 AI 产业链标的：
+默认会缓存核心范围：`SPY`、`QQQ`、`SMH`、`SOXX`、防守 ETF、`^VIX`、`MSFT`、`GOOG`、`TSM`、`INTC`、`AMD`、`NVDA`，以及 FRED 的 `DGS2`、`DGS10`、`DTWEXBGS`。`DTWEXBGS` 是 Federal Reserve 广义美元指数代理，不是 ICE DXY。`download-data` 默认要求 `FMP_API_KEY`，使用 FMP 写入股票/ETF 主价格，并从 Cboe VIX official historical data 补 `^VIX` 到 `data/raw/prices_daily.csv` 主价格缓存；默认也要求 `MARKETSTACK_API_KEY` 并写入 `data/raw/prices_marketstack_daily.csv` 作为股票/ETF 第二行情源。Yahoo Finance 仅保留为显式 `--price-provider yahoo` 迁移调查选项，不再是默认生产主源。如需在无 Marketstack key 的临时环境只更新主缓存，必须显式传入 `--without-marketstack`，且默认生产路径的 `validate-data` 仍会要求第二来源文件。Marketstack Basic 当前不覆盖 `^VIX`；第二来源只用于可覆盖标的的 cross-provider reconciliation，不会覆盖主价格缓存。每次下载会追加写入 `data/raw/download_manifest.csv`，记录 provider、endpoint、请求参数、下载时间、行数、输出路径和 sha256，但不记录 API key。如需抓取配置里的完整 AI 产业链标的：
 
 ```powershell
 aits download-data --start 2018-01-01 --full-universe

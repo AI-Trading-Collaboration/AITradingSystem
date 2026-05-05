@@ -15,6 +15,8 @@ from ai_trading_system.config import (
     configured_rate_series,
 )
 from ai_trading_system.data.market_data import (
+    CBOE_VIX_TICKER,
+    CboeVixPriceProvider,
     CsvDataCache,
     FmpPriceProvider,
     FredRateProvider,
@@ -47,6 +49,7 @@ def download_daily_data(
     output_dir: Path,
     include_full_ai_chain: bool = False,
     price_provider: PriceDataProvider | None = None,
+    vix_price_provider: PriceDataProvider | None = None,
     secondary_price_provider: PriceDataProvider | None = None,
     rate_provider: RateDataProvider | None = None,
 ) -> DataDownloadSummary:
@@ -68,7 +71,21 @@ def download_daily_data(
     price_request = PriceRequest(tickers=price_tickers, start=start, end=end, interval="1d")
     rate_request = RateRequest(series_ids=rate_series, start=start, end=end)
 
-    prices = price_provider.download_prices(price_request)
+    primary_prices = price_provider.download_prices(price_request)
+    prices = primary_prices
+    vix_prices: pd.DataFrame | None = None
+    vix_request: PriceRequest | None = None
+    if CBOE_VIX_TICKER in price_tickers and CBOE_VIX_TICKER not in set(prices["ticker"]):
+        vix_price_provider = vix_price_provider or CboeVixPriceProvider()
+        vix_request = PriceRequest(
+            tickers=[CBOE_VIX_TICKER],
+            start=start,
+            end=end,
+            interval="1d",
+        )
+        vix_prices = vix_price_provider.download_prices(vix_request)
+        prices = pd.concat([prices, vix_prices], ignore_index=True)
+        prices = prices.sort_values(["ticker", "date"]).reset_index(drop=True)
     rates = rate_provider.download_rates(rate_request)
 
     prices_path = cache.write_prices(prices)
@@ -76,9 +93,23 @@ def download_daily_data(
     secondary_prices_path: Path | None = None
     secondary_price_rows = 0
     manifest_records = [
-        _manifest_record_for_prices(price_provider, price_request, prices_path, len(prices)),
+        _manifest_record_for_prices(
+            price_provider,
+            price_request,
+            prices_path,
+            len(primary_prices),
+        ),
         _manifest_record_for_rates(rate_provider, rate_request, rates_path, len(rates)),
     ]
+    if vix_price_provider is not None and vix_request is not None and vix_prices is not None:
+        manifest_records.append(
+            _manifest_record_for_prices(
+                vix_price_provider,
+                vix_request,
+                prices_path,
+                len(vix_prices),
+            )
+        )
 
     if secondary_price_provider is not None:
         secondary_prices = secondary_price_provider.download_prices(price_request)
@@ -203,6 +234,8 @@ def _manifest_record(
 
 
 def _price_provider_metadata(provider: PriceDataProvider) -> tuple[str, str, str]:
+    if isinstance(provider, CboeVixPriceProvider):
+        return ("cboe_vix_daily_prices", "Cboe Global Markets", provider.base_url)
     if isinstance(provider, FmpPriceProvider):
         return ("fmp_eod_daily_prices", "Financial Modeling Prep", provider.endpoint_summary())
     if isinstance(provider, YFinancePriceProvider):

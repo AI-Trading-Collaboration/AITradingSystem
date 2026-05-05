@@ -11,7 +11,12 @@ from typer.testing import CliRunner
 from ai_trading_system.cli import app
 from ai_trading_system.config import load_universe
 from ai_trading_system.data.download import download_daily_data
-from ai_trading_system.data.market_data import FmpPriceProvider, PriceRequest, RateRequest
+from ai_trading_system.data.market_data import (
+    CboeVixPriceProvider,
+    FmpPriceProvider,
+    PriceRequest,
+    RateRequest,
+)
 
 
 @dataclass(frozen=True)
@@ -29,6 +34,26 @@ class FakePriceProvider:
                 "volume": 1,
             }
             for ticker in request.tickers
+        ]
+        return pd.DataFrame(rows)
+
+
+@dataclass(frozen=True)
+class FakeNoVixPriceProvider:
+    def download_prices(self, request: PriceRequest) -> pd.DataFrame:
+        rows = [
+            {
+                "date": request.start.isoformat(),
+                "ticker": ticker,
+                "open": 1.0,
+                "high": 1.0,
+                "low": 1.0,
+                "close": 1.0,
+                "adj_close": 1.0,
+                "volume": 1,
+            }
+            for ticker in request.tickers
+            if ticker != "^VIX"
         ]
         return pd.DataFrame(rows)
 
@@ -93,6 +118,30 @@ def test_download_daily_data_writes_secondary_price_cache(tmp_path: Path) -> Non
     assert str(summary.secondary_prices_path) in set(manifest["output_path"].astype(str))
 
 
+def test_download_daily_data_adds_cboe_vix_when_primary_skips_it(tmp_path: Path) -> None:
+    summary = download_daily_data(
+        load_universe(),
+        start=date(2026, 4, 30),
+        end=date(2026, 5, 1),
+        output_dir=tmp_path,
+        price_provider=FakeNoVixPriceProvider(),
+        vix_price_provider=CboeVixPriceProvider(requests_module=_FakeCboeRequests()),
+        rate_provider=FakeRateProvider(),
+    )
+
+    prices = pd.read_csv(summary.prices_path)
+    assert "^VIX" in set(prices["ticker"])
+    assert summary.price_rows == len(prices)
+
+    manifest = pd.read_csv(summary.manifest_path)
+    assert "cboe_vix_daily_prices" in set(manifest["source_id"])
+    vix_manifest = manifest.loc[manifest["source_id"] == "cboe_vix_daily_prices"].iloc[0]
+    request_parameters = json.loads(str(vix_manifest["request_parameters"]))
+    assert vix_manifest["provider"] == "Cboe Global Markets"
+    assert vix_manifest["row_count"] == 2
+    assert request_parameters["tickers"] == ["^VIX"]
+
+
 def test_download_daily_data_records_fmp_primary_source_without_key(tmp_path: Path) -> None:
     summary = download_daily_data(
         load_universe(),
@@ -114,6 +163,7 @@ def test_download_daily_data_records_fmp_primary_source_without_key(tmp_path: Pa
                 ]
             ),
         ),
+        vix_price_provider=CboeVixPriceProvider(requests_module=_FakeCboeRequests()),
         rate_provider=FakeRateProvider(),
     )
 
@@ -168,3 +218,24 @@ class _FakeRequests:
         assert params["apikey"] == "test-key"
         assert timeout == 30
         return _FakeResponse(self._payload)
+
+
+class _FakeCboeResponse:
+    text = (
+        "DATE,OPEN,HIGH,LOW,CLOSE\n"
+        "04/30/2026,16.5,17.2,15.9,16.8\n"
+        "05/01/2026,18.0,19.0,17.5,18.2\n"
+    )
+    ok = True
+    status_code = 200
+
+
+class _FakeCboeRequests:
+    def get(
+        self,
+        _url: str,
+        *,
+        timeout: int,
+    ) -> _FakeCboeResponse:
+        assert timeout == 30
+        return _FakeCboeResponse()

@@ -23,6 +23,8 @@ FMP_DEFAULT_SYMBOL_ALIASES: dict[str, str | None] = {
     "GOOG": "GOOGL",
     "^VIX": None,
 }
+CBOE_VIX_DAILY_PRICES_URL = "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv"
+CBOE_VIX_TICKER = "^VIX"
 
 
 @dataclass(frozen=True)
@@ -249,6 +251,33 @@ class FmpPriceProvider:
         return provider_symbols, provider_to_ticker
 
 
+@dataclass(frozen=True)
+class CboeVixPriceProvider:
+    base_url: str = CBOE_VIX_DAILY_PRICES_URL
+    ticker: str = CBOE_VIX_TICKER
+    requests_module: Any | None = None
+
+    def download_prices(self, request: PriceRequest) -> pd.DataFrame:
+        if self.ticker not in request.tickers:
+            raise ValueError(f"Cboe VIX request must include {self.ticker}")
+
+        requests = self.requests_module or cast(Any, import_module("requests"))
+        response = requests.get(self.base_url, timeout=30)
+        if not response.ok:
+            raise ValueError(
+                "Cboe VIX request failed: "
+                f"http_status={response.status_code}"
+            )
+
+        raw = pd.read_csv(StringIO(str(response.text)))
+        return normalize_cboe_vix_prices(
+            raw,
+            ticker=self.ticker,
+            start=request.start,
+            end=request.end,
+        )
+
+
 class FredRateProvider:
     base_url = "https://fred.stlouisfed.org/graph/fredgraph.csv"
 
@@ -384,6 +413,51 @@ def normalize_fmp_prices(
         .sort_values(["ticker", "date"])
         .reset_index(drop=True)
     )
+
+
+def normalize_cboe_vix_prices(
+    raw: pd.DataFrame,
+    *,
+    ticker: str,
+    start: date,
+    end: date,
+) -> pd.DataFrame:
+    if raw.empty:
+        raise ValueError("Cboe VIX price data is empty")
+    if start > end:
+        raise ValueError("Cboe VIX start date must be earlier than or equal to end date")
+
+    frame = raw.copy()
+    frame.columns = [_normalize_column_name(str(column)) for column in frame.columns]
+    required_columns = {"date", "open", "high", "low", "close"}
+    missing = sorted(required_columns - set(frame.columns))
+    if missing:
+        raise ValueError(f"Cboe VIX response missing columns: {', '.join(missing)}")
+
+    frame["date"] = pd.to_datetime(frame["date"], errors="coerce")
+    for column in ["open", "high", "low", "close"]:
+        frame[column] = pd.to_numeric(frame[column], errors="coerce")
+
+    start_timestamp = pd.Timestamp(start)
+    end_timestamp = pd.Timestamp(end)
+    frame = frame.loc[
+        (frame["date"] >= start_timestamp) & (frame["date"] <= end_timestamp)
+    ].copy()
+    if frame.empty:
+        raise ValueError(
+            "Cboe VIX response had no rows for "
+            f"{start.isoformat()} to {end.isoformat()}"
+        )
+    if frame[["date", "open", "high", "low", "close"]].isna().any().any():
+        raise ValueError("Cboe VIX response contains invalid date or OHLC values")
+
+    frame["date"] = frame["date"].dt.strftime("%Y-%m-%d")
+    frame["ticker"] = ticker
+    frame["adj_close"] = frame["close"]
+    frame["volume"] = pd.NA
+
+    columns = ["date", "ticker", "open", "high", "low", "close", "adj_close", "volume"]
+    return frame[columns].sort_values(["ticker", "date"]).reset_index(drop=True)
 
 
 def normalize_fred_rates(raw: pd.DataFrame) -> pd.DataFrame:

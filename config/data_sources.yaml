@@ -35,7 +35,7 @@ sources:
       - no_secret_leakage
     limitations:
       - FMP Starter plan 当前用于低成本股票/ETF 日线主源；历史深度上限按 plan 约束，长历史压力测试可能不足。
-      - "`^VIX` 不通过 FMP 股票价格主源抓取，需后续接入 Cboe official historical data。"
+      - "`^VIX` 不通过 FMP 股票价格主源抓取，由 `cboe_vix_daily_prices` 单独补入主价格缓存。"
       - "`GOOG` 请求 FMP 使用 provider symbol alias `GOOGL`，标准化缓存仍归属内部 ticker `GOOG`。"
       - 2026-05-05 真实烟测中，FMP 对 SPY、INTC、MSFT、SOXX 仍返回会触发质量门禁的异常价格或 OHLC 记录；必须作为供应商数据质量问题处理，不能本地静默修正。
       - 与 Marketstack 的 adjusted close 分红复权口径差异必须保留为质量门禁限制或调查项，不能自动平滑。
@@ -50,6 +50,51 @@ sources:
       approval_ref: not_approved_for_external_llm_2026-05-05
       reviewed_at: 2026-05-05
     owner_notes: FMP_API_KEY 只从环境变量读取；默认 `aits download-data` 使用该来源写入主价格缓存，命令、报告和 manifest 不得输出密钥。
+
+  - source_id: cboe_vix_daily_prices
+    provider: Cboe Global Markets
+    source_type: primary_source
+    status: active
+    domains:
+      - market_prices
+    endpoint: https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv
+    adapter: CboeVixPriceProvider
+    cadence: daily
+    requires_credentials: false
+    cache_paths:
+      - data/raw/prices_daily.csv
+    primary_for:
+      - vix_index
+      - risk_sentiment
+      - macro_risk_asset_budget
+    audit_fields:
+      - provider
+      - endpoint
+      - request_parameters
+      - downloaded_at
+      - row_count
+      - checksum
+    validation_checks:
+      - schema
+      - completeness
+      - freshness
+      - duplicate_keys
+      - suspicious_returns
+      - no_secret_leakage
+    limitations:
+      - Cboe VIX CSV 只提供 VIX Index OHLC，不提供成交量；标准化缓存中 `volume` 留空。
+      - "`adj_close` 等于 `close`，因为 VIX Index 不适用股票分红复权。"
+      - Cboe 下载失败、schema 异常或目标日期范围空结果必须 fail closed，不得用 Yahoo 或本地缓存补写。
+    llm_permission:
+      license_scope: public_official_index_reference
+      personal_use_only: false
+      external_llm_allowed: true
+      cache_allowed: true
+      redistribution_allowed: false
+      max_content_sent_level: metadata_only
+      approval_ref: public_cboe_vix_history_2026-05-05
+      reviewed_at: 2026-05-05
+    owner_notes: 用于补 FMP 不覆盖的内部 ticker `^VIX`；默认 `aits download-data` 将其合并进主价格缓存并在 manifest 单独记录。
 
   - source_id: yahoo_finance_daily_prices
     provider: Yahoo Finance via yfinance

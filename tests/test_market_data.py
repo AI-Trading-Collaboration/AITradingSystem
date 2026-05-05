@@ -6,9 +6,11 @@ from pathlib import Path
 import pandas as pd
 
 from ai_trading_system.data.market_data import (
+    CboeVixPriceProvider,
     CsvDataCache,
     FmpPriceProvider,
     PriceRequest,
+    normalize_cboe_vix_prices,
     normalize_fmp_prices,
     normalize_fred_rates,
     normalize_marketstack_prices,
@@ -146,6 +148,28 @@ def test_normalize_fmp_prices_requires_adjusted_close_and_maps_alias() -> None:
     ]
 
 
+def test_normalize_cboe_vix_prices_filters_range_and_sets_internal_ticker() -> None:
+    raw = pd.DataFrame(
+        [
+            {"DATE": "04/30/2026", "OPEN": "16.5", "HIGH": "17.2", "LOW": "15.9", "CLOSE": "16.8"},
+            {"DATE": "05/01/2026", "OPEN": "18.0", "HIGH": "19.0", "LOW": "17.5", "CLOSE": "18.2"},
+        ]
+    )
+
+    prices = normalize_cboe_vix_prices(
+        raw,
+        ticker="^VIX",
+        start=date(2026, 5, 1),
+        end=date(2026, 5, 1),
+    )
+
+    assert prices.loc[0, "date"] == "2026-05-01"
+    assert prices.loc[0, "ticker"] == "^VIX"
+    assert prices.loc[0, "close"] == 18.2
+    assert prices.loc[0, "adj_close"] == 18.2
+    assert pd.isna(prices.loc[0, "volume"])
+
+
 def test_fmp_price_provider_skips_unsupported_vix_and_uses_provider_alias() -> None:
     fake_requests = _FakeRequests(
         [
@@ -175,6 +199,23 @@ def test_fmp_price_provider_skips_unsupported_vix_and_uses_provider_alias() -> N
         "apikey": "test-key",
     }
     assert fake_requests.calls == [expected_params, expected_params]
+
+
+def test_cboe_vix_price_provider_reads_official_csv() -> None:
+    fake_requests = _FakeTextRequests(
+        "DATE,OPEN,HIGH,LOW,CLOSE\n"
+        "04/30/2026,16.5,17.2,15.9,16.8\n"
+        "05/01/2026,18.0,19.0,17.5,18.2\n"
+    )
+    provider = CboeVixPriceProvider(requests_module=fake_requests)
+
+    prices = provider.download_prices(
+        PriceRequest(tickers=["^VIX"], start=date(2026, 5, 1), end=date(2026, 5, 1))
+    )
+
+    assert prices["ticker"].tolist() == ["^VIX"]
+    assert prices.loc[0, "close"] == 18.2
+    assert fake_requests.calls == [provider.base_url]
 
 
 def test_csv_data_cache_writes_prices_and_rates(tmp_path: Path) -> None:
@@ -216,3 +257,26 @@ class _FakeRequests:
         assert timeout == 30
         self.calls.append(params)
         return _FakeResponse(self._payload)
+
+
+class _FakeTextResponse:
+    def __init__(self, text: str, *, ok: bool = True, status_code: int = 200) -> None:
+        self.text = text
+        self.ok = ok
+        self.status_code = status_code
+
+
+class _FakeTextRequests:
+    def __init__(self, text: str) -> None:
+        self.text = text
+        self.calls: list[str] = []
+
+    def get(
+        self,
+        url: str,
+        *,
+        timeout: int,
+    ) -> _FakeTextResponse:
+        assert timeout == 30
+        self.calls.append(url)
+        return _FakeTextResponse(self.text)
