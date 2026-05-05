@@ -1353,11 +1353,14 @@ sources:
       - checksum
       - model
       - reasoning_effort
+      - http_client
       - prompt_version
       - request_id
+      - client_request_id
       - input_checksum_sha256
       - output_checksum_sha256
       - source_permission
+      - transport_diagnostics
     validation_checks:
       - provider_permission_fail_closed
       - structured_output_schema
@@ -1370,6 +1373,7 @@ sources:
       - OpenAI API 只做关键信息校验、结构化抽取、节点映射、去重和人工复核问题生成。
       - 输出强制写入 `llm_extracted` / `pending_review`，不得直接改变评分、thesis 状态、仓位闸门或交易建议。
       - 付费供应商内容只有在原始 provider 的 `llm_permission.external_llm_allowed=true` 且内容级别不超过授权范围时才可发送。
-      - 默认请求策略为 `gpt-5.5` + `reasoning.effort=high`，单请求失败最多重试 2 次，实际请求值必须写入报告和队列。
+      - 默认请求策略为 `gpt-5.5` + `reasoning.effort=high` + `requests` HTTP client；可用 `urllib` 做本机传输对照；单请求失败最多重试 2 次，实际请求值必须写入报告和队列或 transport diagnostics。
+      - 失败报告只输出 sanitized transport diagnostics，包括 attempt、HTTP client、client request id、endpoint host、payload byte size、input checksum、HTTP status、OpenAI x-request-id 或异常类型，不输出 API key、Authorization header 或未授权全文。
       - 请求默认 `store=false`，本地队列只保存结构化字段和 checksum，不保存未授权全文。
     owner_notes: OPENAI_API_KEY 只从环境变量读取；命令、报告和错误信息不得输出密钥。

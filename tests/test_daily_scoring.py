@@ -4,11 +4,13 @@ import json
 from dataclasses import replace
 from datetime import date
 from pathlib import Path
+from types import SimpleNamespace
 from typing import cast
 
 import pandas as pd
 from typer.testing import CliRunner
 
+import ai_trading_system.cli as cli_module
 from ai_trading_system.belief_state import (
     build_belief_state,
     render_belief_state_summary,
@@ -563,6 +565,36 @@ def test_render_daily_score_report_includes_data_gate_and_limitations(tmp_path: 
     assert "交易 thesis" in markdown
     assert "基本面（fundamentals）" in markdown
     assert "基本面硬数据占位" in markdown
+
+
+def test_risk_event_openai_daily_section_includes_transport_client() -> None:
+    section = cli_module._risk_event_openai_precheck_daily_section(
+        official_policy_fetch_report=SimpleNamespace(
+            status="PASS",
+            payload_count=8,
+            candidate_count=20,
+        ),
+        risk_event_prereview_report=SimpleNamespace(
+            status="PASS_WITH_WARNINGS",
+            row_count=20,
+            record_count=7,
+            high_level_candidate_count=6,
+            active_candidate_count=1,
+        ),
+        official_policy_report_output=Path("outputs/reports/official_policy_sources.md"),
+        risk_event_openai_precheck_report_output=Path(
+            "outputs/reports/risk_event_prereview_openai.md"
+        ),
+        risk_event_prereview_queue_path=Path("data/processed/risk_event_prereview_queue.json"),
+        model="gpt-5.5",
+        reasoning_effort="high",
+        timeout_seconds=120.0,
+        http_client="requests",
+        max_candidates=20,
+    )
+
+    assert "- HTTP client：requests" in section
+    assert "- 待人工复核队列记录数：7" in section
 
 
 def test_belief_state_is_read_only_and_keeps_position_unchanged(

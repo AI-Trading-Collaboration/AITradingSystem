@@ -17,7 +17,7 @@
 5. 与 QQQ、SMH/SOXX、SPY 的回测对比。
 6. 每日 Markdown 报告。
 
-SEC 基本面已经接入基础硬数据评分；估值快照和政策/地缘风险发生记录已经接入可审计的手工输入评分，并支持从结构化 CSV 导入来减少手工 YAML 维护。TSMC IR 季度基本面已支持从官方 Management Report 文本或 PDF 可抽取文本层导入，并可显式合并到统一 SEC-style 指标 CSV；LLM claim 预审已支持 OpenAI Responses API 结构化输出和待复核队列，默认使用 `gpt-5.5` 与 `reasoning.effort=high`，单请求失败最多重试 2 次，并记录审计字段，但只能生成 `llm_extracted` / `pending_review` 线索，不能直接触发交易动作。
+SEC 基本面已经接入基础硬数据评分；估值快照和政策/地缘风险发生记录已经接入可审计的手工输入评分，并支持从结构化 CSV 导入来减少手工 YAML 维护。TSMC IR 季度基本面已支持从官方 Management Report 文本或 PDF 可抽取文本层导入，并可显式合并到统一 SEC-style 指标 CSV；LLM claim 预审已支持 OpenAI Responses API 结构化输出和待复核队列，默认使用 `gpt-5.5`、`reasoning.effort=high` 与 `requests` HTTP 客户端，单请求失败最多重试 2 次，并记录审计字段，但只能生成 `llm_extracted` / `pending_review` 线索，不能直接触发交易动作。
 
 ## 工程结构
 
@@ -129,7 +129,7 @@ aits score-daily --as-of 2026-05-01
 aits score-daily --as-of 2026-05-05 --skip-risk-event-openai-precheck
 ```
 
-该流程会先抓取 Federal Register/BIS/OFAC/USTR/Congress.gov/GovInfo/Trade.gov CSL 等官方政策/地缘来源，再用 `OPENAI_API_KEY` 调用 OpenAI Responses API 做 `metadata_only` 预审；为控制成本和延迟，默认最多处理 20 条官方候选，可用 `--risk-event-openai-precheck-max-candidates` 调整；默认模型为 `gpt-5.5`、`reasoning.effort=high`、请求读超时为 120 秒，可用 `--openai-model`、`--openai-reasoning-effort` 和 `--openai-timeout-seconds` 调整；单个 OpenAI 请求遇到超时、429 或 5xx 等瞬时失败时最多重试 2 次，第 3 次仍失败则整批 fail closed。输出只写入 `data/processed/risk_event_prereview_queue.json` 和 `outputs/reports/risk_event_prereview_openai_YYYY-MM-DD.md`，并保持 `llm_extracted / pending_review`；无关或默认无风险结果不增加人工队列。它不会自动写入 `risk_event_occurrence`、不会生成复核声明、不会直接评分或触发仓位闸门。缺少 OpenAI key、官方来源抓取失败、provider LLM 权限失败或 OpenAI 请求最终失败时，默认日报前预审会停止日报评分。
+该流程会先抓取 Federal Register/BIS/OFAC/USTR/Congress.gov/GovInfo/Trade.gov CSL 等官方政策/地缘来源，再用 `OPENAI_API_KEY` 调用 OpenAI Responses API 做 `metadata_only` 预审；为控制成本和延迟，默认最多处理 20 条官方候选，可用 `--risk-event-openai-precheck-max-candidates` 调整；默认模型为 `gpt-5.5`、`reasoning.effort=high`、请求读超时为 120 秒，默认 HTTP 客户端为 `requests`，可用 `--openai-model`、`--openai-reasoning-effort`、`--openai-timeout-seconds` 和 `--openai-http-client urllib` 调整或对照；单个 OpenAI 请求遇到超时、429 或 5xx 等瞬时失败时最多重试 2 次，第 3 次仍失败则整批 fail closed。失败报告只输出 sanitized transport diagnostics，包括 attempt、HTTP client、client request id、endpoint host、payload byte size、input checksum、HTTP status、OpenAI x-request-id 或异常类型，不输出 API key、Authorization header 或未授权全文。输出只写入 `data/processed/risk_event_prereview_queue.json` 和 `outputs/reports/risk_event_prereview_openai_YYYY-MM-DD.md`，并保持 `llm_extracted / pending_review`；无关或默认无风险结果不增加人工队列。它不会自动写入 `risk_event_occurrence`、不会生成复核声明、不会直接评分或触发仓位闸门。缺少 OpenAI key、官方来源抓取失败、provider LLM 权限失败或 OpenAI 请求最终失败时，默认日报前预审会停止日报评分。
 
 运行历史回测：
 

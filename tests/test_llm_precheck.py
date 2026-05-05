@@ -9,6 +9,7 @@ from typing import Any
 import yaml
 from typer.testing import CliRunner
 
+import ai_trading_system.llm_precheck as llm_precheck_module
 from ai_trading_system.cli import app
 from ai_trading_system.config import (
     DataSourceConfig,
@@ -16,6 +17,7 @@ from ai_trading_system.config import (
     DataSourcesConfig,
 )
 from ai_trading_system.llm_precheck import (
+    DEFAULT_OPENAI_HTTP_CLIENT,
     DEFAULT_OPENAI_LLM_MODEL,
     DEFAULT_OPENAI_MAX_RETRIES,
     DEFAULT_OPENAI_REASONING_EFFORT,
@@ -73,6 +75,7 @@ def test_openai_precheck_defaults_are_daily_safe() -> None:
     assert DEFAULT_OPENAI_REASONING_EFFORT == "high"
     assert DEFAULT_OPENAI_TIMEOUT_SECONDS == 120.0
     assert DEFAULT_OPENAI_MAX_RETRIES == 2
+    assert DEFAULT_OPENAI_HTTP_CLIENT == "requests"
 
 
 def test_llm_claim_precheck_rejects_unsupported_reasoning_effort(
@@ -113,6 +116,101 @@ def test_llm_claim_precheck_rejects_unsupported_reasoning_effort(
     assert called is False
     assert report.status == "FAIL"
     assert "openai_reasoning_effort_invalid" in {issue.code for issue in report.issues}
+
+
+def test_llm_claim_precheck_rejects_unsupported_http_client(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    packet = _packet(content_sent_level="full_text")
+
+    def fail_post(*_args: Any, **_kwargs: Any) -> OpenAIJsonResponse:
+        raise AssertionError("unsupported http_client must fail before sending a request")
+
+    monkeypatch.setattr(llm_precheck_module, "_post_json_requests", fail_post)
+
+    report = run_openai_claim_precheck(
+        packet,
+        api_key="sk-test",
+        data_sources=DataSourcesConfig(
+            sources=[
+                _source(
+                    source_id="sec_company_facts",
+                    source_type="primary_source",
+                    external_llm_allowed=True,
+                    max_content_sent_level="full_text",
+                )
+            ]
+        ),
+        input_path=tmp_path / "input.yaml",
+        http_client="httpx",
+        generated_at=datetime(2026, 5, 4, tzinfo=UTC),
+    )
+
+    assert report.status == "FAIL"
+    assert report.record_count == 0
+    assert "openai_http_client_invalid" in {issue.code for issue in report.issues}
+
+
+def test_llm_claim_precheck_uses_requests_client_by_default(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    packet = _packet(content_text="Official release says export controls changed.")
+    calls: list[dict[str, Any]] = []
+
+    class FakeRequestsResponse:
+        status_code = 200
+        headers = {"x-request-id": "req_requests_default"}
+        text = ""
+
+        def json(self) -> dict[str, Any]:
+            return _openai_response(request_id="req_requests_default").body
+
+    def fake_requests_post(
+        url: str,
+        *,
+        headers: Mapping[str, str],
+        json: Mapping[str, Any],
+        timeout: float,
+    ) -> FakeRequestsResponse:
+        calls.append(
+            {
+                "url": url,
+                "headers": dict(headers),
+                "payload": dict(json),
+                "timeout": timeout,
+            }
+        )
+        return FakeRequestsResponse()
+
+    monkeypatch.setattr(llm_precheck_module.requests, "post", fake_requests_post)
+
+    report = run_openai_claim_precheck(
+        packet,
+        api_key="sk-test",
+        data_sources=DataSourcesConfig(
+            sources=[
+                _source(
+                    source_id="sec_company_facts",
+                    source_type="primary_source",
+                    external_llm_allowed=True,
+                    max_content_sent_level="full_text",
+                )
+            ]
+        ),
+        input_path=tmp_path / "input.yaml",
+        generated_at=datetime(2026, 5, 4, tzinfo=UTC),
+    )
+
+    assert report.status == "PASS_WITH_WARNINGS"
+    assert len(calls) == 1
+    assert calls[0]["timeout"] == DEFAULT_OPENAI_TIMEOUT_SECONDS
+    assert calls[0]["payload"]["store"] is False
+    assert calls[0]["payload"]["model"] == DEFAULT_OPENAI_LLM_MODEL
+    assert calls[0]["payload"]["reasoning"] == {"effort": DEFAULT_OPENAI_REASONING_EFFORT}
+    assert calls[0]["headers"]["X-Client-Request-Id"].startswith("aits-llm-precheck-")
+    assert report.records[0].client_request_id == calls[0]["headers"]["X-Client-Request-Id"]
 
 
 def test_llm_claim_precheck_writes_pending_review_queue_without_source_text(
@@ -190,8 +288,9 @@ def test_llm_claim_precheck_retries_retryable_http_error_before_success(
     ) -> OpenAIJsonResponse:
         captured_timeout.append(timeout_seconds)
         if len(captured_timeout) < 3:
+            status_code = 520 if len(captured_timeout) == 1 else 502
             return OpenAIJsonResponse(
-                status_code=502,
+                status_code=status_code,
                 headers={},
                 body={"error": {"message": "bad gateway"}},
             )
@@ -218,9 +317,16 @@ def test_llm_claim_precheck_retries_retryable_http_error_before_success(
     assert captured_timeout == [DEFAULT_OPENAI_TIMEOUT_SECONDS] * 3
     assert report.status == "PASS_WITH_WARNINGS"
     assert report.record_count == 1
-    assert "openai_responses_api_retry_succeeded" in {
-        issue.code for issue in report.issues
-    }
+    retry_issue = next(
+        issue for issue in report.issues if issue.code == "openai_responses_api_retry_succeeded"
+    )
+    attempts = retry_issue.diagnostics["attempts"]
+    assert len(attempts) == 3
+    assert [attempt["http_client"] for attempt in attempts] == ["custom", "custom", "custom"]
+    assert attempts[0]["client_request_id"].startswith("aits-llm-precheck-")
+    assert attempts[1]["client_request_id"].endswith("-retry-2")
+    assert [attempt["http_status"] for attempt in attempts] == [520, 502, 200]
+    assert retry_issue.diagnostics["final_attempt"]["input_checksum_sha256"]
 
 
 def test_llm_claim_precheck_fails_after_retry_exhaustion(tmp_path: Path) -> None:
@@ -236,9 +342,9 @@ def test_llm_claim_precheck_fails_after_retry_exhaustion(tmp_path: Path) -> None
         nonlocal call_count
         call_count += 1
         return OpenAIJsonResponse(
-            status_code=502,
+            status_code=520,
             headers={},
-            body={"error": {"message": "bad gateway"}},
+            body={"error": {"message": "edge timeout"}},
         )
 
     report = run_openai_claim_precheck(
@@ -262,8 +368,17 @@ def test_llm_claim_precheck_fails_after_retry_exhaustion(tmp_path: Path) -> None
     assert call_count == DEFAULT_OPENAI_MAX_RETRIES + 1
     assert report.status == "FAIL"
     assert report.record_count == 0
-    assert "openai_responses_api_error" in {issue.code for issue in report.issues}
-    assert any("已重试 2 次" in issue.message for issue in report.issues)
+    error_issue = next(
+        issue for issue in report.issues if issue.code == "openai_responses_api_error"
+    )
+    assert "已重试 2 次" in error_issue.message
+    assert error_issue.diagnostics["attempt_count"] == 3
+    assert [attempt["http_status"] for attempt in error_issue.diagnostics["attempts"]] == [
+        520,
+        520,
+        520,
+    ]
+    assert "sk-test" not in json.dumps(error_issue.diagnostics, ensure_ascii=False)
 
 
 def test_openai_claim_schema_cannot_emit_trade_action_fields() -> None:

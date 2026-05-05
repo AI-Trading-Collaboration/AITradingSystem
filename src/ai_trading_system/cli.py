@@ -281,6 +281,7 @@ from ai_trading_system.industry_node_state import (
     render_industry_node_heat_section,
 )
 from ai_trading_system.llm_precheck import (
+    DEFAULT_OPENAI_HTTP_CLIENT,
     DEFAULT_OPENAI_LLM_MODEL,
     DEFAULT_OPENAI_REASONING_EFFORT,
     DEFAULT_OPENAI_TIMEOUT_SECONDS,
@@ -927,6 +928,10 @@ def precheck_llm_claims_command(
         float,
         typer.Option(help="OpenAI Responses API 请求读超时秒数。"),
     ] = DEFAULT_OPENAI_TIMEOUT_SECONDS,
+    openai_http_client: Annotated[
+        str,
+        typer.Option(help="OpenAI Responses API HTTP 客户端：requests 或 urllib。"),
+    ] = DEFAULT_OPENAI_HTTP_CLIENT,
 ) -> None:
     """调用 OpenAI 结构化输出生成 claim 待复核队列。"""
     if timeout_seconds <= 0:
@@ -950,6 +955,7 @@ def precheck_llm_claims_command(
         model=model,
         reasoning_effort=reasoning_effort,
         timeout_seconds=timeout_seconds,
+        http_client=openai_http_client,
     )
     write_llm_claim_precheck_report(report, report_path)
 
@@ -4059,6 +4065,10 @@ def precheck_risk_events_with_openai_command(
         float,
         typer.Option(help="OpenAI Responses API 请求读超时秒数。"),
     ] = DEFAULT_OPENAI_TIMEOUT_SECONDS,
+    openai_http_client: Annotated[
+        str,
+        typer.Option(help="OpenAI Responses API HTTP 客户端：requests 或 urllib。"),
+    ] = DEFAULT_OPENAI_HTTP_CLIENT,
 ) -> None:
     """调用 OpenAI API 整理风险事件候选，并写入人工复核队列。"""
     if timeout_seconds <= 0:
@@ -4084,6 +4094,7 @@ def precheck_risk_events_with_openai_command(
         model=model,
         reasoning_effort=reasoning_effort,
         timeout_seconds=timeout_seconds,
+        http_client=openai_http_client,
     )
     write_risk_event_prereview_import_report(report, report_path)
 
@@ -6328,6 +6339,10 @@ def score_daily(
         float,
         typer.Option(help="日报前风险事件 OpenAI 预审 Responses API 请求读超时秒数。"),
     ] = DEFAULT_OPENAI_TIMEOUT_SECONDS,
+    openai_http_client: Annotated[
+        str,
+        typer.Option(help="日报前风险事件 OpenAI 预审 HTTP 客户端：requests 或 urllib。"),
+    ] = DEFAULT_OPENAI_HTTP_CLIENT,
     catalyst_calendar_path: Annotated[
         Path,
         typer.Option(help="未来催化剂日历 YAML 路径，用于日报告警摘要。"),
@@ -6702,6 +6717,7 @@ def score_daily(
                 model=openai_model,
                 reasoning_effort=openai_reasoning_effort,
                 timeout_seconds=openai_timeout_seconds,
+                http_client=openai_http_client,
                 max_candidates=risk_event_openai_precheck_max_candidates,
             )
         )
@@ -6946,6 +6962,7 @@ def score_daily(
                 model=openai_model,
                 reasoning_effort=openai_reasoning_effort,
                 timeout_seconds=openai_timeout_seconds,
+                http_client=openai_http_client,
                 max_candidates=risk_event_openai_precheck_max_candidates,
             )
             if risk_event_openai_precheck
@@ -7027,6 +7044,7 @@ def _risk_event_openai_precheck_daily_section(
     model: str,
     reasoning_effort: str,
     timeout_seconds: float,
+    http_client: str,
     max_candidates: int,
 ) -> str:
     return "\n".join(
@@ -7040,6 +7058,7 @@ def _risk_event_openai_precheck_daily_section(
             f"- OpenAI 模型：{model}",
             f"- reasoning.effort：{reasoning_effort}",
             f"- 请求读超时：{timeout_seconds:g} 秒",
+            f"- HTTP client：{http_client}",
             f"- 本次候选上限：{max_candidates}",
             f"- LLM claim 数：{risk_event_prereview_report.row_count}",
             f"- 待人工复核队列记录数：{risk_event_prereview_report.record_count}",

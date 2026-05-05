@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
@@ -12,12 +14,14 @@ from pathlib import Path
 from typing import Any, Literal
 from uuid import uuid4
 
+import requests
 import yaml
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from ai_trading_system.config import DataSourceConfig, DataSourcesConfig
 
 OpenAIReasoningEffort = Literal["none", "minimal", "low", "medium", "high", "xhigh"]
+OpenAIHttpClient = Literal["requests", "urllib"]
 
 LLM_CLAIM_PREREVIEW_SCHEMA_VERSION = "llm_claim_prereview_queue.v2"
 LLM_CLAIM_PREREVIEW_PROMPT_VERSION = "llm_claim_precheck_v1"
@@ -26,8 +30,10 @@ DEFAULT_OPENAI_LLM_MODEL = "gpt-5.5"
 DEFAULT_OPENAI_REASONING_EFFORT: OpenAIReasoningEffort = "high"
 DEFAULT_OPENAI_TIMEOUT_SECONDS = 120.0
 DEFAULT_OPENAI_MAX_RETRIES = 2
+DEFAULT_OPENAI_HTTP_CLIENT: OpenAIHttpClient = "requests"
 _SUPPORTED_OPENAI_REASONING_EFFORTS = {"none", "minimal", "low", "medium", "high", "xhigh"}
-_OPENAI_RETRYABLE_STATUS_CODES = {408, 409, 425, 429, 500, 502, 503, 504}
+_SUPPORTED_OPENAI_HTTP_CLIENTS = {"requests", "urllib"}
+_OPENAI_RETRYABLE_STATUS_CODES = {408, 409, 425, 429}
 
 ContentSentLevel = Literal["metadata_only", "short_excerpt", "summary_only", "full_text"]
 SourceType = Literal["primary_source", "paid_vendor", "manual_input", "public_convenience"]
@@ -416,6 +422,7 @@ class LlmPrecheckIssue:
     code: str
     message: str
     precheck_id: str | None = None
+    diagnostics: Mapping[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -468,6 +475,7 @@ class OpenAIJsonResponse:
 @dataclass(frozen=True)
 class _OpenAIRequestResult:
     response: OpenAIJsonResponse | None
+    client_request_id: str = ""
     issues: tuple[LlmPrecheckIssue, ...] = field(default_factory=tuple)
 
 
@@ -497,6 +505,7 @@ def run_openai_claim_precheck(
     reasoning_effort: str = DEFAULT_OPENAI_REASONING_EFFORT,
     endpoint: str = DEFAULT_OPENAI_RESPONSES_ENDPOINT,
     timeout_seconds: float = DEFAULT_OPENAI_TIMEOUT_SECONDS,
+    http_client: str = DEFAULT_OPENAI_HTTP_CLIENT,
     generated_at: datetime | None = None,
     http_post_json: HttpPostJson | None = None,
 ) -> LlmClaimPrecheckReport:
@@ -552,6 +561,26 @@ def run_openai_claim_precheck(
             ),
         )
 
+    try:
+        post_json, http_client_name = _resolve_openai_http_client(
+            http_client,
+            http_post_json=http_post_json,
+        )
+    except ValueError as exc:
+        return LlmClaimPrecheckReport(
+            input_path=Path(input_path),
+            generated_at=timestamp,
+            records=(),
+            issues=(
+                LlmPrecheckIssue(
+                    severity=LlmPrecheckIssueSeverity.ERROR,
+                    code="openai_http_client_invalid",
+                    precheck_id=input_packet.precheck_id,
+                    message=str(exc),
+                ),
+            ),
+        )
+
     client_request_id = f"aits-llm-precheck-{uuid4()}"
     request_payload = _build_openai_request_payload(
         input_packet=input_packet,
@@ -572,14 +601,15 @@ def run_openai_claim_precheck(
         "Content-Type": "application/json",
         "X-Client-Request-Id": client_request_id,
     }
-    post_json = http_post_json or _post_json_stdlib
     request_result = _post_openai_json_with_retries(
         post_json=post_json,
+        http_client_name=http_client_name,
         endpoint=endpoint,
         headers=headers,
         payload=request_payload,
         timeout_seconds=timeout_seconds,
         precheck_id=input_packet.precheck_id,
+        input_checksum_sha256=input_checksum,
     )
     issues.extend(request_result.issues)
     if request_result.response is None:
@@ -625,9 +655,9 @@ def run_openai_claim_precheck(
         model=model,
         reasoning_effort=normalized_reasoning_effort,
         prompt_version=LLM_CLAIM_PREREVIEW_PROMPT_VERSION,
-        request_id=request_id or client_request_id,
+        request_id=request_id or request_result.client_request_id or client_request_id,
         response_id=response_id,
-        client_request_id=client_request_id,
+        client_request_id=request_result.client_request_id or client_request_id,
         request_timestamp=timestamp,
         input_checksum_sha256=input_checksum,
         output_checksum_sha256=output_checksum,
@@ -750,6 +780,9 @@ def render_llm_claim_precheck_report(report: LlmClaimPrecheckReport) -> str:
                 f"{issue.precheck_id or ''} | "
                 f"{_escape_markdown_table(issue.message)} |"
             )
+        diagnostic_lines = _render_issue_diagnostics(report.issues)
+        if diagnostic_lines:
+            lines.extend(["", "## 请求诊断", "", *diagnostic_lines])
 
     lines.extend(
         [
@@ -757,7 +790,7 @@ def render_llm_claim_precheck_report(report: LlmClaimPrecheckReport) -> str:
             "## 方法说明",
             "",
             "- 本命令使用 OpenAI Responses API 固定 JSON schema 做结构化预审，"
-            "请求默认 `store=false`。",
+            "请求默认 `store=false`，HTTP 客户端默认 `requests`。",
             "- 单个 OpenAI 请求遇到超时、429 或 5xx 等瞬时失败时最多重试 2 次；"
             "第 3 次仍失败则 fail closed。",
             "- API key 只从环境变量读取，不写入报告、队列或错误信息。",
@@ -970,28 +1003,102 @@ def _post_json_stdlib(
         )
 
 
+def _post_json_requests(
+    url: str,
+    headers: Mapping[str, str],
+    payload: Mapping[str, Any],
+    timeout_seconds: float,
+) -> OpenAIJsonResponse:
+    response = requests.post(
+        url,
+        headers=dict(headers),
+        json=payload,
+        timeout=timeout_seconds,
+    )
+    try:
+        body = response.json()
+    except ValueError:
+        body = {"error": {"message": response.text}}
+    return OpenAIJsonResponse(
+        status_code=response.status_code,
+        headers=dict(response.headers.items()),
+        body=body,
+    )
+
+
+def _resolve_openai_http_client(
+    http_client: str,
+    *,
+    http_post_json: HttpPostJson | None,
+) -> tuple[HttpPostJson, str]:
+    if http_post_json is not None:
+        return http_post_json, "custom"
+    normalized = http_client.strip().lower()
+    if normalized not in _SUPPORTED_OPENAI_HTTP_CLIENTS:
+        supported = ", ".join(sorted(_SUPPORTED_OPENAI_HTTP_CLIENTS))
+        raise ValueError(f"OpenAI HTTP client={http_client!r} 不受支持；允许值：{supported}。")
+    if normalized == "urllib":
+        return _post_json_stdlib, "urllib"
+    return _post_json_requests, "requests"
+
+
 def _post_openai_json_with_retries(
     *,
     post_json: HttpPostJson,
+    http_client_name: str,
     endpoint: str,
     headers: Mapping[str, str],
     payload: Mapping[str, Any],
     timeout_seconds: float,
     precheck_id: str,
+    input_checksum_sha256: str,
     max_retries: int = DEFAULT_OPENAI_MAX_RETRIES,
 ) -> _OpenAIRequestResult:
     max_attempts = max_retries + 1
-    transient_failures: list[str] = []
+    endpoint_host = urllib.parse.urlparse(endpoint).netloc
+    payload_bytes = len(json.dumps(payload, ensure_ascii=False).encode("utf-8"))
+    base_client_request_id = str(headers.get("X-Client-Request-Id", ""))
+    attempt_diagnostics: list[dict[str, Any]] = []
     for attempt in range(1, max_attempts + 1):
+        attempt_client_request_id = (
+            base_client_request_id
+            if attempt == 1
+            else f"{base_client_request_id}-retry-{attempt}"
+        )
+        attempt_headers = {
+            **dict(headers),
+            "X-Client-Request-Id": attempt_client_request_id,
+        }
+        attempt_started = time.perf_counter()
+        diagnostic: dict[str, Any] = {
+            "attempt": attempt,
+            "max_attempts": max_attempts,
+            "client_request_id": attempt_client_request_id,
+            "endpoint_host": endpoint_host,
+            "http_client": http_client_name,
+            "payload_bytes": payload_bytes,
+            "input_checksum_sha256": input_checksum_sha256,
+            "timeout_seconds": timeout_seconds,
+        }
         try:
-            response = post_json(endpoint, headers, payload, timeout_seconds)
-        except (OSError, TimeoutError, urllib.error.URLError) as exc:
+            response = post_json(endpoint, attempt_headers, payload, timeout_seconds)
+        except (OSError, TimeoutError, urllib.error.URLError, requests.RequestException) as exc:
+            diagnostic.update(
+                {
+                    "elapsed_seconds": round(time.perf_counter() - attempt_started, 3),
+                    "exception_type": type(exc).__name__,
+                    "exception_reason": _transport_exception_reason(exc),
+                    "errno": _transport_exception_errno(exc),
+                    "retryable": attempt < max_attempts,
+                }
+            )
+            attempt_diagnostics.append(diagnostic)
             failure = f"{type(exc).__name__}: {exc}"
             if attempt < max_attempts:
-                transient_failures.append(f"第 {attempt} 次尝试失败：{failure}")
                 continue
             return _OpenAIRequestResult(
                 response=None,
+                client_request_id=attempt_client_request_id,
                 issues=(
                     LlmPrecheckIssue(
                         severity=LlmPrecheckIssueSeverity.ERROR,
@@ -1001,23 +1108,37 @@ def _post_openai_json_with_retries(
                             f"OpenAI Responses API 请求在 {max_attempts} 次尝试后仍失败，"
                             f"已停止写入队列：{failure}"
                         ),
+                        diagnostics=_openai_transport_diagnostics(
+                            attempts=attempt_diagnostics,
+                            final_attempt=diagnostic,
+                        ),
                     ),
                 ),
             )
 
-        if response.status_code in _OPENAI_RETRYABLE_STATUS_CODES and attempt < max_attempts:
-            transient_failures.append(
-                f"第 {attempt} 次尝试返回 HTTP {response.status_code}"
-            )
+        diagnostic.update(
+            {
+                "elapsed_seconds": round(time.perf_counter() - attempt_started, 3),
+                "http_status": response.status_code,
+                "openai_request_id": _response_header(response.headers, "x-request-id"),
+                "retryable": (
+                    _is_retryable_http_status(response.status_code)
+                    and attempt < max_attempts
+                ),
+            }
+        )
+        attempt_diagnostics.append(diagnostic)
+        if _is_retryable_http_status(response.status_code) and attempt < max_attempts:
             continue
         if response.status_code >= 400:
             retry_phrase = (
                 f"已重试 {max_retries} 次后仍失败，"
-                if transient_failures
+                if attempt > 1
                 else ""
             )
             return _OpenAIRequestResult(
                 response=None,
+                client_request_id=attempt_client_request_id,
                 issues=(
                     LlmPrecheckIssue(
                         severity=LlmPrecheckIssueSeverity.ERROR,
@@ -1027,15 +1148,23 @@ def _post_openai_json_with_retries(
                             f"OpenAI Responses API 返回 HTTP {response.status_code}，"
                             f"{retry_phrase}已停止写入队列。"
                         ),
+                        diagnostics=_openai_transport_diagnostics(
+                            attempts=attempt_diagnostics,
+                            final_attempt=diagnostic,
+                        ),
                     ),
                 ),
             )
 
-        if not transient_failures:
-            return _OpenAIRequestResult(response=response)
+        if attempt == 1:
+            return _OpenAIRequestResult(
+                response=response,
+                client_request_id=attempt_client_request_id,
+            )
 
         return _OpenAIRequestResult(
             response=response,
+            client_request_id=attempt_client_request_id,
             issues=(
                 LlmPrecheckIssue(
                     severity=LlmPrecheckIssueSeverity.WARNING,
@@ -1043,13 +1172,106 @@ def _post_openai_json_with_retries(
                     precheck_id=precheck_id,
                     message=(
                         f"OpenAI Responses API 在第 {attempt} 次尝试成功；此前失败 "
-                        f"{len(transient_failures)} 次：{'; '.join(transient_failures)}。"
+                        f"{attempt - 1} 次。"
+                    ),
+                    diagnostics=_openai_transport_diagnostics(
+                        attempts=attempt_diagnostics,
+                        final_attempt=diagnostic,
                     ),
                 ),
             ),
         )
 
     raise AssertionError("OpenAI retry loop exited unexpectedly")
+
+
+def _openai_transport_diagnostics(
+    *,
+    attempts: list[dict[str, Any]],
+    final_attempt: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "transport": "openai_responses_api",
+        "attempt_count": len(attempts),
+        "final_attempt": dict(final_attempt),
+        "attempts": [dict(attempt) for attempt in attempts],
+    }
+
+
+def _is_retryable_http_status(status_code: int) -> bool:
+    return status_code in _OPENAI_RETRYABLE_STATUS_CODES or 500 <= status_code <= 599
+
+
+def _transport_exception_reason(exc: BaseException) -> str:
+    reason = getattr(exc, "reason", None)
+    if reason is not None:
+        return str(reason)
+    return str(exc)
+
+
+def _transport_exception_errno(exc: BaseException) -> int | None:
+    reason = getattr(exc, "reason", None)
+    for item in (exc, reason):
+        errno = getattr(item, "errno", None)
+        if isinstance(errno, int):
+            return errno
+    return None
+
+
+def _render_issue_diagnostics(issues: tuple[LlmPrecheckIssue, ...]) -> list[str]:
+    lines: list[str] = []
+    for issue in issues:
+        diagnostics = issue.diagnostics
+        if not diagnostics:
+            continue
+        attempts = diagnostics.get("attempts")
+        if not isinstance(attempts, list):
+            continue
+        lines.extend(
+            [
+                f"### {issue.code} / {issue.precheck_id or ''}",
+                "",
+                "| Attempt | Client request id | Endpoint | Payload bytes | HTTP | "
+                "Client | OpenAI request | Exception | Retryable | Elapsed |",
+                "|---:|---|---|---:|---:|---|---|---|---|---:|",
+            ]
+        )
+        for attempt in attempts:
+            if not isinstance(attempt, Mapping):
+                continue
+            lines.append(
+                "| "
+                f"{attempt.get('attempt', '')} | "
+                f"{_escape_markdown_table(str(attempt.get('client_request_id', '')))} | "
+                f"{_escape_markdown_table(str(attempt.get('endpoint_host', '')))} | "
+                f"{attempt.get('payload_bytes', '')} | "
+                f"{attempt.get('http_status', '')} | "
+                f"{_escape_markdown_table(str(attempt.get('http_client') or ''))} | "
+                f"{_escape_markdown_table(str(attempt.get('openai_request_id') or ''))} | "
+                f"{_escape_markdown_table(_attempt_exception_label(attempt))} | "
+                f"{attempt.get('retryable', '')} | "
+                f"{attempt.get('elapsed_seconds', '')} |"
+            )
+        final_attempt = diagnostics.get("final_attempt")
+        if isinstance(final_attempt, Mapping) and final_attempt.get("input_checksum_sha256"):
+            lines.extend(
+                [
+                    "",
+                    f"- input_checksum_sha256：`{final_attempt['input_checksum_sha256']}`",
+                    "",
+                ]
+            )
+    return lines
+
+
+def _attempt_exception_label(attempt: Mapping[str, Any]) -> str:
+    exception_type = str(attempt.get("exception_type") or "")
+    if not exception_type:
+        return ""
+    reason = str(attempt.get("exception_reason") or "")
+    errno = attempt.get("errno")
+    errno_text = f" errno={errno}" if errno is not None else ""
+    return f"{exception_type}{errno_text}: {reason}"
 
 
 def _extract_output_text(body: Mapping[str, Any]) -> str:

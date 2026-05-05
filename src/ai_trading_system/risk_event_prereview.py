@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from enum import StrEnum
@@ -13,6 +14,7 @@ from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from ai_trading_system.config import DataSourcesConfig, RiskEventsConfig
 from ai_trading_system.llm_precheck import (
+    DEFAULT_OPENAI_HTTP_CLIENT,
     DEFAULT_OPENAI_LLM_MODEL,
     DEFAULT_OPENAI_REASONING_EFFORT,
     DEFAULT_OPENAI_RESPONSES_ENDPOINT,
@@ -249,6 +251,7 @@ class RiskEventPreReviewIssue:
     message: str
     row_number: int | None = None
     precheck_id: str | None = None
+    diagnostics: Mapping[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -376,6 +379,7 @@ def run_openai_risk_event_prereview(
     reasoning_effort: str = DEFAULT_OPENAI_REASONING_EFFORT,
     endpoint: str = DEFAULT_OPENAI_RESPONSES_ENDPOINT,
     timeout_seconds: float = DEFAULT_OPENAI_TIMEOUT_SECONDS,
+    http_client: str = DEFAULT_OPENAI_HTTP_CLIENT,
     generated_at: datetime | None = None,
     http_post_json: HttpPostJson | None = None,
 ) -> RiskEventPreReviewImportReport:
@@ -388,6 +392,7 @@ def run_openai_risk_event_prereview(
         reasoning_effort=reasoning_effort,
         endpoint=endpoint,
         timeout_seconds=timeout_seconds,
+        http_client=http_client,
         generated_at=generated_at,
         http_post_json=http_post_json,
     )
@@ -410,6 +415,7 @@ def run_openai_risk_event_prereview_for_official_candidates(
     reasoning_effort: str = DEFAULT_OPENAI_REASONING_EFFORT,
     endpoint: str = DEFAULT_OPENAI_RESPONSES_ENDPOINT,
     timeout_seconds: float = DEFAULT_OPENAI_TIMEOUT_SECONDS,
+    http_client: str = DEFAULT_OPENAI_HTTP_CLIENT,
     generated_at: datetime | None = None,
     http_post_json: HttpPostJson | None = None,
     max_candidates: int | None = None,
@@ -455,6 +461,7 @@ def run_openai_risk_event_prereview_for_official_candidates(
             reasoning_effort=reasoning_effort,
             endpoint=endpoint,
             timeout_seconds=timeout_seconds,
+            http_client=http_client,
             generated_at=generated_at,
             http_post_json=http_post_json,
         )
@@ -664,6 +671,9 @@ def render_risk_event_prereview_import_report(
                 f"{issue.precheck_id or ''} | "
                 f"{_escape_markdown_table(issue.message)} |"
             )
+        diagnostic_lines = _render_issue_diagnostics(report.issues)
+        if diagnostic_lines:
+            lines.extend(["", "## 请求诊断", "", *diagnostic_lines])
 
     lines.extend(
         [
@@ -876,6 +886,7 @@ def _issue_from_llm_precheck(issue: Any) -> RiskEventPreReviewIssue:
         code=issue.code,
         message=issue.message,
         precheck_id=issue.precheck_id,
+        diagnostics=getattr(issue, "diagnostics", {}),
     )
 
 
@@ -913,6 +924,62 @@ def _claim_report_checksum(report: LlmClaimPrecheckReport) -> str:
         separators=(",", ":"),
     )
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+
+def _render_issue_diagnostics(issues: tuple[RiskEventPreReviewIssue, ...]) -> list[str]:
+    lines: list[str] = []
+    for issue in issues:
+        diagnostics = issue.diagnostics
+        if not diagnostics:
+            continue
+        attempts = diagnostics.get("attempts")
+        if not isinstance(attempts, list):
+            continue
+        lines.extend(
+            [
+                f"### {issue.code} / {issue.precheck_id or ''}",
+                "",
+                "| Attempt | Client request id | Endpoint | Payload bytes | HTTP | "
+                "Client | OpenAI request | Exception | Retryable | Elapsed |",
+                "|---:|---|---|---:|---:|---|---|---|---|---:|",
+            ]
+        )
+        for attempt in attempts:
+            if not isinstance(attempt, Mapping):
+                continue
+            lines.append(
+                "| "
+                f"{attempt.get('attempt', '')} | "
+                f"{_escape_markdown_table(str(attempt.get('client_request_id', '')))} | "
+                f"{_escape_markdown_table(str(attempt.get('endpoint_host', '')))} | "
+                f"{attempt.get('payload_bytes', '')} | "
+                f"{attempt.get('http_status', '')} | "
+                f"{_escape_markdown_table(str(attempt.get('http_client') or ''))} | "
+                f"{_escape_markdown_table(str(attempt.get('openai_request_id') or ''))} | "
+                f"{_escape_markdown_table(_attempt_exception_label(attempt))} | "
+                f"{attempt.get('retryable', '')} | "
+                f"{attempt.get('elapsed_seconds', '')} |"
+            )
+        final_attempt = diagnostics.get("final_attempt")
+        if isinstance(final_attempt, Mapping) and final_attempt.get("input_checksum_sha256"):
+            lines.extend(
+                [
+                    "",
+                    f"- input_checksum_sha256：`{final_attempt['input_checksum_sha256']}`",
+                    "",
+                ]
+            )
+    return lines
+
+
+def _attempt_exception_label(attempt: Mapping[str, Any]) -> str:
+    exception_type = str(attempt.get("exception_type") or "")
+    if not exception_type:
+        return ""
+    reason = str(attempt.get("exception_reason") or "")
+    errno = attempt.get("errno")
+    errno_text = f" errno={errno}" if errno is not None else ""
+    return f"{exception_type}{errno_text}: {reason}"
 
 
 def _dedupe_key(

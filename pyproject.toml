@@ -16,6 +16,7 @@ dependencies = [
   "pydantic>=2.7",
   "pydantic-settings>=2.2",
   "PyYAML>=6.0",
+  "requests>=2.31",
   "rich>=13.7",
   "typer>=0.12",
 ]
@@ -23,7 +24,6 @@ dependencies = [
 [project.optional-dependencies]
 data = [
   "pypdf>=4.2",
-  "requests>=2.31",
   "yfinance>=0.2.40",
 ]
 dashboard = [

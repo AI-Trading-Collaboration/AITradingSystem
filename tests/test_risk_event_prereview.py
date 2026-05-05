@@ -480,9 +480,21 @@ def test_official_candidates_auto_precheck_reports_openai_timeout(
     assert report.status == "FAIL"
     assert report.record_count == 0
     assert call_count == DEFAULT_OPENAI_MAX_RETRIES + 1
-    assert "openai_responses_api_request_failed" in {
-        issue.code for issue in report.issues
-    }
+    error_issue = next(
+        issue for issue in report.issues if issue.code == "openai_responses_api_request_failed"
+    )
+    assert error_issue.diagnostics["attempt_count"] == 3
+    assert [
+        attempt["exception_type"] for attempt in error_issue.diagnostics["attempts"]
+    ] == ["TimeoutError", "TimeoutError", "TimeoutError"]
+    assert [
+        attempt["http_client"] for attempt in error_issue.diagnostics["attempts"]
+    ] == ["custom", "custom", "custom"]
+    markdown = render_risk_event_prereview_import_report(report)
+    assert "## 请求诊断" in markdown
+    assert "Client request id" in markdown
+    assert "custom" in markdown
+    assert "sk-test" not in markdown
 
 
 def test_score_daily_help_exposes_risk_event_openai_precheck_option() -> None:
@@ -491,6 +503,7 @@ def test_score_daily_help_exposes_risk_event_openai_precheck_option() -> None:
     assert result.exit_code == 0
     assert "OpenAI 预审" in result.output
     assert "--skip-risk-event-" in result.output
+    assert "openai-http-client" in result.output
 
 
 def _write_csv(input_path: Path, rows: list[dict[str, str]]) -> None:
