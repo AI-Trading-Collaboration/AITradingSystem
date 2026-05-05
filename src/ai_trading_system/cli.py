@@ -348,6 +348,11 @@ from ai_trading_system.official_policy_sources import (
     fetch_official_policy_sources,
     write_official_policy_fetch_report,
 )
+from ai_trading_system.ops_daily import (
+    build_daily_ops_plan,
+    default_daily_ops_plan_path,
+    write_daily_ops_plan,
+)
 from ai_trading_system.periodic_investment_review import (
     DEFAULT_PERIODIC_INVESTMENT_REVIEW_REPORT_DIR,
     DEFAULT_SCORES_DAILY_PATH,
@@ -4420,6 +4425,106 @@ def pipeline_health_command(
     console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
     console.print(f"活跃告警数：{len(alert_report.alerts)}")
     if not report.passed:
+        raise typer.Exit(code=1)
+
+
+@ops_app.command("daily-plan")
+def daily_ops_plan_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="计划日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    download_start: Annotated[
+        str,
+        typer.Option(help="市场数据下载起始日期，格式为 YYYY-MM-DD。"),
+    ] = "2018-01-01",
+    include_download_data: Annotated[
+        bool,
+        typer.Option(
+            "--include-download-data/--skip-download-data",
+            help="是否在计划中包含 `aits download-data`。",
+        ),
+    ] = True,
+    include_pit_snapshots: Annotated[
+        bool,
+        typer.Option(
+            "--include-pit-snapshots/--skip-pit-snapshots",
+            help="是否在计划中包含 FMP forward-only PIT 抓取和校验。",
+        ),
+    ] = True,
+    include_secret_scan: Annotated[
+        bool,
+        typer.Option(
+            "--include-secret-scan/--skip-secret-scan",
+            help="是否在计划中包含 secret hygiene 扫描。",
+        ),
+    ] = True,
+    risk_event_openai_precheck: Annotated[
+        bool,
+        typer.Option(
+            "--risk-event-openai-precheck/--skip-risk-event-openai-precheck",
+            help="是否让计划中的 score-daily 默认执行 OpenAI 风险事件预审。",
+        ),
+    ] = True,
+    risk_event_openai_precheck_max_candidates: Annotated[
+        int,
+        typer.Option(help="计划中的 OpenAI 风险事件预审候选上限。"),
+    ] = 20,
+    full_universe: Annotated[
+        bool,
+        typer.Option(
+            "--full-universe",
+            help="计划中对 download-data 使用完整 AI 产业链标的。",
+        ),
+    ] = False,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 每日运行计划输出路径。"),
+    ] = None,
+    fail_on_missing_env: Annotated[
+        bool,
+        typer.Option(
+            "--fail-on-missing-env",
+            help="如果计划发现缺少关键环境变量，写出报告后返回非零退出码。",
+        ),
+    ] = False,
+) -> None:
+    """生成适合本地或云 VM 调度的每日运行计划。"""
+    plan_date = _parse_date(as_of) if as_of else date.today()
+    start_date = _parse_date(download_start)
+    if risk_event_openai_precheck_max_candidates < 0:
+        raise typer.BadParameter("OpenAI 风险事件预审候选上限不能为负数。")
+    try:
+        plan = build_daily_ops_plan(
+            as_of=plan_date,
+            download_start=start_date,
+            include_download_data=include_download_data,
+            include_pit_snapshots=include_pit_snapshots,
+            include_secret_scan=include_secret_scan,
+            skip_risk_event_openai_precheck=not risk_event_openai_precheck,
+            full_universe=full_universe,
+            risk_event_openai_precheck_max_candidates=(
+                risk_event_openai_precheck_max_candidates
+            ),
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    report_path = output_path or default_daily_ops_plan_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        plan_date,
+    )
+    write_daily_ops_plan(plan, report_path, env=os.environ)
+
+    status = plan.status(os.environ)
+    style = "green" if status == "READY" else "yellow" if status == "READY_WITH_SKIPS" else "red"
+    missing_env = plan.missing_env_vars(os.environ)
+    console.print(f"[{style}]每日运行计划：{status}[/{style}]")
+    console.print(f"报告：{report_path}")
+    console.print(f"步骤数：{len(plan.steps)}")
+    if missing_env:
+        console.print(f"缺失环境变量：{', '.join(missing_env)}")
+    if fail_on_missing_env and missing_env:
         raise typer.Exit(code=1)
 
 

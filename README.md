@@ -107,6 +107,14 @@ aits ops health --as-of 2026-05-02
 
 该命令默认检查 `data/raw/pit_snapshots/manifest.csv`、当日 `data/processed/pit_snapshots/fmp_forward_pit_YYYY-MM-DD.csv` 和 `outputs/reports/pit_snapshots_validation_YYYY-MM-DD.md`，并输出 `outputs/reports/pipeline_health_YYYY-MM-DD.md` 与 `outputs/reports/pipeline_health_alerts_YYYY-MM-DD.md`。告警只做 data/system 复核提示，`production_effect=none`，不改变评分、仓位、回测或执行建议。
 
+在接入本地任务计划程序或云 VM 前，可以先生成每日运行计划，检查命令顺序、必需环境变量和预期输出：
+
+```powershell
+aits ops daily-plan --as-of 2026-05-02
+```
+
+计划默认包含 `download-data`、`pit-snapshots fetch-fmp-forward`、`score-daily`、`ops health` 和 `security scan-secrets`。报告写入 `outputs/reports/daily_ops_plan_YYYY-MM-DD.md`，只检查环境变量是否非空，不输出 secret 值，也不实际调用供应商 API。缺少 `FMP_API_KEY`、`MARKETSTACK_API_KEY` 或默认 OpenAI 预审需要的 `OPENAI_API_KEY` 时，计划状态会显示 `BLOCKED_ENV`；如需把它作为调度前门禁，可加 `--fail-on-missing-env`。若离线排查需要跳过 OpenAI 预审，必须显式传入 `--skip-risk-event-openai-precheck`，后续日报和运行记录仍需声明该限制。
+
 构建每日市场特征：
 
 ```powershell
