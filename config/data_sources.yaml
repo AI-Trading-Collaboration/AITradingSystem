@@ -130,7 +130,8 @@ sources:
       - 公开便利源，不是交易所一手行情源。
       - 公司行动和复权调整必须在下游评分前通过校验。
       - 2026-05-05 数据质量门禁发现 SPY 非正价格、OHLC 逻辑异常和供应商复权口径冲突，已从默认生产主源移除。
-    owner_notes: 仅保留为显式 `--price-provider yahoo` 迁移调查选项；默认生产主源已切换为 FMP。
+      - 后续可作为 Marketstack 明显自身坏行的显式诊断性第三来源复查；复查结果只能进入数据源健康或调查报告，不得写入主价格缓存、第二源缓存、评分、回测真值或仓位闸门。
+    owner_notes: 仅保留为显式 `--price-provider yahoo` 迁移调查选项和 DATA-012 诊断复查候选；默认生产主源已切换为 FMP。
 
   - source_id: marketstack_eod_daily_prices
     provider: Marketstack
@@ -173,6 +174,7 @@ sources:
       - Marketstack 对部分 ETF 的 `adj_close` 与 Yahoo 分红复权口径不同；质量门禁以 raw `close` 作为阻塞核验，adjusted close 差异作为限制或调查项输出。
       - 2026-05-05 真实缓存复核发现 SPY 非正价格、INTC/MSFT OHLC 异常和 SOXX split 日 adjusted close 异常主要落在 Marketstack 第二源；第二源自身异常默认作为数据源健康告警显式报告，不得自动覆盖或修正主价格缓存。
       - 第二来源只用于 cross-provider reconciliation，不自动平滑、覆盖或修正主价格缓存；主源/二源 raw close 未解决冲突仍会阻断下游流程。
+      - 当 Marketstack 自身坏行明显且 FMP 主源对应行通过时，可用 Yahoo 做只读诊断复查；Yahoo 一致性只能增强归因，不得自动把 Marketstack 或 FMP 的缓存改写。
       - API plan 可能限制请求量、历史深度和字段覆盖。
     llm_permission:
       license_scope: paid_vendor_terms_not_reviewed_for_external_llm
