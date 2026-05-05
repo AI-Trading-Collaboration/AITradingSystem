@@ -171,8 +171,8 @@ sources:
       - Basic 历史深度约 10 年，足够覆盖 `ai_after_chatgpt` 默认窗口和当前 warm-up，但不支持更长历史压力测试。
       - "`^VIX` 等 Yahoo 风格宏观代理不在当前 Marketstack Basic 覆盖内，质量门禁需显式排除或标记限制。"
       - Marketstack 对部分 ETF 的 `adj_close` 与 Yahoo 分红复权口径不同；质量门禁以 raw `close` 作为阻塞核验，adjusted close 差异作为限制或调查项输出。
-      - 2026-05-05 真实缓存复核发现 SPY 非正价格、INTC/MSFT OHLC 异常和 SOXX split 日 adjusted close 异常主要落在 Marketstack 第二源；第二源自身硬错误必须显式报告，不得自动覆盖或修正主价格缓存。
-      - 第二来源只用于 cross-provider reconciliation，不自动平滑、覆盖或修正主价格缓存。
+      - 2026-05-05 真实缓存复核发现 SPY 非正价格、INTC/MSFT OHLC 异常和 SOXX split 日 adjusted close 异常主要落在 Marketstack 第二源；第二源自身异常默认作为数据源健康告警显式报告，不得自动覆盖或修正主价格缓存。
+      - 第二来源只用于 cross-provider reconciliation，不自动平滑、覆盖或修正主价格缓存；主源/二源 raw close 未解决冲突仍会阻断下游流程。
       - API plan 可能限制请求量、历史深度和字段覆盖。
     llm_permission:
       license_scope: paid_vendor_terms_not_reviewed_for_external_llm

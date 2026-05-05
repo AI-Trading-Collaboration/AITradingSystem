@@ -576,6 +576,7 @@ class PriceQualityConfig(BaseModel):
     secondary_source_min_overlap_ratio: float = Field(default=0.80, ge=0, le=1)
     secondary_source_adj_close_warning_pct: float = Field(default=0.01, gt=0)
     secondary_source_adj_close_error_pct: float = Field(default=0.05, gt=0)
+    secondary_source_self_check_fail_closed: bool = False
     secondary_source_excluded_tickers: list[str] = Field(default_factory=lambda: ["^VIX"])
     ticker_return_threshold_overrides: dict[str, PriceReturnThresholdOverrideConfig] = Field(
         default_factory=dict

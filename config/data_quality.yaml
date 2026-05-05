@@ -13,6 +13,9 @@ prices:
   secondary_source_min_overlap_ratio: 0.80
   secondary_source_adj_close_warning_pct: 0.01
   secondary_source_adj_close_error_pct: 0.05
+  # 第二行情源只做核验和告警。其自身坏行必须记录，但在主价格源通过时
+  # 不阻断默认日报；真实主源/二源 raw close 冲突仍由 reconciliation 阻断。
+  secondary_source_self_check_fail_closed: false
   secondary_source_excluded_tickers:
     - "^VIX"
   ticker_return_threshold_overrides:

@@ -385,7 +385,7 @@ def test_validate_data_cache_labels_secondary_self_check_source(tmp_path: Path) 
         rates_path=rates_path,
         expected_price_tickers=["MSFT", "NVDA"],
         expected_rate_series=["DGS2", "DGS10"],
-        quality_config=load_data_quality(),
+        quality_config=_quality_config_with_secondary_overlap_threshold(0.50),
         as_of=date(2026, 5, 2),
         secondary_prices_path=secondary_path,
         require_secondary_prices=True,
@@ -393,9 +393,39 @@ def test_validate_data_cache_labels_secondary_self_check_source(tmp_path: Path) 
     issue = _issue_by_code(report, "prices_non_positive_close")
     markdown = render_data_quality_report(report)
 
-    assert report.passed is False
+    assert report.passed is True
+    assert report.status == "PASS_WITH_WARNINGS"
+    assert issue.severity is Severity.WARNING
     assert issue.source == "第二行情源 Marketstack"
-    assert "| 错误 | 第二行情源 Marketstack | prices_non_positive_close |" in markdown
+    assert "| 警告 | 第二行情源 Marketstack | prices_non_positive_close |" in markdown
+
+
+def test_validate_data_cache_can_fail_closed_on_secondary_self_check_when_configured(
+    tmp_path: Path,
+) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    secondary_path = tmp_path / "prices_marketstack_daily.csv"
+    secondary = pd.read_csv(prices_path)
+    secondary.loc[
+        (secondary["ticker"] == "NVDA") & (secondary["date"] == "2026-04-30"),
+        "close",
+    ] = 0.0
+    secondary.to_csv(secondary_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10"],
+        quality_config=_quality_config_with_secondary_fail_closed(),
+        as_of=date(2026, 5, 2),
+        secondary_prices_path=secondary_path,
+        require_secondary_prices=True,
+    )
+    issue = _issue_by_code(report, "prices_non_positive_close")
+
+    assert report.passed is False
+    assert issue.severity is Severity.ERROR
 
 
 def test_validate_data_cache_warns_when_secondary_adjustment_basis_differs(
@@ -607,5 +637,27 @@ def _quality_config_with_consistency_start(start: date):
         update={
             "prices": config.prices.model_copy(update={"consistency_start_date": start}),
             "rates": config.rates.model_copy(update={"consistency_start_date": start}),
+        }
+    )
+
+
+def _quality_config_with_secondary_overlap_threshold(threshold: float):
+    config = load_data_quality()
+    return config.model_copy(
+        update={
+            "prices": config.prices.model_copy(
+                update={"secondary_source_min_overlap_ratio": threshold}
+            ),
+        }
+    )
+
+
+def _quality_config_with_secondary_fail_closed():
+    config = _quality_config_with_secondary_overlap_threshold(0.50)
+    return config.model_copy(
+        update={
+            "prices": config.prices.model_copy(
+                update={"secondary_source_self_check_fail_closed": True}
+            ),
         }
     )

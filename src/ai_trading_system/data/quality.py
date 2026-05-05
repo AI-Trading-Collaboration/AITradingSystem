@@ -140,6 +140,7 @@ def validate_data_cache(
             as_of,
             issues,
             source="第二行情源 Marketstack",
+            error_severity=_secondary_price_self_check_error_severity(quality_config),
         )
         if prices is not None:
             _check_secondary_price_reconciliation(
@@ -419,15 +420,16 @@ def _validate_prices(
     issues: list[DataQualityIssue],
     *,
     source: str = "价格主源",
+    error_severity: Severity = Severity.ERROR,
 ) -> DataFileSummary:
     if prices.empty:
         issues.append(
-            DataQualityIssue(Severity.ERROR, "prices_empty", "价格数据没有任何行", source=source)
+            DataQualityIssue(error_severity, "prices_empty", "价格数据没有任何行", source=source)
         )
         return summary
 
     if not _check_required_columns(
-        prices, PRICE_REQUIRED_COLUMNS, "prices", issues, source=source
+        prices, PRICE_REQUIRED_COLUMNS, "prices", issues, source=source, severity=error_severity
     ):
         return summary
 
@@ -437,7 +439,7 @@ def _validate_prices(
     if invalid_dates.any():
         issues.append(
             DataQualityIssue(
-                Severity.ERROR,
+                error_severity,
                 "prices_invalid_date",
                 "价格数据包含无法解析的日期",
                 rows=int(invalid_dates.sum()),
@@ -446,11 +448,29 @@ def _validate_prices(
             )
         )
 
-    _check_duplicate_keys(frame, ["date", "ticker"], "prices", issues, source=source)
-    _check_expected_values(frame, "ticker", expected_tickers, "prices", issues, source=source)
-    _check_price_numeric_rules(frame, issues, source=source)
-    _check_price_staleness(frame, expected_tickers, quality_config, as_of, issues, source=source)
-    _check_price_moves(frame, quality_config, issues, source=source)
+    _check_duplicate_keys(
+        frame, ["date", "ticker"], "prices", issues, source=source, severity=error_severity
+    )
+    _check_expected_values(
+        frame,
+        "ticker",
+        expected_tickers,
+        "prices",
+        issues,
+        source=source,
+        severity=error_severity,
+    )
+    _check_price_numeric_rules(frame, issues, source=source, error_severity=error_severity)
+    _check_price_staleness(
+        frame,
+        expected_tickers,
+        quality_config,
+        as_of,
+        issues,
+        source=source,
+        error_severity=error_severity,
+    )
+    _check_price_moves(frame, quality_config, issues, source=source, error_severity=error_severity)
 
     valid_dates = frame.loc[frame["_date"].notna(), "_date"]
     return _summary_with_dates(summary, valid_dates)
@@ -529,12 +549,13 @@ def _check_required_columns(
     issues: list[DataQualityIssue],
     *,
     source: str | None = None,
+    severity: Severity = Severity.ERROR,
 ) -> bool:
     missing = [column for column in required_columns if column not in data.columns]
     if missing:
         issues.append(
             DataQualityIssue(
-                Severity.ERROR,
+                severity,
                 f"{label}_missing_columns",
                 f"{_data_label(label)}缺少必需字段：{', '.join(missing)}",
                 source=source or _source_label(label),
@@ -551,12 +572,13 @@ def _check_duplicate_keys(
     issues: list[DataQualityIssue],
     *,
     source: str | None = None,
+    severity: Severity = Severity.ERROR,
 ) -> None:
     duplicates = data.duplicated(subset=key_columns, keep=False)
     if duplicates.any():
         issues.append(
             DataQualityIssue(
-                Severity.ERROR,
+                severity,
                 f"{label}_duplicate_keys",
                 f"{_data_label(label)}存在重复主键：{', '.join(key_columns)}",
                 rows=int(duplicates.sum()),
@@ -574,13 +596,14 @@ def _check_expected_values(
     issues: list[DataQualityIssue],
     *,
     source: str | None = None,
+    severity: Severity = Severity.ERROR,
 ) -> None:
     present = set(str(value) for value in data[column].dropna().unique())
     missing = [value for value in expected_values if value not in present]
     if missing:
         issues.append(
             DataQualityIssue(
-                Severity.ERROR,
+                severity,
                 f"{label}_missing_expected_values",
                 f"{_data_label(label)}缺少预期的 {column}：{', '.join(missing)}",
                 source=source or _source_label(label),
@@ -593,6 +616,7 @@ def _check_price_numeric_rules(
     issues: list[DataQualityIssue],
     *,
     source: str,
+    error_severity: Severity,
 ) -> None:
     numeric_columns = ["open", "high", "low", "close", "adj_close", "volume"]
     for column in numeric_columns:
@@ -604,7 +628,7 @@ def _check_price_numeric_rules(
         if invalid.any():
             issues.append(
                 DataQualityIssue(
-                    Severity.ERROR,
+                    error_severity,
                     f"prices_invalid_{column}",
                     f"价格数据的 {column} 包含缺失或非数值",
                     rows=int(invalid.sum()),
@@ -617,7 +641,7 @@ def _check_price_numeric_rules(
         if non_positive.any():
             issues.append(
                 DataQualityIssue(
-                    Severity.ERROR,
+                    error_severity,
                     f"prices_non_positive_{column}",
                     f"价格数据的 {column} 包含非正数",
                     rows=int(non_positive.sum()),
@@ -630,7 +654,7 @@ def _check_price_numeric_rules(
     if invalid_volume.any():
         issues.append(
             DataQualityIssue(
-                Severity.ERROR,
+                error_severity,
                 "prices_negative_volume",
                 "价格数据包含负成交量",
                 rows=int(invalid_volume.sum()),
@@ -667,7 +691,7 @@ def _check_price_numeric_rules(
     if ohlc_invalid.any():
         issues.append(
             DataQualityIssue(
-                Severity.ERROR,
+                error_severity,
                 "prices_invalid_ohlc",
                 "价格数据违反 OHLC 逻辑约束",
                 rows=int(ohlc_invalid.sum()),
@@ -688,6 +712,7 @@ def _check_price_staleness(
     issues: list[DataQualityIssue],
     *,
     source: str,
+    error_severity: Severity,
 ) -> None:
     latest_by_ticker = frame.loc[frame["_date"].notna()].groupby("ticker")["_date"].max()
     stale: list[str] = []
@@ -705,7 +730,7 @@ def _check_price_staleness(
     if future:
         issues.append(
             DataQualityIssue(
-                Severity.ERROR,
+                error_severity,
                 "prices_future_dates",
                 "价格数据包含评估日期之后的数据",
                 sample=", ".join(future[:10]),
@@ -715,7 +740,7 @@ def _check_price_staleness(
     if stale:
         issues.append(
             DataQualityIssue(
-                Severity.ERROR,
+                error_severity,
                 "prices_stale",
                 "价格数据最新日期过旧，不能用于评分",
                 sample=", ".join(stale[:10]),
@@ -730,6 +755,7 @@ def _check_price_moves(
     issues: list[DataQualityIssue],
     *,
     source: str,
+    error_severity: Severity,
 ) -> None:
     data = frame.loc[
         frame["_date"].notna() & frame["_adj_close"].notna() & (frame["_adj_close"] > 0)
@@ -754,7 +780,7 @@ def _check_price_moves(
     if extreme.any():
         issues.append(
             DataQualityIssue(
-                Severity.ERROR,
+                error_severity,
                 "prices_extreme_adj_close_move",
                 "价格数据包含极端的调整收盘价单日波动",
                 rows=int(extreme.sum()),
@@ -814,6 +840,12 @@ def _secondary_expected_price_tickers(
 ) -> list[str]:
     excluded = set(quality_config.prices.secondary_source_excluded_tickers)
     return [ticker for ticker in expected_tickers if ticker not in excluded]
+
+
+def _secondary_price_self_check_error_severity(quality_config: DataQualityConfig) -> Severity:
+    if quality_config.prices.secondary_source_self_check_fail_closed:
+        return Severity.ERROR
+    return Severity.WARNING
 
 
 def _check_secondary_price_reconciliation(
