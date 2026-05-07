@@ -331,6 +331,45 @@ def fetch_fmp_forward_pit_snapshots(
     )
 
 
+def build_fmp_forward_pit_failure_report(
+    tickers: list[str] | tuple[str, ...],
+    as_of: date,
+    *,
+    code: str,
+    message: str,
+    captured_at: date | None = None,
+    downloaded_at: datetime | None = None,
+    analyst_estimate_limit: int = 10,
+    earnings_calendar_lookback_days: int = 7,
+    earnings_calendar_forward_days: int = 90,
+) -> FmpForwardPitFetchReport:
+    normalized_tickers = tuple(_normalize_tickers(tickers))
+    download_time = downloaded_at or datetime.now(tz=UTC)
+    fetch_date = captured_at or download_time.date()
+    calendar_from = as_of - timedelta(days=earnings_calendar_lookback_days)
+    calendar_to = as_of + timedelta(days=earnings_calendar_forward_days)
+    issue = FmpForwardPitIssue(
+        severity=FmpForwardPitIssueSeverity.ERROR,
+        code=code,
+        message=message,
+    )
+    return FmpForwardPitFetchReport(
+        as_of=as_of,
+        captured_at=fetch_date,
+        downloaded_at=download_time,
+        requested_tickers=normalized_tickers,
+        provider_symbols=tuple(_fmp_provider_symbol(ticker) for ticker in normalized_tickers),
+        analyst_estimate_limit=analyst_estimate_limit,
+        earnings_calendar_from=calendar_from,
+        earnings_calendar_to=calendar_to,
+        raw_payloads=tuple(),
+        normalized_rows=tuple(),
+        row_count=0,
+        checksum_sha256=_json_checksum({"issues": [issue.__dict__]}),
+        issues=(issue,),
+    )
+
+
 def write_fmp_forward_pit_raw_payloads(
     payloads: tuple[FmpForwardPitRawPayload, ...] | list[FmpForwardPitRawPayload],
     output_dir: Path | str,
@@ -771,7 +810,7 @@ def _display_path(path: Path, project_root: Path) -> Path:
         return path
 
 
-def _sanitize_fmp_error_message(exc: Exception) -> str:
+def sanitize_fmp_forward_pit_error_message(exc: Exception | str) -> str:
     message = str(exc)
     return re.sub(
         r"(apikey=)[^&\s]+",
@@ -779,6 +818,10 @@ def _sanitize_fmp_error_message(exc: Exception) -> str:
         message,
         flags=re.IGNORECASE,
     )
+
+
+def _sanitize_fmp_error_message(exc: Exception) -> str:
+    return sanitize_fmp_forward_pit_error_message(exc)
 
 
 def _escape_markdown_table(value: str) -> str:

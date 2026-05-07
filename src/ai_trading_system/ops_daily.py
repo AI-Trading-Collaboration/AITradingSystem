@@ -19,6 +19,14 @@ from ai_trading_system.fmp_forward_pit import (
     default_fmp_forward_pit_fetch_report_path,
     default_fmp_forward_pit_normalized_path,
 )
+from ai_trading_system.fundamentals.sec_metrics import (
+    default_sec_fundamental_metrics_csv_path,
+    default_sec_fundamental_metrics_report_path,
+    default_sec_fundamental_metrics_validation_report_path,
+)
+from ai_trading_system.fundamentals.sec_validation import (
+    default_sec_companyfacts_validation_report_path,
+)
 from ai_trading_system.pipeline_health import default_pipeline_health_report_path
 from ai_trading_system.pit_snapshots import (
     DEFAULT_PIT_SNAPSHOT_MANIFEST_PATH,
@@ -26,6 +34,11 @@ from ai_trading_system.pit_snapshots import (
 )
 from ai_trading_system.scoring.daily import default_daily_score_report_path
 from ai_trading_system.secret_hygiene import default_secret_scan_report_path
+from ai_trading_system.valuation import default_valuation_validation_report_path
+from ai_trading_system.valuation_sources import (
+    default_fmp_analyst_estimate_history_dir,
+    default_fmp_valuation_fetch_report_path,
+)
 
 
 @dataclass(frozen=True)
@@ -91,6 +104,8 @@ def build_daily_ops_plan(
     download_start: date = date(2018, 1, 1),
     include_download_data: bool = True,
     include_pit_snapshots: bool = True,
+    include_sec_fundamentals: bool = True,
+    include_valuation_snapshots: bool = True,
     include_secret_scan: bool = True,
     skip_risk_event_openai_precheck: bool = False,
     full_universe: bool = False,
@@ -123,6 +138,30 @@ def build_daily_ops_plan(
         as_of,
     )
     pit_validation_report = default_pit_snapshot_validation_report_path(
+        reports_dir,
+        as_of,
+    )
+    sec_companyfacts_dir = raw_dir / "sec_companyfacts"
+    sec_companyfacts_validation_report = default_sec_companyfacts_validation_report_path(
+        reports_dir,
+        as_of,
+    )
+    sec_metrics_csv = default_sec_fundamental_metrics_csv_path(processed_dir, as_of)
+    sec_metrics_report = default_sec_fundamental_metrics_report_path(
+        reports_dir,
+        as_of,
+    )
+    sec_metrics_validation_report = default_sec_fundamental_metrics_validation_report_path(
+        reports_dir,
+        as_of,
+    )
+    valuation_snapshots_dir = project_root / "data" / "external" / "valuation_snapshots"
+    fmp_analyst_history_dir = default_fmp_analyst_estimate_history_dir(raw_dir)
+    fmp_valuation_fetch_report = default_fmp_valuation_fetch_report_path(
+        reports_dir,
+        as_of,
+    )
+    valuation_validation_report = default_valuation_validation_report_path(
         reports_dir,
         as_of,
     )
@@ -177,11 +216,12 @@ def build_daily_ops_plan(
                     "fetch-fmp-forward",
                     "--as-of",
                     as_of_text,
+                    "--continue-on-failure",
                 )
                 if include_pit_snapshots
                 else ()
             ),
-            required_env_vars=("FMP_API_KEY",) if include_pit_snapshots else (),
+            required_env_vars=(),
             produced_paths=(
                 DEFAULT_FMP_FORWARD_PIT_RAW_DIR,
                 pit_normalized,
@@ -189,13 +229,138 @@ def build_daily_ops_plan(
                 pit_fetch_report,
                 pit_validation_report,
             ),
-            quality_gate="命令会刷新 PIT manifest 并执行 PIT 快照质量门禁；失败时停止。",
-            blocks_downstream=True,
+            quality_gate=(
+                "命令读取 FMP_API_KEY 并刷新 PIT manifest；失败会写入脱敏报告或 "
+                "pipeline health 告警，后续 score-daily 仍执行自身质量门禁。"
+            ),
+            blocks_downstream=False,
             enabled=include_pit_snapshots,
             skip_reason=(
                 None
                 if include_pit_snapshots
                 else "显式跳过 PIT 抓取；缺跑日期不能事后补成 strict PIT。"
+            ),
+        ),
+        DailyOpsStep(
+            step_id="sec_companyfacts",
+            title="刷新 SEC companyfacts 原始缓存",
+            command=(
+                (
+                    "aits",
+                    "fundamentals",
+                    "download-sec-companyfacts",
+                )
+                if include_sec_fundamentals
+                else ()
+            ),
+            required_env_vars=("SEC_USER_AGENT",) if include_sec_fundamentals else (),
+            produced_paths=(
+                sec_companyfacts_dir,
+                sec_companyfacts_dir / "sec_companyfacts_manifest.csv",
+            ),
+            quality_gate=(
+                "命令使用 SEC_USER_AGENT 调用 SEC EDGAR companyfacts，并写入 "
+                "endpoint、请求参数、row count 和 checksum manifest；失败时停止日报前置链路。"
+            ),
+            blocks_downstream=True,
+            enabled=include_sec_fundamentals,
+            skip_reason=(
+                None
+                if include_sec_fundamentals
+                else "显式跳过 SEC companyfacts 刷新，只复用已有 SEC 原始缓存。"
+            ),
+        ),
+        DailyOpsStep(
+            step_id="sec_metrics",
+            title="抽取当日 SEC 基本面指标",
+            command=(
+                (
+                    "aits",
+                    "fundamentals",
+                    "extract-sec-metrics",
+                    "--as-of",
+                    as_of_text,
+                )
+                if include_sec_fundamentals
+                else ()
+            ),
+            required_env_vars=(),
+            produced_paths=(
+                sec_companyfacts_validation_report,
+                sec_metrics_csv,
+                sec_metrics_report,
+            ),
+            quality_gate=(
+                "先复用 SEC companyfacts 质量门禁，通过后写入当日 "
+                "sec_fundamentals CSV；后续 score-daily 会再次校验该 CSV 并构建 SEC 特征。"
+            ),
+            blocks_downstream=True,
+            enabled=include_sec_fundamentals,
+            skip_reason=(
+                None
+                if include_sec_fundamentals
+                else "显式跳过 SEC metrics 抽取，score-daily 只能校验既有当日 CSV。"
+            ),
+        ),
+        DailyOpsStep(
+            step_id="sec_metrics_validation",
+            title="校验当日 SEC 基本面指标 CSV",
+            command=(
+                (
+                    "aits",
+                    "fundamentals",
+                    "validate-sec-metrics",
+                    "--as-of",
+                    as_of_text,
+                )
+                if include_sec_fundamentals
+                else ()
+            ),
+            required_env_vars=(),
+            produced_paths=(sec_metrics_validation_report,),
+            quality_gate=(
+                "校验当日 SEC metrics schema、重复键、未来披露日期、数值合法性和覆盖率；"
+                "失败时不进入 score-daily。"
+            ),
+            blocks_downstream=True,
+            enabled=include_sec_fundamentals,
+            skip_reason=(
+                None
+                if include_sec_fundamentals
+                else "显式跳过 SEC metrics 预校验，score-daily 仍会执行同一门禁。"
+            ),
+        ),
+        DailyOpsStep(
+            step_id="valuation_snapshots",
+            title="刷新 FMP 估值和预期快照",
+            command=(
+                (
+                    "aits",
+                    "valuation",
+                    "fetch-fmp",
+                    "--as-of",
+                    as_of_text,
+                )
+                if include_valuation_snapshots
+                else ()
+            ),
+            required_env_vars=("FMP_API_KEY",) if include_valuation_snapshots else (),
+            produced_paths=(
+                valuation_snapshots_dir,
+                fmp_analyst_history_dir,
+                fmp_valuation_fetch_report,
+                valuation_validation_report,
+            ),
+            quality_gate=(
+                "命令读取 FMP_API_KEY 写入估值快照 YAML、analyst history 和校验报告；"
+                "失败时停止，避免日报读取过期估值输入。"
+            ),
+            blocks_downstream=True,
+            enabled=include_valuation_snapshots,
+            skip_reason=(
+                None
+                if include_valuation_snapshots
+                else "显式跳过估值快照刷新，只复用已有 valuation_snapshots。"
             ),
         ),
         DailyOpsStep(
@@ -211,7 +376,10 @@ def build_daily_ops_plan(
                 default_daily_score_report_path(reports_dir, as_of),
                 default_alert_report_path(reports_dir, as_of),
             ),
-            quality_gate="`score-daily` 内部先运行市场数据质量门禁，失败时停止。",
+            quality_gate=(
+                "`score-daily` 内部先运行市场数据质量门禁，并校验 SEC metrics、"
+                "估值快照、风险事件发生记录和 rule card；失败时停止。"
+            ),
             blocks_downstream=True,
         ),
         DailyOpsStep(

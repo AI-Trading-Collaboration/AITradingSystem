@@ -16,7 +16,7 @@
 
 - 先做云厂商无关的每日运行入口，再做具体 VM 部署。
 - 每个下游步骤必须看到 `aits validate-data` 或同一质量门禁的通过结果。
-- 缺少关键凭据、输入缓存、PIT manifest 或质量报告时 fail closed，不做静默跳过。
+- 缺少阻断性关键凭据或输入缓存时 fail closed，不做静默跳过；PIT 抓取失败可在显式非阻断模式下继续后续门禁，但必须写入失败报告或进入 pipeline health 告警，且失败快照不得作为可用 PIT 输入。
 - 运行健康只表示 pipeline artifact 可用，不等于投资结论有效。
 - 报告和 CLI 摘要默认使用中文；ticker、命令、路径、状态码保持英文。
 
@@ -24,7 +24,7 @@
 
 |阶段|状态|目标|验收标准|
 |---|---|---|---|
-|1. 可调度每日运行计划|BASELINE_DONE|新增云厂商无关的 `aits ops daily-plan`，输出每日运行步骤、凭据需求、质量门禁、artifact 路径和阻断关系|命令可按 `as_of` 生成 Markdown 计划；缺少 `FMP_API_KEY`、`MARKETSTACK_API_KEY`、`OPENAI_API_KEY` 等关键凭据时在计划中明确显示；计划包含 `download-data`、PIT 抓取/校验、`score-daily`、`ops health`、`security scan-secrets` 的顺序|
+|1. 可调度每日运行计划|BASELINE_DONE|新增云厂商无关的 `aits ops daily-plan`，输出每日运行步骤、凭据需求、质量门禁、artifact 路径和阻断关系|命令可按 `as_of` 生成 Markdown 计划；缺少 `FMP_API_KEY`、`MARKETSTACK_API_KEY`、`SEC_USER_AGENT`、`OPENAI_API_KEY` 等阻断性凭据时在计划中明确显示；计划包含 `download-data`、带 `--continue-on-failure` 的 PIT 抓取/校验、SEC companyfacts 刷新、SEC metrics 抽取/校验、FMP 估值快照刷新、`score-daily`、`ops health`、`security scan-secrets` 的顺序；PIT 抓取失败不补写 strict PIT，只转为失败报告和 health/alert 限制|
 |2. 结构化 run log|READY|记录每个步骤的开始/结束时间、退出码、耗时、stdout/stderr 摘要、报告路径和失败排查入口|失败时有机器可读 JSON/CSV run log；不会覆盖已有报告；可被 `ops health` 或后续告警读取|
 |3. 可执行每日 orchestrator|READY|在 run log 基础上新增 `aits ops run-daily`，按计划顺序执行命令并在首个失败步骤停止|默认 fail closed；支持 `--dry-run`；支持离线排查时显式跳过 OpenAI 预审但必须在报告中声明|
 |4. 云 VM 部署 runbook|READY|补 Linux VM 的 systemd timer/cron 示例、工作目录、Python 环境、secret 注入、日志路径和数据盘挂载策略|新机器能按 runbook 复现环境；不要求开发机开机；凭据不写入仓库|
@@ -51,3 +51,5 @@
 
 - 2026-05-06：创建 `OPS-003`，拆分为每日运行计划、run log、orchestrator、云 VM runbook、备份恢复和通知运营六个阶段。第一阶段进入实现。
 - 2026-05-06：第一阶段完成基础版：新增 `ops_daily` 模块、`aits ops daily-plan`、`outputs/reports/daily_ops_plan_YYYY-MM-DD.md`、系统流图和 README 说明；计划能显示 `BLOCKED_ENV`、显式跳过 OpenAI 预审/PIT/secret scan 的限制，以及每个步骤的输出 artifact 和质量门禁。验证：`ruff check src tests` 通过，`pytest -q tests/test_ops_daily.py tests/test_pipeline_health.py` 通过。
+- 2026-05-06：按 `OPS-004` 更新第一阶段运行计划边界：PIT 抓取步骤默认带 `--continue-on-failure`，入口层失败不阻断 `score-daily` 自身质量门禁，但必须进入脱敏失败报告或 pipeline health 告警，且不能把失败快照作为可用 PIT 输入。
+- 2026-05-07：按 `OPS-005` 补齐日报前置数据依赖：每日计划在 `score-daily` 前新增 SEC companyfacts 刷新、SEC metrics 抽取/校验和 FMP 估值快照刷新。`score-daily` 仍保留自己的 SEC、估值、风险事件和 rule card 门禁。

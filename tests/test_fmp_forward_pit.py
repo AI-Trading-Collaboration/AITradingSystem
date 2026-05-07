@@ -172,6 +172,90 @@ def test_pit_snapshots_fetch_fmp_forward_cli_writes_outputs(
     assert "fmp_forward_pit" in manifest_path.read_text(encoding="utf-8")
 
 
+def test_pit_snapshots_fetch_fmp_forward_cli_reports_unhandled_fetch_error(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    fetch_report_path = tmp_path / "reports" / "fmp_forward_pit.md"
+
+    def fake_fetch(
+        tickers: list[str] | tuple[str, ...],
+        api_key: str,
+        as_of: date,
+        **kwargs: Any,
+    ):
+        raise RuntimeError(
+            "502 Server Error for url: "
+            "https://financialmodelingprep.com/stable/analyst-estimates?"
+            "symbol=NVDA&apikey=secret-key"
+        )
+
+    monkeypatch.setenv("FMP_API_KEY", "test-key")
+    monkeypatch.setattr(cli_module, "fetch_fmp_forward_pit_snapshots", fake_fetch)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "pit-snapshots",
+            "fetch-fmp-forward",
+            "--tickers",
+            "NVDA",
+            "--as-of",
+            "2026-05-02",
+            "--output-path",
+            str(fetch_report_path),
+        ],
+    )
+
+    assert result.exit_code == 1
+    assert "FMP PIT 抓取状态：FAIL" in result.output
+    assert "失败阶段：fetch" in result.output
+    assert fetch_report_path.exists()
+    report_text = fetch_report_path.read_text(encoding="utf-8")
+    assert "fmp_forward_pit_unhandled_fetch_error" in report_text
+    assert "secret-key" not in report_text
+    assert "apikey=<redacted>" in report_text
+
+
+def test_pit_snapshots_fetch_fmp_forward_cli_can_continue_on_failure(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    fetch_report_path = tmp_path / "reports" / "fmp_forward_pit.md"
+
+    def fake_fetch(
+        tickers: list[str] | tuple[str, ...],
+        api_key: str,
+        as_of: date,
+        **kwargs: Any,
+    ):
+        raise RuntimeError("network timeout")
+
+    monkeypatch.setenv("FMP_API_KEY", "test-key")
+    monkeypatch.setattr(cli_module, "fetch_fmp_forward_pit_snapshots", fake_fetch)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "pit-snapshots",
+            "fetch-fmp-forward",
+            "--tickers",
+            "NVDA",
+            "--as-of",
+            "2026-05-02",
+            "--output-path",
+            str(fetch_report_path),
+            "--continue-on-failure",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "已启用" in result.output
+    assert "--continue-on-failure" in result.output
+    assert "后续命令仍必须执行自己的质量门禁" in result.output
+    assert fetch_report_path.exists()
+
+
 class _FakeFmpForwardPitProvider:
     def fetch_analyst_estimates(
         self,

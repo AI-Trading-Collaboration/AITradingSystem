@@ -105,6 +105,14 @@ aits pit-snapshots validate --as-of 2026-05-02
 
 `fetch-fmp-forward` 会抓取 FMP analyst estimates、price target、ratings 和 earnings calendar，写入 `data/raw/fmp_forward_pit/` 与 `data/processed/pit_snapshots/fmp_forward_pit_YYYY-MM-DD.csv`，并刷新 PIT manifest。`build-manifest` 会把现有 FMP analyst estimates、FMP historical valuation、FMP forward PIT 和 EODHD Earnings Trends 原始缓存登记到 `data/raw/pit_snapshots/manifest.csv`，记录 raw payload 路径、sha256、row count、请求参数、`ingested_at`、`available_time`、PIT 可信度和 provider 授权字段。`validate` 会生成 `outputs/reports/pit_snapshots_validation_YYYY-MM-DD.md`；严重错误时后续评分、回测或报告不得使用这些快照。PIT 快照是 forward-only 日常前置步骤，缺跑日期不能事后补写成 strict PIT。
 
+日常调度如果希望 PIT 抓取失败不阻断后续日报，可显式使用：
+
+```powershell
+aits pit-snapshots fetch-fmp-forward --as-of 2026-05-02 --continue-on-failure
+```
+
+该模式只改变命令退出码：供应商、权限、写入或 PIT 校验失败仍会写入脱敏失败报告或由 `ops health` 告警暴露；失败快照不得作为可用 PIT 输入，`score-daily` 仍必须执行自己的市场数据质量、SEC、估值、风险事件和 rule card 门禁。
+
 后续 `aits valuation fetch-fmp` 默认读取 `data/processed/pit_snapshots/` 的 FMP PIT 标准化索引计算 `eps_revision_90d_pct`，只使用 `available_time <= decision_time` 的自建快照；自建历史不足 90 天时会明确降级，不用未来快照或供应商当前历史视图补洞。
 
 日常运行健康检查会检查 PIT 快照是否缺跑、断更、row count 是否低于阈值，以及 manifest 中 raw payload checksum 是否仍能复核：
@@ -121,7 +129,7 @@ aits ops health --as-of 2026-05-02
 aits ops daily-plan --as-of 2026-05-02
 ```
 
-计划默认包含 `download-data`、`pit-snapshots fetch-fmp-forward`、`score-daily`、`ops health` 和 `security scan-secrets`。报告写入 `outputs/reports/daily_ops_plan_YYYY-MM-DD.md`，只检查环境变量是否非空，不输出 secret 值，也不实际调用供应商 API。缺少 `FMP_API_KEY`、`MARKETSTACK_API_KEY` 或默认 OpenAI 预审需要的 `OPENAI_API_KEY` 时，计划状态会显示 `BLOCKED_ENV`；如需把它作为调度前门禁，可加 `--fail-on-missing-env`。若离线排查需要跳过 OpenAI 预审，必须显式传入 `--skip-risk-event-openai-precheck`，后续日报和运行记录仍需声明该限制。
+计划默认包含 `download-data`、带 `--continue-on-failure` 的 `pit-snapshots fetch-fmp-forward`、`fundamentals download-sec-companyfacts`、`fundamentals extract-sec-metrics`、`fundamentals validate-sec-metrics`、`valuation fetch-fmp`、`score-daily`、`ops health` 和 `security scan-secrets`。报告写入 `outputs/reports/daily_ops_plan_YYYY-MM-DD.md`，只检查阻断性环境变量是否非空，不输出 secret 值，也不实际调用供应商 API。缺少 `FMP_API_KEY`、`MARKETSTACK_API_KEY`、`SEC_USER_AGENT` 或默认 OpenAI 预审需要的 `OPENAI_API_KEY` 时，计划状态会显示 `BLOCKED_ENV`；其中 `FMP_API_KEY` 会因 `download-data`、PIT 估值快照刷新等默认步骤而阻断，PIT 抓取自身失败则进入失败报告和 pipeline health 告警。如需把它作为调度前门禁，可加 `--fail-on-missing-env`。若离线排查需要跳过 OpenAI 预审、SEC fundamentals、估值快照刷新或 PIT 抓取，必须显式传入对应 `--skip-*` 选项，后续日报和运行记录仍需声明该限制。
 
 构建每日市场特征：
 

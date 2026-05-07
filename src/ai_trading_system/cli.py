@@ -249,11 +249,16 @@ from ai_trading_system.feedback_loop_review import (
 from ai_trading_system.fmp_forward_pit import (
     DEFAULT_FMP_FORWARD_PIT_NORMALIZED_DIR,
     DEFAULT_FMP_FORWARD_PIT_RAW_DIR,
+    FmpForwardPitFetchReport,
+    FmpForwardPitIssue,
+    FmpForwardPitIssueSeverity,
     attach_fmp_forward_pit_raw_paths,
+    build_fmp_forward_pit_failure_report,
     default_fmp_forward_pit_fetch_report_path,
     default_fmp_forward_pit_normalized_path,
     fetch_fmp_forward_pit_snapshots,
     normalize_fmp_forward_pit_payloads,
+    sanitize_fmp_forward_pit_error_message,
     write_fmp_forward_pit_fetch_report,
     write_fmp_forward_pit_normalized_csv,
     write_fmp_forward_pit_raw_payloads,
@@ -798,6 +803,16 @@ def fetch_fmp_forward_pit_command(
         int,
         typer.Option(help="earnings-calendar 向后覆盖天数。"),
     ] = 90,
+    continue_on_failure: Annotated[
+        bool,
+        typer.Option(
+            "--continue-on-failure",
+            help=(
+                "抓取、写入或 PIT 校验失败时写入失败报告并返回 0，"
+                "用于每日调度继续执行后续自带质量门禁的步骤。"
+            ),
+        ),
+    ] = False,
 ) -> None:
     """抓取 FMP forward-only PIT raw archive 和标准化 as-of 索引。"""
     fetch_date = _parse_date(as_of) if as_of else date.today()
@@ -806,11 +821,6 @@ def fetch_fmp_forward_pit_command(
         if tickers
         else load_universe().ai_chain.get("core_watchlist", [])
     )
-    api_key = os.getenv(api_key_env)
-    if not api_key:
-        console.print(f"[red]未找到环境变量 {api_key_env}，已停止 FMP PIT 抓取。[/red]")
-        raise typer.Exit(code=1)
-
     fetch_report_output = output_path or default_fmp_forward_pit_fetch_report_path(
         PROJECT_ROOT / "outputs" / "reports",
         fetch_date,
@@ -823,7 +833,50 @@ def fetch_fmp_forward_pit_command(
         PROJECT_ROOT / "outputs" / "reports",
         fetch_date,
     )
-    data_sources = load_data_sources(data_sources_path)
+
+    api_key = os.getenv(api_key_env)
+    if not api_key:
+        fetch_report = build_fmp_forward_pit_failure_report(
+            selected_tickers,
+            fetch_date,
+            code="fmp_forward_pit_api_key_missing",
+            message=f"未找到环境变量 {api_key_env}，无法抓取 FMP PIT。",
+            captured_at=fetch_date,
+            analyst_estimate_limit=analyst_estimate_limit,
+            earnings_calendar_lookback_days=earnings_calendar_lookback_days,
+            earnings_calendar_forward_days=earnings_calendar_forward_days,
+        )
+        _finish_fmp_forward_pit_failure(
+            fetch_report,
+            fetch_report_output,
+            continue_on_failure=continue_on_failure,
+            stage="credential",
+        )
+        return
+
+    try:
+        data_sources = load_data_sources(data_sources_path)
+    except Exception as exc:
+        fetch_report = build_fmp_forward_pit_failure_report(
+            selected_tickers,
+            fetch_date,
+            code="fmp_forward_pit_data_sources_failed",
+            message=(
+                "FMP PIT 数据源目录加载失败："
+                f"{sanitize_fmp_forward_pit_error_message(exc)}"
+            ),
+            captured_at=fetch_date,
+            analyst_estimate_limit=analyst_estimate_limit,
+            earnings_calendar_lookback_days=earnings_calendar_lookback_days,
+            earnings_calendar_forward_days=earnings_calendar_forward_days,
+        )
+        _finish_fmp_forward_pit_failure(
+            fetch_report,
+            fetch_report_output,
+            continue_on_failure=continue_on_failure,
+            stage="config",
+        )
+        return
 
     try:
         fetch_report = fetch_fmp_forward_pit_snapshots(
@@ -836,45 +889,96 @@ def fetch_fmp_forward_pit_command(
             earnings_calendar_forward_days=earnings_calendar_forward_days,
         )
     except ValueError as exc:
-        console.print(f"[red]FMP PIT 参数错误：{exc}[/red]")
-        raise typer.Exit(code=1) from exc
+        fetch_report = build_fmp_forward_pit_failure_report(
+            selected_tickers,
+            fetch_date,
+            code="fmp_forward_pit_parameter_error",
+            message=f"FMP PIT 参数错误：{sanitize_fmp_forward_pit_error_message(exc)}",
+            captured_at=fetch_date,
+            analyst_estimate_limit=analyst_estimate_limit,
+            earnings_calendar_lookback_days=earnings_calendar_lookback_days,
+            earnings_calendar_forward_days=earnings_calendar_forward_days,
+        )
+        _finish_fmp_forward_pit_failure(
+            fetch_report,
+            fetch_report_output,
+            continue_on_failure=continue_on_failure,
+            stage="parameter",
+        )
+        return
+    except Exception as exc:
+        fetch_report = build_fmp_forward_pit_failure_report(
+            selected_tickers,
+            fetch_date,
+            code="fmp_forward_pit_unhandled_fetch_error",
+            message=(
+                "FMP PIT 抓取阶段发生未捕获异常："
+                f"{sanitize_fmp_forward_pit_error_message(exc)}"
+            ),
+            captured_at=fetch_date,
+            analyst_estimate_limit=analyst_estimate_limit,
+            earnings_calendar_lookback_days=earnings_calendar_lookback_days,
+            earnings_calendar_forward_days=earnings_calendar_forward_days,
+        )
+        _finish_fmp_forward_pit_failure(
+            fetch_report,
+            fetch_report_output,
+            continue_on_failure=continue_on_failure,
+            stage="fetch",
+        )
+        return
 
     if not fetch_report.passed:
-        write_fmp_forward_pit_fetch_report(fetch_report, fetch_report_output)
-        status_style = "red"
-        console.print(
-            f"[{status_style}]FMP PIT 抓取状态："
-            f"{fetch_report.status}[/{status_style}]"
+        _finish_fmp_forward_pit_failure(
+            fetch_report,
+            fetch_report_output,
+            continue_on_failure=continue_on_failure,
+            stage="fetch",
         )
-        console.print(f"抓取报告：{fetch_report_output}")
-        console.print(f"错误数：{fetch_report.error_count}；警告数：{fetch_report.warning_count}")
-        raise typer.Exit(code=1)
+        return
 
-    raw_paths = write_fmp_forward_pit_raw_payloads(fetch_report.raw_payloads, raw_output_dir)
-    attached_payloads = attach_fmp_forward_pit_raw_paths(fetch_report.raw_payloads, raw_paths)
-    normalized_rows = normalize_fmp_forward_pit_payloads(attached_payloads)
-    fetch_report = replace(
-        fetch_report,
-        raw_payloads=attached_payloads,
-        normalized_rows=normalized_rows,
-    )
-    write_fmp_forward_pit_normalized_csv(normalized_rows, normalized_output)
-    write_fmp_forward_pit_fetch_report(fetch_report, fetch_report_output)
+    try:
+        raw_paths = write_fmp_forward_pit_raw_payloads(fetch_report.raw_payloads, raw_output_dir)
+        attached_payloads = attach_fmp_forward_pit_raw_paths(fetch_report.raw_payloads, raw_paths)
+        normalized_rows = normalize_fmp_forward_pit_payloads(attached_payloads)
+        fetch_report = replace(
+            fetch_report,
+            raw_payloads=attached_payloads,
+            normalized_rows=normalized_rows,
+        )
+        write_fmp_forward_pit_normalized_csv(normalized_rows, normalized_output)
+        write_fmp_forward_pit_fetch_report(fetch_report, fetch_report_output)
 
-    manifest_records = discover_existing_pit_raw_snapshots(
-        fmp_analyst_history_dir=DEFAULT_FMP_ANALYST_ESTIMATE_HISTORY_DIR,
-        fmp_historical_valuation_dir=DEFAULT_FMP_HISTORICAL_VALUATION_RAW_DIR,
-        eodhd_earnings_trends_dir=DEFAULT_EODHD_EARNINGS_TRENDS_RAW_DIR,
-        fmp_forward_pit_dir=raw_output_dir,
-        data_sources=data_sources,
-    )
-    manifest_output = write_pit_snapshot_manifest(manifest_records, manifest_path)
-    pit_report = validate_pit_snapshot_manifest(
-        input_path=manifest_output,
-        as_of=fetch_date,
-        data_sources=data_sources,
-    )
-    write_pit_snapshot_validation_report(pit_report, pit_report_output)
+        manifest_records = discover_existing_pit_raw_snapshots(
+            fmp_analyst_history_dir=DEFAULT_FMP_ANALYST_ESTIMATE_HISTORY_DIR,
+            fmp_historical_valuation_dir=DEFAULT_FMP_HISTORICAL_VALUATION_RAW_DIR,
+            eodhd_earnings_trends_dir=DEFAULT_EODHD_EARNINGS_TRENDS_RAW_DIR,
+            fmp_forward_pit_dir=raw_output_dir,
+            data_sources=data_sources,
+        )
+        manifest_output = write_pit_snapshot_manifest(manifest_records, manifest_path)
+        pit_report = validate_pit_snapshot_manifest(
+            input_path=manifest_output,
+            as_of=fetch_date,
+            data_sources=data_sources,
+        )
+        write_pit_snapshot_validation_report(pit_report, pit_report_output)
+    except Exception as exc:
+        fetch_report = _append_fmp_forward_pit_failure_issue(
+            fetch_report,
+            code="fmp_forward_pit_artifact_stage_failed",
+            message=(
+                "FMP PIT artifact 写入、manifest 刷新或校验阶段失败："
+                f"{sanitize_fmp_forward_pit_error_message(exc)}"
+            ),
+        )
+        _finish_fmp_forward_pit_failure(
+            fetch_report,
+            fetch_report_output,
+            continue_on_failure=continue_on_failure,
+            stage="artifact",
+        )
+        return
 
     status_style = (
         "green" if fetch_report.status == "PASS" else "yellow" if fetch_report.passed else "red"
@@ -893,7 +997,58 @@ def fetch_fmp_forward_pit_command(
         f"错误数：{pit_report.error_count}；警告数：{pit_report.warning_count}"
     )
     if not pit_report.passed:
+        if continue_on_failure:
+            console.print(
+                "[yellow]PIT manifest 未通过；已保留报告并继续后续流程。"
+                "失败快照不得作为可用 PIT 输入。[/yellow]"
+            )
+            return
         raise typer.Exit(code=1)
+
+
+def _append_fmp_forward_pit_failure_issue(
+    report: FmpForwardPitFetchReport,
+    *,
+    code: str,
+    message: str,
+) -> FmpForwardPitFetchReport:
+    issue = FmpForwardPitIssue(
+        severity=FmpForwardPitIssueSeverity.ERROR,
+        code=code,
+        message=message,
+    )
+    return replace(report, issues=(*report.issues, issue))
+
+
+def _finish_fmp_forward_pit_failure(
+    report: FmpForwardPitFetchReport,
+    output_path: Path,
+    *,
+    continue_on_failure: bool,
+    stage: str,
+) -> None:
+    try:
+        write_fmp_forward_pit_fetch_report(report, output_path)
+        report_written = True
+    except Exception as exc:
+        report_written = False
+        console.print(
+            "[red]FMP PIT 失败报告写入失败："
+            f"{sanitize_fmp_forward_pit_error_message(exc)}[/red]"
+        )
+
+    console.print(f"[red]FMP PIT 抓取状态：{report.status}[/red]")
+    console.print(f"失败阶段：{stage}")
+    if report_written:
+        console.print(f"抓取报告：{output_path}")
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if continue_on_failure:
+        console.print(
+            "[yellow]已启用 --continue-on-failure：本步骤不会阻断后续流程；"
+            "后续命令仍必须执行自己的质量门禁，失败 PIT 不得作为可用输入。[/yellow]"
+        )
+        return
+    raise typer.Exit(code=1)
 
 
 @trace_app.command("lookup")
@@ -4632,6 +4787,20 @@ def daily_ops_plan_command(
             help="是否在计划中包含 FMP forward-only PIT 抓取和校验。",
         ),
     ] = True,
+    include_sec_fundamentals: Annotated[
+        bool,
+        typer.Option(
+            "--include-sec-fundamentals/--skip-sec-fundamentals",
+            help="是否在计划中包含 SEC companyfacts 刷新和 SEC metrics 抽取。",
+        ),
+    ] = True,
+    include_valuation_snapshots: Annotated[
+        bool,
+        typer.Option(
+            "--include-valuation-snapshots/--skip-valuation-snapshots",
+            help="是否在计划中包含 FMP 估值和预期快照刷新。",
+        ),
+    ] = True,
     include_secret_scan: Annotated[
         bool,
         typer.Option(
@@ -4680,6 +4849,8 @@ def daily_ops_plan_command(
             download_start=start_date,
             include_download_data=include_download_data,
             include_pit_snapshots=include_pit_snapshots,
+            include_sec_fundamentals=include_sec_fundamentals,
+            include_valuation_snapshots=include_valuation_snapshots,
             include_secret_scan=include_secret_scan,
             skip_risk_event_openai_precheck=not risk_event_openai_precheck,
             full_universe=full_universe,
