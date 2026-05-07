@@ -22,7 +22,7 @@
 |---|---|---|---|
 |1. 依赖审计|DONE|列出 `score-daily` 依赖但不由 `score-daily` 自动生成的输入|确认市场/宏观缓存已有 `download-data` 步骤；SEC companyfacts/metrics 和 FMP 估值快照缺少日报前置步骤；官方政策来源/OpenAI 预审已在 `score-daily` 内部执行|
 |2. Daily plan 接入|DONE|在 `aits ops daily-plan` 中加入 SEC companyfacts、SEC metrics 和 FMP 估值刷新步骤|计划顺序显示新增步骤、环境变量、artifact、阻断关系；缺少 `SEC_USER_AGENT` 或 `FMP_API_KEY` 时显示 `BLOCKED_ENV`|
-|3. 验证和运行观察|VALIDATING|用测试和下一次真实日报验证新编排不会遗漏前置输入|`tests/test_ops_daily.py` 覆盖新增步骤；下一次默认日报不再因当日 SEC metrics 文件缺失而停止|
+|3. 验证和运行观察|DONE|用测试和下一次真实日报验证新编排不会遗漏前置输入|`tests/test_ops_daily.py` 覆盖新增步骤；2026-05-07 真实日报不再因当日 SEC metrics 文件缺失而停止；`ops health` 已显式检查 FMP PIT 抓取报告状态|
 
 ## 当前仍未自动处理的输入边界
 
@@ -35,3 +35,4 @@
 
 - 2026-05-07：创建任务，原因：真实每日运行暴露 `score-daily` 依赖当日 SEC metrics，但现有每日编排没有生成该 CSV。
 - 2026-05-07：Daily plan 接入完成。新增默认步骤：`sec_companyfacts`、`sec_metrics`、`sec_metrics_validation` 和 `valuation_snapshots`；`score-daily` 仍保留内部重复门禁。验证：`ruff check src tests` 通过，`pytest -q tests/test_ops_daily.py` 6 passed，`pytest -q tests/test_sec_metrics.py tests/test_valuation_sources.py` 36 passed，完整 `pytest -q` 408 passed；`git diff --check` 只有既有 CRLF 提示。
+- 2026-05-07：真实日报链路验证完成。SEC metrics 抽取/校验通过并允许日报继续；`score-daily` 输出 `PASS_WITH_LIMITATIONS`。运行观察发现当天 FMP PIT 抓取报告若曾失败，旧 manifest/normalized artifact 可能让 `ops health` 漏报；已补充 `fmp_forward_pit_fetch_report` 与 `fmp_forward_pit_fetch_status` 健康检查。验证：`ruff check src tests` 通过，`pytest -q tests/test_pipeline_health.py` 4 passed，`pytest -q tests/test_ops_daily.py tests/test_pipeline_health.py` 10 passed，`aits ops health --as-of 2026-05-07` PASS。

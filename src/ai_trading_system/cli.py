@@ -4634,6 +4634,10 @@ def pipeline_health_command(
         Path | None,
         typer.Option(help="PIT 快照质量报告路径，默认按 as-of 日期生成。"),
     ] = None,
+    pit_fetch_report_path: Annotated[
+        Path | None,
+        typer.Option(help="FMP PIT 抓取报告路径，默认按 as-of 日期生成。"),
+    ] = None,
     min_pit_manifest_records: Annotated[
         int,
         typer.Option(help="PIT manifest 最低记录数。"),
@@ -4680,6 +4684,10 @@ def pipeline_health_command(
             health_date,
         )
     )
+    pit_fetch_report = pit_fetch_report_path or default_fmp_forward_pit_fetch_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        health_date,
+    )
     pipeline_alert_report_path = (
         alert_output_path
         or default_pipeline_health_alert_report_path(
@@ -4692,6 +4700,7 @@ def pipeline_health_command(
         manifest_path=pit_manifest_path,
         normalized_path=pit_normalized,
         validation_report_path=pit_validation_report,
+        fetch_report_path=pit_fetch_report,
         project_root=PROJECT_ROOT,
         min_manifest_records=min_pit_manifest_records,
         min_normalized_rows=min_pit_normalized_rows,

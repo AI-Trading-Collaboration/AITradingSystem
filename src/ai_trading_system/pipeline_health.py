@@ -80,6 +80,7 @@ def build_pit_snapshot_health_checks(
     manifest_path: Path,
     normalized_path: Path,
     validation_report_path: Path,
+    fetch_report_path: Path | None = None,
     project_root: Path,
     min_manifest_records: int = 1,
     min_normalized_rows: int = 1,
@@ -124,6 +125,23 @@ def build_pit_snapshot_health_checks(
             )
         ),
     ]
+    if fetch_report_path is not None:
+        checks.append(
+            _check_artifact(
+                PipelineArtifactSpec(
+                    "fmp_forward_pit_fetch_report",
+                    "FMP PIT 抓取报告",
+                    fetch_report_path,
+                    True,
+                    (
+                        "运行 `aits pit-snapshots fetch-fmp-forward`，"
+                        "并检查抓取/写入/校验阶段错误。"
+                    ),
+                )
+            )
+        )
+        if _path_size(fetch_report_path):
+            checks.append(_fmp_forward_pit_fetch_report_status_check(fetch_report_path))
     manifest_rows = _read_csv_rows(manifest_path)
     normalized_rows = _read_csv_rows(normalized_path)
     checks.extend(
@@ -390,6 +408,53 @@ def _pit_manifest_checksum_check(
         severity=severity,
         message=message,
     )
+
+
+def _fmp_forward_pit_fetch_report_status_check(
+    fetch_report_path: Path,
+) -> PipelineArtifactCheck:
+    status = _read_markdown_status(fetch_report_path)
+    severity: PipelineHealthSeverity | None = None
+    if status is None:
+        severity = PipelineHealthSeverity.WARNING
+        message = "无法解析 FMP PIT 抓取报告状态。"
+    elif status == "PASS":
+        message = "OK"
+    elif status in {"PASS_WITH_WARNINGS", "FAIL"}:
+        severity = PipelineHealthSeverity.WARNING
+        message = (
+            f"FMP PIT 抓取报告状态为 {status}；"
+            "日常调度可继续，但失败或降级 PIT 不得作为可用输入。"
+        )
+    else:
+        severity = PipelineHealthSeverity.WARNING
+        message = f"FMP PIT 抓取报告状态未知：{status}。"
+    return PipelineArtifactCheck(
+        spec=PipelineArtifactSpec(
+            "fmp_forward_pit_fetch_status",
+            "FMP PIT 抓取报告状态",
+            fetch_report_path,
+            True,
+            "打开 FMP PIT 抓取报告的问题清单，确认供应商请求、写入和 PIT 校验阶段。",
+        ),
+        exists=fetch_report_path.exists(),
+        size_bytes=_path_size(fetch_report_path),
+        modified_at=_modified_at(fetch_report_path),
+        severity=severity,
+        message=message,
+    )
+
+
+def _read_markdown_status(path: Path) -> str | None:
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeDecodeError):
+        return None
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("- 状态："):
+            return stripped.removeprefix("- 状态：").strip().strip("`")
+    return None
 
 
 def _latest_available_time(rows: Iterable[dict[str, str]]) -> datetime | None:

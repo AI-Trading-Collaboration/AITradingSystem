@@ -102,6 +102,42 @@ def test_pit_snapshot_health_checks_flag_stale_and_checksum_mismatch(
     ]
 
 
+def test_pit_snapshot_health_checks_flag_failed_fetch_report(
+    tmp_path: Path,
+) -> None:
+    pit_paths = _write_pit_health_inputs(tmp_path, date(2026, 5, 4))
+    pit_paths["fetch_report"].write_text(
+        "# FMP Forward-only PIT 快照抓取报告\n\n"
+        "- 状态：FAIL\n"
+        "- 错误数：1\n",
+        encoding="utf-8",
+    )
+
+    report = build_pipeline_health_report(
+        as_of=date(2026, 5, 4),
+        artifacts=(),
+        extra_checks=build_pit_snapshot_health_checks(
+            as_of=date(2026, 5, 4),
+            manifest_path=pit_paths["manifest"],
+            normalized_path=pit_paths["normalized"],
+            validation_report_path=pit_paths["validation_report"],
+            fetch_report_path=pit_paths["fetch_report"],
+            project_root=tmp_path,
+        ),
+    )
+    messages_by_id = {
+        check.spec.artifact_id: check.message
+        for check in report.checks
+        if check.severity is not None
+    }
+
+    assert report.status == "PASS_WITH_WARNINGS"
+    assert (
+        "FMP PIT 抓取报告状态为 FAIL"
+        in messages_by_id["fmp_forward_pit_fetch_status"]
+    )
+
+
 def test_pipeline_health_cli_writes_report(tmp_path: Path) -> None:
     prices_path = _write_artifact(tmp_path / "prices_daily.csv")
     rates_path = _write_artifact(tmp_path / "rates_daily.csv")
@@ -138,6 +174,8 @@ def test_pipeline_health_cli_writes_report(tmp_path: Path) -> None:
             str(pit_paths["normalized"]),
             "--pit-validation-report-path",
             str(pit_paths["validation_report"]),
+            "--pit-fetch-report-path",
+            str(pit_paths["fetch_report"]),
             "--output-path",
             str(output_path),
             "--alert-output-path",
@@ -154,6 +192,7 @@ def test_pipeline_health_cli_writes_report(tmp_path: Path) -> None:
     assert "价格缓存" in markdown
     assert "PIT manifest row count" in markdown
     assert "PIT manifest raw payload checksum" in markdown
+    assert "FMP PIT 抓取报告状态" in markdown
     assert "未触发告警" in alert_output_path.read_text(encoding="utf-8")
 
 
@@ -189,8 +228,16 @@ def _write_pit_health_inputs(tmp_path: Path, as_of: date) -> dict[str, Path]:
         encoding="utf-8",
     )
     validation_report_path = _write_artifact(tmp_path / "reports" / "pit_validation.md")
+    fetch_report_path = tmp_path / "reports" / f"fmp_forward_pit_fetch_{as_of.isoformat()}.md"
+    fetch_report_path.write_text(
+        "# FMP Forward-only PIT 快照抓取报告\n\n"
+        "- 状态：PASS\n"
+        "- 错误数：0\n",
+        encoding="utf-8",
+    )
     return {
         "manifest": manifest_path,
         "normalized": normalized_path,
         "validation_report": validation_report_path,
+        "fetch_report": fetch_report_path,
     }

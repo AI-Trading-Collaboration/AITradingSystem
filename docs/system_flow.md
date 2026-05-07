@@ -274,8 +274,8 @@ flowchart TD
         PEV["aits portfolio exposure<br/>真实持仓只读暴露分解；缺少文件时 NOT_CONNECTED"]
         ODP["aits ops daily-plan<br/>每日运行计划、凭据检查和调度顺序"]
         ODPR["outputs/reports/daily_ops_plan_YYYY-MM-DD.md<br/>步骤、环境变量、artifact、门禁和跳过声明"]
-        OPH["aits ops health<br/>关键 pipeline artifact + PIT 快照健康检查"]
-        OPR["outputs/reports/pipeline_health_YYYY-MM-DD.md<br/>存在性、mtime、row count、freshness、checksum"]
+        OPH["aits ops health<br/>关键 pipeline artifact + PIT 抓取/快照健康检查"]
+        OPR["outputs/reports/pipeline_health_YYYY-MM-DD.md<br/>存在性、mtime、row count、freshness、checksum、fetch status"]
         SCS["aits security scan-secrets<br/>本地 secret hygiene 扫描"]
         SCSR["outputs/reports/secret_hygiene_YYYY-MM-DD.md<br/>疑似 secret 脱敏问题清单"]
     end
@@ -1009,7 +1009,7 @@ flowchart TD
         CT1["未来催化剂日历<br/>aits catalysts validate / upcoming / lookup<br/>5/20/60 天事件前后复核"]
         EX1["执行纪律政策<br/>aits execution validate / lookup<br/>advisory action taxonomy"]
         OPS0["每日运行计划<br/>aits ops daily-plan<br/>下载、PIT、SEC metrics、估值、评分和运行健康顺序"]
-        OPS1["Pipeline health<br/>aits ops health<br/>关键 artifact + PIT 快照健康"]
+        OPS1["Pipeline health<br/>aits ops health<br/>关键 artifact + PIT 抓取/快照健康"]
         SEC1["Secret hygiene<br/>aits security scan-secrets<br/>配置、文档、报告和 trace 脱敏扫描"]
         K["交易复盘归因<br/>aits review-trades"]
         L["日报集成<br/>汇总 thesis、风险规则与发生记录、估值和复盘摘要"]
@@ -1125,8 +1125,8 @@ flowchart TD
 |结论使用等级|`outputs/reports/daily_score_YYYY-MM-DD.md#结论使用等级` / `outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md#结论使用等级`|报告输出 `trend_only`、`actionable`、`review_required`、`research_only`、`data_limited` 或 `backtest_limited` 等使用边界，并与投资姿态标签分开；当前 `score-daily` 和回测以 `trend_judgment` 范围运行，干净通过时也只能显示“趋势判断，不触发交易”，不能自动升级为仓位复核或交易执行；低置信度、人工复核失败、来源不足、数据质量失败和回测覆盖不足会自动降级，说明原因、解除条件和证据引用|已实现基础版|
 |每日运行计划|`aits ops daily-plan`|生成本地或云 VM 可用的每日运行计划，列出 `download-data`、带 `--continue-on-failure` 的 `pit-snapshots fetch-fmp-forward`、SEC companyfacts 刷新、SEC metrics 抽取/校验、FMP 估值快照刷新、`score-daily`、`ops health` 和 `security scan-secrets` 的顺序、必需环境变量、预期 artifact、质量门禁和阻断关系；只做计划和环境变量非空检查，不执行下载、API 调用、评分或报告生成；PIT 抓取失败进入脱敏失败报告或 pipeline health 告警，不把失败快照作为可用 PIT 输入，也不阻断 `score-daily` 自身质量门禁；SEC metrics 与估值刷新失败必须阻断日报；缺少关键环境变量时显示 `BLOCKED_ENV`，可用 `--fail-on-missing-env` 作为调度前门禁|已实现基础版|
 |每日运行计划报告|`outputs/reports/daily_ops_plan_YYYY-MM-DD.md`|中文输出计划状态、评估日期、必需环境变量是否可见、逐步骤命令、输出路径、质量门禁和显式跳过声明；第一阶段未接入结构化 run log、真实 orchestrator、systemd/cron、通知或云备份|已实现基础版|
-|Pipeline health|`aits ops health`|只读检查关键 pipeline artifact，包括价格缓存、利率缓存、数据质量报告、特征缓存、评分缓存、日报、PIT manifest、PIT 质量报告和 FMP PIT normalized as-of CSV 是否存在、是否为空、mtime、row count、`available_time` 新鲜度和 raw payload checksum；不把运行健康解释为投资结论有效|已实现基础版|
-|Pipeline health 报告|`outputs/reports/pipeline_health_YYYY-MM-DD.md`|中文输出 artifact 检查表、PIT 缺跑/断更/row count/checksum 问题、错误/警告数量、问题清单和方法边界；第一阶段未接入结构化 run log、后台调度器、异常栈或 API 错误采集|已实现基础版|
+|Pipeline health|`aits ops health`|只读检查关键 pipeline artifact，包括价格缓存、利率缓存、数据质量报告、特征缓存、评分缓存、日报、FMP PIT 抓取报告、PIT manifest、PIT 质量报告和 FMP PIT normalized as-of CSV 是否存在、是否为空、mtime、row count、`available_time` 新鲜度、raw payload checksum 和 FMP PIT 抓取报告状态；不把运行健康解释为投资结论有效|已实现基础版|
+|Pipeline health 报告|`outputs/reports/pipeline_health_YYYY-MM-DD.md`|中文输出 artifact 检查表、PIT 抓取失败、PIT 缺跑/断更/row count/checksum 问题、错误/警告数量、问题清单和方法边界；第一阶段未接入结构化 run log、后台调度器、异常栈或 API 错误采集|已实现基础版|
 |Pipeline health 告警|`outputs/reports/pipeline_health_alerts_YYYY-MM-DD.md`|`aits ops health` 把失败或警告的 health check 转成只读 data/system alert，记录触发/解除条件、claim/evidence 引用和去重键；`production_effect=none`，不改变评分、仓位、回测或执行建议|已实现基础版|
 |Secret hygiene 扫描|`aits security scan-secrets`|扫描配置、文档、报告、manifest、trace bundle 等文本文件中的疑似 API key、token、secret、password 或 bearer credential；报告只输出脱敏片段，不输出完整疑似密钥|已实现基础版|
 |Secret hygiene 报告|`outputs/reports/secret_hygiene_YYYY-MM-DD.md`|中文输出扫描入口、扫描文件数、疑似 secret 脱敏问题清单和方法边界；第一阶段不替代企业密钥管理、pre-commit hook、CI secret scan 或供应商权限审批|已实现基础版|
@@ -1210,7 +1210,7 @@ flowchart TD
 |PIT manifest 生成|`aits pit-snapshots build-manifest`|从现有 FMP analyst estimates、FMP historical valuation、FMP forward PIT 和 EODHD Earnings Trends raw cache 生成通用 PIT manifest，并立即复用校验报告；不改变当前评分或估值复核语义|已实现基础版|
 |PIT manifest 校验|`aits pit-snapshots validate`|校验 manifest schema、必填字段、raw payload 存在性、sha256、bytes、row count、重复 snapshot id、`available_time <= ingested_at`、strict PIT 误标、低可信 strict 声明和 provider LLM/再分发权限；失败时后续不得使用这些快照|已实现基础版|
 |PIT 快照质量报告|`outputs/reports/pit_snapshots_validation_YYYY-MM-DD.md`|中文输出状态、manifest 路径、快照数量、来源摘要、样例、错误/警告和方法边界；通过不代表已进入评分，下游仍必须通过 `available_time <= decision_time` 查询|已实现基础版|
-|PIT 日常健康检查/告警|`aits ops health` / `outputs/reports/pipeline_health_alerts_YYYY-MM-DD.md`|每日 health 检查要求 PIT manifest、当日 FMP PIT normalized CSV 和 PIT 质量报告可见，并检查 manifest/normalized row count、latest `available_time` 和 raw payload sha256；缺跑、断更、row count 异常或 checksum 异常进入 data/system alert|已实现基础版|
+|PIT 日常健康检查/告警|`aits ops health` / `outputs/reports/pipeline_health_alerts_YYYY-MM-DD.md`|每日 health 检查要求 FMP PIT 抓取报告、PIT manifest、当日 FMP PIT normalized CSV 和 PIT 质量报告可见，并检查抓取报告状态、manifest/normalized row count、latest `available_time` 和 raw payload sha256；抓取 FAIL/PASS_WITH_WARNINGS、缺跑、断更、row count 异常或 checksum 异常进入 data/system alert|已实现基础版|
 |能力圈|`config/watchlist.yaml`|记录核心标的、能力圈和 thesis 要求|已实现基础版|
 |观察池生命周期|`config/watchlist_lifecycle.yaml`|记录 ticker 的 `added_at`、`removed_at`、`active_from`、`active_until`、能力圈状态、节点映射可见日期、thesis 要求可见日期、来源和复核人，用于回测防幸存者偏差|已实现基础版|
 |观察池生命周期校验|`aits watchlist validate-lifecycle`|校验当前核心/活跃观察池是否都有 point-in-time lifecycle 记录、是否存在重复记录，以及当前活跃 ticker 在评估日是否可用于评分/回测|已实现基础版|
