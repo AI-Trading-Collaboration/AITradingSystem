@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import subprocess
+import sys
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
@@ -95,6 +97,45 @@ class DailyOpsPlan:
         if any(not step.enabled for step in self.steps):
             return "READY_WITH_SKIPS"
         return "READY"
+
+
+@dataclass(frozen=True)
+class DailyOpsStepResult:
+    step_id: str
+    title: str
+    command: tuple[str, ...]
+    status: str
+    return_code: int | None
+    started_at: datetime | None
+    ended_at: datetime | None
+    duration_seconds: float | None
+    produced_paths: tuple[Path, ...]
+    blocks_downstream: bool
+    skip_reason: str | None = None
+    stdout_line_count: int = 0
+    stderr_line_count: int = 0
+    error: str | None = None
+
+
+@dataclass(frozen=True)
+class DailyOpsRunReport:
+    plan: DailyOpsPlan
+    started_at: datetime
+    finished_at: datetime
+    status: str
+    step_results: tuple[DailyOpsStepResult, ...]
+    missing_env_vars: tuple[str, ...] = ()
+    production_effect: str = "writes local data/cache/reports and calls provider APIs"
+
+    @property
+    def failed_step(self) -> DailyOpsStepResult | None:
+        return next(
+            (result for result in self.step_results if result.status == "FAIL"),
+            None,
+        )
+
+
+DailyOpsCommandRunner = subprocess.run
 
 
 def build_daily_ops_plan(
@@ -417,6 +458,110 @@ def build_daily_ops_plan(
     )
 
 
+def run_daily_ops_plan(
+    plan: DailyOpsPlan,
+    *,
+    project_root: Path = PROJECT_ROOT,
+    env: Mapping[str, str] | None = None,
+    runner=DailyOpsCommandRunner,
+    stop_on_failure: bool = True,
+) -> DailyOpsRunReport:
+    checked_env = dict(os.environ if env is None else env)
+    started_at = datetime.now(tz=UTC)
+    missing_env = plan.missing_env_vars(checked_env)
+    if missing_env:
+        finished_at = datetime.now(tz=UTC)
+        return DailyOpsRunReport(
+            plan=plan,
+            started_at=started_at,
+            finished_at=finished_at,
+            status="BLOCKED_ENV",
+            step_results=(),
+            missing_env_vars=missing_env,
+        )
+
+    results: list[DailyOpsStepResult] = []
+    for step in plan.steps:
+        if not step.enabled:
+            results.append(
+                DailyOpsStepResult(
+                    step_id=step.step_id,
+                    title=step.title,
+                    command=step.command,
+                    status="SKIPPED",
+                    return_code=None,
+                    started_at=None,
+                    ended_at=None,
+                    duration_seconds=None,
+                    produced_paths=step.produced_paths,
+                    blocks_downstream=step.blocks_downstream,
+                    skip_reason=step.skip_reason,
+                )
+            )
+            continue
+
+        step_started = datetime.now(tz=UTC)
+        try:
+            completed = runner(
+                _execution_command(step.command),
+                cwd=project_root,
+                env=checked_env,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            step_ended = datetime.now(tz=UTC)
+            return_code = completed.returncode
+            stdout_text = completed.stdout or ""
+            stderr_text = completed.stderr or ""
+            artifact_error = (
+                _post_step_artifact_status_error(step) if return_code == 0 else None
+            )
+            result = DailyOpsStepResult(
+                step_id=step.step_id,
+                title=step.title,
+                command=step.command,
+                status="PASS" if return_code == 0 and artifact_error is None else "FAIL",
+                return_code=return_code,
+                started_at=step_started,
+                ended_at=step_ended,
+                duration_seconds=(step_ended - step_started).total_seconds(),
+                produced_paths=step.produced_paths,
+                blocks_downstream=step.blocks_downstream,
+                stdout_line_count=len(stdout_text.splitlines()),
+                stderr_line_count=len(stderr_text.splitlines()),
+                error=artifact_error,
+            )
+        except OSError as exc:
+            step_ended = datetime.now(tz=UTC)
+            result = DailyOpsStepResult(
+                step_id=step.step_id,
+                title=step.title,
+                command=step.command,
+                status="FAIL",
+                return_code=None,
+                started_at=step_started,
+                ended_at=step_ended,
+                duration_seconds=(step_ended - step_started).total_seconds(),
+                produced_paths=step.produced_paths,
+                blocks_downstream=step.blocks_downstream,
+                error=f"{type(exc).__name__}: {exc}",
+            )
+        results.append(result)
+        if result.status == "FAIL" and (stop_on_failure or step.blocks_downstream):
+            break
+
+    finished_at = datetime.now(tz=UTC)
+    status = _daily_run_status(results)
+    return DailyOpsRunReport(
+        plan=plan,
+        started_at=started_at,
+        finished_at=finished_at,
+        status=status,
+        step_results=tuple(results),
+    )
+
+
 def render_daily_ops_plan(
     plan: DailyOpsPlan,
     *,
@@ -502,8 +647,116 @@ def write_daily_ops_plan(
     return output_path
 
 
+def render_daily_ops_run_report(report: DailyOpsRunReport) -> str:
+    duration = (report.finished_at - report.started_at).total_seconds()
+    lines = [
+        "# 每日运行执行报告",
+        "",
+        f"- 状态：{report.status}",
+        f"- 评估日期：{report.plan.as_of.isoformat()}",
+        f"- 开始时间：{report.started_at.isoformat()}",
+        f"- 结束时间：{report.finished_at.isoformat()}",
+        f"- 总耗时秒：{duration:.1f}",
+        f"- 生产影响：{report.production_effect}",
+        "",
+        "## 方法边界",
+        "",
+        "- 本报告由真实每日执行器生成，会按每日运行计划顺序调用本地 CLI。",
+        "- 执行器内部用当前 Python 解释器调用 `ai_trading_system.cli` 模块，",
+        "避免在 Windows 上从 `aits.exe` 父进程递归启动 `aits.exe`。",
+        "- 执行报告只记录命令状态、退出码、耗时和预期 artifact 路径；",
+        "不写入 stdout/stderr 原文、API key、token 或付费内容原文。",
+        "- 投资结论仍以 `score-daily`、数据质量报告、SEC/估值校验、",
+        "风险事件校验、rule card 和告警报告为准。",
+        "",
+    ]
+    if report.missing_env_vars:
+        lines.extend(
+            [
+                "## 环境变量阻断",
+                "",
+                "- 缺失环境变量："
+                + ", ".join(f"`{item}`" for item in report.missing_env_vars),
+                "",
+            ]
+        )
+    failed = report.failed_step
+    if failed is not None:
+        lines.extend(
+            [
+                "## 阻断步骤",
+                "",
+                f"- Step：`{failed.step_id}` {failed.title}",
+                f"- Return code：{_display_return_code(failed.return_code)}",
+                f"- Command：`{_escape_table(_join_command(failed.command))}`",
+            ]
+        )
+        if failed.error:
+            lines.append(f"- Error：`{_escape_table(failed.error)}`")
+        lines.append("")
+    lines.extend(
+        [
+            "## 步骤结果",
+            "",
+            "| 顺序 | Step | Status | Return Code | Duration Seconds | Command | "
+            "Stdout Lines | Stderr Lines | Outputs |",
+            "|---:|---|---|---:|---:|---|---:|---:|---|",
+        ]
+    )
+    for index, result in enumerate(report.step_results, start=1):
+        duration_text = (
+            f"{result.duration_seconds:.1f}"
+            if result.duration_seconds is not None
+            else ""
+        )
+        outputs = "<br/>".join(f"`{path}`" for path in result.produced_paths)
+        command = (
+            f"`{_escape_table(_join_command(result.command))}`"
+            if result.command
+            else "SKIPPED"
+        )
+        if result.status == "SKIPPED" and result.skip_reason:
+            command = f"SKIPPED: {_escape_table(result.skip_reason)}"
+        lines.append(
+            "| "
+            f"{index} | "
+            f"`{result.step_id}`<br/>{_escape_table(result.title)} | "
+            f"{result.status} | "
+            f"{_display_return_code(result.return_code)} | "
+            f"{duration_text} | "
+            f"{command} | "
+            f"{result.stdout_line_count} | "
+            f"{result.stderr_line_count} | "
+            f"{_escape_table(outputs)} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## 输出说明",
+            "",
+            "- `PASS` 表示命令退出码为 0；`FAIL` 表示命令退出码非 0 或命令无法启动。",
+            "- `SKIPPED` 只会出现在显式传入 `--skip-*` 选项的步骤。",
+            "- 报告中的 `Stdout Lines` / `Stderr Lines` 只记录行数，不保存原文。",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def write_daily_ops_run_report(
+    report: DailyOpsRunReport,
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(render_daily_ops_run_report(report), encoding="utf-8")
+    return output_path
+
+
 def default_daily_ops_plan_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"daily_ops_plan_{as_of.isoformat()}.md"
+
+
+def default_daily_ops_run_report_path(output_dir: Path, as_of: date) -> Path:
+    return output_dir / f"daily_ops_run_{as_of.isoformat()}.md"
 
 
 def _command_cell(step: DailyOpsStep) -> str:
@@ -517,6 +770,12 @@ def _join_command(command: tuple[str, ...]) -> str:
     return " ".join(_quote_command_arg(arg) for arg in command)
 
 
+def _execution_command(command: tuple[str, ...]) -> tuple[str, ...]:
+    if command and command[0] == "aits":
+        return (sys.executable, "-m", "ai_trading_system.cli", *command[1:])
+    return command
+
+
 def _quote_command_arg(value: str) -> str:
     if not value:
         return "''"
@@ -527,3 +786,53 @@ def _quote_command_arg(value: str) -> str:
 
 def _escape_table(value: str) -> str:
     return value.replace("|", "\\|").replace("\n", " ")
+
+
+def _daily_run_status(results: list[DailyOpsStepResult]) -> str:
+    if any(result.status == "FAIL" for result in results):
+        return "FAIL"
+    if any(result.status == "SKIPPED" for result in results):
+        return "PASS_WITH_SKIPS"
+    return "PASS"
+
+
+def _display_return_code(return_code: int | None) -> str:
+    return "" if return_code is None else str(return_code)
+
+
+def _post_step_artifact_status_error(step: DailyOpsStep) -> str | None:
+    status_report_indexes = {
+        "pit_snapshots": (3, 4),
+        "sec_metrics": (0, 2),
+        "sec_metrics_validation": (0,),
+        "valuation_snapshots": (2, 3),
+        "score_daily": (2, 4),
+        "pipeline_health": (0,),
+        "secret_hygiene": (0,),
+    }.get(step.step_id, ())
+    for index in status_report_indexes:
+        if index >= len(step.produced_paths):
+            return f"artifact_status_path_missing: {step.step_id}[{index}]"
+        path = step.produced_paths[index]
+        status = _read_markdown_status(path)
+        if status is None:
+            return f"artifact_status_missing: {path}"
+        if not status.startswith("PASS"):
+            return f"artifact_status_failed: {path} status={status}"
+    return None
+
+
+def _read_markdown_status(path: Path) -> str | None:
+    if not path.exists() or not path.is_file():
+        return None
+    try:
+        with path.open("r", encoding="utf-8") as handle:
+            for line in handle:
+                stripped = line.strip()
+                if stripped.startswith("- 状态："):
+                    return stripped.removeprefix("- 状态：").strip()
+                if stripped.startswith("- 状态:"):
+                    return stripped.removeprefix("- 状态:").strip()
+    except OSError:
+        return None
+    return None

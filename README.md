@@ -131,6 +131,14 @@ aits ops daily-plan --as-of 2026-05-02
 
 计划默认包含 `download-data`、带 `--continue-on-failure` 的 `pit-snapshots fetch-fmp-forward`、`fundamentals download-sec-companyfacts`、`fundamentals extract-sec-metrics`、`fundamentals validate-sec-metrics`、`valuation fetch-fmp`、`score-daily`、`ops health` 和 `security scan-secrets`。报告写入 `outputs/reports/daily_ops_plan_YYYY-MM-DD.md`，只检查阻断性环境变量是否非空，不输出 secret 值，也不实际调用供应商 API。缺少 `FMP_API_KEY`、`MARKETSTACK_API_KEY`、`SEC_USER_AGENT` 或默认 OpenAI 预审需要的 `OPENAI_API_KEY` 时，计划状态会显示 `BLOCKED_ENV`；其中 `FMP_API_KEY` 会因 `download-data`、PIT 估值快照刷新等默认步骤而阻断，PIT 抓取自身失败则进入失败报告和 pipeline health 告警。如需把它作为调度前门禁，可加 `--fail-on-missing-env`。若离线排查需要跳过 OpenAI 预审、SEC fundamentals、估值快照刷新或 PIT 抓取，必须显式传入对应 `--skip-*` 选项，后续日报和运行记录仍需声明该限制。
 
+每日真实执行入口使用同一份计划顺序，并额外生成脱敏执行报告：
+
+```powershell
+aits ops daily-run --as-of 2026-05-02
+```
+
+`daily-run` 会先写出 `outputs/reports/daily_ops_plan_YYYY-MM-DD.md`，再按顺序调用本地 CLI。执行器内部用当前 Python 解释器调用同一 `ai_trading_system.cli` 模块，避免 Windows 上从 `aits.exe` 父进程递归启动 `aits.exe`。缺少阻断性环境变量时直接返回 `BLOCKED_ENV`，任一执行步骤退出码非 0 或关键 artifact 报告状态非 `PASS*` 时停止，不继续下游步骤。执行报告写入 `outputs/reports/daily_ops_run_YYYY-MM-DD.md`，只记录步骤状态、退出码、耗时、stdout/stderr 行数和预期 artifact 路径，不保存 stdout/stderr 原文、API key、token 或付费内容原文。调度器应调用 `daily-run`；`daily-plan` 保留为只读计划和凭据检查。
+
 构建每日市场特征：
 
 ```powershell

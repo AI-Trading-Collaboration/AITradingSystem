@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import subprocess
 from datetime import date
 from pathlib import Path
 
@@ -9,6 +10,8 @@ from ai_trading_system.cli import app
 from ai_trading_system.ops_daily import (
     build_daily_ops_plan,
     render_daily_ops_plan,
+    render_daily_ops_run_report,
+    run_daily_ops_plan,
 )
 
 
@@ -173,3 +176,119 @@ def test_daily_ops_plan_sec_and_valuation_steps_block_score_daily() -> None:
     assert valuation.required_env_vars == ("FMP_API_KEY",)
     assert valuation.blocks_downstream is True
     assert "fetch-fmp" in valuation.command
+
+
+def test_run_daily_ops_plan_stops_on_first_failed_command() -> None:
+    plan = build_daily_ops_plan(
+        as_of=date(2026, 5, 6),
+        include_download_data=False,
+        include_pit_snapshots=False,
+        include_valuation_snapshots=False,
+        include_secret_scan=False,
+        skip_risk_event_openai_precheck=True,
+    )
+    calls: list[tuple[str, ...]] = []
+
+    def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
+        calls.append(command)
+        return_code = 1 if "extract-sec-metrics" in command else 0
+        return subprocess.CompletedProcess(
+            command,
+            return_code,
+            stdout="stdout summary\n",
+            stderr="stderr summary\n" if return_code else "",
+        )
+
+    report = run_daily_ops_plan(
+        plan,
+        env={"SEC_USER_AGENT": "AITradingSystem test@example.com"},
+        runner=fake_runner,
+    )
+
+    assert report.status == "FAIL"
+    assert report.failed_step is not None
+    assert report.failed_step.step_id == "sec_metrics"
+    assert [call[3:] for call in calls] == [
+        ("fundamentals", "download-sec-companyfacts"),
+        ("fundamentals", "extract-sec-metrics", "--as-of", "2026-05-06"),
+    ]
+
+
+def test_daily_ops_run_report_omits_command_output_text(tmp_path: Path) -> None:
+    plan = build_daily_ops_plan(
+        as_of=date(2026, 5, 6),
+        project_root=tmp_path,
+        include_download_data=False,
+        include_pit_snapshots=False,
+        include_sec_fundamentals=False,
+        include_valuation_snapshots=False,
+        include_secret_scan=False,
+        skip_risk_event_openai_precheck=True,
+    )
+    for step in plan.steps:
+        if step.step_id == "score_daily":
+            status_paths = (step.produced_paths[2], step.produced_paths[4])
+        elif step.step_id == "pipeline_health":
+            status_paths = (step.produced_paths[0],)
+        else:
+            status_paths = ()
+        for path in status_paths:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("- 状态：PASS\n", encoding="utf-8")
+
+    def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            stdout="SECRET_SHOULD_NOT_APPEAR\n",
+            stderr="PAID_CONTENT_SHOULD_NOT_APPEAR\n",
+        )
+
+    report = run_daily_ops_plan(
+        plan,
+        project_root=tmp_path,
+        env={},
+        runner=fake_runner,
+    )
+    markdown = render_daily_ops_run_report(report)
+
+    assert report.status == "PASS_WITH_SKIPS"
+    assert "SECRET_SHOULD_NOT_APPEAR" not in markdown
+    assert "PAID_CONTENT_SHOULD_NOT_APPEAR" not in markdown
+    assert "Stdout Lines" in markdown
+    assert "Stderr Lines" in markdown
+
+
+def test_run_daily_ops_plan_fails_when_artifact_status_fails(tmp_path: Path) -> None:
+    plan = build_daily_ops_plan(
+        as_of=date(2026, 5, 6),
+        project_root=tmp_path,
+        include_download_data=False,
+        include_sec_fundamentals=False,
+        include_valuation_snapshots=False,
+        include_secret_scan=False,
+        skip_risk_event_openai_precheck=True,
+    )
+    pit_step = next(step for step in plan.steps if step.step_id == "pit_snapshots")
+    pit_step.produced_paths[3].parent.mkdir(parents=True, exist_ok=True)
+    pit_step.produced_paths[3].write_text("- 状态：FAIL\n", encoding="utf-8")
+    pit_step.produced_paths[4].parent.mkdir(parents=True, exist_ok=True)
+    pit_step.produced_paths[4].write_text("- 状态：PASS\n", encoding="utf-8")
+    calls: list[tuple[str, ...]] = []
+
+    def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
+        calls.append(command)
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    report = run_daily_ops_plan(
+        plan,
+        project_root=tmp_path,
+        env={},
+        runner=fake_runner,
+    )
+
+    assert report.status == "FAIL"
+    assert report.failed_step is not None
+    assert report.failed_step.step_id == "pit_snapshots"
+    assert "artifact_status_failed" in (report.failed_step.error or "")
+    assert [call[3:] for call in calls] == [pit_step.command[1:]]

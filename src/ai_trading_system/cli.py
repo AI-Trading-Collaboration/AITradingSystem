@@ -370,7 +370,10 @@ from ai_trading_system.official_policy_sources import (
 from ai_trading_system.ops_daily import (
     build_daily_ops_plan,
     default_daily_ops_plan_path,
+    default_daily_ops_run_report_path,
+    run_daily_ops_plan,
     write_daily_ops_plan,
+    write_daily_ops_run_report,
 )
 from ai_trading_system.periodic_investment_review import (
     DEFAULT_PERIODIC_INVESTMENT_REVIEW_REPORT_DIR,
@@ -4772,6 +4775,43 @@ def pipeline_health_command(
         raise typer.Exit(code=1)
 
 
+def _build_daily_ops_plan_from_cli_options(
+    *,
+    as_of: str | None,
+    download_start: str,
+    include_download_data: bool,
+    include_pit_snapshots: bool,
+    include_sec_fundamentals: bool,
+    include_valuation_snapshots: bool,
+    include_secret_scan: bool,
+    risk_event_openai_precheck: bool,
+    risk_event_openai_precheck_max_candidates: int,
+    full_universe: bool,
+):
+    plan_date = _parse_date(as_of) if as_of else date.today()
+    start_date = _parse_date(download_start)
+    if risk_event_openai_precheck_max_candidates < 0:
+        raise typer.BadParameter("OpenAI 风险事件预审候选上限不能为负数。")
+    try:
+        plan = build_daily_ops_plan(
+            as_of=plan_date,
+            download_start=start_date,
+            include_download_data=include_download_data,
+            include_pit_snapshots=include_pit_snapshots,
+            include_sec_fundamentals=include_sec_fundamentals,
+            include_valuation_snapshots=include_valuation_snapshots,
+            include_secret_scan=include_secret_scan,
+            skip_risk_event_openai_precheck=not risk_event_openai_precheck,
+            full_universe=full_universe,
+            risk_event_openai_precheck_max_candidates=(
+                risk_event_openai_precheck_max_candidates
+            ),
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    return plan_date, plan
+
+
 @ops_app.command("daily-plan")
 def daily_ops_plan_command(
     as_of: Annotated[
@@ -4848,27 +4888,20 @@ def daily_ops_plan_command(
     ] = False,
 ) -> None:
     """生成适合本地或云 VM 调度的每日运行计划。"""
-    plan_date = _parse_date(as_of) if as_of else date.today()
-    start_date = _parse_date(download_start)
-    if risk_event_openai_precheck_max_candidates < 0:
-        raise typer.BadParameter("OpenAI 风险事件预审候选上限不能为负数。")
-    try:
-        plan = build_daily_ops_plan(
-            as_of=plan_date,
-            download_start=start_date,
-            include_download_data=include_download_data,
-            include_pit_snapshots=include_pit_snapshots,
-            include_sec_fundamentals=include_sec_fundamentals,
-            include_valuation_snapshots=include_valuation_snapshots,
-            include_secret_scan=include_secret_scan,
-            skip_risk_event_openai_precheck=not risk_event_openai_precheck,
-            full_universe=full_universe,
-            risk_event_openai_precheck_max_candidates=(
-                risk_event_openai_precheck_max_candidates
-            ),
-        )
-    except ValueError as exc:
-        raise typer.BadParameter(str(exc)) from exc
+    plan_date, plan = _build_daily_ops_plan_from_cli_options(
+        as_of=as_of,
+        download_start=download_start,
+        include_download_data=include_download_data,
+        include_pit_snapshots=include_pit_snapshots,
+        include_sec_fundamentals=include_sec_fundamentals,
+        include_valuation_snapshots=include_valuation_snapshots,
+        include_secret_scan=include_secret_scan,
+        risk_event_openai_precheck=risk_event_openai_precheck,
+        risk_event_openai_precheck_max_candidates=(
+            risk_event_openai_precheck_max_candidates
+        ),
+        full_universe=full_universe,
+    )
 
     report_path = output_path or default_daily_ops_plan_path(
         PROJECT_ROOT / "outputs" / "reports",
@@ -4885,6 +4918,130 @@ def daily_ops_plan_command(
     if missing_env:
         console.print(f"缺失环境变量：{', '.join(missing_env)}")
     if fail_on_missing_env and missing_env:
+        raise typer.Exit(code=1)
+
+
+@ops_app.command("daily-run")
+def daily_ops_run_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="运行日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    download_start: Annotated[
+        str,
+        typer.Option(help="市场数据下载起始日期，格式为 YYYY-MM-DD。"),
+    ] = "2018-01-01",
+    include_download_data: Annotated[
+        bool,
+        typer.Option(
+            "--include-download-data/--skip-download-data",
+            help="是否执行 `aits download-data`。",
+        ),
+    ] = True,
+    include_pit_snapshots: Annotated[
+        bool,
+        typer.Option(
+            "--include-pit-snapshots/--skip-pit-snapshots",
+            help="是否执行 FMP forward-only PIT 抓取和校验。",
+        ),
+    ] = True,
+    include_sec_fundamentals: Annotated[
+        bool,
+        typer.Option(
+            "--include-sec-fundamentals/--skip-sec-fundamentals",
+            help="是否执行 SEC companyfacts 刷新和 SEC metrics 抽取。",
+        ),
+    ] = True,
+    include_valuation_snapshots: Annotated[
+        bool,
+        typer.Option(
+            "--include-valuation-snapshots/--skip-valuation-snapshots",
+            help="是否执行 FMP 估值和预期快照刷新。",
+        ),
+    ] = True,
+    include_secret_scan: Annotated[
+        bool,
+        typer.Option(
+            "--include-secret-scan/--skip-secret-scan",
+            help="是否执行 secret hygiene 扫描。",
+        ),
+    ] = True,
+    risk_event_openai_precheck: Annotated[
+        bool,
+        typer.Option(
+            "--risk-event-openai-precheck/--skip-risk-event-openai-precheck",
+            help="是否让 score-daily 执行 OpenAI 风险事件预审。",
+        ),
+    ] = True,
+    risk_event_openai_precheck_max_candidates: Annotated[
+        int,
+        typer.Option(help="OpenAI 风险事件预审候选上限。"),
+    ] = 20,
+    full_universe: Annotated[
+        bool,
+        typer.Option(
+            "--full-universe",
+            help="对 download-data 使用完整 AI 产业链标的。",
+        ),
+    ] = False,
+    plan_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 每日运行计划输出路径。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 每日执行报告输出路径。"),
+    ] = None,
+) -> None:
+    """按每日运行计划真实执行本地 CLI，并生成脱敏执行报告。"""
+    plan_date, plan = _build_daily_ops_plan_from_cli_options(
+        as_of=as_of,
+        download_start=download_start,
+        include_download_data=include_download_data,
+        include_pit_snapshots=include_pit_snapshots,
+        include_sec_fundamentals=include_sec_fundamentals,
+        include_valuation_snapshots=include_valuation_snapshots,
+        include_secret_scan=include_secret_scan,
+        risk_event_openai_precheck=risk_event_openai_precheck,
+        risk_event_openai_precheck_max_candidates=(
+            risk_event_openai_precheck_max_candidates
+        ),
+        full_universe=full_universe,
+    )
+
+    reports_dir = PROJECT_ROOT / "outputs" / "reports"
+    plan_report_path = plan_output_path or default_daily_ops_plan_path(
+        reports_dir,
+        plan_date,
+    )
+    run_report_path = output_path or default_daily_ops_run_report_path(
+        reports_dir,
+        plan_date,
+    )
+    write_daily_ops_plan(plan, plan_report_path, env=os.environ)
+    run_report = run_daily_ops_plan(plan, project_root=PROJECT_ROOT, env=os.environ)
+    write_daily_ops_run_report(run_report, run_report_path)
+
+    status = run_report.status
+    style = (
+        "green"
+        if status == "PASS"
+        else "yellow"
+        if status == "PASS_WITH_SKIPS"
+        else "red"
+    )
+    console.print(f"[{style}]每日运行执行：{status}[/{style}]")
+    console.print(f"计划报告：{plan_report_path}")
+    console.print(f"执行报告：{run_report_path}")
+    console.print(f"执行步骤数：{len(run_report.step_results)} / {len(plan.steps)}")
+    if run_report.missing_env_vars:
+        console.print(f"缺失环境变量：{', '.join(run_report.missing_env_vars)}")
+    if run_report.failed_step is not None:
+        failed = run_report.failed_step
+        console.print(
+            f"失败步骤：{failed.step_id}；return_code={failed.return_code}"
+        )
+    if status not in {"PASS", "PASS_WITH_SKIPS"}:
         raise typer.Exit(code=1)
 
 
