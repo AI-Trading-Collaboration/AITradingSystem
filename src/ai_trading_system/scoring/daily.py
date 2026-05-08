@@ -32,6 +32,7 @@ from ai_trading_system.scoring.position_gates import build_position_gates
 from ai_trading_system.scoring.position_model import (
     ModuleScore,
     PositionBand,
+    PositionGate,
     PositionRecommendation,
     WeightedScoreModel,
 )
@@ -200,6 +201,7 @@ class DailyScoreReport:
     data_quality_report: DataQualityReport
     feature_set: MarketFeatureSet
     minimum_action_delta: float
+    confidence_assessment: DailyConfidenceAssessment
     fundamental_feature_report: SecFundamentalFeaturesReport | None = None
     valuation_review_report: ValuationReviewReport | None = None
     risk_event_occurrence_review_report: RiskEventOccurrenceReviewReport | None = None
@@ -221,10 +223,6 @@ class DailyScoreReport:
         ):
             return "PASS_WITH_WARNINGS"
         return "PASS"
-
-    @property
-    def confidence_assessment(self) -> DailyConfidenceAssessment:
-        return _confidence_assessment(self)
 
     @property
     def score_architecture_audit(self) -> dict[str, Any]:
@@ -308,26 +306,45 @@ def build_daily_score_report(
         total_risk_asset_min=adjusted_total_risk_asset_min,
         total_risk_asset_max=adjusted_total_risk_asset_max,
     )
-    thesis_review_status = review_summary.thesis if review_summary is not None else None
-    position_gates = build_position_gates(
-        score_band=model_recommendation.model_risk_asset_ai_band,
-        total_risk_asset_max=adjusted_total_risk_asset_max,
-        max_total_ai_exposure=max_total_ai_exposure,
-        gate_rules=rules.position_gates,
-        data_quality_status=data_quality_report.status,
-        component_source_types={
-            component.name: component.source_type for component in components
-        },
-        thesis_status=None if thesis_review_status is None else thesis_review_status.status,
-        thesis_error_count=0 if thesis_review_status is None else thesis_review_status.error_count,
-        thesis_warning_count=(
-            0 if thesis_review_status is None else thesis_review_status.warning_count
-        ),
-        risk_budget=risk_budget,
+    confidence_assessment = _build_confidence_assessment(
+        components=tuple(components),
+        data_quality_report=data_quality_report,
         feature_set=feature_set,
-        portfolio_exposure_report=portfolio_exposure_report,
-        valuation_review_report=valuation_review_report,
-        risk_event_occurrence_review_report=risk_event_occurrence_review_report,
+        model_risk_asset_ai_band=model_recommendation.model_risk_asset_ai_band,
+        fundamental_feature_report=fundamental_feature_report,
+        review_summary=review_summary,
+    )
+    confidence_gate = _confidence_position_gate(
+        score_band=model_recommendation.model_risk_asset_ai_band,
+        confidence=confidence_assessment,
+    )
+    thesis_review_status = review_summary.thesis if review_summary is not None else None
+    position_gates = (
+        confidence_gate,
+        *build_position_gates(
+            score_band=model_recommendation.model_risk_asset_ai_band,
+            total_risk_asset_max=adjusted_total_risk_asset_max,
+            max_total_ai_exposure=max_total_ai_exposure,
+            gate_rules=rules.position_gates,
+            data_quality_status=data_quality_report.status,
+            component_source_types={
+                component.name: component.source_type for component in components
+            },
+            thesis_status=(
+                None if thesis_review_status is None else thesis_review_status.status
+            ),
+            thesis_error_count=(
+                0 if thesis_review_status is None else thesis_review_status.error_count
+            ),
+            thesis_warning_count=(
+                0 if thesis_review_status is None else thesis_review_status.warning_count
+            ),
+            risk_budget=risk_budget,
+            feature_set=feature_set,
+            portfolio_exposure_report=portfolio_exposure_report,
+            valuation_review_report=valuation_review_report,
+            risk_event_occurrence_review_report=risk_event_occurrence_review_report,
+        ),
     )
     recommendation = score_model.recommend(
         module_scores,
@@ -343,6 +360,7 @@ def build_daily_score_report(
         data_quality_report=data_quality_report,
         feature_set=feature_set,
         minimum_action_delta=rules.position_change.minimum_action_delta,
+        confidence_assessment=confidence_assessment,
         fundamental_feature_report=fundamental_feature_report,
         valuation_review_report=valuation_review_report,
         risk_event_occurrence_review_report=risk_event_occurrence_review_report,
@@ -537,7 +555,7 @@ def build_score_architecture_audit(report: DailyScoreReport) -> dict[str, Any]:
             for gate in report.recommendation.position_gates
         ],
         "confidence_boundary": (
-            "confidence 只能降低方向信号权重、结论使用等级或要求确认；"
+            "confidence 只能降低方向信号权重、仓位上限、结论使用等级或要求确认；"
             "不能把低置信风险解释为低风险。"
         ),
         "double_counting_boundary": (
@@ -586,7 +604,7 @@ def render_daily_score_report(
             f"{recommendation.model_risk_asset_ai_band.max_position:.0%}"
         ),
         (
-            "- 置信度调整后建议仓位（股票风险资产内）："
+            "- 置信度调整后模型仓位（风险闸门前，股票风险资产内）："
             f"{confidence.adjusted_risk_asset_ai_band.min_position:.0%}-"
             f"{confidence.adjusted_risk_asset_ai_band.max_position:.0%}"
         ),
@@ -2053,65 +2071,121 @@ def _source_type_confidence(source_type: str, coverage: float) -> float:
     return _clamp(coverage * 0.50, 0.0, 0.50)
 
 
-def _confidence_assessment(report: DailyScoreReport) -> DailyConfidenceAssessment:
-    total_weight = sum(component.weight for component in report.components)
+def _build_confidence_assessment(
+    *,
+    components: tuple[DailyScoreComponent, ...],
+    data_quality_report: DataQualityReport,
+    feature_set: MarketFeatureSet,
+    model_risk_asset_ai_band: PositionBand,
+    fundamental_feature_report: SecFundamentalFeaturesReport | None,
+    review_summary: DailyReviewSummary | None,
+) -> DailyConfidenceAssessment:
+    score, level, reasons = _confidence_score_and_reasons(
+        components=components,
+        data_quality_report=data_quality_report,
+        feature_set=feature_set,
+        fundamental_feature_report=fundamental_feature_report,
+        review_summary=review_summary,
+    )
+    adjusted_band = _confidence_adjusted_band(model_risk_asset_ai_band, score)
+    return DailyConfidenceAssessment(
+        score=score,
+        level=level,
+        reasons=reasons,
+        adjusted_risk_asset_ai_band=adjusted_band,
+    )
+
+
+def _confidence_score_and_reasons(
+    *,
+    components: tuple[DailyScoreComponent, ...],
+    data_quality_report: DataQualityReport,
+    feature_set: MarketFeatureSet,
+    fundamental_feature_report: SecFundamentalFeaturesReport | None,
+    review_summary: DailyReviewSummary | None,
+) -> tuple[float, str, tuple[str, ...]]:
+    total_weight = sum(component.weight for component in components)
     if total_weight <= 0:
         base_score = 0.0
     else:
         base_score = (
-            sum(component.confidence * component.weight for component in report.components)
+            sum(component.confidence * component.weight for component in components)
             / total_weight
             * 100.0
         )
 
     reasons: list[str] = []
     penalty = 0.0
-    if report.data_quality_report.status == "FAIL":
+    if data_quality_report.status == "FAIL":
         penalty += 100.0
         reasons.append("市场数据质量门禁失败")
-    elif "WARNING" in report.data_quality_report.status:
+    elif "WARNING" in data_quality_report.status:
         penalty += 15.0
         reasons.append("市场数据质量门禁存在警告")
 
     low_confidence_components = [
         _component_label(component.name)
-        for component in report.components
+        for component in components
         if component.confidence < 0.60
     ]
     if low_confidence_components:
         reasons.append(f"低置信度模块：{', '.join(low_confidence_components)}")
 
-    if report.feature_set.warnings:
+    if feature_set.warnings:
         penalty += 5.0
-        reasons.append(f"市场特征存在 {len(report.feature_set.warnings)} 条警告")
+        reasons.append(f"市场特征存在 {len(feature_set.warnings)} 条警告")
     if (
-        report.fundamental_feature_report is not None
-        and report.fundamental_feature_report.warning_count
+        fundamental_feature_report is not None
+        and fundamental_feature_report.warning_count
     ):
         penalty += 5.0
         reasons.append(
-            f"SEC 基本面特征存在 {report.fundamental_feature_report.warning_count} 条警告"
+            f"SEC 基本面特征存在 {fundamental_feature_report.warning_count} 条警告"
         )
-    if report.review_summary and report.review_summary.has_failures:
+    if review_summary and review_summary.has_failures:
         penalty += 30.0
         reasons.append("人工复核摘要存在失败项")
-    elif report.review_summary and report.review_summary.has_warnings:
+    elif review_summary and review_summary.has_warnings:
         penalty += 10.0
         reasons.append("人工复核摘要存在警告项")
 
     score = _clamp(base_score - penalty, 0.0, 100.0)
     level = _confidence_level(score / 100.0)
-    adjusted_band = _confidence_adjusted_band(
-        report.recommendation.risk_asset_ai_band,
-        score,
-    )
     if not reasons:
         reasons.append("核心输入覆盖和质量状态未触发额外置信度扣减")
-    return DailyConfidenceAssessment(
-        score=score,
-        level=level,
-        reasons=tuple(reasons),
-        adjusted_risk_asset_ai_band=adjusted_band,
+    return score, level, tuple(reasons)
+
+
+def _confidence_position_gate(
+    *,
+    score_band: PositionBand,
+    confidence: DailyConfidenceAssessment,
+) -> PositionGate:
+    adjusted_band = confidence.adjusted_risk_asset_ai_band
+    triggered = adjusted_band.max_position < score_band.max_position - 1e-9
+    if triggered:
+        reason = (
+            f"判断置信度 {confidence.score:.1f}/100"
+            f"（{_confidence_level_label(confidence.level)}）；"
+            "将评分模型 AI 仓位上限从 "
+            f"{score_band.max_position:.0%} 限制到 {adjusted_band.max_position:.0%}。"
+        )
+    else:
+        reason = (
+            f"判断置信度 {confidence.score:.1f}/100"
+            f"（{_confidence_level_label(confidence.level)}），"
+            "未触发额外仓位限制。"
+        )
+    return PositionGate(
+        gate_id="confidence",
+        label="判断置信度",
+        source="score component confidence, data quality and manual review",
+        max_position=adjusted_band.max_position,
+        triggered=triggered,
+        reason=reason,
+        gate_class="hard_cap",
+        target_effect="position_cap_and_conclusion_downgrade",
+        execution_effect="confidence_position_limit",
     )
 
 

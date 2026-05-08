@@ -152,6 +152,60 @@ def test_valuation_crowding_gate_caps_position_without_thesis_break() -> None:
     assert valuation.score < 50
 
 
+def test_confidence_gate_caps_position_when_no_stricter_gate() -> None:
+    report = build_daily_score_report(
+        feature_set=_feature_set(),
+        data_quality_report=_quality_report(),
+        rules=load_scoring_rules(),
+        total_risk_asset_min=0.60,
+        total_risk_asset_max=0.80,
+    )
+
+    confidence = report.confidence_assessment
+    confidence_gate = _position_gate(report, "confidence")
+
+    assert confidence.level == "medium"
+    assert confidence_gate.triggered
+    assert confidence_gate.max_position == (
+        confidence.adjusted_risk_asset_ai_band.max_position
+    )
+    assert report.recommendation.risk_asset_ai_band.max_position == (
+        confidence.adjusted_risk_asset_ai_band.max_position
+    )
+    assert report.recommendation.risk_asset_ai_band.max_position < (
+        report.recommendation.model_risk_asset_ai_band.max_position
+    )
+
+
+def test_valuation_gate_can_remain_stricter_than_confidence_gate() -> None:
+    rules = load_scoring_rules()
+    report = build_daily_score_report(
+        feature_set=_feature_set(),
+        data_quality_report=_quality_report(),
+        rules=rules,
+        total_risk_asset_min=0.60,
+        total_risk_asset_max=0.80,
+        valuation_review_report=_valuation_review_report(
+            valuation_percentile=96.0,
+            overall_assessment="extreme",
+        ),
+    )
+
+    confidence = report.confidence_assessment
+    confidence_gate = _position_gate(report, "confidence")
+    valuation_gate = _position_gate(report, "valuation")
+
+    assert confidence_gate.triggered
+    assert valuation_gate.triggered
+    assert valuation_gate.max_position < confidence_gate.max_position
+    assert report.recommendation.risk_asset_ai_band.max_position == (
+        rules.position_gates.valuation.extreme_overheated_max_position
+    )
+    assert report.recommendation.risk_asset_ai_band.max_position <= (
+        confidence.adjusted_risk_asset_ai_band.max_position
+    )
+
+
 def test_build_daily_score_report_uses_risk_event_occurrences() -> None:
     report = build_daily_score_report(
         feature_set=_feature_set(),
@@ -314,6 +368,10 @@ def test_macro_risk_asset_budget_cuts_total_budget_not_ai_relative_weight() -> N
         total_risk_asset_min=portfolio.portfolio.total_risk_asset_min,
         total_risk_asset_max=portfolio.portfolio.total_risk_asset_max,
         macro_risk_asset_budget=portfolio.macro_risk_asset_budget,
+        fundamental_feature_report=_fundamental_feature_report(),
+        risk_event_occurrence_review_report=(
+            _empty_risk_event_occurrence_review_report_with_attestation()
+        ),
     )
 
     adjustment = report.macro_risk_asset_budget
@@ -426,9 +484,14 @@ def test_daily_score_confidence_is_reported_separately_from_market_score() -> No
     assert 0 <= confidence.score <= 100
     assert confidence.level in {"high", "medium", "low"}
     assert any("低置信度模块" in reason for reason in confidence.reasons)
-    assert (
+    assert confidence.adjusted_risk_asset_ai_band.max_position <= (
+        report.recommendation.model_risk_asset_ai_band.max_position
+    )
+    assert report.recommendation.risk_asset_ai_band.max_position == (
         confidence.adjusted_risk_asset_ai_band.max_position
-        <= report.recommendation.risk_asset_ai_band.max_position
+    )
+    assert _position_gate(report, "confidence").max_position == (
+        confidence.adjusted_risk_asset_ai_band.max_position
     )
 
 
@@ -567,7 +630,7 @@ def test_render_daily_score_report_includes_data_gate_and_limitations(tmp_path: 
     assert "thesis 承压" in markdown
     assert "- AI 产业链评分：" in markdown
     assert "- 判断置信度：" in markdown
-    assert "- 置信度调整后建议仓位" in markdown
+    assert "- 置信度调整后模型仓位" in markdown
     assert "| 模块 | 分数 | 权重 | 来源 | 覆盖率 | 置信度 | 说明 |" in markdown
     assert "评分模型仓位（score_model）" in markdown
     assert "交易 thesis" in markdown
