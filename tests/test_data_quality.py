@@ -245,6 +245,37 @@ def test_validate_data_cache_fails_stale_data(tmp_path: Path) -> None:
     assert "rates_stale" in _issue_codes(report)
 
 
+def test_validate_data_cache_uses_rate_series_staleness_override(tmp_path: Path) -> None:
+    prices_path, rates_path = _write_valid_cache(tmp_path)
+    prices = pd.read_csv(prices_path)
+    prices["date"] = prices["date"].replace(
+        {
+            "2026-04-29": "2026-05-07",
+            "2026-04-30": "2026-05-08",
+        }
+    )
+    prices.to_csv(prices_path, index=False)
+
+    rates = pd.read_csv(rates_path)
+    rates["date"] = rates.apply(
+        lambda row: _rate_date_for_series(str(row["series"]), str(row["date"])),
+        axis=1,
+    )
+    rates.to_csv(rates_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["MSFT", "NVDA"],
+        expected_rate_series=["DGS2", "DGS10", "DTWEXBGS"],
+        quality_config=load_data_quality(),
+        as_of=date(2026, 5, 9),
+    )
+
+    assert report.passed is True
+    assert "rates_stale" not in _issue_codes(report)
+
+
 def test_render_and_write_data_quality_report(tmp_path: Path) -> None:
     prices_path, rates_path = _write_valid_cache(tmp_path)
     report = validate_data_cache(
@@ -600,6 +631,18 @@ def _price_row(
         "adj_close": adj_close,
         "volume": volume,
     }
+
+
+def _rate_date_for_series(series: str, row_date: str) -> str:
+    if series == "DTWEXBGS":
+        return {
+            "2026-04-29": "2026-04-30",
+            "2026-04-30": "2026-05-01",
+        }[row_date]
+    return {
+        "2026-04-29": "2026-05-07",
+        "2026-04-30": "2026-05-08",
+    }[row_date]
 
 
 def _manifest_row(source_id: str, output_path: Path) -> dict[str, object]:

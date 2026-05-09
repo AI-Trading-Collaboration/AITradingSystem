@@ -34,6 +34,10 @@ rates:
   consistency_start_date: 2022-12-01
   series_overrides:
     DTWEXBGS:
+      # Federal Reserve H.10 usually releases the prior business week's daily
+      # dollar indexes on Monday afternoon U.S. time, so the latest value can
+      # naturally exceed the default daily-rate freshness window.
+      max_stale_calendar_days: 14
       min_plausible_value: 0.0
       max_plausible_value: 250.0
       suspicious_daily_change_abs: 2.0

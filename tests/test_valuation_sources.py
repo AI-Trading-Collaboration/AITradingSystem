@@ -263,6 +263,48 @@ def test_fetch_fmp_valuation_snapshots_calculates_eps_revision_from_history(
     assert "missing_eps_revision_history" not in {issue.code for issue in report.issues}
 
 
+def test_write_fmp_analyst_estimate_history_snapshots_preserves_same_day_runs(
+    tmp_path: Path,
+) -> None:
+    output_dir = tmp_path / "fmp_history"
+    records = ({"symbol": "NVDA", "date": "2027-01-31", "epsAvg": 2.0},)
+
+    written = write_fmp_analyst_estimate_history_snapshots(
+        [
+            FmpAnalystEstimateHistorySnapshot(
+                ticker="NVDA",
+                as_of=date(2026, 5, 2),
+                captured_at=date(2026, 5, 2),
+                downloaded_at=datetime(2026, 5, 2, 10, 0, tzinfo=UTC),
+                endpoint="https://financialmodelingprep.com/stable/analyst-estimates",
+                request_parameters={"symbol": "NVDA", "period": "annual", "limit": 10},
+                row_count=1,
+                checksum_sha256="",
+                records=records,
+            ),
+            FmpAnalystEstimateHistorySnapshot(
+                ticker="NVDA",
+                as_of=date(2026, 5, 2),
+                captured_at=date(2026, 5, 2),
+                downloaded_at=datetime(2026, 5, 2, 12, 0, tzinfo=UTC),
+                endpoint="https://financialmodelingprep.com/stable/analyst-estimates",
+                request_parameters={"symbol": "NVDA", "period": "annual", "limit": 10},
+                row_count=1,
+                checksum_sha256="",
+                records=records,
+            ),
+        ],
+        output_dir,
+    )
+
+    assert len(written) == 2
+    assert len(set(written)) == 2
+    assert all(path.exists() for path in written)
+    assert all("2026-05-02T" in path.name for path in written)
+    loaded = load_fmp_analyst_estimate_history_snapshots(output_dir, ["NVDA"])
+    assert len(loaded) == 2
+
+
 def test_fetch_fmp_valuation_snapshots_calculates_eps_revision_from_pit_asof(
     tmp_path: Path,
 ) -> None:
@@ -639,8 +681,15 @@ def test_valuation_fetch_fmp_cli_writes_yaml_and_reports(
     assert "FMP 估值拉取状态：PASS_WITH_WARNINGS" in result.output
     assert (output_dir / "fmp_nvda_valuation_2026_05_02.yaml").exists()
     assert (
-        analyst_history_dir / "nvda" / "fmp_analyst_estimates_nvda_2026-05-02.json"
-    ).exists()
+        len(
+            list(
+                (analyst_history_dir / "nvda").glob(
+                    "fmp_analyst_estimates_nvda_2026-05-02_*.json"
+                )
+            )
+        )
+        == 1
+    )
     assert fetch_report_path.exists()
     assert validation_report_path.exists()
 

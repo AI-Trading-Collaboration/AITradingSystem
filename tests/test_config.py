@@ -51,6 +51,7 @@ def test_data_quality_config_loads_thresholds() -> None:
     assert config.rates.max_plausible_value == 25.0
     assert config.rates.consistency_start_date is not None
     assert config.rates.consistency_start_date.isoformat() == "2022-12-01"
+    assert config.rates.series_overrides["DTWEXBGS"].max_stale_calendar_days == 14
     assert config.rates.series_overrides["DTWEXBGS"].max_plausible_value == 250.0
     assert config.rates.series_overrides["DTWEXBGS"].extreme_daily_change_abs == 5.0
 

@@ -218,6 +218,7 @@ sources:
       - suspicious_rate_or_index_changes
     limitations:
       - FRED 宏观序列可能在美股收盘后或非交易日更新。
+      - Federal Reserve H.10 通常按周发布上一周的每日汇率和美元指数；`DTWEXBGS` freshness 必须按 series 级阈值解释。
       - "`DTWEXBGS` 是 Federal Reserve 广义美元指数代理，不是 ICE DXY；报告不得把它称为 official DXY。"
     owner_notes: 当前 MVP 宏观利率和广义美元指数来源。
 

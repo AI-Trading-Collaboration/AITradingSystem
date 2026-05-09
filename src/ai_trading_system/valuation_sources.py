@@ -1431,10 +1431,7 @@ def write_fmp_analyst_estimate_history_snapshots(
     for snapshot in snapshots:
         ticker_dir = directory / snapshot.ticker.lower()
         ticker_dir.mkdir(parents=True, exist_ok=True)
-        output_path = ticker_dir / (
-            f"fmp_analyst_estimates_{snapshot.ticker.lower()}_"
-            f"{snapshot.captured_at.isoformat()}.json"
-        )
+        output_path = ticker_dir / _fmp_analyst_estimate_history_raw_filename(snapshot)
         output_path.write_text(
             json.dumps(
                 _fmp_analyst_history_snapshot_to_raw(snapshot),
@@ -1448,6 +1445,19 @@ def write_fmp_analyst_estimate_history_snapshots(
         )
         written.append(output_path)
     return tuple(written)
+
+
+def _fmp_analyst_estimate_history_raw_filename(
+    snapshot: FmpAnalystEstimateHistorySnapshot,
+) -> str:
+    checksum = snapshot.checksum_sha256 or _json_checksum(snapshot.records)
+    downloaded_token = (
+        snapshot.downloaded_at.astimezone(UTC).strftime("%Y-%m-%dT%H-%M-%SZ")
+    )
+    return (
+        f"fmp_analyst_estimates_{snapshot.ticker.lower()}_"
+        f"{snapshot.captured_at.isoformat()}_{downloaded_token}_{checksum[:12]}.json"
+    )
 
 
 def write_fmp_historical_valuation_raw_payloads(

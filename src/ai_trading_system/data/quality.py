@@ -1137,9 +1137,10 @@ def _check_rate_staleness(
             continue
         latest_date = latest_by_series[series].date()
         lag_days = (as_of - latest_date).days
+        max_stale_days = _rate_max_stale_calendar_days(series, quality_config.rates)
         if lag_days < 0:
             future.append(f"{series}:{latest_date.isoformat()}")
-        elif lag_days > quality_config.rates.max_stale_calendar_days:
+        elif lag_days > max_stale_days:
             stale.append(f"{series}:{latest_date.isoformat()}({lag_days}d)")
 
     if future:
@@ -1227,6 +1228,13 @@ def _rate_min_plausible_value(series: str, config: RateQualityConfig) -> float:
     if override and override.min_plausible_value is not None:
         return override.min_plausible_value
     return config.min_plausible_value
+
+
+def _rate_max_stale_calendar_days(series: str, config: RateQualityConfig) -> int:
+    override = config.series_overrides.get(series)
+    if override and override.max_stale_calendar_days is not None:
+        return override.max_stale_calendar_days
+    return config.max_stale_calendar_days
 
 
 def _rate_max_plausible_value(series: str, config: RateQualityConfig) -> float:

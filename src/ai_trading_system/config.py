@@ -602,6 +602,7 @@ class PriceQualityConfig(BaseModel):
 
 
 class RateSeriesQualityOverrideConfig(BaseModel):
+    max_stale_calendar_days: int | None = Field(default=None, gt=0)
     min_plausible_value: float | None = None
     max_plausible_value: float | None = None
     suspicious_daily_change_abs: float | None = Field(default=None, gt=0)
