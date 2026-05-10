@@ -26,6 +26,7 @@ OpenAI API 可以用于风险事件和市场证据的预审，但预审输出在
 - 如果 OpenAI 预审结果和 deterministic source policy 冲突，以 source policy 的保守规则为准。
 - 付费新闻或供应商内容可以在 owner 个人投资决策支持目的下进入 OpenAI 预审，但必须先在数据源目录或请求 envelope 中显式记录 provider、授权范围、`external_llm_allowed`、`cache_allowed`、`redistribution_allowed`、`content_sent_level` 和 `approval_ref`。
 - 如果供应商授权未知或 `external_llm_allowed=false`，系统不得发送供应商全文或长摘录给外部 LLM API；最多只能在授权允许时发送元数据或人工摘要，并保留 checksum 与人工复核记录。
+- 2026-05-10 后，live OpenAI 自动请求还要求 `cache_allowed=true`，因为所有实际发送的 request/response 都必须写入本地审计缓存；如果来源不允许本地缓存归档，应 fail closed 而不是发送后丢失详细记录。
 
 风险事件的完整预审与人工复核流程见 `docs/requirements/risk_event_review_workflow_2026-05-04.md`。
 

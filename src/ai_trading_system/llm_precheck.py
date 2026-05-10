@@ -7,7 +7,7 @@ import urllib.parse
 import urllib.request
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from enum import StrEnum
 from hashlib import sha256
 from pathlib import Path
@@ -18,13 +18,29 @@ import requests
 import yaml
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
+from ai_trading_system.agent_request_cache import (
+    DEFAULT_AGENT_REQUEST_CACHE_DIR,
+    DEFAULT_AGENT_REQUEST_CACHE_TTL_SECONDS,
+    AgentCachedResponse,
+    AgentRequestCacheStatus,
+    agent_cache_report_counts,
+    lookup_agent_request_cache,
+    safe_response_headers,
+    write_agent_request_archive_entry,
+    write_agent_request_cache_entry,
+)
 from ai_trading_system.config import DataSourceConfig, DataSourcesConfig
 
 OpenAIReasoningEffort = Literal["none", "minimal", "low", "medium", "high", "xhigh"]
 OpenAIHttpClient = Literal["requests", "urllib"]
+OpenAIRequestCacheStatus = AgentRequestCacheStatus
 
 LLM_CLAIM_PREREVIEW_SCHEMA_VERSION = "llm_claim_prereview_queue.v2"
 LLM_CLAIM_PREREVIEW_PROMPT_VERSION = "llm_claim_precheck_v1"
+DEFAULT_OPENAI_REQUEST_CACHE_DIR = DEFAULT_AGENT_REQUEST_CACHE_DIR
+DEFAULT_OPENAI_REQUEST_CACHE_TTL_SECONDS = DEFAULT_AGENT_REQUEST_CACHE_TTL_SECONDS
+OPENAI_AGENT_PROVIDER = "openai"
+OPENAI_AGENT_API_FAMILY = "responses"
 DEFAULT_OPENAI_RESPONSES_ENDPOINT = "https://api.openai.com/v1/responses"
 DEFAULT_OPENAI_LLM_MODEL = "gpt-5.5"
 DEFAULT_OPENAI_REASONING_EFFORT: OpenAIReasoningEffort = "high"
@@ -402,6 +418,11 @@ class LlmClaimPrecheckRecord(BaseModel):
     request_timestamp: datetime
     input_checksum_sha256: str
     output_checksum_sha256: str
+    cache_status: OpenAIRequestCacheStatus = "DISABLED"
+    cache_key: str = ""
+    cache_path: str = ""
+    cache_created_at: datetime | None = None
+    cache_expires_at: datetime | None = None
     claim_count: int
     overall_summary_zh: str
     claims: list[LlmExtractedClaim]
@@ -431,6 +452,12 @@ class LlmClaimPrecheckReport:
     generated_at: datetime
     records: tuple[LlmClaimPrecheckRecord, ...]
     issues: tuple[LlmPrecheckIssue, ...] = field(default_factory=tuple)
+    openai_request_count: int = 0
+    openai_cache_hit_count: int = 0
+    openai_cache_miss_count: int = 0
+    openai_cache_expired_count: int = 0
+    openai_cache_disabled_count: int = 0
+    openai_cache_write_count: int = 0
 
     @property
     def record_count(self) -> int:
@@ -477,6 +504,27 @@ class _OpenAIRequestResult:
     response: OpenAIJsonResponse | None
     client_request_id: str = ""
     issues: tuple[LlmPrecheckIssue, ...] = field(default_factory=tuple)
+    failed_response: OpenAIJsonResponse | None = None
+    diagnostics: Mapping[str, Any] = field(default_factory=dict)
+    audit_attempts: tuple[Mapping[str, Any], ...] = field(default_factory=tuple)
+
+
+def _to_openai_json_response(response: AgentCachedResponse) -> OpenAIJsonResponse:
+    return OpenAIJsonResponse(
+        status_code=response.status_code,
+        headers=response.headers,
+        body=response.body,
+    )
+
+
+def _to_agent_cached_response(response: OpenAIJsonResponse | None) -> AgentCachedResponse | None:
+    if response is None:
+        return None
+    return AgentCachedResponse(
+        status_code=response.status_code,
+        headers=response.headers,
+        body=response.body,
+    )
 
 
 HttpPostJson = Callable[
@@ -506,6 +554,8 @@ def run_openai_claim_precheck(
     endpoint: str = DEFAULT_OPENAI_RESPONSES_ENDPOINT,
     timeout_seconds: float = DEFAULT_OPENAI_TIMEOUT_SECONDS,
     http_client: str = DEFAULT_OPENAI_HTTP_CLIENT,
+    openai_cache_dir: Path | str | None = None,
+    openai_cache_ttl_seconds: float = DEFAULT_OPENAI_REQUEST_CACHE_TTL_SECONDS,
     generated_at: datetime | None = None,
     http_post_json: HttpPostJson | None = None,
 ) -> LlmClaimPrecheckReport:
@@ -596,21 +646,111 @@ def run_openai_claim_precheck(
             "request_payload": request_payload,
         }
     )
+    if openai_cache_dir is not None and openai_cache_ttl_seconds <= 0:
+        return LlmClaimPrecheckReport(
+            input_path=Path(input_path),
+            generated_at=timestamp,
+            records=(),
+            issues=(
+                LlmPrecheckIssue(
+                    severity=LlmPrecheckIssueSeverity.ERROR,
+                    code="openai_request_cache_ttl_invalid",
+                    precheck_id=input_packet.precheck_id,
+                    message="OpenAI 请求缓存 TTL 秒数必须为正数。",
+                ),
+            ),
+        )
+    cache_dir = Path(openai_cache_dir) if openai_cache_dir is not None else None
+    if cache_dir is not None and not permission.cache_allowed:
+        return LlmClaimPrecheckReport(
+            input_path=Path(input_path),
+            generated_at=timestamp,
+            records=(),
+            issues=(
+                LlmPrecheckIssue(
+                    severity=LlmPrecheckIssueSeverity.ERROR,
+                    code="llm_precheck_cache_permission_denied",
+                    precheck_id=input_packet.precheck_id,
+                    message=(
+                        f"{input_packet.source_id or input_packet.source_name} "
+                        "不允许本地缓存；已停止 OpenAI live 预审，避免发送后无法完整归档。"
+                    ),
+                ),
+            ),
+        )
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
         "X-Client-Request-Id": client_request_id,
     }
-    request_result = _post_openai_json_with_retries(
-        post_json=post_json,
-        http_client_name=http_client_name,
+    cache_lookup = lookup_agent_request_cache(
+        cache_dir=cache_dir,
+        provider=OPENAI_AGENT_PROVIDER,
+        api_family=OPENAI_AGENT_API_FAMILY,
         endpoint=endpoint,
-        headers=headers,
-        payload=request_payload,
-        timeout_seconds=timeout_seconds,
-        precheck_id=input_packet.precheck_id,
+        request_payload=request_payload,
         input_checksum_sha256=input_checksum,
+        now=timestamp,
+        ttl_seconds=openai_cache_ttl_seconds,
     )
+    cache_status = cache_lookup.status
+    cache_write_count = 0
+    archive_path: Path | None = None
+    if cache_lookup.response is not None:
+        request_result = _OpenAIRequestResult(
+            response=_to_openai_json_response(cache_lookup.response),
+            client_request_id=cache_lookup.client_request_id,
+        )
+    else:
+        request_result = _post_openai_json_with_retries(
+            post_json=post_json,
+            http_client_name=http_client_name,
+            endpoint=endpoint,
+            headers=headers,
+            payload=request_payload,
+            timeout_seconds=timeout_seconds,
+            precheck_id=input_packet.precheck_id,
+            input_checksum_sha256=input_checksum,
+        )
+        if cache_dir is not None:
+            try:
+                archive_path = write_agent_request_archive_entry(
+                    cache_dir=cache_dir,
+                    provider=OPENAI_AGENT_PROVIDER,
+                    api_family=OPENAI_AGENT_API_FAMILY,
+                    cache_key=cache_lookup.cache_key,
+                    endpoint=endpoint,
+                    request_headers=headers,
+                    request_payload=request_payload,
+                    response=_to_agent_cached_response(
+                        request_result.response or request_result.failed_response
+                    ),
+                    input_checksum_sha256=input_checksum,
+                    precheck_id=input_packet.precheck_id,
+                    client_name=http_client_name,
+                    timeout_seconds=timeout_seconds,
+                    client_request_id=request_result.client_request_id or client_request_id,
+                    timestamp=timestamp,
+                    diagnostics=request_result.diagnostics,
+                    audit_attempts=request_result.audit_attempts,
+                )
+            except OSError as exc:
+                issues.append(
+                    LlmPrecheckIssue(
+                        severity=LlmPrecheckIssueSeverity.ERROR,
+                        code="openai_request_cache_write_failed",
+                        precheck_id=input_packet.precheck_id,
+                        message=f"OpenAI 请求审计归档写入失败，已停止写入队列：{exc}",
+                    )
+                )
+                return LlmClaimPrecheckReport(
+                    input_path=Path(input_path),
+                    generated_at=timestamp,
+                    records=(),
+                    issues=tuple(issues),
+                    **_openai_cache_report_counts(cache_status, cache_write_count),
+                )
+
     issues.extend(request_result.issues)
     if request_result.response is None:
         return LlmClaimPrecheckReport(
@@ -618,6 +758,7 @@ def run_openai_claim_precheck(
             generated_at=timestamp,
             records=(),
             issues=tuple(issues),
+            **_openai_cache_report_counts(cache_status, cache_write_count),
         )
     response = request_result.response
 
@@ -638,7 +779,58 @@ def run_openai_claim_precheck(
                     message=_error_message(exc),
                 ),
             ),
+            **_openai_cache_report_counts(cache_status, cache_write_count),
         )
+
+    cache_created_at = cache_lookup.cache_created_at
+    cache_expires_at = cache_lookup.cache_expires_at
+    cache_path = cache_lookup.cache_path
+    if cache_dir is not None and cache_lookup.response is None:
+        try:
+            cache_path = write_agent_request_cache_entry(
+                cache_dir=cache_dir,
+                provider=OPENAI_AGENT_PROVIDER,
+                api_family=OPENAI_AGENT_API_FAMILY,
+                cache_key=cache_lookup.cache_key,
+                endpoint=endpoint,
+                request_headers=headers,
+                request_payload=request_payload,
+                response=AgentCachedResponse(
+                    status_code=response.status_code,
+                    headers=response.headers,
+                    body=response.body,
+                ),
+                input_checksum_sha256=input_checksum,
+                output_checksum_sha256=output_checksum,
+                precheck_id=input_packet.precheck_id,
+                client_name=http_client_name,
+                timeout_seconds=timeout_seconds,
+                client_request_id=request_result.client_request_id or client_request_id,
+                timestamp=timestamp,
+                expires_at=timestamp + timedelta(seconds=openai_cache_ttl_seconds),
+                archive_path=archive_path,
+                diagnostics=request_result.diagnostics,
+                audit_attempts=request_result.audit_attempts,
+            )
+            cache_created_at = timestamp
+            cache_expires_at = timestamp + timedelta(seconds=openai_cache_ttl_seconds)
+            cache_write_count = 1
+        except OSError as exc:
+            issues.append(
+                LlmPrecheckIssue(
+                    severity=LlmPrecheckIssueSeverity.ERROR,
+                    code="openai_request_cache_write_failed",
+                    precheck_id=input_packet.precheck_id,
+                    message=f"OpenAI 成功响应缓存写入失败，已停止写入队列：{exc}",
+                )
+            )
+            return LlmClaimPrecheckReport(
+                input_path=Path(input_path),
+                generated_at=timestamp,
+                records=(),
+                issues=tuple(issues),
+                **_openai_cache_report_counts(cache_status, cache_write_count),
+            )
 
     request_id = _response_header(response.headers, "x-request-id") or str(
         response.body.get("id", "")
@@ -658,9 +850,14 @@ def run_openai_claim_precheck(
         request_id=request_id or request_result.client_request_id or client_request_id,
         response_id=response_id,
         client_request_id=request_result.client_request_id or client_request_id,
-        request_timestamp=timestamp,
+        request_timestamp=cache_lookup.request_timestamp or timestamp,
         input_checksum_sha256=input_checksum,
         output_checksum_sha256=output_checksum,
+        cache_status=cache_status,
+        cache_key=cache_lookup.cache_key,
+        cache_path="" if cache_path is None else str(cache_path),
+        cache_created_at=cache_created_at,
+        cache_expires_at=cache_expires_at,
         claim_count=len(parsed.claims),
         overall_summary_zh=parsed.overall_summary_zh,
         claims=parsed.claims,
@@ -672,6 +869,7 @@ def run_openai_claim_precheck(
         generated_at=timestamp,
         records=(record,),
         issues=tuple(issues),
+        **_openai_cache_report_counts(cache_status, cache_write_count),
     )
 
 
@@ -718,6 +916,11 @@ def render_llm_claim_precheck_report(report: LlmClaimPrecheckReport) -> str:
         f"- 生成时间：{report.generated_at.isoformat()}",
         f"- 预审记录数：{report.record_count}",
         f"- 待复核 claim：{report.pending_review_count}",
+        f"- OpenAI 请求缓存：HIT={report.openai_cache_hit_count} / "
+        f"MISS={report.openai_cache_miss_count} / "
+        f"EXPIRED={report.openai_cache_expired_count} / "
+        f"DISABLED={report.openai_cache_disabled_count}",
+        f"- OpenAI 缓存写入：{report.openai_cache_write_count}",
         f"- 错误数：{report.error_count}",
         f"- 警告数：{report.warning_count}",
         "",
@@ -727,9 +930,9 @@ def render_llm_claim_precheck_report(report: LlmClaimPrecheckReport) -> str:
     if report.records:
         lines.extend(
             [
-                "| Precheck | Provider | Source | Model | Reasoning | Request | Content | "
+                "| Precheck | Provider | Source | Model | Reasoning | Request | Cache | Content | "
                 "Claims | Policy |",
-                "|---|---|---|---|---|---|---|---:|---|",
+                "|---|---|---|---|---|---|---|---|---:|---|",
             ]
         )
         for record in report.records:
@@ -742,6 +945,7 @@ def render_llm_claim_precheck_report(report: LlmClaimPrecheckReport) -> str:
                 f"{_escape_markdown_table(record.model)} | "
                 f"{record.reasoning_effort} | "
                 f"{_escape_markdown_table(record.request_id)} | "
+                f"{record.cache_status} | "
                 f"{permission.content_sent_level} | "
                 f"{record.claim_count} | "
                 "llm_extracted / pending_review；不得评分/不得触发仓位闸门 |"
@@ -793,8 +997,13 @@ def render_llm_claim_precheck_report(report: LlmClaimPrecheckReport) -> str:
             "请求默认 `store=false`，HTTP 客户端默认 `requests`。",
             "- 单个 OpenAI 请求遇到超时、429 或 5xx 等瞬时失败时最多重试 2 次；"
             "第 3 次仍失败则 fail closed。",
+            "- 启用本地 OpenAI 请求缓存时，只按完全相同 request payload checksum 命中；"
+            "TTL 内 cache HIT 不重新调用 OpenAI，TTL 过期后允许重新发送。",
+            "- 实际发送的 OpenAI 请求会写入本地审计归档，包含脱敏 request、response、"
+            "attempt diagnostics、cache key 和 checksum；Authorization header 不写入。",
             "- API key 只从环境变量读取，不写入报告、队列或错误信息。",
-            "- provider 授权未知或 `external_llm_allowed=false` 时 fail closed，不发起 API 请求。",
+            "- provider 授权未知、`external_llm_allowed=false` 或启用缓存时 "
+            "`cache_allowed=false`，均 fail closed，不发起 API 请求。",
             "- 输出只作为 `llm_extracted` / `pending_review` 证据分类结果，"
             "不进入自动评分、thesis 状态迁移、仓位闸门或交易建议。",
             "- 本地队列保存 source permission、request id、model、reasoning effort、"
@@ -828,6 +1037,12 @@ def write_llm_claim_prereview_queue(
         "source_input_path": str(report.input_path),
         "record_count": report.record_count,
         "claim_count": report.claim_count,
+        "openai_request_count": report.openai_request_count,
+        "openai_cache_hit_count": report.openai_cache_hit_count,
+        "openai_cache_miss_count": report.openai_cache_miss_count,
+        "openai_cache_expired_count": report.openai_cache_expired_count,
+        "openai_cache_disabled_count": report.openai_cache_disabled_count,
+        "openai_cache_write_count": report.openai_cache_write_count,
         "records": [record.model_dump(mode="json") for record in report.records],
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -1059,6 +1274,7 @@ def _post_openai_json_with_retries(
     payload_bytes = len(json.dumps(payload, ensure_ascii=False).encode("utf-8"))
     base_client_request_id = str(headers.get("X-Client-Request-Id", ""))
     attempt_diagnostics: list[dict[str, Any]] = []
+    audit_attempts: list[dict[str, Any]] = []
     for attempt in range(1, max_attempts + 1):
         attempt_client_request_id = (
             base_client_request_id
@@ -1093,12 +1309,19 @@ def _post_openai_json_with_retries(
                 }
             )
             attempt_diagnostics.append(diagnostic)
+            audit_attempts.append(dict(diagnostic))
             failure = f"{type(exc).__name__}: {exc}"
             if attempt < max_attempts:
                 continue
+            diagnostics = _openai_transport_diagnostics(
+                attempts=attempt_diagnostics,
+                final_attempt=diagnostic,
+            )
             return _OpenAIRequestResult(
                 response=None,
                 client_request_id=attempt_client_request_id,
+                diagnostics=diagnostics,
+                audit_attempts=tuple(audit_attempts),
                 issues=(
                     LlmPrecheckIssue(
                         severity=LlmPrecheckIssueSeverity.ERROR,
@@ -1108,10 +1331,7 @@ def _post_openai_json_with_retries(
                             f"OpenAI Responses API 请求在 {max_attempts} 次尝试后仍失败，"
                             f"已停止写入队列：{failure}"
                         ),
-                        diagnostics=_openai_transport_diagnostics(
-                            attempts=attempt_diagnostics,
-                            final_attempt=diagnostic,
-                        ),
+                        diagnostics=diagnostics,
                     ),
                 ),
             )
@@ -1128,9 +1348,20 @@ def _post_openai_json_with_retries(
             }
         )
         attempt_diagnostics.append(diagnostic)
+        audit_attempts.append(
+            {
+                **diagnostic,
+                "response_headers": safe_response_headers(response.headers),
+                "response_body": response.body,
+            }
+        )
         if _is_retryable_http_status(response.status_code) and attempt < max_attempts:
             continue
         if response.status_code >= 400:
+            diagnostics = _openai_transport_diagnostics(
+                attempts=attempt_diagnostics,
+                final_attempt=diagnostic,
+            )
             retry_phrase = (
                 f"已重试 {max_retries} 次后仍失败，"
                 if attempt > 1
@@ -1139,6 +1370,9 @@ def _post_openai_json_with_retries(
             return _OpenAIRequestResult(
                 response=None,
                 client_request_id=attempt_client_request_id,
+                failed_response=response,
+                diagnostics=diagnostics,
+                audit_attempts=tuple(audit_attempts),
                 issues=(
                     LlmPrecheckIssue(
                         severity=LlmPrecheckIssueSeverity.ERROR,
@@ -1148,23 +1382,28 @@ def _post_openai_json_with_retries(
                             f"OpenAI Responses API 返回 HTTP {response.status_code}，"
                             f"{retry_phrase}已停止写入队列。"
                         ),
-                        diagnostics=_openai_transport_diagnostics(
-                            attempts=attempt_diagnostics,
-                            final_attempt=diagnostic,
-                        ),
+                        diagnostics=diagnostics,
                     ),
                 ),
             )
 
+        diagnostics = _openai_transport_diagnostics(
+            attempts=attempt_diagnostics,
+            final_attempt=diagnostic,
+        )
         if attempt == 1:
             return _OpenAIRequestResult(
                 response=response,
                 client_request_id=attempt_client_request_id,
+                diagnostics=diagnostics,
+                audit_attempts=tuple(audit_attempts),
             )
 
         return _OpenAIRequestResult(
             response=response,
             client_request_id=attempt_client_request_id,
+            diagnostics=diagnostics,
+            audit_attempts=tuple(audit_attempts),
             issues=(
                 LlmPrecheckIssue(
                     severity=LlmPrecheckIssueSeverity.WARNING,
@@ -1174,10 +1413,7 @@ def _post_openai_json_with_retries(
                         f"OpenAI Responses API 在第 {attempt} 次尝试成功；此前失败 "
                         f"{attempt - 1} 次。"
                     ),
-                    diagnostics=_openai_transport_diagnostics(
-                        attempts=attempt_diagnostics,
-                        final_attempt=diagnostic,
-                    ),
+                    diagnostics=diagnostics,
                 ),
             ),
         )
@@ -1195,6 +1431,21 @@ def _openai_transport_diagnostics(
         "attempt_count": len(attempts),
         "final_attempt": dict(final_attempt),
         "attempts": [dict(attempt) for attempt in attempts],
+    }
+
+
+def _openai_cache_report_counts(
+    cache_status: OpenAIRequestCacheStatus,
+    cache_write_count: int,
+) -> dict[str, int]:
+    agent_counts = agent_cache_report_counts(cache_status, cache_write_count)
+    return {
+        "openai_request_count": agent_counts["agent_request_count"],
+        "openai_cache_hit_count": agent_counts["agent_cache_hit_count"],
+        "openai_cache_miss_count": agent_counts["agent_cache_miss_count"],
+        "openai_cache_expired_count": agent_counts["agent_cache_expired_count"],
+        "openai_cache_disabled_count": agent_counts["agent_cache_disabled_count"],
+        "openai_cache_write_count": agent_counts["agent_cache_write_count"],
     }
 
 

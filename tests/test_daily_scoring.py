@@ -304,6 +304,27 @@ def test_build_daily_score_report_uses_current_risk_event_review_attestation() -
     assert risk_gate.max_position == 1.0
 
 
+def test_build_daily_score_report_labels_llm_formal_assessment_attestation() -> None:
+    report = build_daily_score_report(
+        feature_set=_feature_set(),
+        data_quality_report=_quality_report(),
+        rules=load_scoring_rules(),
+        total_risk_asset_min=0.60,
+        total_risk_asset_max=0.80,
+        risk_event_occurrence_review_report=(
+            _empty_risk_event_occurrence_review_report_with_llm_formal_attestation()
+        ),
+    )
+
+    policy = _component(report, "policy_geopolitics")
+
+    assert policy.source_type == "llm_formal_assessment"
+    assert policy.coverage == 1.0
+    assert policy.score == 100.0
+    assert policy.confidence == 0.55
+    assert "LLM formal assessment" in policy.reason
+
+
 def test_risk_budget_gate_caps_high_vix_market_stress() -> None:
     portfolio = load_portfolio()
     report = build_daily_score_report(
@@ -651,6 +672,10 @@ def test_risk_event_openai_daily_section_includes_transport_client() -> None:
             record_count=7,
             high_level_candidate_count=6,
             active_candidate_count=1,
+            openai_cache_hit_count=2,
+            openai_cache_miss_count=18,
+            openai_cache_expired_count=0,
+            openai_cache_disabled_count=0,
         ),
         official_policy_report_output=Path("outputs/reports/official_policy_sources.md"),
         risk_event_openai_precheck_report_output=Path(
@@ -661,10 +686,14 @@ def test_risk_event_openai_daily_section_includes_transport_client() -> None:
         reasoning_effort="high",
         timeout_seconds=120.0,
         http_client="requests",
+        cache_dir=Path("data/processed/openai_request_cache"),
+        cache_ttl_hours=24.0,
         max_candidates=20,
     )
 
     assert "- HTTP client：requests" in section
+    assert "- OpenAI 请求缓存 TTL：24 小时" in section
+    assert "HIT=2 / MISS=18" in section
     assert "- 待人工复核队列记录数：7" in section
     assert "backlog-only" in section
     assert "`execution_policy.manual_review_gate_ids`" in section
@@ -792,6 +821,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     sec_feature_report_path = tmp_path / "sec_fundamental_features.md"
     sec_validation_report_path = tmp_path / "sec_fundamentals_validation.md"
     valuation_path = tmp_path / "valuation_snapshots"
+    risk_event_occurrences_path = tmp_path / "risk_event_occurrences"
     decision_snapshot_path = tmp_path / "decision_snapshot.json"
     prediction_ledger_path = tmp_path / "prediction_ledger.csv"
     belief_state_path = tmp_path / "belief_state.json"
@@ -848,6 +878,8 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
             str(sec_validation_report_path),
             "--valuation-path",
             str(valuation_path),
+            "--risk-event-occurrences-path",
+            str(risk_event_occurrences_path),
             "--decision-snapshot-path",
             str(decision_snapshot_path),
             "--prediction-ledger-path",
@@ -1043,6 +1075,53 @@ def _empty_risk_event_occurrence_review_report_with_attestation() -> (
                     ],
                 ),
                 path=Path("risk_event_occurrences/review_attestation.yaml"),
+            ),
+        ),
+    )
+    return build_risk_event_occurrence_review_report(validation_report)
+
+
+def _empty_risk_event_occurrence_review_report_with_llm_formal_attestation() -> (
+    RiskEventOccurrenceReviewReport
+):
+    as_of = date(2026, 4, 30)
+    validation_report = RiskEventOccurrenceValidationReport(
+        as_of=as_of,
+        input_path=Path("risk_event_occurrences"),
+        config=load_risk_events(),
+        occurrences=(),
+        review_attestations=(
+            LoadedRiskEventReviewAttestation(
+                attestation=RiskEventReviewAttestation(
+                    attestation_id="llm_formal_risk_event_assessment_2026_04_30",
+                    review_date=as_of,
+                    coverage_start=as_of,
+                    coverage_end=as_of,
+                    reviewer="llm_formal_assessment",
+                    reviewed_at=as_of,
+                    review_decision="confirmed_no_unrecorded_material_events",
+                    rationale="LLM formal assessment 未发现队列内 active 风险事件。",
+                    next_review_due=date(2026, 5, 1),
+                    review_scope=[
+                        "llm_triaged_high_priority_official_candidates",
+                        "policy_event_occurrences",
+                        "geopolitical_event_occurrences",
+                    ],
+                    checked_sources=[
+                        RiskEventReviewAttestationSource(
+                            source_name="OpenAI risk_event_prereview_queue",
+                            source_type="llm_extracted",
+                            captured_at=as_of,
+                        ),
+                        RiskEventReviewAttestationSource(
+                            source_name="Congress.gov API",
+                            source_type="primary_source",
+                            source_url="https://api.congress.gov/v3/bill",
+                            captured_at=as_of,
+                        ),
+                    ],
+                ),
+                path=Path("risk_event_occurrences/llm_formal_attestation.yaml"),
             ),
         ),
     )

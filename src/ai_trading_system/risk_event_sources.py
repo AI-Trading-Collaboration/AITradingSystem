@@ -62,7 +62,13 @@ OPTIONAL_COLUMNS = frozenset(
 ALLOWED_COLUMNS = REQUIRED_COLUMNS | OPTIONAL_COLUMNS
 ALLOWED_STATUSES = frozenset({"active", "watch", "resolved", "dismissed"})
 ALLOWED_SOURCE_TYPES = frozenset(
-    {"primary_source", "paid_vendor", "manual_input", "public_convenience"}
+    {
+        "primary_source",
+        "paid_vendor",
+        "manual_input",
+        "public_convenience",
+        "llm_extracted",
+    }
 )
 
 

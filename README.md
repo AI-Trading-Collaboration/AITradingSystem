@@ -17,7 +17,7 @@
 5. 与 QQQ、SMH/SOXX、SPY 的回测对比。
 6. 每日 Markdown 报告。
 
-SEC 基本面已经接入基础硬数据评分；估值快照和政策/地缘风险发生记录已经接入可审计的手工输入评分，并支持从结构化 CSV 导入来减少手工 YAML 维护。TSMC IR 季度基本面已支持从官方 Management Report 文本或 PDF 可抽取文本层导入，并可显式合并到统一 SEC-style 指标 CSV；LLM claim 预审已支持 OpenAI Responses API 结构化输出和待复核队列，默认使用 `gpt-5.5`、`reasoning.effort=high` 与 `requests` HTTP 客户端，单请求失败最多重试 2 次，并记录审计字段，但只能生成 `llm_extracted` / `pending_review` 线索，不能直接触发交易动作。
+SEC 基本面已经接入基础硬数据评分；估值快照和政策/地缘风险发生记录已经接入可审计的手工输入评分，并支持从结构化 CSV 导入来减少手工 YAML 维护。TSMC IR 季度基本面已支持从官方 Management Report 文本或 PDF 可抽取文本层导入，并可显式合并到统一 SEC-style 指标 CSV；LLM claim 预审已支持 OpenAI Responses API 结构化输出和待复核队列，默认使用 `gpt-5.5`、`reasoning.effort=high` 与 `requests` HTTP 客户端，单请求失败最多重试 2 次，并记录审计字段；live OpenAI 请求默认写入本地短 TTL request/response 缓存，完全相同 payload 在 TTL 内复用，但只能生成 `llm_extracted` / `pending_review` 线索，不能直接触发交易动作。
 
 ## 工程结构
 
@@ -174,7 +174,7 @@ aits score-daily --as-of 2026-05-01
 aits score-daily --as-of 2026-05-05 --skip-risk-event-openai-precheck
 ```
 
-该流程会先抓取 Federal Register/BIS/OFAC/USTR/Congress.gov/GovInfo/Trade.gov CSL 等官方政策/地缘来源，再用 `OPENAI_API_KEY` 调用 OpenAI Responses API 做 `metadata_only` 预审；为控制成本和延迟，默认最多处理 20 条官方候选，可用 `--risk-event-openai-precheck-max-candidates` 调整；默认模型为 `gpt-5.5`、`reasoning.effort=high`、请求读超时为 120 秒，默认 HTTP 客户端为 `requests`，可用 `--openai-model`、`--openai-reasoning-effort`、`--openai-timeout-seconds` 和 `--openai-http-client urllib` 调整或对照；单个 OpenAI 请求遇到超时、429 或 5xx 等瞬时失败时最多重试 2 次，第 3 次仍失败则整批 fail closed。失败报告只输出 sanitized transport diagnostics，包括 attempt、HTTP client、client request id、endpoint host、payload byte size、input checksum、HTTP status、OpenAI x-request-id 或异常类型，不输出 API key、Authorization header 或未授权全文。输出只写入 `data/processed/risk_event_prereview_queue.json` 和 `outputs/reports/risk_event_prereview_openai_YYYY-MM-DD.md`，并保持 `llm_extracted / pending_review`；无关或默认无风险结果不增加人工队列。无人复核时这些候选保留为 backlog-only 线索，不进入 `execution_policy.manual_review_gate_ids`，不会单独把执行动作改成 `wait_manual_review`。它不会自动写入 `risk_event_occurrence`、不会生成复核声明、不会直接评分或触发仓位闸门。缺少 OpenAI key、官方来源抓取失败、provider LLM 权限失败或 OpenAI 请求最终失败时，默认日报前预审会停止日报评分。
+该流程会先抓取 Federal Register/BIS/OFAC/USTR/Congress.gov/GovInfo/Trade.gov CSL 等官方政策/地缘来源，再用 `OPENAI_API_KEY` 调用 OpenAI Responses API 做 `metadata_only` 预审；为控制成本和延迟，默认最多处理 20 条官方候选，可用 `--risk-event-openai-precheck-max-candidates` 调整；默认模型为 `gpt-5.5`、`reasoning.effort=high`、请求读超时为 120 秒，默认 HTTP 客户端为 `requests`，默认 OpenAI 请求缓存目录为 `data/processed/openai_request_cache`、TTL 为 24 小时，可用 `--openai-cache-ttl-hours 12` 改成半天窗口，也可用 `--openai-model`、`--openai-reasoning-effort`、`--openai-timeout-seconds` 和 `--openai-http-client urllib` 调整或对照；完全相同 request payload 在 TTL 内 cache HIT 不重新调用 OpenAI，MISS/EXPIRED 才重新发送。单个 OpenAI 请求遇到超时、429 或 5xx 等瞬时失败时最多重试 2 次，第 3 次仍失败则整批 fail closed。失败报告只输出 sanitized transport diagnostics，包括 attempt、HTTP client、client request id、endpoint host、payload byte size、input checksum、HTTP status、OpenAI x-request-id 或异常类型，不输出 API key、Authorization header 或未授权全文；本地请求缓存会记录脱敏 request、response body、attempt diagnostics、cache key 和 checksum。输出只写入 `data/processed/risk_event_prereview_queue.json` 和 `outputs/reports/risk_event_prereview_openai_YYYY-MM-DD.md`，并保持 `llm_extracted / pending_review`；无关或默认无风险结果不增加人工队列。无人复核时这些候选保留为 backlog-only 线索，不进入 `execution_policy.manual_review_gate_ids`，不会单独把执行动作改成 `wait_manual_review`。它不会自动写入 `risk_event_occurrence`、不会生成复核声明、不会直接评分或触发仓位闸门。缺少 OpenAI key、官方来源抓取失败、provider LLM 权限失败、provider `cache_allowed=false` 或 OpenAI 请求最终失败时，默认日报前预审会停止日报评分。
 
 运行历史回测：
 
@@ -249,6 +249,9 @@ aits thesis review --as-of 2026-05-02
 ```powershell
 aits risk-events list
 aits risk-events validate --as-of 2026-05-02
+aits risk-events triage-official-candidates --as-of 2026-05-02
+aits risk-events precheck-triaged-official-candidates --as-of 2026-05-02
+aits risk-events apply-llm-formal-assessment --as-of 2026-05-02
 aits risk-events precheck-openai --input-path docs/examples/risk_event_prereview/openai_live_precheck_template.yaml --as-of 2026-05-02
 aits risk-events import-prereview-csv --input-path docs/examples/risk_event_prereview/openai_prereview_template.csv --as-of 2026-05-02
 aits risk-events import-occurrences-csv --input-path data/external/risk_event_imports/reviewed_events.csv --as-of 2026-05-02
@@ -256,7 +259,7 @@ aits risk-events list-occurrences
 aits risk-events validate-occurrences --as-of 2026-05-02
 ```
 
-风险事件配置在 `config/risk_events.yaml`，只定义需要监控的 L1/L2/L3 规则、AI 仓位折扣乘数、人工复核要求、影响产业链节点、相关标的、建议动作、升级条件和解除条件。OpenAI 只能通过 `precheck-openai`、`import-prereview-csv` 或 `score-daily --risk-event-openai-precheck` 整理 `llm_extracted / pending_review` 候选；provider 授权未知时 fail closed，输出不得直接评分、触发仓位闸门或写入正式发生记录。实际发生记录默认读取 `data/external/risk_event_occurrences/*.yaml`，该目录不提交；可参考 `docs/examples/risk_event_occurrences/export_control_active_template.yaml` 复制模板。`import-occurrences-csv` 只接受人工复核后的结构化 CSV，同一 `occurrence_id` 的多行用于合并证据来源，关键字段冲突会停止导入。政策/地缘评分只读取已通过校验的发生记录，`public_convenience` 证据只能作为辅助，不能单独进入自动评分。
+风险事件配置在 `config/risk_events.yaml`，只定义需要监控的 L1/L2/L3 规则、AI 仓位折扣乘数、人工复核要求、影响产业链节点、相关标的、建议动作、升级条件和解除条件。`triage-official-candidates` 读取官方来源候选 CSV，按 AI 模块直接相关性输出 `must_review`、`review_next`、`sample_review`、`auto_low_relevance` 和 `duplicate_or_noise`，用于降低无明显 AI/半导体/先进计算/出口管制/核心 ticker 关系候选的人工复核优先级；triage 输出保持 `production_effect=none`，不代表已确认无风险。`precheck-triaged-official-candidates` 默认只把 `must_review/review_next` 高优先级官方候选送入 OpenAI metadata-only 预审，输出 `status_suggestion` 和 `level_suggestion`。按当前 owner 决策，`apply-llm-formal-assessment` 可把 LLM 预审队列写成正式 occurrence 和 LLM formal attestation；该模式不是人工复核，日报来源类型显示为 `llm_formal_assessment`，LLM formal evidence 默认最高 B 级，可进入普通评分但不能单独触发 position gate。OpenAI 只能通过 `precheck-triaged-official-candidates`、`apply-llm-formal-assessment`、`precheck-openai`、`import-prereview-csv` 或 `score-daily --risk-event-openai-precheck` 参与风险事件链路；provider 授权未知或不允许本地缓存归档时 fail closed。实际发生记录默认读取 `data/external/risk_event_occurrences/*.yaml`，该目录不提交；可参考 `docs/examples/risk_event_occurrences/export_control_active_template.yaml` 复制模板。`import-occurrences-csv` 只接受人工复核后的结构化 CSV，同一 `occurrence_id` 的多行用于合并证据来源，关键字段冲突会停止导入。政策/地缘评分只读取已通过校验的发生记录，`public_convenience` 证据只能作为辅助，不能单独进入自动评分。
 
 校验和复核估值、预期与拥挤度快照：
 

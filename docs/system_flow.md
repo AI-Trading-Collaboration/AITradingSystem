@@ -118,6 +118,7 @@ flowchart TD
         PITR["outputs/reports/pit_snapshots_validation_YYYY-MM-DD.md<br/>PIT 快照归档质量报告"]
         OPRAW["data/raw/official_policy_sources/YYYY-MM-DD/*<br/>官方来源 raw payload、row count 和 sha256"]
         OPCAND["data/processed/official_policy_source_candidates_YYYY-MM-DD.csv<br/>pending_review 人工复核候选；production_effect=none"]
+        OPTRI["data/processed/official_policy_candidate_triage_YYYY-MM-DD.csv<br/>AI 模块相关性 triage；降低无明显联系候选优先级；production_effect=none"]
     end
 
     subgraph Gate["数据质量门禁"]
@@ -238,15 +239,22 @@ flowchart TD
         ROI["aits risk-events import-occurrences-csv"]
         ROIR["outputs/reports/risk_event_occurrence_import_YYYY-MM-DD.md"]
         RPI["aits risk-events import-prereview-csv<br/>OpenAI 输出只进入待人工复核队列"]
-        RPO["aits risk-events precheck-openai<br/>Responses API live 风险事件整理<br/>默认 gpt-5.5 / high / requests<br/>单请求失败最多重试 2 次<br/>provider 权限 fail closed"]
+        RPO["aits risk-events precheck-openai<br/>Responses API live 风险事件整理<br/>默认 gpt-5.5 / high / requests<br/>短 TTL 精确请求缓存<br/>单请求失败最多重试 2 次<br/>provider 权限 fail closed"]
         RPQ["data/processed/risk_event_prereview_queue.json<br/>schema v2：llm_extracted / pending_review 预审队列<br/>记录 model 与 reasoning effort"]
         RPIR["outputs/reports/risk_event_prereview_import_YYYY-MM-DD.md"]
         RPOR["outputs/reports/risk_event_prereview_openai_YYYY-MM-DD.md<br/>request id、response id、checksum 和权限边界"]
         OPF["aits risk-events fetch-official-sources<br/>抓取低成本官方来源；缺 API key 显式跳过"]
         OPFR["outputs/reports/official_policy_sources_YYYY-MM-DD.md<br/>官方来源抓取报告：row count/checksum/候选/跳过来源"]
-        LLMP["aits llm precheck-claims<br/>Responses API + Structured Outputs<br/>默认 gpt-5.5 / reasoning.effort=high<br/>单请求失败最多重试 2 次<br/>provider 权限 fail closed"]
+        OPT["aits risk-events triage-official-candidates<br/>按 AI 模块相关性分类官方候选"]
+        OPTR["outputs/reports/risk_event_candidate_triage_YYYY-MM-DD.md<br/>must_review / review_next / sample_review / auto_low_relevance"]
+        OPLLM["aits risk-events precheck-triaged-official-candidates<br/>只对高优先级官方候选做 OpenAI 风险等级预审<br/>复用短 TTL 精确请求缓存"]
+        OPLLMR["outputs/reports/risk_event_prereview_triaged_openai_YYYY-MM-DD.md<br/>LLM level_suggestion / status_suggestion / 人工复核问题 / cache HIT-MISS"]
+        OPLLMF["aits risk-events apply-llm-formal-assessment<br/>将 LLM 预审队列写为正式评估 occurrence / attestation"]
+        OPLLMFR["outputs/reports/risk_event_llm_formal_assessment_YYYY-MM-DD.md<br/>LLM formal assessment 导入报告"]
+        LLMP["aits llm precheck-claims<br/>Responses API + Structured Outputs<br/>默认 gpt-5.5 / reasoning.effort=high<br/>短 TTL 精确请求缓存<br/>单请求失败最多重试 2 次<br/>provider 权限 fail closed"]
         LLMQ["data/processed/llm_claim_prereview_queue.json<br/>schema v2：claim-centric llm_extracted / pending_review 队列<br/>记录 model 与 reasoning effort"]
-        LLMR["outputs/reports/llm_claim_prereview_YYYY-MM-DD.md<br/>request id、model、reasoning effort、prompt version、checksum 和权限边界"]
+        LLMR["outputs/reports/llm_claim_prereview_YYYY-MM-DD.md<br/>request id、model、reasoning effort、prompt version、checksum、cache 状态和权限边界"]
+        OAC["data/processed/openai_request_cache/*.json<br/>archive/openai/responses/YYYY-MM-DD/*.json<br/>Authorization 脱敏；cache_allowed gate"]
         RAT["aits risk-events record-review-attestation<br/>人工确认无未记录重大风险事件"]
         ROV["aits risk-events validate-occurrences"]
         ROR["outputs/reports/risk_event_occurrences_YYYY-MM-DD.md"]
@@ -605,6 +613,8 @@ flowchart TD
     OPCAND -->|日报前自动 metadata_only 预审| RPO
     DS --> RPO
     RE --> RPO
+    OAC -->|TTL HIT| RPO
+    RPO -->|MISS/EXPIRED 实际请求归档| OAC
     RPO --> RPQ
     RPO --> RPOR
     RPQ -->|pending_review；不直接评分| SD
@@ -615,11 +625,25 @@ flowchart TD
     OPF --> OPRAW
     OPF --> OPCAND
     OPF --> OPFR
+    OPCAND --> OPT
+    OPT --> OPTRI
+    OPT --> OPTR
+    OPCAND --> OPLLM
+    OPTRI --> OPLLM
+    OAC -->|TTL HIT| OPLLM
+    OPLLM -->|MISS/EXPIRED 实际请求归档| OAC
+    OPLLM --> RPQ
+    OPLLM --> OPLLMR
+    RPQ --> OPLLMF
+    OPLLMF --> OPLLMFR
+    OPLLMF --> ROV
     OPF --> DM
     OPCAND -->|人工复核后才可整理为 occurrence CSV| REXCSV
     OPCAND -->|可作为每日复核 checked_sources 依据| RAT
     LLMI --> LLMP
     DS --> LLMP
+    OAC -->|TTL HIT| LLMP
+    LLMP -->|MISS/EXPIRED 实际请求归档| OAC
     LLMP --> LLMQ
     LLMP --> LLMR
     LLMQ -->|人工确认后才可整理为 evidence CSV| MECSV
@@ -792,9 +816,9 @@ flowchart TD
     R --> OPX{"是否启用<br/>--risk-event-openai-precheck"}
     OPX -->|是| OPF2["抓取官方政策/地缘来源<br/>fetch_official_policy_sources<br/>写 raw payload、manifest、候选 CSV 和官方来源报告"]
     OPF2 -->|FAIL| OPFSTOP["停止<br/>输出 official_policy_sources 报告和错误数量"]
-    OPF2 -->|PASS 或 PASS_WITH_WARNINGS| RPO2["OpenAI 风险事件 metadata_only 自动预审<br/>store=false；默认 requests；可选 urllib 对照；单请求失败最多重试 2 次；provider 权限 fail closed；irrelevant 不进人工队列"]
+    OPF2 -->|PASS 或 PASS_WITH_WARNINGS| RPO2["OpenAI 风险事件 metadata_only 自动预审<br/>store=false；默认 requests；短 TTL 精确请求缓存；可选 urllib 对照；单请求失败最多重试 2 次；provider 权限和 cache_allowed fail closed；irrelevant 不进人工队列"]
     RPO2 -->|FAIL| RPOSTOP["停止<br/>输出 risk_event_prereview_openai 报告"]
-    RPO2 -->|PASS 或 PASS_WITH_WARNINGS| RPQ2["写入 risk_event_prereview_queue.json<br/>默认最多 20 条官方候选；OpenAI 默认 gpt-5.5 / high / 120 秒 / requests；请求最终失败则整批停止；llm_extracted / pending_review；不写 occurrence 或复核声明"]
+    RPO2 -->|PASS 或 PASS_WITH_WARNINGS| RPQ2["写入 risk_event_prereview_queue.json<br/>默认最多 20 条官方候选；OpenAI 默认 gpt-5.5 / high / 120 秒 / requests / 24 小时 cache TTL；请求最终失败则整批停止；llm_extracted / pending_review；不写 occurrence 或复核声明"]
     OPX -->|否| G1["风险事件发生记录和复核声明校验<br/>validate_risk_event_occurrence_store<br/>watch 不评分；B 只普通评分；C/D/X 只复核；有效复核声明只补足空记录证明"]
     RPQ2 --> G1
     F --> S1["校验 SEC 指标 CSV<br/>validate_sec_fundamental_metrics_csv"]
@@ -1130,7 +1154,7 @@ flowchart TD
 |特征|`aits build-features`|先执行数据质量门禁，再生成可解释市场特征，并输出 PIT 特征可见时间报告；缺少 availability rule 的 source 会 fail closed，特征摘要引用该报告|已实现|
 |特征缓存|`data/processed/features_daily.csv`|保存 tidy 格式特征|已实现|
 |组合与风险预算配置|`config/portfolio.yaml`|定义静态总风险资产预算、`macro_risk_asset_budget` 下调阈值、AI 总资产上限、真实组合集中度提示阈值和 `risk_budget` gate 参数；宏观预算层用 VIX、DGS10 和 `DTWEXBGS` 广义美元指数下调总风险资产预算，`risk_budget` gate 继续约束风险资产内 AI 仓位上限|已实现基础版|
-|评分|`aits score-daily`|先执行市场数据质量门禁和 PIT feature availability 校验，再校验 `execution_policy`、SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照、风险事件发生记录和当前有效复核声明，读取真实持仓 CSV 生成只读组合暴露；默认会在风险事件发生记录校验前抓取官方政策/地缘来源并调用 OpenAI 风险事件 `metadata_only` 预审，可用 `--skip-risk-event-openai-precheck` 跳过；默认最多处理 20 条官方候选，OpenAI 默认 `gpt-5.5` / `reasoning.effort=high` / 120 秒读超时 / `requests` HTTP client，可用 `--openai-http-client urllib` 做本机传输对照，单个 OpenAI 请求失败时重试 2 次，仍失败则整批 fail closed，输出仅写 `llm_extracted / pending_review` 队列，不写 occurrence、复核声明、评分、仓位闸门或 thesis 状态；无人复核时 OpenAI 候选保留为 backlog-only 线索，不进入 `execution_policy.manual_review_gate_ids`，不会单独把执行动作改成 `wait_manual_review`；随后基于已通过校验/复核的市场特征生成只读关注股票趋势分析，并基于市场特征、SEC/TSM 基本面、估值、风险事件和 thesis 生成只读产业链节点热度与健康度，再用 `macro_risk_asset_budget` 下调总风险资产预算，并通过 `position_gate` 把评分仓位、判断置信度、组合限制、风险预算、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限，输出 AI 产业链评分、判断置信度、最终仓位区间、advisory 执行建议、日报、decision snapshot、prediction ledger 行和只读 `belief_state`|已实现|
+|评分|`aits score-daily`|先执行市场数据质量门禁和 PIT feature availability 校验，再校验 `execution_policy`、SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照、风险事件发生记录和当前有效复核声明，读取真实持仓 CSV 生成只读组合暴露；默认会在风险事件发生记录校验前抓取官方政策/地缘来源并调用 OpenAI 风险事件 `metadata_only` 预审，可用 `--skip-risk-event-openai-precheck` 跳过；默认最多处理 20 条官方候选，OpenAI 默认 `gpt-5.5` / `reasoning.effort=high` / 120 秒读超时 / `requests` HTTP client / 24 小时本地 request cache TTL，可用 `--openai-cache-ttl-hours` 调成半天等窗口，可用 `--openai-http-client urllib` 做本机传输对照；完全相同 request payload 在 TTL 内 cache HIT 不重新发送，MISS/EXPIRED 才实际请求并写入 `data/processed/openai_request_cache` 审计归档；provider `cache_allowed=false` 时 fail closed；单个 OpenAI 请求失败时重试 2 次，仍失败则整批 fail closed，输出仅写 `llm_extracted / pending_review` 队列，不写 occurrence、复核声明、评分、仓位闸门或 thesis 状态；无人复核时 OpenAI 候选保留为 backlog-only 线索，不进入 `execution_policy.manual_review_gate_ids`，不会单独把执行动作改成 `wait_manual_review`；随后基于已通过校验/复核的市场特征生成只读关注股票趋势分析，并基于市场特征、SEC/TSM 基本面、估值、风险事件和 thesis 生成只读产业链节点热度与健康度，再用 `macro_risk_asset_budget` 下调总风险资产预算，并通过 `position_gate` 把评分仓位、判断置信度、组合限制、风险预算、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限，输出 AI 产业链评分、判断置信度、最终仓位区间、advisory 执行建议、日报、decision snapshot、prediction ledger 行和只读 `belief_state`|已实现|
 |评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果，component 行记录模块 confidence，overall 行记录整体 confidence、模型/最终/置信度调整仓位区间、静态和宏观调整后总风险资产预算、总资产 AI 仓位区间、宏观预算触发等级和仓位闸门摘要；置信度调整仓位基于评分模型原始仓位计算，并作为 `confidence` gate 参与最终上限约束，用于日报上期对比|已实现|
 |日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|开头输出“今日结论卡”，固定呈现状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、总风险资产预算、执行动作、主结论、三个核心原因、最大限制和下一步触发条件；正文继续输出结论使用等级、适用范围、变化原因树、什么情况会改变判断、关注股票趋势分析、产业链节点热度与健康度、组合暴露、认知状态摘要、执行建议、宏观风险资产预算、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、当前有效风险事件复核声明数量、估值 PIT 可信度、仓位闸门来源/上限/触发状态、置信度调整后模型仓位、限制说明、人工复核摘要和可追溯引用章节；关注股票趋势分析按 `core_watchlist` 显示逐 ticker 1/5/20 日收益、20/50/100/200 日均线位置、相对均线偏离和数据覆盖；当前项目范围为趋势判断/投研辅助，不触发交易；执行建议、关注股票趋势、节点热度/健康度和组合暴露均明确 `production_effect=none`，不是自动交易指令|已实现|
 |结论使用等级|`outputs/reports/daily_score_YYYY-MM-DD.md#结论使用等级` / `outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md#结论使用等级`|报告输出 `trend_only`、`actionable`、`review_required`、`research_only`、`data_limited` 或 `backtest_limited` 等使用边界，并与投资姿态标签分开；当前 `score-daily` 和回测以 `trend_judgment` 范围运行，干净通过时也只能显示“趋势判断，不触发交易”，不能自动升级为仓位复核或交易执行；低置信度、人工复核失败、来源不足、数据质量失败和回测覆盖不足会自动降级，说明原因、解除条件和证据引用|已实现基础版|
@@ -1238,17 +1262,25 @@ flowchart TD
 |风险事件每日复核声明|`aits risk-events record-review-attestation`|在用户显式提供复核人、来源范围和理由后写入 `review_attestation` YAML；声明只表示人工复核覆盖窗口和列出的来源范围，不会自动触发仓位闸门，也不会覆盖已记录 active/watch 发生记录|已实现基础版|
 |风险事件官方来源抓取|`aits risk-events fetch-official-sources`|按 owner 确认的低成本官方来源组合抓取 Federal Register/BIS/OFAC/USTR/Congress.gov/GovInfo/Trade.gov CSL；写入 raw payload、download manifest、待复核候选 CSV 和中文报告；Congress.gov/GovInfo 缺 API key 时显式跳过并报告；候选强制 `pending_review` 和 `production_effect=none`，不得直接评分、触发仓位闸门或写入正式 occurrence|已实现基础版|
 |官方政策来源原始缓存|`data/raw/official_policy_sources/YYYY-MM-DD/*`|保存官方来源原始 JSON/XML/HTML payload，文件名包含 source_id 和 checksum 前缀；manifest 记录 provider、endpoint、请求参数、下载时间、row count、输出路径和 checksum；API key 不写入报告或 manifest|已实现基础版|
-|官方政策来源待复核候选|`data/processed/official_policy_source_candidates_YYYY-MM-DD.csv`|从官方来源 metadata/title/summary 中抽取政策/地缘候选，记录 source_id、provider、source URL、published_at、matched risk_id/ticker/node、raw payload checksum 和人工复核问题；只能作为 owner 每日复核和 reviewed occurrence CSV 的输入|已实现基础版|
+|官方政策来源待复核候选|`data/processed/official_policy_source_candidates_YYYY-MM-DD.csv`|从官方来源 metadata/title/summary 中抽取政策/地缘候选，记录 source_id、provider、source URL、published_at、matched risk_id/ticker/node、raw payload checksum 和人工复核问题；只能作为 owner 每日复核、AI 模块相关性 triage 和 reviewed occurrence CSV 的输入|已实现基础版|
 |官方政策来源抓取报告|`outputs/reports/official_policy_sources_YYYY-MM-DD.md`|中文输出抓取状态、来源数、payload 数、候选数、错误/警告、跳过来源、每个 payload 的 row count/checksum 和候选摘要；报告声明不代表已确认事件或无事件结论|已实现基础版|
+|官方政策来源 AI 模块 triage|`aits risk-events triage-official-candidates`|读取官方来源待复核候选 CSV，按 AI 模块直接相关性输出 `must_review`、`review_next`、`sample_review`、`auto_low_relevance`、`duplicate_or_noise`；分类优先看标题、URL、来源名称和明确 metadata，不盲目继承宽泛 sanctions/geopolitics 自动映射出的 ticker 或 risk_id；输出强制 `production_effect=none`，不得写入正式 occurrence、评分或仓位闸门|已实现基础版|
+|官方政策来源 AI 模块 triage CSV|`data/processed/official_policy_candidate_triage_YYYY-MM-DD.csv`|保存原始候选引用、matched topic/risk/ticker/node、triage bucket、AI relevance score、命中信号、分类理由和复核策略；`auto_low_relevance` 只代表低优先级，不代表已确认无风险|已实现基础版|
+|官方政策来源 AI 模块 triage 报告|`outputs/reports/risk_event_candidate_triage_YYYY-MM-DD.md`|中文输出 bucket 统计、高优先级候选、降低优先级候选摘要、方法边界和问题清单；用于减少人工复核面，不替代复核声明|已实现基础版|
+|高优先级官方候选 OpenAI 风险等级预审|`aits risk-events precheck-triaged-official-candidates`|读取官方候选 CSV 和 triage CSV，默认只把 `must_review/review_next` 送入 OpenAI metadata-only 预审，输出 `status_suggestion`、`level_suggestion`、matched risk/ticker/node 和人工复核问题；provider LLM 授权未知或 `cache_allowed=false` 时 fail closed；完全相同 request payload 在 TTL 内复用本地缓存；输出强制 `llm_extracted / pending_review`，不得写入正式 occurrence、评分或仓位闸门|已实现|
+|高优先级官方候选 OpenAI 预审报告|`outputs/reports/risk_event_prereview_triaged_openai_YYYY-MM-DD.md`|中文输出模型、reasoning effort、输入 checksum、待复核数量、L2/L3 候选、active 候选、cache HIT/MISS、错误/警告和请求诊断；风险等级只作为人工复核建议|已实现|
+|LLM 正式风险评估导入|`aits risk-events apply-llm-formal-assessment`|读取 `risk_event_prereview_queue.json`，按 owner 决策把 LLM 预审结果写入正式 risk occurrence YAML 和 LLM formal attestation；`reviewer` 必须为 `llm_formal_assessment:<model>`，不得伪装成人工复核；LLM formal evidence 默认最高 B 级，可进入普通评分但不能单独触发 position gate|已实现基础版|
+|LLM 正式风险评估报告|`outputs/reports/risk_event_llm_formal_assessment_YYYY-MM-DD.md`|中文输出输入队列 checksum、写入 occurrence 数、active/watch 数、attestation 状态、model/request/checksum 追踪和“未人工复核”边界；日报政策/地缘来源类型显示为 `llm_formal_assessment`，置信度低于人工复核|已实现基础版|
 |风险事件发生记录 CSV 导入|`aits risk-events import-occurrences-csv`|导入人工复核后的事件发生记录 CSV，多证据行按 `occurrence_id` 合并并写入 YAML；关键字段、证据等级、动作等级和人工复核元数据冲突时停止；缺失 `action_class` 默认 `manual_review`|已实现基础版|
 |风险事件发生记录导入报告|`outputs/reports/risk_event_occurrence_import_YYYY-MM-DD.md`|记录 CSV 行数、checksum、导入记录数、错误和警告|已实现基础版|
 |风险事件发生记录校验|`aits risk-events validate-occurrences`|校验实际发生记录 schema、event_id、日期、新鲜度、证据来源、证据等级和动作等级，并校验复核声明的覆盖窗口、复核人、结论、来源范围和过期状态；`watch` 默认只进入报告和人工复核，`B` 级 active 证据只能普通评分，`C/D/X` 或 public convenience 单源不得自动评分或触发仓位闸门；只有当前有效复核声明才能让空发生记录脱离 `insufficient_data`|已实现基础版|
 |风险事件 OpenAI 预审导入|`aits risk-events import-prereview-csv`|导入固定结构化输出，保存 model、reasoning effort、prompt version、request id、request timestamp、source URL、输入/输出 checksum、候选 risk_id、ticker/产业链节点映射和人工复核问题；输出强制为 `llm_extracted` / `pending_review`，不写入正式发生记录|已实现基础版|
-|风险事件 OpenAI live 预审|`aits risk-events precheck-openai` / `aits score-daily --risk-event-openai-precheck`|独立命令读取 JSON/YAML source-permission 输入；日报前自动预审读取官方来源候选 CSV 并默认只发送 `metadata_only`，默认最多处理 20 条官方候选；两者都会按 provider `llm_permission` fail closed 后调用 OpenAI Responses API；默认使用 `gpt-5.5`、`reasoning.effort=high`、120 秒请求读超时和 `requests` HTTP client，可用 `--openai-http-client urllib` 做本机传输对照，单个请求失败时重试 2 次，仍失败则整批停止且不写部分队列；失败报告输出 sanitized transport diagnostics，包括 attempt、HTTP client、client request id、endpoint host、payload byte size、input checksum、HTTP status、OpenAI x-request-id 或异常类型，不输出 API key、Authorization header 或未授权全文；仅将相关 `risk_event` claim 或风险事件候选转换为 `llm_extracted` / `pending_review` backlog，`irrelevant` 或无风险候选不增加人工队列；未复核 backlog 不进入 `execution_policy` 的人工复核 gate；保存 request/response id、model、reasoning effort、prompt version、source permission、输入/输出 checksum、候选 risk_id、ticker/节点映射和人工复核问题|已实现基础版|
-|风险事件 OpenAI 预审队列|`data/processed/risk_event_prereview_queue.json`|保存 schema v2 的待人工复核预审记录、model 与 reasoning effort；L2/L3 或 active 候选只作为 review queue，不得直接进入评分、仓位闸门或回测；人工确认后必须通过 reviewed occurrence CSV 和 `validate-occurrences` 进入正式发生记录|已实现基础版|
-|风险事件 OpenAI 预审报告|`outputs/reports/risk_event_prereview_import_YYYY-MM-DD.md` / `outputs/reports/risk_event_prereview_openai_YYYY-MM-DD.md`|中文报告输出输入行数或 LLM claim 数、model、reasoning effort、checksum、待复核数量、L2/L3 候选、active 候选、错误和警告；live 报告显示 Responses API 调用边界，并在失败或重试成功时输出 sanitized attempt diagnostics 和 HTTP client；CSV 报告声明不发起 API 请求|已实现基础版|
+|OpenAI 请求缓存与审计归档|`data/processed/openai_request_cache/*.json` / `archive/openai/responses/YYYY-MM-DD/*.json`|所有启用缓存的 live OpenAI 请求先按 endpoint、prompt version、model、reasoning effort、结构化输出 schema、source permission、content sent level、provider/api family 和完整 request payload checksum 生成 cache key；默认 TTL 24 小时，可用 `--openai-cache-ttl-hours` 调整；TTL 内 HIT 复用成功响应，MISS/EXPIRED 才重新发送；每次实际发送均归档 sanitized request headers、request payload、response status/header/body、attempt diagnostics、client request id、OpenAI request id、input/output checksum 和 cache key；Authorization/API key 不写入；`cache_allowed=false` 时 fail closed，不发起 live 请求|已实现|
+|风险事件 OpenAI live 预审|`aits risk-events precheck-openai` / `aits score-daily --risk-event-openai-precheck`|独立命令读取 JSON/YAML source-permission 输入；日报前自动预审读取官方来源候选 CSV 并默认只发送 `metadata_only`，默认最多处理 20 条官方候选；两者都会按 provider `llm_permission` 和 `cache_allowed` fail closed 后调用或复用 OpenAI Responses API；默认使用 `gpt-5.5`、`reasoning.effort=high`、120 秒请求读超时、`requests` HTTP client 和 24 小时本地 cache TTL，可用 `--openai-http-client urllib` 做本机传输对照，单个请求失败时重试 2 次，仍失败则整批停止且不写部分队列；失败报告输出 sanitized transport diagnostics，包括 attempt、HTTP client、client request id、endpoint host、payload byte size、input checksum、HTTP status、OpenAI x-request-id 或异常类型，不输出 API key、Authorization header 或未授权全文；仅将相关 `risk_event` claim 或风险事件候选转换为 `llm_extracted` / `pending_review` backlog，`irrelevant` 或无风险候选不增加人工队列；未复核 backlog 不进入 `execution_policy` 的人工复核 gate；保存 request/response id、model、reasoning effort、prompt version、source permission、输入/输出 checksum、cache 状态、候选 risk_id、ticker/节点映射和人工复核问题|已实现|
+|风险事件 OpenAI 预审队列|`data/processed/risk_event_prereview_queue.json`|保存 schema v2 的待人工复核预审记录、model、reasoning effort 和 cache 状态；L2/L3 或 active 候选只作为 review queue，不得直接进入评分、仓位闸门或回测；人工确认后必须通过 reviewed occurrence CSV 和 `validate-occurrences` 进入正式发生记录|已实现|
+|风险事件 OpenAI 预审报告|`outputs/reports/risk_event_prereview_import_YYYY-MM-DD.md` / `outputs/reports/risk_event_prereview_openai_YYYY-MM-DD.md`|中文报告输出输入行数或 LLM claim 数、model、reasoning effort、checksum、cache HIT/MISS、待复核数量、L2/L3 候选、active 候选、错误和警告；live 报告显示 Responses API 调用边界，并在失败或重试成功时输出 sanitized attempt diagnostics 和 HTTP client；CSV 报告声明不发起 API 请求|已实现|
 |风险事件 OpenAI 预审模板|`docs/examples/risk_event_prereview/openai_prereview_template.csv` / `docs/examples/risk_event_prereview/openai_live_precheck_template.yaml`|提供固定结构化 CSV 导入示例和 live API source-permission 输入示例；owner 2026-05-10 允许个人研究、非商用目的下的已授权 paid vendor 文本进入 OpenAI 预审，但付费供应商内容仍只有 `external_llm_permitted=true` 或 provider `llm_permission.external_llm_allowed=true` 且内容级别不超过授权范围时才允许发送|已实现基础版|
-|LLM claim 预审|`aits llm precheck-claims`|从 JSON/YAML 输入读取 source_id、来源引用、采集时间和待发送内容，先按 `config/data_sources.yaml` 的 provider LLM 权限 fail closed，再调用 OpenAI Responses API 固定结构化输出；默认使用 `gpt-5.5`、`reasoning.effort=high` 和 `requests` HTTP client，请求默认 `store=false`，可用 `--openai-http-client urllib` 做本机传输对照，单个请求失败时重试 2 次，失败报告输出 sanitized transport diagnostics；报告和队列只保存 request id、model、reasoning effort、prompt version、输入/输出 checksum、source permission 和结构化 claim，不保存 API key、Authorization header 或未授权全文|已实现基础版|
+|LLM claim 预审|`aits llm precheck-claims`|从 JSON/YAML 输入读取 source_id、来源引用、采集时间和待发送内容，先按 `config/data_sources.yaml` 的 provider LLM 权限和 `cache_allowed` fail closed，再调用或复用 OpenAI Responses API 固定结构化输出；默认使用 `gpt-5.5`、`reasoning.effort=high`、`requests` HTTP client 和 24 小时本地 cache TTL，请求默认 `store=false`，可用 `--openai-http-client urllib` 做本机传输对照，单个请求失败时重试 2 次，失败报告输出 sanitized transport diagnostics；报告和队列保存 request id、model、reasoning effort、prompt version、输入/输出 checksum、source permission、cache 状态和结构化 claim，不保存 API key、Authorization header 或未授权全文|已实现|
 |LLM claim 预审队列|`data/processed/llm_claim_prereview_queue.json`|保存 schema v2 的 claim-centric `llm_extracted` / `pending_review` 记录、model、reasoning effort、risk_event_candidate 和 thesis_signal_match 候选；不得直接进入评分、thesis 状态迁移、仓位闸门或回测；人工确认后才可整理为 market_evidence 或 reviewed risk occurrence 导入|已实现基础版|
 |LLM claim 预审报告|`outputs/reports/llm_claim_prereview_YYYY-MM-DD.md`|中文报告输出 provider、source、model、reasoning effort、request id、内容发送级别、claim 数量、错误/警告和“不得评分/不得触发仓位闸门”边界；不输出 API key 或未授权全文|已实现基础版|
 |LLM claim 输入模板|`docs/examples/llm_claim_prereview/openai_claim_precheck_template.yaml`|提供 source-permission envelope/catalog 驱动输入示例；真实运行前必须确认 provider 的 `llm_permission.external_llm_allowed=true` 且内容级别不超过授权范围|已实现基础版|

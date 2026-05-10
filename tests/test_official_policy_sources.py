@@ -13,6 +13,7 @@ from ai_trading_system.official_policy_sources import (
     OfficialPolicyHttpResponse,
     build_official_policy_source_requests,
     fetch_official_policy_sources,
+    load_official_policy_candidates_csv,
     render_official_policy_fetch_report,
 )
 
@@ -151,12 +152,15 @@ def test_fetch_official_policy_sources_writes_raw_candidates_and_manifest(
     markdown = render_official_policy_fetch_report(report)
     candidates_path = processed_dir / "official_policy_source_candidates_2026-05-05.csv"
     candidates = pd.read_csv(candidates_path)
+    loaded_candidates = load_official_policy_candidates_csv(candidates_path)
     manifest = pd.read_csv(manifest_path)
 
     assert report.status == "PASS"
     assert report.payload_count == 8
     assert report.candidate_count >= 8
     assert candidates_path.exists()
+    assert len(loaded_candidates) == report.candidate_count
+    assert loaded_candidates[0].production_effect == "none"
     assert "ai_chip_export_control_upgrade" in set(
         ";".join(candidates["matched_risk_ids"].fillna("")).split(";")
     )

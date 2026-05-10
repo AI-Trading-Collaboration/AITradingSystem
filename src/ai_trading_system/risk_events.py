@@ -44,6 +44,7 @@ RiskEventOccurrenceSourceType = Literal[
     "paid_vendor",
     "manual_input",
     "public_convenience",
+    "llm_extracted",
 ]
 RiskEventReviewAttestationSourceType = Literal[
     "primary_source",
@@ -1589,6 +1590,7 @@ def _source_type_label(value: str) -> str:
         "paid_vendor": "付费供应商",
         "manual_input": "人工审计",
         "public_convenience": "公开便利源",
+        "llm_extracted": "LLM 抽取/评估",
     }.get(value, value)
 
 

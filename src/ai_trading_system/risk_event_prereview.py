@@ -17,6 +17,7 @@ from ai_trading_system.llm_precheck import (
     DEFAULT_OPENAI_HTTP_CLIENT,
     DEFAULT_OPENAI_LLM_MODEL,
     DEFAULT_OPENAI_REASONING_EFFORT,
+    DEFAULT_OPENAI_REQUEST_CACHE_TTL_SECONDS,
     DEFAULT_OPENAI_RESPONSES_ENDPOINT,
     DEFAULT_OPENAI_TIMEOUT_SECONDS,
     HttpPostJson,
@@ -79,6 +80,11 @@ OPTIONAL_CSV_COLUMNS = frozenset(
         "external_llm_permitted",
         "source_type",
         "manual_review_status",
+        "cache_status",
+        "cache_key",
+        "cache_path",
+        "cache_created_at",
+        "cache_expires_at",
         "matched_risk_ids",
         "affected_tickers",
         "affected_nodes",
@@ -202,6 +208,11 @@ class RiskEventPreReviewRecord(BaseModel):
     request_timestamp: datetime
     input_checksum_sha256: str = Field(pattern=r"^[a-fA-F0-9]{64}$")
     output_checksum_sha256: str = Field(pattern=r"^[a-fA-F0-9]{64}$")
+    cache_status: str = "DISABLED"
+    cache_key: str = ""
+    cache_path: str = ""
+    cache_created_at: datetime | None = None
+    cache_expires_at: datetime | None = None
     source_permission: dict[str, Any] = Field(default_factory=dict)
     matched_risk_ids: list[str] = Field(default_factory=list)
     status_suggestion: RiskEventPreReviewStatusSuggestion
@@ -262,6 +273,12 @@ class RiskEventPreReviewImportReport:
     records: tuple[RiskEventPreReviewRecord, ...]
     source_kind: RiskEventPreReviewSourceKind = "csv_import"
     issues: tuple[RiskEventPreReviewIssue, ...] = field(default_factory=tuple)
+    openai_request_count: int = 0
+    openai_cache_hit_count: int = 0
+    openai_cache_miss_count: int = 0
+    openai_cache_expired_count: int = 0
+    openai_cache_disabled_count: int = 0
+    openai_cache_write_count: int = 0
 
     @property
     def record_count(self) -> int:
@@ -380,6 +397,8 @@ def run_openai_risk_event_prereview(
     endpoint: str = DEFAULT_OPENAI_RESPONSES_ENDPOINT,
     timeout_seconds: float = DEFAULT_OPENAI_TIMEOUT_SECONDS,
     http_client: str = DEFAULT_OPENAI_HTTP_CLIENT,
+    openai_cache_dir: Path | str | None = None,
+    openai_cache_ttl_seconds: float = DEFAULT_OPENAI_REQUEST_CACHE_TTL_SECONDS,
     generated_at: datetime | None = None,
     http_post_json: HttpPostJson | None = None,
 ) -> RiskEventPreReviewImportReport:
@@ -393,6 +412,8 @@ def run_openai_risk_event_prereview(
         endpoint=endpoint,
         timeout_seconds=timeout_seconds,
         http_client=http_client,
+        openai_cache_dir=openai_cache_dir,
+        openai_cache_ttl_seconds=openai_cache_ttl_seconds,
         generated_at=generated_at,
         http_post_json=http_post_json,
     )
@@ -416,6 +437,8 @@ def run_openai_risk_event_prereview_for_official_candidates(
     endpoint: str = DEFAULT_OPENAI_RESPONSES_ENDPOINT,
     timeout_seconds: float = DEFAULT_OPENAI_TIMEOUT_SECONDS,
     http_client: str = DEFAULT_OPENAI_HTTP_CLIENT,
+    openai_cache_dir: Path | str | None = None,
+    openai_cache_ttl_seconds: float = DEFAULT_OPENAI_REQUEST_CACHE_TTL_SECONDS,
     generated_at: datetime | None = None,
     http_post_json: HttpPostJson | None = None,
     max_candidates: int | None = None,
@@ -423,6 +446,12 @@ def run_openai_risk_event_prereview_for_official_candidates(
     records: list[RiskEventPreReviewRecord] = []
     issues: list[RiskEventPreReviewIssue] = []
     row_count = 0
+    openai_request_count = 0
+    openai_cache_hit_count = 0
+    openai_cache_miss_count = 0
+    openai_cache_expired_count = 0
+    openai_cache_disabled_count = 0
+    openai_cache_write_count = 0
     packet_checksums: list[dict[str, str]] = []
     selected_candidates = sorted(candidates, key=_official_candidate_priority_key)
     if max_candidates is not None:
@@ -462,10 +491,18 @@ def run_openai_risk_event_prereview_for_official_candidates(
             endpoint=endpoint,
             timeout_seconds=timeout_seconds,
             http_client=http_client,
+            openai_cache_dir=openai_cache_dir,
+            openai_cache_ttl_seconds=openai_cache_ttl_seconds,
             generated_at=generated_at,
             http_post_json=http_post_json,
         )
         row_count += report.row_count
+        openai_request_count += report.openai_request_count
+        openai_cache_hit_count += report.openai_cache_hit_count
+        openai_cache_miss_count += report.openai_cache_miss_count
+        openai_cache_expired_count += report.openai_cache_expired_count
+        openai_cache_disabled_count += report.openai_cache_disabled_count
+        openai_cache_write_count += report.openai_cache_write_count
         records.extend(report.records)
         issues.extend(
             issue
@@ -484,6 +521,12 @@ def run_openai_risk_event_prereview_for_official_candidates(
         records=tuple(sorted(records, key=lambda item: item.precheck_id)) if not has_error else (),
         source_kind="openai_live",
         issues=tuple(issues),
+        openai_request_count=openai_request_count,
+        openai_cache_hit_count=openai_cache_hit_count,
+        openai_cache_miss_count=openai_cache_miss_count,
+        openai_cache_expired_count=openai_cache_expired_count,
+        openai_cache_disabled_count=openai_cache_disabled_count,
+        openai_cache_write_count=openai_cache_write_count,
     )
 
 
@@ -558,6 +601,12 @@ def build_risk_event_prereview_from_llm_claim_report(
             records=(),
             source_kind="openai_live",
             issues=tuple(issues),
+            openai_request_count=claim_report.openai_request_count,
+            openai_cache_hit_count=claim_report.openai_cache_hit_count,
+            openai_cache_miss_count=claim_report.openai_cache_miss_count,
+            openai_cache_expired_count=claim_report.openai_cache_expired_count,
+            openai_cache_disabled_count=claim_report.openai_cache_disabled_count,
+            openai_cache_write_count=claim_report.openai_cache_write_count,
         )
 
     known_risk_ids = (
@@ -606,6 +655,12 @@ def build_risk_event_prereview_from_llm_claim_report(
         records=tuple(sorted(records, key=lambda item: item.precheck_id)) if not has_error else (),
         source_kind="openai_live",
         issues=tuple(issues),
+        openai_request_count=claim_report.openai_request_count,
+        openai_cache_hit_count=claim_report.openai_cache_hit_count,
+        openai_cache_miss_count=claim_report.openai_cache_miss_count,
+        openai_cache_expired_count=claim_report.openai_cache_expired_count,
+        openai_cache_disabled_count=claim_report.openai_cache_disabled_count,
+        openai_cache_write_count=claim_report.openai_cache_write_count,
     )
 
 
@@ -624,6 +679,11 @@ def render_risk_event_prereview_import_report(
         f"- 待人工复核：{report.pending_review_count}",
         f"- L2/L3 候选：{report.high_level_candidate_count}",
         f"- active 候选：{report.active_candidate_count}",
+        f"- OpenAI 请求缓存：HIT={report.openai_cache_hit_count} / "
+        f"MISS={report.openai_cache_miss_count} / "
+        f"EXPIRED={report.openai_cache_expired_count} / "
+        f"DISABLED={report.openai_cache_disabled_count}",
+        f"- OpenAI 缓存写入：{report.openai_cache_write_count}",
         f"- 错误数：{report.error_count}",
         f"- 警告数：{report.warning_count}",
         "",
@@ -633,9 +693,9 @@ def render_risk_event_prereview_import_report(
     if report.records:
         lines.extend(
             [
-                "| Precheck | Source | Model | Reasoning | Request | Status | Level | Risk IDs | "
-                "Tickers | Nodes | Confidence | Policy |",
-                "|---|---|---|---|---|---|---|---|---|---|---:|---|",
+                "| Precheck | Source | Model | Reasoning | Request | Cache | Status | Level | "
+                "Risk IDs | Tickers | Nodes | Confidence | Policy |",
+                "|---|---|---|---|---|---|---|---|---|---|---|---:|---|",
             ]
         )
         for record in report.records:
@@ -646,6 +706,7 @@ def render_risk_event_prereview_import_report(
                 f"{_escape_markdown_table(record.model)} | "
                 f"{record.reasoning_effort} | "
                 f"{_escape_markdown_table(record.request_id)} | "
+                f"{_escape_markdown_table(record.cache_status)} | "
                 f"{_status_suggestion_label(record.status_suggestion)} | "
                 f"{record.level_suggestion} | "
                 f"{', '.join(record.matched_risk_ids)} | "
@@ -692,11 +753,18 @@ def render_risk_event_prereview_import_report(
                 if is_live
                 else "- 导入模式不会重试外部 API 请求。"
             ),
+            (
+                "- live 模式启用本地 OpenAI 请求缓存，只按完全相同 request payload checksum "
+                "命中；TTL 内 cache HIT 不重新调用 OpenAI，实际发送请求会写入脱敏审计归档。"
+                if is_live
+                else "- 导入模式不会读取或写入 OpenAI 请求缓存。"
+            ),
             "- 每条预审记录强制为 `source_type=llm_extracted` 和 "
             "`manual_review_status=pending_review`。",
             "- 预审只做抽取、分类、去重、ticker/产业链节点映射和人工复核问题生成。",
             "- 预审记录不是 `risk_event_occurrence`，不得直接进入评分、仓位闸门或回测。",
-            "- 付费供应商内容只有在 `external_llm_permitted=true` 时才允许进入外部 LLM 预审。",
+            "- 付费供应商内容只有在 `external_llm_permitted=true` 且允许本地缓存归档时"
+            "才允许进入外部 LLM 预审。",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -733,6 +801,12 @@ def write_risk_event_prereview_queue(
         "source_csv_checksum_sha256": report.checksum_sha256,
         "row_count": report.row_count,
         "record_count": report.record_count,
+        "openai_request_count": report.openai_request_count,
+        "openai_cache_hit_count": report.openai_cache_hit_count,
+        "openai_cache_miss_count": report.openai_cache_miss_count,
+        "openai_cache_expired_count": report.openai_cache_expired_count,
+        "openai_cache_disabled_count": report.openai_cache_disabled_count,
+        "openai_cache_write_count": report.openai_cache_write_count,
         "records": [record.model_dump(mode="json") for record in report.records],
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -814,6 +888,11 @@ def _record_from_llm_claim(
         request_timestamp=llm_record.request_timestamp,
         input_checksum_sha256=llm_record.input_checksum_sha256,
         output_checksum_sha256=llm_record.output_checksum_sha256,
+        cache_status=llm_record.cache_status,
+        cache_key=llm_record.cache_key,
+        cache_path=llm_record.cache_path,
+        cache_created_at=llm_record.cache_created_at,
+        cache_expires_at=llm_record.cache_expires_at,
         source_permission=llm_record.source_permission.model_dump(mode="json"),
         matched_risk_ids=matched_risk_ids,
         status_suggestion=_status_suggestion_from_candidate(
@@ -1120,6 +1199,11 @@ def _record_from_csv_row(row: dict[str, str]) -> RiskEventPreReviewRecord:
         request_timestamp=_parse_datetime(row["request_timestamp"]),
         input_checksum_sha256=row["input_checksum_sha256"],
         output_checksum_sha256=row["output_checksum_sha256"],
+        cache_status=row.get("cache_status", "DISABLED") or "DISABLED",
+        cache_key=row.get("cache_key", ""),
+        cache_path=row.get("cache_path", ""),
+        cache_created_at=_parse_optional_datetime(row.get("cache_created_at", "")),
+        cache_expires_at=_parse_optional_datetime(row.get("cache_expires_at", "")),
         matched_risk_ids=_split_items(row.get("matched_risk_ids", "")),
         status_suggestion=row["status_suggestion"],
         level_suggestion=row["level_suggestion"],
@@ -1255,6 +1339,12 @@ def _parse_datetime(value: str) -> datetime:
     if parsed.tzinfo is None:
         return parsed.replace(tzinfo=UTC)
     return parsed
+
+
+def _parse_optional_datetime(value: str) -> datetime | None:
+    if not value.strip():
+        return None
+    return _parse_datetime(value)
 
 
 def _parse_bool(value: str, *, default: bool) -> bool:

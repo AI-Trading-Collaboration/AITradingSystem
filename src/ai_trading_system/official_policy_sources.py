@@ -623,6 +623,21 @@ def write_official_policy_candidates_csv(
     return output_path
 
 
+def load_official_policy_candidates_csv(input_path: Path) -> tuple[OfficialPolicyCandidate, ...]:
+    input_path = Path(input_path)
+    with input_path.open("r", newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        missing_columns = set(OFFICIAL_POLICY_CANDIDATE_COLUMNS) - set(reader.fieldnames or ())
+        if missing_columns:
+            raise ValueError(
+                "官方候选 CSV 缺少必需字段：" + ", ".join(sorted(missing_columns))
+            )
+        return tuple(
+            _candidate_from_row(row, row_number=index)
+            for index, row in enumerate(reader, 2)
+        )
+
+
 def default_official_policy_fetch_report_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"official_policy_sources_{as_of.isoformat()}.md"
 
@@ -1132,6 +1147,48 @@ def _candidate_to_row(candidate: OfficialPolicyCandidate) -> dict[str, object]:
     }
 
 
+def _candidate_from_row(
+    row: Mapping[str, str],
+    *,
+    row_number: int,
+) -> OfficialPolicyCandidate:
+    candidate_id = row.get("candidate_id", "")
+    try:
+        row_count = int(row.get("row_count", "0") or 0)
+    except ValueError as exc:
+        raise ValueError(
+            f"官方候选 CSV 第 {row_number} 行 row_count 不是整数：{candidate_id}"
+        ) from exc
+    return OfficialPolicyCandidate(
+        candidate_id=candidate_id,
+        as_of=_parse_required_date(row.get("as_of", ""), "as_of", row_number),
+        source_id=row.get("source_id", ""),
+        provider=row.get("provider", ""),
+        source_type=row.get("source_type", ""),
+        source_name=row.get("source_name", ""),
+        source_url=row.get("source_url", ""),
+        source_title=row.get("source_title", ""),
+        published_at=_parse_optional_date(row.get("published_at", "")),
+        captured_at=_parse_required_date(
+            row.get("captured_at", ""),
+            "captured_at",
+            row_number,
+        ),
+        matched_topics=_split_semicolon_items(row.get("matched_topics", "")),
+        matched_risk_ids=_split_semicolon_items(row.get("matched_risk_ids", "")),
+        affected_tickers=_split_semicolon_items(row.get("affected_tickers", "")),
+        affected_nodes=_split_semicolon_items(row.get("affected_nodes", "")),
+        evidence_grade_floor=row.get("evidence_grade_floor", ""),
+        review_status=row.get("review_status", ""),
+        review_questions=_split_semicolon_items(row.get("review_questions", "")),
+        raw_payload_path=Path(row.get("raw_payload_path", "")),
+        raw_payload_sha256=row.get("raw_payload_sha256", ""),
+        row_count=row_count,
+        production_effect=row.get("production_effect", "none") or "none",
+        notes=row.get("notes", ""),
+    )
+
+
 def _download_manifest_records(
     report: OfficialPolicySourceFetchReport,
 ) -> tuple[dict[str, object], ...]:
@@ -1212,6 +1269,17 @@ def _parse_optional_date(value: str) -> date | None:
         return date.fromisoformat(value[:10])
     except ValueError:
         return None
+
+
+def _parse_required_date(value: str, field_name: str, row_number: int) -> date:
+    parsed = _parse_optional_date(value)
+    if parsed is None:
+        raise ValueError(f"官方候选 CSV 第 {row_number} 行 {field_name} 不是有效日期。")
+    return parsed
+
+
+def _split_semicolon_items(value: str) -> tuple[str, ...]:
+    return tuple(item.strip() for item in value.split(";") if item.strip())
 
 
 def _strip_namespace(tag: str) -> str:

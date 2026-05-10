@@ -348,6 +348,8 @@ from ai_trading_system.llm_precheck import (
     DEFAULT_OPENAI_HTTP_CLIENT,
     DEFAULT_OPENAI_LLM_MODEL,
     DEFAULT_OPENAI_REASONING_EFFORT,
+    DEFAULT_OPENAI_REQUEST_CACHE_DIR,
+    DEFAULT_OPENAI_REQUEST_CACHE_TTL_SECONDS,
     DEFAULT_OPENAI_TIMEOUT_SECONDS,
     default_llm_claim_precheck_report_path,
     load_llm_claim_precheck_input,
@@ -370,6 +372,7 @@ from ai_trading_system.official_policy_sources import (
     default_official_policy_candidates_path,
     default_official_policy_fetch_report_path,
     fetch_official_policy_sources,
+    load_official_policy_candidates_csv,
     write_official_policy_fetch_report,
 )
 from ai_trading_system.ops_daily import (
@@ -443,6 +446,21 @@ from ai_trading_system.report_traceability import (
     write_trace_bundle,
 )
 from ai_trading_system.reports.daily import render_recommendation_markdown
+from ai_trading_system.risk_event_candidate_triage import (
+    default_risk_event_candidate_triage_csv_path,
+    default_risk_event_candidate_triage_input_path,
+    default_risk_event_candidate_triage_report_path,
+    load_triaged_candidate_ids,
+    triage_official_policy_candidates,
+    write_risk_event_candidate_triage_csv,
+    write_risk_event_candidate_triage_report,
+)
+from ai_trading_system.risk_event_llm_formal import (
+    build_llm_formal_assessment_report,
+    default_llm_formal_assessment_report_path,
+    write_llm_formal_assessment_outputs,
+    write_llm_formal_assessment_report,
+)
 from ai_trading_system.risk_event_prereview import (
     default_risk_event_openai_prereview_report_path,
     default_risk_event_prereview_report_path,
@@ -638,6 +656,7 @@ DEFAULT_RISK_EVENT_PREREVIEW_QUEUE_PATH = (
 DEFAULT_LLM_CLAIM_PREREVIEW_QUEUE_PATH = (
     PROJECT_ROOT / "data" / "processed" / "llm_claim_prereview_queue.json"
 )
+DEFAULT_OPENAI_REQUEST_CACHE_PATH = PROJECT_ROOT / DEFAULT_OPENAI_REQUEST_CACHE_DIR
 DEFAULT_MARKET_EVIDENCE_PATH = PROJECT_ROOT / "data" / "external" / "market_evidence"
 DEFAULT_PORTFOLIO_POSITIONS_PATH = (
     PROJECT_ROOT / "data" / "external" / "portfolio_positions" / "current_positions.csv"
@@ -1192,10 +1211,20 @@ def precheck_llm_claims_command(
         str,
         typer.Option(help="OpenAI Responses API HTTP 客户端：requests 或 urllib。"),
     ] = DEFAULT_OPENAI_HTTP_CLIENT,
+    openai_cache_dir: Annotated[
+        Path,
+        typer.Option(help="OpenAI 请求/响应本地缓存与审计归档目录。"),
+    ] = DEFAULT_OPENAI_REQUEST_CACHE_PATH,
+    openai_cache_ttl_hours: Annotated[
+        float,
+        typer.Option(help="完全相同 OpenAI 请求的本地缓存复用时长，单位小时。"),
+    ] = DEFAULT_OPENAI_REQUEST_CACHE_TTL_SECONDS / 3600,
 ) -> None:
     """调用 OpenAI 结构化输出生成 claim 待复核队列。"""
     if timeout_seconds <= 0:
         raise typer.BadParameter("OpenAI 请求超时秒数必须为正数。")
+    if openai_cache_ttl_hours <= 0:
+        raise typer.BadParameter("OpenAI 请求缓存 TTL 小时数必须为正数。")
     report_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_llm_claim_precheck_report_path(
         PROJECT_ROOT / "outputs" / "reports",
@@ -1216,6 +1245,8 @@ def precheck_llm_claims_command(
         reasoning_effort=reasoning_effort,
         timeout_seconds=timeout_seconds,
         http_client=openai_http_client,
+        openai_cache_dir=openai_cache_dir,
+        openai_cache_ttl_seconds=openai_cache_ttl_hours * 3600,
     )
     write_llm_claim_precheck_report(report, report_path)
 
@@ -5912,6 +5943,352 @@ def fetch_official_policy_sources_command(
         raise typer.Exit(code=1)
 
 
+@risk_events_app.command("triage-official-candidates")
+def triage_official_policy_candidates_command(
+    processed_dir: Annotated[
+        Path,
+        typer.Option(help="官方来源候选和 triage CSV 所在 processed 目录。"),
+    ] = DEFAULT_OFFICIAL_POLICY_PROCESSED_DIR,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="官方来源待复核候选 CSV 输入路径；为空时按 as_of 推导。"),
+    ] = None,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="triage 评估日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    triage_output_path: Annotated[
+        Path | None,
+        typer.Option(help="AI 模块相关性 triage CSV 输出路径。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown triage 报告输出路径。"),
+    ] = None,
+) -> None:
+    """按 AI 模块相关性分类官方政策/地缘候选，降低无明显联系项优先级。"""
+    triage_date = _parse_date(as_of) if as_of else date.today()
+    candidate_input_path = input_path or default_risk_event_candidate_triage_input_path(
+        processed_dir,
+        triage_date,
+    )
+    report = triage_official_policy_candidates(candidate_input_path, as_of=triage_date)
+    report_path = output_path or default_risk_event_candidate_triage_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        report.as_of,
+    )
+    csv_path = triage_output_path or default_risk_event_candidate_triage_csv_path(
+        processed_dir,
+        report.as_of,
+    )
+    write_risk_event_candidate_triage_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(
+        f"[{status_style}]官方候选 AI 模块 triage 状态："
+        f"{report.status}[/{status_style}]"
+    )
+    console.print(f"报告：{report_path}")
+    console.print(f"输入候选：{candidate_input_path}")
+    console.print(
+        "Bucket："
+        f"must_review={report.bucket_counts.get('must_review', 0)}；"
+        f"review_next={report.bucket_counts.get('review_next', 0)}；"
+        f"sample_review={report.bucket_counts.get('sample_review', 0)}；"
+        f"auto_low_relevance={report.bucket_counts.get('auto_low_relevance', 0)}；"
+        f"duplicate_or_noise={report.bucket_counts.get('duplicate_or_noise', 0)}"
+    )
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+    write_risk_event_candidate_triage_csv(report, csv_path)
+    console.print(f"Triage CSV：{csv_path}")
+    console.print("Triage 结果保持 production_effect=none，未写入评分或仓位闸门。")
+
+
+@risk_events_app.command("precheck-triaged-official-candidates")
+def precheck_triaged_official_candidates_with_openai_command(
+    processed_dir: Annotated[
+        Path,
+        typer.Option(help="官方来源候选、triage CSV 所在 processed 目录。"),
+    ] = DEFAULT_OFFICIAL_POLICY_PROCESSED_DIR,
+    candidate_input_path: Annotated[
+        Path | None,
+        typer.Option(help="官方来源待复核候选 CSV 输入路径；为空时按 as_of 推导。"),
+    ] = None,
+    triage_input_path: Annotated[
+        Path | None,
+        typer.Option(help="官方候选 AI 模块 triage CSV 输入路径；为空时按 as_of 推导。"),
+    ] = None,
+    triage_buckets: Annotated[
+        str,
+        typer.Option(help="逗号分隔的 triage bucket 白名单。"),
+    ] = "must_review,review_next",
+    max_candidates: Annotated[
+        int,
+        typer.Option(help="本次最多送入 OpenAI 预审的高优先级候选数。"),
+    ] = 20,
+    queue_path: Annotated[
+        Path,
+        typer.Option(help="写入风险事件预审待复核队列 JSON 的路径。"),
+    ] = DEFAULT_RISK_EVENT_PREREVIEW_QUEUE_PATH,
+    data_sources_path: Annotated[
+        Path,
+        typer.Option(help="数据源目录路径，用于解析 provider LLM 权限。"),
+    ] = DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    risk_events_path: Annotated[
+        Path,
+        typer.Option(help="风险事件配置路径，用于检查 matched_risk_ids。"),
+    ] = DEFAULT_RISK_EVENTS_CONFIG_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="预审和校验日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown triage OpenAI 预审报告输出路径。"),
+    ] = None,
+    api_key_env: Annotated[
+        str,
+        typer.Option(help="读取 OpenAI API key 的环境变量名。"),
+    ] = "OPENAI_API_KEY",
+    model: Annotated[
+        str,
+        typer.Option(help="OpenAI Responses API 模型。"),
+    ] = DEFAULT_OPENAI_LLM_MODEL,
+    reasoning_effort: Annotated[
+        str,
+        typer.Option(help="OpenAI Responses API reasoning.effort。"),
+    ] = DEFAULT_OPENAI_REASONING_EFFORT,
+    timeout_seconds: Annotated[
+        float,
+        typer.Option(help="OpenAI Responses API 请求读超时秒数。"),
+    ] = DEFAULT_OPENAI_TIMEOUT_SECONDS,
+    openai_http_client: Annotated[
+        str,
+        typer.Option(help="OpenAI Responses API HTTP 客户端：requests 或 urllib。"),
+    ] = DEFAULT_OPENAI_HTTP_CLIENT,
+    openai_cache_dir: Annotated[
+        Path,
+        typer.Option(help="OpenAI 请求/响应本地缓存与审计归档目录。"),
+    ] = DEFAULT_OPENAI_REQUEST_CACHE_PATH,
+    openai_cache_ttl_hours: Annotated[
+        float,
+        typer.Option(help="完全相同 OpenAI 请求的本地缓存复用时长，单位小时。"),
+    ] = DEFAULT_OPENAI_REQUEST_CACHE_TTL_SECONDS / 3600,
+) -> None:
+    """只对 triage 高优先级官方候选调用 OpenAI，输出风险等级预审建议。"""
+    if max_candidates < 0:
+        raise typer.BadParameter("OpenAI 预审候选上限不能为负数。")
+    if timeout_seconds <= 0:
+        raise typer.BadParameter("OpenAI 请求超时秒数必须为正数。")
+    if openai_cache_ttl_hours <= 0:
+        raise typer.BadParameter("OpenAI 请求缓存 TTL 小时数必须为正数。")
+    api_key = os.getenv(api_key_env, "")
+    if not api_key:
+        console.print("[red]缺少 OpenAI API key，已停止高优先级候选风险等级预审。[/red]")
+        console.print(f"需要环境变量：{api_key_env}")
+        raise typer.Exit(code=1)
+
+    precheck_date = _parse_date(as_of) if as_of else date.today()
+    official_candidates_path = candidate_input_path or default_official_policy_candidates_path(
+        processed_dir,
+        precheck_date,
+    )
+    triage_path = triage_input_path or default_risk_event_candidate_triage_csv_path(
+        processed_dir,
+        precheck_date,
+    )
+    selected_buckets = tuple(_parse_csv_items(triage_buckets))
+    report_path = output_path or (
+        PROJECT_ROOT
+        / "outputs"
+        / "reports"
+        / f"risk_event_prereview_triaged_openai_{precheck_date.isoformat()}.md"
+    )
+
+    try:
+        candidates = load_official_policy_candidates_csv(official_candidates_path)
+        selected_ids = set(
+            load_triaged_candidate_ids(triage_path, buckets=selected_buckets)
+        )
+    except (OSError, ValueError) as exc:
+        console.print(f"[red]高优先级官方候选输入无法读取或校验失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+    candidates_by_id = {candidate.candidate_id: candidate for candidate in candidates}
+    selected_candidates = tuple(
+        candidates_by_id[candidate_id]
+        for candidate_id in selected_ids
+        if candidate_id in candidates_by_id
+    )
+    missing_ids = sorted(selected_ids - set(candidates_by_id))
+    if missing_ids:
+        console.print(
+            "[yellow]triage CSV 中有候选未在官方候选 CSV 找到："
+            f"{len(missing_ids)} 条；已跳过。[/yellow]"
+        )
+
+    report = run_openai_risk_event_prereview_for_official_candidates(
+        selected_candidates,
+        api_key=api_key,
+        data_sources=load_data_sources(data_sources_path),
+        risk_events=load_risk_events(risk_events_path),
+        input_path=triage_path,
+        as_of=precheck_date,
+        model=model,
+        reasoning_effort=reasoning_effort,
+        timeout_seconds=timeout_seconds,
+        http_client=openai_http_client,
+        openai_cache_dir=openai_cache_dir,
+        openai_cache_ttl_seconds=openai_cache_ttl_hours * 3600,
+        max_candidates=max_candidates,
+    )
+    write_risk_event_prereview_import_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(
+        f"[{status_style}]高优先级官方候选 OpenAI 预审状态："
+        f"{report.status}[/{status_style}]"
+    )
+    console.print(f"报告：{report_path}")
+    console.print(f"官方候选 CSV：{official_candidates_path}")
+    console.print(f"Triage CSV：{triage_path}")
+    console.print(f"Triage buckets：{', '.join(selected_buckets)}")
+    console.print(
+        f"送入 OpenAI 候选：{len(selected_candidates)}；"
+        f"待复核队列：{report.record_count}；"
+        f"L2/L3 候选：{report.high_level_candidate_count}"
+    )
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+    written_path = write_risk_event_prereview_queue(report, queue_path)
+    console.print(f"预审待复核队列：{written_path}")
+    console.print("LLM 风险等级仅作为 pending_review 建议，未写入正式风险事件或仓位闸门。")
+
+
+@risk_events_app.command("apply-llm-formal-assessment")
+def apply_llm_formal_assessment_command(
+    queue_path: Annotated[
+        Path,
+        typer.Option(help="风险事件 OpenAI 预审队列 JSON 输入路径。"),
+    ] = DEFAULT_RISK_EVENT_PREREVIEW_QUEUE_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="写入正式风险事件 occurrence YAML 的目录。"),
+    ] = DEFAULT_RISK_EVENT_OCCURRENCES_PATH,
+    risk_events_path: Annotated[
+        Path,
+        typer.Option(help="风险事件配置路径，用于检查 matched_risk_ids。"),
+    ] = DEFAULT_RISK_EVENTS_CONFIG_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="正式评估日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown LLM 正式评估导入报告输出路径。"),
+    ] = None,
+    validation_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 风险事件发生记录校验报告输出路径。"),
+    ] = None,
+    min_confidence: Annotated[
+        float,
+        typer.Option(help="低于该 confidence 的 LLM 预审记录不写入正式 occurrence。"),
+    ] = 0.0,
+    next_review_days: Annotated[
+        int,
+        typer.Option(help="LLM formal assessment 的下次复核间隔天数。"),
+    ] = 1,
+    include_attestation: Annotated[
+        bool,
+        typer.Option(help="同时写入 LLM formal attestation。"),
+    ] = True,
+    overwrite: Annotated[
+        bool,
+        typer.Option(help="允许覆盖同名 LLM formal occurrence/attestation YAML。"),
+    ] = False,
+) -> None:
+    """把 LLM 预审结果作为正式风险评估输入写入 occurrence/attestation。"""
+    assessment_date = _parse_date(as_of) if as_of else date.today()
+    if min_confidence < 0 or min_confidence > 1:
+        raise typer.BadParameter("min_confidence 必须在 0 到 1 之间。")
+    if next_review_days < 0:
+        raise typer.BadParameter("next_review_days 不能为负数。")
+    report_path = output_path or default_llm_formal_assessment_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        assessment_date,
+    )
+    validation_output = validation_report_path or default_risk_event_occurrence_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        assessment_date,
+    )
+    try:
+        report = build_llm_formal_assessment_report(
+            queue_path,
+            as_of=assessment_date,
+            risk_events=load_risk_events(risk_events_path),
+            include_attestation=include_attestation,
+            next_review_days=next_review_days,
+            min_confidence=min_confidence,
+        )
+        write_llm_formal_assessment_report(report, report_path)
+    except (OSError, ValueError) as exc:
+        console.print(f"[red]LLM 正式评估输入无法读取或校验失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
+    console.print(f"[{status_style}]LLM 正式风险评估状态：{report.status}[/{status_style}]")
+    console.print(f"报告：{report_path}")
+    console.print(f"输入队列：{queue_path}")
+    console.print(
+        f"预审记录：{report.record_count}；写入 occurrence：{report.occurrence_count}；"
+        f"active={report.active_occurrence_count}；watch={report.watch_occurrence_count}"
+    )
+    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if not report.passed:
+        raise typer.Exit(code=1)
+
+    try:
+        written_paths = write_llm_formal_assessment_outputs(
+            report,
+            output_dir,
+            overwrite=overwrite,
+        )
+    except FileExistsError as exc:
+        console.print(f"[red]{exc}[/red]")
+        console.print("如确认要更新同名 LLM formal 记录，请显式传入 --overwrite。")
+        raise typer.Exit(code=1) from exc
+
+    validation_report = validate_risk_event_occurrence_store(
+        store=load_risk_event_occurrence_store(output_dir),
+        risk_events=load_risk_events(risk_events_path),
+        as_of=assessment_date,
+    )
+    review_report = build_risk_event_occurrence_review_report(validation_report)
+    write_risk_event_occurrence_review_report(review_report, validation_output)
+    validation_style = (
+        "green"
+        if validation_report.status == "PASS"
+        else "yellow"
+        if validation_report.passed
+        else "red"
+    )
+    console.print(f"写入 YAML：{len(written_paths)} 个文件 -> {output_dir}")
+    console.print(
+        f"[{validation_style}]风险事件发生记录校验状态："
+        f"{validation_report.status}[/{validation_style}]"
+    )
+    console.print(f"校验报告：{validation_output}")
+    console.print("LLM formal assessment 已作为正式评估输入，但不会被标记为人工复核。")
+    if not validation_report.passed:
+        raise typer.Exit(code=1)
+
+
 @risk_events_app.command("precheck-openai")
 def precheck_risk_events_with_openai_command(
     input_path: Annotated[
@@ -5958,10 +6335,20 @@ def precheck_risk_events_with_openai_command(
         str,
         typer.Option(help="OpenAI Responses API HTTP 客户端：requests 或 urllib。"),
     ] = DEFAULT_OPENAI_HTTP_CLIENT,
+    openai_cache_dir: Annotated[
+        Path,
+        typer.Option(help="OpenAI 请求/响应本地缓存与审计归档目录。"),
+    ] = DEFAULT_OPENAI_REQUEST_CACHE_PATH,
+    openai_cache_ttl_hours: Annotated[
+        float,
+        typer.Option(help="完全相同 OpenAI 请求的本地缓存复用时长，单位小时。"),
+    ] = DEFAULT_OPENAI_REQUEST_CACHE_TTL_SECONDS / 3600,
 ) -> None:
     """调用 OpenAI API 整理风险事件候选，并写入人工复核队列。"""
     if timeout_seconds <= 0:
         raise typer.BadParameter("OpenAI 请求超时秒数必须为正数。")
+    if openai_cache_ttl_hours <= 0:
+        raise typer.BadParameter("OpenAI 请求缓存 TTL 小时数必须为正数。")
     precheck_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_risk_event_openai_prereview_report_path(
         PROJECT_ROOT / "outputs" / "reports",
@@ -5984,6 +6371,8 @@ def precheck_risk_events_with_openai_command(
         reasoning_effort=reasoning_effort,
         timeout_seconds=timeout_seconds,
         http_client=openai_http_client,
+        openai_cache_dir=openai_cache_dir,
+        openai_cache_ttl_seconds=openai_cache_ttl_hours * 3600,
     )
     write_risk_event_prereview_import_report(report, report_path)
 
@@ -8392,6 +8781,14 @@ def score_daily(
         str,
         typer.Option(help="日报前风险事件 OpenAI 预审 HTTP 客户端：requests 或 urllib。"),
     ] = DEFAULT_OPENAI_HTTP_CLIENT,
+    openai_cache_dir: Annotated[
+        Path,
+        typer.Option(help="日报前 OpenAI 请求/响应本地缓存与审计归档目录。"),
+    ] = DEFAULT_OPENAI_REQUEST_CACHE_PATH,
+    openai_cache_ttl_hours: Annotated[
+        float,
+        typer.Option(help="完全相同日报前 OpenAI 请求的本地缓存复用时长，单位小时。"),
+    ] = DEFAULT_OPENAI_REQUEST_CACHE_TTL_SECONDS / 3600,
     catalyst_calendar_path: Annotated[
         Path,
         typer.Option(help="未来催化剂日历 YAML 路径，用于日报告警摘要。"),
@@ -8769,6 +9166,8 @@ def score_daily(
             raise typer.BadParameter("OpenAI 风险事件预审候选上限不能为负数。")
         if openai_timeout_seconds <= 0:
             raise typer.BadParameter("OpenAI 风险事件预审超时秒数必须为正数。")
+        if openai_cache_ttl_hours <= 0:
+            raise typer.BadParameter("OpenAI 请求缓存 TTL 小时数必须为正数。")
         if not os.getenv(openai_api_key_env, ""):
             console.print("[red]缺少 OpenAI API key，已停止日报前风险事件预审。[/red]")
             console.print(f"需要环境变量：{openai_api_key_env}")
@@ -8819,6 +9218,8 @@ def score_daily(
                 reasoning_effort=openai_reasoning_effort,
                 timeout_seconds=openai_timeout_seconds,
                 http_client=openai_http_client,
+                openai_cache_dir=openai_cache_dir,
+                openai_cache_ttl_seconds=openai_cache_ttl_hours * 3600,
                 max_candidates=risk_event_openai_precheck_max_candidates,
             )
         )
@@ -9097,6 +9498,8 @@ def score_daily(
                 reasoning_effort=openai_reasoning_effort,
                 timeout_seconds=openai_timeout_seconds,
                 http_client=openai_http_client,
+                cache_dir=openai_cache_dir,
+                cache_ttl_hours=openai_cache_ttl_hours,
                 max_candidates=risk_event_openai_precheck_max_candidates,
             )
             if risk_event_openai_precheck
@@ -9188,6 +9591,8 @@ def _risk_event_openai_precheck_daily_section(
     reasoning_effort: str,
     timeout_seconds: float,
     http_client: str,
+    cache_dir: Path,
+    cache_ttl_hours: float,
     max_candidates: int,
 ) -> str:
     return "\n".join(
@@ -9202,6 +9607,12 @@ def _risk_event_openai_precheck_daily_section(
             f"- reasoning.effort：{reasoning_effort}",
             f"- 请求读超时：{timeout_seconds:g} 秒",
             f"- HTTP client：{http_client}",
+            f"- OpenAI 请求缓存目录：`{cache_dir}`",
+            f"- OpenAI 请求缓存 TTL：{cache_ttl_hours:g} 小时",
+            f"- OpenAI 请求缓存命中：HIT={risk_event_prereview_report.openai_cache_hit_count} / "
+            f"MISS={risk_event_prereview_report.openai_cache_miss_count} / "
+            f"EXPIRED={risk_event_prereview_report.openai_cache_expired_count} / "
+            f"DISABLED={risk_event_prereview_report.openai_cache_disabled_count}",
             f"- 本次候选上限：{max_candidates}",
             f"- LLM claim 数：{risk_event_prereview_report.row_count}",
             f"- 待人工复核队列记录数：{risk_event_prereview_report.record_count}",

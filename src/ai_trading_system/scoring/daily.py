@@ -55,6 +55,8 @@ SOURCE_TYPE_LABELS = {
     "placeholder": "占位输入",
     "manual_input": "手工/审计输入",
     "partial_manual_input": "部分手工/审计输入",
+    "llm_formal_assessment": "LLM 正式评估",
+    "partial_llm_formal_assessment": "部分 LLM 正式评估",
     "derived": "派生结果",
 }
 
@@ -1267,12 +1269,22 @@ def _score_policy_geopolitics_module(
     reason = component.reason
     if not eligible_active_items:
         if has_current_review_attestation:
-            source_type = "manual_input"
-            reason = (
-                "已完成覆盖评估日且未过期的风险事件复核声明；未发现可进入评分的 "
-                "active 政策或地缘风险事件发生记录。该声明只代表已检查的来源范围，"
-                "不是自动风险消除证明。"
-            )
+            if _has_current_llm_formal_assessment(
+                risk_event_occurrence_review_report
+            ):
+                source_type = "llm_formal_assessment"
+                reason = (
+                    "已采用覆盖评估日的 LLM formal assessment；未发现可进入评分的 "
+                    "active 政策或地缘风险事件发生记录。该声明只代表本次 LLM 检查的"
+                    "来源范围，不是人工全量风险消除证明。"
+                )
+            else:
+                source_type = "manual_input"
+                reason = (
+                    "已完成覆盖评估日且未过期的风险事件复核声明；未发现可进入评分的 "
+                    "active 政策或地缘风险事件发生记录。该声明只代表已检查的来源范围，"
+                    "不是自动风险消除证明。"
+                )
         else:
             source_type = "insufficient_data"
             reason = (
@@ -1281,15 +1293,30 @@ def _score_policy_geopolitics_module(
                 "本模块使用中性分。"
             )
     elif source_type == "hard_data":
-        source_type = "manual_input"
-        reason = (
-            f"已评估 {len(eligible_active_items)} 个经审计且可评分的 active 风险事件发生记录。"
-        )
+        if _items_include_llm_formal_assessment(eligible_active_items):
+            source_type = "llm_formal_assessment"
+            reason = (
+                f"已采用 {len(eligible_active_items)} 个 LLM formal assessment "
+                "确认且可评分的 active 风险事件发生记录。"
+            )
+        else:
+            source_type = "manual_input"
+            reason = (
+                f"已评估 {len(eligible_active_items)} 个经审计且可评分的 active 风险事件发生记录。"
+            )
     elif source_type == "partial_hard_data":
-        source_type = "partial_manual_input"
-        reason = (
-            f"已部分评估 {len(eligible_active_items)} 个经审计且可评分的 active 风险事件发生记录。"
-        )
+        if _items_include_llm_formal_assessment(eligible_active_items):
+            source_type = "partial_llm_formal_assessment"
+            reason = (
+                f"已部分采用 {len(eligible_active_items)} 个 LLM formal assessment "
+                "确认且可评分的 active 风险事件发生记录。"
+            )
+        else:
+            source_type = "partial_manual_input"
+            reason = (
+                f"已部分评估 {len(eligible_active_items)} 个经审计且可评分的 "
+                "active 风险事件发生记录。"
+            )
     return DailyScoreComponent(
         name=component.name,
         score=component.score,
@@ -2062,6 +2089,10 @@ def _source_type_confidence(source_type: str, coverage: float) -> float:
         return _clamp(coverage * 0.75, 0.0, 0.75)
     if source_type == "partial_manual_input":
         return _clamp(coverage * 0.60, 0.0, 0.60)
+    if source_type == "llm_formal_assessment":
+        return _clamp(coverage * 0.55, 0.0, 0.55)
+    if source_type == "partial_llm_formal_assessment":
+        return _clamp(coverage * 0.45, 0.0, 0.45)
     if source_type == "insufficient_data":
         return 0.35
     if source_type == "placeholder":
@@ -2069,6 +2100,24 @@ def _source_type_confidence(source_type: str, coverage: float) -> float:
     if source_type == "derived":
         return 1.0
     return _clamp(coverage * 0.50, 0.0, 0.50)
+
+
+def _has_current_llm_formal_assessment(
+    report: RiskEventOccurrenceReviewReport,
+) -> bool:
+    return any(
+        any(
+            source.source_type == "llm_extracted"
+            for source in loaded.attestation.checked_sources
+        )
+        for loaded in report.validation_report.current_review_attestations
+    )
+
+
+def _items_include_llm_formal_assessment(
+    items: tuple[Any, ...],
+) -> bool:
+    return any("llm_extracted" in item.source_types for item in items)
 
 
 def _build_confidence_assessment(

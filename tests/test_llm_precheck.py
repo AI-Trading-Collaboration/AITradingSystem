@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Mapping
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -211,6 +211,162 @@ def test_llm_claim_precheck_uses_requests_client_by_default(
     assert calls[0]["payload"]["reasoning"] == {"effort": DEFAULT_OPENAI_REASONING_EFFORT}
     assert calls[0]["headers"]["X-Client-Request-Id"].startswith("aits-llm-precheck-")
     assert report.records[0].client_request_id == calls[0]["headers"]["X-Client-Request-Id"]
+
+
+def test_openai_claim_precheck_reuses_recent_request_cache(tmp_path: Path) -> None:
+    packet = _packet(content_text="Official release says export controls changed.")
+    cache_dir = tmp_path / "openai_cache"
+    calls: list[str] = []
+
+    def fake_post(
+        _url: str,
+        headers: Mapping[str, str],
+        _payload: Mapping[str, Any],
+        _timeout_seconds: float,
+    ) -> OpenAIJsonResponse:
+        calls.append(headers["X-Client-Request-Id"])
+        return _openai_response(request_id=headers["X-Client-Request-Id"])
+
+    data_sources = DataSourcesConfig(
+        sources=[
+            _source(
+                source_id="sec_company_facts",
+                source_type="primary_source",
+                external_llm_allowed=True,
+                max_content_sent_level="full_text",
+                cache_allowed=True,
+            )
+        ]
+    )
+    first_time = datetime(2026, 5, 4, 12, tzinfo=UTC)
+
+    first_report = run_openai_claim_precheck(
+        packet,
+        api_key="sk-test",
+        data_sources=data_sources,
+        input_path=tmp_path / "input.yaml",
+        http_post_json=fake_post,
+        openai_cache_dir=cache_dir,
+        generated_at=first_time,
+    )
+    second_report = run_openai_claim_precheck(
+        packet,
+        api_key="sk-test",
+        data_sources=data_sources,
+        input_path=tmp_path / "input.yaml",
+        http_post_json=fake_post,
+        openai_cache_dir=cache_dir,
+        generated_at=first_time + timedelta(hours=1),
+    )
+
+    assert len(calls) == 1
+    assert first_report.records[0].cache_status == "MISS"
+    assert first_report.openai_cache_write_count == 1
+    assert second_report.records[0].cache_status == "HIT"
+    assert second_report.openai_cache_hit_count == 1
+    assert second_report.records[0].request_id == calls[0]
+    cache_text = Path(first_report.records[0].cache_path).read_text(encoding="utf-8")
+    cache_payload = json.loads(cache_text)
+    assert cache_payload["provider"] == "openai"
+    assert cache_payload["api_family"] == "responses"
+    assert cache_payload["request"]["headers"]["Authorization"] == "Bearer ***"
+    assert "sk-test" not in cache_text
+    assert list((cache_dir / "archive" / "openai" / "responses" / "2026-05-04").glob("*.json"))
+
+
+def test_openai_claim_precheck_refreshes_expired_request_cache(tmp_path: Path) -> None:
+    packet = _packet(content_text="Official release says export controls changed.")
+    cache_dir = tmp_path / "openai_cache"
+    calls: list[str] = []
+
+    def fake_post(
+        _url: str,
+        headers: Mapping[str, str],
+        _payload: Mapping[str, Any],
+        _timeout_seconds: float,
+    ) -> OpenAIJsonResponse:
+        calls.append(headers["X-Client-Request-Id"])
+        return _openai_response(request_id=headers["X-Client-Request-Id"])
+
+    data_sources = DataSourcesConfig(
+        sources=[
+            _source(
+                source_id="sec_company_facts",
+                source_type="primary_source",
+                external_llm_allowed=True,
+                max_content_sent_level="full_text",
+                cache_allowed=True,
+            )
+        ]
+    )
+    first_time = datetime(2026, 5, 4, 12, tzinfo=UTC)
+
+    run_openai_claim_precheck(
+        packet,
+        api_key="sk-test",
+        data_sources=data_sources,
+        input_path=tmp_path / "input.yaml",
+        http_post_json=fake_post,
+        openai_cache_dir=cache_dir,
+        openai_cache_ttl_seconds=3600,
+        generated_at=first_time,
+    )
+    expired_report = run_openai_claim_precheck(
+        packet,
+        api_key="sk-test",
+        data_sources=data_sources,
+        input_path=tmp_path / "input.yaml",
+        http_post_json=fake_post,
+        openai_cache_dir=cache_dir,
+        openai_cache_ttl_seconds=3600,
+        generated_at=first_time + timedelta(hours=2),
+    )
+
+    assert len(calls) == 2
+    assert expired_report.records[0].cache_status == "EXPIRED"
+    assert expired_report.openai_cache_expired_count == 1
+    assert expired_report.openai_cache_write_count == 1
+
+
+def test_openai_claim_precheck_fails_closed_when_cache_not_allowed(
+    tmp_path: Path,
+) -> None:
+    packet = _packet(content_text="Official release says export controls changed.")
+    called = False
+
+    def fake_post(
+        _url: str,
+        _headers: Mapping[str, str],
+        _payload: Mapping[str, Any],
+        _timeout_seconds: float,
+    ) -> OpenAIJsonResponse:
+        nonlocal called
+        called = True
+        return _openai_response()
+
+    report = run_openai_claim_precheck(
+        packet,
+        api_key="sk-test",
+        data_sources=DataSourcesConfig(
+            sources=[
+                _source(
+                    source_id="sec_company_facts",
+                    source_type="primary_source",
+                    external_llm_allowed=True,
+                    max_content_sent_level="full_text",
+                    cache_allowed=False,
+                )
+            ]
+        ),
+        input_path=tmp_path / "input.yaml",
+        http_post_json=fake_post,
+        openai_cache_dir=tmp_path / "openai_cache",
+        generated_at=datetime(2026, 5, 4, tzinfo=UTC),
+    )
+
+    assert called is False
+    assert report.status == "FAIL"
+    assert "llm_precheck_cache_permission_denied" in {issue.code for issue in report.issues}
 
 
 def test_llm_claim_precheck_writes_pending_review_queue_without_source_text(
@@ -480,6 +636,7 @@ def _source(
     source_type: str,
     external_llm_allowed: bool,
     max_content_sent_level: str,
+    cache_allowed: bool = False,
 ) -> DataSourceConfig:
     return DataSourceConfig(
         source_id=source_id,
@@ -504,7 +661,7 @@ def _source(
             license_scope="test_scope",
             personal_use_only=True,
             external_llm_allowed=external_llm_allowed,
-            cache_allowed=False,
+            cache_allowed=cache_allowed,
             redistribution_allowed=False,
             max_content_sent_level=max_content_sent_level,
             approval_ref="owner_test_approval" if external_llm_allowed else "not_approved",

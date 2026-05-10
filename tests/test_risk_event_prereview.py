@@ -26,9 +26,18 @@ from ai_trading_system.llm_precheck import (
     LlmClaimPrecheckInput,
     OpenAIJsonResponse,
 )
-from ai_trading_system.official_policy_sources import OfficialPolicyCandidate
+from ai_trading_system.official_policy_sources import (
+    OfficialPolicyCandidate,
+    OfficialPolicySourceFetchReport,
+    write_official_policy_candidates_csv,
+)
+from ai_trading_system.risk_event_candidate_triage import (
+    triage_official_policy_candidates,
+    write_risk_event_candidate_triage_csv,
+)
 from ai_trading_system.risk_event_prereview import (
     OPENAI_RISK_EVENT_PREREVIEW_SCHEMA,
+    RiskEventPreReviewImportReport,
     import_risk_event_prereview_csv,
     render_risk_event_prereview_import_report,
     run_openai_risk_event_prereview,
@@ -438,6 +447,89 @@ def test_official_candidates_irrelevant_output_does_not_add_review_queue(
     assert report.record_count == 0
     assert report.pending_review_count == 0
     assert payload["record_count"] == 0
+
+
+def test_precheck_triaged_official_candidates_cli_filters_high_priority_bucket(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    candidate_path = tmp_path / "official_policy_source_candidates_2026-05-10.csv"
+    triage_path = tmp_path / "official_policy_candidate_triage_2026-05-10.csv"
+    report_path = tmp_path / "risk_event_prereview_triaged_openai_2026-05-10.md"
+    queue_path = tmp_path / "risk_event_prereview_queue.json"
+    high_candidate = _official_candidate(tmp_path)
+    low_candidate = replace(
+        high_candidate,
+        candidate_id="official:ofac:bank",
+        source_id="official_ofac_sdn_xml",
+        provider="OFAC Sanctions List Service",
+        source_name="OFAC Sanctions List Service",
+        source_title="VTB BANK PJSC",
+        matched_topics=("sanctions", "russia_geopolitics"),
+        matched_risk_ids=("ai_chip_export_control_upgrade",),
+        affected_tickers=("NVDA", "AMD"),
+        affected_nodes=("export_controls",),
+    )
+    official_report = OfficialPolicySourceFetchReport(
+        as_of=datetime(2026, 5, 10, tzinfo=UTC).date(),
+        since=datetime(2026, 5, 7, tzinfo=UTC).date(),
+        generated_at=datetime(2026, 5, 10, tzinfo=UTC),
+        raw_dir=tmp_path / "raw",
+        processed_dir=tmp_path,
+        payloads=(),
+        candidates=(high_candidate, low_candidate),
+    )
+    write_official_policy_candidates_csv(official_report, candidate_path)
+    triage_report = triage_official_policy_candidates(
+        candidate_path,
+        as_of=datetime(2026, 5, 10, tzinfo=UTC).date(),
+    )
+    write_risk_event_candidate_triage_csv(triage_report, triage_path)
+    captured_candidate_ids: list[str] = []
+
+    def fake_run(
+        candidates: tuple[OfficialPolicyCandidate, ...],
+        **kwargs: Any,
+    ) -> RiskEventPreReviewImportReport:
+        captured_candidate_ids.extend(candidate.candidate_id for candidate in candidates)
+        return RiskEventPreReviewImportReport(
+            input_path=Path(kwargs["input_path"]),
+            row_count=len(candidates),
+            checksum_sha256="a" * 64,
+            records=(),
+            source_kind="openai_live",
+            issues=(),
+        )
+
+    monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
+    monkeypatch.setattr(
+        "ai_trading_system.cli.run_openai_risk_event_prereview_for_official_candidates",
+        fake_run,
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "risk-events",
+            "precheck-triaged-official-candidates",
+            "--candidate-input-path",
+            str(candidate_path),
+            "--triage-input-path",
+            str(triage_path),
+            "--queue-path",
+            str(queue_path),
+            "--output-path",
+            str(report_path),
+            "--as-of",
+            "2026-05-10",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured_candidate_ids == [high_candidate.candidate_id]
+    assert "高优先级官方候选 OpenAI 预审状态：PASS" in result.output
+    assert report_path.exists()
+    assert queue_path.exists()
 
 
 def test_official_candidates_auto_precheck_reports_openai_timeout(
