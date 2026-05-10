@@ -91,6 +91,34 @@ def test_replay_day_filters_future_inputs_and_uses_isolated_commands(
     assert risk_occurrence_record.included_count == 1
     assert risk_occurrence_record.excluded_count == 2
 
+    replay_thesis_dir = replay.paths.input_root / "data" / "external" / "trade_theses"
+    assert sorted(path.name for path in replay_thesis_dir.glob("*.yaml")) == [
+        "visible_amd_thesis.yaml"
+    ]
+    thesis_record = next(
+        record for record in replay.input_records if record.artifact_id == "trade_theses"
+    )
+    assert thesis_record.status == "PASS_WITH_EXCLUSIONS"
+    assert thesis_record.included_count == 1
+    assert thesis_record.excluded_count == 1
+
+    replay_trades_dir = replay.paths.input_root / "data" / "external" / "trades"
+    assert sorted(path.name for path in replay_trades_dir.glob("*.yaml")) == [
+        "visible_amd_trade.yaml"
+    ]
+    visible_trade_text = (replay_trades_dir / "visible_amd_trade.yaml").read_text(
+        encoding="utf-8"
+    )
+    assert "closed_at: null" in visible_trade_text
+    assert "exit_price: null" in visible_trade_text
+    assert "2026-05-10" not in visible_trade_text
+    trade_record = next(
+        record for record in replay.input_records if record.artifact_id == "trade_records"
+    )
+    assert trade_record.status == "PASS_WITH_EXCLUSIONS"
+    assert trade_record.included_count == 1
+    assert trade_record.excluded_count == 1
+
     seeded_scores = replay.paths.data_processed_dir / "scores_daily.csv"
     score_dates = {row["as_of"] for row in _read_csv(seeded_scores)}
     assert score_dates == {"2026-05-07"}
@@ -100,6 +128,10 @@ def test_replay_day_filters_future_inputs_and_uses_isolated_commands(
     assert str(replay_valuation_dir) in score_command
     assert "--risk-event-occurrences-path" in score_command
     assert str(replay_risk_occurrence_dir) in score_command
+    assert "--thesis-path" in score_command
+    assert str(replay_thesis_dir) in score_command
+    assert "--trades-path" in score_command
+    assert str(replay_trades_dir) in score_command
     assert "--prediction-production-effect" in score_command
     assert "none" in score_command
 
@@ -469,6 +501,38 @@ def _write_replay_fixture(project_root: Path) -> None:
         encoding="utf-8",
     )
 
+    thesis_dir = project_root / "data" / "external" / "trade_theses"
+    thesis_dir.mkdir(parents=True)
+    _write_trade_thesis(
+        thesis_dir / "visible_amd_thesis.yaml",
+        thesis_id="visible_amd_thesis",
+        created_at="2026-05-07",
+        updated_at="2026-05-08",
+    )
+    _write_trade_thesis(
+        thesis_dir / "future_amd_thesis.yaml",
+        thesis_id="future_amd_thesis",
+        created_at="2026-05-10",
+        updated_at="2026-05-10",
+    )
+
+    trades_dir = project_root / "data" / "external" / "trades"
+    trades_dir.mkdir(parents=True)
+    _write_trade_record(
+        trades_dir / "visible_amd_trade.yaml",
+        trade_id="visible_amd_trade",
+        recorded_at="2026-05-07",
+        opened_at="2026-05-07",
+        closed_at="2026-05-10",
+    )
+    _write_trade_record(
+        trades_dir / "future_amd_trade.yaml",
+        trade_id="future_amd_trade",
+        recorded_at="2026-05-10",
+        opened_at="2026-05-10",
+        closed_at=None,
+    )
+
     processed = project_root / "data" / "processed"
     _write_csv(
         processed / "sec_fundamentals_2026-05-08.csv",
@@ -581,6 +645,87 @@ def _write_risk_occurrence(
                 f"    captured_at: '{captured_at}'",
                 f"    published_at: '{captured_at}'",
                 "summary: 测试风险事件。",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_trade_thesis(
+    path: Path,
+    *,
+    thesis_id: str,
+    created_at: str,
+    updated_at: str,
+) -> None:
+    path.write_text(
+        "\n".join(
+            [
+                f"thesis_id: {thesis_id}",
+                "ticker: AMD",
+                "direction: long",
+                f"created_at: '{created_at}'",
+                "time_horizon: medium",
+                "position_scope: core_ai_bucket",
+                "entry_reason:",
+                "  - 测试 replay thesis 可见性过滤。",
+                "ai_chain_nodes:",
+                "  - gpu_asic_demand",
+                "validation_metrics:",
+                "  - metric_id: data_center_gpu_growth",
+                "    description: 测试指标。",
+                "    evidence_source: manual_review",
+                "    expected_direction: improve",
+                "    latest_status: pending",
+                f"    updated_at: '{updated_at}'",
+                "falsification_conditions:",
+                "  - condition_id: demand_breaks",
+                "    description: 测试证伪条件。",
+                "    severity: high",
+                "    triggered: false",
+                "risk_events:",
+                "  - risk_id: ai_chip_export_control_upgrade",
+                "    level: L2",
+                "    description: 测试风险事件。",
+                "    action: review_if_active",
+                "    active: false",
+                f"    updated_at: '{updated_at}'",
+                "review_frequency: weekly",
+                "status: active",
+                f"status_updated_at: '{updated_at}'",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_trade_record(
+    path: Path,
+    *,
+    trade_id: str,
+    recorded_at: str,
+    opened_at: str,
+    closed_at: str | None,
+) -> None:
+    close_lines = (
+        [f"closed_at: '{closed_at}'", "exit_price: 110.0"]
+        if closed_at is not None
+        else []
+    )
+    path.write_text(
+        "\n".join(
+            [
+                f"trade_id: {trade_id}",
+                "ticker: AMD",
+                "direction: long",
+                f"recorded_at: '{recorded_at}'",
+                f"updated_at: '{closed_at or recorded_at}'",
+                f"opened_at: '{opened_at}'",
+                *close_lines,
+                "thesis_id: visible_amd_thesis",
+                "entry_price: 100.0",
+                "position_size_pct: 0.10",
+                "fees: 0",
             ]
         ),
         encoding="utf-8",

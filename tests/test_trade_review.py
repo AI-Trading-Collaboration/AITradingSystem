@@ -54,6 +54,31 @@ def test_validate_trade_record_store_warns_without_thesis(tmp_path: Path) -> Non
     assert "trade_without_thesis" in {issue.code for issue in report.issues}
 
 
+def test_validate_trade_record_store_warns_without_recorded_at(tmp_path: Path) -> None:
+    trade_path = tmp_path / "trade.yaml"
+    _write_valid_trade(trade_path)
+    text = trade_path.read_text(encoding="utf-8")
+    trade_path.write_text(
+        "\n".join(
+            line
+            for line in text.splitlines()
+            if not line.startswith(("recorded_at:", "updated_at:"))
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    report = validate_trade_record_store(
+        store=load_trade_record_store(trade_path),
+        universe=load_universe(),
+        watchlist=load_watchlist(),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert report.passed is True
+    assert "trade_recorded_at_missing" in {issue.code for issue in report.issues}
+
+
 def test_build_trade_review_report_compares_benchmarks(tmp_path: Path) -> None:
     trade_path = tmp_path / "trade.yaml"
     _write_valid_trade(trade_path)
@@ -160,6 +185,8 @@ def _write_valid_trade(
         f"""trade_id: trade_nvda_2026_04
 ticker: NVDA
 direction: long
+recorded_at: 2026-04-01
+updated_at: 2026-04-15
 opened_at: 2026-04-01
 closed_at: 2026-04-15
 {thesis_line}entry_price: 100.0

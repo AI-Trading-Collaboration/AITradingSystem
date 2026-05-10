@@ -55,7 +55,7 @@ available_time <= visibility_cutoff
 |2. replay-day 接入 dashboard|VALIDATING|cache-only replay 在 `score_daily` 成功后生成 replay-scoped `evidence_dashboard_YYYY-MM-DD.html/json`，所有输入路径指向 replay bundle，不读取生产 canonical 输出。|
 |3. 文档和测试|VALIDATING|README、runbook、system flow 说明入口边界；测试覆盖历史 daily-run 前置阻断、replay dashboard 命令和原最近交易日 replay 验证。|
 |4. OpenAI cache-only row 级可见性过滤|VALIDATING|`replay-day --openai-replay-policy cache-only` 只复用 `request_timestamp/cache_created_at` 可证明不晚于有效 replay cutoff 的 prereview 记录；晚于 cutoff 或缺少可证明时间戳的记录进入排除审计，不调用 live OpenAI。|
-|5. 手工输入 replay 隔离视图|READY|后续把 `trade_theses`、`trades` 等手工输入纳入 replay bundle，按 `created_at/updated_at/status_updated_at/reviewed_at` 等字段过滤；不能只依赖下游校验发现 future manual input。|
+|5. 手工输入 replay 隔离视图|VALIDATING|`replay-day` 生成 `input/data/external/trade_theses` 和 `input/data/external/trades` 过滤视图；`score-daily` 通过 path override 只读取 replay 路径；future thesis/trade 记录进入 input freeze manifest 的排除审计，不再由生产目录或下游校验泄漏到 replay。|
 |6. artifact/row 级通用可见性 schema|READY|后续把更多输入族的 `available_time`、`source_published_at`、`ingested_at` 纳入统一 manifest 或质量报告，不在本阶段一次性改完。|
 
 ## 决策
@@ -65,6 +65,8 @@ available_time <= visibility_cutoff
 - `daily-run` 历史日期阻断不是失败绕行，而是把原本晚到 OpenAI 处的 PIT 错误前移到调度入口。
 - `replay-day` 才是历史复现测试用例的正确入口；它必须继续隔离输出，不改写生产路径。
 - `replay-day --openai-replay-policy cache-only` 可以复用本地历史 OpenAI prereview 缓存，但复用条件是缓存记录的可证明生成/请求时间不晚于有效 `visibility_cutoff`；不能证明时间的缓存记录不得进入严格复现输入。
+- `trade_theses` 在 replay 中按 thesis 及其验证指标、证伪条件、风险事件和状态字段的可见日期整条过滤；任一未来状态会排除该 thesis，而不是让下游校验先读取 production 手工输入。
+- `trades` 在 replay 中必须以交易记录可见时间为边界；缺少可证明记录时间的交易记录不能被当作严格 PIT 输入。未来平仓信息不得进入早于平仓日的 replay。
 
 ## 进展记录
 
@@ -73,3 +75,5 @@ available_time <= visibility_cutoff
 - 2026-05-10：阶段 4 进入 `IN_PROGRESS`。owner 确认 replay 中能复用的历史 OpenAI 请求结果应尽量复用，但必须先增加 row 级可见性过滤和排除审计。
 - 2026-05-10：阶段 4 进入 `VALIDATING`。`replay-day --openai-replay-policy cache-only` 已生成 replay 专用过滤 queue 和过滤报告；真实 `2026-05-08` replay PASS，源 OpenAI 预审队列 5 条均因 2026-05-10 请求时间晚于 cutoff 被排除，dashboard、pipeline health 和 secret scan 均通过。
 - 2026-05-10：调查 `2026-05-08` replay dashboard 的 `final AI position=0` 后确认，直接原因是 `trade_theses` 文件均为 2026-05-10 创建或更新，相对 2026-05-08 严格复现属于未来手工输入，触发 24 个 thesis future-date 错误和 `thesis` position gate 0% 上限。当前行为是正确 fail closed，但 replay 输入冻结还应后续扩展到手工 thesis/trade 输入隔离视图。
+- 2026-05-10：阶段 5 进入 `IN_PROGRESS`。owner 要求 `trade_theses`、`trades` 等手工数据也做好 replay 隔离；本轮实现限定为 cache-only replay 的过滤视图、命令 path override、manifest 审计和原日期复测。
+- 2026-05-10：阶段 5 进入 `VALIDATING`。`replay-day` 已生成手工输入隔离视图并把 `score-daily` 的 `--thesis-path/--trades-path` 指向 replay bundle；真实 `2026-05-08` replay PASS，6 条 2026-05-10 thesis 被排除，最终 AI 仓位由旧 run 的 0%-0% 恢复为估值 gate 约束下的 40%-40%。

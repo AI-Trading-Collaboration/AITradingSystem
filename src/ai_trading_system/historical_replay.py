@@ -70,6 +70,12 @@ from ai_trading_system.risk_events import (
 )
 from ai_trading_system.scoring.daily import default_daily_score_report_path
 from ai_trading_system.secret_hygiene import default_secret_scan_report_path
+from ai_trading_system.thesis import TradeThesisStore, load_trade_thesis_store
+from ai_trading_system.trade_review import (
+    TradeRecord,
+    TradeRecordStore,
+    load_trade_record_store,
+)
 from ai_trading_system.trading_calendar import us_equity_market_session
 from ai_trading_system.valuation import default_valuation_validation_report_path
 from ai_trading_system.valuation_sources import default_fmp_valuation_fetch_report_path
@@ -914,6 +920,22 @@ def _prepare_replay_inputs(
             errors=errors,
         )
     )
+    records.append(
+        _filter_trade_theses(
+            source_path=project_root / "data" / "external" / "trade_theses",
+            replay_dir=paths.input_root / "data" / "external" / "trade_theses",
+            as_of=as_of,
+            errors=errors,
+        )
+    )
+    records.append(
+        _filter_trade_records(
+            source_path=project_root / "data" / "external" / "trades",
+            replay_dir=paths.input_root / "data" / "external" / "trades",
+            as_of=as_of,
+            errors=errors,
+        )
+    )
     records.extend(
         _prepare_openai_replay_cache(
             project_root=project_root,
@@ -1062,10 +1084,14 @@ def _score_daily_command(
         str(paths.data_processed_dir / RISK_EVENT_PREREVIEW_QUEUE_NAME),
         "--risk-event-openai-precheck-report-path",
         str(default_risk_event_openai_prereview_report_path(reports, as_of)),
+        "--thesis-path",
+        str(paths.input_root / "data" / "external" / "trade_theses"),
         "--execution-policy-report-path",
         str(default_execution_policy_report_path(reports, as_of)),
         "--valuation-path",
         str(paths.input_root / "data" / "external" / "valuation_snapshots"),
+        "--trades-path",
+        str(paths.input_root / "data" / "external" / "trades"),
         "--skip-risk-event-openai-precheck",
     ]
     if full_universe:
@@ -1620,6 +1646,220 @@ def _filter_risk_event_occurrences(
             "filtered by occurrence, evidence, review attestation and checked source "
             "dates not later than replay as_of"
         ),
+    )
+
+
+def _filter_trade_theses(
+    *,
+    source_path: Path,
+    replay_dir: Path,
+    as_of: date,
+    errors: list[str],
+) -> ReplayInputRecord:
+    replay_dir.mkdir(parents=True, exist_ok=True)
+    if not source_path.exists():
+        return ReplayInputRecord(
+            artifact_id="trade_theses",
+            artifact_class="manual_input",
+            source_path=str(source_path),
+            replay_path=str(replay_dir),
+            status="MISSING_OPTIONAL",
+            row_count=0,
+            included_count=0,
+            excluded_count=0,
+            sha256=_directory_digest(replay_dir),
+            reason=(
+                "optional trade thesis path missing; replay uses empty isolated "
+                "manual input view"
+            ),
+        )
+
+    source_store = load_trade_thesis_store(source_path)
+    for load_error in source_store.load_errors:
+        errors.append(f"trade_theses YAML 读取失败：{load_error.path}")
+
+    included = 0
+    excluded = 0
+    for loaded in source_store.loaded:
+        if _trade_thesis_visible_as_of(loaded.thesis, as_of):
+            _write_manual_yaml(
+                replay_dir / f"{loaded.thesis.thesis_id}.yaml",
+                loaded.thesis.model_dump(mode="json", exclude_none=False),
+            )
+            included += 1
+        else:
+            excluded += 1
+
+    timestamps = _trade_thesis_timestamps(source_store)
+    return ReplayInputRecord(
+        artifact_id="trade_theses",
+        artifact_class="manual_input",
+        source_path=str(source_path),
+        replay_path=str(replay_dir),
+        status=_manual_input_filter_status(
+            has_load_errors=bool(source_store.load_errors),
+            included_count=included,
+            excluded_count=excluded,
+        ),
+        row_count=len(source_store.loaded),
+        included_count=included,
+        excluded_count=excluded,
+        sha256=_directory_digest(replay_dir),
+        min_timestamp=_iso_or_none(min(timestamps) if timestamps else None),
+        max_timestamp=_iso_or_none(max(timestamps) if timestamps else None),
+        reason=(
+            "filtered by thesis created/status dates and nested metric, condition "
+            "and risk-event update dates not later than replay as_of"
+        ),
+    )
+
+
+def _filter_trade_records(
+    *,
+    source_path: Path,
+    replay_dir: Path,
+    as_of: date,
+    errors: list[str],
+) -> ReplayInputRecord:
+    replay_dir.mkdir(parents=True, exist_ok=True)
+    if not source_path.exists():
+        return ReplayInputRecord(
+            artifact_id="trade_records",
+            artifact_class="manual_input",
+            source_path=str(source_path),
+            replay_path=str(replay_dir),
+            status="MISSING_OPTIONAL",
+            row_count=0,
+            included_count=0,
+            excluded_count=0,
+            sha256=_directory_digest(replay_dir),
+            reason=(
+                "optional trade record path missing; replay uses empty isolated "
+                "manual input view"
+            ),
+        )
+
+    source_store = load_trade_record_store(source_path)
+    for load_error in source_store.load_errors:
+        errors.append(f"trades YAML 读取失败：{load_error.path}")
+
+    included = 0
+    excluded = 0
+    for loaded in source_store.loaded:
+        historical_trade = _trade_record_visible_as_of(loaded.trade, as_of)
+        if historical_trade is None:
+            excluded += 1
+            continue
+        _write_manual_yaml(
+            replay_dir / f"{historical_trade.trade_id}.yaml",
+            historical_trade.model_dump(mode="json", exclude_none=False),
+        )
+        included += 1
+
+    timestamps = _trade_record_timestamps(source_store)
+    return ReplayInputRecord(
+        artifact_id="trade_records",
+        artifact_class="manual_input",
+        source_path=str(source_path),
+        replay_path=str(replay_dir),
+        status=_manual_input_filter_status(
+            has_load_errors=bool(source_store.load_errors),
+            included_count=included,
+            excluded_count=excluded,
+        ),
+        row_count=len(source_store.loaded),
+        included_count=included,
+        excluded_count=excluded,
+        sha256=_directory_digest(replay_dir),
+        min_timestamp=_iso_or_none(min(timestamps) if timestamps else None),
+        max_timestamp=_iso_or_none(max(timestamps) if timestamps else None),
+        reason=(
+            "filtered by trade recorded/open/close/update dates; future close "
+            "details are removed from the replay view"
+        ),
+    )
+
+
+def _trade_thesis_visible_as_of(thesis: Any, as_of: date) -> bool:
+    return all(value <= as_of for value in _trade_thesis_dates(thesis))
+
+
+def _trade_thesis_dates(thesis: Any) -> tuple[date, ...]:
+    values: list[date] = [thesis.created_at]
+    if thesis.status_updated_at is not None:
+        values.append(thesis.status_updated_at)
+    for metric in thesis.validation_metrics:
+        if metric.updated_at is not None:
+            values.append(metric.updated_at)
+    for condition in thesis.falsification_conditions:
+        if condition.triggered_at is not None:
+            values.append(condition.triggered_at)
+    for risk_event in thesis.risk_events:
+        if risk_event.updated_at is not None:
+            values.append(risk_event.updated_at)
+    return tuple(values)
+
+
+def _trade_record_visible_as_of(trade: TradeRecord, as_of: date) -> TradeRecord | None:
+    if trade.recorded_at is None or trade.recorded_at > as_of:
+        return None
+    if trade.opened_at > as_of:
+        return None
+    if trade.closed_at is not None and trade.closed_at > as_of:
+        return trade.model_copy(
+            update={
+                "closed_at": None,
+                "exit_price": None,
+                "updated_at": trade.recorded_at,
+            }
+        )
+    if trade.updated_at is not None and trade.updated_at > as_of:
+        return None
+    return trade
+
+
+def _trade_thesis_timestamps(store: TradeThesisStore) -> list[datetime]:
+    timestamps: list[datetime] = []
+    for loaded in store.loaded:
+        for value in _trade_thesis_dates(loaded.thesis):
+            _append_date_timestamp(timestamps, value)
+    return timestamps
+
+
+def _trade_record_timestamps(store: TradeRecordStore) -> list[datetime]:
+    timestamps: list[datetime] = []
+    for loaded in store.loaded:
+        trade = loaded.trade
+        for value in (
+            trade.recorded_at,
+            trade.updated_at,
+            trade.opened_at,
+            trade.closed_at,
+        ):
+            _append_date_timestamp(timestamps, value)
+    return timestamps
+
+
+def _manual_input_filter_status(
+    *,
+    has_load_errors: bool,
+    included_count: int,
+    excluded_count: int,
+) -> str:
+    if has_load_errors:
+        return "FAIL"
+    if excluded_count:
+        return "PASS_WITH_EXCLUSIONS" if included_count else "PASS_EMPTY"
+    if included_count:
+        return "PASS"
+    return "PASS_EMPTY"
+
+
+def _write_manual_yaml(path: Path, payload: Mapping[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        yaml.safe_dump(payload, allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
     )
 
 

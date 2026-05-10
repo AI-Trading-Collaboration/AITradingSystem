@@ -150,7 +150,7 @@ aits ops replay-day --as-of 2026-05-08 --mode cache-only --openai-replay-policy 
 aits ops replay-window --start 2026-05-01 --end 2026-05-08 --mode cache-only
 ```
 
-`replay-day` 会在 `outputs/replays/YYYY-MM-DD/<run-id>/` 下生成 input freeze manifest、过滤后的 PIT manifest、过滤后的 valuation snapshot 视图、replay-scoped `score-daily` 输出、dashboard、pipeline health、secret hygiene 和 `replay_run.md/json`。默认可见窗口优先读取 production `daily_ops_run_metadata_YYYY-MM-DD.json` 的 `visibility_cutoff`，没有 metadata 时才退回 as-of 当日 UTC 末尾。它会按 as-of 可见窗口排除未来 PIT manifest 行和未来 valuation YAML，并把 `score-daily` 的 features、scores、daily score、alerts、decision snapshot、evidence bundle、prediction ledger、`evidence_dashboard_YYYY-MM-DD.html/json` 等输出全部写入 replay 命名空间；生产 canonical artifacts 不会被改写。打开 `--compare-to-production` 时会额外生成 `diff_vs_production.md/json`，比较本地 production 与 replay 的日报、alerts、dashboard、decision snapshot、trace、features/scores 当日行等 artifact checksum 和行数。OpenAI replay 策略默认为 `disabled`；`--openai-replay-policy cache-only` 会读取历史 `risk_event_prereview_queue.json` 和当日 OpenAI 预审报告，但只把 `request_timestamp/cache_created_at` 或匹配 cache 文件时间可证明不晚于 replay cutoff 的记录写入 replay queue，晚于 cutoff 或缺少可证明时间戳的记录进入排除审计，不调用 live OpenAI。`replay-window` 按 U.S. equity trading day 批量运行单日 cache-only replay，周末和常规整日休市日默认跳过，并在 `outputs/replays/windows/<run-id>/replay_window.md/json` 汇总每个交易日的状态和 diff 状态。
+`replay-day` 会在 `outputs/replays/YYYY-MM-DD/<run-id>/` 下生成 input freeze manifest、过滤后的 PIT manifest、过滤后的 valuation snapshot 视图、过滤后的 `trade_theses` / `trades` 手工输入视图、replay-scoped `score-daily` 输出、dashboard、pipeline health、secret hygiene 和 `replay_run.md/json`。默认可见窗口优先读取 production `daily_ops_run_metadata_YYYY-MM-DD.json` 的 `visibility_cutoff`，没有 metadata 时才退回 as-of 当日 UTC 末尾。它会按 as-of 可见窗口排除未来 PIT manifest 行、未来 valuation YAML、未来 thesis 状态和不可证明可见的交易记录，并把 `score-daily` 的 features、scores、daily score、alerts、decision snapshot、evidence bundle、prediction ledger、`evidence_dashboard_YYYY-MM-DD.html/json` 等输出全部写入 replay 命名空间；生产 canonical artifacts 不会被改写。打开 `--compare-to-production` 时会额外生成 `diff_vs_production.md/json`，比较本地 production 与 replay 的日报、alerts、dashboard、decision snapshot、trace、features/scores 当日行等 artifact checksum 和行数。OpenAI replay 策略默认为 `disabled`；`--openai-replay-policy cache-only` 会读取历史 `risk_event_prereview_queue.json` 和当日 OpenAI 预审报告，但只把 `request_timestamp/cache_created_at` 或匹配 cache 文件时间可证明不晚于 replay cutoff 的记录写入 replay queue，晚于 cutoff 或缺少可证明时间戳的记录进入排除审计，不调用 live OpenAI。`replay-window` 按 U.S. equity trading day 批量运行单日 cache-only replay，周末和常规整日休市日默认跳过，并在 `outputs/replays/windows/<run-id>/replay_window.md/json` 汇总每个交易日的状态和 diff 状态。
 
 构建每日市场特征：
 
@@ -242,7 +242,7 @@ aits thesis validate --as-of 2026-05-02
 aits thesis review --as-of 2026-05-02
 ```
 
-交易 thesis 默认读取 `data/external/trade_theses/*.yaml`，该目录不提交。可参考 `docs/examples/trade_theses/nvda_ai_infra_template.yaml` 复制模板。校验会检查 schema、ticker 是否在观察池、产业链节点是否存在、验证指标和证伪条件是否完整；复核报告会输出原始假设是否仍成立、是否需要人工复核、是否已有证伪条件触发。
+交易 thesis 默认读取 `data/external/trade_theses/*.yaml`，该目录不提交。可参考 `docs/examples/trade_theses/nvda_ai_infra_template.yaml` 复制模板。校验会检查 schema、ticker 是否在观察池、产业链节点是否存在、验证指标和证伪条件是否完整；复核报告会输出原始假设是否仍成立、是否需要人工复核、是否已有证伪条件触发。历史 replay 会把该目录复制成隔离过滤视图，只保留 `created_at`、`status_updated_at`、验证指标 `updated_at`、证伪触发时间和风险事件 `updated_at` 均不晚于 replay as-of 的 thesis。
 
 查看和校验风险事件分级规则：
 
@@ -304,7 +304,7 @@ aits fundamentals merge-tsm-ir-sec-metrics --as-of 2026-05-02
 aits review-trades --as-of 2026-05-02
 ```
 
-交易记录默认读取 `data/external/trades/*.yaml`，该目录不提交。可参考 `docs/examples/trades/nvda_trade_template.yaml` 复制模板。该命令依赖缓存行情数据，会先执行数据质量门禁，再将交易收益与 `SPY`、`QQQ`、`SMH`、`SOXX` 同区间收益对比，辅助区分市场 Beta、AI 主题 Beta 和个股表现。
+交易记录默认读取 `data/external/trades/*.yaml`，该目录不提交。可参考 `docs/examples/trades/nvda_trade_template.yaml` 复制模板。交易记录应包含 `recorded_at` 和可选 `updated_at`，用于证明记录在 PIT replay 时点是否可见；缺少 `recorded_at` 会在交易复盘校验中提示警告，严格 replay 不会把缺少可证明记录时间的交易当作可见输入。该命令依赖缓存行情数据，会先执行数据质量门禁，再将交易收益与 `SPY`、`QQQ`、`SMH`、`SOXX` 同区间收益对比，辅助区分市场 Beta、AI 主题 Beta 和个股表现。
 
 ## 投资边界
 

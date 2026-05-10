@@ -25,6 +25,8 @@ class TradeRecord(BaseModel):
     trade_id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9_.-]+$")
     ticker: str = Field(min_length=1)
     direction: TradeDirection
+    recorded_at: date | None = None
+    updated_at: date | None = None
     opened_at: date
     closed_at: date | None = None
     thesis_id: str | None = None
@@ -241,6 +243,39 @@ def validate_trade_record_store(
                     ticker=trade.ticker,
                     path=loaded.path,
                     message="交易日期晚于评估日期。",
+                )
+            )
+        if trade.recorded_at is None:
+            issues.append(
+                TradeIssue(
+                    severity=TradeIssueSeverity.WARNING,
+                    code="trade_recorded_at_missing",
+                    trade_id=trade.trade_id,
+                    ticker=trade.ticker,
+                    path=loaded.path,
+                    message="交易记录缺少 recorded_at；严格 PIT replay 不能证明该记录何时可见。",
+                )
+            )
+        elif trade.recorded_at > as_of:
+            issues.append(
+                TradeIssue(
+                    severity=TradeIssueSeverity.ERROR,
+                    code="trade_recorded_at_in_future",
+                    trade_id=trade.trade_id,
+                    ticker=trade.ticker,
+                    path=loaded.path,
+                    message="交易记录 recorded_at 晚于评估日期。",
+                )
+            )
+        if trade.updated_at is not None and trade.updated_at > as_of:
+            issues.append(
+                TradeIssue(
+                    severity=TradeIssueSeverity.ERROR,
+                    code="trade_updated_at_in_future",
+                    trade_id=trade.trade_id,
+                    ticker=trade.ticker,
+                    path=loaded.path,
+                    message="交易记录 updated_at 晚于评估日期。",
                 )
             )
         if trade.thesis_id is None:
