@@ -5,36 +5,36 @@ entries:
     reason: ChatGPT 后 AI 产业链核心云与企业软件观察池。
     active_from: 2022-12-01
     active_until:
-    competence_status: in_competence
+    competence_status: watch_only
     node_mapping_valid_from: 2022-12-01
-    thesis_required_from: 2022-12-01
+    thesis_required_from:
     source: initial_ai_after_chatgpt_watchlist
     reviewer: system
-    notes: 与 config/watchlist.yaml 当前活跃观察池保持一致。
+    notes: 观察阶段；用于行业趋势和产业链解释，不作为主动单票交易 thesis 候选。
   - ticker: GOOG
     added_at: 2022-12-01
     removed_at:
     reason: ChatGPT 后 AI 产业链核心云、TPU、模型与搜索商业化观察池。
     active_from: 2022-12-01
     active_until:
-    competence_status: in_competence
+    competence_status: watch_only
     node_mapping_valid_from: 2022-12-01
-    thesis_required_from: 2022-12-01
+    thesis_required_from:
     source: initial_ai_after_chatgpt_watchlist
     reviewer: system
-    notes: 与 config/watchlist.yaml 当前活跃观察池保持一致。
+    notes: 观察阶段；用于行业趋势和产业链解释，不作为主动单票交易 thesis 候选。
   - ticker: TSM
     added_at: 2022-12-01
     removed_at:
     reason: ChatGPT 后 AI 芯片代工、先进制程和封装能力核心观察池。
     active_from: 2022-12-01
     active_until:
-    competence_status: in_competence
+    competence_status: watch_only
     node_mapping_valid_from: 2022-12-01
-    thesis_required_from: 2022-12-01
+    thesis_required_from:
     source: initial_ai_after_chatgpt_watchlist
     reviewer: system
-    notes: 与 config/watchlist.yaml 当前活跃观察池保持一致。
+    notes: 观察阶段；用于行业趋势和产业链解释；进入主动交易前必须重新要求 thesis。
   - ticker: INTC
     added_at: 2022-12-01
     removed_at:
@@ -43,31 +43,31 @@ entries:
     active_until:
     competence_status: watch_only
     node_mapping_valid_from: 2022-12-01
-    thesis_required_from: 2022-12-01
+    thesis_required_from:
     source: initial_ai_after_chatgpt_watchlist
     reviewer: system
-    notes: 能力圈内但执行不确定性高，回测和报告需保留风险限制说明。
+    notes: 观察阶段；能力圈内但执行不确定性高，回测和报告需保留风险限制说明；进入主动交易前必须补齐 thesis。
   - ticker: AMD
     added_at: 2022-12-01
     removed_at:
     reason: ChatGPT 后 AI GPU、CPU 与数据中心竞争格局核心观察池。
     active_from: 2022-12-01
     active_until:
-    competence_status: in_competence
+    competence_status: watch_only
     node_mapping_valid_from: 2022-12-01
-    thesis_required_from: 2022-12-01
+    thesis_required_from:
     source: initial_ai_after_chatgpt_watchlist
     reviewer: system
-    notes: 与 config/watchlist.yaml 当前活跃观察池保持一致。
+    notes: 观察阶段；用于行业趋势和产业链解释；进入主动交易前必须重新要求 thesis。
   - ticker: NVDA
     added_at: 2022-12-01
     removed_at:
     reason: ChatGPT 后 AI GPU、CUDA 生态、推理和数据中心需求核心观察池。
     active_from: 2022-12-01
     active_until:
-    competence_status: in_competence
+    competence_status: watch_only
     node_mapping_valid_from: 2022-12-01
-    thesis_required_from: 2022-12-01
+    thesis_required_from:
     source: initial_ai_after_chatgpt_watchlist
     reviewer: system
-    notes: 与 config/watchlist.yaml 当前活跃观察池保持一致。
+    notes: 观察阶段；用于行业趋势和产业链解释；进入主动交易前必须重新要求 thesis。

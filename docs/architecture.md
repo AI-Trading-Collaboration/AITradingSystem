@@ -95,11 +95,11 @@
 
 重要交易需要记录 thesis，包括买入理由、验证指标、证伪条件、目标周期、仓位理由和风险事件处理规则。
 
-观察池和能力圈配置已落在 `config/watchlist.yaml`。校验命令为 `aits watchlist validate`，用于确保核心个股都在活跃观察池中、每个核心标的都有 AI 产业链节点映射，并且高风险标的必须要求交易 thesis。
+观察池和能力圈配置已落在 `config/watchlist.yaml`。校验命令为 `aits watchlist validate`，用于确保核心个股都在活跃观察池中、每个核心标的都有 AI 产业链节点映射，并区分 `watch_only` 观察阶段和 `active_trade` 主动交易阶段。观察阶段标的用于关注股票趋势分析和产业链节点热度/健康度，不要求主动交易 thesis；主动交易阶段的高风险标的必须要求交易 thesis。
 
 产业链因果图配置已落在 `config/industry_chain.yaml`。校验命令为 `aits industry-chain validate`，用于确保节点 ID 唯一、父节点存在、因果图无环、每个节点有领先指标和相关标的，并且观察池引用的产业链节点都存在。产业链节点在基础版中不直接触发交易动作，只作为信息映射、假设验证和后续基本面/事件评分的结构基础。
 
-交易 thesis 基础版已支持 `data/external/trade_theses/*.yaml`。校验命令为 `aits thesis validate`，复核命令为 `aits thesis review`。当前版本不自动判断 thesis 对错，而是检查结构、观察池引用、产业链节点、验证指标、证伪条件、复核新鲜度和已触发风险，确保主动交易假设可审计、可复盘。
+交易 thesis 基础版已支持 `data/external/trade_theses/*.yaml`。校验命令为 `aits thesis validate`，复核命令为 `aits thesis review`。当前版本不自动判断 thesis 对错，而是检查结构、观察池引用、产业链节点、验证指标、证伪条件、复核新鲜度和已触发风险，确保主动交易假设可审计、可复盘。当当前观察池没有任何活跃标的要求 thesis 时，缺少 `data/external/trade_theses/` 不触发 thesis warning 或 thesis gate；一旦标的切换到 `active_trade` 且要求 thesis，缺少 active thesis 会重新进入复核约束。
 
 风险事件分级基础版已落在 `config/risk_events.yaml`。校验命令为 `aits risk-events validate`，用于确保 L1/L2/L3 等级、AI 仓位折扣、人工复核要求、影响产业链节点、相关标的、建议动作、升级条件和解除条件都可审计。这个配置只代表“需要监控的规则”，不代表风险已经发生。实际发生记录读取 `data/external/risk_event_occurrences/*.yaml`，命令为 `aits risk-events list-occurrences` 和 `aits risk-events validate-occurrences`；日报政策/地缘评分只读取已通过校验的 active 发生记录。保守 source policy 下 `S/A` 级证据可支持普通评分和仓位闸门，`B` 级只支持普通评分，`C/D/X`、`watch` 或 `public_convenience` 单源只能进入报告和人工复核。
 

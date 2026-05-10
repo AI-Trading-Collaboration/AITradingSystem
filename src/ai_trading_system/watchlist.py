@@ -91,8 +91,8 @@ def render_watchlist_validation_report(report: WatchlistValidationReport) -> str
         "",
         "## 活跃观察池",
         "",
-        "| Ticker | 公司 | 类型 | 能力圈分数 | 默认风险 | Thesis | 产业链节点 |",
-        "|---|---|---|---:|---|---|---|",
+        "| Ticker | 公司 | 类型 | 阶段 | 能力圈分数 | 默认风险 | Thesis | 产业链节点 |",
+        "|---|---|---|---|---:|---|---|---|",
     ]
 
     active_items = (item for item in report.items if item.active)
@@ -102,6 +102,7 @@ def render_watchlist_validation_report(report: WatchlistValidationReport) -> str
             f"{item.ticker} | "
             f"{_escape_markdown_table(item.company_name)} | "
             f"{item.instrument_type} | "
+            f"{_decision_stage_label(item.decision_stage)} | "
             f"{item.competence_score:.0f} | "
             f"{_risk_level_label(item.default_risk_level)} | "
             f"{'需要' if item.thesis_required else '不需要'} | "
@@ -208,13 +209,17 @@ def _check_active_item_rules(
                 )
             )
 
-        if item.default_risk_level in {"high", "critical"} and not item.thesis_required:
+        if (
+            item.decision_stage == "active_trade"
+            and item.default_risk_level in {"high", "critical"}
+            and not item.thesis_required
+        ):
             issues.append(
                 WatchlistIssue(
                     severity=WatchlistIssueSeverity.ERROR,
                     code="high_risk_without_thesis",
                     ticker=item.ticker,
-                    message="高风险或极高风险标的必须要求交易 thesis。",
+                    message="主动交易阶段的高风险或极高风险标的必须要求交易 thesis。",
                 )
             )
 
@@ -238,6 +243,13 @@ def _risk_level_label(level: str) -> str:
         "high": "高",
         "critical": "极高",
     }.get(level, level)
+
+
+def _decision_stage_label(stage: str) -> str:
+    return {
+        "watch_only": "仅观察",
+        "active_trade": "主动交易",
+    }.get(stage, stage)
 
 
 def _severity_label(severity: WatchlistIssueSeverity) -> str:

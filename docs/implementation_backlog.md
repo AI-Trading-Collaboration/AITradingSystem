@@ -200,6 +200,7 @@ aits score-daily --as-of 2026-05-01
 - competence_score
 - competence_reason
 - default_risk_level
+- decision_stage
 - thesis_required
 - active
 

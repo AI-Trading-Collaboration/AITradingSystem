@@ -58,6 +58,7 @@ class WatchlistItem(BaseModel):
     competence_score: float = Field(ge=0, le=100)
     competence_reason: str = Field(min_length=1)
     default_risk_level: Literal["low", "medium", "high", "critical"]
+    decision_stage: Literal["watch_only", "active_trade"] = "active_trade"
     thesis_required: bool
     active: bool = True
     notes: str = ""

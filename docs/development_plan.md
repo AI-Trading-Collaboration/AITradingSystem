@@ -213,14 +213,14 @@
 
 ## 观察池与能力圈约定
 
-观察池配置文件为 `config/watchlist.yaml`，用于记录核心个股是否处在能力圈内、映射到哪些 AI 产业链节点、默认风险等级和是否要求交易 thesis。
+观察池配置文件为 `config/watchlist.yaml`，用于记录核心个股是否处在能力圈内、映射到哪些 AI 产业链节点、默认风险等级、使用阶段和是否要求交易 thesis。`watch_only` 标的只进入趋势和产业链观察分析；`active_trade` 标的才按主动交易 thesis 纪律约束。
 
 命令：
 
 - `aits watchlist list`
 - `aits watchlist validate`
 
-校验报告默认写入 `outputs/reports/watchlist_validation_YYYY-MM-DD.md`。核心观察池中的每个个股都必须出现在活跃观察池中，并且必须映射到至少一个 AI 产业链节点。高风险或极高风险标的必须要求 thesis，避免后续报告把高风险单票当成无约束的高置信度输入。
+校验报告默认写入 `outputs/reports/watchlist_validation_YYYY-MM-DD.md`。核心观察池中的每个个股都必须出现在活跃观察池中，并且必须映射到至少一个 AI 产业链节点。主动交易阶段的高风险或极高风险标的必须要求 thesis，避免后续报告把高风险单票当成无约束的高置信度输入；观察阶段高风险标的可以不要求 thesis，但报告只能把它解释为行业趋势和风险观察对象。
 
 ## 阶段 1 回测约定
 

@@ -4054,6 +4054,7 @@ def list_watchlist(
     table.add_column("Ticker")
     table.add_column("公司")
     table.add_column("类型")
+    table.add_column("阶段")
     table.add_column("能力圈")
     table.add_column("风险")
     table.add_column("Thesis")
@@ -4064,6 +4065,7 @@ def list_watchlist(
             item.ticker,
             item.company_name,
             item.instrument_type,
+            _decision_stage_label(item.decision_stage),
             f"{item.competence_score:.0f}",
             _risk_level_label(item.default_risk_level),
             "需要" if item.thesis_required else "不需要",
@@ -10489,6 +10491,13 @@ def _risk_level_label(level: str) -> str:
         "high": "高",
         "critical": "极高",
     }.get(level, level)
+
+
+def _decision_stage_label(stage: str) -> str:
+    return {
+        "watch_only": "仅观察",
+        "active_trade": "主动交易",
+    }.get(stage, stage)
 
 
 def _horizon_label(value: str) -> str:

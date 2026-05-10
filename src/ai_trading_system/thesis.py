@@ -246,6 +246,9 @@ def validate_trade_thesis_store(
     active_watchlist = {item.ticker: item for item in watchlist.items if item.active}
     all_watchlist = {item.ticker: item for item in watchlist.items}
     industry_node_ids = {node.node_id for node in industry_chain.nodes}
+    required_tickers = {
+        item.ticker for item in watchlist.items if item.active and item.thesis_required
+    }
 
     for load_error in store.load_errors:
         issues.append(
@@ -257,7 +260,7 @@ def validate_trade_thesis_store(
             )
         )
 
-    if not store.input_path.exists():
+    if not store.input_path.exists() and required_tickers:
         issues.append(
             ThesisIssue(
                 severity=ThesisIssueSeverity.WARNING,
@@ -266,7 +269,12 @@ def validate_trade_thesis_store(
                 message="交易 thesis 目录或文件不存在；当前没有可复核的交易假设。",
             )
         )
-    elif not store.loaded and not store.load_errors:
+    elif (
+        store.input_path.exists()
+        and not store.loaded
+        and not store.load_errors
+        and required_tickers
+    ):
         issues.append(
             ThesisIssue(
                 severity=ThesisIssueSeverity.WARNING,

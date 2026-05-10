@@ -31,6 +31,8 @@ def test_validate_watchlist_config_passes_default_watchlist() -> None:
     assert report.status == "PASS"
     assert report.error_count == 0
     assert report.active_count == 6
+    assert all(item.decision_stage == "watch_only" for item in report.items)
+    assert all(not item.thesis_required for item in report.items)
 
 
 def test_validate_watchlist_config_fails_missing_core_ticker() -> None:
@@ -52,7 +54,11 @@ def test_validate_watchlist_config_fails_missing_core_ticker() -> None:
 def test_validate_watchlist_config_rejects_high_risk_without_thesis() -> None:
     watchlist = load_watchlist()
     items = [
-        item.model_copy(update={"thesis_required": False}) if item.ticker == "AMD" else item
+        item.model_copy(
+            update={"decision_stage": "active_trade", "thesis_required": False}
+        )
+        if item.ticker == "AMD"
+        else item
         for item in watchlist.items
     ]
     broken = WatchlistConfig(items=items)
@@ -67,6 +73,24 @@ def test_validate_watchlist_config_rejects_high_risk_without_thesis() -> None:
     assert "high_risk_without_thesis" in {issue.code for issue in report.issues}
 
 
+def test_validate_watchlist_config_allows_watch_only_high_risk_without_thesis() -> None:
+    watchlist = load_watchlist()
+    report = validate_watchlist_config(
+        watchlist=watchlist,
+        universe=load_universe(),
+        as_of=date(2026, 5, 2),
+    )
+
+    high_risk_without_thesis = [
+        item
+        for item in report.items
+        if item.default_risk_level == "high" and not item.thesis_required
+    ]
+
+    assert high_risk_without_thesis
+    assert report.status == "PASS"
+
+
 def test_render_and_write_watchlist_validation_report(tmp_path: Path) -> None:
     report = validate_watchlist_config(
         watchlist=load_watchlist(),
@@ -79,6 +103,7 @@ def test_render_and_write_watchlist_validation_report(tmp_path: Path) -> None:
 
     assert "- 状态：PASS" in markdown
     assert "NVDA" in markdown
+    assert "仅观察" in markdown
     assert output_path.read_text(encoding="utf-8") == markdown
 
 

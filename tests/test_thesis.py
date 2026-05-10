@@ -6,7 +6,7 @@ from pathlib import Path
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
-from ai_trading_system.config import load_industry_chain, load_watchlist
+from ai_trading_system.config import WatchlistConfig, load_industry_chain, load_watchlist
 from ai_trading_system.thesis import (
     build_thesis_review_report,
     load_trade_thesis_store,
@@ -128,6 +128,49 @@ def test_validate_trade_thesis_store_rejects_invalid_status_transition(
 
     assert report.passed is False
     assert "invalid_thesis_status_transition" in {issue.code for issue in report.issues}
+
+
+def test_validate_trade_thesis_store_allows_missing_path_for_watch_only_tickers(
+    tmp_path: Path,
+) -> None:
+    store = load_trade_thesis_store(tmp_path / "missing_trade_theses")
+
+    report = validate_trade_thesis_store(
+        store=store,
+        watchlist=load_watchlist(),
+        industry_chain=load_industry_chain(),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert report.status == "PASS"
+    assert "thesis_path_missing" not in {issue.code for issue in report.issues}
+
+
+def test_validate_trade_thesis_store_warns_when_active_trade_requires_thesis(
+    tmp_path: Path,
+) -> None:
+    watchlist = load_watchlist()
+    active_trade_watchlist = WatchlistConfig(
+        items=[
+            item.model_copy(
+                update={"decision_stage": "active_trade", "thesis_required": True}
+            )
+            if item.ticker == "NVDA"
+            else item
+            for item in watchlist.items
+        ],
+    )
+    store = load_trade_thesis_store(tmp_path / "missing_trade_theses")
+
+    report = validate_trade_thesis_store(
+        store=store,
+        watchlist=active_trade_watchlist,
+        industry_chain=load_industry_chain(),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert report.status == "PASS_WITH_WARNINGS"
+    assert "thesis_path_missing" in {issue.code for issue in report.issues}
 
 
 def test_render_and_write_thesis_reports(tmp_path: Path) -> None:
