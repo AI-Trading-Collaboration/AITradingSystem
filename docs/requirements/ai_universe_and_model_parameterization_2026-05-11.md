@@ -81,3 +81,17 @@ AI regime 窗口内的 adjusted close 跳变被误判为未知价格异常。
 - 2026-05-11：新增任务并进入实现。owner 明确当前尚未进入稳定生产，可直接扩展代表 ticker 到流程；同时要求整理类似 valuation 40% cap 的硬编码限制条件，作为后续模型迭代参数候选。
 - 2026-05-11：实现进入 `VALIDATING`。已把 11 个新增代表 ticker 纳入
   `core_watchlist`、watchlist、lifecycle、SEC 映射、风险事件相关 ticker 和官方政策来源 ticker 匹配；已补 AVGO/LRCX 拆股事件；更新系统流图和测试预期。验证通过 watchlist/lifecycle/risk-events CLI 校验、`python -m ruff check src tests` 和全量 `python -m pytest -q`。
+- 2026-05-11：验证拉回 `IN_PROGRESS`。expanded universe 真实非交易日
+  `ops daily-run --as-of 2026-05-10` 已通过官方政策来源、PIT 和 SEC
+  companyfacts 下载，但 `fundamentals extract-sec-metrics` 阻断于 ASML
+  taxonomy：SEC companyfacts 实际返回 `us-gaap + dei`，原配置预期
+  `ifrs-full + dei`。下一步修正 ASML SEC taxonomy 配置并复跑 SEC metrics、
+  非交易日 daily-run 与交易日 replay。
+- 2026-05-11：重新进入 `VALIDATING`。ASML SEC taxonomy 已修正为
+  `us-gaap + dei`，并补充 `us-gaap/EUR` 指标映射；`fundamentals
+  extract-sec-metrics --as-of 2026-05-10` 覆盖 17 家公司。真实非交易日
+  `ops daily-run --as-of 2026-05-10` 结果为 `PASS_WITH_SKIPS`，交易日
+  strict `ops replay-day --as-of 2026-05-08 --full-universe` 为 `PASS`，
+  `ops replay-window --start 2026-05-08 --end 2026-05-10` 为
+  `PASS_WITH_SKIPS`（1 个交易日回放、2 个周末跳过）。当前剩余已知
+  warning 是 AMZN R&D 指标在 SEC companyfacts 中缺披露口径，暂不阻断。

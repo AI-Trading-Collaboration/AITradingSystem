@@ -86,11 +86,11 @@ companies:
     cik: "0000937966"
     company_name: ASML Holding N.V.
     expected_taxonomies:
-      - ifrs-full
+      - us-gaap
       - dei
     sec_metric_periods:
       - annual
-    notes: Foreign issuer; EUV lithography supplier for advanced AI semiconductor capacity.
+    notes: Foreign issuer; SEC companyfacts currently exposes ASML facts under us-gaap taxonomy. EUV lithography supplier for advanced AI semiconductor capacity.
 
   - ticker: AMAT
     cik: "0000006951"

@@ -10,6 +10,9 @@ metrics:
         concept: RevenueFromContractWithCustomerExcludingAssessedTax
         unit: USD
       - taxonomy: us-gaap
+        concept: RevenueFromContractWithCustomerExcludingAssessedTax
+        unit: EUR
+      - taxonomy: us-gaap
         concept: Revenues
         unit: USD
       - taxonomy: ifrs-full
@@ -35,6 +38,9 @@ metrics:
       - taxonomy: us-gaap
         concept: GrossProfit
         unit: USD
+      - taxonomy: us-gaap
+        concept: GrossProfit
+        unit: EUR
       - taxonomy: ifrs-full
         concept: GrossProfit
         unit: USD
@@ -58,6 +64,9 @@ metrics:
       - taxonomy: us-gaap
         concept: OperatingIncomeLoss
         unit: USD
+      - taxonomy: us-gaap
+        concept: OperatingIncomeLoss
+        unit: EUR
       - taxonomy: ifrs-full
         concept: ProfitLossFromOperatingActivities
         unit: USD
@@ -81,6 +90,9 @@ metrics:
       - taxonomy: us-gaap
         concept: NetIncomeLoss
         unit: USD
+      - taxonomy: us-gaap
+        concept: NetIncomeLoss
+        unit: EUR
       - taxonomy: ifrs-full
         concept: ProfitLoss
         unit: USD
@@ -104,6 +116,9 @@ metrics:
       - taxonomy: us-gaap
         concept: ResearchAndDevelopmentExpense
         unit: USD
+      - taxonomy: us-gaap
+        concept: ResearchAndDevelopmentExpense
+        unit: EUR
       - taxonomy: ifrs-full
         concept: ResearchAndDevelopmentExpense
         unit: USD
@@ -124,6 +139,9 @@ metrics:
       - taxonomy: us-gaap
         concept: PaymentsToAcquirePropertyPlantAndEquipment
         unit: USD
+      - taxonomy: us-gaap
+        concept: PaymentsToAcquirePropertyPlantAndEquipment
+        unit: EUR
       - taxonomy: us-gaap
         concept: PaymentsToAcquireProductiveAssets
         unit: USD

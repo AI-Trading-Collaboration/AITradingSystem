@@ -489,6 +489,55 @@ def test_validate_data_cache_warns_when_secondary_adjustment_basis_differs(
     assert report.marketstack_reconciliation_records
 
 
+def test_validate_data_cache_downgrades_known_split_raw_close_basis_diff(
+    tmp_path: Path,
+) -> None:
+    prices_path = tmp_path / "prices_daily.csv"
+    rates_path = tmp_path / "rates_daily.csv"
+    secondary_path = tmp_path / "prices_marketstack_daily.csv"
+    pd.DataFrame(
+        [
+            _price_row("2025-12-17", "NOW", 785.00, 809.65, 781.45, 782.40, 156.48, 11156780),
+            _price_row("2025-12-18", "NOW", 156.51, 157.78, 151.15, 153.38, 153.38, 9644020),
+        ]
+    ).to_csv(prices_path, index=False)
+    pd.DataFrame(
+        [
+            _price_row("2025-12-17", "NOW", 157.04, 161.93, 156.29, 156.48, 156.48, 11156780),
+            _price_row("2025-12-18", "NOW", 156.51, 157.78, 151.15, 153.38, 153.38, 9644020),
+        ]
+    ).to_csv(secondary_path, index=False)
+    pd.DataFrame(
+        [
+            {"date": "2025-12-17", "series": "DGS2", "value": 3.6},
+            {"date": "2025-12-18", "series": "DGS2", "value": 3.6},
+            {"date": "2025-12-17", "series": "DGS10", "value": 4.1},
+            {"date": "2025-12-18", "series": "DGS10", "value": 4.1},
+            {"date": "2025-12-17", "series": "DTWEXBGS", "value": 121.0},
+            {"date": "2025-12-18", "series": "DTWEXBGS", "value": 121.1},
+        ]
+    ).to_csv(rates_path, index=False)
+
+    report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["NOW"],
+        expected_rate_series=["DGS2", "DGS10", "DTWEXBGS"],
+        quality_config=load_data_quality(),
+        as_of=date(2025, 12, 20),
+        secondary_prices_path=secondary_path,
+        require_secondary_prices=True,
+    )
+
+    assert report.passed is True
+    assert "secondary_prices_known_split_close_basis" in _issue_codes(report)
+    assert "secondary_prices_close_mismatch" not in _issue_codes(report)
+    assert any(
+        record.classification == "known_split_raw_close_basis_difference"
+        for record in report.marketstack_reconciliation_records
+    )
+
+
 def test_validate_data_cache_fails_missing_required_secondary_source(tmp_path: Path) -> None:
     prices_path, rates_path = _write_valid_cache(tmp_path)
 

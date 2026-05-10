@@ -35,6 +35,12 @@ prices:
         source_name: Lam Research stock split press release
         source_url: https://newsroom.lamresearch.com/2024-05-21-Lam-Research-Corporation-Announces-10-Billion-Share-Repurchase-Authorization-and-a-10-for-1-Stock-Split
         note: "Lam Research common stock began trading on a post-split basis at market open."
+    NOW:
+      - effective_date: 2025-12-18
+        ratio: 5
+        source_name: ServiceNow 5-for-1 stock split press release
+        source_url: https://investor.servicenow.com/news/news-details/2025/ServiceNow-Shareholders-Approve-5-for-1-Stock-Split/default.aspx
+        note: "ServiceNow common stock was expected to begin trading on a split-adjusted basis."
     SMH:
       - effective_date: 2023-05-05
         ratio: 2

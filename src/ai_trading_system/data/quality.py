@@ -5,10 +5,16 @@ from datetime import UTC, date, datetime
 from enum import StrEnum
 from hashlib import sha256
 from pathlib import Path
+from typing import Any, cast
 
 import pandas as pd
 
-from ai_trading_system.config import DataQualityConfig, PriceQualityConfig, RateQualityConfig
+from ai_trading_system.config import (
+    DataQualityConfig,
+    KnownSplitEventConfig,
+    PriceQualityConfig,
+    RateQualityConfig,
+)
 
 PRICE_REQUIRED_COLUMNS = ("date", "ticker", "open", "high", "low", "close", "adj_close", "volume")
 RATE_REQUIRED_COLUMNS = ("date", "series", "value")
@@ -986,7 +992,7 @@ def _matches_known_split_event(
     value_date: date,
     adjustment_ratio_change: float,
     quality_config: DataQualityConfig,
-):
+) -> KnownSplitEventConfig | None:
     events = quality_config.prices.known_split_events.get(ticker, [])
     if not events:
         return None
@@ -1000,6 +1006,47 @@ def _matches_known_split_event(
         if any(abs(observed_factor - expected) <= tolerance for expected in expected_factors):
             return event
     return None
+
+
+def _matches_known_split_close_basis(
+    *,
+    ticker: str,
+    value_date: date,
+    primary_close: float,
+    secondary_close: float,
+    quality_config: DataQualityConfig,
+) -> KnownSplitEventConfig | None:
+    events = quality_config.prices.known_split_events.get(ticker, [])
+    if not events or primary_close <= 0 or secondary_close <= 0:
+        return None
+    observed_factor = max(primary_close, secondary_close) / min(primary_close, secondary_close)
+    tolerance = quality_config.prices.known_split_ratio_tolerance_abs
+    window_days = quality_config.prices.known_split_match_window_days
+    for event in events:
+        if abs((value_date - event.effective_date).days) > window_days:
+            continue
+        if abs(observed_factor - event.ratio) <= tolerance:
+            return event
+    return None
+
+
+def _row_matches_known_split_close_basis(
+    row: pd.Series,
+    quality_config: DataQualityConfig,
+) -> bool:
+    value_timestamp = pd.to_datetime(row["date"], errors="coerce")
+    if bool(pd.isna(cast(Any, value_timestamp))):
+        return False
+    return (
+        _matches_known_split_close_basis(
+            ticker=str(row["ticker"]),
+            value_date=cast(pd.Timestamp, value_timestamp).date(),
+            primary_close=float(row["_primary_close"]),
+            secondary_close=float(row["_secondary_close"]),
+            quality_config=quality_config,
+        )
+        is not None
+    )
 
 
 def _check_secondary_price_reconciliation(
@@ -1096,12 +1143,37 @@ def _check_secondary_price_reconciliation(
     close_error_diff = merged["_close_diff_pct"] > error_threshold
     close_warning_diff = (merged["_close_diff_pct"] > warning_threshold) & ~close_error_diff
     close_reconciled = merged["_close_diff_pct"] <= warning_threshold
+    known_split_close_basis_diff = (
+        close_error_diff | close_warning_diff
+    ) & merged.apply(
+        lambda row: _row_matches_known_split_close_basis(row, quality_config),
+        axis=1,
+    )
+    close_error_diff = close_error_diff & ~known_split_close_basis_diff
+    close_warning_diff = close_warning_diff & ~known_split_close_basis_diff
     adj_error_diff = merged["_adj_close_diff_pct"] > error_threshold
     adj_warning_diff = (merged["_adj_close_diff_pct"] > warning_threshold) & ~adj_error_diff
     adj_adjustment_basis_diff = adj_error_diff & close_reconciled
-    adj_unresolved_error_diff = adj_error_diff & ~close_reconciled
+    adj_unresolved_error_diff = (
+        adj_error_diff & ~close_reconciled & ~known_split_close_basis_diff
+    )
     adj_warning_basis_diff = adj_warning_diff & close_reconciled
-    adj_unresolved_warning_diff = adj_warning_diff & ~close_reconciled
+    adj_unresolved_warning_diff = (
+        adj_warning_diff & ~close_reconciled & ~known_split_close_basis_diff
+    )
+    records.extend(
+        _marketstack_reconciliation_records_from_mask(
+            merged,
+            known_split_close_basis_diff,
+            severity=Severity.INFO,
+            classification="known_split_raw_close_basis_difference",
+            rule_id="marketstack.known_split_close_basis.v1",
+            evidence=(
+                "raw close diff ratio matches a configured known split event within the "
+                "corporate-action window; classified as provider split-date basis difference."
+            ),
+        )
+    )
     records.extend(
         _marketstack_reconciliation_records_from_mask(
             merged,
@@ -1187,6 +1259,29 @@ def _check_secondary_price_reconciliation(
                 rows=int(close_warning_diff.sum()),
                 sample=_sample_rows(
                     merged.loc[close_warning_diff],
+                    [
+                        "date",
+                        "ticker",
+                        "_primary_close",
+                        "_secondary_close",
+                        "_close_diff_pct",
+                    ],
+                ),
+                source="跨源核验：主价格源 vs Marketstack",
+            )
+        )
+    if known_split_close_basis_diff.any():
+        issues.append(
+            DataQualityIssue(
+                Severity.INFO,
+                "secondary_prices_known_split_close_basis",
+                (
+                    "主价格缓存与 Marketstack 的未调整收盘价差异匹配已配置拆股事件，"
+                    "按 corporate-action window 日期口径差异记录，不改写价格缓存。"
+                ),
+                rows=int(known_split_close_basis_diff.sum()),
+                sample=_sample_rows(
+                    merged.loc[known_split_close_basis_diff],
                     [
                         "date",
                         "ticker",
@@ -1309,7 +1404,9 @@ def _marketstack_bad_point_records(
 ) -> list[MarketstackReconciliationRecord]:
     if secondary.empty:
         return []
-    primary_lookup = primary.set_index(["date", "ticker"], drop=False)
+    primary_rows: dict[tuple[str, str], pd.Series] = {}
+    for _, primary_item in primary.iterrows():
+        primary_rows[(str(primary_item["date"]), str(primary_item["ticker"]))] = primary_item
     valid_ohlc = secondary[
         ["_secondary_open", "_secondary_high", "_secondary_low", "_secondary_close"]
     ].notna().all(axis=1)
@@ -1331,17 +1428,15 @@ def _marketstack_bad_point_records(
     records: list[MarketstackReconciliationRecord] = []
     for _, row in secondary.loc[bad_point].iterrows():
         key = (str(row["date"]), str(row["ticker"]))
-        primary_row = primary_lookup.loc[key] if key in primary_lookup.index else None
-        if isinstance(primary_row, pd.DataFrame):
-            primary_row = primary_row.iloc[0]
+        matched_primary_row = primary_rows.get(key)
         primary_close = (
-            _optional_float(primary_row["_primary_close"])
-            if primary_row is not None and "_primary_close" in primary_row
+            _optional_float(matched_primary_row.get("_primary_close"))
+            if matched_primary_row is not None
             else None
         )
         primary_adj_close = (
-            _optional_float(primary_row["_primary_adj_close"])
-            if primary_row is not None and "_primary_adj_close" in primary_row
+            _optional_float(matched_primary_row.get("_primary_adj_close"))
+            if matched_primary_row is not None
             else None
         )
         records.append(
@@ -1397,10 +1492,13 @@ def _marketstack_reconciliation_records_from_mask(
 
 
 def _optional_float(value: object) -> float | None:
-    if pd.isna(value):
-        return None
     try:
-        return float(value)
+        if bool(pd.isna(cast(Any, value))):
+            return None
+    except (TypeError, ValueError):
+        pass
+    try:
+        return float(cast(Any, value))
     except (TypeError, ValueError):
         return None
 

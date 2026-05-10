@@ -31,6 +31,8 @@ outputs/reports/*
 !outputs/reports/.gitkeep
 outputs/replays/*
 !outputs/replays/.gitkeep
+outputs/runs/*
+!outputs/runs/.gitkeep
 
 # Notebooks
 .ipynb_checkpoints/
