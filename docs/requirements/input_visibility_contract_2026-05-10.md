@@ -55,7 +55,8 @@ available_time <= visibility_cutoff
 |2. replay-day 接入 dashboard|VALIDATING|cache-only replay 在 `score_daily` 成功后生成 replay-scoped `evidence_dashboard_YYYY-MM-DD.html/json`，所有输入路径指向 replay bundle，不读取生产 canonical 输出。|
 |3. 文档和测试|VALIDATING|README、runbook、system flow 说明入口边界；测试覆盖历史 daily-run 前置阻断、replay dashboard 命令和原最近交易日 replay 验证。|
 |4. OpenAI cache-only row 级可见性过滤|VALIDATING|`replay-day --openai-replay-policy cache-only` 只复用 `request_timestamp/cache_created_at` 可证明不晚于有效 replay cutoff 的 prereview 记录；晚于 cutoff 或缺少可证明时间戳的记录进入排除审计，不调用 live OpenAI。|
-|5. artifact/row 级通用可见性 schema|READY|后续把更多输入族的 `available_time`、`source_published_at`、`ingested_at` 纳入统一 manifest 或质量报告，不在本阶段一次性改完。|
+|5. 手工输入 replay 隔离视图|READY|后续把 `trade_theses`、`trades` 等手工输入纳入 replay bundle，按 `created_at/updated_at/status_updated_at/reviewed_at` 等字段过滤；不能只依赖下游校验发现 future manual input。|
+|6. artifact/row 级通用可见性 schema|READY|后续把更多输入族的 `available_time`、`source_published_at`、`ingested_at` 纳入统一 manifest 或质量报告，不在本阶段一次性改完。|
 
 ## 决策
 
@@ -71,3 +72,4 @@ available_time <= visibility_cutoff
 - 2026-05-10：阶段 1-3 进入 `VALIDATING`。新增 `daily-run` 输入可见性预检查、metadata `input_visibility_status/issues`、replay-scoped dashboard 步骤和文档说明；`daily-run --as-of 2026-05-08` 已前置返回 `BLOCKED_VISIBILITY`，`replay-day --as-of 2026-05-08 --mode cache-only --openai-replay-policy cache-only --compare-to-production` 已 PASS 并生成 dashboard HTML/JSON。
 - 2026-05-10：阶段 4 进入 `IN_PROGRESS`。owner 确认 replay 中能复用的历史 OpenAI 请求结果应尽量复用，但必须先增加 row 级可见性过滤和排除审计。
 - 2026-05-10：阶段 4 进入 `VALIDATING`。`replay-day --openai-replay-policy cache-only` 已生成 replay 专用过滤 queue 和过滤报告；真实 `2026-05-08` replay PASS，源 OpenAI 预审队列 5 条均因 2026-05-10 请求时间晚于 cutoff 被排除，dashboard、pipeline health 和 secret scan 均通过。
+- 2026-05-10：调查 `2026-05-08` replay dashboard 的 `final AI position=0` 后确认，直接原因是 `trade_theses` 文件均为 2026-05-10 创建或更新，相对 2026-05-08 严格复现属于未来手工输入，触发 24 个 thesis future-date 错误和 `thesis` position gate 0% 上限。当前行为是正确 fail closed，但 replay 输入冻结还应后续扩展到手工 thesis/trade 输入隔离视图。
