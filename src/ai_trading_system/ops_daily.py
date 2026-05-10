@@ -10,6 +10,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from pathlib import Path
+from typing import Any
 
 from ai_trading_system.alerts import (
     default_alert_report_path,
@@ -17,6 +18,10 @@ from ai_trading_system.alerts import (
 )
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data.quality import default_quality_report_path
+from ai_trading_system.evidence_dashboard import (
+    default_evidence_dashboard_json_path,
+    default_evidence_dashboard_path,
+)
 from ai_trading_system.features.market import default_feature_report_path
 from ai_trading_system.fmp_forward_pit import (
     default_fmp_forward_pit_fetch_report_path,
@@ -57,6 +62,7 @@ class DailyOpsStep:
     blocks_downstream: bool
     enabled: bool = True
     skip_reason: str | None = None
+    input_visibility: str = "local_or_readonly"
 
     def missing_env_vars(self, env: Mapping[str, str]) -> tuple[str, ...]:
         if not self.enabled:
@@ -118,6 +124,14 @@ class DailyOpsStepResult:
 
 
 @dataclass(frozen=True)
+class DailyOpsInputVisibilityIssue:
+    code: str
+    severity: str
+    message: str
+    step_id: str | None = None
+
+
+@dataclass(frozen=True)
 class DailyOpsArtifactDigest:
     path: Path
     exists: bool
@@ -139,6 +153,8 @@ class DailyOpsRunMetadata:
     finished_at: datetime
     visibility_cutoff: datetime
     visibility_cutoff_source: str
+    input_visibility_status: str
+    input_visibility_issues: tuple[Mapping[str, object], ...]
     git: Mapping[str, object]
     config_artifacts: tuple[DailyOpsArtifactDigest, ...]
     rule_card_sha256: str | None
@@ -157,6 +173,7 @@ class DailyOpsRunReport:
     status: str
     step_results: tuple[DailyOpsStepResult, ...]
     missing_env_vars: tuple[str, ...] = ()
+    visibility_issues: tuple[DailyOpsInputVisibilityIssue, ...] = ()
     production_effect: str = "writes local data/cache/reports and calls provider APIs"
     metadata: DailyOpsRunMetadata | None = None
 
@@ -290,6 +307,15 @@ def build_daily_ops_plan(
     if run_id:
         score_command.extend(["--run-id", run_id])
     score_enabled = market_session.is_trading_day
+    dashboard_enabled = score_enabled
+    dashboard_skip_reason = (
+        None
+        if dashboard_enabled
+        else (
+            "休市日模式：未生成新的 daily_score、decision snapshot、evidence bundle "
+            "或执行动作，因此不生成新的 dashboard。"
+        )
+    )
 
     steps = [
         DailyOpsStep(
@@ -309,6 +335,7 @@ def build_daily_ops_plan(
             blocks_downstream=True,
             enabled=download_enabled,
             skip_reason=download_skip_reason,
+            input_visibility="live_provider",
         )
     ]
     if not market_session.is_trading_day:
@@ -340,6 +367,7 @@ def build_daily_ops_plan(
                     "pending_review 候选；失败时停止，避免漏报非交易日风险事件。"
                 ),
                 blocks_downstream=True,
+                input_visibility="live_provider",
             )
         )
     steps.extend(
@@ -378,6 +406,7 @@ def build_daily_ops_plan(
                     if include_pit_snapshots
                     else "显式跳过 PIT 抓取；缺跑日期不能事后补成 strict PIT。"
                 ),
+                input_visibility="live_provider",
             ),
             DailyOpsStep(
                 step_id="sec_companyfacts",
@@ -407,6 +436,7 @@ def build_daily_ops_plan(
                     if include_sec_fundamentals
                     else "显式跳过 SEC companyfacts 刷新，只复用已有 SEC 原始缓存。"
                 ),
+                input_visibility="live_provider",
             ),
             DailyOpsStep(
                 step_id="sec_metrics",
@@ -439,6 +469,7 @@ def build_daily_ops_plan(
                     if include_sec_fundamentals
                     else "显式跳过 SEC metrics 抽取，score-daily 只能校验既有当日 CSV。"
                 ),
+                input_visibility="derived_local",
             ),
             DailyOpsStep(
                 step_id="tsm_ir_sec_metrics_merge",
@@ -471,6 +502,7 @@ def build_daily_ops_plan(
                     if include_sec_fundamentals
                     else "显式跳过 SEC fundamentals，TSMC IR 合并也不执行。"
                 ),
+                input_visibility="derived_local",
             ),
             DailyOpsStep(
                 step_id="sec_metrics_validation",
@@ -499,6 +531,7 @@ def build_daily_ops_plan(
                     if include_sec_fundamentals
                     else "显式跳过 SEC metrics 预校验，score-daily 仍会执行同一门禁。"
                 ),
+                input_visibility="derived_local",
             ),
             DailyOpsStep(
                 step_id="valuation_snapshots",
@@ -532,6 +565,7 @@ def build_daily_ops_plan(
                     if include_valuation_snapshots
                     else "显式跳过估值快照刷新，只复用已有 valuation_snapshots。"
                 ),
+                input_visibility="live_provider",
             ),
             DailyOpsStep(
                 step_id="score_daily",
@@ -560,6 +594,39 @@ def build_daily_ops_plan(
                         "decision snapshot、evidence bundle 或执行动作。"
                     )
                 ),
+                input_visibility=(
+                    "live_provider"
+                    if not skip_risk_event_openai_precheck
+                    else "derived_local"
+                ),
+            ),
+            DailyOpsStep(
+                step_id="reports_dashboard",
+                title="生成只读决策 dashboard",
+                command=(
+                    (
+                        "aits",
+                        "reports",
+                        "dashboard",
+                        "--as-of",
+                        as_of_text,
+                    )
+                    if dashboard_enabled
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(
+                    default_evidence_dashboard_path(reports_dir, as_of),
+                    default_evidence_dashboard_json_path(reports_dir, as_of),
+                ),
+                quality_gate=(
+                    "只读读取日报、trace、decision snapshot、alerts 和 scores_daily；"
+                    "生成 HTML/JSON 展示层，production_effect=none，不改变评分、仓位或执行建议。"
+                ),
+                blocks_downstream=False,
+                enabled=dashboard_enabled,
+                skip_reason=dashboard_skip_reason,
+                input_visibility="readonly",
             ),
             DailyOpsStep(
                 step_id="pipeline_health",
@@ -583,6 +650,7 @@ def build_daily_ops_plan(
                 ),
                 quality_gate="只读运行健康检查；不把 pipeline health 解释为投资结论有效。",
                 blocks_downstream=False,
+                input_visibility="readonly",
             ),
             DailyOpsStep(
                 step_id="secret_hygiene",
@@ -598,6 +666,7 @@ def build_daily_ops_plan(
                 blocks_downstream=False,
                 enabled=include_secret_scan,
                 skip_reason=None if include_secret_scan else "显式跳过 secret hygiene 扫描。",
+                input_visibility="readonly",
             ),
         ]
     )
@@ -614,13 +683,54 @@ def run_daily_ops_plan(
     *,
     project_root: Path = PROJECT_ROOT,
     env: Mapping[str, str] | None = None,
-    runner=DailyOpsCommandRunner,
+    runner: Any = DailyOpsCommandRunner,
     stop_on_failure: bool = True,
     run_id: str | None = None,
+    visibility_check_date: date | None = None,
 ) -> DailyOpsRunReport:
     checked_env = dict(os.environ if env is None else env)
     started_at = datetime.now(tz=UTC)
     pre_run_input_artifacts = _build_pre_run_input_artifacts(plan, project_root)
+    visibility_issues = _validate_daily_ops_input_visibility(
+        plan,
+        run_date=visibility_check_date or started_at.date(),
+    )
+    if visibility_issues:
+        finished_at = datetime.now(tz=UTC)
+        status = "BLOCKED_VISIBILITY"
+        result = DailyOpsStepResult(
+            step_id="input_visibility",
+            title="输入可见性预检查",
+            command=(),
+            status="FAIL",
+            return_code=None,
+            started_at=started_at,
+            ended_at=finished_at,
+            duration_seconds=(finished_at - started_at).total_seconds(),
+            produced_paths=(),
+            blocks_downstream=True,
+            error=_visibility_issue_summary(visibility_issues),
+        )
+        return DailyOpsRunReport(
+            plan=plan,
+            started_at=started_at,
+            finished_at=finished_at,
+            status=status,
+            step_results=(result,),
+            visibility_issues=visibility_issues,
+            metadata=_build_daily_ops_run_metadata(
+                plan=plan,
+                project_root=project_root,
+                env=checked_env,
+                results=(result,),
+                started_at=started_at,
+                finished_at=finished_at,
+                status=status,
+                pre_run_input_artifacts=pre_run_input_artifacts,
+                run_id=run_id,
+                visibility_issues=visibility_issues,
+            ),
+        )
     missing_env = plan.missing_env_vars(checked_env)
     if missing_env:
         finished_at = datetime.now(tz=UTC)
@@ -632,6 +742,7 @@ def run_daily_ops_plan(
             status=status,
             step_results=(),
             missing_env_vars=missing_env,
+            visibility_issues=(),
             metadata=_build_daily_ops_run_metadata(
                 plan=plan,
                 project_root=project_root,
@@ -722,6 +833,7 @@ def run_daily_ops_plan(
         finished_at=finished_at,
         status=status,
         step_results=tuple(results),
+        visibility_issues=(),
         metadata=_build_daily_ops_run_metadata(
             plan=plan,
             project_root=project_root,
@@ -734,6 +846,65 @@ def run_daily_ops_plan(
             run_id=run_id,
         ),
     )
+
+
+def _validate_daily_ops_input_visibility(
+    plan: DailyOpsPlan,
+    *,
+    run_date: date,
+) -> tuple[DailyOpsInputVisibilityIssue, ...]:
+    if plan.as_of > run_date:
+        return (
+            DailyOpsInputVisibilityIssue(
+                code="daily_run_as_of_in_future",
+                severity="error",
+                message=(
+                    "daily-run 不能对未来 as_of 生成生产运行；请等待该交易日结束，"
+                    "或只生成 daily-plan 做调度预检查。"
+                ),
+            ),
+        )
+    if plan.as_of == run_date:
+        return ()
+
+    enabled_live_steps = tuple(
+        step.step_id
+        for step in plan.steps
+        if step.enabled and step.input_visibility == "live_provider"
+    )
+    live_step_text = ", ".join(f"`{step_id}`" for step_id in enabled_live_steps)
+    if not live_step_text:
+        live_step_text = "无 live_provider 步骤，但 daily-run 仍会写生产路径"
+    return (
+        DailyOpsInputVisibilityIssue(
+            code="daily_run_historical_as_of_requires_replay",
+            severity="error",
+            message=(
+                "daily-run 是生产调度入口，不用于历史时点复现。当前运行日期 "
+                f"{run_date.isoformat()} 晚于 as_of {plan.as_of.isoformat()}；"
+                f"启用的 live/生产写入边界：{live_step_text}。"
+                "请改用 `aits ops replay-day --mode cache-only --as-of "
+                f"{plan.as_of.isoformat()}`，OpenAI 仅使用 `disabled` 或 `cache-only`。"
+            ),
+        ),
+    )
+
+
+def _visibility_issue_summary(
+    issues: tuple[DailyOpsInputVisibilityIssue, ...],
+) -> str:
+    return "; ".join(f"{issue.code}: {issue.message}" for issue in issues)
+
+
+def _visibility_issue_to_json(
+    issue: DailyOpsInputVisibilityIssue,
+) -> Mapping[str, object]:
+    return {
+        "code": issue.code,
+        "severity": issue.severity,
+        "message": issue.message,
+        "step_id": issue.step_id,
+    }
 
 
 def render_daily_ops_plan(
@@ -775,9 +946,9 @@ def render_daily_ops_plan(
             "",
             "## 步骤",
             "",
-            "| 顺序 | Step | Enabled | Command | Required Env | Missing Env | "
+            "| 顺序 | Step | Enabled | Input Visibility | Command | Required Env | Missing Env | "
             "Gate / 边界 | Outputs | Blocks Downstream |",
-            "|---:|---|---|---|---|---|---|---|---|",
+            "|---:|---|---|---|---|---|---|---|---|---|",
         ]
     )
     for index, step in enumerate(plan.steps, start=1):
@@ -790,6 +961,7 @@ def render_daily_ops_plan(
             f"{index} | "
             f"`{step.step_id}`<br/>{_escape_table(step.title)} | "
             f"{step.enabled} | "
+            f"`{step.input_visibility}` | "
             f"{command} | "
             f"{required_env} | "
             f"{step_missing} | "
@@ -877,6 +1049,7 @@ def render_daily_ops_run_report(
                 f"- Git dirty：{metadata.git.get('dirty')}",
                 f"- Visibility cutoff：{metadata.visibility_cutoff.isoformat()}",
                 f"- Visibility cutoff source：{metadata.visibility_cutoff_source}",
+                f"- Input visibility status：{metadata.input_visibility_status}",
                 f"- Config artifacts：{len(metadata.config_artifacts)}",
                 f"- Pre-run input artifacts：{len(metadata.pre_run_input_artifacts)}",
                 f"- Produced artifacts：{len(metadata.produced_artifacts)}",
@@ -893,15 +1066,34 @@ def render_daily_ops_run_report(
                 "",
             ]
         )
+    if report.visibility_issues:
+        lines.extend(
+            [
+                "## 输入可见性阻断",
+                "",
+            ]
+        )
+        for issue in report.visibility_issues:
+            step_text = "" if issue.step_id is None else f"；Step：`{issue.step_id}`"
+            lines.append(
+                f"- `{issue.code}`（{issue.severity}{step_text}）："
+                f"{_escape_table(issue.message)}"
+            )
+        lines.append("")
     failed = report.failed_step
     if failed is not None:
+        failed_command = (
+            _escape_table(_join_command(failed.command))
+            if failed.command
+            else "PRECHECK"
+        )
         lines.extend(
             [
                 "## 阻断步骤",
                 "",
                 f"- Step：`{failed.step_id}` {failed.title}",
                 f"- Return code：{_display_return_code(failed.return_code)}",
-                f"- Command：`{_escape_table(_join_command(failed.command))}`",
+                f"- Command：`{failed_command}`",
             ]
         )
         if failed.error:
@@ -922,7 +1114,9 @@ def render_daily_ops_run_report(
         )
         outputs = "<br/>".join(f"`{path}`" for path in result.produced_paths)
         command = (
-            f"`{_escape_table(_join_command(result.command))}`" if result.command else "SKIPPED"
+            f"`{_escape_table(_join_command(result.command))}`"
+            if result.command
+            else "PRECHECK"
         )
         if result.status == "SKIPPED" and result.skip_reason:
             command = f"SKIPPED: {_escape_table(result.skip_reason)}"
@@ -1013,6 +1207,10 @@ def _daily_ops_run_metadata_to_json(metadata: DailyOpsRunMetadata) -> Mapping[st
         "finished_at": metadata.finished_at.isoformat(),
         "visibility_cutoff": metadata.visibility_cutoff.isoformat(),
         "visibility_cutoff_source": metadata.visibility_cutoff_source,
+        "input_visibility_status": metadata.input_visibility_status,
+        "input_visibility_issues": [
+            dict(issue) for issue in metadata.input_visibility_issues
+        ],
         "git": dict(metadata.git),
         "config_artifacts": [
             _artifact_digest_to_json(artifact) for artifact in metadata.config_artifacts
@@ -1131,6 +1329,7 @@ def _build_daily_ops_run_metadata(
     status: str,
     pre_run_input_artifacts: tuple[DailyOpsArtifactDigest, ...],
     run_id: str | None = None,
+    visibility_issues: tuple[DailyOpsInputVisibilityIssue, ...] = (),
 ) -> DailyOpsRunMetadata:
     required_env = sorted(
         {env_var for step in plan.steps for env_var in step.required_env_vars}
@@ -1155,6 +1354,10 @@ def _build_daily_ops_run_metadata(
         finished_at=finished_at,
         visibility_cutoff=finished_at,
         visibility_cutoff_source="daily_run_finished_at_utc",
+        input_visibility_status="BLOCKED" if visibility_issues else "PASS",
+        input_visibility_issues=tuple(
+            _visibility_issue_to_json(issue) for issue in visibility_issues
+        ),
         git=_git_metadata(project_root),
         config_artifacts=tuple(_path_digest(path) for path in config_paths),
         rule_card_sha256=_sha256_file(project_root / "config" / "rule_cards.yaml"),
@@ -1174,6 +1377,7 @@ def _metadata_command_record(step: DailyOpsStep) -> Mapping[str, object]:
         "required_env_vars": list(step.required_env_vars),
         "blocks_downstream": step.blocks_downstream,
         "skip_reason": step.skip_reason,
+        "input_visibility": step.input_visibility,
     }
 
 

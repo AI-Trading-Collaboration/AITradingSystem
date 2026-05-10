@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 import json
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -24,7 +25,16 @@ class EvidenceDashboardReport:
     belief_state: TraceRecord | None
     conclusion_card: Mapping[str, str]
     change_conditions: tuple[str, ...]
+    main_conclusion: str | None
+    core_reasons: tuple[str, ...]
+    main_invalidator: str | None
+    next_checks: tuple[str, ...]
+    period_change_summary: str | None
     warnings: tuple[str, ...]
+    alerts_report_path: Path | None = None
+    scores_daily_path: Path | None = None
+    alert_summary: TraceRecord | None = None
+    history_points: tuple[TraceRecord, ...] = ()
     production_effect: str = "none"
 
     @property
@@ -36,6 +46,10 @@ def default_evidence_dashboard_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"evidence_dashboard_{as_of.isoformat()}.html"
 
 
+def default_evidence_dashboard_json_path(output_dir: Path, as_of: date) -> Path:
+    return output_dir / f"evidence_dashboard_{as_of.isoformat()}.json"
+
+
 def build_evidence_dashboard_report(
     *,
     as_of: date,
@@ -43,6 +57,9 @@ def build_evidence_dashboard_report(
     trace_bundle_path: Path,
     decision_snapshot_path: Path,
     belief_state_path: Path | None = None,
+    alerts_report_path: Path | None = None,
+    scores_daily_path: Path | None = None,
+    history_limit: int = 20,
 ) -> EvidenceDashboardReport:
     daily_text = _read_required_text(daily_report_path)
     trace_bundle = _read_required_json(trace_bundle_path)
@@ -63,6 +80,18 @@ def build_evidence_dashboard_report(
     belief_state = _read_optional_belief_state(resolved_belief_state_path, warnings)
     conclusion_card = _extract_conclusion_card(daily_text, warnings)
     change_conditions = _extract_change_conditions(daily_text, warnings)
+    main_conclusion = _first_bullet(_markdown_subsection(daily_text, "### 一句话主结论"))
+    core_reasons = tuple(_bullet_lines(_markdown_subsection(daily_text, "### 三个核心原因")))
+    main_invalidator = _first_bullet(_markdown_subsection(daily_text, "### Main Invalidator"))
+    next_checks = tuple(_bullet_lines(_markdown_subsection(daily_text, "### Next Checks")))
+    period_change_summary = _extract_period_change_summary(daily_text)
+    alert_summary = _read_optional_alert_summary(alerts_report_path, warnings)
+    history_points = _read_optional_history_points(
+        scores_daily_path,
+        as_of=as_of,
+        history_limit=history_limit,
+        warnings=warnings,
+    )
 
     return EvidenceDashboardReport(
         as_of=as_of,
@@ -76,7 +105,16 @@ def build_evidence_dashboard_report(
         belief_state=belief_state,
         conclusion_card=conclusion_card,
         change_conditions=change_conditions,
+        main_conclusion=main_conclusion,
+        core_reasons=core_reasons,
+        main_invalidator=main_invalidator,
+        next_checks=next_checks,
+        period_change_summary=period_change_summary,
         warnings=tuple(warnings),
+        alerts_report_path=alerts_report_path,
+        scores_daily_path=scores_daily_path,
+        alert_summary=alert_summary,
+        history_points=history_points,
     )
 
 
@@ -86,6 +124,18 @@ def write_evidence_dashboard(
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(render_evidence_dashboard(report), encoding="utf-8")
+    return output_path
+
+
+def write_evidence_dashboard_json(
+    report: EvidenceDashboardReport,
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(build_evidence_dashboard_payload(report), ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
     return output_path
 
 
@@ -104,7 +154,10 @@ def render_evidence_dashboard(report: EvidenceDashboardReport) -> str:
             "<body>",
             _render_header(report, title),
             "<main>",
+            _render_decision_card(report),
             _render_summary_grid(report),
+            _render_alert_summary(report),
+            _render_history_trend(report),
             _render_logic_chain(report),
             _render_reader_modes(report),
             _render_claim_evidence_map(report),
@@ -117,6 +170,36 @@ def render_evidence_dashboard(report: EvidenceDashboardReport) -> str:
             "",
         ]
     )
+
+
+def build_evidence_dashboard_payload(report: EvidenceDashboardReport) -> TraceRecord:
+    return {
+        "as_of": report.as_of.isoformat(),
+        "generated_at": report.generated_at.isoformat(),
+        "status": report.status,
+        "production_effect": report.production_effect,
+        "decision": _decision_payload(report),
+        "top_supporting_evidence": list(_top_supporting_evidence(report)),
+        "top_invalidators": list(_top_invalidators(report)),
+        "next_checks": list(report.next_checks),
+        "alerts": report.alert_summary or {},
+        "history": list(report.history_points),
+        "artifacts": {
+            "daily_report_path": str(report.daily_report_path),
+            "trace_bundle_path": str(report.trace_bundle_path),
+            "decision_snapshot_path": str(report.decision_snapshot_path),
+            "belief_state_path": None
+            if report.belief_state_path is None
+            else str(report.belief_state_path),
+            "alerts_report_path": None
+            if report.alerts_report_path is None
+            else str(report.alerts_report_path),
+            "scores_daily_path": None
+            if report.scores_daily_path is None
+            else str(report.scores_daily_path),
+        },
+        "warnings": list(report.warnings),
+    }
 
 
 def _render_header(report: EvidenceDashboardReport, title: str) -> str:
@@ -137,6 +220,136 @@ def _render_header(report: EvidenceDashboardReport, title: str) -> str:
             _metric("production_effect", report.production_effect),
             "</div>",
             "</header>",
+        ]
+    )
+
+
+def _render_decision_card(report: EvidenceDashboardReport) -> str:
+    decision = _decision_payload(report)
+    support_items = _top_supporting_evidence(report)
+    invalidators = _top_invalidators(report)
+    next_checks = report.next_checks or ("日报未提供 Next Checks。",)
+    return "\n".join(
+        [
+            '<section class="decision-section" aria-labelledby="decision-title">',
+            '<div class="section-head">',
+            '<h2 id="decision-title">今日决策视图</h2>',
+            "<p>只读展示已生成结论，不重新计算评分或触发交易。</p>",
+            "</div>",
+            '<div class="decision-grid">',
+            _decision_metric("执行动作", str(decision["action"])),
+            _decision_metric("最终 AI 仓位", str(decision["final_risk_asset_ai_position"])),
+            _decision_metric("总风险资产预算", str(decision["total_risk_asset_budget"])),
+            _decision_metric("判断置信度", str(decision["confidence"])),
+            _decision_metric("Data Gate", str(decision["data_gate"])),
+            _decision_metric("最大限制", str(decision["largest_constraint"])),
+            _decision_metric("变化摘要", str(decision["change_vs_previous"])),
+            _decision_metric("市场阶段", str(decision["market_regime"])),
+            "</div>",
+            '<div class="decision-columns">',
+            _compact_list("Top Supporting Evidence", support_items),
+            _compact_list("Top Invalidators / Risks", invalidators),
+            _compact_list("Next Checks", next_checks),
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_alert_summary(report: EvidenceDashboardReport) -> str:
+    if report.alert_summary is None:
+        message = (
+            "未接入 alerts 报告；dashboard 仍可查看结论和 trace，"
+            "但告警聚合需要先生成 alerts_YYYY-MM-DD.md。"
+        )
+        return "\n".join(
+            [
+                '<section aria-labelledby="alert-summary-title">',
+                '<div class="section-head warning">',
+                '<h2 id="alert-summary-title">告警聚合</h2>',
+                "<p>可选输入缺失或不可解析时降级显示。</p>",
+                "</div>",
+                f"<p>{_text(message)}</p>",
+                "</section>",
+            ]
+        )
+    severity = _mapping(report.alert_summary.get("severity_counts"))
+    top_alerts = _list_mappings(report.alert_summary.get("top_alerts"))
+    rows = [
+        ("状态", _record_text(report.alert_summary, "status", "UNKNOWN")),
+        ("活跃告警", _record_text(report.alert_summary, "active_count", "0")),
+        ("data/system", _record_text(report.alert_summary, "data_system_count", "0")),
+        ("investment/risk", _record_text(report.alert_summary, "investment_risk_count", "0")),
+        (
+            "严重度",
+            "；".join(
+                [
+                    f"critical {severity.get('critical', 0)}",
+                    f"high {severity.get('high', 0)}",
+                    f"warning {severity.get('warning', 0)}",
+                ]
+            ),
+        ),
+        ("报告路径", _record_text(report.alert_summary, "path", "")),
+    ]
+    return "\n".join(
+        [
+            '<section aria-labelledby="alert-summary-title">',
+            '<div class="section-head">',
+            '<h2 id="alert-summary-title">告警聚合</h2>',
+            "<p>告警只做复核提示，production_effect=none。</p>",
+            "</div>",
+            _key_value_table(rows),
+            "<h3>Top Alerts</h3>",
+            _alert_table(top_alerts),
+            "</section>",
+        ]
+    )
+
+
+def _render_history_trend(report: EvidenceDashboardReport) -> str:
+    if not report.history_points:
+        message = (
+            "未接入 scores_daily.csv 历史趋势；dashboard 仍可查看当日结论，"
+            "但不能展示近 20 个交易日的评分和仓位变化。"
+        )
+        return "\n".join(
+            [
+                '<section aria-labelledby="history-title">',
+                '<div class="section-head warning">',
+                '<h2 id="history-title">历史趋势</h2>',
+                "<p>可选历史输入缺失时降级显示。</p>",
+                "</div>",
+                f"<p>{_text(message)}</p>",
+                "</section>",
+            ]
+        )
+    score_values = [
+        _record_text(point, "overall_score", "")
+        for point in report.history_points
+        if _record_text(point, "overall_score", "")
+    ]
+    return "\n".join(
+        [
+            '<section aria-labelledby="history-title">',
+            '<div class="section-head">',
+            '<h2 id="history-title">近 20 个交易日趋势</h2>',
+            "<p>只读读取 scores_daily.csv 的 overall 行，不重算结论。</p>",
+            "</div>",
+            _key_value_table(
+                [
+                    ("样本数量", str(len(report.history_points))),
+                    ("Score sparkline", _sparkline(score_values)),
+                    (
+                        "历史输入",
+                        "未接入"
+                        if report.scores_daily_path is None
+                        else str(report.scores_daily_path),
+                    ),
+                ]
+            ),
+            _history_table(report.history_points),
+            "</section>",
         ]
     )
 
@@ -526,6 +739,68 @@ def _summary_item(label: str, value: str) -> str:
     )
 
 
+def _decision_metric(label: str, value: str) -> str:
+    return "\n".join(
+        [
+            '<div class="decision-metric">',
+            f"<span>{_text(label)}</span>",
+            f"<strong>{_text(value or '未提供')}</strong>",
+            "</div>",
+        ]
+    )
+
+
+def _compact_list(title: str, items: Sequence[str]) -> str:
+    values = [item for item in items if item]
+    if not values:
+        values = ["未提供"]
+    return "\n".join(
+        [
+            '<div class="compact-list">',
+            f"<h3>{_text(title)}</h3>",
+            "<ol>",
+            *[f"<li>{_text(item)}</li>" for item in values[:5]],
+            "</ol>",
+            "</div>",
+        ]
+    )
+
+
+def _alert_table(alerts: Sequence[Mapping[str, Any]]) -> str:
+    if not alerts:
+        return "<p>未触发告警。</p>"
+    rows = [
+        (
+            _record_text(alert, "severity", ""),
+            _record_text(alert, "category", ""),
+            _record_text(alert, "source", ""),
+            _record_text(alert, "title", ""),
+            _record_text(alert, "trigger_condition", ""),
+        )
+        for alert in alerts
+    ]
+    return _table(("等级", "类别", "来源", "标题", "触发条件"), rows)
+
+
+def _history_table(points: Sequence[Mapping[str, Any]]) -> str:
+    rows = [
+        (
+            _record_text(point, "as_of", ""),
+            _record_text(point, "overall_score", ""),
+            _record_text(point, "confidence", ""),
+            _record_text(point, "final_risk_asset_ai_position", ""),
+            _record_text(point, "total_risk_asset_budget", ""),
+            _record_text(point, "triggered_gate_count", ""),
+            _record_text(point, "data_quality_note", ""),
+        )
+        for point in points
+    ]
+    return _table(
+        ("日期", "总分", "置信度", "最终 AI 仓位", "总风险预算", "Gate 数", "质量/限制"),
+        rows,
+    )
+
+
 def _logic_item(label: str, value: str) -> str:
     return f"<li><strong>{_text(label)}</strong><span>{_text(value)}</span></li>"
 
@@ -581,6 +856,72 @@ def _read_optional_belief_state(
     return _read_json_object(belief_state_path)
 
 
+def _read_optional_alert_summary(
+    alerts_report_path: Path | None,
+    warnings: list[str],
+) -> TraceRecord | None:
+    if alerts_report_path is None:
+        return None
+    if not alerts_report_path.exists():
+        warnings.append(f"alerts 报告不存在：{alerts_report_path}")
+        return None
+    text = alerts_report_path.read_text(encoding="utf-8")
+    severity_rows = _parse_markdown_table(_markdown_section(text, "## 严重度摘要"))
+    severity_counts: dict[str, int] = {"critical": 0, "high": 0, "warning": 0}
+    for row in severity_rows:
+        level = row.get("等级", "")
+        if level in severity_counts:
+            severity_counts[level] = _parse_int(row.get("数量"))
+    alert_rows = _parse_markdown_table(_markdown_section(text, "## 告警明细"))
+    top_alerts = [
+        {
+            "severity": row.get("等级", ""),
+            "category": row.get("类别", ""),
+            "source": row.get("来源", ""),
+            "title": row.get("标题", ""),
+            "trigger_condition": row.get("触发条件", ""),
+            "clear_condition": row.get("解除条件", ""),
+            "refs": row.get("引用", ""),
+        }
+        for row in alert_rows[:5]
+    ]
+    return {
+        "path": str(alerts_report_path),
+        "status": _metadata_value(text, "状态") or "UNKNOWN",
+        "active_count": _parse_int(_metadata_value(text, "活跃告警数")),
+        "data_system_count": _parse_int(_metadata_value(text, "data/system")),
+        "investment_risk_count": _parse_int(_metadata_value(text, "investment/risk")),
+        "severity_counts": severity_counts,
+        "top_alerts": top_alerts,
+        "production_effect": "none",
+    }
+
+
+def _read_optional_history_points(
+    scores_daily_path: Path | None,
+    *,
+    as_of: date,
+    history_limit: int,
+    warnings: list[str],
+) -> tuple[TraceRecord, ...]:
+    if scores_daily_path is None:
+        return ()
+    if not scores_daily_path.exists():
+        warnings.append(f"scores_daily.csv 不存在：{scores_daily_path}")
+        return ()
+    points: list[TraceRecord] = []
+    with scores_daily_path.open("r", encoding="utf-8", newline="") as handle:
+        reader = csv.DictReader(handle)
+        for row in reader:
+            if row.get("component") != "overall":
+                continue
+            row_date = _parse_iso_date(row.get("as_of"))
+            if row_date is None or row_date > as_of:
+                continue
+            points.append(_history_point_from_score_row(row))
+    return tuple(points[-history_limit:])
+
+
 def _validate_artifact_dates(
     *,
     as_of: date,
@@ -633,6 +974,14 @@ def _extract_change_conditions(
     return tuple(_bullet_lines(section))
 
 
+def _extract_period_change_summary(daily_text: str) -> str | None:
+    section = _markdown_section(daily_text, "## 变化原因树")
+    for line in _bullet_lines(section):
+        if line.startswith("本期仓位变化："):
+            return line.removeprefix("本期仓位变化：").strip()
+    return None
+
+
 def _markdown_section(text: str, heading: str) -> str:
     lines = text.splitlines()
     start: int | None = None
@@ -670,6 +1019,60 @@ def _markdown_subsection(text: str, heading: str) -> str:
 
 def _bullet_lines(markdown: str) -> list[str]:
     return [line[2:].strip() for line in markdown.splitlines() if line.startswith("- ")]
+
+
+def _first_bullet(markdown: str) -> str | None:
+    bullets = _bullet_lines(markdown)
+    return bullets[0] if bullets else None
+
+
+def _metadata_value(markdown: str, label: str) -> str | None:
+    prefix = f"- {label}："
+    for line in markdown.splitlines():
+        if line.startswith(prefix):
+            return line.removeprefix(prefix).strip()
+    return None
+
+
+def _parse_markdown_table(markdown: str) -> list[dict[str, str]]:
+    table_lines = [
+        line
+        for line in markdown.splitlines()
+        if line.strip().startswith("|") and "---" not in line
+    ]
+    if len(table_lines) < 2:
+        return []
+    headers = _split_markdown_table_row(table_lines[0])
+    rows: list[dict[str, str]] = []
+    for line in table_lines[1:]:
+        cells = _split_markdown_table_row(line)
+        if len(cells) != len(headers):
+            continue
+        rows.append(dict(zip(headers, cells, strict=True)))
+    return rows
+
+
+def _split_markdown_table_row(line: str) -> list[str]:
+    stripped = line.strip()
+    if not stripped.startswith("|"):
+        return []
+    content = stripped[1:-1] if stripped.endswith("|") else stripped[1:]
+    cells: list[str] = []
+    current: list[str] = []
+    escaped = False
+    for char in content:
+        if char == "|" and not escaped:
+            cells.append("".join(current).strip().replace("\\|", "|"))
+            current = []
+            escaped = False
+            continue
+        current.append(char)
+        if escaped:
+            escaped = False
+        else:
+            escaped = char == "\\"
+    cells.append("".join(current).strip().replace("\\|", "|"))
+    return cells
 
 
 def _primary_claim(report: EvidenceDashboardReport) -> TraceRecord:
@@ -779,6 +1182,58 @@ def _market_regime_summary(trace_bundle: TraceRecord) -> str:
     return regime_id if not start_date else f"{regime_id}，start {start_date}"
 
 
+def _decision_payload(report: EvidenceDashboardReport) -> TraceRecord:
+    return {
+        "date": report.as_of.isoformat(),
+        "action": report.conclusion_card.get("执行动作", "未从日报结论卡提取"),
+        "main_conclusion": report.main_conclusion
+        or _record_text(_primary_claim(report), "statement", "未找到核心 claim"),
+        "final_risk_asset_ai_position": _final_position_summary(report.decision_snapshot),
+        "total_risk_asset_budget": report.conclusion_card.get(
+            "总风险资产预算",
+            _total_risk_asset_budget_summary(report.decision_snapshot),
+        ),
+        "confidence": _confidence_summary(report.decision_snapshot),
+        "data_gate": report.conclusion_card.get("Data Gate", _quality_status(report)),
+        "largest_constraint": report.conclusion_card.get(
+            "最大限制",
+            _triggered_gate_summary(report.decision_snapshot),
+        ),
+        "change_vs_previous": report.period_change_summary or "未从日报提取上期对比。",
+        "market_regime": _market_regime_summary(report.trace_bundle),
+        "production_effect": report.production_effect,
+    }
+
+
+def _top_supporting_evidence(report: EvidenceDashboardReport) -> tuple[str, ...]:
+    if report.core_reasons:
+        return report.core_reasons[:3]
+    primary_claim = _primary_claim(report)
+    evidence_rows = _linked_evidence(report, primary_claim)
+    values = [
+        _record_text(record, "summary", "")
+        for record in evidence_rows
+        if _record_text(record, "summary", "")
+    ]
+    return tuple(values[:3])
+
+
+def _top_invalidators(report: EvidenceDashboardReport) -> tuple[str, ...]:
+    values: list[str] = []
+    if report.main_invalidator:
+        values.append(report.main_invalidator)
+    values.extend(_triggered_constraint_summaries(report.decision_snapshot)[:2])
+    if report.alert_summary is not None:
+        for alert in _list_mappings(report.alert_summary.get("top_alerts")):
+            severity = _record_text(alert, "severity", "")
+            title = _record_text(alert, "title", "")
+            if severity in {"critical", "high"} and title:
+                values.append(f"{severity}: {title}")
+            if len(values) >= 3:
+                break
+    return tuple(values[:3]) if values else ("未从日报或告警中提取主要 invalidator。",)
+
+
 def _confidence_summary(snapshot: TraceRecord) -> str:
     scores = _mapping(snapshot.get("scores"))
     score = _record_text(scores, "confidence_score", "")
@@ -791,6 +1246,11 @@ def _confidence_summary(snapshot: TraceRecord) -> str:
 def _final_position_summary(snapshot: TraceRecord) -> str:
     positions = _mapping(snapshot.get("positions"))
     return _format_band_record(positions.get("final_risk_asset_ai_band"))
+
+
+def _total_risk_asset_budget_summary(snapshot: TraceRecord) -> str:
+    positions = _mapping(snapshot.get("positions"))
+    return _format_band_record(positions.get("final_total_risk_asset_band"))
 
 
 def _position_boundary_summary(snapshot: TraceRecord, belief: Mapping[str, Any]) -> str:
@@ -821,12 +1281,126 @@ def _format_percent(value: object) -> str:
     return "" if value is None else str(value)
 
 
+def _history_point_from_score_row(row: Mapping[str, str]) -> TraceRecord:
+    triggered_gates = str(row.get("triggered_position_gates") or "").strip()
+    return {
+        "as_of": str(row.get("as_of") or ""),
+        "overall_score": _format_number_text(row.get("score")),
+        "confidence": _format_confidence_text(
+            row.get("confidence"),
+            row.get("confidence_level"),
+        ),
+        "final_risk_asset_ai_position": _format_csv_band(
+            row.get("final_risk_asset_ai_min"),
+            row.get("final_risk_asset_ai_max"),
+        ),
+        "total_risk_asset_budget": _format_csv_band(
+            row.get("final_total_risk_asset_min"),
+            row.get("final_total_risk_asset_max"),
+        ),
+        "triggered_position_gates": triggered_gates or "无",
+        "triggered_gate_count": _triggered_gate_count(triggered_gates),
+        "data_quality_note": str(row.get("confidence_reasons") or ""),
+    }
+
+
+def _format_csv_band(min_value: object, max_value: object) -> str:
+    min_text = _format_csv_percent(min_value)
+    max_text = _format_csv_percent(max_value)
+    if min_text and max_text:
+        return f"{min_text}-{max_text}"
+    return "未提供"
+
+
+def _format_csv_percent(value: object) -> str:
+    number = _parse_float(value)
+    return "" if number is None else f"{number:.0%}"
+
+
+def _format_number_text(value: object) -> str:
+    number = _parse_float(value)
+    return "" if number is None else f"{number:.1f}"
+
+
+def _format_confidence_text(value: object, level: object) -> str:
+    score = _format_number_text(value)
+    level_text = "" if level is None else str(level)
+    if score and level_text:
+        return f"{score}（{level_text}）"
+    return score or level_text or "未提供"
+
+
+def _parse_float(value: object) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(str(value))
+    except ValueError:
+        return None
+
+
+def _parse_int(value: object) -> int:
+    if value is None:
+        return 0
+    try:
+        return int(str(value).strip())
+    except ValueError:
+        return 0
+
+
+def _parse_iso_date(value: object) -> date | None:
+    if value is None:
+        return None
+    try:
+        return date.fromisoformat(str(value))
+    except ValueError:
+        return None
+
+
+def _triggered_gate_count(value: str) -> int:
+    if not value or value == "无":
+        return 0
+    normalized = value.replace(",", "、").replace("，", "、").replace(";", "、")
+    return len([item for item in normalized.split("、") if item.strip()])
+
+
+def _sparkline(values: Sequence[str]) -> str:
+    numbers = [number for value in values if (number := _parse_float(value)) is not None]
+    if not numbers:
+        return "未提供"
+    if len(set(numbers)) == 1:
+        return "━" * len(numbers)
+    ticks = "▁▂▃▄▅▆▇█"
+    low = min(numbers)
+    high = max(numbers)
+    span = high - low
+    chars = [ticks[round((number - low) / span * (len(ticks) - 1))] for number in numbers]
+    return "".join(chars)
+
+
 def _triggered_gate_summary(snapshot: TraceRecord) -> str:
     gates = _list_mappings(_mapping(snapshot.get("positions")).get("position_gates"))
     triggered = [gate for gate in gates if gate.get("triggered") is True]
     if not triggered:
         return "未触发额外仓位闸门。"
     return "；".join(
+        (
+            f"{_record_text(gate, 'label', _record_text(gate, 'gate_id', 'gate'))}"
+            f" 上限 {_format_percent(gate.get('max_position'))}: "
+            f"{_record_text(gate, 'reason', '')}"
+        )
+        for gate in triggered
+    )
+
+
+def _triggered_constraint_summaries(snapshot: TraceRecord) -> tuple[str, ...]:
+    gates = _list_mappings(_mapping(snapshot.get("positions")).get("position_gates"))
+    triggered = [
+        gate
+        for gate in gates
+        if gate.get("triggered") is True and str(gate.get("gate_id")) != "score_model"
+    ]
+    return tuple(
         (
             f"{_record_text(gate, 'label', _record_text(gate, 'gate_id', 'gate'))}"
             f" 上限 {_format_percent(gate.get('max_position'))}: "
@@ -964,22 +1538,47 @@ footer {
   grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 10px;
 }
+.decision-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.decision-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 14px;
+}
 .header-meta span,
-.summary-item {
+.summary-item,
+.decision-metric,
+.compact-list {
   border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--surface);
   padding: 10px 12px;
 }
+.decision-metric span,
 .summary-item span {
   display: block;
   color: var(--muted);
   font-size: 12px;
 }
+.decision-metric strong,
 .summary-item strong {
   display: block;
   overflow-wrap: anywhere;
   font-size: 15px;
+}
+.compact-list h3 {
+  margin-bottom: 8px;
+}
+.compact-list ol {
+  margin: 0;
+  padding-left: 20px;
+}
+.compact-list li {
+  margin-bottom: 6px;
 }
 .logic-chain {
   margin: 0;

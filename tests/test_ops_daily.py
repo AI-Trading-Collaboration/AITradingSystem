@@ -46,6 +46,9 @@ def test_daily_ops_plan_reports_missing_required_env() -> None:
     assert "`aits fundamentals validate-sec-metrics --as-of 2026-05-06`" in markdown
     assert "`aits valuation fetch-fmp --as-of 2026-05-06`" in markdown
     assert "`aits score-daily --as-of 2026-05-06" in markdown
+    assert "`aits reports dashboard --as-of 2026-05-06`" in markdown
+    assert "`live_provider`" in markdown
+    assert "`readonly`" in markdown
     assert "缺少关键环境变量时，后续真实执行器必须 fail closed" in markdown
 
 
@@ -86,6 +89,23 @@ def test_daily_ops_plan_threads_run_id_into_score_daily() -> None:
     )
 
 
+def test_daily_ops_plan_generates_dashboard_after_score_daily() -> None:
+    plan = build_daily_ops_plan(
+        as_of=date(2026, 5, 6),
+        skip_risk_event_openai_precheck=True,
+    )
+    step_ids = [step.step_id for step in plan.steps]
+    dashboard_step = next(step for step in plan.steps if step.step_id == "reports_dashboard")
+
+    assert step_ids.index("score_daily") < step_ids.index("reports_dashboard")
+    assert step_ids.index("reports_dashboard") < step_ids.index("pipeline_health")
+    assert dashboard_step.command == ("aits", "reports", "dashboard", "--as-of", "2026-05-06")
+    assert dashboard_step.required_env_vars == ()
+    assert dashboard_step.blocks_downstream is False
+    assert dashboard_step.produced_paths[0].name == "evidence_dashboard_2026-05-06.html"
+    assert dashboard_step.produced_paths[1].name == "evidence_dashboard_2026-05-06.json"
+
+
 def test_daily_ops_plan_cli_writes_report(tmp_path: Path) -> None:
     output_path = tmp_path / "daily_ops_plan.md"
 
@@ -120,6 +140,7 @@ def test_daily_ops_plan_cli_writes_report(tmp_path: Path) -> None:
     assert "fundamentals extract-sec-metrics --as-of 2026-05-06" in markdown
     assert "fundamentals merge-tsm-ir-sec-metrics --as-of 2026-05-06" in markdown
     assert "valuation fetch-fmp --as-of 2026-05-06" in markdown
+    assert "reports dashboard --as-of 2026-05-06" in markdown
     assert "ops health --as-of 2026-05-06" in markdown
     assert "security scan-secrets --as-of 2026-05-06" in markdown
 
@@ -238,6 +259,8 @@ def test_daily_ops_plan_closed_market_skips_score_and_current_download(
     assert "休市日模式" in (step_by_id["download_data"].skip_reason or "")
     assert step_by_id["score_daily"].enabled is False
     assert step_by_id["score_daily"].required_env_vars == ()
+    assert step_by_id["reports_dashboard"].enabled is False
+    assert step_by_id["reports_dashboard"].required_env_vars == ()
     assert step_by_id["pit_snapshots"].produced_paths[0] == (
         tmp_path / "data" / "raw" / "fmp_forward_pit"
     )
@@ -250,6 +273,7 @@ def test_daily_ops_plan_closed_market_skips_score_and_current_download(
     assert "official_policy_sources" in step_by_id
     assert "--non-trading-day" in step_by_id["pipeline_health"].command
     assert "`aits score-daily --as-of 2026-05-10" not in markdown
+    assert "`aits reports dashboard --as-of 2026-05-10`" not in markdown
     assert "市场日状态：CLOSED_MARKET" in markdown
     assert "不生成新的 daily_score" in markdown
 
@@ -300,6 +324,7 @@ def test_run_daily_ops_plan_stops_on_first_failed_command() -> None:
         plan,
         env={"SEC_USER_AGENT": "AITradingSystem test@example.com"},
         runner=fake_runner,
+        visibility_check_date=date(2026, 5, 6),
     )
 
     assert report.status == "FAIL"
@@ -309,6 +334,40 @@ def test_run_daily_ops_plan_stops_on_first_failed_command() -> None:
         ("fundamentals", "download-sec-companyfacts"),
         ("fundamentals", "extract-sec-metrics", "--as-of", "2026-05-06"),
     ]
+
+
+def test_run_daily_ops_plan_blocks_historical_as_of_before_commands() -> None:
+    plan = build_daily_ops_plan(
+        as_of=date(2026, 5, 8),
+        skip_risk_event_openai_precheck=False,
+    )
+    calls: list[tuple[str, ...]] = []
+
+    def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
+        calls.append(command)
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    report = run_daily_ops_plan(
+        plan,
+        env={
+            "FMP_API_KEY": "present",
+            "MARKETSTACK_API_KEY": "present",
+            "OPENAI_API_KEY": "present",
+            "SEC_USER_AGENT": "AITradingSystem test@example.com",
+        },
+        runner=fake_runner,
+        visibility_check_date=date(2026, 5, 10),
+    )
+    markdown = render_daily_ops_run_report(report)
+
+    assert report.status == "BLOCKED_VISIBILITY"
+    assert calls == []
+    assert report.failed_step is not None
+    assert report.failed_step.step_id == "input_visibility"
+    assert report.metadata is not None
+    assert report.metadata.input_visibility_status == "BLOCKED"
+    assert "daily_run_historical_as_of_requires_replay" in markdown
+    assert "aits ops replay-day --mode cache-only --as-of 2026-05-08" in markdown
 
 
 def test_daily_ops_run_report_omits_command_output_text(tmp_path: Path) -> None:
@@ -346,6 +405,7 @@ def test_daily_ops_run_report_omits_command_output_text(tmp_path: Path) -> None:
         project_root=tmp_path,
         env={},
         runner=fake_runner,
+        visibility_check_date=date(2026, 5, 6),
     )
     markdown = render_daily_ops_run_report(report)
 
@@ -391,6 +451,7 @@ def test_daily_ops_run_report_writes_sanitized_metadata_sidecar(tmp_path: Path) 
         project_root=tmp_path,
         env={"UNUSED_SECRET": "SECRET_SHOULD_NOT_APPEAR"},
         runner=fake_runner,
+        visibility_check_date=date(2026, 5, 6),
     )
     output_path = tmp_path / "reports" / "daily_ops_run_2026-05-06.md"
     write_daily_ops_run_report(report, output_path)
@@ -403,6 +464,7 @@ def test_daily_ops_run_report_writes_sanitized_metadata_sidecar(tmp_path: Path) 
     assert metadata["run_id"].startswith("daily_ops_run:2026-05-06:")
     assert metadata["status"] == report.status
     assert metadata["visibility_cutoff_source"] == "daily_run_finished_at_utc"
+    assert metadata["input_visibility_status"] == "PASS"
     assert "SECRET_SHOULD_NOT_APPEAR" not in raw_metadata
     assert "PAID_CONTENT_SHOULD_NOT_APPEAR" not in raw_metadata
     assert "env_presence" in metadata
@@ -454,6 +516,7 @@ def test_run_daily_ops_plan_fails_when_artifact_status_fails(tmp_path: Path) -> 
         project_root=tmp_path,
         env={},
         runner=fake_runner,
+        visibility_check_date=date(2026, 5, 6),
     )
 
     assert report.status == "FAIL"

@@ -45,7 +45,7 @@ def test_replay_day_filters_future_inputs_and_uses_isolated_commands(
     assert replay.cutoff_policy == "production_daily_run_metadata"
     assert replay.visible_at.isoformat() == "2026-05-08T12:00:00+00:00"
     assert replay.openai_replay_policy == "disabled"
-    assert len(calls) == 3
+    assert len(calls) == 4
     assert all(env["OPENAI_API_KEY"] == "" for env in envs)
     assert all(env["FMP_API_KEY"] == "" for env in envs)
 
@@ -103,11 +103,18 @@ def test_replay_day_filters_future_inputs_and_uses_isolated_commands(
     assert "--prediction-production-effect" in score_command
     assert "none" in score_command
 
-    health_command = replay.command_results[1].command
+    dashboard_command = replay.command_results[1].command
+    assert dashboard_command[:3] == ("aits", "reports", "dashboard")
+    assert "--daily-report-path" in dashboard_command
+    assert str(replay.paths.reports_dir / "daily_score_2026-05-08.md") in dashboard_command
+    assert "--output-path" in dashboard_command
+    assert str(replay.paths.reports_dir / "evidence_dashboard_2026-05-08.html") in dashboard_command
+
+    health_command = replay.command_results[2].command
     assert "--pit-manifest-path" in health_command
     assert str(filtered_manifest) in health_command
 
-    secret_command = replay.command_results[2].command
+    secret_command = replay.command_results[3].command
     assert "--scan-paths" in secret_command
     assert str(replay.paths.root) in secret_command
 
@@ -254,7 +261,7 @@ def test_replay_day_compare_to_production_writes_diff(tmp_path: Path) -> None:
     assert "INCOMPLETE_DIFF" in replay_json
 
 
-def test_replay_day_cache_only_openai_policy_copies_archived_prereview(
+def test_replay_day_cache_only_openai_policy_filters_archived_prereview_by_cutoff(
     tmp_path: Path,
 ) -> None:
     project_root = tmp_path / "project"
@@ -276,12 +283,26 @@ def test_replay_day_cache_only_openai_policy_copies_archived_prereview(
         for record in replay.input_records
         if record.artifact_id == "risk_event_openai_prereview_queue"
     )
-    assert queue_record.status == "PASS"
-    assert queue_record.row_count == 1
-    assert (replay.paths.data_processed_dir / "risk_event_prereview_queue.json").exists()
-    assert (
+    assert queue_record.status == "PASS_WITH_EXCLUSIONS"
+    assert queue_record.row_count == 3
+    assert queue_record.included_count == 1
+    assert queue_record.excluded_count == 2
+    replay_queue_path = replay.paths.data_processed_dir / "risk_event_prereview_queue.json"
+    assert replay_queue_path.exists()
+    replay_queue = json.loads(replay_queue_path.read_text(encoding="utf-8"))
+    assert [record["precheck_id"] for record in replay_queue["records"]] == [
+        "visible_policy_export_controls"
+    ]
+    assert replay_queue["replay_filter"]["included_count"] == 1
+    assert replay_queue["replay_filter"]["excluded_count"] == 2
+    assert {
+        record["reason"] for record in replay_queue["replay_filter"]["excluded_records"]
+    } == {"available_after_replay_cutoff", "missing_provable_available_time"}
+    replay_report_path = (
         replay.paths.reports_dir / "risk_event_prereview_openai_2026-05-08.md"
-    ).exists()
+    )
+    assert replay_report_path.exists()
+    assert "PASS_WITH_EXCLUSIONS" in replay_report_path.read_text(encoding="utf-8")
 
 
 def test_replay_window_inventory_skips_non_trading_days(tmp_path: Path) -> None:
@@ -468,7 +489,30 @@ def _write_replay_fixture(project_root: Path) -> None:
         ],
     )
     (processed / "risk_event_prereview_queue.json").write_text(
-        json.dumps({"records": [{"risk_id": "policy_export_controls"}]}),
+        json.dumps(
+            {
+                "schema_version": "risk_event_prereview_queue.v2",
+                "generated_at": "2026-05-10T00:00:00+00:00",
+                "records": [
+                    {
+                        "precheck_id": "visible_policy_export_controls",
+                        "risk_id": "policy_export_controls",
+                        "request_timestamp": "2026-05-08T05:00:00+00:00",
+                        "cache_created_at": "2026-05-08T05:00:00+00:00",
+                    },
+                    {
+                        "precheck_id": "future_policy_export_controls",
+                        "risk_id": "policy_export_controls",
+                        "request_timestamp": "2026-05-10T05:00:00+00:00",
+                        "cache_created_at": "2026-05-10T05:00:00+00:00",
+                    },
+                    {
+                        "precheck_id": "legacy_without_timestamp",
+                        "risk_id": "policy_export_controls",
+                    },
+                ],
+            }
+        ),
         encoding="utf-8",
     )
     decision_dir = processed / "decision_snapshots"

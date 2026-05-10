@@ -21,15 +21,22 @@ def test_evidence_dashboard_links_conclusion_to_inputs(tmp_path: Path) -> None:
         daily_report_path=inputs["daily_report"],
         trace_bundle_path=inputs["trace"],
         decision_snapshot_path=inputs["snapshot"],
+        alerts_report_path=inputs["alerts"],
+        scores_daily_path=inputs["scores"],
     )
     html = render_evidence_dashboard(report)
 
     assert report.status == "PASS"
+    assert "今日决策视图" in html
+    assert "告警聚合" in html
+    assert "近 20 个交易日趋势" in html
     assert "快速读者" in html
     assert "投资复核者" in html
     assert "系统审计者" in html
     assert "最终 AI 仓位为 40%-60%" in html
     assert "估值拥挤 上限 40%" in html
+    assert "估值拥挤 触发仓位上限" in html
+    assert "2026-05-03" in html
     assert "价格日线缓存" in html
     assert "abc123" in html
     assert "市场数据质量门禁: PASS" in html
@@ -57,13 +64,25 @@ def test_reports_dashboard_cli_writes_html(tmp_path: Path) -> None:
             str(inputs["snapshot"]),
             "--output-path",
             str(output_path),
+            "--alerts-report-path",
+            str(inputs["alerts"]),
+            "--scores-daily-path",
+            str(inputs["scores"]),
+            "--json-output-path",
+            str(tmp_path / "dashboard.json"),
         ],
     )
 
     assert result.exit_code == 0
     assert output_path.exists()
+    assert (tmp_path / "dashboard.json").exists()
     assert "Evidence dashboard：PASS" in result.output
+    assert "dashboard.json" in result.output
     assert "Claim 到输入映射" in output_path.read_text(encoding="utf-8")
+    payload = json.loads((tmp_path / "dashboard.json").read_text(encoding="utf-8"))
+    assert payload["production_effect"] == "none"
+    assert payload["decision"]["action"] == "观察，不形成交易结论（`observe_only`）"
+    assert payload["alerts"]["active_count"] == 1
 
 
 def _write_dashboard_inputs(tmp_path: Path) -> dict[str, Path]:
@@ -79,12 +98,25 @@ def _write_dashboard_inputs(tmp_path: Path) -> dict[str, Path]:
                 "|---|---|",
                 "| 状态标签 | 中高配但受限 |",
                 "| 执行动作 | 观察，不形成交易结论（`observe_only`） |",
+                "| 判断置信度 | 中，66.0/100 |",
+                "| Data Gate | PASS |",
+                "| 总风险资产预算 | 50%-70%（normal） |",
                 "",
                 "### 最大限制",
                 "",
                 "- 估值拥挤限制最终仓位。",
                 "",
+                "### Main Invalidator",
+                "",
+                "- 估值拥挤是当前主要 invalidator。",
+                "",
+                "### Next Checks",
+                "",
+                "- 复核 NVDA / TSM / AMD 趋势。",
+                "",
                 "## 变化原因树",
+                "",
+                "- 本期仓位变化：2026-05-03 35%-55% -> 2026-05-04 40%-60%；总分变化 +2.0分。",
                 "",
                 "### 什么情况会改变判断",
                 "",
@@ -95,6 +127,137 @@ def _write_dashboard_inputs(tmp_path: Path) -> dict[str, Path]:
                 "",
             ]
         ),
+        encoding="utf-8",
+    )
+
+    alerts_path = tmp_path / "alerts_2026-05-04.md"
+    alerts_path.write_text(
+        "\n".join(
+            [
+                "# 投资与数据告警报告",
+                "",
+                "- 状态：ACTIVE_WARNINGS",
+                "- 评估日期：2026-05-04",
+                "- production_effect=none；告警只做复核提示，不改变评分、仓位、回测或执行建议。",
+                "- 活跃告警数：1",
+                "- data/system：0",
+                "- investment/risk：1",
+                "",
+                "## 严重度摘要",
+                "",
+                "| 等级 | 数量 |",
+                "|---|---:|",
+                "| critical | 0 |",
+                "| high | 1 |",
+                "| warning | 0 |",
+                "",
+                "## 告警明细",
+                "",
+                "| 等级 | 类别 | 来源 | 标题 | 触发条件 | 解除条件 | 引用 | 去重键 | 说明 |",
+                "|---|---|---|---|---|---|---|---|---|",
+                (
+                    "| high | investment_risk | position_gate | 估值拥挤 触发仓位上限 | "
+                    "gate_id=valuation | gate 解除 | daily_score:2026-05-04:overall_position | "
+                    "k1 | 估值限制仓位。 |"
+                ),
+                "",
+                "## 治理边界",
+                "",
+                "- 告警不是交易指令。",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    scores_path = tmp_path / "scores_daily.csv"
+    score_columns = [
+        "as_of",
+        "component",
+        "score",
+        "weight",
+        "source_type",
+        "coverage",
+        "reason",
+        "confidence",
+        "confidence_level",
+        "confidence_reasons",
+        "model_risk_asset_ai_min",
+        "model_risk_asset_ai_max",
+        "final_risk_asset_ai_min",
+        "final_risk_asset_ai_max",
+        "confidence_adjusted_risk_asset_ai_min",
+        "confidence_adjusted_risk_asset_ai_max",
+        "total_asset_ai_min",
+        "total_asset_ai_max",
+        "triggered_position_gates",
+        "static_total_risk_asset_min",
+        "static_total_risk_asset_max",
+        "final_total_risk_asset_min",
+        "final_total_risk_asset_max",
+        "macro_risk_asset_budget_level",
+        "macro_risk_asset_budget_triggered",
+        "macro_risk_asset_budget_reasons",
+    ]
+    score_rows = [
+        [
+            "2026-05-03",
+            "overall",
+            "71.0",
+            "100.0",
+            "derived",
+            "",
+            "上一日",
+            "64.0",
+            "medium",
+            "warning note",
+            "0.6",
+            "0.8",
+            "0.35",
+            "0.55",
+            "0.5",
+            "0.6",
+            "0.21",
+            "0.33",
+            "估值拥挤",
+            "0.6",
+            "0.8",
+            "0.5",
+            "0.7",
+            "normal",
+            "False",
+            "无",
+        ],
+        [
+            "2026-05-04",
+            "overall",
+            "73.0",
+            "100.0",
+            "derived",
+            "",
+            "当日",
+            "66.0",
+            "medium",
+            "warning note",
+            "0.6",
+            "0.8",
+            "0.4",
+            "0.6",
+            "0.5",
+            "0.6",
+            "0.24",
+            "0.36",
+            "估值拥挤",
+            "0.6",
+            "0.8",
+            "0.5",
+            "0.7",
+            "normal",
+            "False",
+            "无",
+        ],
+    ]
+    scores_path.write_text(
+        "\n".join([",".join(score_columns), *[",".join(row) for row in score_rows]]) + "\n",
         encoding="utf-8",
     )
 
@@ -247,4 +410,6 @@ def _write_dashboard_inputs(tmp_path: Path) -> dict[str, Path]:
         "trace": trace_path,
         "snapshot": snapshot_path,
         "belief": belief_path,
+        "alerts": alerts_path,
+        "scores": scores_path,
     }

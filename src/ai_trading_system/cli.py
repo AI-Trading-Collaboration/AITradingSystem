@@ -218,8 +218,10 @@ from ai_trading_system.docs_freshness import (
 )
 from ai_trading_system.evidence_dashboard import (
     build_evidence_dashboard_report,
+    default_evidence_dashboard_json_path,
     default_evidence_dashboard_path,
     write_evidence_dashboard,
+    write_evidence_dashboard_json,
 )
 from ai_trading_system.execution_policy import (
     build_execution_advisory,
@@ -4649,6 +4651,18 @@ def evidence_dashboard_command(
         Path | None,
         typer.Option(help="HTML dashboard 输出路径。"),
     ] = None,
+    alerts_report_path: Annotated[
+        Path | None,
+        typer.Option(help="alerts Markdown 路径；不传时按 as_of 使用默认告警报告路径。"),
+    ] = None,
+    scores_daily_path: Annotated[
+        Path | None,
+        typer.Option(help="scores_daily.csv 路径；不传时使用默认处理后评分缓存。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Dashboard JSON payload 输出路径；不传时写入默认同名 JSON。"),
+    ] = None,
 ) -> None:
     """生成只读 evidence-first HTML dashboard。"""
     dashboard_date = _parse_date(as_of) if as_of else date.today()
@@ -4665,6 +4679,16 @@ def evidence_dashboard_command(
         PROJECT_ROOT / "outputs" / "reports",
         dashboard_date,
     )
+    alert_path = alerts_report_path or default_alert_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        dashboard_date,
+    )
+    scores_path = scores_daily_path or DEFAULT_SCORES_DAILY_PATH
+    dashboard_json_output = json_output_path or (
+        default_evidence_dashboard_json_path(PROJECT_ROOT / "outputs" / "reports", dashboard_date)
+        if output_path is None
+        else dashboard_output.with_suffix(".json")
+    )
     try:
         report = build_evidence_dashboard_report(
             as_of=dashboard_date,
@@ -4672,6 +4696,8 @@ def evidence_dashboard_command(
             trace_bundle_path=trace_path,
             decision_snapshot_path=snapshot_path,
             belief_state_path=belief_state_path,
+            alerts_report_path=alert_path,
+            scores_daily_path=scores_path,
         )
     except FileNotFoundError as exc:
         raise typer.BadParameter(str(exc)) from exc
@@ -4679,11 +4705,13 @@ def evidence_dashboard_command(
         raise typer.BadParameter(str(exc)) from exc
 
     dashboard_path = write_evidence_dashboard(report, dashboard_output)
+    dashboard_json_path = write_evidence_dashboard_json(report, dashboard_json_output)
     style = "green" if report.status == "PASS" else "yellow"
     claim_count = len(report.trace_bundle.get("claims", []))
     dataset_count = len(report.trace_bundle.get("dataset_refs", []))
     console.print(f"[{style}]Evidence dashboard：{report.status}[/{style}]")
     console.print(f"Dashboard：{dashboard_path}")
+    console.print(f"Dashboard JSON：{dashboard_json_path}")
     console.print(
         f"核心 claim：{claim_count}；"
         f"输入 dataset：{dataset_count}；"

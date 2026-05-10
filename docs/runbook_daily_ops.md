@@ -9,7 +9,8 @@
 |频率|命令|目的|
 |---|---|---|
 |交易日前/盘前|`aits ops daily-plan --as-of YYYY-MM-DD --fail-on-missing-env`|确认环境变量、缓存路径、预期 artifact 和当日是否交易日。|
-|交易日盘后|`aits ops daily-run --as-of YYYY-MM-DD`|执行下载、PIT、SEC、估值、日报、pipeline health 和 secret scan。|
+|交易日盘后|`aits ops daily-run --as-of YYYY-MM-DD`|执行下载、PIT、SEC、估值、日报、只读 dashboard、pipeline health 和 secret scan。|
+|历史时点复现|`aits ops replay-day --as-of YYYY-MM-DD --mode cache-only --openai-replay-policy cache-only`|只读归档输入，生成隔离 replay bundle；不调用 live provider 或 OpenAI。|
 |每周|`aits reports investment-review --period weekly --as-of YYYY-MM-DD`、`aits feedback loop-review --as-of YYYY-MM-DD`|复核结论变化、outcome、learning queue、shadow maturity 和 blocked tasks。|
 |每月|`aits reports investment-review --period monthly --as-of YYYY-MM-DD`、必要时运行回测/覆盖诊断|复核规则、数据源、gate 松紧、样本成熟度和 owner action。|
 
@@ -31,11 +32,12 @@ outputs/runs/YYYY-MM-DD/<run_id>/
 
 过渡期仍可在 `outputs/reports/` 看到 legacy mirror。投资阅读入口优先级：
 
-1. `daily_score_YYYY-MM-DD.md`：趋势判断日报和 Decision Card。
-2. `data_quality_YYYY-MM-DD.md`：市场和宏观缓存质量门禁。
-3. `pipeline_health_YYYY-MM-DD.md`：关键 artifact 健康，不等于投资结论有效。
-4. `daily_ops_run_YYYY-MM-DD.md` 与 `daily_ops_run_metadata_YYYY-MM-DD.json`：运行步骤和脱敏元数据。
-5. `manifest.json`：本次 run 的输入、输出、checksum、legacy mirror 和 visibility cutoff。
+1. `evidence_dashboard_YYYY-MM-DD.html`：只读每日决策展示入口，不替代审计源。
+2. `daily_score_YYYY-MM-DD.md`：趋势判断日报和 Decision Card。
+3. `data_quality_YYYY-MM-DD.md`：市场和宏观缓存质量门禁。
+4. `pipeline_health_YYYY-MM-DD.md`：关键 artifact 健康，不等于投资结论有效。
+5. `daily_ops_run_YYYY-MM-DD.md` 与 `daily_ops_run_metadata_YYYY-MM-DD.json`：运行步骤和脱敏元数据。
+6. `manifest.json`：本次 run 的输入、输出、checksum、legacy mirror 和 visibility cutoff。
 
 ## 阻断规则
 
@@ -44,6 +46,7 @@ outputs/runs/YYYY-MM-DD/<run_id>/
 - `aits validate-data` 或 `score-daily` 内部同一路径数据质量门禁失败。
 - SEC metrics、估值快照、风险事件发生记录、execution policy 或 rule card 校验失败。
 - 必需环境变量缺失导致 `daily-plan` 或 `daily-run` 为 `BLOCKED_ENV`。
+- 历史 `as_of` 被 `daily-run` 输入可见性预检查识别为 `BLOCKED_VISIBILITY`；不得用生产调度入口补跑 strict PIT 复现。
 - `score-daily`、`pipeline health` 或 secret scan 报告状态为 `FAIL`。
 - OpenAI 风险事件预审在启用状态下 fail closed。
 
@@ -61,6 +64,7 @@ outputs/runs/YYYY-MM-DD/<run_id>/
 |数据质量失败|`outputs/reports/data_quality_YYYY-MM-DD.md`、download manifest、provider health。|
 |PIT checksum mismatch|`pit_snapshots_validation_YYYY-MM-DD.md`、`fmp_forward_pit_fetch_YYYY-MM-DD.md`、raw payload 路径。|
 |日报没有生成|`daily_ops_run_YYYY-MM-DD.md` 的阻断步骤和对应子命令报告。|
+|历史复现被 daily-run 阻断|改用 `outputs/replays/` 下的 `ops replay-day --mode cache-only` bundle，检查 `input_freeze_manifest.csv` 和 replay report。|
 |报告存在但结论不可用|日报“结论使用等级”、Decision Card 的 Data Gate、人工复核摘要。|
 |OpenAI 预审失败|`risk_event_prereview_openai_YYYY-MM-DD.md` 和本地 request cache，不保存 API key。|
 |疑似 secret|`secret_hygiene_YYYY-MM-DD.md`，只输出脱敏片段。|
