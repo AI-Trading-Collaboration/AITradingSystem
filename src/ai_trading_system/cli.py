@@ -330,6 +330,11 @@ from ai_trading_system.historical_inputs import (
     build_historical_risk_event_occurrence_review_report,
     build_historical_valuation_review_report,
 )
+from ai_trading_system.historical_replay import (
+    default_historical_replay_output_root,
+    run_historical_day_replay,
+    run_historical_replay_window,
+)
 from ai_trading_system.industry_chain import (
     default_industry_chain_report_path,
     validate_industry_chain_config,
@@ -369,6 +374,7 @@ from ai_trading_system.official_policy_sources import (
 )
 from ai_trading_system.ops_daily import (
     build_daily_ops_plan,
+    daily_ops_run_metadata_path_for_report,
     default_daily_ops_plan_path,
     default_daily_ops_run_report_path,
     run_daily_ops_plan,
@@ -4653,6 +4659,13 @@ def pipeline_health_command(
         int,
         typer.Option(help="PIT latest available_time 最大允许日龄，超出后告警。"),
     ] = 3,
+    non_trading_day: Annotated[
+        bool,
+        typer.Option(
+            "--non-trading-day/--trading-day",
+            help="休市日健康检查模式：不要求当日评分产物存在。",
+        ),
+    ] = False,
     output_path: Annotated[
         Path | None,
         typer.Option(help="Markdown pipeline health 报告输出路径。"),
@@ -4709,53 +4722,65 @@ def pipeline_health_command(
         min_normalized_rows=min_pit_normalized_rows,
         max_snapshot_age_days=max_pit_snapshot_age_days,
     )
+    core_artifacts = [
+        PipelineArtifactSpec(
+            "prices_daily",
+            "价格缓存",
+            prices_path,
+            True,
+            "运行 `aits download-data` 并检查 download manifest。",
+        ),
+        PipelineArtifactSpec(
+            "rates_daily",
+            "利率缓存",
+            rates_path,
+            True,
+            "运行 `aits download-data` 并检查 FRED 下载状态。",
+        ),
+    ]
+    if not non_trading_day:
+        core_artifacts.extend(
+            [
+                PipelineArtifactSpec(
+                    "data_quality_report",
+                    "数据质量报告",
+                    quality_report,
+                    True,
+                    "运行 `aits validate-data` 或 `aits score-daily`。",
+                ),
+                PipelineArtifactSpec(
+                    "features_daily",
+                    "每日特征缓存",
+                    features_path,
+                    True,
+                    "运行 `aits build-features` 或 `aits score-daily`。",
+                ),
+                PipelineArtifactSpec(
+                    "scores_daily",
+                    "每日评分缓存",
+                    scores_path,
+                    True,
+                    "运行 `aits score-daily`。",
+                ),
+                PipelineArtifactSpec(
+                    "daily_score_report",
+                    "每日评分报告",
+                    daily_report,
+                    True,
+                    "运行 `aits score-daily` 并检查数据质量、SEC、风险事件和估值报告。",
+                ),
+            ]
+        )
     report = build_pipeline_health_report(
         as_of=health_date,
-        artifacts=(
-            PipelineArtifactSpec(
-                "prices_daily",
-                "价格缓存",
-                prices_path,
-                True,
-                "运行 `aits download-data` 并检查 download manifest。",
-            ),
-            PipelineArtifactSpec(
-                "rates_daily",
-                "利率缓存",
-                rates_path,
-                True,
-                "运行 `aits download-data` 并检查 FRED 下载状态。",
-            ),
-            PipelineArtifactSpec(
-                "data_quality_report",
-                "数据质量报告",
-                quality_report,
-                True,
-                "运行 `aits validate-data` 或 `aits score-daily`。",
-            ),
-            PipelineArtifactSpec(
-                "features_daily",
-                "每日特征缓存",
-                features_path,
-                True,
-                "运行 `aits build-features` 或 `aits score-daily`。",
-            ),
-            PipelineArtifactSpec(
-                "scores_daily",
-                "每日评分缓存",
-                scores_path,
-                True,
-                "运行 `aits score-daily`。",
-            ),
-            PipelineArtifactSpec(
-                "daily_score_report",
-                "每日评分报告",
-                daily_report,
-                True,
-                "运行 `aits score-daily` 并检查数据质量、SEC、风险事件和估值报告。",
-            ),
-        ),
+        artifacts=tuple(core_artifacts),
         extra_checks=pit_checks,
+        market_session="CLOSED_MARKET" if non_trading_day else "TRADING_DAY",
+        market_session_note=(
+            "休市日模式：不要求当日 data_quality、features、scores 或 daily_score 报告。"
+            if non_trading_day
+            else "交易日模式：要求当日数据质量、特征、评分和日报产物。"
+        ),
     )
     write_pipeline_health_report(report, report_path)
     alert_report = build_pipeline_health_alert_report(
@@ -5018,6 +5043,7 @@ def daily_ops_run_command(
         reports_dir,
         plan_date,
     )
+    metadata_path = daily_ops_run_metadata_path_for_report(run_report_path)
     write_daily_ops_plan(plan, plan_report_path, env=os.environ)
     run_report = run_daily_ops_plan(plan, project_root=PROJECT_ROOT, env=os.environ)
     write_daily_ops_run_report(run_report, run_report_path)
@@ -5033,6 +5059,8 @@ def daily_ops_run_command(
     console.print(f"[{style}]每日运行执行：{status}[/{style}]")
     console.print(f"计划报告：{plan_report_path}")
     console.print(f"执行报告：{run_report_path}")
+    if run_report.metadata is not None:
+        console.print(f"Metadata JSON：{metadata_path}")
     console.print(f"执行步骤数：{len(run_report.step_results)} / {len(plan.steps)}")
     if run_report.missing_env_vars:
         console.print(f"缺失环境变量：{', '.join(run_report.missing_env_vars)}")
@@ -5041,6 +5069,227 @@ def daily_ops_run_command(
         console.print(
             f"失败步骤：{failed.step_id}；return_code={failed.return_code}"
         )
+    if status not in {"PASS", "PASS_WITH_SKIPS"}:
+        raise typer.Exit(code=1)
+
+
+@ops_app.command("replay-day")
+def historical_replay_day_command(
+    as_of: Annotated[
+        str,
+        typer.Option(help="回放的历史交易日，格式为 YYYY-MM-DD。"),
+    ],
+    mode: Annotated[
+        str,
+        typer.Option(help="回放模式；MVP 仅支持 cache-only。"),
+    ] = "cache-only",
+    visible_at: Annotated[
+        str | None,
+        typer.Option(help="显式可见时间上限，ISO datetime；不传则使用 as-of 当日 UTC 末尾。"),
+    ] = None,
+    output_root: Annotated[
+        Path | None,
+        typer.Option(help="Replay bundle 根目录；默认写入项目 outputs/replays。"),
+    ] = None,
+    label: Annotated[
+        str | None,
+        typer.Option(help="可选 replay 标签，用于 run id。"),
+    ] = None,
+    run_id: Annotated[
+        str | None,
+        typer.Option(help="可选固定 run id，便于测试或重复验证。"),
+    ] = None,
+    inventory_only: Annotated[
+        bool,
+        typer.Option(
+            "--inventory-only/--run-score",
+            help="只生成 input freeze manifest，不运行 score/health/secret replay。",
+        ),
+    ] = False,
+    allow_incomplete: Annotated[
+        bool,
+        typer.Option(
+            "--allow-incomplete/--strict",
+            help="允许缺关键输入时只生成 INCOMPLETE_REPLAY 诊断报告。",
+        ),
+    ] = False,
+    compare_to_production: Annotated[
+        bool,
+        typer.Option(
+            "--compare-to-production/--no-compare-to-production",
+            help="生成 replay 输出与 production artifact 的结构化 diff。",
+        ),
+    ] = False,
+    openai_replay_policy: Annotated[
+        str,
+        typer.Option(
+            help=(
+                "OpenAI replay 策略：disabled 或 cache-only；cache-only 只复制历史"
+                "预审队列/报告，不调用 live OpenAI。"
+            ),
+        ),
+    ] = "disabled",
+    full_universe: Annotated[
+        bool,
+        typer.Option("--full-universe", help="对 replay score-daily 使用完整 AI 产业链标的。"),
+    ] = False,
+    project_root: Annotated[
+        Path,
+        typer.Option(help="项目根目录；默认使用当前安装包配置的 PROJECT_ROOT。"),
+    ] = PROJECT_ROOT,
+) -> None:
+    """基于本地归档输入回放某个历史交易日的分析产出。"""
+    replay_date = _parse_date(as_of)
+    replay_visible_at = _parse_datetime(visible_at) if visible_at else None
+    try:
+        replay_run = run_historical_day_replay(
+            as_of=replay_date,
+            project_root=project_root,
+            output_root=output_root or default_historical_replay_output_root(project_root),
+            mode=mode,
+            visible_at=replay_visible_at,
+            label=label,
+            run_id=run_id,
+            inventory_only=inventory_only,
+            allow_incomplete=allow_incomplete,
+            compare_to_production=compare_to_production,
+            openai_replay_policy=openai_replay_policy,
+            full_universe=full_universe,
+            env=os.environ,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    status = replay_run.status
+    style = (
+        "green"
+        if status in {"PASS", "PASS_INVENTORY"}
+        else "yellow"
+        if status == "INCOMPLETE_REPLAY"
+        else "red"
+    )
+    console.print(f"[{style}]历史交易日回放：{status}[/{style}]")
+    console.print(f"Replay bundle：{replay_run.paths.root}")
+    console.print(f"回放报告：{replay_run.paths.run_report_path}")
+    console.print(f"输入冻结清单：{replay_run.paths.input_manifest_csv_path}")
+    if replay_run.production_diff is not None:
+        console.print(f"Production diff：{replay_run.production_diff.report_path}")
+    if replay_run.errors:
+        console.print(f"输入阻断：{len(replay_run.errors)} 项")
+    if replay_run.failed_step is not None:
+        failed = replay_run.failed_step
+        console.print(
+            f"失败步骤：{failed.step_id}；return_code={failed.return_code}"
+        )
+    if status not in {"PASS", "PASS_INVENTORY"}:
+        raise typer.Exit(code=1)
+
+
+@ops_app.command("replay-window")
+def historical_replay_window_command(
+    start: Annotated[
+        str,
+        typer.Option(help="批量回放起始日期，格式为 YYYY-MM-DD。"),
+    ],
+    end: Annotated[
+        str,
+        typer.Option(help="批量回放结束日期，格式为 YYYY-MM-DD。"),
+    ],
+    mode: Annotated[
+        str,
+        typer.Option(help="回放模式；目前仅支持 cache-only。"),
+    ] = "cache-only",
+    output_root: Annotated[
+        Path | None,
+        typer.Option(help="Replay bundle 根目录；默认写入项目 outputs/replays。"),
+    ] = None,
+    label: Annotated[
+        str | None,
+        typer.Option(help="可选 replay 标签，用于 window run id 和单日 run id。"),
+    ] = None,
+    run_id: Annotated[
+        str | None,
+        typer.Option(help="可选固定 window run id，便于测试或重复验证。"),
+    ] = None,
+    inventory_only: Annotated[
+        bool,
+        typer.Option(
+            "--inventory-only/--run-score",
+            help="只生成每个交易日的 input freeze manifest，不运行 score/health/secret replay。",
+        ),
+    ] = False,
+    allow_incomplete: Annotated[
+        bool,
+        typer.Option(
+            "--allow-incomplete/--strict",
+            help="允许缺关键输入时只生成 INCOMPLETE_REPLAY 诊断报告。",
+        ),
+    ] = False,
+    compare_to_production: Annotated[
+        bool,
+        typer.Option(
+            "--compare-to-production/--no-compare-to-production",
+            help="为每个交易日生成 replay 输出与 production artifact 的结构化 diff。",
+        ),
+    ] = False,
+    openai_replay_policy: Annotated[
+        str,
+        typer.Option(
+            help=(
+                "OpenAI replay 策略：disabled 或 cache-only；cache-only 只复制历史"
+                "预审队列/报告，不调用 live OpenAI。"
+            ),
+        ),
+    ] = "disabled",
+    full_universe: Annotated[
+        bool,
+        typer.Option("--full-universe", help="对 replay score-daily 使用完整 AI 产业链标的。"),
+    ] = False,
+    continue_on_failure: Annotated[
+        bool,
+        typer.Option(
+            "--continue-on-failure/--stop-on-failure",
+            help="某个交易日 replay 失败后是否继续后续交易日。",
+        ),
+    ] = False,
+    project_root: Annotated[
+        Path,
+        typer.Option(help="项目根目录；默认使用当前安装包配置的 PROJECT_ROOT。"),
+    ] = PROJECT_ROOT,
+) -> None:
+    """按交易日窗口批量运行历史交易日归档回放。"""
+    start_date = _parse_date(start)
+    end_date = _parse_date(end)
+    try:
+        window_run = run_historical_replay_window(
+            start=start_date,
+            end=end_date,
+            project_root=project_root,
+            output_root=output_root or default_historical_replay_output_root(project_root),
+            mode=mode,
+            label=label,
+            run_id=run_id,
+            inventory_only=inventory_only,
+            allow_incomplete=allow_incomplete,
+            compare_to_production=compare_to_production,
+            openai_replay_policy=openai_replay_policy,
+            full_universe=full_universe,
+            continue_on_failure=continue_on_failure,
+            env=os.environ,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    status = window_run.status
+    style = "green" if status in {"PASS", "PASS_WITH_SKIPS"} else "red"
+    console.print(f"[{style}]历史交易日批量回放：{status}[/{style}]")
+    console.print(f"Window report：{window_run.report_path}")
+    console.print(f"Window JSON：{window_run.json_path}")
+    console.print(f"交易日回放数：{len(window_run.day_runs)}")
+    console.print(f"跳过非交易日数：{len(window_run.skipped_dates)}")
+    if window_run.failed_run is not None:
+        failed = window_run.failed_run
+        console.print(f"失败日期：{failed.as_of.isoformat()}；status={failed.status}")
     if status not in {"PASS", "PASS_WITH_SKIPS"}:
         raise typer.Exit(code=1)
 

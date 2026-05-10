@@ -272,10 +272,12 @@ flowchart TD
         EPRG["outputs/reports/execution_policy_YYYY-MM-DD.md<br/>执行政策校验报告"]
         EPL["aits execution lookup<br/>按 action_id 查询执行动作"]
         PEV["aits portfolio exposure<br/>真实持仓只读暴露分解；缺少文件时 NOT_CONNECTED"]
-        ODP["aits ops daily-plan / daily-run<br/>每日运行计划、凭据检查、真实执行和调度顺序"]
-        ODPR["outputs/reports/daily_ops_plan_YYYY-MM-DD.md / daily_ops_run_YYYY-MM-DD.md<br/>步骤、环境变量、artifact、门禁、执行状态和跳过声明"]
-        OPH["aits ops health<br/>关键 pipeline artifact + PIT 抓取/快照健康检查"]
-        OPR["outputs/reports/pipeline_health_YYYY-MM-DD.md<br/>存在性、mtime、row count、freshness、checksum、fetch status"]
+        ODP["aits ops daily-plan / daily-run<br/>每日运行计划、交易日历判断、凭据检查、真实执行和调度顺序"]
+        ODPR["outputs/reports/daily_ops_plan_YYYY-MM-DD.md / daily_ops_run_YYYY-MM-DD.md / daily_ops_run_metadata_YYYY-MM-DD.json<br/>market session、上一交易日、步骤、环境变量 presence、pre-run input checksum、artifact checksum、visibility cutoff、git/config/rule hash、执行状态和跳过声明"]
+        ODR["aits ops replay-day / replay-window<br/>历史交易日 cache-only 归档回放<br/>冻结 as-of 可见输入窗口、OpenAI disabled/cache-only 策略、可选 production diff、窗口批量回放"]
+        ODRR["outputs/replays/YYYY-MM-DD/<run-id>/ 与 outputs/replays/windows/<run-id>/<br/>input freeze manifest、replay_run、diff_vs_production、replay_window、score/health/secret 输出"]
+        OPH["aits ops health<br/>关键 pipeline artifact + PIT 抓取/快照健康检查<br/>休市日可用 --non-trading-day"]
+        OPR["outputs/reports/pipeline_health_YYYY-MM-DD.md<br/>market session、存在性、mtime、row count、freshness、checksum、fetch status"]
         SCS["aits security scan-secrets<br/>本地 secret hygiene 扫描"]
         SCSR["outputs/reports/secret_hygiene_YYYY-MM-DD.md<br/>疑似 secret 脱敏问题清单"]
     end
@@ -680,6 +682,13 @@ flowchart TD
     ODP -.-> SD
     ODP -.-> OPH
     ODP -.-> SCS
+    PITMAN -.-> ODR
+    FMPFPN -.-> ODR
+    VS -.-> ODR
+    ODR -.-> SD
+    ODR -.-> OPH
+    ODR -.-> SCS
+    ODR --> ODRR
     PR --> OPH
     RR --> OPH
     FT --> OPH
@@ -1010,8 +1019,8 @@ flowchart TD
         SC1["情景压力测试库<br/>aits scenarios validate / lookup<br/>节点、ticker、risk event 和 gate 映射"]
         CT1["未来催化剂日历<br/>aits catalysts validate / upcoming / lookup<br/>5/20/60 天事件前后复核"]
         EX1["执行纪律政策<br/>aits execution validate / lookup<br/>advisory action taxonomy"]
-        OPS0["每日运行计划与执行<br/>aits ops daily-plan / daily-run<br/>下载、PIT、SEC metrics、估值、评分和运行健康顺序"]
-        OPS1["Pipeline health<br/>aits ops health<br/>关键 artifact + PIT 抓取/快照健康"]
+        OPS0["每日运行计划与执行<br/>aits ops daily-plan / daily-run<br/>交易日完整评分；休市日跳过评分并保留风险/缓存健康步骤"]
+        OPS1["Pipeline health<br/>aits ops health<br/>关键 artifact + PIT 抓取/快照健康；休市日不要求当日日报"]
         SEC1["Secret hygiene<br/>aits security scan-secrets<br/>配置、文档、报告和 trace 脱敏扫描"]
         K["交易复盘归因<br/>aits review-trades"]
         L["日报集成<br/>汇总 thesis、风险规则与发生记录、估值和复盘摘要"]
@@ -1125,11 +1134,14 @@ flowchart TD
 |评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果，component 行记录模块 confidence，overall 行记录整体 confidence、模型/最终/置信度调整仓位区间、静态和宏观调整后总风险资产预算、总资产 AI 仓位区间、宏观预算触发等级和仓位闸门摘要；置信度调整仓位基于评分模型原始仓位计算，并作为 `confidence` gate 参与最终上限约束，用于日报上期对比|已实现|
 |日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|开头输出“今日结论卡”，固定呈现状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、总风险资产预算、执行动作、主结论、三个核心原因、最大限制和下一步触发条件；正文继续输出结论使用等级、适用范围、变化原因树、什么情况会改变判断、关注股票趋势分析、产业链节点热度与健康度、组合暴露、认知状态摘要、执行建议、宏观风险资产预算、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、当前有效风险事件复核声明数量、估值 PIT 可信度、仓位闸门来源/上限/触发状态、置信度调整后模型仓位、限制说明、人工复核摘要和可追溯引用章节；关注股票趋势分析按 `core_watchlist` 显示逐 ticker 1/5/20 日收益、20/50/100/200 日均线位置、相对均线偏离和数据覆盖；当前项目范围为趋势判断/投研辅助，不触发交易；执行建议、关注股票趋势、节点热度/健康度和组合暴露均明确 `production_effect=none`，不是自动交易指令|已实现|
 |结论使用等级|`outputs/reports/daily_score_YYYY-MM-DD.md#结论使用等级` / `outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md#结论使用等级`|报告输出 `trend_only`、`actionable`、`review_required`、`research_only`、`data_limited` 或 `backtest_limited` 等使用边界，并与投资姿态标签分开；当前 `score-daily` 和回测以 `trend_judgment` 范围运行，干净通过时也只能显示“趋势判断，不触发交易”，不能自动升级为仓位复核或交易执行；低置信度、人工复核失败、来源不足、数据质量失败和回测覆盖不足会自动降级，说明原因、解除条件和证据引用|已实现基础版|
-|每日运行计划|`aits ops daily-plan`|生成本地或云 VM 可用的每日运行计划，列出 `download-data`、带 `--continue-on-failure` 的 `pit-snapshots fetch-fmp-forward`、SEC companyfacts 刷新、SEC metrics 抽取/校验、FMP 估值快照刷新、`score-daily`、`ops health` 和 `security scan-secrets` 的顺序、必需环境变量、预期 artifact、质量门禁和阻断关系；只做计划和环境变量非空检查，不执行下载、API 调用、评分或报告生成；PIT 抓取失败进入脱敏失败报告或 pipeline health 告警，不把失败快照作为可用 PIT 输入，也不阻断 `score-daily` 自身质量门禁；SEC metrics 与估值刷新失败必须阻断日报；缺少关键环境变量时显示 `BLOCKED_ENV`，可用 `--fail-on-missing-env` 作为调度前门禁|已实现基础版|
-|每日运行执行器|`aits ops daily-run`|复用 `daily-plan` 的步骤顺序真实调用本地 CLI，先写计划报告，再执行 `download-data`、PIT、SEC companyfacts、SEC metrics 抽取/校验、FMP valuation snapshots、`score-daily`、`ops health` 和 secret scan；执行器内部用当前 Python 解释器调用同一 `ai_trading_system.cli` 模块，避免 Windows 上从 `aits.exe` 父进程递归启动 `aits.exe`；缺少阻断性环境变量时返回 `BLOCKED_ENV`；任一执行步骤退出码非 0 或关键 artifact 报告状态非 `PASS*` 时停止，不继续下游步骤；显式 `--skip-*` 选项会在计划和执行报告中保留限制声明|已实现基础版|
-|每日运行报告|`outputs/reports/daily_ops_plan_YYYY-MM-DD.md` / `outputs/reports/daily_ops_run_YYYY-MM-DD.md`|计划报告中文输出计划状态、评估日期、必需环境变量是否可见、逐步骤命令、输出路径、质量门禁和显式跳过声明；执行报告中文输出真实执行状态、开始/结束时间、退出码、耗时、stdout/stderr 行数和预期 artifact 路径，不保存 stdout/stderr 原文、API key、token 或付费内容原文；仍未接入 systemd/cron、通知或云备份|已实现基础版|
-|Pipeline health|`aits ops health`|只读检查关键 pipeline artifact，包括价格缓存、利率缓存、数据质量报告、特征缓存、评分缓存、日报、FMP PIT 抓取报告、PIT manifest、PIT 质量报告和 FMP PIT normalized as-of CSV 是否存在、是否为空、mtime、row count、`available_time` 新鲜度、raw payload checksum 和 FMP PIT 抓取报告状态；不把运行健康解释为投资结论有效|已实现基础版|
-|Pipeline health 报告|`outputs/reports/pipeline_health_YYYY-MM-DD.md`|中文输出 artifact 检查表、PIT 抓取失败、PIT 缺跑/断更/row count/checksum 问题、错误/警告数量、问题清单和方法边界；第一阶段未接入结构化 run log、后台调度器、异常栈或 API 错误采集|已实现基础版|
+|每日运行计划|`aits ops daily-plan`|生成本地或云 VM 可用的每日运行计划，先判断 U.S. equity market session，并在报告中声明 `TRADING_DAY` 或 `CLOSED_MARKET`、休市原因、上一交易日和日历来源；交易日列出 `download-data`、带 `--continue-on-failure` 的 `pit-snapshots fetch-fmp-forward`、SEC companyfacts 刷新、SEC metrics 抽取/校验、FMP 估值快照刷新、`score-daily`、`ops health` 和 `security scan-secrets` 的顺序、必需环境变量、预期 artifact、质量门禁和阻断关系；休市日若上一交易日价格缓存已覆盖则跳过 `download-data`，否则只用上一交易日作为 `download-data --end`，并默认跳过 `score-daily`，不生成新日报评分、decision snapshot、evidence bundle 或执行动作；只做计划和环境变量非空检查，不执行下载、API 调用、评分或报告生成；缺少关键环境变量时显示 `BLOCKED_ENV`，可用 `--fail-on-missing-env` 作为调度前门禁|已实现基础版|
+|每日运行执行器|`aits ops daily-run`|复用 `daily-plan` 的步骤顺序真实调用本地 CLI，先写计划报告，再执行交易日完整链路，或在休市日执行官方政策/地缘来源抓取、PIT、SEC companyfacts、SEC metrics 抽取/校验、FMP valuation snapshots、`ops health --non-trading-day` 和 secret scan，同时显式跳过 `score-daily`；执行器内部用当前 Python 解释器调用同一 `ai_trading_system.cli` 模块，避免 Windows 上从 `aits.exe` 父进程递归启动 `aits.exe`；缺少阻断性环境变量时返回 `BLOCKED_ENV`；任一执行步骤退出码非 0 或关键 artifact 报告状态非 `PASS*` 时停止，不继续下游步骤；显式 `SKIPPED` 步骤在计划和执行报告中保留限制声明，不得被解释为生成了投资结论|已实现基础版|
+|每日运行报告|`outputs/reports/daily_ops_plan_YYYY-MM-DD.md` / `outputs/reports/daily_ops_run_YYYY-MM-DD.md` / `outputs/reports/daily_ops_run_metadata_YYYY-MM-DD.json`|计划报告中文输出计划状态、评估日期、market session、上一交易日、休市原因、必需环境变量是否可见、逐步骤命令、输出路径、质量门禁和显式跳过声明；执行报告中文输出真实执行状态、开始/结束时间、退出码、耗时、stdout/stderr 行数和预期 artifact 路径，不保存 stdout/stderr 原文、API key、token 或付费内容原文；metadata sidecar 结构化记录 run id、git commit/dirty diff hash、config/rule card hash、命令清单、必需 env presence、production visibility cutoff、pre-run input checksum、step result 摘要和 produced artifact checksum，不保存 secret 值、stdout/stderr 原文或付费内容原文；仍未接入 systemd/cron、通知或云备份|已实现|
+|历史交易日归档回放|`aits ops replay-day`|单日 cache-only replay 入口，默认不调用 live provider 或 OpenAI；默认可见窗口优先读取 production `daily_ops_run_metadata_YYYY-MM-DD.json` 的 `visibility_cutoff`，缺失时退回 as-of 当日 UTC 末尾；先按 as-of 可见窗口生成 input freeze manifest，过滤 PIT manifest/normalized 中晚于 cutoff 的行，隔离未来 valuation snapshots，再把 `score-daily`、`ops health` 和 secret scan 的输出写入 `outputs/replays/YYYY-MM-DD/<run-id>/`；`features_daily.csv`、`scores_daily.csv`、daily score、alerts、decision snapshot、evidence bundle、prediction ledger、PIT manifest 和 valuation snapshots 均不改写生产路径；缺少关键输入或可见窗口内无数据时 fail closed，`--inventory-only` 只生成输入清单和诊断；`--compare-to-production` 生成本地 production artifact 与 replay artifact 的结构化 checksum/row diff；OpenAI replay 默认为 `disabled`，`--openai-replay-policy cache-only` 只复制历史预审队列和报告，不调用 live OpenAI|已实现|
+|历史交易日批量回放|`aits ops replay-window`|按 U.S. equity trading day 枚举日期窗口，逐日复用 `replay-day` 的 cache-only 输入冻结和隔离输出；周末和 NYSE 常规整日休市日默认跳过并记录原因；默认某个交易日失败即停止，`--continue-on-failure` 可继续后续交易日；窗口报告只做索引和状态汇总，不改写任何 production artifact|已实现基础版|
+|历史回放报告|`outputs/replays/YYYY-MM-DD/<run-id>/replay_run.md` / `input_freeze_manifest.csv` / `diff_vs_production.md`；`outputs/replays/windows/<run-id>/replay_window.md`|中文输出 replay 状态、as-of、run id、visible cutoff、方法边界、输入冻结清单、被排除的未来 PIT/valuation 数量、子命令状态、stdout/stderr 行数和关键 replay 输出路径；production diff 报告输出日报、alerts、decision snapshot、trace、features/scores 当日行等比较状态、row count 和 checksum；窗口报告输出交易日状态、diff 状态、bundle/report 路径和跳过日期；结构化 JSON 同步保存，不包含 API key、token 或付费内容原文|已实现基础版|
+|Pipeline health|`aits ops health`|只读检查关键 pipeline artifact；交易日检查价格缓存、利率缓存、数据质量报告、特征缓存、评分缓存、日报、FMP PIT 抓取报告、PIT manifest、PIT 质量报告和 FMP PIT normalized as-of CSV 是否存在、是否为空、mtime、row count、`available_time` 新鲜度、raw payload checksum 和 FMP PIT 抓取报告状态；休市日可用 `--non-trading-day`，不要求当日 data_quality、features、scores 或 daily_score 报告存在，但仍检查市场缓存和 PIT 健康；不把运行健康解释为投资结论有效|已实现基础版|
+|Pipeline health 报告|`outputs/reports/pipeline_health_YYYY-MM-DD.md`|中文输出 market session、artifact 检查表、PIT 抓取失败、PIT 缺跑/断更/row count/checksum 问题、错误/警告数量、问题清单和方法边界；第一阶段未接入结构化 run log、后台调度器、异常栈或 API 错误采集|已实现基础版|
 |Pipeline health 告警|`outputs/reports/pipeline_health_alerts_YYYY-MM-DD.md`|`aits ops health` 把失败或警告的 health check 转成只读 data/system alert，记录触发/解除条件、claim/evidence 引用和去重键；`production_effect=none`，不改变评分、仓位、回测或执行建议|已实现基础版|
 |Secret hygiene 扫描|`aits security scan-secrets`|扫描配置、文档、报告、manifest、trace bundle 等文本文件中的疑似 API key、token、secret、password 或 bearer credential；报告只输出脱敏片段，不输出完整疑似密钥|已实现基础版|
 |Secret hygiene 报告|`outputs/reports/secret_hygiene_YYYY-MM-DD.md`|中文输出扫描入口、扫描文件数、疑似 secret 脱敏问题清单和方法边界；第一阶段不替代企业密钥管理、pre-commit hook、CI secret scan 或供应商权限审批|已实现基础版|

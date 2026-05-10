@@ -38,6 +38,8 @@ class PipelineHealthReport:
     as_of: date
     generated_at: datetime
     checks: tuple[PipelineArtifactCheck, ...]
+    market_session: str = "TRADING_DAY"
+    market_session_note: str = "regular trading-day health checks"
     production_effect: str = "none"
 
     @property
@@ -66,11 +68,15 @@ def build_pipeline_health_report(
     as_of: date,
     artifacts: tuple[PipelineArtifactSpec, ...],
     extra_checks: tuple[PipelineArtifactCheck, ...] = (),
+    market_session: str = "TRADING_DAY",
+    market_session_note: str = "regular trading-day health checks",
 ) -> PipelineHealthReport:
     return PipelineHealthReport(
         as_of=as_of,
         generated_at=datetime.now(tz=UTC),
         checks=tuple(_check_artifact(artifact) for artifact in artifacts) + extra_checks,
+        market_session=market_session,
+        market_session_note=market_session_note,
     )
 
 
@@ -133,10 +139,7 @@ def build_pit_snapshot_health_checks(
                     "FMP PIT 抓取报告",
                     fetch_report_path,
                     True,
-                    (
-                        "运行 `aits pit-snapshots fetch-fmp-forward`，"
-                        "并检查抓取/写入/校验阶段错误。"
-                    ),
+                    ("运行 `aits pit-snapshots fetch-fmp-forward`，并检查抓取/写入/校验阶段错误。"),
                 )
             )
         )
@@ -196,6 +199,8 @@ def render_pipeline_health_report(report: PipelineHealthReport) -> str:
         "",
         f"- 状态：{report.status}",
         f"- 评估日期：{report.as_of.isoformat()}",
+        f"- 市场日状态：{report.market_session}",
+        f"- 市场日说明：{report.market_session_note}",
         f"- 生成时间：{report.generated_at.isoformat()}",
         f"- 检查项：{len(report.checks)}",
         f"- 错误数：{report.error_count}",
@@ -257,11 +262,7 @@ def default_pipeline_health_report_path(output_dir: Path, as_of: date) -> Path:
 
 def _check_artifact(spec: PipelineArtifactSpec) -> PipelineArtifactCheck:
     if not spec.path.exists():
-        severity = (
-            PipelineHealthSeverity.ERROR
-            if spec.required
-            else PipelineHealthSeverity.WARNING
-        )
+        severity = PipelineHealthSeverity.ERROR if spec.required else PipelineHealthSeverity.WARNING
         return PipelineArtifactCheck(
             spec=spec,
             exists=False,
@@ -352,10 +353,7 @@ def _freshness_check(
         age_days = (as_of - latest.date()).days
         if age_days < 0:
             severity = PipelineHealthSeverity.ERROR
-            message = (
-                f"latest_available_time={latest.isoformat()} 晚于 as_of="
-                f"{as_of.isoformat()}。"
-            )
+            message = f"latest_available_time={latest.isoformat()} 晚于 as_of={as_of.isoformat()}。"
         elif age_days > max_age_days:
             severity = PipelineHealthSeverity.WARNING
             message = f"latest_available_time={latest.isoformat()}，距 as_of 已 {age_days} 天。"
@@ -423,8 +421,7 @@ def _fmp_forward_pit_fetch_report_status_check(
     elif status in {"PASS_WITH_WARNINGS", "FAIL"}:
         severity = PipelineHealthSeverity.WARNING
         message = (
-            f"FMP PIT 抓取报告状态为 {status}；"
-            "日常调度可继续，但失败或降级 PIT 不得作为可用输入。"
+            f"FMP PIT 抓取报告状态为 {status}；日常调度可继续，但失败或降级 PIT 不得作为可用输入。"
         )
     else:
         severity = PipelineHealthSeverity.WARNING

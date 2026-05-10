@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import subprocess
 from datetime import date
 from pathlib import Path
@@ -9,9 +10,11 @@ from typer.testing import CliRunner
 from ai_trading_system.cli import app
 from ai_trading_system.ops_daily import (
     build_daily_ops_plan,
+    daily_ops_run_metadata_path_for_report,
     render_daily_ops_plan,
     render_daily_ops_run_report,
     run_daily_ops_plan,
+    write_daily_ops_run_report,
 )
 
 
@@ -33,10 +36,7 @@ def test_daily_ops_plan_reports_missing_required_env() -> None:
         "SEC_USER_AGENT",
     )
     markdown = render_daily_ops_plan(plan, env={})
-    pit_command = (
-        "`aits pit-snapshots fetch-fmp-forward --as-of 2026-05-06 "
-        "--continue-on-failure`"
-    )
+    pit_command = "`aits pit-snapshots fetch-fmp-forward --as-of 2026-05-06 --continue-on-failure`"
     assert "状态：BLOCKED_ENV" in markdown
     assert "`aits download-data --start 2018-01-01 --end 2026-05-06`" in markdown
     assert pit_command in markdown
@@ -178,6 +178,72 @@ def test_daily_ops_plan_sec_and_valuation_steps_block_score_daily() -> None:
     assert "fetch-fmp" in valuation.command
 
 
+def test_daily_ops_plan_closed_market_skips_score_and_current_download(
+    tmp_path: Path,
+) -> None:
+    _write_price_cache(tmp_path / "data" / "raw" / "prices_daily.csv", "2026-05-08")
+    _write_price_cache(
+        tmp_path / "data" / "raw" / "prices_marketstack_daily.csv",
+        "2026-05-08",
+    )
+
+    plan = build_daily_ops_plan(
+        as_of=date(2026, 5, 10),
+        project_root=tmp_path,
+    )
+    markdown = render_daily_ops_plan(
+        plan,
+        env={
+            "FMP_API_KEY": "present",
+            "MARKETSTACK_API_KEY": "present",
+            "SEC_USER_AGENT": "AITradingSystem test@example.com",
+        },
+    )
+    step_by_id = {step.step_id: step for step in plan.steps}
+
+    assert plan.market_session.session_status == "CLOSED_MARKET"
+    assert plan.market_session.previous_trading_day == date(2026, 5, 8)
+    assert step_by_id["download_data"].enabled is False
+    assert "休市日模式" in (step_by_id["download_data"].skip_reason or "")
+    assert step_by_id["score_daily"].enabled is False
+    assert step_by_id["score_daily"].required_env_vars == ()
+    assert step_by_id["pit_snapshots"].produced_paths[0] == (
+        tmp_path / "data" / "raw" / "fmp_forward_pit"
+    )
+    assert step_by_id["pit_snapshots"].produced_paths[1] == (
+        tmp_path / "data" / "processed" / "pit_snapshots" / "fmp_forward_pit_2026-05-10.csv"
+    )
+    assert step_by_id["pit_snapshots"].produced_paths[2] == (
+        tmp_path / "data" / "raw" / "pit_snapshots" / "manifest.csv"
+    )
+    assert "official_policy_sources" in step_by_id
+    assert "--non-trading-day" in step_by_id["pipeline_health"].command
+    assert "`aits score-daily --as-of 2026-05-10" not in markdown
+    assert "市场日状态：CLOSED_MARKET" in markdown
+    assert "不生成新的 daily_score" in markdown
+
+
+def test_daily_ops_plan_closed_market_downloads_previous_trading_day_when_cache_missing(
+    tmp_path: Path,
+) -> None:
+    plan = build_daily_ops_plan(
+        as_of=date(2026, 5, 10),
+        project_root=tmp_path,
+        skip_risk_event_openai_precheck=True,
+    )
+    download_step = next(step for step in plan.steps if step.step_id == "download_data")
+
+    assert download_step.enabled is True
+    assert download_step.command == (
+        "aits",
+        "download-data",
+        "--start",
+        "2018-01-01",
+        "--end",
+        "2026-05-08",
+    )
+
+
 def test_run_daily_ops_plan_stops_on_first_failed_command() -> None:
     plan = build_daily_ops_plan(
         as_of=date(2026, 5, 6),
@@ -259,6 +325,63 @@ def test_daily_ops_run_report_omits_command_output_text(tmp_path: Path) -> None:
     assert "Stderr Lines" in markdown
 
 
+def test_daily_ops_run_report_writes_sanitized_metadata_sidecar(tmp_path: Path) -> None:
+    plan = build_daily_ops_plan(
+        as_of=date(2026, 5, 6),
+        project_root=tmp_path,
+        include_download_data=False,
+        include_pit_snapshots=False,
+        include_sec_fundamentals=False,
+        include_valuation_snapshots=False,
+        include_secret_scan=False,
+        skip_risk_event_openai_precheck=True,
+    )
+    for step in plan.steps:
+        if step.step_id == "score_daily":
+            status_paths = (step.produced_paths[2], step.produced_paths[4])
+        elif step.step_id == "pipeline_health":
+            status_paths = (step.produced_paths[0],)
+        else:
+            status_paths = ()
+        for path in status_paths:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("- 状态：PASS\n", encoding="utf-8")
+
+    def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(
+            command,
+            0,
+            stdout="SECRET_SHOULD_NOT_APPEAR\n",
+            stderr="PAID_CONTENT_SHOULD_NOT_APPEAR\n",
+        )
+
+    report = run_daily_ops_plan(
+        plan,
+        project_root=tmp_path,
+        env={"UNUSED_SECRET": "SECRET_SHOULD_NOT_APPEAR"},
+        runner=fake_runner,
+    )
+    output_path = tmp_path / "reports" / "daily_ops_run_2026-05-06.md"
+    write_daily_ops_run_report(report, output_path)
+
+    metadata_path = daily_ops_run_metadata_path_for_report(output_path)
+    raw_metadata = metadata_path.read_text(encoding="utf-8")
+    metadata = json.loads(raw_metadata)
+
+    assert metadata_path.exists()
+    assert metadata["run_id"].startswith("daily_ops_run:2026-05-06:")
+    assert metadata["status"] == report.status
+    assert metadata["visibility_cutoff_source"] == "daily_run_finished_at_utc"
+    assert "SECRET_SHOULD_NOT_APPEAR" not in raw_metadata
+    assert "PAID_CONTENT_SHOULD_NOT_APPEAR" not in raw_metadata
+    assert "env_presence" in metadata
+    assert metadata["commands"]
+    assert metadata["pre_run_input_artifacts"]
+    assert metadata["produced_artifacts"]
+    pre_run_paths = {artifact["path"] for artifact in metadata["pre_run_input_artifacts"]}
+    assert str(tmp_path / "data" / "raw" / "prices_daily.csv") in pre_run_paths
+
+
 def test_run_daily_ops_plan_fails_when_artifact_status_fails(tmp_path: Path) -> None:
     plan = build_daily_ops_plan(
         as_of=date(2026, 5, 6),
@@ -292,3 +415,11 @@ def test_run_daily_ops_plan_fails_when_artifact_status_fails(tmp_path: Path) -> 
     assert report.failed_step.step_id == "pit_snapshots"
     assert "artifact_status_failed" in (report.failed_step.error or "")
     assert [call[3:] for call in calls] == [pit_step.command[1:]]
+
+
+def _write_price_cache(path: Path, latest_date: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        f"date,ticker,open,high,low,close,adj_close,volume\n{latest_date},NVDA,1,1,1,1,1,100\n",
+        encoding="utf-8",
+    )

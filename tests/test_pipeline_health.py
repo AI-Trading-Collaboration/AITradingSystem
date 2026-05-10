@@ -70,8 +70,7 @@ def test_pit_snapshot_health_checks_flag_stale_and_checksum_mismatch(
     )
     normalized_path = tmp_path / "fmp_forward_pit_2026-05-04.csv"
     normalized_path.write_text(
-        "normalized_id,available_time\n"
-        "row-1,2026-05-01T00:00:00+00:00\n",
+        "normalized_id,available_time\nrow-1,2026-05-01T00:00:00+00:00\n",
         encoding="utf-8",
     )
     validation_report_path = _write_artifact(tmp_path / "pit_validation.md")
@@ -97,9 +96,7 @@ def test_pit_snapshot_health_checks_flag_stale_and_checksum_mismatch(
     assert report.status == "FAIL"
     assert "PIT raw payload checksum 异常" in messages_by_id["pit_manifest_checksum"]
     assert "距 as_of 已 3 天" in messages_by_id["pit_manifest_freshness"]
-    assert "距 as_of 已 3 天" in messages_by_id[
-        "fmp_forward_pit_normalized_freshness"
-    ]
+    assert "距 as_of 已 3 天" in messages_by_id["fmp_forward_pit_normalized_freshness"]
 
 
 def test_pit_snapshot_health_checks_flag_failed_fetch_report(
@@ -107,9 +104,7 @@ def test_pit_snapshot_health_checks_flag_failed_fetch_report(
 ) -> None:
     pit_paths = _write_pit_health_inputs(tmp_path, date(2026, 5, 4))
     pit_paths["fetch_report"].write_text(
-        "# FMP Forward-only PIT 快照抓取报告\n\n"
-        "- 状态：FAIL\n"
-        "- 错误数：1\n",
+        "# FMP Forward-only PIT 快照抓取报告\n\n- 状态：FAIL\n- 错误数：1\n",
         encoding="utf-8",
     )
 
@@ -132,10 +127,7 @@ def test_pit_snapshot_health_checks_flag_failed_fetch_report(
     }
 
     assert report.status == "PASS_WITH_WARNINGS"
-    assert (
-        "FMP PIT 抓取报告状态为 FAIL"
-        in messages_by_id["fmp_forward_pit_fetch_status"]
-    )
+    assert "FMP PIT 抓取报告状态为 FAIL" in messages_by_id["fmp_forward_pit_fetch_status"]
 
 
 def test_pipeline_health_cli_writes_report(tmp_path: Path) -> None:
@@ -196,6 +188,50 @@ def test_pipeline_health_cli_writes_report(tmp_path: Path) -> None:
     assert "未触发告警" in alert_output_path.read_text(encoding="utf-8")
 
 
+def test_pipeline_health_cli_non_trading_day_does_not_require_score_outputs(
+    tmp_path: Path,
+) -> None:
+    prices_path = _write_artifact(tmp_path / "prices_daily.csv")
+    rates_path = _write_artifact(tmp_path / "rates_daily.csv")
+    pit_paths = _write_pit_health_inputs(tmp_path, date(2026, 5, 10))
+    output_path = tmp_path / "pipeline_health.md"
+    alert_output_path = tmp_path / "pipeline_health_alerts.md"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "ops",
+            "health",
+            "--as-of",
+            "2026-05-10",
+            "--non-trading-day",
+            "--prices-path",
+            str(prices_path),
+            "--rates-path",
+            str(rates_path),
+            "--pit-manifest-path",
+            str(pit_paths["manifest"]),
+            "--pit-normalized-path",
+            str(pit_paths["normalized"]),
+            "--pit-validation-report-path",
+            str(pit_paths["validation_report"]),
+            "--pit-fetch-report-path",
+            str(pit_paths["fetch_report"]),
+            "--output-path",
+            str(output_path),
+            "--alert-output-path",
+            str(alert_output_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    markdown = output_path.read_text(encoding="utf-8")
+    assert "Pipeline health：PASS" in result.output
+    assert "市场日状态：CLOSED_MARKET" in markdown
+    assert "daily_score_report" not in markdown
+    assert "不要求当日 data_quality" in markdown
+
+
 def _write_artifact(path: Path) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("ok\n", encoding="utf-8")
@@ -223,16 +259,13 @@ def _write_pit_health_inputs(tmp_path: Path, as_of: date) -> dict[str, Path]:
     normalized_path = tmp_path / "processed" / f"fmp_forward_pit_{as_of.isoformat()}.csv"
     normalized_path.parent.mkdir(parents=True)
     normalized_path.write_text(
-        "normalized_id,available_time\n"
-        f"row-1,{available_time}\n",
+        f"normalized_id,available_time\nrow-1,{available_time}\n",
         encoding="utf-8",
     )
     validation_report_path = _write_artifact(tmp_path / "reports" / "pit_validation.md")
     fetch_report_path = tmp_path / "reports" / f"fmp_forward_pit_fetch_{as_of.isoformat()}.md"
     fetch_report_path.write_text(
-        "# FMP Forward-only PIT 快照抓取报告\n\n"
-        "- 状态：PASS\n"
-        "- 错误数：0\n",
+        "# FMP Forward-only PIT 快照抓取报告\n\n- 状态：PASS\n- 错误数：0\n",
         encoding="utf-8",
     )
     return {
