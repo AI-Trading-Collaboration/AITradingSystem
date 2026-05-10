@@ -29,7 +29,10 @@ def test_evidence_dashboard_links_conclusion_to_inputs(tmp_path: Path) -> None:
     assert report.status == "PASS"
     assert "今日决策视图" in html
     assert "告警聚合" in html
-    assert "近 20 个交易日趋势" in html
+    assert "最近可用评分趋势" in html
+    assert "总分走势" in html
+    assert "Score sparkline" not in html
+    assert "<svg" in html
     assert "快速读者" in html
     assert "投资复核者" in html
     assert "系统审计者" in html

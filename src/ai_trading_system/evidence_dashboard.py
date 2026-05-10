@@ -324,30 +324,14 @@ def _render_history_trend(report: EvidenceDashboardReport) -> str:
                 "</section>",
             ]
         )
-    score_values = [
-        _record_text(point, "overall_score", "")
-        for point in report.history_points
-        if _record_text(point, "overall_score", "")
-    ]
     return "\n".join(
         [
             '<section aria-labelledby="history-title">',
             '<div class="section-head">',
-            '<h2 id="history-title">近 20 个交易日趋势</h2>',
-            "<p>只读读取 scores_daily.csv 的 overall 行，不重算结论。</p>",
+            '<h2 id="history-title">最近可用评分趋势</h2>',
+            "<p>只读读取最多 20 条 scores_daily.csv overall 行，不重算结论。</p>",
             "</div>",
-            _key_value_table(
-                [
-                    ("样本数量", str(len(report.history_points))),
-                    ("Score sparkline", _sparkline(score_values)),
-                    (
-                        "历史输入",
-                        "未接入"
-                        if report.scores_daily_path is None
-                        else str(report.scores_daily_path),
-                    ),
-                ]
-            ),
+            _history_score_panel(report),
             _history_table(report.history_points),
             "</section>",
         ]
@@ -799,6 +783,137 @@ def _history_table(points: Sequence[Mapping[str, Any]]) -> str:
         ("日期", "总分", "置信度", "最终 AI 仓位", "总风险预算", "Gate 数", "质量/限制"),
         rows,
     )
+
+
+def _history_score_panel(report: EvidenceDashboardReport) -> str:
+    numbers = _history_score_numbers(report.history_points)
+    history_path = (
+        "未接入" if report.scores_daily_path is None else str(report.scores_daily_path)
+    )
+    if not numbers:
+        return _key_value_table(
+            [
+                ("样本数量", str(len(report.history_points))),
+                ("总分走势", "未提供可绘制的 overall score"),
+                ("历史输入", history_path),
+            ]
+        )
+
+    latest = numbers[-1]
+    lowest = min(numbers)
+    highest = max(numbers)
+    first_date = _record_text(report.history_points[0], "as_of", "")
+    latest_date = _record_text(report.history_points[-1], "as_of", "")
+    change = latest - numbers[0]
+    summary = (
+        f"{first_date} 至 {latest_date}，最新 {latest:.1f}，"
+        f"区间 {lowest:.1f}-{highest:.1f}，较首日 {change:+.1f}。"
+    )
+    return "\n".join(
+        [
+            '<div class="history-summary">',
+            _history_stat("样本数量", str(len(report.history_points))),
+            _history_stat("最新总分", f"{latest:.1f}"),
+            _history_stat("区间", f"{lowest:.1f}-{highest:.1f}"),
+            _history_stat("较首日", f"{change:+.1f}"),
+            "</div>",
+            '<h3 class="history-chart-title">总分走势</h3>',
+            _score_trend_chart(
+                points=report.history_points,
+                scores=numbers,
+                summary=summary,
+            ),
+            '<div class="history-source">',
+            "<strong>历史输入</strong>",
+            f"<span>{_text(history_path)}</span>",
+            "</div>",
+        ]
+    )
+
+
+def _history_stat(label: str, value: str) -> str:
+    return (
+        '<div class="history-stat">'
+        f"<span>{_text(label)}</span>"
+        f"<strong>{_text(value)}</strong>"
+        "</div>"
+    )
+
+
+def _score_trend_chart(
+    *,
+    points: Sequence[Mapping[str, Any]],
+    scores: Sequence[float],
+    summary: str,
+) -> str:
+    width = 640
+    height = 132
+    padding_x = 28
+    padding_y = 20
+    plot_width = width - (padding_x * 2)
+    plot_height = height - (padding_y * 2)
+    low = min(scores)
+    high = max(scores)
+    span = high - low
+    x_step = plot_width / max(len(scores) - 1, 1)
+
+    coordinates: list[tuple[float, float]] = []
+    for index, score in enumerate(scores):
+        x = padding_x + (index * x_step)
+        if span == 0:
+            y = padding_y + (plot_height / 2)
+        else:
+            y = padding_y + ((high - score) / span * plot_height)
+        coordinates.append((x, y))
+
+    if len(coordinates) == 1:
+        x, y = coordinates[0]
+        trend_shape = f'<circle class="trend-point latest" cx="{x:.1f}" cy="{y:.1f}" r="4" />'
+    else:
+        polyline = " ".join(f"{x:.1f},{y:.1f}" for x, y in coordinates)
+        trend_shape = f'<polyline class="trend-line" points="{polyline}" />'
+
+    point_marks = "\n".join(
+        f'<circle class="trend-point{" latest" if index == len(coordinates) - 1 else ""}" '
+        f'cx="{x:.1f}" cy="{y:.1f}" r="{4 if index == len(coordinates) - 1 else 2.5}" />'
+        for index, (x, y) in enumerate(coordinates)
+    )
+    first_label = _record_text(points[0], "as_of", "")
+    latest_label = _record_text(points[-1], "as_of", "")
+    return "\n".join(
+        [
+            f'<figure class="score-trend" aria-label="{_text(summary)}">',
+            (
+                f'<svg viewBox="0 0 {width} {height}" role="img" '
+                f'aria-label="{_text(summary)}" preserveAspectRatio="none">'
+            ),
+            (
+                f'<line class="trend-grid" x1="{padding_x}" y1="{padding_y}" '
+                f'x2="{width - padding_x}" y2="{padding_y}" />'
+            ),
+            (
+                f'<line class="trend-grid" x1="{padding_x}" y1="{height - padding_y}" '
+                f'x2="{width - padding_x}" y2="{height - padding_y}" />'
+            ),
+            trend_shape,
+            point_marks,
+            "</svg>",
+            '<figcaption class="trend-caption">',
+            f"<span>{_text(first_label)}</span>",
+            f"<strong>{_text(summary)}</strong>",
+            f"<span>{_text(latest_label)}</span>",
+            "</figcaption>",
+            "</figure>",
+        ]
+    )
+
+
+def _history_score_numbers(points: Sequence[Mapping[str, Any]]) -> list[float]:
+    return [
+        number
+        for point in points
+        if (number := _parse_float(_record_text(point, "overall_score", ""))) is not None
+    ]
 
 
 def _logic_item(label: str, value: str) -> str:
@@ -1580,6 +1695,88 @@ footer {
 .compact-list li {
   margin-bottom: 6px;
 }
+.history-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.history-stat {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: #fbfcfd;
+}
+.history-stat span,
+.history-source strong {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+.history-stat strong {
+  display: block;
+  font-size: 16px;
+}
+.history-chart-title {
+  margin: 4px 0 8px;
+  font-size: 15px;
+}
+.score-trend {
+  margin: 0 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fbfcfd;
+  padding: 10px 12px;
+}
+.score-trend svg {
+  display: block;
+  width: 100%;
+  height: 128px;
+}
+.trend-grid {
+  stroke: #dfe6ef;
+  stroke-width: 1;
+}
+.trend-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.trend-point {
+  fill: var(--surface);
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.trend-point.latest {
+  fill: var(--accent);
+}
+.trend-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.trend-caption strong {
+  color: var(--ink);
+  font-weight: 600;
+  text-align: center;
+}
+.history-source {
+  display: grid;
+  grid-template-columns: minmax(90px, 120px) 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 9px 12px;
+}
+.history-source span {
+  overflow-wrap: anywhere;
+}
 .logic-chain {
   margin: 0;
   padding-left: 24px;
@@ -1686,6 +1883,10 @@ footer {
     padding: 14px;
   }
   .section-head {
+    display: block;
+  }
+  .history-source,
+  .trend-caption {
     display: block;
   }
 }
