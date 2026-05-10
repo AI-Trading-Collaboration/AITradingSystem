@@ -5156,12 +5156,17 @@ def daily_ops_run_command(
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
     plan_date = _parse_date(as_of) if as_of else date.today()
-    resolved_run_id = run_id or default_daily_run_id(plan_date)
+    run_generated_at = datetime.now(tz=UTC)
+    resolved_run_id = run_id or default_daily_run_id(
+        plan_date,
+        generated_at=run_generated_at,
+    )
     run_paths = prepare_run_directories(
         build_run_artifact_paths(
             as_of=plan_date,
             run_id=resolved_run_id,
             output_root=run_output_root,
+            generated_at=run_generated_at,
         )
     )
     plan_date, plan = _build_daily_ops_plan_from_cli_options(

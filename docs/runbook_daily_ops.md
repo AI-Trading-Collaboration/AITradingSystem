@@ -1,6 +1,6 @@
 # Daily Ops Runbook
 
-最后更新：2026-05-10
+最后更新：2026-05-11
 
 本文是 `aits ops daily-run` 的人工可交接运行手册。它不替代数据质量门禁、日报、pipeline health、secret hygiene 或 evidence bundle；它只规定什么时候跑、失败时看什么、哪些输出是正式结论、哪些只是审计附录。
 
@@ -21,14 +21,17 @@
 `daily-run` 的正式运行归档为：
 
 ```text
-outputs/runs/YYYY-MM-DD/<run_id>/
-  manifest.json
-  reports/
-  traces/
-  metadata/
+outputs/runs/daily/<executed_at_utc>/
+  as_of_<YYYY-MM-DD>__<run_id>/
+    manifest.json
+    reports/
+    traces/
+    metadata/
 ```
 
-目录名使用 filesystem-safe run id；原始 run id 会写入 `manifest.json` 和 daily ops metadata。
+`<executed_at_utc>` 使用 `YYYYMMDDTHHMMSSZ`，表示本轮实际执行时间；`as_of_<YYYY-MM-DD>` 表示市场评估日期。目录名使用 filesystem-safe run id；原始 run id、执行时间戳、评估日期和 run root 会写入 `manifest.json` 和 daily ops metadata。
+
+`data/raw/` 与 `data/processed/` 是可校验状态缓存和输入引用来源，不是每次运行的完整归档副本。正式 run bundle 归档本轮报告、trace、metadata、manifest 和 checksum 引用；需要严格历史复现时使用 `outputs/replays/` 下的隔离 replay bundle。
 
 过渡期仍可在 `outputs/reports/` 看到 legacy mirror。投资阅读入口优先级：
 
@@ -89,4 +92,4 @@ ExecStart=/opt/AITradingSystem/.venv/bin/aits ops daily-run
 30 22 * * 1-5 cd /opt/AITradingSystem && .venv/bin/aits ops daily-run
 ```
 
-凭据不得写入仓库；stdout/stderr 可由系统日志保存，但正式审计以 `outputs/runs/.../manifest.json`、daily ops metadata 和各质量报告为准。
+凭据不得写入仓库；stdout/stderr 可由系统日志保存，但正式审计以 `outputs/runs/daily/<executed_at_utc>/.../manifest.json`、daily ops metadata 和各质量报告为准。

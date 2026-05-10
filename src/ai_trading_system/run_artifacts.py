@@ -18,6 +18,7 @@ class RunArtifactPaths:
     as_of: date
     run_id: str
     safe_run_id: str
+    execution_timestamp_utc: str
     output_root: Path
     run_root: Path
     reports_dir: Path
@@ -42,13 +43,17 @@ def build_run_artifact_paths(
     as_of: date,
     run_id: str,
     output_root: Path,
+    generated_at: datetime | None = None,
 ) -> RunArtifactPaths:
     safe_id = safe_run_id(run_id)
-    run_root = output_root / as_of.isoformat() / safe_id
+    timestamp = (generated_at or datetime.now(tz=UTC)).astimezone(UTC)
+    execution_timestamp = timestamp.strftime("%Y%m%dT%H%M%SZ")
+    run_root = output_root / "daily" / execution_timestamp / f"as_of_{as_of.isoformat()}__{safe_id}"
     return RunArtifactPaths(
         as_of=as_of,
         run_id=run_id,
         safe_run_id=safe_id,
+        execution_timestamp_utc=execution_timestamp,
         output_root=output_root,
         run_root=run_root,
         reports_dir=run_root / "reports",
@@ -204,6 +209,7 @@ def build_run_manifest(
         "schema_version": SCHEMA_VERSION,
         "run_id": paths.run_id,
         "safe_run_id": paths.safe_run_id,
+        "execution_timestamp_utc": paths.execution_timestamp_utc,
         "as_of": paths.as_of.isoformat(),
         "generated_at": (generated_at or datetime.now(tz=UTC)).isoformat(),
         "project_root": str(project_root),

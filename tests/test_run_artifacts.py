@@ -17,19 +17,26 @@ from ai_trading_system.run_artifacts import (
 )
 
 
-def test_run_artifact_paths_are_safe_and_date_scoped(tmp_path: Path) -> None:
+def test_run_artifact_paths_are_execution_time_scoped(tmp_path: Path) -> None:
     run_id = "daily_ops_run:2026-05-06:test/id"
+    generated_at = datetime(2026, 5, 6, 15, 30, tzinfo=UTC)
     paths = prepare_run_directories(
         build_run_artifact_paths(
             as_of=date(2026, 5, 6),
             run_id=run_id,
             output_root=tmp_path / "runs",
+            generated_at=generated_at,
         )
     )
 
     assert safe_run_id(run_id) == "daily_ops_run_2026-05-06_test_id"
+    assert paths.execution_timestamp_utc == "20260506T153000Z"
     assert paths.run_root == (
-        tmp_path / "runs" / "2026-05-06" / "daily_ops_run_2026-05-06_test_id"
+        tmp_path
+        / "runs"
+        / "daily"
+        / "20260506T153000Z"
+        / "as_of_2026-05-06__daily_ops_run_2026-05-06_test_id"
     )
     assert paths.reports_dir.is_dir()
     assert paths.traces_dir.is_dir()
@@ -53,6 +60,7 @@ def test_run_manifest_checksums_and_mirrors_without_payload_text(
             as_of=date(2026, 5, 6),
             run_id="daily_ops_run:2026-05-06:test",
             output_root=tmp_path / "runs",
+            generated_at=datetime(2026, 5, 6, 21, 5, tzinfo=UTC),
         )
     )
     legacy_reports_dir = tmp_path / "outputs" / "reports"
@@ -121,6 +129,7 @@ def test_run_manifest_checksums_and_mirrors_without_payload_text(
     }
     assert input_records[str(input_path)]["sha256"] == expected_sha
     assert manifest["run_id"] == "daily_ops_run:2026-05-06:test"
+    assert manifest["execution_timestamp_utc"] == "20260506T210500Z"
     assert manifest["legacy_output_mode"] == "mirror"
     assert "SECRET_SHOULD_NOT_APPEAR" not in manifest_text
     assert "RAW_STDERR" not in manifest_text
@@ -134,6 +143,7 @@ def test_mirror_legacy_reports_to_run_ignores_stale_same_date_outputs(
             as_of=date(2026, 5, 10),
             run_id="daily_ops_run:2026-05-10:test",
             output_root=tmp_path / "runs",
+            generated_at=datetime(2026, 5, 10, 16, 0, tzinfo=UTC),
         )
     )
     legacy_reports_dir = tmp_path / "outputs" / "reports"
