@@ -2,7 +2,7 @@
 
 状态：VALIDATING
 
-最后更新：2026-05-10
+最后更新：2026-05-11
 
 ## 背景
 
@@ -56,7 +56,8 @@ available_time <= visibility_cutoff
 |3. 文档和测试|VALIDATING|README、runbook、system flow 说明入口边界；测试覆盖历史 daily-run 前置阻断、replay dashboard 命令和原最近交易日 replay 验证。|
 |4. OpenAI cache-only row 级可见性过滤|VALIDATING|`replay-day --openai-replay-policy cache-only` 只复用 `request_timestamp/cache_created_at` 可证明不晚于有效 replay cutoff 的 prereview 记录；晚于 cutoff 或缺少可证明时间戳的记录进入排除审计，不调用 live OpenAI。|
 |5. 手工输入 replay 隔离视图|VALIDATING|`replay-day` 生成 `input/data/external/trade_theses` 和 `input/data/external/trades` 过滤视图；`score-daily` 通过 path override 只读取 replay 路径；future thesis/trade 记录进入 input freeze manifest 的排除审计，不再由生产目录或下游校验泄漏到 replay。|
-|6. artifact/row 级通用可见性 schema|READY|后续把更多输入族的 `available_time`、`source_published_at`、`ingested_at` 纳入统一 manifest 或质量报告，不在本阶段一次性改完。|
+|6. market/macro raw cache replay 过滤|VALIDATING|`replay-day` 生成 as-of 过滤后的 `prices_daily.csv`、`prices_marketstack_daily.csv`、`rates_daily.csv` 和 replay download manifest；`score-daily` / `ops health` 只读取 replay raw 路径，不能因生产缓存含未来行情而在历史日期误触发 `prices_future_dates` / `rates_future_dates`。|
+|7. artifact/row 级通用可见性 schema|READY|后续把更多输入族的 `available_time`、`source_published_at`、`ingested_at` 纳入统一 manifest 或质量报告，不在本阶段一次性改完。|
 
 ## 决策
 
@@ -77,3 +78,5 @@ available_time <= visibility_cutoff
 - 2026-05-10：调查 `2026-05-08` replay dashboard 的 `final AI position=0` 后确认，直接原因是 `trade_theses` 文件均为 2026-05-10 创建或更新，相对 2026-05-08 严格复现属于未来手工输入，触发 24 个 thesis future-date 错误和 `thesis` position gate 0% 上限。当前行为是正确 fail closed，但 replay 输入冻结还应后续扩展到手工 thesis/trade 输入隔离视图。
 - 2026-05-10：阶段 5 进入 `IN_PROGRESS`。owner 要求 `trade_theses`、`trades` 等手工数据也做好 replay 隔离；本轮实现限定为 cache-only replay 的过滤视图、命令 path override、manifest 审计和原日期复测。
 - 2026-05-10：阶段 5 进入 `VALIDATING`。`replay-day` 已生成手工输入隔离视图并把 `score-daily` 的 `--thesis-path/--trades-path` 指向 replay bundle；真实 `2026-05-08` replay PASS，6 条 2026-05-10 thesis 被排除，最终 AI 仓位由旧 run 的 0%-0% 恢复为估值 gate 约束下的 40%-40%。
+- 2026-05-11：阶段 6 进入 `IN_PROGRESS`。`replay-window --start 2026-05-01 --end 2026-05-10 --full-universe --openai-replay-policy cache-only --continue-on-failure` 暴露 2026-05-05 至 2026-05-07 的 `score-daily` 仍读取完整生产 `prices_daily.csv` / `rates_daily.csv`，数据质量门禁因 2026-05-08 未来行 fail closed；需要把市场和宏观 raw cache 纳入 replay as-of 过滤视图。
+- 2026-05-11：阶段 6 进入 `VALIDATING`。`replay-day` 已生成 replay-scoped `prices_daily.csv`、`prices_marketstack_daily.csv`、`rates_daily.csv` 和 replay download manifest，并把 `score-daily` / `ops health` 指向该隔离 raw cache；复跑 2026-05-01 至 2026-05-10 后，2026-05-05、2026-05-06、2026-05-07、2026-05-08 均 PASS，周末 2026-05-02/03/09/10 正确跳过；剩余 2026-05-01 和 2026-05-04 为归档输入缺口，非未来行情过滤逻辑阻塞。

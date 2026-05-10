@@ -820,6 +820,46 @@ def _prepare_replay_inputs(
     pit_input_cutoff = min(visible_at, _default_visible_at(as_of))
     openai_input_cutoff = min(visible_at, _default_visible_at(as_of))
 
+    market_raw_records = [
+        _filter_raw_date_csv(
+            artifact_id="prices_daily",
+            artifact_class="market_raw_cache",
+            source_path=raw_dir / "prices_daily.csv",
+            replay_path=paths.data_raw_dir / "prices_daily.csv",
+            as_of=as_of,
+            date_column="date",
+            errors=errors,
+        ),
+        _filter_raw_date_csv(
+            artifact_id="prices_marketstack_daily",
+            artifact_class="market_raw_cache",
+            source_path=raw_dir / "prices_marketstack_daily.csv",
+            replay_path=paths.data_raw_dir / "prices_marketstack_daily.csv",
+            as_of=as_of,
+            date_column="date",
+            errors=errors,
+            required=False,
+        ),
+        _filter_raw_date_csv(
+            artifact_id="rates_daily",
+            artifact_class="macro_raw_cache",
+            source_path=raw_dir / "rates_daily.csv",
+            replay_path=paths.data_raw_dir / "rates_daily.csv",
+            as_of=as_of,
+            date_column="date",
+            errors=errors,
+        ),
+    ]
+    records.extend(market_raw_records)
+    records.append(
+        _write_replay_download_manifest(
+            source_path=raw_dir / "download_manifest.csv",
+            replay_path=paths.data_raw_dir / "download_manifest.csv",
+            filtered_records=market_raw_records,
+            as_of=as_of,
+        )
+    )
+
     records.append(
         _filter_pit_manifest(
             source_path=raw_dir / "pit_snapshots" / "manifest.csv",
@@ -1030,9 +1070,9 @@ def _score_daily_command(
         "--as-of",
         as_of.isoformat(),
         "--prices-path",
-        str(project_root / "data" / "raw" / "prices_daily.csv"),
+        str(paths.data_raw_dir / "prices_daily.csv"),
         "--rates-path",
-        str(project_root / "data" / "raw" / "rates_daily.csv"),
+        str(paths.data_raw_dir / "rates_daily.csv"),
         "--features-path",
         str(paths.data_processed_dir / "features_daily.csv"),
         "--scores-path",
@@ -1143,9 +1183,9 @@ def _pipeline_health_command(
         "--as-of",
         as_of.isoformat(),
         "--prices-path",
-        str(project_root / "data" / "raw" / "prices_daily.csv"),
+        str(paths.data_raw_dir / "prices_daily.csv"),
         "--rates-path",
-        str(project_root / "data" / "raw" / "rates_daily.csv"),
+        str(paths.data_raw_dir / "rates_daily.csv"),
         "--features-path",
         str(paths.data_processed_dir / "features_daily.csv"),
         "--scores-path",
@@ -1321,6 +1361,127 @@ def _filter_timestamped_csv(
         min_timestamp=_iso_or_none(min(timestamps) if timestamps else None),
         max_timestamp=_iso_or_none(max(timestamps) if timestamps else None),
         reason="filtered by available_time/snapshot_time <= effective PIT input cutoff",
+    )
+
+
+def _filter_raw_date_csv(
+    *,
+    artifact_id: str,
+    artifact_class: str,
+    source_path: Path,
+    replay_path: Path,
+    as_of: date,
+    date_column: str,
+    errors: list[str],
+    required: bool = True,
+) -> ReplayInputRecord:
+    if not source_path.exists():
+        if required:
+            errors.append(f"{artifact_id} 不存在：{source_path}")
+        return ReplayInputRecord(
+            artifact_id=artifact_id,
+            artifact_class=artifact_class,
+            source_path=str(source_path),
+            replay_path=str(replay_path),
+            status="MISSING" if required else "MISSING_OPTIONAL",
+            reason="raw cache CSV missing",
+        )
+
+    rows = _read_csv_dicts(source_path)
+    included: list[dict[str, str]] = []
+    excluded: list[dict[str, str]] = []
+    timestamps: list[datetime] = []
+    for row in rows:
+        row_date = _parse_date_value(row.get(date_column))
+        if row_date is not None:
+            timestamps.append(datetime.combine(row_date, time.max, tzinfo=UTC))
+        if row_date is not None and row_date <= as_of:
+            included.append(row)
+        else:
+            excluded.append(row)
+
+    if required and not included:
+        errors.append(f"{artifact_id} replay as-of 可见窗口内没有记录。")
+    _write_csv_dicts(replay_path, included, fieldnames=rows[0].keys() if rows else ())
+    status = "PASS"
+    if not included:
+        status = "FAIL" if required else "PASS_EMPTY"
+    elif excluded:
+        status = "PASS_WITH_EXCLUSIONS"
+    return ReplayInputRecord(
+        artifact_id=artifact_id,
+        artifact_class=artifact_class,
+        source_path=str(source_path),
+        replay_path=str(replay_path),
+        status=status,
+        row_count=len(rows),
+        included_count=len(included),
+        excluded_count=len(excluded),
+        sha256=_sha256_file(replay_path),
+        min_timestamp=_iso_or_none(min(timestamps) if timestamps else None),
+        max_timestamp=_iso_or_none(max(timestamps) if timestamps else None),
+        reason=f"filtered by {date_column} <= replay as_of",
+    )
+
+
+def _write_replay_download_manifest(
+    *,
+    source_path: Path,
+    replay_path: Path,
+    filtered_records: Iterable[ReplayInputRecord],
+    as_of: date,
+) -> ReplayInputRecord:
+    rows: list[dict[str, str]] = []
+    for record in filtered_records:
+        replay_file = Path(record.replay_path)
+        if not replay_file.exists() or record.sha256 is None:
+            continue
+        rows.append(
+            {
+                "downloaded_at": datetime.now(tz=UTC).isoformat(),
+                "source_id": f"replay_filtered_{record.artifact_id}",
+                "provider": "cache-only replay filter",
+                "endpoint": "local raw cache as-of filter",
+                "request_parameters": json.dumps(
+                    {
+                        "source_path": record.source_path,
+                        "as_of": as_of.isoformat(),
+                        "filter": "date <= as_of",
+                    },
+                    ensure_ascii=False,
+                    sort_keys=True,
+                ),
+                "output_path": str(replay_file),
+                "row_count": str(record.included_count or 0),
+                "checksum_sha256": record.sha256,
+            }
+        )
+    fieldnames = (
+        "downloaded_at",
+        "source_id",
+        "provider",
+        "endpoint",
+        "request_parameters",
+        "output_path",
+        "row_count",
+        "checksum_sha256",
+    )
+    _write_csv_dicts(replay_path, rows, fieldnames=fieldnames)
+    source_rows = _csv_row_count(source_path) if source_path.exists() else 0
+    return ReplayInputRecord(
+        artifact_id="download_manifest",
+        artifact_class="market_raw_manifest",
+        source_path=str(source_path),
+        replay_path=str(replay_path),
+        status="PASS" if rows else "PASS_EMPTY",
+        row_count=source_rows,
+        included_count=len(rows),
+        excluded_count=None,
+        sha256=_sha256_file(replay_path),
+        reason=(
+            "generated replay download manifest for as-of filtered raw cache "
+            "artifacts; original vendor manifest remains referenced as source"
+        ),
     )
 
 

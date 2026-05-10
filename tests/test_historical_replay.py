@@ -49,6 +49,30 @@ def test_replay_day_filters_future_inputs_and_uses_isolated_commands(
     assert all(env["OPENAI_API_KEY"] == "" for env in envs)
     assert all(env["FMP_API_KEY"] == "" for env in envs)
 
+    filtered_prices = replay.paths.data_raw_dir / "prices_daily.csv"
+    filtered_marketstack = replay.paths.data_raw_dir / "prices_marketstack_daily.csv"
+    filtered_rates = replay.paths.data_raw_dir / "rates_daily.csv"
+    assert {row["date"] for row in _read_csv(filtered_prices)} == {
+        "2026-05-07",
+        "2026-05-08",
+    }
+    assert {row["date"] for row in _read_csv(filtered_marketstack)} == {
+        "2026-05-07",
+        "2026-05-08",
+    }
+    assert {row["date"] for row in _read_csv(filtered_rates)} == {
+        "2026-05-07",
+        "2026-05-08",
+    }
+    raw_records = {record.artifact_id: record for record in replay.input_records}
+    assert raw_records["prices_daily"].status == "PASS_WITH_EXCLUSIONS"
+    assert raw_records["prices_daily"].included_count == 2
+    assert raw_records["prices_daily"].excluded_count == 1
+    assert raw_records["rates_daily"].status == "PASS_WITH_EXCLUSIONS"
+    assert raw_records["download_manifest"].status == "PASS"
+    replay_manifest = replay.paths.data_raw_dir / "download_manifest.csv"
+    assert replay_manifest.exists()
+
     filtered_manifest = (
         replay.paths.data_raw_dir / "pit_snapshots" / "manifest.csv"
     )
@@ -124,6 +148,10 @@ def test_replay_day_filters_future_inputs_and_uses_isolated_commands(
     assert score_dates == {"2026-05-07"}
 
     score_command = replay.command_results[0].command
+    assert "--prices-path" in score_command
+    assert str(filtered_prices) in score_command
+    assert "--rates-path" in score_command
+    assert str(filtered_rates) in score_command
     assert "--valuation-path" in score_command
     assert str(replay_valuation_dir) in score_command
     assert "--risk-event-occurrences-path" in score_command
@@ -143,6 +171,10 @@ def test_replay_day_filters_future_inputs_and_uses_isolated_commands(
     assert str(replay.paths.reports_dir / "evidence_dashboard_2026-05-08.html") in dashboard_command
 
     health_command = replay.command_results[2].command
+    assert "--prices-path" in health_command
+    assert str(filtered_prices) in health_command
+    assert "--rates-path" in health_command
+    assert str(filtered_rates) in health_command
     assert "--pit-manifest-path" in health_command
     assert str(filtered_manifest) in health_command
 
@@ -393,6 +425,46 @@ def test_replay_window_inventory_cli_writes_window_report(tmp_path: Path) -> Non
 
 
 def _write_replay_fixture(project_root: Path) -> None:
+    raw_dir = project_root / "data" / "raw"
+    _write_csv(
+        raw_dir / "prices_daily.csv",
+        [
+            _price_row("2026-05-07", "AMD", "100"),
+            _price_row("2026-05-08", "AMD", "101"),
+            _price_row("2026-05-10", "AMD", "102"),
+        ],
+    )
+    _write_csv(
+        raw_dir / "prices_marketstack_daily.csv",
+        [
+            _price_row("2026-05-07", "AMD", "100"),
+            _price_row("2026-05-08", "AMD", "101"),
+            _price_row("2026-05-10", "AMD", "102"),
+        ],
+    )
+    _write_csv(
+        raw_dir / "rates_daily.csv",
+        [
+            {"date": "2026-05-07", "series": "DGS10", "value": "4.0"},
+            {"date": "2026-05-08", "series": "DGS10", "value": "4.1"},
+            {"date": "2026-05-10", "series": "DGS10", "value": "4.2"},
+        ],
+    )
+    _write_csv(
+        raw_dir / "download_manifest.csv",
+        [
+            {
+                "downloaded_at": "2026-05-10T00:00:00+00:00",
+                "source_id": "fmp_eod_daily_prices",
+                "provider": "Financial Modeling Prep",
+                "endpoint": "historical-price-full",
+                "request_parameters": "{}",
+                "output_path": str(raw_dir / "prices_daily.csv"),
+                "row_count": "3",
+                "checksum_sha256": "source-cache-checksum",
+            }
+        ],
+    )
     raw_pit = project_root / "data" / "raw" / "pit_snapshots"
     raw_pit.mkdir(parents=True)
     _write_csv(
@@ -760,6 +832,19 @@ def _write_fmp_forward_pit_raw_payload(path: Path) -> None:
         ),
         encoding="utf-8",
     )
+
+
+def _price_row(day: str, ticker: str, close: str) -> dict[str, str]:
+    return {
+        "date": day,
+        "ticker": ticker,
+        "open": close,
+        "high": close,
+        "low": close,
+        "close": close,
+        "adj_close": close,
+        "volume": "1000",
+    }
 
 
 def _write_csv(path: Path, rows: list[dict[str, str]]) -> None:
