@@ -194,6 +194,46 @@ def test_review_uses_latest_visible_snapshot_per_ticker(tmp_path: Path) -> None:
     assert review_report.items[0].valuation_percentile == 25.0
 
 
+def test_validation_excludes_future_snapshots_for_historical_as_of(
+    tmp_path: Path,
+) -> None:
+    snapshot_dir = tmp_path / "valuation_snapshots"
+    snapshot_dir.mkdir()
+    _write_valid_snapshot(
+        snapshot_dir / "nvda_visible.yaml",
+        snapshot_id="nvda_visible",
+        as_of=date(2026, 5, 8),
+        valuation_percentile=55.0,
+    )
+    _write_valid_snapshot(
+        snapshot_dir / "nvda_future.yaml",
+        snapshot_id="nvda_future",
+        as_of=date(2026, 5, 10),
+        valuation_percentile=95.0,
+    )
+
+    validation_report = validate_valuation_snapshot_store(
+        store=load_valuation_snapshot_store(snapshot_dir),
+        universe=load_universe(),
+        watchlist=load_watchlist(),
+        as_of=date(2026, 5, 8),
+    )
+    review_report = build_valuation_review_report(validation_report)
+    markdown = render_valuation_validation_report(validation_report)
+
+    assert validation_report.status == "PASS_WITH_WARNINGS"
+    assert validation_report.snapshot_count == 1
+    assert [loaded.snapshot.snapshot_id for loaded in validation_report.snapshots] == [
+        "nvda_visible"
+    ]
+    assert [item.snapshot_id for item in review_report.items] == ["nvda_visible"]
+    assert "valuation_snapshot_excluded_future_as_of" in {
+        issue.code for issue in validation_report.issues
+    }
+    assert "nvda_future" in markdown
+    assert "nvda_future | NVDA | 2026-05-10" not in markdown
+
+
 def test_validation_current_readiness_uses_latest_snapshot_per_ticker(
     tmp_path: Path,
 ) -> None:

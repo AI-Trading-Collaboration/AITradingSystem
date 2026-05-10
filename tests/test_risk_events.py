@@ -409,6 +409,68 @@ def test_stale_review_attestation_does_not_remove_empty_store_warning(
     }.issubset({issue.code for issue in validation_report.issues})
 
 
+def test_occurrence_validation_excludes_future_records_for_historical_as_of(
+    tmp_path: Path,
+) -> None:
+    input_path = tmp_path / "occurrences"
+    input_path.mkdir()
+    (input_path / "future_occurrence.yaml").write_text(
+        """
+occurrence_id: future_occurrence
+event_id: ai_chip_export_control_upgrade
+status: watch
+triggered_at: 2026-05-10
+last_confirmed_at: 2026-05-10
+evidence_grade: B
+severity: high
+probability: high
+scope: ai_bucket
+time_sensitivity: high
+reversibility: partly_reversible
+action_class: manual_review
+reviewer: llm_formal_assessment
+reviewed_at: 2026-05-10
+review_decision: needs_more_evidence
+rationale: 未来日期的 LLM formal 记录。
+next_review_due: 2026-05-11
+evidence_sources:
+  - source_name: official_policy_sources
+    source_type: llm_extracted
+    captured_at: 2026-05-10
+summary: 未来日期风险事件记录。
+""",
+        encoding="utf-8",
+    )
+    attestation = build_risk_event_review_attestation(
+        as_of=date(2026, 5, 10),
+        reviewer="llm_formal_assessment",
+        rationale="未来日期的 LLM formal 声明。",
+        checked_source_names=("official_policy_sources",),
+        next_review_due=date(2026, 5, 11),
+    )
+    write_risk_event_review_attestation(attestation, input_path)
+
+    validation_report = validate_risk_event_occurrence_store(
+        store=load_risk_event_occurrence_store(input_path),
+        risk_events=load_risk_events(),
+        as_of=date(2026, 5, 8),
+    )
+    review_report = build_risk_event_occurrence_review_report(validation_report)
+    markdown = render_risk_event_occurrence_review_report(review_report)
+
+    assert validation_report.status == "PASS_WITH_WARNINGS"
+    assert validation_report.occurrence_count == 0
+    assert validation_report.review_attestation_count == 0
+    assert review_report.items == ()
+    assert {
+        "risk_event_occurrence_excluded_future_as_of",
+        "risk_event_review_attestation_excluded_future_as_of",
+        "risk_event_current_review_attestation_missing",
+    }.issubset({issue.code for issue in validation_report.issues})
+    assert "future_occurrence" in markdown
+    assert "未发现可读取的风险事件发生记录。" in markdown
+
+
 def test_render_and_write_risk_event_occurrence_report(tmp_path: Path) -> None:
     input_path = tmp_path / "occurrence.yaml"
     _write_risk_event_occurrence(input_path)

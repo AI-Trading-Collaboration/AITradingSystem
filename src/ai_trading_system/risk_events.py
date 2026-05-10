@@ -441,9 +441,48 @@ def validate_risk_event_occurrence_store(
             )
         )
 
+    visible_occurrences: list[LoadedRiskEventOccurrence] = []
+    for loaded in store.loaded:
+        if _occurrence_has_future_input(loaded.occurrence, as_of):
+            issues.append(
+                RiskEventIssue(
+                    severity=RiskEventIssueSeverity.WARNING,
+                    code="risk_event_occurrence_excluded_future_as_of",
+                    event_id=loaded.occurrence.event_id,
+                    path=loaded.path,
+                    message=(
+                        "风险事件发生记录包含晚于评估日期的触发、确认、复核、解除或证据日期，"
+                        "已从本次历史 as-of 评分和复核中排除。"
+                    ),
+                )
+            )
+            continue
+        visible_occurrences.append(loaded)
+
+    visible_attestations: list[LoadedRiskEventReviewAttestation] = []
+    for loaded in store.review_attestations:
+        if _review_attestation_has_future_input(loaded.attestation, as_of):
+            issues.append(
+                RiskEventIssue(
+                    severity=RiskEventIssueSeverity.WARNING,
+                    code="risk_event_review_attestation_excluded_future_as_of",
+                    event_id=loaded.attestation.attestation_id,
+                    path=loaded.path,
+                    message=(
+                        "风险事件复核声明包含晚于评估日期的复核、覆盖窗口或来源日期，"
+                        "已从本次历史 as-of 复核声明中排除。"
+                    ),
+                )
+            )
+            continue
+        visible_attestations.append(loaded)
+
+    visible_occurrence_tuple = tuple(visible_occurrences)
+    visible_attestation_tuple = tuple(visible_attestations)
+
     current_attestations = tuple(
         loaded
-        for loaded in store.review_attestations
+        for loaded in visible_attestation_tuple
         if _review_attestation_is_current(loaded.attestation, as_of)
     )
 
@@ -472,7 +511,7 @@ def validate_risk_event_occurrence_store(
     elif (
         not any(
             loaded.occurrence.status in {"active", "watch"}
-            for loaded in store.loaded
+            for loaded in visible_occurrence_tuple
         )
         and not current_attestations
     ):
@@ -488,8 +527,8 @@ def validate_risk_event_occurrence_store(
             )
         )
 
-    _check_duplicate_occurrence_ids(store.loaded, issues)
-    for loaded in store.loaded:
+    _check_duplicate_occurrence_ids(visible_occurrence_tuple, issues)
+    for loaded in visible_occurrence_tuple:
         _check_occurrence(
             loaded=loaded,
             rules_by_id=rules_by_id,
@@ -498,8 +537,8 @@ def validate_risk_event_occurrence_store(
             issues=issues,
         )
 
-    _check_duplicate_attestation_ids(store.review_attestations, issues)
-    for loaded in store.review_attestations:
+    _check_duplicate_attestation_ids(visible_attestation_tuple, issues)
+    for loaded in visible_attestation_tuple:
         _check_review_attestation(
             loaded=loaded,
             as_of=as_of,
@@ -510,8 +549,8 @@ def validate_risk_event_occurrence_store(
         as_of=as_of,
         input_path=store.input_path,
         config=risk_events,
-        occurrences=store.loaded,
-        review_attestations=store.review_attestations,
+        occurrences=visible_occurrence_tuple,
+        review_attestations=visible_attestation_tuple,
         issues=tuple(issues),
     )
 
@@ -972,6 +1011,31 @@ def _check_duplicate_attestation_ids(
                 message="风险事件复核声明 attestation_id 重复，后续评分无法可靠引用。",
             )
         )
+
+
+def _occurrence_has_future_input(occurrence: RiskEventOccurrence, as_of: date) -> bool:
+    if occurrence.triggered_at > as_of or occurrence.last_confirmed_at > as_of:
+        return True
+    if occurrence.resolved_at is not None and occurrence.resolved_at > as_of:
+        return True
+    if occurrence.reviewed_at is not None and occurrence.reviewed_at > as_of:
+        return True
+    return any(
+        source.captured_at > as_of
+        or (source.published_at is not None and source.published_at > as_of)
+        for source in occurrence.evidence_sources
+    )
+
+
+def _review_attestation_has_future_input(
+    attestation: RiskEventReviewAttestation,
+    as_of: date,
+) -> bool:
+    if attestation.review_date > as_of or attestation.reviewed_at > as_of:
+        return True
+    if attestation.coverage_start > as_of or attestation.coverage_end > as_of:
+        return True
+    return any(source.captured_at > as_of for source in attestation.checked_sources)
 
 
 def _check_occurrence(

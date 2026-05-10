@@ -273,15 +273,36 @@ def validate_valuation_snapshot_store(
             )
         )
 
-    _check_duplicate_snapshot_ids(store.loaded, issues)
+    visible_snapshots: list[LoadedValuationSnapshot] = []
+    for loaded in store.loaded:
+        snapshot = loaded.snapshot
+        if _snapshot_is_future(snapshot, as_of):
+            issues.append(
+                ValuationIssue(
+                    severity=ValuationIssueSeverity.WARNING,
+                    code="valuation_snapshot_excluded_future_as_of",
+                    snapshot_id=snapshot.snapshot_id,
+                    ticker=snapshot.ticker,
+                    path=loaded.path,
+                    message=(
+                        "估值快照日期或采集日期晚于评估日期，已从本次历史 as-of "
+                        "评分和复核中排除。"
+                    ),
+                )
+            )
+            continue
+        visible_snapshots.append(loaded)
+
+    visible_snapshot_tuple = tuple(visible_snapshots)
+    _check_duplicate_snapshot_ids(visible_snapshot_tuple, issues)
     current_snapshot_ids = {
         id(loaded)
         for loaded in _latest_visible_snapshots_by_ticker(
-            store.loaded,
+            visible_snapshot_tuple,
             as_of=as_of,
         )
     }
-    for loaded in store.loaded:
+    for loaded in visible_snapshot_tuple:
         _check_snapshot(
             loaded=loaded,
             known_tickers=known_tickers,
@@ -294,7 +315,7 @@ def validate_valuation_snapshot_store(
     return ValuationValidationReport(
         as_of=as_of,
         input_path=store.input_path,
-        snapshots=store.loaded,
+        snapshots=visible_snapshot_tuple,
         issues=tuple(issues),
     )
 
@@ -603,6 +624,10 @@ def _valuation_snapshot_sort_key(loaded: LoadedValuationSnapshot) -> tuple[date,
     return (snapshot.as_of, snapshot.captured_at, snapshot.snapshot_id)
 
 
+def _snapshot_is_future(snapshot: ValuationSnapshot, as_of: date) -> bool:
+    return snapshot.as_of > as_of or snapshot.captured_at > as_of
+
+
 def _check_snapshot(
     loaded: LoadedValuationSnapshot,
     known_tickers: set[str],
@@ -625,7 +650,7 @@ def _check_snapshot(
             )
         )
 
-    if snapshot.as_of > as_of or snapshot.captured_at > as_of:
+    if _snapshot_is_future(snapshot, as_of):
         issues.append(
             ValuationIssue(
                 severity=ValuationIssueSeverity.ERROR,
