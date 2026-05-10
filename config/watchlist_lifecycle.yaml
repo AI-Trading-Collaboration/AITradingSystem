@@ -71,3 +71,135 @@ entries:
     source: initial_ai_after_chatgpt_watchlist
     reviewer: system
     notes: 观察阶段；用于行业趋势和产业链解释；进入主动交易前必须重新要求 thesis。
+  - ticker: AMZN
+    added_at: 2026-05-11
+    removed_at:
+    reason: 扩展 AI 产业链核心观察池，补齐 hyperscaler CapEx、AWS 和自研 AI 基础设施需求侧代表性。
+    active_from: 2026-05-11
+    active_until:
+    competence_status: watch_only
+    node_mapping_valid_from: 2026-05-11
+    thesis_required_from:
+    source: owner_ai_universe_expansion_2026_05_11
+    reviewer: system
+    notes: 观察阶段；用于行业趋势和产业链解释，不作为主动单票交易 thesis 候选。
+  - ticker: META
+    added_at: 2026-05-11
+    removed_at:
+    reason: 扩展 AI 产业链核心观察池，补齐大规模 AI CapEx、开源模型和应用推理需求代表性。
+    active_from: 2026-05-11
+    active_until:
+    competence_status: watch_only
+    node_mapping_valid_from: 2026-05-11
+    thesis_required_from:
+    source: owner_ai_universe_expansion_2026_05_11
+    reviewer: system
+    notes: 观察阶段；用于行业趋势和产业链解释，不作为主动单票交易 thesis 候选。
+  - ticker: AVGO
+    added_at: 2026-05-11
+    removed_at:
+    reason: 扩展 AI 产业链核心观察池，补齐定制 ASIC、网络互联和 AI 加速器配套代表性。
+    active_from: 2026-05-11
+    active_until:
+    competence_status: watch_only
+    node_mapping_valid_from: 2026-05-11
+    thesis_required_from:
+    source: owner_ai_universe_expansion_2026_05_11
+    reviewer: system
+    notes: 观察阶段；进入主动交易前必须重新要求 thesis。
+  - ticker: MRVL
+    added_at: 2026-05-11
+    removed_at:
+    reason: 扩展 AI 产业链核心观察池，补齐 custom silicon、光互联和数据中心网络芯片代表性。
+    active_from: 2026-05-11
+    active_until:
+    competence_status: watch_only
+    node_mapping_valid_from: 2026-05-11
+    thesis_required_from:
+    source: owner_ai_universe_expansion_2026_05_11
+    reviewer: system
+    notes: 观察阶段；进入主动交易前必须重新要求 thesis。
+  - ticker: ASML
+    added_at: 2026-05-11
+    removed_at:
+    reason: 扩展 AI 产业链核心观察池，补齐 EUV/High-NA 光刻和先进制程扩产瓶颈代表性。
+    active_from: 2026-05-11
+    active_until:
+    competence_status: watch_only
+    node_mapping_valid_from: 2026-05-11
+    thesis_required_from:
+    source: owner_ai_universe_expansion_2026_05_11
+    reviewer: system
+    notes: 观察阶段；进入主动交易前必须重新要求 thesis。
+  - ticker: AMAT
+    added_at: 2026-05-11
+    removed_at:
+    reason: 扩展 AI 产业链核心观察池，补齐半导体材料工程、先进封装和晶圆厂设备代表性。
+    active_from: 2026-05-11
+    active_until:
+    competence_status: watch_only
+    node_mapping_valid_from: 2026-05-11
+    thesis_required_from:
+    source: owner_ai_universe_expansion_2026_05_11
+    reviewer: system
+    notes: 观察阶段；用于行业趋势和产业链解释，不作为主动单票交易 thesis 候选。
+  - ticker: LRCX
+    added_at: 2026-05-11
+    removed_at:
+    reason: 扩展 AI 产业链核心观察池，补齐刻蚀、沉积和存储/HBM 扩产设备代表性。
+    active_from: 2026-05-11
+    active_until:
+    competence_status: watch_only
+    node_mapping_valid_from: 2026-05-11
+    thesis_required_from:
+    source: owner_ai_universe_expansion_2026_05_11
+    reviewer: system
+    notes: 观察阶段；用于行业趋势和产业链解释，不作为主动单票交易 thesis 候选。
+  - ticker: MU
+    added_at: 2026-05-11
+    removed_at:
+    reason: 扩展 AI 产业链核心观察池，补齐 HBM、DRAM 周期和 AI 加速器存储供给代表性。
+    active_from: 2026-05-11
+    active_until:
+    competence_status: watch_only
+    node_mapping_valid_from: 2026-05-11
+    thesis_required_from:
+    source: owner_ai_universe_expansion_2026_05_11
+    reviewer: system
+    notes: 观察阶段；进入主动交易前必须重新要求 thesis。
+  - ticker: PLTR
+    added_at: 2026-05-11
+    removed_at:
+    reason: 扩展 AI 产业链核心观察池，补齐企业 AI 应用商业化和高 beta 应用层代表性。
+    active_from: 2026-05-11
+    active_until:
+    competence_status: watch_only
+    node_mapping_valid_from: 2026-05-11
+    thesis_required_from:
+    source: owner_ai_universe_expansion_2026_05_11
+    reviewer: system
+    notes: 观察阶段；进入主动交易前必须重新要求 thesis。
+  - ticker: CRM
+    added_at: 2026-05-11
+    removed_at:
+    reason: 扩展 AI 产业链核心观察池，补齐企业软件 AI 付费转化和应用商业化代表性。
+    active_from: 2026-05-11
+    active_until:
+    competence_status: watch_only
+    node_mapping_valid_from: 2026-05-11
+    thesis_required_from:
+    source: owner_ai_universe_expansion_2026_05_11
+    reviewer: system
+    notes: 观察阶段；用于行业趋势和产业链解释，不作为主动单票交易 thesis 候选。
+  - ticker: NOW
+    added_at: 2026-05-11
+    removed_at:
+    reason: 扩展 AI 产业链核心观察池，补齐工作流软件 AI 自动化和企业付费意愿代表性。
+    active_from: 2026-05-11
+    active_until:
+    competence_status: watch_only
+    node_mapping_valid_from: 2026-05-11
+    thesis_required_from:
+    source: owner_ai_universe_expansion_2026_05_11
+    reviewer: system
+    notes: 观察阶段；用于行业趋势和产业链解释，不作为主动单票交易 thesis 候选。

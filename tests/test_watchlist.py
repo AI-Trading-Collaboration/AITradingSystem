@@ -25,12 +25,12 @@ def test_validate_watchlist_config_passes_default_watchlist() -> None:
     report = validate_watchlist_config(
         watchlist=load_watchlist(),
         universe=load_universe(),
-        as_of=date(2026, 5, 2),
+        as_of=date(2026, 5, 11),
     )
 
     assert report.status == "PASS"
     assert report.error_count == 0
-    assert report.active_count == 6
+    assert report.active_count == 17
     assert all(item.decision_stage == "watch_only" for item in report.items)
     assert all(not item.thesis_required for item in report.items)
 
@@ -133,12 +133,12 @@ def test_validate_watchlist_lifecycle_passes_default_config() -> None:
         input_path=Path("config/watchlist_lifecycle.yaml"),
         watchlist=load_watchlist(),
         universe=load_universe(),
-        as_of=date(2026, 5, 2),
+        as_of=date(2026, 5, 11),
     )
 
     assert report.status == "PASS"
-    assert report.entry_count == 6
-    assert report.active_entry_count == 6
+    assert report.entry_count == 17
+    assert report.active_entry_count == 17
 
 
 def test_active_watchlist_tickers_as_of_filters_future_and_node_mapping() -> None:
@@ -196,7 +196,7 @@ def test_watchlist_cli_validate_lifecycle_writes_report(tmp_path: Path) -> None:
             "watchlist",
             "validate-lifecycle",
             "--as-of",
-            "2026-05-02",
+            "2026-05-11",
             "--output-path",
             str(output_path),
         ],

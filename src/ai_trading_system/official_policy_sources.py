@@ -1093,15 +1093,48 @@ def _risk_mapping_for(
     if topic_set & {"export_controls", "sanctions", "china_technology", "ai_policy"}:
         risk_ids.append("ai_chip_export_control_upgrade")
         nodes.extend(("export_controls", "gpu_asic_demand", "semiconductor_equipment"))
-        tickers.extend(("NVDA", "AMD", "TSM", "INTC"))
+        tickers.extend(
+            (
+                "NVDA",
+                "AMD",
+                "TSM",
+                "INTC",
+                "ASML",
+                "AMAT",
+                "LRCX",
+                "AVGO",
+                "MRVL",
+                "MU",
+            )
+        )
     if "taiwan_geopolitics" in topic_set:
         risk_ids.append("taiwan_geopolitical_escalation")
         nodes.extend(("foundry_demand", "advanced_packaging", "export_controls"))
-        tickers.extend(("TSM", "NVDA", "AMD", "SMH", "SOXX"))
+        tickers.extend(("TSM", "NVDA", "AMD", "ASML", "AMAT", "LRCX", "SMH", "SOXX"))
     if "trade_policy" in topic_set:
         nodes.append("export_controls")
     upper_text = text.upper()
-    for ticker in ("NVDA", "AMD", "TSM", "INTC", "ASML", "SMH", "SOXX", "MSFT", "GOOG"):
+    for ticker in (
+        "NVDA",
+        "AMD",
+        "TSM",
+        "INTC",
+        "ASML",
+        "AMAT",
+        "LRCX",
+        "AVGO",
+        "MRVL",
+        "MU",
+        "MSFT",
+        "GOOG",
+        "AMZN",
+        "META",
+        "PLTR",
+        "CRM",
+        "NOW",
+        "SMH",
+        "SOXX",
+    ):
         if ticker in upper_text:
             tickers.append(ticker)
     return (

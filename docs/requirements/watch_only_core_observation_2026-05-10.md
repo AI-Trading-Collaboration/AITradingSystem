@@ -2,9 +2,9 @@
 
 ## 背景
 
-2026-05-10 项目 owner 明确：`MSFT`、`GOOG`、`TSM`、`INTC`、`AMD`、`NVDA` 当前都处于观察阶段，不作为主动交易 thesis 驱动的单票交易对象。系统仍需要结合 AI 产业链趋势、核心 ticker 走势、基本面、估值和风险复核给出观察分析。
+2026-05-10 项目 owner 明确：`MSFT`、`GOOG`、`TSM`、`INTC`、`AMD`、`NVDA` 当前都处于观察阶段，不作为主动交易 thesis 驱动的单票交易对象。系统仍需要结合 AI 产业链趋势、核心 ticker 走势、基本面、估值和风险复核给出观察分析。2026-05-11 核心观察池扩展后，新增代表性 ticker 默认也按 `watch_only` 进入观察分析，不自动要求主动交易 thesis。
 
-现有配置把这些核心 ticker 都标记为 `thesis_required: true`。当 `data/external/trade_theses/` 不存在时，`thesis` 复核产生警告，`score-daily` 的 thesis gate 把仓位上限压到 70%，这会把“没有主动交易 thesis”误解释为“主动交易 thesis 缺失”，不符合当前观察阶段语义。
+当时配置把这 6 个核心 ticker 都标记为 `thesis_required: true`。当 `data/external/trade_theses/` 不存在时，`thesis` 复核产生警告，`score-daily` 的 thesis gate 把仓位上限压到 70%，这会把“没有主动交易 thesis”误解释为“主动交易 thesis 缺失”，不符合当前观察阶段语义。
 
 ## 设计决策
 
@@ -18,7 +18,7 @@
 
 1. 配置语义
    - 给 watchlist item 增加 `decision_stage`，枚举值为 `watch_only` 和 `active_trade`。
-   - 将当前 6 个核心 ticker 设置为 `watch_only`，并将 `thesis_required` 设置为 `false`。
+   - 将当时 6 个核心 ticker 设置为 `watch_only`，并将 `thesis_required` 设置为 `false`。
 
 2. 校验规则
    - `watchlist validate` 对 `watch_only` 高风险 ticker 不再报 `high_risk_without_thesis` 错误。
@@ -32,7 +32,7 @@
 ## 验收标准
 
 - 默认 `aits watchlist validate` 对当前核心观察池返回 `PASS`。
-- 当前 6 个核心 ticker 不再因为缺少 `data/external/trade_theses/` 让 `aits thesis review` 返回 `PASS_WITH_WARNINGS`。
+- 当时 6 个核心 ticker 不再因为缺少 `data/external/trade_theses/` 让 `aits thesis review` 返回 `PASS_WITH_WARNINGS`。
 - `active_trade` 高风险 ticker 如果 `thesis_required=false` 仍会失败，避免放松主动交易纪律。
 - 日报仍保留“关注股票趋势分析”和“产业链节点热度与健康度”，用于观察阶段解释行业趋势。
 - `docs/system_flow.md` 同步说明 watch-only 与 active-trade thesis gate 的边界。
@@ -40,4 +40,4 @@
 ## 进展记录
 
 - 2026-05-10：新增需求文档；开始实现 watch-only 核心观察池语义。
-- 2026-05-10：完成实现。新增 `decision_stage` 配置语义，将 6 个核心 ticker 设置为 `watch_only`，观察阶段不再因缺少 `data/external/trade_theses/` 触发 thesis warning 或 thesis gate；主动交易阶段高风险 ticker 仍必须要求 thesis。验证通过 `ruff check src tests`、`pytest -q`、`watchlist validate`、`thesis review` 和 `watchlist validate-lifecycle`。
+- 2026-05-10：完成实现。新增 `decision_stage` 配置语义，将当时 6 个核心 ticker 设置为 `watch_only`，观察阶段不再因缺少 `data/external/trade_theses/` 触发 thesis warning 或 thesis gate；主动交易阶段高风险 ticker 仍必须要求 thesis。验证通过 `ruff check src tests`、`pytest -q`、`watchlist validate`、`thesis review` 和 `watchlist validate-lifecycle`。

@@ -29,7 +29,7 @@
 |1|Marketstack reconciliation|可审计 reconciliation CSV/Markdown；数据质量报告引用|坏点、拆股/复权日期、adjusted close 口径差异被分类；可解释项有规则和证据；不可解释项不静默通过|
 |2|风险事件复核闭环|官方权限 preflight、候选/队列复核报告、复核声明写入路径|能区分“真实复核无重大事件”“仍待复核”“仅 LLM formal”；没有真实 reviewer 时不得写人工复核声明|
 |3|TSM 基本面覆盖|TSM IR 覆盖校验和 SEC-style merge 规则调整|TSM 缺 SEC companyfacts 季度不再误伤；缺 TSM IR 时明确报缺官方 IR 覆盖|
-|4|核心 ticker thesis|6 个 ticker active thesis YAML；校验/复核报告|MSFT、GOOG、TSM、INTC、AMD、NVDA 均有 thesis、验证指标、证伪条件和复核频率|
+|4|初始主动 baseline thesis|原 6 个 ticker active thesis YAML；校验/复核报告|MSFT、GOOG、TSM、INTC、AMD、NVDA 均有 thesis、验证指标、证伪条件和复核频率；2026-05-11 扩展后的新增 ticker 暂按 `watch_only` 观察池处理，不要求主动交易 thesis|
 |5|PIT/outcome 成熟度|PIT coverage 与 outcome/shadow 成熟度报告|报告真实样本数、缺跑、pending/missing 和 readiness；不得提升未成熟窗口可信度|
 
 ## 开放问题
@@ -46,5 +46,6 @@
 - 2026-05-10：TSM IR 基本面覆盖已合并。`fundamentals merge-tsm-ir-sec-metrics --as-of 2026-05-10` 后，SEC-style metrics 行数从 66 增至 72；`validate-sec-metrics` 与 `build-sec-features` 均为 PASS，TSM 季度缺口消失。
 - 2026-05-10：补齐 TSM IR 日报链路。`ops daily-plan` 已在 `validate-sec-metrics` 前加入 `fundamentals merge-tsm-ir-sec-metrics`，`score-daily` 在本地 `data/processed/tsm_ir_quarterly_metrics.csv` 存在时会先按 as-of 合并 TSM IR，再执行 SEC metrics 校验和特征构建，避免只靠手工命令维持覆盖。
 - 2026-05-10：已为 MSFT、GOOG、TSM、INTC、AMD、NVDA 写入 active baseline thesis；`thesis validate` PASS。`thesis review` 仍为 `PASS_WITH_WARNINGS`，原因是部分业务驱动指标保留 `pending`，需要 owner/人工业务复核，未伪装为 confirmed。
+- 2026-05-11：核心观察池扩展到 17 个代表性 AI 产业链 ticker；本计划中的 thesis 项保留为原 6 个主动 baseline thesis，新增 ticker 暂不作为主动交易 thesis 候选。
 - 2026-05-10：已刷新 forward-only maturity 报告。`backtest-pit-coverage` 为 `PASS_WITH_WARNINGS`，prediction outcome 可用样本 2，decision outcome 可用样本 6，shadow maturity 为 `PASS_WITH_LIMITATIONS`；继续受真实时间窗口约束。
 - 2026-05-10：综合验证 `score-daily --as-of 2026-05-10 --skip-risk-event-openai-precheck` 通过，日报状态 `PASS_WITH_LIMITATIONS`，AI 产业链评分 74.9，判断置信度 83.0（high）。执行建议仍为 `wait_manual_review`，原因是风险/业务复核仍存在真实人工闭环缺口。

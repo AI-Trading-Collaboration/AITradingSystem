@@ -24,7 +24,25 @@ def test_universe_config_includes_daily_frequency_and_core_watchlist() -> None:
     config = load_universe()
 
     assert config.market.decision_frequency == "daily"
-    assert config.ai_chain["core_watchlist"] == ["MSFT", "GOOG", "TSM", "INTC", "AMD", "NVDA"]
+    assert config.ai_chain["core_watchlist"] == [
+        "MSFT",
+        "GOOG",
+        "TSM",
+        "INTC",
+        "AMD",
+        "NVDA",
+        "AMZN",
+        "META",
+        "AVGO",
+        "MRVL",
+        "ASML",
+        "AMAT",
+        "LRCX",
+        "MU",
+        "PLTR",
+        "CRM",
+        "NOW",
+    ]
 
 
 def test_portfolio_config_loads_total_asset_budget() -> None:
@@ -69,13 +87,15 @@ def test_data_sources_config_loads_current_and_planned_sources() -> None:
 
 
 def test_sec_companies_config_covers_core_watchlist() -> None:
+    universe = load_universe()
     config = load_sec_companies()
     by_ticker = {company.ticker: company for company in config.companies}
 
-    assert {"MSFT", "GOOG", "TSM", "INTC", "AMD", "NVDA"}.issubset(by_ticker)
+    assert set(universe.ai_chain["core_watchlist"]).issubset(by_ticker)
     assert by_ticker["NVDA"].cik == "0001045810"
     assert by_ticker["TSM"].expected_taxonomies == ["ifrs-full", "dei"]
     assert by_ticker["TSM"].sec_metric_periods == ["annual", "quarterly"]
+    assert by_ticker["ASML"].sec_metric_periods == ["annual"]
 
 
 def test_fundamental_metrics_config_loads_sec_metric_mappings() -> None:
@@ -161,6 +181,17 @@ def test_configured_price_tickers_defaults_to_core_universe() -> None:
         "INTC",
         "AMD",
         "NVDA",
+        "AMZN",
+        "META",
+        "AVGO",
+        "MRVL",
+        "ASML",
+        "AMAT",
+        "LRCX",
+        "MU",
+        "PLTR",
+        "CRM",
+        "NOW",
     ]
 
 

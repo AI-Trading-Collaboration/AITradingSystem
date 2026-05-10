@@ -26,6 +26,17 @@ ai_chain:
     - INTC
     - AMD
     - NVDA
+    - AMZN
+    - META
+    - AVGO
+    - MRVL
+    - ASML
+    - AMAT
+    - LRCX
+    - MU
+    - PLTR
+    - CRM
+    - NOW
   semiconductor_equipment:
     - ASML
     - AMAT

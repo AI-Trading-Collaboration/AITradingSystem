@@ -1114,7 +1114,8 @@ def test_backtest_report_includes_monthly_input_source_url_summary(
     assert (
         "| 2026-04 | taiwan_geopolitical_escalation | "
         "taiwan_geopolitical_escalation_2026-04-01 | 活跃（active） | 是 | "
-        "TSM, NVDA, AMD, INTC, SMH, SOXX | 一手来源（primary_source） | "
+        "TSM, NVDA, AMD, INTC, ASML, AMAT, LRCX, AVGO, MRVL, SMH, SOXX | "
+        "一手来源（primary_source） | "
         "https://policy.example/release | 1 |"
     ) in markdown
 

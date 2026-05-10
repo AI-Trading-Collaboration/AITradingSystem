@@ -85,7 +85,8 @@ def test_download_daily_data_writes_core_universe_cache(tmp_path: Path) -> None:
     assert summary.rate_rows == len(summary.rate_series)
     assert "MSFT" in summary.price_tickers
     assert "NVDA" in summary.price_tickers
-    assert "ASML" not in summary.price_tickers
+    assert "ASML" in summary.price_tickers
+    assert "AMZN" in summary.price_tickers
     assert summary.rate_series == ("DGS2", "DGS10", "DTWEXBGS")
 
     manifest = pd.read_csv(summary.manifest_path)

@@ -34,9 +34,17 @@ event_rules:
     related_tickers:
       - MSFT
       - GOOG
+      - AMZN
+      - META
       - NVDA
       - AMD
+      - AVGO
+      - MRVL
       - TSM
+      - ASML
+      - AMAT
+      - LRCX
+      - MU
     trigger_examples:
       - 云厂商财报或电话会明确下修 AI 数据中心资本开支。
       - 多家云厂商同时延后 AI 集群建设计划。
@@ -65,6 +73,12 @@ event_rules:
       - AMD
       - TSM
       - INTC
+      - ASML
+      - AMAT
+      - LRCX
+      - AVGO
+      - MRVL
+      - MU
     trigger_examples:
       - 新规则限制更多 AI 芯片型号出口。
       - 先进制程设备、EDA、代工服务的许可要求收紧。
@@ -93,6 +107,11 @@ event_rules:
       - NVDA
       - AMD
       - INTC
+      - ASML
+      - AMAT
+      - LRCX
+      - AVGO
+      - MRVL
       - SMH
       - SOXX
     trigger_examples:
@@ -122,6 +141,12 @@ event_rules:
       - NVDA
       - AMD
       - TSM
+      - AVGO
+      - MRVL
+      - MU
+      - ASML
+      - AMAT
+      - LRCX
     trigger_examples:
       - 龙头公司确认客户库存积压并下修未来订单。
       - HBM 或先进封装紧缺指标快速逆转。

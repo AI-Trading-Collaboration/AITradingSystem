@@ -95,3 +95,176 @@ items:
     thesis_required: false
     active: true
     notes: "观察阶段：重点观察订单可持续性、推理需求、毛利率和估值透支程度；高风险单票进入主动交易前必须重新要求 thesis。"
+
+  - ticker: AMZN
+    company_name: Amazon.com
+    instrument_type: single_stock
+    sector: cloud_and_platform
+    ai_chain_nodes:
+      - cloud_capex
+      - ai_inference_demand
+      - power_and_data_center_capacity
+      - software_and_apps
+    competence_score: 76
+    competence_reason: "AWS、AI 基础设施 CapEx、Trainium/Inferentia 和企业云需求是 AI 算力链的重要需求侧输入。"
+    default_risk_level: medium
+    decision_stage: watch_only
+    thesis_required: false
+    active: true
+    notes: "观察阶段：重点观察 AWS 增速、AI CapEx、自研芯片部署和电力/数据中心容量约束；不作为主动单票交易 thesis 候选。"
+
+  - ticker: META
+    company_name: Meta Platforms
+    instrument_type: single_stock
+    sector: cloud_and_platform
+    ai_chain_nodes:
+      - cloud_capex
+      - ai_models
+      - ai_inference_demand
+      - power_and_data_center_capacity
+    competence_score: 74
+    competence_reason: "大规模 AI CapEx、开源模型生态、广告推荐和推理负载是 AI 需求与变现的重要观察入口。"
+    default_risk_level: medium
+    decision_stage: watch_only
+    thesis_required: false
+    active: true
+    notes: "观察阶段：重点观察 AI 基建投入、Llama 生态、广告效率和推理成本；不作为主动单票交易 thesis 候选。"
+
+  - ticker: AVGO
+    company_name: Broadcom
+    instrument_type: single_stock
+    sector: accelerators_and_compute
+    ai_chain_nodes:
+      - gpu_asic_demand
+      - ai_inference_demand
+      - foundry_demand
+    competence_score: 78
+    competence_reason: "定制 ASIC、网络互联和 AI 加速器需求与云厂商 CapEx 传导高度相关。"
+    default_risk_level: high
+    decision_stage: watch_only
+    thesis_required: false
+    active: true
+    notes: "观察阶段：重点观察 AI ASIC 订单、网络芯片需求、客户集中度和估值拥挤；进入主动交易前必须重新要求 thesis。"
+
+  - ticker: MRVL
+    company_name: Marvell Technology
+    instrument_type: single_stock
+    sector: accelerators_and_compute
+    ai_chain_nodes:
+      - gpu_asic_demand
+      - ai_inference_demand
+      - foundry_demand
+    competence_score: 70
+    competence_reason: "定制硅、光互联和数据中心网络芯片是 AI 算力扩张的重要配套环节。"
+    default_risk_level: high
+    decision_stage: watch_only
+    thesis_required: false
+    active: true
+    notes: "观察阶段：重点观察 custom silicon pipeline、数据中心网络需求和毛利率兑现；进入主动交易前必须重新要求 thesis。"
+
+  - ticker: ASML
+    company_name: ASML Holding
+    instrument_type: single_stock
+    sector: semiconductor_equipment
+    ai_chain_nodes:
+      - semiconductor_equipment
+      - foundry_demand
+      - export_controls
+    competence_score: 82
+    competence_reason: "EUV 光刻是先进制程扩产的核心瓶颈，直接影响 AI 芯片供给能力。"
+    default_risk_level: high
+    decision_stage: watch_only
+    thesis_required: false
+    active: true
+    notes: "观察阶段：重点观察 EUV/High-NA 订单、出口管制和先进制程客户 CapEx；进入主动交易前必须重新要求 thesis。"
+
+  - ticker: AMAT
+    company_name: Applied Materials
+    instrument_type: single_stock
+    sector: semiconductor_equipment
+    ai_chain_nodes:
+      - semiconductor_equipment
+      - advanced_packaging
+      - foundry_demand
+    competence_score: 74
+    competence_reason: "沉积、刻蚀、材料工程和先进封装设备需求可反映 AI 半导体扩产节奏。"
+    default_risk_level: medium
+    decision_stage: watch_only
+    thesis_required: false
+    active: true
+    notes: "观察阶段：重点观察设备订单、先进封装需求和晶圆厂 CapEx 指引；不作为主动单票交易 thesis 候选。"
+
+  - ticker: LRCX
+    company_name: Lam Research
+    instrument_type: single_stock
+    sector: semiconductor_equipment
+    ai_chain_nodes:
+      - semiconductor_equipment
+      - foundry_demand
+    competence_score: 72
+    competence_reason: "刻蚀和沉积设备需求能反映先进制程和存储/HBM 扩产周期。"
+    default_risk_level: medium
+    decision_stage: watch_only
+    thesis_required: false
+    active: true
+    notes: "观察阶段：重点观察设备订单、存储资本开支和出口限制；不作为主动单票交易 thesis 候选。"
+
+  - ticker: MU
+    company_name: Micron Technology
+    instrument_type: single_stock
+    sector: memory_and_hbm
+    ai_chain_nodes:
+      - hbm_supply_demand
+      - gpu_asic_demand
+    competence_score: 70
+    competence_reason: "HBM 供需、DRAM 周期和 AI 加速器 BOM 成本是 AI 硬件链的重要约束。"
+    default_risk_level: high
+    decision_stage: watch_only
+    thesis_required: false
+    active: true
+    notes: "观察阶段：重点观察 HBM 产能、合约价格、库存周期和毛利率；进入主动交易前必须重新要求 thesis。"
+
+  - ticker: PLTR
+    company_name: Palantir Technologies
+    instrument_type: single_stock
+    sector: software_and_apps
+    ai_chain_nodes:
+      - software_and_apps
+      - ai_inference_demand
+    competence_score: 66
+    competence_reason: "AIP 和企业 AI 应用商业化可作为应用层需求和估值拥挤的高 beta 观察样本。"
+    default_risk_level: high
+    decision_stage: watch_only
+    thesis_required: false
+    active: true
+    notes: "观察阶段：重点观察商业客户增长、AIP 转化、政府收入和估值拥挤；进入主动交易前必须重新要求 thesis。"
+
+  - ticker: CRM
+    company_name: Salesforce
+    instrument_type: single_stock
+    sector: software_and_apps
+    ai_chain_nodes:
+      - software_and_apps
+      - ai_inference_demand
+    competence_score: 68
+    competence_reason: "企业软件 AI 功能的付费转化、ARPU 和留存能验证应用层商业化。"
+    default_risk_level: medium
+    decision_stage: watch_only
+    thesis_required: false
+    active: true
+    notes: "观察阶段：重点观察 Agentforce/AI 功能渗透、续费和利润率；不作为主动单票交易 thesis 候选。"
+
+  - ticker: NOW
+    company_name: ServiceNow
+    instrument_type: single_stock
+    sector: software_and_apps
+    ai_chain_nodes:
+      - software_and_apps
+      - ai_inference_demand
+    competence_score: 68
+    competence_reason: "工作流软件中的 AI 自动化采用率和企业付费意愿能验证应用商业化。"
+    default_risk_level: medium
+    decision_stage: watch_only
+    thesis_required: false
+    active: true
+    notes: "观察阶段：重点观察 AI 工作流渗透、订阅增速和净留存；不作为主动单票交易 thesis 候选。"

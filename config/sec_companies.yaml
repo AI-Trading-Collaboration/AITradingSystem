@@ -49,3 +49,93 @@ companies:
       - us-gaap
       - dei
     notes: Core AI accelerator and networking company.
+
+  - ticker: AMZN
+    cik: "0001018724"
+    company_name: Amazon.com, Inc.
+    expected_taxonomies:
+      - us-gaap
+      - dei
+    notes: AI cloud infrastructure and platform company.
+
+  - ticker: META
+    cik: "0001326801"
+    company_name: Meta Platforms, Inc.
+    expected_taxonomies:
+      - us-gaap
+      - dei
+    notes: AI infrastructure, model and application platform company.
+
+  - ticker: AVGO
+    cik: "0001730168"
+    company_name: Broadcom Inc.
+    expected_taxonomies:
+      - us-gaap
+      - dei
+    notes: AI custom silicon, networking and accelerator supplier.
+
+  - ticker: MRVL
+    cik: "0001835632"
+    company_name: Marvell Technology, Inc.
+    expected_taxonomies:
+      - us-gaap
+      - dei
+    notes: AI custom silicon and data center networking supplier.
+
+  - ticker: ASML
+    cik: "0000937966"
+    company_name: ASML Holding N.V.
+    expected_taxonomies:
+      - ifrs-full
+      - dei
+    sec_metric_periods:
+      - annual
+    notes: Foreign issuer; EUV lithography supplier for advanced AI semiconductor capacity.
+
+  - ticker: AMAT
+    cik: "0000006951"
+    company_name: Applied Materials, Inc.
+    expected_taxonomies:
+      - us-gaap
+      - dei
+    notes: Semiconductor equipment and advanced packaging supplier.
+
+  - ticker: LRCX
+    cik: "0000707549"
+    company_name: Lam Research Corporation
+    expected_taxonomies:
+      - us-gaap
+      - dei
+    notes: Semiconductor equipment supplier for etch, deposition and memory/HBM capacity.
+
+  - ticker: MU
+    cik: "0000723125"
+    company_name: Micron Technology, Inc.
+    expected_taxonomies:
+      - us-gaap
+      - dei
+    notes: Memory and HBM supplier for AI accelerator systems.
+
+  - ticker: PLTR
+    cik: "0001321655"
+    company_name: Palantir Technologies Inc.
+    expected_taxonomies:
+      - us-gaap
+      - dei
+    notes: AI application and enterprise software company.
+
+  - ticker: CRM
+    cik: "0001108524"
+    company_name: Salesforce, Inc.
+    expected_taxonomies:
+      - us-gaap
+      - dei
+    notes: Enterprise software AI commercialization company.
+
+  - ticker: NOW
+    cik: "0001373715"
+    company_name: ServiceNow, Inc.
+    expected_taxonomies:
+      - us-gaap
+      - dei
+    notes: Enterprise workflow software AI commercialization company.

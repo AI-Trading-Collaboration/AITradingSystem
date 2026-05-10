@@ -23,6 +23,18 @@ prices:
         source_name: NVIDIA 2024 Stock Split FAQ
         source_url: https://investor.nvidia.com/files/doc_downloads/2024/06/nvidia-2024-stock-split_faq_investors.pdf
         note: "NVIDIA common stock began trading split-adjusted at market open."
+    AVGO:
+      - effective_date: 2024-07-15
+        ratio: 10
+        source_name: Broadcom fiscal 2024 second quarter results press release
+        source_url: https://investors.broadcom.com/news-releases/news-release-details/broadcom-inc-announces-second-quarter-fiscal-year-2024-financial
+        note: "Broadcom common stock began trading on a split-adjusted basis at market open."
+    LRCX:
+      - effective_date: 2024-10-03
+        ratio: 10
+        source_name: Lam Research stock split press release
+        source_url: https://newsroom.lamresearch.com/2024-05-21-Lam-Research-Corporation-Announces-10-Billion-Share-Repurchase-Authorization-and-a-10-for-1-Stock-Split
+        note: "Lam Research common stock began trading on a post-split basis at market open."
     SMH:
       - effective_date: 2023-05-05
         ratio: 2
