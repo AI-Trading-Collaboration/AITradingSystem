@@ -69,6 +69,28 @@ def test_replay_day_filters_future_inputs_and_uses_isolated_commands(
         / "fmp_amd_valuation_2026_05_10.yaml"
     ).exists()
 
+    replay_risk_occurrence_dir = (
+        replay.paths.input_root / "data" / "external" / "risk_event_occurrences"
+    )
+    assert sorted(path.name for path in replay_risk_occurrence_dir.glob("*.yaml")) == [
+        "visible_policy_event.yaml"
+    ]
+    assert (
+        project_root
+        / "data"
+        / "external"
+        / "risk_event_occurrences"
+        / "future_policy_event.yaml"
+    ).exists()
+    risk_occurrence_record = next(
+        record
+        for record in replay.input_records
+        if record.artifact_id == "risk_event_occurrences"
+    )
+    assert risk_occurrence_record.status == "PASS"
+    assert risk_occurrence_record.included_count == 1
+    assert risk_occurrence_record.excluded_count == 2
+
     seeded_scores = replay.paths.data_processed_dir / "scores_daily.csv"
     score_dates = {row["as_of"] for row in _read_csv(seeded_scores)}
     assert score_dates == {"2026-05-07"}
@@ -76,6 +98,8 @@ def test_replay_day_filters_future_inputs_and_uses_isolated_commands(
     score_command = replay.command_results[0].command
     assert "--valuation-path" in score_command
     assert str(replay_valuation_dir) in score_command
+    assert "--risk-event-occurrences-path" in score_command
+    assert str(replay_risk_occurrence_dir) in score_command
     assert "--prediction-production-effect" in score_command
     assert "none" in score_command
 
@@ -124,6 +148,81 @@ def test_replay_day_inventory_cli_writes_bundle(tmp_path: Path) -> None:
         / "valuation_snapshots"
         / "fmp_amd_valuation_2026_05_10.yaml"
     ).exists()
+
+
+def test_replay_day_caps_pit_inputs_to_as_of_when_production_cutoff_is_later(
+    tmp_path: Path,
+) -> None:
+    project_root = tmp_path / "project"
+    _write_replay_fixture(project_root)
+    (project_root / "outputs" / "reports" / "daily_ops_run_metadata_2026-05-08.json").write_text(
+        json.dumps(
+            {
+                "visibility_cutoff": "2026-05-10T12:00:00+00:00",
+                "visibility_cutoff_source": "daily_run_finished_at_utc",
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    replay = run_historical_day_replay(
+        as_of=date(2026, 5, 8),
+        project_root=project_root,
+        output_root=tmp_path / "replays",
+        run_id="unit_replay_late_cutoff",
+        inventory_only=True,
+    )
+
+    assert replay.status == "PASS_INVENTORY"
+    assert replay.visible_at.isoformat() == "2026-05-10T12:00:00+00:00"
+    records = {record.artifact_id: record for record in replay.input_records}
+    assert records["pit_manifest"].included_count == 1
+    assert records["pit_manifest"].excluded_count == 1
+    assert records["fmp_forward_pit_normalized"].included_count == 1
+    assert records["fmp_forward_pit_normalized"].excluded_count == 1
+
+
+def test_replay_day_rebuilds_pit_normalized_from_filtered_raw_manifest(
+    tmp_path: Path,
+) -> None:
+    project_root = tmp_path / "project"
+    _write_replay_fixture(project_root)
+    _write_csv(
+        project_root / "data" / "processed" / "pit_snapshots" / "fmp_forward_pit_2026-05-08.csv",
+        [
+            {
+                "normalized_id": "future_only",
+                "available_time": "2026-05-10T02:00:00+00:00",
+            }
+        ],
+    )
+    _write_fmp_forward_pit_raw_payload(
+        project_root / "data" / "raw" / "fmp_forward_pit" / "amd" / "2026-05-08.json"
+    )
+
+    replay = run_historical_day_replay(
+        as_of=date(2026, 5, 8),
+        project_root=project_root,
+        output_root=tmp_path / "replays",
+        run_id="unit_replay_rebuild_pit",
+        inventory_only=True,
+    )
+
+    assert replay.status == "PASS_INVENTORY"
+    record = next(
+        record
+        for record in replay.input_records
+        if record.artifact_id == "fmp_forward_pit_normalized"
+    )
+    assert record.included_count == 1
+    assert "rebuilt" in record.reason
+    normalized_rows = _read_csv(
+        replay.paths.data_processed_dir / "pit_snapshots" / "fmp_forward_pit_2026-05-08.csv"
+    )
+    assert normalized_rows[0]["available_time"] == "2026-05-08T02:00:00+00:00"
+    assert normalized_rows[0]["raw_payload_path"] == (
+        "data/raw/fmp_forward_pit/amd/2026-05-08.json"
+    )
 
 
 def test_replay_day_compare_to_production_writes_diff(tmp_path: Path) -> None:
@@ -311,6 +410,44 @@ def _write_replay_fixture(project_root: Path) -> None:
     _write_valuation(valuation_dir / "fmp_amd_valuation_2026_05_08.yaml", "2026-05-08")
     _write_valuation(valuation_dir / "fmp_amd_valuation_2026_05_10.yaml", "2026-05-10")
 
+    risk_occurrence_dir = project_root / "data" / "external" / "risk_event_occurrences"
+    risk_occurrence_dir.mkdir(parents=True)
+    _write_risk_occurrence(
+        risk_occurrence_dir / "visible_policy_event.yaml",
+        occurrence_id="visible_policy_event",
+        triggered_at="2026-05-07",
+        captured_at="2026-05-08",
+    )
+    _write_risk_occurrence(
+        risk_occurrence_dir / "future_policy_event.yaml",
+        occurrence_id="future_policy_event",
+        triggered_at="2026-05-10",
+        captured_at="2026-05-10",
+    )
+    (risk_occurrence_dir / "future_review_attestation.yaml").write_text(
+        "\n".join(
+            [
+                "review_attestation:",
+                "  attestation_id: future_review_attestation",
+                "  review_date: '2026-05-10'",
+                "  coverage_start: '2026-05-10'",
+                "  coverage_end: '2026-05-10'",
+                "  reviewer: policy_owner",
+                "  reviewed_at: '2026-05-10'",
+                "  review_decision: confirmed_no_unrecorded_material_events",
+                "  rationale: 测试未来复核声明。",
+                "  next_review_due: '2026-05-11'",
+                "  review_scope:",
+                "    - policy_event_occurrences",
+                "  checked_sources:",
+                "    - source_name: manual_policy_review",
+                "      source_type: manual_input",
+                "      captured_at: '2026-05-10'",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
     processed = project_root / "data" / "processed"
     _write_csv(
         processed / "sec_fundamentals_2026-05-08.csv",
@@ -362,6 +499,75 @@ def _write_valuation(path: Path, snapshot_date: str) -> None:
                 "valuation_metrics: []",
                 "expectation_metrics: []",
             ]
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_risk_occurrence(
+    path: Path,
+    *,
+    occurrence_id: str,
+    triggered_at: str,
+    captured_at: str,
+) -> None:
+    path.write_text(
+        "\n".join(
+            [
+                f"occurrence_id: {occurrence_id}",
+                "event_id: ai_chip_export_control_upgrade",
+                "status: active",
+                f"triggered_at: '{triggered_at}'",
+                f"last_confirmed_at: '{captured_at}'",
+                "evidence_grade: B",
+                "severity: medium",
+                "probability: medium",
+                "scope: industry_chain_node",
+                "time_sensitivity: medium",
+                "reversibility: unknown",
+                "action_class: score_eligible",
+                "reviewer: policy_owner",
+                f"reviewed_at: '{captured_at}'",
+                "review_decision: confirmed_active",
+                "rationale: 测试风险事件。",
+                f"next_review_due: '{captured_at}'",
+                "evidence_sources:",
+                "  - source_name: manual_policy_review",
+                "    source_type: manual_input",
+                f"    captured_at: '{captured_at}'",
+                f"    published_at: '{captured_at}'",
+                "summary: 测试风险事件。",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_fmp_forward_pit_raw_payload(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            {
+                "provider": "Financial Modeling Prep",
+                "source_type": "paid_vendor",
+                "ticker": "AMD",
+                "provider_symbol": "AMD",
+                "as_of": "2026-05-08",
+                "captured_at": "2026-05-08",
+                "downloaded_at": "2026-05-08T02:00:00+00:00",
+                "request_parameters_by_endpoint": {
+                    "analyst-estimates": {"symbol": "AMD"},
+                },
+                "records_by_endpoint": {
+                    "analyst-estimates": [
+                        {
+                            "symbol": "AMD",
+                            "date": "2026-05-08",
+                            "estimatedEpsAvg": 1.23,
+                        }
+                    ]
+                },
+            }
         ),
         encoding="utf-8",
     )

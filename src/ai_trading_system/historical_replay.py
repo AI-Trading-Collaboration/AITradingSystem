@@ -35,8 +35,11 @@ from ai_trading_system.feature_availability import (
 )
 from ai_trading_system.features.market import default_feature_report_path
 from ai_trading_system.fmp_forward_pit import (
+    FmpForwardPitRawPayload,
     default_fmp_forward_pit_fetch_report_path,
     default_fmp_forward_pit_normalized_path,
+    normalize_fmp_forward_pit_payloads,
+    write_fmp_forward_pit_normalized_csv,
 )
 from ai_trading_system.fundamentals.sec_features import (
     default_sec_fundamental_features_csv_path,
@@ -46,6 +49,7 @@ from ai_trading_system.fundamentals.sec_metrics import (
     default_sec_fundamental_metrics_csv_path,
     default_sec_fundamental_metrics_validation_report_path,
 )
+from ai_trading_system.historical_inputs import risk_event_occurrence_store_as_of
 from ai_trading_system.ops_daily import _join_command, default_daily_ops_run_metadata_path
 from ai_trading_system.pipeline_health import default_pipeline_health_report_path
 from ai_trading_system.pit_snapshots import default_pit_snapshot_validation_report_path
@@ -55,7 +59,10 @@ from ai_trading_system.report_traceability import default_report_trace_bundle_pa
 from ai_trading_system.risk_event_prereview import (
     default_risk_event_openai_prereview_report_path,
 )
-from ai_trading_system.risk_events import default_risk_event_occurrence_report_path
+from ai_trading_system.risk_events import (
+    default_risk_event_occurrence_report_path,
+    load_risk_event_occurrence_store,
+)
 from ai_trading_system.scoring.daily import default_daily_score_report_path
 from ai_trading_system.secret_hygiene import default_secret_scan_report_path
 from ai_trading_system.trading_calendar import us_equity_market_session
@@ -785,17 +792,18 @@ def _prepare_replay_inputs(
     raw_dir = project_root / "data" / "raw"
     processed_dir = project_root / "data" / "processed"
     reports_dir = project_root / "outputs" / "reports"
+    pit_input_cutoff = min(visible_at, _default_visible_at(as_of))
 
     records.append(
         _filter_pit_manifest(
             source_path=raw_dir / "pit_snapshots" / "manifest.csv",
             replay_path=paths.data_raw_dir / "pit_snapshots" / "manifest.csv",
-            visible_at=visible_at,
+            visible_at=pit_input_cutoff,
             errors=errors,
         )
     )
     records.append(
-        _filter_timestamped_csv(
+        _filter_fmp_forward_pit_normalized(
             artifact_id="fmp_forward_pit_normalized",
             artifact_class="pit_normalized",
             source_path=default_fmp_forward_pit_normalized_path(
@@ -807,7 +815,10 @@ def _prepare_replay_inputs(
                 / "pit_snapshots"
                 / f"fmp_forward_pit_{as_of.isoformat()}.csv"
             ),
-            visible_at=visible_at,
+            manifest_path=paths.data_raw_dir / "pit_snapshots" / "manifest.csv",
+            project_root=project_root,
+            as_of=as_of,
+            visible_at=pit_input_cutoff,
             errors=errors,
         )
     )
@@ -873,6 +884,14 @@ def _prepare_replay_inputs(
             / "outputs"
             / "reports"
             / f"valuation_validation_{as_of.isoformat()}.md",
+        )
+    )
+    records.append(
+        _filter_risk_event_occurrences(
+            source_dir=project_root / "data" / "external" / "risk_event_occurrences",
+            replay_dir=paths.input_root / "data" / "external" / "risk_event_occurrences",
+            as_of=as_of,
+            errors=errors,
         )
     )
     records.extend(
@@ -1010,6 +1029,8 @@ def _score_daily_command(
         str(default_sec_fundamental_metrics_validation_report_path(reports, as_of)),
         "--risk-event-occurrence-report-path",
         str(default_risk_event_occurrence_report_path(reports, as_of)),
+        "--risk-event-occurrences-path",
+        str(paths.input_root / "data" / "external" / "risk_event_occurrences"),
         "--risk-event-prereview-queue-path",
         str(paths.data_processed_dir / RISK_EVENT_PREREVIEW_QUEUE_NAME),
         "--risk-event-openai-precheck-report-path",
@@ -1175,7 +1196,7 @@ def _filter_pit_manifest(
         sha256=_sha256_file(replay_path),
         min_timestamp=_iso_or_none(min(timestamps) if timestamps else None),
         max_timestamp=_iso_or_none(max(timestamps) if timestamps else None),
-        reason="filtered by available_time/snapshot_time <= visible_at",
+        reason="filtered by available_time/snapshot_time <= effective PIT input cutoff",
     )
 
 
@@ -1215,7 +1236,207 @@ def _filter_timestamped_csv(
         sha256=_sha256_file(replay_path),
         min_timestamp=_iso_or_none(min(timestamps) if timestamps else None),
         max_timestamp=_iso_or_none(max(timestamps) if timestamps else None),
-        reason="filtered by available_time/snapshot_time <= visible_at",
+        reason="filtered by available_time/snapshot_time <= effective PIT input cutoff",
+    )
+
+
+def _filter_fmp_forward_pit_normalized(
+    *,
+    artifact_id: str,
+    artifact_class: str,
+    source_path: Path,
+    replay_path: Path,
+    manifest_path: Path,
+    project_root: Path,
+    as_of: date,
+    visible_at: datetime,
+    errors: list[str],
+) -> ReplayInputRecord:
+    if not source_path.exists():
+        rebuilt = _rebuild_fmp_forward_pit_normalized_from_manifest(
+            manifest_path=manifest_path,
+            replay_path=replay_path,
+            project_root=project_root,
+            as_of=as_of,
+        )
+        if rebuilt is not None:
+            return rebuilt
+        errors.append(f"{artifact_id} 不存在：{source_path}")
+        return ReplayInputRecord(
+            artifact_id=artifact_id,
+            artifact_class=artifact_class,
+            source_path=str(source_path),
+            replay_path=str(replay_path),
+            status="MISSING",
+            reason="required timestamped CSV missing and raw manifest rebuild unavailable",
+        )
+
+    rows = _read_csv_dicts(source_path)
+    included, excluded, timestamps = _split_rows_by_timestamp(rows, visible_at)
+    if included:
+        _write_csv_dicts(replay_path, included, fieldnames=rows[0].keys() if rows else ())
+        return ReplayInputRecord(
+            artifact_id=artifact_id,
+            artifact_class=artifact_class,
+            source_path=str(source_path),
+            replay_path=str(replay_path),
+            status="PASS",
+            row_count=len(rows),
+            included_count=len(included),
+            excluded_count=len(excluded),
+            sha256=_sha256_file(replay_path),
+            min_timestamp=_iso_or_none(min(timestamps) if timestamps else None),
+            max_timestamp=_iso_or_none(max(timestamps) if timestamps else None),
+            reason="filtered by available_time/snapshot_time <= effective PIT input cutoff",
+        )
+
+    rebuilt = _rebuild_fmp_forward_pit_normalized_from_manifest(
+        manifest_path=manifest_path,
+        replay_path=replay_path,
+        project_root=project_root,
+        as_of=as_of,
+    )
+    if rebuilt is not None:
+        return ReplayInputRecord(
+            artifact_id=artifact_id,
+            artifact_class=artifact_class,
+            source_path=str(source_path),
+            replay_path=rebuilt.replay_path,
+            status=rebuilt.status,
+            row_count=rebuilt.included_count,
+            included_count=rebuilt.included_count,
+            excluded_count=0,
+            sha256=rebuilt.sha256,
+            min_timestamp=rebuilt.min_timestamp,
+            max_timestamp=rebuilt.max_timestamp,
+            reason=(
+                f"source normalized CSV had {len(rows)} rows but none within "
+                "effective PIT input cutoff; "
+                "rebuilt replay normalized CSV from filtered raw PIT manifest"
+            ),
+        )
+
+    errors.append(f"{artifact_id} 可见窗口内没有记录。")
+    _write_csv_dicts(replay_path, [], fieldnames=rows[0].keys() if rows else ())
+    return ReplayInputRecord(
+        artifact_id=artifact_id,
+        artifact_class=artifact_class,
+        source_path=str(source_path),
+        replay_path=str(replay_path),
+        status="FAIL",
+        row_count=len(rows),
+        included_count=0,
+        excluded_count=len(excluded),
+        sha256=_sha256_file(replay_path),
+        min_timestamp=_iso_or_none(min(timestamps) if timestamps else None),
+        max_timestamp=_iso_or_none(max(timestamps) if timestamps else None),
+        reason="filtered by available_time/snapshot_time <= effective PIT input cutoff",
+    )
+
+
+def _rebuild_fmp_forward_pit_normalized_from_manifest(
+    *,
+    manifest_path: Path,
+    replay_path: Path,
+    project_root: Path,
+    as_of: date,
+) -> ReplayInputRecord | None:
+    if not manifest_path.exists():
+        return None
+    payloads_by_ticker: dict[str, FmpForwardPitRawPayload] = {}
+    for row in _read_csv_dicts(manifest_path):
+        raw_payload_path = row.get("raw_payload_path", "")
+        if "fmp_forward_pit" not in raw_payload_path.replace("\\", "/"):
+            continue
+        payload = _load_fmp_forward_pit_raw_payload(
+            raw_payload_path=raw_payload_path,
+            raw_payload_sha256=row.get("raw_payload_sha256", ""),
+            project_root=project_root,
+        )
+        if payload is None or payload.as_of != as_of:
+            continue
+        current = payloads_by_ticker.get(payload.ticker)
+        if current is None or payload.downloaded_at > current.downloaded_at:
+            payloads_by_ticker[payload.ticker] = payload
+    payloads = tuple(
+        payloads_by_ticker[ticker] for ticker in sorted(payloads_by_ticker)
+    )
+    if not payloads:
+        return None
+
+    normalized_rows = normalize_fmp_forward_pit_payloads(payloads)
+    if not normalized_rows:
+        return None
+    write_fmp_forward_pit_normalized_csv(normalized_rows, replay_path)
+    timestamps = [
+        timestamp
+        for row in normalized_rows
+        if (timestamp := _parse_datetime_value(row.available_time)) is not None
+    ]
+    return ReplayInputRecord(
+        artifact_id="fmp_forward_pit_normalized",
+        artifact_class="pit_normalized",
+        source_path=str(manifest_path),
+        replay_path=str(replay_path),
+        status="PASS",
+        row_count=len(normalized_rows),
+        included_count=len(normalized_rows),
+        excluded_count=0,
+        sha256=_sha256_file(replay_path),
+        min_timestamp=_iso_or_none(min(timestamps) if timestamps else None),
+        max_timestamp=_iso_or_none(max(timestamps) if timestamps else None),
+        reason="rebuilt from filtered FMP forward PIT raw payload manifest",
+    )
+
+
+def _load_fmp_forward_pit_raw_payload(
+    *,
+    raw_payload_path: str,
+    raw_payload_sha256: str,
+    project_root: Path,
+) -> FmpForwardPitRawPayload | None:
+    path = Path(raw_payload_path)
+    resolved_path = path if path.is_absolute() else project_root / path
+    if not resolved_path.exists():
+        return None
+    raw = _read_yaml_mapping(resolved_path)
+    ticker = str(raw.get("ticker") or "").strip().upper()
+    as_of = _parse_date_value(raw.get("as_of"))
+    captured_at = _parse_date_value(raw.get("captured_at"))
+    downloaded_at = _parse_datetime_value(raw.get("downloaded_at"))
+    records_by_endpoint = raw.get("records_by_endpoint")
+    request_parameters = raw.get("request_parameters_by_endpoint")
+    if (
+        not ticker
+        or as_of is None
+        or captured_at is None
+        or downloaded_at is None
+        or not isinstance(records_by_endpoint, dict)
+        or not isinstance(request_parameters, dict)
+    ):
+        return None
+    endpoint_records = {
+        str(endpoint): tuple(
+            item for item in records if isinstance(item, dict)
+        )
+        for endpoint, records in records_by_endpoint.items()
+        if isinstance(records, list)
+    }
+    request_parameters_by_endpoint = {
+        str(endpoint): params
+        for endpoint, params in request_parameters.items()
+        if isinstance(params, dict)
+    }
+    return FmpForwardPitRawPayload(
+        ticker=ticker,
+        as_of=as_of,
+        captured_at=captured_at,
+        downloaded_at=downloaded_at,
+        provider_symbol=str(raw.get("provider_symbol") or ticker),
+        endpoint_records=endpoint_records,
+        request_parameters_by_endpoint=request_parameters_by_endpoint,
+        checksum_sha256=raw_payload_sha256 or _sha256_file(resolved_path) or "",
+        source_path=path,
     )
 
 
@@ -1275,6 +1496,117 @@ def _filter_valuation_snapshots(
         max_timestamp=_iso_or_none(max(timestamps) if timestamps else None),
         reason="included when valuation as_of and captured_at are not later than replay as_of",
     )
+
+
+def _filter_risk_event_occurrences(
+    *,
+    source_dir: Path,
+    replay_dir: Path,
+    as_of: date,
+    errors: list[str],
+) -> ReplayInputRecord:
+    if not source_dir.exists():
+        return ReplayInputRecord(
+            artifact_id="risk_event_occurrences",
+            artifact_class="risk_event_occurrences",
+            source_path=str(source_dir),
+            replay_path=str(replay_dir),
+            status="MISSING_OPTIONAL",
+            reason=(
+                "optional risk event occurrence directory missing; score-daily will "
+                "report missing path in replay output"
+            ),
+        )
+
+    replay_dir.mkdir(parents=True, exist_ok=True)
+    source_store = load_risk_event_occurrence_store(source_dir)
+    filtered_store = risk_event_occurrence_store_as_of(
+        store=source_store,
+        as_of=as_of,
+    )
+    for load_error in source_store.load_errors:
+        errors.append(f"risk_event_occurrences YAML 读取失败：{load_error.path}")
+
+    for loaded in filtered_store.loaded:
+        _write_risk_event_occurrence_yaml(
+            replay_dir / f"{loaded.occurrence.occurrence_id}.yaml",
+            loaded.occurrence.model_dump(mode="json", exclude_none=False),
+        )
+    for loaded in filtered_store.review_attestations:
+        _write_risk_event_occurrence_yaml(
+            replay_dir / f"{loaded.attestation.attestation_id}.yaml",
+            {
+                "review_attestation": loaded.attestation.model_dump(
+                    mode="json",
+                    exclude_none=False,
+                )
+            },
+        )
+
+    source_count = len(source_store.loaded) + len(source_store.review_attestations)
+    included_count = len(filtered_store.loaded) + len(filtered_store.review_attestations)
+    timestamps = _risk_event_occurrence_timestamps(source_store)
+    return ReplayInputRecord(
+        artifact_id="risk_event_occurrences",
+        artifact_class="risk_event_occurrences",
+        source_path=str(source_dir),
+        replay_path=str(replay_dir),
+        status="FAIL" if source_store.load_errors else "PASS",
+        row_count=source_count,
+        included_count=included_count,
+        excluded_count=source_count - included_count,
+        sha256=_directory_digest(replay_dir),
+        min_timestamp=_iso_or_none(min(timestamps) if timestamps else None),
+        max_timestamp=_iso_or_none(max(timestamps) if timestamps else None),
+        reason=(
+            "filtered by occurrence, evidence, review attestation and checked source "
+            "dates not later than replay as_of"
+        ),
+    )
+
+
+def _write_risk_event_occurrence_yaml(path: Path, payload: Mapping[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        yaml.safe_dump(payload, allow_unicode=True, sort_keys=False),
+        encoding="utf-8",
+    )
+
+
+def _risk_event_occurrence_timestamps(store) -> list[datetime]:
+    timestamps: list[datetime] = []
+    for loaded in store.loaded:
+        occurrence = loaded.occurrence
+        for value in (
+            occurrence.triggered_at,
+            occurrence.last_confirmed_at,
+            occurrence.resolved_at,
+            occurrence.reviewed_at,
+            occurrence.expiry_time,
+            occurrence.next_review_due,
+        ):
+            _append_date_timestamp(timestamps, value)
+        for source in occurrence.evidence_sources:
+            _append_date_timestamp(timestamps, source.published_at)
+            _append_date_timestamp(timestamps, source.captured_at)
+    for loaded in store.review_attestations:
+        attestation = loaded.attestation
+        for value in (
+            attestation.review_date,
+            attestation.coverage_start,
+            attestation.coverage_end,
+            attestation.reviewed_at,
+            attestation.next_review_due,
+        ):
+            _append_date_timestamp(timestamps, value)
+        for source in attestation.checked_sources:
+            _append_date_timestamp(timestamps, source.captured_at)
+    return timestamps
+
+
+def _append_date_timestamp(timestamps: list[datetime], value: date | None) -> None:
+    if value is not None:
+        timestamps.append(datetime.combine(value, time.max, tzinfo=UTC))
 
 
 def _copy_required_file(
