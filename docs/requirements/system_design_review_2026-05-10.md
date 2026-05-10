@@ -4,7 +4,7 @@
 
 最后更新：2026-05-10
 
-关联任务：`OPS-006`、`RUN-001`、`REPORT-008`、`DOC-002`、`ARCH-001`
+关联任务：`OPS-008`、`RUN-001`、`REPORT-008`、`DOC-002`、`ARCH-001`
 
 ## 背景
 
@@ -17,7 +17,7 @@
 |建议|结论|原因|
 |---|---|---|
 |拆分 `cli.py`|采纳为 `ARCH-001`，本批只做路线登记|`cli.py` 已超过 400KB，长期维护风险真实存在；但直接拆大文件会扩大回归面，应先分阶段迁移低耦合命令组。|
-|daily ops runbook|采纳为 `OPS-006`|`daily-plan/daily-run` 已具备基础能力，缺少可交接的运行时刻、失败处理、正式 artifact 和审计附录说明。|
+|daily ops runbook|采纳为 `OPS-008`|`daily-plan/daily-run` 已具备基础能力，缺少可交接的运行时刻、失败处理、正式 artifact 和审计附录说明。|
 |统一 `run_id` artifact 目录|采纳为 `RUN-001`，采用兼容迁移|owner 选择迁移输出路径；为避免打断 pipeline health、replay 和既有测试，本阶段让 daily-run 生成 canonical `outputs/runs/...` bundle，同时保留 legacy mirror。|
 |Decision Card|采纳为 `REPORT-008`|现有 `REPORT-003/REPORT-007` 已有结论卡和 Base Signal / Risk Caps；本次只补 Data Gate、Run ID / Trace、Main Invalidator 和 Next Checks。|
 |文档新鲜度检查|采纳为 `DOC-002`|任务登记和需求文档更新频繁，最小自动门禁可防止 `最后更新` 明显落后于状态记录。|
@@ -52,5 +52,5 @@
 
 ## 状态记录
 
-- 2026-05-10：新增本计划并登记 `OPS-006`、`RUN-001`、`REPORT-008`、`DOC-002`、`ARCH-001`。本批采纳 low-risk closure，暂不执行 GitHub Actions 生产 cron、`data/external` 路径迁移或 DuckDB/Parquet 存储迁移。
+- 2026-05-10：新增本计划并登记 `OPS-008`、`RUN-001`、`REPORT-008`、`DOC-002`、`ARCH-001`。本批采纳 low-risk closure，暂不执行 GitHub Actions 生产 cron、`data/external` 路径迁移或 DuckDB/Parquet 存储迁移。
 - 2026-05-10：基础实现完成：新增 daily ops runbook、`outputs/runs` canonical run bundle、`score-daily --run-id` trace 串联、Decision Card v2、`aits docs validate-freshness` 和 CI 门禁；`ARCH-001` 仍仅登记路线，CLI 大文件拆分留到下一批。
