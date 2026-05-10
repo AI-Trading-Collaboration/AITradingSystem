@@ -382,8 +382,8 @@ from ai_trading_system.official_policy_sources import (
 )
 from ai_trading_system.ops_daily import (
     build_daily_ops_plan,
-    daily_ops_run_metadata_path_for_report,
     default_daily_ops_plan_path,
+    default_daily_ops_run_metadata_path,
     default_daily_ops_run_report_path,
     run_daily_ops_plan,
     write_daily_ops_plan,
@@ -5164,8 +5164,11 @@ def daily_ops_run_command(
         env=os.environ,
         run_id=resolved_run_id,
     )
-    write_daily_ops_run_report(run_report, run_report_path)
-    metadata_path = daily_ops_run_metadata_path_for_report(run_report_path)
+    metadata_path = default_daily_ops_run_metadata_path(
+        run_paths.metadata_dir,
+        plan_date,
+    )
+    write_daily_ops_run_report(run_report, run_report_path, metadata_path=metadata_path)
     canonical_outputs = mirror_legacy_reports_to_run(
         as_of=plan_date,
         legacy_reports_dir=reports_dir,

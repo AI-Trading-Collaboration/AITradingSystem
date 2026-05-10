@@ -921,15 +921,18 @@ def render_daily_ops_run_report(
 def write_daily_ops_run_report(
     report: DailyOpsRunReport,
     output_path: Path,
+    metadata_path: Path | None = None,
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    metadata_path = daily_ops_run_metadata_path_for_report(output_path)
+    resolved_metadata_path = metadata_path or daily_ops_run_metadata_path_for_report(
+        output_path
+    )
     output_path.write_text(
-        render_daily_ops_run_report(report, metadata_path=metadata_path),
+        render_daily_ops_run_report(report, metadata_path=resolved_metadata_path),
         encoding="utf-8",
     )
     if report.metadata is not None:
-        write_daily_ops_run_metadata(report.metadata, metadata_path)
+        write_daily_ops_run_metadata(report.metadata, resolved_metadata_path)
     return output_path
 
 

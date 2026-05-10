@@ -400,6 +400,21 @@ def test_daily_ops_run_report_writes_sanitized_metadata_sidecar(tmp_path: Path) 
     pre_run_paths = {artifact["path"] for artifact in metadata["pre_run_input_artifacts"]}
     assert str(tmp_path / "data" / "raw" / "prices_daily.csv") in pre_run_paths
 
+    explicit_report_path = tmp_path / "bundle" / "reports" / "daily_ops_run_2026-05-06.md"
+    explicit_metadata_path = (
+        tmp_path / "bundle" / "metadata" / "daily_ops_run_metadata_2026-05-06.json"
+    )
+    write_daily_ops_run_report(
+        report,
+        explicit_report_path,
+        metadata_path=explicit_metadata_path,
+    )
+
+    assert explicit_metadata_path.exists()
+    assert str(explicit_metadata_path) in explicit_report_path.read_text(
+        encoding="utf-8"
+    )
+
 
 def test_run_daily_ops_plan_fails_when_artifact_status_fails(tmp_path: Path) -> None:
     plan = build_daily_ops_plan(
