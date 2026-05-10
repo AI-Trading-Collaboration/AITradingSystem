@@ -14,6 +14,10 @@
 - 如果任务需要拆成多个开发步骤，必须先创建或更新独立需求文档，记录阶段拆解、依赖关系、实施顺序、各阶段验收标准、开放问题和状态迁移；任务表必须引用该文档，而不是把完整计划塞进单个表格单元。
 - 使用独立需求文档时，后续开发进展必须同步更新任务表的摘要/状态，以及被引用文档中的详细进展记录。
 - 任务状态变化必须和触发变化的代码或文档改动一起更新。
+- 任务改为 `DONE`、`BASELINE_DONE` 或 `DROPPED` 时，同一变更必须把整行移动到 `docs/task_register_completed.md`，并同步更新 completed 文档的 `最后更新` 日期。
+- `docs/task_register.md` 的“当前任务”只保留仍需推进、验证、owner 输入或外部条件解除的任务；已归档状态不得继续留在当前任务表。
+- 归档前必须检查任务 ID 是否已在 `docs/task_register_completed.md` 中存在；如果发现 ID 复用，先修正为唯一 ID，并在备注中记录原 ID 和修正原因。
+- 提交前执行 `rg "^\|[^|]+\|[^|]+\|P[0-3]\|(DONE|BASELINE_DONE|DROPPED)\|" docs/task_register.md`；正常情况下不应有结果。若确实需要例外，必须在同一变更中说明原因。
 - `BASELINE_DONE` 不等于完成。它表示已有可审计基础闭环，但仍存在数据源、验证、设计或覆盖缺口。
 - 被 owner 输入、数据源、API 权限、样本时间窗口或成本限制阻塞的任务，必须明确 blocker 和解除条件。
 - 每个任务必须有可验收的完成标准，避免长期停留在模糊“优化”状态。
@@ -48,6 +52,7 @@
 
 |ID|领域|优先级|状态|下一责任方|阻塞或下一步|验收标准|备注|
 |---|---|---|---|---|---|---|---|
+|ARCH-001|架构/CLI 模块化拆分|P2|READY|系统实现|详细拆解见 `docs/requirements/system_design_review_2026-05-10.md`；路线已登记，下一批从低耦合命令组迁移到 `cli_commands/`，保留 `ai_trading_system.cli:app` 入口|形成可分阶段实施的 CLI 分包方案；每阶段有明确命令组、导入边界、测试范围和回滚方式；拆分后 `aits` 命令名、参数和退出码保持兼容；不得在未验证前改动评分、回测或日报语义|2026-05-10: 新增，原因：`cli.py` 已超过 400KB，review 认为长期维护风险上升，但本轮应先做运行闭环和报告收口，避免大规模结构迁移。2026-05-10: 路线已在系统设计 review 文档登记，本任务继续保留为下一批实际分包实施入口。|
 |PROD-002|趋势判断/风险复核运行纪律|P1|BLOCKED_OWNER_INPUT|项目 owner + 系统验证|`RISK-005/RISK-006/RISK-007/RISK-008` 已有工程底座；下一步需要 owner 明确每日风险复核责任人、合格来源清单、跳过规则和复核声明运行纪律；详细索引见 `docs/requirements/production_readiness_gaps_2026-05-04.md` 与 `docs/requirements/risk_event_review_workflow_2026-05-04.md`|连续运行样本中，日报能区分“已复核且未发现未记录重大事件”“有待复核 backlog”“复核缺失导致 policy/geopolitics 降级”；有效复核声明必须包含 reviewer、source scope、reviewed_at、coverage window 和结论；缺失或过期声明时不得把空 occurrence 目录解释为无风险|2026-05-06: 从 `PROD-001` 拆出，原因：总控任务已完成缺口登记和边界收口，但风险事件真实复核是 owner 运营纪律，不应继续压在总任务里。|
 |PROD-004|趋势判断/PIT 估值样本成熟度|P1|BLOCKED_EXTERNAL|系统验证 + 时间窗口|`DATA-003/BACKTEST-002/BTINPUT-001` 已完成 forward-only PIT 快照、回测可信度标签和覆盖诊断；下一步等待自建 PIT 样本自然积累，并用覆盖报告判断何时可提升估值/预期结论可信度|`aits backtest-pit-coverage` 能给出 core universe 的可用样本起始日期、覆盖率和 A/B readiness；`score-daily` 对 `eps_revision_90d_pct`、valuation percentile 和 vendor/self-archived PIT 来源的限制声明与实际覆盖一致；历史不足时继续降级，不得用采集日视图伪装 signal_date 可见数据|2026-05-06: 从 `PROD-001` 拆出，原因：owner 已决定不购买或伪造历史 PIT；剩余工作是持续验证 forward-only 样本成熟度，而不是继续推进总控任务。|
 |PROD-005|趋势判断/规则治理 owner approval|P1|BLOCKED_OWNER_INPUT|项目 owner + 系统验证|`GOV-001/GOV-002/GOV-003` 已有 rule card、rule version 注入和受控 promotion/retirement 基础版；下一步需要 owner 对 production rule baseline、promotion 条件和 retirement 条件形成批准记录|核心 production rule card 具备 owner approval、适用范围、验证证据、已知失败模式、rollback condition 和最后复核时间；未批准候选规则不得改变正式评分、仓位 gate、日报结论或回测 production 规则；日报、回测、decision snapshot 和 trace 能追溯本次运行使用的规则版本|2026-05-06: 从 `PROD-001` 拆出，原因：规则治理工程底座已完成，但真实批准流属于 owner 决策和长期治理，不应让 `PROD-001` 继续保持进行中。|

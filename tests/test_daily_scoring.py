@@ -620,6 +620,10 @@ def test_render_daily_score_report_includes_data_gate_and_limitations(tmp_path: 
 
     assert "- 数据质量状态：PASS" in markdown
     assert "## 今日结论卡" in markdown
+    assert "| Data Gate | PASS；市场和宏观缓存质量门禁通过。 |" in markdown
+    assert "| Run ID / Trace | 未传入 run_id |" in markdown
+    assert "### Main Invalidator" in markdown
+    assert "### Next Checks" in markdown
     assert "## Base Signal / Risk Caps" in markdown
     assert "Base signal score" in markdown
     assert "### Risk Caps" in markdown
@@ -844,6 +848,8 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
             str(rates_path),
             "--as-of",
             "2026-04-30",
+            "--run-id",
+            "daily_ops_run:2026-04-30:test",
             "--features-path",
             str(features_path),
             "--scores-path",
@@ -910,6 +916,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert "daily_score:2026-04-30:score_architecture" in claim_ids
     assert "daily_score:2026-04-30:belief_state" in claim_ids
     assert "daily_score:2026-04-30:focus_stock_trends" in claim_ids
+    assert trace["run_manifest"]["run_id"] == "daily_ops_run:2026-04-30:test"
     assert "dataset:belief_state:2026-04-30" in dataset_ids
     assert "dataset:feature_availability:2026-04-30" in dataset_ids
     feature_availability_params = trace["run_manifest"]["parameters"][
@@ -954,6 +961,10 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert "NOT_CONNECTED" in daily_text
     assert "风险预算" in daily_text
     assert "## 今日结论卡" in daily_text
+    assert "| Data Gate | PASS_WITH_WARNINGS；存在质量警告" in daily_text
+    assert "| Run ID / Trace | daily_ops_run:2026-04-30:test；trace=" in daily_text
+    assert "### Main Invalidator" in daily_text
+    assert "### Next Checks" in daily_text
     assert "## Base Signal / Risk Caps" in daily_text
     assert "## 结论使用等级" in daily_text
     assert "适用范围：趋势判断/投研辅助，不触发交易（`trend_judgment`）" in daily_text

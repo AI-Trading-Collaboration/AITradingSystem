@@ -1,5 +1,7 @@
 # DTWEXBGS freshness policy
 
+最后更新：2026-05-10
+
 ## 背景
 
 2026-05-09 每日 `aits ops daily-run` 已执行 `download_data`，并重新请求

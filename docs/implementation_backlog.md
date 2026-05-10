@@ -1,5 +1,7 @@
 # 工程落地 Backlog
 
+最后更新：2026-05-10
+
 本文把 `docs/product_strategy.md` 中的方向拆成可开发模块。它的用途不是替代开发计划，而是把“想建设什么”转换成数据结构、命令、验收标准和阶段顺序。
 
 具体未完成任务、优先级、阻塞原因、owner 配合事项和基础版遗留缺口统一登记在 `docs/task_register.md`。已完成和基础版完成任务归档在 `docs/task_register_completed.md`。本文负责长期模块路线图；任务状态变更以 task register 为准。

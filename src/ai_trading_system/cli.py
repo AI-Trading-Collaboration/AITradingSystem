@@ -210,6 +210,11 @@ from ai_trading_system.decision_snapshots import (
     default_decision_snapshot_path,
     write_decision_snapshot,
 )
+from ai_trading_system.docs_freshness import (
+    default_docs_freshness_paths,
+    validate_docs_freshness,
+    write_docs_freshness_report,
+)
 from ai_trading_system.evidence_dashboard import (
     build_evidence_dashboard_report,
     default_evidence_dashboard_path,
@@ -512,6 +517,16 @@ from ai_trading_system.rule_governance import (
     write_rule_governance_report,
     write_rule_lifecycle_action_report,
 )
+from ai_trading_system.run_artifacts import (
+    build_run_artifact_paths,
+    collect_run_files,
+    default_daily_run_id,
+    mirror_canonical_daily_ops_outputs_to_legacy,
+    mirror_legacy_reports_to_run,
+    prepare_run_directories,
+    validate_legacy_output_mode,
+    write_run_manifest,
+)
 from ai_trading_system.scenario_library import (
     default_scenario_library_report_path,
     load_scenario_library,
@@ -627,6 +642,7 @@ ops_app = typer.Typer(help="运行监控和 pipeline health。", no_args_is_help
 security_app = typer.Typer(help="密钥卫生和供应商权限治理。", no_args_is_help=True)
 llm_app = typer.Typer(help="LLM 结构化预审和待复核队列。", no_args_is_help=True)
 pit_snapshots_app = typer.Typer(help="Forward-only PIT raw snapshot 归档。", no_args_is_help=True)
+docs_app = typer.Typer(help="项目文档治理和新鲜度检查。", no_args_is_help=True)
 app.add_typer(watchlist_app, name="watchlist")
 app.add_typer(industry_chain_app, name="industry-chain")
 app.add_typer(thesis_app, name="thesis")
@@ -646,6 +662,7 @@ app.add_typer(ops_app, name="ops")
 app.add_typer(security_app, name="security")
 app.add_typer(llm_app, name="llm")
 app.add_typer(pit_snapshots_app, name="pit-snapshots")
+app.add_typer(docs_app, name="docs")
 console = Console()
 DEFAULT_RISK_EVENT_OCCURRENCES_PATH = (
     PROJECT_ROOT / "data" / "external" / "risk_event_occurrences"
@@ -670,6 +687,38 @@ DEFAULT_FMP_HISTORICAL_VALUATION_RAW_DIR = default_fmp_historical_valuation_raw_
 DEFAULT_EODHD_EARNINGS_TRENDS_RAW_DIR = default_eodhd_earnings_trends_raw_dir(
     PROJECT_ROOT / "data" / "raw"
 )
+
+
+@docs_app.command("validate-freshness")
+def validate_docs_freshness_command(
+    paths: Annotated[
+        list[Path] | None,
+        typer.Option(
+            "--path",
+            help="要检查的新鲜度文档路径；不传则检查关键 docs 和 requirements。",
+        ),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="可选 Markdown 文档新鲜度报告输出路径。"),
+    ] = None,
+) -> None:
+    """检查关键项目文档的 `最后更新` 是否落后于内部状态记录。"""
+    checked_paths = tuple(paths or default_docs_freshness_paths(PROJECT_ROOT))
+    report = validate_docs_freshness(checked_paths)
+    if output_path is not None:
+        write_docs_freshness_report(report, output_path)
+
+    style = "green" if report.passed else "red"
+    console.print(f"[{style}]文档新鲜度：{report.status}[/{style}]")
+    console.print(f"检查文档数：{len(report.records)}")
+    console.print(f"问题数：{len(report.issues)}")
+    if output_path is not None:
+        console.print(f"报告：{output_path}")
+    for issue in report.issues[:10]:
+        console.print(f"{issue.path}: {issue.code}: {issue.message}")
+    if report.issues:
+        raise typer.Exit(code=1)
 
 
 @pit_snapshots_app.command("validate")
@@ -4843,6 +4892,7 @@ def _build_daily_ops_plan_from_cli_options(
     risk_event_openai_precheck: bool,
     risk_event_openai_precheck_max_candidates: int,
     full_universe: bool,
+    run_id: str | None = None,
 ):
     plan_date = _parse_date(as_of) if as_of else date.today()
     start_date = _parse_date(download_start)
@@ -4862,6 +4912,7 @@ def _build_daily_ops_plan_from_cli_options(
             risk_event_openai_precheck_max_candidates=(
                 risk_event_openai_precheck_max_candidates
             ),
+            run_id=run_id,
         )
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
@@ -5048,8 +5099,33 @@ def daily_ops_run_command(
         Path | None,
         typer.Option(help="Markdown 每日执行报告输出路径。"),
     ] = None,
+    run_output_root: Annotated[
+        Path,
+        typer.Option(help="Canonical run bundle 根目录。"),
+    ] = PROJECT_ROOT / "outputs" / "runs",
+    run_id: Annotated[
+        str | None,
+        typer.Option(help="可选固定 run id；默认由 as_of 和 UTC 时间生成。"),
+    ] = None,
+    legacy_output_mode: Annotated[
+        str,
+        typer.Option(help="Legacy outputs/reports 兼容模式：mirror 或 off。"),
+    ] = "mirror",
 ) -> None:
     """按每日运行计划真实执行本地 CLI，并生成脱敏执行报告。"""
+    try:
+        legacy_mode = validate_legacy_output_mode(legacy_output_mode)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    plan_date = _parse_date(as_of) if as_of else date.today()
+    resolved_run_id = run_id or default_daily_run_id(plan_date)
+    run_paths = prepare_run_directories(
+        build_run_artifact_paths(
+            as_of=plan_date,
+            run_id=resolved_run_id,
+            output_root=run_output_root,
+        )
+    )
     plan_date, plan = _build_daily_ops_plan_from_cli_options(
         as_of=as_of,
         download_start=download_start,
@@ -5063,21 +5139,65 @@ def daily_ops_run_command(
             risk_event_openai_precheck_max_candidates
         ),
         full_universe=full_universe,
+        run_id=resolved_run_id,
     )
 
     reports_dir = PROJECT_ROOT / "outputs" / "reports"
     plan_report_path = plan_output_path or default_daily_ops_plan_path(
-        reports_dir,
+        run_paths.reports_dir,
         plan_date,
     )
     run_report_path = output_path or default_daily_ops_run_report_path(
-        reports_dir,
+        run_paths.reports_dir,
         plan_date,
     )
-    metadata_path = daily_ops_run_metadata_path_for_report(run_report_path)
     write_daily_ops_plan(plan, plan_report_path, env=os.environ)
-    run_report = run_daily_ops_plan(plan, project_root=PROJECT_ROOT, env=os.environ)
+    if legacy_mode == "mirror":
+        write_daily_ops_plan(
+            plan,
+            default_daily_ops_plan_path(reports_dir, plan_date),
+            env=os.environ,
+        )
+    run_report = run_daily_ops_plan(
+        plan,
+        project_root=PROJECT_ROOT,
+        env=os.environ,
+        run_id=resolved_run_id,
+    )
     write_daily_ops_run_report(run_report, run_report_path)
+    metadata_path = daily_ops_run_metadata_path_for_report(run_report_path)
+    canonical_outputs = mirror_legacy_reports_to_run(
+        as_of=plan_date,
+        legacy_reports_dir=reports_dir,
+        paths=run_paths,
+    )
+    if legacy_mode == "mirror":
+        legacy_outputs = mirror_canonical_daily_ops_outputs_to_legacy(
+            paths=run_paths,
+            legacy_reports_dir=reports_dir,
+        )
+    else:
+        legacy_outputs = ()
+    if run_report.metadata is not None:
+        write_run_manifest(
+            paths=run_paths,
+            project_root=PROJECT_ROOT,
+            status=run_report.status,
+            visibility_cutoff=run_report.metadata.visibility_cutoff,
+            visibility_cutoff_source=run_report.metadata.visibility_cutoff_source,
+            legacy_output_mode=legacy_mode,
+            input_artifacts=(
+                artifact.path for artifact in run_report.metadata.pre_run_input_artifacts
+            ),
+            canonical_output_artifacts=(
+                *collect_run_files(run_paths),
+                *canonical_outputs,
+            ),
+            legacy_output_artifacts=(
+                *(artifact.path for artifact in run_report.metadata.produced_artifacts),
+                *legacy_outputs,
+            ),
+        )
 
     status = run_report.status
     style = (
@@ -5088,10 +5208,13 @@ def daily_ops_run_command(
         else "red"
     )
     console.print(f"[{style}]每日运行执行：{status}[/{style}]")
+    console.print(f"Run ID：{resolved_run_id}")
+    console.print(f"Run bundle：{run_paths.run_root}")
     console.print(f"计划报告：{plan_report_path}")
     console.print(f"执行报告：{run_report_path}")
     if run_report.metadata is not None:
         console.print(f"Metadata JSON：{metadata_path}")
+        console.print(f"Run manifest：{run_paths.manifest_path}")
     console.print(f"执行步骤数：{len(run_report.step_results)} / {len(plan.steps)}")
     if run_report.missing_env_vars:
         console.print(f"缺失环境变量：{', '.join(run_report.missing_env_vars)}")
@@ -8603,6 +8726,10 @@ def score_daily(
         str | None,
         typer.Option(help="评分日期，格式为 YYYY-MM-DD，默认今天。"),
     ] = None,
+    run_id: Annotated[
+        str | None,
+        typer.Option(help="可选 run id，用于 evidence bundle 和日报结论卡。"),
+    ] = None,
     features_path: Annotated[
         Path,
         typer.Option(help="特征 CSV 输出路径。"),
@@ -9414,6 +9541,7 @@ def score_daily(
             feature_availability_output,
         ),
         focus_stock_trend_tickers=core_watchlist_tickers,
+        run_id=run_id,
     )
     daily_trace_output = write_trace_bundle(daily_trace_bundle, daily_trace_output)
     belief_state = build_belief_state(
@@ -9511,6 +9639,8 @@ def score_daily(
             daily_trace_bundle,
             daily_trace_output,
         ),
+        run_id=run_id or daily_trace_bundle.run_manifest["run_id"],
+        trace_bundle_path=daily_trace_output,
     )
 
     status_style = "green" if score_report.status == "PASS" else "yellow"

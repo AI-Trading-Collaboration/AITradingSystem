@@ -70,6 +70,7 @@ def build_daily_score_trace_bundle(
     feature_availability_report_path: Path | None = None,
     feature_availability_summary: TraceRecord | None = None,
     focus_stock_trend_tickers: tuple[str, ...] = (),
+    run_id: str | None = None,
 ) -> ReportTraceBundle:
     report_id = f"daily_score:{report.as_of.isoformat()}"
     date_window = _date_window(report.as_of, report.as_of)
@@ -377,7 +378,7 @@ def build_daily_score_trace_bundle(
             },
         )
     run_manifest = _run_manifest(
-        run_id=f"run:daily_score:{report.as_of.isoformat()}",
+        run_id=run_id or f"run:daily_score:{report.as_of.isoformat()}",
         command="aits score-daily",
         date_window=date_window,
         market_regime=market_regime,

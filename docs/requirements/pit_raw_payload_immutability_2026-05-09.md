@@ -1,5 +1,7 @@
 # PIT raw payload immutability
 
+最后更新：2026-05-09
+
 ## 背景
 
 2026-05-09 在验证 `DTWEXBGS` freshness 修复后，`aits ops daily-run`

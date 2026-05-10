@@ -66,6 +66,25 @@ def test_daily_ops_plan_allows_explicit_openai_skip() -> None:
     assert "OPENAI_API_KEY" not in plan.missing_env_vars(env)
 
 
+def test_daily_ops_plan_threads_run_id_into_score_daily() -> None:
+    plan = build_daily_ops_plan(
+        as_of=date(2026, 5, 6),
+        skip_risk_event_openai_precheck=True,
+        run_id="daily_ops_run:2026-05-06:test",
+    )
+    score_step = next(step for step in plan.steps if step.step_id == "score_daily")
+
+    assert score_step.command[-2:] == ("--run-id", "daily_ops_run:2026-05-06:test")
+    assert "--run-id daily_ops_run:2026-05-06:test" in render_daily_ops_plan(
+        plan,
+        env={
+            "FMP_API_KEY": "present",
+            "MARKETSTACK_API_KEY": "present",
+            "SEC_USER_AGENT": "AITradingSystem test@example.com",
+        },
+    )
+
+
 def test_daily_ops_plan_cli_writes_report(tmp_path: Path) -> None:
     output_path = tmp_path / "daily_ops_plan.md"
 

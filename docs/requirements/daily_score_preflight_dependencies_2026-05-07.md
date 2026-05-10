@@ -2,6 +2,8 @@
 
 任务 ID：`OPS-005`
 
+最后更新：2026-05-07
+
 ## 背景
 
 2026-05-07 每日 `score-daily` 运行在 SEC 基本面指标 CSV 缺失处 fail closed：

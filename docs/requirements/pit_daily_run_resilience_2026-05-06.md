@@ -1,5 +1,7 @@
 # PIT 日常抓取韧性修复
 
+最后更新：2026-05-06
+
 ## 背景
 
 2026-05-06 日常 automation 执行 `aits pit-snapshots fetch-fmp-forward` 时，

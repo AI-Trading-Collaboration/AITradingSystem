@@ -184,6 +184,7 @@ def build_daily_ops_plan(
     skip_risk_event_openai_precheck: bool = False,
     full_universe: bool = False,
     risk_event_openai_precheck_max_candidates: int = 20,
+    run_id: str | None = None,
 ) -> DailyOpsPlan:
     if risk_event_openai_precheck_max_candidates < 0:
         raise ValueError("risk_event_openai_precheck_max_candidates must be non-negative")
@@ -285,6 +286,8 @@ def build_daily_ops_plan(
             ]
         )
         score_required_env = ("OPENAI_API_KEY",)
+    if run_id:
+        score_command.extend(["--run-id", run_id])
     score_enabled = market_session.is_trading_day
 
     steps = [
@@ -580,6 +583,7 @@ def run_daily_ops_plan(
     env: Mapping[str, str] | None = None,
     runner=DailyOpsCommandRunner,
     stop_on_failure: bool = True,
+    run_id: str | None = None,
 ) -> DailyOpsRunReport:
     checked_env = dict(os.environ if env is None else env)
     started_at = datetime.now(tz=UTC)
@@ -604,6 +608,7 @@ def run_daily_ops_plan(
                 finished_at=finished_at,
                 status=status,
                 pre_run_input_artifacts=pre_run_input_artifacts,
+                run_id=run_id,
             ),
         )
 
@@ -693,6 +698,7 @@ def run_daily_ops_plan(
             finished_at=finished_at,
             status=status,
             pre_run_input_artifacts=pre_run_input_artifacts,
+            run_id=run_id,
         ),
     )
 
@@ -1088,6 +1094,7 @@ def _build_daily_ops_run_metadata(
     finished_at: datetime,
     status: str,
     pre_run_input_artifacts: tuple[DailyOpsArtifactDigest, ...],
+    run_id: str | None = None,
 ) -> DailyOpsRunMetadata:
     required_env = sorted(
         {env_var for step in plan.steps for env_var in step.required_env_vars}
@@ -1096,14 +1103,14 @@ def _build_daily_ops_run_metadata(
         dict.fromkeys(path for step in plan.steps for path in step.produced_paths)
     )
     config_paths = tuple(sorted((project_root / "config").glob("*.yaml")))
-    run_id = (
+    resolved_run_id = run_id or (
         "daily_ops_run:"
         f"{plan.as_of.isoformat()}:"
         f"{started_at.astimezone(UTC).strftime('%Y%m%dT%H%M%SZ')}"
     )
     return DailyOpsRunMetadata(
         schema_version=1,
-        run_id=run_id,
+        run_id=resolved_run_id,
         as_of=plan.as_of,
         generated_at=datetime.now(tz=UTC),
         project_root=project_root,

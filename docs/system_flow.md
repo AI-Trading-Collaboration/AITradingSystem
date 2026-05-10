@@ -10,7 +10,7 @@
 
 - 新增、删除或改名 CLI 命令。
 - 新增、删除或改名关键配置文件。
-- 改变 `data/raw`、`data/processed`、`outputs/reports`、`outputs/backtests` 的核心文件结构。
+- 改变 `data/raw`、`data/processed`、`outputs/reports`、`outputs/runs`、`outputs/backtests` 的核心文件结构。
 - 改变数据质量门禁位置、通过条件或失败后的停止行为。
 - 改变评分模块、仓位映射、回测默认市场阶段或报告结论结构。
 - 接入或改变交易 thesis、风险事件、估值、新闻、认知状态、复盘归因等模块。
@@ -137,7 +137,7 @@ flowchart TD
     end
 
     subgraph Score["中间评估：评分和仓位"]
-        SD["aits score-daily<br/>默认运行日报前官方来源抓取 + OpenAI 风险事件预审<br/>可用 --skip-risk-event-openai-precheck 跳过"]
+        SD["aits score-daily<br/>默认运行日报前官方来源抓取 + OpenAI 风险事件预审<br/>可用 --skip-risk-event-openai-precheck 跳过<br/>可选 --run-id 贯穿 trace / Decision Card"]
         MBG["macro_risk_asset_budget<br/>VIX、DGS10、DTWEXBGS 广义美元指数触发总风险资产预算下调"]
         PG["position_gate<br/>评分仓位、判断置信度、组合限制、风险预算、风险事件、估值拥挤、thesis 和数据置信度取最严格上限<br/>输出 gate_class / target_effect / execution_effect 审计"]
         CONF["判断置信度<br/>按模块来源、覆盖率、质量门禁和人工复核汇总<br/>生成 confidence position gate"]
@@ -148,12 +148,12 @@ flowchart TD
         SC["data/processed/scores_daily.csv<br/>模块分、整体分、confidence、仓位区间和 gate 摘要"]
         EADV["执行建议<br/>execution_policy + 最终仓位变化 + confidence/gate<br/>production_effect=none"]
         EPR["outputs/reports/execution_policy_YYYY-MM-DD.md<br/>动作词表校验和问题清单"]
-        DR["outputs/reports/daily_score_YYYY-MM-DD.md<br/>今日结论卡、Base Signal / Risk Caps、结论使用等级、变化原因树、关注股票趋势、认知状态、执行建议和仓位闸门"]
+        DR["outputs/reports/daily_score_YYYY-MM-DD.md<br/>Decision Card v2：Data Gate、Run ID / Trace、Main Invalidator、Next Checks<br/>Base Signal / Risk Caps、结论使用等级、变化原因树、关注股票趋势、认知状态、执行建议和仓位闸门"]
         DSNAP["data/processed/decision_snapshots/decision_snapshot_YYYY-MM-DD.json<br/>当日判断快照、score_architecture、risk lifecycle 和 belief_state_ref"]
         PLED["data/processed/prediction_ledger.csv<br/>append-only production/challenger prediction ledger"]
         BS["data/processed/belief_state/belief_state_YYYY-MM-DD.json<br/>只读认知状态"]
         BSH["data/processed/belief_state_history.csv<br/>只读认知状态历史索引"]
-        DRT["outputs/reports/evidence/daily_score_YYYY-MM-DD_trace.json<br/>claim / evidence / dataset / quality / run manifest / belief_state / rule_versions"]
+        DRT["outputs/reports/evidence/daily_score_YYYY-MM-DD_trace.json<br/>claim / evidence / dataset / quality / run_id / run manifest / belief_state / rule_versions"]
     end
 
     subgraph Backtest["历史回测"]
@@ -280,8 +280,10 @@ flowchart TD
         EPRG["outputs/reports/execution_policy_YYYY-MM-DD.md<br/>执行政策校验报告"]
         EPL["aits execution lookup<br/>按 action_id 查询执行动作"]
         PEV["aits portfolio exposure<br/>真实持仓只读暴露分解；缺少文件时 NOT_CONNECTED"]
-        ODP["aits ops daily-plan / daily-run<br/>每日运行计划、交易日历判断、凭据检查、真实执行和调度顺序"]
-        ODPR["outputs/reports/daily_ops_plan_YYYY-MM-DD.md / daily_ops_run_YYYY-MM-DD.md / daily_ops_run_metadata_YYYY-MM-DD.json<br/>market session、上一交易日、步骤、环境变量 presence、pre-run input checksum、artifact checksum、visibility cutoff、git/config/rule hash、执行状态和跳过声明"]
+        ODP["aits ops daily-plan / daily-run<br/>每日运行计划、交易日历判断、凭据检查、真实执行和调度顺序<br/>daily-run 支持 --run-output-root / --run-id / --legacy-output-mode"]
+        ODPR["outputs/runs/YYYY-MM-DD/<safe_run_id>/{manifest.json,reports/,traces/,metadata/}<br/>legacy mirror: outputs/reports/daily_ops_* 与 daily_score_*<br/>market session、上一交易日、步骤、环境变量 presence、pre-run input checksum、artifact checksum、visibility cutoff、git/config/rule hash、执行状态和跳过声明"]
+        DOCF["aits docs validate-freshness<br/>检查任务/需求文档最后更新日期"]
+        DOCFR["可选 outputs/reports/docs_freshness_YYYY-MM-DD.md<br/>缺失最后更新或状态日期更新时 fail closed"]
         ODR["aits ops replay-day / replay-window<br/>历史交易日 cache-only 归档回放<br/>冻结 as-of 可见输入窗口、OpenAI disabled/cache-only 策略、可选 production diff、窗口批量回放"]
         ODRR["outputs/replays/YYYY-MM-DD/<run-id>/ 与 outputs/replays/windows/<run-id>/<br/>input freeze manifest、replay_run、diff_vs_production、replay_window、score/health/secret 输出"]
         OPH["aits ops health<br/>关键 pipeline artifact + PIT 抓取/快照健康检查<br/>休市日可用 --non-trading-day"]
@@ -706,6 +708,7 @@ flowchart TD
     ODP -.-> SD
     ODP -.-> OPH
     ODP -.-> SCS
+    DOCF --> DOCFR
     PITMAN -.-> ODR
     FMPFPN -.-> ODR
     VS -.-> ODR
@@ -1154,13 +1157,15 @@ flowchart TD
 |特征|`aits build-features`|先执行数据质量门禁，再生成可解释市场特征，并输出 PIT 特征可见时间报告；缺少 availability rule 的 source 会 fail closed，特征摘要引用该报告|已实现|
 |特征缓存|`data/processed/features_daily.csv`|保存 tidy 格式特征|已实现|
 |组合与风险预算配置|`config/portfolio.yaml`|定义静态总风险资产预算、`macro_risk_asset_budget` 下调阈值、AI 总资产上限、真实组合集中度提示阈值和 `risk_budget` gate 参数；宏观预算层用 VIX、DGS10 和 `DTWEXBGS` 广义美元指数下调总风险资产预算，`risk_budget` gate 继续约束风险资产内 AI 仓位上限|已实现基础版|
-|评分|`aits score-daily`|先执行市场数据质量门禁和 PIT feature availability 校验，再校验 `execution_policy`、SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照、风险事件发生记录和当前有效复核声明，读取真实持仓 CSV 生成只读组合暴露；默认会在风险事件发生记录校验前抓取官方政策/地缘来源并调用 OpenAI 风险事件 `metadata_only` 预审，可用 `--skip-risk-event-openai-precheck` 跳过；默认最多处理 20 条官方候选，OpenAI 默认 `gpt-5.5` / `reasoning.effort=high` / 120 秒读超时 / `requests` HTTP client / 24 小时本地 agent request cache TTL，可用 `--openai-cache-ttl-hours` 调成半天等窗口，可用 `--openai-http-client urllib` 做本机传输对照；完全相同 request payload 在 TTL 内 cache HIT 不重新发送，MISS/EXPIRED 才实际请求并写入 `data/processed/agent_request_cache` 审计归档；provider `cache_allowed=false` 时 fail closed；单个 OpenAI 请求失败时重试 2 次，仍失败则整批 fail closed，输出仅写 `llm_extracted / pending_review` 队列，不写 occurrence、复核声明、评分、仓位闸门或 thesis 状态；无人复核时 OpenAI 候选保留为 backlog-only 线索，不进入 `execution_policy.manual_review_gate_ids`，不会单独把执行动作改成 `wait_manual_review`；随后基于已通过校验/复核的市场特征生成只读关注股票趋势分析，并基于市场特征、SEC/TSM 基本面、估值、风险事件和 thesis 生成只读产业链节点热度与健康度，再用 `macro_risk_asset_budget` 下调总风险资产预算，并通过 `position_gate` 把评分仓位、判断置信度、组合限制、风险预算、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限，输出 AI 产业链评分、判断置信度、最终仓位区间、advisory 执行建议、日报、decision snapshot、prediction ledger 行和只读 `belief_state`|已实现|
+|评分|`aits score-daily`|先执行市场数据质量门禁和 PIT feature availability 校验，再校验 `execution_policy`、SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照、风险事件发生记录和当前有效复核声明，读取真实持仓 CSV 生成只读组合暴露；默认会在风险事件发生记录校验前抓取官方政策/地缘来源并调用 OpenAI 风险事件 `metadata_only` 预审，可用 `--skip-risk-event-openai-precheck` 跳过；可选 `--run-id` 会写入日报 trace bundle 和 Decision Card，未传入时保持 `run:daily_score:YYYY-MM-DD`；默认最多处理 20 条官方候选，OpenAI 默认 `gpt-5.5` / `reasoning.effort=high` / 120 秒读超时 / `requests` HTTP client / 24 小时本地 agent request cache TTL，可用 `--openai-cache-ttl-hours` 调成半天等窗口，可用 `--openai-http-client urllib` 做本机传输对照；完全相同 request payload 在 TTL 内 cache HIT 不重新发送，MISS/EXPIRED 才实际请求并写入 `data/processed/agent_request_cache` 审计归档；provider `cache_allowed=false` 时 fail closed；单个 OpenAI 请求失败时重试 2 次，仍失败则整批 fail closed，输出仅写 `llm_extracted / pending_review` 队列，不写 occurrence、复核声明、评分、仓位闸门或 thesis 状态；无人复核时 OpenAI 候选保留为 backlog-only 线索，不进入 `execution_policy.manual_review_gate_ids`，不会单独把执行动作改成 `wait_manual_review`；随后基于已通过校验/复核的市场特征生成只读关注股票趋势分析，并基于市场特征、SEC/TSM 基本面、估值、风险事件和 thesis 生成只读产业链节点热度与健康度，再用 `macro_risk_asset_budget` 下调总风险资产预算，并通过 `position_gate` 把评分仓位、判断置信度、组合限制、风险预算、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限，输出 AI 产业链评分、判断置信度、最终仓位区间、advisory 执行建议、日报、decision snapshot、prediction ledger 行和只读 `belief_state`|已实现|
 |评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果，component 行记录模块 confidence，overall 行记录整体 confidence、模型/最终/置信度调整仓位区间、静态和宏观调整后总风险资产预算、总资产 AI 仓位区间、宏观预算触发等级和仓位闸门摘要；置信度调整仓位基于评分模型原始仓位计算，并作为 `confidence` gate 参与最终上限约束，用于日报上期对比|已实现|
-|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|开头输出“今日结论卡”，固定呈现状态标签、市场吸引力、判断置信度、评分映射仓位、风险闸门后最终仓位、总风险资产预算、执行动作、主结论、三个核心原因、最大限制和下一步触发条件；正文继续输出结论使用等级、适用范围、变化原因树、什么情况会改变判断、关注股票趋势分析、产业链节点热度与健康度、组合暴露、认知状态摘要、执行建议、宏观风险资产预算、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、当前有效风险事件复核声明数量、估值 PIT 可信度、仓位闸门来源/上限/触发状态、置信度调整后模型仓位、限制说明、人工复核摘要和可追溯引用章节；关注股票趋势分析按 `core_watchlist` 显示逐 ticker 1/5/20 日收益、20/50/100/200 日均线位置、相对均线偏离和数据覆盖；当前项目范围为趋势判断/投研辅助，不触发交易；执行建议、关注股票趋势、节点热度/健康度和组合暴露均明确 `production_effect=none`，不是自动交易指令|已实现|
+|日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|开头输出 Decision Card v2，固定呈现状态标签、市场吸引力、判断置信度、`Data Gate`、`Run ID / Trace`、评分映射仓位、风险闸门后最终仓位、总风险资产预算、执行动作、主结论、三个核心原因、最大限制、下一步触发条件、`Main Invalidator` 和 `Next Checks`；正文继续输出结论使用等级、适用范围、变化原因树、什么情况会改变判断、关注股票趋势分析、产业链节点热度与健康度、组合暴露、认知状态摘要、执行建议、宏观风险资产预算、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、当前有效风险事件复核声明数量、估值 PIT 可信度、仓位闸门来源/上限/触发状态、置信度调整后模型仓位、限制说明、人工复核摘要和可追溯引用章节；关注股票趋势分析按 `core_watchlist` 显示逐 ticker 1/5/20 日收益、20/50/100/200 日均线位置、相对均线偏离和数据覆盖；当前项目范围为趋势判断/投研辅助，不触发交易；执行建议、关注股票趋势、节点热度/健康度和组合暴露均明确 `production_effect=none`，不是自动交易指令|已实现|
 |结论使用等级|`outputs/reports/daily_score_YYYY-MM-DD.md#结论使用等级` / `outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md#结论使用等级`|报告输出 `trend_only`、`actionable`、`review_required`、`research_only`、`data_limited` 或 `backtest_limited` 等使用边界，并与投资姿态标签分开；当前 `score-daily` 和回测以 `trend_judgment` 范围运行，干净通过时也只能显示“趋势判断，不触发交易”，不能自动升级为仓位复核或交易执行；低置信度、人工复核失败、来源不足、数据质量失败和回测覆盖不足会自动降级，说明原因、解除条件和证据引用|已实现基础版|
 |每日运行计划|`aits ops daily-plan`|生成本地或云 VM 可用的每日运行计划，先判断 U.S. equity market session，并在报告中声明 `TRADING_DAY` 或 `CLOSED_MARKET`、休市原因、上一交易日和日历来源；交易日列出 `download-data`、带 `--continue-on-failure` 的 `pit-snapshots fetch-fmp-forward`、SEC companyfacts 刷新、SEC metrics 抽取/校验、FMP 估值快照刷新、`score-daily`、`ops health` 和 `security scan-secrets` 的顺序、必需环境变量、预期 artifact、质量门禁和阻断关系；休市日若上一交易日价格缓存已覆盖则跳过 `download-data`，否则只用上一交易日作为 `download-data --end`，并默认跳过 `score-daily`，不生成新日报评分、decision snapshot、evidence bundle 或执行动作；只做计划和环境变量非空检查，不执行下载、API 调用、评分或报告生成；缺少关键环境变量时显示 `BLOCKED_ENV`，可用 `--fail-on-missing-env` 作为调度前门禁|已实现基础版|
-|每日运行执行器|`aits ops daily-run`|复用 `daily-plan` 的步骤顺序真实调用本地 CLI，先写计划报告，再执行交易日完整链路，或在休市日执行官方政策/地缘来源抓取、PIT、SEC companyfacts、SEC metrics 抽取/校验、FMP valuation snapshots、`ops health --non-trading-day` 和 secret scan，同时显式跳过 `score-daily`；执行器内部用当前 Python 解释器调用同一 `ai_trading_system.cli` 模块，避免 Windows 上从 `aits.exe` 父进程递归启动 `aits.exe`；缺少阻断性环境变量时返回 `BLOCKED_ENV`；任一执行步骤退出码非 0 或关键 artifact 报告状态非 `PASS*` 时停止，不继续下游步骤；显式 `SKIPPED` 步骤在计划和执行报告中保留限制声明，不得被解释为生成了投资结论|已实现基础版|
-|每日运行报告|`outputs/reports/daily_ops_plan_YYYY-MM-DD.md` / `outputs/reports/daily_ops_run_YYYY-MM-DD.md` / `outputs/reports/daily_ops_run_metadata_YYYY-MM-DD.json`|计划报告中文输出计划状态、评估日期、market session、上一交易日、休市原因、必需环境变量是否可见、逐步骤命令、输出路径、质量门禁和显式跳过声明；执行报告中文输出真实执行状态、开始/结束时间、退出码、耗时、stdout/stderr 行数和预期 artifact 路径，不保存 stdout/stderr 原文、API key、token 或付费内容原文；metadata sidecar 结构化记录 run id、git commit/dirty diff hash、config/rule card hash、命令清单、必需 env presence、production visibility cutoff、pre-run input checksum、step result 摘要和 produced artifact checksum，不保存 secret 值、stdout/stderr 原文或付费内容原文；仍未接入 systemd/cron、通知或云备份|已实现|
+|每日运行执行器|`aits ops daily-run`|复用 `daily-plan` 的步骤顺序真实调用本地 CLI，先写计划报告，再执行交易日完整链路，或在休市日执行官方政策/地缘来源抓取、PIT、SEC companyfacts、SEC metrics 抽取/校验、FMP valuation snapshots、`ops health --non-trading-day` 和 secret scan，同时显式跳过 `score-daily`；默认写入 canonical run bundle，可用 `--run-output-root` 指定根目录、`--run-id` 固定运行标识、`--legacy-output-mode mirror/off` 控制旧 `outputs/reports` 兼容镜像；执行器内部用当前 Python 解释器调用同一 `ai_trading_system.cli` 模块，避免 Windows 上从 `aits.exe` 父进程递归启动 `aits.exe`；缺少阻断性环境变量时返回 `BLOCKED_ENV`；任一执行步骤退出码非 0 或关键 artifact 报告状态非 `PASS*` 时停止，不继续下游步骤；显式 `SKIPPED` 步骤在计划和执行报告中保留限制声明，不得被解释为生成了投资结论|已实现基础版|
+|每日运行报告|`outputs/runs/YYYY-MM-DD/<safe_run_id>/reports/daily_ops_plan_YYYY-MM-DD.md` / `reports/daily_ops_run_YYYY-MM-DD.md` / `metadata/daily_ops_run_metadata_YYYY-MM-DD.json`，默认镜像到 `outputs/reports/daily_ops_*`|计划报告中文输出计划状态、评估日期、market session、上一交易日、休市原因、必需环境变量是否可见、逐步骤命令、输出路径、质量门禁和显式跳过声明；执行报告中文输出真实执行状态、开始/结束时间、退出码、耗时、stdout/stderr 行数和预期 artifact 路径，不保存 stdout/stderr 原文、API key、token 或付费内容原文；metadata sidecar 结构化记录 run id、git commit/dirty diff hash、config/rule card hash、命令清单、必需 env presence、production visibility cutoff、pre-run input checksum、step result 摘要和 produced artifact checksum，不保存 secret 值、stdout/stderr 原文或付费内容原文；当前仍未接入主动 GitHub Actions 生产 cron、通知或云备份|已实现|
+|每日运行 Bundle|`outputs/runs/YYYY-MM-DD/<safe_run_id>/manifest.json` / `reports/` / `traces/` / `metadata/`|`daily-run` 的 canonical artifact bundle；manifest 记录 schema version、run id、safe run id、as_of、run root、状态、visibility cutoff、legacy output mode、输入 artifact、canonical 输出 artifact、legacy mirror artifact、checksum、size 和 file count；`data/raw` 与 `data/processed` 仍是状态缓存，bundle 只归档本次运行报告、trace 和 metadata；legacy mirror 迁移期保留旧路径可读性|已实现基础版|
+|文档新鲜度检查|`aits docs validate-freshness` / 可选 `outputs/reports/docs_freshness_YYYY-MM-DD.md`|CI 中检查 task register、implementation backlog、runbook 和 `docs/requirements/*.md` 是否包含 `最后更新：YYYY-MM-DD`，且该日期不得早于文档内部最新状态记录日期；失败时命令返回非 0，防止任务状态和需求文档继续漂移|已实现|
 |历史交易日归档回放|`aits ops replay-day`|单日 cache-only replay 入口，默认不调用 live provider 或 OpenAI；默认可见窗口优先读取 production `daily_ops_run_metadata_YYYY-MM-DD.json` 的 `visibility_cutoff`，缺失时退回 as-of 当日 UTC 末尾；先按 as-of 可见窗口生成 input freeze manifest，过滤 PIT manifest/normalized 中晚于 cutoff 的行，隔离未来 valuation snapshots，再把 `score-daily`、`ops health` 和 secret scan 的输出写入 `outputs/replays/YYYY-MM-DD/<run-id>/`；`features_daily.csv`、`scores_daily.csv`、daily score、alerts、decision snapshot、evidence bundle、prediction ledger、PIT manifest 和 valuation snapshots 均不改写生产路径；缺少关键输入或可见窗口内无数据时 fail closed，`--inventory-only` 只生成输入清单和诊断；`--compare-to-production` 生成本地 production artifact 与 replay artifact 的结构化 checksum/row diff；OpenAI replay 默认为 `disabled`，`--openai-replay-policy cache-only` 只复制历史预审队列和报告，不调用 live OpenAI|已实现|
 |历史交易日批量回放|`aits ops replay-window`|按 U.S. equity trading day 枚举日期窗口，逐日复用 `replay-day` 的 cache-only 输入冻结和隔离输出；周末和 NYSE 常规整日休市日默认跳过并记录原因；默认某个交易日失败即停止，`--continue-on-failure` 可继续后续交易日；窗口报告只做索引和状态汇总，不改写任何 production artifact|已实现基础版|
 |历史回放报告|`outputs/replays/YYYY-MM-DD/<run-id>/replay_run.md` / `input_freeze_manifest.csv` / `diff_vs_production.md`；`outputs/replays/windows/<run-id>/replay_window.md`|中文输出 replay 状态、as-of、run id、visible cutoff、方法边界、输入冻结清单、被排除的未来 PIT/valuation 数量、子命令状态、stdout/stderr 行数和关键 replay 输出路径；production diff 报告输出日报、alerts、decision snapshot、trace、features/scores 当日行等比较状态、row count 和 checksum；窗口报告输出交易日状态、diff 状态、bundle/report 路径和跳过日期；结构化 JSON 同步保存，不包含 API key、token 或付费内容原文|已实现基础版|
@@ -1174,7 +1179,7 @@ flowchart TD
 |组合暴露分解|`aits portfolio exposure` / `score-daily` 日报章节|基于 `data/external/portfolio_positions/current_positions.csv` 或显式传入的真实持仓 CSV，按 ticker、产业链节点、地区、客户链、因子和相关性簇分解 AI 名义暴露；缺少持仓文件时显示 `NOT_CONNECTED`，存在但格式错误时停止；不得用观察池、模型建议仓位或 AI 产业链评分替代真实账户持仓|已实现基础版|
 |组合暴露报告|`outputs/reports/portfolio_exposure_YYYY-MM-DD.md`|中文输出持仓快照日期、总市值、AI 名义暴露、AI 占比、最大单票占 AI 暴露、ETF beta 覆盖率、暴露分组表和问题清单；第一阶段 `production_effect=none`，不改变评分、仓位闸门、执行建议或回测仓位|已实现基础版|
 |风险预算 gate|`score-daily` / `backtest` 仓位闸门|在共享 `position_gate` 层读取 `config/portfolio.yaml:risk_budget`；高 VIX 或高 VIX 分位会压低最终 AI 仓位上限，真实持仓接入后单票、节点、相关性簇集中或 ETF beta 覆盖不足也会压低上限；缺少真实持仓时不使用观察池替代组合集中度|已实现基础版|
-|日报 Evidence Bundle|`outputs/reports/evidence/daily_score_YYYY-MM-DD_trace.json`|记录日报 `claim`、`evidence`、`dataset`、`quality` 和 `run_manifest`，包括 `belief_state`、关注股票趋势分析 dataset/claim 引用和本次运行适用的 production rule version manifest，用于从核心结论反查输入上下文、数据快照、只读认知状态和规则版本|已实现|
+|日报 Evidence Bundle|`outputs/reports/evidence/daily_score_YYYY-MM-DD_trace.json`|记录日报 `claim`、`evidence`、`dataset`、`quality` 和 `run_manifest`；`run_manifest.run_id` 可由 `score-daily --run-id` 或 `daily-run --run-id` 贯穿到 Decision Card；bundle 包括 `belief_state`、关注股票趋势分析 dataset/claim 引用和本次运行适用的 production rule version manifest，用于从核心结论反查输入上下文、数据快照、只读认知状态和规则版本|已实现|
 |决策快照|`data/processed/decision_snapshots/decision_snapshot_YYYY-MM-DD.json`|每次 `score-daily` 通过质量门禁后保存 signal_date、market regime、整体分、模块分、判断置信度、模型/最终/置信度调整仓位、静态和宏观调整后总风险资产预算、position gates、质量状态、人工复核、估值状态、风险事件状态、trace bundle 引用、`belief_state_ref`、rule version manifest 和配置路径|已实现基础版|
 |Prediction / shadow ledger|`data/processed/prediction_ledger.csv`|每次 `score-daily` 通过质量门禁后追加 production prediction 行，记录 run id、model/rule version、candidate_id、`production_effect`、features/data/trace 引用、decision_time、signal、score、confidence、模型目标仓位和 gate 后仓位；`aits feedback run-shadow` 可从 production `decision_snapshot` 和 trace 派生 challenger prediction 行，强制 `production_effect=none`；后验 outcome 字段初始为 `PENDING`，不得改写 signal-time 输入|已实现基础版|
 |证据下钻 dashboard|`aits reports dashboard` / `outputs/reports/evidence_dashboard_YYYY-MM-DD.html`|读取日报 Markdown、日报 evidence bundle、decision snapshot 和可选 belief_state，生成本地静态 HTML；按快速读者、投资复核者和系统审计者分层展示结论卡、执行动作、论证链、仓位 gate、thesis/risk/valuation 状态、claim/evidence/dataset/quality refs、输入路径、row count、checksum 和 trace lookup 命令；`production_effect=none`，不改变评分、仓位、回测或执行建议，也不替代 Markdown 日报和 trace bundle 的审计责任|已实现基础版|

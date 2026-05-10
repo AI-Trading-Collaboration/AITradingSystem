@@ -589,6 +589,8 @@ def render_daily_score_report(
     feature_availability_section: str | None = None,
     risk_event_openai_precheck_section: str | None = None,
     traceability_section: str | None = None,
+    run_id: str | None = None,
+    trace_bundle_path: Path | None = None,
 ) -> str:
     recommendation = report.recommendation
     confidence = report.confidence_assessment
@@ -633,6 +635,8 @@ def render_daily_score_report(
             report,
             execution_action_label=execution_action_label,
             execution_action_id=execution_action_id,
+            run_id=run_id,
+            trace_bundle_path=trace_bundle_path,
         ).rstrip(),
         "",
         render_base_signal_risk_caps_section(
@@ -876,6 +880,8 @@ def write_daily_score_report(
     feature_availability_section: str | None = None,
     risk_event_openai_precheck_section: str | None = None,
     traceability_section: str | None = None,
+    run_id: str | None = None,
+    trace_bundle_path: Path | None = None,
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(
@@ -901,6 +907,8 @@ def write_daily_score_report(
             feature_availability_section=feature_availability_section,
             risk_event_openai_precheck_section=risk_event_openai_precheck_section,
             traceability_section=traceability_section,
+            run_id=run_id,
+            trace_bundle_path=trace_bundle_path,
         ),
         encoding="utf-8",
     )
@@ -916,6 +924,8 @@ def render_daily_conclusion_card(
     *,
     execution_action_label: str | None = None,
     execution_action_id: str | None = None,
+    run_id: str | None = None,
+    trace_bundle_path: Path | None = None,
 ) -> str:
     action = _execution_action_summary(execution_action_label, execution_action_id)
     posture = _daily_posture_label(report)
@@ -929,6 +939,11 @@ def render_daily_conclusion_card(
         (
             "| 判断置信度 | "
             f"{_escape_markdown_table(_confidence_card_summary(report))} |"
+        ),
+        f"| Data Gate | {_escape_markdown_table(_data_gate_card_summary(report))} |",
+        (
+            "| Run ID / Trace | "
+            f"{_escape_markdown_table(_run_trace_card_summary(run_id, trace_bundle_path))} |"
         ),
         (
             "| 评分映射仓位 | "
@@ -961,8 +976,16 @@ def render_daily_conclusion_card(
             "### 下一步触发条件",
             "",
             f"- {_daily_next_trigger(report)}",
+            "",
+            "### Main Invalidator",
+            "",
+            f"- {_daily_main_invalidator(report)}",
+            "",
+            "### Next Checks",
+            "",
         ]
     )
+    lines.extend(f"- {item}" for item in _daily_next_checks(report))
     return "\n".join(lines) + "\n"
 
 
@@ -1593,6 +1616,23 @@ def _confidence_card_summary(report: DailyScoreReport) -> str:
     )
 
 
+def _data_gate_card_summary(report: DailyScoreReport) -> str:
+    status = report.data_quality_report.status
+    if status == "PASS":
+        return "PASS；市场和宏观缓存质量门禁通过。"
+    if "WARNING" in status:
+        return f"{status}；存在质量警告，结论使用等级和限制说明需同步查看。"
+    return f"{status}；数据质量未通过时不得作为完整趋势判断。"
+
+
+def _run_trace_card_summary(run_id: str | None, trace_bundle_path: Path | None) -> str:
+    run_text = run_id or "未传入 run_id"
+    trace_text = "" if trace_bundle_path is None else str(trace_bundle_path)
+    if trace_text:
+        return f"{run_text}；trace={trace_text}"
+    return run_text
+
+
 def _macro_budget_summary(report: DailyScoreReport) -> str:
     adjustment = report.macro_risk_asset_budget
     static_band = adjustment.static_total_risk_asset_band
@@ -1681,6 +1721,48 @@ def _daily_next_trigger(report: DailyScoreReport) -> str:
     if report.recommendation.total_score < 55:
         return _add_condition_summary(report)
     return _watch_condition_summary(report)
+
+
+def _daily_main_invalidator(report: DailyScoreReport) -> str:
+    if report.data_quality_report.status == "FAIL":
+        return "市场或宏观数据质量门禁失败会直接推翻当日趋势判断。"
+    if report.review_summary and report.review_summary.has_failures:
+        return "人工复核摘要存在错误；修复前不能把日报解释为完整结论。"
+    triggered = [
+        gate
+        for gate in report.recommendation.triggered_position_gates
+        if gate.gate_id != "score_model"
+    ]
+    if triggered:
+        gate = min(triggered, key=lambda item: item.max_position)
+        return (
+            f"{gate.label} 若继续恶化或无法解除，将维持或进一步压低仓位上限；"
+            f"当前原因：{gate.reason}"
+        )
+    return _reduce_condition_summary(report)
+
+
+def _daily_next_checks(report: DailyScoreReport) -> tuple[str, str, str]:
+    triggered = _triggered_position_gate_summary(report)
+    weakest = min(
+        report.components,
+        key=lambda component: (
+            component.score,
+            component.confidence,
+        ),
+    )
+    return (
+        (
+            "Data Gate：确认下一次 `aits validate-data` 仍为 "
+            f"PASS/PASS_WITH_WARNINGS；当前为 {report.data_quality_report.status}。"
+        ),
+        f"Risk Caps：跟踪已触发闸门（{triggered}）及 thesis、估值、风险事件复核状态。",
+        (
+            "Weakest module：重点观察 "
+            f"{_component_label(weakest.name)}（{weakest.score:.1f} 分，"
+            f"置信度 {weakest.confidence:.0%}）。"
+        ),
+    )
 
 
 def _valuation_confidence_summary(report: ValuationReviewReport) -> str:

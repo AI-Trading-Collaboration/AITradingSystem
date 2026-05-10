@@ -17,5 +17,7 @@ jobs:
         run: python -m pip install -e ".[dev]"
       - name: Lint
         run: python -m ruff check .
+      - name: Docs freshness
+        run: python -m ai_trading_system.cli docs validate-freshness
       - name: Test
         run: python -m pytest
