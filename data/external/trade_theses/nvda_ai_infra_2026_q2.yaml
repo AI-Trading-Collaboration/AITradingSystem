@@ -1,0 +1,56 @@
+thesis_id: nvda_ai_infra_2026_q2
+ticker: NVDA
+direction: long
+created_at: 2026-05-10
+time_horizon: medium
+position_scope: core_ai_bucket
+entry_reason:
+  - AI infrastructure demand, accelerator leadership, networking, and software ecosystem strength support the core AI-cycle thesis.
+  - The thesis requires ongoing evidence that data-center demand, gross margin, and supply-chain capacity remain strong enough to justify valuation risk.
+ai_chain_nodes:
+  - gpu_asic_demand
+  - hbm_supply_demand
+  - ai_inference_demand
+  - advanced_packaging
+validation_metrics:
+  - metric_id: data_center_growth
+    description: Data-center revenue and forward demand commentary should remain strong.
+    evidence_source: manual_earnings_review_and_sec_fundamental_features
+    expected_direction: growth_remains_strong
+    latest_status: pending
+    updated_at: 2026-05-10
+    notes: "需 owner 复核最新 earnings call、backlog 和 supply commentary。"
+  - metric_id: margin_and_capex_quality
+    description: Gross margin, operating margin, and CapEx intensity should remain consistent with AI leader economics.
+    evidence_source: sec_fundamental_features_2026-05-10
+    expected_direction: margins_remain_high
+    latest_status: confirmed
+    updated_at: 2026-05-10
+    notes: "本地基本面特征已覆盖 margins 与 CapEx intensity。"
+falsification_conditions:
+  - condition_id: demand_visibility_breaks
+    description: Data-center demand visibility weakens materially or customer order timing slips.
+    severity: high
+    triggered: false
+  - condition_id: margin_breaks
+    description: Gross margin or operating margin deteriorates in a way that indicates competition, mix, or supply constraints are eroding the thesis.
+    severity: critical
+    triggered: false
+risk_events:
+  - risk_id: ai_chip_export_control_upgrade
+    level: L2
+    description: Export control escalation can affect geographic revenue, product mix, and supply-chain assumptions.
+    action: review_position_if_direct_revenue_impact_confirmed
+    active: false
+    updated_at: 2026-05-10
+review_frequency: weekly
+status: active
+previous_status:
+status_updated_at: 2026-05-10
+status_reason: "Owner requested active core ticker thesis coverage."
+status_evidence: "sec_fundamental_features_2026-05-10; data_quality_2026-05-10"
+manual_review_required: false
+notes: >
+  Baseline active thesis for decision support. Valuation and export-control
+  risks must be reviewed before translating this thesis into active position
+  changes.

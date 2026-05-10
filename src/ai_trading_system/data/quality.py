@@ -25,6 +25,7 @@ MANIFEST_REQUIRED_COLUMNS = (
 
 
 class Severity(StrEnum):
+    INFO = "INFO"
     ERROR = "ERROR"
     WARNING = "WARNING"
 
@@ -50,6 +51,22 @@ class DataFileSummary:
 
 
 @dataclass(frozen=True)
+class MarketstackReconciliationRecord:
+    date: str
+    ticker: str
+    severity: Severity
+    classification: str
+    rule_id: str
+    evidence: str
+    primary_close: float | None = None
+    secondary_close: float | None = None
+    close_diff_pct: float | None = None
+    primary_adj_close: float | None = None
+    secondary_adj_close: float | None = None
+    adj_close_diff_pct: float | None = None
+
+
+@dataclass(frozen=True)
 class DataQualityReport:
     checked_at: datetime
     as_of: date
@@ -61,6 +78,7 @@ class DataQualityReport:
     manifest_summary: DataFileSummary | None = None
     price_consistency_start_date: date | None = None
     rate_consistency_start_date: date | None = None
+    marketstack_reconciliation_records: tuple[MarketstackReconciliationRecord, ...] = ()
     issues: tuple[DataQualityIssue, ...] = field(default_factory=tuple)
 
     @property
@@ -70,6 +88,10 @@ class DataQualityReport:
     @property
     def warning_count(self) -> int:
         return sum(1 for issue in self.issues if issue.severity == Severity.WARNING)
+
+    @property
+    def info_count(self) -> int:
+        return sum(1 for issue in self.issues if issue.severity == Severity.INFO)
 
     @property
     def passed(self) -> bool:
@@ -96,6 +118,7 @@ def validate_data_cache(
     require_secondary_prices: bool = False,
 ) -> DataQualityReport:
     issues: list[DataQualityIssue] = []
+    marketstack_reconciliation_records: tuple[MarketstackReconciliationRecord, ...] = ()
 
     prices, price_summary = _read_csv(prices_path, issues, "prices")
     rates, rate_summary = _read_csv(rates_path, issues, "rates")
@@ -143,7 +166,7 @@ def validate_data_cache(
             error_severity=_secondary_price_self_check_error_severity(quality_config),
         )
         if prices is not None:
-            _check_secondary_price_reconciliation(
+            marketstack_reconciliation_records = _check_secondary_price_reconciliation(
                 primary_prices=prices,
                 secondary_prices=secondary_prices,
                 expected_tickers=secondary_expected_tickers,
@@ -173,6 +196,7 @@ def validate_data_cache(
         manifest_summary=manifest_summary,
         price_consistency_start_date=quality_config.prices.consistency_start_date,
         rate_consistency_start_date=quality_config.rates.consistency_start_date,
+        marketstack_reconciliation_records=marketstack_reconciliation_records,
         issues=tuple(issues),
     )
 
@@ -186,6 +210,7 @@ def render_data_quality_report(report: DataQualityReport) -> str:
         f"- 评估日期：{report.as_of.isoformat()}",
         f"- 错误数：{report.error_count}",
         f"- 警告数：{report.warning_count}",
+        f"- 信息数：{report.info_count}",
         "",
         "## 文件",
         "",
@@ -233,12 +258,51 @@ def render_data_quality_report(report: DataQualityReport) -> str:
                 f"{_escape_markdown_table(issue.sample or '')} |"
             )
 
+    if report.marketstack_reconciliation_records:
+        lines.extend(_marketstack_reconciliation_section(report))
+
     return "\n".join(lines) + "\n"
 
 
 def write_data_quality_report(report: DataQualityReport, output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(render_data_quality_report(report), encoding="utf-8")
+    if report.marketstack_reconciliation_records:
+        write_marketstack_reconciliation_csv(
+            report,
+            marketstack_reconciliation_path(output_path),
+        )
+    return output_path
+
+
+def marketstack_reconciliation_path(report_path: Path) -> Path:
+    return report_path.with_name(f"{report_path.stem}_marketstack_reconciliation.csv")
+
+
+def write_marketstack_reconciliation_csv(
+    report: DataQualityReport,
+    output_path: Path,
+) -> Path:
+    rows = [
+        {
+            "as_of": report.as_of.isoformat(),
+            "date": record.date,
+            "ticker": record.ticker,
+            "severity": record.severity.value,
+            "classification": record.classification,
+            "rule_id": record.rule_id,
+            "evidence": record.evidence,
+            "primary_close": record.primary_close,
+            "secondary_close": record.secondary_close,
+            "close_diff_pct": record.close_diff_pct,
+            "primary_adj_close": record.primary_adj_close,
+            "secondary_adj_close": record.secondary_adj_close,
+            "adj_close_diff_pct": record.adj_close_diff_pct,
+        }
+        for record in report.marketstack_reconciliation_records
+    ]
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame(rows).to_csv(output_path, index=False)
     return output_path
 
 
@@ -460,7 +524,13 @@ def _validate_prices(
         source=source,
         severity=error_severity,
     )
-    _check_price_numeric_rules(frame, issues, source=source, error_severity=error_severity)
+    _check_price_numeric_rules(
+        frame,
+        quality_config,
+        issues,
+        source=source,
+        error_severity=error_severity,
+    )
     _check_price_staleness(
         frame,
         expected_tickers,
@@ -613,6 +683,7 @@ def _check_expected_values(
 
 def _check_price_numeric_rules(
     frame: pd.DataFrame,
+    quality_config: DataQualityConfig,
     issues: list[DataQualityIssue],
     *,
     source: str,
@@ -663,15 +734,38 @@ def _check_price_numeric_rules(
             )
         )
 
+    volume_optional_tickers = set(quality_config.prices.volume_optional_tickers)
     missing_volume = frame["_volume"].isna()
-    if missing_volume.any():
+    optional_missing_volume = missing_volume & frame["ticker"].isin(volume_optional_tickers)
+    unexpected_missing_volume = missing_volume & ~frame["ticker"].isin(volume_optional_tickers)
+    if optional_missing_volume.any():
         issues.append(
             DataQualityIssue(
-                Severity.WARNING,
+                Severity.INFO,
+                "prices_index_volume_not_applicable",
+                (
+                    "价格数据缺少成交量，但该 ticker 已配置为指数/非成交标的，"
+                    "volume 不适用于质量阻断。"
+                ),
+                rows=int(optional_missing_volume.sum()),
+                sample=_sample_rows(
+                    frame.loc[optional_missing_volume],
+                    ["date", "ticker", "volume"],
+                ),
+                source=source,
+            )
+        )
+    if unexpected_missing_volume.any():
+        issues.append(
+            DataQualityIssue(
+                _noncritical_price_issue_severity(error_severity),
                 "prices_missing_volume",
                 "价格数据的成交量包含缺失或非数值",
-                rows=int(missing_volume.sum()),
-                sample=_sample_rows(frame.loc[missing_volume], ["date", "ticker", "volume"]),
+                rows=int(unexpected_missing_volume.sum()),
+                sample=_sample_rows(
+                    frame.loc[unexpected_missing_volume],
+                    ["date", "ticker", "volume"],
+                ),
                 source=source,
             )
         )
@@ -794,9 +888,12 @@ def _check_price_moves(
     if suspicious.any():
         issues.append(
             DataQualityIssue(
-                Severity.WARNING,
+                Severity.INFO,
                 "prices_suspicious_adj_close_move",
-                "价格数据包含可疑的调整收盘价单日波动",
+                (
+                    "价格数据包含较大调整收盘价单日波动；未达到极端错误阈值，"
+                    "作为可审计市场波动信息记录。"
+                ),
                 rows=int(suspicious.sum()),
                 sample=_sample_rows(
                     data.loc[suspicious],
@@ -819,14 +916,43 @@ def _check_price_moves(
         > quality_config.prices.suspicious_adjustment_ratio_change_abs
     )
     if ratio_jump.any():
+        known_split = data.apply(
+            lambda row: _matches_known_split_event(
+                ticker=str(row["ticker"]),
+                value_date=row["_date"].date(),
+                adjustment_ratio_change=float(row["_adjustment_ratio_change"]),
+                quality_config=quality_config,
+            )
+            is not None,
+            axis=1,
+        )
+        split_ratio_jump = ratio_jump & known_split
+        unresolved_ratio_jump = ratio_jump & ~known_split
+        if split_ratio_jump.any():
+            issues.append(
+                DataQualityIssue(
+                    Severity.INFO,
+                    "prices_known_split_adjustment_ratio_jump",
+                    "复权比例跳变匹配已配置 corporate action 拆股事件。",
+                    rows=int(split_ratio_jump.sum()),
+                    sample=_sample_rows(
+                        data.loc[split_ratio_jump],
+                        ["date", "ticker", "_adjustment_ratio", "_adjustment_ratio_change"],
+                    ),
+                    source=source,
+                )
+            )
+    else:
+        unresolved_ratio_jump = ratio_jump
+    if unresolved_ratio_jump.any():
         issues.append(
             DataQualityIssue(
-                Severity.WARNING,
+                _noncritical_price_issue_severity(error_severity),
                 "prices_adjustment_ratio_jump",
                 "价格数据的复权比例出现明显跳变",
-                rows=int(ratio_jump.sum()),
+                rows=int(unresolved_ratio_jump.sum()),
                 sample=_sample_rows(
-                    data.loc[ratio_jump],
+                    data.loc[unresolved_ratio_jump],
                     ["date", "ticker", "_adjustment_ratio", "_adjustment_ratio_change"],
                 ),
                 source=source,
@@ -845,7 +971,35 @@ def _secondary_expected_price_tickers(
 def _secondary_price_self_check_error_severity(quality_config: DataQualityConfig) -> Severity:
     if quality_config.prices.secondary_source_self_check_fail_closed:
         return Severity.ERROR
+    return Severity.INFO
+
+
+def _noncritical_price_issue_severity(error_severity: Severity) -> Severity:
+    if error_severity == Severity.INFO:
+        return Severity.INFO
     return Severity.WARNING
+
+
+def _matches_known_split_event(
+    *,
+    ticker: str,
+    value_date: date,
+    adjustment_ratio_change: float,
+    quality_config: DataQualityConfig,
+):
+    events = quality_config.prices.known_split_events.get(ticker, [])
+    if not events:
+        return None
+    observed_factor = 1.0 + adjustment_ratio_change
+    tolerance = quality_config.prices.known_split_ratio_tolerance_abs
+    window_days = quality_config.prices.known_split_match_window_days
+    for event in events:
+        if abs((value_date - event.effective_date).days) > window_days:
+            continue
+        expected_factors = (event.ratio, 1.0 / event.ratio)
+        if any(abs(observed_factor - expected) <= tolerance for expected in expected_factors):
+            return event
+    return None
 
 
 def _check_secondary_price_reconciliation(
@@ -856,17 +1010,18 @@ def _check_secondary_price_reconciliation(
     *,
     required: bool,
     issues: list[DataQualityIssue],
-) -> None:
+) -> tuple[MarketstackReconciliationRecord, ...]:
     if not expected_tickers:
-        return
+        return ()
     required_columns = {"date", "ticker", "close", "adj_close"}
     if not required_columns.issubset(primary_prices.columns) or not required_columns.issubset(
         secondary_prices.columns
     ):
-        return
+        return ()
 
     primary = primary_prices.loc[primary_prices["ticker"].isin(expected_tickers)].copy()
     secondary = secondary_prices.loc[secondary_prices["ticker"].isin(expected_tickers)].copy()
+    records: list[MarketstackReconciliationRecord] = []
     if primary.empty or secondary.empty:
         issues.append(
             DataQualityIssue(
@@ -876,7 +1031,7 @@ def _check_secondary_price_reconciliation(
                 source="跨源核验：主价格源 vs Marketstack",
             )
         )
-        return
+        return ()
 
     primary["_date"] = pd.to_datetime(primary["date"], errors="coerce")
     secondary["_date"] = pd.to_datetime(secondary["date"], errors="coerce")
@@ -886,6 +1041,9 @@ def _check_secondary_price_reconciliation(
     secondary["_secondary_close"] = pd.to_numeric(secondary["close"], errors="coerce")
     primary["_primary_adj_close"] = pd.to_numeric(primary["adj_close"], errors="coerce")
     secondary["_secondary_adj_close"] = pd.to_numeric(secondary["adj_close"], errors="coerce")
+    for column in ("open", "high", "low"):
+        secondary[f"_secondary_{column}"] = pd.to_numeric(secondary[column], errors="coerce")
+    records.extend(_marketstack_bad_point_records(primary, secondary))
 
     primary = primary.loc[
         primary["_date"].notna()
@@ -906,7 +1064,7 @@ def _check_secondary_price_reconciliation(
 
     expected_pairs = len(primary)
     if expected_pairs == 0:
-        return
+        return tuple(records)
     merged = primary.merge(secondary, on=["date", "ticker"], how="inner")
     overlap_ratio = len(merged) / expected_pairs
     if overlap_ratio < quality_config.prices.secondary_source_min_overlap_ratio:
@@ -924,7 +1082,7 @@ def _check_secondary_price_reconciliation(
             )
         )
     if merged.empty:
-        return
+        return tuple(records)
 
     warning_threshold = quality_config.prices.secondary_source_adj_close_warning_pct
     error_threshold = quality_config.prices.secondary_source_adj_close_error_pct
@@ -942,6 +1100,63 @@ def _check_secondary_price_reconciliation(
     adj_warning_diff = (merged["_adj_close_diff_pct"] > warning_threshold) & ~adj_error_diff
     adj_adjustment_basis_diff = adj_error_diff & close_reconciled
     adj_unresolved_error_diff = adj_error_diff & ~close_reconciled
+    adj_warning_basis_diff = adj_warning_diff & close_reconciled
+    adj_unresolved_warning_diff = adj_warning_diff & ~close_reconciled
+    records.extend(
+        _marketstack_reconciliation_records_from_mask(
+            merged,
+            close_error_diff,
+            severity=Severity.ERROR,
+            classification="raw_close_unresolved_error",
+            rule_id="marketstack.raw_close_reconciliation.v1",
+            evidence="raw close diff exceeds error threshold; downstream remains blocked.",
+        )
+    )
+    records.extend(
+        _marketstack_reconciliation_records_from_mask(
+            merged,
+            close_warning_diff,
+            severity=Severity.WARNING,
+            classification="raw_close_unresolved_warning",
+            rule_id="marketstack.raw_close_reconciliation.v1",
+            evidence="raw close diff exceeds warning threshold; requires investigation.",
+        )
+    )
+    records.extend(
+        _marketstack_reconciliation_records_from_mask(
+            merged,
+            adj_adjustment_basis_diff | adj_warning_basis_diff,
+            severity=Severity.INFO,
+            classification="adjusted_close_dividend_basis_difference",
+            rule_id="marketstack.adjusted_close_basis.v1",
+            evidence=(
+                "raw close reconciles within warning threshold while adjusted close differs; "
+                "classified as dividend/adjusted-close basis difference, no price cache mutation."
+            ),
+        )
+    )
+    records.extend(
+        _marketstack_reconciliation_records_from_mask(
+            merged,
+            adj_unresolved_error_diff,
+            severity=Severity.ERROR,
+            classification="adjusted_close_unresolved_error",
+            rule_id="marketstack.adjusted_close_reconciliation.v1",
+            evidence="adjusted close diff exceeds error threshold and raw close is not reconciled.",
+        )
+    )
+    records.extend(
+        _marketstack_reconciliation_records_from_mask(
+            merged,
+            adj_unresolved_warning_diff,
+            severity=Severity.WARNING,
+            classification="adjusted_close_unresolved_warning",
+            rule_id="marketstack.adjusted_close_reconciliation.v1",
+            evidence=(
+                "adjusted close diff exceeds warning threshold and raw close is not reconciled."
+            ),
+        )
+    )
 
     if close_error_diff.any():
         issues.append(
@@ -1012,7 +1227,7 @@ def _check_secondary_price_reconciliation(
     if adj_adjustment_basis_diff.any():
         issues.append(
             DataQualityIssue(
-                Severity.WARNING,
+                Severity.INFO,
                 "secondary_prices_adjustment_basis_warning",
                 (
                     "Marketstack 调整收盘价与主缓存差异超过错误阈值，"
@@ -1036,15 +1251,15 @@ def _check_secondary_price_reconciliation(
                 source="跨源核验：主价格源 vs Marketstack",
             )
         )
-    if adj_warning_diff.any():
+    if adj_unresolved_warning_diff.any():
         issues.append(
             DataQualityIssue(
                 Severity.WARNING,
                 "secondary_prices_adj_close_warning",
                 "主价格缓存与 Marketstack 的调整收盘价差异超过警告阈值。",
-                rows=int(adj_warning_diff.sum()),
+                rows=int(adj_unresolved_warning_diff.sum()),
                 sample=_sample_rows(
-                    merged.loc[adj_warning_diff],
+                    merged.loc[adj_unresolved_warning_diff],
                     [
                         "date",
                         "ticker",
@@ -1059,6 +1274,135 @@ def _check_secondary_price_reconciliation(
                 source="跨源核验：主价格源 vs Marketstack",
             )
         )
+    if adj_warning_basis_diff.any():
+        issues.append(
+            DataQualityIssue(
+                Severity.INFO,
+                "secondary_prices_adjustment_basis_info",
+                (
+                    "Marketstack 调整收盘价与主缓存超过警告阈值，但未调整收盘价通过核验；"
+                    "按分红复权口径差异记录。"
+                ),
+                rows=int(adj_warning_basis_diff.sum()),
+                sample=_sample_rows(
+                    merged.loc[adj_warning_basis_diff],
+                    [
+                        "date",
+                        "ticker",
+                        "_primary_close",
+                        "_secondary_close",
+                        "_close_diff_pct",
+                        "_primary_adj_close",
+                        "_secondary_adj_close",
+                        "_adj_close_diff_pct",
+                    ],
+                ),
+                source="跨源核验：主价格源 vs Marketstack",
+            )
+        )
+    return tuple(records)
+
+
+def _marketstack_bad_point_records(
+    primary: pd.DataFrame,
+    secondary: pd.DataFrame,
+) -> list[MarketstackReconciliationRecord]:
+    if secondary.empty:
+        return []
+    primary_lookup = primary.set_index(["date", "ticker"], drop=False)
+    valid_ohlc = secondary[
+        ["_secondary_open", "_secondary_high", "_secondary_low", "_secondary_close"]
+    ].notna().all(axis=1)
+    invalid_ohlc = valid_ohlc & (
+        (secondary["_secondary_high"] < secondary["_secondary_open"])
+        | (secondary["_secondary_high"] < secondary["_secondary_low"])
+        | (secondary["_secondary_high"] < secondary["_secondary_close"])
+        | (secondary["_secondary_low"] > secondary["_secondary_open"])
+        | (secondary["_secondary_low"] > secondary["_secondary_high"])
+        | (secondary["_secondary_low"] > secondary["_secondary_close"])
+    )
+    bad_point = (
+        secondary["_secondary_close"].isna()
+        | secondary["_secondary_adj_close"].isna()
+        | (secondary["_secondary_close"] <= 0)
+        | (secondary["_secondary_adj_close"] <= 0)
+        | invalid_ohlc
+    )
+    records: list[MarketstackReconciliationRecord] = []
+    for _, row in secondary.loc[bad_point].iterrows():
+        key = (str(row["date"]), str(row["ticker"]))
+        primary_row = primary_lookup.loc[key] if key in primary_lookup.index else None
+        if isinstance(primary_row, pd.DataFrame):
+            primary_row = primary_row.iloc[0]
+        primary_close = (
+            _optional_float(primary_row["_primary_close"])
+            if primary_row is not None and "_primary_close" in primary_row
+            else None
+        )
+        primary_adj_close = (
+            _optional_float(primary_row["_primary_adj_close"])
+            if primary_row is not None and "_primary_adj_close" in primary_row
+            else None
+        )
+        records.append(
+            MarketstackReconciliationRecord(
+                date=str(row["date"]),
+                ticker=str(row["ticker"]),
+                severity=Severity.INFO,
+                classification="marketstack_bad_point_primary_available"
+                if primary_close is not None
+                else "marketstack_bad_point_no_primary_evidence",
+                rule_id="marketstack.secondary_self_check.v1",
+                evidence=(
+                    "Marketstack row violates close/adj_close/OHLC self-check; "
+                    "primary source same ticker-date is recorded for audit when available."
+                ),
+                primary_close=primary_close,
+                secondary_close=_optional_float(row["_secondary_close"]),
+                primary_adj_close=primary_adj_close,
+                secondary_adj_close=_optional_float(row["_secondary_adj_close"]),
+            )
+        )
+    return records
+
+
+def _marketstack_reconciliation_records_from_mask(
+    merged: pd.DataFrame,
+    mask: pd.Series,
+    *,
+    severity: Severity,
+    classification: str,
+    rule_id: str,
+    evidence: str,
+) -> list[MarketstackReconciliationRecord]:
+    records: list[MarketstackReconciliationRecord] = []
+    for _, row in merged.loc[mask].iterrows():
+        records.append(
+            MarketstackReconciliationRecord(
+                date=str(row["date"]),
+                ticker=str(row["ticker"]),
+                severity=severity,
+                classification=classification,
+                rule_id=rule_id,
+                evidence=evidence,
+                primary_close=_optional_float(row["_primary_close"]),
+                secondary_close=_optional_float(row["_secondary_close"]),
+                close_diff_pct=_optional_float(row["_close_diff_pct"]),
+                primary_adj_close=_optional_float(row["_primary_adj_close"]),
+                secondary_adj_close=_optional_float(row["_secondary_adj_close"]),
+                adj_close_diff_pct=_optional_float(row["_adj_close_diff_pct"]),
+            )
+        )
+    return records
+
+
+def _optional_float(value: object) -> float | None:
+    if pd.isna(value):
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _suspicious_price_return_threshold(ticker: str, config: PriceQualityConfig) -> float:
@@ -1266,6 +1610,58 @@ def _sample_rows(data: pd.DataFrame, columns: list[str], max_rows: int = 3) -> s
     return "; ".join(str(record) for record in records)
 
 
+def _marketstack_reconciliation_section(report: DataQualityReport) -> list[str]:
+    counts: dict[tuple[Severity, str], int] = {}
+    for record in report.marketstack_reconciliation_records:
+        key = (record.severity, record.classification)
+        counts[key] = counts.get(key, 0) + 1
+
+    lines = [
+        "",
+        "## Marketstack reconciliation",
+        "",
+        (
+            "- 明细 CSV：与本 Markdown 同目录，文件名后缀为 "
+            "`_marketstack_reconciliation.csv`。"
+        ),
+        "- 规则边界：只归因和记录，不改写主价格缓存、第二行情源缓存、评分或回测真值。",
+        "",
+        "| 级别 | 分类 | 行数 |",
+        "|---|---|---:|",
+    ]
+    for (severity, classification), count in sorted(
+        counts.items(),
+        key=lambda item: (item[0][0].value, item[0][1]),
+    ):
+        lines.append(
+            "| "
+            f"{_severity_label(severity)} | "
+            f"{_escape_markdown_table(classification)} | "
+            f"{count} |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "### 样例",
+            "",
+            "| 日期 | Ticker | 级别 | 分类 | 规则 | 证据 |",
+            "|---|---|---|---|---|---|",
+        ]
+    )
+    for record in report.marketstack_reconciliation_records[:10]:
+        lines.append(
+            "| "
+            f"{record.date} | "
+            f"{record.ticker} | "
+            f"{_severity_label(record.severity)} | "
+            f"{_escape_markdown_table(record.classification)} | "
+            f"{_escape_markdown_table(record.rule_id)} | "
+            f"{_escape_markdown_table(record.evidence)} |"
+        )
+    return lines
+
+
 def _file_sha256(path: Path) -> str:
     digest = sha256()
     with path.open("rb") as file:
@@ -1287,6 +1683,8 @@ def _render_file_summary(label: str, summary: DataFileSummary) -> str:
 
 
 def _severity_label(severity: Severity) -> str:
+    if severity == Severity.INFO:
+        return "信息"
     if severity == Severity.ERROR:
         return "错误"
     return "警告"

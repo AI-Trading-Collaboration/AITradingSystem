@@ -8,6 +8,33 @@ prices:
   # 默认研究窗口为 ChatGPT 后 AI 主线行情。早于该日期的复权比例、
   # adjusted close 波动和跨源一致性差异不阻断默认日报质量门禁。
   consistency_start_date: 2022-12-01
+  # 价格指数没有真实成交量。此处必须显式列出，缺 volume 只作为
+  # 可审计信息记录，不计入数据质量警告。
+  volume_optional_tickers:
+    - "^VIX"
+  # 已核验 corporate action。复权比例跳变只有匹配到这些事件和比例时
+  # 才会从 warning 降为可审计信息；未匹配事件继续提示调查。
+  known_split_match_window_days: 5
+  known_split_ratio_tolerance_abs: 0.08
+  known_split_events:
+    NVDA:
+      - effective_date: 2024-06-10
+        ratio: 10
+        source_name: NVIDIA 2024 Stock Split FAQ
+        source_url: https://investor.nvidia.com/files/doc_downloads/2024/06/nvidia-2024-stock-split_faq_investors.pdf
+        note: "NVIDIA common stock began trading split-adjusted at market open."
+    SMH:
+      - effective_date: 2023-05-05
+        ratio: 2
+        source_name: VanEck Semiconductor ETF share split press release
+        source_url: https://www.vaneck.com/us/en/press-releases/smh-vaneck-semiconductor-etf-share-split-press-release.pdf
+        note: "VanEck Semiconductor ETF split-adjusted trading date."
+    SOXX:
+      - effective_date: 2024-03-07
+        ratio: 3
+        source_name: OCC information memo 53942 for SOXX split
+        source_url: https://www.miaxglobal.com/sites/default/files/alert-files/SOXX_Split_53942.pdf
+        note: "iShares Semiconductor ETF split effective date."
   # 第二来源核验使用同一组阈值：raw close 超阈值会阻塞；
   # adjusted close 若仅因分红复权口径不同而 raw close 对齐，则输出警告。
   secondary_source_min_overlap_ratio: 0.80

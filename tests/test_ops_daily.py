@@ -42,6 +42,7 @@ def test_daily_ops_plan_reports_missing_required_env() -> None:
     assert pit_command in markdown
     assert "`aits fundamentals download-sec-companyfacts`" in markdown
     assert "`aits fundamentals extract-sec-metrics --as-of 2026-05-06`" in markdown
+    assert "`aits fundamentals merge-tsm-ir-sec-metrics --as-of 2026-05-06`" in markdown
     assert "`aits fundamentals validate-sec-metrics --as-of 2026-05-06`" in markdown
     assert "`aits valuation fetch-fmp --as-of 2026-05-06`" in markdown
     assert "`aits score-daily --as-of 2026-05-06" in markdown
@@ -117,6 +118,7 @@ def test_daily_ops_plan_cli_writes_report(tmp_path: Path) -> None:
     assert "失败会写入脱敏报告或 pipeline health 告警" in markdown
     assert "fundamentals download-sec-companyfacts" in markdown
     assert "fundamentals extract-sec-metrics --as-of 2026-05-06" in markdown
+    assert "fundamentals merge-tsm-ir-sec-metrics --as-of 2026-05-06" in markdown
     assert "valuation fetch-fmp --as-of 2026-05-06" in markdown
     assert "ops health --as-of 2026-05-06" in markdown
     assert "security scan-secrets --as-of 2026-05-06" in markdown
@@ -180,11 +182,19 @@ def test_daily_ops_plan_sec_and_valuation_steps_block_score_daily() -> None:
 
     assert step_ids.index("sec_companyfacts") < step_ids.index("score_daily")
     assert step_ids.index("sec_metrics") < step_ids.index("score_daily")
+    assert step_ids.index("tsm_ir_sec_metrics_merge") < step_ids.index("score_daily")
     assert step_ids.index("sec_metrics_validation") < step_ids.index("score_daily")
+    assert step_ids.index("sec_metrics") < step_ids.index("tsm_ir_sec_metrics_merge")
+    assert step_ids.index("tsm_ir_sec_metrics_merge") < step_ids.index(
+        "sec_metrics_validation"
+    )
     assert step_ids.index("valuation_snapshots") < step_ids.index("score_daily")
 
     sec_companyfacts = next(step for step in plan.steps if step.step_id == "sec_companyfacts")
     sec_metrics = next(step for step in plan.steps if step.step_id == "sec_metrics")
+    tsm_merge = next(
+        step for step in plan.steps if step.step_id == "tsm_ir_sec_metrics_merge"
+    )
     valuation = next(step for step in plan.steps if step.step_id == "valuation_snapshots")
 
     assert sec_companyfacts.required_env_vars == ("SEC_USER_AGENT",)
@@ -192,6 +202,8 @@ def test_daily_ops_plan_sec_and_valuation_steps_block_score_daily() -> None:
     assert "download-sec-companyfacts" in sec_companyfacts.command
     assert sec_metrics.blocks_downstream is True
     assert "extract-sec-metrics" in sec_metrics.command
+    assert tsm_merge.blocks_downstream is True
+    assert "merge-tsm-ir-sec-metrics" in tsm_merge.command
     assert valuation.required_env_vars == ("FMP_API_KEY",)
     assert valuation.blocks_downstream is True
     assert "fetch-fmp" in valuation.command

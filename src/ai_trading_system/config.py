@@ -568,12 +568,24 @@ class PriceReturnThresholdOverrideConfig(BaseModel):
     extreme_daily_return_abs: float | None = Field(default=None, gt=0)
 
 
+class KnownSplitEventConfig(BaseModel):
+    effective_date: date
+    ratio: float = Field(gt=1)
+    source_name: str
+    source_url: str
+    note: str = ""
+
+
 class PriceQualityConfig(BaseModel):
     max_stale_calendar_days: int = Field(gt=0)
     suspicious_daily_return_abs: float = Field(gt=0)
     extreme_daily_return_abs: float = Field(gt=0)
     suspicious_adjustment_ratio_change_abs: float = Field(gt=0)
     consistency_start_date: date | None = None
+    volume_optional_tickers: list[str] = Field(default_factory=list)
+    known_split_events: dict[str, list[KnownSplitEventConfig]] = Field(default_factory=dict)
+    known_split_match_window_days: int = Field(default=5, ge=0)
+    known_split_ratio_tolerance_abs: float = Field(default=0.05, gt=0)
     secondary_source_min_overlap_ratio: float = Field(default=0.80, ge=0, le=1)
     secondary_source_adj_close_warning_pct: float = Field(default=0.01, gt=0)
     secondary_source_adj_close_error_pct: float = Field(default=0.05, gt=0)

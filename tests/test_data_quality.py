@@ -110,7 +110,7 @@ def test_validate_data_cache_flags_suspicious_price_move(tmp_path: Path) -> None
 
     assert report.passed is True
     assert any(
-        issue.severity is Severity.WARNING and issue.code == "prices_suspicious_adj_close_move"
+        issue.severity is Severity.INFO and issue.code == "prices_suspicious_adj_close_move"
         for issue in report.issues
     )
 
@@ -176,7 +176,7 @@ def test_validate_data_cache_uses_ticker_return_threshold_overrides(tmp_path: Pa
     assert report.passed is True
     assert "prices_extreme_adj_close_move" not in _issue_codes(report)
     assert any(
-        issue.severity is Severity.WARNING and issue.code == "prices_suspicious_adj_close_move"
+        issue.severity is Severity.INFO and issue.code == "prices_suspicious_adj_close_move"
         for issue in report.issues
     )
 
@@ -425,10 +425,10 @@ def test_validate_data_cache_labels_secondary_self_check_source(tmp_path: Path) 
     markdown = render_data_quality_report(report)
 
     assert report.passed is True
-    assert report.status == "PASS_WITH_WARNINGS"
-    assert issue.severity is Severity.WARNING
+    assert report.status == "PASS"
+    assert issue.severity is Severity.INFO
     assert issue.source == "第二行情源 Marketstack"
-    assert "| 警告 | 第二行情源 Marketstack | prices_non_positive_close |" in markdown
+    assert "| 信息 | 第二行情源 Marketstack | prices_non_positive_close |" in markdown
 
 
 def test_validate_data_cache_can_fail_closed_on_secondary_self_check_when_configured(
@@ -486,6 +486,7 @@ def test_validate_data_cache_warns_when_secondary_adjustment_basis_differs(
     assert report.passed is True
     assert "secondary_prices_adjustment_basis_warning" in _issue_codes(report)
     assert "secondary_prices_adj_close_mismatch" not in _issue_codes(report)
+    assert report.marketstack_reconciliation_records
 
 
 def test_validate_data_cache_fails_missing_required_secondary_source(tmp_path: Path) -> None:

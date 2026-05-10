@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import replace
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 from types import SimpleNamespace
 from typing import cast
@@ -23,6 +23,7 @@ from ai_trading_system.config import (
     load_portfolio,
     load_risk_events,
     load_scoring_rules,
+    load_sec_companies,
     load_universe,
     load_watchlist,
 )
@@ -35,7 +36,14 @@ from ai_trading_system.fundamentals.sec_features import (
 from ai_trading_system.fundamentals.sec_metrics import (
     SEC_FUNDAMENTAL_METRIC_COLUMNS,
     PeriodType,
+    SecFundamentalMetricRow,
     SecFundamentalMetricsCsvValidationReport,
+    load_sec_fundamental_metric_rows_csv,
+    write_sec_fundamental_metric_rows_csv,
+)
+from ai_trading_system.fundamentals.tsm_ir import (
+    TsmIrQuarterlyMetricRow,
+    tsm_ir_quarterly_metric_rows_to_frame,
 )
 from ai_trading_system.portfolio_exposure import (
     PortfolioExposureReport,
@@ -1008,6 +1016,92 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     )
     assert lookup_result.exit_code == 0
     assert "最终 AI 仓位" in lookup_result.output
+
+
+def test_score_daily_tsm_ir_merge_helper_replaces_tsm_quarterly_rows(
+    tmp_path: Path,
+) -> None:
+    sec_companies_path = tmp_path / "sec_companies.yaml"
+    sec_companies_path.write_text(
+        """
+companies:
+  - ticker: TSM
+    cik: "0001046179"
+    company_name: Taiwan Semiconductor Manufacturing Company Limited
+    sec_metric_periods:
+      - annual
+      - quarterly
+    expected_taxonomies:
+      - ifrs-full
+""",
+        encoding="utf-8",
+    )
+    sec_companies = load_sec_companies(sec_companies_path)
+    sec_path = tmp_path / "sec_fundamentals.csv"
+    tsm_path = tmp_path / "tsm_ir_quarterly_metrics.csv"
+    source_path = tmp_path / "tsm_management_report.txt"
+
+    write_sec_fundamental_metric_rows_csv(
+        (
+            SecFundamentalMetricRow(
+                as_of=date(2026, 5, 10),
+                ticker="TSM",
+                cik="0001046179",
+                company_name="Taiwan Semiconductor Manufacturing Company Limited",
+                metric_id="revenue",
+                metric_name="Revenue",
+                period_type="quarterly",
+                fiscal_year=2026,
+                fiscal_period="Q1",
+                end_date=date(2026, 3, 31),
+                filed_date=date(2026, 4, 16),
+                form="6-K",
+                taxonomy="ifrs-full",
+                concept="Revenue",
+                unit="TWD_billions",
+                value=1.0,
+                accession_number="old-tsm-quarter",
+                source_path=source_path,
+            ),
+        ),
+        sec_path,
+    )
+    tsm_ir_quarterly_metric_rows_to_frame(
+        (
+            TsmIrQuarterlyMetricRow(
+                as_of=date(2026, 5, 10),
+                ticker="TSM",
+                fiscal_year=2026,
+                fiscal_period="Q1",
+                end_date=date(2026, 3, 31),
+                filed_date=date(2026, 4, 16),
+                captured_at=datetime(2026, 5, 10, 12, tzinfo=UTC),
+                metric_id="revenue",
+                metric_name="Revenue",
+                period_type="quarterly",
+                unit="TWD_billions",
+                value=839.25,
+                source_url="https://investor.tsmc.com/english/quarterly-results/2026/q1",
+                source_path=source_path,
+                source_id="tsm_ir_2026_q1",
+                checksum_sha256="a" * 64,
+            ),
+        )
+    ).to_csv(tsm_path, index=False)
+
+    cli_module._merge_tsm_ir_for_daily_score(
+        sec_fundamentals_path=sec_path,
+        tsm_ir_path=tsm_path,
+        sec_companies=sec_companies,
+        as_of=date(2026, 5, 10),
+    )
+
+    rows = load_sec_fundamental_metric_rows_csv(sec_path)
+    assert len(rows) == 1
+    assert rows[0].ticker == "TSM"
+    assert rows[0].form == "TSM-IR"
+    assert rows[0].value == 839.25
+    assert rows[0].accession_number.endswith(":FY2026Q1")
 
 
 def _risk_event_occurrence_review_report(

@@ -163,6 +163,7 @@ from ai_trading_system.data.market_data import (
 from ai_trading_system.data.quality import (
     DataQualityReport,
     default_quality_report_path,
+    marketstack_reconciliation_path,
     validate_data_cache,
     write_data_quality_report,
 )
@@ -2602,7 +2603,14 @@ def validate_data(
     status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
     console.print(f"[{status_style}]数据质量状态：{report.status}[/{status_style}]")
     console.print(f"报告：{report_path}")
-    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
+    if report.marketstack_reconciliation_records:
+        reconciliation_path = marketstack_reconciliation_path(report_path)
+        console.print(f"Marketstack reconciliation：{reconciliation_path}")
+    console.print(
+        f"错误数：{report.error_count}；"
+        f"警告数：{report.warning_count}；"
+        f"信息数：{report.info_count}"
+    )
 
     if not report.passed:
         raise typer.Exit(code=1)
@@ -8831,6 +8839,22 @@ def score_daily(
         Path | None,
         typer.Option(help="SEC 基本面指标 CSV 输入路径，用于日报基本面评分。"),
     ] = None,
+    tsm_ir_quarterly_metrics_path: Annotated[
+        Path,
+        typer.Option(
+            help=(
+                "TSMC IR 季度指标 CSV；存在时日报会按 as-of 合并到 "
+                "SEC-style 指标后再校验。"
+            )
+        ),
+    ] = PROJECT_ROOT / "data" / "processed" / "tsm_ir_quarterly_metrics.csv",
+    tsm_ir_merge: Annotated[
+        bool,
+        typer.Option(
+            "--tsm-ir-merge/--skip-tsm-ir-merge",
+            help="是否在日报基本面校验前合并 TSMC IR 季度指标。",
+        ),
+    ] = True,
     sec_fundamental_features_path: Annotated[
         Path | None,
         typer.Option(help="SEC 基本面特征 CSV 输出路径，用于日报基本面评分。"),
@@ -9209,6 +9233,13 @@ def score_daily(
         raise typer.Exit(code=1)
     sec_companies = load_sec_companies(sec_companies_path)
     sec_metrics = load_fundamental_metrics(sec_metrics_path)
+    if tsm_ir_merge:
+        _merge_tsm_ir_for_daily_score(
+            sec_fundamentals_path=sec_fundamentals_input,
+            tsm_ir_path=tsm_ir_quarterly_metrics_path,
+            sec_companies=sec_companies,
+            as_of=score_date,
+        )
     sec_metrics_validation_report = validate_sec_fundamental_metrics_csv(
         companies=sec_companies,
         metrics=sec_metrics,
@@ -9712,6 +9743,47 @@ def score_daily(
         "规则版本："
         f"{daily_rule_version_manifest['production_rule_count']} 个 production rule cards"
         f"（{rule_governance_report.status}）"
+    )
+
+
+def _merge_tsm_ir_for_daily_score(
+    *,
+    sec_fundamentals_path: Path,
+    tsm_ir_path: Path,
+    sec_companies: object,
+    as_of: date,
+) -> None:
+    tsm_ir_required = any(
+        company.active
+        and company.ticker.upper() == "TSM"
+        and "quarterly" in company.sec_metric_periods
+        for company in sec_companies.companies
+    )
+    if not tsm_ir_required or not tsm_ir_path.exists():
+        return
+
+    all_tsm_rows = load_tsm_ir_quarterly_metric_rows_csv(tsm_ir_path)
+    selected_tsm_rows = select_tsm_ir_quarterly_metric_rows_as_of(all_tsm_rows, as_of)
+    if not selected_tsm_rows:
+        return
+
+    try:
+        existing_rows = load_sec_fundamental_metric_rows_csv(sec_fundamentals_path)
+        merged_rows = merge_tsm_ir_quarterly_rows_into_sec_metrics_as_of(
+            existing_rows=existing_rows,
+            tsm_rows=all_tsm_rows,
+            tsm_company=sec_companies,
+            as_of=as_of,
+        )
+    except ValueError as exc:
+        console.print("[red]TSMC IR 日报基本面合并失败，已停止每日评分。[/red]")
+        console.print(str(exc))
+        raise typer.Exit(code=1) from exc
+
+    write_sec_fundamental_metric_rows_csv(merged_rows, sec_fundamentals_path)
+    console.print(
+        "TSMC IR 已合并到 SEC-style 基本面指标："
+        f"{sec_fundamentals_path}（TSM 行数 {len(selected_tsm_rows)}）"
     )
 
 

@@ -244,6 +244,7 @@ def build_daily_ops_plan(
         as_of,
     )
     sec_metrics_csv = default_sec_fundamental_metrics_csv_path(processed_dir, as_of)
+    tsm_ir_metrics_csv = processed_dir / "tsm_ir_quarterly_metrics.csv"
     sec_metrics_report = default_sec_fundamental_metrics_report_path(
         reports_dir,
         as_of,
@@ -437,6 +438,38 @@ def build_daily_ops_plan(
                     None
                     if include_sec_fundamentals
                     else "显式跳过 SEC metrics 抽取，score-daily 只能校验既有当日 CSV。"
+                ),
+            ),
+            DailyOpsStep(
+                step_id="tsm_ir_sec_metrics_merge",
+                title="合并 TSMC IR 季度指标",
+                command=(
+                    (
+                        "aits",
+                        "fundamentals",
+                        "merge-tsm-ir-sec-metrics",
+                        "--as-of",
+                        as_of_text,
+                    )
+                    if include_sec_fundamentals
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(
+                    tsm_ir_metrics_csv,
+                    sec_metrics_csv,
+                    sec_metrics_validation_report,
+                ),
+                quality_gate=(
+                    "按 as-of 选择已披露的 TSMC IR 官方季度 Management Report 指标，"
+                    "合并到当日 SEC-style metrics 后再进入统一校验；缺失或转换失败时阻断下游。"
+                ),
+                blocks_downstream=True,
+                enabled=include_sec_fundamentals,
+                skip_reason=(
+                    None
+                    if include_sec_fundamentals
+                    else "显式跳过 SEC fundamentals，TSMC IR 合并也不执行。"
                 ),
             ),
             DailyOpsStep(

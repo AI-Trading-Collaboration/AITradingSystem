@@ -1,0 +1,55 @@
+thesis_id: intc_foundry_turnaround_2026_q2
+ticker: INTC
+direction: long
+created_at: 2026-05-10
+time_horizon: long
+position_scope: core_ai_bucket
+entry_reason:
+  - Intel offers optionality on foundry recovery, process execution, and AI/CPU platform stabilization.
+  - The thesis has lower confidence than leading AI beneficiaries and requires strict execution evidence.
+ai_chain_nodes:
+  - gpu_asic_demand
+  - foundry_demand
+  - semiconductor_equipment
+validation_metrics:
+  - metric_id: margin_and_cash_flow_repair
+    description: Gross margin, operating margin, and CapEx intensity should show credible stabilization.
+    evidence_source: sec_fundamental_features_2026-05-10
+    expected_direction: losses_and_capex_pressure_improve
+    latest_status: pending
+    updated_at: 2026-05-10
+    notes: "当前结构化跟踪已建立，但改善尚需后续季度确认。"
+  - metric_id: foundry_customer_progress
+    description: External foundry customer wins and process milestones should become more visible.
+    evidence_source: manual_earnings_and_foundry_review
+    expected_direction: milestones_confirmed
+    latest_status: pending
+    updated_at: 2026-05-10
+    notes: "需 owner 复核 foundry disclosure 和 process roadmap。"
+falsification_conditions:
+  - condition_id: foundry_milestones_slip
+    description: Foundry process milestones or external customer commitments slip materially.
+    severity: critical
+    triggered: false
+  - condition_id: losses_accelerate
+    description: Operating losses or cash burn worsen without credible recovery path.
+    severity: high
+    triggered: false
+risk_events:
+  - risk_id: ai_chip_export_control_upgrade
+    level: L2
+    description: Export controls can alter accelerator or foundry customer demand.
+    action: monitor_only_until_direct_impact_confirmed
+    active: false
+    updated_at: 2026-05-10
+review_frequency: weekly
+status: active
+previous_status:
+status_updated_at: 2026-05-10
+status_reason: "Owner requested active core ticker thesis coverage."
+status_evidence: "sec_fundamental_features_2026-05-10"
+manual_review_required: false
+notes: >
+  Baseline active thesis with explicitly lower confidence. It should not be
+  treated as equivalent to a high-confidence AI leader thesis without confirmed
+  execution improvement.

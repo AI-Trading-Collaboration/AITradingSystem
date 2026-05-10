@@ -1,0 +1,55 @@
+thesis_id: tsm_ai_foundry_packaging_2026_q2
+ticker: TSM
+direction: long
+created_at: 2026-05-10
+time_horizon: medium
+position_scope: core_ai_bucket
+entry_reason:
+  - AI accelerator demand should support advanced-node foundry utilization and advanced packaging demand.
+  - The thesis depends on CoWoS/advanced packaging capacity, customer demand visibility, and geopolitical risk remaining manageable.
+ai_chain_nodes:
+  - foundry_demand
+  - advanced_packaging
+  - gpu_asic_demand
+validation_metrics:
+  - metric_id: tsm_ir_quarterly_coverage
+    description: Official TSMC IR quarterly metrics must remain available and merged into SEC-style features.
+    evidence_source: tsm_ir_quarterly_metrics_and_sec_fundamental_features_2026-05-10
+    expected_direction: official_ir_coverage_current
+    latest_status: confirmed
+    updated_at: 2026-05-10
+    notes: "2026-05-10 merge-tsm-ir-sec-metrics 与 build-sec-features 均 PASS。"
+  - metric_id: advanced_packaging_demand
+    description: Advanced packaging and foundry demand should remain supported by AI accelerator orders.
+    evidence_source: manual_ir_and_industry_review
+    expected_direction: demand_visibility_remains_strong
+    latest_status: pending
+    updated_at: 2026-05-10
+    notes: "需随 TSMC IR、月度营收和客户订单证据复核。"
+falsification_conditions:
+  - condition_id: ai_foundry_utilization_breaks
+    description: AI-related foundry or advanced packaging utilization weakens materially for two reporting periods.
+    severity: high
+    triggered: false
+  - condition_id: geopolitical_gate_activates
+    description: Policy/geopolitical event becomes active and directly constrains TSM production, shipment, or customer access.
+    severity: critical
+    triggered: false
+risk_events:
+  - risk_id: ai_chip_export_control_upgrade
+    level: L2
+    description: Export control escalation can affect AI accelerator customers and supply-chain demand.
+    action: review_position_and_thesis_if_active
+    active: false
+    updated_at: 2026-05-10
+review_frequency: weekly
+status: active
+previous_status:
+status_updated_at: 2026-05-10
+status_reason: "Owner requested active core ticker thesis coverage."
+status_evidence: "tsm_ir_quarterly_metrics.csv; sec_fundamental_features_2026-05-10"
+manual_review_required: false
+notes: >
+  Baseline active thesis. TSM uses official TSMC IR quarterly metrics for
+  quarterly fundamentals; missing U.S. SEC companyfacts quarters alone should
+  not be treated as thesis evidence failure.
