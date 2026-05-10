@@ -5211,6 +5211,7 @@ def daily_ops_run_command(
         as_of=plan_date,
         legacy_reports_dir=reports_dir,
         paths=run_paths,
+        min_modified_at=run_report.started_at,
     )
     if legacy_mode == "mirror":
         legacy_outputs = mirror_canonical_daily_ops_outputs_to_legacy(

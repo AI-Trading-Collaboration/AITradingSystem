@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from datetime import UTC, date, datetime
 from pathlib import Path
 
@@ -123,3 +124,39 @@ def test_run_manifest_checksums_and_mirrors_without_payload_text(
     assert manifest["legacy_output_mode"] == "mirror"
     assert "SECRET_SHOULD_NOT_APPEAR" not in manifest_text
     assert "RAW_STDERR" not in manifest_text
+
+
+def test_mirror_legacy_reports_to_run_ignores_stale_same_date_outputs(
+    tmp_path: Path,
+) -> None:
+    paths = prepare_run_directories(
+        build_run_artifact_paths(
+            as_of=date(2026, 5, 10),
+            run_id="daily_ops_run:2026-05-10:test",
+            output_root=tmp_path / "runs",
+        )
+    )
+    legacy_reports_dir = tmp_path / "outputs" / "reports"
+    stale_dashboard = legacy_reports_dir / "evidence_dashboard_2026-05-10.html"
+    fresh_health = legacy_reports_dir / "pipeline_health_2026-05-10.md"
+    for path, text in (
+        (stale_dashboard, "<html>old dashboard</html>\n"),
+        (fresh_health, "# current health\n"),
+    ):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    run_started_at = datetime(2026, 5, 10, 16, 0, tzinfo=UTC)
+    os.utime(stale_dashboard, (run_started_at.timestamp() - 10, run_started_at.timestamp() - 10))
+    os.utime(fresh_health, (run_started_at.timestamp() + 10, run_started_at.timestamp() + 10))
+
+    copied = mirror_legacy_reports_to_run(
+        as_of=date(2026, 5, 10),
+        legacy_reports_dir=legacy_reports_dir,
+        paths=paths,
+        min_modified_at=run_started_at,
+    )
+
+    assert paths.reports_dir / "pipeline_health_2026-05-10.md" in copied
+    assert (paths.reports_dir / "pipeline_health_2026-05-10.md").exists()
+    assert not (paths.reports_dir / "evidence_dashboard_2026-05-10.html").exists()

@@ -118,14 +118,22 @@ def mirror_legacy_reports_to_run(
     as_of: date,
     legacy_reports_dir: Path,
     paths: RunArtifactPaths,
+    min_modified_at: datetime | None = None,
 ) -> tuple[Path, ...]:
     if not legacy_reports_dir.exists():
         return ()
+    min_modified_timestamp = None if min_modified_at is None else min_modified_at.timestamp()
     as_of_text = as_of.isoformat()
     mirrored: list[Path] = []
     for source in sorted(legacy_reports_dir.rglob("*")):
         if not source.is_file() or as_of_text not in source.name:
             continue
+        if min_modified_timestamp is not None:
+            try:
+                if source.stat().st_mtime < min_modified_timestamp:
+                    continue
+            except OSError:
+                continue
         if source.name.startswith(
             (
                 "daily_ops_plan_",
