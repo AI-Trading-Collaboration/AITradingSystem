@@ -18,7 +18,7 @@ Federal Reserve H.10 外汇统计发布，页面说明通常在周一 4:15 p.m. 
 - 放宽 `DTWEXBGS` 的 freshness 规则，使其符合 H.10 周度发布机制。
 - 不降低 `DGS2`、`DGS10` 等利率序列的 freshness 要求。
 - 在配置、测试和系统流图中明确这是 series 级规则，不是临时绕过。
-- 记录可选第二数据源和成本边界，供 owner 后续决策。
+- 记录可选第二数据源和成本边界；owner 2026-05-10 已决定暂无新增 macro/price qualified source 计划。
 
 ## 设计决策
 
@@ -43,6 +43,8 @@ Federal Reserve H.10 外汇统计发布，页面说明通常在周一 4:15 p.m. 
 | Bloomberg / Refinitiv / FactSet / Macrobond | 高，通常 contact sales | 中 | 可能改善 SLA 和授权 | 除非系统整体进入生产级预算，否则不建议只为单个美元 proxy 采购。 |
 | Alpha Vantage / 类似低价 FX API | 免费层或低价 premium | 中 | 只能辅助自建 FX proxy，不能直接替代 `DTWEXBGS` | 适合作为实验，不适合作为官方 broad USD index 替代。 |
 
+2026-05-10 owner 决策：当前继续使用 FRED `DTWEXBGS`，不接入额外宏观第二来源或自建 FX proxy。上述选项保留为未来重新打开 `PROD-003` 时的评估材料；现阶段不得用临时数据源伪装为宏观双源 reconciliation。
+
 ## 验收标准
 
 - `DTWEXBGS` 最新值距评估日 8 到 14 个日历日时不再触发 `rates_stale`。
@@ -61,3 +63,4 @@ Federal Reserve H.10 外汇统计发布，页面说明通常在周一 4:15 p.m. 
   `PASS_WITH_WARNINGS`，错误数 0、警告数 11。验证通过
   `ruff check src tests`、`pytest -q tests/test_config.py tests/test_data_quality.py`
   、完整 `pytest -q`、`aits data-sources validate` 和 `git diff --check`。
+- 2026-05-10：owner 确认继续使用现有 FMP + Marketstack + FRED，暂无引入第二个更可靠 macro/price qualified source 计划；`DTWEXBGS` freshness policy 继续作为 FRED 单源宏观输入的显式质量规则。

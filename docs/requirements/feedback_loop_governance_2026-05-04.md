@@ -2,7 +2,7 @@
 
 状态：IN_PROGRESS
 
-最后更新：2026-05-04
+最后更新：2026-05-10
 
 关联任务：`EVIDENCE-001`、`CAUSE-001`、`LEARNING-001`、`EXPERIMENT-001`、`LOOP-001`、`FEEDBACK-001`、`FEEDBACK-002`、`UNIVERSE-001`、`DATA-002`、`SCENARIO-001`、`CATALYST-001`、`PORTFOLIO-002`、`EXEC-001`、`COST-001`、`PROXY-001`、`GOV-001`、`OPS-001`、`ALERT-001`、`TEST-001`、`STORAGE-001`、`UI-001`、`SECURITY-001`、`DOC-001`
 
@@ -253,6 +253,8 @@
 
 2026-05-04 owner 决策：初版先走低成本框架方案，不直接订阅 Intrinio `US Fundamentals` 等高价年付来源。第一阶段使用 SEC EDGAR、FRED、现有 FMP/Yahoo 和低成本或试用来源搭建 adapter、数据源目录、provider health score、差异报告和未覆盖声明；后续按实际缺口订阅 Intrinio、Sharadar、Databento 或企业级来源。该阶段的完成态只能是 `BASELINE_DONE`，不能把价格、估值、财报、宏观的完整生产级 cross-provider reconciliation 标成 `DONE`。
 
+2026-05-10 owner 决策：继续使用现有 FMP + Marketstack + FRED 组合，暂无引入第二个更可靠 macro/price qualified source 计划。`market_prices` 维持 FMP 主源、Cboe VIX 专用源和 Marketstack 第二行情源的低成本 baseline；`macro_rates` 继续以 FRED 为唯一宏观来源并在报告中保留单源限制，不用 public convenience 或临时来源伪装成合格第二源。
+
 分步开发：
 
 1. 定义 provider health score，覆盖 freshness、schema drift、row count anomaly、checksum change、alias risk、cross-provider deviation、permission status。
@@ -266,7 +268,7 @@
 - 2026-05-04 低成本基础版已完成：新增 `aits data-sources health`，读取 `config/data_sources.yaml` 和 `data/raw/download_manifest.csv`，输出 provider health score、cache path 状态、latest manifest `downloaded_at`/`row_count`/`checksum`、checksum drift、新鲜度和问题表。
 - 报告按 `market_prices`、`macro_rates`、`fundamentals`、`valuation` 输出 qualified source 覆盖状态；少于两个 qualified source 的领域标记为 `NOT_COVERED`，不把单源通过伪装成 cross-provider reconciliation 通过。
 - 2026-05-05 修正健康检查语义：active 来源的 manifest checksum mismatch 继续 fail closed；inactive/diagnostic-only 来源的历史 manifest checksum 漂移降为调查警告，避免旧 Yahoo 记录在 FMP/Cboe 主缓存接管后误阻断 provider health。
-- 当前完成态为 `BASELINE_DONE`：框架、审计字段和失败路径已具备，但完整 `DONE` 仍依赖 owner 提供长期可用第二来源、API key、商业授权/再分发限制和生产口径策略。
+- 当前完成态为 `BASELINE_DONE`：框架、审计字段和失败路径已具备。完整生产级双源 reconciliation 仍需要长期可用第二来源、API key、商业授权/再分发限制和生产口径策略；但 owner 2026-05-10 已决定暂无新增 macro/price source 计划，因此该缺口由 `PROD-003` 改为暂缓，报告继续披露限制。
 
 验收标准：
 
@@ -653,6 +655,7 @@
 - 2026-05-04：`OPS-001` 达到 `BASELINE_DONE`：新增 pipeline health 只读报告和 CLI，检查关键 artifact 并输出排查入口；报告明确运行健康不等于投资结论有效。
 - 2026-05-04：`SECURITY-001` 达到 `BASELINE_DONE`：新增 secret hygiene 扫描 CLI 和脱敏报告；企业级密钥管理、pre-commit/CI 和供应商权限审批仍待后续。
 - 2026-05-04：`DATA-002` 已完成低成本基础版：新增 `aits data-sources health` 和 `outputs/reports/data_sources_health_YYYY-MM-DD.md`，覆盖 provider health score、cache/manifest/row count/checksum/freshness 检查、manifest checksum mismatch 失败，以及 qualified source 不足时的 reconciliation `NOT_COVERED` 声明；owner 已验证 SEC User-Agent、FMP、FRED、Tiingo EOD 和 EODHD Fundamentals 初版权限可访问，EODHD EOD 价格未订阅且价格核验使用 Tiingo；完整 `DONE` 仍依赖生产级第二来源、商业授权/再分发限制和长期口径策略。
+- 2026-05-10：`DATA-002/PROD-003` 成本与授权口径更新：owner 确认继续使用现有 FMP + Marketstack + FRED，暂无引入第二个更可靠 macro/price qualified source 计划；系统应把宏观单源和低成本价格二源限制作为趋势判断限制披露，而不是继续等待供应商选择。
 - 2026-05-04：`UI-001` 进入第一阶段实现；owner 明确第一版主要服务个人复核，优先连接报告结论、论证链、trace evidence 和实际输入数据，风格保持简约。
 - 2026-05-04：`UI-001` 达到 `BASELINE_DONE`：新增 `aits reports dashboard` 静态 HTML 输出，按快速读者、投资复核者和系统审计者分层展示结论、论证链、gate、thesis/risk/valuation 状态、claim/evidence/dataset/quality refs、输入路径、checksum 和 trace lookup；完整 `DONE` 仍需要更完整交互服务、跨日报对比和 reader mode 配置。
 - 2026-05-04：`UNIVERSE-001` 已完成基础实现：新增 `config/watchlist_lifecycle.yaml`、`aits watchlist validate-lifecycle` 和回测 signal_date lifecycle 过滤，测试覆盖尚未进入观察池的 ticker 不参与历史市场特征。

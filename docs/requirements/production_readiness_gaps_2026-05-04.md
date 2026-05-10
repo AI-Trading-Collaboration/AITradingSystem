@@ -2,7 +2,7 @@
 
 状态：DONE
 
-最后更新：2026-05-06
+最后更新：2026-05-10
 
 关联任务：`PROD-001`、`PROD-002`、`PROD-003`、`PROD-004`、`PROD-005`、`PROD-006`、`TREND-001`、`RISK-005`、`RISK-006`、`RISK-007`、`RISK-008`、`DATA-001`、`DATA-002`、`DATA-003`、`BTINPUT-001`、`BACKTEST-001`、`BACKTEST-002`、`CHAIN-001`、`PORTFOLIO-002`、`SCORE-003`、`COST-001`、`GOV-001`、`GOV-002`、`GOV-003`、`SHADOW-002`、`SHADOW-003`、`REPORT-005`
 
@@ -20,7 +20,7 @@
 |2|风险事件发生记录缺少“今日已复核且未发现未记录重大事件”的可审计输入，空目录不能证明没有政策/地缘风险|`RISK-005`、`RISK-006`、`RISK-007`、`RISK-008`、`PROD-002`|工程底座已完成基础版；真实复核 owner、来源清单和运行纪律拆到 `PROD-002`，作为趋势判断生产前置运营任务。|
 |3|估值和盈利预期数据仍受 point-in-time 样本、历史覆盖和 `eps_revision_90d_pct` 覆盖限制|`DATA-001`、`DATA-003`、`BTINPUT-001`、`BACKTEST-002`、`PROD-004`|工程底座已完成历史输入缺口诊断：`aits backtest-input-gaps` 可列出 signal_date 级估值/风险事件覆盖；历史 PIT 采购和历史补数暂不推进，系统继续保留限制声明；`DATA-003` 从当前日期开始积累 forward-only 自建快照，`BACKTEST-002` 负责把历史回测标注为 A/B/C 数据可信度，样本成熟度拆到 `PROD-004`。|
 |4|产业链节点需要把价格热度和基本面/估值/风险/thesis 健康度分开，防止把上涨误读成基本面确认|`CHAIN-001`|节点热度与健康度基础版已完成：日报显示健康覆盖、支持项、风险/限制和数据缺口；回测每日明细和报告也可追踪历史节点状态；完整缺口只剩是否进入仓位约束的后续评估。|
-|5|市场价格和宏观利率 cross-provider reconciliation 不足，少于两个 qualified source 的领域不能视为生产级核对完成|`DATA-002`、`PROD-003`|已由数据源健康报告暴露；第二 qualified source 候选、授权/成本和缓存审计字段拆到 `PROD-003`。|
+|5|市场价格和宏观利率 cross-provider reconciliation 不足，少于两个 qualified source 的领域不能视为生产级核对完成|`DATA-002`、`PROD-003`|已由数据源健康报告暴露；owner 2026-05-10 决策继续使用现有 FMP + Cboe VIX + Marketstack + FRED，暂无新增 macro/price qualified source 计划；缺口改为暂缓并在报告中保留限制声明。|
 |6|回测、校准和前向验证还不足以支撑趋势判断长期信任，需要抗过拟合、参数敏感性、样本外、baseline 对比和真实 outcome 样本|`BACKTEST-001`、`SHADOW-002`、`SHADOW-003`、`REPORT-005`、`PROD-006`|`BACKTEST-001` 已完成稳健性报告；真实 forward shadow/outcome 样本成熟度拆到 `PROD-006`，防止把历史回测或未成熟 shadow 结果误读为规则晋级证据。|
 |7|账户持仓、执行成本和交易审批链不属于当前趋势判断目标|`PORTFOLIO-002`、`SCORE-003`、`COST-001`、`EXEC-001`|保留已完成的只读解释和 advisory 输出，但不作为当前趋势判断就绪的阻塞项；未来若重新要求实际调仓，再提升优先级。|
 |8|规则治理仍停留在 baseline rule card registry，缺少正式 promotion / retirement / owner approval 与规则版本注入|`GOV-001`、`GOV-002`、`GOV-003`、`PROD-005`|工程底座已完成规则版本注入：日报、回测、decision snapshot 和 evidence bundle 记录当前 production rule versions；正式 owner approval 和规则生命周期批准拆到 `PROD-005`。|
@@ -32,7 +32,7 @@
 |任务|主题|阻塞类型|验收重点|
 |---|---|---|---|
 |`PROD-002`|风险事件每日复核运行纪律|owner 输入|有效复核声明、来源范围、过期处理和日报降级边界可审计。|
-|`PROD-003`|市场价格与宏观利率第二 qualified source|owner 输入|`market_prices` 与 `macro_rates` 至少各有两个 qualified source，并能暴露跨源冲突。|
+|`PROD-003`|市场价格与宏观利率第二 qualified source|owner 决策暂缓|暂缓期间维持现有 FMP + Cboe VIX + Marketstack + FRED；价格按 FMP/Marketstack baseline 做核验，宏观不得伪装成双源核验完成。|
 |`PROD-004`|forward-only PIT 估值样本成熟度|时间窗口|自建 PIT 样本覆盖达到可提升估值/预期可信度的条件，历史不足继续降级。|
 |`PROD-005`|规则治理 owner approval|owner 输入|production rule baseline、promotion 和 retirement 具备批准记录与回滚条件。|
 |`PROD-006`|forward shadow 与 outcome 成熟度|时间窗口|真实 prediction outcome 样本达到可评估窗口前，不把 shadow 或回测结果写成规则晋级证据。|
@@ -53,3 +53,4 @@
 - 2026-05-04：`CHAIN-001` 回测历史节点追踪完成基础版，`backtest_daily_*.csv` 写入 top 节点、热度、健康等级和节点数据缺口，回测报告输出“产业链节点历史状态摘要”；该层仍为只读审计解释，不改变评分、仓位闸门或回测仓位。
 - 2026-05-04：owner 决策不购买或伪造历史 PIT estimates/archive；`DATA-001/BTINPUT-001` 保留 baseline 和缺口诊断，不继续推进历史 PIT 采购、历史估值或历史风险事件补数；新增 `DATA-003/BACKTEST-002`，分别承接 forward-only 自建快照归档和历史回测数据可信度/滞后敏感性。
 - 2026-05-06：owner 决策将 `PROD-001` 总控任务改为 `DONE`，原因：该任务牵涉子模块较多，继续挂总任务会掩盖真实阻塞边界；后续拆为 `PROD-002` 至 `PROD-006`，分别承接风险复核运行纪律、第二合格数据源、PIT 样本成熟度、规则治理批准和 forward shadow/outcome 成熟度。
+- 2026-05-10：owner 决策将 `PROD-003` 从等待数据源选择改为暂缓，原因：继续使用现有 FMP + Marketstack + FRED 组合，暂无引入第二个更可靠 macro/price qualified source 计划；系统必须继续披露 `macro_rates` 单源限制和价格 baseline reconciliation 边界。

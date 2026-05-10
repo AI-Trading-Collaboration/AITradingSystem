@@ -1316,7 +1316,8 @@ sources:
     limitations:
       - 供应商尚未确定；现阶段任何自动交易动作都不能依赖该来源。
       - 进入自动评分前必须能映射到 S/A/B 证据等级；B 级只能普通评分，C/D/X 只能报告或人工复核。
-      - provider 授权未知时不得发送全文或长摘录给外部 LLM API。
+      - owner 2026-05-10 已允许个人研究、非商用目的下的已授权 paid vendor 文本进入 OpenAI 预审；但本占位来源 provider 尚未确定，不能用 generic source_id 发送全文。
+      - provider 授权未知时不得发送全文或长摘录给外部 LLM API；实际使用必须新增具体 provider 记录，或在请求级 source-permission envelope 中声明授权边界。
     llm_permission:
       license_scope: provider_not_selected
       personal_use_only: true
@@ -1326,7 +1327,7 @@ sources:
       max_content_sent_level: metadata_only
       approval_ref: provider_not_selected_2026-05-04
       reviewed_at: 2026-05-04
-    owner_notes: 进入评分前必须支持引用、去重、人工复核和 source policy grade。
+    owner_notes: 进入评分前必须支持引用、去重、人工复核和 source policy grade；paid vendor 文本进入 OpenAI 预审时使用 approval_ref `owner_personal_research_paid_vendor_llm_2026-05-10` 或更具体的 provider 授权引用。
 
   - source_id: openai_llm_claim_prereview
     provider: OpenAI
