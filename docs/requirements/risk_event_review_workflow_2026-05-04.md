@@ -155,7 +155,7 @@ API 使用边界：
 - 新增 `aits risk-events precheck-openai` 或等价 CLI，读取 source-permission envelope 或数据源目录中的 `llm_permission`。
 - OpenAI live 预审默认使用 `gpt-5.5` 和 `reasoning.effort=high`；单请求失败最多重试 2 次，第 3 次仍失败时整批 fail closed；CLI 可显式覆盖用于对比实验，但队列和报告必须记录实际 model 与 reasoning effort。
 - provider 授权未知、`external_llm_allowed=false` 或 live 请求要求本地归档但 `cache_allowed=false` 时 fail closed，不发起 API 请求，不写入队列。
-- API 请求使用固定结构化输出和 `store=false`，记录 model、reasoning effort、prompt version、OpenAI request/response id、输入/输出 checksum、source URL、source permission、request timestamp 和 cache HIT/MISS。
+- API 请求使用固定结构化输出和 `store=false`，记录 model、reasoning effort、prompt version、OpenAI request/response id、provider/api family、输入/输出 checksum、source URL、source permission、request timestamp 和 cache HIT/MISS；缓存底座使用通用 agent request cache，便于后续接入其他 agent。
 - 只把 `risk_event` claim 或含风险事件候选的输出转换成 `risk_event_prereview_queue.json` 记录。
 - 转换后的记录强制为 `source_type=llm_extracted`、`manual_review_status=pending_review`，不得自动评分、触发仓位闸门或写入正式 occurrence。
 - 中文报告区分 live API 预审、待人工复核候选和不可执行边界。
@@ -164,7 +164,7 @@ API 使用边界：
 ### 第二阶段实现进展
 
 - 新增 `aits risk-events precheck-openai`，读取与 `aits llm precheck-claims` 相同的 JSON/YAML source-permission 输入。
-- live API 调用复用 `LLM-001` 的 provider LLM 权限检查、Responses API Structured Outputs、`store=false`、request id/response id、输入/输出 checksum、model、reasoning effort 和短 TTL 本地 request cache 审计。
+- live API 调用复用 `LLM-001` 的 provider LLM 权限检查、Responses API Structured Outputs、`store=false`、request id/response id、输入/输出 checksum、model、reasoning effort 和短 TTL 本地 agent request cache 审计。
 - 新增从 LLM claim report 到 `risk_event_prereview_queue.json` 的转换，只保留 `risk_event` claim 或带风险事件候选的输出。
 - 队列记录新增 `source_kind=openai_live`、`source_input_path`、`source_input_checksum_sha256`、`response_id`、`client_request_id` 和 `source_permission`；仍保留 CSV 导入兼容字段。
 - 中文报告会区分 CSV 导入和 live API 预审；live 报告说明 Responses API 调用边界和 `llm_extracted / pending_review` 隔离。

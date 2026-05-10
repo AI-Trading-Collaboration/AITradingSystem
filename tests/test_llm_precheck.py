@@ -21,6 +21,7 @@ from ai_trading_system.llm_precheck import (
     DEFAULT_OPENAI_LLM_MODEL,
     DEFAULT_OPENAI_MAX_RETRIES,
     DEFAULT_OPENAI_REASONING_EFFORT,
+    DEFAULT_OPENAI_REQUEST_CACHE_DIR,
     DEFAULT_OPENAI_TIMEOUT_SECONDS,
     OPENAI_LLM_CLAIM_RESPONSE_FORMAT,
     LlmClaimPrecheckInput,
@@ -76,6 +77,7 @@ def test_openai_precheck_defaults_are_daily_safe() -> None:
     assert DEFAULT_OPENAI_TIMEOUT_SECONDS == 120.0
     assert DEFAULT_OPENAI_MAX_RETRIES == 2
     assert DEFAULT_OPENAI_HTTP_CLIENT == "requests"
+    assert DEFAULT_OPENAI_REQUEST_CACHE_DIR == Path("data/processed/agent_request_cache")
 
 
 def test_llm_claim_precheck_rejects_unsupported_reasoning_effort(
@@ -267,8 +269,11 @@ def test_openai_claim_precheck_reuses_recent_request_cache(tmp_path: Path) -> No
     assert second_report.records[0].request_id == calls[0]
     cache_text = Path(first_report.records[0].cache_path).read_text(encoding="utf-8")
     cache_payload = json.loads(cache_text)
+    assert cache_payload["schema_version"] == "agent_request_cache.v1"
     assert cache_payload["provider"] == "openai"
     assert cache_payload["api_family"] == "responses"
+    assert cache_payload["provider_request_id"] == calls[0]
+    assert cache_payload["client_name"] == "custom"
     assert cache_payload["request"]["headers"]["Authorization"] == "Bearer ***"
     assert "sk-test" not in cache_text
     assert list((cache_dir / "archive" / "openai" / "responses" / "2026-05-04").glob("*.json"))

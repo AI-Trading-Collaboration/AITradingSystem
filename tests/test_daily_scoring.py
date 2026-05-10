@@ -686,7 +686,7 @@ def test_risk_event_openai_daily_section_includes_transport_client() -> None:
         reasoning_effort="high",
         timeout_seconds=120.0,
         http_client="requests",
-        cache_dir=Path("data/processed/openai_request_cache"),
+        cache_dir=Path("data/processed/agent_request_cache"),
         cache_ttl_hours=24.0,
         max_candidates=20,
     )

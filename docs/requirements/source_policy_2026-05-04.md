@@ -26,7 +26,7 @@ OpenAI API 可以用于风险事件和市场证据的预审，但预审输出在
 - 如果 OpenAI 预审结果和 deterministic source policy 冲突，以 source policy 的保守规则为准。
 - 付费新闻或供应商内容可以在 owner 个人投资决策支持目的下进入 OpenAI 预审，但必须先在数据源目录或请求 envelope 中显式记录 provider、授权范围、`external_llm_allowed`、`cache_allowed`、`redistribution_allowed`、`content_sent_level` 和 `approval_ref`。
 - 如果供应商授权未知或 `external_llm_allowed=false`，系统不得发送供应商全文或长摘录给外部 LLM API；最多只能在授权允许时发送元数据或人工摘要，并保留 checksum 与人工复核记录。
-- 2026-05-10 后，live OpenAI 自动请求还要求 `cache_allowed=true`，因为所有实际发送的 request/response 都必须写入本地审计缓存；如果来源不允许本地缓存归档，应 fail closed 而不是发送后丢失详细记录。
+- 2026-05-10 后，live external agent/LLM 自动请求还要求 `cache_allowed=true`；当前首个接入方是 OpenAI Responses API，但约束适用于后续其他 agent。原因是所有实际发送的 request/response 都必须写入本地审计缓存；如果来源不允许本地缓存归档，应 fail closed 而不是发送后丢失详细记录。
 
 风险事件的完整预审与人工复核流程见 `docs/requirements/risk_event_review_workflow_2026-05-04.md`。
 
@@ -73,3 +73,4 @@ OpenAI API 可以用于风险事件和市场证据的预审，但预审输出在
 - 2026-05-04：owner 确认付费新闻/供应商内容可在个人使用目的下进入 OpenAI 预审；source policy 仍要求 provider 级外部 LLM 授权标记，未知授权 fail closed，避免把个人使用目的误当成所有供应商条款的通用许可。
 - 2026-05-04：`LLM-001` 第一阶段实现把 provider LLM 授权落到 `config/data_sources.yaml` 的 `llm_permission`，并由 `aits llm precheck-claims` 在调用 OpenAI 前执行 fail closed 检查；待复核队列只保存结构化 claim、权限 envelope、request id、model、reasoning effort、prompt version 和 checksum，不保存未授权全文。2026-05-04：owner 指定默认 OpenAI 请求策略为 `gpt-5.5` 和 `reasoning.effort=high`。2026-05-05：owner 批准单请求失败最多重试 2 次，仍失败时 fail closed。
 - 2026-05-10：owner 重新确认在个人研究、非商用目的下，允许已授权的 paid vendor 文本进入 OpenAI 预审。执行边界不变：必须由 provider 级 `llm_permission` 或请求级 source-permission envelope 显式记录 `external_llm_allowed=true`、`content_sent_level`、`cache_allowed`、`redistribution_allowed`、`approval_ref` 和 `reviewed_at`；推荐使用 `approval_ref=owner_personal_research_paid_vendor_llm_2026-05-10`。授权未知或配置仍为 `external_llm_allowed=false` 时继续 fail closed。
+- 2026-05-10：缓存边界抽象为 `agent_request_cache`，OpenAI Responses 是首个 adapter；未来接入其他 agent 时仍必须复用 `cache_allowed`、本地归档、secret 脱敏和 provider/api family 审计字段。
