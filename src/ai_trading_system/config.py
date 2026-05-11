@@ -746,6 +746,11 @@ class DataConfidencePositionGateConfig(BaseModel):
     placeholder_max_position: float = Field(default=0.80, ge=0, le=1)
 
 
+class SourceTypeConfidenceConfig(BaseModel):
+    llm_formal_assessment: float = Field(default=0.65, ge=0, le=1)
+    partial_llm_formal_assessment: float = Field(default=0.55, ge=0, le=1)
+
+
 class PositionGateRulesConfig(BaseModel):
     valuation: ValuationPositionGateConfig = Field(
         default_factory=ValuationPositionGateConfig
@@ -768,6 +773,9 @@ class ScoringRulesConfig(BaseModel):
     placeholders: dict[str, PlaceholderScoreConfig]
     position_change: PositionChangeConfig
     position_gates: PositionGateRulesConfig = Field(default_factory=PositionGateRulesConfig)
+    source_type_confidence: SourceTypeConfidenceConfig = Field(
+        default_factory=SourceTypeConfidenceConfig
+    )
 
 
 def load_universe(path: Path | str = DEFAULT_CONFIG_PATH) -> UniverseConfig:

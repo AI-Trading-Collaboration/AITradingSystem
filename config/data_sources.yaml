@@ -564,7 +564,7 @@ sources:
       - public_convenience_exclusion
     limitations:
       - 手工发生记录只说明已审计的触发事件；空目录不能证明当前没有政策或地缘风险。
-      - 当前有效复核声明只说明人工复核覆盖窗口和列出的来源范围，不能替代后续 active/watch 发生记录。
+      - 当前有效复核声明只说明人工或 LLM formal 评估覆盖窗口和列出的来源范围，不能替代后续 active/watch 发生记录。
       - public_convenience 证据只能作为辅助线索，不能单独进入评分。
       - 保守 source policy 下，S/A 级 active 风险证据可支持普通评分和仓位闸门；B 级只可进入普通评分；C/D/X 只能进入报告或人工复核。
     owner_notes: 日报政策/地缘评分只读取已通过校验的发生记录，不读取监控规则的 active 字段。
@@ -608,8 +608,9 @@ sources:
       - authoritative_source_scope
       - review_due_freshness
     limitations:
-      - 复核声明只代表指定窗口和来源范围内的人工检查结果；不是自动风险消除证明。
+      - 复核声明只代表指定窗口和来源范围内的人工检查或 LLM formal 评估结果；不是自动风险消除证明。
       - 只有覆盖 as_of、未过期、结论为 confirmed_no_unrecorded_material_events 且来源范围合格时，才允许政策/地缘模块摆脱 insufficient_data。
+      - LLM formal attestation 可按 owner 2026-05-12 决策作为可信结论缓解低置信，但必须显示为 llm_formal_assessment，不能伪装成人工复核或单独触发 position gate。
       - 复核声明不会触发仓位闸门，也不会覆盖已记录的 active/watch 发生记录。
     owner_notes: 系统不得自动代填真实声明；CLI 只在用户显式提供复核人、来源范围和理由时写入。
 

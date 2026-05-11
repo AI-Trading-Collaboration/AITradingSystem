@@ -329,8 +329,11 @@ def test_build_daily_score_report_labels_llm_formal_assessment_attestation() -> 
     assert policy.source_type == "llm_formal_assessment"
     assert policy.coverage == 1.0
     assert policy.score == 100.0
-    assert policy.confidence == 0.55
+    assert policy.confidence == 0.65
     assert "LLM formal assessment" in policy.reason
+    assert "低置信度模块：政策/地缘" not in "；".join(
+        report.confidence_assessment.reasons
+    )
 
 
 def test_risk_budget_gate_caps_high_vix_market_stress() -> None:
@@ -694,6 +697,17 @@ def test_risk_event_openai_daily_section_includes_transport_client() -> None:
             "outputs/reports/risk_event_prereview_openai.md"
         ),
         risk_event_prereview_queue_path=Path("data/processed/risk_event_prereview_queue.json"),
+        llm_formal_report=SimpleNamespace(
+            status="PASS_WITH_WARNINGS",
+            occurrence_count=3,
+            active_occurrence_count=1,
+            watch_occurrence_count=2,
+            attestation=object(),
+        ),
+        risk_event_llm_formal_report_output=Path(
+            "outputs/reports/risk_event_llm_formal_assessment.md"
+        ),
+        llm_formal_enabled=True,
         model="gpt-5.5",
         reasoning_effort="high",
         timeout_seconds=120.0,
@@ -707,7 +721,9 @@ def test_risk_event_openai_daily_section_includes_transport_client() -> None:
     assert "- OpenAI 请求缓存 TTL：24 小时" in section
     assert "HIT=2 / MISS=18" in section
     assert "- 待人工复核队列记录数：7" in section
-    assert "backlog-only" in section
+    assert "- LLM formal 自动写入：是" in section
+    assert "- LLM formal occurrence 数：3" in section
+    assert "LLM formal trusted by owner" in section
     assert "`execution_policy.manual_review_gate_ids`" in section
     assert "不会单独把执行动作改成 `wait_manual_review`" in section
 

@@ -8935,6 +8935,35 @@ def score_daily(
         Path | None,
         typer.Option(help="Markdown 风险事件 OpenAI 自动预审报告输出路径。"),
     ] = None,
+    risk_event_llm_formal_assessment: Annotated[
+        bool,
+        typer.Option(
+            "--risk-event-llm-formal-assessment/--skip-risk-event-llm-formal-assessment",
+            help=(
+                "OpenAI 风险事件预审成功后，是否自动写入 LLM formal "
+                "occurrence/attestation 作为政策/地缘正式评估输入。"
+            ),
+        ),
+    ] = True,
+    risk_event_llm_formal_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 风险事件 LLM formal assessment 报告输出路径。"),
+    ] = None,
+    risk_event_llm_formal_min_confidence: Annotated[
+        float,
+        typer.Option(help="低于该 confidence 的 LLM 预审记录不写入正式 occurrence。"),
+    ] = 0.0,
+    risk_event_llm_formal_next_review_days: Annotated[
+        int,
+        typer.Option(help="LLM formal assessment 的下次复核间隔天数。"),
+    ] = 1,
+    risk_event_llm_formal_overwrite: Annotated[
+        bool,
+        typer.Option(
+            "--risk-event-llm-formal-overwrite/--no-risk-event-llm-formal-overwrite",
+            help="日报重复运行同一 as-of 时是否覆盖同名 LLM formal YAML。",
+        ),
+    ] = True,
     official_policy_report_path: Annotated[
         Path | None,
         typer.Option(help="Markdown 官方政策/地缘来源自动抓取报告输出路径。"),
@@ -9152,6 +9181,13 @@ def score_daily(
             score_date,
         )
     )
+    risk_event_llm_formal_report_output = (
+        risk_event_llm_formal_report_path
+        or default_llm_formal_assessment_report_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            score_date,
+        )
+    )
 
     data_quality_report = validate_data_cache(
         prices_path=prices_path,
@@ -9358,6 +9394,7 @@ def score_daily(
         raise typer.Exit(code=1)
     official_policy_fetch_report = None
     risk_event_prereview_report = None
+    llm_formal_report = None
     if risk_event_openai_precheck:
         if risk_event_openai_precheck_max_candidates < 0:
             raise typer.BadParameter("OpenAI 风险事件预审候选上限不能为负数。")
@@ -9365,6 +9402,13 @@ def score_daily(
             raise typer.BadParameter("OpenAI 风险事件预审超时秒数必须为正数。")
         if openai_cache_ttl_hours <= 0:
             raise typer.BadParameter("OpenAI 请求缓存 TTL 小时数必须为正数。")
+        if (
+            risk_event_llm_formal_min_confidence < 0
+            or risk_event_llm_formal_min_confidence > 1
+        ):
+            raise typer.BadParameter("LLM formal min confidence 必须在 0 到 1 之间。")
+        if risk_event_llm_formal_next_review_days < 0:
+            raise typer.BadParameter("LLM formal next review days 不能为负数。")
         if not os.getenv(openai_api_key_env, ""):
             console.print("[red]缺少 OpenAI API key，已停止日报前风险事件预审。[/red]")
             console.print(f"需要环境变量：{openai_api_key_env}")
@@ -9445,6 +9489,45 @@ def score_daily(
         console.print(f"官方来源抓取报告：{official_policy_report_output}")
         console.print(f"OpenAI 预审报告：{risk_event_openai_precheck_report_output}")
         console.print(f"预审待复核队列：{risk_event_prereview_queue_path}")
+        if risk_event_llm_formal_assessment:
+            try:
+                llm_formal_report = build_llm_formal_assessment_report(
+                    risk_event_prereview_queue_path,
+                    as_of=score_date,
+                    risk_events=risk_events_config,
+                    include_attestation=True,
+                    next_review_days=risk_event_llm_formal_next_review_days,
+                    min_confidence=risk_event_llm_formal_min_confidence,
+                )
+                write_llm_formal_assessment_report(
+                    llm_formal_report,
+                    risk_event_llm_formal_report_output,
+                )
+                if not llm_formal_report.passed:
+                    console.print(
+                        "[red]风险事件 LLM formal assessment 失败，已停止每日评分。[/red]"
+                    )
+                    console.print(f"LLM formal 报告：{risk_event_llm_formal_report_output}")
+                    console.print(
+                        f"错误数：{llm_formal_report.error_count}；"
+                        f"警告数：{llm_formal_report.warning_count}"
+                    )
+                    raise typer.Exit(code=1)
+                written_llm_formal_paths = write_llm_formal_assessment_outputs(
+                    llm_formal_report,
+                    risk_event_occurrences_path,
+                    overwrite=risk_event_llm_formal_overwrite,
+                )
+            except (OSError, ValueError, FileExistsError) as exc:
+                console.print(f"[red]风险事件 LLM formal assessment 写入失败：{exc}[/red]")
+                raise typer.Exit(code=1) from exc
+            console.print(
+                "[green]风险事件 LLM formal assessment 已写入。[/green] "
+                f"occurrence={llm_formal_report.occurrence_count}；"
+                f"attestation={'是' if llm_formal_report.attestation else '否'}；"
+                f"YAML={len(written_llm_formal_paths)}"
+            )
+            console.print(f"LLM formal 报告：{risk_event_llm_formal_report_output}")
     risk_event_occurrence_validation_report = validate_risk_event_occurrence_store(
         store=load_risk_event_occurrence_store(risk_event_occurrences_path),
         risk_events=risk_events_config,
@@ -9692,6 +9775,11 @@ def score_daily(
                     risk_event_openai_precheck_report_output
                 ),
                 risk_event_prereview_queue_path=risk_event_prereview_queue_path,
+                llm_formal_report=llm_formal_report,
+                risk_event_llm_formal_report_output=(
+                    risk_event_llm_formal_report_output
+                ),
+                llm_formal_enabled=risk_event_llm_formal_assessment,
                 model=openai_model,
                 reasoning_effort=openai_reasoning_effort,
                 timeout_seconds=openai_timeout_seconds,
@@ -9764,6 +9852,8 @@ def score_daily(
         console.print(f"官方政策/地缘抓取报告：{official_policy_report_output}")
         console.print(f"风险事件 OpenAI 预审报告：{risk_event_openai_precheck_report_output}")
         console.print(f"风险事件预审队列：{risk_event_prereview_queue_path}")
+        if llm_formal_report is not None:
+            console.print(f"风险事件 LLM formal 报告：{risk_event_llm_formal_report_output}")
     console.print(
         f"组合暴露报告：{portfolio_exposure_output}"
         f"（{portfolio_exposure_report.status}）"
@@ -9828,6 +9918,9 @@ def _risk_event_openai_precheck_daily_section(
     official_policy_report_output: Path,
     risk_event_openai_precheck_report_output: Path,
     risk_event_prereview_queue_path: Path,
+    llm_formal_report,
+    risk_event_llm_formal_report_output: Path,
+    llm_formal_enabled: bool,
     model: str,
     reasoning_effort: str,
     timeout_seconds: float,
@@ -9836,40 +9929,73 @@ def _risk_event_openai_precheck_daily_section(
     cache_ttl_hours: float,
     max_candidates: int,
 ) -> str:
-    return "\n".join(
-        [
-            "## 日报前 OpenAI 风险事件预审",
-            "",
-            f"- 官方来源抓取状态：{official_policy_fetch_report.status}",
-            f"- 官方 payload 数：{official_policy_fetch_report.payload_count}",
-            f"- 官方候选数：{official_policy_fetch_report.candidate_count}",
-            f"- OpenAI 预审状态：{risk_event_prereview_report.status}",
-            f"- OpenAI 模型：{model}",
-            f"- reasoning.effort：{reasoning_effort}",
-            f"- 请求读超时：{timeout_seconds:g} 秒",
-            f"- HTTP client：{http_client}",
-            f"- OpenAI 请求缓存目录：`{cache_dir}`",
-            f"- OpenAI 请求缓存 TTL：{cache_ttl_hours:g} 小时",
-            f"- OpenAI 请求缓存命中：HIT={risk_event_prereview_report.openai_cache_hit_count} / "
-            f"MISS={risk_event_prereview_report.openai_cache_miss_count} / "
-            f"EXPIRED={risk_event_prereview_report.openai_cache_expired_count} / "
-            f"DISABLED={risk_event_prereview_report.openai_cache_disabled_count}",
-            f"- 本次候选上限：{max_candidates}",
-            f"- LLM claim 数：{risk_event_prereview_report.row_count}",
-            f"- 待人工复核队列记录数：{risk_event_prereview_report.record_count}",
-            f"- L2/L3 候选数：{risk_event_prereview_report.high_level_candidate_count}",
-            f"- active 候选数：{risk_event_prereview_report.active_candidate_count}",
+    lines = [
+        "## 日报前 OpenAI 风险事件预审",
+        "",
+        f"- 官方来源抓取状态：{official_policy_fetch_report.status}",
+        f"- 官方 payload 数：{official_policy_fetch_report.payload_count}",
+        f"- 官方候选数：{official_policy_fetch_report.candidate_count}",
+        f"- OpenAI 预审状态：{risk_event_prereview_report.status}",
+        f"- OpenAI 模型：{model}",
+        f"- reasoning.effort：{reasoning_effort}",
+        f"- 请求读超时：{timeout_seconds:g} 秒",
+        f"- HTTP client：{http_client}",
+        f"- OpenAI 请求缓存目录：`{cache_dir}`",
+        f"- OpenAI 请求缓存 TTL：{cache_ttl_hours:g} 小时",
+        f"- OpenAI 请求缓存命中：HIT={risk_event_prereview_report.openai_cache_hit_count} / "
+        f"MISS={risk_event_prereview_report.openai_cache_miss_count} / "
+        f"EXPIRED={risk_event_prereview_report.openai_cache_expired_count} / "
+        f"DISABLED={risk_event_prereview_report.openai_cache_disabled_count}",
+        f"- 本次候选上限：{max_candidates}",
+        f"- LLM claim 数：{risk_event_prereview_report.row_count}",
+        f"- 待人工复核队列记录数：{risk_event_prereview_report.record_count}",
+        f"- L2/L3 候选数：{risk_event_prereview_report.high_level_candidate_count}",
+        f"- active 候选数：{risk_event_prereview_report.active_candidate_count}",
+        f"- LLM formal 自动写入：{'是' if llm_formal_enabled else '否'}",
+    ]
+    if llm_formal_report is not None:
+        lines.extend(
+            [
+                f"- LLM formal 状态：{llm_formal_report.status}",
+                f"- LLM formal occurrence 数：{llm_formal_report.occurrence_count}",
+                f"- LLM formal active/watch：{llm_formal_report.active_occurrence_count}/"
+                f"{llm_formal_report.watch_occurrence_count}",
+                f"- LLM formal attestation：{'是' if llm_formal_report.attestation else '否'}",
+                f"- LLM formal 报告：`{risk_event_llm_formal_report_output}`",
+            ]
+        )
+    if llm_formal_enabled:
+        mode_line = (
+            "- 复核模式：LLM formal trusted by owner；不伪装成人工复核，"
+            "不进入 `execution_policy.manual_review_gate_ids`，不会单独把执行动作改成 "
+            "`wait_manual_review`。"
+        )
+        boundary_line = (
+            "- 边界：LLM formal 是正式评估输入，但不是人工复核；"
+            "LLM formal evidence 默认最高 B 级，可进入普通评分但不能单独触发 "
+            "position gate 或 thesis 状态。"
+        )
+    else:
+        mode_line = (
             "- 复核模式：backlog-only；未确认 OpenAI 候选不进入 "
             "`execution_policy.manual_review_gate_ids`，不会单独把执行动作改成 "
-            "`wait_manual_review`。",
+            "`wait_manual_review`。"
+        )
+        boundary_line = (
+            "- 边界：预审输出只作为 `llm_extracted / pending_review` 线索，"
+            "不会写入 occurrence、复核声明、评分、仓位闸门或 thesis 状态；"
+            "无人复核时保留为未确认 backlog。"
+        )
+    lines.extend(
+        [
+            mode_line,
             f"- 官方来源抓取报告：`{official_policy_report_output}`",
             f"- OpenAI 预审报告：`{risk_event_openai_precheck_report_output}`",
             f"- 预审待复核队列：`{risk_event_prereview_queue_path}`",
-            "- 边界：预审输出只作为 `llm_extracted / pending_review` 线索，"
-            "不会写入 occurrence、复核声明、评分、仓位闸门或 thesis 状态；"
-            "无人复核时保留为未确认 backlog。",
+            boundary_line,
         ]
     )
+    return "\n".join(lines)
 
 
 def _base_trace_config_paths() -> dict[str, Path]:

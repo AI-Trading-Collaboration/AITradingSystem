@@ -11,7 +11,7 @@
 当前日报置信度主要受五类约束影响：
 
 1. Marketstack 第二行情源坏点、复权/拆股日期和 adjusted close 口径差异仍只表现为质量警告或调查项，缺少可审计 reconciliation 结论。
-2. 政策/地缘风险事件需要官方来源权限、OpenAI 预审队列/官方候选复核，以及覆盖当日的复核声明，才能从 `insufficient_data` 进入更高可信来源类型。
+2. 政策/地缘风险事件需要官方来源权限、OpenAI 预审队列/官方候选复核，以及覆盖当日的人工或 LLM formal 复核声明，才能从 `insufficient_data` 进入更高可信来源类型。
 3. TSM 基本面不能被硬套 SEC companyfacts 季度覆盖预期；应以 TSMC IR 官方季度数据作为等价可审计来源，或显式调整缺口规则。
 4. 核心 ticker 缺少活跃交易 thesis，日报只能报告趋势和观察状态，不能形成高置信主动交易假设。
 5. forward-only PIT 和 outcome 样本受时间窗口限制，不能回填或伪造，只能持续运行、报告覆盖和真实结果标签。
@@ -53,5 +53,6 @@
 - 2026-05-11：核心观察池扩展到 17 个代表性 AI 产业链 ticker；本计划中的 thesis 项保留为原 6 个主动 baseline thesis，新增 ticker 暂不作为主动交易 thesis 候选。
 - 2026-05-10：已刷新 forward-only maturity 报告。`backtest-pit-coverage` 为 `PASS_WITH_WARNINGS`，prediction outcome 可用样本 2，decision outcome 可用样本 6，shadow maturity 为 `PASS_WITH_LIMITATIONS`；继续受真实时间窗口约束。
 - 2026-05-10：综合验证 `score-daily --as-of 2026-05-10 --skip-risk-event-openai-precheck` 通过，日报状态 `PASS_WITH_LIMITATIONS`，AI 产业链评分 74.9，判断置信度 83.0（high）。执行建议仍为 `wait_manual_review`，原因是风险/业务复核仍存在真实人工闭环缺口。
+- 2026-05-12：owner 批准短期放宽政策/地缘人工复核限制，允许 `score-daily` 在 OpenAI 预审成功后自动写入 LLM formal occurrence/attestation；full coverage `llm_formal_assessment` 置信度提升到 65%，用于解除 `policy_geopolitics` 低置信提示。该口径不伪造 manual_input，不单独触发 position gate，退出条件记录在 `docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md`。
 - 2026-05-11：expanded universe 真实 `download-data --full-universe` 后，价格覆盖已补齐，但 `validate-data --as-of 2026-05-10 --full-universe` 暴露 `NOW` 2025-12-17/18 拆股窗口内主源/Marketstack raw close 口径差异。ServiceNow 官方 IR 公告确认 5-for-1 split，2025-12-18 开始 split-adjusted 交易；本轮将补 `NOW` 已知拆股事件，并把拆股窗口内比例匹配的二源 raw close 日期口径差异归入可审计 reconciliation，而不是静默忽略。
 - 2026-05-11：`NOW` 拆股窗口 reconciliation 已完成。`config/data_quality.yaml` 已记录 ServiceNow 官方 5-for-1 split，`validate-data` 新增 `known_split_raw_close_basis_difference` 分类，仅当主源/二源 raw close 比例匹配已配置拆股比例且落入 corporate-action window 时降级为 INFO。真实 `validate-data --as-of 2026-05-10 --full-universe` 为 PASS，错误 0、警告 0、信息 12；交易日 replay 内 `data_quality_2026-05-08` 同样 PASS。

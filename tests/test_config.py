@@ -157,6 +157,7 @@ def test_scoring_rules_config_loads_weights_and_placeholders() -> None:
 
     assert config.weights["trend"] == 25
     assert config.minimum_signal_coverage == 0.50
+    assert config.source_type_confidence.llm_formal_assessment == 0.65
     assert config.trend.signals[0].subject == "SPY"
     assert config.placeholders["valuation"].score == 50
     assert "MVP 阶段占位" in config.placeholders["valuation"].reason

@@ -8,6 +8,10 @@ weights:
 
 minimum_signal_coverage: 0.50
 
+source_type_confidence:
+  llm_formal_assessment: 0.65
+  partial_llm_formal_assessment: 0.55
+
 trend:
   neutral_score: 50
   signals:

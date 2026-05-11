@@ -579,10 +579,13 @@ def build_daily_ops_plan(
                     default_feature_report_path(reports_dir, as_of),
                     default_daily_score_report_path(reports_dir, as_of),
                     default_alert_report_path(reports_dir, as_of),
+                    processed_dir / "risk_event_prereview_queue.json",
+                    reports_dir / f"risk_event_llm_formal_assessment_{as_of_text}.md",
                 ),
                 quality_gate=(
                     "`score-daily` 内部先运行市场数据质量门禁，并校验 SEC metrics、"
-                    "估值快照、风险事件发生记录和 rule card；失败时停止。"
+                    "估值快照、风险事件发生记录和 rule card；OpenAI 预审成功后会写入 "
+                    "LLM formal 风险评估，失败时停止。"
                 ),
                 blocks_downstream=True,
                 enabled=score_enabled,

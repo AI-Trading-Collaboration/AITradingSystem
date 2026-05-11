@@ -18,6 +18,7 @@ from ai_trading_system.config import (
     ScoreModuleRuleConfig,
     ScoreSignalConfig,
     ScoringRulesConfig,
+    SourceTypeConfidenceConfig,
 )
 from ai_trading_system.data.quality import DataQualityReport
 from ai_trading_system.features.market import MarketFeatureSet
@@ -1267,7 +1268,11 @@ def _score_policy_geopolitics_module(
             weight=rules.weights["policy_geopolitics"],
             source_type="placeholder",
             coverage=0.0,
-            confidence=_source_type_confidence("placeholder", 0.0),
+            confidence=_source_type_confidence(
+                "placeholder",
+                0.0,
+                rules.source_type_confidence,
+            ),
             reason=placeholder.reason,
             signals=(),
         )
@@ -1346,7 +1351,11 @@ def _score_policy_geopolitics_module(
         weight=component.weight,
         source_type=source_type,
         coverage=component.coverage,
-        confidence=_source_type_confidence(source_type, component.coverage),
+        confidence=_source_type_confidence(
+            source_type,
+            component.coverage,
+            rules.source_type_confidence,
+        ),
         reason=reason,
         signals=component.signals,
     )
@@ -2161,7 +2170,11 @@ def _source_type_label(source_type: str) -> str:
     return SOURCE_TYPE_LABELS.get(source_type, source_type)
 
 
-def _source_type_confidence(source_type: str, coverage: float) -> float:
+def _source_type_confidence(
+    source_type: str,
+    coverage: float,
+    source_type_confidence: SourceTypeConfidenceConfig | None = None,
+) -> float:
     coverage = _clamp(coverage, 0.0, 1.0)
     if source_type == "hard_data":
         return coverage
@@ -2172,9 +2185,19 @@ def _source_type_confidence(source_type: str, coverage: float) -> float:
     if source_type == "partial_manual_input":
         return _clamp(coverage * 0.60, 0.0, 0.60)
     if source_type == "llm_formal_assessment":
-        return _clamp(coverage * 0.55, 0.0, 0.55)
+        max_confidence = (
+            source_type_confidence.llm_formal_assessment
+            if source_type_confidence is not None
+            else 0.65
+        )
+        return _clamp(coverage * max_confidence, 0.0, max_confidence)
     if source_type == "partial_llm_formal_assessment":
-        return _clamp(coverage * 0.45, 0.0, 0.45)
+        max_confidence = (
+            source_type_confidence.partial_llm_formal_assessment
+            if source_type_confidence is not None
+            else 0.55
+        )
+        return _clamp(coverage * max_confidence, 0.0, max_confidence)
     if source_type == "insufficient_data":
         return 0.35
     if source_type == "placeholder":

@@ -81,6 +81,33 @@ def test_apply_llm_formal_assessment_cli_writes_outputs(tmp_path: Path) -> None:
     assert len(list(output_dir.glob("*.yaml"))) == 2
 
 
+def test_llm_formal_attestation_with_empty_queue_keeps_current_source_scope(
+    tmp_path: Path,
+) -> None:
+    queue_path = tmp_path / "risk_event_prereview_queue.json"
+    output_dir = tmp_path / "occurrences"
+    _write_queue(queue_path, [])
+
+    report = build_llm_formal_assessment_report(
+        queue_path,
+        as_of=date(2026, 5, 12),
+        risk_events=load_risk_events(),
+    )
+    written_paths = write_llm_formal_assessment_outputs(report, output_dir)
+    validation = validate_risk_event_occurrence_store(
+        store=load_risk_event_occurrence_store(output_dir),
+        risk_events=load_risk_events(),
+        as_of=date(2026, 5, 12),
+    )
+
+    assert report.status == "PASS"
+    assert report.occurrence_count == 0
+    assert report.attestation is not None
+    assert len(written_paths) == 1
+    assert validation.current_review_attestation_count == 1
+    assert validation.status == "PASS"
+
+
 def _write_queue(path: Path, records: list[dict[str, object]]) -> None:
     path.write_text(
         json.dumps(

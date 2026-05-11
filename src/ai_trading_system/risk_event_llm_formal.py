@@ -242,6 +242,10 @@ def build_llm_formal_assessment_report(
             next_review_due=as_of + timedelta(days=next_review_days),
             input_path=input_path,
             checksum_sha256=checksum,
+            source_input_path=str(payload.get("source_input_path") or ""),
+            source_input_checksum_sha256=str(
+                payload.get("source_input_checksum_sha256") or ""
+            ),
         )
         if include_attestation
         else None
@@ -429,6 +433,8 @@ def _build_llm_formal_attestation(
     next_review_due: date,
     input_path: Path,
     checksum_sha256: str,
+    source_input_path: str = "",
+    source_input_checksum_sha256: str = "",
 ) -> RiskEventReviewAttestation:
     checked_sources: list[RiskEventReviewAttestationSource] = [
         RiskEventReviewAttestationSource(
@@ -439,6 +445,19 @@ def _build_llm_formal_attestation(
             notes=f"queue_checksum_sha256={checksum_sha256}",
         )
     ]
+    if source_input_path:
+        checked_sources.append(
+            RiskEventReviewAttestationSource(
+                source_name="official_policy_source_candidates_from_primary_sources",
+                source_type="primary_source",
+                source_url=source_input_path,
+                captured_at=as_of,
+                notes=(
+                    "candidate_set_used_by_llm_formal_assessment=true; "
+                    f"source_input_checksum_sha256={source_input_checksum_sha256}"
+                ),
+            )
+        )
     for record in records[:50]:
         checked_sources.append(
             RiskEventReviewAttestationSource(
