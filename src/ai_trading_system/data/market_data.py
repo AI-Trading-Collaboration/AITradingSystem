@@ -2,12 +2,22 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date, timedelta
+from hashlib import sha256
 from importlib import import_module
-from io import StringIO
+from io import BytesIO, StringIO
 from pathlib import Path
+from time import sleep
 from typing import Any, Protocol, cast
 
 import pandas as pd
+
+from ai_trading_system.external_request_cache import (
+    cached_requests_get,
+    default_external_request_cache_dir,
+    lookup_external_request_cache,
+    sanitize_diagnostic_text,
+    write_external_request_cache_response,
+)
 
 MARKETSTACK_EOD_URL = "https://api.marketstack.com/v2/eod"
 MARKETSTACK_DEFAULT_SYMBOL_ALIASES: dict[str, str | None] = {
@@ -52,6 +62,35 @@ class RateDataProvider(Protocol):
 
 
 @dataclass(frozen=True)
+class ProviderRequestDiagnostic:
+    provider: str
+    api_family: str
+    endpoint: str
+    stage: str
+    method: str
+    request_parameters: dict[str, object]
+    cache_status: str
+    cache_key: str | None = None
+    cache_metadata_path: Path | None = None
+    http_status: int | None = None
+    error_code: str | None = None
+    response_body_sha256: str | None = None
+    response_body_size_bytes: int | None = None
+    row_count_before_failure: int | None = None
+    attempt_count: int | None = None
+    max_attempts: int | None = None
+    timeout_seconds: float | None = None
+    exception_type: str | None = None
+    exception_message: str | None = None
+
+
+class ProviderDownloadError(RuntimeError):
+    def __init__(self, message: str, diagnostic: ProviderRequestDiagnostic) -> None:
+        super().__init__(message)
+        self.diagnostic = diagnostic
+
+
+@dataclass(frozen=True)
 class CsvDataCache:
     root: Path
 
@@ -68,8 +107,36 @@ class CsvDataCache:
         return output_path
 
 
+@dataclass(frozen=True)
 class YFinancePriceProvider:
+    request_cache_dir: Path | str | None = None
+
     def download_prices(self, request: PriceRequest) -> pd.DataFrame:
+        request_cache_dir = default_external_request_cache_dir(
+            explicit_cache_dir=self.request_cache_dir,
+        )
+        cache_params = {
+            "tickers": list(request.tickers),
+            "start": request.start.isoformat(),
+            "end": (request.end + timedelta(days=1)).isoformat(),
+            "interval": request.interval,
+            "group_by": "ticker",
+            "auto_adjust": False,
+        }
+        cache_lookup = lookup_external_request_cache(
+            provider="Yahoo Finance via yfinance",
+            api_family="download",
+            method="YFINANCE_DOWNLOAD",
+            url="yfinance.download",
+            params=cache_params,
+            cache_dir=None if request_cache_dir is None else Path(request_cache_dir),
+        )
+        if cache_lookup.response is not None:
+            raw = pd.read_pickle(BytesIO(cache_lookup.response.content))
+            if not isinstance(raw, pd.DataFrame):
+                raise TypeError("cached yfinance.download payload was not a pandas DataFrame")
+            return normalize_yfinance_prices(raw, request.tickers)
+
         yfinance = cast(Any, import_module("yfinance"))
 
         raw = yfinance.download(
@@ -84,6 +151,20 @@ class YFinancePriceProvider:
         )
         if not isinstance(raw, pd.DataFrame):
             raise TypeError("yfinance.download did not return a pandas DataFrame")
+        if request_cache_dir is not None:
+            buffer = BytesIO()
+            raw.to_pickle(buffer)
+            write_external_request_cache_response(
+                provider="Yahoo Finance via yfinance",
+                api_family="download",
+                method="YFINANCE_DOWNLOAD",
+                url="yfinance.download",
+                params=cache_params,
+                status_code=200,
+                response_headers={},
+                content=buffer.getvalue(),
+                cache_dir=Path(request_cache_dir),
+            )
         return normalize_yfinance_prices(raw, request.tickers)
 
 
@@ -95,6 +176,8 @@ class MarketstackPriceProvider:
     symbol_aliases: dict[str, str | None] = field(
         default_factory=lambda: dict(MARKETSTACK_DEFAULT_SYMBOL_ALIASES)
     )
+    requests_module: Any | None = None
+    request_cache_dir: Path | str | None = None
 
     def __post_init__(self) -> None:
         if not self.api_key:
@@ -103,7 +186,11 @@ class MarketstackPriceProvider:
             raise ValueError("Marketstack page_limit must be positive")
 
     def download_prices(self, request: PriceRequest) -> pd.DataFrame:
-        requests = cast(Any, import_module("requests"))
+        requests = self.requests_module or cast(Any, import_module("requests"))
+        request_cache_dir = default_external_request_cache_dir(
+            requests_module=self.requests_module,
+            explicit_cache_dir=self.request_cache_dir,
+        )
         provider_symbols, provider_to_ticker = self._provider_symbols(request.tickers)
         if not provider_symbols:
             raise ValueError("Marketstack request has no supported tickers")
@@ -119,26 +206,116 @@ class MarketstackPriceProvider:
                 "limit": str(self.page_limit),
                 "offset": str(offset),
             }
-            response = requests.get(self.base_url, params=params, timeout=30)
+            cache_lookup = lookup_external_request_cache(
+                provider="Marketstack",
+                api_family="eod_daily_prices",
+                method="GET",
+                url=self.base_url,
+                params=params,
+                cache_dir=None if request_cache_dir is None else Path(request_cache_dir),
+            )
+            try:
+                response = cached_requests_get(
+                    provider="Marketstack",
+                    api_family="eod_daily_prices",
+                    url=self.base_url,
+                    params=params,
+                    timeout=30,
+                    requests_module=requests,
+                    cache_dir=request_cache_dir,
+                )
+            except Exception as exc:
+                diagnostic = _marketstack_diagnostic(
+                    base_url=self.base_url,
+                    params=params,
+                    cache_key=cache_lookup.cache_key,
+                    cache_metadata_path=(
+                        None if request_cache_dir is None else cache_lookup.metadata_path
+                    ),
+                    cache_status="DISABLED" if request_cache_dir is None else "MISS_NO_RESPONSE",
+                    stage="http_request",
+                    row_count_before_failure=len(records),
+                    exception=exc,
+                    api_key=self.api_key,
+                )
+                raise ProviderDownloadError(
+                    "Marketstack request failed before receiving a cacheable response",
+                    diagnostic,
+                ) from exc
+
             try:
                 payload = response.json()
-            except ValueError:
-                payload = {}
+            except ValueError as exc:
+                diagnostic = _marketstack_diagnostic(
+                    base_url=self.base_url,
+                    params=params,
+                    cache_key=response.cache_key,
+                    cache_metadata_path=response.cache_metadata_path,
+                    cache_status="HIT" if response.from_cache else "MISS_WRITTEN",
+                    stage="response_json",
+                    row_count_before_failure=len(records),
+                    response=response,
+                    exception=exc,
+                    api_key=self.api_key,
+                )
+                raise ProviderDownloadError(
+                    "Marketstack response was not valid JSON",
+                    diagnostic,
+                ) from exc
             if not response.ok:
-                raise ValueError(
+                error_code = _marketstack_error_code(payload)
+                diagnostic = _marketstack_diagnostic(
+                    base_url=self.base_url,
+                    params=params,
+                    cache_key=response.cache_key,
+                    cache_metadata_path=response.cache_metadata_path,
+                    cache_status="HIT" if response.from_cache else "MISS_WRITTEN",
+                    stage="http_status",
+                    row_count_before_failure=len(records),
+                    response=response,
+                    error_code=error_code,
+                )
+                raise ProviderDownloadError(
                     "Marketstack request failed: "
                     f"http_status={response.status_code}, "
-                    f"error_code={_marketstack_error_code(payload)}"
+                    f"error_code={error_code}",
+                    diagnostic,
                 )
             if isinstance(payload, dict) and payload.get("error"):
-                raise ValueError(
+                error_code = _marketstack_error_code(payload)
+                diagnostic = _marketstack_diagnostic(
+                    base_url=self.base_url,
+                    params=params,
+                    cache_key=response.cache_key,
+                    cache_metadata_path=response.cache_metadata_path,
+                    cache_status="HIT" if response.from_cache else "MISS_WRITTEN",
+                    stage="provider_error",
+                    row_count_before_failure=len(records),
+                    response=response,
+                    error_code=error_code,
+                )
+                raise ProviderDownloadError(
                     "Marketstack response returned an error: "
-                    f"error_code={_marketstack_error_code(payload)}"
+                    f"error_code={error_code}",
+                    diagnostic,
                 )
 
             page_records = payload.get("data", []) if isinstance(payload, dict) else []
             if not isinstance(page_records, list):
-                raise ValueError("Marketstack response data is not a list")
+                diagnostic = _marketstack_diagnostic(
+                    base_url=self.base_url,
+                    params=params,
+                    cache_key=response.cache_key,
+                    cache_metadata_path=response.cache_metadata_path,
+                    cache_status="HIT" if response.from_cache else "MISS_WRITTEN",
+                    stage="schema",
+                    row_count_before_failure=len(records),
+                    response=response,
+                )
+                raise ProviderDownloadError(
+                    "Marketstack response data is not a list",
+                    diagnostic,
+                )
             records.extend(record for record in page_records if isinstance(record, dict))
 
             pagination = payload.get("pagination", {}) if isinstance(payload, dict) else {}
@@ -148,7 +325,34 @@ class MarketstackPriceProvider:
                 break
             offset += count
 
-        return normalize_marketstack_prices(records, provider_to_ticker)
+        try:
+            return normalize_marketstack_prices(records, provider_to_ticker)
+        except ValueError as exc:
+            diagnostic = ProviderRequestDiagnostic(
+                provider="Marketstack",
+                api_family="eod_daily_prices",
+                endpoint=self.base_url,
+                stage="normalize",
+                method="GET",
+                request_parameters={
+                    "symbols": ",".join(provider_symbols),
+                    "date_from": request.start.isoformat(),
+                    "date_to": request.end.isoformat(),
+                    "limit": str(self.page_limit),
+                    "last_offset": str(offset),
+                },
+                cache_status="UNKNOWN",
+                row_count_before_failure=len(records),
+                exception_type=type(exc).__name__,
+                exception_message=sanitize_diagnostic_text(
+                    str(exc),
+                    extra_secrets=(self.api_key,),
+                ),
+            )
+            raise ProviderDownloadError(
+                "Marketstack response normalization failed",
+                diagnostic,
+            ) from exc
 
     def _provider_symbols(self, tickers: list[str]) -> tuple[list[str], dict[str, str]]:
         provider_symbols: list[str] = []
@@ -171,6 +375,7 @@ class FmpPriceProvider:
         default_factory=lambda: dict(FMP_DEFAULT_SYMBOL_ALIASES)
     )
     requests_module: Any | None = None
+    request_cache_dir: Path | str | None = None
 
     def __post_init__(self) -> None:
         if not self.api_key.strip():
@@ -178,6 +383,10 @@ class FmpPriceProvider:
 
     def download_prices(self, request: PriceRequest) -> pd.DataFrame:
         requests = self.requests_module or cast(Any, import_module("requests"))
+        request_cache_dir = default_external_request_cache_dir(
+            requests_module=self.requests_module,
+            explicit_cache_dir=self.request_cache_dir,
+        )
         provider_symbols, provider_to_ticker = self._provider_symbols(request.tickers)
         if not provider_symbols:
             raise ValueError("FMP price request has no supported tickers")
@@ -190,12 +399,14 @@ class FmpPriceProvider:
                 url=self.base_url,
                 params=params,
                 response_label="FMP price",
+                request_cache_dir=request_cache_dir,
             )
             adjusted_records = _fetch_fmp_price_records(
                 requests=requests,
                 url=self.adjusted_url,
                 params=params,
                 response_label="FMP adjusted price",
+                request_cache_dir=request_cache_dir,
             )
             if not page_records:
                 raise ValueError(f"FMP price response was empty for symbol {provider_symbol}")
@@ -255,13 +466,25 @@ class CboeVixPriceProvider:
     base_url: str = CBOE_VIX_DAILY_PRICES_URL
     ticker: str = CBOE_VIX_TICKER
     requests_module: Any | None = None
+    request_cache_dir: Path | str | None = None
 
     def download_prices(self, request: PriceRequest) -> pd.DataFrame:
         if self.ticker not in request.tickers:
             raise ValueError(f"Cboe VIX request must include {self.ticker}")
 
         requests = self.requests_module or cast(Any, import_module("requests"))
-        response = requests.get(self.base_url, timeout=30)
+        request_cache_dir = default_external_request_cache_dir(
+            requests_module=self.requests_module,
+            explicit_cache_dir=self.request_cache_dir,
+        )
+        response = cached_requests_get(
+            provider="Cboe Global Markets",
+            api_family="vix_daily_prices",
+            url=self.base_url,
+            timeout=30,
+            requests_module=requests,
+            cache_dir=request_cache_dir,
+        )
         if not response.ok:
             raise ValueError(
                 "Cboe VIX request failed: "
@@ -277,27 +500,133 @@ class CboeVixPriceProvider:
         )
 
 
+@dataclass(frozen=True)
 class FredRateProvider:
     base_url = "https://fred.stlouisfed.org/graph/fredgraph.csv"
+    requests_module: Any | None = None
+    request_cache_dir: Path | str | None = None
+    timeout_seconds: float = 60
+    max_attempts: int = 2
+    retry_backoff_seconds: float = 3
+
+    def __post_init__(self) -> None:
+        if self.timeout_seconds <= 0:
+            raise ValueError("FRED timeout_seconds must be positive")
+        if self.max_attempts <= 0:
+            raise ValueError("FRED max_attempts must be positive")
+        if self.retry_backoff_seconds < 0:
+            raise ValueError("FRED retry_backoff_seconds must not be negative")
 
     def download_rates(self, request: RateRequest) -> pd.DataFrame:
-        requests = cast(Any, import_module("requests"))
+        requests = self.requests_module or cast(Any, import_module("requests"))
+        request_cache_dir = default_external_request_cache_dir(
+            requests_module=self.requests_module,
+            explicit_cache_dir=self.request_cache_dir,
+        )
         frames: list[pd.DataFrame] = []
 
         for series_id in request.series_ids:
-            response = requests.get(
-                self.base_url,
-                params={
-                    "id": series_id,
-                    "cosd": request.start.isoformat(),
-                    "coed": request.end.isoformat(),
-                },
-                timeout=30,
+            params = {
+                "id": series_id,
+                "cosd": request.start.isoformat(),
+                "coed": request.end.isoformat(),
+            }
+            cache_lookup = lookup_external_request_cache(
+                provider="Federal Reserve Economic Data",
+                api_family="fredgraph_csv",
+                method="GET",
+                url=self.base_url,
+                params=params,
+                cache_dir=None if request_cache_dir is None else Path(request_cache_dir),
             )
-            response.raise_for_status()
-            frame = pd.read_csv(StringIO(str(response.text)))
+            rows_before_failure = sum(len(frame) for frame in frames)
+            response = None
+            last_exception: Exception | None = None
+            for attempt in range(1, self.max_attempts + 1):
+                try:
+                    response = cached_requests_get(
+                        provider="Federal Reserve Economic Data",
+                        api_family="fredgraph_csv",
+                        url=self.base_url,
+                        params=params,
+                        timeout=self.timeout_seconds,
+                        requests_module=requests,
+                        cache_dir=request_cache_dir,
+                    )
+                    break
+                except Exception as exc:
+                    last_exception = exc
+                    if attempt < self.max_attempts and self.retry_backoff_seconds > 0:
+                        sleep(self.retry_backoff_seconds)
+            if response is None:
+                diagnostic = _fred_diagnostic(
+                    base_url=self.base_url,
+                    params=params,
+                    cache_key=cache_lookup.cache_key,
+                    cache_metadata_path=(
+                        None if request_cache_dir is None else cache_lookup.metadata_path
+                    ),
+                    cache_status="DISABLED" if request_cache_dir is None else "MISS_NO_RESPONSE",
+                    stage="http_request",
+                    row_count_before_failure=rows_before_failure,
+                    exception=last_exception,
+                    attempt_count=self.max_attempts,
+                    max_attempts=self.max_attempts,
+                    timeout_seconds=self.timeout_seconds,
+                )
+                raise ProviderDownloadError(
+                    "FRED request failed before receiving a cacheable response",
+                    diagnostic,
+                ) from last_exception
+            if not response.ok:
+                diagnostic = _fred_diagnostic(
+                    base_url=self.base_url,
+                    params=params,
+                    cache_key=response.cache_key,
+                    cache_metadata_path=response.cache_metadata_path,
+                    cache_status="HIT" if response.from_cache else "MISS_WRITTEN",
+                    stage="http_status",
+                    row_count_before_failure=rows_before_failure,
+                    response=response,
+                    error_code=str(response.status_code),
+                )
+                raise ProviderDownloadError(
+                    f"FRED request failed: http_status={response.status_code}",
+                    diagnostic,
+                )
+            try:
+                frame = pd.read_csv(StringIO(str(response.text)))
+            except Exception as exc:
+                diagnostic = _fred_diagnostic(
+                    base_url=self.base_url,
+                    params=params,
+                    cache_key=response.cache_key,
+                    cache_metadata_path=response.cache_metadata_path,
+                    cache_status="HIT" if response.from_cache else "MISS_WRITTEN",
+                    stage="csv_parse",
+                    row_count_before_failure=rows_before_failure,
+                    response=response,
+                    exception=exc,
+                )
+                raise ProviderDownloadError(
+                    f"FRED response for {series_id} could not be parsed as CSV",
+                    diagnostic,
+                ) from exc
             if "observation_date" not in frame.columns or series_id not in frame.columns:
-                raise ValueError(f"FRED response for {series_id} has unexpected columns")
+                diagnostic = _fred_diagnostic(
+                    base_url=self.base_url,
+                    params=params,
+                    cache_key=response.cache_key,
+                    cache_metadata_path=response.cache_metadata_path,
+                    cache_status="HIT" if response.from_cache else "MISS_WRITTEN",
+                    stage="schema",
+                    row_count_before_failure=rows_before_failure,
+                    response=response,
+                )
+                raise ProviderDownloadError(
+                    f"FRED response for {series_id} has unexpected columns",
+                    diagnostic,
+                )
 
             series_frame = frame.rename(columns={"observation_date": "date", series_id: "value"})
             series_frame["series"] = series_id
@@ -509,6 +838,100 @@ def _marketstack_error_code(payload: Any) -> str:
     return "unknown"
 
 
+def _marketstack_diagnostic(
+    *,
+    base_url: str,
+    params: dict[str, object],
+    cache_key: str | None,
+    cache_metadata_path: Path | None,
+    cache_status: str,
+    stage: str,
+    row_count_before_failure: int,
+    response: Any | None = None,
+    error_code: str | None = None,
+    exception: Exception | None = None,
+    api_key: str = "",
+) -> ProviderRequestDiagnostic:
+    content = getattr(response, "content", None)
+    content_bytes = content if isinstance(content, (bytes, bytearray)) else None
+    return ProviderRequestDiagnostic(
+        provider="Marketstack",
+        api_family="eod_daily_prices",
+        endpoint=base_url,
+        stage=stage,
+        method="GET",
+        request_parameters=_marketstack_safe_request_parameters(params),
+        cache_status=cache_status,
+        cache_key=cache_key,
+        cache_metadata_path=cache_metadata_path,
+        http_status=getattr(response, "status_code", None),
+        error_code=error_code,
+        response_body_sha256=(
+            sha256(bytes(content_bytes)).hexdigest() if content_bytes is not None else None
+        ),
+        response_body_size_bytes=(len(content_bytes) if content_bytes is not None else None),
+        row_count_before_failure=row_count_before_failure,
+        exception_type=type(exception).__name__ if exception is not None else None,
+        exception_message=(
+            sanitize_diagnostic_text(str(exception), extra_secrets=(api_key,))
+            if exception is not None
+            else None
+        ),
+    )
+
+
+def _marketstack_safe_request_parameters(params: dict[str, object]) -> dict[str, object]:
+    return {
+        key: ("***" if key == "access_key" else value)
+        for key, value in sorted(params.items(), key=lambda item: item[0])
+    }
+
+
+def _fred_diagnostic(
+    *,
+    base_url: str,
+    params: dict[str, object],
+    cache_key: str | None,
+    cache_metadata_path: Path | None,
+    cache_status: str,
+    stage: str,
+    row_count_before_failure: int,
+    response: Any | None = None,
+    error_code: str | None = None,
+    exception: Exception | None = None,
+    attempt_count: int | None = None,
+    max_attempts: int | None = None,
+    timeout_seconds: float | None = None,
+) -> ProviderRequestDiagnostic:
+    content = getattr(response, "content", None)
+    content_bytes = content if isinstance(content, (bytes, bytearray)) else None
+    return ProviderRequestDiagnostic(
+        provider="Federal Reserve Economic Data",
+        api_family="fredgraph_csv",
+        endpoint=base_url,
+        stage=stage,
+        method="GET",
+        request_parameters=dict(sorted(params.items(), key=lambda item: item[0])),
+        cache_status=cache_status,
+        cache_key=cache_key,
+        cache_metadata_path=cache_metadata_path,
+        http_status=getattr(response, "status_code", None),
+        error_code=error_code,
+        response_body_sha256=(
+            sha256(bytes(content_bytes)).hexdigest() if content_bytes is not None else None
+        ),
+        response_body_size_bytes=(len(content_bytes) if content_bytes is not None else None),
+        row_count_before_failure=row_count_before_failure,
+        attempt_count=attempt_count,
+        max_attempts=max_attempts,
+        timeout_seconds=timeout_seconds,
+        exception_type=type(exception).__name__ if exception is not None else None,
+        exception_message=(
+            sanitize_diagnostic_text(str(exception)) if exception is not None else None
+        ),
+    )
+
+
 def _fmp_price_records(payload: Any) -> list[dict[str, Any]]:
     if isinstance(payload, list):
         if not all(isinstance(item, dict) for item in payload):
@@ -558,8 +981,17 @@ def _fetch_fmp_price_records(
     url: str,
     params: dict[str, object],
     response_label: str,
+    request_cache_dir: Path | str | None = None,
 ) -> list[dict[str, Any]]:
-    response = requests.get(url, params=params, timeout=30)
+    response = cached_requests_get(
+        provider="Financial Modeling Prep",
+        api_family="eod_daily_prices",
+        url=url,
+        params=params,
+        timeout=30,
+        requests_module=requests,
+        cache_dir=request_cache_dir,
+    )
     try:
         payload = response.json()
     except ValueError as exc:

@@ -23,10 +23,13 @@ from ai_trading_system.data.market_data import (
     MarketstackPriceProvider,
     PriceDataProvider,
     PriceRequest,
+    ProviderDownloadError,
+    ProviderRequestDiagnostic,
     RateDataProvider,
     RateRequest,
     YFinancePriceProvider,
 )
+from ai_trading_system.external_request_cache import sanitize_diagnostic_text
 
 
 @dataclass(frozen=True)
@@ -40,6 +43,69 @@ class DataDownloadSummary:
     rate_series: tuple[str, ...]
     secondary_prices_path: Path | None = None
     secondary_price_rows: int = 0
+
+
+def default_download_failure_report_path(reports_dir: Path, as_of: date) -> Path:
+    return reports_dir / f"download_data_diagnostics_{as_of.isoformat()}.md"
+
+
+def write_download_failure_report(
+    *,
+    output_path: Path,
+    start: date,
+    end: date,
+    raw_output_dir: Path,
+    include_full_ai_chain: bool,
+    price_provider_name: str,
+    with_marketstack: bool,
+    error: BaseException,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    generated_at = datetime.now(tz=UTC)
+    diagnostic = _provider_diagnostic_from_error(error)
+    lines = [
+        "# download-data 失败诊断报告",
+        "",
+        "- 状态：FAIL",
+        f"- 生成时间：{generated_at.isoformat()}",
+        f"- 下载开始日期：{start.isoformat()}",
+        f"- 下载结束日期：{end.isoformat()}",
+        f"- Raw 输出目录：`{raw_output_dir}`",
+        f"- 主价格源：`{price_provider_name}`",
+        f"- Full universe：{include_full_ai_chain}",
+        f"- Marketstack 第二源：{with_marketstack}",
+        "- 安全边界：本报告不保存 API key、token、Cookie、User-Agent、"
+        "stdout/stderr 原文或供应商响应正文。",
+        "",
+        "## 失败摘要",
+        "",
+        f"- Exception type：`{type(error).__name__}`",
+        f"- Sanitized message：{sanitize_diagnostic_text(str(error))}",
+    ]
+    if diagnostic is None:
+        lines.extend(
+            [
+                "",
+                "## Provider 诊断",
+                "",
+                "未捕获到结构化 provider 诊断。请优先检查子命令 stderr 的脱敏摘要，"
+                "或补充对应 provider adapter 的诊断上下文。",
+            ]
+        )
+    else:
+        lines.extend(_render_provider_diagnostic(diagnostic))
+    lines.extend(
+        [
+            "",
+            "## 下游影响",
+            "",
+            "- `download-data` 已 fail closed；不得把可能部分刷新的 CSV 当作完整可审计输入。",
+            "- 未成功写入本轮下载审计 manifest 时，`daily-run` 必须停止 PIT、SEC、"
+            "valuation 和 `score-daily` 下游步骤。",
+        ]
+    )
+    output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return output_path
 
 
 def download_daily_data(
@@ -143,6 +209,95 @@ def download_daily_data(
         secondary_prices_path=secondary_prices_path,
         secondary_price_rows=secondary_price_rows,
     )
+
+
+def _provider_diagnostic_from_error(error: BaseException) -> ProviderRequestDiagnostic | None:
+    current: BaseException | None = error
+    while current is not None:
+        if isinstance(current, ProviderDownloadError):
+            return current.diagnostic
+        current = current.__cause__ or current.__context__
+    return None
+
+
+def _render_provider_diagnostic(diagnostic: ProviderRequestDiagnostic) -> list[str]:
+    request_parameters = json.dumps(
+        diagnostic.request_parameters,
+        ensure_ascii=False,
+        sort_keys=True,
+    )
+    rows = [
+        ("Provider", diagnostic.provider),
+        ("API family", diagnostic.api_family),
+        ("Stage", diagnostic.stage),
+        ("Method", diagnostic.method),
+        ("Endpoint", diagnostic.endpoint),
+        ("Cache status", diagnostic.cache_status),
+        ("Cache key", diagnostic.cache_key or ""),
+        (
+            "Cache metadata path",
+            "" if diagnostic.cache_metadata_path is None else str(diagnostic.cache_metadata_path),
+        ),
+        ("HTTP status", "" if diagnostic.http_status is None else str(diagnostic.http_status)),
+        ("Provider error code", diagnostic.error_code or ""),
+        (
+            "Response body sha256",
+            diagnostic.response_body_sha256 or "",
+        ),
+        (
+            "Response body size bytes",
+            (
+                ""
+                if diagnostic.response_body_size_bytes is None
+                else str(diagnostic.response_body_size_bytes)
+            ),
+        ),
+        (
+            "Rows before failure",
+            (
+                ""
+                if diagnostic.row_count_before_failure is None
+                else str(diagnostic.row_count_before_failure)
+            ),
+        ),
+        (
+            "Attempt count",
+            "" if diagnostic.attempt_count is None else str(diagnostic.attempt_count),
+        ),
+        (
+            "Max attempts",
+            "" if diagnostic.max_attempts is None else str(diagnostic.max_attempts),
+        ),
+        (
+            "Timeout seconds",
+            "" if diagnostic.timeout_seconds is None else str(diagnostic.timeout_seconds),
+        ),
+        ("Exception type", diagnostic.exception_type or ""),
+        ("Exception message", diagnostic.exception_message or ""),
+    ]
+    lines = [
+        "",
+        "## Provider 诊断",
+        "",
+        "| 字段 | 值 |",
+        "|---|---|",
+    ]
+    lines.extend(f"| {key} | {_escape_markdown_table(value)} |" for key, value in rows)
+    lines.extend(
+        [
+            "",
+            "### 脱敏请求参数",
+            "",
+            "```json",
+            request_parameters,
+            "```",
+        ]
+    )
+    return lines
+
+
+def _escape_markdown_table(value: object) -> str:
+    return str(value).replace("|", "\\|").replace("\n", " ")
 
 
 def write_download_manifest(

@@ -1,14 +1,14 @@
 from __future__ import annotations
 
+import csv
 import json
-from dataclasses import asdict, dataclass, field
+from collections.abc import Mapping
+from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from enum import StrEnum
 from hashlib import sha256
 from pathlib import Path
 from typing import Any
-
-import pandas as pd
 
 from ai_trading_system.config import (
     PROJECT_ROOT,
@@ -240,8 +240,11 @@ def validate_pit_snapshot_manifest(
             issues=tuple(issues),
         )
     try:
-        frame = pd.read_csv(input_path, dtype=str, keep_default_na=False)
-    except Exception as exc:
+        with input_path.open(encoding="utf-8", newline="") as file:
+            reader = csv.DictReader(file)
+            fieldnames = tuple(reader.fieldnames or ())
+            rows = tuple(reader)
+    except (OSError, csv.Error, UnicodeDecodeError) as exc:
         issues.append(
             PitSnapshotValidationIssue(
                 severity=PitSnapshotIssueSeverity.ERROR,
@@ -259,7 +262,7 @@ def validate_pit_snapshot_manifest(
         )
 
     missing_columns = [
-        column for column in PIT_SNAPSHOT_MANIFEST_COLUMNS if column not in frame.columns
+        column for column in PIT_SNAPSHOT_MANIFEST_COLUMNS if column not in fieldnames
     ]
     if missing_columns:
         issues.append(
@@ -282,8 +285,8 @@ def validate_pit_snapshot_manifest(
         source.source_id: source for source in data_sources.sources
     } if data_sources is not None else {}
     seen_snapshot_ids: set[str] = set()
-    for index, row in frame.iterrows():
-        row_number = int(index) + 2
+    for index, row in enumerate(rows):
+        row_number = index + 2
         record = _record_from_manifest_row(row)
         records.append(record)
         _validate_required_values(record, issues, row_number)
@@ -400,13 +403,13 @@ def write_pit_snapshot_manifest(
     output_path: Path,
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    frame = pd.DataFrame(
-        [{column: asdict(record)[column] for column in PIT_SNAPSHOT_MANIFEST_COLUMNS}
-         for record in records]
-    )
-    if frame.empty:
-        frame = pd.DataFrame(columns=PIT_SNAPSHOT_MANIFEST_COLUMNS)
-    frame.to_csv(output_path, index=False)
+    with output_path.open("w", encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=list(PIT_SNAPSHOT_MANIFEST_COLUMNS))
+        writer.writeheader()
+        for record in records:
+            writer.writerow(
+                {column: getattr(record, column) for column in PIT_SNAPSHOT_MANIFEST_COLUMNS}
+            )
     return output_path
 
 
@@ -589,7 +592,7 @@ def _discover_raw_json_records(
     return tuple(records)
 
 
-def _record_from_manifest_row(row: pd.Series) -> PitSnapshotManifestRecord:
+def _record_from_manifest_row(row: Mapping[str, Any]) -> PitSnapshotManifestRecord:
     return PitSnapshotManifestRecord(
         snapshot_id=_cell(row, "snapshot_id"),
         source_id=_cell(row, "source_id"),
@@ -632,9 +635,8 @@ def _validate_required_values(
     issues: list[PitSnapshotValidationIssue],
     row_number: int,
 ) -> None:
-    raw = asdict(record)
     for column in REQUIRED_VALUE_COLUMNS:
-        value = raw[column]
+        value = getattr(record, column)
         if value is None or str(value).strip() == "":
             issues.append(
                 PitSnapshotValidationIssue(
@@ -1029,11 +1031,11 @@ def _file_sha256(path: Path) -> str:
     return sha256(path.read_bytes()).hexdigest()
 
 
-def _cell(row: pd.Series, column: str) -> str:
+def _cell(row: Mapping[str, Any], column: str) -> str:
     return str(row.get(column, "")).strip()
 
 
-def _int_cell(row: pd.Series, column: str) -> int:
+def _int_cell(row: Mapping[str, Any], column: str) -> int:
     value = _cell(row, column)
     if not value:
         return 0
@@ -1043,7 +1045,7 @@ def _int_cell(row: pd.Series, column: str) -> int:
         return 0
 
 
-def _bool_cell(row: pd.Series, column: str) -> bool:
+def _bool_cell(row: Mapping[str, Any], column: str) -> bool:
     return str(row.get(column, "")).strip().lower() in {"true", "1", "yes", "y"}
 
 

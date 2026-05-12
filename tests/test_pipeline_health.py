@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import UTC, date, datetime
 from hashlib import sha256
 from pathlib import Path
 
@@ -130,6 +130,65 @@ def test_pit_snapshot_health_checks_flag_failed_fetch_report(
     assert "FMP PIT 抓取报告状态为 FAIL" in messages_by_id["fmp_forward_pit_fetch_status"]
 
 
+def test_pit_snapshot_health_checks_allow_production_visibility_cutoff(
+    tmp_path: Path,
+) -> None:
+    pit_paths = _write_pit_health_inputs(
+        tmp_path,
+        date(2026, 5, 11),
+        available_time="2026-05-12T16:46:24+00:00",
+    )
+
+    report = build_pipeline_health_report(
+        as_of=date(2026, 5, 11),
+        artifacts=(),
+        extra_checks=build_pit_snapshot_health_checks(
+            as_of=date(2026, 5, 11),
+            manifest_path=pit_paths["manifest"],
+            normalized_path=pit_paths["normalized"],
+            validation_report_path=pit_paths["validation_report"],
+            fetch_report_path=pit_paths["fetch_report"],
+            project_root=tmp_path,
+            visibility_cutoff=datetime(2026, 5, 12, 16, 57, tzinfo=UTC),
+        ),
+    )
+
+    assert report.status == "PASS"
+
+
+def test_pit_snapshot_health_checks_reject_after_visibility_cutoff(
+    tmp_path: Path,
+) -> None:
+    pit_paths = _write_pit_health_inputs(
+        tmp_path,
+        date(2026, 5, 11),
+        available_time="2026-05-12T16:58:24+00:00",
+    )
+
+    report = build_pipeline_health_report(
+        as_of=date(2026, 5, 11),
+        artifacts=(),
+        extra_checks=build_pit_snapshot_health_checks(
+            as_of=date(2026, 5, 11),
+            manifest_path=pit_paths["manifest"],
+            normalized_path=pit_paths["normalized"],
+            validation_report_path=pit_paths["validation_report"],
+            fetch_report_path=pit_paths["fetch_report"],
+            project_root=tmp_path,
+            visibility_cutoff=datetime(2026, 5, 12, 16, 57, tzinfo=UTC),
+        ),
+    )
+    messages_by_id = {
+        check.spec.artifact_id: check.message
+        for check in report.checks
+        if check.severity is not None
+    }
+
+    assert report.status == "FAIL"
+    assert "晚于 visibility_cutoff" in messages_by_id["pit_manifest_freshness"]
+    assert "晚于 visibility_cutoff" in messages_by_id["fmp_forward_pit_normalized_freshness"]
+
+
 def test_pipeline_health_cli_writes_report(tmp_path: Path) -> None:
     prices_path = _write_artifact(tmp_path / "prices_daily.csv")
     rates_path = _write_artifact(tmp_path / "rates_daily.csv")
@@ -238,19 +297,23 @@ def _write_artifact(path: Path) -> Path:
     return path
 
 
-def _write_pit_health_inputs(tmp_path: Path, as_of: date) -> dict[str, Path]:
+def _write_pit_health_inputs(
+    tmp_path: Path,
+    as_of: date,
+    available_time: str | None = None,
+) -> dict[str, Path]:
     payload_path = tmp_path / "raw" / "fmp_forward_pit" / "nvda" / "payload.json"
     payload_path.parent.mkdir(parents=True)
     payload_path.write_text('{"records":[{"symbol":"NVDA"}]}\n', encoding="utf-8")
     checksum = sha256(payload_path.read_bytes()).hexdigest()
-    available_time = f"{as_of.isoformat()}T01:00:00+00:00"
+    resolved_available_time = available_time or f"{as_of.isoformat()}T01:00:00+00:00"
     manifest_path = tmp_path / "pit_snapshots" / "manifest.csv"
     manifest_path.parent.mkdir(parents=True)
     manifest_path.write_text(
         "\n".join(
             [
                 "snapshot_id,raw_payload_path,raw_payload_sha256,available_time",
-                f"snapshot-1,{payload_path},{checksum},{available_time}",
+                f"snapshot-1,{payload_path},{checksum},{resolved_available_time}",
             ]
         )
         + "\n",
@@ -259,7 +322,7 @@ def _write_pit_health_inputs(tmp_path: Path, as_of: date) -> dict[str, Path]:
     normalized_path = tmp_path / "processed" / f"fmp_forward_pit_{as_of.isoformat()}.csv"
     normalized_path.parent.mkdir(parents=True)
     normalized_path.write_text(
-        f"normalized_id,available_time\nrow-1,{available_time}\n",
+        f"normalized_id,available_time\nrow-1,{resolved_available_time}\n",
         encoding="utf-8",
     )
     validation_report_path = _write_artifact(tmp_path / "reports" / "pit_validation.md")

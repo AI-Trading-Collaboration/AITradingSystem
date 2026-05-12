@@ -3,10 +3,12 @@ from __future__ import annotations
 import csv
 import json
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, timedelta
 from enum import StrEnum
 from hashlib import sha256
+from math import isfinite
 from pathlib import Path
 from typing import Any, Protocol, cast
 
@@ -150,7 +152,9 @@ class FmpForwardPitFetchReport:
 
     @property
     def normalized_row_count(self) -> int:
-        return len(self.normalized_rows)
+        if self.normalized_rows:
+            return len(self.normalized_rows)
+        return self.row_count if self.raw_payloads else 0
 
     @property
     def error_count(self) -> int:
@@ -224,6 +228,7 @@ def fetch_fmp_forward_pit_snapshots(
     analyst_estimate_limit: int = 10,
     earnings_calendar_lookback_days: int = 7,
     earnings_calendar_forward_days: int = 90,
+    include_normalized_rows: bool = True,
 ) -> FmpForwardPitFetchReport:
     normalized_tickers = tuple(_normalize_tickers(tickers))
     if not normalized_tickers:
@@ -313,7 +318,11 @@ def fetch_fmp_forward_pit_snapshots(
             )
         )
 
-    normalized_rows = tuple(_normalize_fmp_forward_pit_payloads(raw_payloads))
+    normalized_rows = (
+        tuple(_normalize_fmp_forward_pit_payloads(raw_payloads))
+        if include_normalized_rows
+        else tuple()
+    )
     return FmpForwardPitFetchReport(
         as_of=as_of,
         captured_at=fetch_date,
@@ -383,17 +392,7 @@ def write_fmp_forward_pit_raw_payloads(
             f"fmp_forward_pit_{payload.ticker.lower()}_"
             f"{_timestamp_token(payload.downloaded_at)}.json"
         )
-        output_path.write_text(
-            json.dumps(
-                _fmp_forward_pit_payload_to_raw(payload),
-                ensure_ascii=False,
-                indent=2,
-                sort_keys=False,
-                default=str,
-            )
-            + "\n",
-            encoding="utf-8",
-        )
+        _write_json_payload(output_path, _fmp_forward_pit_payload_to_raw(payload))
         written.append(output_path)
     return tuple(written)
 
@@ -411,10 +410,163 @@ def write_fmp_forward_pit_normalized_csv(
     return output_path
 
 
+def write_fmp_forward_pit_normalized_csv_for_payloads(
+    rows: tuple[FmpForwardPitNormalizedRow, ...] | list[FmpForwardPitNormalizedRow],
+    payloads: tuple[FmpForwardPitRawPayload, ...] | list[FmpForwardPitRawPayload],
+    output_path: Path,
+) -> Path:
+    payload_by_ticker = {payload.ticker: payload for payload in payloads}
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=list(FMP_FORWARD_PIT_NORMALIZED_COLUMNS))
+        writer.writeheader()
+        for row in rows:
+            payload = payload_by_ticker.get(row.canonical_ticker)
+            writer.writerow(_normalized_row_csv_record(row, payload))
+    return output_path
+
+
+def write_fmp_forward_pit_normalized_csv_from_payloads(
+    payloads: tuple[FmpForwardPitRawPayload, ...] | list[FmpForwardPitRawPayload],
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", encoding="utf-8", newline="") as file:
+        writer = csv.DictWriter(file, fieldnames=list(FMP_FORWARD_PIT_NORMALIZED_COLUMNS))
+        writer.writeheader()
+        for payload in payloads:
+            for record in _normalized_csv_records_for_payload(payload):
+                writer.writerow(record)
+    return output_path
+
+
 def normalize_fmp_forward_pit_payloads(
     payloads: tuple[FmpForwardPitRawPayload, ...] | list[FmpForwardPitRawPayload],
 ) -> tuple[FmpForwardPitNormalizedRow, ...]:
     return tuple(_normalize_fmp_forward_pit_payloads(payloads))
+
+
+def retarget_fmp_forward_pit_normalized_rows(
+    rows: tuple[FmpForwardPitNormalizedRow, ...] | list[FmpForwardPitNormalizedRow],
+    payloads: tuple[FmpForwardPitRawPayload, ...] | list[FmpForwardPitRawPayload],
+) -> tuple[FmpForwardPitNormalizedRow, ...]:
+    payload_by_ticker = {payload.ticker: payload for payload in payloads}
+    ordered_payloads: list[FmpForwardPitRawPayload] = []
+    passthrough_rows: list[FmpForwardPitNormalizedRow] = []
+    seen_payload_tickers: set[str] = set()
+    for row in rows:
+        payload = payload_by_ticker.get(row.canonical_ticker)
+        if payload is None:
+            passthrough_rows.append(row)
+            continue
+        if payload.ticker not in seen_payload_tickers:
+            ordered_payloads.append(payload)
+            seen_payload_tickers.add(payload.ticker)
+    return (
+        *tuple(_normalize_fmp_forward_pit_payloads(ordered_payloads)),
+        *passthrough_rows,
+    )
+
+
+def _normalized_row_csv_record(
+    row: FmpForwardPitNormalizedRow,
+    payload: FmpForwardPitRawPayload | None,
+) -> dict[str, object]:
+    record = {column: getattr(row, column) for column in FMP_FORWARD_PIT_NORMALIZED_COLUMNS}
+    if payload is None:
+        return record
+    raw_path = (
+        payload.source_path.as_posix()
+        if payload.source_path is not None
+        else _default_raw_payload_path(payload).as_posix()
+    )
+    snapshot_id = _snapshot_id(payload)
+    record["snapshot_id"] = snapshot_id
+    record["normalized_id"] = _id_token(f"{snapshot_id}_{row.endpoint}_{row.record_index}")
+    record["raw_payload_path"] = raw_path
+    record["raw_payload_sha256"] = payload.checksum_sha256
+    return record
+
+
+def _normalized_csv_records_for_payload(
+    payload: FmpForwardPitRawPayload,
+) -> list[dict[str, object]]:
+    records_for_payload: list[dict[str, object]] = []
+    raw_path = (
+        payload.source_path.as_posix()
+        if payload.source_path is not None
+        else _default_raw_payload_path(payload).as_posix()
+    )
+    snapshot_id = _snapshot_id(payload)
+    provider_symbol_alias = _provider_symbol_alias(payload.ticker, payload.provider_symbol)
+    as_of = payload.as_of.isoformat()
+    captured_at = payload.captured_at.isoformat()
+    downloaded_at = payload.downloaded_at.isoformat()
+    for endpoint in FMP_FORWARD_PIT_ENDPOINTS:
+        records = payload.endpoint_records.get(endpoint, ())
+        for index in range(len(records)):
+            record = records[index]
+            if not isinstance(record, dict):
+                continue
+            records_for_payload.append(
+                {
+                    "normalized_id": _id_token(f"{snapshot_id}_{endpoint}_{index}"),
+                    "snapshot_id": snapshot_id,
+                    "source_id": FMP_FORWARD_PIT_SOURCE_ID,
+                    "source_name": FMP_SOURCE_NAME,
+                    "source_type": "paid_vendor",
+                    "endpoint": f"{FMP_BASE_URL}/{endpoint}",
+                    "endpoint_category": _endpoint_category(endpoint),
+                    "canonical_ticker": payload.ticker,
+                    "provider_symbol": payload.provider_symbol,
+                    "provider_symbol_alias": provider_symbol_alias,
+                    "as_of": as_of,
+                    "captured_at": captured_at,
+                    "downloaded_at": downloaded_at,
+                    "available_time": downloaded_at,
+                    "vendor_date": _vendor_date(record),
+                    "fiscal_period": _fiscal_period(record),
+                    "record_index": index,
+                    "normalized_values_json": _json_dumps(_safe_scalar_values(record)),
+                    "raw_payload_path": raw_path,
+                    "raw_payload_sha256": payload.checksum_sha256,
+                    "normalization_version": FMP_FORWARD_PIT_NORMALIZATION_VERSION,
+                    "point_in_time_class": "captured_snapshot",
+                    "history_source_class": "captured_snapshot_history",
+                    "backtest_use": "captured_at_forward_only",
+                    "confidence_level": "medium",
+                    "confidence_reason": (
+                        "FMP forward-only raw snapshot captured by local system; "
+                        "available_time equals downloaded_at."
+                    ),
+                }
+            )
+    return records_for_payload
+
+
+def attach_fmp_forward_pit_report_artifacts(
+    report: FmpForwardPitFetchReport,
+    *,
+    raw_payloads: tuple[FmpForwardPitRawPayload, ...],
+    normalized_rows: tuple[FmpForwardPitNormalizedRow, ...],
+) -> FmpForwardPitFetchReport:
+    return FmpForwardPitFetchReport(
+        as_of=report.as_of,
+        captured_at=report.captured_at,
+        downloaded_at=report.downloaded_at,
+        requested_tickers=report.requested_tickers,
+        provider_symbols=report.provider_symbols,
+        analyst_estimate_limit=report.analyst_estimate_limit,
+        earnings_calendar_from=report.earnings_calendar_from,
+        earnings_calendar_to=report.earnings_calendar_to,
+        raw_payloads=raw_payloads,
+        normalized_rows=normalized_rows,
+        row_count=report.row_count,
+        checksum_sha256=report.checksum_sha256,
+        issues=report.issues,
+        source_name=report.source_name,
+        source_type=report.source_type,
+    )
 
 
 def render_fmp_forward_pit_fetch_report(report: FmpForwardPitFetchReport) -> str:
@@ -597,6 +749,59 @@ def _fmp_forward_pit_payload_to_raw(payload: FmpForwardPitRawPayload) -> dict[st
     }
 
 
+def _write_json_payload(output_path: Path, payload: Mapping[str, Any]) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w", encoding="utf-8", newline="\n") as file:
+        _write_json_value(file, payload, indent_level=0)
+        file.write("\n")
+
+
+def _write_json_value(file: Any, value: Any, *, indent_level: int) -> None:
+    if isinstance(value, Mapping):
+        items = list(value.items())
+        if not items:
+            file.write("{}")
+            return
+        file.write("{\n")
+        for index, (key, item_value) in enumerate(items):
+            file.write(" " * (indent_level + 2))
+            file.write(json.dumps(str(key), ensure_ascii=False))
+            file.write(": ")
+            _write_json_value(file, item_value, indent_level=indent_level + 2)
+            file.write(",\n" if index < len(items) - 1 else "\n")
+        file.write(" " * indent_level)
+        file.write("}")
+        return
+    if isinstance(value, (list, tuple)):
+        if not value:
+            file.write("[]")
+            return
+        file.write("[\n")
+        for index, item_value in enumerate(value):
+            file.write(" " * (indent_level + 2))
+            _write_json_value(file, item_value, indent_level=indent_level + 2)
+            file.write(",\n" if index < len(value) - 1 else "\n")
+        file.write(" " * indent_level)
+        file.write("]")
+        return
+    if isinstance(value, str):
+        file.write(json.dumps(value, ensure_ascii=False))
+        return
+    if value is None:
+        file.write("null")
+        return
+    if isinstance(value, bool):
+        file.write("true" if value else "false")
+        return
+    if isinstance(value, int):
+        file.write(str(value))
+        return
+    if isinstance(value, float):
+        file.write(str(value) if isfinite(value) else json.dumps(value))
+        return
+    file.write(json.dumps(str(value), ensure_ascii=False))
+
+
 def _normalize_fmp_forward_pit_payloads(
     payloads: tuple[FmpForwardPitRawPayload, ...] | list[FmpForwardPitRawPayload],
 ) -> list[FmpForwardPitNormalizedRow]:
@@ -610,10 +815,11 @@ def _normalize_fmp_forward_pit_payloads(
         snapshot_id = _snapshot_id(payload)
         for endpoint in FMP_FORWARD_PIT_ENDPOINTS:
             records = payload.endpoint_records.get(endpoint, ())
-            for index, record in enumerate(records):
-                normalized_id = _id_token(
-                    f"{snapshot_id}_{endpoint}_{index}_{_record_key_fragment(record)}"
-                )
+            for index in range(len(records)):
+                record = records[index]
+                if not isinstance(record, dict):
+                    continue
+                normalized_id = _id_token(f"{snapshot_id}_{endpoint}_{index}")
                 rows.append(
                     FmpForwardPitNormalizedRow(
                         normalized_id=normalized_id,
@@ -718,11 +924,13 @@ def _endpoint_category(endpoint: str) -> str:
 
 
 def _safe_scalar_values(record: dict[str, Any]) -> dict[str, Any]:
-    return {
-        str(key): value
-        for key, value in sorted(record.items())
-        if value is None or isinstance(value, str | int | float | bool)
-    }
+    scalar_values: dict[str, Any] = {}
+    for key, value in record.items():
+        if type(key) is not str:
+            continue
+        if value is None or type(value) in {str, int, float, bool}:
+            scalar_values[key] = value
+    return {key: scalar_values[key] for key in sorted(scalar_values)}
 
 
 def _vendor_date(record: dict[str, Any]) -> str:
@@ -748,14 +956,6 @@ def _fiscal_period(record: dict[str, Any]) -> str:
             return f"{year}-{value}" if year else str(value)
     year = record.get("fiscalYear") or record.get("year")
     return str(year) if year else "not_recorded"
-
-
-def _record_key_fragment(record: dict[str, Any]) -> str:
-    for key in ("date", "publishedDate", "calendarDate", "symbol", "ticker"):
-        value = record.get(key)
-        if value:
-            return str(value)
-    return _json_checksum(record)[:12]
 
 
 def _normalize_tickers(tickers: list[str] | tuple[str, ...]) -> list[str]:
@@ -799,8 +999,14 @@ def _timestamp_token(value: datetime) -> str:
 
 
 def _id_token(value: str) -> str:
-    token = "".join(character.lower() if character.isalnum() else "_" for character in value)
-    return "_".join(part for part in token.split("_") if part) or "unknown"
+    raw_text = str(value)
+    digest = sha256(raw_text.encode("utf-8", "backslashreplace")).hexdigest()[:12]
+    ascii_text = raw_text.encode("ascii", "ignore").decode("ascii")
+    token = re.sub(r"[^0-9A-Za-z]+", "_", ascii_text).strip("_").lower()
+    token = re.sub(r"_+", "_", token)[:140].rstrip("_")
+    if not token:
+        return f"id_{digest}"
+    return f"{token}_{digest}"
 
 
 def _display_path(path: Path, project_root: Path) -> Path:

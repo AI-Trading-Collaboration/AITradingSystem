@@ -1,14 +1,15 @@
 from __future__ import annotations
 
+import re
 from collections import defaultdict
 from dataclasses import dataclass, field
+from dataclasses import replace as dataclass_replace
 from datetime import date
 from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal
 
 import yaml
-from pydantic import BaseModel, Field, ValidationError
 
 from ai_trading_system.config import (
     UniverseConfig,
@@ -46,6 +47,46 @@ ValuationBacktestUse = Literal[
     "auxiliary_current_only",
     "not_for_backtest",
 ]
+_ID_PATTERN = r"^[A-Za-z0-9_.-]+$"
+_VALUATION_SOURCE_TYPES = {
+    "primary_filing",
+    "paid_vendor",
+    "manual_input",
+    "public_convenience",
+}
+_CROWDING_STATUSES = {"normal", "elevated", "extreme", "unknown"}
+_VALUATION_ASSESSMENTS = {"cheap", "reasonable", "expensive", "extreme", "unknown"}
+_POINT_IN_TIME_CLASSES = {
+    "true_point_in_time",
+    "captured_snapshot",
+    "backfilled_history_distribution",
+    "unknown",
+}
+_HISTORY_SOURCE_CLASSES = {
+    "vendor_archive",
+    "captured_snapshot_history",
+    "vendor_historical_endpoint",
+    "vendor_current_trend",
+    "manual_backfill",
+    "none",
+    "unknown",
+}
+_CONFIDENCE_LEVELS = {"high", "medium", "low"}
+_BACKTEST_USES = {
+    "strict_point_in_time",
+    "captured_at_forward_only",
+    "auxiliary_current_only",
+    "not_for_backtest",
+}
+
+
+class ValidationError(ValueError):
+    def __init__(self, loc: tuple[str | int, ...], msg: str) -> None:
+        super().__init__(msg)
+        self._errors = ({"loc": loc, "msg": msg},)
+
+    def errors(self) -> list[dict[str, object]]:
+        return [dict(error) for error in self._errors]
 
 
 class ValuationIssueSeverity(StrEnum):
@@ -53,43 +94,181 @@ class ValuationIssueSeverity(StrEnum):
     WARNING = "WARNING"
 
 
-class SnapshotMetric(BaseModel):
-    metric_id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9_.-]+$")
+@dataclass(frozen=True)
+class SnapshotMetric:
+    metric_id: str
     value: float
-    unit: str = Field(min_length=1)
-    period: str = Field(min_length=1)
+    unit: str
+    period: str
     source_field: str = ""
     notes: str = ""
 
+    @classmethod
+    def model_validate(cls, raw: Any) -> SnapshotMetric:
+        if not isinstance(raw, dict):
+            raise ValidationError((), "input should be a mapping")
+        return cls(
+            metric_id=_require_text(raw, "metric_id", pattern=_ID_PATTERN),
+            value=_require_float(raw, "value"),
+            unit=_require_text(raw, "unit"),
+            period=_require_text(raw, "period"),
+            source_field=_optional_text(raw, "source_field"),
+            notes=_optional_text(raw, "notes"),
+        )
 
-class CrowdingSignal(BaseModel):
-    signal_id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9_.-]+$")
-    name: str = Field(min_length=1)
+    def model_dump(self, *, mode: str = "python") -> dict[str, object]:
+        return {
+            "metric_id": self.metric_id,
+            "value": self.value,
+            "unit": self.unit,
+            "period": self.period,
+            "source_field": self.source_field,
+            "notes": self.notes,
+        }
+
+
+@dataclass(frozen=True)
+class CrowdingSignal:
+    signal_id: str
+    name: str
     status: CrowdingStatus
-    evidence_source: str = Field(min_length=1)
+    evidence_source: str
     updated_at: date
     notes: str = ""
 
+    @classmethod
+    def model_validate(cls, raw: Any) -> CrowdingSignal:
+        if not isinstance(raw, dict):
+            raise ValidationError((), "input should be a mapping")
+        return cls(
+            signal_id=_require_text(raw, "signal_id", pattern=_ID_PATTERN),
+            name=_require_text(raw, "name"),
+            status=_require_choice(raw, "status", _CROWDING_STATUSES),
+            evidence_source=_require_text(raw, "evidence_source"),
+            updated_at=_require_date(raw, "updated_at"),
+            notes=_optional_text(raw, "notes"),
+        )
 
-class ValuationSnapshot(BaseModel):
-    snapshot_id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9_.-]+$")
-    ticker: str = Field(min_length=1)
+    def model_dump(self, *, mode: str = "python") -> dict[str, object]:
+        updated_at: date | str = self.updated_at
+        if mode == "json":
+            updated_at = self.updated_at.isoformat()
+        return {
+            "signal_id": self.signal_id,
+            "name": self.name,
+            "status": self.status,
+            "evidence_source": self.evidence_source,
+            "updated_at": updated_at,
+            "notes": self.notes,
+        }
+
+@dataclass(frozen=True)
+class ValuationSnapshot:
+    snapshot_id: str
+    ticker: str
     as_of: date
     source_type: ValuationSourceType
-    source_name: str = Field(min_length=1)
-    source_url: str = ""
+    source_name: str
     captured_at: date
+    source_url: str = ""
     point_in_time_class: ValuationPointInTimeClass = "captured_snapshot"
     history_source_class: ValuationHistorySourceClass = "unknown"
     confidence_level: ValuationConfidenceLevel = "medium"
     confidence_reason: str = ""
     backtest_use: ValuationBacktestUse = "captured_at_forward_only"
-    valuation_metrics: list[SnapshotMetric] = Field(min_length=1)
-    expectation_metrics: list[SnapshotMetric] = Field(default_factory=list)
-    crowding_signals: list[CrowdingSignal] = Field(default_factory=list)
-    valuation_percentile: float | None = Field(default=None, ge=0, le=100)
+    valuation_metrics: list[SnapshotMetric] = field(default_factory=list)
+    expectation_metrics: list[SnapshotMetric] = field(default_factory=list)
+    crowding_signals: list[CrowdingSignal] = field(default_factory=list)
+    valuation_percentile: float | None = None
     overall_assessment: ValuationAssessment = "unknown"
     notes: str = ""
+
+    @classmethod
+    def model_validate(cls, raw: Any) -> ValuationSnapshot:
+        if not isinstance(raw, dict):
+            raise ValidationError((), "input should be a mapping")
+        valuation_metrics = _metric_list(raw, "valuation_metrics", required=True)
+        return cls(
+            snapshot_id=_require_text(raw, "snapshot_id", pattern=_ID_PATTERN),
+            ticker=_require_text(raw, "ticker"),
+            as_of=_require_date(raw, "as_of"),
+            source_type=_require_choice(raw, "source_type", _VALUATION_SOURCE_TYPES),
+            source_name=_require_text(raw, "source_name"),
+            source_url=_optional_text(raw, "source_url"),
+            captured_at=_require_date(raw, "captured_at"),
+            point_in_time_class=_optional_choice(
+                raw,
+                "point_in_time_class",
+                _POINT_IN_TIME_CLASSES,
+                "captured_snapshot",
+            ),
+            history_source_class=_optional_choice(
+                raw,
+                "history_source_class",
+                _HISTORY_SOURCE_CLASSES,
+                "unknown",
+            ),
+            confidence_level=_optional_choice(
+                raw,
+                "confidence_level",
+                _CONFIDENCE_LEVELS,
+                "medium",
+            ),
+            confidence_reason=_optional_text(raw, "confidence_reason"),
+            backtest_use=_optional_choice(
+                raw,
+                "backtest_use",
+                _BACKTEST_USES,
+                "captured_at_forward_only",
+            ),
+            valuation_metrics=valuation_metrics,
+            expectation_metrics=_metric_list(raw, "expectation_metrics", required=False),
+            crowding_signals=_crowding_signal_list(raw, "crowding_signals"),
+            valuation_percentile=_optional_percentile(raw, "valuation_percentile"),
+            overall_assessment=_optional_choice(
+                raw,
+                "overall_assessment",
+                _VALUATION_ASSESSMENTS,
+                "unknown",
+            ),
+            notes=_optional_text(raw, "notes"),
+        )
+
+    def model_dump(self, *, mode: str = "python") -> dict[str, object]:
+        as_of: date | str = self.as_of
+        captured_at: date | str = self.captured_at
+        if mode == "json":
+            as_of = self.as_of.isoformat()
+            captured_at = self.captured_at.isoformat()
+        return {
+            "snapshot_id": self.snapshot_id,
+            "ticker": self.ticker,
+            "as_of": as_of,
+            "source_type": self.source_type,
+            "source_name": self.source_name,
+            "source_url": self.source_url,
+            "captured_at": captured_at,
+            "point_in_time_class": self.point_in_time_class,
+            "history_source_class": self.history_source_class,
+            "confidence_level": self.confidence_level,
+            "confidence_reason": self.confidence_reason,
+            "backtest_use": self.backtest_use,
+            "valuation_metrics": [
+                metric.model_dump(mode=mode) for metric in self.valuation_metrics
+            ],
+            "expectation_metrics": [
+                metric.model_dump(mode=mode) for metric in self.expectation_metrics
+            ],
+            "crowding_signals": [
+                signal.model_dump(mode=mode) for signal in self.crowding_signals
+            ],
+            "valuation_percentile": self.valuation_percentile,
+            "overall_assessment": self.overall_assessment,
+            "notes": self.notes,
+        }
+
+    def model_copy(self, *, update: dict[str, object] | None = None) -> ValuationSnapshot:
+        return dataclass_replace(self, **(update or {}))
 
 
 @dataclass(frozen=True)
@@ -563,6 +742,128 @@ def _raw_snapshot_items(raw: Any) -> list[Any]:
             return snapshots
         return [snapshots]
     return [raw]
+
+
+def _require_text(raw: dict[str, Any], key: str, *, pattern: str | None = None) -> str:
+    value = raw.get(key)
+    if not isinstance(value, str) or not value.strip():
+        raise ValidationError((key,), "string should have at least 1 character")
+    text = value.strip()
+    if pattern is not None and not _fullmatch(pattern, text):
+        raise ValidationError((key,), f"string should match pattern '{pattern}'")
+    return text
+
+
+def _optional_text(raw: dict[str, Any], key: str) -> str:
+    value = raw.get(key, "")
+    if value is None:
+        return ""
+    if isinstance(value, str):
+        return value
+    return str(value)
+
+
+def _require_float(raw: dict[str, Any], key: str) -> float:
+    value = raw.get(key)
+    if isinstance(value, bool) or value is None:
+        raise ValidationError((key,), "input should be a valid number")
+    try:
+        return float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValidationError((key,), "input should be a valid number") from exc
+
+
+def _require_date(raw: dict[str, Any], key: str) -> date:
+    value = raw.get(key)
+    if isinstance(value, date):
+        return value
+    if isinstance(value, str):
+        try:
+            return date.fromisoformat(value)
+        except ValueError as exc:
+            raise ValidationError((key,), "date should be YYYY-MM-DD") from exc
+    raise ValidationError((key,), "input should be a valid date")
+
+
+def _require_choice(raw: dict[str, Any], key: str, choices: set[str]) -> Any:
+    value = _require_text(raw, key)
+    if value not in choices:
+        raise ValidationError((key,), f"input should be one of {sorted(choices)}")
+    return value
+
+
+def _optional_choice(
+    raw: dict[str, Any],
+    key: str,
+    choices: set[str],
+    default: str,
+) -> Any:
+    value = raw.get(key)
+    if value is None or value == "":
+        return default
+    text = str(value)
+    if text not in choices:
+        raise ValidationError((key,), f"input should be one of {sorted(choices)}")
+    return text
+
+
+def _metric_list(
+    raw: dict[str, Any],
+    key: str,
+    *,
+    required: bool,
+) -> list[SnapshotMetric]:
+    value = raw.get(key, [])
+    if value is None:
+        value = []
+    if not isinstance(value, list):
+        raise ValidationError((key,), "input should be a list")
+    if required and not value:
+        raise ValidationError((key,), "list should have at least 1 item")
+    metrics: list[SnapshotMetric] = []
+    for index, item in enumerate(value):
+        try:
+            metrics.append(
+                item if isinstance(item, SnapshotMetric) else SnapshotMetric.model_validate(item)
+            )
+        except ValidationError as exc:
+            first_error = exc.errors()[0]
+            child_loc = tuple(first_error.get("loc", ()))
+            raise ValidationError((key, index, *child_loc), str(first_error.get("msg"))) from exc
+    return metrics
+
+
+def _crowding_signal_list(raw: dict[str, Any], key: str) -> list[CrowdingSignal]:
+    value = raw.get(key, [])
+    if value is None:
+        value = []
+    if not isinstance(value, list):
+        raise ValidationError((key,), "input should be a list")
+    signals: list[CrowdingSignal] = []
+    for index, item in enumerate(value):
+        try:
+            signals.append(
+                item if isinstance(item, CrowdingSignal) else CrowdingSignal.model_validate(item)
+            )
+        except ValidationError as exc:
+            first_error = exc.errors()[0]
+            child_loc = tuple(first_error.get("loc", ()))
+            raise ValidationError((key, index, *child_loc), str(first_error.get("msg"))) from exc
+    return signals
+
+
+def _optional_percentile(raw: dict[str, Any], key: str) -> float | None:
+    value = raw.get(key)
+    if value in (None, ""):
+        return None
+    percentile = _require_float(raw, key)
+    if percentile < 0 or percentile > 100:
+        raise ValidationError((key,), "input should be between 0 and 100")
+    return percentile
+
+
+def _fullmatch(pattern: str, value: str) -> bool:
+    return re.fullmatch(pattern, value) is not None
 
 
 def _compact_validation_error(exc: ValidationError) -> str:

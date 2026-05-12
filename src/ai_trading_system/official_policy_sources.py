@@ -5,7 +5,6 @@ import json
 import re
 import urllib.error
 import urllib.parse
-import urllib.request
 import xml.etree.ElementTree as ET
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
@@ -18,6 +17,7 @@ from typing import Any, Protocol
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data.download import write_download_manifest
+from ai_trading_system.external_request_cache import cached_urllib_get
 
 DEFAULT_OFFICIAL_POLICY_RAW_DIR = PROJECT_ROOT / "data" / "raw" / "official_policy_sources"
 DEFAULT_OFFICIAL_POLICY_PROCESSED_DIR = PROJECT_ROOT / "data" / "processed"
@@ -90,24 +90,18 @@ class UrllibOfficialPolicyHttpClient:
         headers: Mapping[str, str] | None = None,
         timeout: int = 30,
     ) -> OfficialPolicyHttpResponse:
-        request = urllib.request.Request(
-            url,
-            headers=dict(headers or {}),
-            method="GET",
+        response = cached_urllib_get(
+            provider="Official policy source",
+            api_family="source_fetch",
+            url=url,
+            headers=headers,
+            timeout=timeout,
         )
-        try:
-            with urllib.request.urlopen(request, timeout=timeout) as response:
-                return OfficialPolicyHttpResponse(
-                    status_code=response.status,
-                    headers=dict(response.headers.items()),
-                    body=response.read(),
-                )
-        except urllib.error.HTTPError as exc:
-            return OfficialPolicyHttpResponse(
-                status_code=exc.code,
-                headers=dict(exc.headers.items()),
-                body=exc.read(),
-            )
+        return OfficialPolicyHttpResponse(
+            status_code=response.status_code,
+            headers=response.headers,
+            body=response.content,
+        )
 
 
 @dataclass(frozen=True)

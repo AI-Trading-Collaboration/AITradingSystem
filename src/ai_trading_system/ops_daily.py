@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import csv
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 from collections.abc import Mapping
@@ -17,6 +17,7 @@ from ai_trading_system.alerts import (
     default_pipeline_health_alert_report_path,
 )
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.data.download import default_download_failure_report_path
 from ai_trading_system.data.quality import default_quality_report_path
 from ai_trading_system.evidence_dashboard import (
     default_evidence_dashboard_json_path,
@@ -43,7 +44,12 @@ from ai_trading_system.pipeline_health import default_pipeline_health_report_pat
 from ai_trading_system.pit_snapshots import default_pit_snapshot_validation_report_path
 from ai_trading_system.scoring.daily import default_daily_score_report_path
 from ai_trading_system.secret_hygiene import default_secret_scan_report_path
-from ai_trading_system.trading_calendar import MarketSession, us_equity_market_session
+from ai_trading_system.trading_calendar import (
+    MarketSession,
+    current_us_equity_market_date,
+    latest_completed_us_equity_trading_day,
+    us_equity_market_session,
+)
 from ai_trading_system.valuation import default_valuation_validation_report_path
 from ai_trading_system.valuation_sources import (
     default_fmp_analyst_estimate_history_dir,
@@ -188,6 +194,14 @@ class DailyOpsRunReport:
 DailyOpsCommandRunner = subprocess.run
 
 
+def resolve_daily_ops_default_as_of(observed_at: datetime | None = None) -> date:
+    return latest_completed_us_equity_trading_day(observed_at)
+
+
+def resolve_daily_ops_market_date(observed_at: datetime | None = None) -> date:
+    return current_us_equity_market_date(observed_at)
+
+
 def build_daily_ops_plan(
     *,
     as_of: date,
@@ -328,9 +342,11 @@ def build_daily_ops_plan(
                 raw_dir / "prices_marketstack_daily.csv",
                 raw_dir / "rates_daily.csv",
                 raw_dir / "download_manifest.csv",
+                default_download_failure_report_path(reports_dir, download_end),
             ),
             quality_gate=(
-                "下载审计 manifest 记录 provider、endpoint、请求参数、row count 和 checksum。"
+                "下载审计 manifest 记录 provider、endpoint、请求参数、row count 和 checksum；"
+                "失败时写入脱敏 download_data_diagnostics 报告并停止下游。"
             ),
             blocks_downstream=True,
             enabled=download_enabled,
@@ -690,13 +706,29 @@ def run_daily_ops_plan(
     stop_on_failure: bool = True,
     run_id: str | None = None,
     visibility_check_date: date | None = None,
+    visibility_latest_completed_trading_day: date | None = None,
 ) -> DailyOpsRunReport:
-    checked_env = dict(os.environ if env is None else env)
     started_at = datetime.now(tz=UTC)
+    checked_env = dict(os.environ if env is None else env)
+    checked_env["PYTHONFAULTHANDLER"] = "1"
+    checked_env["PYTHONMALLOC"] = "malloc"
+    checked_env["PYTHONDONTWRITEBYTECODE"] = "1"
+    run_pycache_token = f"run_{started_at.strftime('%Y%m%dT%H%M%S%fZ')}_{os.getpid()}"
+    pycache_prefix = project_root / "outputs" / "tmp" / "pycache" / "daily_run" / run_pycache_token
+    pycache_prefix.mkdir(parents=True, exist_ok=True)
+    checked_env["PYTHONPYCACHEPREFIX"] = str(pycache_prefix)
+    _purge_source_pycache_dirs(project_root)
     pre_run_input_artifacts = _build_pre_run_input_artifacts(plan, project_root)
+    visibility_run_date = visibility_check_date or resolve_daily_ops_market_date(started_at)
+    visibility_completed_trading_day = (
+        visibility_latest_completed_trading_day
+        if visibility_latest_completed_trading_day is not None
+        else visibility_check_date or resolve_daily_ops_default_as_of(started_at)
+    )
     visibility_issues = _validate_daily_ops_input_visibility(
         plan,
-        run_date=visibility_check_date or started_at.date(),
+        run_date=visibility_run_date,
+        latest_completed_trading_day=visibility_completed_trading_day,
     )
     if visibility_issues:
         finished_at = datetime.now(tz=UTC)
@@ -782,7 +814,7 @@ def run_daily_ops_plan(
         step_started = datetime.now(tz=UTC)
         try:
             completed = runner(
-                _execution_command(step.command),
+                _execution_command(step.command, project_root=project_root),
                 cwd=project_root,
                 env=checked_env,
                 text=True,
@@ -855,19 +887,26 @@ def _validate_daily_ops_input_visibility(
     plan: DailyOpsPlan,
     *,
     run_date: date,
+    latest_completed_trading_day: date | None = None,
 ) -> tuple[DailyOpsInputVisibilityIssue, ...]:
-    if plan.as_of > run_date:
+    current_production_as_of = (
+        latest_completed_trading_day if plan.market_session.is_trading_day else run_date
+    )
+    if current_production_as_of is None:
+        current_production_as_of = run_date
+    if plan.as_of > current_production_as_of:
         return (
             DailyOpsInputVisibilityIssue(
                 code="daily_run_as_of_in_future",
                 severity="error",
                 message=(
-                    "daily-run 不能对未来 as_of 生成生产运行；请等待该交易日结束，"
-                    "或只生成 daily-plan 做调度预检查。"
+                    "daily-run 不能对未来 as_of 生成生产运行；交易日请等待 "
+                    "U.S. equity market 收盘后可见窗口结束，休市日请等待 "
+                    "America/New_York 日期到达，或只生成 daily-plan 做调度预检查。"
                 ),
             ),
         )
-    if plan.as_of == run_date:
+    if plan.as_of == current_production_as_of:
         return ()
 
     enabled_live_steps = tuple(
@@ -1031,8 +1070,15 @@ def render_daily_ops_run_report(
             "## 方法边界",
             "",
             "- 本报告由真实每日执行器生成，会按每日运行计划顺序调用本地 CLI。",
-            "- 执行器内部用当前 Python 解释器调用 `ai_trading_system.cli` 模块，",
-            "避免在 Windows 上从 `aits.exe` 父进程递归启动 `aits.exe`。",
+            "- 执行器内部优先用项目 `.venv` Python 调用 daily-run direct dispatcher，",
+            "找不到本地虚拟环境时才回退当前 Python，避免 Windows 上从 `aits.exe` "
+            "父进程递归启动 `aits.exe`，同时绕开 Typer 对整棵 CLI 的全局解析。",
+            "- 子命令环境显式设置 `PYTHONMALLOC=malloc` 和 `PYTHONFAULTHANDLER=1`，"
+            "并禁用 `.pyc` 写入、隔离 `PYTHONPYCACHEPREFIX`，降低 Windows 本机"
+            "长流程子进程原生崩溃风险，"
+            "同时保留崩溃堆栈行数。",
+            "- 启动子命令前会清理项目源码目录下已有 `__pycache__`，避免损坏的本地 "
+            "bytecode cache 被后续子进程读取。",
             "- 执行报告只记录命令状态、退出码、耗时和预期 artifact 路径；",
             "不写入 stdout/stderr 原文、API key、token 或付费内容原文。",
             "- Metadata sidecar 记录 run id、git/config/rule hash、命令清单、"
@@ -1254,10 +1300,42 @@ def _join_command(command: tuple[str, ...]) -> str:
     return " ".join(_quote_command_arg(arg) for arg in command)
 
 
-def _execution_command(command: tuple[str, ...]) -> tuple[str, ...]:
+def _execution_command(
+    command: tuple[str, ...],
+    project_root: Path = PROJECT_ROOT,
+) -> tuple[str, ...]:
     if command and command[0] == "aits":
-        return (sys.executable, "-m", "ai_trading_system.cli", *command[1:])
+        return (
+            str(_project_python_executable(project_root)),
+            "-m",
+            "ai_trading_system.cli_direct",
+            *command[1:],
+        )
     return command
+
+
+def _project_python_executable(project_root: Path) -> Path:
+    candidates = (
+        project_root / ".venv" / "Scripts" / "python.exe",
+        project_root / ".venv" / "bin" / "python",
+    )
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return Path(sys.executable)
+
+
+def _purge_source_pycache_dirs(project_root: Path) -> None:
+    source_root = (project_root / "src").resolve()
+    if not source_root.exists():
+        return
+    for pycache_dir in source_root.rglob("__pycache__"):
+        resolved = pycache_dir.resolve()
+        try:
+            resolved.relative_to(source_root)
+        except ValueError:
+            continue
+        shutil.rmtree(resolved, ignore_errors=True)
 
 
 def _quote_command_arg(value: str) -> str:
@@ -1433,16 +1511,24 @@ def _latest_csv_date(path: Path) -> date | None:
         return None
     latest: date | None = None
     try:
-        with path.open(encoding="utf-8", newline="") as handle:
-            for row in csv.DictReader(handle):
-                raw_date = row.get("date") or ""
+        with path.open(encoding="utf-8") as handle:
+            header = handle.readline().strip().split(",")
+            try:
+                date_index = header.index("date")
+            except ValueError:
+                return None
+            for line in handle:
+                columns = line.strip().split(",")
+                if date_index >= len(columns):
+                    continue
+                raw_date = columns[date_index]
                 try:
                     parsed = date.fromisoformat(raw_date)
                 except ValueError:
                     continue
                 if latest is None or parsed > latest:
                     latest = parsed
-    except (OSError, csv.Error, UnicodeDecodeError):
+    except (OSError, TypeError, UnicodeDecodeError):
         return None
     return latest
 

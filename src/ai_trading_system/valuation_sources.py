@@ -13,13 +13,17 @@ from pathlib import Path
 from typing import Any, Protocol, cast
 
 import yaml
-from pydantic import ValidationError
 
+from ai_trading_system.external_request_cache import (
+    cached_requests_get,
+    default_external_request_cache_dir,
+)
 from ai_trading_system.valuation import (
     CrowdingSignal,
     CrowdingStatus,
     LoadedValuationSnapshot,
     SnapshotMetric,
+    ValidationError,
     ValuationIssueSeverity,
     ValuationSnapshot,
     load_valuation_snapshot_store,
@@ -439,6 +443,7 @@ class FmpHttpValuationProvider:
         max_attempts: int = 3,
         retry_backoff_seconds: float = 0.5,
         requests_module: Any | None = None,
+        request_cache_dir: Path | str | None = None,
     ) -> None:
         if not api_key.strip():
             raise ValueError("FMP API key must not be empty")
@@ -452,6 +457,7 @@ class FmpHttpValuationProvider:
         self._max_attempts = max_attempts
         self._retry_backoff_seconds = retry_backoff_seconds
         self._requests_module = requests_module
+        self._request_cache_dir = request_cache_dir
 
     def fetch_quote_short(self, ticker: str) -> list[dict[str, Any]]:
         return self._get("quote-short", {"symbol": ticker})
@@ -534,14 +540,22 @@ class FmpHttpValuationProvider:
 
     def _get(self, endpoint: str, params: dict[str, object]) -> list[dict[str, Any]]:
         requests = self._requests_module or cast(Any, import_module("requests"))
+        request_cache_dir = default_external_request_cache_dir(
+            requests_module=self._requests_module,
+            explicit_cache_dir=self._request_cache_dir,
+        )
         request_params = {**params, "apikey": self._api_key}
         response: Any | None = None
         for attempt in range(1, self._max_attempts + 1):
             try:
-                response = requests.get(
-                    self.endpoint_for(endpoint),
+                response = cached_requests_get(
+                    provider=FMP_SOURCE_NAME,
+                    api_family=endpoint,
+                    url=self.endpoint_for(endpoint),
                     params=request_params,
                     timeout=self._timeout,
+                    requests_module=requests,
+                    cache_dir=request_cache_dir,
                 )
                 response.raise_for_status()
                 break
@@ -575,6 +589,7 @@ class EodhdHttpEarningsTrendsProvider:
         max_attempts: int = 3,
         retry_backoff_seconds: float = 0.5,
         requests_module: Any | None = None,
+        request_cache_dir: Path | str | None = None,
     ) -> None:
         if not api_key.strip():
             raise ValueError("EODHD API key must not be empty")
@@ -588,6 +603,7 @@ class EodhdHttpEarningsTrendsProvider:
         self._max_attempts = max_attempts
         self._retry_backoff_seconds = retry_backoff_seconds
         self._requests_module = requests_module
+        self._request_cache_dir = request_cache_dir
 
     def fetch_earnings_trends(self, provider_symbols: tuple[str, ...]) -> dict[str, Any]:
         return self._get(
@@ -603,14 +619,22 @@ class EodhdHttpEarningsTrendsProvider:
 
     def _get(self, endpoint: str, params: dict[str, object]) -> dict[str, Any]:
         requests = self._requests_module or cast(Any, import_module("requests"))
+        request_cache_dir = default_external_request_cache_dir(
+            requests_module=self._requests_module,
+            explicit_cache_dir=self._request_cache_dir,
+        )
         request_params = {**params, "api_token": self._api_key}
         response: Any | None = None
         for attempt in range(1, self._max_attempts + 1):
             try:
-                response = requests.get(
-                    self.endpoint_for(endpoint),
+                response = cached_requests_get(
+                    provider=EODHD_SOURCE_NAME,
+                    api_family=endpoint,
+                    url=self.endpoint_for(endpoint),
                     params=request_params,
                     timeout=self._timeout,
+                    requests_module=requests,
+                    cache_dir=request_cache_dir,
                 )
                 response.raise_for_status()
                 break

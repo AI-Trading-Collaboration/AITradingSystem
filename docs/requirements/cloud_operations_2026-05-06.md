@@ -55,4 +55,5 @@
 - 2026-05-07：按 `OPS-005` 补齐日报前置数据依赖：每日计划在 `score-daily` 前新增 SEC companyfacts 刷新、SEC metrics 抽取/校验和 FMP 估值快照刷新。`score-daily` 仍保留自己的 SEC、估值、风险事件和 rule card 门禁。
 - 2026-05-08：每日自动化真实运行暴露 `daily-plan` 只生成调度计划，不能执行前置依赖和日报评分；owner 确认目标是让每日任务正常跑完。阶段 2 和阶段 3 进入实现，范围限定为本地 CLI 执行器和脱敏执行报告，不处理云 VM、备份和通知。
 - 2026-05-08：阶段 2 和阶段 3 完成本地基础版。新增 `aits ops daily-run`，复用 `daily-plan` 步骤顺序真实执行本地 CLI，写出 `outputs/reports/daily_ops_run_YYYY-MM-DD.md`，记录每步状态、退出码、耗时、stdout/stderr 行数和 artifact 路径，不保存 stdout/stderr 原文。执行器内部用当前 Python 解释器调用 `ai_trading_system.cli` 模块，避免 Windows 上从 `aits.exe` 父进程递归启动 `aits.exe`。真实运行 2026-05-08 每日链路 9/9 步 PASS；验证 `ruff check src tests` 与 `pytest -q` 412 passed。
+- 2026-05-12：执行器子命令解释器修正为优先使用项目 `.venv` Python，找不到本地虚拟环境时才回退当前 Python；原因是本机 PATH `aits` 指向全局 Python，daily-run 子命令继承全局解释器后在 PIT/SEC 大数据步骤出现 Windows access violation。该变更不改变步骤顺序或质量门禁，只固定本地执行环境。
 - 2026-05-10：阶段 4 完成基础版：新增 `docs/runbook_daily_ops.md`，明确盘前/盘后/周/月运行节奏、正式 artifact、阻断规则、可降级披露、排查入口和 systemd/cron 示例；生产 GitHub Actions cron 仍不启用，备份和通知保持后续 owner 决策项。

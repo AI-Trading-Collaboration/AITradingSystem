@@ -45,6 +45,16 @@ class FakeSecCompanyFactsProvider:
         return f"https://example.test/companyfacts/CIK{cik}.json"
 
 
+@dataclass(frozen=True)
+class FakeRawSecCompanyFactsProvider(FakeSecCompanyFactsProvider):
+    def download_companyfacts_raw(self, request: SecCompanyFactsRequest) -> bytes:
+        return (
+            b'{"cik":1045810,"entityName":"Raw Entity","facts":{"us-gaap":'
+            b'{"Revenues":{"units":{"USD":[{"fy":2025,"fp":"FY","form":"10-K",'
+            b'"val":1000,"filed":"2026-01-31"}]}}},"dei":{}}}'
+        )
+
+
 def test_download_sec_companyfacts_writes_json_and_manifest(tmp_path: Path) -> None:
     config = SecCompaniesConfig(
         companies=[
@@ -73,6 +83,30 @@ def test_download_sec_companyfacts_writes_json_and_manifest(tmp_path: Path) -> N
     assert manifest.loc[0, "source_id"] == "sec_company_facts"
     assert manifest.loc[0, "ticker"] == "NVDA"
     assert manifest.loc[0, "fact_count"] == 1
+
+
+def test_download_sec_companyfacts_preserves_raw_json_bytes(tmp_path: Path) -> None:
+    config = SecCompaniesConfig(
+        companies=[
+            SecCompanyConfig(
+                ticker="NVDA",
+                cik="0001045810",
+                company_name="NVIDIA Corporation",
+                expected_taxonomies=["us-gaap", "dei"],
+            )
+        ]
+    )
+
+    summary = download_sec_companyfacts(
+        config=config,
+        output_dir=tmp_path,
+        provider=FakeRawSecCompanyFactsProvider(),
+    )
+
+    raw_text = summary.files[0].output_path.read_text(encoding="utf-8")
+    assert raw_text.startswith('{"cik":1045810')
+    assert raw_text.endswith("\n")
+    assert summary.total_fact_count == 1
 
 
 def test_download_sec_companyfacts_rejects_unknown_ticker(tmp_path: Path) -> None:

@@ -11,6 +11,10 @@ from typing import Any, Protocol, cast
 import pandas as pd
 
 from ai_trading_system.config import SecCompaniesConfig, SecCompanyConfig, dedupe_preserving_order
+from ai_trading_system.external_request_cache import (
+    cached_requests_get,
+    default_external_request_cache_dir,
+)
 
 
 @dataclass(frozen=True)
@@ -22,6 +26,11 @@ class SecCompanyFactsRequest:
 class SecCompanyFactsProvider(Protocol):
     def download_companyfacts(self, request: SecCompanyFactsRequest) -> dict[str, Any]:
         """Download SEC companyfacts JSON for a single CIK."""
+
+
+class SecCompanyFactsRawProvider(Protocol):
+    def download_companyfacts_raw(self, request: SecCompanyFactsRequest) -> bytes:
+        """Download raw SEC companyfacts JSON bytes for one CIK."""
 
 
 @dataclass(frozen=True)
@@ -53,27 +62,46 @@ class SecCompanyFactsDownloadSummary:
 class SecEdgarCompanyFactsProvider:
     base_url = "https://data.sec.gov/api/xbrl/companyfacts"
 
-    def __init__(self, user_agent: str) -> None:
+    def __init__(
+        self,
+        user_agent: str,
+        *,
+        requests_module: Any | None = None,
+        request_cache_dir: Path | str | None = None,
+    ) -> None:
         if not user_agent.strip():
             raise ValueError("SEC User-Agent must not be empty")
         self.user_agent = user_agent.strip()
+        self._requests_module = requests_module
+        self._request_cache_dir = request_cache_dir
 
-    def download_companyfacts(self, request: SecCompanyFactsRequest) -> dict[str, Any]:
-        requests = cast(Any, import_module("requests"))
-        response = requests.get(
-            self._endpoint(request.cik),
+    def download_companyfacts_raw(self, request: SecCompanyFactsRequest) -> bytes:
+        requests = self._requests_module or cast(Any, import_module("requests"))
+        request_cache_dir = default_external_request_cache_dir(
+            requests_module=self._requests_module,
+            explicit_cache_dir=self._request_cache_dir,
+        )
+        response = cached_requests_get(
+            provider="SEC EDGAR",
+            api_family="companyfacts",
+            url=self._endpoint(request.cik),
             headers={
                 "User-Agent": self.user_agent,
                 "Accept-Encoding": "gzip, deflate",
                 "Accept": "application/json",
             },
             timeout=30,
+            requests_module=requests,
+            cache_dir=request_cache_dir,
         )
         response.raise_for_status()
-        data = response.json()
+        return bytes(response.content)
+
+    def download_companyfacts(self, request: SecCompanyFactsRequest) -> dict[str, Any]:
+        data = _load_companyfacts_json(self.download_companyfacts_raw(request))
         if not isinstance(data, dict):
             raise TypeError("SEC companyfacts response was not a JSON object")
-        return cast(dict[str, Any], data)
+        return data
 
     def endpoint_for(self, cik: str) -> str:
         return self._endpoint(cik)
@@ -98,9 +126,14 @@ def download_sec_companyfacts(
 
     for company in companies:
         request = SecCompanyFactsRequest(ticker=company.ticker, cik=company.cik)
-        data = provider.download_companyfacts(request)
+        raw_payload = _download_raw_companyfacts_if_available(provider, request)
+        data = (
+            _load_companyfacts_json(raw_payload)
+            if raw_payload is not None
+            else provider.download_companyfacts(request)
+        )
         output_path = output_dir / f"{company.ticker.lower()}_companyfacts.json"
-        _write_json(data, output_path)
+        _write_json(data, output_path, raw_payload=raw_payload)
         checksum = _sha256_file(output_path)
         fact_count = _count_company_facts(data)
         taxonomy_count = len(data.get("facts", {})) if isinstance(data.get("facts"), dict) else 0
@@ -186,11 +219,38 @@ def _write_manifest(
     return output_path
 
 
-def _write_json(data: dict[str, Any], output_path: Path) -> None:
-    output_path.write_text(
-        json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True),
-        encoding="utf-8",
-    )
+def _download_raw_companyfacts_if_available(
+    provider: SecCompanyFactsProvider,
+    request: SecCompanyFactsRequest,
+) -> bytes | None:
+    raw_fetcher = getattr(provider, "download_companyfacts_raw", None)
+    if not callable(raw_fetcher):
+        return None
+    raw_payload = raw_fetcher(request)
+    if not isinstance(raw_payload, bytes):
+        raise TypeError("SEC companyfacts raw response was not bytes")
+    return raw_payload
+
+
+def _load_companyfacts_json(raw_payload: bytes) -> dict[str, Any]:
+    data = json.loads(raw_payload.decode("utf-8"))
+    if not isinstance(data, dict):
+        raise TypeError("SEC companyfacts response was not a JSON object")
+    return cast(dict[str, Any], data)
+
+
+def _write_json(
+    data: dict[str, Any],
+    output_path: Path,
+    *,
+    raw_payload: bytes | None = None,
+) -> None:
+    if raw_payload is not None:
+        output_path.write_bytes(raw_payload.rstrip() + b"\n")
+        return
+    with output_path.open("w", encoding="utf-8") as file:
+        json.dump(data, file, ensure_ascii=False, separators=(",", ":"))
+        file.write("\n")
 
 
 def _count_company_facts(data: dict[str, Any]) -> int:

@@ -330,6 +330,7 @@ def import_risk_event_prereview_csv(
     *,
     risk_events: RiskEventsConfig | None = None,
     as_of: date | None = None,
+    request_visibility_cutoff: datetime | None = None,
 ) -> RiskEventPreReviewImportReport:
     path = Path(input_path)
     raw_bytes = path.read_bytes()
@@ -370,7 +371,14 @@ def import_risk_event_prereview_csv(
                 )
             )
             continue
-        _check_record(record, row_number, known_risk_ids, as_of, issues)
+        _check_record(
+            record,
+            row_number,
+            known_risk_ids,
+            as_of,
+            request_visibility_cutoff,
+            issues,
+        )
         records.append(record)
 
     _check_duplicate_records(records, issues)
@@ -400,6 +408,7 @@ def run_openai_risk_event_prereview(
     openai_cache_dir: Path | str | None = None,
     openai_cache_ttl_seconds: float = DEFAULT_OPENAI_REQUEST_CACHE_TTL_SECONDS,
     generated_at: datetime | None = None,
+    request_visibility_cutoff: datetime | None = None,
     http_post_json: HttpPostJson | None = None,
 ) -> RiskEventPreReviewImportReport:
     claim_report = run_openai_claim_precheck(
@@ -421,6 +430,7 @@ def run_openai_risk_event_prereview(
         claim_report,
         risk_events=risk_events,
         as_of=as_of,
+        request_visibility_cutoff=request_visibility_cutoff,
     )
 
 
@@ -440,6 +450,7 @@ def run_openai_risk_event_prereview_for_official_candidates(
     openai_cache_dir: Path | str | None = None,
     openai_cache_ttl_seconds: float = DEFAULT_OPENAI_REQUEST_CACHE_TTL_SECONDS,
     generated_at: datetime | None = None,
+    request_visibility_cutoff: datetime | None = None,
     http_post_json: HttpPostJson | None = None,
     max_candidates: int | None = None,
 ) -> RiskEventPreReviewImportReport:
@@ -494,6 +505,7 @@ def run_openai_risk_event_prereview_for_official_candidates(
             openai_cache_dir=openai_cache_dir,
             openai_cache_ttl_seconds=openai_cache_ttl_seconds,
             generated_at=generated_at,
+            request_visibility_cutoff=request_visibility_cutoff,
             http_post_json=http_post_json,
         )
         row_count += report.row_count
@@ -591,6 +603,7 @@ def build_risk_event_prereview_from_llm_claim_report(
     *,
     risk_events: RiskEventsConfig | None = None,
     as_of: date | None = None,
+    request_visibility_cutoff: datetime | None = None,
 ) -> RiskEventPreReviewImportReport:
     issues = [_issue_from_llm_precheck(issue) for issue in claim_report.issues]
     if claim_report.error_count:
@@ -634,7 +647,14 @@ def build_risk_event_prereview_from_llm_claim_report(
                     )
                 )
                 continue
-            _check_record(record, row_number, known_risk_ids, as_of, issues)
+            _check_record(
+                record,
+                row_number,
+                known_risk_ids,
+                as_of,
+                request_visibility_cutoff,
+                issues,
+            )
             records.append(record)
 
     if claim_report.record_count and not records:
@@ -1225,6 +1245,7 @@ def _check_record(
     row_number: int,
     known_risk_ids: set[str],
     as_of: date | None,
+    request_visibility_cutoff: datetime | None,
     issues: list[RiskEventPreReviewIssue],
 ) -> None:
     if as_of is not None:
@@ -1240,14 +1261,28 @@ def _check_record(
                     message="预审来源发布日期或采集日期晚于评估日期。",
                 )
             )
-        if record.request_timestamp.date() > as_of:
+        cutoff = _effective_request_visibility_cutoff(
+            as_of,
+            request_visibility_cutoff,
+        )
+        if _as_utc(record.request_timestamp) > cutoff:
+            code = (
+                "risk_event_prereview_request_after_visibility_cutoff"
+                if request_visibility_cutoff is not None
+                else "risk_event_prereview_request_in_future"
+            )
+            message = (
+                "OpenAI 请求时间晚于本次可见时间上限。"
+                if request_visibility_cutoff is not None
+                else "OpenAI 请求时间晚于评估日期。"
+            )
             issues.append(
                 RiskEventPreReviewIssue(
                     severity=RiskEventPreReviewIssueSeverity.ERROR,
-                    code="risk_event_prereview_request_in_future",
+                    code=code,
                     row_number=row_number,
                     precheck_id=record.precheck_id,
-                    message="OpenAI 请求时间晚于评估日期。",
+                    message=message,
                 )
             )
     if known_risk_ids:
@@ -1345,6 +1380,30 @@ def _parse_optional_datetime(value: str) -> datetime | None:
     if not value.strip():
         return None
     return _parse_datetime(value)
+
+
+def _as_utc(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
+
+
+def _effective_request_visibility_cutoff(
+    as_of: date,
+    request_visibility_cutoff: datetime | None,
+) -> datetime:
+    if request_visibility_cutoff is not None:
+        return _as_utc(request_visibility_cutoff)
+    return datetime(
+        as_of.year,
+        as_of.month,
+        as_of.day,
+        23,
+        59,
+        59,
+        999999,
+        tzinfo=UTC,
+    )
 
 
 def _parse_bool(value: str, *, default: bool) -> bool:

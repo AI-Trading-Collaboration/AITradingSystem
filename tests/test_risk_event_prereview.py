@@ -220,6 +220,94 @@ def test_run_openai_risk_event_prereview_writes_pending_queue_without_source_tex
     assert "sk-test" not in queue_text
 
 
+def test_openai_prereview_allows_production_request_after_as_of_with_cutoff(
+    tmp_path: Path,
+) -> None:
+    request_time = datetime(2026, 5, 12, 4, 10, tzinfo=UTC)
+    packet = _packet(
+        published_at=datetime(2026, 5, 11, tzinfo=UTC).date(),
+        captured_at=datetime(2026, 5, 11, tzinfo=UTC).date(),
+    )
+
+    def fake_post(
+        _url: str,
+        headers: Mapping[str, str],
+        _payload: Mapping[str, Any],
+        _timeout: float,
+    ) -> OpenAIJsonResponse:
+        return _openai_response(request_id=headers["X-Client-Request-Id"])
+
+    report = run_openai_risk_event_prereview(
+        packet,
+        api_key="sk-test",
+        data_sources=DataSourcesConfig(
+            sources=[
+                _source(
+                    source_id="official_policy",
+                    source_type="primary_source",
+                    external_llm_allowed=True,
+                    max_content_sent_level="full_text",
+                )
+            ]
+        ),
+        risk_events=load_risk_events(),
+        input_path=tmp_path / "risk_input.yaml",
+        as_of=datetime(2026, 5, 11, tzinfo=UTC).date(),
+        generated_at=request_time,
+        request_visibility_cutoff=request_time,
+        http_post_json=fake_post,
+    )
+
+    assert report.status == "PASS_WITH_WARNINGS"
+    assert report.record_count == 1
+    assert "risk_event_prereview_request_in_future" not in {
+        issue.code for issue in report.issues
+    }
+
+
+def test_openai_prereview_rejects_request_after_as_of_without_cutoff(
+    tmp_path: Path,
+) -> None:
+    packet = _packet(
+        published_at=datetime(2026, 5, 11, tzinfo=UTC).date(),
+        captured_at=datetime(2026, 5, 11, tzinfo=UTC).date(),
+    )
+
+    def fake_post(
+        _url: str,
+        headers: Mapping[str, str],
+        _payload: Mapping[str, Any],
+        _timeout: float,
+    ) -> OpenAIJsonResponse:
+        return _openai_response(request_id=headers["X-Client-Request-Id"])
+
+    report = run_openai_risk_event_prereview(
+        packet,
+        api_key="sk-test",
+        data_sources=DataSourcesConfig(
+            sources=[
+                _source(
+                    source_id="official_policy",
+                    source_type="primary_source",
+                    external_llm_allowed=True,
+                    max_content_sent_level="full_text",
+                )
+            ]
+        ),
+        risk_events=load_risk_events(),
+        input_path=tmp_path / "risk_input.yaml",
+        as_of=datetime(2026, 5, 11, tzinfo=UTC).date(),
+        generated_at=datetime(2026, 5, 12, 4, 10, tzinfo=UTC),
+        http_post_json=fake_post,
+    )
+
+    assert report.passed is False
+    assert report.records == ()
+    assert "risk_event_prereview_request_in_future" in {
+        issue.code for issue in report.issues
+    }
+
+
 def test_risk_events_precheck_openai_cli_fails_closed_without_permission(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,

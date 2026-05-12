@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 NYSE_REGULAR_HOLIDAY_CALENDAR_SOURCE = (
     "NYSE regular full-day holiday rules: weekends, New Year's Day, "
@@ -9,6 +10,9 @@ NYSE_REGULAR_HOLIDAY_CALENDAR_SOURCE = (
     "Memorial Day, Juneteenth, Independence Day, Labor Day, Thanksgiving Day, "
     "and Christmas Day. Does not include unscheduled special closures."
 )
+US_EQUITY_MARKET_TIMEZONE = ZoneInfo("America/New_York")
+US_EQUITY_REGULAR_CLOSE_TIME = time(16, 0)
+US_EQUITY_DEFAULT_POST_CLOSE_BUFFER = timedelta(minutes=30)
 
 
 @dataclass(frozen=True)
@@ -54,6 +58,41 @@ def us_equity_market_session(as_of: date) -> MarketSession:
 
 def is_us_equity_trading_day(value: date) -> bool:
     return value.weekday() < 5 and value not in us_equity_full_day_holidays(value.year)
+
+
+def current_us_equity_market_date(observed_at: datetime | None = None) -> date:
+    current = observed_at or datetime.now(tz=UTC)
+    if current.tzinfo is None or current.utcoffset() is None:
+        raise ValueError("observed_at must be timezone-aware")
+    return current.astimezone(US_EQUITY_MARKET_TIMEZONE).date()
+
+
+def latest_completed_us_equity_trading_day(
+    observed_at: datetime | None = None,
+    *,
+    post_close_buffer: timedelta = US_EQUITY_DEFAULT_POST_CLOSE_BUFFER,
+) -> date:
+    """Return the latest U.S. equity trading day that is safe for production daily ops."""
+    current = observed_at or datetime.now(tz=UTC)
+    if current.tzinfo is None or current.utcoffset() is None:
+        raise ValueError("observed_at must be timezone-aware")
+    if post_close_buffer < timedelta(0):
+        raise ValueError("post_close_buffer must be non-negative")
+
+    market_now = current.astimezone(US_EQUITY_MARKET_TIMEZONE)
+    market_date = market_now.date()
+    if is_us_equity_trading_day(market_date):
+        ready_at = (
+            datetime.combine(
+                market_date,
+                US_EQUITY_REGULAR_CLOSE_TIME,
+                tzinfo=US_EQUITY_MARKET_TIMEZONE,
+            )
+            + post_close_buffer
+        )
+        if market_now >= ready_at:
+            return market_date
+    return previous_us_equity_trading_day(market_date)
 
 
 def previous_us_equity_trading_day(value: date) -> date:

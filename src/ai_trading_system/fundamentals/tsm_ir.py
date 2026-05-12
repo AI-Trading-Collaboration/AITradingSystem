@@ -15,6 +15,10 @@ from urllib.parse import urljoin, urlparse
 import pandas as pd
 
 from ai_trading_system.config import SecCompaniesConfig, SecCompanyConfig
+from ai_trading_system.external_request_cache import (
+    cached_requests_get,
+    default_external_request_cache_dir,
+)
 from ai_trading_system.fundamentals.sec_metrics import SecFundamentalMetricRow
 
 TSM_IR_SOURCE_ID = "tsm_investor_relations_quarterly_results"
@@ -69,6 +73,7 @@ class TsmIrHttpProvider:
     def __init__(
         self,
         requests_module: Any | None = None,
+        request_cache_dir: Path | str | None = None,
         timeout: float = 30,
         user_agent: str = "ai-trading-system tsm-ir/0.1",
     ) -> None:
@@ -78,6 +83,7 @@ class TsmIrHttpProvider:
         if not normalized_user_agent:
             raise ValueError("TSMC IR HTTP User-Agent must not be empty")
         self._requests_module = requests_module
+        self._request_cache_dir = request_cache_dir
         self.timeout = timeout
         self.user_agent = normalized_user_agent
 
@@ -92,8 +98,14 @@ class TsmIrHttpProvider:
             raise ValueError(_extracted_text_required_message(url, url_binary_reason))
 
         requests = self._requests_module or cast(Any, import_module("requests"))
-        response = requests.get(
-            url,
+        request_cache_dir = default_external_request_cache_dir(
+            requests_module=self._requests_module,
+            explicit_cache_dir=self._request_cache_dir,
+        )
+        response = cached_requests_get(
+            provider=TSM_IR_PROVIDER_NAME,
+            api_family="quarterly_text",
+            url=url,
             headers={
                 "User-Agent": self.user_agent,
                 "Accept": (
@@ -102,6 +114,8 @@ class TsmIrHttpProvider:
                 ),
             },
             timeout=self.timeout,
+            requests_module=requests,
+            cache_dir=request_cache_dir,
         )
         response.raise_for_status()
         headers = getattr(response, "headers", {}) or {}

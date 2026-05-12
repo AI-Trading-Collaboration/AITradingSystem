@@ -12,10 +12,12 @@ import ai_trading_system.cli as cli_module
 from ai_trading_system.cli import app
 from ai_trading_system.config import DataSourceConfig, DataSourcesConfig
 from ai_trading_system.fmp_forward_pit import (
+    FmpForwardPitRawPayload,
     attach_fmp_forward_pit_raw_paths,
     fetch_fmp_forward_pit_snapshots,
     normalize_fmp_forward_pit_payloads,
     render_fmp_forward_pit_fetch_report,
+    retarget_fmp_forward_pit_normalized_rows,
     write_fmp_forward_pit_normalized_csv,
     write_fmp_forward_pit_raw_payloads,
 )
@@ -75,6 +77,10 @@ def test_fetch_fmp_forward_pit_writes_raw_normalized_and_manifest(
     assert report.status == "PASS"
     assert report.row_count == 8
     assert len(raw_paths) == 1
+    assert raw_payload["records_by_endpoint"]["analyst-estimates"][0]["nested"] == {
+        "source": "unit",
+        "values": [1, {"inner": True}],
+    }
     assert raw_payload["records_by_endpoint"]["earnings-calendar"][0]["symbol"] == "NVDA"
     assert raw_payload["request_parameters_by_endpoint"]["earnings-calendar"][
         "filtered_symbol"
@@ -92,6 +98,74 @@ def test_fetch_fmp_forward_pit_writes_raw_normalized_and_manifest(
     assert normalized_csv[0]["raw_payload_sha256"] == manifest_records[0].raw_payload_sha256
     assert pit_report.status == "PASS"
     assert "available_time <= decision_time" in render_fmp_forward_pit_fetch_report(report)
+
+
+def test_normalized_id_handles_non_ascii_long_record_keys() -> None:
+    unusual_symbol = "NVDA-中文-🚀-" + ("X" * 5000)
+    payload = FmpForwardPitRawPayload(
+        ticker="NVDA",
+        as_of=date(2026, 5, 11),
+        captured_at=date(2026, 5, 11),
+        downloaded_at=datetime(2026, 5, 12, 2, 0, tzinfo=UTC),
+        provider_symbol="NVDA",
+        endpoint_records={
+            "analyst-estimates": (
+                {
+                    "symbol": unusual_symbol,
+                    "epsAvg": 4.25,
+                    "comment": "保留非 ASCII 审计字段",
+                    "nested": {"ignored": "not_scalar"},
+                },
+            ),
+        },
+        request_parameters_by_endpoint={"analyst-estimates": {"symbol": "NVDA"}},
+        checksum_sha256="b" * 64,
+    )
+
+    first = normalize_fmp_forward_pit_payloads((payload,))
+    second = normalize_fmp_forward_pit_payloads((payload,))
+
+    assert len(first) == 1
+    assert first[0].normalized_id == second[0].normalized_id
+    assert len(first[0].normalized_id) <= 153
+    assert all(ord(character) < 128 for character in first[0].normalized_id)
+    digest_suffix = first[0].normalized_id.rsplit("_", maxsplit=1)[-1]
+    assert len(digest_suffix) == 12
+    int(digest_suffix, 16)
+    assert "保留非 ASCII 审计字段" in first[0].normalized_values_json
+    assert "nested" not in first[0].normalized_values_json
+
+
+def test_retarget_normalized_rows_updates_raw_file_identity(tmp_path: Path) -> None:
+    report = fetch_fmp_forward_pit_snapshots(
+        ["NVDA"],
+        "test-key",
+        date(2026, 5, 2),
+        provider=_FakeFmpForwardPitProvider(),
+        captured_at=date(2026, 5, 2),
+        downloaded_at=datetime(2026, 5, 2, 12, 0, tzinfo=UTC),
+        analyst_estimate_limit=2,
+    )
+    raw_paths = write_fmp_forward_pit_raw_payloads(
+        report.raw_payloads,
+        tmp_path / "raw" / "fmp_forward_pit",
+    )
+    attached_payloads = attach_fmp_forward_pit_raw_paths(
+        report.raw_payloads,
+        raw_paths,
+        project_root=tmp_path,
+    )
+
+    retargeted = retarget_fmp_forward_pit_normalized_rows(
+        report.normalized_rows,
+        attached_payloads,
+    )
+
+    assert len(retargeted) == len(report.normalized_rows)
+    assert retargeted[0].raw_payload_path == raw_paths[0].relative_to(tmp_path).as_posix()
+    assert retargeted[0].raw_payload_sha256 == attached_payloads[0].checksum_sha256
+    assert retargeted[0].snapshot_id != report.normalized_rows[0].snapshot_id
+    assert retargeted[0].normalized_values_json == report.normalized_rows[0].normalized_values_json
 
 
 def test_fetch_fmp_forward_pit_redacts_api_key_from_errors() -> None:
@@ -266,7 +340,13 @@ class _FakeFmpForwardPitProvider:
     ) -> list[dict[str, Any]]:
         assert period == "annual"
         return [
-            {"symbol": ticker, "date": "2027-01-31", "epsAvg": 4.0, "revenueAvg": 120.0},
+            {
+                "symbol": ticker,
+                "date": "2027-01-31",
+                "epsAvg": 4.0,
+                "revenueAvg": 120.0,
+                "nested": {"source": "unit", "values": [1, {"inner": True}]},
+            },
             {"symbol": ticker, "date": "2026-01-31", "epsAvg": 3.0, "revenueAvg": 100.0},
         ][:limit]
 

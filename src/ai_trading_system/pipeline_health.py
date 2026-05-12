@@ -91,6 +91,7 @@ def build_pit_snapshot_health_checks(
     min_manifest_records: int = 1,
     min_normalized_rows: int = 1,
     max_snapshot_age_days: int = 3,
+    visibility_cutoff: datetime | None = None,
 ) -> tuple[PipelineArtifactCheck, ...]:
     if min_manifest_records < 0:
         raise ValueError("min_manifest_records must be non-negative")
@@ -172,6 +173,7 @@ def build_pit_snapshot_health_checks(
                 rows=manifest_rows,
                 as_of=as_of,
                 max_age_days=max_snapshot_age_days,
+                visibility_cutoff=visibility_cutoff,
                 investigation_hint="检查最近一次 PIT raw snapshot 的 available_time。",
             ),
             _freshness_check(
@@ -181,6 +183,7 @@ def build_pit_snapshot_health_checks(
                 rows=normalized_rows,
                 as_of=as_of,
                 max_age_days=max_snapshot_age_days,
+                visibility_cutoff=visibility_cutoff,
                 investigation_hint="检查 FMP PIT 标准化索引是否断更。",
             ),
             _pit_manifest_checksum_check(
@@ -342,6 +345,7 @@ def _freshness_check(
     rows: Iterable[dict[str, str]],
     as_of: date,
     max_age_days: int,
+    visibility_cutoff: datetime | None,
     investigation_hint: str,
 ) -> PipelineArtifactCheck:
     latest = _latest_available_time(rows)
@@ -349,6 +353,24 @@ def _freshness_check(
     if latest is None:
         severity = PipelineHealthSeverity.WARNING
         message = "未发现可解析的 available_time。"
+    elif visibility_cutoff is not None:
+        cutoff = visibility_cutoff.astimezone(UTC)
+        if latest > cutoff:
+            severity = PipelineHealthSeverity.ERROR
+            message = (
+                f"latest_available_time={latest.isoformat()} 晚于 "
+                f"visibility_cutoff={cutoff.isoformat()}。"
+            )
+        else:
+            age_days = (cutoff.date() - latest.date()).days
+            if age_days > max_age_days:
+                severity = PipelineHealthSeverity.WARNING
+                message = (
+                    f"latest_available_time={latest.isoformat()}，"
+                    f"距 visibility_cutoff 已 {age_days} 天。"
+                )
+            else:
+                message = "OK"
     else:
         age_days = (as_of - latest.date()).days
         if age_days < 0:

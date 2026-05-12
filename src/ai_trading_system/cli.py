@@ -154,7 +154,11 @@ from ai_trading_system.config import (
     load_watchlist,
     market_regime_by_id,
 )
-from ai_trading_system.data.download import download_daily_data
+from ai_trading_system.data.download import (
+    default_download_failure_report_path,
+    download_daily_data,
+    write_download_failure_report,
+)
 from ai_trading_system.data.market_data import (
     FmpPriceProvider,
     MarketstackPriceProvider,
@@ -233,6 +237,7 @@ from ai_trading_system.execution_policy import (
     validate_execution_policy,
     write_execution_policy_report,
 )
+from ai_trading_system.external_request_cache import sanitize_diagnostic_text
 from ai_trading_system.feature_availability import (
     DEFAULT_FEATURE_AVAILABILITY_CONFIG_PATH,
     FeatureAvailabilitySourceCheck,
@@ -261,14 +266,14 @@ from ai_trading_system.fmp_forward_pit import (
     FmpForwardPitIssue,
     FmpForwardPitIssueSeverity,
     attach_fmp_forward_pit_raw_paths,
+    attach_fmp_forward_pit_report_artifacts,
     build_fmp_forward_pit_failure_report,
     default_fmp_forward_pit_fetch_report_path,
     default_fmp_forward_pit_normalized_path,
     fetch_fmp_forward_pit_snapshots,
-    normalize_fmp_forward_pit_payloads,
     sanitize_fmp_forward_pit_error_message,
     write_fmp_forward_pit_fetch_report,
-    write_fmp_forward_pit_normalized_csv,
+    write_fmp_forward_pit_normalized_csv_from_payloads,
     write_fmp_forward_pit_raw_payloads,
 )
 from ai_trading_system.focus_stock_trends import (
@@ -388,6 +393,7 @@ from ai_trading_system.ops_daily import (
     default_daily_ops_plan_path,
     default_daily_ops_run_metadata_path,
     default_daily_ops_run_report_path,
+    resolve_daily_ops_default_as_of,
     run_daily_ops_plan,
     write_daily_ops_plan,
     write_daily_ops_run_report,
@@ -925,6 +931,7 @@ def fetch_fmp_forward_pit_command(
             analyst_estimate_limit=analyst_estimate_limit,
             earnings_calendar_lookback_days=earnings_calendar_lookback_days,
             earnings_calendar_forward_days=earnings_calendar_forward_days,
+            include_normalized_rows=False,
         )
         _finish_fmp_forward_pit_failure(
             fetch_report,
@@ -1020,13 +1027,15 @@ def fetch_fmp_forward_pit_command(
     try:
         raw_paths = write_fmp_forward_pit_raw_payloads(fetch_report.raw_payloads, raw_output_dir)
         attached_payloads = attach_fmp_forward_pit_raw_paths(fetch_report.raw_payloads, raw_paths)
-        normalized_rows = normalize_fmp_forward_pit_payloads(attached_payloads)
-        fetch_report = replace(
+        fetch_report = attach_fmp_forward_pit_report_artifacts(
             fetch_report,
             raw_payloads=attached_payloads,
-            normalized_rows=normalized_rows,
+            normalized_rows=fetch_report.normalized_rows,
         )
-        write_fmp_forward_pit_normalized_csv(normalized_rows, normalized_output)
+        write_fmp_forward_pit_normalized_csv_from_payloads(
+            attached_payloads,
+            normalized_output,
+        )
         write_fmp_forward_pit_fetch_report(fetch_report, fetch_report_output)
 
         manifest_records = discover_existing_pit_raw_snapshots(
@@ -2500,6 +2509,10 @@ def download_data(
         str,
         typer.Option(help="读取 Marketstack API key 的环境变量名。"),
     ] = "MARKETSTACK_API_KEY",
+    failure_report_path: Annotated[
+        Path | None,
+        typer.Option(help="下载失败诊断报告路径；默认写入 outputs/reports。"),
+    ] = None,
 ) -> None:
     """下载市场日线价格和 FRED 宏观序列到本地 CSV 缓存。"""
     universe = load_universe()
@@ -2527,15 +2540,35 @@ def download_data(
             raise typer.Exit(code=1)
         marketstack_provider = MarketstackPriceProvider(api_key=api_key)
 
-    summary = download_daily_data(
-        universe,
-        start=start_date,
-        end=end_date,
-        output_dir=output_dir,
-        include_full_ai_chain=full_universe,
-        price_provider=primary_price_provider,
-        secondary_price_provider=marketstack_provider,
-    )
+    try:
+        summary = download_daily_data(
+            universe,
+            start=start_date,
+            end=end_date,
+            output_dir=output_dir,
+            include_full_ai_chain=full_universe,
+            price_provider=primary_price_provider,
+            secondary_price_provider=marketstack_provider,
+        )
+    except Exception as exc:
+        report_path = failure_report_path or default_download_failure_report_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            end_date,
+        )
+        write_download_failure_report(
+            output_path=report_path,
+            start=start_date,
+            end=end_date,
+            raw_output_dir=output_dir,
+            include_full_ai_chain=full_universe,
+            price_provider_name=normalized_price_provider,
+            with_marketstack=with_marketstack,
+            error=exc,
+        )
+        console.print("[red]数据缓存更新失败，已停止。[/red]")
+        console.print(f"下载失败诊断报告：{report_path}")
+        console.print(f"脱敏错误摘要：{sanitize_diagnostic_text(str(exc))}")
+        raise typer.Exit(code=1) from exc
 
     console.print("[green]数据缓存已更新。[/green]")
     console.print(f"主价格源：{normalized_price_provider}")
@@ -4794,7 +4827,13 @@ def pipeline_health_command(
     ] = None,
 ) -> None:
     """检查关键 pipeline 输入/输出 artifact 和 PIT 快照归档健康。"""
+    health_observed_at = datetime.now(tz=UTC)
     health_date = _parse_date(as_of) if as_of else date.today()
+    production_health_cutoff = (
+        health_observed_at
+        if health_date == resolve_daily_ops_default_as_of(health_observed_at)
+        else None
+    )
     quality_report = data_quality_report_path or default_quality_report_path(
         PROJECT_ROOT / "outputs" / "reports",
         health_date,
@@ -4839,6 +4878,7 @@ def pipeline_health_command(
         min_manifest_records=min_pit_manifest_records,
         min_normalized_rows=min_pit_normalized_rows,
         max_snapshot_age_days=max_pit_snapshot_age_days,
+        visibility_cutoff=production_health_cutoff,
     )
     core_artifacts = [
         PipelineArtifactSpec(
@@ -4931,8 +4971,11 @@ def _build_daily_ops_plan_from_cli_options(
     risk_event_openai_precheck_max_candidates: int,
     full_universe: bool,
     run_id: str | None = None,
+    default_observed_at: datetime | None = None,
 ):
-    plan_date = _parse_date(as_of) if as_of else date.today()
+    plan_date = (
+        _parse_date(as_of) if as_of else resolve_daily_ops_default_as_of(default_observed_at)
+    )
     start_date = _parse_date(download_start)
     if risk_event_openai_precheck_max_candidates < 0:
         raise typer.BadParameter("OpenAI 风险事件预审候选上限不能为负数。")
@@ -5155,8 +5198,10 @@ def daily_ops_run_command(
         legacy_mode = validate_legacy_output_mode(legacy_output_mode)
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
-    plan_date = _parse_date(as_of) if as_of else date.today()
     run_generated_at = datetime.now(tz=UTC)
+    plan_date = (
+        _parse_date(as_of) if as_of else resolve_daily_ops_default_as_of(run_generated_at)
+    )
     resolved_run_id = run_id or default_daily_run_id(
         plan_date,
         generated_at=run_generated_at,
@@ -5183,6 +5228,7 @@ def daily_ops_run_command(
         ),
         full_universe=full_universe,
         run_id=resolved_run_id,
+        default_observed_at=run_generated_at,
     )
 
     reports_dir = PROJECT_ROOT / "outputs" / "reports"
@@ -9045,7 +9091,11 @@ def score_daily(
         market_regimes,
         market_regimes.default_backtest_regime,
     )
-    score_date = _parse_date(as_of) if as_of else date.today()
+    score_started_at = datetime.now(tz=UTC)
+    score_date = _parse_date(as_of) if as_of else resolve_daily_ops_default_as_of(
+        score_started_at
+    )
+    production_score_date = resolve_daily_ops_default_as_of(score_started_at)
     benchmark_tickers = tuple(_parse_csv_items(review_benchmarks))
     if not benchmark_tickers:
         raise typer.BadParameter("日报交易复盘至少需要一个归因基准标的。")
@@ -9461,6 +9511,12 @@ def score_daily(
                 http_client=openai_http_client,
                 openai_cache_dir=openai_cache_dir,
                 openai_cache_ttl_seconds=openai_cache_ttl_hours * 3600,
+                generated_at=(
+                    score_started_at if score_date == production_score_date else None
+                ),
+                request_visibility_cutoff=(
+                    score_started_at if score_date == production_score_date else None
+                ),
                 max_candidates=risk_event_openai_precheck_max_candidates,
             )
         )

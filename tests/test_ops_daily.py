@@ -2,17 +2,21 @@ from __future__ import annotations
 
 import json
 import subprocess
-from datetime import date
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 from typer.testing import CliRunner
 
+import ai_trading_system.cli as cli_module
 from ai_trading_system.cli import app
 from ai_trading_system.ops_daily import (
+    _execution_command,
+    _purge_source_pycache_dirs,
     build_daily_ops_plan,
     daily_ops_run_metadata_path_for_report,
     render_daily_ops_plan,
     render_daily_ops_run_report,
+    resolve_daily_ops_default_as_of,
     run_daily_ops_plan,
     write_daily_ops_run_report,
 )
@@ -39,6 +43,8 @@ def test_daily_ops_plan_reports_missing_required_env() -> None:
     pit_command = "`aits pit-snapshots fetch-fmp-forward --as-of 2026-05-06 --continue-on-failure`"
     assert "状态：BLOCKED_ENV" in markdown
     assert "`aits download-data --start 2018-01-01 --end 2026-05-06`" in markdown
+    assert "download_data_diagnostics_2026-05-06.md" in markdown
+    assert "失败时写入脱敏 download_data_diagnostics 报告" in markdown
     assert pit_command in markdown
     assert "`aits fundamentals download-sec-companyfacts`" in markdown
     assert "`aits fundamentals extract-sec-metrics --as-of 2026-05-06`" in markdown
@@ -50,6 +56,51 @@ def test_daily_ops_plan_reports_missing_required_env() -> None:
     assert "`live_provider`" in markdown
     assert "`readonly`" in markdown
     assert "缺少关键环境变量时，后续真实执行器必须 fail closed" in markdown
+
+
+def test_daily_ops_default_as_of_uses_latest_completed_us_market_day() -> None:
+    observed_at = datetime(2026, 5, 12, 1, 44, tzinfo=UTC)
+
+    assert resolve_daily_ops_default_as_of(observed_at) == date(2026, 5, 11)
+
+
+def test_daily_ops_plan_cli_default_as_of_uses_market_resolver(monkeypatch) -> None:
+    monkeypatch.setattr(
+        cli_module,
+        "resolve_daily_ops_default_as_of",
+        lambda observed_at=None: date(2026, 5, 11),
+    )
+
+    plan_date, plan = cli_module._build_daily_ops_plan_from_cli_options(
+        as_of=None,
+        download_start="2018-01-01",
+        include_download_data=False,
+        include_pit_snapshots=False,
+        include_sec_fundamentals=False,
+        include_valuation_snapshots=False,
+        include_secret_scan=False,
+        risk_event_openai_precheck=False,
+        risk_event_openai_precheck_max_candidates=20,
+        full_universe=False,
+    )
+
+    assert plan_date == date(2026, 5, 11)
+    assert plan.as_of == date(2026, 5, 11)
+
+
+def test_execution_command_prefers_project_venv_python(tmp_path: Path) -> None:
+    local_python = tmp_path / ".venv" / "Scripts" / "python.exe"
+    local_python.parent.mkdir(parents=True)
+    local_python.write_text("", encoding="utf-8")
+
+    command = _execution_command(("aits", "score-daily", "--as-of", "2026-05-11"), tmp_path)
+
+    assert command[:3] == (
+        str(local_python),
+        "-m",
+        "ai_trading_system.cli_direct",
+    )
+    assert command[3:] == ("score-daily", "--as-of", "2026-05-11")
 
 
 def test_daily_ops_plan_allows_explicit_openai_skip() -> None:
@@ -336,6 +387,84 @@ def test_run_daily_ops_plan_stops_on_first_failed_command() -> None:
     ]
 
 
+def test_run_daily_ops_plan_sets_stable_child_python_env() -> None:
+    plan = build_daily_ops_plan(
+        as_of=date(2026, 5, 6),
+        include_download_data=False,
+        include_pit_snapshots=False,
+        include_valuation_snapshots=False,
+        include_secret_scan=False,
+        skip_risk_event_openai_precheck=True,
+    )
+    observed_env: dict[str, str] = {}
+
+    def fake_runner(command: tuple[str, ...], **kwargs: object) -> subprocess.CompletedProcess[str]:
+        observed_env.update(kwargs["env"])  # type: ignore[arg-type]
+        return subprocess.CompletedProcess(command, 1, stdout="", stderr="")
+
+    run_daily_ops_plan(
+        plan,
+        env={
+            "SEC_USER_AGENT": "AITradingSystem test@example.com",
+            "PYTHONPYCACHEPREFIX": "bad-inherited-cache",
+        },
+        runner=fake_runner,
+        visibility_check_date=date(2026, 5, 6),
+    )
+
+    assert observed_env["PYTHONMALLOC"] == "malloc"
+    assert observed_env["PYTHONFAULTHANDLER"] == "1"
+    assert observed_env["PYTHONDONTWRITEBYTECODE"] == "1"
+    pycache_parts = Path(observed_env["PYTHONPYCACHEPREFIX"]).parts
+    assert pycache_parts[-5:-1] == (
+        "outputs",
+        "tmp",
+        "pycache",
+        "daily_run",
+    )
+    assert pycache_parts[-1].startswith("run_")
+
+
+def test_run_daily_ops_plan_purges_source_pycache_before_child(tmp_path: Path) -> None:
+    source_pycache = tmp_path / "src" / "ai_trading_system" / "__pycache__"
+    source_pycache.mkdir(parents=True)
+    (source_pycache / "config.cpython-311.pyc").write_bytes(b"bad bytecode")
+    plan = build_daily_ops_plan(
+        as_of=date(2026, 5, 6),
+        project_root=tmp_path,
+        include_download_data=False,
+        include_pit_snapshots=False,
+        include_sec_fundamentals=False,
+        include_valuation_snapshots=False,
+        include_secret_scan=False,
+        skip_risk_event_openai_precheck=True,
+    )
+
+    def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
+        assert not source_pycache.exists()
+        return subprocess.CompletedProcess(command, 1, stdout="", stderr="")
+
+    run_daily_ops_plan(
+        plan,
+        project_root=tmp_path,
+        env={},
+        runner=fake_runner,
+        visibility_check_date=date(2026, 5, 6),
+    )
+
+
+def test_purge_source_pycache_leaves_non_source_cache(tmp_path: Path) -> None:
+    source_pycache = tmp_path / "src" / "pkg" / "__pycache__"
+    other_pycache = tmp_path / "outputs" / "__pycache__"
+    source_pycache.mkdir(parents=True)
+    other_pycache.mkdir(parents=True)
+
+    _purge_source_pycache_dirs(tmp_path)
+
+    assert not source_pycache.exists()
+    assert other_pycache.exists()
+
+
 def test_run_daily_ops_plan_blocks_historical_as_of_before_commands() -> None:
     plan = build_daily_ops_plan(
         as_of=date(2026, 5, 8),
@@ -368,6 +497,71 @@ def test_run_daily_ops_plan_blocks_historical_as_of_before_commands() -> None:
     assert report.metadata.input_visibility_status == "BLOCKED"
     assert "daily_run_historical_as_of_requires_replay" in markdown
     assert "aits ops replay-day --mode cache-only --as-of 2026-05-08" in markdown
+
+
+def test_run_daily_ops_plan_blocks_trading_day_before_market_close_window() -> None:
+    plan = build_daily_ops_plan(
+        as_of=date(2026, 5, 11),
+        skip_risk_event_openai_precheck=True,
+    )
+    calls: list[tuple[str, ...]] = []
+
+    def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
+        calls.append(command)
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    report = run_daily_ops_plan(
+        plan,
+        env={
+            "FMP_API_KEY": "present",
+            "MARKETSTACK_API_KEY": "present",
+            "SEC_USER_AGENT": "AITradingSystem test@example.com",
+        },
+        runner=fake_runner,
+        visibility_check_date=date(2026, 5, 11),
+        visibility_latest_completed_trading_day=date(2026, 5, 8),
+    )
+
+    assert report.status == "BLOCKED_VISIBILITY"
+    assert calls == []
+    assert report.failed_step is not None
+    assert report.failed_step.step_id == "input_visibility"
+
+
+def test_run_daily_ops_plan_allows_explicit_current_closed_market_day(tmp_path: Path) -> None:
+    _write_price_cache(tmp_path / "data" / "raw" / "prices_daily.csv", "2026-05-08")
+    _write_price_cache(
+        tmp_path / "data" / "raw" / "prices_marketstack_daily.csv",
+        "2026-05-08",
+    )
+    plan = build_daily_ops_plan(
+        as_of=date(2026, 5, 10),
+        project_root=tmp_path,
+        skip_risk_event_openai_precheck=True,
+    )
+    calls: list[tuple[str, ...]] = []
+
+    def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
+        calls.append(command)
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    report = run_daily_ops_plan(
+        plan,
+        project_root=tmp_path,
+        env={
+            "FMP_API_KEY": "present",
+            "MARKETSTACK_API_KEY": "present",
+            "SEC_USER_AGENT": "AITradingSystem test@example.com",
+        },
+        runner=fake_runner,
+        visibility_check_date=date(2026, 5, 10),
+        visibility_latest_completed_trading_day=date(2026, 5, 8),
+    )
+
+    assert calls
+    assert report.failed_step is None or report.failed_step.step_id != "input_visibility"
+    assert calls[0][3:6] == ("risk-events", "fetch-official-sources", "--as-of")
+    assert calls[0][6] == "2026-05-10"
 
 
 def test_daily_ops_run_report_omits_command_output_text(tmp_path: Path) -> None:

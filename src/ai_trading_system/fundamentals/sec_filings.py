@@ -17,6 +17,10 @@ from ai_trading_system.config import (
     SecCompanyConfig,
     dedupe_preserving_order,
 )
+from ai_trading_system.external_request_cache import (
+    cached_requests_get,
+    default_external_request_cache_dir,
+)
 from ai_trading_system.fundamentals.sec_metrics import (
     SecFundamentalMetricRow,
     load_sec_fundamental_metric_rows_csv,
@@ -165,10 +169,18 @@ class SecEdgarFilingArchiveProvider:
     submissions_base_url = "https://data.sec.gov/submissions"
     archive_base_url = "https://www.sec.gov/Archives/edgar/data"
 
-    def __init__(self, user_agent: str) -> None:
+    def __init__(
+        self,
+        user_agent: str,
+        *,
+        requests_module: Any | None = None,
+        request_cache_dir: Path | str | None = None,
+    ) -> None:
         if not user_agent.strip():
             raise ValueError("SEC User-Agent must not be empty")
         self.user_agent = user_agent.strip()
+        self._requests_module = requests_module
+        self._request_cache_dir = request_cache_dir
 
     def download_submissions(self, request: SecFilingRequest) -> dict[str, Any]:
         return self._get_json(self.submissions_endpoint_for(request.cik))
@@ -187,15 +199,23 @@ class SecEdgarFilingArchiveProvider:
         return f"{self.archive_base_url}/{cik_int}/{accession_directory}/index.json"
 
     def _get_json(self, url: str) -> dict[str, Any]:
-        requests = cast(Any, import_module("requests"))
-        response = requests.get(
-            url,
+        requests = self._requests_module or cast(Any, import_module("requests"))
+        request_cache_dir = default_external_request_cache_dir(
+            requests_module=self._requests_module,
+            explicit_cache_dir=self._request_cache_dir,
+        )
+        response = cached_requests_get(
+            provider="SEC EDGAR",
+            api_family="filing_archive",
+            url=url,
             headers={
                 "User-Agent": self.user_agent,
                 "Accept-Encoding": "gzip, deflate",
                 "Accept": "application/json",
             },
             timeout=30,
+            requests_module=requests,
+            cache_dir=request_cache_dir,
         )
         response.raise_for_status()
         data = response.json()

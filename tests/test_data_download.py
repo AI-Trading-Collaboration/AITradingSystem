@@ -10,11 +10,13 @@ from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
 from ai_trading_system.config import load_universe
-from ai_trading_system.data.download import download_daily_data
+from ai_trading_system.data.download import download_daily_data, write_download_failure_report
 from ai_trading_system.data.market_data import (
     CboeVixPriceProvider,
     FmpPriceProvider,
     PriceRequest,
+    ProviderDownloadError,
+    ProviderRequestDiagnostic,
     RateRequest,
 )
 
@@ -193,6 +195,52 @@ def test_download_data_cli_requires_fmp_key_by_default(tmp_path: Path, monkeypat
 
     assert result.exit_code == 1
     assert "未设置 FMP_API_KEY" in result.output
+
+
+def test_write_download_failure_report_redacts_marketstack_diagnostics(tmp_path: Path) -> None:
+    diagnostic = ProviderRequestDiagnostic(
+        provider="Marketstack",
+        api_family="eod_daily_prices",
+        endpoint="https://api.marketstack.com/v2/eod",
+        stage="http_request",
+        method="GET",
+        request_parameters={
+            "access_key": "***",
+            "symbols": "NVDA",
+            "date_from": "2026-05-01",
+            "date_to": "2026-05-01",
+            "limit": "1000",
+            "offset": "0",
+        },
+        cache_status="MISS_NO_RESPONSE",
+        cache_key="abc123",
+        cache_metadata_path=tmp_path / "cache" / "metadata.json",
+        exception_type="TimeoutError",
+        exception_message="timeout access_key=***",
+    )
+    error = ProviderDownloadError(
+        "Marketstack request failed before receiving a cacheable response",
+        diagnostic,
+    )
+
+    report_path = write_download_failure_report(
+        output_path=tmp_path / "download_data_diagnostics_2026-05-11.md",
+        start=date(2018, 1, 1),
+        end=date(2026, 5, 11),
+        raw_output_dir=tmp_path / "raw",
+        include_full_ai_chain=False,
+        price_provider_name="fmp",
+        with_marketstack=True,
+        error=error,
+    )
+
+    text = report_path.read_text(encoding="utf-8")
+    assert "- 状态：FAIL" in text
+    assert "Marketstack" in text
+    assert "MISS_NO_RESPONSE" in text
+    assert "NVDA" in text
+    assert "access_key\": \"***\"" in text
+    assert "secret" not in text.lower()
 
 
 class _FakeResponse:
