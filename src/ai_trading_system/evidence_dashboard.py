@@ -35,6 +35,10 @@ class EvidenceDashboardReport:
     scores_daily_path: Path | None = None
     alert_summary: TraceRecord | None = None
     history_points: tuple[TraceRecord, ...] = ()
+    feedback_review: TraceRecord | None = None
+    market_feedback_report_path: Path | None = None
+    feedback_loop_review_path: Path | None = None
+    investment_review_path: Path | None = None
     production_effect: str = "none"
 
     @property
@@ -59,6 +63,9 @@ def build_evidence_dashboard_report(
     belief_state_path: Path | None = None,
     alerts_report_path: Path | None = None,
     scores_daily_path: Path | None = None,
+    market_feedback_report_path: Path | None = None,
+    feedback_loop_review_path: Path | None = None,
+    investment_review_path: Path | None = None,
     history_limit: int = 20,
 ) -> EvidenceDashboardReport:
     daily_text = _read_required_text(daily_report_path)
@@ -92,6 +99,12 @@ def build_evidence_dashboard_report(
         history_limit=history_limit,
         warnings=warnings,
     )
+    feedback_review = _read_optional_feedback_review(
+        market_feedback_report_path=market_feedback_report_path,
+        feedback_loop_review_path=feedback_loop_review_path,
+        investment_review_path=investment_review_path,
+        warnings=warnings,
+    )
 
     return EvidenceDashboardReport(
         as_of=as_of,
@@ -115,6 +128,10 @@ def build_evidence_dashboard_report(
         scores_daily_path=scores_daily_path,
         alert_summary=alert_summary,
         history_points=history_points,
+        feedback_review=feedback_review,
+        market_feedback_report_path=market_feedback_report_path,
+        feedback_loop_review_path=feedback_loop_review_path,
+        investment_review_path=investment_review_path,
     )
 
 
@@ -158,6 +175,7 @@ def render_evidence_dashboard(report: EvidenceDashboardReport) -> str:
             _render_summary_grid(report),
             _render_alert_summary(report),
             _render_history_trend(report),
+            _render_feedback_review(report),
             _render_logic_chain(report),
             _render_reader_modes(report),
             _render_claim_evidence_map(report),
@@ -184,6 +202,7 @@ def build_evidence_dashboard_payload(report: EvidenceDashboardReport) -> TraceRe
         "next_checks": list(report.next_checks),
         "alerts": report.alert_summary or {},
         "history": list(report.history_points),
+        "feedback_review": report.feedback_review or {},
         "artifacts": {
             "daily_report_path": str(report.daily_report_path),
             "trace_bundle_path": str(report.trace_bundle_path),
@@ -197,6 +216,15 @@ def build_evidence_dashboard_payload(report: EvidenceDashboardReport) -> TraceRe
             "scores_daily_path": None
             if report.scores_daily_path is None
             else str(report.scores_daily_path),
+            "market_feedback_report_path": None
+            if report.market_feedback_report_path is None
+            else str(report.market_feedback_report_path),
+            "feedback_loop_review_path": None
+            if report.feedback_loop_review_path is None
+            else str(report.feedback_loop_review_path),
+            "investment_review_path": None
+            if report.investment_review_path is None
+            else str(report.investment_review_path),
         },
         "warnings": list(report.warnings),
     }
@@ -336,6 +364,150 @@ def _render_history_trend(report: EvidenceDashboardReport) -> str:
             "</section>",
         ]
     )
+
+
+def _render_feedback_review(report: EvidenceDashboardReport) -> str:
+    if report.feedback_review is None:
+        message = (
+            "未接入反馈复盘报告；dashboard 仍可查看日报结论、告警、历史趋势和 trace，"
+            "但不会展示市场反馈优化、闭环复核或投资周报摘要。"
+        )
+        return "\n".join(
+            [
+                '<section aria-labelledby="feedback-review-title">',
+                '<div class="section-head warning">',
+                '<h2 id="feedback-review-title">反馈复盘与学习闭环</h2>',
+                "<p>可选复盘输入缺失时降级显示。</p>",
+                "</div>",
+                f"<p>{_text(message)}</p>",
+                "</section>",
+            ]
+        )
+
+    feedback = report.feedback_review
+    market_feedback = _mapping(feedback.get("market_feedback"))
+    loop_review = _mapping(feedback.get("feedback_loop"))
+    investment_review = _mapping(feedback.get("investment_review"))
+    top_evidence = _string_sequence(investment_review.get("top_evidence"))
+    return "\n".join(
+        [
+            '<section aria-labelledby="feedback-review-title">',
+            '<div class="section-head">',
+            '<h2 id="feedback-review-title">反馈复盘与学习闭环</h2>',
+            "<p>只读汇总已生成复盘报告，不在 dashboard 内重算权重或规则。</p>",
+            "</div>",
+            '<div class="feedback-grid">',
+            _feedback_panel(
+                "市场反馈优化",
+                [
+                    ("状态", _record_text(market_feedback, "status", "未接入")),
+                    ("Readiness", _record_text(market_feedback, "readiness", "未接入")),
+                    ("复核窗口", _record_text(market_feedback, "review_window", "未接入")),
+                    ("as-if 窗口", _record_text(market_feedback, "as_if_window", "未接入")),
+                    (
+                        "Decision 样本",
+                        _record_text(
+                            market_feedback,
+                            "decision_available_sample_summary",
+                            "未接入",
+                        ),
+                    ),
+                    (
+                        "Prediction 样本",
+                        _record_text(
+                            market_feedback,
+                            "prediction_available_sample_summary",
+                            "未接入",
+                        ),
+                    ),
+                    (
+                        "学习队列",
+                        _record_text(
+                            market_feedback,
+                            "learning_queue_classification",
+                            "未接入",
+                        ),
+                    ),
+                    (
+                        "候选规则",
+                        _record_text(market_feedback, "candidate_rule_summary", "未接入"),
+                    ),
+                    ("下一步", _record_text(market_feedback, "next_step", "未接入")),
+                ],
+            ),
+            _feedback_panel(
+                "反馈闭环复核",
+                [
+                    ("状态", _record_text(loop_review, "status", "未接入")),
+                    ("警告数", _record_text(loop_review, "warning_count", "未接入")),
+                    ("复核窗口", _record_text(loop_review, "review_window", "未接入")),
+                    ("Decision outcome", _record_text(loop_review, "outcome_summary", "未接入")),
+                    (
+                        "Prediction outcome",
+                        _record_text(loop_review, "prediction_outcome_summary", "未接入"),
+                    ),
+                    ("因果链", _record_text(loop_review, "causal_chain_count", "未接入")),
+                    ("学习队列", _record_text(loop_review, "learning_queue_summary", "未接入")),
+                    ("规则候选", _record_text(loop_review, "candidate_rule_summary", "未接入")),
+                    ("Blocked tasks", _record_text(loop_review, "blocked_tasks", "未接入")),
+                ],
+            ),
+            _feedback_panel(
+                "投资复盘",
+                [
+                    ("状态", _record_text(investment_review, "status", "未接入")),
+                    ("复盘区间", _record_text(investment_review, "review_interval", "未接入")),
+                    ("样本", _record_text(investment_review, "decision_sample_summary", "未接入")),
+                    ("评分变化", _record_text(investment_review, "score_change", "未接入")),
+                    ("置信度变化", _record_text(investment_review, "confidence_change", "未接入")),
+                    (
+                        "风险资产 AI 仓位",
+                        _record_text(investment_review, "risk_asset_position_change", "未接入"),
+                    ),
+                    (
+                        "总资产 AI 仓位",
+                        _record_text(investment_review, "total_asset_position_change", "未接入"),
+                    ),
+                    ("最新 gate", _record_text(investment_review, "latest_gates", "未接入")),
+                    ("Outcome 覆盖", _record_text(investment_review, "outcome_coverage", "未接入")),
+                ],
+            ),
+            "</div>",
+            "<h3>改变判断的前三个证据</h3>",
+            _compact_list("投资复盘证据", top_evidence),
+            "<h3>复盘报告路径</h3>",
+            _key_value_table(_feedback_source_rows(feedback)),
+            "</section>",
+        ]
+    )
+
+
+def _feedback_panel(title: str, rows: Sequence[tuple[str, str]]) -> str:
+    return "\n".join(
+        [
+            '<div class="feedback-panel">',
+            f"<h3>{_text(title)}</h3>",
+            _key_value_table(rows),
+            "</div>",
+        ]
+    )
+
+
+def _feedback_source_rows(feedback: Mapping[str, Any]) -> list[tuple[str, str]]:
+    return [
+        (
+            "Market feedback optimization",
+            _record_text(_mapping(feedback.get("market_feedback")), "path", "未接入"),
+        ),
+        (
+            "Feedback loop review",
+            _record_text(_mapping(feedback.get("feedback_loop")), "path", "未接入"),
+        ),
+        (
+            "Investment review",
+            _record_text(_mapping(feedback.get("investment_review")), "path", "未接入"),
+        ),
+    ]
 
 
 def _render_summary_grid(report: EvidenceDashboardReport) -> str:
@@ -531,6 +703,30 @@ def _render_artifact_section(report: EvidenceDashboardReport) -> str:
                             "未接入"
                             if report.belief_state_path is None
                             else str(report.belief_state_path)
+                        ),
+                    ),
+                    (
+                        "Market feedback optimization",
+                        (
+                            "未接入"
+                            if report.market_feedback_report_path is None
+                            else str(report.market_feedback_report_path)
+                        ),
+                    ),
+                    (
+                        "Feedback loop review",
+                        (
+                            "未接入"
+                            if report.feedback_loop_review_path is None
+                            else str(report.feedback_loop_review_path)
+                        ),
+                    ),
+                    (
+                        "Investment review",
+                        (
+                            "未接入"
+                            if report.investment_review_path is None
+                            else str(report.investment_review_path)
                         ),
                     ),
                 ]
@@ -1037,6 +1233,193 @@ def _read_optional_history_points(
     return tuple(points[-history_limit:])
 
 
+def _read_optional_feedback_review(
+    *,
+    market_feedback_report_path: Path | None,
+    feedback_loop_review_path: Path | None,
+    investment_review_path: Path | None,
+    warnings: list[str],
+) -> TraceRecord | None:
+    if (
+        market_feedback_report_path is None
+        and feedback_loop_review_path is None
+        and investment_review_path is None
+    ):
+        return None
+    market_text = _read_optional_markdown_report(
+        market_feedback_report_path,
+        "market feedback optimization 报告",
+        warnings,
+    )
+    loop_text = _read_optional_markdown_report(
+        feedback_loop_review_path,
+        "feedback loop review 报告",
+        warnings,
+    )
+    investment_text = _read_optional_markdown_report(
+        investment_review_path,
+        "investment review 报告",
+        warnings,
+    )
+    return {
+        "production_effect": "none",
+        "market_feedback": _parse_market_feedback_summary(
+            market_text,
+            market_feedback_report_path,
+        ),
+        "feedback_loop": _parse_feedback_loop_summary(
+            loop_text,
+            feedback_loop_review_path,
+        ),
+        "investment_review": _parse_investment_review_summary(
+            investment_text,
+            investment_review_path,
+        ),
+    }
+
+
+def _read_optional_markdown_report(
+    path: Path | None,
+    label: str,
+    warnings: list[str],
+) -> str | None:
+    if path is None:
+        return None
+    if not path.exists():
+        warnings.append(f"{label}不存在：{path}")
+        return None
+    return path.read_text(encoding="utf-8")
+
+
+def _parse_market_feedback_summary(text: str | None, path: Path | None) -> TraceRecord:
+    if text is None:
+        return _disconnected_review_record(path)
+    decision_summary = _metadata_value(text, "Decision outcome 可用样本") or ""
+    prediction_summary = _metadata_value(text, "Prediction/shadow outcome 可用样本") or ""
+    candidate_count = _metadata_value(text, "候选规则数") or "0"
+    replay_pending = _metadata_value(text, "未运行 replay") or "0"
+    shadow_pending = _metadata_value(text, "待 forward shadow") or "0"
+    return {
+        "connected": True,
+        "path": str(path) if path is not None else "",
+        "status": _metadata_value(text, "状态") or "UNKNOWN",
+        "readiness": _metadata_value(text, "Readiness") or "UNKNOWN",
+        "review_window": _metadata_value(text, "复核窗口") or "",
+        "as_if_window": _metadata_value(text, "as-if 回放窗口") or "",
+        "market_regime": _metadata_value(text, "市场阶段") or "",
+        "sample_policy": _metadata_value(text, "样本政策") or "",
+        "decision_available_sample_summary": decision_summary,
+        "decision_available_count": _parse_leading_int(decision_summary),
+        "prediction_available_sample_summary": prediction_summary,
+        "prediction_available_count": _parse_leading_int(prediction_summary),
+        "decision_horizon_coverage": _metadata_value(text, "Decision outcome horizon 覆盖")
+        or "",
+        "prediction_candidate_coverage": _metadata_value(text, "Prediction candidate 覆盖")
+        or "",
+        "current_conclusion": _metadata_value(text, "当前结论") or "",
+        "learning_queue_classification": _metadata_value(text, "学习队列分类") or "",
+        "candidate_rule_count": _parse_int(candidate_count),
+        "replay_pending_count": _parse_int(replay_pending),
+        "forward_shadow_pending_count": _parse_int(shadow_pending),
+        "candidate_rule_summary": (
+            f"{candidate_count}；未运行 replay {replay_pending}；待 forward shadow {shadow_pending}"
+        ),
+        "approved_overlay_count": _parse_int(_metadata_value(text, "Approved overlay 数")),
+        "effective_weight_hit_count": _parse_int(
+            _metadata_value(text, "当前 effective weight 命中数")
+        ),
+        "next_step": _first_bullet(_markdown_section(text, "## 下一步")) or "",
+    }
+
+
+def _parse_feedback_loop_summary(text: str | None, path: Path | None) -> TraceRecord:
+    if text is None:
+        return _disconnected_review_record(path)
+    outcome_total = _metadata_value(text, "Outcome 行数") or "0"
+    outcome_available = _metadata_value(text, "可用 outcome") or "0"
+    outcome_pending = _metadata_value(text, "等待完成") or "0"
+    outcome_missing = _metadata_value(text, "缺失数据") or "0"
+    prediction_total = _metadata_value(text, "Prediction outcome 行数") or "0"
+    prediction_available = _metadata_value(text, "可用 prediction outcome") or "0"
+    prediction_pending = _metadata_value(text, "等待 shadow 窗口") or "0"
+    prediction_missing = _metadata_value(text, "缺失 prediction 数据") or "0"
+    review_count = _metadata_value(text, "复核项数量") or "0"
+    classification = _metadata_value(text, "分类") or ""
+    candidate_count = _metadata_value(text, "候选规则数") or "0"
+    replay_pending = _metadata_value(text, "未运行 replay") or "0"
+    shadow_pending = _metadata_value(text, "待前向 shadow") or "0"
+    return {
+        "connected": True,
+        "path": str(path) if path is not None else "",
+        "status": _metadata_value(text, "状态") or "UNKNOWN",
+        "review_window": _metadata_value(text, "复核窗口") or "",
+        "market_regime": _metadata_value(text, "市场阶段") or "",
+        "warning_count": _parse_int(_metadata_value(text, "警告数")),
+        "new_evidence_count": _parse_int(_metadata_value(text, "证据总数")),
+        "window_new_evidence_count": _parse_int(_metadata_value(text, "窗口内新证据")),
+        "decision_snapshot_summary": (
+            f"窗口内 {(_metadata_value(text, '窗口内快照') or '0')} / "
+            f"总数 {(_metadata_value(text, '快照总数') or '0')}"
+        ),
+        "outcome_summary": (
+            f"可用 {outcome_available} / total {outcome_total}；"
+            f"pending {outcome_pending}；missing {outcome_missing}"
+        ),
+        "prediction_outcome_summary": (
+            f"可用 {prediction_available} / total {prediction_total}；"
+            f"pending {prediction_pending}；missing {prediction_missing}"
+        ),
+        "causal_chain_count": _parse_int(_metadata_value(text, "因果链数量")),
+        "learning_queue_count": _parse_int(review_count),
+        "learning_queue_summary": f"{review_count}；{classification}".strip("；"),
+        "candidate_rule_count": _parse_int(candidate_count),
+        "candidate_rule_summary": (
+            f"{candidate_count}；未运行 replay {replay_pending}；待前向 shadow {shadow_pending}"
+        ),
+        "blocked_tasks": _metadata_value(text, "Blocked tasks") or "",
+    }
+
+
+def _parse_investment_review_summary(text: str | None, path: Path | None) -> TraceRecord:
+    if text is None:
+        return _disconnected_review_record(path)
+    outcome_coverage = _metadata_value(text, "Outcome 覆盖") or ""
+    prediction_coverage = _metadata_value(text, "Prediction outcome 覆盖") or ""
+    return {
+        "connected": True,
+        "path": str(path) if path is not None else "",
+        "status": _metadata_value(text, "状态") or "UNKNOWN",
+        "review_interval": _metadata_value(text, "复盘区间") or "",
+        "market_regime": _metadata_value(text, "市场阶段") or "",
+        "decision_sample_count": _parse_int(_metadata_value(text, "决策样本数")),
+        "decision_snapshot_count": _parse_int(_metadata_value(text, "Decision snapshots")),
+        "decision_sample_summary": (
+            f"决策样本 {_metadata_value(text, '决策样本数') or '0'}；"
+            f"snapshot {_metadata_value(text, 'Decision snapshots') or '0'}"
+        ),
+        "score_change": _metadata_value(text, "AI 产业链评分") or "",
+        "confidence_change": _metadata_value(text, "判断置信度") or "",
+        "latest_limitation": _metadata_value(text, "最新结论限制") or "",
+        "risk_asset_position_change": _metadata_value(text, "风险资产内最终 AI 仓位")
+        or "",
+        "total_asset_position_change": _metadata_value(text, "总资产内 AI 仓位") or "",
+        "latest_gates": _metadata_value(text, "最新触发 gate") or "",
+        "top_evidence": _bullet_lines(_markdown_section(text, "## 改变判断的前三个证据")),
+        "outcome_coverage": outcome_coverage,
+        "average_ai_proxy_return": _metadata_value(text, "平均 AI proxy return") or "",
+        "average_max_drawdown": _metadata_value(text, "平均最大回撤") or "",
+        "prediction_outcome_coverage": prediction_coverage,
+    }
+
+
+def _disconnected_review_record(path: Path | None) -> TraceRecord:
+    return {
+        "connected": False,
+        "path": "未接入" if path is None else str(path),
+        "status": "NOT_CONNECTED",
+    }
+
+
 def _validate_artifact_dates(
     *,
     as_of: date,
@@ -1243,6 +1626,12 @@ def _string_set(value: object) -> set[str]:
     if not isinstance(value, list | tuple):
         return set()
     return {str(item) for item in value}
+
+
+def _string_sequence(value: object) -> tuple[str, ...]:
+    if not isinstance(value, list | tuple):
+        return ()
+    return tuple(str(item) for item in value if str(item))
 
 
 def _record_text(record: Mapping[str, Any], key: str, default: str) -> str:
@@ -1461,6 +1850,15 @@ def _parse_int(value: object) -> int:
         return int(str(value).strip())
     except ValueError:
         return 0
+
+
+def _parse_leading_int(value: object) -> int:
+    if value is None:
+        return 0
+    text = str(value).strip()
+    token = text.split(maxsplit=1)[0] if text else ""
+    token = token.split("/", maxsplit=1)[0].strip()
+    return _parse_int(token)
 
 
 def _parse_iso_date(value: object) -> date | None:
@@ -1776,6 +2174,18 @@ footer {
 }
 .history-source span {
   overflow-wrap: anywhere;
+}
+.feedback-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 14px;
+}
+.feedback-panel {
+  min-width: 0;
+}
+.feedback-panel h3 {
+  margin-bottom: 8px;
 }
 .logic-chain {
   margin: 0;

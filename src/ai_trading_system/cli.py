@@ -4912,6 +4912,33 @@ def evidence_dashboard_command(
         Path | None,
         typer.Option(help="scores_daily.csv 路径；不传时使用默认处理后评分缓存。"),
     ] = None,
+    market_feedback_report_path: Annotated[
+        Path | None,
+        typer.Option(
+            help=(
+                "market_feedback_optimization Markdown 路径；不传且使用默认日报路径时，"
+                "若同日默认报告存在则接入。"
+            ),
+        ),
+    ] = None,
+    feedback_loop_review_path: Annotated[
+        Path | None,
+        typer.Option(
+            help=(
+                "feedback_loop_review Markdown 路径；不传且使用默认日报路径时，"
+                "若同日默认报告存在则接入。"
+            ),
+        ),
+    ] = None,
+    investment_review_path: Annotated[
+        Path | None,
+        typer.Option(
+            help=(
+                "investment weekly/monthly review Markdown 路径；不传且使用默认日报路径时，"
+                "若同日 weekly 默认报告存在则接入。"
+            ),
+        ),
+    ] = None,
     json_output_path: Annotated[
         Path | None,
         typer.Option(help="Dashboard JSON payload 输出路径；不传时写入默认同名 JSON。"),
@@ -4937,6 +4964,32 @@ def evidence_dashboard_command(
         dashboard_date,
     )
     scores_path = scores_daily_path or DEFAULT_SCORES_DAILY_PATH
+    market_feedback_path = market_feedback_report_path
+    loop_review_path = feedback_loop_review_path
+    periodic_review_path = investment_review_path
+    if daily_report_path is None:
+        default_market_feedback_path = default_market_feedback_optimization_report_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            dashboard_date,
+        )
+        default_loop_review_path = default_feedback_loop_review_report_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            dashboard_date,
+        )
+        default_periodic_review_path = default_periodic_investment_review_report_path(
+            DEFAULT_PERIODIC_INVESTMENT_REVIEW_REPORT_DIR,
+            "weekly",
+            dashboard_date,
+        )
+        market_feedback_path = market_feedback_path or (
+            default_market_feedback_path if default_market_feedback_path.exists() else None
+        )
+        loop_review_path = loop_review_path or (
+            default_loop_review_path if default_loop_review_path.exists() else None
+        )
+        periodic_review_path = periodic_review_path or (
+            default_periodic_review_path if default_periodic_review_path.exists() else None
+        )
     dashboard_json_output = json_output_path or (
         default_evidence_dashboard_json_path(PROJECT_ROOT / "outputs" / "reports", dashboard_date)
         if output_path is None
@@ -4951,6 +5004,9 @@ def evidence_dashboard_command(
             belief_state_path=belief_state_path,
             alerts_report_path=alert_path,
             scores_daily_path=scores_path,
+            market_feedback_report_path=market_feedback_path,
+            feedback_loop_review_path=loop_review_path,
+            investment_review_path=periodic_review_path,
         )
     except FileNotFoundError as exc:
         raise typer.BadParameter(str(exc)) from exc

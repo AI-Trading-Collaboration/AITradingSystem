@@ -8,6 +8,7 @@ from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
 from ai_trading_system.evidence_dashboard import (
+    build_evidence_dashboard_payload,
     build_evidence_dashboard_report,
     render_evidence_dashboard,
 )
@@ -48,6 +49,46 @@ def test_evidence_dashboard_links_conclusion_to_inputs(tmp_path: Path) -> None:
     assert "none" in html
 
 
+def test_evidence_dashboard_includes_feedback_review_outputs(tmp_path: Path) -> None:
+    inputs = _write_dashboard_inputs(tmp_path)
+    feedback_inputs = _write_feedback_review_inputs(tmp_path)
+
+    report = build_evidence_dashboard_report(
+        as_of=date(2026, 5, 4),
+        daily_report_path=inputs["daily_report"],
+        trace_bundle_path=inputs["trace"],
+        decision_snapshot_path=inputs["snapshot"],
+        alerts_report_path=inputs["alerts"],
+        scores_daily_path=inputs["scores"],
+        market_feedback_report_path=feedback_inputs["market_feedback"],
+        feedback_loop_review_path=feedback_inputs["feedback_loop"],
+        investment_review_path=feedback_inputs["investment_review"],
+    )
+    html = render_evidence_dashboard(report)
+    payload = build_evidence_dashboard_payload(report)
+
+    assert report.status == "PASS"
+    assert "反馈复盘与学习闭环" in html
+    assert "PILOT_DIAGNOSTIC_REVIEW" in html
+    assert "Decision 样本" in html
+    assert "data_issue=2，rule_issue=5，sample_limited=3" in html
+    assert "风险预算、估值拥挤、交易 thesis" in html
+    assert payload["feedback_review"]["production_effect"] == "none"
+    assert (
+        payload["feedback_review"]["market_feedback"]["decision_available_count"]
+        == 10
+    )
+    assert (
+        payload["feedback_review"]["feedback_loop"]["prediction_outcome_summary"]
+        == "可用 8 / total 65；pending 37；missing 20"
+    )
+    assert payload["feedback_review"]["investment_review"]["top_evidence"] == [
+        "valuation 分数变化 +72.6",
+        "policy_geopolitics 分数变化 +50.0",
+        "macro_liquidity 分数变化 -26.2",
+    ]
+
+
 def test_reports_dashboard_cli_writes_html(tmp_path: Path) -> None:
     inputs = _write_dashboard_inputs(tmp_path)
     output_path = tmp_path / "dashboard.html"
@@ -86,6 +127,169 @@ def test_reports_dashboard_cli_writes_html(tmp_path: Path) -> None:
     assert payload["production_effect"] == "none"
     assert payload["decision"]["action"] == "观察，不形成交易结论（`observe_only`）"
     assert payload["alerts"]["active_count"] == 1
+
+
+def _write_feedback_review_inputs(tmp_path: Path) -> dict[str, Path]:
+    market_feedback_path = tmp_path / "market_feedback_optimization_2026-05-04.md"
+    market_feedback_path.write_text(
+        "\n".join(
+            [
+                "# 市场反馈优化闭环报告",
+                "",
+                "- 状态：PASS_WITH_LIMITATIONS",
+                "- Readiness：PILOT_DIAGNOSTIC_REVIEW",
+                "- 复核日期：2026-05-04",
+                "- 复核窗口：2026-04-28 至 2026-05-04",
+                "- as-if 回放窗口：2022-12-01 至 2026-05-04",
+                "- 市场阶段：ai_after_chatgpt",
+                "- 样本政策：feedback_sample_policy_v1（status=pilot，review_after_reports=8）",
+                "- 生产影响：none。",
+                "",
+                "## Outcome 可校准性",
+                "",
+                "- Decision outcome 可用样本：10 / reporting/pilot/diagnostic/promotion=1/5/30/60",
+                (
+                    "- Prediction/shadow outcome 可用样本：8 / "
+                    "reporting/pilot/diagnostic/promotion=1/2/30/30"
+                ),
+                "- Decision outcome horizon 覆盖：1=7，5=3，20=0，60=0，120=0",
+                "- Prediction candidate 覆盖：1",
+                (
+                    "- 当前结论：样本达到 pilot floor，可启动因果链、学习队列和候选规则整理；"
+                    "权重诊断仍是研究用途。"
+                ),
+                "",
+                "## 错误复盘与候选规则",
+                "",
+                "- 学习队列分类：data_issue=2，rule_issue=5，sample_limited=3",
+                "- 候选规则数：0",
+                "- 未运行 replay：0",
+                "- 待 forward shadow：0",
+                "",
+                "## Overlay 与生产兼容性",
+                "",
+                "- Approved overlay 数：0",
+                "- 当前 effective weight 命中数：0",
+                "",
+                "## 下一步",
+                "",
+                (
+                    "- 先跑 causal chain、learning queue 和 rule experiment 候选整理；"
+                    "不要晋级 production。"
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    feedback_loop_path = tmp_path / "feedback_loop_review_2026-05-04.md"
+    feedback_loop_path.write_text(
+        "\n".join(
+            [
+                "# 反馈闭环周期复核报告",
+                "",
+                "- 状态：PASS_WITH_LIMITATIONS",
+                "- 复核日期：2026-05-04",
+                "- 复核窗口：2026-04-28 至 2026-05-04",
+                "- 市场阶段：ai_after_chatgpt",
+                "- 警告数：2",
+                "",
+                "## 新证据",
+                "",
+                "- 证据总数：0",
+                "- 窗口内新证据：0",
+                "",
+                "## 决策快照",
+                "",
+                "- 快照总数：10",
+                "- 窗口内快照：8",
+                "",
+                "## Outcome 与校准",
+                "",
+                "- Outcome 行数：50",
+                "- 可用 outcome：10",
+                "- 等待完成：30",
+                "- 缺失数据：10",
+                "",
+                "## Prediction / Shadow Outcome",
+                "",
+                "- Prediction outcome 行数：65",
+                "- 可用 prediction outcome：8",
+                "- 等待 shadow 窗口：37",
+                "- 缺失 prediction 数据：20",
+                "",
+                "## 因果链",
+                "",
+                "- 因果链数量：10",
+                "",
+                "## 学习队列",
+                "",
+                "- 复核项数量：10",
+                "- 分类：data_issue=2，rule_issue=5，sample_limited=3",
+                "",
+                "## 规则候选",
+                "",
+                "- 候选规则数：0",
+                "- 未运行 replay：0",
+                "- 待前向 shadow：0",
+                "",
+                "## Task Register",
+                "",
+                "- Blocked tasks：OPS-012, PROD-002",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    investment_review_path = tmp_path / "investment_weekly_review_2026-05-04.md"
+    investment_review_path.write_text(
+        "\n".join(
+            [
+                "# AI 产业链周报投资复盘",
+                "",
+                "- 状态：PASS",
+                "- 复盘区间：2026-04-28 至 2026-05-04",
+                "- 市场阶段：ai_after_chatgpt",
+                "- production_effect=none；本报告只做复盘和审计下钻。",
+                "- 决策样本数：7",
+                "- Decision snapshots：7",
+                "",
+                "## 本期结论是否变化",
+                "",
+                "- AI 产业链评分：69.5 -> 75.3（变化 +5.9）。",
+                "- 判断置信度：61.0 -> 79.0（变化 +18.0）。",
+                "- 最新结论限制：人工复核摘要存在警告项",
+                "",
+                "## 本期仓位是否变化",
+                "",
+                "- 风险资产内最终 AI 仓位：40%-40% -> 40%-40%。",
+                "- 总资产内 AI 仓位：24%-32% -> 20%-28%。",
+                "- 最新触发 gate：风险预算、估值拥挤、交易 thesis",
+                "",
+                "## 改变判断的前三个证据",
+                "",
+                "- valuation 分数变化 +72.6",
+                "- policy_geopolitics 分数变化 +50.0",
+                "- macro_liquidity 分数变化 -26.2",
+                "",
+                "## 系统判断是否被市场验证",
+                "",
+                "- Outcome 覆盖：total=35，available=4，pending=21，missing=10。",
+                "- 平均 AI proxy return：0.56%；平均最大回撤：-1.09%。",
+                "",
+                "## Production vs Challenger Shadow",
+                "",
+                "- Prediction outcome 覆盖：total=65，available=8，pending=37，missing=20。",
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    return {
+        "market_feedback": market_feedback_path,
+        "feedback_loop": feedback_loop_path,
+        "investment_review": investment_review_path,
+    }
 
 
 def _write_dashboard_inputs(tmp_path: Path) -> dict[str, Path]:
