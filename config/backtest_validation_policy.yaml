@@ -1,0 +1,38 @@
+policy_metadata:
+  version: backtest_validation_policy_v1
+  status: pilot
+  owner: system
+  rationale: "把回测稳健性默认实验参数、解释阈值和模型晋级门槛迁入可审计 policy；初始值保持迁移前行为不变，后续由 feedback/as-if replay 和 owner review 迭代。"
+  validation: "由 tests/test_config.py 与 tests/test_backtest.py 覆盖；promotion sample floor 仍读取 config/feedback_sample_policy.yaml，避免重复定义样本门槛。"
+  review_after_reports: 8
+
+data_credibility:
+  component_coverage_min: 0.90
+
+robustness:
+  default_shifted_start_days: 20
+  default_cost_stress_increment_bps: 5.0
+  default_weight_perturbation_pct: 0.20
+  default_random_seed_start: 42
+  default_random_seed_count: 20
+  default_oos_split_ratio: 0.70
+  fixed_total_asset_exposure: 0.60
+  rebalance_intervals: [5, 21]
+  full_exposure_time_in_market_min: 0.95
+  material_cost_drag_total_return: -0.02
+  shifted_start_material_total_return_delta_abs: 0.05
+  weight_perturbation_material_total_return_delta_abs: 0.05
+  oos_material_underperformance_total_return_delta: 0.05
+
+promotion:
+  blocking_data_credibility_grades: ["C"]
+  required_robustness_categories:
+    - cost
+    - baseline
+    - rebalance_frequency
+    - signal_family_baseline
+    - module_weight_perturbation
+    - same_turnover_random_strategy
+    - out_of_sample_validation
+  min_lag_sensitivity_days: 3
+  required_rule_governance_status: PASS

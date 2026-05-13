@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 
@@ -13,6 +14,14 @@ class ModuleScore:
 
 @dataclass(frozen=True)
 class PositionBand:
+    min_position: float
+    max_position: float
+    label: str
+
+
+@dataclass(frozen=True)
+class PositionBandRule:
+    min_score: float
     min_position: float
     max_position: float
     label: str
@@ -56,6 +65,13 @@ class PositionRecommendation:
 
 
 class WeightedScoreModel:
+    def __init__(
+        self,
+        position_bands: Iterable[PositionBandRule],
+    ) -> None:
+        self.position_bands = tuple(position_bands)
+        self._validate_position_bands(self.position_bands)
+
     def recommend(
         self,
         components: list[ModuleScore],
@@ -137,17 +153,32 @@ class WeightedScoreModel:
         if not 0 <= min_position <= max_position <= 1:
             raise ValueError("position range must satisfy 0 <= min <= max <= 1")
 
-    @staticmethod
-    def _position_band(score: float) -> PositionBand:
-        if score >= 80:
-            return PositionBand(0.8, 1.0, "重仓")
-        if score >= 65:
-            return PositionBand(0.6, 0.8, "偏重仓")
-        if score >= 50:
-            return PositionBand(0.4, 0.6, "中性")
-        if score >= 35:
-            return PositionBand(0.2, 0.4, "防守")
-        return PositionBand(0.0, 0.2, "极端防守")
+    @classmethod
+    def _validate_position_bands(cls, position_bands: tuple[PositionBandRule, ...]) -> None:
+        if not position_bands:
+            raise ValueError("position_bands must not be empty")
+        previous_min_score = 101.0
+        for band in position_bands:
+            if not 0 <= band.min_score <= 100:
+                raise ValueError("position band score floor must be between 0 and 100")
+            if band.min_score >= previous_min_score:
+                raise ValueError(
+                    "position bands must be sorted by descending min_score"
+                )
+            cls._validate_position_range(band.min_position, band.max_position)
+            previous_min_score = band.min_score
+        if abs(position_bands[-1].min_score) > 1e-9:
+            raise ValueError("position bands must include a final floor at 0")
+
+    def _position_band(self, score: float) -> PositionBand:
+        for band in self.position_bands:
+            if score >= band.min_score:
+                return PositionBand(
+                    band.min_position,
+                    band.max_position,
+                    band.label,
+                )
+        raise ValueError("position bands must include a floor for all scores")
 
     @staticmethod
     def _final_label(model_band: PositionBand, final_max_position: float) -> str:

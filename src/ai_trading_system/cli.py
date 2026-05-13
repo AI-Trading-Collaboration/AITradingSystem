@@ -116,6 +116,7 @@ from ai_trading_system.catalyst_calendar import (
     write_catalyst_calendar_report,
 )
 from ai_trading_system.config import (
+    DEFAULT_BACKTEST_VALIDATION_POLICY_CONFIG_PATH,
     DEFAULT_CATALYST_CALENDAR_CONFIG_PATH,
     DEFAULT_CONFIG_PATH,
     DEFAULT_DATA_QUALITY_CONFIG_PATH,
@@ -139,6 +140,7 @@ from ai_trading_system.config import (
     WatchlistConfig,
     configured_price_tickers,
     configured_rate_series,
+    load_backtest_validation_policy,
     load_data_quality,
     load_data_sources,
     load_features,
@@ -259,6 +261,10 @@ from ai_trading_system.feedback_loop_review import (
     default_feedback_loop_review_report_path,
     write_feedback_loop_review_report,
 )
+from ai_trading_system.feedback_sample_policy import (
+    DEFAULT_FEEDBACK_SAMPLE_POLICY_PATH,
+    load_feedback_sample_policy,
+)
 from ai_trading_system.fmp_forward_pit import (
     DEFAULT_FMP_FORWARD_PIT_NORMALIZED_DIR,
     DEFAULT_FMP_FORWARD_PIT_RAW_DIR,
@@ -378,6 +384,12 @@ from ai_trading_system.market_evidence import (
     write_market_evidence_import_report,
     write_market_evidence_validation_report,
     write_market_evidence_yaml,
+)
+from ai_trading_system.market_feedback_optimization import (
+    DEFAULT_MARKET_FEEDBACK_REPLAY_START,
+    build_market_feedback_optimization_report,
+    default_market_feedback_optimization_report_path,
+    write_market_feedback_optimization_report,
 )
 from ai_trading_system.official_policy_sources import (
     DEFAULT_OFFICIAL_POLICY_PROCESSED_DIR,
@@ -553,7 +565,11 @@ from ai_trading_system.scoring.daily import (
     write_daily_score_report,
     write_scores_csv,
 )
-from ai_trading_system.scoring.position_model import ModuleScore, WeightedScoreModel
+from ai_trading_system.scoring.position_model import (
+    ModuleScore,
+    PositionBandRule,
+    WeightedScoreModel,
+)
 from ai_trading_system.secret_hygiene import (
     default_secret_scan_report_path,
     scan_secrets,
@@ -1561,7 +1577,11 @@ def calibrate_decision_outcomes(
         output_path=calibration_report_output,
     )
 
-    status_style = "green" if len(result.available_rows) >= 30 else "yellow"
+    sample_policy = load_feedback_sample_policy()
+    decision_diagnostic_floor = sample_policy.decision_outcomes.diagnostic_floor
+    status_style = (
+        "green" if len(result.available_rows) >= decision_diagnostic_floor else "yellow"
+    )
     console.print(
         f"[{status_style}]决策校准完成。可用 outcome："
         f"{len(result.available_rows)}[/{status_style}]"
@@ -1689,7 +1709,11 @@ def calibrate_prediction_outcomes(
         output_path=report_output,
     )
 
-    status_style = "green" if len(result.available_rows) >= 30 else "yellow"
+    sample_policy = load_feedback_sample_policy()
+    prediction_diagnostic_floor = sample_policy.prediction_outcomes.diagnostic_floor
+    status_style = (
+        "green" if len(result.available_rows) >= prediction_diagnostic_floor else "yellow"
+    )
     console.print(
         f"[{status_style}]Prediction outcome 校准完成。可用 outcome："
         f"{len(result.available_rows)}[/{status_style}]"
@@ -1813,9 +1837,14 @@ def shadow_maturity_command(
         typer.Option(help="成熟度评估日期，格式为 YYYY-MM-DD，默认今天。"),
     ] = None,
     min_available_samples: Annotated[
-        int,
-        typer.Option(help="进入 owner/rule card 审批前所需最低可用 outcome 样本数。"),
-    ] = 30,
+        int | None,
+        typer.Option(
+            help=(
+                "进入 owner/rule card 审批前所需最低可用 outcome 样本数；"
+                "默认读取 feedback sample policy 的 prediction promotion floor。"
+            )
+        ),
+    ] = None,
     output_path: Annotated[
         Path | None,
         typer.Option(help="Markdown shadow maturity 报告输出路径。"),
@@ -2434,15 +2463,134 @@ def feedback_loop_review_command(
     console.print(f"警告数：{report.warning_count}")
 
 
+@feedback_app.command("optimize-market-feedback")
+def optimize_market_feedback_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="复核日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    since: Annotated[
+        str | None,
+        typer.Option(help="复核窗口起始日期，格式为 YYYY-MM-DD，默认 as_of 前 7 天。"),
+    ] = None,
+    replay_start: Annotated[
+        str,
+        typer.Option(help="as-if 回放窗口起始日期；默认 AI regime 起点 2022-12-01。"),
+    ] = DEFAULT_MARKET_FEEDBACK_REPLAY_START.isoformat(),
+    replay_end: Annotated[
+        str | None,
+        typer.Option(help="as-if 回放窗口结束日期，默认 as_of。"),
+    ] = None,
+    data_quality_report_path: Annotated[
+        Path | None,
+        typer.Option(help="数据质量报告路径；默认 outputs/reports/data_quality_YYYY-MM-DD.md。"),
+    ] = None,
+    decision_outcomes_path: Annotated[
+        Path,
+        typer.Option(help="decision_outcomes CSV 路径。"),
+    ] = DEFAULT_DECISION_OUTCOMES_PATH,
+    prediction_outcomes_path: Annotated[
+        Path,
+        typer.Option(help="prediction_outcomes CSV 路径。"),
+    ] = DEFAULT_PREDICTION_OUTCOMES_PATH,
+    causal_chain_path: Annotated[
+        Path,
+        typer.Option(help="decision causal chain ledger JSON 路径。"),
+    ] = DEFAULT_DECISION_CAUSAL_CHAIN_PATH,
+    learning_queue_path: Annotated[
+        Path,
+        typer.Option(help="decision learning queue JSON 路径。"),
+    ] = DEFAULT_DECISION_LEARNING_QUEUE_PATH,
+    rule_experiment_path: Annotated[
+        Path,
+        typer.Option(help="rule experiment ledger JSON 路径。"),
+    ] = DEFAULT_RULE_EXPERIMENT_LEDGER_PATH,
+    shadow_maturity_report_path: Annotated[
+        Path | None,
+        typer.Option(
+            help=(
+                "shadow maturity Markdown 报告路径；默认 "
+                "outputs/reports/shadow_maturity_YYYY-MM-DD.md。"
+            )
+        ),
+    ] = None,
+    calibration_overlay_path: Annotated[
+        Path,
+        typer.Option(help="approved calibration overlay JSON 路径。"),
+    ] = DEFAULT_APPROVED_CALIBRATION_OVERLAY_PATH,
+    effective_weights_path: Annotated[
+        Path,
+        typer.Option(help="current effective weights JSON 路径。"),
+    ] = DEFAULT_EFFECTIVE_WEIGHTS_PATH,
+    sample_policy_path: Annotated[
+        Path,
+        typer.Option(help="反馈优化样本政策配置路径。"),
+    ] = DEFAULT_FEEDBACK_SAMPLE_POLICY_PATH,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 市场反馈优化报告输出路径。"),
+    ] = None,
+) -> None:
+    """生成独立市场反馈优化闭环报告。"""
+    review_date = _parse_date(as_of) if as_of else date.today()
+    since_date = _parse_date(since) if since else None
+    replay_start_date = _parse_date(replay_start)
+    replay_end_date = _parse_date(replay_end) if replay_end else None
+    report = build_market_feedback_optimization_report(
+        as_of=review_date,
+        since=since_date,
+        replay_start=replay_start_date,
+        replay_end=replay_end_date,
+        data_quality_report_path=data_quality_report_path,
+        decision_outcomes_path=decision_outcomes_path,
+        prediction_outcomes_path=prediction_outcomes_path,
+        causal_chain_path=causal_chain_path,
+        learning_queue_path=learning_queue_path,
+        rule_experiment_path=rule_experiment_path,
+        shadow_maturity_report_path=shadow_maturity_report_path,
+        calibration_overlay_path=calibration_overlay_path,
+        effective_weights_path=effective_weights_path,
+        sample_policy_path=sample_policy_path,
+    )
+    report_path = output_path or default_market_feedback_optimization_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        review_date,
+    )
+    write_market_feedback_optimization_report(report, report_path)
+
+    status_style = "green" if report.status == "PASS" else "yellow"
+    console.print(f"[{status_style}]市场反馈优化状态：{report.status}[/{status_style}]")
+    console.print(f"Readiness：{report.readiness}")
+    console.print(f"报告：{report_path}")
+    console.print(f"警告数：{report.warning_count}")
+
+
 @app.callback()
 def main() -> None:
     """AI 产业链趋势分析和仓位管理工具。"""
 
 
+def _configured_position_band_rules(
+    scoring_rules: ScoringRulesConfig,
+) -> tuple[PositionBandRule, ...]:
+    return tuple(
+        PositionBandRule(
+            min_score=band.min_score,
+            min_position=band.min_position,
+            max_position=band.max_position,
+            label=band.label,
+        )
+        for band in scoring_rules.position_bands
+    )
+
+
 @app.command("score-example")
 def score_example() -> None:
     """输出一份示例仓位建议。"""
-    model = WeightedScoreModel()
+    scoring_rules = load_scoring_rules()
+    model = WeightedScoreModel(
+        position_bands=_configured_position_band_rules(scoring_rules)
+    )
     portfolio = load_portfolio()
     recommendation = model.recommend(
         [
@@ -2752,9 +2900,11 @@ def backtest(
         typer.Option(help="JSON evidence bundle 输出路径。"),
     ] = None,
     minimum_component_coverage: Annotated[
-        float,
-        typer.Option(help="审计用评分模块最低平均覆盖率阈值，范围 0-1。"),
-    ] = 0.9,
+        float | None,
+        typer.Option(
+            help="审计用评分模块最低平均覆盖率阈值；默认读取 backtest validation policy。"
+        ),
+    ] = None,
     fail_on_audit_warning: Annotated[
         bool,
         typer.Option(
@@ -2787,29 +2937,42 @@ def backtest(
         ),
     ] = False,
     robustness_shift_days: Annotated[
-        int,
-        typer.Option(help="稳健性报告的起点后移天数。"),
-    ] = 20,
+        int | None,
+        typer.Option(help="稳健性报告的起点后移天数；默认读取 backtest validation policy。"),
+    ] = None,
     robustness_cost_stress_bps: Annotated[
-        float,
-        typer.Option(help="稳健性报告中交易执行成本压力的额外 bps。"),
-    ] = 5.0,
+        float | None,
+        typer.Option(
+            help="稳健性报告中交易执行成本压力的额外 bps；默认读取 backtest validation policy。"
+        ),
+    ] = None,
     robustness_weight_perturbation_pct: Annotated[
-        float,
-        typer.Option(help="稳健性报告中单模块权重上调/下调扰动比例，0.20 表示 20%。"),
-    ] = 0.20,
+        float | None,
+        typer.Option(
+            help="稳健性报告中单模块权重上调/下调扰动比例；默认读取 backtest validation policy。"
+        ),
+    ] = None,
     robustness_random_seed_start: Annotated[
-        int,
-        typer.Option(help="稳健性报告中同换手率随机策略的起始随机种子。"),
-    ] = 42,
+        int | None,
+        typer.Option(
+            help="稳健性报告中同换手率随机策略的起始随机种子；默认读取 backtest validation policy。"
+        ),
+    ] = None,
     robustness_random_seed_count: Annotated[
-        int,
-        typer.Option(help="稳健性报告中同换手率随机策略的种子数量。"),
-    ] = 20,
+        int | None,
+        typer.Option(
+            help="稳健性报告中同换手率随机策略的种子数量；默认读取 backtest validation policy。"
+        ),
+    ] = None,
     robustness_oos_split_ratio: Annotated[
-        float,
-        typer.Option(help="稳健性报告中时间顺序样本外验证的 in-sample 切分比例。"),
-    ] = 0.70,
+        float | None,
+        typer.Option(
+            help=(
+                "稳健性报告中时间顺序样本外验证的 in-sample 切分比例；"
+                "默认读取 backtest validation policy。"
+            )
+        ),
+    ] = None,
     lag_sensitivity_report_path: Annotated[
         Path | None,
         typer.Option(help="Markdown 回测滞后敏感性报告输出路径。"),
@@ -2924,6 +3087,8 @@ def backtest(
     data_quality_config = load_data_quality()
     feature_config = load_features()
     scoring_rules = load_scoring_rules()
+    backtest_validation_policy = load_backtest_validation_policy()
+    robustness_policy = backtest_validation_policy.robustness
     portfolio = load_portfolio()
     market_regimes = load_market_regimes(regimes_path)
     selected_regime_id = regime or market_regimes.default_backtest_regime
@@ -2936,6 +3101,41 @@ def backtest(
     end_date = _parse_date(end) if end else date.today()
     quality_date = _parse_date(quality_as_of) if quality_as_of else date.today()
     benchmark_tickers = _parse_csv_items(benchmarks)
+    robustness_shift_days = (
+        robustness_shift_days
+        if robustness_shift_days is not None
+        else robustness_policy.default_shifted_start_days
+    )
+    robustness_cost_stress_bps = (
+        robustness_cost_stress_bps
+        if robustness_cost_stress_bps is not None
+        else robustness_policy.default_cost_stress_increment_bps
+    )
+    robustness_weight_perturbation_pct = (
+        robustness_weight_perturbation_pct
+        if robustness_weight_perturbation_pct is not None
+        else robustness_policy.default_weight_perturbation_pct
+    )
+    robustness_random_seed_start = (
+        robustness_random_seed_start
+        if robustness_random_seed_start is not None
+        else robustness_policy.default_random_seed_start
+    )
+    robustness_random_seed_count = (
+        robustness_random_seed_count
+        if robustness_random_seed_count is not None
+        else robustness_policy.default_random_seed_count
+    )
+    robustness_oos_split_ratio = (
+        robustness_oos_split_ratio
+        if robustness_oos_split_ratio is not None
+        else robustness_policy.default_oos_split_ratio
+    )
+    minimum_component_coverage = (
+        minimum_component_coverage
+        if minimum_component_coverage is not None
+        else backtest_validation_policy.data_credibility.component_coverage_min
+    )
     if not benchmark_tickers:
         raise typer.BadParameter("至少需要一个基准标的。")
     if not 0.0 <= minimum_component_coverage <= 1.0:
@@ -3402,6 +3602,7 @@ def backtest(
     robustness_output = None
     robustness_summary_output = None
     if should_run_robustness:
+        configured_position_bands = _configured_position_band_rules(scoring_rules)
         robustness_scenarios = [
             BacktestRobustnessScenario(
                 scenario_id="cost_stress_execution",
@@ -3425,24 +3626,35 @@ def backtest(
                     scenario_etf_delay_bps=etf_delay_bps + robustness_cost_stress_bps,
                 ),
             ),
-            fixed_total_asset_exposure_scenario(result, exposure=0.60),
-            rebalance_interval_scenario(result, interval_days=5),
-            rebalance_interval_scenario(result, interval_days=21),
-            module_subset_baseline_scenario(
+            fixed_total_asset_exposure_scenario(
                 result,
-                scenario_id="trend_only_baseline",
-                label="趋势-only 基线",
-                modules=("trend",),
-                weights=scoring_rules.weights,
-            ),
-            module_subset_baseline_scenario(
-                result,
-                scenario_id="trend_plus_risk_sentiment_baseline",
-                label="趋势 + 风险情绪基线",
-                modules=("trend", "risk_sentiment"),
-                weights=scoring_rules.weights,
+                exposure=robustness_policy.fixed_total_asset_exposure,
             ),
         ]
+        for interval_days in robustness_policy.rebalance_intervals:
+            robustness_scenarios.append(
+                rebalance_interval_scenario(result, interval_days=interval_days)
+            )
+        robustness_scenarios.extend(
+            [
+                module_subset_baseline_scenario(
+                    result,
+                    scenario_id="trend_only_baseline",
+                    label="趋势-only 基线",
+                    modules=("trend",),
+                    weights=scoring_rules.weights,
+                    position_bands=configured_position_bands,
+                ),
+                module_subset_baseline_scenario(
+                    result,
+                    scenario_id="trend_plus_risk_sentiment_baseline",
+                    label="趋势 + 风险情绪基线",
+                    modules=("trend", "risk_sentiment"),
+                    weights=scoring_rules.weights,
+                    position_bands=configured_position_bands,
+                ),
+            ]
+        )
         for module_name in scoring_rules.weights:
             for direction, multiplier in (
                 ("down", 1.0 - robustness_weight_perturbation_pct),
@@ -3611,6 +3823,10 @@ def backtest(
             random_seed_start=robustness_random_seed_start,
             random_seed_count=robustness_random_seed_count,
             oos_split_ratio=robustness_oos_split_ratio,
+            policy_metadata=backtest_validation_policy.policy_metadata.model_dump(
+                mode="json"
+            ),
+            policy=robustness_policy,
         )
         if should_write_robustness_markdown:
             robustness_output = write_backtest_robustness_report(
@@ -3696,6 +3912,10 @@ def backtest(
             ),
             prediction_outcomes_path=promotion_prediction_outcomes_path,
             rule_governance_status=rule_governance_report.status,
+            promotion_policy=backtest_validation_policy.promotion,
+            policy_metadata=backtest_validation_policy.policy_metadata.model_dump(
+                mode="json"
+            ),
         )
         if should_write_promotion_markdown:
             promotion_output = write_model_promotion_report(
@@ -10107,6 +10327,8 @@ def _backtest_trace_config_paths(
         **_base_trace_config_paths(),
         "market_regimes": regimes_path,
         "benchmark_policy": benchmark_policy_path,
+        "backtest_validation_policy": DEFAULT_BACKTEST_VALIDATION_POLICY_CONFIG_PATH,
+        "feedback_sample_policy": DEFAULT_FEEDBACK_SAMPLE_POLICY_PATH,
         "sec_companies": sec_companies_path,
         "fundamental_metrics": sec_metrics_path,
         "fundamental_features": fundamental_feature_config_path,

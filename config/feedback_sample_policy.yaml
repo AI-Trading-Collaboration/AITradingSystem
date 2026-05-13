@@ -1,0 +1,31 @@
+version: feedback_sample_policy_v1
+status: pilot
+owner: system
+market_regime_id: ai_after_chatgpt
+effective_from: 2026-05-13
+review_after_reports: 8
+notes:
+  - "当前处于市场反馈优化 pilot 阶段，样本较少时允许启动复盘、因果链和候选规则整理。"
+  - "pilot floor 只允许生成诊断和候选复核，不允许晋级 production 权重、规则或仓位 gate。"
+  - "如果后续周度报告显示节奏过快或噪声过高，提高 pilot floor 或延长 review_after_reports。"
+decision_outcomes:
+  reporting_floor: 1
+  pilot_floor: 5
+  diagnostic_floor: 30
+  promotion_floor: 60
+prediction_outcomes:
+  reporting_floor: 1
+  pilot_floor: 2
+  diagnostic_floor: 30
+  promotion_floor: 30
+governance:
+  reporting_allows:
+    - "只读展示 outcome 覆盖和 freshness。"
+  pilot_allows:
+    - "生成 causal chain、learning queue、rule experiment 候选和 pilot 复盘。"
+    - "允许启动 as-if replay 或 forward shadow 的候选准备。"
+  diagnostic_allows:
+    - "允许输出 weight diagnostics 和候选 overlay 设计。"
+  promotion_requires:
+    - "达到 promotion floor。"
+    - "完成 as-if replay、forward shadow、owner approval 和回滚条件登记。"

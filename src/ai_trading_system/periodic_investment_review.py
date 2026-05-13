@@ -313,7 +313,6 @@ def _prediction_outcome_summary(
         outcome_rows=tuple(filtered),
         outcomes_path=path,
         as_of=as_of,
-        min_available_samples=30,
     )
     return {
         "total": len(filtered),

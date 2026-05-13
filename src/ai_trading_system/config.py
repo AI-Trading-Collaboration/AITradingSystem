@@ -18,6 +18,9 @@ DEFAULT_WATCHLIST_CONFIG_PATH = PROJECT_ROOT / "config" / "watchlist.yaml"
 DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH = PROJECT_ROOT / "config" / "industry_chain.yaml"
 DEFAULT_MARKET_REGIMES_CONFIG_PATH = PROJECT_ROOT / "config" / "market_regimes.yaml"
 DEFAULT_BENCHMARK_POLICY_CONFIG_PATH = PROJECT_ROOT / "config" / "benchmark_policy.yaml"
+DEFAULT_BACKTEST_VALIDATION_POLICY_CONFIG_PATH = (
+    PROJECT_ROOT / "config" / "backtest_validation_policy.yaml"
+)
 DEFAULT_SCENARIO_LIBRARY_CONFIG_PATH = PROJECT_ROOT / "config" / "scenario_library.yaml"
 DEFAULT_CATALYST_CALENDAR_CONFIG_PATH = PROJECT_ROOT / "config" / "catalyst_calendar.yaml"
 DEFAULT_EXECUTION_POLICY_CONFIG_PATH = PROJECT_ROOT / "config" / "execution_policy.yaml"
@@ -747,8 +750,190 @@ class DataConfidencePositionGateConfig(BaseModel):
 
 
 class SourceTypeConfidenceConfig(BaseModel):
+    partial_hard_data_base: float = Field(default=0.55, ge=0, le=1)
+    partial_hard_data_coverage_multiplier: float = Field(default=0.35, ge=0, le=1)
+    partial_hard_data_max: float = Field(default=0.90, ge=0, le=1)
+    manual_input_max: float = Field(default=0.75, ge=0, le=1)
+    partial_manual_input_max: float = Field(default=0.60, ge=0, le=1)
     llm_formal_assessment: float = Field(default=0.65, ge=0, le=1)
     partial_llm_formal_assessment: float = Field(default=0.55, ge=0, le=1)
+    insufficient_data: float = Field(default=0.35, ge=0, le=1)
+    placeholder: float = Field(default=0.25, ge=0, le=1)
+    derived: float = Field(default=1.00, ge=0, le=1)
+    unknown_source_type_max: float = Field(default=0.50, ge=0, le=1)
+
+    @model_validator(mode="after")
+    def validate_source_type_confidence(self) -> Self:
+        if self.partial_hard_data_base > self.partial_hard_data_max:
+            raise ValueError(
+                "partial_hard_data_base must be <= partial_hard_data_max"
+            )
+        if (
+            self.partial_hard_data_base
+            + self.partial_hard_data_coverage_multiplier
+            < self.partial_hard_data_max
+        ):
+            raise ValueError(
+                "partial_hard_data_base + multiplier should reach "
+                "partial_hard_data_max at full coverage"
+            )
+        return self
+
+
+class PositionBandRuleConfig(BaseModel):
+    min_score: float = Field(ge=0, le=100)
+    min_position: float = Field(ge=0, le=1)
+    max_position: float = Field(ge=0, le=1)
+    label: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_position_range(self) -> Self:
+        if self.min_position > self.max_position:
+            raise ValueError("position band must satisfy min_position <= max_position")
+        return self
+
+
+class DailyConclusionPolicyConfig(BaseModel):
+    defensive_score_below: float = Field(default=45.0, ge=0, le=100)
+    constrained_score_min: float = Field(default=55.0, ge=0, le=100)
+    aggressive_score_min: float = Field(default=65.0, ge=0, le=100)
+    constructive_score_min: float = Field(default=55.0, ge=0, le=100)
+    attractiveness_strong_min: float = Field(default=65.0, ge=0, le=100)
+    attractiveness_medium_strong_min: float = Field(default=55.0, ge=0, le=100)
+    attractiveness_neutral_min: float = Field(default=45.0, ge=0, le=100)
+    watch_condition_score_min: float = Field(default=55.0, ge=0, le=100)
+    support_score_min: float = Field(default=55.0, ge=0, le=100)
+    support_confidence_min: float = Field(default=0.60, ge=0, le=1)
+    pressure_score_below: float = Field(default=50.0, ge=0, le=100)
+    pressure_confidence_below: float = Field(default=0.60, ge=0, le=1)
+    weak_fundamentals_score_below: float = Field(default=45.0, ge=0, le=100)
+    fundamentals_constructive_min: float = Field(default=50.0, ge=0, le=100)
+    valuation_pressure_score_below: float = Field(default=50.0, ge=0, le=100)
+    trend_or_risk_pressure_score_below: float = Field(default=50.0, ge=0, le=100)
+    low_component_score_below: float = Field(default=50.0, ge=0, le=100)
+    core_module_reduction_score_below: float = Field(default=45.0, ge=0, le=100)
+
+    @model_validator(mode="after")
+    def validate_score_order(self) -> Self:
+        if self.aggressive_score_min < self.constructive_score_min:
+            raise ValueError(
+                "aggressive_score_min must be >= constructive_score_min"
+            )
+        if self.constrained_score_min < self.defensive_score_below:
+            raise ValueError(
+                "constrained_score_min must be >= defensive_score_below"
+            )
+        if self.attractiveness_strong_min < self.attractiveness_medium_strong_min:
+            raise ValueError(
+                "attractiveness_strong_min must be >= "
+                "attractiveness_medium_strong_min"
+            )
+        if self.attractiveness_medium_strong_min < self.attractiveness_neutral_min:
+            raise ValueError(
+                "attractiveness_medium_strong_min must be >= "
+                "attractiveness_neutral_min"
+            )
+        return self
+
+
+class ConfidencePositionCapConfig(BaseModel):
+    min_confidence_score: float = Field(ge=0, le=100)
+    cap_multiplier: float = Field(ge=0, le=1)
+
+
+def _default_confidence_position_cap_bands() -> list[ConfidencePositionCapConfig]:
+    return [
+        ConfidencePositionCapConfig(min_confidence_score=75.0, cap_multiplier=1.0),
+        ConfidencePositionCapConfig(min_confidence_score=60.0, cap_multiplier=0.85),
+        ConfidencePositionCapConfig(min_confidence_score=45.0, cap_multiplier=0.70),
+        ConfidencePositionCapConfig(min_confidence_score=0.0, cap_multiplier=0.50),
+    ]
+
+
+class ConfidencePolicyConfig(BaseModel):
+    high_confidence_min: float = Field(default=0.75, ge=0, le=1)
+    medium_confidence_min: float = Field(default=0.60, ge=0, le=1)
+    low_component_confidence_below: float = Field(default=0.60, ge=0, le=1)
+    data_quality_fail_penalty: float = Field(default=100.0, ge=0, le=100)
+    data_quality_warning_penalty: float = Field(default=15.0, ge=0, le=100)
+    feature_warning_penalty: float = Field(default=5.0, ge=0, le=100)
+    fundamental_warning_penalty: float = Field(default=5.0, ge=0, le=100)
+    manual_review_failure_penalty: float = Field(default=30.0, ge=0, le=100)
+    manual_review_warning_penalty: float = Field(default=10.0, ge=0, le=100)
+    position_cap_bands: list[ConfidencePositionCapConfig] = Field(
+        default_factory=_default_confidence_position_cap_bands,
+        min_length=1,
+    )
+
+    @model_validator(mode="after")
+    def validate_confidence_policy(self) -> Self:
+        if self.high_confidence_min < self.medium_confidence_min:
+            raise ValueError("high_confidence_min must be >= medium_confidence_min")
+        previous_min_score = 101.0
+        previous_multiplier = 1.0
+        for band in self.position_cap_bands:
+            if band.min_confidence_score >= previous_min_score:
+                raise ValueError(
+                    "confidence position cap bands must be sorted by descending "
+                    "min_confidence_score"
+                )
+            if band.cap_multiplier > previous_multiplier:
+                raise ValueError(
+                    "confidence position cap multiplier must not increase as "
+                    "confidence falls"
+                )
+            previous_min_score = band.min_confidence_score
+            previous_multiplier = band.cap_multiplier
+        if abs(self.position_cap_bands[-1].min_confidence_score) > 1e-9:
+            raise ValueError(
+                "confidence position cap bands must include a final floor at 0"
+            )
+        return self
+
+
+def _default_position_bands() -> list[PositionBandRuleConfig]:
+    return [
+        PositionBandRuleConfig(
+            min_score=80.0,
+            min_position=0.80,
+            max_position=1.00,
+            label="重仓",
+        ),
+        PositionBandRuleConfig(
+            min_score=65.0,
+            min_position=0.60,
+            max_position=0.80,
+            label="偏重仓",
+        ),
+        PositionBandRuleConfig(
+            min_score=50.0,
+            min_position=0.40,
+            max_position=0.60,
+            label="中性",
+        ),
+        PositionBandRuleConfig(
+            min_score=35.0,
+            min_position=0.20,
+            max_position=0.40,
+            label="防守",
+        ),
+        PositionBandRuleConfig(
+            min_score=0.0,
+            min_position=0.00,
+            max_position=0.20,
+            label="极端防守",
+        ),
+    ]
+
+
+class ScoringPolicyMetadataConfig(BaseModel):
+    version: str = Field(default="scoring_rules_legacy_defaults", min_length=1)
+    status: str = Field(default="legacy_default", min_length=1)
+    owner: str = Field(default="system", min_length=1)
+    rationale: str = Field(default="", min_length=0)
+    validation: str = Field(default="", min_length=0)
+    review_after_reports: int | None = Field(default=None, gt=0)
+    expires_on: date | None = None
 
 
 class PositionGateRulesConfig(BaseModel):
@@ -762,8 +947,21 @@ class PositionGateRulesConfig(BaseModel):
 
 
 class ScoringRulesConfig(BaseModel):
+    policy_metadata: ScoringPolicyMetadataConfig = Field(
+        default_factory=ScoringPolicyMetadataConfig
+    )
     weights: dict[str, float]
     minimum_signal_coverage: float = Field(ge=0, le=1)
+    position_bands: list[PositionBandRuleConfig] = Field(
+        default_factory=_default_position_bands,
+        min_length=1,
+    )
+    daily_conclusion: DailyConclusionPolicyConfig = Field(
+        default_factory=DailyConclusionPolicyConfig
+    )
+    confidence_policy: ConfidencePolicyConfig = Field(
+        default_factory=ConfidencePolicyConfig
+    )
     trend: ScoreModuleRuleConfig
     fundamentals: ScoreModuleRuleConfig | None = None
     macro_liquidity: ScoreModuleRuleConfig
@@ -775,6 +973,123 @@ class ScoringRulesConfig(BaseModel):
     position_gates: PositionGateRulesConfig = Field(default_factory=PositionGateRulesConfig)
     source_type_confidence: SourceTypeConfidenceConfig = Field(
         default_factory=SourceTypeConfidenceConfig
+    )
+
+    @model_validator(mode="after")
+    def validate_position_bands(self) -> Self:
+        previous_min_score = 101.0
+        labels: set[str] = set()
+        for band in self.position_bands:
+            if band.min_score >= previous_min_score:
+                raise ValueError(
+                    "position bands must be sorted by descending min_score"
+                )
+            if band.label in labels:
+                raise ValueError(f"position band labels must be unique: {band.label}")
+            labels.add(band.label)
+            previous_min_score = band.min_score
+        if abs(self.position_bands[-1].min_score) > 1e-9:
+            raise ValueError("position bands must include a final floor at 0")
+        return self
+
+
+class BacktestValidationPolicyMetadataConfig(BaseModel):
+    version: str = Field(default="backtest_validation_policy_legacy_defaults", min_length=1)
+    status: str = Field(default="legacy_default", min_length=1)
+    owner: str = Field(default="system", min_length=1)
+    rationale: str = Field(default="", min_length=0)
+    validation: str = Field(default="", min_length=0)
+    review_after_reports: int | None = Field(default=None, gt=0)
+    expires_on: date | None = None
+
+
+class BacktestRobustnessPolicyConfig(BaseModel):
+    default_shifted_start_days: int = Field(default=20, gt=0)
+    default_cost_stress_increment_bps: float = Field(default=5.0, ge=0)
+    default_weight_perturbation_pct: float = Field(default=0.20, gt=0, lt=1)
+    default_random_seed_start: int = 42
+    default_random_seed_count: int = Field(default=20, gt=0)
+    default_oos_split_ratio: float = Field(default=0.70, gt=0, lt=1)
+    fixed_total_asset_exposure: float = Field(default=0.60, ge=0, le=1)
+    rebalance_intervals: list[int] = Field(default_factory=lambda: [5, 21], min_length=1)
+    full_exposure_time_in_market_min: float = Field(default=0.95, ge=0, le=1)
+    material_cost_drag_total_return: float = Field(default=-0.02, ge=-1, le=0)
+    shifted_start_material_total_return_delta_abs: float = Field(
+        default=0.05,
+        ge=0,
+        le=1,
+    )
+    weight_perturbation_material_total_return_delta_abs: float = Field(
+        default=0.05,
+        ge=0,
+        le=1,
+    )
+    oos_material_underperformance_total_return_delta: float = Field(
+        default=0.05,
+        ge=0,
+        le=1,
+    )
+
+    @model_validator(mode="after")
+    def validate_rebalance_intervals(self) -> Self:
+        duplicate_intervals = _duplicates(str(item) for item in self.rebalance_intervals)
+        if duplicate_intervals:
+            raise ValueError(
+                "robustness rebalance intervals must be unique: "
+                f"{', '.join(duplicate_intervals)}"
+            )
+        if any(interval <= 1 for interval in self.rebalance_intervals):
+            raise ValueError("robustness rebalance intervals must be greater than 1")
+        return self
+
+
+class BacktestDataCredibilityPolicyConfig(BaseModel):
+    component_coverage_min: float = Field(default=0.90, ge=0, le=1)
+
+
+class BacktestPromotionPolicyConfig(BaseModel):
+    blocking_data_credibility_grades: list[str] = Field(
+        default_factory=lambda: ["C"],
+        min_length=1,
+    )
+    required_robustness_categories: list[str] = Field(
+        default_factory=lambda: [
+            "cost",
+            "baseline",
+            "rebalance_frequency",
+            "signal_family_baseline",
+            "module_weight_perturbation",
+            "same_turnover_random_strategy",
+            "out_of_sample_validation",
+        ],
+        min_length=1,
+    )
+    min_lag_sensitivity_days: int = Field(default=3, gt=0)
+    required_rule_governance_status: str = Field(default="PASS", min_length=1)
+
+    @model_validator(mode="after")
+    def validate_required_categories(self) -> Self:
+        duplicate_categories = _duplicates(self.required_robustness_categories)
+        if duplicate_categories:
+            raise ValueError(
+                "promotion required robustness categories must be unique: "
+                f"{', '.join(duplicate_categories)}"
+            )
+        return self
+
+
+class BacktestValidationPolicyConfig(BaseModel):
+    policy_metadata: BacktestValidationPolicyMetadataConfig = Field(
+        default_factory=BacktestValidationPolicyMetadataConfig
+    )
+    data_credibility: BacktestDataCredibilityPolicyConfig = Field(
+        default_factory=BacktestDataCredibilityPolicyConfig
+    )
+    robustness: BacktestRobustnessPolicyConfig = Field(
+        default_factory=BacktestRobustnessPolicyConfig
+    )
+    promotion: BacktestPromotionPolicyConfig = Field(
+        default_factory=BacktestPromotionPolicyConfig
     )
 
 
@@ -896,6 +1211,15 @@ def load_scoring_rules(
     with config_path.open("r", encoding="utf-8") as file:
         raw: dict[str, Any] = yaml.safe_load(file)
     return ScoringRulesConfig.model_validate(raw)
+
+
+def load_backtest_validation_policy(
+    path: Path | str = DEFAULT_BACKTEST_VALIDATION_POLICY_CONFIG_PATH,
+) -> BacktestValidationPolicyConfig:
+    config_path = Path(path)
+    with config_path.open("r", encoding="utf-8") as file:
+        raw: dict[str, Any] = yaml.safe_load(file)
+    return BacktestValidationPolicyConfig.model_validate(raw)
 
 
 def configured_price_tickers(

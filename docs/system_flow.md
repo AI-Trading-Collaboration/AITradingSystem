@@ -31,9 +31,11 @@ flowchart TD
         Q["config/data_quality.yaml<br/>质量阈值 + 价格一致性窗口 + FRED series 级 freshness<br/>指数 volume / 已知拆股 / corporate-action window / 二源自检规则"]
         F["config/features.yaml<br/>特征窗口和相对强弱组合"]
         FAVC["config/feature_availability.yaml<br/>PIT feature availability 目录<br/>event_time / available_time / decision_time"]
-        S["config/scoring_rules.yaml<br/>评分权重、仓位动作阈值和 position_gates 上限"]
+        S["config/scoring_rules.yaml<br/>评分权重、score->position band、日报结论 policy、confidence/source-type policy、仓位动作阈值和 position_gates 上限"]
         WPC["config/weights/weight_profile_current.yaml<br/>回测校准基础权重 profile、bounds、score-point confidence delta 语义"]
         WPM["config/weights/calibration_protocol.yaml<br/>调权实验 protocol manifest：数据、成本、执行、切分、trial 和 benchmark"]
+        FSP["config/feedback_sample_policy.yaml<br/>市场反馈优化样本政策：reporting / pilot / diagnostic / promotion floor"]
+        BVP["config/backtest_validation_policy.yaml<br/>回测数据可信度覆盖率、稳健性默认实验参数、解释阈值和 promotion gate policy"]
         W["config/watchlist.yaml<br/>观察池与能力圈<br/>decision_stage: watch_only / active_trade"]
         WL["config/watchlist_lifecycle.yaml<br/>观察池 point-in-time 生命周期"]
         I["config/industry_chain.yaml<br/>产业链节点与因果图"]
@@ -171,9 +173,9 @@ flowchart TD
         BD["outputs/backtests/backtest_daily_YYYY-MM-DD_YYYY-MM-DD.csv<br/>含 confidence_score / confidence_level / feature_as_of / universe_as_of / industry_node 状态"]
         BIC["outputs/backtests/backtest_input_coverage_YYYY-MM-DD_YYYY-MM-DD.csv<br/>signal_date 输入覆盖、source_type 和 PIT 字段"]
         BR["outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md<br/>含结论使用等级、Backtest Data Quality、判断置信度分桶、产业链节点历史状态和基准政策解释"]
-        BROB["outputs/backtests/backtest_robustness_YYYY-MM-DD_YYYY-MM-DD.md/json<br/>成本压力、起点后移、固定仓位、再平衡频率、趋势基线、权重扰动、随机同换手率、样本外切分和买入持有基准对比"]
+        BROB["outputs/backtests/backtest_robustness_YYYY-MM-DD_YYYY-MM-DD.md/json<br/>按 backtest validation policy 运行成本压力、起点后移、固定仓位、再平衡频率、趋势基线、权重扰动、随机同换手率、样本外切分和买入持有基准对比"]
         BLAG["outputs/backtests/backtest_lag_sensitivity_YYYY-MM-DD_YYYY-MM-DD.md/json<br/>feature/universe lag 0/1/3/5/10/20 敏感性"]
-        BMP["outputs/backtests/model_promotion_YYYY-MM-DD_YYYY-MM-DD.md/json<br/>数据可信度、robustness、lag、shadow outcome 和 rule governance 晋级门槛"]
+        BMP["outputs/backtests/model_promotion_YYYY-MM-DD_YYYY-MM-DD.md/json<br/>按 backtest validation policy + feedback sample policy 检查数据可信度、robustness、lag、shadow outcome 和 rule governance 晋级门槛"]
         BGA["aits backtest-gate-attribution<br/>读取 backtest daily + input coverage；production_effect=none"]
         BGAR["outputs/backtests/gate_event_attribution_YYYY-MM-DD_YYYY-MM-DD.md<br/>gate avoided_drawdown / missed_upside 与 event label readiness"]
         BA["outputs/backtests/backtest_audit_YYYY-MM-DD_YYYY-MM-DD.md<br/>输入审计状态、发现和修复建议"]
@@ -221,6 +223,8 @@ flowchart TD
         FBPL["aits feedback lookup-benchmark-policy<br/>按 ticker 或 basket 查询基准口径"]
         FLR["aits feedback loop-review<br/>周期性闭环复核"]
         FLRR["outputs/reports/feedback_loop_review_YYYY-MM-DD.md<br/>证据、快照、decision/prediction outcome、因果链、学习队列和任务状态"]
+        MFO["aits feedback optimize-market-feedback<br/>独立市场反馈优化编排；production_effect=none"]
+        MFOR["outputs/reports/market_feedback_optimization_YYYY-MM-DD.md<br/>readiness、样本门槛、as-if 窗口、错误复盘和执行频次"]
         PIR["aits reports investment-review<br/>周报/月报投资复盘"]
         PIRR["outputs/reports/investment_weekly/monthly_review_YYYY-MM-DD.md<br/>判断变化、仓位变化、证据、production vs challenger outcome 和规则学习"]
         EDASH["aits reports dashboard<br/>证据下钻型静态 dashboard v2"]
@@ -499,6 +503,9 @@ flowchart TD
     F --> BT
     FAVC --> BT
     S --> BT
+    BVP --> BT
+    BVP --> BROB
+    BVP --> BMP
     P --> BT
     W --> BT
     WL --> BT
@@ -546,6 +553,12 @@ flowchart TD
     BIC --> BGA
     BGA --> BGAR
     FCPR -. "实验准入证据" .-> REXP
+    FSP --> FBC
+    FSP --> FPC
+    FSP --> FSM
+    FSP --> FLR
+    FSP --> PIR
+    FSP --> BMP
     DRT --> TLK
     BRT --> TLK
     DSNAP --> FBC
@@ -574,6 +587,12 @@ flowchart TD
     FRE --> REXP
     FRE --> REXPR
     REXP --> FRL
+    REXP --> FSH
+    DSNAP --> FSH
+    DRT --> FSH
+    FSH --> PLED
+    POCSV --> FSM
+    FSM --> FSMR
     GOVC --> FGV
     REXP --> FGV
     FGV --> GVR
@@ -588,6 +607,19 @@ flowchart TD
     DLQ --> FLR
     REXP --> FLR
     FLR --> FLRR
+    QR --> MFO
+    DOCSV --> MFO
+    POCSV --> MFO
+    DCC --> MFO
+    DLQ --> MFO
+    REXP --> MFO
+    FSMR --> MFO
+    ACO --> MFO
+    EW --> MFO
+    FSP --> MFO
+    FLRR --> MFO
+    MFO --> MFOR
+    MFOR --> PIR
     SC --> PIR
     DSNAP --> PIR
     DOCSV --> PIR
@@ -906,7 +938,8 @@ flowchart TD
 flowchart TD
     A["用户执行<br/>aits backtest"] --> B["解析市场阶段<br/>默认 ai_after_chatgpt"]
     B --> C["确定回测起点<br/>默认 2022-12-01"]
-    C --> BP0["读取 benchmark_policy<br/>校验 strategy_ticker / benchmark 解释口径"]
+    C --> BVP0["读取 backtest_validation_policy<br/>robustness 默认参数和 promotion gate 要求"]
+    BVP0 --> BP0["读取 benchmark_policy<br/>校验 strategy_ticker / benchmark 解释口径"]
     BP0 -->|FAIL| BPF["停止回测<br/>输出 benchmark policy 错误"]
     BP0 -->|PASS 或 PASS_WITH_WARNINGS| D["读取 prices_daily.csv / prices_marketstack_daily.csv / rates_daily.csv"]
     D --> E["调用数据质量门禁<br/>validate_data_cache"]
@@ -943,9 +976,11 @@ flowchart TD
     O --> Q["写入回测报告 Markdown<br/>包含市场阶段、结论使用等级、Backtest Data Quality、PIT 特征可见时间、核心输入 PIT 覆盖、置信度分桶和产业链节点历史状态"]
     C0 --> Q
     NH0 --> Q
-    O --> Q2["可选写入稳健性报告 Markdown / JSON<br/>成本压力 / 起点后移 / 固定 60% / 每 5/21 个交易日再平衡 / 买入持有基准<br/>production_effect=none"]
+    O --> Q2["可选写入稳健性报告 Markdown / JSON<br/>按 backtest_validation_policy 运行成本压力 / 起点后移 / 固定 exposure / 再平衡间隔 / 买入持有基准<br/>production_effect=none"]
     O --> Q3["可选写入 lag sensitivity Markdown / JSON<br/>feature lag、universe lag 与 rebalance delay<br/>production_effect=none"]
-    Q2 --> Q4["可选写入模型晋级门槛 Markdown / JSON<br/>data credibility / robustness / lag / shadow outcome / rule governance"]
+    BVP0 --> Q2
+    Q2 --> Q4["可选写入模型晋级门槛 Markdown / JSON<br/>按 policy 检查 data credibility / robustness / lag / shadow outcome / rule governance"]
+    BVP0 --> Q4
     Q3 --> Q4
     Q4 --> Q
     O --> R["写入输入覆盖诊断 CSV<br/>component / ticker / issue / source_url / point_in_time_class / backtest_use"]
@@ -1021,10 +1056,13 @@ flowchart TD
     CA0 --> L0["aits feedback build-learning-queue<br/>learning_queue<br/>错误归因和成功样本归因"]
     L0 --> LQ["aits feedback lookup-learning<br/>按 review_id 查询复核项"]
     L0 --> LR0["aits feedback loop-review<br/>周期复核报告<br/>证据 / 快照 / outcome / 因果链 / 学习队列 / task register"]
+    L0 --> MFO0["aits feedback optimize-market-feedback<br/>市场反馈优化 readiness / as-if 窗口 / 执行频次"]
     L0 --> RC0["rule_candidate<br/>候选规则建议"]
     RC0 --> SH0["aits feedback run-shadow<br/>challenger prediction 写入 ledger<br/>不影响 production 输出"]
     SH0 --> PO0
     PO0 --> SM0["aits feedback shadow-maturity<br/>样本成熟度和 promotion readiness"]
+    PO0 --> MFO0
+    SM0 --> MFO0
     SM0 --> GOV0["rule card + manual approval<br/>批准后才可进入 production rules"]
     GOV0 --> GOV1["aits feedback promote-rule-card / retire-rule-card<br/>受控更新 config/rule_cards.yaml"]
 
@@ -1062,6 +1100,7 @@ flowchart TD
         FB3["决策因果链 ledger<br/>aits feedback build-causal-chain / lookup-chain<br/>串联 evidence、模块变化、gate、snapshot 和 outcome"]
         FB4["学习复核队列<br/>aits feedback build-learning-queue / lookup-learning<br/>失败和成功样本归因"]
         FB5["反馈闭环周期复核<br/>aits feedback loop-review<br/>汇总证据、快照、outcome、因果链、学习队列和任务状态"]
+        FB6["市场反馈优化编排<br/>aits feedback optimize-market-feedback<br/>汇总 readiness、样本限制、as-if 窗口、候选规则、shadow 和 overlay"]
         BP1["基准政策治理<br/>aits feedback validate-benchmark-policy / lookup-benchmark-policy<br/>AI proxy 与 benchmark 解释口径"]
         SC1["情景压力测试库<br/>aits scenarios validate / lookup<br/>节点、ticker、risk event 和 gate 映射"]
         CT1["未来催化剂日历<br/>aits catalysts validate / upcoming / lookup<br/>5/20/60 天事件前后复核"]
@@ -1177,6 +1216,7 @@ flowchart TD
 |特征|`aits build-features`|先执行数据质量门禁，再生成可解释市场特征，并输出 PIT 特征可见时间报告；缺少 availability rule 的 source 会 fail closed，特征摘要引用该报告|已实现|
 |特征缓存|`data/processed/features_daily.csv`|保存 tidy 格式特征|已实现|
 |组合与风险预算配置|`config/portfolio.yaml`|定义静态总风险资产预算、`macro_risk_asset_budget` 下调阈值、AI 总资产上限、真实组合集中度提示阈值和 `risk_budget` gate 参数；宏观预算层用 VIX、DGS10 和 `DTWEXBGS` 广义美元指数下调总风险资产预算，`risk_budget` gate 继续约束风险资产内 AI 仓位上限|已实现基础版|
+|评分规则配置|`config/scoring_rules.yaml`|定义模块权重、signal 规则、score->position band、日报结论边界、confidence cutoff、confidence cap multiplier、source_type confidence、仓位动作阈值和 position gate 上限；带 `policy_metadata`，用于追踪 owner/status/rationale/validation；`score-daily`、回测评分和 robustness 信号族基线读取同一套配置，不再从散落的 if/else 推断仓位带或结论边界|已实现基础版|
 |评分|`aits score-daily`|先执行市场数据质量门禁和 PIT feature availability 校验，再校验 `execution_policy`、SEC 指标 CSV、构建 SEC 基本面特征、复核估值快照、风险事件发生记录和当前有效复核声明，读取真实持仓 CSV 生成只读组合暴露；默认会在风险事件发生记录校验前抓取官方政策/地缘来源并调用 OpenAI 风险事件 `metadata_only` 预审，可用 `--skip-risk-event-openai-precheck` 跳过；预审成功后默认把队列写入 LLM formal occurrence/attestation，full coverage `llm_formal_assessment` 置信度为 65%，低于人工复核但不再触发低置信模块，且不得单独触发 position gate；可选 `--run-id` 会写入日报 trace bundle 和 Decision Card，未传入时保持 `run:daily_score:YYYY-MM-DD`；默认最多处理 20 条官方候选，OpenAI 默认 `gpt-5.5` / `reasoning.effort=high` / 120 秒读超时 / `requests` HTTP client / 24 小时本地 agent request cache TTL，可用 `--openai-cache-ttl-hours` 调成半天等窗口，可用 `--openai-http-client urllib` 做本机传输对照；完全相同 request payload 在 TTL 内 cache HIT 不重新发送，MISS/EXPIRED 才实际请求并写入 `data/processed/agent_request_cache` 审计归档；provider `cache_allowed=false` 时 fail closed；单个 OpenAI 请求失败时重试 2 次，仍失败则整批 fail closed；随后基于已通过校验/复核的市场特征生成只读关注股票趋势分析，并基于市场特征、SEC/TSM/ADR 基本面、估值、风险事件和 thesis 生成只读产业链节点热度与健康度；`watch_only` 观察阶段 ticker 缺少主动交易 thesis 不触发 thesis warning 或 thesis gate，`active_trade` 阶段仍按 thesis 纪律约束；再用 `macro_risk_asset_budget` 下调总风险资产预算，并通过 `position_gate` 把评分仓位、判断置信度、组合限制、风险预算、风险事件、估值拥挤、thesis 状态和数据置信度取最严格上限，输出 AI 产业链评分、判断置信度、最终仓位区间、advisory 执行建议、日报、decision snapshot、prediction ledger 行和只读 `belief_state`|已实现|
 |评分缓存|`data/processed/scores_daily.csv`|保存每日评分结构化结果，component 行记录模块 confidence，overall 行记录整体 confidence、模型/最终/置信度调整仓位区间、静态和宏观调整后总风险资产预算、总资产 AI 仓位区间、宏观预算触发等级和仓位闸门摘要；置信度调整仓位基于评分模型原始仓位计算，并作为 `confidence` gate 参与最终上限约束，用于日报上期对比|已实现|
 |日报|`outputs/reports/daily_score_YYYY-MM-DD.md`|开头输出 Decision Card v2，固定呈现状态标签、市场吸引力、判断置信度、`Data Gate`、`Run ID / Trace`、评分映射仓位、风险闸门后最终仓位、总风险资产预算、执行动作、主结论、三个核心原因、最大限制、下一步触发条件、`Main Invalidator` 和 `Next Checks`；正文继续输出结论使用等级、适用范围、变化原因树、什么情况会改变判断、关注股票趋势分析、产业链节点热度与健康度、组合暴露、认知状态摘要、执行建议、宏观风险资产预算、市场数据质量状态、SEC 基本面质量状态、风险事件发生记录状态、当前有效风险事件复核声明数量、估值 PIT 可信度、仓位闸门来源/上限/触发状态、置信度调整后模型仓位、限制说明、人工复核摘要和可追溯引用章节；关注股票趋势分析按 `core_watchlist` 显示逐 ticker 1/5/20 日收益、20/50/100/200 日均线位置、相对均线偏离和数据覆盖；当前项目范围为趋势判断/投研辅助，不触发交易；执行建议、关注股票趋势、节点热度/健康度和组合暴露均明确 `production_effect=none`，不是自动交易指令|已实现|
@@ -1246,13 +1286,17 @@ flowchart TD
 |执行动作查询|`aits execution lookup`|按 `action_id` 反查固定动作定义，例如 `maintain`、`small_increase`、`no_new_position`、`reduce_to_target_range`、`wait_manual_review`、`observe_only`|已实现基础版|
 |反馈闭环复核|`aits feedback loop-review`|按复核窗口汇总 market evidence、decision snapshots、decision_outcomes、prediction_outcomes、decision_causal_chains、decision_learning_queue、rule_experiments 和 task register 状态；声明 `ai_after_chatgpt` 市场阶段和可执行/需复核/研究用途边界|已实现基础版|
 |反馈闭环复核报告|`outputs/reports/feedback_loop_review_YYYY-MM-DD.md`|中文周期报告输出新证据、快照、decision/prediction outcome、因果链、学习队列、规则候选、blocked task 和状态统计；prediction/shadow 样本不足时只标记研究用途，不直接生成调仓建议，也不自动修改生产规则|已实现基础版|
+|市场反馈优化编排|`aits feedback optimize-market-feedback`|只读汇总 data quality、decision/prediction outcomes、decision causal chains、learning queue、rule experiments、approved calibration overlay 和 current effective weights；输出 readiness、样本门槛、as-if 回放窗口、错误复盘、候选规则、overlay 状态和周/月执行频次；`production_effect=none`，不改变 `score-daily`、`position_gate`、thesis、日报结论或回测仓位|已实现基础版|
+|市场反馈样本政策|`config/feedback_sample_policy.yaml`|配置 feedback / shadow / promotion 路径的 reporting、pilot、diagnostic 和 promotion 样本 floor；`feedback calibrate`、`feedback calibrate-predictions`、`feedback shadow-maturity`、`feedback loop-review`、`investment-review`、model promotion 和 `optimize-market-feedback` 读取该政策；当前 pilot 阶段允许少量样本启动因果链、学习队列、候选规则整理和 pilot 复盘，但低于 diagnostic/promotion floor 时不得输出正式调权结论或晋级 production|已实现基础版|
+|市场反馈优化报告|`outputs/reports/market_feedback_optimization_YYYY-MM-DD.md`|中文输出市场阶段、复核窗口、默认 `ai_after_chatgpt` as-if 窗口、产物状态、样本不足限制、learning queue 分类、rule experiment replay/shadow 状态、approved overlay 命中状态、与 daily-run/loop-review/investment-review 的兼容边界和下一步|已实现基础版|
 |投资周报/月报复盘|`aits reports investment-review` / `outputs/reports/investment_weekly_review_YYYY-MM-DD.md` / `investment_monthly_review_YYYY-MM-DD.md`|读取 `scores_daily.csv`、decision snapshots、belief_state、decision outcomes、prediction outcomes、learning queue 和 rule experiments，面向投资复核者回答本期结论/仓位是否变化、前三个证据、产业链节点状态、thesis/risk/valuation 状态、production vs challenger shadow 表现、市场验证和规则学习；`production_effect=none`，不改变评分、仓位、回测或执行建议|已实现基础版|
 |投资与数据告警|`outputs/reports/alerts_YYYY-MM-DD.md` / `outputs/reports/daily_score_YYYY-MM-DD.md#告警摘要`|`score-daily` 基于数据质量、特征警告、低可信模块、估值健康、risk event gate、thesis 复核、仓位上限变化和未来 5 天 high/critical catalyst 生成只读 data/system 与 investment/risk 告警；每条告警记录等级、触发/解除条件、claim/evidence 引用和去重键；`production_effect=none`，不改变评分、仓位、回测或执行建议|已实现基础版|
 |认知模型需求|`docs/requirements/cognitive_model_2026-05-04.md`|定义 AI 产业链可审计认知模型边界、`belief_state` 第一阶段、阶段路线、禁止自动改生产规则的治理边界和关联任务|已登记|
 |认知状态缓存|`data/processed/belief_state/belief_state_YYYY-MM-DD.json`|只读认知状态快照，结构化记录市场状态、产业链节点状态、估值、风险、thesis、仓位边界、宏观总风险资产预算、限制因素、多维置信度、trace 引用和 `decision_snapshot` 引用；明确不直接改变评分、闸门、回测仓位或交易建议|已实现基础版|
 |认知状态历史|`data/processed/belief_state_history.csv`|认知状态历史索引，按 `signal_date` upsert，记录 `belief_state_id`、路径、生成时间、production_effect、置信度、数据质量、最终仓位边界、限制数量、trace 路径和 decision snapshot 路径|已实现基础版|
 |认知状态报告|`outputs/reports/daily_score_YYYY-MM-DD.md#认知状态`|日报中的中文认知状态摘要，明确 `belief_state` 是只读解释层，而不是已批准进入 production 规则的输入|已实现基础版|
-|回测|`aits backtest`|先校验 `benchmark_policy`、数据质量门禁和 PIT feature availability，再基于每日评分、`macro_risk_asset_budget` 和同一套 `position_gate` 动态回测；策略实际敞口使用总资产内 AI exposure，风险资产内 AI 相对权重和总风险资产预算在每日明细中分别保留；按显式成本假设扣除 commission、bid-ask spread、linear slippage、market impact、tax、FX、annual financing carry 和 ETF delay，并按 signal_date 构建 point-in-time watchlist lifecycle、SEC 基本面特征、TSM IR 季度补充、估值快照切片、风险事件发生记录、复核声明切片和只读产业链节点热度/健康度历史状态；feature/universe lag 场景会改用更早的 `feature_as_of` 和 `universe_as_of`；可通过 `--robustness-report`、`--lag-sensitivity-report` 或 `--promotion-report` 生成可选稳健性、滞后敏感性和模型晋级门槛报告|已实现|
+|回测验证政策|`config/backtest_validation_policy.yaml`|定义 backtest data credibility 的模块覆盖率阈值、robustness 默认起点后移、成本压力、权重扰动、随机种子、样本外切分、固定 exposure、再平衡间隔、解释阈值，以及 promotion gate 阻断数据可信度等级、必需 robustness category、最小 lag sensitivity 天数和 rule governance 状态；带 `policy_metadata`，回测稳健性和模型晋级报告会输出 policy version|已实现基础版|
+|回测|`aits backtest`|先校验 `benchmark_policy`、数据质量门禁和 PIT feature availability，再基于每日评分、`macro_risk_asset_budget` 和同一套 `position_gate` 动态回测；策略实际敞口使用总资产内 AI exposure，风险资产内 AI 相对权重和总风险资产预算在每日明细中分别保留；按显式成本假设扣除 commission、bid-ask spread、linear slippage、market impact、tax、FX、annual financing carry 和 ETF delay，并按 signal_date 构建 point-in-time watchlist lifecycle、SEC 基本面特征、TSM IR 季度补充、估值快照切片、风险事件发生记录、复核声明切片和只读产业链节点热度/健康度历史状态；feature/universe lag 场景会改用更早的 `feature_as_of` 和 `universe_as_of`；可通过 `--robustness-report`、`--lag-sensitivity-report` 或 `--promotion-report` 生成可选稳健性、滞后敏感性和模型晋级门槛报告，robustness/promotion 默认参数读取 `config/backtest_validation_policy.yaml`|已实现|
 |回测历史输入缺口诊断|`aits backtest-input-gaps`|先执行数据质量门禁，再按回测 signal_date 诊断历史估值快照、严格 PIT 估值、风险事件 occurrence 和人工复核声明覆盖；报告只列缺口和补数入口，不生成或伪造历史估值/风险事件/无风险声明|已实现基础版|
 |回测历史输入缺口报告|`outputs/backtests/backtest_input_gaps_YYYY-MM-DD_YYYY-MM-DD.md`|中文报告列出每个 signal_date 的估值状态、估值快照数量、严格 PIT 估值数量、风险事件 occurrence 数量、当前有效人工复核声明数量和风险覆盖状态；明确 occurrence 为 0 不能自动代表历史无事件|已实现基础版|
 |Forward-only PIT 覆盖验证|`aits backtest-pit-coverage`|读取并校验 PIT raw snapshot manifest 后，按输入族、source、ticker 和 `available_time` 汇总自建 forward-only 快照覆盖，输出历史 C 级原因、B/A readiness、first eligible date 和解除条件；manifest 校验失败时停止，不把未通过校验的快照计入回测可信度|已实现基础版|
@@ -1260,9 +1304,9 @@ flowchart TD
 |回测输入覆盖诊断|`outputs/backtests/backtest_input_coverage_YYYY-MM-DD_YYYY-MM-DD.csv`|机器可读输出评分模块覆盖、来源类型、输入问题、证据 URL、ticker 输入、SEC 特征、风险事件证据、来源类型、估值 `point_in_time_class`、`history_source_class`、`backtest_use` 和 `confidence_level` 聚合，便于跨月审计和回归分析|已实现|
 |回测报告|`outputs/backtests/backtest_YYYY-MM-DD_YYYY-MM-DD.md`|输出市场阶段、结论使用等级、Backtest Data Quality A/B/C、vendor historical estimates 使用声明、自建快照使用声明、Minimum Feature Lag、Universe PIT、Corporate Actions Handling、核心输入 PIT 覆盖、绩效指标、benchmark policy 状态、基准解释边界、执行成本摘要、宏观风险资产预算摘要、仓位闸门摘要、判断置信度分桶、产业链节点历史状态摘要、数据质量门禁摘要、SEC 基本面、估值快照、风险事件质量摘要、模块覆盖率摘要、月度覆盖率趋势、月度来源类型趋势、月度输入问题下钻、月度输入证据 URL 摘要、月度风险事件证据 URL 明细、月度 ticker 输入摘要、月度 ticker SEC 特征明细、月度估值快照来源和月度风险事件证据来源分布；C 级输入下 Sharpe/CAGR/收益表只作探索性诊断|已实现|
 |回测成本假设|`aits backtest --cost-bps --spread-bps --slippage-bps --market-impact-bps --tax-bps --fx-bps --financing-annual-bps --etf-delay-bps`|成本模型第一阶段是显式假设拆分，不等同于真实券商成交回报；每日明细保存每类成本扣减，回测报告显示成本摘要，trace run manifest 记录 `cost_assumptions` 便于复现|已实现基础版|
-|回测稳健性报告|`outputs/backtests/backtest_robustness_YYYY-MM-DD_YYYY-MM-DD.md` / `.json`|可选输出，复用同一 point-in-time 输入运行基础动态策略、成本压力、起点后移、固定 60% 总资产 AI exposure 基线、每 5 个/21 个交易日再平衡频率实验、趋势-only / 趋势+风险情绪信号族基线、单模块权重上下扰动、同换手率随机策略，以及时间顺序 in-sample / out-of-sample holdout，并把结果与买入持有 SPY/QQQ/SMH/SOXX 或用户配置基准对比；Markdown 报告和机器可读 JSON 摘要均声明 `production_effect=none`，`remaining_gaps` 为空时仍保留数据可信度、样本长度和 owner 审批限制|已实现|
+|回测稳健性报告|`outputs/backtests/backtest_robustness_YYYY-MM-DD_YYYY-MM-DD.md` / `.json`|可选输出，复用同一 point-in-time 输入，按 `config/backtest_validation_policy.yaml` 运行基础动态策略、成本压力、起点后移、固定总资产 AI exposure 基线、配置化再平衡频率、趋势-only / 趋势+风险情绪信号族基线、单模块权重上下扰动、同换手率随机策略，以及时间顺序 in-sample / out-of-sample holdout，并把结果与买入持有 SPY/QQQ/SMH/SOXX 或用户配置基准对比；Markdown 报告和机器可读 JSON 摘要均声明 `production_effect=none`、输出 policy metadata，`remaining_gaps` 为空时仍保留数据可信度、样本长度和 owner 审批限制|已实现|
 |回测滞后敏感性报告|`outputs/backtests/backtest_lag_sensitivity_YYYY-MM-DD_YYYY-MM-DD.md` / `.json`|可选输出，默认测试 feature/universe lag `0,1,3,5,10,20` 个交易日并保留 1 个交易日 rebalance delay；复用同一数据质量门禁、同一成本假设和同一 universe PIT 规则；C 级输入下仅用于识别未来函数风险，不解除输入可信度降级|已实现基础版|
-|模型晋级门槛报告|`outputs/backtests/model_promotion_YYYY-MM-DD_YYYY-MM-DD.md` / `.json`|可选输出，汇总 Backtest Data Quality、robustness、lag sensitivity、prediction/shadow outcome 和 rule card registry 状态；C 级回测标记 `NOT_PROMOTABLE`，缺少 shadow outcome 或关键证据时只允许进入 `READY_FOR_SHADOW`，`READY_FOR_GOV_REVIEW` 仍需 owner approval 和 rule governance|已实现基础版|
+|模型晋级门槛报告|`outputs/backtests/model_promotion_YYYY-MM-DD_YYYY-MM-DD.md` / `.json`|可选输出，按 `config/backtest_validation_policy.yaml` 和 `config/feedback_sample_policy.yaml` 汇总 Backtest Data Quality、robustness、lag sensitivity、prediction/shadow outcome 和 rule card registry 状态；阻断数据可信度等级、必需 robustness category、最小 lag sensitivity 天数和 shadow outcome floor 均来自 policy；缺少 shadow outcome 或关键证据时只允许进入 `READY_FOR_SHADOW`，`READY_FOR_GOV_REVIEW` 仍需 owner approval 和 rule governance|已实现基础版|
 |回测输入审计报告|`outputs/backtests/backtest_audit_YYYY-MM-DD_YYYY-MM-DD.md`|输出 PASS/PASS_WITH_WARNINGS/FAIL、数据质量、Backtest Data Quality、point-in-time 输入、模块覆盖率、来源类型、执行假设、审计发现和修复建议，判断本次回测是否可解释；`--fail-on-audit-warning` 可把非 PASS 审计状态转为命令失败|已实现|
 |回测 Evidence Bundle|`outputs/backtests/evidence/backtest_YYYY-MM-DD_YYYY-MM-DD_trace.json`|记录回测 `claim`、`evidence`、`dataset`、`quality`、`run_manifest`、`benchmark_policy`、feature availability 配置引用和本次运行适用的 production rule version manifest，用于从绩效、数据质量、输入覆盖、PIT 可见时间和规则版本结论反查上下文|已实现|
 |报告反查|`aits trace lookup`|按 claim/evidence/dataset/quality/run id 读取 evidence bundle 并输出中文摘要和原始 JSON 上下文|已实现|

@@ -1,3 +1,11 @@
+policy_metadata:
+  version: scoring_rules_v1
+  status: pilot
+  owner: system
+  rationale: "将既有评分、仓位、日报结论和置信度边界迁入可审计配置；初始数值保持迁移前行为不变，后续由 market feedback optimization 回测与复盘迭代。"
+  validation: "配置加载由 tests/test_config.py 覆盖；评分路径由 tests/test_position_model.py 与 tests/test_daily_scoring.py 覆盖；权重和阈值迭代跟踪 CALIBRATION-003/GOV-004。"
+  review_after_reports: 8
+
 weights:
   trend: 25
   fundamentals: 25
@@ -8,9 +16,80 @@ weights:
 
 minimum_signal_coverage: 0.50
 
+position_bands:
+  - min_score: 80
+    min_position: 0.80
+    max_position: 1.00
+    label: "重仓"
+  - min_score: 65
+    min_position: 0.60
+    max_position: 0.80
+    label: "偏重仓"
+  - min_score: 50
+    min_position: 0.40
+    max_position: 0.60
+    label: "中性"
+  - min_score: 35
+    min_position: 0.20
+    max_position: 0.40
+    label: "防守"
+  - min_score: 0
+    min_position: 0.00
+    max_position: 0.20
+    label: "极端防守"
+
+daily_conclusion:
+  defensive_score_below: 45
+  constrained_score_min: 55
+  aggressive_score_min: 65
+  constructive_score_min: 55
+  attractiveness_strong_min: 65
+  attractiveness_medium_strong_min: 55
+  attractiveness_neutral_min: 45
+  watch_condition_score_min: 55
+  support_score_min: 55
+  support_confidence_min: 0.60
+  pressure_score_below: 50
+  pressure_confidence_below: 0.60
+  weak_fundamentals_score_below: 45
+  fundamentals_constructive_min: 50
+  valuation_pressure_score_below: 50
+  trend_or_risk_pressure_score_below: 50
+  low_component_score_below: 50
+  core_module_reduction_score_below: 45
+
+confidence_policy:
+  high_confidence_min: 0.75
+  medium_confidence_min: 0.60
+  low_component_confidence_below: 0.60
+  data_quality_fail_penalty: 100
+  data_quality_warning_penalty: 15
+  feature_warning_penalty: 5
+  fundamental_warning_penalty: 5
+  manual_review_failure_penalty: 30
+  manual_review_warning_penalty: 10
+  position_cap_bands:
+    - min_confidence_score: 75
+      cap_multiplier: 1.00
+    - min_confidence_score: 60
+      cap_multiplier: 0.85
+    - min_confidence_score: 45
+      cap_multiplier: 0.70
+    - min_confidence_score: 0
+      cap_multiplier: 0.50
+
 source_type_confidence:
+  partial_hard_data_base: 0.55
+  partial_hard_data_coverage_multiplier: 0.35
+  partial_hard_data_max: 0.90
+  manual_input_max: 0.75
+  partial_manual_input_max: 0.60
   llm_formal_assessment: 0.65
   partial_llm_formal_assessment: 0.55
+  insufficient_data: 0.35
+  placeholder: 0.25
+  derived: 1.00
+  unknown_source_type_max: 0.50
 
 trend:
   neutral_score: 50

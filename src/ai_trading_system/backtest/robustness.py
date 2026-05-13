@@ -9,7 +9,12 @@ from random import Random
 
 from ai_trading_system.backtest.daily import DailyBacktestResult
 from ai_trading_system.backtest.engine import BacktestMetrics, summarize_long_only_backtest
-from ai_trading_system.scoring.position_model import ModuleScore, WeightedScoreModel
+from ai_trading_system.config import BacktestRobustnessPolicyConfig
+from ai_trading_system.scoring.position_model import (
+    ModuleScore,
+    PositionBandRule,
+    WeightedScoreModel,
+)
 
 
 @dataclass(frozen=True)
@@ -41,10 +46,12 @@ class BacktestRobustnessReport:
     scenarios: tuple[BacktestRobustnessScenario, ...]
     cost_stress_increment_bps: float
     shifted_start_days: int
-    weight_perturbation_pct: float = 0.20
-    random_seed_start: int = 42
-    random_seed_count: int = 20
-    oos_split_ratio: float = 0.70
+    weight_perturbation_pct: float
+    random_seed_start: int
+    random_seed_count: int
+    oos_split_ratio: float
+    policy_metadata: dict[str, object]
+    policy: BacktestRobustnessPolicyConfig
 
     @property
     def status(self) -> str:
@@ -103,7 +110,7 @@ def write_backtest_robustness_summary(
 def fixed_total_asset_exposure_scenario(
     result: DailyBacktestResult,
     *,
-    exposure: float = 0.60,
+    exposure: float,
 ) -> BacktestRobustnessScenario:
     metrics = _fixed_exposure_metrics(result, exposure=exposure)
     return BacktestRobustnessScenario(
@@ -150,8 +157,14 @@ def module_subset_baseline_scenario(
     label: str,
     modules: tuple[str, ...],
     weights: Mapping[str, float],
+    position_bands: tuple[PositionBandRule, ...],
 ) -> BacktestRobustnessScenario:
-    metrics = _module_subset_metrics(result, modules=modules, weights=weights)
+    metrics = _module_subset_metrics(
+        result,
+        modules=modules,
+        weights=weights,
+        position_bands=position_bands,
+    )
     module_label = " + ".join(modules)
     return BacktestRobustnessScenario(
         scenario_id=scenario_id,
@@ -213,6 +226,8 @@ def backtest_robustness_summary_record(
             }
         ),
         "data_quality_status": result.data_quality_report.status,
+        "policy_metadata": report.policy_metadata,
+        "policy": report.policy.model_dump(mode="json"),
         "cost_stress_increment_bps": report.cost_stress_increment_bps,
         "shifted_start_days": report.shifted_start_days,
         "weight_perturbation_pct": report.weight_perturbation_pct,
@@ -266,6 +281,7 @@ def render_backtest_robustness_report(report: BacktestRobustnessReport) -> str:
             f"- 实际基础信号区间：{result.first_signal_date.isoformat()} 至 "
             f"{result.last_signal_date.isoformat()}",
             f"- 数据质量状态：{result.data_quality_report.status}",
+            f"- Policy version：{report.policy_metadata.get('version', 'unknown')}",
             f"- 成本压力增量：{report.cost_stress_increment_bps:.1f} bps",
             f"- 起点后移天数：{report.shifted_start_days}",
             f"- 模块权重扰动比例：±{report.weight_perturbation_pct:.0%}",
@@ -434,14 +450,14 @@ def _interpretation_lines(report: BacktestRobustnessReport) -> list[str]:
             lines.append(
                 "- 动态策略最大回撤深于至少一个买入持有基准，回撤控制结论需要继续验证。"
             )
-    if strategy.time_in_market < 0.95:
+    if strategy.time_in_market < report.policy.full_exposure_time_in_market_min:
         lines.append(
             "- 动态策略不是长期满仓，仓位纪律和风险暴露管理应与收益指标分开评估。"
         )
     cost_scenario = _find_scenario(report, "cost_stress_execution")
     if cost_scenario is not None and cost_scenario.result is not None:
         delta = cost_scenario.result.strategy_metrics.total_return - strategy.total_return
-        if delta < -0.02:
+        if delta < report.policy.material_cost_drag_total_return:
             lines.append(
                 "- 成本压力对总收益造成明显拖累，生产前必须用真实成交样本校验成本假设。"
             )
@@ -450,7 +466,7 @@ def _interpretation_lines(report: BacktestRobustnessReport) -> list[str]:
     shifted_scenario = _find_scenario(report, "shifted_start")
     if shifted_scenario is not None and shifted_scenario.result is not None:
         delta = shifted_scenario.result.strategy_metrics.total_return - strategy.total_return
-        if abs(delta) > 0.05:
+        if abs(delta) > report.policy.shifted_start_material_total_return_delta_abs:
             lines.append(
                 "- 起点后移后结果变化较大，说明样本窗口敏感性仍是主要生产化风险。"
             )
@@ -506,7 +522,9 @@ def _interpretation_lines(report: BacktestRobustnessReport) -> list[str]:
             for scenario in weight_scenarios
             if scenario.result is not None
         )
-        if max_abs_delta > 0.05:
+        if max_abs_delta > (
+            report.policy.weight_perturbation_material_total_return_delta_abs
+        ):
             lines.append(
                 "- 模块权重扰动对总收益影响较大，当前参数仍需要样本外验证和 owner 审批。"
             )
@@ -556,7 +574,10 @@ def _interpretation_lines(report: BacktestRobustnessReport) -> list[str]:
                 lines.append(
                     "- 样本外 holdout 总收益为负，需把全样本结果降级为窗口内诊断。"
                 )
-            if out_metrics.total_return < in_metrics.total_return - 0.05:
+            if out_metrics.total_return < (
+                in_metrics.total_return
+                - report.policy.oos_material_underperformance_total_return_delta
+            ):
                 lines.append(
                     "- 样本外收益明显弱于 in-sample，参数与市场阶段稳定性仍需人工复核。"
                 )
@@ -650,13 +671,14 @@ def _module_subset_metrics(
     *,
     modules: tuple[str, ...],
     weights: Mapping[str, float],
+    position_bands: tuple[PositionBandRule, ...],
 ) -> BacktestMetrics:
     if not modules:
         raise ValueError("module subset must not be empty")
     if len(set(modules)) != len(modules):
         raise ValueError("module subset must not contain duplicates")
 
-    score_model = WeightedScoreModel()
+    score_model = WeightedScoreModel(position_bands=position_bands)
     previous_exposure = 0.0
     returns: list[float] = []
     exposures: list[float] = []

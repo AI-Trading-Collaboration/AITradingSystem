@@ -3,6 +3,7 @@ from __future__ import annotations
 from ai_trading_system.config import (
     configured_price_tickers,
     configured_rate_series,
+    load_backtest_validation_policy,
     load_data_quality,
     load_data_sources,
     load_features,
@@ -155,12 +156,33 @@ def test_feature_config_loads_market_feature_windows() -> None:
 def test_scoring_rules_config_loads_weights_and_placeholders() -> None:
     config = load_scoring_rules()
 
+    assert config.policy_metadata.version == "scoring_rules_v1"
     assert config.weights["trend"] == 25
     assert config.minimum_signal_coverage == 0.50
+    assert config.position_bands[0].min_score == 80
+    assert config.position_bands[-1].min_score == 0
+    assert config.daily_conclusion.aggressive_score_min == 65
+    assert config.confidence_policy.position_cap_bands[1].cap_multiplier == 0.85
+    assert config.source_type_confidence.placeholder == 0.25
     assert config.source_type_confidence.llm_formal_assessment == 0.65
     assert config.trend.signals[0].subject == "SPY"
     assert config.placeholders["valuation"].score == 50
     assert "MVP 阶段占位" in config.placeholders["valuation"].reason
+
+
+def test_backtest_validation_policy_loads_governed_thresholds() -> None:
+    config = load_backtest_validation_policy()
+
+    assert config.policy_metadata.version == "backtest_validation_policy_v1"
+    assert config.data_credibility.component_coverage_min == 0.90
+    assert config.robustness.default_weight_perturbation_pct == 0.20
+    assert config.robustness.default_oos_split_ratio == 0.70
+    assert config.robustness.full_exposure_time_in_market_min == 0.95
+    assert config.robustness.oos_material_underperformance_total_return_delta == 0.05
+    assert config.promotion.min_lag_sensitivity_days == 3
+    assert "same_turnover_random_strategy" in (
+        config.promotion.required_robustness_categories
+    )
 
 
 def test_configured_price_tickers_defaults_to_core_universe() -> None:

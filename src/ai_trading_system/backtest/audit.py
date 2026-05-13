@@ -10,6 +10,7 @@ from ai_trading_system.backtest.daily import (
     DailyBacktestResult,
     build_backtest_data_credibility,
 )
+from ai_trading_system.config import load_backtest_validation_policy
 from ai_trading_system.scoring.daily import COMPONENT_LABELS, SOURCE_TYPE_LABELS
 
 AuditSeverity = Literal["ERROR", "WARNING"]
@@ -63,8 +64,12 @@ def build_backtest_audit_report(
     daily_output_path: Path,
     input_coverage_output_path: Path,
     sec_companyfacts_validation_report_path: Path | None = None,
-    minimum_component_coverage: float = 0.9,
+    minimum_component_coverage: float | None = None,
 ) -> BacktestAuditReport:
+    if minimum_component_coverage is None:
+        minimum_component_coverage = (
+            load_backtest_validation_policy().data_credibility.component_coverage_min
+        )
     if not 0.0 <= minimum_component_coverage <= 1.0:
         raise ValueError("minimum_component_coverage 必须在 0 到 1 之间")
 

@@ -16,6 +16,11 @@ from ai_trading_system.benchmark_policy import (
 )
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data.quality import DataQualityReport
+from ai_trading_system.feedback_sample_policy import (
+    FeedbackSamplePolicy,
+    load_feedback_sample_policy,
+    sample_floor_summary,
+)
 
 DEFAULT_OUTCOME_HORIZONS = (1, 5, 20, 60, 120)
 DEFAULT_DECISION_OUTCOMES_PATH = PROJECT_ROOT / "data" / "processed" / "decision_outcomes.csv"
@@ -146,8 +151,13 @@ def render_decision_calibration_report(
     outcomes_path: Path,
     data_quality_report_path: Path,
 ) -> str:
+    sample_policy = load_feedback_sample_policy()
     available_count = len(result.available_rows)
-    sample_status = "PASS" if available_count >= 30 else "PASS_WITH_LIMITATIONS"
+    sample_status = (
+        "PASS"
+        if available_count >= sample_policy.decision_outcomes.diagnostic_floor
+        else "PASS_WITH_LIMITATIONS"
+    )
     lines = [
         "# 决策结果校准报告",
         "",
@@ -157,6 +167,8 @@ def render_decision_calibration_report(
         f"- 决策快照数：{len(result.snapshots)}",
         f"- outcome 行数：{len(result.outcome_rows)}",
         f"- 可用观察：{available_count}",
+        f"- 样本政策：{sample_policy.version}",
+        f"- Decision 样本门槛：{sample_floor_summary(sample_policy.decision_outcomes)}",
         f"- 等待窗口完成：{len(result.pending_rows)}",
         f"- 缺失价格数据：{len(result.missing_rows)}",
         f"- 观察窗口：{', '.join(f'{horizon}D' for horizon in result.horizons)}",
@@ -171,7 +183,7 @@ def render_decision_calibration_report(
         "",
         "## 样本限制",
         "",
-        _sample_limitation_text(result),
+        _sample_limitation_text(result, sample_policy),
         "",
         "## 全局摘要",
         "",
@@ -449,11 +461,28 @@ def _valuation_crowded_count(valuation_state: dict[str, Any]) -> int:
     )
 
 
-def _sample_limitation_text(result: DecisionOutcomeBuildResult) -> str:
+def _sample_limitation_text(
+    result: DecisionOutcomeBuildResult,
+    sample_policy: FeedbackSamplePolicy,
+) -> str:
     limitations: list[str] = []
-    if len(result.available_rows) < 30:
+    available_count = len(result.available_rows)
+    floors = sample_policy.decision_outcomes
+    if available_count < floors.pilot_floor:
         limitations.append(
-            "- 可用 outcome 少于 30 行，只能作为早期校准观察，不能解释为稳定统计结论。"
+            f"- 可用 outcome 少于 pilot floor {floors.pilot_floor}，只能展示覆盖状态。"
+        )
+    elif available_count < floors.diagnostic_floor:
+        limitations.append(
+            "- 可用 outcome 已达到 pilot floor "
+            f"{floors.pilot_floor}，但低于 diagnostic floor {floors.diagnostic_floor}；"
+            "可进入复盘和候选整理，不能解释为稳定调权结论。"
+        )
+    elif available_count < floors.promotion_floor:
+        limitations.append(
+            "- 可用 outcome 已达到 diagnostic floor "
+            f"{floors.diagnostic_floor}，但低于 promotion floor {floors.promotion_floor}；"
+            "不能作为 production 晋级充分证据。"
         )
     if result.pending_rows:
         limitations.append(

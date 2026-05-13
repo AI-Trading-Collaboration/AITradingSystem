@@ -13,6 +13,8 @@ from ai_trading_system.conclusion_boundary import (
     render_conclusion_boundary_section,
 )
 from ai_trading_system.config import (
+    ConfidencePolicyConfig,
+    DailyConclusionPolicyConfig,
     MacroRiskAssetBudgetConfig,
     RiskBudgetConfig,
     ScoreModuleRuleConfig,
@@ -33,6 +35,7 @@ from ai_trading_system.scoring.position_gates import build_position_gates
 from ai_trading_system.scoring.position_model import (
     ModuleScore,
     PositionBand,
+    PositionBandRule,
     PositionGate,
     PositionRecommendation,
     WeightedScoreModel,
@@ -205,6 +208,10 @@ class DailyScoreReport:
     feature_set: MarketFeatureSet
     minimum_action_delta: float
     confidence_assessment: DailyConfidenceAssessment
+    scoring_policy_metadata: dict[str, Any]
+    position_band_policy: tuple[PositionBandRule, ...]
+    daily_conclusion_policy: DailyConclusionPolicyConfig
+    confidence_policy: ConfidencePolicyConfig
     fundamental_feature_report: SecFundamentalFeaturesReport | None = None
     valuation_review_report: ValuationReviewReport | None = None
     risk_event_occurrence_review_report: RiskEventOccurrenceReviewReport | None = None
@@ -230,6 +237,18 @@ class DailyScoreReport:
     @property
     def score_architecture_audit(self) -> dict[str, Any]:
         return build_score_architecture_audit(self)
+
+
+def _position_band_policy(rules: ScoringRulesConfig) -> tuple[PositionBandRule, ...]:
+    return tuple(
+        PositionBandRule(
+            min_score=band.min_score,
+            min_position=band.min_position,
+            max_position=band.max_position,
+            label=band.label,
+        )
+        for band in rules.position_bands
+    )
 
 
 def build_daily_score_report(
@@ -290,7 +309,8 @@ def build_daily_score_report(
         ),
     ]
 
-    score_model = WeightedScoreModel()
+    position_band_policy = _position_band_policy(rules)
+    score_model = WeightedScoreModel(position_bands=position_band_policy)
     module_scores = [component.to_module_score() for component in components]
     macro_budget_adjustment = build_macro_risk_asset_budget_adjustment(
         static_total_risk_asset_min=total_risk_asset_min,
@@ -316,6 +336,7 @@ def build_daily_score_report(
         model_risk_asset_ai_band=model_recommendation.model_risk_asset_ai_band,
         fundamental_feature_report=fundamental_feature_report,
         review_summary=review_summary,
+        confidence_policy=rules.confidence_policy,
     )
     confidence_gate = _confidence_position_gate(
         score_band=model_recommendation.model_risk_asset_ai_band,
@@ -364,6 +385,10 @@ def build_daily_score_report(
         feature_set=feature_set,
         minimum_action_delta=rules.position_change.minimum_action_delta,
         confidence_assessment=confidence_assessment,
+        scoring_policy_metadata=rules.policy_metadata.model_dump(mode="json"),
+        position_band_policy=position_band_policy,
+        daily_conclusion_policy=rules.daily_conclusion,
+        confidence_policy=rules.confidence_policy,
         fundamental_feature_report=fundamental_feature_report,
         valuation_review_report=valuation_review_report,
         risk_event_occurrence_review_report=risk_event_occurrence_review_report,
@@ -374,7 +399,14 @@ def build_daily_score_report(
 def write_scores_csv(report: DailyScoreReport, output_path: Path) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     new_frame = pd.DataFrame(
-        [_score_component_record(report.as_of, item) for item in report.components]
+        [
+            _score_component_record(
+                report.as_of,
+                item,
+                report.confidence_policy,
+            )
+            for item in report.components
+        ]
     )
     overall = pd.DataFrame(
         [
@@ -519,6 +551,18 @@ def build_score_architecture_audit(report: DailyScoreReport) -> dict[str, Any]:
         "risk_state_score": _weighted_component_score(risk_state_components),
         "risk_state_components": [component.name for component in risk_state_components],
         "risk_adjusted_score": report.recommendation.total_score,
+        "scoring_policy_metadata": report.scoring_policy_metadata,
+        "position_band_policy": [
+            {
+                "min_score": band.min_score,
+                "min_position": band.min_position,
+                "max_position": band.max_position,
+                "label": band.label,
+            }
+            for band in report.position_band_policy
+        ],
+        "daily_conclusion_policy": report.daily_conclusion_policy.model_dump(),
+        "confidence_policy": report.confidence_policy.model_dump(),
         "posture": _daily_posture_label(report),
         "raw_position": _band_audit_record(
             report.recommendation.model_risk_asset_ai_band
@@ -1573,13 +1617,14 @@ def _band_audit_record(band: PositionBand) -> dict[str, Any]:
     }
 
 
-def _optional_score_label(value: object) -> str:
+def _optional_score_label(value: float | None) -> str:
     if value is None:
         return "n/a"
     return f"{float(value):.1f}"
 
 
 def _daily_posture_label(report: DailyScoreReport) -> str:
+    policy = report.daily_conclusion_policy
     non_score_gates = [
         gate
         for gate in report.recommendation.triggered_position_gates
@@ -1589,28 +1634,29 @@ def _daily_posture_label(report: DailyScoreReport) -> str:
         return "人工复核"
     if report.confidence_assessment.level == "low":
         return "人工复核"
-    if report.recommendation.total_score < 45:
+    if report.recommendation.total_score < policy.defensive_score_below:
         return "防守降仓"
-    if non_score_gates and report.recommendation.total_score >= 55:
+    if non_score_gates and report.recommendation.total_score >= policy.constrained_score_min:
         return "中高配但受限"
     if (
-        report.recommendation.total_score >= 65
+        report.recommendation.total_score >= policy.aggressive_score_min
         and report.confidence_assessment.level == "high"
         and not non_score_gates
     ):
         return "积极进攻"
-    if report.recommendation.total_score >= 55:
+    if report.recommendation.total_score >= policy.constructive_score_min:
         return "中高配"
     return "中性观察"
 
 
 def _market_attractiveness_summary(report: DailyScoreReport) -> str:
+    policy = report.daily_conclusion_policy
     score = report.recommendation.total_score
-    if score >= 65:
+    if score >= policy.attractiveness_strong_min:
         label = "较强"
-    elif score >= 55:
+    elif score >= policy.attractiveness_medium_strong_min:
         label = "中等偏强"
-    elif score >= 45:
+    elif score >= policy.attractiveness_neutral_min:
         label = "中性"
     else:
         label = "偏弱"
@@ -1727,7 +1773,7 @@ def _daily_next_trigger(report: DailyScoreReport) -> str:
         and (report.review_summary.has_failures or report.review_summary.has_warnings)
     ):
         return _add_condition_summary(report)
-    if report.recommendation.total_score < 55:
+    if report.recommendation.total_score < report.daily_conclusion_policy.watch_condition_score_min:
         return _add_condition_summary(report)
     return _watch_condition_summary(report)
 
@@ -1835,11 +1881,13 @@ def _module_change_source_summary(
     report: DailyScoreReport,
     previous: PreviousDailyScoreSnapshot | None,
 ) -> str:
+    policy = report.daily_conclusion_policy
     supports = sorted(
         (
             component
             for component in report.components
-            if component.score >= 55 and component.confidence >= 0.60
+            if component.score >= policy.support_score_min
+            and component.confidence >= policy.support_confidence_min
         ),
         key=lambda item: item.score,
         reverse=True,
@@ -1848,8 +1896,8 @@ def _module_change_source_summary(
         (
             component
             for component in report.components
-            if component.score < 50
-            or component.confidence < 0.60
+            if component.score < policy.pressure_score_below
+            or component.confidence < policy.pressure_confidence_below
             or component.source_type in {"placeholder", "insufficient_data"}
         ),
         key=lambda item: (item.score, item.confidence),
@@ -1940,6 +1988,7 @@ def _valuation_change_summary(report: DailyScoreReport) -> str:
 
 
 def _judgement_type(report: DailyScoreReport) -> str:
+    policy = report.daily_conclusion_policy
     thesis = report.review_summary.thesis if report.review_summary else None
     if thesis and (thesis.status == "FAIL" or thesis.error_count):
         return "thesis 证伪或人工复核失败"
@@ -1954,20 +2003,27 @@ def _judgement_type(report: DailyScoreReport) -> str:
 
     fundamentals = _component_by_name(report, "fundamentals")
     valuation = _component_by_name(report, "valuation")
-    if fundamentals and fundamentals.source_type == "hard_data" and fundamentals.score < 45:
+    if (
+        fundamentals
+        and fundamentals.source_type == "hard_data"
+        and fundamentals.score < policy.weak_fundamentals_score_below
+    ):
         return "基本面恶化"
     if (
         fundamentals
         and valuation
         and fundamentals.source_type == "hard_data"
-        and fundamentals.score >= 50
-        and valuation.score < 50
+        and fundamentals.score >= policy.fundamentals_constructive_min
+        and valuation.score < policy.valuation_pressure_score_below
     ):
         return "估值过高但基本面未坏"
 
     trend = _component_by_name(report, "trend")
     risk_sentiment = _component_by_name(report, "risk_sentiment")
-    if (trend and trend.score < 50) or (risk_sentiment and risk_sentiment.score < 50):
+    if (trend and trend.score < policy.trend_or_risk_pressure_score_below) or (
+        risk_sentiment
+        and risk_sentiment.score < policy.trend_or_risk_pressure_score_below
+    ):
         return "市场短期波动或风险情绪扰动"
     return "评分模型常规再平衡"
 
@@ -1992,6 +2048,7 @@ def _action_constraint_summary(report: DailyScoreReport) -> str:
 
 
 def _add_condition_summary(report: DailyScoreReport) -> str:
+    policy = report.daily_conclusion_policy
     conditions: list[str] = []
     triggered = [
         gate.label
@@ -2003,11 +2060,15 @@ def _add_condition_summary(report: DailyScoreReport) -> str:
     low_components = [
         _component_label(component.name)
         for component in report.components
-        if component.score < 50
+        if component.score < policy.low_component_score_below
         or component.source_type in {"placeholder", "insufficient_data"}
     ]
     if low_components:
-        conditions.append(f"低分/缺数模块回到 50 分以上并补齐来源（{', '.join(low_components)}）")
+        conditions.append(
+            "低分/缺数模块回到 "
+            f"{policy.low_component_score_below:.0f} 分以上并补齐来源"
+            f"（{', '.join(low_components)}）"
+        )
     if report.confidence_assessment.level != "high":
         conditions.append("判断置信度回到高，且低置信度原因被数据或人工复核解除")
     if not conditions:
@@ -2016,8 +2077,10 @@ def _add_condition_summary(report: DailyScoreReport) -> str:
 
 
 def _reduce_condition_summary(report: DailyScoreReport) -> str:
+    policy = report.daily_conclusion_policy
     conditions = [
-        "综合分跌破当前仓位区间下沿，或趋势/风险情绪任一核心模块降至 45 分以下",
+        "综合分跌破当前仓位区间下沿，或趋势/风险情绪任一核心模块降至 "
+        f"{policy.core_module_reduction_score_below:.0f} 分以下",
         "新增 L3 或可评分 active 风险事件，导致 position_gate 上限低于当前最终区间",
         "thesis 进入 challenged/invalidated 或人工复核失败",
         "基本面硬数据恶化，同时估值仍处高位或数据置信度下降",
@@ -2133,7 +2196,11 @@ def _risk_event_occurrence_feature_index(
     }
 
 
-def _score_component_record(as_of: date, component: DailyScoreComponent) -> dict[str, object]:
+def _score_component_record(
+    as_of: date,
+    component: DailyScoreComponent,
+    confidence_policy: ConfidencePolicyConfig,
+) -> dict[str, object]:
     return {
         "as_of": as_of.isoformat(),
         "component": component.name,
@@ -2142,7 +2209,7 @@ def _score_component_record(as_of: date, component: DailyScoreComponent) -> dict
         "source_type": component.source_type,
         "coverage": component.coverage,
         "confidence": component.confidence,
-        "confidence_level": _confidence_level(component.confidence),
+        "confidence_level": _confidence_level(component.confidence, confidence_policy),
         "confidence_reasons": "",
         "reason": component.reason,
     }
@@ -2175,36 +2242,42 @@ def _source_type_confidence(
     coverage: float,
     source_type_confidence: SourceTypeConfidenceConfig | None = None,
 ) -> float:
+    policy = source_type_confidence or SourceTypeConfidenceConfig()
     coverage = _clamp(coverage, 0.0, 1.0)
     if source_type == "hard_data":
         return coverage
     if source_type == "partial_hard_data":
-        return _clamp(0.55 + coverage * 0.35, 0.0, 0.90)
-    if source_type == "manual_input":
-        return _clamp(coverage * 0.75, 0.0, 0.75)
-    if source_type == "partial_manual_input":
-        return _clamp(coverage * 0.60, 0.0, 0.60)
-    if source_type == "llm_formal_assessment":
-        max_confidence = (
-            source_type_confidence.llm_formal_assessment
-            if source_type_confidence is not None
-            else 0.65
+        return _clamp(
+            policy.partial_hard_data_base
+            + coverage * policy.partial_hard_data_coverage_multiplier,
+            0.0,
+            policy.partial_hard_data_max,
         )
+    if source_type == "manual_input":
+        return _clamp(coverage * policy.manual_input_max, 0.0, policy.manual_input_max)
+    if source_type == "partial_manual_input":
+        return _clamp(
+            coverage * policy.partial_manual_input_max,
+            0.0,
+            policy.partial_manual_input_max,
+        )
+    if source_type == "llm_formal_assessment":
+        max_confidence = policy.llm_formal_assessment
         return _clamp(coverage * max_confidence, 0.0, max_confidence)
     if source_type == "partial_llm_formal_assessment":
-        max_confidence = (
-            source_type_confidence.partial_llm_formal_assessment
-            if source_type_confidence is not None
-            else 0.55
-        )
+        max_confidence = policy.partial_llm_formal_assessment
         return _clamp(coverage * max_confidence, 0.0, max_confidence)
     if source_type == "insufficient_data":
-        return 0.35
+        return policy.insufficient_data
     if source_type == "placeholder":
-        return 0.25
+        return policy.placeholder
     if source_type == "derived":
-        return 1.0
-    return _clamp(coverage * 0.50, 0.0, 0.50)
+        return policy.derived
+    return _clamp(
+        coverage * policy.unknown_source_type_max,
+        0.0,
+        policy.unknown_source_type_max,
+    )
 
 
 def _has_current_llm_formal_assessment(
@@ -2233,6 +2306,7 @@ def _build_confidence_assessment(
     model_risk_asset_ai_band: PositionBand,
     fundamental_feature_report: SecFundamentalFeaturesReport | None,
     review_summary: DailyReviewSummary | None,
+    confidence_policy: ConfidencePolicyConfig,
 ) -> DailyConfidenceAssessment:
     score, level, reasons = _confidence_score_and_reasons(
         components=components,
@@ -2240,8 +2314,13 @@ def _build_confidence_assessment(
         feature_set=feature_set,
         fundamental_feature_report=fundamental_feature_report,
         review_summary=review_summary,
+        confidence_policy=confidence_policy,
     )
-    adjusted_band = _confidence_adjusted_band(model_risk_asset_ai_band, score)
+    adjusted_band = _confidence_adjusted_band(
+        model_risk_asset_ai_band,
+        score,
+        confidence_policy,
+    )
     return DailyConfidenceAssessment(
         score=score,
         level=level,
@@ -2257,6 +2336,7 @@ def _confidence_score_and_reasons(
     feature_set: MarketFeatureSet,
     fundamental_feature_report: SecFundamentalFeaturesReport | None,
     review_summary: DailyReviewSummary | None,
+    confidence_policy: ConfidencePolicyConfig,
 ) -> tuple[float, str, tuple[str, ...]]:
     total_weight = sum(component.weight for component in components)
     if total_weight <= 0:
@@ -2271,40 +2351,40 @@ def _confidence_score_and_reasons(
     reasons: list[str] = []
     penalty = 0.0
     if data_quality_report.status == "FAIL":
-        penalty += 100.0
+        penalty += confidence_policy.data_quality_fail_penalty
         reasons.append("市场数据质量门禁失败")
     elif "WARNING" in data_quality_report.status:
-        penalty += 15.0
+        penalty += confidence_policy.data_quality_warning_penalty
         reasons.append("市场数据质量门禁存在警告")
 
     low_confidence_components = [
         _component_label(component.name)
         for component in components
-        if component.confidence < 0.60
+        if component.confidence < confidence_policy.low_component_confidence_below
     ]
     if low_confidence_components:
         reasons.append(f"低置信度模块：{', '.join(low_confidence_components)}")
 
     if feature_set.warnings:
-        penalty += 5.0
+        penalty += confidence_policy.feature_warning_penalty
         reasons.append(f"市场特征存在 {len(feature_set.warnings)} 条警告")
     if (
         fundamental_feature_report is not None
         and fundamental_feature_report.warning_count
     ):
-        penalty += 5.0
+        penalty += confidence_policy.fundamental_warning_penalty
         reasons.append(
             f"SEC 基本面特征存在 {fundamental_feature_report.warning_count} 条警告"
         )
     if review_summary and review_summary.has_failures:
-        penalty += 30.0
+        penalty += confidence_policy.manual_review_failure_penalty
         reasons.append("人工复核摘要存在失败项")
     elif review_summary and review_summary.has_warnings:
-        penalty += 10.0
+        penalty += confidence_policy.manual_review_warning_penalty
         reasons.append("人工复核摘要存在警告项")
 
     score = _clamp(base_score - penalty, 0.0, 100.0)
-    level = _confidence_level(score / 100.0)
+    level = _confidence_level(score / 100.0, confidence_policy)
     if not reasons:
         reasons.append("核心输入覆盖和质量状态未触发额外置信度扣减")
     return score, level, tuple(reasons)
@@ -2343,15 +2423,16 @@ def _confidence_position_gate(
     )
 
 
-def _confidence_adjusted_band(band: PositionBand, confidence_score: float) -> PositionBand:
-    if confidence_score >= 75:
-        cap_multiplier = 1.0
-    elif confidence_score >= 60:
-        cap_multiplier = 0.85
-    elif confidence_score >= 45:
-        cap_multiplier = 0.70
-    else:
-        cap_multiplier = 0.50
+def _confidence_adjusted_band(
+    band: PositionBand,
+    confidence_score: float,
+    confidence_policy: ConfidencePolicyConfig,
+) -> PositionBand:
+    cap_multiplier = confidence_policy.position_cap_bands[-1].cap_multiplier
+    for cap_band in confidence_policy.position_cap_bands:
+        if confidence_score >= cap_band.min_confidence_score:
+            cap_multiplier = cap_band.cap_multiplier
+            break
     adjusted_max = min(band.max_position, band.max_position * cap_multiplier)
     adjusted_min = min(band.min_position, adjusted_max)
     label = band.label if adjusted_max >= band.max_position else f"{band.label}/置信度受限"
@@ -2362,10 +2443,13 @@ def _confidence_adjusted_band(band: PositionBand, confidence_score: float) -> Po
     )
 
 
-def _confidence_level(confidence: float) -> str:
-    if confidence >= 0.75:
+def _confidence_level(
+    confidence: float,
+    confidence_policy: ConfidencePolicyConfig,
+) -> str:
+    if confidence >= confidence_policy.high_confidence_min:
         return "high"
-    if confidence >= 0.60:
+    if confidence >= confidence_policy.medium_confidence_min:
         return "medium"
     return "low"
 

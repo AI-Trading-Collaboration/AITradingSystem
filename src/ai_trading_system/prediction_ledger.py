@@ -13,6 +13,10 @@ import pandas as pd
 from ai_trading_system.backtest.daily import DEFAULT_BENCHMARK_TICKERS, BacktestRegimeContext
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.data.quality import DataQualityReport
+from ai_trading_system.feedback_sample_policy import (
+    load_feedback_sample_policy,
+    sample_floor_summary,
+)
 
 DEFAULT_PREDICTION_LEDGER_PATH = PROJECT_ROOT / "data" / "processed" / "prediction_ledger.csv"
 DEFAULT_PREDICTION_OUTCOMES_PATH = PROJECT_ROOT / "data" / "processed" / "prediction_outcomes.csv"
@@ -398,8 +402,12 @@ def build_shadow_maturity_report(
     outcome_rows: tuple[dict[str, Any], ...],
     outcomes_path: Path,
     as_of: date,
-    min_available_samples: int = 30,
+    min_available_samples: int | None = None,
 ) -> ShadowMaturityReport:
+    if min_available_samples is None:
+        min_available_samples = (
+            load_feedback_sample_policy().prediction_outcomes.promotion_floor
+        )
     if min_available_samples <= 0:
         raise ValueError("min_available_samples must be positive")
     grouped: dict[tuple[str, str, str, str], list[dict[str, Any]]] = {}
@@ -548,6 +556,7 @@ def render_prediction_outcome_report(
     outcomes_path: Path,
     data_quality_report_path: Path,
 ) -> str:
+    sample_policy = load_feedback_sample_policy()
     lines = [
         "# Prediction / Shadow Outcome 报告",
         "",
@@ -556,6 +565,8 @@ def render_prediction_outcome_report(
         f"- prediction 行数：{len(result.prediction_rows)}",
         f"- outcome 行数：{len(result.outcome_rows)}",
         f"- 可用观察：{len(result.available_rows)}",
+        f"- 样本政策：{sample_policy.version}",
+        f"- Prediction 样本门槛：{sample_floor_summary(sample_policy.prediction_outcomes)}",
         f"- 等待窗口完成：{len(result.pending_rows)}",
         f"- 缺失价格数据：{len(result.missing_rows)}",
         f"- 观察窗口：{', '.join(f'{horizon}D' for horizon in result.horizons)}",
@@ -732,7 +743,8 @@ def _stable_hash(value: object) -> str:
 
 
 def _prediction_report_status(result: PredictionOutcomeBuildResult) -> str:
-    if len(result.available_rows) >= 30:
+    diagnostic_floor = load_feedback_sample_policy().prediction_outcomes.diagnostic_floor
+    if len(result.available_rows) >= diagnostic_floor:
         return "PASS"
     return "PASS_WITH_LIMITATIONS"
 

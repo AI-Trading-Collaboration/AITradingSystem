@@ -15,15 +15,18 @@ from ai_trading_system.benchmark_policy import (
     render_benchmark_policy_summary_section,
 )
 from ai_trading_system.conclusion_boundary import (
+    ConclusionBoundary,
     classify_conclusion_boundary,
     render_conclusion_boundary_section,
 )
 from ai_trading_system.config import (
+    BacktestDataCredibilityPolicyConfig,
     FeatureConfig,
     IndustryChainConfig,
     PortfolioConfig,
     ScoringRulesConfig,
     WatchlistConfig,
+    load_backtest_validation_policy,
 )
 from ai_trading_system.data.quality import DataFileSummary, DataQualityReport
 from ai_trading_system.features.market import build_market_features
@@ -1372,7 +1375,7 @@ def _backtest_conclusion_boundary(
     data_quality_report_path: Path,
     input_coverage_output_path: Path | None,
     audit_report_path: Path | None,
-):
+) -> ConclusionBoundary:
     evidence_refs = [f"quality:data_cache:{result.requested_end.isoformat()}"]
     evidence_refs.append(str(data_quality_report_path))
     if input_coverage_output_path is not None:
@@ -1425,7 +1428,11 @@ def _component_source_type_counts(
     return counts
 
 
-def build_backtest_data_credibility(result: DailyBacktestResult) -> BacktestDataCredibility:
+def build_backtest_data_credibility(
+    result: DailyBacktestResult,
+    policy: BacktestDataCredibilityPolicyConfig | None = None,
+) -> BacktestDataCredibility:
+    policy = policy or load_backtest_validation_policy().data_credibility
     signal_count = len(result.rows)
     reasons: list[str] = []
     component_values = _component_coverage_values(result)
@@ -1475,8 +1482,13 @@ def build_backtest_data_credibility(result: DailyBacktestResult) -> BacktestData
         reasons.append("历史估值快照全区间为空，估值模块只能按数据不足解释。")
     if result.risk_event_occurrence_count_max == 0:
         reasons.append("风险事件 occurrence/attestation 全区间为空，不能解释为历史无风险。")
-    if minimum_component_coverage < 0.9 or average_component_coverage < 0.9:
-        reasons.append("至少一个评分模块覆盖率低于 90%。")
+    if (
+        minimum_component_coverage < policy.component_coverage_min
+        or average_component_coverage < policy.component_coverage_min
+    ):
+        reasons.append(
+            f"至少一个评分模块覆盖率低于 {policy.component_coverage_min:.0%}。"
+        )
     if _has_any_count(
         valuation_backtest_use_counts,
         {"auxiliary_current_only", "not_for_backtest"},
@@ -1499,7 +1511,7 @@ def build_backtest_data_credibility(result: DailyBacktestResult) -> BacktestData
         or not result.universe_pit
         or result.valuation_snapshot_count_max == 0
         or result.risk_event_occurrence_count_max == 0
-        or minimum_component_coverage < 0.9
+        or minimum_component_coverage < policy.component_coverage_min
         or _has_any_count(
             valuation_backtest_use_counts,
             {"auxiliary_current_only", "not_for_backtest"},

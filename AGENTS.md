@@ -99,6 +99,39 @@ commands must enforce the gate themselves.
 - If a design decision affects investment interpretation, record it in docs or
   configuration rather than leaving it implicit in code.
 
+## Heuristic and Threshold Governance
+
+Investment-facing heuristics are model policy, not incidental code.
+
+Any threshold, score band, confidence cutoff, sample floor, position cap,
+readiness rule, promotion gate, risk multiplier, report conclusion boundary, or
+backtest acceptance rule that can affect investment interpretation must satisfy
+one of the following before it is introduced or changed:
+
+1. Be defined in a reviewed configuration or policy manifest with owner,
+   version/status, rationale, intended effect, validation evidence or planned
+   validation, and review/expiry condition where applicable.
+2. Be a named code constant with an adjacent comment or linked requirement that
+   explains why it is an invariant rather than a tunable heuristic.
+3. Be explicitly documented as a temporary pilot baseline in the task register
+   and supporting requirement document, including the exit condition for
+   replacing it with evidence-backed calibration.
+
+Avoid unexplained numeric literals in scoring, position gates, confidence
+assessment, feedback calibration, learning queues, backtests, promotion reports,
+and investment reports. Existing hardcoded heuristics in these paths should be
+treated as audit findings until migrated to configuration or documented with a
+clear rationale.
+
+Allowed low-risk constants include pure scale bounds such as 0/1/100, array
+indices, formatting precision, unit conversions, protocol/schema constants,
+HTTP timeouts, retry counts, UI sizing, and test fixture values, provided they do
+not change investment interpretation.
+
+When a heuristic is intentionally configurable but still subjective, reports
+that depend on it should expose the policy/config version or link to the
+generated policy report so the conclusion remains auditable.
+
 ## Task Register Discipline
 
 `docs/task_register.md` is the source of truth for unfinished work, deferred

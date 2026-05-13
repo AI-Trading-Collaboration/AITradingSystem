@@ -92,6 +92,10 @@ def test_build_daily_score_report_uses_hard_data_and_placeholders() -> None:
     assert _component(report, "fundamentals").source_type == "placeholder"
     assert report.status == "PASS_WITH_LIMITATIONS"
     assert report.recommendation.total_asset_ai_band.min_position >= 0.24
+    assert report.score_architecture_audit["scoring_policy_metadata"]["version"] == (
+        "scoring_rules_v1"
+    )
+    assert report.score_architecture_audit["position_band_policy"][0]["min_score"] == 80
 
 
 def test_build_daily_score_report_uses_sec_fundamental_features() -> None:

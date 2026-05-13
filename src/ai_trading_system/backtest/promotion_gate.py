@@ -13,6 +13,11 @@ from ai_trading_system.backtest.daily import (
 )
 from ai_trading_system.backtest.lag_sensitivity import BacktestLagSensitivityReport
 from ai_trading_system.backtest.robustness import BacktestRobustnessReport
+from ai_trading_system.config import (
+    BacktestPromotionPolicyConfig,
+    load_backtest_validation_policy,
+)
+from ai_trading_system.feedback_sample_policy import load_feedback_sample_policy
 
 
 @dataclass(frozen=True)
@@ -32,6 +37,8 @@ class ModelPromotionReport:
     lag_sensitivity_report_path: Path | None
     prediction_outcomes_path: Path | None
     rule_governance_status: str
+    policy_metadata: dict[str, object]
+    promotion_policy: BacktestPromotionPolicyConfig
     production_effect: str = "none"
 
     @property
@@ -61,13 +68,25 @@ def build_model_promotion_report(
     lag_sensitivity_report_path: Path | None,
     prediction_outcomes_path: Path | None,
     rule_governance_status: str,
+    promotion_policy: BacktestPromotionPolicyConfig | None = None,
+    policy_metadata: dict[str, object] | None = None,
 ) -> ModelPromotionReport:
+    if promotion_policy is None or policy_metadata is None:
+        validation_policy = load_backtest_validation_policy()
+        if promotion_policy is None:
+            promotion_policy = validation_policy.promotion
+        if policy_metadata is None:
+            policy_metadata = validation_policy.policy_metadata.model_dump(mode="json")
     checks = [
-        _data_credibility_check(result),
-        _robustness_check(robustness_report, robustness_report_path),
-        _lag_sensitivity_check(lag_sensitivity_report, lag_sensitivity_report_path),
+        _data_credibility_check(result, promotion_policy),
+        _robustness_check(robustness_report, robustness_report_path, promotion_policy),
+        _lag_sensitivity_check(
+            lag_sensitivity_report,
+            lag_sensitivity_report_path,
+            promotion_policy,
+        ),
         _shadow_outcome_check(prediction_outcomes_path),
-        _rule_governance_check(rule_governance_status),
+        _rule_governance_check(rule_governance_status, promotion_policy),
     ]
     return ModelPromotionReport(
         as_of=as_of,
@@ -77,6 +96,8 @@ def build_model_promotion_report(
         lag_sensitivity_report_path=lag_sensitivity_report_path,
         prediction_outcomes_path=prediction_outcomes_path,
         rule_governance_status=rule_governance_status,
+        policy_metadata=policy_metadata,
+        promotion_policy=promotion_policy,
     )
 
 
@@ -126,6 +147,8 @@ def model_promotion_summary_record(report: ModelPromotionReport) -> dict[str, ob
             "grade": credibility.grade,
             "label": credibility.label,
         },
+        "policy_metadata": report.policy_metadata,
+        "promotion_policy": report.promotion_policy.model_dump(mode="json"),
         "checks": [
             {
                 "check_id": check.check_id,
@@ -148,6 +171,7 @@ def render_model_promotion_report(report: ModelPromotionReport) -> str:
         f"- 评估日期：{report.as_of.isoformat()}",
         f"- 请求区间：{result.requested_start.isoformat()} 至 {result.requested_end.isoformat()}",
         f"- Backtest Data Quality：{credibility.label}（{credibility.grade}）",
+        f"- Policy version：{report.policy_metadata.get('version', 'unknown')}",
         f"- production_effect={report.production_effect}",
         "- 晋级路线：历史探索 -> 近似 PIT 回测 -> 稳健性/滞后敏感性 -> "
         "前向 shadow -> owner/rule card 批准 -> production rule",
@@ -197,13 +221,19 @@ def render_model_promotion_report(report: ModelPromotionReport) -> str:
     return "\n".join(lines) + "\n"
 
 
-def _data_credibility_check(result: DailyBacktestResult) -> ModelPromotionCheck:
+def _data_credibility_check(
+    result: DailyBacktestResult,
+    policy: BacktestPromotionPolicyConfig,
+) -> ModelPromotionCheck:
     credibility = build_backtest_data_credibility(result)
-    if credibility.grade == "C":
+    if credibility.grade in policy.blocking_data_credibility_grades:
         return ModelPromotionCheck(
             check_id="data_credibility",
             status="FAIL",
-            reason="回测数据可信度为 C 级；只能作为探索性诊断，不得晋级。",
+            reason=(
+                f"回测数据可信度为 {credibility.grade} 级，属于 policy 阻断等级；"
+                "只能作为探索性诊断，不得晋级。"
+            ),
             evidence_ref="backtest_report:Backtest Data Quality",
         )
     return ModelPromotionCheck(
@@ -217,6 +247,7 @@ def _data_credibility_check(result: DailyBacktestResult) -> ModelPromotionCheck:
 def _robustness_check(
     report: BacktestRobustnessReport | None,
     report_path: Path | None,
+    policy: BacktestPromotionPolicyConfig,
 ) -> ModelPromotionCheck:
     if report is None:
         return ModelPromotionCheck(
@@ -230,15 +261,7 @@ def _robustness_check(
         for scenario in report.scenarios
         if scenario.result is not None or scenario.metrics is not None
     }
-    required = {
-        "cost",
-        "baseline",
-        "rebalance_frequency",
-        "signal_family_baseline",
-        "module_weight_perturbation",
-        "same_turnover_random_strategy",
-        "out_of_sample_validation",
-    }
+    required = set(policy.required_robustness_categories)
     missing = sorted(required - completed_categories)
     if missing:
         return ModelPromotionCheck(
@@ -258,6 +281,7 @@ def _robustness_check(
 def _lag_sensitivity_check(
     report: BacktestLagSensitivityReport | None,
     report_path: Path | None,
+    policy: BacktestPromotionPolicyConfig,
 ) -> ModelPromotionCheck:
     if report is None:
         return ModelPromotionCheck(
@@ -268,20 +292,29 @@ def _lag_sensitivity_check(
         )
     has_three_day = any(
         scenario.result is not None
-        and max(scenario.feature_lag_days, scenario.universe_lag_days) >= 3
+        and max(scenario.feature_lag_days, scenario.universe_lag_days)
+        >= policy.min_lag_sensitivity_days
         for scenario in report.scenarios
     )
     if not has_three_day:
         return ModelPromotionCheck(
             check_id="lag_sensitivity",
             status="MISSING",
-            reason="缺少 3 个交易日以上 feature/universe lag 场景。",
+            reason=(
+                "缺少 "
+                f"{policy.min_lag_sensitivity_days} 个交易日以上 "
+                "feature/universe lag 场景。"
+            ),
             evidence_ref=_path_ref(report_path),
         )
     return ModelPromotionCheck(
         check_id="lag_sensitivity",
         status="PASS",
-        reason="已运行 3 个交易日以上 feature/universe lag 场景。",
+        reason=(
+            "已运行 "
+            f"{policy.min_lag_sensitivity_days} 个交易日以上 "
+            "feature/universe lag 场景。"
+        ),
         evidence_ref=_path_ref(report_path),
     )
 
@@ -311,11 +344,15 @@ def _shadow_outcome_check(prediction_outcomes_path: Path | None) -> ModelPromoti
             evidence_ref=str(prediction_outcomes_path),
         )
     available = frame.loc[frame["outcome_status"] == "AVAILABLE"]
-    if len(available) < 30:
+    promotion_floor = load_feedback_sample_policy().prediction_outcomes.promotion_floor
+    if len(available) < promotion_floor:
         return ModelPromotionCheck(
             check_id="shadow_outcome",
             status="MISSING",
-            reason=f"可用 prediction outcome 只有 {len(available)} 行，样本不足。",
+            reason=(
+                f"可用 prediction outcome 只有 {len(available)} 行，低于 "
+                f"promotion floor {promotion_floor}。"
+            ),
             evidence_ref=str(prediction_outcomes_path),
         )
     return ModelPromotionCheck(
@@ -326,8 +363,11 @@ def _shadow_outcome_check(prediction_outcomes_path: Path | None) -> ModelPromoti
     )
 
 
-def _rule_governance_check(rule_governance_status: str) -> ModelPromotionCheck:
-    if rule_governance_status == "PASS":
+def _rule_governance_check(
+    rule_governance_status: str,
+    policy: BacktestPromotionPolicyConfig,
+) -> ModelPromotionCheck:
+    if rule_governance_status == policy.required_rule_governance_status:
         return ModelPromotionCheck(
             check_id="rule_governance",
             status="PASS",

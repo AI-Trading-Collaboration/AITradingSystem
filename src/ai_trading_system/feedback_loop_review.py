@@ -10,6 +10,7 @@ import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.decision_outcomes import load_decision_snapshots
+from ai_trading_system.feedback_sample_policy import load_feedback_sample_policy
 from ai_trading_system.market_evidence import load_market_evidence_store
 from ai_trading_system.prediction_ledger import DEFAULT_PREDICTION_OUTCOMES_PATH
 from ai_trading_system.rule_experiments import DEFAULT_RULE_EXPERIMENT_LEDGER_PATH
@@ -260,8 +261,12 @@ def _prediction_outcome_section(path: Path) -> dict[str, Any]:
     )
     warnings = []
     available_count = int((status == "AVAILABLE").sum())
-    if available_count < 30:
-        warnings.append("prediction/shadow 可用样本不足 30，不能作为 production 晋级证据。")
+    promotion_floor = load_feedback_sample_policy().prediction_outcomes.promotion_floor
+    if available_count < promotion_floor:
+        warnings.append(
+            "prediction/shadow 可用样本不足 promotion floor "
+            f"{promotion_floor}，不能作为 production 晋级证据。"
+        )
     return {
         "total_count": len(outcomes),
         "available_count": available_count,
