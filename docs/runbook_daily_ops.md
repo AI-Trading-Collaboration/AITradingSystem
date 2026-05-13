@@ -12,7 +12,7 @@
 |交易日盘后|`aits ops daily-run` 或 `aits ops daily-run --as-of YYYY-MM-DD`|执行下载、PIT、SEC、估值、日报、只读 dashboard、pipeline health 和 secret scan。未传 `--as-of` 时默认使用最新已完成美股交易日。|
 |历史时点复现|`aits ops replay-day --as-of YYYY-MM-DD --mode cache-only --openai-replay-policy cache-only`|只读归档输入，生成隔离 replay bundle；不调用 live provider 或 OpenAI。|
 |每周|`aits reports investment-review --period weekly --as-of YYYY-MM-DD`、`aits feedback loop-review --as-of YYYY-MM-DD`、`aits feedback optimize-market-feedback --as-of YYYY-MM-DD`|复核结论变化、outcome、learning queue、shadow maturity、blocked tasks，并判断市场反馈优化 readiness。|
-|每月|`aits reports investment-review --period monthly --as-of YYYY-MM-DD`、`aits feedback optimize-market-feedback --as-of YYYY-MM-DD --replay-start 2022-12-01 --replay-end YYYY-MM-DD`、必要时运行回测/覆盖诊断|复核规则、数据源、gate 松紧、样本成熟度、as-if 回放窗口和 owner action。|
+|每月|`aits backtest --robustness-report --to YYYY-MM-DD`、`aits feedback build-parameter-replay --as-of YYYY-MM-DD`、`aits feedback build-parameter-candidates --as-of YYYY-MM-DD`、`aits reports investment-review --period monthly --as-of YYYY-MM-DD`、`aits feedback optimize-market-feedback --as-of YYYY-MM-DD --replay-start 2022-12-01 --replay-end YYYY-MM-DD`、必要时运行覆盖诊断|复核规则、数据源、gate 松紧、样本成熟度、参数复测收益变化、参数候选台账、as-if 回放窗口和 owner action。|
 
 建议盘后运行时间放在美股收盘且数据供应商 EOD 数据稳定后。未显式传入 `--as-of` 时，系统按 `America/New_York` 判断 U.S. equity market 最新已完成交易日：常规交易日美东 16:30 之后使用当日，16:30 前、周末或 NYSE 常规整日休市日使用上一交易日。具体云 VM 时区和时刻由 owner 后续决定；当前不在 GitHub Actions 中配置生产 cron。
 

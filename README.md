@@ -204,6 +204,17 @@ aits feedback validate-calibration-protocol --manifest-path config/weights/calib
 
 协议校验会要求固定数据快照、配置版本、成本和执行假设、`ai_after_chatgpt` 日期范围、nested walk-forward、purging/embargo、trial 次数、benchmark set、参数分层和多重测试折扣。通过校验只表示实验协议可用于研究，不批准 overlay、不修改 production scoring、`position_gate` 或回测仓位。
 
+把已生成的回测稳健性摘要接入反馈闭环，生成参数复测收益变化报告：
+
+```powershell
+aits backtest --robustness-report --to 2026-05-12 --quality-as-of 2026-05-13
+aits feedback build-parameter-replay --as-of 2026-05-13
+aits feedback build-parameter-candidates --as-of 2026-05-13
+aits feedback optimize-market-feedback --as-of 2026-05-13
+```
+
+`build-parameter-replay` 读取 `outputs/backtests/backtest_robustness_*.json`，比较 baseline 与模块权重扰动、再平衡频率、成本压力等参数场景的收益、回撤和换手变化，并写出 `outputs/reports/parameter_replay_YYYY-MM-DD.md/json`。robustness 调参场景会缓存昂贵的 point-in-time feature/report 上下文，但权重扰动、成本压力和窗口切分仍重走同一评分/回测执行路径，不维护第二套评分逻辑。material 判定优先使用 robustness summary 内嵌的 as-run policy；旧 summary 缺少 policy 时，会读取当前 `config/backtest_validation_policy.yaml` 并在报告中披露 limitation。`build-parameter-candidates` 再把这些场景登记到 `data/processed/parameter_candidates.json` 和 `outputs/reports/parameter_candidates_YYYY-MM-DD.md`，作为后续 shadow / owner review 的 candidate-only trial ledger；正向 material 变化进入 owner review，负向 material 变化进入 risk review。该流程 `production_effect=none`，不会生成 approved overlay 或改变 `score-daily`、`position_gate`、日报结论或回测仓位。
+
 如需把 2019 年以来的历史作为非默认压力测试，可以显式指定：
 
 ```powershell

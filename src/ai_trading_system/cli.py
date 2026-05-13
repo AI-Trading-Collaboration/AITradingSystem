@@ -33,6 +33,7 @@ from ai_trading_system.backtest.daily import (
     default_backtest_daily_path,
     default_backtest_input_coverage_path,
     default_backtest_report_path,
+    prepare_daily_score_backtest_context,
     run_daily_score_backtest,
     write_backtest_daily_csv,
     write_backtest_input_coverage_csv,
@@ -409,6 +410,22 @@ from ai_trading_system.ops_daily import (
     run_daily_ops_plan,
     write_daily_ops_plan,
     write_daily_ops_run_report,
+)
+from ai_trading_system.parameter_candidates import (
+    DEFAULT_PARAMETER_CANDIDATE_LEDGER_PATH,
+    build_parameter_candidate_ledger,
+    default_parameter_candidate_report_path,
+    write_parameter_candidate_ledger,
+    write_parameter_candidate_report,
+)
+from ai_trading_system.parameter_replay import (
+    DEFAULT_BACKTEST_ROBUSTNESS_DIR,
+    build_parameter_replay_report,
+    default_parameter_replay_report_path,
+    default_parameter_replay_summary_path,
+    latest_backtest_robustness_summary_path,
+    write_parameter_replay_report,
+    write_parameter_replay_summary,
 )
 from ai_trading_system.periodic_investment_review import (
     DEFAULT_PERIODIC_INVESTMENT_REVIEW_REPORT_DIR,
@@ -2512,6 +2529,127 @@ def feedback_loop_review_command(
     console.print(f"警告数：{report.warning_count}")
 
 
+@feedback_app.command("build-parameter-replay")
+def build_parameter_replay_command(
+    robustness_summary_path: Annotated[
+        Path | None,
+        typer.Option(
+            help=(
+                "backtest robustness JSON 摘要路径；不传时读取 outputs/backtests 最新 "
+                "backtest_robustness_*.json。"
+            )
+        ),
+    ] = None,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="复核日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 参数 replay 报告输出路径。"),
+    ] = None,
+    summary_output_path: Annotated[
+        Path | None,
+        typer.Option(help="JSON 参数 replay 摘要输出路径。"),
+    ] = None,
+) -> None:
+    """把 backtest robustness 参数复测结果接入 feedback 闭环。"""
+    review_date = _parse_date(as_of) if as_of else date.today()
+    selected_summary_path = robustness_summary_path or latest_backtest_robustness_summary_path(
+        DEFAULT_BACKTEST_ROBUSTNESS_DIR
+    )
+    if selected_summary_path is None:
+        console.print(
+            "[red]未找到 backtest_robustness_*.json；"
+            "请先运行 aits backtest --robustness-report。[/red]"
+        )
+        raise typer.Exit(code=1)
+    try:
+        report = build_parameter_replay_report(
+            robustness_summary_path=selected_summary_path,
+            as_of=review_date,
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        console.print(f"[red]参数 replay 构建失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+    report_output = output_path or default_parameter_replay_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        review_date,
+    )
+    summary_output = summary_output_path or default_parameter_replay_summary_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        review_date,
+    )
+    write_parameter_replay_report(report, report_output)
+    write_parameter_replay_summary(report, summary_output)
+
+    status_style = "green" if report.status == "PASS" else "yellow"
+    console.print(f"[{status_style}]参数 replay 状态：{report.status}[/{status_style}]")
+    console.print(f"参数复测场景：{report.scenario_count}")
+    console.print(f"Material delta：{report.material_delta_count}")
+    console.print(f"报告：{report_output}")
+    console.print(f"摘要：{summary_output}")
+    console.print(
+        "治理边界：本命令只读解释参数复测收益变化，"
+        "不修改 production scoring 或仓位闸门。"
+    )
+
+
+@feedback_app.command("build-parameter-candidates")
+def build_parameter_candidates_command(
+    parameter_replay_summary_path: Annotated[
+        Path | None,
+        typer.Option(
+            help=(
+                "parameter replay JSON 摘要路径；默认 "
+                "outputs/reports/parameter_replay_YYYY-MM-DD.json。"
+            )
+        ),
+    ] = None,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="复核日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path,
+        typer.Option(help="参数候选 ledger JSON 输出路径。"),
+    ] = DEFAULT_PARAMETER_CANDIDATE_LEDGER_PATH,
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 参数候选报告输出路径。"),
+    ] = None,
+) -> None:
+    """从 parameter replay 摘要生成 candidate-only 参数候选台账。"""
+    review_date = _parse_date(as_of) if as_of else date.today()
+    try:
+        ledger = build_parameter_candidate_ledger(
+            parameter_replay_summary_path=parameter_replay_summary_path,
+            as_of=review_date,
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        console.print(f"[red]参数候选台账构建失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+    ledger_output = write_parameter_candidate_ledger(ledger, output_path)
+    report_output = report_path or default_parameter_candidate_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        review_date,
+    )
+    report_output = write_parameter_candidate_report(
+        ledger,
+        ledger_output,
+        report_output,
+    )
+
+    status_style = "green" if ledger.status == "PASS" else "yellow"
+    console.print(f"[{status_style}]参数候选状态：{ledger.status}[/{status_style}]")
+    console.print(f"Trial 数：{ledger.trial_count}")
+    console.print(f"Candidate 数：{ledger.candidate_count}")
+    console.print(f"Owner review：{ledger.ready_for_owner_review_count}")
+    console.print(f"Ledger：{ledger_output}")
+    console.print(f"报告：{report_output}")
+    console.print("治理边界：候选台账不批准参数上线，不修改 production scoring 或仓位闸门。")
+
+
 @feedback_app.command("optimize-market-feedback")
 def optimize_market_feedback_command(
     as_of: Annotated[
@@ -2554,6 +2692,19 @@ def optimize_market_feedback_command(
         Path,
         typer.Option(help="rule experiment ledger JSON 路径。"),
     ] = DEFAULT_RULE_EXPERIMENT_LEDGER_PATH,
+    parameter_replay_summary_path: Annotated[
+        Path | None,
+        typer.Option(
+            help=(
+                "parameter replay JSON 摘要路径；默认 "
+                "outputs/reports/parameter_replay_YYYY-MM-DD.json。"
+            )
+        ),
+    ] = None,
+    parameter_candidate_ledger_path: Annotated[
+        Path,
+        typer.Option(help="parameter candidates ledger JSON 路径。"),
+    ] = DEFAULT_PARAMETER_CANDIDATE_LEDGER_PATH,
     shadow_maturity_report_path: Annotated[
         Path | None,
         typer.Option(
@@ -2596,6 +2747,8 @@ def optimize_market_feedback_command(
         causal_chain_path=causal_chain_path,
         learning_queue_path=learning_queue_path,
         rule_experiment_path=rule_experiment_path,
+        parameter_replay_summary_path=parameter_replay_summary_path,
+        parameter_candidate_ledger_path=parameter_candidate_ledger_path,
         shadow_maturity_report_path=shadow_maturity_report_path,
         calibration_overlay_path=calibration_overlay_path,
         effective_weights_path=effective_weights_path,
@@ -3523,6 +3676,23 @@ def backtest(
         anchor_event=selected_regime.anchor_event,
         description=selected_regime.description,
     )
+    base_prepared_context = prepare_daily_score_backtest_context(
+        prices=prices_frame,
+        rates=rates_frame,
+        feature_config=feature_config,
+        data_quality_report=data_quality_report,
+        core_watchlist=universe.ai_chain.get("core_watchlist", []),
+        start=start_date,
+        end=end_date,
+        strategy_ticker=strategy_ticker,
+        benchmark_tickers=tuple(benchmark_tickers),
+        market_regime=backtest_regime_context,
+        fundamental_feature_reports=sec_fundamental_feature_reports,
+        valuation_review_reports=valuation_review_reports,
+        risk_event_occurrence_review_reports=risk_event_occurrence_review_reports,
+        watchlist_lifecycle=watchlist_lifecycle,
+        benchmark_policy_report=benchmark_policy_report,
+    )
 
     def run_configured_backtest(
         *,
@@ -3540,6 +3710,11 @@ def backtest(
         scenario_universe_lag_days: int = 0,
         scenario_scoring_rules: ScoringRulesConfig | None = None,
     ) -> DailyBacktestResult:
+        prepared_context = (
+            base_prepared_context
+            if scenario_feature_lag_days == 0 and scenario_universe_lag_days == 0
+            else None
+        )
         return run_daily_score_backtest(
             prices=prices_frame,
             rates=rates_frame,
@@ -3574,6 +3749,7 @@ def backtest(
             market_regime=backtest_regime_context,
             feature_lag_days=scenario_feature_lag_days,
             universe_lag_days=scenario_universe_lag_days,
+            prepared_context=prepared_context,
         )
 
     result = run_configured_backtest(
@@ -3652,6 +3828,17 @@ def backtest(
     robustness_summary_output = None
     if should_run_robustness:
         configured_position_bands = _configured_position_band_rules(scoring_rules)
+        cost_stress_result = run_configured_backtest(
+            scenario_start=start_date,
+            scenario_cost_bps=cost_bps + robustness_cost_stress_bps,
+            scenario_spread_bps=spread_bps + robustness_cost_stress_bps,
+            scenario_slippage_bps=slippage_bps + robustness_cost_stress_bps,
+            scenario_market_impact_bps=market_impact_bps + robustness_cost_stress_bps,
+            scenario_tax_bps=tax_bps,
+            scenario_fx_bps=fx_bps,
+            scenario_financing_annual_bps=financing_annual_bps,
+            scenario_etf_delay_bps=etf_delay_bps + robustness_cost_stress_bps,
+        )
         robustness_scenarios = [
             BacktestRobustnessScenario(
                 scenario_id="cost_stress_execution",
@@ -3659,21 +3846,10 @@ def backtest(
                 category="cost",
                 description=(
                     "commission、spread、slippage、market impact 和 ETF delay "
-                    f"各增加 {robustness_cost_stress_bps:.1f} bps；税费、FX 和融资保持基础假设。"
+                    f"各增加 {robustness_cost_stress_bps:.1f} bps；税费、FX "
+                    "和融资保持基础假设；复用缓存 PIT 输入并调用同一回测执行路径。"
                 ),
-                result=run_configured_backtest(
-                    scenario_start=start_date,
-                    scenario_cost_bps=cost_bps + robustness_cost_stress_bps,
-                    scenario_spread_bps=spread_bps + robustness_cost_stress_bps,
-                    scenario_slippage_bps=slippage_bps + robustness_cost_stress_bps,
-                    scenario_market_impact_bps=(
-                        market_impact_bps + robustness_cost_stress_bps
-                    ),
-                    scenario_tax_bps=tax_bps,
-                    scenario_fx_bps=fx_bps,
-                    scenario_financing_annual_bps=financing_annual_bps,
-                    scenario_etf_delay_bps=etf_delay_bps + robustness_cost_stress_bps,
-                ),
+                result=cost_stress_result,
             ),
             fixed_total_asset_exposure_scenario(
                 result,
@@ -3710,6 +3886,23 @@ def backtest(
                 ("up", 1.0 + robustness_weight_perturbation_pct),
             ):
                 direction_label = "下调" if direction == "down" else "上调"
+                scenario_rules = _perturbed_scoring_rules(
+                    scoring_rules,
+                    module_name=module_name,
+                    multiplier=multiplier,
+                )
+                scenario_result = run_configured_backtest(
+                    scenario_start=start_date,
+                    scenario_cost_bps=cost_bps,
+                    scenario_spread_bps=spread_bps,
+                    scenario_slippage_bps=slippage_bps,
+                    scenario_market_impact_bps=market_impact_bps,
+                    scenario_tax_bps=tax_bps,
+                    scenario_fx_bps=fx_bps,
+                    scenario_financing_annual_bps=financing_annual_bps,
+                    scenario_etf_delay_bps=etf_delay_bps,
+                    scenario_scoring_rules=scenario_rules,
+                )
                 robustness_scenarios.append(
                     BacktestRobustnessScenario(
                         scenario_id=_weight_perturbation_scenario_id(
@@ -3724,26 +3917,10 @@ def backtest(
                         category="module_weight_perturbation",
                         description=(
                             f"将 {module_name} 模块权重{direction_label} "
-                            f"{robustness_weight_perturbation_pct:.0%}，"
-                            "其他模块权重保持配置值；重新运行同一 PIT 输入、"
-                            "评分规则、position gate、成本假设和收益生效规则。"
+                            f"{robustness_weight_perturbation_pct:.0%}；"
+                            "复用缓存 PIT 输入并调用同一评分/回测执行路径。"
                         ),
-                        result=run_configured_backtest(
-                            scenario_start=start_date,
-                            scenario_cost_bps=cost_bps,
-                            scenario_spread_bps=spread_bps,
-                            scenario_slippage_bps=slippage_bps,
-                            scenario_market_impact_bps=market_impact_bps,
-                            scenario_tax_bps=tax_bps,
-                            scenario_fx_bps=fx_bps,
-                            scenario_financing_annual_bps=financing_annual_bps,
-                            scenario_etf_delay_bps=etf_delay_bps,
-                            scenario_scoring_rules=_perturbed_scoring_rules(
-                                scoring_rules,
-                                module_name=module_name,
-                                multiplier=multiplier,
-                            ),
-                        ),
+                        result=scenario_result,
                     )
                 )
         shifted_start = start_date + timedelta(days=robustness_shift_days)
@@ -3767,6 +3944,17 @@ def backtest(
                 )
             )
         else:
+            shifted_result = run_configured_backtest(
+                scenario_start=shifted_start,
+                scenario_cost_bps=cost_bps,
+                scenario_spread_bps=spread_bps,
+                scenario_slippage_bps=slippage_bps,
+                scenario_market_impact_bps=market_impact_bps,
+                scenario_tax_bps=tax_bps,
+                scenario_fx_bps=fx_bps,
+                scenario_financing_annual_bps=financing_annual_bps,
+                scenario_etf_delay_bps=etf_delay_bps,
+            )
             robustness_scenarios.append(
                 BacktestRobustnessScenario(
                     scenario_id="shifted_start",
@@ -3774,19 +3962,9 @@ def backtest(
                     category="window",
                     description=(
                         f"将请求起点后移 {robustness_shift_days} 天，"
-                        "价格、PIT 输入、评分规则和成本假设保持不变。"
+                        "复用缓存 PIT 输入并调用同一评分/回测执行路径。"
                     ),
-                    result=run_configured_backtest(
-                        scenario_start=shifted_start,
-                        scenario_cost_bps=cost_bps,
-                        scenario_spread_bps=spread_bps,
-                        scenario_slippage_bps=slippage_bps,
-                        scenario_market_impact_bps=market_impact_bps,
-                        scenario_tax_bps=tax_bps,
-                        scenario_fx_bps=fx_bps,
-                        scenario_financing_annual_bps=financing_annual_bps,
-                        scenario_etf_delay_bps=etf_delay_bps,
-                    ),
+                    result=shifted_result,
                 )
             )
         oos_split = _backtest_oos_split_dates(
@@ -3818,6 +3996,30 @@ def backtest(
             )
         else:
             in_sample_end, out_of_sample_start = oos_split
+            in_sample_result = run_configured_backtest(
+                scenario_start=start_date,
+                scenario_end=in_sample_end,
+                scenario_cost_bps=cost_bps,
+                scenario_spread_bps=spread_bps,
+                scenario_slippage_bps=slippage_bps,
+                scenario_market_impact_bps=market_impact_bps,
+                scenario_tax_bps=tax_bps,
+                scenario_fx_bps=fx_bps,
+                scenario_financing_annual_bps=financing_annual_bps,
+                scenario_etf_delay_bps=etf_delay_bps,
+            )
+            out_of_sample_result = run_configured_backtest(
+                scenario_start=out_of_sample_start,
+                scenario_end=end_date,
+                scenario_cost_bps=cost_bps,
+                scenario_spread_bps=spread_bps,
+                scenario_slippage_bps=slippage_bps,
+                scenario_market_impact_bps=market_impact_bps,
+                scenario_tax_bps=tax_bps,
+                scenario_fx_bps=fx_bps,
+                scenario_financing_annual_bps=financing_annual_bps,
+                scenario_etf_delay_bps=etf_delay_bps,
+            )
             robustness_scenarios.extend(
                 [
                     BacktestRobustnessScenario(
@@ -3826,20 +4028,10 @@ def backtest(
                         category="out_of_sample_validation",
                         description=(
                             f"按 {robustness_oos_split_ratio:.0%} 时间顺序切分的"
-                            f"前段窗口，区间截至 {in_sample_end.isoformat()}。"
+                            f"前段窗口，区间截至 {in_sample_end.isoformat()}；"
+                            "复用缓存 PIT 输入并调用同一评分/回测执行路径。"
                         ),
-                        result=run_configured_backtest(
-                            scenario_start=start_date,
-                            scenario_end=in_sample_end,
-                            scenario_cost_bps=cost_bps,
-                            scenario_spread_bps=spread_bps,
-                            scenario_slippage_bps=slippage_bps,
-                            scenario_market_impact_bps=market_impact_bps,
-                            scenario_tax_bps=tax_bps,
-                            scenario_fx_bps=fx_bps,
-                            scenario_financing_annual_bps=financing_annual_bps,
-                            scenario_etf_delay_bps=etf_delay_bps,
-                        ),
+                        result=in_sample_result,
                     ),
                     BacktestRobustnessScenario(
                         scenario_id="out_of_sample_holdout",
@@ -3847,19 +4039,10 @@ def backtest(
                         category="out_of_sample_validation",
                         description=(
                             f"按 {robustness_oos_split_ratio:.0%} 时间顺序切分的"
-                            f"后段 holdout，起点为 {out_of_sample_start.isoformat()}。"
+                            f"后段 holdout，起点为 {out_of_sample_start.isoformat()}；"
+                            "复用缓存 PIT 输入并调用同一评分/回测执行路径。"
                         ),
-                        result=run_configured_backtest(
-                            scenario_start=out_of_sample_start,
-                            scenario_cost_bps=cost_bps,
-                            scenario_spread_bps=spread_bps,
-                            scenario_slippage_bps=slippage_bps,
-                            scenario_market_impact_bps=market_impact_bps,
-                            scenario_tax_bps=tax_bps,
-                            scenario_fx_bps=fx_bps,
-                            scenario_financing_annual_bps=financing_annual_bps,
-                            scenario_etf_delay_bps=etf_delay_bps,
-                        ),
+                        result=out_of_sample_result,
                     ),
                 ]
             )

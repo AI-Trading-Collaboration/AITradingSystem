@@ -19,6 +19,10 @@ from ai_trading_system.feedback_sample_policy import (
     load_feedback_sample_policy,
     sample_floor_summary,
 )
+from ai_trading_system.parameter_candidates import (
+    DEFAULT_PARAMETER_CANDIDATE_LEDGER_PATH,
+)
+from ai_trading_system.parameter_replay import default_parameter_replay_summary_path
 from ai_trading_system.prediction_ledger import DEFAULT_PREDICTION_OUTCOMES_PATH
 from ai_trading_system.rule_experiments import DEFAULT_RULE_EXPERIMENT_LEDGER_PATH
 from ai_trading_system.weight_calibration import (
@@ -44,6 +48,8 @@ class MarketFeedbackOptimizationReport:
     causal_chains: dict[str, Any]
     learning_queue: dict[str, Any]
     rule_experiments: dict[str, Any]
+    parameter_replay: dict[str, Any]
+    parameter_candidates: dict[str, Any]
     shadow_maturity: dict[str, Any]
     calibration_overlay: dict[str, Any]
     effective_weights: dict[str, Any]
@@ -59,6 +65,8 @@ class MarketFeedbackOptimizationReport:
             self.causal_chains,
             self.learning_queue,
             self.rule_experiments,
+            self.parameter_replay,
+            self.parameter_candidates,
             self.shadow_maturity,
             self.calibration_overlay,
             self.effective_weights,
@@ -116,6 +124,8 @@ def build_market_feedback_optimization_report(
     causal_chain_path: Path = DEFAULT_DECISION_CAUSAL_CHAIN_PATH,
     learning_queue_path: Path = DEFAULT_DECISION_LEARNING_QUEUE_PATH,
     rule_experiment_path: Path = DEFAULT_RULE_EXPERIMENT_LEDGER_PATH,
+    parameter_replay_summary_path: Path | None = None,
+    parameter_candidate_ledger_path: Path = DEFAULT_PARAMETER_CANDIDATE_LEDGER_PATH,
     shadow_maturity_report_path: Path | None = None,
     calibration_overlay_path: Path = DEFAULT_APPROVED_CALIBRATION_OVERLAY_PATH,
     effective_weights_path: Path = DEFAULT_EFFECTIVE_WEIGHTS_PATH,
@@ -129,6 +139,12 @@ def build_market_feedback_optimization_report(
     )
     shadow_maturity_report_path = shadow_maturity_report_path or (
         PROJECT_ROOT / "outputs" / "reports" / f"shadow_maturity_{as_of.isoformat()}.md"
+    )
+    parameter_replay_summary_path = parameter_replay_summary_path or (
+        default_parameter_replay_summary_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            as_of,
+        )
     )
     return MarketFeedbackOptimizationReport(
         as_of=as_of,
@@ -154,6 +170,8 @@ def build_market_feedback_optimization_report(
         causal_chains=_json_collection_section(causal_chain_path, "chains"),
         learning_queue=_learning_queue_section(learning_queue_path),
         rule_experiments=_rule_experiment_section(rule_experiment_path),
+        parameter_replay=_parameter_replay_section(parameter_replay_summary_path),
+        parameter_candidates=_parameter_candidate_section(parameter_candidate_ledger_path),
         shadow_maturity=_markdown_artifact_section(
             shadow_maturity_report_path,
             "shadow_maturity_report",
@@ -220,6 +238,12 @@ def render_market_feedback_optimization_report(
         _artifact_row("Decision causal chains", report.causal_chains, "total_count"),
         _artifact_row("Learning queue", report.learning_queue, "total_count"),
         _artifact_row("Rule experiments", report.rule_experiments, "total_count"),
+        _artifact_row("Parameter replay", report.parameter_replay, "scenario_count"),
+        _artifact_row(
+            "Parameter candidates",
+            report.parameter_candidates,
+            "candidate_count",
+        ),
         _artifact_row("Shadow maturity", report.shadow_maturity, "row_count"),
         _artifact_row("Approved overlay", report.calibration_overlay, "total_count"),
         _artifact_row("Effective weights", report.effective_weights, "matched_count"),
@@ -245,6 +269,12 @@ def render_market_feedback_optimization_report(
         f"- 候选规则数：{report.rule_experiments['total_count']}",
         f"- 未运行 replay：{report.rule_experiments['pending_replay_count']}",
         f"- 待 forward shadow：{report.rule_experiments['pending_shadow_count']}",
+        f"- 参数复测场景：{report.parameter_replay['scenario_count']}；"
+        f"material delta：{report.parameter_replay['material_delta_count']}",
+        f"- 参数候选数：{report.parameter_candidates['candidate_count']}；"
+        f"trial：{report.parameter_candidates['trial_count']}；"
+        f"owner review：{report.parameter_candidates['ready_for_owner_review_count']}；"
+        f"risk review：{report.parameter_candidates['material_risk_review_count']}",
         "",
         "## Overlay 与生产兼容性",
         "",
@@ -465,6 +495,74 @@ def _rule_experiment_section(path: Path) -> dict[str, Any]:
     }
 
 
+def _parameter_replay_section(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {
+            "path": str(path),
+            "exists": False,
+            "status": "NOT_CONNECTED",
+            "scenario_count": 0,
+            "completed_scenario_count": 0,
+            "material_delta_count": 0,
+            "warnings": ["parameter replay 摘要不存在；尚未把参数复测收益变化接入 feedback 闭环。"],
+        }
+    payload = _read_json(path)
+    scenarios = payload.get("scenarios", [])
+    if not isinstance(scenarios, list):
+        scenarios = []
+    raw_warnings = payload.get("warnings", [])
+    if isinstance(raw_warnings, list):
+        warnings = [str(item) for item in raw_warnings if str(item).strip()]
+    elif isinstance(raw_warnings, str) and raw_warnings.strip():
+        warnings = [raw_warnings]
+    else:
+        warnings = []
+    return {
+        "path": str(path),
+        "exists": True,
+        "status": str(payload.get("status") or "CONNECTED"),
+        "scenario_count": int(payload.get("scenario_count") or len(scenarios)),
+        "completed_scenario_count": int(
+            payload.get("completed_scenario_count")
+            or sum(
+                1
+                for scenario in scenarios
+                if isinstance(scenario, dict) and scenario.get("total_return") is not None
+            )
+        ),
+        "material_delta_count": int(payload.get("material_delta_count") or 0),
+        "warnings": warnings,
+    }
+
+
+def _parameter_candidate_section(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {
+            "path": str(path),
+            "exists": False,
+            "status": "NOT_CONNECTED",
+            "trial_count": 0,
+            "candidate_count": 0,
+            "ready_for_owner_review_count": 0,
+            "material_risk_review_count": 0,
+            "needs_policy_count": 0,
+            "warnings": ["parameter candidates ledger 不存在；参数复测结果尚未进入候选台账。"],
+        }
+    payload = _read_json(path)
+    warnings = _warnings_from_payload(payload)
+    return {
+        "path": str(path),
+        "exists": True,
+        "status": str(payload.get("status") or "CONNECTED"),
+        "trial_count": int(payload.get("trial_count") or 0),
+        "candidate_count": int(payload.get("candidate_count") or 0),
+        "ready_for_owner_review_count": int(payload.get("ready_for_owner_review_count") or 0),
+        "material_risk_review_count": int(payload.get("material_risk_review_count") or 0),
+        "needs_policy_count": int(payload.get("needs_policy_count") or 0),
+        "warnings": warnings,
+    }
+
+
 def _calibration_overlay_section(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {
@@ -583,6 +681,15 @@ def _read_json(path: Path) -> dict[str, Any]:
     return {"items": payload}
 
 
+def _warnings_from_payload(payload: dict[str, Any]) -> list[str]:
+    raw_warnings = payload.get("warnings", [])
+    if isinstance(raw_warnings, list):
+        return [str(item) for item in raw_warnings if str(item).strip()]
+    if isinstance(raw_warnings, str) and raw_warnings.strip():
+        return [raw_warnings]
+    return []
+
+
 def _string_series(frame: pd.DataFrame, column: str) -> pd.Series:
     if column not in frame:
         return pd.Series(dtype="string")
@@ -661,9 +768,7 @@ def _sample_floor_warnings(
 def _format_counts(counts: dict[str, int]) -> str:
     if not counts:
         return "无"
-    return "，".join(
-        f"{key}={value}" for key, value in sorted(counts.items(), key=_count_sort_key)
-    )
+    return "，".join(f"{key}={value}" for key, value in sorted(counts.items(), key=_count_sort_key))
 
 
 def _count_sort_key(item: tuple[str, int]) -> tuple[int, float | str]:
@@ -683,8 +788,7 @@ def _readiness_explanation(report: MarketFeedbackOptimizationReport) -> str:
         return "prediction/shadow outcome 样本不足 pilot floor，暂不启动候选 shadow 流程。"
     if report.readiness == "READY_FOR_REPLAY_OR_SHADOW_REVIEW":
         return (
-            "已有候选规则待 replay 或 forward shadow；当前可启动 pilot 验证，"
-            "但不能改 production。"
+            "已有候选规则待 replay 或 forward shadow；当前可启动 pilot 验证，但不能改 production。"
         )
     if report.readiness == "READY_FOR_APPROVED_OVERLAY_AUDIT":
         return "存在 approved overlay，应审计命中上下文、过期条件和回滚条件。"
@@ -705,8 +809,17 @@ def _next_action_line(report: MarketFeedbackOptimizationReport) -> str:
     if report.readiness == "READY_FOR_APPROVED_OVERLAY_AUDIT":
         return "- 运行 `apply-calibration-overlay` 审计命中情况，确认是否仍在有效期内。"
     if report.readiness == "PILOT_DIAGNOSTIC_REVIEW":
+        if not report.parameter_replay.get("exists"):
+            return (
+                "- 先运行带 robustness 的回测并生成 `feedback build-parameter-replay`，"
+                "把参数复测收益变化纳入闭环；不要晋级 production。"
+            )
+        if not report.parameter_candidates.get("exists"):
+            return (
+                "- 运行 `feedback build-parameter-candidates`，把参数复测结果登记为 "
+                "candidate-only trial ledger；不要晋级 production。"
+            )
         return (
-            "- 先跑 causal chain、learning queue 和 rule experiment 候选整理；"
-            "不要晋级 production。"
+            "- 先跑 causal chain、learning queue 和 rule experiment 候选整理；不要晋级 production。"
         )
     return "- 设计候选 weight diagnostics，但保持 candidate-only 和 production_effect=none。"

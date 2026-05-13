@@ -29,7 +29,7 @@ from ai_trading_system.config import (
     load_backtest_validation_policy,
 )
 from ai_trading_system.data.quality import DataFileSummary, DataQualityReport
-from ai_trading_system.features.market import build_market_features
+from ai_trading_system.features.market import MarketFeatureSet, build_market_features
 from ai_trading_system.fundamentals.sec_features import SecFundamentalFeaturesReport
 from ai_trading_system.industry_node_state import build_industry_node_heat_report
 from ai_trading_system.risk_events import RiskEventOccurrenceReviewReport
@@ -316,6 +316,162 @@ class DailyBacktestResult:
         return "PASS_WITH_LIMITATIONS"
 
 
+@dataclass(frozen=True)
+class PreparedBacktestPeriod:
+    signal_date: date
+    return_date: date
+    feature_as_of: date
+    universe_as_of: date
+    asset_return: float
+    feature_set: MarketFeatureSet
+    fundamental_feature_report: SecFundamentalFeaturesReport | None
+    valuation_review_report: ValuationReviewReport | None
+    risk_event_occurrence_review_report: RiskEventOccurrenceReviewReport | None
+
+
+@dataclass(frozen=True)
+class PreparedDailyBacktestContext:
+    requested_start: date
+    requested_end: date
+    close_pivot: pd.DataFrame
+    periods: tuple[PreparedBacktestPeriod, ...]
+    strategy_ticker: str
+    benchmark_tickers: tuple[str, ...]
+    data_quality_report: DataQualityReport
+    market_regime: BacktestRegimeContext | None
+    benchmark_policy_report: BenchmarkPolicyReport | None
+    feature_lag_days: int
+    universe_lag_days: int
+    rebalance_delay_days: int
+    universe_pit: bool
+
+
+def prepare_daily_score_backtest_context(
+    prices: pd.DataFrame,
+    rates: pd.DataFrame,
+    feature_config: FeatureConfig,
+    data_quality_report: DataQualityReport,
+    core_watchlist: list[str],
+    start: date,
+    end: date,
+    strategy_ticker: str = "SMH",
+    benchmark_tickers: tuple[str, ...] = DEFAULT_BENCHMARK_TICKERS,
+    market_regime: BacktestRegimeContext | None = None,
+    fundamental_feature_reports: Mapping[date, SecFundamentalFeaturesReport] | None = None,
+    valuation_review_reports: Mapping[date, ValuationReviewReport] | None = None,
+    risk_event_occurrence_review_reports: (
+        Mapping[date, RiskEventOccurrenceReviewReport] | None
+    ) = None,
+    watchlist_lifecycle: WatchlistLifecycleConfig | None = None,
+    benchmark_policy_report: BenchmarkPolicyReport | None = None,
+    feature_lag_days: int = 0,
+    universe_lag_days: int = 0,
+    rebalance_delay_days: int = 1,
+) -> PreparedDailyBacktestContext:
+    if start >= end:
+        raise ValueError("回测开始日期必须早于结束日期")
+    if feature_lag_days < 0:
+        raise ValueError("feature_lag_days 不能为负数")
+    if universe_lag_days < 0:
+        raise ValueError("universe_lag_days 不能为负数")
+    if rebalance_delay_days != 1:
+        raise ValueError("当前回测只支持 1 个交易日 rebalance delay")
+
+    close_pivot = _prepare_adjusted_close_pivot(prices)
+    _check_required_tickers(close_pivot, (strategy_ticker, *benchmark_tickers))
+    period_dates = _backtest_periods_with_lag(
+        close_pivot[strategy_ticker],
+        start,
+        end,
+        feature_lag_days=feature_lag_days,
+        universe_lag_days=universe_lag_days,
+    )
+    if not period_dates:
+        raise ValueError("回测区间内没有可用的下一交易日收益")
+
+    periods: list[PreparedBacktestPeriod] = []
+    for signal_date, return_date, feature_as_of, universe_as_of in period_dates:
+        fundamental_feature_report = None
+        if fundamental_feature_reports is not None:
+            fundamental_feature_report = fundamental_feature_reports.get(feature_as_of)
+            if fundamental_feature_report is None:
+                raise ValueError(
+                    "回测缺少 point-in-time SEC 基本面特征："
+                    f"{feature_as_of.isoformat()}"
+                )
+        valuation_review_report = None
+        if valuation_review_reports is not None:
+            valuation_review_report = valuation_review_reports.get(feature_as_of)
+            if valuation_review_report is None:
+                raise ValueError(
+                    "回测缺少 point-in-time 估值快照复核报告："
+                    f"{feature_as_of.isoformat()}"
+                )
+        risk_event_occurrence_review_report = None
+        if risk_event_occurrence_review_reports is not None:
+            risk_event_occurrence_review_report = risk_event_occurrence_review_reports.get(
+                feature_as_of
+            )
+            if risk_event_occurrence_review_report is None:
+                raise ValueError(
+                    "回测缺少 point-in-time 风险事件发生记录复核报告："
+                    f"{feature_as_of.isoformat()}"
+                )
+
+        effective_core_watchlist = (
+            active_watchlist_tickers_as_of(
+                lifecycle=watchlist_lifecycle,
+                tickers=core_watchlist,
+                as_of=universe_as_of,
+            )
+            if watchlist_lifecycle is not None
+            else core_watchlist
+        )
+        feature_set = build_market_features(
+            prices=prices,
+            rates=rates,
+            config=feature_config,
+            as_of=feature_as_of,
+            core_watchlist=effective_core_watchlist,
+        )
+        periods.append(
+            PreparedBacktestPeriod(
+                signal_date=signal_date,
+                return_date=return_date,
+                feature_as_of=feature_as_of,
+                universe_as_of=universe_as_of,
+                asset_return=_period_return(
+                    close_pivot,
+                    strategy_ticker,
+                    signal_date,
+                    return_date,
+                ),
+                feature_set=feature_set,
+                fundamental_feature_report=fundamental_feature_report,
+                valuation_review_report=valuation_review_report,
+                risk_event_occurrence_review_report=(
+                    risk_event_occurrence_review_report
+                ),
+            )
+        )
+
+    return PreparedDailyBacktestContext(
+        requested_start=start,
+        requested_end=end,
+        close_pivot=close_pivot,
+        periods=tuple(periods),
+        strategy_ticker=strategy_ticker,
+        benchmark_tickers=benchmark_tickers,
+        data_quality_report=data_quality_report,
+        market_regime=market_regime,
+        benchmark_policy_report=benchmark_policy_report,
+        feature_lag_days=feature_lag_days,
+        universe_lag_days=universe_lag_days,
+        rebalance_delay_days=rebalance_delay_days,
+        universe_pit=watchlist_lifecycle is not None,
+    )
+
+
 def run_daily_score_backtest(
     prices: pd.DataFrame,
     rates: pd.DataFrame,
@@ -349,6 +505,7 @@ def run_daily_score_backtest(
     feature_lag_days: int = 0,
     universe_lag_days: int = 0,
     rebalance_delay_days: int = 1,
+    prepared_context: PreparedDailyBacktestContext | None = None,
 ) -> DailyBacktestResult:
     if start >= end:
         raise ValueError("回测开始日期必须早于结束日期")
@@ -370,14 +527,49 @@ def run_daily_score_backtest(
         etf_delay_bps=etf_delay_bps,
     )
 
-    close_pivot = _prepare_adjusted_close_pivot(prices)
-    _check_required_tickers(close_pivot, (strategy_ticker, *benchmark_tickers))
-    periods = _backtest_periods_with_lag(
-        close_pivot[strategy_ticker],
-        start,
-        end,
-        feature_lag_days=feature_lag_days,
-        universe_lag_days=universe_lag_days,
+    if prepared_context is None:
+        prepared_context = prepare_daily_score_backtest_context(
+            prices=prices,
+            rates=rates,
+            feature_config=feature_config,
+            data_quality_report=data_quality_report,
+            core_watchlist=core_watchlist,
+            start=start,
+            end=end,
+            strategy_ticker=strategy_ticker,
+            benchmark_tickers=benchmark_tickers,
+            market_regime=market_regime,
+            fundamental_feature_reports=fundamental_feature_reports,
+            valuation_review_reports=valuation_review_reports,
+            risk_event_occurrence_review_reports=(
+                risk_event_occurrence_review_reports
+            ),
+            watchlist_lifecycle=watchlist_lifecycle,
+            benchmark_policy_report=benchmark_policy_report,
+            feature_lag_days=feature_lag_days,
+            universe_lag_days=universe_lag_days,
+            rebalance_delay_days=rebalance_delay_days,
+        )
+    else:
+        if prepared_context.strategy_ticker != strategy_ticker:
+            raise ValueError("prepared backtest context strategy ticker mismatch")
+        if prepared_context.benchmark_tickers != benchmark_tickers:
+            raise ValueError("prepared backtest context benchmark tickers mismatch")
+        if prepared_context.feature_lag_days != feature_lag_days:
+            raise ValueError("prepared backtest context feature lag mismatch")
+        if prepared_context.universe_lag_days != universe_lag_days:
+            raise ValueError("prepared backtest context universe lag mismatch")
+        if prepared_context.rebalance_delay_days != rebalance_delay_days:
+            raise ValueError("prepared backtest context rebalance delay mismatch")
+
+    close_pivot = prepared_context.close_pivot
+    data_quality_report = prepared_context.data_quality_report
+    market_regime = prepared_context.market_regime
+    benchmark_policy_report = prepared_context.benchmark_policy_report
+    periods = tuple(
+        period
+        for period in prepared_context.periods
+        if period.signal_date >= start and period.return_date <= end
     )
     if not periods:
         raise ValueError("回测区间内没有可用的下一交易日收益")
@@ -420,15 +612,13 @@ def run_daily_score_backtest(
     valuation_backtest_use_counts: Counter[str] = Counter()
     valuation_confidence_level_counts: Counter[str] = Counter()
 
-    for signal_date, return_date, feature_as_of, universe_as_of in periods:
-        fundamental_feature_report = None
-        if fundamental_feature_reports is not None:
-            fundamental_feature_report = fundamental_feature_reports.get(feature_as_of)
-            if fundamental_feature_report is None:
-                raise ValueError(
-                    "回测缺少 point-in-time SEC 基本面特征："
-                    f"{feature_as_of.isoformat()}"
-                )
+    for period in periods:
+        signal_date = period.signal_date
+        return_date = period.return_date
+        feature_as_of = period.feature_as_of
+        universe_as_of = period.universe_as_of
+        fundamental_feature_report = period.fundamental_feature_report
+        if fundamental_feature_report is not None:
             fundamental_feature_report_count += 1
             fundamental_feature_status_counts[fundamental_feature_report.status] = (
                 fundamental_feature_status_counts.get(fundamental_feature_report.status, 0) + 1
@@ -469,14 +659,8 @@ def run_daily_score_backtest(
                 input_label="SEC 基本面",
                 issues=fundamental_feature_report.issues,
             )
-        valuation_review_report = None
-        if valuation_review_reports is not None:
-            valuation_review_report = valuation_review_reports.get(feature_as_of)
-            if valuation_review_report is None:
-                raise ValueError(
-                    "回测缺少 point-in-time 估值快照复核报告："
-                    f"{feature_as_of.isoformat()}"
-                )
+        valuation_review_report = period.valuation_review_report
+        if valuation_review_report is not None:
             valuation_review_report_count += 1
             valuation_review_status_counts[valuation_review_report.status] = (
                 valuation_review_status_counts.get(valuation_review_report.status, 0) + 1
@@ -515,16 +699,10 @@ def run_daily_score_backtest(
                 input_label="估值快照",
                 issues=valuation_review_report.validation_report.issues,
             )
-        risk_event_occurrence_review_report = None
-        if risk_event_occurrence_review_reports is not None:
-            risk_event_occurrence_review_report = risk_event_occurrence_review_reports.get(
-                feature_as_of
-            )
-            if risk_event_occurrence_review_report is None:
-                raise ValueError(
-                    "回测缺少 point-in-time 风险事件发生记录复核报告："
-                    f"{feature_as_of.isoformat()}"
-                )
+        risk_event_occurrence_review_report = (
+            period.risk_event_occurrence_review_report
+        )
+        if risk_event_occurrence_review_report is not None:
             risk_event_occurrence_review_report_count += 1
             status = risk_event_occurrence_review_report.status
             risk_event_occurrence_status_counts[status] = (
@@ -565,22 +743,7 @@ def run_daily_score_backtest(
                 input_label="风险事件发生记录",
                 issues=risk_event_occurrence_review_report.validation_report.issues,
             )
-        effective_core_watchlist = (
-            active_watchlist_tickers_as_of(
-                lifecycle=watchlist_lifecycle,
-                tickers=core_watchlist,
-                as_of=universe_as_of,
-            )
-            if watchlist_lifecycle is not None
-            else core_watchlist
-        )
-        feature_set = build_market_features(
-            prices=prices,
-            rates=rates,
-            config=feature_config,
-            as_of=feature_as_of,
-            core_watchlist=effective_core_watchlist,
-        )
+        feature_set = period.feature_set
         score_report = build_daily_score_report(
             feature_set=feature_set,
             data_quality_report=data_quality_report,
@@ -634,7 +797,7 @@ def run_daily_score_backtest(
         else:
             target_exposure = previous_exposure
 
-        asset_return = _period_return(close_pivot, strategy_ticker, signal_date, return_date)
+        asset_return = period.asset_return
         gross_return = target_exposure * asset_return
         turnover = abs(target_exposure - previous_exposure)
         sell_turnover = max(previous_exposure - target_exposure, 0.0)
@@ -744,8 +907,7 @@ def run_daily_score_backtest(
         turnovers=[row.turnover for row in rows],
     )
     benchmark_periods = [
-        (signal_date, return_date)
-        for signal_date, return_date, _feature_as_of, _universe_as_of in periods
+        (period.signal_date, period.return_date) for period in periods
     ]
     benchmark_metrics = {
         ticker: _benchmark_metrics(close_pivot, ticker, benchmark_periods)
@@ -841,7 +1003,7 @@ def run_daily_score_backtest(
         feature_lag_days=feature_lag_days,
         universe_lag_days=universe_lag_days,
         rebalance_delay_days=rebalance_delay_days,
-        universe_pit=watchlist_lifecycle is not None,
+        universe_pit=prepared_context.universe_pit,
     )
 
 

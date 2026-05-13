@@ -30,6 +30,8 @@ def test_market_feedback_optimization_report_summarizes_readiness(
         causal_chain_path=paths["causal"],
         learning_queue_path=paths["learning"],
         rule_experiment_path=paths["rule_experiments"],
+        parameter_replay_summary_path=paths["parameter_replay"],
+        parameter_candidate_ledger_path=paths["parameter_candidates"],
         shadow_maturity_report_path=paths["shadow_maturity"],
         calibration_overlay_path=paths["overlay"],
         effective_weights_path=paths["effective_weights"],
@@ -45,10 +47,11 @@ def test_market_feedback_optimization_report_summarizes_readiness(
     assert "生产影响：none" in markdown
     assert "## 执行频次" in markdown
     assert (
-        "Decision outcome 可用样本：5 / reporting/pilot/diagnostic/promotion=1/5/30/60"
-        in markdown
+        "Decision outcome 可用样本：5 / reporting/pilot/diagnostic/promotion=1/5/30/60" in markdown
     )
     assert "候选规则数：1" in markdown
+    assert "参数复测场景：2；material delta：1" in markdown
+    assert "参数候选数：1；trial：2；owner review：1；risk review：0" in markdown
     assert "Approved overlay 数：1" in markdown
 
 
@@ -81,6 +84,10 @@ def test_market_feedback_optimization_cli_writes_report(tmp_path: Path) -> None:
             str(paths["learning"]),
             "--rule-experiment-path",
             str(paths["rule_experiments"]),
+            "--parameter-replay-summary-path",
+            str(paths["parameter_replay"]),
+            "--parameter-candidate-ledger-path",
+            str(paths["parameter_candidates"]),
             "--shadow-maturity-report-path",
             str(paths["shadow_maturity"]),
             "--calibration-overlay-path",
@@ -180,7 +187,7 @@ def _write_feedback_optimization_artifacts(tmp_path: Path) -> dict[str, Path]:
                 "production_effect": "none",
                 "decision_date": "2026-04-10",
                 "outcome_status": "AVAILABLE",
-            }
+            },
         ]
     ).to_csv(prediction_outcomes_path, index=False)
 
@@ -226,6 +233,57 @@ def _write_feedback_optimization_artifacts(tmp_path: Path) -> dict[str, Path]:
         encoding="utf-8",
     )
 
+    parameter_replay_path = tmp_path / "parameter_replay_2026-04-10.json"
+    parameter_replay_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "feedback_parameter_replay",
+                "production_effect": "none",
+                "status": "PASS_WITH_LIMITATIONS",
+                "scenario_count": 2,
+                "completed_scenario_count": 2,
+                "material_delta_count": 1,
+                "warnings": ["低于 promotion floor，保持 candidate-only。"],
+                "scenarios": [
+                    {
+                        "scenario_id": "weight_perturb_trend_up_20pct",
+                        "total_return_delta_vs_base": 0.06,
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    parameter_candidates_path = tmp_path / "parameter_candidates.json"
+    parameter_candidates_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "parameter_candidate_ledger",
+                "production_effect": "none",
+                "status": "PASS",
+                "trial_count": 2,
+                "candidate_count": 1,
+                "ready_for_owner_review_count": 1,
+                "material_risk_review_count": 0,
+                "needs_policy_count": 0,
+                "warnings": [],
+                "trials": [],
+                "candidates": [
+                    {
+                        "candidate_id": "parameter_candidate:test",
+                        "recommendation_status": "READY_FOR_OWNER_REVIEW",
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
     shadow_maturity_path = tmp_path / "shadow_maturity_2026-04-10.md"
     shadow_maturity_path.write_text(
         "# Shadow 样本成熟度\n\n- 状态：PASS_WITH_LIMITATIONS\n",
@@ -259,6 +317,8 @@ def _write_feedback_optimization_artifacts(tmp_path: Path) -> dict[str, Path]:
         "causal": causal_path,
         "learning": learning_path,
         "rule_experiments": rule_experiments_path,
+        "parameter_replay": parameter_replay_path,
+        "parameter_candidates": parameter_candidates_path,
         "shadow_maturity": shadow_maturity_path,
         "overlay": overlay_path,
         "effective_weights": effective_weights_path,

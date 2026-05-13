@@ -294,9 +294,10 @@ def render_backtest_robustness_report(report: BacktestRobustnessReport) -> str:
             "## 方法边界",
             "",
             (
-                "当前基础版复用同一批 point-in-time 输入运行成本压力、起点后移、"
-                "固定总资产 AI exposure、再平衡频率、趋势信号族基线和买入持有"
-                "基准对比；它不是完整的防过拟合证明。"
+                "成本压力、起点后移、权重扰动和样本外窗口复用同一批 "
+                "point-in-time 输入，并重新调用同一评分/回测执行路径；固定总资产 "
+                "AI exposure、再平衡频率、趋势信号族和随机策略属于执行或信号族"
+                "基线。"
             ),
             (
                 "成本压力实验只改变显式成本假设，不改变价格、基本面、估值、风险事件、"
@@ -799,15 +800,33 @@ def _transaction_cost_for_turnover(
     exposure: float,
     previous_exposure: float,
     turnover: float,
+    cost_bps: float | None = None,
+    spread_bps: float | None = None,
+    slippage_bps: float | None = None,
+    market_impact_bps: float | None = None,
+    tax_bps: float | None = None,
+    fx_bps: float | None = None,
+    financing_annual_bps: float | None = None,
+    etf_delay_bps: float | None = None,
 ) -> float:
-    commission_rate = result.cost_bps / 10_000.0
-    spread_rate = result.spread_bps / 10_000.0
-    slippage_rate = result.slippage_bps / 10_000.0
-    market_impact_rate = result.market_impact_bps / 10_000.0
-    tax_rate = result.tax_bps / 10_000.0
-    fx_rate = result.fx_bps / 10_000.0
-    financing_daily_rate = result.financing_annual_bps / 10_000.0 / 252.0
-    etf_delay_rate = result.etf_delay_bps / 10_000.0
+    commission_rate = (result.cost_bps if cost_bps is None else cost_bps) / 10_000.0
+    spread_rate = (result.spread_bps if spread_bps is None else spread_bps) / 10_000.0
+    slippage_rate = (
+        result.slippage_bps if slippage_bps is None else slippage_bps
+    ) / 10_000.0
+    market_impact_rate = (
+        result.market_impact_bps if market_impact_bps is None else market_impact_bps
+    ) / 10_000.0
+    tax_rate = (result.tax_bps if tax_bps is None else tax_bps) / 10_000.0
+    fx_rate = (result.fx_bps if fx_bps is None else fx_bps) / 10_000.0
+    financing_daily_rate = (
+        result.financing_annual_bps
+        if financing_annual_bps is None
+        else financing_annual_bps
+    ) / 10_000.0 / 252.0
+    etf_delay_rate = (
+        result.etf_delay_bps if etf_delay_bps is None else etf_delay_bps
+    ) / 10_000.0
     sell_turnover = max(previous_exposure - exposure, 0.0)
     return (
         turnover * commission_rate

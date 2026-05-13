@@ -19,6 +19,7 @@ from ai_trading_system.backtest.audit import (
 from ai_trading_system.backtest.daily import (
     backtest_input_coverage_records,
     build_backtest_data_credibility,
+    prepare_daily_score_backtest_context,
     render_backtest_report,
     run_daily_score_backtest,
     write_backtest_daily_csv,
@@ -361,6 +362,83 @@ def test_run_daily_score_backtest_applies_feature_and_universe_lag(
     assert result.rows[0].feature_as_of < result.rows[0].signal_date
     assert captured_feature_dates[0] == result.rows[0].feature_as_of
     assert captured_watchlists[0][1] == ()
+
+
+def test_run_daily_score_backtest_reuses_prepared_context_for_parameter_scenarios(
+    monkeypatch: MonkeyPatch,
+) -> None:
+    universe = load_universe()
+    prices = _sample_prices(configured_price_tickers(universe), periods=320)
+    rates = _sample_rates(configured_rate_series(universe), periods=320)
+    feature_config = load_features()
+    scoring_rules = load_scoring_rules()
+    portfolio = load_portfolio()
+    data_quality_report = _quality_report()
+    feature_build_dates: list[date] = []
+    original_build_market_features = backtest_daily_module.build_market_features
+
+    def wrapped_build_market_features(**kwargs):  # type: ignore[no-untyped-def]
+        feature_build_dates.append(kwargs["as_of"])
+        return original_build_market_features(**kwargs)
+
+    monkeypatch.setattr(
+        backtest_daily_module,
+        "build_market_features",
+        wrapped_build_market_features,
+    )
+
+    prepared_context = prepare_daily_score_backtest_context(
+        prices=prices,
+        rates=rates,
+        feature_config=feature_config,
+        data_quality_report=data_quality_report,
+        core_watchlist=universe.ai_chain["core_watchlist"],
+        start=date(2026, 4, 1),
+        end=date(2026, 4, 10),
+        strategy_ticker="SMH",
+        benchmark_tickers=("SPY",),
+    )
+    feature_build_count = len(feature_build_dates)
+
+    base_result = run_daily_score_backtest(
+        prices=prices,
+        rates=rates,
+        feature_config=feature_config,
+        scoring_rules=scoring_rules,
+        portfolio_config=portfolio,
+        data_quality_report=data_quality_report,
+        core_watchlist=universe.ai_chain["core_watchlist"],
+        start=date(2026, 4, 1),
+        end=date(2026, 4, 10),
+        strategy_ticker="SMH",
+        benchmark_tickers=("SPY",),
+        cost_bps=5.0,
+        prepared_context=prepared_context,
+    )
+    stress_result = run_daily_score_backtest(
+        prices=prices,
+        rates=rates,
+        feature_config=feature_config,
+        scoring_rules=scoring_rules,
+        portfolio_config=portfolio,
+        data_quality_report=data_quality_report,
+        core_watchlist=universe.ai_chain["core_watchlist"],
+        start=date(2026, 4, 1),
+        end=date(2026, 4, 10),
+        strategy_ticker="SMH",
+        benchmark_tickers=("SPY",),
+        cost_bps=5.0,
+        slippage_bps=10.0,
+        prepared_context=prepared_context,
+    )
+
+    assert feature_build_count == len(prepared_context.periods)
+    assert len(feature_build_dates) == feature_build_count
+    assert len(base_result.rows) == len(prepared_context.periods)
+    assert stress_result.rows[0].total_score == base_result.rows[0].total_score
+    assert stress_result.strategy_metrics.total_return < (
+        base_result.strategy_metrics.total_return
+    )
 
 
 def test_render_and_write_backtest_outputs(tmp_path: Path) -> None:

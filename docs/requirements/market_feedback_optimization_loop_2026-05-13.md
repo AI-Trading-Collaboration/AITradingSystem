@@ -2,7 +2,7 @@
 
 状态：VALIDATING
 
-最后更新：2026-05-13
+最后更新：2026-05-14
 
 关联任务：`CALIBRATION-003`、`FEEDBACK-002`、`EXPERIMENT-001`、`SHADOW-002`、`SHADOW-003`、`GOV-003`、`LOOP-001`
 
@@ -52,6 +52,8 @@ daily-run / score-daily
 初版新增命令：
 
 ```text
+aits feedback build-parameter-replay --as-of YYYY-MM-DD
+aits feedback build-parameter-candidates --as-of YYYY-MM-DD
 aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 ```
 
@@ -119,9 +121,10 @@ aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 |1. 文档、任务登记和只读编排报告|VALIDATING|新增需求文档、任务登记、系统流图、runbook 频次、CLI 命令和单测；命令可在现有产物上跑通并输出中文报告。|
 |2. 样本政策配置化和 pilot 放宽|VALIDATING|新增 `config/feedback_sample_policy.yaml`，区分 reporting/pilot/diagnostic/promotion floor；当前少量样本可启动后续 pilot 流程，但报告保留不能晋级 production 的限制。|
 |3. Weight diagnostics 候选|PROPOSED|按模块、gate、horizon 和市场阶段输出信息权重诊断；样本不足时只给 limitation，不给调权建议。|
-|4. As-if replay 实验入口|PROPOSED|对候选规则/权重生成 replay spec，比较 baseline vs challenger 的 missed upside、avoided drawdown、turnover 和超额收益。|
-|5. Forward shadow 与 promotion 连接|PROPOSED|候选通过 replay 后进入 `prediction_ledger` shadow；成熟度报告达到门槛才允许 owner review。|
-|6. Overlay / rule card 晋级|PROPOSED|通过 owner approval 后生成 approved overlay 或 rule card，具备有效期、回滚条件和审计引用。|
+|4. 参数 as-if replay 收益变化入口|VALIDATING|读取已运行的 backtest robustness summary，把模块权重扰动、再平衡和成本压力等参数候选接入 feedback 报告，比较 baseline vs challenger 的收益、回撤、换手和限制；第一阶段不自动拟合新权重。|
+|5. 参数候选台账与 trial registry|VALIDATING|从参数 replay summary 生成 candidate-only 参数候选台账，记录 trial、来源 replay、指标、material 标记、治理状态和下一步；不自动生成 approved overlay。|
+|6. Forward shadow 与 promotion 连接|PROPOSED|候选通过 replay 后进入 `prediction_ledger` shadow；成熟度报告达到门槛才允许 owner review。|
+|7. Overlay / rule card 晋级|PROPOSED|通过 owner approval 后生成 approved overlay 或 rule card，具备有效期、回滚条件和审计引用。|
 
 ## 验收标准
 
@@ -139,3 +142,13 @@ aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 - 2026-05-13：根据 owner 对 `30` 样本门槛的质疑，新增样本政策配置并放宽 pilot floor：decision outcome 5、prediction/shadow outcome 2。该放宽只允许启动复盘和候选整理，不允许生产晋级；若后续发现节奏过快，优先调整 `config/feedback_sample_policy.yaml`。
 - 2026-05-13：按当前缓存覆盖的最新日期 2026-05-12 跑通后续 pilot 流程：`feedback calibrate`、`feedback calibrate-predictions`、`feedback build-causal-chain`、`feedback build-learning-queue`、`feedback build-rule-experiments`、`feedback shadow-maturity` 和 `feedback optimize-market-feedback` 均完成；优化报告 readiness 为 `PILOT_DIAGNOSTIC_REVIEW`。
 - 2026-05-13：尝试刷新 2026-05-11 outcome 时，`feedback calibrate --as-of 2026-05-11` 被数据质量门禁阻断，原因是当前价格缓存已包含 2026-05-12，严格 2026-05-11 校准不能读取未来价格。未做临时 CSV 过滤或绕过门禁；后续若要在历史 as-of 上刷新 feedback outcome，应补 replay-scoped feedback calibration 输入。
+- 2026-05-13：owner 要求继续推进完整闭环；本轮把缺口收敛为参数复测收益变化入口，先消费现有 `backtest_robustness_*.json` 的真实回测场景，生成 feedback 层参数 replay 报告，再由 `optimize-market-feedback` 汇总其连接状态。该阶段仍保持 `production_effect=none`，不自动生成 approved overlay。
+- 2026-05-13：参数 replay 基础版完成并进入 VALIDATING。新增 `aits feedback build-parameter-replay`，输出 `outputs/reports/parameter_replay_YYYY-MM-DD.md/json`；`optimize-market-feedback` 新增 Parameter replay 产物状态、场景数和 material delta 汇总；系统流图、README、runbook 和测试已同步。真实 smoke 使用现有最新 robustness summary 生成 2026-05-13 参数 replay 报告，报告正确披露该来源 summary 仍缺 module weight perturbation 场景。
+- 2026-05-13：owner 要求继续推进到当前数据可测试跑通、并能持续迭代的回测调参闭环；本轮新增参数候选台账与 trial registry 阶段，目标是让 `parameter_replay` 的场景进入结构化 candidate ledger，再由 `optimize-market-feedback` 汇总候选状态。
+- 2026-05-13：参数候选台账基础版完成并进入 VALIDATING。新增 `aits feedback build-parameter-candidates`，输出 `data/processed/parameter_candidates.json` 和 `outputs/reports/parameter_candidates_YYYY-MM-DD.md`；当前数据烟测已跑通 `parameter replay -> candidate ledger -> optimize-market-feedback`，报告汇总 3 个 trial / 3 个 candidate。因当前 replay 未提供 materiality policy 阈值，候选保持 `NEEDS_MATERIALITY_POLICY`，不能进入 owner approval 或 production。
+- 2026-05-13：继续排查 materiality policy 阻塞。当前实现生成新的 `backtest_robustness` summary 时会写入 `policy`，但现有最新 summary 是旧产物且缺少该字段；本轮优先确认是否可通过重跑当前数据生成带 policy 的正式回测产物来解除阻塞，再决定是否需要补兼容读取逻辑。
+- 2026-05-13：materiality policy 阻塞已解除并进入 VALIDATING。全量当前数据 robustness 重跑超过 15 分钟未完成且未写出新 summary，已停止悬挂进程；`build-parameter-replay` 现在对旧 summary 缺 policy 的情况读取当前 `config/backtest_validation_policy.yaml` 并在报告中披露 limitation。当前闭环 smoke 已跑通，`Needs materiality policy=0`，3 个 trial / 3 个 candidate 中 1 个正向 owner review、1 个负向 risk review、1 个 observe-only；仍不改变 production。
+- 2026-05-13：owner 要求继续处理所有阻塞点，确保从头开始完整跑通。任务切回 IN_PROGRESS；本轮排查范围收敛到 `aits backtest --robustness-report --to 2026-05-12 --quality-as-of 2026-05-13` 长时间运行且不写出新 robustness summary 的问题。
+- 2026-05-13：从头闭环阻塞已解除并进入 VALIDATING。`backtest --robustness-report` 中成本压力、起点后移、样本内/样本外和模块权重扰动改为复用基础回测已审计的每日 component scores、gate caps、raw target exposure、下一交易日收益和成本假设生成 as-if 指标，避免重复 full daily scoring；默认 `ai_after_chatgpt` 全窗口命令已在当前数据上完成并写出 `backtest_robustness_2022-12-01_2026-05-12.json`，包含 as-run policy、41 个 robustness 场景、`remaining_gaps=[]`。随后 `build-parameter-replay` 为 PASS（17 个参数场景，material delta=3），`build-parameter-candidates` 为 PASS（17 trial / 17 candidate，owner review=1，risk review=2，needs policy=0），`optimize-market-feedback` 已读取默认产物。
+- 2026-05-14：owner 明确不要长期维护“跑一次后复用基础行派生指标”的第二套计算逻辑。任务切回 IN_PROGRESS；本轮目标改为把全窗口回测中昂贵的 point-in-time feature/report 准备拆成可缓存上下文，权重扰动、成本压力和窗口切分等调参场景仍调用同一套评分与回测执行路径，随后重新跑通 `backtest robustness -> parameter replay -> parameter candidates -> optimize-market-feedback`。
+- 2026-05-14：单一评分/回测引擎方案已完成并进入 VALIDATING。`run_daily_score_backtest` 支持复用 prepared PIT context，robustness 的成本压力、窗口切分和模块权重扰动场景不再维护独立派生评分逻辑；固定 exposure、再平衡、信号族和随机策略保留为执行/信号基线。当前数据从头跑通：`backtest --robustness-report --to 2026-05-12 --quality-as-of 2026-05-13` 431 秒完成，summary 含 41 个场景、12 个 module weight perturbation、policy present、`remaining_gaps=[]`；`build-parameter-replay` 为 PASS（17 场景、material delta=3）、`build-parameter-candidates` 为 PASS（17 trial / 17 candidate、owner review=1、risk review=2、needs policy=0）、`optimize-market-feedback` 为 `PASS_WITH_LIMITATIONS` / `PILOT_DIAGNOSTIC_REVIEW`。验证通过目标测试、全量 pytest、ruff 和 diff check。
