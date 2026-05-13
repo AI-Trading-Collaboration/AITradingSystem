@@ -1,0 +1,66 @@
+policy_metadata:
+  version: llm_request_profiles_v1_cost_pilot_2026-05-13
+  status: cost_pilot
+  owner: system
+  rationale: "将 OpenAI live 请求策略从 CLI 默认值迁入可审计配置；日报自动预审先降为成本 pilot，降低 daily-run 默认候选量和 reasoning 成本，其他手动/通用 profile 暂不调整。"
+  validation: "配置加载由 tests/test_llm_request_profiles.py 覆盖；日报账单和预审质量在下一次 daily-run 后人工观察。"
+  review_after_reports: 1
+
+default_profile_id: llm_claim_prereview
+
+profiles:
+  - profile_id: llm_claim_prereview
+    description: "通用 source-permission claim 预审；输出只进入 llm_extracted / pending_review 队列。"
+    provider: openai
+    api_family: responses
+    endpoint: https://api.openai.com/v1/responses
+    model: gpt-5.5
+    reasoning_effort: high
+    timeout_seconds: 120
+    http_client: requests
+    cache_ttl_hours: 24
+    max_retries: 2
+
+  - profile_id: risk_event_single_prereview
+    description: "单条风险事件 OpenAI 预审；复用 claim 结构化输出后只保留风险事件候选。"
+    provider: openai
+    api_family: responses
+    endpoint: https://api.openai.com/v1/responses
+    model: gpt-5.5
+    reasoning_effort: high
+    timeout_seconds: 120
+    http_client: requests
+    cache_ttl_hours: 24
+    max_retries: 2
+
+  - profile_id: risk_event_triaged_official_candidates
+    description: "只对 must_review/review_next 官方候选做 metadata-only 风险等级预审。"
+    provider: openai
+    api_family: responses
+    endpoint: https://api.openai.com/v1/responses
+    model: gpt-5.5
+    reasoning_effort: high
+    timeout_seconds: 120
+    http_client: requests
+    cache_ttl_hours: 24
+    max_retries: 2
+    max_candidates: 20
+
+  - profile_id: risk_event_daily_official_precheck
+    description: "score-daily/daily-run 默认日报前官方政策与地缘候选预审。"
+    provider: openai
+    api_family: responses
+    endpoint: https://api.openai.com/v1/responses
+    model: gpt-5.5
+    reasoning_effort: medium
+    timeout_seconds: 120
+    http_client: requests
+    cache_ttl_hours: 24
+    max_retries: 2
+    max_candidates: 10
+    official_policy_limit: 30
+    formal_assessment:
+      enabled: true
+      min_confidence: 0.0
+      next_review_days: 1
+      overwrite: true

@@ -38,7 +38,7 @@
 - 宏观序列：美国 2 年期、10 年期国债收益率，以及 FRED `DTWEXBGS` 广义美元指数代理。
 - 可选：TLT。
 
-财报、估值、政策/地缘发生记录、新闻与事件抽取放到第二期和第三期。其中 SEC 基本面、估值快照和手工审计的风险事件发生记录已经接入基础评分；估值快照已支持 FMP paid vendor API 拉取和结构化 CSV 导入，风险事件发生记录已支持结构化 CSV 导入，以减少 YAML 手工维护；LLM claim 预审已支持 OpenAI Responses API 结构化输出和待复核队列，默认使用 `gpt-5.5` 与 `reasoning.effort=high`，单请求失败最多重试 2 次，并记录审计字段，但仍只生成 `llm_extracted` / `pending_review` 线索，未接入交易评分。
+财报、估值、政策/地缘发生记录、新闻与事件抽取放到第二期和第三期。其中 SEC 基本面、估值快照和手工审计的风险事件发生记录已经接入基础评分；估值快照已支持 FMP paid vendor API 拉取和结构化 CSV 导入，风险事件发生记录已支持结构化 CSV 导入，以减少 YAML 手工维护；LLM claim 预审已支持 OpenAI Responses API 结构化输出和待复核队列，默认请求策略读取 `config/llm_request_profiles.yaml`，当前 profile 保持 `gpt-5.5` 和单请求失败最多重试 2 次，日报自动风险预审 profile 正在用 `reasoning.effort=medium` 做成本 pilot，并记录审计字段，但仍只生成 `llm_extracted` / `pending_review` 线索，未接入交易评分。
 
 数据源目录配置为 `config/data_sources.yaml`，校验命令为 `aits data-sources validate`。该目录记录每个来源的 provider、endpoint、缓存路径、审计字段、校验项、来源类型、限制说明和 provider 级 LLM 处理权限。新增正式财报、估值、新闻或事件来源前，必须先补充该目录并通过校验；外部 LLM 授权未知时默认 fail closed。
 

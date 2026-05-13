@@ -364,17 +364,17 @@ from ai_trading_system.industry_node_state import (
     render_industry_node_heat_section,
 )
 from ai_trading_system.llm_precheck import (
-    DEFAULT_OPENAI_HTTP_CLIENT,
-    DEFAULT_OPENAI_LLM_MODEL,
-    DEFAULT_OPENAI_REASONING_EFFORT,
     DEFAULT_OPENAI_REQUEST_CACHE_DIR,
-    DEFAULT_OPENAI_REQUEST_CACHE_TTL_SECONDS,
-    DEFAULT_OPENAI_TIMEOUT_SECONDS,
     default_llm_claim_precheck_report_path,
     load_llm_claim_precheck_input,
     run_openai_claim_precheck,
     write_llm_claim_precheck_report,
     write_llm_claim_prereview_queue,
+)
+from ai_trading_system.llm_request_profiles import (
+    DEFAULT_LLM_REQUEST_PROFILES_CONFIG_PATH,
+    LlmRequestProfile,
+    load_llm_request_profiles,
 )
 from ai_trading_system.market_evidence import (
     default_market_evidence_report_path,
@@ -699,6 +699,10 @@ DEFAULT_LLM_CLAIM_PREREVIEW_QUEUE_PATH = (
     PROJECT_ROOT / "data" / "processed" / "llm_claim_prereview_queue.json"
 )
 DEFAULT_OPENAI_REQUEST_CACHE_PATH = PROJECT_ROOT / DEFAULT_OPENAI_REQUEST_CACHE_DIR
+DEFAULT_LLM_CLAIM_PREREVIEW_PROFILE = "llm_claim_prereview"
+DEFAULT_RISK_EVENT_SINGLE_PREREVIEW_PROFILE = "risk_event_single_prereview"
+DEFAULT_RISK_EVENT_TRIAGED_PREREVIEW_PROFILE = "risk_event_triaged_official_candidates"
+DEFAULT_RISK_EVENT_DAILY_PREREVIEW_PROFILE = "risk_event_daily_official_precheck"
 DEFAULT_MARKET_EVIDENCE_PATH = PROJECT_ROOT / "data" / "external" / "market_evidence"
 DEFAULT_PORTFOLIO_POSITIONS_PATH = (
     PROJECT_ROOT / "data" / "external" / "portfolio_positions" / "current_positions.csv"
@@ -706,6 +710,20 @@ DEFAULT_PORTFOLIO_POSITIONS_PATH = (
 DEFAULT_FMP_ANALYST_ESTIMATE_HISTORY_DIR = default_fmp_analyst_estimate_history_dir(
     PROJECT_ROOT / "data" / "raw"
 )
+
+
+def _load_llm_request_profile(
+    profiles_path: Path,
+    profile_id: str,
+) -> LlmRequestProfile:
+    try:
+        return load_llm_request_profiles(profiles_path).get_profile(profile_id)
+    except (OSError, ValueError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+
+def _coalesce_profile_value(value, profile_value):
+    return profile_value if value is None else value
 DEFAULT_FMP_HISTORICAL_VALUATION_RAW_DIR = default_fmp_historical_valuation_raw_dir(
     PROJECT_ROOT / "data" / "raw"
 )
@@ -1260,6 +1278,14 @@ def precheck_llm_claims_command(
         Path,
         typer.Option(help="数据源目录路径，用于解析 provider LLM 权限。"),
     ] = DEFAULT_DATA_SOURCES_CONFIG_PATH,
+    llm_request_profiles_path: Annotated[
+        Path,
+        typer.Option(help="LLM request profile 配置路径。"),
+    ] = DEFAULT_LLM_REQUEST_PROFILES_CONFIG_PATH,
+    llm_request_profile: Annotated[
+        str,
+        typer.Option(help="本次 LLM 请求使用的 profile_id。"),
+    ] = DEFAULT_LLM_CLAIM_PREREVIEW_PROFILE,
     as_of: Annotated[
         str | None,
         typer.Option(help="报告日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -1273,34 +1299,51 @@ def precheck_llm_claims_command(
         typer.Option(help="读取 OpenAI API key 的环境变量名。"),
     ] = "OPENAI_API_KEY",
     model: Annotated[
-        str,
-        typer.Option(help="OpenAI Responses API 模型。"),
-    ] = DEFAULT_OPENAI_LLM_MODEL,
+        str | None,
+        typer.Option(help="覆盖 profile 中的 OpenAI Responses API 模型。"),
+    ] = None,
     reasoning_effort: Annotated[
-        str,
-        typer.Option(help="OpenAI Responses API reasoning.effort。"),
-    ] = DEFAULT_OPENAI_REASONING_EFFORT,
+        str | None,
+        typer.Option(help="覆盖 profile 中的 OpenAI Responses API reasoning.effort。"),
+    ] = None,
     timeout_seconds: Annotated[
-        float,
-        typer.Option(help="OpenAI Responses API 请求读超时秒数。"),
-    ] = DEFAULT_OPENAI_TIMEOUT_SECONDS,
+        float | None,
+        typer.Option(help="覆盖 profile 中的 OpenAI Responses API 请求读超时秒数。"),
+    ] = None,
     openai_http_client: Annotated[
-        str,
-        typer.Option(help="OpenAI Responses API HTTP 客户端：requests 或 urllib。"),
-    ] = DEFAULT_OPENAI_HTTP_CLIENT,
+        str | None,
+        typer.Option(
+            help="覆盖 profile 中的 OpenAI Responses API HTTP 客户端：requests 或 urllib。"
+        ),
+    ] = None,
     openai_cache_dir: Annotated[
         Path,
         typer.Option(help="OpenAI 请求/响应本地缓存与审计归档目录。"),
     ] = DEFAULT_OPENAI_REQUEST_CACHE_PATH,
     openai_cache_ttl_hours: Annotated[
-        float,
-        typer.Option(help="完全相同 OpenAI 请求的本地缓存复用时长，单位小时。"),
-    ] = DEFAULT_OPENAI_REQUEST_CACHE_TTL_SECONDS / 3600,
+        float | None,
+        typer.Option(help="覆盖 profile 中完全相同 OpenAI 请求的本地缓存复用时长，单位小时。"),
+    ] = None,
 ) -> None:
     """调用 OpenAI 结构化输出生成 claim 待复核队列。"""
-    if timeout_seconds <= 0:
+    profile = _load_llm_request_profile(llm_request_profiles_path, llm_request_profile)
+    effective_model = _coalesce_profile_value(model, profile.model)
+    effective_reasoning_effort = _coalesce_profile_value(
+        reasoning_effort,
+        profile.reasoning_effort,
+    )
+    effective_timeout_seconds = _coalesce_profile_value(
+        timeout_seconds,
+        profile.timeout_seconds,
+    )
+    effective_http_client = _coalesce_profile_value(openai_http_client, profile.http_client)
+    effective_cache_ttl_hours = _coalesce_profile_value(
+        openai_cache_ttl_hours,
+        profile.cache_ttl_hours,
+    )
+    if effective_timeout_seconds <= 0:
         raise typer.BadParameter("OpenAI 请求超时秒数必须为正数。")
-    if openai_cache_ttl_hours <= 0:
+    if effective_cache_ttl_hours <= 0:
         raise typer.BadParameter("OpenAI 请求缓存 TTL 小时数必须为正数。")
     report_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_llm_claim_precheck_report_path(
@@ -1318,12 +1361,14 @@ def precheck_llm_claims_command(
         api_key=os.getenv(api_key_env, ""),
         data_sources=load_data_sources(data_sources_path),
         input_path=input_path,
-        model=model,
-        reasoning_effort=reasoning_effort,
-        timeout_seconds=timeout_seconds,
-        http_client=openai_http_client,
+        model=effective_model,
+        reasoning_effort=effective_reasoning_effort,
+        endpoint=profile.endpoint,
+        timeout_seconds=effective_timeout_seconds,
+        http_client=effective_http_client,
         openai_cache_dir=openai_cache_dir,
-        openai_cache_ttl_seconds=openai_cache_ttl_hours * 3600,
+        openai_cache_ttl_seconds=effective_cache_ttl_hours * 3600,
+        max_retries=profile.max_retries,
     )
     write_llm_claim_precheck_report(report, report_path)
 
@@ -1331,6 +1376,10 @@ def precheck_llm_claims_command(
     console.print(f"[{status_style}]LLM 证据预审状态：{report.status}[/{status_style}]")
     console.print(f"预审报告：{report_path}")
     console.print(f"预审记录：{report.record_count}；待复核 claim：{report.pending_review_count}")
+    console.print(
+        f"LLM request profile：{profile.profile_id}；"
+        f"model={effective_model}；reasoning={effective_reasoning_effort}"
+    )
     console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
     if not report.passed:
         raise typer.Exit(code=1)
@@ -5244,7 +5293,8 @@ def _build_daily_ops_plan_from_cli_options(
     include_valuation_snapshots: bool,
     include_secret_scan: bool,
     risk_event_openai_precheck: bool,
-    risk_event_openai_precheck_max_candidates: int,
+    risk_event_openai_precheck_max_candidates: int | None,
+    llm_request_profile: str,
     full_universe: bool,
     run_id: str | None = None,
     default_observed_at: datetime | None = None,
@@ -5253,7 +5303,10 @@ def _build_daily_ops_plan_from_cli_options(
         _parse_date(as_of) if as_of else resolve_daily_ops_default_as_of(default_observed_at)
     )
     start_date = _parse_date(download_start)
-    if risk_event_openai_precheck_max_candidates < 0:
+    if (
+        risk_event_openai_precheck_max_candidates is not None
+        and risk_event_openai_precheck_max_candidates < 0
+    ):
         raise typer.BadParameter("OpenAI 风险事件预审候选上限不能为负数。")
     try:
         plan = build_daily_ops_plan(
@@ -5266,6 +5319,7 @@ def _build_daily_ops_plan_from_cli_options(
             include_secret_scan=include_secret_scan,
             skip_risk_event_openai_precheck=not risk_event_openai_precheck,
             full_universe=full_universe,
+            llm_request_profile=llm_request_profile,
             risk_event_openai_precheck_max_candidates=(
                 risk_event_openai_precheck_max_candidates
             ),
@@ -5329,9 +5383,13 @@ def daily_ops_plan_command(
         ),
     ] = True,
     risk_event_openai_precheck_max_candidates: Annotated[
-        int,
-        typer.Option(help="计划中的 OpenAI 风险事件预审候选上限。"),
-    ] = 20,
+        int | None,
+        typer.Option(help="覆盖 LLM request profile 中的 OpenAI 风险事件预审候选上限。"),
+    ] = None,
+    llm_request_profile: Annotated[
+        str,
+        typer.Option(help="计划中的 score-daily 使用的 LLM request profile。"),
+    ] = DEFAULT_RISK_EVENT_DAILY_PREREVIEW_PROFILE,
     full_universe: Annotated[
         bool,
         typer.Option(
@@ -5364,6 +5422,7 @@ def daily_ops_plan_command(
         risk_event_openai_precheck_max_candidates=(
             risk_event_openai_precheck_max_candidates
         ),
+        llm_request_profile=llm_request_profile,
         full_universe=full_universe,
     )
 
@@ -5438,9 +5497,13 @@ def daily_ops_run_command(
         ),
     ] = True,
     risk_event_openai_precheck_max_candidates: Annotated[
-        int,
-        typer.Option(help="OpenAI 风险事件预审候选上限。"),
-    ] = 20,
+        int | None,
+        typer.Option(help="覆盖 LLM request profile 中的 OpenAI 风险事件预审候选上限。"),
+    ] = None,
+    llm_request_profile: Annotated[
+        str,
+        typer.Option(help="score-daily 使用的 LLM request profile。"),
+    ] = DEFAULT_RISK_EVENT_DAILY_PREREVIEW_PROFILE,
     full_universe: Annotated[
         bool,
         typer.Option(
@@ -5502,6 +5565,7 @@ def daily_ops_run_command(
         risk_event_openai_precheck_max_candidates=(
             risk_event_openai_precheck_max_candidates
         ),
+        llm_request_profile=llm_request_profile,
         full_universe=full_universe,
         run_id=resolved_run_id,
         default_observed_at=run_generated_at,
@@ -6518,9 +6582,9 @@ def precheck_triaged_official_candidates_with_openai_command(
         typer.Option(help="逗号分隔的 triage bucket 白名单。"),
     ] = "must_review,review_next",
     max_candidates: Annotated[
-        int,
-        typer.Option(help="本次最多送入 OpenAI 预审的高优先级候选数。"),
-    ] = 20,
+        int | None,
+        typer.Option(help="覆盖 profile 中本次最多送入 OpenAI 预审的高优先级候选数。"),
+    ] = None,
     queue_path: Annotated[
         Path,
         typer.Option(help="写入风险事件预审待复核队列 JSON 的路径。"),
@@ -6533,6 +6597,14 @@ def precheck_triaged_official_candidates_with_openai_command(
         Path,
         typer.Option(help="风险事件配置路径，用于检查 matched_risk_ids。"),
     ] = DEFAULT_RISK_EVENTS_CONFIG_PATH,
+    llm_request_profiles_path: Annotated[
+        Path,
+        typer.Option(help="LLM request profile 配置路径。"),
+    ] = DEFAULT_LLM_REQUEST_PROFILES_CONFIG_PATH,
+    llm_request_profile: Annotated[
+        str,
+        typer.Option(help="本次 LLM 请求使用的 profile_id。"),
+    ] = DEFAULT_RISK_EVENT_TRIAGED_PREREVIEW_PROFILE,
     as_of: Annotated[
         str | None,
         typer.Option(help="预审和校验日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -6546,36 +6618,59 @@ def precheck_triaged_official_candidates_with_openai_command(
         typer.Option(help="读取 OpenAI API key 的环境变量名。"),
     ] = "OPENAI_API_KEY",
     model: Annotated[
-        str,
-        typer.Option(help="OpenAI Responses API 模型。"),
-    ] = DEFAULT_OPENAI_LLM_MODEL,
+        str | None,
+        typer.Option(help="覆盖 profile 中的 OpenAI Responses API 模型。"),
+    ] = None,
     reasoning_effort: Annotated[
-        str,
-        typer.Option(help="OpenAI Responses API reasoning.effort。"),
-    ] = DEFAULT_OPENAI_REASONING_EFFORT,
+        str | None,
+        typer.Option(help="覆盖 profile 中的 OpenAI Responses API reasoning.effort。"),
+    ] = None,
     timeout_seconds: Annotated[
-        float,
-        typer.Option(help="OpenAI Responses API 请求读超时秒数。"),
-    ] = DEFAULT_OPENAI_TIMEOUT_SECONDS,
+        float | None,
+        typer.Option(help="覆盖 profile 中的 OpenAI Responses API 请求读超时秒数。"),
+    ] = None,
     openai_http_client: Annotated[
-        str,
-        typer.Option(help="OpenAI Responses API HTTP 客户端：requests 或 urllib。"),
-    ] = DEFAULT_OPENAI_HTTP_CLIENT,
+        str | None,
+        typer.Option(
+            help="覆盖 profile 中的 OpenAI Responses API HTTP 客户端：requests 或 urllib。"
+        ),
+    ] = None,
     openai_cache_dir: Annotated[
         Path,
         typer.Option(help="OpenAI 请求/响应本地缓存与审计归档目录。"),
     ] = DEFAULT_OPENAI_REQUEST_CACHE_PATH,
     openai_cache_ttl_hours: Annotated[
-        float,
-        typer.Option(help="完全相同 OpenAI 请求的本地缓存复用时长，单位小时。"),
-    ] = DEFAULT_OPENAI_REQUEST_CACHE_TTL_SECONDS / 3600,
+        float | None,
+        typer.Option(help="覆盖 profile 中完全相同 OpenAI 请求的本地缓存复用时长，单位小时。"),
+    ] = None,
 ) -> None:
     """只对 triage 高优先级官方候选调用 OpenAI，输出风险等级预审建议。"""
-    if max_candidates < 0:
+    profile = _load_llm_request_profile(llm_request_profiles_path, llm_request_profile)
+    effective_max_candidates = _coalesce_profile_value(
+        max_candidates,
+        profile.max_candidates,
+    )
+    effective_model = _coalesce_profile_value(model, profile.model)
+    effective_reasoning_effort = _coalesce_profile_value(
+        reasoning_effort,
+        profile.reasoning_effort,
+    )
+    effective_timeout_seconds = _coalesce_profile_value(
+        timeout_seconds,
+        profile.timeout_seconds,
+    )
+    effective_http_client = _coalesce_profile_value(openai_http_client, profile.http_client)
+    effective_cache_ttl_hours = _coalesce_profile_value(
+        openai_cache_ttl_hours,
+        profile.cache_ttl_hours,
+    )
+    if effective_max_candidates is None:
+        raise typer.BadParameter("LLM request profile 必须设置 max_candidates，或显式传入。")
+    if effective_max_candidates < 0:
         raise typer.BadParameter("OpenAI 预审候选上限不能为负数。")
-    if timeout_seconds <= 0:
+    if effective_timeout_seconds <= 0:
         raise typer.BadParameter("OpenAI 请求超时秒数必须为正数。")
-    if openai_cache_ttl_hours <= 0:
+    if effective_cache_ttl_hours <= 0:
         raise typer.BadParameter("OpenAI 请求缓存 TTL 小时数必须为正数。")
     api_key = os.getenv(api_key_env, "")
     if not api_key:
@@ -6629,13 +6724,15 @@ def precheck_triaged_official_candidates_with_openai_command(
         risk_events=load_risk_events(risk_events_path),
         input_path=triage_path,
         as_of=precheck_date,
-        model=model,
-        reasoning_effort=reasoning_effort,
-        timeout_seconds=timeout_seconds,
-        http_client=openai_http_client,
+        model=effective_model,
+        reasoning_effort=effective_reasoning_effort,
+        endpoint=profile.endpoint,
+        timeout_seconds=effective_timeout_seconds,
+        http_client=effective_http_client,
         openai_cache_dir=openai_cache_dir,
-        openai_cache_ttl_seconds=openai_cache_ttl_hours * 3600,
-        max_candidates=max_candidates,
+        openai_cache_ttl_seconds=effective_cache_ttl_hours * 3600,
+        max_retries=profile.max_retries,
+        max_candidates=effective_max_candidates,
     )
     write_risk_event_prereview_import_report(report, report_path)
 
@@ -6648,6 +6745,10 @@ def precheck_triaged_official_candidates_with_openai_command(
     console.print(f"官方候选 CSV：{official_candidates_path}")
     console.print(f"Triage CSV：{triage_path}")
     console.print(f"Triage buckets：{', '.join(selected_buckets)}")
+    console.print(
+        f"LLM request profile：{profile.profile_id}；"
+        f"model={effective_model}；reasoning={effective_reasoning_effort}"
+    )
     console.print(
         f"送入 OpenAI 候选：{len(selected_candidates)}；"
         f"待复核队列：{report.record_count}；"
@@ -6799,6 +6900,14 @@ def precheck_risk_events_with_openai_command(
         Path,
         typer.Option(help="风险事件配置路径，用于检查 matched_risk_ids。"),
     ] = DEFAULT_RISK_EVENTS_CONFIG_PATH,
+    llm_request_profiles_path: Annotated[
+        Path,
+        typer.Option(help="LLM request profile 配置路径。"),
+    ] = DEFAULT_LLM_REQUEST_PROFILES_CONFIG_PATH,
+    llm_request_profile: Annotated[
+        str,
+        typer.Option(help="本次 LLM 请求使用的 profile_id。"),
+    ] = DEFAULT_RISK_EVENT_SINGLE_PREREVIEW_PROFILE,
     as_of: Annotated[
         str | None,
         typer.Option(help="预审和校验日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -6812,34 +6921,51 @@ def precheck_risk_events_with_openai_command(
         typer.Option(help="读取 OpenAI API key 的环境变量名。"),
     ] = "OPENAI_API_KEY",
     model: Annotated[
-        str,
-        typer.Option(help="OpenAI Responses API 模型。"),
-    ] = DEFAULT_OPENAI_LLM_MODEL,
+        str | None,
+        typer.Option(help="覆盖 profile 中的 OpenAI Responses API 模型。"),
+    ] = None,
     reasoning_effort: Annotated[
-        str,
-        typer.Option(help="OpenAI Responses API reasoning.effort。"),
-    ] = DEFAULT_OPENAI_REASONING_EFFORT,
+        str | None,
+        typer.Option(help="覆盖 profile 中的 OpenAI Responses API reasoning.effort。"),
+    ] = None,
     timeout_seconds: Annotated[
-        float,
-        typer.Option(help="OpenAI Responses API 请求读超时秒数。"),
-    ] = DEFAULT_OPENAI_TIMEOUT_SECONDS,
+        float | None,
+        typer.Option(help="覆盖 profile 中的 OpenAI Responses API 请求读超时秒数。"),
+    ] = None,
     openai_http_client: Annotated[
-        str,
-        typer.Option(help="OpenAI Responses API HTTP 客户端：requests 或 urllib。"),
-    ] = DEFAULT_OPENAI_HTTP_CLIENT,
+        str | None,
+        typer.Option(
+            help="覆盖 profile 中的 OpenAI Responses API HTTP 客户端：requests 或 urllib。"
+        ),
+    ] = None,
     openai_cache_dir: Annotated[
         Path,
         typer.Option(help="OpenAI 请求/响应本地缓存与审计归档目录。"),
     ] = DEFAULT_OPENAI_REQUEST_CACHE_PATH,
     openai_cache_ttl_hours: Annotated[
-        float,
-        typer.Option(help="完全相同 OpenAI 请求的本地缓存复用时长，单位小时。"),
-    ] = DEFAULT_OPENAI_REQUEST_CACHE_TTL_SECONDS / 3600,
+        float | None,
+        typer.Option(help="覆盖 profile 中完全相同 OpenAI 请求的本地缓存复用时长，单位小时。"),
+    ] = None,
 ) -> None:
     """调用 OpenAI API 整理风险事件候选，并写入人工复核队列。"""
-    if timeout_seconds <= 0:
+    profile = _load_llm_request_profile(llm_request_profiles_path, llm_request_profile)
+    effective_model = _coalesce_profile_value(model, profile.model)
+    effective_reasoning_effort = _coalesce_profile_value(
+        reasoning_effort,
+        profile.reasoning_effort,
+    )
+    effective_timeout_seconds = _coalesce_profile_value(
+        timeout_seconds,
+        profile.timeout_seconds,
+    )
+    effective_http_client = _coalesce_profile_value(openai_http_client, profile.http_client)
+    effective_cache_ttl_hours = _coalesce_profile_value(
+        openai_cache_ttl_hours,
+        profile.cache_ttl_hours,
+    )
+    if effective_timeout_seconds <= 0:
         raise typer.BadParameter("OpenAI 请求超时秒数必须为正数。")
-    if openai_cache_ttl_hours <= 0:
+    if effective_cache_ttl_hours <= 0:
         raise typer.BadParameter("OpenAI 请求缓存 TTL 小时数必须为正数。")
     precheck_date = _parse_date(as_of) if as_of else date.today()
     report_path = output_path or default_risk_event_openai_prereview_report_path(
@@ -6859,12 +6985,14 @@ def precheck_risk_events_with_openai_command(
         risk_events=load_risk_events(risk_events_path),
         input_path=input_path,
         as_of=precheck_date,
-        model=model,
-        reasoning_effort=reasoning_effort,
-        timeout_seconds=timeout_seconds,
-        http_client=openai_http_client,
+        model=effective_model,
+        reasoning_effort=effective_reasoning_effort,
+        endpoint=profile.endpoint,
+        timeout_seconds=effective_timeout_seconds,
+        http_client=effective_http_client,
         openai_cache_dir=openai_cache_dir,
-        openai_cache_ttl_seconds=openai_cache_ttl_hours * 3600,
+        openai_cache_ttl_seconds=effective_cache_ttl_hours * 3600,
+        max_retries=profile.max_retries,
     )
     write_risk_event_prereview_import_report(report, report_path)
 
@@ -6874,6 +7002,10 @@ def precheck_risk_events_with_openai_command(
         f"{report.status}[/{status_style}]"
     )
     console.print(f"预审报告：{report_path}")
+    console.print(
+        f"LLM request profile：{profile.profile_id}；"
+        f"model={effective_model}；reasoning={effective_reasoning_effort}"
+    )
     console.print(
         f"LLM claim 数：{report.row_count}；"
         f"风险事件候选：{report.record_count}；"
@@ -9257,8 +9389,16 @@ def score_daily(
         Path | None,
         typer.Option(help="Markdown 风险事件 OpenAI 自动预审报告输出路径。"),
     ] = None,
+    llm_request_profiles_path: Annotated[
+        Path,
+        typer.Option(help="LLM request profile 配置路径。"),
+    ] = DEFAULT_LLM_REQUEST_PROFILES_CONFIG_PATH,
+    llm_request_profile: Annotated[
+        str,
+        typer.Option(help="日报前 OpenAI 风险事件预审使用的 profile_id。"),
+    ] = DEFAULT_RISK_EVENT_DAILY_PREREVIEW_PROFILE,
     risk_event_llm_formal_assessment: Annotated[
-        bool,
+        bool | None,
         typer.Option(
             "--risk-event-llm-formal-assessment/--skip-risk-event-llm-formal-assessment",
             help=(
@@ -9266,26 +9406,28 @@ def score_daily(
                 "occurrence/attestation 作为政策/地缘正式评估输入。"
             ),
         ),
-    ] = True,
+    ] = None,
     risk_event_llm_formal_report_path: Annotated[
         Path | None,
         typer.Option(help="Markdown 风险事件 LLM formal assessment 报告输出路径。"),
     ] = None,
     risk_event_llm_formal_min_confidence: Annotated[
-        float,
-        typer.Option(help="低于该 confidence 的 LLM 预审记录不写入正式 occurrence。"),
-    ] = 0.0,
+        float | None,
+        typer.Option(
+            help="覆盖 profile 中低于该 confidence 的 LLM 预审记录不写入正式 occurrence。"
+        ),
+    ] = None,
     risk_event_llm_formal_next_review_days: Annotated[
-        int,
-        typer.Option(help="LLM formal assessment 的下次复核间隔天数。"),
-    ] = 1,
+        int | None,
+        typer.Option(help="覆盖 profile 中 LLM formal assessment 的下次复核间隔天数。"),
+    ] = None,
     risk_event_llm_formal_overwrite: Annotated[
-        bool,
+        bool | None,
         typer.Option(
             "--risk-event-llm-formal-overwrite/--no-risk-event-llm-formal-overwrite",
-            help="日报重复运行同一 as-of 时是否覆盖同名 LLM formal YAML。",
+            help="覆盖 profile 中日报重复运行同一 as-of 时是否覆盖同名 LLM formal YAML。",
         ),
-    ] = True,
+    ] = None,
     official_policy_report_path: Annotated[
         Path | None,
         typer.Option(help="Markdown 官方政策/地缘来源自动抓取报告输出路径。"),
@@ -9295,41 +9437,49 @@ def score_daily(
         typer.Option(help="日报前官方来源抓取 source_id 白名单，逗号分隔；为空抓取全部。"),
     ] = None,
     official_policy_limit: Annotated[
-        int,
-        typer.Option(help="日报前官方来源抓取每个可分页来源最多请求的记录数。"),
-    ] = 50,
+        int | None,
+        typer.Option(help="覆盖 profile 中日报前官方来源抓取每个可分页来源最多请求的记录数。"),
+    ] = None,
     risk_event_openai_precheck_max_candidates: Annotated[
-        int,
-        typer.Option(help="日报前 OpenAI 风险事件预审最多处理的官方候选数，避免成本失控。"),
-    ] = 20,
+        int | None,
+        typer.Option(
+            help="覆盖 profile 中日报前 OpenAI 风险事件预审最多处理的官方候选数。"
+        ),
+    ] = None,
     openai_api_key_env: Annotated[
         str,
         typer.Option(help="日报前风险事件 OpenAI 预审读取 API key 的环境变量名。"),
     ] = "OPENAI_API_KEY",
     openai_model: Annotated[
-        str,
-        typer.Option(help="日报前风险事件 OpenAI 预审使用的 Responses API 模型。"),
-    ] = DEFAULT_OPENAI_LLM_MODEL,
+        str | None,
+        typer.Option(help="覆盖 profile 中日报前风险事件 OpenAI 预审使用的 Responses API 模型。"),
+    ] = None,
     openai_reasoning_effort: Annotated[
-        str,
-        typer.Option(help="日报前风险事件 OpenAI 预审 reasoning.effort。"),
-    ] = DEFAULT_OPENAI_REASONING_EFFORT,
+        str | None,
+        typer.Option(help="覆盖 profile 中日报前风险事件 OpenAI 预审 reasoning.effort。"),
+    ] = None,
     openai_timeout_seconds: Annotated[
-        float,
-        typer.Option(help="日报前风险事件 OpenAI 预审 Responses API 请求读超时秒数。"),
-    ] = DEFAULT_OPENAI_TIMEOUT_SECONDS,
+        float | None,
+        typer.Option(
+            help="覆盖 profile 中日报前风险事件 OpenAI 预审 Responses API 请求读超时秒数。"
+        ),
+    ] = None,
     openai_http_client: Annotated[
-        str,
-        typer.Option(help="日报前风险事件 OpenAI 预审 HTTP 客户端：requests 或 urllib。"),
-    ] = DEFAULT_OPENAI_HTTP_CLIENT,
+        str | None,
+        typer.Option(
+            help="覆盖 profile 中日报前风险事件 OpenAI 预审 HTTP 客户端：requests 或 urllib。"
+        ),
+    ] = None,
     openai_cache_dir: Annotated[
         Path,
         typer.Option(help="日报前 OpenAI 请求/响应本地缓存与审计归档目录。"),
     ] = DEFAULT_OPENAI_REQUEST_CACHE_PATH,
     openai_cache_ttl_hours: Annotated[
-        float,
-        typer.Option(help="完全相同日报前 OpenAI 请求的本地缓存复用时长，单位小时。"),
-    ] = DEFAULT_OPENAI_REQUEST_CACHE_TTL_SECONDS / 3600,
+        float | None,
+        typer.Option(
+            help="覆盖 profile 中完全相同日报前 OpenAI 请求的本地缓存复用时长。"
+        ),
+    ] = None,
     catalyst_calendar_path: Annotated[
         Path,
         typer.Option(help="未来催化剂日历 YAML 路径，用于日报告警摘要。"),
@@ -9722,18 +9872,71 @@ def score_daily(
     risk_event_prereview_report = None
     llm_formal_report = None
     if risk_event_openai_precheck:
-        if risk_event_openai_precheck_max_candidates < 0:
+        llm_profile = _load_llm_request_profile(
+            llm_request_profiles_path,
+            llm_request_profile,
+        )
+        effective_openai_model = _coalesce_profile_value(openai_model, llm_profile.model)
+        effective_openai_reasoning_effort = _coalesce_profile_value(
+            openai_reasoning_effort,
+            llm_profile.reasoning_effort,
+        )
+        effective_openai_timeout_seconds = _coalesce_profile_value(
+            openai_timeout_seconds,
+            llm_profile.timeout_seconds,
+        )
+        effective_openai_http_client = _coalesce_profile_value(
+            openai_http_client,
+            llm_profile.http_client,
+        )
+        effective_openai_cache_ttl_hours = _coalesce_profile_value(
+            openai_cache_ttl_hours,
+            llm_profile.cache_ttl_hours,
+        )
+        effective_risk_event_openai_precheck_max_candidates = _coalesce_profile_value(
+            risk_event_openai_precheck_max_candidates,
+            llm_profile.max_candidates,
+        )
+        effective_official_policy_limit = _coalesce_profile_value(
+            official_policy_limit,
+            llm_profile.official_policy_limit,
+        )
+        effective_risk_event_llm_formal_assessment = _coalesce_profile_value(
+            risk_event_llm_formal_assessment,
+            llm_profile.formal_assessment.enabled,
+        )
+        effective_risk_event_llm_formal_min_confidence = _coalesce_profile_value(
+            risk_event_llm_formal_min_confidence,
+            llm_profile.formal_assessment.min_confidence,
+        )
+        effective_risk_event_llm_formal_next_review_days = _coalesce_profile_value(
+            risk_event_llm_formal_next_review_days,
+            llm_profile.formal_assessment.next_review_days,
+        )
+        effective_risk_event_llm_formal_overwrite = _coalesce_profile_value(
+            risk_event_llm_formal_overwrite,
+            llm_profile.formal_assessment.overwrite,
+        )
+        if effective_risk_event_openai_precheck_max_candidates is None:
+            raise typer.BadParameter(
+                "LLM request profile 必须设置 max_candidates，或显式传入。"
+            )
+        if effective_official_policy_limit is None:
+            raise typer.BadParameter(
+                "LLM request profile 必须设置 official_policy_limit，或显式传入。"
+            )
+        if effective_risk_event_openai_precheck_max_candidates < 0:
             raise typer.BadParameter("OpenAI 风险事件预审候选上限不能为负数。")
-        if openai_timeout_seconds <= 0:
+        if effective_openai_timeout_seconds <= 0:
             raise typer.BadParameter("OpenAI 风险事件预审超时秒数必须为正数。")
-        if openai_cache_ttl_hours <= 0:
+        if effective_openai_cache_ttl_hours <= 0:
             raise typer.BadParameter("OpenAI 请求缓存 TTL 小时数必须为正数。")
         if (
-            risk_event_llm_formal_min_confidence < 0
-            or risk_event_llm_formal_min_confidence > 1
+            effective_risk_event_llm_formal_min_confidence < 0
+            or effective_risk_event_llm_formal_min_confidence > 1
         ):
             raise typer.BadParameter("LLM formal min confidence 必须在 0 到 1 之间。")
-        if risk_event_llm_formal_next_review_days < 0:
+        if effective_risk_event_llm_formal_next_review_days < 0:
             raise typer.BadParameter("LLM formal next review days 不能为负数。")
         if not os.getenv(openai_api_key_env, ""):
             console.print("[red]缺少 OpenAI API key，已停止日报前风险事件预审。[/red]")
@@ -9754,7 +9957,7 @@ def score_daily(
                 "GOVINFO_API_KEY": os.getenv("GOVINFO_API_KEY", ""),
             },
             selected_source_ids=selected_official_source_ids,
-            limit=official_policy_limit,
+            limit=effective_official_policy_limit,
             download_manifest_path=PROJECT_ROOT / "data" / "raw" / "download_manifest.csv",
         )
         write_official_policy_fetch_report(
@@ -9781,19 +9984,21 @@ def score_daily(
                 risk_events=risk_events_config,
                 input_path=official_candidates_path,
                 as_of=score_date,
-                model=openai_model,
-                reasoning_effort=openai_reasoning_effort,
-                timeout_seconds=openai_timeout_seconds,
-                http_client=openai_http_client,
+                model=effective_openai_model,
+                reasoning_effort=effective_openai_reasoning_effort,
+                endpoint=llm_profile.endpoint,
+                timeout_seconds=effective_openai_timeout_seconds,
+                http_client=effective_openai_http_client,
                 openai_cache_dir=openai_cache_dir,
-                openai_cache_ttl_seconds=openai_cache_ttl_hours * 3600,
+                openai_cache_ttl_seconds=effective_openai_cache_ttl_hours * 3600,
+                max_retries=llm_profile.max_retries,
                 generated_at=(
                     score_started_at if score_date == production_score_date else None
                 ),
                 request_visibility_cutoff=(
                     score_started_at if score_date == production_score_date else None
                 ),
-                max_candidates=risk_event_openai_precheck_max_candidates,
+                max_candidates=effective_risk_event_openai_precheck_max_candidates,
             )
         )
         write_risk_event_prereview_import_report(
@@ -9821,15 +10026,21 @@ def score_daily(
         console.print(f"官方来源抓取报告：{official_policy_report_output}")
         console.print(f"OpenAI 预审报告：{risk_event_openai_precheck_report_output}")
         console.print(f"预审待复核队列：{risk_event_prereview_queue_path}")
-        if risk_event_llm_formal_assessment:
+        console.print(
+            f"LLM request profile：{llm_profile.profile_id}；"
+            f"model={effective_openai_model}；"
+            f"reasoning={effective_openai_reasoning_effort}；"
+            f"max_candidates={effective_risk_event_openai_precheck_max_candidates}"
+        )
+        if effective_risk_event_llm_formal_assessment:
             try:
                 llm_formal_report = build_llm_formal_assessment_report(
                     risk_event_prereview_queue_path,
                     as_of=score_date,
                     risk_events=risk_events_config,
                     include_attestation=True,
-                    next_review_days=risk_event_llm_formal_next_review_days,
-                    min_confidence=risk_event_llm_formal_min_confidence,
+                    next_review_days=effective_risk_event_llm_formal_next_review_days,
+                    min_confidence=effective_risk_event_llm_formal_min_confidence,
                 )
                 write_llm_formal_assessment_report(
                     llm_formal_report,
@@ -9848,7 +10059,7 @@ def score_daily(
                 written_llm_formal_paths = write_llm_formal_assessment_outputs(
                     llm_formal_report,
                     risk_event_occurrences_path,
-                    overwrite=risk_event_llm_formal_overwrite,
+                    overwrite=effective_risk_event_llm_formal_overwrite,
                 )
             except (OSError, ValueError, FileExistsError) as exc:
                 console.print(f"[red]风险事件 LLM formal assessment 写入失败：{exc}[/red]")
@@ -10111,14 +10322,15 @@ def score_daily(
                 risk_event_llm_formal_report_output=(
                     risk_event_llm_formal_report_output
                 ),
-                llm_formal_enabled=risk_event_llm_formal_assessment,
-                model=openai_model,
-                reasoning_effort=openai_reasoning_effort,
-                timeout_seconds=openai_timeout_seconds,
-                http_client=openai_http_client,
+                llm_profile_id=llm_profile.profile_id,
+                llm_formal_enabled=effective_risk_event_llm_formal_assessment,
+                model=effective_openai_model,
+                reasoning_effort=effective_openai_reasoning_effort,
+                timeout_seconds=effective_openai_timeout_seconds,
+                http_client=effective_openai_http_client,
                 cache_dir=openai_cache_dir,
-                cache_ttl_hours=openai_cache_ttl_hours,
-                max_candidates=risk_event_openai_precheck_max_candidates,
+                cache_ttl_hours=effective_openai_cache_ttl_hours,
+                max_candidates=effective_risk_event_openai_precheck_max_candidates,
             )
             if risk_event_openai_precheck
             and official_policy_fetch_report is not None
@@ -10184,6 +10396,7 @@ def score_daily(
         console.print(f"官方政策/地缘抓取报告：{official_policy_report_output}")
         console.print(f"风险事件 OpenAI 预审报告：{risk_event_openai_precheck_report_output}")
         console.print(f"风险事件预审队列：{risk_event_prereview_queue_path}")
+        console.print(f"LLM request profile：{llm_profile.profile_id}")
         if llm_formal_report is not None:
             console.print(f"风险事件 LLM formal 报告：{risk_event_llm_formal_report_output}")
     console.print(
@@ -10252,6 +10465,7 @@ def _risk_event_openai_precheck_daily_section(
     risk_event_prereview_queue_path: Path,
     llm_formal_report,
     risk_event_llm_formal_report_output: Path,
+    llm_profile_id: str,
     llm_formal_enabled: bool,
     model: str,
     reasoning_effort: str,
@@ -10268,6 +10482,7 @@ def _risk_event_openai_precheck_daily_section(
         f"- 官方 payload 数：{official_policy_fetch_report.payload_count}",
         f"- 官方候选数：{official_policy_fetch_report.candidate_count}",
         f"- OpenAI 预审状态：{risk_event_prereview_report.status}",
+        f"- LLM request profile：{llm_profile_id}",
         f"- OpenAI 模型：{model}",
         f"- reasoning.effort：{reasoning_effort}",
         f"- 请求读超时：{timeout_seconds:g} 秒",
@@ -10337,6 +10552,7 @@ def _base_trace_config_paths() -> dict[str, Path]:
         "data_quality": DEFAULT_DATA_QUALITY_CONFIG_PATH,
         "features": DEFAULT_FEATURE_CONFIG_PATH,
         "scoring_rules": DEFAULT_SCORING_RULES_CONFIG_PATH,
+        "llm_request_profiles": DEFAULT_LLM_REQUEST_PROFILES_CONFIG_PATH,
         "watchlist": DEFAULT_WATCHLIST_CONFIG_PATH,
         "watchlist_lifecycle": DEFAULT_WATCHLIST_LIFECYCLE_PATH,
         "industry_chain": DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH,

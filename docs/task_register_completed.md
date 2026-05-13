@@ -2,7 +2,7 @@
 
 本文归档 `docs/task_register.md` 中已经 `DONE`、`BASELINE_DONE` 或 `DROPPED` 的任务，保留状态迁移、验收标准和历史备注。
 
-最后更新：2026-05-10
+最后更新：2026-05-13
 
 ## 使用规则
 
@@ -14,6 +14,7 @@
 
 |ID|领域|优先级|状态|下一责任方|阻塞或下一步|验收标准|备注|
 |---|---|---|---|---|---|---|---|
+|LLM-004|新闻/LLM 请求配置|P1|DONE|系统实现|已完成请求 profile 配置、加载器、CLI 覆盖参数、daily-run profile 传递、文档和测试；详细拆解见 `docs/requirements/llm_request_profiles_2026-05-13.md`|不同 LLM 请求入口从可审计 profile 读取模型、reasoning、timeout、HTTP client、缓存 TTL、重试、候选上限和 LLM formal 运行参数；CLI 显式参数可覆盖 profile；`daily-run` 传递 profile id 而不是把候选上限等效硬编码；provider 权限、cache_allowed、`store=false`、本地审计和 `llm_extracted / pending_review` 边界不放松；系统流图、README 和测试同步|2026-05-13: 新增并进入 IN_PROGRESS，原因：owner 要求梳理当前 LLM 请求来源，并希望系统按不同请求使用不同配置。第一版只配置请求策略和候选/LLM formal 运行参数，不开放 prompt/schema 版本。2026-05-13: 从 IN_PROGRESS 改为 DONE，原因：新增 `config/llm_request_profiles.yaml`、profile schema/loader、四个 live LLM 请求入口的 profile 默认值和 CLI 覆盖、`daily-run`/direct dispatcher profile 传递、日报输出 profile id、README/系统流图/数据源说明同步；验证通过 `pytest` 506 passed、`ruff check src tests`、`git diff --check`、CLI help smoke、`data-sources validate` 和 daily-plan smoke。|
 |OBS-001|观察池/行业趋势分析语义|P1|DONE|系统实现|已实现 watch-only 核心 ticker 不要求主动交易 thesis，同时保留关注股票趋势和产业链节点分析；详细拆解见 `docs/requirements/watch_only_core_observation_2026-05-10.md`|默认核心观察池可被标记为观察阶段；观察阶段 ticker 不因缺少 `data/external/trade_theses/` 触发 thesis gate；active-trade 高风险 ticker 仍必须要求 thesis；日报继续输出核心 ticker 趋势和产业链节点热度/健康度，且明确 `production_effect=none`|2026-05-10: 新增，原因：owner 明确当前 6 个核心 ticker 均处于观察阶段，希望系统结合行业趋势给出分析，而不是把缺少主动交易 thesis 解释为仓位约束。2026-05-10: 从 IN_PROGRESS 改为 DONE，原因：新增 `decision_stage`、更新核心观察池为 `watch_only`、调整 thesis 缺失校验、同步系统流图和测试；验证通过 `ruff check src tests`、`pytest -q`、`watchlist validate`、`thesis review` 和 `watchlist validate-lifecycle`。|
 |OPS-010|运行架构/replay PIT as-of 截止窗口|P0|DONE|系统实现|已实现 replay PIT effective cutoff 和从 filtered raw manifest 重建 replay-scoped FMP forward PIT normalized CSV；不调用外部服务、不复用旧 replay 输出、不改写生产缓存|当 production metadata cutoff 晚于 as-of 时，`replay-day` 的 PIT manifest/normalized 输入不包含晚于 as-of 的 `available_time`；若生产 normalized CSV 被补跑覆盖为未来 `available_time`，replay 从 filtered raw manifest 中按 ticker 选择 as-of 当天最新 raw payload 重建 normalized；2026-05-08 cache-only replay 的 `score_daily`、`ops health`、secret scan 全部 PASS；单测覆盖 cutoff 收紧和 raw manifest 重建|2026-05-10: 新增并完成，原因：真实 replay 验证显示 5/8 production metadata 来自 5/10 补跑，直接使用 visibility cutoff 会纳入未来 PIT；随后发现生产 normalized CSV 已被 5/10 补跑覆盖，需从 5/8 raw payload 重建 replay 输入。验证：`ruff check src/ai_trading_system/historical_replay.py tests/test_historical_replay.py` 通过，`pytest -q tests/test_historical_replay.py` 8 passed，真实 `replay-day --as-of 2026-05-08 --openai-replay-policy cache-only --compare-to-production` PASS。|
 |OPS-009|运行架构/replay 风险事件 PIT 冻结|P0|DONE|系统实现|已让 `replay-day` 生成 `risk_event_occurrences` 的 as-of 可见隔离视图，并把 `score-daily --risk-event-occurrences-path` 指向 replay bundle|input freeze manifest 记录风险事件源路径、隔离路径、总数、纳入数、排除数和 checksum；生产 occurrence YAML 不被改写；2026-05-08 cache-only replay 不再因 2026-05-10 LLM formal occurrence/attestation 触发未来日期错误；相关单测、系统流图和需求文档已同步更新|2026-05-10: 新增并完成，原因：真实最近交易日回放验证发现 valuation 已隔离，但 risk event occurrence store 仍读取生产目录，导致历史回放被未来风险事件数据阻断。验证：`score_daily` 在真实 2026-05-08 replay 中 PASS，风险事件报告改为隔离路径且无未来日期错误。|

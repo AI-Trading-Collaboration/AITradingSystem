@@ -214,10 +214,14 @@ def build_daily_ops_plan(
     include_secret_scan: bool = True,
     skip_risk_event_openai_precheck: bool = False,
     full_universe: bool = False,
-    risk_event_openai_precheck_max_candidates: int = 20,
+    llm_request_profile: str = "risk_event_daily_official_precheck",
+    risk_event_openai_precheck_max_candidates: int | None = None,
     run_id: str | None = None,
 ) -> DailyOpsPlan:
-    if risk_event_openai_precheck_max_candidates < 0:
+    if (
+        risk_event_openai_precheck_max_candidates is not None
+        and risk_event_openai_precheck_max_candidates < 0
+    ):
         raise ValueError("risk_event_openai_precheck_max_candidates must be non-negative")
 
     raw_dir = project_root / "data" / "raw"
@@ -311,12 +315,15 @@ def build_daily_ops_plan(
     if skip_risk_event_openai_precheck:
         score_command.append("--skip-risk-event-openai-precheck")
     else:
-        score_command.extend(
-            [
-                "--risk-event-openai-precheck-max-candidates",
-                str(risk_event_openai_precheck_max_candidates),
-            ]
-        )
+        score_command.extend(["--llm-request-profile", llm_request_profile])
+        if risk_event_openai_precheck_max_candidates is not None:
+            score_command.extend(
+                [
+                    "--risk-event-openai-precheck-max-candidates",
+                    str(risk_event_openai_precheck_max_candidates),
+                ]
+            )
+    if not skip_risk_event_openai_precheck:
         score_required_env = ("OPENAI_API_KEY",)
     if run_id:
         score_command.extend(["--run-id", run_id])

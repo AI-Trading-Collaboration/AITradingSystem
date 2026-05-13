@@ -711,6 +711,7 @@ def test_risk_event_openai_daily_section_includes_transport_client() -> None:
         risk_event_llm_formal_report_output=Path(
             "outputs/reports/risk_event_llm_formal_assessment.md"
         ),
+        llm_profile_id="risk_event_daily_official_precheck",
         llm_formal_enabled=True,
         model="gpt-5.5",
         reasoning_effort="high",
@@ -722,6 +723,7 @@ def test_risk_event_openai_daily_section_includes_transport_client() -> None:
     )
 
     assert "- HTTP client：requests" in section
+    assert "- LLM request profile：risk_event_daily_official_precheck" in section
     assert "- OpenAI 请求缓存 TTL：24 小时" in section
     assert "HIT=2 / MISS=18" in section
     assert "- 待人工复核队列记录数：7" in section

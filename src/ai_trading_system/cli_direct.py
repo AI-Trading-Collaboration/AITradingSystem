@@ -53,12 +53,19 @@ def _dispatch(args: list[str]) -> None:
         cli.fetch_fmp_valuations(as_of=_option(args, "--as-of"))
         return
     if args[:1] == ["score-daily"]:
+        max_candidates = _option(args, "--risk-event-openai-precheck-max-candidates")
         cli.score_daily(
             as_of=_option(args, "--as-of"),
-            risk_event_openai_precheck_max_candidates=int(
-                _option(args, "--risk-event-openai-precheck-max-candidates", "20") or "20"
+            risk_event_openai_precheck_max_candidates=(
+                int(max_candidates) if max_candidates is not None else None
             ),
             risk_event_openai_precheck=not _flag(args, "--skip-risk-event-openai-precheck"),
+            llm_request_profile=_option(
+                args,
+                "--llm-request-profile",
+                "risk_event_daily_official_precheck",
+            )
+            or "risk_event_daily_official_precheck",
             run_id=_option(args, "--run-id"),
         )
         return

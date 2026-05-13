@@ -52,6 +52,7 @@ def test_daily_ops_plan_reports_missing_required_env() -> None:
     assert "`aits fundamentals validate-sec-metrics --as-of 2026-05-06`" in markdown
     assert "`aits valuation fetch-fmp --as-of 2026-05-06`" in markdown
     assert "`aits score-daily --as-of 2026-05-06" in markdown
+    assert "--llm-request-profile risk_event_daily_official_precheck" in markdown
     assert "`aits reports dashboard --as-of 2026-05-06`" in markdown
     assert "`live_provider`" in markdown
     assert "`readonly`" in markdown
@@ -80,7 +81,8 @@ def test_daily_ops_plan_cli_default_as_of_uses_market_resolver(monkeypatch) -> N
         include_valuation_snapshots=False,
         include_secret_scan=False,
         risk_event_openai_precheck=False,
-        risk_event_openai_precheck_max_candidates=20,
+        risk_event_openai_precheck_max_candidates=None,
+        llm_request_profile="risk_event_daily_official_precheck",
         full_universe=False,
     )
 
@@ -119,6 +121,18 @@ def test_daily_ops_plan_allows_explicit_openai_skip() -> None:
     assert plan.missing_env_vars(env) == ()
     assert "--skip-risk-event-openai-precheck" in markdown
     assert "OPENAI_API_KEY" not in plan.missing_env_vars(env)
+
+
+def test_daily_ops_plan_threads_llm_request_profile_without_candidate_override() -> None:
+    plan = build_daily_ops_plan(
+        as_of=date(2026, 5, 6),
+        llm_request_profile="risk_event_triaged_official_candidates",
+    )
+    score_step = next(step for step in plan.steps if step.step_id == "score_daily")
+
+    assert "--llm-request-profile" in score_step.command
+    assert "risk_event_triaged_official_candidates" in score_step.command
+    assert "--risk-event-openai-precheck-max-candidates" not in score_step.command
 
 
 def test_daily_ops_plan_threads_run_id_into_score_daily() -> None:

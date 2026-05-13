@@ -556,6 +556,7 @@ def run_openai_claim_precheck(
     http_client: str = DEFAULT_OPENAI_HTTP_CLIENT,
     openai_cache_dir: Path | str | None = None,
     openai_cache_ttl_seconds: float = DEFAULT_OPENAI_REQUEST_CACHE_TTL_SECONDS,
+    max_retries: int = DEFAULT_OPENAI_MAX_RETRIES,
     generated_at: datetime | None = None,
     http_post_json: HttpPostJson | None = None,
 ) -> LlmClaimPrecheckReport:
@@ -590,6 +591,21 @@ def run_openai_claim_precheck(
                     code="openai_api_key_missing",
                     precheck_id=input_packet.precheck_id,
                     message="未找到 OpenAI API key 环境变量，已停止 LLM 预审。",
+                ),
+            ),
+        )
+
+    if max_retries < 0:
+        return LlmClaimPrecheckReport(
+            input_path=Path(input_path),
+            generated_at=timestamp,
+            records=(),
+            issues=(
+                LlmPrecheckIssue(
+                    severity=LlmPrecheckIssueSeverity.ERROR,
+                    code="openai_max_retries_invalid",
+                    precheck_id=input_packet.precheck_id,
+                    message="OpenAI 请求最大重试次数不能为负数。",
                 ),
             ),
         )
@@ -711,6 +727,7 @@ def run_openai_claim_precheck(
             timeout_seconds=timeout_seconds,
             precheck_id=input_packet.precheck_id,
             input_checksum_sha256=input_checksum,
+            max_retries=max_retries,
         )
         if cache_dir is not None:
             try:

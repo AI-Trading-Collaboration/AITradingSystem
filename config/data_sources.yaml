@@ -1377,7 +1377,7 @@ sources:
       - 输出强制写入 `llm_extracted` / `pending_review`，不得直接改变评分、thesis 状态、仓位闸门或交易建议。
       - owner 无复核精力时，OpenAI 候选仅保留为 backlog-only 未确认线索，不进入 `execution_policy.manual_review_gate_ids`，不能单独把执行动作改为 `wait_manual_review`。
       - 付费供应商内容只有在原始 provider 的 `llm_permission.external_llm_allowed=true` 且内容级别不超过授权范围时才可发送。
-      - 默认请求策略为 `gpt-5.5` + `reasoning.effort=high` + `requests` HTTP client；可用 `urllib` 做本机传输对照；单请求失败最多重试 2 次，实际请求值必须写入报告和队列或 transport diagnostics。
+      - 默认请求策略读取 `config/llm_request_profiles.yaml`；当前 profile 保持 `gpt-5.5` + `requests` HTTP client，日报自动风险预审 profile 正在用 `reasoning.effort=medium` 做成本 pilot；可用 CLI 参数做本次运行覆盖；单请求失败最多重试 2 次，实际请求值必须写入报告和队列或 transport diagnostics。
       - 失败报告只输出 sanitized transport diagnostics，包括 attempt、HTTP client、client request id、endpoint host、payload byte size、input checksum、HTTP status、OpenAI x-request-id 或异常类型，不输出 API key、Authorization header 或未授权全文。
       - 请求默认 `store=false`，本地队列只保存结构化字段和 checksum，不保存未授权全文。
     owner_notes: OPENAI_API_KEY 只从环境变量读取；命令、报告和错误信息不得输出密钥。
