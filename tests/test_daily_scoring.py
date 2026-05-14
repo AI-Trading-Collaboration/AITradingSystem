@@ -76,6 +76,7 @@ from ai_trading_system.valuation import (
     ValuationValidationReport,
     build_valuation_review_report,
 )
+from ai_trading_system.weight_calibration import CalibrationApplication
 
 
 def test_build_daily_score_report_uses_hard_data_and_placeholders() -> None:
@@ -503,6 +504,64 @@ def test_write_scores_csv_upserts_as_of_rows(tmp_path: Path) -> None:
     assert overall["confidence_level"] in {"high", "medium", "low"}
     assert overall["confidence_reasons"]
     assert overall["final_risk_asset_ai_max"] == report.recommendation.max_position
+
+
+def test_daily_score_uses_resolved_calibration_weights(tmp_path: Path) -> None:
+    application = CalibrationApplication(
+        weight_profile_version="test_profile_v1",
+        matched_overlays=("test_overlay",),
+        base_weights={
+            "trend": 0.25,
+            "fundamentals": 0.25,
+            "macro_liquidity": 0.15,
+            "risk_sentiment": 0.15,
+            "valuation": 0.10,
+            "policy_geopolitics": 0.10,
+        },
+        effective_weights={
+            "trend": 0.50,
+            "fundamentals": 0.10,
+            "macro_liquidity": 0.10,
+            "risk_sentiment": 0.10,
+            "valuation": 0.10,
+            "policy_geopolitics": 0.10,
+        },
+        confidence_delta=-3.0,
+        position_multiplier=0.80,
+        required_confirmations=("post_event_follow_through",),
+        audit={"why_applied": ["unit test"], "why_not_applied": []},
+    )
+
+    report = build_daily_score_report(
+        feature_set=_feature_set(),
+        data_quality_report=_quality_report(),
+        rules=load_scoring_rules(),
+        total_risk_asset_min=0.60,
+        total_risk_asset_max=0.80,
+        weight_calibration=application,
+    )
+    output_path = tmp_path / "scores_daily.csv"
+    write_scores_csv(report, output_path)
+    markdown = render_daily_score_report(
+        report,
+        data_quality_report_path=tmp_path / "quality.md",
+        feature_report_path=tmp_path / "features.md",
+        features_path=tmp_path / "features.csv",
+        scores_path=output_path,
+    )
+    stored = pd.read_csv(output_path)
+
+    assert _component(report, "trend").weight == 50
+    assert _position_gate(report, "calibration_overlay").max_position < (
+        report.recommendation.model_risk_asset_ai_band.max_position
+    )
+    assert report.score_architecture_audit["weight_calibration"][
+        "weight_profile_version"
+    ] == "test_profile_v1"
+    assert "Historical Calibration" in markdown
+    assert "test_profile_v1" in markdown
+    assert stored.loc[stored["component"] == "trend", "effective_weight"].iloc[0] == 0.5
+    assert "effective_weights_json" in stored.columns
 
 
 def test_daily_score_confidence_is_reported_separately_from_market_score() -> None:

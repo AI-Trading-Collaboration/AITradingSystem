@@ -83,6 +83,7 @@ from ai_trading_system.watchlist_lifecycle import (
     WatchlistLifecycleConfig,
     WatchlistLifecycleEntry,
 )
+from ai_trading_system.weight_calibration import load_weight_profile
 
 
 def test_run_daily_score_backtest_uses_next_day_returns() -> None:
@@ -128,6 +129,7 @@ def test_run_daily_score_backtest_uses_total_asset_ai_exposure() -> None:
         end=date(2026, 4, 30),
         strategy_ticker="SMH",
         benchmark_tickers=("SPY",),
+        weight_profile=load_weight_profile(),
     )
 
     first_row = result.rows[0]
@@ -457,6 +459,7 @@ def test_render_and_write_backtest_outputs(tmp_path: Path) -> None:
         end=date(2026, 4, 30),
         strategy_ticker="SMH",
         benchmark_tickers=("SPY",),
+        weight_profile=load_weight_profile(),
     )
 
     daily_path = write_backtest_daily_csv(result, tmp_path / "daily.csv")
@@ -484,6 +487,8 @@ def test_render_and_write_backtest_outputs(tmp_path: Path) -> None:
     assert "结论等级：回测覆盖不足，结论降级（`backtest_limited`）" in markdown
     assert "适用范围：趋势判断/投研辅助，不触发交易（`trend_judgment`）" in markdown
     assert "## 执行成本摘要" in markdown
+    assert "## 历史校准权重摘要" in markdown
+    assert "2026-05-06" in markdown
     assert "## 回测数据可信度" in markdown
     assert "Backtest Data Quality：C 级" in markdown
     assert "Sharpe、CAGR 和收益表不构成无条件绩效结论" in markdown
@@ -496,6 +501,8 @@ def test_render_and_write_backtest_outputs(tmp_path: Path) -> None:
     assert "| 线性滑点扣减 |" in markdown
     assert "fundamentals_source_type" in daily_path.read_text(encoding="utf-8")
     daily_text = daily_path.read_text(encoding="utf-8")
+    assert "weight_profile_version" in daily_text
+    assert "effective_weights_json" in daily_text
     assert "confidence_score" in daily_text
     assert "confidence_level" in daily_text
     assert "commission_cost" in daily_text
@@ -1491,36 +1498,57 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert "production_effect=none" in robustness_text
     assert "cost_stress_execution" in robustness_text
     assert "fixed_60pct_total_asset_ai" in robustness_text
+    assert "vol_targeted_total_asset_ai" in robustness_text
+    assert "no_gate_model_target_baseline" in robustness_text
     assert "rebalance_every_5d" in robustness_text
     assert "rebalance_every_21d" in robustness_text
     assert "trend_only_baseline" in robustness_text
     assert "trend_plus_risk_sentiment_baseline" in robustness_text
+    assert "alpha_only_score_baseline" in robustness_text
+    assert "risk_state_only_score_baseline" in robustness_text
     assert "weight_perturb_trend_up_20pct" in robustness_text
     assert "模块权重扰动比例：±20%" in robustness_text
     assert "same_turnover_random_seed_42" in robustness_text
+    assert "same_exposure_random_seed_42" in robustness_text
     assert "同换手率随机策略：seed 42 起，3 组" in robustness_text
     assert "out_of_sample_holdout" in robustness_text
     assert "样本外切分比例：70% in-sample" in robustness_text
     assert "shifted_start" in robustness_text
     assert "买入持有基准" in robustness_text
+    assert "数据覆盖与 source veto 证据" in robustness_text
     assert "6.0 bps" in robustness_text
     robustness_summary = json.loads(robustness_summary_path.read_text(encoding="utf-8"))
     assert robustness_summary["production_effect"] == "none"
+    assert robustness_summary["coverage_evidence"]["available"] is True
+    assert "trend" in robustness_summary["coverage_evidence"]["components"]
     scenario_ids = {
         scenario["scenario_id"] for scenario in robustness_summary["scenarios"]
     }
     assert "fixed_60pct_total_asset_ai" in scenario_ids
+    assert "vol_targeted_total_asset_ai" in scenario_ids
+    assert "no_gate_model_target_baseline" in scenario_ids
     assert "rebalance_every_5d" in scenario_ids
     assert "rebalance_every_21d" in scenario_ids
     assert "trend_only_baseline" in scenario_ids
     assert "trend_plus_risk_sentiment_baseline" in scenario_ids
+    assert "alpha_only_score_baseline" in scenario_ids
+    assert "risk_state_only_score_baseline" in scenario_ids
+    assert "gate_modules_score_baseline" in scenario_ids
     assert "weight_perturb_trend_up_20pct" in scenario_ids
     assert "weight_perturb_trend_down_20pct" in scenario_ids
     assert "same_turnover_random_seed_42" in scenario_ids
     assert "same_turnover_random_seed_44" in scenario_ids
+    assert "same_exposure_random_seed_42" in scenario_ids
+    assert "same_exposure_random_seed_44" in scenario_ids
     assert "in_sample_window" in scenario_ids
     assert "out_of_sample_holdout" in scenario_ids
     assert "base_dynamic" in robustness_summary
+    trend_up = next(
+        scenario
+        for scenario in robustness_summary["scenarios"]
+        if scenario["scenario_id"] == "weight_perturb_trend_up_20pct"
+    )
+    assert "return_delta_bootstrap_ci_95" in trend_up
     assert robustness_summary["weight_perturbation_pct"] == 0.20
     assert robustness_summary["random_seed_start"] == 42
     assert robustness_summary["random_seed_count"] == 3

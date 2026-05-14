@@ -27,8 +27,16 @@ def test_parameter_replay_report_summarizes_robustness_scenarios(
     markdown = render_parameter_replay_report(report)
 
     assert report.status == "PASS"
-    assert report.scenario_count == 3
+    assert report.scenario_count == 8
     assert report.material_delta_count == 1
+    assert report.robustness_evidence["same_turnover_random_strategy"][
+        "dynamic_strategy_percentile"
+    ] == 1.0
+    assert report.robustness_evidence["out_of_sample_validation"]["blocked"] is False
+    assert report.robustness_evidence["statistical"]["deflated_sharpe_proxy"][
+        "available"
+    ] is True
+    assert report.robustness_evidence["statistical"]["pbo_proxy"]["value"] == 0.0
     assert "参数 as-if replay 收益变化报告" in markdown
     assert "production_effect：none" in markdown
     assert "weight_perturb_trend_up_20pct" in markdown
@@ -65,8 +73,11 @@ def test_parameter_replay_cli_writes_markdown_and_summary(tmp_path: Path) -> Non
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     assert summary["report_type"] == "feedback_parameter_replay"
     assert summary["production_effect"] == "none"
-    assert summary["scenario_count"] == 3
+    assert summary["scenario_count"] == 8
     assert summary["material_delta_count"] == 1
+    assert summary["robustness_evidence"]["signal_family_baseline"][
+        "base_beats_best_signal_family_baseline"
+    ] is True
 
 
 def test_parameter_replay_summary_writer(tmp_path: Path) -> None:
@@ -79,7 +90,7 @@ def test_parameter_replay_summary_writer(tmp_path: Path) -> None:
 
     payload = json.loads(output_path.read_text(encoding="utf-8"))
     assert payload["source_summary_path"] == str(robustness_path)
-    assert payload["completed_scenario_count"] == 3
+    assert payload["completed_scenario_count"] == 8
 
 
 def test_parameter_replay_uses_current_policy_for_legacy_summary(
@@ -111,6 +122,32 @@ def _write_robustness_summary(tmp_path: Path, *, include_policy: bool = True) ->
         "first_signal_date": "2026-04-01",
         "last_signal_date": "2026-04-10",
         "data_quality_status": "PASS",
+        "data_credibility_grade": "B",
+        "coverage_evidence": {
+            "available": True,
+            "sample_count": 8,
+            "min_required_component_coverage": 0.9,
+            "max_allowed_placeholder_share": 0.0,
+            "blocking_source_types": ["insufficient_data", "placeholder"],
+            "minimum_component_coverage": 1.0,
+            "minimum_average_component_coverage": 1.0,
+            "maximum_placeholder_share": 0.0,
+            "blocking_components": [],
+            "blocked": False,
+            "components": {
+                "trend": {
+                    "observations": 8,
+                    "min_coverage": 1.0,
+                    "average_coverage": 1.0,
+                    "placeholder_count": 0,
+                    "insufficient_data_count": 0,
+                    "placeholder_share": 0.0,
+                    "blocking_source_count": 0,
+                    "source_type_counts": {"hard_data": 8},
+                    "blocked": False,
+                }
+            },
+        },
         "market_regime": {
             "regime_id": "ai_after_chatgpt",
             "name": "ChatGPT 后 AI 主线行情",
@@ -137,6 +174,12 @@ def _write_robustness_summary(tmp_path: Path, *, include_policy: bool = True) ->
                 "max_drawdown": -0.04,
                 "sharpe": 1.8,
                 "turnover": 0.8,
+                "return_delta_bootstrap_ci_95": {
+                    "low": 0.02,
+                    "high": 0.09,
+                    "daily_return_count": 8,
+                    "method": "paired_block_bootstrap_total_return_delta",
+                },
                 "skipped_reason": None,
                 "description": "测试 trend 上调。",
             },
@@ -177,11 +220,76 @@ def _write_robustness_summary(tmp_path: Path, *, include_policy: bool = True) ->
                 "sharpe": 0.4,
                 "turnover": 0.7,
                 "skipped_reason": None,
-                "description": "非参数候选，报告不纳入参数 replay。",
+                "description": "非参数候选，作为随机基线证据。",
+            },
+            {
+                "scenario_id": "same_turnover_random_seed_43",
+                "label": "同换手率随机策略",
+                "category": "same_turnover_random_strategy",
+                "status": "PASS_WITH_LIMITATIONS",
+                "total_return": 0.04,
+                "total_return_delta_vs_base": -0.06,
+                "max_drawdown": -0.07,
+                "sharpe": 0.6,
+                "turnover": 0.7,
+                "skipped_reason": None,
+                "description": "非参数候选，作为随机基线证据。",
+            },
+            {
+                "scenario_id": "trend_only_baseline",
+                "label": "趋势-only 基线",
+                "category": "signal_family_baseline",
+                "status": "PASS_WITH_LIMITATIONS",
+                "total_return": 0.09,
+                "total_return_delta_vs_base": -0.01,
+                "max_drawdown": -0.06,
+                "sharpe": 1.3,
+                "turnover": 0.4,
+                "skipped_reason": None,
+                "description": "趋势信号族基线。",
+            },
+            {
+                "scenario_id": "in_sample_window",
+                "label": "in-sample 窗口",
+                "category": "out_of_sample_validation",
+                "status": "PASS_WITH_LIMITATIONS",
+                "total_return": 0.10,
+                "total_return_delta_vs_base": 0.0,
+                "max_drawdown": -0.05,
+                "sharpe": 1.4,
+                "turnover": 0.5,
+                "skipped_reason": None,
+                "description": "样本内窗口。",
+            },
+            {
+                "scenario_id": "out_of_sample_holdout",
+                "label": "out-of-sample holdout",
+                "category": "out_of_sample_validation",
+                "status": "PASS_WITH_LIMITATIONS",
+                "total_return": 0.08,
+                "total_return_delta_vs_base": -0.02,
+                "max_drawdown": -0.04,
+                "sharpe": 1.2,
+                "turnover": 0.4,
+                "skipped_reason": None,
+                "description": "样本外 holdout。",
             },
         ],
     }
     if include_policy:
-        payload["policy"] = {"weight_perturbation_material_total_return_delta_abs": 0.05}
+        payload["policy"] = {
+            "weight_perturbation_material_total_return_delta_abs": 0.05,
+            "candidate_min_component_coverage": 0.90,
+            "candidate_max_placeholder_share": 0.0,
+            "candidate_blocking_component_source_types": [
+                "insufficient_data",
+                "placeholder",
+            ],
+            "candidate_require_bootstrap_ci": True,
+            "candidate_min_bootstrap_ci_lower_total_return_delta": 0.0,
+            "candidate_label_horizon_days": 20,
+            "candidate_embargo_days": 5,
+            "candidate_min_independent_windows": 1,
+        }
     path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
     return path

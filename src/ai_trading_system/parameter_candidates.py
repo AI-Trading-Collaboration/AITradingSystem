@@ -17,6 +17,9 @@ DEFAULT_PARAMETER_CANDIDATE_LEDGER_PATH = (
     PROJECT_ROOT / "data" / "processed" / "parameter_candidates.json"
 )
 DEFAULT_PARAMETER_CANDIDATE_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
+CANDIDATE_EVALUATION_CATEGORIES = frozenset(
+    {"module_weight_perturbation", "rebalance_frequency", "cost", "window"}
+)
 
 
 @dataclass(frozen=True)
@@ -29,9 +32,12 @@ class ParameterTrial:
     total_return_delta_vs_base: float | None
     max_drawdown_delta_vs_base: float | None
     turnover: float | None
+    return_delta_bootstrap_ci_low: float | None
+    return_delta_bootstrap_ci_high: float | None
     material_total_return_delta: bool | None
     skipped_reason: str | None
     candidate_eligible: bool
+    candidate_eligible_reason: str
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -43,9 +49,12 @@ class ParameterTrial:
             "total_return_delta_vs_base": self.total_return_delta_vs_base,
             "max_drawdown_delta_vs_base": self.max_drawdown_delta_vs_base,
             "turnover": self.turnover,
+            "return_delta_bootstrap_ci_low": self.return_delta_bootstrap_ci_low,
+            "return_delta_bootstrap_ci_high": self.return_delta_bootstrap_ci_high,
             "material_total_return_delta": self.material_total_return_delta,
             "skipped_reason": self.skipped_reason,
             "candidate_eligible": self.candidate_eligible,
+            "candidate_eligible_reason": self.candidate_eligible_reason,
         }
 
 
@@ -61,6 +70,21 @@ class ParameterCandidate:
     max_drawdown_delta_vs_base: float | None
     turnover: float | None
     material_total_return_delta: bool | None
+    data_quality_status: str
+    data_credibility_grade: str | None
+    coverage_min_component: float | None
+    coverage_max_placeholder_share: float | None
+    coverage_blocking_components: tuple[str, ...]
+    effective_independent_windows: int | None
+    oos_total_return: float | None
+    oos_vs_insample_degradation: float | None
+    random_strategy_percentile: float | None
+    random_beats_count: int | None
+    return_delta_bootstrap_ci_low: float | None
+    return_delta_bootstrap_ci_high: float | None
+    signal_family_baseline_beaten: bool | None
+    score_architecture_baseline_beaten: bool | None
+    veto_reasons: tuple[str, ...]
     recommendation_status: str
     replay_status: str
     shadow_status: str
@@ -80,6 +104,23 @@ class ParameterCandidate:
             "max_drawdown_delta_vs_base": self.max_drawdown_delta_vs_base,
             "turnover": self.turnover,
             "material_total_return_delta": self.material_total_return_delta,
+            "data_quality_status": self.data_quality_status,
+            "data_credibility_grade": self.data_credibility_grade,
+            "coverage_min_component": self.coverage_min_component,
+            "coverage_max_placeholder_share": self.coverage_max_placeholder_share,
+            "coverage_blocking_components": list(self.coverage_blocking_components),
+            "effective_independent_windows": self.effective_independent_windows,
+            "oos_total_return": self.oos_total_return,
+            "oos_vs_insample_degradation": self.oos_vs_insample_degradation,
+            "random_strategy_percentile": self.random_strategy_percentile,
+            "random_beats_count": self.random_beats_count,
+            "return_delta_bootstrap_ci_low": self.return_delta_bootstrap_ci_low,
+            "return_delta_bootstrap_ci_high": self.return_delta_bootstrap_ci_high,
+            "signal_family_baseline_beaten": self.signal_family_baseline_beaten,
+            "score_architecture_baseline_beaten": (
+                self.score_architecture_baseline_beaten
+            ),
+            "veto_reasons": list(self.veto_reasons),
             "recommendation_status": self.recommendation_status,
             "replay_status": self.replay_status,
             "shadow_status": self.shadow_status,
@@ -119,6 +160,22 @@ class ParameterCandidateLedger:
         )
 
     @property
+    def ready_for_forward_shadow_count(self) -> int:
+        return sum(
+            1
+            for candidate in self.candidates
+            if candidate.recommendation_status == "READY_FOR_FORWARD_SHADOW"
+        )
+
+    @property
+    def blocked_count(self) -> int:
+        return sum(
+            1
+            for candidate in self.candidates
+            if candidate.recommendation_status.startswith("BLOCKED_BY_")
+        )
+
+    @property
     def needs_policy_count(self) -> int:
         return sum(
             1
@@ -155,6 +212,8 @@ class ParameterCandidateLedger:
             "trial_count": self.trial_count,
             "candidate_count": self.candidate_count,
             "ready_for_owner_review_count": self.ready_for_owner_review_count,
+            "ready_for_forward_shadow_count": self.ready_for_forward_shadow_count,
+            "blocked_count": self.blocked_count,
             "needs_policy_count": self.needs_policy_count,
             "material_risk_review_count": self.material_risk_review_count,
             "warnings": list(self.warnings),
@@ -179,9 +238,17 @@ def build_parameter_candidate_ledger(
     )
     payload = _read_json_object(replay_path)
     generated = generated_at or datetime.now(tz=UTC)
+    robustness_evidence = _dict_value(payload.get("robustness_evidence"))
+    materiality_policy = _optional_dict(payload.get("materiality_policy"))
     trials = tuple(_trial_from_scenario(item, payload) for item in _scenario_items(payload))
     candidates = tuple(
-        _candidate_from_trial(trial, scenario, payload)
+        _candidate_from_trial(
+            trial,
+            scenario,
+            payload,
+            robustness_evidence=robustness_evidence,
+            materiality_policy=materiality_policy,
+        )
         for trial, scenario in zip(trials, _scenario_items(payload), strict=True)
         if trial.candidate_eligible
     )
@@ -228,7 +295,8 @@ def render_parameter_candidate_report(
         f"- 机器可读 ledger：`{ledger_path}`",
         f"- Trial 数：{ledger.trial_count}",
         f"- Candidate 数：{ledger.candidate_count}",
-        f"- Ready for owner review：{ledger.ready_for_owner_review_count}",
+        f"- Ready for forward shadow：{ledger.ready_for_forward_shadow_count}",
+        f"- Blocked：{ledger.blocked_count}",
         f"- Material risk review：{ledger.material_risk_review_count}",
         f"- Needs materiality policy：{ledger.needs_policy_count}",
     ]
@@ -316,19 +384,39 @@ def _trial_from_scenario(
     trial_id = _trial_id(payload, scenario_id)
     skipped_reason = _optional_str(scenario.get("skipped_reason"))
     total_return_delta = _float_or_none(scenario.get("total_return_delta_vs_base"))
-    candidate_eligible = skipped_reason is None and total_return_delta is not None
+    category = str(scenario.get("category") or "unknown")
+    candidate_eligible = (
+        skipped_reason is None
+        and total_return_delta is not None
+        and category in CANDIDATE_EVALUATION_CATEGORIES
+    )
+    if skipped_reason is not None:
+        candidate_eligible_reason = "skipped_scenario"
+    elif total_return_delta is None:
+        candidate_eligible_reason = "missing_total_return_delta"
+    elif category not in CANDIDATE_EVALUATION_CATEGORIES:
+        candidate_eligible_reason = "robustness_evidence_only"
+    else:
+        candidate_eligible_reason = "eligible_for_multi_objective_gate"
     return ParameterTrial(
         trial_id=trial_id,
         source_scenario_id=scenario_id,
         label=str(scenario.get("label") or scenario_id),
-        category=str(scenario.get("category") or "unknown"),
+        category=category,
         status=str(scenario.get("status") or "UNKNOWN"),
         total_return_delta_vs_base=total_return_delta,
         max_drawdown_delta_vs_base=_float_or_none(scenario.get("max_drawdown_delta_vs_base")),
         turnover=_float_or_none(scenario.get("turnover")),
+        return_delta_bootstrap_ci_low=_float_or_none(
+            scenario.get("return_delta_bootstrap_ci_low")
+        ),
+        return_delta_bootstrap_ci_high=_float_or_none(
+            scenario.get("return_delta_bootstrap_ci_high")
+        ),
         material_total_return_delta=_bool_or_none(scenario.get("material_total_return_delta")),
         skipped_reason=skipped_reason,
         candidate_eligible=candidate_eligible,
+        candidate_eligible_reason=candidate_eligible_reason,
     )
 
 
@@ -336,8 +424,27 @@ def _candidate_from_trial(
     trial: ParameterTrial,
     scenario: dict[str, Any],
     payload: dict[str, Any],
+    *,
+    robustness_evidence: dict[str, Any],
+    materiality_policy: dict[str, Any] | None,
 ) -> ParameterCandidate:
-    recommendation_status = _recommendation_status(trial)
+    recommendation_status, veto_reasons = _recommendation_status(
+        trial,
+        robustness_evidence=robustness_evidence,
+        materiality_policy=materiality_policy,
+    )
+    data_quality = _dict_value(robustness_evidence.get("data_quality"))
+    random_evidence = _dict_value(
+        robustness_evidence.get("same_turnover_random_strategy")
+    )
+    oos_evidence = _dict_value(robustness_evidence.get("out_of_sample_validation"))
+    signal_evidence = _dict_value(robustness_evidence.get("signal_family_baseline"))
+    architecture_evidence = _dict_value(
+        robustness_evidence.get("score_architecture_baseline")
+    )
+    sample_evidence = _dict_value(robustness_evidence.get("sample_independence"))
+    coverage_evidence = _dict_value(robustness_evidence.get("coverage"))
+    raw_blocking_components = coverage_evidence.get("blocking_components")
     return ParameterCandidate(
         candidate_id=_candidate_id(payload, trial.source_scenario_id),
         linked_trial_id=trial.trial_id,
@@ -349,6 +456,39 @@ def _candidate_from_trial(
         max_drawdown_delta_vs_base=trial.max_drawdown_delta_vs_base,
         turnover=trial.turnover,
         material_total_return_delta=trial.material_total_return_delta,
+        data_quality_status=str(data_quality.get("status") or "UNKNOWN"),
+        data_credibility_grade=_optional_str(data_quality.get("data_credibility_grade")),
+        coverage_min_component=_float_or_none(
+            coverage_evidence.get("minimum_component_coverage")
+        ),
+        coverage_max_placeholder_share=_float_or_none(
+            coverage_evidence.get("maximum_placeholder_share")
+        ),
+        coverage_blocking_components=(
+            tuple(str(item) for item in raw_blocking_components)
+            if isinstance(raw_blocking_components, list)
+            else ()
+        ),
+        effective_independent_windows=_int_or_none(
+            sample_evidence.get("effective_independent_windows")
+        ),
+        oos_total_return=_float_or_none(oos_evidence.get("out_of_sample_total_return")),
+        oos_vs_insample_degradation=_float_or_none(
+            oos_evidence.get("oos_vs_insample_degradation")
+        ),
+        random_strategy_percentile=_float_or_none(
+            random_evidence.get("dynamic_strategy_percentile")
+        ),
+        random_beats_count=_int_or_none(random_evidence.get("random_beats_count")),
+        return_delta_bootstrap_ci_low=trial.return_delta_bootstrap_ci_low,
+        return_delta_bootstrap_ci_high=trial.return_delta_bootstrap_ci_high,
+        signal_family_baseline_beaten=_bool_or_none(
+            signal_evidence.get("base_beats_best_signal_family_baseline")
+        ),
+        score_architecture_baseline_beaten=_bool_or_none(
+            architecture_evidence.get("base_beats_best_score_architecture_baseline")
+        ),
+        veto_reasons=veto_reasons,
         recommendation_status=recommendation_status,
         replay_status="COMPLETED_FROM_ROBUSTNESS_SUMMARY",
         shadow_status="NOT_STARTED",
@@ -358,19 +498,209 @@ def _candidate_from_trial(
     )
 
 
-def _recommendation_status(trial: ParameterTrial) -> str:
+def _recommendation_status(
+    trial: ParameterTrial,
+    *,
+    robustness_evidence: dict[str, Any],
+    materiality_policy: dict[str, Any] | None,
+) -> tuple[str, tuple[str, ...]]:
+    veto_reasons = _candidate_veto_reasons(
+        trial,
+        robustness_evidence=robustness_evidence,
+        materiality_policy=materiality_policy,
+    )
+    if any(reason.startswith("data_") for reason in veto_reasons):
+        return "BLOCKED_BY_DATA", veto_reasons
+    if "oos_holdout_failed" in veto_reasons:
+        return "BLOCKED_BY_OOS", veto_reasons
+    if "random_baseline_failed" in veto_reasons:
+        return "BLOCKED_BY_RANDOM_BASELINE", veto_reasons
+    if "drawdown_worsened" in veto_reasons:
+        return "RISK_REVIEW", veto_reasons
+    if "signal_family_baseline_not_beaten" in veto_reasons:
+        return "RISK_REVIEW", veto_reasons
+    if "score_architecture_baseline_not_beaten" in veto_reasons:
+        return "RISK_REVIEW", veto_reasons
+    if "sample_independence_insufficient" in veto_reasons:
+        return "READY_FOR_AS_IF_REPLAY", veto_reasons
+    if "statistical_bootstrap_ci_crosses_threshold" in veto_reasons:
+        return "READY_FOR_AS_IF_REPLAY", veto_reasons
     if trial.material_total_return_delta is True:
         if trial.total_return_delta_vs_base is not None and trial.total_return_delta_vs_base > 0:
-            return "READY_FOR_OWNER_REVIEW"
-        return "MATERIAL_RISK_REVIEW"
+            if any(reason.endswith("_missing") for reason in veto_reasons):
+                return "READY_FOR_AS_IF_REPLAY", veto_reasons
+            return "READY_FOR_FORWARD_SHADOW", veto_reasons
+        return "MATERIAL_RISK_REVIEW", veto_reasons
     if trial.material_total_return_delta is False:
-        return "OBSERVE_ONLY"
-    return "NEEDS_MATERIALITY_POLICY"
+        return "OBSERVE_ONLY", veto_reasons
+    return "NEEDS_MATERIALITY_POLICY", veto_reasons
+
+
+def _candidate_veto_reasons(
+    trial: ParameterTrial,
+    *,
+    robustness_evidence: dict[str, Any],
+    materiality_policy: dict[str, Any] | None,
+) -> tuple[str, ...]:
+    reasons: list[str] = []
+    data_quality = _dict_value(robustness_evidence.get("data_quality"))
+    if data_quality.get("passed") is False:
+        reasons.append("data_quality_failed")
+    blocking_grades = {
+        str(item)
+        for item in (materiality_policy or {}).get(
+            "candidate_blocking_data_credibility_grades",
+            [],
+        )
+        if str(item).strip()
+    }
+    data_grade = _optional_str(data_quality.get("data_credibility_grade"))
+    if data_grade and data_grade in blocking_grades:
+        reasons.append("data_credibility_blocked")
+    coverage_evidence = _dict_value(robustness_evidence.get("coverage"))
+    if coverage_evidence.get("available") is not True:
+        reasons.append("data_coverage_missing")
+    elif coverage_evidence.get("blocked") is True:
+        blocking_components = coverage_evidence.get("blocking_components")
+        if isinstance(blocking_components, list) and blocking_components:
+            reasons.append("data_component_coverage_blocked")
+        min_required_coverage = _float_or_none(
+            (materiality_policy or {}).get("candidate_min_component_coverage")
+        )
+        min_coverage = _float_or_none(
+            coverage_evidence.get("minimum_component_coverage")
+        )
+        min_avg_coverage = _float_or_none(
+            coverage_evidence.get("minimum_average_component_coverage")
+        )
+        if min_required_coverage is not None and (
+            (min_coverage is not None and min_coverage < min_required_coverage)
+            or (
+                min_avg_coverage is not None
+                and min_avg_coverage < min_required_coverage
+            )
+        ):
+            reasons.append("data_coverage_below_threshold")
+        max_placeholder_share = _float_or_none(
+            (materiality_policy or {}).get("candidate_max_placeholder_share")
+        )
+        actual_placeholder_share = _float_or_none(
+            coverage_evidence.get("maximum_placeholder_share")
+        )
+        if (
+            max_placeholder_share is not None
+            and actual_placeholder_share is not None
+            and actual_placeholder_share > max_placeholder_share
+        ):
+            reasons.append("data_placeholder_share_exceeded")
+    sample_evidence = _dict_value(robustness_evidence.get("sample_independence"))
+    if sample_evidence.get("available") is not True:
+        reasons.append("sample_independence_missing")
+    elif sample_evidence.get("blocked") is True:
+        reasons.append("sample_independence_insufficient")
+
+    max_drawdown_worsening = _float_or_none(
+        (materiality_policy or {}).get("candidate_max_drawdown_worsening")
+    )
+    if (
+        trial.max_drawdown_delta_vs_base is not None
+        and max_drawdown_worsening is not None
+        and trial.max_drawdown_delta_vs_base < -max_drawdown_worsening
+    ):
+        reasons.append("drawdown_worsened")
+
+    oos_evidence = _dict_value(robustness_evidence.get("out_of_sample_validation"))
+    if oos_evidence.get("available") is True:
+        if oos_evidence.get("blocked") is True:
+            reasons.append("oos_holdout_failed")
+    else:
+        reasons.append("oos_evidence_missing")
+
+    random_evidence = _dict_value(
+        robustness_evidence.get("same_turnover_random_strategy")
+    )
+    if random_evidence.get("available") is True:
+        percentile = _float_or_none(random_evidence.get("dynamic_strategy_percentile"))
+        min_percentile = _float_or_none(random_evidence.get("min_required_percentile"))
+        beats_count = _int_or_none(random_evidence.get("random_beats_count"))
+        path_count = _int_or_none(random_evidence.get("random_path_count"))
+        max_beats_share = _float_or_none(random_evidence.get("max_random_beats_share"))
+        beats_share = (
+            None
+            if beats_count is None or path_count in (None, 0)
+            else beats_count / path_count
+        )
+        if (
+            percentile is not None
+            and min_percentile is not None
+            and percentile < min_percentile
+        ) or (
+            beats_share is not None
+            and max_beats_share is not None
+            and beats_share > max_beats_share
+        ):
+            reasons.append("random_baseline_failed")
+    else:
+        reasons.append("random_baseline_missing")
+
+    signal_evidence = _dict_value(robustness_evidence.get("signal_family_baseline"))
+    if signal_evidence.get("available") is True:
+        if signal_evidence.get("base_beats_best_signal_family_baseline") is False:
+            reasons.append("signal_family_baseline_not_beaten")
+    else:
+        reasons.append("signal_family_baseline_missing")
+    architecture_evidence = _dict_value(
+        robustness_evidence.get("score_architecture_baseline")
+    )
+    if architecture_evidence.get("available") is True:
+        if (
+            architecture_evidence.get(
+                "base_beats_best_score_architecture_baseline"
+            )
+            is False
+        ):
+            reasons.append("score_architecture_baseline_not_beaten")
+    else:
+        reasons.append("score_architecture_baseline_missing")
+    if trial.material_total_return_delta is True and (
+        trial.total_return_delta_vs_base is not None
+        and trial.total_return_delta_vs_base > 0
+    ):
+        require_bootstrap = bool(
+            (materiality_policy or {}).get("candidate_require_bootstrap_ci")
+        )
+        min_ci_lower = _float_or_none(
+            (materiality_policy or {}).get(
+                "candidate_min_bootstrap_ci_lower_total_return_delta"
+            )
+        )
+        if (
+            trial.return_delta_bootstrap_ci_low is None
+            or trial.return_delta_bootstrap_ci_high is None
+        ):
+            if require_bootstrap:
+                reasons.append("statistical_evidence_missing")
+        elif (
+            min_ci_lower is not None
+            and trial.return_delta_bootstrap_ci_low < min_ci_lower
+        ):
+            reasons.append("statistical_bootstrap_ci_crosses_threshold")
+    return tuple(dict.fromkeys(reasons))
 
 
 def _candidate_next_step(status: str) -> str:
-    if status == "READY_FOR_OWNER_REVIEW":
-        return "人工复核假设和风险；通过后只能进入 shadow 或 candidate overlay。"
+    if status == "READY_FOR_FORWARD_SHADOW":
+        return "补 owner 假设卡和 rollback 条件后进入 forward shadow，不得直接改 production。"
+    if status == "READY_FOR_AS_IF_REPLAY":
+        return "补齐缺失 OOS/random/baseline 证据后再判断能否进入 forward shadow。"
+    if status == "BLOCKED_BY_DATA":
+        return "先修复数据质量、PIT 覆盖或数据可信度，再讨论参数候选。"
+    if status == "BLOCKED_BY_OOS":
+        return "样本外证据阻断；记录为过拟合风险，不进入 shadow。"
+    if status == "BLOCKED_BY_RANDOM_BASELINE":
+        return "同换手率随机基线阻断；需要更长样本或重新提出业务假设。"
+    if status == "RISK_REVIEW":
+        return "收益改善伴随风险或基线问题，进入风险复核而不是晋级。"
     if status == "MATERIAL_RISK_REVIEW":
         return "记录为参数敏感性风险；不作为上线候选，需补窗口复测或降低结论可信度。"
     if status == "OBSERVE_ONLY":
@@ -394,6 +724,8 @@ def _ledger_warnings(
         candidate.recommendation_status == "NEEDS_MATERIALITY_POLICY" for candidate in candidates
     ):
         warnings.append("存在候选缺少 materiality policy 阈值，不能进入 owner approval。")
+    if any(candidate.recommendation_status.startswith("BLOCKED_BY_") for candidate in candidates):
+        warnings.append("存在候选被数据、OOS 或随机基线 veto，不能进入 forward shadow。")
     return tuple(warnings)
 
 
@@ -433,13 +765,16 @@ def _id_token(value: str) -> str:
 
 
 def _candidate_row(candidate: ParameterCandidate) -> str:
+    next_step = candidate.next_step
+    if candidate.veto_reasons:
+        next_step += " Veto: " + "、".join(candidate.veto_reasons)
     return (
         f"| `{candidate.candidate_id}` | `{candidate.source_scenario_id}` | "
         f"{candidate.category} | "
         f"{_format_pct(candidate.total_return_delta_vs_base, signed=True)} | "
         f"{_format_pct(candidate.max_drawdown_delta_vs_base, signed=True)} | "
         f"{_format_float(candidate.turnover)} | "
-        f"{candidate.recommendation_status} | {candidate.next_step} |"
+        f"{candidate.recommendation_status} | {next_step} |"
     )
 
 
@@ -447,7 +782,7 @@ def _trial_row(trial: ParameterTrial) -> str:
     return (
         f"| `{trial.trial_id}` | `{trial.source_scenario_id}` | {trial.category} | "
         f"{trial.status} | {_format_pct(trial.total_return_delta_vs_base, signed=True)} | "
-        f"{trial.candidate_eligible} |"
+        f"{trial.candidate_eligible} ({trial.candidate_eligible_reason}) |"
     )
 
 
@@ -460,6 +795,10 @@ def _read_json_object(path: Path) -> dict[str, Any]:
 
 def _optional_dict(value: Any) -> dict[str, Any] | None:
     return value if isinstance(value, dict) else None
+
+
+def _dict_value(value: Any) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
 
 
 def _optional_str(value: Any) -> str | None:
@@ -482,6 +821,15 @@ def _bool_or_none(value: Any) -> bool | None:
     if isinstance(value, bool):
         return value
     return None
+
+
+def _int_or_none(value: Any) -> int | None:
+    if value is None:
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _format_pct(value: float | None, *, signed: bool = False) -> str:

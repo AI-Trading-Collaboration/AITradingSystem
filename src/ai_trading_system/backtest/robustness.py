@@ -4,10 +4,15 @@ import json
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date
+from math import sqrt
 from pathlib import Path
 from random import Random
+from statistics import pstdev
 
-from ai_trading_system.backtest.daily import DailyBacktestResult
+from ai_trading_system.backtest.daily import (
+    DailyBacktestResult,
+    build_backtest_data_credibility,
+)
 from ai_trading_system.backtest.engine import BacktestMetrics, summarize_long_only_backtest
 from ai_trading_system.config import BacktestRobustnessPolicyConfig
 from ai_trading_system.scoring.position_model import (
@@ -158,6 +163,7 @@ def module_subset_baseline_scenario(
     modules: tuple[str, ...],
     weights: Mapping[str, float],
     position_bands: tuple[PositionBandRule, ...],
+    category: str = "signal_family_baseline",
 ) -> BacktestRobustnessScenario:
     metrics = _module_subset_metrics(
         result,
@@ -169,7 +175,7 @@ def module_subset_baseline_scenario(
     return BacktestRobustnessScenario(
         scenario_id=scenario_id,
         label=label,
-        category="signal_family_baseline",
+        category=category,
         description=(
             f"只使用 {module_label} 模块分数和配置权重映射仓位，复用每日宏观总风险"
             "资产预算、最小调仓阈值、下一交易日收益和显式成本假设；不重跑 "
@@ -201,10 +207,81 @@ def same_turnover_random_scenario(
     )
 
 
+def same_exposure_random_scenario(
+    result: DailyBacktestResult,
+    *,
+    seed: int,
+) -> BacktestRobustnessScenario:
+    rng = Random(seed)
+    exposures = [row.raw_target_exposure for row in result.rows]
+    rng.shuffle(exposures)
+    metrics = _exposure_path_metrics(result, tuple(exposures))
+    return BacktestRobustnessScenario(
+        scenario_id=f"same_exposure_random_seed_{seed}",
+        label=f"同 exposure 分布随机策略 seed {seed}",
+        category="same_exposure_random_strategy",
+        description=(
+            f"使用固定随机种子 {seed} 打乱基础动态策略的每日目标 exposure，"
+            "保留 exposure 分布但破坏信号时点；逐日重新计算收益和成本。"
+        ),
+        metrics=metrics,
+        first_signal_date=result.first_signal_date,
+        last_signal_date=result.last_signal_date,
+    )
+
+
+def model_target_no_gate_scenario(
+    result: DailyBacktestResult,
+) -> BacktestRobustnessScenario:
+    exposures = tuple(row.total_asset_model_target_exposure for row in result.rows)
+    metrics = _exposure_path_metrics(result, exposures)
+    return BacktestRobustnessScenario(
+        scenario_id="no_gate_model_target_baseline",
+        label="No-gate model target 基线",
+        category="score_architecture_baseline",
+        description=(
+            "使用线性加权模型映射出的 total_asset_model_target_exposure，"
+            "不应用后续 position gate cap；复用同一下一交易日收益和成本假设。"
+        ),
+        metrics=metrics,
+        first_signal_date=result.first_signal_date,
+        last_signal_date=result.last_signal_date,
+    )
+
+
+def volatility_targeted_exposure_scenario(
+    result: DailyBacktestResult,
+    *,
+    target_annual_volatility: float,
+    lookback_days: int,
+    fallback_exposure: float,
+) -> BacktestRobustnessScenario:
+    metrics = _volatility_targeted_metrics(
+        result,
+        target_annual_volatility=target_annual_volatility,
+        lookback_days=lookback_days,
+        fallback_exposure=fallback_exposure,
+    )
+    return BacktestRobustnessScenario(
+        scenario_id="vol_targeted_total_asset_ai",
+        label=f"Vol-targeted AI exposure {target_annual_volatility:.0%}",
+        category="baseline",
+        description=(
+            f"使用前 {lookback_days} 个交易日 realized volatility 估计下一日 exposure，"
+            f"目标年化波动 {target_annual_volatility:.0%}，不足样本时使用"
+            f"固定 {fallback_exposure:.0%} 总资产 exposure；不读取未来收益。"
+        ),
+        metrics=metrics,
+        first_signal_date=result.first_signal_date,
+        last_signal_date=result.last_signal_date,
+    )
+
+
 def backtest_robustness_summary_record(
     report: BacktestRobustnessReport,
 ) -> dict[str, object]:
     result = report.base_result
+    data_credibility = build_backtest_data_credibility(result)
     return {
         "schema_version": 1,
         "report_type": "backtest_robustness",
@@ -226,6 +303,11 @@ def backtest_robustness_summary_record(
             }
         ),
         "data_quality_status": result.data_quality_report.status,
+        "data_credibility_grade": data_credibility.grade,
+        "coverage_evidence": _coverage_evidence_record(result, report.policy),
+        "weight_profile_version": result.weight_profile_version,
+        "calibration_overlay_ids": list(result.calibration_overlay_ids),
+        "effective_weights": result.effective_weights or {},
         "policy_metadata": report.policy_metadata,
         "policy": report.policy.model_dump(mode="json"),
         "cost_stress_increment_bps": report.cost_stress_increment_bps,
@@ -236,7 +318,7 @@ def backtest_robustness_summary_record(
         "oos_split_ratio": report.oos_split_ratio,
         "base_dynamic": _summary_metrics_record(result.strategy_metrics),
         "scenarios": [
-            _scenario_summary_record(scenario, result.strategy_metrics)
+            _scenario_summary_record(scenario, result, report.policy)
             for scenario in report.scenarios
         ],
         "benchmarks": [
@@ -340,6 +422,8 @@ def render_backtest_robustness_report(report: BacktestRobustnessReport) -> str:
     )
     for ticker, metrics in result.benchmark_metrics.items():
         lines.append(_benchmark_row(ticker, metrics, result.strategy_metrics))
+
+    lines.extend(_coverage_evidence_lines(report))
 
     lines.extend(
         [
@@ -632,6 +716,66 @@ def _fixed_exposure_metrics(
     )
 
 
+def _exposure_path_metrics(
+    result: DailyBacktestResult,
+    exposures: tuple[float, ...],
+) -> BacktestMetrics:
+    if len(exposures) != len(result.rows):
+        raise ValueError("exposure path length must match backtest rows")
+    previous_exposure = 0.0
+    returns: list[float] = []
+    turnovers: list[float] = []
+    for row, raw_exposure in zip(result.rows, exposures, strict=True):
+        exposure = _clamp_exposure(raw_exposure)
+        turnover = abs(exposure - previous_exposure)
+        transaction_cost = _transaction_cost_for_turnover(
+            result=result,
+            exposure=exposure,
+            previous_exposure=previous_exposure,
+            turnover=turnover,
+        )
+        returns.append(exposure * row.asset_return - transaction_cost)
+        turnovers.append(turnover)
+        previous_exposure = exposure
+    return summarize_long_only_backtest(
+        strategy_returns=returns,
+        exposures=[_clamp_exposure(value) for value in exposures],
+        turnovers=turnovers,
+    )
+
+
+def _volatility_targeted_metrics(
+    result: DailyBacktestResult,
+    *,
+    target_annual_volatility: float,
+    lookback_days: int,
+    fallback_exposure: float,
+) -> BacktestMetrics:
+    if not 0 < target_annual_volatility <= 1:
+        raise ValueError("target annual volatility must satisfy 0 < value <= 1")
+    if lookback_days <= 1:
+        raise ValueError("volatility target lookback days must be greater than 1")
+    if not 0 <= fallback_exposure <= 1:
+        raise ValueError("fallback exposure must satisfy 0 <= exposure <= 1")
+    target_daily_volatility = target_annual_volatility / sqrt(252.0)
+    exposures: list[float] = []
+    asset_returns: list[float] = []
+    for row in result.rows:
+        if len(asset_returns) < lookback_days:
+            exposure = fallback_exposure
+        else:
+            trailing_returns = asset_returns[-lookback_days:]
+            realized_volatility = pstdev(trailing_returns)
+            exposure = (
+                fallback_exposure
+                if realized_volatility <= 0
+                else target_daily_volatility / realized_volatility
+            )
+        exposures.append(_clamp_exposure(exposure))
+        asset_returns.append(row.asset_return)
+    return _exposure_path_metrics(result, tuple(exposures))
+
+
 def _rebalance_interval_metrics(
     result: DailyBacktestResult,
     *,
@@ -842,8 +986,10 @@ def _transaction_cost_for_turnover(
 
 def _scenario_summary_record(
     scenario: BacktestRobustnessScenario,
-    base_metrics: BacktestMetrics,
+    base_result: DailyBacktestResult,
+    policy: BacktestRobustnessPolicyConfig,
 ) -> dict[str, object]:
+    base_metrics = base_result.strategy_metrics
     metrics = (
         scenario.result.strategy_metrics
         if scenario.result is not None
@@ -862,7 +1008,245 @@ def _scenario_summary_record(
         record["total_return_delta_vs_base"] = (
             metrics.total_return - base_metrics.total_return
         )
+        bootstrap_ci = _scenario_bootstrap_ci_record(
+            scenario=scenario,
+            base_result=base_result,
+            policy=policy,
+        )
+        if bootstrap_ci is not None:
+            record["return_delta_bootstrap_ci_95"] = bootstrap_ci
+    if scenario.result is not None:
+        record["weight_profile_version"] = scenario.result.weight_profile_version
+        record["calibration_overlay_ids"] = list(
+            scenario.result.calibration_overlay_ids
+        )
+        record["effective_weights"] = scenario.result.effective_weights or {}
     return record
+
+
+def _scenario_bootstrap_ci_record(
+    *,
+    scenario: BacktestRobustnessScenario,
+    base_result: DailyBacktestResult,
+    policy: BacktestRobustnessPolicyConfig,
+) -> dict[str, object] | None:
+    if scenario.result is None:
+        return None
+    base_returns = tuple(row.strategy_return for row in base_result.rows)
+    scenario_returns = tuple(row.strategy_return for row in scenario.result.rows)
+    if len(base_returns) != len(scenario_returns) or len(base_returns) < 2:
+        return None
+    ci_low, ci_high = _block_bootstrap_total_return_delta_ci(
+        base_returns=base_returns,
+        scenario_returns=scenario_returns,
+        iterations=policy.bootstrap_iterations,
+        block_size_days=policy.bootstrap_block_size_days,
+        random_seed=policy.bootstrap_random_seed
+        + sum(ord(character) for character in scenario.scenario_id),
+    )
+    return {
+        "method": "paired_block_bootstrap_total_return_delta",
+        "iterations": policy.bootstrap_iterations,
+        "block_size_days": policy.bootstrap_block_size_days,
+        "daily_return_count": len(base_returns),
+        "low": ci_low,
+        "high": ci_high,
+    }
+
+
+def _block_bootstrap_total_return_delta_ci(
+    *,
+    base_returns: tuple[float, ...],
+    scenario_returns: tuple[float, ...],
+    iterations: int,
+    block_size_days: int,
+    random_seed: int,
+) -> tuple[float, float]:
+    if iterations <= 0:
+        raise ValueError("bootstrap iterations must be positive")
+    if block_size_days <= 0:
+        raise ValueError("bootstrap block size must be positive")
+    rng = Random(random_seed)
+    count = len(base_returns)
+    deltas: list[float] = []
+    for _ in range(iterations):
+        sampled_base: list[float] = []
+        sampled_scenario: list[float] = []
+        while len(sampled_base) < count:
+            start = rng.randrange(count)
+            for offset in range(block_size_days):
+                index = (start + offset) % count
+                sampled_base.append(base_returns[index])
+                sampled_scenario.append(scenario_returns[index])
+                if len(sampled_base) >= count:
+                    break
+        deltas.append(
+            _compound_return(sampled_scenario) - _compound_return(sampled_base)
+        )
+    ordered = sorted(deltas)
+    return _quantile(ordered, 0.025), _quantile(ordered, 0.975)
+
+
+def _compound_return(returns: list[float]) -> float:
+    value = 1.0
+    for item in returns:
+        value *= 1.0 + item
+    return value - 1.0
+
+
+def _quantile(sorted_values: list[float], probability: float) -> float:
+    if not sorted_values:
+        raise ValueError("sorted_values must not be empty")
+    if not 0 <= probability <= 1:
+        raise ValueError("probability must be between 0 and 1")
+    position = (len(sorted_values) - 1) * probability
+    lower = int(position)
+    upper = min(lower + 1, len(sorted_values) - 1)
+    weight = position - lower
+    return sorted_values[lower] * (1.0 - weight) + sorted_values[upper] * weight
+
+
+def _coverage_evidence_record(
+    result: DailyBacktestResult,
+    policy: BacktestRobustnessPolicyConfig,
+) -> dict[str, object]:
+    row_count = len(result.rows)
+    components = sorted(
+        {
+            component
+            for row in result.rows
+            for component in (
+                set(row.component_coverages) | set(row.component_source_types)
+            )
+        }
+    )
+    blocking_source_types = set(policy.candidate_blocking_component_source_types)
+    component_records: dict[str, object] = {}
+    blocking_components: list[str] = []
+    minimum_component_coverage: float | None = None
+    minimum_average_component_coverage: float | None = None
+    maximum_placeholder_share: float | None = None
+
+    for component in components:
+        coverage_values = [
+            float(row.component_coverages.get(component, 0.0))
+            for row in result.rows
+        ]
+        source_type_counts: dict[str, int] = {}
+        for row in result.rows:
+            source_type = row.component_source_types.get(component, "missing")
+            source_type_counts[source_type] = source_type_counts.get(source_type, 0) + 1
+        observations = len(coverage_values)
+        component_min = min(coverage_values) if coverage_values else None
+        component_avg = (
+            sum(coverage_values) / len(coverage_values) if coverage_values else None
+        )
+        placeholder_count = source_type_counts.get("placeholder", 0)
+        insufficient_count = source_type_counts.get("insufficient_data", 0)
+        placeholder_share = (
+            None if observations == 0 else placeholder_count / observations
+        )
+        blocking_source_count = sum(
+            count
+            for source_type, count in source_type_counts.items()
+            if source_type in blocking_source_types
+        )
+        component_blocked = (
+            component_min is None
+            or component_avg is None
+            or component_min < policy.candidate_min_component_coverage
+            or component_avg < policy.candidate_min_component_coverage
+            or (
+                placeholder_share is not None
+                and placeholder_share > policy.candidate_max_placeholder_share
+            )
+            or blocking_source_count > 0
+        )
+        if component_blocked:
+            blocking_components.append(component)
+        minimum_component_coverage = (
+            component_min
+            if minimum_component_coverage is None
+            else min(minimum_component_coverage, component_min or 0.0)
+        )
+        minimum_average_component_coverage = (
+            component_avg
+            if minimum_average_component_coverage is None
+            else min(minimum_average_component_coverage, component_avg or 0.0)
+        )
+        maximum_placeholder_share = (
+            placeholder_share
+            if maximum_placeholder_share is None
+            else max(maximum_placeholder_share, placeholder_share or 0.0)
+        )
+        component_records[component] = {
+            "observations": observations,
+            "min_coverage": component_min,
+            "average_coverage": component_avg,
+            "placeholder_count": placeholder_count,
+            "insufficient_data_count": insufficient_count,
+            "placeholder_share": placeholder_share,
+            "blocking_source_count": blocking_source_count,
+            "source_type_counts": source_type_counts,
+            "blocked": component_blocked,
+        }
+
+    return {
+        "available": bool(components),
+        "sample_count": row_count,
+        "min_required_component_coverage": policy.candidate_min_component_coverage,
+        "max_allowed_placeholder_share": policy.candidate_max_placeholder_share,
+        "blocking_source_types": sorted(blocking_source_types),
+        "minimum_component_coverage": minimum_component_coverage,
+        "minimum_average_component_coverage": minimum_average_component_coverage,
+        "maximum_placeholder_share": maximum_placeholder_share,
+        "blocking_components": blocking_components,
+        "blocked": bool(blocking_components),
+        "components": component_records,
+    }
+
+
+def _coverage_evidence_lines(report: BacktestRobustnessReport) -> list[str]:
+    evidence = _coverage_evidence_record(report.base_result, report.policy)
+    components = evidence.get("components")
+    if not isinstance(components, dict) or not components:
+        return [
+            "",
+            "## 数据覆盖与 source veto 证据",
+            "",
+            "- 未找到 component coverage 证据；参数候选不得据此晋级。",
+        ]
+    lines = [
+        "",
+        "## 数据覆盖与 source veto 证据",
+        "",
+        (
+            "- 候选最低模块覆盖率："
+            f"{float(evidence['min_required_component_coverage']):.0%}"
+        ),
+        (
+            "- 候选最大 placeholder 占比："
+            f"{float(evidence['max_allowed_placeholder_share']):.0%}"
+        ),
+        (
+            "- 阻断 source_type："
+            + ", ".join(str(item) for item in evidence["blocking_source_types"])
+        ),
+        "| 模块 | min coverage | avg coverage | placeholder share | blocking sources | 状态 |",
+        "|---|---:|---:|---:|---:|---|",
+    ]
+    for component, raw_record in sorted(components.items()):
+        record = raw_record if isinstance(raw_record, dict) else {}
+        status = "BLOCK" if record.get("blocked") else "PASS"
+        lines.append(
+            f"| `{component}` | "
+            f"{_format_pct(_float_or_none(record.get('min_coverage')))} | "
+            f"{_format_pct(_float_or_none(record.get('average_coverage')))} | "
+            f"{_format_pct(_float_or_none(record.get('placeholder_share')))} | "
+            f"{int(record.get('blocking_source_count') or 0)} | "
+            f"{status} |"
+        )
+    return lines
 
 
 def _summary_metrics_record(metrics: BacktestMetrics) -> dict[str, object]:
@@ -900,6 +1284,21 @@ def _benchmark_role(ticker: str) -> str:
 
 def _format_percent(value: float) -> str:
     return f"{value:.1%}"
+
+
+def _format_pct(value: float | None) -> str:
+    if value is None:
+        return "n/a"
+    return f"{value:.1%}"
+
+
+def _float_or_none(value: object) -> float | None:
+    if value is None:
+        return None
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _format_optional(value: float | None) -> str:

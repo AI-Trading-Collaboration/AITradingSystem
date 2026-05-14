@@ -112,6 +112,7 @@ class WeightProfile(BaseModel):
 
 class OverlayEffect(BaseModel):
     weight_multipliers: dict[str, float] = Field(default_factory=dict)
+    target_weights: dict[str, float] = Field(default_factory=dict)
     confidence_delta: float = 0.0
     position_multiplier: float = 1.0
     required_confirmation: str | list[str] | None = None
@@ -121,6 +122,8 @@ class OverlayEffect(BaseModel):
 
     @model_validator(mode="after")
     def validate_effect_values(self) -> Self:
+        if self.weight_multipliers and self.target_weights:
+            raise ValueError("effect cannot define both weight_multipliers and target_weights")
         non_positive = [
             signal
             for signal, multiplier in self.weight_multipliers.items()
@@ -130,6 +133,16 @@ class OverlayEffect(BaseModel):
             raise ValueError(
                 "weight_multipliers must be positive: " + ", ".join(sorted(non_positive))
             )
+        negative_targets = [
+            signal for signal, weight in self.target_weights.items() if weight < 0.0
+        ]
+        if negative_targets:
+            raise ValueError(
+                "target_weights must be non-negative: "
+                + ", ".join(sorted(negative_targets))
+            )
+        if self.target_weights and abs(sum(self.target_weights.values()) - 1.0) > _FLOAT_EPSILON:
+            raise ValueError("target_weights must sum to 1.0")
         if self.position_multiplier <= 0.0:
             raise ValueError("position_multiplier must be positive")
         if self.hard_gate_max_position is not None and not 0 <= self.hard_gate_max_position <= 1:
@@ -164,6 +177,11 @@ class CalibrationOverlay(BaseModel):
     overlay_id: str = Field(min_length=1, pattern=r"^[A-Za-z0-9_.:-]+$")
     version: str = Field(min_length=1)
     status: OverlayStatus
+    priority: int = Field(default=100)
+    mutual_exclusion_group: str | None = Field(default=None, min_length=1)
+    conflict_policy: Literal["highest_priority_wins", "fail_closed"] = (
+        "highest_priority_wins"
+    )
     match: dict[str, Any] = Field(default_factory=dict)
     effect: OverlayEffect = Field(default_factory=OverlayEffect)
     evidence: dict[str, Any] = Field(default_factory=dict)
@@ -288,45 +306,70 @@ def apply_calibration_overlays(
         if not overlay.production_eligible(as_of=as_of):
             why_not_applied.append(_overlay_ineligible_reason(overlay, as_of=as_of))
             continue
+        _validate_overlay_signals(profile, overlay)
         result = match_overlay(context, overlay)
         if result.matched:
             matched_results.append(result)
         else:
             why_not_applied.extend(result.reasons)
 
-    matched_overlays = tuple(result.overlay for result in matched_results)
-    multipliers = {signal: 1.0 for signal in profile.base_weights}
+    matched_results, conflict_audit = _resolve_overlay_conflicts(matched_results)
+    why_not_applied.extend(conflict_audit)
+    matched_overlays = tuple(
+        result.overlay
+        for result in sorted(
+            matched_results,
+            key=lambda item: (item.overlay.priority, item.overlay.overlay_id),
+        )
+    )
+    cumulative_multipliers = {signal: 1.0 for signal in profile.base_weights}
+    effective_weights = dict(profile.base_weights)
     confidence_delta = 0.0
     position_multiplier = 1.0
     confirmations: list[str] = []
+    weight_changes: list[str] = []
     for overlay in matched_overlays:
-        for signal, raw_multiplier in overlay.effect.weight_multipliers.items():
-            if signal not in multipliers:
-                why_not_applied.append(
-                    f"{overlay.overlay_id}: multiplier ignored for unknown signal {signal}"
+        before_weights = dict(effective_weights)
+        if overlay.effect.target_weights:
+            effective_weights = _target_weights_for_profile(profile, overlay)
+            cumulative_multipliers = {signal: 1.0 for signal in profile.base_weights}
+            weight_changes.extend(
+                _weight_change_audit_lines(
+                    overlay_id=overlay.overlay_id,
+                    before=before_weights,
+                    after=effective_weights,
                 )
-                continue
+            )
+        for signal, raw_multiplier in overlay.effect.weight_multipliers.items():
             single_multiplier = _clamp(
                 raw_multiplier,
                 profile.bounds.min_single_overlay_multiplier,
                 profile.bounds.max_single_overlay_multiplier,
             )
-            multipliers[signal] *= single_multiplier
+            next_total_multiplier = _clamp(
+                cumulative_multipliers[signal] * single_multiplier,
+                profile.bounds.min_total_overlay_multiplier,
+                profile.bounds.max_total_overlay_multiplier,
+            )
+            effective_single_multiplier = (
+                next_total_multiplier / cumulative_multipliers[signal]
+            )
+            cumulative_multipliers[signal] = next_total_multiplier
+            effective_weights[signal] *= effective_single_multiplier
+        if overlay.effect.weight_multipliers:
+            if profile.normalization.enabled:
+                effective_weights = _normalize_weights(effective_weights)
+            weight_changes.extend(
+                _weight_change_audit_lines(
+                    overlay_id=overlay.overlay_id,
+                    before=before_weights,
+                    after=effective_weights,
+                )
+            )
         confidence_delta += overlay.effect.confidence_delta
         position_multiplier *= overlay.effect.position_multiplier
         confirmations.extend(overlay.effect.required_confirmations)
 
-    for signal, raw_multiplier in list(multipliers.items()):
-        multipliers[signal] = _clamp(
-            raw_multiplier,
-            profile.bounds.min_total_overlay_multiplier,
-            profile.bounds.max_total_overlay_multiplier,
-        )
-
-    effective_weights = {
-        signal: weight * multipliers[signal]
-        for signal, weight in profile.base_weights.items()
-    }
     if profile.normalization.enabled:
         effective_weights = _normalize_weights(effective_weights)
 
@@ -357,7 +400,31 @@ def apply_calibration_overlays(
             else ["No approved overlays matched"]
             if not matched_overlays
             else [],
+            "overlay_order": [
+                f"{overlay.overlay_id}: priority={overlay.priority}"
+                for overlay in matched_overlays
+            ],
+            "weight_changes": weight_changes
+            if weight_changes
+            else ["No overlay weight changes applied"],
         },
+    )
+
+
+def resolve_calibration_application(
+    *,
+    context: dict[str, Any],
+    as_of: date,
+    weight_profile_path: Path | str = DEFAULT_WEIGHT_PROFILE_PATH,
+    overlays_path: Path | str = DEFAULT_APPROVED_CALIBRATION_OVERLAY_PATH,
+) -> CalibrationApplication:
+    profile = load_weight_profile(weight_profile_path)
+    overlays = load_calibration_overlays(overlays_path)
+    return apply_calibration_overlays(
+        context=context,
+        profile=profile,
+        overlays=overlays,
+        as_of=as_of,
     )
 
 
@@ -374,6 +441,115 @@ def write_effective_weights(application: CalibrationApplication, output_path: Pa
         encoding="utf-8",
     )
     return output_path
+
+
+def _validate_overlay_signals(
+    profile: WeightProfile,
+    overlay: CalibrationOverlay,
+) -> None:
+    referenced_signals = set(overlay.effect.weight_multipliers) | set(
+        overlay.effect.target_weights
+    )
+    unknown = sorted(referenced_signals - set(profile.base_weights))
+    if unknown:
+        raise ValueError(
+            f"approved overlay {overlay.overlay_id} references unknown signal(s): "
+            + ", ".join(unknown)
+        )
+    if overlay.effect.target_weights:
+        missing = sorted(set(profile.base_weights) - set(overlay.effect.target_weights))
+        if missing:
+            raise ValueError(
+                f"approved overlay {overlay.overlay_id} target_weights missing signal(s): "
+                + ", ".join(missing)
+            )
+        overweight = [
+            signal
+            for signal, weight in overlay.effect.target_weights.items()
+            if weight > profile.bounds.max_weight + _FLOAT_EPSILON
+            or weight < profile.bounds.min_weight - _FLOAT_EPSILON
+        ]
+        if overweight:
+            raise ValueError(
+                f"approved overlay {overlay.overlay_id} target_weights outside profile bounds: "
+                + ", ".join(sorted(overweight))
+            )
+
+
+def _resolve_overlay_conflicts(
+    matched_results: list[OverlayMatchResult],
+) -> tuple[list[OverlayMatchResult], list[str]]:
+    selected: list[OverlayMatchResult] = []
+    audit: list[str] = []
+    grouped: dict[str, list[OverlayMatchResult]] = {}
+    for result in matched_results:
+        group = result.overlay.mutual_exclusion_group
+        if group is None:
+            selected.append(result)
+        else:
+            grouped.setdefault(group, []).append(result)
+
+    for group, results in sorted(grouped.items()):
+        if len(results) == 1:
+            selected.append(results[0])
+            continue
+        if any(result.overlay.conflict_policy == "fail_closed" for result in results):
+            overlay_ids = ", ".join(result.overlay.overlay_id for result in results)
+            raise ValueError(
+                f"matched overlays conflict in mutual_exclusion_group {group}: "
+                f"{overlay_ids}"
+            )
+        best_priority = max(result.overlay.priority for result in results)
+        winners = [result for result in results if result.overlay.priority == best_priority]
+        if len(winners) != 1:
+            overlay_ids = ", ".join(result.overlay.overlay_id for result in winners)
+            raise ValueError(
+                f"matched overlays tie on priority in mutual_exclusion_group {group}: "
+                f"{overlay_ids}"
+            )
+        winner = winners[0]
+        selected.append(winner)
+        for result in results:
+            if result is winner:
+                continue
+            audit.append(
+                f"{result.overlay.overlay_id}: skipped because "
+                f"{winner.overlay.overlay_id} has higher priority in group {group}"
+            )
+    return selected, audit
+
+
+def _target_weights_for_profile(
+    profile: WeightProfile,
+    overlay: CalibrationOverlay,
+) -> dict[str, float]:
+    weights = {
+        signal: float(overlay.effect.target_weights[signal])
+        for signal in profile.base_weights
+    }
+    if profile.normalization.enabled:
+        weights = _normalize_weights(weights)
+    return weights
+
+
+def _weight_change_audit_lines(
+    *,
+    overlay_id: str,
+    before: dict[str, float],
+    after: dict[str, float],
+) -> list[str]:
+    lines: list[str] = []
+    for signal in sorted(set(before) | set(after)):
+        before_weight = before.get(signal, 0.0)
+        after_weight = after.get(signal, 0.0)
+        delta = after_weight - before_weight
+        if abs(delta) <= _FLOAT_EPSILON:
+            continue
+        lines.append(
+            f"{overlay_id}: {signal} {before_weight:.2%} -> "
+            f"{after_weight:.2%} ({delta:+.2%})"
+        )
+    return lines
 
 
 def _overlay_ineligible_reason(overlay: CalibrationOverlay, *, as_of: date) -> str:

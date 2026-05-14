@@ -69,6 +69,18 @@ def _dispatch(args: list[str]) -> None:
             run_id=_option(args, "--run-id"),
         )
         return
+    if args[:2] == ["feedback", "optimize-market-feedback"]:
+        cli.optimize_market_feedback_command(as_of=_option(args, "--as-of"))
+        return
+    if args[:2] == ["feedback", "loop-review"]:
+        cli.feedback_loop_review_command(as_of=_option(args, "--as-of"))
+        return
+    if args[:2] == ["reports", "investment-review"]:
+        cli.investment_periodic_review_command(
+            period=_option(args, "--period", "weekly") or "weekly",
+            as_of=_option(args, "--as-of"),
+        )
+        return
     if args[:2] == ["reports", "dashboard"]:
         cli.evidence_dashboard_command(as_of=_option(args, "--as-of"))
         return

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections import Counter
 from collections.abc import Mapping
 from dataclasses import dataclass
@@ -37,11 +38,18 @@ from ai_trading_system.scoring.daily import (
     COMPONENT_LABELS,
     SOURCE_TYPE_LABELS,
     build_daily_score_report,
+    build_weight_calibration_context,
 )
 from ai_trading_system.valuation import ValuationReviewReport
 from ai_trading_system.watchlist_lifecycle import (
     WatchlistLifecycleConfig,
     active_watchlist_tickers_as_of,
+)
+from ai_trading_system.weight_calibration import (
+    CalibrationApplication,
+    CalibrationOverlay,
+    WeightProfile,
+    apply_calibration_overlays,
 )
 
 DEFAULT_BENCHMARK_TICKERS = ("SPY", "QQQ", "SMH", "SOXX")
@@ -168,6 +176,9 @@ class BacktestDailyRow:
     component_scores: dict[str, float]
     component_source_types: dict[str, str]
     component_coverages: dict[str, float]
+    weight_profile_version: str
+    calibration_overlay_ids: tuple[str, ...]
+    effective_weights: dict[str, float]
     position_gate_caps: dict[str, float]
     position_gate_triggers: dict[str, bool]
     industry_node_status: str
@@ -225,6 +236,13 @@ class BacktestDailyRow:
             "industry_node_risk_limited_count": self.industry_node_risk_limited_count,
             "industry_node_price_only_count": self.industry_node_price_only_count,
             "industry_node_data_gap_count": self.industry_node_data_gap_count,
+            "weight_profile_version": self.weight_profile_version,
+            "calibration_overlay_ids": ",".join(self.calibration_overlay_ids),
+            "effective_weights_json": json.dumps(
+                self.effective_weights,
+                ensure_ascii=False,
+                sort_keys=True,
+            ),
         }
         for component, score in self.component_scores.items():
             record[f"{component}_score"] = score
@@ -310,6 +328,9 @@ class DailyBacktestResult:
     universe_lag_days: int = 0
     rebalance_delay_days: int = 1
     universe_pit: bool = False
+    weight_profile_version: str = "not_connected"
+    calibration_overlay_ids: tuple[str, ...] = ()
+    effective_weights: dict[str, float] | None = None
 
     @property
     def status(self) -> str:
@@ -506,6 +527,10 @@ def run_daily_score_backtest(
     universe_lag_days: int = 0,
     rebalance_delay_days: int = 1,
     prepared_context: PreparedDailyBacktestContext | None = None,
+    weight_calibration: CalibrationApplication | None = None,
+    weight_profile: WeightProfile | None = None,
+    calibration_overlays: tuple[CalibrationOverlay, ...] = (),
+    weight_multipliers: Mapping[str, float] | None = None,
 ) -> DailyBacktestResult:
     if start >= end:
         raise ValueError("回测开始日期必须早于结束日期")
@@ -517,6 +542,8 @@ def run_daily_score_backtest(
         raise ValueError("universe_lag_days 不能为负数")
     if rebalance_delay_days != 1:
         raise ValueError("当前回测只支持 1 个交易日 rebalance delay")
+    if weight_calibration is not None and weight_profile is not None:
+        raise ValueError("weight_calibration and weight_profile cannot both be provided")
     _validate_cost_bps(
         spread_bps=spread_bps,
         slippage_bps=slippage_bps,
@@ -744,6 +771,15 @@ def run_daily_score_backtest(
                 issues=risk_event_occurrence_review_report.validation_report.issues,
             )
         feature_set = period.feature_set
+        period_weight_calibration = _period_weight_calibration(
+            period=period,
+            data_quality_report=data_quality_report,
+            base_application=weight_calibration,
+            weight_profile=weight_profile,
+            calibration_overlays=calibration_overlays,
+            weight_multipliers=weight_multipliers,
+            market_regime=market_regime,
+        )
         score_report = build_daily_score_report(
             feature_set=feature_set,
             data_quality_report=data_quality_report,
@@ -756,6 +792,7 @@ def run_daily_score_backtest(
             fundamental_feature_report=fundamental_feature_report,
             valuation_review_report=valuation_review_report,
             risk_event_occurrence_review_report=risk_event_occurrence_review_report,
+            weight_calibration=period_weight_calibration,
         )
         industry_node_state = _build_industry_node_backtest_state(
             industry_chain=industry_chain,
@@ -883,6 +920,21 @@ def run_daily_score_backtest(
                 component_coverages={
                     component.name: component.coverage for component in score_report.components
                 },
+                weight_profile_version=(
+                    "not_connected"
+                    if period_weight_calibration is None
+                    else period_weight_calibration.weight_profile_version
+                ),
+                calibration_overlay_ids=(
+                    ()
+                    if period_weight_calibration is None
+                    else period_weight_calibration.matched_overlays
+                ),
+                effective_weights=(
+                    {}
+                    if period_weight_calibration is None
+                    else dict(period_weight_calibration.effective_weights)
+                ),
                 position_gate_caps={
                     gate.gate_id: gate.max_position for gate in recommendation.position_gates
                 },
@@ -1004,6 +1056,9 @@ def run_daily_score_backtest(
         universe_lag_days=universe_lag_days,
         rebalance_delay_days=rebalance_delay_days,
         universe_pit=prepared_context.universe_pit,
+        weight_profile_version=rows[0].weight_profile_version,
+        calibration_overlay_ids=_unique_calibration_overlay_ids(rows),
+        effective_weights=rows[0].effective_weights,
     )
 
 
@@ -1011,6 +1066,18 @@ def write_backtest_daily_csv(result: DailyBacktestResult, output_path: Path) -> 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame([row.to_record() for row in result.rows]).to_csv(output_path, index=False)
     return output_path
+
+
+def _unique_calibration_overlay_ids(
+    rows: list[BacktestDailyRow],
+) -> tuple[str, ...]:
+    overlay_ids = {
+        overlay_id
+        for row in rows
+        for overlay_id in row.calibration_overlay_ids
+        if overlay_id
+    }
+    return tuple(sorted(overlay_ids))
 
 
 def write_backtest_input_coverage_csv(
@@ -1038,6 +1105,76 @@ def backtest_input_coverage_records(
     records.extend(_input_source_type_coverage_records(result))
     records.extend(_valuation_credibility_coverage_records(result))
     return tuple(records)
+
+
+def _period_weight_calibration(
+    *,
+    period: PreparedBacktestPeriod,
+    data_quality_report: DataQualityReport,
+    base_application: CalibrationApplication | None,
+    weight_profile: WeightProfile | None,
+    calibration_overlays: tuple[CalibrationOverlay, ...],
+    weight_multipliers: Mapping[str, float] | None,
+    market_regime: BacktestRegimeContext | None,
+) -> CalibrationApplication | None:
+    application = base_application
+    if weight_profile is not None:
+        context = build_weight_calibration_context(
+            feature_set=period.feature_set,
+            data_quality_report=data_quality_report,
+            fundamental_feature_report=period.fundamental_feature_report,
+            valuation_review_report=period.valuation_review_report,
+            risk_event_occurrence_review_report=(
+                period.risk_event_occurrence_review_report
+            ),
+            run_type="backtest",
+            market_regime_id=None if market_regime is None else market_regime.regime_id,
+        )
+        application = apply_calibration_overlays(
+            context=context,
+            profile=weight_profile,
+            overlays=calibration_overlays,
+            as_of=period.signal_date,
+        )
+    if application is not None and weight_multipliers:
+        application = _apply_weight_multipliers(application, weight_multipliers)
+    return application
+
+
+def _apply_weight_multipliers(
+    application: CalibrationApplication,
+    multipliers: Mapping[str, float],
+) -> CalibrationApplication:
+    unknown = sorted(set(multipliers) - set(application.effective_weights))
+    if unknown:
+        raise ValueError("weight multipliers reference unknown signals: " + ", ".join(unknown))
+    weights = dict(application.effective_weights)
+    for signal, multiplier in multipliers.items():
+        if multiplier <= 0:
+            raise ValueError("weight multipliers must be positive")
+        weights[signal] *= multiplier
+    total = sum(weights.values())
+    if total <= 0:
+        raise ValueError("effective weights total must be positive")
+    effective_weights = {signal: value / total for signal, value in weights.items()}
+    audit = {
+        key: list(value)
+        for key, value in application.audit.items()
+    }
+    audit.setdefault("why_applied", []).append(
+        "backtest_parameter_multiplier: "
+        + ", ".join(f"{signal}={multiplier:.4g}" for signal, multiplier in multipliers.items())
+    )
+    return CalibrationApplication(
+        weight_profile_version=application.weight_profile_version,
+        matched_overlays=application.matched_overlays,
+        base_weights=application.base_weights,
+        effective_weights=effective_weights,
+        confidence_delta=application.confidence_delta,
+        position_multiplier=application.position_multiplier,
+        required_confirmations=application.required_confirmations,
+        audit=audit,
+    )
 
 
 def _build_industry_node_backtest_state(
@@ -1206,6 +1343,7 @@ def render_backtest_report(
         lines.extend(["", benchmark_policy_section.rstrip()])
 
     lines.extend(_execution_cost_summary_lines(result))
+    lines.extend(_weight_calibration_summary_lines(result))
     macro_budget_rows = _macro_budget_summary_rows(result)
     if macro_budget_rows:
         lines.extend(
@@ -2273,6 +2411,38 @@ def _execution_cost_summary_lines(result: DailyBacktestResult) -> list[str]:
         "当前成本模型为显式假设拆分，不等同于真实券商成交回报；"
         "真实生产执行仍需成交样本、盘口/容量约束、税务和融资条款验证。",
     ]
+
+
+def _weight_calibration_summary_lines(result: DailyBacktestResult) -> list[str]:
+    if result.weight_profile_version == "not_connected":
+        return [
+            "",
+            "## 历史校准权重摘要",
+            "",
+            "- 状态：not_connected",
+            "- 权重来源：legacy `scoring_rules.yaml` weights；"
+            "本次回测未传入 effective weights resolver。",
+        ]
+    lines = [
+        "",
+        "## 历史校准权重摘要",
+        "",
+        f"- Weight profile version：`{result.weight_profile_version}`",
+        "- Matched overlays："
+        + (
+            "、".join(f"`{overlay_id}`" for overlay_id in result.calibration_overlay_ids)
+            if result.calibration_overlay_ids
+            else "无"
+        ),
+        "- 边界：每日明细记录 `weight_profile_version`、`calibration_overlay_ids` "
+        "和 `effective_weights_json`，用于复现回测实际评分权重。",
+        "",
+        "| Module | Effective weight |",
+        "|---|---:|",
+    ]
+    for signal, weight in sorted((result.effective_weights or {}).items()):
+        lines.append(f"| `{signal}` | {weight:.1%} |")
+    return lines
 
 
 def _position_gate_summary_rows(result: DailyBacktestResult) -> list[str]:

@@ -4,7 +4,7 @@
 
 最后更新：2026-05-14
 
-关联任务：`CALIBRATION-003`、`FEEDBACK-002`、`EXPERIMENT-001`、`SHADOW-002`、`SHADOW-003`、`GOV-003`、`LOOP-001`
+关联任务：`CALIBRATION-003`、`CALIBRATION-004`、`FEEDBACK-002`、`EXPERIMENT-001`、`SHADOW-002`、`SHADOW-003`、`GOV-003`、`LOOP-001`
 
 ## 背景
 
@@ -123,8 +123,16 @@ aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 |3. Weight diagnostics 候选|PROPOSED|按模块、gate、horizon 和市场阶段输出信息权重诊断；样本不足时只给 limitation，不给调权建议。|
 |4. 参数 as-if replay 收益变化入口|VALIDATING|读取已运行的 backtest robustness summary，把模块权重扰动、再平衡和成本压力等参数候选接入 feedback 报告，比较 baseline vs challenger 的收益、回撤、换手和限制；第一阶段不自动拟合新权重。|
 |5. 参数候选台账与 trial registry|VALIDATING|从参数 replay summary 生成 candidate-only 参数候选台账，记录 trial、来源 replay、指标、material 标记、治理状态和下一步；不自动生成 approved overlay。|
-|6. Forward shadow 与 promotion 连接|PROPOSED|候选通过 replay 后进入 `prediction_ledger` shadow；成熟度报告达到门槛才允许 owner review。|
-|7. Overlay / rule card 晋级|PROPOSED|通过 owner approval 后生成 approved overlay 或 rule card，具备有效期、回滚条件和审计引用。|
+|6. Effective weights 单一入口|VALIDATING|`score-daily` 和 `backtest` 通过同一 resolver 使用 `weight_profile_current.yaml` 与 approved overlay 产出 effective weights；报告、CSV、trace 和回测 daily row 写入 profile/overlay/权重审计；approved overlay 未知 signal fail closed。|
+|7. 多目标 candidate gate|VALIDATING|parameter replay/candidate ledger 消费 OOS、same-turnover random、signal-family baseline、coverage/data credibility 证据；baseline-only、OOS 弱化、随机基线未过、coverage 不足和风险恶化不得仅凭 total return 进入 owner review。|
+|8. Forward shadow 与 promotion 连接|PROPOSED|候选通过 replay 后进入 `prediction_ledger` shadow；成熟度报告达到门槛才允许 owner review。|
+|9. Overlay / rule card 晋级|PROPOSED|通过 owner approval 后生成 approved overlay 或 rule card，具备有效期、回滚条件和审计引用。|
+|10. Coverage / placeholder / source veto|VALIDATING|robustness summary 汇总模块覆盖率、placeholder 占比、数据来源可信度和关键模块缺失；parameter replay/candidate ledger 把这些字段作为 `BLOCKED_BY_DATA` 或降级原因，而不只作为报告说明。|
+|11. Overlay target weights 与冲突治理|VALIDATING|approved overlay 支持 `target_weights` 模式、priority、mutual exclusion group 和冲突审计；approved overlay 的未知 signal、非法权重或同组优先级冲突必须 fail closed。|
+|12. Benchmark 扩展与反过拟合证据|VALIDATING|robustness 增加 same-exposure random、vol-targeted/fixed exposure、no-gate、alpha-only/risk-state-only 等 benchmark，并把关键 benchmark 结果接入 candidate 证据摘要。|
+|13. 统计证据诊断|VALIDATING|参数复测报告输出 paired block bootstrap confidence interval，并披露明确标注为 proxy 的 Deflated Sharpe / PBO 诊断；candidate 晋级不能把缺失统计证据误写成通过。正式 CSCV/PBO 仍保留为后续更严格统计层。|
+|14. 有效独立样本与 purging/embargo 口径|VALIDATING|样本成熟度报告和 candidate evidence 披露 horizon、embargo、时间跨度和有效独立窗口估计；少量重叠样本不能直接支持 production promotion。|
+|15. Alpha / risk / hard gate 分层迁移|VALIDATING|先以 robustness benchmark 和审计字段验证 alpha、risk budget、hard/soft gate 的分层解释；默认不改变 production scoring，除非后续 owner approval 明确允许分层模型替代线性加权。|
 
 ## 验收标准
 
@@ -134,6 +142,9 @@ aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 - `docs/system_flow.md` 展示新命令、输入和输出。
 - 单测覆盖报告构建和 CLI 写出。
 - 初版不得改变 `score-daily`、`position_gate`、`prediction_ledger` production 行、回测仓位或日报结论。
+- 本轮 effective weights 接入后，base profile 与当前 `scoring_rules.yaml` 权重等价；未命中 approved overlay 时 production 数值应保持不变，但输出必须披露 resolver 版本与审计字段。
+- 参数候选晋级必须优先阻断 benchmark-only、OOS/random/coverage 证据不足和风险恶化场景；`READY_FOR_FORWARD_SHADOW` 只能表示可进入候选 shadow，不表示 owner approval 或 production effect。
+- 高级证据阶段新增的阈值、窗口、priority 和冲突策略必须进入 policy/config 或具名常量并写明解释；不得在 scoring/backtest/candidate 路径引入未记录的投资解释数字。
 
 ## 状态记录
 
@@ -152,3 +163,7 @@ aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 - 2026-05-13：从头闭环阻塞已解除并进入 VALIDATING。`backtest --robustness-report` 中成本压力、起点后移、样本内/样本外和模块权重扰动改为复用基础回测已审计的每日 component scores、gate caps、raw target exposure、下一交易日收益和成本假设生成 as-if 指标，避免重复 full daily scoring；默认 `ai_after_chatgpt` 全窗口命令已在当前数据上完成并写出 `backtest_robustness_2022-12-01_2026-05-12.json`，包含 as-run policy、41 个 robustness 场景、`remaining_gaps=[]`。随后 `build-parameter-replay` 为 PASS（17 个参数场景，material delta=3），`build-parameter-candidates` 为 PASS（17 trial / 17 candidate，owner review=1，risk review=2，needs policy=0），`optimize-market-feedback` 已读取默认产物。
 - 2026-05-14：owner 明确不要长期维护“跑一次后复用基础行派生指标”的第二套计算逻辑。任务切回 IN_PROGRESS；本轮目标改为把全窗口回测中昂贵的 point-in-time feature/report 准备拆成可缓存上下文，权重扰动、成本压力和窗口切分等调参场景仍调用同一套评分与回测执行路径，随后重新跑通 `backtest robustness -> parameter replay -> parameter candidates -> optimize-market-feedback`。
 - 2026-05-14：单一评分/回测引擎方案已完成并进入 VALIDATING。`run_daily_score_backtest` 支持复用 prepared PIT context，robustness 的成本压力、窗口切分和模块权重扰动场景不再维护独立派生评分逻辑；固定 exposure、再平衡、信号族和随机策略保留为执行/信号基线。当前数据从头跑通：`backtest --robustness-report --to 2026-05-12 --quality-as-of 2026-05-13` 431 秒完成，summary 含 41 个场景、12 个 module weight perturbation、policy present、`remaining_gaps=[]`；`build-parameter-replay` 为 PASS（17 场景、material delta=3）、`build-parameter-candidates` 为 PASS（17 trial / 17 candidate、owner review=1、risk review=2、needs policy=0）、`optimize-market-feedback` 为 `PASS_WITH_LIMITATIONS` / `PILOT_DIAGNOSTIC_REVIEW`。验证通过目标测试、全量 pytest、ruff 和 diff check。
+- 2026-05-14：外部方案复核确认当前主要缺口是 `weight_profile_current.yaml`/approved overlay 尚未成为 `score-daily` 与 `backtest` 的单一权重入口，以及 parameter candidate 仍由 total return materiality 主导。本轮状态切回 IN_PROGRESS，实施 effective weights resolver、approved overlay fail-closed 和多目标 candidate veto；不引入黑箱优化器，不自动生成 production overlay。
+- 2026-05-14：阶段 6/7 基础实现完成并进入 VALIDATING。`score-daily` 与 `backtest` 已通过同一 effective weight resolver 使用 `weight_profile_current.yaml` 和 approved overlay；日报、scores CSV、backtest daily CSV、回测报告、robustness summary 和 trace bundle 记录 `weight_profile_version`、matched overlays、effective weights 与审计原因；approved overlay 中未知 signal 现在 fail closed。`parameter_replay` 输出 `robustness_evidence`，`parameter_candidates` 使用 data quality/data credibility、OOS、same-turnover random、signal-family baseline 和 drawdown veto，正向 total return 不再直接进入 owner review，而是进入 `READY_FOR_FORWARD_SHADOW` 或被阻断/降级。验证通过 `ruff check src tests`、`git diff --check`、目标 pytest 83 passed 和全量 pytest 516 passed。
+- 2026-05-14：owner 要求继续推进其余方向并尽可能完整实现。本轮新增 `CALIBRATION-004`，状态切回 IN_PROGRESS；实现范围扩展为 coverage/placeholder veto、overlay `target_weights`/priority/conflict、benchmark 扩展、统计证据、有效独立样本和 alpha/risk/gate 分层迁移。生产效果继续保持 `none`，大功能完成后必须复测完整链路。
+- 2026-05-14：阶段 10-15 baseline 完成并进入 VALIDATING。robustness summary/report 新增 coverage/source veto、same-exposure random、vol-targeted exposure、no-gate、alpha-only/risk-state-only/gate-modules 架构基线和 paired block bootstrap CI；parameter replay 新增 Deflated Sharpe / PBO proxy 诊断但明确不是正式 CSCV 统计；approved overlay 支持 `target_weights`、priority、mutual exclusion group 和 fail-closed 冲突治理；parameter replay/candidates 消费 coverage、有效独立窗口、score-architecture baseline 和 bootstrap CI。当前真实链路已重跑：`aits backtest --robustness-report --to 2026-05-12 --quality-as-of 2026-05-13` 410 秒完成；`build-parameter-replay` 为 PASS（66 场景、material delta=2）；`build-parameter-candidates` 为 PASS_WITH_LIMITATIONS（66 trial / 16 candidate / forward shadow ready=0 / blocked=16）；`optimize-market-feedback` 为 PASS_WITH_LIMITATIONS / `PILOT_DIAGNOSTIC_REVIEW`。阻断原因集中在 data credibility / component coverage、random baseline 和 architecture baseline，符合 candidate-only 边界。

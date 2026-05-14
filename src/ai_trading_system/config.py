@@ -1011,6 +1011,8 @@ class BacktestRobustnessPolicyConfig(BaseModel):
     default_random_seed_count: int = Field(default=20, gt=0)
     default_oos_split_ratio: float = Field(default=0.70, gt=0, lt=1)
     fixed_total_asset_exposure: float = Field(default=0.60, ge=0, le=1)
+    volatility_target_annual_volatility: float = Field(default=0.25, gt=0, le=1)
+    volatility_target_lookback_days: int = Field(default=20, gt=1)
     rebalance_intervals: list[int] = Field(default_factory=lambda: [5, 21], min_length=1)
     full_exposure_time_in_market_min: float = Field(default=0.95, ge=0, le=1)
     material_cost_drag_total_return: float = Field(default=-0.02, ge=-1, le=0)
@@ -1029,6 +1031,32 @@ class BacktestRobustnessPolicyConfig(BaseModel):
         ge=0,
         le=1,
     )
+    candidate_max_drawdown_worsening: float = Field(default=0.02, ge=0, le=1)
+    candidate_random_baseline_min_percentile: float = Field(default=0.90, ge=0, le=1)
+    candidate_max_random_beats_share: float = Field(default=0.10, ge=0, le=1)
+    candidate_min_oos_total_return: float = Field(default=0.0, ge=-1, le=1)
+    candidate_blocking_data_credibility_grades: list[str] = Field(
+        default_factory=lambda: ["C"],
+        min_length=1,
+    )
+    candidate_min_component_coverage: float = Field(default=0.90, ge=0, le=1)
+    candidate_max_placeholder_share: float = Field(default=0.0, ge=0, le=1)
+    candidate_blocking_component_source_types: list[str] = Field(
+        default_factory=lambda: ["insufficient_data", "placeholder"],
+        min_length=1,
+    )
+    candidate_require_bootstrap_ci: bool = True
+    candidate_min_bootstrap_ci_lower_total_return_delta: float = Field(
+        default=0.0,
+        ge=-1,
+        le=1,
+    )
+    candidate_label_horizon_days: int = Field(default=20, gt=0)
+    candidate_embargo_days: int = Field(default=5, ge=0)
+    candidate_min_independent_windows: int = Field(default=6, gt=0)
+    bootstrap_iterations: int = Field(default=200, gt=0)
+    bootstrap_block_size_days: int = Field(default=20, gt=0)
+    bootstrap_random_seed: int = 20260514
 
     @model_validator(mode="after")
     def validate_rebalance_intervals(self) -> Self:

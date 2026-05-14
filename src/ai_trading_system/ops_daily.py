@@ -24,6 +24,7 @@ from ai_trading_system.evidence_dashboard import (
     default_evidence_dashboard_path,
 )
 from ai_trading_system.features.market import default_feature_report_path
+from ai_trading_system.feedback_loop_review import default_feedback_loop_review_report_path
 from ai_trading_system.fmp_forward_pit import (
     default_fmp_forward_pit_fetch_report_path,
     default_fmp_forward_pit_normalized_path,
@@ -36,9 +37,15 @@ from ai_trading_system.fundamentals.sec_metrics import (
 from ai_trading_system.fundamentals.sec_validation import (
     default_sec_companyfacts_validation_report_path,
 )
+from ai_trading_system.market_feedback_optimization import (
+    default_market_feedback_optimization_report_path,
+)
 from ai_trading_system.official_policy_sources import (
     default_official_policy_candidates_path,
     default_official_policy_fetch_report_path,
+)
+from ai_trading_system.periodic_investment_review import (
+    default_periodic_investment_review_report_path,
 )
 from ai_trading_system.pipeline_health import default_pipeline_health_report_path
 from ai_trading_system.pit_snapshots import default_pit_snapshot_validation_report_path
@@ -337,6 +344,18 @@ def build_daily_ops_plan(
             "或执行动作，因此不生成新的 dashboard。"
         )
     )
+    feedback_review_enabled = dashboard_enabled
+    feedback_review_skip_reason = dashboard_skip_reason
+    market_feedback_report = default_market_feedback_optimization_report_path(
+        reports_dir,
+        as_of,
+    )
+    feedback_loop_report = default_feedback_loop_review_report_path(reports_dir, as_of)
+    investment_weekly_review_report = default_periodic_investment_review_report_path(
+        reports_dir,
+        "weekly",
+        as_of,
+    )
 
     steps = [
         DailyOpsStep(
@@ -627,6 +646,83 @@ def build_daily_ops_plan(
                 ),
             ),
             DailyOpsStep(
+                step_id="market_feedback_optimization",
+                title="生成市场反馈优化复盘报告",
+                command=(
+                    (
+                        "aits",
+                        "feedback",
+                        "optimize-market-feedback",
+                        "--as-of",
+                        as_of_text,
+                    )
+                    if feedback_review_enabled
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(market_feedback_report,),
+                quality_gate=(
+                    "只读读取 data_quality、outcome、学习队列、规则实验、参数 replay/candidate "
+                    "和 overlay 审计产物；production_effect=none，不改变生产评分、权重或规则。"
+                ),
+                blocks_downstream=True,
+                enabled=feedback_review_enabled,
+                skip_reason=feedback_review_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
+                step_id="feedback_loop_review",
+                title="生成反馈闭环周期复核报告",
+                command=(
+                    (
+                        "aits",
+                        "feedback",
+                        "loop-review",
+                        "--as-of",
+                        as_of_text,
+                    )
+                    if feedback_review_enabled
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(feedback_loop_report,),
+                quality_gate=(
+                    "只读汇总 evidence、decision/prediction outcome、因果链、学习队列、"
+                    "规则候选和 task register 阻断；production_effect=none。"
+                ),
+                blocks_downstream=True,
+                enabled=feedback_review_enabled,
+                skip_reason=feedback_review_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
+                step_id="investment_weekly_review",
+                title="生成投资周度复盘报告",
+                command=(
+                    (
+                        "aits",
+                        "reports",
+                        "investment-review",
+                        "--period",
+                        "weekly",
+                        "--as-of",
+                        as_of_text,
+                    )
+                    if feedback_review_enabled
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(investment_weekly_review_report,),
+                quality_gate=(
+                    "只读读取 scores、decision snapshots、outcomes、learning queue "
+                    "和 rule experiments；production_effect=none，不改变日报结论或执行动作。"
+                ),
+                blocks_downstream=True,
+                enabled=feedback_review_enabled,
+                skip_reason=feedback_review_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
                 step_id="reports_dashboard",
                 title="生成只读决策 dashboard",
                 command=(
@@ -646,7 +742,8 @@ def build_daily_ops_plan(
                     default_evidence_dashboard_json_path(reports_dir, as_of),
                 ),
                 quality_gate=(
-                    "只读读取日报、trace、decision snapshot、alerts 和 scores_daily；"
+                    "只读读取日报、trace、decision snapshot、alerts、scores_daily "
+                    "和本次生成的复盘报告；"
                     "生成 HTML/JSON 展示层，production_effect=none，不改变评分、仓位或执行建议。"
                 ),
                 blocks_downstream=False,
@@ -1685,6 +1782,9 @@ def _post_step_artifact_status_error(step: DailyOpsStep) -> str | None:
         "sec_metrics_validation": (0,),
         "valuation_snapshots": (2, 3),
         "score_daily": (2, 4),
+        "market_feedback_optimization": (0,),
+        "feedback_loop_review": (0,),
+        "investment_weekly_review": (0,),
         "pipeline_health": (0,),
         "secret_hygiene": (0,),
     }.get(step.step_id, ())

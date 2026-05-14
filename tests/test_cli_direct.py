@@ -74,3 +74,54 @@ def test_cli_direct_score_daily_threads_llm_request_profile(monkeypatch) -> None
 
     assert exit_code == 0
     assert captured["llm_request_profile"] == "risk_event_triaged_official_candidates"
+
+
+def test_cli_direct_dispatches_daily_feedback_reports(monkeypatch) -> None:
+    calls: list[tuple[str, dict[str, object]]] = []
+
+    def fake_market_feedback(**kwargs: object) -> None:
+        calls.append(("market_feedback", kwargs))
+
+    def fake_loop_review(**kwargs: object) -> None:
+        calls.append(("loop_review", kwargs))
+
+    def fake_investment_review(**kwargs: object) -> None:
+        calls.append(("investment_review", kwargs))
+
+    monkeypatch.setattr(
+        cli_direct.cli,
+        "optimize_market_feedback_command",
+        fake_market_feedback,
+    )
+    monkeypatch.setattr(
+        cli_direct.cli,
+        "feedback_loop_review_command",
+        fake_loop_review,
+    )
+    monkeypatch.setattr(
+        cli_direct.cli,
+        "investment_periodic_review_command",
+        fake_investment_review,
+    )
+
+    assert cli_direct.main(["feedback", "optimize-market-feedback", "--as-of", "2026-05-13"]) == 0
+    assert cli_direct.main(["feedback", "loop-review", "--as-of", "2026-05-13"]) == 0
+    assert (
+        cli_direct.main(
+            [
+                "reports",
+                "investment-review",
+                "--period",
+                "weekly",
+                "--as-of",
+                "2026-05-13",
+            ]
+        )
+        == 0
+    )
+
+    assert calls == [
+        ("market_feedback", {"as_of": "2026-05-13"}),
+        ("loop_review", {"as_of": "2026-05-13"}),
+        ("investment_review", {"period": "weekly", "as_of": "2026-05-13"}),
+    ]

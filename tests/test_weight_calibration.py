@@ -166,6 +166,145 @@ def test_apply_calibration_overlays_without_match_keeps_base_weights() -> None:
     assert application.audit["why_not_applied"]
 
 
+def test_approved_overlay_with_unknown_signal_fails_closed() -> None:
+    profile = load_weight_profile()
+    overlay = _overlay(
+        overlay_id="typo_overlay",
+        status="approved_soft",
+        match={"macro_event_within_2d": True},
+        effect={"weight_multipliers": {"trend_typo": 1.20}},
+    )
+
+    with pytest.raises(ValueError, match="unknown signal"):
+        apply_calibration_overlays(
+            context={"event_risk": {"macro_event_within_2d": True}},
+            profile=profile,
+            overlays=(overlay,),
+            as_of=date(2026, 5, 6),
+        )
+
+
+def test_target_weight_overlay_sets_absolute_effective_weights() -> None:
+    profile = load_weight_profile()
+    target_weights = {
+        "trend": 0.30,
+        "fundamentals": 0.20,
+        "macro_liquidity": 0.15,
+        "risk_sentiment": 0.15,
+        "valuation": 0.10,
+        "policy_geopolitics": 0.10,
+    }
+    overlay = _overlay(
+        overlay_id="target_ai_regime_weights",
+        status="approved_soft",
+        match={"market_regime": "ai_after_chatgpt"},
+        effect={"target_weights": target_weights},
+    )
+
+    application = apply_calibration_overlays(
+        context={"market_regime": "ai_after_chatgpt"},
+        profile=profile,
+        overlays=(overlay,),
+        as_of=date(2026, 5, 6),
+    )
+
+    assert application.matched_overlays == ("target_ai_regime_weights",)
+    assert application.effective_weights == pytest.approx(target_weights)
+    assert any(
+        "target_ai_regime_weights: trend" in reason
+        for reason in application.audit["weight_changes"]
+    )
+
+
+def test_mutual_exclusion_group_uses_highest_priority_overlay() -> None:
+    profile = load_weight_profile()
+    lower_priority = _overlay(
+        overlay_id="macro_soft_low",
+        status="approved_soft",
+        match={"macro_event_within_2d": True},
+        effect={"weight_multipliers": {"trend": 0.80}},
+        priority=10,
+        mutual_exclusion_group="macro_soft",
+    )
+    higher_priority = _overlay(
+        overlay_id="macro_soft_high",
+        status="approved_soft",
+        match={"macro_event_within_2d": True},
+        effect={"weight_multipliers": {"trend": 0.70}},
+        priority=20,
+        mutual_exclusion_group="macro_soft",
+    )
+
+    application = apply_calibration_overlays(
+        context={"event_risk": {"macro_event_within_2d": True}},
+        profile=profile,
+        overlays=(lower_priority, higher_priority),
+        as_of=date(2026, 5, 6),
+    )
+
+    assert application.matched_overlays == ("macro_soft_high",)
+    assert any(
+        "macro_soft_low: skipped because macro_soft_high has higher priority"
+        in reason
+        for reason in application.audit["why_not_applied"]
+    )
+
+
+def test_mutual_exclusion_group_tie_fails_closed() -> None:
+    profile = load_weight_profile()
+    first = _overlay(
+        overlay_id="macro_soft_a",
+        status="approved_soft",
+        match={"macro_event_within_2d": True},
+        effect={"weight_multipliers": {"trend": 0.80}},
+        priority=10,
+        mutual_exclusion_group="macro_soft",
+    )
+    second = _overlay(
+        overlay_id="macro_soft_b",
+        status="approved_soft",
+        match={"macro_event_within_2d": True},
+        effect={"weight_multipliers": {"trend": 0.70}},
+        priority=10,
+        mutual_exclusion_group="macro_soft",
+    )
+
+    with pytest.raises(ValueError, match="tie on priority"):
+        apply_calibration_overlays(
+            context={"event_risk": {"macro_event_within_2d": True}},
+            profile=profile,
+            overlays=(first, second),
+            as_of=date(2026, 5, 6),
+        )
+
+
+def test_target_weight_overlay_with_unknown_signal_fails_closed() -> None:
+    profile = load_weight_profile()
+    overlay = _overlay(
+        overlay_id="target_typo_overlay",
+        status="approved_soft",
+        match={"market_regime": "ai_after_chatgpt"},
+        effect={
+            "target_weights": {
+                "trend": 0.25,
+                "fundamentals": 0.25,
+                "macro_liquidity": 0.15,
+                "risk_sentiment": 0.15,
+                "valuation": 0.10,
+                "policy_typo": 0.10,
+            }
+        },
+    )
+
+    with pytest.raises(ValueError, match="unknown signal"):
+        apply_calibration_overlays(
+            context={"market_regime": "ai_after_chatgpt"},
+            profile=profile,
+            overlays=(overlay,),
+            as_of=date(2026, 5, 6),
+        )
+
+
 def test_load_calibration_overlays_missing_file_returns_empty_tuple(tmp_path: Path) -> None:
     assert load_calibration_overlays(tmp_path / "missing.json") == ()
 
@@ -207,6 +346,9 @@ def _overlay(
     status: str,
     match: dict[str, object],
     effect: dict[str, object],
+    priority: int = 100,
+    mutual_exclusion_group: str | None = None,
+    conflict_policy: str = "highest_priority_wins",
     valid_from: str = "2026-05-06",
     expires_at: str = "2026-06-06",
 ) -> CalibrationOverlay:
@@ -214,6 +356,9 @@ def _overlay(
         "overlay_id": overlay_id,
         "version": "v1",
         "status": status,
+        "priority": priority,
+        "mutual_exclusion_group": mutual_exclusion_group,
+        "conflict_policy": conflict_policy,
         "valid_from": valid_from,
         "expires_at": expires_at,
         "rollback_condition": "owner rollback",

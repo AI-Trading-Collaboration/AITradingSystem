@@ -77,9 +77,12 @@ from ai_trading_system.backtest.robustness import (
     default_backtest_robustness_report_path,
     default_backtest_robustness_summary_path,
     fixed_total_asset_exposure_scenario,
+    model_target_no_gate_scenario,
     module_subset_baseline_scenario,
     rebalance_interval_scenario,
+    same_exposure_random_scenario,
     same_turnover_random_scenario,
+    volatility_targeted_exposure_scenario,
     write_backtest_robustness_report,
     write_backtest_robustness_summary,
 )
@@ -577,6 +580,7 @@ from ai_trading_system.scoring.daily import (
     DailyManualReviewStatus,
     DailyReviewSummary,
     build_daily_score_report,
+    build_weight_calibration_context,
     default_daily_score_report_path,
     load_previous_daily_score_snapshot,
     write_daily_score_report,
@@ -661,6 +665,7 @@ from ai_trading_system.weight_calibration import (
     apply_calibration_overlays,
     load_calibration_overlays,
     load_weight_profile,
+    resolve_calibration_application,
     write_effective_weights,
 )
 
@@ -2644,7 +2649,8 @@ def build_parameter_candidates_command(
     console.print(f"[{status_style}]参数候选状态：{ledger.status}[/{status_style}]")
     console.print(f"Trial 数：{ledger.trial_count}")
     console.print(f"Candidate 数：{ledger.candidate_count}")
-    console.print(f"Owner review：{ledger.ready_for_owner_review_count}")
+    console.print(f"Forward shadow ready：{ledger.ready_for_forward_shadow_count}")
+    console.print(f"Blocked：{ledger.blocked_count}")
     console.print(f"Ledger：{ledger_output}")
     console.print(f"报告：{report_output}")
     console.print("治理边界：候选台账不批准参数上线，不修改 production scoring 或仓位闸门。")
@@ -3289,6 +3295,8 @@ def backtest(
     data_quality_config = load_data_quality()
     feature_config = load_features()
     scoring_rules = load_scoring_rules()
+    weight_profile = load_weight_profile()
+    calibration_overlays = load_calibration_overlays()
     backtest_validation_policy = load_backtest_validation_policy()
     robustness_policy = backtest_validation_policy.robustness
     portfolio = load_portfolio()
@@ -3709,6 +3717,7 @@ def backtest(
         scenario_feature_lag_days: int = 0,
         scenario_universe_lag_days: int = 0,
         scenario_scoring_rules: ScoringRulesConfig | None = None,
+        scenario_weight_multipliers: dict[str, float] | None = None,
     ) -> DailyBacktestResult:
         prepared_context = (
             base_prepared_context
@@ -3750,6 +3759,9 @@ def backtest(
             feature_lag_days=scenario_feature_lag_days,
             universe_lag_days=scenario_universe_lag_days,
             prepared_context=prepared_context,
+            weight_profile=weight_profile,
+            calibration_overlays=calibration_overlays,
+            weight_multipliers=scenario_weight_multipliers,
         )
 
     result = run_configured_backtest(
@@ -3855,6 +3867,15 @@ def backtest(
                 result,
                 exposure=robustness_policy.fixed_total_asset_exposure,
             ),
+            volatility_targeted_exposure_scenario(
+                result,
+                target_annual_volatility=(
+                    robustness_policy.volatility_target_annual_volatility
+                ),
+                lookback_days=robustness_policy.volatility_target_lookback_days,
+                fallback_exposure=robustness_policy.fixed_total_asset_exposure,
+            ),
+            model_target_no_gate_scenario(result),
         ]
         for interval_days in robustness_policy.rebalance_intervals:
             robustness_scenarios.append(
@@ -3878,6 +3899,33 @@ def backtest(
                     weights=scoring_rules.weights,
                     position_bands=configured_position_bands,
                 ),
+                module_subset_baseline_scenario(
+                    result,
+                    scenario_id="alpha_only_score_baseline",
+                    label="Alpha-only score 基线",
+                    modules=("trend", "fundamentals"),
+                    weights=scoring_rules.weights,
+                    position_bands=configured_position_bands,
+                    category="score_architecture_baseline",
+                ),
+                module_subset_baseline_scenario(
+                    result,
+                    scenario_id="risk_state_only_score_baseline",
+                    label="Risk-state-only score 基线",
+                    modules=("macro_liquidity", "risk_sentiment"),
+                    weights=scoring_rules.weights,
+                    position_bands=configured_position_bands,
+                    category="score_architecture_baseline",
+                ),
+                module_subset_baseline_scenario(
+                    result,
+                    scenario_id="gate_modules_score_baseline",
+                    label="Gate modules score 基线",
+                    modules=("valuation", "policy_geopolitics"),
+                    weights=scoring_rules.weights,
+                    position_bands=configured_position_bands,
+                    category="score_architecture_baseline",
+                ),
             ]
         )
         for module_name in scoring_rules.weights:
@@ -3886,11 +3934,6 @@ def backtest(
                 ("up", 1.0 + robustness_weight_perturbation_pct),
             ):
                 direction_label = "下调" if direction == "down" else "上调"
-                scenario_rules = _perturbed_scoring_rules(
-                    scoring_rules,
-                    module_name=module_name,
-                    multiplier=multiplier,
-                )
                 scenario_result = run_configured_backtest(
                     scenario_start=start_date,
                     scenario_cost_bps=cost_bps,
@@ -3901,7 +3944,7 @@ def backtest(
                     scenario_fx_bps=fx_bps,
                     scenario_financing_annual_bps=financing_annual_bps,
                     scenario_etf_delay_bps=etf_delay_bps,
-                    scenario_scoring_rules=scenario_rules,
+                    scenario_weight_multipliers={module_name: multiplier},
                 )
                 robustness_scenarios.append(
                     BacktestRobustnessScenario(
@@ -3929,6 +3972,7 @@ def backtest(
             robustness_random_seed_start + robustness_random_seed_count,
         ):
             robustness_scenarios.append(same_turnover_random_scenario(result, seed=seed))
+            robustness_scenarios.append(same_exposure_random_scenario(result, seed=seed))
         if shifted_start >= result.last_signal_date:
             robustness_scenarios.append(
                 BacktestRobustnessScenario(
@@ -10327,6 +10371,19 @@ def score_daily(
     industry_node_heat_section = render_industry_node_heat_section(
         industry_node_heat_report
     )
+    weight_calibration_context = build_weight_calibration_context(
+        feature_set=feature_set,
+        data_quality_report=data_quality_report,
+        fundamental_feature_report=sec_fundamental_feature_report,
+        valuation_review_report=valuation_review_report,
+        risk_event_occurrence_review_report=risk_event_occurrence_review_report,
+        run_type="score_daily",
+        market_regime_id=default_market_regime.regime_id,
+    )
+    weight_calibration_application = resolve_calibration_application(
+        context=weight_calibration_context,
+        as_of=score_date,
+    )
     score_report = build_daily_score_report(
         feature_set=feature_set,
         data_quality_report=data_quality_report,
@@ -10341,6 +10398,7 @@ def score_daily(
         fundamental_feature_report=sec_fundamental_feature_report,
         valuation_review_report=valuation_review_report,
         risk_event_occurrence_review_report=risk_event_occurrence_review_report,
+        weight_calibration=weight_calibration_application,
     )
     previous_score_snapshot = load_previous_daily_score_snapshot(scores_path, score_date)
     daily_alert_report = build_daily_alert_report(
@@ -10735,6 +10793,8 @@ def _base_trace_config_paths() -> dict[str, Path]:
         "data_quality": DEFAULT_DATA_QUALITY_CONFIG_PATH,
         "features": DEFAULT_FEATURE_CONFIG_PATH,
         "scoring_rules": DEFAULT_SCORING_RULES_CONFIG_PATH,
+        "weight_profile": DEFAULT_WEIGHT_PROFILE_PATH,
+        "calibration_overlay": DEFAULT_APPROVED_CALIBRATION_OVERLAY_PATH,
         "llm_request_profiles": DEFAULT_LLM_REQUEST_PROFILES_CONFIG_PATH,
         "watchlist": DEFAULT_WATCHLIST_CONFIG_PATH,
         "watchlist_lifecycle": DEFAULT_WATCHLIST_LIFECYCLE_PATH,

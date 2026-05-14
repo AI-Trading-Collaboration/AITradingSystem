@@ -386,6 +386,7 @@ def build_daily_score_trace_bundle(
         parameters=_run_parameters(
             rule_version_manifest=rule_version_manifest,
             feature_availability=feature_availability_summary,
+            weight_calibration=_daily_weight_calibration_parameters(report),
         ),
         output_artifacts=_artifact_paths(
             report_path,
@@ -606,6 +607,7 @@ def build_backtest_trace_bundle(
             cost_assumptions=_backtest_cost_assumptions(result),
             rule_version_manifest=rule_version_manifest,
             feature_availability=feature_availability_summary,
+            weight_calibration=_backtest_weight_calibration_parameters(result),
         ),
         output_artifacts=_artifact_paths(
             report_path,
@@ -908,6 +910,7 @@ def _run_parameters(
     cost_assumptions: TraceRecord | None = None,
     rule_version_manifest: TraceRecord | None = None,
     feature_availability: TraceRecord | None = None,
+    weight_calibration: TraceRecord | None = None,
 ) -> TraceRecord | None:
     parameters: TraceRecord = {}
     if cost_assumptions is not None:
@@ -916,7 +919,42 @@ def _run_parameters(
         parameters["rule_versions"] = rule_version_manifest
     if feature_availability is not None:
         parameters["feature_availability"] = feature_availability
+    if weight_calibration is not None:
+        parameters["weight_calibration"] = weight_calibration
     return parameters or None
+
+
+def _daily_weight_calibration_parameters(report: DailyScoreReport) -> TraceRecord:
+    application = report.weight_calibration
+    if application is None:
+        return {
+            "status": "not_connected",
+            "weight_source": "legacy_scoring_rules_weights",
+            "production_effect": "scoring_rules_only",
+        }
+    return {
+        "status": "connected",
+        "weight_profile_version": application.weight_profile_version,
+        "matched_overlays": list(application.matched_overlays),
+        "effective_weights": application.effective_weights,
+        "confidence_delta": application.confidence_delta,
+        "position_multiplier": application.position_multiplier,
+        "required_confirmations": list(application.required_confirmations),
+        "production_effect": "approved_overlay_only",
+    }
+
+
+def _backtest_weight_calibration_parameters(result: DailyBacktestResult) -> TraceRecord:
+    connected = result.weight_profile_version != "not_connected"
+    return {
+        "status": "connected" if connected else "not_connected",
+        "weight_profile_version": result.weight_profile_version,
+        "matched_overlays": list(result.calibration_overlay_ids),
+        "effective_weights": result.effective_weights or {},
+        "production_effect": (
+            "approved_overlay_only" if connected else "scoring_rules_only"
+        ),
+    }
 
 
 def _backtest_cost_assumptions(result: DailyBacktestResult) -> TraceRecord:

@@ -17,12 +17,30 @@ robustness:
   default_random_seed_count: 20
   default_oos_split_ratio: 0.70
   fixed_total_asset_exposure: 0.60
+  volatility_target_annual_volatility: 0.25
+  volatility_target_lookback_days: 20
   rebalance_intervals: [5, 21]
   full_exposure_time_in_market_min: 0.95
   material_cost_drag_total_return: -0.02
   shifted_start_material_total_return_delta_abs: 0.05
   weight_perturbation_material_total_return_delta_abs: 0.05
   oos_material_underperformance_total_return_delta: 0.05
+  candidate_max_drawdown_worsening: 0.02
+  candidate_random_baseline_min_percentile: 0.90
+  candidate_max_random_beats_share: 0.10
+  candidate_min_oos_total_return: 0.00
+  candidate_blocking_data_credibility_grades: ["C"]
+  candidate_min_component_coverage: 0.90
+  candidate_max_placeholder_share: 0.00
+  candidate_blocking_component_source_types: ["insufficient_data", "placeholder"]
+  candidate_require_bootstrap_ci: true
+  candidate_min_bootstrap_ci_lower_total_return_delta: 0.00
+  candidate_label_horizon_days: 20
+  candidate_embargo_days: 5
+  candidate_min_independent_windows: 6
+  bootstrap_iterations: 200
+  bootstrap_block_size_days: 20
+  bootstrap_random_seed: 20260514
 
 promotion:
   blocking_data_credibility_grades: ["C"]

@@ -154,16 +154,62 @@ def test_daily_ops_plan_threads_run_id_into_score_daily() -> None:
     )
 
 
-def test_daily_ops_plan_generates_dashboard_after_score_daily() -> None:
+def test_daily_ops_plan_generates_feedback_reports_before_dashboard() -> None:
     plan = build_daily_ops_plan(
         as_of=date(2026, 5, 6),
         skip_risk_event_openai_precheck=True,
     )
     step_ids = [step.step_id for step in plan.steps]
+    market_feedback_step = next(
+        step for step in plan.steps if step.step_id == "market_feedback_optimization"
+    )
+    loop_review_step = next(
+        step for step in plan.steps if step.step_id == "feedback_loop_review"
+    )
+    investment_review_step = next(
+        step for step in plan.steps if step.step_id == "investment_weekly_review"
+    )
     dashboard_step = next(step for step in plan.steps if step.step_id == "reports_dashboard")
 
-    assert step_ids.index("score_daily") < step_ids.index("reports_dashboard")
+    assert step_ids.index("score_daily") < step_ids.index("market_feedback_optimization")
+    assert step_ids.index("market_feedback_optimization") < step_ids.index(
+        "feedback_loop_review"
+    )
+    assert step_ids.index("feedback_loop_review") < step_ids.index(
+        "investment_weekly_review"
+    )
+    assert step_ids.index("investment_weekly_review") < step_ids.index("reports_dashboard")
     assert step_ids.index("reports_dashboard") < step_ids.index("pipeline_health")
+    assert market_feedback_step.command == (
+        "aits",
+        "feedback",
+        "optimize-market-feedback",
+        "--as-of",
+        "2026-05-06",
+    )
+    assert market_feedback_step.produced_paths[0].name == (
+        "market_feedback_optimization_2026-05-06.md"
+    )
+    assert loop_review_step.command == (
+        "aits",
+        "feedback",
+        "loop-review",
+        "--as-of",
+        "2026-05-06",
+    )
+    assert loop_review_step.produced_paths[0].name == "feedback_loop_review_2026-05-06.md"
+    assert investment_review_step.command == (
+        "aits",
+        "reports",
+        "investment-review",
+        "--period",
+        "weekly",
+        "--as-of",
+        "2026-05-06",
+    )
+    assert investment_review_step.produced_paths[0].name == (
+        "investment_weekly_review_2026-05-06.md"
+    )
     assert dashboard_step.command == ("aits", "reports", "dashboard", "--as-of", "2026-05-06")
     assert dashboard_step.required_env_vars == ()
     assert dashboard_step.blocks_downstream is False
@@ -324,6 +370,9 @@ def test_daily_ops_plan_closed_market_skips_score_and_current_download(
     assert "休市日模式" in (step_by_id["download_data"].skip_reason or "")
     assert step_by_id["score_daily"].enabled is False
     assert step_by_id["score_daily"].required_env_vars == ()
+    assert step_by_id["market_feedback_optimization"].enabled is False
+    assert step_by_id["feedback_loop_review"].enabled is False
+    assert step_by_id["investment_weekly_review"].enabled is False
     assert step_by_id["reports_dashboard"].enabled is False
     assert step_by_id["reports_dashboard"].required_env_vars == ()
     assert step_by_id["pit_snapshots"].produced_paths[0] == (
@@ -592,6 +641,12 @@ def test_daily_ops_run_report_omits_command_output_text(tmp_path: Path) -> None:
     for step in plan.steps:
         if step.step_id == "score_daily":
             status_paths = (step.produced_paths[2], step.produced_paths[4])
+        elif step.step_id in {
+            "market_feedback_optimization",
+            "feedback_loop_review",
+            "investment_weekly_review",
+        }:
+            status_paths = (step.produced_paths[0],)
         elif step.step_id == "pipeline_health":
             status_paths = (step.produced_paths[0],)
         else:
@@ -638,6 +693,12 @@ def test_daily_ops_run_report_writes_sanitized_metadata_sidecar(tmp_path: Path) 
     for step in plan.steps:
         if step.step_id == "score_daily":
             status_paths = (step.produced_paths[2], step.produced_paths[4])
+        elif step.step_id in {
+            "market_feedback_optimization",
+            "feedback_loop_review",
+            "investment_weekly_review",
+        }:
+            status_paths = (step.produced_paths[0],)
         elif step.step_id == "pipeline_health":
             status_paths = (step.produced_paths[0],)
         else:

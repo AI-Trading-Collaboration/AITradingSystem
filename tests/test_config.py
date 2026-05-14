@@ -178,7 +178,23 @@ def test_backtest_validation_policy_loads_governed_thresholds() -> None:
     assert config.robustness.default_weight_perturbation_pct == 0.20
     assert config.robustness.default_oos_split_ratio == 0.70
     assert config.robustness.full_exposure_time_in_market_min == 0.95
+    assert config.robustness.volatility_target_annual_volatility == 0.25
+    assert config.robustness.volatility_target_lookback_days == 20
     assert config.robustness.oos_material_underperformance_total_return_delta == 0.05
+    assert config.robustness.candidate_random_baseline_min_percentile == 0.90
+    assert config.robustness.candidate_blocking_data_credibility_grades == ["C"]
+    assert config.robustness.candidate_min_component_coverage == 0.90
+    assert config.robustness.candidate_max_placeholder_share == 0.0
+    assert config.robustness.candidate_blocking_component_source_types == [
+        "insufficient_data",
+        "placeholder",
+    ]
+    assert config.robustness.candidate_require_bootstrap_ci is True
+    assert config.robustness.candidate_label_horizon_days == 20
+    assert config.robustness.candidate_embargo_days == 5
+    assert config.robustness.candidate_min_independent_windows == 6
+    assert config.robustness.bootstrap_iterations == 200
+    assert config.robustness.bootstrap_block_size_days == 20
     assert config.promotion.min_lag_sensitivity_days == 3
     assert "same_turnover_random_strategy" in (
         config.promotion.required_robustness_categories

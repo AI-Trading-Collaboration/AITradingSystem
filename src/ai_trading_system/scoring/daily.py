@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -41,6 +42,7 @@ from ai_trading_system.scoring.position_model import (
     WeightedScoreModel,
 )
 from ai_trading_system.valuation import ValuationReviewReport
+from ai_trading_system.weight_calibration import CalibrationApplication
 
 COMPONENT_LABELS = {
     "trend": "趋势",
@@ -212,6 +214,7 @@ class DailyScoreReport:
     position_band_policy: tuple[PositionBandRule, ...]
     daily_conclusion_policy: DailyConclusionPolicyConfig
     confidence_policy: ConfidencePolicyConfig
+    weight_calibration: CalibrationApplication | None = None
     fundamental_feature_report: SecFundamentalFeaturesReport | None = None
     valuation_review_report: ValuationReviewReport | None = None
     risk_event_occurrence_review_report: RiskEventOccurrenceReviewReport | None = None
@@ -251,6 +254,80 @@ def _position_band_policy(rules: ScoringRulesConfig) -> tuple[PositionBandRule, 
     )
 
 
+def _resolved_module_weights(
+    rules: ScoringRulesConfig,
+    weight_calibration: CalibrationApplication | None,
+) -> dict[str, float]:
+    if weight_calibration is None:
+        return dict(rules.weights)
+    expected = set(rules.weights)
+    actual = set(weight_calibration.effective_weights)
+    missing = sorted(expected - actual)
+    extra = sorted(actual - expected)
+    if missing or extra:
+        messages = []
+        if missing:
+            messages.append("missing " + ", ".join(missing))
+        if extra:
+            messages.append("unknown " + ", ".join(extra))
+        raise ValueError("effective weights do not match scoring modules: " + "; ".join(messages))
+    score_weight_total = sum(rules.weights.values())
+    if score_weight_total <= 0:
+        raise ValueError("scoring rule weights total must be positive")
+    return {
+        signal: weight_calibration.effective_weights[signal] * score_weight_total
+        for signal in rules.weights
+    }
+
+
+def build_weight_calibration_context(
+    *,
+    feature_set: MarketFeatureSet,
+    data_quality_report: DataQualityReport,
+    fundamental_feature_report: SecFundamentalFeaturesReport | None = None,
+    valuation_review_report: ValuationReviewReport | None = None,
+    risk_event_occurrence_review_report: RiskEventOccurrenceReviewReport | None = None,
+    run_type: str = "score_daily",
+    market_regime_id: str | None = None,
+) -> dict[str, Any]:
+    context: dict[str, Any] = {
+        "run_type": run_type,
+        "as_of": feature_set.as_of.isoformat(),
+        "data_quality_status": data_quality_report.status,
+        "feature_status": feature_set.status,
+        "feature_warning_count": len(feature_set.warnings),
+        "market_regime_id": market_regime_id or "",
+        "inputs": {
+            "fundamentals_connected": fundamental_feature_report is not None,
+            "valuation_connected": valuation_review_report is not None,
+            "risk_events_connected": risk_event_occurrence_review_report is not None,
+        },
+    }
+    if fundamental_feature_report is not None:
+        context["fundamentals"] = {
+            "status": fundamental_feature_report.status,
+            "row_count": fundamental_feature_report.row_count,
+            "warning_count": fundamental_feature_report.warning_count,
+        }
+    if valuation_review_report is not None:
+        context["valuation"] = {
+            "status": valuation_review_report.status,
+            "snapshot_count": valuation_review_report.validation_report.snapshot_count,
+            "warning_count": valuation_review_report.validation_report.warning_count,
+        }
+    if risk_event_occurrence_review_report is not None:
+        context["risk_events"] = {
+            "status": risk_event_occurrence_review_report.status,
+            "active_score_eligible_count": len(
+                risk_event_occurrence_review_report.score_eligible_active_items
+            ),
+            "active_position_gate_eligible_count": len(
+                risk_event_occurrence_review_report.position_gate_eligible_active_items
+            ),
+        }
+    return context
+
+
 def build_daily_score_report(
     feature_set: MarketFeatureSet,
     data_quality_report: DataQualityReport,
@@ -265,6 +342,7 @@ def build_daily_score_report(
     fundamental_feature_report: SecFundamentalFeaturesReport | None = None,
     valuation_review_report: ValuationReviewReport | None = None,
     risk_event_occurrence_review_report: RiskEventOccurrenceReviewReport | None = None,
+    weight_calibration: CalibrationApplication | None = None,
 ) -> DailyScoreReport:
     if fundamental_feature_report is not None and not fundamental_feature_report.passed:
         raise ValueError("SEC 基本面特征报告未通过，不能进入每日评分")
@@ -279,32 +357,36 @@ def build_daily_score_report(
     ):
         raise ValueError("风险事件发生记录校验未通过，不能进入每日评分")
 
+    module_weights = _resolved_module_weights(rules, weight_calibration)
     components = [
-        _score_hard_data_module("trend", rules.weights["trend"], rules.trend, feature_set, rules),
+        _score_hard_data_module("trend", module_weights["trend"], rules.trend, feature_set, rules),
         _score_fundamental_module(
             rules=rules,
+            weight=module_weights["fundamentals"],
             fundamental_feature_report=fundamental_feature_report,
         ),
         _score_hard_data_module(
             "macro_liquidity",
-            rules.weights["macro_liquidity"],
+            module_weights["macro_liquidity"],
             rules.macro_liquidity,
             feature_set,
             rules,
         ),
         _score_hard_data_module(
             "risk_sentiment",
-            rules.weights["risk_sentiment"],
+            module_weights["risk_sentiment"],
             rules.risk_sentiment,
             feature_set,
             rules,
         ),
         _score_valuation_module(
             rules=rules,
+            weight=module_weights["valuation"],
             valuation_review_report=valuation_review_report,
         ),
         _score_policy_geopolitics_module(
             rules=rules,
+            weight=module_weights["policy_geopolitics"],
             risk_event_occurrence_review_report=risk_event_occurrence_review_report,
         ),
     ]
@@ -338,37 +420,58 @@ def build_daily_score_report(
         review_summary=review_summary,
         confidence_policy=rules.confidence_policy,
     )
+    confidence_assessment = _apply_calibration_confidence_delta(
+        confidence_assessment,
+        weight_calibration,
+        rules.confidence_policy,
+        model_recommendation.model_risk_asset_ai_band,
+    )
     confidence_gate = _confidence_position_gate(
         score_band=model_recommendation.model_risk_asset_ai_band,
         confidence=confidence_assessment,
     )
+    calibration_position_gate = _calibration_position_gate(
+        score_band=model_recommendation.model_risk_asset_ai_band,
+        weight_calibration=weight_calibration,
+    )
     thesis_review_status = review_summary.thesis if review_summary is not None else None
-    position_gates = (
-        confidence_gate,
-        *build_position_gates(
-            score_band=model_recommendation.model_risk_asset_ai_band,
-            total_risk_asset_max=adjusted_total_risk_asset_max,
-            max_total_ai_exposure=max_total_ai_exposure,
-            gate_rules=rules.position_gates,
-            data_quality_status=data_quality_report.status,
-            component_source_types={
-                component.name: component.source_type for component in components
-            },
-            thesis_status=(
-                None if thesis_review_status is None else thesis_review_status.status
+    position_gates = tuple(
+        gate
+        for gate in (
+            confidence_gate,
+            calibration_position_gate,
+            *build_position_gates(
+                score_band=model_recommendation.model_risk_asset_ai_band,
+                total_risk_asset_max=adjusted_total_risk_asset_max,
+                max_total_ai_exposure=max_total_ai_exposure,
+                gate_rules=rules.position_gates,
+                data_quality_status=data_quality_report.status,
+                component_source_types={
+                    component.name: component.source_type for component in components
+                },
+                thesis_status=(
+                    None
+                    if thesis_review_status is None
+                    else thesis_review_status.status
+                ),
+                thesis_error_count=(
+                    0
+                    if thesis_review_status is None
+                    else thesis_review_status.error_count
+                ),
+                thesis_warning_count=(
+                    0
+                    if thesis_review_status is None
+                    else thesis_review_status.warning_count
+                ),
+                risk_budget=risk_budget,
+                feature_set=feature_set,
+                portfolio_exposure_report=portfolio_exposure_report,
+                valuation_review_report=valuation_review_report,
+                risk_event_occurrence_review_report=risk_event_occurrence_review_report,
             ),
-            thesis_error_count=(
-                0 if thesis_review_status is None else thesis_review_status.error_count
-            ),
-            thesis_warning_count=(
-                0 if thesis_review_status is None else thesis_review_status.warning_count
-            ),
-            risk_budget=risk_budget,
-            feature_set=feature_set,
-            portfolio_exposure_report=portfolio_exposure_report,
-            valuation_review_report=valuation_review_report,
-            risk_event_occurrence_review_report=risk_event_occurrence_review_report,
-        ),
+        )
+        if gate is not None
     )
     recommendation = score_model.recommend(
         module_scores,
@@ -389,6 +492,7 @@ def build_daily_score_report(
         position_band_policy=position_band_policy,
         daily_conclusion_policy=rules.daily_conclusion,
         confidence_policy=rules.confidence_policy,
+        weight_calibration=weight_calibration,
         fundamental_feature_report=fundamental_feature_report,
         valuation_review_report=valuation_review_report,
         risk_event_occurrence_review_report=risk_event_occurrence_review_report,
@@ -404,10 +508,12 @@ def write_scores_csv(report: DailyScoreReport, output_path: Path) -> Path:
                 report.as_of,
                 item,
                 report.confidence_policy,
+                report.weight_calibration,
             )
             for item in report.components
         ]
     )
+    calibration = report.weight_calibration
     overall = pd.DataFrame(
         [
             {
@@ -420,6 +526,22 @@ def write_scores_csv(report: DailyScoreReport, output_path: Path) -> Path:
                 "confidence": report.confidence_assessment.score,
                 "confidence_level": report.confidence_assessment.level,
                 "confidence_reasons": "；".join(report.confidence_assessment.reasons),
+                "weight_profile_version": (
+                    "" if calibration is None else calibration.weight_profile_version
+                ),
+                "calibration_overlay_ids": (
+                    "" if calibration is None else ",".join(calibration.matched_overlays)
+                ),
+                "effective_weight": "",
+                "effective_weights_json": (
+                    ""
+                    if calibration is None
+                    else json.dumps(
+                        calibration.effective_weights,
+                        ensure_ascii=False,
+                        sort_keys=True,
+                    )
+                ),
                 "model_risk_asset_ai_min": (
                     report.recommendation.model_risk_asset_ai_band.min_position
                 ),
@@ -552,6 +674,7 @@ def build_score_architecture_audit(report: DailyScoreReport) -> dict[str, Any]:
         "risk_state_components": [component.name for component in risk_state_components],
         "risk_adjusted_score": report.recommendation.total_score,
         "scoring_policy_metadata": report.scoring_policy_metadata,
+        "weight_calibration": _weight_calibration_audit_record(report),
         "position_band_policy": [
             {
                 "min_score": band.min_score,
@@ -610,6 +733,24 @@ def build_score_architecture_audit(report: DailyScoreReport) -> dict[str, Any]:
             "同一 evidence/dedup_group 的强约束检查由 SCORE-004/RISK-009 后续阶段扩展。"
         ),
     }
+
+
+def _weight_calibration_audit_record(report: DailyScoreReport) -> dict[str, Any]:
+    if report.weight_calibration is None:
+        return {
+            "status": "legacy_scoring_rules_weights",
+            "weight_profile_version": "not_connected",
+            "matched_overlays": [],
+            "effective_weights": {
+                component.name: component.weight for component in report.components
+            },
+            "audit": {
+                "why_not_applied": [
+                    "score-daily caller did not provide a calibration application"
+                ]
+            },
+        }
+    return report.weight_calibration.to_dict()
 
 
 def render_daily_score_report(
@@ -710,6 +851,7 @@ def render_daily_score_report(
     if alert_summary_section is not None:
         lines.extend(["", alert_summary_section.rstrip()])
     lines.extend(["", render_macro_risk_asset_budget_section(report).rstrip()])
+    lines.extend(["", render_weight_calibration_section(report).rstrip()])
     lines.extend(
         [
             "",
@@ -900,6 +1042,57 @@ def render_daily_score_report(
             )
 
     return "\n".join(lines) + "\n"
+
+
+def render_weight_calibration_section(report: DailyScoreReport) -> str:
+    calibration = report.weight_calibration
+    if calibration is None:
+        return "\n".join(
+            [
+                "## Historical Calibration",
+                "",
+                "- 状态：not_connected",
+                "- 权重来源：legacy `scoring_rules.yaml` weights；"
+                "当前调用方尚未传入 effective weights resolver。",
+            ]
+        )
+    matched = ", ".join(calibration.matched_overlays) if calibration.matched_overlays else "无"
+    lines = [
+        "## Historical Calibration",
+        "",
+        f"- Weight profile version：`{calibration.weight_profile_version}`",
+        f"- Matched overlays：{matched}",
+        f"- Confidence delta：{calibration.confidence_delta:+.2f}",
+        f"- Position multiplier：{calibration.position_multiplier:.2f}",
+        "- 生产边界：本节记录本次评分实际使用的 effective weights；"
+        "未批准、过期或未命中的 overlay 不影响评分。",
+        "",
+        "| Module | Base weight | Effective weight |",
+        "|---|---:|---:|",
+    ]
+    for signal, base_weight in calibration.base_weights.items():
+        effective_weight = calibration.effective_weights.get(signal)
+        lines.append(
+            "| "
+            f"`{signal}` | "
+            f"{base_weight:.1%} | "
+            f"{'' if effective_weight is None else f'{effective_weight:.1%}'} |"
+        )
+    if calibration.required_confirmations:
+        lines.extend(
+            [
+                "",
+                "- Required confirmations："
+                + "、".join(f"`{item}`" for item in calibration.required_confirmations),
+            ]
+        )
+    why_applied = calibration.audit.get("why_applied", [])
+    why_not_applied = calibration.audit.get("why_not_applied", [])
+    if why_applied or why_not_applied:
+        lines.extend(["", "### Overlay Audit", ""])
+        lines.extend(f"- Applied：{item}" for item in why_applied)
+        lines.extend(f"- Not applied：{item}" for item in why_not_applied)
+    return "\n".join(lines)
 
 
 def write_daily_score_report(
@@ -1230,6 +1423,7 @@ def _score_hard_data_module(
 
 def _score_fundamental_module(
     rules: ScoringRulesConfig,
+    weight: float,
     fundamental_feature_report: SecFundamentalFeaturesReport | None,
 ) -> DailyScoreComponent:
     placeholder = rules.placeholders["fundamentals"]
@@ -1237,7 +1431,7 @@ def _score_fundamental_module(
         return DailyScoreComponent(
             name="fundamentals",
             score=placeholder.score,
-            weight=rules.weights["fundamentals"],
+            weight=weight,
             source_type="placeholder",
             coverage=0.0,
             confidence=_source_type_confidence("placeholder", 0.0),
@@ -1247,7 +1441,7 @@ def _score_fundamental_module(
 
     return _score_signal_module(
         name="fundamentals",
-        weight=rules.weights["fundamentals"],
+        weight=weight,
         module_rules=rules.fundamentals,
         feature_index=_fundamental_feature_index(fundamental_feature_report),
         rules=rules,
@@ -1257,6 +1451,7 @@ def _score_fundamental_module(
 
 def _score_valuation_module(
     rules: ScoringRulesConfig,
+    weight: float,
     valuation_review_report: ValuationReviewReport | None,
 ) -> DailyScoreComponent:
     placeholder = rules.placeholders["valuation"]
@@ -1264,7 +1459,7 @@ def _score_valuation_module(
         return DailyScoreComponent(
             name="valuation",
             score=placeholder.score,
-            weight=rules.weights["valuation"],
+            weight=weight,
             source_type="placeholder",
             coverage=0.0,
             confidence=_source_type_confidence("placeholder", 0.0),
@@ -1274,7 +1469,7 @@ def _score_valuation_module(
 
     component = _score_signal_module(
         name="valuation",
-        weight=rules.weights["valuation"],
+        weight=weight,
         module_rules=rules.valuation,
         feature_index=_valuation_feature_index(valuation_review_report),
         rules=rules,
@@ -1299,6 +1494,7 @@ def _score_valuation_module(
 
 def _score_policy_geopolitics_module(
     rules: ScoringRulesConfig,
+    weight: float,
     risk_event_occurrence_review_report: RiskEventOccurrenceReviewReport | None,
 ) -> DailyScoreComponent:
     placeholder = rules.placeholders["policy_geopolitics"]
@@ -1309,7 +1505,7 @@ def _score_policy_geopolitics_module(
         return DailyScoreComponent(
             name="policy_geopolitics",
             score=placeholder.score,
-            weight=rules.weights["policy_geopolitics"],
+            weight=weight,
             source_type="placeholder",
             coverage=0.0,
             confidence=_source_type_confidence(
@@ -1329,7 +1525,7 @@ def _score_policy_geopolitics_module(
     )
     component = _score_signal_module(
         name="policy_geopolitics",
-        weight=rules.weights["policy_geopolitics"],
+        weight=weight,
         module_rules=rules.policy_geopolitics,
         feature_index=_risk_event_occurrence_feature_index(
             risk_event_occurrence_review_report
@@ -2200,12 +2396,27 @@ def _score_component_record(
     as_of: date,
     component: DailyScoreComponent,
     confidence_policy: ConfidencePolicyConfig,
+    weight_calibration: CalibrationApplication | None,
 ) -> dict[str, object]:
     return {
         "as_of": as_of.isoformat(),
         "component": component.name,
         "score": component.score,
         "weight": component.weight,
+        "weight_profile_version": (
+            "" if weight_calibration is None else weight_calibration.weight_profile_version
+        ),
+        "calibration_overlay_ids": (
+            ""
+            if weight_calibration is None
+            else ",".join(weight_calibration.matched_overlays)
+        ),
+        "effective_weight": (
+            ""
+            if weight_calibration is None
+            else weight_calibration.effective_weights.get(component.name, "")
+        ),
+        "effective_weights_json": "",
         "source_type": component.source_type,
         "coverage": component.coverage,
         "confidence": component.confidence,
@@ -2388,6 +2599,64 @@ def _confidence_score_and_reasons(
     if not reasons:
         reasons.append("核心输入覆盖和质量状态未触发额外置信度扣减")
     return score, level, tuple(reasons)
+
+
+def _apply_calibration_confidence_delta(
+    confidence: DailyConfidenceAssessment,
+    weight_calibration: CalibrationApplication | None,
+    confidence_policy: ConfidencePolicyConfig,
+    model_risk_asset_ai_band: PositionBand,
+) -> DailyConfidenceAssessment:
+    if weight_calibration is None or abs(weight_calibration.confidence_delta) < 1e-9:
+        return confidence
+    adjusted_score = _clamp(
+        confidence.score + weight_calibration.confidence_delta,
+        0.0,
+        100.0,
+    )
+    return DailyConfidenceAssessment(
+        score=adjusted_score,
+        level=_confidence_level(adjusted_score / 100.0, confidence_policy),
+        reasons=(
+            *confidence.reasons,
+            "历史校准 overlay 调整判断置信度："
+            f"{weight_calibration.confidence_delta:+.1f} 分。",
+        ),
+        adjusted_risk_asset_ai_band=_confidence_adjusted_band(
+            model_risk_asset_ai_band,
+            adjusted_score,
+            confidence_policy,
+        ),
+    )
+
+
+def _calibration_position_gate(
+    *,
+    score_band: PositionBand,
+    weight_calibration: CalibrationApplication | None,
+) -> PositionGate | None:
+    if (
+        weight_calibration is None
+        or abs(weight_calibration.position_multiplier - 1.0) < 1e-9
+    ):
+        return None
+    max_position = score_band.max_position * weight_calibration.position_multiplier
+    return PositionGate(
+        gate_id="calibration_overlay",
+        label="历史校准 overlay",
+        source="approved calibration overlay",
+        max_position=max_position,
+        triggered=max_position < score_band.max_position - 1e-9,
+        reason=(
+            "已命中 approved calibration overlay："
+            f"{', '.join(weight_calibration.matched_overlays) or '无'}；"
+            "position multiplier="
+            f"{weight_calibration.position_multiplier:.2f}。"
+        ),
+        gate_class="soft_cap",
+        target_effect="calibration_position_multiplier",
+        execution_effect="approved_overlay_position_limit",
+    )
 
 
 def _confidence_position_gate(
