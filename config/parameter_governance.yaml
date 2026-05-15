@@ -1,0 +1,138 @@
+version: parameter_governance_v1
+status: pilot
+owner: system
+market_regime_id: ai_after_chatgpt
+owner_quantitative_input_status: unavailable
+production_effect: none
+rationale: "owner 暂时无法提供可量化参数输入；本 manifest 只登记参数面、证据要求和行动边界，避免把主观数值写成生产配置。"
+validation: "由 aits feedback evaluate-parameter-governance、parameter candidate ledger、market feedback optimization 和目标测试覆盖；真实生产参数仍由既有 scoring/backtest/sample policy 与 owner-approved overlay 管理。"
+review_after: "连续 8 份 market feedback optimization 或 owner 给出量化 policy 后复核。"
+
+actions:
+  keep_current: "保持当前生产配置；不写 overlay。"
+  collect_more_evidence: "继续运行 backtest robustness、parameter replay、candidate ledger、outcome 和 shadow maturity。"
+  prepare_forward_shadow: "只准备 candidate/shadow 假设卡，不改变 production。"
+  owner_decision_required: "需要 owner 给出量化 policy、批准 shadow 或明确拒绝。"
+  blocked_by_data: "先修复数据质量、coverage、placeholder、random/OOS/architecture 证据阻断。"
+  blocked_by_policy: "先补 governance manifest、rationale、退出条件或 policy 边界。"
+
+parameters:
+  - parameter_id: weight_profile.current_base_weights
+    surface: module_weights
+    config_path: config/weights/weight_profile_current.yaml
+    source_level: pilot_prior
+    owner: system
+    status: active
+    rationale: "当前模块权重是可审计 baseline；后续只允许由 parameter replay、candidate ledger、forward shadow 和 owner-approved overlay 推进。"
+    validation_evidence:
+      - "score-daily 与 backtest 已通过 effective weight resolver 使用同一 profile。"
+      - "parameter candidates 消费 OOS、random baseline、coverage、architecture baseline 和 bootstrap CI。"
+    review_after: "market feedback optimization 连续观察后，或 candidate ledger 出现未阻断 forward shadow 候选。"
+    exit_condition: "owner 批准新的 overlay 或证据持续阻断后保持当前 profile。"
+    production_effect: none
+    candidate_categories:
+      - module_weight_perturbation
+    allowed_actions:
+      - keep_current
+      - collect_more_evidence
+      - prepare_forward_shadow
+      - owner_decision_required
+      - blocked_by_data
+    requires_owner_quantitative_input_for_production: true
+    allows_shadow_without_owner_quantitative_input: true
+
+  - parameter_id: scoring_rules.position_and_confidence_policy
+    surface: score_position_confidence
+    config_path: config/scoring_rules.yaml
+    source_level: pilot_prior
+    owner: system
+    status: active
+    rationale: "评分到仓位、日报结论和 confidence cap 已配置化，但仍属于 pilot baseline；owner 未给出新阈值前只能用 outcome/shadow 证据观察。"
+    validation_evidence:
+      - "scoring_rules policy_metadata 记录 rationale、validation 和 review_after_reports。"
+      - "日报报告披露 score architecture audit 与 confidence gate。"
+    review_after: "累积足够 decision/prediction outcome 后复核分档。"
+    exit_condition: "promotion floor、shadow maturity、owner approval 和回滚条件满足后才可变更。"
+    production_effect: none
+    candidate_categories:
+      - score_architecture_baseline
+    allowed_actions:
+      - keep_current
+      - collect_more_evidence
+      - owner_decision_required
+      - blocked_by_policy
+    requires_owner_quantitative_input_for_production: true
+    allows_shadow_without_owner_quantitative_input: false
+
+  - parameter_id: feedback_sample_policy.market_feedback_floors
+    surface: feedback_sample_floors
+    config_path: config/feedback_sample_policy.yaml
+    source_level: temporary_baseline
+    owner: system
+    status: active
+    rationale: "当前 floor 是 pilot 阶段为了启动复盘闭环的审计 baseline；它只改变诊断流程 readiness，不允许生产晋级。"
+    validation_evidence:
+      - "market_feedback_optimization 报告披露 sample policy version 和四层 floor。"
+      - "promotion 仍需要 replay、forward shadow、owner approval 和回滚条件。"
+    review_after: "review_after_reports 到期、噪声过高或候选生成过快时调整。"
+    exit_condition: "用真实 outcome/shadow 样本重新校准，或 owner 明确提高/降低 pilot 节奏。"
+    production_effect: none
+    candidate_categories: []
+    allowed_actions:
+      - keep_current
+      - collect_more_evidence
+      - owner_decision_required
+      - blocked_by_policy
+    requires_owner_quantitative_input_for_production: true
+    allows_shadow_without_owner_quantitative_input: false
+
+  - parameter_id: backtest_validation_policy.robustness_candidate_gate
+    surface: backtest_candidate_evidence
+    config_path: config/backtest_validation_policy.yaml
+    source_level: pilot_prior
+    owner: system
+    status: active
+    rationale: "回测稳健性、materiality、coverage、random/OOS/architecture 和 promotion gate 只作为候选证据门禁，不自动批准参数上线。"
+    validation_evidence:
+      - "parameter replay/candidates 读取 as-run 或当前 backtest validation policy。"
+      - "candidate ledger 把数据、OOS、random、architecture 和统计证据阻断写入 veto_reasons。"
+    review_after: "每次完整 robustness 链路后复核 blocked reason 分布。"
+    exit_condition: "阻断原因解除且 shadow/owner governance 完成，或证据显示当前候选不可推进。"
+    production_effect: none
+    candidate_categories:
+      - cost
+      - window
+      - rebalance_frequency
+      - same_turnover_random_strategy
+      - out_of_sample_validation
+      - score_architecture_baseline
+    allowed_actions:
+      - keep_current
+      - collect_more_evidence
+      - prepare_forward_shadow
+      - owner_decision_required
+      - blocked_by_data
+      - blocked_by_policy
+    requires_owner_quantitative_input_for_production: true
+    allows_shadow_without_owner_quantitative_input: true
+
+  - parameter_id: llm_request_profiles.daily_risk_event_cost_pilot
+    surface: llm_cost_quality
+    config_path: config/llm_request_profiles.yaml
+    source_level: temporary_baseline
+    owner: system
+    status: active
+    rationale: "日报 OpenAI 请求成本已降为 cost pilot；参数值只影响候选预审成本和待复核队列，不应被市场收益回测直接优化。"
+    validation_evidence:
+      - "llm_request_profiles policy_metadata 记录 cost pilot rationale 和账单观察要求。"
+      - "OpenAI 输出仍为 pending_review/backlog 边界，不能直接作为风险事实。"
+    review_after: "下一次账单/日报候选质量复核后。"
+    exit_condition: "owner 接受成本/质量权衡后固化，或继续降低候选量并记录新 cost pilot。"
+    production_effect: none
+    candidate_categories: []
+    allowed_actions:
+      - keep_current
+      - collect_more_evidence
+      - owner_decision_required
+    requires_owner_quantitative_input_for_production: true
+    allows_shadow_without_owner_quantitative_input: false

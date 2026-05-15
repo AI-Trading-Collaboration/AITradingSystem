@@ -22,6 +22,9 @@ from ai_trading_system.feedback_sample_policy import (
 from ai_trading_system.parameter_candidates import (
     DEFAULT_PARAMETER_CANDIDATE_LEDGER_PATH,
 )
+from ai_trading_system.parameter_governance import (
+    default_parameter_governance_summary_path,
+)
 from ai_trading_system.parameter_replay import default_parameter_replay_summary_path
 from ai_trading_system.prediction_ledger import DEFAULT_PREDICTION_OUTCOMES_PATH
 from ai_trading_system.rule_experiments import DEFAULT_RULE_EXPERIMENT_LEDGER_PATH
@@ -50,6 +53,7 @@ class MarketFeedbackOptimizationReport:
     rule_experiments: dict[str, Any]
     parameter_replay: dict[str, Any]
     parameter_candidates: dict[str, Any]
+    parameter_governance: dict[str, Any]
     shadow_maturity: dict[str, Any]
     calibration_overlay: dict[str, Any]
     effective_weights: dict[str, Any]
@@ -67,6 +71,7 @@ class MarketFeedbackOptimizationReport:
             self.rule_experiments,
             self.parameter_replay,
             self.parameter_candidates,
+            self.parameter_governance,
             self.shadow_maturity,
             self.calibration_overlay,
             self.effective_weights,
@@ -126,6 +131,7 @@ def build_market_feedback_optimization_report(
     rule_experiment_path: Path = DEFAULT_RULE_EXPERIMENT_LEDGER_PATH,
     parameter_replay_summary_path: Path | None = None,
     parameter_candidate_ledger_path: Path = DEFAULT_PARAMETER_CANDIDATE_LEDGER_PATH,
+    parameter_governance_summary_path: Path | None = None,
     shadow_maturity_report_path: Path | None = None,
     calibration_overlay_path: Path = DEFAULT_APPROVED_CALIBRATION_OVERLAY_PATH,
     effective_weights_path: Path = DEFAULT_EFFECTIVE_WEIGHTS_PATH,
@@ -142,6 +148,12 @@ def build_market_feedback_optimization_report(
     )
     parameter_replay_summary_path = parameter_replay_summary_path or (
         default_parameter_replay_summary_path(
+            PROJECT_ROOT / "outputs" / "reports",
+            as_of,
+        )
+    )
+    parameter_governance_summary_path = parameter_governance_summary_path or (
+        default_parameter_governance_summary_path(
             PROJECT_ROOT / "outputs" / "reports",
             as_of,
         )
@@ -172,6 +184,9 @@ def build_market_feedback_optimization_report(
         rule_experiments=_rule_experiment_section(rule_experiment_path),
         parameter_replay=_parameter_replay_section(parameter_replay_summary_path),
         parameter_candidates=_parameter_candidate_section(parameter_candidate_ledger_path),
+        parameter_governance=_parameter_governance_section(
+            parameter_governance_summary_path
+        ),
         shadow_maturity=_markdown_artifact_section(
             shadow_maturity_report_path,
             "shadow_maturity_report",
@@ -244,6 +259,11 @@ def render_market_feedback_optimization_report(
             report.parameter_candidates,
             "candidate_count",
         ),
+        _artifact_row(
+            "Parameter governance",
+            report.parameter_governance,
+            "parameter_count",
+        ),
         _artifact_row("Shadow maturity", report.shadow_maturity, "row_count"),
         _artifact_row("Approved overlay", report.calibration_overlay, "total_count"),
         _artifact_row("Effective weights", report.effective_weights, "matched_count"),
@@ -275,6 +295,10 @@ def render_market_feedback_optimization_report(
         f"trial：{report.parameter_candidates['trial_count']}；"
         f"owner review：{report.parameter_candidates['ready_for_owner_review_count']}；"
         f"risk review：{report.parameter_candidates['material_risk_review_count']}",
+        f"- 参数治理：{report.parameter_governance['status']}；"
+        f"manifest={report.parameter_governance['manifest_version']}；"
+        f"owner input={report.parameter_governance['owner_quantitative_input_status']}；"
+        f"action={_format_counts(report.parameter_governance['action_counts'])}",
         "",
         "## Overlay 与生产兼容性",
         "",
@@ -559,6 +583,41 @@ def _parameter_candidate_section(path: Path) -> dict[str, Any]:
         "ready_for_owner_review_count": int(payload.get("ready_for_owner_review_count") or 0),
         "material_risk_review_count": int(payload.get("material_risk_review_count") or 0),
         "needs_policy_count": int(payload.get("needs_policy_count") or 0),
+        "warnings": warnings,
+    }
+
+
+def _parameter_governance_section(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {
+            "path": str(path),
+            "exists": False,
+            "status": "NOT_CONNECTED",
+            "manifest_version": "UNKNOWN",
+            "owner_quantitative_input_status": "UNKNOWN",
+            "parameter_count": 0,
+            "action_counts": {},
+            "warnings": ["parameter governance 摘要不存在；参数配置治理报告尚未生成。"],
+        }
+    payload = _read_json(path)
+    warnings = _warnings_from_payload(payload)
+    action_counts = payload.get("action_counts", {})
+    if not isinstance(action_counts, dict):
+        action_counts = {}
+    return {
+        "path": str(path),
+        "exists": True,
+        "status": str(payload.get("status") or "CONNECTED"),
+        "manifest_version": str(payload.get("manifest_version") or "UNKNOWN"),
+        "owner_quantitative_input_status": str(
+            payload.get("owner_quantitative_input_status") or "UNKNOWN"
+        ),
+        "parameter_count": int(payload.get("parameter_count") or 0),
+        "action_counts": {
+            str(key): int(value)
+            for key, value in action_counts.items()
+            if isinstance(value, int)
+        },
         "warnings": warnings,
     }
 

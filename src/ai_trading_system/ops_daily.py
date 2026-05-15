@@ -44,6 +44,10 @@ from ai_trading_system.official_policy_sources import (
     default_official_policy_candidates_path,
     default_official_policy_fetch_report_path,
 )
+from ai_trading_system.parameter_governance import (
+    default_parameter_governance_report_path,
+    default_parameter_governance_summary_path,
+)
 from ai_trading_system.periodic_investment_review import (
     default_periodic_investment_review_report_path,
 )
@@ -350,6 +354,14 @@ def build_daily_ops_plan(
         reports_dir,
         as_of,
     )
+    parameter_governance_report = default_parameter_governance_report_path(
+        reports_dir,
+        as_of,
+    )
+    parameter_governance_summary = default_parameter_governance_summary_path(
+        reports_dir,
+        as_of,
+    )
     feedback_loop_report = default_feedback_loop_review_report_path(reports_dir, as_of)
     investment_weekly_review_report = default_periodic_investment_review_report_path(
         reports_dir,
@@ -646,6 +658,31 @@ def build_daily_ops_plan(
                 ),
             ),
             DailyOpsStep(
+                step_id="parameter_governance",
+                title="生成参数配置治理报告",
+                command=(
+                    (
+                        "aits",
+                        "feedback",
+                        "evaluate-parameter-governance",
+                        "--as-of",
+                        as_of_text,
+                    )
+                    if feedback_review_enabled
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(parameter_governance_report, parameter_governance_summary),
+                quality_gate=(
+                    "只读读取 parameter candidate ledger 和 config/parameter_governance.yaml；"
+                    "production_effect=none，不写生产参数、overlay 或 rule card。"
+                ),
+                blocks_downstream=True,
+                enabled=feedback_review_enabled,
+                skip_reason=feedback_review_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
                 step_id="market_feedback_optimization",
                 title="生成市场反馈优化复盘报告",
                 command=(
@@ -662,8 +699,9 @@ def build_daily_ops_plan(
                 required_env_vars=(),
                 produced_paths=(market_feedback_report,),
                 quality_gate=(
-                    "只读读取 data_quality、outcome、学习队列、规则实验、参数 replay/candidate "
-                    "和 overlay 审计产物；production_effect=none，不改变生产评分、权重或规则。"
+                    "只读读取 data_quality、outcome、学习队列、规则实验、参数 replay/candidate、"
+                    "参数治理和 overlay 审计产物；production_effect=none，"
+                    "不改变生产评分、权重或规则。"
                 ),
                 blocks_downstream=True,
                 enabled=feedback_review_enabled,
@@ -1782,6 +1820,7 @@ def _post_step_artifact_status_error(step: DailyOpsStep) -> str | None:
         "sec_metrics_validation": (0,),
         "valuation_snapshots": (2, 3),
         "score_daily": (2, 4),
+        "parameter_governance": (0,),
         "market_feedback_optimization": (0,),
         "feedback_loop_review": (0,),
         "investment_weekly_review": (0,),

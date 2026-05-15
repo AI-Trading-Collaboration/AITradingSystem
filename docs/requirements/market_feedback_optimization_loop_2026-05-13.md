@@ -2,7 +2,7 @@
 
 状态：VALIDATING
 
-最后更新：2026-05-14
+最后更新：2026-05-15
 
 关联任务：`CALIBRATION-003`、`CALIBRATION-004`、`FEEDBACK-002`、`EXPERIMENT-001`、`SHADOW-002`、`SHADOW-003`、`GOV-003`、`LOOP-001`
 
@@ -54,6 +54,7 @@ daily-run / score-daily
 ```text
 aits feedback build-parameter-replay --as-of YYYY-MM-DD
 aits feedback build-parameter-candidates --as-of YYYY-MM-DD
+aits feedback evaluate-parameter-governance --as-of YYYY-MM-DD
 aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 ```
 
@@ -68,9 +69,12 @@ aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 - `outputs/reports/shadow_maturity_YYYY-MM-DD.md`
 - `data/processed/approved_calibration_overlay.json`
 - `outputs/current_effective_weights.json`
+- `config/parameter_governance.yaml`
+- `outputs/reports/parameter_governance_YYYY-MM-DD.json`
 
 主要输出：
 
+- `outputs/reports/parameter_governance_YYYY-MM-DD.md/json`
 - `outputs/reports/market_feedback_optimization_YYYY-MM-DD.md`
 
 ## 执行频次
@@ -125,6 +129,7 @@ aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 |5. 参数候选台账与 trial registry|VALIDATING|从参数 replay summary 生成 candidate-only 参数候选台账，记录 trial、来源 replay、指标、material 标记、治理状态和下一步；不自动生成 approved overlay。|
 |6. Effective weights 单一入口|VALIDATING|`score-daily` 和 `backtest` 通过同一 resolver 使用 `weight_profile_current.yaml` 与 approved overlay 产出 effective weights；报告、CSV、trace 和回测 daily row 写入 profile/overlay/权重审计；approved overlay 未知 signal fail closed。|
 |7. 多目标 candidate gate|VALIDATING|parameter replay/candidate ledger 消费 OOS、same-turnover random、signal-family baseline、coverage/data credibility 证据；baseline-only、OOS 弱化、随机基线未过、coverage 不足和风险恶化不得仅凭 total return 进入 owner review。|
+|7B. 参数治理 manifest 与 owner 暂缺输入边界|VALIDATING|新增 `config/parameter_governance.yaml` 和 `aits feedback evaluate-parameter-governance`，把参数面、source level、owner quantitative input 状态、证据要求和 action 建议显式化；报告接入 `optimize-market-feedback` 和交易日 `daily-run` dashboard 前置流程；仍不写 production 参数。|
 |8. Forward shadow 与 promotion 连接|PROPOSED|候选通过 replay 后进入 `prediction_ledger` shadow；成熟度报告达到门槛才允许 owner review。|
 |9. Overlay / rule card 晋级|PROPOSED|通过 owner approval 后生成 approved overlay 或 rule card，具备有效期、回滚条件和审计引用。|
 |10. Coverage / placeholder / source veto|VALIDATING|robustness summary 汇总模块覆盖率、placeholder 占比、数据来源可信度和关键模块缺失；parameter replay/candidate ledger 把这些字段作为 `BLOCKED_BY_DATA` 或降级原因，而不只作为报告说明。|
@@ -167,3 +172,4 @@ aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 - 2026-05-14：阶段 6/7 基础实现完成并进入 VALIDATING。`score-daily` 与 `backtest` 已通过同一 effective weight resolver 使用 `weight_profile_current.yaml` 和 approved overlay；日报、scores CSV、backtest daily CSV、回测报告、robustness summary 和 trace bundle 记录 `weight_profile_version`、matched overlays、effective weights 与审计原因；approved overlay 中未知 signal 现在 fail closed。`parameter_replay` 输出 `robustness_evidence`，`parameter_candidates` 使用 data quality/data credibility、OOS、same-turnover random、signal-family baseline 和 drawdown veto，正向 total return 不再直接进入 owner review，而是进入 `READY_FOR_FORWARD_SHADOW` 或被阻断/降级。验证通过 `ruff check src tests`、`git diff --check`、目标 pytest 83 passed 和全量 pytest 516 passed。
 - 2026-05-14：owner 要求继续推进其余方向并尽可能完整实现。本轮新增 `CALIBRATION-004`，状态切回 IN_PROGRESS；实现范围扩展为 coverage/placeholder veto、overlay `target_weights`/priority/conflict、benchmark 扩展、统计证据、有效独立样本和 alpha/risk/gate 分层迁移。生产效果继续保持 `none`，大功能完成后必须复测完整链路。
 - 2026-05-14：阶段 10-15 baseline 完成并进入 VALIDATING。robustness summary/report 新增 coverage/source veto、same-exposure random、vol-targeted exposure、no-gate、alpha-only/risk-state-only/gate-modules 架构基线和 paired block bootstrap CI；parameter replay 新增 Deflated Sharpe / PBO proxy 诊断但明确不是正式 CSCV 统计；approved overlay 支持 `target_weights`、priority、mutual exclusion group 和 fail-closed 冲突治理；parameter replay/candidates 消费 coverage、有效独立窗口、score-architecture baseline 和 bootstrap CI。当前真实链路已重跑：`aits backtest --robustness-report --to 2026-05-12 --quality-as-of 2026-05-13` 410 秒完成；`build-parameter-replay` 为 PASS（66 场景、material delta=2）；`build-parameter-candidates` 为 PASS_WITH_LIMITATIONS（66 trial / 16 candidate / forward shadow ready=0 / blocked=16）；`optimize-market-feedback` 为 PASS_WITH_LIMITATIONS / `PILOT_DIAGNOSTIC_REVIEW`。阻断原因集中在 data credibility / component coverage、random baseline 和 architecture baseline，符合 candidate-only 边界。
+- 2026-05-15：owner 暂时无法提供可量化参数输入；新增参数治理 manifest 与只读报告阶段，`evaluate-parameter-governance` 会把 candidate ledger 映射为 `KEEP_CURRENT`、`COLLECT_MORE_EVIDENCE`、`PREPARE_FORWARD_SHADOW`、`OWNER_DECISION_REQUIRED`、`BLOCKED_BY_DATA` 或 `BLOCKED_BY_POLICY`，并由 `optimize-market-feedback` 汇总 action 分布。交易日 `daily-run` 在 market feedback/dashboard 前生成该报告；生产参数、approved overlay 和 rule card 仍不自动改写。

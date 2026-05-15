@@ -32,6 +32,7 @@ def test_market_feedback_optimization_report_summarizes_readiness(
         rule_experiment_path=paths["rule_experiments"],
         parameter_replay_summary_path=paths["parameter_replay"],
         parameter_candidate_ledger_path=paths["parameter_candidates"],
+        parameter_governance_summary_path=paths["parameter_governance"],
         shadow_maturity_report_path=paths["shadow_maturity"],
         calibration_overlay_path=paths["overlay"],
         effective_weights_path=paths["effective_weights"],
@@ -52,6 +53,7 @@ def test_market_feedback_optimization_report_summarizes_readiness(
     assert "候选规则数：1" in markdown
     assert "参数复测场景：2；material delta：1" in markdown
     assert "参数候选数：1；trial：2；owner review：1；risk review：0" in markdown
+    assert "参数治理：PASS_WITH_LIMITATIONS" in markdown
     assert "Approved overlay 数：1" in markdown
 
 
@@ -88,6 +90,8 @@ def test_market_feedback_optimization_cli_writes_report(tmp_path: Path) -> None:
             str(paths["parameter_replay"]),
             "--parameter-candidate-ledger-path",
             str(paths["parameter_candidates"]),
+            "--parameter-governance-summary-path",
+            str(paths["parameter_governance"]),
             "--shadow-maturity-report-path",
             str(paths["shadow_maturity"]),
             "--calibration-overlay-path",
@@ -284,6 +288,29 @@ def _write_feedback_optimization_artifacts(tmp_path: Path) -> dict[str, Path]:
         encoding="utf-8",
     )
 
+    parameter_governance_path = tmp_path / "parameter_governance_2026-04-10.json"
+    parameter_governance_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "parameter_governance",
+                "production_effect": "none",
+                "status": "PASS_WITH_LIMITATIONS",
+                "manifest_version": "parameter_governance_test",
+                "owner_quantitative_input_status": "unavailable",
+                "parameter_count": 3,
+                "action_counts": {
+                    "BLOCKED_BY_DATA": 1,
+                    "COLLECT_MORE_EVIDENCE": 1,
+                    "PREPARE_FORWARD_SHADOW": 1,
+                },
+                "warnings": ["owner 暂无可量化配置输入。"],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
     shadow_maturity_path = tmp_path / "shadow_maturity_2026-04-10.md"
     shadow_maturity_path.write_text(
         "# Shadow 样本成熟度\n\n- 状态：PASS_WITH_LIMITATIONS\n",
@@ -319,6 +346,7 @@ def _write_feedback_optimization_artifacts(tmp_path: Path) -> dict[str, Path]:
         "rule_experiments": rule_experiments_path,
         "parameter_replay": parameter_replay_path,
         "parameter_candidates": parameter_candidates_path,
+        "parameter_governance": parameter_governance_path,
         "shadow_maturity": shadow_maturity_path,
         "overlay": overlay_path,
         "effective_weights": effective_weights_path,

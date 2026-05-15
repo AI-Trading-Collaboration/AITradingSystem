@@ -72,6 +72,9 @@ def _dispatch(args: list[str]) -> None:
     if args[:2] == ["feedback", "optimize-market-feedback"]:
         cli.optimize_market_feedback_command(as_of=_option(args, "--as-of"))
         return
+    if args[:2] == ["feedback", "evaluate-parameter-governance"]:
+        cli.evaluate_parameter_governance_command(as_of=_option(args, "--as-of"))
+        return
     if args[:2] == ["feedback", "loop-review"]:
         cli.feedback_loop_review_command(as_of=_option(args, "--as-of"))
         return

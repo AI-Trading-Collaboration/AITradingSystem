@@ -421,6 +421,14 @@ from ai_trading_system.parameter_candidates import (
     write_parameter_candidate_ledger,
     write_parameter_candidate_report,
 )
+from ai_trading_system.parameter_governance import (
+    DEFAULT_PARAMETER_GOVERNANCE_MANIFEST_PATH,
+    build_parameter_governance_report,
+    default_parameter_governance_report_path,
+    default_parameter_governance_summary_path,
+    write_parameter_governance_report,
+    write_parameter_governance_summary,
+)
 from ai_trading_system.parameter_replay import (
     DEFAULT_BACKTEST_ROBUSTNESS_DIR,
     build_parameter_replay_report,
@@ -2656,6 +2664,65 @@ def build_parameter_candidates_command(
     console.print("治理边界：候选台账不批准参数上线，不修改 production scoring 或仓位闸门。")
 
 
+@feedback_app.command("evaluate-parameter-governance")
+def evaluate_parameter_governance_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="复核日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    manifest_path: Annotated[
+        Path,
+        typer.Option(help="参数治理 manifest 路径。"),
+    ] = DEFAULT_PARAMETER_GOVERNANCE_MANIFEST_PATH,
+    parameter_candidate_ledger_path: Annotated[
+        Path,
+        typer.Option(help="parameter candidates ledger JSON 路径。"),
+    ] = DEFAULT_PARAMETER_CANDIDATE_LEDGER_PATH,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 参数治理报告输出路径。"),
+    ] = None,
+    summary_output_path: Annotated[
+        Path | None,
+        typer.Option(help="JSON 参数治理摘要输出路径。"),
+    ] = None,
+) -> None:
+    """评估可调参数 manifest 与候选证据，输出只读治理建议。"""
+    review_date = _parse_date(as_of) if as_of else date.today()
+    try:
+        report = build_parameter_governance_report(
+            as_of=review_date,
+            manifest_path=manifest_path,
+            candidate_ledger_path=parameter_candidate_ledger_path,
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        console.print(f"[red]参数治理评估失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+    report_output = output_path or default_parameter_governance_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        review_date,
+    )
+    summary_output = summary_output_path or default_parameter_governance_summary_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        review_date,
+    )
+    write_parameter_governance_report(report, report_output)
+    write_parameter_governance_summary(report, summary_output)
+
+    status_style = "green" if report.status == "PASS" else "yellow"
+    if report.status == "FAIL":
+        status_style = "red"
+    console.print(f"[{status_style}]参数治理状态：{report.status}[/{status_style}]")
+    console.print(f"Manifest：{report.manifest.version}")
+    console.print(f"Owner quantitative input：{report.manifest.owner_quantitative_input_status}")
+    console.print(f"Action 分布：{report.action_counts}")
+    console.print(f"报告：{report_output}")
+    console.print(f"摘要：{summary_output}")
+    console.print("治理边界：本命令不修改 production 参数、overlay、rule card 或日报结论。")
+    if report.status == "FAIL":
+        raise typer.Exit(code=1)
+
+
 @feedback_app.command("optimize-market-feedback")
 def optimize_market_feedback_command(
     as_of: Annotated[
@@ -2711,6 +2778,15 @@ def optimize_market_feedback_command(
         Path,
         typer.Option(help="parameter candidates ledger JSON 路径。"),
     ] = DEFAULT_PARAMETER_CANDIDATE_LEDGER_PATH,
+    parameter_governance_summary_path: Annotated[
+        Path | None,
+        typer.Option(
+            help=(
+                "parameter governance JSON 摘要路径；默认 "
+                "outputs/reports/parameter_governance_YYYY-MM-DD.json。"
+            )
+        ),
+    ] = None,
     shadow_maturity_report_path: Annotated[
         Path | None,
         typer.Option(
@@ -2755,6 +2831,7 @@ def optimize_market_feedback_command(
         rule_experiment_path=rule_experiment_path,
         parameter_replay_summary_path=parameter_replay_summary_path,
         parameter_candidate_ledger_path=parameter_candidate_ledger_path,
+        parameter_governance_summary_path=parameter_governance_summary_path,
         shadow_maturity_report_path=shadow_maturity_report_path,
         calibration_overlay_path=calibration_overlay_path,
         effective_weights_path=effective_weights_path,
