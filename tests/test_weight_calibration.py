@@ -6,13 +6,16 @@ from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
+from typer.testing import CliRunner
 
+from ai_trading_system.cli import app
 from ai_trading_system.weight_calibration import (
     CalibrationOverlay,
     WeightProfile,
     apply_calibration_overlays,
     load_calibration_overlays,
     load_weight_profile,
+    write_calibration_context,
 )
 
 
@@ -30,6 +33,50 @@ def test_default_weight_profile_loads_current_scoring_modules() -> None:
         "policy_geopolitics",
     }
     assert sum(profile.base_weights.values()) == pytest.approx(1.0)
+
+
+def test_write_calibration_context_writes_auditable_json(tmp_path: Path) -> None:
+    output_path = tmp_path / "current_context.json"
+    written_path = write_calibration_context(
+        {
+            "as_of": "2026-05-14",
+            "inputs": {"valuation_connected": True},
+            "run_type": "score_daily",
+        },
+        output_path,
+    )
+
+    assert written_path == output_path
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert payload["as_of"] == "2026-05-14"
+    assert payload["inputs"]["valuation_connected"] is True
+
+
+def test_apply_overlay_cli_allows_missing_context_when_no_approved_overlay(
+    tmp_path: Path,
+) -> None:
+    output_path = tmp_path / "current_effective_weights.json"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "feedback",
+            "apply-calibration-overlay",
+            "--context-path",
+            str(tmp_path / "missing_context.json"),
+            "--overlays-path",
+            str(tmp_path / "missing_overlays.json"),
+            "--output-path",
+            str(output_path),
+            "--as-of",
+            "2026-05-14",
+        ],
+    )
+
+    assert result.exit_code == 0
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert payload["matched_overlays"] == []
+    assert payload["effective_weights"] == payload["base_weights"]
 
 
 def test_weight_profile_rejects_base_weights_that_do_not_sum_to_one() -> None:

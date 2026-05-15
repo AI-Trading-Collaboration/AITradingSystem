@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.parameter_replay import (
@@ -20,6 +20,8 @@ DEFAULT_PARAMETER_CANDIDATE_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
 CANDIDATE_EVALUATION_CATEGORIES = frozenset(
     {"module_weight_perturbation", "rebalance_frequency", "cost", "window"}
 )
+CandidateEvaluationMode = Literal["strict", "flow_validation"]
+CANDIDATE_EVALUATION_MODES = frozenset({"strict", "flow_validation"})
 
 
 @dataclass(frozen=True)
@@ -84,8 +86,10 @@ class ParameterCandidate:
     return_delta_bootstrap_ci_high: float | None
     signal_family_baseline_beaten: bool | None
     score_architecture_baseline_beaten: bool | None
+    label_horizon_days: int | None
     veto_reasons: tuple[str, ...]
     recommendation_status: str
+    evaluation_mode: str
     replay_status: str
     shadow_status: str
     governance_status: str
@@ -120,8 +124,10 @@ class ParameterCandidate:
             "score_architecture_baseline_beaten": (
                 self.score_architecture_baseline_beaten
             ),
+            "label_horizon_days": self.label_horizon_days,
             "veto_reasons": list(self.veto_reasons),
             "recommendation_status": self.recommendation_status,
+            "evaluation_mode": self.evaluation_mode,
             "replay_status": self.replay_status,
             "shadow_status": self.shadow_status,
             "governance_status": self.governance_status,
@@ -139,6 +145,7 @@ class ParameterCandidateLedger:
     source_status: str
     source_market_regime: dict[str, Any] | None
     production_effect: str
+    evaluation_mode: str
     trials: tuple[ParameterTrial, ...]
     candidates: tuple[ParameterCandidate, ...]
     warnings: tuple[str, ...]
@@ -176,6 +183,14 @@ class ParameterCandidateLedger:
         )
 
     @property
+    def flow_validation_override_count(self) -> int:
+        return sum(
+            1
+            for candidate in self.candidates
+            if "flow_validation_override" in candidate.veto_reasons
+        )
+
+    @property
     def needs_policy_count(self) -> int:
         return sum(
             1
@@ -193,7 +208,11 @@ class ParameterCandidateLedger:
 
     @property
     def status(self) -> str:
-        if self.warnings or self.needs_policy_count:
+        if (
+            self.evaluation_mode != "strict"
+            or self.warnings
+            or self.needs_policy_count
+        ):
             return "PASS_WITH_LIMITATIONS"
         return "PASS"
 
@@ -202,6 +221,7 @@ class ParameterCandidateLedger:
             "schema_version": SCHEMA_VERSION,
             "report_type": "parameter_candidate_ledger",
             "production_effect": self.production_effect,
+            "evaluation_mode": self.evaluation_mode,
             "status": self.status,
             "as_of": self.as_of.isoformat(),
             "generated_at": self.generated_at.isoformat(),
@@ -214,6 +234,7 @@ class ParameterCandidateLedger:
             "ready_for_owner_review_count": self.ready_for_owner_review_count,
             "ready_for_forward_shadow_count": self.ready_for_forward_shadow_count,
             "blocked_count": self.blocked_count,
+            "flow_validation_override_count": self.flow_validation_override_count,
             "needs_policy_count": self.needs_policy_count,
             "material_risk_review_count": self.material_risk_review_count,
             "warnings": list(self.warnings),
@@ -231,7 +252,13 @@ def build_parameter_candidate_ledger(
     parameter_replay_summary_path: Path | None,
     as_of: date,
     generated_at: datetime | None = None,
+    evaluation_mode: CandidateEvaluationMode | str = "strict",
 ) -> ParameterCandidateLedger:
+    if evaluation_mode not in CANDIDATE_EVALUATION_MODES:
+        raise ValueError(
+            "candidate evaluation_mode must be one of: "
+            + ", ".join(sorted(CANDIDATE_EVALUATION_MODES))
+        )
     replay_path = parameter_replay_summary_path or default_parameter_replay_summary_path(
         PROJECT_ROOT / "outputs" / "reports",
         as_of,
@@ -248,11 +275,12 @@ def build_parameter_candidate_ledger(
             payload,
             robustness_evidence=robustness_evidence,
             materiality_policy=materiality_policy,
+            evaluation_mode=evaluation_mode,
         )
         for trial, scenario in zip(trials, _scenario_items(payload), strict=True)
         if trial.candidate_eligible
     )
-    warnings = _ledger_warnings(payload, trials, candidates)
+    warnings = _ledger_warnings(payload, trials, candidates, evaluation_mode=evaluation_mode)
     return ParameterCandidateLedger(
         as_of=as_of,
         generated_at=generated,
@@ -261,6 +289,7 @@ def build_parameter_candidate_ledger(
         source_status=str(payload.get("status") or "UNKNOWN"),
         source_market_regime=_optional_dict(payload.get("market_regime")),
         production_effect="none",
+        evaluation_mode=evaluation_mode,
         trials=trials,
         candidates=candidates,
         warnings=warnings,
@@ -288,6 +317,7 @@ def render_parameter_candidate_report(
         "",
         f"- 状态：{ledger.status}",
         "- production_effect：none",
+        f"- Evaluation mode：{ledger.evaluation_mode}",
         f"- 生成时间：{ledger.generated_at.isoformat()}",
         f"- 复核日期：{ledger.as_of.isoformat()}",
         f"- 参数 replay 摘要：`{ledger.source_parameter_replay_path}`",
@@ -297,6 +327,7 @@ def render_parameter_candidate_report(
         f"- Candidate 数：{ledger.candidate_count}",
         f"- Ready for forward shadow：{ledger.ready_for_forward_shadow_count}",
         f"- Blocked：{ledger.blocked_count}",
+        f"- Flow validation override：{ledger.flow_validation_override_count}",
         f"- Material risk review：{ledger.material_risk_review_count}",
         f"- Needs materiality policy：{ledger.needs_policy_count}",
     ]
@@ -350,6 +381,10 @@ def render_parameter_candidate_report(
             (
                 "- 候选台账不批准参数上线；所有候选仍需 owner review、"
                 "forward shadow 和 overlay/rule card 治理。"
+            ),
+            (
+                "- `flow_validation` 只用于流程接线验证：保留严格 veto 审计，"
+                "但允许 validation-only shadow 行写入 prediction ledger；不得作为生产晋级证据。"
             ),
             "- 未配置 materiality policy 的候选只能进入观察或补政策阈值，不能作为晋级依据。",
         ]
@@ -427,11 +462,13 @@ def _candidate_from_trial(
     *,
     robustness_evidence: dict[str, Any],
     materiality_policy: dict[str, Any] | None,
+    evaluation_mode: CandidateEvaluationMode | str,
 ) -> ParameterCandidate:
     recommendation_status, veto_reasons = _recommendation_status(
         trial,
         robustness_evidence=robustness_evidence,
         materiality_policy=materiality_policy,
+        evaluation_mode=evaluation_mode,
     )
     data_quality = _dict_value(robustness_evidence.get("data_quality"))
     random_evidence = _dict_value(
@@ -488,13 +525,17 @@ def _candidate_from_trial(
         score_architecture_baseline_beaten=_bool_or_none(
             architecture_evidence.get("base_beats_best_score_architecture_baseline")
         ),
+        label_horizon_days=_int_or_none(
+            (materiality_policy or {}).get("candidate_label_horizon_days")
+        ),
         veto_reasons=veto_reasons,
         recommendation_status=recommendation_status,
+        evaluation_mode=evaluation_mode,
         replay_status="COMPLETED_FROM_ROBUSTNESS_SUMMARY",
         shadow_status="NOT_STARTED",
         governance_status="NOT_APPROVED",
         production_effect="none",
-        next_step=_candidate_next_step(recommendation_status),
+        next_step=_candidate_next_step(recommendation_status, evaluation_mode),
     )
 
 
@@ -503,12 +544,21 @@ def _recommendation_status(
     *,
     robustness_evidence: dict[str, Any],
     materiality_policy: dict[str, Any] | None,
+    evaluation_mode: CandidateEvaluationMode | str,
 ) -> tuple[str, tuple[str, ...]]:
     veto_reasons = _candidate_veto_reasons(
         trial,
         robustness_evidence=robustness_evidence,
         materiality_policy=materiality_policy,
     )
+    if (
+        evaluation_mode == "flow_validation"
+        and trial.candidate_eligible
+        and trial.total_return_delta_vs_base is not None
+    ):
+        return "READY_FOR_FORWARD_SHADOW", tuple(
+            dict.fromkeys((*veto_reasons, "flow_validation_override"))
+        )
     if any(reason.startswith("data_") for reason in veto_reasons):
         return "BLOCKED_BY_DATA", veto_reasons
     if "oos_holdout_failed" in veto_reasons:
@@ -688,7 +738,12 @@ def _candidate_veto_reasons(
     return tuple(dict.fromkeys(reasons))
 
 
-def _candidate_next_step(status: str) -> str:
+def _candidate_next_step(status: str, evaluation_mode: CandidateEvaluationMode | str) -> str:
+    if evaluation_mode == "flow_validation" and status == "READY_FOR_FORWARD_SHADOW":
+        return (
+            "流程验证模式：允许追加 validation-only forward shadow，保留 veto 审计；"
+            "不得改 production。"
+        )
     if status == "READY_FOR_FORWARD_SHADOW":
         return "补 owner 假设卡和 rollback 条件后进入 forward shadow，不得直接改 production。"
     if status == "READY_FOR_AS_IF_REPLAY":
@@ -712,8 +767,15 @@ def _ledger_warnings(
     payload: dict[str, Any],
     trials: tuple[ParameterTrial, ...],
     candidates: tuple[ParameterCandidate, ...],
+    *,
+    evaluation_mode: CandidateEvaluationMode | str,
 ) -> tuple[str, ...]:
     warnings = _warnings_from_payload(payload)
+    if evaluation_mode == "flow_validation":
+        warnings.append(
+            "flow_validation 模式已放宽 candidate gate，仅用于接线验证；"
+            "严格 veto reasons 保留，不得作为生产晋级证据。"
+        )
     if payload.get("production_effect") != "none":
         warnings.append("来源 parameter replay 未声明 production_effect=none。")
     if not trials:
@@ -726,6 +788,12 @@ def _ledger_warnings(
         warnings.append("存在候选缺少 materiality policy 阈值，不能进入 owner approval。")
     if any(candidate.recommendation_status.startswith("BLOCKED_BY_") for candidate in candidates):
         warnings.append("存在候选被数据、OOS 或随机基线 veto，不能进入 forward shadow。")
+    if evaluation_mode == "flow_validation" and any(
+        "flow_validation_override" in candidate.veto_reasons for candidate in candidates
+    ):
+        warnings.append(
+            "存在 flow_validation override 候选；只能写 validation-only prediction ledger 行。"
+        )
     return tuple(warnings)
 
 

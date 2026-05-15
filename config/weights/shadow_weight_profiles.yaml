@@ -1,0 +1,63 @@
+version: "shadow_weight_profiles_v1"
+status: "pilot"
+owner: "system_validation"
+production_effect: "none"
+source_weight_profile_path: "config/weights/weight_profile_current.yaml"
+label_horizon_days: 20
+rationale: "隔离维护多套测试权重，长期观察与主线评分的差异；不替换生产权重。"
+review_after_reports: 8
+
+profiles:
+  - profile_id: "shadow_alpha_tilt_v1"
+    version: "2026-05-15-alpha-tilt"
+    status: "shadow"
+    owner: "system_validation"
+    production_effect: "none"
+    rationale: "相对生产权重提高 trend/fundamentals，观察 AI 主线强趋势阶段的 alpha 权重敏感性。"
+    review_after_reports: 8
+    target_weights:
+      trend: 0.30
+      fundamentals: 0.30
+      macro_liquidity: 0.125
+      risk_sentiment: 0.125
+      valuation: 0.075
+      policy_geopolitics: 0.075
+    metadata:
+      source_task: "CALIBRATION-008"
+      isolation: "shadow_only"
+
+  - profile_id: "shadow_risk_macro_tilt_v1"
+    version: "2026-05-15-risk-macro-tilt"
+    status: "shadow"
+    owner: "system_validation"
+    production_effect: "none"
+    rationale: "相对生产权重提高 macro_liquidity/risk_sentiment，观察高波动和宏观压力阶段的保守信号表现。"
+    review_after_reports: 8
+    target_weights:
+      trend: 0.20
+      fundamentals: 0.20
+      macro_liquidity: 0.20
+      risk_sentiment: 0.20
+      valuation: 0.10
+      policy_geopolitics: 0.10
+    metadata:
+      source_task: "CALIBRATION-008"
+      isolation: "shadow_only"
+
+  - profile_id: "shadow_guardrail_tilt_v1"
+    version: "2026-05-15-guardrail-tilt"
+    status: "shadow"
+    owner: "system_validation"
+    production_effect: "none"
+    rationale: "相对生产权重提高 valuation/policy_geopolitics，观察估值拥挤和政策事件对评分稳定性的影响。"
+    review_after_reports: 8
+    target_weights:
+      trend: 0.22
+      fundamentals: 0.22
+      macro_liquidity: 0.14
+      risk_sentiment: 0.14
+      valuation: 0.14
+      policy_geopolitics: 0.14
+    metadata:
+      source_task: "CALIBRATION-008"
+      isolation: "shadow_only"

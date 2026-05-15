@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -17,6 +18,7 @@ DEFAULT_WEIGHT_PROFILE_PATH = (
 DEFAULT_APPROVED_CALIBRATION_OVERLAY_PATH = (
     PROJECT_ROOT / "data" / "processed" / "approved_calibration_overlay.json"
 )
+DEFAULT_CURRENT_CONTEXT_PATH = PROJECT_ROOT / "outputs" / "current_context.json"
 DEFAULT_EFFECTIVE_WEIGHTS_PATH = PROJECT_ROOT / "outputs" / "current_effective_weights.json"
 
 OverlayStatus = Literal[
@@ -438,6 +440,19 @@ def write_effective_weights(application: CalibrationApplication, output_path: Pa
             sort_keys=True,
         )
         + "\n",
+        encoding="utf-8",
+    )
+    return output_path
+
+
+def write_calibration_context(
+    context: Mapping[str, Any],
+    output_path: Path | str = DEFAULT_CURRENT_CONTEXT_PATH,
+) -> Path:
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(dict(context), ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
     return output_path

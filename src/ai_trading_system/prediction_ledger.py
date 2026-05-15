@@ -79,6 +79,7 @@ class ShadowPredictionRunReport:
     appended_count: int
     records: tuple[dict[str, Any], ...]
     warnings: tuple[str, ...]
+    source_label: str = "Rule experiment ledger"
     production_effect: str = "none"
 
     @property
@@ -268,6 +269,48 @@ def build_shadow_prediction_records(
     return tuple(records)
 
 
+def build_parameter_shadow_prediction_records(
+    *,
+    snapshot: dict[str, Any],
+    trace_bundle: dict[str, Any],
+    trace_bundle_path: Path,
+    features_path: Path,
+    data_quality_report_path: Path,
+    parameter_candidate_ledger: dict[str, Any],
+    selected_candidate_ids: tuple[str, ...] = (),
+) -> tuple[dict[str, Any], ...]:
+    selected = set(selected_candidate_ids)
+    records: list[dict[str, Any]] = []
+    for candidate in parameter_candidate_ledger.get("candidates", []):
+        if not isinstance(candidate, dict):
+            continue
+        candidate_id = str(candidate.get("candidate_id") or "")
+        if not candidate_id:
+            continue
+        if selected and candidate_id not in selected:
+            continue
+        if candidate.get("production_effect") not in {None, "", "none"}:
+            continue
+        if str(candidate.get("recommendation_status") or "") != "READY_FOR_FORWARD_SHADOW":
+            continue
+        label_horizon = _positive_int_or_none(candidate.get("label_horizon_days"))
+        record = build_prediction_record_from_decision_snapshot(
+            snapshot=snapshot,
+            trace_bundle=trace_bundle,
+            trace_bundle_path=trace_bundle_path,
+            features_path=features_path,
+            data_quality_report_path=data_quality_report_path,
+            candidate_id=candidate_id,
+            production_effect="none",
+            label_horizon_days=label_horizon,
+        )
+        record["execution_assumption"] = (
+            "parameter_flow_validation_shadow_no_order_no_position_change"
+        )
+        records.append(record)
+    return tuple(records)
+
+
 def build_shadow_prediction_run_report(
     *,
     as_of: date,
@@ -278,6 +321,7 @@ def build_shadow_prediction_run_report(
     records: tuple[dict[str, Any], ...],
     candidate_count: int,
     warnings: tuple[str, ...] = (),
+    source_label: str = "Rule experiment ledger",
 ) -> ShadowPredictionRunReport:
     return ShadowPredictionRunReport(
         as_of=as_of,
@@ -289,6 +333,7 @@ def build_shadow_prediction_run_report(
         appended_count=len(records),
         records=records,
         warnings=warnings,
+        source_label=source_label,
     )
 
 
@@ -311,7 +356,7 @@ def render_shadow_prediction_run_report(report: ShadowPredictionRunReport) -> st
         f"- 写入 prediction 行数：{report.appended_count}",
         f"- Decision snapshot：`{report.decision_snapshot_path}`",
         f"- Trace bundle：`{report.trace_bundle_path}`",
-        f"- Rule experiment ledger：`{report.rule_experiment_path}`",
+        f"- {report.source_label}：`{report.rule_experiment_path}`",
         f"- Prediction ledger：`{report.prediction_ledger_path}`",
         f"- production_effect={report.production_effect}",
         "- 治理边界：shadow runner 只追加 candidate-only prediction；不写正式日报动作，"

@@ -1,0 +1,33 @@
+{
+  "audit": {
+    "overlay_order": [],
+    "weight_changes": [
+      "No overlay weight changes applied"
+    ],
+    "why_applied": [],
+    "why_not_applied": [
+      "No approved overlays matched"
+    ]
+  },
+  "base_weights": {
+    "fundamentals": 0.25,
+    "macro_liquidity": 0.15,
+    "policy_geopolitics": 0.1,
+    "risk_sentiment": 0.15,
+    "trend": 0.25,
+    "valuation": 0.1
+  },
+  "confidence_delta": 0.0,
+  "effective_weights": {
+    "fundamentals": 0.25,
+    "macro_liquidity": 0.15,
+    "policy_geopolitics": 0.1,
+    "risk_sentiment": 0.15,
+    "trend": 0.25,
+    "valuation": 0.1
+  },
+  "matched_overlays": [],
+  "position_multiplier": 1.0,
+  "required_confirmations": [],
+  "weight_profile_version": "2026-05-06"
+}

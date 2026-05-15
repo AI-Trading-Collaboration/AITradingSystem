@@ -418,6 +418,7 @@ from ai_trading_system.parameter_candidates import (
     DEFAULT_PARAMETER_CANDIDATE_LEDGER_PATH,
     build_parameter_candidate_ledger,
     default_parameter_candidate_report_path,
+    load_parameter_candidate_ledger,
     write_parameter_candidate_ledger,
     write_parameter_candidate_report,
 )
@@ -470,6 +471,7 @@ from ai_trading_system.prediction_ledger import (
     DEFAULT_PREDICTION_LEDGER_PATH,
     DEFAULT_PREDICTION_OUTCOMES_PATH,
     append_prediction_records,
+    build_parameter_shadow_prediction_records,
     build_prediction_outcomes,
     build_prediction_record_from_decision_snapshot,
     build_shadow_maturity_report,
@@ -604,6 +606,15 @@ from ai_trading_system.secret_hygiene import (
     scan_secrets,
     write_secret_scan_report,
 )
+from ai_trading_system.shadow_weight_profiles import (
+    DEFAULT_SHADOW_WEIGHT_PROFILE_MANIFEST_PATH,
+    DEFAULT_SHADOW_WEIGHT_PROFILE_OBSERVATION_LEDGER_PATH,
+    build_shadow_weight_prediction_records,
+    build_shadow_weight_profile_run_report,
+    default_shadow_weight_profile_report_path,
+    write_shadow_weight_observation_ledger,
+    write_shadow_weight_profile_report,
+)
 from ai_trading_system.thesis import (
     ThesisReviewReport,
     build_thesis_review_report,
@@ -668,12 +679,14 @@ from ai_trading_system.watchlist_lifecycle import (
 )
 from ai_trading_system.weight_calibration import (
     DEFAULT_APPROVED_CALIBRATION_OVERLAY_PATH,
+    DEFAULT_CURRENT_CONTEXT_PATH,
     DEFAULT_EFFECTIVE_WEIGHTS_PATH,
     DEFAULT_WEIGHT_PROFILE_PATH,
     apply_calibration_overlays,
     load_calibration_overlays,
     load_weight_profile,
     resolve_calibration_application,
+    write_calibration_context,
     write_effective_weights,
 )
 
@@ -1424,7 +1437,7 @@ def apply_calibration_overlay_command(
     context_path: Annotated[
         Path,
         typer.Option(help="当前 decision context JSON 路径。"),
-    ] = PROJECT_ROOT / "outputs" / "current_context.json",
+    ] = DEFAULT_CURRENT_CONTEXT_PATH,
     weight_profile_path: Annotated[
         Path,
         typer.Option(help="当前基础权重 profile YAML 路径。"),
@@ -1445,11 +1458,20 @@ def apply_calibration_overlay_command(
     """根据 context、weight profile 和 approved overlays 计算 effective weights。"""
     calibration_date = _parse_date(as_of) if as_of else date.today()
     try:
-        context = json.loads(context_path.read_text(encoding="utf-8"))
-        if not isinstance(context, dict):
-            raise ValueError("context JSON must contain an object")
         profile = load_weight_profile(weight_profile_path)
         overlays = load_calibration_overlays(overlays_path)
+        if context_path.exists():
+            context = json.loads(context_path.read_text(encoding="utf-8"))
+            if not isinstance(context, dict):
+                raise ValueError("context JSON must contain an object")
+        elif overlays:
+            raise ValueError(f"context JSON not found: {context_path}")
+        else:
+            context = {
+                "as_of": calibration_date.isoformat(),
+                "context_path": str(context_path),
+                "context_status": "missing_no_approved_overlay",
+            }
         application = apply_calibration_overlays(
             context=context,
             profile=profile,
@@ -1903,6 +1925,240 @@ def run_shadow_predictions_command(
     console.print(f"写入 prediction：{report.appended_count}")
     console.print(f"Prediction ledger：{ledger_output}")
     console.print(f"Shadow runner 报告：{output_report}")
+
+
+@feedback_app.command("run-parameter-shadow")
+def run_parameter_shadow_predictions_command(
+    parameter_candidate_ledger_path: Annotated[
+        Path,
+        typer.Option(help="parameter candidates ledger JSON 路径。"),
+    ] = DEFAULT_PARAMETER_CANDIDATE_LEDGER_PATH,
+    decision_snapshot_path: Annotated[
+        Path | None,
+        typer.Option(help="production decision_snapshot JSON 路径；不传时按 as-of 推导。"),
+    ] = None,
+    trace_bundle_path: Annotated[
+        Path | None,
+        typer.Option(help="production trace bundle JSON 路径；不传时从 snapshot.trace 推导。"),
+    ] = None,
+    features_path: Annotated[
+        Path | None,
+        typer.Option(help="特征快照 CSV 路径；不传时从 trace dataset_refs 推导。"),
+    ] = None,
+    data_quality_report_path: Annotated[
+        Path | None,
+        typer.Option(help="数据质量报告路径；不传时从 trace quality_refs 推导。"),
+    ] = None,
+    prediction_ledger_path: Annotated[
+        Path,
+        typer.Option(help="append-only prediction ledger CSV 输出路径。"),
+    ] = DEFAULT_PREDICTION_LEDGER_PATH,
+    candidate_ids: Annotated[
+        str | None,
+        typer.Option(help="可选：逗号分隔的 candidate_id 白名单。"),
+    ] = None,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="shadow 运行日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown parameter shadow runner 报告输出路径。"),
+    ] = None,
+) -> None:
+    """把参数候选追加到 prediction ledger，production_effect=none。"""
+    run_date = _parse_date(as_of) if as_of else date.today()
+    snapshot_path = decision_snapshot_path or default_decision_snapshot_path(
+        DEFAULT_DECISION_SNAPSHOT_DIR,
+        run_date,
+    )
+    if not snapshot_path.exists():
+        raise typer.BadParameter(f"decision_snapshot 不存在：{snapshot_path}")
+    snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    trace_path = trace_bundle_path or _path_from_snapshot_trace(snapshot)
+    if trace_path is None or not trace_path.exists():
+        raise typer.BadParameter(f"trace bundle 不存在：{trace_path}")
+    trace_bundle = json.loads(trace_path.read_text(encoding="utf-8"))
+    feature_snapshot_path = features_path or _trace_dataset_path(
+        trace_bundle,
+        "processed_feature_cache",
+    )
+    if feature_snapshot_path is None:
+        raise typer.BadParameter("无法从 trace bundle 推导 feature snapshot 路径。")
+    quality_path = data_quality_report_path or _trace_quality_report_path(trace_bundle)
+    if quality_path is None:
+        raise typer.BadParameter("无法从 trace bundle 推导 data quality report 路径。")
+    try:
+        parameter_candidate_ledger = load_parameter_candidate_ledger(
+            parameter_candidate_ledger_path
+        )
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(
+            f"parameter candidate ledger 不存在：{parameter_candidate_ledger_path}"
+        ) from exc
+    selected = tuple(_parse_csv_items(candidate_ids)) if candidate_ids else ()
+    records = build_parameter_shadow_prediction_records(
+        snapshot=snapshot,
+        trace_bundle=trace_bundle,
+        trace_bundle_path=trace_path,
+        features_path=feature_snapshot_path,
+        data_quality_report_path=quality_path,
+        parameter_candidate_ledger=parameter_candidate_ledger,
+        selected_candidate_ids=selected,
+    )
+    ledger_output = append_prediction_records(records, prediction_ledger_path)
+    warnings: list[str] = []
+    if not records:
+        warnings.append(
+            "没有可运行的 parameter challenger；请检查 recommendation_status 和门禁模式。"
+        )
+    if parameter_candidate_ledger.get("evaluation_mode") == "flow_validation":
+        warnings.append(
+            "本次 parameter shadow 来自 flow_validation candidate ledger；"
+            "仅用于接线验证，不得作为生产证据。"
+        )
+    report = build_shadow_prediction_run_report(
+        as_of=run_date,
+        decision_snapshot_path=snapshot_path,
+        trace_bundle_path=trace_path,
+        rule_experiment_path=parameter_candidate_ledger_path,
+        prediction_ledger_path=ledger_output,
+        records=records,
+        candidate_count=len(parameter_candidate_ledger.get("candidates", [])),
+        warnings=tuple(warnings),
+        source_label="Parameter candidate ledger",
+    )
+    output_report = report_path or (
+        PROJECT_ROOT
+        / "outputs"
+        / "reports"
+        / f"parameter_shadow_predictions_{run_date.isoformat()}.md"
+    )
+    output_report = write_shadow_prediction_run_report(report, output_report)
+    style = "green" if report.status == "PASS" else "yellow"
+    console.print(f"[{style}]Parameter shadow runner 状态：{report.status}[/{style}]")
+    console.print(f"写入 prediction：{report.appended_count}")
+    console.print(f"Prediction ledger：{ledger_output}")
+    console.print(f"Parameter shadow runner 报告：{output_report}")
+
+
+@feedback_app.command("run-shadow-weight-profiles")
+def run_shadow_weight_profiles_command(
+    manifest_path: Annotated[
+        Path,
+        typer.Option(help="shadow weight profile manifest YAML 路径。"),
+    ] = DEFAULT_SHADOW_WEIGHT_PROFILE_MANIFEST_PATH,
+    decision_snapshot_path: Annotated[
+        Path | None,
+        typer.Option(help="production decision_snapshot JSON 路径；不传时按 as-of 推导。"),
+    ] = None,
+    trace_bundle_path: Annotated[
+        Path | None,
+        typer.Option(help="可选：写 prediction ledger 时使用的 trace bundle JSON 路径。"),
+    ] = None,
+    features_path: Annotated[
+        Path | None,
+        typer.Option(help="可选：写 prediction ledger 时使用的 feature snapshot CSV 路径。"),
+    ] = None,
+    data_quality_report_path: Annotated[
+        Path | None,
+        typer.Option(help="可选：写 prediction ledger 时使用的数据质量报告路径。"),
+    ] = None,
+    observation_ledger_path: Annotated[
+        Path,
+        typer.Option(help="独立 shadow weight observation ledger CSV 输出路径。"),
+    ] = DEFAULT_SHADOW_WEIGHT_PROFILE_OBSERVATION_LEDGER_PATH,
+    prediction_ledger_path: Annotated[
+        Path | None,
+        typer.Option(
+            help=(
+                "可选：隔离 prediction ledger CSV 路径；提供后才追加 "
+                "production_effect=none 的 shadow prediction。"
+            )
+        ),
+    ] = None,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="观察日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown shadow weight profile 报告输出路径。"),
+    ] = None,
+) -> None:
+    """运行隔离 shadow weight profile 与主线评分对比，production_effect=none。"""
+    run_date = _parse_date(as_of) if as_of else date.today()
+    snapshot_path = decision_snapshot_path or default_decision_snapshot_path(
+        DEFAULT_DECISION_SNAPSHOT_DIR,
+        run_date,
+    )
+    if not snapshot_path.exists():
+        raise typer.BadParameter(f"decision_snapshot 不存在：{snapshot_path}")
+    try:
+        report = build_shadow_weight_profile_run_report(
+            as_of=run_date,
+            decision_snapshot_path=snapshot_path,
+            manifest_path=manifest_path,
+            observation_ledger_path=observation_ledger_path,
+            prediction_ledger_path=prediction_ledger_path,
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        console.print(f"[red]Shadow weight profile 运行失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+    observation_output = write_shadow_weight_observation_ledger(
+        report,
+        observation_ledger_path,
+    )
+    appended_predictions = 0
+    prediction_output: Path | None = None
+    if prediction_ledger_path is not None:
+        snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+        trace_path = trace_bundle_path or _path_from_snapshot_trace(snapshot)
+        if trace_path is None or not trace_path.exists():
+            raise typer.BadParameter(f"trace bundle 不存在：{trace_path}")
+        trace_bundle = json.loads(trace_path.read_text(encoding="utf-8"))
+        feature_snapshot_path = features_path or _trace_dataset_path(
+            trace_bundle,
+            "processed_feature_cache",
+        )
+        if feature_snapshot_path is None:
+            raise typer.BadParameter("无法从 trace bundle 推导 feature snapshot 路径。")
+        quality_path = data_quality_report_path or _trace_quality_report_path(trace_bundle)
+        if quality_path is None:
+            raise typer.BadParameter("无法从 trace bundle 推导 data quality report 路径。")
+        records = build_shadow_weight_prediction_records(
+            report,
+            snapshot=snapshot,
+            trace_bundle=trace_bundle,
+            trace_bundle_path=trace_path,
+            features_path=feature_snapshot_path,
+            data_quality_report_path=quality_path,
+        )
+        existing_prediction_ids = {
+            str(row.get("prediction_id") or "")
+            for row in load_prediction_ledger(prediction_ledger_path)
+        }
+        new_records = tuple(
+            record
+            for record in records
+            if str(record.get("prediction_id") or "") not in existing_prediction_ids
+        )
+        prediction_output = append_prediction_records(new_records, prediction_ledger_path)
+        appended_predictions = len(new_records)
+    output_report = report_path or default_shadow_weight_profile_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        run_date,
+    )
+    output_report = write_shadow_weight_profile_report(report, output_report)
+    style = "green" if report.status == "PASS" else "yellow"
+    console.print(f"[{style}]Shadow weight profile 状态：{report.status}[/{style}]")
+    console.print(f"Profile 数：{len(report.observations)}")
+    console.print(f"Observation ledger：{observation_output}")
+    if prediction_output is not None:
+        console.print(f"Shadow prediction ledger：{prediction_output}")
+        console.print(f"写入 shadow prediction：{appended_predictions}")
+    console.print(f"报告：{output_report}")
+    console.print("治理边界：本命令不修改生产权重、approved overlay、日报结论或仓位 gate。")
 
 
 @feedback_app.command("shadow-maturity")
@@ -2631,6 +2887,15 @@ def build_parameter_candidates_command(
         Path | None,
         typer.Option(help="Markdown 参数候选报告输出路径。"),
     ] = None,
+    candidate_gate_mode: Annotated[
+        str,
+        typer.Option(
+            help=(
+                "候选门禁模式：strict 或 flow_validation。flow_validation "
+                "仅用于接线验证，不改变 production。"
+            )
+        ),
+    ] = "strict",
 ) -> None:
     """从 parameter replay 摘要生成 candidate-only 参数候选台账。"""
     review_date = _parse_date(as_of) if as_of else date.today()
@@ -2638,6 +2903,7 @@ def build_parameter_candidates_command(
         ledger = build_parameter_candidate_ledger(
             parameter_replay_summary_path=parameter_replay_summary_path,
             as_of=review_date,
+            evaluation_mode=candidate_gate_mode,
         )
     except (OSError, ValueError, json.JSONDecodeError) as exc:
         console.print(f"[red]参数候选台账构建失败：{exc}[/red]")
@@ -2657,6 +2923,7 @@ def build_parameter_candidates_command(
     console.print(f"[{status_style}]参数候选状态：{ledger.status}[/{status_style}]")
     console.print(f"Trial 数：{ledger.trial_count}")
     console.print(f"Candidate 数：{ledger.candidate_count}")
+    console.print(f"Evaluation mode：{ledger.evaluation_mode}")
     console.print(f"Forward shadow ready：{ledger.ready_for_forward_shadow_count}")
     console.print(f"Blocked：{ledger.blocked_count}")
     console.print(f"Ledger：{ledger_output}")
@@ -10461,6 +10728,17 @@ def score_daily(
         context=weight_calibration_context,
         as_of=score_date,
     )
+    current_context_output: Path | None = None
+    current_effective_weights_output: Path | None = None
+    if report_path is None:
+        current_context_output = write_calibration_context(
+            weight_calibration_context,
+            DEFAULT_CURRENT_CONTEXT_PATH,
+        )
+        current_effective_weights_output = write_effective_weights(
+            weight_calibration_application,
+            DEFAULT_EFFECTIVE_WEIGHTS_PATH,
+        )
     score_report = build_daily_score_report(
         feature_set=feature_set,
         data_quality_report=data_quality_report,
@@ -10693,6 +10971,9 @@ def score_daily(
     console.print(f"告警报告：{daily_alert_output}")
     console.print(f"Evidence bundle：{daily_trace_output}")
     console.print(f"Decision snapshot：{daily_decision_snapshot_output}")
+    if current_context_output is not None and current_effective_weights_output is not None:
+        console.print(f"Current context：{current_context_output}")
+        console.print(f"Current effective weights：{current_effective_weights_output}")
     console.print(f"Prediction ledger：{prediction_ledger_output}")
     console.print(f"Belief state：{belief_state_output}")
     console.print(f"Belief state history：{belief_state_history_output}")

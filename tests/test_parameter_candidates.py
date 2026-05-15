@@ -72,6 +72,77 @@ def test_parameter_candidate_cli_writes_ledger_and_report(tmp_path: Path) -> Non
     assert report_path.exists()
 
 
+def test_parameter_candidate_flow_validation_preserves_veto_but_allows_shadow(
+    tmp_path: Path,
+) -> None:
+    replay_path = _write_parameter_replay_summary(tmp_path)
+    payload = json.loads(replay_path.read_text(encoding="utf-8"))
+    payload["robustness_evidence"]["coverage"].update(
+        {
+            "minimum_component_coverage": 0.50,
+            "minimum_average_component_coverage": 0.85,
+            "blocking_components": ["valuation"],
+            "blocked": True,
+        }
+    )
+    replay_path.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+
+    ledger = build_parameter_candidate_ledger(
+        parameter_replay_summary_path=replay_path,
+        as_of=date(2026, 4, 10),
+        evaluation_mode="flow_validation",
+    )
+    markdown = render_parameter_candidate_report(ledger, tmp_path / "ledger.json")
+
+    trend_candidate = next(
+        candidate
+        for candidate in ledger.candidates
+        if candidate.source_scenario_id == "weight_perturb_trend_up_20pct"
+    )
+    assert ledger.status == "PASS_WITH_LIMITATIONS"
+    assert ledger.evaluation_mode == "flow_validation"
+    assert ledger.ready_for_forward_shadow_count == ledger.candidate_count
+    assert ledger.flow_validation_override_count == ledger.candidate_count
+    assert trend_candidate.recommendation_status == "READY_FOR_FORWARD_SHADOW"
+    assert "data_component_coverage_blocked" in trend_candidate.veto_reasons
+    assert "flow_validation_override" in trend_candidate.veto_reasons
+    assert trend_candidate.production_effect == "none"
+    assert trend_candidate.label_horizon_days == 20
+    assert "flow_validation" in markdown
+
+
+def test_parameter_candidate_cli_accepts_flow_validation_mode(tmp_path: Path) -> None:
+    replay_path = _write_parameter_replay_summary(tmp_path)
+    ledger_path = tmp_path / "parameter_candidates.json"
+    report_path = tmp_path / "parameter_candidates.md"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "feedback",
+            "build-parameter-candidates",
+            "--parameter-replay-summary-path",
+            str(replay_path),
+            "--as-of",
+            "2026-04-10",
+            "--candidate-gate-mode",
+            "flow_validation",
+            "--output-path",
+            str(ledger_path),
+            "--report-path",
+            str(report_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Evaluation mode：flow_validation" in result.output
+    payload = json.loads(ledger_path.read_text(encoding="utf-8"))
+    assert payload["evaluation_mode"] == "flow_validation"
+    assert payload["production_effect"] == "none"
+    assert payload["flow_validation_override_count"] == payload["candidate_count"]
+    assert report_path.exists()
+
+
 def test_parameter_candidate_blocks_random_baseline_failure(tmp_path: Path) -> None:
     replay_path = _write_parameter_replay_summary(tmp_path)
     payload = json.loads(replay_path.read_text(encoding="utf-8"))

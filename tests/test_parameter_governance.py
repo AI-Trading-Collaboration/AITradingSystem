@@ -91,6 +91,33 @@ def test_parameter_governance_missing_config_fails_policy(tmp_path: Path) -> Non
     assert "配置路径不存在" in weights.action_reason
 
 
+def test_parameter_governance_flow_validation_keeps_no_production_boundary(
+    tmp_path: Path,
+) -> None:
+    paths = _write_governance_inputs(tmp_path)
+    payload = json.loads(paths["ledger"].read_text(encoding="utf-8"))
+    payload["evaluation_mode"] = "flow_validation"
+    payload["candidates"][0]["veto_reasons"] = [
+        "data_credibility_blocked",
+        "flow_validation_override",
+    ]
+    paths["ledger"].write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+
+    report = build_parameter_governance_report(
+        as_of=date(2026, 4, 10),
+        manifest_path=paths["manifest"],
+        candidate_ledger_path=paths["ledger"],
+    )
+    markdown = render_parameter_governance_report(report)
+
+    weights = next(item for item in report.parameters if item.parameter_id == "weights")
+    assert report.candidate_evaluation_mode == "flow_validation"
+    assert weights.action == "PREPARE_FORWARD_SHADOW"
+    assert "flow_validation_only_no_production" in weights.constraints
+    assert "flow_validation" in markdown
+    assert "不可进入 owner approval 或 production" in markdown
+
+
 def _write_governance_inputs(tmp_path: Path) -> dict[str, Path]:
     weights_config = tmp_path / "weight_profile_current.yaml"
     gate_config = tmp_path / "backtest_validation_policy.yaml"

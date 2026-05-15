@@ -171,6 +171,7 @@ class ParameterGovernanceReport:
     candidate_ledger_path: Path
     manifest: ParameterGovernanceManifest
     candidate_ledger_status: str
+    candidate_evaluation_mode: str
     candidate_count: int
     trial_count: int
     action_counts: dict[str, int]
@@ -217,6 +218,7 @@ class ParameterGovernanceReport:
                 self.manifest.owner_quantitative_input_status
             ),
             "candidate_ledger_status": self.candidate_ledger_status,
+            "candidate_evaluation_mode": self.candidate_evaluation_mode,
             "candidate_count": self.candidate_count,
             "trial_count": self.trial_count,
             "parameter_count": len(self.parameters),
@@ -279,11 +281,13 @@ def build_parameter_governance_report(
     generated = generated_at or datetime.now(tz=UTC)
     candidate_payload, candidate_warnings = _load_candidate_ledger(candidate_ledger_path)
     candidates = _candidate_items(candidate_payload)
+    candidate_evaluation_mode = str(candidate_payload.get("evaluation_mode") or "strict")
     parameters = tuple(
         _parameter_report(
             entry,
             manifest=manifest,
             candidates=candidates,
+            candidate_evaluation_mode=candidate_evaluation_mode,
         )
         for entry in manifest.parameters
     )
@@ -297,6 +301,11 @@ def build_parameter_governance_report(
         )
     if not candidates:
         warnings.append("parameter candidate ledger 没有候选记录；参数建议只能保持观察。")
+    if candidate_evaluation_mode == "flow_validation":
+        warnings.append(
+            "parameter candidate ledger 使用 flow_validation 放宽门禁；"
+            "治理建议仅用于验证 shadow 接线，不可进入 owner approval 或 production。"
+        )
     return ParameterGovernanceReport(
         as_of=as_of,
         generated_at=generated,
@@ -304,6 +313,7 @@ def build_parameter_governance_report(
         candidate_ledger_path=candidate_ledger_path,
         manifest=manifest,
         candidate_ledger_status=str(candidate_payload.get("status") or "NOT_CONNECTED"),
+        candidate_evaluation_mode=candidate_evaluation_mode,
         candidate_count=int(candidate_payload.get("candidate_count") or len(candidates)),
         trial_count=int(candidate_payload.get("trial_count") or 0),
         action_counts=dict(sorted(action_counts.items())),
@@ -326,6 +336,7 @@ def render_parameter_governance_report(report: ParameterGovernanceReport) -> str
         f"- Owner quantitative input：{report.manifest.owner_quantitative_input_status}",
         f"- Candidate ledger：`{report.candidate_ledger_path}`",
         f"- Candidate ledger status：{report.candidate_ledger_status}",
+        f"- Candidate evaluation mode：{report.candidate_evaluation_mode}",
         f"- Trial / candidate：{report.trial_count} / {report.candidate_count}",
         f"- Action 分布：{_format_counts(report.action_counts)}",
         "",
@@ -459,6 +470,7 @@ def _parameter_report(
     *,
     manifest: ParameterGovernanceManifest,
     candidates: tuple[dict[str, Any], ...],
+    candidate_evaluation_mode: str,
 ) -> ParameterGovernanceParameterReport:
     matching = tuple(
         candidate
@@ -475,6 +487,7 @@ def _parameter_report(
         candidate_status_counts=candidate_status_counts,
         veto_reason_counts=veto_reason_counts,
         config_exists=config_exists,
+        candidate_evaluation_mode=candidate_evaluation_mode,
     )
     return ParameterGovernanceParameterReport(
         parameter_id=entry.parameter_id,
@@ -504,6 +517,7 @@ def _action_for_entry(
     candidate_status_counts: dict[str, int],
     veto_reason_counts: dict[str, int],
     config_exists: bool,
+    candidate_evaluation_mode: str,
 ) -> tuple[str, str, tuple[str, ...]]:
     constraints: list[str] = []
     allowed = {_action_token(item) for item in entry.allowed_actions}
@@ -538,6 +552,27 @@ def _action_for_entry(
         return _guarded_action(
             "COLLECT_MORE_EVIDENCE",
             "当前 candidate ledger 没有覆盖该参数面。",
+            allowed=allowed,
+            constraints=constraints,
+        )
+    if (
+        candidate_evaluation_mode == "flow_validation"
+        and candidate_status_counts.get("READY_FOR_FORWARD_SHADOW", 0)
+    ):
+        constraints.append("flow_validation_only_no_production")
+        if owner_unavailable and not entry.allows_shadow_without_owner_quantitative_input:
+            return _guarded_action(
+                "OWNER_DECISION_REQUIRED",
+                "flow validation 候选可验证 shadow 接线，但该参数面要求 owner 先给出量化输入。",
+                allowed=allowed,
+                constraints=constraints,
+            )
+        return _guarded_action(
+            "PREPARE_FORWARD_SHADOW",
+            (
+                "flow validation 模式存在候选进入 validation-only shadow；"
+                "仅用于接线验证，不改 production。"
+            ),
             allowed=allowed,
             constraints=constraints,
         )

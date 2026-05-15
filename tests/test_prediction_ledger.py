@@ -250,6 +250,91 @@ def test_feedback_run_shadow_cli_appends_challenger_predictions(tmp_path: Path) 
     assert "Shadow runner 状态：PASS" in result.output
 
 
+def test_feedback_run_parameter_shadow_cli_appends_validation_predictions(
+    tmp_path: Path,
+) -> None:
+    snapshot_path = tmp_path / "decision_snapshot_2026-04-30.json"
+    trace_path = tmp_path / "trace.json"
+    features_path = tmp_path / "features.csv"
+    quality_path = tmp_path / "quality.md"
+    candidate_ledger_path = tmp_path / "parameter_candidates.json"
+    ledger_path = tmp_path / "prediction_ledger.csv"
+    report_path = tmp_path / "parameter_shadow_predictions.md"
+    snapshot = _decision_snapshot()
+    snapshot["trace"] = {"trace_bundle_path": str(trace_path)}
+    snapshot_path.write_text(json.dumps(snapshot, ensure_ascii=False), encoding="utf-8")
+    trace_path.write_text(
+        json.dumps(
+            {
+                "run_manifest": {"run_id": "run:test:2026-04-30"},
+                "dataset_refs": [
+                    {
+                        "dataset_type": "processed_feature_cache",
+                        "path": str(features_path),
+                    }
+                ],
+                "quality_refs": [{"report_path": str(quality_path)}],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    candidate_ledger_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "parameter_candidate_ledger",
+                "evaluation_mode": "flow_validation",
+                "production_effect": "none",
+                "candidates": [
+                    {
+                        "candidate_id": "parameter_candidate:test_weight",
+                        "recommendation_status": "READY_FOR_FORWARD_SHADOW",
+                        "production_effect": "none",
+                        "label_horizon_days": 20,
+                        "veto_reasons": [
+                            "data_credibility_blocked",
+                            "flow_validation_override",
+                        ],
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "feedback",
+            "run-parameter-shadow",
+            "--parameter-candidate-ledger-path",
+            str(candidate_ledger_path),
+            "--decision-snapshot-path",
+            str(snapshot_path),
+            "--prediction-ledger-path",
+            str(ledger_path),
+            "--as-of",
+            "2026-04-30",
+            "--report-path",
+            str(report_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    rows = load_prediction_ledger(ledger_path)
+    assert rows[0]["candidate_id"] == "parameter_candidate:test_weight"
+    assert rows[0]["production_effect"] == "none"
+    assert rows[0]["label_horizon_days"] == "20"
+    assert (
+        rows[0]["execution_assumption"]
+        == "parameter_flow_validation_shadow_no_order_no_position_change"
+    )
+    assert report_path.exists()
+    assert "Parameter shadow runner 状态：PASS_WITH_LIMITATIONS" in result.output
+
+
 def _decision_snapshot() -> dict[str, object]:
     return {
         "signal_date": "2026-04-27",

@@ -55,6 +55,7 @@ daily-run / score-daily
 aits feedback build-parameter-replay --as-of YYYY-MM-DD
 aits feedback build-parameter-candidates --as-of YYYY-MM-DD
 aits feedback evaluate-parameter-governance --as-of YYYY-MM-DD
+aits feedback run-parameter-shadow --as-of YYYY-MM-DD
 aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 ```
 
@@ -69,12 +70,16 @@ aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 - `outputs/reports/shadow_maturity_YYYY-MM-DD.md`
 - `data/processed/approved_calibration_overlay.json`
 - `outputs/current_effective_weights.json`
+- `config/weights/shadow_weight_profiles.yaml`
+- `data/processed/shadow_weight_profile_observations.csv`
 - `config/parameter_governance.yaml`
 - `outputs/reports/parameter_governance_YYYY-MM-DD.json`
 
 主要输出：
 
 - `outputs/reports/parameter_governance_YYYY-MM-DD.md/json`
+- `outputs/reports/parameter_shadow_predictions_YYYY-MM-DD.md`
+- `outputs/reports/shadow_weight_profiles_YYYY-MM-DD.md`
 - `outputs/reports/market_feedback_optimization_YYYY-MM-DD.md`
 
 ## 执行频次
@@ -130,8 +135,9 @@ aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 |6. Effective weights 单一入口|VALIDATING|`score-daily` 和 `backtest` 通过同一 resolver 使用 `weight_profile_current.yaml` 与 approved overlay 产出 effective weights；报告、CSV、trace 和回测 daily row 写入 profile/overlay/权重审计；approved overlay 未知 signal fail closed。|
 |7. 多目标 candidate gate|VALIDATING|parameter replay/candidate ledger 消费 OOS、same-turnover random、signal-family baseline、coverage/data credibility 证据；baseline-only、OOS 弱化、随机基线未过、coverage 不足和风险恶化不得仅凭 total return 进入 owner review。|
 |7B. 参数治理 manifest 与 owner 暂缺输入边界|VALIDATING|新增 `config/parameter_governance.yaml` 和 `aits feedback evaluate-parameter-governance`，把参数面、source level、owner quantitative input 状态、证据要求和 action 建议显式化；报告接入 `optimize-market-feedback` 和交易日 `daily-run` dashboard 前置流程；仍不写 production 参数。|
-|8. Forward shadow 与 promotion 连接|PROPOSED|候选通过 replay 后进入 `prediction_ledger` shadow；成熟度报告达到门槛才允许 owner review。|
+|8. Forward shadow 与 promotion 连接|VALIDATING|严格候选通过 replay 后进入 `prediction_ledger` shadow；`flow_validation` 可先写 validation-only parameter shadow 行来验证后续接线；成熟度报告达到门槛才允许 owner review。|
 |9. Overlay / rule card 晋级|PROPOSED|通过 owner approval 后生成 approved overlay 或 rule card，具备有效期、回滚条件和审计引用。|
+|9B. Shadow weight profile 长期观察|IN_PROGRESS|维护若干套隔离测试权重参数，初始值参考生产 `weight_profile_current.yaml`，每日从 production decision snapshot 计算 shadow score / model band / gated band，并可选写入隔离 prediction ledger 进入 outcome 观察；不得替换生产权重。|
 |10. Coverage / placeholder / source veto|VALIDATING|robustness summary 汇总模块覆盖率、placeholder 占比、数据来源可信度和关键模块缺失；parameter replay/candidate ledger 把这些字段作为 `BLOCKED_BY_DATA` 或降级原因，而不只作为报告说明。|
 |11. Overlay target weights 与冲突治理|VALIDATING|approved overlay 支持 `target_weights` 模式、priority、mutual exclusion group 和冲突审计；approved overlay 的未知 signal、非法权重或同组优先级冲突必须 fail closed。|
 |12. Benchmark 扩展与反过拟合证据|VALIDATING|robustness 增加 same-exposure random、vol-targeted/fixed exposure、no-gate、alpha-only/risk-state-only 等 benchmark，并把关键 benchmark 结果接入 candidate 证据摘要。|
@@ -173,3 +179,9 @@ aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 - 2026-05-14：owner 要求继续推进其余方向并尽可能完整实现。本轮新增 `CALIBRATION-004`，状态切回 IN_PROGRESS；实现范围扩展为 coverage/placeholder veto、overlay `target_weights`/priority/conflict、benchmark 扩展、统计证据、有效独立样本和 alpha/risk/gate 分层迁移。生产效果继续保持 `none`，大功能完成后必须复测完整链路。
 - 2026-05-14：阶段 10-15 baseline 完成并进入 VALIDATING。robustness summary/report 新增 coverage/source veto、same-exposure random、vol-targeted exposure、no-gate、alpha-only/risk-state-only/gate-modules 架构基线和 paired block bootstrap CI；parameter replay 新增 Deflated Sharpe / PBO proxy 诊断但明确不是正式 CSCV 统计；approved overlay 支持 `target_weights`、priority、mutual exclusion group 和 fail-closed 冲突治理；parameter replay/candidates 消费 coverage、有效独立窗口、score-architecture baseline 和 bootstrap CI。当前真实链路已重跑：`aits backtest --robustness-report --to 2026-05-12 --quality-as-of 2026-05-13` 410 秒完成；`build-parameter-replay` 为 PASS（66 场景、material delta=2）；`build-parameter-candidates` 为 PASS_WITH_LIMITATIONS（66 trial / 16 candidate / forward shadow ready=0 / blocked=16）；`optimize-market-feedback` 为 PASS_WITH_LIMITATIONS / `PILOT_DIAGNOSTIC_REVIEW`。阻断原因集中在 data credibility / component coverage、random baseline 和 architecture baseline，符合 candidate-only 边界。
 - 2026-05-15：owner 暂时无法提供可量化参数输入；新增参数治理 manifest 与只读报告阶段，`evaluate-parameter-governance` 会把 candidate ledger 映射为 `KEEP_CURRENT`、`COLLECT_MORE_EVIDENCE`、`PREPARE_FORWARD_SHADOW`、`OWNER_DECISION_REQUIRED`、`BLOCKED_BY_DATA` 或 `BLOCKED_BY_POLICY`，并由 `optimize-market-feedback` 汇总 action 分布。交易日 `daily-run` 在 market feedback/dashboard 前生成该报告；生产参数、approved overlay 和 rule card 仍不自动改写。
+- 2026-05-15：owner 要求为验证流程系统逻辑继续跑完全流程，数据阻塞时允许用既有数据和 pilot 限制放宽推进。当前发现 `score-daily` 已在 decision snapshot 写入 `weight_calibration`，但没有同步写默认 `outputs/current_context.json` 与 `outputs/current_effective_weights.json`，导致独立 `apply-calibration-overlay` 默认路径和 dashboard effective weights 状态断开；本轮新增 `CALIBRATION-006` 修复该接线缺口，生产影响仍为只读审计输出，不改变 scoring、position gate 或 approved overlay。
+- 2026-05-15：CALIBRATION-006 进入 VALIDATING。代码已让默认 `score-daily` 写出 `outputs/current_context.json` 和 `outputs/current_effective_weights.json`；独立 `apply-calibration-overlay` 在没有 approved overlay 时允许缺 current context 并输出 base/effective weights 相等的审计结果，若存在 approved overlay 但缺 context 仍 fail closed。全量 pytest 530 passed，ruff 和 diff check 通过。真实验证使用既有 2026-05-14 数据完成：outcome/因果链/学习队列/shadow maturity 已刷新，`backtest --robustness-report --to 2026-05-14 --quality-as-of 2026-05-14` 写出最新 summary，随后 `build-parameter-replay` PASS（66 场景、material delta=2）、`build-parameter-candidates` PASS_WITH_LIMITATIONS（16 candidate，0 ready，16 blocked）、`evaluate-parameter-governance` PASS_WITH_LIMITATIONS、`optimize-market-feedback` PASS_WITH_LIMITATIONS、dashboard/ops health/secret scan PASS。Approved overlay 仍为 NOT_CONNECTED，因为当前没有 owner-approved overlay；这是治理边界，不是流程接线阻塞。
+- 2026-05-15：owner 进一步要求尽快调整限制先跑全流程，确认是否还有后续接线问题。本轮新增 `CALIBRATION-007`，实现显式 `flow_validation` candidate gate 模式：严格 veto 仍写入审计字段，但允许 validation-only 参数候选进入 forward shadow 接线；该模式只能写 `production_effect=none` 的验证 prediction，不批准 overlay、不改变 production scoring、position gate 或正式权重。
+- 2026-05-15：CALIBRATION-007 进入 VALIDATING。代码新增 `build-parameter-candidates --candidate-gate-mode flow_validation` 和 `feedback run-parameter-shadow`；目标测试 18 passed、全量 pytest 534 passed、ruff、diff check 和 secret scan 通过。真实验证使用 2026-05-14 既有数据完成：flow validation candidate ledger 为 PASS_WITH_LIMITATIONS（66 trial / 16 candidate / 16 ready / 16 override / blocked=0），parameter governance 为 PASS_WITH_LIMITATIONS（PREPARE_FORWARD_SHADOW=2、COLLECT_MORE_EVIDENCE=3），单独 `prediction_ledger_flow_validation.csv` 写入 16 条 validation-only parameter shadow prediction；`calibrate-predictions` 输出 160 行 outcome（available=13、pending=127、missing=20），`shadow-maturity` 为 PASS_WITH_LIMITATIONS，`optimize-market-feedback` 为 PASS_WITH_LIMITATIONS / `PILOT_DIAGNOSTIC_REVIEW`。生产 `prediction_ledger.csv`、scoring、position gate 和 approved overlay 未被修改。
+- 2026-05-15：owner 要求后续调参流程也尝试跑通，并先维护若干套隔离测试权重参数。新增 `CALIBRATION-008` 与阶段 9B；目标是把 shadow weight profiles 作为长期观察对象，每套 profile 可独立计算 shadow score、与主线评分对比并进入独立 outcome 观察，但暂不定义替换生产参数的条件。
+- 2026-05-15：CALIBRATION-008 进入 VALIDATING。新增 `config/weights/shadow_weight_profiles.yaml`，包含 alpha tilt、risk/macro tilt 和 guardrail tilt 三套隔离测试权重；新增 `aits feedback run-shadow-weight-profiles`，从 production decision snapshot 计算 shadow score、模型仓位和 gate 后观察仓位，默认写独立 observation ledger，可选写隔离 prediction ledger。真实 2026-05-14 验证：主线评分 67.79，`shadow_alpha_tilt_v1` 71.46（+3.67），`shadow_risk_macro_tilt_v1` 63.52（-4.27），`shadow_guardrail_tilt_v1` 66.18（-1.61）；三者 gate 后观察仓位均受 valuation gate 限制为 40%-40%。隔离 prediction ledger 写入 3 行，prediction outcome 15 行（available=0、pending=15、missing=0），shadow maturity 为 PASS_WITH_LIMITATIONS。目标测试 23 passed、全量 pytest 537 passed、ruff、diff check 和 secret scan 通过；生产权重、approved overlay、正式 prediction ledger、日报结论和仓位 gate 未改变。
