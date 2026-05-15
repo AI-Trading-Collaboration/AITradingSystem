@@ -5,7 +5,7 @@ import os
 from dataclasses import replace
 from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal, cast
 
 import pandas as pd
 import typer
@@ -607,12 +607,18 @@ from ai_trading_system.secret_hygiene import (
     write_secret_scan_report,
 )
 from ai_trading_system.shadow_weight_profiles import (
+    DEFAULT_SHADOW_POSITION_GATE_PROFILE_MANIFEST_PATH,
     DEFAULT_SHADOW_WEIGHT_PROFILE_MANIFEST_PATH,
     DEFAULT_SHADOW_WEIGHT_PROFILE_OBSERVATION_LEDGER_PATH,
+    build_shadow_weight_performance_report,
     build_shadow_weight_prediction_records,
     build_shadow_weight_profile_run_report,
+    default_shadow_weight_performance_csv_path,
+    default_shadow_weight_performance_report_path,
     default_shadow_weight_profile_report_path,
     write_shadow_weight_observation_ledger,
+    write_shadow_weight_performance_csv,
+    write_shadow_weight_performance_report,
     write_shadow_weight_profile_report,
 )
 from ai_trading_system.thesis import (
@@ -2048,6 +2054,15 @@ def run_shadow_weight_profiles_command(
         Path,
         typer.Option(help="shadow weight profile manifest YAML 路径。"),
     ] = DEFAULT_SHADOW_WEIGHT_PROFILE_MANIFEST_PATH,
+    gate_manifest_path: Annotated[
+        Path | None,
+        typer.Option(
+            help=(
+                "可选：shadow position gate profile manifest YAML 路径；"
+                "提供后与 weight profile 组合观察 gate cap 参数。"
+            )
+        ),
+    ] = DEFAULT_SHADOW_POSITION_GATE_PROFILE_MANIFEST_PATH,
     decision_snapshot_path: Annotated[
         Path | None,
         typer.Option(help="production decision_snapshot JSON 路径；不传时按 as-of 推导。"),
@@ -2099,6 +2114,7 @@ def run_shadow_weight_profiles_command(
             as_of=run_date,
             decision_snapshot_path=snapshot_path,
             manifest_path=manifest_path,
+            gate_manifest_path=gate_manifest_path,
             observation_ledger_path=observation_ledger_path,
             prediction_ledger_path=prediction_ledger_path,
         )
@@ -2161,6 +2177,95 @@ def run_shadow_weight_profiles_command(
     console.print("治理边界：本命令不修改生产权重、approved overlay、日报结论或仓位 gate。")
 
 
+@feedback_app.command("evaluate-shadow-weight-performance")
+def evaluate_shadow_weight_performance_command(
+    observation_ledger_path: Annotated[
+        Path,
+        typer.Option(help="shadow weight observation ledger CSV 路径。"),
+    ] = DEFAULT_SHADOW_WEIGHT_PROFILE_OBSERVATION_LEDGER_PATH,
+    prices_path: Annotated[
+        Path,
+        typer.Option(help="标准化日线价格 CSV 路径。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="评估截止日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    since: Annotated[
+        str | None,
+        typer.Option(help="评估起始日期，格式为 YYYY-MM-DD；默认读取全部 observation。"),
+    ] = None,
+    strategy_ticker: Annotated[
+        str,
+        typer.Option(help="AI proxy 或策略代理标的。"),
+    ] = "SMH",
+    horizon_days: Annotated[
+        int,
+        typer.Option(help="非重叠表现评估观察窗口，单位为交易日。"),
+    ] = 1,
+    cost_bps: Annotated[
+        float,
+        typer.Option(help="单边交易成本 bps，用于 position-weighted 验证。"),
+    ] = 5.0,
+    slippage_bps: Annotated[
+        float,
+        typer.Option(help="线性滑点 bps，用于 position-weighted 验证。"),
+    ] = 0.0,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown shadow weight performance 报告输出路径。"),
+    ] = None,
+    csv_output_path: Annotated[
+        Path | None,
+        typer.Option(help="机器可读 shadow weight performance CSV 输出路径。"),
+    ] = None,
+) -> None:
+    """比较 shadow 权重与主线 gate 后仓位的 position-weighted 表现。"""
+    evaluation_date = _parse_date(as_of) if as_of else date.today()
+    since_date = _parse_date(since) if since else None
+    try:
+        report = build_shadow_weight_performance_report(
+            as_of=evaluation_date,
+            since=since_date,
+            observation_ledger_path=observation_ledger_path,
+            prices_path=prices_path,
+            strategy_ticker=strategy_ticker,
+            horizon_days=horizon_days,
+            cost_bps=cost_bps,
+            slippage_bps=slippage_bps,
+        )
+    except (OSError, ValueError) as exc:
+        console.print(f"[red]Shadow weight performance 评估失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+    csv_path = csv_output_path or default_shadow_weight_performance_csv_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        evaluation_date,
+    )
+    csv_path = write_shadow_weight_performance_csv(report, csv_path)
+    report_path = output_path or default_shadow_weight_performance_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        evaluation_date,
+    )
+    report_path = write_shadow_weight_performance_report(
+        report,
+        report_path,
+        csv_path=csv_path,
+    )
+    style = "green" if report.status == "PASS" else "yellow"
+    console.print(f"[{style}]Shadow weight performance 状态：{report.status}[/{style}]")
+    if report.best_positive_profile is not None:
+        best = report.best_positive_profile
+        console.print(
+            "Return-leading profile："
+            f"{best.profile_id}（excess={best.excess_total_return:.2%}）"
+        )
+    elif report.best_profile is not None:
+        console.print("当前没有正向 excess 的 shadow weight profile。")
+    console.print(f"Performance CSV：{csv_path}")
+    console.print(f"Performance 报告：{report_path}")
+    console.print("治理边界：本命令不修改生产权重、approved overlay、日报结论或仓位 gate。")
+
+
 @feedback_app.command("shadow-maturity")
 def shadow_maturity_command(
     prediction_outcomes_path: Annotated[
@@ -2176,10 +2281,20 @@ def shadow_maturity_command(
         typer.Option(
             help=(
                 "进入 owner/rule card 审批前所需最低可用 outcome 样本数；"
-                "默认读取 feedback sample policy 的 prediction promotion floor。"
+                "promotion mode 默认读取 prediction promotion floor；"
+                "validation mode 默认读取 prediction pilot floor。"
             )
         ),
     ] = None,
+    review_mode: Annotated[
+        str,
+        typer.Option(
+            help=(
+                "成熟度复核模式：promotion 使用生产晋级门槛；validation 只启动"
+                "后续验证复核，不允许 production 晋级。"
+            )
+        ),
+    ] = "promotion",
     output_path: Annotated[
         Path | None,
         typer.Option(help="Markdown shadow maturity 报告输出路径。"),
@@ -2187,12 +2302,16 @@ def shadow_maturity_command(
 ) -> None:
     """按 candidate/horizon 汇总 forward shadow outcome 样本成熟度。"""
     report_date = _parse_date(as_of) if as_of else date.today()
+    if review_mode not in {"promotion", "validation"}:
+        raise typer.BadParameter("review_mode 必须是 promotion 或 validation")
+    parsed_review_mode = cast(Literal["promotion", "validation"], review_mode)
     rows = load_prediction_outcomes(prediction_outcomes_path)
     report = build_shadow_maturity_report(
         outcome_rows=rows,
         outcomes_path=prediction_outcomes_path,
         as_of=report_date,
         min_available_samples=min_available_samples,
+        review_mode=parsed_review_mode,
     )
     report_output = output_path or default_shadow_maturity_report_path(
         PROJECT_ROOT / "outputs" / "reports",
@@ -2201,6 +2320,7 @@ def shadow_maturity_command(
     report_output = write_shadow_maturity_report(report, report_output)
     style = "green" if report.status == "PASS" else "yellow"
     console.print(f"[{style}]Shadow 样本成熟度：{report.status}[/{style}]")
+    console.print(f"Review mode：{report.review_mode}")
     console.print(f"分组数：{len(report.groups)}")
     console.print(f"报告：{report_output}")
 

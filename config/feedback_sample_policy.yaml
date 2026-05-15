@@ -1,22 +1,23 @@
-version: feedback_sample_policy_v1
+version: feedback_sample_policy_v2
 status: pilot
 owner: system
 market_regime_id: ai_after_chatgpt
-effective_from: 2026-05-13
+effective_from: 2026-05-16
 review_after_reports: 8
 notes:
   - "当前处于市场反馈优化 pilot 阶段，样本较少时允许启动复盘、因果链和候选规则整理。"
   - "pilot floor 只允许生成诊断和候选复核，不允许晋级 production 权重、规则或仓位 gate。"
+  - "2026-05-16 按 owner 要求将 diagnostic floor 下调到当前已积累 outcome 样本刚好可启动后续验证；promotion floor 不下调。"
   - "如果后续周度报告显示节奏过快或噪声过高，提高 pilot floor 或延长 review_after_reports。"
 decision_outcomes:
   reporting_floor: 1
   pilot_floor: 5
-  diagnostic_floor: 30
+  diagnostic_floor: 14
   promotion_floor: 60
 prediction_outcomes:
   reporting_floor: 1
   pilot_floor: 2
-  diagnostic_floor: 30
+  diagnostic_floor: 13
   promotion_floor: 30
 governance:
   reporting_allows:

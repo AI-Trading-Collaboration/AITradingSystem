@@ -2,9 +2,9 @@
 
 状态：VALIDATING
 
-最后更新：2026-05-15
+最后更新：2026-05-16
 
-关联任务：`CALIBRATION-003`、`CALIBRATION-004`、`FEEDBACK-002`、`EXPERIMENT-001`、`SHADOW-002`、`SHADOW-003`、`GOV-003`、`LOOP-001`
+关联任务：`CALIBRATION-003`、`CALIBRATION-004`、`CALIBRATION-011`、`FEEDBACK-002`、`EXPERIMENT-001`、`SHADOW-002`、`SHADOW-003`、`GOV-003`、`LOOP-001`
 
 ## 背景
 
@@ -71,6 +71,7 @@ aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 - `data/processed/approved_calibration_overlay.json`
 - `outputs/current_effective_weights.json`
 - `config/weights/shadow_weight_profiles.yaml`
+- `config/weights/shadow_position_gate_profiles.yaml`
 - `data/processed/shadow_weight_profile_observations.csv`
 - `config/parameter_governance.yaml`
 - `outputs/reports/parameter_governance_YYYY-MM-DD.json`
@@ -80,6 +81,7 @@ aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 - `outputs/reports/parameter_governance_YYYY-MM-DD.md/json`
 - `outputs/reports/parameter_shadow_predictions_YYYY-MM-DD.md`
 - `outputs/reports/shadow_weight_profiles_YYYY-MM-DD.md`
+- `outputs/reports/shadow_weight_performance_YYYY-MM-DD.md/.csv`
 - `outputs/reports/market_feedback_optimization_YYYY-MM-DD.md`
 
 ## 执行频次
@@ -138,6 +140,9 @@ aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 |8. Forward shadow 与 promotion 连接|VALIDATING|严格候选通过 replay 后进入 `prediction_ledger` shadow；`flow_validation` 可先写 validation-only parameter shadow 行来验证后续接线；成熟度报告达到门槛才允许 owner review。|
 |9. Overlay / rule card 晋级|PROPOSED|通过 owner approval 后生成 approved overlay 或 rule card，具备有效期、回滚条件和审计引用。|
 |9B. Shadow weight profile 长期观察|IN_PROGRESS|维护若干套隔离测试权重参数，初始值参考生产 `weight_profile_current.yaml`，每日从 production decision snapshot 计算 shadow score / model band / gated band，并可选写入隔离 prediction ledger 进入 outcome 观察；不得替换生产权重。|
+|9C. 当前样本 validation 门槛|VALIDATING|把 diagnostic/validation 门槛放宽到当前已积累 outcome 样本可启动后续验证，但 production promotion floor 不降低；shadow maturity 区分 validation review 和 promotion/governance review，低样本 validation 只能进入 `READY_FOR_VALIDATION_REVIEW`。|
+|9D. Shadow weight 表现优选|VALIDATING|按 gate 后仓位把 shadow 权重与主线转成可比的 position-weighted return、drawdown、turnover 和成本；当前三套 shadow profile 与主线 gate 后仓位一致，未找到正向 excess profile；不得自动替换生产权重。|
+|9E. Shadow gate 参数实验|VALIDATING|新增隔离 hard gate / confidence / risk budget cap profile，允许与 shadow weight profile 组合观察 gate 后仓位和表现差异；profile 只覆盖 validation ledger，不修改生产 `scoring_rules.yaml`、`portfolio.yaml`、approved overlay 或日报仓位 gate。|
 |10. Coverage / placeholder / source veto|VALIDATING|robustness summary 汇总模块覆盖率、placeholder 占比、数据来源可信度和关键模块缺失；parameter replay/candidate ledger 把这些字段作为 `BLOCKED_BY_DATA` 或降级原因，而不只作为报告说明。|
 |11. Overlay target weights 与冲突治理|VALIDATING|approved overlay 支持 `target_weights` 模式、priority、mutual exclusion group 和冲突审计；approved overlay 的未知 signal、非法权重或同组优先级冲突必须 fail closed。|
 |12. Benchmark 扩展与反过拟合证据|VALIDATING|robustness 增加 same-exposure random、vol-targeted/fixed exposure、no-gate、alpha-only/risk-state-only 等 benchmark，并把关键 benchmark 结果接入 candidate 证据摘要。|
@@ -185,3 +190,9 @@ aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 - 2026-05-15：CALIBRATION-007 进入 VALIDATING。代码新增 `build-parameter-candidates --candidate-gate-mode flow_validation` 和 `feedback run-parameter-shadow`；目标测试 18 passed、全量 pytest 534 passed、ruff、diff check 和 secret scan 通过。真实验证使用 2026-05-14 既有数据完成：flow validation candidate ledger 为 PASS_WITH_LIMITATIONS（66 trial / 16 candidate / 16 ready / 16 override / blocked=0），parameter governance 为 PASS_WITH_LIMITATIONS（PREPARE_FORWARD_SHADOW=2、COLLECT_MORE_EVIDENCE=3），单独 `prediction_ledger_flow_validation.csv` 写入 16 条 validation-only parameter shadow prediction；`calibrate-predictions` 输出 160 行 outcome（available=13、pending=127、missing=20），`shadow-maturity` 为 PASS_WITH_LIMITATIONS，`optimize-market-feedback` 为 PASS_WITH_LIMITATIONS / `PILOT_DIAGNOSTIC_REVIEW`。生产 `prediction_ledger.csv`、scoring、position gate 和 approved overlay 未被修改。
 - 2026-05-15：owner 要求后续调参流程也尝试跑通，并先维护若干套隔离测试权重参数。新增 `CALIBRATION-008` 与阶段 9B；目标是把 shadow weight profiles 作为长期观察对象，每套 profile 可独立计算 shadow score、与主线评分对比并进入独立 outcome 观察，但暂不定义替换生产参数的条件。
 - 2026-05-15：CALIBRATION-008 进入 VALIDATING。新增 `config/weights/shadow_weight_profiles.yaml`，包含 alpha tilt、risk/macro tilt 和 guardrail tilt 三套隔离测试权重；新增 `aits feedback run-shadow-weight-profiles`，从 production decision snapshot 计算 shadow score、模型仓位和 gate 后观察仓位，默认写独立 observation ledger，可选写隔离 prediction ledger。真实 2026-05-14 验证：主线评分 67.79，`shadow_alpha_tilt_v1` 71.46（+3.67），`shadow_risk_macro_tilt_v1` 63.52（-4.27），`shadow_guardrail_tilt_v1` 66.18（-1.61）；三者 gate 后观察仓位均受 valuation gate 限制为 40%-40%。隔离 prediction ledger 写入 3 行，prediction outcome 15 行（available=0、pending=15、missing=0），shadow maturity 为 PASS_WITH_LIMITATIONS。目标测试 23 passed、全量 pytest 537 passed、ruff、diff check 和 secret scan 通过；生产权重、approved overlay、正式 prediction ledger、日报结论和仓位 gate 未改变。
+- 2026-05-16：owner 要求把限制放宽到当前已积累数据刚好能启动后续流程。新增 `CALIBRATION-009` 与阶段 9C；本轮只允许 validation/diagnostic 放宽，production promotion floor、approved overlay、正式 prediction ledger 和日报仓位 gate 不得降低或自动改写。
+- 2026-05-16：CALIBRATION-009 进入 VALIDATING。`config/feedback_sample_policy.yaml` 升级为 `feedback_sample_policy_v2`，decision/prediction diagnostic floor 下调为 14/13，promotion floor 仍为 60/30；`aits feedback shadow-maturity` 新增 `--review-mode validation`，默认使用 prediction pilot floor 并把达标状态写为 `READY_FOR_VALIDATION_REVIEW`，避免把当前少量样本误写成 production governance review。真实验证使用 2026-05-04 至 2026-05-14 可追溯 decision snapshots 回填隔离 shadow-weight ledger，生成 33 条 shadow prediction；2026-04-30 旧 snapshot 因 trace 指向 pytest 临时目录未写 prediction ledger。随后 `calibrate-predictions --horizons 1,5` 生成 66 行 outcome（available=36、pending=18、missing=12），validation maturity PASS，`optimize-market-feedback` 在隔离 shadow-weight outcome 上达到 `READY_FOR_WEIGHT_DIAGNOSTIC_REVIEW`。全量 pytest 538 passed，ruff 和 diff check 通过；生产 prediction ledger、approved overlay、日报结论和仓位 gate 未改变。
+- 2026-05-16：owner 明确初期目标是通过调整权重实现一个更好表现的配置。新增 `CALIBRATION-010` 与阶段 9D；本轮先补 position-weighted evaluator，把 shadow score 差异转化为与主线可比的收益、回撤、换手和成本差异，再决定哪套权重值得继续扩展观察或迭代。
+- 2026-05-16：CALIBRATION-010 进入 VALIDATING。新增 `aits feedback evaluate-shadow-weight-performance`，读取 shadow weight observation ledger 和价格缓存，按 production/shadow gate 后仓位计算 position-weighted return、最大回撤、换手和成本；observation ledger 增补 production/shadow 模型目标仓位与 gate 后目标仓位字段。真实 2026-05-14 验证使用 2026-05-04 至 2026-05-14 样本、SMH、1D horizon 和 5bps 单边成本，三套 profile 均为 production total return 4.74%、shadow total return 4.74%、excess 0.00%、turnover 1.20。当前没有正向 excess 的 shadow weight profile，直接原因是估值/风险等 hard gate 将三套 shadow 的最终仓位压到与主线一致；生产权重、approved overlay、正式 prediction ledger、日报结论和仓位 gate 未改变。
+- 2026-05-16：owner 明确 hard gate、confidence cap、risk budget cap 等可配置参数都可以纳入观察，只要做好 shadow 隔离。新增 `CALIBRATION-011` 与阶段 9E；本轮实现范围限定为 validation-only shadow gate profile 与现有 shadow weight profile 的组合观察，不改生产 gate 触发阈值或正式仓位结论。
+- 2026-05-16：CALIBRATION-011 进入 VALIDATING。新增 `config/weights/shadow_position_gate_profiles.yaml`，包含 relaxed valuation、balanced caps 和 defensive caps 三套隔离 gate profile；`aits feedback run-shadow-weight-profiles` 默认可组合 shadow weight 与 shadow gate profile，并在 observation ledger 记录 weight/gate profile、gate overrides 和 gate cap sources。真实 2026-05-04 至 2026-05-14 验证写入 9 个组合/日；`evaluate-shadow-weight-performance --as-of 2026-05-14 --since 2026-05-04 --horizon-days 1` 为 PASS，return-leading profile 为 `shadow_alpha_tilt_v1__shadow_gate_relaxed_valuation_v1`，available=8、pending=1、missing=2，shadow total return 8.31%、production total return 4.74%、excess 3.58%、shadow MDD -1.57%、production MDD -1.09%、beat rate 75.00%。该结果仍是 validation-only，样本少且未满足 production promotion；生产配置、正式 prediction ledger、日报结论和仓位 gate 未改变。

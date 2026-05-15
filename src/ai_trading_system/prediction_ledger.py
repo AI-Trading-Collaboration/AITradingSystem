@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from statistics import median
-from typing import Any
+from typing import Any, Literal
 
 import pandas as pd
 
@@ -94,12 +94,14 @@ class ShadowMaturityReport:
     as_of: date
     outcomes_path: Path
     min_available_samples: int
+    review_mode: Literal["promotion", "validation"]
     groups: tuple[dict[str, Any], ...]
     production_effect: str = "none"
 
     @property
     def status(self) -> str:
-        if any(group["maturity_status"] == "READY_FOR_GOV_REVIEW" for group in self.groups):
+        ready_statuses = {"READY_FOR_GOV_REVIEW", "READY_FOR_VALIDATION_REVIEW"}
+        if any(group["maturity_status"] in ready_statuses for group in self.groups):
             return "PASS"
         return "PASS_WITH_LIMITATIONS"
 
@@ -448,10 +450,16 @@ def build_shadow_maturity_report(
     outcomes_path: Path,
     as_of: date,
     min_available_samples: int | None = None,
+    review_mode: Literal["promotion", "validation"] = "promotion",
 ) -> ShadowMaturityReport:
+    if review_mode not in {"promotion", "validation"}:
+        raise ValueError("review_mode must be promotion or validation")
+    sample_policy = load_feedback_sample_policy()
     if min_available_samples is None:
         min_available_samples = (
-            load_feedback_sample_policy().prediction_outcomes.promotion_floor
+            sample_policy.prediction_outcomes.pilot_floor
+            if review_mode == "validation"
+            else sample_policy.prediction_outcomes.promotion_floor
         )
     if min_available_samples <= 0:
         raise ValueError("min_available_samples must be positive")
@@ -469,6 +477,7 @@ def build_shadow_maturity_report(
             key=key,
             rows=tuple(rows),
             min_available_samples=min_available_samples,
+            review_mode=review_mode,
         )
         for key, rows in sorted(grouped.items())
     )
@@ -476,6 +485,7 @@ def build_shadow_maturity_report(
         as_of=as_of,
         outcomes_path=outcomes_path,
         min_available_samples=min_available_samples,
+        review_mode=review_mode,
         groups=groups,
     )
 
@@ -495,11 +505,13 @@ def render_shadow_maturity_report(report: ShadowMaturityReport) -> str:
         "",
         f"- 状态：{report.status}",
         f"- 评估日期：{report.as_of.isoformat()}",
+        f"- Review mode：{report.review_mode}",
         f"- 最低可用样本：{report.min_available_samples}",
         f"- Prediction outcomes：`{report.outcomes_path}`",
         f"- production_effect={report.production_effect}",
-        "- 治理边界：样本不足、pending outcome 或 missing data 时只能保持 "
-        "`READY_FOR_SHADOW` / `MISSING`，不能作为 production rule 晋级证据。",
+        "- 治理边界：validation mode 只允许启动后续验证复核；样本不足、pending outcome "
+        "或 missing data 时只能保持 `READY_FOR_SHADOW` / `MISSING`，不能作为 "
+        "production rule 晋级证据。",
         "",
         "## Candidate / Horizon 成熟度",
         "",
@@ -818,6 +830,7 @@ def _shadow_maturity_group(
     key: tuple[str, str, str, str],
     rows: tuple[dict[str, Any], ...],
     min_available_samples: int,
+    review_mode: Literal["promotion", "validation"],
 ) -> dict[str, Any]:
     candidate_id, horizon_days, market_regime_id, production_effect = key
     available = tuple(row for row in rows if row.get("outcome_status") == "AVAILABLE")
@@ -837,6 +850,7 @@ def _shadow_maturity_group(
             available_count=len(available),
             total_count=len(rows),
             min_available_samples=min_available_samples,
+            review_mode=review_mode,
         ),
         "average_ai_proxy_return": _mean(_row_float_values(available, "ai_proxy_return")),
         "average_ai_proxy_max_drawdown": _mean(
@@ -852,11 +866,14 @@ def _shadow_maturity_status(
     available_count: int,
     total_count: int,
     min_available_samples: int,
+    review_mode: Literal["promotion", "validation"],
 ) -> str:
     if total_count == 0 or available_count == 0:
         return "MISSING"
     if available_count < min_available_samples:
         return "READY_FOR_SHADOW"
+    if review_mode == "validation":
+        return "READY_FOR_VALIDATION_REVIEW"
     return "READY_FOR_GOV_REVIEW"
 
 

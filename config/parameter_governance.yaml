@@ -64,6 +64,33 @@ parameters:
     requires_owner_quantitative_input_for_production: true
     allows_shadow_without_owner_quantitative_input: false
 
+  - parameter_id: shadow_position_gate_profiles.validation_caps
+    surface: position_gate_shadow_caps
+    config_path: config/weights/shadow_position_gate_profiles.yaml
+    source_level: validation_shadow
+    owner: system
+    status: active
+    rationale: "owner 允许 hard gate、confidence cap 和 risk budget cap 进入隔离 shadow 观察；该 manifest 只覆盖 validation ledger 中已观察 gate cap，不改变生产门禁。"
+    validation_evidence:
+      - "shadow profile 必须 production_effect=none，且只由 run-shadow-weight-profiles 写入独立 observation/prediction ledger。"
+      - "evaluate-shadow-weight-performance 只比较 shadow gate 后观察仓位与主线仓位表现差异。"
+    review_after: "连续 8 份 shadow gate performance 报告或 owner 要求复核后。"
+    exit_condition: "达到 promotion floor、forward shadow、owner approval 和 rollback 条件后，才允许提出生产 scoring_rules/portfolio 变更。"
+    production_effect: none
+    candidate_categories:
+      - position_gate_cap_shadow
+      - confidence_cap_shadow
+      - risk_budget_cap_shadow
+    allowed_actions:
+      - keep_current
+      - collect_more_evidence
+      - prepare_forward_shadow
+      - owner_decision_required
+      - blocked_by_data
+      - blocked_by_policy
+    requires_owner_quantitative_input_for_production: true
+    allows_shadow_without_owner_quantitative_input: true
+
   - parameter_id: feedback_sample_policy.market_feedback_floors
     surface: feedback_sample_floors
     config_path: config/feedback_sample_policy.yaml

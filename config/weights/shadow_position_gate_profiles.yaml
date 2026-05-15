@@ -1,0 +1,61 @@
+version: "shadow_position_gate_profiles_v1"
+status: "pilot"
+owner: "system_validation"
+production_effect: "none"
+source_policy_paths:
+  - "config/scoring_rules.yaml"
+  - "config/portfolio.yaml"
+rationale: "隔离维护 hard gate、confidence cap 和 risk budget cap 的测试参数；只用于 validation observation，不替换生产仓位门禁。"
+review_after_reports: 8
+
+profiles:
+  - profile_id: "shadow_gate_relaxed_valuation_v1"
+    version: "2026-05-16-relaxed-valuation"
+    status: "shadow"
+    owner: "system_validation"
+    production_effect: "none"
+    rationale: "在估值极热时把 valuation cap 从生产观察值向 60% 放宽，测试当前 hard cap 是否过度压制强趋势样本。"
+    review_after_reports: 8
+    gate_cap_overrides:
+      valuation: 0.60
+      risk_budget: 0.80
+      thesis: 0.80
+      confidence: 1.00
+      data_confidence: 0.90
+    metadata:
+      source_task: "CALIBRATION-011"
+      isolation: "shadow_only"
+
+  - profile_id: "shadow_gate_balanced_caps_v1"
+    version: "2026-05-16-balanced-caps"
+    status: "shadow"
+    owner: "system_validation"
+    production_effect: "none"
+    rationale: "温和放宽 valuation/risk/thesis cap，但保留中等风险限制，观察比生产 40% cap 更高的仓位是否改善短期表现。"
+    review_after_reports: 8
+    gate_cap_overrides:
+      valuation: 0.50
+      risk_budget: 0.75
+      thesis: 0.75
+      confidence: 0.90
+      data_confidence: 0.85
+    metadata:
+      source_task: "CALIBRATION-011"
+      isolation: "shadow_only"
+
+  - profile_id: "shadow_gate_defensive_caps_v1"
+    version: "2026-05-16-defensive-caps"
+    status: "shadow"
+    owner: "system_validation"
+    production_effect: "none"
+    rationale: "比生产观察值更保守地压低 valuation/risk/thesis cap，用作 drawdown 和 missed-upside 对照。"
+    review_after_reports: 8
+    gate_cap_overrides:
+      valuation: 0.35
+      risk_budget: 0.60
+      thesis: 0.60
+      confidence: 0.75
+      data_confidence: 0.70
+    metadata:
+      source_task: "CALIBRATION-011"
+      isolation: "shadow_only"

@@ -175,6 +175,37 @@ def test_shadow_maturity_report_keeps_small_samples_in_shadow(
     assert "READY_FOR_SHADOW" in markdown
 
 
+def test_shadow_maturity_validation_mode_does_not_mark_promotion(
+    tmp_path: Path,
+) -> None:
+    report = build_shadow_maturity_report(
+        outcome_rows=(
+            {
+                "candidate_id": "shadow_weight_profile:test",
+                "production_effect": "none",
+                "horizon_days": "1",
+                "market_regime_id": "ai_after_chatgpt",
+                "outcome_status": "AVAILABLE",
+                "ai_proxy_return": "0.01",
+                "ai_proxy_max_drawdown": "-0.01",
+                "hit": "True",
+            },
+        ),
+        outcomes_path=tmp_path / "prediction_outcomes.csv",
+        as_of=date(2026, 5, 16),
+        min_available_samples=1,
+        review_mode="validation",
+    )
+    markdown = render_shadow_maturity_report(report)
+    group = report.groups[0]
+
+    assert report.status == "PASS"
+    assert report.review_mode == "validation"
+    assert group["maturity_status"] == "READY_FOR_VALIDATION_REVIEW"
+    assert "READY_FOR_GOV_REVIEW" not in markdown
+    assert "validation mode 只允许启动后续验证复核" in markdown
+
+
 def test_feedback_run_shadow_cli_appends_challenger_predictions(tmp_path: Path) -> None:
     snapshot_path = tmp_path / "decision_snapshot_2026-04-30.json"
     trace_path = tmp_path / "trace.json"
