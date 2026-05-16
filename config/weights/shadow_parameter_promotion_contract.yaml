@@ -1,0 +1,16 @@
+version: "shadow_parameter_promotion_contract_v1"
+status: "validation"
+owner: "system_validation"
+production_effect: "none"
+rationale: "将 shadow parameter search 的排序结果与生产晋级条件硬分离；搜索结果最多进入 forward shadow，不能仅凭 in-sample objective 或 diagnostic-leading trial 改写 production 权重、gate 或 approved overlay。"
+
+min_available_samples: 30
+require_search_eligible_best: true
+require_positive_excess: true
+max_drawdown_degradation: 0.01
+max_shadow_turnover: 1.50
+gate_primary_driver_requires_cap_review: true
+required_forward_shadow_available_samples: 30
+owner_approval_required: true
+rollback_condition_required: true
+approved_hard_allowed: false

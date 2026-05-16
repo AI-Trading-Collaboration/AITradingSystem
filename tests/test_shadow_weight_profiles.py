@@ -12,12 +12,15 @@ from typer.testing import CliRunner
 from ai_trading_system.cli import app
 from ai_trading_system.prediction_ledger import load_prediction_ledger
 from ai_trading_system.shadow_weight_profiles import (
+    build_shadow_parameter_promotion_report,
     build_shadow_parameter_search_report,
     build_shadow_weight_performance_report,
     build_shadow_weight_profile_run_report,
+    load_shadow_parameter_promotion_contract,
     load_shadow_position_gate_profile_manifest,
     load_shadow_weight_profile_manifest,
     render_shadow_parameter_search_report,
+    write_shadow_parameter_promotion_report,
     write_shadow_parameter_search_bundle,
     write_shadow_weight_performance_csv,
 )
@@ -324,8 +327,19 @@ def test_shadow_parameter_search_writes_trial_registry_and_best_profile(
     assert report.best_trial.excess_total_return > 0
     assert report.factorial_attribution is not None
     assert report.factorial_attribution.primary_driver == "gate"
+    assert report.cap_attribution
+    assert report.cap_attribution[0].gate_id == "valuation"
+    assert report.position_change_rows
+    assert report.position_change_rows[0].candidate_position > (
+        report.position_change_rows[0].production_position
+    )
+    assert report.source_weight_profile_checksum
+    assert report.prices_checksum
+    assert report.decision_snapshot_checksum
     markdown = render_shadow_parameter_search_report(report)
     assert "## Factorial Attribution" in markdown
+    assert "## Cap-Level Attribution" in markdown
+    assert "## Position Change Attribution" in markdown
     assert "weight_only" in markdown
     assert "gate_only" in markdown
     assert paths["trials_csv"].exists()
@@ -380,6 +394,53 @@ def test_shadow_parameter_search_gate_grid_fits_numeric_caps(tmp_path: Path) -> 
     assert report.best_trial is not None
     assert report.best_trial.gate_candidate_id.startswith("grid_gate_")
     assert report.best_trial.gate_cap_overrides["valuation"] == 0.60
+
+
+def test_shadow_parameter_objective_can_block_large_weight_distance(
+    tmp_path: Path,
+) -> None:
+    snapshot_dir = tmp_path / "snapshots"
+    snapshot_dir.mkdir()
+    _write_snapshot(
+        tmp_path,
+        output_path=snapshot_dir / "decision_snapshot_2026-05-01.json",
+        signal_date="2026-05-01",
+    )
+    prices_path = tmp_path / "prices.csv"
+    search_space_path = _write_search_space(tmp_path)
+    objective_path = _write_objective(
+        tmp_path,
+        max_l1_distance_from_production=0.10,
+        max_single_factor_step=0.025,
+    )
+    pd.DataFrame(
+        [
+            {"date": "2026-05-01", "ticker": "SMH", "adj_close": 100.0},
+            {"date": "2026-05-04", "ticker": "SMH", "adj_close": 110.0},
+        ]
+    ).to_csv(prices_path, index=False)
+
+    report = build_shadow_parameter_search_report(
+        run_id="test_regularized_objective",
+        start=date(2026, 5, 1),
+        end=date(2026, 5, 4),
+        decision_snapshot_path=snapshot_dir,
+        prices_path=prices_path,
+        search_space_path=search_space_path,
+        objective_path=objective_path,
+        output_dir=tmp_path / "search_output",
+        horizon_days=1,
+        cost_bps=0.0,
+    )
+
+    far_weight_trials = [
+        trial for trial in report.trials if trial.weight_candidate_id == "grid_weight_0001"
+    ]
+    assert far_weight_trials
+    assert all(not trial.eligible for trial in far_weight_trials)
+    assert {
+        trial.ineligibility_reason for trial in far_weight_trials
+    } == {"weight_l1_distance_above_objective_limit"}
 
 
 def test_shadow_parameter_search_strict_objective_keeps_diagnostic_only(
@@ -492,6 +553,135 @@ def test_shadow_parameter_search_cli_writes_outputs(tmp_path: Path) -> None:
     assert "Shadow parameter search 状态：PASS" in result.output
     assert (output_root / "test_cli_search" / "trials.csv").exists()
     assert (output_root / "test_cli_search" / "best_profiles.yaml").exists()
+
+
+def test_shadow_parameter_promotion_contract_keeps_search_separate(
+    tmp_path: Path,
+) -> None:
+    snapshot_dir = tmp_path / "snapshots"
+    snapshot_dir.mkdir()
+    _write_snapshot(
+        tmp_path,
+        output_path=snapshot_dir / "decision_snapshot_2026-05-01.json",
+        signal_date="2026-05-01",
+    )
+    _write_snapshot(
+        tmp_path,
+        output_path=snapshot_dir / "decision_snapshot_2026-05-04.json",
+        signal_date="2026-05-04",
+    )
+    prices_path = tmp_path / "prices.csv"
+    search_space_path = _write_search_space(tmp_path)
+    objective_path = _write_objective(tmp_path)
+    contract_path = _write_promotion_contract(tmp_path)
+    pd.DataFrame(
+        [
+            {"date": "2026-05-01", "ticker": "SMH", "adj_close": 100.0},
+            {"date": "2026-05-04", "ticker": "SMH", "adj_close": 110.0},
+            {"date": "2026-05-05", "ticker": "SMH", "adj_close": 121.0},
+        ]
+    ).to_csv(prices_path, index=False)
+    search_report = build_shadow_parameter_search_report(
+        run_id="test_promotion",
+        start=date(2026, 5, 1),
+        end=date(2026, 5, 5),
+        decision_snapshot_path=snapshot_dir,
+        prices_path=prices_path,
+        search_space_path=search_space_path,
+        objective_path=objective_path,
+        output_dir=tmp_path / "search_output",
+        horizon_days=1,
+        cost_bps=0.0,
+    )
+    paths = write_shadow_parameter_search_bundle(search_report)
+
+    contract = load_shadow_parameter_promotion_contract(contract_path)
+    promotion = build_shadow_parameter_promotion_report(
+        search_output_dir=paths["output_dir"],
+        contract_path=contract_path,
+    )
+    output_path = write_shadow_parameter_promotion_report(
+        promotion,
+        tmp_path / "promotion.md",
+    )
+
+    assert contract.production_effect == "none"
+    assert promotion.status == "READY_FOR_FORWARD_SHADOW"
+    assert any(
+        check.check_id == "gate_driver_cap_review" and check.status == "MISSING"
+        for check in promotion.checks
+    )
+    assert any(
+        check.check_id == "forward_shadow" and check.status == "MISSING"
+        for check in promotion.checks
+    )
+    assert output_path.exists()
+    assert output_path.with_suffix(".json").exists()
+
+
+def test_shadow_parameter_promotion_cli_writes_report(tmp_path: Path) -> None:
+    snapshot_dir = tmp_path / "snapshots"
+    snapshot_dir.mkdir()
+    _write_snapshot(
+        tmp_path,
+        output_path=snapshot_dir / "decision_snapshot_2026-05-01.json",
+        signal_date="2026-05-01",
+    )
+    prices_path = tmp_path / "prices.csv"
+    search_space_path = _write_search_space(tmp_path)
+    objective_path = _write_objective(tmp_path)
+    contract_path = _write_promotion_contract(tmp_path)
+    output_root = tmp_path / "parameter_search"
+    pd.DataFrame(
+        [
+            {"date": "2026-05-01", "ticker": "SMH", "adj_close": 100.0},
+            {"date": "2026-05-04", "ticker": "SMH", "adj_close": 110.0},
+        ]
+    ).to_csv(prices_path, index=False)
+    search_result = CliRunner().invoke(
+        app,
+        [
+            "feedback",
+            "search-shadow-parameters",
+            "--from",
+            "2026-05-01",
+            "--to",
+            "2026-05-04",
+            "--decision-snapshot-path",
+            str(snapshot_dir),
+            "--prices-path",
+            str(prices_path),
+            "--search-space-path",
+            str(search_space_path),
+            "--objective-path",
+            str(objective_path),
+            "--output-root",
+            str(output_root),
+            "--run-id",
+            "test_cli_promotion_search",
+        ],
+    )
+    assert search_result.exit_code == 0
+    promotion_path = tmp_path / "promotion.md"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "feedback",
+            "evaluate-shadow-parameter-promotion",
+            "--search-output-dir",
+            str(output_root / "test_cli_promotion_search"),
+            "--contract-path",
+            str(contract_path),
+            "--output-path",
+            str(promotion_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Shadow parameter promotion 状态：READY_FOR_FORWARD_SHADOW" in result.output
+    assert promotion_path.exists()
+    assert promotion_path.with_suffix(".json").exists()
 
 
 def _write_manifest(tmp_path: Path) -> Path:
@@ -613,8 +803,18 @@ def _write_objective(
     *,
     min_available_samples: int = 1,
     require_positive_excess: bool = False,
+    max_l1_distance_from_production: float | None = None,
+    max_single_factor_step: float | None = None,
 ) -> Path:
     objective_path = tmp_path / "shadow_parameter_objective.yaml"
+    optional_limits = ""
+    if max_l1_distance_from_production is not None:
+        optional_limits += (
+            "max_l1_distance_from_production: "
+            f"{max_l1_distance_from_production}\n"
+        )
+    if max_single_factor_step is not None:
+        optional_limits += f"max_single_factor_step: {max_single_factor_step}\n"
     objective_path.write_text(
         f"""
 version: objective_test
@@ -631,10 +831,36 @@ missing_sample_penalty: 0.0
 min_available_samples: {min_available_samples}
 require_positive_excess: {str(require_positive_excess).lower()}
 top_n: 5
+{optional_limits}
 """.lstrip(),
         encoding="utf-8",
     )
     return objective_path
+
+
+def _write_promotion_contract(tmp_path: Path) -> Path:
+    contract_path = tmp_path / "shadow_parameter_promotion_contract.yaml"
+    contract_path.write_text(
+        """
+version: promotion_contract_test
+status: validation
+owner: system
+production_effect: none
+rationale: test promotion contract
+min_available_samples: 1
+require_search_eligible_best: true
+require_positive_excess: true
+max_drawdown_degradation: 1.0
+max_shadow_turnover: 10.0
+gate_primary_driver_requires_cap_review: true
+required_forward_shadow_available_samples: 2
+owner_approval_required: true
+rollback_condition_required: true
+approved_hard_allowed: false
+""".lstrip(),
+        encoding="utf-8",
+    )
+    return contract_path
 
 
 def _write_snapshot(

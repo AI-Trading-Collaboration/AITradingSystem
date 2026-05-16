@@ -610,18 +610,22 @@ from ai_trading_system.secret_hygiene import (
 from ai_trading_system.shadow_weight_profiles import (
     DEFAULT_DECISION_SNAPSHOT_SEARCH_DIR,
     DEFAULT_SHADOW_PARAMETER_OBJECTIVE_PATH,
+    DEFAULT_SHADOW_PARAMETER_PROMOTION_CONTRACT_PATH,
     DEFAULT_SHADOW_PARAMETER_SEARCH_OUTPUT_ROOT,
     DEFAULT_SHADOW_PARAMETER_SEARCH_SPACE_PATH,
     DEFAULT_SHADOW_POSITION_GATE_PROFILE_MANIFEST_PATH,
     DEFAULT_SHADOW_WEIGHT_PROFILE_MANIFEST_PATH,
     DEFAULT_SHADOW_WEIGHT_PROFILE_OBSERVATION_LEDGER_PATH,
+    build_shadow_parameter_promotion_report,
     build_shadow_parameter_search_report,
     build_shadow_weight_performance_report,
     build_shadow_weight_prediction_records,
     build_shadow_weight_profile_run_report,
+    default_shadow_parameter_promotion_report_path,
     default_shadow_weight_performance_csv_path,
     default_shadow_weight_performance_report_path,
     default_shadow_weight_profile_report_path,
+    write_shadow_parameter_promotion_report,
     write_shadow_parameter_search_bundle,
     write_shadow_weight_observation_ledger,
     write_shadow_weight_performance_csv,
@@ -2393,6 +2397,45 @@ def search_shadow_parameters_command(
     console.print(f"搜索报告：{paths['search_report']}")
     console.print(f"Best profile YAML：{paths['best_profiles_yaml']}")
     console.print("治理边界：本命令不修改生产权重、approved overlay、日报结论或仓位 gate。")
+
+
+@feedback_app.command("evaluate-shadow-parameter-promotion")
+def evaluate_shadow_parameter_promotion_command(
+    search_output_dir: Annotated[
+        Path,
+        typer.Option(help="search-shadow-parameters 输出目录，包含 manifest.json 和 trials.csv。"),
+    ],
+    contract_path: Annotated[
+        Path,
+        typer.Option(help="shadow parameter promotion contract YAML 路径。"),
+    ] = DEFAULT_SHADOW_PARAMETER_PROMOTION_CONTRACT_PATH,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="promotion contract 报告输出路径；不传则写入 search output 目录。"),
+    ] = None,
+) -> None:
+    """用独立 contract 检查 shadow parameter search 是否只能进入后续 shadow。"""
+    try:
+        report = build_shadow_parameter_promotion_report(
+            search_output_dir=search_output_dir,
+            contract_path=contract_path,
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        console.print(f"[red]Shadow parameter promotion 评估失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+    run_id = str(report.search_manifest.get("run_id") or search_output_dir.name)
+    destination = output_path or default_shadow_parameter_promotion_report_path(
+        search_output_dir,
+        run_id,
+    )
+    written = write_shadow_parameter_promotion_report(report, destination)
+    style = "green" if report.status == "READY_FOR_OWNER_REVIEW" else "yellow"
+    console.print(f"[{style}]Shadow parameter promotion 状态：{report.status}[/{style}]")
+    console.print(f"Selected trial：{report.selected_trial_id or 'none'}")
+    console.print(f"Contract checks：{len(report.checks)}")
+    console.print(f"Promotion 报告：{written}")
+    console.print(f"Promotion JSON：{written.with_suffix('.json')}")
+    console.print("治理边界：本命令只评估 contract，不修改 production 参数或 ledger。")
 
 
 @feedback_app.command("shadow-maturity")

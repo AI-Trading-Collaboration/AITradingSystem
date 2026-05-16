@@ -4,7 +4,7 @@
 
 最后更新：2026-05-16
 
-关联任务：`CALIBRATION-014`、`CALIBRATION-012`、`CALIBRATION-013`
+关联任务：`CALIBRATION-014`、`CALIBRATION-012`、`CALIBRATION-013`、`CALIBRATION-015`、`CALIBRATION-016`、`CALIBRATION-017`
 
 ## 背景
 
@@ -64,3 +64,7 @@ objective 和 approved hard overlay 的生产边界。
 - 2026-05-16：验证补充。`python -m pytest -q` 通过 548 项，`python -m ruff check
   src tests` 通过，`git diff --check` 仅提示 `docs/task_register.md` 行尾将由
   CRLF 转 LF；未发现 whitespace error。
+- 2026-05-16：后续强化已拆到
+  `docs/requirements/shadow_parameter_attribution_promotion_contract_2026-05-16.md`。
+  该后续任务补 cap-level attribution、独立 promotion contract、objective regularization
+  和 search lineage，仍保持 validation-only。

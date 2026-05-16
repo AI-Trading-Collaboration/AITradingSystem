@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import itertools
 import json
+import subprocess
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
@@ -32,6 +33,9 @@ DEFAULT_SHADOW_PARAMETER_SEARCH_SPACE_PATH = (
 DEFAULT_SHADOW_PARAMETER_OBJECTIVE_PATH = (
     PROJECT_ROOT / "config" / "weights" / "shadow_parameter_objective.yaml"
 )
+DEFAULT_SHADOW_PARAMETER_PROMOTION_CONTRACT_PATH = (
+    PROJECT_ROOT / "config" / "weights" / "shadow_parameter_promotion_contract.yaml"
+)
 DEFAULT_SHADOW_WEIGHT_PROFILE_OBSERVATION_LEDGER_PATH = (
     PROJECT_ROOT / "data" / "processed" / "shadow_weight_profile_observations.csv"
 )
@@ -39,6 +43,7 @@ DEFAULT_SHADOW_WEIGHT_PROFILE_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
 DEFAULT_SHADOW_PARAMETER_SEARCH_OUTPUT_ROOT = PROJECT_ROOT / "outputs" / "parameter_search"
 DEFAULT_DECISION_SNAPSHOT_SEARCH_DIR = PROJECT_ROOT / "data" / "processed" / "decision_snapshots"
 PRODUCTION_OBSERVED_GATE_PROFILE_ID = "production_observed_gates"
+SHADOW_PARAMETER_SEARCH_RESOLVER_VERSION = "shadow_parameter_search_v2"
 
 ShadowProfileStatus = Literal["shadow", "candidate", "retired"]
 
@@ -271,10 +276,33 @@ class ShadowParameterObjectiveConfig(BaseModel):
     excess_drawdown_penalty: float = Field(default=0.50, ge=0)
     excess_turnover_penalty: float = Field(default=0.00, ge=0)
     missing_sample_penalty: float = Field(default=0.00, ge=0)
+    gate_relaxation_penalty: float = Field(default=0.00, ge=0)
+    weight_distance_penalty: float = Field(default=0.00, ge=0)
+    changed_dimension_penalty: float = Field(default=0.00, ge=0)
+    max_l1_distance_from_production: float | None = Field(default=None, ge=0)
+    max_single_factor_step: float | None = Field(default=None, ge=0)
     min_available_samples: int = Field(default=1, ge=0)
     require_positive_excess: bool = False
     top_n: int = Field(default=20, gt=0)
     rationale: str = Field(min_length=1)
+
+
+class ShadowParameterPromotionContractConfig(BaseModel):
+    version: str = Field(min_length=1)
+    status: str = Field(min_length=1)
+    owner: str = Field(min_length=1)
+    production_effect: Literal["none"] = "none"
+    rationale: str = Field(min_length=1)
+    min_available_samples: int = Field(default=30, ge=0)
+    require_search_eligible_best: bool = True
+    require_positive_excess: bool = True
+    max_drawdown_degradation: float | None = Field(default=None, ge=0)
+    max_shadow_turnover: float | None = Field(default=None, ge=0)
+    gate_primary_driver_requires_cap_review: bool = True
+    required_forward_shadow_available_samples: int = Field(default=30, ge=0)
+    owner_approval_required: bool = True
+    rollback_condition_required: bool = True
+    approved_hard_allowed: bool = False
 
 
 @dataclass(frozen=True)
@@ -574,6 +602,10 @@ class ShadowParameterSearchTrial:
     production_turnover: float
     shadow_turnover: float
     shadow_beats_production_rate: float | None
+    weight_l1_distance_from_production: float
+    max_single_factor_step: float
+    gate_relaxation_distance: float
+    changed_dimension_count: int
     objective_score: float | None
     eligible: bool
     ineligibility_reason: str
@@ -599,6 +631,10 @@ class ShadowParameterSearchTrial:
             "shadow_beats_production_rate": _blank_if_none(
                 self.shadow_beats_production_rate
             ),
+            "weight_l1_distance_from_production": self.weight_l1_distance_from_production,
+            "max_single_factor_step": self.max_single_factor_step,
+            "gate_relaxation_distance": self.gate_relaxation_distance,
+            "changed_dimension_count": self.changed_dimension_count,
             "objective_score": _blank_if_none(self.objective_score),
             "eligible": self.eligible,
             "ineligibility_reason": self.ineligibility_reason,
@@ -612,6 +648,63 @@ class ShadowParameterSearchTrial:
                 ensure_ascii=False,
                 sort_keys=True,
             ),
+        }
+
+
+@dataclass(frozen=True)
+class ShadowParameterCapAttribution:
+    gate_id: str
+    selected_cap_value: float
+    cap_only_trial: ShadowParameterSearchTrial
+    excess_delta_vs_baseline: float | None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "gate_id": self.gate_id,
+            "selected_cap_value": self.selected_cap_value,
+            "cap_only_trial_id": self.cap_only_trial.trial_id,
+            "cap_only_excess_total_return": self.cap_only_trial.excess_total_return,
+            "excess_delta_vs_baseline": self.excess_delta_vs_baseline,
+            "cap_only_shadow_max_drawdown": self.cap_only_trial.shadow_max_drawdown,
+            "cap_only_shadow_turnover": self.cap_only_trial.shadow_turnover,
+        }
+
+
+@dataclass(frozen=True)
+class ShadowParameterPositionChangeRow:
+    as_of: date
+    outcome_status: str
+    outcome_end_date: date | None
+    asset_return: float | None
+    production_position: float
+    candidate_position: float
+    position_delta: float
+    production_binding_gates: tuple[str, ...]
+    candidate_binding_gates: tuple[str, ...]
+    production_position_return: float | None
+    candidate_position_return: float | None
+    return_impact: float | None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "as_of": self.as_of.isoformat(),
+            "outcome_status": self.outcome_status,
+            "outcome_end_date": (
+                "" if self.outcome_end_date is None else self.outcome_end_date.isoformat()
+            ),
+            "asset_return": _blank_if_none(self.asset_return),
+            "production_position": self.production_position,
+            "candidate_position": self.candidate_position,
+            "position_delta": self.position_delta,
+            "production_binding_gates": ",".join(self.production_binding_gates),
+            "candidate_binding_gates": ",".join(self.candidate_binding_gates),
+            "production_position_return": _blank_if_none(
+                self.production_position_return
+            ),
+            "candidate_position_return": _blank_if_none(
+                self.candidate_position_return
+            ),
+            "return_impact": _blank_if_none(self.return_impact),
         }
 
 
@@ -687,6 +780,7 @@ class ShadowParameterSearchReport:
     end: date
     decision_snapshot_path: Path
     prices_path: Path
+    source_weight_profile_path: Path
     search_space_path: Path
     objective_path: Path
     output_dir: Path
@@ -698,12 +792,20 @@ class ShadowParameterSearchReport:
     objective: ShadowParameterObjectiveConfig
     search_space_checksum: str
     objective_checksum: str
+    source_weight_profile_checksum: str
+    prices_checksum: str
+    decision_snapshot_checksum: str
+    resolver_version: str
+    git_commit_sha: str | None
+    git_worktree_dirty: bool | None
     snapshot_count: int
     weight_candidate_count: int
     gate_candidate_count: int
     trials: tuple[ShadowParameterSearchTrial, ...]
     pareto_front: tuple[ShadowParameterSearchTrial, ...]
     factorial_attribution: ShadowParameterFactorialAttribution | None
+    cap_attribution: tuple[ShadowParameterCapAttribution, ...]
+    position_change_rows: tuple[ShadowParameterPositionChangeRow, ...]
     warnings: tuple[str, ...]
 
     @property
@@ -721,6 +823,58 @@ class ShadowParameterSearchReport:
         return _best_search_trial(self.trials, eligible_only=False)
 
 
+@dataclass(frozen=True)
+class ShadowParameterPromotionCheck:
+    check_id: str
+    status: str
+    reason: str
+    evidence_ref: str
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "check_id": self.check_id,
+            "status": self.status,
+            "reason": self.reason,
+            "evidence_ref": self.evidence_ref,
+        }
+
+
+@dataclass(frozen=True)
+class ShadowParameterPromotionReport:
+    generated_at: datetime
+    search_output_dir: Path
+    contract_path: Path
+    contract: ShadowParameterPromotionContractConfig
+    search_manifest: dict[str, Any]
+    selected_trial_id: str | None
+    selected_trial: dict[str, Any] | None
+    checks: tuple[ShadowParameterPromotionCheck, ...]
+    production_effect: str = "none"
+
+    @property
+    def status(self) -> str:
+        if any(check.status == "FAIL" for check in self.checks):
+            return "NOT_PROMOTABLE"
+        if any(check.status == "MISSING" for check in self.checks):
+            return "READY_FOR_FORWARD_SHADOW"
+        return "READY_FOR_OWNER_REVIEW"
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": SCHEMA_VERSION,
+            "report_type": "shadow_parameter_promotion_contract",
+            "status": self.status,
+            "production_effect": self.production_effect,
+            "generated_at": self.generated_at.isoformat(),
+            "search_output_dir": str(self.search_output_dir),
+            "contract_path": str(self.contract_path),
+            "contract": self.contract.model_dump(mode="json"),
+            "search_run_id": self.search_manifest.get("run_id"),
+            "selected_trial_id": self.selected_trial_id,
+            "checks": [check.to_dict() for check in self.checks],
+        }
+
+
 def default_shadow_weight_profile_report_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"shadow_weight_profiles_{as_of.isoformat()}.md"
 
@@ -735,6 +889,10 @@ def default_shadow_weight_performance_csv_path(output_dir: Path, as_of: date) ->
 
 def default_shadow_parameter_search_output_dir(output_root: Path, run_id: str) -> Path:
     return output_root / run_id
+
+
+def default_shadow_parameter_promotion_report_path(output_dir: Path, run_id: str) -> Path:
+    return output_dir / f"shadow_parameter_promotion_{run_id}.md"
 
 
 def load_shadow_weight_profile_manifest(
@@ -784,6 +942,16 @@ def load_shadow_parameter_objective(
     if not isinstance(raw, dict):
         raise ValueError(f"shadow parameter objective must be a mapping: {path}")
     return ShadowParameterObjectiveConfig.model_validate(raw)
+
+
+def load_shadow_parameter_promotion_contract(
+    path: Path | str = DEFAULT_SHADOW_PARAMETER_PROMOTION_CONTRACT_PATH,
+) -> ShadowParameterPromotionContractConfig:
+    contract_path = Path(path)
+    raw = yaml.safe_load(contract_path.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        raise ValueError(f"shadow parameter promotion contract must be a mapping: {path}")
+    return ShadowParameterPromotionContractConfig.model_validate(raw)
 
 
 def build_shadow_weight_profile_run_report(
@@ -1287,7 +1455,8 @@ def build_shadow_parameter_search_report(
 
     search_space = load_shadow_parameter_search_space(search_space_path)
     objective = load_shadow_parameter_objective(objective_path)
-    source_profile = load_weight_profile(_project_path(search_space.source_weight_profile_path))
+    source_profile_path = _project_path(search_space.source_weight_profile_path)
+    source_profile = load_weight_profile(source_profile_path)
     snapshots = _load_search_snapshots(decision_snapshot_path, start, end)
     if not snapshots:
         raise ValueError(
@@ -1331,6 +1500,7 @@ def build_shadow_parameter_search_report(
                 outcomes_by_signal_date=outcomes_by_signal_date,
                 cost_rate=cost_rate,
                 objective=objective,
+                production_weights=source_profile.base_weights,
             )
         )
     if not trials:
@@ -1340,6 +1510,22 @@ def build_shadow_parameter_search_report(
     factorial_attribution, attribution_warning = _build_factorial_attribution(trials)
     if attribution_warning:
         warnings.append(attribution_warning)
+    cap_attribution = _build_cap_level_attribution(
+        trials=trials,
+        snapshots=snapshots,
+        source_profile=source_profile,
+        position_bands=position_bands,
+        outcomes_by_signal_date=outcomes_by_signal_date,
+        cost_rate=cost_rate,
+        objective=objective,
+    )
+    position_change_rows = _build_position_change_rows(
+        trials=trials,
+        snapshots=snapshots,
+        position_bands=position_bands,
+        outcomes_by_signal_date=outcomes_by_signal_date,
+        cost_rate=cost_rate,
+    )
     return ShadowParameterSearchReport(
         run_id=run_id,
         generated_at=generated_at or datetime.now(tz=UTC),
@@ -1347,6 +1533,7 @@ def build_shadow_parameter_search_report(
         end=end,
         decision_snapshot_path=decision_snapshot_path,
         prices_path=prices_path,
+        source_weight_profile_path=source_profile_path,
         search_space_path=search_space_path,
         objective_path=objective_path,
         output_dir=output_dir or default_shadow_parameter_search_output_dir(
@@ -1361,12 +1548,20 @@ def build_shadow_parameter_search_report(
         objective=objective,
         search_space_checksum=_sha256_file(search_space_path),
         objective_checksum=_sha256_file(objective_path),
+        source_weight_profile_checksum=_sha256_file(source_profile_path),
+        prices_checksum=_sha256_file(prices_path),
+        decision_snapshot_checksum=_sha256_search_snapshots(snapshots),
+        resolver_version=SHADOW_PARAMETER_SEARCH_RESOLVER_VERSION,
+        git_commit_sha=_git_commit_sha(),
+        git_worktree_dirty=_git_worktree_dirty(),
         snapshot_count=len(snapshots),
         weight_candidate_count=len(weight_candidates),
         gate_candidate_count=len(gate_candidates),
         trials=tuple(trials),
         pareto_front=_pareto_front(trials),
         factorial_attribution=factorial_attribution,
+        cap_attribution=cap_attribution,
+        position_change_rows=position_change_rows,
         warnings=tuple(dict.fromkeys(warnings)),
     )
 
@@ -1413,6 +1608,105 @@ def write_shadow_parameter_search_bundle(
     }
 
 
+def build_shadow_parameter_promotion_report(
+    *,
+    search_output_dir: Path,
+    contract_path: Path = DEFAULT_SHADOW_PARAMETER_PROMOTION_CONTRACT_PATH,
+    generated_at: datetime | None = None,
+) -> ShadowParameterPromotionReport:
+    contract = load_shadow_parameter_promotion_contract(contract_path)
+    manifest_path = search_output_dir / "manifest.json"
+    trials_path = search_output_dir / "trials.csv"
+    manifest = _read_json_object(manifest_path)
+    if not trials_path.exists():
+        raise FileNotFoundError(f"shadow parameter trials CSV not found: {trials_path}")
+    trials = pd.read_csv(trials_path)
+    selected_trial_id = manifest.get("best_trial_id")
+    diagnostic_trial_id = manifest.get("best_diagnostic_trial_id")
+    if selected_trial_id is None:
+        selected_trial_id = diagnostic_trial_id
+    selected_trial = _trial_row_by_id(trials, selected_trial_id)
+    checks = _build_shadow_parameter_promotion_checks(
+        contract=contract,
+        manifest=manifest,
+        selected_trial=selected_trial,
+        selected_trial_id=selected_trial_id,
+        has_eligible_best=manifest.get("best_trial_id") is not None,
+    )
+    return ShadowParameterPromotionReport(
+        generated_at=generated_at or datetime.now(tz=UTC),
+        search_output_dir=search_output_dir,
+        contract_path=contract_path,
+        contract=contract,
+        search_manifest=manifest,
+        selected_trial_id=selected_trial_id,
+        selected_trial=selected_trial,
+        checks=tuple(checks),
+    )
+
+
+def write_shadow_parameter_promotion_report(
+    report: ShadowParameterPromotionReport,
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        render_shadow_parameter_promotion_report(report),
+        encoding="utf-8",
+    )
+    summary_path = output_path.with_suffix(".json")
+    summary_path.write_text(
+        json.dumps(report.to_dict(), ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    return output_path
+
+
+def render_shadow_parameter_promotion_report(
+    report: ShadowParameterPromotionReport,
+) -> str:
+    lines = [
+        "# Shadow Parameter Promotion Contract 报告",
+        "",
+        f"- 状态：{report.status}",
+        "- production_effect：none",
+        f"- 生成时间：{report.generated_at.isoformat()}",
+        f"- Search output：`{report.search_output_dir}`",
+        f"- Search run id：`{report.search_manifest.get('run_id', 'unknown')}`",
+        f"- Contract：`{report.contract_path}`",
+        f"- Contract version：`{report.contract.version}`",
+        f"- Selected trial：`{report.selected_trial_id or 'none'}`",
+        "",
+        "## Contract Checks",
+        "",
+        "| Check | 状态 | Evidence | 说明 |",
+        "|---|---|---|---|",
+    ]
+    for check in report.checks:
+        lines.append(
+            "| "
+            f"`{check.check_id}` | "
+            f"`{check.status}` | "
+            f"{_escape_markdown_table(check.evidence_ref)} | "
+            f"{_escape_markdown_table(check.reason)} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## 治理边界",
+            "",
+            "- 本报告只把 search output 放入独立 promotion contract 检查；"
+            "不修改 production weight、approved overlay、正式 prediction ledger、"
+            "日报结论或仓位 gate。",
+            "- `READY_FOR_FORWARD_SHADOW` 只表示可以继续收集前向 shadow 证据，"
+            "不表示 owner approval 或 production effect。",
+            "- `READY_FOR_OWNER_REVIEW` 仍需要 owner approval 和 rollback condition；"
+            "`approved_hard` 在执行链路未打通前保持不可用。",
+        ]
+    )
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def render_shadow_parameter_search_report(
     report: ShadowParameterSearchReport,
 ) -> str:
@@ -1444,6 +1738,13 @@ def render_shadow_parameter_search_report(
         f"- Search space checksum：`{report.search_space_checksum}`",
         f"- Objective：`{report.objective_path}`",
         f"- Objective checksum：`{report.objective_checksum}`",
+        f"- Source weight profile：`{report.source_weight_profile_path}`",
+        f"- Source weight checksum：`{report.source_weight_profile_checksum}`",
+        f"- Prices checksum：`{report.prices_checksum}`",
+        f"- Decision snapshot checksum：`{report.decision_snapshot_checksum}`",
+        f"- Resolver version：`{report.resolver_version}`",
+        f"- Git commit：`{report.git_commit_sha or 'unknown'}`",
+        f"- Git worktree dirty：`{report.git_worktree_dirty}`",
         (
             "- 搜索方式："
             f"weight_grid={'on' if report.search_space.weight_grid.enabled else 'off'}, "
@@ -1572,6 +1873,70 @@ def render_shadow_parameter_search_report(
                 ),
             ]
         )
+    lines.extend(["", "## Cap-Level Attribution", ""])
+    if not report.cap_attribution:
+        lines.append("- 未生成 cap-level attribution。")
+    else:
+        primary_cap = max(
+            report.cap_attribution,
+            key=lambda item: abs(item.excess_delta_vs_baseline or 0.0),
+        )
+        lines.extend(
+            [
+                f"- Primary gate cap：`{primary_cap.gate_id}`",
+                "- 解读：每行保留 production 权重，只替换 selected trial 中对应单个 gate cap，"
+                "用于判断 gate 主导收益来自哪个 cap。",
+                "",
+                (
+                    "| Gate cap | Selected value | Cap-only trial | "
+                    "Excess | Δ excess vs baseline | Shadow MDD | Turnover |"
+                ),
+                "|---|---:|---|---:|---:|---:|---:|",
+            ]
+        )
+        for item in report.cap_attribution:
+            trial = item.cap_only_trial
+            lines.append(
+                "| "
+                f"`{item.gate_id}` | "
+                f"{item.selected_cap_value:.2f} | "
+                f"`{trial.trial_id}` | "
+                f"{_format_pct(trial.excess_total_return)} | "
+                f"{_format_pct(item.excess_delta_vs_baseline)} | "
+                f"{_format_pct(trial.shadow_max_drawdown)} | "
+                f"{trial.shadow_turnover:.2f} |"
+            )
+    lines.extend(["", "## Position Change Attribution", ""])
+    if not report.position_change_rows:
+        lines.append("- 未生成最终仓位变化解释。")
+    else:
+        lines.extend(
+            [
+                (
+                    "| Date | Status | Production position | Candidate position | "
+                    "Delta | Production binding gate | Candidate binding gate | "
+                    "Asset return | Return impact |"
+                ),
+                "|---|---|---:|---:|---:|---|---|---:|---:|",
+            ]
+        )
+        for row in report.position_change_rows[:50]:
+            lines.append(
+                "| "
+                f"{row.as_of.isoformat()} | "
+                f"`{row.outcome_status}` | "
+                f"{row.production_position:.2%} | "
+                f"{row.candidate_position:.2%} | "
+                f"{row.position_delta:.2%} | "
+                f"{_escape_markdown_table(', '.join(row.production_binding_gates) or 'none')} | "
+                f"{_escape_markdown_table(', '.join(row.candidate_binding_gates) or 'none')} | "
+                f"{_format_pct(row.asset_return)} | "
+                f"{_format_pct(row.return_impact)} |"
+            )
+        if len(report.position_change_rows) > 50:
+            lines.append(
+                f"- 仅展示前 50 行；完整行数：{len(report.position_change_rows)}。"
+            )
     lines.extend(
         [
             "",
@@ -1781,6 +2146,7 @@ def _evaluate_search_trial(
     outcomes_by_signal_date: Mapping[date, dict[str, Any]],
     cost_rate: float,
     objective: ShadowParameterObjectiveConfig,
+    production_weights: Mapping[str, float],
 ) -> ShadowParameterSearchTrial:
     production_returns: list[float] = []
     shadow_returns: list[float] = []
@@ -1791,6 +2157,10 @@ def _evaluate_search_trial(
     shadow_turnover_sum = 0.0
     previous_production = 0.0
     previous_shadow = 0.0
+    gate_relaxation_distance_sum = 0.0
+    weight_l1_distance, max_single_factor_step, changed_weight_dimensions = (
+        _weight_distance_metrics(weight_candidate.target_weights, production_weights)
+    )
     for signal_date, _path, snapshot in snapshots:
         production_position = _band_midpoint(
             _dict_value((snapshot.get("positions") or {}).get("final_risk_asset_ai_band"))
@@ -1804,6 +2174,10 @@ def _evaluate_search_trial(
         gate_cap_max_position, _gate_cap_sources = _gate_cap(
             snapshot,
             gate_cap_overrides=gate_candidate.gate_cap_overrides,
+        )
+        gate_relaxation_distance_sum += _gate_relaxation_distance(
+            snapshot,
+            gate_candidate.gate_cap_overrides,
         )
         shadow_final_band = _apply_gate_cap(shadow_model_band, gate_cap_max_position)
         shadow_position = _band_midpoint(shadow_final_band)
@@ -1839,6 +2213,14 @@ def _evaluate_search_trial(
     )
     production_max_drawdown = _max_drawdown_from_returns(production_returns)
     shadow_max_drawdown = _max_drawdown_from_returns(shadow_returns)
+    gate_relaxation_distance = (
+        0.0
+        if not snapshots
+        else gate_relaxation_distance_sum / len(snapshots)
+    )
+    changed_dimension_count = changed_weight_dimensions + len(
+        gate_candidate.gate_cap_overrides
+    )
     objective_score = _search_objective_score(
         objective=objective,
         total_count=len(snapshots),
@@ -1850,12 +2232,17 @@ def _evaluate_search_trial(
         shadow_max_drawdown=shadow_max_drawdown,
         production_turnover=production_turnover_sum,
         shadow_turnover=shadow_turnover_sum,
+        weight_l1_distance=weight_l1_distance,
+        gate_relaxation_distance=gate_relaxation_distance,
+        changed_dimension_count=changed_dimension_count,
     )
     eligible, ineligibility_reason = _search_trial_eligibility(
         objective=objective,
         available_count=len(shadow_returns),
         excess_total_return=excess_total_return,
         objective_score=objective_score,
+        weight_l1_distance=weight_l1_distance,
+        max_single_factor_step=max_single_factor_step,
     )
     return ShadowParameterSearchTrial(
         trial_id=(
@@ -1883,6 +2270,10 @@ def _evaluate_search_trial(
             if not excess_returns
             else sum(value > 0.0 for value in excess_returns) / len(excess_returns)
         ),
+        weight_l1_distance_from_production=weight_l1_distance,
+        max_single_factor_step=max_single_factor_step,
+        gate_relaxation_distance=gate_relaxation_distance,
+        changed_dimension_count=changed_dimension_count,
         objective_score=objective_score,
         eligible=eligible,
         ineligibility_reason=ineligibility_reason,
@@ -1976,6 +2367,175 @@ def _trial_excess_delta(
     if trial.excess_total_return is None or baseline.excess_total_return is None:
         return None
     return trial.excess_total_return - baseline.excess_total_return
+
+
+def _build_cap_level_attribution(
+    *,
+    trials: list[ShadowParameterSearchTrial],
+    snapshots: tuple[tuple[date, Path, dict[str, Any]], ...],
+    source_profile: WeightProfile,
+    position_bands: tuple[PositionBand, ...],
+    outcomes_by_signal_date: Mapping[date, dict[str, Any]],
+    cost_rate: float,
+    objective: ShadowParameterObjectiveConfig,
+) -> tuple[ShadowParameterCapAttribution, ...]:
+    selected = _best_search_trial(trials, eligible_only=True)
+    if selected is None:
+        selected = _best_search_trial(trials, eligible_only=False)
+    if selected is None or not selected.gate_cap_overrides:
+        return ()
+    baseline = _find_trial(
+        trials,
+        weight_candidate_id="source_current",
+        gate_candidate_id=PRODUCTION_OBSERVED_GATE_PROFILE_ID,
+    )
+    if baseline is None:
+        return ()
+    source_weight = ShadowWeightCandidate(
+        candidate_id="source_current",
+        version=source_profile.version,
+        source="source_weight_profile",
+        target_weights=dict(source_profile.base_weights),
+    )
+    rows: list[ShadowParameterCapAttribution] = []
+    for gate_id, cap_value in sorted(selected.gate_cap_overrides.items()):
+        cap_trial = _evaluate_search_trial(
+            snapshots=snapshots,
+            weight_candidate=source_weight,
+            gate_candidate=ShadowGateCandidate(
+                candidate_id=f"cap_only_{gate_id}",
+                version=selected.gate_candidate_version,
+                source="cap_level_ablation",
+                gate_cap_overrides={gate_id: cap_value},
+            ),
+            position_bands=position_bands,
+            outcomes_by_signal_date=outcomes_by_signal_date,
+            cost_rate=cost_rate,
+            objective=objective,
+            production_weights=source_profile.base_weights,
+        )
+        rows.append(
+            ShadowParameterCapAttribution(
+                gate_id=gate_id,
+                selected_cap_value=cap_value,
+                cap_only_trial=cap_trial,
+                excess_delta_vs_baseline=_trial_excess_delta(cap_trial, baseline),
+            )
+        )
+    return tuple(rows)
+
+
+def _build_position_change_rows(
+    *,
+    trials: list[ShadowParameterSearchTrial],
+    snapshots: tuple[tuple[date, Path, dict[str, Any]], ...],
+    position_bands: tuple[PositionBand, ...],
+    outcomes_by_signal_date: Mapping[date, dict[str, Any]],
+    cost_rate: float,
+) -> tuple[ShadowParameterPositionChangeRow, ...]:
+    selected = _best_search_trial(trials, eligible_only=True)
+    if selected is None:
+        selected = _best_search_trial(trials, eligible_only=False)
+    if selected is None:
+        return ()
+    rows: list[ShadowParameterPositionChangeRow] = []
+    previous_production = 0.0
+    previous_candidate = 0.0
+    for signal_date, _path, snapshot in snapshots:
+        production_position = _band_midpoint(
+            _dict_value((snapshot.get("positions") or {}).get("final_risk_asset_ai_band"))
+        )
+        production_gate_cap, production_gate_sources = _gate_cap(snapshot)
+        _ = production_gate_cap
+        component_scores = _component_scores(snapshot)
+        candidate_score = sum(
+            component_scores[signal] * weight
+            for signal, weight in selected.target_weights.items()
+        )
+        candidate_model_band = _band_for_score(candidate_score, position_bands)
+        candidate_gate_cap, candidate_gate_sources = _gate_cap(
+            snapshot,
+            gate_cap_overrides=selected.gate_cap_overrides,
+        )
+        candidate_final_band = _apply_gate_cap(candidate_model_band, candidate_gate_cap)
+        candidate_position = _band_midpoint(candidate_final_band)
+        outcome = outcomes_by_signal_date[signal_date]
+        asset_return = _float_or_none(outcome.get("return"))
+        production_position_return: float | None = None
+        candidate_position_return: float | None = None
+        return_impact: float | None = None
+        if outcome.get("status") == "AVAILABLE" and asset_return is not None:
+            production_turnover = abs(production_position - previous_production)
+            candidate_turnover = abs(candidate_position - previous_candidate)
+            production_position_return = (
+                production_position * asset_return - production_turnover * cost_rate
+            )
+            candidate_position_return = (
+                candidate_position * asset_return - candidate_turnover * cost_rate
+            )
+            return_impact = candidate_position_return - production_position_return
+            previous_production = production_position
+            previous_candidate = candidate_position
+        rows.append(
+            ShadowParameterPositionChangeRow(
+                as_of=signal_date,
+                outcome_status=str(outcome.get("status") or "UNKNOWN"),
+                outcome_end_date=outcome.get("end_date"),
+                asset_return=asset_return,
+                production_position=production_position,
+                candidate_position=candidate_position,
+                position_delta=candidate_position - production_position,
+                production_binding_gates=production_gate_sources,
+                candidate_binding_gates=candidate_gate_sources,
+                production_position_return=production_position_return,
+                candidate_position_return=candidate_position_return,
+                return_impact=return_impact,
+            )
+        )
+    return tuple(rows)
+
+
+def _weight_distance_metrics(
+    candidate_weights: Mapping[str, float],
+    production_weights: Mapping[str, float],
+) -> tuple[float, float, int]:
+    signals = sorted(set(candidate_weights) | set(production_weights))
+    deltas = [
+        abs(float(candidate_weights.get(signal, 0.0)) - float(production_weights.get(signal, 0.0)))
+        for signal in signals
+    ]
+    return sum(deltas), max(deltas, default=0.0), sum(delta > 1e-9 for delta in deltas)
+
+
+def _observed_gate_caps(snapshot: dict[str, Any]) -> dict[str, float]:
+    raw_gates = (snapshot.get("positions") or {}).get("position_gates")
+    if not isinstance(raw_gates, list):
+        return {}
+    caps: dict[str, float] = {}
+    for gate in raw_gates:
+        if not isinstance(gate, dict):
+            continue
+        gate_id = str(gate.get("gate_id") or "")
+        if not gate_id or gate_id == "score_model":
+            continue
+        cap = _float_or_none(gate.get("max_position"))
+        if cap is not None:
+            caps[gate_id] = cap
+    return caps
+
+
+def _gate_relaxation_distance(
+    snapshot: dict[str, Any],
+    gate_cap_overrides: Mapping[str, float],
+) -> float:
+    observed = _observed_gate_caps(snapshot)
+    distance = 0.0
+    for gate_id, override in gate_cap_overrides.items():
+        base = observed.get(gate_id)
+        if base is None:
+            continue
+        distance += max(0.0, override - base)
+    return distance
 
 
 def _validate_weight_mapping(weights: dict[str, float]) -> None:
@@ -2157,6 +2717,9 @@ def _search_objective_score(
     shadow_max_drawdown: float | None,
     production_turnover: float,
     shadow_turnover: float,
+    weight_l1_distance: float,
+    gate_relaxation_distance: float,
+    changed_dimension_count: int,
 ) -> float | None:
     if shadow_total_return is None or excess_total_return is None:
         return None
@@ -2172,6 +2735,9 @@ def _search_objective_score(
         - objective.excess_drawdown_penalty * excess_drawdown
         - objective.excess_turnover_penalty * excess_turnover
         - objective.missing_sample_penalty * missing_ratio
+        - objective.gate_relaxation_penalty * gate_relaxation_distance
+        - objective.weight_distance_penalty * weight_l1_distance
+        - objective.changed_dimension_penalty * changed_dimension_count
     )
 
 
@@ -2181,6 +2747,8 @@ def _search_trial_eligibility(
     available_count: int,
     excess_total_return: float | None,
     objective_score: float | None,
+    weight_l1_distance: float,
+    max_single_factor_step: float,
 ) -> tuple[bool, str]:
     if objective_score is None:
         return False, "objective_score_missing"
@@ -2190,6 +2758,16 @@ def _search_trial_eligibility(
         excess_total_return is None or excess_total_return <= 0.0
     ):
         return False, "positive_excess_required"
+    if (
+        objective.max_l1_distance_from_production is not None
+        and weight_l1_distance > objective.max_l1_distance_from_production + 1e-9
+    ):
+        return False, "weight_l1_distance_above_objective_limit"
+    if (
+        objective.max_single_factor_step is not None
+        and max_single_factor_step > objective.max_single_factor_step + 1e-9
+    ):
+        return False, "single_factor_step_above_objective_limit"
     return True, ""
 
 
@@ -2272,8 +2850,15 @@ def _best_profile_payload(report: ShadowParameterSearchReport) -> dict[str, Any]
         "source": {
             "search_space": str(report.search_space_path),
             "objective": str(report.objective_path),
+            "source_weight_profile": str(report.source_weight_profile_path),
             "search_space_checksum": report.search_space_checksum,
             "objective_checksum": report.objective_checksum,
+            "source_weight_profile_checksum": report.source_weight_profile_checksum,
+            "prices_checksum": report.prices_checksum,
+            "decision_snapshot_checksum": report.decision_snapshot_checksum,
+            "resolver_version": report.resolver_version,
+            "git_commit_sha": report.git_commit_sha,
+            "git_worktree_dirty": report.git_worktree_dirty,
         },
     }
     if best is None:
@@ -2344,6 +2929,206 @@ def _best_profile_payload(report: ShadowParameterSearchReport) -> dict[str, Any]
     return payload
 
 
+def _trial_row_by_id(
+    trials: pd.DataFrame,
+    trial_id: object,
+) -> dict[str, Any] | None:
+    if trial_id is None or "trial_id" not in trials.columns:
+        return None
+    rows = trials.loc[trials["trial_id"].astype(str) == str(trial_id)]
+    if rows.empty:
+        return None
+    return rows.iloc[0].to_dict()
+
+
+def _build_shadow_parameter_promotion_checks(
+    *,
+    contract: ShadowParameterPromotionContractConfig,
+    manifest: dict[str, Any],
+    selected_trial: dict[str, Any] | None,
+    selected_trial_id: object,
+    has_eligible_best: bool,
+) -> list[ShadowParameterPromotionCheck]:
+    checks: list[ShadowParameterPromotionCheck] = []
+    if selected_trial is None:
+        checks.append(
+            ShadowParameterPromotionCheck(
+                check_id="search_selected",
+                status="FAIL",
+                reason="search output 没有可读取的 selected 或 diagnostic trial。",
+                evidence_ref="manifest.json + trials.csv",
+            )
+        )
+        return checks
+    if contract.require_search_eligible_best and not has_eligible_best:
+        checks.append(
+            ShadowParameterPromotionCheck(
+                check_id="search_selected",
+                status="FAIL",
+                reason=(
+                    "当前 search 没有 eligible best trial；diagnostic-leading 不能进入生产晋级。"
+                ),
+                evidence_ref=f"trial:{selected_trial_id}",
+            )
+        )
+    else:
+        checks.append(
+            ShadowParameterPromotionCheck(
+                check_id="search_selected",
+                status="PASS",
+                reason="search output 存在 contract 可评估的 selected trial。",
+                evidence_ref=f"trial:{selected_trial_id}",
+            )
+        )
+
+    available = _row_int(selected_trial, "available_count")
+    checks.append(
+        ShadowParameterPromotionCheck(
+            check_id="available_sample_floor",
+            status=(
+                "PASS"
+                if available >= contract.min_available_samples
+                else "FAIL"
+            ),
+            reason=(
+                f"available={available}，contract floor={contract.min_available_samples}。"
+            ),
+            evidence_ref="trials.csv:available_count",
+        )
+    )
+
+    excess = _row_float(selected_trial, "excess_total_return")
+    if contract.require_positive_excess and (excess is None or excess <= 0.0):
+        checks.append(
+            ShadowParameterPromotionCheck(
+                check_id="positive_excess",
+                status="FAIL",
+                reason="contract 要求正 excess return，但 selected trial 未满足。",
+                evidence_ref="trials.csv:excess_total_return",
+            )
+        )
+    else:
+        checks.append(
+            ShadowParameterPromotionCheck(
+                check_id="positive_excess",
+                status="PASS",
+                reason=f"selected trial excess={_format_pct(excess)}。",
+                evidence_ref="trials.csv:excess_total_return",
+            )
+        )
+
+    shadow_drawdown = abs(_row_float(selected_trial, "shadow_max_drawdown") or 0.0)
+    production_drawdown = abs(
+        _row_float(selected_trial, "production_max_drawdown") or 0.0
+    )
+    degradation = max(0.0, shadow_drawdown - production_drawdown)
+    if contract.max_drawdown_degradation is not None:
+        checks.append(
+            ShadowParameterPromotionCheck(
+                check_id="drawdown_degradation",
+                status=(
+                    "PASS"
+                    if degradation <= contract.max_drawdown_degradation + 1e-12
+                    else "FAIL"
+                ),
+                reason=(
+                    f"drawdown degradation={degradation:.2%}，"
+                    f"limit={contract.max_drawdown_degradation:.2%}。"
+                ),
+                evidence_ref="trials.csv:shadow_max_drawdown",
+            )
+        )
+
+    shadow_turnover = _row_float(selected_trial, "shadow_turnover") or 0.0
+    if contract.max_shadow_turnover is not None:
+        checks.append(
+            ShadowParameterPromotionCheck(
+                check_id="shadow_turnover",
+                status=(
+                    "PASS"
+                    if shadow_turnover <= contract.max_shadow_turnover + 1e-12
+                    else "FAIL"
+                ),
+                reason=(
+                    f"shadow turnover={shadow_turnover:.2f}，"
+                    f"limit={contract.max_shadow_turnover:.2f}。"
+                ),
+                evidence_ref="trials.csv:shadow_turnover",
+            )
+        )
+
+    factorial = manifest.get("factorial_attribution")
+    primary_driver = (
+        factorial.get("primary_driver") if isinstance(factorial, dict) else None
+    )
+    if contract.gate_primary_driver_requires_cap_review and primary_driver == "gate":
+        checks.append(
+            ShadowParameterPromotionCheck(
+                check_id="gate_driver_cap_review",
+                status="MISSING",
+                reason=(
+                    "factorial attribution 显示 primary driver=gate；"
+                    "需要 cap-level attribution 和 forward shadow 证明不是单纯放松风险约束。"
+                ),
+                evidence_ref="manifest.json:factorial_attribution",
+            )
+        )
+    else:
+        checks.append(
+            ShadowParameterPromotionCheck(
+                check_id="gate_driver_cap_review",
+                status="PASS",
+                reason=f"primary driver={primary_driver or 'unknown'}。",
+                evidence_ref="manifest.json:factorial_attribution",
+            )
+        )
+
+    if contract.required_forward_shadow_available_samples > 0:
+        checks.append(
+            ShadowParameterPromotionCheck(
+                check_id="forward_shadow",
+                status="MISSING",
+                reason=(
+                    "尚未接入独立 forward shadow outcome；"
+                    "contract 要求 available>="
+                    f"{contract.required_forward_shadow_available_samples}。"
+                ),
+                evidence_ref="prediction_outcomes:missing",
+            )
+        )
+
+    checks.append(
+        ShadowParameterPromotionCheck(
+            check_id="approved_hard_boundary",
+            status="PASS",
+            reason=(
+                "approved_hard_allowed=false，hard effects 在下游执行链路未接入前保持不可用。"
+                if not contract.approved_hard_allowed
+                else "contract 允许 approved_hard；必须另有执行链路测试证明。"
+            ),
+            evidence_ref="contract.approved_hard_allowed",
+        )
+    )
+    return checks
+
+
+def _row_float(row: Mapping[str, Any], key: str) -> float | None:
+    value = row.get(key)
+    if pd.isna(value):
+        return None
+    return _float_or_none(value)
+
+
+def _row_int(row: Mapping[str, Any], key: str) -> int:
+    value = row.get(key)
+    if pd.isna(value):
+        return 0
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return 0
+
+
 def _search_manifest_payload(report: ShadowParameterSearchReport) -> dict[str, Any]:
     best = report.best_trial
     return {
@@ -2363,10 +3148,17 @@ def _search_manifest_payload(report: ShadowParameterSearchReport) -> dict[str, A
         "slippage_bps": report.slippage_bps,
         "decision_snapshot_path": str(report.decision_snapshot_path),
         "prices_path": str(report.prices_path),
+        "source_weight_profile_path": str(report.source_weight_profile_path),
         "search_space_path": str(report.search_space_path),
         "objective_path": str(report.objective_path),
         "search_space_checksum": report.search_space_checksum,
         "objective_checksum": report.objective_checksum,
+        "source_weight_profile_checksum": report.source_weight_profile_checksum,
+        "prices_checksum": report.prices_checksum,
+        "decision_snapshot_checksum": report.decision_snapshot_checksum,
+        "resolver_version": report.resolver_version,
+        "git_commit_sha": report.git_commit_sha,
+        "git_worktree_dirty": report.git_worktree_dirty,
         "search_algorithm": "exhaustive_grid_with_optional_manifest_seeds",
         "weight_grid_enabled": report.search_space.weight_grid.enabled,
         "gate_grid_enabled": report.search_space.gate_grid.enabled,
@@ -2387,6 +3179,10 @@ def _search_manifest_payload(report: ShadowParameterSearchReport) -> dict[str, A
             if report.factorial_attribution is None
             else report.factorial_attribution.to_dict()
         ),
+        "cap_attribution": [item.to_dict() for item in report.cap_attribution],
+        "position_change_rows": [
+            row.to_dict() for row in report.position_change_rows
+        ],
         "warnings": list(report.warnings),
     }
 
@@ -2811,12 +3607,58 @@ def _format_gate_overrides(overrides: Mapping[str, float]) -> str:
     )
 
 
+def _escape_markdown_table(value: str) -> str:
+    return value.replace("|", "\\|").replace("\n", " ")
+
+
 def _sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as handle:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _sha256_search_snapshots(
+    snapshots: tuple[tuple[date, Path, dict[str, Any]], ...],
+) -> str:
+    digest = hashlib.sha256()
+    for signal_date, path, _snapshot in snapshots:
+        digest.update(signal_date.isoformat().encode("utf-8"))
+        digest.update(str(path).encode("utf-8"))
+        digest.update(_sha256_file(path).encode("utf-8"))
+    return digest.hexdigest()
+
+
+def _git_commit_sha() -> str | None:
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=PROJECT_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return None
+    sha = result.stdout.strip()
+    return sha or None
+
+
+def _git_worktree_dirty() -> bool | None:
+    try:
+        result = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=PROJECT_ROOT,
+            check=True,
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return None
+    return bool(result.stdout.strip())
 
 
 def _project_path(value: str) -> Path:

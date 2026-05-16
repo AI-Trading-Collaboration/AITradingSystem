@@ -4,7 +4,7 @@
 
 最后更新：2026-05-16
 
-关联任务：`CALIBRATION-003`、`CALIBRATION-004`、`CALIBRATION-011`、`CALIBRATION-012`、`CALIBRATION-014`、`FEEDBACK-002`、`EXPERIMENT-001`、`SHADOW-002`、`SHADOW-003`、`GOV-003`、`LOOP-001`
+关联任务：`CALIBRATION-003`、`CALIBRATION-004`、`CALIBRATION-011`、`CALIBRATION-012`、`CALIBRATION-014`、`CALIBRATION-015`、`CALIBRATION-016`、`CALIBRATION-017`、`FEEDBACK-002`、`EXPERIMENT-001`、`SHADOW-002`、`SHADOW-003`、`GOV-003`、`LOOP-001`
 
 ## 背景
 
@@ -58,6 +58,7 @@ aits feedback evaluate-parameter-governance --as-of YYYY-MM-DD
 aits feedback run-parameter-shadow --as-of YYYY-MM-DD
 aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 aits feedback search-shadow-parameters --from YYYY-MM-DD --to YYYY-MM-DD
+aits feedback evaluate-shadow-parameter-promotion --search-output-dir outputs/parameter_search/<run_id>
 ```
 
 主要输入：
@@ -75,6 +76,7 @@ aits feedback search-shadow-parameters --from YYYY-MM-DD --to YYYY-MM-DD
 - `config/weights/shadow_position_gate_profiles.yaml`
 - `config/weights/shadow_parameter_search_space.yaml`
 - `config/weights/shadow_parameter_objective.yaml`
+- `config/weights/shadow_parameter_promotion_contract.yaml`
 - `data/processed/shadow_weight_profile_observations.csv`
 - `config/parameter_governance.yaml`
 - `outputs/reports/parameter_governance_YYYY-MM-DD.json`
@@ -86,6 +88,7 @@ aits feedback search-shadow-parameters --from YYYY-MM-DD --to YYYY-MM-DD
 - `outputs/reports/shadow_weight_profiles_YYYY-MM-DD.md`
 - `outputs/reports/shadow_weight_performance_YYYY-MM-DD.md/.csv`
 - `outputs/parameter_search/<run_id>/{manifest.json,trials.csv,pareto_front.csv,best_profiles.yaml,search_report.md}`
+- `outputs/parameter_search/<run_id>/shadow_parameter_promotion_<run_id>.md/json`
 - `outputs/reports/market_feedback_optimization_YYYY-MM-DD.md`
 
 ## 执行频次
@@ -149,6 +152,9 @@ aits feedback search-shadow-parameters --from YYYY-MM-DD --to YYYY-MM-DD
 |9E. Shadow gate 参数实验|VALIDATING|新增隔离 hard gate / confidence / risk budget cap profile，允许与 shadow weight profile 组合观察 gate 后仓位和表现差异；profile 只覆盖 validation ledger，不修改生产 `scoring_rules.yaml`、`portfolio.yaml`、approved overlay 或日报仓位 gate。|
 |9F. Shadow 参数搜索器|VALIDATING|新增可复现搜索入口，按指定区间枚举或采样 shadow weight/gate 组合，输出 trial registry、Pareto front 和 best profile YAML；结论只代表当前回测区间 in-sample 最优候选，不能直接生产替换。|
 |9G. Shadow 参数验证收紧|VALIDATING|搜索报告输出 weight-only / gate-only / combined 的 factorial attribution；默认 objective 要求验证级样本和正 excess；短样本结果只能作为 diagnostic-leading，不得写成 eligible best 或 production 候选。|
+|9H. Cap-level attribution 与仓位解释|VALIDATING|在搜索报告中拆出单个 gate cap 的边际贡献，并按日期披露 production/candidate 最终仓位、binding gate 和 return impact；仍只作为 validation 解释。|
+|9I. Shadow 参数 promotion contract|VALIDATING|新增独立 contract 与 CLI，把 search ranking 和生产晋级拆开；缺 eligible best、forward shadow、owner approval 或 rollback 时不得进入 production。|
+|9J. Objective regularization 与 lineage|VALIDATING|objective 增加 gate relaxation、weight distance、changed dimension penalty 和生产邻近性限制；search manifest 记录价格、快照、权重、resolver 和 git commit lineage。|
 |10. Coverage / placeholder / source veto|VALIDATING|robustness summary 汇总模块覆盖率、placeholder 占比、数据来源可信度和关键模块缺失；parameter replay/candidate ledger 把这些字段作为 `BLOCKED_BY_DATA` 或降级原因，而不只作为报告说明。|
 |11. Overlay target weights 与冲突治理|VALIDATING|approved overlay 支持 `target_weights` 模式、priority、mutual exclusion group 和冲突审计；approved overlay 的未知 signal、非法权重或同组优先级冲突必须 fail closed。|
 |12. Benchmark 扩展与反过拟合证据|VALIDATING|robustness 增加 same-exposure random、vol-targeted/fixed exposure、no-gate、alpha-only/risk-state-only 等 benchmark，并把关键 benchmark 结果接入 candidate 证据摘要。|
@@ -209,3 +215,5 @@ aits feedback search-shadow-parameters --from YYYY-MM-DD --to YYYY-MM-DD
 - 2026-05-16：新增 CALIBRATION-013 shadow / production 边界复核。`validation_shadow` 被定义为 validation-only source level；`run-parameter-shadow` 默认输出从正式 `prediction_ledger.csv` 改为隔离的 `prediction_ledger_flow_validation.csv`，显式路径仍可覆盖。该修复只收紧 shadow 默认隔离，不改变正式 `score-daily`、approved overlay、生产权重或仓位 gate。
 - 2026-05-16：新增 CALIBRATION-014 shadow 参数验证收紧。当前实现目标是补 factorial attribution，收紧默认 objective 到 prediction diagnostic floor，短样本只输出 diagnostic-leading trial，并在 hard overlay 未接入下游执行层前对 `approved_hard` hard effect fail closed。
 - 2026-05-16：CALIBRATION-014 进入 VALIDATING。`search-shadow-parameters` 报告和 manifest 已输出 factorial attribution；默认 objective 现要求 `min_available_samples=13` 且 `require_positive_excess=true`。完整当前样本搜索 `current_20260504_20260514_validation_v3` 评估 51,612 trials，结果为 `PASS_WITH_LIMITATIONS`，没有 eligible best trial；诊断领先项为 `grid_weight_0118__grid_gate_0217`，factorial attribution 显示 `weight_only` excess delta 0.00%、`gate_only` 约 4.29%、`combined` 约 4.45%，primary driver 为 `gate`。
+- 2026-05-16：新增 CALIBRATION-015、CALIBRATION-016 和 CALIBRATION-017。原因：最新评估指出下一步应继续拆解 gate 主导效应、把 search ranking 与 promotion contract 分层，并强化 objective risk-awareness、生产邻近性和 lineage。实现已让 `search-shadow-parameters` 输出 cap-level attribution、最终仓位变化解释、source weight / price / decision snapshot checksum、resolver version、git commit sha 和 dirty worktree 标记；新增 `config/weights/shadow_parameter_promotion_contract.yaml` 与 `aits feedback evaluate-shadow-parameter-promotion`，默认 contract 仍要求 eligible best、30 个 available、正 excess、回撤/换手约束、cap review、forward shadow、owner approval、rollback condition，并保持 `approved_hard_allowed=false`。目标测试已通过，生产权重、正式 gate、approved overlay、正式 prediction ledger 和日报结论未改变。
+- 2026-05-16：CALIBRATION-015/016/017 当前样本 smoke 通过。`current_20260504_20260514_cap_promotion_v3` 为 `PASS_WITH_LIMITATIONS`，51,612 trials，无 eligible best；diagnostic-leading 为 `source_current__grid_gate_0217`，excess 4.29%，factorial primary driver 为 `gate`。Cap-level attribution 显示 primary gate cap 为 `valuation`，valuation cap-only excess delta 约 2.42%、thesis 约 0.76%、其他 cap 约 0%；position change 表展示 2026-05-04 至 2026-05-14 每日 production/candidate 最终仓位和 return impact。`evaluate-shadow-parameter-promotion` 对同一 bundle 输出 `NOT_PROMOTABLE`，因为没有 eligible best、available=8 低于 contract floor 30，且缺 forward shadow outcome。

@@ -3,13 +3,18 @@ status: "validation"
 owner: "system_validation"
 production_effect: "none"
 primary_metric: "objective_score"
-rationale: "验证版优先寻找相对主线的 post-gate position-weighted excess return，同时要求达到 prediction diagnostic floor 并惩罚额外回撤、换手和缺失样本；不满足门槛时只能输出 diagnostic-leading trial，不能作为 eligible best 或生产候选。"
+rationale: "验证版优先寻找相对主线的 post-gate position-weighted excess return，同时要求达到 prediction diagnostic floor 并惩罚额外回撤、换手、缺失样本、gate 放松、远离生产权重和改动维度；不满足门槛时只能输出 diagnostic-leading trial，不能作为 eligible best 或生产候选。"
 
 excess_return_weight: 1.00
 shadow_return_weight: 0.00
 excess_drawdown_penalty: 0.50
 excess_turnover_penalty: 0.02
 missing_sample_penalty: 0.25
+gate_relaxation_penalty: 0.01
+weight_distance_penalty: 0.01
+changed_dimension_penalty: 0.0005
+max_l1_distance_from_production: 0.30
+max_single_factor_step: 0.10
 min_available_samples: 13
 require_positive_excess: true
 top_n: 20
