@@ -9,6 +9,7 @@ from typing import Any
 
 import pytest
 import yaml
+from typer.main import get_command
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
@@ -687,8 +688,14 @@ def test_score_daily_help_exposes_risk_event_openai_precheck_option() -> None:
 
     assert result.exit_code == 0
     assert "OpenAI 预审" in result.output
-    assert "--skip-risk-event-" in result.output
-    assert "openai-http-client" in result.output
+    score_command = get_command(app).commands["score-daily"]
+    option_strings = {
+        option
+        for param in score_command.params
+        for option in [*getattr(param, "opts", []), *getattr(param, "secondary_opts", [])]
+    }
+    assert "--skip-risk-event-openai-precheck" in option_strings
+    assert "--openai-http-client" in option_strings
 
 
 def _write_csv(input_path: Path, rows: list[dict[str, str]]) -> None:
