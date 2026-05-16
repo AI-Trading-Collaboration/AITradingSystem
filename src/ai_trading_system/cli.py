@@ -614,8 +614,10 @@ from ai_trading_system.shadow_iteration import (
     DEFAULT_SHADOW_ITERATION_REGISTRY_PATH,
     DEFAULT_SHADOW_ITERATION_REPORT_DIR,
     DEFAULT_SHADOW_ITERATION_RUN_ROOT,
+    build_forward_shadow_evaluation_report,
     build_shadow_iteration_report,
     register_forward_shadow_candidate,
+    write_forward_shadow_evaluation_outputs,
     write_shadow_iteration_outputs,
 )
 from ai_trading_system.shadow_weight_profiles import (
@@ -2520,6 +2522,52 @@ def register_forward_shadow_command(
     console.print(f"Status：{row.get('status')}")
     console.print(f"Registry：{registry_path}")
     console.print("治理边界：本命令只更新 shadow_iteration_registry.csv，不修改 production 配置。")
+
+
+@feedback_app.command("evaluate-forward-shadow")
+def evaluate_forward_shadow_command(
+    as_of: Annotated[
+        str,
+        typer.Option(help="forward shadow 评估日期，格式为 YYYY-MM-DD。"),
+    ],
+    registry_path: Annotated[
+        Path,
+        typer.Option(
+            hidden=True,
+            help="测试/隔离用：shadow iteration registry CSV 路径。",
+        ),
+    ] = DEFAULT_SHADOW_ITERATION_REGISTRY_PATH,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(hidden=True, help="测试/隔离用：forward shadow 评估报告目录。"),
+    ] = DEFAULT_SHADOW_ITERATION_REPORT_DIR,
+) -> None:
+    """每日评估 active forward shadow 候选并更新只读 lifecycle 状态。"""
+    run_date = _parse_date(as_of)
+    try:
+        report = build_forward_shadow_evaluation_report(
+            as_of=run_date,
+            registry_path=registry_path,
+            reports_dir=reports_dir,
+        )
+        paths = write_forward_shadow_evaluation_outputs(report)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        console.print(f"[red]Forward shadow 评估失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+    style = "green" if report.status == "PASS" else "yellow"
+    console.print(f"[{style}]Forward shadow 评估状态：{report.status}[/{style}]")
+    console.print(f"Evaluated candidates：{len(report.evaluations)}")
+    console.print(
+        "Actions："
+        + ", ".join(
+            f"{action}={count}"
+            for action, count in report.action_counts.items()
+        )
+    )
+    console.print(f"Registry：{paths['registry']}")
+    console.print(f"报告：{paths['markdown_report']}")
+    console.print(f"JSON：{paths['json_report']}")
+    console.print("治理边界：本命令不修改 production 权重、gate、approved overlay 或正式 ledger。")
 
 
 @feedback_app.command("shadow-maturity")

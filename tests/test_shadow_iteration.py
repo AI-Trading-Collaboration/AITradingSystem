@@ -124,6 +124,68 @@ def test_shadow_iteration_command_does_not_modify_production_surfaces(
     assert after == before
 
 
+def test_run_shadow_iteration_is_idempotent_for_registry_rows(
+    tmp_path: Path,
+) -> None:
+    search_output_dir, contract_path = _write_search_output(tmp_path)
+    registry_path = tmp_path / "registry.csv"
+
+    first = build_shadow_iteration_report(
+        as_of=pd.Timestamp("2026-05-17").date(),
+        search_output_dir=search_output_dir,
+        registry_path=registry_path,
+        reports_dir=tmp_path / "reports",
+        run_output_root=tmp_path / "shadow_iterations",
+        contract_path=contract_path,
+    )
+    write_shadow_iteration_outputs(first)
+    second = build_shadow_iteration_report(
+        as_of=pd.Timestamp("2026-05-17").date(),
+        search_output_dir=search_output_dir,
+        registry_path=registry_path,
+        reports_dir=tmp_path / "reports",
+        run_output_root=tmp_path / "shadow_iterations",
+        contract_path=contract_path,
+    )
+    write_shadow_iteration_outputs(second)
+
+    registry = pd.read_csv(registry_path)
+    assert len(registry) == len(set(registry["iteration_id"]))
+    assert set(registry["candidate_type"]) == {
+        "weight_only",
+        "gate_only",
+        "weight_gate_bundle",
+    }
+
+    old_row = registry.iloc[0].copy()
+    old_row["iteration_id"] = "old_search::missing_trial"
+    old_row["trial_id"] = "missing_trial"
+    old_row["as_of"] = "2026-05-17"
+    old_row["retirement_evidence_json"] = json.dumps(
+        {"missing_top_group_count": 1},
+        ensure_ascii=False,
+    )
+    pd.concat([registry, pd.DataFrame([old_row])], ignore_index=True).to_csv(
+        registry_path,
+        index=False,
+    )
+
+    third = build_shadow_iteration_report(
+        as_of=pd.Timestamp("2026-05-17").date(),
+        search_output_dir=search_output_dir,
+        registry_path=registry_path,
+        reports_dir=tmp_path / "reports",
+        run_output_root=tmp_path / "shadow_iterations",
+        contract_path=contract_path,
+    )
+    write_shadow_iteration_outputs(third)
+    updated = pd.read_csv(registry_path)
+    assert len(updated) == len(set(updated["iteration_id"]))
+    old_updated = updated.loc[updated["iteration_id"] == "old_search::missing_trial"].iloc[0]
+    evidence = json.loads(old_updated["retirement_evidence_json"])
+    assert evidence["missing_top_group_count"] == 1
+
+
 def test_register_forward_shadow_only_updates_registry_status(
     tmp_path: Path,
 ) -> None:
@@ -165,6 +227,161 @@ def test_register_forward_shadow_only_updates_registry_status(
     assert "forward shadow 观察" in updated_row["next_action"]
     assert not (tmp_path / "config" / "weights" / "weight_profile_current.yaml").exists()
     assert not (tmp_path / "data" / "processed" / "prediction_ledger.csv").exists()
+
+
+def test_evaluate_forward_shadow_routes_non_weight_reviews_and_keeps_production_files(
+    tmp_path: Path,
+) -> None:
+    search_output_dir, contract_path = _write_search_output(tmp_path)
+    registry_path = tmp_path / "registry.csv"
+    report = build_shadow_iteration_report(
+        as_of=pd.Timestamp("2026-05-17").date(),
+        search_output_dir=search_output_dir,
+        registry_path=registry_path,
+        reports_dir=tmp_path / "reports",
+        run_output_root=tmp_path / "shadow_iterations",
+        contract_path=contract_path,
+    )
+    write_shadow_iteration_outputs(report)
+    registry = pd.read_csv(registry_path)
+    protected_paths = [
+        PROJECT_ROOT / "config" / "weights" / "weight_profile_current.yaml",
+        PROJECT_ROOT / "config" / "scoring_rules.yaml",
+        PROJECT_ROOT / "config" / "portfolio.yaml",
+        PROJECT_ROOT / "data" / "processed" / "approved_calibration_overlay.json",
+        PROJECT_ROOT / "data" / "processed" / "prediction_ledger.csv",
+    ]
+    before = {
+        path: (sha256_file(path) if path.exists() else None)
+        for path in protected_paths
+    }
+
+    for candidate_type in ["gate_only", "weight_gate_bundle", "weight_only"]:
+        row = registry.loc[registry["candidate_type"] == candidate_type].iloc[0]
+        result = CliRunner().invoke(
+            app,
+            [
+                "feedback",
+                "register-forward-shadow",
+                "--iteration-id",
+                str(row["iteration_id"]),
+                "--candidate-id",
+                str(row["trial_id"]),
+                "--as-of",
+                "2026-05-18",
+                "--registry-path",
+                str(registry_path),
+            ],
+        )
+        assert result.exit_code == 0, result.output
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "feedback",
+            "evaluate-forward-shadow",
+            "--as-of",
+            "2026-05-19",
+            "--registry-path",
+            str(registry_path),
+            "--reports-dir",
+            str(tmp_path / "reports"),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    output_json = tmp_path / "reports" / "forward_shadow_evaluation_2026-05-19.json"
+    output_md = tmp_path / "reports" / "forward_shadow_evaluation_2026-05-19.md"
+    assert output_json.exists()
+    assert output_md.exists()
+    payload = json.loads(output_json.read_text(encoding="utf-8"))
+    actions = {
+        item["candidate_type"]: item["action"]
+        for item in payload["evaluations"]
+    }
+    assert actions["gate_only"] == "REVIEW_GATE_POLICY"
+    assert actions["weight_gate_bundle"] == "RETIRE"
+    assert actions["weight_only"] == "CONTINUE"
+    assert payload["summary"]["action_counts"]["REVIEW_WEIGHT_CANDIDATE"] == 0
+    assert payload["production_effect"] == "none"
+    updated = pd.read_csv(registry_path)
+    gate_row = updated.loc[updated["candidate_type"] == "gate_only"].iloc[0]
+    bundle_row = updated.loc[updated["candidate_type"] == "weight_gate_bundle"].iloc[0]
+    weight_row = updated.loc[updated["candidate_type"] == "weight_only"].iloc[0]
+    assert gate_row["status"] == "REVIEW_PENDING"
+    assert bundle_row["status"] == "RETIRED"
+    assert weight_row["status"] == "FORWARD_SHADOW_ACTIVE"
+    after = {
+        path: (sha256_file(path) if path.exists() else None)
+        for path in protected_paths
+    }
+    assert after == before
+
+
+def test_evaluate_forward_shadow_weight_review_requires_weight_primary_driver(
+    tmp_path: Path,
+) -> None:
+    search_output_dir, contract_path = _write_search_output(
+        tmp_path,
+        primary_driver="weight",
+    )
+    registry_path = tmp_path / "registry.csv"
+    report = build_shadow_iteration_report(
+        as_of=pd.Timestamp("2026-05-17").date(),
+        search_output_dir=search_output_dir,
+        registry_path=registry_path,
+        reports_dir=tmp_path / "reports",
+        run_output_root=tmp_path / "shadow_iterations",
+        contract_path=contract_path,
+    )
+    write_shadow_iteration_outputs(report)
+    registry = pd.read_csv(registry_path)
+    row = registry.loc[registry["candidate_type"] == "weight_only"].iloc[0]
+    register_result = CliRunner().invoke(
+        app,
+        [
+            "feedback",
+            "register-forward-shadow",
+            "--iteration-id",
+            str(row["iteration_id"]),
+            "--candidate-id",
+            str(row["trial_id"]),
+            "--as-of",
+            "2026-05-18",
+            "--registry-path",
+            str(registry_path),
+        ],
+    )
+    assert register_result.exit_code == 0, register_result.output
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "feedback",
+            "evaluate-forward-shadow",
+            "--as-of",
+            "2026-05-19",
+            "--registry-path",
+            str(registry_path),
+            "--reports-dir",
+            str(tmp_path / "reports"),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(
+        (tmp_path / "reports" / "forward_shadow_evaluation_2026-05-19.json").read_text(
+            encoding="utf-8",
+        )
+    )
+    weight_eval = next(
+        item for item in payload["evaluations"] if item["candidate_type"] == "weight_only"
+    )
+    assert weight_eval["primary_driver"] == "weight"
+    assert weight_eval["action"] == "REVIEW_WEIGHT_CANDIDATE"
+    updated = pd.read_csv(registry_path)
+    updated_weight = updated.loc[updated["candidate_type"] == "weight_only"].iloc[0]
+    assert updated_weight["status"] == "REVIEW_PENDING"
 
 
 def test_shadow_iteration_promotion_contract_only_outputs_blocked_reasons(

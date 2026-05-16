@@ -31,10 +31,17 @@ DEFAULT_SHADOW_ITERATION_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
 DEFAULT_SHADOW_ITERATION_RUN_ROOT = PROJECT_ROOT / "outputs" / "shadow_iterations"
 
 CandidateType = Literal["weight_only", "gate_only", "weight_gate_bundle"]
+ForwardShadowAction = Literal[
+    "CONTINUE",
+    "RETIRE",
+    "REVIEW_GATE_POLICY",
+    "REVIEW_WEIGHT_CANDIDATE",
+]
 LifecycleStatus = Literal[
     "OBSERVED",
     "CANDIDATE",
     "FORWARD_SHADOW_ACTIVE",
+    "REVIEW_PENDING",
     "BLOCKED",
     "RETIRED",
 ]
@@ -91,6 +98,10 @@ P2_GUARDRAILS = (
     "do_not_promote_gate_only_as_weight_candidate",
     "do_not_promote_weight_gate_bundle_directly",
     "do_not_generate_shrinkage_production_proposal",
+)
+FORWARD_SHADOW_ACTIVE_STATUSES = frozenset({"FORWARD_SHADOW_ACTIVE", "REVIEW_PENDING"})
+FORWARD_SHADOW_REVIEW_ACTIONS = frozenset(
+    {"REVIEW_GATE_POLICY", "REVIEW_WEIGHT_CANDIDATE"}
 )
 
 
@@ -266,7 +277,13 @@ class ShadowIterationReport:
             candidate
             for candidate in self.candidates
             if candidate.status
-            in {"OBSERVED", "CANDIDATE", "FORWARD_SHADOW_ACTIVE", "BLOCKED"}
+            in {
+                "OBSERVED",
+                "CANDIDATE",
+                "FORWARD_SHADOW_ACTIVE",
+                "REVIEW_PENDING",
+                "BLOCKED",
+            }
         )
 
     def to_dashboard_dict(self) -> dict[str, Any]:
@@ -329,12 +346,131 @@ class ShadowIterationReport:
         }
 
 
+@dataclass(frozen=True)
+class ForwardShadowEvaluationRow:
+    iteration_id: str
+    trial_id: str
+    candidate_type: str
+    status_before: str
+    status_after: str
+    action: ForwardShadowAction
+    primary_driver: str
+    promotion_status_before: str
+    promotion_status_after: str
+    production_effect: str
+    active_days: int
+    excess_return: float | None
+    shadow_return: float | None
+    production_return: float | None
+    max_drawdown_delta: float | None
+    turnover: float | None
+    available_samples: int
+    missing_samples: int
+    reason: str
+    next_action: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "iteration_id": self.iteration_id,
+            "trial_id": self.trial_id,
+            "candidate_type": self.candidate_type,
+            "status_before": self.status_before,
+            "status_after": self.status_after,
+            "action": self.action,
+            "primary_driver": self.primary_driver,
+            "promotion_status_before": self.promotion_status_before,
+            "promotion_status_after": self.promotion_status_after,
+            "production_effect": self.production_effect,
+            "active_days": self.active_days,
+            "excess_return": self.excess_return,
+            "shadow_return": self.shadow_return,
+            "production_return": self.production_return,
+            "max_drawdown_delta": self.max_drawdown_delta,
+            "turnover": self.turnover,
+            "available_samples": self.available_samples,
+            "missing_samples": self.missing_samples,
+            "reason": self.reason,
+            "next_action": self.next_action,
+        }
+
+
+@dataclass(frozen=True)
+class ForwardShadowEvaluationReport:
+    as_of: date
+    generated_at: datetime
+    registry_path: Path
+    report_path: Path
+    json_path: Path
+    production_effect: str
+    evaluations: tuple[ForwardShadowEvaluationRow, ...]
+    updated_rows: tuple[dict[str, Any], ...]
+    warnings: tuple[str, ...]
+
+    @property
+    def status(self) -> str:
+        if self.warnings:
+            return "PASS_WITH_LIMITATIONS"
+        return "PASS"
+
+    @property
+    def action_counts(self) -> dict[str, int]:
+        counts = {
+            "CONTINUE": 0,
+            "RETIRE": 0,
+            "REVIEW_GATE_POLICY": 0,
+            "REVIEW_WEIGHT_CANDIDATE": 0,
+        }
+        for evaluation in self.evaluations:
+            counts[evaluation.action] += 1
+        return counts
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "schema_version": SCHEMA_VERSION,
+            "report_type": "forward_shadow_evaluation",
+            "status": self.status,
+            "production_effect": self.production_effect,
+            "as_of": self.as_of.isoformat(),
+            "generated_at": self.generated_at.isoformat(),
+            "registry_path": str(self.registry_path),
+            "summary": {
+                "evaluated_count": len(self.evaluations),
+                "action_counts": self.action_counts,
+                "production_parameters_changed": False,
+                "weight_review_count": self.action_counts["REVIEW_WEIGHT_CANDIDATE"],
+                "gate_policy_review_count": self.action_counts["REVIEW_GATE_POLICY"],
+            },
+            "evaluations": [
+                evaluation.to_dict() for evaluation in self.evaluations
+            ],
+            "warnings": list(self.warnings),
+            "safety": {
+                "production_parameters_changed": False,
+                "forbidden_write_surfaces": [
+                    "config/weights/weight_profile_current.yaml",
+                    "config/scoring_rules.yaml",
+                    "config/portfolio.yaml",
+                    "approved calibration overlay",
+                    "data/processed/prediction_ledger.csv",
+                ],
+            },
+        }
+
+
 def default_shadow_iteration_report_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"shadow_iteration_{as_of.isoformat()}.md"
 
 
 def default_shadow_iteration_json_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"shadow_iteration_{as_of.isoformat()}.json"
+
+
+def default_forward_shadow_evaluation_report_path(output_dir: Path, as_of: date) -> Path:
+    return output_dir / f"forward_shadow_evaluation_{as_of.isoformat()}.md"
+
+
+def default_forward_shadow_evaluation_json_path(output_dir: Path, as_of: date) -> Path:
+    return output_dir / f"forward_shadow_evaluation_{as_of.isoformat()}.json"
 
 
 def build_shadow_iteration_report(
@@ -437,6 +573,7 @@ def write_shadow_iteration_outputs(report: ShadowIterationReport) -> dict[str, P
     report.run_output_dir.mkdir(parents=True, exist_ok=True)
     registry_rows = [*report.retired_rows]
     registry_rows.extend(candidate.to_registry_row() for candidate in report.candidates)
+    registry_rows = _dedupe_registry_rows(registry_rows)
     _write_registry_rows(report.registry_path, registry_rows)
     report.report_path.write_text(render_shadow_iteration_report(report), encoding="utf-8")
     report.json_path.write_text(
@@ -531,8 +668,70 @@ def register_forward_shadow_candidate(
         ensure_ascii=False,
     )
     rows[matched_index] = row
-    _write_registry_rows(registry_path, rows)
+    _write_registry_rows(registry_path, _dedupe_registry_rows(rows))
     return row
+
+
+def build_forward_shadow_evaluation_report(
+    *,
+    as_of: date,
+    registry_path: Path = DEFAULT_SHADOW_ITERATION_REGISTRY_PATH,
+    reports_dir: Path = DEFAULT_SHADOW_ITERATION_REPORT_DIR,
+    generated_at: datetime | None = None,
+) -> ForwardShadowEvaluationReport:
+    effective_generated_at = generated_at or datetime.now(tz=UTC)
+    rows = _load_registry_rows(registry_path)
+    if not rows:
+        raise FileNotFoundError(f"shadow iteration registry not found or empty: {registry_path}")
+    updated_rows: list[dict[str, Any]] = []
+    evaluations: list[ForwardShadowEvaluationRow] = []
+    warnings: list[str] = []
+    for row in _dedupe_registry_rows(rows):
+        status = str(row.get("status") or "")
+        if status not in FORWARD_SHADOW_ACTIVE_STATUSES:
+            updated_rows.append(row)
+            continue
+        updated, evaluation = _evaluate_forward_shadow_row(
+            row=row,
+            as_of=as_of,
+            generated_at=effective_generated_at,
+        )
+        updated_rows.append(updated)
+        evaluations.append(evaluation)
+    if not evaluations:
+        warnings.append("没有 FORWARD_SHADOW_ACTIVE 或 REVIEW_PENDING 候选可评估。")
+    return ForwardShadowEvaluationReport(
+        as_of=as_of,
+        generated_at=effective_generated_at,
+        registry_path=registry_path,
+        report_path=default_forward_shadow_evaluation_report_path(reports_dir, as_of),
+        json_path=default_forward_shadow_evaluation_json_path(reports_dir, as_of),
+        production_effect="none",
+        evaluations=tuple(evaluations),
+        updated_rows=tuple(updated_rows),
+        warnings=tuple(warnings),
+    )
+
+
+def write_forward_shadow_evaluation_outputs(
+    report: ForwardShadowEvaluationReport,
+) -> dict[str, Path]:
+    report.report_path.parent.mkdir(parents=True, exist_ok=True)
+    report.json_path.parent.mkdir(parents=True, exist_ok=True)
+    _write_registry_rows(report.registry_path, list(report.updated_rows))
+    report.report_path.write_text(
+        render_forward_shadow_evaluation_report(report),
+        encoding="utf-8",
+    )
+    report.json_path.write_text(
+        json.dumps(report.to_dict(), ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    return {
+        "registry": report.registry_path,
+        "markdown_report": report.report_path,
+        "json_report": report.json_path,
+    }
 
 
 def find_latest_search_output_dir(output_root: Path) -> Path:
@@ -679,6 +878,81 @@ def render_shadow_iteration_report(report: ShadowIterationReport) -> str:
     lines.extend(["", "## P2 Guardrails", ""])
     lines.extend(f"- `{guardrail}`" for guardrail in P2_GUARDRAILS)
     lines.extend(["", "## Warnings", ""])
+    if report.warnings:
+        lines.extend(f"- {warning}" for warning in report.warnings)
+    else:
+        lines.append("- 无。")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def render_forward_shadow_evaluation_report(
+    report: ForwardShadowEvaluationReport,
+) -> str:
+    lines = [
+        "# Forward Shadow Evaluation 报告",
+        "",
+        f"- 状态：{report.status}",
+        "- production_effect：none",
+        f"- As of：{report.as_of.isoformat()}",
+        f"- Registry：`{report.registry_path}`",
+        "",
+        "## 本次结论",
+        "",
+        (
+            "- Production 参数未改变：本流程只更新 shadow registry 状态和 forward "
+            "evaluation 报告，不写 production weight、production gate、approved overlay "
+            "或正式 prediction ledger。"
+        ),
+        (
+            "- Action counts："
+            + ", ".join(
+                f"{action}={count}"
+                for action, count in report.action_counts.items()
+            )
+        ),
+        "",
+        "## Forward Shadow Candidates",
+        "",
+    ]
+    if not report.evaluations:
+        lines.append("- 没有 active forward shadow 候选。")
+    else:
+        lines.extend(
+            [
+                (
+                    "| Candidate | Type | Driver | Action | Status | Excess | "
+                    "MDD delta | Turnover | Reason |"
+                ),
+                "|---|---|---|---|---|---:|---:|---:|---|",
+            ]
+        )
+        for evaluation in report.evaluations:
+            lines.append(
+                "| "
+                f"`{evaluation.trial_id}` | "
+                f"`{evaluation.candidate_type}` | "
+                f"`{evaluation.primary_driver}` | "
+                f"`{evaluation.action}` | "
+                f"`{evaluation.status_before}` -> `{evaluation.status_after}` | "
+                f"{_format_pct(evaluation.excess_return)} | "
+                f"{_format_pct(evaluation.max_drawdown_delta)} | "
+                f"{_format_number(evaluation.turnover)} | "
+                f"{_escape_markdown_table(evaluation.reason)} |"
+            )
+    lines.extend(
+        [
+            "",
+            "## Review Boundary",
+            "",
+            "- `REVIEW_WEIGHT_CANDIDATE` 只允许 `weight_only` 且 `primary_driver=weight`。",
+            "- `gate_only` 只能进入 `REVIEW_GATE_POLICY`。",
+            "- `weight_gate_bundle` 不能直接进入 weight review。",
+            "- `REVIEW_PENDING` 不代表 owner approval，也不代表 production effect。",
+            "",
+            "## Warnings",
+            "",
+        ]
+    )
     if report.warnings:
         lines.extend(f"- {warning}" for warning in report.warnings)
     else:
@@ -952,6 +1226,8 @@ def _candidate_status(
 ) -> LifecycleStatus:
     if has_retirement_reasons:
         return "RETIRED"
+    if previous_status == "REVIEW_PENDING":
+        return "REVIEW_PENDING"
     if previous_status == "FORWARD_SHADOW_ACTIVE":
         return "FORWARD_SHADOW_ACTIVE"
     if has_critical_reasons:
@@ -1082,6 +1358,148 @@ def _candidate_next_action(
     return "继续观察；promotion contract 只输出阻断原因，不改 production。"
 
 
+def _evaluate_forward_shadow_row(
+    *,
+    row: Mapping[str, Any],
+    as_of: date,
+    generated_at: datetime,
+) -> tuple[dict[str, Any], ForwardShadowEvaluationRow]:
+    normalized = _normalize_registry_row(row)
+    status_before = str(normalized.get("status") or "")
+    promotion_before = str(normalized.get("promotion_status") or "")
+    action, status_after, promotion_after, reason, next_action = (
+        _forward_shadow_lifecycle_decision(normalized)
+    )
+    first_seen_at = str(normalized.get("first_seen_at") or "")
+    if not first_seen_at:
+        first_seen_at = generated_at.isoformat()
+    active_days = _active_days(first_seen_at, as_of)
+    reasons = _json_list(normalized.get("blocked_reasons_json"))
+    reasons.append(f"forward_shadow_evaluation:{action}:{reason}")
+    evidence = _json_object(normalized.get("retirement_evidence_json"))
+    evidence["forward_shadow_last_action"] = action
+    evidence["forward_shadow_last_reason"] = reason
+    evidence["forward_shadow_last_as_of"] = as_of.isoformat()
+    evidence["forward_shadow_status_before"] = status_before
+    evidence["forward_shadow_status_after"] = status_after
+    updated = dict(normalized)
+    updated["status"] = status_after
+    updated["promotion_status"] = promotion_after
+    updated["production_effect"] = "none"
+    updated["next_action"] = next_action
+    updated["as_of"] = as_of.isoformat()
+    updated["last_seen_at"] = generated_at.isoformat()
+    updated["first_seen_at"] = first_seen_at
+    updated["active_days"] = active_days
+    updated["blocked_reasons_json"] = json.dumps(
+        list(dict.fromkeys(reasons)),
+        ensure_ascii=False,
+    )
+    updated["retirement_evidence_json"] = json.dumps(
+        evidence,
+        ensure_ascii=False,
+        sort_keys=True,
+    )
+    evaluation = ForwardShadowEvaluationRow(
+        iteration_id=str(updated.get("iteration_id") or ""),
+        trial_id=str(updated.get("trial_id") or ""),
+        candidate_type=str(updated.get("candidate_type") or ""),
+        status_before=status_before,
+        status_after=status_after,
+        action=action,
+        primary_driver=str(updated.get("primary_driver") or "unknown"),
+        promotion_status_before=promotion_before,
+        promotion_status_after=promotion_after,
+        production_effect="none",
+        active_days=active_days,
+        excess_return=_float_or_none(updated.get("excess_return")),
+        shadow_return=_float_or_none(updated.get("shadow_return")),
+        production_return=_float_or_none(updated.get("production_return")),
+        max_drawdown_delta=_float_or_none(updated.get("max_drawdown_delta")),
+        turnover=_float_or_none(updated.get("turnover")),
+        available_samples=_int_or_zero(updated.get("available_samples")),
+        missing_samples=_int_or_zero(updated.get("missing_samples")),
+        reason=reason,
+        next_action=next_action,
+    )
+    return updated, evaluation
+
+
+def _forward_shadow_lifecycle_decision(
+    row: Mapping[str, Any],
+) -> tuple[ForwardShadowAction, str, str, str, str]:
+    candidate_type = str(row.get("candidate_type") or "")
+    primary_driver = str(row.get("primary_driver") or "unknown")
+    blocked_reasons = _json_list(row.get("blocked_reasons_json"))
+    promotion_status = str(row.get("promotion_status") or "")
+    if _has_forward_retirement_evidence(row, blocked_reasons):
+        return (
+            "RETIRE",
+            "RETIRED",
+            "RETIRED",
+            "retirement evidence or retired status present",
+            "候选已退出 forward shadow；不修改 production。",
+        )
+    if candidate_type == "gate_only":
+        if primary_driver != "gate":
+            return (
+                "CONTINUE",
+                "FORWARD_SHADOW_ACTIVE",
+                "FORWARD_SHADOW_ACTIVE",
+                f"gate_only primary_driver={primary_driver}; wait for gate-led evidence",
+                "继续 forward shadow；gate 主因不足时不进入权重复核。",
+            )
+        return (
+            "REVIEW_GATE_POLICY",
+            "REVIEW_PENDING",
+            "GATE_POLICY_REVIEW_PENDING",
+            "gate_only candidate is restricted to gate policy review",
+            "进入 gate policy review；不得作为权重晋级候选。",
+        )
+    if candidate_type == "weight_gate_bundle":
+        return (
+            "RETIRE",
+            "RETIRED",
+            "RETIRED",
+            "weight_gate_bundle is diagnostic-only and must be split before review",
+            "bundle diagnostic 候选退出 forward lifecycle；先拆分 weight/gate 影响。",
+        )
+    if candidate_type == "weight_only":
+        if primary_driver == "weight":
+            return (
+                "REVIEW_WEIGHT_CANDIDATE",
+                "REVIEW_PENDING",
+                "WEIGHT_CANDIDATE_REVIEW_PENDING",
+                "weight_only candidate with primary_driver=weight",
+                "进入权重候选复核；仍需 owner approval 和 rollback 条件。",
+            )
+        return (
+            "CONTINUE",
+            "FORWARD_SHADOW_ACTIVE",
+            "FORWARD_SHADOW_ACTIVE",
+            f"weight_only primary_driver={primary_driver}; not eligible for weight review",
+            "继续 forward shadow；primary_driver 非 weight 时不得进入权重复核。",
+        )
+    return (
+        "CONTINUE",
+        str(row.get("status") or "FORWARD_SHADOW_ACTIVE"),
+        promotion_status or "FORWARD_SHADOW_ACTIVE",
+        f"unknown candidate_type={candidate_type}",
+        "继续观察；候选类型未知，需人工复核 registry。",
+    )
+
+
+def _has_forward_retirement_evidence(
+    row: Mapping[str, Any],
+    blocked_reasons: list[str],
+) -> bool:
+    if str(row.get("status") or "") == "RETIRED":
+        return True
+    if str(row.get("promotion_status") or "") == "RETIRED":
+        return True
+    return any(reason.startswith("retired:") for reason in blocked_reasons)
+
+
 def _retire_missing_rows(
     *,
     existing_rows: list[dict[str, Any]],
@@ -1095,6 +1513,9 @@ def _retire_missing_rows(
         if iteration_id in current_ids:
             continue
         updated = _normalize_registry_row(row)
+        if str(updated.get("as_of") or "") == as_of.isoformat():
+            retired_rows.append(updated)
+            continue
         evidence = _json_object(updated.get("retirement_evidence_json"))
         missing_count = _int_or_zero(evidence.get("missing_top_group_count")) + 1
         evidence["missing_top_group_count"] = missing_count
@@ -1226,9 +1647,25 @@ def _load_registry_rows(path: Path) -> list[dict[str, Any]]:
     ]
 
 
+def _dedupe_registry_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    deduped: dict[str, dict[str, Any]] = {}
+    order: list[str] = []
+    anonymous_index = 0
+    for row in rows:
+        normalized = _normalize_registry_row(row)
+        iteration_id = str(normalized.get("iteration_id") or "")
+        if not iteration_id:
+            iteration_id = f"__anonymous_{anonymous_index}"
+            anonymous_index += 1
+        if iteration_id not in deduped:
+            order.append(iteration_id)
+        deduped[iteration_id] = normalized
+    return [deduped[key] for key in order]
+
+
 def _write_registry_rows(path: Path, rows: list[dict[str, Any]]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    normalized = [_normalize_registry_row(row) for row in rows]
+    normalized = _dedupe_registry_rows(rows)
     frame = pd.DataFrame(normalized, columns=list(REGISTRY_COLUMNS))
     frame.to_csv(path, index=False)
 
