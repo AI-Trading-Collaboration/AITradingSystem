@@ -678,7 +678,12 @@ def test_official_candidates_auto_precheck_reports_openai_timeout(
 
 
 def test_score_daily_help_exposes_risk_event_openai_precheck_option() -> None:
-    result = CliRunner().invoke(app, ["score-daily", "--help"])
+    result = CliRunner().invoke(
+        app,
+        ["score-daily", "--help"],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
 
     assert result.exit_code == 0
     assert "OpenAI 预审" in result.output

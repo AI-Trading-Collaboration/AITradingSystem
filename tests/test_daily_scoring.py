@@ -998,6 +998,8 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
             "--belief-state-history-path",
             str(belief_state_history_path),
         ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
     )
 
     assert result.exit_code == 0

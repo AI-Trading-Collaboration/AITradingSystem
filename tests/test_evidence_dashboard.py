@@ -115,6 +115,8 @@ def test_reports_dashboard_cli_writes_html(tmp_path: Path) -> None:
             "--json-output-path",
             str(tmp_path / "dashboard.json"),
         ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
     )
 
     assert result.exit_code == 0
