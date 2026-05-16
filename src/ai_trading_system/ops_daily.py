@@ -17,6 +17,13 @@ from ai_trading_system.alerts import (
     default_pipeline_health_alert_report_path,
 )
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.core import (
+    ArtifactRef,
+    ProductionEffect,
+    StepStatus,
+    WorkflowStep,
+    WorkflowStepResult,
+)
 from ai_trading_system.data.download import default_download_failure_report_path
 from ai_trading_system.data.quality import default_quality_report_path
 from ai_trading_system.evidence_dashboard import (
@@ -95,7 +102,7 @@ class DailyOpsPlan:
     generated_at: datetime
     steps: tuple[DailyOpsStep, ...]
     market_session: MarketSession
-    production_effect: str = "none"
+    production_effect: str = ProductionEffect.NONE.value
 
     def missing_env_by_step(
         self,
@@ -203,6 +210,32 @@ class DailyOpsRunReport:
 
 
 DailyOpsCommandRunner = subprocess.run
+
+
+def daily_ops_step_to_workflow_step(step: DailyOpsStep) -> WorkflowStep:
+    return WorkflowStep(
+        step_id=step.step_id,
+        name=step.title,
+        command_name=_workflow_command_name(step.command),
+        command=step.command,
+        production_effect=ProductionEffect.NONE,
+        expected_outputs=tuple(ArtifactRef.from_path(path) for path in step.produced_paths),
+        blocking=step.blocks_downstream,
+    )
+
+
+def daily_ops_step_result_to_workflow_step_result(
+    result: DailyOpsStepResult,
+) -> WorkflowStepResult:
+    return WorkflowStepResult(
+        step_id=result.step_id,
+        status=_workflow_status(result.status),
+        started_at=result.started_at,
+        finished_at=result.ended_at,
+        artifacts=tuple(ArtifactRef.from_path(path) for path in result.produced_paths),
+        risks=(result.error,) if result.error else (),
+        production_effect=ProductionEffect.NONE,
+    )
 
 
 def resolve_daily_ops_default_as_of(observed_at: datetime | None = None) -> date:
@@ -1498,6 +1531,31 @@ def _daily_run_status(results: list[DailyOpsStepResult]) -> str:
     if any(result.status == "SKIPPED" for result in results):
         return "PASS_WITH_SKIPS"
     return "PASS"
+
+
+def _workflow_status(status: str) -> StepStatus:
+    normalized = status.strip().upper()
+    if normalized == "PASS":
+        return "PASS"
+    if normalized == "SKIPPED":
+        return "SKIPPED"
+    if normalized == "FAIL":
+        return "FAIL"
+    if normalized.startswith("PASS_WITH") or normalized == "WARN":
+        return "WARN"
+    if normalized.startswith("BLOCKED"):
+        return "BLOCKED"
+    return "FAIL"
+
+
+def _workflow_command_name(command: tuple[str, ...]) -> str:
+    if not command:
+        return ""
+    if len(command) >= 3 and command[0] == "aits":
+        return " ".join(command[:3])
+    if len(command) >= 2 and command[0] == "aits":
+        return " ".join(command[:2])
+    return command[0]
 
 
 def _build_pre_run_input_artifacts(

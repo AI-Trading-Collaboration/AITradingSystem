@@ -9,14 +9,18 @@ from typer.testing import CliRunner
 
 import ai_trading_system.cli as cli_module
 from ai_trading_system.cli import app
+from ai_trading_system.core import ProductionEffect
 from ai_trading_system.ops_daily import (
     DailyOpsRunMetadata,
     DailyOpsRunReport,
+    DailyOpsStep,
     DailyOpsStepResult,
     _execution_command,
     _purge_source_pycache_dirs,
     build_daily_ops_plan,
     daily_ops_run_metadata_path_for_report,
+    daily_ops_step_result_to_workflow_step_result,
+    daily_ops_step_to_workflow_step,
     render_daily_ops_plan,
     render_daily_ops_run_report,
     resolve_daily_ops_default_as_of,
@@ -155,6 +159,82 @@ def test_daily_ops_plan_threads_run_id_into_score_daily() -> None:
             "SEC_USER_AGENT": "AITradingSystem test@example.com",
         },
     )
+
+
+def test_daily_ops_workflow_step_adapter_preserves_command_and_outputs(tmp_path: Path) -> None:
+    output_path = tmp_path / "outputs" / "reports" / "daily_ops_run_2026-05-06.md"
+    output_path.parent.mkdir(parents=True)
+    output_path.write_text("# run\n", encoding="utf-8")
+    step = DailyOpsStep(
+        step_id="daily_ops_run",
+        title="每日运行",
+        command=("aits", "ops", "daily-run", "--as-of", "2026-05-06"),
+        required_env_vars=("FMP_API_KEY",),
+        produced_paths=(output_path,),
+        quality_gate="daily-run report",
+        blocks_downstream=True,
+    )
+
+    workflow_step = daily_ops_step_to_workflow_step(step)
+
+    assert workflow_step.step_id == "daily_ops_run"
+    assert workflow_step.name == "每日运行"
+    assert workflow_step.command_name == "aits ops daily-run"
+    assert workflow_step.command == step.command
+    assert workflow_step.production_effect is ProductionEffect.NONE
+    assert workflow_step.expected_outputs[0].path == output_path
+    assert workflow_step.expected_outputs[0].exists is True
+    assert workflow_step.blocking is True
+
+
+def test_daily_ops_step_result_adapter_maps_status_and_artifacts(tmp_path: Path) -> None:
+    output_path = tmp_path / "outputs" / "reports" / "daily_ops_run_2026-05-06.md"
+    output_path.parent.mkdir(parents=True)
+    output_path.write_text("# run\n", encoding="utf-8")
+    started_at = datetime(2026, 5, 6, 21, 0, tzinfo=UTC)
+    ended_at = datetime(2026, 5, 6, 21, 1, tzinfo=UTC)
+    result = DailyOpsStepResult(
+        step_id="daily_ops_run",
+        title="每日运行",
+        command=("aits", "ops", "daily-run"),
+        status="PASS",
+        return_code=0,
+        started_at=started_at,
+        ended_at=ended_at,
+        duration_seconds=60.0,
+        produced_paths=(output_path,),
+        blocks_downstream=True,
+    )
+
+    workflow_result = daily_ops_step_result_to_workflow_step_result(result)
+
+    assert workflow_result.step_id == result.step_id
+    assert workflow_result.status == "PASS"
+    assert workflow_result.started_at == started_at
+    assert workflow_result.finished_at == ended_at
+    assert workflow_result.artifacts[0].path == output_path
+    assert workflow_result.production_effect is ProductionEffect.NONE
+
+
+def test_daily_ops_step_result_adapter_maps_summary_statuses_to_workflow_statuses() -> None:
+    base = {
+        "step_id": "step",
+        "title": "Step",
+        "command": ("aits", "step"),
+        "return_code": None,
+        "started_at": None,
+        "ended_at": None,
+        "duration_seconds": None,
+        "produced_paths": (),
+        "blocks_downstream": False,
+    }
+
+    assert daily_ops_step_result_to_workflow_step_result(
+        DailyOpsStepResult(status="PASS_WITH_SKIPS", **base),
+    ).status == "WARN"
+    assert daily_ops_step_result_to_workflow_step_result(
+        DailyOpsStepResult(status="BLOCKED_VISIBILITY", **base),
+    ).status == "BLOCKED"
 
 
 def test_daily_ops_plan_generates_feedback_reports_before_dashboard() -> None:

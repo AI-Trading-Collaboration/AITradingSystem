@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import hashlib
 import itertools
 import json
-import subprocess
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
@@ -15,6 +13,21 @@ import yaml
 from pydantic import BaseModel, Field, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.shadow.lineage import (
+    git_commit_sha as _git_commit_sha,
+)
+from ai_trading_system.shadow.lineage import (
+    git_worktree_dirty as _git_worktree_dirty,
+)
+from ai_trading_system.shadow.lineage import (
+    project_path as _project_path,
+)
+from ai_trading_system.shadow.lineage import (
+    sha256_file as _sha256_file,
+)
+from ai_trading_system.shadow.lineage import (
+    sha256_search_snapshots as _sha256_search_snapshots,
+)
 from ai_trading_system.weight_calibration import (
     WeightProfile,
     load_weight_profile,
@@ -3726,60 +3739,3 @@ def _format_gate_overrides(overrides: Mapping[str, float]) -> str:
 
 def _escape_markdown_table(value: str) -> str:
     return value.replace("|", "\\|").replace("\n", " ")
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def _sha256_search_snapshots(
-    snapshots: tuple[tuple[date, Path, dict[str, Any]], ...],
-) -> str:
-    digest = hashlib.sha256()
-    for signal_date, path, _snapshot in snapshots:
-        digest.update(signal_date.isoformat().encode("utf-8"))
-        digest.update(str(path).encode("utf-8"))
-        digest.update(_sha256_file(path).encode("utf-8"))
-    return digest.hexdigest()
-
-
-def _git_commit_sha() -> str | None:
-    try:
-        result = subprocess.run(
-            ["git", "rev-parse", "HEAD"],
-            cwd=PROJECT_ROOT,
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
-        return None
-    sha = result.stdout.strip()
-    return sha or None
-
-
-def _git_worktree_dirty() -> bool | None:
-    try:
-        result = subprocess.run(
-            ["git", "status", "--porcelain"],
-            cwd=PROJECT_ROOT,
-            check=True,
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-    except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
-        return None
-    return bool(result.stdout.strip())
-
-
-def _project_path(value: str) -> Path:
-    path = Path(value)
-    if path.is_absolute():
-        return path
-    return PROJECT_ROOT / path

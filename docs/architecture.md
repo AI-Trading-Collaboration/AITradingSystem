@@ -24,6 +24,8 @@
 
 详细的数据输入、中间评估、回测和输出结论流程见 `docs/system_flow.md`。该图是工程事实的一部分，后续改变命令、配置、缓存、门禁、评分、回测或报告结构时必须同步维护。
 
+结构化降复杂度重构的模块边界见 `docs/architecture/module_boundaries.md`，workflow / artifact / `production_effect` 运行契约见 `docs/architecture/workflow_contract.md`。这些文档约束后续拆分顺序：先抽共享契约和报告/view model 边界，再逐步拆 CLI、dashboard、shadow 子系统和 scoring/position gate。
+
 系统产品原则见 `docs/product_strategy.md`。后续模块设计不能只围绕技术指标扩张，必须保留能力圈、产业链因果、仓位约束和复盘归因这四条主线。
 
 默认策略解释区间是 `ai_after_chatgpt`：锚定 `2022-11-30` ChatGPT 公开发布，默认回测起点为 `2022-12-01`。2019 年以来的数据可用于跨周期压力测试，但报告必须把这种长窗口和默认 AI 主线行情区间区分开。

@@ -119,6 +119,7 @@ from ai_trading_system.catalyst_calendar import (
     validate_catalyst_calendar,
     write_catalyst_calendar_report,
 )
+from ai_trading_system.cli_commands.docs import docs_app
 from ai_trading_system.config import (
     DEFAULT_BACKTEST_VALIDATION_POLICY_CONFIG_PATH,
     DEFAULT_CATALYST_CALENDAR_CONFIG_PATH,
@@ -227,11 +228,6 @@ from ai_trading_system.decision_snapshots import (
     build_decision_snapshot,
     default_decision_snapshot_path,
     write_decision_snapshot,
-)
-from ai_trading_system.docs_freshness import (
-    default_docs_freshness_paths,
-    validate_docs_freshness,
-    write_docs_freshness_report,
 )
 from ai_trading_system.evidence_dashboard import (
     build_evidence_dashboard_report,
@@ -734,7 +730,6 @@ ops_app = typer.Typer(help="运行监控和 pipeline health。", no_args_is_help
 security_app = typer.Typer(help="密钥卫生和供应商权限治理。", no_args_is_help=True)
 llm_app = typer.Typer(help="LLM 结构化预审和待复核队列。", no_args_is_help=True)
 pit_snapshots_app = typer.Typer(help="Forward-only PIT raw snapshot 归档。", no_args_is_help=True)
-docs_app = typer.Typer(help="项目文档治理和新鲜度检查。", no_args_is_help=True)
 app.add_typer(watchlist_app, name="watchlist")
 app.add_typer(industry_chain_app, name="industry-chain")
 app.add_typer(thesis_app, name="thesis")
@@ -797,38 +792,6 @@ DEFAULT_FMP_HISTORICAL_VALUATION_RAW_DIR = default_fmp_historical_valuation_raw_
 DEFAULT_EODHD_EARNINGS_TRENDS_RAW_DIR = default_eodhd_earnings_trends_raw_dir(
     PROJECT_ROOT / "data" / "raw"
 )
-
-
-@docs_app.command("validate-freshness")
-def validate_docs_freshness_command(
-    paths: Annotated[
-        list[Path] | None,
-        typer.Option(
-            "--path",
-            help="要检查的新鲜度文档路径；不传则检查关键 docs 和 requirements。",
-        ),
-    ] = None,
-    output_path: Annotated[
-        Path | None,
-        typer.Option(help="可选 Markdown 文档新鲜度报告输出路径。"),
-    ] = None,
-) -> None:
-    """检查关键项目文档的 `最后更新` 是否落后于内部状态记录。"""
-    checked_paths = tuple(paths or default_docs_freshness_paths(PROJECT_ROOT))
-    report = validate_docs_freshness(checked_paths)
-    if output_path is not None:
-        write_docs_freshness_report(report, output_path)
-
-    style = "green" if report.passed else "red"
-    console.print(f"[{style}]文档新鲜度：{report.status}[/{style}]")
-    console.print(f"检查文档数：{len(report.records)}")
-    console.print(f"问题数：{len(report.issues)}")
-    if output_path is not None:
-        console.print(f"报告：{output_path}")
-    for issue in report.issues[:10]:
-        console.print(f"{issue.path}: {issue.code}: {issue.message}")
-    if report.issues:
-        raise typer.Exit(code=1)
 
 
 @pit_snapshots_app.command("validate")

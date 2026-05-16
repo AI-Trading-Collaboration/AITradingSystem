@@ -12,6 +12,9 @@ from ai_trading_system.daily_task_dashboard import (
     build_daily_task_dashboard_report,
     render_daily_task_dashboard,
 )
+from ai_trading_system.reports.daily_task_dashboard_view_model import (
+    DailyTaskDashboardReport,
+)
 
 
 def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
@@ -31,6 +34,7 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     html = render_daily_task_dashboard(report)
     payload = build_daily_task_dashboard_payload(report)
 
+    assert isinstance(report, DailyTaskDashboardReport)
     assert report.status == "PASS"
     assert report.risk_count == 2
     assert "关键结论总览" in html

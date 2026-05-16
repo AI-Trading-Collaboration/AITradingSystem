@@ -11,6 +11,7 @@ from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
 from ai_trading_system.prediction_ledger import load_prediction_ledger
+from ai_trading_system.shadow.lineage import sha256_file, sha256_search_snapshots
 from ai_trading_system.shadow_weight_profiles import (
     build_shadow_parameter_promotion_report,
     build_shadow_parameter_search_report,
@@ -50,6 +51,19 @@ def test_default_shadow_position_gate_profile_manifest_is_isolated() -> None:
         assert profile.gate_cap_overrides
         assert "score_model" not in profile.gate_cap_overrides
         assert all(0.0 <= value <= 1.0 for value in profile.gate_cap_overrides.values())
+
+
+def test_shadow_lineage_helpers_hash_files_and_snapshot_sets(tmp_path: Path) -> None:
+    first = tmp_path / "snapshot_a.json"
+    second = tmp_path / "snapshot_b.json"
+    first.write_text('{"a": 1}\n', encoding="utf-8")
+    second.write_text('{"b": 2}\n', encoding="utf-8")
+
+    first_snapshot = (date(2026, 5, 14), first, {})
+    second_snapshot = (date(2026, 5, 15), second, {})
+
+    assert sha256_file(first) != sha256_file(second)
+    assert sha256_search_snapshots((first_snapshot, second_snapshot)) != sha256_file(first)
 
 
 def test_shadow_weight_profile_report_compares_against_production(

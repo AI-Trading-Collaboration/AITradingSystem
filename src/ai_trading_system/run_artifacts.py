@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 import shutil
@@ -8,6 +7,8 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from pathlib import Path
+
+from ai_trading_system.core.artifacts import ArtifactRef
 
 SCHEMA_VERSION = 1
 LEGACY_OUTPUT_MODES = {"mirror", "off"}
@@ -247,30 +248,4 @@ def collect_run_files(paths: RunArtifactPaths) -> tuple[Path, ...]:
 
 
 def _artifact_record(path: Path) -> Mapping[str, object]:
-    return {
-        "path": str(path),
-        "exists": path.exists(),
-        "artifact_type": _artifact_type(path),
-        "sha256": _sha256_file(path) if path.exists() and path.is_file() else None,
-        "size_bytes": path.stat().st_size if path.exists() and path.is_file() else None,
-        "file_count": _file_count(path) if path.exists() and path.is_dir() else None,
-    }
-
-
-def _artifact_type(path: Path) -> str:
-    if path.is_dir():
-        return "directory"
-    suffix = path.suffix.lower().lstrip(".")
-    return suffix or "file"
-
-
-def _file_count(path: Path) -> int:
-    return sum(1 for child in path.rglob("*") if child.is_file())
-
-
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(chunk)
-    return digest.hexdigest()
+    return ArtifactRef.from_path(path).to_manifest_record()

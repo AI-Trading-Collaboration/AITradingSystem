@@ -37,7 +37,7 @@
 | `outputs/reports/daily_ops_plan_YYYY-MM-DD.md` | `aits ops daily-plan` / `daily-run` | market calendar、env presence、config | planned commands、required env、expected artifacts、skip reason | 调度前检查、daily-run | 否，只读计划 | 计划报告不代表命令已经执行 |
 | `outputs/reports/daily_ops_run_YYYY-MM-DD.md` | `aits ops daily-run` | plan、实际子命令结果 | step status、exit code、duration、artifact paths | 运行审计、问题定位 | 是，作为生产运行审计 | 不保存 stdout/stderr 原文或 secret |
 | `outputs/reports/daily_task_dashboard_YYYY-MM-DD.html/json` | `aits ops daily-run` / `aits reports daily-tasks` | daily_ops_run metadata、本轮同日子报告、evidence dashboard JSON、最近可用 shadow parameter search bundle、search window 内 production decision snapshots | `key_conclusions`、投资动作/仓位/置信度/Data Gate、数据可信度、参数治理、反馈复盘、shadow parameter 诊断领先 trial 与收益差距、production/current vs shadow candidate 结果对比表（Total return、Max drawdown、Turnover、Beat rate、样本覆盖和 return 计算口径）、分区参数对比表（Gate cap override 与权重参数，含 production 实际 gate cap 数值/区间）、运行健康、任务状态、子报告 `href` 和可点击子任务下钻入口 | 每日关键结论入口 | 否，`production_effect=none` | 任务状态是审计信息，不是页面首要结论；shadow parameter 诊断领先不等于可上线；return 只统计 AVAILABLE outcome 且扣除成本/滑点后复利累计；各子任务 Markdown/HTML/JSON 仍是审计源，后续可升级为专属网页 |
-| `outputs/runs/daily/<executed_at>/as_of_YYYY-MM-DD__<run_id>/manifest.json` | `aits ops daily-run` | 本轮 daily-run artifacts | run id、checksum、legacy mirror、visibility cutoff | 复现、归档、审计 | 是，作为运行 bundle | `data/raw` / `data/processed` 仍是状态缓存，不会每轮完整复制 |
+| `outputs/runs/daily/<executed_at>/as_of_YYYY-MM-DD__<run_id>/manifest.json` | `aits ops daily-run` | 本轮 daily-run artifacts | run id、checksum、legacy mirror、visibility cutoff；artifact 记录由 `ArtifactRef` 统一生成 | 复现、归档、审计 | 是，作为运行 bundle | `data/raw` / `data/processed` 仍是状态缓存，不会每轮完整复制；manifest 只记录产物引用和 checksum，不保存 stdout/stderr 原文 |
 | `outputs/replays/YYYY-MM-DD/<run_id>/replay_run.md` | `aits ops replay-day` | cache-only input freeze | visible cutoff、excluded future inputs、replay artifacts | 历史复现、diff | 否，不改 production artifacts | replay 不是 live daily-run，也不应调用 live provider |
 | `outputs/replays/YYYY-MM-DD/<run_id>/diff_vs_production.md` | `replay-day --compare-to-production` | replay bundle、production artifacts | checksum、row count、status diff | PIT 复核 | 否 | diff 说明产物不同，不自动说明哪个结论正确 |
 
@@ -78,5 +78,7 @@
 | `none` | 只读、诊断、shadow 或 validation-only，不改变生产评分、仓位 gate、正式 ledger 或 approved overlay | dashboard、shadow search、flow validation ledger |
 | `validation-only` | 用于验证参数、规则或流程，不可当成生产候选批准 | parameter search、shadow gate / weight profiles |
 | `blocked` | 被质量、治理、样本、owner approval 或 promotion contract 阻断 | promotion report、candidate governance |
+
+运行时核心标签由 `ai_trading_system.core.production_effect.ProductionEffect` 表达。历史报告中较长的解释性 production effect 文本需要逐处确认语义后再迁移，不能自动归并。
 
 当一个产物声明 `production_effect=none` 时，它仍然可以非常有价值，但价值是诊断、学习、复核或准备 forward shadow，而不是直接改变 production 结论。

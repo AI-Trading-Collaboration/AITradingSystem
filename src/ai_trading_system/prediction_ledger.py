@@ -6,12 +6,13 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from statistics import median
-from typing import Any, Literal
+from typing import Any, Literal, SupportsFloat, cast
 
 import pandas as pd
 
 from ai_trading_system.backtest.daily import DEFAULT_BENCHMARK_TICKERS, BacktestRegimeContext
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.core import ProductionEffect
 from ai_trading_system.data.quality import DataQualityReport
 from ai_trading_system.feedback_sample_policy import (
     load_feedback_sample_policy,
@@ -83,7 +84,7 @@ class ShadowPredictionRunReport:
     records: tuple[dict[str, Any], ...]
     warnings: tuple[str, ...]
     source_label: str = "Rule experiment ledger"
-    production_effect: str = "none"
+    production_effect: str = ProductionEffect.NONE.value
 
     @property
     def status(self) -> str:
@@ -99,7 +100,7 @@ class ShadowMaturityReport:
     min_available_samples: int
     review_mode: Literal["promotion", "validation"]
     groups: tuple[dict[str, Any], ...]
-    production_effect: str = "none"
+    production_effect: str = ProductionEffect.NONE.value
 
     @property
     def status(self) -> str:
@@ -129,11 +130,14 @@ def build_prediction_record_from_decision_snapshot(
     features_path: Path,
     data_quality_report_path: Path,
     candidate_id: str = "production",
-    production_effect: str = "production",
+    production_effect: str = ProductionEffect.PRODUCTION.value,
     instrument_id: str = "AI_PORTFOLIO",
     label_horizon_days: int | None = None,
 ) -> dict[str, Any]:
-    if production_effect not in {"production", "none"}:
+    if production_effect not in {
+        ProductionEffect.PRODUCTION.value,
+        ProductionEffect.NONE.value,
+    }:
         raise ValueError("production_effect must be production or none")
     signal_date = str(snapshot.get("signal_date") or "")
     generated_at = str(snapshot.get("generated_at") or signal_date)
@@ -226,14 +230,16 @@ def load_prediction_ledger(input_path: Path) -> tuple[dict[str, Any], ...]:
     if not input_path.exists():
         return ()
     frame = pd.read_csv(input_path, dtype=str, keep_default_na=False)
-    return tuple(frame.to_dict(orient="records"))
+    records = cast(list[dict[str, Any]], frame.to_dict(orient="records"))
+    return tuple(records)
 
 
 def load_prediction_outcomes(input_path: Path) -> tuple[dict[str, Any], ...]:
     if not input_path.exists():
         return ()
     frame = pd.read_csv(input_path, dtype=str, keep_default_na=False)
-    return tuple(frame.to_dict(orient="records"))
+    records = cast(list[dict[str, Any]], frame.to_dict(orient="records"))
+    return tuple(records)
 
 
 def build_shadow_prediction_records(
@@ -266,7 +272,7 @@ def build_shadow_prediction_records(
             features_path=features_path,
             data_quality_report_path=data_quality_report_path,
             candidate_id=candidate_id,
-            production_effect="none",
+            production_effect=ProductionEffect.NONE.value,
             label_horizon_days=label_horizon,
         )
         record["execution_assumption"] = "shadow_candidate_no_order_no_position_change"
@@ -294,7 +300,7 @@ def build_parameter_shadow_prediction_records(
             continue
         if selected and candidate_id not in selected:
             continue
-        if candidate.get("production_effect") not in {None, "", "none"}:
+        if candidate.get("production_effect") not in {None, "", ProductionEffect.NONE.value}:
             continue
         if str(candidate.get("recommendation_status") or "") != "READY_FOR_FORWARD_SHADOW":
             continue
@@ -306,7 +312,7 @@ def build_parameter_shadow_prediction_records(
             features_path=features_path,
             data_quality_report_path=data_quality_report_path,
             candidate_id=candidate_id,
-            production_effect="none",
+            production_effect=ProductionEffect.NONE.value,
             label_horizon_days=label_horizon,
         )
         record["execution_assumption"] = (
@@ -680,7 +686,7 @@ def _prediction_outcome_row(
             "outcome_reason": f"缺少 AI proxy 价格：{strategy_ticker}",
         }
     series = close_pivot[strategy_ticker].dropna()
-    if decision_date not in set(series.index.date):
+    if decision_date not in set(_series_dates(series)):
         return {
             **base,
             "outcome_status": "MISSING_DATA",
@@ -693,7 +699,7 @@ def _prediction_outcome_row(
             **base,
             "outcome_status": "PENDING",
             "outcome_reason": "价格历史尚未覆盖完整观察窗口",
-            "available_through": series.index[-1].date().isoformat(),
+            "available_through": pd.Timestamp(series.index[-1]).date().isoformat(),
         }
     end_date = series.index[end_index].date()
     if end_date > as_of:
@@ -757,27 +763,40 @@ def _benchmark_window_return(
     if ticker not in close_pivot.columns:
         return None
     series = close_pivot[ticker].dropna()
-    if start_date not in set(series.index.date) or end_date not in set(series.index.date):
+    series_dates = set(_series_dates(series))
+    if start_date not in series_dates or end_date not in series_dates:
         return None
     window = series.iloc[_date_position(series, start_date) : _date_position(series, end_date) + 1]
     return _window_return(window)
 
 
 def _date_position(series: pd.Series, value: date) -> int:
-    matches = series.index[series.index.date == value]
+    index = pd.DatetimeIndex(series.index)
+    matches = index[index.date == value]
     if len(matches) == 0:
         raise ValueError(f"date not found in series: {value.isoformat()}")
-    return int(series.index.get_loc(matches[0]))
+    return int(index.get_indexer(pd.DatetimeIndex([matches[0]]))[0])
+
+
+def _series_dates(series: pd.Series) -> tuple[date, ...]:
+    return tuple(pd.DatetimeIndex(series.index).date)
 
 
 def _window_return(window: pd.Series) -> float:
-    return float(window.iloc[-1] / window.iloc[0] - 1.0)
+    start = _float_or_none(window.iloc[0])
+    end = _float_or_none(window.iloc[-1])
+    if start is None or end is None or start == 0.0:
+        raise ValueError("window return requires non-zero numeric start/end prices")
+    return end / start - 1.0
 
 
 def _max_drawdown(window: pd.Series) -> float:
     running_max = window.cummax()
     drawdowns = window / running_max - 1.0
-    return float(drawdowns.min())
+    value = _float_or_none(drawdowns.min())
+    if value is None:
+        raise ValueError("max drawdown requires numeric window values")
+    return value
 
 
 def _band_midpoint(band: dict[str, Any]) -> float | None:
@@ -792,7 +811,11 @@ def _float_or_none(value: object) -> float | None:
     if value is None or value == "":
         return None
     try:
-        return float(value)
+        if isinstance(value, str):
+            return float(value)
+        if isinstance(value, SupportsFloat):
+            return float(value)
+        return None
     except (TypeError, ValueError):
         return None
 
