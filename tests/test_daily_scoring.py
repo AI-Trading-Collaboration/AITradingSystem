@@ -698,12 +698,24 @@ def test_render_daily_score_report_includes_data_gate_and_limitations(tmp_path: 
     assert "| Run ID / Trace | 未传入 run_id |" in markdown
     assert "### Main Invalidator" in markdown
     assert "### Next Checks" in markdown
+    assert "## Data Lineage Card" in markdown
+    assert "| 生成命令 | `aits score-daily --as-of 2026-04-30` |" in markdown
+    assert "### 关键输入" in markdown
+    assert "### 关键输出" in markdown
     assert "## Base Signal / Risk Caps" in markdown
+    assert "### Score-to-Position Funnel" in markdown
+    assert "| Base module scores |" in markdown
+    assert "| Effective weights |" in markdown
+    assert "| Final position |" in markdown
     assert "Base signal score" in markdown
     assert "### Risk Caps" in markdown
+    assert "### Binding Gate Ladder" in markdown
+    assert "| Gate | Cap | 触发 | Binding | 证据来源 | 对模型上限影响 | 解释 |" in markdown
     assert "`score_mapping`" in markdown
     assert "### Channel Audit" in markdown
     assert "`alpha`" in markdown
+    assert "## 如何复核今天的结果" in markdown
+    assert "最终仓位由哪个 gate 决定？" in markdown
     assert "## 结论使用等级" in markdown
     assert "适用范围：趋势判断/投研辅助，不触发交易（`trend_judgment`）" in markdown
     assert "结论等级：必须人工复核（`review_required`）" in markdown
@@ -717,6 +729,8 @@ def test_render_daily_score_report_includes_data_gate_and_limitations(tmp_path: 
     assert "## 仓位闸门" in markdown
     assert "## 变化原因树" in markdown
     assert markdown.index("## 今日结论卡") < markdown.index("## 变化原因树")
+    assert markdown.index("## 今日结论卡") < markdown.index("## Data Lineage Card")
+    assert markdown.index("## Data Lineage Card") < markdown.index("## Base Signal / Risk Caps")
     assert markdown.index("## 今日结论卡") < markdown.index("## Base Signal / Risk Caps")
     assert markdown.index("## Base Signal / Risk Caps") < markdown.index("## 结论使用等级")
     assert markdown.index("## 结论使用等级") < markdown.index("## 变化原因树")

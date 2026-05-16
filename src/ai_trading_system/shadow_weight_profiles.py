@@ -1768,6 +1768,8 @@ def render_shadow_parameter_search_report(
         "- 生产替换仍需要 walk-forward / forward shadow、promotion floor、"
         "owner approval 和 rollback 条件。",
         "",
+        render_shadow_parameter_trial_card(report).rstrip(),
+        "",
         "## 最优候选",
         "",
     ]
@@ -1974,6 +1976,121 @@ def render_shadow_parameter_search_report(
     else:
         lines.append("- 无")
     return "\n".join(lines).rstrip() + "\n"
+
+
+def render_shadow_parameter_trial_card(report: ShadowParameterSearchReport) -> str:
+    trial = report.best_trial or report.best_diagnostic_trial
+    if trial is None:
+        return "\n".join(
+            [
+                "## Trial Card",
+                "",
+                "| 项目 | 内容 |",
+                "|---|---|",
+                "| Trial ID | none |",
+                "| 状态 | no_trial |",
+                "| 是否影响 production | 否，`production_effect=none` |",
+                "| 说明 | 没有可排序 trial；先检查输入样本、搜索空间和 objective。 |",
+            ]
+        )
+
+    status = "eligible-best" if report.best_trial is not None else "diagnostic-leading"
+    if not trial.eligible:
+        status = f"{status} / not eligible: {trial.ineligibility_reason or 'not_eligible'}"
+    attribution = _trial_card_attribution_summary(report)
+    position_change = _trial_card_position_change_summary(report)
+    lines = [
+        "## Trial Card",
+        "",
+        "| 项目 | 内容 |",
+        "|---|---|",
+        f"| Trial ID | `{trial.trial_id}` |",
+        f"| 状态 | `{_escape_markdown_table(status)}` |",
+        (
+            "| 是否影响 production | 否，`production_effect=none`；不能修改生产权重、"
+            "gate、approved overlay、正式 ledger 或日报结论 |"
+        ),
+        f"| Weight candidate | `{trial.weight_candidate_id}` |",
+        f"| Gate candidate | `{trial.gate_candidate_id}` |",
+        f"| Objective | {_format_score(trial.objective_score)} |",
+        (
+            f"| 样本 | available={trial.available_count}；"
+            f"pending={trial.pending_count}；missing={trial.missing_count} |"
+        ),
+        (
+            f"| 收益 | shadow={_format_pct(trial.shadow_total_return)}；"
+            f"production={_format_pct(trial.production_total_return)}；"
+            f"excess={_format_pct(trial.excess_total_return)} |"
+        ),
+        (
+            f"| 风险/交易 | shadow MDD={_format_pct(trial.shadow_max_drawdown)}；"
+            f"turnover={trial.shadow_turnover:.2f}；"
+            f"beat rate={_format_pct(trial.shadow_beats_production_rate)} |"
+        ),
+        (
+            "| 改了什么：weights | "
+            f"{_escape_markdown_table(_format_weight_mapping(trial.target_weights))} |"
+        ),
+        (
+            "| 改了什么：gate caps | "
+            f"{_escape_markdown_table(_format_gate_overrides(trial.gate_cap_overrides))} |"
+        ),
+        f"| 收益归因 | {_escape_markdown_table(attribution)} |",
+        f"| 仓位变化 | {_escape_markdown_table(position_change)} |",
+        "",
+        "### Trial Card 边界",
+        "",
+        "- 不能说明生产权重应该立即修改。",
+        "- 不能说明 relaxed gate 已通过治理。",
+        "- 不能替代 forward shadow、promotion contract、owner approval 和 rollback condition。",
+    ]
+    return "\n".join(lines)
+
+
+def _trial_card_attribution_summary(report: ShadowParameterSearchReport) -> str:
+    parts: list[str] = []
+    if report.factorial_attribution is not None:
+        attribution = report.factorial_attribution
+        parts.append(f"primary_driver={attribution.primary_driver}")
+        parts.append(
+            "weight_only Δexcess="
+            f"{_format_pct(attribution.weight_only_excess_delta)}"
+        )
+        parts.append(
+            "gate_only Δexcess="
+            f"{_format_pct(attribution.gate_only_excess_delta)}"
+        )
+        parts.append(
+            "interaction Δexcess="
+            f"{_format_pct(attribution.interaction_excess_delta)}"
+        )
+    if report.cap_attribution:
+        primary_cap = max(
+            report.cap_attribution,
+            key=lambda item: abs(item.excess_delta_vs_baseline or 0.0),
+        )
+        parts.append(
+            f"primary_gate_cap={primary_cap.gate_id} "
+            f"({_format_pct(primary_cap.excess_delta_vs_baseline)})"
+        )
+    return "；".join(parts) if parts else "未生成 attribution。"
+
+
+def _trial_card_position_change_summary(report: ShadowParameterSearchReport) -> str:
+    changed = [
+        row for row in report.position_change_rows if abs(row.position_delta) > 1e-9
+    ]
+    if not changed:
+        return "未改变最终仓位；查看 Position Change Attribution。"
+    available = [row for row in changed if row.return_impact is not None]
+    if not available:
+        return f"{len(changed)} 个 signal date 改变最终仓位；return impact 尚不可用。"
+    largest = max(available, key=lambda row: abs(row.return_impact or 0.0))
+    return (
+        f"{len(changed)} 个 signal date 改变最终仓位；"
+        f"最大 return impact 日期 {largest.as_of.isoformat()}="
+        f"{_format_pct(largest.return_impact)}；完整明细见 Position Change Attribution。"
+    )
 
 
 def build_shadow_weight_prediction_records(

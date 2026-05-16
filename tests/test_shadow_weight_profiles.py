@@ -337,6 +337,10 @@ def test_shadow_parameter_search_writes_trial_registry_and_best_profile(
     assert report.prices_checksum
     assert report.decision_snapshot_checksum
     markdown = render_shadow_parameter_search_report(report)
+    assert "## Trial Card" in markdown
+    assert "| Trial ID |" in markdown
+    assert "| 是否影响 production | 否，`production_effect=none`" in markdown
+    assert "Trial Card 边界" in markdown
     assert "## Factorial Attribution" in markdown
     assert "## Cap-Level Attribution" in markdown
     assert "## Position Change Attribution" in markdown
@@ -493,6 +497,7 @@ def test_shadow_parameter_search_strict_objective_keeps_diagnostic_only(
     assert report.factorial_attribution is not None
     assert not report.factorial_attribution.selected_trial_eligible
     markdown = render_shadow_parameter_search_report(report)
+    assert "## Trial Card" in markdown
     assert "诊断领先 trial" in markdown
     assert "diagnostic_only_not_eligible" in markdown
     best_payload = yaml.safe_load(paths["best_profiles_yaml"].read_text(encoding="utf-8"))

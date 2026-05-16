@@ -825,11 +825,27 @@ def render_daily_score_report(
             trace_bundle_path=trace_bundle_path,
         ).rstrip(),
         "",
+        render_daily_data_lineage_card(
+            report,
+            data_quality_report_path=data_quality_report_path,
+            feature_report_path=feature_report_path,
+            features_path=features_path,
+            scores_path=scores_path,
+            sec_metrics_validation_report_path=sec_metrics_validation_report_path,
+            sec_fundamental_feature_report_path=sec_fundamental_feature_report_path,
+            sec_fundamental_features_path=sec_fundamental_features_path,
+            risk_event_occurrence_report_path=risk_event_occurrence_report_path,
+            run_id=run_id,
+            trace_bundle_path=trace_bundle_path,
+        ).rstrip(),
+        "",
         render_base_signal_risk_caps_section(
             report,
             execution_action_label=execution_action_label,
             execution_action_id=execution_action_id,
         ).rstrip(),
+        "",
+        render_daily_review_questions_section(report).rstrip(),
         "",
         render_daily_conclusion_boundary(report).rstrip(),
         "",
@@ -1227,6 +1243,104 @@ def render_daily_conclusion_card(
     return "\n".join(lines) + "\n"
 
 
+def render_daily_data_lineage_card(
+    report: DailyScoreReport,
+    *,
+    data_quality_report_path: Path,
+    feature_report_path: Path,
+    features_path: Path,
+    scores_path: Path,
+    sec_metrics_validation_report_path: Path | None = None,
+    sec_fundamental_feature_report_path: Path | None = None,
+    sec_fundamental_features_path: Path | None = None,
+    risk_event_occurrence_report_path: Path | None = None,
+    run_id: str | None = None,
+    trace_bundle_path: Path | None = None,
+) -> str:
+    command = f"aits score-daily --as-of {report.as_of.isoformat()}"
+    if run_id:
+        command = f"{command} --run-id {run_id}"
+
+    input_rows: list[tuple[str, str]] = [
+        ("价格主缓存", "`data/raw/prices_daily.csv`"),
+        ("第二行情源", "`data/raw/prices_marketstack_daily.csv`"),
+        ("宏观利率/美元", "`data/raw/rates_daily.csv`"),
+        ("数据质量报告", _path_cell(data_quality_report_path)),
+        ("市场特征", _path_cell(features_path)),
+        ("特征报告", _path_cell(feature_report_path)),
+        ("生产权重", "`config/weights/weight_profile_current.yaml`"),
+        ("评分与 gate 配置", "`config/scoring_rules.yaml` + `config/portfolio.yaml`"),
+        ("估值快照", "`data/external/valuation_snapshots/*.yaml`"),
+        ("风险事件发生记录", "`data/external/risk_event_occurrences/*.yaml`"),
+        ("交易 thesis", "`data/external/trade_theses/*.yaml`"),
+    ]
+    if sec_metrics_validation_report_path is not None:
+        input_rows.append(("SEC 指标校验报告", _path_cell(sec_metrics_validation_report_path)))
+    if sec_fundamental_feature_report_path is not None:
+        input_rows.append(
+            ("SEC 基本面特征报告", _path_cell(sec_fundamental_feature_report_path))
+        )
+    if sec_fundamental_features_path is not None:
+        input_rows.append(("SEC 基本面特征", _path_cell(sec_fundamental_features_path)))
+    if risk_event_occurrence_report_path is not None:
+        input_rows.append(("风险事件发生记录报告", _path_cell(risk_event_occurrence_report_path)))
+    if report.review_summary is not None:
+        for item in report.review_summary.items:
+            if item.source_path is not None:
+                input_rows.append((f"{item.name} 输入", _path_cell(item.source_path)))
+
+    as_of_text = report.as_of.isoformat()
+    output_rows: list[tuple[str, str]] = [
+        ("评分 CSV", _path_cell(scores_path)),
+        ("日报 Markdown", f"`outputs/reports/daily_score_{as_of_text}.md`（当前文件）"),
+        (
+            "Decision snapshot",
+            f"`data/processed/decision_snapshots/decision_snapshot_{as_of_text}.json`",
+        ),
+        (
+            "Trace bundle",
+            _path_cell(
+                trace_bundle_path
+                or Path(f"outputs/reports/evidence/daily_score_{as_of_text}_trace.json")
+            ),
+        ),
+        ("Prediction ledger", "`data/processed/prediction_ledger.csv`"),
+        ("Evidence dashboard", f"`outputs/reports/evidence_dashboard_{as_of_text}.html`"),
+    ]
+
+    lines = [
+        "## Data Lineage Card",
+        "",
+        "| 项目 | 内容 |",
+        "|---|---|",
+        f"| 生成命令 | `{_escape_markdown_table(command)}` |",
+        f"| Market regime | `{_escape_markdown_table(_market_regime_card_summary())}` |",
+        (
+            "| production_effect | advisory trend judgment；不自动交易；"
+            "生产路径会记录 decision snapshot / prediction ledger 供复盘和校准 |"
+        ),
+        "",
+        "### 关键输入",
+        "",
+        "| 输入 | 路径或来源 |",
+        "|---|---|",
+    ]
+    for label, path in input_rows:
+        lines.append(f"| {_escape_markdown_table(label)} | {_escape_markdown_table(path)} |")
+    lines.extend(
+        [
+            "",
+            "### 关键输出",
+            "",
+            "| 输出 | 路径或说明 |",
+            "|---|---|",
+        ]
+    )
+    for label, path in output_rows:
+        lines.append(f"| {_escape_markdown_table(label)} | {_escape_markdown_table(path)} |")
+    return "\n".join(lines) + "\n"
+
+
 def render_daily_conclusion_boundary(report: DailyScoreReport) -> str:
     boundary = classify_conclusion_boundary(
         report_status=report.status,
@@ -1272,6 +1386,61 @@ def render_base_signal_risk_caps_section(
         f"- 判断姿态：{audit['posture']}",
         f"- Confidence 使用边界：{audit['confidence_boundary']}",
         "",
+        "### Score-to-Position Funnel",
+        "",
+        "| 步骤 | 本次结果 | 复核入口 |",
+        "|---|---|---|",
+        (
+            "| Base module scores | "
+            f"{_escape_markdown_table(_component_score_summary(report))} | "
+            "日报 `模块评分` / `scores_daily.csv` |"
+        ),
+        (
+            "| Effective weights | "
+            f"{_escape_markdown_table(_effective_weight_summary(report))} | "
+            "`outputs/current_effective_weights.json` / `effective_weights_json` |"
+        ),
+        (
+            "| Weighted overall score | "
+            f"{report.recommendation.total_score:.1f} | "
+            "`scores_daily.csv` overall 行 |"
+        ),
+        (
+            "| Score band -> model position | "
+            f"{report.recommendation.total_score:.1f} -> "
+            f"{report.recommendation.model_risk_asset_ai_band.min_position:.0%}-"
+            f"{report.recommendation.model_risk_asset_ai_band.max_position:.0%} "
+            f"（{_escape_markdown_table(report.recommendation.model_risk_asset_ai_band.label)}） | "
+            "`config/scoring_rules.yaml:position_bands` |"
+        ),
+        (
+            "| Confidence-adjusted position | "
+            f"{report.confidence_assessment.adjusted_risk_asset_ai_band.min_position:.0%}-"
+            f"{report.confidence_assessment.adjusted_risk_asset_ai_band.max_position:.0%} "
+            f"（confidence={report.confidence_assessment.score:.1f}/100，"
+            f"{_confidence_level_label(report.confidence_assessment.level)}） | "
+            "`confidence` gate / 判断置信度 |"
+        ),
+        (
+            "| Macro risk budget | "
+            f"{report.macro_risk_asset_budget.adjusted_total_risk_asset_band.min_position:.0%}-"
+            f"{report.macro_risk_asset_budget.adjusted_total_risk_asset_band.max_position:.0%} "
+            f"（{_escape_markdown_table(report.macro_risk_asset_budget.level)}） | "
+            "`config/portfolio.yaml:risk_budget` / 宏观风险资产预算 |"
+        ),
+        (
+            "| Position gates | "
+            f"{_escape_markdown_table(_triggered_position_gate_summary(report))} | "
+            "`Binding Gate Ladder` / `仓位闸门` |"
+        ),
+        (
+            "| Final position | "
+            f"{report.recommendation.risk_asset_ai_band.min_position:.0%}-"
+            f"{report.recommendation.risk_asset_ai_band.max_position:.0%}；"
+            f"binding={_escape_markdown_table(_binding_gate_summary(report))} | "
+            "`decision_snapshot_YYYY-MM-DD.json` / `prediction_ledger.csv` |"
+        ),
+        "",
         "### Base Signal",
         "",
         (
@@ -1315,6 +1484,27 @@ def render_base_signal_risk_caps_section(
             f"{_escape_markdown_table(gate.source)} | "
             f"{_escape_markdown_table(gate.reason)} |"
         )
+    binding_gates = _binding_position_gates(report)
+    lines.extend(
+        [
+            "",
+            "### Binding Gate Ladder",
+            "",
+            "| Gate | Cap | 触发 | Binding | 证据来源 | 对模型上限影响 | 解释 |",
+            "|---|---:|---|---|---|---:|---|",
+        ]
+    )
+    for gate in report.recommendation.position_gates:
+        lines.append(
+            "| "
+            f"{_escape_markdown_table(gate.label)} (`{gate.gate_id}`) | "
+            f"{gate.max_position:.0%} | "
+            f"{'是' if gate.triggered else '否'} | "
+            f"{'是' if gate in binding_gates else '否'} | "
+            f"{_escape_markdown_table(gate.source)} | "
+            f"{_gate_model_cap_impact(gate, report)} | "
+            f"{_escape_markdown_table(gate.reason)} |"
+        )
     lines.extend(
         [
             "",
@@ -1351,6 +1541,43 @@ def render_base_signal_risk_caps_section(
             f"{_source_type_label(str(item['source_type']))} |"
         )
     lines.extend(["", f"- 防双重计分边界：{audit['double_counting_boundary']}"])
+    return "\n".join(lines) + "\n"
+
+
+def render_daily_review_questions_section(report: DailyScoreReport) -> str:
+    binding = _binding_gate_summary(report)
+    binding_sources = _binding_gate_source_summary(report)
+    lines = [
+        "## 如何复核今天的结果",
+        "",
+        "| 追问 | 本次复核入口 |",
+        "|---|---|",
+        (
+            "| 这个结论最依赖哪 3 类输入？ | "
+            "先看 `Data Lineage Card` 的价格/特征、权重配置、估值/风险/thesis 输入；"
+            "再用 trace bundle 的 dataset refs 反查 row count、checksum 和来源。 |"
+        ),
+        (
+            "| 今天有没有数据质量或 PIT 降级？ | "
+            f"Data Gate={_escape_markdown_table(_data_gate_card_summary(report))}；"
+            f"feature warnings={len(report.feature_set.warnings)}；"
+            "再看 `feature_availability_YYYY-MM-DD.md`。 |"
+        ),
+        (
+            "| 最终仓位由哪个 gate 决定？ | "
+            f"{_escape_markdown_table(binding)}；证据来源："
+            f"{_escape_markdown_table(binding_sources)}。 |"
+        ),
+        (
+            "| 如果不同意这个结论，应先检查哪里？ | "
+            f"优先检查 binding gate 的来源和原因；当前 Main Invalidator："
+            f"{_escape_markdown_table(_daily_main_invalidator(report))} |"
+        ),
+        (
+            "| 哪个条件变化会改变判断？ | "
+            f"{_escape_markdown_table(_daily_next_trigger(report))} |"
+        ),
+    ]
     return "\n".join(lines) + "\n"
 
 
@@ -1882,6 +2109,62 @@ def _run_trace_card_summary(run_id: str | None, trace_bundle_path: Path | None) 
     if trace_text:
         return f"{run_text}；trace={trace_text}"
     return run_text
+
+
+def _market_regime_card_summary() -> str:
+    return "ai_after_chatgpt；default backtest start=2022-12-01"
+
+
+def _path_cell(path: Path | str | None) -> str:
+    if path is None:
+        return "未接入"
+    return f"`{path}`"
+
+
+def _component_score_summary(report: DailyScoreReport) -> str:
+    return "；".join(
+        f"{_component_label(component.name)} {component.score:.1f}"
+        for component in report.components
+    )
+
+
+def _effective_weight_summary(report: DailyScoreReport) -> str:
+    return "；".join(
+        f"{_component_label(component.name)} {component.weight:.0%}"
+        for component in report.components
+    )
+
+
+def _binding_position_gates(report: DailyScoreReport) -> tuple[PositionGate, ...]:
+    final_max = report.recommendation.risk_asset_ai_band.max_position
+    binding = tuple(
+        gate
+        for gate in report.recommendation.position_gates
+        if gate.triggered and abs(gate.max_position - final_max) < 1e-9
+    )
+    if binding:
+        return binding
+    return (min(report.recommendation.position_gates, key=lambda gate: gate.max_position),)
+
+
+def _binding_gate_summary(report: DailyScoreReport) -> str:
+    return "、".join(
+        f"{gate.label} (`{gate.gate_id}`) {gate.max_position:.0%}"
+        for gate in _binding_position_gates(report)
+    )
+
+
+def _binding_gate_source_summary(report: DailyScoreReport) -> str:
+    return "；".join(
+        f"{gate.label}: {gate.source}" for gate in _binding_position_gates(report)
+    )
+
+
+def _gate_model_cap_impact(gate: PositionGate, report: DailyScoreReport) -> str:
+    model_max = report.recommendation.model_risk_asset_ai_band.max_position
+    if gate.max_position >= model_max - 1e-9:
+        return "0pp"
+    return f"-{(model_max - gate.max_position) * 100:.0f}pp"
 
 
 def _macro_budget_summary(report: DailyScoreReport) -> str:

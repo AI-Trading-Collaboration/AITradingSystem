@@ -1,0 +1,368 @@
+version: 2026-05-16
+status: baseline
+owner: system
+purpose: >
+  Machine-readable field dictionary for core reports, ledgers, traces, and
+  validation-only parameter search artifacts. This file explains field meaning,
+  upstream dependencies, downstream usage, production effect, and common
+  misunderstandings. It is documentation only and does not change scoring,
+  gates, backtests, or ledgers.
+
+fields:
+  scores_daily.as_of:
+    meaning: 评分日期或 signal date。
+    produced_by: aits score-daily
+    upstream_fields:
+      - CLI --as-of
+      - market calendar / daily-run resolved as_of
+    downstream_usage:
+      - previous score comparison
+      - decision snapshot lookup
+      - prediction ledger signal_date
+    production_effect: production_scoring_record
+    common_misunderstanding: 不是报告生成时间；生成时间由 run manifest 或 daily-run metadata 记录。
+
+  scores_daily.component:
+    meaning: 评分行类型；component 行记录单个模块，overall 行记录综合结果。
+    produced_by: build_daily_score_report
+    upstream_fields:
+      - config/scoring_rules.yaml modules
+      - config/weights/weight_profile_current.yaml effective weights
+    downstream_usage:
+      - daily report module score table
+      - dashboard score trend
+      - previous component delta
+    production_effect: production_scoring_record
+    common_misunderstanding: component 行不是独立投资结论，必须与 overall 行和 gate 一起解读。
+
+  scores_daily.score:
+    meaning: component 或 overall 的 0-100 分数。
+    produced_by: WeightedScoreModel / module scoring functions
+    upstream_fields:
+      - features_daily feature values
+      - SEC/TSM fundamentals
+      - valuation snapshots
+      - risk event occurrence review
+      - scoring signal rules
+    downstream_usage:
+      - score band mapping
+      - daily report module and overall score
+      - backtest signal reconstruction
+    production_effect: production_scoring_record
+    common_misunderstanding: 高分不等于最终仓位高；position gates 可能把仓位压低。
+
+  scores_daily.confidence:
+    meaning: component confidence 或 overall confidence，用于说明输入质量和结论可用性。
+    produced_by: confidence policy / source type policy
+    upstream_fields:
+      - component source_type
+      - component coverage
+      - data quality status
+      - manual review status
+      - approved calibration confidence delta
+    downstream_usage:
+      - confidence gate
+      - conclusion boundary
+      - daily report confidence explanation
+    production_effect: production_scoring_record
+    common_misunderstanding: confidence 不是收益概率；它只能降低使用等级或仓位上限，不能把低置信风险解释为低风险。
+
+  scores_daily.weight_profile_version:
+    meaning: 本次评分使用的生产权重 profile 版本。
+    produced_by: effective weight resolver
+    upstream_fields:
+      - config/weights/weight_profile_current.yaml
+      - approved overlay registry
+    downstream_usage:
+      - report weight calibration audit
+      - trace run manifest
+      - reproducibility review
+    production_effect: production_scoring_record
+    common_misunderstanding: shadow_weight_profiles.yaml 中的版本不会出现在 production overall 行，除非未来经过治理批准。
+
+  scores_daily.effective_weights_json:
+    meaning: 本次 overall score 使用的最终模块权重 JSON。
+    produced_by: effective weight resolver
+    upstream_fields:
+      - base weight profile
+      - approved overlays
+      - score-daily context
+    downstream_usage:
+      - Score-to-Position Funnel
+      - current_effective_weights audit
+      - backtest reproducibility
+    production_effect: production_scoring_record
+    common_misunderstanding: 不是候选调参结果；validation-only search 的权重不得写入这里。
+
+  scores_daily.model_risk_asset_ai_min:
+    meaning: weighted overall score 映射出的风险资产内 AI 模型仓位区间下限。
+    produced_by: WeightedScoreModel
+    upstream_fields:
+      - overall score
+      - config/scoring_rules.yaml position_bands
+    downstream_usage:
+      - daily report Score-to-Position Funnel
+      - decision snapshot raw_position
+    production_effect: advisory_output
+    common_misunderstanding: 这是硬 gate 前的模型区间，不是最终仓位。
+
+  scores_daily.model_risk_asset_ai_max:
+    meaning: weighted overall score 映射出的风险资产内 AI 模型仓位区间上限。
+    produced_by: WeightedScoreModel
+    upstream_fields:
+      - overall score
+      - config/scoring_rules.yaml position_bands
+    downstream_usage:
+      - position gate baseline cap
+      - Binding Gate Ladder impact calculation
+    production_effect: advisory_output
+    common_misunderstanding: 如果 valuation、thesis、risk_budget 等 gate 更严格，最终上限会低于该字段。
+
+  scores_daily.confidence_adjusted_risk_asset_ai_max:
+    meaning: confidence gate 后的模型仓位上限。
+    produced_by: confidence position gate
+    upstream_fields:
+      - model_risk_asset_ai_max
+      - overall confidence
+      - config/scoring_rules.yaml confidence_policy
+    downstream_usage:
+      - Score-to-Position Funnel
+      - final position min-gate calculation
+    production_effect: advisory_output
+    common_misunderstanding: 它只是多个 gate 之一，不一定是 binding gate。
+
+  scores_daily.final_risk_asset_ai_min:
+    meaning: 经过所有 position gates 后的风险资产内 AI 最终建议区间下限。
+    produced_by: WeightedScoreModel final recommendation
+    upstream_fields:
+      - model_risk_asset_ai_min
+      - final_risk_asset_ai_max
+    formula: min(model_min, final_max)
+    downstream_usage:
+      - daily report final position
+      - decision snapshot final position
+      - prediction ledger gated target position
+    production_effect: advisory_output
+    common_misunderstanding: 不是账户实际持仓，也不是交易指令。
+
+  scores_daily.final_risk_asset_ai_max:
+    meaning: 经过所有 position gates 后的风险资产内 AI 最终建议区间上限。
+    produced_by: WeightedScoreModel final recommendation
+    upstream_fields:
+      - model_risk_asset_ai_max
+      - confidence gate
+      - calibration overlay gate
+      - portfolio limit
+      - risk budget
+      - risk event gate
+      - valuation gate
+      - thesis gate
+      - data confidence gate
+    formula: min(score_model_cap, confidence_cap, calibration_cap, portfolio_cap, risk_budget_cap, risk_event_cap, valuation_cap, thesis_cap, data_confidence_cap)
+    downstream_usage:
+      - daily report Binding Gate Ladder
+      - decision snapshot positions
+      - prediction ledger gated target position
+      - backtest target exposure
+    production_effect: advisory_output
+    common_misunderstanding: 最严格 gate 决定上限；不能只看 overall score 推断最终仓位。
+
+  scores_daily.triggered_position_gates:
+    meaning: 本次触发的非 score_model 仓位 gate 摘要。
+    produced_by: _triggered_position_gate_summary
+    upstream_fields:
+      - position_gates
+    downstream_usage:
+      - daily report change explanation
+      - dashboard recent trend
+      - alerts
+    production_effect: advisory_output
+    common_misunderstanding: 没触发不代表该风险不存在，只代表没有形成本次更严格的仓位上限。
+
+  decision_snapshot.positions.position_gates:
+    meaning: 本次所有 position gate 的结构化列表，含 gate_id、class、source、max_position、triggered 和 reason。
+    produced_by: decision snapshot writer
+    upstream_fields:
+      - report.recommendation.position_gates
+    downstream_usage:
+      - evidence dashboard gate table
+      - shadow weight/gate observation
+      - feedback and replay
+    production_effect: production_decision_record
+    common_misunderstanding: triggered=false 的 gate 仍是本次计算过的约束，只是没有额外压低最终上限。
+
+  decision_snapshot.positions.final_risk_asset_ai_band:
+    meaning: signal-time 保存的最终风险资产内 AI 仓位区间。
+    produced_by: decision snapshot writer
+    upstream_fields:
+      - scores_daily.final_risk_asset_ai_min
+      - scores_daily.final_risk_asset_ai_max
+    downstream_usage:
+      - feedback calibration
+      - shadow parameter search baseline
+      - replay comparison
+    production_effect: production_decision_record
+    common_misunderstanding: 后验 outcome 不应改写该字段。
+
+  trace_bundle.run_manifest.run_id:
+    meaning: 本次日报或 daily-run 的稳定运行标识。
+    produced_by: score-daily / daily-run
+    upstream_fields:
+      - CLI --run-id
+      - default run id builder
+    downstream_usage:
+      - Decision Card
+      - trace lookup
+      - run bundle manifest
+    production_effect: audit_metadata
+    common_misunderstanding: run_id 不是报告状态，也不是样本 id。
+
+  trace_bundle.dataset_refs:
+    meaning: 支撑报告 claim 的输入数据集引用。
+    produced_by: report_traceability
+    upstream_fields:
+      - data quality report
+      - feature set
+      - scores
+      - review reports
+    downstream_usage:
+      - evidence dashboard
+      - audit review
+      - future explain command
+    production_effect: audit_metadata
+    common_misunderstanding: dataset ref 不是数据副本；它是反查路径、row count、checksum 等审计索引。
+
+  trace_bundle.quality_refs:
+    meaning: 与报告 claim 相关的数据质量和门禁引用。
+    produced_by: report_traceability
+    upstream_fields:
+      - validate-data result
+      - feature availability report
+      - SEC / valuation / risk validation
+    downstream_usage:
+      - dashboard quality section
+      - Data Lineage Card follow-up review
+    production_effect: audit_metadata
+    common_misunderstanding: quality ref 说明本次使用的质量上下文，不代表所有外部来源永久可信。
+
+  prediction_ledger.candidate_id:
+    meaning: production 或 challenger/shadow prediction 的候选标识。
+    produced_by: prediction ledger writer
+    upstream_fields:
+      - decision snapshot
+      - shadow runner candidate
+    downstream_usage:
+      - prediction outcomes
+      - shadow maturity
+      - promotion review
+    production_effect: production_or_shadow_record
+    common_misunderstanding: candidate_id 不是 ticker；`production` 与 shadow candidate 必须分开统计。
+
+  prediction_ledger.production_effect:
+    meaning: 该 prediction 是否可影响生产链路。
+    produced_by: score-daily / shadow runners
+    values:
+      production: 正式生产判断。
+      none: 只读、shadow 或 validation-only，不改变生产日报、gate 或 approved overlay。
+    downstream_usage:
+      - outcome calibration
+      - dashboard / reports labeling
+      - promotion safeguards
+    production_effect: governance_boundary
+    common_misunderstanding: shadow 行不代表正式规则已启用。
+
+  prediction_ledger.gated_target_position:
+    meaning: signal-time gate 后目标仓位，用于后续 outcome 评价。
+    produced_by: prediction ledger writer
+    upstream_fields:
+      - decision_snapshot.positions.final_risk_asset_ai_band
+    downstream_usage:
+      - position-weighted return
+      - shadow maturity
+      - parameter search comparison
+    production_effect: production_or_shadow_record
+    common_misunderstanding: 它是评价信号的 target，不是账户成交仓位。
+
+  parameter_search.trials.trial_id:
+    meaning: shadow 参数搜索中的 weight candidate 与 gate candidate 组合 id。
+    produced_by: aits feedback search-shadow-parameters
+    upstream_fields:
+      - weight_candidate_id
+      - gate_candidate_id
+    downstream_usage:
+      - search report
+      - pareto front
+      - promotion contract
+    production_effect: none
+    common_misunderstanding: trial id 不是 production rule id。
+
+  parameter_search.trials.objective_score:
+    meaning: 根据 validation-only objective 计算的排序分数。
+    produced_by: shadow parameter objective evaluator
+    upstream_fields:
+      - excess_total_return
+      - max drawdown
+      - turnover
+      - regularization penalties
+      - sample eligibility
+    downstream_usage:
+      - best trial selection
+      - Trial Card
+      - promotion contract input
+    production_effect: none
+    common_misunderstanding: objective 领先不等于生产可上线；还必须通过 promotion contract。
+
+  parameter_search.trials.eligible:
+    meaning: trial 是否满足当前 objective 的最小准入条件。
+    produced_by: _search_trial_eligibility
+    upstream_fields:
+      - available_count
+      - excess_total_return
+      - drawdown / turnover constraints
+      - production-nearness constraints
+    downstream_usage:
+      - best_trial selection
+      - search status
+      - promotion contract
+    production_effect: none
+    common_misunderstanding: eligible 只是在 search objective 层面合格，不是 owner approval。
+
+  parameter_search.trials.ineligibility_reason:
+    meaning: trial 未满足 objective 准入条件的原因。
+    produced_by: _search_trial_eligibility
+    upstream_fields:
+      - objective config
+      - trial metrics
+    downstream_usage:
+      - Trial Card
+      - warnings
+      - promotion review
+    production_effect: none
+    common_misunderstanding: diagnostic-leading trial 可能收益最高，但仍因该字段被排除在 eligible best 之外。
+
+  parameter_search.trials.gate_cap_overrides_json:
+    meaning: 该 trial 对 shadow gate caps 的 validation-only 覆盖。
+    produced_by: shadow parameter search
+    upstream_fields:
+      - config/weights/shadow_parameter_search_space.yaml gate_grid
+    downstream_usage:
+      - Trial Card
+      - cap-level attribution
+      - best_profiles.yaml
+    production_effect: none
+    common_misunderstanding: 这里的 relaxed cap 不会写入 `config/scoring_rules.yaml` 或 `config/portfolio.yaml`。
+
+  parameter_search.position_change.return_impact:
+    meaning: candidate 与 production 在某个 signal date 因仓位差异产生的 position-weighted return 差异。
+    produced_by: position change attribution
+    upstream_fields:
+      - production_position
+      - candidate_position
+      - asset_return
+    formula: (candidate_position - production_position) * asset_return, net of available cost assumptions where applicable
+    downstream_usage:
+      - search_report Position Change Attribution
+      - Trial Card
+      - cap review
+    production_effect: none
+    common_misunderstanding: 单日 return impact 不可直接年化，也不能单独证明 gate 应放宽。
