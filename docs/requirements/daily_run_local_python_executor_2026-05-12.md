@@ -2,6 +2,8 @@
 
 任务 ID：`OPS-012`
 
+最后更新：2026-05-17
+
 ## 背景
 
 2026-05-12 修复 daily-run 默认 as-of 后，`aits ops daily-run` 已正确选择

@@ -1,5 +1,7 @@
 # Shadow Parameter Iteration MVP
 
+最后更新：2026-05-17
+
 ## 背景
 
 现有 shadow parameter search 已能输出 trials、manifest、factorial attribution、
