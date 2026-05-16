@@ -10,6 +10,9 @@ from typer.testing import CliRunner
 import ai_trading_system.cli as cli_module
 from ai_trading_system.cli import app
 from ai_trading_system.ops_daily import (
+    DailyOpsRunMetadata,
+    DailyOpsRunReport,
+    DailyOpsStepResult,
     _execution_command,
     _purge_source_pycache_dirs,
     build_daily_ops_plan,
@@ -273,6 +276,146 @@ def test_daily_ops_plan_cli_writes_report(tmp_path: Path) -> None:
     assert "reports dashboard --as-of 2026-05-06" in markdown
     assert "ops health --as-of 2026-05-06" in markdown
     assert "security scan-secrets --as-of 2026-05-06" in markdown
+
+
+def test_daily_ops_run_cli_writes_daily_task_dashboard(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    run_output_root = tmp_path / "runs"
+
+    def fake_run_daily_ops_plan(
+        plan,
+        *,
+        project_root,
+        env,
+        run_id,
+    ) -> DailyOpsRunReport:
+        reports_dir = project_root / "outputs" / "reports"
+        reports_dir.mkdir(parents=True, exist_ok=True)
+        (reports_dir / "data_quality_2026-05-06.md").write_text(
+            "# 数据质量\n\n- 状态：PASS\n- 错误数：0\n- 警告数：0\n",
+            encoding="utf-8",
+        )
+        (reports_dir / "download_data_diagnostics_2026-05-06.md").write_text(
+            "# 下载诊断\n\n- 状态：PASS\n",
+            encoding="utf-8",
+        )
+        started_at = datetime(2020, 1, 1, 0, 0, tzinfo=UTC)
+        finished_at = datetime(2020, 1, 1, 0, 1, tzinfo=UTC)
+        step_results = tuple(
+            DailyOpsStepResult(
+                step_id=step.step_id,
+                title=step.title,
+                command=step.command,
+                status="SKIPPED" if not step.enabled else "PASS",
+                return_code=None if not step.enabled else 0,
+                started_at=None if not step.enabled else started_at,
+                ended_at=None if not step.enabled else finished_at,
+                duration_seconds=None if not step.enabled else 1.0,
+                produced_paths=step.produced_paths,
+                blocks_downstream=step.blocks_downstream,
+                skip_reason=step.skip_reason,
+            )
+            for step in plan.steps
+        )
+        metadata = DailyOpsRunMetadata(
+            schema_version=1,
+            run_id=run_id,
+            as_of=plan.as_of,
+            generated_at=started_at,
+            project_root=project_root,
+            status="PASS",
+            started_at=started_at,
+            finished_at=finished_at,
+            visibility_cutoff=finished_at,
+            visibility_cutoff_source="test",
+            input_visibility_status="PASS",
+            input_visibility_issues=(),
+            git={"commit": "test", "dirty": False},
+            config_artifacts=(),
+            rule_card_sha256=None,
+            env_presence={},
+            commands=tuple(
+                {
+                    "step_id": step.step_id,
+                    "enabled": step.enabled,
+                    "command": " ".join(step.command),
+                    "required_env_vars": list(step.required_env_vars),
+                    "blocks_downstream": step.blocks_downstream,
+                    "skip_reason": step.skip_reason,
+                    "input_visibility": step.input_visibility,
+                }
+                for step in plan.steps
+            ),
+            step_results=tuple(
+                {
+                    "step_id": result.step_id,
+                    "status": result.status,
+                    "return_code": result.return_code,
+                    "started_at": None
+                    if result.started_at is None
+                    else result.started_at.isoformat(),
+                    "ended_at": None
+                    if result.ended_at is None
+                    else result.ended_at.isoformat(),
+                    "duration_seconds": result.duration_seconds,
+                    "stdout_line_count": result.stdout_line_count,
+                    "stderr_line_count": result.stderr_line_count,
+                    "error": result.error,
+                }
+                for result in step_results
+            ),
+            pre_run_input_artifacts=(),
+            produced_artifacts=(),
+        )
+        return DailyOpsRunReport(
+            plan=plan,
+            started_at=started_at,
+            finished_at=finished_at,
+            status="PASS",
+            step_results=step_results,
+            metadata=metadata,
+        )
+
+    monkeypatch.setattr(cli_module, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(cli_module, "run_daily_ops_plan", fake_run_daily_ops_plan)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "ops",
+            "daily-run",
+            "--as-of",
+            "2026-05-06",
+            "--skip-risk-event-openai-precheck",
+            "--run-output-root",
+            str(run_output_root),
+            "--run-id",
+            "daily_ops_run:2026-05-06:test",
+        ],
+        env={
+            "FMP_API_KEY": "present",
+            "MARKETSTACK_API_KEY": "present",
+            "OPENAI_API_KEY": "",
+            "SEC_USER_AGENT": "AITradingSystem test@example.com",
+        },
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "每日任务" in result.output
+    assert "Dashboard" in result.output
+    task_dashboard = next(
+        run_output_root.rglob("reports/daily_task_dashboard_2026-05-06.html")
+    )
+    task_dashboard_json = next(
+        run_output_root.rglob("reports/daily_task_dashboard_2026-05-06.json")
+    )
+    assert task_dashboard.exists()
+    assert task_dashboard_json.exists()
+    assert "关键结论总览" in task_dashboard.read_text(encoding="utf-8")
+    assert (tmp_path / "outputs" / "reports" / "daily_task_dashboard_2026-05-06.html").exists()
+    assert (tmp_path / "outputs" / "reports" / "daily_task_dashboard_2026-05-06.json").exists()
 
 
 def test_daily_ops_plan_cli_can_fail_on_missing_env(tmp_path: Path) -> None:

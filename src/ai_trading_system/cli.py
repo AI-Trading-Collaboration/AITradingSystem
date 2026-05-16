@@ -160,6 +160,13 @@ from ai_trading_system.config import (
     load_watchlist,
     market_regime_by_id,
 )
+from ai_trading_system.daily_task_dashboard import (
+    build_daily_task_dashboard_report,
+    default_daily_task_dashboard_json_path,
+    default_daily_task_dashboard_path,
+    write_daily_task_dashboard,
+    write_daily_task_dashboard_json,
+)
 from ai_trading_system.data.download import (
     default_download_failure_report_path,
     download_daily_data,
@@ -5940,6 +5947,84 @@ def evidence_dashboard_command(
     )
 
 
+@reports_app.command("daily-tasks")
+def daily_task_dashboard_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="每日任务展示日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    metadata_path: Annotated[
+        Path | None,
+        typer.Option(help="daily_ops_run_metadata JSON 路径；不传时按 as_of 使用默认路径。"),
+    ] = None,
+    run_report_path: Annotated[
+        Path | None,
+        typer.Option(help="daily_ops_run Markdown 路径；不传时按 as_of 使用默认路径。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="同日子任务报告所在目录。"),
+    ] = PROJECT_ROOT / "outputs" / "reports",
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="每日任务 HTML dashboard 输出路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="每日任务 JSON payload 输出路径。"),
+    ] = None,
+) -> None:
+    """生成 daily-run 子任务总控展示页。"""
+    dashboard_date = _parse_date(as_of) if as_of else date.today()
+    resolved_metadata_path = metadata_path or default_daily_ops_run_metadata_path(
+        reports_dir,
+        dashboard_date,
+    )
+    resolved_run_report_path = run_report_path or default_daily_ops_run_report_path(
+        reports_dir,
+        dashboard_date,
+    )
+    dashboard_output = output_path or default_daily_task_dashboard_path(
+        reports_dir,
+        dashboard_date,
+    )
+    dashboard_json_output = json_output_path or (
+        default_daily_task_dashboard_json_path(reports_dir, dashboard_date)
+        if output_path is None
+        else dashboard_output.with_suffix(".json")
+    )
+    try:
+        report = build_daily_task_dashboard_report(
+            as_of=dashboard_date,
+            metadata_path=resolved_metadata_path,
+            run_report_path=resolved_run_report_path
+            if resolved_run_report_path.exists()
+            else None,
+            reports_dir=reports_dir,
+        )
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    html_path = write_daily_task_dashboard(report, dashboard_output)
+    json_path = write_daily_task_dashboard_json(report, dashboard_json_output)
+    style = (
+        "green"
+        if report.status == "PASS"
+        else "yellow"
+        if report.status == "PASS_WITH_SKIPS"
+        else "red"
+    )
+    console.print(f"[{style}]每日任务展示：{report.status}[/{style}]")
+    console.print(f"Dashboard：{html_path}")
+    console.print(f"Dashboard JSON：{json_path}")
+    console.print(
+        f"步骤：{len(report.tasks)}；失败：{report.failed_count}；"
+        f"跳过：{report.skipped_count}；风险/限制：{report.risk_count}"
+    )
+
+
 @ops_app.command("health")
 def pipeline_health_command(
     as_of: Annotated[
@@ -6467,6 +6552,20 @@ def daily_ops_run_command(
         paths=run_paths,
         min_modified_at=run_report.started_at,
     )
+    daily_task_dashboard_report = build_daily_task_dashboard_report(
+        as_of=plan_date,
+        metadata_path=metadata_path,
+        run_report_path=run_report_path,
+        reports_dir=run_paths.reports_dir,
+    )
+    daily_task_dashboard_path = write_daily_task_dashboard(
+        daily_task_dashboard_report,
+        default_daily_task_dashboard_path(run_paths.reports_dir, plan_date),
+    )
+    daily_task_dashboard_json_path = write_daily_task_dashboard_json(
+        daily_task_dashboard_report,
+        default_daily_task_dashboard_json_path(run_paths.reports_dir, plan_date),
+    )
     if legacy_mode == "mirror":
         legacy_outputs = mirror_canonical_daily_ops_outputs_to_legacy(
             paths=run_paths,
@@ -6508,6 +6607,8 @@ def daily_ops_run_command(
     console.print(f"Run bundle：{run_paths.run_root}")
     console.print(f"计划报告：{plan_report_path}")
     console.print(f"执行报告：{run_report_path}")
+    console.print(f"每日任务 Dashboard：{daily_task_dashboard_path}")
+    console.print(f"每日任务 Dashboard JSON：{daily_task_dashboard_json_path}")
     if run_report.metadata is not None:
         console.print(f"Metadata JSON：{metadata_path}")
         console.print(f"Run manifest：{run_paths.manifest_path}")

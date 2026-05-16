@@ -110,6 +110,14 @@ def mirror_canonical_daily_ops_outputs_to_legacy(
             paths.metadata_dir / f"daily_ops_run_metadata_{as_of_text}.json",
             legacy_reports_dir / f"daily_ops_run_metadata_{as_of_text}.json",
         ),
+        (
+            paths.reports_dir / f"daily_task_dashboard_{as_of_text}.html",
+            legacy_reports_dir / f"daily_task_dashboard_{as_of_text}.html",
+        ),
+        (
+            paths.reports_dir / f"daily_task_dashboard_{as_of_text}.json",
+            legacy_reports_dir / f"daily_task_dashboard_{as_of_text}.json",
+        ),
     )
     mirrored: list[Path] = []
     for source, destination in pairs:

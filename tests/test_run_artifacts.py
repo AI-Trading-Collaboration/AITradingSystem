@@ -78,6 +78,8 @@ def test_run_manifest_checksums_and_mirrors_without_payload_text(
     canonical_plan = paths.reports_dir / "daily_ops_plan_2026-05-06.md"
     canonical_run = paths.reports_dir / "daily_ops_run_2026-05-06.md"
     canonical_metadata = paths.metadata_dir / "daily_ops_run_metadata_2026-05-06.json"
+    canonical_task_dashboard = paths.reports_dir / "daily_task_dashboard_2026-05-06.html"
+    canonical_task_dashboard_json = paths.reports_dir / "daily_task_dashboard_2026-05-06.json"
     input_path = tmp_path / "data" / "raw" / "prices_daily.csv"
     for path, text in (
         (canonical_plan, "# canonical plan\n"),
@@ -86,6 +88,8 @@ def test_run_manifest_checksums_and_mirrors_without_payload_text(
             canonical_metadata,
             '{"stdout": "SECRET_SHOULD_NOT_APPEAR", "stderr": "RAW_STDERR"}\n',
         ),
+        (canonical_task_dashboard, "<html>daily task dashboard</html>\n"),
+        (canonical_task_dashboard_json, '{"production_effect": "none"}\n'),
         (input_path, "date,ticker,close\n2026-05-06,NVDA,1\n"),
     ):
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -121,6 +125,12 @@ def test_run_manifest_checksums_and_mirrors_without_payload_text(
     assert (paths.reports_dir / "daily_score_2026-05-06.md").exists()
     assert (paths.traces_dir / "daily_score_2026-05-06_trace.json").exists()
     assert legacy_daily_ops.read_text(encoding="utf-8") == "# canonical run\n"
+    assert (
+        legacy_reports_dir / "daily_task_dashboard_2026-05-06.html"
+    ).read_text(encoding="utf-8") == "<html>daily task dashboard</html>\n"
+    assert (
+        legacy_reports_dir / "daily_task_dashboard_2026-05-06.json"
+    ).read_text(encoding="utf-8") == '{"production_effect": "none"}\n'
     manifest_text = manifest_path.read_text(encoding="utf-8")
     manifest = json.loads(manifest_text)
     expected_sha = hashlib.sha256(input_path.read_bytes()).hexdigest()
