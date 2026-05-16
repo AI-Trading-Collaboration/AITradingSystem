@@ -610,6 +610,14 @@ from ai_trading_system.secret_hygiene import (
     scan_secrets,
     write_secret_scan_report,
 )
+from ai_trading_system.shadow_iteration import (
+    DEFAULT_SHADOW_ITERATION_REGISTRY_PATH,
+    DEFAULT_SHADOW_ITERATION_REPORT_DIR,
+    DEFAULT_SHADOW_ITERATION_RUN_ROOT,
+    build_shadow_iteration_report,
+    register_forward_shadow_candidate,
+    write_shadow_iteration_outputs,
+)
 from ai_trading_system.shadow_weight_profiles import (
     DEFAULT_DECISION_SNAPSHOT_SEARCH_DIR,
     DEFAULT_SHADOW_PARAMETER_OBJECTIVE_PATH,
@@ -2406,6 +2414,112 @@ def evaluate_shadow_parameter_promotion_command(
     console.print(f"Promotion 报告：{written}")
     console.print(f"Promotion JSON：{written.with_suffix('.json')}")
     console.print("治理边界：本命令只评估 contract，不修改 production 参数或 ledger。")
+
+
+@feedback_app.command("run-shadow-iteration")
+def run_shadow_iteration_command(
+    as_of: Annotated[
+        str,
+        typer.Option(help="shadow iteration 运行日期，格式为 YYYY-MM-DD。"),
+    ],
+    search_output_dir: Annotated[
+        Path | None,
+        typer.Option(help="可选：search-shadow-parameters 输出目录。"),
+    ] = None,
+    registry_path: Annotated[
+        Path,
+        typer.Option(
+            hidden=True,
+            help="测试/隔离用：shadow iteration registry CSV 输出路径。",
+        ),
+    ] = DEFAULT_SHADOW_ITERATION_REGISTRY_PATH,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(hidden=True, help="测试/隔离用：shadow iteration 报告目录。"),
+    ] = DEFAULT_SHADOW_ITERATION_REPORT_DIR,
+    run_output_root: Annotated[
+        Path,
+        typer.Option(hidden=True, help="测试/隔离用：shadow iteration run 输出根目录。"),
+    ] = DEFAULT_SHADOW_ITERATION_RUN_ROOT,
+    contract_path: Annotated[
+        Path,
+        typer.Option(
+            hidden=True,
+            help="测试/隔离用：shadow parameter promotion contract YAML 路径。",
+        ),
+    ] = DEFAULT_SHADOW_PARAMETER_PROMOTION_CONTRACT_PATH,
+) -> None:
+    """读取既有 search output，维护 shadow iteration registry 和只读报告。"""
+    run_date = _parse_date(as_of)
+    try:
+        report = build_shadow_iteration_report(
+            as_of=run_date,
+            search_output_dir=search_output_dir,
+            registry_path=registry_path,
+            reports_dir=reports_dir,
+            run_output_root=run_output_root,
+            contract_path=contract_path,
+        )
+        paths = write_shadow_iteration_outputs(report)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        console.print(f"[red]Shadow iteration 运行失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+    style = "green" if report.status == "PASS" else "yellow"
+    console.print(f"[{style}]Shadow iteration 状态：{report.status}[/{style}]")
+    console.print(f"Source search run：{report.source_search_run_id}")
+    console.print(f"Active candidates：{len(report.active_candidates)}")
+    if report.best_weight_only is not None:
+        console.print(f"Best weight-only：{report.best_weight_only.trial_id}")
+    if report.best_gate_only is not None:
+        console.print(f"Best gate-only：{report.best_gate_only.trial_id}")
+    if report.best_weight_gate_bundle is not None:
+        console.print(f"Best bundle：{report.best_weight_gate_bundle.trial_id}")
+    console.print(f"Registry：{paths['registry']}")
+    console.print(f"报告：{paths['markdown_report']}")
+    console.print(f"JSON：{paths['json_report']}")
+    console.print("治理边界：本命令不修改 production 权重、gate、approved overlay 或正式 ledger。")
+
+
+@feedback_app.command("register-forward-shadow")
+def register_forward_shadow_command(
+    iteration_id: Annotated[
+        str,
+        typer.Option(help="shadow iteration registry 中的 iteration_id。"),
+    ],
+    candidate_id: Annotated[
+        str,
+        typer.Option(help="registry trial_id；也可传同一个 iteration_id 作一致性校验。"),
+    ],
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="登记日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    registry_path: Annotated[
+        Path,
+        typer.Option(
+            hidden=True,
+            help="测试/隔离用：shadow iteration registry CSV 路径。",
+        ),
+    ] = DEFAULT_SHADOW_ITERATION_REGISTRY_PATH,
+) -> None:
+    """仅把 shadow iteration registry 中的候选标记为持续 forward shadow。"""
+    run_date = _parse_date(as_of) if as_of else date.today()
+    try:
+        row = register_forward_shadow_candidate(
+            registry_path=registry_path,
+            iteration_id=iteration_id,
+            candidate_id=candidate_id,
+            as_of=run_date,
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        console.print(f"[red]Forward shadow 登记失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+    console.print("[green]Forward shadow 登记完成[/green]")
+    console.print(f"Iteration：{row.get('iteration_id')}")
+    console.print(f"Trial：{row.get('trial_id')}")
+    console.print(f"Status：{row.get('status')}")
+    console.print(f"Registry：{registry_path}")
+    console.print("治理边界：本命令只更新 shadow_iteration_registry.csv，不修改 production 配置。")
 
 
 @feedback_app.command("shadow-maturity")

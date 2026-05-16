@@ -24,6 +24,7 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
     _write_detail_reports(tmp_path, as_of)
     _write_shadow_parameter_search(tmp_path)
+    _write_shadow_iteration_report(tmp_path, as_of)
 
     report = build_daily_task_dashboard_report(
         as_of=as_of,
@@ -41,6 +42,7 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert "当日动作、仓位与主要约束" in html
     assert "任务执行明细" in html
     assert "Shadow 结果与参数对比" in html
+    assert "Shadow 参数持续迭代状态" in html
     assert "结果对比" in html
     assert "Return 口径" in html
     assert "Total return" in html
@@ -122,6 +124,17 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert trend_weight["candidate"] == "25.00%"
     assert trend_weight["delta"] == "+0.00%"
     assert trend_weight["note"] == "未变化"
+    shadow_iteration = next(
+        item for item in payload["key_conclusions"] if item["area"] == "Shadow Iteration"
+    )
+    assert shadow_iteration["status"] == "PASS_WITH_LIMITATIONS"
+    assert "active candidates：3" in shadow_iteration["primary"]
+    assert "best gate-only" in shadow_iteration["primary"]
+    assert "source_current__grid_gate_0217" in shadow_iteration["primary"]
+    assert "dashboard 只读取 shadow_iteration JSON" in "；".join(
+        shadow_iteration["supporting"]
+    )
+    assert "gate_only 只能进入 gate policy review" in shadow_iteration["important_risk"]
     score_task = next(task for task in payload["tasks"] if task["step_id"] == "score_daily")
     assert score_task["conclusion"] == (
         "执行动作：观察；最终 AI 仓位：40%-60%；置信度：0.71；Data Gate：PASS"
@@ -134,6 +147,7 @@ def test_reports_daily_tasks_cli_writes_html_and_json(tmp_path: Path) -> None:
     metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
     _write_detail_reports(tmp_path, as_of)
     _write_shadow_parameter_search(tmp_path)
+    _write_shadow_iteration_report(tmp_path, as_of)
     output_path = tmp_path / "daily_task_dashboard_2026-05-04.html"
     json_output_path = tmp_path / "daily_task_dashboard_2026-05-04.json"
 
@@ -167,6 +181,10 @@ def test_reports_daily_tasks_cli_writes_html_and_json(tmp_path: Path) -> None:
     assert payload["key_conclusions"][0]["area"] == "投资结论"
     assert any(
         "source_current__grid_gate_0217" in item["primary"]
+        for item in payload["key_conclusions"]
+    )
+    assert any(
+        item["area"] == "Shadow Iteration"
         for item in payload["key_conclusions"]
     )
     assert payload["tasks"][0]["step_id"] == "download_data"
@@ -377,6 +395,54 @@ def _write_shadow_parameter_search(tmp_path: Path) -> None:
                         "reason": "尚未接入独立 forward shadow outcome。",
                     },
                 ],
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_shadow_iteration_report(tmp_path: Path, as_of: date) -> None:
+    (tmp_path / f"shadow_iteration_{as_of.isoformat()}.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "shadow_iteration",
+                "status": "PASS_WITH_LIMITATIONS",
+                "production_effect": "none",
+                "as_of": as_of.isoformat(),
+                "source_search_run_id": "demo_search",
+                "summary": {
+                    "active_candidate_count": 3,
+                    "primary_driver": "gate",
+                    "next_action": "进入 gate policy review；不得作为权重晋级候选。",
+                },
+                "best_candidates": {
+                    "weight_only": {
+                        "trial_id": "grid_weight_0015__production_observed_gates",
+                        "status": "BLOCKED",
+                        "excess_return": 0.0,
+                        "next_action": "不进入权重迭代；先处理 blocked reasons。",
+                    },
+                    "gate_only": {
+                        "trial_id": "source_current__grid_gate_0217",
+                        "status": "OBSERVED",
+                        "excess_return": 0.0428733645,
+                        "next_action": "进入 gate policy review；不得作为权重晋级候选。",
+                    },
+                    "weight_gate_bundle": {
+                        "trial_id": "grid_weight_0196__grid_gate_0217",
+                        "status": "OBSERVED",
+                        "excess_return": 0.0444968246,
+                        "next_action": "仅用于 diagnostic；拆分 weight/gate 影响后再评估。",
+                    },
+                },
+                "blocked_reasons": {
+                    "source_current__grid_gate_0217": [
+                        "not_weight_promotion_candidate: gate_only 只能进入 gate policy review"
+                    ]
+                },
             },
             ensure_ascii=False,
             indent=2,

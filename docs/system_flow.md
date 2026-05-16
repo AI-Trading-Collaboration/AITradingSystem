@@ -218,6 +218,9 @@ flowchart TD
         SPSR["outputs/parameter_search/<run_id>/{manifest.json,trials.csv,pareto_front.csv,best_profiles.yaml,search_report.md}<br/>可复现搜索登记、lineage checksum、factorial/cap attribution、最优/诊断候选和治理边界"]
         FSPP["aits feedback evaluate-shadow-parameter-promotion<br/>读取 search bundle + promotion contract；只评估晋级 readiness"]
         SPPR["outputs/parameter_search/<run_id>/shadow_parameter_promotion_<run_id>.md/json<br/>NOT_PROMOTABLE / READY_FOR_FORWARD_SHADOW / READY_FOR_OWNER_REVIEW；production_effect=none"]
+        FSPI["aits feedback run-shadow-iteration<br/>读取已有 search bundle + promotion contract<br/>分类 weight_only / gate_only / weight_gate_bundle，维护 shadow-only iteration 状态"]
+        SPIR["data/processed/shadow_iteration_registry.csv<br/>+ outputs/reports/shadow_iteration_YYYY-MM-DD.md/json<br/>+ outputs/shadow_iterations/<run_id>/*<br/>dashboard 只读候选状态、Trial Card、blocked reasons 和 lineage；production_effect=none"]
+        FSRFS["aits feedback register-forward-shadow<br/>仅把 registry 中指定候选标记为 FORWARD_SHADOW_ACTIVE<br/>不修改 production 配置、approved overlay 或正式 ledger"]
         FCP["aits feedback validate-calibration-protocol<br/>校验 nested walk-forward、purging/embargo、trial、benchmark 和 production boundary"]
         FCPR["outputs/reports/calibration_protocol_YYYY-MM-DD.md<br/>调权防过拟合 protocol 校验报告"]
         FSH["aits feedback run-shadow<br/>从 production snapshot/trace 派生 challenger prediction；production_effect=none"]
@@ -622,6 +625,12 @@ flowchart TD
     SPPC --> FSPP
     SPSR --> FSPP
     FSPP --> SPPR
+    SPSR --> FSPI
+    SPPC --> FSPI
+    FSPI --> SPIR
+    SPIR --> FSRFS
+    FSRFS --> SPIR
+    SPIR --> DTASKD
     FSP --> FBC
     FSP --> FPC
     FSP --> FSM

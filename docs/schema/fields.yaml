@@ -1,4 +1,4 @@
-version: 2026-05-16
+version: 2026-05-17
 status: baseline
 owner: system
 purpose: >
@@ -366,3 +366,108 @@ fields:
       - cap review
     production_effect: none
     common_misunderstanding: 单日 return impact 不可直接年化，也不能单独证明 gate 应放宽。
+
+  shadow_iteration_registry.iteration_id:
+    meaning: shadow iteration registry 中的稳定候选标识，格式为 source_search_run_id::trial_id。
+    produced_by: aits feedback run-shadow-iteration
+    upstream_fields:
+      - outputs/parameter_search/<run_id>/manifest.json run_id
+      - outputs/parameter_search/<run_id>/trials.csv trial_id
+    downstream_usage:
+      - register-forward-shadow
+      - shadow iteration dashboard card
+      - candidate lifecycle tracking
+    production_effect: none
+    common_misunderstanding: iteration_id 不是 production 参数版本，也不批准上线。
+
+  shadow_iteration_registry.candidate_type:
+    meaning: 候选变更类型；只能是 weight_only、gate_only 或 weight_gate_bundle。
+    produced_by: aits feedback run-shadow-iteration
+    upstream_fields:
+      - trials.csv weight_l1_distance_from_production
+      - trials.csv gate_cap_overrides_json
+    downstream_usage:
+      - weight iteration candidate filter
+      - gate policy review
+      - diagnostic bundle review
+    production_effect: none
+    common_misunderstanding: 只有 weight_only 才可能成为潜在权重迭代候选；gate_only 和 bundle 不得作为权重晋级。
+
+  shadow_iteration_registry.status:
+    meaning: shadow-only lifecycle 状态，支持 OBSERVED、CANDIDATE、FORWARD_SHADOW_ACTIVE、BLOCKED、RETIRED。
+    produced_by: aits feedback run-shadow-iteration / register-forward-shadow
+    upstream_fields:
+      - promotion contract checks
+      - prior registry status
+      - retirement_evidence_json
+    downstream_usage:
+      - dashboard status card
+      - forward shadow watchlist
+      - retirement review
+    production_effect: none
+    common_misunderstanding: FORWARD_SHADOW_ACTIVE 只表示持续观察，不是 production approval。
+
+  shadow_iteration_registry.production_effect:
+    meaning: 固定为 none，声明该 registry 行不得改变生产权重、gate、approved overlay 或正式 prediction ledger。
+    produced_by: aits feedback run-shadow-iteration / register-forward-shadow
+    upstream_fields:
+      - shadow iteration safety contract
+    downstream_usage:
+      - production safety tests
+      - dashboard and audit reports
+    production_effect: none
+    common_misunderstanding: registry 行存在不代表系统采用了该参数。
+
+  shadow_iteration_registry.promotion_status:
+    meaning: 候选在 shadow iteration 层面的 promotion 分类，如 POTENTIAL_WEIGHT_ITERATION_CANDIDATE、GATE_POLICY_REVIEW_ONLY、DIAGNOSTIC_ONLY、BLOCKED 或 RETIRED。
+    produced_by: aits feedback run-shadow-iteration
+    upstream_fields:
+      - candidate_type
+      - primary_driver
+      - promotion contract checks
+      - retirement rules
+    downstream_usage:
+      - dashboard summary
+      - owner review queue
+    production_effect: none
+    common_misunderstanding: POTENTIAL_WEIGHT_ITERATION_CANDIDATE 也只是观察候选，仍需 forward shadow、owner approval 和 rollback condition。
+
+  shadow_iteration_registry.blocked_reasons_json:
+    meaning: 阻断原因列表，包括 objective、contract、driver mismatch、retirement 和 P2 guardrail 类原因。
+    produced_by: aits feedback run-shadow-iteration / register-forward-shadow
+    upstream_fields:
+      - promotion contract
+      - trials.csv metrics
+      - manifest factorial attribution
+      - prior registry row
+    downstream_usage:
+      - Markdown report
+      - dashboard card
+      - owner review
+    production_effect: none
+    common_misunderstanding: blocked reason 不是可忽略警告；在解除前不得改 production。
+
+  shadow_iteration_registry.retirement_evidence_json:
+    meaning: shadow-only retirement 计数和证据，包括连续未进入 top group、连续表现恶化、primary_driver 转移和 drawdown/turnover contract 违反。
+    produced_by: aits feedback run-shadow-iteration
+    upstream_fields:
+      - prior shadow_iteration_registry.csv
+      - current top candidate set
+      - current trial metrics
+      - promotion contract
+    downstream_usage:
+      - RETIRED 状态判断
+      - audit review
+    production_effect: none
+    common_misunderstanding: retirement 只退出 shadow 观察，不会回滚或修改任何 production 参数。
+
+  shadow_iteration_report.summary.primary_driver:
+    meaning: 从 search manifest factorial attribution 读取的本轮收益主因，通常为 weight、gate、interaction 或 unknown。
+    produced_by: aits feedback run-shadow-iteration
+    upstream_fields:
+      - manifest.json factorial_attribution.primary_driver
+    downstream_usage:
+      - daily task dashboard Shadow Iteration card
+      - next action selection
+    production_effect: none
+    common_misunderstanding: primary_driver=gate 时不能把结果解释为权重改进。

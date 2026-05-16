@@ -524,6 +524,7 @@ def _build_key_conclusions(
         _data_key_conclusion(tasks),
         _parameter_key_conclusion(tasks),
         _feedback_key_conclusion(report, tasks, dashboard_payload),
+        _shadow_iteration_key_conclusion(report),
         _operations_key_conclusion(tasks),
     ]
     return tuple(conclusion for conclusion in conclusions if conclusion is not None)
@@ -746,6 +747,49 @@ def _operations_key_conclusion(
     )
 
 
+def _shadow_iteration_key_conclusion(
+    report: DailyTaskDashboardReport,
+) -> DailyTaskKeyConclusion | None:
+    summary = _latest_shadow_iteration_summary(report)
+    if not summary:
+        return None
+    active_count = _optional_int(summary.get("active_candidate_count"))
+    primary_driver = _string_value(summary.get("primary_driver")) or "unknown"
+    best_weight = _mapping_value(summary, "best_weight_only")
+    best_gate = _mapping_value(summary, "best_gate_only")
+    best_bundle = _mapping_value(summary, "best_weight_gate_bundle")
+    blocked_reasons = _string_list(summary.get("blocked_reasons"), limit=3)
+    primary = _join_nonempty(
+        [
+            _label("active candidates", active_count),
+            _label("primary driver", primary_driver),
+            _label("best weight-only", _shadow_iteration_candidate_label(best_weight)),
+            _label("best gate-only", _shadow_iteration_candidate_label(best_gate)),
+            _label("best bundle", _shadow_iteration_candidate_label(best_bundle)),
+        ]
+    )
+    supporting = tuple(
+        item
+        for item in (
+            _label("next action", summary.get("next_action")),
+            _label("source search", summary.get("source_search_run_id")),
+            "production 参数未改变；dashboard 只读取 shadow_iteration JSON，不重算结果。",
+        )
+        if item
+    )
+    risk = "；".join(blocked_reasons) or "当前 shadow iteration 未报告 blocked reasons。"
+    return DailyTaskKeyConclusion(
+        area="Shadow Iteration",
+        title="Shadow 参数持续迭代状态",
+        status=_string_value(summary.get("status")) or "PASS_WITH_LIMITATIONS",
+        primary=primary or "Shadow iteration JSON 缺少候选摘要。",
+        supporting=supporting,
+        important_risk=risk,
+        risk_level="medium" if blocked_reasons else "none",
+        source_steps=("shadow_iteration",),
+    )
+
+
 def _read_evidence_dashboard_payload(report: DailyTaskDashboardReport) -> TraceRecord:
     path = report.reports_dir / f"evidence_dashboard_{report.as_of.isoformat()}.json"
     if not path.exists():
@@ -755,6 +799,58 @@ def _read_evidence_dashboard_payload(report: DailyTaskDashboardReport) -> TraceR
     except json.JSONDecodeError:
         return {}
     return payload if isinstance(payload, dict) else {}
+
+
+def _latest_shadow_iteration_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = report.reports_dir / f"shadow_iteration_{report.as_of.isoformat()}.json"
+    payload = _read_json_object(path)
+    if not payload:
+        fallback = (
+            report.project_root
+            / "outputs"
+            / "reports"
+            / f"shadow_iteration_{report.as_of.isoformat()}.json"
+        )
+        if fallback != path:
+            payload = _read_json_object(fallback)
+    if payload.get("report_type") != "shadow_iteration":
+        return {}
+    summary = _mapping_value(payload, "summary")
+    best = _mapping_value(payload, "best_candidates")
+    blocked = _mapping_value(payload, "blocked_reasons")
+    blocked_reasons = []
+    for trial_id, reasons in blocked.items():
+        if not isinstance(reasons, list):
+            continue
+        for reason in reasons:
+            if isinstance(reason, str):
+                blocked_reasons.append(f"{trial_id}: {reason}")
+    return {
+        "status": _string_value(payload.get("status")) or "PASS_WITH_LIMITATIONS",
+        "active_candidate_count": summary.get("active_candidate_count"),
+        "primary_driver": summary.get("primary_driver"),
+        "next_action": summary.get("next_action"),
+        "source_search_run_id": payload.get("source_search_run_id"),
+        "best_weight_only": _mapping_value(best, "weight_only"),
+        "best_gate_only": _mapping_value(best, "gate_only"),
+        "best_weight_gate_bundle": _mapping_value(best, "weight_gate_bundle"),
+        "blocked_reasons": blocked_reasons,
+    }
+
+
+def _shadow_iteration_candidate_label(candidate: TraceRecord) -> str:
+    trial_id = _string_value(candidate.get("trial_id"))
+    if not trial_id:
+        return "unavailable"
+    return _join_nonempty(
+        [
+            f"`{trial_id}`",
+            _label("status", candidate.get("status")),
+            _label("excess", _format_percent(_optional_float(candidate.get("excess_return")))),
+            _label("next", candidate.get("next_action")),
+        ],
+        separator="，",
+    )
 
 
 def _latest_shadow_parameter_summary(report: DailyTaskDashboardReport) -> TraceRecord:
