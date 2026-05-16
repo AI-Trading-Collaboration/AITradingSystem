@@ -25,6 +25,7 @@ SOURCE_LEVELS = frozenset(
         "owner_policy",
         "empirical_calibrated",
         "pilot_prior",
+        "validation_shadow",
         "temporary_baseline",
         "invariant",
     }

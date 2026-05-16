@@ -281,16 +281,21 @@ def test_feedback_run_shadow_cli_appends_challenger_predictions(tmp_path: Path) 
     assert "Shadow runner 状态：PASS" in result.output
 
 
-def test_feedback_run_parameter_shadow_cli_appends_validation_predictions(
+def test_feedback_run_parameter_shadow_cli_defaults_to_isolated_validation_ledger(
     tmp_path: Path,
+    monkeypatch,
 ) -> None:
     snapshot_path = tmp_path / "decision_snapshot_2026-04-30.json"
     trace_path = tmp_path / "trace.json"
     features_path = tmp_path / "features.csv"
     quality_path = tmp_path / "quality.md"
     candidate_ledger_path = tmp_path / "parameter_candidates.json"
-    ledger_path = tmp_path / "prediction_ledger.csv"
+    ledger_path = tmp_path / "prediction_ledger_flow_validation.csv"
     report_path = tmp_path / "parameter_shadow_predictions.md"
+    monkeypatch.setattr(
+        "ai_trading_system.cli.DEFAULT_PARAMETER_SHADOW_PREDICTION_LEDGER_PATH",
+        ledger_path,
+    )
     snapshot = _decision_snapshot()
     snapshot["trace"] = {"trace_bundle_path": str(trace_path)}
     snapshot_path.write_text(json.dumps(snapshot, ensure_ascii=False), encoding="utf-8")
@@ -344,8 +349,6 @@ def test_feedback_run_parameter_shadow_cli_appends_validation_predictions(
             str(candidate_ledger_path),
             "--decision-snapshot-path",
             str(snapshot_path),
-            "--prediction-ledger-path",
-            str(ledger_path),
             "--as-of",
             "2026-04-30",
             "--report-path",

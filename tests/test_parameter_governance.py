@@ -118,6 +118,29 @@ def test_parameter_governance_flow_validation_keeps_no_production_boundary(
     assert "不可进入 owner approval 或 production" in markdown
 
 
+def test_parameter_governance_accepts_validation_shadow_source_level(
+    tmp_path: Path,
+) -> None:
+    paths = _write_governance_inputs(tmp_path)
+    raw = paths["manifest"].read_text(encoding="utf-8")
+    paths["manifest"].write_text(
+        raw.replace("source_level: pilot_prior", "source_level: validation_shadow", 1),
+        encoding="utf-8",
+    )
+
+    report = build_parameter_governance_report(
+        as_of=date(2026, 4, 10),
+        manifest_path=paths["manifest"],
+        candidate_ledger_path=paths["ledger"],
+    )
+    weights = next(item for item in report.parameters if item.parameter_id == "weights")
+
+    assert weights.source_level == "validation_shadow"
+    assert weights.production_effect == "none"
+    assert weights.action == "PREPARE_FORWARD_SHADOW"
+    assert report.status == "PASS_WITH_LIMITATIONS"
+
+
 def _write_governance_inputs(tmp_path: Path) -> dict[str, Path]:
     weights_config = tmp_path / "weight_profile_current.yaml"
     gate_config = tmp_path / "backtest_validation_policy.yaml"

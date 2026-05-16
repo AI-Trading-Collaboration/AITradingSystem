@@ -33,6 +33,7 @@
 |`owner_policy`|owner 已明确批准且有记录的政策值|可作为 production policy，但仍需回滚条件。|
 |`empirical_calibrated`|通过 replay、shadow、OOS、random/benchmark 和数据覆盖证据支持|可提交 owner review；未批准前仍无 production effect。|
 |`pilot_prior`|当前 pilot baseline，有 rationale 和验证计划，但证据不足|只能用于诊断、候选准备和报告披露。|
+|`validation_shadow`|只用于验证 shadow 接线和隔离观察的参数面|只能生成 validation-only shadow 建议或观察报告；不得作为 owner approval 或 production 参数。|
 |`temporary_baseline`|为了让流程可审计运行而保留的初始值|必须有退出条件；不得作为长期结论依据。|
 |`invariant`|协议、尺度、schema 或审计不变量|不可由市场反馈自动调参。|
 
@@ -69,3 +70,4 @@
 
 - 2026-05-15：新增任务和设计文档。owner 确认暂时无法提供可量化配置输入，本轮采用只读 governance manifest + evidence-driven action 建议，不自动改生产参数。
 - 2026-05-15：基础实现完成并进入 VALIDATING。新增 `config/parameter_governance.yaml`、`aits feedback evaluate-parameter-governance`、`parameter_governance_YYYY-MM-DD.md/json`，并把摘要接入 `optimize-market-feedback` 和交易日 `daily-run` 的 dashboard 前置流程。真实 2026-05-13 smoke 显示 manifest `parameter_governance_v1`、owner input `unavailable`、candidate_count=16、parameter_count=5、action 分布为 `BLOCKED_BY_DATA=2`、`COLLECT_MORE_EVIDENCE=3`；没有生成 approved overlay 或修改生产配置。验证通过 `ruff check src tests`、目标测试 33 passed、全量 `pytest -q` 528 passed、`git diff --check` 和 `aits ops daily-plan --as-of 2026-05-13 --skip-risk-event-openai-precheck` smoke。
+- 2026-05-16：补充 `validation_shadow` source level，原因是 shadow gate 参数面属于 validation-only 观察，不应被归类为 production prior。该等级只解除参数治理 manifest 的 schema 漏配，不改变 production scoring、approved overlay、rule card 或正式仓位 gate。

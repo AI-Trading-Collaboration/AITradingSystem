@@ -20,6 +20,9 @@ from ai_trading_system.feedback_sample_policy import (
 
 DEFAULT_PREDICTION_LEDGER_PATH = PROJECT_ROOT / "data" / "processed" / "prediction_ledger.csv"
 DEFAULT_PREDICTION_OUTCOMES_PATH = PROJECT_ROOT / "data" / "processed" / "prediction_outcomes.csv"
+DEFAULT_PARAMETER_SHADOW_PREDICTION_LEDGER_PATH = (
+    PROJECT_ROOT / "data" / "processed" / "prediction_ledger_flow_validation.csv"
+)
 DEFAULT_SHADOW_RUN_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
 DEFAULT_SHADOW_MATURITY_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
 PREDICTION_LEDGER_COLUMNS = (

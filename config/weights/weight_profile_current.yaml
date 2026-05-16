@@ -31,4 +31,4 @@ metadata:
   created_by: "baseline_calibration_infrastructure"
   source_task: "CALIBRATION-001"
   confidence_delta_unit: "score_points"
-  production_effect: "none_until_score_daily_integration"
+  production_effect: "active_via_score_daily_and_backtest_effective_weight_resolver"

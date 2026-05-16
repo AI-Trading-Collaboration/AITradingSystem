@@ -308,6 +308,12 @@ def apply_calibration_overlays(
         if not overlay.production_eligible(as_of=as_of):
             why_not_applied.append(_overlay_ineligible_reason(overlay, as_of=as_of))
             continue
+        if overlay.status == "approved_hard" and overlay.effect.has_hard_effect:
+            raise ValueError(
+                "approved_hard overlay hard effects are schema-reserved but not "
+                "connected to the production position/execution path: "
+                f"{overlay.overlay_id}"
+            )
         _validate_overlay_signals(profile, overlay)
         result = match_overlay(context, overlay)
         if result.matched:

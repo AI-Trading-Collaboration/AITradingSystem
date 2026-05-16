@@ -4,7 +4,7 @@
 
 最后更新：2026-05-16
 
-关联任务：`CALIBRATION-003`、`CALIBRATION-004`、`CALIBRATION-011`、`FEEDBACK-002`、`EXPERIMENT-001`、`SHADOW-002`、`SHADOW-003`、`GOV-003`、`LOOP-001`
+关联任务：`CALIBRATION-003`、`CALIBRATION-004`、`CALIBRATION-011`、`CALIBRATION-012`、`CALIBRATION-014`、`FEEDBACK-002`、`EXPERIMENT-001`、`SHADOW-002`、`SHADOW-003`、`GOV-003`、`LOOP-001`
 
 ## 背景
 
@@ -57,6 +57,7 @@ aits feedback build-parameter-candidates --as-of YYYY-MM-DD
 aits feedback evaluate-parameter-governance --as-of YYYY-MM-DD
 aits feedback run-parameter-shadow --as-of YYYY-MM-DD
 aits feedback optimize-market-feedback --as-of YYYY-MM-DD
+aits feedback search-shadow-parameters --from YYYY-MM-DD --to YYYY-MM-DD
 ```
 
 主要输入：
@@ -72,6 +73,8 @@ aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 - `outputs/current_effective_weights.json`
 - `config/weights/shadow_weight_profiles.yaml`
 - `config/weights/shadow_position_gate_profiles.yaml`
+- `config/weights/shadow_parameter_search_space.yaml`
+- `config/weights/shadow_parameter_objective.yaml`
 - `data/processed/shadow_weight_profile_observations.csv`
 - `config/parameter_governance.yaml`
 - `outputs/reports/parameter_governance_YYYY-MM-DD.json`
@@ -82,6 +85,7 @@ aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 - `outputs/reports/parameter_shadow_predictions_YYYY-MM-DD.md`
 - `outputs/reports/shadow_weight_profiles_YYYY-MM-DD.md`
 - `outputs/reports/shadow_weight_performance_YYYY-MM-DD.md/.csv`
+- `outputs/parameter_search/<run_id>/{manifest.json,trials.csv,pareto_front.csv,best_profiles.yaml,search_report.md}`
 - `outputs/reports/market_feedback_optimization_YYYY-MM-DD.md`
 
 ## 执行频次
@@ -143,6 +147,8 @@ aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 |9C. 当前样本 validation 门槛|VALIDATING|把 diagnostic/validation 门槛放宽到当前已积累 outcome 样本可启动后续验证，但 production promotion floor 不降低；shadow maturity 区分 validation review 和 promotion/governance review，低样本 validation 只能进入 `READY_FOR_VALIDATION_REVIEW`。|
 |9D. Shadow weight 表现优选|VALIDATING|按 gate 后仓位把 shadow 权重与主线转成可比的 position-weighted return、drawdown、turnover 和成本；当前三套 shadow profile 与主线 gate 后仓位一致，未找到正向 excess profile；不得自动替换生产权重。|
 |9E. Shadow gate 参数实验|VALIDATING|新增隔离 hard gate / confidence / risk budget cap profile，允许与 shadow weight profile 组合观察 gate 后仓位和表现差异；profile 只覆盖 validation ledger，不修改生产 `scoring_rules.yaml`、`portfolio.yaml`、approved overlay 或日报仓位 gate。|
+|9F. Shadow 参数搜索器|VALIDATING|新增可复现搜索入口，按指定区间枚举或采样 shadow weight/gate 组合，输出 trial registry、Pareto front 和 best profile YAML；结论只代表当前回测区间 in-sample 最优候选，不能直接生产替换。|
+|9G. Shadow 参数验证收紧|VALIDATING|搜索报告输出 weight-only / gate-only / combined 的 factorial attribution；默认 objective 要求验证级样本和正 excess；短样本结果只能作为 diagnostic-leading，不得写成 eligible best 或 production 候选。|
 |10. Coverage / placeholder / source veto|VALIDATING|robustness summary 汇总模块覆盖率、placeholder 占比、数据来源可信度和关键模块缺失；parameter replay/candidate ledger 把这些字段作为 `BLOCKED_BY_DATA` 或降级原因，而不只作为报告说明。|
 |11. Overlay target weights 与冲突治理|VALIDATING|approved overlay 支持 `target_weights` 模式、priority、mutual exclusion group 和冲突审计；approved overlay 的未知 signal、非法权重或同组优先级冲突必须 fail closed。|
 |12. Benchmark 扩展与反过拟合证据|VALIDATING|robustness 增加 same-exposure random、vol-targeted/fixed exposure、no-gate、alpha-only/risk-state-only 等 benchmark，并把关键 benchmark 结果接入 candidate 证据摘要。|
@@ -196,3 +202,10 @@ aits feedback optimize-market-feedback --as-of YYYY-MM-DD
 - 2026-05-16：CALIBRATION-010 进入 VALIDATING。新增 `aits feedback evaluate-shadow-weight-performance`，读取 shadow weight observation ledger 和价格缓存，按 production/shadow gate 后仓位计算 position-weighted return、最大回撤、换手和成本；observation ledger 增补 production/shadow 模型目标仓位与 gate 后目标仓位字段。真实 2026-05-14 验证使用 2026-05-04 至 2026-05-14 样本、SMH、1D horizon 和 5bps 单边成本，三套 profile 均为 production total return 4.74%、shadow total return 4.74%、excess 0.00%、turnover 1.20。当前没有正向 excess 的 shadow weight profile，直接原因是估值/风险等 hard gate 将三套 shadow 的最终仓位压到与主线一致；生产权重、approved overlay、正式 prediction ledger、日报结论和仓位 gate 未改变。
 - 2026-05-16：owner 明确 hard gate、confidence cap、risk budget cap 等可配置参数都可以纳入观察，只要做好 shadow 隔离。新增 `CALIBRATION-011` 与阶段 9E；本轮实现范围限定为 validation-only shadow gate profile 与现有 shadow weight profile 的组合观察，不改生产 gate 触发阈值或正式仓位结论。
 - 2026-05-16：CALIBRATION-011 进入 VALIDATING。新增 `config/weights/shadow_position_gate_profiles.yaml`，包含 relaxed valuation、balanced caps 和 defensive caps 三套隔离 gate profile；`aits feedback run-shadow-weight-profiles` 默认可组合 shadow weight 与 shadow gate profile，并在 observation ledger 记录 weight/gate profile、gate overrides 和 gate cap sources。真实 2026-05-04 至 2026-05-14 验证写入 9 个组合/日；`evaluate-shadow-weight-performance --as-of 2026-05-14 --since 2026-05-04 --horizon-days 1` 为 PASS，return-leading profile 为 `shadow_alpha_tilt_v1__shadow_gate_relaxed_valuation_v1`，available=8、pending=1、missing=2，shadow total return 8.31%、production total return 4.74%、excess 3.58%、shadow MDD -1.57%、production MDD -1.09%、beat rate 75.00%。该结果仍是 validation-only，样本少且未满足 production promotion；生产配置、正式 prediction ledger、日报结论和仓位 gate 未改变。
+- 2026-05-16：owner 要求第一版可频繁调用的最优参数搜索器，并用当前 2026-05-04 至 2026-05-14 输入寻找最优权重策略。新增 `CALIBRATION-012` 与阶段 9F；第一版限定为枚举式 validation-only 搜索，输出 top-N、Pareto front 和 best profile YAML，不写 production 配置。
+- 2026-05-16：CALIBRATION-012 进入 VALIDATING。新增 `config/weights/shadow_parameter_search_space.yaml`、`config/weights/shadow_parameter_objective.yaml` 和 `aits feedback search-shadow-parameters`；真实 2026-05-04 至 2026-05-14 初版搜索为 PASS，共 204 个 weight candidates、4 个 gate candidates、816 个 trials、582 个 Pareto front trials。当前目标函数下最优 trial 为 `source_current__shadow_gate_relaxed_valuation_v1`，available=8、pending=1、missing=2，shadow total return 8.31%、production total return 4.74%、excess 3.58%、shadow MDD -1.57%、production MDD -1.09%、turnover 0.60、beat rate 75.00%；最优结果主要来自 relaxed valuation gate，多个权重候选并列，说明当前短样本中 gate cap 仍主导最终仓位。输出位于 `outputs/parameter_search/current_20260504_20260514_v1/`；生产权重、approved overlay、正式 prediction ledger、日报结论和仓位 gate 未改变。
+- 2026-05-16：根据 owner 反馈，修正 CALIBRATION-012 第一版语义：`search-shadow-parameters` 不能只在几套预设 gate profile 中选优，必须在配置化数值搜索空间内拟合参数。`shadow_parameter_search_space.yaml` 已新增 `gate_grid`，默认关闭预设 shadow gate profile 参与最优解选择，改为枚举 weight grid + gate cap grid；报告和 manifest 记录 `exhaustive_grid_with_optional_manifest_seeds`、weight/gate grid 启用状态和配置 checksum。该方式仍是搜索空间内的 validation-only in-sample 最优，不是无限连续空间或 production approval。
+- 2026-05-16：CALIBRATION-012 修正版真实搜索 PASS，run id 为 `current_20260504_20260514_grid_v2`。搜索空间生成 204 个 weight candidates、253 个 gate candidates、51,612 个 trials、45,288 个 Pareto front trials；当前最优 trial 为 `grid_weight_0118__grid_gate_0217`，target weights 为 trend 25%、fundamentals 35%、macro_liquidity 10%、risk_sentiment 20%、valuation 5%、policy_geopolitics 5%，gate cap overrides 为 valuation 0.70、risk_budget 0.70、thesis 0.70、confidence 0.90、data_confidence 0.80。样本 available=8、pending=1、missing=2，shadow total return 9.18%、production total return 4.74%、excess 4.45%、shadow MDD -1.70%、production MDD -1.09%、turnover 0.75、beat rate 75.00%。Top trials 存在大量并列，说明短样本和离散仓位/gate 仍会形成平台区间；生产配置、approved overlay、正式 prediction ledger、日报结论和仓位 gate 未改变。
+- 2026-05-16：新增 CALIBRATION-013 shadow / production 边界复核。`validation_shadow` 被定义为 validation-only source level；`run-parameter-shadow` 默认输出从正式 `prediction_ledger.csv` 改为隔离的 `prediction_ledger_flow_validation.csv`，显式路径仍可覆盖。该修复只收紧 shadow 默认隔离，不改变正式 `score-daily`、approved overlay、生产权重或仓位 gate。
+- 2026-05-16：新增 CALIBRATION-014 shadow 参数验证收紧。当前实现目标是补 factorial attribution，收紧默认 objective 到 prediction diagnostic floor，短样本只输出 diagnostic-leading trial，并在 hard overlay 未接入下游执行层前对 `approved_hard` hard effect fail closed。
+- 2026-05-16：CALIBRATION-014 进入 VALIDATING。`search-shadow-parameters` 报告和 manifest 已输出 factorial attribution；默认 objective 现要求 `min_available_samples=13` 且 `require_positive_excess=true`。完整当前样本搜索 `current_20260504_20260514_validation_v3` 评估 51,612 trials，结果为 `PASS_WITH_LIMITATIONS`，没有 eligible best trial；诊断领先项为 `grid_weight_0118__grid_gate_0217`，factorial attribution 显示 `weight_only` excess delta 0.00%、`gate_only` 约 4.29%、`combined` 约 4.45%，primary driver 为 `gate`。

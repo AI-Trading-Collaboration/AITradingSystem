@@ -352,6 +352,27 @@ def test_target_weight_overlay_with_unknown_signal_fails_closed() -> None:
         )
 
 
+def test_approved_hard_hard_effect_fails_closed_until_execution_path_exists() -> None:
+    profile = load_weight_profile()
+    overlay = _overlay(
+        overlay_id="hard_valuation_cap",
+        status="approved_hard",
+        match={"market_regime": "ai_after_chatgpt"},
+        effect={"hard_gate_max_position": 0.40},
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="approved_hard overlay hard effects are schema-reserved",
+    ):
+        apply_calibration_overlays(
+            context={"market_regime": "ai_after_chatgpt"},
+            profile=profile,
+            overlays=(overlay,),
+            as_of=date(2026, 5, 6),
+        )
+
+
 def test_load_calibration_overlays_missing_file_returns_empty_tuple(tmp_path: Path) -> None:
     assert load_calibration_overlays(tmp_path / "missing.json") == ()
 

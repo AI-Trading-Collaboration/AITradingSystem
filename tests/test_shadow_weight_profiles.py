@@ -6,15 +6,19 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+import yaml
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
 from ai_trading_system.prediction_ledger import load_prediction_ledger
 from ai_trading_system.shadow_weight_profiles import (
+    build_shadow_parameter_search_report,
     build_shadow_weight_performance_report,
     build_shadow_weight_profile_run_report,
     load_shadow_position_gate_profile_manifest,
     load_shadow_weight_profile_manifest,
+    render_shadow_parameter_search_report,
+    write_shadow_parameter_search_bundle,
     write_shadow_weight_performance_csv,
 )
 
@@ -273,6 +277,223 @@ def test_shadow_weight_performance_cli_writes_report(tmp_path: Path) -> None:
     assert csv_path.exists()
 
 
+def test_shadow_parameter_search_writes_trial_registry_and_best_profile(
+    tmp_path: Path,
+) -> None:
+    snapshot_dir = tmp_path / "snapshots"
+    snapshot_dir.mkdir()
+    _write_snapshot(
+        tmp_path,
+        output_path=snapshot_dir / "decision_snapshot_2026-05-01.json",
+        signal_date="2026-05-01",
+    )
+    _write_snapshot(
+        tmp_path,
+        output_path=snapshot_dir / "decision_snapshot_2026-05-04.json",
+        signal_date="2026-05-04",
+    )
+    prices_path = tmp_path / "prices.csv"
+    search_space_path = _write_search_space(tmp_path)
+    objective_path = _write_objective(tmp_path)
+    pd.DataFrame(
+        [
+            {"date": "2026-05-01", "ticker": "SMH", "adj_close": 100.0},
+            {"date": "2026-05-04", "ticker": "SMH", "adj_close": 110.0},
+            {"date": "2026-05-05", "ticker": "SMH", "adj_close": 121.0},
+        ]
+    ).to_csv(prices_path, index=False)
+
+    report = build_shadow_parameter_search_report(
+        run_id="test_search",
+        start=date(2026, 5, 1),
+        end=date(2026, 5, 5),
+        decision_snapshot_path=snapshot_dir,
+        prices_path=prices_path,
+        search_space_path=search_space_path,
+        objective_path=objective_path,
+        output_dir=tmp_path / "search_output",
+        horizon_days=1,
+        cost_bps=5.0,
+    )
+    paths = write_shadow_parameter_search_bundle(report)
+
+    assert report.status == "PASS"
+    assert report.best_trial is not None
+    assert report.best_trial.available_count == 2
+    assert report.best_trial.excess_total_return is not None
+    assert report.best_trial.excess_total_return > 0
+    assert report.factorial_attribution is not None
+    assert report.factorial_attribution.primary_driver == "gate"
+    markdown = render_shadow_parameter_search_report(report)
+    assert "## Factorial Attribution" in markdown
+    assert "weight_only" in markdown
+    assert "gate_only" in markdown
+    assert paths["trials_csv"].exists()
+    assert paths["pareto_front_csv"].exists()
+    assert paths["best_profiles_yaml"].exists()
+    assert paths["manifest_json"].exists()
+    assert paths["search_report"].exists()
+
+
+def test_shadow_parameter_search_gate_grid_fits_numeric_caps(tmp_path: Path) -> None:
+    snapshot_dir = tmp_path / "snapshots"
+    snapshot_dir.mkdir()
+    _write_snapshot(
+        tmp_path,
+        output_path=snapshot_dir / "decision_snapshot_2026-05-01.json",
+        signal_date="2026-05-01",
+    )
+    _write_snapshot(
+        tmp_path,
+        output_path=snapshot_dir / "decision_snapshot_2026-05-04.json",
+        signal_date="2026-05-04",
+    )
+    prices_path = tmp_path / "prices.csv"
+    search_space_path = _write_search_space(
+        tmp_path,
+        include_shadow_gate_profiles=False,
+        gate_grid_values={"valuation": [0.40, 0.55, 0.60]},
+    )
+    objective_path = _write_objective(tmp_path)
+    pd.DataFrame(
+        [
+            {"date": "2026-05-01", "ticker": "SMH", "adj_close": 100.0},
+            {"date": "2026-05-04", "ticker": "SMH", "adj_close": 110.0},
+            {"date": "2026-05-05", "ticker": "SMH", "adj_close": 121.0},
+        ]
+    ).to_csv(prices_path, index=False)
+
+    report = build_shadow_parameter_search_report(
+        run_id="test_gate_grid",
+        start=date(2026, 5, 1),
+        end=date(2026, 5, 5),
+        decision_snapshot_path=snapshot_dir,
+        prices_path=prices_path,
+        search_space_path=search_space_path,
+        objective_path=objective_path,
+        output_dir=tmp_path / "search_output",
+        horizon_days=1,
+        cost_bps=0.0,
+    )
+
+    assert report.gate_candidate_count == 4
+    assert report.best_trial is not None
+    assert report.best_trial.gate_candidate_id.startswith("grid_gate_")
+    assert report.best_trial.gate_cap_overrides["valuation"] == 0.60
+
+
+def test_shadow_parameter_search_strict_objective_keeps_diagnostic_only(
+    tmp_path: Path,
+) -> None:
+    snapshot_dir = tmp_path / "snapshots"
+    snapshot_dir.mkdir()
+    _write_snapshot(
+        tmp_path,
+        output_path=snapshot_dir / "decision_snapshot_2026-05-01.json",
+        signal_date="2026-05-01",
+    )
+    _write_snapshot(
+        tmp_path,
+        output_path=snapshot_dir / "decision_snapshot_2026-05-04.json",
+        signal_date="2026-05-04",
+    )
+    prices_path = tmp_path / "prices.csv"
+    search_space_path = _write_search_space(tmp_path)
+    objective_path = _write_objective(
+        tmp_path,
+        min_available_samples=3,
+        require_positive_excess=True,
+    )
+    pd.DataFrame(
+        [
+            {"date": "2026-05-01", "ticker": "SMH", "adj_close": 100.0},
+            {"date": "2026-05-04", "ticker": "SMH", "adj_close": 110.0},
+            {"date": "2026-05-05", "ticker": "SMH", "adj_close": 121.0},
+        ]
+    ).to_csv(prices_path, index=False)
+
+    report = build_shadow_parameter_search_report(
+        run_id="test_strict_objective",
+        start=date(2026, 5, 1),
+        end=date(2026, 5, 5),
+        decision_snapshot_path=snapshot_dir,
+        prices_path=prices_path,
+        search_space_path=search_space_path,
+        objective_path=objective_path,
+        output_dir=tmp_path / "search_output",
+        horizon_days=1,
+        cost_bps=0.0,
+    )
+    paths = write_shadow_parameter_search_bundle(report)
+
+    assert report.status == "PASS_WITH_LIMITATIONS"
+    assert report.best_trial is None
+    assert report.best_diagnostic_trial is not None
+    assert report.factorial_attribution is not None
+    assert not report.factorial_attribution.selected_trial_eligible
+    markdown = render_shadow_parameter_search_report(report)
+    assert "诊断领先 trial" in markdown
+    assert "diagnostic_only_not_eligible" in markdown
+    best_payload = yaml.safe_load(paths["best_profiles_yaml"].read_text(encoding="utf-8"))
+    assert best_payload["selected_profile"] is None
+    assert best_payload["diagnostic_leading_trial"]["production_effect"] == "none"
+
+
+def test_shadow_parameter_search_cli_writes_outputs(tmp_path: Path) -> None:
+    snapshot_dir = tmp_path / "snapshots"
+    snapshot_dir.mkdir()
+    _write_snapshot(
+        tmp_path,
+        output_path=snapshot_dir / "decision_snapshot_2026-05-01.json",
+        signal_date="2026-05-01",
+    )
+    _write_snapshot(
+        tmp_path,
+        output_path=snapshot_dir / "decision_snapshot_2026-05-04.json",
+        signal_date="2026-05-04",
+    )
+    prices_path = tmp_path / "prices.csv"
+    search_space_path = _write_search_space(tmp_path)
+    objective_path = _write_objective(tmp_path)
+    output_root = tmp_path / "parameter_search"
+    pd.DataFrame(
+        [
+            {"date": "2026-05-01", "ticker": "SMH", "adj_close": 100.0},
+            {"date": "2026-05-04", "ticker": "SMH", "adj_close": 110.0},
+            {"date": "2026-05-05", "ticker": "SMH", "adj_close": 121.0},
+        ]
+    ).to_csv(prices_path, index=False)
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "feedback",
+            "search-shadow-parameters",
+            "--from",
+            "2026-05-01",
+            "--to",
+            "2026-05-05",
+            "--decision-snapshot-path",
+            str(snapshot_dir),
+            "--prices-path",
+            str(prices_path),
+            "--search-space-path",
+            str(search_space_path),
+            "--objective-path",
+            str(objective_path),
+            "--output-root",
+            str(output_root),
+            "--run-id",
+            "test_cli_search",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Shadow parameter search 状态：PASS" in result.output
+    assert (output_root / "test_cli_search" / "trials.csv").exists()
+    assert (output_root / "test_cli_search" / "best_profiles.yaml").exists()
+
+
 def _write_manifest(tmp_path: Path) -> Path:
     manifest_path = tmp_path / "shadow_weight_profiles.yaml"
     manifest_path.write_text(
@@ -335,12 +556,98 @@ profiles:
     return manifest_path
 
 
-def _write_snapshot(tmp_path: Path) -> Path:
-    snapshot_path = tmp_path / "decision_snapshot_2026-05-14.json"
+def _write_search_space(
+    tmp_path: Path,
+    *,
+    include_shadow_gate_profiles: bool = True,
+    gate_grid_values: dict[str, list[float]] | None = None,
+) -> Path:
+    gate_manifest_path = _write_gate_manifest(tmp_path)
+    gate_grid_yaml = ""
+    if gate_grid_values is not None:
+        value_lines = "\n".join(
+            f"    {gate_id}: {values}"
+            for gate_id, values in gate_grid_values.items()
+        )
+        gate_grid_yaml = f"""
+gate_grid:
+  enabled: true
+  max_candidates: 20
+  cap_values:
+{value_lines}
+"""
+    search_space_path = tmp_path / "shadow_parameter_search_space.yaml"
+    search_space_path.write_text(
+        f"""
+version: search_space_test
+status: pilot
+owner: system
+production_effect: none
+source_weight_profile_path: config/weights/weight_profile_current.yaml
+shadow_gate_profile_manifest_path: {gate_manifest_path.as_posix()}
+include_source_weight_profile: true
+include_shadow_weight_profiles: false
+include_production_observed_gate_profile: true
+include_shadow_gate_profiles: {str(include_shadow_gate_profiles).lower()}
+rationale: test search space
+review_after_reports: 3
+weight_grid:
+  enabled: true
+  max_candidates: 10
+  signal_values:
+    trend: [0.30]
+    fundamentals: [0.30]
+    macro_liquidity: [0.125]
+    risk_sentiment: [0.125]
+    valuation: [0.075]
+    policy_geopolitics: [0.075]
+{gate_grid_yaml}
+""".lstrip(),
+        encoding="utf-8",
+    )
+    return search_space_path
+
+
+def _write_objective(
+    tmp_path: Path,
+    *,
+    min_available_samples: int = 1,
+    require_positive_excess: bool = False,
+) -> Path:
+    objective_path = tmp_path / "shadow_parameter_objective.yaml"
+    objective_path.write_text(
+        f"""
+version: objective_test
+status: pilot
+owner: system
+production_effect: none
+primary_metric: objective_score
+rationale: test objective
+excess_return_weight: 1.0
+shadow_return_weight: 0.0
+excess_drawdown_penalty: 0.0
+excess_turnover_penalty: 0.0
+missing_sample_penalty: 0.0
+min_available_samples: {min_available_samples}
+require_positive_excess: {str(require_positive_excess).lower()}
+top_n: 5
+""".lstrip(),
+        encoding="utf-8",
+    )
+    return objective_path
+
+
+def _write_snapshot(
+    tmp_path: Path,
+    *,
+    output_path: Path | None = None,
+    signal_date: str = "2026-05-14",
+) -> Path:
+    snapshot_path = output_path or tmp_path / f"decision_snapshot_{signal_date}.json"
     snapshot_path.write_text(
         json.dumps(
             {
-                "signal_date": "2026-05-14",
+                "signal_date": signal_date,
                 "generated_at": "2026-05-14T21:00:00+00:00",
                 "market_regime": {"regime_id": "ai_after_chatgpt"},
                 "scores": {

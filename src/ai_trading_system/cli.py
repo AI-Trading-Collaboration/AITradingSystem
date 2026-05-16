@@ -468,6 +468,7 @@ from ai_trading_system.portfolio_exposure import (
     write_portfolio_exposure_report,
 )
 from ai_trading_system.prediction_ledger import (
+    DEFAULT_PARAMETER_SHADOW_PREDICTION_LEDGER_PATH,
     DEFAULT_PREDICTION_LEDGER_PATH,
     DEFAULT_PREDICTION_OUTCOMES_PATH,
     append_prediction_records,
@@ -607,15 +608,21 @@ from ai_trading_system.secret_hygiene import (
     write_secret_scan_report,
 )
 from ai_trading_system.shadow_weight_profiles import (
+    DEFAULT_DECISION_SNAPSHOT_SEARCH_DIR,
+    DEFAULT_SHADOW_PARAMETER_OBJECTIVE_PATH,
+    DEFAULT_SHADOW_PARAMETER_SEARCH_OUTPUT_ROOT,
+    DEFAULT_SHADOW_PARAMETER_SEARCH_SPACE_PATH,
     DEFAULT_SHADOW_POSITION_GATE_PROFILE_MANIFEST_PATH,
     DEFAULT_SHADOW_WEIGHT_PROFILE_MANIFEST_PATH,
     DEFAULT_SHADOW_WEIGHT_PROFILE_OBSERVATION_LEDGER_PATH,
+    build_shadow_parameter_search_report,
     build_shadow_weight_performance_report,
     build_shadow_weight_prediction_records,
     build_shadow_weight_profile_run_report,
     default_shadow_weight_performance_csv_path,
     default_shadow_weight_performance_report_path,
     default_shadow_weight_profile_report_path,
+    write_shadow_parameter_search_bundle,
     write_shadow_weight_observation_ledger,
     write_shadow_weight_performance_csv,
     write_shadow_weight_performance_report,
@@ -1956,9 +1963,14 @@ def run_parameter_shadow_predictions_command(
         typer.Option(help="数据质量报告路径；不传时从 trace quality_refs 推导。"),
     ] = None,
     prediction_ledger_path: Annotated[
-        Path,
-        typer.Option(help="append-only prediction ledger CSV 输出路径。"),
-    ] = DEFAULT_PREDICTION_LEDGER_PATH,
+        Path | None,
+        typer.Option(
+            help=(
+                "append-only parameter shadow prediction ledger CSV 输出路径；"
+                "默认写入隔离 flow validation ledger，不写正式 production ledger。"
+            )
+        ),
+    ] = None,
     candidate_ids: Annotated[
         str | None,
         typer.Option(help="可选：逗号分隔的 candidate_id 白名单。"),
@@ -2012,7 +2024,10 @@ def run_parameter_shadow_predictions_command(
         parameter_candidate_ledger=parameter_candidate_ledger,
         selected_candidate_ids=selected,
     )
-    ledger_output = append_prediction_records(records, prediction_ledger_path)
+    parameter_shadow_ledger_path = (
+        prediction_ledger_path or DEFAULT_PARAMETER_SHADOW_PREDICTION_LEDGER_PATH
+    )
+    ledger_output = append_prediction_records(records, parameter_shadow_ledger_path)
     warnings: list[str] = []
     if not records:
         warnings.append(
@@ -2263,6 +2278,120 @@ def evaluate_shadow_weight_performance_command(
         console.print("当前没有正向 excess 的 shadow weight profile。")
     console.print(f"Performance CSV：{csv_path}")
     console.print(f"Performance 报告：{report_path}")
+    console.print("治理边界：本命令不修改生产权重、approved overlay、日报结论或仓位 gate。")
+
+
+@feedback_app.command("search-shadow-parameters")
+def search_shadow_parameters_command(
+    from_date: Annotated[
+        str,
+        typer.Option("--from", help="搜索起始日期，格式为 YYYY-MM-DD。"),
+    ],
+    to_date: Annotated[
+        str,
+        typer.Option("--to", help="搜索截止日期，格式为 YYYY-MM-DD。"),
+    ],
+    decision_snapshot_path: Annotated[
+        Path,
+        typer.Option(help="decision_snapshot JSON 文件或目录路径。"),
+    ] = DEFAULT_DECISION_SNAPSHOT_SEARCH_DIR,
+    prices_path: Annotated[
+        Path,
+        typer.Option(help="标准化日线价格 CSV 路径。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    search_space_path: Annotated[
+        Path,
+        typer.Option(help="shadow 参数搜索空间 YAML 路径。"),
+    ] = DEFAULT_SHADOW_PARAMETER_SEARCH_SPACE_PATH,
+    objective_path: Annotated[
+        Path,
+        typer.Option(help="shadow 参数目标函数 YAML 路径。"),
+    ] = DEFAULT_SHADOW_PARAMETER_OBJECTIVE_PATH,
+    output_root: Annotated[
+        Path,
+        typer.Option(help="参数搜索输出根目录。"),
+    ] = DEFAULT_SHADOW_PARAMETER_SEARCH_OUTPUT_ROOT,
+    run_id: Annotated[
+        str | None,
+        typer.Option(help="搜索 run id；不传则按日期和 UTC 时间生成。"),
+    ] = None,
+    strategy_ticker: Annotated[
+        str,
+        typer.Option(help="AI proxy 或策略代理标的。"),
+    ] = "SMH",
+    horizon_days: Annotated[
+        int,
+        typer.Option(help="表现评估观察窗口，单位为交易日。"),
+    ] = 1,
+    cost_bps: Annotated[
+        float,
+        typer.Option(help="单边交易成本 bps。"),
+    ] = 5.0,
+    slippage_bps: Annotated[
+        float,
+        typer.Option(help="线性滑点 bps。"),
+    ] = 0.0,
+    max_trials: Annotated[
+        int | None,
+        typer.Option(help="可选：最多评估 trial 数，用于快速 smoke。"),
+    ] = None,
+) -> None:
+    """按指定区间搜索 validation-only shadow weight/gate 参数候选。"""
+    start = _parse_date(from_date)
+    end = _parse_date(to_date)
+    effective_run_id = run_id or (
+        f"shadow_parameter_search_{start.isoformat()}_{end.isoformat()}_"
+        f"{datetime.now(tz=UTC).strftime('%Y%m%dT%H%M%SZ')}"
+    )
+    output_dir = output_root / effective_run_id
+    try:
+        report = build_shadow_parameter_search_report(
+            run_id=effective_run_id,
+            start=start,
+            end=end,
+            decision_snapshot_path=decision_snapshot_path,
+            prices_path=prices_path,
+            search_space_path=search_space_path,
+            objective_path=objective_path,
+            output_dir=output_dir,
+            strategy_ticker=strategy_ticker,
+            horizon_days=horizon_days,
+            cost_bps=cost_bps,
+            slippage_bps=slippage_bps,
+            max_trials=max_trials,
+        )
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        console.print(f"[red]Shadow parameter search 失败：{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+    paths = write_shadow_parameter_search_bundle(report)
+    style = "green" if report.status == "PASS" else "yellow"
+    console.print(f"[{style}]Shadow parameter search 状态：{report.status}[/{style}]")
+    console.print(f"Trial 数：{len(report.trials)}")
+    console.print(f"Pareto front：{len(report.pareto_front)}")
+    if report.best_trial is not None:
+        best = report.best_trial
+        console.print(
+            "Best trial："
+            f"{best.trial_id}（objective={best.objective_score:.4f}, "
+            f"excess={best.excess_total_return:.2%}）"
+        )
+    else:
+        console.print("当前没有 eligible best trial。")
+        if report.best_diagnostic_trial is not None:
+            diagnostic = report.best_diagnostic_trial
+            console.print(
+                "Diagnostic-leading trial："
+                f"{diagnostic.trial_id}（not eligible: "
+                f"{diagnostic.ineligibility_reason or 'not_eligible'}）"
+            )
+    if report.factorial_attribution is not None:
+        console.print(
+            "Factorial primary driver："
+            f"{report.factorial_attribution.primary_driver}"
+        )
+    console.print(f"输出目录：{paths['output_dir']}")
+    console.print(f"搜索报告：{paths['search_report']}")
+    console.print(f"Best profile YAML：{paths['best_profiles_yaml']}")
     console.print("治理边界：本命令不修改生产权重、approved overlay、日报结论或仓位 gate。")
 
 

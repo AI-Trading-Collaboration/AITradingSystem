@@ -99,3 +99,8 @@ daily decision / backtest outcome
 
 - 2026-05-06：新增并进入实现。原因：owner 同意先搭建基础系统，再通过每日数据收集、回测和 forward shadow 等待样本成熟；第一阶段只实现不改变 production 的 schema、loader、matching 和 CLI 骨架。
 - 2026-05-06：从 IN_PROGRESS 改为 BASELINE_DONE。原因：已完成第一阶段权重 profile、approved overlay schema/loader、context matching、effective weights 计算、standalone CLI、系统流图和单元测试；`score-daily`、回测仓位、`position_gate` 和 prediction ledger 尚未接入，后续仍按阶段 2-7 推进。
+- 2026-05-16：补充生产边界收紧。当前 `score-daily` 和 `backtest` 已接入
+  effective weight resolver，但 `approved_hard` hard effect 仍未接入下游
+  position/execution path；因此带 `hard_gate_max_position`、`block_trade` 或
+  `observe_only` 的 `approved_hard` overlay 在 resolver 中 fail closed，避免配置
+  看似批准但实际未执行。
