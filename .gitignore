@@ -35,6 +35,8 @@ outputs/reports/ibkr_paper_account_snapshot_*.json
 outputs/reports/ibkr_paper_account_snapshot_*.md
 outputs/reports/ibkr_paper_order_lifecycle_*.json
 outputs/reports/ibkr_paper_order_lifecycle_*.md
+outputs/reports/ibkr_paper_controlled_fill_*.json
+outputs/reports/ibkr_paper_controlled_fill_*.md
 outputs/replays/*
 !outputs/replays/.gitkeep
 outputs/runs/*

@@ -1,0 +1,24 @@
+# IBKR Paper controlled small fill test.
+# No passwords, tokens, API keys, session cookies, or other credentials belong in this file.
+controlled_fill_enabled: false
+host: 127.0.0.1
+port: 7497
+client_id: 19013
+account_id: ""
+trading_mode: paper
+production_effect: none
+max_quantity: 1
+allowed_symbols:
+  - NVDA
+  - AAPL
+  - TSM
+allow_market_order: false
+allow_sell: false
+allow_option: false
+allow_margin: false
+allow_short: false
+require_manual_limit_price: true
+status_timeout_seconds: 30.0
+cancel_timeout_seconds: 10.0
+exchange: SMART
+currency: USD
