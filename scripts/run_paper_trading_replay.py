@@ -4,7 +4,7 @@ import argparse
 import json
 import sys
 from collections.abc import Iterable
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -75,7 +75,7 @@ def run_paper_trading_replay(
     )
     output_md_path = output_md_path or output_json_path.with_suffix(".md")
     if replay_mode == REPLAY_MODE_CONTINUOUS_PORTFOLIO:
-        return _write_continuous_portfolio_not_implemented_payload(
+        return _run_continuous_portfolio_replay(
             start=start,
             end=end,
             output_json_path=output_json_path,
@@ -83,6 +83,8 @@ def run_paper_trading_replay(
             reports_dir=reports_dir,
             audit_root=audit_root,
             trading_daily_report_dir=trading_daily_report_dir,
+            project_root=project_root,
+            prices_path=prices_path,
         )
 
     totals = _zero_totals()
@@ -195,26 +197,362 @@ def run_paper_trading_replay(
     return payload
 
 
+def _run_continuous_portfolio_replay(
+    *,
+    start: date,
+    end: date,
+    output_json_path: Path,
+    output_md_path: Path,
+    reports_dir: Path,
+    audit_root: Path,
+    trading_daily_report_dir: Path,
+    project_root: Path,
+    prices_path: Path | None,
+) -> dict[str, Any]:
+    from run_paper_trading_from_candidates import (
+        _ensure_upstream_candidate_artifacts,
+        _update_candidate_replay_records,
+    )
+
+    from ai_trading_system.trading_engine.audit import JsonlAuditLogger
+    from ai_trading_system.trading_engine.config import load_trading_engine_config
+    from ai_trading_system.trading_engine.execution import ExecutionService, PaperBroker
+    from ai_trading_system.trading_engine.intent_builder import (
+        build_order_intent_from_candidate,
+    )
+    from ai_trading_system.trading_engine.market_snapshot_provider import (
+        HistoricalPriceMarketSnapshotProvider,
+    )
+    from ai_trading_system.trading_engine.portfolio import PaperPortfolio
+    from ai_trading_system.trading_engine.portfolio.reconciliation import (
+        reconcile_portfolio_from_execution_reports,
+    )
+    from ai_trading_system.trading_engine.risk import PreTradeRiskChecker
+    from ai_trading_system.trading_engine.schemas import MarketContext
+
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    audit_root.mkdir(parents=True, exist_ok=True)
+    config = load_trading_engine_config()
+    portfolio = PaperPortfolio(config.execution.default_initial_cash_usd)
+    broker = PaperBroker(portfolio=portfolio, execution_settings=config.execution)
+    audit_logger = JsonlAuditLogger(audit_root)
+    service = ExecutionService(
+        risk_checker=PreTradeRiskChecker(config),
+        broker=broker,
+        audit_logger=audit_logger,
+        config=config,
+    )
+    snapshot_provider = HistoricalPriceMarketSnapshotProvider(
+        prices_path=prices_path or project_root / "data" / "raw" / "prices_daily.csv",
+    )
+    run_id = f"continuous_portfolio_replay:{start.isoformat()}:{end.isoformat()}"
+
+    totals = _zero_totals()
+    distributions: dict[str, dict[str, int]] = {
+        "daily_status": {},
+        "reconciliation_status": {},
+        "market_snapshot_source": {},
+    }
+    aggregations = _empty_aggregations()
+    daily_results: list[dict[str, Any]] = []
+    portfolio_snapshots: list[dict[str, Any]] = []
+    equity_curve: list[dict[str, Any]] = []
+    daily_equity: dict[str, float] = {}
+    daily_cash: dict[str, float] = {}
+    daily_exposure: dict[str, float] = {}
+    daily_realized_pnl: dict[str, float] = {}
+    daily_unrealized_pnl: dict[str, float] = {}
+    cumulative_realized_pnl: dict[str, float] = {}
+    cumulative_unrealized_pnl: dict[str, float] = {}
+
+    previous_realized_pnl = 0.0
+    previous_unrealized_pnl = 0.0
+    peak_equity: float | None = None
+    max_drawdown = {"amount_usd": 0.0, "percent": 0.0}
+    exposure_peak = 0.0
+    position_concentration_peak = 0.0
+
+    for as_of in _date_range(start, end):
+        candidates_path = reports_dir / f"order_intent_candidates_{as_of.isoformat()}.json"
+        candidate_file_preexisting = candidates_path.exists()
+        risk_start = len(service.risk_results)
+        order_start = len(service.submitted_orders)
+        report_start = len(service.execution_reports)
+        try:
+            if not candidate_file_preexisting:
+                _ensure_upstream_candidate_artifacts(
+                    as_of=as_of,
+                    candidates_path=candidates_path,
+                    project_root=project_root,
+                )
+            payload = _read_json_object(candidates_path)
+            candidates, candidate_records = _load_continuous_candidates(
+                payload,
+                as_of=as_of,
+            )
+            candidate_record_by_id = {
+                str(record["candidate_id"]): record for record in candidate_records
+            }
+
+            approved_candidates = []
+            intents = []
+            for candidate in candidates:
+                record = candidate_record_by_id[candidate.candidate_id]
+                try:
+                    intent = build_order_intent_from_candidate(candidate, mode="paper")
+                except (RuntimeError, ValueError) as exc:
+                    record["conversion_error"] = str(exc)
+                    continue
+                record["generated_intent"] = True
+                record["intent_id"] = intent.intent_id
+                approved_candidates.append(candidate)
+                intents.append(intent)
+
+            market_snapshot_source_counts = _empty_market_snapshot_source_counts()
+            snapshots = []
+            for candidate in approved_candidates:
+                if candidate.symbol is None or candidate.limit_price is None:
+                    continue
+                resolution = snapshot_provider.resolve(candidate, as_of=as_of)
+                snapshots.append(resolution.snapshot)
+                market_snapshot_source_counts[resolution.source] += 1
+                candidate_record_by_id[candidate.candidate_id][
+                    "market_snapshot_source"
+                ] = resolution.source
+
+            prices = _snapshot_prices(snapshots)
+            market_context = MarketContext(as_of=as_of, prices=prices)
+            for intent in intents:
+                service.execute(intent, market_context=market_context)
+
+            if snapshots:
+                service.process_market_snapshot(snapshots)
+            snapshot_time = max(
+                (snapshot.timestamp for snapshot in snapshots),
+                default=datetime.combine(as_of, time(20, 0), tzinfo=UTC),
+            )
+            service.expire_day_orders(completed_at=snapshot_time)
+            final_orders = [
+                broker.get_order(order.broker_order_id)
+                for order in service.submitted_orders
+            ]
+            final_orders_day = [
+                broker.get_order(order.broker_order_id)
+                for order in service.submitted_orders[order_start:]
+            ]
+            portfolio_state = service.get_portfolio_state(
+                prices=prices,
+                as_of=snapshot_time,
+            )
+            reconciliation_result = reconcile_portfolio_from_execution_reports(
+                execution_reports=service.execution_reports,
+                submitted_orders=final_orders,
+                actual_portfolio=portfolio_state,
+                initial_cash_usd=config.execution.default_initial_cash_usd,
+                prices=prices,
+                as_of=snapshot_time,
+            )
+            risk_results_day = service.risk_results[risk_start:]
+            execution_reports_day = service.execution_reports[report_start:]
+            _update_candidate_replay_records(
+                candidate_records=candidate_records,
+                risk_results=risk_results_day,
+                submitted_orders=final_orders_day,
+                execution_reports=execution_reports_day,
+            )
+            related_intent_ids = tuple(intent.intent_id for intent in intents)
+            audit_logger.log_portfolio_snapshot(
+                portfolio_state,
+                run_id=run_id,
+                strategy_id="continuous_portfolio_replay",
+                related_intent_ids=related_intent_ids,
+            )
+
+            day_key = as_of.isoformat()
+            snapshot_record = _portfolio_snapshot_record(
+                as_of=as_of,
+                portfolio_state=portfolio_state,
+            )
+            current_unrealized_pnl = _portfolio_unrealized_pnl(portfolio_state)
+            realized_delta = portfolio_state.realized_pnl_usd - previous_realized_pnl
+            unrealized_delta = current_unrealized_pnl - previous_unrealized_pnl
+            previous_realized_pnl = portfolio_state.realized_pnl_usd
+            previous_unrealized_pnl = current_unrealized_pnl
+            peak_equity, drawdown = _drawdown_point(
+                equity=portfolio_state.equity_value_usd,
+                peak_equity=peak_equity,
+            )
+            if drawdown["amount_usd"] < max_drawdown["amount_usd"]:
+                max_drawdown = drawdown
+            exposure_peak = max(exposure_peak, portfolio_state.gross_exposure_usd)
+            position_concentration_peak = max(
+                position_concentration_peak,
+                _position_concentration(snapshot_record),
+            )
+
+            record = _continuous_daily_result(
+                as_of=as_of,
+                candidates_path=candidates_path,
+                candidate_file_preexisting=candidate_file_preexisting,
+                candidate_records=candidate_records,
+                risk_results=risk_results_day,
+                final_orders_day=final_orders_day,
+                realized_pnl=realized_delta,
+                unrealized_pnl=unrealized_delta,
+                reconciliation_status=reconciliation_result.status.value,
+                market_snapshot_source_counts=market_snapshot_source_counts,
+                portfolio_snapshot=snapshot_record,
+            )
+            portfolio_snapshots.append(snapshot_record)
+            equity_curve.append(
+                {
+                    "date": day_key,
+                    "equity": portfolio_state.equity_value_usd,
+                    "drawdown": drawdown["amount_usd"],
+                    "drawdown_percent": drawdown["percent"],
+                }
+            )
+            daily_equity[day_key] = portfolio_state.equity_value_usd
+            daily_cash[day_key] = portfolio_state.cash_usd
+            daily_exposure[day_key] = portfolio_state.gross_exposure_usd
+            daily_realized_pnl[day_key] = realized_delta
+            daily_unrealized_pnl[day_key] = unrealized_delta
+            cumulative_realized_pnl[day_key] = portfolio_state.realized_pnl_usd
+            cumulative_unrealized_pnl[day_key] = current_unrealized_pnl
+            _add_candidate_aggregations(aggregations, tuple(candidate_records))
+        except Exception as exc:  # noqa: BLE001 - replay records per-day failures.
+            snapshot_time = datetime.combine(as_of, time(20, 0), tzinfo=UTC)
+            portfolio_state = service.get_portfolio_state(as_of=snapshot_time)
+            snapshot_record = _portfolio_snapshot_record(
+                as_of=as_of,
+                portfolio_state=portfolio_state,
+            )
+            record = _continuous_daily_error_result(
+                as_of=as_of,
+                candidates_path=candidates_path,
+                candidate_file_preexisting=candidate_file_preexisting,
+                portfolio_snapshot=snapshot_record,
+                error=str(exc),
+            )
+            portfolio_snapshots.append(snapshot_record)
+
+        _add_daily_totals(totals, record)
+        _increment(distributions["daily_status"], str(record["status"]))
+        _increment(
+            distributions["reconciliation_status"],
+            str(record["reconciliation_status"]),
+        )
+        _increment(
+            distributions["market_snapshot_source"],
+            str(record["market_snapshot_source"]),
+        )
+        daily_results.append(record)
+
+    quality_flags = _quality_flags(daily_results)
+    payload_out: dict[str, Any] = {
+        "schema_version": PAPER_TRADING_REPLAY_SCHEMA_VERSION,
+        "report_type": "paper_trading_replay",
+        "generated_at": datetime.now(tz=UTC).isoformat(),
+        "market_regime": "ai_after_chatgpt",
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "date_count": len(daily_results),
+        "status": _overall_status(daily_results, quality_flags=quality_flags),
+        "production_effect": "none",
+        "replay_mode": REPLAY_MODE_CONTINUOUS_PORTFOLIO,
+        "portfolio_carry_forward": True,
+        "implementation_status": "IMPLEMENTED",
+        "execution_boundary": {
+            "mode": "paper",
+            "paper_only": True,
+            "real_broker_allowed": False,
+            "broker_api_allowed": False,
+            "api_key_read": False,
+            "production_position_effect": "none",
+        },
+        "outputs": {
+            "json": str(output_json_path),
+            "markdown": str(output_md_path),
+            "reports_dir": str(reports_dir),
+            "audit_root": str(audit_root),
+            "trading_daily_report_dir": str(trading_daily_report_dir),
+        },
+        "totals": totals,
+        "distributions": {
+            key: dict(sorted(value.items())) for key, value in distributions.items()
+        },
+        "aggregations": _serialize_aggregations(aggregations),
+        "quality_flags": quality_flags,
+        "daily_results": daily_results,
+        "portfolio_snapshots": portfolio_snapshots,
+        "equity_curve": equity_curve,
+        "daily_equity": daily_equity,
+        "daily_cash": daily_cash,
+        "daily_exposure": daily_exposure,
+        "daily_realized_pnl": daily_realized_pnl,
+        "daily_unrealized_pnl": daily_unrealized_pnl,
+        "cumulative_realized_pnl": cumulative_realized_pnl,
+        "cumulative_unrealized_pnl": cumulative_unrealized_pnl,
+        "max_drawdown": max_drawdown,
+        "exposure_peak": exposure_peak,
+        "position_concentration_peak": position_concentration_peak,
+        "notes": [
+            "continuous-portfolio 是 paper-only 连续组合模拟。",
+            "它不是实盘交易，也不是真实 broker 成交。",
+            "production_effect=none；replay 不读取 broker API key。",
+            "daily-independent 每天重置 portfolio；continuous-portfolio 结转持仓和 cash。",
+            "DAY order 当日未成交即过期；本阶段不支持 GTC。",
+        ],
+    }
+
+    output_json_path.parent.mkdir(parents=True, exist_ok=True)
+    output_json_path.write_text(
+        json.dumps(payload_out, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    output_md_path.parent.mkdir(parents=True, exist_ok=True)
+    output_md_path.write_text(
+        render_paper_trading_replay_report(payload_out),
+        encoding="utf-8",
+    )
+    return payload_out
+
+
 def render_paper_trading_replay_report(payload: dict[str, Any]) -> str:
     totals = _mapping(payload.get("totals"))
     quality_flags = _mapping(payload.get("quality_flags"))
+    replay_mode = _string(payload.get("replay_mode"))
+    is_continuous = replay_mode == REPLAY_MODE_CONTINUOUS_PORTFOLIO
+    mode_boundary = (
+        "- 边界：continuous-portfolio 是 paper-only 连续组合模拟；"
+        "不是实盘交易，不是真实 broker 成交；production_effect=none；"
+        "不读取 broker API key。"
+        if is_continuous
+        else (
+            "- 边界：paper-only 复盘；不读取 broker API key；不调用真实 broker；"
+            "不改变 production 仓位建议。"
+        )
+    )
+    mode_difference = (
+        "- 与 daily-independent 的区别：daily-independent 每天重置 paper portfolio；"
+        "continuous-portfolio 从 start date 初始化一次，并跨日结转持仓、cash 和 PnL。"
+        if is_continuous
+        else (
+            "- 当前默认 replay 是逐日独立模拟，不是连续组合收益；不会结转前一日"
+            "持仓、cash 或 open order。"
+        )
+    )
     lines = [
         "# Paper Trading Replay Summary",
         "",
         f"- 日期范围：{payload.get('start')} 到 {payload.get('end')}",
         "- 市场阶段：`ai_after_chatgpt`",
         f"- 状态：{payload.get('status')}",
-        f"- replay_mode={payload.get('replay_mode')}",
-        f"- portfolio_carry_forward={payload.get('portfolio_carry_forward')}",
+        f"- replay_mode={replay_mode}",
+        f"- portfolio_carry_forward={_format_bool(payload.get('portfolio_carry_forward'))}",
         "- production_effect=none",
-        (
-            "- 边界：paper-only 复盘；不读取 broker API key；不调用真实 broker；"
-            "不改变 production 仓位建议。"
-        ),
-        (
-            "- 当前默认 replay 是逐日独立模拟，不是连续组合收益；不会结转前一日"
-            "持仓、cash 或 open order。"
-        ),
+        mode_boundary,
+        mode_difference,
         "",
         "## 汇总",
         "",
@@ -223,6 +561,9 @@ def render_paper_trading_replay_report(payload: dict[str, Any]) -> str:
     ]
     for field in (*COUNT_FIELDS, *PNL_FIELDS):
         lines.append(f"| {field} | {_format_value(totals.get(field))} |")
+
+    if is_continuous:
+        lines.extend(_render_continuous_metrics_section(payload))
 
     lines.extend(
         [
@@ -265,11 +606,92 @@ def render_paper_trading_replay_report(payload: dict[str, Any]) -> str:
     lines.extend(_render_group_section(payload, "by_reason_code", "按 Reason Code 聚合"))
     lines.extend(_render_group_section(payload, "by_blocked_by", "按 Blocked By 聚合"))
 
+    lines.extend(_render_daily_results_section(payload, is_continuous=is_continuous))
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _render_continuous_metrics_section(payload: dict[str, Any]) -> list[str]:
+    max_drawdown = _mapping(payload.get("max_drawdown"))
+    lines = [
+        "",
+        "## Continuous Portfolio Metrics",
+        "",
+        "| 指标 | 数值 |",
+        "|---|---:|",
+        f"| max_drawdown_usd | {_format_value(max_drawdown.get('amount_usd', 0.0))} |",
+        f"| max_drawdown_percent | {_format_percent(max_drawdown.get('percent'))} |",
+        f"| exposure_peak | {_format_value(payload.get('exposure_peak'))} |",
+        "| position_concentration_peak | "
+        f"{_format_percent(payload.get('position_concentration_peak'))} |",
+        "",
+        "## Equity Curve",
+        "",
+        "| Date | Equity | Cash | Exposure | Realized PnL | Unrealized PnL | Drawdown |",
+        "|---|---:|---:|---:|---:|---:|---:|",
+    ]
+    daily_cash = _mapping(payload.get("daily_cash"))
+    daily_exposure = _mapping(payload.get("daily_exposure"))
+    cumulative_realized = _mapping(payload.get("cumulative_realized_pnl"))
+    cumulative_unrealized = _mapping(payload.get("cumulative_unrealized_pnl"))
+    for point in _list_mappings(payload.get("equity_curve")):
+        day_key = _string(point.get("date"))
+        lines.append(
+            "| "
+            f"{day_key} | "
+            f"{_format_value(point.get('equity'))} | "
+            f"{_format_value(daily_cash.get(day_key))} | "
+            f"{_format_value(daily_exposure.get(day_key))} | "
+            f"{_format_value(cumulative_realized.get(day_key))} | "
+            f"{_format_value(cumulative_unrealized.get(day_key))} | "
+            f"{_format_value(point.get('drawdown'))} |"
+        )
+    if not _list_mappings(payload.get("equity_curve")):
+        lines.append("| none | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 |")
+    return lines
+
+
+def _render_daily_results_section(
+    payload: dict[str, Any],
+    *,
+    is_continuous: bool,
+) -> list[str]:
+    lines = [
+        "",
+        "## 每日结果",
+        "",
+    ]
+    if is_continuous:
+        lines.extend(
+            [
+                "| Date | Status | Candidates | Intents | Submitted | "
+                "Filled/Open/Expired | Reconciliation | Equity | Cash | Exposure |",
+                "|---|---|---:|---:|---:|---:|---|---:|---:|---:|",
+            ]
+        )
+        for record in _list_mappings(payload.get("daily_results")):
+            snapshot = _mapping(record.get("portfolio_snapshot"))
+            filled_open_expired = (
+                f"{record.get('filled', 0)}/"
+                f"{record.get('open', 0)}/"
+                f"{record.get('expired', 0)}"
+            )
+            lines.append(
+                "| "
+                f"{record.get('as_of')} | "
+                f"{record.get('status')} | "
+                f"{record.get('candidate_count')} | "
+                f"{record.get('generated_intents')} | "
+                f"{record.get('submitted')} | "
+                f"{filled_open_expired} | "
+                f"{record.get('reconciliation_status')} | "
+                f"{_format_value(snapshot.get('equity'))} | "
+                f"{_format_value(snapshot.get('cash'))} | "
+                f"{_format_value(snapshot.get('exposure'))} |"
+            )
+        return lines
+
     lines.extend(
         [
-            "",
-            "## 每日结果",
-            "",
             "| Date | Status | Candidates | Intents | Submitted | "
             "Filled/Open/Cancelled | Reconciliation | Snapshot Source | Limited upstream |",
             "|---|---|---:|---:|---:|---:|---|---|---|",
@@ -293,7 +715,7 @@ def render_paper_trading_replay_report(payload: dict[str, Any]) -> str:
             f"{record.get('market_snapshot_source')} | "
             f"{record.get('limited_upstream_generated')} |"
         )
-    return "\n".join(lines).rstrip() + "\n"
+    return lines
 
 
 def _render_group_section(
@@ -340,8 +762,6 @@ def _default_replay_json_path(
     replay_mode: str,
 ) -> Path:
     suffix = f"{start.isoformat()}_{end.isoformat()}"
-    if replay_mode != REPLAY_MODE_DAILY_INDEPENDENT:
-        suffix = f"{suffix}_{replay_mode}"
     return reports_dir / f"paper_trading_replay_{suffix}.json"
 
 
@@ -428,6 +848,286 @@ def _daily_error_result(
     for field in PNL_FIELDS:
         record[field] = 0.0
     return record
+
+
+def _continuous_daily_result(
+    *,
+    as_of: date,
+    candidates_path: Path,
+    candidate_file_preexisting: bool,
+    candidate_records: list[dict[str, Any]],
+    risk_results: list[Any],
+    final_orders_day: list[Any],
+    realized_pnl: float,
+    unrealized_pnl: float,
+    reconciliation_status: str,
+    market_snapshot_source_counts: dict[str, int],
+    portfolio_snapshot: dict[str, Any],
+) -> dict[str, Any]:
+    blocked_candidates = sum(
+        1 for record in candidate_records if not bool(record.get("generated_intent"))
+    )
+    direct_rejections = sum(
+        1
+        for record in candidate_records
+        if bool(record.get("rejected")) and not _string(record.get("intent_id"))
+    )
+    expired = sum(1 for order in final_orders_day if _order_status(order) == "EXPIRED")
+    open_count = sum(
+        1
+        for order in final_orders_day
+        if _order_status(order) in {"SUBMITTED", "PARTIALLY_FILLED"}
+    )
+    record: dict[str, Any] = {
+        "as_of": as_of.isoformat(),
+        "status": _continuous_daily_status(
+            reconciliation_status=reconciliation_status,
+            candidate_count=len(candidate_records),
+            blocked_candidates=blocked_candidates,
+        ),
+        "production_effect": "none",
+        "candidate_file_preexisting": candidate_file_preexisting,
+        "limited_upstream_generated": not candidate_file_preexisting,
+        "candidates_path": str(candidates_path),
+        "summary_output_path": "",
+        "report_path": "",
+        "audit_log_path": "",
+        "reconciliation_status": reconciliation_status,
+        "market_snapshot_source": _market_snapshot_source_label(
+            market_snapshot_source_counts
+        ),
+        "market_snapshot_source_counts": dict(market_snapshot_source_counts),
+        "candidate_count": len(candidate_records),
+        "blocked_candidates": blocked_candidates,
+        "generated_intents": sum(
+            1 for record in candidate_records if bool(record.get("generated_intent"))
+        ),
+        "approved": sum(1 for result in risk_results if bool(result.approved)),
+        "rejected": sum(1 for result in risk_results if not bool(result.approved))
+        + direct_rejections,
+        "submitted": len(final_orders_day),
+        "filled": sum(1 for order in final_orders_day if _order_status(order) == "FILLED"),
+        "open": open_count,
+        "cancelled": sum(
+            1 for order in final_orders_day if _order_status(order) == "CANCELLED"
+        ),
+        "expired": expired,
+        "realized_pnl": realized_pnl,
+        "unrealized_pnl": unrealized_pnl,
+        "portfolio_snapshot": portfolio_snapshot,
+        "open_orders_end_of_day": open_count,
+    }
+    return record
+
+
+def _continuous_daily_error_result(
+    *,
+    as_of: date,
+    candidates_path: Path,
+    candidate_file_preexisting: bool,
+    portfolio_snapshot: dict[str, Any],
+    error: str,
+) -> dict[str, Any]:
+    record = _daily_error_result(
+        as_of=as_of,
+        candidates_path=candidates_path,
+        summary_output_path=Path(""),
+        candidate_file_preexisting=candidate_file_preexisting,
+        error=error,
+    )
+    record["expired"] = 0
+    record["summary_output_path"] = ""
+    record["portfolio_snapshot"] = portfolio_snapshot
+    record["open_orders_end_of_day"] = 0
+    return record
+
+
+def _continuous_daily_status(
+    *,
+    reconciliation_status: str,
+    candidate_count: int,
+    blocked_candidates: int,
+) -> str:
+    if reconciliation_status == "ERROR":
+        return "ERROR"
+    if reconciliation_status != "PASS":
+        return "LIMITED"
+    if candidate_count == 0 or blocked_candidates:
+        return "LIMITED"
+    return "PASS"
+
+
+def _load_continuous_candidates(
+    payload: dict[str, Any],
+    *,
+    as_of: date,
+) -> tuple[tuple[Any, ...], list[dict[str, Any]]]:
+    from run_paper_trading_from_candidates import _candidate_replay_record
+
+    from ai_trading_system.trading_engine.schemas import OrderIntentCandidate
+
+    raw_candidates = payload.get("candidates")
+    if not isinstance(raw_candidates, list):
+        return (), []
+    parsed_candidates = []
+    records: list[dict[str, Any]] = []
+    fallback_run_id = str(payload.get("run_id") or "missing_run_id")
+    for index, raw_candidate in enumerate(raw_candidates, start=1):
+        if not isinstance(raw_candidate, dict):
+            records.append(
+                _invalid_candidate_record(
+                    candidate_id=f"invalid_candidate_{index}",
+                    error="candidate item must be a JSON object",
+                )
+            )
+            continue
+        raw_record = _candidate_record_from_raw(
+            raw_candidate,
+            fallback_candidate_id=f"candidate_{index}",
+        )
+        candidate_payload = dict(raw_candidate)
+        candidate_payload.setdefault("run_id", fallback_run_id)
+        candidate_payload.setdefault(
+            "created_at",
+            datetime.combine(as_of, time(14, 0), tzinfo=UTC).isoformat(),
+        )
+        time_in_force = str(candidate_payload.get("time_in_force") or "DAY").upper()
+        if time_in_force != "DAY":
+            raw_record["blocked"] = True
+            raw_record["blocked_by"] = _append_unique_code(
+                _string_list(raw_record.get("blocked_by")),
+                "unsupported_time_in_force",
+            )
+            raw_record["rejected"] = True
+            raw_record["conversion_error"] = (
+                f"unsupported time_in_force for continuous replay: {time_in_force}"
+            )
+            records.append(raw_record)
+            continue
+        try:
+            candidate = OrderIntentCandidate.model_validate(candidate_payload)
+        except ValueError as exc:
+            raw_record["rejected"] = True
+            raw_record["conversion_error"] = str(exc)
+            records.append(raw_record)
+            continue
+        parsed_candidates.append(candidate)
+        records.append(_candidate_replay_record(candidate))
+    return tuple(parsed_candidates), records
+
+
+def _invalid_candidate_record(*, candidate_id: str, error: str) -> dict[str, Any]:
+    record = _candidate_record_from_raw(
+        {"candidate_id": candidate_id, "blocked": True},
+        fallback_candidate_id=candidate_id,
+    )
+    record["rejected"] = True
+    record["conversion_error"] = error
+    return record
+
+
+def _candidate_record_from_raw(
+    raw_candidate: dict[str, Any],
+    *,
+    fallback_candidate_id: str,
+) -> dict[str, Any]:
+    return {
+        "candidate_id": str(raw_candidate.get("candidate_id") or fallback_candidate_id),
+        "strategy_id": str(raw_candidate.get("strategy_id") or "missing"),
+        "symbol": str(raw_candidate.get("symbol") or "missing").upper(),
+        "reason_codes": _string_list(raw_candidate.get("reason_codes")),
+        "blocked": bool(raw_candidate.get("blocked", True)),
+        "blocked_by": _string_list(raw_candidate.get("blocked_by")),
+        "generated_intent": False,
+        "intent_id": None,
+        "approved": False,
+        "rejected": False,
+        "submitted": False,
+        "filled": False,
+        "open": False,
+        "cancelled": False,
+        "order_status": "NOT_SUBMITTED",
+        "risk_blocked_by": [],
+        "conversion_error": "",
+        "market_snapshot_source": "not_applicable",
+    }
+
+
+def _append_unique_code(codes: list[str], code: str) -> list[str]:
+    if code not in codes:
+        codes.append(code)
+    return codes
+
+
+def _order_status(order: Any) -> str:
+    status = getattr(order, "status", "")
+    value = getattr(status, "value", status)
+    return str(value)
+
+
+def _read_json_object(path: Path) -> dict[str, Any]:
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"candidate file must be a JSON object: {path}")
+    return payload
+
+
+def _snapshot_prices(snapshots: list[Any]) -> dict[str, float]:
+    return {snapshot.symbol: snapshot.last for snapshot in snapshots}
+
+
+def _portfolio_snapshot_record(
+    *,
+    as_of: date,
+    portfolio_state: Any,
+) -> dict[str, Any]:
+    positions = [
+        position.model_dump(mode="json")
+        for position in sorted(
+            portfolio_state.positions,
+            key=lambda item: item.symbol,
+        )
+    ]
+    return {
+        "date": as_of.isoformat(),
+        "cash": portfolio_state.cash_usd,
+        "positions": positions,
+        "equity": portfolio_state.equity_value_usd,
+        "exposure": portfolio_state.gross_exposure_usd,
+        "net_exposure": portfolio_state.net_exposure_usd,
+        "realized_pnl": portfolio_state.realized_pnl_usd,
+        "unrealized_pnl": sum(
+            _float_value(position.get("unrealized_pnl")) for position in positions
+        ),
+    }
+
+
+def _portfolio_unrealized_pnl(portfolio_state: Any) -> float:
+    return float(sum(position.unrealized_pnl for position in portfolio_state.positions))
+
+
+def _drawdown_point(
+    *,
+    equity: float,
+    peak_equity: float | None,
+) -> tuple[float, dict[str, float]]:
+    next_peak = equity if peak_equity is None else max(peak_equity, equity)
+    amount = equity - next_peak
+    percent = amount / next_peak if next_peak else 0.0
+    return next_peak, {"amount_usd": amount, "percent": percent}
+
+
+def _position_concentration(snapshot_record: dict[str, Any]) -> float:
+    equity = _float_value(snapshot_record.get("equity"))
+    if equity <= 0:
+        return 0.0
+    positions = _list_mappings(snapshot_record.get("positions"))
+    if not positions:
+        return 0.0
+    return max(
+        abs(_float_value(position.get("market_value"))) / equity
+        for position in positions
+    )
 
 
 def _add_daily_totals(totals: dict[str, int | float], record: dict[str, Any]) -> None:
@@ -568,6 +1268,15 @@ def _market_snapshot_source_counts(value: object) -> dict[str, int]:
     return counts
 
 
+def _market_snapshot_source_label(counts: dict[str, int]) -> str:
+    active_sources = [source for source, count in counts.items() if count]
+    if not active_sources:
+        return "none"
+    if len(active_sources) == 1:
+        return active_sources[0]
+    return "mixed"
+
+
 def _empty_market_snapshot_source_counts() -> dict[str, int]:
     return {
         "historical_ohlc": 0,
@@ -583,75 +1292,6 @@ def _normalize_replay_mode(mode: str) -> str:
     if normalized == "continuous-portfolio":
         return REPLAY_MODE_CONTINUOUS_PORTFOLIO
     raise ValueError("mode must be daily-independent or continuous-portfolio")
-
-
-def _write_continuous_portfolio_not_implemented_payload(
-    *,
-    start: date,
-    end: date,
-    output_json_path: Path,
-    output_md_path: Path,
-    reports_dir: Path,
-    audit_root: Path,
-    trading_daily_report_dir: Path,
-) -> dict[str, Any]:
-    payload: dict[str, Any] = {
-        "schema_version": PAPER_TRADING_REPLAY_SCHEMA_VERSION,
-        "report_type": "paper_trading_replay",
-        "generated_at": datetime.now(tz=UTC).isoformat(),
-        "market_regime": "ai_after_chatgpt",
-        "start": start.isoformat(),
-        "end": end.isoformat(),
-        "date_count": 0,
-        "status": "NOT_IMPLEMENTED",
-        "production_effect": "none",
-        "replay_mode": REPLAY_MODE_CONTINUOUS_PORTFOLIO,
-        "portfolio_carry_forward": False,
-        "implementation_status": "NOT_IMPLEMENTED",
-        "execution_boundary": {
-            "mode": "paper",
-            "paper_only": True,
-            "real_broker_allowed": False,
-            "broker_api_allowed": False,
-            "api_key_read": False,
-            "production_position_effect": "none",
-        },
-        "outputs": {
-            "json": str(output_json_path),
-            "markdown": str(output_md_path),
-            "reports_dir": str(reports_dir),
-            "audit_root": str(audit_root),
-            "trading_daily_report_dir": str(trading_daily_report_dir),
-        },
-        "totals": _zero_totals(),
-        "distributions": {
-            "daily_status": {},
-            "reconciliation_status": {},
-            "market_snapshot_source": {},
-        },
-        "aggregations": _serialize_aggregations(_empty_aggregations()),
-        "quality_flags": {
-            "synthetic_snapshot_days": 0,
-            "missing_candidate_days": 0,
-            "limited_upstream_days": 0,
-            "error_days": 0,
-            "empty_candidate_days": 0,
-        },
-        "daily_results": [],
-        "notes": [
-            "continuous-portfolio 模式本阶段仅预留结构，尚未实现。",
-            "本报告没有结转前一日持仓、cash 或 open order，不能解释为连续组合收益。",
-            "replay 不读取 broker API key，不调用真实 broker，不改变 production 仓位建议。",
-        ],
-    }
-    output_json_path.parent.mkdir(parents=True, exist_ok=True)
-    output_json_path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2),
-        encoding="utf-8",
-    )
-    output_md_path.parent.mkdir(parents=True, exist_ok=True)
-    output_md_path.write_text(render_paper_trading_replay_report(payload), encoding="utf-8")
-    return payload
 
 
 def _increment(distribution: dict[str, int], key: str) -> None:
@@ -708,6 +1348,16 @@ def _format_value(value: object) -> str:
     return str(value)
 
 
+def _format_percent(value: object) -> str:
+    return f"{_float_value(value) * 100:.2f}%"
+
+
+def _format_bool(value: object) -> str:
+    if isinstance(value, bool):
+        return str(value).lower()
+    return str(value)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Replay paper trading daily flow over a date range."
@@ -718,7 +1368,7 @@ def main() -> None:
         "--mode",
         default="daily-independent",
         choices=REPLAY_MODE_CHOICES,
-        help="Replay mode. continuous-portfolio is a reserved, not implemented mode.",
+        help="Replay mode. daily-independent resets portfolio; continuous-portfolio carries it.",
     )
     parser.add_argument(
         "--reports-dir",

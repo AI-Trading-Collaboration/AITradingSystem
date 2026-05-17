@@ -5,7 +5,11 @@ from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
-from ai_trading_system.trading_engine.schemas.order_intent import OrderSide, OrderType
+from ai_trading_system.trading_engine.schemas.order_intent import (
+    OrderSide,
+    OrderType,
+    TimeInForce,
+)
 
 
 class OrderStatus(StrEnum):
@@ -26,6 +30,7 @@ class BrokerOrder(BaseModel):
     symbol: str = Field(min_length=1)
     side: OrderSide
     order_type: OrderType
+    time_in_force: TimeInForce = TimeInForce.DAY
     limit_price: float = Field(gt=0)
     quantity: int = Field(gt=0)
     status: OrderStatus

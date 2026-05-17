@@ -234,7 +234,7 @@ def test_paper_trading_replay_marks_synthetic_limit_price_fallback(
     assert payload["quality_flags"]["synthetic_snapshot_days"] == 1
 
 
-def test_continuous_portfolio_mode_is_explicitly_not_implemented(
+def test_continuous_portfolio_mode_writes_implemented_limited_payload(
     tmp_path: Path,
 ) -> None:
     as_of = date(2026, 5, 7)
@@ -248,11 +248,14 @@ def test_continuous_portfolio_mode_is_explicitly_not_implemented(
         mode="continuous-portfolio",
     )
 
-    assert payload["status"] == "NOT_IMPLEMENTED"
+    assert payload["status"] == "LIMITED"
     assert payload["replay_mode"] == "continuous_portfolio"
-    assert payload["portfolio_carry_forward"] is False
-    assert payload["implementation_status"] == "NOT_IMPLEMENTED"
-    assert payload["daily_results"] == []
+    assert payload["portfolio_carry_forward"] is True
+    assert payload["implementation_status"] == "IMPLEMENTED"
+    assert payload["production_effect"] == "none"
+    assert payload["daily_results"][0]["portfolio_snapshot"]["date"] == "2026-05-07"
+    assert payload["equity_curve"][0]["date"] == "2026-05-07"
+    assert "max_drawdown" in payload
     assert Path(payload["outputs"]["json"]).exists()
 
 
