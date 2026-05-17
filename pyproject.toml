@@ -22,6 +22,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+brokers = [
+  "ib-insync>=0.9.86",
+]
 data = [
   "pypdf>=4.2",
   "yfinance>=0.2.40",

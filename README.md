@@ -68,11 +68,16 @@ tests/                   单元测试
 ## 本地开发
 
 ```powershell
-python -m venv .venv
+py -3.11 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install -e ".[dev,data,dashboard]"
+python -m pip install -e ".[dev,data,dashboard,brokers]"
 python -m pytest
 ```
+
+项目主线运行环境固定对齐 Python 3.11：CI 使用 3.11，`pyproject.toml` 的
+Ruff/Black/Mypy 目标也是 `py311`。Windows 本机如果裸 `python` 指向 3.12+
+或 3.14，应优先使用 `.\.venv\Scripts\python.exe` 或先激活 `.venv` 再运行
+pytest、ruff、black、daily-run 和 IBKR Paper read-only snapshot。
 
 本地验证通过并 push 后，还需要把 GitHub Actions CI 当作同一轮验证项：打开 [Actions](https://github.com/AI-Trading-Collaboration/AITradingSystem/actions)，确认本次 commit 触发的最新 run 结束且 `success`。如果 CI 失败，先看失败 job 日志，本地复现并修复后再次提交推送，直到 CI 通过；交付说明应记录通过的 run 号或链接。
 
