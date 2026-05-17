@@ -81,3 +81,5 @@ Candidate 级和顶层 `promotion_gate_status` 只允许：
   dashboard Weight Promotion Gate 只读卡片、系统流图 / 产物目录和测试；验证通过目标
   pytest、`tests/trading_engine`、`tests/test_daily_task_dashboard.py`、全量 pytest、ruff
   和 black check。
+- 2026-05-18：push 后 GitHub Actions CI run `25997552867` 已对 commit
+  `a86fde5a207a6fffa3471dde46dcc664def184ce` 完成且通过。
