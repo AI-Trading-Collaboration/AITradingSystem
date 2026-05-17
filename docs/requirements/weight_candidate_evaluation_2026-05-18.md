@@ -72,3 +72,5 @@ Candidate 级 `evaluation_status` 只允许：
   7/14/30 日窗口、candidate scorecard、保守 evaluation gate、dashboard 只读卡片、
   系统流图 / 产物目录和测试；验证通过目标 pytest、`tests/trading_engine`、
   `tests/test_daily_task_dashboard.py`、全量 pytest、ruff 和 black check。
+- 2026-05-18：push 后 GitHub Actions CI run `25996830767` 已对 commit
+  `aa84423e756428c2531a58fc77bd2252b379a31e` 完成且通过。
