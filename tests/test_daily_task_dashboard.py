@@ -179,6 +179,9 @@ def test_reports_daily_tasks_cli_writes_html_and_json(tmp_path: Path) -> None:
     output_path = tmp_path / "daily_task_dashboard_2026-05-04.html"
     json_output_path = tmp_path / "daily_task_dashboard_2026-05-04.json"
     decision_summary_output_path = tmp_path / "daily_decision_summary_2026-05-04.json"
+    order_intent_candidates_output_path = (
+        tmp_path / "order_intent_candidates_2026-05-04.json"
+    )
 
     result = CliRunner().invoke(
         app,
@@ -199,6 +202,8 @@ def test_reports_daily_tasks_cli_writes_html_and_json(tmp_path: Path) -> None:
             str(json_output_path),
             "--decision-summary-output-path",
             str(decision_summary_output_path),
+            "--order-intent-candidates-output-path",
+            str(order_intent_candidates_output_path),
         ],
     )
 
@@ -207,6 +212,7 @@ def test_reports_daily_tasks_cli_writes_html_and_json(tmp_path: Path) -> None:
     assert output_path.exists()
     assert json_output_path.exists()
     assert decision_summary_output_path.exists()
+    assert order_intent_candidates_output_path.exists()
     assert "关键结论总览" in output_path.read_text(encoding="utf-8")
     payload = json.loads(json_output_path.read_text(encoding="utf-8"))
     assert payload["summary"]["risk_count"] == 2
@@ -223,6 +229,21 @@ def test_reports_daily_tasks_cli_writes_html_and_json(tmp_path: Path) -> None:
     decision_summary = json.loads(decision_summary_output_path.read_text(encoding="utf-8"))
     assert decision_summary["investment_conclusion"]["action_bias"] == "观察"
     assert decision_summary["production_effect"] == "none"
+    order_candidates = json.loads(
+        order_intent_candidates_output_path.read_text(encoding="utf-8")
+    )
+    assert order_candidates["production_effect"] == "none"
+    assert order_candidates["execution_boundary"]["creates_execution_action"] is False
+    assert order_candidates["candidate_count"] == 1
+    order_candidate = order_candidates["candidates"][0]
+    assert order_candidate["source_decision"]["action_bias"] == (
+        decision_summary["investment_conclusion"]["action_bias"]
+    )
+    assert order_candidate["blocked"] is True
+    assert {"trading_engine_not_enabled", "manual_approval_required"}.issubset(
+        set(order_candidate["blocked_by"])
+    )
+    assert order_candidate["execution_action"] == "none"
 
 
 def test_daily_decision_summary_schema_is_stable(tmp_path: Path) -> None:

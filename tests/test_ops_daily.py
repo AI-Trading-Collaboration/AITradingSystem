@@ -494,19 +494,47 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
     decision_summary_json = next(
         run_output_root.rglob("reports/daily_decision_summary_2026-05-06.json")
     )
+    order_intent_candidates_json = next(
+        run_output_root.rglob("reports/order_intent_candidates_2026-05-06.json")
+    )
     assert task_dashboard.exists()
     assert task_dashboard_json.exists()
     assert decision_summary_json.exists()
+    assert order_intent_candidates_json.exists()
     assert "关键结论总览" in task_dashboard.read_text(encoding="utf-8")
     assert (tmp_path / "outputs" / "reports" / "daily_task_dashboard_2026-05-06.html").exists()
     assert (tmp_path / "outputs" / "reports" / "daily_task_dashboard_2026-05-06.json").exists()
     assert (
         tmp_path / "outputs" / "reports" / "daily_decision_summary_2026-05-06.json"
     ).exists()
+    assert (
+        tmp_path / "outputs" / "reports" / "order_intent_candidates_2026-05-06.json"
+    ).exists()
     decision_summary = json.loads(decision_summary_json.read_text(encoding="utf-8"))
     assert decision_summary["production_effect"] == "none"
     assert decision_summary["investment_conclusion"]["availability"] == "missing"
     assert decision_summary["decision_bus_role"]["order_intent_builder_connected"] is False
+    order_candidates = json.loads(
+        order_intent_candidates_json.read_text(encoding="utf-8")
+    )
+    assert order_candidates["production_effect"] == "none"
+    assert order_candidates["execution_boundary"] == {
+        "creates_order_intent": False,
+        "creates_execution_action": False,
+        "broker_api_allowed": False,
+        "paper_broker_allowed": False,
+        "account_state_required": False,
+        "trading_engine_connected": False,
+    }
+    assert order_candidates["candidate_count"] == 1
+    order_candidate = order_candidates["candidates"][0]
+    assert order_candidate["blocked"] is True
+    assert {"trading_engine_not_enabled", "manual_approval_required"}.issubset(
+        set(order_candidate["blocked_by"])
+    )
+    assert order_candidate["execution_action"] == "none"
+    assert order_candidate["would_create_order_intent"] is False
+    assert order_candidate["would_submit_order"] is False
 
 
 def test_daily_ops_plan_cli_can_fail_on_missing_env(tmp_path: Path) -> None:

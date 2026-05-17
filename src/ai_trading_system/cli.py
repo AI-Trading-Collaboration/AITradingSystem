@@ -419,6 +419,10 @@ from ai_trading_system.ops_daily import (
     write_daily_ops_plan,
     write_daily_ops_run_report,
 )
+from ai_trading_system.order_intent_candidates import (
+    default_order_intent_candidates_path,
+    write_order_intent_candidates_json,
+)
 from ai_trading_system.parameter_candidates import (
     DEFAULT_PARAMETER_CANDIDATE_LEDGER_PATH,
     build_parameter_candidate_ledger,
@@ -6104,6 +6108,10 @@ def daily_task_dashboard_command(
         Path | None,
         typer.Option(help="每日决策总线 JSON 输出路径。"),
     ] = None,
+    order_intent_candidates_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Order intent candidate JSON 输出路径。"),
+    ] = None,
 ) -> None:
     """生成 daily-run 子任务总控展示页。"""
     dashboard_date = _parse_date(as_of) if as_of else date.today()
@@ -6128,6 +6136,10 @@ def daily_task_dashboard_command(
         reports_dir,
         dashboard_date,
     )
+    order_intent_candidates_output = (
+        order_intent_candidates_output_path
+        or default_order_intent_candidates_path(reports_dir, dashboard_date)
+    )
     try:
         report = build_daily_task_dashboard_report(
             as_of=dashboard_date,
@@ -6148,6 +6160,12 @@ def daily_task_dashboard_command(
         report,
         decision_summary_output,
     )
+    order_intent_candidates_path = write_order_intent_candidates_json(
+        as_of=dashboard_date,
+        daily_decision_summary_path=decision_summary_path,
+        output_path=order_intent_candidates_output,
+        project_root=report.project_root,
+    )
     style = (
         "green"
         if report.status == "PASS"
@@ -6159,6 +6177,7 @@ def daily_task_dashboard_command(
     console.print(f"Dashboard：{html_path}")
     console.print(f"Dashboard JSON：{json_path}")
     console.print(f"Daily decision summary JSON：{decision_summary_path}")
+    console.print(f"Order intent candidates JSON：{order_intent_candidates_path}")
     console.print(
         f"步骤：{len(report.tasks)}；失败：{report.failed_count}；"
         f"跳过：{report.skipped_count}；风险/限制：{report.risk_count}"
@@ -6710,6 +6729,12 @@ def daily_ops_run_command(
         daily_task_dashboard_report,
         default_daily_decision_summary_path(run_paths.reports_dir, plan_date),
     )
+    order_intent_candidates_path = write_order_intent_candidates_json(
+        as_of=plan_date,
+        daily_decision_summary_path=daily_decision_summary_path,
+        output_path=default_order_intent_candidates_path(run_paths.reports_dir, plan_date),
+        project_root=PROJECT_ROOT,
+    )
     if legacy_mode == "mirror":
         legacy_outputs = mirror_canonical_daily_ops_outputs_to_legacy(
             paths=run_paths,
@@ -6754,6 +6779,7 @@ def daily_ops_run_command(
     console.print(f"每日任务 Dashboard：{daily_task_dashboard_path}")
     console.print(f"每日任务 Dashboard JSON：{daily_task_dashboard_json_path}")
     console.print(f"每日决策总线 JSON：{daily_decision_summary_path}")
+    console.print(f"Order intent candidates JSON：{order_intent_candidates_path}")
     if run_report.metadata is not None:
         console.print(f"Metadata JSON：{metadata_path}")
         console.print(f"Run manifest：{run_paths.manifest_path}")

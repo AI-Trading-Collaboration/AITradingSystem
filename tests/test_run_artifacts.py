@@ -83,6 +83,9 @@ def test_run_manifest_checksums_and_mirrors_without_payload_text(
     canonical_decision_summary_json = (
         paths.reports_dir / "daily_decision_summary_2026-05-06.json"
     )
+    canonical_order_intent_candidates_json = (
+        paths.reports_dir / "order_intent_candidates_2026-05-06.json"
+    )
     input_path = tmp_path / "data" / "raw" / "prices_daily.csv"
     for path, text in (
         (canonical_plan, "# canonical plan\n"),
@@ -94,6 +97,10 @@ def test_run_manifest_checksums_and_mirrors_without_payload_text(
         (canonical_task_dashboard, "<html>daily task dashboard</html>\n"),
         (canonical_task_dashboard_json, '{"production_effect": "none"}\n'),
         (canonical_decision_summary_json, '{"report_type": "daily_decision_summary"}\n'),
+        (
+            canonical_order_intent_candidates_json,
+            '{"report_type": "order_intent_candidates"}\n',
+        ),
         (input_path, "date,ticker,close\n2026-05-06,NVDA,1\n"),
     ):
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -138,6 +145,9 @@ def test_run_manifest_checksums_and_mirrors_without_payload_text(
     assert (
         legacy_reports_dir / "daily_decision_summary_2026-05-06.json"
     ).read_text(encoding="utf-8") == '{"report_type": "daily_decision_summary"}\n'
+    assert (
+        legacy_reports_dir / "order_intent_candidates_2026-05-06.json"
+    ).read_text(encoding="utf-8") == '{"report_type": "order_intent_candidates"}\n'
     manifest_text = manifest_path.read_text(encoding="utf-8")
     manifest = json.loads(manifest_text)
     expected_sha = hashlib.sha256(input_path.read_bytes()).hexdigest()
