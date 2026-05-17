@@ -17,6 +17,7 @@ venv/
 .env
 .env.*
 !.env.example
+config/*.local.yaml
 
 # Local data and generated outputs
 data/raw/*
@@ -30,6 +31,8 @@ outputs/backtests/*
 !outputs/backtests/.gitkeep
 outputs/reports/*
 !outputs/reports/.gitkeep
+outputs/reports/ibkr_paper_account_snapshot_*.json
+outputs/reports/ibkr_paper_account_snapshot_*.md
 outputs/replays/*
 !outputs/replays/.gitkeep
 outputs/runs/*

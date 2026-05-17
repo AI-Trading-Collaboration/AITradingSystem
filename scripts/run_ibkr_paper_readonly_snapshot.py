@@ -274,6 +274,8 @@ def main() -> None:
     )
     parser.add_argument(
         "--config-path",
+        "--config",
+        dest="config_path",
         default=str(DEFAULT_IBKR_PAPER_READONLY_CONFIG_PATH),
         help="Path to IBKR Paper read-only YAML config.",
     )

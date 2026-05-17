@@ -1,6 +1,9 @@
 from __future__ import annotations
 
 import json
+import re
+import subprocess
+import sys
 from datetime import date
 from pathlib import Path
 from typing import Any
@@ -100,6 +103,11 @@ def test_snapshot_json_keeps_production_effect_none_and_masks_account(
     assert snapshot["readonly"] is True
     assert snapshot["account_id_masked"] == "DUP***4567"
     assert "DUP1234567" not in json_text
+    markdown_text = (output_dir / "ibkr_paper_account_snapshot_2026-05-17.md").read_text(
+        encoding="utf-8"
+    )
+    assert "DUP1234567" not in markdown_text
+    assert "DUP***4567" in markdown_text
     assert snapshot["connection_status"]["status"] == "CONNECTED"
     assert snapshot["contract_details_sample"]["symbol"] == "NVDA"
     assert client.connect_calls == 1
@@ -204,6 +212,57 @@ def test_source_does_not_read_broker_credentials() -> None:
                 violations.append(f"{path}: {fragment}")
 
     assert violations == []
+
+
+def test_tests_do_not_depend_on_local_ibkr_config() -> None:
+    forbidden_config = "ibkr_paper_readonly" + "." + "local.yaml"
+    violations = [
+        str(path.relative_to(PROJECT_ROOT))
+        for path in (PROJECT_ROOT / "tests").rglob("*.py")
+        if forbidden_config in path.read_text(encoding="utf-8")
+    ]
+
+    assert violations == []
+
+
+def test_sanitized_snapshot_fixture_has_no_full_account_or_sensitive_details() -> None:
+    fixture_path = (
+        PROJECT_ROOT / "tests" / "fixtures" / "ibkr_paper_account_snapshot_sanitized.json"
+    )
+    text = fixture_path.read_text(encoding="utf-8")
+    payload = json.loads(text)
+
+    assert re.search(r"\bDUP\d{5,}\b", text, flags=re.IGNORECASE) is None
+    assert re.search(r"\bU\d{5,}\b", text, flags=re.IGNORECASE) is None
+    assert re.search(r"[\w.\-+]+@[\w.\-]+\.\w+", text) is None
+    assert payload["account_id_masked"] == "DUP***0000"
+    assert payload["readonly"] is True
+    assert payload["production_effect"] == "none"
+    assert all(row.get("value") == "[REDACTED]" for row in payload["account_summary"])
+
+
+def test_snapshot_cli_accepts_config_alias_without_local_config(tmp_path: Path) -> None:
+    config = _enabled_config(enabled=False)
+    config_path = _write_config(tmp_path, config.model_dump())
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(PROJECT_ROOT / "scripts" / "run_ibkr_paper_readonly_snapshot.py"),
+            "--date",
+            "2026-05-17",
+            "--config",
+            str(config_path),
+            "--output-dir",
+            str(tmp_path),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    assert "Snapshot status" in result.stdout
+    assert (tmp_path / "ibkr_paper_account_snapshot_2026-05-17.json").exists()
 
 
 def test_ib_insync_client_bootstrap_creates_missing_event_loop(

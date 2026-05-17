@@ -53,6 +53,25 @@ IB Gateway / TWS Paper 的只读账户同步能力，不提交订单，不改变
   paper replay 或 parameter promotion。
 - 不精确计算 IBKR avg cost、realized/unrealized PnL、税费或融资成本。
 
+## TRADING-009A：本机验证固化
+
+`TRADING-009A` 不新增下单能力，也不提交真实本机配置。目标是把本机
+IBKR Paper 只读连接验证流程固化为可复用 runbook，并给测试提供脱敏样例。
+
+范围：
+
+1. 新增 `docs/runbooks/ibkr_paper_readonly_local_validation.md`，记录 TWS /
+   IB Gateway Paper 启动、API socket 开启、推荐 port/client_id、本机 local
+   YAML 准备、snapshot 命令、常见错误和验证 checklist。
+2. `.gitignore` 覆盖 `config/*.local.yaml` 和
+   `outputs/reports/ibkr_paper_account_snapshot_*.json/md`，避免本机账号和只读
+   账户状态报告被误提交。
+3. 新增 `tests/fixtures/ibkr_paper_account_snapshot_sanitized.json`，只保留
+   masked account id 和结构样例，不包含完整账号、真实姓名、邮箱、现金细节或
+   敏感标识。
+4. 测试确认 `.local.yaml` 不被测试依赖、sanitized fixture 不含完整 `DUP`
+   账号格式、snapshot writer 默认隐藏完整 account id。
+
 ## 验收标准
 
 - `python -m pytest tests/trading_engine/test_ibkr_paper_readonly.py`
@@ -95,3 +114,13 @@ IB Gateway / TWS Paper 的只读账户同步能力，不提交订单，不改变
   `connection_status=CONNECTED`、`snapshot_status=PASS`、
   `reconciliation_status=PASS`、account id masked、`production_effect=none`、
   `readonly=true`，未出现 `submit_order` / `cancel_order` / `placeOrder`。
+- 2026-05-17：`TRADING-009A` 新增并进入实现。原因：owner 要求在
+  `TRADING-009` 完成且 CI 通过后，固化本机 IBKR Paper 只读验证流程和安全
+  checklist；本阶段只记录/验证 local workflow，不提交本机敏感配置或真实账户
+  snapshot。
+- 2026-05-17：`TRADING-009A` 实现完成并进入验证。已新增本机验证 runbook、
+  `.gitignore` local config / snapshot 规则、sanitized snapshot fixture、
+  `--config` snapshot CLI alias 和测试覆盖；本地验证通过 `python -m pytest
+  tests/trading_engine/test_ibkr_paper_readonly.py`、`python -m pytest
+  tests/trading_engine`、`python -m pytest`、`python -m ruff check scripts src
+  tests` 和 `python -m black --check scripts src tests`。
