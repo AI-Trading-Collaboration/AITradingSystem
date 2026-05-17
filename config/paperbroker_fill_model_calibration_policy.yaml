@@ -1,0 +1,33 @@
+policy_id: paperbroker_fill_model_calibration_policy
+version: 1
+status: pilot_baseline
+owner: system
+production_effect: none
+calibration_mode: diagnostic_only
+rationale: >
+  First-pass diagnostic policy for explaining whether local PaperBroker fill
+  simulation observations have enough IBKR Paper comparison evidence for model
+  calibration discussion.
+intended_effect: >
+  Keep sparse lifecycle-only comparison samples from being interpreted as a
+  validated fill model or as permission to modify PaperBroker execution
+  behavior.
+validation_evidence: TRADING-012 unit tests and ongoing paper-only IBKR Paper comparison samples.
+review_condition: >
+  Revisit thresholds and status ordering after near-market or controlled
+  small-fill IBKR Paper samples exist in the ai_after_chatgpt regime and before
+  any fill model change is proposed.
+thresholds:
+  maximum_recent_comparison_reports: 30
+  minimum_comparison_count: 1
+allowed_statuses:
+  - INSUFFICIENT_SAMPLE
+  - LIFECYCLE_ALIGNED_FILL_UNTESTED
+  - LOCAL_SIM_TOO_OPTIMISTIC
+  - BROKER_REJECTION_GAP
+  - OBSERVE_ONLY
+forbidden_status_terms:
+  - READY_FOR_LIVE
+  - SHOULD_TRADE
+  - PROMOTE
+  - APPROVED

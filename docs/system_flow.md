@@ -56,6 +56,7 @@ flowchart TD
         EPC["config/execution_policy.yaml<br/>advisory execution action taxonomy 和执行纪律"]
         PSQP["config/paper_signal_quality_policy.yaml<br/>paper signal quality evaluation gate pilot baseline；production_effect=none"]
         SPIP["config/shadow_parameter_impact_policy.yaml<br/>shadow parameter impact gate pilot baseline；production_effect=none"]
+        PBFMCP["config/paperbroker_fill_model_calibration_policy.yaml<br/>PaperBroker fill model calibration diagnostic policy；production_effect=none"]
         IBKRCFG["config/ibkr_paper_readonly.yaml<br/>IBKR Paper 只读同步配置；enabled=false、paper、readonly=true、production_effect=none；不保存凭证"]
         IBKROCFG["config/ibkr_paper_order.yaml<br/>IBKR Paper order lifecycle / comparison 配置；默认 disabled；只允许 paper、DUP account、production_effect=none；comparison 需显式 ibkr_paper_comparison_enabled=true；不保存凭证"]
         GOVC["config/rule_cards.yaml<br/>production / candidate / retired rule cards"]
@@ -384,6 +385,7 @@ flowchart TD
         TEREPLAY["python scripts/run_paper_trading_replay.py --start YYYY-MM-DD --end YYYY-MM-DD --mode daily-independent / continuous-portfolio<br/>daily-independent 逐日独立；continuous-portfolio 结转同一个 PaperPortfolio；不读取 broker API key"]
         TEQUAL["python scripts/run_paper_signal_quality.py --date YYYY-MM-DD<br/>只读读取 summary/candidates/可选 replay；不触发 runner 或 replay"]
         TEIMPACT["python scripts/run_shadow_parameter_impact.py --date YYYY-MM-DD<br/>只读比较 production / shadow / unknown profile；记录 policy snapshot 与 continuous replay source；不触发 runner、replay、broker 或参数晋级"]
+        TEFMCAL["python scripts/run_paperbroker_fill_model_calibration.py --date YYYY-MM-DD<br/>只读读取最近 PaperBroker vs IBKR Paper comparison、可选 replay quality flags 和 paper_signal_quality；calibration_mode=diagnostic_only；不触发 runner、replay、broker 或 fill model 修改"]
         TEIBKR["python scripts/run_ibkr_paper_readonly_snapshot.py --date YYYY-MM-DD --config config/ibkr_paper_readonly.local.yaml<br/>IB Gateway / TWS Paper 只读账户 snapshot；默认 disabled；非 paper/read-only fail closed；local config 不提交"]
         TEIBKRA["IBKRPaperReadOnlyAdapter<br/>connect/disconnect/account summary/positions/open orders/executions/contract details only；submit_order 明确报错"]
         TEIBKRO["python scripts/run_ibkr_paper_order_lifecycle.py --date YYYY-MM-DD --config config/ibkr_paper_order.local.yaml --symbol NVDA --side BUY --quantity 1 --limit-price 10<br/>人工显式运行 IBKR Paper order lifecycle；submit/status/cancel/report；不接 production 自动交易"]
@@ -404,6 +406,7 @@ flowchart TD
         TEIBKRR["outputs/reports/ibkr_paper_account_snapshot_YYYY-MM-DD.json/md<br/>masked account、connection status、summary、positions、open orders、executions、contract sample、reconciliation；readonly=true；production_effect=none"]
         TEIBKROR["outputs/reports/ibkr_paper_order_lifecycle_YYYY-MM-DD.json/md<br/>lifecycle_status、connection_status、masked account、submitted_order、broker_order_id、status events、cancel confirmation、fills_seen、safety_checks、issues；production_effect=none"]
         TEIBKRCMPR["outputs/reports/paperbroker_vs_ibkr_paper_comparison_YYYY-MM-DD.json/md<br/>local PaperBroker status/open/fill/cancel/reconciliation、IBKR redacted broker order id/openOrder/orderStatus/cancel/fills/reconciliation、diff labels、quality recommendations；production_effect=none；diagnostic_only"]
+        TEFMCALR["outputs/reports/paperbroker_fill_model_calibration_YYYY-MM-DD.json/md<br/>calibration_status、comparison_count、lifecycle/status/fill/cancel match ratios、local optimistic / broker rejection / market data / synthetic / no-fill lifecycle counts、recommendations；production_effect=none；diagnostic_only"]
     end
 
     MD --> ERC
@@ -628,6 +631,11 @@ flowchart TD
     TEBR --> TEIBKRCMP
     TEIBKROA --> TEIBKRCMP
     TEIBKRCMP --> TEIBKRCMPR
+    PBFMCP --> TEFMCAL
+    TEIBKRCMPR --> TEFMCAL
+    TEREPLAYSUM -. "可选读取 quality_flags；不触发 replay" .-> TEFMCAL
+    TEQUALR -. "可选读取 paper_signal_quality；不反写 quality" .-> TEFMCAL
+    TEFMCAL --> TEFMCALR
     TESUM -. "daily task dashboard 只读展示" .-> DTASKDR
     TESUM -. "dashboard Trend 只读读取最近 N 日；缺失显示 LIMITED" .-> DTASKDR
     TEQUALR -. "dashboard 只显示轻量 quality 卡片，不展示详细表格" .-> DTASKDR
