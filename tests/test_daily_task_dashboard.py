@@ -8,6 +8,7 @@ from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
 from ai_trading_system.daily_task_dashboard import (
+    build_daily_decision_summary_payload,
     build_daily_task_dashboard_payload,
     build_daily_task_dashboard_report,
     render_daily_task_dashboard,
@@ -34,6 +35,7 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     )
     html = render_daily_task_dashboard(report)
     payload = build_daily_task_dashboard_payload(report)
+    decision_summary = build_daily_decision_summary_payload(report)
 
     assert isinstance(report, DailyTaskDashboardReport)
     assert report.status == "PASS"
@@ -140,6 +142,32 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
         "执行动作：观察；最终 AI 仓位：40%-60%；置信度：0.71；Data Gate：PASS"
     )
     assert score_task["detail_reports"][1]["href"] == "daily_score_2026-05-04.md"
+    assert decision_summary["schema_version"] == 1
+    assert decision_summary["report_type"] == "daily_decision_summary"
+    assert decision_summary["production_effect"] == "none"
+    assert decision_summary["decision_bus_role"] == {
+        "upstream_for": "order_intent_candidate",
+        "current_behavior": "read_only_no_trade",
+        "order_intent_builder_connected": False,
+    }
+    assert decision_summary["data_gate"]["status"] == "PASS"
+    assert decision_summary["investment_conclusion"]["action_bias"] == "观察"
+    assert decision_summary["investment_conclusion"]["confidence"] == "0.71"
+    assert decision_summary["investment_conclusion"]["position_band"] == "40%-60%"
+    assert decision_summary["investment_conclusion"]["source_dashboard_key_conclusion"][
+        "primary"
+    ] == investment["primary"]
+    assert investment["primary"] in html
+    assert (
+        decision_summary["parameter_governance"]["shadow_candidate"]["selected_trial_id"]
+        == "source_current__grid_gate_0217"
+    )
+    assert decision_summary["parameter_governance"]["promotion_status"] == "NOT_PROMOTABLE"
+    assert "daily_ops_metadata" in decision_summary["hrefs"]
+    assert any(
+        artifact["label"] == "每日评分报告" and artifact["href"] == "daily_score_2026-05-04.md"
+        for artifact in decision_summary["source_artifacts"]
+    )
 
 
 def test_reports_daily_tasks_cli_writes_html_and_json(tmp_path: Path) -> None:
@@ -150,6 +178,7 @@ def test_reports_daily_tasks_cli_writes_html_and_json(tmp_path: Path) -> None:
     _write_shadow_iteration_report(tmp_path, as_of)
     output_path = tmp_path / "daily_task_dashboard_2026-05-04.html"
     json_output_path = tmp_path / "daily_task_dashboard_2026-05-04.json"
+    decision_summary_output_path = tmp_path / "daily_decision_summary_2026-05-04.json"
 
     result = CliRunner().invoke(
         app,
@@ -168,6 +197,8 @@ def test_reports_daily_tasks_cli_writes_html_and_json(tmp_path: Path) -> None:
             str(output_path),
             "--json-output-path",
             str(json_output_path),
+            "--decision-summary-output-path",
+            str(decision_summary_output_path),
         ],
     )
 
@@ -175,6 +206,7 @@ def test_reports_daily_tasks_cli_writes_html_and_json(tmp_path: Path) -> None:
     assert "每日任务展示：PASS" in result.output
     assert output_path.exists()
     assert json_output_path.exists()
+    assert decision_summary_output_path.exists()
     assert "关键结论总览" in output_path.read_text(encoding="utf-8")
     payload = json.loads(json_output_path.read_text(encoding="utf-8"))
     assert payload["summary"]["risk_count"] == 2
@@ -188,6 +220,121 @@ def test_reports_daily_tasks_cli_writes_html_and_json(tmp_path: Path) -> None:
         for item in payload["key_conclusions"]
     )
     assert payload["tasks"][0]["step_id"] == "download_data"
+    decision_summary = json.loads(decision_summary_output_path.read_text(encoding="utf-8"))
+    assert decision_summary["investment_conclusion"]["action_bias"] == "观察"
+    assert decision_summary["production_effect"] == "none"
+
+
+def test_daily_decision_summary_schema_is_stable(tmp_path: Path) -> None:
+    as_of = date(2026, 5, 4)
+    metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
+    _write_detail_reports(tmp_path, as_of)
+
+    report = build_daily_task_dashboard_report(
+        as_of=as_of,
+        metadata_path=metadata_path,
+        run_report_path=tmp_path / "daily_ops_run_2026-05-04.md",
+        reports_dir=tmp_path,
+    )
+    payload = build_daily_decision_summary_payload(report)
+
+    assert set(payload) == {
+        "schema_version",
+        "report_type",
+        "as_of",
+        "generated_at",
+        "run_id",
+        "production_effect",
+        "status",
+        "decision_bus_role",
+        "data_gate",
+        "investment_conclusion",
+        "parameter_governance",
+        "feedback_review",
+        "system_health",
+        "source_artifacts",
+        "hrefs",
+        "checksums",
+    }
+    assert set(payload["data_gate"]) == {
+        "availability",
+        "status",
+        "blocking_reasons",
+        "source_dashboard_key_conclusion",
+    }
+    assert set(payload["investment_conclusion"]) == {
+        "availability",
+        "action_bias",
+        "confidence",
+        "position_band",
+        "major_risks",
+        "source_dashboard_key_conclusion",
+        "source_steps",
+        "production_effect",
+    }
+    assert set(payload["parameter_governance"]) == {
+        "availability",
+        "status",
+        "production_profile",
+        "shadow_candidate",
+        "promotion_status",
+        "blocking_reasons",
+        "source_dashboard_key_conclusion",
+    }
+    assert set(payload["feedback_review"]) == {
+        "availability",
+        "status",
+        "summary",
+        "market_feedback_status",
+        "feedback_loop_status",
+        "investment_review_status",
+        "blocking_reasons",
+        "source_dashboard_key_conclusion",
+    }
+    assert set(payload["system_health"]) == {
+        "availability",
+        "status",
+        "warnings",
+        "run_status",
+        "failed_count",
+        "skipped_count",
+        "source_dashboard_key_conclusion",
+    }
+
+
+def test_daily_decision_summary_marks_missing_child_reports_without_synthesis(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 5, 4)
+    metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
+    suffix = as_of.isoformat()
+    (tmp_path / f"data_quality_{suffix}.md").write_text(
+        "# 数据质量\n\n- 状态：PASS\n",
+        encoding="utf-8",
+    )
+    (tmp_path / f"daily_score_{suffix}.md").write_text(
+        "# 每日评分\n\n- 状态：PASS\n",
+        encoding="utf-8",
+    )
+
+    report = build_daily_task_dashboard_report(
+        as_of=as_of,
+        metadata_path=metadata_path,
+        run_report_path=None,
+        reports_dir=tmp_path,
+    )
+    html = render_daily_task_dashboard(report)
+    payload = build_daily_decision_summary_payload(report)
+
+    assert "当日投资结论受限" in html
+    investment = payload["investment_conclusion"]
+    assert investment["availability"] == "missing"
+    assert investment["action_bias"] == "missing"
+    assert investment["confidence"] == "missing"
+    assert investment["position_band"] == "missing"
+    assert any("未合成投资动作" in risk for risk in investment["major_risks"])
+    assert payload["production_effect"] == "none"
+    assert payload["parameter_governance"]["production_profile"]["availability"] == "missing"
 
 
 def _write_daily_ops_metadata(tmp_path: Path, as_of: date) -> Path:

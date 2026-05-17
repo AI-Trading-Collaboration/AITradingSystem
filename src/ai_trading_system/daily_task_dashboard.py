@@ -9,12 +9,15 @@ from html import escape
 from pathlib import Path
 from urllib.parse import quote
 
+from ai_trading_system.core import ArtifactRef, ProductionEffect
 from ai_trading_system.reports.daily_task_dashboard_view_model import (
     DailyTaskDashboardReport,
     DailyTaskDetail,
     DailyTaskKeyConclusion,
     TraceRecord,
 )
+
+DAILY_DECISION_SUMMARY_SCHEMA_VERSION = 1
 
 
 @dataclass(frozen=True)
@@ -51,6 +54,10 @@ def default_daily_task_dashboard_path(output_dir: Path, as_of: date) -> Path:
 
 def default_daily_task_dashboard_json_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"daily_task_dashboard_{as_of.isoformat()}.json"
+
+
+def default_daily_decision_summary_path(output_dir: Path, as_of: date) -> Path:
+    return output_dir / f"daily_decision_summary_{as_of.isoformat()}.json"
 
 
 def build_daily_task_dashboard_report(
@@ -109,6 +116,19 @@ def write_daily_task_dashboard_json(
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     payload = build_daily_task_dashboard_payload(report)
+    output_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    return output_path
+
+
+def write_daily_decision_summary_json(
+    report: DailyTaskDashboardReport,
+    output_path: Path,
+) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    payload = build_daily_decision_summary_payload(report)
     output_path.write_text(
         json.dumps(payload, ensure_ascii=False, indent=2),
         encoding="utf-8",
@@ -180,6 +200,57 @@ def build_daily_task_dashboard_payload(
             }
             for task in report.tasks
         ],
+    }
+
+
+def build_daily_decision_summary_payload(
+    report: DailyTaskDashboardReport,
+) -> TraceRecord:
+    dashboard_payload = _read_evidence_dashboard_payload(report)
+    conclusions = _dashboard_key_conclusions_by_area(report)
+    artifacts = _daily_decision_source_artifacts(report)
+    hrefs = {
+        artifact["id"]: artifact["href"]
+        for artifact in artifacts
+        if artifact.get("exists") and artifact.get("href")
+    }
+    checksums = {
+        artifact["id"]: artifact["checksum_sha256"]
+        for artifact in artifacts
+        if artifact.get("checksum_sha256")
+    }
+    return {
+        "schema_version": DAILY_DECISION_SUMMARY_SCHEMA_VERSION,
+        "report_type": "daily_decision_summary",
+        "as_of": report.as_of.isoformat(),
+        "generated_at": report.generated_at.isoformat(),
+        "run_id": report.run_id,
+        "production_effect": ProductionEffect.NONE.value,
+        "status": _decision_summary_status(conclusions),
+        "decision_bus_role": {
+            "upstream_for": "order_intent_candidate",
+            "current_behavior": "read_only_no_trade",
+            "order_intent_builder_connected": False,
+        },
+        "data_gate": _decision_summary_data_gate(report, dashboard_payload, conclusions),
+        "investment_conclusion": _decision_summary_investment(
+            report,
+            dashboard_payload,
+            conclusions,
+        ),
+        "parameter_governance": _decision_summary_parameter_governance(
+            report,
+            conclusions,
+        ),
+        "feedback_review": _decision_summary_feedback_review(
+            report,
+            dashboard_payload,
+            conclusions,
+        ),
+        "system_health": _decision_summary_system_health(report, conclusions),
+        "source_artifacts": artifacts,
+        "hrefs": hrefs,
+        "checksums": checksums,
     }
 
 
@@ -530,6 +601,412 @@ def _build_key_conclusions(
     return tuple(conclusion for conclusion in conclusions if conclusion is not None)
 
 
+def _dashboard_key_conclusions_by_area(
+    report: DailyTaskDashboardReport,
+) -> dict[str, DailyTaskKeyConclusion]:
+    return {conclusion.area: conclusion for conclusion in _build_key_conclusions(report)}
+
+
+def _decision_summary_status(
+    conclusions: dict[str, DailyTaskKeyConclusion],
+) -> str:
+    if not conclusions:
+        return "missing"
+    if any(conclusion.status == "FAIL" for conclusion in conclusions.values()):
+        return "limited"
+    if any(
+        conclusion.risk_level != "none" or conclusion.status != "PASS"
+        for conclusion in conclusions.values()
+    ):
+        return "limited"
+    return "available"
+
+
+def _decision_summary_data_gate(
+    report: DailyTaskDashboardReport,
+    dashboard_payload: TraceRecord,
+    conclusions: dict[str, DailyTaskKeyConclusion],
+) -> TraceRecord:
+    decision = _mapping_value(dashboard_payload, "decision")
+    data_gate = _string_value(decision.get("data_gate"))
+    data_conclusion = conclusions.get("数据可信度")
+    data_tasks = _existing_tasks(
+        {task.step_id: task for task in report.tasks},
+        (
+            "download_data",
+            "pit_snapshots",
+            "sec_companyfacts",
+            "sec_metrics",
+            "sec_metrics_validation",
+            "valuation_snapshots",
+            "score_daily",
+        ),
+    )
+    if not data_gate:
+        data_gate = _first_detail_status(data_tasks, "数据质量门禁")
+    blocking = _blocking_reasons(data_conclusion)
+    if not data_gate:
+        blocking = (*blocking, "data_gate 来源报告缺失或未暴露结构化状态。")
+    return {
+        "availability": "available" if data_gate else "missing",
+        "status": data_gate or "MISSING",
+        "blocking_reasons": list(blocking),
+        "source_dashboard_key_conclusion": _key_conclusion_reference(data_conclusion),
+    }
+
+
+def _decision_summary_investment(
+    report: DailyTaskDashboardReport,
+    dashboard_payload: TraceRecord,
+    conclusions: dict[str, DailyTaskKeyConclusion],
+) -> TraceRecord:
+    investment = conclusions.get("投资结论")
+    decision = _mapping_value(dashboard_payload, "decision")
+    action = _string_value(decision.get("action"))
+    confidence = _string_value(decision.get("confidence"))
+    position_band = _string_value(decision.get("final_risk_asset_ai_position"))
+    risks = _string_list(dashboard_payload.get("top_invalidators"), limit=4)
+    largest_constraint = _string_value(decision.get("largest_constraint"))
+    if largest_constraint:
+        risks = (largest_constraint, *risks)
+    availability = "available" if action or confidence or position_band else "missing"
+    major_risks = tuple(dict.fromkeys(item for item in risks if item))
+    if availability == "missing":
+        major_risks = (
+            *major_risks,
+            "evidence_dashboard JSON 缺失或缺少 decision；未合成投资动作、置信度或仓位。",
+        )
+    return {
+        "availability": availability,
+        "action_bias": action or "missing",
+        "confidence": confidence or "missing",
+        "position_band": position_band or "missing",
+        "major_risks": list(major_risks),
+        "source_dashboard_key_conclusion": _key_conclusion_reference(investment),
+        "source_steps": list(investment.source_steps) if investment is not None else [],
+        "production_effect": report.production_effect,
+    }
+
+
+def _decision_summary_parameter_governance(
+    report: DailyTaskDashboardReport,
+    conclusions: dict[str, DailyTaskKeyConclusion],
+) -> TraceRecord:
+    parameter = conclusions.get("参数治理")
+    payload = _read_parameter_governance_summary(report)
+    shadow_parameter = _latest_shadow_parameter_summary(report)
+    shadow_iteration = _latest_shadow_iteration_summary(report)
+    warnings = _string_list(payload.get("warnings"), limit=20)
+    production_profile = _parameter_production_profile(payload)
+    shadow_candidate = _parameter_shadow_candidate(shadow_parameter, shadow_iteration)
+    promotion_status = (
+        _string_value(shadow_parameter.get("promotion_status"))
+        or _string_value(shadow_iteration.get("promotion_status"))
+        or "NOT_EVALUATED"
+    )
+    blocking = tuple(
+        dict.fromkeys(
+            (
+                *_blocking_reasons(parameter),
+                *warnings,
+                _string_value(shadow_parameter.get("risk")),
+            )
+        )
+    )
+    if not payload:
+        blocking = (
+            *blocking,
+            "parameter_governance JSON 缺失；production profile 只能标记 missing。",
+        )
+    return {
+        "availability": "available" if payload or shadow_parameter else "limited",
+        "status": _string_value(payload.get("status"))
+        or (parameter.status if parameter is not None else "MISSING"),
+        "production_profile": production_profile,
+        "shadow_candidate": shadow_candidate,
+        "promotion_status": promotion_status,
+        "blocking_reasons": [reason for reason in blocking if reason],
+        "source_dashboard_key_conclusion": _key_conclusion_reference(parameter),
+    }
+
+
+def _decision_summary_feedback_review(
+    report: DailyTaskDashboardReport,
+    dashboard_payload: TraceRecord,
+    conclusions: dict[str, DailyTaskKeyConclusion],
+) -> TraceRecord:
+    feedback_conclusion = conclusions.get("反馈复盘")
+    feedback = _mapping_value(dashboard_payload, "feedback_review")
+    market = _mapping_value(feedback, "market_feedback")
+    loop = _mapping_value(feedback, "feedback_loop")
+    investment = _mapping_value(feedback, "investment_review")
+    shadow_parameter = _latest_shadow_parameter_summary(report)
+    connected = any(
+        _string_value(section.get("status"))
+        for section in (market, loop, investment)
+    )
+    summary = _join_nonempty(
+        [
+            _label("market readiness", market.get("readiness")),
+            _string_value(market.get("current_conclusion")),
+            _label("loop outcome", loop.get("outcome_summary")),
+            _label("weekly position", investment.get("risk_asset_position_change")),
+            _string_value(shadow_parameter.get("primary")),
+        ]
+    )
+    if not summary and feedback_conclusion is not None:
+        summary = feedback_conclusion.primary
+    blocking = _blocking_reasons(feedback_conclusion)
+    if not connected and not shadow_parameter:
+        blocking = (
+            *blocking,
+            "feedback 子报告缺失或未接入；summary 标记为 missing。",
+        )
+    return {
+        "availability": "available" if connected or shadow_parameter else "missing",
+        "status": feedback_conclusion.status if feedback_conclusion is not None else "MISSING",
+        "summary": summary or "missing",
+        "market_feedback_status": _string_value(market.get("status")) or "MISSING",
+        "feedback_loop_status": _string_value(loop.get("status")) or "MISSING",
+        "investment_review_status": _string_value(investment.get("status")) or "MISSING",
+        "blocking_reasons": list(blocking),
+        "source_dashboard_key_conclusion": _key_conclusion_reference(feedback_conclusion),
+    }
+
+
+def _decision_summary_system_health(
+    report: DailyTaskDashboardReport,
+    conclusions: dict[str, DailyTaskKeyConclusion],
+) -> TraceRecord:
+    operations = conclusions.get("运行健康")
+    health_tasks = [
+        task
+        for task in report.tasks
+        if task.step_id in {"pipeline_health", "secret_hygiene"}
+    ]
+    warnings = [
+        f"{task.step_id}: {task.important_risk}"
+        for task in health_tasks
+        if task.risk_level != "none"
+    ]
+    if operations is None:
+        warnings.append("pipeline health / secret hygiene 步骤缺失。")
+    return {
+        "availability": "available" if operations is not None else "missing",
+        "status": operations.status if operations is not None else "MISSING",
+        "warnings": list(dict.fromkeys(warnings)),
+        "run_status": report.status,
+        "failed_count": report.failed_count,
+        "skipped_count": report.skipped_count,
+        "source_dashboard_key_conclusion": _key_conclusion_reference(operations),
+    }
+
+
+def _read_parameter_governance_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = report.reports_dir / f"parameter_governance_{report.as_of.isoformat()}.json"
+    payload = _read_json_object(path)
+    if not payload:
+        fallback = (
+            report.project_root
+            / "outputs"
+            / "reports"
+            / f"parameter_governance_{report.as_of.isoformat()}.json"
+        )
+        if fallback != path:
+            payload = _read_json_object(fallback)
+    if payload.get("report_type") != "parameter_governance":
+        return {}
+    return payload
+
+
+def _parameter_production_profile(payload: TraceRecord) -> TraceRecord:
+    if not payload:
+        return {
+            "availability": "missing",
+            "manifest_version": "missing",
+            "manifest_status": "missing",
+            "owner_quantitative_input_status": "missing",
+            "action_counts": {},
+        }
+    action_counts = payload.get("action_counts")
+    return {
+        "availability": "available",
+        "manifest_version": _string_value(payload.get("manifest_version")) or "missing",
+        "manifest_status": _string_value(payload.get("manifest_status")) or "missing",
+        "owner_quantitative_input_status": (
+            _string_value(payload.get("owner_quantitative_input_status")) or "missing"
+        ),
+        "candidate_ledger_status": (
+            _string_value(payload.get("candidate_ledger_status")) or "missing"
+        ),
+        "candidate_evaluation_mode": (
+            _string_value(payload.get("candidate_evaluation_mode")) or "missing"
+        ),
+        "action_counts": action_counts if isinstance(action_counts, dict) else {},
+    }
+
+
+def _parameter_shadow_candidate(
+    shadow_parameter: TraceRecord,
+    shadow_iteration: TraceRecord,
+) -> TraceRecord:
+    if shadow_parameter:
+        return {
+            "availability": "available",
+            "source": "shadow_parameter_search",
+            "run_id": _string_value(shadow_parameter.get("run_id")) or "missing",
+            "selected_trial_id": (
+                _string_value(shadow_parameter.get("selected_trial_id")) or "missing"
+            ),
+            "selected_kind": _string_value(shadow_parameter.get("selected_kind"))
+            or "missing",
+            "summary": _string_value(shadow_parameter.get("primary")) or "missing",
+        }
+    if shadow_iteration:
+        best_gate = _mapping_value(shadow_iteration, "best_gate_only")
+        return {
+            "availability": "limited",
+            "source": "shadow_iteration",
+            "run_id": _string_value(shadow_iteration.get("source_search_run_id"))
+            or "missing",
+            "selected_trial_id": _string_value(best_gate.get("trial_id")) or "missing",
+            "selected_kind": "shadow_iteration_gate_only",
+            "summary": _shadow_iteration_candidate_label(best_gate),
+        }
+    return {
+        "availability": "missing",
+        "source": "missing",
+        "run_id": "missing",
+        "selected_trial_id": "missing",
+        "selected_kind": "missing",
+        "summary": "missing",
+    }
+
+
+def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[TraceRecord]:
+    records: list[TraceRecord] = []
+    records.append(
+        _source_artifact_record(
+            artifact_id="daily_ops_metadata",
+            label="daily ops metadata",
+            path=report.metadata_path,
+            reports_dir=report.reports_dir,
+        )
+    )
+    if report.run_report_path is not None:
+        records.append(
+            _source_artifact_record(
+                artifact_id="daily_ops_run_report",
+                label="daily ops run report",
+                path=report.run_report_path,
+                reports_dir=report.reports_dir,
+            )
+        )
+    for task in report.tasks:
+        for index, detail in enumerate(task.detail_reports, start=1):
+            records.append(
+                _source_artifact_record(
+                    artifact_id=(
+                        f"{task.step_id}:{index}:"
+                        f"{_slug(str(detail.get('label') or 'report'))}"
+                    ),
+                    label=str(detail.get("label") or "report"),
+                    path=Path(str(detail.get("path") or "")),
+                    reports_dir=report.reports_dir,
+                )
+            )
+    suffix = report.as_of.isoformat()
+    extras = (
+        (
+            "parameter_governance_json",
+            "parameter governance JSON",
+            report.reports_dir / f"parameter_governance_{suffix}.json",
+        ),
+        (
+            "shadow_iteration_json",
+            "shadow iteration JSON",
+            report.reports_dir / f"shadow_iteration_{suffix}.json",
+        ),
+        (
+            "daily_task_dashboard_json",
+            "daily task dashboard JSON",
+            report.reports_dir / f"daily_task_dashboard_{suffix}.json",
+        ),
+    )
+    for artifact_id, label, path in extras:
+        records.append(
+            _source_artifact_record(
+                artifact_id=artifact_id,
+                label=label,
+                path=path,
+                reports_dir=report.reports_dir,
+            )
+        )
+    unique: dict[str, TraceRecord] = {}
+    for record in records:
+        unique[str(record["id"])] = record
+    return list(unique.values())
+
+
+def _source_artifact_record(
+    *,
+    artifact_id: str,
+    label: str,
+    path: Path,
+    reports_dir: Path,
+) -> TraceRecord:
+    ref = ArtifactRef.from_path(path)
+    return {
+        "id": artifact_id,
+        "label": label,
+        "path": str(path),
+        "href": _report_href(path, reports_dir),
+        "exists": ref.exists,
+        "artifact_type": ref.artifact_type,
+        "checksum_sha256": ref.sha256,
+        "size_bytes": ref.size_bytes,
+    }
+
+
+def _key_conclusion_reference(
+    conclusion: DailyTaskKeyConclusion | None,
+) -> TraceRecord:
+    if conclusion is None:
+        return {
+            "availability": "missing",
+            "area": "missing",
+            "status": "MISSING",
+            "primary": "missing",
+            "source_steps": [],
+        }
+    return {
+        "availability": "available",
+        "area": conclusion.area,
+        "title": conclusion.title,
+        "status": conclusion.status,
+        "primary": conclusion.primary,
+        "important_risk": conclusion.important_risk,
+        "source_steps": list(conclusion.source_steps),
+    }
+
+
+def _blocking_reasons(conclusion: DailyTaskKeyConclusion | None) -> tuple[str, ...]:
+    if conclusion is None:
+        return ()
+    if conclusion.risk_level == "none":
+        return ()
+    return tuple(
+        reason.strip()
+        for reason in conclusion.important_risk.split("；")
+        if reason.strip()
+    )
+
+
+def _slug(value: str) -> str:
+    slug = re.sub(r"[^A-Za-z0-9._=-]+", "_", value.strip())
+    return slug.strip("._-") or "artifact"
+
+
 def _investment_key_conclusion(
     tasks: dict[str, DailyTaskDetail],
     dashboard_payload: TraceRecord,
@@ -551,10 +1028,15 @@ def _investment_key_conclusion(
         ]
     )
     if not primary and score_task is not None:
-        primary = score_task.conclusion
+        primary = "当日投资结论受限：evidence_dashboard JSON 未生成或缺少 decision。"
     risk = _join_nonempty([largest_constraint, *invalidators])
     if not risk and score_task is not None:
-        risk = score_task.important_risk
+        risk = _join_nonempty(
+            [
+                "evidence_dashboard JSON 缺失或缺少 decision；不从任务状态补造投资结论。",
+                score_task.important_risk,
+            ]
+        )
     source_tasks = tuple(
         step for step in ("score_daily", "reports_dashboard") if step in tasks
     )
@@ -818,6 +1300,7 @@ def _latest_shadow_iteration_summary(report: DailyTaskDashboardReport) -> TraceR
     summary = _mapping_value(payload, "summary")
     best = _mapping_value(payload, "best_candidates")
     blocked = _mapping_value(payload, "blocked_reasons")
+    promotion = _mapping_value(payload, "promotion_contract_check")
     blocked_reasons = []
     for trial_id, reasons in blocked.items():
         if not isinstance(reasons, list):
@@ -831,6 +1314,7 @@ def _latest_shadow_iteration_summary(report: DailyTaskDashboardReport) -> TraceR
         "primary_driver": summary.get("primary_driver"),
         "next_action": summary.get("next_action"),
         "source_search_run_id": payload.get("source_search_run_id"),
+        "promotion_status": promotion.get("status"),
         "best_weight_only": _mapping_value(best, "weight_only"),
         "best_gate_only": _mapping_value(best, "gate_only"),
         "best_weight_gate_bundle": _mapping_value(best, "weight_gate_bundle"),

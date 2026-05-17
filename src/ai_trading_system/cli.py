@@ -163,8 +163,10 @@ from ai_trading_system.config import (
 )
 from ai_trading_system.daily_task_dashboard import (
     build_daily_task_dashboard_report,
+    default_daily_decision_summary_path,
     default_daily_task_dashboard_json_path,
     default_daily_task_dashboard_path,
+    write_daily_decision_summary_json,
     write_daily_task_dashboard,
     write_daily_task_dashboard_json,
 )
@@ -6098,6 +6100,10 @@ def daily_task_dashboard_command(
         Path | None,
         typer.Option(help="每日任务 JSON payload 输出路径。"),
     ] = None,
+    decision_summary_output_path: Annotated[
+        Path | None,
+        typer.Option(help="每日决策总线 JSON 输出路径。"),
+    ] = None,
 ) -> None:
     """生成 daily-run 子任务总控展示页。"""
     dashboard_date = _parse_date(as_of) if as_of else date.today()
@@ -6118,6 +6124,10 @@ def daily_task_dashboard_command(
         if output_path is None
         else dashboard_output.with_suffix(".json")
     )
+    decision_summary_output = decision_summary_output_path or default_daily_decision_summary_path(
+        reports_dir,
+        dashboard_date,
+    )
     try:
         report = build_daily_task_dashboard_report(
             as_of=dashboard_date,
@@ -6134,6 +6144,10 @@ def daily_task_dashboard_command(
 
     html_path = write_daily_task_dashboard(report, dashboard_output)
     json_path = write_daily_task_dashboard_json(report, dashboard_json_output)
+    decision_summary_path = write_daily_decision_summary_json(
+        report,
+        decision_summary_output,
+    )
     style = (
         "green"
         if report.status == "PASS"
@@ -6144,6 +6158,7 @@ def daily_task_dashboard_command(
     console.print(f"[{style}]每日任务展示：{report.status}[/{style}]")
     console.print(f"Dashboard：{html_path}")
     console.print(f"Dashboard JSON：{json_path}")
+    console.print(f"Daily decision summary JSON：{decision_summary_path}")
     console.print(
         f"步骤：{len(report.tasks)}；失败：{report.failed_count}；"
         f"跳过：{report.skipped_count}；风险/限制：{report.risk_count}"
@@ -6691,6 +6706,10 @@ def daily_ops_run_command(
         daily_task_dashboard_report,
         default_daily_task_dashboard_json_path(run_paths.reports_dir, plan_date),
     )
+    daily_decision_summary_path = write_daily_decision_summary_json(
+        daily_task_dashboard_report,
+        default_daily_decision_summary_path(run_paths.reports_dir, plan_date),
+    )
     if legacy_mode == "mirror":
         legacy_outputs = mirror_canonical_daily_ops_outputs_to_legacy(
             paths=run_paths,
@@ -6734,6 +6753,7 @@ def daily_ops_run_command(
     console.print(f"执行报告：{run_report_path}")
     console.print(f"每日任务 Dashboard：{daily_task_dashboard_path}")
     console.print(f"每日任务 Dashboard JSON：{daily_task_dashboard_json_path}")
+    console.print(f"每日决策总线 JSON：{daily_decision_summary_path}")
     if run_report.metadata is not None:
         console.print(f"Metadata JSON：{metadata_path}")
         console.print(f"Run manifest：{run_paths.manifest_path}")
