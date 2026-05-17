@@ -1,5 +1,7 @@
 # TRADING-014：IBKR Paper Controlled Fill Market Session Guard
 
+最后更新：2026-05-18
+
 关联任务：`TRADING-014`
 
 ## 背景
