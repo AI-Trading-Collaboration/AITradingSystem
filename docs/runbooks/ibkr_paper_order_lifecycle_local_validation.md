@@ -96,6 +96,51 @@ far_from_market_pct: 0.5
 可选在 TWS / Gateway 的 Paper order 窗口手工确认订单状态已经取消，且没有残留
 open order。
 
+## 验证成功后的检查清单
+
+验证成功后，先保留本机 ignored 输出用于复核，再只提交脱敏 review / fixture：
+
+- JSON 与 Markdown 显示 `lifecycle_status=PASS`。
+- `connection_status.status=CONNECTED`，且 `trading_mode=paper`。
+- `production_effect=none`。
+- `account_id_masked` 只显示 masked account id，没有完整 account id。
+- `submitted_order` 是 `stock`、`LIMIT`、`DAY`、极小 `quantity` 和显式
+  `limit_price`。
+- `open_order_seen=true`，`order_status_events` 至少记录提交后状态。
+- `cancel_requested=true`，`cancelled_confirmed=true`。
+- `fills_seen=false`，`fills=[]`。
+- committed review / fixture 不保留原始 broker order id、现金明细或 broker 凭证值。
+- 没有运行 daily-run、replay 或 dashboard，也没有把结果写成 production conclusion。
+
+## 如果订单意外成交怎么办
+
+如果 `fills_seen=true` 或 TWS / Gateway 显示任何成交：
+
+- 不删除本机报告，不把该次样本解释为策略成交质量或 production readiness。
+- 立即在 TWS / Gateway Paper 窗口确认是否还有剩余 open quantity；如有残留，手工
+  cancel 并等待 final status。
+- 记录 symbol、side、quantity、limit price、fill 状态和最终 cancel 状态，但仍只提交
+  masked account 与 redacted broker order id。
+- 检查 limit price 是否离参考价不够远、是否处于快速波动或盘前/盘后异常报价。
+- 复核 Paper account positions / open orders，确认没有 live account 或 production
+  surface 被触发。
+- 需要重跑时，先更新 local limit price 到更远离市场价的位置；不要放宽
+  `LIMIT`、`DAY`、whitelist、quantity cap、DUP account 或 `production_effect=none`
+  约束。
+
+## 如何确认没有 live account / production effect
+
+- TWS / Gateway 登录界面和窗口标题应明确是 Paper Trading。
+- 本地配置必须是 `trading_mode: paper`、`production_effect: none`，且 account id 为
+  `DUP` 开头。
+- 连接端口应匹配 Paper session：TWS Paper 通常为 `7497`，IB Gateway Paper 通常为
+  `4002`；不要把 live session 端口用于本流程。
+- 输出中的 account id 只能是 masked 形式，例如 `DUP***1234`。
+- 报告中必须显示 `production_effect=none`，且不应写入 production portfolio、
+  production scoring、daily-run、replay、dashboard 或 promotion workflow。
+- 使用 `git status --short` 确认只新增脱敏 review、fixture、runbook 和测试；不要提交
+  `config/*.local.yaml` 或 `outputs/reports/ibkr_paper_order_lifecycle_*` 本机原始输出。
+
 ## 常见错误
 
 |现象|常见原因|处理|

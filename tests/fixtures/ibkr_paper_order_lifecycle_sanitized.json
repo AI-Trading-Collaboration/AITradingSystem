@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "report_type": "ibkr_paper_order_lifecycle_sanitized_fixture",
+  "source_task": "TRADING-010A",
+  "as_of": "2026-05-17",
+  "validation_status": "PASS",
+  "paper_only": true,
+  "production_effect": "none",
+  "connection": {
+    "actual_method": "TWS Paper Trading",
+    "supported_alternate_method": "IB Gateway Paper Trading",
+    "host": "127.0.0.1",
+    "port": 7497,
+    "client_id": 19010,
+    "trading_mode": "paper",
+    "connection_status": "CONNECTED",
+    "account_id_masked": "DUP***0000"
+  },
+  "submitted_order": {
+    "symbol": "NVDA",
+    "asset_type": "stock",
+    "side": "BUY",
+    "order_type": "LIMIT",
+    "time_in_force": "DAY",
+    "quantity": 1,
+    "limit_price": 10.0,
+    "broker_order_id_redaction": "[REDACTED_LOCAL_BROKER_ORDER_ID]",
+    "production_effect": "none"
+  },
+  "lifecycle": {
+    "submitted": true,
+    "open_order_seen": true,
+    "open_order_payload_retained": false,
+    "order_status_events": [
+      {
+        "status": "PendingSubmit",
+        "filled": 0.0,
+        "remaining": 0.0,
+        "avg_fill_price": 0.0
+      },
+      {
+        "status": "PendingCancel",
+        "filled": 0.0,
+        "remaining": 0.0,
+        "avg_fill_price": 0.0
+      },
+      {
+        "status": "ApiCancelled",
+        "filled": 0.0,
+        "remaining": 1.0,
+        "avg_fill_price": 0.0
+      }
+    ],
+    "cancel_requested": true,
+    "final_order_status": "ApiCancelled",
+    "cancelled_confirmed": true,
+    "fills_seen": false
+  },
+  "production_surfaces": {
+    "daily_run_triggered": false,
+    "replay_triggered": false,
+    "dashboard_triggered": false,
+    "production_conclusion_triggered": false
+  },
+  "sanitization": {
+    "account_id": "masked",
+    "broker_order_id": "redacted",
+    "credential_values": "not_included",
+    "cash_details": "not_included"
+  }
+}
