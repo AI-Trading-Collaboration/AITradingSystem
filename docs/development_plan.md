@@ -24,6 +24,7 @@
 - 如果确实需要临时方案，必须先沟通原因、风险、影响和退出条件。
 - 数据来源、数据质量、回测和评分链路不能接受静默降级。
 - 新增正式数据源前，必须先进入 `config/data_sources.yaml` 并通过 `aits data-sources validate`。
+- 本地提交并 push 后，必须把 GitHub Actions 最新 CI run 作为后置测试项；确认本次 commit 对应 run 结束且通过，失败则读取失败 job 日志、本地复现、修复后再次提交推送，直到 CI 通过。
 
 ## 阶段 0：工程初始化
 
