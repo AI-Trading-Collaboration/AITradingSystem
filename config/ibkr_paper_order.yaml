@@ -1,0 +1,17 @@
+# IBKR Paper order lifecycle test.
+# No passwords, tokens, API keys, session cookies, or other credentials belong in this file.
+paper_order_lifecycle_enabled: false
+host: 127.0.0.1
+port: 7497
+client_id: 19010
+account_id: ""
+trading_mode: paper
+production_effect: none
+allowed_symbols:
+  - NVDA
+  - AAPL
+  - TSM
+max_quantity: 1
+far_from_market_pct: 0.5
+status_timeout_seconds: 10.0
+cancel_timeout_seconds: 10.0
