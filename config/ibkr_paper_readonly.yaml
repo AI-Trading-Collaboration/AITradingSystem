@@ -1,0 +1,10 @@
+# IBKR Paper Account read-only sync spike.
+# No passwords, tokens, API keys, session cookies, or other credentials belong in this file.
+enabled: false
+host: 127.0.0.1
+port: 7497
+client_id: 19009
+account_id: ""
+trading_mode: paper
+readonly: true
+production_effect: none

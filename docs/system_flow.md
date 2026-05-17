@@ -56,6 +56,7 @@ flowchart TD
         EPC["config/execution_policy.yaml<br/>advisory execution action taxonomy 和执行纪律"]
         PSQP["config/paper_signal_quality_policy.yaml<br/>paper signal quality evaluation gate pilot baseline；production_effect=none"]
         SPIP["config/shadow_parameter_impact_policy.yaml<br/>shadow parameter impact gate pilot baseline；production_effect=none"]
+        IBKRCFG["config/ibkr_paper_readonly.yaml<br/>IBKR Paper 只读同步配置；enabled=false、paper、readonly=true、production_effect=none；不保存凭证"]
         GOVC["config/rule_cards.yaml<br/>production / candidate / retired rule cards"]
         RE["config/risk_events.yaml<br/>L1/L2/L3 风险事件动作规则"]
         REX["data/external/risk_event_occurrences/*.yaml<br/>已触发/观察的风险事件发生记录<br/>S/A/B/C/D/X、严重性、概率、动作等级、lifecycle_state、dedup_group、expiry_time"]
@@ -382,17 +383,21 @@ flowchart TD
         TEREPLAY["python scripts/run_paper_trading_replay.py --start YYYY-MM-DD --end YYYY-MM-DD --mode daily-independent / continuous-portfolio<br/>daily-independent 逐日独立；continuous-portfolio 结转同一个 PaperPortfolio；不读取 broker API key"]
         TEQUAL["python scripts/run_paper_signal_quality.py --date YYYY-MM-DD<br/>只读读取 summary/candidates/可选 replay；不触发 runner 或 replay"]
         TEIMPACT["python scripts/run_shadow_parameter_impact.py --date YYYY-MM-DD<br/>只读比较 production / shadow / unknown profile；记录 policy snapshot 与 continuous replay source；不触发 runner、replay、broker 或参数晋级"]
+        TEIBKR["python scripts/run_ibkr_paper_readonly_snapshot.py --date YYYY-MM-DD<br/>IB Gateway / TWS Paper 只读账户 snapshot；默认 disabled；非 paper/read-only fail closed"]
+        TEIBKRA["IBKRPaperReadOnlyAdapter<br/>connect/disconnect/account summary/positions/open orders/executions/contract details only；submit_order 明确报错"]
         TEINT["OrderIntent<br/>趋势系统与交易引擎边界 schema"]
         TERISK["PreTradeRiskChecker<br/>kill switch、asset/order type、confidence、notional、仓位、现金、重复订单、事件 blackout"]
         TEBR["PaperBroker<br/>LIMIT order submit/cancel/query、market snapshot fill simulation"]
         TEPORT["PaperPortfolio / PortfolioState<br/>cash、position、avg cost、realized/unrealized PnL"]
         TEREC["ReconciliationResult<br/>从 fill log / ExecutionReport 重建 expected portfolio；cash、quantity、avg cost 不一致则 BLOCK"]
+        TEIBKRREC["IBKRPaperReadOnlyReconciliation<br/>只读 scaffold：symbol、quantity、cash summary 和 unknown positions；PASS/LIMITED/BLOCK"]
         TEAUD["data/trading_engine/audit/*/*.jsonl<br/>order intent、risk check、order、execution report、fill、portfolio snapshot；intent_id lineage 可 replay"]
         TERPT["reports/trading_daily/YYYY-MM-DD.md<br/>paper trading 执行复盘；production_effect=none"]
         TESUM["outputs/reports/paper_trading_summary_YYYY-MM-DD.json<br/>dashboard 读取的 paper trading summary；trend 汇总 snapshot source；production_effect=none"]
         TEREPLAYSUM["outputs/reports/paper_trading_replay_START_END.json/md<br/>replay_mode、portfolio_carry_forward、quality_flags、reconciliation 分布；continuous 指标含 equity_curve / drawdown / exposure；production_effect=none"]
         TEQUALR["outputs/reports/paper_signal_quality_YYYY-MM-DD.json/md<br/>allowed evaluation_status / quality_status、policy snapshot、evaluation_gate explanation、PAPER_ONLY_SIMULATION warning、daily-independent 时 DAILY_INDEPENDENT_ONLY warning、strategy/symbol/reason/blocked/confidence/source 聚合；observe-only；production_effect=none"]
         TEIMPACTR["outputs/reports/shadow_parameter_impact_YYYY-MM-DD.json/md<br/>保守 impact_status、policy id/version/threshold snapshot、impact_gate explanation、blocked_by/warning explanations、7/14/30 日 production vs shadow 样本/成交/PnL、数据质量、reconciliation、blocked_by/reason_code/confidence bucket、continuous replay source path/mode/date range；缺 continuous replay 写 continuous_replay_missing；observe-only；production_effect=none"]
+        TEIBKRR["outputs/reports/ibkr_paper_account_snapshot_YYYY-MM-DD.json/md<br/>masked account、connection status、summary、positions、open orders、executions、contract sample、reconciliation；readonly=true；production_effect=none"]
     end
 
     MD --> ERC
@@ -601,6 +606,13 @@ flowchart TD
     TEQUALR --> TEIMPACT
     TEREPLAYSUM -. "可选，只读补充 continuous replay 指标" .-> TEIMPACT
     TEIMPACT --> TEIMPACTR
+    IBKRCFG --> TEIBKR
+    IBKRCFG --> TEIBKRA
+    TEIBKR --> TEIBKRA
+    TEIBKRA --> TEIBKRREC
+    TEPORT -. "可选本地 PaperPortfolio 对账输入" .-> TEIBKRREC
+    TEIBKRA --> TEIBKRR
+    TEIBKRREC --> TEIBKRR
     TESUM -. "daily task dashboard 只读展示" .-> DTASKDR
     TESUM -. "dashboard Trend 只读读取最近 N 日；缺失显示 LIMITED" .-> DTASKDR
     TEQUALR -. "dashboard 只显示轻量 quality 卡片，不展示详细表格" .-> DTASKDR
@@ -1473,6 +1485,9 @@ flowchart TD
 |执行动作查询|`aits execution lookup`|按 `action_id` 反查固定动作定义，例如 `maintain`、`small_increase`、`no_new_position`、`reduce_to_target_range`、`wait_manual_review`、`observe_only`|已实现基础版|
 |Paper trading 配置|`config/trading_engine.yaml`|登记第二交易引擎 MVP 的 paper-only mode、`real_trading_enabled=false`、风险阈值、policy owner/version/status/rationale/validation/review condition、初始 cash、commission 和 slippage；这些阈值是 pilot baseline，不是实盘校准结论；真实交易接入前必须另行设计和审批|已实现基础版|
 |Paper trading engine|`src/ai_trading_system/trading_engine/`|独立交易执行子系统；只接受标准 `OrderIntent`，通过 `PreTradeRiskChecker` 聚合 kill switch、asset/order type、side/short sell、confidence、单笔 notional、单标的仓位、总 exposure、cash、重复订单和事件 blackout；`ExecutionService` 是唯一执行入口，内部强制风控并提交到 `PaperBroker`；`PaperPortfolio` reconciliation 从 fill log 或 `ExecutionReport` 重建 expected portfolio，并在 cash、position quantity、avg cost 不一致时输出 `ReconciliationResult(status=BLOCK)`；不反向依赖现有趋势评分内部实现|已实现基础版|
+|IBKR Paper 只读配置|`config/ibkr_paper_readonly.yaml`|登记 IBKR Paper Account 只读同步 spike；默认 `enabled=false`，只允许 `trading_mode=paper`、`readonly=true`、`production_effect=none`；不保存 password、token、API key、session cookie 或其他敏感凭证；真实连接只在显式启用且 account id 看起来是 Paper / DUP 账号时尝试|已实现基础版|
+|IBKR Paper 只读 adapter|`src/ai_trading_system/trading_engine/brokers/ibkr_readonly.py`|只读 broker adapter；允许 `connect`、`disconnect`、`get_account_summary`、`list_positions`、`list_open_orders`、`list_executions` 和 `get_contract_details`；`submit_order` 必须抛出明确错误；非 paper、`readonly=false` 或非 `production_effect=none` fail closed；所有输出隐藏完整 account id；`IBKRPaperReadOnlyReconciliation` 第一版只比较 symbol、quantity、cash summary 是否存在和 unknown positions，输出 `PASS` / `LIMITED` / `BLOCK`|已实现基础版|
+|IBKR Paper 账户 snapshot|`python scripts/run_ibkr_paper_readonly_snapshot.py --date YYYY-MM-DD` / `outputs/reports/ibkr_paper_account_snapshot_YYYY-MM-DD.json` / `.md`|只读读取 IB Gateway / TWS Paper 账户状态并输出 JSON/Markdown；内容包括 connection status、masked account id、account summary、positions、open orders、recent executions、contract details sample、reconciliation status、`readonly=true` 和 `production_effect=none`；默认配置关闭时不连接 broker；account id 不像 Paper / DUP 账号时 BLOCK 且不连接；输出不得包含完整 account id 或 broker 密钥|已实现基础版|
 |Paper trading demo|`python scripts/run_paper_trading_demo.py --date YYYY-MM-DD`|从模拟趋势候选构造 `OrderIntent`，执行 `OrderIntent -> RiskCheck -> PaperBroker -> Fill simulation -> PortfolioState -> ReconciliationResult -> TradingDailyReport` 闭环；默认输出 JSONL 审计日志和 `reports/trading_daily/YYYY-MM-DD.md`；不读取真实 broker API key，不执行真实订单|已实现基础版|
 |Paper trading candidate runner|`python scripts/run_paper_trading_from_candidates.py --date YYYY-MM-DD`|默认读取 `outputs/reports/order_intent_candidates_YYYY-MM-DD.json`；默认候选文件缺失时先生成 `outputs/reports/daily_decision_summary_YYYY-MM-DD.json` 和正式 `order_intent_candidates`，缺少 upstream 报告只能标记 `limited` / `missing`，不得补造投资动作、置信度、仓位或订单字段；仅将 `blocked=false` 且 `mode=paper` 的 `OrderIntentCandidate` 转换为 `OrderIntent`，再通过 `ExecutionService` 走 paper-only 风控、PaperBroker、fill simulation、reconciliation 和 report writer；MarketSnapshotProvider 优先读取 historical OHLC，其次 candidate metadata，最后才用 `candidate.limit_price` synthetic snapshot，并把 `market_snapshot_source` 写入 summary；blocked、非 paper mode 或字段不足的 candidate 不会产生执行动作；不依赖真实账户状态、真实 broker API key、paper broker 以外的 adapter 或实盘下单接口|已实现基础版|
 |Paper trading replay|`python scripts/run_paper_trading_replay.py --start YYYY-MM-DD --end YYYY-MM-DD --mode daily-independent` 或 `--mode continuous-portfolio` / `outputs/reports/paper_trading_replay_START_END.json` / `.md`|`daily-independent` 写入 `replay_mode=daily_independent`、`portfolio_carry_forward=false`、`continuous_metrics_available=false`，逐日独立创建 paper portfolio，不结转前一日持仓、cash 或 open order，因此不是连续组合收益；`continuous-portfolio` 写入 `replay_mode=continuous_portfolio`、`portfolio_carry_forward=true`、`continuous_metrics_available=true`，在 start date 初始化一个 `PaperPortfolio`，每日读取 `order_intent_candidates_YYYY-MM-DD.json`、转换可执行 candidate、经过 `PreTradeRiskChecker`、使用同一个 portfolio 连续执行、每日结束生成带 date/cash/positions/equity/exposure 的 snapshot，并运行 reconciliation；DAY order 当日未成交则过期，不结转 open DAY order，顶层输出 `order_expiration_policy` 和 `expired_day_orders`；本阶段不支持 GTC / non-DAY time_in_force，candidate 直接 rejected / limited，并输出 `unsupported_order_policy` 和 `rejected_gtc_orders`；两种模式均默认读取候选文件，候选缺失时生成 limited `daily_decision_summary` 和 `order_intent_candidates`；汇总 candidate_count、blocked_candidates、generated_intents、approved/rejected、submitted、filled/open/cancelled、realized/unrealized PnL、reconciliation_status 和 market_snapshot_source 分布，输出 quality_flags 并按 symbol / strategy_id / reason_code / blocked_by 聚合；continuous 额外输出 equity_curve、daily_equity、daily_cash、daily_exposure、daily_realized_pnl、daily_unrealized_pnl、cumulative_realized_pnl、cumulative_unrealized_pnl、max_drawdown、`max_drawdown_pct`、exposure_peak、position_concentration_peak、`max_position_concentration`、`final_cash`、`final_equity`、`final_positions` 和 `carried_positions_count`；Markdown 展示 final portfolio summary、max drawdown、exposure peak、expired DAY orders，并明确 continuous replay 不是真实账户收益、真实 broker 成交、完整税费/滑点模拟或实盘上线依据；任一天 reconciliation 非 PASS 时整体 status 至少 LIMITED；输出明确 `production_effect=none`、paper-only、不读取 broker API key、不调用真实 broker、不改变 production 仓位建议|已实现基础版|
