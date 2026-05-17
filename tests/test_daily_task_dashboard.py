@@ -56,7 +56,7 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert "+4.29%" in html
     assert "Gate cap override" in html
     assert "权重参数" in html
-    assert '<strong>实际 40.00%</strong>' in html
+    assert "<strong>实际 40.00%</strong>" in html
     assert "<small>无静态 override</small>" in html
     assert "主线实际 gate" in html
     assert "subtask-link-grid" in html
@@ -75,19 +75,13 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert payload["paper_trading_summary"]["blocked_candidates"] == 1
     assert payload["paper_trading_summary"]["reconciliation_status"] == "PASS"
     assert payload["paper_trading_summary"]["production_effect"] == "none"
-    investment = next(
-        item for item in payload["key_conclusions"] if item["area"] == "投资结论"
-    )
+    investment = next(item for item in payload["key_conclusions"] if item["area"] == "投资结论")
     assert investment["primary"] == (
         "执行动作：观察；最终 AI 仓位：40%-60%；置信度：0.71；Data Gate：PASS"
     )
-    parameter = next(
-        item for item in payload["key_conclusions"] if item["area"] == "参数治理"
-    )
+    parameter = next(item for item in payload["key_conclusions"] if item["area"] == "参数治理")
     assert parameter["status"] == "PASS_WITH_LIMITATIONS"
-    feedback = next(
-        item for item in payload["key_conclusions"] if item["area"] == "反馈复盘"
-    )
+    feedback = next(item for item in payload["key_conclusions"] if item["area"] == "反馈复盘")
     assert "source_current__grid_gate_0217" in feedback["primary"]
     assert "shadow return 9.02%" in feedback["primary"]
     assert "production 4.74%" in feedback["primary"]
@@ -95,10 +89,7 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert "promotion=NOT_PROMOTABLE" in feedback["primary"]
     assert "available：8，total：11" in "；".join(feedback["supporting"])
     assert "available=8，contract floor=30" in feedback["important_risk"]
-    assert (
-        "单日 return = 仓位中点 × 标的 outcome return"
-        in feedback["result_methodology"]
-    )
+    assert "单日 return = 仓位中点 × 标的 outcome return" in feedback["result_methodology"]
     results = feedback["result_comparison"]
     total_return = next(row for row in results if row["metric"] == "Total return")
     assert total_return["production"] == "4.74%"
@@ -115,9 +106,7 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert turnover["delta"] == "-0.55"
     comparison = feedback["parameter_comparison"]
     valuation_cap = next(
-        row
-        for row in comparison
-        if row["group"] == "gate_cap" and row["parameter"] == "valuation"
+        row for row in comparison if row["group"] == "gate_cap" and row["parameter"] == "valuation"
     )
     assert valuation_cap["production"] == "主线实际 gate：40.00%（无静态 override）"
     assert valuation_cap["production_observed_min"] == 0.4
@@ -126,9 +115,7 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert valuation_cap["delta"] == "新增 override"
     assert "primary cap" in valuation_cap["note"]
     trend_weight = next(
-        row
-        for row in comparison
-        if row["group"] == "weight" and row["parameter"] == "trend"
+        row for row in comparison if row["group"] == "weight" and row["parameter"] == "trend"
     )
     assert trend_weight["production"] == "25.00%"
     assert trend_weight["candidate"] == "25.00%"
@@ -141,9 +128,7 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert "active candidates：3" in shadow_iteration["primary"]
     assert "best gate-only" in shadow_iteration["primary"]
     assert "source_current__grid_gate_0217" in shadow_iteration["primary"]
-    assert "dashboard 只读取 shadow_iteration JSON" in "；".join(
-        shadow_iteration["supporting"]
-    )
+    assert "dashboard 只读取 shadow_iteration JSON" in "；".join(shadow_iteration["supporting"])
     assert "gate_only 只能进入 gate policy review" in shadow_iteration["important_risk"]
     score_task = next(task for task in payload["tasks"] if task["step_id"] == "score_daily")
     assert score_task["conclusion"] == (
@@ -162,9 +147,10 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert decision_summary["investment_conclusion"]["action_bias"] == "观察"
     assert decision_summary["investment_conclusion"]["confidence"] == "0.71"
     assert decision_summary["investment_conclusion"]["position_band"] == "40%-60%"
-    assert decision_summary["investment_conclusion"]["source_dashboard_key_conclusion"][
-        "primary"
-    ] == investment["primary"]
+    assert (
+        decision_summary["investment_conclusion"]["source_dashboard_key_conclusion"]["primary"]
+        == investment["primary"]
+    )
     assert investment["primary"] in html
     assert (
         decision_summary["parameter_governance"]["shadow_candidate"]["selected_trial_id"]
@@ -188,9 +174,7 @@ def test_reports_daily_tasks_cli_writes_html_and_json(tmp_path: Path) -> None:
     output_path = tmp_path / "daily_task_dashboard_2026-05-04.html"
     json_output_path = tmp_path / "daily_task_dashboard_2026-05-04.json"
     decision_summary_output_path = tmp_path / "daily_decision_summary_2026-05-04.json"
-    order_intent_candidates_output_path = (
-        tmp_path / "order_intent_candidates_2026-05-04.json"
-    )
+    order_intent_candidates_output_path = tmp_path / "order_intent_candidates_2026-05-04.json"
 
     result = CliRunner().invoke(
         app,
@@ -230,20 +214,14 @@ def test_reports_daily_tasks_cli_writes_html_and_json(tmp_path: Path) -> None:
     assert payload["paper_trading_summary"]["filled"] == 1
     assert payload["key_conclusions"][0]["area"] == "投资结论"
     assert any(
-        "source_current__grid_gate_0217" in item["primary"]
-        for item in payload["key_conclusions"]
+        "source_current__grid_gate_0217" in item["primary"] for item in payload["key_conclusions"]
     )
-    assert any(
-        item["area"] == "Shadow Iteration"
-        for item in payload["key_conclusions"]
-    )
+    assert any(item["area"] == "Shadow Iteration" for item in payload["key_conclusions"])
     assert payload["tasks"][0]["step_id"] == "download_data"
     decision_summary = json.loads(decision_summary_output_path.read_text(encoding="utf-8"))
     assert decision_summary["investment_conclusion"]["action_bias"] == "观察"
     assert decision_summary["production_effect"] == "none"
-    order_candidates = json.loads(
-        order_intent_candidates_output_path.read_text(encoding="utf-8")
-    )
+    order_candidates = json.loads(order_intent_candidates_output_path.read_text(encoding="utf-8"))
     assert order_candidates["production_effect"] == "none"
     assert order_candidates["execution_boundary"]["creates_execution_action"] is False
     assert order_candidates["candidate_count"] == 1
@@ -394,6 +372,76 @@ def test_daily_task_dashboard_paper_trading_trend_is_limited_when_history_missin
     assert trend["available_count"] == 0
     assert trend["missing_count"] == 7
     assert "不补造趋势结论" in trend["risk"]
+
+
+def test_daily_task_dashboard_paper_trading_trend_aggregates_replay_visibility(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 5, 14)
+    metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
+    _write_detail_reports(tmp_path, as_of)
+    for offset in range(7):
+        current = date.fromordinal(as_of.toordinal() - offset)
+        _write_paper_trading_summary(
+            tmp_path,
+            current,
+            status="PASS",
+            candidate_count=3,
+            blocked_candidates=2,
+            generated_intents=1,
+            filled=1,
+            unrealized_pnl=10.0,
+            market_snapshot_source="synthetic_limit_price",
+            market_snapshot_source_counts={
+                "historical_ohlc": 1,
+                "candidate_metadata": 0,
+                "synthetic_limit_price": 1,
+            },
+        )
+        _write_order_intent_candidates(tmp_path, current)
+
+    report = build_daily_task_dashboard_report(
+        as_of=as_of,
+        metadata_path=metadata_path,
+        run_report_path=tmp_path / "daily_ops_run_2026-05-14.md",
+        reports_dir=tmp_path,
+        paper_trading_trend_days=7,
+    )
+    html = render_daily_task_dashboard(report)
+    payload = build_daily_task_dashboard_payload(report)
+    trend = payload["paper_trading_trend"]
+
+    assert "Paper Trading Trend (7/14/30 日)" in html
+    assert "manual_approval_required" in html
+    assert "REVIEW_DIRECTION_BLOCKED" in html
+    assert trend["production_effect"] == "none"
+    assert trend["replay_mode"] == "daily_independent"
+    assert trend["portfolio_carry_forward"] is False
+    assert trend["execution_boundary"]["runs_replay"] is False
+    assert trend["execution_boundary"]["broker_api_allowed"] is False
+    assert trend["execution_boundary"]["changes_parameter_promotion"] is False
+    assert set(trend["windows"]) == {"7", "14", "30"}
+    assert trend["windows"]["7"]["status"] == "PASS"
+    assert trend["windows"]["14"]["status"] == "LIMITED"
+    assert trend["windows"]["30"]["status"] == "LIMITED"
+    assert trend["windows"]["7"]["totals"]["candidate_count"] == 21
+    assert trend["windows"]["7"]["totals"]["filled"] == 7
+    assert trend["windows"]["7"]["totals"]["unrealized_pnl"] == 70.0
+    assert trend["windows"]["7"]["synthetic_snapshot_count"] == 7
+    assert trend["windows"]["7"]["synthetic_snapshot_ratio"] == 0.5
+    assert trend["windows"]["7"]["market_snapshot_source_distribution"] == {
+        "historical_ohlc": 7,
+        "synthetic_limit_price": 7,
+    }
+    assert trend["windows"]["7"]["top_blocked_by"][0] == {
+        "value": "manual_approval_required",
+        "count": 7,
+    }
+    assert trend["windows"]["7"]["top_reason_code"][0] == {
+        "value": "REVIEW_DIRECTION_BLOCKED",
+        "count": 7,
+    }
+    assert "连续组合收益" in html
 
 
 def _write_daily_ops_metadata(tmp_path: Path, as_of: date) -> Path:
@@ -565,18 +613,18 @@ def _write_shadow_parameter_search(tmp_path: Path) -> None:
                     "target_weights_json,gate_cap_overrides_json"
                 ),
                 (
-                    'source_current__production_observed_gates,11,8,1,2,'
-                    '0.0473519476,0.0473519476,0.0,-0.0108505772,'
-                    '-0.0108505772,1.2,1.2,0.0,False,'
-                    'available_samples_below_objective_floor,'
+                    "source_current__production_observed_gates,11,8,1,2,"
+                    "0.0473519476,0.0473519476,0.0,-0.0108505772,"
+                    "-0.0108505772,1.2,1.2,0.0,False,"
+                    "available_samples_below_objective_floor,"
                     '"{""trend"": 0.25, ""fundamentals"": 0.25}",'
-                    '{}'
+                    "{}"
                 ),
                 (
-                    'source_current__grid_gate_0217,11,8,1,2,0.0473519476,'
-                    '0.0902253121,0.0428733645,-0.0108505772,'
-                    '-0.0169856501,1.2,0.65,0.75,False,'
-                    'available_samples_below_objective_floor,'
+                    "source_current__grid_gate_0217,11,8,1,2,0.0473519476,"
+                    "0.0902253121,0.0428733645,-0.0108505772,"
+                    "-0.0169856501,1.2,0.65,0.75,False,"
+                    "available_samples_below_objective_floor,"
                     '"{""trend"": 0.25, ""fundamentals"": 0.25}",'
                     '"{""valuation"": 0.7, ""risk_budget"": 0.7}"'
                 ),
@@ -657,29 +705,76 @@ def _write_shadow_iteration_report(tmp_path: Path, as_of: date) -> None:
     )
 
 
-def _write_paper_trading_summary(tmp_path: Path, as_of: date) -> None:
+def _write_paper_trading_summary(
+    tmp_path: Path,
+    as_of: date,
+    *,
+    status: str = "LIMITED",
+    candidate_count: int = 2,
+    blocked_candidates: int = 1,
+    generated_intents: int = 1,
+    filled: int = 1,
+    unrealized_pnl: float = 12.5,
+    market_snapshot_source: str = "none",
+    market_snapshot_source_counts: dict[str, int] | None = None,
+) -> None:
+    source_counts = market_snapshot_source_counts or {
+        "historical_ohlc": 0,
+        "candidate_metadata": 0,
+        "synthetic_limit_price": 0,
+    }
     (tmp_path / f"paper_trading_summary_{as_of.isoformat()}.json").write_text(
         json.dumps(
             {
                 "schema_version": 1,
                 "report_type": "paper_trading_summary",
                 "as_of": as_of.isoformat(),
-                "status": "LIMITED",
+                "status": status,
                 "production_effect": "none",
-                "candidate_count": 2,
-                "blocked_candidates": 1,
-                "generated_intents": 1,
+                "candidate_count": candidate_count,
+                "blocked_candidates": blocked_candidates,
+                "generated_intents": generated_intents,
                 "approved": 1,
                 "rejected": 0,
                 "submitted": 1,
-                "filled": 1,
+                "filled": filled,
                 "open": 0,
                 "cancelled": 0,
                 "realized_pnl": 0.0,
-                "unrealized_pnl": 12.5,
+                "unrealized_pnl": unrealized_pnl,
                 "reconciliation_status": "PASS",
                 "audit_log_path": str(tmp_path / "audit"),
                 "report_path": str(tmp_path / "reports" / "trading_daily" / "2026-05-04.md"),
+                "market_snapshot_source": market_snapshot_source,
+                "market_snapshot_source_counts": source_counts,
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_order_intent_candidates(tmp_path: Path, as_of: date) -> None:
+    (tmp_path / f"order_intent_candidates_{as_of.isoformat()}.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "order_intent_candidates",
+                "as_of": as_of.isoformat(),
+                "production_effect": "none",
+                "candidate_count": 1,
+                "candidates": [
+                    {
+                        "candidate_id": f"candidate:{as_of.isoformat()}",
+                        "blocked": True,
+                        "blocked_by": [
+                            "manual_approval_required",
+                            "data_gate_blocked",
+                        ],
+                        "reason_codes": ["REVIEW_DIRECTION_BLOCKED"],
+                    }
+                ],
             },
             ensure_ascii=False,
             indent=2,

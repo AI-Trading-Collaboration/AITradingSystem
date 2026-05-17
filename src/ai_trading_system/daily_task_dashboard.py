@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import json
 import re
+from collections import Counter
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from html import escape
@@ -18,6 +19,8 @@ from ai_trading_system.reports.daily_task_dashboard_view_model import (
 )
 
 DAILY_DECISION_SUMMARY_SCHEMA_VERSION = 1
+PAPER_TRADING_TREND_WINDOWS: tuple[int, ...] = (7, 14, 30)
+PAPER_TRADING_TREND_REPLAY_MODE = "daily_independent"
 
 
 @dataclass(frozen=True)
@@ -99,9 +102,7 @@ def build_daily_task_dashboard_report(
         git_commit=str(git.get("commit") or ""),
         git_dirty=raw_git_dirty if isinstance(raw_git_dirty, bool) else None,
         tasks=tasks,
-        paper_trading_trend_days=_normalize_paper_trading_trend_days(
-            paper_trading_trend_days
-        ),
+        paper_trading_trend_days=_normalize_paper_trading_trend_days(paper_trading_trend_days),
     )
 
 
@@ -150,9 +151,7 @@ def build_daily_task_dashboard_payload(
         "production_effect": report.production_effect,
         "run_id": report.run_id,
         "metadata_path": str(report.metadata_path),
-        "run_report_path": None
-        if report.run_report_path is None
-        else str(report.run_report_path),
+        "run_report_path": None if report.run_report_path is None else str(report.run_report_path),
         "reports_dir": str(report.reports_dir),
         "project_root": str(report.project_root),
         "started_at": report.started_at,
@@ -528,9 +527,7 @@ def _report_specs(as_of: date) -> dict[str, tuple[_ReportSpec, ...]]:
         "sec_companyfacts": (
             _ReportSpec("SEC companyfacts 校验", f"sec_companyfacts_validation_{suffix}.md"),
         ),
-        "sec_metrics": (
-            _ReportSpec("SEC fundamentals", f"sec_fundamentals_{suffix}.md"),
-        ),
+        "sec_metrics": (_ReportSpec("SEC fundamentals", f"sec_fundamentals_{suffix}.md"),),
         "tsm_ir_sec_metrics_merge": (
             _ReportSpec("SEC fundamentals 校验", f"sec_fundamentals_validation_{suffix}.md"),
         ),
@@ -546,15 +543,11 @@ def _report_specs(as_of: date) -> dict[str, tuple[_ReportSpec, ...]]:
             _ReportSpec("每日评分报告", f"daily_score_{suffix}.md"),
             _ReportSpec("告警报告", f"alerts_{suffix}.md"),
         ),
-        "parameter_governance": (
-            _ReportSpec("参数治理", f"parameter_governance_{suffix}.md"),
-        ),
+        "parameter_governance": (_ReportSpec("参数治理", f"parameter_governance_{suffix}.md"),),
         "market_feedback_optimization": (
             _ReportSpec("市场反馈优化", f"market_feedback_optimization_{suffix}.md"),
         ),
-        "feedback_loop_review": (
-            _ReportSpec("反馈闭环复核", f"feedback_loop_review_{suffix}.md"),
-        ),
+        "feedback_loop_review": (_ReportSpec("反馈闭环复核", f"feedback_loop_review_{suffix}.md"),),
         "investment_weekly_review": (
             _ReportSpec("投资周度复盘", f"investment_weekly_review_{suffix}.md"),
         ),
@@ -566,9 +559,7 @@ def _report_specs(as_of: date) -> dict[str, tuple[_ReportSpec, ...]]:
             _ReportSpec("Pipeline health", f"pipeline_health_{suffix}.md"),
             _ReportSpec("Pipeline health alerts", f"pipeline_health_alerts_{suffix}.md"),
         ),
-        "secret_hygiene": (
-            _ReportSpec("Secret hygiene", f"secret_hygiene_{suffix}.md"),
-        ),
+        "secret_hygiene": (_ReportSpec("Secret hygiene", f"secret_hygiene_{suffix}.md"),),
     }
 
 
@@ -749,10 +740,7 @@ def _decision_summary_feedback_review(
     loop = _mapping_value(feedback, "feedback_loop")
     investment = _mapping_value(feedback, "investment_review")
     shadow_parameter = _latest_shadow_parameter_summary(report)
-    connected = any(
-        _string_value(section.get("status"))
-        for section in (market, loop, investment)
-    )
+    connected = any(_string_value(section.get("status")) for section in (market, loop, investment))
     summary = _join_nonempty(
         [
             _label("market readiness", market.get("readiness")),
@@ -788,9 +776,7 @@ def _decision_summary_system_health(
 ) -> TraceRecord:
     operations = conclusions.get("运行健康")
     health_tasks = [
-        task
-        for task in report.tasks
-        if task.step_id in {"pipeline_health", "secret_hygiene"}
+        task for task in report.tasks if task.step_id in {"pipeline_health", "secret_hygiene"}
     ]
     warnings = [
         f"{task.step_id}: {task.important_risk}"
@@ -866,8 +852,7 @@ def _parameter_shadow_candidate(
             "selected_trial_id": (
                 _string_value(shadow_parameter.get("selected_trial_id")) or "missing"
             ),
-            "selected_kind": _string_value(shadow_parameter.get("selected_kind"))
-            or "missing",
+            "selected_kind": _string_value(shadow_parameter.get("selected_kind")) or "missing",
             "summary": _string_value(shadow_parameter.get("primary")) or "missing",
         }
     if shadow_iteration:
@@ -875,8 +860,7 @@ def _parameter_shadow_candidate(
         return {
             "availability": "limited",
             "source": "shadow_iteration",
-            "run_id": _string_value(shadow_iteration.get("source_search_run_id"))
-            or "missing",
+            "run_id": _string_value(shadow_iteration.get("source_search_run_id")) or "missing",
             "selected_trial_id": _string_value(best_gate.get("trial_id")) or "missing",
             "selected_kind": "shadow_iteration_gate_only",
             "summary": _shadow_iteration_candidate_label(best_gate),
@@ -915,8 +899,7 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
             records.append(
                 _source_artifact_record(
                     artifact_id=(
-                        f"{task.step_id}:{index}:"
-                        f"{_slug(str(detail.get('label') or 'report'))}"
+                        f"{task.step_id}:{index}:" f"{_slug(str(detail.get('label') or 'report'))}"
                     ),
                     label=str(detail.get("label") or "report"),
                     path=Path(str(detail.get("path") or "")),
@@ -1009,9 +992,7 @@ def _blocking_reasons(conclusion: DailyTaskKeyConclusion | None) -> tuple[str, .
     if conclusion.risk_level == "none":
         return ()
     return tuple(
-        reason.strip()
-        for reason in conclusion.important_risk.split("；")
-        if reason.strip()
+        reason.strip() for reason in conclusion.important_risk.split("；") if reason.strip()
     )
 
 
@@ -1050,9 +1031,7 @@ def _investment_key_conclusion(
                 score_task.important_risk,
             ]
         )
-    source_tasks = tuple(
-        step for step in ("score_daily", "reports_dashboard") if step in tasks
-    )
+    source_tasks = tuple(step for step in ("score_daily", "reports_dashboard") if step in tasks)
     return DailyTaskKeyConclusion(
         area="投资结论",
         title="当日动作、仓位与主要约束",
@@ -1185,9 +1164,7 @@ def _feedback_key_conclusion(
     return DailyTaskKeyConclusion(
         area="反馈复盘",
         title="样本、学习闭环、周度判断和 shadow 参数",
-        status=_combined_status(feedback_tasks)
-        if feedback_tasks
-        else "PASS_WITH_LIMITATIONS",
+        status=_combined_status(feedback_tasks) if feedback_tasks else "PASS_WITH_LIMITATIONS",
         primary=primary or "反馈复盘结论缺失，需要查看子报告。",
         supporting=supporting[:6],
         important_risk=_join_nonempty(
@@ -1202,22 +1179,14 @@ def _feedback_key_conclusion(
         ),
         source_steps=(
             *tuple(task.step_id for task in feedback_tasks),
-            *(
-                ("shadow_parameter_search",)
-                if shadow_parameter.get("connected") is True
-                else ()
-            ),
+            *(("shadow_parameter_search",) if shadow_parameter.get("connected") is True else ()),
         ),
         result_comparison=tuple(
-            row
-            for row in shadow_parameter.get("result_comparison", ())
-            if isinstance(row, dict)
+            row for row in shadow_parameter.get("result_comparison", ()) if isinstance(row, dict)
         ),
         result_methodology=_string_value(shadow_parameter.get("result_methodology")),
         parameter_comparison=tuple(
-            row
-            for row in shadow_parameter.get("parameter_comparison", ())
-            if isinstance(row, dict)
+            row for row in shadow_parameter.get("parameter_comparison", ()) if isinstance(row, dict)
         ),
     )
 
@@ -1326,9 +1295,7 @@ def _paper_trading_summary(report: DailyTaskDashboardReport) -> TraceRecord:
         }
     report_path = _string_value(payload.get("report_path"))
     audit_log_path = _string_value(payload.get("audit_log_path"))
-    reconciliation_status = (
-        _string_value(payload.get("reconciliation_status")) or "MISSING"
-    )
+    reconciliation_status = _string_value(payload.get("reconciliation_status")) or "MISSING"
     summary_status = _string_value(payload.get("status")) or reconciliation_status
     return {
         "status": summary_status,
@@ -1350,9 +1317,7 @@ def _paper_trading_summary(report: DailyTaskDashboardReport) -> TraceRecord:
         "reconciliation_status": reconciliation_status,
         "audit_log_path": audit_log_path or "missing",
         "report_path": report_path or "missing",
-        "report_href": _report_href(Path(report_path), report.reports_dir)
-        if report_path
-        else "",
+        "report_href": _report_href(Path(report_path), report.reports_dir) if report_path else "",
         "risk": _paper_trading_summary_risk(payload),
     }
 
@@ -1374,7 +1339,20 @@ def _paper_trading_summary_risk(payload: TraceRecord) -> str:
 
 
 def _paper_trading_trend(report: DailyTaskDashboardReport) -> TraceRecord:
-    days = _normalize_paper_trading_trend_days(report.paper_trading_trend_days)
+    selected_days = _normalize_paper_trading_trend_days(report.paper_trading_trend_days)
+    windows = {
+        str(days): _paper_trading_trend_window(report, days) for days in PAPER_TRADING_TREND_WINDOWS
+    }
+    selected = dict(windows[str(selected_days)])
+    selected["windows"] = windows
+    selected["available_windows"] = list(windows)
+    return selected
+
+
+def _paper_trading_trend_window(
+    report: DailyTaskDashboardReport,
+    days: int,
+) -> TraceRecord:
     start = report.as_of - timedelta(days=days - 1)
     records: list[TraceRecord] = []
     totals: TraceRecord = {
@@ -1391,8 +1369,13 @@ def _paper_trading_trend(report: DailyTaskDashboardReport) -> TraceRecord:
         "unrealized_pnl": 0.0,
     }
     reconciliation_distribution: dict[str, int] = {}
+    market_snapshot_source_distribution: Counter[str] = Counter()
+    blocked_by_distribution: Counter[str] = Counter()
+    reason_code_distribution: Counter[str] = Counter()
     missing_dates: list[str] = []
+    missing_candidate_dates: list[str] = []
     non_none_production_effect_dates: list[str] = []
+    synthetic_snapshot_dates: list[str] = []
 
     for offset in range(days):
         current = start + timedelta(days=offset)
@@ -1414,7 +1397,10 @@ def _paper_trading_trend(report: DailyTaskDashboardReport) -> TraceRecord:
                     "filled": "missing",
                     "open": "missing",
                     "cancelled": "missing",
+                    "realized_pnl": "missing",
+                    "unrealized_pnl": "missing",
                     "reconciliation_status": "MISSING",
+                    "market_snapshot_source": "missing",
                 }
             )
             continue
@@ -1422,12 +1408,21 @@ def _paper_trading_trend(report: DailyTaskDashboardReport) -> TraceRecord:
         production_effect = _string_value(payload.get("production_effect")) or "none"
         if production_effect != ProductionEffect.NONE.value:
             non_none_production_effect_dates.append(current.isoformat())
-        reconciliation_status = (
-            _string_value(payload.get("reconciliation_status")) or "MISSING"
-        )
+        reconciliation_status = _string_value(payload.get("reconciliation_status")) or "MISSING"
         reconciliation_distribution[reconciliation_status] = (
             reconciliation_distribution.get(reconciliation_status, 0) + 1
         )
+        source_counts = _paper_trading_snapshot_source_counts(payload)
+        market_snapshot_source_distribution.update(source_counts)
+        if source_counts.get("synthetic_limit_price", 0) > 0:
+            synthetic_snapshot_dates.append(current.isoformat())
+        candidate_path = report.reports_dir / f"order_intent_candidates_{current.isoformat()}.json"
+        if not _add_paper_candidate_explanations(
+            candidate_path,
+            blocked_by_distribution,
+            reason_code_distribution,
+        ):
+            missing_candidate_dates.append(current.isoformat())
         record = {
             "as_of": current.isoformat(),
             "exists": True,
@@ -1447,6 +1442,9 @@ def _paper_trading_trend(report: DailyTaskDashboardReport) -> TraceRecord:
             "realized_pnl": payload.get("realized_pnl", 0.0),
             "unrealized_pnl": payload.get("unrealized_pnl", 0.0),
             "reconciliation_status": reconciliation_status,
+            "market_snapshot_source": _string_value(payload.get("market_snapshot_source"))
+            or "none",
+            "candidate_explanation_path": str(candidate_path),
         }
         for key in (
             "candidate_count",
@@ -1465,19 +1463,21 @@ def _paper_trading_trend(report: DailyTaskDashboardReport) -> TraceRecord:
         totals["realized_pnl"] = (_optional_float(totals.get("realized_pnl")) or 0.0) + (
             _optional_float(record.get("realized_pnl")) or 0.0
         )
-        totals["unrealized_pnl"] = (
-            _optional_float(totals.get("unrealized_pnl")) or 0.0
-        ) + (_optional_float(record.get("unrealized_pnl")) or 0.0)
+        totals["unrealized_pnl"] = (_optional_float(totals.get("unrealized_pnl")) or 0.0) + (
+            _optional_float(record.get("unrealized_pnl")) or 0.0
+        )
         records.append(record)
 
     available_count = days - len(missing_dates)
+    snapshot_total = sum(market_snapshot_source_distribution.values())
+    synthetic_snapshot_count = market_snapshot_source_distribution.get(
+        "synthetic_limit_price",
+        0,
+    )
+    synthetic_snapshot_ratio = synthetic_snapshot_count / snapshot_total if snapshot_total else 0.0
     status = "PASS"
     risks: list[str] = []
-    existing_statuses = {
-        str(record.get("status"))
-        for record in records
-        if record.get("exists")
-    }
+    existing_statuses = {str(record.get("status")) for record in records if record.get("exists")}
     if non_none_production_effect_dates:
         status = "ERROR"
         risks.append(
@@ -1491,32 +1491,105 @@ def _paper_trading_trend(report: DailyTaskDashboardReport) -> TraceRecord:
         if status != "ERROR":
             status = "LIMITED"
         risks.append("历史 paper_trading_summary 缺失；dashboard 不补造趋势结论。")
+    if missing_candidate_dates:
+        if status != "ERROR":
+            status = "LIMITED"
+        risks.append("部分 order_intent_candidates 缺失；top blocked_by/reason_code 受限。")
     if any(item not in {"PASS", "MISSING"} for item in existing_statuses):
         if status != "ERROR":
             status = "LIMITED"
         risks.append("至少一个 paper trading summary 不是 PASS，趋势只能作为受限观察。")
+    if synthetic_snapshot_count:
+        risks.append("存在 synthetic limit price snapshot；fill 质量解释受限。")
 
     return {
         "status": status,
         "production_effect": ProductionEffect.NONE.value,
+        "production_position_effect": ProductionEffect.NONE.value,
+        "parameter_promotion_effect": ProductionEffect.NONE.value,
+        "replay_mode": PAPER_TRADING_TREND_REPLAY_MODE,
+        "portfolio_carry_forward": False,
+        "execution_boundary": {
+            "read_only": True,
+            "runs_paper_runner": False,
+            "runs_replay": False,
+            "broker_api_allowed": False,
+            "changes_production_position_recommendation": False,
+            "changes_parameter_promotion": False,
+        },
         "window_days": days,
         "start": start.isoformat(),
         "end": report.as_of.isoformat(),
         "available_count": available_count,
         "missing_count": len(missing_dates),
         "missing_dates": missing_dates,
+        "missing_candidate_count": len(missing_candidate_dates),
+        "missing_candidate_dates": missing_candidate_dates,
         "totals": totals,
-        "reconciliation_status_distribution": dict(
-            sorted(reconciliation_distribution.items())
+        "reconciliation_status_distribution": dict(sorted(reconciliation_distribution.items())),
+        "market_snapshot_source_distribution": dict(
+            sorted(market_snapshot_source_distribution.items())
         ),
+        "synthetic_snapshot_count": synthetic_snapshot_count,
+        "synthetic_snapshot_ratio": synthetic_snapshot_ratio,
+        "synthetic_snapshot_dates": synthetic_snapshot_dates,
+        "top_blocked_by": _top_counter_records(blocked_by_distribution),
+        "top_reason_code": _top_counter_records(reason_code_distribution),
+        "quality_flags": {
+            "missing_summary_days": len(missing_dates),
+            "missing_candidate_days": len(missing_candidate_dates),
+            "synthetic_snapshot_days": len(synthetic_snapshot_dates),
+            "synthetic_snapshot_count": synthetic_snapshot_count,
+        },
         "daily_results": records,
         "risk": "；".join(dict.fromkeys(risks))
-        or "最近 paper trading summary 输入完整；趋势仍仅为 paper-only 复盘。",
+        or ("最近 paper trading summary 输入完整；趋势仍仅为 paper-only " "逐日独立复盘。"),
     }
 
 
+def _paper_trading_snapshot_source_counts(payload: TraceRecord) -> Counter[str]:
+    counts: Counter[str] = Counter()
+    source_counts = _mapping_value(payload, "market_snapshot_source_counts")
+    if source_counts:
+        for source, count in source_counts.items():
+            source_name = _string_value(source) or str(source)
+            count_value = _optional_int(count) or 0
+            if source_name and count_value > 0:
+                counts[source_name] += count_value
+        return counts
+
+    source = _string_value(payload.get("market_snapshot_source"))
+    if source and source != "none":
+        counts[source] += _optional_int(payload.get("generated_intents")) or 1
+    return counts
+
+
+def _add_paper_candidate_explanations(
+    path: Path,
+    blocked_by_distribution: Counter[str],
+    reason_code_distribution: Counter[str],
+) -> bool:
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "order_intent_candidates":
+        return False
+    for candidate in _records(payload.get("candidates")):
+        for blocked_by in _strings(candidate.get("blocked_by")):
+            blocked_by_distribution[blocked_by] += 1
+        for reason_code in _strings(candidate.get("reason_codes")):
+            reason_code_distribution[reason_code] += 1
+    return True
+
+
+def _top_counter_records(counter: Counter[str], *, limit: int = 5) -> list[TraceRecord]:
+    return [
+        {"value": value, "count": count}
+        for value, count in counter.most_common(limit)
+        if value and count > 0
+    ]
+
+
 def _normalize_paper_trading_trend_days(value: int) -> int:
-    if value not in {7, 14, 30}:
+    if value not in set(PAPER_TRADING_TREND_WINDOWS):
         raise ValueError("paper_trading_trend_days must be one of 7, 14, or 30")
     return value
 
@@ -1672,11 +1745,7 @@ def _latest_shadow_parameter_summary(report: DailyTaskDashboardReport) -> TraceR
     )
     risk = _join_nonempty(
         [
-            (
-                "当前没有 eligible trial，诊断领先结果不得进入 production。"
-                if not eligible
-                else ""
-            ),
+            ("当前没有 eligible trial，诊断领先结果不得进入 production。" if not eligible else ""),
             _label("Promotion", promotion_status),
             "；".join(blockers[:3]),
         ]
@@ -1749,13 +1818,8 @@ def _primary_cap_summary(manifest: TraceRecord) -> str:
     if not gate_id:
         return ""
     selected_cap = _format_percent(_optional_float(selected.get("selected_cap_value")))
-    excess_delta = _format_signed_percent(
-        _optional_float(selected.get("excess_delta_vs_baseline"))
-    )
-    return (
-        f"主要 cap：{gate_id}={selected_cap}，"
-        f"cap-only excess {excess_delta}"
-    )
+    excess_delta = _format_signed_percent(_optional_float(selected.get("excess_delta_vs_baseline")))
+    return f"主要 cap：{gate_id}={selected_cap}，" f"cap-only excess {excess_delta}"
 
 
 def _shadow_result_comparison_rows(
@@ -1797,9 +1861,7 @@ def _shadow_result_comparison_rows(
             "production": _format_percent(production_return),
             "shadow": _format_percent(shadow_return),
             "delta": _format_signed_percent(excess_return),
-            "note": _join_nonempty(
-                ["AVAILABLE outcome 复利累计", sample_note, cost_note]
-            ),
+            "note": _join_nonempty(["AVAILABLE outcome 复利累计", sample_note, cost_note]),
         },
         {
             "metric": "Max drawdown",
@@ -1844,9 +1906,9 @@ def _shadow_result_comparison_rows(
                 separator="，",
             )
             or "NA",
-            "delta": "eligible"
-            if _string_value(trial.get("eligible")).lower() == "true"
-            else "未达准入",
+            "delta": (
+                "eligible" if _string_value(trial.get("eligible")).lower() == "true" else "未达准入"
+            ),
             "note": _string_value(trial.get("ineligibility_reason")) or "NA",
         }
     )
@@ -1894,9 +1956,7 @@ def _shadow_parameter_comparison_rows(
                 "production": _format_percent(baseline_value),
                 "candidate": _format_percent(candidate_value),
                 "delta": _format_signed_percent_delta(baseline_value, candidate_value),
-                "note": "未变化"
-                if _floats_equal(baseline_value, candidate_value)
-                else "已变化",
+                "note": "未变化" if _floats_equal(baseline_value, candidate_value) else "已变化",
             }
         )
 
@@ -1925,9 +1985,11 @@ def _shadow_parameter_comparison_rows(
                     observed_cap.get("snapshot_count")
                 ),
                 "candidate": _format_percent(candidate_value),
-                "delta": "新增 override"
-                if baseline_value is None
-                else _format_signed_percent_delta(baseline_value, candidate_value),
+                "delta": (
+                    "新增 override"
+                    if baseline_value is None
+                    else _format_signed_percent_delta(baseline_value, candidate_value)
+                ),
                 "note": cap_notes.get(key, "候选 gate cap override"),
             }
         )
@@ -2130,11 +2192,7 @@ def _max_risk_level(first: str, second: str) -> str:
 
 
 def _combined_task_risk(tasks: tuple[DailyTaskDetail, ...]) -> str:
-    risks = [
-        f"{task.title}：{task.important_risk}"
-        for task in tasks
-        if task.risk_level != "none"
-    ]
+    risks = [f"{task.title}：{task.important_risk}" for task in tasks if task.risk_level != "none"]
     if not risks:
         return "未发现该结论域的新增阻断风险。"
     return "；".join(dict.fromkeys(risks))
@@ -2168,6 +2226,12 @@ def _string_list(value: object, *, limit: int) -> tuple[str, ...]:
         return ()
     strings = tuple(item for item in value if isinstance(item, str))
     return strings[:limit]
+
+
+def _strings(value: object) -> tuple[str, ...]:
+    if not isinstance(value, list):
+        return ()
+    return tuple(item for item in value if isinstance(item, str))
 
 
 def _render_header(report: DailyTaskDashboardReport, title: str) -> str:
@@ -2219,9 +2283,7 @@ def _render_key_conclusion_card(conclusion: DailyTaskKeyConclusion) -> str:
     )
     sources = "、".join(conclusion.source_steps)
     comparison_class = (
-        " has-comparison"
-        if conclusion.parameter_comparison or conclusion.result_comparison
-        else ""
+        " has-comparison" if conclusion.parameter_comparison or conclusion.result_comparison else ""
     )
     return "\n".join(
         [
@@ -2263,9 +2325,7 @@ def _render_shadow_comparison(
     gate_rows = tuple(row for row in parameter_rows if row.get("group") == "gate_cap")
     weight_rows = tuple(row for row in parameter_rows if row.get("group") == "weight")
     other_rows = tuple(
-        row
-        for row in parameter_rows
-        if row.get("group") not in {"gate_cap", "weight"}
+        row for row in parameter_rows if row.get("group") not in {"gate_cap", "weight"}
     )
     sections = []
     if result_rows:
@@ -2330,9 +2390,7 @@ def _render_result_comparison_table(
             )
         )
     methodology_html = (
-        f'<p class="result-methodology">{_text(methodology)}</p>'
-        if methodology
-        else ""
+        f'<p class="result-methodology">{_text(methodology)}</p>' if methodology else ""
     )
     return "\n".join(
         [
@@ -2424,10 +2482,7 @@ def _render_weight_parameter_table(rows: tuple[TraceRecord, ...]) -> str:
     return "\n".join(
         [
             '<section class="shadow-section">',
-            (
-                "<h5>权重参数 "
-                f'<span>{unchanged_count}/{len(rows)} 未变化</span></h5>'
-            ),
+            ("<h5>权重参数 " f"<span>{unchanged_count}/{len(rows)} 未变化</span></h5>"),
             '<div class="table-wrap shadow-table-wrap"><table class="shadow-table shadow-weights">',
             "<thead><tr><th>参数</th><th>Production/current</th>"
             "<th>Shadow candidate</th><th>变化</th></tr></thead>",
@@ -2478,7 +2533,7 @@ def _render_parameter_change(row: TraceRecord) -> str:
     class_name = "unchanged" if label in {"未变化", "+0.00%"} else "changed"
     detail = ""
     if note in {"未变化", "已变化"} and delta:
-        detail = f'<small>{_text(delta)}</small>'
+        detail = f"<small>{_text(delta)}</small>"
     return f'<span class="change-chip {class_name}">{_text(label)}</span>{detail}'
 
 
@@ -2503,7 +2558,7 @@ def _render_gate_production_value(value: object) -> str:
     value_text, note = match.groups()
     return (
         '<span class="cap-value">'
-        f'<strong>实际 {_text(value_text)}</strong>'
+        f"<strong>实际 {_text(value_text)}</strong>"
         f"<small>{_text(note)}</small>"
         "</span>"
     )
@@ -2570,10 +2625,7 @@ def _render_paper_trading_summary(report: DailyTaskDashboardReport) -> str:
             '<section aria-labelledby="paper-trading-summary-title">',
             '<div class="section-head">',
             '<h2 id="paper-trading-summary-title">Paper Trading Summary</h2>',
-            (
-                "<p>只读 paper 执行复盘；production_effect 必须保持 "
-                "<code>none</code>。</p>"
-            ),
+            ("<p>只读 paper 执行复盘；production_effect 必须保持 " "<code>none</code>。</p>"),
             "</div>",
             '<div class="summary-grid">',
             _summary_item("candidate_count", summary.get("candidate_count", "missing")),
@@ -2619,6 +2671,29 @@ def _render_paper_trading_summary(report: DailyTaskDashboardReport) -> str:
 def _render_paper_trading_trend(report: DailyTaskDashboardReport) -> str:
     trend = _paper_trading_trend(report)
     totals = _mapping_value(trend, "totals")
+    windows = _mapping_value(trend, "windows")
+    window_rows = []
+    for window_days in PAPER_TRADING_TREND_WINDOWS:
+        window = _mapping_value(windows, str(window_days))
+        window_totals = _mapping_value(window, "totals")
+        window_rows.append(
+            "<tr>"
+            f"<td>{window_days} 日</td>"
+            f"<td>{_text(window.get('status', 'LIMITED'))}</td>"
+            f"<td>{_text(window.get('replay_mode', 'daily_independent'))}</td>"
+            f"<td>{_text(window.get('available_count', 0))} / "
+            f"{_text(window.get('missing_count', 0))}</td>"
+            f"<td>{_text(window_totals.get('candidate_count', 0))}</td>"
+            f"<td>{_text(window_totals.get('generated_intents', 0))}</td>"
+            f"<td>{_text(_count_triplet(window_totals, 'filled', 'open', 'cancelled'))}</td>"
+            f"<td>{_text(_format_money_value(window_totals.get('realized_pnl')))} / "
+            f"{_text(_format_money_value(window_totals.get('unrealized_pnl')))}</td>"
+            f"<td>{_text(_format_distribution(window.get('reconciliation_status_distribution')))}</td>"
+            f"<td>{_text(_format_percent(_optional_float(window.get('synthetic_snapshot_ratio'))))}</td>"
+            f"<td>{_text(_format_top_records(window.get('top_blocked_by')))}</td>"
+            f"<td>{_text(_format_top_records(window.get('top_reason_code')))}</td>"
+            "</tr>"
+        )
     rows = []
     for record in _records(trend.get("daily_results")):
         if not record.get("exists"):
@@ -2626,7 +2701,7 @@ def _render_paper_trading_trend(report: DailyTaskDashboardReport) -> str:
                 "<tr>"
                 f"<td>{_text(record.get('as_of'))}</td>"
                 "<td>MISSING</td>"
-                "<td colspan=\"5\">LIMITED：历史 summary 缺失；未补造结论。</td>"
+                '<td colspan="6">LIMITED：历史 summary 缺失；未补造结论。</td>'
                 "</tr>"
             )
             continue
@@ -2639,23 +2714,27 @@ def _render_paper_trading_trend(report: DailyTaskDashboardReport) -> str:
             f"<td>{_text(record.get('submitted'))}</td>"
             f"<td>{_text(_count_triplet(record, 'filled', 'open', 'cancelled'))}</td>"
             f"<td>{_text(record.get('reconciliation_status'))}</td>"
+            f"<td>{_text(record.get('market_snapshot_source'))}</td>"
             "</tr>"
         )
     return "\n".join(
         [
             '<section aria-labelledby="paper-trading-trend-title">',
             '<div class="section-head">',
-            (
-                '<h2 id="paper-trading-trend-title">Paper Trading Trend '
-                f"({trend.get('window_days')} 日)</h2>"
-            ),
+            '<h2 id="paper-trading-trend-title">Paper Trading Trend (7/14/30 日)</h2>',
             (
                 "<p>只读读取最近历史 summary；缺失显示 "
-                "<code>LIMITED</code>，不运行 replay 或补造结论。</p>"
+                "<code>LIMITED</code>，不运行 replay 或补造结论；当前汇总语义为"
+                "逐日独立 paper-only 复盘，不是连续组合收益。</p>"
             ),
             "</div>",
             '<div class="summary-grid">',
             _summary_item("Trend status", trend.get("status", "LIMITED")),
+            _summary_item("replay_mode", trend.get("replay_mode", "daily_independent")),
+            _summary_item(
+                "portfolio_carry_forward",
+                str(trend.get("portfolio_carry_forward", False)),
+            ),
             _summary_item(
                 "available / missing",
                 f"{trend.get('available_count', 0)} / {trend.get('missing_count', 0)}",
@@ -2672,15 +2751,43 @@ def _render_paper_trading_trend(report: DailyTaskDashboardReport) -> str:
                 "unrealized_pnl",
                 _format_money_value(totals.get("unrealized_pnl")),
             ),
+            _summary_item(
+                "synthetic snapshot",
+                (
+                    f"{trend.get('synthetic_snapshot_count', 0)} / "
+                    f"{_format_percent(_optional_float(trend.get('synthetic_snapshot_ratio')))}"
+                ),
+            ),
+            _summary_item(
+                "top blocked_by",
+                _format_top_records(trend.get("top_blocked_by")),
+            ),
+            _summary_item(
+                "top reason_code",
+                _format_top_records(trend.get("top_reason_code")),
+            ),
+            _summary_item(
+                "production_effect",
+                trend.get("production_effect", ProductionEffect.NONE.value),
+            ),
             "</div>",
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'
                 f"{_text(trend.get('risk', ''))}</p>"
             ),
             '<div class="table-wrap"><table>',
+            "<thead><tr><th>Window</th><th>Status</th><th>Replay mode</th>"
+            "<th>Available/Missing</th><th>Candidates</th><th>Intents</th>"
+            "<th>Filled/Open/Cancelled</th><th>Realized/Unrealized PnL</th>"
+            "<th>Reconciliation</th><th>Synthetic snapshot</th>"
+            "<th>Top blocked_by</th><th>Top reason_code</th></tr></thead>",
+            "<tbody>",
+            *window_rows,
+            "</tbody></table></div>",
+            '<div class="table-wrap"><table>',
             "<thead><tr><th>Date</th><th>Status</th><th>Candidates</th>"
             "<th>Intents</th><th>Submitted</th><th>Filled/Open/Cancelled</th>"
-            "<th>Reconciliation</th></tr></thead>",
+            "<th>Reconciliation</th><th>Snapshot source</th></tr></thead>",
             "<tbody>",
             *rows,
             "</tbody></table></div>",
@@ -2713,18 +2820,39 @@ def _format_money_value(value: object) -> str:
     return f"{number:.2f}"
 
 
+def _format_distribution(value: object) -> str:
+    if not isinstance(value, dict) or not value:
+        return "none"
+    parts = [
+        f"{key}:{count}" for key, count in sorted(value.items()) if _string_value(key) or str(key)
+    ]
+    return "；".join(parts) or "none"
+
+
+def _format_top_records(value: object) -> str:
+    parts = []
+    for record in _records(value):
+        label = _string_value(record.get("value"))
+        count = _optional_int(record.get("count"))
+        if label and count is not None:
+            parts.append(f"{label}:{count}")
+    return "；".join(parts) or "none"
+
+
 def _render_risks(report: DailyTaskDashboardReport) -> str:
     risky_tasks = [task for task in report.tasks if task.risk_level != "none"]
-    rows = [
-        "<tr><td>无</td><td>未发现阻断或限制风险。</td><td></td></tr>"
-    ] if not risky_tasks else [
-        (
-            f"<tr><td>{_text(task.title)}</td>"
-            f"<td>{_status_badge(task.risk_level)}</td>"
-            f"<td>{_text(task.important_risk)}</td></tr>"
-        )
-        for task in risky_tasks
-    ]
+    rows = (
+        ["<tr><td>无</td><td>未发现阻断或限制风险。</td><td></td></tr>"]
+        if not risky_tasks
+        else [
+            (
+                f"<tr><td>{_text(task.title)}</td>"
+                f"<td>{_status_badge(task.risk_level)}</td>"
+                f"<td>{_text(task.important_risk)}</td></tr>"
+            )
+            for task in risky_tasks
+        ]
+    )
     return "\n".join(
         [
             '<section aria-labelledby="risk-title">',
@@ -2798,10 +2926,7 @@ def _render_subtask_link_card(task: DailyTaskDetail, reports_dir: Path) -> str:
             _status_badge(task.status),
             "</div>",
             f'<p class="subtask-conclusion">{_text(task.conclusion)}</p>',
-            (
-                '<p class="subtask-risk"><strong>风险：</strong>'
-                f"{_text(task.important_risk)}</p>"
-            ),
+            ('<p class="subtask-risk"><strong>风险：</strong>' f"{_text(task.important_risk)}</p>"),
             _render_report_links(task, reports_dir),
             "</article>",
         ]
@@ -2997,9 +3122,7 @@ def _join_nonempty(
     *,
     separator: str = "；",
 ) -> str:
-    return separator.join(
-        str(value) for value in values if value is not None and str(value) != ""
-    )
+    return separator.join(str(value) for value in values if value is not None and str(value) != "")
 
 
 def _label(label: str, value: object | None) -> str:
@@ -3094,9 +3217,7 @@ def _status_badge(status: str) -> str:
     if normalized in {"fail", "high", "blocked", "blocked_env", "blocked_visibility"}:
         class_name += " danger"
     elif (
-        normalized in {"skipped", "medium"}
-        or "warning" in normalized
-        or "limitation" in normalized
+        normalized in {"skipped", "medium"} or "warning" in normalized or "limitation" in normalized
     ):
         class_name += " warn"
     elif normalized in {"pass", "present", "none"}:
