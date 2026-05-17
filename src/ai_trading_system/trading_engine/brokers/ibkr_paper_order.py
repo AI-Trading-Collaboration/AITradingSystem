@@ -59,6 +59,7 @@ class LifecycleIssue(BaseModel):
 
 class IBKRPaperOrderConfig(BaseModel):
     paper_order_lifecycle_enabled: bool = False
+    ibkr_paper_comparison_enabled: bool = False
     host: str = "127.0.0.1"
     port: int = Field(default=7497, ge=1, le=65535)
     client_id: int = Field(default=19010, ge=0)
