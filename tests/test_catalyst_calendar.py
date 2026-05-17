@@ -35,9 +35,7 @@ def test_catalyst_calendar_buckets_upcoming_events(tmp_path: Path) -> None:
 
     assert report.passed is True
     assert report.upcoming_count == 2
-    assert [event.catalyst_id for event in report.upcoming_events(5)] == [
-        "msft_earnings_2026q2"
-    ]
+    assert [event.catalyst_id for event in report.upcoming_events(5)] == ["msft_earnings_2026q2"]
     assert "msft_earnings_2026q2" in markdown
     assert "fomc_2026_05" in markdown
     assert "pre_event_review" in markdown

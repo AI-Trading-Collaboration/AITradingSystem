@@ -291,8 +291,7 @@ def test_mutual_exclusion_group_uses_highest_priority_overlay() -> None:
 
     assert application.matched_overlays == ("macro_soft_high",)
     assert any(
-        "macro_soft_low: skipped because macro_soft_high has higher priority"
-        in reason
+        "macro_soft_low: skipped because macro_soft_high has higher priority" in reason
         for reason in application.audit["why_not_applied"]
     )
 

@@ -1654,9 +1654,7 @@ def _latest_replay_risk(payload: TraceRecord) -> str:
             "latest replay 是 paper-only continuous-portfolio 模拟；不是实盘收益、"
             "真实 broker 成交或上线依据。"
         )
-    return (
-        "latest replay 是 daily-independent；每天重新初始化组合，不能解释连续组合收益。"
-    )
+    return "latest replay 是 daily-independent；每天重新初始化组合，不能解释连续组合收益。"
 
 
 def _paper_signal_quality_summary(report: DailyTaskDashboardReport) -> TraceRecord:
@@ -2968,9 +2966,7 @@ def _render_paper_trading_trend(report: DailyTaskDashboardReport) -> str:
     for window_days in PAPER_TRADING_TREND_WINDOWS:
         window = _mapping_value(windows, str(window_days))
         window_totals = _mapping_value(window, "totals")
-        reconciliation_text = _format_distribution(
-            window.get("reconciliation_status_distribution")
-        )
+        reconciliation_text = _format_distribution(window.get("reconciliation_status_distribution"))
         synthetic_ratio_text = _format_percent(
             _optional_float(window.get("synthetic_snapshot_ratio"))
         )

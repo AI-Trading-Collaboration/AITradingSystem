@@ -58,9 +58,7 @@ def test_c_grade_market_evidence_is_report_only(
 
     assert report.status == "PASS_WITH_WARNINGS"
     assert report.automatic_score_eligible_count == 0
-    assert "market_evidence_grade_review_only" in {
-        issue.code for issue in report.issues
-    }
+    assert "market_evidence_grade_review_only" in {issue.code for issue in report.issues}
 
 
 def test_llm_market_evidence_is_forced_to_pending_review(
@@ -104,9 +102,7 @@ def test_public_convenience_market_evidence_is_not_scoreable(
     )
 
     assert report.status == "PASS_WITH_WARNINGS"
-    assert "public_convenience_evidence_not_scoreable" in {
-        issue.code for issue in report.issues
-    }
+    assert "public_convenience_evidence_not_scoreable" in {issue.code for issue in report.issues}
 
 
 def test_import_market_evidence_csv_round_trips_to_validation(

@@ -70,8 +70,7 @@ def build_order_intent_from_candidate(
     missing = candidate.missing_order_intent_fields()
     if missing:
         raise ValueError(
-            "unblocked OrderIntentCandidate is missing required fields: "
-            + ", ".join(missing)
+            "unblocked OrderIntentCandidate is missing required fields: " + ", ".join(missing)
         )
     if candidate.symbol is None or candidate.asset_type is None or candidate.side is None:
         raise ValueError("OrderIntentCandidate is missing symbol, asset_type or side")

@@ -257,8 +257,7 @@ def run_historical_day_replay(
         raise ValueError("historical replay MVP only supports mode=cache-only")
     if openai_replay_policy not in OPENAI_REPLAY_POLICIES:
         raise ValueError(
-            "openai replay policy must be one of: "
-            + ", ".join(sorted(OPENAI_REPLAY_POLICIES))
+            "openai replay policy must be one of: " + ", ".join(sorted(OPENAI_REPLAY_POLICIES))
         )
 
     generated_at = datetime.now(tz=UTC)
@@ -353,8 +352,7 @@ def run_historical_replay_window(
         raise ValueError("replay window start must be on or before end")
     if openai_replay_policy not in OPENAI_REPLAY_POLICIES:
         raise ValueError(
-            "openai replay policy must be one of: "
-            + ", ".join(sorted(OPENAI_REPLAY_POLICIES))
+            "openai replay policy must be one of: " + ", ".join(sorted(OPENAI_REPLAY_POLICIES))
         )
 
     generated_at = datetime.now(tz=UTC)
@@ -371,9 +369,7 @@ def run_historical_replay_window(
     while current <= end:
         session = us_equity_market_session(current)
         if not session.is_trading_day:
-            skipped_dates.append(
-                ReplayWindowSkippedDate(as_of=current, reason=session.reason)
-            )
+            skipped_dates.append(ReplayWindowSkippedDate(as_of=current, reason=session.reason))
             current += timedelta(days=1)
             continue
         day_run = run_historical_day_replay(
@@ -635,9 +631,7 @@ def render_historical_replay_window_run(window_run: HistoricalReplayWindowRun) -
     if not window_run.skipped_dates:
         lines.append("|  |  |")
     for skipped in window_run.skipped_dates:
-        lines.append(
-            f"| {skipped.as_of.isoformat()} | {_escape_table(skipped.reason)} |"
-        )
+        lines.append(f"| {skipped.as_of.isoformat()} | {_escape_table(skipped.reason)} |")
     return "\n".join(lines) + "\n"
 
 
@@ -767,9 +761,7 @@ def build_replay_production_diff(
             ),
             replay_path=_decision_snapshot_path(paths, as_of),
             projection=_decision_snapshot_core_fields,
-            details=(
-                "selected score/position/execution fields; excludes generated_at and paths"
-            ),
+            details=("selected score/position/execution fields; excludes generated_at and paths"),
         ),
         _compare_file_artifact(
             artifact_id="evidence_bundle",
@@ -1198,9 +1190,7 @@ def _pipeline_health_command(
         str(paths.data_raw_dir / "pit_snapshots" / "manifest.csv"),
         "--pit-normalized-path",
         str(
-            paths.data_processed_dir
-            / "pit_snapshots"
-            / f"fmp_forward_pit_{as_of.isoformat()}.csv"
+            paths.data_processed_dir / "pit_snapshots" / f"fmp_forward_pit_{as_of.isoformat()}.csv"
         ),
         "--pit-validation-report-path",
         str(
@@ -1603,9 +1593,7 @@ def _rebuild_fmp_forward_pit_normalized_from_manifest(
         current = payloads_by_ticker.get(payload.ticker)
         if current is None or payload.downloaded_at > current.downloaded_at:
             payloads_by_ticker[payload.ticker] = payload
-    payloads = tuple(
-        payloads_by_ticker[ticker] for ticker in sorted(payloads_by_ticker)
-    )
+    payloads = tuple(payloads_by_ticker[ticker] for ticker in sorted(payloads_by_ticker))
     if not payloads:
         return None
 
@@ -1661,9 +1649,7 @@ def _load_fmp_forward_pit_raw_payload(
     ):
         return None
     endpoint_records = {
-        str(endpoint): tuple(
-            item for item in records if isinstance(item, dict)
-        )
+        str(endpoint): tuple(item for item in records if isinstance(item, dict))
         for endpoint, records in records_by_endpoint.items()
         if isinstance(records, list)
     }
@@ -3043,9 +3029,7 @@ def _csv_rows_digest(path: Path, as_of: date) -> tuple[int | None, str | None]:
     )
     if date_column is None:
         return len(rows), _sha256_file(path)
-    filtered_rows = [
-        row for row in rows if _parse_date_value(row.get(date_column)) == as_of
-    ]
+    filtered_rows = [row for row in rows if _parse_date_value(row.get(date_column)) == as_of]
     sorted_rows = sorted(
         filtered_rows,
         key=lambda row: json.dumps(row, ensure_ascii=False, sort_keys=True),
@@ -3093,9 +3077,7 @@ def _decision_snapshot_core_fields(raw: Mapping[str, Any]) -> Mapping[str, Any]:
             ),
             "total_asset_ai_band": positions.get("total_asset_ai_band"),
             "final_total_risk_asset_band": positions.get("final_total_risk_asset_band"),
-            "position_gates": _position_gate_summary(
-                positions.get("position_gates")
-            ),
+            "position_gates": _position_gate_summary(positions.get("position_gates")),
         },
         "execution": raw.get("execution"),
         "recommendation": raw.get("recommendation"),

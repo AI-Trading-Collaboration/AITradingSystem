@@ -118,9 +118,7 @@ def backtest_lag_sensitivity_summary_record(
         "backtest_data_quality": {
             "grade": credibility.grade,
             "label": credibility.label,
-            "uses_vendor_historical_estimates": (
-                credibility.uses_vendor_historical_estimates
-            ),
+            "uses_vendor_historical_estimates": (credibility.uses_vendor_historical_estimates),
             "uses_self_archived_snapshots": credibility.uses_self_archived_snapshots,
             "universe_pit": credibility.universe_pit,
         },
@@ -180,9 +178,7 @@ def render_backtest_lag_sensitivity_report(
                 "feature lag 表示信号日使用更早交易日的特征、SEC/估值/风险事件 PIT 切片；"
                 "universe lag 表示观察池按更早交易日的 lifecycle 可见性过滤。"
             ),
-            (
-                "C 级回测下，Sharpe 和收益指标只作为探索性诊断；不能作为无条件绩效结论。"
-            ),
+            ("C 级回测下，Sharpe 和收益指标只作为探索性诊断；不能作为无条件绩效结论。"),
             "",
             "## 场景结果",
             "",
@@ -277,18 +273,14 @@ def _interpretation_summary(report: BacktestLagSensitivityReport) -> list[str]:
             "基础回测数据可信度为 C 级；本报告只能帮助识别未来函数风险，不能解除输入缺口。"
         )
     if base_effective and not effective_lagged:
-        lines.append(
-            "策略只在低滞后或 lag=0 场景有效，未来函数或过度依赖即时输入的风险较高。"
-        )
+        lines.append("策略只在低滞后或 lag=0 场景有效，未来函数或过度依赖即时输入的风险较高。")
     elif effective_lagged:
         lines.append(
             "至少一个 3 个交易日以上滞后场景仍保持正收益和正 Sharpe，可作为更可信研究线索。"
         )
     else:
         lines.append("基础场景本身未达到正收益和正 Sharpe，有效性需要重新评估。")
-    lines.append(
-        "完整生产信任仍需要更完整的 PIT 估值/风险事件覆盖、权重扰动和样本外验证。"
-    )
+    lines.append("完整生产信任仍需要更完整的 PIT 估值/风险事件覆盖、权重扰动和样本外验证。")
     return lines
 
 

@@ -109,8 +109,7 @@ class PortfolioExposureReport:
     @property
     def ai_market_value(self) -> float:
         return sum(
-            position.market_value * position.ai_exposure_pct
-            for position in self.selected_positions
+            position.market_value * position.ai_exposure_pct for position in self.selected_positions
         )
 
     @property
@@ -137,8 +136,7 @@ class PortfolioExposureReport:
         covered = sum(
             position.market_value * position.ai_exposure_pct
             for position in self.selected_positions
-            if position.instrument_type == "etf"
-            and position.etf_beta_to_ai_proxy is not None
+            if position.instrument_type == "etf" and position.etf_beta_to_ai_proxy is not None
         )
         return covered / etf_ai_value
 
@@ -238,8 +236,7 @@ def build_portfolio_exposure_report(
             PortfolioExposureIssue(
                 severity="WARNING",
                 code="portfolio_ai_position_missing_node_mapping",
-                message="部分 AI 暴露缺少产业链节点映射："
-                f"{', '.join(sorted(set(unmapped)))}。",
+                message="部分 AI 暴露缺少产业链节点映射：" f"{', '.join(sorted(set(unmapped)))}。",
             )
         )
 
@@ -304,8 +301,7 @@ def _load_positions(
                     PortfolioExposureIssue(
                         severity="ERROR",
                         code="portfolio_positions_missing_columns",
-                        message="持仓 CSV 缺少必要字段："
-                        f"{', '.join(missing_columns)}。",
+                        message="持仓 CSV 缺少必要字段：" f"{', '.join(missing_columns)}。",
                     )
                 ],
             )
@@ -504,7 +500,9 @@ def _render_portfolio_exposure(
         ]
     )
     if report.status == "NOT_CONNECTED":
-        lines.append("未接入真实持仓文件；日报仓位仍只能解释为模型建议区间，不能直接转成账户买卖数量。")
+        lines.append(
+            "未接入真实持仓文件；日报仓位仍只能解释为模型建议区间，不能直接转成账户买卖数量。"
+        )
         lines.append("")
 
     _append_bucket_table(lines, "### Ticker 暴露", report.ticker_exposures)

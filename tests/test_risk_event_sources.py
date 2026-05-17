@@ -160,9 +160,7 @@ def test_write_imported_occurrences_yaml_round_trips_through_existing_validation
 
     assert len(written_paths) == 1
     assert written_paths[0].name == "ai_chip_export_control_upgrade_2026_05_01.yaml"
-    assert store.loaded[0].occurrence.occurrence_id == (
-        "ai_chip_export_control_upgrade_2026_05_01"
-    )
+    assert store.loaded[0].occurrence.occurrence_id == ("ai_chip_export_control_upgrade_2026_05_01")
     assert len(store.loaded[0].occurrence.evidence_sources) == 2
     assert validation_report.status == "PASS"
 

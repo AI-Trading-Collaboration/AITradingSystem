@@ -229,9 +229,7 @@ def _classify_chain(
     outcome_direction = (
         "success"
         if hit_values and all(hit_values)
-        else "success"
-        if returns and mean(returns) > 0
-        else "failure"
+        else "success" if returns and mean(returns) > 0 else "failure"
     )
     data_quality_status = (signal.get("quality") or {}).get("market_data_status")
     affected_modules = signal.get("affected_modules") or []

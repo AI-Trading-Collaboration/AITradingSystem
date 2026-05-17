@@ -1218,16 +1218,12 @@ def load_fmp_forward_pit_analyst_estimate_history(
                 ticker = (row.get("canonical_ticker") or "").strip().upper()
                 if selected_tickers is not None and ticker not in selected_tickers:
                     continue
-                available_time = _parse_optional_iso_datetime(
-                    row.get("available_time") or ""
-                )
+                available_time = _parse_optional_iso_datetime(row.get("available_time") or "")
                 if available_time is None or available_time > decision_time.astimezone(UTC):
                     continue
                 try:
                     captured_at = date.fromisoformat(row.get("captured_at") or "")
-                    downloaded_at = _parse_optional_iso_datetime(
-                        row.get("downloaded_at") or ""
-                    )
+                    downloaded_at = _parse_optional_iso_datetime(row.get("downloaded_at") or "")
                     record = json.loads(row.get("normalized_values_json") or "{}")
                 except (ValueError, json.JSONDecodeError):
                     continue
@@ -1446,8 +1442,9 @@ def default_fmp_analyst_history_validation_report_path(
 
 
 def write_fmp_analyst_estimate_history_snapshots(
-    snapshots: tuple[FmpAnalystEstimateHistorySnapshot, ...]
-    | list[FmpAnalystEstimateHistorySnapshot],
+    snapshots: (
+        tuple[FmpAnalystEstimateHistorySnapshot, ...] | list[FmpAnalystEstimateHistorySnapshot]
+    ),
     output_dir: Path | str,
 ) -> tuple[Path, ...]:
     directory = Path(output_dir)
@@ -1475,9 +1472,7 @@ def _fmp_analyst_estimate_history_raw_filename(
     snapshot: FmpAnalystEstimateHistorySnapshot,
 ) -> str:
     checksum = snapshot.checksum_sha256 or _json_checksum(snapshot.records)
-    downloaded_token = (
-        snapshot.downloaded_at.astimezone(UTC).strftime("%Y-%m-%dT%H-%M-%SZ")
-    )
+    downloaded_token = snapshot.downloaded_at.astimezone(UTC).strftime("%Y-%m-%dT%H-%M-%SZ")
     return (
         f"fmp_analyst_estimates_{snapshot.ticker.lower()}_"
         f"{snapshot.captured_at.isoformat()}_{downloaded_token}_{checksum[:12]}.json"
@@ -1485,8 +1480,7 @@ def _fmp_analyst_estimate_history_raw_filename(
 
 
 def write_fmp_historical_valuation_raw_payloads(
-    payloads: tuple[FmpHistoricalValuationRawPayload, ...]
-    | list[FmpHistoricalValuationRawPayload],
+    payloads: tuple[FmpHistoricalValuationRawPayload, ...] | list[FmpHistoricalValuationRawPayload],
     output_dir: Path | str,
 ) -> tuple[Path, ...]:
     directory = Path(output_dir)
@@ -1550,9 +1544,7 @@ def render_fmp_historical_valuation_fetch_report(
             ]
         )
         for snapshot in sorted(report.snapshots, key=lambda value: value.snapshot_id):
-            valuation_ids = ", ".join(
-                metric.metric_id for metric in snapshot.valuation_metrics
-            )
+            valuation_ids = ", ".join(metric.metric_id for metric in snapshot.valuation_metrics)
             lines.append(
                 "| "
                 f"{snapshot.snapshot_id} | "
@@ -1646,14 +1638,12 @@ def render_fmp_valuation_fetch_report(report: FmpValuationFetchReport) -> str:
             f"limit={report.analyst_estimate_limit}"
         ),
         (
-            f"- Analyst history 输入："
-            f"`{report.analyst_history_input_path}`"
+            f"- Analyst history 输入：" f"`{report.analyst_history_input_path}`"
             if report.analyst_history_input_path is not None
             else "- Analyst history 输入：未配置"
         ),
         (
-            f"- PIT normalized 输入："
-            f"`{report.pit_normalized_input_path}`"
+            f"- PIT normalized 输入：" f"`{report.pit_normalized_input_path}`"
             if report.pit_normalized_input_path is not None
             else "- PIT normalized 输入：未配置"
         ),
@@ -1661,8 +1651,7 @@ def render_fmp_valuation_fetch_report(report: FmpValuationFetchReport) -> str:
         f"- 已读取 PIT analyst 快照数：{report.pit_analyst_snapshot_count}",
         f"- 本次待写入 analyst 快照数：{len(report.analyst_estimate_history_snapshots)}",
         (
-            f"- Valuation history 输入："
-            f"`{report.valuation_history_input_path}`"
+            f"- Valuation history 输入：" f"`{report.valuation_history_input_path}`"
             if report.valuation_history_input_path is not None
             else "- Valuation history 输入：未配置"
         ),
@@ -1687,12 +1676,8 @@ def render_fmp_valuation_fetch_report(report: FmpValuationFetchReport) -> str:
             ]
         )
         for snapshot in sorted(report.snapshots, key=lambda value: value.snapshot_id):
-            valuation_ids = ", ".join(
-                metric.metric_id for metric in snapshot.valuation_metrics
-            )
-            expectation_ids = ", ".join(
-                metric.metric_id for metric in snapshot.expectation_metrics
-            )
+            valuation_ids = ", ".join(metric.metric_id for metric in snapshot.valuation_metrics)
+            expectation_ids = ", ".join(metric.metric_id for metric in snapshot.expectation_metrics)
             lines.append(
                 "| "
                 f"{snapshot.snapshot_id} | "
@@ -1820,12 +1805,8 @@ def render_eodhd_earnings_trends_fetch_report(
             ]
         )
         for snapshot in report.snapshots:
-            valuation_ids = ", ".join(
-                metric.metric_id for metric in snapshot.valuation_metrics
-            )
-            expectation_ids = ", ".join(
-                metric.metric_id for metric in snapshot.expectation_metrics
-            )
+            valuation_ids = ", ".join(metric.metric_id for metric in snapshot.valuation_metrics)
+            expectation_ids = ", ".join(metric.metric_id for metric in snapshot.expectation_metrics)
             lines.append(
                 "| "
                 f"{snapshot.snapshot_id} | "
@@ -1961,9 +1942,7 @@ def _load_fmp_valuation_history(
             )
         )
     ticker_set = set(tickers)
-    return tuple(
-        loaded for loaded in store.loaded if loaded.snapshot.ticker.upper() in ticker_set
-    )
+    return tuple(loaded for loaded in store.loaded if loaded.snapshot.ticker.upper() in ticker_set)
 
 
 def _fmp_analyst_history_paths(path: Path) -> list[Path]:
@@ -2087,8 +2066,7 @@ def _check_fmp_history_request_parameters(
                     path=path,
                     ticker=snapshot.ticker,
                     message=(
-                        f"request_parameters.{key}={actual!r}，"
-                        f"预期为 {expected_value!r}。"
+                        f"request_parameters.{key}={actual!r}，" f"预期为 {expected_value!r}。"
                     ),
                 )
             )
@@ -2281,8 +2259,7 @@ def _fmp_historical_snapshots_from_payload(
                 source_type="paid_vendor",
                 source_name=FMP_SOURCE_NAME,
                 source_url=", ".join(
-                    f"{FMP_BASE_URL}/{endpoint}"
-                    for endpoint in FMP_HISTORICAL_VALUATION_ENDPOINTS
+                    f"{FMP_BASE_URL}/{endpoint}" for endpoint in FMP_HISTORICAL_VALUATION_ENDPOINTS
                 ),
                 captured_at=captured_at,
                 point_in_time_class="backfilled_history_distribution",
@@ -2407,8 +2384,7 @@ def _append_fmp_historical_positive_metric(
                 ticker=ticker,
                 endpoint=endpoint,
                 message=(
-                    f"FMP historical {source_field} is non-positive; "
-                    f"skipped {metric_id}."
+                    f"FMP historical {source_field} is non-positive; " f"skipped {metric_id}."
                 ),
             )
         )
@@ -2459,8 +2435,7 @@ def _fmp_historical_valuation_payload_to_raw(
         "row_count": payload.row_count,
         "checksum_sha256": checksum,
         "records_by_endpoint": {
-            endpoint: list(records)
-            for endpoint, records in payload.endpoint_records.items()
+            endpoint: list(records) for endpoint, records in payload.endpoint_records.items()
         },
     }
 
@@ -2482,8 +2457,7 @@ def _eodhd_earnings_trends_payload_to_raw(
         "row_count": payload.row_count,
         "checksum_sha256": checksum,
         "records_by_ticker": {
-            ticker: list(records)
-            for ticker, records in sorted(payload.records_by_ticker.items())
+            ticker: list(records) for ticker, records in sorted(payload.records_by_ticker.items())
         },
     }
 
@@ -2677,9 +2651,7 @@ def _select_eodhd_eps_trend_record(
     if not dated_records:
         return None
 
-    future_or_current = [
-        item for item in dated_records if item[0] is None or item[0] >= as_of
-    ]
+    future_or_current = [item for item in dated_records if item[0] is None or item[0] >= as_of]
     candidates = future_or_current or dated_records
     period_rank = {"+1y": 0, "0y": 1, "+1q": 2, "0q": 3}
     return sorted(
@@ -2700,9 +2672,7 @@ def _merged_eodhd_trend_snapshot(
     trend_metric: SnapshotMetric,
 ) -> ValuationSnapshot:
     expectation_metrics = [
-        metric
-        for metric in base.expectation_metrics
-        if metric.metric_id != trend_metric.metric_id
+        metric for metric in base.expectation_metrics if metric.metric_id != trend_metric.metric_id
     ]
     expectation_metrics.append(trend_metric)
     date_token = as_of.isoformat().replace("-", "_")
@@ -2715,19 +2685,13 @@ def _merged_eodhd_trend_snapshot(
         if item
     )
     base_note = f"base_snapshot={base.snapshot_id}"
-    notes = (
-        f"{base.notes} "
-        if base.notes
-        else ""
-    ) + (
+    notes = (f"{base.notes} " if base.notes else "") + (
         "EODHD Earnings Trends overlay refreshed eps_revision_90d_pct; "
         f"{base_note}; downloaded_at={downloaded_at.isoformat()}."
     )
     return base.model_copy(
         update={
-            "snapshot_id": (
-                f"merged_{base.ticker.lower()}_valuation_eodhd_trends_{date_token}"
-            ),
+            "snapshot_id": (f"merged_{base.ticker.lower()}_valuation_eodhd_trends_{date_token}"),
             "as_of": as_of,
             "source_type": "paid_vendor",
             "source_name": f"{EODHD_SOURCE_NAME} + {base.source_name}",
@@ -2877,9 +2841,7 @@ def _fmp_snapshot_from_payload(
         captured_at=captured_at,
         point_in_time_class="captured_snapshot",
         history_source_class=(
-            "captured_snapshot_history"
-            if valuation_percentile is not None
-            else "none"
+            "captured_snapshot_history" if valuation_percentile is not None else "none"
         ),
         confidence_level="medium",
         confidence_reason=(
@@ -3542,9 +3504,7 @@ def _snapshot_from_row(
         first_error = exc.errors()[0] if exc.errors() else None
         schema_column: str | None = None
         if first_error is not None:
-            schema_column = (
-                ".".join(str(part) for part in first_error.get("loc", ())) or None
-            )
+            schema_column = ".".join(str(part) for part in first_error.get("loc", ())) or None
         issues.append(
             ValuationImportIssue(
                 severity=ValuationIssueSeverity.ERROR,

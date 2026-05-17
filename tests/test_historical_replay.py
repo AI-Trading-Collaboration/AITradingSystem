@@ -73,15 +73,11 @@ def test_replay_day_filters_future_inputs_and_uses_isolated_commands(
     replay_manifest = replay.paths.data_raw_dir / "download_manifest.csv"
     assert replay_manifest.exists()
 
-    filtered_manifest = (
-        replay.paths.data_raw_dir / "pit_snapshots" / "manifest.csv"
-    )
+    filtered_manifest = replay.paths.data_raw_dir / "pit_snapshots" / "manifest.csv"
     assert _csv_row_count(filtered_manifest) == 1
     assert _csv_row_count(project_root / "data" / "raw" / "pit_snapshots" / "manifest.csv") == 2
 
-    replay_valuation_dir = (
-        replay.paths.input_root / "data" / "external" / "valuation_snapshots"
-    )
+    replay_valuation_dir = replay.paths.input_root / "data" / "external" / "valuation_snapshots"
     assert sorted(path.name for path in replay_valuation_dir.glob("*.yaml")) == [
         "fmp_amd_valuation_2026_05_08.yaml"
     ]
@@ -100,16 +96,10 @@ def test_replay_day_filters_future_inputs_and_uses_isolated_commands(
         "visible_policy_event.yaml"
     ]
     assert (
-        project_root
-        / "data"
-        / "external"
-        / "risk_event_occurrences"
-        / "future_policy_event.yaml"
+        project_root / "data" / "external" / "risk_event_occurrences" / "future_policy_event.yaml"
     ).exists()
     risk_occurrence_record = next(
-        record
-        for record in replay.input_records
-        if record.artifact_id == "risk_event_occurrences"
+        record for record in replay.input_records if record.artifact_id == "risk_event_occurrences"
     )
     assert risk_occurrence_record.status == "PASS"
     assert risk_occurrence_record.included_count == 1
@@ -130,9 +120,7 @@ def test_replay_day_filters_future_inputs_and_uses_isolated_commands(
     assert sorted(path.name for path in replay_trades_dir.glob("*.yaml")) == [
         "visible_amd_trade.yaml"
     ]
-    visible_trade_text = (replay_trades_dir / "visible_amd_trade.yaml").read_text(
-        encoding="utf-8"
-    )
+    visible_trade_text = (replay_trades_dir / "visible_amd_trade.yaml").read_text(encoding="utf-8")
     assert "closed_at: null" in visible_trade_text
     assert "exit_price: null" in visible_trade_text
     assert "2026-05-10" not in visible_trade_text
@@ -313,8 +301,7 @@ def test_replay_day_compare_to_production_writes_diff(tmp_path: Path) -> None:
     assert replay.production_diff is not None
     assert replay.production_diff.status == "INCOMPLETE_DIFF"
     statuses = {
-        artifact.artifact_id: artifact.status
-        for artifact in replay.production_diff.artifacts
+        artifact.artifact_id: artifact.status for artifact in replay.production_diff.artifacts
     }
     assert statuses["daily_score_report"] == "MISSING_REPLAY"
     assert statuses["features_daily_rows"] == "MATCH"
@@ -359,12 +346,11 @@ def test_replay_day_cache_only_openai_policy_filters_archived_prereview_by_cutof
     ]
     assert replay_queue["replay_filter"]["included_count"] == 1
     assert replay_queue["replay_filter"]["excluded_count"] == 2
-    assert {
-        record["reason"] for record in replay_queue["replay_filter"]["excluded_records"]
-    } == {"available_after_replay_cutoff", "missing_provable_available_time"}
-    replay_report_path = (
-        replay.paths.reports_dir / "risk_event_prereview_openai_2026-05-08.md"
-    )
+    assert {record["reason"] for record in replay_queue["replay_filter"]["excluded_records"]} == {
+        "available_after_replay_cutoff",
+        "missing_provable_available_time",
+    }
+    replay_report_path = replay.paths.reports_dir / "risk_event_prereview_openai_2026-05-08.md"
     assert replay_report_path.exists()
     assert "PASS_WITH_EXCLUSIONS" in replay_report_path.read_text(encoding="utf-8")
 
@@ -780,9 +766,7 @@ def _write_trade_record(
     closed_at: str | None,
 ) -> None:
     close_lines = (
-        [f"closed_at: '{closed_at}'", "exit_price: 110.0"]
-        if closed_at is not None
-        else []
+        [f"closed_at: '{closed_at}'", "exit_price: 110.0"] if closed_at is not None else []
     )
     path.write_text(
         "\n".join(

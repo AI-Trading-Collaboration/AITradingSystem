@@ -183,10 +183,7 @@ def _write_valid_cache(tmp_path: Path) -> tuple[Path, Path]:
                 _price_row("2026-04-30", ticker, 104.0),
             ]
         )
-    rate_rows = [
-        {"date": "2026-04-30", "series": series, "value": 4.5}
-        for series in rates
-    ]
+    rate_rows = [{"date": "2026-04-30", "series": series, "value": 4.5} for series in rates]
     prices_path = tmp_path / "prices_daily.csv"
     rates_path = tmp_path / "rates_daily.csv"
     pd.DataFrame(price_rows).to_csv(prices_path, index=False)

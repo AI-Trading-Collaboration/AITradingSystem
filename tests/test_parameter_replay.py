@@ -29,13 +29,12 @@ def test_parameter_replay_report_summarizes_robustness_scenarios(
     assert report.status == "PASS"
     assert report.scenario_count == 8
     assert report.material_delta_count == 1
-    assert report.robustness_evidence["same_turnover_random_strategy"][
-        "dynamic_strategy_percentile"
-    ] == 1.0
+    assert (
+        report.robustness_evidence["same_turnover_random_strategy"]["dynamic_strategy_percentile"]
+        == 1.0
+    )
     assert report.robustness_evidence["out_of_sample_validation"]["blocked"] is False
-    assert report.robustness_evidence["statistical"]["deflated_sharpe_proxy"][
-        "available"
-    ] is True
+    assert report.robustness_evidence["statistical"]["deflated_sharpe_proxy"]["available"] is True
     assert report.robustness_evidence["statistical"]["pbo_proxy"]["value"] == 0.0
     assert "参数 as-if replay 收益变化报告" in markdown
     assert "production_effect：none" in markdown
@@ -75,9 +74,12 @@ def test_parameter_replay_cli_writes_markdown_and_summary(tmp_path: Path) -> Non
     assert summary["production_effect"] == "none"
     assert summary["scenario_count"] == 8
     assert summary["material_delta_count"] == 1
-    assert summary["robustness_evidence"]["signal_family_baseline"][
-        "base_beats_best_signal_family_baseline"
-    ] is True
+    assert (
+        summary["robustness_evidence"]["signal_family_baseline"][
+            "base_beats_best_signal_family_baseline"
+        ]
+        is True
+    )
 
 
 def test_parameter_replay_summary_writer(tmp_path: Path) -> None:

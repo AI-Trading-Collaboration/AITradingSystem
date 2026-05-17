@@ -100,9 +100,7 @@ P2_GUARDRAILS = (
     "do_not_generate_shrinkage_production_proposal",
 )
 FORWARD_SHADOW_ACTIVE_STATUSES = frozenset({"FORWARD_SHADOW_ACTIVE", "REVIEW_PENDING"})
-FORWARD_SHADOW_REVIEW_ACTIONS = frozenset(
-    {"REVIEW_GATE_POLICY", "REVIEW_WEIGHT_CANDIDATE"}
-)
+FORWARD_SHADOW_REVIEW_ACTIONS = frozenset({"REVIEW_GATE_POLICY", "REVIEW_WEIGHT_CANDIDATE"})
 
 
 @dataclass(frozen=True)
@@ -318,9 +316,7 @@ class ShadowIterationReport:
             },
             "blocked_reasons": _blocked_reason_index(self.candidates),
             "attribution": {
-                "factorial": factorial
-                if factorial is not None
-                else {"status": "unavailable"},
+                "factorial": factorial if factorial is not None else {"status": "unavailable"},
                 "cap_level": {
                     "status": "available" if cap_rows else "unavailable",
                     "rows": cap_rows,
@@ -440,9 +436,7 @@ class ForwardShadowEvaluationReport:
                 "weight_review_count": self.action_counts["REVIEW_WEIGHT_CANDIDATE"],
                 "gate_policy_review_count": self.action_counts["REVIEW_GATE_POLICY"],
             },
-            "evaluations": [
-                evaluation.to_dict() for evaluation in self.evaluations
-            ],
+            "evaluations": [evaluation.to_dict() for evaluation in self.evaluations],
             "warnings": list(self.warnings),
             "safety": {
                 "production_parameters_changed": False,
@@ -505,9 +499,7 @@ def build_shadow_iteration_report(
     )
     existing_rows = _load_registry_rows(registry_path)
     existing_by_id = {
-        str(row.get("iteration_id") or ""): row
-        for row in existing_rows
-        if row.get("iteration_id")
+        str(row.get("iteration_id") or ""): row for row in existing_rows if row.get("iteration_id")
     }
     top_trials = _top_trials_by_candidate_type(trials)
     source_weights = _source_weights(trials)
@@ -649,8 +641,7 @@ def register_forward_shadow_candidate(
     trial_id = str(row.get("trial_id") or "")
     if candidate_id not in {trial_id, iteration_id}:
         raise ValueError(
-            "candidate-id must match registry trial_id or iteration_id: "
-            f"{candidate_id}"
+            "candidate-id must match registry trial_id or iteration_id: " f"{candidate_id}"
         )
     now = generated_at or datetime.now(tz=UTC)
     reasons = _json_list(row.get("blocked_reasons_json"))
@@ -905,10 +896,7 @@ def render_forward_shadow_evaluation_report(
         ),
         (
             "- Action counts："
-            + ", ".join(
-                f"{action}={count}"
-                for action, count in report.action_counts.items()
-            )
+            + ", ".join(f"{action}={count}" for action, count in report.action_counts.items())
         ),
         "",
         "## Forward Shadow Candidates",
@@ -1083,9 +1071,7 @@ def _candidate_from_trial(
         blocked_reasons=blocked_reasons,
     )
     potential_weight_candidate = (
-        candidate_type == "weight_only"
-        and not critical_reasons
-        and primary_driver == "weight"
+        candidate_type == "weight_only" and not critical_reasons and primary_driver == "weight"
     )
     promotion_status = _candidate_promotion_status(
         candidate_type=candidate_type,
@@ -1152,9 +1138,7 @@ def _candidate_blocked_reasons(
             reasons.append(reason)
             critical.append(reason)
     elif candidate_type == "weight_gate_bundle":
-        reasons.append(
-            "not_weight_promotion_candidate: weight_gate_bundle 只能作为 diagnostic"
-        )
+        reasons.append("not_weight_promotion_candidate: weight_gate_bundle 只能作为 diagnostic")
     elif primary_driver != "weight":
         reason = f"primary_driver_mismatch: expected weight, actual {primary_driver}"
         reasons.append(reason)
@@ -1268,9 +1252,7 @@ def _candidate_retirement_evidence(
             "retire_after_consecutive_missing_top_group": (
                 RETIRE_AFTER_CONSECUTIVE_MISSING_TOP_GROUP
             ),
-            "retire_after_consecutive_worse_runs": (
-                RETIRE_AFTER_CONSECUTIVE_WORSE_RUNS
-            ),
+            "retire_after_consecutive_worse_runs": (RETIRE_AFTER_CONSECUTIVE_WORSE_RUNS),
         },
     }
 
@@ -1281,16 +1263,9 @@ def _retirement_reasons(evidence: Mapping[str, Any]) -> list[str]:
         _int_or_zero(evidence.get("missing_top_group_count"))
         >= RETIRE_AFTER_CONSECUTIVE_MISSING_TOP_GROUP
     ):
-        reasons.append(
-            "retired: consecutive missing top group count reached policy threshold"
-        )
-    if (
-        _int_or_zero(evidence.get("worse_performance_count"))
-        >= RETIRE_AFTER_CONSECUTIVE_WORSE_RUNS
-    ):
-        reasons.append(
-            "retired: consecutive worse performance count reached policy threshold"
-        )
+        reasons.append("retired: consecutive missing top group count reached policy threshold")
+    if _int_or_zero(evidence.get("worse_performance_count")) >= RETIRE_AFTER_CONSECUTIVE_WORSE_RUNS:
+        reasons.append("retired: consecutive worse performance count reached policy threshold")
     previous_driver = str(evidence.get("previous_primary_driver") or "")
     current_driver = str(evidence.get("current_primary_driver") or "")
     if previous_driver == "weight" and current_driver == "gate":
@@ -1367,8 +1342,8 @@ def _evaluate_forward_shadow_row(
     normalized = _normalize_registry_row(row)
     status_before = str(normalized.get("status") or "")
     promotion_before = str(normalized.get("promotion_status") or "")
-    action, status_after, promotion_after, reason, next_action = (
-        _forward_shadow_lifecycle_decision(normalized)
+    action, status_after, promotion_after, reason, next_action = _forward_shadow_lifecycle_decision(
+        normalized
     )
     first_seen_at = str(normalized.get("first_seen_at") or "")
     if not first_seen_at:
@@ -1525,9 +1500,7 @@ def _retire_missing_rows(
                 "retire_after_consecutive_missing_top_group": (
                     RETIRE_AFTER_CONSECUTIVE_MISSING_TOP_GROUP
                 ),
-                "retire_after_consecutive_worse_runs": (
-                    RETIRE_AFTER_CONSECUTIVE_WORSE_RUNS
-                ),
+                "retire_after_consecutive_worse_runs": (RETIRE_AFTER_CONSECUTIVE_WORSE_RUNS),
             },
         )
         reasons = _json_list(updated.get("blocked_reasons_json"))
@@ -1541,9 +1514,7 @@ def _retire_missing_rows(
             updated["status"] = "RETIRED"
             updated["next_action"] = "连续不在 top group，按 shadow-only 规则退休。"
         elif updated.get("status") != "RETIRED":
-            updated["next_action"] = (
-                "本次不在 top group；继续观察是否达到连续缺席退休阈值。"
-            )
+            updated["next_action"] = "本次不在 top group；继续观察是否达到连续缺席退休阈值。"
         updated["last_seen_at"] = generated_at.isoformat()
         updated["blocked_reasons_json"] = json.dumps(
             list(dict.fromkeys(reasons)),
@@ -1641,10 +1612,7 @@ def _load_registry_rows(path: Path) -> list[dict[str, Any]]:
         list[dict[str, Any]],
         frame.loc[:, list(REGISTRY_COLUMNS)].to_dict(orient="records"),
     )
-    return [
-        _normalize_registry_row(row)
-        for row in rows
-    ]
+    return [_normalize_registry_row(row) for row in rows]
 
 
 def _dedupe_registry_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -1672,8 +1640,7 @@ def _write_registry_rows(path: Path, rows: list[dict[str, Any]]) -> None:
 
 def _normalize_registry_row(row: Mapping[str, Any]) -> dict[str, Any]:
     return {
-        column: "" if row.get(column) is None else row.get(column)
-        for column in REGISTRY_COLUMNS
+        column: "" if row.get(column) is None else row.get(column) for column in REGISTRY_COLUMNS
     }
 
 
@@ -1720,25 +1687,16 @@ def _binding_gate_summary(manifest: Mapping[str, Any], trial_id: str) -> str:
             for item in [part.strip() for part in value.split(",") if part.strip()]:
                 gate_id = item.split(":", 1)[0]
                 target[gate_id] = target.get(gate_id, 0) + 1
-    return (
-        "production="
-        f"{_format_gate_counts(production)}; shadow={_format_gate_counts(shadow)}"
-    )
+    return "production=" f"{_format_gate_counts(production)}; shadow={_format_gate_counts(shadow)}"
 
 
 def _attribution_summary(manifest: Mapping[str, Any]) -> str:
     factorial = _factorial_attribution(manifest)
     if not factorial:
         return "factorial attribution unavailable"
-    weight_only_excess = _format_pct(
-        _factorial_value(factorial, "weight_only_excess_delta")
-    )
-    gate_only_excess = _format_pct(
-        _factorial_value(factorial, "gate_only_excess_delta")
-    )
-    combined_excess = _format_pct(
-        _factorial_value(factorial, "combined_excess_delta")
-    )
+    weight_only_excess = _format_pct(_factorial_value(factorial, "weight_only_excess_delta"))
+    gate_only_excess = _format_pct(_factorial_value(factorial, "gate_only_excess_delta"))
+    combined_excess = _format_pct(_factorial_value(factorial, "combined_excess_delta"))
     parts = [
         f"primary_driver={factorial.get('primary_driver') or 'unknown'}",
         f"weight_only_excess={weight_only_excess}",
@@ -1808,18 +1766,10 @@ def _render_factorial_attribution(manifest: Mapping[str, Any]) -> list[str]:
     factorial = _factorial_attribution(manifest)
     if not factorial:
         return ["### Factorial Attribution", "", "- unavailable"]
-    weight_only_excess = _format_pct(
-        _factorial_value(factorial, "weight_only_excess_delta")
-    )
-    gate_only_excess = _format_pct(
-        _factorial_value(factorial, "gate_only_excess_delta")
-    )
-    combined_excess = _format_pct(
-        _factorial_value(factorial, "combined_excess_delta")
-    )
-    interaction_excess = _format_pct(
-        _factorial_value(factorial, "interaction_excess_delta")
-    )
+    weight_only_excess = _format_pct(_factorial_value(factorial, "weight_only_excess_delta"))
+    gate_only_excess = _format_pct(_factorial_value(factorial, "gate_only_excess_delta"))
+    combined_excess = _format_pct(_factorial_value(factorial, "combined_excess_delta"))
+    interaction_excess = _format_pct(_factorial_value(factorial, "interaction_excess_delta"))
     return [
         "### Factorial Attribution",
         "",
@@ -1898,10 +1848,7 @@ def _overall_conclusion(report: ShadowIterationReport) -> str:
         )
     gate = report.best_gate_only
     if gate is not None:
-        return (
-            f"本次最强信号偏向 gate policy review：`{gate.trial_id}`；"
-            "不得作为权重晋级候选。"
-        )
+        return f"本次最强信号偏向 gate policy review：`{gate.trial_id}`；" "不得作为权重晋级候选。"
     if report.best_weight_gate_bundle is not None:
         return "本次只形成 bundle diagnostic 候选；不进入权重晋级。"
     return "本次没有形成可登记 shadow iteration candidate。"

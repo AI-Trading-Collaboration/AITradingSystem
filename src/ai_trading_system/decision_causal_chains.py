@@ -144,9 +144,7 @@ def write_decision_causal_chain_report(
 def render_decision_causal_chain_lookup(chain: dict[str, Any]) -> str:
     signal = chain["signal_time_context"]
     post = chain["post_signal_observations"]
-    affected_modules = ", ".join(
-        item["component"] for item in signal["affected_modules"]
-    ) or "无"
+    affected_modules = ", ".join(item["component"] for item in signal["affected_modules"]) or "无"
     lines = [
         f"# {chain['chain_id']}",
         "",

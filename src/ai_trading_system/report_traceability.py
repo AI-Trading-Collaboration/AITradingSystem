@@ -108,9 +108,7 @@ def build_daily_score_trace_bundle(
     if sec_fundamental_features_path is not None:
         dataset_refs.append(
             _file_dataset_ref(
-                dataset_id=(
-                    f"dataset:sec_fundamental_features:{report.as_of.isoformat()}"
-                ),
+                dataset_id=(f"dataset:sec_fundamental_features:{report.as_of.isoformat()}"),
                 label="SEC 基本面特征缓存",
                 dataset_type="processed_fundamental_feature_cache",
                 path=sec_fundamental_features_path,
@@ -128,14 +126,10 @@ def build_daily_score_trace_bundle(
     if report.risk_event_occurrence_review_report is not None:
         dataset_refs.append(
             _path_dataset_ref(
-                dataset_id=(
-                    f"dataset:risk_event_occurrences:{report.as_of.isoformat()}"
-                ),
+                dataset_id=(f"dataset:risk_event_occurrences:{report.as_of.isoformat()}"),
                 label="风险事件发生记录输入",
                 dataset_type="risk_event_occurrence_store",
-                path=(
-                    report.risk_event_occurrence_review_report.validation_report.input_path
-                ),
+                path=(report.risk_event_occurrence_review_report.validation_report.input_path),
             )
         )
     if belief_state_path is not None:
@@ -173,8 +167,7 @@ def build_daily_score_trace_bundle(
                 "共同支持最终 AI 仓位结论。"
             ),
             "signal_ids": [
-                f"position_gate:{gate.gate_id}"
-                for gate in report.recommendation.position_gates
+                f"position_gate:{gate.gate_id}" for gate in report.recommendation.position_gates
             ],
             "ticker_ids": _daily_signal_tickers(report),
             "date_window": date_window,
@@ -213,9 +206,7 @@ def build_daily_score_trace_bundle(
             "artifact_paths": _artifact_paths(data_quality_report_path),
         },
     )
-    architecture_evidence_id = (
-        f"evidence:daily_score:{report.as_of.isoformat()}:score_architecture"
-    )
+    architecture_evidence_id = f"evidence:daily_score:{report.as_of.isoformat()}:score_architecture"
     evidence_cards = (
         *evidence_cards,
         {
@@ -247,8 +238,7 @@ def build_daily_score_trace_bundle(
             {
                 "evidence_id": belief_evidence_id,
                 "summary": (
-                    "只读 belief_state 汇总市场、产业链、估值、风险、thesis "
-                    "和仓位边界状态。"
+                    "只读 belief_state 汇总市场、产业链、估值、风险、thesis " "和仓位边界状态。"
                 ),
                 "signal_ids": [
                     "belief_state:read_only",
@@ -266,9 +256,7 @@ def build_daily_score_trace_bundle(
             },
         )
     if focus_stock_trend_tickers:
-        trend_evidence_id = (
-            f"evidence:daily_score:{report.as_of.isoformat()}:focus_stock_trends"
-        )
+        trend_evidence_id = f"evidence:daily_score:{report.as_of.isoformat()}:focus_stock_trends"
         evidence_cards = (
             *evidence_cards,
             {
@@ -349,9 +337,7 @@ def build_daily_score_trace_bundle(
                 "claim_id": f"daily_score:{report.as_of.isoformat()}:belief_state",
                 "statement": "日报生成只读 belief_state；该状态不直接改变评分、闸门或仓位。",
                 "report_section": "认知状态",
-                "evidence_ids": [
-                    f"evidence:daily_score:{report.as_of.isoformat()}:belief_state"
-                ],
+                "evidence_ids": [f"evidence:daily_score:{report.as_of.isoformat()}:belief_state"],
                 "dataset_ids": [f"dataset:belief_state:{report.as_of.isoformat()}"],
                 "quality_ids": _quality_ids(quality_refs),
             },
@@ -431,9 +417,7 @@ def build_backtest_trace_bundle(
     feature_availability_report_path: Path | None = None,
     feature_availability_summary: TraceRecord | None = None,
 ) -> ReportTraceBundle:
-    report_id = (
-        f"backtest:{result.requested_start.isoformat()}:{result.requested_end.isoformat()}"
-    )
+    report_id = f"backtest:{result.requested_start.isoformat()}:{result.requested_end.isoformat()}"
     date_window = _date_window(result.requested_start, result.requested_end)
     manifest_records = _download_manifest_records(result.data_quality_report)
     dataset_refs: list[TraceRecord] = [
@@ -951,9 +935,7 @@ def _backtest_weight_calibration_parameters(result: DailyBacktestResult) -> Trac
         "weight_profile_version": result.weight_profile_version,
         "matched_overlays": list(result.calibration_overlay_ids),
         "effective_weights": result.effective_weights or {},
-        "production_effect": (
-            "approved_overlay_only" if connected else "scoring_rules_only"
-        ),
+        "production_effect": ("approved_overlay_only" if connected else "scoring_rules_only"),
     }
 
 

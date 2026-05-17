@@ -758,8 +758,7 @@ def _check_active_thesis_consistency(
                 ticker=thesis.ticker,
                 path=path,
                 message=(
-                    f"高强度证伪条件 {condition.condition_id} 已触发，"
-                    "但 thesis 仍是 active。"
+                    f"高强度证伪条件 {condition.condition_id} 已触发，" "但 thesis 仍是 active。"
                 ),
             )
         )

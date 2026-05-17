@@ -144,9 +144,11 @@ def render_gate_event_attribution_report(report: GateEventAttributionReport) -> 
         f"- 生成日期：{report.as_of.isoformat()}",
         f"- 回测窗口：{_date_text(report.start_date)} 至 {_date_text(report.end_date)}",
         f"- Backtest daily：`{report.backtest_daily_path}`",
-        f"- Input coverage：`{report.input_coverage_path}`"
-        if report.input_coverage_path
-        else "- Input coverage：未提供",
+        (
+            f"- Input coverage：`{report.input_coverage_path}`"
+            if report.input_coverage_path
+            else "- Input coverage：未提供"
+        ),
         f"- 样本行数：{report.row_count}",
         f"- 左尾阈值：{report.left_tail_threshold:.1%}",
         "- production_effect：none",
@@ -351,9 +353,7 @@ def _build_gate_rows(
         avoided_drawdown = float((triggered_reduction * (-asset_return.clip(upper=0.0))).sum())
         missed_upside = float((triggered_reduction * asset_return.clip(lower=0.0)).sum())
         late_trigger_rate = (
-            float((left_tail & ~triggered).sum() / left_tail_count)
-            if left_tail_count
-            else None
+            float((left_tail & ~triggered).sum() / left_tail_count) if left_tail_count else None
         )
         gate_rows.append(
             GateAttributionRow(
@@ -386,9 +386,7 @@ def _build_event_summary(
         if "record_type" in coverage.columns
         else pd.Series([""] * len(coverage), index=coverage.index)
     )
-    risk_rows = coverage[
-        record_type.isin({"risk_event_evidence_url", "risk_event_source_type"})
-    ]
+    risk_rows = coverage[record_type.isin({"risk_event_evidence_url", "risk_event_source_type"})]
     if risk_rows.empty:
         return _empty_event_summary(label_availability="no_risk_event_rows")
     occurrence_id = (
@@ -401,9 +399,7 @@ def _build_event_summary(
     score_eligible_count = int(_bool_series(risk_rows.get("score_eligible", False)).sum())
     source_type_counts = _value_counts(risk_rows.get("source_type"))
     status_counts = _value_counts(risk_rows.get("status"))
-    manual_review_pass_rate = (
-        score_eligible_count / occurrence_count if occurrence_count else None
-    )
+    manual_review_pass_rate = score_eligible_count / occurrence_count if occurrence_count else None
     confirmed_count = sum(
         count
         for status, count in status_counts.items()

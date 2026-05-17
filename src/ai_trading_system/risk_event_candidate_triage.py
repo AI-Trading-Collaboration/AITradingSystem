@@ -218,16 +218,13 @@ def triage_official_policy_candidates(
                         severity=RiskEventCandidateTriageIssueSeverity.ERROR,
                         code="risk_event_candidate_triage_missing_columns",
                         message=(
-                            "官方候选 CSV 缺少必需字段："
-                            + ", ".join(sorted(missing_columns))
+                            "官方候选 CSV 缺少必需字段：" + ", ".join(sorted(missing_columns))
                         ),
                     )
                 )
             else:
                 rows = [
-                    {key: str(value or "") for key, value in row.items()}
-                    for row in reader
-                    if row
+                    {key: str(value or "") for key, value in row.items()} for row in reader if row
                 ]
     except OSError as exc:
         issues.append(
@@ -259,9 +256,7 @@ def triage_official_policy_candidates(
                 RiskEventCandidateTriageIssue(
                     severity=RiskEventCandidateTriageIssueSeverity.WARNING,
                     code="risk_event_candidate_triage_input_has_production_effect",
-                    message=(
-                        "输入候选存在非 none production_effect；triage 输出仍强制为 none。"
-                    ),
+                    message=("输入候选存在非 none production_effect；triage 输出仍强制为 none。"),
                     row_number=row_number,
                     candidate_id=row.get("candidate_id", ""),
                 )
@@ -324,9 +319,7 @@ def load_triaged_candidate_ids(
         reader = csv.DictReader(handle)
         missing_columns = {"candidate_id", "triage_bucket"} - set(reader.fieldnames or ())
         if missing_columns:
-            raise ValueError(
-                "triage CSV 缺少必需字段：" + ", ".join(sorted(missing_columns))
-            )
+            raise ValueError("triage CSV 缺少必需字段：" + ", ".join(sorted(missing_columns)))
         candidate_ids: list[str] = []
         for row in reader:
             if row.get("triage_bucket", "") in bucket_set:
@@ -481,9 +474,7 @@ def _classify_row(
             ai_relevance_score=95,
             ai_signals=tuple(direct_high),
             triage_reason=(
-                "标题、URL 或来源直接命中 AI 模块高相关信号："
-                + ", ".join(direct_high)
-                + "。"
+                "标题、URL 或来源直接命中 AI 模块高相关信号：" + ", ".join(direct_high) + "。"
             ),
             review_policy=_review_policy_for_bucket("must_review"),
         )
@@ -503,9 +494,7 @@ def _classify_row(
         )
 
     if broad_signals and _is_broad_sanctions_source(source_id):
-        reason = (
-            "候选来自 OFAC/CSL 等宽泛制裁或筛查列表，标题/URL 未显示直接 AI 模块信号。"
-        )
+        reason = "候选来自 OFAC/CSL 等宽泛制裁或筛查列表，标题/URL 未显示直接 AI 模块信号。"
         if low_signals:
             reason += " 标题更像金融/行政/个人实体： " + ", ".join(low_signals) + "。"
         return RiskEventCandidateTriageRecord(

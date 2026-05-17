@@ -372,8 +372,7 @@ def _append_benchmark_issues(
             "ERROR",
             "missing_required_benchmark",
             "benchmark_set",
-            "缺少必须比较的 production 基准："
-            + ", ".join(sorted(missing_required)),
+            "缺少必须比较的 production 基准：" + ", ".join(sorted(missing_required)),
             "候选权重必须显式战胜当前生产模型后才可继续。",
         )
     if not benchmarks.intersection(RECOMMENDED_BENCHMARKS):
@@ -431,9 +430,7 @@ def _append_trial_issues(
         return
     if trials is not None and trials > 1:
         adjustment = str(
-            manifest.get("multiple_testing_adjustment")
-            or manifest.get("pbo_dsr_method")
-            or ""
+            manifest.get("multiple_testing_adjustment") or manifest.get("pbo_dsr_method") or ""
         ).strip()
         if not adjustment:
             _issue(

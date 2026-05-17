@@ -28,9 +28,7 @@ DEFAULT_RISK_EVENTS_CONFIG_PATH = PROJECT_ROOT / "config" / "risk_events.yaml"
 DEFAULT_DATA_SOURCES_CONFIG_PATH = PROJECT_ROOT / "config" / "data_sources.yaml"
 DEFAULT_SEC_COMPANIES_CONFIG_PATH = PROJECT_ROOT / "config" / "sec_companies.yaml"
 DEFAULT_FUNDAMENTAL_METRICS_CONFIG_PATH = PROJECT_ROOT / "config" / "fundamental_metrics.yaml"
-DEFAULT_FUNDAMENTAL_FEATURES_CONFIG_PATH = (
-    PROJECT_ROOT / "config" / "fundamental_features.yaml"
-)
+DEFAULT_FUNDAMENTAL_FEATURES_CONFIG_PATH = PROJECT_ROOT / "config" / "fundamental_features.yaml"
 
 
 class MarketUniverse(BaseModel):
@@ -115,9 +113,7 @@ class MarketRegimesConfig(BaseModel):
             raise ValueError(f"market regime ids must be unique: {duplicates}")
 
         if self.default_backtest_regime not in seen:
-            raise ValueError(
-                "default_backtest_regime must match one configured market regime id"
-            )
+            raise ValueError("default_backtest_regime must match one configured market regime id")
 
         return self
 
@@ -322,8 +318,7 @@ class FundamentalMetricConfig(BaseModel):
             )
 
         concept_keys = [
-            f"{concept.taxonomy}:{concept.concept}:{concept.unit}"
-            for concept in self.concepts
+            f"{concept.taxonomy}:{concept.concept}:{concept.unit}" for concept in self.concepts
         ]
         duplicate_concepts = _duplicates(concept_keys)
         if duplicate_concepts:
@@ -347,9 +342,7 @@ class FundamentalDerivedMetricConfig(BaseModel):
                 f"derived metric {self.metric_id} must not reference itself as a component"
             )
         if self.minuend_metric_id == self.subtrahend_metric_id:
-            raise ValueError(
-                f"derived metric {self.metric_id} must use two distinct components"
-            )
+            raise ValueError(f"derived metric {self.metric_id} must use two distinct components")
         return self
 
 
@@ -440,9 +433,7 @@ class FundamentalFeaturesConfig(BaseModel):
         feature_ids = [feature.feature_id for feature in self.features]
         duplicate_ids = _duplicates(feature_ids)
         if duplicate_ids:
-            raise ValueError(
-                f"fundamental feature ids must be unique: {', '.join(duplicate_ids)}"
-            )
+            raise ValueError(f"fundamental feature ids must be unique: {', '.join(duplicate_ids)}")
         return self
 
 
@@ -460,9 +451,7 @@ class PortfolioBudgetConfig(BaseModel):
     @model_validator(mode="after")
     def validate_budget_range(self) -> Self:
         if not 0 <= self.total_risk_asset_min <= self.total_risk_asset_max <= 1:
-            raise ValueError(
-                "portfolio total risk asset budget must satisfy 0 <= min <= max <= 1"
-            )
+            raise ValueError("portfolio total risk asset budget must satisfy 0 <= min <= max <= 1")
         return self
 
 
@@ -530,19 +519,13 @@ class MacroRiskAssetBudgetConfig(BaseModel):
         if self.stress_rate_change_20d < self.elevated_rate_change_20d:
             raise ValueError("stress_rate_change_20d must be >= elevated_rate_change_20d")
         if self.stress_dollar_return_20d < self.elevated_dollar_return_20d:
-            raise ValueError(
-                "stress_dollar_return_20d must be >= elevated_dollar_return_20d"
-            )
+            raise ValueError("stress_dollar_return_20d must be >= elevated_dollar_return_20d")
         if self.elevated_total_risk_asset_min > self.elevated_total_risk_asset_max:
-            raise ValueError(
-                "elevated total risk asset budget must satisfy min <= max"
-            )
+            raise ValueError("elevated total risk asset budget must satisfy min <= max")
         if self.stress_total_risk_asset_min > self.stress_total_risk_asset_max:
             raise ValueError("stress total risk asset budget must satisfy min <= max")
         if self.stress_total_risk_asset_max > self.elevated_total_risk_asset_max:
-            raise ValueError(
-                "stress_total_risk_asset_max must be <= elevated_total_risk_asset_max"
-            )
+            raise ValueError("stress_total_risk_asset_max must be <= elevated_total_risk_asset_max")
         return self
 
 
@@ -765,12 +748,9 @@ class SourceTypeConfidenceConfig(BaseModel):
     @model_validator(mode="after")
     def validate_source_type_confidence(self) -> Self:
         if self.partial_hard_data_base > self.partial_hard_data_max:
-            raise ValueError(
-                "partial_hard_data_base must be <= partial_hard_data_max"
-            )
+            raise ValueError("partial_hard_data_base must be <= partial_hard_data_max")
         if (
-            self.partial_hard_data_base
-            + self.partial_hard_data_coverage_multiplier
+            self.partial_hard_data_base + self.partial_hard_data_coverage_multiplier
             < self.partial_hard_data_max
         ):
             raise ValueError(
@@ -816,22 +796,16 @@ class DailyConclusionPolicyConfig(BaseModel):
     @model_validator(mode="after")
     def validate_score_order(self) -> Self:
         if self.aggressive_score_min < self.constructive_score_min:
-            raise ValueError(
-                "aggressive_score_min must be >= constructive_score_min"
-            )
+            raise ValueError("aggressive_score_min must be >= constructive_score_min")
         if self.constrained_score_min < self.defensive_score_below:
-            raise ValueError(
-                "constrained_score_min must be >= defensive_score_below"
-            )
+            raise ValueError("constrained_score_min must be >= defensive_score_below")
         if self.attractiveness_strong_min < self.attractiveness_medium_strong_min:
             raise ValueError(
-                "attractiveness_strong_min must be >= "
-                "attractiveness_medium_strong_min"
+                "attractiveness_strong_min must be >= " "attractiveness_medium_strong_min"
             )
         if self.attractiveness_medium_strong_min < self.attractiveness_neutral_min:
             raise ValueError(
-                "attractiveness_medium_strong_min must be >= "
-                "attractiveness_neutral_min"
+                "attractiveness_medium_strong_min must be >= " "attractiveness_neutral_min"
             )
         return self
 
@@ -879,15 +853,12 @@ class ConfidencePolicyConfig(BaseModel):
                 )
             if band.cap_multiplier > previous_multiplier:
                 raise ValueError(
-                    "confidence position cap multiplier must not increase as "
-                    "confidence falls"
+                    "confidence position cap multiplier must not increase as " "confidence falls"
                 )
             previous_min_score = band.min_confidence_score
             previous_multiplier = band.cap_multiplier
         if abs(self.position_cap_bands[-1].min_confidence_score) > 1e-9:
-            raise ValueError(
-                "confidence position cap bands must include a final floor at 0"
-            )
+            raise ValueError("confidence position cap bands must include a final floor at 0")
         return self
 
 
@@ -937,9 +908,7 @@ class ScoringPolicyMetadataConfig(BaseModel):
 
 
 class PositionGateRulesConfig(BaseModel):
-    valuation: ValuationPositionGateConfig = Field(
-        default_factory=ValuationPositionGateConfig
-    )
+    valuation: ValuationPositionGateConfig = Field(default_factory=ValuationPositionGateConfig)
     thesis: ThesisPositionGateConfig = Field(default_factory=ThesisPositionGateConfig)
     data_confidence: DataConfidencePositionGateConfig = Field(
         default_factory=DataConfidencePositionGateConfig
@@ -959,9 +928,7 @@ class ScoringRulesConfig(BaseModel):
     daily_conclusion: DailyConclusionPolicyConfig = Field(
         default_factory=DailyConclusionPolicyConfig
     )
-    confidence_policy: ConfidencePolicyConfig = Field(
-        default_factory=ConfidencePolicyConfig
-    )
+    confidence_policy: ConfidencePolicyConfig = Field(default_factory=ConfidencePolicyConfig)
     trend: ScoreModuleRuleConfig
     fundamentals: ScoreModuleRuleConfig | None = None
     macro_liquidity: ScoreModuleRuleConfig
@@ -981,9 +948,7 @@ class ScoringRulesConfig(BaseModel):
         labels: set[str] = set()
         for band in self.position_bands:
             if band.min_score >= previous_min_score:
-                raise ValueError(
-                    "position bands must be sorted by descending min_score"
-                )
+                raise ValueError("position bands must be sorted by descending min_score")
             if band.label in labels:
                 raise ValueError(f"position band labels must be unique: {band.label}")
             labels.add(band.label)
@@ -1116,9 +1081,7 @@ class BacktestValidationPolicyConfig(BaseModel):
     robustness: BacktestRobustnessPolicyConfig = Field(
         default_factory=BacktestRobustnessPolicyConfig
     )
-    promotion: BacktestPromotionPolicyConfig = Field(
-        default_factory=BacktestPromotionPolicyConfig
-    )
+    promotion: BacktestPromotionPolicyConfig = Field(default_factory=BacktestPromotionPolicyConfig)
 
 
 def load_universe(path: Path | str = DEFAULT_CONFIG_PATH) -> UniverseConfig:

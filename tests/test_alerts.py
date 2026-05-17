@@ -105,17 +105,13 @@ def test_daily_alert_report_has_schema_refs_and_dedupe() -> None:
     assert alert_report.status == "ACTIVE_CRITICAL"
     assert alert_report.data_system_count > 0
     assert alert_report.investment_risk_count > 0
-    assert len({alert.dedupe_key for alert in alert_report.alerts}) == len(
-        alert_report.alerts
-    )
+    assert len({alert.dedupe_key for alert in alert_report.alerts}) == len(alert_report.alerts)
     assert all(alert.production_effect == "none" for alert in alert_report.alerts)
     assert all(alert.clear_condition for alert in alert_report.alerts)
     assert any(alert.category == "data_system" for alert in alert_report.alerts)
     assert any(alert.category == "investment_risk" for alert in alert_report.alerts)
     assert any(
-        "daily_score:2026-04-30" in ref
-        for alert in alert_report.alerts
-        for ref in alert.claim_refs
+        "daily_score:2026-04-30" in ref for alert in alert_report.alerts for ref in alert.claim_refs
     )
 
 
@@ -183,9 +179,7 @@ def test_pipeline_health_alert_report_converts_failed_checks() -> None:
     assert alert_report.data_system_count == 1
     assert alert_report.high_count == 1
     assert alert_report.alerts[0].production_effect == "none"
-    assert "pipeline_health:2026-05-04:pit_manifest_checksum" in alert_report.alerts[
-        0
-    ].claim_refs
+    assert "pipeline_health:2026-05-04:pit_manifest_checksum" in alert_report.alerts[0].claim_refs
     assert "PIT manifest raw payload checksum 异常" in markdown
 
 

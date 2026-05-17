@@ -44,7 +44,7 @@ def build_position_gates(
                 feature_set=feature_set,
                 portfolio_exposure_report=portfolio_exposure_report,
             )
-    )
+        )
     gates.extend(
         [
             _risk_event_gate(
@@ -113,16 +113,12 @@ def _risk_event_gate(
         max_position = 1.0
         reason = "未传入已校验的风险事件发生记录，本 gate 不额外限制。"
     else:
-        eligible_items = (
-            risk_event_occurrence_review_report.position_gate_eligible_active_items
-        )
+        eligible_items = risk_event_occurrence_review_report.position_gate_eligible_active_items
         if not eligible_items:
             max_position = 1.0
             reason = "没有可触发仓位闸门的 active 风险事件发生记录，本 gate 不额外限制。"
         else:
-            minimum_multiplier = min(
-                item.target_ai_exposure_multiplier for item in eligible_items
-            )
+            minimum_multiplier = min(item.target_ai_exposure_multiplier for item in eligible_items)
             max_position = _clamp(score_band.max_position * minimum_multiplier)
             event_summary = "；".join(
                 (
@@ -211,11 +207,8 @@ def _market_stress_cap(
         "^VIX",
         "vix_percentile_252",
     )
-    stress_triggered = (
-        vix_current is not None and vix_current >= config.stress_vix_current
-    ) or (
-        vix_percentile is not None
-        and vix_percentile >= config.stress_vix_percentile
+    stress_triggered = (vix_current is not None and vix_current >= config.stress_vix_current) or (
+        vix_percentile is not None and vix_percentile >= config.stress_vix_percentile
     )
     if stress_triggered:
         reasons.append(
@@ -228,10 +221,7 @@ def _market_stress_cap(
 
     elevated_triggered = (
         vix_current is not None and vix_current >= config.elevated_vix_current
-    ) or (
-        vix_percentile is not None
-        and vix_percentile >= config.elevated_vix_percentile
-    )
+    ) or (vix_percentile is not None and vix_percentile >= config.elevated_vix_percentile)
     if elevated_triggered:
         reasons.append(
             "市场压力达到 elevated 阈值，风险预算上限 "
@@ -254,9 +244,7 @@ def _portfolio_concentration_cap(
         reasons.append("未传入真实组合暴露，组合集中度约束不生效。")
         return 1.0
     if portfolio_exposure_report.status == "NOT_CONNECTED":
-        reasons.append(
-            "真实持仓未接入，不能用观察池或模型建议仓位替代组合集中度约束。"
-        )
+        reasons.append("真实持仓未接入，不能用观察池或模型建议仓位替代组合集中度约束。")
         return 1.0
     if not portfolio_exposure_report.passed:
         reasons.append("组合暴露报告未通过校验，组合集中度约束不生效。")
@@ -286,9 +274,7 @@ def _portfolio_concentration_cap(
             f"超过上限 {config.max_industry_node_share_of_ai:.0%}。"
         )
 
-    max_cluster_share = _max_bucket_share(
-        portfolio_exposure_report.correlation_cluster_exposures
-    )
+    max_cluster_share = _max_bucket_share(portfolio_exposure_report.correlation_cluster_exposures)
     if max_cluster_share > config.max_correlation_cluster_share_of_ai:
         cap = min(cap, config.concentration_max_position)
         reasons.append(
@@ -323,14 +309,10 @@ def _valuation_gate(
         )
         if any(item.health == "EXTREME_OVERHEATED" for item in usable_items):
             max_position = gate_rules.valuation.extreme_overheated_max_position
-            reason = (
-                "存在 EXTREME_OVERHEATED 估值或拥挤度信号，限制新增 AI 仓位上限。"
-            )
+            reason = "存在 EXTREME_OVERHEATED 估值或拥挤度信号，限制新增 AI 仓位上限。"
         elif any(item.health == "EXPENSIVE_OR_CROWDED" for item in usable_items):
             max_position = gate_rules.valuation.expensive_or_crowded_max_position
-            reason = (
-                "存在 EXPENSIVE_OR_CROWDED 估值或拥挤度信号，限制新增 AI 仓位上限。"
-            )
+            reason = "存在 EXPENSIVE_OR_CROWDED 估值或拥挤度信号，限制新增 AI 仓位上限。"
         else:
             max_position = 1.0
             reason = "估值复核未发现可用的高估或拥挤信号，本 gate 不额外限制。"
@@ -357,9 +339,7 @@ def _thesis_gate(
         reason = "未传入交易 thesis 复核摘要，本 gate 不额外限制。"
     elif thesis_status == "FAIL" or thesis_error_count:
         max_position = gate_rules.thesis.failure_max_position
-        reason = (
-            "交易 thesis 复核失败或存在错误，不能把当前评分作为完整加仓依据。"
-        )
+        reason = "交易 thesis 复核失败或存在错误，不能把当前评分作为完整加仓依据。"
     elif "WARNING" in thesis_status or thesis_warning_count:
         max_position = gate_rules.thesis.warning_max_position
         reason = "交易 thesis 复核存在警告，仓位结论需要人工确认。"
@@ -405,10 +385,7 @@ def _data_confidence_gate(
             max_position,
             gate_rules.data_confidence.insufficient_data_max_position,
         )
-        reasons.append(
-            "存在数据不足评分模块："
-            f"{', '.join(insufficient_components)}。"
-        )
+        reasons.append("存在数据不足评分模块：" f"{', '.join(insufficient_components)}。")
 
     placeholder_components = _components_by_source_type(
         component_source_types,
@@ -419,10 +396,7 @@ def _data_confidence_gate(
             max_position,
             gate_rules.data_confidence.placeholder_max_position,
         )
-        reasons.append(
-            "存在占位评分模块："
-            f"{', '.join(placeholder_components)}。"
-        )
+        reasons.append("存在占位评分模块：" f"{', '.join(placeholder_components)}。")
 
     reason = " ".join(reasons) if reasons else "评分输入置信度未触发额外仓位限制。"
     return _gate(

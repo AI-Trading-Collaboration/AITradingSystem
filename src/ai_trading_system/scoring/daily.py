@@ -228,11 +228,10 @@ class DailyScoreReport:
             return "PASS_WITH_LIMITATIONS"
         if any(component.source_type != "hard_data" for component in self.components):
             return "PASS_WITH_LIMITATIONS"
-        if self.feature_set.warnings or (
-            self.review_summary and self.review_summary.has_warnings
-        ) or (
-            self.fundamental_feature_report
-            and self.fundamental_feature_report.warning_count
+        if (
+            self.feature_set.warnings
+            or (self.review_summary and self.review_summary.has_warnings)
+            or (self.fundamental_feature_report and self.fundamental_feature_report.warning_count)
         ):
             return "PASS_WITH_WARNINGS"
         return "PASS"
@@ -346,10 +345,7 @@ def build_daily_score_report(
 ) -> DailyScoreReport:
     if fundamental_feature_report is not None and not fundamental_feature_report.passed:
         raise ValueError("SEC 基本面特征报告未通过，不能进入每日评分")
-    if (
-        valuation_review_report is not None
-        and not valuation_review_report.validation_report.passed
-    ):
+    if valuation_review_report is not None and not valuation_review_report.validation_report.passed:
         raise ValueError("估值快照校验未通过，不能进入每日评分")
     if (
         risk_event_occurrence_review_report is not None
@@ -450,19 +446,13 @@ def build_daily_score_report(
                     component.name: component.source_type for component in components
                 },
                 thesis_status=(
-                    None
-                    if thesis_review_status is None
-                    else thesis_review_status.status
+                    None if thesis_review_status is None else thesis_review_status.status
                 ),
                 thesis_error_count=(
-                    0
-                    if thesis_review_status is None
-                    else thesis_review_status.error_count
+                    0 if thesis_review_status is None else thesis_review_status.error_count
                 ),
                 thesis_warning_count=(
-                    0
-                    if thesis_review_status is None
-                    else thesis_review_status.warning_count
+                    0 if thesis_review_status is None else thesis_review_status.warning_count
                 ),
                 risk_budget=risk_budget,
                 feature_set=feature_set,
@@ -548,12 +538,8 @@ def write_scores_csv(report: DailyScoreReport, output_path: Path) -> Path:
                 "model_risk_asset_ai_max": (
                     report.recommendation.model_risk_asset_ai_band.max_position
                 ),
-                "final_risk_asset_ai_min": (
-                    report.recommendation.risk_asset_ai_band.min_position
-                ),
-                "final_risk_asset_ai_max": (
-                    report.recommendation.risk_asset_ai_band.max_position
-                ),
+                "final_risk_asset_ai_min": (report.recommendation.risk_asset_ai_band.min_position),
+                "final_risk_asset_ai_max": (report.recommendation.risk_asset_ai_band.max_position),
                 "confidence_adjusted_risk_asset_ai_min": (
                     report.confidence_assessment.adjusted_risk_asset_ai_band.min_position
                 ),
@@ -574,12 +560,8 @@ def write_scores_csv(report: DailyScoreReport, output_path: Path) -> Path:
                 "final_total_risk_asset_max": (
                     report.recommendation.total_risk_asset_band.max_position
                 ),
-                "macro_risk_asset_budget_level": (
-                    report.macro_risk_asset_budget.level
-                ),
-                "macro_risk_asset_budget_triggered": (
-                    report.macro_risk_asset_budget.triggered
-                ),
+                "macro_risk_asset_budget_level": (report.macro_risk_asset_budget.level),
+                "macro_risk_asset_budget_triggered": (report.macro_risk_asset_budget.triggered),
                 "macro_risk_asset_budget_reasons": "；".join(
                     report.macro_risk_asset_budget.reasons
                 ),
@@ -622,8 +604,7 @@ def load_previous_daily_score_snapshot(
     if overall.empty:
         return None
     overall = overall.loc[
-        overall["_as_of_date"].notna()
-        & (overall["_as_of_date"] < pd.Timestamp(as_of))
+        overall["_as_of_date"].notna() & (overall["_as_of_date"] < pd.Timestamp(as_of))
     ].copy()
     if overall.empty:
         return None
@@ -687,16 +668,12 @@ def build_score_architecture_audit(report: DailyScoreReport) -> dict[str, Any]:
         "daily_conclusion_policy": report.daily_conclusion_policy.model_dump(),
         "confidence_policy": report.confidence_policy.model_dump(),
         "posture": _daily_posture_label(report),
-        "raw_position": _band_audit_record(
-            report.recommendation.model_risk_asset_ai_band
-        ),
+        "raw_position": _band_audit_record(report.recommendation.model_risk_asset_ai_band),
         "confidence_adjusted_position": _band_audit_record(
             report.confidence_assessment.adjusted_risk_asset_ai_band
         ),
         "final_position": _band_audit_record(report.recommendation.risk_asset_ai_band),
-        "total_asset_ai_position": _band_audit_record(
-            report.recommendation.total_asset_ai_band
-        ),
+        "total_asset_ai_position": _band_audit_record(report.recommendation.total_asset_ai_band),
         "components": [
             {
                 "component": component.name,
@@ -745,9 +722,7 @@ def _weight_calibration_audit_record(report: DailyScoreReport) -> dict[str, Any]
                 component.name: component.weight for component in report.components
             },
             "audit": {
-                "why_not_applied": [
-                    "score-daily caller did not provide a calibration application"
-                ]
+                "why_not_applied": ["score-daily caller did not provide a calibration application"]
             },
         }
     return report.weight_calibration.to_dict()
@@ -909,8 +884,7 @@ def render_daily_score_report(
             f"{len(report.valuation_review_report.items)}"
         )
         lines.append(
-            "- 估值 PIT 可信度："
-            f"{_valuation_confidence_summary(report.valuation_review_report)}"
+            "- 估值 PIT 可信度：" f"{_valuation_confidence_summary(report.valuation_review_report)}"
         )
     if report.risk_event_occurrence_review_report is not None:
         occurrence_validation = report.risk_event_occurrence_review_report.validation_report
@@ -1049,8 +1023,7 @@ def render_daily_score_report(
             )
         if report.review_summary and report.review_summary.has_failures:
             lines.append(
-                "- 人工复核摘要存在错误，日报结论不能视为完整交易结论；"
-                "请先修复对应输入或配置。"
+                "- 人工复核摘要存在错误，日报结论不能视为完整交易结论；" "请先修复对应输入或配置。"
             )
         elif report.review_summary and report.review_summary.has_warnings:
             lines.append(
@@ -1190,10 +1163,7 @@ def render_daily_conclusion_card(
         "|---|---|",
         f"| 状态标签 | {_escape_markdown_table(posture)} |",
         f"| 市场吸引力 | {_escape_markdown_table(_market_attractiveness_summary(report))} |",
-        (
-            "| 判断置信度 | "
-            f"{_escape_markdown_table(_confidence_card_summary(report))} |"
-        ),
+        ("| 判断置信度 | " f"{_escape_markdown_table(_confidence_card_summary(report))} |"),
         f"| Data Gate | {_escape_markdown_table(_data_gate_card_summary(report))} |",
         (
             "| Run ID / Trace | "
@@ -1277,9 +1247,7 @@ def render_daily_data_lineage_card(
     if sec_metrics_validation_report_path is not None:
         input_rows.append(("SEC 指标校验报告", _path_cell(sec_metrics_validation_report_path)))
     if sec_fundamental_feature_report_path is not None:
-        input_rows.append(
-            ("SEC 基本面特征报告", _path_cell(sec_fundamental_feature_report_path))
-        )
+        input_rows.append(("SEC 基本面特征报告", _path_cell(sec_fundamental_feature_report_path)))
     if sec_fundamental_features_path is not None:
         input_rows.append(("SEC 基本面特征", _path_cell(sec_fundamental_features_path)))
     if risk_event_occurrence_report_path is not None:
@@ -1347,12 +1315,8 @@ def render_daily_conclusion_boundary(report: DailyScoreReport) -> str:
         data_quality_status=report.data_quality_report.status,
         posture_label=_daily_posture_label(report),
         confidence_level=report.confidence_assessment.level,
-        has_review_failures=bool(
-            report.review_summary and report.review_summary.has_failures
-        ),
-        has_review_warnings=bool(
-            report.review_summary and report.review_summary.has_warnings
-        ),
+        has_review_failures=bool(report.review_summary and report.review_summary.has_failures),
+        has_review_warnings=bool(report.review_summary and report.review_summary.has_warnings),
         has_source_limitations=any(
             component.source_type in {"placeholder", "insufficient_data"}
             for component in report.components
@@ -1725,10 +1689,7 @@ def _score_policy_geopolitics_module(
     risk_event_occurrence_review_report: RiskEventOccurrenceReviewReport | None,
 ) -> DailyScoreComponent:
     placeholder = rules.placeholders["policy_geopolitics"]
-    if (
-        risk_event_occurrence_review_report is None
-        or rules.policy_geopolitics is None
-    ):
+    if risk_event_occurrence_review_report is None or rules.policy_geopolitics is None:
         return DailyScoreComponent(
             name="policy_geopolitics",
             score=placeholder.score,
@@ -1744,9 +1705,7 @@ def _score_policy_geopolitics_module(
             signals=(),
         )
 
-    eligible_active_items = (
-        risk_event_occurrence_review_report.score_eligible_active_items
-    )
+    eligible_active_items = risk_event_occurrence_review_report.score_eligible_active_items
     has_current_review_attestation = (
         risk_event_occurrence_review_report.has_current_review_attestation
     )
@@ -1754,9 +1713,7 @@ def _score_policy_geopolitics_module(
         name="policy_geopolitics",
         weight=weight,
         module_rules=rules.policy_geopolitics,
-        feature_index=_risk_event_occurrence_feature_index(
-            risk_event_occurrence_review_report
-        ),
+        feature_index=_risk_event_occurrence_feature_index(risk_event_occurrence_review_report),
         rules=rules,
         source_description="政策/地缘风险事件发生记录",
     )
@@ -1764,9 +1721,7 @@ def _score_policy_geopolitics_module(
     reason = component.reason
     if not eligible_active_items:
         if has_current_review_attestation:
-            if _has_current_llm_formal_assessment(
-                risk_event_occurrence_review_report
-            ):
+            if _has_current_llm_formal_assessment(risk_event_occurrence_review_report):
                 source_type = "llm_formal_assessment"
                 reason = (
                     "已采用覆盖评估日的 LLM formal assessment；未发现可进入评分的 "
@@ -1968,13 +1923,10 @@ def _valuation_feature_index(report: ValuationReviewReport) -> dict[tuple[str, s
         return {}
 
     valuation_percentiles = [
-        item.valuation_percentile
-        for item in usable_items
-        if item.valuation_percentile is not None
+        item.valuation_percentile for item in usable_items if item.valuation_percentile is not None
     ]
     overheated_count = sum(
-        item.health in {"EXPENSIVE_OR_CROWDED", "EXTREME_OVERHEATED"}
-        for item in usable_items
+        item.health in {"EXPENSIVE_OR_CROWDED", "EXTREME_OVERHEATED"} for item in usable_items
     )
     return {
         ("AI_CORE_MEDIAN", "valuation_percentile"): float(median(valuation_percentiles)),
@@ -1996,8 +1948,7 @@ def _eps_revision_count(report: ValuationReviewReport) -> int:
         for item in report.items
         if (snapshot := snapshot_by_id.get(item.snapshot_id)) is not None
         and any(
-            metric.metric_id == "eps_revision_90d_pct"
-            for metric in snapshot.expectation_metrics
+            metric.metric_id == "eps_revision_90d_pct" for metric in snapshot.expectation_metrics
         )
     )
 
@@ -2155,9 +2106,7 @@ def _binding_gate_summary(report: DailyScoreReport) -> str:
 
 
 def _binding_gate_source_summary(report: DailyScoreReport) -> str:
-    return "；".join(
-        f"{gate.label}: {gate.source}" for gate in _binding_position_gates(report)
-    )
+    return "；".join(f"{gate.label}: {gate.source}" for gate in _binding_position_gates(report))
 
 
 def _gate_model_cap_impact(gate: PositionGate, report: DailyScoreReport) -> str:
@@ -2427,10 +2376,7 @@ def _review_item_summary(report: DailyScoreReport, item_name: str) -> str:
     item = getattr(report.review_summary, item_name)
     if item is None:
         return "未接入人工复核摘要。"
-    return (
-        f"{item.status}；错误 {item.error_count}，警告 {item.warning_count}；"
-        f"{item.summary}"
-    )
+    return f"{item.status}；错误 {item.error_count}，警告 {item.warning_count}；" f"{item.summary}"
 
 
 def _risk_event_change_summary(report: DailyScoreReport) -> str:
@@ -2500,8 +2446,7 @@ def _judgement_type(report: DailyScoreReport) -> str:
     trend = _component_by_name(report, "trend")
     risk_sentiment = _component_by_name(report, "risk_sentiment")
     if (trend and trend.score < policy.trend_or_risk_pressure_score_below) or (
-        risk_sentiment
-        and risk_sentiment.score < policy.trend_or_risk_pressure_score_below
+        risk_sentiment and risk_sentiment.score < policy.trend_or_risk_pressure_score_below
     ):
         return "市场短期波动或风险情绪扰动"
     return "评分模型常规再平衡"
@@ -2690,9 +2635,7 @@ def _score_component_record(
             "" if weight_calibration is None else weight_calibration.weight_profile_version
         ),
         "calibration_overlay_ids": (
-            ""
-            if weight_calibration is None
-            else ",".join(weight_calibration.matched_overlays)
+            "" if weight_calibration is None else ",".join(weight_calibration.matched_overlays)
         ),
         "effective_weight": (
             ""
@@ -2742,8 +2685,7 @@ def _source_type_confidence(
         return coverage
     if source_type == "partial_hard_data":
         return _clamp(
-            policy.partial_hard_data_base
-            + coverage * policy.partial_hard_data_coverage_multiplier,
+            policy.partial_hard_data_base + coverage * policy.partial_hard_data_coverage_multiplier,
             0.0,
             policy.partial_hard_data_max,
         )
@@ -2778,10 +2720,7 @@ def _has_current_llm_formal_assessment(
     report: RiskEventOccurrenceReviewReport,
 ) -> bool:
     return any(
-        any(
-            source.source_type == "llm_extracted"
-            for source in loaded.attestation.checked_sources
-        )
+        any(source.source_type == "llm_extracted" for source in loaded.attestation.checked_sources)
         for loaded in report.validation_report.current_review_attestations
     )
 
@@ -2862,14 +2801,9 @@ def _confidence_score_and_reasons(
     if feature_set.warnings:
         penalty += confidence_policy.feature_warning_penalty
         reasons.append(f"市场特征存在 {len(feature_set.warnings)} 条警告")
-    if (
-        fundamental_feature_report is not None
-        and fundamental_feature_report.warning_count
-    ):
+    if fundamental_feature_report is not None and fundamental_feature_report.warning_count:
         penalty += confidence_policy.fundamental_warning_penalty
-        reasons.append(
-            f"SEC 基本面特征存在 {fundamental_feature_report.warning_count} 条警告"
-        )
+        reasons.append(f"SEC 基本面特征存在 {fundamental_feature_report.warning_count} 条警告")
     if review_summary and review_summary.has_failures:
         penalty += confidence_policy.manual_review_failure_penalty
         reasons.append("人工复核摘要存在失败项")
@@ -2902,8 +2836,7 @@ def _apply_calibration_confidence_delta(
         level=_confidence_level(adjusted_score / 100.0, confidence_policy),
         reasons=(
             *confidence.reasons,
-            "历史校准 overlay 调整判断置信度："
-            f"{weight_calibration.confidence_delta:+.1f} 分。",
+            "历史校准 overlay 调整判断置信度：" f"{weight_calibration.confidence_delta:+.1f} 分。",
         ),
         adjusted_risk_asset_ai_band=_confidence_adjusted_band(
             model_risk_asset_ai_band,
@@ -2918,10 +2851,7 @@ def _calibration_position_gate(
     score_band: PositionBand,
     weight_calibration: CalibrationApplication | None,
 ) -> PositionGate | None:
-    if (
-        weight_calibration is None
-        or abs(weight_calibration.position_multiplier - 1.0) < 1e-9
-    ):
+    if weight_calibration is None or abs(weight_calibration.position_multiplier - 1.0) < 1e-9:
         return None
     max_position = score_band.max_position * weight_calibration.position_multiplier
     return PositionGate(

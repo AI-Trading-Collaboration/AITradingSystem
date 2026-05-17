@@ -49,9 +49,7 @@ class TradingDailyReport:
 
     @property
     def cancelled_count(self) -> int:
-        return sum(
-            1 for order in self.submitted_orders if order.status == OrderStatus.CANCELLED
-        )
+        return sum(1 for order in self.submitted_orders if order.status == OrderStatus.CANCELLED)
 
     @property
     def unrealized_pnl_usd(self) -> float:
@@ -290,12 +288,8 @@ def build_paper_trading_summary_payload(
     status: str | None = None,
 ) -> dict[str, Any]:
     generated_intents = len(report.order_intents)
-    resolved_candidate_count = (
-        generated_intents if candidate_count is None else candidate_count
-    )
-    resolved_blocked_candidates = (
-        0 if blocked_candidates is None else blocked_candidates
-    )
+    resolved_candidate_count = generated_intents if candidate_count is None else candidate_count
+    resolved_blocked_candidates = 0 if blocked_candidates is None else blocked_candidates
     resolved_status = status or _paper_trading_summary_status(
         reconciliation_status=report.reconciliation_status,
         candidate_count=resolved_candidate_count,

@@ -162,6 +162,7 @@ class CrowdingSignal:
             "notes": self.notes,
         }
 
+
 @dataclass(frozen=True)
 class ValuationSnapshot:
     snapshot_id: str
@@ -259,9 +260,7 @@ class ValuationSnapshot:
             "expectation_metrics": [
                 metric.model_dump(mode=mode) for metric in self.expectation_metrics
             ],
-            "crowding_signals": [
-                signal.model_dump(mode=mode) for signal in self.crowding_signals
-            ],
+            "crowding_signals": [signal.model_dump(mode=mode) for signal in self.crowding_signals],
             "valuation_percentile": self.valuation_percentile,
             "overall_assessment": self.overall_assessment,
             "notes": self.notes,
@@ -368,8 +367,7 @@ class ValuationReviewReport:
         if self.validation_report.warning_count:
             return "PASS_WITH_WARNINGS"
         if any(
-            item.health in {"EXPENSIVE_OR_CROWDED", "EXTREME_OVERHEATED"}
-            for item in self.items
+            item.health in {"EXPENSIVE_OR_CROWDED", "EXTREME_OVERHEATED"} for item in self.items
         ):
             return "PASS_WITH_WARNINGS"
         return "PASS"
@@ -387,9 +385,7 @@ def load_valuation_snapshot_store(input_path: Path | str) -> ValuationSnapshotSt
             load_errors.append(ValuationLoadError(path=yaml_path, message=str(exc)))
             continue
         except yaml.YAMLError as exc:
-            load_errors.append(
-                ValuationLoadError(path=yaml_path, message=f"YAML 解析失败：{exc}")
-            )
+            load_errors.append(ValuationLoadError(path=yaml_path, message=f"YAML 解析失败：{exc}"))
             continue
 
         for raw_item in _raw_snapshot_items(raw):
@@ -510,8 +506,7 @@ def build_valuation_review_report(
         as_of=validation_report.as_of,
         validation_report=validation_report,
         items=tuple(
-            _review_item(loaded.snapshot, validation_report.as_of)
-            for loaded in review_snapshots
+            _review_item(loaded.snapshot, validation_report.as_of) for loaded in review_snapshots
         ),
     )
 
@@ -622,9 +617,7 @@ def render_valuation_review_report(report: ValuationReviewReport) -> str:
         )
         for item in sorted(report.items, key=lambda value: value.snapshot_id):
             percentile = (
-                "n/a"
-                if item.valuation_percentile is None
-                else f"{item.valuation_percentile:.0f}"
+                "n/a" if item.valuation_percentile is None else f"{item.valuation_percentile:.0f}"
             )
             lines.append(
                 "| "
@@ -1001,10 +994,7 @@ def _check_snapshot(
                 ),
             )
         )
-    if (
-        snapshot.confidence_level == "low"
-        and snapshot.backtest_use == "strict_point_in_time"
-    ):
+    if snapshot.confidence_level == "low" and snapshot.backtest_use == "strict_point_in_time":
         issues.append(
             ValuationIssue(
                 severity=ValuationIssueSeverity.ERROR,
@@ -1124,19 +1114,21 @@ def _review_item(snapshot: ValuationSnapshot, as_of: date) -> ValuationReviewIte
     if (as_of - snapshot.as_of).days > 45:
         health = "STALE"
         reason = "估值快照已过期，不能作为当前仓位折扣依据。"
-    elif snapshot.overall_assessment == "extreme" or extreme_signals or (
-        percentile is not None and percentile >= 90
+    elif (
+        snapshot.overall_assessment == "extreme"
+        or extreme_signals
+        or (percentile is not None and percentile >= 90)
     ):
         health = "EXTREME_OVERHEATED"
         reason = "估值或拥挤度处于极端区间，应显著降低仓位置信度。"
-    elif snapshot.overall_assessment == "expensive" or elevated_signals or (
-        percentile is not None and percentile >= 75
+    elif (
+        snapshot.overall_assessment == "expensive"
+        or elevated_signals
+        or (percentile is not None and percentile >= 75)
     ):
         health = "EXPENSIVE_OR_CROWDED"
         reason = "估值偏贵或拥挤度偏高，只能作为仓位折扣信号。"
-    elif snapshot.overall_assessment == "cheap" or (
-        percentile is not None and percentile <= 30
-    ):
+    elif snapshot.overall_assessment == "cheap" or (percentile is not None and percentile <= 30):
         health = "POTENTIAL_VALUE"
         reason = "估值分位较低，但仍需结合基本面和风险事件确认。"
     else:

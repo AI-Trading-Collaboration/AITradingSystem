@@ -207,24 +207,30 @@ def build_evidence_dashboard_payload(report: EvidenceDashboardReport) -> TraceRe
             "daily_report_path": str(report.daily_report_path),
             "trace_bundle_path": str(report.trace_bundle_path),
             "decision_snapshot_path": str(report.decision_snapshot_path),
-            "belief_state_path": None
-            if report.belief_state_path is None
-            else str(report.belief_state_path),
-            "alerts_report_path": None
-            if report.alerts_report_path is None
-            else str(report.alerts_report_path),
-            "scores_daily_path": None
-            if report.scores_daily_path is None
-            else str(report.scores_daily_path),
-            "market_feedback_report_path": None
-            if report.market_feedback_report_path is None
-            else str(report.market_feedback_report_path),
-            "feedback_loop_review_path": None
-            if report.feedback_loop_review_path is None
-            else str(report.feedback_loop_review_path),
-            "investment_review_path": None
-            if report.investment_review_path is None
-            else str(report.investment_review_path),
+            "belief_state_path": (
+                None if report.belief_state_path is None else str(report.belief_state_path)
+            ),
+            "alerts_report_path": (
+                None if report.alerts_report_path is None else str(report.alerts_report_path)
+            ),
+            "scores_daily_path": (
+                None if report.scores_daily_path is None else str(report.scores_daily_path)
+            ),
+            "market_feedback_report_path": (
+                None
+                if report.market_feedback_report_path is None
+                else str(report.market_feedback_report_path)
+            ),
+            "feedback_loop_review_path": (
+                None
+                if report.feedback_loop_review_path is None
+                else str(report.feedback_loop_review_path)
+            ),
+            "investment_review_path": (
+                None
+                if report.investment_review_path is None
+                else str(report.investment_review_path)
+            ),
         },
         "warnings": list(report.warnings),
     }
@@ -234,10 +240,10 @@ def _render_header(report: EvidenceDashboardReport, title: str) -> str:
     return "\n".join(
         [
             "<header>",
-            "<p class=\"eyebrow\">UI-001 evidence-first dashboard</p>",
+            '<p class="eyebrow">UI-001 evidence-first dashboard</p>',
             f"<h1>{_text(title)}</h1>",
             (
-                "<p class=\"subtle\">只读解释页，连接日报结论、论证链、"
+                '<p class="subtle">只读解释页，连接日报结论、论证链、'
                 "trace evidence 和实际输入数据；Markdown 日报和 trace bundle "
                 "仍是审计源。</p>"
             ),
@@ -636,11 +642,11 @@ def _render_review_panel(report: EvidenceDashboardReport) -> str:
             '<section id="review-panel" class="panel review-panel">',
             "<h3>投资复核者</h3>",
             '<div class="split">',
-            '<div>',
+            "<div>",
             "<h4>评分组件</h4>",
             _component_table(report.decision_snapshot),
             "</div>",
-            '<div>',
+            "<div>",
             "<h4>仓位闸门</h4>",
             _gate_table(report.decision_snapshot),
             "</div>",
@@ -887,8 +893,7 @@ def _state_table(report: EvidenceDashboardReport) -> str:
 def _table(headers: Sequence[str], rows: Sequence[Sequence[str]]) -> str:
     header = "".join(f"<th>{_text(item)}</th>" for item in headers)
     body_rows = [
-        "<tr>" + "".join(f"<td>{_text(cell)}</td>" for cell in row) + "</tr>"
-        for row in rows
+        "<tr>" + "".join(f"<td>{_text(cell)}</td>" for cell in row) + "</tr>" for row in rows
     ]
     return "\n".join(
         [
@@ -983,9 +988,7 @@ def _history_table(points: Sequence[Mapping[str, Any]]) -> str:
 
 def _history_score_panel(report: EvidenceDashboardReport) -> str:
     numbers = _history_score_numbers(report.history_points)
-    history_path = (
-        "未接入" if report.scores_daily_path is None else str(report.scores_daily_path)
-    )
+    history_path = "未接入" if report.scores_daily_path is None else str(report.scores_daily_path)
     if not numbers:
         return _key_value_table(
             [
@@ -1312,10 +1315,8 @@ def _parse_market_feedback_summary(text: str | None, path: Path | None) -> Trace
         "decision_available_count": _parse_leading_int(decision_summary),
         "prediction_available_sample_summary": prediction_summary,
         "prediction_available_count": _parse_leading_int(prediction_summary),
-        "decision_horizon_coverage": _metadata_value(text, "Decision outcome horizon 覆盖")
-        or "",
-        "prediction_candidate_coverage": _metadata_value(text, "Prediction candidate 覆盖")
-        or "",
+        "decision_horizon_coverage": _metadata_value(text, "Decision outcome horizon 覆盖") or "",
+        "prediction_candidate_coverage": _metadata_value(text, "Prediction candidate 覆盖") or "",
         "current_conclusion": _metadata_value(text, "当前结论") or "",
         "learning_queue_classification": _metadata_value(text, "学习队列分类") or "",
         "candidate_rule_count": _parse_int(candidate_count),
@@ -1400,8 +1401,7 @@ def _parse_investment_review_summary(text: str | None, path: Path | None) -> Tra
         "score_change": _metadata_value(text, "AI 产业链评分") or "",
         "confidence_change": _metadata_value(text, "判断置信度") or "",
         "latest_limitation": _metadata_value(text, "最新结论限制") or "",
-        "risk_asset_position_change": _metadata_value(text, "风险资产内最终 AI 仓位")
-        or "",
+        "risk_asset_position_change": _metadata_value(text, "风险资产内最终 AI 仓位") or "",
         "total_asset_position_change": _metadata_value(text, "总资产内 AI 仓位") or "",
         "latest_gates": _metadata_value(text, "最新触发 gate") or "",
         "top_evidence": _bullet_lines(_markdown_section(text, "## 改变判断的前三个证据")),
@@ -1534,9 +1534,7 @@ def _metadata_value(markdown: str, label: str) -> str | None:
 
 def _parse_markdown_table(markdown: str) -> list[dict[str, str]]:
     table_lines = [
-        line
-        for line in markdown.splitlines()
-        if line.strip().startswith("|") and "---" not in line
+        line for line in markdown.splitlines() if line.strip().startswith("|") and "---" not in line
     ]
     if len(table_lines) < 2:
         return []
@@ -1939,9 +1937,7 @@ def _state_summary(
         return _record_text(valuation_state, "status", "未接入")
     if key == "thesis_state":
         reviews = _list_mappings(snapshot.get("manual_review"))
-        thesis_reviews = [
-            item for item in reviews if "thesis" in str(item.get("name", "")).lower()
-        ]
+        thesis_reviews = [item for item in reviews if "thesis" in str(item.get("name", "")).lower()]
         return _record_text(thesis_reviews[0], "summary", "未接入") if thesis_reviews else "未接入"
     return "未接入"
 

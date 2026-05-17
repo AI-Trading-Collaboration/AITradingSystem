@@ -87,9 +87,7 @@ def build_pipeline_health_alert_report(
         _alert(
             as_of=report.as_of,
             category="data_system",
-            severity="high"
-            if check.severity == PipelineHealthSeverity.ERROR
-            else "warning",
+            severity="high" if check.severity == PipelineHealthSeverity.ERROR else "warning",
             source="aits ops health",
             code=f"pipeline_health_{check.spec.artifact_id}",
             title=f"{check.spec.label} 异常",
@@ -99,9 +97,7 @@ def build_pipeline_health_alert_report(
                 f"`{check.spec.artifact_id}` 状态恢复 OK。"
             ),
             message=f"{check.message} 排查入口：{check.spec.investigation_hint}",
-            claim_refs=(
-                f"pipeline_health:{report.as_of.isoformat()}:{check.spec.artifact_id}",
-            ),
+            claim_refs=(f"pipeline_health:{report.as_of.isoformat()}:{check.spec.artifact_id}",),
             evidence_refs=_path_refs(pipeline_health_report_path, str(check.spec.path)),
         )
         for check in report.checks
@@ -136,9 +132,7 @@ def build_daily_alert_report(
             _alert(
                 as_of=as_of,
                 category="data_system",
-                severity="high"
-                if report.data_quality_report.error_count
-                else "warning",
+                severity="high" if report.data_quality_report.error_count else "warning",
                 source="aits validate-data",
                 code="data_quality_not_pass",
                 title="数据质量门禁未完全通过",
@@ -186,8 +180,7 @@ def build_daily_alert_report(
                         f"confidence={component.confidence:.0%}"
                     ),
                     clear_condition=(
-                        "模块输入切换为可审计 hard/manual data，"
-                        "且置信度恢复到 60% 以上。"
+                        "模块输入切换为可审计 hard/manual data，" "且置信度恢复到 60% 以上。"
                     ),
                     message=component.reason,
                     claim_refs=(f"daily_score:{as_of.isoformat()}:{component.name}",),
@@ -221,9 +214,7 @@ def build_daily_alert_report(
                     _alert(
                         as_of=as_of,
                         category="investment_risk",
-                        severity="high"
-                        if item.health == "EXTREME_OVERHEATED"
-                        else "warning",
+                        severity="high" if item.health == "EXTREME_OVERHEATED" else "warning",
                         source="valuation",
                         code=f"valuation_{item.ticker}_{item.health.lower()}",
                         title=f"{item.ticker} 估值拥挤",
@@ -232,8 +223,7 @@ def build_daily_alert_report(
                             f"valuation_percentile={_format_optional_number(item.valuation_percentile)}"
                         ),
                         clear_condition=(
-                            "估值健康状态不再是 "
-                            "EXPENSIVE_OR_CROWDED/EXTREME_OVERHEATED。"
+                            "估值健康状态不再是 " "EXPENSIVE_OR_CROWDED/EXTREME_OVERHEATED。"
                         ),
                         message=item.reason,
                         claim_refs=(f"daily_score:{as_of.isoformat()}:valuation_gate",),
@@ -304,9 +294,7 @@ def build_daily_alert_report(
                 source="position_gate",
                 code=f"position_gate_{gate.gate_id}",
                 title=f"{gate.label} 触发仓位上限",
-                trigger_condition=(
-                    f"gate_id={gate.gate_id}；max_position={gate.max_position:.0%}"
-                ),
+                trigger_condition=(f"gate_id={gate.gate_id}；max_position={gate.max_position:.0%}"),
                 clear_condition="对应 gate 不再触发，或 max_position 不低于当前最终区间上限。",
                 message=gate.reason,
                 claim_refs=(f"daily_score:{as_of.isoformat()}:overall_position",),
@@ -348,9 +336,7 @@ def build_daily_alert_report(
                 _alert(
                     as_of=as_of,
                     category="data_system",
-                    severity="high"
-                    if catalyst_calendar_report.error_count
-                    else "warning",
+                    severity="high" if catalyst_calendar_report.error_count else "warning",
                     source="catalyst_calendar",
                     code="catalyst_calendar_not_pass",
                     title="催化剂日历校验未完全通过",
@@ -371,9 +357,7 @@ def build_daily_alert_report(
                     _alert(
                         as_of=as_of,
                         category="investment_risk",
-                        severity="critical"
-                        if event.importance == "critical"
-                        else "high",
+                        severity="critical" if event.importance == "critical" else "high",
                         source="catalyst_calendar",
                         code=f"catalyst_{event.catalyst_id}",
                         title="未来 5 天存在重要催化剂",

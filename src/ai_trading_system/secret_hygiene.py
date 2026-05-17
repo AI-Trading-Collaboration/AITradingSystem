@@ -53,9 +53,7 @@ class SecretScanReport:
     @property
     def error_count(self) -> int:
         return sum(
-            1
-            for finding in self.findings
-            if finding.severity == SecretFindingSeverity.ERROR
+            1 for finding in self.findings if finding.severity == SecretFindingSeverity.ERROR
         )
 
     @property
@@ -194,8 +192,7 @@ def _scan_file(path: Path, findings: list[SecretScanFinding]) -> None:
                     matched_label=label,
                     redacted_value=_redact(value),
                     message=(
-                        "疑似 secret literal 出现在可扫描文件中；"
-                        "应改为环境变量或安全密钥管理。"
+                        "疑似 secret literal 出现在可扫描文件中；" "应改为环境变量或安全密钥管理。"
                     ),
                 )
             )

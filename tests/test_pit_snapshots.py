@@ -57,9 +57,7 @@ def test_validate_pit_snapshot_manifest_rejects_checksum_mismatch(
     )
 
     assert report.status == "FAIL"
-    assert "pit_snapshot_raw_payload_checksum_mismatch" in {
-        issue.code for issue in report.issues
-    }
+    assert "pit_snapshot_raw_payload_checksum_mismatch" in {issue.code for issue in report.issues}
 
 
 def test_validate_pit_snapshot_manifest_rejects_missing_payload(
@@ -241,10 +239,7 @@ def test_pit_snapshots_cli_build_manifest_from_existing_cache(
     tmp_path: Path,
 ) -> None:
     _write_raw_payload(
-        tmp_path
-        / "fmp_analyst_estimates"
-        / "nvda"
-        / "fmp_analyst_estimates_nvda_2026-05-02.json"
+        tmp_path / "fmp_analyst_estimates" / "nvda" / "fmp_analyst_estimates_nvda_2026-05-02.json"
     )
     config_path = _write_data_sources_config(tmp_path / "data_sources.yaml")
     manifest_path = tmp_path / "pit_snapshots" / "manifest.csv"

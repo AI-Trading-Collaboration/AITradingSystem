@@ -197,9 +197,7 @@ class PitSnapshotValidationReport:
 
     @property
     def warning_count(self) -> int:
-        return sum(
-            1 for issue in self.issues if issue.severity == PitSnapshotIssueSeverity.WARNING
-        )
+        return sum(1 for issue in self.issues if issue.severity == PitSnapshotIssueSeverity.WARNING)
 
     @property
     def passed(self) -> bool:
@@ -281,9 +279,11 @@ def validate_pit_snapshot_manifest(
             issues=tuple(issues),
         )
 
-    source_catalog = {
-        source.source_id: source for source in data_sources.sources
-    } if data_sources is not None else {}
+    source_catalog = (
+        {source.source_id: source for source in data_sources.sources}
+        if data_sources is not None
+        else {}
+    )
     seen_snapshot_ids: set[str] = set()
     for index, row in enumerate(rows):
         row_number = index + 2
@@ -326,9 +326,11 @@ def discover_existing_pit_raw_snapshots(
     data_sources: DataSourcesConfig | None = None,
     project_root: Path = PROJECT_ROOT,
 ) -> tuple[PitSnapshotManifestRecord, ...]:
-    source_catalog = {
-        source.source_id: source for source in data_sources.sources
-    } if data_sources is not None else {}
+    source_catalog = (
+        {source.source_id: source for source in data_sources.sources}
+        if data_sources is not None
+        else {}
+    )
     records: list[PitSnapshotManifestRecord] = []
     records.extend(
         _discover_raw_json_records(
@@ -484,8 +486,12 @@ def render_pit_snapshot_validation_report(report: PitSnapshotValidationReport) -
     if not report.issues:
         lines.append("未发现问题。")
     else:
-        lines.extend(["| 级别 | Code | Snapshot | Source | Row | Path | 说明 |",
-                      "|---|---|---|---|---:|---|---|"])
+        lines.extend(
+            [
+                "| 级别 | Code | Snapshot | Source | Row | Path | 说明 |",
+                "|---|---|---|---|---:|---|---|",
+            ]
+        )
         for issue in report.issues:
             lines.append(
                 "| "

@@ -37,8 +37,7 @@ def test_validate_data_sources_config_rejects_duplicate_source_id() -> None:
 
     assert not report.passed
     assert any(
-        issue.severity == DataSourceIssueSeverity.ERROR
-        and issue.code == "duplicate_source_id"
+        issue.severity == DataSourceIssueSeverity.ERROR and issue.code == "duplicate_source_id"
         for issue in report.issues
     )
 
@@ -222,13 +221,9 @@ def test_build_data_source_health_report_warns_on_inactive_checksum_mismatch(
     )
 
     assert report.status == "PASS_WITH_WARNINGS"
-    assert not any(
-        issue.code == "manifest_checksum_mismatch" for issue in report.issues
-    )
+    assert not any(issue.code == "manifest_checksum_mismatch" for issue in report.issues)
     inactive_issue = next(
-        issue
-        for issue in report.issues
-        if issue.code == "inactive_manifest_checksum_mismatch"
+        issue for issue in report.issues if issue.code == "inactive_manifest_checksum_mismatch"
     )
     assert inactive_issue.severity == DataSourceIssueSeverity.WARNING
 
@@ -305,9 +300,7 @@ def test_data_sources_cli_health_writes_report(tmp_path: Path) -> None:
     assert result.exit_code == 0
     assert "数据源健康状态：PASS_WITH_WARNINGS" in result.output
     assert report_path.exists()
-    assert "数据源健康与 reconciliation 报告" in report_path.read_text(
-        encoding="utf-8"
-    )
+    assert "数据源健康与 reconciliation 报告" in report_path.read_text(encoding="utf-8")
 
 
 def _source(

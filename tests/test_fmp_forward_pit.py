@@ -82,9 +82,10 @@ def test_fetch_fmp_forward_pit_writes_raw_normalized_and_manifest(
         "values": [1, {"inner": True}],
     }
     assert raw_payload["records_by_endpoint"]["earnings-calendar"][0]["symbol"] == "NVDA"
-    assert raw_payload["request_parameters_by_endpoint"]["earnings-calendar"][
-        "filtered_symbol"
-    ] == "NVDA"
+    assert (
+        raw_payload["request_parameters_by_endpoint"]["earnings-calendar"]["filtered_symbol"]
+        == "NVDA"
+    )
     assert len(normalized_rows) == 8
     assert {row.endpoint_category for row in normalized_rows} == {
         "analyst_estimates",
@@ -92,9 +93,7 @@ def test_fetch_fmp_forward_pit_writes_raw_normalized_and_manifest(
         "ratings",
         "earnings_calendar",
     }
-    assert all(
-        row.available_time == "2026-05-02T12:00:00+00:00" for row in normalized_rows
-    )
+    assert all(row.available_time == "2026-05-02T12:00:00+00:00" for row in normalized_rows)
     assert normalized_csv[0]["raw_payload_sha256"] == manifest_records[0].raw_payload_sha256
     assert pit_report.status == "PASS"
     assert "available_time <= decision_time" in render_fmp_forward_pit_fetch_report(report)

@@ -137,17 +137,13 @@ class BenchmarkPolicyReport:
     @property
     def error_count(self) -> int:
         return sum(
-            1
-            for issue in self.issues
-            if issue.severity == BenchmarkPolicyIssueSeverity.ERROR
+            1 for issue in self.issues if issue.severity == BenchmarkPolicyIssueSeverity.ERROR
         )
 
     @property
     def warning_count(self) -> int:
         return sum(
-            1
-            for issue in self.issues
-            if issue.severity == BenchmarkPolicyIssueSeverity.WARNING
+            1 for issue in self.issues if issue.severity == BenchmarkPolicyIssueSeverity.WARNING
         )
 
     @property

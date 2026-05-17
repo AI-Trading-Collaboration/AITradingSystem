@@ -215,15 +215,13 @@ def _node_health_assessment(
         risk_items=risk_items,
         data_gaps=data_gaps,
     )
-    risk_event_coverage, has_node_risk_event, has_severe_risk_event = (
-        _risk_event_coverage(
-            node_id=node_id,
-            ticker_set=ticker_set,
-            report=risk_event_occurrence_review_report,
-            support_items=support_items,
-            risk_items=risk_items,
-            data_gaps=data_gaps,
-        )
+    risk_event_coverage, has_node_risk_event, has_severe_risk_event = _risk_event_coverage(
+        node_id=node_id,
+        ticker_set=ticker_set,
+        report=risk_event_occurrence_review_report,
+        support_items=support_items,
+        risk_items=risk_items,
+        data_gaps=data_gaps,
     )
     thesis_coverage, has_thesis_pressure, has_invalidated_thesis = _thesis_coverage(
         node_id=node_id,
@@ -235,16 +233,10 @@ def _node_health_assessment(
     )
 
     health_coverage = (
-        fundamental_coverage
-        + valuation_coverage
-        + risk_event_coverage
-        + thesis_coverage
+        fundamental_coverage + valuation_coverage + risk_event_coverage + thesis_coverage
     ) / 4
     has_any_risk = (
-        has_valuation_limit
-        or has_node_risk_event
-        or has_thesis_pressure
-        or has_invalidated_thesis
+        has_valuation_limit or has_node_risk_event or has_thesis_pressure or has_invalidated_thesis
     )
     health_level = _health_level(
         heat_score=heat_score,
@@ -283,16 +275,11 @@ def _fundamental_coverage(
         data_gaps.append(f"SEC/TSM 基本面特征状态 {report.status}，不用于健康度")
         return 0.0
 
-    covered = {
-        row.ticker.upper()
-        for row in report.rows
-        if row.ticker.upper() in ticker_set
-    }
+    covered = {row.ticker.upper() for row in report.rows if row.ticker.upper() in ticker_set}
     coverage = _coverage(covered, ticker_set)
     if covered:
         support_items.append(
-            "SEC/TSM 基本面覆盖 "
-            f"{len(covered)}/{len(ticker_set)}：{_format_tickers(covered)}"
+            "SEC/TSM 基本面覆盖 " f"{len(covered)}/{len(ticker_set)}：{_format_tickers(covered)}"
         )
     elif ticker_set:
         data_gaps.append(f"SEC/TSM 基本面覆盖 0/{len(ticker_set)}")
@@ -311,9 +298,7 @@ def _valuation_coverage(
         data_gaps.append("估值快照未接入")
         return 0.0, False
     if not report.validation_report.passed:
-        data_gaps.append(
-            f"估值快照校验状态 {report.validation_report.status}，不用于健康度"
-        )
+        data_gaps.append(f"估值快照校验状态 {report.validation_report.status}，不用于健康度")
         return 0.0, False
 
     items = [item for item in report.items if item.ticker.upper() in ticker_set]
@@ -335,8 +320,7 @@ def _valuation_coverage(
         )
     else:
         support_items.append(
-            "估值快照覆盖 "
-            f"{len(covered)}/{len(ticker_set)}，未显示偏贵或极端拥挤"
+            "估值快照覆盖 " f"{len(covered)}/{len(ticker_set)}，未显示偏贵或极端拥挤"
         )
     return coverage, bool(limiting)
 
@@ -354,9 +338,7 @@ def _risk_event_coverage(
         data_gaps.append("风险事件发生记录未接入")
         return 0.0, False, False
     if not report.validation_report.passed:
-        data_gaps.append(
-            f"风险事件发生记录状态 {report.validation_report.status}，不用于健康度"
-        )
+        data_gaps.append(f"风险事件发生记录状态 {report.validation_report.status}，不用于健康度")
         return 0.0, False, False
 
     node_items = _node_risk_event_items(
@@ -366,15 +348,11 @@ def _risk_event_coverage(
     )
     if node_items:
         severe = any(
-            item.level in {"L2", "L3"} or item.position_gate_eligible
-            for item in node_items
+            item.level in {"L2", "L3"} or item.position_gate_eligible for item in node_items
         )
         risk_items.append(
             "风险事件 active/watch："
-            + ", ".join(
-                f"{item.event_id}({item.level}/{item.status})"
-                for item in node_items[:3]
-            )
+            + ", ".join(f"{item.event_id}({item.level}/{item.status})" for item in node_items[:3])
         )
         return 1.0, True, severe
 
@@ -412,11 +390,7 @@ def _thesis_coverage(
         return 0.0, False, False
 
     intact = [item for item in relevant if item.health == "INTACT"]
-    pressured = [
-        item
-        for item in relevant
-        if item.health in {"WATCH", "CHALLENGED", "INVALIDATED"}
-    ]
+    pressured = [item for item in relevant if item.health in {"WATCH", "CHALLENGED", "INVALIDATED"}]
     inactive = [item for item in relevant if item.health == "INACTIVE"]
     if intact:
         support_items.append(f"Thesis intact {len(intact)} 个")
@@ -439,9 +413,7 @@ def _node_risk_event_items(
     ticker_set: set[str],
     report: RiskEventOccurrenceReviewReport,
 ):
-    rules_by_event = {
-        rule.event_id: rule for rule in report.validation_report.config.event_rules
-    }
+    rules_by_event = {rule.event_id: rule for rule in report.validation_report.config.event_rules}
     matched = []
     for item in report.active_items:
         rule = rules_by_event.get(item.event_id)
@@ -526,10 +498,7 @@ def _watchlist_tickers_by_node(watchlist: WatchlistConfig) -> dict[str, tuple[st
             continue
         for node_id in item.ai_chain_nodes:
             tickers_by_node.setdefault(node_id, []).append(item.ticker)
-    return {
-        node_id: tuple(dict.fromkeys(tickers))
-        for node_id, tickers in tickers_by_node.items()
-    }
+    return {node_id: tuple(dict.fromkeys(tickers)) for node_id, tickers in tickers_by_node.items()}
 
 
 def _return_heat_score(return_20d: float) -> float:
@@ -602,9 +571,7 @@ def _node_heat_explanation(
     concentration_text = (
         "集中度未知"
         if concentration is None
-        else "单一贡献偏高"
-        if concentration >= 0.55
-        else "贡献较分散"
+        else "单一贡献偏高" if concentration >= 0.55 else "贡献较分散"
     )
     missing_text = "" if not missing else f"；缺少 {', '.join(missing[:4])}"
     return (

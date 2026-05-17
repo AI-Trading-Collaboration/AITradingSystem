@@ -97,9 +97,7 @@ def test_validate_trade_thesis_store_accepts_warning_state_metadata(
     markdown = render_thesis_validation_report(validation_report)
 
     assert validation_report.passed is True
-    assert "missing_thesis_status_reason" not in {
-        issue.code for issue in validation_report.issues
-    }
+    assert "missing_thesis_status_reason" not in {issue.code for issue in validation_report.issues}
     assert validation_report.active_count == 1
     assert review_report.items[0].health == "WATCH"
     assert "警告" in markdown
@@ -152,11 +150,11 @@ def test_validate_trade_thesis_store_warns_when_active_trade_requires_thesis(
     watchlist = load_watchlist()
     active_trade_watchlist = WatchlistConfig(
         items=[
-            item.model_copy(
-                update={"decision_stage": "active_trade", "thesis_required": True}
+            (
+                item.model_copy(update={"decision_stage": "active_trade", "thesis_required": True})
+                if item.ticker == "NVDA"
+                else item
             )
-            if item.ticker == "NVDA"
-            else item
             for item in watchlist.items
         ],
     )

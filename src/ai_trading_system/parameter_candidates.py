@@ -121,9 +121,7 @@ class ParameterCandidate:
             "return_delta_bootstrap_ci_low": self.return_delta_bootstrap_ci_low,
             "return_delta_bootstrap_ci_high": self.return_delta_bootstrap_ci_high,
             "signal_family_baseline_beaten": self.signal_family_baseline_beaten,
-            "score_architecture_baseline_beaten": (
-                self.score_architecture_baseline_beaten
-            ),
+            "score_architecture_baseline_beaten": (self.score_architecture_baseline_beaten),
             "label_horizon_days": self.label_horizon_days,
             "veto_reasons": list(self.veto_reasons),
             "recommendation_status": self.recommendation_status,
@@ -208,11 +206,7 @@ class ParameterCandidateLedger:
 
     @property
     def status(self) -> str:
-        if (
-            self.evaluation_mode != "strict"
-            or self.warnings
-            or self.needs_policy_count
-        ):
+        if self.evaluation_mode != "strict" or self.warnings or self.needs_policy_count:
             return "PASS_WITH_LIMITATIONS"
         return "PASS"
 
@@ -442,9 +436,7 @@ def _trial_from_scenario(
         total_return_delta_vs_base=total_return_delta,
         max_drawdown_delta_vs_base=_float_or_none(scenario.get("max_drawdown_delta_vs_base")),
         turnover=_float_or_none(scenario.get("turnover")),
-        return_delta_bootstrap_ci_low=_float_or_none(
-            scenario.get("return_delta_bootstrap_ci_low")
-        ),
+        return_delta_bootstrap_ci_low=_float_or_none(scenario.get("return_delta_bootstrap_ci_low")),
         return_delta_bootstrap_ci_high=_float_or_none(
             scenario.get("return_delta_bootstrap_ci_high")
         ),
@@ -471,14 +463,10 @@ def _candidate_from_trial(
         evaluation_mode=evaluation_mode,
     )
     data_quality = _dict_value(robustness_evidence.get("data_quality"))
-    random_evidence = _dict_value(
-        robustness_evidence.get("same_turnover_random_strategy")
-    )
+    random_evidence = _dict_value(robustness_evidence.get("same_turnover_random_strategy"))
     oos_evidence = _dict_value(robustness_evidence.get("out_of_sample_validation"))
     signal_evidence = _dict_value(robustness_evidence.get("signal_family_baseline"))
-    architecture_evidence = _dict_value(
-        robustness_evidence.get("score_architecture_baseline")
-    )
+    architecture_evidence = _dict_value(robustness_evidence.get("score_architecture_baseline"))
     sample_evidence = _dict_value(robustness_evidence.get("sample_independence"))
     coverage_evidence = _dict_value(robustness_evidence.get("coverage"))
     raw_blocking_components = coverage_evidence.get("blocking_components")
@@ -495,9 +483,7 @@ def _candidate_from_trial(
         material_total_return_delta=trial.material_total_return_delta,
         data_quality_status=str(data_quality.get("status") or "UNKNOWN"),
         data_credibility_grade=_optional_str(data_quality.get("data_credibility_grade")),
-        coverage_min_component=_float_or_none(
-            coverage_evidence.get("minimum_component_coverage")
-        ),
+        coverage_min_component=_float_or_none(coverage_evidence.get("minimum_component_coverage")),
         coverage_max_placeholder_share=_float_or_none(
             coverage_evidence.get("maximum_placeholder_share")
         ),
@@ -510,9 +496,7 @@ def _candidate_from_trial(
             sample_evidence.get("effective_independent_windows")
         ),
         oos_total_return=_float_or_none(oos_evidence.get("out_of_sample_total_return")),
-        oos_vs_insample_degradation=_float_or_none(
-            oos_evidence.get("oos_vs_insample_degradation")
-        ),
+        oos_vs_insample_degradation=_float_or_none(oos_evidence.get("oos_vs_insample_degradation")),
         random_strategy_percentile=_float_or_none(
             random_evidence.get("dynamic_strategy_percentile")
         ),
@@ -617,18 +601,13 @@ def _candidate_veto_reasons(
         min_required_coverage = _float_or_none(
             (materiality_policy or {}).get("candidate_min_component_coverage")
         )
-        min_coverage = _float_or_none(
-            coverage_evidence.get("minimum_component_coverage")
-        )
+        min_coverage = _float_or_none(coverage_evidence.get("minimum_component_coverage"))
         min_avg_coverage = _float_or_none(
             coverage_evidence.get("minimum_average_component_coverage")
         )
         if min_required_coverage is not None and (
             (min_coverage is not None and min_coverage < min_required_coverage)
-            or (
-                min_avg_coverage is not None
-                and min_avg_coverage < min_required_coverage
-            )
+            or (min_avg_coverage is not None and min_avg_coverage < min_required_coverage)
         ):
             reasons.append("data_coverage_below_threshold")
         max_placeholder_share = _float_or_none(
@@ -666,9 +645,7 @@ def _candidate_veto_reasons(
     else:
         reasons.append("oos_evidence_missing")
 
-    random_evidence = _dict_value(
-        robustness_evidence.get("same_turnover_random_strategy")
-    )
+    random_evidence = _dict_value(robustness_evidence.get("same_turnover_random_strategy"))
     if random_evidence.get("available") is True:
         percentile = _float_or_none(random_evidence.get("dynamic_strategy_percentile"))
         min_percentile = _float_or_none(random_evidence.get("min_required_percentile"))
@@ -676,14 +653,10 @@ def _candidate_veto_reasons(
         path_count = _int_or_none(random_evidence.get("random_path_count"))
         max_beats_share = _float_or_none(random_evidence.get("max_random_beats_share"))
         beats_share = (
-            None
-            if beats_count is None or path_count in (None, 0)
-            else beats_count / path_count
+            None if beats_count is None or path_count in (None, 0) else beats_count / path_count
         )
         if (
-            percentile is not None
-            and min_percentile is not None
-            and percentile < min_percentile
+            percentile is not None and min_percentile is not None and percentile < min_percentile
         ) or (
             beats_share is not None
             and max_beats_share is not None
@@ -699,30 +672,18 @@ def _candidate_veto_reasons(
             reasons.append("signal_family_baseline_not_beaten")
     else:
         reasons.append("signal_family_baseline_missing")
-    architecture_evidence = _dict_value(
-        robustness_evidence.get("score_architecture_baseline")
-    )
+    architecture_evidence = _dict_value(robustness_evidence.get("score_architecture_baseline"))
     if architecture_evidence.get("available") is True:
-        if (
-            architecture_evidence.get(
-                "base_beats_best_score_architecture_baseline"
-            )
-            is False
-        ):
+        if architecture_evidence.get("base_beats_best_score_architecture_baseline") is False:
             reasons.append("score_architecture_baseline_not_beaten")
     else:
         reasons.append("score_architecture_baseline_missing")
     if trial.material_total_return_delta is True and (
-        trial.total_return_delta_vs_base is not None
-        and trial.total_return_delta_vs_base > 0
+        trial.total_return_delta_vs_base is not None and trial.total_return_delta_vs_base > 0
     ):
-        require_bootstrap = bool(
-            (materiality_policy or {}).get("candidate_require_bootstrap_ci")
-        )
+        require_bootstrap = bool((materiality_policy or {}).get("candidate_require_bootstrap_ci"))
         min_ci_lower = _float_or_none(
-            (materiality_policy or {}).get(
-                "candidate_min_bootstrap_ci_lower_total_return_delta"
-            )
+            (materiality_policy or {}).get("candidate_min_bootstrap_ci_lower_total_return_delta")
         )
         if (
             trial.return_delta_bootstrap_ci_low is None
@@ -730,10 +691,7 @@ def _candidate_veto_reasons(
         ):
             if require_bootstrap:
                 reasons.append("statistical_evidence_missing")
-        elif (
-            min_ci_lower is not None
-            and trial.return_delta_bootstrap_ci_low < min_ci_lower
-        ):
+        elif min_ci_lower is not None and trial.return_delta_bootstrap_ci_low < min_ci_lower:
             reasons.append("statistical_bootstrap_ci_crosses_threshold")
     return tuple(dict.fromkeys(reasons))
 

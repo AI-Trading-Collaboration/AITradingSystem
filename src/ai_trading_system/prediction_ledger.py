@@ -208,8 +208,7 @@ def append_prediction_records(
         missing = set(PREDICTION_LEDGER_COLUMNS) - set(existing.columns)
         if missing:
             raise ValueError(
-                "existing prediction ledger is missing columns: "
-                f"{', '.join(sorted(missing))}"
+                "existing prediction ledger is missing columns: " f"{', '.join(sorted(missing))}"
             )
         duplicate_ids = set(existing["prediction_id"]) & set(new_frame["prediction_id"])
         if duplicate_ids:
@@ -572,9 +571,7 @@ def write_prediction_outcomes_csv(
                 "existing prediction outcome file is missing columns: "
                 f"{', '.join(sorted(missing))}"
             )
-        current_keys = set(
-            zip(new_frame["prediction_id"], new_frame["horizon_days"], strict=True)
-        )
+        current_keys = set(zip(new_frame["prediction_id"], new_frame["horizon_days"], strict=True))
         existing = existing.loc[
             [
                 (prediction_id, horizon) not in current_keys
@@ -966,9 +963,7 @@ def _group_table(
     for row in rows:
         groups.setdefault(str(row.get(group_column, "unknown")), []).append(row)
     preferred_benchmarks = [
-        ticker
-        for ticker in ("SPY", "QQQ", "SMH", "SOXX")
-        if ticker in benchmark_tickers
+        ticker for ticker in ("SPY", "QQQ", "SMH", "SOXX") if ticker in benchmark_tickers
     ]
     lines = [
         (

@@ -165,8 +165,7 @@ def build_sec_fundamental_metrics_report(
     all_source_metrics = [*metrics.metrics, *metrics.supporting_metrics]
     source_metrics_by_id = {metric.metric_id: metric for metric in all_source_metrics}
     derived_metrics_by_id = {
-        derived_metric.metric_id: derived_metric
-        for derived_metric in metrics.derived_metrics
+        derived_metric.metric_id: derived_metric for derived_metric in metrics.derived_metrics
     }
 
     for company in companies.companies:
@@ -254,9 +253,7 @@ def load_sec_fundamental_metric_rows_csv(input_path: Path) -> tuple[SecFundament
     frame = pd.read_csv(input_path)
     missing_columns = sorted(set(SEC_FUNDAMENTAL_METRIC_COLUMNS) - set(frame.columns))
     if missing_columns:
-        raise ValueError(
-            f"SEC 基本面指标 CSV 缺少字段：{', '.join(missing_columns)}。"
-        )
+        raise ValueError(f"SEC 基本面指标 CSV 缺少字段：{', '.join(missing_columns)}。")
     records = [
         {str(key): value for key, value in record.items()}
         for record in frame.to_dict(orient="records")
@@ -750,9 +747,7 @@ def _metric_periods_for_company(
 ) -> list[PeriodType]:
     supported_periods = set(company.sec_metric_periods)
     return [
-        period_type
-        for period_type in metric.preferred_periods
-        if period_type in supported_periods
+        period_type for period_type in metric.preferred_periods if period_type in supported_periods
     ]
 
 
@@ -877,9 +872,7 @@ def _derive_metric_row(
         return None
 
     minuend_row = extracted_rows.get((derived_metric.minuend_metric_id, period_type))
-    subtrahend_row = extracted_rows.get(
-        (derived_metric.subtrahend_metric_id, period_type)
-    )
+    subtrahend_row = extracted_rows.get((derived_metric.subtrahend_metric_id, period_type))
     if minuend_row is None or subtrahend_row is None:
         return None
     if not _rows_can_derive_difference(minuend_row, subtrahend_row):
@@ -900,8 +893,7 @@ def _derive_metric_row(
         form=minuend_row.form,
         taxonomy="derived",
         concept=(
-            "derived:"
-            f"{derived_metric.minuend_metric_id}-{derived_metric.subtrahend_metric_id}"
+            "derived:" f"{derived_metric.minuend_metric_id}-{derived_metric.subtrahend_metric_id}"
         ),
         unit=minuend_row.unit,
         value=minuend_row.value - subtrahend_row.value,
@@ -1106,8 +1098,7 @@ def _row_from_record(
     period_type_value = _string_record_value(record, "period_type")
     if period_type_value not in {"annual", "quarterly"}:
         raise ValueError(
-            "SEC 基本面指标 CSV period_type 必须是 annual 或 quarterly："
-            f"{period_type_value}"
+            "SEC 基本面指标 CSV period_type 必须是 annual 或 quarterly：" f"{period_type_value}"
         )
     value = _float_record_value(record, "value")
     if value is None:

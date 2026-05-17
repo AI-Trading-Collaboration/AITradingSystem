@@ -80,9 +80,7 @@ def test_run_manifest_checksums_and_mirrors_without_payload_text(
     canonical_metadata = paths.metadata_dir / "daily_ops_run_metadata_2026-05-06.json"
     canonical_task_dashboard = paths.reports_dir / "daily_task_dashboard_2026-05-06.html"
     canonical_task_dashboard_json = paths.reports_dir / "daily_task_dashboard_2026-05-06.json"
-    canonical_decision_summary_json = (
-        paths.reports_dir / "daily_decision_summary_2026-05-06.json"
-    )
+    canonical_decision_summary_json = paths.reports_dir / "daily_decision_summary_2026-05-06.json"
     canonical_order_intent_candidates_json = (
         paths.reports_dir / "order_intent_candidates_2026-05-06.json"
     )
@@ -136,24 +134,22 @@ def test_run_manifest_checksums_and_mirrors_without_payload_text(
     assert (paths.reports_dir / "daily_score_2026-05-06.md").exists()
     assert (paths.traces_dir / "daily_score_2026-05-06_trace.json").exists()
     assert legacy_daily_ops.read_text(encoding="utf-8") == "# canonical run\n"
-    assert (
-        legacy_reports_dir / "daily_task_dashboard_2026-05-06.html"
-    ).read_text(encoding="utf-8") == "<html>daily task dashboard</html>\n"
-    assert (
-        legacy_reports_dir / "daily_task_dashboard_2026-05-06.json"
-    ).read_text(encoding="utf-8") == '{"production_effect": "none"}\n'
-    assert (
-        legacy_reports_dir / "daily_decision_summary_2026-05-06.json"
-    ).read_text(encoding="utf-8") == '{"report_type": "daily_decision_summary"}\n'
-    assert (
-        legacy_reports_dir / "order_intent_candidates_2026-05-06.json"
-    ).read_text(encoding="utf-8") == '{"report_type": "order_intent_candidates"}\n'
+    assert (legacy_reports_dir / "daily_task_dashboard_2026-05-06.html").read_text(
+        encoding="utf-8"
+    ) == "<html>daily task dashboard</html>\n"
+    assert (legacy_reports_dir / "daily_task_dashboard_2026-05-06.json").read_text(
+        encoding="utf-8"
+    ) == '{"production_effect": "none"}\n'
+    assert (legacy_reports_dir / "daily_decision_summary_2026-05-06.json").read_text(
+        encoding="utf-8"
+    ) == '{"report_type": "daily_decision_summary"}\n'
+    assert (legacy_reports_dir / "order_intent_candidates_2026-05-06.json").read_text(
+        encoding="utf-8"
+    ) == '{"report_type": "order_intent_candidates"}\n'
     manifest_text = manifest_path.read_text(encoding="utf-8")
     manifest = json.loads(manifest_text)
     expected_sha = hashlib.sha256(input_path.read_bytes()).hexdigest()
-    input_records = {
-        record["path"]: record for record in manifest["input_artifacts"]
-    }
+    input_records = {record["path"]: record for record in manifest["input_artifacts"]}
     assert input_records[str(input_path)]["sha256"] == expected_sha
     assert manifest["run_id"] == "daily_ops_run:2026-05-06:test"
     assert manifest["execution_timestamp_utc"] == "20260506T210500Z"

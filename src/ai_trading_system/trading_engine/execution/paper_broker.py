@@ -119,9 +119,7 @@ class PaperBroker:
         market_snapshot: MarketSnapshot | list[MarketSnapshot],
     ) -> list[ExecutionReport]:
         snapshots = (
-            [market_snapshot]
-            if isinstance(market_snapshot, MarketSnapshot)
-            else market_snapshot
+            [market_snapshot] if isinstance(market_snapshot, MarketSnapshot) else market_snapshot
         )
         snapshot_by_symbol = {snapshot.symbol: snapshot for snapshot in snapshots}
         reports: list[ExecutionReport] = []

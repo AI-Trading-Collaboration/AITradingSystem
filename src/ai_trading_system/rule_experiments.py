@@ -9,9 +9,7 @@ from typing import Any
 from ai_trading_system.config import PROJECT_ROOT
 
 SCHEMA_VERSION = 1
-DEFAULT_RULE_EXPERIMENT_LEDGER_PATH = (
-    PROJECT_ROOT / "data" / "processed" / "rule_experiments.json"
-)
+DEFAULT_RULE_EXPERIMENT_LEDGER_PATH = PROJECT_ROOT / "data" / "processed" / "rule_experiments.json"
 DEFAULT_REPLAY_START = date(2022, 12, 1)
 
 

@@ -7,9 +7,18 @@ from pathlib import Path
 from typing import Any
 
 from ai_trading_system.trading_engine.reports.shadow_parameter_impact import (
+    ALLOWED_IMPACT_STATUSES,
     build_shadow_parameter_impact_payload,
     render_shadow_parameter_impact_report,
     write_shadow_parameter_impact_report,
+)
+
+DANGEROUS_OUTPUT_TERMS = (
+    "PROMOTE_TO_PRODUCTION",
+    "READY_FOR_LIVE",
+    "SHOULD_TRADE",
+    "APPROVED_FOR_TRADING",
+    "APPROVED",
 )
 
 
@@ -44,7 +53,11 @@ def test_shadow_parameter_impact_missing_shadow_sample_is_insufficient(
 
     assert payload["report_type"] == "shadow_parameter_impact"
     assert payload["production_effect"] == "none"
+    assert payload["policy_id"] == "shadow_parameter_impact_policy"
+    assert payload["policy_version"] == 1
+    assert payload["thresholds_snapshot"]["minimum_shadow_sample_count"] == 7
     assert payload["impact_status"] == "INSUFFICIENT_DATA"
+    assert payload["impact_status"] in ALLOWED_IMPACT_STATUSES
     assert payload["evaluation_scope"]["observe_only"] is True
     assert payload["safety_boundary"]["reads_broker_api_key"] is False
     assert payload["summary"]["sample_counts"] == {
@@ -55,9 +68,13 @@ def test_shadow_parameter_impact_missing_shadow_sample_is_insufficient(
     assert "insufficient_shadow_sample" in payload["impact_gate"]["blocking_reasons"]
     assert Path(payload["outputs"]["json"]).exists()
     assert Path(payload["outputs"]["markdown"]).exists()
+    json_text = Path(payload["outputs"]["json"]).read_text(encoding="utf-8")
     markdown = Path(payload["outputs"]["markdown"]).read_text(encoding="utf-8")
     assert "Shadow Parameter Impact Evaluation" in markdown
+    assert "Policy：shadow_parameter_impact_policy v1" in markdown
+    assert "minimum_shadow_sample_count" in markdown
     assert "production_effect=none" in markdown
+    _assert_no_dangerous_terms(json_text, markdown)
 
 
 def test_shadow_parameter_impact_blocks_high_synthetic_snapshot_ratio(
@@ -97,7 +114,8 @@ def test_shadow_parameter_impact_blocks_high_synthetic_snapshot_ratio(
         selected_window_days=7,
     )
 
-    assert payload["impact_status"] == "SHADOW_UNRELIABLE"
+    assert payload["impact_status"] == "LOW_DATA_QUALITY"
+    assert payload["impact_status"] in ALLOWED_IMPACT_STATUSES
     assert payload["impact_gate"]["blocked"] is True
     assert "synthetic_snapshot_ratio_too_high" in payload["impact_gate"]["blocking_reasons"]
     assert "low_data_quality" in payload["impact_gate"]["blocking_reasons"]
@@ -144,11 +162,64 @@ def test_shadow_parameter_impact_warns_when_continuous_replay_missing(
     )
 
     assert payload["impact_status"] == "SHADOW_PROMISING_BUT_LIMITED"
-    assert "daily_independent_only" in payload["warning_codes"]
-    assert "daily_independent_only" in payload["impact_gate"]["warnings"]
+    assert payload["impact_status"] in ALLOWED_IMPACT_STATUSES
+    assert "continuous_replay_missing" in payload["warning_codes"]
+    assert "continuous_replay_missing" in payload["impact_gate"]["warnings"]
     assert payload["continuous_replay"]["available"] is False
+    _assert_gate_explanations_cover_codes(payload["impact_gate"])
     markdown = render_shadow_parameter_impact_report(payload)
-    assert "daily_independent_only" in markdown
+    assert "continuous_replay_missing" in markdown
+
+
+def test_daily_independent_replay_is_not_treated_as_continuous_portfolio(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    as_of = date(2026, 5, 17)
+    for offset in range(7):
+        current = date.fromordinal(as_of.toordinal() - offset)
+        _write_paper_day(
+            reports_dir,
+            current,
+            [
+                _candidate_record(
+                    current,
+                    "production",
+                    generated=True,
+                    filled=True,
+                    unrealized_pnl=1.0,
+                    market_snapshot_source="historical_ohlc",
+                ),
+                _candidate_record(
+                    current,
+                    "shadow",
+                    generated=True,
+                    filled=True,
+                    unrealized_pnl=2.0,
+                    market_snapshot_source="historical_ohlc",
+                ),
+            ],
+        )
+    replay_path = reports_dir / "paper_trading_replay_2026-05-11_2026-05-17.json"
+    _write_continuous_replay(replay_path, replay_mode="daily_independent")
+
+    payload = build_shadow_parameter_impact_payload(
+        as_of=as_of,
+        reports_dir=reports_dir,
+        replay_json_path=replay_path,
+        selected_window_days=7,
+    )
+
+    replay = payload["continuous_replay"]
+    assert replay["available"] is False
+    assert replay["replay_mode"] == "daily_independent"
+    assert replay["source_artifact"]["path"] == str(replay_path)
+    assert replay["source_artifact"]["mode"] == "daily_independent"
+    assert replay["source_artifact"]["used_for_comparison"] is False
+    assert replay["profiles"]["shadow"]["available"] is False
+    assert replay["profiles"]["shadow"]["final_equity"] is None
+    assert "continuous_replay_missing" in payload["warning_codes"]
+    assert "daily_independent_only" in payload["warning_codes"]
 
 
 def test_shadow_pnl_better_but_sample_insufficient_has_no_promote_semantics(
@@ -181,7 +252,7 @@ def test_shadow_pnl_better_but_sample_insufficient_has_no_promote_semantics(
             )
         _write_paper_day(reports_dir, current, records)
 
-    payload = build_shadow_parameter_impact_payload(
+    payload = write_shadow_parameter_impact_report(
         as_of=as_of,
         reports_dir=reports_dir,
         selected_window_days=7,
@@ -189,9 +260,11 @@ def test_shadow_pnl_better_but_sample_insufficient_has_no_promote_semantics(
 
     assert payload["profile_comparison"]["shadow"]["paper_pnl_total"] == 50.0
     assert payload["impact_status"] == "INSUFFICIENT_DATA"
+    assert payload["impact_status"] in ALLOWED_IMPACT_STATUSES
     assert "insufficient_shadow_sample" in payload["impact_gate"]["blocking_reasons"]
-    forbidden = {"PROMOTE_TO_PRODUCTION", "READY_FOR_LIVE", "SHOULD_TRADE", "APPROVED"}
-    assert not forbidden.intersection(_all_string_values(payload))
+    json_text = Path(payload["outputs"]["json"]).read_text(encoding="utf-8")
+    markdown = Path(payload["outputs"]["markdown"]).read_text(encoding="utf-8")
+    _assert_no_dangerous_terms(json_text, markdown)
 
 
 def test_shadow_parameter_impact_is_read_only_and_does_not_use_broker(
@@ -265,6 +338,7 @@ def test_shadow_parameter_impact_is_read_only_and_does_not_use_broker(
     )
 
     assert payload["production_effect"] == "none"
+    assert payload["impact_status"] in ALLOWED_IMPACT_STATUSES
     assert payload["safety_boundary"] == {
         "reads_broker_api_key": False,
         "calls_real_broker": False,
@@ -277,7 +351,16 @@ def test_shadow_parameter_impact_is_read_only_and_does_not_use_broker(
         "paper_pnl_is_launch_evidence": False,
     }
     assert payload["continuous_replay"]["available"] is True
+    assert payload["continuous_replay"]["source_artifact"] == {
+        "exists": True,
+        "path": str(replay_path),
+        "mode": "continuous_portfolio",
+        "date_range": {"start": "2026-05-11", "end": "2026-05-17"},
+        "used_for_comparison": True,
+    }
+    assert "continuous_replay_missing" not in payload["warning_codes"]
     assert "daily_independent_only" not in payload["warning_codes"]
+    _assert_gate_explanations_cover_codes(payload["impact_gate"])
 
 
 def _candidate_record(
@@ -414,7 +497,11 @@ def _write_signal_quality(reports_dir: Path, as_of: date) -> None:
     )
 
 
-def _write_continuous_replay(path: Path) -> None:
+def _write_continuous_replay(
+    path: Path,
+    *,
+    replay_mode: str = "continuous_portfolio",
+) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps(
@@ -425,9 +512,9 @@ def _write_continuous_replay(path: Path) -> None:
                 "start": "2026-05-11",
                 "end": "2026-05-17",
                 "production_effect": "none",
-                "replay_mode": "continuous_portfolio",
-                "portfolio_carry_forward": True,
-                "continuous_metrics_available": True,
+                "replay_mode": replay_mode,
+                "portfolio_carry_forward": replay_mode == "continuous_portfolio",
+                "continuous_metrics_available": replay_mode == "continuous_portfolio",
                 "profile_results": {
                     "production": {
                         "final_equity": 100007.0,
@@ -448,14 +535,19 @@ def _write_continuous_replay(path: Path) -> None:
     )
 
 
-def _all_string_values(payload: object) -> set[str]:
-    values: set[str] = set()
-    if isinstance(payload, dict):
-        for value in payload.values():
-            values.update(_all_string_values(value))
-    elif isinstance(payload, list):
-        for item in payload:
-            values.update(_all_string_values(item))
-    elif isinstance(payload, str):
-        values.add(payload)
-    return values
+def _assert_no_dangerous_terms(*texts: str) -> None:
+    combined = "\n".join(texts)
+    for term in DANGEROUS_OUTPUT_TERMS:
+        assert term not in combined
+
+
+def _assert_gate_explanations_cover_codes(gate: dict[str, Any]) -> None:
+    reason_explanations = gate["reason_explanations"]
+    warning_explanations = gate["warning_explanations"]
+    for reason in gate["blocking_reasons"]:
+        assert reason in reason_explanations
+        assert reason_explanations[reason]
+    for warning in gate["warnings"]:
+        assert warning in reason_explanations
+        assert warning in warning_explanations
+        assert warning_explanations[warning]

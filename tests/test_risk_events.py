@@ -199,9 +199,7 @@ def test_watch_risk_event_occurrence_requires_review_not_scoring(
     review_report = build_risk_event_occurrence_review_report(validation_report)
 
     assert validation_report.passed is True
-    assert "watch_risk_event_not_auto_scored" in {
-        issue.code for issue in validation_report.issues
-    }
+    assert "watch_risk_event_not_auto_scored" in {issue.code for issue in validation_report.issues}
     assert review_report.score_eligible_active_items == ()
     assert review_report.items[0].health == "WATCH"
     assert review_report.items[0].score_eligible is False
@@ -232,9 +230,7 @@ resolution_reason: ""
     markdown = render_risk_event_occurrence_review_report(review_report)
     item = review_report.items[0]
 
-    assert "risk_event_occurrence_expired" in {
-        issue.code for issue in validation_report.issues
-    }
+    assert "risk_event_occurrence_expired" in {issue.code for issue in validation_report.issues}
     assert item.lifecycle_state == "expired"
     assert item.dedup_group == "export_control_2026_may"
     assert item.used_in_gate is True

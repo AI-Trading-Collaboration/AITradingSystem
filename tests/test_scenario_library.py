@@ -68,9 +68,7 @@ def test_scenario_library_rejects_probability_forecasts(tmp_path: Path) -> None:
     )
 
     assert report.passed is False
-    assert "scenario_probability_forecast_not_allowed" in {
-        issue.code for issue in report.issues
-    }
+    assert "scenario_probability_forecast_not_allowed" in {issue.code for issue in report.issues}
 
 
 def test_scenarios_cli_validates_and_looks_up(tmp_path: Path) -> None:

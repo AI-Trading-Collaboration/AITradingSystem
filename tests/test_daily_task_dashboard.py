@@ -19,6 +19,14 @@ from ai_trading_system.reports.daily_task_dashboard_view_model import (
     DailyTaskDashboardReport,
 )
 
+DANGEROUS_SHADOW_IMPACT_OUTPUT_TERMS = (
+    "PROMOTE_TO_PRODUCTION",
+    "READY_FOR_LIVE",
+    "SHOULD_TRADE",
+    "APPROVED_FOR_TRADING",
+    "APPROVED",
+)
+
 
 def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     tmp_path: Path,
@@ -563,6 +571,8 @@ def test_daily_task_dashboard_shadow_impact_card_is_read_only(
             "run_paper_trading_replay",
             "run_paper_trading_from_candidates",
             "ai_trading_system.trading_engine.brokers",
+            "ai_trading_system.shadow_iteration",
+            "shadow_parameter_promotion",
         )
         if any(token in name for token in blocked_module_tokens):
             raise AssertionError(f"dashboard must not import execution path: {name}")
@@ -586,6 +596,8 @@ def test_daily_task_dashboard_shadow_impact_card_is_read_only(
     assert "Shadow Impact" in html
     assert "shadow_parameter_impact_2026-05-14.md" in html
     assert "Distribution Snapshot" not in html
+    dashboard_json = json.dumps(payload, ensure_ascii=False, sort_keys=True)
+    _assert_no_shadow_impact_dangerous_terms(dashboard_json, html)
 
 
 def _write_daily_ops_metadata(tmp_path: Path, as_of: date) -> Path:
@@ -963,6 +975,16 @@ def _write_shadow_parameter_impact(tmp_path: Path, as_of: date) -> None:
                 "report_type": "shadow_parameter_impact",
                 "as_of": suffix,
                 "impact_status": "INSUFFICIENT_DATA",
+                "policy_id": "shadow_parameter_impact_policy",
+                "policy_version": 1,
+                "thresholds_snapshot": {
+                    "minimum_shadow_sample_count": 7,
+                    "minimum_production_baseline_count": 7,
+                    "minimum_filled_count_for_comparison": 3,
+                    "maximum_synthetic_snapshot_ratio": 0.25,
+                    "minimum_historical_ohlc_coverage": 0.7,
+                    "minimum_reconciliation_pass_ratio": 0.9,
+                },
                 "production_effect": "none",
                 "outputs": {
                     "json": str(tmp_path / f"shadow_parameter_impact_{suffix}.json"),
@@ -985,6 +1007,11 @@ def _write_shadow_parameter_impact(tmp_path: Path, as_of: date) -> None:
                     "blocking_reasons": ["insufficient_shadow_sample"],
                     "warnings": [],
                     "checks": [],
+                    "reason_explanations": {
+                        "insufficient_shadow_sample": "shadow profile 样本少于 policy floor。"
+                    },
+                    "warning_explanations": {},
+                    "explanation": "INSUFFICIENT_DATA：shadow profile 样本少于 policy floor。",
                     "production_effect": "none",
                 },
                 "profile_comparison": {
@@ -1022,7 +1049,18 @@ def _write_shadow_parameter_impact(tmp_path: Path, as_of: date) -> None:
                 },
                 "continuous_replay": {
                     "available": True,
+                    "path": str(tmp_path / "paper_trading_replay_2026-05-08_2026-05-14.json"),
+                    "start": "2026-05-08",
+                    "end": "2026-05-14",
                     "replay_mode": "continuous_portfolio",
+                    "portfolio_carry_forward": True,
+                    "source_artifact": {
+                        "exists": True,
+                        "path": str(tmp_path / "paper_trading_replay_2026-05-08_2026-05-14.json"),
+                        "mode": "continuous_portfolio",
+                        "date_range": {"start": "2026-05-08", "end": "2026-05-14"},
+                        "used_for_comparison": True,
+                    },
                     "profiles": {
                         "production": {
                             "available": True,
@@ -1047,6 +1085,12 @@ def _write_shadow_parameter_impact(tmp_path: Path, as_of: date) -> None:
         "# Shadow Parameter Impact Evaluation\n\n- production_effect=none\n",
         encoding="utf-8",
     )
+
+
+def _assert_no_shadow_impact_dangerous_terms(*texts: str) -> None:
+    combined = "\n".join(texts)
+    for term in DANGEROUS_SHADOW_IMPACT_OUTPUT_TERMS:
+        assert term not in combined
 
 
 def _write_order_intent_candidates(tmp_path: Path, as_of: date) -> None:

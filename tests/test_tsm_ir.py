@@ -229,15 +229,11 @@ def test_parse_tsm_ir_management_report_text_warns_when_capex_absent() -> None:
 
 
 def test_tsm_ir_official_url_validation() -> None:
-    assert is_official_tsm_ir_url(
-        "https://investor.tsmc.com/english/quarterly-results/2026/q1"
-    )
+    assert is_official_tsm_ir_url("https://investor.tsmc.com/english/quarterly-results/2026/q1")
     assert is_official_tsm_ir_url(
         "https://investor.tsmc.com/sites/ir/quarterly-results/2026/q1-management-report.pdf"
     )
-    assert not is_official_tsm_ir_url(
-        "https://example.com/english/quarterly-results/2026/q1"
-    )
+    assert not is_official_tsm_ir_url("https://example.com/english/quarterly-results/2026/q1")
 
     report = parse_tsm_ir_management_report_text(
         text=MANAGEMENT_REPORT_TEXT,
@@ -272,8 +268,7 @@ def test_extract_tsm_ir_management_report_pdf_text_writes_text_and_audit(
     report = extract_tsm_ir_pdf_text(
         input_path=input_path,
         source_url=(
-            "https://investor.tsmc.com/sites/ir/quarterly-results/2026/"
-            "q1-management-report.pdf"
+            "https://investor.tsmc.com/sites/ir/quarterly-results/2026/" "q1-management-report.pdf"
         ),
         output_path=output_path,
         extracted_at=extracted_at,
@@ -289,12 +284,8 @@ def test_extract_tsm_ir_management_report_pdf_text_writes_text_and_audit(
     assert report.page_count == 2
     assert report.character_count == len(expected_text)
     assert report.char_count == len(expected_text)
-    assert report.input_checksum_sha256 == hashlib.sha256(
-        b"%PDF-1.7 fake payload"
-    ).hexdigest()
-    assert report.text_checksum_sha256 == hashlib.sha256(
-        expected_text.encode("utf-8")
-    ).hexdigest()
+    assert report.input_checksum_sha256 == hashlib.sha256(b"%PDF-1.7 fake payload").hexdigest()
+    assert report.text_checksum_sha256 == hashlib.sha256(expected_text.encode("utf-8")).hexdigest()
     assert report.checksum_sha256 == hashlib.sha256(expected_text.encode("utf-8")).hexdigest()
     assert report.issues == ()
     assert opened_paths == [input_path]
@@ -538,8 +529,7 @@ def test_build_tsm_ir_quarterly_report_uses_fake_provider_resource() -> None:
 def test_http_provider_discovers_management_report_and_downloads_text() -> None:
     page_url = "https://investor.tsmc.com/english/quarterly-results/2026/q1"
     management_url = (
-        "https://investor.tsmc.com/english/quarterly-results/2026/q1/"
-        "management-report.txt"
+        "https://investor.tsmc.com/english/quarterly-results/2026/q1/" "management-report.txt"
     )
     page_html = f"""
     <html>
@@ -582,8 +572,7 @@ def test_http_provider_discovers_management_report_and_downloads_text() -> None:
 def test_http_provider_ignores_non_anchor_preconnect_links() -> None:
     page_url = "https://investor.tsmc.com/english/quarterly-results/2026/q1"
     management_url = (
-        "https://investor.tsmc.com/english/quarterly-results/2026/q1/"
-        "management-report.txt"
+        "https://investor.tsmc.com/english/quarterly-results/2026/q1/" "management-report.txt"
     )
     page_html = f"""
     <html>
@@ -623,8 +612,7 @@ def test_http_provider_ignores_non_anchor_preconnect_links() -> None:
 def test_http_provider_reports_binary_management_report_requires_extracted_text() -> None:
     page_url = "https://investor.tsmc.com/english/quarterly-results/2026/q1"
     management_url = (
-        "https://investor.tsmc.com/english/quarterly-results/2026/q1/"
-        "management-report"
+        "https://investor.tsmc.com/english/quarterly-results/2026/q1/" "management-report"
     )
     page_html = f'<a href="{management_url}">Management Report</a>'
     fake_requests = FakeRequestsModule(
@@ -660,8 +648,7 @@ def test_fundamentals_fetch_tsm_ir_quarterly_cli_downloads_text_csv_and_report(
 ) -> None:
     page_url = "https://investor.tsmc.com/english/quarterly-results/2026/q1"
     management_url = (
-        "https://investor.tsmc.com/english/quarterly-results/2026/q1/"
-        "management-report.txt"
+        "https://investor.tsmc.com/english/quarterly-results/2026/q1/" "management-report.txt"
     )
     page_html = f'<a href="{management_url}">Management Report</a>'
     fake_requests = FakeRequestsModule(

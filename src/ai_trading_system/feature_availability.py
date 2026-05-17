@@ -311,10 +311,7 @@ def render_feature_availability_section(
                 "",
                 "| 输入族 | 规则数 |",
                 "|---|---:|",
-                *[
-                    f"| {family} | {family_counts[family]} |"
-                    for family in sorted(family_counts)
-                ],
+                *[f"| {family} | {family_counts[family]} |" for family in sorted(family_counts)],
             ]
         )
     return "\n".join(lines)
@@ -490,11 +487,7 @@ def _coverage_issues(
     observed_sources: tuple[str, ...],
     required_sources: tuple[str, ...],
 ) -> tuple[FeatureAvailabilityIssue, ...]:
-    source_to_rule = {
-        source
-        for rule in rules
-        for source in rule.sources
-    }
+    source_to_rule = {source for rule in rules for source in rule.sources}
     issues: list[FeatureAvailabilityIssue] = []
     for source in sorted(set(observed_sources) - source_to_rule):
         issues.append(
@@ -521,11 +514,7 @@ def _source_check_issues(
     rules: tuple[FeatureAvailabilityRule, ...],
     checks: tuple[FeatureAvailabilitySourceCheck, ...],
 ) -> tuple[FeatureAvailabilityIssue, ...]:
-    rule_by_source = {
-        source: rule
-        for rule in rules
-        for source in rule.sources
-    }
+    rule_by_source = {source: rule for rule in rules for source in rule.sources}
     issues: list[FeatureAvailabilityIssue] = []
     for check in checks:
         rule = rule_by_source.get(check.source)
@@ -552,16 +541,12 @@ def _source_check_issues(
                         code="feature_source_available_time_column_missing",
                         rule_id=rule.rule_id,
                         source=check.source,
-                        message=(
-                            "输入缺少显式 available_time 字段，不能进入 A/B 级主结论。"
-                        ),
+                        message=("输入缺少显式 available_time 字段，不能进入 A/B 级主结论。"),
                     )
                 )
         if check.missing_available_time_count:
             severity = (
-                "ERROR"
-                if rule.missing_available_time_policy == "exclude_from_a_b"
-                else "WARNING"
+                "ERROR" if rule.missing_available_time_policy == "exclude_from_a_b" else "WARNING"
             )
             issues.append(
                 FeatureAvailabilityIssue(

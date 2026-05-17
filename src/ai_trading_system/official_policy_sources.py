@@ -279,10 +279,7 @@ def fetch_official_policy_sources(
                     severity=OfficialPolicyIssueSeverity.ERROR,
                     code="official_policy_source_download_failed",
                     source_id=request.source_id,
-                    message=(
-                        f"{request.source_id} 下载失败："
-                        f"{type(exc).__name__}: {exc}"
-                    ),
+                    message=(f"{request.source_id} 下载失败：" f"{type(exc).__name__}: {exc}"),
                 )
             )
             continue
@@ -389,8 +386,8 @@ def build_official_policy_source_requests(
         _federal_register_request(
             source_id="official_bis_federal_register_notices",
             term=(
-                "\"Bureau of Industry and Security\" OR \"Entity List\" OR "
-                "\"Unverified List\" OR \"Export Administration Regulations\""
+                '"Bureau of Industry and Security" OR "Entity List" OR '
+                '"Unverified List" OR "Export Administration Regulations"'
             ),
             as_of=as_of,
             since=since,
@@ -582,9 +579,7 @@ def render_official_policy_fetch_report(report: OfficialPolicySourceFetchReport)
             )
         if len(report.candidates) > 50:
             hidden_count = len(report.candidates) - 50
-            lines.append(
-                f"| ... | ... | ... | 另有 {hidden_count} 条候选 | ... | ... |"
-            )
+            lines.append(f"| ... | ... | ... | 另有 {hidden_count} 条候选 | ... | ... |")
     else:
         lines.append("未生成关键词命中的待复核候选。")
 
@@ -623,12 +618,9 @@ def load_official_policy_candidates_csv(input_path: Path) -> tuple[OfficialPolic
         reader = csv.DictReader(handle)
         missing_columns = set(OFFICIAL_POLICY_CANDIDATE_COLUMNS) - set(reader.fieldnames or ())
         if missing_columns:
-            raise ValueError(
-                "官方候选 CSV 缺少必需字段：" + ", ".join(sorted(missing_columns))
-            )
+            raise ValueError("官方候选 CSV 缺少必需字段：" + ", ".join(sorted(missing_columns)))
         return tuple(
-            _candidate_from_row(row, row_number=index)
-            for index, row in enumerate(reader, 2)
+            _candidate_from_row(row, row_number=index) for index, row in enumerate(reader, 2)
         )
 
 
@@ -1069,10 +1061,13 @@ def _matched_topics(text: str) -> tuple[str, ...]:
 def _contains_keyword(lowered_text: str, keyword: str) -> bool:
     normalized = keyword.lower()
     if len(normalized) <= 3 and normalized.replace(" ", "").isalnum():
-        return re.search(
-            rf"(?<![a-z0-9]){re.escape(normalized)}(?![a-z0-9])",
-            lowered_text,
-        ) is not None
+        return (
+            re.search(
+                rf"(?<![a-z0-9]){re.escape(normalized)}(?![a-z0-9])",
+                lowered_text,
+            )
+            is not None
+        )
     return normalized in lowered_text
 
 
@@ -1338,8 +1333,7 @@ def _redact_api_key(url: str) -> str:
     parsed = urllib.parse.urlsplit(url)
     pairs = urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
     redacted = [
-        (key, "***" if key.lower() == "api_key" and value else value)
-        for key, value in pairs
+        (key, "***" if key.lower() == "api_key" and value else value) for key, value in pairs
     ]
     return urllib.parse.urlunsplit(
         (

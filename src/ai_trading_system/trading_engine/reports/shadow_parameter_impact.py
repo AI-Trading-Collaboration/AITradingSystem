@@ -23,12 +23,14 @@ STATUS_OBSERVE_ONLY = "OBSERVE_ONLY"
 STATUS_SHADOW_PROMISING_BUT_LIMITED = "SHADOW_PROMISING_BUT_LIMITED"
 STATUS_NO_CLEAR_IMPROVEMENT = "NO_CLEAR_IMPROVEMENT"
 STATUS_SHADOW_UNRELIABLE = "SHADOW_UNRELIABLE"
+STATUS_LOW_DATA_QUALITY = "LOW_DATA_QUALITY"
 ALLOWED_IMPACT_STATUSES = {
     STATUS_INSUFFICIENT_DATA,
     STATUS_OBSERVE_ONLY,
     STATUS_SHADOW_PROMISING_BUT_LIMITED,
     STATUS_NO_CLEAR_IMPROVEMENT,
     STATUS_SHADOW_UNRELIABLE,
+    STATUS_LOW_DATA_QUALITY,
 }
 
 REASON_INSUFFICIENT_SHADOW_SAMPLE = "insufficient_shadow_sample"
@@ -37,6 +39,7 @@ REASON_LOW_DATA_QUALITY = "low_data_quality"
 REASON_SYNTHETIC_SNAPSHOT_RATIO_TOO_HIGH = "synthetic_snapshot_ratio_too_high"
 REASON_DAILY_INDEPENDENT_ONLY = "daily_independent_only"
 REASON_UNRELIABLE_RECONCILIATION = "unreliable_reconciliation"
+REASON_CONTINUOUS_REPLAY_MISSING = "continuous_replay_missing"
 REASON_EXPLANATIONS = {
     REASON_INSUFFICIENT_SHADOW_SAMPLE: "shadow profile 样本少于 policy floor。",
     REASON_INSUFFICIENT_PRODUCTION_BASELINE: "production baseline 样本少于 policy floor。",
@@ -45,9 +48,16 @@ REASON_EXPLANATIONS = {
         "synthetic limit price snapshot 占比高于 policy 上限。"
     ),
     REASON_DAILY_INDEPENDENT_ONLY: (
-        "未找到 continuous-portfolio replay；只能观察逐日独立 paper summary。"
+        "找到的 replay 不是 continuous portfolio 或没有 portfolio carry-forward，"
+        "不能当作连续组合结果。"
     ),
     REASON_UNRELIABLE_RECONCILIATION: "portfolio reconciliation PASS 比例低于 policy floor。",
+    REASON_CONTINUOUS_REPLAY_MISSING: (
+        "未找到可用于 shadow impact comparison 的 continuous-portfolio replay artifact。"
+    ),
+    "paper_only_simulation": (
+        "shadow impact evaluation 只解释 paper-only 模拟和只读报告，不是实盘或上线依据。"
+    ),
 }
 
 
@@ -131,9 +141,20 @@ def build_shadow_parameter_impact_payload(
     policy_report = _policy_report(policy, policy_path)
     warnings = _impact_warnings(replay_payload, replay_mode)
     warning_codes = [str(record["code"]) for record in warnings]
+    warning_explanations = {str(record["code"]): str(record["message"]) for record in warnings}
     for window in windows.values():
         gate = _mapping(window.get("impact_gate"))
+        blocking_reasons = _strings(gate.get("blocking_reasons"))
         gate["warnings"] = warning_codes
+        gate["warning_explanations"] = warning_explanations
+        reason_explanations = dict(_mapping(gate.get("reason_explanations")))
+        reason_explanations.update(warning_explanations)
+        gate["reason_explanations"] = reason_explanations
+        gate["explanation"] = _gate_explanation(
+            str(gate.get("status", STATUS_INSUFFICIENT_DATA)),
+            blocking_reasons,
+            warning_codes,
+        )
 
     return {
         "schema_version": SHADOW_PARAMETER_IMPACT_SCHEMA_VERSION,
@@ -239,6 +260,8 @@ def render_shadow_parameter_impact_report(payload: dict[str, Any]) -> str:
     production = _mapping(comparison.get("production"))
     shadow = _mapping(comparison.get("shadow"))
     continuous = _mapping(payload.get("continuous_replay"))
+    replay_source = _mapping(continuous.get("source_artifact"))
+    replay_date_range = _mapping(replay_source.get("date_range"))
     lines = [
         "# Shadow Parameter Impact Evaluation",
         "",
@@ -322,6 +345,13 @@ def render_shadow_parameter_impact_report(payload: dict[str, Any]) -> str:
         "",
         f"- available：{continuous.get('available', False)}",
         f"- replay_mode：{continuous.get('replay_mode', 'daily_independent')}",
+        f"- artifact_path：{replay_source.get('path') or continuous.get('path') or 'missing'}",
+        (
+            "- date_range："
+            f"{replay_date_range.get('start') or continuous.get('start') or 'missing'}"
+            " to "
+            f"{replay_date_range.get('end') or continuous.get('end') or 'missing'}"
+        ),
         f"- final_equity production/shadow：{_continuous_metric_pair(continuous, 'final_equity')}",
         (
             "- max_drawdown production/shadow："
@@ -490,8 +520,7 @@ def _build_window_evaluation(
         )
 
     profile_comparison = {
-        profile: _profile_summary(profile_stats)
-        for profile, profile_stats in stats.items()
+        profile: _profile_summary(profile_stats) for profile, profile_stats in stats.items()
     }
     continuous_replay = _continuous_replay_summary(replay_payload, profile_comparison)
     gate = _impact_gate(
@@ -500,6 +529,8 @@ def _build_window_evaluation(
         policy=policy,
     )
     impact_status = gate["status"]
+    if impact_status not in ALLOWED_IMPACT_STATUSES:
+        raise ValueError(f"unsupported shadow impact status: {impact_status}")
     summary = _impact_summary(
         profile_comparison=profile_comparison,
         impact_status=impact_status,
@@ -908,19 +939,21 @@ def _impact_gate(
     ]
     if REASON_SYNTHETIC_SNAPSHOT_RATIO_TOO_HIGH in blocking_reasons:
         blocking_reasons.append(REASON_LOW_DATA_QUALITY)
-    warnings: list[str] = []
-    if not continuous_replay.get("available"):
-        warnings.append(REASON_DAILY_INDEPENDENT_ONLY)
+    warnings = _continuous_replay_warning_codes(continuous_replay)
     status = _impact_status(
         production=production,
         shadow=shadow,
         blocking_reasons=blocking_reasons,
         continuous_replay=continuous_replay,
     )
-    reason_explanations = {
+    blocking_explanations = {
         reason: REASON_EXPLANATIONS.get(reason, "shadow impact 判断受限。")
-        for reason in [*blocking_reasons, *warnings]
+        for reason in blocking_reasons
     }
+    warning_explanations = {
+        warning: REASON_EXPLANATIONS.get(warning, "shadow impact warning。") for warning in warnings
+    }
+    reason_explanations = {**blocking_explanations, **warning_explanations}
     return {
         "status": status,
         "blocked": bool(blocking_reasons),
@@ -928,6 +961,8 @@ def _impact_gate(
         "blocking_reasons": list(dict.fromkeys(blocking_reasons)),
         "warnings": warnings,
         "checks": checks,
+        "blocking_reason_explanations": blocking_explanations,
+        "warning_explanations": warning_explanations,
         "reason_explanations": reason_explanations,
         "explanation": _gate_explanation(status, blocking_reasons, warnings),
         "production_effect": "none",
@@ -951,6 +986,9 @@ def _impact_status(
     if reason_set & {
         REASON_LOW_DATA_QUALITY,
         REASON_SYNTHETIC_SNAPSHOT_RATIO_TOO_HIGH,
+    }:
+        return STATUS_LOW_DATA_QUALITY
+    if reason_set & {
         REASON_UNRELIABLE_RECONCILIATION,
     }:
         return STATUS_SHADOW_UNRELIABLE
@@ -1007,8 +1045,18 @@ def _continuous_replay_summary(
     if replay_payload.get("report_type") != "paper_trading_replay":
         return {
             "available": False,
+            "path": "",
+            "start": "",
+            "end": "",
             "replay_mode": "daily_independent",
             "portfolio_carry_forward": False,
+            "source_artifact": {
+                "exists": False,
+                "path": "",
+                "mode": "missing",
+                "date_range": {"start": "", "end": ""},
+                "used_for_comparison": False,
+            },
             "profiles": {
                 profile: {"available": False, "final_equity": None, "max_drawdown_pct": None}
                 for profile in SOURCE_PROFILES
@@ -1016,15 +1064,26 @@ def _continuous_replay_summary(
         }
     replay_mode = _string_value(replay_payload.get("replay_mode")) or "daily_independent"
     carry_forward = _bool_value(replay_payload.get("portfolio_carry_forward"))
-    profile_results = _replay_profile_results(replay_payload)
+    start = _string_value(replay_payload.get("start"))
+    end = _string_value(replay_payload.get("end"))
+    artifact_path = _replay_source_path(replay_payload)
+    used_for_comparison = replay_mode == "continuous_portfolio" and carry_forward
+    profile_results = _replay_profile_results(replay_payload) if used_for_comparison else {}
     return {
-        "available": replay_mode == "continuous_portfolio" and carry_forward,
-        "path": _string_value(_mapping(replay_payload.get("outputs")).get("json")),
-        "start": _string_value(replay_payload.get("start")),
-        "end": _string_value(replay_payload.get("end")),
+        "available": used_for_comparison,
+        "path": artifact_path,
+        "start": start,
+        "end": end,
         "replay_mode": replay_mode,
         "portfolio_carry_forward": carry_forward,
         "continuous_metrics_available": bool(replay_payload.get("continuous_metrics_available")),
+        "source_artifact": {
+            "exists": True,
+            "path": artifact_path,
+            "mode": replay_mode,
+            "date_range": {"start": start, "end": end},
+            "used_for_comparison": used_for_comparison,
+        },
         "profiles": {
             profile: profile_results.get(
                 profile,
@@ -1041,6 +1100,14 @@ def _continuous_replay_summary(
             for profile in SOURCE_PROFILES
         },
     }
+
+
+def _replay_source_path(replay_payload: dict[str, Any]) -> str:
+    return (
+        _string_value(replay_payload.get("_source_artifact_path"))
+        or _string_value(_mapping(replay_payload.get("outputs")).get("json"))
+        or _string_value(replay_payload.get("path"))
+    )
 
 
 def _replay_profile_results(payload: dict[str, Any]) -> dict[str, dict[str, Any]]:
@@ -1115,10 +1182,30 @@ def _impact_warnings(
     ):
         warnings.append(
             {
+                "code": REASON_CONTINUOUS_REPLAY_MISSING,
+                "message": REASON_EXPLANATIONS[REASON_CONTINUOUS_REPLAY_MISSING],
+            }
+        )
+    if replay_payload.get("report_type") == "paper_trading_replay" and (
+        replay_mode.get("replay_mode") != "continuous_portfolio"
+        or replay_mode.get("portfolio_carry_forward") is not True
+    ):
+        warnings.append(
+            {
                 "code": REASON_DAILY_INDEPENDENT_ONLY,
                 "message": REASON_EXPLANATIONS[REASON_DAILY_INDEPENDENT_ONLY],
             }
         )
+    return warnings
+
+
+def _continuous_replay_warning_codes(continuous_replay: dict[str, Any]) -> list[str]:
+    if continuous_replay.get("available"):
+        return []
+    source = _mapping(continuous_replay.get("source_artifact"))
+    warnings = [REASON_CONTINUOUS_REPLAY_MISSING]
+    if source.get("exists"):
+        warnings.append(REASON_DAILY_INDEPENDENT_ONLY)
     return warnings
 
 
@@ -1135,8 +1222,7 @@ def _gate_explanation(
         return f"{status}：{'；'.join(explanations)}"
     if status == STATUS_SHADOW_PROMISING_BUT_LIMITED:
         return (
-            "shadow 在 paper 观察中有非 PnL 维度支持，但仍是 observe-only，"
-            "不能改变 production。"
+            "shadow 在 paper 观察中有非 PnL 维度支持，但仍是 observe-only，" "不能改变 production。"
         )
     if warnings:
         return (
@@ -1328,7 +1414,7 @@ def _select_replay_payload(
     replay_json_path: Path | None,
 ) -> dict[str, Any]:
     if replay_json_path is not None:
-        return _read_json_object(replay_json_path)
+        return _with_replay_source_path(_read_json_object(replay_json_path), replay_json_path)
     candidates: list[tuple[date, datetime, str, Path, dict[str, Any]]] = []
     for path in reports_dir.glob("paper_trading_replay_*.json"):
         payload = _read_json_object(path)
@@ -1338,10 +1424,26 @@ def _select_replay_payload(
         if end_date is None or end_date > as_of:
             continue
         generated_at = _parse_iso_datetime(_string_value(payload.get("generated_at")))
-        candidates.append((end_date, generated_at, path.name, path, payload))
+        candidates.append(
+            (
+                end_date,
+                generated_at,
+                path.name,
+                path,
+                _with_replay_source_path(payload, path),
+            )
+        )
     if not candidates:
         return {}
     return max(candidates)[4]
+
+
+def _with_replay_source_path(payload: dict[str, Any], path: Path) -> dict[str, Any]:
+    if not payload:
+        return {}
+    marked = dict(payload)
+    marked["_source_artifact_path"] = str(path)
+    return marked
 
 
 def _paper_evaluation_mode(replay_payload: dict[str, Any]) -> dict[str, Any]:
@@ -1363,11 +1465,12 @@ def _optional_replay_source(
     if replay_json_path is None:
         return {
             "provided": False,
-            "path": "",
+            "path": _replay_source_path(replay_payload),
             "exists": bool(replay_payload),
             "report_type": _string_value(replay_payload.get("report_type")),
             "start": _string_value(replay_payload.get("start")),
             "end": _string_value(replay_payload.get("end")),
+            "mode": _string_value(replay_payload.get("replay_mode")),
         }
     return {
         "provided": True,
@@ -1376,6 +1479,7 @@ def _optional_replay_source(
         "report_type": _string_value(replay_payload.get("report_type")),
         "start": _string_value(replay_payload.get("start")),
         "end": _string_value(replay_payload.get("end")),
+        "mode": _string_value(replay_payload.get("replay_mode")),
     }
 
 

@@ -685,9 +685,7 @@ def build_daily_ops_plan(
                     )
                 ),
                 input_visibility=(
-                    "live_provider"
-                    if not skip_risk_event_openai_precheck
-                    else "derived_local"
+                    "live_provider" if not skip_risk_event_openai_precheck else "derived_local"
                 ),
             ),
             DailyOpsStep(
@@ -1307,9 +1305,7 @@ def render_daily_ops_run_report(
     failed = report.failed_step
     if failed is not None:
         failed_command = (
-            _escape_table(_join_command(failed.command))
-            if failed.command
-            else "PRECHECK"
+            _escape_table(_join_command(failed.command)) if failed.command else "PRECHECK"
         )
         lines.extend(
             [
@@ -1338,9 +1334,7 @@ def render_daily_ops_run_report(
         )
         outputs = "<br/>".join(f"`{path}`" for path in result.produced_paths)
         command = (
-            f"`{_escape_table(_join_command(result.command))}`"
-            if result.command
-            else "PRECHECK"
+            f"`{_escape_table(_join_command(result.command))}`" if result.command else "PRECHECK"
         )
         if result.status == "SKIPPED" and result.skip_reason:
             command = f"SKIPPED: {_escape_table(result.skip_reason)}"
@@ -1375,9 +1369,7 @@ def write_daily_ops_run_report(
     metadata_path: Path | None = None,
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    resolved_metadata_path = metadata_path or daily_ops_run_metadata_path_for_report(
-        output_path
-    )
+    resolved_metadata_path = metadata_path or daily_ops_run_metadata_path_for_report(output_path)
     output_path.write_text(
         render_daily_ops_run_report(report, metadata_path=resolved_metadata_path),
         encoding="utf-8",
@@ -1432,9 +1424,7 @@ def _daily_ops_run_metadata_to_json(metadata: DailyOpsRunMetadata) -> Mapping[st
         "visibility_cutoff": metadata.visibility_cutoff.isoformat(),
         "visibility_cutoff_source": metadata.visibility_cutoff_source,
         "input_visibility_status": metadata.input_visibility_status,
-        "input_visibility_issues": [
-            dict(issue) for issue in metadata.input_visibility_issues
-        ],
+        "input_visibility_issues": [dict(issue) for issue in metadata.input_visibility_issues],
         "git": dict(metadata.git),
         "config_artifacts": [
             _artifact_digest_to_json(artifact) for artifact in metadata.config_artifacts
@@ -1444,8 +1434,7 @@ def _daily_ops_run_metadata_to_json(metadata: DailyOpsRunMetadata) -> Mapping[st
         "commands": [dict(command) for command in metadata.commands],
         "step_results": [dict(result) for result in metadata.step_results],
         "pre_run_input_artifacts": [
-            _artifact_digest_to_json(artifact)
-            for artifact in metadata.pre_run_input_artifacts
+            _artifact_digest_to_json(artifact) for artifact in metadata.pre_run_input_artifacts
         ],
         "produced_artifacts": [
             _artifact_digest_to_json(artifact) for artifact in metadata.produced_artifacts
@@ -1612,9 +1601,7 @@ def _build_daily_ops_run_metadata(
     run_id: str | None = None,
     visibility_issues: tuple[DailyOpsInputVisibilityIssue, ...] = (),
 ) -> DailyOpsRunMetadata:
-    required_env = sorted(
-        {env_var for step in plan.steps for env_var in step.required_env_vars}
-    )
+    required_env = sorted({env_var for step in plan.steps for env_var in step.required_env_vars})
     produced_paths = tuple(
         dict.fromkeys(path for step in plan.steps for path in step.produced_paths)
     )

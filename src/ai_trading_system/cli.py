@@ -767,9 +767,7 @@ app.add_typer(llm_app, name="llm")
 app.add_typer(pit_snapshots_app, name="pit-snapshots")
 app.add_typer(docs_app, name="docs")
 console = Console()
-DEFAULT_RISK_EVENT_OCCURRENCES_PATH = (
-    PROJECT_ROOT / "data" / "external" / "risk_event_occurrences"
-)
+DEFAULT_RISK_EVENT_OCCURRENCES_PATH = PROJECT_ROOT / "data" / "external" / "risk_event_occurrences"
 DEFAULT_RISK_EVENT_PREREVIEW_QUEUE_PATH = (
     PROJECT_ROOT / "data" / "processed" / "risk_event_prereview_queue.json"
 )
@@ -802,6 +800,8 @@ def _load_llm_request_profile(
 
 def _coalesce_profile_value(value, profile_value):
     return profile_value if value is None else value
+
+
 DEFAULT_FMP_HISTORICAL_VALUATION_RAW_DIR = default_fmp_historical_valuation_raw_dir(
     PROJECT_ROOT / "data" / "raw"
 )
@@ -983,9 +983,7 @@ def fetch_fmp_forward_pit_command(
     """抓取 FMP forward-only PIT raw archive 和标准化 as-of 索引。"""
     fetch_date = _parse_date(as_of) if as_of else date.today()
     selected_tickers = (
-        _parse_csv_items(tickers)
-        if tickers
-        else load_universe().ai_chain.get("core_watchlist", [])
+        _parse_csv_items(tickers) if tickers else load_universe().ai_chain.get("core_watchlist", [])
     )
     fetch_report_output = output_path or default_fmp_forward_pit_fetch_report_path(
         PROJECT_ROOT / "outputs" / "reports",
@@ -1029,8 +1027,7 @@ def fetch_fmp_forward_pit_command(
             fetch_date,
             code="fmp_forward_pit_data_sources_failed",
             message=(
-                "FMP PIT 数据源目录加载失败："
-                f"{sanitize_fmp_forward_pit_error_message(exc)}"
+                "FMP PIT 数据源目录加载失败：" f"{sanitize_fmp_forward_pit_error_message(exc)}"
             ),
             captured_at=fetch_date,
             analyst_estimate_limit=analyst_estimate_limit,
@@ -1079,8 +1076,7 @@ def fetch_fmp_forward_pit_command(
             fetch_date,
             code="fmp_forward_pit_unhandled_fetch_error",
             message=(
-                "FMP PIT 抓取阶段发生未捕获异常："
-                f"{sanitize_fmp_forward_pit_error_message(exc)}"
+                "FMP PIT 抓取阶段发生未捕获异常：" f"{sanitize_fmp_forward_pit_error_message(exc)}"
             ),
             captured_at=fetch_date,
             analyst_estimate_limit=analyst_estimate_limit,
@@ -1202,8 +1198,7 @@ def _finish_fmp_forward_pit_failure(
     except Exception as exc:
         report_written = False
         console.print(
-            "[red]FMP PIT 失败报告写入失败："
-            f"{sanitize_fmp_forward_pit_error_message(exc)}[/red]"
+            "[red]FMP PIT 失败报告写入失败：" f"{sanitize_fmp_forward_pit_error_message(exc)}[/red]"
         )
 
     console.print(f"[red]FMP PIT 抓取状态：{report.status}[/red]")
@@ -1548,11 +1543,17 @@ def calibrate_decision_outcomes(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化日线利率 CSV 路径，用于复用数据质量门禁。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option(help="校准截止日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -1683,9 +1684,7 @@ def calibrate_decision_outcomes(
 
     sample_policy = load_feedback_sample_policy()
     decision_diagnostic_floor = sample_policy.decision_outcomes.diagnostic_floor
-    status_style = (
-        "green" if len(result.available_rows) >= decision_diagnostic_floor else "yellow"
-    )
+    status_style = "green" if len(result.available_rows) >= decision_diagnostic_floor else "yellow"
     console.print(
         f"[{status_style}]决策校准完成。可用 outcome："
         f"{len(result.available_rows)}[/{status_style}]"
@@ -1707,11 +1706,17 @@ def calibrate_prediction_outcomes(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化日线利率 CSV 路径，用于复用数据质量门禁。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option(help="校准截止日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -2191,7 +2196,10 @@ def evaluate_shadow_weight_performance_command(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "prices_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option(help="评估截止日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -2261,8 +2269,7 @@ def evaluate_shadow_weight_performance_command(
     if report.best_positive_profile is not None:
         best = report.best_positive_profile
         console.print(
-            "Return-leading profile："
-            f"{best.profile_id}（excess={best.excess_total_return:.2%}）"
+            "Return-leading profile：" f"{best.profile_id}（excess={best.excess_total_return:.2%}）"
         )
     elif report.best_profile is not None:
         console.print("当前没有正向 excess 的 shadow weight profile。")
@@ -2288,7 +2295,10 @@ def search_shadow_parameters_command(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "prices_daily.csv",
     search_space_path: Annotated[
         Path,
         typer.Option(help="shadow 参数搜索空间 YAML 路径。"),
@@ -2375,10 +2385,7 @@ def search_shadow_parameters_command(
                 f"{diagnostic.ineligibility_reason or 'not_eligible'}）"
             )
     if report.factorial_attribution is not None:
-        console.print(
-            "Factorial primary driver："
-            f"{report.factorial_attribution.primary_driver}"
-        )
+        console.print("Factorial primary driver：" f"{report.factorial_attribution.primary_driver}")
     console.print(f"输出目录：{paths['output_dir']}")
     console.print(f"搜索报告：{paths['search_report']}")
     console.print(f"Best profile YAML：{paths['best_profiles_yaml']}")
@@ -2565,10 +2572,7 @@ def evaluate_forward_shadow_command(
     console.print(f"Evaluated candidates：{len(report.evaluations)}")
     console.print(
         "Actions："
-        + ", ".join(
-            f"{action}={count}"
-            for action, count in report.action_counts.items()
-        )
+        + ", ".join(f"{action}={count}" for action, count in report.action_counts.items())
     )
     console.print(f"Registry：{paths['registry']}")
     console.print(f"报告：{paths['markdown_report']}")
@@ -3001,9 +3005,7 @@ def promote_rule_card_command(
     style = (
         "green"
         if report.status == "PASS"
-        else "yellow"
-        if report.validation_report.passed
-        else "red"
+        else "yellow" if report.validation_report.passed else "red"
     )
     console.print(f"[{style}]Rule promotion 状态：{report.status}[/{style}]")
     console.print(f"Rule cards：{report.output_path}")
@@ -3058,10 +3060,7 @@ def retire_rule_card_command(
     except (KeyError, ValueError) as exc:
         raise typer.BadParameter(str(exc)) from exc
     lifecycle_report_path = report_path or (
-        PROJECT_ROOT
-        / "outputs"
-        / "reports"
-        / f"rule_lifecycle_retire_{action_date.isoformat()}.md"
+        PROJECT_ROOT / "outputs" / "reports" / f"rule_lifecycle_retire_{action_date.isoformat()}.md"
     )
     lifecycle_report_path = write_rule_lifecycle_action_report(
         report,
@@ -3070,9 +3069,7 @@ def retire_rule_card_command(
     style = (
         "green"
         if report.status == "PASS"
-        else "yellow"
-        if report.validation_report.passed
-        else "red"
+        else "yellow" if report.validation_report.passed else "red"
     )
     console.print(f"[{style}]Rule retirement 状态：{report.status}[/{style}]")
     console.print(f"Rule cards：{report.output_path}")
@@ -3106,9 +3103,7 @@ def validate_benchmark_policy_command(
 ) -> None:
     """校验 AI proxy 与 benchmark policy registry。"""
     validation_date = _parse_date(as_of) if as_of else date.today()
-    benchmark_tickers = (
-        tuple(_parse_csv_items(benchmarks)) if benchmarks is not None else None
-    )
+    benchmark_tickers = tuple(_parse_csv_items(benchmarks)) if benchmarks is not None else None
     report = validate_benchmark_policy(
         load_benchmark_policy(input_path),
         as_of=validation_date,
@@ -3125,8 +3120,7 @@ def validate_benchmark_policy_command(
     console.print(f"[{status_style}]基准政策状态：{report.status}[/{status_style}]")
     console.print(f"报告：{report_path}")
     console.print(
-        f"Benchmark：{report.instrument_count}；"
-        f"Custom AI basket：{report.custom_basket_count}"
+        f"Benchmark：{report.instrument_count}；" f"Custom AI basket：{report.custom_basket_count}"
     )
     console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
     if not report.passed:
@@ -3159,7 +3153,10 @@ def feedback_loop_review_command(
     evidence_path: Annotated[
         Path,
         typer.Option(help="market evidence YAML 文件或目录路径。"),
-    ] = PROJECT_ROOT / "data" / "external" / "market_evidence",
+    ] = PROJECT_ROOT
+    / "data"
+    / "external"
+    / "market_evidence",
     decision_snapshot_path: Annotated[
         Path,
         typer.Option(help="decision_snapshot JSON 文件或目录路径。"),
@@ -3187,7 +3184,9 @@ def feedback_loop_review_command(
     task_register_path: Annotated[
         Path,
         typer.Option(help="任务登记 Markdown 路径。"),
-    ] = PROJECT_ROOT / "docs" / "task_register.md",
+    ] = PROJECT_ROOT
+    / "docs"
+    / "task_register.md",
     as_of: Annotated[
         str | None,
         typer.Option(help="复核日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -3289,8 +3288,7 @@ def build_parameter_replay_command(
     console.print(f"报告：{report_output}")
     console.print(f"摘要：{summary_output}")
     console.print(
-        "治理边界：本命令只读解释参数复测收益变化，"
-        "不修改 production scoring 或仓位闸门。"
+        "治理边界：本命令只读解释参数复测收益变化，" "不修改 production scoring 或仓位闸门。"
     )
 
 
@@ -3570,9 +3568,7 @@ def _configured_position_band_rules(
 def score_example() -> None:
     """输出一份示例仓位建议。"""
     scoring_rules = load_scoring_rules()
-    model = WeightedScoreModel(
-        position_bands=_configured_position_band_rules(scoring_rules)
-    )
+    model = WeightedScoreModel(position_bands=_configured_position_band_rules(scoring_rules))
     portfolio = load_portfolio()
     recommendation = model.recommend(
         [
@@ -3612,7 +3608,9 @@ def download_data(
     output_dir: Annotated[
         Path,
         typer.Option(help="输出缓存目录。"),
-    ] = PROJECT_ROOT / "data" / "raw",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw",
     full_universe: Annotated[
         bool,
         typer.Option(
@@ -3719,11 +3717,17 @@ def validate_data(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化 FRED 宏观序列 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -3786,11 +3790,17 @@ def backtest(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化日线利率 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     start: Annotated[
         str | None,
         typer.Option(
@@ -4020,11 +4030,17 @@ def backtest(
     sec_companyfacts_dir: Annotated[
         Path,
         typer.Option(help="SEC companyfacts 原始 JSON 缓存目录。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "sec_companyfacts",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "sec_companyfacts",
     tsm_ir_input_path: Annotated[
         Path,
         typer.Option(help="TSMC IR 季度指标 CSV，用于补齐 TSM point-in-time 回测基本面。"),
-    ] = PROJECT_ROOT / "data" / "processed" / "tsm_ir_quarterly_metrics.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "tsm_ir_quarterly_metrics.csv",
     sec_companyfacts_validation_report_path: Annotated[
         Path | None,
         typer.Option(help="Markdown SEC companyfacts 缓存校验报告输出路径。"),
@@ -4032,7 +4048,10 @@ def backtest(
     valuation_path: Annotated[
         Path,
         typer.Option(help="估值快照 YAML 文件或目录路径，用于 point-in-time 回测评分。"),
-    ] = PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+    ] = PROJECT_ROOT
+    / "data"
+    / "external"
+    / "valuation_snapshots",
     risk_events_path: Annotated[
         Path,
         typer.Option(help="风险事件配置路径，用于 point-in-time 回测评分。"),
@@ -4136,9 +4155,7 @@ def backtest(
         raise typer.BadParameter("样本外验证 in-sample 切分比例必须大于 0 且小于 1。")
     lag_days = _parse_backtest_lag_days(lag_sensitivity_days)
     should_run_promotion = (
-        promotion_report
-        or promotion_report_path is not None
-        or promotion_summary_path is not None
+        promotion_report or promotion_report_path is not None or promotion_summary_path is not None
     )
     should_write_promotion_markdown = promotion_report or promotion_report_path is not None
     should_run_robustness = (
@@ -4215,24 +4232,18 @@ def backtest(
         start_date,
         end_date,
     )
-    backtest_robustness_output = (
-        robustness_report_path
-        or default_backtest_robustness_report_path(
+    backtest_robustness_output = robustness_report_path or default_backtest_robustness_report_path(
+        PROJECT_ROOT / "outputs" / "backtests",
+        start_date,
+        end_date,
+    )
+    backtest_robustness_summary_output = robustness_summary_path or (
+        backtest_robustness_output.with_suffix(".json")
+        if should_write_robustness_markdown
+        else default_backtest_robustness_summary_path(
             PROJECT_ROOT / "outputs" / "backtests",
             start_date,
             end_date,
-        )
-    )
-    backtest_robustness_summary_output = (
-        robustness_summary_path
-        or (
-            backtest_robustness_output.with_suffix(".json")
-            if should_write_robustness_markdown
-            else default_backtest_robustness_summary_path(
-                PROJECT_ROOT / "outputs" / "backtests",
-                start_date,
-                end_date,
-            )
         )
     )
     backtest_lag_sensitivity_output = (
@@ -4243,16 +4254,13 @@ def backtest(
             end_date,
         )
     )
-    backtest_lag_sensitivity_summary_output = (
-        lag_sensitivity_summary_path
-        or (
-            backtest_lag_sensitivity_output.with_suffix(".json")
-            if should_write_lag_sensitivity_markdown
-            else default_backtest_lag_sensitivity_summary_path(
-                PROJECT_ROOT / "outputs" / "backtests",
-                start_date,
-                end_date,
-            )
+    backtest_lag_sensitivity_summary_output = lag_sensitivity_summary_path or (
+        backtest_lag_sensitivity_output.with_suffix(".json")
+        if should_write_lag_sensitivity_markdown
+        else default_backtest_lag_sensitivity_summary_path(
+            PROJECT_ROOT / "outputs" / "backtests",
+            start_date,
+            end_date,
         )
     )
     backtest_feature_availability_output = (
@@ -4262,24 +4270,18 @@ def backtest(
             quality_date,
         )
     )
-    backtest_promotion_output = (
-        promotion_report_path
-        or default_model_promotion_report_path(
+    backtest_promotion_output = promotion_report_path or default_model_promotion_report_path(
+        PROJECT_ROOT / "outputs" / "backtests",
+        start_date,
+        end_date,
+    )
+    backtest_promotion_summary_output = promotion_summary_path or (
+        backtest_promotion_output.with_suffix(".json")
+        if promotion_report or promotion_report_path is not None
+        else default_model_promotion_summary_path(
             PROJECT_ROOT / "outputs" / "backtests",
             start_date,
             end_date,
-        )
-    )
-    backtest_promotion_summary_output = (
-        promotion_summary_path
-        or (
-            backtest_promotion_output.with_suffix(".json")
-            if promotion_report or promotion_report_path is not None
-            else default_model_promotion_summary_path(
-                PROJECT_ROOT / "outputs" / "backtests",
-                start_date,
-                end_date,
-            )
         )
     )
     backtest_audit_output = audit_output_path or default_backtest_audit_report_path(
@@ -4438,16 +4440,14 @@ def backtest(
         universe=universe,
         watchlist=watchlist,
     )
-    risk_event_occurrence_review_reports = (
-        _build_backtest_risk_event_occurrence_review_reports(
-            signal_dates=input_signal_dates,
-            risk_events_path=risk_events_path,
-            risk_event_occurrences_path=risk_event_occurrences_path,
-            universe=universe,
-            industry_chain=industry_chain,
-            watchlist=watchlist,
-            validation_as_of=quality_date,
-        )
+    risk_event_occurrence_review_reports = _build_backtest_risk_event_occurrence_review_reports(
+        signal_dates=input_signal_dates,
+        risk_events_path=risk_events_path,
+        risk_event_occurrences_path=risk_event_occurrences_path,
+        universe=universe,
+        industry_chain=industry_chain,
+        watchlist=watchlist,
+        validation_as_of=quality_date,
     )
 
     backtest_regime_context = BacktestRegimeContext(
@@ -4503,9 +4503,7 @@ def backtest(
             rates=rates_frame,
             feature_config=feature_config,
             scoring_rules=(
-                scoring_rules
-                if scenario_scoring_rules is None
-                else scenario_scoring_rules
+                scoring_rules if scenario_scoring_rules is None else scenario_scoring_rules
             ),
             portfolio_config=portfolio,
             data_quality_report=data_quality_report,
@@ -4643,9 +4641,7 @@ def backtest(
             ),
             volatility_targeted_exposure_scenario(
                 result,
-                target_annual_volatility=(
-                    robustness_policy.volatility_target_annual_volatility
-                ),
+                target_annual_volatility=(robustness_policy.volatility_target_annual_volatility),
                 lookback_days=robustness_policy.volatility_target_lookback_days,
                 fallback_exposure=robustness_policy.fixed_total_asset_exposure,
             ),
@@ -4873,9 +4869,7 @@ def backtest(
             random_seed_start=robustness_random_seed_start,
             random_seed_count=robustness_random_seed_count,
             oos_split_ratio=robustness_oos_split_ratio,
-            policy_metadata=backtest_validation_policy.policy_metadata.model_dump(
-                mode="json"
-            ),
+            policy_metadata=backtest_validation_policy.policy_metadata.model_dump(mode="json"),
             policy=robustness_policy,
         )
         if should_write_robustness_markdown:
@@ -4957,15 +4951,11 @@ def backtest(
             robustness_report=robustness_report_data,
             robustness_report_path=robustness_output or robustness_summary_output,
             lag_sensitivity_report=lag_sensitivity_report_data,
-            lag_sensitivity_report_path=(
-                lag_sensitivity_output or lag_sensitivity_summary_output
-            ),
+            lag_sensitivity_report_path=(lag_sensitivity_output or lag_sensitivity_summary_output),
             prediction_outcomes_path=promotion_prediction_outcomes_path,
             rule_governance_status=rule_governance_report.status,
             promotion_policy=backtest_validation_policy.promotion,
-            policy_metadata=backtest_validation_policy.policy_metadata.model_dump(
-                mode="json"
-            ),
+            policy_metadata=backtest_validation_policy.policy_metadata.model_dump(mode="json"),
         )
         if should_write_promotion_markdown:
             promotion_output = write_model_promotion_report(
@@ -4981,15 +4971,13 @@ def backtest(
             data_quality_report_path=quality_output,
             daily_output_path=daily_output,
             output_path=backtest_report_output,
-            sec_companyfacts_validation_report_path=(
-                sec_companyfacts_validation_output
-            ),
+            sec_companyfacts_validation_report_path=(sec_companyfacts_validation_output),
             input_coverage_output_path=input_coverage_output,
             audit_report_path=audit_output,
             feature_availability_section=backtest_feature_availability_section,
-            promotion_gate_section=render_model_promotion_report(
-                promotion_report_data
-            ).replace("# 模型晋级门槛报告", "## 模型晋级门槛", 1),
+            promotion_gate_section=render_model_promotion_report(promotion_report_data).replace(
+                "# 模型晋级门槛报告", "## 模型晋级门槛", 1
+            ),
             traceability_section=render_traceability_section(
                 backtest_trace_bundle,
                 backtest_trace_output,
@@ -5000,9 +4988,7 @@ def backtest(
     audit_style = "green" if audit_report.status == "PASS" else "yellow"
     console.print(f"[{audit_style}]输入审计状态：{audit_report.status}[/{audit_style}]")
     if result.market_regime is not None:
-        console.print(
-            f"市场阶段：{result.market_regime.name}（{result.market_regime.regime_id}）"
-        )
+        console.print(f"市场阶段：{result.market_regime.name}（{result.market_regime.regime_id}）")
     console.print(f"策略总收益：{result.strategy_metrics.total_return:.1%}")
     console.print(f"策略 CAGR：{result.strategy_metrics.cagr:.1%}")
     console.print(f"策略最大回撤：{result.strategy_metrics.max_drawdown:.1%}")
@@ -5028,19 +5014,13 @@ def backtest(
     console.print(f"输入审计报告：{audit_output}")
     console.print(f"每日明细：{daily_output}")
     console.print(f"历史输入覆盖诊断：{input_coverage_output}")
-    console.print(
-        f"SEC 基本面切片：{result.fundamental_feature_report_count} 个 signal_date"
-    )
-    console.print(
-        f"估值快照切片：{result.valuation_review_report_count} 个 signal_date"
-    )
+    console.print(f"SEC 基本面切片：{result.fundamental_feature_report_count} 个 signal_date")
+    console.print(f"估值快照切片：{result.valuation_review_report_count} 个 signal_date")
     console.print(
         "风险事件发生记录切片："
         f"{result.risk_event_occurrence_review_report_count} 个 signal_date"
     )
-    console.print(
-        f"SEC companyfacts 校验报告：{sec_companyfacts_validation_output}"
-    )
+    console.print(f"SEC companyfacts 校验报告：{sec_companyfacts_validation_output}")
     console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
     console.print(
         "规则版本："
@@ -5051,9 +5031,7 @@ def backtest(
     if benchmark_policy_report_path is not None:
         console.print(f"基准政策报告：{benchmark_policy_report_path}")
     if fail_on_audit_warning and audit_report.status != "PASS":
-        console.print(
-            "[red]输入审计未达到 PASS，严格审计门禁已返回失败。[/red]"
-        )
+        console.print("[red]输入审计未达到 PASS，严格审计门禁已返回失败。[/red]")
         raise typer.Exit(code=1)
 
 
@@ -5088,9 +5066,7 @@ def backtest_gate_attribution(
     if selected_daily_path is None:
         console.print("[red]未找到 backtest_daily_*.csv；请先运行 aits backtest。[/red]")
         raise typer.Exit(code=1)
-    selected_coverage_path = input_coverage_path or infer_input_coverage_path(
-        selected_daily_path
-    )
+    selected_coverage_path = input_coverage_path or infer_input_coverage_path(selected_daily_path)
     report = build_gate_event_attribution_report(
         backtest_daily_path=selected_daily_path,
         input_coverage_path=selected_coverage_path,
@@ -5119,11 +5095,17 @@ def backtest_input_gaps(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径，用于确定回测 signal_date。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化日线利率 CSV 路径，用于数据质量门禁。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     start: Annotated[
         str | None,
         typer.Option(
@@ -5153,7 +5135,10 @@ def backtest_input_gaps(
     valuation_path: Annotated[
         Path,
         typer.Option(help="估值快照 YAML 文件或目录路径，用于历史覆盖诊断。"),
-    ] = PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+    ] = PROJECT_ROOT
+    / "data"
+    / "external"
+    / "valuation_snapshots",
     risk_events_path: Annotated[
         Path,
         typer.Option(help="风险事件配置路径，用于历史覆盖诊断。"),
@@ -5466,9 +5451,7 @@ def validate_watchlist_lifecycle_command(
     write_watchlist_lifecycle_report(report, report_path)
 
     status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
-    console.print(
-        f"[{status_style}]观察池 lifecycle 校验状态：{report.status}[/{status_style}]"
-    )
+    console.print(f"[{status_style}]观察池 lifecycle 校验状态：{report.status}[/{status_style}]")
     console.print(f"报告：{report_path}")
     console.print(f"生命周期记录数：{report.entry_count}；当前活跃：{report.active_entry_count}")
     console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
@@ -5679,8 +5662,7 @@ def validate_catalysts_command(
     console.print(f"[{status_style}]催化剂日历状态：{report.status}[/{status_style}]")
     console.print(f"报告：{report_path}")
     console.print(
-        f"事件数：{report.event_count}；"
-        f"未来 {max(report.windows)} 天：{report.upcoming_count}"
+        f"事件数：{report.event_count}；" f"未来 {max(report.windows)} 天：{report.upcoming_count}"
     )
     console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
     if not report.passed:
@@ -6095,7 +6077,9 @@ def daily_task_dashboard_command(
     reports_dir: Annotated[
         Path,
         typer.Option(help="同日子任务报告所在目录。"),
-    ] = PROJECT_ROOT / "outputs" / "reports",
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
     output_path: Annotated[
         Path | None,
         typer.Option(help="每日任务 HTML dashboard 输出路径。"),
@@ -6148,9 +6132,7 @@ def daily_task_dashboard_command(
         report = build_daily_task_dashboard_report(
             as_of=dashboard_date,
             metadata_path=resolved_metadata_path,
-            run_report_path=resolved_run_report_path
-            if resolved_run_report_path.exists()
-            else None,
+            run_report_path=resolved_run_report_path if resolved_run_report_path.exists() else None,
             reports_dir=reports_dir,
             paper_trading_trend_days=paper_trading_trend_days,
         )
@@ -6174,9 +6156,7 @@ def daily_task_dashboard_command(
     style = (
         "green"
         if report.status == "PASS"
-        else "yellow"
-        if report.status == "PASS_WITH_SKIPS"
-        else "red"
+        else "yellow" if report.status == "PASS_WITH_SKIPS" else "red"
     )
     console.print(f"[{style}]每日任务展示：{report.status}[/{style}]")
     console.print(f"Dashboard：{html_path}")
@@ -6198,19 +6178,31 @@ def pipeline_health_command(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化日线利率 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     features_path: Annotated[
         Path,
         typer.Option(help="每日特征 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "processed" / "features_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "features_daily.csv",
     scores_path: Annotated[
         Path,
         typer.Option(help="每日评分 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "processed" / "scores_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "scores_daily.csv",
     data_quality_report_path: Annotated[
         Path | None,
         typer.Option(help="Markdown 数据质量报告路径。"),
@@ -6298,12 +6290,9 @@ def pipeline_health_command(
         PROJECT_ROOT / "outputs" / "reports",
         health_date,
     )
-    pipeline_alert_report_path = (
-        alert_output_path
-        or default_pipeline_health_alert_report_path(
-            PROJECT_ROOT / "outputs" / "reports",
-            health_date,
-        )
+    pipeline_alert_report_path = alert_output_path or default_pipeline_health_alert_report_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        health_date,
     )
     pit_checks = build_pit_snapshot_health_checks(
         as_of=health_date,
@@ -6432,9 +6421,7 @@ def _build_daily_ops_plan_from_cli_options(
             skip_risk_event_openai_precheck=not risk_event_openai_precheck,
             full_universe=full_universe,
             llm_request_profile=llm_request_profile,
-            risk_event_openai_precheck_max_candidates=(
-                risk_event_openai_precheck_max_candidates
-            ),
+            risk_event_openai_precheck_max_candidates=(risk_event_openai_precheck_max_candidates),
             run_id=run_id,
         )
     except ValueError as exc:
@@ -6531,9 +6518,7 @@ def daily_ops_plan_command(
         include_valuation_snapshots=include_valuation_snapshots,
         include_secret_scan=include_secret_scan,
         risk_event_openai_precheck=risk_event_openai_precheck,
-        risk_event_openai_precheck_max_candidates=(
-            risk_event_openai_precheck_max_candidates
-        ),
+        risk_event_openai_precheck_max_candidates=(risk_event_openai_precheck_max_candidates),
         llm_request_profile=llm_request_profile,
         full_universe=full_universe,
     )
@@ -6634,7 +6619,9 @@ def daily_ops_run_command(
     run_output_root: Annotated[
         Path,
         typer.Option(help="Canonical run bundle 根目录。"),
-    ] = PROJECT_ROOT / "outputs" / "runs",
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "runs",
     run_id: Annotated[
         str | None,
         typer.Option(help="可选固定 run id；默认由 as_of 和 UTC 时间生成。"),
@@ -6650,9 +6637,7 @@ def daily_ops_run_command(
     except ValueError as exc:
         raise typer.BadParameter(str(exc)) from exc
     run_generated_at = datetime.now(tz=UTC)
-    plan_date = (
-        _parse_date(as_of) if as_of else resolve_daily_ops_default_as_of(run_generated_at)
-    )
+    plan_date = _parse_date(as_of) if as_of else resolve_daily_ops_default_as_of(run_generated_at)
     resolved_run_id = run_id or default_daily_run_id(
         plan_date,
         generated_at=run_generated_at,
@@ -6674,9 +6659,7 @@ def daily_ops_run_command(
         include_valuation_snapshots=include_valuation_snapshots,
         include_secret_scan=include_secret_scan,
         risk_event_openai_precheck=risk_event_openai_precheck,
-        risk_event_openai_precheck_max_candidates=(
-            risk_event_openai_precheck_max_candidates
-        ),
+        risk_event_openai_precheck_max_candidates=(risk_event_openai_precheck_max_candidates),
         llm_request_profile=llm_request_profile,
         full_universe=full_universe,
         run_id=resolved_run_id,
@@ -6769,13 +6752,7 @@ def daily_ops_run_command(
         )
 
     status = run_report.status
-    style = (
-        "green"
-        if status == "PASS"
-        else "yellow"
-        if status == "PASS_WITH_SKIPS"
-        else "red"
-    )
+    style = "green" if status == "PASS" else "yellow" if status == "PASS_WITH_SKIPS" else "red"
     console.print(f"[{style}]每日运行执行：{status}[/{style}]")
     console.print(f"Run ID：{resolved_run_id}")
     console.print(f"Run bundle：{run_paths.run_root}")
@@ -6793,9 +6770,7 @@ def daily_ops_run_command(
         console.print(f"缺失环境变量：{', '.join(run_report.missing_env_vars)}")
     if run_report.failed_step is not None:
         failed = run_report.failed_step
-        console.print(
-            f"失败步骤：{failed.step_id}；return_code={failed.return_code}"
-        )
+        console.print(f"失败步骤：{failed.step_id}；return_code={failed.return_code}")
     if status not in {"PASS", "PASS_WITH_SKIPS"}:
         raise typer.Exit(code=1)
 
@@ -6891,9 +6866,7 @@ def historical_replay_day_command(
     style = (
         "green"
         if status in {"PASS", "PASS_INVENTORY"}
-        else "yellow"
-        if status == "INCOMPLETE_REPLAY"
-        else "red"
+        else "yellow" if status == "INCOMPLETE_REPLAY" else "red"
     )
     console.print(f"[{style}]历史交易日回放：{status}[/{style}]")
     console.print(f"Replay bundle：{replay_run.paths.root}")
@@ -6905,9 +6878,7 @@ def historical_replay_day_command(
         console.print(f"输入阻断：{len(replay_run.errors)} 项")
     if replay_run.failed_step is not None:
         failed = replay_run.failed_step
-        console.print(
-            f"失败步骤：{failed.step_id}；return_code={failed.return_code}"
-        )
+        console.print(f"失败步骤：{failed.step_id}；return_code={failed.return_code}")
     if status not in {"PASS", "PASS_INVENTORY"}:
         raise typer.Exit(code=1)
 
@@ -7062,7 +7033,10 @@ def list_theses(
     input_path: Annotated[
         Path,
         typer.Option(help="交易 thesis YAML 文件或目录路径。"),
-    ] = PROJECT_ROOT / "data" / "external" / "trade_theses",
+    ] = PROJECT_ROOT
+    / "data"
+    / "external"
+    / "trade_theses",
 ) -> None:
     """列出本地交易 thesis。"""
     store = load_trade_thesis_store(input_path)
@@ -7102,7 +7076,10 @@ def validate_theses(
     input_path: Annotated[
         Path,
         typer.Option(help="交易 thesis YAML 文件或目录路径。"),
-    ] = PROJECT_ROOT / "data" / "external" / "trade_theses",
+    ] = PROJECT_ROOT
+    / "data"
+    / "external"
+    / "trade_theses",
     watchlist_path: Annotated[
         Path,
         typer.Option(help="观察池配置文件路径。"),
@@ -7150,7 +7127,10 @@ def review_theses(
     input_path: Annotated[
         Path,
         typer.Option(help="交易 thesis YAML 文件或目录路径。"),
-    ] = PROJECT_ROOT / "data" / "external" / "trade_theses",
+    ] = PROJECT_ROOT
+    / "data"
+    / "external"
+    / "trade_theses",
     watchlist_path: Annotated[
         Path,
         typer.Option(help="观察池配置文件路径。"),
@@ -7184,14 +7164,15 @@ def review_theses(
     review_report = build_thesis_review_report(validation_report)
     write_thesis_review_report(review_report, report_path)
 
-    status_style = "green" if review_report.status == "PASS" else (
-        "yellow" if validation_report.passed else "red"
+    status_style = (
+        "green"
+        if review_report.status == "PASS"
+        else ("yellow" if validation_report.passed else "red")
     )
     console.print(f"[{status_style}]交易 thesis 复核状态：{review_report.status}[/{status_style}]")
     console.print(f"报告：{report_path}")
     console.print(
-        f"Thesis 数量：{validation_report.thesis_count}；"
-        f"活跃：{validation_report.active_count}"
+        f"Thesis 数量：{validation_report.thesis_count}；" f"活跃：{validation_report.active_count}"
     )
     console.print(
         f"校验错误数：{validation_report.error_count}；"
@@ -7293,7 +7274,9 @@ def validate_risk_events(
     status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
     console.print(f"[{status_style}]风险事件校验状态：{report.status}[/{status_style}]")
     console.print(f"报告：{report_path}")
-    console.print(f"风险事件规则数：{len(report.config.event_rules)}；活跃：{report.active_rule_count}")
+    console.print(
+        f"风险事件规则数：{len(report.config.event_rules)}；活跃：{report.active_rule_count}"
+    )
     console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
 
     if not report.passed:
@@ -7442,9 +7425,7 @@ def record_risk_event_review_attestation_command(
         coverage_end=_parse_date(coverage_end) if coverage_end else review_date,
         reviewed_at=_parse_date(reviewed_at) if reviewed_at else review_date,
         next_review_due=(
-            _parse_date(next_review_due)
-            if next_review_due
-            else review_date + timedelta(days=1)
+            _parse_date(next_review_due) if next_review_due else review_date + timedelta(days=1)
         ),
         review_scope=scope_items,
     )
@@ -7465,14 +7446,10 @@ def record_risk_event_review_attestation_command(
     status_style = (
         "green"
         if review_report.status == "PASS"
-        else "yellow"
-        if validation_report.passed
-        else "red"
+        else "yellow" if validation_report.passed else "red"
     )
     console.print(f"风险事件复核声明：{written_path}")
-    console.print(
-        f"[{status_style}]风险事件发生记录状态：{review_report.status}[/{status_style}]"
-    )
+    console.print(f"[{status_style}]风险事件发生记录状态：{review_report.status}[/{status_style}]")
     console.print(f"校验报告：{report_path}")
     console.print(
         f"复核声明数：{validation_report.review_attestation_count}；"
@@ -7530,8 +7507,7 @@ def import_risk_event_occurrences_csv_command(
     )
     console.print(f"导入报告：{import_report_output}")
     console.print(
-        f"CSV 行数：{import_report.row_count}；"
-        f"发生记录：{import_report.occurrence_count}"
+        f"CSV 行数：{import_report.row_count}；" f"发生记录：{import_report.occurrence_count}"
     )
     console.print(f"错误数：{import_report.error_count}；警告数：{import_report.warning_count}")
     if not import_report.passed:
@@ -7549,9 +7525,7 @@ def import_risk_event_occurrences_csv_command(
     validation_style = (
         "green"
         if validation_report.status == "PASS"
-        else "yellow"
-        if validation_report.passed
-        else "red"
+        else "yellow" if validation_report.passed else "red"
     )
     console.print(f"写入 YAML：{len(written_paths)} 个文件 -> {output_dir}")
     console.print(
@@ -7596,7 +7570,10 @@ def fetch_official_policy_sources_command(
     download_manifest_path: Annotated[
         Path,
         typer.Option(help="统一 download_manifest.csv 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "download_manifest.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "download_manifest.csv",
     congress_api_key_env: Annotated[
         str,
         typer.Option(help="读取 Congress.gov API key 的环境变量名。"),
@@ -7681,8 +7658,7 @@ def triage_official_policy_candidates_command(
 
     status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
     console.print(
-        f"[{status_style}]官方候选 AI 模块 triage 状态："
-        f"{report.status}[/{status_style}]"
+        f"[{status_style}]官方候选 AI 模块 triage 状态：" f"{report.status}[/{status_style}]"
     )
     console.print(f"报告：{report_path}")
     console.print(f"输入候选：{candidate_input_path}")
@@ -7837,9 +7813,7 @@ def precheck_triaged_official_candidates_with_openai_command(
 
     try:
         candidates = load_official_policy_candidates_csv(official_candidates_path)
-        selected_ids = set(
-            load_triaged_candidate_ids(triage_path, buckets=selected_buckets)
-        )
+        selected_ids = set(load_triaged_candidate_ids(triage_path, buckets=selected_buckets))
     except (OSError, ValueError) as exc:
         console.print(f"[red]高优先级官方候选输入无法读取或校验失败：{exc}[/red]")
         raise typer.Exit(code=1) from exc
@@ -7878,8 +7852,7 @@ def precheck_triaged_official_candidates_with_openai_command(
 
     status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
     console.print(
-        f"[{status_style}]高优先级官方候选 OpenAI 预审状态："
-        f"{report.status}[/{status_style}]"
+        f"[{status_style}]高优先级官方候选 OpenAI 预审状态：" f"{report.status}[/{status_style}]"
     )
     console.print(f"报告：{report_path}")
     console.print(f"官方候选 CSV：{official_candidates_path}")
@@ -8007,9 +7980,7 @@ def apply_llm_formal_assessment_command(
     validation_style = (
         "green"
         if validation_report.status == "PASS"
-        else "yellow"
-        if validation_report.passed
-        else "red"
+        else "yellow" if validation_report.passed else "red"
     )
     console.print(f"写入 YAML：{len(written_paths)} 个文件 -> {output_dir}")
     console.print(
@@ -8137,10 +8108,7 @@ def precheck_risk_events_with_openai_command(
     write_risk_event_prereview_import_report(report, report_path)
 
     status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
-    console.print(
-        f"[{status_style}]风险事件 OpenAI 预审状态："
-        f"{report.status}[/{status_style}]"
-    )
+    console.print(f"[{status_style}]风险事件 OpenAI 预审状态：" f"{report.status}[/{status_style}]")
     console.print(f"预审报告：{report_path}")
     console.print(
         f"LLM request profile：{profile.profile_id}；"
@@ -8200,8 +8168,7 @@ def import_risk_event_prereview_csv_command(
         "green" if import_report.status == "PASS" else "yellow" if import_report.passed else "red"
     )
     console.print(
-        f"[{status_style}]风险事件 OpenAI 预审导入状态："
-        f"{import_report.status}[/{status_style}]"
+        f"[{status_style}]风险事件 OpenAI 预审导入状态：" f"{import_report.status}[/{status_style}]"
     )
     console.print(f"导入报告：{report_path}")
     console.print(
@@ -8254,13 +8221,9 @@ def validate_risk_event_occurrences(
     status_style = (
         "green"
         if review_report.status == "PASS"
-        else "yellow"
-        if validation_report.passed
-        else "red"
+        else "yellow" if validation_report.passed else "red"
     )
-    console.print(
-        f"[{status_style}]风险事件发生记录状态：{review_report.status}[/{status_style}]"
-    )
+    console.print(f"[{status_style}]风险事件发生记录状态：{review_report.status}[/{status_style}]")
     console.print(f"报告：{report_path}")
     console.print(
         f"发生记录数：{validation_report.occurrence_count}；"
@@ -8272,7 +8235,9 @@ def validate_risk_event_occurrences(
         f"复核声明数：{validation_report.review_attestation_count}；"
         f"当前有效：{validation_report.current_review_attestation_count}"
     )
-    console.print(f"错误数：{validation_report.error_count}；警告数：{validation_report.warning_count}")
+    console.print(
+        f"错误数：{validation_report.error_count}；警告数：{validation_report.warning_count}"
+    )
 
     if not validation_report.passed:
         raise typer.Exit(code=1)
@@ -8359,7 +8324,10 @@ def data_source_health(
     manifest_path: Annotated[
         Path,
         typer.Option(help="download_manifest.csv 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "download_manifest.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "download_manifest.csv",
     as_of: Annotated[
         str | None,
         typer.Option(help="评估日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -8397,11 +8365,17 @@ def yahoo_price_diagnostic(
     prices_path: Annotated[
         Path,
         typer.Option(help="FMP 主价格缓存 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="FRED 宏观序列 CSV 路径，用于复用数据质量报告。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     marketstack_prices_path: Annotated[
         Path | None,
         typer.Option(help="Marketstack 第二行情源 CSV 路径；默认跟随主价格缓存目录。"),
@@ -8468,13 +8442,10 @@ def yahoo_price_diagnostic(
     status_style = (
         "green"
         if diagnostic_report.status == "PASS"
-        else "yellow"
-        if diagnostic_report.status != "DIAGNOSTIC_FAILED"
-        else "red"
+        else "yellow" if diagnostic_report.status != "DIAGNOSTIC_FAILED" else "red"
     )
     console.print(
-        f"[{status_style}]Yahoo 价格诊断状态："
-        f"{diagnostic_report.status}[/{status_style}]"
+        f"[{status_style}]Yahoo 价格诊断状态：" f"{diagnostic_report.status}[/{status_style}]"
     )
     console.print(f"报告：{report_path}")
     console.print(f"诊断目标：{len(diagnostic_report.targets)}")
@@ -8526,7 +8497,10 @@ def download_sec_companyfacts_command(
     output_dir: Annotated[
         Path,
         typer.Option(help="SEC companyfacts 原始 JSON 输出目录。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "sec_companyfacts",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "sec_companyfacts",
     tickers: Annotated[
         str | None,
         typer.Option(help="逗号分隔的 ticker；未提供时下载全部活跃配置。"),
@@ -8725,7 +8699,10 @@ def validate_sec_companyfacts_command(
     input_dir: Annotated[
         Path,
         typer.Option(help="SEC companyfacts 原始 JSON 输入目录。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "sec_companyfacts",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "sec_companyfacts",
     as_of: Annotated[
         str | None,
         typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -8771,7 +8748,10 @@ def extract_sec_metrics_command(
     input_dir: Annotated[
         Path,
         typer.Option(help="SEC companyfacts 原始 JSON 输入目录。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "sec_companyfacts",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "sec_companyfacts",
     as_of: Annotated[
         str | None,
         typer.Option(help="抽取日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -8993,9 +8973,7 @@ def build_sec_features_command(
             output_csv_path=feature_csv_output,
             output_path=feature_report_output,
         )
-        console.print(
-            f"[{status_style}]SEC 基本面特征构建状态：{report.status}[/{status_style}]"
-        )
+        console.print(f"[{status_style}]SEC 基本面特征构建状态：{report.status}[/{status_style}]")
         console.print(f"SEC 指标 CSV 校验报告：{validation_output}（{validation_report.status}）")
         console.print(f"基本面特征 CSV 未写入：{feature_csv_output}")
         console.print(f"基本面特征报告：{markdown_path}")
@@ -9052,12 +9030,7 @@ def extract_tsm_ir_pdf_text_command(
     report_date = _parse_date(as_of) if as_of else date.today()
     extraction_datetime = _parse_datetime(extracted_at) if extracted_at else datetime.now(tz=UTC)
     text_output = output_path or (
-        PROJECT_ROOT
-        / "data"
-        / "external"
-        / "fundamentals"
-        / "tsm_ir"
-        / f"{input_path.stem}.txt"
+        PROJECT_ROOT / "data" / "external" / "fundamentals" / "tsm_ir" / f"{input_path.stem}.txt"
     )
     markdown_output = report_path or (
         PROJECT_ROOT / "outputs" / "reports" / f"tsm_ir_pdf_text_{report_date}.md"
@@ -9204,10 +9177,7 @@ def import_tsm_ir_quarterly_batch(
         PROJECT_ROOT / "data" / "processed" / "tsm_ir_quarterly_metrics.csv"
     )
     markdown_output = report_path or (
-        PROJECT_ROOT
-        / "outputs"
-        / "reports"
-        / f"tsm_ir_quarterly_batch_{import_date}.md"
+        PROJECT_ROOT / "outputs" / "reports" / f"tsm_ir_quarterly_batch_{import_date}.md"
     )
 
     report = build_tsm_ir_quarterly_batch_import_report(
@@ -9220,8 +9190,7 @@ def import_tsm_ir_quarterly_batch(
 
     status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
     console.print(
-        f"[{status_style}]TSMC IR 批量季度基本面导入状态："
-        f"{report.status}[/{status_style}]"
+        f"[{status_style}]TSMC IR 批量季度基本面导入状态：" f"{report.status}[/{status_style}]"
     )
     console.print(f"Manifest：{manifest_path}")
     console.print(f"报告：{markdown_path}")
@@ -9364,7 +9333,10 @@ def merge_tsm_ir_sec_metrics(
     input_path: Annotated[
         Path,
         typer.Option(help="TSMC IR 季度指标 CSV 输入路径。"),
-    ] = PROJECT_ROOT / "data" / "processed" / "tsm_ir_quarterly_metrics.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "tsm_ir_quarterly_metrics.csv",
     sec_companies_path: Annotated[
         Path,
         typer.Option(help="SEC company CIK 配置文件路径；TSM 必须声明 quarterly。"),
@@ -9451,9 +9423,7 @@ def merge_tsm_ir_sec_metrics(
     status_style = (
         "green"
         if validation_report.status == "PASS"
-        else "yellow"
-        if validation_report.passed
-        else "red"
+        else "yellow" if validation_report.passed else "red"
     )
     console.print(
         f"[{status_style}]TSMC IR 合并后 SEC 指标校验状态："
@@ -9480,7 +9450,10 @@ def fetch_fmp_valuations(
     output_dir: Annotated[
         Path,
         typer.Option(help="写入 FMP 估值快照 YAML 的目录。"),
-    ] = PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+    ] = PROJECT_ROOT
+    / "data"
+    / "external"
+    / "valuation_snapshots",
     analyst_history_dir: Annotated[
         Path,
         typer.Option(help="读取并写入 FMP analyst-estimates 原始历史快照的目录。"),
@@ -9518,9 +9491,7 @@ def fetch_fmp_valuations(
     """从 Financial Modeling Prep 拉取估值和预期快照。"""
     fetch_date = _parse_date(as_of) if as_of else date.today()
     selected_tickers = (
-        _parse_csv_items(tickers)
-        if tickers
-        else load_universe().ai_chain.get("core_watchlist", [])
+        _parse_csv_items(tickers) if tickers else load_universe().ai_chain.get("core_watchlist", [])
     )
     api_key = os.getenv(api_key_env)
     if not api_key:
@@ -9581,15 +9552,12 @@ def fetch_fmp_valuations(
     validation_style = (
         "green"
         if validation_report.status == "PASS"
-        else "yellow"
-        if validation_report.passed
-        else "red"
+        else "yellow" if validation_report.passed else "red"
     )
     console.print(f"写入 YAML：{len(written_paths)} 个文件 -> {output_dir}")
     console.print(f"写入 analyst history：{len(history_paths)} 个文件 -> {analyst_history_dir}")
     console.print(
-        f"[{validation_style}]估值快照校验状态："
-        f"{validation_report.status}[/{validation_style}]"
+        f"[{validation_style}]估值快照校验状态：" f"{validation_report.status}[/{validation_style}]"
     )
     console.print(f"校验报告：{validation_output}")
     if not validation_report.passed:
@@ -9605,7 +9573,10 @@ def fetch_fmp_valuation_history(
     output_dir: Annotated[
         Path,
         typer.Option(help="写入历史估值快照 YAML 的目录。"),
-    ] = PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+    ] = PROJECT_ROOT
+    / "data"
+    / "external"
+    / "valuation_snapshots",
     raw_output_dir: Annotated[
         Path,
         typer.Option(help="写入 FMP historical key-metrics/ratios 原始 JSON 的目录。"),
@@ -9638,9 +9609,7 @@ def fetch_fmp_valuation_history(
     """从 FMP 拉取 historical key-metrics/ratios，回填估值分位历史。"""
     fetch_date = _parse_date(as_of) if as_of else date.today()
     selected_tickers = (
-        _parse_csv_items(tickers)
-        if tickers
-        else load_universe().ai_chain.get("core_watchlist", [])
+        _parse_csv_items(tickers) if tickers else load_universe().ai_chain.get("core_watchlist", [])
     )
     api_key = os.getenv(api_key_env)
     if not api_key:
@@ -9674,8 +9643,7 @@ def fetch_fmp_valuation_history(
         "green" if fetch_report.status == "PASS" else "yellow" if fetch_report.passed else "red"
     )
     console.print(
-        f"[{status_style}]FMP 历史估值拉取状态："
-        f"{fetch_report.status}[/{status_style}]"
+        f"[{status_style}]FMP 历史估值拉取状态：" f"{fetch_report.status}[/{status_style}]"
     )
     console.print(f"拉取报告：{fetch_report_output}")
     console.print(
@@ -9702,15 +9670,12 @@ def fetch_fmp_valuation_history(
     validation_style = (
         "green"
         if validation_report.status == "PASS"
-        else "yellow"
-        if validation_report.passed
-        else "red"
+        else "yellow" if validation_report.passed else "red"
     )
     console.print(f"写入原始历史 payload：{len(raw_paths)} 个文件 -> {raw_output_dir}")
     console.print(f"写入历史估值 YAML：{len(written_paths)} 个文件 -> {output_dir}")
     console.print(
-        f"[{validation_style}]估值快照校验状态："
-        f"{validation_report.status}[/{validation_style}]"
+        f"[{validation_style}]估值快照校验状态：" f"{validation_report.status}[/{validation_style}]"
     )
     console.print(f"校验报告：{validation_output}")
     if not validation_report.passed:
@@ -9726,7 +9691,10 @@ def fetch_eodhd_valuation_trends(
     output_dir: Annotated[
         Path,
         typer.Option(help="写入 EODHD trend 合并估值快照 YAML 的目录。"),
-    ] = PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+    ] = PROJECT_ROOT
+    / "data"
+    / "external"
+    / "valuation_snapshots",
     base_valuation_dir: Annotated[
         Path | None,
         typer.Option(help="读取基础估值快照的目录；默认与 output_dir 相同。"),
@@ -9755,9 +9723,7 @@ def fetch_eodhd_valuation_trends(
     """从 EODHD Earnings Trends 拉取当前 EPS trend，合并进估值快照。"""
     fetch_date = _parse_date(as_of) if as_of else date.today()
     selected_tickers = (
-        _parse_csv_items(tickers)
-        if tickers
-        else load_universe().ai_chain.get("core_watchlist", [])
+        _parse_csv_items(tickers) if tickers else load_universe().ai_chain.get("core_watchlist", [])
     )
     api_key = os.getenv(api_key_env)
     if not api_key:
@@ -9791,8 +9757,7 @@ def fetch_eodhd_valuation_trends(
         "green" if fetch_report.status == "PASS" else "yellow" if fetch_report.passed else "red"
     )
     console.print(
-        f"[{status_style}]EODHD trends 拉取状态："
-        f"{fetch_report.status}[/{status_style}]"
+        f"[{status_style}]EODHD trends 拉取状态：" f"{fetch_report.status}[/{status_style}]"
     )
     console.print(f"拉取报告：{fetch_report_output}")
     console.print(
@@ -9819,15 +9784,12 @@ def fetch_eodhd_valuation_trends(
     validation_style = (
         "green"
         if validation_report.status == "PASS"
-        else "yellow"
-        if validation_report.passed
-        else "red"
+        else "yellow" if validation_report.passed else "red"
     )
     console.print(f"写入原始 trend payload：{len(raw_paths)} 个文件 -> {raw_output_dir}")
     console.print(f"写入合并估值 YAML：{len(written_paths)} 个文件 -> {output_dir}")
     console.print(
-        f"[{validation_style}]估值快照校验状态："
-        f"{validation_report.status}[/{validation_style}]"
+        f"[{validation_style}]估值快照校验状态：" f"{validation_report.status}[/{validation_style}]"
     )
     console.print(f"校验报告：{validation_output}")
     if not validation_report.passed:
@@ -9897,7 +9859,10 @@ def import_valuation_csv(
     output_dir: Annotated[
         Path,
         typer.Option(help="写入估值快照 YAML 的目录。"),
-    ] = PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+    ] = PROJECT_ROOT
+    / "data"
+    / "external"
+    / "valuation_snapshots",
     as_of: Annotated[
         str | None,
         typer.Option(help="导入后校验日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -9928,9 +9893,7 @@ def import_valuation_csv(
     )
     console.print(f"[{status_style}]估值 CSV 导入状态：{import_report.status}[/{status_style}]")
     console.print(f"导入报告：{import_report_output}")
-    console.print(
-        f"CSV 行数：{import_report.row_count}；导入快照：{import_report.imported_count}"
-    )
+    console.print(f"CSV 行数：{import_report.row_count}；导入快照：{import_report.imported_count}")
     console.print(f"错误数：{import_report.error_count}；警告数：{import_report.warning_count}")
     if not import_report.passed:
         raise typer.Exit(code=1)
@@ -9947,14 +9910,11 @@ def import_valuation_csv(
     validation_style = (
         "green"
         if validation_report.status == "PASS"
-        else "yellow"
-        if validation_report.passed
-        else "red"
+        else "yellow" if validation_report.passed else "red"
     )
     console.print(f"写入 YAML：{len(written_paths)} 个文件 -> {output_dir}")
     console.print(
-        f"[{validation_style}]估值快照校验状态："
-        f"{validation_report.status}[/{validation_style}]"
+        f"[{validation_style}]估值快照校验状态：" f"{validation_report.status}[/{validation_style}]"
     )
     console.print(f"校验报告：{validation_output}")
     if not validation_report.passed:
@@ -9966,7 +9926,10 @@ def list_valuations(
     input_path: Annotated[
         Path,
         typer.Option(help="估值快照 YAML 文件或目录路径。"),
-    ] = PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+    ] = PROJECT_ROOT
+    / "data"
+    / "external"
+    / "valuation_snapshots",
 ) -> None:
     """列出估值、预期和拥挤度快照。"""
     store = load_valuation_snapshot_store(input_path)
@@ -10011,7 +9974,10 @@ def validate_valuations(
     input_path: Annotated[
         Path,
         typer.Option(help="估值快照 YAML 文件或目录路径。"),
-    ] = PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+    ] = PROJECT_ROOT
+    / "data"
+    / "external"
+    / "valuation_snapshots",
     as_of: Annotated[
         str | None,
         typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -10050,7 +10016,10 @@ def review_valuations(
     input_path: Annotated[
         Path,
         typer.Option(help="估值快照 YAML 文件或目录路径。"),
-    ] = PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+    ] = PROJECT_ROOT
+    / "data"
+    / "external"
+    / "valuation_snapshots",
     as_of: Annotated[
         str | None,
         typer.Option(help="复核日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -10075,8 +10044,10 @@ def review_valuations(
     review_report = build_valuation_review_report(validation_report)
     write_valuation_review_report(review_report, report_path)
 
-    status_style = "green" if review_report.status == "PASS" else (
-        "yellow" if validation_report.passed else "red"
+    status_style = (
+        "green"
+        if review_report.status == "PASS"
+        else ("yellow" if validation_report.passed else "red")
     )
     console.print(f"[{status_style}]估值复核状态：{review_report.status}[/{status_style}]")
     console.print(f"报告：{report_path}")
@@ -10098,15 +10069,24 @@ def review_trades(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化日线利率 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     input_path: Annotated[
         Path,
         typer.Option(help="交易记录 YAML 文件或目录路径。"),
-    ] = PROJECT_ROOT / "data" / "external" / "trades",
+    ] = PROJECT_ROOT
+    / "data"
+    / "external"
+    / "trades",
     as_of: Annotated[
         str | None,
         typer.Option(help="复盘日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -10189,8 +10169,10 @@ def review_trades(
         output_path=report_output,
     )
 
-    status_style = "green" if review_report.status == "PASS" else (
-        "yellow" if validation_report.passed else "red"
+    status_style = (
+        "green"
+        if review_report.status == "PASS"
+        else ("yellow" if validation_report.passed else "red")
     )
     console.print(f"[{status_style}]交易复盘状态：{review_report.status}[/{status_style}]")
     console.print(f"报告：{report_output}")
@@ -10210,11 +10192,17 @@ def build_features(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化日线利率 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option(help="特征日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -10222,7 +10210,10 @@ def build_features(
     output_path: Annotated[
         Path,
         typer.Option(help="特征 CSV 输出路径。"),
-    ] = PROJECT_ROOT / "data" / "processed" / "features_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "features_daily.csv",
     report_path: Annotated[
         Path | None,
         typer.Option(help="Markdown 特征摘要输出路径。"),
@@ -10358,11 +10349,17 @@ def score_daily(
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "prices_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "prices_daily.csv",
     rates_path: Annotated[
         Path,
         typer.Option(help="标准化日线利率 CSV 路径。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option(help="评分日期，格式为 YYYY-MM-DD，默认今天。"),
@@ -10374,11 +10371,17 @@ def score_daily(
     features_path: Annotated[
         Path,
         typer.Option(help="特征 CSV 输出路径。"),
-    ] = PROJECT_ROOT / "data" / "processed" / "features_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "features_daily.csv",
     scores_path: Annotated[
         Path,
         typer.Option(help="评分 CSV 输出路径。"),
-    ] = PROJECT_ROOT / "data" / "processed" / "scores_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "scores_daily.csv",
     report_path: Annotated[
         Path | None,
         typer.Option(help="Markdown 每日评分报告输出路径。"),
@@ -10470,12 +10473,12 @@ def score_daily(
     tsm_ir_quarterly_metrics_path: Annotated[
         Path,
         typer.Option(
-            help=(
-                "TSMC IR 季度指标 CSV；存在时日报会按 as-of 合并到 "
-                "SEC-style 指标后再校验。"
-            )
+            help=("TSMC IR 季度指标 CSV；存在时日报会按 as-of 合并到 " "SEC-style 指标后再校验。")
         ),
-    ] = PROJECT_ROOT / "data" / "processed" / "tsm_ir_quarterly_metrics.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "tsm_ir_quarterly_metrics.csv",
     tsm_ir_merge: Annotated[
         bool,
         typer.Option(
@@ -10498,7 +10501,10 @@ def score_daily(
     thesis_path: Annotated[
         Path,
         typer.Option(help="交易 thesis YAML 文件或目录路径，用于写入日报复核摘要。"),
-    ] = PROJECT_ROOT / "data" / "external" / "trade_theses",
+    ] = PROJECT_ROOT
+    / "data"
+    / "external"
+    / "trade_theses",
     risk_events_path: Annotated[
         Path,
         typer.Option(help="风险事件配置路径，用于写入日报复核摘要。"),
@@ -10582,9 +10588,7 @@ def score_daily(
     ] = None,
     risk_event_openai_precheck_max_candidates: Annotated[
         int | None,
-        typer.Option(
-            help="覆盖 profile 中日报前 OpenAI 风险事件预审最多处理的官方候选数。"
-        ),
+        typer.Option(help="覆盖 profile 中日报前 OpenAI 风险事件预审最多处理的官方候选数。"),
     ] = None,
     openai_api_key_env: Annotated[
         str,
@@ -10616,9 +10620,7 @@ def score_daily(
     ] = DEFAULT_OPENAI_REQUEST_CACHE_PATH,
     openai_cache_ttl_hours: Annotated[
         float | None,
-        typer.Option(
-            help="覆盖 profile 中完全相同日报前 OpenAI 请求的本地缓存复用时长。"
-        ),
+        typer.Option(help="覆盖 profile 中完全相同日报前 OpenAI 请求的本地缓存复用时长。"),
     ] = None,
     catalyst_calendar_path: Annotated[
         Path,
@@ -10627,11 +10629,17 @@ def score_daily(
     valuation_path: Annotated[
         Path,
         typer.Option(help="估值快照 YAML 文件或目录路径，用于写入日报复核摘要。"),
-    ] = PROJECT_ROOT / "data" / "external" / "valuation_snapshots",
+    ] = PROJECT_ROOT
+    / "data"
+    / "external"
+    / "valuation_snapshots",
     trades_path: Annotated[
         Path,
         typer.Option(help="交易记录 YAML 文件或目录路径，用于写入日报复盘摘要。"),
-    ] = PROJECT_ROOT / "data" / "external" / "trades",
+    ] = PROJECT_ROOT
+    / "data"
+    / "external"
+    / "trades",
     review_benchmarks: Annotated[
         str,
         typer.Option(help="逗号分隔的日报交易复盘归因基准标的。"),
@@ -10658,19 +10666,14 @@ def score_daily(
         market_regimes.default_backtest_regime,
     )
     score_started_at = datetime.now(tz=UTC)
-    score_date = _parse_date(as_of) if as_of else resolve_daily_ops_default_as_of(
-        score_started_at
-    )
+    score_date = _parse_date(as_of) if as_of else resolve_daily_ops_default_as_of(score_started_at)
     production_score_date = resolve_daily_ops_default_as_of(score_started_at)
     benchmark_tickers = tuple(_parse_csv_items(review_benchmarks))
     if not benchmark_tickers:
         raise typer.BadParameter("日报交易复盘至少需要一个归因基准标的。")
     if prediction_production_effect not in {"production", "none"}:
         raise typer.BadParameter("prediction_production_effect 只能是 production 或 none。")
-    if (
-        prediction_candidate_id != "production"
-        and prediction_production_effect == "production"
-    ):
+    if prediction_candidate_id != "production" and prediction_production_effect == "production":
         raise typer.BadParameter(
             "非 production 候选模型必须使用 prediction_production_effect=none。"
         )
@@ -10730,9 +10733,7 @@ def score_daily(
             score_date,
         )
     )
-    daily_trace_output = trace_bundle_path or default_report_trace_bundle_path(
-        score_report_output
-    )
+    daily_trace_output = trace_bundle_path or default_report_trace_bundle_path(score_report_output)
     decision_snapshot_output = decision_snapshot_path or default_decision_snapshot_path(
         DEFAULT_DECISION_SNAPSHOT_DIR,
         score_date,
@@ -10741,9 +10742,7 @@ def score_daily(
         DEFAULT_BELIEF_STATE_DIR,
         score_date,
     )
-    belief_state_history_output = (
-        belief_state_history_path or DEFAULT_BELIEF_STATE_HISTORY_PATH
-    )
+    belief_state_history_output = belief_state_history_path or DEFAULT_BELIEF_STATE_HISTORY_PATH
     sec_fundamentals_input = sec_fundamentals_path or default_sec_fundamental_metrics_csv_path(
         PROJECT_ROOT / "data" / "processed",
         score_date,
@@ -11058,9 +11057,7 @@ def score_daily(
             llm_profile.formal_assessment.overwrite,
         )
         if effective_risk_event_openai_precheck_max_candidates is None:
-            raise typer.BadParameter(
-                "LLM request profile 必须设置 max_candidates，或显式传入。"
-            )
+            raise typer.BadParameter("LLM request profile 必须设置 max_candidates，或显式传入。")
         if effective_official_policy_limit is None:
             raise typer.BadParameter(
                 "LLM request profile 必须设置 official_policy_limit，或显式传入。"
@@ -11083,9 +11080,7 @@ def score_daily(
             console.print(f"需要环境变量：{openai_api_key_env}")
             raise typer.Exit(code=1)
         selected_official_source_ids = (
-            _parse_csv_items(official_policy_source_ids)
-            if official_policy_source_ids
-            else None
+            _parse_csv_items(official_policy_source_ids) if official_policy_source_ids else None
         )
         official_policy_fetch_report = fetch_official_policy_sources(
             as_of=score_date,
@@ -11116,30 +11111,26 @@ def score_daily(
             DEFAULT_OFFICIAL_POLICY_PROCESSED_DIR,
             score_date,
         )
-        risk_event_prereview_report = (
-            run_openai_risk_event_prereview_for_official_candidates(
-                official_policy_fetch_report.candidates,
-                api_key=os.getenv(openai_api_key_env, ""),
-                data_sources=load_data_sources(DEFAULT_DATA_SOURCES_CONFIG_PATH),
-                risk_events=risk_events_config,
-                input_path=official_candidates_path,
-                as_of=score_date,
-                model=effective_openai_model,
-                reasoning_effort=effective_openai_reasoning_effort,
-                endpoint=llm_profile.endpoint,
-                timeout_seconds=effective_openai_timeout_seconds,
-                http_client=effective_openai_http_client,
-                openai_cache_dir=openai_cache_dir,
-                openai_cache_ttl_seconds=effective_openai_cache_ttl_hours * 3600,
-                max_retries=llm_profile.max_retries,
-                generated_at=(
-                    score_started_at if score_date == production_score_date else None
-                ),
-                request_visibility_cutoff=(
-                    score_started_at if score_date == production_score_date else None
-                ),
-                max_candidates=effective_risk_event_openai_precheck_max_candidates,
-            )
+        risk_event_prereview_report = run_openai_risk_event_prereview_for_official_candidates(
+            official_policy_fetch_report.candidates,
+            api_key=os.getenv(openai_api_key_env, ""),
+            data_sources=load_data_sources(DEFAULT_DATA_SOURCES_CONFIG_PATH),
+            risk_events=risk_events_config,
+            input_path=official_candidates_path,
+            as_of=score_date,
+            model=effective_openai_model,
+            reasoning_effort=effective_openai_reasoning_effort,
+            endpoint=llm_profile.endpoint,
+            timeout_seconds=effective_openai_timeout_seconds,
+            http_client=effective_openai_http_client,
+            openai_cache_dir=openai_cache_dir,
+            openai_cache_ttl_seconds=effective_openai_cache_ttl_hours * 3600,
+            max_retries=llm_profile.max_retries,
+            generated_at=(score_started_at if score_date == production_score_date else None),
+            request_visibility_cutoff=(
+                score_started_at if score_date == production_score_date else None
+            ),
+            max_candidates=effective_risk_event_openai_precheck_max_candidates,
         )
         write_risk_event_prereview_import_report(
             risk_event_prereview_report,
@@ -11269,9 +11260,7 @@ def score_daily(
         tickers=core_watchlist_tickers,
         watchlist=watchlist,
     )
-    focus_stock_trend_section = render_focus_stock_trend_section(
-        focus_stock_trend_report
-    )
+    focus_stock_trend_section = render_focus_stock_trend_section(focus_stock_trend_report)
     industry_node_heat_report = build_industry_node_heat_report(
         industry_chain=industry_chain,
         watchlist=watchlist,
@@ -11281,9 +11270,7 @@ def score_daily(
         risk_event_occurrence_review_report=risk_event_occurrence_review_report,
         thesis_review_report=thesis_review_report,
     )
-    industry_node_heat_section = render_industry_node_heat_section(
-        industry_node_heat_report
-    )
+    industry_node_heat_section = render_industry_node_heat_section(industry_node_heat_report)
     weight_calibration_context = build_weight_calibration_context(
         feature_set=feature_set,
         data_quality_report=data_quality_report,
@@ -11479,14 +11466,10 @@ def score_daily(
                 official_policy_fetch_report=official_policy_fetch_report,
                 risk_event_prereview_report=risk_event_prereview_report,
                 official_policy_report_output=official_policy_report_output,
-                risk_event_openai_precheck_report_output=(
-                    risk_event_openai_precheck_report_output
-                ),
+                risk_event_openai_precheck_report_output=(risk_event_openai_precheck_report_output),
                 risk_event_prereview_queue_path=risk_event_prereview_queue_path,
                 llm_formal_report=llm_formal_report,
-                risk_event_llm_formal_report_output=(
-                    risk_event_llm_formal_report_output
-                ),
+                risk_event_llm_formal_report_output=(risk_event_llm_formal_report_output),
                 llm_profile_id=llm_profile.profile_id,
                 llm_formal_enabled=effective_risk_event_llm_formal_assessment,
                 model=effective_openai_model,
@@ -11533,8 +11516,7 @@ def score_daily(
         f"（AI 占比 {portfolio_exposure_report.ai_exposure_pct_total:.1%}）"
     )
     console.print(
-        f"告警状态：{daily_alert_report.status}"
-        f"（{len(daily_alert_report.alerts)} 条）"
+        f"告警状态：{daily_alert_report.status}" f"（{len(daily_alert_report.alerts)} 条）"
     )
     console.print(f"每日评分报告：{daily_report_output}")
     console.print(f"告警报告：{daily_alert_output}")
@@ -11568,12 +11550,10 @@ def score_daily(
         if llm_formal_report is not None:
             console.print(f"风险事件 LLM formal 报告：{risk_event_llm_formal_report_output}")
     console.print(
-        f"组合暴露报告：{portfolio_exposure_output}"
-        f"（{portfolio_exposure_report.status}）"
+        f"组合暴露报告：{portfolio_exposure_output}" f"（{portfolio_exposure_report.status}）"
     )
     console.print(
-        f"执行政策报告：{execution_policy_report_output}"
-        f"（{execution_policy_report.status}）"
+        f"执行政策报告：{execution_policy_report_output}" f"（{execution_policy_report.status}）"
     )
     console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
     console.print(
@@ -11879,9 +11859,7 @@ def _build_daily_risk_events_status(
     )
     occurrence_validation = occurrence_review_report.validation_report
     error_count = rules_validation_report.error_count + occurrence_validation.error_count
-    warning_count = (
-        rules_validation_report.warning_count + occurrence_validation.warning_count
-    )
+    warning_count = rules_validation_report.warning_count + occurrence_validation.warning_count
     status = "PASS"
     if error_count:
         status = "FAIL"
@@ -12123,9 +12101,9 @@ def _weight_perturbation_scenario_id(
     perturbation_pct: float,
 ) -> str:
     percent_token = f"{perturbation_pct * 100:g}".replace(".", "p")
-    module_token = "".join(
-        char if char.isalnum() else "_" for char in module_name.lower()
-    ).strip("_")
+    module_token = "".join(char if char.isalnum() else "_" for char in module_name.lower()).strip(
+        "_"
+    )
     return f"weight_perturb_{module_token}_{direction}_{percent_token}pct"
 
 
@@ -12258,8 +12236,7 @@ def _build_backtest_sec_fundamental_feature_reports(
             console.print("[red]SEC point-in-time 指标抽取失败，已停止回测。[/red]")
             console.print(f"失败日期：{signal_date.isoformat()}")
             console.print(
-                f"错误数：{metrics_report.error_count}；"
-                f"警告数：{metrics_report.warning_count}"
+                f"错误数：{metrics_report.error_count}；" f"警告数：{metrics_report.warning_count}"
             )
             raise typer.Exit(code=1)
         metric_rows = metrics_report.rows
@@ -12272,9 +12249,7 @@ def _build_backtest_sec_fundamental_feature_reports(
                     as_of=signal_date,
                 )
             except ValueError as exc:
-                console.print(
-                    "[red]TSMC IR point-in-time 指标合并失败，已停止回测。[/red]"
-                )
+                console.print("[red]TSMC IR point-in-time 指标合并失败，已停止回测。[/red]")
                 console.print(f"失败日期：{signal_date.isoformat()}")
                 console.print(str(exc))
                 raise typer.Exit(code=1) from exc
@@ -12309,8 +12284,7 @@ def _build_backtest_sec_fundamental_feature_reports(
             console.print("[red]SEC point-in-time 基本面特征构建失败，已停止回测。[/red]")
             console.print(f"失败日期：{signal_date.isoformat()}")
             console.print(
-                f"错误数：{feature_report.error_count}；"
-                f"警告数：{feature_report.warning_count}"
+                f"错误数：{feature_report.error_count}；" f"警告数：{feature_report.warning_count}"
             )
             raise typer.Exit(code=1)
         reports[signal_date] = feature_report
@@ -12378,9 +12352,7 @@ def _build_backtest_risk_event_occurrence_review_reports(
             as_of=signal_date,
         )
         if not report.validation_report.passed:
-            console.print(
-                "[red]point-in-time 风险事件发生记录校验失败，已停止回测。[/red]"
-            )
+            console.print("[red]point-in-time 风险事件发生记录校验失败，已停止回测。[/red]")
             console.print(f"失败日期：{signal_date.isoformat()}")
             console.print(
                 f"错误数：{report.validation_report.error_count}；"

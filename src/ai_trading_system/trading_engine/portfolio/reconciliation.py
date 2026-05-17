@@ -25,10 +25,7 @@ def rebuild_expected_portfolio_from_execution_reports(
     as_of: datetime | None = None,
 ) -> PortfolioState:
     portfolio = PaperPortfolio(initial_cash_usd)
-    orders_by_id = {
-        order.broker_order_id: order
-        for order in submitted_orders
-    }
+    orders_by_id = {order.broker_order_id: order for order in submitted_orders}
     for report in execution_reports:
         if report.filled_quantity <= 0:
             continue

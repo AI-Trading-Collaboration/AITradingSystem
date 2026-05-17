@@ -48,8 +48,7 @@ class FocusStockTrendReport:
     @property
     def status(self) -> str:
         if not self.items or any(
-            item.data_coverage < 1.0 or item.trend_status == "data_gap"
-            for item in self.items
+            item.data_coverage < 1.0 or item.trend_status == "data_gap" for item in self.items
         ):
             return "PASS_WITH_WARNINGS"
         return "PASS"
@@ -123,12 +122,8 @@ def _build_item(
     rows: tuple[MarketFeatureRow, ...],
 ) -> FocusStockTrendItem:
     feature_map = {row.feature: row for row in rows}
-    missing = tuple(
-        feature for feature in EXPECTED_TREND_FEATURES if feature not in feature_map
-    )
-    coverage = (len(EXPECTED_TREND_FEATURES) - len(missing)) / len(
-        EXPECTED_TREND_FEATURES
-    )
+    missing = tuple(feature for feature in EXPECTED_TREND_FEATURES if feature not in feature_map)
+    coverage = (len(EXPECTED_TREND_FEATURES) - len(missing)) / len(EXPECTED_TREND_FEATURES)
     source_date = max((row.source_date for row in rows), default=None)
     item = FocusStockTrendItem(
         ticker=ticker,
@@ -209,8 +204,10 @@ def _item_explanation(item: FocusStockTrendItem, status: str) -> str:
         return f"趋势特征覆盖不足，缺少 {missing}{suffix}，只可作为数据缺口提示。"
 
     ma_summary = _ma_count_summary(item)
-    return_20d = "缺少 20 日收益" if item.return_20d is None else (
-        f"20 日收益 {_format_pct(item.return_20d)}"
+    return_20d = (
+        "缺少 20 日收益"
+        if item.return_20d is None
+        else (f"20 日收益 {_format_pct(item.return_20d)}")
     )
     if status == "uptrend":
         return f"{ma_summary}，{return_20d}，短中期趋势仍在延续。"
@@ -233,11 +230,7 @@ def _trend_summary(report: FocusStockTrendReport) -> str:
         for item in report.items
         if item.trend_status in {"uptrend", "uptrend_pullback", "range_constructive"}
     ]
-    weak = [
-        item.ticker
-        for item in report.items
-        if item.trend_status in {"weakening", "downtrend"}
-    ]
+    weak = [item.ticker for item in report.items if item.trend_status in {"weakening", "downtrend"}]
     gaps = [item.ticker for item in report.items if item.trend_status == "data_gap"]
     return (
         f"偏强/建设性 {len(strong)} 个"

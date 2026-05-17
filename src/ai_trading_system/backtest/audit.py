@@ -162,8 +162,7 @@ def _append_data_quality_issues(
                 subject="market_data",
                 message="市场数据质量门禁失败，本次回测不能用于结论解释。",
                 recommendation=(
-                    "先修复 prices_daily.csv、rates_daily.csv 或下载 manifest "
-                    "问题后重跑。"
+                    "先修复 prices_daily.csv、rates_daily.csv 或下载 manifest " "问题后重跑。"
                 ),
             )
         )
@@ -268,9 +267,7 @@ def _append_data_credibility_issues(
                 severity="WARNING",
                 code="backtest_data_quality_c_exploratory",
                 subject="Backtest Data Quality",
-                message=(
-                    "本次回测被标记为 C 级探索性输入，不能输出无条件 Sharpe 或绩效结论。"
-                ),
+                message=("本次回测被标记为 C 级探索性输入，不能输出无条件 Sharpe 或绩效结论。"),
                 recommendation=(
                     "先补齐 PIT 输入覆盖、运行 lag sensitivity，并在报告中逐项说明降级原因。"
                 ),
@@ -308,8 +305,7 @@ def _append_component_coverage_issues(
                         f"{minimum_component_coverage:.0%}。"
                     ),
                     recommendation=(
-                        "查看 backtest_input_coverage CSV 中的 "
-                        "component_coverage 记录。"
+                        "查看 backtest_input_coverage CSV 中的 " "component_coverage 记录。"
                     ),
                 )
             )
@@ -418,10 +414,7 @@ def _data_credibility_section(report: BacktestAuditReport) -> list[str]:
             "- Uses Vendor Historical Estimates："
             f"{_yes_no(credibility.uses_vendor_historical_estimates)}"
         ),
-        (
-            "- Uses Self-Archived Snapshots："
-            f"{_yes_no(credibility.uses_self_archived_snapshots)}"
-        ),
+        ("- Uses Self-Archived Snapshots：" f"{_yes_no(credibility.uses_self_archived_snapshots)}"),
         f"- Minimum Feature Lag：{credibility.minimum_feature_lag_days} 个交易日",
         f"- Universe PIT：{_yes_no(credibility.universe_pit)}",
         "",
@@ -611,9 +604,7 @@ def _source_type_count(
     if not counts:
         return 0
     return sum(
-        count
-        for (_, item_source_type), count in counts.items()
-        if item_source_type == source_type
+        count for (_, item_source_type), count in counts.items() if item_source_type == source_type
     )
 
 

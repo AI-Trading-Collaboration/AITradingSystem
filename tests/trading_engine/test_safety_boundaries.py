@@ -26,8 +26,7 @@ from ai_trading_system.trading_engine.schemas import (
 
 
 class SubmitOrderStub(Protocol):
-    def submit_order(self, order_intent: OrderIntent) -> object:
-        ...
+    def submit_order(self, order_intent: OrderIntent) -> object: ...
 
 
 def test_default_trading_engine_config_keeps_real_trading_disabled() -> None:
@@ -40,11 +39,7 @@ def test_default_trading_engine_config_keeps_real_trading_disabled() -> None:
 def test_execution_service_rejects_real_trading_enabled_config() -> None:
     config = load_trading_engine_config()
     real_enabled_config = config.model_copy(
-        update={
-            "trading": config.trading.model_copy(
-                update={"real_trading_enabled": True}
-            )
-        }
+        update={"trading": config.trading.model_copy(update={"real_trading_enabled": True})}
     )
 
     with pytest.raises(RuntimeError, match="real_trading_enabled must remain false"):

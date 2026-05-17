@@ -49,16 +49,13 @@ class BacktestInputGapReport:
         return sum(
             1
             for row in self.rows
-            if row.valuation_snapshot_count > 0
-            and row.strict_point_in_time_valuation_count == 0
+            if row.valuation_snapshot_count > 0 and row.strict_point_in_time_valuation_count == 0
         )
 
     @property
     def risk_event_gap_count(self) -> int:
         return sum(
-            1
-            for row in self.rows
-            if row.risk_event_coverage_status == "missing_or_not_reviewed"
+            1 for row in self.rows if row.risk_event_coverage_status == "missing_or_not_reviewed"
         )
 
 
@@ -88,15 +85,11 @@ def build_backtest_input_gap_report(
                     if item.backtest_use == "strict_point_in_time"
                 ),
                 risk_event_status=risk_event_report.status,
-                risk_event_occurrence_count=(
-                    risk_event_report.validation_report.occurrence_count
-                ),
+                risk_event_occurrence_count=(risk_event_report.validation_report.occurrence_count),
                 risk_event_attestation_count=(
                     risk_event_report.validation_report.current_review_attestation_count
                 ),
-                risk_event_coverage_status=_risk_event_coverage_status(
-                    risk_event_report
-                ),
+                risk_event_coverage_status=_risk_event_coverage_status(risk_event_report),
             )
         )
     return BacktestInputGapReport(
@@ -157,18 +150,12 @@ def render_backtest_input_gap_report(report: BacktestInputGapReport) -> str:
             f"| signal_date | {len(report.signal_dates)} |",
             f"| 有估值快照 | {len(report.rows) - report.valuation_gap_count} |",
             f"| 有严格 PIT 估值 | {_strict_pit_signal_count(report)} |",
-            (
-                "| 风险事件 occurrence 覆盖 | "
-                f"{status_counts.get('covered_by_occurrence', 0)} |"
-            ),
+            ("| 风险事件 occurrence 覆盖 | " f"{status_counts.get('covered_by_occurrence', 0)} |"),
             (
                 "| 人工复核声明覆盖空事件 | "
                 f"{status_counts.get('covered_by_review_attestation', 0)} |"
             ),
-            (
-                "| 风险事件缺口或未复核 | "
-                f"{status_counts.get('missing_or_not_reviewed', 0)} |"
-            ),
+            ("| 风险事件缺口或未复核 | " f"{status_counts.get('missing_or_not_reviewed', 0)} |"),
             "",
             "## 信号日明细",
             "",

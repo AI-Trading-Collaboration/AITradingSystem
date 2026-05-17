@@ -170,9 +170,7 @@ def test_rule_card_promotion_and_retirement_are_controlled(tmp_path: Path) -> No
         ),
         applies_to="score-daily",
     )
-    assert "candidate.position_gate.v2" not in {
-        rule["rule_id"] for rule in manifest["rules"]
-    }
+    assert "candidate.position_gate.v2" not in {rule["rule_id"] for rule in manifest["rules"]}
 
 
 def test_rule_card_promotion_requires_owner_and_outcome_refs(tmp_path: Path) -> None:

@@ -147,9 +147,7 @@ class ShadowWeightProfileManifest(BaseModel):
                 duplicates.append(profile.profile_id)
             seen.add(profile.profile_id)
         if duplicates:
-            raise ValueError(
-                "shadow weight profile ids must be unique: " + ", ".join(duplicates)
-            )
+            raise ValueError("shadow weight profile ids must be unique: " + ", ".join(duplicates))
         return self
 
 
@@ -175,14 +173,11 @@ class ShadowPositionGateProfile(BaseModel):
                 "do not override it in shadow gate profiles"
             )
         out_of_bounds = [
-            key
-            for key, value in self.gate_cap_overrides.items()
-            if value < 0.0 or value > 1.0
+            key for key, value in self.gate_cap_overrides.items() if value < 0.0 or value > 1.0
         ]
         if out_of_bounds:
             raise ValueError(
-                "gate_cap_overrides must be between 0 and 1: "
-                + ", ".join(sorted(out_of_bounds))
+                "gate_cap_overrides must be between 0 and 1: " + ", ".join(sorted(out_of_bounds))
             )
         return self
 
@@ -209,8 +204,7 @@ class ShadowPositionGateProfileManifest(BaseModel):
             seen.add(profile.profile_id)
         if duplicates:
             raise ValueError(
-                "shadow position gate profile ids must be unique: "
-                + ", ".join(duplicates)
+                "shadow position gate profile ids must be unique: " + ", ".join(duplicates)
             )
         return self
 
@@ -229,9 +223,7 @@ class ShadowWeightGridConfig(BaseModel):
                 raise ValueError(f"weight_grid signal has no values: {signal}")
             bad_values = [value for value in values if value < 0.0 or value > 1.0]
             if bad_values:
-                raise ValueError(
-                    f"weight_grid values must be between 0 and 1 for {signal}"
-                )
+                raise ValueError(f"weight_grid values must be between 0 and 1 for {signal}")
         return self
 
 
@@ -254,9 +246,7 @@ class ShadowGateGridConfig(BaseModel):
                 raise ValueError(f"gate_grid cap has no values: {gate_id}")
             bad_values = [value for value in values if value < 0.0 or value > 1.0]
             if bad_values:
-                raise ValueError(
-                    f"gate_grid values must be between 0 and 1 for {gate_id}"
-                )
+                raise ValueError(f"gate_grid values must be between 0 and 1 for {gate_id}")
         return self
 
 
@@ -522,14 +512,10 @@ class ShadowWeightPerformanceRow:
             "production_gated_target_position": _blank_if_none(
                 self.production_gated_target_position
             ),
-            "shadow_gated_target_position": _blank_if_none(
-                self.shadow_gated_target_position
-            ),
+            "shadow_gated_target_position": _blank_if_none(self.shadow_gated_target_position),
             "production_turnover": _blank_if_none(self.production_turnover),
             "shadow_turnover": _blank_if_none(self.shadow_turnover),
-            "production_position_return": _blank_if_none(
-                self.production_position_return
-            ),
+            "production_position_return": _blank_if_none(self.production_position_return),
             "shadow_position_return": _blank_if_none(self.shadow_position_return),
             "excess_position_return": _blank_if_none(self.excess_position_return),
         }
@@ -641,9 +627,7 @@ class ShadowParameterSearchTrial:
             "shadow_max_drawdown": _blank_if_none(self.shadow_max_drawdown),
             "production_turnover": self.production_turnover,
             "shadow_turnover": self.shadow_turnover,
-            "shadow_beats_production_rate": _blank_if_none(
-                self.shadow_beats_production_rate
-            ),
+            "shadow_beats_production_rate": _blank_if_none(self.shadow_beats_production_rate),
             "weight_l1_distance_from_production": self.weight_l1_distance_from_production,
             "max_single_factor_step": self.max_single_factor_step,
             "gate_relaxation_distance": self.gate_relaxation_distance,
@@ -711,12 +695,8 @@ class ShadowParameterPositionChangeRow:
             "position_delta": self.position_delta,
             "production_binding_gates": ",".join(self.production_binding_gates),
             "candidate_binding_gates": ",".join(self.candidate_binding_gates),
-            "production_position_return": _blank_if_none(
-                self.production_position_return
-            ),
-            "candidate_position_return": _blank_if_none(
-                self.candidate_position_return
-            ),
+            "production_position_return": _blank_if_none(self.production_position_return),
+            "candidate_position_return": _blank_if_none(self.candidate_position_return),
             "return_impact": _blank_if_none(self.return_impact),
         }
 
@@ -918,9 +898,7 @@ def load_shadow_weight_profile_manifest(
     if not isinstance(raw, dict):
         raise ValueError(f"shadow weight profile manifest must be a mapping: {path}")
     manifest = ShadowWeightProfileManifest.model_validate(raw)
-    resolved_source_path = source_profile_path or _project_path(
-        manifest.source_weight_profile_path
-    )
+    resolved_source_path = source_profile_path or _project_path(manifest.source_weight_profile_path)
     source_profile = load_weight_profile(resolved_source_path)
     for profile in manifest.profiles:
         _validate_profile_against_source(profile, source_profile)
@@ -1002,9 +980,7 @@ def build_shadow_weight_profile_run_report(
     observations: list[ShadowWeightObservation] = []
     for profile in manifest.profiles:
         if profile.status != "shadow":
-            warnings.append(
-                f"profile {profile.profile_id} status={profile.status}，本轮只作观察。"
-            )
+            warnings.append(f"profile {profile.profile_id} status={profile.status}，本轮只作观察。")
         for gate_profile in gate_profiles:
             if gate_profile.status != "shadow":
                 warnings.append(
@@ -1215,9 +1191,7 @@ def build_shadow_weight_performance_report(
         profile_id = str(observation["profile_id"])
         profile_version = str(observation["profile_version"])
         signal_date = date.fromisoformat(str(observation["as_of"]))
-        production_position = _float_or_none(
-            observation.get("production_gated_target_position")
-        )
+        production_position = _float_or_none(observation.get("production_gated_target_position"))
         shadow_position = _float_or_none(observation.get("shadow_gated_target_position"))
         if production_position is None or shadow_position is None:
             row = ShadowWeightPerformanceRow(
@@ -1364,9 +1338,7 @@ def render_shadow_weight_performance_report(
         if report.best_profile is None:
             lines.append("- 当前没有可比较的 available 样本。")
         else:
-            lines.append(
-                "- 当前没有产生正向 position-weighted excess return 的 shadow profile。"
-            )
+            lines.append("- 当前没有产生正向 position-weighted excess return 的 shadow profile。")
             lines.append(
                 "- 最高 excess total return："
                 f"{_format_pct(report.best_profile.excess_total_return)}"
@@ -1500,9 +1472,7 @@ def build_shadow_parameter_search_report(
         start=1,
     ):
         if max_trials is not None and index > max_trials:
-            warnings.append(
-                f"max_trials={max_trials} 已截断搜索空间；未评估剩余组合。"
-            )
+            warnings.append(f"max_trials={max_trials} 已截断搜索空间；未评估剩余组合。")
             break
         trials.append(
             _evaluate_search_trial(
@@ -1549,7 +1519,8 @@ def build_shadow_parameter_search_report(
         source_weight_profile_path=source_profile_path,
         search_space_path=search_space_path,
         objective_path=objective_path,
-        output_dir=output_dir or default_shadow_parameter_search_output_dir(
+        output_dir=output_dir
+        or default_shadow_parameter_search_output_dir(
             DEFAULT_SHADOW_PARAMETER_SEARCH_OUTPUT_ROOT,
             run_id,
         ),
@@ -1725,11 +1696,7 @@ def render_shadow_parameter_search_report(
 ) -> str:
     best = report.best_trial
     top_trials = sorted(
-        (
-            trial
-            for trial in report.trials
-            if trial.eligible and trial.objective_score is not None
-        ),
+        (trial for trial in report.trials if trial.eligible and trial.objective_score is not None),
         key=lambda trial: trial.objective_score or float("-inf"),
         reverse=True,
     )[: report.objective.top_n]
@@ -1821,14 +1788,8 @@ def render_shadow_parameter_search_report(
                     "- Shadow beats production rate："
                     f"{_format_pct(best.shadow_beats_production_rate)}"
                 ),
-                (
-                    "- Target weights："
-                    f"{_format_weight_mapping(best.target_weights)}"
-                ),
-                (
-                    "- Gate overrides："
-                    f"{_format_gate_overrides(best.gate_cap_overrides)}"
-                ),
+                ("- Target weights：" f"{_format_weight_mapping(best.target_weights)}"),
+                ("- Gate overrides：" f"{_format_gate_overrides(best.gate_cap_overrides)}"),
             ]
         )
     lines.extend(["", "## Factorial Attribution", ""])
@@ -1837,9 +1798,7 @@ def render_shadow_parameter_search_report(
     else:
         attribution = report.factorial_attribution
         selected_status = (
-            "eligible"
-            if attribution.selected_trial_eligible
-            else "diagnostic_only_not_eligible"
+            "eligible" if attribution.selected_trial_eligible else "diagnostic_only_not_eligible"
         )
         lines.extend(
             [
@@ -1949,9 +1908,7 @@ def render_shadow_parameter_search_report(
                 f"{_format_pct(row.return_impact)} |"
             )
         if len(report.position_change_rows) > 50:
-            lines.append(
-                f"- 仅展示前 50 行；完整行数：{len(report.position_change_rows)}。"
-            )
+            lines.append(f"- 仅展示前 50 行；完整行数：{len(report.position_change_rows)}。")
     lines.extend(
         [
             "",
@@ -2065,18 +2022,9 @@ def _trial_card_attribution_summary(report: ShadowParameterSearchReport) -> str:
     if report.factorial_attribution is not None:
         attribution = report.factorial_attribution
         parts.append(f"primary_driver={attribution.primary_driver}")
-        parts.append(
-            "weight_only Δexcess="
-            f"{_format_pct(attribution.weight_only_excess_delta)}"
-        )
-        parts.append(
-            "gate_only Δexcess="
-            f"{_format_pct(attribution.gate_only_excess_delta)}"
-        )
-        parts.append(
-            "interaction Δexcess="
-            f"{_format_pct(attribution.interaction_excess_delta)}"
-        )
+        parts.append("weight_only Δexcess=" f"{_format_pct(attribution.weight_only_excess_delta)}")
+        parts.append("gate_only Δexcess=" f"{_format_pct(attribution.gate_only_excess_delta)}")
+        parts.append("interaction Δexcess=" f"{_format_pct(attribution.interaction_excess_delta)}")
     if report.cap_attribution:
         primary_cap = max(
             report.cap_attribution,
@@ -2090,9 +2038,7 @@ def _trial_card_attribution_summary(report: ShadowParameterSearchReport) -> str:
 
 
 def _trial_card_position_change_summary(report: ShadowParameterSearchReport) -> str:
-    changed = [
-        row for row in report.position_change_rows if abs(row.position_delta) > 1e-9
-    ]
+    changed = [row for row in report.position_change_rows if abs(row.position_delta) > 1e-9]
     if not changed:
         return "未改变最终仓位；查看 Position Change Attribution。"
     available = [row for row in changed if row.return_impact is not None]
@@ -2122,8 +2068,7 @@ def build_shadow_weight_prediction_records(
     records: list[dict[str, Any]] = []
     for observation in report.observations:
         candidate_id = (
-            f"shadow_weight_profile:{observation.profile_id}:"
-            f"{observation.profile_version}"
+            f"shadow_weight_profile:{observation.profile_id}:" f"{observation.profile_version}"
         )
         record = build_prediction_record_from_decision_snapshot(
             snapshot=snapshot,
@@ -2139,9 +2084,7 @@ def build_shadow_weight_prediction_records(
         record["signal"] = _band_label(observation.shadow_final_band)
         record["model_target_position"] = observation.shadow_model_target_position
         record["gated_target_position"] = observation.shadow_gated_target_position
-        record["execution_assumption"] = (
-            "shadow_weight_profile_no_order_no_position_change"
-        )
+        record["execution_assumption"] = "shadow_weight_profile_no_order_no_position_change"
         records.append(record)
     return tuple(records)
 
@@ -2231,10 +2174,7 @@ def _build_search_gate_candidates(
                 gate_cap_overrides={},
             )
         )
-    if (
-        search_space.include_shadow_gate_profiles
-        and search_space.shadow_gate_profile_manifest_path
-    ):
+    if search_space.include_shadow_gate_profiles and search_space.shadow_gate_profile_manifest_path:
         manifest = load_shadow_position_gate_profile_manifest(
             _project_path(search_space.shadow_gate_profile_manifest_path)
         )
@@ -2324,9 +2264,7 @@ def _evaluate_search_trial(
         production_position_return = (
             production_position * asset_return - production_turnover * cost_rate
         )
-        shadow_position_return = (
-            shadow_position * asset_return - shadow_turnover * cost_rate
-        )
+        shadow_position_return = shadow_position * asset_return - shadow_turnover * cost_rate
         production_returns.append(production_position_return)
         shadow_returns.append(shadow_position_return)
         excess_returns.append(shadow_position_return - production_position_return)
@@ -2344,13 +2282,9 @@ def _evaluate_search_trial(
     production_max_drawdown = _max_drawdown_from_returns(production_returns)
     shadow_max_drawdown = _max_drawdown_from_returns(shadow_returns)
     gate_relaxation_distance = (
-        0.0
-        if not snapshots
-        else gate_relaxation_distance_sum / len(snapshots)
+        0.0 if not snapshots else gate_relaxation_distance_sum / len(snapshots)
     )
-    changed_dimension_count = changed_weight_dimensions + len(
-        gate_candidate.gate_cap_overrides
-    )
+    changed_dimension_count = changed_weight_dimensions + len(gate_candidate.gate_cap_overrides)
     objective_score = _search_objective_score(
         objective=objective,
         total_count=len(snapshots),
@@ -2375,9 +2309,7 @@ def _evaluate_search_trial(
         max_single_factor_step=max_single_factor_step,
     )
     return ShadowParameterSearchTrial(
-        trial_id=(
-            f"{weight_candidate.candidate_id}__{gate_candidate.candidate_id}"
-        ),
+        trial_id=(f"{weight_candidate.candidate_id}__{gate_candidate.candidate_id}"),
         weight_candidate_id=weight_candidate.candidate_id,
         weight_candidate_version=weight_candidate.version,
         gate_candidate_id=gate_candidate.candidate_id,
@@ -2579,8 +2511,7 @@ def _build_position_change_rows(
         _ = production_gate_cap
         component_scores = _component_scores(snapshot)
         candidate_score = sum(
-            component_scores[signal] * weight
-            for signal, weight in selected.target_weights.items()
+            component_scores[signal] * weight for signal, weight in selected.target_weights.items()
         )
         candidate_model_band = _band_for_score(candidate_score, position_bands)
         candidate_gate_cap, candidate_gate_sources = _gate_cap(
@@ -2676,9 +2607,7 @@ def _validate_weight_mapping(weights: dict[str, float]) -> None:
         raise ValueError("target_weights keys must not be empty")
     negative_keys = [key for key, value in weights.items() if value < 0.0]
     if negative_keys:
-        raise ValueError(
-            "target_weights must be non-negative: " + ", ".join(sorted(negative_keys))
-        )
+        raise ValueError("target_weights must be non-negative: " + ", ".join(sorted(negative_keys)))
     if abs(sum(weights.values()) - 1.0) > 1e-6:
         raise ValueError("target_weights must sum to 1.0")
 
@@ -2698,8 +2627,7 @@ def _validate_profile_against_source(
         if unknown:
             details.append("unknown " + ", ".join(unknown))
         raise ValueError(
-            f"shadow profile {profile.profile_id} signal mismatch: "
-            + "; ".join(details)
+            f"shadow profile {profile.profile_id} signal mismatch: " + "; ".join(details)
         )
     out_of_bounds = [
         signal
@@ -2728,8 +2656,7 @@ def _validate_weight_candidate_against_source(
         if unknown:
             details.append("unknown " + ", ".join(unknown))
         raise ValueError(
-            f"weight candidate {candidate.candidate_id} signal mismatch: "
-            + "; ".join(details)
+            f"weight candidate {candidate.candidate_id} signal mismatch: " + "; ".join(details)
         )
     out_of_bounds = [
         signal
@@ -2753,9 +2680,7 @@ def _validate_gate_candidate(candidate: ShadowGateCandidate) -> None:
             f"do not override it in gate candidate {candidate.candidate_id}"
         )
     out_of_bounds = [
-        gate_id
-        for gate_id, cap in candidate.gate_cap_overrides.items()
-        if cap < 0.0 or cap > 1.0
+        gate_id for gate_id, cap in candidate.gate_cap_overrides.items() if cap < 0.0 or cap > 1.0
     ]
     if out_of_bounds:
         raise ValueError(
@@ -2799,10 +2724,7 @@ def _iter_gate_grid(grid: ShadowGateGridConfig) -> tuple[dict[str, float], ...]:
     value_lists = [tuple(grid.cap_values[gate_id]) for gate_id in gate_ids]
     for values in itertools.product(*value_lists):
         candidates.append(
-            {
-                gate_id: float(value)
-                for gate_id, value in zip(gate_ids, values, strict=True)
-            }
+            {gate_id: float(value) for gate_id, value in zip(gate_ids, values, strict=True)}
         )
         if len(candidates) >= grid.max_candidates:
             break
@@ -3115,14 +3037,8 @@ def _build_shadow_parameter_promotion_checks(
     checks.append(
         ShadowParameterPromotionCheck(
             check_id="available_sample_floor",
-            status=(
-                "PASS"
-                if available >= contract.min_available_samples
-                else "FAIL"
-            ),
-            reason=(
-                f"available={available}，contract floor={contract.min_available_samples}。"
-            ),
+            status=("PASS" if available >= contract.min_available_samples else "FAIL"),
+            reason=(f"available={available}，contract floor={contract.min_available_samples}。"),
             evidence_ref="trials.csv:available_count",
         )
     )
@@ -3148,18 +3064,14 @@ def _build_shadow_parameter_promotion_checks(
         )
 
     shadow_drawdown = abs(_row_float(selected_trial, "shadow_max_drawdown") or 0.0)
-    production_drawdown = abs(
-        _row_float(selected_trial, "production_max_drawdown") or 0.0
-    )
+    production_drawdown = abs(_row_float(selected_trial, "production_max_drawdown") or 0.0)
     degradation = max(0.0, shadow_drawdown - production_drawdown)
     if contract.max_drawdown_degradation is not None:
         checks.append(
             ShadowParameterPromotionCheck(
                 check_id="drawdown_degradation",
                 status=(
-                    "PASS"
-                    if degradation <= contract.max_drawdown_degradation + 1e-12
-                    else "FAIL"
+                    "PASS" if degradation <= contract.max_drawdown_degradation + 1e-12 else "FAIL"
                 ),
                 reason=(
                     f"drawdown degradation={degradation:.2%}，"
@@ -3175,9 +3087,7 @@ def _build_shadow_parameter_promotion_checks(
             ShadowParameterPromotionCheck(
                 check_id="shadow_turnover",
                 status=(
-                    "PASS"
-                    if shadow_turnover <= contract.max_shadow_turnover + 1e-12
-                    else "FAIL"
+                    "PASS" if shadow_turnover <= contract.max_shadow_turnover + 1e-12 else "FAIL"
                 ),
                 reason=(
                     f"shadow turnover={shadow_turnover:.2f}，"
@@ -3188,9 +3098,7 @@ def _build_shadow_parameter_promotion_checks(
         )
 
     factorial = manifest.get("factorial_attribution")
-    primary_driver = (
-        factorial.get("primary_driver") if isinstance(factorial, dict) else None
-    )
+    primary_driver = factorial.get("primary_driver") if isinstance(factorial, dict) else None
     if contract.gate_primary_driver_requires_cap_review and primary_driver == "gate":
         checks.append(
             ShadowParameterPromotionCheck(
@@ -3300,19 +3208,13 @@ def _search_manifest_payload(report: ShadowParameterSearchReport) -> dict[str, A
         "best_trial_id": None if best is None else best.trial_id,
         "best_objective_score": None if best is None else best.objective_score,
         "best_diagnostic_trial_id": (
-            None
-            if report.best_diagnostic_trial is None
-            else report.best_diagnostic_trial.trial_id
+            None if report.best_diagnostic_trial is None else report.best_diagnostic_trial.trial_id
         ),
         "factorial_attribution": (
-            None
-            if report.factorial_attribution is None
-            else report.factorial_attribution.to_dict()
+            None if report.factorial_attribution is None else report.factorial_attribution.to_dict()
         ),
         "cap_attribution": [item.to_dict() for item in report.cap_attribution],
-        "position_change_rows": [
-            row.to_dict() for row in report.position_change_rows
-        ],
+        "position_change_rows": [row.to_dict() for row in report.position_change_rows],
         "warnings": list(report.warnings),
     }
 
@@ -3373,8 +3275,7 @@ def _load_observation_rows(
     missing = required - set(frame.columns)
     if missing:
         raise ValueError(
-            "shadow weight observation ledger missing columns: "
-            + ", ".join(sorted(missing))
+            "shadow weight observation ledger missing columns: " + ", ".join(sorted(missing))
         )
     for column in ("production_gated_target_position", "shadow_gated_target_position"):
         if column not in frame.columns:
@@ -3473,31 +3374,23 @@ def _performance_summaries(
                 profile_version=str(profile_version),
                 total_count=len(group_rows),
                 available_count=len(available),
-                pending_count=sum(
-                    row.outcome_status == "PENDING" for row in group_rows
-                ),
-                missing_count=sum(
-                    row.outcome_status == "MISSING_DATA" for row in group_rows
-                ),
+                pending_count=sum(row.outcome_status == "PENDING" for row in group_rows),
+                missing_count=sum(row.outcome_status == "MISSING_DATA" for row in group_rows),
                 production_total_return=_compound_returns(production_returns),
                 shadow_total_return=_compound_returns(shadow_returns),
                 excess_total_return=(
                     None
                     if not production_returns or not shadow_returns
-                    else _compound_returns(shadow_returns)
-                    - _compound_returns(production_returns)
+                    else _compound_returns(shadow_returns) - _compound_returns(production_returns)
                 ),
                 production_max_drawdown=_max_drawdown_from_returns(production_returns),
                 shadow_max_drawdown=_max_drawdown_from_returns(shadow_returns),
-                production_turnover=sum(
-                    row.production_turnover or 0.0 for row in available
-                ),
+                production_turnover=sum(row.production_turnover or 0.0 for row in available),
                 shadow_turnover=sum(row.shadow_turnover or 0.0 for row in available),
                 shadow_beats_production_rate=(
                     None
                     if not excess_returns
-                    else sum(value > 0.0 for value in excess_returns)
-                    / len(excess_returns)
+                    else sum(value > 0.0 for value in excess_returns) / len(excess_returns)
                 ),
             )
         )
@@ -3732,9 +3625,7 @@ def _factorial_row(
 def _format_gate_overrides(overrides: Mapping[str, float]) -> str:
     if not overrides:
         return "production observed"
-    return ", ".join(
-        f"{gate_id}={value:.2f}" for gate_id, value in sorted(overrides.items())
-    )
+    return ", ".join(f"{gate_id}={value:.2f}" for gate_id, value in sorted(overrides.items()))
 
 
 def _escape_markdown_table(value: str) -> str:

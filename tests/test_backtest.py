@@ -177,10 +177,7 @@ def test_run_daily_score_backtest_deducts_configured_slippage() -> None:
     assert slippage_result.slippage_bps == 10.0
     assert slippage_result.rows[0].slippage_cost > 0
     assert slippage_result.rows[0].transaction_cost > base_result.rows[0].transaction_cost
-    assert (
-        slippage_result.strategy_metrics.total_return
-        < base_result.strategy_metrics.total_return
-    )
+    assert slippage_result.strategy_metrics.total_return < base_result.strategy_metrics.total_return
 
 
 def test_run_daily_score_backtest_uses_point_in_time_sec_features() -> None:
@@ -188,9 +185,7 @@ def test_run_daily_score_backtest_uses_point_in_time_sec_features() -> None:
     prices = _sample_prices(configured_price_tickers(universe), periods=320)
     rates = _sample_rates(configured_rate_series(universe), periods=320)
     signal_dates = pd.date_range("2026-04-01", "2026-04-29", freq="D")
-    sec_reports = {
-        item.date(): _fundamental_feature_report(item.date()) for item in signal_dates
-    }
+    sec_reports = {item.date(): _fundamental_feature_report(item.date()) for item in signal_dates}
 
     result = run_daily_score_backtest(
         prices=prices,
@@ -222,8 +217,7 @@ def test_run_daily_score_backtest_uses_point_in_time_valuation_and_risk_events()
         item.date(): _valuation_review_report(item.date()) for item in signal_dates
     }
     risk_event_reports = {
-        item.date(): _risk_event_occurrence_review_report(item.date())
-        for item in signal_dates
+        item.date(): _risk_event_occurrence_review_report(item.date()) for item in signal_dates
     }
 
     result = run_daily_score_backtest(
@@ -262,9 +256,7 @@ def test_run_daily_score_backtest_filters_watchlist_by_lifecycle(
     original_build_market_features = backtest_daily_module.build_market_features
 
     def wrapped_build_market_features(**kwargs):  # type: ignore[no-untyped-def]
-        captured_watchlists.append(
-            (kwargs["as_of"], tuple(kwargs["core_watchlist"]))
-        )
+        captured_watchlists.append((kwargs["as_of"], tuple(kwargs["core_watchlist"])))
         return original_build_market_features(**kwargs)
 
     monkeypatch.setattr(
@@ -438,9 +430,7 @@ def test_run_daily_score_backtest_reuses_prepared_context_for_parameter_scenario
     assert len(feature_build_dates) == feature_build_count
     assert len(base_result.rows) == len(prepared_context.periods)
     assert stress_result.rows[0].total_score == base_result.rows[0].total_score
-    assert stress_result.strategy_metrics.total_return < (
-        base_result.strategy_metrics.total_return
-    )
+    assert stress_result.strategy_metrics.total_return < (base_result.strategy_metrics.total_return)
 
 
 def test_render_and_write_backtest_outputs(tmp_path: Path) -> None:
@@ -530,12 +520,10 @@ def test_backtest_data_credibility_summarizes_pit_inputs() -> None:
         strategy_ticker="SMH",
         benchmark_tickers=("SPY",),
         fundamental_feature_reports={
-            signal_date: _fundamental_feature_report(signal_date)
-            for signal_date in signal_dates
+            signal_date: _fundamental_feature_report(signal_date) for signal_date in signal_dates
         },
         valuation_review_reports={
-            signal_date: _valuation_review_report(signal_date)
-            for signal_date in signal_dates
+            signal_date: _valuation_review_report(signal_date) for signal_date in signal_dates
         },
         risk_event_occurrence_review_reports={
             signal_date: _risk_event_occurrence_review_report(signal_date)
@@ -549,9 +537,7 @@ def test_backtest_data_credibility_summarizes_pit_inputs() -> None:
     assert credibility.universe_pit
     assert credibility.uses_self_archived_snapshots
     assert credibility.grade == "B"
-    valuation_input = {
-        item.input_name: item for item in credibility.core_inputs
-    }["估值快照"]
+    valuation_input = {item.input_name: item for item in credibility.core_inputs}["估值快照"]
     assert valuation_input.point_in_time_class_counts["captured_snapshot"] == 2
     assert valuation_input.backtest_use_counts["captured_at_forward_only"] == 2
 
@@ -597,8 +583,7 @@ def test_backtest_input_coverage_csv_includes_audit_records(tmp_path: Path) -> N
     universe = load_universe()
     signal_dates = [date(2026, 4, day) for day in range(1, 3)]
     fundamental_reports = {
-        signal_date: _fundamental_feature_report(signal_date)
-        for signal_date in signal_dates
+        signal_date: _fundamental_feature_report(signal_date) for signal_date in signal_dates
     }
     valuation_reports = {
         signal_date: _valuation_review_report(
@@ -664,13 +649,9 @@ def test_backtest_input_coverage_csv_includes_audit_records(tmp_path: Path) -> N
     ]
     assert "https://policy.example/release" in set(risk_url["source_url"])
     assert "True" in set(risk_url["score_eligible"].astype(str))
-    valuation_pit = frame.loc[
-        frame["record_type"] == "valuation_point_in_time_class"
-    ]
+    valuation_pit = frame.loc[frame["record_type"] == "valuation_point_in_time_class"]
     assert "captured_snapshot" in set(valuation_pit["point_in_time_class"])
-    valuation_backtest_use = frame.loc[
-        frame["record_type"] == "valuation_backtest_use"
-    ]
+    valuation_backtest_use = frame.loc[frame["record_type"] == "valuation_backtest_use"]
     assert "captured_at_forward_only" in set(valuation_backtest_use["backtest_use"])
     assert backtest_input_coverage_records(result)
 
@@ -727,8 +708,7 @@ def test_backtest_report_includes_data_quality_gate_summary(tmp_path: Path) -> N
     assert "## 数据质量门禁摘要" in markdown
     assert "- 错误数：0；警告数：1" in markdown
     assert (
-        "| 价格数据 | `prices.csv` | 100 | 2026-01-01 至 2026-04-30 | "
-        "price-checksum |"
+        "| 价格数据 | `prices.csv` | 100 | 2026-01-01 至 2026-04-30 | " "price-checksum |"
     ) in markdown
     assert "| 警告 | prices_stale | 1 | 价格数据距离评估日偏旧。 | SPY |" in markdown
 
@@ -904,13 +884,10 @@ def test_render_backtest_report_includes_monthly_component_source_type_trend(
 
     assert "## 月度模块来源类型趋势" in markdown
     assert "| 月份 | 模块 | 样本数 | 来源类型分布 | 需解释天数 |" in markdown
-    april_fundamentals = (
-        "| 2026-04 | 基本面（fundamentals） | 2 | 硬数据 1；数据不足 1 | 1 |"
-    )
+    april_fundamentals = "| 2026-04 | 基本面（fundamentals） | 2 | 硬数据 1；数据不足 1 | 1 |"
     april_trend = "| 2026-04 | 趋势（trend） | 2 | 硬数据 1；部分硬数据 1 | 1 |"
     may_fundamentals = (
-        "| 2026-05 | 基本面（fundamentals） | 2 | 手工/审计输入 1；"
-        "部分手工/审计输入 1 | 1 |"
+        "| 2026-05 | 基本面（fundamentals） | 2 | 手工/审计输入 1；" "部分手工/审计输入 1 | 1 |"
     )
     may_trend = "| 2026-05 | 趋势（trend） | 2 | 硬数据 1；占位输入 1 | 1 |"
     assert april_fundamentals in markdown
@@ -925,12 +902,10 @@ def test_backtest_report_includes_monthly_input_issue_drilldown(tmp_path: Path) 
     rates = _sample_rates(configured_rate_series(universe), periods=320)
     signal_dates = [date(2026, 4, day) for day in range(1, 5)]
     fundamental_reports = {
-        signal_date: _fundamental_feature_report(signal_date)
-        for signal_date in signal_dates
+        signal_date: _fundamental_feature_report(signal_date) for signal_date in signal_dates
     }
     valuation_reports = {
-        signal_date: _valuation_review_report(signal_date)
-        for signal_date in signal_dates
+        signal_date: _valuation_review_report(signal_date) for signal_date in signal_dates
     }
     risk_reports = {
         signal_date: _risk_event_occurrence_review_report(signal_date)
@@ -1016,8 +991,7 @@ def test_backtest_report_includes_monthly_input_issue_drilldown(tmp_path: Path) 
         "TSM:revenue:quarterly | 2 |"
     ) in markdown
     assert (
-        "| 2026-04 | 估值快照 | stale_snapshot | NVDA:nvda_valuation_2026-04-03 | "
-        "1 |"
+        "| 2026-04 | 估值快照 | stale_snapshot | NVDA:nvda_valuation_2026-04-03 | " "1 |"
     ) in markdown
     assert (
         "| 2026-04 | 风险事件发生记录 | active_occurrence_stale | "
@@ -1213,8 +1187,7 @@ def test_backtest_report_includes_monthly_ticker_input_summary(
     rates = _sample_rates(configured_rate_series(universe), periods=320)
     signal_dates = [date(2026, 4, day) for day in range(1, 3)]
     fundamental_reports = {
-        signal_date: _fundamental_feature_report(signal_date)
-        for signal_date in signal_dates
+        signal_date: _fundamental_feature_report(signal_date) for signal_date in signal_dates
     }
     for signal_date in signal_dates:
         report = fundamental_reports[signal_date]
@@ -1229,8 +1202,7 @@ def test_backtest_report_includes_monthly_ticker_input_summary(
             ),
         )
     valuation_reports = {
-        signal_date: _valuation_review_report(signal_date)
-        for signal_date in signal_dates
+        signal_date: _valuation_review_report(signal_date) for signal_date in signal_dates
     }
     risk_reports = {
         signal_date: _risk_event_occurrence_review_report(
@@ -1457,9 +1429,7 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert rule_versions["production_rule_count"] >= 1
     rule_ids = {rule["rule_id"] for rule in rule_versions["rules"]}
     assert "scoring.weighted_score.v1" in rule_ids
-    feature_availability_params = trace["run_manifest"]["parameters"][
-        "feature_availability"
-    ]
+    feature_availability_params = trace["run_manifest"]["parameters"]["feature_availability"]
     assert feature_availability_params["status"] == "PASS"
     dataset_ids = {dataset["dataset_id"] for dataset in trace["dataset_refs"]}
     assert "dataset:feature_availability:2026-04-01:2026-04-30" in dataset_ids
@@ -1521,9 +1491,7 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     assert robustness_summary["production_effect"] == "none"
     assert robustness_summary["coverage_evidence"]["available"] is True
     assert "trend" in robustness_summary["coverage_evidence"]["components"]
-    scenario_ids = {
-        scenario["scenario_id"] for scenario in robustness_summary["scenarios"]
-    }
+    scenario_ids = {scenario["scenario_id"] for scenario in robustness_summary["scenarios"]}
     assert "fixed_60pct_total_asset_ai" in scenario_ids
     assert "vol_targeted_total_asset_ai" in scenario_ids
     assert "no_gate_model_target_baseline" in scenario_ids
@@ -1570,9 +1538,7 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     lag_summary = json.loads(lag_sensitivity_summary_path.read_text(encoding="utf-8"))
     assert lag_summary["report_type"] == "backtest_lag_sensitivity"
     assert lag_summary["tested_lag_days"] == [0, 1, 3]
-    assert {
-        scenario["scenario_id"] for scenario in lag_summary["scenarios"]
-    } == {
+    assert {scenario["scenario_id"] for scenario in lag_summary["scenarios"]} == {
         "feature_lag_1_universe_lag_0",
         "feature_lag_0_universe_lag_1",
         "feature_lag_1_universe_lag_1",
@@ -1591,9 +1557,7 @@ def test_backtest_cli_writes_report_and_daily_csv(tmp_path: Path) -> None:
     promotion_summary = json.loads(promotion_summary_path.read_text(encoding="utf-8"))
     assert promotion_summary["report_type"] == "model_promotion_gate"
     assert promotion_summary["production_effect"] == "none"
-    assert {
-        check["check_id"] for check in promotion_summary["checks"]
-    } >= {
+    assert {check["check_id"] for check in promotion_summary["checks"]} >= {
         "data_credibility",
         "robustness",
         "lag_sensitivity",

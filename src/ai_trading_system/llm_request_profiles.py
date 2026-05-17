@@ -8,9 +8,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
 
-DEFAULT_LLM_REQUEST_PROFILES_CONFIG_PATH = (
-    PROJECT_ROOT / "config" / "llm_request_profiles.yaml"
-)
+DEFAULT_LLM_REQUEST_PROFILES_CONFIG_PATH = PROJECT_ROOT / "config" / "llm_request_profiles.yaml"
 
 OpenAIReasoningEffortConfig = Literal["none", "minimal", "low", "medium", "high", "xhigh"]
 OpenAIHttpClientConfig = Literal["requests", "urllib"]
@@ -63,9 +61,7 @@ class LlmRequestProfilesConfig(BaseModel):
             {profile_id for profile_id in profile_ids if profile_ids.count(profile_id) > 1}
         )
         if duplicate_ids:
-            raise ValueError(
-                f"LLM request profile ids must be unique: {', '.join(duplicate_ids)}"
-            )
+            raise ValueError(f"LLM request profile ids must be unique: {', '.join(duplicate_ids)}")
         if self.default_profile_id not in set(profile_ids):
             raise ValueError("default_profile_id must match a configured profile_id")
         return self
@@ -76,9 +72,7 @@ class LlmRequestProfilesConfig(BaseModel):
             if profile.profile_id == requested:
                 return profile
         configured = ", ".join(profile.profile_id for profile in self.profiles)
-        raise ValueError(
-            f"unknown LLM request profile '{requested}', available: {configured}"
-        )
+        raise ValueError(f"unknown LLM request profile '{requested}', available: {configured}")
 
 
 def load_llm_request_profiles(

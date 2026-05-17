@@ -107,9 +107,7 @@ def test_sec_accession_coverage_reports_missing_archive_index(tmp_path: Path) ->
     )
 
     assert report.status == "FAIL"
-    assert "sec_accession_archive_index_missing" in {
-        issue.code for issue in report.issues
-    }
+    assert "sec_accession_archive_index_missing" in {issue.code for issue in report.issues}
     assert report.rows[0].status == "MISSING_ARCHIVE_INDEX"
 
 

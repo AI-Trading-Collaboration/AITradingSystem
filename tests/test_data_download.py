@@ -239,7 +239,7 @@ def test_write_download_failure_report_redacts_marketstack_diagnostics(tmp_path:
     assert "Marketstack" in text
     assert "MISS_NO_RESPONSE" in text
     assert "NVDA" in text
-    assert "access_key\": \"***\"" in text
+    assert 'access_key": "***"' in text
     assert "secret" not in text.lower()
 
 

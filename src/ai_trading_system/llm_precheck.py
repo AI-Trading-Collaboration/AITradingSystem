@@ -366,12 +366,8 @@ class LlmExtractedClaim(BaseModel):
     def normalize_claim(self) -> LlmExtractedClaim:
         self.affected_tickers = [ticker.upper() for ticker in self.affected_tickers if ticker]
         self.affected_nodes = [node for node in self.affected_nodes if node]
-        self.conflicts_or_uncertainties = [
-            item for item in self.conflicts_or_uncertainties if item
-        ]
-        self.required_review_questions = [
-            item for item in self.required_review_questions if item
-        ]
+        self.conflicts_or_uncertainties = [item for item in self.conflicts_or_uncertainties if item]
+        self.required_review_questions = [item for item in self.required_review_questions if item]
         if not self.required_review_questions:
             raise ValueError("required_review_questions must contain at least one item")
         if not self.prohibited_actions_ack:
@@ -1088,9 +1084,7 @@ def _check_content_level_allowed(
     source_id: str,
 ) -> None:
     if _CONTENT_LEVEL_ORDER[requested] > _CONTENT_LEVEL_ORDER[maximum]:
-        raise ValueError(
-            f"{source_id} 只允许发送到 {maximum}，本次请求为 {requested}。"
-        )
+        raise ValueError(f"{source_id} 只允许发送到 {maximum}，本次请求为 {requested}。")
 
 
 def _check_send_allowed(
@@ -1099,9 +1093,7 @@ def _check_send_allowed(
 ) -> None:
     if not permission.external_llm_allowed:
         provider = permission.provider
-        raise ValueError(
-            f"{provider} 的 external_llm_allowed=false，不能发送给外部 LLM API。"
-        )
+        raise ValueError(f"{provider} 的 external_llm_allowed=false，不能发送给外部 LLM API。")
     if permission.source_type == "paid_vendor" and permission.content_sent_level == "full_text":
         if not permission.approval_ref:
             raise ValueError("paid_vendor full_text 发送必须记录 approval_ref。")
@@ -1161,9 +1153,9 @@ def _source_payload(
         "source_url": input_packet.source_url,
         "source_name": input_packet.source_name,
         "source_title": input_packet.source_title,
-        "published_at": None
-        if input_packet.published_at is None
-        else input_packet.published_at.isoformat(),
+        "published_at": (
+            None if input_packet.published_at is None else input_packet.published_at.isoformat()
+        ),
         "captured_at": input_packet.captured_at.isoformat(),
         "source_permission": permission.model_dump(mode="json"),
         "content_sent_level": input_packet.content_sent_level,
@@ -1193,9 +1185,7 @@ def _claim_review_warnings(record: LlmClaimPrecheckRecord) -> list[LlmPrecheckIs
                     severity=LlmPrecheckIssueSeverity.WARNING,
                     code="high_impact_llm_claim_requires_human_confirmation",
                     precheck_id=record.precheck_id,
-                    message=(
-                        f"{claim.claim_id} 是高影响或仓位闸门候选，只能进入人工复核。"
-                    ),
+                    message=(f"{claim.claim_id} 是高影响或仓位闸门候选，只能进入人工复核。"),
                 )
             )
     return issues
@@ -1294,9 +1284,7 @@ def _post_openai_json_with_retries(
     audit_attempts: list[dict[str, Any]] = []
     for attempt in range(1, max_attempts + 1):
         attempt_client_request_id = (
-            base_client_request_id
-            if attempt == 1
-            else f"{base_client_request_id}-retry-{attempt}"
+            base_client_request_id if attempt == 1 else f"{base_client_request_id}-retry-{attempt}"
         )
         attempt_headers = {
             **dict(headers),
@@ -1359,8 +1347,7 @@ def _post_openai_json_with_retries(
                 "http_status": response.status_code,
                 "openai_request_id": _response_header(response.headers, "x-request-id"),
                 "retryable": (
-                    _is_retryable_http_status(response.status_code)
-                    and attempt < max_attempts
+                    _is_retryable_http_status(response.status_code) and attempt < max_attempts
                 ),
             }
         )
@@ -1379,11 +1366,7 @@ def _post_openai_json_with_retries(
                 attempts=attempt_diagnostics,
                 final_attempt=diagnostic,
             )
-            retry_phrase = (
-                f"已重试 {max_retries} 次后仍失败，"
-                if attempt > 1
-                else ""
-            )
+            retry_phrase = f"已重试 {max_retries} 次后仍失败，" if attempt > 1 else ""
             return _OpenAIRequestResult(
                 response=None,
                 client_request_id=attempt_client_request_id,

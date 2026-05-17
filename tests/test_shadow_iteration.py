@@ -50,9 +50,7 @@ def test_shadow_iteration_writes_registry_report_and_dashboard_json(
     assert dashboard["production_effect"] == "none"
     assert dashboard["summary"]["production_parameters_changed"] is False
     assert (
-        dashboard["best_candidates"]["gate_only"][
-            "is_potential_weight_iteration_candidate"
-        ]
+        dashboard["best_candidates"]["gate_only"]["is_potential_weight_iteration_candidate"]
         is False
     )
     assert (
@@ -64,10 +62,7 @@ def test_shadow_iteration_writes_registry_report_and_dashboard_json(
     assert dashboard["attribution"]["cap_level"]["status"] == "available"
     assert dashboard["attribution"]["position_change"]["status"] == "available"
     assert "do_not_enable_approved_hard" in dashboard["safety"]["p2_guardrails"]
-    assert (
-        "do_not_generate_shrinkage_production_proposal"
-        in dashboard["safety"]["p2_guardrails"]
-    )
+    assert "do_not_generate_shrinkage_production_proposal" in dashboard["safety"]["p2_guardrails"]
 
     markdown = paths["markdown_report"].read_text(encoding="utf-8")
     assert "Production 参数未改变" in markdown
@@ -90,10 +85,7 @@ def test_shadow_iteration_command_does_not_modify_production_surfaces(
         PROJECT_ROOT / "data" / "processed" / "approved_calibration_overlay.json",
         PROJECT_ROOT / "data" / "processed" / "prediction_ledger.csv",
     ]
-    before = {
-        path: (sha256_file(path) if path.exists() else None)
-        for path in protected_paths
-    }
+    before = {path: (sha256_file(path) if path.exists() else None) for path in protected_paths}
 
     result = CliRunner().invoke(
         app,
@@ -117,10 +109,7 @@ def test_shadow_iteration_command_does_not_modify_production_surfaces(
 
     assert result.exit_code == 0
     assert "Shadow iteration 状态" in result.output
-    after = {
-        path: (sha256_file(path) if path.exists() else None)
-        for path in protected_paths
-    }
+    after = {path: (sha256_file(path) if path.exists() else None) for path in protected_paths}
     assert after == before
 
 
@@ -251,10 +240,7 @@ def test_evaluate_forward_shadow_routes_non_weight_reviews_and_keeps_production_
         PROJECT_ROOT / "data" / "processed" / "approved_calibration_overlay.json",
         PROJECT_ROOT / "data" / "processed" / "prediction_ledger.csv",
     ]
-    before = {
-        path: (sha256_file(path) if path.exists() else None)
-        for path in protected_paths
-    }
+    before = {path: (sha256_file(path) if path.exists() else None) for path in protected_paths}
 
     for candidate_type in ["gate_only", "weight_gate_bundle", "weight_only"]:
         row = registry.loc[registry["candidate_type"] == candidate_type].iloc[0]
@@ -295,10 +281,7 @@ def test_evaluate_forward_shadow_routes_non_weight_reviews_and_keeps_production_
     assert output_json.exists()
     assert output_md.exists()
     payload = json.loads(output_json.read_text(encoding="utf-8"))
-    actions = {
-        item["candidate_type"]: item["action"]
-        for item in payload["evaluations"]
-    }
+    actions = {item["candidate_type"]: item["action"] for item in payload["evaluations"]}
     assert actions["gate_only"] == "REVIEW_GATE_POLICY"
     assert actions["weight_gate_bundle"] == "RETIRE"
     assert actions["weight_only"] == "CONTINUE"
@@ -311,10 +294,7 @@ def test_evaluate_forward_shadow_routes_non_weight_reviews_and_keeps_production_
     assert gate_row["status"] == "REVIEW_PENDING"
     assert bundle_row["status"] == "RETIRED"
     assert weight_row["status"] == "FORWARD_SHADOW_ACTIVE"
-    after = {
-        path: (sha256_file(path) if path.exists() else None)
-        for path in protected_paths
-    }
+    after = {path: (sha256_file(path) if path.exists() else None) for path in protected_paths}
     assert after == before
 
 
@@ -727,9 +707,9 @@ def _trial_row(
         "changed_dimension_count": len(gate_caps),
         "objective_score": objective_score,
         "eligible": available_count >= 30,
-        "ineligibility_reason": ""
-        if available_count >= 30
-        else "available_samples_below_objective_floor",
+        "ineligibility_reason": (
+            "" if available_count >= 30 else "available_samples_below_objective_floor"
+        ),
         "target_weights_json": json.dumps(weights, sort_keys=True),
         "gate_cap_overrides_json": json.dumps(gate_caps, sort_keys=True),
     }

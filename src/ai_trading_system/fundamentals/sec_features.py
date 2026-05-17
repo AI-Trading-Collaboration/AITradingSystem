@@ -102,9 +102,7 @@ class SecFundamentalFeaturesReport:
     @property
     def error_count(self) -> int:
         return sum(
-            1
-            for issue in self.issues
-            if issue.severity == SecFundamentalFeatureIssueSeverity.ERROR
+            1 for issue in self.issues if issue.severity == SecFundamentalFeatureIssueSeverity.ERROR
         )
 
     @property
@@ -450,9 +448,7 @@ def _feature_periods_for_company(
 ) -> list[PeriodType]:
     supported_periods = set(company.sec_metric_periods)
     return [
-        period_type
-        for period_type in feature.preferred_periods
-        if period_type in supported_periods
+        period_type for period_type in feature.preferred_periods if period_type in supported_periods
     ]
 
 
@@ -465,17 +461,11 @@ def _build_ratio_feature_row(
     as_of: date,
     issues: list[SecFundamentalFeatureIssue],
 ) -> SecFundamentalFeatureRow | None:
-    numerator = metric_index.get(
-        (company.ticker, period_type, feature.numerator_metric_id)
-    )
-    denominator = metric_index.get(
-        (company.ticker, period_type, feature.denominator_metric_id)
-    )
+    numerator = metric_index.get((company.ticker, period_type, feature.numerator_metric_id))
+    denominator = metric_index.get((company.ticker, period_type, feature.denominator_metric_id))
     if numerator is None or denominator is None:
         missing_metric = (
-            feature.numerator_metric_id
-            if numerator is None
-            else feature.denominator_metric_id
+            feature.numerator_metric_id if numerator is None else feature.denominator_metric_id
         )
         issues.append(
             SecFundamentalFeatureIssue(
@@ -499,10 +489,7 @@ def _build_ratio_feature_row(
                 feature_id=feature.feature_id,
                 period_type=period_type,
                 path=input_path,
-                message=(
-                    "分子和分母指标的周期、单位或披露来源不一致，"
-                    "未生成该特征。"
-                ),
+                message=("分子和分母指标的周期、单位或披露来源不一致，" "未生成该特征。"),
             )
         )
         return None

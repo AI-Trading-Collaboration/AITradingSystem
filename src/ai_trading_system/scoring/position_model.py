@@ -90,9 +90,9 @@ class WeightedScoreModel:
         for component in components:
             self._validate_component(component)
 
-        total_score = sum(
-            component.score * component.weight for component in components
-        ) / total_weight
+        total_score = (
+            sum(component.score * component.weight for component in components) / total_weight
+        )
         model_risk_asset_ai_band = self._position_band(total_score)
         all_position_gates = (
             PositionGate(
@@ -162,9 +162,7 @@ class WeightedScoreModel:
             if not 0 <= band.min_score <= 100:
                 raise ValueError("position band score floor must be between 0 and 100")
             if band.min_score >= previous_min_score:
-                raise ValueError(
-                    "position bands must be sorted by descending min_score"
-                )
+                raise ValueError("position bands must be sorted by descending min_score")
             cls._validate_position_range(band.min_position, band.max_position)
             previous_min_score = band.min_score
         if abs(position_bands[-1].min_score) > 1e-9:

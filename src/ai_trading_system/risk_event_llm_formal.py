@@ -69,17 +69,13 @@ class LlmFormalAssessmentReport:
     @property
     def error_count(self) -> int:
         return sum(
-            1
-            for issue in self.issues
-            if issue.severity == LlmFormalAssessmentIssueSeverity.ERROR
+            1 for issue in self.issues if issue.severity == LlmFormalAssessmentIssueSeverity.ERROR
         )
 
     @property
     def warning_count(self) -> int:
         return sum(
-            1
-            for issue in self.issues
-            if issue.severity == LlmFormalAssessmentIssueSeverity.WARNING
+            1 for issue in self.issues if issue.severity == LlmFormalAssessmentIssueSeverity.WARNING
         )
 
     @property
@@ -156,8 +152,7 @@ def build_llm_formal_assessment_report(
                 severity=LlmFormalAssessmentIssueSeverity.ERROR,
                 code="llm_formal_assessment_unknown_queue_schema",
                 message=(
-                    "风险事件预审队列 schema_version 不匹配："
-                    f"{payload.get('schema_version')}"
+                    "风险事件预审队列 schema_version 不匹配：" f"{payload.get('schema_version')}"
                 ),
             )
         )
@@ -171,9 +166,7 @@ def build_llm_formal_assessment_report(
         )
 
     known_risk_ids = (
-        {rule.event_id for rule in risk_events.event_rules}
-        if risk_events is not None
-        else set()
+        {rule.event_id for rule in risk_events.event_rules} if risk_events is not None else set()
     )
     records: list[RiskEventPreReviewRecord] = []
     occurrences: list[RiskEventOccurrence] = []
@@ -243,9 +236,7 @@ def build_llm_formal_assessment_report(
             input_path=input_path,
             checksum_sha256=checksum,
             source_input_path=str(payload.get("source_input_path") or ""),
-            source_input_checksum_sha256=str(
-                payload.get("source_input_checksum_sha256") or ""
-            ),
+            source_input_checksum_sha256=str(payload.get("source_input_checksum_sha256") or ""),
         )
         if include_attestation
         else None

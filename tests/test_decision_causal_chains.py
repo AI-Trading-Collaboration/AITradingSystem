@@ -52,9 +52,7 @@ def test_build_decision_causal_chain_keeps_outcomes_post_signal(
     assert signal_context["score_delta"] == -8.0
     assert signal_context["confidence_delta"] == -15.0
     assert signal_context["position_delta"]["final_max_delta"] == pytest.approx(-0.15)
-    assert signal_context["linked_evidence_ids"] == [
-        "evidence:daily_score:2026-04-02:position"
-    ]
+    assert signal_context["linked_evidence_ids"] == ["evidence:daily_score:2026-04-02:position"]
     assert "linked_outcome_windows" not in signal_context
     assert post_signal["append_only"] is True
     assert post_signal["linked_outcome_windows"][0]["horizon_days"] == 5

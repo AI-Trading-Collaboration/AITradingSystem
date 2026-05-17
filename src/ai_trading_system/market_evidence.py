@@ -155,9 +155,7 @@ class MarketEvidenceValidationReport:
     @property
     def confirmed_count(self) -> int:
         return sum(
-            1
-            for loaded in self.evidence
-            if loaded.evidence.manual_review_status == "confirmed"
+            1 for loaded in self.evidence if loaded.evidence.manual_review_status == "confirmed"
         )
 
     @property
@@ -171,9 +169,7 @@ class MarketEvidenceValidationReport:
     @property
     def automatic_score_eligible_count(self) -> int:
         return sum(
-            1
-            for loaded in self.evidence
-            if _market_evidence_can_auto_score(loaded.evidence)
+            1 for loaded in self.evidence if _market_evidence_can_auto_score(loaded.evidence)
         )
 
     @property
@@ -321,15 +317,10 @@ def validate_market_evidence_store(
                     code="market_evidence_grade_review_only",
                     evidence_id=evidence.evidence_id,
                     path=loaded.path,
-                    message=(
-                        "C/D/X 级证据只能进入报告或人工复核，不能直接进入自动评分。"
-                    ),
+                    message=("C/D/X 级证据只能进入报告或人工复核，不能直接进入自动评分。"),
                 )
             )
-        if (
-            evidence.evidence_grade == "B"
-            and evidence.manual_review_status != "confirmed"
-        ):
+        if evidence.evidence_grade == "B" and evidence.manual_review_status != "confirmed":
             issues.append(
                 MarketEvidenceIssue(
                     severity=MarketEvidenceIssueSeverity.WARNING,
@@ -396,9 +387,7 @@ def import_market_evidence_csv(input_path: Path | str) -> MarketEvidenceCsvImpor
                     message=f"row {row_number}: {_error_message(exc)}",
                 )
             )
-    has_error = any(
-        issue.severity == MarketEvidenceIssueSeverity.ERROR for issue in issues
-    )
+    has_error = any(issue.severity == MarketEvidenceIssueSeverity.ERROR for issue in issues)
     return MarketEvidenceCsvImportReport(
         input_path=path,
         row_count=row_count,
@@ -497,19 +486,22 @@ def render_market_evidence_validation_report(report: MarketEvidenceValidationRep
 
 
 def render_market_evidence_import_report(report: MarketEvidenceCsvImportReport) -> str:
-    return "\n".join(
-        [
-            "# Market Evidence CSV 导入报告",
-            "",
-            f"- 状态：{report.status}",
-            f"- 输入路径：`{report.input_path}`",
-            f"- CSV 行数：{report.row_count}",
-            f"- SHA256：`{report.checksum_sha256}`",
-            f"- 导入证据数：{report.imported_count}",
-            f"- 错误数：{report.error_count}",
-            f"- 警告数：{report.warning_count}",
-        ]
-    ) + "\n"
+    return (
+        "\n".join(
+            [
+                "# Market Evidence CSV 导入报告",
+                "",
+                f"- 状态：{report.status}",
+                f"- 输入路径：`{report.input_path}`",
+                f"- CSV 行数：{report.row_count}",
+                f"- SHA256：`{report.checksum_sha256}`",
+                f"- 导入证据数：{report.imported_count}",
+                f"- 错误数：{report.error_count}",
+                f"- 警告数：{report.warning_count}",
+            ]
+        )
+        + "\n"
+    )
 
 
 def write_market_evidence_validation_report(
@@ -613,8 +605,7 @@ def _check_duplicate_source_keys(
                     evidence_id=evidence.evidence_id,
                     path=loaded.path,
                     message=(
-                        "source_url/published_at/topic "
-                        f"与 {existing} 重复，需确认是否重复信息。"
+                        "source_url/published_at/topic " f"与 {existing} 重复，需确认是否重复信息。"
                     ),
                 )
             )

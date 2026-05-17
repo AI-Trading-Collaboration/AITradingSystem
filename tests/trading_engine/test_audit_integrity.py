@@ -54,9 +54,7 @@ def test_audit_replay_links_approved_filled_intent(tmp_path: Path) -> None:
     assert len(trace["order_log"]) == 1
     assert len(trace["fill_log"]) == 1
     assert len(trace["portfolio_snapshot"]) == 1
-    execution_statuses = [
-        record["payload"]["status"] for record in trace["execution_report_log"]
-    ]
+    execution_statuses = [record["payload"]["status"] for record in trace["execution_report_log"]]
     assert execution_statuses == ["SUBMITTED", "FILLED"]
 
     order_payload = trace["order_log"][0]["payload"]
@@ -64,9 +62,7 @@ def test_audit_replay_links_approved_filled_intent(tmp_path: Path) -> None:
     assert order_payload["intent_id"] == filled_intent.intent_id
     assert fill_payload["intent_id"] == filled_intent.intent_id
     assert fill_payload["broker_order_id"] == order_payload["broker_order_id"]
-    assert filled_intent.intent_id in trace["portfolio_snapshot"][0][
-        "related_intent_ids"
-    ]
+    assert filled_intent.intent_id in trace["portfolio_snapshot"][0]["related_intent_ids"]
 
 
 def test_audit_replay_keeps_rejected_intent_without_broker_order_or_fill(
@@ -91,9 +87,7 @@ def test_audit_replay_keeps_rejected_intent_without_broker_order_or_fill(
     assert trace["order_log"] == []
     assert trace["fill_log"] == []
     assert trace["portfolio_snapshot"] == []
-    assert [record["payload"]["status"] for record in trace["execution_report_log"]] == [
-        "REJECTED"
-    ]
+    assert [record["payload"]["status"] for record in trace["execution_report_log"]] == ["REJECTED"]
 
 
 def test_audit_replay_keeps_open_intent_without_fill(tmp_path: Path) -> None:

@@ -21,8 +21,7 @@ REPLAY_MODE_DAILY_INDEPENDENT = "daily_independent"
 REPLAY_MODE_CONTINUOUS_PORTFOLIO = "continuous_portfolio"
 REPLAY_MODE_CHOICES = ("daily-independent", "continuous-portfolio")
 DAY_ORDER_EXPIRATION_POLICY = (
-    "DAY orders expire at the end of the replay day; open DAY orders are not "
-    "carried forward."
+    "DAY orders expire at the end of the replay day; open DAY orders are not " "carried forward."
 )
 UNSUPPORTED_ORDER_POLICY = (
     "GTC and other non-DAY time_in_force candidates are rejected before order "
@@ -355,8 +354,7 @@ def _run_continuous_portfolio_replay(
             )
             service.expire_day_orders(completed_at=snapshot_time)
             final_orders = [
-                broker.get_order(order.broker_order_id)
-                for order in service.submitted_orders
+                broker.get_order(order.broker_order_id) for order in service.submitted_orders
             ]
             final_orders_day = [
                 broker.get_order(order.broker_order_id)
@@ -489,9 +487,7 @@ def _run_continuous_portfolio_replay(
         "order_expiration_policy": DAY_ORDER_EXPIRATION_POLICY,
         "unsupported_order_policy": UNSUPPORTED_ORDER_POLICY,
         "continuous_metrics_available": True,
-        "expired_day_orders": sum(
-            _int_value(record.get("expired")) for record in daily_results
-        ),
+        "expired_day_orders": sum(_int_value(record.get("expired")) for record in daily_results),
         "rejected_gtc_orders": sum(
             _int_value(record.get("rejected_gtc_orders")) for record in daily_results
         ),
@@ -518,9 +514,7 @@ def _run_continuous_portfolio_replay(
             "trading_daily_report_dir": str(trading_daily_report_dir),
         },
         "totals": totals,
-        "distributions": {
-            key: dict(sorted(value.items())) for key, value in distributions.items()
-        },
+        "distributions": {key: dict(sorted(value.items())) for key, value in distributions.items()},
         "aggregations": _serialize_aggregations(aggregations),
         "quality_flags": quality_flags,
         "daily_results": daily_results,
@@ -956,9 +950,7 @@ def _continuous_daily_result(
     rejected_gtc_orders = _rejected_gtc_order_count(candidate_records)
     expired = sum(1 for order in final_orders_day if _order_status(order) == "EXPIRED")
     open_count = sum(
-        1
-        for order in final_orders_day
-        if _order_status(order) in {"SUBMITTED", "PARTIALLY_FILLED"}
+        1 for order in final_orders_day if _order_status(order) in {"SUBMITTED", "PARTIALLY_FILLED"}
     )
     record: dict[str, Any] = {
         "as_of": as_of.isoformat(),
@@ -975,9 +967,7 @@ def _continuous_daily_result(
         "report_path": "",
         "audit_log_path": "",
         "reconciliation_status": reconciliation_status,
-        "market_snapshot_source": _market_snapshot_source_label(
-            market_snapshot_source_counts
-        ),
+        "market_snapshot_source": _market_snapshot_source_label(market_snapshot_source_counts),
         "market_snapshot_source_counts": dict(market_snapshot_source_counts),
         "candidate_count": len(candidate_records),
         "blocked_candidates": blocked_candidates,
@@ -990,9 +980,7 @@ def _continuous_daily_result(
         "submitted": len(final_orders_day),
         "filled": sum(1 for order in final_orders_day if _order_status(order) == "FILLED"),
         "open": open_count,
-        "cancelled": sum(
-            1 for order in final_orders_day if _order_status(order) == "CANCELLED"
-        ),
+        "cancelled": sum(1 for order in final_orders_day if _order_status(order) == "CANCELLED"),
         "expired": expired,
         "rejected_gtc_orders": rejected_gtc_orders,
         "realized_pnl": realized_pnl,
@@ -1148,8 +1136,7 @@ def _rejected_gtc_order_count(candidate_records: list[dict[str, Any]]) -> int:
     return sum(
         1
         for record in candidate_records
-        if bool(record.get("rejected"))
-        and _string(record.get("time_in_force")).upper() == "GTC"
+        if bool(record.get("rejected")) and _string(record.get("time_in_force")).upper() == "GTC"
     )
 
 
@@ -1218,10 +1205,7 @@ def _position_concentration(snapshot_record: dict[str, Any]) -> float:
     positions = _list_mappings(snapshot_record.get("positions"))
     if not positions:
         return 0.0
-    return max(
-        abs(_float_value(position.get("market_value"))) / equity
-        for position in positions
-    )
+    return max(abs(_float_value(position.get("market_value"))) / equity for position in positions)
 
 
 def _add_daily_totals(totals: dict[str, int | float], record: dict[str, Any]) -> None:

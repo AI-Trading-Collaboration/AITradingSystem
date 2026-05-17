@@ -44,9 +44,7 @@ class RiskLimits(BaseModel):
     @model_validator(mode="after")
     def validate_exposure_limits(self) -> Self:
         if self.max_position_pct_per_symbol > self.max_total_exposure_pct:
-            raise ValueError(
-                "max_position_pct_per_symbol must not exceed max_total_exposure_pct"
-            )
+            raise ValueError("max_position_pct_per_symbol must not exceed max_total_exposure_pct")
         return self
 
 

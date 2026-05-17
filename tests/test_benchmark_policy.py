@@ -67,8 +67,7 @@ def test_benchmark_policy_rejects_duplicate_tickers(tmp_path: Path) -> None:
 def test_custom_basket_candidate_requires_pit_lifecycle(tmp_path: Path) -> None:
     input_path = tmp_path / "benchmark_policy.yaml"
     input_path.write_text(
-        _policy_yaml(
-            custom_baskets="""  - basket_id: ai_chain_basket.v1
+        _policy_yaml(custom_baskets="""  - basket_id: ai_chain_basket.v1
     name: AI chain basket
     status: candidate
     description: test basket
@@ -78,8 +77,7 @@ def test_custom_basket_candidate_requires_pit_lifecycle(tmp_path: Path) -> None:
     rebalance_frequency: monthly
     source_config_paths: []
     limitations: []
-"""
-        ),
+"""),
         encoding="utf-8",
     )
 

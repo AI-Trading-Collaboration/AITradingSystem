@@ -136,17 +136,13 @@ class ScenarioLibraryValidationReport:
     @property
     def error_count(self) -> int:
         return sum(
-            1
-            for issue in self.issues
-            if issue.severity == ScenarioLibraryIssueSeverity.ERROR
+            1 for issue in self.issues if issue.severity == ScenarioLibraryIssueSeverity.ERROR
         )
 
     @property
     def warning_count(self) -> int:
         return sum(
-            1
-            for issue in self.issues
-            if issue.severity == ScenarioLibraryIssueSeverity.WARNING
+            1 for issue in self.issues if issue.severity == ScenarioLibraryIssueSeverity.WARNING
         )
 
     @property
@@ -443,6 +439,7 @@ def _check_scenario(
                 )
             )
 
+
 def _known_tickers(
     industry_chain: IndustryChainConfig,
     watchlist: WatchlistConfig,
@@ -458,8 +455,7 @@ def _known_tickers(
 
 def _gate_summary(scenario: ScenarioDefinition) -> str:
     return "; ".join(
-        f"{impact.gate_id}:{impact.expected_effect}"
-        for impact in scenario.position_gate_impacts
+        f"{impact.gate_id}:{impact.expected_effect}" for impact in scenario.position_gate_impacts
     )
 
 

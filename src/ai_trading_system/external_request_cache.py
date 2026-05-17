@@ -365,9 +365,7 @@ def external_request_identity(
     json_payload: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     parsed = urllib.parse.urlparse(url)
-    endpoint = urllib.parse.urlunparse(
-        (parsed.scheme, parsed.netloc, parsed.path, "", "", "")
-    )
+    endpoint = urllib.parse.urlunparse((parsed.scheme, parsed.netloc, parsed.path, "", "", ""))
     query_params = urllib.parse.parse_qsl(parsed.query, keep_blank_values=True)
     return {
         "schema_version": EXTERNAL_REQUEST_CACHE_SCHEMA_VERSION,

@@ -96,9 +96,7 @@ def test_order_intent_candidates_are_blocked_only_and_no_trading_engine(
     assert candidate["production_effect"] == "none"
     assert candidate["score_snapshot_id"] == "decision_snapshot:2026-05-04"
     assert candidate["score_snapshot"]["snapshot_id"] == "decision_snapshot:2026-05-04"
-    assert candidate["position_context"]["binding_position_gates"][0]["gate_id"] == (
-        "valuation"
-    )
+    assert candidate["position_context"]["binding_position_gates"][0]["gate_id"] == ("valuation")
     assert candidate["non_execution_policy"] == {
         "no_symbol_level_order": True,
         "no_quantity": True,
@@ -219,7 +217,8 @@ def _write_daily_decision_summary(
                 "production_effect": "none",
                 "status": "available",
                 "data_gate": data_gate or {"status": "PASS"},
-                "investment_conclusion": investment_conclusion or {
+                "investment_conclusion": investment_conclusion
+                or {
                     "availability": "available",
                     "action_bias": "观察",
                     "confidence": "0.71",

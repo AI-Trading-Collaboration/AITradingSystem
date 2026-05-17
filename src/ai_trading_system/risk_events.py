@@ -180,9 +180,7 @@ class RiskEventOccurrenceLoadError:
 class RiskEventOccurrenceStore:
     input_path: Path
     loaded: tuple[LoadedRiskEventOccurrence, ...] = field(default_factory=tuple)
-    review_attestations: tuple[LoadedRiskEventReviewAttestation, ...] = field(
-        default_factory=tuple
-    )
+    review_attestations: tuple[LoadedRiskEventReviewAttestation, ...] = field(default_factory=tuple)
     load_errors: tuple[RiskEventOccurrenceLoadError, ...] = field(default_factory=tuple)
 
 
@@ -268,9 +266,7 @@ class RiskEventOccurrenceValidationReport:
     input_path: Path
     config: RiskEventsConfig
     occurrences: tuple[LoadedRiskEventOccurrence, ...]
-    review_attestations: tuple[LoadedRiskEventReviewAttestation, ...] = field(
-        default_factory=tuple
-    )
+    review_attestations: tuple[LoadedRiskEventReviewAttestation, ...] = field(default_factory=tuple)
     issues: tuple[RiskEventIssue, ...] = field(default_factory=tuple)
 
     @property
@@ -280,9 +276,7 @@ class RiskEventOccurrenceValidationReport:
     @property
     def active_occurrence_count(self) -> int:
         return sum(
-            1
-            for loaded in self.occurrences
-            if loaded.occurrence.status in {"active", "watch"}
+            1 for loaded in self.occurrences if loaded.occurrence.status in {"active", "watch"}
         )
 
     @property
@@ -392,9 +386,7 @@ def load_risk_event_occurrence_store(input_path: Path | str) -> RiskEventOccurre
                     )
                 )
                 continue
-            loaded.append(
-                LoadedRiskEventOccurrence(occurrence=occurrence, path=yaml_path)
-            )
+            loaded.append(LoadedRiskEventOccurrence(occurrence=occurrence, path=yaml_path))
 
         for raw_item in _raw_review_attestation_items(raw):
             try:
@@ -492,9 +484,7 @@ def validate_risk_event_occurrence_store(
                 severity=RiskEventIssueSeverity.WARNING,
                 code="risk_event_occurrence_path_missing",
                 path=store.input_path,
-                message=(
-                    "风险事件发生记录目录或文件不存在；政策/地缘模块不能证明当前没有风险。"
-                ),
+                message=("风险事件发生记录目录或文件不存在；政策/地缘模块不能证明当前没有风险。"),
             )
         )
     elif not store.loaded and not store.review_attestations and not store.load_errors:
@@ -510,8 +500,7 @@ def validate_risk_event_occurrence_store(
         )
     elif (
         not any(
-            loaded.occurrence.status in {"active", "watch"}
-            for loaded in visible_occurrence_tuple
+            loaded.occurrence.status in {"active", "watch"} for loaded in visible_occurrence_tuple
         )
         and not current_attestations
     ):
@@ -768,17 +757,14 @@ def render_risk_event_occurrence_review_report(
             ]
         )
         current_ids = {
-            loaded.attestation.attestation_id
-            for loaded in validation.current_review_attestations
+            loaded.attestation.attestation_id for loaded in validation.current_review_attestations
         }
         for loaded in sorted(
             validation.review_attestations,
             key=lambda value: value.attestation.attestation_id,
         ):
             attestation = loaded.attestation
-            source_names = ", ".join(
-                source.source_name for source in attestation.checked_sources
-            )
+            source_names = ", ".join(source.source_name for source in attestation.checked_sources)
             lines.append(
                 "| "
                 f"{attestation.attestation_id} | "
@@ -1157,8 +1143,8 @@ def _check_occurrence(
                 event_id=occurrence.event_id,
                 path=path,
                 message="活跃/观察风险事件超过新鲜度阈值未确认，需要更新证据。",
-                )
             )
+        )
 
     missing_review_fields = _missing_occurrence_review_fields(occurrence)
     if missing_review_fields:
@@ -1195,9 +1181,7 @@ def _check_occurrence(
                 code="watch_risk_event_not_auto_scored",
                 event_id=occurrence.event_id,
                 path=path,
-                message=(
-                    "watch 状态不会直接进入自动评分；如已确认风险，请先将状态升级为 active。"
-                ),
+                message=("watch 状态不会直接进入自动评分；如已确认风险，请先将状态升级为 active。"),
             )
         )
     if evidence_grade_is_report_only(occurrence.evidence_grade) and occurrence.action_class in {
@@ -1210,9 +1194,7 @@ def _check_occurrence(
                 code="low_grade_risk_event_not_auto_scored",
                 event_id=occurrence.event_id,
                 path=path,
-                message=(
-                    "C/D/X 级证据只能进入人工复核；即使 action_class 较高，也不会自动评分。"
-                ),
+                message=("C/D/X 级证据只能进入人工复核；即使 action_class 较高，也不会自动评分。"),
             )
         )
     if occurrence.evidence_grade == "B" and occurrence.action_class == "position_gate_eligible":
@@ -1222,9 +1204,7 @@ def _check_occurrence(
                 code="b_grade_risk_event_not_position_gate_eligible",
                 event_id=occurrence.event_id,
                 path=path,
-                message=(
-                    "B 级风险证据可在 active 后进入普通评分，但不能单独触发仓位闸门。"
-                ),
+                message=("B 级风险证据可在 active 后进入普通评分，但不能单独触发仓位闸门。"),
             )
         )
 
@@ -1295,13 +1275,9 @@ def _occurrence_review_item(
     level_id = rule.level if rule is not None else "UNKNOWN"
     level_config = levels_by_id.get(level_id)
     multiplier = (
-        float(level_config.target_ai_exposure_multiplier)
-        if level_config is not None
-        else 1.0
+        float(level_config.target_ai_exposure_multiplier) if level_config is not None else 1.0
     )
-    source_types = tuple(
-        sorted({source.source_type for source in occurrence.evidence_sources})
-    )
+    source_types = tuple(sorted({source.source_type for source in occurrence.evidence_sources}))
     has_score_source = any(
         source_type_allows_automatic_scoring(source_type) for source_type in source_types
     )
@@ -1309,13 +1285,9 @@ def _occurrence_review_item(
         "score_eligible",
         "position_gate_eligible",
     }
-    evidence_allows_scoring = evidence_grade_allows_automatic_scoring(
-        occurrence.evidence_grade
-    )
+    evidence_allows_scoring = evidence_grade_allows_automatic_scoring(occurrence.evidence_grade)
     action_allows_position_gate = occurrence.action_class == "position_gate_eligible"
-    evidence_allows_position_gate = evidence_grade_allows_position_gate(
-        occurrence.evidence_grade
-    )
+    evidence_allows_position_gate = evidence_grade_allows_position_gate(occurrence.evidence_grade)
     expired = occurrence.expiry_time is not None and occurrence.expiry_time < as_of
     score_eligible = (
         rule is not None
@@ -1326,16 +1298,12 @@ def _occurrence_review_item(
         and evidence_allows_scoring
     )
     position_gate_eligible = (
-        score_eligible
-        and action_allows_position_gate
-        and evidence_allows_position_gate
+        score_eligible and action_allows_position_gate and evidence_allows_position_gate
     )
 
     if expired:
         health = "EXPIRED"
-        reason = (
-            "风险事件已超过 expiry_time；默认只保留审计和复核提示，不进入自动评分或仓位闸门。"
-        )
+        reason = "风险事件已超过 expiry_time；默认只保留审计和复核提示，不进入自动评分或仓位闸门。"
     elif rule is None:
         health = "UNKNOWN_RULE"
         reason = "发生记录引用了未知风险规则，不能进入评分。"
@@ -1399,7 +1367,7 @@ def _occurrence_review_item(
         position_gate_eligible=position_gate_eligible,
         health=health,
         reason=reason,
-            )
+    )
 
 
 def _check_review_attestation(
@@ -1551,10 +1519,8 @@ def _check_level_actions(
 ) -> None:
     levels = {level.level: level for level in risk_events.levels}
     if (
-        levels["L1"].target_ai_exposure_multiplier
-        < levels["L2"].target_ai_exposure_multiplier
-        or levels["L2"].target_ai_exposure_multiplier
-        < levels["L3"].target_ai_exposure_multiplier
+        levels["L1"].target_ai_exposure_multiplier < levels["L2"].target_ai_exposure_multiplier
+        or levels["L2"].target_ai_exposure_multiplier < levels["L3"].target_ai_exposure_multiplier
     ):
         issues.append(
             RiskEventIssue(

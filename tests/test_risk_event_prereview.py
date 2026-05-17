@@ -261,9 +261,7 @@ def test_openai_prereview_allows_production_request_after_as_of_with_cutoff(
 
     assert report.status == "PASS_WITH_WARNINGS"
     assert report.record_count == 1
-    assert "risk_event_prereview_request_in_future" not in {
-        issue.code for issue in report.issues
-    }
+    assert "risk_event_prereview_request_in_future" not in {issue.code for issue in report.issues}
 
 
 def test_openai_prereview_rejects_request_after_as_of_without_cutoff(
@@ -304,9 +302,7 @@ def test_openai_prereview_rejects_request_after_as_of_without_cutoff(
 
     assert report.passed is False
     assert report.records == ()
-    assert "risk_event_prereview_request_in_future" in {
-        issue.code for issue in report.issues
-    }
+    assert "risk_event_prereview_request_in_future" in {issue.code for issue in report.issues}
 
 
 def test_risk_events_precheck_openai_cli_fails_closed_without_permission(
@@ -494,8 +490,7 @@ def test_official_candidates_auto_precheck_prioritizes_ai_policy_candidates(
     assert request_payload["source_name"] == "Federal Register API / BIS notices"
     assert "BIS advanced computing export controls" in request_payload["source_title"]
     assert any(
-        issue.code == "risk_event_prereview_candidate_limit_applied"
-        for issue in report.issues
+        issue.code == "risk_event_prereview_candidate_limit_applied" for issue in report.issues
     )
 
 
@@ -665,12 +660,16 @@ def test_official_candidates_auto_precheck_reports_openai_timeout(
         issue for issue in report.issues if issue.code == "openai_responses_api_request_failed"
     )
     assert error_issue.diagnostics["attempt_count"] == 3
-    assert [
-        attempt["exception_type"] for attempt in error_issue.diagnostics["attempts"]
-    ] == ["TimeoutError", "TimeoutError", "TimeoutError"]
-    assert [
-        attempt["http_client"] for attempt in error_issue.diagnostics["attempts"]
-    ] == ["custom", "custom", "custom"]
+    assert [attempt["exception_type"] for attempt in error_issue.diagnostics["attempts"]] == [
+        "TimeoutError",
+        "TimeoutError",
+        "TimeoutError",
+    ]
+    assert [attempt["http_client"] for attempt in error_issue.diagnostics["attempts"]] == [
+        "custom",
+        "custom",
+        "custom",
+    ]
     markdown = render_risk_event_prereview_import_report(report)
     assert "## 请求诊断" in markdown
     assert "Client request id" in markdown

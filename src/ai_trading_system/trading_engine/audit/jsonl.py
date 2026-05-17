@@ -80,8 +80,7 @@ class JsonlAuditLogger:
             run_id=order_intent.run_id,
             strategy_id=order_intent.strategy_id,
             schema_version=order_intent.schema_version,
-            source_object_id=execution_report.broker_order_id
-            or execution_report.intent_id,
+            source_object_id=execution_report.broker_order_id or execution_report.intent_id,
             intent_id=order_intent.intent_id,
             payload=execution_report,
         )
@@ -204,8 +203,5 @@ def _record_matches_intent(record: dict[str, Any], intent_id: str) -> bool:
         return True
     payload = record.get("payload")
     if isinstance(payload, dict):
-        return (
-            payload.get("intent_id") == intent_id
-            or payload.get("client_order_id") == intent_id
-        )
+        return payload.get("intent_id") == intent_id or payload.get("client_order_id") == intent_id
     return False

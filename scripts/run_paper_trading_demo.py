@@ -128,9 +128,7 @@ def run_demo(
             ),
         ]
     )
-    final_orders = [
-        broker.get_order(order.broker_order_id) for order in service.submitted_orders
-    ]
+    final_orders = [broker.get_order(order.broker_order_id) for order in service.submitted_orders]
     portfolio_state = service.get_portfolio_state(
         prices={"TSM": 186.0, "NVDA": 915.0, "INTC": 30.0},
         as_of=snapshot_time,

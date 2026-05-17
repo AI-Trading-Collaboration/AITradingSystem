@@ -115,8 +115,7 @@ def test_build_daily_score_report_uses_sec_fundamental_features() -> None:
     assert fundamentals.coverage == 1.0
     assert fundamentals.score > 50
     assert any(
-        signal.subject == "AI_CORE_MEDIAN"
-        and signal.feature == "gross_margin_quarterly_median"
+        signal.subject == "AI_CORE_MEDIAN" and signal.feature == "gross_margin_quarterly_median"
         for signal in fundamentals.signals
     )
 
@@ -179,9 +178,7 @@ def test_confidence_gate_caps_position_when_no_stricter_gate() -> None:
 
     assert confidence.level == "medium"
     assert confidence_gate.triggered
-    assert confidence_gate.max_position == (
-        confidence.adjusted_risk_asset_ai_band.max_position
-    )
+    assert confidence_gate.max_position == (confidence.adjusted_risk_asset_ai_band.max_position)
     assert report.recommendation.risk_asset_ai_band.max_position == (
         confidence.adjusted_risk_asset_ai_band.max_position
     )
@@ -336,9 +333,7 @@ def test_build_daily_score_report_labels_llm_formal_assessment_attestation() -> 
     assert policy.score == 100.0
     assert policy.confidence == 0.65
     assert "LLM formal assessment" in policy.reason
-    assert "低置信度模块：政策/地缘" not in "；".join(
-        report.confidence_assessment.reasons
-    )
+    assert "低置信度模块：政策/地缘" not in "；".join(report.confidence_assessment.reasons)
 
 
 def test_risk_budget_gate_caps_high_vix_market_stress() -> None:
@@ -356,14 +351,9 @@ def test_risk_budget_gate_caps_high_vix_market_stress() -> None:
     risk_budget_gate = _position_gate(report, "risk_budget")
 
     assert risk_budget_gate.triggered
-    assert (
-        risk_budget_gate.max_position
-        == portfolio.risk_budget.market_stress.stress_max_position
-    )
+    assert risk_budget_gate.max_position == portfolio.risk_budget.market_stress.stress_max_position
     assert "市场压力达到 stress 阈值" in risk_budget_gate.reason
-    assert report.recommendation.risk_asset_ai_band.max_position <= (
-        risk_budget_gate.max_position
-    )
+    assert report.recommendation.risk_asset_ai_band.max_position <= (risk_budget_gate.max_position)
 
 
 def test_risk_budget_gate_caps_real_portfolio_concentration(
@@ -479,9 +469,7 @@ def test_write_scores_csv_upserts_as_of_rows(tmp_path: Path) -> None:
 
     assert set(stored["as_of"]) == {"2026-04-30"}
     assert len(stored) == len(report.components) + 1
-    assert {"confidence", "confidence_level", "confidence_reasons"}.issubset(
-        stored.columns
-    )
+    assert {"confidence", "confidence_level", "confidence_reasons"}.issubset(stored.columns)
     assert {
         "model_risk_asset_ai_min",
         "model_risk_asset_ai_max",
@@ -555,9 +543,10 @@ def test_daily_score_uses_resolved_calibration_weights(tmp_path: Path) -> None:
     assert _position_gate(report, "calibration_overlay").max_position < (
         report.recommendation.model_risk_asset_ai_band.max_position
     )
-    assert report.score_architecture_audit["weight_calibration"][
-        "weight_profile_version"
-    ] == "test_profile_v1"
+    assert (
+        report.score_architecture_audit["weight_calibration"]["weight_profile_version"]
+        == "test_profile_v1"
+    )
     assert "Historical Calibration" in markdown
     assert "test_profile_v1" in markdown
     assert stored.loc[stored["component"] == "trend", "effective_weight"].iloc[0] == 0.5
@@ -844,9 +833,10 @@ def test_belief_state_is_read_only_and_keeps_position_unchanged(
     assert after == before
     assert belief_state["read_only"] is True
     assert belief_state["production_effect"] == "none"
-    assert belief_state["position_boundary"]["final_risk_asset_ai_band"][
-        "max_position"
-    ] == report.recommendation.risk_asset_ai_band.max_position
+    assert (
+        belief_state["position_boundary"]["final_risk_asset_ai_band"]["max_position"]
+        == report.recommendation.risk_asset_ai_band.max_position
+    )
     assert belief_state["references"]["overall_claim_id"] == (
         "daily_score:2026-04-30:overall_position"
     )
@@ -1024,9 +1014,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert trace["run_manifest"]["run_id"] == "daily_ops_run:2026-04-30:test"
     assert "dataset:belief_state:2026-04-30" in dataset_ids
     assert "dataset:feature_availability:2026-04-30" in dataset_ids
-    feature_availability_params = trace["run_manifest"]["parameters"][
-        "feature_availability"
-    ]
+    feature_availability_params = trace["run_manifest"]["parameters"]["feature_availability"]
     assert feature_availability_params["status"] == "PASS"
     assert "sec_fundamental_features" in feature_availability_params["required_sources"]
     assert snapshot["snapshot_id"] == "decision_snapshot:2026-04-30"
@@ -1085,9 +1073,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert "daily_score:2026-04-30:overall_position" in daily_text
     feature_text = feature_report_path.read_text(encoding="utf-8")
     assert "## PIT 特征可见时间" in feature_text
-    feature_availability_text = feature_availability_report_path.read_text(
-        encoding="utf-8"
-    )
+    feature_availability_text = feature_availability_report_path.read_text(encoding="utf-8")
     assert "# PIT 特征可见时间报告" in feature_availability_text
     prediction_frame = pd.read_csv(prediction_ledger_path)
     assert set(prediction_frame["candidate_id"]) == {"production"}

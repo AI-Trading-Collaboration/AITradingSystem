@@ -229,16 +229,12 @@ def _source_summaries(
                 latest_available_date=latest_available_date,
                 unique_available_dates=len(available_dates),
                 latest_staleness_days=(
-                    None
-                    if latest_available_date is None
-                    else (as_of - latest_available_date).days
+                    None if latest_available_date is None else (as_of - latest_available_date).days
                 ),
                 point_in_time_class_counts=dict(
                     Counter(record.point_in_time_class for record in source_records)
                 ),
-                backtest_use_counts=dict(
-                    Counter(record.backtest_use for record in source_records)
-                ),
+                backtest_use_counts=dict(Counter(record.backtest_use for record in source_records)),
                 confidence_level_counts=dict(
                     Counter(record.confidence_level for record in source_records)
                 ),
@@ -278,10 +274,7 @@ def _readiness_summaries(
             ]
         )
         latest_date = all_dates[-1] if all_dates else None
-        latest_stale = (
-            latest_date is not None
-            and (as_of - latest_date).days > max_staleness_days
-        )
+        latest_stale = latest_date is not None and (as_of - latest_date).days > max_staleness_days
         first_b = _first_eligible_date(captured_dates, min_forward_days)
         first_a = _first_eligible_date(strict_dates, min_forward_days)
         if first_a is not None and not latest_stale:
@@ -330,9 +323,7 @@ def _historical_c_grade_reason_lines(report: BacktestPitCoverageReport) -> list[
     lines: list[str] = []
     if first_dates:
         first_date = min(first_dates)
-        lines.append(
-            f"- {first_date.isoformat()} 之前没有自建可见时间证明，历史输入保持 C 级。"
-        )
+        lines.append(f"- {first_date.isoformat()} 之前没有自建可见时间证明，历史输入保持 C 级。")
     if not any(item.first_a_grade_date for item in report.readiness):
         lines.append("- 没有 strict PIT vendor archive 或等价证明，不能升级为 A 级。")
     stale_sources = [

@@ -103,17 +103,13 @@ class ExecutionPolicyValidationReport:
     @property
     def error_count(self) -> int:
         return sum(
-            1
-            for issue in self.issues
-            if issue.severity == ExecutionPolicyIssueSeverity.ERROR
+            1 for issue in self.issues if issue.severity == ExecutionPolicyIssueSeverity.ERROR
         )
 
     @property
     def warning_count(self) -> int:
         return sum(
-            1
-            for issue in self.issues
-            if issue.severity == ExecutionPolicyIssueSeverity.WARNING
+            1 for issue in self.issues if issue.severity == ExecutionPolicyIssueSeverity.WARNING
         )
 
     @property
@@ -234,9 +230,7 @@ def build_execution_advisory(
         reasons.append("最终目标区间较上一期明显下移，应复核是否降至目标范围。")
     elif no_new_position_gates and delta_midpoint is not None and delta_midpoint > 0:
         action_id = "no_new_position"
-        reasons.append(
-            f"目标区间上移但触发禁止新增仓位 gate：{', '.join(no_new_position_gates)}。"
-        )
+        reasons.append(f"目标区间上移但触发禁止新增仓位 gate：{', '.join(no_new_position_gates)}。")
     elif delta_midpoint is not None and delta_midpoint >= policy.small_increase_delta:
         action_id = "small_increase"
         reasons.append("最终目标区间较上一期明显上移，可进入小幅加仓复核。")
@@ -433,8 +427,7 @@ def _check_action_registry(
             ExecutionPolicyIssue(
                 severity=ExecutionPolicyIssueSeverity.ERROR,
                 code="missing_required_execution_actions",
-                message="缺少必需 advisory action："
-                + ", ".join(sorted(missing)),
+                message="缺少必需 advisory action：" + ", ".join(sorted(missing)),
             )
         )
 

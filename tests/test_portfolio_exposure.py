@@ -37,8 +37,7 @@ def test_build_portfolio_exposure_report_decomposes_real_holdings(
     assert any(bucket.name == "gpu_asic_demand" for bucket in report.node_exposures)
     assert any(bucket.name == "US" for bucket in report.region_exposures)
     assert any(
-        issue.code == "portfolio_ai_position_missing_node_mapping"
-        for issue in report.issues
+        issue.code == "portfolio_ai_position_missing_node_mapping" for issue in report.issues
     )
     assert "生产影响：none" in markdown
     assert "### 产业链节点暴露" in markdown
@@ -74,9 +73,7 @@ def test_invalid_portfolio_positions_fails_validation(tmp_path: Path) -> None:
 
     assert report.status == "FAIL"
     assert report.passed is False
-    assert "portfolio_positions_missing_columns" in {
-        issue.code for issue in report.issues
-    }
+    assert "portfolio_positions_missing_columns" in {issue.code for issue in report.issues}
 
 
 def test_portfolio_exposure_cli_writes_report(tmp_path: Path) -> None:

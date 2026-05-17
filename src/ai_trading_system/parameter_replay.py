@@ -392,10 +392,7 @@ def _robustness_evidence(
         if scenario.get("category") == "same_turnover_random_strategy"
         and _float_or_none(scenario.get("total_return")) is not None
     ]
-    random_returns = [
-        _float_or_none(scenario.get("total_return"))
-        for scenario in random_scenarios
-    ]
+    random_returns = [_float_or_none(scenario.get("total_return")) for scenario in random_scenarios]
     random_returns = [value for value in random_returns if value is not None]
     random_beats_count = (
         None
@@ -414,8 +411,7 @@ def _robustness_evidence(
         and _float_or_none(scenario.get("total_return")) is not None
     ]
     same_exposure_random_returns = [
-        _float_or_none(scenario.get("total_return"))
-        for scenario in same_exposure_random_scenarios
+        _float_or_none(scenario.get("total_return")) for scenario in same_exposure_random_scenarios
     ]
     same_exposure_random_returns = [
         value for value in same_exposure_random_returns if value is not None
@@ -428,9 +424,7 @@ def _robustness_evidence(
     same_exposure_percentile = (
         None
         if same_exposure_beats_count is None or not same_exposure_random_returns
-        else (
-            len(same_exposure_random_returns) - same_exposure_beats_count
-        )
+        else (len(same_exposure_random_returns) - same_exposure_beats_count)
         / len(same_exposure_random_returns)
     )
 
@@ -466,9 +460,7 @@ def _robustness_evidence(
         key=lambda scenario: _float_or_none(scenario.get("total_return")) or -1e9,
         default=None,
     )
-    best_signal_return = _float_or_none(
-        (best_signal_baseline or {}).get("total_return")
-    )
+    best_signal_return = _float_or_none((best_signal_baseline or {}).get("total_return"))
     best_signal_delta = (
         None
         if best_signal_return is None or base_return is None
@@ -550,9 +542,7 @@ def _robustness_evidence(
         "signal_family_baseline": {
             "available": best_signal_baseline is not None,
             "best_scenario_id": (
-                None
-                if best_signal_baseline is None
-                else best_signal_baseline.get("scenario_id")
+                None if best_signal_baseline is None else best_signal_baseline.get("scenario_id")
             ),
             "best_total_return": best_signal_return,
             "best_delta_vs_base": best_signal_delta,
@@ -570,9 +560,7 @@ def _robustness_evidence(
             "best_total_return": best_architecture_return,
             "best_delta_vs_base": best_architecture_delta,
             "base_beats_best_score_architecture_baseline": (
-                None
-                if best_architecture_delta is None
-                else best_architecture_delta <= 0
+                None if best_architecture_delta is None else best_architecture_delta <= 0
             ),
         },
         "statistical": statistical_evidence,
@@ -601,9 +589,7 @@ def _coverage_evidence(
         if str(item).strip()
     ]
     minimum_coverage = _float_or_none(raw.get("minimum_component_coverage"))
-    minimum_average_coverage = _float_or_none(
-        raw.get("minimum_average_component_coverage")
-    )
+    minimum_average_coverage = _float_or_none(raw.get("minimum_average_component_coverage"))
     maximum_placeholder_share = _float_or_none(raw.get("maximum_placeholder_share"))
     raw_blocking_components = raw.get("blocking_components")
     blocking_components = (
@@ -616,12 +602,9 @@ def _coverage_evidence(
     else:
         blocked = bool(blocking_components)
         if min_required is not None:
+            blocked = blocked or (minimum_coverage is not None and minimum_coverage < min_required)
             blocked = blocked or (
-                minimum_coverage is not None and minimum_coverage < min_required
-            )
-            blocked = blocked or (
-                minimum_average_coverage is not None
-                and minimum_average_coverage < min_required
+                minimum_average_coverage is not None and minimum_average_coverage < min_required
             )
         if max_placeholder is not None and maximum_placeholder_share is not None:
             blocked = blocked or maximum_placeholder_share > max_placeholder
@@ -649,13 +632,9 @@ def _statistical_evidence(
     oos_degradation: float | None,
 ) -> dict[str, Any]:
     candidate_categories = {"module_weight_perturbation", "cost", "window"}
-    require_bootstrap = bool(
-        (materiality_policy or {}).get("candidate_require_bootstrap_ci")
-    )
+    require_bootstrap = bool((materiality_policy or {}).get("candidate_require_bootstrap_ci"))
     min_ci_lower = _float_or_none(
-        (materiality_policy or {}).get(
-            "candidate_min_bootstrap_ci_lower_total_return_delta"
-        )
+        (materiality_policy or {}).get("candidate_min_bootstrap_ci_lower_total_return_delta")
     )
     completed_candidates = [
         scenario
@@ -688,8 +667,7 @@ def _statistical_evidence(
         (
             value
             for value in (
-                _float_or_none(scenario.get("sharpe"))
-                for scenario in completed_candidates
+                _float_or_none(scenario.get("sharpe")) for scenario in completed_candidates
             )
             if value is not None
         ),
@@ -699,8 +677,7 @@ def _statistical_evidence(
     daily_return_counts = [
         count
         for count in (
-            _int_or_none(record.get("daily_return_count"))
-            for record in available_records
+            _int_or_none(record.get("daily_return_count")) for record in available_records
         )
         if count is not None and count > 0
     ]
@@ -720,13 +697,9 @@ def _statistical_evidence(
         "require_bootstrap_ci": require_bootstrap,
         "candidate_scenario_count": len(completed_candidates),
         "bootstrap_ci_count": len(available_records),
-        "missing_bootstrap_ci_count": (
-            len(completed_candidates) - len(available_records)
-        ),
+        "missing_bootstrap_ci_count": (len(completed_candidates) - len(available_records)),
         "min_required_ci_lower_total_return_delta": min_ci_lower,
-        "positive_candidate_ci_crosses_threshold_count": (
-            positive_ci_crosses_threshold
-        ),
+        "positive_candidate_ci_crosses_threshold_count": (positive_ci_crosses_threshold),
         "deflated_sharpe_proxy": {
             "available": deflated_sharpe_proxy is not None,
             "method": "trial_count_penalty_proxy_not_formal_deflated_sharpe",
@@ -765,9 +738,7 @@ def _sample_independence_evidence(
         (materiality_policy or {}).get("candidate_label_horizon_days")
     )
     embargo_days = _int_or_none((materiality_policy or {}).get("candidate_embargo_days"))
-    min_windows = _int_or_none(
-        (materiality_policy or {}).get("candidate_min_independent_windows")
-    )
+    min_windows = _int_or_none((materiality_policy or {}).get("candidate_min_independent_windows"))
     first_signal_date = _date_or_none(payload.get("first_signal_date"))
     last_signal_date = _date_or_none(payload.get("last_signal_date"))
     signal_count = _int_or_none(coverage_evidence.get("sample_count"))
@@ -808,12 +779,8 @@ def _sample_independence_evidence(
     )
     return {
         "available": available,
-        "first_signal_date": (
-            None if first_signal_date is None else first_signal_date.isoformat()
-        ),
-        "last_signal_date": (
-            None if last_signal_date is None else last_signal_date.isoformat()
-        ),
+        "first_signal_date": (None if first_signal_date is None else first_signal_date.isoformat()),
+        "last_signal_date": (None if last_signal_date is None else last_signal_date.isoformat()),
         "signal_count": signal_count,
         "calendar_span_days": calendar_span_days,
         "label_horizon_days": label_horizon_days,
@@ -926,16 +893,12 @@ def _materiality_policy_record(
     candidate_max_placeholder_share = _float_or_none(
         raw_policy.get("candidate_max_placeholder_share")
     )
-    candidate_blocking_source_types = raw_policy.get(
-        "candidate_blocking_component_source_types"
-    )
+    candidate_blocking_source_types = raw_policy.get("candidate_blocking_component_source_types")
     candidate_require_bootstrap_ci = raw_policy.get("candidate_require_bootstrap_ci")
     candidate_min_bootstrap_ci_lower = _float_or_none(
         raw_policy.get("candidate_min_bootstrap_ci_lower_total_return_delta")
     )
-    candidate_label_horizon_days = _int_or_none(
-        raw_policy.get("candidate_label_horizon_days")
-    )
+    candidate_label_horizon_days = _int_or_none(raw_policy.get("candidate_label_horizon_days"))
     candidate_embargo_days = _int_or_none(raw_policy.get("candidate_embargo_days"))
     candidate_min_independent_windows = _int_or_none(
         raw_policy.get("candidate_min_independent_windows")
@@ -970,9 +933,7 @@ def _materiality_policy_record(
             else []
         ),
         "candidate_require_bootstrap_ci": bool(candidate_require_bootstrap_ci),
-        "candidate_min_bootstrap_ci_lower_total_return_delta": (
-            candidate_min_bootstrap_ci_lower
-        ),
+        "candidate_min_bootstrap_ci_lower_total_return_delta": (candidate_min_bootstrap_ci_lower),
         "candidate_label_horizon_days": candidate_label_horizon_days,
         "candidate_embargo_days": candidate_embargo_days,
         "candidate_min_independent_windows": candidate_min_independent_windows,
@@ -1062,9 +1023,7 @@ def _scenario_row(scenario: ParameterReplayScenario) -> str:
     material = (
         "n/a"
         if scenario.material_total_return_delta is None
-        else "yes"
-        if scenario.material_total_return_delta
-        else "no"
+        else "yes" if scenario.material_total_return_delta else "no"
     )
     return (
         f"| `{scenario.scenario_id}` | {scenario.category} | {scenario.status} | "
@@ -1081,9 +1040,7 @@ def _scenario_row(scenario: ParameterReplayScenario) -> str:
 def _robustness_evidence_lines(evidence: dict[str, Any]) -> list[str]:
     data_quality = _dict_value(evidence.get("data_quality"))
     random_evidence = _dict_value(evidence.get("same_turnover_random_strategy"))
-    exposure_random_evidence = _dict_value(
-        evidence.get("same_exposure_random_strategy")
-    )
+    exposure_random_evidence = _dict_value(evidence.get("same_exposure_random_strategy"))
     oos_evidence = _dict_value(evidence.get("out_of_sample_validation"))
     signal_evidence = _dict_value(evidence.get("signal_family_baseline"))
     architecture_evidence = _dict_value(evidence.get("score_architecture_baseline"))

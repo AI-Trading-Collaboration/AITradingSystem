@@ -201,9 +201,7 @@ def test_fetch_fmp_valuation_snapshots_builds_paid_vendor_snapshot() -> None:
     assert snapshot.source_type == "paid_vendor"
     assert snapshot.source_name == "Financial Modeling Prep"
     valuation_metrics = {metric.metric_id: metric for metric in snapshot.valuation_metrics}
-    expectation_metrics = {
-        metric.metric_id: metric for metric in snapshot.expectation_metrics
-    }
+    expectation_metrics = {metric.metric_id: metric for metric in snapshot.expectation_metrics}
     assert valuation_metrics["forward_pe"].value == 30
     assert valuation_metrics["forward_pe"].source_field == (
         "quote-short.price / analyst-estimates.epsAvg"
@@ -256,9 +254,7 @@ def test_fetch_fmp_valuation_snapshots_calculates_eps_revision_from_history(
     assert len(loaded_history) == 1
     assert report.historical_analyst_snapshot_count == 1
     snapshot = report.snapshots[0]
-    expectation_metrics = {
-        metric.metric_id: metric for metric in snapshot.expectation_metrics
-    }
+    expectation_metrics = {metric.metric_id: metric for metric in snapshot.expectation_metrics}
     assert expectation_metrics["eps_revision_90d_pct"].value == approx(100)
     assert "missing_eps_revision_history" not in {issue.code for issue in report.issues}
 
@@ -405,9 +401,7 @@ def test_fetch_fmp_valuation_snapshots_calculates_local_valuation_percentile(
 
     assert report.historical_valuation_snapshot_count == 3
     assert report.snapshots[0].valuation_percentile == approx(66.6666667)
-    assert "missing_valuation_percentile_history" not in {
-        issue.code for issue in report.issues
-    }
+    assert "missing_valuation_percentile_history" not in {issue.code for issue in report.issues}
 
 
 def test_fetch_fmp_historical_valuation_snapshots_generates_percentile_history(
@@ -430,9 +424,7 @@ def test_fetch_fmp_historical_valuation_snapshots_generates_percentile_history(
     assert history_report.row_count == 6
     assert len(history_report.raw_payloads) == 1
     assert len(history_report.snapshots) == 3
-    assert history_report.snapshots[0].point_in_time_class == (
-        "backfilled_history_distribution"
-    )
+    assert history_report.snapshots[0].point_in_time_class == ("backfilled_history_distribution")
     assert history_report.snapshots[0].history_source_class == "vendor_historical_endpoint"
     assert history_report.snapshots[0].confidence_level == "low"
     assert history_report.snapshots[0].backtest_use == "captured_at_forward_only"
@@ -552,9 +544,7 @@ def test_validate_fmp_analyst_estimate_history_checks_cache(
                 },
                 row_count=1,
                 checksum_sha256="",
-                records=(
-                    {"symbol": "NVDA", "date": "2027-01-31", "epsAvg": 4.0},
-                ),
+                records=({"symbol": "NVDA", "date": "2027-01-31", "epsAvg": 4.0},),
             )
         ],
         history_dir,
@@ -683,9 +673,7 @@ def test_valuation_fetch_fmp_cli_writes_yaml_and_reports(
     assert (
         len(
             list(
-                (analyst_history_dir / "nvda").glob(
-                    "fmp_analyst_estimates_nvda_2026-05-02_*.json"
-                )
+                (analyst_history_dir / "nvda").glob("fmp_analyst_estimates_nvda_2026-05-02_*.json")
             )
         )
         == 1
@@ -750,12 +738,9 @@ def test_valuation_fetch_fmp_valuation_history_cli_writes_raw_yaml_and_reports(
 
     assert result.exit_code == 0
     assert "FMP 历史估值拉取状态：PASS" in result.output
+    assert (raw_output_dir / "nvda" / "fmp_historical_valuation_nvda_2026-05-02.json").exists()
     assert (
-        raw_output_dir / "nvda" / "fmp_historical_valuation_nvda_2026-05-02.json"
-    ).exists()
-    assert (
-        output_dir
-        / "fmp_nvda_historical_valuation_2026_01_31_captured_2026_05_02.yaml"
+        output_dir / "fmp_nvda_historical_valuation_2026_01_31_captured_2026_05_02.yaml"
     ).exists()
     assert fetch_report_path.exists()
     assert validation_report_path.exists()
@@ -795,9 +780,7 @@ def test_fetch_eodhd_earnings_trends_merges_eps_revision_into_base_snapshot(
         "forward_pe",
         "ev_sales",
     }
-    expectation_metrics = {
-        metric.metric_id: metric for metric in snapshot.expectation_metrics
-    }
+    expectation_metrics = {metric.metric_id: metric for metric in snapshot.expectation_metrics}
     assert expectation_metrics["revenue_growth_next_12m_pct"].value == 20
     assert expectation_metrics["eps_revision_90d_pct"].value == approx(20)
     assert "EODHD Earnings Trends" in render_eodhd_earnings_trends_fetch_report(report)
@@ -891,14 +874,8 @@ def test_valuation_fetch_eodhd_trends_cli_writes_raw_yaml_and_reports(
 
     assert result.exit_code == 0
     assert "EODHD trends 拉取状态：PASS" in result.output
-    assert (
-        output_dir / "merged_nvda_valuation_eodhd_trends_2026_05_02.yaml"
-    ).exists()
-    assert (
-        raw_output_dir
-        / "nvda"
-        / "eodhd_earnings_trends_nvda_2026-05-02.json"
-    ).exists()
+    assert (output_dir / "merged_nvda_valuation_eodhd_trends_2026_05_02.yaml").exists()
+    assert (raw_output_dir / "nvda" / "eodhd_earnings_trends_nvda_2026-05-02.json").exists()
     assert fetch_report_path.exists()
     assert validation_report_path.exists()
 
@@ -922,9 +899,7 @@ def test_valuation_validate_fmp_history_cli_writes_report(tmp_path: Path) -> Non
                 },
                 row_count=1,
                 checksum_sha256="",
-                records=(
-                    {"symbol": "NVDA", "date": "2027-01-31", "epsAvg": 4.0},
-                ),
+                records=({"symbol": "NVDA", "date": "2027-01-31", "epsAvg": 4.0},),
             )
         ],
         history_dir,
@@ -1170,9 +1145,7 @@ class _FlakyRequestsModule:
         assert url.endswith("/ratios-ttm")
         assert params["symbol"] == "INTC"
         assert timeout == 30
-        return _FakeResponse(
-            [{"symbol": "INTC", "forwardPriceToEarningsGrowthRatioTTM": -3.8}]
-        )
+        return _FakeResponse([{"symbol": "INTC", "forwardPriceToEarningsGrowthRatioTTM": -3.8}])
 
 
 class _FakeResponse:

@@ -54,9 +54,7 @@ def build_decision_snapshot(
             ],
         },
         "positions": {
-            "model_risk_asset_ai_band": _band_record(
-                recommendation.model_risk_asset_ai_band
-            ),
+            "model_risk_asset_ai_band": _band_record(recommendation.model_risk_asset_ai_band),
             "final_risk_asset_ai_band": _band_record(recommendation.risk_asset_ai_band),
             "confidence_adjusted_risk_asset_ai_band": _band_record(
                 confidence.adjusted_risk_asset_ai_band
@@ -64,9 +62,7 @@ def build_decision_snapshot(
             "static_total_risk_asset_band": _band_record(
                 report.macro_risk_asset_budget.static_total_risk_asset_band
             ),
-            "final_total_risk_asset_band": _band_record(
-                recommendation.total_risk_asset_band
-            ),
+            "final_total_risk_asset_band": _band_record(recommendation.total_risk_asset_band),
             "macro_risk_asset_budget": {
                 "level": report.macro_risk_asset_budget.level,
                 "triggered": report.macro_risk_asset_budget.triggered,
@@ -184,9 +180,7 @@ def _risk_event_state_record(report: DailyScoreReport) -> dict[str, Any] | None:
         "status": review.status,
         "occurrence_count": review.validation_report.occurrence_count,
         "score_eligible_active_count": len(review.score_eligible_active_items),
-        "position_gate_eligible_active_count": len(
-            review.position_gate_eligible_active_items
-        ),
+        "position_gate_eligible_active_count": len(review.position_gate_eligible_active_items),
         "items": [
             {
                 "occurrence_id": item.occurrence_id,

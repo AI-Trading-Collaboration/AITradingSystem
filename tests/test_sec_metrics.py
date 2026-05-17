@@ -698,7 +698,7 @@ def _write_companyfacts(tmp_path: Path, ticker: str, cik: str) -> Path:
                                     },
                                 ]
                             }
-                        }
+                        },
                     },
                     "dei": {},
                 },

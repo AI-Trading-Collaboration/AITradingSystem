@@ -1134,18 +1134,15 @@ def _check_secondary_price_reconciliation(
     warning_threshold = quality_config.prices.secondary_source_adj_close_warning_pct
     error_threshold = quality_config.prices.secondary_source_adj_close_error_pct
     merged["_close_diff_pct"] = (
-        (merged["_primary_close"] - merged["_secondary_close"]).abs() / merged["_primary_close"]
-    )
+        merged["_primary_close"] - merged["_secondary_close"]
+    ).abs() / merged["_primary_close"]
     merged["_adj_close_diff_pct"] = (
-        (merged["_primary_adj_close"] - merged["_secondary_adj_close"]).abs()
-        / merged["_primary_adj_close"]
-    )
+        merged["_primary_adj_close"] - merged["_secondary_adj_close"]
+    ).abs() / merged["_primary_adj_close"]
     close_error_diff = merged["_close_diff_pct"] > error_threshold
     close_warning_diff = (merged["_close_diff_pct"] > warning_threshold) & ~close_error_diff
     close_reconciled = merged["_close_diff_pct"] <= warning_threshold
-    known_split_close_basis_diff = (
-        close_error_diff | close_warning_diff
-    ) & merged.apply(
+    known_split_close_basis_diff = (close_error_diff | close_warning_diff) & merged.apply(
         lambda row: _row_matches_known_split_close_basis(row, quality_config),
         axis=1,
     )
@@ -1154,9 +1151,7 @@ def _check_secondary_price_reconciliation(
     adj_error_diff = merged["_adj_close_diff_pct"] > error_threshold
     adj_warning_diff = (merged["_adj_close_diff_pct"] > warning_threshold) & ~adj_error_diff
     adj_adjustment_basis_diff = adj_error_diff & close_reconciled
-    adj_unresolved_error_diff = (
-        adj_error_diff & ~close_reconciled & ~known_split_close_basis_diff
-    )
+    adj_unresolved_error_diff = adj_error_diff & ~close_reconciled & ~known_split_close_basis_diff
     adj_warning_basis_diff = adj_warning_diff & close_reconciled
     adj_unresolved_warning_diff = (
         adj_warning_diff & ~close_reconciled & ~known_split_close_basis_diff
@@ -1407,9 +1402,11 @@ def _marketstack_bad_point_records(
     primary_rows: dict[tuple[str, str], pd.Series] = {}
     for _, primary_item in primary.iterrows():
         primary_rows[(str(primary_item["date"]), str(primary_item["ticker"]))] = primary_item
-    valid_ohlc = secondary[
-        ["_secondary_open", "_secondary_high", "_secondary_low", "_secondary_close"]
-    ].notna().all(axis=1)
+    valid_ohlc = (
+        secondary[["_secondary_open", "_secondary_high", "_secondary_low", "_secondary_close"]]
+        .notna()
+        .all(axis=1)
+    )
     invalid_ohlc = valid_ohlc & (
         (secondary["_secondary_high"] < secondary["_secondary_open"])
         | (secondary["_secondary_high"] < secondary["_secondary_low"])
@@ -1444,9 +1441,11 @@ def _marketstack_bad_point_records(
                 date=str(row["date"]),
                 ticker=str(row["ticker"]),
                 severity=Severity.INFO,
-                classification="marketstack_bad_point_primary_available"
-                if primary_close is not None
-                else "marketstack_bad_point_no_primary_evidence",
+                classification=(
+                    "marketstack_bad_point_primary_available"
+                    if primary_close is not None
+                    else "marketstack_bad_point_no_primary_evidence"
+                ),
                 rule_id="marketstack.secondary_self_check.v1",
                 evidence=(
                     "Marketstack row violates close/adj_close/OHLC self-check; "
@@ -1718,10 +1717,7 @@ def _marketstack_reconciliation_section(report: DataQualityReport) -> list[str]:
         "",
         "## Marketstack reconciliation",
         "",
-        (
-            "- 明细 CSV：与本 Markdown 同目录，文件名后缀为 "
-            "`_marketstack_reconciliation.csv`。"
-        ),
+        ("- 明细 CSV：与本 Markdown 同目录，文件名后缀为 " "`_marketstack_reconciliation.csv`。"),
         "- 规则边界：只归因和记录，不改写主价格缓存、第二行情源缓存、评分或回测真值。",
         "",
         "| 级别 | 分类 | 行数 |",
@@ -1809,10 +1805,11 @@ def _rate_consistency_start_label(report: DataQualityReport) -> str:
 def _issue_source(issue: DataQualityIssue) -> str:
     if issue.source:
         return issue.source
-    if issue.code.startswith("secondary_prices_close") or issue.code.startswith(
-        "secondary_prices_adj"
-    ) or issue.code.startswith("secondary_prices_overlap") or issue.code.startswith(
-        "secondary_prices_no_reconciliation"
+    if (
+        issue.code.startswith("secondary_prices_close")
+        or issue.code.startswith("secondary_prices_adj")
+        or issue.code.startswith("secondary_prices_overlap")
+        or issue.code.startswith("secondary_prices_no_reconciliation")
     ):
         return "跨源核验：主价格源 vs Marketstack"
     if issue.code.startswith("secondary_prices_"):

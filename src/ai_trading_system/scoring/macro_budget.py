@@ -68,11 +68,7 @@ def build_macro_risk_asset_budget_adjustment(
             adjusted_total_risk_asset_band=adjusted_band,
             level="stress",
             triggered=True,
-            reasons=(
-                "宏观流动性达到 stress 阈值："
-                + "；".join(stress_reasons)
-                + "。",
-            ),
+            reasons=("宏观流动性达到 stress 阈值：" + "；".join(stress_reasons) + "。",),
         )
 
     elevated_reasons = _trigger_reasons(feature_set, config, level="elevated")
@@ -89,11 +85,7 @@ def build_macro_risk_asset_budget_adjustment(
             adjusted_total_risk_asset_band=adjusted_band,
             level="elevated",
             triggered=True,
-            reasons=(
-                "宏观流动性达到 elevated 阈值："
-                + "；".join(elevated_reasons)
-                + "。",
-            ),
+            reasons=("宏观流动性达到 elevated 阈值：" + "；".join(elevated_reasons) + "。",),
         )
 
     return MacroRiskAssetBudgetAdjustment(
@@ -156,9 +148,7 @@ def _trigger_reasons(
     for subject, feature, threshold in thresholds:
         value = _feature_value(feature_set, subject, feature)
         if value is not None and value >= threshold:
-            reasons.append(
-                f"{subject} {feature}={value:.4f} >= {threshold:.4f}"
-            )
+            reasons.append(f"{subject} {feature}={value:.4f} >= {threshold:.4f}")
     return reasons
 
 
@@ -181,9 +171,7 @@ def _feature_value(
     feature: str,
 ) -> float | None:
     matches = [
-        row.value
-        for row in feature_set.rows
-        if row.subject == subject and row.feature == feature
+        row.value for row in feature_set.rows if row.subject == subject and row.feature == feature
     ]
     if not matches:
         return None

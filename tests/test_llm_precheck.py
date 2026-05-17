@@ -543,9 +543,9 @@ def test_llm_claim_precheck_fails_after_retry_exhaustion(tmp_path: Path) -> None
 
 
 def test_openai_claim_schema_cannot_emit_trade_action_fields() -> None:
-    claim_properties = OPENAI_LLM_CLAIM_RESPONSE_FORMAT["schema"]["properties"]["claims"][
-        "items"
-    ]["properties"]
+    claim_properties = OPENAI_LLM_CLAIM_RESPONSE_FORMAT["schema"]["properties"]["claims"]["items"][
+        "properties"
+    ]
 
     assert "recommended_action" not in claim_properties
     assert "position_size" not in claim_properties

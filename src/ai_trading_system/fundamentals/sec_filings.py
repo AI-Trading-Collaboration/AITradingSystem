@@ -186,9 +186,7 @@ class SecEdgarFilingArchiveProvider:
         return self._get_json(self.submissions_endpoint_for(request.cik))
 
     def download_filing_index(self, request: SecFilingIndexRequest) -> dict[str, Any]:
-        return self._get_json(
-            self.filing_index_endpoint_for(request.cik, request.accession_number)
-        )
+        return self._get_json(self.filing_index_endpoint_for(request.cik, request.accession_number))
 
     def submissions_endpoint_for(self, cik: str) -> str:
         return f"{self.submissions_base_url}/CIK{cik}.json"
@@ -299,9 +297,7 @@ def download_sec_filing_archive_indexes(
         raise ValueError("request_delay_seconds must be non-negative")
     accessions = _metric_accessions(metrics_path, as_of, tickers)
     if not accessions:
-        raise ValueError(
-            f"no SEC metric accessions found for as_of={as_of.isoformat()}"
-        )
+        raise ValueError(f"no SEC metric accessions found for as_of={as_of.isoformat()}")
     output_dir.mkdir(parents=True, exist_ok=True)
     files: list[SecFilingArchiveFile] = []
     manifest_records: list[dict[str, object]] = []
@@ -418,7 +414,7 @@ def build_sec_accession_coverage_report(
                     code="sec_accession_submission_metadata_missing",
                     ticker=ticker,
                     accession_number=accession["accession_number"],
-                    message="SEC submissions JSON 中找不到该 accession。"
+                    message="SEC submissions JSON 中找不到该 accession。",
                 )
             )
         elif not archive_index_found:
@@ -429,7 +425,7 @@ def build_sec_accession_coverage_report(
                     code="sec_accession_archive_index_missing",
                     ticker=ticker,
                     accession_number=accession["accession_number"],
-                    message="尚未归档该 accession directory 的 index.json。"
+                    message="尚未归档该 accession directory 的 index.json。",
                 )
             )
         rows.append(
@@ -452,9 +448,7 @@ def build_sec_accession_coverage_report(
                     "" if submission is None else submission.get("primaryDocument", "")
                 ),
                 archive_index_path=index_path,
-                archive_index_sha256=_sha256_file(index_path)
-                if archive_index_found
-                else None,
+                archive_index_sha256=_sha256_file(index_path) if archive_index_found else None,
                 status=status,
             )
         )

@@ -39,9 +39,7 @@ class PreTradeRiskChecker:
         equity = portfolio_state.equity_value_usd
         current_position = portfolio_state.position_for(order_intent.symbol)
         current_quantity = 0 if current_position is None else current_position.quantity
-        current_market_value = (
-            0.0 if current_position is None else current_position.market_value
-        )
+        current_market_value = 0.0 if current_position is None else current_position.market_value
 
         evaluations = [
             self._kill_switch_rule(),

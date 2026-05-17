@@ -147,9 +147,7 @@ def test_continuous_portfolio_replay_rejects_gtc_candidate(
     assert day["rejected_gtc_orders"] == 1
     assert payload["rejected_gtc_orders"] == 1
     assert "GTC" in payload["unsupported_order_policy"]
-    assert payload["aggregations"]["by_blocked_by"][0]["key"] == (
-        "unsupported_time_in_force"
-    )
+    assert payload["aggregations"]["by_blocked_by"][0]["key"] == ("unsupported_time_in_force")
 
 
 def test_continuous_portfolio_replay_does_not_call_real_broker_or_read_api_key(
@@ -272,8 +270,7 @@ def _candidate(
     return {
         "schema_version": "1.0",
         "candidate_id": f"candidate:{as_of.isoformat()}:{suffix}",
-        "created_at": datetime(as_of.year, as_of.month, as_of.day, 14, 0, tzinfo=UTC)
-        .isoformat(),
+        "created_at": datetime(as_of.year, as_of.month, as_of.day, 14, 0, tzinfo=UTC).isoformat(),
         "strategy_id": "continuous_replay_test",
         "strategy_version": "v1",
         "run_id": f"continuous_replay_test:{as_of.isoformat()}",

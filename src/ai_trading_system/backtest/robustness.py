@@ -520,41 +520,27 @@ def _interpretation_lines(report: BacktestRobustnessReport) -> list[str]:
         best_total_return = max(metrics.total_return for metrics in benchmark_metrics)
         best_drawdown = max(metrics.max_drawdown for metrics in benchmark_metrics)
         if strategy.total_return >= best_total_return:
-            lines.append(
-                "- 动态策略的总收益不低于本次可用买入持有基准，价值来源包含收益增强。"
-            )
+            lines.append("- 动态策略的总收益不低于本次可用买入持有基准，价值来源包含收益增强。")
         else:
-            lines.append(
-                "- 动态策略未跑赢最高收益买入持有基准，不能把本次结果解释为纯收益增强。"
-            )
+            lines.append("- 动态策略未跑赢最高收益买入持有基准，不能把本次结果解释为纯收益增强。")
         if strategy.max_drawdown >= best_drawdown:
-            lines.append(
-                "- 动态策略最大回撤不深于本次可用买入持有基准，回撤控制是可观察价值来源。"
-            )
+            lines.append("- 动态策略最大回撤不深于本次可用买入持有基准，回撤控制是可观察价值来源。")
         else:
-            lines.append(
-                "- 动态策略最大回撤深于至少一个买入持有基准，回撤控制结论需要继续验证。"
-            )
+            lines.append("- 动态策略最大回撤深于至少一个买入持有基准，回撤控制结论需要继续验证。")
     if strategy.time_in_market < report.policy.full_exposure_time_in_market_min:
-        lines.append(
-            "- 动态策略不是长期满仓，仓位纪律和风险暴露管理应与收益指标分开评估。"
-        )
+        lines.append("- 动态策略不是长期满仓，仓位纪律和风险暴露管理应与收益指标分开评估。")
     cost_scenario = _find_scenario(report, "cost_stress_execution")
     if cost_scenario is not None and cost_scenario.result is not None:
         delta = cost_scenario.result.strategy_metrics.total_return - strategy.total_return
         if delta < report.policy.material_cost_drag_total_return:
-            lines.append(
-                "- 成本压力对总收益造成明显拖累，生产前必须用真实成交样本校验成本假设。"
-            )
+            lines.append("- 成本压力对总收益造成明显拖累，生产前必须用真实成交样本校验成本假设。")
         else:
             lines.append("- 成本压力实验未显著改变总收益方向，但仍不替代真实成交质量验证。")
     shifted_scenario = _find_scenario(report, "shifted_start")
     if shifted_scenario is not None and shifted_scenario.result is not None:
         delta = shifted_scenario.result.strategy_metrics.total_return - strategy.total_return
         if abs(delta) > report.policy.shifted_start_material_total_return_delta_abs:
-            lines.append(
-                "- 起点后移后结果变化较大，说明样本窗口敏感性仍是主要生产化风险。"
-            )
+            lines.append("- 起点后移后结果变化较大，说明样本窗口敏感性仍是主要生产化风险。")
         else:
             lines.append("- 起点后移后总收益变化有限，窗口敏感性在第一阶段实验中未明显恶化。")
     rebalance_scenarios = [
@@ -569,13 +555,9 @@ def _interpretation_lines(report: BacktestRobustnessReport) -> list[str]:
             if scenario.metrics is not None
         )
         if best_rebalance_delta >= 0:
-            lines.append(
-                "- 较低再平衡频率未降低本次总收益，动态仓位价值不能只归因于高频调仓。"
-            )
+            lines.append("- 较低再平衡频率未降低本次总收益，动态仓位价值不能只归因于高频调仓。")
         else:
-            lines.append(
-                "- 较低再平衡频率削弱本次总收益，需确认策略是否过度依赖每日调仓。"
-            )
+            lines.append("- 较低再平衡频率削弱本次总收益，需确认策略是否过度依赖每日调仓。")
     signal_baselines = [
         scenario
         for scenario in report.scenarios
@@ -592,14 +574,11 @@ def _interpretation_lines(report: BacktestRobustnessReport) -> list[str]:
                 "- 至少一个趋势信号族基线跑赢动态策略，复杂模块增益仍需权重扰动和样本外验证。"
             )
         else:
-            lines.append(
-                "- 动态策略本次收益不低于趋势信号族基线，复杂模块未在该样本削弱总收益。"
-            )
+            lines.append("- 动态策略本次收益不低于趋势信号族基线，复杂模块未在该样本削弱总收益。")
     weight_scenarios = [
         scenario
         for scenario in report.scenarios
-        if scenario.category == "module_weight_perturbation"
-        and scenario.result is not None
+        if scenario.category == "module_weight_perturbation" and scenario.result is not None
     ]
     if weight_scenarios:
         max_abs_delta = max(
@@ -607,19 +586,14 @@ def _interpretation_lines(report: BacktestRobustnessReport) -> list[str]:
             for scenario in weight_scenarios
             if scenario.result is not None
         )
-        if max_abs_delta > (
-            report.policy.weight_perturbation_material_total_return_delta_abs
-        ):
-            lines.append(
-                "- 模块权重扰动对总收益影响较大，当前参数仍需要样本外验证和 owner 审批。"
-            )
+        if max_abs_delta > (report.policy.weight_perturbation_material_total_return_delta_abs):
+            lines.append("- 模块权重扰动对总收益影响较大，当前参数仍需要样本外验证和 owner 审批。")
         else:
             lines.append("- 模块权重扰动未明显改变本次总收益方向，参数敏感性初步可控。")
     random_scenarios = [
         scenario
         for scenario in report.scenarios
-        if scenario.category == "same_turnover_random_strategy"
-        and scenario.metrics is not None
+        if scenario.category == "same_turnover_random_strategy" and scenario.metrics is not None
     ]
     if random_scenarios:
         random_returns = [
@@ -629,9 +603,7 @@ def _interpretation_lines(report: BacktestRobustnessReport) -> list[str]:
         ]
         random_beats = sum(1 for item in random_returns if item >= strategy.total_return)
         if random_beats == 0:
-            lines.append(
-                "- 动态策略跑赢全部同换手率随机策略，信号方向价值在本次随机基线中可见。"
-            )
+            lines.append("- 动态策略跑赢全部同换手率随机策略，信号方向价值在本次随机基线中可见。")
         else:
             lines.append(
                 f"- {random_beats}/{len(random_returns)} 组同换手率随机策略不低于动态策略，"
@@ -641,9 +613,7 @@ def _interpretation_lines(report: BacktestRobustnessReport) -> list[str]:
     out_sample = _find_scenario(report, "out_of_sample_holdout")
     if in_sample is not None and out_sample is not None:
         in_metrics = (
-            in_sample.result.strategy_metrics
-            if in_sample.result is not None
-            else in_sample.metrics
+            in_sample.result.strategy_metrics if in_sample.result is not None else in_sample.metrics
         )
         out_metrics = (
             out_sample.result.strategy_metrics
@@ -652,20 +622,14 @@ def _interpretation_lines(report: BacktestRobustnessReport) -> list[str]:
         )
         if in_metrics is not None and out_metrics is not None:
             if out_metrics.total_return >= 0:
-                lines.append(
-                    "- 样本外 holdout 总收益为正，时间切分下未立即暴露方向性失效。"
-                )
+                lines.append("- 样本外 holdout 总收益为正，时间切分下未立即暴露方向性失效。")
             else:
-                lines.append(
-                    "- 样本外 holdout 总收益为负，需把全样本结果降级为窗口内诊断。"
-                )
+                lines.append("- 样本外 holdout 总收益为负，需把全样本结果降级为窗口内诊断。")
             if out_metrics.total_return < (
                 in_metrics.total_return
                 - report.policy.oos_material_underperformance_total_return_delta
             ):
-                lines.append(
-                    "- 样本外收益明显弱于 in-sample，参数与市场阶段稳定性仍需人工复核。"
-                )
+                lines.append("- 样本外收益明显弱于 in-sample，参数与市场阶段稳定性仍需人工复核。")
     lines.append(
         "- 当前结论仍是研究和审计输入；完整生产信任还取决于数据可信度、样本长度和 owner 审批。"
     )
@@ -955,22 +919,18 @@ def _transaction_cost_for_turnover(
 ) -> float:
     commission_rate = (result.cost_bps if cost_bps is None else cost_bps) / 10_000.0
     spread_rate = (result.spread_bps if spread_bps is None else spread_bps) / 10_000.0
-    slippage_rate = (
-        result.slippage_bps if slippage_bps is None else slippage_bps
-    ) / 10_000.0
+    slippage_rate = (result.slippage_bps if slippage_bps is None else slippage_bps) / 10_000.0
     market_impact_rate = (
         result.market_impact_bps if market_impact_bps is None else market_impact_bps
     ) / 10_000.0
     tax_rate = (result.tax_bps if tax_bps is None else tax_bps) / 10_000.0
     fx_rate = (result.fx_bps if fx_bps is None else fx_bps) / 10_000.0
     financing_daily_rate = (
-        result.financing_annual_bps
-        if financing_annual_bps is None
-        else financing_annual_bps
-    ) / 10_000.0 / 252.0
-    etf_delay_rate = (
-        result.etf_delay_bps if etf_delay_bps is None else etf_delay_bps
-    ) / 10_000.0
+        (result.financing_annual_bps if financing_annual_bps is None else financing_annual_bps)
+        / 10_000.0
+        / 252.0
+    )
+    etf_delay_rate = (result.etf_delay_bps if etf_delay_bps is None else etf_delay_bps) / 10_000.0
     sell_turnover = max(previous_exposure - exposure, 0.0)
     return (
         turnover * commission_rate
@@ -990,11 +950,7 @@ def _scenario_summary_record(
     policy: BacktestRobustnessPolicyConfig,
 ) -> dict[str, object]:
     base_metrics = base_result.strategy_metrics
-    metrics = (
-        scenario.result.strategy_metrics
-        if scenario.result is not None
-        else scenario.metrics
-    )
+    metrics = scenario.result.strategy_metrics if scenario.result is not None else scenario.metrics
     record: dict[str, object] = {
         "scenario_id": scenario.scenario_id,
         "label": scenario.label,
@@ -1005,9 +961,7 @@ def _scenario_summary_record(
     }
     if metrics is not None:
         record.update(_summary_metrics_record(metrics))
-        record["total_return_delta_vs_base"] = (
-            metrics.total_return - base_metrics.total_return
-        )
+        record["total_return_delta_vs_base"] = metrics.total_return - base_metrics.total_return
         bootstrap_ci = _scenario_bootstrap_ci_record(
             scenario=scenario,
             base_result=base_result,
@@ -1017,9 +971,7 @@ def _scenario_summary_record(
             record["return_delta_bootstrap_ci_95"] = bootstrap_ci
     if scenario.result is not None:
         record["weight_profile_version"] = scenario.result.weight_profile_version
-        record["calibration_overlay_ids"] = list(
-            scenario.result.calibration_overlay_ids
-        )
+        record["calibration_overlay_ids"] = list(scenario.result.calibration_overlay_ids)
         record["effective_weights"] = scenario.result.effective_weights or {}
     return record
 
@@ -1080,9 +1032,7 @@ def _block_bootstrap_total_return_delta_ci(
                 sampled_scenario.append(scenario_returns[index])
                 if len(sampled_base) >= count:
                     break
-        deltas.append(
-            _compound_return(sampled_scenario) - _compound_return(sampled_base)
-        )
+        deltas.append(_compound_return(sampled_scenario) - _compound_return(sampled_base))
     ordered = sorted(deltas)
     return _quantile(ordered, 0.025), _quantile(ordered, 0.975)
 
@@ -1115,9 +1065,7 @@ def _coverage_evidence_record(
         {
             component
             for row in result.rows
-            for component in (
-                set(row.component_coverages) | set(row.component_source_types)
-            )
+            for component in (set(row.component_coverages) | set(row.component_source_types))
         }
     )
     blocking_source_types = set(policy.candidate_blocking_component_source_types)
@@ -1129,8 +1077,7 @@ def _coverage_evidence_record(
 
     for component in components:
         coverage_values = [
-            float(row.component_coverages.get(component, 0.0))
-            for row in result.rows
+            float(row.component_coverages.get(component, 0.0)) for row in result.rows
         ]
         source_type_counts: dict[str, int] = {}
         for row in result.rows:
@@ -1138,14 +1085,10 @@ def _coverage_evidence_record(
             source_type_counts[source_type] = source_type_counts.get(source_type, 0) + 1
         observations = len(coverage_values)
         component_min = min(coverage_values) if coverage_values else None
-        component_avg = (
-            sum(coverage_values) / len(coverage_values) if coverage_values else None
-        )
+        component_avg = sum(coverage_values) / len(coverage_values) if coverage_values else None
         placeholder_count = source_type_counts.get("placeholder", 0)
         insufficient_count = source_type_counts.get("insufficient_data", 0)
-        placeholder_share = (
-            None if observations == 0 else placeholder_count / observations
-        )
+        placeholder_share = None if observations == 0 else placeholder_count / observations
         blocking_source_count = sum(
             count
             for source_type, count in source_type_counts.items()
@@ -1220,14 +1163,8 @@ def _coverage_evidence_lines(report: BacktestRobustnessReport) -> list[str]:
         "",
         "## 数据覆盖与 source veto 证据",
         "",
-        (
-            "- 候选最低模块覆盖率："
-            f"{float(evidence['min_required_component_coverage']):.0%}"
-        ),
-        (
-            "- 候选最大 placeholder 占比："
-            f"{float(evidence['max_allowed_placeholder_share']):.0%}"
-        ),
+        ("- 候选最低模块覆盖率：" f"{float(evidence['min_required_component_coverage']):.0%}"),
+        ("- 候选最大 placeholder 占比：" f"{float(evidence['max_allowed_placeholder_share']):.0%}"),
         (
             "- 阻断 source_type："
             + ", ".join(str(item) for item in evidence["blocking_source_types"])

@@ -133,9 +133,7 @@ class RuleGovernanceReport:
     @property
     def error_count(self) -> int:
         return sum(
-            1
-            for issue in self.issues
-            if issue.severity == RuleGovernanceIssueSeverity.ERROR
+            1 for issue in self.issues if issue.severity == RuleGovernanceIssueSeverity.ERROR
         )
 
     @property
@@ -505,9 +503,7 @@ def build_rule_version_manifest(
         "registry_as_of": report.as_of.isoformat(),
         "source_path": str(report.store.input_path),
         "applies_to": applies_to,
-        "manifest_scope": (
-            "current_rule_registry_for_this_run_not_historical_approval_proof"
-        ),
+        "manifest_scope": ("current_rule_registry_for_this_run_not_historical_approval_proof"),
         "production_rule_count": len(production_cards),
         "rules": [_rule_version_record(card) for card in production_cards],
     }
@@ -560,8 +556,7 @@ def _replace_card(
     return RuleCardStore(
         input_path=input_path,
         cards=tuple(
-            updated_card if card.rule_id == updated_card.rule_id else card
-            for card in store.cards
+            updated_card if card.rule_id == updated_card.rule_id else card for card in store.cards
         ),
     )
 

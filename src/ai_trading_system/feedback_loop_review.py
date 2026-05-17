@@ -186,12 +186,8 @@ def _evidence_section(path: Path, since: date, as_of: date) -> dict[str, Any]:
     store = load_market_evidence_store(path)
     warnings.extend(f"{error.path}: {error.message}" for error in store.load_errors)
     loaded = tuple(item.evidence for item in store.loaded)
-    new_items = [
-        item for item in loaded if since <= item.captured_at <= as_of
-    ]
-    pending = [
-        item for item in loaded if item.manual_review_status == "pending_review"
-    ]
+    new_items = [item for item in loaded if since <= item.captured_at <= as_of]
+    pending = [item for item in loaded if item.manual_review_status == "pending_review"]
     return {
         "total_count": len(loaded),
         "new_count": len(new_items),

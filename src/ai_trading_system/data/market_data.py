@@ -32,7 +32,9 @@ FMP_EOD_DIVIDEND_ADJUSTED_URL = (
 FMP_DEFAULT_SYMBOL_ALIASES: dict[str, str | None] = {
     "^VIX": None,
 }
-CBOE_VIX_DAILY_PRICES_URL = "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv"
+CBOE_VIX_DAILY_PRICES_URL = (
+    "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv"
+)
 CBOE_VIX_TICKER = "^VIX"
 
 
@@ -295,8 +297,7 @@ class MarketstackPriceProvider:
                     error_code=error_code,
                 )
                 raise ProviderDownloadError(
-                    "Marketstack response returned an error: "
-                    f"error_code={error_code}",
+                    "Marketstack response returned an error: " f"error_code={error_code}",
                     diagnostic,
                 )
 
@@ -486,10 +487,7 @@ class CboeVixPriceProvider:
             cache_dir=request_cache_dir,
         )
         if not response.ok:
-            raise ValueError(
-                "Cboe VIX request failed: "
-                f"http_status={response.status_code}"
-            )
+            raise ValueError("Cboe VIX request failed: " f"http_status={response.status_code}")
 
         raw = pd.read_csv(StringIO(str(response.text)))
         return normalize_cboe_vix_prices(
@@ -768,13 +766,10 @@ def normalize_cboe_vix_prices(
 
     start_timestamp = pd.Timestamp(start)
     end_timestamp = pd.Timestamp(end)
-    frame = frame.loc[
-        (frame["date"] >= start_timestamp) & (frame["date"] <= end_timestamp)
-    ].copy()
+    frame = frame.loc[(frame["date"] >= start_timestamp) & (frame["date"] <= end_timestamp)].copy()
     if frame.empty:
         raise ValueError(
-            "Cboe VIX response had no rows for "
-            f"{start.isoformat()} to {end.isoformat()}"
+            "Cboe VIX response had no rows for " f"{start.isoformat()} to {end.isoformat()}"
         )
     if frame[["date", "open", "high", "low", "close"]].isna().any().any():
         raise ValueError("Cboe VIX response contains invalid date or OHLC values")
@@ -940,8 +935,7 @@ def _fmp_price_records(payload: Any) -> list[dict[str, Any]]:
     if isinstance(payload, dict):
         if "Error Message" in payload or "error" in payload:
             raise ValueError(
-                "FMP price response returned an error: "
-                f"error_code={_fmp_error_code(payload)}"
+                "FMP price response returned an error: " f"error_code={_fmp_error_code(payload)}"
             )
         historical = payload.get("historical")
         if isinstance(historical, list):

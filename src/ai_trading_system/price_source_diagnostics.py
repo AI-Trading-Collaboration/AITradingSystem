@@ -575,8 +575,9 @@ def _dataframe_checksum(frame: pd.DataFrame) -> str:
     if frame.empty:
         return _records_checksum(())
     records = tuple(
-        frame.sort_values([column for column in ("ticker", "date") if column in frame.columns])
-        .to_dict(orient="records")
+        frame.sort_values(
+            [column for column in ("ticker", "date") if column in frame.columns]
+        ).to_dict(orient="records")
     )
     return _records_checksum(records)
 

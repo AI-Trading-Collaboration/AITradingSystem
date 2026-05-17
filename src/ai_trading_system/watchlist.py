@@ -229,9 +229,7 @@ def _check_active_item_rules(
                     severity=WatchlistIssueSeverity.WARNING,
                     code="low_competence_score",
                     ticker=item.ticker,
-                    message=(
-                        "能力圈分数较低，后续报告不能把该标的默认视为高置信度输入。"
-                    ),
+                    message=("能力圈分数较低，后续报告不能把该标的默认视为高置信度输入。"),
                 )
             )
 

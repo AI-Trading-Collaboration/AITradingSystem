@@ -142,17 +142,13 @@ class CatalystCalendarValidationReport:
     @property
     def error_count(self) -> int:
         return sum(
-            1
-            for issue in self.issues
-            if issue.severity == CatalystCalendarIssueSeverity.ERROR
+            1 for issue in self.issues if issue.severity == CatalystCalendarIssueSeverity.ERROR
         )
 
     @property
     def warning_count(self) -> int:
         return sum(
-            1
-            for issue in self.issues
-            if issue.severity == CatalystCalendarIssueSeverity.WARNING
+            1 for issue in self.issues if issue.severity == CatalystCalendarIssueSeverity.WARNING
         )
 
     @property

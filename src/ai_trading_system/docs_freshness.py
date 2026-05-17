@@ -129,9 +129,7 @@ def render_docs_freshness_report(report: DocsFreshnessReport) -> str:
     for record in report.records:
         last_updated = "" if record.last_updated is None else record.last_updated.isoformat()
         latest_status = (
-            ""
-            if record.latest_status_date is None
-            else record.latest_status_date.isoformat()
+            "" if record.latest_status_date is None else record.latest_status_date.isoformat()
         )
         lines.append(
             "| "

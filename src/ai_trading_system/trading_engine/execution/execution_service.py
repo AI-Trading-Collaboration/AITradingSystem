@@ -25,8 +25,7 @@ class RiskChecker(Protocol):
         order_intent: OrderIntent,
         portfolio_state: PortfolioState,
         market_context: MarketContext | None = None,
-    ) -> RiskCheckResult:
-        ...
+    ) -> RiskCheckResult: ...
 
 
 class ExecutionService:
@@ -108,9 +107,7 @@ class ExecutionService:
             effective_market_context.as_of,
             order_intent.duplicate_key,
         )
-        self._daily_submitted_counts[count_key] = (
-            self._daily_submitted_counts.get(count_key, 0) + 1
-        )
+        self._daily_submitted_counts[count_key] = self._daily_submitted_counts.get(count_key, 0) + 1
         if self.audit_logger is not None:
             self.audit_logger.log_order(broker_order, order_intent=order_intent)
         submitted_report = ExecutionReport(
@@ -197,10 +194,9 @@ class ExecutionService:
         context = market_context or MarketContext(as_of=order_intent.created_at.date())
         count_key = (context.as_of, order_intent.duplicate_key)
         merged_counts = dict(context.daily_trade_counts)
-        merged_counts[order_intent.duplicate_key] = (
-            merged_counts.get(order_intent.duplicate_key, 0)
-            + self._daily_submitted_counts.get(count_key, 0)
-        )
+        merged_counts[order_intent.duplicate_key] = merged_counts.get(
+            order_intent.duplicate_key, 0
+        ) + self._daily_submitted_counts.get(count_key, 0)
         return context.model_copy(update={"daily_trade_counts": merged_counts})
 
 
@@ -215,18 +211,14 @@ def _snapshot_prices(
     market_snapshot: MarketSnapshot | list[MarketSnapshot],
 ) -> dict[str, float]:
     snapshots = (
-        [market_snapshot]
-        if isinstance(market_snapshot, MarketSnapshot)
-        else market_snapshot
+        [market_snapshot] if isinstance(market_snapshot, MarketSnapshot) else market_snapshot
     )
     return {snapshot.symbol: snapshot.last for snapshot in snapshots}
 
 
 def _snapshot_as_of(market_snapshot: MarketSnapshot | list[MarketSnapshot]) -> datetime:
     snapshots = (
-        [market_snapshot]
-        if isinstance(market_snapshot, MarketSnapshot)
-        else market_snapshot
+        [market_snapshot] if isinstance(market_snapshot, MarketSnapshot) else market_snapshot
     )
     if not snapshots:
         return datetime.now(UTC)

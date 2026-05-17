@@ -90,8 +90,7 @@ class TsmIrHttpProvider:
     def download_text(self, url: str) -> str:
         if not is_official_tsm_ir_url(url):
             raise ValueError(
-                "TSMC IR HTTP provider only downloads official "
-                "investor.tsmc.com HTTPS URLs."
+                "TSMC IR HTTP provider only downloads official " "investor.tsmc.com HTTPS URLs."
             )
         url_binary_reason = _binary_url_reason(url)
         if url_binary_reason is not None:
@@ -109,8 +108,7 @@ class TsmIrHttpProvider:
             headers={
                 "User-Agent": self.user_agent,
                 "Accept": (
-                    "text/html,text/plain,application/xhtml+xml,"
-                    "application/xml;q=0.9,*/*;q=0.1"
+                    "text/html,text/plain,application/xhtml+xml," "application/xml;q=0.9,*/*;q=0.1"
                 ),
             },
             timeout=self.timeout,
@@ -297,15 +295,11 @@ class TsmIrQuarterlyBatchImportReport:
 
     @property
     def error_count(self) -> int:
-        return sum(
-            1 for issue in self.all_issues if issue.severity == TsmIrIssueSeverity.ERROR
-        )
+        return sum(1 for issue in self.all_issues if issue.severity == TsmIrIssueSeverity.ERROR)
 
     @property
     def warning_count(self) -> int:
-        return sum(
-            1 for issue in self.all_issues if issue.severity == TsmIrIssueSeverity.WARNING
-        )
+        return sum(1 for issue in self.all_issues if issue.severity == TsmIrIssueSeverity.WARNING)
 
     @property
     def passed(self) -> bool:
@@ -466,8 +460,7 @@ def select_tsm_ir_management_report_resource(
     if issues or management_resource is None:
         issue_summary = "; ".join(f"{issue.code}: {issue.message}" for issue in issues)
         raise ValueError(
-            issue_summary
-            or "TSMC IR quarterly page did not expose a Management Report resource."
+            issue_summary or "TSMC IR quarterly page did not expose a Management Report resource."
         )
     return management_resource
 
@@ -869,9 +862,7 @@ def load_tsm_ir_quarterly_metric_rows_csv(
     frame = pd.read_csv(input_path)
     missing_columns = sorted(set(_CSV_COLUMNS) - set(frame.columns))
     if missing_columns:
-        raise ValueError(
-            f"TSMC IR 季度指标 CSV 缺少字段：{', '.join(missing_columns)}。"
-        )
+        raise ValueError(f"TSMC IR 季度指标 CSV 缺少字段：{', '.join(missing_columns)}。")
     records = [
         {str(key): value for key, value in record.items()}
         for record in frame.to_dict(orient="records")
@@ -886,10 +877,7 @@ def load_tsm_ir_quarterly_import_manifest_csv(
     frame = pd.read_csv(manifest_path)
     missing_columns = sorted(set(_TSM_IR_IMPORT_MANIFEST_COLUMNS) - set(frame.columns))
     if missing_columns:
-        raise ValueError(
-            "TSMC IR 批量导入 manifest 缺少字段："
-            f"{', '.join(missing_columns)}。"
-        )
+        raise ValueError("TSMC IR 批量导入 manifest 缺少字段：" f"{', '.join(missing_columns)}。")
 
     entries: list[TsmIrQuarterlyImportManifestEntry] = []
     records = [
@@ -1054,10 +1042,7 @@ def build_tsm_ir_quarterly_batch_import_report(
                             code="tsm_ir_batch_input_read_failed",
                             source_url=entry.source_url,
                             source_path=entry.input_path,
-                            message=(
-                                "TSMC IR 批量导入 Management Report 文本读取失败："
-                                f"{exc}"
-                            ),
+                            message=("TSMC IR 批量导入 Management Report 文本读取失败：" f"{exc}"),
                         )
                     ],
                 )
@@ -1511,7 +1496,7 @@ def render_tsm_ir_pdf_text_extraction_report(report: TsmIrPdfTextExtractionRepor
             "## 方法说明",
             "",
             "- 仅允许 `https://investor.tsmc.com/...` 官方 Source URL。",
-            "- `pypdf` 通过 `import_module(\"pypdf\")` 动态加载，是 optional dependency。",
+            '- `pypdf` 通过 `import_module("pypdf")` 动态加载，是 optional dependency。',
             "- PDF 无可抽取文本时状态为 FAIL，需要 OCR 或人工抽取；本流程不生成伪文本。",
         ]
     )
@@ -1552,11 +1537,7 @@ def _binary_url_reason(url: str) -> str | None:
 
 def _response_content_type(headers: object) -> str:
     headers_mapping = cast(Any, headers)
-    value = (
-        headers_mapping.get("Content-Type")
-        or headers_mapping.get("content-type")
-        or ""
-    )
+    value = headers_mapping.get("Content-Type") or headers_mapping.get("content-type") or ""
     return str(value).split(";", 1)[0].strip().lower()
 
 
@@ -2241,8 +2222,7 @@ def _float_record_value(record: dict[str, object], key: str) -> float | None:
 
 def _manifest_row_is_empty(record: dict[str, object]) -> bool:
     return all(
-        not _string_record_value(record, column)
-        for column in _TSM_IR_IMPORT_MANIFEST_COLUMNS
+        not _string_record_value(record, column) for column in _TSM_IR_IMPORT_MANIFEST_COLUMNS
     )
 
 
@@ -2253,9 +2233,7 @@ def _required_manifest_string_value(
 ) -> str:
     value = _string_record_value(record, key).strip()
     if not value:
-        raise ValueError(
-            f"TSMC IR 批量导入 manifest 第 {row_number} 行缺少字段：{key}。"
-        )
+        raise ValueError(f"TSMC IR 批量导入 manifest 第 {row_number} 行缺少字段：{key}。")
     return value
 
 
@@ -2266,9 +2244,7 @@ def _required_manifest_int_value(
 ) -> int:
     value = record.get(key)
     if value is None or _is_missing_cell(value):
-        raise ValueError(
-            f"TSMC IR 批量导入 manifest 第 {row_number} 行缺少整数字段：{key}。"
-        )
+        raise ValueError(f"TSMC IR 批量导入 manifest 第 {row_number} 行缺少整数字段：{key}。")
     if isinstance(value, bool):
         raise ValueError(
             f"TSMC IR 批量导入 manifest 第 {row_number} 行整数字段无效：{key}={value}。"
@@ -2280,8 +2256,7 @@ def _required_manifest_int_value(
             numeric_value = float(str(value).strip())
         except ValueError as exc:
             raise ValueError(
-                "TSMC IR 批量导入 manifest 第 "
-                f"{row_number} 行整数字段无效：{key}={value}。"
+                "TSMC IR 批量导入 manifest 第 " f"{row_number} 行整数字段无效：{key}={value}。"
             ) from exc
     if not math.isfinite(numeric_value) or not numeric_value.is_integer():
         raise ValueError(
@@ -2304,8 +2279,7 @@ def _manifest_optional_date_value(
         return date.fromisoformat(value)
     except ValueError as exc:
         raise ValueError(
-            f"TSMC IR 批量导入 manifest 第 {row_number} 行日期字段无效："
-            f"{key}={value}。"
+            f"TSMC IR 批量导入 manifest 第 {row_number} 行日期字段无效：" f"{key}={value}。"
         ) from exc
 
 

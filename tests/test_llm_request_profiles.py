@@ -14,9 +14,7 @@ def test_default_llm_request_profiles_load() -> None:
 
     assert config.policy_metadata.version == "llm_request_profiles_v1_cost_pilot_2026-05-13"
     assert config.default_profile_id == "llm_claim_prereview"
-    assert {
-        profile.profile_id for profile in config.profiles
-    } >= {
+    assert {profile.profile_id for profile in config.profiles} >= {
         "llm_claim_prereview",
         "risk_event_single_prereview",
         "risk_event_triaged_official_candidates",

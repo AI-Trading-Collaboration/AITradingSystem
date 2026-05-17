@@ -74,10 +74,7 @@ def test_evidence_dashboard_includes_feedback_review_outputs(tmp_path: Path) -> 
     assert "data_issue=2，rule_issue=5，sample_limited=3" in html
     assert "风险预算、估值拥挤、交易 thesis" in html
     assert payload["feedback_review"]["production_effect"] == "none"
-    assert (
-        payload["feedback_review"]["market_feedback"]["decision_available_count"]
-        == 10
-    )
+    assert payload["feedback_review"]["market_feedback"]["decision_available_count"] == 10
     assert (
         payload["feedback_review"]["feedback_loop"]["prediction_outcome_summary"]
         == "可用 8 / total 65；pending 37；missing 20"
@@ -523,9 +520,7 @@ def _write_dashboard_inputs(tmp_path: Path) -> dict[str, Path]:
                         "claim_id": "daily_score:2026-05-04:overall_position",
                         "statement": "最终 AI 仓位为 40%-60%。",
                         "report_section": "今日结论卡 / 仓位闸门",
-                        "evidence_ids": [
-                            "evidence:daily_score:2026-05-04:position"
-                        ],
+                        "evidence_ids": ["evidence:daily_score:2026-05-04:position"],
                         "dataset_ids": ["dataset:prices_daily"],
                         "quality_ids": ["quality:market_data:2026-05-04"],
                     }

@@ -48,9 +48,7 @@ def test_validate_sec_companyfacts_cache_rejects_missing_taxonomy(tmp_path: Path
     report = validate_sec_companyfacts_cache(config, input_dir=tmp_path, as_of=_date())
 
     assert not report.passed
-    assert "sec_companyfacts_missing_expected_taxonomy" in {
-        issue.code for issue in report.issues
-    }
+    assert "sec_companyfacts_missing_expected_taxonomy" in {issue.code for issue in report.issues}
 
 
 def test_fundamentals_cli_validate_sec_companyfacts(tmp_path: Path) -> None:

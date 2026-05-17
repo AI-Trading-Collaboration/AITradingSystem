@@ -15,9 +15,7 @@ from ai_trading_system.parameter_candidates import (
 )
 
 SCHEMA_VERSION = 1
-DEFAULT_PARAMETER_GOVERNANCE_MANIFEST_PATH = (
-    PROJECT_ROOT / "config" / "parameter_governance.yaml"
-)
+DEFAULT_PARAMETER_GOVERNANCE_MANIFEST_PATH = PROJECT_ROOT / "config" / "parameter_governance.yaml"
 DEFAULT_PARAMETER_GOVERNANCE_REPORT_DIR = PROJECT_ROOT / "outputs" / "reports"
 
 SOURCE_LEVELS = frozenset(
@@ -184,7 +182,8 @@ class ParameterGovernanceReport:
         if self._blocking_policy_count:
             return "FAIL"
         if self.warnings or any(
-            item.action in {
+            item.action
+            in {
                 "BLOCKED_BY_DATA",
                 "BLOCKED_BY_POLICY",
                 "OWNER_DECISION_REQUIRED",
@@ -215,9 +214,7 @@ class ParameterGovernanceReport:
             "manifest": self.manifest.to_dict(),
             "manifest_version": self.manifest.version,
             "manifest_status": self.manifest.status,
-            "owner_quantitative_input_status": (
-                self.manifest.owner_quantitative_input_status
-            ),
+            "owner_quantitative_input_status": (self.manifest.owner_quantitative_input_status),
             "candidate_ledger_status": self.candidate_ledger_status,
             "candidate_evaluation_mode": self.candidate_evaluation_mode,
             "candidate_count": self.candidate_count,
@@ -297,9 +294,7 @@ def build_parameter_governance_report(
         action_counts[parameter.action] = action_counts.get(parameter.action, 0) + 1
     warnings = list(candidate_warnings)
     if manifest.owner_quantitative_input_status != "available":
-        warnings.append(
-            "owner 暂无可量化配置输入；本报告只能给出候选治理动作，不能写生产参数。"
-        )
+        warnings.append("owner 暂无可量化配置输入；本报告只能给出候选治理动作，不能写生产参数。")
     if not candidates:
         warnings.append("parameter candidate ledger 没有候选记录；参数建议只能保持观察。")
     if candidate_evaluation_mode == "flow_validation":
@@ -403,8 +398,7 @@ def _entries(
     duplicate_ids = _duplicates(entry.parameter_id for entry in entries)
     if duplicate_ids:
         raise ValueError(
-            "parameter governance parameter_id must be unique: "
-            + ", ".join(duplicate_ids)
+            "parameter governance parameter_id must be unique: " + ", ".join(duplicate_ids)
         )
     return entries
 
@@ -545,9 +539,7 @@ def _action_for_entry(
             if entry.source_level == "temporary_baseline"
             else "KEEP_CURRENT"
         )
-        reason = (
-            "该参数面当前没有 parameter candidate 类别；先按 manifest 继续观察。"
-        )
+        reason = "该参数面当前没有 parameter candidate 类别；先按 manifest 继续观察。"
         return _guarded_action(action, reason, allowed=allowed, constraints=constraints)
     if not candidates:
         return _guarded_action(
@@ -556,9 +548,8 @@ def _action_for_entry(
             allowed=allowed,
             constraints=constraints,
         )
-    if (
-        candidate_evaluation_mode == "flow_validation"
-        and candidate_status_counts.get("READY_FOR_FORWARD_SHADOW", 0)
+    if candidate_evaluation_mode == "flow_validation" and candidate_status_counts.get(
+        "READY_FOR_FORWARD_SHADOW", 0
     ):
         constraints.append("flow_validation_only_no_production")
         if owner_unavailable and not entry.allows_shadow_without_owner_quantitative_input:

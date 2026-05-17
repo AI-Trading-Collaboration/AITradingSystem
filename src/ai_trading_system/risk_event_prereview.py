@@ -240,10 +240,7 @@ class RiskEventPreReviewRecord(BaseModel):
         ]
         if not self.prohibited_actions_ack:
             raise ValueError("prohibited_actions_ack must be true")
-        if (
-            self.original_source_type == "paid_vendor"
-            and not self.external_llm_permitted
-        ):
+        if self.original_source_type == "paid_vendor" and not self.external_llm_permitted:
             raise ValueError("paid_vendor source requires external_llm_permitted=true")
         return self
 
@@ -287,9 +284,7 @@ class RiskEventPreReviewImportReport:
 
     @property
     def pending_review_count(self) -> int:
-        return sum(
-            1 for record in self.records if record.manual_review_status == "pending_review"
-        )
+        return sum(1 for record in self.records if record.manual_review_status == "pending_review")
 
     @property
     def high_level_candidate_count(self) -> int:
@@ -302,9 +297,7 @@ class RiskEventPreReviewImportReport:
     @property
     def error_count(self) -> int:
         return sum(
-            1
-            for issue in self.issues
-            if issue.severity == RiskEventPreReviewIssueSeverity.ERROR
+            1 for issue in self.issues if issue.severity == RiskEventPreReviewIssueSeverity.ERROR
         )
 
     @property
@@ -350,9 +343,7 @@ def import_risk_event_prereview_csv(
         )
 
     known_risk_ids = (
-        {rule.event_id for rule in risk_events.event_rules}
-        if risk_events is not None
-        else set()
+        {rule.event_id for rule in risk_events.event_rules} if risk_events is not None else set()
     )
     records: list[RiskEventPreReviewRecord] = []
     row_count = 0
@@ -628,9 +619,7 @@ def build_risk_event_prereview_from_llm_claim_report(
         )
 
     known_risk_ids = (
-        {rule.event_id for rule in risk_events.event_rules}
-        if risk_events is not None
-        else set()
+        {rule.event_id for rule in risk_events.event_rules} if risk_events is not None else set()
     )
     records: list[RiskEventPreReviewRecord] = []
     for llm_record in claim_report.records:
@@ -881,8 +870,7 @@ def _record_from_llm_claim(
                 f"time_sensitivity_candidate={candidate.time_sensitivity_candidate}",
                 f"action_class_candidate={candidate.action_class_candidate}",
                 (
-                    "thesis_signal_match="
-                    f"{','.join(claim.thesis_signal_match)}"
+                    "thesis_signal_match=" f"{','.join(claim.thesis_signal_match)}"
                     if claim.thesis_signal_match
                     else ""
                 ),

@@ -181,9 +181,7 @@ def _build_candidate(
             "path": str(decision_snapshot_path),
             "exists": bool(decision_snapshot),
             "overall_score": _mapping(decision_snapshot.get("scores")).get("overall_score"),
-            "confidence_score": _mapping(decision_snapshot.get("scores")).get(
-                "confidence_score"
-            ),
+            "confidence_score": _mapping(decision_snapshot.get("scores")).get("confidence_score"),
         },
         "position_context": {
             "daily_summary_band": _string(investment.get("position_band")) or "missing",

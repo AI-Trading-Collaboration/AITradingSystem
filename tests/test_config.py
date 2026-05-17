@@ -119,9 +119,7 @@ def test_fundamental_metrics_config_loads_sec_metric_mappings() -> None:
         for metric in config.metrics
         for concept in metric.concepts
     )
-    assert {metric.metric_id for metric in config.supporting_metrics} == {
-        "cost_of_revenue"
-    }
+    assert {metric.metric_id for metric in config.supporting_metrics} == {"cost_of_revenue"}
     assert any(
         derived.metric_id == "gross_profit"
         and derived.minuend_metric_id == "revenue"
@@ -196,9 +194,7 @@ def test_backtest_validation_policy_loads_governed_thresholds() -> None:
     assert config.robustness.bootstrap_iterations == 200
     assert config.robustness.bootstrap_block_size_days == 20
     assert config.promotion.min_lag_sensitivity_days == 3
-    assert "same_turnover_random_strategy" in (
-        config.promotion.required_robustness_categories
-    )
+    assert "same_turnover_random_strategy" in (config.promotion.required_robustness_categories)
 
 
 def test_configured_price_tickers_defaults_to_core_universe() -> None:
@@ -264,11 +260,7 @@ def test_industry_chain_config_covers_watchlist_nodes() -> None:
     watchlist = load_watchlist()
     industry_chain = load_industry_chain()
     node_ids = {node.node_id for node in industry_chain.nodes}
-    watchlist_node_ids = {
-        node_id
-        for item in watchlist.items
-        for node_id in item.ai_chain_nodes
-    }
+    watchlist_node_ids = {node_id for item in watchlist.items for node_id in item.ai_chain_nodes}
 
     assert watchlist_node_ids.issubset(node_ids)
 

@@ -257,9 +257,9 @@ def agent_request_cache_payload(
         "client_name": client_name,
         "timeout_seconds": timeout_seconds,
         "client_request_id": client_request_id,
-        "provider_request_id": ""
-        if response is None
-        else _response_header(response.headers, "x-request-id"),
+        "provider_request_id": (
+            "" if response is None else _response_header(response.headers, "x-request-id")
+        ),
         "input_checksum_sha256": input_checksum_sha256,
         "output_checksum_sha256": output_checksum_sha256,
         "request_payload_checksum_sha256": sha256_json(request_payload),

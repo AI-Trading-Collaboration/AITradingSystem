@@ -209,9 +209,7 @@ class BacktestDailyRow:
             "total_risk_asset_min": self.total_risk_asset_min,
             "total_risk_asset_max": self.total_risk_asset_max,
             "macro_risk_asset_budget_level": self.macro_risk_asset_budget_level,
-            "macro_risk_asset_budget_triggered": (
-                self.macro_risk_asset_budget_triggered
-            ),
+            "macro_risk_asset_budget_triggered": (self.macro_risk_asset_budget_triggered),
             "raw_target_exposure": self.raw_target_exposure,
             "target_exposure": self.target_exposure,
             "asset_return": self.asset_return,
@@ -417,16 +415,14 @@ def prepare_daily_score_backtest_context(
             fundamental_feature_report = fundamental_feature_reports.get(feature_as_of)
             if fundamental_feature_report is None:
                 raise ValueError(
-                    "回测缺少 point-in-time SEC 基本面特征："
-                    f"{feature_as_of.isoformat()}"
+                    "回测缺少 point-in-time SEC 基本面特征：" f"{feature_as_of.isoformat()}"
                 )
         valuation_review_report = None
         if valuation_review_reports is not None:
             valuation_review_report = valuation_review_reports.get(feature_as_of)
             if valuation_review_report is None:
                 raise ValueError(
-                    "回测缺少 point-in-time 估值快照复核报告："
-                    f"{feature_as_of.isoformat()}"
+                    "回测缺少 point-in-time 估值快照复核报告：" f"{feature_as_of.isoformat()}"
                 )
         risk_event_occurrence_review_report = None
         if risk_event_occurrence_review_reports is not None:
@@ -470,9 +466,7 @@ def prepare_daily_score_backtest_context(
                 feature_set=feature_set,
                 fundamental_feature_report=fundamental_feature_report,
                 valuation_review_report=valuation_review_report,
-                risk_event_occurrence_review_report=(
-                    risk_event_occurrence_review_report
-                ),
+                risk_event_occurrence_review_report=(risk_event_occurrence_review_report),
             )
         )
 
@@ -568,9 +562,7 @@ def run_daily_score_backtest(
             market_regime=market_regime,
             fundamental_feature_reports=fundamental_feature_reports,
             valuation_review_reports=valuation_review_reports,
-            risk_event_occurrence_review_reports=(
-                risk_event_occurrence_review_reports
-            ),
+            risk_event_occurrence_review_reports=(risk_event_occurrence_review_reports),
             watchlist_lifecycle=watchlist_lifecycle,
             benchmark_policy_report=benchmark_policy_report,
             feature_lag_days=feature_lag_days,
@@ -726,9 +718,7 @@ def run_daily_score_backtest(
                 input_label="估值快照",
                 issues=valuation_review_report.validation_report.issues,
             )
-        risk_event_occurrence_review_report = (
-            period.risk_event_occurrence_review_report
-        )
+        risk_event_occurrence_review_report = period.risk_event_occurrence_review_report
         if risk_event_occurrence_review_report is not None:
             risk_event_occurrence_review_report_count += 1
             status = risk_event_occurrence_review_report.status
@@ -874,27 +864,15 @@ def run_daily_score_backtest(
                 total_asset_model_target_exposure=total_asset_model_target_exposure,
                 total_asset_gated_target_exposure=total_asset_gated_target_exposure,
                 static_total_risk_asset_min=(
-                    score_report.macro_risk_asset_budget
-                    .static_total_risk_asset_band
-                    .min_position
+                    score_report.macro_risk_asset_budget.static_total_risk_asset_band.min_position
                 ),
                 static_total_risk_asset_max=(
-                    score_report.macro_risk_asset_budget
-                    .static_total_risk_asset_band
-                    .max_position
+                    score_report.macro_risk_asset_budget.static_total_risk_asset_band.max_position
                 ),
-                total_risk_asset_min=(
-                    recommendation.total_risk_asset_band.min_position
-                ),
-                total_risk_asset_max=(
-                    recommendation.total_risk_asset_band.max_position
-                ),
-                macro_risk_asset_budget_level=(
-                    score_report.macro_risk_asset_budget.level
-                ),
-                macro_risk_asset_budget_triggered=(
-                    score_report.macro_risk_asset_budget.triggered
-                ),
+                total_risk_asset_min=(recommendation.total_risk_asset_band.min_position),
+                total_risk_asset_max=(recommendation.total_risk_asset_band.max_position),
+                macro_risk_asset_budget_level=(score_report.macro_risk_asset_budget.level),
+                macro_risk_asset_budget_triggered=(score_report.macro_risk_asset_budget.triggered),
                 raw_target_exposure=raw_target_exposure,
                 target_exposure=target_exposure,
                 asset_return=asset_return,
@@ -958,9 +936,7 @@ def run_daily_score_backtest(
         exposures=[row.target_exposure for row in rows],
         turnovers=[row.turnover for row in rows],
     )
-    benchmark_periods = [
-        (period.signal_date, period.return_date) for period in periods
-    ]
+    benchmark_periods = [(period.signal_date, period.return_date) for period in periods]
     benchmark_metrics = {
         ticker: _benchmark_metrics(close_pivot, ticker, benchmark_periods)
         for ticker in benchmark_tickers
@@ -1008,9 +984,7 @@ def run_daily_score_backtest(
             max(valuation_snapshot_counts) if valuation_snapshot_counts else None
         ),
         risk_event_occurrence_review_report_count=risk_event_occurrence_review_report_count,
-        risk_event_occurrence_status_counts=(
-            risk_event_occurrence_status_counts or None
-        ),
+        risk_event_occurrence_status_counts=(risk_event_occurrence_status_counts or None),
         risk_event_occurrence_warning_count=risk_event_occurrence_warning_count,
         risk_event_occurrence_count_min=(
             min(risk_event_occurrence_counts) if risk_event_occurrence_counts else None
@@ -1019,14 +993,10 @@ def run_daily_score_backtest(
             max(risk_event_occurrence_counts) if risk_event_occurrence_counts else None
         ),
         risk_event_score_eligible_count_min=(
-            min(risk_event_score_eligible_counts)
-            if risk_event_score_eligible_counts
-            else None
+            min(risk_event_score_eligible_counts) if risk_event_score_eligible_counts else None
         ),
         risk_event_score_eligible_count_max=(
-            max(risk_event_score_eligible_counts)
-            if risk_event_score_eligible_counts
-            else None
+            max(risk_event_score_eligible_counts) if risk_event_score_eligible_counts else None
         ),
         monthly_input_issue_counts=dict(monthly_input_issue_counts) or None,
         monthly_input_source_url_counts=dict(monthly_input_source_url_counts) or None,
@@ -1035,22 +1005,12 @@ def run_daily_score_backtest(
         monthly_risk_event_evidence_url_counts=(
             dict(monthly_risk_event_evidence_url_counts) or None
         ),
-        monthly_valuation_source_type_counts=(
-            dict(monthly_valuation_source_type_counts) or None
-        ),
-        monthly_risk_event_source_type_counts=(
-            dict(monthly_risk_event_source_type_counts) or None
-        ),
-        valuation_point_in_time_class_counts=(
-            dict(valuation_point_in_time_class_counts) or None
-        ),
-        valuation_history_source_class_counts=(
-            dict(valuation_history_source_class_counts) or None
-        ),
+        monthly_valuation_source_type_counts=(dict(monthly_valuation_source_type_counts) or None),
+        monthly_risk_event_source_type_counts=(dict(monthly_risk_event_source_type_counts) or None),
+        valuation_point_in_time_class_counts=(dict(valuation_point_in_time_class_counts) or None),
+        valuation_history_source_class_counts=(dict(valuation_history_source_class_counts) or None),
         valuation_backtest_use_counts=dict(valuation_backtest_use_counts) or None,
-        valuation_confidence_level_counts=(
-            dict(valuation_confidence_level_counts) or None
-        ),
+        valuation_confidence_level_counts=(dict(valuation_confidence_level_counts) or None),
         benchmark_policy_report=benchmark_policy_report,
         feature_lag_days=feature_lag_days,
         universe_lag_days=universe_lag_days,
@@ -1072,10 +1032,7 @@ def _unique_calibration_overlay_ids(
     rows: list[BacktestDailyRow],
 ) -> tuple[str, ...]:
     overlay_ids = {
-        overlay_id
-        for row in rows
-        for overlay_id in row.calibration_overlay_ids
-        if overlay_id
+        overlay_id for row in rows for overlay_id in row.calibration_overlay_ids if overlay_id
     }
     return tuple(sorted(overlay_ids))
 
@@ -1124,9 +1081,7 @@ def _period_weight_calibration(
             data_quality_report=data_quality_report,
             fundamental_feature_report=period.fundamental_feature_report,
             valuation_review_report=period.valuation_review_report,
-            risk_event_occurrence_review_report=(
-                period.risk_event_occurrence_review_report
-            ),
+            risk_event_occurrence_review_report=(period.risk_event_occurrence_review_report),
             run_type="backtest",
             market_regime_id=None if market_regime is None else market_regime.regime_id,
         )
@@ -1157,10 +1112,7 @@ def _apply_weight_multipliers(
     if total <= 0:
         raise ValueError("effective weights total must be positive")
     effective_weights = {signal: value / total for signal, value in weights.items()}
-    audit = {
-        key: list(value)
-        for key, value in application.audit.items()
-    }
+    audit = {key: list(value) for key, value in application.audit.items()}
     audit.setdefault("why_applied", []).append(
         "backtest_parameter_multiplier: "
         + ", ".join(f"{signal}={multiplier:.4g}" for signal, multiplier in multipliers.items())
@@ -1215,13 +1167,9 @@ def _build_industry_node_backtest_state(
         status=report.status,
         top_node_id=top_item.node_id if top_item is not None else "",
         top_heat_score=top_item.heat_score if top_item is not None else None,
-        top_health_level=(
-            top_item.health_level if top_item is not None else "insufficient_data"
-        ),
+        top_health_level=(top_item.health_level if top_item is not None else "insufficient_data"),
         supported_count=sum(1 for item in report.items if item.health_level == "supported"),
-        risk_limited_count=sum(
-            1 for item in report.items if item.health_level == "risk_limited"
-        ),
+        risk_limited_count=sum(1 for item in report.items if item.health_level == "risk_limited"),
         price_only_count=sum(1 for item in report.items if item.health_level == "price_only"),
         data_gap_count=sum(len(item.data_gaps) for item in report.items),
     )
@@ -1260,8 +1208,7 @@ def render_backtest_report(
         )
         if result.requested_start != result.market_regime.start_date:
             lines.append(
-                "- 起点说明：本次请求起点与市场阶段默认起点不同，"
-                "结论应按实际请求区间解释。"
+                "- 起点说明：本次请求起点与市场阶段默认起点不同，" "结论应按实际请求区间解释。"
             )
 
     lines.extend(
@@ -1291,10 +1238,7 @@ def render_backtest_report(
             f"- 数据质量报告：`{data_quality_report_path}`",
             f"- SEC 基本面切片数：{result.fundamental_feature_report_count}",
             f"- 估值快照切片数：{result.valuation_review_report_count}",
-            (
-                "- 风险事件发生记录切片数："
-                f"{result.risk_event_occurrence_review_report_count}"
-            ),
+            ("- 风险事件发生记录切片数：" f"{result.risk_event_occurrence_review_report_count}"),
             f"- 每日回测明细：`{daily_output_path}`",
         ]
     )
@@ -1759,15 +1703,19 @@ def build_backtest_data_credibility(
             "vendor_current_trend",
         },
     ) or any(source_type == "paid_vendor" for (_month, source_type) in valuation_source_counts)
-    uses_self_archived_snapshots = _has_any_count(
-        valuation_history_counts,
-        {"captured_snapshot_history"},
-    ) or _has_any_count(
-        valuation_pit_counts,
-        {"captured_snapshot"},
-    ) or _has_any_count(
-        valuation_backtest_use_counts,
-        {"captured_at_forward_only"},
+    uses_self_archived_snapshots = (
+        _has_any_count(
+            valuation_history_counts,
+            {"captured_snapshot_history"},
+        )
+        or _has_any_count(
+            valuation_pit_counts,
+            {"captured_snapshot"},
+        )
+        or _has_any_count(
+            valuation_backtest_use_counts,
+            {"captured_at_forward_only"},
+        )
     )
 
     if not result.data_quality_report.passed:
@@ -1786,9 +1734,7 @@ def build_backtest_data_credibility(
         minimum_component_coverage < policy.component_coverage_min
         or average_component_coverage < policy.component_coverage_min
     ):
-        reasons.append(
-            f"至少一个评分模块覆盖率低于 {policy.component_coverage_min:.0%}。"
-        )
+        reasons.append(f"至少一个评分模块覆盖率低于 {policy.component_coverage_min:.0%}。")
     if _has_any_count(
         valuation_backtest_use_counts,
         {"auxiliary_current_only", "not_for_backtest"},
@@ -1870,10 +1816,7 @@ def _backtest_data_credibility_section(result: DailyBacktestResult) -> list[str]
             "- Uses Vendor Historical Estimates："
             f"{_yes_no(credibility.uses_vendor_historical_estimates)}"
         ),
-        (
-            "- Uses Self-Archived Snapshots："
-            f"{_yes_no(credibility.uses_self_archived_snapshots)}"
-        ),
+        ("- Uses Self-Archived Snapshots：" f"{_yes_no(credibility.uses_self_archived_snapshots)}"),
         f"- Minimum Feature Lag：{credibility.minimum_feature_lag_days} 个交易日",
         f"- Universe PIT：{_yes_no(credibility.universe_pit)}",
         f"- Corporate Actions Handling：{credibility.corporate_actions_handling}",
@@ -1943,8 +1886,7 @@ def _core_input_credibility_rows(
                 else 0.0
             ),
             point_in_time_class_counts=(
-                result.valuation_point_in_time_class_counts
-                or {"insufficient_data": signal_count}
+                result.valuation_point_in_time_class_counts or {"insufficient_data": signal_count}
             ),
             backtest_use_counts=(
                 result.valuation_backtest_use_counts or {"not_for_backtest": signal_count}
@@ -2106,9 +2048,7 @@ def _ticker_input_coverage_records(
             metric=metric,
             count=count,
         )
-        for (month, ticker, metric), count in sorted(
-            result.monthly_ticker_input_counts.items()
-        )
+        for (month, ticker, metric), count in sorted(result.monthly_ticker_input_counts.items())
     ]
 
 
@@ -2234,9 +2174,7 @@ def _valuation_credibility_coverage_records(
                 count=count,
             )
         )
-    for confidence_level, count in sorted(
-        (result.valuation_confidence_level_counts or {}).items()
-    ):
+    for confidence_level, count in sorted((result.valuation_confidence_level_counts or {}).items()):
         records.append(
             _input_coverage_record(
                 "valuation_confidence_level",
@@ -2252,9 +2190,7 @@ def _input_coverage_record(
     record_type: str,
     **updates: object,
 ) -> dict[str, object]:
-    record: dict[str, object] = {
-        column: "" for column in BACKTEST_INPUT_COVERAGE_COLUMNS
-    }
+    record: dict[str, object] = {column: "" for column in BACKTEST_INPUT_COVERAGE_COLUMNS}
     record["record_type"] = record_type
     for key, value in updates.items():
         if key in record:
@@ -2476,9 +2412,7 @@ def _macro_budget_summary_rows(result: DailyBacktestResult) -> list[str]:
     rows: list[str] = []
     for level, level_rows in sorted(grouped_rows.items()):
         max_values = [row.total_risk_asset_max for row in level_rows]
-        trigger_count = sum(
-            1 for row in level_rows if row.macro_risk_asset_budget_triggered
-        )
+        trigger_count = sum(1 for row in level_rows if row.macro_risk_asset_budget_triggered)
         rows.append(
             "| "
             f"{level} | "
@@ -2587,10 +2521,7 @@ def _data_quality_gate_summary_lines(report: DataQualityReport) -> list[str]:
 def _data_quality_file_row(label: str, summary: DataFileSummary) -> str:
     if not summary.exists:
         return (
-            "| "
-            f"{label} | "
-            f"`{_escape_markdown_table(str(summary.path))}` | "
-            "0 | n/a | n/a |"
+            "| " f"{label} | " f"`{_escape_markdown_table(str(summary.path))}` | " "0 | n/a | n/a |"
         )
 
     min_date = summary.min_date.isoformat() if summary.min_date else "n/a"
@@ -2705,12 +2636,7 @@ def _monthly_risk_event_source_type_rows(result: DailyBacktestResult) -> list[st
         return []
 
     return [
-        (
-            "| "
-            f"{month} | "
-            f"{_risk_event_source_type_label(source_type)} | "
-            f"{count} |"
-        )
+        ("| " f"{month} | " f"{_risk_event_source_type_label(source_type)} | " f"{count} |")
         for (month, source_type), count in sorted(
             result.monthly_risk_event_source_type_counts.items()
         )
@@ -2772,10 +2698,7 @@ def _monthly_ticker_input_rows(result: DailyBacktestResult) -> list[str]:
         return []
 
     month_tickers = sorted(
-        {
-            (month, ticker)
-            for month, ticker, _metric in result.monthly_ticker_input_counts
-        }
+        {(month, ticker) for month, ticker, _metric in result.monthly_ticker_input_counts}
     )
     rows: list[str] = []
     for month, ticker in month_tickers:
@@ -2827,12 +2750,7 @@ def _monthly_valuation_source_type_rows(result: DailyBacktestResult) -> list[str
         return []
 
     return [
-        (
-            "| "
-            f"{month} | "
-            f"{_valuation_source_type_label(source_type)} | "
-            f"{count} |"
-        )
+        ("| " f"{month} | " f"{_valuation_source_type_label(source_type)} | " f"{count} |")
         for (month, source_type), count in sorted(
             result.monthly_valuation_source_type_counts.items()
         )
@@ -2937,9 +2855,7 @@ def _record_monthly_risk_event_source_urls(
 
 
 def _record_monthly_risk_event_evidence_urls(
-    monthly_risk_event_evidence_url_counts: Counter[
-        tuple[str, str, str, str, str, str, str, str]
-    ],
+    monthly_risk_event_evidence_url_counts: Counter[tuple[str, str, str, str, str, str, str, str]],
     signal_date: date,
     report: RiskEventOccurrenceReviewReport,
 ) -> None:
@@ -2950,9 +2866,7 @@ def _record_monthly_risk_event_evidence_urls(
         occurrence = loaded.occurrence
         item = items_by_occurrence_id.get(occurrence.occurrence_id)
         score_state = (
-            "score_eligible"
-            if item is not None and item.score_eligible
-            else "not_score_eligible"
+            "score_eligible" if item is not None and item.score_eligible else "not_score_eligible"
         )
         rule = rules_by_id.get(occurrence.event_id)
         related_tickers = ", ".join(rule.related_tickers if rule is not None else [])
@@ -2988,9 +2902,7 @@ def _record_monthly_risk_event_ticker_inputs(
         for ticker in rule.related_tickers:
             monthly_ticker_input_counts[(month, ticker, "active_risk_events")] += 1
             if item.score_eligible:
-                monthly_ticker_input_counts[
-                    (month, ticker, "score_eligible_risk_events")
-                ] += 1
+                monthly_ticker_input_counts[(month, ticker, "score_eligible_risk_events")] += 1
 
 
 def _record_monthly_risk_event_source_types(
@@ -3013,9 +2925,7 @@ def _record_monthly_sec_feature_inputs(
     month = signal_date.strftime("%Y-%m")
     for row in report.rows:
         monthly_ticker_input_counts[(month, row.ticker, "sec_feature_rows")] += 1
-        monthly_ticker_feature_counts[
-            (month, row.ticker, row.feature_id, row.period_type)
-        ] += 1
+        monthly_ticker_feature_counts[(month, row.ticker, row.feature_id, row.period_type)] += 1
 
 
 def _record_monthly_sec_missing_observations(
@@ -3048,11 +2958,7 @@ def _issue_subject(issue: object) -> str:
         "event_id",
         "level",
     )
-    parts = [
-        value
-        for attr in attrs
-        if (value := _issue_attr(issue, attr)) is not None
-    ]
+    parts = [value for attr in attrs if (value := _issue_attr(issue, attr)) is not None]
     return ":".join(parts) if parts else "global"
 
 
@@ -3068,9 +2974,11 @@ def _source_type_counts_summary(counts: Counter[str]) -> str:
     ordered_source_types = sorted(
         counts,
         key=lambda source_type: (
-            _SOURCE_TYPE_ORDER.index(source_type)
-            if source_type in _SOURCE_TYPE_ORDER
-            else len(_SOURCE_TYPE_ORDER),
+            (
+                _SOURCE_TYPE_ORDER.index(source_type)
+                if source_type in _SOURCE_TYPE_ORDER
+                else len(_SOURCE_TYPE_ORDER)
+            ),
             source_type,
         ),
     )

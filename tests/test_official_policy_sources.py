@@ -226,9 +226,7 @@ def test_fetch_official_policy_sources_fails_unknown_source_id(tmp_path: Path) -
 
     assert report.status == "FAIL"
     assert report.payload_count == 0
-    assert "official_policy_source_unknown_source_id" in {
-        issue.code for issue in report.issues
-    }
+    assert "official_policy_source_unknown_source_id" in {issue.code for issue in report.issues}
 
 
 def test_fetch_official_policy_sources_records_download_failure(tmp_path: Path) -> None:

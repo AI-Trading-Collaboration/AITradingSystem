@@ -113,10 +113,7 @@ def test_cli_direct_dispatches_daily_feedback_reports(monkeypatch) -> None:
     )
 
     assert (
-        cli_direct.main(
-            ["feedback", "evaluate-parameter-governance", "--as-of", "2026-05-13"]
-        )
-        == 0
+        cli_direct.main(["feedback", "evaluate-parameter-governance", "--as-of", "2026-05-13"]) == 0
     )
     assert cli_direct.main(["feedback", "optimize-market-feedback", "--as-of", "2026-05-13"]) == 0
     assert cli_direct.main(["feedback", "loop-review", "--as-of", "2026-05-13"]) == 0

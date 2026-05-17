@@ -84,16 +84,10 @@ def test_paper_trading_replay_runs_multiple_dates_and_writes_summary(
     assert "synthetic_snapshot_count" in markdown
     assert "production_effect=none" in markdown
 
-    by_symbol = {
-        record["key"]: record
-        for record in payload["aggregations"]["by_symbol"]
-    }
+    by_symbol = {record["key"]: record for record in payload["aggregations"]["by_symbol"]}
     assert by_symbol["TSM"]["generated_intents"] == 1
     assert by_symbol["NVDA"]["blocked_candidates"] == 1
-    by_blocked_by = {
-        record["key"]: record
-        for record in payload["aggregations"]["by_blocked_by"]
-    }
+    by_blocked_by = {record["key"]: record for record in payload["aggregations"]["by_blocked_by"]}
     assert by_blocked_by["data_gate_blocked"]["blocked_candidates"] == 1
 
 
@@ -220,9 +214,7 @@ def test_paper_trading_replay_uses_historical_ohlc_when_available(
     assert day["market_snapshot_source_counts"]["historical_ohlc"] == 1
     assert payload["quality_flags"]["synthetic_snapshot_days"] == 0
     summary = json.loads(
-        (reports_dir / "paper_trading_summary_2026-05-05.json").read_text(
-            encoding="utf-8"
-        )
+        (reports_dir / "paper_trading_summary_2026-05-05.json").read_text(encoding="utf-8")
     )
     assert summary["market_snapshot_source"] == "historical_ohlc"
 
@@ -417,8 +409,7 @@ def _candidate(
     return {
         "schema_version": "1.0",
         "candidate_id": candidate_id,
-        "created_at": datetime(as_of.year, as_of.month, as_of.day, 14, 0, tzinfo=UTC)
-        .isoformat(),
+        "created_at": datetime(as_of.year, as_of.month, as_of.day, 14, 0, tzinfo=UTC).isoformat(),
         "strategy_id": "paper_replay_test",
         "strategy_version": "v1",
         "run_id": f"paper_replay_test:{as_of.isoformat()}",

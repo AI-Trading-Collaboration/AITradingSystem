@@ -229,12 +229,18 @@ def test_daily_ops_step_result_adapter_maps_summary_statuses_to_workflow_statuse
         "blocks_downstream": False,
     }
 
-    assert daily_ops_step_result_to_workflow_step_result(
-        DailyOpsStepResult(status="PASS_WITH_SKIPS", **base),
-    ).status == "WARN"
-    assert daily_ops_step_result_to_workflow_step_result(
-        DailyOpsStepResult(status="BLOCKED_VISIBILITY", **base),
-    ).status == "BLOCKED"
+    assert (
+        daily_ops_step_result_to_workflow_step_result(
+            DailyOpsStepResult(status="PASS_WITH_SKIPS", **base),
+        ).status
+        == "WARN"
+    )
+    assert (
+        daily_ops_step_result_to_workflow_step_result(
+            DailyOpsStepResult(status="BLOCKED_VISIBILITY", **base),
+        ).status
+        == "BLOCKED"
+    )
 
 
 def test_daily_ops_plan_generates_feedback_reports_before_dashboard() -> None:
@@ -249,24 +255,16 @@ def test_daily_ops_plan_generates_feedback_reports_before_dashboard() -> None:
     market_feedback_step = next(
         step for step in plan.steps if step.step_id == "market_feedback_optimization"
     )
-    loop_review_step = next(
-        step for step in plan.steps if step.step_id == "feedback_loop_review"
-    )
+    loop_review_step = next(step for step in plan.steps if step.step_id == "feedback_loop_review")
     investment_review_step = next(
         step for step in plan.steps if step.step_id == "investment_weekly_review"
     )
     dashboard_step = next(step for step in plan.steps if step.step_id == "reports_dashboard")
 
     assert step_ids.index("score_daily") < step_ids.index("parameter_governance")
-    assert step_ids.index("parameter_governance") < step_ids.index(
-        "market_feedback_optimization"
-    )
-    assert step_ids.index("market_feedback_optimization") < step_ids.index(
-        "feedback_loop_review"
-    )
-    assert step_ids.index("feedback_loop_review") < step_ids.index(
-        "investment_weekly_review"
-    )
+    assert step_ids.index("parameter_governance") < step_ids.index("market_feedback_optimization")
+    assert step_ids.index("market_feedback_optimization") < step_ids.index("feedback_loop_review")
+    assert step_ids.index("feedback_loop_review") < step_ids.index("investment_weekly_review")
     assert step_ids.index("investment_weekly_review") < step_ids.index("reports_dashboard")
     assert step_ids.index("reports_dashboard") < step_ids.index("pipeline_health")
     assert parameter_governance_step.command == (
@@ -433,12 +431,10 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
                     "step_id": result.step_id,
                     "status": result.status,
                     "return_code": result.return_code,
-                    "started_at": None
-                    if result.started_at is None
-                    else result.started_at.isoformat(),
-                    "ended_at": None
-                    if result.ended_at is None
-                    else result.ended_at.isoformat(),
+                    "started_at": (
+                        None if result.started_at is None else result.started_at.isoformat()
+                    ),
+                    "ended_at": None if result.ended_at is None else result.ended_at.isoformat(),
                     "duration_seconds": result.duration_seconds,
                     "stdout_line_count": result.stdout_line_count,
                     "stderr_line_count": result.stderr_line_count,
@@ -485,9 +481,7 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
     assert result.exit_code == 0, result.output
     assert "每日任务" in result.output
     assert "Dashboard" in result.output
-    task_dashboard = next(
-        run_output_root.rglob("reports/daily_task_dashboard_2026-05-06.html")
-    )
+    task_dashboard = next(run_output_root.rglob("reports/daily_task_dashboard_2026-05-06.html"))
     task_dashboard_json = next(
         run_output_root.rglob("reports/daily_task_dashboard_2026-05-06.json")
     )
@@ -504,19 +498,13 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
     assert "关键结论总览" in task_dashboard.read_text(encoding="utf-8")
     assert (tmp_path / "outputs" / "reports" / "daily_task_dashboard_2026-05-06.html").exists()
     assert (tmp_path / "outputs" / "reports" / "daily_task_dashboard_2026-05-06.json").exists()
-    assert (
-        tmp_path / "outputs" / "reports" / "daily_decision_summary_2026-05-06.json"
-    ).exists()
-    assert (
-        tmp_path / "outputs" / "reports" / "order_intent_candidates_2026-05-06.json"
-    ).exists()
+    assert (tmp_path / "outputs" / "reports" / "daily_decision_summary_2026-05-06.json").exists()
+    assert (tmp_path / "outputs" / "reports" / "order_intent_candidates_2026-05-06.json").exists()
     decision_summary = json.loads(decision_summary_json.read_text(encoding="utf-8"))
     assert decision_summary["production_effect"] == "none"
     assert decision_summary["investment_conclusion"]["availability"] == "missing"
     assert decision_summary["decision_bus_role"]["order_intent_builder_connected"] is False
-    order_candidates = json.loads(
-        order_intent_candidates_json.read_text(encoding="utf-8")
-    )
+    order_candidates = json.loads(order_intent_candidates_json.read_text(encoding="utf-8"))
     assert order_candidates["production_effect"] == "none"
     assert order_candidates["execution_boundary"] == {
         "creates_order_intent": False,
@@ -598,16 +586,12 @@ def test_daily_ops_plan_sec_and_valuation_steps_block_score_daily() -> None:
     assert step_ids.index("tsm_ir_sec_metrics_merge") < step_ids.index("score_daily")
     assert step_ids.index("sec_metrics_validation") < step_ids.index("score_daily")
     assert step_ids.index("sec_metrics") < step_ids.index("tsm_ir_sec_metrics_merge")
-    assert step_ids.index("tsm_ir_sec_metrics_merge") < step_ids.index(
-        "sec_metrics_validation"
-    )
+    assert step_ids.index("tsm_ir_sec_metrics_merge") < step_ids.index("sec_metrics_validation")
     assert step_ids.index("valuation_snapshots") < step_ids.index("score_daily")
 
     sec_companyfacts = next(step for step in plan.steps if step.step_id == "sec_companyfacts")
     sec_metrics = next(step for step in plan.steps if step.step_id == "sec_metrics")
-    tsm_merge = next(
-        step for step in plan.steps if step.step_id == "tsm_ir_sec_metrics_merge"
-    )
+    tsm_merge = next(step for step in plan.steps if step.step_id == "tsm_ir_sec_metrics_merge")
     valuation = next(step for step in plan.steps if step.step_id == "valuation_snapshots")
 
     assert sec_companyfacts.required_env_vars == ("SEC_USER_AGENT",)
@@ -1038,9 +1022,7 @@ def test_daily_ops_run_report_writes_sanitized_metadata_sidecar(tmp_path: Path) 
     )
 
     assert explicit_metadata_path.exists()
-    assert str(explicit_metadata_path) in explicit_report_path.read_text(
-        encoding="utf-8"
-    )
+    assert str(explicit_metadata_path) in explicit_report_path.read_text(encoding="utf-8")
 
 
 def test_run_daily_ops_plan_fails_when_artifact_status_fails(tmp_path: Path) -> None:

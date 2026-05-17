@@ -54,11 +54,11 @@ def test_validate_watchlist_config_fails_missing_core_ticker() -> None:
 def test_validate_watchlist_config_rejects_high_risk_without_thesis() -> None:
     watchlist = load_watchlist()
     items = [
-        item.model_copy(
-            update={"decision_stage": "active_trade", "thesis_required": False}
+        (
+            item.model_copy(update={"decision_stage": "active_trade", "thesis_required": False})
+            if item.ticker == "AMD"
+            else item
         )
-        if item.ticker == "AMD"
-        else item
         for item in watchlist.items
     ]
     broken = WatchlistConfig(items=items)

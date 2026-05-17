@@ -19,9 +19,7 @@ from ai_trading_system.scoring.position_model import PositionBand
 
 SCHEMA_VERSION = 1
 DEFAULT_BELIEF_STATE_DIR = PROJECT_ROOT / "data" / "processed" / "belief_state"
-DEFAULT_BELIEF_STATE_HISTORY_PATH = (
-    PROJECT_ROOT / "data" / "processed" / "belief_state_history.csv"
-)
+DEFAULT_BELIEF_STATE_HISTORY_PATH = PROJECT_ROOT / "data" / "processed" / "belief_state_history.csv"
 
 
 def default_belief_state_path(output_dir: Path, as_of: date) -> Path:
@@ -45,8 +43,7 @@ def build_belief_state(
         "read_only": True,
         "production_effect": "none",
         "production_effect_note": (
-            "belief_state 是只读解释层；不改变正式评分、position_gate、"
-            "回测仓位或交易建议。"
+            "belief_state 是只读解释层；不改变正式评分、position_gate、" "回测仓位或交易建议。"
         ),
         "market_regime": _market_regime_record(market_regime),
         "data_quality": {
@@ -67,9 +64,7 @@ def build_belief_state(
             "overall_level": confidence.level,
             "data_quality_confidence": _data_quality_confidence(report),
             "evidence_strength": _evidence_strength(report),
-            "regime_fit_confidence": (
-                "medium" if market_regime is not None else "not_assessed"
-            ),
+            "regime_fit_confidence": ("medium" if market_regime is not None else "not_assessed"),
             "model_calibration_confidence": "not_assessed",
             "human_review_status": _human_review_status(report),
             "reasons": list(confidence.reasons),
@@ -335,19 +330,13 @@ def _position_boundary_record(report: DailyScoreReport) -> dict[str, Any]:
     recommendation = report.recommendation
     confidence = report.confidence_assessment
     return {
-        "model_risk_asset_ai_band": _band_record(
-            recommendation.model_risk_asset_ai_band
-        ),
+        "model_risk_asset_ai_band": _band_record(recommendation.model_risk_asset_ai_band),
         "final_risk_asset_ai_band": _band_record(recommendation.risk_asset_ai_band),
-        "confidence_adjusted_band": _band_record(
-            confidence.adjusted_risk_asset_ai_band
-        ),
+        "confidence_adjusted_band": _band_record(confidence.adjusted_risk_asset_ai_band),
         "static_total_risk_asset_band": _band_record(
             report.macro_risk_asset_budget.static_total_risk_asset_band
         ),
-        "final_total_risk_asset_band": _band_record(
-            recommendation.total_risk_asset_band
-        ),
+        "final_total_risk_asset_band": _band_record(recommendation.total_risk_asset_band),
         "macro_risk_asset_budget": {
             "level": report.macro_risk_asset_budget.level,
             "triggered": report.macro_risk_asset_budget.triggered,
@@ -510,9 +499,7 @@ def _industry_chain_summary(industry_chain_state: dict[str, Any]) -> str:
     if industry_chain_state["status"] != "available":
         return industry_chain_state["summary"]
     nodes = industry_chain_state["nodes"][:5]
-    node_text = "、".join(
-        f"{node['subject']}({node['feature_count']})" for node in nodes
-    )
+    node_text = "、".join(f"{node['subject']}({node['feature_count']})" for node in nodes)
     suffix = "" if industry_chain_state["node_count"] <= 5 else "等"
     return f"{industry_chain_state['summary']} 首批节点：{node_text}{suffix}。"
 

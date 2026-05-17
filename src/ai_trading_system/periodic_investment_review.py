@@ -212,9 +212,7 @@ def _load_score_rows(
     frame = frame.loc[frame["component"] == "overall"].copy()
     frame["_as_of"] = pd.to_datetime(frame["as_of"], errors="coerce").dt.date
     frame = frame.loc[
-        frame["_as_of"].notna()
-        & (frame["_as_of"] >= since)
-        & (frame["_as_of"] <= as_of)
+        frame["_as_of"].notna() & (frame["_as_of"] >= since) & (frame["_as_of"] <= as_of)
     ].sort_values("_as_of")
     return [dict(row) for row in frame.drop(columns=["_as_of"]).to_dict("records")]
 
@@ -344,9 +342,7 @@ def _learning_summary(
     return {
         "total": len(items),
         "new": new_count,
-        "rule_candidate_required": sum(
-            1 for item in items if item.get("rule_candidate_required")
-        ),
+        "rule_candidate_required": sum(1 for item in items if item.get("rule_candidate_required")),
     }
 
 

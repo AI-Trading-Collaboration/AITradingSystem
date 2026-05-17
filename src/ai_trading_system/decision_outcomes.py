@@ -325,12 +325,12 @@ def _snapshot_base_record(snapshot: dict[str, Any], horizon: int) -> dict[str, A
         "score_bucket": _score_bucket(scores.get("overall_score")),
         "confidence_score": scores.get("confidence_score"),
         "confidence_level": scores.get("confidence_level"),
-        "final_risk_asset_ai_min": (
-            positions.get("final_risk_asset_ai_band") or {}
-        ).get("min_position"),
-        "final_risk_asset_ai_max": (
-            positions.get("final_risk_asset_ai_band") or {}
-        ).get("max_position"),
+        "final_risk_asset_ai_min": (positions.get("final_risk_asset_ai_band") or {}).get(
+            "min_position"
+        ),
+        "final_risk_asset_ai_max": (positions.get("final_risk_asset_ai_band") or {}).get(
+            "max_position"
+        ),
         "triggered_gate_count": len(triggered_gates),
         "triggered_gate_ids": ",".join(str(gate.get("gate_id")) for gate in triggered_gates),
         "gate_state": "extra_gate_triggered" if triggered_gates else "score_model_only",
@@ -408,7 +408,7 @@ def _realized_volatility(window: pd.Series) -> float:
     returns = window.pct_change().dropna()
     if len(returns) < 2:
         return 0.0
-    return float(returns.std(ddof=1) * (252 ** 0.5))
+    return float(returns.std(ddof=1) * (252**0.5))
 
 
 def _snapshot_paths(input_path: Path) -> tuple[Path, ...]:
@@ -525,9 +525,7 @@ def _group_table(
         groups.setdefault(str(row.get(group_column, "unknown")), []).append(row)
 
     preferred_benchmarks = [
-        ticker
-        for ticker in ("SPY", "QQQ", "SMH", "SOXX")
-        if ticker in benchmark_tickers
+        ticker for ticker in ("SPY", "QQQ", "SMH", "SOXX") if ticker in benchmark_tickers
     ]
     lines = [
         (

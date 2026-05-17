@@ -184,9 +184,7 @@ def build_market_feedback_optimization_report(
         rule_experiments=_rule_experiment_section(rule_experiment_path),
         parameter_replay=_parameter_replay_section(parameter_replay_summary_path),
         parameter_candidates=_parameter_candidate_section(parameter_candidate_ledger_path),
-        parameter_governance=_parameter_governance_section(
-            parameter_governance_summary_path
-        ),
+        parameter_governance=_parameter_governance_section(parameter_governance_summary_path),
         shadow_maturity=_markdown_artifact_section(
             shadow_maturity_report_path,
             "shadow_maturity_report",
@@ -614,9 +612,7 @@ def _parameter_governance_section(path: Path) -> dict[str, Any]:
         ),
         "parameter_count": int(payload.get("parameter_count") or 0),
         "action_counts": {
-            str(key): int(value)
-            for key, value in action_counts.items()
-            if isinstance(value, int)
+            str(key): int(value) for key, value in action_counts.items() if isinstance(value, int)
         },
         "warnings": warnings,
     }

@@ -172,9 +172,7 @@ def test_shadow_weight_profiles_cli_writes_observations_and_optional_predictions
     assert result.exit_code == 0
     assert "Shadow weight profile 状态：PASS" in result.output
     observations = pd.read_csv(observation_path)
-    assert observations.loc[0, "profile_id"] == (
-        "shadow_test_alpha__shadow_gate_test_relaxed"
-    )
+    assert observations.loc[0, "profile_id"] == ("shadow_test_alpha__shadow_gate_test_relaxed")
     assert observations.loc[0, "gate_profile_id"] == "shadow_gate_test_relaxed"
     rows = load_prediction_ledger(prediction_ledger_path)
     assert len(rows) == 1
@@ -182,10 +180,7 @@ def test_shadow_weight_profiles_cli_writes_observations_and_optional_predictions
         "shadow_weight_profile:shadow_test_alpha__shadow_gate_test_relaxed"
     )
     assert rows[0]["production_effect"] == "none"
-    assert (
-        rows[0]["execution_assumption"]
-        == "shadow_weight_profile_no_order_no_position_change"
-    )
+    assert rows[0]["execution_assumption"] == "shadow_weight_profile_no_order_no_position_change"
     assert report_path.exists()
 
 
@@ -456,9 +451,9 @@ def test_shadow_parameter_objective_can_block_large_weight_distance(
     ]
     assert far_weight_trials
     assert all(not trial.eligible for trial in far_weight_trials)
-    assert {
-        trial.ineligibility_reason for trial in far_weight_trials
-    } == {"weight_l1_distance_above_objective_limit"}
+    assert {trial.ineligibility_reason for trial in far_weight_trials} == {
+        "weight_l1_distance_above_objective_limit"
+    }
 
 
 def test_shadow_parameter_search_strict_objective_keeps_diagnostic_only(
@@ -775,8 +770,7 @@ def _write_search_space(
     gate_grid_yaml = ""
     if gate_grid_values is not None:
         value_lines = "\n".join(
-            f"    {gate_id}: {values}"
-            for gate_id, values in gate_grid_values.items()
+            f"    {gate_id}: {values}" for gate_id, values in gate_grid_values.items()
         )
         gate_grid_yaml = f"""
 gate_grid:
@@ -829,8 +823,7 @@ def _write_objective(
     optional_limits = ""
     if max_l1_distance_from_production is not None:
         optional_limits += (
-            "max_l1_distance_from_production: "
-            f"{max_l1_distance_from_production}\n"
+            "max_l1_distance_from_production: " f"{max_l1_distance_from_production}\n"
         )
     if max_single_factor_step is not None:
         optional_limits += f"max_single_factor_step: {max_single_factor_step}\n"

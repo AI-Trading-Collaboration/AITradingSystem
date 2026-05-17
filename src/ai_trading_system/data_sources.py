@@ -693,8 +693,7 @@ def _check_manifest_record_consistency(
                 code="manifest_provider_mismatch",
                 source_id=source.source_id,
                 message=(
-                    f"Manifest provider `{record.provider}` 与目录 "
-                    f"`{source.provider}` 不一致。"
+                    f"Manifest provider `{record.provider}` 与目录 " f"`{source.provider}` 不一致。"
                 ),
             )
         )
@@ -705,8 +704,7 @@ def _check_manifest_record_consistency(
                 code="manifest_endpoint_mismatch",
                 source_id=source.source_id,
                 message=(
-                    f"Manifest endpoint `{record.endpoint}` 与目录 "
-                    f"`{source.endpoint}` 不一致。"
+                    f"Manifest endpoint `{record.endpoint}` 与目录 " f"`{source.endpoint}` 不一致。"
                 ),
             )
         )
@@ -764,9 +762,7 @@ def _build_domain_reconciliation(
     records: list[DomainReconciliationRecord] = []
     active_sources = [source for source in config.sources if source.status == "active"]
     for domain in RECONCILIATION_REQUIRED_DOMAINS:
-        domain_sources = tuple(
-            source for source in active_sources if domain in source.domains
-        )
+        domain_sources = tuple(source for source in active_sources if domain in source.domains)
         qualified_sources = tuple(
             source
             for source in domain_sources

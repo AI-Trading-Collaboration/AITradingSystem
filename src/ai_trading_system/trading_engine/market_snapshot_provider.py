@@ -40,8 +40,10 @@ class HistoricalPriceMarketSnapshotProvider:
         self,
         prices_path: Path | str | None = None,
     ) -> None:
-        self.prices_path = Path(prices_path) if prices_path is not None else (
-            PROJECT_ROOT / "data" / "raw" / "prices_daily.csv"
+        self.prices_path = (
+            Path(prices_path)
+            if prices_path is not None
+            else (PROJECT_ROOT / "data" / "raw" / "prices_daily.csv")
         )
 
     def resolve(

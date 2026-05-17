@@ -62,9 +62,7 @@ FMP_FORWARD_PIT_NORMALIZED_COLUMNS = (
 FMP_FORWARD_PIT_SOURCE_ID = "fmp_valuation_expectations"
 FMP_FORWARD_PIT_NORMALIZATION_VERSION = "fmp_forward_pit_v1"
 DEFAULT_FMP_FORWARD_PIT_RAW_DIR = PROJECT_ROOT / "data" / "raw" / "fmp_forward_pit"
-DEFAULT_FMP_FORWARD_PIT_NORMALIZED_DIR = (
-    PROJECT_ROOT / "data" / "processed" / "pit_snapshots"
-)
+DEFAULT_FMP_FORWARD_PIT_NORMALIZED_DIR = PROJECT_ROOT / "data" / "processed" / "pit_snapshots"
 
 
 class FmpForwardPitIssueSeverity(StrEnum):
@@ -158,16 +156,12 @@ class FmpForwardPitFetchReport:
 
     @property
     def error_count(self) -> int:
-        return sum(
-            1 for issue in self.issues if issue.severity == FmpForwardPitIssueSeverity.ERROR
-        )
+        return sum(1 for issue in self.issues if issue.severity == FmpForwardPitIssueSeverity.ERROR)
 
     @property
     def warning_count(self) -> int:
         return sum(
-            1
-            for issue in self.issues
-            if issue.severity == FmpForwardPitIssueSeverity.WARNING
+            1 for issue in self.issues if issue.severity == FmpForwardPitIssueSeverity.WARNING
         )
 
     @property
@@ -275,12 +269,8 @@ def fetch_fmp_forward_pit_snapshots(
                     fetch_provider.fetch_price_target_consensus(provider_symbol)
                 ),
                 "grades": tuple(fetch_provider.fetch_grades(provider_symbol)),
-                "grades-consensus": tuple(
-                    fetch_provider.fetch_grades_consensus(provider_symbol)
-                ),
-                "ratings-snapshot": tuple(
-                    fetch_provider.fetch_ratings_snapshot(provider_symbol)
-                ),
+                "grades-consensus": tuple(fetch_provider.fetch_grades_consensus(provider_symbol)),
+                "ratings-snapshot": tuple(fetch_provider.fetch_ratings_snapshot(provider_symbol)),
                 "earnings-calendar": tuple(
                     _calendar_records_for_symbol(calendar_records, provider_symbol)
                 ),
@@ -615,8 +605,7 @@ def render_fmp_forward_pit_fetch_report(report: FmpForwardPitFetchReport) -> str
     if not report.issues:
         lines.append("未发现问题。")
     else:
-        lines.extend(["| 级别 | Code | Ticker | Endpoint | 说明 |",
-                      "|---|---|---|---|---|"])
+        lines.extend(["| 级别 | Code | Ticker | Endpoint | 说明 |", "|---|---|---|---|---|"])
         for issue in report.issues:
             level = "错误" if issue.severity == FmpForwardPitIssueSeverity.ERROR else "警告"
             lines.append(
@@ -743,8 +732,7 @@ def _fmp_forward_pit_payload_to_raw(payload: FmpForwardPitRawPayload) -> dict[st
         "row_count": payload.row_count,
         "checksum_sha256": checksum,
         "records_by_endpoint": {
-            endpoint: list(records)
-            for endpoint, records in payload.endpoint_records.items()
+            endpoint: list(records) for endpoint, records in payload.endpoint_records.items()
         },
     }
 
@@ -865,9 +853,7 @@ def attach_fmp_forward_pit_raw_paths(
     *,
     project_root: Path = PROJECT_ROOT,
 ) -> tuple[FmpForwardPitRawPayload, ...]:
-    path_by_ticker = {
-        _ticker_from_forward_pit_path(path): path for path in paths
-    }
+    path_by_ticker = {_ticker_from_forward_pit_path(path): path for path in paths}
     attached: list[FmpForwardPitRawPayload] = []
     for payload in payloads:
         path = path_by_ticker.get(payload.ticker)

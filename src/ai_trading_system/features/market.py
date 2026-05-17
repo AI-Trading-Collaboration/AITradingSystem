@@ -223,9 +223,7 @@ def _prepare_rates(rates: pd.DataFrame, as_of: date) -> pd.DataFrame:
     frame["_date"] = pd.to_datetime(frame["date"], errors="coerce")
     frame["_value"] = pd.to_numeric(frame["value"], errors="coerce")
     frame = frame.loc[
-        frame["_date"].notna()
-        & frame["_value"].notna()
-        & (frame["_date"] <= pd.Timestamp(as_of))
+        frame["_date"].notna() & frame["_value"].notna() & (frame["_date"] <= pd.Timestamp(as_of))
     ].copy()
     return frame.sort_values(["series", "_date"]).reset_index(drop=True)
 
