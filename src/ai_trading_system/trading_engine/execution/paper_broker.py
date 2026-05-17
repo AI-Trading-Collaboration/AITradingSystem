@@ -40,6 +40,7 @@ class PaperBroker:
             symbol=order_intent.symbol,
             side=order_intent.side,
             order_type=order_intent.order_type,
+            time_in_force=order_intent.time_in_force,
             limit_price=order_intent.limit_price,
             quantity=quantity,
             status=OrderStatus.SUBMITTED,
@@ -59,6 +60,38 @@ class PaperBroker:
         )
         self._orders[broker_order_id] = updated
         return updated
+
+    def expire_day_orders(
+        self,
+        *,
+        completed_at: datetime | None = None,
+    ) -> list[ExecutionReport]:
+        effective_completed_at = completed_at or datetime.now(UTC)
+        reports: list[ExecutionReport] = []
+        for order in list(self.list_open_orders()):
+            if order.time_in_force.value != "DAY":
+                continue
+            assert_transition(order.status, OrderStatus.EXPIRED)
+            updated = order.model_copy(
+                update={
+                    "status": OrderStatus.EXPIRED,
+                    "completed_at": effective_completed_at,
+                }
+            )
+            self._orders[order.broker_order_id] = updated
+            reports.append(
+                ExecutionReport(
+                    intent_id=order.intent_id,
+                    broker_order_id=order.broker_order_id,
+                    status=OrderStatus.EXPIRED,
+                    submitted_at=order.submitted_at,
+                    completed_at=effective_completed_at,
+                    requested_quantity=order.quantity,
+                    filled_quantity=order.filled_quantity,
+                    avg_fill_price=order.avg_fill_price,
+                )
+            )
+        return reports
 
     def get_order(self, broker_order_id: str) -> BrokerOrder:
         try:

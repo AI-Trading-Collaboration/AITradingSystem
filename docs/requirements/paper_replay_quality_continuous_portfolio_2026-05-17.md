@@ -24,7 +24,9 @@ market snapshot 数据来源透明度和质量标记。
 2. 预留 continuous portfolio 模式：
    - CLI 增加 `--mode daily-independent / continuous-portfolio`。
    - 第一阶段只实现 `daily-independent`。
-   - `continuous-portfolio` 返回 `NOT_IMPLEMENTED` 或受限状态，不生成虚假的连续持仓结转结果。
+   - `continuous-portfolio` 在 TRADING-004 阶段只做结构预留，不生成虚假的连续持仓结转结果。
+   - 后续 TRADING-007 已把真实连续组合结转实现为独立任务，详见
+     `docs/requirements/continuous_portfolio_replay_2026-05-17.md`。
 3. 改善 fill 模拟数据来源：
    - 新增 `MarketSnapshotProvider` 接口。
    - replay 优先读取历史 OHLC。
@@ -50,8 +52,8 @@ market snapshot 数据来源透明度和质量标记。
 
 - 不接真实 broker，不读取 broker API key，不调用 IBKR / Alpaca。
 - 不扩展订单类型。
-- `continuous-portfolio` 本阶段不实现真实持仓结转；输出必须明确
-  `NOT_IMPLEMENTED`，不能产生连续组合收益。
+- TRADING-004 阶段不实现真实持仓结转；后续 TRADING-007 实现必须继续遵守
+  paper-only、`production_effect=none` 和真实 broker 隔离边界。
 - historical OHLC 用于提高 paper fill simulation 的真实性，但仍是 paper-only
   复盘，不代表真实成交价、真实流动性、滑点或券商状态。
 - replay 输出继续保持 `production_effect=none`，不得改变 production scoring、
@@ -73,7 +75,7 @@ market snapshot 数据来源透明度和质量标记。
 - 2026-05-17：实现完成并进入验证。新增 `replay_mode`、
   `portfolio_carry_forward`、`quality_flags`、`--mode daily-independent /
   continuous-portfolio`、`MarketSnapshotProvider`、historical OHLC / metadata /
-  synthetic snapshot source 记录、continuous portfolio `NOT_IMPLEMENTED` 边界、
+  synthetic snapshot source 记录、continuous portfolio 结构预留边界、
   Black 配置和脚本可维护性测试。验证通过 `python -m pytest tests/trading_engine`、
   `python -m pytest`、`python -m black --check scripts/run_paper_trading_from_candidates.py
   scripts/run_paper_trading_replay.py`、`python -m ruff check scripts src tests`、

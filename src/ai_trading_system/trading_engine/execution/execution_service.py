@@ -164,6 +164,23 @@ class ExecutionService:
             )
         return reports
 
+    def expire_day_orders(
+        self,
+        *,
+        completed_at: datetime | None = None,
+    ) -> list[ExecutionReport]:
+        reports = self.broker.expire_day_orders(completed_at=completed_at)
+        self.execution_reports.extend(reports)
+        if self.audit_logger is not None:
+            for report in reports:
+                order_intent = self._intents_by_id.get(report.intent_id)
+                if order_intent is not None:
+                    self.audit_logger.log_execution_report(
+                        report,
+                        order_intent=order_intent,
+                    )
+        return reports
+
     def get_portfolio_state(
         self,
         *,
