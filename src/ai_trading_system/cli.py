@@ -6112,6 +6112,10 @@ def daily_task_dashboard_command(
         Path | None,
         typer.Option(help="Order intent candidate JSON 输出路径。"),
     ] = None,
+    paper_trading_trend_days: Annotated[
+        int,
+        typer.Option(help="Paper Trading Trend 读取窗口；可选 7、14 或 30。"),
+    ] = 7,
 ) -> None:
     """生成 daily-run 子任务总控展示页。"""
     dashboard_date = _parse_date(as_of) if as_of else date.today()
@@ -6148,6 +6152,7 @@ def daily_task_dashboard_command(
             if resolved_run_report_path.exists()
             else None,
             reports_dir=reports_dir,
+            paper_trading_trend_days=paper_trading_trend_days,
         )
     except FileNotFoundError as exc:
         raise typer.BadParameter(str(exc)) from exc

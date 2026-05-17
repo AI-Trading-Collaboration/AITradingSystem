@@ -54,7 +54,11 @@ def run_from_candidates(
 
     audit_root.mkdir(parents=True, exist_ok=True)
     payload = _read_json_object(candidates_path)
-    candidates = _load_candidates(payload)
+    candidates = _load_candidates(payload, as_of=as_of)
+    candidate_records = [_candidate_replay_record(candidate) for candidate in candidates]
+    candidate_record_by_id = {
+        str(record["candidate_id"]): record for record in candidate_records
+    }
     config = load_trading_engine_config()
     portfolio = PaperPortfolio(config.execution.default_initial_cash_usd)
     broker = PaperBroker(portfolio=portfolio, execution_settings=config.execution)
@@ -69,10 +73,14 @@ def run_from_candidates(
     intents = []
     prices: dict[str, float] = {}
     for candidate in candidates:
+        record = candidate_record_by_id[candidate.candidate_id]
         try:
             intent = build_order_intent_from_candidate(candidate, mode="paper")
-        except (RuntimeError, ValueError):
+        except (RuntimeError, ValueError) as exc:
+            record["conversion_error"] = str(exc)
             continue
+        record["generated_intent"] = True
+        record["intent_id"] = intent.intent_id
         approved_candidates.append(candidate)
         intents.append(intent)
         if candidate.symbol is not None and candidate.limit_price is not None:
@@ -106,6 +114,12 @@ def run_from_candidates(
         initial_cash_usd=config.execution.default_initial_cash_usd,
         prices=_snapshot_prices(snapshots) or prices,
         as_of=snapshot_time,
+    )
+    _update_candidate_replay_records(
+        candidate_records=candidate_records,
+        risk_results=service.risk_results,
+        submitted_orders=final_orders,
+        execution_reports=service.execution_reports,
     )
     report = build_trading_daily_report(
         as_of=as_of,
@@ -143,6 +157,7 @@ def run_from_candidates(
     )
     summary["summary_output_path"] = summary_output_path
     summary["filled"] = len(fill_reports)
+    summary["candidate_records"] = candidate_records
     return summary
 
 
@@ -399,7 +414,7 @@ def _href(path: Path, base_dir: Path) -> str:
     return link_path.as_posix()
 
 
-def _load_candidates(payload: dict[str, Any]) -> tuple[OrderIntentCandidate, ...]:
+def _load_candidates(payload: dict[str, Any], *, as_of: date) -> tuple[OrderIntentCandidate, ...]:
     from ai_trading_system.trading_engine.schemas import OrderIntentCandidate
 
     raw_candidates = payload.get("candidates")
@@ -412,8 +427,79 @@ def _load_candidates(payload: dict[str, Any]) -> tuple[OrderIntentCandidate, ...
             continue
         candidate_payload = dict(raw_candidate)
         candidate_payload.setdefault("run_id", fallback_run_id)
+        candidate_payload.setdefault(
+            "created_at",
+            datetime.combine(as_of, time(14, 0), tzinfo=UTC).isoformat(),
+        )
         parsed.append(OrderIntentCandidate.model_validate(candidate_payload))
     return tuple(parsed)
+
+
+def _candidate_replay_record(candidate: OrderIntentCandidate) -> dict[str, Any]:
+    return {
+        "candidate_id": candidate.candidate_id,
+        "strategy_id": candidate.strategy_id,
+        "symbol": candidate.symbol or "missing",
+        "reason_codes": list(candidate.reason_codes),
+        "blocked": candidate.blocked,
+        "blocked_by": list(candidate.blocked_by),
+        "generated_intent": False,
+        "intent_id": None,
+        "approved": False,
+        "rejected": False,
+        "submitted": False,
+        "filled": False,
+        "open": False,
+        "cancelled": False,
+        "order_status": "NOT_SUBMITTED",
+        "risk_blocked_by": [],
+        "conversion_error": "",
+    }
+
+
+def _update_candidate_replay_records(
+    *,
+    candidate_records: list[dict[str, Any]],
+    risk_results: list[Any],
+    submitted_orders: list[Any],
+    execution_reports: list[Any],
+) -> None:
+    record_by_intent = {
+        str(record["intent_id"]): record
+        for record in candidate_records
+        if record.get("intent_id")
+    }
+    for risk_result in risk_results:
+        record = record_by_intent.get(risk_result.intent_id)
+        if record is None:
+            continue
+        record["approved"] = risk_result.approved
+        record["rejected"] = not risk_result.approved
+        record["risk_blocked_by"] = list(risk_result.blocked_by)
+
+    for order in submitted_orders:
+        record = record_by_intent.get(order.intent_id)
+        if record is None:
+            continue
+        status = order.status.value
+        record["submitted"] = True
+        record["order_status"] = status
+        record["filled"] = status == "FILLED"
+        record["open"] = status in {"SUBMITTED", "PARTIALLY_FILLED"}
+        record["cancelled"] = status == "CANCELLED"
+
+    for execution_report in execution_reports:
+        record = record_by_intent.get(execution_report.intent_id)
+        if record is None:
+            continue
+        status = execution_report.status.value
+        if status == "FILLED":
+            record["filled"] = True
+            record["open"] = False
+            record["order_status"] = status
+        elif status == "REJECTED":
+            record["rejected"] = True
+            record["order_status"] = status
 
 
 def _candidate_market_snapshot(

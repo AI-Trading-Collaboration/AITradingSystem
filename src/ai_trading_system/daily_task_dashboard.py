@@ -4,7 +4,7 @@ import csv
 import json
 import re
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from html import escape
 from pathlib import Path
 from urllib.parse import quote
@@ -66,6 +66,7 @@ def build_daily_task_dashboard_report(
     metadata_path: Path,
     reports_dir: Path,
     run_report_path: Path | None = None,
+    paper_trading_trend_days: int = 7,
 ) -> DailyTaskDashboardReport:
     metadata = _read_metadata(metadata_path)
     commands = _records_by_step(metadata.get("commands", []))
@@ -98,6 +99,9 @@ def build_daily_task_dashboard_report(
         git_commit=str(git.get("commit") or ""),
         git_dirty=raw_git_dirty if isinstance(raw_git_dirty, bool) else None,
         tasks=tasks,
+        paper_trading_trend_days=_normalize_paper_trading_trend_days(
+            paper_trading_trend_days
+        ),
     )
 
 
@@ -182,6 +186,7 @@ def build_daily_task_dashboard_payload(
             for conclusion in _build_key_conclusions(report)
         ],
         "paper_trading_summary": _paper_trading_summary(report),
+        "paper_trading_trend": _paper_trading_trend(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -272,6 +277,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             "<main>",
             _render_key_conclusions(report),
             _render_paper_trading_summary(report),
+            _render_paper_trading_trend(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -1367,6 +1373,154 @@ def _paper_trading_summary_risk(payload: TraceRecord) -> str:
     return "；".join(risks) or "未发现 paper trading 执行复盘阻断风险。"
 
 
+def _paper_trading_trend(report: DailyTaskDashboardReport) -> TraceRecord:
+    days = _normalize_paper_trading_trend_days(report.paper_trading_trend_days)
+    start = report.as_of - timedelta(days=days - 1)
+    records: list[TraceRecord] = []
+    totals: TraceRecord = {
+        "candidate_count": 0,
+        "blocked_candidates": 0,
+        "generated_intents": 0,
+        "approved": 0,
+        "rejected": 0,
+        "submitted": 0,
+        "filled": 0,
+        "open": 0,
+        "cancelled": 0,
+        "realized_pnl": 0.0,
+        "unrealized_pnl": 0.0,
+    }
+    reconciliation_distribution: dict[str, int] = {}
+    missing_dates: list[str] = []
+    non_none_production_effect_dates: list[str] = []
+
+    for offset in range(days):
+        current = start + timedelta(days=offset)
+        path = report.reports_dir / f"paper_trading_summary_{current.isoformat()}.json"
+        payload = _read_json_object(path)
+        if payload.get("report_type") != "paper_trading_summary":
+            missing_dates.append(current.isoformat())
+            records.append(
+                {
+                    "as_of": current.isoformat(),
+                    "exists": False,
+                    "status": "MISSING",
+                    "path": str(path),
+                    "href": _report_href(path, report.reports_dir),
+                    "production_effect": ProductionEffect.NONE.value,
+                    "candidate_count": "missing",
+                    "generated_intents": "missing",
+                    "submitted": "missing",
+                    "filled": "missing",
+                    "open": "missing",
+                    "cancelled": "missing",
+                    "reconciliation_status": "MISSING",
+                }
+            )
+            continue
+
+        production_effect = _string_value(payload.get("production_effect")) or "none"
+        if production_effect != ProductionEffect.NONE.value:
+            non_none_production_effect_dates.append(current.isoformat())
+        reconciliation_status = (
+            _string_value(payload.get("reconciliation_status")) or "MISSING"
+        )
+        reconciliation_distribution[reconciliation_status] = (
+            reconciliation_distribution.get(reconciliation_status, 0) + 1
+        )
+        record = {
+            "as_of": current.isoformat(),
+            "exists": True,
+            "status": _string_value(payload.get("status")) or reconciliation_status,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "production_effect": production_effect,
+            "candidate_count": payload.get("candidate_count", 0),
+            "blocked_candidates": payload.get("blocked_candidates", 0),
+            "generated_intents": payload.get("generated_intents", 0),
+            "approved": payload.get("approved", 0),
+            "rejected": payload.get("rejected", 0),
+            "submitted": payload.get("submitted", 0),
+            "filled": payload.get("filled", 0),
+            "open": payload.get("open", 0),
+            "cancelled": payload.get("cancelled", 0),
+            "realized_pnl": payload.get("realized_pnl", 0.0),
+            "unrealized_pnl": payload.get("unrealized_pnl", 0.0),
+            "reconciliation_status": reconciliation_status,
+        }
+        for key in (
+            "candidate_count",
+            "blocked_candidates",
+            "generated_intents",
+            "approved",
+            "rejected",
+            "submitted",
+            "filled",
+            "open",
+            "cancelled",
+        ):
+            totals[key] = (_optional_int(totals.get(key)) or 0) + (
+                _optional_int(record.get(key)) or 0
+            )
+        totals["realized_pnl"] = (_optional_float(totals.get("realized_pnl")) or 0.0) + (
+            _optional_float(record.get("realized_pnl")) or 0.0
+        )
+        totals["unrealized_pnl"] = (
+            _optional_float(totals.get("unrealized_pnl")) or 0.0
+        ) + (_optional_float(record.get("unrealized_pnl")) or 0.0)
+        records.append(record)
+
+    available_count = days - len(missing_dates)
+    status = "PASS"
+    risks: list[str] = []
+    existing_statuses = {
+        str(record.get("status"))
+        for record in records
+        if record.get("exists")
+    }
+    if non_none_production_effect_dates:
+        status = "ERROR"
+        risks.append(
+            "存在 production_effect 非 none 的 paper summary："
+            + ", ".join(non_none_production_effect_dates)
+        )
+    if "ERROR" in existing_statuses:
+        status = "ERROR"
+        risks.append("至少一个 paper trading summary 标记 ERROR。")
+    if missing_dates:
+        if status != "ERROR":
+            status = "LIMITED"
+        risks.append("历史 paper_trading_summary 缺失；dashboard 不补造趋势结论。")
+    if any(item not in {"PASS", "MISSING"} for item in existing_statuses):
+        if status != "ERROR":
+            status = "LIMITED"
+        risks.append("至少一个 paper trading summary 不是 PASS，趋势只能作为受限观察。")
+
+    return {
+        "status": status,
+        "production_effect": ProductionEffect.NONE.value,
+        "window_days": days,
+        "start": start.isoformat(),
+        "end": report.as_of.isoformat(),
+        "available_count": available_count,
+        "missing_count": len(missing_dates),
+        "missing_dates": missing_dates,
+        "totals": totals,
+        "reconciliation_status_distribution": dict(
+            sorted(reconciliation_distribution.items())
+        ),
+        "daily_results": records,
+        "risk": "；".join(dict.fromkeys(risks))
+        or "最近 paper trading summary 输入完整；趋势仍仅为 paper-only 复盘。",
+    }
+
+
+def _normalize_paper_trading_trend_days(value: int) -> int:
+    if value not in {7, 14, 30}:
+        raise ValueError("paper_trading_trend_days must be one of 7, 14, or 30")
+    return value
+
+
 def _latest_shadow_iteration_summary(report: DailyTaskDashboardReport) -> TraceRecord:
     path = report.reports_dir / f"shadow_iteration_{report.as_of.isoformat()}.json"
     payload = _read_json_object(path)
@@ -2457,6 +2611,79 @@ def _render_paper_trading_summary(report: DailyTaskDashboardReport) -> str:
             summary_link,
             report_link,
             "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_paper_trading_trend(report: DailyTaskDashboardReport) -> str:
+    trend = _paper_trading_trend(report)
+    totals = _mapping_value(trend, "totals")
+    rows = []
+    for record in _records(trend.get("daily_results")):
+        if not record.get("exists"):
+            rows.append(
+                "<tr>"
+                f"<td>{_text(record.get('as_of'))}</td>"
+                "<td>MISSING</td>"
+                "<td colspan=\"5\">LIMITED：历史 summary 缺失；未补造结论。</td>"
+                "</tr>"
+            )
+            continue
+        rows.append(
+            "<tr>"
+            f"<td>{_text(record.get('as_of'))}</td>"
+            f"<td>{_text(record.get('status'))}</td>"
+            f"<td>{_text(record.get('candidate_count'))}</td>"
+            f"<td>{_text(record.get('generated_intents'))}</td>"
+            f"<td>{_text(record.get('submitted'))}</td>"
+            f"<td>{_text(_count_triplet(record, 'filled', 'open', 'cancelled'))}</td>"
+            f"<td>{_text(record.get('reconciliation_status'))}</td>"
+            "</tr>"
+        )
+    return "\n".join(
+        [
+            '<section aria-labelledby="paper-trading-trend-title">',
+            '<div class="section-head">',
+            (
+                '<h2 id="paper-trading-trend-title">Paper Trading Trend '
+                f"({trend.get('window_days')} 日)</h2>"
+            ),
+            (
+                "<p>只读读取最近历史 summary；缺失显示 "
+                "<code>LIMITED</code>，不运行 replay 或补造结论。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("Trend status", trend.get("status", "LIMITED")),
+            _summary_item(
+                "available / missing",
+                f"{trend.get('available_count', 0)} / {trend.get('missing_count', 0)}",
+            ),
+            _summary_item("candidate_count", totals.get("candidate_count", 0)),
+            _summary_item("generated_intents", totals.get("generated_intents", 0)),
+            _summary_item("submitted", totals.get("submitted", 0)),
+            _summary_item(
+                "filled / open / cancelled",
+                _count_triplet(totals, "filled", "open", "cancelled"),
+            ),
+            _summary_item("realized_pnl", _format_money_value(totals.get("realized_pnl"))),
+            _summary_item(
+                "unrealized_pnl",
+                _format_money_value(totals.get("unrealized_pnl")),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(trend.get('risk', ''))}</p>"
+            ),
+            '<div class="table-wrap"><table>',
+            "<thead><tr><th>Date</th><th>Status</th><th>Candidates</th>"
+            "<th>Intents</th><th>Submitted</th><th>Filled/Open/Cancelled</th>"
+            "<th>Reconciliation</th></tr></thead>",
+            "<tbody>",
+            *rows,
+            "</tbody></table></div>",
             "</section>",
         ]
     )

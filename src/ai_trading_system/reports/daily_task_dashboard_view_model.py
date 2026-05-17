@@ -45,6 +45,7 @@ class DailyTaskDashboardReport:
     git_commit: str
     git_dirty: bool | None
     tasks: tuple[DailyTaskDetail, ...]
+    paper_trading_trend_days: int = 7
     production_effect: str = ProductionEffect.NONE.value
 
     @property

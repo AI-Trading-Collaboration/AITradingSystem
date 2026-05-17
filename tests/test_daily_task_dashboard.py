@@ -370,6 +370,32 @@ def test_daily_decision_summary_marks_missing_child_reports_without_synthesis(
     assert payload["parameter_governance"]["production_profile"]["availability"] == "missing"
 
 
+def test_daily_task_dashboard_paper_trading_trend_is_limited_when_history_missing(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 5, 4)
+    metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
+    _write_detail_reports(tmp_path, as_of)
+
+    report = build_daily_task_dashboard_report(
+        as_of=as_of,
+        metadata_path=metadata_path,
+        run_report_path=tmp_path / "daily_ops_run_2026-05-04.md",
+        reports_dir=tmp_path,
+        paper_trading_trend_days=7,
+    )
+    html = render_daily_task_dashboard(report)
+    payload = build_daily_task_dashboard_payload(report)
+
+    assert "Paper Trading Trend" in html
+    trend = payload["paper_trading_trend"]
+    assert trend["status"] == "LIMITED"
+    assert trend["production_effect"] == "none"
+    assert trend["available_count"] == 0
+    assert trend["missing_count"] == 7
+    assert "不补造趋势结论" in trend["risk"]
+
+
 def _write_daily_ops_metadata(tmp_path: Path, as_of: date) -> Path:
     metadata_path = tmp_path / f"daily_ops_run_metadata_{as_of.isoformat()}.json"
     started_at = datetime(2026, 5, 4, 21, 0, tzinfo=UTC)
