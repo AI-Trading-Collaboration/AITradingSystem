@@ -43,6 +43,13 @@
 | `outputs/replays/YYYY-MM-DD/<run_id>/replay_run.md` | `aits ops replay-day` | cache-only input freeze | visible cutoff、excluded future inputs、replay artifacts | 历史复现、diff | 否，不改 production artifacts | replay 不是 live daily-run，也不应调用 live provider |
 | `outputs/replays/YYYY-MM-DD/<run_id>/diff_vs_production.md` | `replay-day --compare-to-production` | replay bundle、production artifacts | checksum、row count、status diff | PIT 复核 | 否 | diff 说明产物不同，不自动说明哪个结论正确 |
 
+## Trading engine / paper trading 产物
+
+| Artifact | 由谁生成 | 上游输入 | 关键字段或内容 | 下游使用 | 是否影响 production | 常见误解 |
+|---|---|---|---|---|---|---|
+| `data/trading_engine/audit/{order_intent_log,risk_check_log,order_log,execution_report_log,fill_log,portfolio_snapshot}/YYYY-MM-DD.jsonl` | `ExecutionService` / `JsonlAuditLogger` | paper-only `OrderIntent`、risk result、paper order、execution report、portfolio snapshot | 每行包含 timestamp、run_id、strategy_id、schema_version、source_object_id、payload、`intent_id` 或 `related_intent_ids`；`replay_intent_audit_trace` 可按 intent 回放完整轨迹 | paper trading 审计和测试复现 | 否，paper trading MVP；真实交易仍未启用 | `execution_report_log` 和 `fill_log` 不等价；rejected intent 不应有 broker order 或 fill；portfolio snapshot 可通过 `related_intent_ids` 关联到 intent |
+| `reports/trading_daily/YYYY-MM-DD.md` | `scripts/run_paper_trading_demo.py` / trading report writer | paper trading audit state、orders、fills、portfolio snapshot | OrderIntent 数量、风控通过/拒绝、paper order、成交/未成交、portfolio、`production_effect=none` | paper trading 执行复盘 | 否，`production_effect=none` | 不是实盘交易日报，不代表真实账户、券商状态或真实成交 |
+
 ## Backtest / feedback 产物
 
 | Artifact | 由谁生成 | 上游输入 | 关键字段或内容 | 下游使用 | 是否影响 production | 常见误解 |

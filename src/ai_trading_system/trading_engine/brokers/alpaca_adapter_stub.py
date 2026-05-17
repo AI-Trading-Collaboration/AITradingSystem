@@ -7,7 +7,10 @@ from ai_trading_system.trading_engine.schemas.order_intent import OrderIntent
 
 class AlpacaAdapterStub:
     def submit_order(self, order_intent: OrderIntent) -> BrokerOrder:
-        raise RuntimeError("Real trading is not implemented in this phase")
+        raise RuntimeError(
+            "Alpaca adapter stub cannot submit orders; real trading is not implemented "
+            "in this phase"
+        )
 
     def cancel_order(self, broker_order_id: str) -> BrokerOrder:
         raise RuntimeError("Real trading is not implemented in this phase")

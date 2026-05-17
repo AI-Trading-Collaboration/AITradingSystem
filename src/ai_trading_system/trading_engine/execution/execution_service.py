@@ -42,6 +42,10 @@ class ExecutionService:
     ) -> None:
         self.config = config or load_trading_engine_config()
         self.config.assert_paper_only()
+        if broker is not None and not isinstance(broker, PaperBroker):
+            raise RuntimeError(
+                "ExecutionService only supports PaperBroker in this paper-only phase"
+            )
         self.risk_checker = risk_checker or PreTradeRiskChecker(self.config)
         self.broker = broker or PaperBroker(
             execution_settings=self.config.execution,
@@ -91,6 +95,11 @@ class ExecutionService:
                 rejection_reason=", ".join(risk_result.blocked_by),
             )
             self.execution_reports.append(rejected_report)
+            if self.audit_logger is not None:
+                self.audit_logger.log_execution_report(
+                    rejected_report,
+                    order_intent=order_intent,
+                )
             return rejected_report
 
         broker_order = self.broker.submit_order(order_intent)
@@ -112,6 +121,11 @@ class ExecutionService:
             requested_quantity=broker_order.quantity,
         )
         self.execution_reports.append(submitted_report)
+        if self.audit_logger is not None:
+            self.audit_logger.log_execution_report(
+                submitted_report,
+                order_intent=order_intent,
+            )
         return submitted_report
 
     def process_market_snapshot(
@@ -125,15 +139,28 @@ class ExecutionService:
                 order_intent = self._intents_by_id.get(report.intent_id)
                 if order_intent is not None:
                     self.audit_logger.log_fill(report, order_intent=order_intent)
+                    self.audit_logger.log_execution_report(
+                        report,
+                        order_intent=order_intent,
+                    )
             snapshot_prices = _snapshot_prices(market_snapshot)
             portfolio_state = self.broker.get_portfolio_state(
                 prices=snapshot_prices,
                 as_of=_snapshot_as_of(market_snapshot),
             )
+            related_intent_ids = tuple(
+                dict.fromkeys(
+                    [
+                        *(report.intent_id for report in reports),
+                        *(order.intent_id for order in self.broker.list_open_orders()),
+                    ]
+                )
+            )
             self.audit_logger.log_portfolio_snapshot(
                 portfolio_state,
                 run_id=self._last_run_id or "unknown_run",
                 strategy_id=self._last_strategy_id or "unknown_strategy",
+                related_intent_ids=related_intent_ids,
             )
         return reports
 

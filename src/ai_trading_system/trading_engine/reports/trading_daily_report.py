@@ -70,7 +70,7 @@ def render_trading_daily_report(report: TradingDailyReport) -> str:
         f"- 交易日期：{report.as_of.isoformat()}",
         "- 市场阶段：`ai_after_chatgpt`，本报告为 paper trading 执行复盘，不是实盘交易指令。",
         f"- 数据质量状态：{report.data_quality_status}",
-        f"- 生产影响：{report.production_effect}",
+        f"- 生产影响：production_effect={report.production_effect}",
         f"- 审计目录：`{report.audit_root}`",
         "",
         "## 摘要",

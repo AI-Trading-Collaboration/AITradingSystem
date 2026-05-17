@@ -69,6 +69,21 @@ OrderIntent -> PreTradeRiskChecker -> ExecutionService -> PaperBroker -> AuditLo
 ## 验收标准
 
 - `pytest tests/trading_engine` 通过。
+- `tests/trading_engine/test_safety_boundaries.py` 覆盖并保持以下边界：
+  - `ExecutionService` 必须强制 paper-only。
+  - `config/trading_engine.yaml` 默认 `real_trading_enabled=false`。
+  - IBKR / Alpaca adapter stub 调用 `submit_order` 必须抛出明确错误。
+  - trading_engine 外部的趋势分析、日报和 dashboard 模块不得直接 import broker adapter。
+  - 所有 trading daily report 必须包含 `production_effect=none`。
+  - 测试不得读取真实券商 API key 或环境变量。
+- `tests/trading_engine/test_audit_integrity.py` 覆盖 audit log 完整性：
+  - approved intent 可用 `intent_id` 串起 order intent、risk result、order、
+    execution report、fill 和 portfolio snapshot。
+  - rejected intent 不得出现 broker order 或 fill。
+  - JSONL 每行必须包含 timestamp、run_id、strategy_id、schema version 和
+    intent lineage 字段。
+  - `replay_intent_audit_trace` 可读取单个 `intent_id` 的完整审计轨迹。
+  - 测试覆盖 approved / rejected / filled / open 四种情况。
 - `python scripts/run_paper_trading_demo.py --date 2026-05-17` 可生成：
   - JSONL audit log
   - paper order / fill / portfolio snapshot
@@ -93,3 +108,15 @@ OrderIntent -> PreTradeRiskChecker -> ExecutionService -> PaperBroker -> AuditLo
 
 - 2026-05-17：新增任务和需求文档，进入 paper trading MVP 实现。当前设计选择 `src/ai_trading_system/trading_engine`，保持与既有趋势预测系统模块隔离。
 - 2026-05-17：MVP 实现完成并进入 VALIDATING。新增 `config/trading_engine.yaml`、独立 schema/risk/portfolio/execution/audit/report/broker stub 模块、`scripts/run_paper_trading_demo.py` 和 `tests/trading_engine`；默认 demo 生成 3 个 OrderIntent、风控通过 2 / 拒绝 1、提交 2 个 paper order、成交 1 / 未成交 1，并输出 `reports/trading_daily/2026-05-17.md` 与 `data/trading_engine/audit/*/2026-05-17.jsonl`。验证通过 `pytest -q`（595 passed）、`ruff check src tests scripts`、目标 mypy、`git diff --check` 和 demo smoke。真实 broker adapter 仍只保留 stub，不读取 API key，不实现真实下单。
+- 2026-05-17：从验证回到实现。原因：owner 要求新增 trading_engine 安全边界测试，显式锁定 paper-only、stub 禁止下单、外部模块不得绕过 broker 边界、日报 `production_effect=none` 和测试不读取真实券商环境变量。
+- 2026-05-17：进入验证。原因：已新增
+  `tests/trading_engine/test_safety_boundaries.py`，并把 `ExecutionService`
+  运行时 broker guard、IBKR/Alpaca stub 明确错误和 trading daily report
+  `production_effect=none` 文本边界纳入测试；验证通过 trading_engine 测试、
+  全量 pytest、ruff、目标 mypy、diff check 和 demo smoke。
+- 2026-05-17：继续保持验证。原因：已新增 `replay_intent_audit_trace` 和
+  `tests/trading_engine/test_audit_integrity.py`；audit JSONL 顶层写入
+  `intent_id` / `related_intent_ids`，新增 `execution_report_log`，可按
+  `intent_id` 回放 approved、rejected、filled、open 审计轨迹；验证通过 audit
+  integrity 测试、trading_engine 测试、全量 pytest、ruff、目标 mypy、diff check
+  和 demo smoke。

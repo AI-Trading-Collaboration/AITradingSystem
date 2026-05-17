@@ -379,7 +379,7 @@ flowchart TD
         TERISK["PreTradeRiskChecker<br/>kill switch、asset/order type、confidence、notional、仓位、现金、重复订单、事件 blackout"]
         TEBR["PaperBroker<br/>LIMIT order submit/cancel/query、market snapshot fill simulation"]
         TEPORT["PaperPortfolio / PortfolioState<br/>cash、position、avg cost、realized/unrealized PnL"]
-        TEAUD["data/trading_engine/audit/*/*.jsonl<br/>order intent、risk check、order、fill、portfolio snapshot"]
+        TEAUD["data/trading_engine/audit/*/*.jsonl<br/>order intent、risk check、order、execution report、fill、portfolio snapshot；intent_id lineage 可 replay"]
         TERPT["reports/trading_daily/YYYY-MM-DD.md<br/>paper trading 执行复盘；production_effect=none"]
     end
 
@@ -1438,7 +1438,7 @@ flowchart TD
 |Paper trading 配置|`config/trading_engine.yaml`|登记第二交易引擎 MVP 的 paper-only mode、`real_trading_enabled=false`、风险阈值、policy owner/version/status/rationale/validation/review condition、初始 cash、commission 和 slippage；这些阈值是 pilot baseline，不是实盘校准结论；真实交易接入前必须另行设计和审批|已实现基础版|
 |Paper trading engine|`src/ai_trading_system/trading_engine/`|独立交易执行子系统；只接受标准 `OrderIntent`，通过 `PreTradeRiskChecker` 聚合 kill switch、asset/order type、side/short sell、confidence、单笔 notional、单标的仓位、总 exposure、cash、重复订单和事件 blackout；`ExecutionService` 是唯一执行入口，内部强制风控并提交到 `PaperBroker`；不反向依赖现有趋势评分内部实现|已实现基础版|
 |Paper trading demo|`python scripts/run_paper_trading_demo.py --date YYYY-MM-DD`|从模拟趋势候选构造 `OrderIntent`，执行 `OrderIntent -> RiskCheck -> PaperBroker -> Fill simulation -> PortfolioState -> TradingDailyReport` 闭环；默认输出 JSONL 审计日志和 `reports/trading_daily/YYYY-MM-DD.md`；不读取真实 broker API key，不执行真实订单|已实现基础版|
-|Paper trading 审计日志|`data/trading_engine/audit/{order_intent_log,risk_check_log,order_log,fill_log,portfolio_snapshot}/YYYY-MM-DD.jsonl`|每条记录包含 timestamp、run_id、strategy_id、schema_version、source object id 和 payload；用于回答交易意图为何生成、风控为何放行或拦截、订单是否提交、是否成交、成交价和组合状态如何变化|已实现基础版|
+|Paper trading 审计日志|`data/trading_engine/audit/{order_intent_log,risk_check_log,order_log,execution_report_log,fill_log,portfolio_snapshot}/YYYY-MM-DD.jsonl`|每条记录包含 timestamp、run_id、strategy_id、schema_version、source object id、payload 和 `intent_id` / `related_intent_ids` lineage 字段；`replay_intent_audit_trace` 可按单个 `intent_id` 读取完整轨迹，用于回答交易意图为何生成、风控为何放行或拦截、订单是否提交、执行报告状态、是否成交、成交价和组合状态如何变化；rejected intent 不应出现 broker order 或 fill|已实现基础版|
 |Paper trading 日报|`reports/trading_daily/YYYY-MM-DD.md`|中文 paper trading 执行复盘，列出当日 OrderIntent、风控通过/拒绝、PaperBroker 订单、成交/未成交、持仓、cash、exposure、PnL、审计目录、数据质量状态和人工关注事项；固定声明 `production_effect=none`，不是实盘交易指令|已实现基础版|
 |反馈闭环复核|`aits feedback loop-review`|按复核窗口汇总 market evidence、decision snapshots、decision_outcomes、prediction_outcomes、decision_causal_chains、decision_learning_queue、rule_experiments 和 task register 状态；声明 `ai_after_chatgpt` 市场阶段和可执行/需复核/研究用途边界|已实现基础版|
 |反馈闭环复核报告|`outputs/reports/feedback_loop_review_YYYY-MM-DD.md`|中文周期报告输出新证据、快照、decision/prediction outcome、因果链、学习队列、规则候选、blocked task 和状态统计；prediction/shadow 样本不足时只标记研究用途，不直接生成调仓建议，也不自动修改生产规则|已实现基础版|
