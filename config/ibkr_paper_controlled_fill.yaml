@@ -22,3 +22,4 @@ status_timeout_seconds: 30.0
 cancel_timeout_seconds: 10.0
 exchange: SMART
 currency: USD
+exchange_timezone: US/Eastern

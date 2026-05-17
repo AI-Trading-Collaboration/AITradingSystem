@@ -44,6 +44,14 @@ def main() -> None:
         required=True,
         help="Manual LIMIT price confirmed by the operator before running.",
     )
+    parser.add_argument(
+        "--allow-outside-rth-diagnostic",
+        action="store_true",
+        help=(
+            "Allow a diagnostic controlled fill submission outside regular trading hours. "
+            "The report remains LIMITED and marks outside_rth_override=true."
+        ),
+    )
     args = parser.parse_args()
 
     payload = run_ibkr_paper_controlled_fill_test(
@@ -54,9 +62,13 @@ def main() -> None:
         side=args.side,
         quantity=args.quantity,
         limit_price=args.limit_price,
+        allow_outside_rth_diagnostic=args.allow_outside_rth_diagnostic,
     )
     print(f"Controlled fill status：{payload['test_status']}")
     print(f"Account：{payload['account_id_masked']}")
+    print(f"Market session：{payload['market_session_status']}")
+    print(f"Controlled fill submission：{payload['controlled_fill_submission']}")
+    print(f"Outside RTH override：{payload['outside_rth_override']}")
     print(f"Fill seen：{payload['fill_seen']}")
     print(f"Avg fill price：{payload['avg_fill_price']}")
     print(f"Cancel requested：{payload['cancel_requested']}")

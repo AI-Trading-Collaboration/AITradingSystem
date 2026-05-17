@@ -28,6 +28,12 @@ from ai_trading_system.trading_engine.brokers.ibkr_readonly import (
     sanitize_ibkr_payload,
 )
 from ai_trading_system.trading_engine.execution.paper_broker import PaperBroker
+from ai_trading_system.trading_engine.market_data.market_session_guard import (
+    FALLBACK_UNKNOWN_SOURCE,
+    MarketSessionGuardResult,
+    MarketSessionStatus,
+    evaluate_market_session,
+)
 from ai_trading_system.trading_engine.schemas.market import MarketSnapshot
 from ai_trading_system.trading_engine.schemas.order_intent import (
     AssetType,
@@ -55,6 +61,12 @@ _CONTEXTUAL_BROKER_ORDER_ID_LABEL = (
 )
 _JSON_BROKER_ORDER_ID_KEY = r"(?:broker_order_id|orderId|order_id|permId|perm_id)"
 _MIN_GLOBAL_STRING_BROKER_ID_LENGTH = 4
+DEFAULT_CONTROLLED_FILL_EXCHANGE_TIMEZONE = "US/Eastern"
+_SESSION_GUARD_ISSUE_CODES = {
+    MarketSessionStatus.CLOSED: "market_session_closed",
+    MarketSessionStatus.OUTSIDE_RTH: "outside_regular_trading_hours",
+    MarketSessionStatus.UNKNOWN: "market_session_unknown",
+}
 
 
 class ControlledFillStatus(StrEnum):
@@ -87,6 +99,7 @@ class ControlledFillConfig(BaseModel):
     cancel_timeout_seconds: float = Field(default=10.0, ge=0.0, le=120.0)
     exchange: str = "SMART"
     currency: str = "USD"
+    exchange_timezone: str = DEFAULT_CONTROLLED_FILL_EXCHANGE_TIMEZONE
 
     @model_validator(mode="after")
     def normalize_config(self) -> Self:
@@ -97,6 +110,9 @@ class ControlledFillConfig(BaseModel):
         self.allowed_symbols = [symbol.strip().upper() for symbol in self.allowed_symbols]
         self.exchange = self.exchange.strip().upper()
         self.currency = self.currency.strip().upper()
+        self.exchange_timezone = self.exchange_timezone.strip() or (
+            DEFAULT_CONTROLLED_FILL_EXCHANGE_TIMEZONE
+        )
         return self
 
 
@@ -125,6 +141,8 @@ def run_ibkr_paper_controlled_fill_test(
     margin: bool = False,
     market_snapshot: MarketSnapshot | Mapping[str, Any] | None = None,
     prices_path: Path | str | None = None,
+    allow_outside_rth_diagnostic: bool = False,
+    session_as_of: datetime | None = None,
 ) -> dict[str, Any]:
     config: ControlledFillConfig | None = None
     adapter: IBKRPaperOrderLifecycleAdapter | None = None
@@ -132,6 +150,7 @@ def run_ibkr_paper_controlled_fill_test(
     raw_broker_order_ids: list[str] = []
     stage = "load_config"
     payload = _base_payload(as_of=as_of, config_path=Path(config_path))
+    payload["outside_rth_override"] = bool(allow_outside_rth_diagnostic)
 
     try:
         config = load_controlled_fill_config(config_path)
@@ -198,6 +217,56 @@ def run_ibkr_paper_controlled_fill_test(
                 config=config,
                 raw_broker_order_ids=raw_broker_order_ids,
             )
+
+        stage = "market_session_guard"
+        session_result = _market_session_guard_result(
+            adapter=adapter,
+            request=request,
+            config=config,
+            as_of=session_as_of or datetime.now(tz=UTC),
+        )
+        _merge_market_session_guard(payload, session_result)
+        if not session_result.can_submit_controlled_fill:
+            issue_code = _session_guard_issue_code(session_result.market_session_status)
+            override_allowed = (
+                allow_outside_rth_diagnostic
+                and session_result.market_session_status == MarketSessionStatus.OUTSIDE_RTH
+            )
+            _add_issue(
+                payload,
+                LifecycleIssue(
+                    code=issue_code,
+                    severity="LIMITED" if override_allowed else "BLOCK",
+                    message=(
+                        "outside_rth_override=true; fill interpretation is limited"
+                        if override_allowed
+                        else "Controlled fill submission blocked by market session guard."
+                    ),
+                    details={
+                        "market_session_status": session_result.market_session_status.value,
+                        "session_guard_reason": session_result.reason,
+                        "outside_rth_override": bool(allow_outside_rth_diagnostic),
+                    },
+                ),
+            )
+            if override_allowed:
+                payload["controlled_fill_submission"] = (
+                    "submitted_with_outside_rth_diagnostic_override"
+                )
+                payload["fill_interpretation"] = "limited"
+            else:
+                payload["controlled_fill_submission"] = "blocked_by_session_guard"
+                payload["test_status"] = ControlledFillStatus.BLOCK.value
+                return _write_outputs(
+                    payload=payload,
+                    as_of=as_of,
+                    output_dir=Path(output_dir),
+                    config=config,
+                    raw_broker_order_ids=raw_broker_order_ids,
+                )
+        else:
+            payload["controlled_fill_submission"] = "submitted"
+            payload["fill_interpretation"] = "regular_session"
 
         order_intent = _order_intent_from_request(request, as_of=as_of)
         payload["order_intent"] = order_intent.model_dump(mode="json")
@@ -298,7 +367,9 @@ def run_ibkr_paper_controlled_fill_test(
         if adapter is not None and submitted_order is not None and not payload["cancel_requested"]:
             payload["cancel_requested"] = _try_cancel_after_error(adapter, submitted_order, payload)
         severity: Literal["BLOCK", "ERROR"] = (
-            "BLOCK" if stage in {"load_config", "config_safety", "order_safety"} else "ERROR"
+            "BLOCK"
+            if stage in {"load_config", "config_safety", "order_safety", "market_session_guard"}
+            else "ERROR"
         )
         _add_issue(
             payload,
@@ -345,6 +416,9 @@ def render_controlled_fill_markdown(payload: dict[str, Any]) -> str:
         f"- trading_mode={payload['trading_mode']}",
         f"- account_id_masked：`{payload['account_id_masked']}`",
         f"- manual_cli_only：{str(payload.get('manual_cli_only')).lower()}",
+        f"- controlled_fill_submission：{payload.get('controlled_fill_submission')}",
+        f"- outside_rth_override：{str(payload.get('outside_rth_override')).lower()}",
+        f"- fill_interpretation：{payload.get('fill_interpretation')}",
         (
             "- 安全边界：这是 IBKR Paper controlled fill test，不是实盘交易，"
             "不是 production 自动交易；成交也只是 Paper account 模拟成交，"
@@ -354,6 +428,18 @@ def render_controlled_fill_markdown(payload: dict[str, Any]) -> str:
         "## Order",
         "",
         _json_block(payload.get("submitted_order") or payload.get("requested_order", {})),
+        "",
+        "## Market Session Guard",
+        "",
+        f"- market_session_status：{payload.get('market_session_status')}",
+        f"- exchange_timezone：{payload.get('exchange_timezone')}",
+        f"- trading_hours_source：{payload.get('trading_hours_source')}",
+        f"- liquid_hours_source：{payload.get('liquid_hours_source')}",
+        f"- session_guard_reason：{payload.get('session_guard_reason')}",
+        (
+            "- 解释：非 regular session 下 `PreSubmitted` / no-fill 不等于 fill failure；"
+            "不应归因于 `PaperBroker` fill model。"
+        ),
         "",
         "## IBKR Paper Fill",
         "",
@@ -413,6 +499,17 @@ def _base_payload(*, as_of: date, config_path: Path) -> dict[str, Any]:
         "trading_mode": "unknown",
         "controlled_fill_enabled": False,
         "manual_cli_only": True,
+        "market_session_status": MarketSessionStatus.UNKNOWN.value,
+        "can_submit_controlled_fill": False,
+        "market_session_source": FALLBACK_UNKNOWN_SOURCE,
+        "exchange_timezone": DEFAULT_CONTROLLED_FILL_EXCHANGE_TIMEZONE,
+        "trading_hours_source": FALLBACK_UNKNOWN_SOURCE,
+        "liquid_hours_source": FALLBACK_UNKNOWN_SOURCE,
+        "controlled_fill_submission": "not_evaluated",
+        "outside_rth_override": False,
+        "session_guard_reason": "not_evaluated",
+        "session_guard_checked_at": None,
+        "fill_interpretation": "not_evaluated",
         "production_surface_impact": {
             "daily_run": "none",
             "dashboard": "none",
@@ -456,6 +553,7 @@ def _merge_config_metadata(payload: dict[str, Any], config: ControlledFillConfig
             "trading_mode": config.trading_mode,
             "controlled_fill_enabled": config.controlled_fill_enabled,
             "account_id_masked": mask_account_id(config.account_id),
+            "exchange_timezone": config.exchange_timezone,
         }
     )
 
@@ -595,6 +693,113 @@ def _requested_order_payload(request: IBKRPaperOrderRequest) -> dict[str, Any]:
         "limit_price": request.limit_price,
         "production_effect": CONTROLLED_FILL_PRODUCTION_EFFECT,
     }
+
+
+def _market_session_guard_result(
+    *,
+    adapter: IBKRPaperOrderLifecycleAdapter,
+    request: IBKRPaperOrderRequest,
+    config: ControlledFillConfig,
+    as_of: datetime,
+) -> MarketSessionGuardResult:
+    try:
+        contract_details = adapter.get_contract_details(request.symbol)
+    except Exception as exc:
+        return _unknown_market_session_result(
+            symbol=request.symbol,
+            as_of=as_of,
+            exchange_timezone=config.exchange_timezone,
+            reason=(
+                "IBKR contract details request failed: "
+                f"{sanitize_ibkr_payload(str(exc), account_id=config.account_id)}"
+            ),
+        )
+
+    first_detail = _first_contract_detail(contract_details)
+    trading_hours = _contract_detail_value(first_detail, "tradingHours", "trading_hours")
+    liquid_hours = _contract_detail_value(first_detail, "liquidHours", "liquid_hours")
+    exchange_timezone = (
+        _contract_detail_value(first_detail, "timeZoneId", "timeZoneID", "time_zone_id")
+        or config.exchange_timezone
+    )
+    return evaluate_market_session(
+        symbol=request.symbol,
+        as_of=as_of,
+        trading_hours=trading_hours,
+        liquid_hours=liquid_hours,
+        exchange_timezone=exchange_timezone,
+    )
+
+
+def _unknown_market_session_result(
+    *,
+    symbol: str,
+    as_of: datetime,
+    exchange_timezone: str,
+    reason: str,
+) -> MarketSessionGuardResult:
+    return MarketSessionGuardResult(
+        symbol=symbol,
+        checked_at=as_of.isoformat(),
+        market_session_status=MarketSessionStatus.UNKNOWN,
+        can_submit_controlled_fill=False,
+        reason=reason,
+        source=FALLBACK_UNKNOWN_SOURCE,
+        exchange_timezone=exchange_timezone,
+        trading_hours_source=FALLBACK_UNKNOWN_SOURCE,
+        liquid_hours_source=FALLBACK_UNKNOWN_SOURCE,
+    )
+
+
+def _first_contract_detail(contract_details: Any) -> Any:
+    if isinstance(contract_details, Sequence) and not isinstance(
+        contract_details, str | bytes | bytearray
+    ):
+        return contract_details[0] if contract_details else None
+    return contract_details
+
+
+def _contract_detail_value(contract_details: Any, *names: str) -> str | None:
+    if contract_details is None:
+        return None
+    if isinstance(contract_details, Mapping):
+        normalized = {str(key).lower(): value for key, value in contract_details.items()}
+        for name in names:
+            value = contract_details.get(name)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+            value = normalized.get(name.lower())
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+        return None
+    for name in names:
+        value = getattr(contract_details, name, None)
+        if isinstance(value, str) and value.strip():
+            return value.strip()
+    return None
+
+
+def _merge_market_session_guard(
+    payload: dict[str, Any],
+    session_result: MarketSessionGuardResult,
+) -> None:
+    session_payload = session_result.as_payload()
+    payload.update(
+        {
+            "market_session_status": session_payload["market_session_status"],
+            "can_submit_controlled_fill": session_payload["can_submit_controlled_fill"],
+            "market_session_source": session_payload["source"],
+            "exchange_timezone": session_payload["exchange_timezone"],
+            "trading_hours_source": session_payload["trading_hours_source"],
+            "liquid_hours_source": session_payload["liquid_hours_source"],
+            "session_guard_reason": session_payload["reason"],
+            "session_guard_checked_at": session_payload["checked_at"],
+        }
+    )
+
+
+def _session_guard_issue_code(status: MarketSessionStatus) -> str:
+    return _SESSION_GUARD_ISSUE_CODES.get(status, "market_session_unknown")
 
 
 def _order_intent_from_request(request: IBKRPaperOrderRequest, *, as_of: date) -> OrderIntent:

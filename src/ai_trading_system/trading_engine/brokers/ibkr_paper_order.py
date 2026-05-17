@@ -350,6 +350,26 @@ class IBKRPaperOrderLifecycleAdapter:
         fills = _extract_fills(trade)
         return sanitize_ibkr_payload(fills, account_id=self.config.account_id)
 
+    def get_contract_details(self, symbol: str) -> Any:
+        client = self._require_client()
+        direct = getattr(client, "get_contract_details", None)
+        if callable(direct):
+            return sanitize_ibkr_payload(direct(symbol), account_id=self.config.account_id)
+
+        req_contract_details = getattr(client, "reqContractDetails", None)
+        if not callable(req_contract_details):
+            return None
+        contract = _stock_contract(
+            symbol,
+            exchange=self.config.exchange,
+            currency=self.config.currency,
+        )
+        try:
+            raw_details = req_contract_details(contract)
+        except TypeError:
+            raw_details = req_contract_details(contract, [])
+        return sanitize_ibkr_payload(raw_details, account_id=self.config.account_id)
+
     def get_position_quantity(self, symbol: str) -> float | None:
         client = self._require_client()
         for method_name in ("positions", "reqPositions"):

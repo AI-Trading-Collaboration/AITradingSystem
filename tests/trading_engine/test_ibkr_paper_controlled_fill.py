@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo
 
 import pytest
 import yaml
@@ -24,6 +25,12 @@ SOURCE_PATHS = [
     / "trading_engine"
     / "brokers"
     / "ibkr_paper_controlled_fill.py",
+    PROJECT_ROOT
+    / "src"
+    / "ai_trading_system"
+    / "trading_engine"
+    / "market_data"
+    / "market_session_guard.py",
     PROJECT_ROOT / "scripts" / "run_ibkr_paper_controlled_fill_test.py",
 ]
 CONTROLLED_FILL_NO_FILL_FIXTURE = (
@@ -66,6 +73,7 @@ def test_default_controlled_fill_config_fails_closed() -> None:
     assert config.allow_margin is False
     assert config.allow_short is False
     assert config.require_manual_limit_price is True
+    assert config.exchange_timezone == "US/Eastern"
 
 
 def test_controlled_fill_disabled_fails_closed_before_network(tmp_path: Path) -> None:
@@ -151,6 +159,9 @@ def test_fill_seen_true_outputs_fill_report_and_local_comparison(tmp_path: Path)
     assert payload["quantity"] == 1
     assert payload["limit_price"] == 401.25
     assert payload["fill_seen"] is True
+    assert payload["market_session_status"] == "REGULAR"
+    assert payload["controlled_fill_submission"] == "submitted"
+    assert payload["outside_rth_override"] is False
     assert payload["fill_quantity"] == 1.0
     assert payload["avg_fill_price"] == 401.25
     assert payload["fill_time"] == "2026-05-17T14:31:00Z"
@@ -174,6 +185,8 @@ def test_fill_seen_false_cancels_and_outputs_limited(tmp_path: Path) -> None:
     payload, client = _run_with_mock(tmp_path)
 
     assert payload["test_status"] == "LIMITED"
+    assert payload["market_session_status"] == "REGULAR"
+    assert payload["controlled_fill_submission"] == "submitted"
     assert payload["fill_seen"] is False
     assert payload["fill_quantity"] == 0.0
     assert payload["cancel_requested"] is True
@@ -202,6 +215,91 @@ def test_missing_market_snapshot_marks_insufficient_market_data(tmp_path: Path) 
         "missing_reliable_market_snapshot"
     )
     assert "insufficient_market_data" in _issue_codes(payload)
+
+
+def test_closed_market_session_blocks_before_submit_order(tmp_path: Path) -> None:
+    payload, client = _run_with_mock(
+        tmp_path,
+        client=MockControlledFillClient(
+            contract_details=[
+                {
+                    "tradingHours": "20260518:CLOSED",
+                    "liquidHours": "20260518:CLOSED",
+                    "timeZoneId": "US/Eastern",
+                }
+            ]
+        ),
+    )
+
+    assert payload["test_status"] == "BLOCK"
+    assert payload["market_session_status"] == "CLOSED"
+    assert payload["controlled_fill_submission"] == "blocked_by_session_guard"
+    assert payload["session_guard_reason"] == (
+        "IBKR tradingHours reports CLOSED for the exchange date"
+    )
+    assert _issue_codes(payload) == ["market_session_closed"]
+    assert client.contract_details_calls == 1
+    assert client.place_order_calls == 0
+    assert client.cancel_order_calls == 0
+
+
+def test_outside_regular_trading_hours_blocks_before_submit_order(tmp_path: Path) -> None:
+    payload, client = _run_with_mock(
+        tmp_path,
+        session_as_of=datetime(2026, 5, 18, 8, 0, tzinfo=ZoneInfo("US/Eastern")),
+    )
+
+    assert payload["test_status"] == "BLOCK"
+    assert payload["market_session_status"] == "OUTSIDE_RTH"
+    assert payload["controlled_fill_submission"] == "blocked_by_session_guard"
+    assert _issue_codes(payload) == ["outside_regular_trading_hours"]
+    assert client.place_order_calls == 0
+
+
+def test_unknown_market_session_blocks_before_submit_order(tmp_path: Path) -> None:
+    payload, client = _run_with_mock(
+        tmp_path,
+        client=MockControlledFillClient(contract_details=[]),
+    )
+
+    assert payload["test_status"] == "BLOCK"
+    assert payload["market_session_status"] == "UNKNOWN"
+    assert payload["trading_hours_source"] == "fallback_unknown"
+    assert payload["liquid_hours_source"] == "fallback_unknown"
+    assert payload["controlled_fill_submission"] == "blocked_by_session_guard"
+    assert _issue_codes(payload) == ["market_session_unknown"]
+    assert client.place_order_calls == 0
+
+
+def test_outside_rth_diagnostic_override_can_submit_but_limits_report(
+    tmp_path: Path,
+) -> None:
+    payload, client = _run_with_mock(
+        tmp_path,
+        client=MockControlledFillClient(initial_status="Filled", include_fill=True),
+        market_snapshot={
+            "open": 401.25,
+            "high": 402.0,
+            "low": 401.0,
+            "last": 401.5,
+        },
+        allow_outside_rth_diagnostic=True,
+        session_as_of=datetime(2026, 5, 18, 8, 0, tzinfo=ZoneInfo("US/Eastern")),
+    )
+    markdown_text = Path(payload["output_paths"]["markdown"]).read_text(encoding="utf-8")
+
+    assert payload["test_status"] == "LIMITED"
+    assert payload["production_effect"] == "none"
+    assert payload["market_session_status"] == "OUTSIDE_RTH"
+    assert payload["controlled_fill_submission"] == (
+        "submitted_with_outside_rth_diagnostic_override"
+    )
+    assert payload["outside_rth_override"] is True
+    assert payload["fill_interpretation"] == "limited"
+    assert "outside_regular_trading_hours" in _issue_codes(payload)
+    assert "fill interpretation is limited" in json.dumps(payload)
+    assert "非 regular session 下 `PreSubmitted` / no-fill 不等于 fill failure" in markdown_text
+    assert client.place_order_calls == 1
 
 
 def test_account_id_and_broker_order_id_are_redacted_in_outputs(tmp_path: Path) -> None:
@@ -470,12 +568,25 @@ class MockControlledFillClient:
         initial_status: str = "Submitted",
         include_fill: bool = False,
         order_id: int = 101,
+        contract_details: list[dict[str, Any]] | None = None,
     ) -> None:
         self.initial_status = initial_status
         self.include_fill = include_fill
         self.order_id = order_id
+        self.contract_details = (
+            contract_details
+            if contract_details is not None
+            else [
+                {
+                    "tradingHours": "20260518:0400-20260518:2000",
+                    "liquidHours": "20260518:0930-20260518:1600",
+                    "timeZoneId": "US/Eastern",
+                }
+            ]
+        )
         self.connect_calls = 0
         self.disconnect_calls = 0
+        self.contract_details_calls = 0
         self.place_order_calls = 0
         self.cancel_order_calls = 0
         self.wait_calls = 0
@@ -518,6 +629,12 @@ class MockControlledFillClient:
 
     def positions(self) -> list[dict[str, Any]]:
         return []
+
+    def reqContractDetails(self, contract: Any) -> list[dict[str, Any]]:
+        self.contract_details_calls += 1
+        symbol = contract["symbol"] if isinstance(contract, dict) else contract.symbol
+        assert symbol == "NVDA"
+        return self.contract_details
 
     def placeOrder(self, contract: Any, order: Any) -> MockTrade:
         self.place_order_calls += 1
@@ -611,6 +728,10 @@ def _run_with_mock(
         asset_type=overrides.pop("asset_type", "stock"),
         order_type=overrides.pop("order_type", "LIMIT"),
         time_in_force=overrides.pop("time_in_force", "DAY"),
+        session_as_of=overrides.pop(
+            "session_as_of",
+            datetime(2026, 5, 18, 10, 0, tzinfo=ZoneInfo("US/Eastern")),
+        ),
         **overrides,
     )
     return payload, mock_client

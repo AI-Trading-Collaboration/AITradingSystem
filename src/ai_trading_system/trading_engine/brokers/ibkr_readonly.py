@@ -30,6 +30,12 @@ _SENSITIVE_KEY_FRAGMENTS = (
     "session",
     "cookie",
 )
+_NON_SECRET_SESSION_KEYS = {
+    "market_session_status",
+    "market_session_source",
+    "session_guard_reason",
+    "session_guard_checked_at",
+}
 _ACCOUNT_KEY_FRAGMENTS = ("account", "acct")
 _CASH_SUMMARY_TAGS = {
     "availablefunds",
@@ -435,7 +441,9 @@ def _sanitize_value(value: Any, *, account_id: str) -> Any:
         for key, item in value.items():
             key_text = str(key)
             normalized_key = key_text.lower().replace("-", "_")
-            if any(fragment in normalized_key for fragment in _SENSITIVE_KEY_FRAGMENTS):
+            if normalized_key in _NON_SECRET_SESSION_KEYS:
+                sanitized[key_text] = _sanitize_value(item, account_id=account_id)
+            elif any(fragment in normalized_key for fragment in _SENSITIVE_KEY_FRAGMENTS):
                 sanitized[key_text] = "[REDACTED]"
             elif any(
                 fragment in normalized_key for fragment in _ACCOUNT_KEY_FRAGMENTS
