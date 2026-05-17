@@ -1,6 +1,6 @@
 # TRADING-012：PaperBroker Fill Model Calibration Diagnostics
 
-最后更新：2026-05-17
+最后更新：2026-05-18
 
 关联任务：`TRADING-012`
 
