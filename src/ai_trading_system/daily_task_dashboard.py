@@ -188,6 +188,7 @@ def build_daily_task_dashboard_payload(
         "paper_trading_trend": _paper_trading_trend(report),
         "paper_signal_quality": _paper_signal_quality_summary(report),
         "shadow_parameter_impact": _shadow_parameter_impact_summary(report),
+        "weight_adjustment_candidates": _weight_adjustment_candidates_summary(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -281,6 +282,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_paper_trading_trend(report),
             _render_paper_signal_quality(report),
             _render_shadow_parameter_impact(report),
+            _render_weight_adjustment_candidates(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -941,6 +943,11 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
             "shadow_parameter_impact_json",
             "shadow parameter impact JSON",
             report.reports_dir / f"shadow_parameter_impact_{suffix}.json",
+        ),
+        (
+            "weight_adjustment_candidates_json",
+            "weight adjustment candidates JSON",
+            report.reports_dir / f"weight_adjustment_candidates_{suffix}.json",
         ),
     )
     for artifact_id, label, path in extras:
@@ -1795,6 +1802,63 @@ def _shadow_impact_window_sample_counts(payload: TraceRecord) -> TraceRecord:
             "unknown": counts.get("unknown", 0),
         }
     return sample_counts
+
+
+def _weight_adjustment_candidates_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    suffix = report.as_of.isoformat()
+    path = report.reports_dir / f"weight_adjustment_candidates_{suffix}.json"
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "weight_adjustment_candidates":
+        return {
+            "status": "MISSING",
+            "gate_status": "LIMITED",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "candidate_count": 0,
+            "top_candidate_id": "",
+            "main_blocked_by": "missing",
+            "blocked_by": ["missing"],
+            "production_effect": ProductionEffect.NONE.value,
+            "mode": "observe_only",
+            "risk": "weight adjustment candidate JSON 缺失；dashboard 不生成候选或调参。",
+        }
+    summary = _mapping_value(payload, "summary")
+    gate = _mapping_value(payload, "candidate_gate")
+    outputs = _mapping_value(payload, "outputs")
+    report_path = Path(
+        _string_value(outputs.get("markdown")) or str(path.with_suffix(".md")),
+    )
+    report_href = _report_href(report_path, report.reports_dir) if report_path.exists() else ""
+    production_effect = _string_value(payload.get("production_effect")) or "none"
+    gate_status = _string_value(payload.get("gate_status")) or _string_value(
+        summary.get("gate_status")
+    )
+    blocked_by = _strings(gate.get("blocked_by"))
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("weight adjustment candidates production_effect 不是 none。")
+    if _string_value(payload.get("mode")) != "observe_only":
+        risks.append("weight adjustment candidates mode 不是 observe_only。")
+    if blocked_by:
+        risks.append(f"candidate_gate 限制：{', '.join(blocked_by)}。")
+    return {
+        "status": gate_status or "LIMITED",
+        "gate_status": gate_status or "LIMITED",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "candidate_count": summary.get("candidate_count", payload.get("candidate_count", 0)),
+        "top_candidate_id": summary.get("top_candidate_id", payload.get("top_candidate_id", "")),
+        "main_blocked_by": summary.get("main_blocked_by")
+        or (blocked_by[0] if blocked_by else "none"),
+        "blocked_by": blocked_by,
+        "production_effect": production_effect,
+        "mode": _string_value(payload.get("mode")) or "observe_only",
+        "risk": "；".join(risks) or "Weight adjustment candidates 当前仅作只读展示。",
+    }
 
 
 def _paper_trading_snapshot_source_counts(payload: TraceRecord) -> Counter[str]:
@@ -3198,6 +3262,51 @@ def _render_shadow_parameter_impact(report: DailyTaskDashboardReport) -> str:
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'
                 f"{_text(impact.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_weight_adjustment_candidates(report: DailyTaskDashboardReport) -> str:
+    candidates = _weight_adjustment_candidates_summary(report)
+    report_href = _string_value(candidates.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}"><span>Weight Adjustment Candidate</span>'
+        f"<small>{_text(candidates.get('gate_status', 'LIMITED'))}</small></a>"
+        if candidates.get("exists")
+        else '<span class="report-link missing"><span>Weight Adjustment Candidate</span>'
+        "<small>MISSING</small></span>"
+    )
+    blocked_by = _strings(candidates.get("blocked_by"))
+    return "\n".join(
+        [
+            '<section aria-labelledby="weight-adjustment-candidates-title">',
+            '<div class="section-head">',
+            '<h2 id="weight-adjustment-candidates-title">Weight Adjustment Candidate</h2>',
+            (
+                "<p>observe-only 权重候选入口；dashboard 只读已有 JSON，"
+                "不改变主结论、不应用参数。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("candidate_count", candidates.get("candidate_count", 0)),
+            _summary_item("top_candidate_id", candidates.get("top_candidate_id", "")),
+            _summary_item("gate_status", candidates.get("gate_status", "LIMITED")),
+            _summary_item("main blocked_by", candidates.get("main_blocked_by", "missing")),
+            _summary_item("blocked_by", "；".join(blocked_by) if blocked_by else "none"),
+            _summary_item(
+                "production_effect",
+                candidates.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(candidates.get('risk', ''))}</p>"
             ),
             '<div class="report-link-list">',
             report_link,

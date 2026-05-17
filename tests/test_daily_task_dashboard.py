@@ -39,6 +39,7 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     _write_paper_trading_summary(tmp_path, as_of)
     _write_paper_signal_quality(tmp_path, as_of)
     _write_shadow_parameter_impact(tmp_path, as_of)
+    _write_weight_adjustment_candidates(tmp_path, as_of)
 
     report = build_daily_task_dashboard_report(
         as_of=as_of,
@@ -57,6 +58,7 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert "Paper Trading Summary" in html
     assert "Paper Signal Quality" in html
     assert "Shadow Impact" in html
+    assert "Weight Adjustment Candidate" in html
     assert "observe-only" in html
     assert "只读已有 paper artifacts" in html
     assert "production_effect=<code>none</code>" in html
@@ -111,6 +113,15 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert payload["shadow_parameter_impact"]["continuous_replay_available"] is True
     assert payload["shadow_parameter_impact"]["production_effect"] == "none"
     assert payload["shadow_parameter_impact"]["observe_only"] is True
+    assert payload["weight_adjustment_candidates"]["candidate_count"] == 1
+    assert (
+        payload["weight_adjustment_candidates"]["top_candidate_id"]
+        == "weight_adjustment_candidate:2026-05-04:limited_input"
+    )
+    assert payload["weight_adjustment_candidates"]["gate_status"] == "LIMITED"
+    assert payload["weight_adjustment_candidates"]["main_blocked_by"] == "manual_approval_required"
+    assert payload["weight_adjustment_candidates"]["production_effect"] == "none"
+    assert payload["weight_adjustment_candidates"]["mode"] == "observe_only"
     investment = next(item for item in payload["key_conclusions"] if item["area"] == "投资结论")
     assert investment["primary"] == (
         "执行动作：观察；最终 AI 仓位：40%-60%；置信度：0.71；Data Gate：PASS"
@@ -1083,6 +1094,66 @@ def _write_shadow_parameter_impact(tmp_path: Path, as_of: date) -> None:
     )
     (tmp_path / f"shadow_parameter_impact_{suffix}.md").write_text(
         "# Shadow Parameter Impact Evaluation\n\n- production_effect=none\n",
+        encoding="utf-8",
+    )
+
+
+def _write_weight_adjustment_candidates(tmp_path: Path, as_of: date) -> None:
+    suffix = as_of.isoformat()
+    (tmp_path / f"weight_adjustment_candidates_{suffix}.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "weight_adjustment_candidates",
+                "as_of": suffix,
+                "generated_at": datetime(2026, 5, 4, 22, 0, tzinfo=UTC).isoformat(),
+                "mode": "observe_only",
+                "production_effect": "none",
+                "status": "LIMITED",
+                "gate_status": "LIMITED",
+                "candidate_count": 1,
+                "top_candidate_id": f"weight_adjustment_candidate:{suffix}:limited_input",
+                "outputs": {
+                    "json": str(tmp_path / f"weight_adjustment_candidates_{suffix}.json"),
+                    "markdown": str(tmp_path / f"weight_adjustment_candidates_{suffix}.md"),
+                },
+                "summary": {
+                    "candidate_count": 1,
+                    "top_candidate_id": f"weight_adjustment_candidate:{suffix}:limited_input",
+                    "gate_status": "LIMITED",
+                    "main_blocked_by": "manual_approval_required",
+                    "production_effect": "none",
+                    "mode": "observe_only",
+                },
+                "candidate_gate": {
+                    "status": "LIMITED",
+                    "blocked": True,
+                    "blocked_by": ["manual_approval_required"],
+                    "explanation": "人工复核前保持 blocked。",
+                },
+                "candidates": [
+                    {
+                        "candidate_id": f"weight_adjustment_candidate:{suffix}:limited_input",
+                        "generated_at": datetime(2026, 5, 4, 22, 0, tzinfo=UTC).isoformat(),
+                        "source_profile": {"profile_id": "production_current"},
+                        "target_profile": {"profile_id": "limited_no_change"},
+                        "parameter_changes": [],
+                        "reason_codes": ["limited_input"],
+                        "expected_effect": {"summary": "只读占位。"},
+                        "risk_notes": ["人工复核前保持 blocked。"],
+                        "blocked_by": ["manual_approval_required"],
+                        "required_validations": ["aits validate-data"],
+                        "production_effect": "none",
+                    }
+                ],
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / f"weight_adjustment_candidates_{suffix}.md").write_text(
+        "# Weight Adjustment Candidate Generator\n\n- production_effect=none\n",
         encoding="utf-8",
     )
 

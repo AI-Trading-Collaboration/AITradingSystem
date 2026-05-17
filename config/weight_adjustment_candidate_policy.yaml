@@ -1,0 +1,40 @@
+policy_id: weight_adjustment_candidate_policy
+version: 1
+status: pilot_baseline
+owner: system
+production_effect: none
+rationale: >
+  First-pass observe-only policy for generating daily weight adjustment
+  candidates from existing paper signal quality, shadow impact, replay, and
+  parameter governance artifacts without changing production weights.
+intended_effect: >
+  Allow conservative review of small weight moves toward already isolated
+  shadow profiles while preventing sparse samples, weak data quality, or paper
+  PnL from being interpreted as production evidence.
+validation_evidence: TRADING-015 unit tests and ongoing observe-only daily review.
+review_condition: >
+  Revisit thresholds after enough continuous replay, paper signal quality, and
+  shadow impact samples exist in the ai_after_chatgpt regime and before any
+  workflow beyond candidate review is considered.
+thresholds:
+  max_single_day_weight_delta: 0.02
+  target_total_weight_sum: 1.0
+  total_weight_tolerance: 0.000001
+  minimum_paper_signal_sample_count: 7
+  minimum_shadow_sample_count: 7
+  minimum_production_baseline_count: 7
+  maximum_synthetic_snapshot_ratio: 0.25
+required_validations:
+  - aits validate-data
+  - paper_signal_quality_gate
+  - shadow_parameter_impact_gate
+  - continuous_portfolio_replay
+  - parameter_governance_review
+  - manual_owner_review
+safety_boundaries:
+  manual_approval_required: true
+  allow_production_profile_write: false
+  allow_daily_dashboard_main_conclusion_change: false
+  allow_trade_trigger: false
+  allow_core_risk_gate_deletion: false
+  allow_data_quality_gate_bypass: false
