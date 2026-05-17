@@ -13,6 +13,7 @@ from ai_trading_system.trading_engine.brokers.ibkr_readonly import (
     IBKRPaperReadOnlyAdapter,
     IBKRPaperReadOnlyConfig,
     IBKRPaperReadOnlyReconciliation,
+    _ensure_asyncio_event_loop,
     load_ibkr_paper_readonly_config,
     mask_account_id,
 )
@@ -158,6 +159,27 @@ def test_reconciliation_scaffold_compares_symbol_quantity_and_cash() -> None:
     assert result.compared_positions == 1
 
 
+def test_reconciliation_accepts_ib_insync_sequence_rows() -> None:
+    portfolio = PaperPortfolio(100000.0)
+    portfolio.apply_fill(
+        symbol="NVDA",
+        side=OrderSide.BUY,
+        quantity=3,
+        price=100.0,
+        fees=0.0,
+    )
+
+    result = IBKRPaperReadOnlyReconciliation().reconcile(
+        account_summary=[["DUP***4567", "TotalCashValue", "99700", "USD", ""]],
+        positions=[["DUP***4567", {"symbol": "NVDA"}, 3, 100.0]],
+        local_portfolio=portfolio,
+    )
+
+    assert result.status == "PASS"
+    assert result.cash_summary_present is True
+    assert result.compared_positions == 1
+
+
 def test_source_does_not_read_broker_credentials() -> None:
     forbidden_fragments = (
         "os." + "environ",
@@ -182,6 +204,33 @@ def test_source_does_not_read_broker_credentials() -> None:
                 violations.append(f"{path}: {fragment}")
 
     assert violations == []
+
+
+def test_ib_insync_client_bootstrap_creates_missing_event_loop(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    created_loop = object()
+    calls: list[object] = []
+
+    def raise_missing_loop() -> None:
+        raise RuntimeError("There is no current event loop in thread 'MainThread'.")
+
+    monkeypatch.setattr(
+        "ai_trading_system.trading_engine.brokers.ibkr_readonly.asyncio.get_event_loop",
+        raise_missing_loop,
+    )
+    monkeypatch.setattr(
+        "ai_trading_system.trading_engine.brokers.ibkr_readonly.asyncio.new_event_loop",
+        lambda: created_loop,
+    )
+    monkeypatch.setattr(
+        "ai_trading_system.trading_engine.brokers.ibkr_readonly.asyncio.set_event_loop",
+        calls.append,
+    )
+
+    _ensure_asyncio_event_loop()
+
+    assert calls == [created_loop]
 
 
 class MockClient:

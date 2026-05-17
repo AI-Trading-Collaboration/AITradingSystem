@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import re
 from collections.abc import Mapping, Sequence
 from dataclasses import asdict, dataclass, is_dataclass
@@ -339,14 +340,22 @@ def sanitize_ibkr_payload(value: Any, *, account_id: str = "") -> Any:
 
 
 def _create_ibkr_client() -> Any:
+    _ensure_asyncio_event_loop()
     try:
         from ib_insync import IB
-    except ImportError as exc:
+    except (ImportError, ModuleNotFoundError) as exc:
         raise RuntimeError(
             "ib_insync is required for a real IBKR Paper read-only connection; "
             "tests should inject a mock client"
         ) from exc
     return IB()
+
+
+def _ensure_asyncio_event_loop() -> None:
+    try:
+        asyncio.get_event_loop()
+    except RuntimeError:
+        asyncio.set_event_loop(asyncio.new_event_loop())
 
 
 def _client_connected(client: Any) -> bool:
@@ -388,6 +397,7 @@ def _call_client_account_method(
 
 
 def _stock_contract(symbol: str) -> Any:
+    _ensure_asyncio_event_loop()
     try:
         from ib_insync import Stock
     except ImportError:
@@ -458,8 +468,17 @@ def _has_cash_summary(value: Any) -> bool:
                 return True
         return False
     if isinstance(jsonable, list):
+        if _looks_like_account_summary_row(jsonable):
+            return True
         return any(_has_cash_summary(item) for item in jsonable)
     return False
+
+
+def _looks_like_account_summary_row(row: list[Any]) -> bool:
+    if len(row) < 3:
+        return False
+    tag = str(row[1]).lower().replace("_", "")
+    return tag in _CASH_SUMMARY_TAGS and row[2] not in ("", None)
 
 
 def _extract_local_position_quantities(
@@ -505,6 +524,12 @@ def _extract_position_symbol(record: Any) -> str | None:
             contract_symbol = contract.get("symbol") or contract.get("localSymbol")
             if contract_symbol:
                 return str(contract_symbol)
+    if isinstance(jsonable, list) and len(jsonable) >= 2:
+        contract = jsonable[1]
+        if isinstance(contract, Mapping):
+            contract_symbol = contract.get("symbol") or contract.get("localSymbol")
+            if contract_symbol:
+                return str(contract_symbol)
     return None
 
 
@@ -519,6 +544,11 @@ def _extract_position_quantity(record: Any) -> float | None:
                 return float(raw_quantity)
             except (TypeError, ValueError):
                 return None
+    if isinstance(jsonable, list) and len(jsonable) >= 3:
+        try:
+            return float(jsonable[2])
+        except (TypeError, ValueError):
+            return None
     return None
 
 

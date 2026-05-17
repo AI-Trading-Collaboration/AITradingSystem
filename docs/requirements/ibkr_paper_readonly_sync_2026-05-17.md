@@ -85,3 +85,13 @@ IB Gateway / TWS Paper 的只读账户同步能力，不提交订单，不改变
   tests/trading_engine/test_ibkr_paper_readonly.py`、`python -m pytest
   tests/trading_engine`、`python -m pytest`、`python -m ruff check scripts src
   tests` 和 `python -m black --check scripts src tests`。
+- 2026-05-17：真实 TWS Paper validation 通过。已在本机检测到 TWS 进程和
+  `127.0.0.1:7497` API socket，修复 Python 3.14 下 `ib_insync` import 前
+  缺少 asyncio event loop 的初始化问题，并补齐 `ib_insync` AccountValue /
+  Position 序列行解析。使用 `config/ibkr_paper_readonly.local.yaml` 运行
+  `python scripts/run_ibkr_paper_readonly_snapshot.py --date 2026-05-17 --config
+  config/ibkr_paper_readonly.local.yaml`，生成
+  `outputs/reports/ibkr_paper_account_snapshot_2026-05-17.json/md`，
+  `connection_status=CONNECTED`、`snapshot_status=PASS`、
+  `reconciliation_status=PASS`、account id masked、`production_effect=none`、
+  `readonly=true`，未出现 `submit_order` / `cancel_order` / `placeOrder`。
