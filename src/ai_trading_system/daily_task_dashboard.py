@@ -189,6 +189,7 @@ def build_daily_task_dashboard_payload(
         "paper_signal_quality": _paper_signal_quality_summary(report),
         "shadow_parameter_impact": _shadow_parameter_impact_summary(report),
         "weight_adjustment_candidates": _weight_adjustment_candidates_summary(report),
+        "weight_candidate_evaluation": _weight_candidate_evaluation_summary(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -283,6 +284,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_paper_signal_quality(report),
             _render_shadow_parameter_impact(report),
             _render_weight_adjustment_candidates(report),
+            _render_weight_candidate_evaluation(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -948,6 +950,11 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
             "weight_adjustment_candidates_json",
             "weight adjustment candidates JSON",
             report.reports_dir / f"weight_adjustment_candidates_{suffix}.json",
+        ),
+        (
+            "weight_candidate_evaluation_json",
+            "weight candidate evaluation JSON",
+            report.reports_dir / f"weight_candidate_evaluation_{suffix}.json",
         ),
     )
     for artifact_id, label, path in extras:
@@ -1858,6 +1865,75 @@ def _weight_adjustment_candidates_summary(report: DailyTaskDashboardReport) -> T
         "production_effect": production_effect,
         "mode": _string_value(payload.get("mode")) or "observe_only",
         "risk": "；".join(risks) or "Weight adjustment candidates 当前仅作只读展示。",
+    }
+
+
+def _weight_candidate_evaluation_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    suffix = report.as_of.isoformat()
+    path = report.reports_dir / f"weight_candidate_evaluation_{suffix}.json"
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "weight_candidate_evaluation":
+        return {
+            "status": "MISSING",
+            "evaluation_status": "INSUFFICIENT_DATA",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "candidate_count": 0,
+            "evaluable_candidate_count": 0,
+            "top_candidate_id": "",
+            "main_blocked_by": "missing",
+            "blocked_by": ["missing"],
+            "production_effect": ProductionEffect.NONE.value,
+            "evaluation_mode": "observe_only",
+            "risk": "weight candidate evaluation JSON 缺失；dashboard 不生成评估或调参。",
+        }
+    summary = _mapping_value(payload, "summary")
+    outputs = _mapping_value(payload, "outputs")
+    selected_window = _mapping_value(
+        _mapping_value(payload, "windows"),
+        str(payload.get("selected_window_days", 30)),
+    )
+    report_path = Path(
+        _string_value(outputs.get("markdown")) or str(path.with_suffix(".md")),
+    )
+    report_href = _report_href(report_path, report.reports_dir) if report_path.exists() else ""
+    production_effect = _string_value(payload.get("production_effect")) or "none"
+    evaluation_mode = _string_value(payload.get("evaluation_mode")) or "observe_only"
+    evaluation_status = (
+        _string_value(payload.get("evaluation_status"))
+        or _string_value(summary.get("evaluation_status"))
+        or "INSUFFICIENT_DATA"
+    )
+    blocked_by = _strings(selected_window.get("blocked_by"))
+    main_blocked_by = (
+        _string_value(summary.get("main_blocked_by"))
+        or _string_value(selected_window.get("main_blocked_by"))
+        or (blocked_by[0] if blocked_by else "none")
+    )
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("weight candidate evaluation production_effect 不是 none。")
+    if evaluation_mode != "observe_only":
+        risks.append("weight candidate evaluation evaluation_mode 不是 observe_only。")
+    if blocked_by:
+        risks.append(f"evaluation gate 限制：{', '.join(blocked_by)}。")
+    return {
+        "status": evaluation_status,
+        "evaluation_status": evaluation_status,
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "candidate_count": summary.get("candidate_count", payload.get("candidate_count", 0)),
+        "evaluable_candidate_count": summary.get("evaluable_candidate_count", 0),
+        "top_candidate_id": summary.get("top_candidate_id", ""),
+        "main_blocked_by": main_blocked_by,
+        "blocked_by": blocked_by,
+        "production_effect": production_effect,
+        "evaluation_mode": evaluation_mode,
+        "risk": "；".join(risks) or "Weight candidate evaluation 当前仅作只读展示。",
     }
 
 
@@ -3307,6 +3383,56 @@ def _render_weight_adjustment_candidates(report: DailyTaskDashboardReport) -> st
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'
                 f"{_text(candidates.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_weight_candidate_evaluation(report: DailyTaskDashboardReport) -> str:
+    evaluation = _weight_candidate_evaluation_summary(report)
+    report_href = _string_value(evaluation.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}"><span>Weight Candidate Evaluation</span>'
+        f"<small>{_text(evaluation.get('evaluation_status', 'INSUFFICIENT_DATA'))}</small></a>"
+        if evaluation.get("exists")
+        else '<span class="report-link missing"><span>Weight Candidate Evaluation</span>'
+        "<small>MISSING</small></span>"
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="weight-candidate-evaluation-title">',
+            '<div class="section-head">',
+            '<h2 id="weight-candidate-evaluation-title">Weight Candidate Evaluation</h2>',
+            (
+                "<p>observe-only 权重候选评估入口；dashboard 只读已有 JSON，"
+                "不重跑评估、不应用参数、不影响主结论。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item(
+                "evaluation_status",
+                evaluation.get("evaluation_status", "INSUFFICIENT_DATA"),
+            ),
+            _summary_item("candidate_count", evaluation.get("candidate_count", 0)),
+            _summary_item(
+                "evaluable_candidate_count",
+                evaluation.get("evaluable_candidate_count", 0),
+            ),
+            _summary_item("top_candidate_id", evaluation.get("top_candidate_id", "")),
+            _summary_item("main blocked_by", evaluation.get("main_blocked_by", "missing")),
+            _summary_item(
+                "production_effect",
+                evaluation.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(evaluation.get('risk', ''))}</p>"
             ),
             '<div class="report-link-list">',
             report_link,

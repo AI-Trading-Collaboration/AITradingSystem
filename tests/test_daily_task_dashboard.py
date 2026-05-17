@@ -40,6 +40,7 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     _write_paper_signal_quality(tmp_path, as_of)
     _write_shadow_parameter_impact(tmp_path, as_of)
     _write_weight_adjustment_candidates(tmp_path, as_of)
+    _write_weight_candidate_evaluation(tmp_path, as_of)
 
     report = build_daily_task_dashboard_report(
         as_of=as_of,
@@ -59,6 +60,7 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert "Paper Signal Quality" in html
     assert "Shadow Impact" in html
     assert "Weight Adjustment Candidate" in html
+    assert "Weight Candidate Evaluation" in html
     assert "observe-only" in html
     assert "只读已有 paper artifacts" in html
     assert "production_effect=<code>none</code>" in html
@@ -122,6 +124,17 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert payload["weight_adjustment_candidates"]["main_blocked_by"] == "manual_approval_required"
     assert payload["weight_adjustment_candidates"]["production_effect"] == "none"
     assert payload["weight_adjustment_candidates"]["mode"] == "observe_only"
+    assert payload["weight_candidate_evaluation"]["evaluation_status"] == (
+        "CANDIDATE_PROMISING_BUT_LIMITED"
+    )
+    assert payload["weight_candidate_evaluation"]["candidate_count"] == 1
+    assert payload["weight_candidate_evaluation"]["evaluable_candidate_count"] == 1
+    assert (
+        payload["weight_candidate_evaluation"]["top_candidate_id"]
+        == "weight_adjustment_candidate:2026-05-04:limited_input"
+    )
+    assert payload["weight_candidate_evaluation"]["main_blocked_by"] == ("manual_approval_required")
+    assert payload["weight_candidate_evaluation"]["production_effect"] == "none"
     investment = next(item for item in payload["key_conclusions"] if item["area"] == "投资结论")
     assert investment["primary"] == (
         "执行动作：观察；最终 AI 仓位：40%-60%；置信度：0.71；Data Gate：PASS"
@@ -1154,6 +1167,92 @@ def _write_weight_adjustment_candidates(tmp_path: Path, as_of: date) -> None:
     )
     (tmp_path / f"weight_adjustment_candidates_{suffix}.md").write_text(
         "# Weight Adjustment Candidate Generator\n\n- production_effect=none\n",
+        encoding="utf-8",
+    )
+
+
+def _write_weight_candidate_evaluation(tmp_path: Path, as_of: date) -> None:
+    suffix = as_of.isoformat()
+    candidate_id = f"weight_adjustment_candidate:{suffix}:limited_input"
+    windows = {
+        str(window): {
+            "window_days": window,
+            "evaluation_status": "CANDIDATE_PROMISING_BUT_LIMITED",
+            "candidate_count": 1,
+            "evaluable_candidate_count": 1,
+            "blocked_candidate_count": 1,
+            "insufficient_data_count": 0,
+            "low_quality_data_count": 0,
+            "continuous_replay_available": True,
+            "synthetic_snapshot_ratio": 0.0,
+            "historical_ohlc_coverage": 1.0,
+            "reconciliation_pass_ratio": 1.0,
+            "paper_signal_quality_status": "OBSERVE_ONLY",
+            "shadow_impact_status": "SHADOW_PROMISING_BUT_LIMITED",
+            "replay_mode": "continuous_portfolio",
+            "max_drawdown_delta": 0.0,
+            "final_equity_delta": 100.0,
+            "exposure_delta": 0.0,
+            "concentration_delta": 0.0,
+            "blocked_by": ["manual_approval_required", "candidate_blocked"],
+            "main_blocked_by": "manual_approval_required",
+            "production_effect": "none",
+        }
+        for window in (7, 14, 30)
+    }
+    (tmp_path / f"weight_candidate_evaluation_{suffix}.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "weight_candidate_evaluation",
+                "as_of": suffix,
+                "generated_at": datetime(2026, 5, 4, 22, 5, tzinfo=UTC).isoformat(),
+                "status": "BLOCKED",
+                "evaluation_status": "CANDIDATE_PROMISING_BUT_LIMITED",
+                "evaluation_mode": "observe_only",
+                "production_effect": "none",
+                "selected_window_days": 30,
+                "outputs": {
+                    "json": str(tmp_path / f"weight_candidate_evaluation_{suffix}.json"),
+                    "markdown": str(tmp_path / f"weight_candidate_evaluation_{suffix}.md"),
+                },
+                "summary": {
+                    "evaluation_status": "CANDIDATE_PROMISING_BUT_LIMITED",
+                    "candidate_count": 1,
+                    "evaluable_candidate_count": 1,
+                    "blocked_candidate_count": 1,
+                    "insufficient_data_count": 0,
+                    "low_quality_data_count": 0,
+                    "top_candidate_id": candidate_id,
+                    "main_blocked_by": "manual_approval_required",
+                    "production_effect": "none",
+                    "evaluation_mode": "observe_only",
+                },
+                "windows": windows,
+                "candidates": [
+                    {
+                        "candidate_id": candidate_id,
+                        "source_profile": {"profile_id": "production_current"},
+                        "target_profile": {"profile_id": "limited_no_change"},
+                        "parameter_changes": [],
+                        "required_validations": ["aits validate-data", "manual_owner_review"],
+                        "evaluation_status": "CANDIDATE_PROMISING_BUT_LIMITED",
+                        "blocked": True,
+                        "blocked_by": ["manual_approval_required", "candidate_blocked"],
+                        "warnings": [],
+                        "scorecard": {"selected_window_days": 30, "windows": windows},
+                        "recommendation": {"action": "manual_review_only"},
+                        "production_effect": "none",
+                    }
+                ],
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / f"weight_candidate_evaluation_{suffix}.md").write_text(
+        "# Weight Candidate Evaluation\n\n- production_effect=none\n- observe-only=true\n",
         encoding="utf-8",
     )
 
