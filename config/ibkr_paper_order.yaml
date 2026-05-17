@@ -1,6 +1,7 @@
 # IBKR Paper order lifecycle test.
 # No passwords, tokens, API keys, session cookies, or other credentials belong in this file.
 paper_order_lifecycle_enabled: false
+ibkr_paper_comparison_enabled: false
 host: 127.0.0.1
 port: 7497
 client_id: 19010
