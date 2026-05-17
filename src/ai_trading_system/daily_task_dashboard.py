@@ -181,6 +181,7 @@ def build_daily_task_dashboard_payload(
             }
             for conclusion in _build_key_conclusions(report)
         ],
+        "paper_trading_summary": _paper_trading_summary(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -270,6 +271,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_header(report, title),
             "<main>",
             _render_key_conclusions(report),
+            _render_paper_trading_summary(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -932,6 +934,11 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
             "daily task dashboard JSON",
             report.reports_dir / f"daily_task_dashboard_{suffix}.json",
         ),
+        (
+            "paper_trading_summary_json",
+            "paper trading summary JSON",
+            report.reports_dir / f"paper_trading_summary_{suffix}.json",
+        ),
     )
     for artifact_id, label, path in extras:
         records.append(
@@ -1281,6 +1288,71 @@ def _read_evidence_dashboard_payload(report: DailyTaskDashboardReport) -> TraceR
     except json.JSONDecodeError:
         return {}
     return payload if isinstance(payload, dict) else {}
+
+
+def _paper_trading_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    suffix = report.as_of.isoformat()
+    path = report.reports_dir / f"paper_trading_summary_{suffix}.json"
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "paper_trading_summary":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "production_effect": ProductionEffect.NONE.value,
+            "generated_intents": "missing",
+            "approved": "missing",
+            "rejected": "missing",
+            "submitted": "missing",
+            "filled": "missing",
+            "open": "missing",
+            "cancelled": "missing",
+            "realized_pnl": "missing",
+            "unrealized_pnl": "missing",
+            "reconciliation_status": "MISSING",
+            "audit_log_path": "missing",
+            "report_path": "missing",
+            "report_href": "",
+            "risk": "paper trading summary JSON 缺失；dashboard 不补造执行复盘。",
+        }
+    report_path = _string_value(payload.get("report_path"))
+    audit_log_path = _string_value(payload.get("audit_log_path"))
+    return {
+        "status": _string_value(payload.get("reconciliation_status")) or "PRESENT",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "production_effect": _string_value(payload.get("production_effect")) or "none",
+        "generated_intents": payload.get("generated_intents", "missing"),
+        "approved": payload.get("approved", "missing"),
+        "rejected": payload.get("rejected", "missing"),
+        "submitted": payload.get("submitted", "missing"),
+        "filled": payload.get("filled", "missing"),
+        "open": payload.get("open", "missing"),
+        "cancelled": payload.get("cancelled", "missing"),
+        "realized_pnl": payload.get("realized_pnl", "missing"),
+        "unrealized_pnl": payload.get("unrealized_pnl", "missing"),
+        "reconciliation_status": _string_value(payload.get("reconciliation_status"))
+        or "MISSING",
+        "audit_log_path": audit_log_path or "missing",
+        "report_path": report_path or "missing",
+        "report_href": _report_href(Path(report_path), report.reports_dir)
+        if report_path
+        else "",
+        "risk": _paper_trading_summary_risk(payload),
+    }
+
+
+def _paper_trading_summary_risk(payload: TraceRecord) -> str:
+    production_effect = _string_value(payload.get("production_effect"))
+    reconciliation_status = _string_value(payload.get("reconciliation_status"))
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("paper trading summary production_effect 不是 none。")
+    if reconciliation_status in {"BLOCK", "MISSING", ""}:
+        risks.append("portfolio reconciliation 未通过或缺失。")
+    return "；".join(risks) or "未发现 paper trading 执行复盘阻断风险。"
 
 
 def _latest_shadow_iteration_summary(report: DailyTaskDashboardReport) -> TraceRecord:
@@ -2305,6 +2377,96 @@ def _render_summary(report: DailyTaskDashboardReport) -> str:
             "</section>",
         ]
     )
+
+
+def _render_paper_trading_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _paper_trading_summary(report)
+    report_href = _string_value(summary.get("report_href"))
+    summary_href = _string_value(summary.get("href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}"><span>Trading daily report</span>'
+        f"<small>{_text(summary.get('reconciliation_status', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing"><span>Trading daily report</span>'
+        "<small>MISSING</small></span>"
+    )
+    summary_link = (
+        '<a class="report-link" '
+        f'href="{_text(summary_href)}"><span>Paper summary JSON</span>'
+        f"<small>{_text(summary.get('status', 'MISSING'))}</small></a>"
+        if summary.get("exists")
+        else '<span class="report-link missing"><span>Paper summary JSON</span>'
+        "<small>MISSING</small></span>"
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="paper-trading-summary-title">',
+            '<div class="section-head">',
+            '<h2 id="paper-trading-summary-title">Paper Trading Summary</h2>',
+            (
+                "<p>只读 paper 执行复盘；production_effect 必须保持 "
+                "<code>none</code>。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("generated_intents", summary.get("generated_intents", "missing")),
+            _summary_item("approved / rejected", _count_pair(summary, "approved", "rejected")),
+            _summary_item("submitted", summary.get("submitted", "missing")),
+            _summary_item(
+                "filled / open / cancelled",
+                _count_triplet(summary, "filled", "open", "cancelled"),
+            ),
+            _summary_item("realized_pnl", _format_money_value(summary.get("realized_pnl"))),
+            _summary_item(
+                "unrealized_pnl",
+                _format_money_value(summary.get("unrealized_pnl")),
+            ),
+            _summary_item(
+                "reconciliation_status",
+                summary.get("reconciliation_status", "MISSING"),
+            ),
+            _summary_item("production_effect", summary.get("production_effect", "none")),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            (
+                '<p class="subtle">audit_log_path: '
+                f"<code>{_text(summary.get('audit_log_path', 'missing'))}</code></p>"
+            ),
+            '<div class="report-link-list">',
+            summary_link,
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _count_pair(summary: TraceRecord, left_key: str, right_key: str) -> str:
+    return f"{summary.get(left_key, 'missing')} / {summary.get(right_key, 'missing')}"
+
+
+def _count_triplet(
+    summary: TraceRecord,
+    first_key: str,
+    second_key: str,
+    third_key: str,
+) -> str:
+    return (
+        f"{summary.get(first_key, 'missing')} / "
+        f"{summary.get(second_key, 'missing')} / "
+        f"{summary.get(third_key, 'missing')}"
+    )
+
+
+def _format_money_value(value: object) -> str:
+    number = _optional_float(value)
+    if number is None:
+        return "missing"
+    return f"{number:.2f}"
 
 
 def _render_risks(report: DailyTaskDashboardReport) -> str:

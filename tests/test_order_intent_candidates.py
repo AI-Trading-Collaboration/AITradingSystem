@@ -54,7 +54,12 @@ def test_order_intent_candidates_are_blocked_only_and_no_trading_engine(
     assert payload["candidate_count"] == 1
     candidate = payload["candidates"][0]
     assert set(candidate) == {
+        "schema_version",
         "candidate_id",
+        "strategy_id",
+        "strategy_version",
+        "run_id",
+        "mode",
         "candidate_type",
         "candidate_action",
         "candidate_action_label",
@@ -69,6 +74,10 @@ def test_order_intent_candidates_are_blocked_only_and_no_trading_engine(
         "manual_approval_required",
         "trading_engine_connected",
         "account_state_dependency",
+        "score_snapshot_id",
+        "confidence",
+        "reason_codes",
+        "metadata",
         "source_decision",
         "score_snapshot",
         "position_context",
@@ -83,6 +92,9 @@ def test_order_intent_candidates_are_blocked_only_and_no_trading_engine(
     assert candidate["would_create_order_intent"] is False
     assert candidate["would_submit_order"] is False
     assert candidate["account_state_dependency"] is False
+    assert candidate["mode"] == "paper"
+    assert candidate["production_effect"] == "none"
+    assert candidate["score_snapshot_id"] == "decision_snapshot:2026-05-04"
     assert candidate["score_snapshot"]["snapshot_id"] == "decision_snapshot:2026-05-04"
     assert candidate["position_context"]["binding_position_gates"][0]["gate_id"] == (
         "valuation"

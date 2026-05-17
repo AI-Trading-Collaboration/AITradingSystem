@@ -130,6 +130,7 @@ def _build_candidate(
     position_gates = _position_gates(decision_snapshot)
     binding_gates = tuple(gate for gate in position_gates if gate.get("triggered") is True)
     snapshot_id = _string(decision_snapshot.get("snapshot_id")) or f"decision_snapshot:{as_of}"
+    run_id = _string(daily_summary.get("run_id")) or f"daily_decision_summary:{as_of}"
     blocked_by = _candidate_blockers(
         daily_summary=daily_summary,
         decision_snapshot=decision_snapshot,
@@ -137,7 +138,12 @@ def _build_candidate(
         summary_status=summary_status,
     )
     return {
+        "schema_version": "1.0",
         "candidate_id": f"order_intent_candidate:{as_of.isoformat()}:ai_exposure",
+        "strategy_id": "daily_decision_bus",
+        "strategy_version": "candidate_schema_v1",
+        "run_id": run_id,
+        "mode": "paper",
         "candidate_type": "ai_exposure_adjustment",
         "candidate_action": candidate_action,
         "candidate_action_label": _candidate_action_label(candidate_action),
@@ -152,6 +158,13 @@ def _build_candidate(
         "manual_approval_required": True,
         "trading_engine_connected": False,
         "account_state_dependency": False,
+        "score_snapshot_id": snapshot_id,
+        "confidence": 0.0,
+        "reason_codes": [candidate_action],
+        "metadata": {
+            "source": "daily_decision_summary",
+            "as_of": as_of.isoformat(),
+        },
         "source_decision": {
             "action_bias": action_bias or "missing",
             "confidence": _string(investment.get("confidence")) or "missing",

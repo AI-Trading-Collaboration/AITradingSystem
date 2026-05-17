@@ -1,9 +1,17 @@
 from __future__ import annotations
 
+import importlib.util
 from datetime import date
 from pathlib import Path
 
-from scripts.run_paper_trading_demo import run_demo
+REPO_ROOT = Path(__file__).resolve().parents[2]
+DEMO_PATH = REPO_ROOT / "scripts" / "run_paper_trading_demo.py"
+_DEMO_SPEC = importlib.util.spec_from_file_location("run_paper_trading_demo", DEMO_PATH)
+assert _DEMO_SPEC is not None
+_DEMO_MODULE = importlib.util.module_from_spec(_DEMO_SPEC)
+assert _DEMO_SPEC.loader is not None
+_DEMO_SPEC.loader.exec_module(_DEMO_MODULE)
+run_demo = _DEMO_MODULE.run_demo
 
 
 def test_paper_trading_demo_generates_report_and_audit_logs(tmp_path: Path) -> None:

@@ -26,6 +26,9 @@ def run_demo(
         build_order_intent,
     )
     from ai_trading_system.trading_engine.portfolio import PaperPortfolio
+    from ai_trading_system.trading_engine.portfolio.reconciliation import (
+        reconcile_portfolio_from_execution_reports,
+    )
     from ai_trading_system.trading_engine.reports import (
         build_trading_daily_report,
         write_trading_daily_report,
@@ -132,6 +135,14 @@ def run_demo(
         prices={"TSM": 186.0, "NVDA": 915.0, "INTC": 30.0},
         as_of=snapshot_time,
     )
+    reconciliation_result = reconcile_portfolio_from_execution_reports(
+        execution_reports=service.execution_reports,
+        submitted_orders=final_orders,
+        actual_portfolio=portfolio_state,
+        initial_cash_usd=config.execution.default_initial_cash_usd,
+        prices={"TSM": 186.0, "NVDA": 915.0, "INTC": 30.0},
+        as_of=snapshot_time,
+    )
     report = build_trading_daily_report(
         as_of=as_of,
         order_intents=intents,
@@ -140,6 +151,7 @@ def run_demo(
         execution_reports=service.execution_reports,
         portfolio_state=portfolio_state,
         audit_root=audit_root,
+        reconciliation_result=reconciliation_result,
     )
     report_path = write_trading_daily_report(
         report,
@@ -152,7 +164,13 @@ def run_demo(
         "submitted": len(final_orders),
         "filled": len(fill_reports),
         "open": report.open_count,
+        "cancelled": report.cancelled_count,
+        "realized_pnl": portfolio_state.realized_pnl_usd,
+        "unrealized_pnl": report.unrealized_pnl_usd,
+        "reconciliation_status": report.reconciliation_status,
+        "audit_log_path": audit_root,
         "report_path": report_path,
+        "production_effect": report.production_effect,
     }
 
 
@@ -180,6 +198,7 @@ def main() -> None:
     print(f"风控通过 / 拒绝：{summary['approved']} / {summary['rejected']}")
     print(f"提交 paper 订单：{summary['submitted']}")
     print(f"成交 / 未成交：{summary['filled']} / {summary['open']}")
+    print(f"Reconciliation：{summary['reconciliation_status']}")
     print(f"交易日报：{summary['report_path']}")
 
 

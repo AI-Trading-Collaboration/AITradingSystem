@@ -16,7 +16,9 @@ from ai_trading_system.trading_engine.schemas import (
     MarketContext,
     MarketSnapshot,
     OrderIntent,
+    OrderIntentCandidate,
     PortfolioState,
+    ReconciliationResult,
     RiskCheckResult,
 )
 
@@ -28,9 +30,11 @@ __all__ = [
     "MarketContext",
     "MarketSnapshot",
     "OrderIntent",
+    "OrderIntentCandidate",
     "PaperBroker",
     "PaperPortfolio",
     "PortfolioState",
     "PreTradeRiskChecker",
+    "ReconciliationResult",
     "RiskCheckResult",
 ]

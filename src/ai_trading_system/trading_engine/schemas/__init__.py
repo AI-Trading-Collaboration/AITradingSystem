@@ -12,7 +12,14 @@ from ai_trading_system.trading_engine.schemas.order_intent import (
     RiskConstraints,
     TimeInForce,
 )
+from ai_trading_system.trading_engine.schemas.order_intent_candidate import (
+    OrderIntentCandidate,
+)
 from ai_trading_system.trading_engine.schemas.portfolio_state import PortfolioState
+from ai_trading_system.trading_engine.schemas.reconciliation import (
+    ReconciliationIssue,
+    ReconciliationResult,
+)
 from ai_trading_system.trading_engine.schemas.risk_result import (
     RiskCheckResult,
     RiskRuleEvaluation,
@@ -27,10 +34,13 @@ __all__ = [
     "MarketContext",
     "MarketSnapshot",
     "OrderIntent",
+    "OrderIntentCandidate",
     "OrderSide",
     "OrderStatus",
     "OrderType",
     "PortfolioState",
+    "ReconciliationIssue",
+    "ReconciliationResult",
     "RiskCheckResult",
     "RiskConstraints",
     "RiskRuleEvaluation",

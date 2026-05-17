@@ -26,6 +26,7 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     _write_detail_reports(tmp_path, as_of)
     _write_shadow_parameter_search(tmp_path)
     _write_shadow_iteration_report(tmp_path, as_of)
+    _write_paper_trading_summary(tmp_path, as_of)
 
     report = build_daily_task_dashboard_report(
         as_of=as_of,
@@ -41,6 +42,8 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert report.status == "PASS"
     assert report.risk_count == 2
     assert "关键结论总览" in html
+    assert "Paper Trading Summary" in html
+    assert "reconciliation_status" in html
     assert "当日动作、仓位与主要约束" in html
     assert "任务执行明细" in html
     assert "Shadow 结果与参数对比" in html
@@ -67,6 +70,9 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert payload["production_effect"] == "none"
     assert payload["summary"]["task_count"] == 4
     assert payload["summary"]["risk_count"] == 2
+    assert payload["paper_trading_summary"]["generated_intents"] == 1
+    assert payload["paper_trading_summary"]["reconciliation_status"] == "PASS"
+    assert payload["paper_trading_summary"]["production_effect"] == "none"
     investment = next(
         item for item in payload["key_conclusions"] if item["area"] == "投资结论"
     )
@@ -176,6 +182,7 @@ def test_reports_daily_tasks_cli_writes_html_and_json(tmp_path: Path) -> None:
     _write_detail_reports(tmp_path, as_of)
     _write_shadow_parameter_search(tmp_path)
     _write_shadow_iteration_report(tmp_path, as_of)
+    _write_paper_trading_summary(tmp_path, as_of)
     output_path = tmp_path / "daily_task_dashboard_2026-05-04.html"
     json_output_path = tmp_path / "daily_task_dashboard_2026-05-04.json"
     decision_summary_output_path = tmp_path / "daily_decision_summary_2026-05-04.json"
@@ -216,6 +223,7 @@ def test_reports_daily_tasks_cli_writes_html_and_json(tmp_path: Path) -> None:
     assert "关键结论总览" in output_path.read_text(encoding="utf-8")
     payload = json.loads(json_output_path.read_text(encoding="utf-8"))
     assert payload["summary"]["risk_count"] == 2
+    assert payload["paper_trading_summary"]["filled"] == 1
     assert payload["key_conclusions"][0]["area"] == "投资结论"
     assert any(
         "source_current__grid_gate_0217" in item["primary"]
@@ -611,6 +619,34 @@ def _write_shadow_iteration_report(tmp_path: Path, as_of: date) -> None:
                         "not_weight_promotion_candidate: gate_only 只能进入 gate policy review"
                     ]
                 },
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_paper_trading_summary(tmp_path: Path, as_of: date) -> None:
+    (tmp_path / f"paper_trading_summary_{as_of.isoformat()}.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "paper_trading_summary",
+                "as_of": as_of.isoformat(),
+                "production_effect": "none",
+                "generated_intents": 1,
+                "approved": 1,
+                "rejected": 0,
+                "submitted": 1,
+                "filled": 1,
+                "open": 0,
+                "cancelled": 0,
+                "realized_pnl": 0.0,
+                "unrealized_pnl": 12.5,
+                "reconciliation_status": "PASS",
+                "audit_log_path": str(tmp_path / "audit"),
+                "report_path": str(tmp_path / "reports" / "trading_daily" / "2026-05-04.md"),
             },
             ensure_ascii=False,
             indent=2,

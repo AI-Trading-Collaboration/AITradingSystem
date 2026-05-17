@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
+from typing import Any
 
 from ai_trading_system.trading_engine.schemas.broker_order import BrokerOrder, OrderStatus
 from ai_trading_system.trading_engine.schemas.execution_report import ExecutionReport
 from ai_trading_system.trading_engine.schemas.order_intent import OrderIntent
 from ai_trading_system.trading_engine.schemas.portfolio_state import PortfolioState
+from ai_trading_system.trading_engine.schemas.reconciliation import ReconciliationResult
 from ai_trading_system.trading_engine.schemas.risk_result import RiskCheckResult
 
 
@@ -21,6 +24,7 @@ class TradingDailyReport:
     portfolio_state: PortfolioState
     audit_root: Path
     data_quality_status: str
+    reconciliation_result: ReconciliationResult | None = None
     production_effect: str = "none"
 
     @property
@@ -37,7 +41,27 @@ class TradingDailyReport:
 
     @property
     def open_count(self) -> int:
-        return sum(1 for order in self.submitted_orders if order.status == OrderStatus.SUBMITTED)
+        return sum(
+            1
+            for order in self.submitted_orders
+            if order.status in {OrderStatus.SUBMITTED, OrderStatus.PARTIALLY_FILLED}
+        )
+
+    @property
+    def cancelled_count(self) -> int:
+        return sum(
+            1 for order in self.submitted_orders if order.status == OrderStatus.CANCELLED
+        )
+
+    @property
+    def unrealized_pnl_usd(self) -> float:
+        return sum(position.unrealized_pnl for position in self.portfolio_state.positions)
+
+    @property
+    def reconciliation_status(self) -> str:
+        if self.reconciliation_result is None:
+            return "NOT_RUN"
+        return self.reconciliation_result.status.value
 
 
 def build_trading_daily_report(
@@ -50,6 +74,7 @@ def build_trading_daily_report(
     portfolio_state: PortfolioState,
     audit_root: Path,
     data_quality_status: str = "SIMULATED_DEMO",
+    reconciliation_result: ReconciliationResult | None = None,
 ) -> TradingDailyReport:
     return TradingDailyReport(
         as_of=as_of,
@@ -60,6 +85,7 @@ def build_trading_daily_report(
         portfolio_state=portfolio_state,
         audit_root=audit_root,
         data_quality_status=data_quality_status,
+        reconciliation_result=reconciliation_result,
     )
 
 
@@ -79,10 +105,13 @@ def render_trading_daily_report(report: TradingDailyReport) -> str:
         f"- 风控通过 / 拒绝：{report.approved_count} / {report.rejected_count}",
         f"- Paper 订单提交：{len(report.submitted_orders)}",
         f"- 成交 / 未成交：{report.filled_count} / {report.open_count}",
+        f"- 取消：{report.cancelled_count}",
+        f"- Reconciliation status：{report.reconciliation_status}",
         f"- 现金：{report.portfolio_state.cash_usd:.2f} USD",
         f"- 权益：{report.portfolio_state.equity_value_usd:.2f} USD",
         f"- Gross exposure：{report.portfolio_state.gross_exposure_usd:.2f} USD",
         f"- Realized PnL：{report.portfolio_state.realized_pnl_usd:.2f} USD",
+        f"- Unrealized PnL：{report.unrealized_pnl_usd:.2f} USD",
         "",
         "## OrderIntent",
         "",
@@ -186,6 +215,8 @@ def render_trading_daily_report(report: TradingDailyReport) -> str:
     else:
         lines.append("| 无持仓 | 0 | 0.00 | 0.00 | 0.00 | 0.00 |")
 
+    lines.extend(_render_reconciliation_section(report))
+
     lines.extend(
         [
             "",
@@ -198,6 +229,48 @@ def render_trading_daily_report(report: TradingDailyReport) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
+def _render_reconciliation_section(report: TradingDailyReport) -> list[str]:
+    result = report.reconciliation_result
+    if result is None:
+        return [
+            "",
+            "## Portfolio Reconciliation",
+            "",
+            "- 状态：NOT_RUN",
+            "- 说明：本报告未收到 ReconciliationResult；不得据此假定 portfolio 一致。",
+        ]
+    lines = [
+        "",
+        "## Portfolio Reconciliation",
+        "",
+        f"- 状态：{result.status.value}",
+        f"- 来源：{result.source}",
+        f"- production_effect={result.production_effect}",
+        f"- 问题数：{len(result.issues)}",
+    ]
+    if not result.issues:
+        lines.append("- 结论：expected portfolio 与 actual portfolio 一致。")
+        return lines
+    lines.extend(
+        [
+            "",
+            "| Severity | Field | Symbol | Expected | Actual | Message |",
+            "|---|---|---:|---:|---:|---|",
+        ]
+    )
+    for issue in result.issues:
+        lines.append(
+            "| "
+            f"{issue.severity.value} | "
+            f"{issue.field} | "
+            f"{issue.symbol or 'NA'} | "
+            f"{issue.expected} | "
+            f"{issue.actual} | "
+            f"{issue.message} |"
+        )
+    return lines
+
+
 def write_trading_daily_report(
     report: TradingDailyReport,
     output_path: Path | str,
@@ -205,4 +278,48 @@ def write_trading_daily_report(
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(render_trading_daily_report(report), encoding="utf-8")
+    return path
+
+
+def build_paper_trading_summary_payload(
+    report: TradingDailyReport,
+    *,
+    report_path: Path | str | None = None,
+) -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "report_type": "paper_trading_summary",
+        "as_of": report.as_of.isoformat(),
+        "production_effect": report.production_effect,
+        "generated_intents": len(report.order_intents),
+        "approved": report.approved_count,
+        "rejected": report.rejected_count,
+        "submitted": len(report.submitted_orders),
+        "filled": report.filled_count,
+        "open": report.open_count,
+        "cancelled": report.cancelled_count,
+        "realized_pnl": report.portfolio_state.realized_pnl_usd,
+        "unrealized_pnl": report.unrealized_pnl_usd,
+        "reconciliation_status": report.reconciliation_status,
+        "audit_log_path": str(report.audit_root),
+        "report_path": None if report_path is None else str(report_path),
+    }
+
+
+def write_paper_trading_summary_json(
+    report: TradingDailyReport,
+    output_path: Path | str,
+    *,
+    report_path: Path | str | None = None,
+) -> Path:
+    path = Path(output_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(
+            build_paper_trading_summary_payload(report, report_path=report_path),
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
     return path
