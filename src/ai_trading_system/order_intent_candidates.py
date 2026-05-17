@@ -90,7 +90,11 @@ def build_order_intent_candidates_payload(
         "generated_at": generated.isoformat(),
         "run_id": _string(daily_summary.get("run_id")),
         "production_effect": ProductionEffect.NONE.value,
-        "status": "blocked" if candidate is not None else "missing",
+        "status": _payload_status(
+            candidate=candidate,
+            daily_summary=daily_summary,
+            decision_snapshot=decision_snapshot,
+        ),
         "execution_boundary": {
             "creates_order_intent": False,
             "creates_execution_action": False,
@@ -217,8 +221,8 @@ def _candidate_blockers(
 ) -> tuple[str, ...]:
     blockers = list(MANDATORY_BLOCKERS)
     data_gate_status = _string(data_gate.get("status"))
-    if data_gate_status and data_gate_status != "PASS":
-        blockers.append("data_gate_not_pass")
+    if not data_gate_status or data_gate_status != "PASS":
+        blockers.append("data_gate_blocked")
     if summary_status in {"limited", "missing"}:
         blockers.append("daily_decision_summary_limited")
     if not decision_snapshot:
@@ -226,6 +230,25 @@ def _candidate_blockers(
     if _mapping(daily_summary.get("investment_conclusion")).get("availability") == "missing":
         blockers.append("investment_conclusion_missing")
     return tuple(dict.fromkeys(blockers))
+
+
+def _payload_status(
+    *,
+    candidate: TraceRecord | None,
+    daily_summary: TraceRecord,
+    decision_snapshot: TraceRecord,
+) -> str:
+    if candidate is None:
+        return "missing"
+    summary_status = _string(daily_summary.get("status"))
+    investment = _mapping(daily_summary.get("investment_conclusion"))
+    if (
+        summary_status in {"limited", "missing"}
+        or not decision_snapshot
+        or investment.get("availability") == "missing"
+    ):
+        return "limited"
+    return "blocked"
 
 
 def _candidate_action(action_bias: str) -> str:

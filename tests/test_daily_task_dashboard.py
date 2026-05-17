@@ -71,6 +71,8 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert payload["summary"]["task_count"] == 4
     assert payload["summary"]["risk_count"] == 2
     assert payload["paper_trading_summary"]["generated_intents"] == 1
+    assert payload["paper_trading_summary"]["candidate_count"] == 2
+    assert payload["paper_trading_summary"]["blocked_candidates"] == 1
     assert payload["paper_trading_summary"]["reconciliation_status"] == "PASS"
     assert payload["paper_trading_summary"]["production_effect"] == "none"
     investment = next(
@@ -223,6 +225,8 @@ def test_reports_daily_tasks_cli_writes_html_and_json(tmp_path: Path) -> None:
     assert "关键结论总览" in output_path.read_text(encoding="utf-8")
     payload = json.loads(json_output_path.read_text(encoding="utf-8"))
     assert payload["summary"]["risk_count"] == 2
+    assert payload["paper_trading_summary"]["candidate_count"] == 2
+    assert payload["paper_trading_summary"]["blocked_candidates"] == 1
     assert payload["paper_trading_summary"]["filled"] == 1
     assert payload["key_conclusions"][0]["area"] == "投资结论"
     assert any(
@@ -634,7 +638,10 @@ def _write_paper_trading_summary(tmp_path: Path, as_of: date) -> None:
                 "schema_version": 1,
                 "report_type": "paper_trading_summary",
                 "as_of": as_of.isoformat(),
+                "status": "LIMITED",
                 "production_effect": "none",
+                "candidate_count": 2,
+                "blocked_candidates": 1,
                 "generated_intents": 1,
                 "approved": 1,
                 "rejected": 0,

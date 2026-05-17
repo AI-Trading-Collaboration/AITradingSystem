@@ -1301,6 +1301,8 @@ def _paper_trading_summary(report: DailyTaskDashboardReport) -> TraceRecord:
             "path": str(path),
             "href": _report_href(path, report.reports_dir),
             "production_effect": ProductionEffect.NONE.value,
+            "candidate_count": "missing",
+            "blocked_candidates": "missing",
             "generated_intents": "missing",
             "approved": "missing",
             "rejected": "missing",
@@ -1318,12 +1320,18 @@ def _paper_trading_summary(report: DailyTaskDashboardReport) -> TraceRecord:
         }
     report_path = _string_value(payload.get("report_path"))
     audit_log_path = _string_value(payload.get("audit_log_path"))
+    reconciliation_status = (
+        _string_value(payload.get("reconciliation_status")) or "MISSING"
+    )
+    summary_status = _string_value(payload.get("status")) or reconciliation_status
     return {
-        "status": _string_value(payload.get("reconciliation_status")) or "PRESENT",
+        "status": summary_status,
         "exists": True,
         "path": str(path),
         "href": _report_href(path, report.reports_dir),
         "production_effect": _string_value(payload.get("production_effect")) or "none",
+        "candidate_count": payload.get("candidate_count", "missing"),
+        "blocked_candidates": payload.get("blocked_candidates", "missing"),
         "generated_intents": payload.get("generated_intents", "missing"),
         "approved": payload.get("approved", "missing"),
         "rejected": payload.get("rejected", "missing"),
@@ -1333,8 +1341,7 @@ def _paper_trading_summary(report: DailyTaskDashboardReport) -> TraceRecord:
         "cancelled": payload.get("cancelled", "missing"),
         "realized_pnl": payload.get("realized_pnl", "missing"),
         "unrealized_pnl": payload.get("unrealized_pnl", "missing"),
-        "reconciliation_status": _string_value(payload.get("reconciliation_status"))
-        or "MISSING",
+        "reconciliation_status": reconciliation_status,
         "audit_log_path": audit_log_path or "missing",
         "report_path": report_path or "missing",
         "report_href": _report_href(Path(report_path), report.reports_dir)
@@ -1345,11 +1352,16 @@ def _paper_trading_summary(report: DailyTaskDashboardReport) -> TraceRecord:
 
 
 def _paper_trading_summary_risk(payload: TraceRecord) -> str:
+    status = _string_value(payload.get("status"))
     production_effect = _string_value(payload.get("production_effect"))
     reconciliation_status = _string_value(payload.get("reconciliation_status"))
     risks: list[str] = []
     if production_effect != ProductionEffect.NONE.value:
         risks.append("paper trading summary production_effect 不是 none。")
+    if status == "ERROR":
+        risks.append("paper trading runner 标记 ERROR；执行复盘不能视为完整。")
+    elif status == "LIMITED":
+        risks.append("paper trading runner 标记 LIMITED；候选或执行覆盖受限。")
     if reconciliation_status in {"BLOCK", "MISSING", ""}:
         risks.append("portfolio reconciliation 未通过或缺失。")
     return "；".join(risks) or "未发现 paper trading 执行复盘阻断风险。"
@@ -2410,6 +2422,11 @@ def _render_paper_trading_summary(report: DailyTaskDashboardReport) -> str:
             ),
             "</div>",
             '<div class="summary-grid">',
+            _summary_item("candidate_count", summary.get("candidate_count", "missing")),
+            _summary_item(
+                "blocked_candidates",
+                summary.get("blocked_candidates", "missing"),
+            ),
             _summary_item("generated_intents", summary.get("generated_intents", "missing")),
             _summary_item("approved / rejected", _count_pair(summary, "approved", "rejected")),
             _summary_item("submitted", summary.get("submitted", "missing")),

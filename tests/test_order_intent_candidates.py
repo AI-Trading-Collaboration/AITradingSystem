@@ -144,6 +144,30 @@ def test_order_intent_candidates_missing_snapshot_stays_limited_and_blocked(
     assert payload["source_inputs"]["decision_snapshot"]["exists"] is False
 
 
+def test_order_intent_candidates_mark_data_gate_blocked(tmp_path: Path) -> None:
+    as_of = date(2026, 5, 4)
+    daily_summary_path = _write_daily_decision_summary(
+        tmp_path,
+        as_of,
+        data_gate={"status": "MISSING"},
+    )
+    snapshot_path = _write_decision_snapshot(tmp_path, as_of)
+
+    payload = build_order_intent_candidates_payload(
+        as_of=as_of,
+        daily_decision_summary_path=daily_summary_path,
+        decision_snapshot_path=snapshot_path,
+        project_root=tmp_path,
+    )
+
+    candidate = payload["candidates"][0]
+    assert candidate["blocked"] is True
+    assert "data_gate_blocked" in candidate["blocked_by"]
+    assert {"trading_engine_not_enabled", "manual_approval_required"}.issubset(
+        set(candidate["blocked_by"])
+    )
+
+
 def test_order_intent_candidates_missing_decision_stays_missing(
     tmp_path: Path,
 ) -> None:
@@ -182,6 +206,7 @@ def _write_daily_decision_summary(
     as_of: date,
     *,
     investment_conclusion: dict[str, object] | None = None,
+    data_gate: dict[str, object] | None = None,
 ) -> Path:
     path = tmp_path / f"daily_decision_summary_{as_of.isoformat()}.json"
     path.write_text(
@@ -193,7 +218,7 @@ def _write_daily_decision_summary(
                 "run_id": f"daily_ops_run:{as_of.isoformat()}:test",
                 "production_effect": "none",
                 "status": "available",
-                "data_gate": {"status": "PASS"},
+                "data_gate": data_gate or {"status": "PASS"},
                 "investment_conclusion": investment_conclusion or {
                     "availability": "available",
                     "action_bias": "观察",

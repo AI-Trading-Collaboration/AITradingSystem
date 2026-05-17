@@ -285,13 +285,31 @@ def build_paper_trading_summary_payload(
     report: TradingDailyReport,
     *,
     report_path: Path | str | None = None,
+    candidate_count: int | None = None,
+    blocked_candidates: int | None = None,
+    status: str | None = None,
 ) -> dict[str, Any]:
+    generated_intents = len(report.order_intents)
+    resolved_candidate_count = (
+        generated_intents if candidate_count is None else candidate_count
+    )
+    resolved_blocked_candidates = (
+        0 if blocked_candidates is None else blocked_candidates
+    )
+    resolved_status = status or _paper_trading_summary_status(
+        reconciliation_status=report.reconciliation_status,
+        candidate_count=resolved_candidate_count,
+        blocked_candidates=resolved_blocked_candidates,
+    )
     return {
         "schema_version": 1,
         "report_type": "paper_trading_summary",
         "as_of": report.as_of.isoformat(),
+        "status": resolved_status,
         "production_effect": report.production_effect,
-        "generated_intents": len(report.order_intents),
+        "candidate_count": resolved_candidate_count,
+        "blocked_candidates": resolved_blocked_candidates,
+        "generated_intents": generated_intents,
         "approved": report.approved_count,
         "rejected": report.rejected_count,
         "submitted": len(report.submitted_orders),
@@ -311,15 +329,37 @@ def write_paper_trading_summary_json(
     output_path: Path | str,
     *,
     report_path: Path | str | None = None,
+    candidate_count: int | None = None,
+    blocked_candidates: int | None = None,
+    status: str | None = None,
 ) -> Path:
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         json.dumps(
-            build_paper_trading_summary_payload(report, report_path=report_path),
+            build_paper_trading_summary_payload(
+                report,
+                report_path=report_path,
+                candidate_count=candidate_count,
+                blocked_candidates=blocked_candidates,
+                status=status,
+            ),
             ensure_ascii=False,
             indent=2,
         ),
         encoding="utf-8",
     )
     return path
+
+
+def _paper_trading_summary_status(
+    *,
+    reconciliation_status: str,
+    candidate_count: int,
+    blocked_candidates: int,
+) -> str:
+    if reconciliation_status != "PASS":
+        return "ERROR"
+    if candidate_count == 0 or blocked_candidates:
+        return "LIMITED"
+    return "PASS"
