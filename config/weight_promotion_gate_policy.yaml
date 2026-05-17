@@ -1,0 +1,50 @@
+policy_id: weight_promotion_gate_policy
+version: 1
+status: pilot_baseline
+owner: system
+production_effect: none
+rationale: >
+  First-pass manual-review-only policy for deciding whether evaluated weight
+  adjustment candidates have enough evidence to enter human review without
+  changing production weights.
+intended_effect: >
+  Prevent candidate weight changes from being interpreted as promotable when
+  sample size, fills, data quality, reconciliation, continuous replay, risk
+  deltas, or paper/shadow reliability are not adequate.
+validation_evidence: TRADING-017 unit tests and ongoing manual-review-only daily review.
+review_condition: >
+  Revisit thresholds after enough forward paper/shadow/replay evidence exists
+  in the ai_after_chatgpt regime and before any production promotion workflow
+  is designed.
+thresholds:
+  minimum_paper_signal_sample_count: 7
+  minimum_shadow_sample_count: 7
+  minimum_production_baseline_count: 7
+  minimum_filled_count: 3
+  maximum_synthetic_snapshot_ratio: 0.25
+  minimum_historical_ohlc_coverage: 0.70
+  minimum_reconciliation_pass_ratio: 0.90
+  minimum_max_drawdown_delta: 0.0
+  maximum_exposure_delta: 0.0
+  maximum_concentration_delta: 0.0
+  minimum_final_equity_delta: 0.0
+  minimum_improvement_windows: 2
+required_validations:
+  - aits validate-data
+  - weight_adjustment_candidate_gate
+  - weight_candidate_evaluation_gate
+  - paper_signal_quality_gate
+  - shadow_parameter_impact_gate
+  - continuous_portfolio_replay
+  - manual_owner_review
+safety_boundaries:
+  manual_approval_required: true
+  gate_mode: manual_review_only
+  allow_production_profile_write: false
+  allow_approved_profile_write: false
+  allow_daily_dashboard_main_conclusion_change: false
+  allow_trade_trigger: false
+  allow_ibkr_call: false
+  allow_paperbroker_call: false
+  allow_paper_runner: false
+  allow_replay_runner: false

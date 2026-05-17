@@ -190,6 +190,7 @@ def build_daily_task_dashboard_payload(
         "shadow_parameter_impact": _shadow_parameter_impact_summary(report),
         "weight_adjustment_candidates": _weight_adjustment_candidates_summary(report),
         "weight_candidate_evaluation": _weight_candidate_evaluation_summary(report),
+        "weight_promotion_gate": _weight_promotion_gate_summary(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -285,6 +286,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_shadow_parameter_impact(report),
             _render_weight_adjustment_candidates(report),
             _render_weight_candidate_evaluation(report),
+            _render_weight_promotion_gate(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -955,6 +957,11 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
             "weight_candidate_evaluation_json",
             "weight candidate evaluation JSON",
             report.reports_dir / f"weight_candidate_evaluation_{suffix}.json",
+        ),
+        (
+            "weight_promotion_gate_json",
+            "weight promotion gate JSON",
+            report.reports_dir / f"weight_promotion_gate_{suffix}.json",
         ),
     )
     for artifact_id, label, path in extras:
@@ -1935,6 +1942,82 @@ def _weight_candidate_evaluation_summary(report: DailyTaskDashboardReport) -> Tr
         "evaluation_mode": evaluation_mode,
         "risk": "；".join(risks) or "Weight candidate evaluation 当前仅作只读展示。",
     }
+
+
+def _weight_promotion_gate_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    suffix = report.as_of.isoformat()
+    path = report.reports_dir / f"weight_promotion_gate_{suffix}.json"
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "weight_promotion_gate":
+        return {
+            "status": "MISSING",
+            "gate_status": "INSUFFICIENT_DATA",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "candidate_count": 0,
+            "ready_for_manual_review_count": 0,
+            "blocked_count": 0,
+            "top_candidate_id": "",
+            "main_blocked_by": "missing",
+            "blocked_by": ["missing"],
+            "production_effect": ProductionEffect.NONE.value,
+            "gate_mode": "manual_review_only",
+            "risk": "weight promotion gate JSON 缺失；dashboard 不运行 gate 或调参。",
+        }
+    summary = _mapping_value(payload, "summary")
+    outputs = _mapping_value(payload, "outputs")
+    report_path = Path(
+        _string_value(outputs.get("markdown")) or str(path.with_suffix(".md")),
+    )
+    report_href = _report_href(report_path, report.reports_dir) if report_path.exists() else ""
+    production_effect = _string_value(payload.get("production_effect")) or "none"
+    gate_mode = _string_value(payload.get("gate_mode")) or "manual_review_only"
+    gate_status = (
+        _string_value(summary.get("gate_status"))
+        or _string_value(payload.get("promotion_gate_status"))
+        or "INSUFFICIENT_DATA"
+    )
+    blocked_by = _weight_promotion_gate_blockers(payload)
+    main_blocked_by = _string_value(summary.get("main_blocked_by")) or (
+        blocked_by[0] if blocked_by else "none"
+    )
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("weight promotion gate production_effect 不是 none。")
+    if gate_mode != "manual_review_only":
+        risks.append("weight promotion gate gate_mode 不是 manual_review_only。")
+    if blocked_by:
+        risks.append(f"promotion gate 限制：{', '.join(blocked_by)}。")
+    return {
+        "status": gate_status,
+        "gate_status": gate_status,
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "candidate_count": summary.get("candidate_count", payload.get("candidate_count", 0)),
+        "ready_for_manual_review_count": summary.get("ready_for_manual_review_count", 0),
+        "blocked_count": summary.get("blocked_count", 0),
+        "top_candidate_id": summary.get("top_candidate_id", ""),
+        "main_blocked_by": main_blocked_by,
+        "blocked_by": blocked_by,
+        "production_effect": production_effect,
+        "gate_mode": gate_mode,
+        "risk": "；".join(risks) or "Weight promotion gate 当前仅作只读展示。",
+    }
+
+
+def _weight_promotion_gate_blockers(payload: TraceRecord) -> list[str]:
+    summary = _mapping_value(payload, "summary")
+    summary_blockers = _strings(summary.get("blocked_by"))
+    if summary_blockers:
+        return summary_blockers
+    counter: Counter[str] = Counter()
+    for candidate in _records(payload.get("candidates")):
+        counter.update(_strings(candidate.get("blocked_by")))
+    return [value for value, _count in counter.most_common()]
 
 
 def _paper_trading_snapshot_source_counts(payload: TraceRecord) -> Counter[str]:
@@ -3433,6 +3516,54 @@ def _render_weight_candidate_evaluation(report: DailyTaskDashboardReport) -> str
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'
                 f"{_text(evaluation.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_weight_promotion_gate(report: DailyTaskDashboardReport) -> str:
+    gate = _weight_promotion_gate_summary(report)
+    report_href = _string_value(gate.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}"><span>Weight Promotion Gate</span>'
+        f"<small>{_text(gate.get('gate_status', 'INSUFFICIENT_DATA'))}</small></a>"
+        if gate.get("exists")
+        else '<span class="report-link missing"><span>Weight Promotion Gate</span>'
+        "<small>MISSING</small></span>"
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="weight-promotion-gate-title">',
+            '<div class="section-head">',
+            '<h2 id="weight-promotion-gate-title">Weight Promotion Gate</h2>',
+            (
+                "<p>manual-review-only 权重 promotion gate；dashboard 只读已有 JSON，"
+                "不重跑 gate、不应用参数、不触发交易。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("gate_status", gate.get("gate_status", "INSUFFICIENT_DATA")),
+            _summary_item("candidate_count", gate.get("candidate_count", 0)),
+            _summary_item(
+                "ready_for_manual_review_count",
+                gate.get("ready_for_manual_review_count", 0),
+            ),
+            _summary_item("blocked_count", gate.get("blocked_count", 0)),
+            _summary_item("top_candidate_id", gate.get("top_candidate_id", "")),
+            _summary_item("main blocked_by", gate.get("main_blocked_by", "missing")),
+            _summary_item(
+                "production_effect",
+                gate.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(gate.get('risk', ''))}</p>"
             ),
             '<div class="report-link-list">',
             report_link,
