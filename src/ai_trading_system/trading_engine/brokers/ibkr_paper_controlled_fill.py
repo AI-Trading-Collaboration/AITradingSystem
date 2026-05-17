@@ -43,6 +43,18 @@ DEFAULT_IBKR_PAPER_CONTROLLED_FILL_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "ibkr_paper_controlled_fill.yaml"
 )
 DEFAULT_CONTROLLED_FILL_OUTPUT_DIR = PROJECT_ROOT / "outputs" / "reports"
+_BROKER_ORDER_ID_KEYS = {
+    "broker_order_id",
+    "orderid",
+    "order_id",
+    "permid",
+    "perm_id",
+}
+_CONTEXTUAL_BROKER_ORDER_ID_LABEL = (
+    r"(?:broker[\s_-]*order[\s_-]*id|order[\s_-]*id|orderid|perm[\s_-]*id|permid)"
+)
+_JSON_BROKER_ORDER_ID_KEY = r"(?:broker_order_id|orderId|order_id|permId|perm_id)"
+_MIN_GLOBAL_STRING_BROKER_ID_LENGTH = 4
 
 
 class ControlledFillStatus(StrEnum):
@@ -989,13 +1001,7 @@ def _redact_broker_value(value: Any, *, raw_broker_order_ids: Sequence[str]) -> 
         redacted: dict[str, Any] = {}
         for key, item in value.items():
             normalized_key = str(key).lower().replace("-", "_")
-            if normalized_key in {
-                "broker_order_id",
-                "orderid",
-                "order_id",
-                "permid",
-                "perm_id",
-            }:
+            if normalized_key in _BROKER_ORDER_ID_KEYS:
                 redacted[str(key)] = _redacted_broker_order_id(item)
             else:
                 redacted[str(key)] = _redact_broker_value(
@@ -1008,12 +1014,52 @@ def _redact_broker_value(value: Any, *, raw_broker_order_ids: Sequence[str]) -> 
             _redact_broker_value(item, raw_broker_order_ids=raw_broker_order_ids) for item in value
         ]
     if isinstance(value, str):
-        redacted = value
-        for raw_id in raw_broker_order_ids:
-            if raw_id:
-                redacted = redacted.replace(raw_id, _redacted_broker_order_id(raw_id))
-        return redacted
+        return _redact_broker_order_ids_in_text(value, raw_broker_order_ids=raw_broker_order_ids)
     return value
+
+
+def _redact_broker_order_ids_in_text(
+    text: str,
+    *,
+    raw_broker_order_ids: Sequence[str],
+) -> str:
+    redacted = text
+    for raw_id in raw_broker_order_ids:
+        raw_id_text = str(raw_id or "")
+        if not raw_id_text:
+            continue
+        replacement = _redacted_broker_order_id(raw_id_text) or ""
+        redacted = _contextual_broker_order_id_pattern(raw_id_text).sub(
+            lambda match, replacement=replacement: (
+                f"{match.group('prefix')}{replacement}{match.group('suffix')}"
+            ),
+            redacted,
+        )
+        if _allow_global_string_broker_id_scan(raw_id_text):
+            redacted = re.sub(
+                rf"(?<![\w.-]){re.escape(raw_id_text)}(?![\w.-])",
+                replacement,
+                redacted,
+            )
+    return redacted
+
+
+def _allow_global_string_broker_id_scan(raw_id: str) -> bool:
+    return len(raw_id) >= _MIN_GLOBAL_STRING_BROKER_ID_LENGTH and not raw_id.isdigit()
+
+
+def _contextual_broker_order_id_pattern(raw_id: str) -> re.Pattern[str]:
+    escaped = re.escape(raw_id)
+    return re.compile(
+        rf"(?P<prefix>"
+        rf"(?:\"{_JSON_BROKER_ORDER_ID_KEY}\"\s*:\s*[`'\"]?)"
+        rf"|(?:\b{_CONTEXTUAL_BROKER_ORDER_ID_LABEL}\b\s*(?:[:=：#]|is)?\s*[`'\"]?)"
+        rf")"
+        rf"{escaped}"
+        rf"(?P<suffix>[`'\"]?)"
+        rf"(?=$|[\s,.;)\]}}])",
+        flags=re.IGNORECASE,
+    )
 
 
 def _redacted_broker_order_id(value: Any) -> str | None:
@@ -1105,7 +1151,16 @@ def _assert_no_sensitive_output(
     if re.search(r"\b(?:DUP?|U)\d{5,}\b", text, flags=re.IGNORECASE):
         raise RuntimeError("controlled fill output contains an unmasked account id")
     for raw_id in raw_broker_order_ids:
-        if raw_id and re.search(rf"\b{re.escape(raw_id)}\b", text):
+        raw_id_text = str(raw_id or "")
+        if not raw_id_text:
+            continue
+        context_pattern = _contextual_broker_order_id_pattern(raw_id_text)
+        if context_pattern.search(text):
+            raise RuntimeError("controlled fill output contains an unredacted broker order id")
+        if _allow_global_string_broker_id_scan(raw_id_text) and re.search(
+            rf"(?<![\w.-]){re.escape(raw_id_text)}(?![\w.-])",
+            text,
+        ):
             raise RuntimeError("controlled fill output contains an unredacted broker order id")
 
 

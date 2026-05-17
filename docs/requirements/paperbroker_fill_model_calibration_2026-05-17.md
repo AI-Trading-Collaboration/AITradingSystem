@@ -39,6 +39,8 @@ model 已被真实 broker 行为验证。本任务新增 calibration diagnostics
 第一版只读读取本地 artifacts：
 
 - 最近 N 个 `paperbroker_vs_ibkr_paper_comparison_*.json`
+- 最近 N 个 `ibkr_paper_controlled_fill_*.json`，其中 `fill_seen=false` 且最终
+  `Cancelled` 的样本只作为 no-fill lifecycle evidence
 - 可选最近已有 `paper_trading_replay_*.json` 的 `quality_flags`
 - 可选同日或最近已有 `paper_signal_quality_*.json`
 
@@ -51,6 +53,8 @@ API key，不调用 IBKR、不调用 broker adapter、不触发 paper runner 或
 报告至少输出：
 
 - `comparison_count`
+- `controlled_fill_count`
+- `calibration_evidence_count`
 - `lifecycle_match_count`
 - `status_match_ratio`
 - `fill_match_ratio`
@@ -61,6 +65,8 @@ API key，不调用 IBKR、不调用 broker adapter、不触发 paper runner 或
 - `insufficient_market_data_count`
 - `synthetic_snapshot_related_count`
 - `no_fill_lifecycle_only_count`
+- `controlled_fill_no_fill_lifecycle_validated_count`
+- `no_fill_lifecycle_validated_count`
 
 ## Calibration Gate
 
@@ -78,6 +84,11 @@ API key，不调用 IBKR、不调用 broker adapter、不触发 paper runner 或
 本机当前 `fills_seen=false` 的 comparison 样本应输出
 `LIFECYCLE_ALIGNED_FILL_UNTESTED` 或 `INSUFFICIENT_SAMPLE`，不得输出已验证 fill model
 的结论。
+
+Controlled fill no-fill 样本如果满足 `fill_seen=false`、`cancel_requested=true` 且
+`final_order_status=Cancelled`，只能归类为 `NO_FILL_LIFECYCLE_VALIDATED`。该分类证明
+submit/open/cancel 链路被观察到，仍必须保持 `fill_tested=false`，不得把 controlled
+fill 脚本成功运行解释为 fill model 已验证。
 
 ## Recommendations
 
@@ -116,3 +127,8 @@ API key，不调用 IBKR、不调用 broker adapter、不触发 paper runner 或
   `python -m pytest tests/trading_engine`、`python -m pytest`、
   `python -m ruff check scripts src tests` 和
   `python -m black --check scripts src tests`。
+- 2026-05-18：TRADING-013A 扩展 calibration 语义。Calibration 现在可只读读取
+  `ibkr_paper_controlled_fill_*.json` no-fill/cancelled artifact，并将其分类为
+  `NO_FILL_LIFECYCLE_VALIDATED`；该分类不改变 `PaperBroker` fill model，不调用
+  broker，不触发 runner/replay，且继续保持 `fill_tested=false` 和
+  `LIFECYCLE_ALIGNED_FILL_UNTESTED`。

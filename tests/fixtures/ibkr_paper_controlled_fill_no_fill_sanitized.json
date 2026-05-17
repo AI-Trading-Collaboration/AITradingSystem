@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "report_type": "ibkr_paper_controlled_fill",
+  "validation_type": "local_ibkr_paper_controlled_fill_no_fill_sanitized",
+  "as_of": "2026-05-17",
+  "source_run_date": "2026-05-17",
+  "market_regime": "ai_after_chatgpt",
+  "paper_only": true,
+  "diagnostic_only": true,
+  "manual_cli_only": true,
+  "test_status": "LIMITED",
+  "production_effect": "none",
+  "trading_mode": "paper",
+  "connection_status": {
+    "status": "CONNECTED",
+    "connected": true,
+    "account_id_masked": "DUP***0000",
+    "production_effect": "none",
+    "trading_mode": "paper"
+  },
+  "account_id_masked": "DUP***0000",
+  "broker_order_id": "[REDACTED_BROKER_ORDER_ID]",
+  "broker_order_id_redaction": "[REDACTED_BROKER_ORDER_ID]",
+  "perm_id_redaction": "[REDACTED_PERM_ID]",
+  "execution_id_redaction": "[NOT_PRESENT]",
+  "symbol": "NVDA",
+  "side": "BUY",
+  "quantity": 1,
+  "limit_price": 224.5,
+  "requested_order": {
+    "symbol": "NVDA",
+    "asset_type": "stock",
+    "side": "BUY",
+    "order_type": "LIMIT",
+    "time_in_force": "DAY",
+    "quantity": 1,
+    "limit_price": 224.5,
+    "margin": false
+  },
+  "submitted_order": {
+    "symbol": "NVDA",
+    "asset_type": "stock",
+    "side": "BUY",
+    "order_type": "LIMIT",
+    "time_in_force": "DAY",
+    "quantity": 1,
+    "limit_price": 224.5,
+    "broker_order_id": "[REDACTED_BROKER_ORDER_ID]",
+    "perm_id": "[REDACTED_PERM_ID]"
+  },
+  "open_order_seen": true,
+  "order_status_events": [
+    {
+      "status": "PendingSubmit",
+      "filled": 0.0,
+      "remaining": 0.0,
+      "avg_fill_price": 0.0,
+      "broker_order_id": "[REDACTED_BROKER_ORDER_ID]"
+    },
+    {
+      "status": "PreSubmitted",
+      "filled": 0.0,
+      "remaining": 1.0,
+      "avg_fill_price": 0.0,
+      "broker_order_id": "[REDACTED_BROKER_ORDER_ID]"
+    },
+    {
+      "status": "PendingCancel",
+      "filled": 0.0,
+      "remaining": 1.0,
+      "avg_fill_price": 0.0,
+      "broker_order_id": "[REDACTED_BROKER_ORDER_ID]"
+    },
+    {
+      "status": "Cancelled",
+      "filled": 0.0,
+      "remaining": 1.0,
+      "avg_fill_price": 0.0,
+      "broker_order_id": "[REDACTED_BROKER_ORDER_ID]"
+    }
+  ],
+  "order_status_path": [
+    "PendingSubmit",
+    "PreSubmitted",
+    "PendingCancel",
+    "Cancelled"
+  ],
+  "fill_seen": false,
+  "fill_quantity": 0.0,
+  "avg_fill_price": null,
+  "fill_time": null,
+  "commission_report_seen": false,
+  "cancel_requested": true,
+  "final_order_status": "Cancelled",
+  "issues": [
+    {
+      "code": "fill_not_seen_timeout",
+      "severity": "LIMITED",
+      "message": "IBKR Paper order did not fill within the controlled fill timeout."
+    }
+  ],
+  "calibration_observation": {
+    "classification": "NO_FILL_LIFECYCLE_VALIDATED",
+    "fill_tested": false,
+    "fill_model_validated": false,
+    "paperbroker_fill_model_changed": false
+  },
+  "likely_explanation": "non-regular trading session / order remained PreSubmitted",
+  "production_surface_impact": {
+    "daily_run": "none",
+    "replay": "none",
+    "dashboard": "none",
+    "production_conclusion": "none",
+    "paper_signal_quality": "none",
+    "shadow_impact": "none",
+    "paperbroker_fill_model": "none",
+    "parameter_promotion": "none",
+    "trading_advice": "none"
+  },
+  "safety_assertions": {
+    "full_account_id_written": false,
+    "broker_order_id_written": false,
+    "perm_id_written": false,
+    "execution_id_written": false,
+    "credential_value_written": false,
+    "production_surface_impact": "none"
+  }
+}

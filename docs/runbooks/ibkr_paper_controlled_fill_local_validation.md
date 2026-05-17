@@ -95,6 +95,27 @@ local report。
 - 缺少可靠 `MarketSnapshot` 时，`fill_match_status=INSUFFICIENT_MARKET_DATA`，
   不强行比较本地 `PaperBroker`
 
+## No-Fill 的正常判定
+
+非美股正常交易时段下，`BUY LIMIT DAY` 订单可能停留在 `PreSubmitted`。即使人工
+设置的 `limit_price` 高于 TWS / Gateway 当时显示的 ask，IBKR Paper 也可能因为
+session、routing 或 Paper matching 限制而不成交。
+
+如果出现以下组合，本阶段可把 no-fill 判为正常的受限验证结果：
+
+- `connection_status=CONNECTED`
+- `order_status_events` 至少包含 open 状态，例如 `PendingSubmit` 或 `PreSubmitted`
+- `fill_seen=false`
+- `fill_quantity=0`
+- `commission_report_seen=false`
+- `cancel_requested=true`
+- `final_order_status=Cancelled` 或 `ApiCancelled`
+- `issues` 包含 `fill_not_seen_timeout`
+
+该结果只能证明 submit/open/cancel 链路可用，不能证明 fill model。Calibration 层读取
+这类样本时应归类为 `NO_FILL_LIFECYCLE_VALIDATED`，但仍应保持
+`fill_tested=false` 和 `LIFECYCLE_ALIGNED_FILL_UNTESTED`。
+
 ## 成交后的处理
 
 如果 `fill_seen=true`：
@@ -109,6 +130,18 @@ local report。
 - 只提交脱敏总结或测试 fixture；不要提交完整账号、原始 broker order id、现金细节或
   broker 凭证值。
 
+## 未成交后的处理
+
+如果 `fill_seen=false`：
+
+- 保留报告的 `LIMITED` 状态，不把脚本提交成功解释为 fill model 已验证。
+- 不修改 `PaperBroker` fill model。
+- 不把单个 no-fill 样本用于放宽或收紧本地 fill simulation。
+- 建议在美股正常交易时段重新运行 near-ask `BUY LIMIT`，仍保持 `quantity=1`、
+  Paper account、manual CLI only 和 `production_effect=none`。
+- 若再次 no-fill，继续记录为诊断样本；等待多个时段、多个 symbol 或真实 fill 样本后
+  再讨论 calibration 设计。
+
 ## 常见错误
 
 |现象|常见原因|处理|
@@ -121,3 +154,4 @@ local report。
 |`only LIMIT orders are allowed`|传入 MARKET 或其他订单类型|停止运行；不要放宽到 market order|
 |`quantity must equal 1`|数量超过第一版上限|恢复 `quantity=1`|
 |成交但无本地对比|缺可靠当日 MarketSnapshot|保留 `INSUFFICIENT_MARKET_DATA`，不要补造 synthetic snapshot|
+|`fill_not_seen_timeout` 且最终取消|非正常交易时段、Paper matching 未撮合或订单停留 `PreSubmitted`|记录为 `LIMITED` no-fill；只证明 submit/open/cancel，不修改 `PaperBroker`|

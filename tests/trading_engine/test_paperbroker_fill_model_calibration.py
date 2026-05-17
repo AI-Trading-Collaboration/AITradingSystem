@@ -9,6 +9,7 @@ from typing import Any
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.trading_engine.reports.paperbroker_fill_model_calibration import (
     ALLOWED_CALIBRATION_STATUSES,
+    CONTROLLED_FILL_NO_FILL_CLASSIFICATION,
     NO_FILL_LIFECYCLE_RECOMMENDATIONS,
     build_paperbroker_fill_model_calibration_payload,
     render_paperbroker_fill_model_calibration_report,
@@ -29,6 +30,9 @@ FORBIDDEN_STATUS_TERMS = (
     "SHOULD_TRADE",
     "PROMOTE",
     "APPROVED",
+)
+CONTROLLED_FILL_NO_FILL_FIXTURE = (
+    PROJECT_ROOT / "tests" / "fixtures" / "ibkr_paper_controlled_fill_no_fill_sanitized.json"
 )
 
 
@@ -92,6 +96,42 @@ def test_no_fill_lifecycle_only_is_lifecycle_aligned_fill_untested(tmp_path: Pat
     )
     assert "fill model remains unvalidated" in markdown
     assert "fill_tested=false" in markdown
+    _assert_no_forbidden_terms(json.dumps(payload, ensure_ascii=False), markdown)
+
+
+def test_controlled_fill_no_fill_keeps_fill_model_untested(tmp_path: Path) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    fixture_text = CONTROLLED_FILL_NO_FILL_FIXTURE.read_text(encoding="utf-8")
+    (reports_dir / "ibkr_paper_controlled_fill_2026-05-17.json").write_text(
+        fixture_text,
+        encoding="utf-8",
+    )
+
+    payload = build_paperbroker_fill_model_calibration_payload(
+        as_of=date(2026, 5, 17),
+        reports_dir=reports_dir,
+    )
+    markdown = render_paperbroker_fill_model_calibration_report(payload)
+
+    assert payload["calibration_status"] == "LIFECYCLE_ALIGNED_FILL_UNTESTED"
+    assert payload["fill_tested"] is False
+    assert payload["summary"]["comparison_count"] == 0
+    assert payload["summary"]["controlled_fill_count"] == 1
+    assert payload["summary"]["calibration_evidence_count"] == 1
+    assert payload["summary"]["controlled_fill_no_fill_lifecycle_validated_count"] == 1
+    assert payload["summary"]["no_fill_lifecycle_validated_count"] == 1
+    assert payload["summary"]["controlled_fill_fill_seen_count"] == 0
+    assert payload["summary"]["controlled_fill_classification_counts"] == {
+        CONTROLLED_FILL_NO_FILL_CLASSIFICATION: 1,
+    }
+    controlled_source = payload["source_artifacts"]["controlled_fills"][0]
+    assert controlled_source["classification"] == CONTROLLED_FILL_NO_FILL_CLASSIFICATION
+    assert controlled_source["fill_seen"] is False
+    assert controlled_source["cancel_requested"] is True
+    assert controlled_source["final_order_status"] == "Cancelled"
+    assert "fill_tested=false" in markdown
+    assert CONTROLLED_FILL_NO_FILL_CLASSIFICATION in markdown
     _assert_no_forbidden_terms(json.dumps(payload, ensure_ascii=False), markdown)
 
 

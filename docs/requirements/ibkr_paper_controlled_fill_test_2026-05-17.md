@@ -155,3 +155,17 @@ order id。
   `python -m pytest tests/trading_engine`、`python -m pytest`、
   `python -m ruff check scripts src tests`、`python -m black --check scripts src tests`
   和 `git diff --check`。
+- 2026-05-17：本机 controlled fill 运行在写报告前触发
+  `controlled fill output contains an unredacted broker order id` fail-closed
+  检查。初步定位为短数字 IBKR broker order id 可能与 `quantity=1`、日期、
+  redaction token 长度等非敏感输出冲突；当前处理要求修复结构化敏感输出检查、
+  保留 fail-closed 语义、补充短 order id 回归测试，并在通过后重新运行本机验证。
+- 2026-05-17：修复完成并重新验证。broker order id 文本脱敏和写盘前检查改为
+  上下文感知，只在 `broker_order_id` / `orderId` / `permId` 等 broker id
+  字段或明确文本上下文中识别原始 id，避免短数字 order id 与 `quantity=1`、
+  日期或 redaction token 长度误匹配；仍保留 account id 和 broker id
+  fail-closed 检查。新增短 `order_id=1` 回归测试。本机命令
+  `python scripts/run_ibkr_paper_controlled_fill_test.py --date 2026-05-17 --config config/ibkr_paper_controlled_fill.local.yaml --symbol NVDA --side BUY --quantity 1 --limit-price 200`
+  已正常生成 JSON/Markdown，`test_status=LIMITED`、`fill_seen=false`、
+  `cancel_requested=true`、`final_order_status=Cancelled`，broker order id 为
+  `[REDACTED_BROKER_ORDER_ID:len=N]` 形式。

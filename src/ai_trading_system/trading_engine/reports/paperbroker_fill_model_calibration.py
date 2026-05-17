@@ -17,6 +17,8 @@ DEFAULT_PAPERBROKER_FILL_MODEL_CALIBRATION_POLICY_PATH = (
     REPO_ROOT / "config" / "paperbroker_fill_model_calibration_policy.yaml"
 )
 COMPARISON_REPORT_TYPE = "paperbroker_vs_ibkr_paper_comparison"
+CONTROLLED_FILL_REPORT_TYPE = "ibkr_paper_controlled_fill"
+CONTROLLED_FILL_NO_FILL_CLASSIFICATION = "NO_FILL_LIFECYCLE_VALIDATED"
 
 STATUS_INSUFFICIENT_SAMPLE = "INSUFFICIENT_SAMPLE"
 STATUS_LIFECYCLE_ALIGNED_FILL_UNTESTED = "LIFECYCLE_ALIGNED_FILL_UNTESTED"
@@ -93,6 +95,11 @@ def build_paperbroker_fill_model_calibration_payload(
         as_of=as_of,
         limit=comparison_limit,
     )
+    controlled_fill_records = _select_recent_controlled_fill_records(
+        reports_dir=reports_dir,
+        as_of=as_of,
+        limit=comparison_limit,
+    )
     replay_payload, replay_path = _select_replay_payload(
         reports_dir=reports_dir,
         as_of=as_of,
@@ -105,6 +112,7 @@ def build_paperbroker_fill_model_calibration_payload(
     )
     summary = _calibration_summary(
         comparison_records=comparison_records,
+        controlled_fill_records=controlled_fill_records,
         replay_payload=replay_payload,
         paper_signal_quality_payload=signal_payload,
     )
@@ -169,6 +177,10 @@ def build_paperbroker_fill_model_calibration_payload(
             "comparisons": [
                 _comparison_source_artifact(path, comparison, reports_dir)
                 for path, comparison in comparison_records
+            ],
+            "controlled_fills": [
+                _controlled_fill_source_artifact(path, controlled_fill, reports_dir)
+                for path, controlled_fill in controlled_fill_records
             ],
             "replay_quality": _replay_source_artifact(
                 replay_path,
@@ -272,6 +284,8 @@ def render_paperbroker_fill_model_calibration_report(payload: dict[str, Any]) ->
         "| 指标 | 数值 |",
         "|---|---:|",
         f"| comparison_count | {summary.get('comparison_count', 0)} |",
+        f"| controlled_fill_count | {summary.get('controlled_fill_count', 0)} |",
+        f"| calibration_evidence_count | {summary.get('calibration_evidence_count', 0)} |",
         f"| lifecycle_match_count | {summary.get('lifecycle_match_count', 0)} |",
         (
             "| lifecycle_match_ratio | "
@@ -307,6 +321,14 @@ def render_paperbroker_fill_model_calibration_report(payload: dict[str, Any]) ->
             f"{summary.get('synthetic_snapshot_related_count', 0)} |"
         ),
         f"| no_fill_lifecycle_only_count | {summary.get('no_fill_lifecycle_only_count', 0)} |",
+        (
+            "| controlled_fill_no_fill_lifecycle_validated_count | "
+            f"{summary.get('controlled_fill_no_fill_lifecycle_validated_count', 0)} |"
+        ),
+        (
+            "| no_fill_lifecycle_validated_count | "
+            f"{summary.get('no_fill_lifecycle_validated_count', 0)} |"
+        ),
         "",
         "## Calibration Gate",
         "",
@@ -332,6 +354,14 @@ def render_paperbroker_fill_model_calibration_report(payload: dict[str, Any]) ->
             "## Context Artifacts",
             "",
             f"- comparison artifacts：{len(_records(source_artifacts.get('comparisons')))}",
+            (
+                "- controlled fill artifacts："
+                f"{len(_records(source_artifacts.get('controlled_fills')))}"
+            ),
+            (
+                "- controlled fill classifications："
+                f"{_json_inline(summary.get('controlled_fill_classification_counts'))}"
+            ),
             f"- replay quality：{replay_source.get('path') or 'missing'}",
             f"- replay quality flags：{_json_inline(replay_source.get('quality_flags'))}",
             f"- paper_signal_quality：{signal_source.get('path') or 'missing'}",
@@ -348,10 +378,13 @@ def render_paperbroker_fill_model_calibration_report(payload: dict[str, Any]) ->
 def _calibration_summary(
     *,
     comparison_records: list[tuple[Path, dict[str, Any]]],
+    controlled_fill_records: list[tuple[Path, dict[str, Any]]],
     replay_payload: dict[str, Any],
     paper_signal_quality_payload: dict[str, Any],
 ) -> dict[str, Any]:
     comparison_count = len(comparison_records)
+    controlled_fill_count = len(controlled_fill_records)
+    calibration_evidence_count = comparison_count + controlled_fill_count
     lifecycle_match_count = 0
     status_match_count = 0
     fill_match_count = 0
@@ -362,9 +395,13 @@ def _calibration_summary(
     insufficient_market_data_count = 0
     synthetic_snapshot_related_count = 0
     no_fill_lifecycle_only_count = 0
+    controlled_fill_no_fill_lifecycle_validated_count = 0
+    controlled_fill_fill_seen_count = 0
     fill_tested = False
     comparison_status_counts: dict[str, int] = {}
     difference_label_counts: dict[str, int] = {}
+    controlled_fill_status_counts: dict[str, int] = {}
+    controlled_fill_classification_counts: dict[str, int] = {}
 
     for _path, comparison in comparison_records:
         diff = _mapping(comparison.get("diff"))
@@ -409,10 +446,32 @@ def _calibration_summary(
             lifecycle_match and not local_fill_seen and not ibkr_fill_seen
         )
 
+    for _path, controlled_fill in controlled_fill_records:
+        test_status = _string_value(controlled_fill.get("test_status")) or "missing"
+        controlled_fill_status_counts[test_status] = (
+            controlled_fill_status_counts.get(test_status, 0) + 1
+        )
+        classification = _controlled_fill_classification(controlled_fill)
+        controlled_fill_classification_counts[classification] = (
+            controlled_fill_classification_counts.get(classification, 0) + 1
+        )
+        controlled_fill_seen = _bool_value(controlled_fill.get("fill_seen"))
+        if controlled_fill_seen:
+            fill_tested = True
+            controlled_fill_fill_seen_count += 1
+        controlled_fill_no_fill_lifecycle_validated_count += int(
+            classification == CONTROLLED_FILL_NO_FILL_CLASSIFICATION
+        )
+
+    no_fill_lifecycle_validated_count = (
+        no_fill_lifecycle_only_count + controlled_fill_no_fill_lifecycle_validated_count
+    )
     replay_quality_flags = _mapping(replay_payload.get("quality_flags"))
     paper_signal_summary = _mapping(paper_signal_quality_payload.get("summary"))
     return {
         "comparison_count": comparison_count,
+        "controlled_fill_count": controlled_fill_count,
+        "calibration_evidence_count": calibration_evidence_count,
         "lifecycle_match_count": lifecycle_match_count,
         "lifecycle_match_ratio": _ratio(lifecycle_match_count, comparison_count),
         "status_match_count": status_match_count,
@@ -427,9 +486,18 @@ def _calibration_summary(
         "insufficient_market_data_count": insufficient_market_data_count,
         "synthetic_snapshot_related_count": synthetic_snapshot_related_count,
         "no_fill_lifecycle_only_count": no_fill_lifecycle_only_count,
+        "controlled_fill_no_fill_lifecycle_validated_count": (
+            controlled_fill_no_fill_lifecycle_validated_count
+        ),
+        "controlled_fill_fill_seen_count": controlled_fill_fill_seen_count,
+        "no_fill_lifecycle_validated_count": no_fill_lifecycle_validated_count,
         "fill_tested": fill_tested,
         "comparison_status_counts": dict(sorted(comparison_status_counts.items())),
         "difference_label_counts": dict(sorted(difference_label_counts.items())),
+        "controlled_fill_status_counts": dict(sorted(controlled_fill_status_counts.items())),
+        "controlled_fill_classification_counts": dict(
+            sorted(controlled_fill_classification_counts.items())
+        ),
         "replay_quality_flags": dict(replay_quality_flags),
         "paper_signal_quality_status": _string_value(
             paper_signal_quality_payload.get("evaluation_status")
@@ -440,16 +508,16 @@ def _calibration_summary(
 
 def _calibration_gate(*, summary: dict[str, Any], policy: dict[str, Any]) -> dict[str, Any]:
     thresholds = _mapping(policy["thresholds"])
-    comparison_count = _int_value(summary.get("comparison_count"))
+    evidence_count = _int_value(summary.get("calibration_evidence_count"))
     minimum_count = _int_value(thresholds.get("minimum_comparison_count"), default=1)
     checks = [
         {
-            "check_id": "minimum_comparison_count",
-            "status": "PASS" if comparison_count >= minimum_count else "FAIL",
-            "observed": comparison_count,
+            "check_id": "minimum_evidence_count",
+            "status": "PASS" if evidence_count >= minimum_count else "FAIL",
+            "observed": evidence_count,
             "threshold": minimum_count,
             "operator": ">=",
-            "reason_code": "" if comparison_count >= minimum_count else "insufficient_sample",
+            "reason_code": "" if evidence_count >= minimum_count else "insufficient_sample",
         },
         {
             "check_id": "fill_tested",
@@ -460,7 +528,7 @@ def _calibration_gate(*, summary: dict[str, Any], policy: dict[str, Any]) -> dic
             "reason_code": "" if summary.get("fill_tested") else "no_fill_lifecycle_only",
         },
     ]
-    if comparison_count < minimum_count:
+    if evidence_count < minimum_count:
         return _gate(
             status=STATUS_INSUFFICIENT_SAMPLE,
             reason="insufficient_sample",
@@ -479,8 +547,9 @@ def _calibration_gate(*, summary: dict[str, Any], policy: dict[str, Any]) -> dic
             checks=checks,
         )
     no_fill_lifecycle = (
-        comparison_count > 0
-        and _int_value(summary.get("no_fill_lifecycle_only_count")) == comparison_count
+        evidence_count > 0
+        and not summary.get("fill_tested")
+        and (_int_value(summary.get("no_fill_lifecycle_validated_count")) == evidence_count)
     )
     if no_fill_lifecycle:
         return _gate(
@@ -547,6 +616,28 @@ def _select_recent_comparison_records(
     for path in reports_dir.glob(f"{COMPARISON_REPORT_TYPE}_*.json"):
         payload = _read_json_object(path)
         if payload.get("report_type") != COMPARISON_REPORT_TYPE:
+            continue
+        sample_date = _payload_date(payload, path)
+        if sample_date is None or sample_date > as_of:
+            continue
+        generated_at = _parse_iso_datetime(_string_value(payload.get("generated_at")))
+        candidates.append((sample_date, generated_at, path.name, path, payload))
+    return [
+        (path, payload)
+        for _day, _generated, _name, path, payload in sorted(candidates, reverse=True)[:limit]
+    ]
+
+
+def _select_recent_controlled_fill_records(
+    *,
+    reports_dir: Path,
+    as_of: date,
+    limit: int,
+) -> list[tuple[Path, dict[str, Any]]]:
+    candidates: list[tuple[date, datetime, str, Path, dict[str, Any]]] = []
+    for path in reports_dir.glob(f"{CONTROLLED_FILL_REPORT_TYPE}_*.json"):
+        payload = _read_json_object(path)
+        if payload.get("report_type") != CONTROLLED_FILL_REPORT_TYPE:
             continue
         sample_date = _payload_date(payload, path)
         if sample_date is None or sample_date > as_of:
@@ -630,6 +721,32 @@ def _comparison_source_artifact(
         "fill_match": _bool_value(diff.get("fill_match")),
         "cancel_match": _bool_value(diff.get("cancel_match")),
         "fills_seen": _ibkr_fill_seen(ibkr),
+    }
+
+
+def _controlled_fill_source_artifact(
+    path: Path,
+    payload: dict[str, Any],
+    reports_dir: Path,
+) -> dict[str, Any]:
+    return {
+        "path": str(path),
+        "href": _report_href(path, reports_dir),
+        "exists": True,
+        "as_of": _string_value(payload.get("as_of"))
+        or _string_value(payload.get("source_run_date")),
+        "test_status": _string_value(payload.get("test_status")),
+        "classification": _controlled_fill_classification(payload),
+        "fill_seen": _bool_value(payload.get("fill_seen")),
+        "fill_quantity": _optional_float(payload.get("fill_quantity")),
+        "cancel_requested": _bool_value(payload.get("cancel_requested")),
+        "final_order_status": _string_value(payload.get("final_order_status")),
+        "issue_codes": [
+            _string_value(issue.get("code"))
+            for issue in _records(payload.get("issues"))
+            if _string_value(issue.get("code"))
+        ],
+        "production_effect": _string_value(payload.get("production_effect")),
     }
 
 
@@ -752,6 +869,15 @@ def _broker_rejected(ibkr: dict[str, Any], labels: Iterable[str]) -> bool:
     return "BROKER_REJECTED" in set(labels) or _normalize_status(
         _string_value(ibkr.get("final_status"))
     ) in {"REJECTED", "INACTIVE"}
+
+
+def _controlled_fill_classification(payload: dict[str, Any]) -> str:
+    if _bool_value(payload.get("fill_seen")):
+        return "FILL_OBSERVED"
+    final_status = _normalize_status(_string_value(payload.get("final_order_status")))
+    if final_status == "CANCELLED" and _bool_value(payload.get("cancel_requested")):
+        return CONTROLLED_FILL_NO_FILL_CLASSIFICATION
+    return "CONTROLLED_FILL_INCONCLUSIVE"
 
 
 def _comparison_uses_synthetic_snapshot(local: dict[str, Any], diff: dict[str, Any]) -> bool:
@@ -886,6 +1012,7 @@ def _json_inline(value: object) -> str:
 __all__ = [
     "ALLOWED_CALIBRATION_STATUSES",
     "CALIBRATION_MODE",
+    "CONTROLLED_FILL_NO_FILL_CLASSIFICATION",
     "DEFAULT_PAPERBROKER_FILL_MODEL_CALIBRATION_POLICY_PATH",
     "NO_FILL_LIFECYCLE_RECOMMENDATIONS",
     "PAPERBROKER_FILL_MODEL_CALIBRATION_REPORT_TYPE",
