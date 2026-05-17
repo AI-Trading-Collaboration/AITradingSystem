@@ -25,6 +25,31 @@ SOURCE_PATHS = [
     / "paperbroker_ibkr_comparison.py",
     PROJECT_ROOT / "scripts" / "run_paperbroker_vs_ibkr_paper_comparison.py",
 ]
+SANITIZED_COMPARISON_FIXTURE = (
+    PROJECT_ROOT / "tests" / "fixtures" / "paperbroker_vs_ibkr_paper_comparison_sanitized.json"
+)
+LOCAL_COMPARISON_REVIEW = (
+    PROJECT_ROOT
+    / "docs"
+    / "reviews"
+    / "paperbroker_vs_ibkr_paper_comparison_local_validation_2026-05-17.md"
+)
+COMPARISON_RUNBOOK = (
+    PROJECT_ROOT / "docs" / "runbooks" / "paperbroker_vs_ibkr_paper_comparison_local_validation.md"
+)
+FORBIDDEN_PRODUCTION_SEMANTICS = (
+    "READY_FOR_LIVE",
+    "SHOULD_TRADE",
+    "PROMOTE_TO_PRODUCTION",
+)
+SENSITIVE_VALUE_PATTERNS = (
+    r"sk-[A-Za-z0-9]{8,}",
+    r"(?i)authorization:\s*bearer",
+    r"(?i)\"api[_ -]?key\"\s*:",
+    r"(?i)\"password\"\s*:",
+    r"(?i)\"token\"\s*:",
+    r"(?i)session[_ -]?cookie\s*[:=]",
+)
 
 
 def test_non_paper_mode_fails_closed_before_network(tmp_path: Path) -> None:
@@ -239,6 +264,89 @@ def test_source_does_not_trigger_daily_replay_dashboard_or_live_paths() -> None:
                 violations.append(f"{path}: {fragment}")
 
     assert violations == []
+
+
+def test_sanitized_comparison_fixture_records_pass_and_diagnostic_boundary() -> None:
+    payload = json.loads(SANITIZED_COMPARISON_FIXTURE.read_text(encoding="utf-8"))
+
+    assert payload["comparison_status"] == "PASS"
+    assert payload["comparison_mode"] == "diagnostic_only"
+    assert payload["production_effect"] == "none"
+    assert payload["paper_only"] is True
+    assert payload["manual_cli_only"] is True
+    assert payload["submitted_order"] == {
+        "symbol": "NVDA",
+        "asset_type": "stock",
+        "side": "BUY",
+        "order_type": "LIMIT",
+        "time_in_force": "DAY",
+        "quantity": 1,
+        "limit_price": 10.0,
+    }
+    assert payload["local"]["local_fill_seen"] is False
+    assert payload["local"]["local_final_status"] == "CANCELLED"
+    assert payload["ibkr"]["open_order_seen"] is True
+    assert payload["ibkr"]["cancel_requested"] is True
+    assert payload["ibkr"]["final_status"] == "Cancelled"
+    assert payload["ibkr"]["fills_seen"] is False
+    assert payload["diff"]["status_match"] is True
+    assert payload["diff"]["fill_match"] is True
+    assert payload["diff"]["cancel_match"] is True
+    assert payload["difference_labels"] == []
+
+
+def test_sanitized_comparison_fixture_omits_account_order_id_and_secret_values() -> None:
+    text = SANITIZED_COMPARISON_FIXTURE.read_text(encoding="utf-8")
+    payload = json.loads(text)
+
+    assert payload["account_id_masked"] == "DUP***0000"
+    assert payload["broker_order_id_redaction"] == "[REDACTED_BROKER_ORDER_ID]"
+    assert re.search(r"\bDUP\d{5,}\b", text, flags=re.IGNORECASE) is None
+    assert re.search(r'"broker_order_id"\s*:\s*"\d+', text) is None
+    assert re.search(r"\borderId\b.*\d+", text) is None
+    for pattern in SENSITIVE_VALUE_PATTERNS:
+        assert re.search(pattern, text, flags=re.IGNORECASE) is None
+
+
+def test_local_comparison_validation_review_records_safe_paper_only_result() -> None:
+    text = LOCAL_COMPARISON_REVIEW.read_text(encoding="utf-8")
+
+    assert "validation_status=PASS" in text
+    assert "paper-only=true" in text
+    assert "comparison_mode=diagnostic_only" in text
+    assert "production_effect=none" in text
+    assert "account_id_masked=`DUP***0000`" in text
+    assert "broker_order_id=`[REDACTED_BROKER_ORDER_ID]`" in text
+    assert "fills_seen=false" in text
+    assert "production_surface_impact=none" in text
+    assert re.search(r"\bDUP\d{5,}\b", text, flags=re.IGNORECASE) is None
+    for pattern in SENSITIVE_VALUE_PATTERNS:
+        assert re.search(pattern, text, flags=re.IGNORECASE) is None
+
+
+def test_comparison_runbook_documents_fail_closed_and_no_raw_output_commit() -> None:
+    text = COMPARISON_RUNBOOK.read_text(encoding="utf-8")
+
+    assert "ibkr_paper_comparison_enabled=true" in text
+    assert "production_effect=none" in text
+    assert "comparison_mode=diagnostic_only" in text
+    assert "只提交 sanitized review / fixture，不提交 raw local output" in text
+    assert "fill model 校准另走 TRADING-012" in text
+    assert re.search(r"\bDUP\d{5,}\b", text, flags=re.IGNORECASE) is None
+    for pattern in SENSITIVE_VALUE_PATTERNS:
+        assert re.search(pattern, text, flags=re.IGNORECASE) is None
+
+
+def test_local_comparison_artifacts_avoid_live_trade_promotion_semantics() -> None:
+    texts = [
+        SANITIZED_COMPARISON_FIXTURE.read_text(encoding="utf-8"),
+        LOCAL_COMPARISON_REVIEW.read_text(encoding="utf-8"),
+        COMPARISON_RUNBOOK.read_text(encoding="utf-8"),
+    ]
+
+    for text in texts:
+        for phrase in FORBIDDEN_PRODUCTION_SEMANTICS:
+            assert phrase not in text
 
 
 class MockOrder:

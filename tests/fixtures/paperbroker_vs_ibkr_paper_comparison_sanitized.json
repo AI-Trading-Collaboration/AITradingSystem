@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "report_type": "paperbroker_vs_ibkr_paper_comparison",
+  "validation_type": "local_ibkr_paper_comparison_sanitized",
+  "source_run_date": "2026-05-17",
+  "paper_only": true,
+  "manual_cli_only": true,
+  "comparison_status": "PASS",
+  "comparison_mode": "diagnostic_only",
+  "production_effect": "none",
+  "account_id_masked": "DUP***0000",
+  "broker_order_id_redaction": "[REDACTED_BROKER_ORDER_ID]",
+  "submitted_order": {
+    "symbol": "NVDA",
+    "asset_type": "stock",
+    "side": "BUY",
+    "order_type": "LIMIT",
+    "time_in_force": "DAY",
+    "quantity": 1,
+    "limit_price": 10.0
+  },
+  "local": {
+    "local_order_status": "SUBMITTED",
+    "local_open_order_seen": true,
+    "local_fill_seen": false,
+    "local_avg_fill_price": null,
+    "local_cancel_result": "CANCELLED",
+    "local_final_status": "CANCELLED",
+    "local_reconciliation_status": "PASS",
+    "local_price_source": "synthetic_far_from_market_snapshot"
+  },
+  "ibkr": {
+    "broker_order_id": "[REDACTED_BROKER_ORDER_ID]",
+    "open_order_seen": true,
+    "order_status_events": [
+      {
+        "status": "PendingSubmit",
+        "filled": 0.0,
+        "remaining": 0.0,
+        "avg_fill_price": 0.0,
+        "broker_order_id": "[REDACTED_BROKER_ORDER_ID]"
+      },
+      {
+        "status": "PreSubmitted",
+        "filled": 0.0,
+        "remaining": 1.0,
+        "avg_fill_price": 0.0,
+        "broker_order_id": "[REDACTED_BROKER_ORDER_ID]"
+      },
+      {
+        "status": "PendingCancel",
+        "filled": 0.0,
+        "remaining": 1.0,
+        "avg_fill_price": 0.0,
+        "broker_order_id": "[REDACTED_BROKER_ORDER_ID]"
+      },
+      {
+        "status": "Cancelled",
+        "filled": 0.0,
+        "remaining": 1.0,
+        "avg_fill_price": 0.0,
+        "broker_order_id": "[REDACTED_BROKER_ORDER_ID]"
+      }
+    ],
+    "cancel_requested": true,
+    "final_status": "Cancelled",
+    "cancelled_confirmed": true,
+    "fills_seen": false,
+    "ibkr_reconciliation_status": "PASS"
+  },
+  "diff": {
+    "status_match": true,
+    "fill_match": true,
+    "cancel_match": true,
+    "local_filled_but_ibkr_not_filled": false,
+    "ibkr_rejected_but_local_accepted": false,
+    "local_price_source": "synthetic_far_from_market_snapshot",
+    "ibkr_reference_price_available": null,
+    "lifecycle_event_gap": []
+  },
+  "difference_labels": [],
+  "recommendations": [
+    "consider stricter fill simulation",
+    "require historical bid/ask",
+    "mark synthetic snapshot replay as LIMITED",
+    "add broker_rejection_reason mapping"
+  ],
+  "safety_assertions": {
+    "full_account_id_written": false,
+    "broker_order_id_written": false,
+    "secret_written": false,
+    "production_surface_impact": "none"
+  }
+}
