@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import builtins
 import json
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -59,7 +60,16 @@ def test_paper_signal_quality_writes_gate_and_aggregations(tmp_path: Path) -> No
 
     assert payload["report_type"] == "paper_signal_quality"
     assert payload["production_effect"] == "none"
-    assert payload["evaluation_status"] == "LIMITED"
+    assert payload["evaluation_status"] == "INSUFFICIENT_DATA"
+    assert payload["policy_id"] == "paper_signal_quality_policy"
+    assert payload["policy_version"] == 1
+    assert payload["thresholds_snapshot"] == {
+        "minimum_sample_count": 7,
+        "minimum_filled_count": 3,
+        "maximum_synthetic_snapshot_ratio": 0.25,
+        "minimum_historical_ohlc_coverage": 0.70,
+        "minimum_reconciliation_pass_ratio": 0.90,
+    }
     assert payload["summary"]["sample_count"] == 7
     assert payload["summary"]["candidate_count"] == 14
     assert payload["summary"]["filled_count"] == 2
@@ -72,6 +82,21 @@ def test_paper_signal_quality_writes_gate_and_aggregations(tmp_path: Path) -> No
         "LOW_DATA_QUALITY",
         "LIMITED_MARKET_DATA",
         "UNRELIABLE_EXECUTION_STATE",
+    }
+    assert (
+        payload["evaluation_gate"]["blocked_by"] == payload["evaluation_gate"]["blocking_reasons"]
+    )
+    assert "paper signal quality" in payload["evaluation_gate"]["scope"]
+    assert (
+        "synthetic limit price"
+        in payload["evaluation_gate"]["reason_explanations"]["LOW_DATA_QUALITY"]
+    )
+    assert "DAILY_INDEPENDENT_ONLY" in payload["warning_codes"]
+    assert "DAILY_INDEPENDENT_ONLY" in payload["evaluation_gate"]["warnings"]
+    assert payload["paper_evaluation_mode"] == {
+        "replay_mode": "daily_independent",
+        "portfolio_carry_forward": False,
+        "continuous_portfolio_metrics_available": False,
     }
     assert payload["safety_boundary"] == {
         "reads_broker_api_key": False,
@@ -86,7 +111,7 @@ def test_paper_signal_quality_writes_gate_and_aggregations(tmp_path: Path) -> No
     assert by_symbol["TSM"]["sample_count"] == 7
     assert by_symbol["TSM"]["generated_intents"] == 7
     assert by_symbol["TSM"]["filled_count"] == 2
-    assert by_symbol["TSM"]["quality_status"] == "INSUFFICIENT_FILLED_SAMPLE"
+    assert by_symbol["TSM"]["quality_status"] == "INSUFFICIENT_DATA"
     by_blocked = {row["key"]: row for row in payload["aggregations"]["by_blocked_by"]}
     assert by_blocked["manual_approval_required"]["candidate_count"] == 7
     by_confidence = {row["key"]: row for row in payload["aggregations"]["by_confidence_bucket"]}
@@ -94,11 +119,30 @@ def test_paper_signal_quality_writes_gate_and_aggregations(tmp_path: Path) -> No
     by_source = {row["key"]: row for row in payload["aggregations"]["by_market_snapshot_source"]}
     assert by_source["synthetic_limit_price"]["candidate_count"] == 5
     assert "LOW_DATA_QUALITY" in by_source["synthetic_limit_price"]["quality_reasons"]
+    assert _quality_status_values(payload) <= {
+        "INSUFFICIENT_DATA",
+        "OBSERVE_ONLY",
+        "PROMISING_BUT_LIMITED",
+        "LOW_DATA_QUALITY",
+        "UNRELIABLE",
+    }
+    forbidden = {
+        "READY_FOR_LIVE",
+        "SHOULD_TRADE",
+        "PROMOTE_TO_PRODUCTION",
+        "APPROVED_FOR_TRADING",
+    }
+    assert not forbidden.intersection(_all_string_values(payload))
     assert Path(payload["outputs"]["json"]).exists()
     assert Path(payload["outputs"]["markdown"]).exists()
     markdown = Path(payload["outputs"]["markdown"]).read_text(encoding="utf-8")
     assert "Paper Signal Quality Evaluation" in markdown
     assert "production_effect=none" in markdown
+    assert "Policy：paper_signal_quality_policy v1" in markdown
+    assert "minimum_sample_count" in markdown
+    assert "DAILY_INDEPENDENT_ONLY" in markdown
+    assert "不是连续组合收益" in markdown
+    assert "最大回撤" in markdown
     assert "Paper PnL 只作诊断字段" in markdown
 
 
@@ -147,6 +191,7 @@ def test_paper_signal_quality_uses_optional_replay_without_running_replay(
 
     env_module = __import__("o" + "s")
     original_get_env = getattr(env_module, "get" + "env")
+    original_import = builtins.__import__
 
     def guarded_get_env(key: str, default: str | None = None) -> str | None:
         blocked_tokens = (
@@ -161,6 +206,24 @@ def test_paper_signal_quality_uses_optional_replay_without_running_replay(
 
     monkeypatch.setattr(env_module, "get" + "env", guarded_get_env)
 
+    def guarded_import(
+        name: str,
+        globals_: dict[str, object] | None = None,
+        locals_: dict[str, object] | None = None,
+        fromlist: tuple[str, ...] = (),
+        level: int = 0,
+    ) -> object:
+        blocked_module_tokens = (
+            "run_paper_trading_replay",
+            "run_paper_trading_from_candidates",
+            "ai_trading_system.trading_engine.brokers",
+        )
+        if any(token in name for token in blocked_module_tokens):
+            raise AssertionError(f"quality evaluation must not import execution path: {name}")
+        return original_import(name, globals_, locals_, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+
     payload = build_paper_signal_quality_payload(
         as_of=as_of,
         reports_dir=reports_dir,
@@ -172,9 +235,43 @@ def test_paper_signal_quality_uses_optional_replay_without_running_replay(
     assert payload["source_artifacts"]["optional_replay"]["used_as_daily_summary_fallback"] is True
     assert payload["summary"]["sample_count"] == 1
     assert "INSUFFICIENT_SAMPLE" in payload["evaluation_gate"]["blocking_reasons"]
+    assert payload["evaluation_status"] == "INSUFFICIENT_DATA"
+    assert payload["paper_evaluation_mode"] == {
+        "replay_mode": "daily_independent",
+        "portfolio_carry_forward": False,
+        "continuous_portfolio_metrics_available": False,
+    }
+    assert "DAILY_INDEPENDENT_ONLY" in payload["warning_codes"]
     assert payload["safety_boundary"]["runs_replay"] is False
     markdown = render_paper_signal_quality_report(payload)
     assert "不触发 paper runner / replay" in markdown
+    assert "DAILY_INDEPENDENT_ONLY" in markdown
+
+
+def _quality_status_values(payload: object) -> set[str]:
+    values: set[str] = set()
+    if isinstance(payload, dict):
+        for key, value in payload.items():
+            if key in {"evaluation_status", "quality_status"} and isinstance(value, str):
+                values.add(value)
+            values.update(_quality_status_values(value))
+    elif isinstance(payload, list):
+        for item in payload:
+            values.update(_quality_status_values(item))
+    return values
+
+
+def _all_string_values(payload: object) -> set[str]:
+    values: set[str] = set()
+    if isinstance(payload, dict):
+        for value in payload.values():
+            values.update(_all_string_values(value))
+    elif isinstance(payload, list):
+        for item in payload:
+            values.update(_all_string_values(item))
+    elif isinstance(payload, str):
+        values.add(payload)
+    return values
 
 
 def _write_summary(

@@ -1561,7 +1561,7 @@ def _paper_signal_quality_summary(report: DailyTaskDashboardReport) -> TraceReco
     if payload.get("report_type") != "paper_signal_quality":
         return {
             "status": "MISSING",
-            "evaluation_status": "MISSING",
+            "evaluation_status": "INSUFFICIENT_DATA",
             "exists": False,
             "path": str(path),
             "href": _report_href(path, report.reports_dir),
@@ -1578,13 +1578,13 @@ def _paper_signal_quality_summary(report: DailyTaskDashboardReport) -> TraceReco
     report_path = Path(_string_value(outputs.get("markdown")) or str(path.with_suffix(".md")))
     report_href = _report_href(report_path, report.reports_dir) if report_path.exists() else ""
     production_effect = _string_value(payload.get("production_effect")) or "none"
-    evaluation_status = _string_value(payload.get("evaluation_status")) or "LIMITED"
+    evaluation_status = _string_value(payload.get("evaluation_status")) or "INSUFFICIENT_DATA"
     risks: list[str] = []
     if production_effect != ProductionEffect.NONE.value:
         risks.append("paper signal quality production_effect 不是 none。")
-    if evaluation_status != "PASS":
+    if evaluation_status != "OBSERVE_ONLY":
         gate = _mapping_value(payload, "evaluation_gate")
-        reasons = _strings(gate.get("blocking_reasons"))
+        reasons = _strings(gate.get("blocked_by")) or _strings(gate.get("blocking_reasons"))
         reason_text = ", ".join(reasons) if reasons else evaluation_status
         risks.append(f"evaluation_gate 限制：{reason_text}。")
     return {
@@ -2858,7 +2858,7 @@ def _render_paper_signal_quality(report: DailyTaskDashboardReport) -> str:
     report_link = (
         '<a class="report-link" '
         f'href="{_text(report_href)}"><span>Paper Signal Quality</span>'
-        f"<small>{_text(quality.get('evaluation_status', 'MISSING'))}</small></a>"
+        f"<small>{_text(quality.get('evaluation_status', 'INSUFFICIENT_DATA'))}</small></a>"
         if quality.get("exists")
         else '<span class="report-link missing"><span>Paper Signal Quality</span>'
         "<small>MISSING</small></span>"
@@ -2878,7 +2878,7 @@ def _render_paper_signal_quality(report: DailyTaskDashboardReport) -> str:
             '<div class="summary-grid">',
             _summary_item(
                 "evaluation_status",
-                quality.get("evaluation_status", "MISSING"),
+                quality.get("evaluation_status", "INSUFFICIENT_DATA"),
             ),
             _summary_item("主要 blocked_by", quality.get("primary_blocked_by", "missing")),
             _summary_item("synthetic_snapshot_ratio", synthetic_display),

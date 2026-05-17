@@ -46,6 +46,8 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert "Paper Trading Summary" in html
     assert "Paper Signal Quality" in html
     assert "observe-only" in html
+    assert "只读已有 paper artifacts" in html
+    assert "production_effect=<code>none</code>" in html
     assert "reconciliation_status" in html
     assert "当日动作、仓位与主要约束" in html
     assert "任务执行明细" in html
@@ -78,10 +80,11 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert payload["paper_trading_summary"]["blocked_candidates"] == 1
     assert payload["paper_trading_summary"]["reconciliation_status"] == "PASS"
     assert payload["paper_trading_summary"]["production_effect"] == "none"
-    assert payload["paper_signal_quality"]["evaluation_status"] == "LIMITED"
+    assert payload["paper_signal_quality"]["evaluation_status"] == "LOW_DATA_QUALITY"
     assert payload["paper_signal_quality"]["primary_blocked_by"] == "manual_approval_required"
     assert payload["paper_signal_quality"]["sample_count"] == 7
     assert payload["paper_signal_quality"]["production_effect"] == "none"
+    assert payload["paper_signal_quality"]["observe_only"] is True
     investment = next(item for item in payload["key_conclusions"] if item["area"] == "投资结论")
     assert investment["primary"] == (
         "执行动作：观察；最终 AI 仓位：40%-60%；置信度：0.71；Data Gate：PASS"
@@ -769,7 +772,7 @@ def _write_paper_signal_quality(tmp_path: Path, as_of: date) -> None:
                 "schema_version": 1,
                 "report_type": "paper_signal_quality",
                 "as_of": as_of.isoformat(),
-                "evaluation_status": "LIMITED",
+                "evaluation_status": "LOW_DATA_QUALITY",
                 "production_effect": "none",
                 "outputs": {
                     "json": str(tmp_path / f"paper_signal_quality_{as_of.isoformat()}.json"),
@@ -786,8 +789,10 @@ def _write_paper_signal_quality(tmp_path: Path, as_of: date) -> None:
                     "reconciliation_pass_ratio": 0.86,
                 },
                 "evaluation_gate": {
-                    "status": "LIMITED",
+                    "status": "LOW_DATA_QUALITY",
+                    "blocked_by": ["LOW_DATA_QUALITY"],
                     "blocking_reasons": ["LOW_DATA_QUALITY"],
+                    "explanation": "synthetic snapshot ratio 高于 policy 上限。",
                     "checks": [],
                 },
             },

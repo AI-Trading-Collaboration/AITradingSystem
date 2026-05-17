@@ -14,6 +14,26 @@ PAPER_SIGNAL_QUALITY_WINDOWS: tuple[int, ...] = (7, 14, 30)
 PAPER_SIGNAL_QUALITY_REPORT_TYPE = "paper_signal_quality"
 REPO_ROOT = Path(__file__).resolve().parents[4]
 DEFAULT_PAPER_SIGNAL_QUALITY_POLICY_PATH = REPO_ROOT / "config" / "paper_signal_quality_policy.yaml"
+STATUS_INSUFFICIENT_DATA = "INSUFFICIENT_DATA"
+STATUS_OBSERVE_ONLY = "OBSERVE_ONLY"
+STATUS_PROMISING_BUT_LIMITED = "PROMISING_BUT_LIMITED"
+STATUS_LOW_DATA_QUALITY = "LOW_DATA_QUALITY"
+STATUS_UNRELIABLE = "UNRELIABLE"
+ALLOWED_QUALITY_STATUSES = {
+    STATUS_INSUFFICIENT_DATA,
+    STATUS_OBSERVE_ONLY,
+    STATUS_PROMISING_BUT_LIMITED,
+    STATUS_LOW_DATA_QUALITY,
+    STATUS_UNRELIABLE,
+}
+WARNING_DAILY_INDEPENDENT_ONLY = "DAILY_INDEPENDENT_ONLY"
+REASON_EXPLANATIONS = {
+    "INSUFFICIENT_SAMPLE": "可用 paper summary 样本少于 policy floor。",
+    "INSUFFICIENT_FILLED_SAMPLE": "paper filled 样本少于 policy floor，成交后解释不稳定。",
+    "LOW_DATA_QUALITY": "synthetic limit price snapshot 占比高于 policy 上限。",
+    "LIMITED_MARKET_DATA": "historical OHLC 覆盖低于 policy floor，market snapshot 可信度受限。",
+    "UNRELIABLE_EXECUTION_STATE": "portfolio reconciliation PASS 比例低于 policy floor。",
+}
 
 
 @dataclass
@@ -73,6 +93,14 @@ def build_paper_signal_quality_payload(
         for days in PAPER_SIGNAL_QUALITY_WINDOWS
     }
     selected = windows[str(selected_window_days)]
+    policy_report = _policy_report(policy, policy_path)
+    paper_evaluation_mode = _paper_evaluation_mode(replay_payload)
+    warning_records = _quality_warnings(paper_evaluation_mode)
+    warning_codes = [str(record["code"]) for record in warning_records]
+    for window in windows.values():
+        gate = window.get("evaluation_gate")
+        if isinstance(gate, dict):
+            gate["warnings"] = warning_codes
     return {
         "schema_version": PAPER_SIGNAL_QUALITY_SCHEMA_VERSION,
         "report_type": PAPER_SIGNAL_QUALITY_REPORT_TYPE,
@@ -82,7 +110,13 @@ def build_paper_signal_quality_payload(
         "production_effect": "none",
         "evaluation_status": selected["evaluation_status"],
         "selected_window_days": selected_window_days,
-        "policy": _policy_report(policy, policy_path),
+        "policy_id": policy_report["policy_id"],
+        "policy_version": policy_report["version"],
+        "thresholds_snapshot": policy_report["thresholds"],
+        "policy": policy_report,
+        "warnings": warning_records,
+        "warning_codes": warning_codes,
+        "paper_evaluation_mode": paper_evaluation_mode,
         "evaluation_scope": {
             "observe_only": True,
             "production_effect": "none",
@@ -161,12 +195,14 @@ def write_paper_signal_quality_report(
 def render_paper_signal_quality_report(payload: dict[str, Any]) -> str:
     summary = _mapping(payload.get("summary"))
     gate = _mapping(payload.get("evaluation_gate"))
+    thresholds = _mapping(payload.get("thresholds_snapshot"))
     lines = [
         "# Paper Signal Quality Evaluation",
         "",
         f"- 评估日期：{payload.get('as_of')}",
         "- 市场阶段：`ai_after_chatgpt`",
         f"- 状态：{payload.get('evaluation_status')}",
+        f"- Policy：{payload.get('policy_id')} v{payload.get('policy_version')}",
         "- observe-only：true",
         "- production_effect=none",
         (
@@ -174,6 +210,29 @@ def render_paper_signal_quality_report(payload: dict[str, Any]) -> str:
             "replay；不改变 production 仓位建议；不影响参数晋级。"
         ),
         "- Paper PnL 只作诊断字段，不作为上线依据。",
+        (
+            "- Daily-independent warning：当前结果不是连续组合收益，不能解释现金占用、"
+            "持仓结转、open order 跨日处理或最大回撤。"
+        ),
+        "",
+        "## Policy Thresholds",
+        "",
+        "| Threshold | Value |",
+        "|---|---:|",
+        f"| minimum_sample_count | {thresholds.get('minimum_sample_count', 'missing')} |",
+        f"| minimum_filled_count | {thresholds.get('minimum_filled_count', 'missing')} |",
+        (
+            "| maximum_synthetic_snapshot_ratio | "
+            f"{thresholds.get('maximum_synthetic_snapshot_ratio', 'missing')} |"
+        ),
+        (
+            "| minimum_historical_ohlc_coverage | "
+            f"{thresholds.get('minimum_historical_ohlc_coverage', 'missing')} |"
+        ),
+        (
+            "| minimum_reconciliation_pass_ratio | "
+            f"{thresholds.get('minimum_reconciliation_pass_ratio', 'missing')} |"
+        ),
         "",
         "## 摘要",
         "",
@@ -199,8 +258,9 @@ def render_paper_signal_quality_report(payload: dict[str, Any]) -> str:
         "",
         "## Evaluation Gate",
         "",
-        f"- Gate status：{gate.get('status', 'LIMITED')}",
-        f"- Blocking reasons：{', '.join(_strings(gate.get('blocking_reasons'))) or 'none'}",
+        f"- Gate status：{gate.get('status', STATUS_INSUFFICIENT_DATA)}",
+        f"- Explanation：{gate.get('explanation', '')}",
+        f"- Blocking reasons：{', '.join(_strings(gate.get('blocked_by'))) or 'none'}",
         "",
         "| Check | Status | Observed | Threshold | Reason |",
         "|---|---|---:|---:|---|",
@@ -214,6 +274,33 @@ def render_paper_signal_quality_report(payload: dict[str, Any]) -> str:
             f"{_format_check_value(check.get('threshold'))} | "
             f"{check.get('reason_code') or 'none'} |"
         )
+    lines.extend(
+        [
+            "",
+            "### Blocked Reason Explanation",
+            "",
+            "| Reason | Explanation |",
+            "|---|---|",
+        ]
+    )
+    reason_explanations = _mapping(gate.get("reason_explanations"))
+    if reason_explanations:
+        for reason, explanation in sorted(reason_explanations.items()):
+            lines.append(f"| {reason} | {explanation} |")
+    else:
+        lines.append("| none | 当前没有触发 evaluation gate blocking reason。 |")
+
+    lines.extend(
+        [
+            "",
+            "## Warnings",
+            "",
+            "| Code | Message |",
+            "|---|---|",
+        ]
+    )
+    for warning in _records(payload.get("warnings")):
+        lines.append(f"| {warning.get('code')} | {warning.get('message')} |")
 
     aggregations = _mapping(payload.get("aggregations"))
     lines.extend(_render_aggregation_section(aggregations, "by_strategy_id", "按 Strategy 聚合"))
@@ -486,12 +573,21 @@ def _evaluation_gate(summary: dict[str, Any], policy: dict[str, Any]) -> dict[st
     blocking_reasons = [
         str(check["reason_code"]) for check in checks if check.get("status") == "FAIL"
     ]
+    status = _quality_status_from_reasons(blocking_reasons)
+    reason_explanations = {
+        reason: REASON_EXPLANATIONS.get(reason, "paper signal quality 解释受限。")
+        for reason in blocking_reasons
+    }
     return {
-        "status": "LIMITED" if blocking_reasons else "PASS",
+        "status": status,
+        "blocked_by": blocking_reasons,
         "blocking_reasons": blocking_reasons,
+        "warnings": [],
+        "explanation": _gate_explanation(status, blocking_reasons),
+        "reason_explanations": reason_explanations,
         "checks": checks,
         "production_effect": "none",
-        "scope": "paper_signal_quality_only",
+        "scope": "paper signal quality only",
     }
 
 
@@ -733,6 +829,7 @@ def _serialize_group(
             else 0.0
         )
         quality_reasons = _group_quality_reasons(stats, synthetic_ratio, policy)
+        quality_status = _quality_status_from_reasons(quality_reasons)
         rows.append(
             {
                 "key": key,
@@ -742,7 +839,7 @@ def _serialize_group(
                 "filled_count": stats.filled_count,
                 "avg_paper_pnl": _average_pnl(stats.paper_pnl_total, stats.filled_count),
                 "synthetic_snapshot_ratio": synthetic_ratio,
-                "quality_status": quality_reasons[0] if quality_reasons else "PASS",
+                "quality_status": quality_status,
                 "quality_reasons": quality_reasons,
             }
         )
@@ -763,7 +860,7 @@ def _group_quality_reasons(
     thresholds = _mapping(policy["thresholds"])
     reasons: list[str] = []
     if not stats.candidate_count:
-        return ["NO_DATA"]
+        return ["INSUFFICIENT_SAMPLE"]
     if len(stats.dates) < _int_value(thresholds["minimum_sample_count"]):
         reasons.append("INSUFFICIENT_SAMPLE")
     if stats.generated_intents and stats.filled_count < _int_value(
@@ -862,6 +959,64 @@ def _policy_report(policy: dict[str, Any], policy_path: Path) -> dict[str, Any]:
         "thresholds": dict(_mapping(policy.get("thresholds"))),
         "review_condition": _string_value(policy.get("review_condition")),
     }
+
+
+def _paper_evaluation_mode(replay_payload: dict[str, Any]) -> dict[str, Any]:
+    replay_mode = _string_value(replay_payload.get("replay_mode")) or "daily_independent"
+    portfolio_carry_forward = replay_payload.get("portfolio_carry_forward")
+    if portfolio_carry_forward is None:
+        portfolio_carry_forward = False
+    if not isinstance(portfolio_carry_forward, bool):
+        portfolio_carry_forward = str(portfolio_carry_forward).strip().lower() == "true"
+    return {
+        "replay_mode": replay_mode,
+        "portfolio_carry_forward": portfolio_carry_forward,
+        "continuous_portfolio_metrics_available": (
+            replay_mode != "daily_independent" and portfolio_carry_forward
+        ),
+    }
+
+
+def _quality_warnings(replay_payload: dict[str, Any]) -> list[dict[str, str]]:
+    replay_mode = _string_value(replay_payload.get("replay_mode")) or "daily_independent"
+    portfolio_carry_forward = replay_payload.get("portfolio_carry_forward")
+    if portfolio_carry_forward is None:
+        portfolio_carry_forward = False
+    if replay_mode == "daily_independent" or portfolio_carry_forward is False:
+        return [
+            {
+                "code": WARNING_DAILY_INDEPENDENT_ONLY,
+                "message": (
+                    "当前 paper signal quality 基于逐日独立 paper summary / replay 语义；"
+                    "不是连续组合收益，不能解释现金占用、持仓结转、open order 跨日处理或最大回撤。"
+                ),
+            }
+        ]
+    return []
+
+
+def _quality_status_from_reasons(reasons: list[str]) -> str:
+    reason_set = set(reasons)
+    if reason_set & {"INSUFFICIENT_SAMPLE", "INSUFFICIENT_FILLED_SAMPLE"}:
+        return STATUS_INSUFFICIENT_DATA
+    if "UNRELIABLE_EXECUTION_STATE" in reason_set:
+        return STATUS_UNRELIABLE
+    if reason_set & {"LOW_DATA_QUALITY", "LIMITED_MARKET_DATA"}:
+        return STATUS_LOW_DATA_QUALITY
+    return STATUS_OBSERVE_ONLY
+
+
+def _gate_explanation(status: str, blocking_reasons: list[str]) -> str:
+    if not blocking_reasons:
+        return (
+            "当前没有触发阻断性 paper signal quality gate；结果仍为 observe-only，"
+            "不代表可实盘交易或可晋级参数。"
+        )
+    explanations = [
+        REASON_EXPLANATIONS.get(reason, "paper signal quality 解释受限。")
+        for reason in blocking_reasons
+    ]
+    return f"{status}：{'；'.join(explanations)}"
 
 
 def _optional_replay_source(
