@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 from datetime import date
 from pathlib import Path
@@ -15,6 +16,24 @@ from ai_trading_system.trading_engine.brokers.ibkr_paper_order import (
     load_ibkr_paper_order_config,
 )
 from scripts.run_ibkr_paper_order_lifecycle import run_order_lifecycle
+
+LOCAL_VALIDATION_REPORT = (
+    PROJECT_ROOT / "docs" / "reviews" / "ibkr_paper_order_lifecycle_local_validation_2026-05-17.md"
+)
+SANITIZED_LIFECYCLE_FIXTURE = (
+    PROJECT_ROOT / "tests" / "fixtures" / "ibkr_paper_order_lifecycle_sanitized.json"
+)
+FORBIDDEN_PRODUCTION_SEMANTICS = (
+    "READY_FOR_LIVE",
+    "SHOULD_TRADE",
+    "PROMOTE_TO_PRODUCTION",
+)
+SECRET_PATTERNS = (
+    r"sk-[A-Za-z0-9]{8,}",
+    r"api[_ -]?key",
+    r"password",
+    r"token",
+)
 
 
 def test_default_config_keeps_ibkr_paper_order_lifecycle_disabled() -> None:
@@ -285,6 +304,56 @@ def test_disabled_report_does_not_call_live_broker(
 
     assert payload["lifecycle_status"] == "BLOCK"
     assert payload["connection_status"]["status"] == "NOT_RUN"
+
+
+def test_sanitized_lifecycle_fixture_omits_full_dup_account_and_order_id() -> None:
+    text = SANITIZED_LIFECYCLE_FIXTURE.read_text(encoding="utf-8")
+    payload = json.loads(text)
+
+    assert payload["connection"]["account_id_masked"] == "DUP***0000"
+    assert re.search(r"\bDUP\d{5,}\b", text, flags=re.IGNORECASE) is None
+    assert re.search(r'"broker_order_id"\s*:\s*"\d+', text) is None
+    assert payload["submitted_order"]["broker_order_id_redaction"].startswith("[REDACTED")
+    assert payload["production_effect"] == "none"
+    assert payload["paper_only"] is True
+
+
+def test_sanitized_lifecycle_fixture_contains_no_secret_values() -> None:
+    text = SANITIZED_LIFECYCLE_FIXTURE.read_text(encoding="utf-8")
+
+    for pattern in SECRET_PATTERNS:
+        assert re.search(pattern, text, flags=re.IGNORECASE) is None
+
+
+def test_local_validation_report_records_production_effect_none() -> None:
+    text = LOCAL_VALIDATION_REPORT.read_text(encoding="utf-8")
+
+    assert "production_effect=none" in text
+
+
+def test_local_validation_report_contains_no_secret_values() -> None:
+    text = LOCAL_VALIDATION_REPORT.read_text(encoding="utf-8")
+
+    for pattern in SECRET_PATTERNS:
+        assert re.search(pattern, text, flags=re.IGNORECASE) is None
+
+
+def test_local_validation_report_is_explicitly_paper_only() -> None:
+    text = LOCAL_VALIDATION_REPORT.read_text(encoding="utf-8")
+
+    assert "paper-only=true" in text
+    assert "TWS Paper Trading" in text
+    assert "IB Gateway Paper Trading" in text
+    assert "daily-run" in text
+    assert "replay" in text
+    assert "dashboard" in text
+
+
+def test_local_validation_report_avoids_live_trade_promotion_semantics() -> None:
+    text = LOCAL_VALIDATION_REPORT.read_text(encoding="utf-8")
+
+    for phrase in FORBIDDEN_PRODUCTION_SEMANTICS:
+        assert phrase not in text
 
 
 class MockOrder:
