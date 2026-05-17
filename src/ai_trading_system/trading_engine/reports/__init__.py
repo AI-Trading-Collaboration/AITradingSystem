@@ -6,6 +6,12 @@ from ai_trading_system.trading_engine.reports.paper_signal_quality import (
     render_paper_signal_quality_report,
     write_paper_signal_quality_report,
 )
+from ai_trading_system.trading_engine.reports.shadow_parameter_impact import (
+    build_shadow_parameter_impact_payload,
+    default_shadow_parameter_impact_json_path,
+    render_shadow_parameter_impact_report,
+    write_shadow_parameter_impact_report,
+)
 from ai_trading_system.trading_engine.reports.trading_daily_report import (
     TradingDailyReport,
     build_paper_trading_summary_payload,
@@ -20,10 +26,14 @@ __all__ = [
     "build_paper_trading_summary_payload",
     "build_paper_signal_quality_payload",
     "build_trading_daily_report",
+    "build_shadow_parameter_impact_payload",
     "default_paper_signal_quality_json_path",
+    "default_shadow_parameter_impact_json_path",
     "render_paper_signal_quality_report",
+    "render_shadow_parameter_impact_report",
     "render_trading_daily_report",
     "write_paper_trading_summary_json",
     "write_paper_signal_quality_report",
+    "write_shadow_parameter_impact_report",
     "write_trading_daily_report",
 ]

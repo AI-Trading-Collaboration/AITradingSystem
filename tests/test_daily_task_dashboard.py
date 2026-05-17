@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import builtins
 import json
 from datetime import UTC, date, datetime
 from pathlib import Path
+from typing import Any
 
 from typer.testing import CliRunner
 
@@ -28,6 +30,7 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     _write_shadow_iteration_report(tmp_path, as_of)
     _write_paper_trading_summary(tmp_path, as_of)
     _write_paper_signal_quality(tmp_path, as_of)
+    _write_shadow_parameter_impact(tmp_path, as_of)
 
     report = build_daily_task_dashboard_report(
         as_of=as_of,
@@ -45,6 +48,7 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert "关键结论总览" in html
     assert "Paper Trading Summary" in html
     assert "Paper Signal Quality" in html
+    assert "Shadow Impact" in html
     assert "observe-only" in html
     assert "只读已有 paper artifacts" in html
     assert "production_effect=<code>none</code>" in html
@@ -85,6 +89,20 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert payload["paper_signal_quality"]["sample_count"] == 7
     assert payload["paper_signal_quality"]["production_effect"] == "none"
     assert payload["paper_signal_quality"]["observe_only"] is True
+    assert payload["shadow_parameter_impact"]["impact_status"] == "INSUFFICIENT_DATA"
+    assert payload["shadow_parameter_impact"]["main_blocked_by"] == "insufficient_shadow_sample"
+    assert payload["shadow_parameter_impact"]["window_sample_counts"]["7"] == {
+        "production": 7,
+        "shadow": 0,
+        "unknown": 0,
+    }
+    assert payload["shadow_parameter_impact"]["production_vs_shadow_filled_count"] == {
+        "production": 3,
+        "shadow": 0,
+    }
+    assert payload["shadow_parameter_impact"]["continuous_replay_available"] is True
+    assert payload["shadow_parameter_impact"]["production_effect"] == "none"
+    assert payload["shadow_parameter_impact"]["observe_only"] is True
     investment = next(item for item in payload["key_conclusions"] if item["area"] == "投资结论")
     assert investment["primary"] == (
         "执行动作：观察；最终 AI 仓位：40%-60%；置信度：0.71；Data Gate：PASS"
@@ -513,6 +531,63 @@ def test_daily_task_dashboard_paper_trading_trend_shows_continuous_replay_summar
     assert "portfolio_carry_forward" in html
 
 
+def test_daily_task_dashboard_shadow_impact_card_is_read_only(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    as_of = date(2026, 5, 14)
+    metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
+    _write_detail_reports(tmp_path, as_of)
+    _write_shadow_parameter_impact(tmp_path, as_of)
+
+    env_module = __import__("o" + "s")
+    original_get_env = getattr(env_module, "get" + "env")
+    original_import = builtins.__import__
+
+    def guarded_get_env(key: str, default: str | None = None) -> str | None:
+        blocked_tokens = ("API" + "_" + "KEY", "ALPACA" + "_", "IBKR" + "_", "BRO" + "KER")
+        if any(token in key for token in blocked_tokens):
+            raise AssertionError(f"dashboard must not read broker env var: {key}")
+        return original_get_env(key, default)
+
+    monkeypatch.setattr(env_module, "get" + "env", guarded_get_env)
+
+    def guarded_import(
+        name: str,
+        globals_: dict[str, object] | None = None,
+        locals_: dict[str, object] | None = None,
+        fromlist: tuple[str, ...] = (),
+        level: int = 0,
+    ) -> object:
+        blocked_module_tokens = (
+            "run_paper_trading_replay",
+            "run_paper_trading_from_candidates",
+            "ai_trading_system.trading_engine.brokers",
+        )
+        if any(token in name for token in blocked_module_tokens):
+            raise AssertionError(f"dashboard must not import execution path: {name}")
+        return original_import(name, globals_, locals_, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+
+    report = build_daily_task_dashboard_report(
+        as_of=as_of,
+        metadata_path=metadata_path,
+        run_report_path=tmp_path / "daily_ops_run_2026-05-14.md",
+        reports_dir=tmp_path,
+    )
+    html = render_daily_task_dashboard(report)
+    payload = build_daily_task_dashboard_payload(report)
+
+    impact = payload["shadow_parameter_impact"]
+    assert impact["impact_status"] == "INSUFFICIENT_DATA"
+    assert impact["production_effect"] == "none"
+    assert impact["continuous_replay_available"] is True
+    assert "Shadow Impact" in html
+    assert "shadow_parameter_impact_2026-05-14.md" in html
+    assert "Distribution Snapshot" not in html
+
+
 def _write_daily_ops_metadata(tmp_path: Path, as_of: date) -> Path:
     metadata_path = tmp_path / f"daily_ops_run_metadata_{as_of.isoformat()}.json"
     started_at = datetime(2026, 5, 4, 21, 0, tzinfo=UTC)
@@ -862,6 +937,114 @@ def _write_paper_signal_quality(tmp_path: Path, as_of: date) -> None:
     )
     (tmp_path / f"paper_signal_quality_{as_of.isoformat()}.md").write_text(
         "# Paper Signal Quality Evaluation\n\n- production_effect=none\n",
+        encoding="utf-8",
+    )
+
+
+def _write_shadow_parameter_impact(tmp_path: Path, as_of: date) -> None:
+    suffix = as_of.isoformat()
+    windows = {
+        str(days): {
+            "impact_status": "INSUFFICIENT_DATA",
+            "summary": {
+                "sample_counts": {
+                    "production": 7 if days == 7 else 7,
+                    "shadow": 0,
+                    "unknown": 0,
+                }
+            },
+        }
+        for days in (7, 14, 30)
+    }
+    (tmp_path / f"shadow_parameter_impact_{suffix}.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "shadow_parameter_impact",
+                "as_of": suffix,
+                "impact_status": "INSUFFICIENT_DATA",
+                "production_effect": "none",
+                "outputs": {
+                    "json": str(tmp_path / f"shadow_parameter_impact_{suffix}.json"),
+                    "markdown": str(tmp_path / f"shadow_parameter_impact_{suffix}.md"),
+                },
+                "summary": {
+                    "impact_status": "INSUFFICIENT_DATA",
+                    "sample_counts": {"production": 7, "shadow": 0, "unknown": 0},
+                    "filled_count": {"production": 3, "shadow": 0},
+                    "paper_pnl_total": {"production": 12.5, "shadow": 0.0},
+                    "main_blocked_by": "insufficient_shadow_sample",
+                    "main_warning": "none",
+                    "continuous_replay_available": True,
+                    "continuous_replay_mode": "continuous_portfolio",
+                },
+                "impact_gate": {
+                    "status": "INSUFFICIENT_DATA",
+                    "blocked": True,
+                    "blocked_by": ["insufficient_shadow_sample"],
+                    "blocking_reasons": ["insufficient_shadow_sample"],
+                    "warnings": [],
+                    "checks": [],
+                    "production_effect": "none",
+                },
+                "profile_comparison": {
+                    "production": {
+                        "sample_count": 7,
+                        "candidate_count": 14,
+                        "generated_intents": 5,
+                        "filled_count": 3,
+                        "paper_pnl_total": 12.5,
+                        "blocked_by_distribution": [
+                            {"value": "manual_approval_required", "count": 7}
+                        ],
+                        "reason_code_distribution": [
+                            {"value": "REVIEW_DIRECTION_BLOCKED", "count": 7}
+                        ],
+                    },
+                    "shadow": {
+                        "sample_count": 0,
+                        "candidate_count": 0,
+                        "generated_intents": 0,
+                        "filled_count": 0,
+                        "paper_pnl_total": 0.0,
+                        "blocked_by_distribution": [],
+                        "reason_code_distribution": [],
+                    },
+                    "unknown": {
+                        "sample_count": 0,
+                        "candidate_count": 0,
+                        "generated_intents": 0,
+                        "filled_count": 0,
+                        "paper_pnl_total": 0.0,
+                        "blocked_by_distribution": [],
+                        "reason_code_distribution": [],
+                    },
+                },
+                "continuous_replay": {
+                    "available": True,
+                    "replay_mode": "continuous_portfolio",
+                    "profiles": {
+                        "production": {
+                            "available": True,
+                            "final_equity": 100012.5,
+                            "max_drawdown_pct": -0.01,
+                        },
+                        "shadow": {
+                            "available": False,
+                            "final_equity": None,
+                            "max_drawdown_pct": None,
+                        },
+                    },
+                },
+                "windows": windows,
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / f"shadow_parameter_impact_{suffix}.md").write_text(
+        "# Shadow Parameter Impact Evaluation\n\n- production_effect=none\n",
         encoding="utf-8",
     )
 

@@ -187,6 +187,7 @@ def build_daily_task_dashboard_payload(
         "paper_trading_summary": _paper_trading_summary(report),
         "paper_trading_trend": _paper_trading_trend(report),
         "paper_signal_quality": _paper_signal_quality_summary(report),
+        "shadow_parameter_impact": _shadow_parameter_impact_summary(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -279,6 +280,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_paper_trading_summary(report),
             _render_paper_trading_trend(report),
             _render_paper_signal_quality(report),
+            _render_shadow_parameter_impact(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -934,6 +936,11 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
             "paper_signal_quality_json",
             "paper signal quality JSON",
             report.reports_dir / f"paper_signal_quality_{suffix}.json",
+        ),
+        (
+            "shadow_parameter_impact_json",
+            "shadow parameter impact JSON",
+            report.reports_dir / f"shadow_parameter_impact_{suffix}.json",
         ),
     )
     for artifact_id, label, path in extras:
@@ -1699,6 +1706,97 @@ def _paper_signal_quality_summary(report: DailyTaskDashboardReport) -> TraceReco
         "sample_count": summary.get("sample_count", 0),
         "risk": "；".join(risks) or "Paper signal quality 当前未触发评价限制。",
     }
+
+
+def _shadow_parameter_impact_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    suffix = report.as_of.isoformat()
+    path = report.reports_dir / f"shadow_parameter_impact_{suffix}.json"
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "shadow_parameter_impact":
+        return {
+            "status": "MISSING",
+            "impact_status": "INSUFFICIENT_DATA",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "production_effect": ProductionEffect.NONE.value,
+            "observe_only": True,
+            "main_blocked_by": "missing",
+            "warnings": ["missing"],
+            "window_sample_counts": {
+                "7": {"production": 0, "shadow": 0, "unknown": 0},
+                "14": {"production": 0, "shadow": 0, "unknown": 0},
+                "30": {"production": 0, "shadow": 0, "unknown": 0},
+            },
+            "production_vs_shadow_filled_count": {"production": "missing", "shadow": "missing"},
+            "production_vs_shadow_paper_pnl": {"production": "missing", "shadow": "missing"},
+            "continuous_replay_available": False,
+            "continuous_replay_mode": "missing",
+            "risk": "shadow parameter impact JSON 缺失；dashboard 不补造 impact 结论。",
+        }
+    summary = _mapping_value(payload, "summary")
+    gate = _mapping_value(payload, "impact_gate")
+    outputs = _mapping_value(payload, "outputs")
+    report_path = Path(
+        _string_value(outputs.get("markdown")) or str(path.with_suffix(".md")),
+    )
+    report_href = _report_href(report_path, report.reports_dir) if report_path.exists() else ""
+    production_effect = _string_value(payload.get("production_effect")) or "none"
+    impact_status = _string_value(payload.get("impact_status")) or "INSUFFICIENT_DATA"
+    window_sample_counts = _shadow_impact_window_sample_counts(payload)
+    comparison = _mapping_value(payload, "profile_comparison")
+    production = _mapping_value(comparison, "production")
+    shadow = _mapping_value(comparison, "shadow")
+    continuous = _mapping_value(payload, "continuous_replay")
+    blockers = _strings(gate.get("blocked_by")) or _strings(gate.get("blocking_reasons"))
+    warnings = _strings(gate.get("warnings")) or _strings(payload.get("warning_codes"))
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("shadow impact production_effect 不是 none。")
+    if blockers:
+        risks.append(f"impact_gate 限制：{', '.join(blockers)}。")
+    if warnings:
+        risks.append(f"warnings：{', '.join(warnings)}。")
+    return {
+        "status": impact_status,
+        "impact_status": impact_status,
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "production_effect": production_effect,
+        "observe_only": True,
+        "main_blocked_by": summary.get("main_blocked_by") or (blockers[0] if blockers else "none"),
+        "warnings": warnings,
+        "window_sample_counts": window_sample_counts,
+        "production_vs_shadow_filled_count": {
+            "production": production.get("filled_count", 0),
+            "shadow": shadow.get("filled_count", 0),
+        },
+        "production_vs_shadow_paper_pnl": {
+            "production": production.get("paper_pnl_total", 0.0),
+            "shadow": shadow.get("paper_pnl_total", 0.0),
+        },
+        "continuous_replay_available": bool(continuous.get("available")),
+        "continuous_replay_mode": continuous.get("replay_mode", "daily_independent"),
+        "risk": "；".join(risks) or "Shadow impact 当前未触发阻断性限制。",
+    }
+
+
+def _shadow_impact_window_sample_counts(payload: TraceRecord) -> TraceRecord:
+    windows = _mapping_value(payload, "windows")
+    sample_counts: TraceRecord = {}
+    for window_days in PAPER_TRADING_TREND_WINDOWS:
+        window = _mapping_value(windows, str(window_days))
+        summary = _mapping_value(window, "summary")
+        counts = _mapping_value(summary, "sample_counts")
+        sample_counts[str(window_days)] = {
+            "production": counts.get("production", 0),
+            "shadow": counts.get("shadow", 0),
+            "unknown": counts.get("unknown", 0),
+        }
+    return sample_counts
 
 
 def _paper_trading_snapshot_source_counts(payload: TraceRecord) -> Counter[str]:
@@ -3044,6 +3142,87 @@ def _render_paper_signal_quality(report: DailyTaskDashboardReport) -> str:
             "</section>",
         ]
     )
+
+
+def _render_shadow_parameter_impact(report: DailyTaskDashboardReport) -> str:
+    impact = _shadow_parameter_impact_summary(report)
+    report_href = _string_value(impact.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}"><span>Shadow Impact</span>'
+        f"<small>{_text(impact.get('impact_status', 'INSUFFICIENT_DATA'))}</small></a>"
+        if impact.get("exists")
+        else '<span class="report-link missing"><span>Shadow Impact</span>'
+        "<small>MISSING</small></span>"
+    )
+    filled = _mapping_value(impact, "production_vs_shadow_filled_count")
+    pnl = _mapping_value(impact, "production_vs_shadow_paper_pnl")
+    warnings = _strings(impact.get("warnings"))
+    return "\n".join(
+        [
+            '<section aria-labelledby="shadow-parameter-impact-title">',
+            '<div class="section-head">',
+            '<h2 id="shadow-parameter-impact-title">Shadow Impact</h2>',
+            (
+                "<p>observe-only impact 观察；只读已有 paper artifacts，"
+                "不改变 production conclusion。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item(
+                "impact_status",
+                impact.get("impact_status", "INSUFFICIENT_DATA"),
+            ),
+            _summary_item("main blocked_by", impact.get("main_blocked_by", "missing")),
+            _summary_item("warnings", "；".join(warnings) if warnings else "none"),
+            _summary_item("7/14/30d samples", _shadow_impact_sample_text(impact)),
+            _summary_item(
+                "filled production/shadow",
+                _count_pair(filled, "production", "shadow"),
+            ),
+            _summary_item(
+                "paper PnL production/shadow",
+                (
+                    f"{_format_money_value(pnl.get('production'))} / "
+                    f"{_format_money_value(pnl.get('shadow'))}"
+                ),
+            ),
+            _summary_item(
+                "continuous replay",
+                (
+                    f"{impact.get('continuous_replay_available', False)} / "
+                    f"{impact.get('continuous_replay_mode', 'missing')}"
+                ),
+            ),
+            _summary_item(
+                "production_effect",
+                impact.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(impact.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _shadow_impact_sample_text(impact: TraceRecord) -> str:
+    counts = _mapping_value(impact, "window_sample_counts")
+    parts = []
+    for window_days in PAPER_TRADING_TREND_WINDOWS:
+        window = _mapping_value(counts, str(window_days))
+        parts.append(
+            f"{window_days}d P/S/U "
+            f"{window.get('production', 0)}/"
+            f"{window.get('shadow', 0)}/"
+            f"{window.get('unknown', 0)}"
+        )
+    return "；".join(parts)
 
 
 def _count_pair(summary: TraceRecord, left_key: str, right_key: str) -> str:

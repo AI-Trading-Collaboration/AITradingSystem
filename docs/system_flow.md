@@ -55,6 +55,7 @@ flowchart TD
         CTC["config/catalyst_calendar.yaml<br/>未来催化剂日历和事件前/后复核要求"]
         EPC["config/execution_policy.yaml<br/>advisory execution action taxonomy 和执行纪律"]
         PSQP["config/paper_signal_quality_policy.yaml<br/>paper signal quality evaluation gate pilot baseline；production_effect=none"]
+        SPIP["config/shadow_parameter_impact_policy.yaml<br/>shadow parameter impact gate pilot baseline；production_effect=none"]
         GOVC["config/rule_cards.yaml<br/>production / candidate / retired rule cards"]
         RE["config/risk_events.yaml<br/>L1/L2/L3 风险事件动作规则"]
         REX["data/external/risk_event_occurrences/*.yaml<br/>已触发/观察的风险事件发生记录<br/>S/A/B/C/D/X、严重性、概率、动作等级、lifecycle_state、dedup_group、expiry_time"]
@@ -265,7 +266,7 @@ flowchart TD
         EDASH["aits reports dashboard<br/>证据下钻型静态 dashboard v2"]
         EDASHR["outputs/reports/evidence_dashboard_YYYY-MM-DD.html/json<br/>Decision Card、alerts、history、feedback review、trace 下钻"]
         DTASKD["aits reports daily-tasks<br/>每日关键结论展示页"]
-        DTASKDR["outputs/reports/daily_task_dashboard_YYYY-MM-DD.html/json<br/>key_conclusions、shadow parameter 结果/参数对比表、Paper Trading Summary + 7/14/30 日 Paper Trading Trend + latest replay summary、Paper Signal Quality 轻量卡片、synthetic snapshot 比例、top blocked_by/reason_code、return 口径、重要风险、任务状态和可点击子报告链接"]
+        DTASKDR["outputs/reports/daily_task_dashboard_YYYY-MM-DD.html/json<br/>key_conclusions、shadow parameter 结果/参数对比表、Paper Trading Summary + 7/14/30 日 Paper Trading Trend + latest replay summary、Paper Signal Quality 轻量卡片、Shadow Impact 轻量卡片、synthetic snapshot 比例、top blocked_by/reason_code、return 口径、重要风险、任务状态和可点击子报告链接"]
         DDBUS["outputs/reports/daily_decision_summary_YYYY-MM-DD.json<br/>每日决策总线 JSON：data_gate、investment_conclusion、parameter_governance、feedback_review、system_health、source_artifacts；production_effect=none"]
         OICAND["outputs/reports/order_intent_candidates_YYYY-MM-DD.json<br/>OrderIntentCandidate schema-compatible 候选方向：来自 daily_decision_summary、decision snapshot、position/gate；默认 blocked，Data Gate 缺失用 data_gate_blocked，不接入 broker"]
         ALERT["score-daily alert evaluation<br/>data/system + investment/risk 只读告警"]
@@ -380,6 +381,7 @@ flowchart TD
         TEMSP["MarketSnapshotProvider<br/>historical_ohlc 优先；candidate_metadata 次之；synthetic_limit_price 兜底"]
         TEREPLAY["python scripts/run_paper_trading_replay.py --start YYYY-MM-DD --end YYYY-MM-DD --mode daily-independent / continuous-portfolio<br/>daily-independent 逐日独立；continuous-portfolio 结转同一个 PaperPortfolio；不读取 broker API key"]
         TEQUAL["python scripts/run_paper_signal_quality.py --date YYYY-MM-DD<br/>只读读取 summary/candidates/可选 replay；不触发 runner 或 replay"]
+        TEIMPACT["python scripts/run_shadow_parameter_impact.py --date YYYY-MM-DD<br/>只读比较 production / shadow / unknown profile；不触发 runner、replay、broker 或参数晋级"]
         TEINT["OrderIntent<br/>趋势系统与交易引擎边界 schema"]
         TERISK["PreTradeRiskChecker<br/>kill switch、asset/order type、confidence、notional、仓位、现金、重复订单、事件 blackout"]
         TEBR["PaperBroker<br/>LIMIT order submit/cancel/query、market snapshot fill simulation"]
@@ -390,6 +392,7 @@ flowchart TD
         TESUM["outputs/reports/paper_trading_summary_YYYY-MM-DD.json<br/>dashboard 读取的 paper trading summary；trend 汇总 snapshot source；production_effect=none"]
         TEREPLAYSUM["outputs/reports/paper_trading_replay_START_END.json/md<br/>replay_mode、portfolio_carry_forward、quality_flags、reconciliation 分布；continuous 指标含 equity_curve / drawdown / exposure；production_effect=none"]
         TEQUALR["outputs/reports/paper_signal_quality_YYYY-MM-DD.json/md<br/>allowed evaluation_status / quality_status、policy snapshot、evaluation_gate explanation、PAPER_ONLY_SIMULATION warning、daily-independent 时 DAILY_INDEPENDENT_ONLY warning、strategy/symbol/reason/blocked/confidence/source 聚合；observe-only；production_effect=none"]
+        TEIMPACTR["outputs/reports/shadow_parameter_impact_YYYY-MM-DD.json/md<br/>impact_status、impact_gate、7/14/30 日 production vs shadow 样本/成交/PnL、数据质量、reconciliation、blocked_by/reason_code/confidence bucket、continuous replay 可用性；observe-only；production_effect=none"]
     end
 
     MD --> ERC
@@ -592,9 +595,16 @@ flowchart TD
     OICAND --> TEQUAL
     TEREPLAYSUM -. "可选，只读补充 replay 可见性" .-> TEQUAL
     TEQUAL --> TEQUALR
+    SPIP --> TEIMPACT
+    OICAND --> TEIMPACT
+    TESUM --> TEIMPACT
+    TEQUALR --> TEIMPACT
+    TEREPLAYSUM -. "可选，只读补充 continuous replay 指标" .-> TEIMPACT
+    TEIMPACT --> TEIMPACTR
     TESUM -. "daily task dashboard 只读展示" .-> DTASKDR
     TESUM -. "dashboard Trend 只读读取最近 N 日；缺失显示 LIMITED" .-> DTASKDR
     TEQUALR -. "dashboard 只显示轻量 quality 卡片，不展示详细表格" .-> DTASKDR
+    TEIMPACTR -. "dashboard 只显示轻量 Shadow Impact 卡片，不展示大表" .-> DTASKDR
     DRT --> DSNAP
     DSNAP --> PLED
 
