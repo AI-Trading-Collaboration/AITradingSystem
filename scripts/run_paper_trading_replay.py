@@ -17,6 +17,9 @@ if str(SCRIPTS_ROOT) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_ROOT))
 
 PAPER_TRADING_REPLAY_SCHEMA_VERSION = 1
+REPLAY_MODE_DAILY_INDEPENDENT = "daily_independent"
+REPLAY_MODE_CONTINUOUS_PORTFOLIO = "continuous_portfolio"
+REPLAY_MODE_CHOICES = ("daily-independent", "continuous-portfolio")
 
 COUNT_FIELDS = (
     "candidate_count",
@@ -54,24 +57,39 @@ def run_paper_trading_replay(
     project_root: Path = REPO_ROOT,
     output_json_path: Path | None = None,
     output_md_path: Path | None = None,
+    mode: str = "daily-independent",
+    prices_path: Path | None = None,
 ) -> dict[str, Any]:
     from run_paper_trading_from_candidates import run_from_candidates
 
     if end < start:
         raise ValueError("end must be on or after start")
 
+    replay_mode = _normalize_replay_mode(mode)
     reports_dir.mkdir(parents=True, exist_ok=True)
     output_json_path = output_json_path or _default_replay_json_path(
         reports_dir,
         start,
         end,
+        replay_mode=replay_mode,
     )
     output_md_path = output_md_path or output_json_path.with_suffix(".md")
+    if replay_mode == REPLAY_MODE_CONTINUOUS_PORTFOLIO:
+        return _write_continuous_portfolio_not_implemented_payload(
+            start=start,
+            end=end,
+            output_json_path=output_json_path,
+            output_md_path=output_md_path,
+            reports_dir=reports_dir,
+            audit_root=audit_root,
+            trading_daily_report_dir=trading_daily_report_dir,
+        )
 
     totals = _zero_totals()
     distributions: dict[str, dict[str, int]] = {
         "daily_status": {},
         "reconciliation_status": {},
+        "market_snapshot_source": {},
     }
     aggregations = _empty_aggregations()
     daily_results: list[dict[str, Any]] = []
@@ -89,6 +107,7 @@ def run_paper_trading_replay(
                 summary_output_path=summary_output_path,
                 project_root=project_root,
                 ensure_upstream_artifacts=not candidate_file_preexisting,
+                prices_path=prices_path,
             )
             record = _daily_result_from_summary(
                 as_of=as_of,
@@ -102,6 +121,10 @@ def run_paper_trading_replay(
             _increment(
                 distributions["reconciliation_status"],
                 str(record["reconciliation_status"]),
+            )
+            _increment(
+                distributions["market_snapshot_source"],
+                str(record["market_snapshot_source"]),
             )
             _add_candidate_aggregations(
                 aggregations,
@@ -117,8 +140,10 @@ def run_paper_trading_replay(
             )
             _increment(distributions["daily_status"], "ERROR")
             _increment(distributions["reconciliation_status"], "ERROR")
+            _increment(distributions["market_snapshot_source"], "ERROR")
         daily_results.append(record)
 
+    quality_flags = _quality_flags(daily_results)
     payload: dict[str, Any] = {
         "schema_version": PAPER_TRADING_REPLAY_SCHEMA_VERSION,
         "report_type": "paper_trading_replay",
@@ -127,8 +152,11 @@ def run_paper_trading_replay(
         "start": start.isoformat(),
         "end": end.isoformat(),
         "date_count": len(daily_results),
-        "status": _overall_status(daily_results),
+        "status": _overall_status(daily_results, quality_flags=quality_flags),
         "production_effect": "none",
+        "replay_mode": replay_mode,
+        "portfolio_carry_forward": False,
+        "implementation_status": "IMPLEMENTED",
         "execution_boundary": {
             "mode": "paper",
             "paper_only": True,
@@ -145,13 +173,13 @@ def run_paper_trading_replay(
             "trading_daily_report_dir": str(trading_daily_report_dir),
         },
         "totals": totals,
-        "distributions": {
-            key: dict(sorted(value.items())) for key, value in distributions.items()
-        },
+        "distributions": {key: dict(sorted(value.items())) for key, value in distributions.items()},
         "aggregations": _serialize_aggregations(aggregations),
+        "quality_flags": quality_flags,
         "daily_results": daily_results,
         "notes": [
             "本 replay 只验证 paper trading daily flow，不代表实盘收益。",
+            "当前 replay_mode=daily_independent：逐日独立模拟，不是连续组合收益。",
             "replay 不读取 broker API key，不调用真实 broker，不改变 production 仓位建议。",
             "缺失候选或上游输入时只生成 limited artifacts，不补造投资结论。",
         ],
@@ -169,16 +197,23 @@ def run_paper_trading_replay(
 
 def render_paper_trading_replay_report(payload: dict[str, Any]) -> str:
     totals = _mapping(payload.get("totals"))
+    quality_flags = _mapping(payload.get("quality_flags"))
     lines = [
         "# Paper Trading Replay Summary",
         "",
         f"- 日期范围：{payload.get('start')} 到 {payload.get('end')}",
         "- 市场阶段：`ai_after_chatgpt`",
         f"- 状态：{payload.get('status')}",
+        f"- replay_mode={payload.get('replay_mode')}",
+        f"- portfolio_carry_forward={payload.get('portfolio_carry_forward')}",
         "- production_effect=none",
         (
             "- 边界：paper-only 复盘；不读取 broker API key；不调用真实 broker；"
             "不改变 production 仓位建议。"
+        ),
+        (
+            "- 当前默认 replay 是逐日独立模拟，不是连续组合收益；不会结转前一日"
+            "持仓、cash 或 open order。"
         ),
         "",
         "## 汇总",
@@ -188,6 +223,28 @@ def render_paper_trading_replay_report(payload: dict[str, Any]) -> str:
     ]
     for field in (*COUNT_FIELDS, *PNL_FIELDS):
         lines.append(f"| {field} | {_format_value(totals.get(field))} |")
+
+    lines.extend(
+        [
+            "",
+            "## Replay Quality Flags",
+            "",
+            "| Flag | Count |",
+            "|---|---:|",
+        ]
+    )
+    for field in (
+        "synthetic_snapshot_days",
+        "missing_candidate_days",
+        "limited_upstream_days",
+        "error_days",
+        "empty_candidate_days",
+    ):
+        lines.append(f"| {field} | {quality_flags.get(field, 0)} |")
+    lines.append(
+        "| synthetic_snapshot_count | "
+        f"{_synthetic_snapshot_count(_list_mappings(payload.get('daily_results')))} |"
+    )
 
     lines.extend(
         [
@@ -214,8 +271,8 @@ def render_paper_trading_replay_report(payload: dict[str, Any]) -> str:
             "## 每日结果",
             "",
             "| Date | Status | Candidates | Intents | Submitted | "
-            "Filled/Open/Cancelled | Reconciliation | Limited upstream |",
-            "|---|---|---:|---:|---:|---:|---|---|",
+            "Filled/Open/Cancelled | Reconciliation | Snapshot Source | Limited upstream |",
+            "|---|---|---:|---:|---:|---:|---|---|---|",
         ]
     )
     for record in _list_mappings(payload.get("daily_results")):
@@ -233,6 +290,7 @@ def render_paper_trading_replay_report(payload: dict[str, Any]) -> str:
             f"{record.get('submitted')} | "
             f"{filled_open_cancelled} | "
             f"{record.get('reconciliation_status')} | "
+            f"{record.get('market_snapshot_source')} | "
             f"{record.get('limited_upstream_generated')} |"
         )
     return "\n".join(lines).rstrip() + "\n"
@@ -258,9 +316,7 @@ def _render_group_section(
     for row in rows:
         approved_rejected = f"{row.get('approved', 0)}/{row.get('rejected', 0)}"
         filled_open_cancelled = (
-            f"{row.get('filled', 0)}/"
-            f"{row.get('open', 0)}/"
-            f"{row.get('cancelled', 0)}"
+            f"{row.get('filled', 0)}/" f"{row.get('open', 0)}/" f"{row.get('cancelled', 0)}"
         )
         lines.append(
             "| "
@@ -276,10 +332,17 @@ def _render_group_section(
     return lines
 
 
-def _default_replay_json_path(reports_dir: Path, start: date, end: date) -> Path:
-    return reports_dir / (
-        f"paper_trading_replay_{start.isoformat()}_{end.isoformat()}.json"
-    )
+def _default_replay_json_path(
+    reports_dir: Path,
+    start: date,
+    end: date,
+    *,
+    replay_mode: str,
+) -> Path:
+    suffix = f"{start.isoformat()}_{end.isoformat()}"
+    if replay_mode != REPLAY_MODE_DAILY_INDEPENDENT:
+        suffix = f"{suffix}_{replay_mode}"
+    return reports_dir / f"paper_trading_replay_{suffix}.json"
 
 
 def _date_range(start: date, end: date) -> Iterable[date]:
@@ -290,7 +353,10 @@ def _date_range(start: date, end: date) -> Iterable[date]:
 
 
 def _zero_totals() -> dict[str, int | float]:
-    return {**{field: 0 for field in COUNT_FIELDS}, **{field: 0.0 for field in PNL_FIELDS}}
+    return {
+        **{field: 0 for field in COUNT_FIELDS},
+        **{field: 0.0 for field in PNL_FIELDS},
+    }
 
 
 def _empty_aggregations() -> dict[str, dict[str, dict[str, int]]]:
@@ -310,6 +376,9 @@ def _daily_result_from_summary(
     candidate_file_preexisting: bool,
     summary_output_path: Path,
 ) -> dict[str, Any]:
+    market_snapshot_source_counts = _market_snapshot_source_counts(
+        summary.get("market_snapshot_source_counts")
+    )
     record: dict[str, Any] = {
         "as_of": as_of.isoformat(),
         "status": _string(summary.get("status")) or "UNKNOWN",
@@ -320,8 +389,9 @@ def _daily_result_from_summary(
         "summary_output_path": str(summary_output_path),
         "report_path": str(summary.get("report_path") or ""),
         "audit_log_path": str(summary.get("audit_log_path") or ""),
-        "reconciliation_status": _string(summary.get("reconciliation_status"))
-        or "MISSING",
+        "reconciliation_status": _string(summary.get("reconciliation_status")) or "MISSING",
+        "market_snapshot_source": _string(summary.get("market_snapshot_source")) or "none",
+        "market_snapshot_source_counts": market_snapshot_source_counts,
     }
     for field in COUNT_FIELDS:
         record[field] = _int_value(summary.get(field))
@@ -349,6 +419,8 @@ def _daily_error_result(
         "report_path": "",
         "audit_log_path": "",
         "reconciliation_status": "ERROR",
+        "market_snapshot_source": "ERROR",
+        "market_snapshot_source_counts": _empty_market_snapshot_source_counts(),
         "error": error,
     }
     for field in COUNT_FIELDS:
@@ -424,7 +496,11 @@ def _serialize_aggregations(
     return serialized
 
 
-def _overall_status(daily_results: list[dict[str, Any]]) -> str:
+def _overall_status(
+    daily_results: list[dict[str, Any]],
+    *,
+    quality_flags: dict[str, int],
+) -> str:
     statuses = {_string(record.get("status")) for record in daily_results}
     if "ERROR" in statuses:
         return "ERROR"
@@ -432,7 +508,150 @@ def _overall_status(daily_results: list[dict[str, Any]]) -> str:
         return "LIMITED"
     if any(record.get("limited_upstream_generated") for record in daily_results):
         return "LIMITED"
+    if _synthetic_snapshot_dominates(daily_results, quality_flags=quality_flags):
+        return "LIMITED"
     return "PASS"
+
+
+def _quality_flags(daily_results: list[dict[str, Any]]) -> dict[str, int]:
+    return {
+        "synthetic_snapshot_days": sum(
+            1 for record in daily_results if _snapshot_count(record, "synthetic_limit_price") > 0
+        ),
+        "missing_candidate_days": sum(
+            1 for record in daily_results if not record.get("candidate_file_preexisting")
+        ),
+        "limited_upstream_days": sum(
+            1 for record in daily_results if bool(record.get("limited_upstream_generated"))
+        ),
+        "error_days": sum(1 for record in daily_results if record.get("status") == "ERROR"),
+        "empty_candidate_days": sum(
+            1 for record in daily_results if _int_value(record.get("candidate_count")) == 0
+        ),
+    }
+
+
+def _synthetic_snapshot_dominates(
+    daily_results: list[dict[str, Any]],
+    *,
+    quality_flags: dict[str, int],
+) -> bool:
+    synthetic_days = quality_flags.get("synthetic_snapshot_days", 0)
+    if synthetic_days <= 0:
+        return False
+    snapshot_days = sum(
+        1
+        for record in daily_results
+        if any(count > 0 for count in _market_snapshot_counts_from_record(record).values())
+    )
+    non_synthetic_days = snapshot_days - synthetic_days
+    return synthetic_days > non_synthetic_days
+
+
+def _snapshot_count(record: dict[str, Any], source: str) -> int:
+    return _market_snapshot_counts_from_record(record).get(source, 0)
+
+
+def _synthetic_snapshot_count(daily_results: tuple[dict[str, Any], ...]) -> int:
+    return sum(_snapshot_count(record, "synthetic_limit_price") for record in daily_results)
+
+
+def _market_snapshot_counts_from_record(record: dict[str, Any]) -> dict[str, int]:
+    return _market_snapshot_source_counts(record.get("market_snapshot_source_counts"))
+
+
+def _market_snapshot_source_counts(value: object) -> dict[str, int]:
+    counts = _empty_market_snapshot_source_counts()
+    if isinstance(value, dict):
+        for key in counts:
+            counts[key] = _int_value(value.get(key))
+    return counts
+
+
+def _empty_market_snapshot_source_counts() -> dict[str, int]:
+    return {
+        "historical_ohlc": 0,
+        "candidate_metadata": 0,
+        "synthetic_limit_price": 0,
+    }
+
+
+def _normalize_replay_mode(mode: str) -> str:
+    normalized = mode.strip().lower().replace("_", "-")
+    if normalized == "daily-independent":
+        return REPLAY_MODE_DAILY_INDEPENDENT
+    if normalized == "continuous-portfolio":
+        return REPLAY_MODE_CONTINUOUS_PORTFOLIO
+    raise ValueError("mode must be daily-independent or continuous-portfolio")
+
+
+def _write_continuous_portfolio_not_implemented_payload(
+    *,
+    start: date,
+    end: date,
+    output_json_path: Path,
+    output_md_path: Path,
+    reports_dir: Path,
+    audit_root: Path,
+    trading_daily_report_dir: Path,
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "schema_version": PAPER_TRADING_REPLAY_SCHEMA_VERSION,
+        "report_type": "paper_trading_replay",
+        "generated_at": datetime.now(tz=UTC).isoformat(),
+        "market_regime": "ai_after_chatgpt",
+        "start": start.isoformat(),
+        "end": end.isoformat(),
+        "date_count": 0,
+        "status": "NOT_IMPLEMENTED",
+        "production_effect": "none",
+        "replay_mode": REPLAY_MODE_CONTINUOUS_PORTFOLIO,
+        "portfolio_carry_forward": False,
+        "implementation_status": "NOT_IMPLEMENTED",
+        "execution_boundary": {
+            "mode": "paper",
+            "paper_only": True,
+            "real_broker_allowed": False,
+            "broker_api_allowed": False,
+            "api_key_read": False,
+            "production_position_effect": "none",
+        },
+        "outputs": {
+            "json": str(output_json_path),
+            "markdown": str(output_md_path),
+            "reports_dir": str(reports_dir),
+            "audit_root": str(audit_root),
+            "trading_daily_report_dir": str(trading_daily_report_dir),
+        },
+        "totals": _zero_totals(),
+        "distributions": {
+            "daily_status": {},
+            "reconciliation_status": {},
+            "market_snapshot_source": {},
+        },
+        "aggregations": _serialize_aggregations(_empty_aggregations()),
+        "quality_flags": {
+            "synthetic_snapshot_days": 0,
+            "missing_candidate_days": 0,
+            "limited_upstream_days": 0,
+            "error_days": 0,
+            "empty_candidate_days": 0,
+        },
+        "daily_results": [],
+        "notes": [
+            "continuous-portfolio 模式本阶段仅预留结构，尚未实现。",
+            "本报告没有结转前一日持仓、cash 或 open order，不能解释为连续组合收益。",
+            "replay 不读取 broker API key，不调用真实 broker，不改变 production 仓位建议。",
+        ],
+    }
+    output_json_path.parent.mkdir(parents=True, exist_ok=True)
+    output_json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    output_md_path.parent.mkdir(parents=True, exist_ok=True)
+    output_md_path.write_text(render_paper_trading_replay_report(payload), encoding="utf-8")
+    return payload
 
 
 def _increment(distribution: dict[str, int], key: str) -> None:
@@ -496,6 +715,12 @@ def main() -> None:
     parser.add_argument("--start", required=True, help="Start date in YYYY-MM-DD format.")
     parser.add_argument("--end", required=True, help="End date in YYYY-MM-DD format.")
     parser.add_argument(
+        "--mode",
+        default="daily-independent",
+        choices=REPLAY_MODE_CHOICES,
+        help="Replay mode. continuous-portfolio is a reserved, not implemented mode.",
+    )
+    parser.add_argument(
         "--reports-dir",
         default=str(REPO_ROOT / "outputs" / "reports"),
         help="Directory containing candidate and paper summary reports.",
@@ -510,6 +735,10 @@ def main() -> None:
         default=str(REPO_ROOT / "reports" / "trading_daily"),
         help="Trading daily report output directory.",
     )
+    parser.add_argument(
+        "--prices-path",
+        help="Historical OHLC CSV path. Defaults to data/raw/prices_daily.csv.",
+    )
     args = parser.parse_args()
 
     start = date.fromisoformat(args.start)
@@ -521,6 +750,8 @@ def main() -> None:
         audit_root=Path(args.audit_root),
         trading_daily_report_dir=Path(args.report_dir),
         project_root=REPO_ROOT,
+        mode=args.mode,
+        prices_path=Path(args.prices_path) if args.prices_path else None,
     )
     totals = _mapping(payload.get("totals"))
     outputs = _mapping(payload.get("outputs"))

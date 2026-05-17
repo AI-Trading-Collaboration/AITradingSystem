@@ -44,11 +44,18 @@ def test_run_paper_trading_from_candidates_generates_report_audit_and_summary(
     assert summary["open"] == 0
     assert summary["reconciliation_status"] == "PASS"
     assert summary["production_effect"] == "none"
+    assert summary["market_snapshot_source"] == "synthetic_limit_price"
+    assert summary["market_snapshot_source_counts"] == {
+        "historical_ohlc": 0,
+        "candidate_metadata": 0,
+        "synthetic_limit_price": 1,
+    }
     assert Path(summary["report_path"]).exists()
     assert summary_output_path.exists()
     assert (tmp_path / "audit" / "order_intent_log" / "2026-05-17.jsonl").exists()
     summary_json = json.loads(summary_output_path.read_text(encoding="utf-8"))
     assert summary_json["production_effect"] == "none"
+    assert summary_json["market_snapshot_source"] == "synthetic_limit_price"
     assert summary_json["candidate_count"] == 2
     assert summary_json["blocked_candidates"] == 1
     assert summary_json["reconciliation_status"] == "PASS"

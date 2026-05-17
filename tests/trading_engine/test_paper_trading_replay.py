@@ -42,6 +42,8 @@ def test_paper_trading_replay_runs_multiple_dates_and_writes_summary(
     assert payload["end"] == "2026-05-02"
     assert payload["status"] == "LIMITED"
     assert payload["production_effect"] == "none"
+    assert payload["replay_mode"] == "daily_independent"
+    assert payload["portfolio_carry_forward"] is False
     assert payload["execution_boundary"] == {
         "mode": "paper",
         "paper_only": True,
@@ -57,7 +59,19 @@ def test_paper_trading_replay_runs_multiple_dates_and_writes_summary(
     assert payload["totals"]["submitted"] == 1
     assert payload["totals"]["filled"] == 1
     assert payload["distributions"]["reconciliation_status"] == {"PASS": 2}
+    assert payload["distributions"]["market_snapshot_source"] == {
+        "none": 1,
+        "synthetic_limit_price": 1,
+    }
+    assert payload["quality_flags"] == {
+        "synthetic_snapshot_days": 1,
+        "missing_candidate_days": 1,
+        "limited_upstream_days": 1,
+        "error_days": 0,
+        "empty_candidate_days": 0,
+    }
     assert payload["daily_results"][0]["candidate_file_preexisting"] is True
+    assert payload["daily_results"][0]["market_snapshot_source"] == "synthetic_limit_price"
     assert payload["daily_results"][1]["limited_upstream_generated"] is True
     assert (reports_dir / "daily_decision_summary_2026-05-02.json").exists()
     assert (reports_dir / "order_intent_candidates_2026-05-02.json").exists()
@@ -66,6 +80,8 @@ def test_paper_trading_replay_runs_multiple_dates_and_writes_summary(
     assert Path(payload["outputs"]["markdown"]).exists()
     markdown = Path(payload["outputs"]["markdown"]).read_text(encoding="utf-8")
     assert "paper-only 复盘" in markdown
+    assert "逐日独立模拟" in markdown
+    assert "synthetic_snapshot_count" in markdown
     assert "production_effect=none" in markdown
 
     by_symbol = {
@@ -102,11 +118,15 @@ def test_paper_trading_replay_json_schema_is_stable(tmp_path: Path) -> None:
         "date_count",
         "status",
         "production_effect",
+        "replay_mode",
+        "portfolio_carry_forward",
+        "implementation_status",
         "execution_boundary",
         "outputs",
         "totals",
         "distributions",
         "aggregations",
+        "quality_flags",
         "daily_results",
         "notes",
     }
@@ -141,6 +161,8 @@ def test_paper_trading_replay_json_schema_is_stable(tmp_path: Path) -> None:
         "report_path",
         "audit_log_path",
         "reconciliation_status",
+        "market_snapshot_source",
+        "market_snapshot_source_counts",
         "candidate_count",
         "blocked_candidates",
         "generated_intents",
@@ -154,6 +176,92 @@ def test_paper_trading_replay_json_schema_is_stable(tmp_path: Path) -> None:
         "unrealized_pnl",
     }
     assert first_day["production_effect"] == "none"
+    assert payload["replay_mode"] == "daily_independent"
+    assert payload["portfolio_carry_forward"] is False
+
+
+def test_paper_trading_replay_uses_historical_ohlc_when_available(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    as_of = date(2026, 5, 5)
+    _write_candidates(reports_dir, as_of, include_blocked=False)
+    prices_path = _write_price_cache(tmp_path, as_of, symbol="TSM")
+
+    payload = run_paper_trading_replay(
+        start=as_of,
+        end=as_of,
+        reports_dir=reports_dir,
+        audit_root=tmp_path / "audit",
+        trading_daily_report_dir=tmp_path / "reports" / "trading_daily",
+        project_root=tmp_path,
+        prices_path=prices_path,
+    )
+
+    day = payload["daily_results"][0]
+    assert payload["status"] == "PASS"
+    assert day["market_snapshot_source"] == "historical_ohlc"
+    assert day["market_snapshot_source_counts"]["historical_ohlc"] == 1
+    assert payload["quality_flags"]["synthetic_snapshot_days"] == 0
+    summary = json.loads(
+        (reports_dir / "paper_trading_summary_2026-05-05.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert summary["market_snapshot_source"] == "historical_ohlc"
+
+
+def test_paper_trading_replay_marks_synthetic_limit_price_fallback(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    as_of = date(2026, 5, 6)
+    _write_candidates(reports_dir, as_of, include_blocked=False)
+
+    payload = run_paper_trading_replay(
+        start=as_of,
+        end=as_of,
+        reports_dir=reports_dir,
+        audit_root=tmp_path / "audit",
+        trading_daily_report_dir=tmp_path / "reports" / "trading_daily",
+        project_root=tmp_path,
+    )
+
+    day = payload["daily_results"][0]
+    assert payload["status"] == "LIMITED"
+    assert day["market_snapshot_source"] == "synthetic_limit_price"
+    assert day["market_snapshot_source_counts"]["synthetic_limit_price"] == 1
+    assert payload["quality_flags"]["synthetic_snapshot_days"] == 1
+
+
+def test_continuous_portfolio_mode_is_explicitly_not_implemented(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 5, 7)
+    payload = run_paper_trading_replay(
+        start=as_of,
+        end=as_of,
+        reports_dir=tmp_path / "outputs" / "reports",
+        audit_root=tmp_path / "audit",
+        trading_daily_report_dir=tmp_path / "reports" / "trading_daily",
+        project_root=tmp_path,
+        mode="continuous-portfolio",
+    )
+
+    assert payload["status"] == "NOT_IMPLEMENTED"
+    assert payload["replay_mode"] == "continuous_portfolio"
+    assert payload["portfolio_carry_forward"] is False
+    assert payload["implementation_status"] == "NOT_IMPLEMENTED"
+    assert payload["daily_results"] == []
+    assert Path(payload["outputs"]["json"]).exists()
+
+
+def test_paper_replay_scripts_remain_reviewable_text_files() -> None:
+    runner_path = REPO_ROOT / "scripts" / "run_paper_trading_from_candidates.py"
+    for path in (runner_path, REPLAY_PATH):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        assert len(lines) > 50
+        assert max(len(line) for line in lines) <= 100
 
 
 def test_paper_trading_replay_does_not_call_real_broker_or_read_api_key(
@@ -215,7 +323,12 @@ def test_paper_trading_replay_does_not_call_real_broker_or_read_api_key(
     assert payload["totals"]["submitted"] == 1
 
 
-def _write_candidates(reports_dir: Path, as_of: date) -> Path:
+def _write_candidates(
+    reports_dir: Path,
+    as_of: date,
+    *,
+    include_blocked: bool = True,
+) -> Path:
     reports_dir.mkdir(parents=True, exist_ok=True)
     path = reports_dir / f"order_intent_candidates_{as_of.isoformat()}.json"
     payload = {
@@ -234,6 +347,10 @@ def _write_candidates(reports_dir: Path, as_of: date) -> Path:
                 blocked_by=[],
                 reason_codes=["ai_infra"],
             ),
+        ],
+    }
+    if include_blocked:
+        payload["candidates"].append(
             _candidate(
                 candidate_id=f"candidate:{as_of.isoformat()}:nvda",
                 as_of=as_of,
@@ -241,10 +358,24 @@ def _write_candidates(reports_dir: Path, as_of: date) -> Path:
                 blocked=True,
                 blocked_by=["manual_approval_required"],
                 reason_codes=["valuation_risk"],
-            ),
-        ],
-    }
+            )
+        )
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    return path
+
+
+def _write_price_cache(tmp_path: Path, as_of: date, *, symbol: str) -> Path:
+    path = tmp_path / "data" / "raw" / "prices_daily.csv"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        "\n".join(
+            [
+                "date,ticker,open,high,low,close,adj_close,volume",
+                f"{as_of.isoformat()},{symbol},95,101,90,99,99,1000",
+            ]
+        ),
+        encoding="utf-8",
+    )
     return path
 
 

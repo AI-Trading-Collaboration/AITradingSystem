@@ -376,7 +376,8 @@ flowchart TD
         TEDMO["python scripts/run_paper_trading_demo.py --date YYYY-MM-DD<br/>模拟趋势候选，不读取真实券商 API key"]
         TEOIB["OrderIntentBuilder / order intent candidate adapter<br/>只允许 blocked=false 且 mode=paper 的 candidate 转成 OrderIntent"]
         TEOCR["python scripts/run_paper_trading_from_candidates.py<br/>读取 order_intent_candidates JSON，执行 paper-only 闭环"]
-        TEREPLAY["python scripts/run_paper_trading_replay.py --start YYYY-MM-DD --end YYYY-MM-DD<br/>逐日复用 candidate runner；缺候选时生成 limited upstream artifacts；不读取 broker API key"]
+        TEMSP["MarketSnapshotProvider<br/>historical_ohlc 优先；candidate_metadata 次之；synthetic_limit_price 兜底"]
+        TEREPLAY["python scripts/run_paper_trading_replay.py --start YYYY-MM-DD --end YYYY-MM-DD --mode daily-independent<br/>逐日独立复用 candidate runner；缺候选时生成 limited upstream artifacts；不读取 broker API key"]
         TEINT["OrderIntent<br/>趋势系统与交易引擎边界 schema"]
         TERISK["PreTradeRiskChecker<br/>kill switch、asset/order type、confidence、notional、仓位、现金、重复订单、事件 blackout"]
         TEBR["PaperBroker<br/>LIMIT order submit/cancel/query、market snapshot fill simulation"]
@@ -385,7 +386,7 @@ flowchart TD
         TEAUD["data/trading_engine/audit/*/*.jsonl<br/>order intent、risk check、order、execution report、fill、portfolio snapshot；intent_id lineage 可 replay"]
         TERPT["reports/trading_daily/YYYY-MM-DD.md<br/>paper trading 执行复盘；production_effect=none"]
         TESUM["outputs/reports/paper_trading_summary_YYYY-MM-DD.json<br/>dashboard 读取的 paper trading summary；production_effect=none"]
-        TEREPLAYSUM["outputs/reports/paper_trading_replay_START_END.json/md<br/>多日 paper-only flow validation 汇总；按 symbol / strategy_id / reason_code / blocked_by 聚合；production_effect=none"]
+        TEREPLAYSUM["outputs/reports/paper_trading_replay_START_END.json/md<br/>replay_mode=daily_independent；portfolio_carry_forward=false；quality_flags；snapshot source 分布；production_effect=none"]
     end
 
     MD --> ERC
@@ -564,6 +565,7 @@ flowchart TD
     EADV -. "advisory signal 不能绕过风控" .-> TEINT
     OICAND -. "daily-run 生成项默认 blocked；非 blocked paper candidate 才能转换" .-> TEOIB
     TEOCR --> TEOIB
+    TEOCR --> TEMSP
     TEREPLAY --> TEOCR
     TEOIB -. "通过标准 schema 后才可能进入" .-> TEINT
     TECFG --> TERISK
@@ -580,6 +582,7 @@ flowchart TD
     TEREC --> TERPT
     TEREC --> TESUM
     TEREPLAY --> TEREPLAYSUM
+    TEMSP --> TESUM
     TEAUD --> TERPT
     TESUM -. "daily task dashboard 只读展示" .-> DTASKDR
     TESUM -. "dashboard Trend 只读读取最近 N 日；缺失显示 LIMITED" .-> DTASKDR
@@ -1452,11 +1455,11 @@ flowchart TD
 |Paper trading 配置|`config/trading_engine.yaml`|登记第二交易引擎 MVP 的 paper-only mode、`real_trading_enabled=false`、风险阈值、policy owner/version/status/rationale/validation/review condition、初始 cash、commission 和 slippage；这些阈值是 pilot baseline，不是实盘校准结论；真实交易接入前必须另行设计和审批|已实现基础版|
 |Paper trading engine|`src/ai_trading_system/trading_engine/`|独立交易执行子系统；只接受标准 `OrderIntent`，通过 `PreTradeRiskChecker` 聚合 kill switch、asset/order type、side/short sell、confidence、单笔 notional、单标的仓位、总 exposure、cash、重复订单和事件 blackout；`ExecutionService` 是唯一执行入口，内部强制风控并提交到 `PaperBroker`；`PaperPortfolio` reconciliation 从 fill log 或 `ExecutionReport` 重建 expected portfolio，并在 cash、position quantity、avg cost 不一致时输出 `ReconciliationResult(status=BLOCK)`；不反向依赖现有趋势评分内部实现|已实现基础版|
 |Paper trading demo|`python scripts/run_paper_trading_demo.py --date YYYY-MM-DD`|从模拟趋势候选构造 `OrderIntent`，执行 `OrderIntent -> RiskCheck -> PaperBroker -> Fill simulation -> PortfolioState -> ReconciliationResult -> TradingDailyReport` 闭环；默认输出 JSONL 审计日志和 `reports/trading_daily/YYYY-MM-DD.md`；不读取真实 broker API key，不执行真实订单|已实现基础版|
-|Paper trading candidate runner|`python scripts/run_paper_trading_from_candidates.py --date YYYY-MM-DD`|默认读取 `outputs/reports/order_intent_candidates_YYYY-MM-DD.json`；默认候选文件缺失时先生成 `outputs/reports/daily_decision_summary_YYYY-MM-DD.json` 和正式 `order_intent_candidates`，缺少 upstream 报告只能标记 `limited` / `missing`，不得补造投资动作、置信度、仓位或订单字段；仅将 `blocked=false` 且 `mode=paper` 的 `OrderIntentCandidate` 转换为 `OrderIntent`，再通过 `ExecutionService` 走 paper-only 风控、PaperBroker、fill simulation、reconciliation 和 report writer；blocked、非 paper mode 或字段不足的 candidate 不会产生执行动作；不依赖真实账户状态、真实 broker API key、paper broker 以外的 adapter 或实盘下单接口|已实现基础版|
-|Paper trading replay|`python scripts/run_paper_trading_replay.py --start YYYY-MM-DD --end YYYY-MM-DD` / `outputs/reports/paper_trading_replay_START_END.json` / `.md`|按日历日逐日复用 candidate runner；默认读取 `order_intent_candidates_YYYY-MM-DD.json`，候选缺失时生成 limited `daily_decision_summary` 和 `order_intent_candidates`；汇总 candidate_count、blocked_candidates、generated_intents、approved/rejected、submitted、filled/open/cancelled、realized/unrealized PnL、reconciliation_status 分布，并按 symbol / strategy_id / reason_code / blocked_by 聚合；输出明确 `production_effect=none`、paper-only、不读取 broker API key、不调用真实 broker、不改变 production 仓位建议|已实现基础版|
+|Paper trading candidate runner|`python scripts/run_paper_trading_from_candidates.py --date YYYY-MM-DD`|默认读取 `outputs/reports/order_intent_candidates_YYYY-MM-DD.json`；默认候选文件缺失时先生成 `outputs/reports/daily_decision_summary_YYYY-MM-DD.json` 和正式 `order_intent_candidates`，缺少 upstream 报告只能标记 `limited` / `missing`，不得补造投资动作、置信度、仓位或订单字段；仅将 `blocked=false` 且 `mode=paper` 的 `OrderIntentCandidate` 转换为 `OrderIntent`，再通过 `ExecutionService` 走 paper-only 风控、PaperBroker、fill simulation、reconciliation 和 report writer；MarketSnapshotProvider 优先读取 historical OHLC，其次 candidate metadata，最后才用 `candidate.limit_price` synthetic snapshot，并把 `market_snapshot_source` 写入 summary；blocked、非 paper mode 或字段不足的 candidate 不会产生执行动作；不依赖真实账户状态、真实 broker API key、paper broker 以外的 adapter 或实盘下单接口|已实现基础版|
+|Paper trading replay|`python scripts/run_paper_trading_replay.py --start YYYY-MM-DD --end YYYY-MM-DD --mode daily-independent` / `outputs/reports/paper_trading_replay_START_END.json` / `.md`|`daily-independent` 是当前唯一已实现模式，JSON 明确写入 `replay_mode=daily_independent` 和 `portfolio_carry_forward=false`，逐日独立创建 paper portfolio，不结转前一日持仓、cash 或 open order，因此不是连续组合收益；按日历日逐日复用 candidate runner；默认读取 `order_intent_candidates_YYYY-MM-DD.json`，候选缺失时生成 limited `daily_decision_summary` 和 `order_intent_candidates`；汇总 candidate_count、blocked_candidates、generated_intents、approved/rejected、submitted、filled/open/cancelled、realized/unrealized PnL、reconciliation_status 和 market_snapshot_source 分布，输出 quality_flags（synthetic_snapshot_days、missing_candidate_days、limited_upstream_days、error_days、empty_candidate_days），并按 symbol / strategy_id / reason_code / blocked_by 聚合；`--mode continuous-portfolio` 本阶段只返回 `NOT_IMPLEMENTED`，不生成虚假的连续持仓结转结果；输出明确 `production_effect=none`、paper-only、不读取 broker API key、不调用真实 broker、不改变 production 仓位建议|已实现基础版|
 |Paper trading 审计日志|`data/trading_engine/audit/{order_intent_log,risk_check_log,order_log,execution_report_log,fill_log,portfolio_snapshot}/YYYY-MM-DD.jsonl`|每条记录包含 timestamp、run_id、strategy_id、schema_version、source object id、payload 和 `intent_id` / `related_intent_ids` lineage 字段；`replay_intent_audit_trace` 可按单个 `intent_id` 读取完整轨迹，用于回答交易意图为何生成、风控为何放行或拦截、订单是否提交、执行报告状态、是否成交、成交价和组合状态如何变化；rejected intent 不应出现 broker order 或 fill|已实现基础版|
 |Paper trading 日报|`reports/trading_daily/YYYY-MM-DD.md`|中文 paper trading 执行复盘，列出当日 OrderIntent、风控通过/拒绝、PaperBroker 订单、成交/未成交/取消、持仓、cash、exposure、realized/unrealized PnL、reconciliation status、审计目录、数据质量状态和人工关注事项；固定声明 `production_effect=none`，不是实盘交易指令|已实现基础版|
-|Paper trading summary JSON|`outputs/reports/paper_trading_summary_YYYY-MM-DD.json`|由 candidate runner 或 trading report writer 生成，供 daily task dashboard 只读展示；包含 status、candidate_count、blocked_candidates、generated_intents、approved/rejected、submitted、filled/open/cancelled、realized/unrealized PnL、reconciliation_status、audit_log_path、trading daily report path 和 `production_effect=none`；该 JSON 不触发交易，`LIMITED` / `ERROR` 不阻断主报告或改变 production 仓位建议，只把 paper trading 执行结果带回每日主入口|已实现基础版|
+|Paper trading summary JSON|`outputs/reports/paper_trading_summary_YYYY-MM-DD.json`|由 candidate runner 或 trading report writer 生成，供 daily task dashboard 只读展示；包含 status、candidate_count、blocked_candidates、generated_intents、approved/rejected、submitted、filled/open/cancelled、realized/unrealized PnL、reconciliation_status、market_snapshot_source / counts、audit_log_path、trading daily report path 和 `production_effect=none`；该 JSON 不触发交易，`LIMITED` / `ERROR` 不阻断主报告或改变 production 仓位建议，只把 paper trading 执行结果带回每日主入口|已实现基础版|
 |反馈闭环复核|`aits feedback loop-review`|按复核窗口汇总 market evidence、decision snapshots、decision_outcomes、prediction_outcomes、decision_causal_chains、decision_learning_queue、rule_experiments 和 task register 状态；声明 `ai_after_chatgpt` 市场阶段和可执行/需复核/研究用途边界|已实现基础版|
 |反馈闭环复核报告|`outputs/reports/feedback_loop_review_YYYY-MM-DD.md`|中文周期报告输出新证据、快照、decision/prediction outcome、因果链、学习队列、规则候选、blocked task 和状态统计；prediction/shadow 样本不足时只标记研究用途，不直接生成调仓建议，也不自动修改生产规则|已实现基础版|
 |市场反馈优化编排|`aits feedback optimize-market-feedback`|只读汇总 data quality、decision/prediction outcomes、decision causal chains、learning queue、rule experiments、parameter replay、parameter candidates、approved calibration overlay 和 current effective weights；输出 readiness、样本门槛、as-if 回放窗口、错误复盘、候选规则、参数复测收益变化、参数候选状态、overlay 状态和周/月执行频次；`production_effect=none`，不改变 `score-daily`、`position_gate`、thesis、日报结论或回测仓位|已实现基础版|

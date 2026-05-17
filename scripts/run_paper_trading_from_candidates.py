@@ -13,7 +13,13 @@ if str(SRC_ROOT) not in sys.path:
     sys.path.insert(0, str(SRC_ROOT))
 
 if TYPE_CHECKING:
-    from ai_trading_system.trading_engine.schemas import MarketSnapshot, OrderIntentCandidate
+    from ai_trading_system.trading_engine.market_snapshot_provider import (
+        MarketSnapshotProvider,
+    )
+    from ai_trading_system.trading_engine.schemas import (
+        MarketSnapshot,
+        OrderIntentCandidate,
+    )
 
 
 def run_from_candidates(
@@ -25,6 +31,8 @@ def run_from_candidates(
     summary_output_path: Path | None = None,
     project_root: Path = REPO_ROOT,
     ensure_upstream_artifacts: bool = False,
+    prices_path: Path | None = None,
+    market_snapshot_provider: MarketSnapshotProvider | None = None,
 ) -> dict[str, Any]:
     if ensure_upstream_artifacts:
         _ensure_upstream_candidate_artifacts(
@@ -39,6 +47,9 @@ def run_from_candidates(
     from ai_trading_system.trading_engine.intent_builder import (
         build_order_intent_from_candidate,
     )
+    from ai_trading_system.trading_engine.market_snapshot_provider import (
+        HistoricalPriceMarketSnapshotProvider,
+    )
     from ai_trading_system.trading_engine.portfolio import PaperPortfolio
     from ai_trading_system.trading_engine.portfolio.reconciliation import (
         reconcile_portfolio_from_execution_reports,
@@ -46,7 +57,6 @@ def run_from_candidates(
     from ai_trading_system.trading_engine.reports import (
         build_paper_trading_summary_payload,
         build_trading_daily_report,
-        write_paper_trading_summary_json,
         write_trading_daily_report,
     )
     from ai_trading_system.trading_engine.risk import PreTradeRiskChecker
@@ -56,10 +66,11 @@ def run_from_candidates(
     payload = _read_json_object(candidates_path)
     candidates = _load_candidates(payload, as_of=as_of)
     candidate_records = [_candidate_replay_record(candidate) for candidate in candidates]
-    candidate_record_by_id = {
-        str(record["candidate_id"]): record for record in candidate_records
-    }
+    candidate_record_by_id = {str(record["candidate_id"]): record for record in candidate_records}
     config = load_trading_engine_config()
+    snapshot_provider = market_snapshot_provider or HistoricalPriceMarketSnapshotProvider(
+        prices_path=prices_path or project_root / "data" / "raw" / "prices_daily.csv",
+    )
     portfolio = PaperPortfolio(config.execution.default_initial_cash_usd)
     broker = PaperBroker(portfolio=portfolio, execution_settings=config.execution)
     service = ExecutionService(
@@ -71,7 +82,6 @@ def run_from_candidates(
 
     approved_candidates = []
     intents = []
-    prices: dict[str, float] = {}
     for candidate in candidates:
         record = candidate_record_by_id[candidate.candidate_id]
         try:
@@ -83,22 +93,24 @@ def run_from_candidates(
         record["intent_id"] = intent.intent_id
         approved_candidates.append(candidate)
         intents.append(intent)
-        if candidate.symbol is not None and candidate.limit_price is not None:
-            prices[candidate.symbol] = candidate.limit_price
 
+    market_snapshot_source_counts = _empty_market_snapshot_source_counts()
+    snapshots = []
+    for candidate in approved_candidates:
+        if candidate.symbol is None or candidate.limit_price is None:
+            continue
+        resolution = snapshot_provider.resolve(candidate, as_of=as_of)
+        snapshots.append(resolution.snapshot)
+        market_snapshot_source_counts[resolution.source] += 1
+        candidate_record_by_id[candidate.candidate_id]["market_snapshot_source"] = resolution.source
+
+    prices = _snapshot_prices(snapshots)
     market_context = MarketContext(as_of=as_of, prices=prices)
     for intent in intents:
         service.execute(intent, market_context=market_context)
 
-    snapshots = [
-        _candidate_market_snapshot(candidate, as_of=as_of)
-        for candidate in approved_candidates
-        if candidate.symbol is not None and candidate.limit_price is not None
-    ]
     fill_reports = service.process_market_snapshot(snapshots) if snapshots else []
-    final_orders = [
-        broker.get_order(order.broker_order_id) for order in service.submitted_orders
-    ]
+    final_orders = [broker.get_order(order.broker_order_id) for order in service.submitted_orders]
     snapshot_time = max(
         (snapshot.timestamp for snapshot in snapshots),
         default=datetime.combine(as_of, time(20, 0), tzinfo=UTC),
@@ -135,28 +147,25 @@ def run_from_candidates(
     report_path = write_trading_daily_report(report, report_dir / f"{as_of.isoformat()}.md")
     if summary_output_path is None:
         summary_output_path = (
-            project_root
-            / "outputs"
-            / "reports"
-            / f"paper_trading_summary_{as_of.isoformat()}.json"
+            project_root / "outputs" / "reports" / f"paper_trading_summary_{as_of.isoformat()}.json"
         )
     candidate_count = len(candidates)
     blocked_candidates = len(candidates) - len(intents)
-    write_paper_trading_summary_json(
-        report,
-        summary_output_path,
-        report_path=report_path,
-        candidate_count=candidate_count,
-        blocked_candidates=blocked_candidates,
-    )
     summary = build_paper_trading_summary_payload(
         report,
         report_path=report_path,
         candidate_count=candidate_count,
         blocked_candidates=blocked_candidates,
     )
-    summary["summary_output_path"] = summary_output_path
     summary["filled"] = len(fill_reports)
+    summary["market_snapshot_source"] = _market_snapshot_source_label(market_snapshot_source_counts)
+    summary["market_snapshot_source_counts"] = dict(market_snapshot_source_counts)
+    summary_output_path.parent.mkdir(parents=True, exist_ok=True)
+    summary_output_path.write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    summary["summary_output_path"] = summary_output_path
     summary["candidate_records"] = candidate_records
     return summary
 
@@ -167,7 +176,9 @@ def _ensure_upstream_candidate_artifacts(
     candidates_path: Path,
     project_root: Path,
 ) -> None:
-    from ai_trading_system.order_intent_candidates import write_order_intent_candidates_json
+    from ai_trading_system.order_intent_candidates import (
+        write_order_intent_candidates_json,
+    )
 
     reports_dir = candidates_path.parent
     daily_summary_path = reports_dir / f"daily_decision_summary_{as_of.isoformat()}.json"
@@ -454,6 +465,7 @@ def _candidate_replay_record(candidate: OrderIntentCandidate) -> dict[str, Any]:
         "order_status": "NOT_SUBMITTED",
         "risk_blocked_by": [],
         "conversion_error": "",
+        "market_snapshot_source": "not_applicable",
     }
 
 
@@ -465,9 +477,7 @@ def _update_candidate_replay_records(
     execution_reports: list[Any],
 ) -> None:
     record_by_intent = {
-        str(record["intent_id"]): record
-        for record in candidate_records
-        if record.get("intent_id")
+        str(record["intent_id"]): record for record in candidate_records if record.get("intent_id")
     }
     for risk_result in risk_results:
         record = record_by_intent.get(risk_result.intent_id)
@@ -502,34 +512,21 @@ def _update_candidate_replay_records(
             record["order_status"] = status
 
 
-def _candidate_market_snapshot(
-    candidate: OrderIntentCandidate,
-    *,
-    as_of: date,
-) -> MarketSnapshot:
-    from ai_trading_system.trading_engine.schemas import MarketSnapshot
+def _empty_market_snapshot_source_counts() -> dict[str, int]:
+    return {
+        "historical_ohlc": 0,
+        "candidate_metadata": 0,
+        "synthetic_limit_price": 0,
+    }
 
-    if candidate.symbol is None or candidate.limit_price is None:
-        raise ValueError("candidate cannot create market snapshot without symbol and limit")
-    raw_snapshot = candidate.metadata.get("market_snapshot")
-    timestamp = datetime.combine(as_of, time(20, 0), tzinfo=UTC)
-    if isinstance(raw_snapshot, dict):
-        return MarketSnapshot(
-            symbol=str(raw_snapshot.get("symbol") or candidate.symbol),
-            timestamp=_parse_datetime(raw_snapshot.get("timestamp")) or timestamp,
-            open=_float_or_default(raw_snapshot.get("open"), candidate.limit_price),
-            high=_float_or_default(raw_snapshot.get("high"), candidate.limit_price),
-            low=_float_or_default(raw_snapshot.get("low"), candidate.limit_price),
-            last=_float_or_default(raw_snapshot.get("last"), candidate.limit_price),
-        )
-    return MarketSnapshot(
-        symbol=candidate.symbol,
-        timestamp=timestamp,
-        open=candidate.limit_price,
-        high=candidate.limit_price,
-        low=candidate.limit_price,
-        last=candidate.limit_price,
-    )
+
+def _market_snapshot_source_label(counts: dict[str, int]) -> str:
+    active_sources = [source for source, count in counts.items() if count]
+    if not active_sources:
+        return "none"
+    if len(active_sources) == 1:
+        return active_sources[0]
+    return "mixed"
 
 
 def _source_data_quality_status(payload: dict[str, Any]) -> str:
@@ -550,31 +547,8 @@ def _snapshot_prices(snapshots: list[MarketSnapshot]) -> dict[str, float]:
     return {snapshot.symbol: snapshot.last for snapshot in snapshots}
 
 
-def _parse_datetime(value: object) -> datetime | None:
-    if not isinstance(value, str) or not value:
-        return None
-    try:
-        parsed = datetime.fromisoformat(value)
-    except ValueError:
-        return None
-    if parsed.tzinfo is None:
-        return parsed.replace(tzinfo=UTC)
-    return parsed
-
-
-def _float_or_default(value: object, default: float) -> float:
-    try:
-        if isinstance(value, (int, float, str)):
-            return float(value)
-    except ValueError:
-        pass
-    return default
-
-
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Run paper trading from order intent candidates."
-    )
+    parser = argparse.ArgumentParser(description="Run paper trading from order intent candidates.")
     parser.add_argument("--date", required=True, help="Trading date in YYYY-MM-DD format.")
     parser.add_argument(
         "--candidates-path",
@@ -594,6 +568,10 @@ def main() -> None:
         "--summary-output-path",
         help="Paper trading summary JSON path. Defaults to outputs/reports for the date.",
     )
+    parser.add_argument(
+        "--prices-path",
+        help="Historical OHLC CSV path. Defaults to data/raw/prices_daily.csv.",
+    )
     args = parser.parse_args()
     as_of = date.fromisoformat(args.date)
     candidates_path = (
@@ -601,9 +579,7 @@ def main() -> None:
         if args.candidates_path
         else REPO_ROOT / "outputs" / "reports" / f"order_intent_candidates_{args.date}.json"
     )
-    summary_output_path = (
-        Path(args.summary_output_path) if args.summary_output_path else None
-    )
+    summary_output_path = Path(args.summary_output_path) if args.summary_output_path else None
     summary = run_from_candidates(
         as_of=as_of,
         candidates_path=candidates_path,
@@ -612,6 +588,7 @@ def main() -> None:
         summary_output_path=summary_output_path,
         project_root=REPO_ROOT,
         ensure_upstream_artifacts=args.candidates_path is None,
+        prices_path=Path(args.prices_path) if args.prices_path else None,
     )
     print(f"候选数：{summary['candidate_count']}")
     print(f"生成 OrderIntent：{summary['generated_intents']}")
