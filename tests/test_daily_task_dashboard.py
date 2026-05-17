@@ -27,6 +27,7 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     _write_shadow_parameter_search(tmp_path)
     _write_shadow_iteration_report(tmp_path, as_of)
     _write_paper_trading_summary(tmp_path, as_of)
+    _write_paper_signal_quality(tmp_path, as_of)
 
     report = build_daily_task_dashboard_report(
         as_of=as_of,
@@ -43,6 +44,8 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert report.risk_count == 2
     assert "关键结论总览" in html
     assert "Paper Trading Summary" in html
+    assert "Paper Signal Quality" in html
+    assert "observe-only" in html
     assert "reconciliation_status" in html
     assert "当日动作、仓位与主要约束" in html
     assert "任务执行明细" in html
@@ -75,6 +78,10 @@ def test_daily_task_dashboard_summarizes_task_conclusions_and_risks(
     assert payload["paper_trading_summary"]["blocked_candidates"] == 1
     assert payload["paper_trading_summary"]["reconciliation_status"] == "PASS"
     assert payload["paper_trading_summary"]["production_effect"] == "none"
+    assert payload["paper_signal_quality"]["evaluation_status"] == "LIMITED"
+    assert payload["paper_signal_quality"]["primary_blocked_by"] == "manual_approval_required"
+    assert payload["paper_signal_quality"]["sample_count"] == 7
+    assert payload["paper_signal_quality"]["production_effect"] == "none"
     investment = next(item for item in payload["key_conclusions"] if item["area"] == "投资结论")
     assert investment["primary"] == (
         "执行动作：观察；最终 AI 仓位：40%-60%；置信度：0.71；Data Gate：PASS"
@@ -751,6 +758,46 @@ def _write_paper_trading_summary(
             ensure_ascii=False,
             indent=2,
         ),
+        encoding="utf-8",
+    )
+
+
+def _write_paper_signal_quality(tmp_path: Path, as_of: date) -> None:
+    (tmp_path / f"paper_signal_quality_{as_of.isoformat()}.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "paper_signal_quality",
+                "as_of": as_of.isoformat(),
+                "evaluation_status": "LIMITED",
+                "production_effect": "none",
+                "outputs": {
+                    "json": str(tmp_path / f"paper_signal_quality_{as_of.isoformat()}.json"),
+                    "markdown": str(tmp_path / f"paper_signal_quality_{as_of.isoformat()}.md"),
+                },
+                "summary": {
+                    "sample_count": 7,
+                    "candidate_count": 14,
+                    "generated_intents": 5,
+                    "filled_count": 2,
+                    "primary_blocked_by": "manual_approval_required",
+                    "synthetic_snapshot_ratio": 0.42,
+                    "historical_ohlc_coverage": 0.58,
+                    "reconciliation_pass_ratio": 0.86,
+                },
+                "evaluation_gate": {
+                    "status": "LIMITED",
+                    "blocking_reasons": ["LOW_DATA_QUALITY"],
+                    "checks": [],
+                },
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / f"paper_signal_quality_{as_of.isoformat()}.md").write_text(
+        "# Paper Signal Quality Evaluation\n\n- production_effect=none\n",
         encoding="utf-8",
     )
 

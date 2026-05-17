@@ -186,6 +186,7 @@ def build_daily_task_dashboard_payload(
         ],
         "paper_trading_summary": _paper_trading_summary(report),
         "paper_trading_trend": _paper_trading_trend(report),
+        "paper_signal_quality": _paper_signal_quality_summary(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -277,6 +278,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_key_conclusions(report),
             _render_paper_trading_summary(report),
             _render_paper_trading_trend(report),
+            _render_paper_signal_quality(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -928,6 +930,11 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
             "paper trading summary JSON",
             report.reports_dir / f"paper_trading_summary_{suffix}.json",
         ),
+        (
+            "paper_signal_quality_json",
+            "paper signal quality JSON",
+            report.reports_dir / f"paper_signal_quality_{suffix}.json",
+        ),
     )
     for artifact_id, label, path in extras:
         records.append(
@@ -1544,6 +1551,55 @@ def _paper_trading_trend_window(
         "daily_results": records,
         "risk": "；".join(dict.fromkeys(risks))
         or ("最近 paper trading summary 输入完整；趋势仍仅为 paper-only " "逐日独立复盘。"),
+    }
+
+
+def _paper_signal_quality_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    suffix = report.as_of.isoformat()
+    path = report.reports_dir / f"paper_signal_quality_{suffix}.json"
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "paper_signal_quality":
+        return {
+            "status": "MISSING",
+            "evaluation_status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "production_effect": ProductionEffect.NONE.value,
+            "observe_only": True,
+            "primary_blocked_by": "missing",
+            "synthetic_snapshot_ratio": "missing",
+            "sample_count": "missing",
+            "risk": "paper signal quality JSON 缺失；dashboard 不补造质量评价。",
+        }
+    summary = _mapping_value(payload, "summary")
+    outputs = _mapping_value(payload, "outputs")
+    report_path = Path(_string_value(outputs.get("markdown")) or str(path.with_suffix(".md")))
+    report_href = _report_href(report_path, report.reports_dir) if report_path.exists() else ""
+    production_effect = _string_value(payload.get("production_effect")) or "none"
+    evaluation_status = _string_value(payload.get("evaluation_status")) or "LIMITED"
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("paper signal quality production_effect 不是 none。")
+    if evaluation_status != "PASS":
+        gate = _mapping_value(payload, "evaluation_gate")
+        reasons = _strings(gate.get("blocking_reasons"))
+        reason_text = ", ".join(reasons) if reasons else evaluation_status
+        risks.append(f"evaluation_gate 限制：{reason_text}。")
+    return {
+        "status": evaluation_status,
+        "evaluation_status": evaluation_status,
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "production_effect": production_effect,
+        "observe_only": True,
+        "primary_blocked_by": summary.get("primary_blocked_by", "none"),
+        "synthetic_snapshot_ratio": summary.get("synthetic_snapshot_ratio", 0.0),
+        "sample_count": summary.get("sample_count", 0),
+        "risk": "；".join(risks) or "Paper signal quality 当前未触发评价限制。",
     }
 
 
@@ -2791,6 +2847,55 @@ def _render_paper_trading_trend(report: DailyTaskDashboardReport) -> str:
             "<tbody>",
             *rows,
             "</tbody></table></div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_paper_signal_quality(report: DailyTaskDashboardReport) -> str:
+    quality = _paper_signal_quality_summary(report)
+    report_href = _string_value(quality.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}"><span>Paper Signal Quality</span>'
+        f"<small>{_text(quality.get('evaluation_status', 'MISSING'))}</small></a>"
+        if quality.get("exists")
+        else '<span class="report-link missing"><span>Paper Signal Quality</span>'
+        "<small>MISSING</small></span>"
+    )
+    synthetic_ratio = _optional_float(quality.get("synthetic_snapshot_ratio"))
+    synthetic_display = "missing" if synthetic_ratio is None else _format_percent(synthetic_ratio)
+    return "\n".join(
+        [
+            '<section aria-labelledby="paper-signal-quality-title">',
+            '<div class="section-head">',
+            '<h2 id="paper-signal-quality-title">Paper Signal Quality</h2>',
+            (
+                "<p>observe-only 质量评价；只读已有 paper artifacts，"
+                "production_effect=<code>none</code>。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item(
+                "evaluation_status",
+                quality.get("evaluation_status", "MISSING"),
+            ),
+            _summary_item("主要 blocked_by", quality.get("primary_blocked_by", "missing")),
+            _summary_item("synthetic_snapshot_ratio", synthetic_display),
+            _summary_item("sample_count", quality.get("sample_count", "missing")),
+            _summary_item("observe-only", str(quality.get("observe_only", True))),
+            _summary_item(
+                "production_effect",
+                quality.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(quality.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
             "</section>",
         ]
     )
