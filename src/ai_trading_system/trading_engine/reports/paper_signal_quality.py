@@ -27,6 +27,7 @@ ALLOWED_QUALITY_STATUSES = {
     STATUS_UNRELIABLE,
 }
 WARNING_DAILY_INDEPENDENT_ONLY = "DAILY_INDEPENDENT_ONLY"
+WARNING_PAPER_ONLY_SIMULATION = "PAPER_ONLY_SIMULATION"
 REASON_EXPLANATIONS = {
     "INSUFFICIENT_SAMPLE": "可用 paper summary 样本少于 policy floor。",
     "INSUFFICIENT_FILLED_SAMPLE": "paper filled 样本少于 policy floor，成交后解释不稳定。",
@@ -196,6 +197,7 @@ def render_paper_signal_quality_report(payload: dict[str, Any]) -> str:
     summary = _mapping(payload.get("summary"))
     gate = _mapping(payload.get("evaluation_gate"))
     thresholds = _mapping(payload.get("thresholds_snapshot"))
+    paper_mode = _mapping(payload.get("paper_evaluation_mode"))
     lines = [
         "# Paper Signal Quality Evaluation",
         "",
@@ -206,14 +208,16 @@ def render_paper_signal_quality_report(payload: dict[str, Any]) -> str:
         "- observe-only：true",
         "- production_effect=none",
         (
+            "- paper_evaluation_mode："
+            f"replay_mode={paper_mode.get('replay_mode', 'daily_independent')}；"
+            "portfolio_carry_forward="
+            f"{paper_mode.get('portfolio_carry_forward', False)}"
+        ),
+        (
             "- 安全边界：不读取 broker API key；不调用真实 broker；不触发 paper runner / "
             "replay；不改变 production 仓位建议；不影响参数晋级。"
         ),
         "- Paper PnL 只作诊断字段，不作为上线依据。",
-        (
-            "- Daily-independent warning：当前结果不是连续组合收益，不能解释现金占用、"
-            "持仓结转、open order 跨日处理或最大回撤。"
-        ),
         "",
         "## Policy Thresholds",
         "",
@@ -982,8 +986,17 @@ def _quality_warnings(replay_payload: dict[str, Any]) -> list[dict[str, str]]:
     portfolio_carry_forward = replay_payload.get("portfolio_carry_forward")
     if portfolio_carry_forward is None:
         portfolio_carry_forward = False
+    warnings = [
+        {
+            "code": WARNING_PAPER_ONLY_SIMULATION,
+            "message": (
+                "paper signal quality 只解释 paper-only 模拟执行质量；continuous replay "
+                "也不是真实账户收益、真实 broker 成交、完整税费/滑点模拟或实盘上线依据。"
+            ),
+        }
+    ]
     if replay_mode == "daily_independent" or portfolio_carry_forward is False:
-        return [
+        warnings.append(
             {
                 "code": WARNING_DAILY_INDEPENDENT_ONLY,
                 "message": (
@@ -991,8 +1004,8 @@ def _quality_warnings(replay_payload: dict[str, Any]) -> list[dict[str, str]]:
                     "不是连续组合收益，不能解释现金占用、持仓结转、open order 跨日处理或最大回撤。"
                 ),
             }
-        ]
-    return []
+        )
+    return warnings
 
 
 def _quality_status_from_reasons(reasons: list[str]) -> str:

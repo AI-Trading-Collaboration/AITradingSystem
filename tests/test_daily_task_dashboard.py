@@ -454,6 +454,65 @@ def test_daily_task_dashboard_paper_trading_trend_aggregates_replay_visibility(
     assert "连续组合收益" in html
 
 
+def test_daily_task_dashboard_paper_trading_trend_shows_continuous_replay_summary(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 5, 14)
+    metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
+    _write_detail_reports(tmp_path, as_of)
+    for offset in range(7):
+        current = date.fromordinal(as_of.toordinal() - offset)
+        _write_paper_trading_summary(tmp_path, current, status="PASS")
+        _write_order_intent_candidates(tmp_path, current)
+    _write_paper_trading_replay(
+        tmp_path,
+        start=date(2026, 5, 8),
+        end=as_of,
+        mode="continuous_portfolio",
+        portfolio_carry_forward=True,
+        final_equity=101234.56,
+        max_drawdown_pct=-0.034,
+        exposure_peak=12500.0,
+        final_positions=[
+            {
+                "symbol": "TSM",
+                "quantity": 5,
+                "avg_cost": 100.0,
+                "market_price": 110.0,
+                "market_value": 550.0,
+                "unrealized_pnl": 50.0,
+            }
+        ],
+        expired_day_orders=2,
+    )
+
+    report = build_daily_task_dashboard_report(
+        as_of=as_of,
+        metadata_path=metadata_path,
+        run_report_path=tmp_path / "daily_ops_run_2026-05-14.md",
+        reports_dir=tmp_path,
+        paper_trading_trend_days=7,
+    )
+    html = render_daily_task_dashboard(report)
+    payload = build_daily_task_dashboard_payload(report)
+    trend = payload["paper_trading_trend"]
+    continuous = trend["continuous_portfolio_summary"]
+
+    assert trend["replay_mode"] == "continuous_portfolio"
+    assert trend["portfolio_carry_forward"] is True
+    assert trend["latest_replay"]["exists"] is True
+    assert continuous["final_equity"] == 101234.56
+    assert continuous["max_drawdown_pct"] == -0.034
+    assert continuous["exposure_peak"] == 12500.0
+    assert continuous["final_positions_count"] == 1
+    assert continuous["expired_day_orders"] == 2
+    assert trend["execution_boundary"]["runs_replay"] is False
+    assert "continuous-portfolio" in html
+    assert "final_equity" in html
+    assert "max_drawdown" in html
+    assert "portfolio_carry_forward" in html
+
+
 def _write_daily_ops_metadata(tmp_path: Path, as_of: date) -> Path:
     metadata_path = tmp_path / f"daily_ops_run_metadata_{as_of.isoformat()}.json"
     started_at = datetime(2026, 5, 4, 21, 0, tzinfo=UTC)
@@ -827,6 +886,53 @@ def _write_order_intent_candidates(tmp_path: Path, as_of: date) -> None:
                         "reason_codes": ["REVIEW_DIRECTION_BLOCKED"],
                     }
                 ],
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+
+def _write_paper_trading_replay(
+    tmp_path: Path,
+    *,
+    start: date,
+    end: date,
+    mode: str,
+    portfolio_carry_forward: bool,
+    final_equity: float,
+    max_drawdown_pct: float,
+    exposure_peak: float,
+    final_positions: list[dict[str, object]],
+    expired_day_orders: int,
+) -> None:
+    (tmp_path / f"paper_trading_replay_{start.isoformat()}_{end.isoformat()}.json").write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "paper_trading_replay",
+                "generated_at": datetime(2026, 5, 14, 23, 0, tzinfo=UTC).isoformat(),
+                "start": start.isoformat(),
+                "end": end.isoformat(),
+                "production_effect": "none",
+                "replay_mode": mode,
+                "portfolio_carry_forward": portfolio_carry_forward,
+                "continuous_metrics_available": mode == "continuous_portfolio",
+                "order_expiration_policy": "DAY orders expire at end of replay day.",
+                "unsupported_order_policy": "GTC orders are rejected.",
+                "final_cash": final_equity - exposure_peak,
+                "final_equity": final_equity,
+                "final_positions": final_positions,
+                "carried_positions_count": len(final_positions),
+                "max_drawdown": {
+                    "amount_usd": -100.0,
+                    "percent": max_drawdown_pct,
+                },
+                "max_drawdown_pct": max_drawdown_pct,
+                "exposure_peak": exposure_peak,
+                "expired_day_orders": expired_day_orders,
+                "daily_results": [],
             },
             ensure_ascii=False,
             indent=2,

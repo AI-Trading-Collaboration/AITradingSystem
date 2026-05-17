@@ -92,7 +92,9 @@ def test_paper_signal_quality_writes_gate_and_aggregations(tmp_path: Path) -> No
         in payload["evaluation_gate"]["reason_explanations"]["LOW_DATA_QUALITY"]
     )
     assert "DAILY_INDEPENDENT_ONLY" in payload["warning_codes"]
+    assert "PAPER_ONLY_SIMULATION" in payload["warning_codes"]
     assert "DAILY_INDEPENDENT_ONLY" in payload["evaluation_gate"]["warnings"]
+    assert "PAPER_ONLY_SIMULATION" in payload["evaluation_gate"]["warnings"]
     assert payload["paper_evaluation_mode"] == {
         "replay_mode": "daily_independent",
         "portfolio_carry_forward": False,
@@ -141,6 +143,7 @@ def test_paper_signal_quality_writes_gate_and_aggregations(tmp_path: Path) -> No
     assert "Policy：paper_signal_quality_policy v1" in markdown
     assert "minimum_sample_count" in markdown
     assert "DAILY_INDEPENDENT_ONLY" in markdown
+    assert "PAPER_ONLY_SIMULATION" in markdown
     assert "不是连续组合收益" in markdown
     assert "最大回撤" in markdown
     assert "Paper PnL 只作诊断字段" in markdown
@@ -242,10 +245,85 @@ def test_paper_signal_quality_uses_optional_replay_without_running_replay(
         "continuous_portfolio_metrics_available": False,
     }
     assert "DAILY_INDEPENDENT_ONLY" in payload["warning_codes"]
+    assert "PAPER_ONLY_SIMULATION" in payload["warning_codes"]
     assert payload["safety_boundary"]["runs_replay"] is False
     markdown = render_paper_signal_quality_report(payload)
     assert "不触发 paper runner / replay" in markdown
     assert "DAILY_INDEPENDENT_ONLY" in markdown
+    assert "PAPER_ONLY_SIMULATION" in markdown
+
+
+def test_paper_signal_quality_continuous_replay_removes_daily_independent_warning(
+    tmp_path: Path,
+) -> None:
+    reports_dir = tmp_path / "outputs" / "reports"
+    as_of = date(2026, 5, 17)
+    _write_candidates(reports_dir, as_of)
+    replay_path = reports_dir / "paper_trading_replay_2026-05-17_2026-05-17.json"
+    replay_path.parent.mkdir(parents=True, exist_ok=True)
+    replay_path.write_text(
+        json.dumps(
+            {
+                "report_type": "paper_trading_replay",
+                "production_effect": "none",
+                "replay_mode": "continuous_portfolio",
+                "portfolio_carry_forward": True,
+                "continuous_metrics_available": True,
+                "start": "2026-05-17",
+                "end": "2026-05-17",
+                "daily_results": [
+                    {
+                        "as_of": "2026-05-17",
+                        "status": "PASS",
+                        "production_effect": "none",
+                        "candidate_count": 2,
+                        "blocked_candidates": 1,
+                        "generated_intents": 1,
+                        "filled": 1,
+                        "realized_pnl": 0.0,
+                        "unrealized_pnl": 3.0,
+                        "reconciliation_status": "PASS",
+                        "market_snapshot_source": "historical_ohlc",
+                        "market_snapshot_source_counts": {
+                            "historical_ohlc": 1,
+                            "candidate_metadata": 0,
+                            "synthetic_limit_price": 0,
+                        },
+                    }
+                ],
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    payload = build_paper_signal_quality_payload(
+        as_of=as_of,
+        reports_dir=reports_dir,
+        replay_json_path=replay_path,
+        selected_window_days=7,
+    )
+
+    assert payload["paper_evaluation_mode"] == {
+        "replay_mode": "continuous_portfolio",
+        "portfolio_carry_forward": True,
+        "continuous_portfolio_metrics_available": True,
+    }
+    assert "DAILY_INDEPENDENT_ONLY" not in payload["warning_codes"]
+    assert "PAPER_ONLY_SIMULATION" in payload["warning_codes"]
+    assert "PAPER_ONLY_SIMULATION" in payload["evaluation_gate"]["warnings"]
+    forbidden = {
+        "READY_FOR_LIVE",
+        "SHOULD_TRADE",
+        "PROMOTE_TO_PRODUCTION",
+        "APPROVED_FOR_TRADING",
+    }
+    assert not forbidden.intersection(_all_string_values(payload))
+    markdown = render_paper_signal_quality_report(payload)
+    assert "DAILY_INDEPENDENT_ONLY" not in markdown
+    assert "PAPER_ONLY_SIMULATION" in markdown
+    assert "Paper PnL 只作诊断字段" in markdown
 
 
 def _quality_status_values(payload: object) -> set[str]:

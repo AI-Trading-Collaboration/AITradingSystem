@@ -120,6 +120,17 @@ def test_paper_trading_replay_json_schema_is_stable(tmp_path: Path) -> None:
         "production_effect",
         "replay_mode",
         "portfolio_carry_forward",
+        "order_expiration_policy",
+        "unsupported_order_policy",
+        "continuous_metrics_available",
+        "expired_day_orders",
+        "rejected_gtc_orders",
+        "carried_positions_count",
+        "final_cash",
+        "final_equity",
+        "final_positions",
+        "max_position_concentration",
+        "max_drawdown_pct",
         "implementation_status",
         "execution_boundary",
         "outputs",
@@ -178,6 +189,11 @@ def test_paper_trading_replay_json_schema_is_stable(tmp_path: Path) -> None:
     assert first_day["production_effect"] == "none"
     assert payload["replay_mode"] == "daily_independent"
     assert payload["portfolio_carry_forward"] is False
+    assert payload["continuous_metrics_available"] is False
+    assert payload["production_effect"] == "none"
+    assert payload["expired_day_orders"] == 0
+    assert payload["rejected_gtc_orders"] == 0
+    assert payload["final_positions"] == []
 
 
 def test_paper_trading_replay_uses_historical_ohlc_when_available(
@@ -253,9 +269,16 @@ def test_continuous_portfolio_mode_writes_implemented_limited_payload(
     assert payload["portfolio_carry_forward"] is True
     assert payload["implementation_status"] == "IMPLEMENTED"
     assert payload["production_effect"] == "none"
+    assert payload["continuous_metrics_available"] is True
+    assert payload["order_expiration_policy"]
+    assert payload["unsupported_order_policy"]
+    assert payload["final_positions"] == []
+    assert payload["final_cash"] == 100000.0
+    assert payload["final_equity"] == 100000.0
     assert payload["daily_results"][0]["portfolio_snapshot"]["date"] == "2026-05-07"
     assert payload["equity_curve"][0]["date"] == "2026-05-07"
     assert "max_drawdown" in payload
+    assert payload["max_drawdown_pct"] == 0.0
     assert Path(payload["outputs"]["json"]).exists()
 
 

@@ -79,6 +79,9 @@ def test_continuous_portfolio_replay_carries_positions_cash_and_pnl(
     assert payload["replay_mode"] == "continuous_portfolio"
     assert payload["portfolio_carry_forward"] is True
     assert payload["production_effect"] == "none"
+    assert payload["continuous_metrics_available"] is True
+    assert "DAY orders expire" in payload["order_expiration_policy"]
+    assert "GTC" in payload["unsupported_order_policy"]
     assert payload["execution_boundary"]["api_key_read"] is False
     assert payload["distributions"]["reconciliation_status"] == {"PASS": 2}
 
@@ -92,9 +95,14 @@ def test_continuous_portfolio_replay_carries_positions_cash_and_pnl(
     assert _position_quantity(second_snapshot, "TSM") == 5
 
     assert payload["daily_results"][0]["expired"] == 1
+    assert payload["expired_day_orders"] == 1
     assert payload["daily_results"][0]["open_orders_end_of_day"] == 0
     assert payload["daily_results"][1]["open_orders_end_of_day"] == 0
     assert payload["daily_results"][1]["submitted"] == 1
+    assert payload["final_cash"] == pytest.approx(99550.0)
+    assert payload["final_equity"] == pytest.approx(100105.0)
+    assert payload["carried_positions_count"] == 1
+    assert _position_quantity({"positions": payload["final_positions"]}, "TSM") == 5
 
     assert payload["daily_realized_pnl"]["2026-05-02"] == pytest.approx(50.0)
     assert payload["daily_unrealized_pnl"]["2026-05-02"] == pytest.approx(55.0)
@@ -102,8 +110,14 @@ def test_continuous_portfolio_replay_carries_positions_cash_and_pnl(
     assert payload["cumulative_unrealized_pnl"]["2026-05-02"] == pytest.approx(55.0)
     assert "max_drawdown" in payload
     assert "amount_usd" in payload["max_drawdown"]
+    assert payload["max_drawdown_pct"] == payload["max_drawdown"]["percent"]
     assert payload["exposure_peak"] > 0
     assert payload["position_concentration_peak"] > 0
+    assert payload["max_position_concentration"] == payload["position_concentration_peak"]
+    markdown = Path(payload["outputs"]["markdown"]).read_text(encoding="utf-8")
+    assert "Final Portfolio Summary" in markdown
+    assert "不是真实账户收益" in markdown
+    assert "不能作为实盘上线依据" in markdown
 
 
 def test_continuous_portfolio_replay_rejects_gtc_candidate(
@@ -130,6 +144,9 @@ def test_continuous_portfolio_replay_rejects_gtc_candidate(
     assert day["blocked_candidates"] == 1
     assert day["generated_intents"] == 0
     assert day["rejected"] == 1
+    assert day["rejected_gtc_orders"] == 1
+    assert payload["rejected_gtc_orders"] == 1
+    assert "GTC" in payload["unsupported_order_policy"]
     assert payload["aggregations"]["by_blocked_by"][0]["key"] == (
         "unsupported_time_in_force"
     )

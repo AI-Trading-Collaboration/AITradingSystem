@@ -20,6 +20,14 @@ PAPER_TRADING_REPLAY_SCHEMA_VERSION = 1
 REPLAY_MODE_DAILY_INDEPENDENT = "daily_independent"
 REPLAY_MODE_CONTINUOUS_PORTFOLIO = "continuous_portfolio"
 REPLAY_MODE_CHOICES = ("daily-independent", "continuous-portfolio")
+DAY_ORDER_EXPIRATION_POLICY = (
+    "DAY orders expire at the end of the replay day; open DAY orders are not "
+    "carried forward."
+)
+UNSUPPORTED_ORDER_POLICY = (
+    "GTC and other non-DAY time_in_force candidates are rejected before order "
+    "submission in continuous-portfolio replay."
+)
 
 COUNT_FIELDS = (
     "candidate_count",
@@ -158,6 +166,20 @@ def run_paper_trading_replay(
         "production_effect": "none",
         "replay_mode": replay_mode,
         "portfolio_carry_forward": False,
+        "order_expiration_policy": (
+            "daily-independent resets the paper portfolio every replay day; open "
+            "orders are not carried across days."
+        ),
+        "unsupported_order_policy": UNSUPPORTED_ORDER_POLICY,
+        "continuous_metrics_available": False,
+        "expired_day_orders": 0,
+        "rejected_gtc_orders": 0,
+        "carried_positions_count": 0,
+        "final_cash": None,
+        "final_equity": None,
+        "final_positions": [],
+        "max_position_concentration": 0.0,
+        "max_drawdown_pct": 0.0,
         "implementation_status": "IMPLEMENTED",
         "execution_boundary": {
             "mode": "paper",
@@ -449,6 +471,9 @@ def _run_continuous_portfolio_replay(
         daily_results.append(record)
 
     quality_flags = _quality_flags(daily_results)
+    final_snapshot = _mapping(portfolio_snapshots[-1]) if portfolio_snapshots else {}
+    final_positions = list(_list_mappings(final_snapshot.get("positions")))
+    max_drawdown_pct = _float_value(max_drawdown.get("percent"))
     payload_out: dict[str, Any] = {
         "schema_version": PAPER_TRADING_REPLAY_SCHEMA_VERSION,
         "report_type": "paper_trading_replay",
@@ -461,6 +486,21 @@ def _run_continuous_portfolio_replay(
         "production_effect": "none",
         "replay_mode": REPLAY_MODE_CONTINUOUS_PORTFOLIO,
         "portfolio_carry_forward": True,
+        "order_expiration_policy": DAY_ORDER_EXPIRATION_POLICY,
+        "unsupported_order_policy": UNSUPPORTED_ORDER_POLICY,
+        "continuous_metrics_available": True,
+        "expired_day_orders": sum(
+            _int_value(record.get("expired")) for record in daily_results
+        ),
+        "rejected_gtc_orders": sum(
+            _int_value(record.get("rejected_gtc_orders")) for record in daily_results
+        ),
+        "carried_positions_count": len(final_positions),
+        "final_cash": final_snapshot.get("cash"),
+        "final_equity": final_snapshot.get("equity"),
+        "final_positions": final_positions,
+        "max_position_concentration": position_concentration_peak,
+        "max_drawdown_pct": max_drawdown_pct,
         "implementation_status": "IMPLEMENTED",
         "execution_boundary": {
             "mode": "paper",
@@ -525,8 +565,9 @@ def render_paper_trading_replay_report(payload: dict[str, Any]) -> str:
     is_continuous = replay_mode == REPLAY_MODE_CONTINUOUS_PORTFOLIO
     mode_boundary = (
         "- 边界：continuous-portfolio 是 paper-only 连续组合模拟；"
-        "不是实盘交易，不是真实 broker 成交；production_effect=none；"
-        "不读取 broker API key。"
+        "不是实盘交易，不是真实账户收益，不是真实 broker 成交；"
+        "不包含完整税费/滑点模拟，不能作为实盘上线依据；"
+        "production_effect=none；不读取 broker API key。"
         if is_continuous
         else (
             "- 边界：paper-only 复盘；不读取 broker API key；不调用真实 broker；"
@@ -538,8 +579,8 @@ def render_paper_trading_replay_report(payload: dict[str, Any]) -> str:
         "continuous-portfolio 从 start date 初始化一次，并跨日结转持仓、cash 和 PnL。"
         if is_continuous
         else (
-            "- 当前默认 replay 是逐日独立模拟，不是连续组合收益；不会结转前一日"
-            "持仓、cash 或 open order。"
+            "- daily-independent = 每天重新初始化组合；当前默认 replay 是逐日独立模拟，"
+            "不是连续组合收益；不会结转前一日持仓、cash 或 open order。"
         )
     )
     lines = [
@@ -551,6 +592,10 @@ def render_paper_trading_replay_report(payload: dict[str, Any]) -> str:
         f"- replay_mode={replay_mode}",
         f"- portfolio_carry_forward={_format_bool(payload.get('portfolio_carry_forward'))}",
         "- production_effect=none",
+        "- continuous_metrics_available="
+        f"{_format_bool(payload.get('continuous_metrics_available'))}",
+        f"- order_expiration_policy={payload.get('order_expiration_policy', 'missing')}",
+        f"- unsupported_order_policy={payload.get('unsupported_order_policy', 'missing')}",
         mode_boundary,
         mode_difference,
         "",
@@ -612,6 +657,7 @@ def render_paper_trading_replay_report(payload: dict[str, Any]) -> str:
 
 def _render_continuous_metrics_section(payload: dict[str, Any]) -> list[str]:
     max_drawdown = _mapping(payload.get("max_drawdown"))
+    final_positions = _list_mappings(payload.get("final_positions"))
     lines = [
         "",
         "## Continuous Portfolio Metrics",
@@ -620,15 +666,50 @@ def _render_continuous_metrics_section(payload: dict[str, Any]) -> list[str]:
         "|---|---:|",
         f"| max_drawdown_usd | {_format_value(max_drawdown.get('amount_usd', 0.0))} |",
         f"| max_drawdown_percent | {_format_percent(max_drawdown.get('percent'))} |",
+        f"| max_drawdown_pct | {_format_percent(payload.get('max_drawdown_pct'))} |",
         f"| exposure_peak | {_format_value(payload.get('exposure_peak'))} |",
         "| position_concentration_peak | "
         f"{_format_percent(payload.get('position_concentration_peak'))} |",
+        "| max_position_concentration | "
+        f"{_format_percent(payload.get('max_position_concentration'))} |",
+        f"| expired_day_orders | {payload.get('expired_day_orders', 0)} |",
+        f"| rejected_gtc_orders | {payload.get('rejected_gtc_orders', 0)} |",
         "",
-        "## Equity Curve",
+        "## Final Portfolio Summary",
         "",
-        "| Date | Equity | Cash | Exposure | Realized PnL | Unrealized PnL | Drawdown |",
-        "|---|---:|---:|---:|---:|---:|---:|",
+        "| 指标 | 数值 |",
+        "|---|---:|",
+        f"| final_cash | {_format_value(payload.get('final_cash'))} |",
+        f"| final_equity | {_format_value(payload.get('final_equity'))} |",
+        f"| final_positions_count | {len(final_positions)} |",
+        f"| carried_positions_count | {payload.get('carried_positions_count', 0)} |",
+        "",
+        "## Final Positions",
+        "",
+        "| Symbol | Quantity | Avg cost | Market price | Market value | Unrealized PnL |",
+        "|---|---:|---:|---:|---:|---:|",
     ]
+    for position in final_positions:
+        lines.append(
+            "| "
+            f"{position.get('symbol')} | "
+            f"{position.get('quantity')} | "
+            f"{_format_value(position.get('avg_cost'))} | "
+            f"{_format_value(position.get('market_price'))} | "
+            f"{_format_value(position.get('market_value'))} | "
+            f"{_format_value(position.get('unrealized_pnl'))} |"
+        )
+    if not final_positions:
+        lines.append("| none | 0 | 0.00 | 0.00 | 0.00 | 0.00 |")
+    lines.extend(
+        [
+            "",
+            "## Equity Curve",
+            "",
+            "| Date | Equity | Cash | Exposure | Realized PnL | Unrealized PnL | Drawdown |",
+            "|---|---:|---:|---:|---:|---:|---:|",
+        ]
+    )
     daily_cash = _mapping(payload.get("daily_cash"))
     daily_exposure = _mapping(payload.get("daily_exposure"))
     cumulative_realized = _mapping(payload.get("cumulative_realized_pnl"))
@@ -872,6 +953,7 @@ def _continuous_daily_result(
         for record in candidate_records
         if bool(record.get("rejected")) and not _string(record.get("intent_id"))
     )
+    rejected_gtc_orders = _rejected_gtc_order_count(candidate_records)
     expired = sum(1 for order in final_orders_day if _order_status(order) == "EXPIRED")
     open_count = sum(
         1
@@ -912,6 +994,7 @@ def _continuous_daily_result(
             1 for order in final_orders_day if _order_status(order) == "CANCELLED"
         ),
         "expired": expired,
+        "rejected_gtc_orders": rejected_gtc_orders,
         "realized_pnl": realized_pnl,
         "unrealized_pnl": unrealized_pnl,
         "portfolio_snapshot": portfolio_snapshot,
@@ -936,6 +1019,7 @@ def _continuous_daily_error_result(
         error=error,
     )
     record["expired"] = 0
+    record["rejected_gtc_orders"] = 0
     record["summary_output_path"] = ""
     record["portfolio_snapshot"] = portfolio_snapshot
     record["open_orders_end_of_day"] = 0
@@ -1035,6 +1119,7 @@ def _candidate_record_from_raw(
         "candidate_id": str(raw_candidate.get("candidate_id") or fallback_candidate_id),
         "strategy_id": str(raw_candidate.get("strategy_id") or "missing"),
         "symbol": str(raw_candidate.get("symbol") or "missing").upper(),
+        "time_in_force": str(raw_candidate.get("time_in_force") or "DAY").upper(),
         "reason_codes": _string_list(raw_candidate.get("reason_codes")),
         "blocked": bool(raw_candidate.get("blocked", True)),
         "blocked_by": _string_list(raw_candidate.get("blocked_by")),
@@ -1057,6 +1142,15 @@ def _append_unique_code(codes: list[str], code: str) -> list[str]:
     if code not in codes:
         codes.append(code)
     return codes
+
+
+def _rejected_gtc_order_count(candidate_records: list[dict[str, Any]]) -> int:
+    return sum(
+        1
+        for record in candidate_records
+        if bool(record.get("rejected"))
+        and _string(record.get("time_in_force")).upper() == "GTC"
+    )
 
 
 def _order_status(order: Any) -> str:

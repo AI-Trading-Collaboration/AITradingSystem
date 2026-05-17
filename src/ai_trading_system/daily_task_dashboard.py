@@ -1351,6 +1351,22 @@ def _paper_trading_trend(report: DailyTaskDashboardReport) -> TraceRecord:
         str(days): _paper_trading_trend_window(report, days) for days in PAPER_TRADING_TREND_WINDOWS
     }
     selected = dict(windows[str(selected_days)])
+    latest_replay = _latest_paper_trading_replay_summary(report)
+    selected["latest_replay"] = latest_replay
+    if latest_replay.get("exists"):
+        selected["replay_mode"] = latest_replay["replay_mode"]
+        selected["portfolio_carry_forward"] = latest_replay["portfolio_carry_forward"]
+        selected["latest_replay_mode"] = latest_replay["replay_mode"]
+        if latest_replay.get("replay_mode") == "continuous_portfolio":
+            selected["continuous_portfolio_summary"] = _mapping_value(
+                latest_replay,
+                "continuous_portfolio_summary",
+            )
+            selected["risk"] = _paper_trading_trend_risk_with_continuous_replay(
+                _string_value(selected.get("risk")),
+            )
+    else:
+        selected["latest_replay_mode"] = selected["replay_mode"]
     selected["windows"] = windows
     selected["available_windows"] = list(windows)
     return selected
@@ -1552,6 +1568,88 @@ def _paper_trading_trend_window(
         "risk": "；".join(dict.fromkeys(risks))
         or ("最近 paper trading summary 输入完整；趋势仍仅为 paper-only " "逐日独立复盘。"),
     }
+
+
+def _latest_paper_trading_replay_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    candidates: list[tuple[date, datetime, str, Path, TraceRecord]] = []
+    for path in report.reports_dir.glob("paper_trading_replay_*.json"):
+        payload = _read_json_object(path)
+        if payload.get("report_type") != "paper_trading_replay":
+            continue
+        end_date = _parse_iso_date(_string_value(payload.get("end")))
+        if end_date is None or end_date > report.as_of:
+            continue
+        generated_at = _parse_iso_datetime(_string_value(payload.get("generated_at")))
+        candidates.append((end_date, generated_at, path.name, path, payload))
+    if not candidates:
+        return {
+            "exists": False,
+            "path": "",
+            "href": "",
+            "replay_mode": PAPER_TRADING_TREND_REPLAY_MODE,
+            "portfolio_carry_forward": False,
+            "production_effect": ProductionEffect.NONE.value,
+            "risk": "未找到已有 paper_trading_replay JSON；趋势保持 daily-independent warning。",
+        }
+
+    _, _, _, path, payload = max(candidates)
+    replay_mode = _string_value(payload.get("replay_mode")) or PAPER_TRADING_TREND_REPLAY_MODE
+    carry_forward = _bool_value(payload.get("portfolio_carry_forward"))
+    final_positions = _records(payload.get("final_positions"))
+    final_positions_count = _optional_int(payload.get("carried_positions_count"))
+    if final_positions_count is None:
+        final_positions_count = len(final_positions)
+    max_drawdown = _mapping_value(payload, "max_drawdown")
+    max_drawdown_pct = _optional_float(payload.get("max_drawdown_pct"))
+    if max_drawdown_pct is None:
+        max_drawdown_pct = _optional_float(max_drawdown.get("percent"))
+    continuous_summary = {
+        "final_equity": payload.get("final_equity"),
+        "final_cash": payload.get("final_cash"),
+        "max_drawdown_pct": max_drawdown_pct,
+        "exposure_peak": payload.get("exposure_peak"),
+        "final_positions_count": final_positions_count,
+        "portfolio_carry_forward": carry_forward,
+        "expired_day_orders": payload.get("expired_day_orders", 0),
+    }
+    return {
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "start": _string_value(payload.get("start")),
+        "end": _string_value(payload.get("end")),
+        "replay_mode": replay_mode,
+        "portfolio_carry_forward": carry_forward,
+        "production_effect": _string_value(payload.get("production_effect")) or "none",
+        "continuous_metrics_available": bool(payload.get("continuous_metrics_available")),
+        "order_expiration_policy": _string_value(payload.get("order_expiration_policy")),
+        "unsupported_order_policy": _string_value(payload.get("unsupported_order_policy")),
+        "continuous_portfolio_summary": continuous_summary,
+        "risk": _latest_replay_risk(payload),
+    }
+
+
+def _paper_trading_trend_risk_with_continuous_replay(base_risk: str) -> str:
+    continuous_note = (
+        "最近 existing replay 为 continuous-portfolio；dashboard 只读展示 final "
+        "portfolio summary，仍不触发 replay 或 broker。"
+    )
+    daily_only = "最近 paper trading summary 输入完整；趋势仍仅为 paper-only 逐日独立复盘。"
+    if base_risk == daily_only:
+        return continuous_note
+    return "；".join(item for item in (base_risk, continuous_note) if item)
+
+
+def _latest_replay_risk(payload: TraceRecord) -> str:
+    replay_mode = _string_value(payload.get("replay_mode")) or PAPER_TRADING_TREND_REPLAY_MODE
+    if replay_mode == "continuous_portfolio":
+        return (
+            "latest replay 是 paper-only continuous-portfolio 模拟；不是实盘收益、"
+            "真实 broker 成交或上线依据。"
+        )
+    return (
+        "latest replay 是 daily-independent；每天重新初始化组合，不能解释连续组合收益。"
+    )
 
 
 def _paper_signal_quality_summary(report: DailyTaskDashboardReport) -> TraceRecord:
@@ -2728,10 +2826,56 @@ def _render_paper_trading_trend(report: DailyTaskDashboardReport) -> str:
     trend = _paper_trading_trend(report)
     totals = _mapping_value(trend, "totals")
     windows = _mapping_value(trend, "windows")
+    latest_replay = _mapping_value(trend, "latest_replay")
+    continuous_summary = _mapping_value(trend, "continuous_portfolio_summary")
+    latest_replay_is_continuous = (
+        _string_value(latest_replay.get("replay_mode")) == "continuous_portfolio"
+    )
+    trend_intro = (
+        "只读读取最近历史 summary；缺失显示 "
+        "<code>LIMITED</code>，不运行 replay 或补造结论；最近已有 replay 为"
+        " <code>continuous-portfolio</code> 时，额外展示 final portfolio summary。"
+        if latest_replay_is_continuous
+        else (
+            "只读读取最近历史 summary；缺失显示 "
+            "<code>LIMITED</code>，不运行 replay 或补造结论；当前汇总语义为"
+            "逐日独立 paper-only 复盘，不是连续组合收益。"
+        )
+    )
+    continuous_items = []
+    if latest_replay_is_continuous:
+        continuous_items = [
+            _summary_item(
+                "final_equity",
+                _format_money_value(continuous_summary.get("final_equity")),
+            ),
+            _summary_item(
+                "max_drawdown",
+                _format_percent(_optional_float(continuous_summary.get("max_drawdown_pct"))),
+            ),
+            _summary_item(
+                "exposure_peak",
+                _format_money_value(continuous_summary.get("exposure_peak")),
+            ),
+            _summary_item(
+                "final_positions",
+                continuous_summary.get("final_positions_count", 0),
+            ),
+            _summary_item(
+                "expired DAY orders",
+                continuous_summary.get("expired_day_orders", 0),
+            ),
+        ]
     window_rows = []
     for window_days in PAPER_TRADING_TREND_WINDOWS:
         window = _mapping_value(windows, str(window_days))
         window_totals = _mapping_value(window, "totals")
+        reconciliation_text = _format_distribution(
+            window.get("reconciliation_status_distribution")
+        )
+        synthetic_ratio_text = _format_percent(
+            _optional_float(window.get("synthetic_snapshot_ratio"))
+        )
         window_rows.append(
             "<tr>"
             f"<td>{window_days} 日</td>"
@@ -2744,8 +2888,8 @@ def _render_paper_trading_trend(report: DailyTaskDashboardReport) -> str:
             f"<td>{_text(_count_triplet(window_totals, 'filled', 'open', 'cancelled'))}</td>"
             f"<td>{_text(_format_money_value(window_totals.get('realized_pnl')))} / "
             f"{_text(_format_money_value(window_totals.get('unrealized_pnl')))}</td>"
-            f"<td>{_text(_format_distribution(window.get('reconciliation_status_distribution')))}</td>"
-            f"<td>{_text(_format_percent(_optional_float(window.get('synthetic_snapshot_ratio'))))}</td>"
+            f"<td>{_text(reconciliation_text)}</td>"
+            f"<td>{_text(synthetic_ratio_text)}</td>"
             f"<td>{_text(_format_top_records(window.get('top_blocked_by')))}</td>"
             f"<td>{_text(_format_top_records(window.get('top_reason_code')))}</td>"
             "</tr>"
@@ -2778,19 +2922,20 @@ def _render_paper_trading_trend(report: DailyTaskDashboardReport) -> str:
             '<section aria-labelledby="paper-trading-trend-title">',
             '<div class="section-head">',
             '<h2 id="paper-trading-trend-title">Paper Trading Trend (7/14/30 日)</h2>',
-            (
-                "<p>只读读取最近历史 summary；缺失显示 "
-                "<code>LIMITED</code>，不运行 replay 或补造结论；当前汇总语义为"
-                "逐日独立 paper-only 复盘，不是连续组合收益。</p>"
-            ),
+            f"<p>{trend_intro}</p>",
             "</div>",
             '<div class="summary-grid">',
             _summary_item("Trend status", trend.get("status", "LIMITED")),
             _summary_item("replay_mode", trend.get("replay_mode", "daily_independent")),
             _summary_item(
+                "latest replay",
+                latest_replay.get("replay_mode", trend.get("replay_mode", "daily_independent")),
+            ),
+            _summary_item(
                 "portfolio_carry_forward",
                 str(trend.get("portfolio_carry_forward", False)),
             ),
+            *continuous_items,
             _summary_item(
                 "available / missing",
                 f"{trend.get('available_count', 0)} / {trend.get('missing_count', 0)}",
@@ -3205,6 +3350,14 @@ def _optional_int(value: object) -> int | None:
         return None
 
 
+def _bool_value(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes"}
+    return False
+
+
 def _optional_float(value: object) -> float | None:
     if value is None:
         return None
@@ -3214,6 +3367,25 @@ def _optional_float(value: object) -> float | None:
         return None
     except (TypeError, ValueError):
         return None
+
+
+def _parse_iso_date(value: str) -> date | None:
+    try:
+        return date.fromisoformat(value)
+    except ValueError:
+        return None
+
+
+def _parse_iso_datetime(value: str) -> datetime:
+    if not value:
+        return datetime.min.replace(tzinfo=UTC)
+    try:
+        parsed = datetime.fromisoformat(value)
+    except ValueError:
+        return datetime.min.replace(tzinfo=UTC)
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=UTC)
+    return parsed
 
 
 def _format_seconds(value: float | None) -> str:
