@@ -2,7 +2,7 @@
 
 面向美股 AI 产业链的投资认知、趋势分析、风险评分、回测与仓位建议系统。
 
-项目目标不是预测市场，也不是自动交易。当前阶段只做 AI 产业链趋势判断和投研复核辅助，不实际触发交易；仓位区间、gate 和执行动作都是解释语言，不能直接转成账户买卖。长期方向是可审计认知模型：持续记录 `belief_state`、证据、置信度、风险边界和规则改进建议，但生产规则必须经过回测、shadow mode 和人工批准。
+项目目标不是预测市场，也不是自动交易。当前生产路径只做 AI 产业链趋势判断和投研复核辅助，不实际触发交易；仓位区间、gate 和执行动作都是解释语言，不能直接转成账户买卖。第二套交易执行子系统已启动 paper trading MVP，但默认只模拟成交、记录审计和生成复盘报告，不接真实券商、不读取真实 API key、不提供实盘下单路径。长期方向是可审计认知模型：持续记录 `belief_state`、证据、置信度、风险边界和规则改进建议，但生产规则必须经过回测、shadow mode 和人工批准。
 
 产品定位详见 [docs/product_strategy.md](docs/product_strategy.md)：系统应服务于能力圈、产业链因果、仓位决策和复盘归因，而不是扩张成全市场万能分析器。工程落地拆解见 [docs/implementation_backlog.md](docs/implementation_backlog.md)，具体未完成任务和优先级见 [docs/task_register.md](docs/task_register.md)。
 
@@ -19,6 +19,14 @@
 
 SEC 基本面已经接入基础硬数据评分；估值快照和政策/地缘风险发生记录已经接入可审计的手工输入评分，并支持从结构化 CSV 导入来减少手工 YAML 维护。TSMC IR 季度基本面已支持从官方 Management Report 文本或 PDF 可抽取文本层导入，并可显式合并到统一 SEC-style 指标 CSV；LLM claim 预审已支持 OpenAI Responses API 结构化输出和待复核队列，LLM 请求策略默认读取 `config/llm_request_profiles.yaml`，当前 profile 保持 `gpt-5.5`、`requests` HTTP 客户端和单请求失败最多重试 2 次；日报自动风险预审 profile 正在做成本 pilot，`reasoning.effort=medium`，其他手动/通用 profile 仍可保持 `high`；live OpenAI 请求默认写入本地短 TTL request/response 缓存，完全相同 payload 在 TTL 内复用，但只能生成 `llm_extracted` / `pending_review` 线索，不能直接触发交易动作。
 
+Paper trading engine MVP 位于 `src/ai_trading_system/trading_engine/`。它只接受标准 `OrderIntent`，强制执行 `PreTradeRiskChecker -> ExecutionService -> PaperBroker` 链路，默认读取 `config/trading_engine.yaml` 的 paper-only 配置，并把订单意图、风控、订单、成交和组合快照写入 `data/trading_engine/audit/` JSONL。可用下面命令跑通模拟闭环：
+
+```powershell
+python scripts/run_paper_trading_demo.py --date 2026-05-17
+```
+
+demo 会生成 `reports/trading_daily/2026-05-17.md`。该报告固定为 `production_effect=none`，不是实盘交易指令。
+
 ## 工程结构
 
 ```text
@@ -32,9 +40,11 @@ config/data_sources.yaml 数据源目录、审计字段和来源限制
 config/sec_companies.yaml SEC companyfacts CIK 映射
 config/fundamental_metrics.yaml SEC 基本面指标映射
 config/fundamental_features.yaml SEC 基本面特征公式
+config/trading_engine.yaml paper trading engine 风控和执行配置
 data/raw/                原始数据缓存，不提交
 data/processed/          清洗后的中间数据，不提交
 data/external/           外部导入数据，不提交
+data/trading_engine/     paper trading 审计日志，不提交
 docs/                    架构和开发计划
 docs/system_flow.md      数据输入、中间评估和输出结论示意图
 docs/learning_path.md    按阅读顺序理解数据、评分、仓位 gate、trace、ledger 和 shadow
@@ -48,7 +58,10 @@ docs/examples/           可复制的输入模板，不包含个人交易记录
 notebooks/               研究和临时分析
 outputs/backtests/       回测输出，不提交
 outputs/reports/         日报/周报输出，不提交
+reports/trading_daily/   paper trading demo 日报，不提交
 src/ai_trading_system/   应用代码
+src/ai_trading_system/trading_engine/ 独立 paper trading 执行子系统
+scripts/run_paper_trading_demo.py paper trading MVP demo
 tests/                   单元测试
 ```
 
@@ -60,6 +73,8 @@ python -m venv .venv
 python -m pip install -e ".[dev,data,dashboard]"
 python -m pytest
 ```
+
+本地验证通过并 push 后，还需要把 GitHub Actions CI 当作同一轮验证项：打开 [Actions](https://github.com/AI-Trading-Collaboration/AITradingSystem/actions)，确认本次 commit 触发的最新 run 结束且 `success`。如果 CI 失败，先看失败 job 日志，本地复现并修复后再次提交推送，直到 CI 通过；交付说明应记录通过的 run 号或链接。
 
 下载阶段 1 所需的日线数据：
 

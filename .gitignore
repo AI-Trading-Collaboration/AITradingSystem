@@ -25,6 +25,7 @@ data/processed/*
 !data/processed/.gitkeep
 data/external/*
 !data/external/.gitkeep
+data/trading_engine/*
 outputs/backtests/*
 !outputs/backtests/.gitkeep
 outputs/reports/*
@@ -35,6 +36,7 @@ outputs/runs/*
 !outputs/runs/.gitkeep
 outputs/shadow_iterations/*
 !outputs/shadow_iterations/.gitkeep
+reports/trading_daily/*
 
 # Notebooks
 .ipynb_checkpoints/

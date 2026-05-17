@@ -369,6 +369,17 @@ flowchart TD
         RTR["outputs/reports/trade_review_YYYY-MM-DD.md"]
     end
 
+    subgraph PaperTrading["Paper Trading Engine MVP"]
+        TECFG["config/trading_engine.yaml<br/>paper-only mode、real_trading_enabled=false、风险阈值 policy metadata"]
+        TEDMO["python scripts/run_paper_trading_demo.py --date YYYY-MM-DD<br/>模拟趋势候选，不读取真实券商 API key"]
+        TEINT["OrderIntent<br/>趋势系统与交易引擎边界 schema"]
+        TERISK["PreTradeRiskChecker<br/>kill switch、asset/order type、confidence、notional、仓位、现金、重复订单、事件 blackout"]
+        TEBR["PaperBroker<br/>LIMIT order submit/cancel/query、market snapshot fill simulation"]
+        TEPORT["PaperPortfolio / PortfolioState<br/>cash、position、avg cost、realized/unrealized PnL"]
+        TEAUD["data/trading_engine/audit/*/*.jsonl<br/>order intent、risk check、order、fill、portfolio snapshot"]
+        TERPT["reports/trading_daily/YYYY-MM-DD.md<br/>paper trading 执行复盘；production_effect=none"]
+    end
+
     MD --> ERC
     FMP --> ERC
     CBOEVIX --> ERC
@@ -541,6 +552,18 @@ flowchart TD
     PEX --> DR
     EADV --> DR
     EADV --> DRT
+    DR -. "当前不直接下单；未来只能经标准 OrderIntent adapter" .-> TEINT
+    EADV -. "advisory signal 不能绕过风控" .-> TEINT
+    TECFG --> TERISK
+    TECFG --> TEBR
+    TEDMO --> TEINT
+    TEINT --> TERISK
+    TERISK --> TEBR
+    TEBR --> TEPORT
+    TERISK --> TEAUD
+    TEBR --> TEAUD
+    TEPORT --> TEAUD
+    TEAUD --> TERPT
     DRT --> DSNAP
     DSNAP --> PLED
 
@@ -1394,6 +1417,11 @@ flowchart TD
 |执行纪律校验|`aits execution validate`|校验 execution policy schema、必需 action id、重复 action、报告可用性和复核到期状态；该政策只影响报告动作语言，不改变 production scoring、`position_gate` 或回测仓位|已实现基础版|
 |执行纪律报告|`outputs/reports/execution_policy_YYYY-MM-DD.md`|中文报告输出政策版本、阈值、冷却期、advisory action taxonomy 和问题清单；`score-daily` 会写入该报告并在日报执行建议章节引用校验状态|已实现基础版|
 |执行动作查询|`aits execution lookup`|按 `action_id` 反查固定动作定义，例如 `maintain`、`small_increase`、`no_new_position`、`reduce_to_target_range`、`wait_manual_review`、`observe_only`|已实现基础版|
+|Paper trading 配置|`config/trading_engine.yaml`|登记第二交易引擎 MVP 的 paper-only mode、`real_trading_enabled=false`、风险阈值、policy owner/version/status/rationale/validation/review condition、初始 cash、commission 和 slippage；这些阈值是 pilot baseline，不是实盘校准结论；真实交易接入前必须另行设计和审批|已实现基础版|
+|Paper trading engine|`src/ai_trading_system/trading_engine/`|独立交易执行子系统；只接受标准 `OrderIntent`，通过 `PreTradeRiskChecker` 聚合 kill switch、asset/order type、side/short sell、confidence、单笔 notional、单标的仓位、总 exposure、cash、重复订单和事件 blackout；`ExecutionService` 是唯一执行入口，内部强制风控并提交到 `PaperBroker`；不反向依赖现有趋势评分内部实现|已实现基础版|
+|Paper trading demo|`python scripts/run_paper_trading_demo.py --date YYYY-MM-DD`|从模拟趋势候选构造 `OrderIntent`，执行 `OrderIntent -> RiskCheck -> PaperBroker -> Fill simulation -> PortfolioState -> TradingDailyReport` 闭环；默认输出 JSONL 审计日志和 `reports/trading_daily/YYYY-MM-DD.md`；不读取真实 broker API key，不执行真实订单|已实现基础版|
+|Paper trading 审计日志|`data/trading_engine/audit/{order_intent_log,risk_check_log,order_log,fill_log,portfolio_snapshot}/YYYY-MM-DD.jsonl`|每条记录包含 timestamp、run_id、strategy_id、schema_version、source object id 和 payload；用于回答交易意图为何生成、风控为何放行或拦截、订单是否提交、是否成交、成交价和组合状态如何变化|已实现基础版|
+|Paper trading 日报|`reports/trading_daily/YYYY-MM-DD.md`|中文 paper trading 执行复盘，列出当日 OrderIntent、风控通过/拒绝、PaperBroker 订单、成交/未成交、持仓、cash、exposure、PnL、审计目录、数据质量状态和人工关注事项；固定声明 `production_effect=none`，不是实盘交易指令|已实现基础版|
 |反馈闭环复核|`aits feedback loop-review`|按复核窗口汇总 market evidence、decision snapshots、decision_outcomes、prediction_outcomes、decision_causal_chains、decision_learning_queue、rule_experiments 和 task register 状态；声明 `ai_after_chatgpt` 市场阶段和可执行/需复核/研究用途边界|已实现基础版|
 |反馈闭环复核报告|`outputs/reports/feedback_loop_review_YYYY-MM-DD.md`|中文周期报告输出新证据、快照、decision/prediction outcome、因果链、学习队列、规则候选、blocked task 和状态统计；prediction/shadow 样本不足时只标记研究用途，不直接生成调仓建议，也不自动修改生产规则|已实现基础版|
 |市场反馈优化编排|`aits feedback optimize-market-feedback`|只读汇总 data quality、decision/prediction outcomes、decision causal chains、learning queue、rule experiments、parameter replay、parameter candidates、approved calibration overlay 和 current effective weights；输出 readiness、样本门槛、as-if 回放窗口、错误复盘、候选规则、参数复测收益变化、参数候选状态、overlay 状态和周/月执行频次；`production_effect=none`，不改变 `score-daily`、`position_gate`、thesis、日报结论或回测仓位|已实现基础版|

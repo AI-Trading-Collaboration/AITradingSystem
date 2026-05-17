@@ -1,0 +1,43 @@
+trading:
+  mode: paper
+  real_trading_enabled: false
+  base_currency: USD
+
+risk_policy:
+  policy_id: trading_engine_risk_limits
+  version: risk_v1
+  status: pilot_baseline
+  owner: system
+  rationale: >
+    Phase 1 only supports paper trading. Limits are intentionally conservative
+    account-level safety gates for auditability and demo validation, not
+    evidence-backed production trading calibration.
+  validation: >
+    Covered by schema, pre-trade risk checker, paper broker, execution service
+    and demo smoke tests. Live broker integration is out of scope.
+  review_condition: >
+    Revisit before any real broker read-only integration, manual confirmation
+    workflow or automated order routing is introduced.
+
+risk_limits:
+  allowed_asset_types:
+    - stock
+    - etf
+  allowed_order_types:
+    - LIMIT
+  allowed_sides:
+    - BUY
+    - SELL
+  allow_short: false
+  allow_margin: false
+  min_confidence: 0.60
+  max_order_notional_pct: 0.05
+  max_position_pct_per_symbol: 0.10
+  max_total_exposure_pct: 0.50
+  max_daily_trades_per_symbol: 2
+  kill_switch_enabled: false
+
+execution:
+  default_initial_cash_usd: 100000.0
+  commission_bps: 0.0
+  slippage_bps: 0.0
