@@ -393,6 +393,7 @@ flowchart TD
         TEWCE["python scripts/run_weight_candidate_evaluation.py --date YYYY-MM-DD<br/>只读评估 weight adjustment candidates 的 backtest/replay/signal quality/shadow impact 证据；evaluation_mode=observe_only；不重跑 replay、不写 production profile"]
         TEWPG["python scripts/run_weight_promotion_gate.py --date YYYY-MM-DD<br/>manual-review-only 读取候选评估、候选、paper quality、shadow impact、可选 replay/daily summary/governance/profile；不重跑 gate、不写 production profile、不触发交易"]
         TEWDA["python scripts/run_daily_weight_adjustment.py --date YYYY-MM-DD<br/>只读串联同日 weight adjustment candidates、candidate evaluation 和 promotion gate JSON/MD；mode=observe_only；production_effect=none；缺失只标记 LIMITED / INSUFFICIENT_DATA；不触发上游 runner、replay、broker 或参数应用"]
+        TEWDAS["python scripts/run_daily_weight_adjustment_scheduler_dry_run.py --date YYYY-MM-DD<br/>dry-run 封装 daily weight adjustment summary pipeline；记录 invoked_command、duration、generated/missing artifacts 和 safety checks；不写 profile、不触发 broker/replay、不自动 commit"]
         TEFMCAL["python scripts/run_paperbroker_fill_model_calibration.py --date YYYY-MM-DD<br/>只读读取最近 PaperBroker vs IBKR Paper comparison、controlled fill no-fill artifacts、可选 replay quality flags 和 paper_signal_quality；calibration_mode=diagnostic_only；不触发 runner、replay、broker 或 fill model 修改"]
         TEIBKR["python scripts/run_ibkr_paper_readonly_snapshot.py --date YYYY-MM-DD --config config/ibkr_paper_readonly.local.yaml<br/>IB Gateway / TWS Paper 只读账户 snapshot；默认 disabled；非 paper/read-only fail closed；local config 不提交"]
         TEIBKRA["IBKRPaperReadOnlyAdapter<br/>connect/disconnect/account summary/positions/open orders/executions/contract details only；submit_order 明确报错"]
@@ -416,6 +417,7 @@ flowchart TD
         TEWCER["outputs/reports/weight_candidate_evaluation_YYYY-MM-DD.json/md<br/>evaluation_mode=observe_only、production_effect=none、7/14/30 日窗口、candidate scorecard、blocked_by、recommendation；不 promotion、不触发交易、不影响 dashboard 主结论"]
         TEWPGR["outputs/reports/weight_promotion_gate_YYYY-MM-DD.json/md<br/>gate_mode=manual_review_only、production_effect=none、promotion_gate_status、blocked_by、improvement/risk/data quality summary、manual review items；不自动晋级、不写 production profile、不触发交易"]
         TEWDAR["outputs/reports/daily_weight_adjustment_summary_YYYY-MM-DD.json/md<br/>mode=observe_only、production_effect=none、candidate/evaluation/gate status、candidate_count、evaluable/ready/blocked count、top_candidate_id、main blocked_by、warnings、source/missing artifacts、manual review items 和 recommendation；不补造 improvement、不写 profile、不触发交易"]
+        TEWDASR["outputs/reports/daily_weight_adjustment_scheduler_dry_run_YYYY-MM-DD.json/md<br/>mode=dry_run、production_effect=none、manual_review_only=true、started/completed/duration、pipeline_status、invoked_command、generated/missing artifacts、warnings 和 safety checks；缺上游时 LIMITED"]
         TEIBKRR["outputs/reports/ibkr_paper_account_snapshot_YYYY-MM-DD.json/md<br/>masked account、connection status、summary、positions、open orders、executions、contract sample、reconciliation；readonly=true；production_effect=none"]
         TEIBKROR["outputs/reports/ibkr_paper_order_lifecycle_YYYY-MM-DD.json/md<br/>lifecycle_status、connection_status、masked account、submitted_order、broker_order_id、status events、cancel confirmation、fills_seen、safety_checks、issues；production_effect=none"]
         TEIBKRCMPR["outputs/reports/paperbroker_vs_ibkr_paper_comparison_YYYY-MM-DD.json/md<br/>local PaperBroker status/open/fill/cancel/reconciliation、IBKR redacted broker order id/openOrder/orderStatus/cancel/fills/reconciliation、diff labels、quality recommendations；production_effect=none；diagnostic_only"]
@@ -662,6 +664,8 @@ flowchart TD
     TEWCER --> TEWDA
     TEWPGR --> TEWDA
     TEWDA --> TEWDAR
+    TEWDA --> TEWDAS
+    TEWDAS --> TEWDASR
     IBKRCFG --> TEIBKR
     IBKRCFG --> TEIBKRA
     TEIBKR --> TEIBKRA
