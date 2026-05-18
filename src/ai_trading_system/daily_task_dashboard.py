@@ -192,6 +192,7 @@ def build_daily_task_dashboard_payload(
         "weight_candidate_evaluation": _weight_candidate_evaluation_summary(report),
         "weight_promotion_gate": _weight_promotion_gate_summary(report),
         "daily_weight_adjustment_summary": _daily_weight_adjustment_summary(report),
+        "shadow_vs_production_comparison": _shadow_vs_production_comparison_summary(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -289,6 +290,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_weight_candidate_evaluation(report),
             _render_weight_promotion_gate(report),
             _render_daily_weight_adjustment_summary(report),
+            _render_shadow_vs_production_comparison(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -969,6 +971,16 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
             "daily_weight_adjustment_summary_json",
             "daily weight adjustment summary JSON",
             report.reports_dir / f"daily_weight_adjustment_summary_{suffix}.json",
+        ),
+        (
+            "shadow_vs_production_comparison_json",
+            "shadow vs production comparison JSON",
+            report.project_root
+            / "data"
+            / "derived"
+            / "weight_iterations"
+            / "comparison"
+            / f"daily_shadow_vs_production_{suffix}.json",
         ),
     )
     for artifact_id, label, path in extras:
@@ -2087,6 +2099,84 @@ def _daily_weight_adjustment_summary(report: DailyTaskDashboardReport) -> TraceR
         "risk": "；".join(risks) or "Daily weight adjustment summary 当前仅作只读展示。",
     }
 
+
+def _shadow_vs_production_comparison_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    suffix = report.as_of.isoformat()
+    path = (
+        report.project_root
+        / "data"
+        / "derived"
+        / "weight_iterations"
+        / "comparison"
+        / f"daily_shadow_vs_production_{suffix}.json"
+    )
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "daily_shadow_vs_production_comparison":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "production_decision": "MISSING",
+            "shadow_decision": "MISSING",
+            "score_delta": "NA",
+            "decision_changed": "MISSING",
+            "main_reason": "missing",
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_only": True,
+            "risk": "shadow vs production comparison JSON 缺失；dashboard 不运行比较。",
+        }
+    outputs = _mapping_value(payload, "outputs")
+    markdown_path = Path(_string_value(outputs.get("markdown")) or str(path.with_suffix(".md")))
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    production = _mapping_value(payload, "production")
+    shadow = _mapping_value(payload, "shadow")
+    difference = _mapping_value(payload, "difference")
+    validation = _mapping_value(payload, "input_validation")
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    manual_review_only = payload.get("manual_review_only") is True
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("shadow vs production comparison production_effect 不是 none。")
+    if not manual_review_only:
+        risks.append("shadow vs production comparison 不是 manual_review_only。")
+    blockers = _strings(validation.get("blocking_reasons"))
+    if blockers:
+        risks.append(f"comparison 输入限制：{', '.join(blockers)}。")
+    contract = _mapping_value(payload, "pipeline_contract")
+    for field in (
+        "runs_broker_runner",
+        "runs_paper_runner",
+        "runs_replay_runner",
+        "writes_production_profile",
+        "writes_approved_profile",
+        "promotes_shadow_to_production",
+    ):
+        if contract.get(field) is not False:
+            risks.append(f"comparison safety contract 异常：{field}。")
+    score_delta = _optional_float(difference.get("score_delta"))
+    return {
+        "status": _string_value(payload.get("comparison_status")) or "INSUFFICIENT_DATA",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "production_decision": _string_value(production.get("decision")) or "MISSING",
+        "shadow_decision": _string_value(shadow.get("decision")) or "MISSING",
+        "production_score": production.get("score"),
+        "shadow_score": shadow.get("score"),
+        "score_delta": _format_signed_decimal_delta(0.0, score_delta, digits=2),
+        "normalized_score_delta": difference.get("normalized_score_delta"),
+        "decision_changed": difference.get("decision_changed"),
+        "score_band_changed": difference.get("score_band_changed"),
+        "main_reason": _string_value(difference.get("main_reason")) or "missing",
+        "production_effect": production_effect,
+        "manual_review_only": manual_review_only,
+        "risk": "；".join(risks) or "Shadow vs Production Comparison 当前仅作只读展示。",
+    }
 
 def _paper_trading_snapshot_source_counts(payload: TraceRecord) -> Counter[str]:
     counts: Counter[str] = Counter()
@@ -3697,6 +3787,54 @@ def _render_daily_weight_adjustment_summary(report: DailyTaskDashboardReport) ->
         ]
     )
 
+
+def _render_shadow_vs_production_comparison(report: DailyTaskDashboardReport) -> str:
+    summary = _shadow_vs_production_comparison_summary(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}"><span>Shadow vs Production Comparison</span>'
+        f"<small>{_text(summary.get('status', 'INSUFFICIENT_DATA'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing"><span>Shadow vs Production Comparison</span>'
+        "<small>MISSING</small></span>"
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="shadow-vs-production-title">',
+            '<div class="section-head">',
+            '<h2 id="shadow-vs-production-title">Shadow vs Production Comparison</h2>',
+            (
+                "<p>offline comparison 只读卡片；dashboard 只读 comparison JSON，"
+                "不重跑评分、不接 broker/replay、不应用 shadow。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("status", summary.get("status", "INSUFFICIENT_DATA")),
+            _summary_item("production decision", summary.get("production_decision", "MISSING")),
+            _summary_item("shadow decision", summary.get("shadow_decision", "MISSING")),
+            _summary_item("score_delta", summary.get("score_delta", "NA")),
+            _summary_item("decision_changed", summary.get("decision_changed", "MISSING")),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            _summary_item("manual_review_only", summary.get("manual_review_only", True)),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>Main reason：</strong>'
+                f"{_text(summary.get('main_reason', ''))}</p>"
+            ),
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
 
 def _shadow_impact_sample_text(impact: TraceRecord) -> str:
     counts = _mapping_value(impact, "window_sample_counts")

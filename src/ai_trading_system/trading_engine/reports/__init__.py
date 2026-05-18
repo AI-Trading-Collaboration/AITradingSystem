@@ -1,5 +1,12 @@
 """Trading engine reports."""
 
+from ai_trading_system.trading_engine.reports.daily_shadow_vs_production_comparison import (
+    build_daily_shadow_vs_production_comparison_payload,
+    default_shadow_vs_production_comparison_json_path,
+    render_daily_shadow_vs_production_comparison_report,
+    write_daily_shadow_vs_production_comparison_report,
+)
+
 from ai_trading_system.trading_engine.reports.daily_weight_adjustment import (
     build_daily_weight_adjustment_summary_payload,
     default_daily_weight_adjustment_summary_json_path,
@@ -53,18 +60,21 @@ __all__ = [
     "build_trading_daily_report",
     "build_shadow_parameter_impact_payload",
     "build_daily_weight_adjustment_summary_payload",
+    "build_daily_shadow_vs_production_comparison_payload",
     "build_weight_adjustment_candidates_payload",
     "build_weight_candidate_evaluation_payload",
     "default_daily_weight_adjustment_summary_json_path",
     "default_paper_signal_quality_json_path",
     "default_paperbroker_fill_model_calibration_json_path",
     "default_shadow_parameter_impact_json_path",
+    "default_shadow_vs_production_comparison_json_path",
     "default_weight_adjustment_candidates_json_path",
     "default_weight_candidate_evaluation_json_path",
     "render_paper_signal_quality_report",
     "render_paperbroker_fill_model_calibration_report",
     "render_shadow_parameter_impact_report",
     "render_daily_weight_adjustment_summary_report",
+    "render_daily_shadow_vs_production_comparison_report",
     "render_weight_adjustment_candidates_report",
     "render_weight_candidate_evaluation_report",
     "render_trading_daily_report",
@@ -73,6 +83,7 @@ __all__ = [
     "write_paperbroker_fill_model_calibration_report",
     "write_shadow_parameter_impact_report",
     "write_daily_weight_adjustment_summary_report",
+    "write_daily_shadow_vs_production_comparison_report",
     "write_weight_adjustment_candidates_report",
     "write_weight_candidate_evaluation_report",
     "write_trading_daily_report",
