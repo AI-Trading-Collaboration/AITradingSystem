@@ -193,6 +193,9 @@ def build_daily_task_dashboard_payload(
         "weight_promotion_gate": _weight_promotion_gate_summary(report),
         "daily_weight_adjustment_summary": _daily_weight_adjustment_summary(report),
         "shadow_vs_production_comparison": _shadow_vs_production_comparison_summary(report),
+        "shadow_vs_production_multi_day_review": (
+            _shadow_vs_production_multi_day_review_summary(report)
+        ),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -291,6 +294,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_weight_promotion_gate(report),
             _render_daily_weight_adjustment_summary(report),
             _render_shadow_vs_production_comparison(report),
+            _render_shadow_vs_production_multi_day_review(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -981,6 +985,11 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
             / "weight_iterations"
             / "comparison"
             / f"daily_shadow_vs_production_{suffix}.json",
+        ),
+        (
+            "shadow_vs_production_multi_day_review_json",
+            "shadow vs production multi-day review JSON",
+            _latest_shadow_vs_production_review_path(report),
         ),
     )
     for artifact_id, label, path in extras:
@@ -2177,6 +2186,101 @@ def _shadow_vs_production_comparison_summary(report: DailyTaskDashboardReport) -
         "manual_review_only": manual_review_only,
         "risk": "；".join(risks) or "Shadow vs Production Comparison 当前仅作只读展示。",
     }
+
+
+def _shadow_vs_production_multi_day_review_summary(
+    report: DailyTaskDashboardReport,
+) -> TraceRecord:
+    path = _latest_shadow_vs_production_review_path(report)
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "shadow_vs_production_multi_day_review":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "latest_review_markdown_path": "",
+            "review_decision": "MISSING",
+            "lookback_days": 0,
+            "available_comparison_days": 0,
+            "average_score_delta": "NA",
+            "decision_difference_count": 0,
+            "promotion_ready": False,
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_only": True,
+            "risk": (
+                "multi-day shadow vs production review JSON 缺失；"
+                "dashboard 不运行 review pipeline。"
+            ),
+        }
+
+    outputs = _mapping_value(payload, "outputs")
+    markdown_path = Path(_string_value(outputs.get("markdown")) or str(path.with_suffix(".md")))
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    manual_review_only = payload.get("manual_review_only") is True
+    promotion = _mapping_value(payload, "promotion_readiness")
+    promotion_ready = promotion.get("ready") is True
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("multi-day review production_effect 不是 none。")
+    if not manual_review_only:
+        risks.append("multi-day review 不是 manual_review_only。")
+    if promotion_ready:
+        risks.append("TRADING-018C2 不允许 promotion_readiness.ready=true。")
+    contract = _mapping_value(payload, "pipeline_contract")
+    for field in (
+        "runs_scoring_pipeline",
+        "runs_comparison_pipeline",
+        "runs_broker_runner",
+        "runs_paper_runner",
+        "runs_replay_runner",
+        "writes_production_profile",
+        "writes_approved_profile",
+        "promotes_shadow_to_production",
+    ):
+        if contract.get(field) is not False:
+            risks.append(f"multi-day review safety contract 异常：{field}。")
+    score_delta = _optional_float(payload.get("average_score_delta"))
+    return {
+        "status": _string_value(payload.get("review_decision")) or "INSUFFICIENT_HISTORY",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "latest_review_markdown_path": str(markdown_path),
+        "review_decision": _string_value(payload.get("review_decision")) or "INSUFFICIENT_HISTORY",
+        "lookback_days": payload.get("lookback_days", 0),
+        "available_comparison_days": payload.get("available_comparison_days", 0),
+        "average_score_delta": _format_signed_decimal_delta(0.0, score_delta, digits=2),
+        "decision_difference_count": payload.get("decision_difference_count", 0),
+        "promotion_ready": promotion_ready,
+        "production_effect": production_effect,
+        "manual_review_only": manual_review_only,
+        "risk": "；".join(risks) or "Shadow vs Production Multi-day Review 当前仅作只读展示。",
+    }
+
+
+def _latest_shadow_vs_production_review_path(report: DailyTaskDashboardReport) -> Path:
+    review_root = (
+        report.project_root / "data" / "derived" / "weight_iterations" / "comparison" / "reviews"
+    )
+    default_path = review_root / f"shadow_vs_production_review_{report.as_of.isoformat()}.json"
+    if not review_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in review_root.glob("shadow_vs_production_review_*.json"):
+        raw_date = path.stem.removeprefix("shadow_vs_production_review_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
 
 def _paper_trading_snapshot_source_counts(payload: TraceRecord) -> Counter[str]:
     counts: Counter[str] = Counter()
@@ -3835,6 +3939,66 @@ def _render_shadow_vs_production_comparison(report: DailyTaskDashboardReport) ->
             "</section>",
         ]
     )
+
+
+def _render_shadow_vs_production_multi_day_review(report: DailyTaskDashboardReport) -> str:
+    summary = _shadow_vs_production_multi_day_review_summary(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}"><span>Shadow vs Production Multi-day Review</span>'
+        f"<small>{_text(summary.get('review_decision', 'INSUFFICIENT_HISTORY'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>Shadow vs Production Multi-day Review</span><small>MISSING</small></span>"
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="shadow-vs-production-review-title">',
+            '<div class="section-head">',
+            (
+                '<h2 id="shadow-vs-production-review-title">'
+                "Shadow vs Production Multi-day Review</h2>"
+            ),
+            (
+                "<p>只读多日观察卡片；dashboard 只读取 latest review artifact，"
+                "不重跑 scoring/comparison/review pipeline。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("latest review_decision", summary.get("review_decision", "MISSING")),
+            _summary_item("lookback_days", summary.get("lookback_days", 0)),
+            _summary_item(
+                "available_comparison_days",
+                summary.get("available_comparison_days", 0),
+            ),
+            _summary_item("average_score_delta", summary.get("average_score_delta", "NA")),
+            _summary_item(
+                "decision_difference_count",
+                summary.get("decision_difference_count", 0),
+            ),
+            _summary_item("promotion_readiness.ready", summary.get("promotion_ready", False)),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            _summary_item("manual_review_only", summary.get("manual_review_only", True)),
+            _summary_item(
+                "latest review markdown path",
+                summary.get("latest_review_markdown_path", ""),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
 
 def _shadow_impact_sample_text(impact: TraceRecord) -> str:
     counts = _mapping_value(impact, "window_sample_counts")
