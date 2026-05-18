@@ -191,6 +191,7 @@ def build_daily_task_dashboard_payload(
         "weight_adjustment_candidates": _weight_adjustment_candidates_summary(report),
         "weight_candidate_evaluation": _weight_candidate_evaluation_summary(report),
         "weight_promotion_gate": _weight_promotion_gate_summary(report),
+        "daily_weight_adjustment_summary": _daily_weight_adjustment_summary(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -287,6 +288,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_weight_adjustment_candidates(report),
             _render_weight_candidate_evaluation(report),
             _render_weight_promotion_gate(report),
+            _render_daily_weight_adjustment_summary(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -962,6 +964,11 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
             "weight_promotion_gate_json",
             "weight promotion gate JSON",
             report.reports_dir / f"weight_promotion_gate_{suffix}.json",
+        ),
+        (
+            "daily_weight_adjustment_summary_json",
+            "daily weight adjustment summary JSON",
+            report.reports_dir / f"daily_weight_adjustment_summary_{suffix}.json",
         ),
     )
     for artifact_id, label, path in extras:
@@ -2018,6 +2025,67 @@ def _weight_promotion_gate_blockers(payload: TraceRecord) -> list[str]:
     for candidate in _records(payload.get("candidates")):
         counter.update(_strings(candidate.get("blocked_by")))
     return [value for value, _count in counter.most_common()]
+
+
+def _daily_weight_adjustment_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    suffix = report.as_of.isoformat()
+    path = report.reports_dir / f"daily_weight_adjustment_summary_{suffix}.json"
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "daily_weight_adjustment_summary":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "candidate_count": 0,
+            "evaluation_status": "INSUFFICIENT_DATA",
+            "promotion_gate_status": "INSUFFICIENT_DATA",
+            "ready_for_manual_review_count": 0,
+            "main_blocked_by": "missing",
+            "warnings": ["missing"],
+            "production_effect": ProductionEffect.NONE.value,
+            "mode": "observe_only",
+            "manual_review_only": True,
+            "risk": (
+                "daily weight adjustment summary JSON 缺失；dashboard 不运行 "
+                "weight adjustment pipeline。"
+            ),
+        }
+    outputs = _mapping_value(payload, "outputs")
+    report_path = Path(
+        _string_value(outputs.get("markdown")) or str(path.with_suffix(".md")),
+    )
+    report_href = _report_href(report_path, report.reports_dir) if report_path.exists() else ""
+    production_effect = _string_value(payload.get("production_effect")) or "none"
+    mode = _string_value(payload.get("mode")) or "observe_only"
+    warnings = _strings(payload.get("warnings"))
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("daily weight adjustment summary production_effect 不是 none。")
+    if mode != "observe_only":
+        risks.append("daily weight adjustment summary mode 不是 observe_only。")
+    if payload.get("manual_review_only") is not True:
+        risks.append("daily weight adjustment summary 不是 manual_review_only。")
+    if warnings:
+        risks.append(f"summary warnings：{', '.join(warnings)}。")
+    return {
+        "status": _string_value(payload.get("status")) or "LIMITED",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "candidate_count": payload.get("candidate_count", 0),
+        "evaluation_status": payload.get("evaluation_status", "INSUFFICIENT_DATA"),
+        "promotion_gate_status": payload.get("promotion_gate_status", "INSUFFICIENT_DATA"),
+        "ready_for_manual_review_count": payload.get("ready_for_manual_review_count", 0),
+        "main_blocked_by": payload.get("main_blocked_by", "missing"),
+        "warnings": warnings,
+        "production_effect": production_effect,
+        "mode": mode,
+        "manual_review_only": payload.get("manual_review_only") is True,
+        "risk": "；".join(risks) or "Daily weight adjustment summary 当前仅作只读展示。",
+    }
 
 
 def _paper_trading_snapshot_source_counts(payload: TraceRecord) -> Counter[str]:
@@ -3564,6 +3632,63 @@ def _render_weight_promotion_gate(report: DailyTaskDashboardReport) -> str:
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'
                 f"{_text(gate.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_daily_weight_adjustment_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _daily_weight_adjustment_summary(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}"><span>Daily Weight Adjustment Summary</span>'
+        f"<small>{_text(summary.get('status', 'LIMITED'))}</small></a>"
+        if summary.get("exists")
+        else '<span class="report-link missing"><span>Daily Weight Adjustment Summary</span>'
+        "<small>MISSING</small></span>"
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="daily-weight-adjustment-summary-title">',
+            '<div class="section-head">',
+            (
+                '<h2 id="daily-weight-adjustment-summary-title">'
+                "Daily Weight Adjustment Summary</h2>"
+            ),
+            (
+                "<p>observe-only 每日权重调节汇总；dashboard 只读 summary JSON，"
+                "不重跑候选、评估或 gate，不应用参数。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("candidate_count", summary.get("candidate_count", 0)),
+            _summary_item(
+                "evaluation_status",
+                summary.get("evaluation_status", "INSUFFICIENT_DATA"),
+            ),
+            _summary_item(
+                "promotion_gate_status",
+                summary.get("promotion_gate_status", "INSUFFICIENT_DATA"),
+            ),
+            _summary_item(
+                "ready_for_manual_review_count",
+                summary.get("ready_for_manual_review_count", 0),
+            ),
+            _summary_item("main blocked_by", summary.get("main_blocked_by", "missing")),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            _summary_item("manual_review_only", summary.get("manual_review_only", True)),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
             ),
             '<div class="report-link-list">',
             report_link,
