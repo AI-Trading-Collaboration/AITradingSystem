@@ -48,6 +48,7 @@ _STEP_TITLES: dict[str, str] = {
     "reports_dashboard": "生成只读决策 dashboard",
     "pipeline_health": "检查关键 artifact 和 PIT 健康",
     "secret_hygiene": "扫描报告和配置中的疑似 secret",
+    "daily_shadow_weight_iteration": "生成每日 shadow 权重迭代报告",
 }
 
 
@@ -192,6 +193,7 @@ def build_daily_task_dashboard_payload(
         "weight_candidate_evaluation": _weight_candidate_evaluation_summary(report),
         "weight_promotion_gate": _weight_promotion_gate_summary(report),
         "daily_weight_adjustment_summary": _daily_weight_adjustment_summary(report),
+        "shadow_weight_iteration": _shadow_weight_iteration_summary(report),
         "shadow_vs_production_comparison": _shadow_vs_production_comparison_summary(report),
         "shadow_vs_production_multi_day_review": (
             _shadow_vs_production_multi_day_review_summary(report)
@@ -293,6 +295,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_weight_candidate_evaluation(report),
             _render_weight_promotion_gate(report),
             _render_daily_weight_adjustment_summary(report),
+            _render_shadow_weight_iteration(report),
             _render_shadow_vs_production_comparison(report),
             _render_shadow_vs_production_multi_day_review(report),
             _render_risks(report),
@@ -2109,6 +2112,76 @@ def _daily_weight_adjustment_summary(report: DailyTaskDashboardReport) -> TraceR
     }
 
 
+def _shadow_weight_iteration_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    suffix = report.as_of.isoformat()
+    shadow_root = report.project_root / "data" / "derived" / "weight_iterations" / "shadow"
+    current_path = shadow_root / "current_shadow_weights.json"
+    candidate_path = shadow_root / "candidates" / f"shadow_weight_candidate_{suffix}.json"
+    current = _read_json_object(current_path)
+    candidate = _read_json_object(candidate_path)
+    current_exists = current.get("report_type") == "current_shadow_weights"
+    candidate_exists = candidate.get("report_type") == "daily_shadow_weight_iteration"
+    if not current_exists and not candidate_exists:
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "current_path": str(current_path),
+            "candidate_path": str(candidate_path),
+            "candidate_report_href": "",
+            "decision": "MISSING",
+            "last_updated_date": "missing",
+            "current_weights": {},
+            "latest_delta": {},
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_only": True,
+            "risk": "shadow weight iteration state 缺失；dashboard 不运行 shadow learn pipeline。",
+        }
+    outputs = _mapping_value(candidate, "outputs")
+    candidate_md = Path(
+        _string_value(outputs.get("candidate_markdown")) or str(candidate_path.with_suffix(".md"))
+    )
+    candidate_report_href = (
+        _report_href(candidate_md, report.reports_dir)
+        if candidate_md.exists()
+        else _report_href(candidate_path, report.reports_dir)
+    )
+    current_weights = _mapping_value(current, "weights")
+    latest_delta = _mapping_value(candidate, "proposed_delta")
+    audit = _mapping_value(current, "audit")
+    production_effect = (
+        _string_value(candidate.get("production_effect"))
+        or _string_value(current.get("production_effect"))
+        or ProductionEffect.NONE.value
+    )
+    manual_review_only = (
+        candidate.get("manual_review_only") is True
+        if candidate_exists
+        else current.get("manual_review_only") is True
+    )
+    decision = _string_value(candidate.get("decision")) or _string_value(audit.get("last_decision"))
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("shadow weight iteration production_effect 不是 none。")
+    if not manual_review_only:
+        risks.append("shadow weight iteration 不是 manual_review_only。")
+    if candidate_exists and decision in {"INSUFFICIENT_DATA", "SAFETY_BLOCKED", "ERROR"}:
+        risks.append(f"最近 candidate decision 为 {decision}。")
+    return {
+        "status": decision or "MISSING",
+        "exists": current_exists or candidate_exists,
+        "current_path": str(current_path),
+        "candidate_path": str(candidate_path),
+        "candidate_report_href": candidate_report_href if candidate_exists else "",
+        "decision": decision or "MISSING",
+        "last_updated_date": _string_value(current.get("last_updated_date")) or "missing",
+        "current_weights": current_weights,
+        "latest_delta": latest_delta,
+        "production_effect": production_effect,
+        "manual_review_only": manual_review_only,
+        "risk": "；".join(risks) or "Shadow Weight Iteration 当前仅作只读展示。",
+    }
+
+
 def _shadow_vs_production_comparison_summary(report: DailyTaskDashboardReport) -> TraceRecord:
     suffix = report.as_of.isoformat()
     path = (
@@ -3880,6 +3953,71 @@ def _render_daily_weight_adjustment_summary(report: DailyTaskDashboardReport) ->
             ),
             _summary_item("manual_review_only", summary.get("manual_review_only", True)),
             "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_shadow_weight_iteration(report: DailyTaskDashboardReport) -> str:
+    summary = _shadow_weight_iteration_summary(report)
+    report_href = _string_value(summary.get("candidate_report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}"><span>Shadow Weight Iteration</span>'
+        f"<small>{_text(summary.get('decision', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing"><span>Shadow Weight Iteration</span>'
+        "<small>MISSING</small></span>"
+    )
+    weights = _mapping_value(summary, "current_weights")
+    deltas = _mapping_value(summary, "latest_delta")
+    rows = []
+    for key in sorted(weights):
+        delta_value = _format_signed_decimal_delta(0.0, _optional_float(deltas.get(key)), digits=4)
+        rows.append(
+            "<tr>"
+            f'<td data-label="Weight"><code>{_text(key)}</code></td>'
+            f'<td data-label="Current" class="value-cell">'
+            f"{_text(_format_decimal(_optional_float(weights.get(key)), digits=4))}</td>"
+            f'<td data-label="Latest delta" class="value-cell">'
+            f"{_text(delta_value)}"
+            "</td>"
+            "</tr>"
+        )
+    weights_table = (
+        '<div class="table-wrap"><table class="shadow-table">'
+        "<thead><tr><th>Weight</th><th>Current</th><th>Latest delta</th></tr></thead>"
+        f"<tbody>{''.join(rows)}</tbody></table></div>"
+        if rows
+        else '<p class="subtle">当前 shadow weights 尚未生成。</p>'
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="shadow-weight-iteration-title">',
+            '<div class="section-head">',
+            '<h2 id="shadow-weight-iteration-title">Shadow Weight Iteration</h2>',
+            (
+                "<p>shadow-only 权重状态；dashboard 只读 current/candidate JSON，"
+                "不重跑 pipeline、不应用 production 参数。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("latest decision", summary.get("decision", "MISSING")),
+            _summary_item("last updated", summary.get("last_updated_date", "missing")),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            _summary_item("manual_review_only", summary.get("manual_review_only", True)),
+            "</div>",
+            weights_table,
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'
                 f"{_text(summary.get('risk', ''))}</p>"

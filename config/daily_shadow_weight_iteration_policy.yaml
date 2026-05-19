@@ -1,0 +1,46 @@
+policy_id: daily_shadow_weight_iteration_policy
+version: 1
+status: pilot_baseline
+owner: system
+production_effect: none
+rationale: >
+  Conservative pilot policy for maintaining an isolated daily shadow weight
+  state after the observe-only weight adjustment summary and scheduler dry-run
+  checks have completed.
+intended_effect: >
+  Allow shadow-only learning from existing daily artifacts while preventing
+  sparse, unsafe, or low-confidence signals from modifying production weights
+  or trading decisions.
+validation_evidence: TRADING-018B unit tests and ongoing shadow-only review.
+review_condition: >
+  Revisit thresholds after several ai_after_chatgpt daily shadow iteration runs
+  and before any TRADING-018C comparison or TRADING-018D manual promotion gate.
+thresholds:
+  max_abs_delta_per_day: 0.02
+  max_relative_delta_per_day: 0.05
+  minimum_adjustment_confidence: 0.60
+  target_total_weight_sum: 1.0
+  total_weight_tolerance: 0.000001
+  min_weight: 0.0
+  max_weight: 1.0
+confidence_defaults:
+  ready_for_manual_review: 0.80
+  candidate_promising_but_limited: 0.70
+conservative_default_weights:
+  technical: 0.25
+  fundamental: 0.25
+  macro: 0.20
+  policy: 0.15
+  sentiment: 0.15
+required_inputs:
+  - TRADING-015 weight adjustment candidates
+  - TRADING-016 weight candidate evaluation
+  - TRADING-017 weight promotion gate
+  - TRADING-018 daily weight adjustment summary
+  - TRADING-018A scheduler dry-run safety checks
+safety_boundaries:
+  allow_production_profile_write: false
+  allow_approved_profile_write: false
+  allow_trade_trigger: false
+  allow_scheduler_without_safety_pass: false
+  manual_review_only: true
