@@ -2,7 +2,7 @@
 
 关联任务：`TRADING-018D`
 
-状态：`VALIDATING`
+状态：`DONE`
 
 ## 背景
 
@@ -116,3 +116,12 @@ python -m black --check scripts src tests
   `python -m pytest tests/trading_engine -q`、`python -m pytest -q`、
   `python -m ruff check scripts src tests` 和
   `python -m black --check scripts src tests`。
+- 2026-05-20：从 `VALIDATING` 改为 `DONE`。最终收尾验证通过：手动运行
+  `python scripts/run_shadow_promotion_proposal.py --date 2026-05-20 --lookback-days 7`
+  生成 proposal JSON/Markdown；当前本地没有 current shadow / latest review artifacts，
+  因此 proposal decision 为 `INSUFFICIENT_DATA` 且 `available_comparison_days=0`；安全边界保持
+  `production_effect="none"`、`manual_review_only=true`、`promotion_executed=false`、
+  `safe_for_production=false`；dashboard smoke 只读读取 proposal artifact，import guard、
+  proposal mtime 和上游 shadow/comparison artifact 列表确认未重跑 018B/018C/018C2/018D。
+  收尾验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff 和
+  black check。
