@@ -1,0 +1,25 @@
+policy_id: shadow_promotion_proposal_policy
+version: "1.0"
+status: "pilot_manual_review_only"
+owner: "system_review"
+production_effect: "none"
+manual_review_only: true
+rationale: >
+  TRADING-018D only decides whether shadow weights have enough read-only evidence
+  to prepare a human promotion proposal. It must not apply production weights or
+  imply live trading readiness.
+thresholds:
+  minimum_comparison_days: 5
+  maximum_insufficient_data_days: 0
+  maximum_safety_blocked_days: 0
+  minimum_average_score_delta: 0.0
+  maximum_shadow_risk_flag_delta_total: 0
+  maximum_decision_difference_count: 2
+  target_weight_sum: 1.0
+  weight_sum_tolerance: 0.000001
+validation_evidence: >
+  Initial pilot baseline for manual review only. Calibration must be revisited
+  after several complete AI-regime shadow comparison windows.
+review_condition: >
+  Re-review before any explicit apply task, after material scoring changes, or
+  when comparison coverage/data quality policy changes.
