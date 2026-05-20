@@ -218,6 +218,64 @@ def test_cboe_vix_price_provider_reads_official_csv() -> None:
     assert fake_requests.calls == [provider.base_url]
 
 
+def test_cboe_vix_price_provider_cache_identity_includes_requested_window(tmp_path: Path) -> None:
+    fake_requests = _SequencedTextRequests(
+        [
+            "DATE,OPEN,HIGH,LOW,CLOSE\n"
+            "05/11/2026,18.21,18.47,17.90,18.38\n",
+            "DATE,OPEN,HIGH,LOW,CLOSE\n"
+            "05/11/2026,18.21,18.47,17.90,18.38\n"
+            "05/19/2026,18.01,18.36,17.66,18.06\n",
+        ]
+    )
+    provider = CboeVixPriceProvider(
+        requests_module=fake_requests,
+        request_cache_dir=tmp_path,
+    )
+
+    first = provider.download_prices(
+        PriceRequest(tickers=["^VIX"], start=date(2026, 5, 1), end=date(2026, 5, 11))
+    )
+    second = provider.download_prices(
+        PriceRequest(tickers=["^VIX"], start=date(2026, 5, 1), end=date(2026, 5, 19))
+    )
+    third = provider.download_prices(
+        PriceRequest(tickers=["^VIX"], start=date(2026, 5, 1), end=date(2026, 5, 19))
+    )
+
+    assert first["date"].max() == "2026-05-11"
+    assert second["date"].max() == "2026-05-19"
+    assert third["date"].max() == "2026-05-19"
+    assert fake_requests.calls == [provider.base_url, provider.base_url]
+
+
+def test_cboe_vix_price_provider_refetches_stale_cached_window(tmp_path: Path) -> None:
+    fake_requests = _SequencedTextRequests(
+        [
+            "DATE,OPEN,HIGH,LOW,CLOSE\n"
+            "05/11/2026,18.21,18.47,17.90,18.38\n",
+            "DATE,OPEN,HIGH,LOW,CLOSE\n"
+            "05/11/2026,18.21,18.47,17.90,18.38\n"
+            "05/19/2026,18.01,18.36,17.66,18.06\n",
+        ]
+    )
+    provider = CboeVixPriceProvider(
+        requests_module=fake_requests,
+        request_cache_dir=tmp_path,
+    )
+
+    stale = provider.download_prices(
+        PriceRequest(tickers=["^VIX"], start=date(2026, 5, 1), end=date(2026, 5, 19))
+    )
+    refreshed = provider.download_prices(
+        PriceRequest(tickers=["^VIX"], start=date(2026, 5, 1), end=date(2026, 5, 19))
+    )
+
+    assert stale["date"].max() == "2026-05-11"
+    assert refreshed["date"].max() == "2026-05-19"
+    assert fake_requests.calls == [provider.base_url, provider.base_url]
+
+
 def test_csv_data_cache_writes_prices_and_rates(tmp_path: Path) -> None:
     cache = CsvDataCache(tmp_path)
     prices = pd.DataFrame(
@@ -280,3 +338,20 @@ class _FakeTextRequests:
         assert timeout == 30
         self.calls.append(url)
         return _FakeTextResponse(self.text)
+
+
+class _SequencedTextRequests:
+    def __init__(self, responses: list[str]) -> None:
+        self.responses = responses
+        self.calls: list[str] = []
+
+    def get(
+        self,
+        url: str,
+        *,
+        timeout: int,
+    ) -> _FakeTextResponse:
+        assert timeout == 30
+        self.calls.append(url)
+        index = len(self.calls) - 1
+        return _FakeTextResponse(self.responses[index])

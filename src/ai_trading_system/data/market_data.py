@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from hashlib import sha256
@@ -12,6 +13,7 @@ from typing import Any, Protocol, cast
 import pandas as pd
 
 from ai_trading_system.external_request_cache import (
+    CachedHttpResponse,
     cached_requests_get,
     default_external_request_cache_dir,
     lookup_external_request_cache,
@@ -478,14 +480,50 @@ class CboeVixPriceProvider:
             requests_module=self.requests_module,
             explicit_cache_dir=self.request_cache_dir,
         )
-        response = cached_requests_get(
+        cache_identity_params = {
+            "ticker": self.ticker,
+            "start": request.start.isoformat(),
+            "end": request.end.isoformat(),
+            "interval": request.interval,
+        }
+        cache_lookup = lookup_external_request_cache(
             provider="Cboe Global Markets",
             api_family="vix_daily_prices",
+            method="GET",
             url=self.base_url,
-            timeout=30,
-            requests_module=requests,
-            cache_dir=request_cache_dir,
+            params=cache_identity_params,
+            cache_dir=None if request_cache_dir is None else Path(request_cache_dir),
         )
+        response = cache_lookup.response
+        if response is not None and not _cboe_vix_response_covers_end(response, request.end):
+            response = None
+        if response is None:
+            raw_response = requests.get(self.base_url, timeout=30)
+            content = _http_response_content(raw_response)
+            response_headers = _http_response_headers(raw_response)
+            status_code = _http_response_status_code(raw_response)
+            if request_cache_dir is None:
+                response = CachedHttpResponse(
+                    status_code=status_code,
+                    headers=response_headers,
+                    content=content,
+                    url=self.base_url,
+                    cache_key=cache_lookup.cache_key,
+                    cache_metadata_path=cache_lookup.metadata_path,
+                    from_cache=False,
+                )
+            else:
+                response = write_external_request_cache_response(
+                    provider="Cboe Global Markets",
+                    api_family="vix_daily_prices",
+                    method="GET",
+                    url=self.base_url,
+                    params=cache_identity_params,
+                    status_code=status_code,
+                    response_headers=response_headers,
+                    content=content,
+                    cache_dir=Path(request_cache_dir),
+                )
         if not response.ok:
             raise ValueError("Cboe VIX request failed: " f"http_status={response.status_code}")
 
@@ -821,6 +859,47 @@ def _normalize_single_ticker_prices(data: pd.DataFrame, ticker: str) -> pd.DataF
 
 def _normalize_column_name(column: str) -> str:
     return column.strip().lower().replace(" ", "_")
+
+
+def _http_response_status_code(response: Any) -> int:
+    return int(getattr(response, "status_code", 200))
+
+
+def _http_response_headers(response: Any) -> dict[str, str]:
+    headers = getattr(response, "headers", {}) or {}
+    if hasattr(headers, "items"):
+        return {str(key): str(value) for key, value in headers.items()}
+    return {}
+
+
+def _http_response_content(response: Any) -> bytes:
+    content = getattr(response, "content", None)
+    if isinstance(content, bytes):
+        return content
+    if isinstance(content, bytearray):
+        return bytes(content)
+    text = getattr(response, "text", None)
+    if isinstance(text, str):
+        return text.encode("utf-8")
+    if hasattr(response, "json"):
+        return json.dumps(response.json(), ensure_ascii=False).encode("utf-8")
+    return b""
+
+
+def _cboe_vix_response_covers_end(response: CachedHttpResponse, end: date) -> bool:
+    try:
+        raw = pd.read_csv(StringIO(str(response.text)))
+    except Exception:
+        return False
+    if raw.empty:
+        return False
+    raw.columns = [_normalize_column_name(str(column)) for column in raw.columns]
+    if "date" not in raw.columns:
+        return False
+    max_date = pd.to_datetime(raw["date"], errors="coerce").max()
+    if pd.isna(max_date):
+        return False
+    return max_date.date() >= end
 
 
 def _marketstack_error_code(payload: Any) -> str:
