@@ -199,6 +199,7 @@ def build_daily_task_dashboard_payload(
             _shadow_vs_production_multi_day_review_summary(report)
         ),
         "shadow_promotion_proposal": _shadow_promotion_proposal_summary(report),
+        "shadow_promotion_apply_preflight": _shadow_promotion_apply_preflight_summary(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -300,6 +301,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_shadow_vs_production_comparison(report),
             _render_shadow_vs_production_multi_day_review(report),
             _render_shadow_promotion_proposal(report),
+            _render_shadow_promotion_apply_preflight(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -1000,6 +1002,11 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
             "shadow_promotion_proposal_json",
             "shadow promotion proposal JSON",
             _latest_shadow_promotion_proposal_path(report),
+        ),
+        (
+            "shadow_promotion_apply_preflight_json",
+            "shadow promotion apply preflight JSON",
+            _latest_shadow_promotion_apply_preflight_path(report),
         ),
     )
     for artifact_id, label, path in extras:
@@ -2424,6 +2431,102 @@ def _shadow_promotion_proposal_summary(report: DailyTaskDashboardReport) -> Trac
     }
 
 
+def _shadow_promotion_apply_preflight_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_shadow_promotion_apply_preflight_path(report)
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "shadow_promotion_apply_preflight":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "latest_preflight_markdown_path": "",
+            "preflight_decision": "MISSING",
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_only": True,
+            "promotion_executed": False,
+            "apply_executed": False,
+            "preflight_only": True,
+            "safe_for_production": False,
+            "changed_weight_keys": [],
+            "proposal_path": "",
+            "approval_path": "",
+            "risk": (
+                "shadow promotion apply preflight JSON 缺失；"
+                "dashboard 不运行 preflight pipeline。"
+            ),
+        }
+
+    outputs = _mapping_value(payload, "outputs")
+    markdown_path = Path(_string_value(outputs.get("markdown")) or str(path.with_suffix(".md")))
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    diff = _mapping_value(payload, "diff_preview")
+    artifacts = _mapping_value(payload, "input_artifacts")
+    proposal = _mapping_value(artifacts, "promotion_proposal")
+    approval = _mapping_value(artifacts, "approval_artifact")
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    manual_review_only = payload.get("manual_review_only") is True
+    promotion_executed = payload.get("promotion_executed") is True
+    apply_executed = payload.get("apply_executed") is True
+    preflight_only = payload.get("preflight_only") is True
+    safe_for_production = payload.get("safe_for_production") is True
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("apply preflight production_effect 不是 none。")
+    if not manual_review_only:
+        risks.append("apply preflight 不是 manual_review_only。")
+    if promotion_executed:
+        risks.append("TRADING-018E1 不允许 promotion_executed=true。")
+    if apply_executed:
+        risks.append("TRADING-018E1 不允许 apply_executed=true。")
+    if not preflight_only:
+        risks.append("TRADING-018E1 必须 preflight_only=true。")
+    if safe_for_production:
+        risks.append("TRADING-018E1 不允许 safe_for_production=true。")
+    contract = _mapping_value(payload, "pipeline_contract")
+    for field in (
+        "runs_shadow_iteration_pipeline",
+        "runs_comparison_pipeline",
+        "runs_multi_day_review_pipeline",
+        "runs_promotion_proposal_pipeline",
+        "runs_promotion_apply",
+        "runs_scoring_pipeline",
+        "runs_broker_runner",
+        "runs_paper_runner",
+        "runs_replay_runner",
+        "writes_production_profile",
+        "writes_production_weights",
+        "writes_approved_profile",
+        "promotes_shadow_to_production",
+    ):
+        if contract.get(field) is not False:
+            risks.append(f"apply preflight safety contract 异常：{field}。")
+    changed_weight_keys = list(_strings(diff.get("changed_weight_keys")))
+    return {
+        "status": _string_value(payload.get("preflight_decision")) or "INSUFFICIENT_DATA",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "latest_preflight_markdown_path": str(markdown_path),
+        "preflight_decision": _string_value(payload.get("preflight_decision"))
+        or "INSUFFICIENT_DATA",
+        "production_effect": production_effect,
+        "manual_review_only": manual_review_only,
+        "promotion_executed": promotion_executed,
+        "apply_executed": apply_executed,
+        "preflight_only": preflight_only,
+        "safe_for_production": safe_for_production,
+        "changed_weight_keys": changed_weight_keys,
+        "proposal_path": _string_value(proposal.get("path")),
+        "approval_path": _string_value(approval.get("path")),
+        "risk": "；".join(risks) or "Shadow Promotion Apply Preflight 当前仅作只读展示。",
+    }
+
+
 def _latest_shadow_vs_production_review_path(report: DailyTaskDashboardReport) -> Path:
     review_root = (
         report.project_root / "data" / "derived" / "weight_iterations" / "comparison" / "reviews"
@@ -2452,6 +2555,26 @@ def _latest_shadow_promotion_proposal_path(report: DailyTaskDashboardReport) -> 
     candidates: list[tuple[date, Path]] = []
     for path in proposal_root.glob("shadow_promotion_proposal_*.json"):
         raw_date = path.stem.removeprefix("shadow_promotion_proposal_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_shadow_promotion_apply_preflight_path(report: DailyTaskDashboardReport) -> Path:
+    preflight_root = (
+        report.project_root / "data" / "derived" / "weight_iterations" / "promotion" / "preflight"
+    )
+    default_path = preflight_root / (
+        f"shadow_promotion_apply_preflight_{report.as_of.isoformat()}.json"
+    )
+    if not preflight_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in preflight_root.glob("shadow_promotion_apply_preflight_*.json"):
+        raw_date = path.stem.removeprefix("shadow_promotion_apply_preflight_")
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= report.as_of:
             candidates.append((parsed, path))
@@ -4282,6 +4405,64 @@ def _render_shadow_promotion_proposal(report: DailyTaskDashboardReport) -> str:
             _summary_item(
                 "proposal markdown path",
                 summary.get("latest_proposal_markdown_path", ""),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_shadow_promotion_apply_preflight(report: DailyTaskDashboardReport) -> str:
+    summary = _shadow_promotion_apply_preflight_summary(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}"><span>Shadow Promotion Apply Preflight</span>'
+        f"<small>{_text(summary.get('preflight_decision', 'INSUFFICIENT_DATA'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>Shadow Promotion Apply Preflight</span><small>MISSING</small></span>"
+    )
+    changed_keys = ", ".join(_strings(summary.get("changed_weight_keys"))) or "none"
+    return "\n".join(
+        [
+            '<section aria-labelledby="shadow-promotion-apply-preflight-title">',
+            '<div class="section-head">',
+            (
+                '<h2 id="shadow-promotion-apply-preflight-title">'
+                "Shadow Promotion Apply Preflight</h2>"
+            ),
+            (
+                "<p>approved apply preflight 只读卡片；dashboard 只读取 preflight "
+                "artifact，不重跑 018B/018C/018C2/018D/018E1/scoring/broker/replay。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item(
+                "latest preflight_decision",
+                summary.get("preflight_decision", "MISSING"),
+            ),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            _summary_item("manual_review_only", summary.get("manual_review_only", True)),
+            _summary_item("promotion_executed", summary.get("promotion_executed", False)),
+            _summary_item("apply_executed", summary.get("apply_executed", False)),
+            _summary_item("preflight_only", summary.get("preflight_only", True)),
+            _summary_item("changed_weight_keys", changed_keys),
+            _summary_item("proposal path", summary.get("proposal_path", "")),
+            _summary_item("approval path", summary.get("approval_path", "")),
+            _summary_item(
+                "preflight markdown path",
+                summary.get("latest_preflight_markdown_path", ""),
             ),
             "</div>",
             (
