@@ -2,6 +2,8 @@
 
 关联任务：`TRADING-018F`
 
+当前状态：DONE
+
 最后更新：2026-05-23
 
 ## 背景
@@ -62,7 +64,7 @@ TRADING-018D/018E1/018E2/018E3 已形成 shadow promotion 的人工 proposal、
 |7. Dashboard|DONE|只读读取 latest audit artifact，展示 lifecycle decision、stage status、safety status、findings/warnings 和 report path，不触发任何 pipeline。|
 |8. 文档|DONE|更新 `docs/system_flow.md`、`docs/artifact_catalog.md`，新增 runbook。|
 |9. 测试与 smoke|DONE|覆盖 artifact coverage、apply/rollback 状态、chain mismatch、safety anomaly、weight lifecycle、dashboard import guard 和 output invariants。|
-|10. 验证收尾|VALIDATING|目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff 已通过；全仓 black check 被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化。|
+|10. 验证收尾|DONE|最终 repo 外 smoke、目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff 已通过；全仓 black check 被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化。|
 
 ## Lifecycle Decision
 
@@ -99,3 +101,14 @@ TRADING-018D/018E1/018E2/018E3 已形成 shadow promotion 的人工 proposal、
   验证完整 rollback、无 rollback 和 broker anomaly 三种路径；目标 pytest、dashboard pytest、
   `tests/trading_engine`、全量 pytest 和 ruff 通过；全仓 Black check 仅被既有无关
   `tests/test_market_data.py` baseline 阻断。
+- 2026-05-23：从 `VALIDATING` 改为 `DONE`。最终收尾验证再次通过 repo 外临时 fixture
+  smoke：`COMPLETE_WITH_ROLLBACK` 输出 artifact chain PASS、safety boundary PASS、net delta
+  全为 0；`COMPLETE_APPLIED_NO_ROLLBACK` 输出 rollback 缺失 warning 且不视为 safety anomaly；
+  `SAFETY_ANOMALY` 对 apply artifact `broker_execution=true` 输出 critical finding。三条路径均确认
+  audit 顶层 `production_effect=none`、`audit_only=true`、`apply_executed_by_audit=false`、
+  `rollback_executed_by_audit=false`、`broker_execution=false`、`replay_execution=false`、
+  `trading_execution=false`。Dashboard import guard 验证 `Shadow Promotion Lifecycle Audit`
+  卡片只读读取 audit artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/018F、
+  scoring、broker、replay 或 trading。目标 pytest、dashboard pytest、`tests/trading_engine`、
+  全量 pytest 和 ruff 通过；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+  baseline 阻断，未混入无关格式化 diff。
