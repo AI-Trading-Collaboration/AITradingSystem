@@ -2,7 +2,7 @@
 
 关联任务：`TRADING-018E3`
 
-状态：`VALIDATING`
+状态：`DONE`
 
 最后更新：2026-05-23
 
@@ -154,3 +154,20 @@ python -m black --check scripts src tests
   `python -m ruff check scripts src tests`。本次改动文件 black check 通过；全仓
   `python -m black --check scripts src tests` 仍被既有无关 `tests/test_market_data.py`
   格式 baseline 阻断，未混入无关格式化 diff。
+- 2026-05-23：从 `VALIDATING` 改为 `DONE`。最终收尾验证再次使用 repo 外临时
+  fixture 跑成功和失败 smoke。成功路径带 rollback approval、apply result、rollback
+  snapshot 和 danger flag，输出 `rollback_decision=ROLLED_BACK`、
+  `rollback_executed=true`，production profile weights 恢复为 rollback snapshot weights，
+  current snapshot 已生成且 snapshot sha256 等于 rollback 前 production profile sha256，
+  `post_rollback_validation.status=PASS`，`broker_execution=false`、`replay_execution=false`、
+  `trading_execution=false`。失败路径不带 danger flag，输出
+  `rollback_decision=DANGER_FLAG_MISSING`、`rollback_executed=false`、
+  `production_effect=none`，production profile sha256 不变。Dashboard import guard 验证
+  Shadow Promotion Rollback Result 卡片只读读取 rollback result artifact，不触发
+  018B/018C/018C2/018D/018E1/018E2/018E3/scoring/broker/replay/trading。收尾命令再次验证通过：
+  `python -m pytest tests/trading_engine/test_shadow_promotion_rollback.py -q`、
+  `python -m pytest tests/test_daily_task_dashboard.py -q`、
+  `python -m pytest tests/trading_engine -q`、`python -m pytest -q`、
+  `python -m ruff check scripts src tests`。全仓
+  `python -m black --check scripts src tests` 仍只被既有无关
+  `tests/test_market_data.py` 格式 baseline 阻断，未混入无关格式化 diff。
