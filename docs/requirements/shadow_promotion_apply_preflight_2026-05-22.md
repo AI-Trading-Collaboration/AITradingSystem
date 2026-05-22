@@ -2,9 +2,9 @@
 
 关联任务：`TRADING-018E1`
 
-状态：`VALIDATING`
+状态：`DONE`
 
-最后更新：2026-05-22
+最后更新：2026-05-23
 
 ## 背景
 
@@ -85,7 +85,7 @@ promotion。下一阶段需要在真正 apply 之前增加一个只读 preflight
 |3. CLI 脚本|DONE|`python scripts/run_shadow_promotion_apply_preflight.py --date YYYY-MM-DD` 可运行，默认只读读取 artifacts。|
 |4. Dashboard 只读卡片|DONE|展示 latest preflight decision、安全字段、changed_weight_keys、proposal/approval/Markdown path，不重跑 pipeline。|
 |5. 文档更新|DONE|更新 runbook、system flow、artifact catalog。|
-|6. 测试验证|VALIDATING|目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff 通过；本次改动文件 Black check 通过，全仓 Black check 被既有无关 `tests/test_market_data.py` 格式 baseline 阻断。|
+|6. 测试验证|DONE|手动 CLI smoke、production hash 检查、dashboard 只读测试、目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff 通过；全仓 Black check 仍被既有无关 `tests/test_market_data.py` 格式 baseline 阻断，未混入无关格式化 diff。|
 
 ## 验证命令
 
@@ -111,3 +111,13 @@ python -m black --check scripts src tests
   `python -m pytest -q`、`python -m ruff check scripts src tests`。本次改动文件
   Black check 通过；全仓 `python -m black --check scripts src tests` 被既有无关
   `tests/test_market_data.py` 格式 baseline 阻断，未混入该无关格式化 diff。
+- 2026-05-23：从 `VALIDATING` 改为 `DONE`。最终收尾验证使用 repo 外临时 fixture
+  手动创建 proposal、approval、current shadow weights 和 production profile，运行
+  `scripts/run_shadow_promotion_apply_preflight.py` 输出 `preflight_decision=PASS`，确认
+  preflight JSON、Markdown、run log、diff preview 和 rollback plan 均生成；安全边界字段保持
+  `production_effect=none`、`manual_review_only=true`、`promotion_executed=false`、
+  `apply_executed=false`、`preflight_only=true`、`safe_for_production=false`；production profile
+  sha256 前后一致。Dashboard import guard 测试确认只读读取 preflight artifact，不重跑
+  018B/018C/018C2/018D/018E1/scoring/broker/replay。收尾验证通过目标 pytest、dashboard
+  pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check 仍只被既有无关
+  `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。
