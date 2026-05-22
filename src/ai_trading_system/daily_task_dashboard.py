@@ -202,6 +202,7 @@ def build_daily_task_dashboard_payload(
         "shadow_promotion_apply_preflight": _shadow_promotion_apply_preflight_summary(report),
         "shadow_promotion_apply": _shadow_promotion_apply_summary(report),
         "shadow_promotion_rollback": _shadow_promotion_rollback_summary(report),
+        "shadow_promotion_lifecycle_audit": _shadow_promotion_lifecycle_audit_summary(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -306,6 +307,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_shadow_promotion_apply_preflight(report),
             _render_shadow_promotion_apply(report),
             _render_shadow_promotion_rollback(report),
+            _render_shadow_promotion_lifecycle_audit(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -1021,6 +1023,11 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
             "shadow_promotion_rollback_json",
             "shadow promotion rollback result JSON",
             _latest_shadow_promotion_rollback_path(report),
+        ),
+        (
+            "shadow_promotion_lifecycle_audit_json",
+            "shadow promotion lifecycle audit JSON",
+            _latest_shadow_promotion_lifecycle_audit_path(report),
         ),
     )
     for artifact_id, label, path in extras:
@@ -2736,6 +2743,119 @@ def _shadow_promotion_rollback_summary(report: DailyTaskDashboardReport) -> Trac
     }
 
 
+def _shadow_promotion_lifecycle_audit_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_shadow_promotion_lifecycle_audit_path(report)
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "shadow_promotion_lifecycle_audit":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "latest_audit_markdown_path": "",
+            "lifecycle_decision": "MISSING",
+            "promotion_date": "",
+            "proposal_status": "MISSING",
+            "preflight_status": "MISSING",
+            "apply_status": "MISSING",
+            "rollback_status": "NOT_FOUND",
+            "safety_boundary_status": "MISSING",
+            "critical_findings_count": 0,
+            "warnings_count": 0,
+            "broker_execution": False,
+            "replay_execution": False,
+            "trading_execution": False,
+            "production_effect": ProductionEffect.NONE.value,
+            "audit_only": True,
+            "risk": (
+                "shadow promotion lifecycle audit JSON 缺失；dashboard 不运行 "
+                "018F audit pipeline 或任何上游 promotion pipeline。"
+            ),
+        }
+
+    outputs = _mapping_value(payload, "outputs")
+    markdown_path = Path(_string_value(outputs.get("markdown")) or str(path.with_suffix(".md")))
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    artifacts = _mapping_value(payload, "input_artifacts")
+    safety = _mapping_value(payload, "safety_boundary_audit")
+    findings = _mapping_value(payload, "audit_findings")
+    contract = _mapping_value(payload, "pipeline_contract")
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    broker_execution = payload.get("broker_execution") is True
+    replay_execution = payload.get("replay_execution") is True
+    trading_execution = payload.get("trading_execution") is True
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("lifecycle audit production_effect 必须为 none。")
+    if payload.get("manual_review_only") is not True:
+        risks.append("lifecycle audit 必须 manual_review_only=true。")
+    if payload.get("audit_only") is not True:
+        risks.append("lifecycle audit 必须 audit_only=true。")
+    if payload.get("apply_executed_by_audit") is not False:
+        risks.append("018F audit 不允许执行 apply。")
+    if payload.get("rollback_executed_by_audit") is not False:
+        risks.append("018F audit 不允许执行 rollback。")
+    if broker_execution:
+        risks.append("018F audit 不允许 broker_execution=true。")
+    if replay_execution:
+        risks.append("018F audit 不允许 replay_execution=true。")
+    if trading_execution:
+        risks.append("018F audit 不允许 trading_execution=true。")
+    for field in (
+        "runs_shadow_iteration_pipeline",
+        "runs_comparison_pipeline",
+        "runs_multi_day_review_pipeline",
+        "runs_promotion_proposal_pipeline",
+        "runs_apply_preflight_pipeline",
+        "runs_promotion_apply",
+        "runs_promotion_rollback",
+        "runs_lifecycle_audit_pipeline",
+        "runs_scoring_pipeline",
+        "runs_broker_runner",
+        "runs_paper_runner",
+        "runs_replay_runner",
+        "writes_production_profile",
+        "writes_production_weights",
+        "writes_approved_profile",
+        "promotes_shadow_to_production",
+        "changes_daily_dashboard_main_conclusion",
+        "triggers_trade",
+    ):
+        if contract.get(field) is True:
+            risks.append(f"lifecycle audit safety contract 异常：{field}。")
+    critical = list(_strings(findings.get("critical_findings")))
+    warnings = list(_strings(findings.get("warnings")))
+    return {
+        "status": _string_value(payload.get("lifecycle_decision")) or "INCOMPLETE_ARTIFACTS",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "latest_audit_markdown_path": str(markdown_path),
+        "lifecycle_decision": _string_value(payload.get("lifecycle_decision"))
+        or "INCOMPLETE_ARTIFACTS",
+        "promotion_date": _string_value(payload.get("promotion_date")),
+        "proposal_status": _string_value(_mapping_value(artifacts, "proposal").get("status")),
+        "preflight_status": _string_value(_mapping_value(artifacts, "preflight").get("status")),
+        "apply_status": _string_value(_mapping_value(artifacts, "apply_result").get("status")),
+        "rollback_status": _string_value(
+            _mapping_value(artifacts, "rollback_result").get("status")
+        ),
+        "safety_boundary_status": _string_value(safety.get("status")) or "MISSING",
+        "critical_findings_count": len(critical),
+        "warnings_count": len(warnings),
+        "broker_execution": broker_execution,
+        "replay_execution": replay_execution,
+        "trading_execution": trading_execution,
+        "production_effect": production_effect,
+        "audit_only": payload.get("audit_only") is True,
+        "risk": "；".join(risks) or "Shadow Promotion Lifecycle Audit 当前仅作只读展示。",
+    }
+
+
 def _latest_shadow_vs_production_review_path(report: DailyTaskDashboardReport) -> Path:
     review_root = (
         report.project_root / "data" / "derived" / "weight_iterations" / "comparison" / "reviews"
@@ -2827,6 +2947,26 @@ def _latest_shadow_promotion_rollback_path(report: DailyTaskDashboardReport) -> 
     candidates: list[tuple[date, Path]] = []
     for path in rollback_root.glob("shadow_promotion_rollback_result_*.json"):
         raw_date = path.stem.removeprefix("shadow_promotion_rollback_result_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_shadow_promotion_lifecycle_audit_path(report: DailyTaskDashboardReport) -> Path:
+    audit_root = (
+        report.project_root / "data" / "derived" / "weight_iterations" / "promotion" / "audit"
+    )
+    default_path = audit_root / (
+        f"shadow_promotion_lifecycle_audit_{report.as_of.isoformat()}.json"
+    )
+    if not audit_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in audit_root.glob("shadow_promotion_lifecycle_audit_*.json"):
+        raw_date = path.stem.removeprefix("shadow_promotion_lifecycle_audit_")
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= report.as_of:
             candidates.append((parsed, path))
@@ -4832,6 +4972,67 @@ def _render_shadow_promotion_rollback(report: DailyTaskDashboardReport) -> str:
             _summary_item(
                 "rollback result markdown path",
                 summary.get("latest_rollback_markdown_path", ""),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_shadow_promotion_lifecycle_audit(report: DailyTaskDashboardReport) -> str:
+    summary = _shadow_promotion_lifecycle_audit_summary(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}"><span>Shadow Promotion Lifecycle Audit</span>'
+        f"<small>{_text(summary.get('lifecycle_decision', 'INCOMPLETE_ARTIFACTS'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>Shadow Promotion Lifecycle Audit</span><small>MISSING</small></span>"
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="shadow-promotion-lifecycle-audit-title">',
+            '<div class="section-head">',
+            (
+                '<h2 id="shadow-promotion-lifecycle-audit-title">'
+                "Shadow Promotion Lifecycle Audit</h2>"
+            ),
+            (
+                "<p>promotion lifecycle audit 只读卡片；dashboard 只读取 018F audit "
+                "artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/018F/"
+                "scoring/broker/replay/交易。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item(
+                "latest lifecycle_decision",
+                summary.get("lifecycle_decision", "MISSING"),
+            ),
+            _summary_item("promotion_date", summary.get("promotion_date", "")),
+            _summary_item("proposal status", summary.get("proposal_status", "MISSING")),
+            _summary_item("preflight status", summary.get("preflight_status", "MISSING")),
+            _summary_item("apply status", summary.get("apply_status", "MISSING")),
+            _summary_item("rollback status", summary.get("rollback_status", "NOT_FOUND")),
+            _summary_item(
+                "safety_boundary_audit.status",
+                summary.get("safety_boundary_status", "MISSING"),
+            ),
+            _summary_item("critical_findings", summary.get("critical_findings_count", 0)),
+            _summary_item("warnings", summary.get("warnings_count", 0)),
+            _summary_item("broker_execution", summary.get("broker_execution", False)),
+            _summary_item("replay_execution", summary.get("replay_execution", False)),
+            _summary_item("trading_execution", summary.get("trading_execution", False)),
+            _summary_item(
+                "audit markdown path",
+                summary.get("latest_audit_markdown_path", ""),
             ),
             "</div>",
             (
