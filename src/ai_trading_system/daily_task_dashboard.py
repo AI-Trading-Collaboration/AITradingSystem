@@ -200,6 +200,7 @@ def build_daily_task_dashboard_payload(
         ),
         "shadow_promotion_proposal": _shadow_promotion_proposal_summary(report),
         "shadow_promotion_apply_preflight": _shadow_promotion_apply_preflight_summary(report),
+        "shadow_promotion_apply": _shadow_promotion_apply_summary(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -302,6 +303,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_shadow_vs_production_multi_day_review(report),
             _render_shadow_promotion_proposal(report),
             _render_shadow_promotion_apply_preflight(report),
+            _render_shadow_promotion_apply(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -1007,6 +1009,11 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
             "shadow_promotion_apply_preflight_json",
             "shadow promotion apply preflight JSON",
             _latest_shadow_promotion_apply_preflight_path(report),
+        ),
+        (
+            "shadow_promotion_apply_json",
+            "shadow promotion apply result JSON",
+            _latest_shadow_promotion_apply_path(report),
         ),
     )
     for artifact_id, label, path in extras:
@@ -2527,6 +2534,100 @@ def _shadow_promotion_apply_preflight_summary(report: DailyTaskDashboardReport) 
     }
 
 
+def _shadow_promotion_apply_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_shadow_promotion_apply_path(report)
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "shadow_promotion_apply_result":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "latest_apply_markdown_path": "",
+            "apply_decision": "MISSING",
+            "apply_executed": False,
+            "promotion_executed": False,
+            "production_effect": ProductionEffect.NONE.value,
+            "target_profile_path": "",
+            "changed_weight_keys": [],
+            "rollback_snapshot_path": "",
+            "post_apply_validation_status": "MISSING",
+            "broker_execution": False,
+            "replay_execution": False,
+            "trading_execution": False,
+            "risk": "shadow promotion apply result JSON 缺失；dashboard 不运行 apply pipeline。",
+        }
+
+    outputs = _mapping_value(payload, "outputs")
+    markdown_path = Path(_string_value(outputs.get("markdown")) or str(path.with_suffix(".md")))
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    target = _mapping_value(payload, "target_profile_validation")
+    diff = _mapping_value(payload, "diff_applied")
+    rollback = _mapping_value(payload, "rollback")
+    post_apply = _mapping_value(payload, "post_apply_validation")
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    apply_executed = payload.get("apply_executed") is True
+    promotion_executed = payload.get("promotion_executed") is True
+    safe_for_scheduler = payload.get("safe_for_scheduler") is True
+    broker_execution = payload.get("broker_execution") is True
+    replay_execution = payload.get("replay_execution") is True
+    trading_execution = payload.get("trading_execution") is True
+    risks: list[str] = []
+    if safe_for_scheduler:
+        risks.append("TRADING-018E2 apply result 不允许 safe_for_scheduler=true。")
+    if broker_execution:
+        risks.append("TRADING-018E2 不允许 broker_execution=true。")
+    if replay_execution:
+        risks.append("TRADING-018E2 不允许 replay_execution=true。")
+    if trading_execution:
+        risks.append("TRADING-018E2 不允许 trading_execution=true。")
+    if apply_executed and production_effect != "profile_updated_only_if_apply_executed":
+        risks.append("已执行 apply 但 production_effect 未记录 profile update。")
+    if not apply_executed and production_effect != ProductionEffect.NONE.value:
+        risks.append("未执行 apply 时 production_effect 必须为 none。")
+    contract = _mapping_value(payload, "pipeline_contract")
+    for field in (
+        "runs_shadow_iteration_pipeline",
+        "runs_comparison_pipeline",
+        "runs_multi_day_review_pipeline",
+        "runs_promotion_proposal_pipeline",
+        "runs_apply_preflight_pipeline",
+        "runs_scoring_pipeline",
+        "runs_broker_runner",
+        "runs_paper_runner",
+        "runs_replay_runner",
+        "writes_approved_profile",
+        "changes_daily_dashboard_main_conclusion",
+        "triggers_trade",
+    ):
+        if contract.get(field) is not False:
+            risks.append(f"apply result safety contract 异常：{field}。")
+    changed_weight_keys = list(_strings(diff.get("changed_weight_keys")))
+    return {
+        "status": _string_value(payload.get("apply_decision")) or "INSUFFICIENT_DATA",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "latest_apply_markdown_path": str(markdown_path),
+        "apply_decision": _string_value(payload.get("apply_decision")) or "INSUFFICIENT_DATA",
+        "apply_executed": apply_executed,
+        "promotion_executed": promotion_executed,
+        "production_effect": production_effect,
+        "target_profile_path": _string_value(target.get("path")),
+        "changed_weight_keys": changed_weight_keys,
+        "rollback_snapshot_path": _string_value(rollback.get("snapshot_path")),
+        "post_apply_validation_status": _string_value(post_apply.get("status")) or "MISSING",
+        "broker_execution": broker_execution,
+        "replay_execution": replay_execution,
+        "trading_execution": trading_execution,
+        "risk": "；".join(risks) or "Shadow Promotion Apply Result 当前仅作只读展示。",
+    }
+
+
 def _latest_shadow_vs_production_review_path(report: DailyTaskDashboardReport) -> Path:
     review_root = (
         report.project_root / "data" / "derived" / "weight_iterations" / "comparison" / "reviews"
@@ -2575,6 +2676,24 @@ def _latest_shadow_promotion_apply_preflight_path(report: DailyTaskDashboardRepo
     candidates: list[tuple[date, Path]] = []
     for path in preflight_root.glob("shadow_promotion_apply_preflight_*.json"):
         raw_date = path.stem.removeprefix("shadow_promotion_apply_preflight_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_shadow_promotion_apply_path(report: DailyTaskDashboardReport) -> Path:
+    apply_root = (
+        report.project_root / "data" / "derived" / "weight_iterations" / "promotion" / "apply"
+    )
+    default_path = apply_root / f"shadow_promotion_apply_result_{report.as_of.isoformat()}.json"
+    if not apply_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in apply_root.glob("shadow_promotion_apply_result_*.json"):
+        raw_date = path.stem.removeprefix("shadow_promotion_apply_result_")
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= report.as_of:
             candidates.append((parsed, path))
@@ -4463,6 +4582,62 @@ def _render_shadow_promotion_apply_preflight(report: DailyTaskDashboardReport) -
             _summary_item(
                 "preflight markdown path",
                 summary.get("latest_preflight_markdown_path", ""),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_shadow_promotion_apply(report: DailyTaskDashboardReport) -> str:
+    summary = _shadow_promotion_apply_summary(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}"><span>Shadow Promotion Apply Result</span>'
+        f"<small>{_text(summary.get('apply_decision', 'INSUFFICIENT_DATA'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>Shadow Promotion Apply Result</span><small>MISSING</small></span>"
+    )
+    changed_keys = ", ".join(_strings(summary.get("changed_weight_keys"))) or "none"
+    return "\n".join(
+        [
+            '<section aria-labelledby="shadow-promotion-apply-title">',
+            '<div class="section-head">',
+            '<h2 id="shadow-promotion-apply-title">Shadow Promotion Apply Result</h2>',
+            (
+                "<p>explicit apply result 只读卡片；dashboard 只读取 apply result "
+                "artifact，不触发 018B/018C/018C2/018D/018E1/018E2/scoring/broker/replay/交易。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("latest apply_decision", summary.get("apply_decision", "MISSING")),
+            _summary_item("apply_executed", summary.get("apply_executed", False)),
+            _summary_item("promotion_executed", summary.get("promotion_executed", False)),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            _summary_item("target_profile_path", summary.get("target_profile_path", "")),
+            _summary_item("changed_weight_keys", changed_keys),
+            _summary_item("rollback_snapshot_path", summary.get("rollback_snapshot_path", "")),
+            _summary_item(
+                "post_apply_validation.status",
+                summary.get("post_apply_validation_status", "MISSING"),
+            ),
+            _summary_item("broker_execution", summary.get("broker_execution", False)),
+            _summary_item("replay_execution", summary.get("replay_execution", False)),
+            _summary_item("trading_execution", summary.get("trading_execution", False)),
+            _summary_item(
+                "apply result markdown path", summary.get("latest_apply_markdown_path", "")
             ),
             "</div>",
             (

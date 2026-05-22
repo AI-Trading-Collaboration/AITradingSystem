@@ -136,6 +136,9 @@ def build_shadow_promotion_apply_preflight_payload(
     safety_checklist = _build_safety_checklist(proposal)
     diff_preview = _build_diff_preview(
         production_profile_path=production_profile_path,
+        production_profile_sha256=_string_value(
+            input_artifacts["production_profile"].get("sha256")
+        ),
         production_weights=production_weights,
         proposed_weights=proposed_weights,
     )
@@ -736,6 +739,7 @@ def _build_safety_checklist(proposal: dict[str, Any]) -> dict[str, Any]:
 def _build_diff_preview(
     *,
     production_profile_path: Path,
+    production_profile_sha256: str,
     production_weights: dict[str, float],
     proposed_weights: dict[str, float],
 ) -> dict[str, Any]:
@@ -749,6 +753,7 @@ def _build_diff_preview(
     changed = [key for key, value in delta.items() if abs(value) > WEIGHT_MATCH_TOLERANCE]
     return {
         "target_profile_path": str(production_profile_path),
+        "target_profile_sha256_before": production_profile_sha256,
         "changed_weight_keys": changed,
         "production_weights_before": production_weights,
         "production_weights_after_preview": proposed_weights,
