@@ -713,6 +713,98 @@ def test_daily_task_dashboard_operator_brief_card_is_read_only(
     assert "stale_required_sources" in html
 
 
+def test_daily_task_dashboard_operator_brief_scheduler_dry_run_card_is_read_only(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    as_of = date(2026, 5, 23)
+    metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
+    _write_detail_reports(tmp_path, as_of)
+    dry_run = _write_operator_brief_scheduler_dry_run(tmp_path, as_of)
+
+    original_import = builtins.__import__
+
+    def guarded_import(
+        name: str,
+        globals_: dict[str, object] | None = None,
+        locals_: dict[str, object] | None = None,
+        fromlist: tuple[str, ...] = (),
+        level: int = 0,
+    ) -> object:
+        blocked_module_tokens = (
+            "run_daily_shadow_weight_iteration",
+            "run_daily_shadow_vs_production_comparison",
+            "run_shadow_vs_production_multi_day_review",
+            "run_shadow_promotion_proposal",
+            "run_shadow_promotion_apply_preflight",
+            "run_shadow_promotion_apply",
+            "run_shadow_promotion_rollback",
+            "run_shadow_promotion_lifecycle_audit",
+            "run_parameter_governance_summary",
+            "render_parameter_governance_web_view",
+            "run_parameter_governance_daily_digest",
+            "run_pipeline_health_summary",
+            "run_data_freshness_summary",
+            "run_daily_trading_system_operator_brief",
+            "run_daily_operator_brief_scheduler_dry_run",
+            "ai_trading_system.trading_engine.daily_trading_system_operator_brief",
+            "ai_trading_system.trading_engine.pipeline_health_summary",
+            "ai_trading_system.trading_engine.data_freshness_summary",
+            "ai_trading_system.trading_engine.daily_operator_brief_scheduler_dry_run",
+            "ai_trading_system.data.download",
+            "ai_trading_system.scoring",
+            "ai_trading_system.backtest",
+            "ai_trading_system.trading_engine.brokers",
+            "run_paper_trading_replay",
+        )
+        if any(token in name for token in blocked_module_tokens):
+            raise AssertionError(f"dashboard must not import scheduler or pipeline path: {name}")
+        return original_import(name, globals_, locals_, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+
+    report = build_daily_task_dashboard_report(
+        as_of=as_of,
+        metadata_path=metadata_path,
+        run_report_path=None,
+        reports_dir=tmp_path,
+    )
+    html = render_daily_task_dashboard(report)
+    payload = build_daily_task_dashboard_payload(report)
+
+    summary = payload["daily_operator_brief_scheduler_dry_run"]
+    assert summary["dry_run_decision"] == "READY"
+    assert summary["dry_run_status"] == "OK"
+    assert summary["summary_level"] == "NORMAL"
+    assert summary["expected_run_time_local"] == "09:00"
+    assert summary["dependency_check_status"] == "PASS"
+    assert summary["safety_check_status"] == "PASS"
+    assert summary["missing_required_inputs_count"] == 0
+    assert summary["missing_optional_inputs_count"] == 1
+    assert summary["stale_inputs_count"] == 1
+    assert summary["latest_dry_run_markdown_path"].endswith(
+        "daily_operator_brief_scheduler_dry_run_2026-05-23.md"
+    )
+    assert summary["production_effect"] == "none"
+    assert summary["manual_review_only"] is True
+    assert summary["scheduler_dry_run_only"] is True
+    assert summary["read_only"] is True
+    assert summary["scheduler_created"] is False
+    assert summary["operator_brief_executed_by_scheduler_dry_run"] is False
+    assert summary["pipelines_executed_by_scheduler_dry_run"] is False
+    assert summary["data_downloaded_by_scheduler_dry_run"] is False
+    assert summary["apply_executed_by_scheduler_dry_run"] is False
+    assert summary["rollback_executed_by_scheduler_dry_run"] is False
+    assert summary["broker_execution"] is False
+    assert summary["replay_execution"] is False
+    assert summary["trading_execution"] is False
+    assert "Daily Operator Brief Scheduler Dry Run" in html
+    assert "dependency_check.status" in html
+    assert "safety_check.status" in html
+    assert "missing_optional_inputs_count" in html
+    assert dry_run["output_artifacts"]["markdown"]["path"] in html
+
+
 def test_daily_task_dashboard_pipeline_health_summary_card_is_read_only(
     tmp_path: Path,
     monkeypatch: Any,
@@ -1239,6 +1331,108 @@ def _write_operator_brief(tmp_path: Path, as_of: date) -> dict[str, Any]:
         encoding="utf-8",
     )
     markdown_path.write_text("# Daily Trading System Operator Brief\n", encoding="utf-8")
+    return payload
+
+
+def _write_operator_brief_scheduler_dry_run(tmp_path: Path, as_of: date) -> dict[str, Any]:
+    suffix = as_of.isoformat()
+    dry_run_path = (
+        tmp_path
+        / "data"
+        / "derived"
+        / "operator_briefs"
+        / "scheduler_dry_run"
+        / f"daily_operator_brief_scheduler_dry_run_{suffix}.json"
+    )
+    markdown_path = dry_run_path.with_suffix(".md")
+    payload: dict[str, Any] = {
+        "schema_version": "1.0",
+        "report_type": "daily_operator_brief_scheduler_dry_run",
+        "task_id": "TRADING-026",
+        "date": suffix,
+        "mode": "daily_operator_brief_scheduler_dry_run_only",
+        "production_effect": "none",
+        "manual_review_only": True,
+        "scheduler_dry_run_only": True,
+        "read_only": True,
+        "safe_for_scheduler": True,
+        "safe_for_scheduled_generation": True,
+        "scheduler_created": False,
+        "operator_brief_executed_by_scheduler_dry_run": False,
+        "pipelines_executed_by_scheduler_dry_run": False,
+        "data_downloaded_by_scheduler_dry_run": False,
+        "apply_executed_by_scheduler_dry_run": False,
+        "rollback_executed_by_scheduler_dry_run": False,
+        "broker_execution": False,
+        "replay_execution": False,
+        "trading_execution": False,
+        "dry_run_decision": "READY",
+        "dry_run_status": "OK",
+        "summary_level": "NORMAL",
+        "headline": "Daily operator brief scheduler dry run is ready.",
+        "schedule_plan": {
+            "intended_frequency": "DAILY",
+            "expected_run_time_local": "09:00",
+            "timezone": "Asia/Tokyo",
+            "scheduler_target": "manual_or_future_scheduler",
+            "actual_scheduler_created": False,
+        },
+        "dependency_check": {
+            "status": "PASS",
+            "required_inputs_available": True,
+            "optional_inputs_available": False,
+            "missing_required_inputs": [],
+            "missing_optional_inputs": ["pipeline_health_summary"],
+            "invalid_inputs": [],
+            "stale_inputs": ["data_freshness_summary"],
+            "blocking_reasons": [],
+        },
+        "safety_check": {
+            "status": "PASS",
+            "digest_safe": True,
+            "pipeline_health_safe": True,
+            "data_freshness_safe": True,
+            "existing_operator_brief_safe": True,
+            "no_scheduler_created": True,
+            "no_pipeline_execution": True,
+            "no_data_download": True,
+            "no_broker_execution": True,
+            "no_replay_execution": True,
+            "no_trading_execution": True,
+            "blocking_reasons": [],
+        },
+        "output_artifacts": {
+            "json": {"path": str(dry_run_path)},
+            "markdown": {"path": str(markdown_path)},
+        },
+        "scheduler_contract": {
+            "runs_daily_digest_script": False,
+            "runs_pipeline_health_summary_script": False,
+            "runs_data_freshness_summary_script": False,
+            "runs_operator_brief_script": False,
+            "creates_windows_task_scheduler_task": False,
+            "creates_cron_job": False,
+            "creates_github_actions_workflow": False,
+            "runs_market_pipeline": False,
+            "runs_backtest_pipeline": False,
+            "runs_scoring_pipeline": False,
+            "runs_data_download": False,
+            "runs_broker_runner": False,
+            "runs_replay_runner": False,
+            "triggers_trade": False,
+            "writes_production_profile": False,
+            "writes_production_weights": False,
+            "writes_shadow_weights": False,
+            "writes_approved_profile": False,
+            "promotes_shadow_to_production": False,
+        },
+    }
+    dry_run_path.parent.mkdir(parents=True, exist_ok=True)
+    dry_run_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.write_text("# Daily Operator Brief Scheduler Dry Run\n", encoding="utf-8")
     return payload
 
 

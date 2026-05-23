@@ -211,6 +211,9 @@ def build_daily_task_dashboard_payload(
         "daily_trading_system_operator_brief": (
             _daily_trading_system_operator_brief_summary(report)
         ),
+        "daily_operator_brief_scheduler_dry_run": (
+            _daily_operator_brief_scheduler_dry_run_summary(report)
+        ),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -322,6 +325,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_pipeline_health_summary(report),
             _render_data_freshness_summary(report),
             _render_daily_trading_system_operator_brief(report),
+            _render_daily_operator_brief_scheduler_dry_run(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -3755,6 +3759,164 @@ def _daily_trading_system_operator_brief_summary(report: DailyTaskDashboardRepor
     }
 
 
+def _daily_operator_brief_scheduler_dry_run_summary(
+    report: DailyTaskDashboardReport,
+) -> TraceRecord:
+    path = _latest_daily_operator_brief_scheduler_dry_run_path(report)
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "daily_operator_brief_scheduler_dry_run":
+        default_markdown = (
+            report.project_root
+            / "data"
+            / "derived"
+            / "operator_briefs"
+            / "scheduler_dry_run"
+            / f"daily_operator_brief_scheduler_dry_run_{report.as_of.isoformat()}.md"
+        )
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "latest_dry_run_markdown_path": str(default_markdown),
+            "dry_run_decision": "MISSING",
+            "dry_run_status": "MISSING",
+            "summary_level": "UNKNOWN",
+            "expected_run_time_local": "",
+            "dependency_check_status": "MISSING",
+            "safety_check_status": "MISSING",
+            "missing_required_inputs_count": 0,
+            "missing_optional_inputs_count": 0,
+            "stale_inputs_count": 0,
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_only": True,
+            "scheduler_dry_run_only": True,
+            "read_only": True,
+            "scheduler_created": False,
+            "operator_brief_executed_by_scheduler_dry_run": False,
+            "pipelines_executed_by_scheduler_dry_run": False,
+            "data_downloaded_by_scheduler_dry_run": False,
+            "apply_executed_by_scheduler_dry_run": False,
+            "rollback_executed_by_scheduler_dry_run": False,
+            "broker_execution": False,
+            "replay_execution": False,
+            "trading_execution": False,
+            "risk": (
+                "daily operator brief scheduler dry run JSON 缺失；dashboard 不运行 "
+                "018B-025、TRADING-026 script、operator brief、scheduler creation、"
+                "market / backtest / scoring / data download / broker / replay / trading。"
+            ),
+        }
+
+    output_artifacts = _mapping_value(payload, "output_artifacts")
+    markdown_path = Path(
+        _string_value(_mapping_value(output_artifacts, "markdown").get("path"))
+        or str(path.with_suffix(".md"))
+    )
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    schedule = _mapping_value(payload, "schedule_plan")
+    dependency = _mapping_value(payload, "dependency_check")
+    safety = _mapping_value(payload, "safety_check")
+    contract = _mapping_value(payload, "scheduler_contract")
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    scheduler_created = payload.get("scheduler_created") is True
+    operator_brief_executed = payload.get("operator_brief_executed_by_scheduler_dry_run") is True
+    pipelines_executed = payload.get("pipelines_executed_by_scheduler_dry_run") is True
+    data_downloaded = payload.get("data_downloaded_by_scheduler_dry_run") is True
+    apply_executed = payload.get("apply_executed_by_scheduler_dry_run") is True
+    rollback_executed = payload.get("rollback_executed_by_scheduler_dry_run") is True
+    broker_execution = payload.get("broker_execution") is True
+    replay_execution = payload.get("replay_execution") is True
+    trading_execution = payload.get("trading_execution") is True
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("TRADING-026 scheduler dry run production_effect 必须为 none。")
+    if payload.get("manual_review_only") is not True:
+        risks.append("TRADING-026 scheduler dry run 必须 manual_review_only=true。")
+    if payload.get("scheduler_dry_run_only") is not True:
+        risks.append("TRADING-026 scheduler dry run 必须 scheduler_dry_run_only=true。")
+    if payload.get("read_only") is not True:
+        risks.append("TRADING-026 scheduler dry run 必须 read_only=true。")
+    if payload.get("safe_for_scheduler") is not True:
+        risks.append("TRADING-026 scheduler dry run 本身必须 safe_for_scheduler=true。")
+    if scheduler_created:
+        risks.append("TRADING-026 scheduler dry run 不允许创建真实 scheduler。")
+    if operator_brief_executed:
+        risks.append("TRADING-026 scheduler dry run 不允许运行 TRADING-022。")
+    if pipelines_executed:
+        risks.append("TRADING-026 scheduler dry run 不允许运行上游 pipeline。")
+    if data_downloaded:
+        risks.append("TRADING-026 scheduler dry run 不允许下载或刷新数据。")
+    if apply_executed:
+        risks.append("TRADING-026 scheduler dry run 不允许执行 apply。")
+    if rollback_executed:
+        risks.append("TRADING-026 scheduler dry run 不允许执行 rollback。")
+    if broker_execution:
+        risks.append("TRADING-026 scheduler dry run 不允许 broker_execution=true。")
+    if replay_execution:
+        risks.append("TRADING-026 scheduler dry run 不允许 replay_execution=true。")
+    if trading_execution:
+        risks.append("TRADING-026 scheduler dry run 不允许 trading_execution=true。")
+    for field in (
+        "runs_daily_digest_script",
+        "runs_pipeline_health_summary_script",
+        "runs_data_freshness_summary_script",
+        "runs_operator_brief_script",
+        "creates_windows_task_scheduler_task",
+        "creates_cron_job",
+        "creates_github_actions_workflow",
+        "runs_market_pipeline",
+        "runs_backtest_pipeline",
+        "runs_scoring_pipeline",
+        "runs_data_download",
+        "runs_broker_runner",
+        "runs_replay_runner",
+        "triggers_trade",
+        "writes_production_profile",
+        "writes_production_weights",
+        "writes_shadow_weights",
+        "writes_approved_profile",
+        "promotes_shadow_to_production",
+    ):
+        if contract.get(field) is True:
+            risks.append(f"daily operator brief scheduler dry run safety contract 异常：{field}。")
+
+    return {
+        "status": _string_value(payload.get("dry_run_status")) or "MISSING",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "latest_dry_run_markdown_path": str(markdown_path),
+        "dry_run_decision": _string_value(payload.get("dry_run_decision")) or "MISSING",
+        "dry_run_status": _string_value(payload.get("dry_run_status")) or "MISSING",
+        "summary_level": _string_value(payload.get("summary_level")) or "UNKNOWN",
+        "expected_run_time_local": _string_value(schedule.get("expected_run_time_local")),
+        "dependency_check_status": _string_value(dependency.get("status")) or "MISSING",
+        "safety_check_status": _string_value(safety.get("status")) or "MISSING",
+        "missing_required_inputs_count": len(_strings(dependency.get("missing_required_inputs"))),
+        "missing_optional_inputs_count": len(_strings(dependency.get("missing_optional_inputs"))),
+        "stale_inputs_count": len(_strings(dependency.get("stale_inputs"))),
+        "production_effect": production_effect,
+        "manual_review_only": payload.get("manual_review_only") is True,
+        "scheduler_dry_run_only": payload.get("scheduler_dry_run_only") is True,
+        "read_only": payload.get("read_only") is True,
+        "scheduler_created": scheduler_created,
+        "operator_brief_executed_by_scheduler_dry_run": operator_brief_executed,
+        "pipelines_executed_by_scheduler_dry_run": pipelines_executed,
+        "data_downloaded_by_scheduler_dry_run": data_downloaded,
+        "apply_executed_by_scheduler_dry_run": apply_executed,
+        "rollback_executed_by_scheduler_dry_run": rollback_executed,
+        "broker_execution": broker_execution,
+        "replay_execution": replay_execution,
+        "trading_execution": trading_execution,
+        "risk": "；".join(risks) or "Daily Operator Brief Scheduler Dry Run 当前仅作只读展示。",
+    }
+
+
 def _latest_shadow_vs_production_review_path(report: DailyTaskDashboardReport) -> Path:
     review_root = (
         report.project_root / "data" / "derived" / "weight_iterations" / "comparison" / "reviews"
@@ -3970,6 +4132,28 @@ def _latest_daily_trading_system_operator_brief_path(report: DailyTaskDashboardR
     candidates: list[tuple[date, Path]] = []
     for path in brief_root.glob("daily_trading_system_operator_brief_*.json"):
         raw_date = path.stem.removeprefix("daily_trading_system_operator_brief_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_daily_operator_brief_scheduler_dry_run_path(
+    report: DailyTaskDashboardReport,
+) -> Path:
+    dry_run_root = (
+        report.project_root / "data" / "derived" / "operator_briefs" / "scheduler_dry_run"
+    )
+    default_path = dry_run_root / (
+        f"daily_operator_brief_scheduler_dry_run_{report.as_of.isoformat()}.json"
+    )
+    if not dry_run_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in dry_run_root.glob("daily_operator_brief_scheduler_dry_run_*.json"):
+        raw_date = path.stem.removeprefix("daily_operator_brief_scheduler_dry_run_")
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= report.as_of:
             candidates.append((parsed, path))
@@ -6413,6 +6597,71 @@ def _render_daily_trading_system_operator_brief(report: DailyTaskDashboardReport
             _summary_item(
                 "operator brief markdown path",
                 summary.get("latest_brief_markdown_path", ""),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_daily_operator_brief_scheduler_dry_run(report: DailyTaskDashboardReport) -> str:
+    summary = _daily_operator_brief_scheduler_dry_run_summary(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}"><span>Daily Operator Brief Scheduler Dry Run</span>'
+        f"<small>{_text(summary.get('dry_run_decision', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>Daily Operator Brief Scheduler Dry Run</span><small>MISSING</small></span>"
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="daily-operator-brief-scheduler-dry-run-title">',
+            '<div class="section-head">',
+            (
+                '<h2 id="daily-operator-brief-scheduler-dry-run-title">'
+                "Daily Operator Brief Scheduler Dry Run</h2>"
+            ),
+            (
+                "<p>Operator brief scheduler dry run 只读卡片；dashboard 只读取 "
+                "TRADING-026 dry-run artifact，不触发 018B-025、TRADING-026 script、"
+                "operator brief、scheduler creation、market/backtest/scoring/data download/"
+                "broker/replay/交易。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("dry_run_decision", summary.get("dry_run_decision", "MISSING")),
+            _summary_item("dry_run_status", summary.get("dry_run_status", "MISSING")),
+            _summary_item("summary_level", summary.get("summary_level", "UNKNOWN")),
+            _summary_item(
+                "expected_run_time_local",
+                summary.get("expected_run_time_local", ""),
+            ),
+            _summary_item(
+                "dependency_check.status",
+                summary.get("dependency_check_status", "MISSING"),
+            ),
+            _summary_item("safety_check.status", summary.get("safety_check_status", "MISSING")),
+            _summary_item(
+                "missing_required_inputs_count",
+                summary.get("missing_required_inputs_count", 0),
+            ),
+            _summary_item(
+                "missing_optional_inputs_count",
+                summary.get("missing_optional_inputs_count", 0),
+            ),
+            _summary_item("stale_inputs_count", summary.get("stale_inputs_count", 0)),
+            _summary_item(
+                "scheduler dry-run markdown path",
+                summary.get("latest_dry_run_markdown_path", ""),
             ),
             "</div>",
             (
