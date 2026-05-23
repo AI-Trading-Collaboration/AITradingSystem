@@ -656,6 +656,8 @@ def test_daily_task_dashboard_operator_brief_card_is_read_only(
             "run_parameter_governance_daily_digest",
             "run_daily_trading_system_operator_brief",
             "ai_trading_system.trading_engine.daily_trading_system_operator_brief",
+            "run_pipeline_health_summary",
+            "ai_trading_system.trading_engine.pipeline_health_summary",
             "ai_trading_system.scoring",
             "ai_trading_system.backtest",
             "ai_trading_system.trading_engine.brokers",
@@ -697,6 +699,82 @@ def test_daily_task_dashboard_operator_brief_card_is_read_only(
     assert summary["replay_execution"] is False
     assert summary["trading_execution"] is False
     assert "Daily Trading System Operator Brief" in html
+
+
+def test_daily_task_dashboard_pipeline_health_summary_card_is_read_only(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    as_of = date(2026, 5, 23)
+    metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
+    _write_detail_reports(tmp_path, as_of)
+    health_summary = _write_pipeline_health_summary(tmp_path, as_of)
+
+    original_import = builtins.__import__
+
+    def guarded_import(
+        name: str,
+        globals_: dict[str, object] | None = None,
+        locals_: dict[str, object] | None = None,
+        fromlist: tuple[str, ...] = (),
+        level: int = 0,
+    ) -> object:
+        blocked_module_tokens = (
+            "run_daily_shadow_weight_iteration",
+            "run_daily_shadow_vs_production_comparison",
+            "run_shadow_vs_production_multi_day_review",
+            "run_shadow_promotion_proposal",
+            "run_shadow_promotion_apply_preflight",
+            "run_shadow_promotion_apply",
+            "run_shadow_promotion_rollback",
+            "run_shadow_promotion_lifecycle_audit",
+            "run_parameter_governance_summary",
+            "render_parameter_governance_web_view",
+            "run_parameter_governance_daily_digest",
+            "run_daily_trading_system_operator_brief",
+            "run_pipeline_health_summary",
+            "ai_trading_system.trading_engine.pipeline_health_summary",
+            "ai_trading_system.scoring",
+            "ai_trading_system.backtest",
+            "ai_trading_system.trading_engine.brokers",
+            "run_paper_trading_replay",
+        )
+        if any(token in name for token in blocked_module_tokens):
+            raise AssertionError(f"dashboard must not import pipeline path: {name}")
+        return original_import(name, globals_, locals_, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+
+    report = build_daily_task_dashboard_report(
+        as_of=as_of,
+        metadata_path=metadata_path,
+        run_report_path=None,
+        reports_dir=tmp_path,
+    )
+    html = render_daily_task_dashboard(report)
+    payload = build_daily_task_dashboard_payload(report)
+
+    summary = payload["pipeline_health_summary"]
+    assert summary["health_status"] == "OK"
+    assert summary["summary_level"] == "NORMAL"
+    assert summary["headline"] == health_summary["headline"]
+    assert summary["required_pipelines"] == 8
+    assert summary["missing_required_pipelines"] == 0
+    assert summary["stale_required_pipelines"] == 0
+    assert summary["critical_pipelines"] == 0
+    assert summary["warning_pipelines"] == 1
+    assert summary["production_effect"] == "none"
+    assert summary["manual_review_only"] is True
+    assert summary["pipeline_health_only"] is True
+    assert summary["read_only"] is True
+    assert summary["pipelines_executed_by_health_check"] is False
+    assert summary["apply_executed_by_health_check"] is False
+    assert summary["rollback_executed_by_health_check"] is False
+    assert summary["broker_execution"] is False
+    assert summary["replay_execution"] is False
+    assert summary["trading_execution"] is False
+    assert "Pipeline Health Summary" in html
+    assert "pipeline_health_summary_2026-05-23.md" in html
 
 
 def _write_daily_ops_metadata(tmp_path: Path, as_of: date) -> Path:
@@ -811,6 +889,84 @@ def _write_detail_reports(tmp_path: Path, as_of: date) -> None:
         "# Pipeline health alerts\n\n- 状态：PASS\n",
         encoding="utf-8",
     )
+
+
+def _write_pipeline_health_summary(tmp_path: Path, as_of: date) -> dict[str, Any]:
+    suffix = as_of.isoformat()
+    summary_path = (
+        tmp_path / "data" / "derived" / "pipeline_health" / f"pipeline_health_summary_{suffix}.json"
+    )
+    markdown_path = summary_path.with_suffix(".md")
+    payload: dict[str, Any] = {
+        "schema_version": "1.0",
+        "report_type": "pipeline_health_summary",
+        "task_id": "TRADING-023",
+        "date": suffix,
+        "mode": "pipeline_health_summary_only",
+        "production_effect": "none",
+        "manual_review_only": True,
+        "pipeline_health_only": True,
+        "read_only": True,
+        "safe_for_scheduler": True,
+        "pipelines_executed_by_health_check": False,
+        "apply_executed_by_health_check": False,
+        "rollback_executed_by_health_check": False,
+        "broker_execution": False,
+        "replay_execution": False,
+        "trading_execution": False,
+        "health_status": "OK",
+        "summary_level": "NORMAL",
+        "headline": "Required pipeline artifacts are available.",
+        "coverage": {
+            "registered_pipelines": 12,
+            "required_pipelines": 8,
+            "available_pipelines": 11,
+            "missing_required_pipelines": 0,
+            "stale_required_pipelines": 0,
+            "critical_pipelines": 0,
+            "warning_pipelines": 1,
+        },
+        "alerts": {
+            "critical": [],
+            "warnings": ["TRADING-020 web view artifact is stale but optional."],
+            "notes": ["Pipeline health summary is read-only."],
+        },
+        "output_artifacts": {
+            "json": {"path": str(summary_path)},
+            "markdown": {"path": str(markdown_path)},
+        },
+        "pipeline_contract": {
+            "runs_shadow_iteration_pipeline": False,
+            "runs_comparison_pipeline": False,
+            "runs_multi_day_review_pipeline": False,
+            "runs_promotion_proposal_pipeline": False,
+            "runs_apply_preflight_pipeline": False,
+            "runs_promotion_apply": False,
+            "runs_promotion_rollback": False,
+            "runs_lifecycle_audit_pipeline": False,
+            "runs_governance_summary_pipeline": False,
+            "runs_web_view_render_script": False,
+            "runs_daily_digest_script": False,
+            "runs_operator_brief_script": False,
+            "runs_pipeline_health_summary_script": False,
+            "runs_market_pipeline": False,
+            "runs_backtest_pipeline": False,
+            "runs_scoring_pipeline": False,
+            "runs_broker_runner": False,
+            "runs_paper_runner": False,
+            "runs_replay_runner": False,
+            "writes_production_profile": False,
+            "writes_production_weights": False,
+            "writes_shadow_weights": False,
+            "writes_approved_profile": False,
+            "promotes_shadow_to_production": False,
+            "triggers_trade": False,
+        },
+    }
+    summary_path.parent.mkdir(parents=True, exist_ok=True)
+    summary_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    markdown_path.write_text("# Pipeline Health Summary\n", encoding="utf-8")
+    return payload
 
 
 def _write_operator_brief(tmp_path: Path, as_of: date) -> dict[str, Any]:
