@@ -2,7 +2,7 @@
 
 关联任务：`TRADING-023`
 
-当前状态：VALIDATING
+当前状态：DONE
 
 最后更新：2026-05-23
 
@@ -90,7 +90,7 @@ pipeline 单项 `status` 只允许：
 |5. Dashboard|DONE|新增只读卡片，只读取 latest TRADING-023 artifact，不 import 或运行任何 pipeline。|
 |6. 文档|DONE|更新 `docs/system_flow.md`、`docs/artifact_catalog.md`，新增 runbook。|
 |7. 测试与 smoke|DONE|覆盖 required/optional、状态映射、新鲜度、安全字段、overall health、Markdown、dashboard 和 output invariants。|
-|8. 验证收尾|VALIDATING|目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff 和 repo 外 smoke 已完成；全仓 Black check 仍被既有无关 `tests/test_market_data.py` baseline 阻断。|
+|8. 验证收尾|DONE|最终 repo 外 smoke、dashboard 只读确认、目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff 和 Black check 结果已记录；全仓 Black check 仍被既有无关 `tests/test_market_data.py` baseline 阻断。|
 
 ## Dashboard 读取边界
 
@@ -121,3 +121,21 @@ brief 的 `pipeline_health` 从 `UNKNOWN` 升级为结构化状态。
   `pipelines_executed_by_health_check=false`、`broker_execution=false`、`replay_execution=false`、
   `trading_execution=false`。`python -m black --check scripts src tests` 仍仅被既有无关
   `tests/test_market_data.py` baseline 阻断；触达文件 Black check 已通过。
+- 2026-05-23：最终收尾验证完成，从 `VALIDATING` 改为 `DONE`。再次使用 repo 外临时 fixture
+  验证 OK / INCOMPLETE / CRITICAL / STALE 四路径；OK Markdown 包含 `Health Summary`、
+  `Required Pipelines`、`Optional Pipelines`，CRITICAL Markdown 顶部包含
+  `CRITICAL: Pipeline Health Issue Detected`，STALE required artifact 输出 `ACTION_REQUIRED`
+  且 Markdown 顶部包含 `Action Required`；`include_optional_pipelines=true` 时 optional
+  missing 输出 `WATCH`，不导致 `INCOMPLETE`。所有 smoke 输出和 run log 均确认固定安全边界：
+  `production_effect=none`、`manual_review_only=true`、`pipeline_health_only=true`、
+  `read_only=true`、`pipelines_executed_by_health_check=false`、
+  `apply_executed_by_health_check=false`、`rollback_executed_by_health_check=false`、
+  `broker_execution=false`、`replay_execution=false`、`trading_execution=false`。Dashboard import
+  guard 确认 `Pipeline Health Summary` 卡片只读读取 TRADING-023 artifact，不触发 018B-022、
+  TRADING-023 script、market/backtest/scoring/broker/replay/trading。随后重新执行
+  `python -m pytest tests/trading_engine/test_pipeline_health_summary.py -q`（10 passed）、
+  `python -m pytest tests/test_daily_task_dashboard.py -q`（10 passed）、
+  `python -m pytest tests/trading_engine -q`（417 passed / 1 warning）、
+  `python -m pytest -q`（1003 passed / 1 warning）和
+  `python -m ruff check scripts src tests`（passed）。`python -m black --check scripts src tests`
+  仍仅因既有无关 `tests/test_market_data.py` baseline 返回 would reformat，未混入无关格式化 diff。
