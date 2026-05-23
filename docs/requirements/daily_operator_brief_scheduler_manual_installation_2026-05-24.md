@@ -2,7 +2,7 @@
 
 关联任务：`TRADING-027`
 
-状态：`VALIDATING`
+状态：`DONE`
 
 ## 目标
 
@@ -135,3 +135,4 @@ TRADING-028 可以生成可审阅模板，例如 Windows Task Scheduler XML temp
 
 - 2026-05-24：新增并进入 `IN_PROGRESS`。Owner 要求在 TRADING-026 scheduler dry-run 之后补齐人工 scheduler 安装 runbook；本任务严格限定为文档 only，不创建 scheduler、不运行 TRADING-021/022/023/024/026、不触发任何 pipeline 或交易执行。
 - 2026-05-24：实现完成并进入 `VALIDATING`。已新增 manual installation runbook 和需求文档，并更新 task register、system flow、artifact catalog；验证通过 `python -m pytest tests/test_daily_task_dashboard.py -q`、`python -m pytest tests/trading_engine -q`、`python -m pytest -q` 和 `python -m ruff check scripts src tests`。`python -m black --check scripts src tests` 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。本任务未创建 scheduler、未提交 GitHub Actions workflow、未写 cron / Windows Task Scheduler XML、未运行 TRADING-021/022/023/024/026 或任何 market/backtest/scoring/data download/broker/replay/trading pipeline。
+- 2026-05-24：最终收尾验证完成并改为 `DONE`。人工检查确认 runbook 包含 Windows Task Scheduler 手动安装步骤、cron 手动安装步骤、GitHub Actions 可选示例、pre-installation checklist、safety checklist、dry-run decision 处理说明、disable / pause scheduler、failure handling，并明确说明 TRADING-027 不创建 scheduler。仓库检查确认本任务未新增 Windows Task Scheduler XML、cron 文件、GitHub Actions workflow 或 scheduler 自动安装脚本；现有 `.github/workflows/ci.yml` 与既有 scheduler dry-run 脚本不是 TRADING-027 新增项。文档明确禁止 scheduler 运行 TRADING-018E2 apply、TRADING-018E3 rollback、broker execution、replay runner、trading execution、data download、market/backtest/scoring pipeline，除非未来任务明确审查。最终验证通过目标 pytest、`tests/trading_engine`、全量 pytest 和 ruff；Black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。
