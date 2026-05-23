@@ -207,6 +207,7 @@ def build_daily_task_dashboard_payload(
         "parameter_governance_web_view": _parameter_governance_web_view_summary(report),
         "parameter_governance_daily_digest": _parameter_governance_daily_digest_summary(report),
         "pipeline_health_summary": _pipeline_health_summary_summary(report),
+        "data_freshness_summary": _data_freshness_summary_summary(report),
         "daily_trading_system_operator_brief": (
             _daily_trading_system_operator_brief_summary(report)
         ),
@@ -319,6 +320,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_parameter_governance_web_view(report),
             _render_parameter_governance_daily_digest(report),
             _render_pipeline_health_summary(report),
+            _render_data_freshness_summary(report),
             _render_daily_trading_system_operator_brief(report),
             _render_risks(report),
             _render_summary(report),
@@ -1055,6 +1057,11 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
             "pipeline_health_summary_json",
             "pipeline health summary JSON",
             _latest_pipeline_health_summary_path(report),
+        ),
+        (
+            "data_freshness_summary_json",
+            "data freshness summary JSON",
+            _latest_data_freshness_summary_path(report),
         ),
         (
             "daily_trading_system_operator_brief_json",
@@ -3436,6 +3443,153 @@ def _pipeline_health_summary_summary(report: DailyTaskDashboardReport) -> TraceR
     }
 
 
+def _data_freshness_summary_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_data_freshness_summary_path(report)
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "data_freshness_summary":
+        default_markdown = (
+            report.project_root
+            / "data"
+            / "derived"
+            / "data_freshness"
+            / f"data_freshness_summary_{report.as_of.isoformat()}.md"
+        )
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "latest_summary_markdown_path": str(default_markdown),
+            "freshness_status": "MISSING",
+            "summary_level": "UNKNOWN",
+            "headline": "",
+            "required_sources": 0,
+            "missing_required_sources": 0,
+            "stale_required_sources": 0,
+            "critical_sources": 0,
+            "warning_sources": 0,
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_only": True,
+            "data_freshness_only": True,
+            "read_only": True,
+            "data_downloaded_by_freshness_check": False,
+            "pipelines_executed_by_freshness_check": False,
+            "apply_executed_by_freshness_check": False,
+            "rollback_executed_by_freshness_check": False,
+            "broker_execution": False,
+            "replay_execution": False,
+            "trading_execution": False,
+            "risk": (
+                "data freshness summary JSON 缺失；dashboard 不运行 TRADING-024 script、"
+                "TRADING-018B-023 或任何 data download / market / backtest / scoring / "
+                "broker / replay / trading pipeline。"
+            ),
+        }
+
+    output_artifacts = _mapping_value(payload, "output_artifacts")
+    markdown_path = Path(
+        _string_value(_mapping_value(output_artifacts, "markdown").get("path"))
+        or str(path.with_suffix(".md"))
+    )
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    coverage = _mapping_value(payload, "coverage")
+    contract = _mapping_value(payload, "freshness_contract")
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    data_downloaded = payload.get("data_downloaded_by_freshness_check") is True
+    pipelines_executed = payload.get("pipelines_executed_by_freshness_check") is True
+    apply_executed = payload.get("apply_executed_by_freshness_check") is True
+    rollback_executed = payload.get("rollback_executed_by_freshness_check") is True
+    broker_execution = payload.get("broker_execution") is True
+    replay_execution = payload.get("replay_execution") is True
+    trading_execution = payload.get("trading_execution") is True
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("TRADING-024 data freshness summary production_effect 必须为 none。")
+    if payload.get("manual_review_only") is not True:
+        risks.append("TRADING-024 data freshness summary 必须 manual_review_only=true。")
+    if payload.get("data_freshness_only") is not True:
+        risks.append("TRADING-024 data freshness summary 必须 data_freshness_only=true。")
+    if payload.get("read_only") is not True:
+        risks.append("TRADING-024 data freshness summary 必须 read_only=true。")
+    if data_downloaded:
+        risks.append("TRADING-024 data freshness summary 不允许下载或刷新数据。")
+    if pipelines_executed:
+        risks.append("TRADING-024 data freshness summary 不允许运行上游 pipeline。")
+    if apply_executed:
+        risks.append("TRADING-024 data freshness summary 不允许执行 apply。")
+    if rollback_executed:
+        risks.append("TRADING-024 data freshness summary 不允许执行 rollback。")
+    if broker_execution:
+        risks.append("TRADING-024 data freshness summary 不允许 broker_execution=true。")
+    if replay_execution:
+        risks.append("TRADING-024 data freshness summary 不允许 replay_execution=true。")
+    if trading_execution:
+        risks.append("TRADING-024 data freshness summary 不允许 trading_execution=true。")
+    for field in (
+        "runs_shadow_iteration_pipeline",
+        "runs_comparison_pipeline",
+        "runs_multi_day_review_pipeline",
+        "runs_promotion_proposal_pipeline",
+        "runs_apply_preflight_pipeline",
+        "runs_promotion_apply",
+        "runs_promotion_rollback",
+        "runs_lifecycle_audit_pipeline",
+        "runs_governance_summary_pipeline",
+        "runs_web_view_render_script",
+        "runs_daily_digest_script",
+        "runs_operator_brief_script",
+        "runs_pipeline_health_summary_script",
+        "runs_data_freshness_summary_script",
+        "runs_market_pipeline",
+        "runs_backtest_pipeline",
+        "runs_scoring_pipeline",
+        "runs_data_download",
+        "runs_broker_runner",
+        "runs_paper_runner",
+        "runs_replay_runner",
+        "writes_production_profile",
+        "writes_production_weights",
+        "writes_shadow_weights",
+        "writes_approved_profile",
+        "promotes_shadow_to_production",
+        "triggers_trade",
+    ):
+        if contract.get(field) is True:
+            risks.append(f"data freshness summary safety contract 异常：{field}。")
+
+    return {
+        "status": _string_value(payload.get("freshness_status")) or "MISSING",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "latest_summary_markdown_path": str(markdown_path),
+        "freshness_status": _string_value(payload.get("freshness_status")) or "MISSING",
+        "summary_level": _string_value(payload.get("summary_level")) or "UNKNOWN",
+        "headline": _string_value(payload.get("headline")),
+        "required_sources": _optional_int(coverage.get("required_sources")) or 0,
+        "missing_required_sources": _optional_int(coverage.get("missing_required_sources")) or 0,
+        "stale_required_sources": _optional_int(coverage.get("stale_required_sources")) or 0,
+        "critical_sources": _optional_int(coverage.get("critical_sources")) or 0,
+        "warning_sources": _optional_int(coverage.get("warning_sources")) or 0,
+        "production_effect": production_effect,
+        "manual_review_only": payload.get("manual_review_only") is True,
+        "data_freshness_only": payload.get("data_freshness_only") is True,
+        "read_only": payload.get("read_only") is True,
+        "data_downloaded_by_freshness_check": data_downloaded,
+        "pipelines_executed_by_freshness_check": pipelines_executed,
+        "apply_executed_by_freshness_check": apply_executed,
+        "rollback_executed_by_freshness_check": rollback_executed,
+        "broker_execution": broker_execution,
+        "replay_execution": replay_execution,
+        "trading_execution": trading_execution,
+        "risk": "；".join(risks) or "Data Freshness Summary 当前仅作只读展示。",
+    }
+
+
 def _daily_trading_system_operator_brief_summary(report: DailyTaskDashboardReport) -> TraceRecord:
     path = _latest_daily_trading_system_operator_brief_path(report)
     payload = _read_json_object(path)
@@ -3765,6 +3919,22 @@ def _latest_pipeline_health_summary_path(report: DailyTaskDashboardReport) -> Pa
     candidates: list[tuple[date, Path]] = []
     for path in health_root.glob("pipeline_health_summary_*.json"):
         raw_date = path.stem.removeprefix("pipeline_health_summary_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_data_freshness_summary_path(report: DailyTaskDashboardReport) -> Path:
+    freshness_root = report.project_root / "data" / "derived" / "data_freshness"
+    default_path = freshness_root / f"data_freshness_summary_{report.as_of.isoformat()}.json"
+    if not freshness_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in freshness_root.glob("data_freshness_summary_*.json"):
+        raw_date = path.stem.removeprefix("data_freshness_summary_")
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= report.as_of:
             candidates.append((parsed, path))
@@ -6073,6 +6243,61 @@ def _render_pipeline_health_summary(report: DailyTaskDashboardReport) -> str:
             _summary_item("warning_pipelines", summary.get("warning_pipelines", 0)),
             _summary_item(
                 "pipeline health markdown path",
+                summary.get("latest_summary_markdown_path", ""),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_data_freshness_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _data_freshness_summary_summary(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}"><span>Data Freshness Summary</span>'
+        f"<small>{_text(summary.get('freshness_status', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>Data Freshness Summary</span><small>MISSING</small></span>"
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="data-freshness-summary-title">',
+            '<div class="section-head">',
+            '<h2 id="data-freshness-summary-title">Data Freshness Summary</h2>',
+            (
+                "<p>Data Freshness Summary 只读卡片；dashboard 只读取 TRADING-024 "
+                "artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/"
+                "018F/019/020/021/022/023/024/data download/market/backtest/scoring/"
+                "broker/replay/交易。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("freshness_status", summary.get("freshness_status", "MISSING")),
+            _summary_item("summary_level", summary.get("summary_level", "UNKNOWN")),
+            _summary_item("headline", summary.get("headline", "")),
+            _summary_item("required_sources", summary.get("required_sources", 0)),
+            _summary_item(
+                "missing_required_sources",
+                summary.get("missing_required_sources", 0),
+            ),
+            _summary_item(
+                "stale_required_sources",
+                summary.get("stale_required_sources", 0),
+            ),
+            _summary_item("critical_sources", summary.get("critical_sources", 0)),
+            _summary_item("warning_sources", summary.get("warning_sources", 0)),
+            _summary_item(
+                "data freshness markdown path",
                 summary.get("latest_summary_markdown_path", ""),
             ),
             "</div>",
