@@ -2,7 +2,7 @@
 
 关联任务：`TRADING-021`
 
-当前状态：VALIDATING
+当前状态：DONE
 
 最后更新：2026-05-23
 
@@ -110,7 +110,7 @@ replay 或 trading execution，不得写 production / shadow weights。
 |6. Dashboard|DONE|只读读取 latest digest artifact 并展示 digest status、summary level、headline、state、pending apply/rollback、alert counts 和 Markdown path。|
 |7. 文档|DONE|更新 `docs/system_flow.md`、`docs/artifact_catalog.md`，新增 runbook。|
 |8. 测试与 smoke|DONE|覆盖状态映射、input/safety、Markdown banners、weight snapshot、dashboard 只读和 output invariants。|
-|9. 验证收尾|VALIDATING|目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest、ruff 和触达文件 black check 已通过；全仓 black check 被既有 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。|
+|9. 验证收尾|DONE|最终 repo 外 smoke、dashboard 只读 guard、目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff 已通过；全仓 black check 被既有 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。|
 
 ## Dashboard 读取边界
 
@@ -131,3 +131,14 @@ trading execution。
   全量 `pytest` 973 passed / 1 warning；`ruff check scripts src tests` passed；触达文件 black check passed。
   全仓 `black --check scripts src tests` 被既有 `tests/test_market_data.py` 格式 baseline 阻断，未格式化该无关文件。
   Repo 外临时 smoke 覆盖 OK、ACTION_REQUIRED、URGENT、SAFETY_BLOCKED，均生成预期 status 与 Markdown banner。
+- 2026-05-23：从 `VALIDATING` 改为 `DONE`。最终收尾再次使用 repo 外临时 fixture 运行 OK、
+  ACTION_REQUIRED、URGENT、SAFETY_BLOCKED 四路径 smoke，并确认 digest 顶层安全边界固定为
+  `production_effect=none`、`manual_review_only=true`、`digest_only=true`、`governance_only=true`、
+  `apply_executed_by_digest=false`、`rollback_executed_by_digest=false`、`broker_execution=false`、
+  `replay_execution=false`、`trading_execution=false`。Markdown 验证 OK 包含 `Continue observation`，
+  ACTION_REQUIRED 顶部包含 `Action Required` 且 `pending_apply=true` 渲染为 pending apply，URGENT 顶部包含
+  `URGENT: Manual Attention Required` 且 critical findings 显示在 Alerts/Critical，SAFETY_BLOCKED 顶部包含
+  `Digest Safety Blocked`。Dashboard import guard 验证 Parameter Governance Daily Digest 卡片只读读取 digest
+  artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/018F/019/020/021、scoring、broker、replay 或
+  trading execution。收尾验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；
+  全仓 black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。
