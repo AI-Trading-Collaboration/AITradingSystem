@@ -132,3 +132,11 @@ promotion、apply、rollback，不得触发 broker、replay runner、trading exe
   scoring、broker、replay 或 trading。收尾验证通过目标 pytest、dashboard pytest、
   `tests/trading_engine`、全量 pytest 和 ruff；全仓 black check 仍只被既有无关
   `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。
+- 2026-05-23：重复最终收尾验证通过。再次使用 repo 外临时 fixture 验证 `RENDERED`、
+  `SAFETY_ANOMALY` 和 `SAFETY_BLOCKED`；三条路径均确认 TRADING-020 render metadata 安全字段
+  固定为只读无执行；HTML 覆盖治理状态、action level、weights table、lifecycle timeline、
+  pending items、safety audit、urgent banner、blocked report 和 JSON 字符串 HTML escape；Dashboard
+  import guard 再次确认只读取 TRADING-020 render metadata artifact，不触发 018B/018C/018C2/018D/
+  018E1/018E2/018E3/018F/019/020、scoring、broker、replay 或 trading。重复收尾验证通过目标
+  pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 black check 仍只被
+  既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。
