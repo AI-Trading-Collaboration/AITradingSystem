@@ -2,7 +2,7 @@
 
 关联任务：`TRADING-019`
 
-当前状态：VALIDATING
+当前状态：DONE
 
 最后更新：2026-05-23
 
@@ -96,3 +96,16 @@ review / shadow learning 按最新可用 artifact 向前推导。
   Repo 外临时 fixture smoke 验证 `ROLLBACK_COMPLETED`、`PREFLIGHT_READY` 和 `SAFETY_ANOMALY`
   三条路径；目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff 通过。
   全仓 Black check 仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。
+- 2026-05-23：从 `VALIDATING` 改为 `DONE`。最终收尾验证再次通过 repo 外临时 fixture
+  三路径 smoke：`ROLLBACK_COMPLETED` 输出 `action_required=false` 和
+  `safety_boundary_audit.status=PASS`，`PREFLIGHT_READY` 输出 `pending_apply=true` 和
+  `action_level=APPROVAL_REQUIRED`，`SAFETY_ANOMALY` 输出 `action_required=true`、
+  `action_level=URGENT` 且 critical findings 非空。三路径均确认 summary 顶层
+  `production_effect=none`、`manual_review_only=true`、`governance_only=true`、
+  `apply_executed_by_governance=false`、`rollback_executed_by_governance=false`、
+  `broker_execution=false`、`replay_execution=false`、`trading_execution=false`。
+  Dashboard import guard 验证 Parameter Governance Summary 卡片只读读取 governance summary
+  artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/018F/019、scoring、broker、
+  replay 或 trading。收尾验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、
+  全量 pytest 和 ruff；全仓 Black check 仍只被既有无关 `tests/test_market_data.py`
+  baseline 阻断，未混入无关格式化 diff。
