@@ -206,6 +206,9 @@ def build_daily_task_dashboard_payload(
         "parameter_governance_summary": _parameter_governance_summary_summary(report),
         "parameter_governance_web_view": _parameter_governance_web_view_summary(report),
         "parameter_governance_daily_digest": _parameter_governance_daily_digest_summary(report),
+        "daily_trading_system_operator_brief": (
+            _daily_trading_system_operator_brief_summary(report)
+        ),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -314,6 +317,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_parameter_governance_summary(report),
             _render_parameter_governance_web_view(report),
             _render_parameter_governance_daily_digest(report),
+            _render_daily_trading_system_operator_brief(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -1044,6 +1048,11 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
             "parameter_governance_daily_digest_json",
             "parameter governance daily digest JSON",
             _latest_parameter_governance_daily_digest_path(report),
+        ),
+        (
+            "daily_trading_system_operator_brief_json",
+            "daily trading system operator brief JSON",
+            _latest_daily_trading_system_operator_brief_path(report),
         ),
     )
     for artifact_id, label, path in extras:
@@ -3278,6 +3287,154 @@ def _parameter_governance_daily_digest_summary(report: DailyTaskDashboardReport)
     }
 
 
+def _daily_trading_system_operator_brief_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_daily_trading_system_operator_brief_path(report)
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "daily_trading_system_operator_brief":
+        default_markdown = (
+            report.project_root
+            / "data"
+            / "derived"
+            / "operator_briefs"
+            / f"daily_trading_system_operator_brief_{report.as_of.isoformat()}.md"
+        )
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "latest_brief_markdown_path": str(default_markdown),
+            "brief_status": "MISSING",
+            "summary_level": "UNKNOWN",
+            "headline": "",
+            "can_trust_outputs_today": False,
+            "manual_action_required": False,
+            "parameter_governance_digest_status": "MISSING",
+            "pipeline_health_status": "UNKNOWN",
+            "data_freshness_status": "UNKNOWN",
+            "critical_alert_count": 0,
+            "warning_count": 0,
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_only": True,
+            "operator_brief_only": True,
+            "read_only": True,
+            "apply_executed_by_operator_brief": False,
+            "rollback_executed_by_operator_brief": False,
+            "broker_execution": False,
+            "replay_execution": False,
+            "trading_execution": False,
+            "risk": (
+                "daily trading system operator brief JSON 缺失；dashboard 不运行 "
+                "TRADING-022 script、TRADING-021、TRADING-020、TRADING-019、018B-018F "
+                "或任何 market / backtest / scoring / broker / replay / trading pipeline。"
+            ),
+        }
+
+    output_artifacts = _mapping_value(payload, "output_artifacts")
+    markdown_path = Path(
+        _string_value(_mapping_value(output_artifacts, "markdown").get("path"))
+        or str(path.with_suffix(".md"))
+    )
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    snapshot = _mapping_value(payload, "system_snapshot")
+    governance = _mapping_value(payload, "parameter_governance")
+    pipeline = _mapping_value(payload, "pipeline_health")
+    freshness = _mapping_value(payload, "data_freshness")
+    alerts = _mapping_value(payload, "alerts")
+    contract = _mapping_value(payload, "pipeline_contract")
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    broker_execution = payload.get("broker_execution") is True
+    replay_execution = payload.get("replay_execution") is True
+    trading_execution = payload.get("trading_execution") is True
+    critical = _strings(alerts.get("critical"))
+    warnings = _strings(alerts.get("warnings"))
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("TRADING-022 operator brief production_effect 必须为 none。")
+    if payload.get("manual_review_only") is not True:
+        risks.append("TRADING-022 operator brief 必须 manual_review_only=true。")
+    if payload.get("operator_brief_only") is not True:
+        risks.append("TRADING-022 operator brief 必须 operator_brief_only=true。")
+    if payload.get("read_only") is not True:
+        risks.append("TRADING-022 operator brief 必须 read_only=true。")
+    if payload.get("apply_executed_by_operator_brief") is not False:
+        risks.append("TRADING-022 operator brief 不允许执行 apply。")
+    if payload.get("rollback_executed_by_operator_brief") is not False:
+        risks.append("TRADING-022 operator brief 不允许执行 rollback。")
+    if broker_execution:
+        risks.append("TRADING-022 operator brief 不允许 broker_execution=true。")
+    if replay_execution:
+        risks.append("TRADING-022 operator brief 不允许 replay_execution=true。")
+    if trading_execution:
+        risks.append("TRADING-022 operator brief 不允许 trading_execution=true。")
+    for field in (
+        "runs_shadow_iteration_pipeline",
+        "runs_comparison_pipeline",
+        "runs_multi_day_review_pipeline",
+        "runs_promotion_proposal_pipeline",
+        "runs_apply_preflight_pipeline",
+        "runs_promotion_apply",
+        "runs_promotion_rollback",
+        "runs_lifecycle_audit_pipeline",
+        "runs_governance_summary_pipeline",
+        "runs_web_view_render_script",
+        "runs_daily_digest_script",
+        "runs_operator_brief_script",
+        "runs_market_pipeline",
+        "runs_backtest_pipeline",
+        "runs_scoring_pipeline",
+        "runs_broker_runner",
+        "runs_paper_runner",
+        "runs_replay_runner",
+        "writes_production_profile",
+        "writes_production_weights",
+        "writes_shadow_weights",
+        "writes_approved_profile",
+        "promotes_shadow_to_production",
+        "triggers_trade",
+    ):
+        if contract.get(field) is True:
+            risks.append(f"daily trading system operator brief safety contract 异常：{field}。")
+
+    return {
+        "status": _string_value(payload.get("brief_status")) or "MISSING",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "latest_brief_markdown_path": str(markdown_path),
+        "brief_status": _string_value(payload.get("brief_status")) or "MISSING",
+        "summary_level": _string_value(payload.get("summary_level")) or "UNKNOWN",
+        "headline": _string_value(payload.get("headline")),
+        "can_trust_outputs_today": snapshot.get("can_trust_outputs_today") is True,
+        "manual_action_required": snapshot.get("manual_action_required") is True,
+        "parameter_governance_digest_status": (
+            _string_value(governance.get("digest_status")) or "MISSING"
+        ),
+        "pipeline_health_status": _string_value(pipeline.get("status")) or "UNKNOWN",
+        "data_freshness_status": _string_value(freshness.get("status")) or "UNKNOWN",
+        "critical_alert_count": len(critical),
+        "warning_count": len(warnings),
+        "production_effect": production_effect,
+        "manual_review_only": payload.get("manual_review_only") is True,
+        "operator_brief_only": payload.get("operator_brief_only") is True,
+        "read_only": payload.get("read_only") is True,
+        "apply_executed_by_operator_brief": (
+            payload.get("apply_executed_by_operator_brief") is True
+        ),
+        "rollback_executed_by_operator_brief": (
+            payload.get("rollback_executed_by_operator_brief") is True
+        ),
+        "broker_execution": broker_execution,
+        "replay_execution": replay_execution,
+        "trading_execution": trading_execution,
+        "risk": "；".join(risks) or "Daily Trading System Operator Brief 当前仅作只读展示。",
+    }
+
+
 def _latest_shadow_vs_production_review_path(report: DailyTaskDashboardReport) -> Path:
     review_root = (
         report.project_root / "data" / "derived" / "weight_iterations" / "comparison" / "reviews"
@@ -3443,6 +3600,24 @@ def _latest_parameter_governance_daily_digest_path(report: DailyTaskDashboardRep
     candidates: list[tuple[date, Path]] = []
     for path in digest_root.glob("parameter_governance_daily_digest_*.json"):
         raw_date = path.stem.removeprefix("parameter_governance_daily_digest_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_daily_trading_system_operator_brief_path(report: DailyTaskDashboardReport) -> Path:
+    brief_root = report.project_root / "data" / "derived" / "operator_briefs"
+    default_path = brief_root / (
+        f"daily_trading_system_operator_brief_{report.as_of.isoformat()}.json"
+    )
+    if not brief_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in brief_root.glob("daily_trading_system_operator_brief_*.json"):
+        raw_date = path.stem.removeprefix("daily_trading_system_operator_brief_")
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= report.as_of:
             candidates.append((parsed, path))
@@ -5680,6 +5855,74 @@ def _render_parameter_governance_daily_digest(report: DailyTaskDashboardReport) 
             _summary_item(
                 "digest markdown path",
                 summary.get("latest_digest_markdown_path", ""),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_daily_trading_system_operator_brief(report: DailyTaskDashboardReport) -> str:
+    summary = _daily_trading_system_operator_brief_summary(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}"><span>Daily Trading System Operator Brief</span>'
+        f"<small>{_text(summary.get('brief_status', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>Daily Trading System Operator Brief</span><small>MISSING</small></span>"
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="daily-trading-system-operator-brief-title">',
+            '<div class="section-head">',
+            (
+                '<h2 id="daily-trading-system-operator-brief-title">'
+                "Daily Trading System Operator Brief</h2>"
+            ),
+            (
+                "<p>系统级 operator brief 只读卡片；dashboard 只读取 TRADING-022 "
+                "operator brief artifact，不触发 018B/018C/018C2/018D/018E1/018E2/"
+                "018E3/018F/019/020/021/022/market/backtest/scoring/broker/replay/交易。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("brief_status", summary.get("brief_status", "MISSING")),
+            _summary_item("summary_level", summary.get("summary_level", "UNKNOWN")),
+            _summary_item("headline", summary.get("headline", "")),
+            _summary_item(
+                "can_trust_outputs_today",
+                summary.get("can_trust_outputs_today", False),
+            ),
+            _summary_item(
+                "manual_action_required",
+                summary.get("manual_action_required", False),
+            ),
+            _summary_item(
+                "parameter_governance.digest_status",
+                summary.get("parameter_governance_digest_status", "MISSING"),
+            ),
+            _summary_item(
+                "pipeline_health.status",
+                summary.get("pipeline_health_status", "UNKNOWN"),
+            ),
+            _summary_item(
+                "data_freshness.status",
+                summary.get("data_freshness_status", "UNKNOWN"),
+            ),
+            _summary_item("critical_alert_count", summary.get("critical_alert_count", 0)),
+            _summary_item("warning_count", summary.get("warning_count", 0)),
+            _summary_item(
+                "operator brief markdown path",
+                summary.get("latest_brief_markdown_path", ""),
             ),
             "</div>",
             (

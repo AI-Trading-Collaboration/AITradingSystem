@@ -624,6 +624,81 @@ def test_daily_task_dashboard_shadow_impact_card_is_read_only(
     _assert_no_shadow_impact_dangerous_terms(dashboard_json, html)
 
 
+def test_daily_task_dashboard_operator_brief_card_is_read_only(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    as_of = date(2026, 5, 23)
+    metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
+    _write_detail_reports(tmp_path, as_of)
+    operator_brief = _write_operator_brief(tmp_path, as_of)
+
+    original_import = builtins.__import__
+
+    def guarded_import(
+        name: str,
+        globals_: dict[str, object] | None = None,
+        locals_: dict[str, object] | None = None,
+        fromlist: tuple[str, ...] = (),
+        level: int = 0,
+    ) -> object:
+        blocked_module_tokens = (
+            "run_daily_shadow_weight_iteration",
+            "run_daily_shadow_vs_production_comparison",
+            "run_shadow_vs_production_multi_day_review",
+            "run_shadow_promotion_proposal",
+            "run_shadow_promotion_apply_preflight",
+            "run_shadow_promotion_apply",
+            "run_shadow_promotion_rollback",
+            "run_shadow_promotion_lifecycle_audit",
+            "run_parameter_governance_summary",
+            "render_parameter_governance_web_view",
+            "run_parameter_governance_daily_digest",
+            "run_daily_trading_system_operator_brief",
+            "ai_trading_system.trading_engine.daily_trading_system_operator_brief",
+            "ai_trading_system.scoring",
+            "ai_trading_system.backtest",
+            "ai_trading_system.trading_engine.brokers",
+            "run_paper_trading_replay",
+        )
+        if any(token in name for token in blocked_module_tokens):
+            raise AssertionError(f"dashboard must not import pipeline path: {name}")
+        return original_import(name, globals_, locals_, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+
+    report = build_daily_task_dashboard_report(
+        as_of=as_of,
+        metadata_path=metadata_path,
+        run_report_path=None,
+        reports_dir=tmp_path,
+    )
+    html = render_daily_task_dashboard(report)
+    payload = build_daily_task_dashboard_payload(report)
+
+    summary = payload["daily_trading_system_operator_brief"]
+    assert summary["brief_status"] == "OK"
+    assert summary["summary_level"] == "NORMAL"
+    assert summary["headline"] == operator_brief["headline"]
+    assert summary["can_trust_outputs_today"] is True
+    assert summary["manual_action_required"] is False
+    assert summary["parameter_governance_digest_status"] == "OK"
+    assert summary["pipeline_health_status"] == "UNKNOWN"
+    assert summary["data_freshness_status"] == "UNKNOWN"
+    assert summary["critical_alert_count"] == 0
+    assert summary["warning_count"] == 0
+    assert summary["production_effect"] == "none"
+    assert summary["manual_review_only"] is True
+    assert summary["operator_brief_only"] is True
+    assert summary["read_only"] is True
+    assert summary["apply_executed_by_operator_brief"] is False
+    assert summary["rollback_executed_by_operator_brief"] is False
+    assert summary["broker_execution"] is False
+    assert summary["replay_execution"] is False
+    assert summary["trading_execution"] is False
+    assert "Daily Trading System Operator Brief" in html
+
+
 def _write_daily_ops_metadata(tmp_path: Path, as_of: date) -> Path:
     metadata_path = tmp_path / f"daily_ops_run_metadata_{as_of.isoformat()}.json"
     started_at = datetime(2026, 5, 4, 21, 0, tzinfo=UTC)
@@ -736,6 +811,94 @@ def _write_detail_reports(tmp_path: Path, as_of: date) -> None:
         "# Pipeline health alerts\n\n- 状态：PASS\n",
         encoding="utf-8",
     )
+
+
+def _write_operator_brief(tmp_path: Path, as_of: date) -> dict[str, Any]:
+    suffix = as_of.isoformat()
+    brief_path = (
+        tmp_path
+        / "data"
+        / "derived"
+        / "operator_briefs"
+        / f"daily_trading_system_operator_brief_{suffix}.json"
+    )
+    markdown_path = brief_path.with_suffix(".md")
+    payload: dict[str, Any] = {
+        "schema_version": "1.0",
+        "report_type": "daily_trading_system_operator_brief",
+        "task_id": "TRADING-022",
+        "date": suffix,
+        "mode": "daily_trading_system_operator_brief_only",
+        "production_effect": "none",
+        "manual_review_only": True,
+        "operator_brief_only": True,
+        "read_only": True,
+        "safe_for_scheduler": True,
+        "apply_executed_by_operator_brief": False,
+        "rollback_executed_by_operator_brief": False,
+        "broker_execution": False,
+        "replay_execution": False,
+        "trading_execution": False,
+        "brief_status": "OK",
+        "summary_level": "NORMAL",
+        "headline": "Trading system status is stable. No immediate manual action is required.",
+        "system_snapshot": {
+            "overall_system_status": "OK",
+            "can_trust_outputs_today": True,
+            "manual_action_required": False,
+            "has_critical_alerts": False,
+            "has_warnings": False,
+        },
+        "parameter_governance": {
+            "status": "OK",
+            "digest_status": "OK",
+            "summary_level": "NORMAL",
+            "governance_state": "ROLLBACK_COMPLETED",
+            "action_required": False,
+            "action_level": "NONE",
+            "headline": "Parameter governance is stable.",
+        },
+        "pipeline_health": {"status": "UNKNOWN", "available": False},
+        "data_freshness": {"status": "UNKNOWN", "available": False},
+        "alerts": {"critical": [], "warnings": [], "notes": ["Parameter governance digest is OK."]},
+        "output_artifacts": {
+            "json": {"path": str(brief_path)},
+            "markdown": {"path": str(markdown_path)},
+        },
+        "pipeline_contract": {
+            "runs_shadow_iteration_pipeline": False,
+            "runs_comparison_pipeline": False,
+            "runs_multi_day_review_pipeline": False,
+            "runs_promotion_proposal_pipeline": False,
+            "runs_apply_preflight_pipeline": False,
+            "runs_promotion_apply": False,
+            "runs_promotion_rollback": False,
+            "runs_lifecycle_audit_pipeline": False,
+            "runs_governance_summary_pipeline": False,
+            "runs_web_view_render_script": False,
+            "runs_daily_digest_script": False,
+            "runs_operator_brief_script": False,
+            "runs_market_pipeline": False,
+            "runs_backtest_pipeline": False,
+            "runs_scoring_pipeline": False,
+            "runs_broker_runner": False,
+            "runs_paper_runner": False,
+            "runs_replay_runner": False,
+            "writes_production_profile": False,
+            "writes_production_weights": False,
+            "writes_shadow_weights": False,
+            "writes_approved_profile": False,
+            "promotes_shadow_to_production": False,
+            "triggers_trade": False,
+        },
+    }
+    brief_path.parent.mkdir(parents=True, exist_ok=True)
+    brief_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.write_text("# Daily Trading System Operator Brief\n", encoding="utf-8")
+    return payload
 
 
 def _write_shadow_parameter_search(tmp_path: Path) -> None:
