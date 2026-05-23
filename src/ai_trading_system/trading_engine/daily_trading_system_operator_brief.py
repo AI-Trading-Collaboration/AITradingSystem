@@ -12,6 +12,8 @@ REPORT_TYPE = "daily_trading_system_operator_brief"
 RUN_REPORT_TYPE = "daily_trading_system_operator_brief_run"
 TASK_ID = "TRADING-022"
 DIGEST_TASK_ID = "TRADING-021"
+PIPELINE_HEALTH_TASK_ID = "TRADING-023"
+DATA_FRESHNESS_TASK_ID = "TRADING-024"
 MODE = "daily_trading_system_operator_brief_only"
 PRODUCTION_EFFECT_NONE = "none"
 DEFAULT_LOOKBACK_DAYS = 7
@@ -100,11 +102,33 @@ def default_parameter_governance_digest_json_path(data_root: Path, as_of: date) 
     )
 
 
+def default_pipeline_health_summary_root(data_root: Path) -> Path:
+    return data_root / "derived" / "pipeline_health"
+
+
+def default_pipeline_health_summary_json_path(data_root: Path, as_of: date) -> Path:
+    return default_pipeline_health_summary_root(data_root) / (
+        f"pipeline_health_summary_{as_of.isoformat()}.json"
+    )
+
+
+def default_data_freshness_summary_root(data_root: Path) -> Path:
+    return data_root / "derived" / "data_freshness"
+
+
+def default_data_freshness_summary_json_path(data_root: Path, as_of: date) -> Path:
+    return default_data_freshness_summary_root(data_root) / (
+        f"data_freshness_summary_{as_of.isoformat()}.json"
+    )
+
+
 def write_daily_trading_system_operator_brief(
     *,
     as_of: date,
     data_root: Path = DEFAULT_DATA_ROOT,
     parameter_governance_digest_file: Path | None = None,
+    pipeline_health_summary_file: Path | None = None,
+    data_freshness_summary_file: Path | None = None,
     lookback_days: int = DEFAULT_LOOKBACK_DAYS,
     fail_on_critical: bool = False,
     include_optional_artifacts: bool = False,
@@ -123,6 +147,8 @@ def write_daily_trading_system_operator_brief(
             as_of=as_of,
             data_root=data_root,
             parameter_governance_digest_file=parameter_governance_digest_file,
+            pipeline_health_summary_file=pipeline_health_summary_file,
+            data_freshness_summary_file=data_freshness_summary_file,
             lookback_days=lookback_days,
             include_optional_artifacts=include_optional_artifacts,
             output_json_path=output_json_path,
@@ -136,6 +162,8 @@ def write_daily_trading_system_operator_brief(
             as_of=as_of,
             data_root=data_root,
             parameter_governance_digest_file=parameter_governance_digest_file,
+            pipeline_health_summary_file=pipeline_health_summary_file,
+            data_freshness_summary_file=data_freshness_summary_file,
             lookback_days=lookback_days,
             include_optional_artifacts=include_optional_artifacts,
             output_json_path=output_json_path,
@@ -162,6 +190,8 @@ def build_daily_trading_system_operator_brief_payload(
     as_of: date,
     data_root: Path = DEFAULT_DATA_ROOT,
     parameter_governance_digest_file: Path | None = None,
+    pipeline_health_summary_file: Path | None = None,
+    data_freshness_summary_file: Path | None = None,
     lookback_days: int = DEFAULT_LOOKBACK_DAYS,
     include_optional_artifacts: bool = False,
     output_json_path: Path | None = None,
@@ -188,7 +218,7 @@ def build_daily_trading_system_operator_brief_payload(
         lookback_days=lookback_days,
     )
     digest_payload, input_status, input_reason = _load_digest(digest_path)
-    safety_validation = _digest_safety_validation(
+    digest_safety_validation = _digest_safety_validation(
         digest_payload,
         input_status=input_status,
         input_reason=input_reason,
@@ -197,12 +227,19 @@ def build_daily_trading_system_operator_brief_payload(
     pipeline_health = _pipeline_health_status(
         as_of=as_of,
         data_root=data_root,
+        explicit_path=pipeline_health_summary_file,
         lookback_days=lookback_days,
     )
     data_freshness = _data_freshness_status(
         as_of=as_of,
         data_root=data_root,
+        explicit_path=data_freshness_summary_file,
         lookback_days=lookback_days,
+    )
+    safety_validation = _input_safety_validation(
+        digest_validation=digest_safety_validation,
+        pipeline_health=pipeline_health,
+        data_freshness=data_freshness,
     )
     market_report = _market_report_status(
         as_of=as_of,
@@ -227,18 +264,22 @@ def build_daily_trading_system_operator_brief_payload(
     parameter_governance = _parameter_governance_status(
         digest=digest_payload,
         input_status=input_status,
-        safety_validation=safety_validation,
+        safety_validation=digest_safety_validation,
     )
     pending_manual_actions = _pending_manual_actions(
         digest=digest_payload,
         brief_alerts=alerts,
         input_status=input_status,
         safety_validation=safety_validation,
+        pipeline_health=pipeline_health,
+        data_freshness=data_freshness,
     )
     brief_status = _brief_status(
         digest=digest_payload,
         input_status=input_status,
         safety_validation=safety_validation,
+        pipeline_health=pipeline_health,
+        data_freshness=data_freshness,
         alerts=alerts,
         pending_manual_actions=pending_manual_actions,
     )
@@ -280,8 +321,8 @@ def build_daily_trading_system_operator_brief_payload(
         "headline": headline,
         "input_artifacts": {
             "parameter_governance_daily_digest": _artifact_record(digest_path),
-            "pipeline_health": pipeline_health["artifact"],
-            "data_freshness": data_freshness["artifact"],
+            "pipeline_health_summary": pipeline_health["artifact"],
+            "data_freshness_summary": data_freshness["artifact"],
             "market_report": market_report["artifact"],
         },
         "system_snapshot": system_snapshot,
@@ -330,13 +371,15 @@ def render_daily_trading_system_operator_brief_markdown(payload: dict[str, Any])
         lines.extend(["## URGENT: Manual Attention Required", ""])
     elif brief_status == BRIEF_ACTION_REQUIRED:
         lines.extend(["## Action Required", ""])
+    elif brief_status == BRIEF_WATCH:
+        lines.extend(["## Watch: Monitoring Recommended", ""])
     elif brief_status == BRIEF_SAFETY_BLOCKED:
         lines.extend(["## Operator Brief Safety Blocked", ""])
         lines.extend(
             [
                 (
-                    "Operator brief generation was safety-blocked because parameter "
-                    "governance digest safety fields are invalid."
+                    "Operator brief generation was safety-blocked because input "
+                    "artifact safety fields are invalid."
                 ),
                 "",
             ]
@@ -356,6 +399,8 @@ def render_daily_trading_system_operator_brief_markdown(payload: dict[str, Any])
                 "- Manual Action Required: "
                 f"`{_bool_text(snapshot.get('manual_action_required'))}`"
             ),
+            f"- Pipeline Health: `{pipeline.get('status', STATUS_UNKNOWN)}`",
+            f"- Data Freshness: `{freshness.get('status', STATUS_UNKNOWN)}`",
             f"- Headline: {payload.get('headline') or ''}",
             "",
             "## 2. Parameter Governance",
@@ -369,8 +414,14 @@ def render_daily_trading_system_operator_brief_markdown(payload: dict[str, Any])
             "## 3. Pipeline Health",
             "",
             f"- Status: `{pipeline.get('status', STATUS_UNKNOWN)}`",
-            f"- Failed Pipelines: {_inline_list(_strings(pipeline.get('failed_pipelines')))}",
-            f"- Stale Pipelines: {_inline_list(_strings(pipeline.get('stale_pipelines')))}",
+            f"- Summary Level: `{pipeline.get('summary_level', SUMMARY_UNKNOWN)}`",
+            f"- Required Pipelines: `{pipeline.get('required_pipelines', 0)}`",
+            ("- Missing Required Pipelines: " f"`{pipeline.get('missing_required_pipelines', 0)}`"),
+            ("- Stale Required Pipelines: " f"`{pipeline.get('stale_required_pipelines', 0)}`"),
+            f"- Critical Pipelines: `{pipeline.get('critical_pipelines', 0)}`",
+            f"- Warning Pipelines: `{pipeline.get('warning_pipelines', 0)}`",
+            f"- Report: `{pipeline.get('markdown_path') or ''}`",
+            f"- Headline: {pipeline.get('headline') or ''}",
             "- Notes:",
         ]
     )
@@ -381,9 +432,14 @@ def render_daily_trading_system_operator_brief_markdown(payload: dict[str, Any])
             "## 4. Data Freshness",
             "",
             f"- Status: `{freshness.get('status', STATUS_UNKNOWN)}`",
-            f"- Fresh Sources: {_inline_list(_strings(freshness.get('fresh_sources')))}",
-            f"- Stale Sources: {_inline_list(_strings(freshness.get('stale_sources')))}",
-            f"- Missing Sources: {_inline_list(_strings(freshness.get('missing_sources')))}",
+            f"- Summary Level: `{freshness.get('summary_level', SUMMARY_UNKNOWN)}`",
+            f"- Required Sources: `{freshness.get('required_sources', 0)}`",
+            ("- Missing Required Sources: " f"`{freshness.get('missing_required_sources', 0)}`"),
+            ("- Stale Required Sources: " f"`{freshness.get('stale_required_sources', 0)}`"),
+            f"- Critical Sources: `{freshness.get('critical_sources', 0)}`",
+            f"- Warning Sources: `{freshness.get('warning_sources', 0)}`",
+            f"- Report: `{freshness.get('markdown_path') or ''}`",
+            f"- Headline: {freshness.get('headline') or ''}",
             "- Notes:",
         ]
     )
@@ -511,6 +567,44 @@ def _resolve_digest_path(
         as_of=as_of,
         lookback_days=lookback_days,
         default_path=default_parameter_governance_digest_json_path(data_root, as_of),
+    )
+
+
+def _resolve_pipeline_health_summary_path(
+    *,
+    as_of: date,
+    data_root: Path,
+    explicit_path: Path | None,
+    lookback_days: int,
+) -> Path:
+    if explicit_path is not None:
+        return explicit_path
+    return _latest_dated_artifact(
+        roots=(default_pipeline_health_summary_root(data_root),),
+        prefix="pipeline_health_summary_",
+        suffixes=(".json",),
+        as_of=as_of,
+        lookback_days=lookback_days,
+        default_path=default_pipeline_health_summary_json_path(data_root, as_of),
+    )
+
+
+def _resolve_data_freshness_summary_path(
+    *,
+    as_of: date,
+    data_root: Path,
+    explicit_path: Path | None,
+    lookback_days: int,
+) -> Path:
+    if explicit_path is not None:
+        return explicit_path
+    return _latest_dated_artifact(
+        roots=(default_data_freshness_summary_root(data_root),),
+        prefix="data_freshness_summary_",
+        suffixes=(".json",),
+        as_of=as_of,
+        lookback_days=lookback_days,
+        default_path=default_data_freshness_summary_json_path(data_root, as_of),
     )
 
 
@@ -648,78 +742,355 @@ def _safety_reason(field: str) -> str:
     }.get(field, field)
 
 
-def _pipeline_health_status(*, as_of: date, data_root: Path, lookback_days: int) -> dict[str, Any]:
-    path = _optional_artifact_path(
-        data_root=data_root,
+def _pipeline_health_status(
+    *,
+    as_of: date,
+    data_root: Path,
+    explicit_path: Path | None,
+    lookback_days: int,
+) -> dict[str, Any]:
+    path = _resolve_pipeline_health_summary_path(
         as_of=as_of,
+        data_root=data_root,
+        explicit_path=explicit_path,
         lookback_days=lookback_days,
-        prefixes=("pipeline_health_",),
-        default_filename=f"pipeline_health_{as_of.isoformat()}.md",
-        subdirs=(data_root / "derived" / "pipeline_health",),
     )
     if not path.exists():
         return {
             "artifact": _optional_artifact_record(path),
             "status": STATUS_UNKNOWN,
             "available": False,
-            "pipeline_runs_checked": [],
-            "failed_pipelines": [],
-            "stale_pipelines": [],
-            "notes": [
-                "No pipeline health artifact was found. This does not block operator "
-                "brief generation."
-            ],
+            "health_status": STATUS_UNKNOWN,
+            "summary_level": SUMMARY_UNKNOWN,
+            "required_pipelines": 0,
+            "missing_required_pipelines": 0,
+            "stale_required_pipelines": 0,
+            "critical_pipelines": 0,
+            "warning_pipelines": 0,
+            "critical_pipeline_items": [],
+            "action_pipeline_items": [],
+            "missing_required_pipeline_items": [],
+            "stale_pipeline_items": [],
+            "headline": "",
+            "markdown_path": str(path.with_suffix(".md")),
+            "alerts": {"critical": [], "warnings": [], "notes": []},
+            "safety_validation": {
+                "status": "PASS",
+                "pipeline_health_task_id_valid": True,
+                "pipeline_health_production_effect_none": True,
+                "pipeline_health_only": True,
+                "pipeline_health_read_only": True,
+                "pipeline_health_no_pipeline_execution": True,
+                "pipeline_health_no_broker_execution": True,
+                "pipeline_health_no_replay_execution": True,
+                "pipeline_health_no_trading_execution": True,
+                "blocking_reasons": [],
+            },
+            "notes": ["No TRADING-023 pipeline health summary artifact was found."],
         }
-    payload = _read_json_object(path)
-    status = _artifact_status(path, payload, default=STATUS_AVAILABLE)
-    failed = _strings(payload.get("failed_pipelines"))
-    stale = _strings(payload.get("stale_pipelines"))
-    checked = _strings(payload.get("pipeline_runs_checked"))
-    if not failed and status in {"FAIL", "ERROR", "BLOCKED"}:
-        failed = ["pipeline_health"]
+    payload, read_error = _load_json_object_with_error(path)
+    if read_error:
+        return _invalid_pipeline_health_status(path, read_error)
+    safety = _pipeline_health_summary_safety_validation(payload)
+    coverage = _mapping(payload.get("coverage"))
+    health_status = _string_value(payload.get("health_status")) or STATUS_UNKNOWN
+    output_artifacts = _mapping(payload.get("output_artifacts"))
+    markdown_path = _string_value(_mapping(output_artifacts.get("markdown")).get("path"))
+    if not markdown_path:
+        markdown_path = str(path.with_suffix(".md"))
+    critical_items = _records(payload.get("critical_pipelines"))
+    missing_items = _records(payload.get("missing_required_pipelines"))
+    stale_items = _records(payload.get("stale_pipelines"))
+    action_items = [
+        item
+        for item in _records(payload.get("pipeline_results"))
+        if item.get("required") is True
+        and _string_value(item.get("status")) in {"ACTION_REQUIRED", "STALE"}
+    ]
     return {
         "artifact": _optional_artifact_record(path),
-        "status": status,
+        "status": health_status,
         "available": True,
-        "pipeline_runs_checked": checked,
-        "failed_pipelines": failed,
-        "stale_pipelines": stale,
-        "notes": _strings(payload.get("notes")) or [f"Pipeline health artifact found: {path}"],
+        "health_status": health_status,
+        "summary_level": _string_value(payload.get("summary_level")) or SUMMARY_UNKNOWN,
+        "required_pipelines": int(coverage.get("required_pipelines") or 0),
+        "missing_required_pipelines": int(coverage.get("missing_required_pipelines") or 0),
+        "stale_required_pipelines": int(coverage.get("stale_required_pipelines") or 0),
+        "critical_pipelines": int(coverage.get("critical_pipelines") or 0),
+        "warning_pipelines": int(coverage.get("warning_pipelines") or 0),
+        "critical_pipeline_items": critical_items,
+        "action_pipeline_items": action_items,
+        "missing_required_pipeline_items": missing_items,
+        "stale_pipeline_items": stale_items,
+        "headline": _string_value(payload.get("headline")),
+        "markdown_path": markdown_path,
+        "alerts": _mapping(payload.get("alerts")),
+        "safety_validation": safety,
+        "notes": _strings(_mapping(payload.get("operator_brief_integration")).get("notes")),
     }
 
 
-def _data_freshness_status(*, as_of: date, data_root: Path, lookback_days: int) -> dict[str, Any]:
-    path = _optional_artifact_path(
-        data_root=data_root,
+def _data_freshness_status(
+    *,
+    as_of: date,
+    data_root: Path,
+    explicit_path: Path | None,
+    lookback_days: int,
+) -> dict[str, Any]:
+    path = _resolve_data_freshness_summary_path(
         as_of=as_of,
+        data_root=data_root,
+        explicit_path=explicit_path,
         lookback_days=lookback_days,
-        prefixes=("data_freshness_", "data_quality_"),
-        default_filename=f"data_freshness_{as_of.isoformat()}.json",
-        subdirs=(data_root / "derived" / "data_freshness",),
     )
     if not path.exists():
         return {
             "artifact": _optional_artifact_record(path),
             "status": STATUS_UNKNOWN,
             "available": False,
-            "fresh_sources": [],
-            "stale_sources": [],
-            "missing_sources": [],
-            "notes": [
-                "No data freshness artifact was found. Freshness could not be "
-                "independently verified."
-            ],
+            "freshness_status": STATUS_UNKNOWN,
+            "summary_level": SUMMARY_UNKNOWN,
+            "required_sources": 0,
+            "missing_required_sources": 0,
+            "stale_required_sources": 0,
+            "critical_sources": 0,
+            "warning_sources": 0,
+            "critical_source_items": [],
+            "stale_source_items": [],
+            "missing_required_source_items": [],
+            "headline": "",
+            "markdown_path": str(path.with_suffix(".md")),
+            "alerts": {"critical": [], "warnings": [], "notes": []},
+            "safety_validation": {
+                "status": "PASS",
+                "data_freshness_task_id_valid": True,
+                "data_freshness_production_effect_none": True,
+                "data_freshness_only": True,
+                "data_freshness_read_only": True,
+                "data_freshness_no_data_download": True,
+                "data_freshness_no_pipeline_execution": True,
+                "data_freshness_no_broker_execution": True,
+                "data_freshness_no_replay_execution": True,
+                "data_freshness_no_trading_execution": True,
+                "blocking_reasons": [],
+            },
+            "notes": ["No TRADING-024 data freshness summary artifact was found."],
         }
-    payload = _read_json_object(path)
-    status = _artifact_status(path, payload, default=STATUS_AVAILABLE)
+    payload, read_error = _load_json_object_with_error(path)
+    if read_error:
+        return _invalid_data_freshness_status(path, read_error)
+    safety = _data_freshness_summary_safety_validation(payload)
+    coverage = _mapping(payload.get("coverage"))
+    freshness_status = _string_value(payload.get("freshness_status")) or STATUS_UNKNOWN
+    output_artifacts = _mapping(payload.get("output_artifacts"))
+    markdown_path = _string_value(_mapping(output_artifacts.get("markdown")).get("path"))
+    if not markdown_path:
+        markdown_path = str(path.with_suffix(".md"))
     return {
         "artifact": _optional_artifact_record(path),
-        "status": status,
+        "status": freshness_status,
         "available": True,
-        "fresh_sources": _strings(payload.get("fresh_sources")),
-        "stale_sources": _strings(payload.get("stale_sources")),
-        "missing_sources": _strings(payload.get("missing_sources")),
-        "notes": _strings(payload.get("notes")) or [f"Data freshness artifact found: {path}"],
+        "freshness_status": freshness_status,
+        "summary_level": _string_value(payload.get("summary_level")) or SUMMARY_UNKNOWN,
+        "required_sources": int(coverage.get("required_sources") or 0),
+        "missing_required_sources": int(coverage.get("missing_required_sources") or 0),
+        "stale_required_sources": int(coverage.get("stale_required_sources") or 0),
+        "critical_sources": int(coverage.get("critical_sources") or 0),
+        "warning_sources": int(coverage.get("warning_sources") or 0),
+        "critical_source_items": _records(payload.get("critical_sources")),
+        "stale_source_items": _records(payload.get("stale_sources")),
+        "missing_required_source_items": _records(payload.get("missing_required_sources")),
+        "headline": _string_value(payload.get("headline")),
+        "markdown_path": markdown_path,
+        "alerts": _mapping(payload.get("alerts")),
+        "safety_validation": safety,
+        "notes": _strings(_mapping(payload.get("operator_brief_integration")).get("notes")),
+    }
+
+
+def _invalid_pipeline_health_status(path: Path, reason: str) -> dict[str, Any]:
+    return {
+        "artifact": _optional_artifact_record(path),
+        "status": STATUS_UNKNOWN,
+        "available": True,
+        "health_status": STATUS_UNKNOWN,
+        "summary_level": SUMMARY_UNKNOWN,
+        "required_pipelines": 0,
+        "missing_required_pipelines": 0,
+        "stale_required_pipelines": 0,
+        "critical_pipelines": 0,
+        "warning_pipelines": 0,
+        "critical_pipeline_items": [],
+        "action_pipeline_items": [],
+        "missing_required_pipeline_items": [],
+        "stale_pipeline_items": [],
+        "headline": "",
+        "markdown_path": str(path.with_suffix(".md")),
+        "alerts": {"critical": [], "warnings": [], "notes": []},
+        "safety_validation": {
+            "status": "FAIL",
+            "pipeline_health_task_id_valid": False,
+            "pipeline_health_production_effect_none": False,
+            "pipeline_health_only": False,
+            "pipeline_health_read_only": False,
+            "pipeline_health_no_pipeline_execution": False,
+            "pipeline_health_no_broker_execution": False,
+            "pipeline_health_no_replay_execution": False,
+            "pipeline_health_no_trading_execution": False,
+            "blocking_reasons": [reason],
+        },
+        "notes": [reason],
+    }
+
+
+def _invalid_data_freshness_status(path: Path, reason: str) -> dict[str, Any]:
+    return {
+        "artifact": _optional_artifact_record(path),
+        "status": STATUS_UNKNOWN,
+        "available": True,
+        "freshness_status": STATUS_UNKNOWN,
+        "summary_level": SUMMARY_UNKNOWN,
+        "required_sources": 0,
+        "missing_required_sources": 0,
+        "stale_required_sources": 0,
+        "critical_sources": 0,
+        "warning_sources": 0,
+        "critical_source_items": [],
+        "stale_source_items": [],
+        "missing_required_source_items": [],
+        "headline": "",
+        "markdown_path": str(path.with_suffix(".md")),
+        "alerts": {"critical": [], "warnings": [], "notes": []},
+        "safety_validation": {
+            "status": "FAIL",
+            "data_freshness_task_id_valid": False,
+            "data_freshness_production_effect_none": False,
+            "data_freshness_only": False,
+            "data_freshness_read_only": False,
+            "data_freshness_no_data_download": False,
+            "data_freshness_no_pipeline_execution": False,
+            "data_freshness_no_broker_execution": False,
+            "data_freshness_no_replay_execution": False,
+            "data_freshness_no_trading_execution": False,
+            "blocking_reasons": [reason],
+        },
+        "notes": [reason],
+    }
+
+
+def _pipeline_health_summary_safety_validation(payload: dict[str, Any]) -> dict[str, Any]:
+    checks = {
+        "pipeline_health_task_id_valid": payload.get("task_id") == PIPELINE_HEALTH_TASK_ID,
+        "pipeline_health_production_effect_none": (
+            payload.get("production_effect") == PRODUCTION_EFFECT_NONE
+        ),
+        "pipeline_health_only": payload.get("pipeline_health_only") is True,
+        "pipeline_health_read_only": payload.get("read_only") is True,
+        "pipeline_health_no_pipeline_execution": (
+            payload.get("pipelines_executed_by_health_check") is False
+        ),
+        "pipeline_health_no_broker_execution": payload.get("broker_execution") is False,
+        "pipeline_health_no_replay_execution": payload.get("replay_execution") is False,
+        "pipeline_health_no_trading_execution": payload.get("trading_execution") is False,
+    }
+    blocking_reasons = [
+        _summary_safety_reason(field) for field, passed in checks.items() if not passed
+    ]
+    return {
+        "status": "PASS" if not blocking_reasons else "FAIL",
+        **checks,
+        "blocking_reasons": blocking_reasons,
+    }
+
+
+def _data_freshness_summary_safety_validation(payload: dict[str, Any]) -> dict[str, Any]:
+    checks = {
+        "data_freshness_task_id_valid": payload.get("task_id") == DATA_FRESHNESS_TASK_ID,
+        "data_freshness_production_effect_none": (
+            payload.get("production_effect") == PRODUCTION_EFFECT_NONE
+        ),
+        "data_freshness_only": payload.get("data_freshness_only") is True,
+        "data_freshness_read_only": payload.get("read_only") is True,
+        "data_freshness_no_data_download": (
+            payload.get("data_downloaded_by_freshness_check") is False
+        ),
+        "data_freshness_no_pipeline_execution": (
+            payload.get("pipelines_executed_by_freshness_check") is False
+        ),
+        "data_freshness_no_broker_execution": payload.get("broker_execution") is False,
+        "data_freshness_no_replay_execution": payload.get("replay_execution") is False,
+        "data_freshness_no_trading_execution": payload.get("trading_execution") is False,
+    }
+    blocking_reasons = [
+        _summary_safety_reason(field) for field, passed in checks.items() if not passed
+    ]
+    return {
+        "status": "PASS" if not blocking_reasons else "FAIL",
+        **checks,
+        "blocking_reasons": blocking_reasons,
+    }
+
+
+def _summary_safety_reason(field: str) -> str:
+    return {
+        "pipeline_health_task_id_valid": ("Pipeline health summary task_id must be TRADING-023."),
+        "pipeline_health_production_effect_none": (
+            "Pipeline health summary production_effect must be none."
+        ),
+        "pipeline_health_only": "Pipeline health summary must keep pipeline_health_only=true.",
+        "pipeline_health_read_only": "Pipeline health summary must keep read_only=true.",
+        "pipeline_health_no_pipeline_execution": (
+            "Pipeline health summary must not run pipelines."
+        ),
+        "pipeline_health_no_broker_execution": (
+            "Pipeline health summary must keep broker_execution=false."
+        ),
+        "pipeline_health_no_replay_execution": (
+            "Pipeline health summary must keep replay_execution=false."
+        ),
+        "pipeline_health_no_trading_execution": (
+            "Pipeline health summary must keep trading_execution=false."
+        ),
+        "data_freshness_task_id_valid": ("Data freshness summary task_id must be TRADING-024."),
+        "data_freshness_production_effect_none": (
+            "Data freshness summary production_effect must be none."
+        ),
+        "data_freshness_only": "Data freshness summary must keep data_freshness_only=true.",
+        "data_freshness_read_only": "Data freshness summary must keep read_only=true.",
+        "data_freshness_no_data_download": (
+            "Data freshness summary must not download or refresh data."
+        ),
+        "data_freshness_no_pipeline_execution": ("Data freshness summary must not run pipelines."),
+        "data_freshness_no_broker_execution": (
+            "Data freshness summary must keep broker_execution=false."
+        ),
+        "data_freshness_no_replay_execution": (
+            "Data freshness summary must keep replay_execution=false."
+        ),
+        "data_freshness_no_trading_execution": (
+            "Data freshness summary must keep trading_execution=false."
+        ),
+    }.get(field, field)
+
+
+def _input_safety_validation(
+    *,
+    digest_validation: dict[str, Any],
+    pipeline_health: dict[str, Any],
+    data_freshness: dict[str, Any],
+) -> dict[str, Any]:
+    pipeline_validation = _mapping(pipeline_health.get("safety_validation"))
+    freshness_validation = _mapping(data_freshness.get("safety_validation"))
+    blocking_reasons = []
+    blocking_reasons.extend(_strings(digest_validation.get("blocking_reasons")))
+    blocking_reasons.extend(_strings(pipeline_validation.get("blocking_reasons")))
+    blocking_reasons.extend(_strings(freshness_validation.get("blocking_reasons")))
+    return {
+        **digest_validation,
+        "status": "PASS" if not blocking_reasons else "FAIL",
+        "pipeline_health": pipeline_validation,
+        "data_freshness": freshness_validation,
+        "blocking_reasons": list(dict.fromkeys(blocking_reasons)),
     }
 
 
@@ -880,33 +1251,49 @@ def _alerts(
     data_freshness: dict[str, Any],
 ) -> dict[str, list[str]]:
     raw_alerts = _mapping(digest.get("alerts"))
-    critical = list(_strings(raw_alerts.get("critical")))
-    warnings = list(_strings(raw_alerts.get("warnings")))
-    notes = list(_strings(raw_alerts.get("notes")))
+    critical = _prefixed_alerts("TRADING-021", _strings(raw_alerts.get("critical")))
+    warnings = _prefixed_alerts("TRADING-021", _strings(raw_alerts.get("warnings")))
+    notes = _prefixed_alerts("TRADING-021", _strings(raw_alerts.get("notes")))
     digest_status = _string_value(digest.get("digest_status"))
+    pipeline_alerts = _mapping(pipeline_health.get("alerts"))
+    freshness_alerts = _mapping(data_freshness.get("alerts"))
+    pipeline_status = _string_value(pipeline_health.get("health_status")) or _string_value(
+        pipeline_health.get("status")
+    )
+    freshness_status = _string_value(data_freshness.get("freshness_status")) or _string_value(
+        data_freshness.get("status")
+    )
 
     if input_status == BRIEF_INPUT_MISSING and input_reason:
-        warnings.append(input_reason)
+        warnings.append(f"[TRADING-022] {input_reason}")
     if input_status == BRIEF_INPUT_INVALID and input_reason:
-        critical.append(input_reason)
+        critical.append(f"[TRADING-022] {input_reason}")
     if safety_validation.get("status") == "FAIL" and input_status == BRIEF_OK:
         critical.append(
-            "Operator brief generation was safety-blocked because parameter governance digest "
+            "[TRADING-022] Operator brief generation was safety-blocked because input artifact "
             "safety fields are invalid."
         )
-        critical.extend(_strings(safety_validation.get("blocking_reasons")))
-    if _is_critical_status(_string_value(pipeline_health.get("status"))):
-        critical.append("Pipeline health artifact reports a critical status.")
-    elif _is_warning_status(_string_value(pipeline_health.get("status"))):
-        warnings.append("Pipeline health artifact reports warnings.")
-    if _is_critical_status(_string_value(data_freshness.get("status"))):
-        critical.append("Data freshness artifact reports a critical status.")
-    elif _is_warning_status(_string_value(data_freshness.get("status"))):
-        warnings.append("Data freshness artifact reports warnings.")
+        critical.extend(
+            _prefixed_alerts("TRADING-022", _strings(safety_validation.get("blocking_reasons")))
+        )
+    critical.extend(_prefixed_alerts("TRADING-023", _strings(pipeline_alerts.get("critical"))))
+    warnings.extend(_prefixed_alerts("TRADING-023", _strings(pipeline_alerts.get("warnings"))))
+    notes.extend(_prefixed_alerts("TRADING-023", _strings(pipeline_alerts.get("notes"))))
+    critical.extend(_prefixed_alerts("TRADING-024", _strings(freshness_alerts.get("critical"))))
+    warnings.extend(_prefixed_alerts("TRADING-024", _strings(freshness_alerts.get("warnings"))))
+    notes.extend(_prefixed_alerts("TRADING-024", _strings(freshness_alerts.get("notes"))))
+    if pipeline_status == "CRITICAL":
+        critical.append("[TRADING-023] Pipeline health summary status is CRITICAL.")
+    elif pipeline_status in {"ACTION_REQUIRED", "INCOMPLETE", "WATCH", STATUS_UNKNOWN}:
+        warnings.append(f"[TRADING-023] Pipeline health summary status is {pipeline_status}.")
+    if freshness_status == "CRITICAL":
+        critical.append("[TRADING-024] Data freshness summary status is CRITICAL.")
+    elif freshness_status in {"STALE", "MISSING", "WATCH", STATUS_UNKNOWN}:
+        warnings.append(f"[TRADING-024] Data freshness summary status is {freshness_status}.")
     if digest_status == BRIEF_OK:
-        notes.append("Parameter governance digest is OK.")
+        notes.append("[TRADING-021] Parameter governance digest is OK.")
     elif digest_status:
-        notes.append(f"Parameter governance digest status is {digest_status}.")
+        notes.append(f"[TRADING-021] Parameter governance digest status is {digest_status}.")
     return {
         "critical": list(dict.fromkeys(critical)),
         "warnings": list(dict.fromkeys(warnings)),
@@ -943,6 +1330,8 @@ def _pending_manual_actions(
     brief_alerts: dict[str, list[str]],
     input_status: str,
     safety_validation: dict[str, Any],
+    pipeline_health: dict[str, Any],
+    data_freshness: dict[str, Any],
 ) -> dict[str, Any]:
     items: list[dict[str, Any]] = []
     snapshot = _mapping(digest.get("governance_snapshot"))
@@ -952,8 +1341,8 @@ def _pending_manual_actions(
         items.append(
             _manual_action(
                 "Locate or regenerate TRADING-021 digest",
-                "operator_brief_input",
-                1,
+                "TRADING-022",
+                "HIGH",
                 "Required parameter governance daily digest is missing.",
             )
         )
@@ -961,18 +1350,18 @@ def _pending_manual_actions(
         items.append(
             _manual_action(
                 "Inspect invalid TRADING-021 digest",
-                "operator_brief_input",
-                1,
+                "TRADING-022",
+                "HIGH",
                 "Required digest could not be parsed or has the wrong task_id.",
             )
         )
     elif safety_validation.get("status") == "FAIL":
         items.append(
             _manual_action(
-                "Inspect digest safety fields",
-                "parameter_governance_daily_digest",
-                1,
-                "Digest safety validation failed.",
+                "Inspect input artifact safety fields",
+                "TRADING-022",
+                "HIGH",
+                "One or more input artifact safety validations failed.",
             )
         )
 
@@ -980,8 +1369,8 @@ def _pending_manual_actions(
         items.append(
             _manual_action(
                 "Review parameter governance action",
-                "parameter_governance_daily_digest",
-                2,
+                "TRADING-021",
+                "MEDIUM",
                 _string_value(snapshot.get("recommended_action"))
                 or "Digest reports action_required=true.",
             )
@@ -990,8 +1379,8 @@ def _pending_manual_actions(
         items.append(
             _manual_action(
                 "Review pending apply",
-                "parameter_governance_daily_digest",
-                1,
+                "TRADING-021",
+                "HIGH",
                 "pending_apply=true; explicit approved apply remains outside operator brief.",
             )
         )
@@ -999,8 +1388,8 @@ def _pending_manual_actions(
         items.append(
             _manual_action(
                 "Review pending rollback",
-                "parameter_governance_daily_digest",
-                1,
+                "TRADING-021",
+                "HIGH",
                 "pending_rollback=true; explicit approved rollback remains outside operator brief.",
             )
         )
@@ -1008,17 +1397,71 @@ def _pending_manual_actions(
         items.append(
             _manual_action(
                 "Review pending promotion proposal",
-                "parameter_governance_daily_digest",
-                2,
+                "TRADING-021",
+                "MEDIUM",
                 "pending_proposal_review=true.",
+            )
+        )
+    for item in _records(pipeline_health.get("critical_pipeline_items")):
+        items.append(
+            _manual_action(
+                "Review critical pipeline health finding",
+                "TRADING-023",
+                "HIGH",
+                _pipeline_issue_reason(item),
+            )
+        )
+    for item in _records(pipeline_health.get("action_pipeline_items")):
+        items.append(
+            _manual_action(
+                "Review required pipeline issue",
+                "TRADING-023",
+                "MEDIUM",
+                _pipeline_issue_reason(item),
+            )
+        )
+    for item in _records(pipeline_health.get("missing_required_pipeline_items")):
+        items.append(
+            _manual_action(
+                "Review missing required pipeline artifact",
+                "TRADING-023",
+                "MEDIUM",
+                _pipeline_issue_reason(item),
+            )
+        )
+    for item in _records(data_freshness.get("critical_source_items")):
+        items.append(
+            _manual_action(
+                "Review critical data freshness finding",
+                "TRADING-024",
+                "HIGH",
+                _source_issue_reason(item),
+            )
+        )
+    for item in _records(data_freshness.get("stale_source_items")):
+        items.append(
+            _manual_action(
+                "Review stale required data source",
+                "TRADING-024",
+                "MEDIUM",
+                _source_issue_reason(item),
+            )
+        )
+    for item in _records(data_freshness.get("missing_required_source_items")):
+        items.append(
+            _manual_action(
+                "Review missing required data source",
+                "TRADING-024",
+                "MEDIUM",
+                _source_issue_reason(item),
             )
         )
     if _strings(brief_alerts.get("critical")):
         items.append(
             _manual_action(
                 "Urgent review of critical findings",
-                "operator_brief_alerts",
-                1,
+                "TRADING-022",
+                "HIGH",
                 "Critical alerts are present.",
             )
         )
@@ -1032,7 +1475,7 @@ def _pending_manual_actions(
     }
 
 
-def _manual_action(action: str, source: str, priority: int, reason: str) -> dict[str, Any]:
+def _manual_action(action: str, source: str, priority: str, reason: str) -> dict[str, Any]:
     return {
         "action": action,
         "source": source,
@@ -1046,6 +1489,8 @@ def _brief_status(
     digest: dict[str, Any],
     input_status: str,
     safety_validation: dict[str, Any],
+    pipeline_health: dict[str, Any],
+    data_freshness: dict[str, Any],
     alerts: dict[str, list[str]],
     pending_manual_actions: dict[str, Any],
 ) -> str:
@@ -1055,18 +1500,36 @@ def _brief_status(
         return BRIEF_INPUT_INVALID
     if safety_validation.get("status") == "FAIL":
         return BRIEF_SAFETY_BLOCKED
+    digest_status = _string_value(digest.get("digest_status"))
+    pipeline_status = _string_value(pipeline_health.get("health_status")) or _string_value(
+        pipeline_health.get("status")
+    )
+    freshness_status = _string_value(data_freshness.get("freshness_status")) or _string_value(
+        data_freshness.get("status")
+    )
     if _strings(alerts.get("critical")):
         return BRIEF_URGENT
-    digest_status = _string_value(digest.get("digest_status"))
     if digest_status == BRIEF_URGENT:
+        return BRIEF_URGENT
+    if pipeline_status == "CRITICAL" or freshness_status == "CRITICAL":
         return BRIEF_URGENT
     if digest_status == BRIEF_ACTION_REQUIRED:
         return BRIEF_ACTION_REQUIRED
+    if pipeline_status in {"ACTION_REQUIRED", "INCOMPLETE"}:
+        return BRIEF_ACTION_REQUIRED
+    if freshness_status in {"STALE", "MISSING"}:
+        return BRIEF_ACTION_REQUIRED
     if pending_manual_actions.get("has_pending_actions") is True:
         return BRIEF_ACTION_REQUIRED
-    if digest_status == BRIEF_WATCH or _strings(alerts.get("warnings")):
+    if digest_status == BRIEF_WATCH:
         return BRIEF_WATCH
-    if digest_status == BRIEF_OK:
+    if pipeline_status in {"WATCH", STATUS_UNKNOWN}:
+        return BRIEF_WATCH
+    if freshness_status in {"WATCH", STATUS_UNKNOWN}:
+        return BRIEF_WATCH
+    if _strings(alerts.get("warnings")):
+        return BRIEF_WATCH
+    if digest_status == BRIEF_OK and pipeline_status == BRIEF_OK and freshness_status == BRIEF_OK:
         return BRIEF_OK
     return BRIEF_INPUT_INVALID
 
@@ -1101,7 +1564,7 @@ def _headline(brief_status: str) -> str:
             "system state."
         ),
         BRIEF_SAFETY_BLOCKED: (
-            "Operator brief generation was blocked by invalid digest safety fields."
+            "Operator brief generation was blocked by invalid input artifact safety fields."
         ),
         BRIEF_ERROR: "Daily trading system operator brief generation failed.",
     }.get(brief_status, "Trading system status is unknown.")
@@ -1166,15 +1629,23 @@ def _recommended_next_steps(brief_status: str) -> list[str]:
         ],
         BRIEF_WATCH: [
             "Continue monitoring.",
-            "Check pipeline health and data freshness if available.",
+            "Review pipeline health and data freshness summaries.",
+            "Regenerate TRADING-023 or TRADING-024 if their artifacts are missing or stale.",
         ],
         BRIEF_ACTION_REQUIRED: [
             "Review pending manual actions.",
+            (
+                "Inspect pipeline health and data freshness summaries before relying on "
+                "today's outputs."
+            ),
             "Do not apply or rollback without explicit approval artifacts and danger flags.",
         ],
         BRIEF_URGENT: [
             "Stop relying on automated outputs until the issue is reviewed.",
-            "Inspect critical alerts and the latest parameter governance digest.",
+            (
+                "Inspect critical alerts from parameter governance, pipeline health, and "
+                "data freshness."
+            ),
             "Confirm no broker/replay/trading execution occurred unexpectedly.",
         ],
         BRIEF_INPUT_MISSING: [
@@ -1186,7 +1657,7 @@ def _recommended_next_steps(brief_status: str) -> list[str]:
             "Do not infer system health from partial artifacts.",
         ],
         BRIEF_SAFETY_BLOCKED: [
-            "Inspect digest safety fields.",
+            "Inspect input artifact safety fields.",
             "Do not continue with operator brief-based decisions until safety fields are fixed.",
         ],
         BRIEF_ERROR: [
@@ -1232,6 +1703,8 @@ def _error_payload(
     as_of: date,
     data_root: Path,
     parameter_governance_digest_file: Path | None,
+    pipeline_health_summary_file: Path | None,
+    data_freshness_summary_file: Path | None,
     lookback_days: int,
     include_optional_artifacts: bool,
     output_json_path: Path,
@@ -1247,6 +1720,18 @@ def _error_payload(
         explicit_path=parameter_governance_digest_file,
         lookback_days=lookback_days,
     )
+    pipeline_path = _resolve_pipeline_health_summary_path(
+        as_of=as_of,
+        data_root=data_root,
+        explicit_path=pipeline_health_summary_file,
+        lookback_days=lookback_days,
+    )
+    freshness_path = _resolve_data_freshness_summary_path(
+        as_of=as_of,
+        data_root=data_root,
+        explicit_path=data_freshness_summary_file,
+        lookback_days=lookback_days,
+    )
     _ = include_optional_artifacts
     alerts = {"critical": [error], "warnings": [], "notes": []}
     pending = {
@@ -1254,8 +1739,8 @@ def _error_payload(
         "items": [
             _manual_action(
                 "Inspect operator brief run error",
-                "operator_brief_run",
-                1,
+                "TRADING-022",
+                "HIGH",
                 error,
             )
         ],
@@ -1283,12 +1768,8 @@ def _error_payload(
         "headline": _headline(BRIEF_ERROR),
         "input_artifacts": {
             "parameter_governance_daily_digest": _artifact_record(digest_path),
-            "pipeline_health": _optional_artifact_record(
-                data_root.parent / "outputs" / "reports" / f"pipeline_health_{as_of}.md"
-            ),
-            "data_freshness": _optional_artifact_record(
-                data_root.parent / "outputs" / "reports" / f"data_freshness_{as_of}.json"
-            ),
+            "pipeline_health_summary": _optional_artifact_record(pipeline_path),
+            "data_freshness_summary": _optional_artifact_record(freshness_path),
             "market_report": _optional_artifact_record(
                 data_root.parent / "outputs" / "reports" / f"market_report_{as_of}.json"
             ),
@@ -1310,17 +1791,27 @@ def _error_payload(
         "pipeline_health": {
             "status": STATUS_UNKNOWN,
             "available": False,
-            "pipeline_runs_checked": [],
-            "failed_pipelines": [],
-            "stale_pipelines": [],
+            "health_status": STATUS_UNKNOWN,
+            "summary_level": SUMMARY_UNKNOWN,
+            "required_pipelines": 0,
+            "missing_required_pipelines": 0,
+            "stale_required_pipelines": 0,
+            "critical_pipelines": 0,
+            "warning_pipelines": 0,
+            "markdown_path": str(pipeline_path.with_suffix(".md")),
             "notes": [],
         },
         "data_freshness": {
             "status": STATUS_UNKNOWN,
             "available": False,
-            "fresh_sources": [],
-            "stale_sources": [],
-            "missing_sources": [],
+            "freshness_status": STATUS_UNKNOWN,
+            "summary_level": SUMMARY_UNKNOWN,
+            "required_sources": 0,
+            "missing_required_sources": 0,
+            "stale_required_sources": 0,
+            "critical_sources": 0,
+            "warning_sources": 0,
+            "markdown_path": str(freshness_path.with_suffix(".md")),
             "notes": [],
         },
         "market_report_status": {
@@ -1408,6 +1899,20 @@ def _read_json_object(path: Path) -> dict[str, Any]:
     return payload if isinstance(payload, dict) else {}
 
 
+def _load_json_object_with_error(path: Path) -> tuple[dict[str, Any], str]:
+    if path.suffix.lower() != ".json":
+        return {}, f"Artifact must be JSON: {path}"
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        return {}, f"Artifact JSON is invalid: {exc}"
+    except OSError as exc:
+        return {}, f"Artifact cannot be read: {exc}"
+    if not isinstance(payload, dict):
+        return {}, "Artifact JSON must be an object."
+    return payload, ""
+
+
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -1474,6 +1979,23 @@ def _strings(value: Any) -> list[str]:
     if isinstance(value, set):
         return [str(item) for item in value if str(item)]
     return []
+
+
+def _prefixed_alerts(source: str, items: list[str]) -> list[str]:
+    prefix = f"[{source}] "
+    return [item if item.startswith(prefix) else f"{prefix}{item}" for item in items]
+
+
+def _pipeline_issue_reason(item: dict[str, Any]) -> str:
+    pipeline_id = _string_value(item.get("pipeline_id")) or "unknown_pipeline"
+    reason = _string_value(item.get("reason")) or _string_value(item.get("status"))
+    return f"Pipeline {pipeline_id}: {reason or 'requires review'}."
+
+
+def _source_issue_reason(item: dict[str, Any]) -> str:
+    source_id = _string_value(item.get("source_id")) or "unknown_source"
+    reason = _string_value(item.get("reason")) or _string_value(item.get("status"))
+    return f"Required source {source_id}: {reason or 'requires review'}."
 
 
 def _string_value(value: Any) -> str:

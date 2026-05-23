@@ -31,6 +31,8 @@ def test_operator_brief_status_mapping_from_digest(
 ) -> None:
     context = _write_context(tmp_path)
     _write_digest(context, digest_status=digest_status)
+    _write_pipeline_health_summary(context)
+    _write_data_freshness_summary(context)
 
     payload = _build_brief(context)
 
@@ -96,7 +98,7 @@ def test_operator_brief_blocks_invalid_digest_safety_fields(
     assert "Operator Brief Safety Blocked" in markdown
 
 
-def test_operator_brief_optional_artifacts_missing_do_not_block(
+def test_operator_brief_health_and_freshness_missing_degrade_to_watch(
     tmp_path: Path,
 ) -> None:
     context = _write_context(tmp_path)
@@ -106,40 +108,31 @@ def test_operator_brief_optional_artifacts_missing_do_not_block(
     markdown = render_daily_trading_system_operator_brief_markdown(payload)
 
     _assert_operator_invariants(payload)
-    assert payload["brief_status"] == "OK"
+    assert payload["brief_status"] == "WATCH"
     assert payload["pipeline_health"]["status"] == "UNKNOWN"
     assert payload["data_freshness"]["status"] == "UNKNOWN"
     assert payload["market_report_status"]["status"] == "UNKNOWN"
+    assert payload["pipeline_health"]["available"] is False
+    assert payload["data_freshness"]["available"] is False
+    assert "No TRADING-023 pipeline health summary artifact was found." in (
+        payload["pipeline_health"]["notes"]
+    )
+    assert "No TRADING-024 data freshness summary artifact was found." in (
+        payload["data_freshness"]["notes"]
+    )
     assert "Status: `UNKNOWN`" in markdown
+    assert "## Watch: Monitoring Recommended" in markdown
     assert "failure" not in markdown.lower()
 
 
-def test_operator_brief_optional_artifacts_present_are_summarized(
+def test_operator_brief_health_and_freshness_summaries_are_consumed(
     tmp_path: Path,
 ) -> None:
     context = _write_context(tmp_path)
     _write_digest(context)
+    _write_pipeline_health_summary(context, warning_pipelines=1)
+    _write_data_freshness_summary(context, warning_sources=1)
     reports = tmp_path / "outputs" / "reports"
-    _write_json(
-        reports / "pipeline_health_2026-05-23.json",
-        {
-            "status": "FAIL",
-            "pipeline_runs_checked": ["score_daily"],
-            "failed_pipelines": ["score_daily"],
-            "stale_pipelines": ["pit_snapshots"],
-            "notes": ["pipeline health test fixture"],
-        },
-    )
-    _write_json(
-        reports / "data_freshness_2026-05-23.json",
-        {
-            "status": "PASS",
-            "fresh_sources": ["prices_daily"],
-            "stale_sources": [],
-            "missing_sources": [],
-            "notes": ["freshness test fixture"],
-        },
-    )
     _write_json(
         reports / "market_report_2026-05-23.json",
         {
@@ -152,11 +145,193 @@ def test_operator_brief_optional_artifacts_present_are_summarized(
     payload = _build_brief(context)
 
     _assert_operator_invariants(payload)
-    assert payload["brief_status"] == "URGENT"
-    assert payload["pipeline_health"]["status"] == "FAIL"
-    assert payload["pipeline_health"]["failed_pipelines"] == ["score_daily"]
-    assert payload["data_freshness"]["status"] == "PASS"
+    assert payload["brief_status"] == "OK"
+    assert payload["input_artifacts"]["pipeline_health_summary"]["status"] == "FOUND"
+    assert payload["input_artifacts"]["data_freshness_summary"]["status"] == "FOUND"
+    assert payload["pipeline_health"]["status"] == "OK"
+    assert payload["pipeline_health"]["health_status"] == "OK"
+    assert payload["pipeline_health"]["required_pipelines"] == 8
+    assert payload["pipeline_health"]["warning_pipelines"] == 1
+    assert payload["data_freshness"]["status"] == "OK"
+    assert payload["data_freshness"]["freshness_status"] == "OK"
+    assert payload["data_freshness"]["required_sources"] == 3
+    assert payload["data_freshness"]["warning_sources"] == 1
     assert payload["market_report_status"]["status"] == "PASS"
+
+
+@pytest.mark.parametrize(
+    ("health_status", "expected_brief_status"),
+    [
+        ("CRITICAL", "URGENT"),
+        ("ACTION_REQUIRED", "ACTION_REQUIRED"),
+        ("INCOMPLETE", "ACTION_REQUIRED"),
+        ("WATCH", "WATCH"),
+    ],
+)
+def test_operator_brief_pipeline_health_status_affects_brief_status(
+    tmp_path: Path,
+    health_status: str,
+    expected_brief_status: str,
+) -> None:
+    context = _write_context(tmp_path)
+    _write_digest(context)
+    _write_pipeline_health_summary(context, health_status=health_status)
+    _write_data_freshness_summary(context)
+
+    payload = _build_brief(context)
+
+    _assert_operator_invariants(payload)
+    assert payload["brief_status"] == expected_brief_status
+    assert payload["pipeline_health"]["health_status"] == health_status
+
+
+@pytest.mark.parametrize(
+    ("freshness_status", "expected_brief_status"),
+    [
+        ("CRITICAL", "URGENT"),
+        ("STALE", "ACTION_REQUIRED"),
+        ("MISSING", "ACTION_REQUIRED"),
+        ("WATCH", "WATCH"),
+    ],
+)
+def test_operator_brief_data_freshness_status_affects_brief_status(
+    tmp_path: Path,
+    freshness_status: str,
+    expected_brief_status: str,
+) -> None:
+    context = _write_context(tmp_path)
+    _write_digest(context)
+    _write_pipeline_health_summary(context)
+    _write_data_freshness_summary(context, freshness_status=freshness_status)
+
+    payload = _build_brief(context)
+
+    _assert_operator_invariants(payload)
+    assert payload["brief_status"] == expected_brief_status
+    assert payload["data_freshness"]["freshness_status"] == freshness_status
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"broker_execution": True},
+        {"pipelines_executed_by_health_check": True},
+        {"production_effect": "profile_updated"},
+    ],
+)
+def test_operator_brief_blocks_invalid_pipeline_health_safety_fields(
+    tmp_path: Path,
+    overrides: dict[str, Any],
+) -> None:
+    context = _write_context(tmp_path)
+    _write_digest(context)
+    _write_pipeline_health_summary(context, overrides=overrides)
+    _write_data_freshness_summary(context)
+
+    payload = _build_brief(context)
+
+    _assert_operator_invariants(payload)
+    assert payload["brief_status"] == "SAFETY_BLOCKED"
+    assert payload["safety_validation"]["pipeline_health"]["status"] == "FAIL"
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"data_downloaded_by_freshness_check": True},
+        {"pipelines_executed_by_freshness_check": True},
+        {"broker_execution": True},
+    ],
+)
+def test_operator_brief_blocks_invalid_data_freshness_safety_fields(
+    tmp_path: Path,
+    overrides: dict[str, Any],
+) -> None:
+    context = _write_context(tmp_path)
+    _write_digest(context)
+    _write_pipeline_health_summary(context)
+    _write_data_freshness_summary(context, overrides=overrides)
+
+    payload = _build_brief(context)
+
+    _assert_operator_invariants(payload)
+    assert payload["brief_status"] == "SAFETY_BLOCKED"
+    assert payload["safety_validation"]["data_freshness"]["status"] == "FAIL"
+
+
+def test_operator_brief_merges_summary_alerts_with_source_prefixes(
+    tmp_path: Path,
+) -> None:
+    context = _write_context(tmp_path)
+    _write_digest(context)
+    _write_pipeline_health_summary(
+        context,
+        health_status="CRITICAL",
+        alerts={"critical": ["critical pipeline fixture"], "warnings": [], "notes": []},
+    )
+    _write_data_freshness_summary(
+        context,
+        freshness_status="WATCH",
+        alerts={"critical": [], "warnings": ["freshness warning fixture"], "notes": []},
+    )
+
+    payload = _build_brief(context)
+
+    _assert_operator_invariants(payload)
+    assert payload["brief_status"] == "URGENT"
+    assert "[TRADING-023] critical pipeline fixture" in payload["alerts"]["critical"]
+    assert "[TRADING-024] freshness warning fixture" in payload["alerts"]["warnings"]
+
+
+def test_operator_brief_pending_manual_actions_from_health_and_freshness(
+    tmp_path: Path,
+) -> None:
+    context = _write_context(tmp_path)
+    _write_digest(
+        context,
+        overrides={
+            "pending_items": {
+                "pending_proposal_review": False,
+                "pending_preflight": False,
+                "pending_apply": True,
+                "pending_rollback": False,
+                "pending_lifecycle_audit": False,
+            }
+        },
+    )
+    _write_pipeline_health_summary(
+        context,
+        health_status="CRITICAL",
+        critical_pipelines=[
+            {
+                "pipeline_id": "TRADING-021",
+                "name": "Digest",
+                "status": "CRITICAL",
+                "reason": "Safety field mismatch.",
+            }
+        ],
+    )
+    _write_data_freshness_summary(
+        context,
+        freshness_status="STALE",
+        stale_sources=[
+            {
+                "source_id": "parameter_governance_digest",
+                "name": "Parameter Governance Digest",
+                "status": "STALE",
+                "reason": "Required source parameter_governance_digest is stale.",
+            }
+        ],
+    )
+
+    payload = _build_brief(context)
+
+    _assert_operator_invariants(payload)
+    assert payload["pending_manual_actions"]["has_pending_actions"] is True
+    actions = [item["action"] for item in payload["pending_manual_actions"]["items"]]
+    assert "Review pending apply" in actions
+    assert "Review critical pipeline health finding" in actions
+    assert "Review stale required data source" in actions
 
 
 def test_operator_brief_pending_manual_actions_from_digest(tmp_path: Path) -> None:
@@ -221,6 +396,8 @@ def test_operator_brief_critical_findings_create_urgent_manual_action(
 def test_operator_brief_markdown_ok_contains_daily_sections(tmp_path: Path) -> None:
     context = _write_context(tmp_path)
     _write_digest(context)
+    _write_pipeline_health_summary(context)
+    _write_data_freshness_summary(context)
 
     payload = _build_brief(context)
     markdown = render_daily_trading_system_operator_brief_markdown(payload)
@@ -313,6 +490,229 @@ def _write_digest(
     payload = _valid_digest(context, digest_status=digest_status)
     payload.update(overrides or {})
     _write_json(context["digest_path"], payload)
+
+
+def _write_pipeline_health_summary(
+    context: dict[str, Any],
+    *,
+    health_status: str = "OK",
+    warning_pipelines: int = 0,
+    critical_pipelines: list[dict[str, Any]] | None = None,
+    alerts: dict[str, list[str]] | None = None,
+    overrides: dict[str, Any] | None = None,
+) -> None:
+    suffix = context["as_of"].isoformat()
+    path = (
+        context["data_root"]
+        / "derived"
+        / "pipeline_health"
+        / f"pipeline_health_summary_{suffix}.json"
+    )
+    markdown_path = path.with_suffix(".md")
+    critical = critical_pipelines or []
+    payload: dict[str, Any] = {
+        "schema_version": "1.0",
+        "report_type": "pipeline_health_summary",
+        "task_id": "TRADING-023",
+        "date": suffix,
+        "generated_at": _fixed_generated_at().isoformat(),
+        "mode": "pipeline_health_summary_only",
+        "production_effect": "none",
+        "manual_review_only": True,
+        "pipeline_health_only": True,
+        "read_only": True,
+        "safe_for_scheduler": True,
+        "pipelines_executed_by_health_check": False,
+        "apply_executed_by_health_check": False,
+        "rollback_executed_by_health_check": False,
+        "broker_execution": False,
+        "replay_execution": False,
+        "trading_execution": False,
+        "health_status": health_status,
+        "summary_level": {
+            "OK": "NORMAL",
+            "WATCH": "WATCH",
+            "ACTION_REQUIRED": "ACTION",
+            "INCOMPLETE": "ACTION",
+            "CRITICAL": "CRITICAL",
+        }.get(health_status, "UNKNOWN"),
+        "headline": "Required pipeline artifacts are available.",
+        "coverage": {
+            "registered_pipelines": 8,
+            "required_pipelines": 8,
+            "available_pipelines": 8,
+            "missing_required_pipelines": 1 if health_status == "INCOMPLETE" else 0,
+            "stale_required_pipelines": 1 if health_status == "ACTION_REQUIRED" else 0,
+            "critical_pipelines": len(critical) or (1 if health_status == "CRITICAL" else 0),
+            "warning_pipelines": warning_pipelines,
+        },
+        "pipeline_results": (
+            [
+                {
+                    "pipeline_id": "TRADING-021",
+                    "name": "Parameter Governance Digest",
+                    "required": True,
+                    "status": "ACTION_REQUIRED",
+                    "reason": "Required pipeline issue.",
+                }
+            ]
+            if health_status == "ACTION_REQUIRED"
+            else []
+        ),
+        "missing_required_pipelines": (
+            [
+                {
+                    "pipeline_id": "TRADING-022",
+                    "name": "Operator Brief",
+                    "status": "MISSING",
+                    "reason": "Required artifact is missing.",
+                }
+            ]
+            if health_status == "INCOMPLETE"
+            else []
+        ),
+        "stale_pipelines": (
+            [
+                {
+                    "pipeline_id": "TRADING-021",
+                    "name": "Parameter Governance Digest",
+                    "status": "STALE",
+                    "reason": "Required artifact is stale.",
+                }
+            ]
+            if health_status == "ACTION_REQUIRED"
+            else []
+        ),
+        "critical_pipelines": critical
+        or (
+            [
+                {
+                    "pipeline_id": "TRADING-021",
+                    "name": "Parameter Governance Digest",
+                    "status": "CRITICAL",
+                    "reason": "Critical pipeline condition detected.",
+                }
+            ]
+            if health_status == "CRITICAL"
+            else []
+        ),
+        "warning_pipelines": [],
+        "operator_brief_integration": {"notes": ["TRADING-022 consumed this summary."]},
+        "alerts": alerts or {"critical": [], "warnings": [], "notes": []},
+        "output_artifacts": {
+            "json": {"path": str(path)},
+            "markdown": {"path": str(markdown_path)},
+        },
+    }
+    payload.update(overrides or {})
+    _write_json(path, payload)
+    markdown_path.write_text("# Pipeline Health Summary\n", encoding="utf-8")
+
+
+def _write_data_freshness_summary(
+    context: dict[str, Any],
+    *,
+    freshness_status: str = "OK",
+    warning_sources: int = 0,
+    stale_sources: list[dict[str, Any]] | None = None,
+    alerts: dict[str, list[str]] | None = None,
+    overrides: dict[str, Any] | None = None,
+) -> None:
+    suffix = context["as_of"].isoformat()
+    path = (
+        context["data_root"]
+        / "derived"
+        / "data_freshness"
+        / f"data_freshness_summary_{suffix}.json"
+    )
+    markdown_path = path.with_suffix(".md")
+    stale = stale_sources or []
+    payload: dict[str, Any] = {
+        "schema_version": "1.0",
+        "report_type": "data_freshness_summary",
+        "task_id": "TRADING-024",
+        "date": suffix,
+        "generated_at": _fixed_generated_at().isoformat(),
+        "mode": "data_freshness_summary_only",
+        "production_effect": "none",
+        "manual_review_only": True,
+        "data_freshness_only": True,
+        "read_only": True,
+        "safe_for_scheduler": True,
+        "data_downloaded_by_freshness_check": False,
+        "pipelines_executed_by_freshness_check": False,
+        "apply_executed_by_freshness_check": False,
+        "rollback_executed_by_freshness_check": False,
+        "broker_execution": False,
+        "replay_execution": False,
+        "trading_execution": False,
+        "freshness_status": freshness_status,
+        "summary_level": {
+            "OK": "NORMAL",
+            "WATCH": "WATCH",
+            "STALE": "ACTION",
+            "MISSING": "ACTION",
+            "CRITICAL": "CRITICAL",
+        }.get(freshness_status, "UNKNOWN"),
+        "headline": "Required data sources are fresh enough.",
+        "coverage": {
+            "registered_sources": 3,
+            "required_sources": 3,
+            "available_sources": 3,
+            "missing_required_sources": 1 if freshness_status == "MISSING" else 0,
+            "stale_required_sources": len(stale) or (1 if freshness_status == "STALE" else 0),
+            "critical_sources": 1 if freshness_status == "CRITICAL" else 0,
+            "warning_sources": warning_sources,
+        },
+        "source_results": [],
+        "missing_required_sources": (
+            [
+                {
+                    "source_id": "parameter_governance_digest",
+                    "name": "Parameter Governance Digest",
+                    "status": "MISSING",
+                    "reason": "Required source is missing.",
+                }
+            ]
+            if freshness_status == "MISSING"
+            else []
+        ),
+        "stale_sources": stale
+        or (
+            [
+                {
+                    "source_id": "parameter_governance_digest",
+                    "name": "Parameter Governance Digest",
+                    "status": "STALE",
+                    "reason": "Required source is stale.",
+                }
+            ]
+            if freshness_status == "STALE"
+            else []
+        ),
+        "critical_sources": (
+            [
+                {
+                    "source_id": "parameter_governance_digest",
+                    "name": "Parameter Governance Digest",
+                    "status": "CRITICAL",
+                    "reason": "Critical data freshness condition detected.",
+                }
+            ]
+            if freshness_status == "CRITICAL"
+            else []
+        ),
+        "warning_sources": [],
+        "operator_brief_integration": {"notes": ["TRADING-022 consumed this summary."]},
+        "alerts": alerts or {"critical": [], "warnings": [], "notes": []},
+        "output_artifacts": {
+            "json": {"path": str(path)},
+            "markdown": {"path": str(markdown_path)},
+        },
+    }
+    payload.update(overrides or {})
+    _write_json(path, payload)
+    markdown_path.write_text("# Data Freshness Summary\n", encoding="utf-8")
 
 
 def _valid_digest(context: dict[str, Any], *, digest_status: str) -> dict[str, Any]:

@@ -3615,7 +3615,13 @@ def _daily_trading_system_operator_brief_summary(report: DailyTaskDashboardRepor
             "manual_action_required": False,
             "parameter_governance_digest_status": "MISSING",
             "pipeline_health_status": "UNKNOWN",
+            "pipeline_health_health_status": "UNKNOWN",
             "data_freshness_status": "UNKNOWN",
+            "data_freshness_freshness_status": "UNKNOWN",
+            "missing_required_pipelines": 0,
+            "stale_required_pipelines": 0,
+            "missing_required_sources": 0,
+            "stale_required_sources": 0,
             "critical_alert_count": 0,
             "warning_count": 0,
             "production_effect": ProductionEffect.NONE.value,
@@ -3629,7 +3635,8 @@ def _daily_trading_system_operator_brief_summary(report: DailyTaskDashboardRepor
             "trading_execution": False,
             "risk": (
                 "daily trading system operator brief JSON 缺失；dashboard 不运行 "
-                "TRADING-022 script、TRADING-021、TRADING-020、TRADING-019、018B-018F "
+                "TRADING-022 script、TRADING-021、TRADING-020、TRADING-019、018B-018F、"
+                "TRADING-023、TRADING-024、TRADING-025 "
                 "或任何 market / backtest / scoring / broker / replay / trading pipeline。"
             ),
         }
@@ -3718,7 +3725,17 @@ def _daily_trading_system_operator_brief_summary(report: DailyTaskDashboardRepor
             _string_value(governance.get("digest_status")) or "MISSING"
         ),
         "pipeline_health_status": _string_value(pipeline.get("status")) or "UNKNOWN",
+        "pipeline_health_health_status": (
+            _string_value(pipeline.get("health_status")) or "UNKNOWN"
+        ),
         "data_freshness_status": _string_value(freshness.get("status")) or "UNKNOWN",
+        "data_freshness_freshness_status": (
+            _string_value(freshness.get("freshness_status")) or "UNKNOWN"
+        ),
+        "missing_required_pipelines": _int_value(pipeline.get("missing_required_pipelines")),
+        "stale_required_pipelines": _int_value(pipeline.get("stale_required_pipelines")),
+        "missing_required_sources": _int_value(freshness.get("missing_required_sources")),
+        "stale_required_sources": _int_value(freshness.get("stale_required_sources")),
         "critical_alert_count": len(critical),
         "warning_count": len(warnings),
         "production_effect": production_effect,
@@ -4633,6 +4650,10 @@ def _mapping_value(record: TraceRecord, key: str) -> TraceRecord:
 
 def _string_value(value: object) -> str:
     return value if isinstance(value, str) else ""
+
+
+def _int_value(value: object) -> int:
+    return value if isinstance(value, int) and not isinstance(value, bool) else 0
 
 
 def _string_list(value: object, *, limit: int) -> tuple[str, ...]:
@@ -6335,7 +6356,8 @@ def _render_daily_trading_system_operator_brief(report: DailyTaskDashboardReport
             (
                 "<p>系统级 operator brief 只读卡片；dashboard 只读取 TRADING-022 "
                 "operator brief artifact，不触发 018B/018C/018C2/018D/018E1/018E2/"
-                "018E3/018F/019/020/021/022/market/backtest/scoring/broker/replay/交易。</p>"
+                "018E3/018F/019/020/021/022/023/024/025/market/backtest/scoring/"
+                "data download/broker/replay/交易。</p>"
             ),
             "</div>",
             '<div class="summary-grid">',
@@ -6359,8 +6381,32 @@ def _render_daily_trading_system_operator_brief(report: DailyTaskDashboardReport
                 summary.get("pipeline_health_status", "UNKNOWN"),
             ),
             _summary_item(
+                "pipeline_health.health_status",
+                summary.get("pipeline_health_health_status", "UNKNOWN"),
+            ),
+            _summary_item(
                 "data_freshness.status",
                 summary.get("data_freshness_status", "UNKNOWN"),
+            ),
+            _summary_item(
+                "data_freshness.freshness_status",
+                summary.get("data_freshness_freshness_status", "UNKNOWN"),
+            ),
+            _summary_item(
+                "missing_required_pipelines",
+                summary.get("missing_required_pipelines", 0),
+            ),
+            _summary_item(
+                "stale_required_pipelines",
+                summary.get("stale_required_pipelines", 0),
+            ),
+            _summary_item(
+                "missing_required_sources",
+                summary.get("missing_required_sources", 0),
+            ),
+            _summary_item(
+                "stale_required_sources",
+                summary.get("stale_required_sources", 0),
             ),
             _summary_item("critical_alert_count", summary.get("critical_alert_count", 0)),
             _summary_item("warning_count", summary.get("warning_count", 0)),

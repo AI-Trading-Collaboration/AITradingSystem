@@ -32,6 +32,14 @@ def main() -> None:
         help="Explicit parameter_governance_daily_digest_YYYY-MM-DD.json path to read only.",
     )
     parser.add_argument(
+        "--pipeline-health-summary-file",
+        help="Explicit pipeline_health_summary_YYYY-MM-DD.json path to read only.",
+    )
+    parser.add_argument(
+        "--data-freshness-summary-file",
+        help="Explicit data_freshness_summary_YYYY-MM-DD.json path to read only.",
+    )
+    parser.add_argument(
         "--lookback-days",
         type=int,
         default=DEFAULT_LOOKBACK_DAYS,
@@ -59,6 +67,12 @@ def main() -> None:
             if args.parameter_governance_digest_file
             else None
         ),
+        pipeline_health_summary_file=(
+            Path(args.pipeline_health_summary_file) if args.pipeline_health_summary_file else None
+        ),
+        data_freshness_summary_file=(
+            Path(args.data_freshness_summary_file) if args.data_freshness_summary_file else None
+        ),
         lookback_days=args.lookback_days,
         fail_on_critical=args.fail_on_critical,
         include_optional_artifacts=args.include_optional_artifacts,
@@ -79,7 +93,9 @@ def main() -> None:
     print(f"manual_action_required：{snapshot['manual_action_required']}")
     print(f"parameter_governance.digest_status：{governance['digest_status']}")
     print(f"pipeline_health.status：{pipeline['status']}")
+    print(f"pipeline_health.health_status：{pipeline.get('health_status')}")
     print(f"data_freshness.status：{freshness['status']}")
+    print(f"data_freshness.freshness_status：{freshness.get('freshness_status')}")
     print(f"production_effect：{payload['production_effect']}")
     print(f"manual_review_only：{payload['manual_review_only']}")
     print(f"operator_brief_only：{payload['operator_brief_only']}")

@@ -658,6 +658,8 @@ def test_daily_task_dashboard_operator_brief_card_is_read_only(
             "ai_trading_system.trading_engine.daily_trading_system_operator_brief",
             "run_pipeline_health_summary",
             "ai_trading_system.trading_engine.pipeline_health_summary",
+            "run_data_freshness_summary",
+            "ai_trading_system.trading_engine.data_freshness_summary",
             "ai_trading_system.scoring",
             "ai_trading_system.backtest",
             "ai_trading_system.trading_engine.brokers",
@@ -685,8 +687,14 @@ def test_daily_task_dashboard_operator_brief_card_is_read_only(
     assert summary["can_trust_outputs_today"] is True
     assert summary["manual_action_required"] is False
     assert summary["parameter_governance_digest_status"] == "OK"
-    assert summary["pipeline_health_status"] == "UNKNOWN"
-    assert summary["data_freshness_status"] == "UNKNOWN"
+    assert summary["pipeline_health_status"] == "OK"
+    assert summary["pipeline_health_health_status"] == "OK"
+    assert summary["data_freshness_status"] == "OK"
+    assert summary["data_freshness_freshness_status"] == "OK"
+    assert summary["missing_required_pipelines"] == 1
+    assert summary["stale_required_pipelines"] == 2
+    assert summary["missing_required_sources"] == 3
+    assert summary["stale_required_sources"] == 4
     assert summary["critical_alert_count"] == 0
     assert summary["warning_count"] == 0
     assert summary["production_effect"] == "none"
@@ -699,6 +707,10 @@ def test_daily_task_dashboard_operator_brief_card_is_read_only(
     assert summary["replay_execution"] is False
     assert summary["trading_execution"] is False
     assert "Daily Trading System Operator Brief" in html
+    assert "pipeline_health.health_status" in html
+    assert "data_freshness.freshness_status" in html
+    assert "missing_required_pipelines" in html
+    assert "stale_required_sources" in html
 
 
 def test_daily_task_dashboard_pipeline_health_summary_card_is_read_only(
@@ -1175,8 +1187,20 @@ def _write_operator_brief(tmp_path: Path, as_of: date) -> dict[str, Any]:
             "action_level": "NONE",
             "headline": "Parameter governance is stable.",
         },
-        "pipeline_health": {"status": "UNKNOWN", "available": False},
-        "data_freshness": {"status": "UNKNOWN", "available": False},
+        "pipeline_health": {
+            "status": "OK",
+            "available": True,
+            "health_status": "OK",
+            "missing_required_pipelines": 1,
+            "stale_required_pipelines": 2,
+        },
+        "data_freshness": {
+            "status": "OK",
+            "available": True,
+            "freshness_status": "OK",
+            "missing_required_sources": 3,
+            "stale_required_sources": 4,
+        },
         "alerts": {"critical": [], "warnings": [], "notes": ["Parameter governance digest is OK."]},
         "output_artifacts": {
             "json": {"path": str(brief_path)},

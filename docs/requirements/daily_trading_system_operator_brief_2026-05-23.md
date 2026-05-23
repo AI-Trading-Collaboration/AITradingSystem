@@ -1,10 +1,10 @@
 # TRADING-022: Daily Trading System Operator Brief
 
-关联任务：`TRADING-022`
+关联任务：`TRADING-022`、`TRADING-025`
 
-当前状态：DONE
+当前状态：TRADING-022 DONE；TRADING-025 VALIDATING
 
-最后更新：2026-05-23
+最后更新：2026-05-24
 
 ## 背景
 
@@ -121,6 +121,67 @@ Dashboard 只能读取
 018B、018C、018C2、018D、018E1、018E2、018E3、018F，不触发 market、backtest、scoring、
 broker、replay 或 trading execution。
 
+## TRADING-025 Health / Freshness 接入
+
+TRADING-025 是对 TRADING-022 的只读增强，不新增独立 pipeline。Operator brief 继续要求
+TRADING-021 parameter governance daily digest，并新增可选但优先读取：
+
+- TRADING-023 `pipeline_health_summary_YYYY-MM-DD.json`
+- TRADING-024 `data_freshness_summary_YYYY-MM-DD.json`
+
+CLI 增加：
+
+- `--pipeline-health-summary-file`
+- `--data-freshness-summary-file`
+
+默认行为是按 `--date` 和 `--lookback-days` 自动查找 latest TRADING-023 / TRADING-024 summary
+artifact。缺失 023/024 不触发 `INPUT_MISSING`，但对应 section 输出 `UNKNOWN`，operator brief
+默认降级为 `WATCH`。
+
+### TRADING-025 输入安全校验
+
+已加载 TRADING-023 summary 必须满足：
+
+- `task_id=TRADING-023`
+- `production_effect=none`
+- `pipeline_health_only=true`
+- `read_only=true`
+- `pipelines_executed_by_health_check=false`
+- `broker_execution=false`
+- `replay_execution=false`
+- `trading_execution=false`
+
+已加载 TRADING-024 summary 必须满足：
+
+- `task_id=TRADING-024`
+- `production_effect=none`
+- `data_freshness_only=true`
+- `read_only=true`
+- `data_downloaded_by_freshness_check=false`
+- `pipelines_executed_by_freshness_check=false`
+- `broker_execution=false`
+- `replay_execution=false`
+- `trading_execution=false`
+
+任一 loaded artifact 安全字段异常时，TRADING-022 输出
+`brief_status=SAFETY_BLOCKED`、`summary_level=UNKNOWN`、`can_trust_outputs_today=false`、
+`manual_action_required=true`，但 operator brief 自身安全 invariant 仍必须保持 false/none/read-only。
+
+### TRADING-025 状态推导
+
+`brief_status` 综合 TRADING-021 `digest_status`、TRADING-023 `health_status` 和 TRADING-024
+`freshness_status`：
+
+- safety field 异常优先输出 `SAFETY_BLOCKED`。
+- digest `URGENT`、pipeline `CRITICAL` 或 freshness `CRITICAL` 输出 `URGENT`。
+- digest `ACTION_REQUIRED`、pipeline `ACTION_REQUIRED` / `INCOMPLETE` 或 freshness
+  `STALE` / `MISSING` 输出 `ACTION_REQUIRED`。
+- digest/pipeline/freshness `WATCH`，或 023/024 缺失导致 `UNKNOWN`，输出 `WATCH`。
+- 只有 digest、pipeline health 和 data freshness 均为 `OK` 时默认输出 `OK`。
+
+TRADING-025 同步更新 alerts、pending manual actions、recommended next steps、Markdown 的
+Pipeline Health / Data Freshness section，以及 Daily Task Dashboard 的 operator brief 只读卡片。
+
 ## 进展记录
 
 - 2026-05-23：新增并进入 `IN_PROGRESS`。Owner 要求在 TRADING-021 参数治理 daily digest
@@ -144,3 +205,15 @@ broker、replay 或 trading execution。
   `UNKNOWN` 而不是失败。Dashboard import guard 和专项测试确认 Daily Trading System Operator
   Brief 卡片只读读取 operator brief artifact，不触发 018B-022、market、backtest、scoring、
   broker、replay 或 trading execution。
+- 2026-05-24：新增 TRADING-025 并进入 `IN_PROGRESS`。本阶段把 TRADING-023 pipeline
+  health summary 和 TRADING-024 data freshness summary 作为 TRADING-022 的真实只读输入；
+  不运行 021/023/024，不运行 market/backtest/scoring/data download/broker/replay/trading，
+  仅增强 operator brief 的状态推导、alerts、pending actions、Markdown 和 dashboard 展示。
+- 2026-05-24：TRADING-025 实现完成并进入 `VALIDATING`。已新增 CLI 显式输入参数、latest
+  023/024 自动查找、023/024 safety field 校验、brief status 优先级、source-prefixed alerts、
+  health/freshness pending manual actions、Markdown 真实状态展示和 dashboard 只读卡片字段。
+  验证通过 repo 外 OK / WATCH / ACTION_REQUIRED / URGENT / SAFETY_BLOCKED smoke、
+  `tests/trading_engine/test_daily_trading_system_operator_brief.py`、`tests/test_daily_task_dashboard.py`、
+  `tests/trading_engine`、全量 `pytest` 和 `ruff check scripts src tests`。全仓
+  `black --check scripts src tests` 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未格式化
+  无关文件。
