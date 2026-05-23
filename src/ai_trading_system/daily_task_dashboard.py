@@ -205,6 +205,7 @@ def build_daily_task_dashboard_payload(
         "shadow_promotion_lifecycle_audit": _shadow_promotion_lifecycle_audit_summary(report),
         "parameter_governance_summary": _parameter_governance_summary_summary(report),
         "parameter_governance_web_view": _parameter_governance_web_view_summary(report),
+        "parameter_governance_daily_digest": _parameter_governance_daily_digest_summary(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -312,6 +313,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_shadow_promotion_lifecycle_audit(report),
             _render_parameter_governance_summary(report),
             _render_parameter_governance_web_view(report),
+            _render_parameter_governance_daily_digest(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -1037,6 +1039,11 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
             "parameter_governance_summary_json",
             "parameter governance summary JSON",
             _latest_parameter_governance_summary_path(report),
+        ),
+        (
+            "parameter_governance_daily_digest_json",
+            "parameter governance daily digest JSON",
+            _latest_parameter_governance_daily_digest_path(report),
         ),
     )
     for artifact_id, label, path in extras:
@@ -3127,6 +3134,150 @@ def _parameter_governance_web_view_summary(report: DailyTaskDashboardReport) -> 
     }
 
 
+def _parameter_governance_daily_digest_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_parameter_governance_daily_digest_path(report)
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "parameter_governance_daily_digest":
+        default_markdown = (
+            report.project_root
+            / "data"
+            / "derived"
+            / "weight_iterations"
+            / "governance"
+            / "digests"
+            / f"parameter_governance_daily_digest_{report.as_of.isoformat()}.md"
+        )
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "latest_digest_markdown_path": str(default_markdown),
+            "digest_status": "MISSING",
+            "summary_level": "UNKNOWN",
+            "headline": "",
+            "governance_state": "MISSING",
+            "action_required": False,
+            "action_level": "NONE",
+            "safety_boundary_status": "MISSING",
+            "pending_apply": False,
+            "pending_rollback": False,
+            "critical_alert_count": 0,
+            "warning_count": 0,
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_only": True,
+            "digest_only": True,
+            "governance_only": True,
+            "apply_executed_by_digest": False,
+            "rollback_executed_by_digest": False,
+            "broker_execution": False,
+            "replay_execution": False,
+            "trading_execution": False,
+            "risk": (
+                "parameter governance daily digest JSON 缺失；dashboard 不运行 "
+                "TRADING-021 script、TRADING-020、TRADING-019 或任何 018B-018F / scoring / "
+                "broker / replay / trading pipeline。"
+            ),
+        }
+
+    output_artifacts = _mapping_value(payload, "output_artifacts")
+    markdown_path = Path(
+        _string_value(_mapping_value(output_artifacts, "markdown").get("path"))
+        or str(path.with_suffix(".md"))
+    )
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    snapshot = _mapping_value(payload, "governance_snapshot")
+    pending = _mapping_value(payload, "pending_items")
+    alerts = _mapping_value(payload, "alerts")
+    contract = _mapping_value(payload, "pipeline_contract")
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    broker_execution = payload.get("broker_execution") is True
+    replay_execution = payload.get("replay_execution") is True
+    trading_execution = payload.get("trading_execution") is True
+    critical = _strings(alerts.get("critical"))
+    warnings = _strings(alerts.get("warnings"))
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("TRADING-021 digest production_effect 必须为 none。")
+    if payload.get("manual_review_only") is not True:
+        risks.append("TRADING-021 digest 必须 manual_review_only=true。")
+    if payload.get("digest_only") is not True:
+        risks.append("TRADING-021 digest 必须 digest_only=true。")
+    if payload.get("governance_only") is not True:
+        risks.append("TRADING-021 digest 必须 governance_only=true。")
+    if payload.get("apply_executed_by_digest") is not False:
+        risks.append("TRADING-021 digest 不允许执行 apply。")
+    if payload.get("rollback_executed_by_digest") is not False:
+        risks.append("TRADING-021 digest 不允许执行 rollback。")
+    if broker_execution:
+        risks.append("TRADING-021 digest 不允许 broker_execution=true。")
+    if replay_execution:
+        risks.append("TRADING-021 digest 不允许 replay_execution=true。")
+    if trading_execution:
+        risks.append("TRADING-021 digest 不允许 trading_execution=true。")
+    for field in (
+        "runs_shadow_iteration_pipeline",
+        "runs_comparison_pipeline",
+        "runs_multi_day_review_pipeline",
+        "runs_promotion_proposal_pipeline",
+        "runs_apply_preflight_pipeline",
+        "runs_promotion_apply",
+        "runs_promotion_rollback",
+        "runs_lifecycle_audit_pipeline",
+        "runs_governance_summary_pipeline",
+        "runs_web_view_render_script",
+        "runs_daily_digest_script",
+        "runs_scoring_pipeline",
+        "runs_broker_runner",
+        "runs_paper_runner",
+        "runs_replay_runner",
+        "writes_production_profile",
+        "writes_production_weights",
+        "writes_shadow_weights",
+        "writes_approved_profile",
+        "promotes_shadow_to_production",
+        "changes_daily_dashboard_main_conclusion",
+        "triggers_trade",
+    ):
+        if contract.get(field) is True:
+            risks.append(f"parameter governance daily digest safety contract 异常：{field}。")
+
+    return {
+        "status": _string_value(payload.get("digest_status")) or "MISSING",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "latest_digest_markdown_path": str(markdown_path),
+        "digest_status": _string_value(payload.get("digest_status")) or "MISSING",
+        "summary_level": _string_value(payload.get("summary_level")) or "UNKNOWN",
+        "headline": _string_value(payload.get("headline")),
+        "governance_state": _string_value(snapshot.get("governance_state")) or "MISSING",
+        "action_required": snapshot.get("action_required") is True,
+        "action_level": _string_value(snapshot.get("action_level")) or "NONE",
+        "safety_boundary_status": (
+            _string_value(snapshot.get("safety_boundary_status")) or "MISSING"
+        ),
+        "pending_apply": pending.get("pending_apply") is True,
+        "pending_rollback": pending.get("pending_rollback") is True,
+        "critical_alert_count": len(critical),
+        "warning_count": len(warnings),
+        "production_effect": production_effect,
+        "manual_review_only": payload.get("manual_review_only") is True,
+        "digest_only": payload.get("digest_only") is True,
+        "governance_only": payload.get("governance_only") is True,
+        "apply_executed_by_digest": payload.get("apply_executed_by_digest") is True,
+        "rollback_executed_by_digest": payload.get("rollback_executed_by_digest") is True,
+        "broker_execution": broker_execution,
+        "replay_execution": replay_execution,
+        "trading_execution": trading_execution,
+        "risk": "；".join(risks) or "Parameter Governance Daily Digest 当前仅作只读展示。",
+    }
+
+
 def _latest_shadow_vs_production_review_path(report: DailyTaskDashboardReport) -> Path:
     review_root = (
         report.project_root / "data" / "derived" / "weight_iterations" / "comparison" / "reviews"
@@ -3272,6 +3423,26 @@ def _latest_parameter_governance_web_view_metadata_path(report: DailyTaskDashboa
     candidates: list[tuple[date, Path]] = []
     for path in web_root.glob("parameter_governance_web_view_*.json"):
         raw_date = path.stem.removeprefix("parameter_governance_web_view_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_parameter_governance_daily_digest_path(report: DailyTaskDashboardReport) -> Path:
+    digest_root = (
+        report.project_root / "data" / "derived" / "weight_iterations" / "governance" / "digests"
+    )
+    default_path = digest_root / (
+        f"parameter_governance_daily_digest_{report.as_of.isoformat()}.json"
+    )
+    if not digest_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in digest_root.glob("parameter_governance_daily_digest_*.json"):
+        raw_date = path.stem.removeprefix("parameter_governance_daily_digest_")
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= report.as_of:
             candidates.append((parsed, path))
@@ -5453,6 +5624,63 @@ def _render_parameter_governance_web_view(report: DailyTaskDashboardReport) -> s
             ),
             _summary_item("critical_findings", summary.get("critical_findings_count", 0)),
             _summary_item("warnings", summary.get("warnings_count", 0)),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_parameter_governance_daily_digest(report: DailyTaskDashboardReport) -> str:
+    summary = _parameter_governance_daily_digest_summary(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}"><span>Parameter Governance Daily Digest</span>'
+        f"<small>{_text(summary.get('digest_status', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>Parameter Governance Daily Digest</span><small>MISSING</small></span>"
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="parameter-governance-daily-digest-title">',
+            '<div class="section-head">',
+            (
+                '<h2 id="parameter-governance-daily-digest-title">'
+                "Parameter Governance Daily Digest</h2>"
+            ),
+            (
+                "<p>参数治理 Daily Digest 只读卡片；dashboard 只读取 TRADING-021 "
+                "digest artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/"
+                "018F/019/020/021/scoring/broker/replay/交易。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("digest_status", summary.get("digest_status", "MISSING")),
+            _summary_item("summary_level", summary.get("summary_level", "UNKNOWN")),
+            _summary_item("headline", summary.get("headline", "")),
+            _summary_item("governance_state", summary.get("governance_state", "MISSING")),
+            _summary_item("action_required", summary.get("action_required", False)),
+            _summary_item("action_level", summary.get("action_level", "NONE")),
+            _summary_item(
+                "safety_boundary_status",
+                summary.get("safety_boundary_status", "MISSING"),
+            ),
+            _summary_item("pending_apply", summary.get("pending_apply", False)),
+            _summary_item("pending_rollback", summary.get("pending_rollback", False)),
+            _summary_item("critical_alert_count", summary.get("critical_alert_count", 0)),
+            _summary_item("warning_count", summary.get("warning_count", 0)),
+            _summary_item(
+                "digest markdown path",
+                summary.get("latest_digest_markdown_path", ""),
+            ),
             "</div>",
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'
