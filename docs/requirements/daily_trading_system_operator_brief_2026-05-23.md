@@ -2,7 +2,7 @@
 
 关联任务：`TRADING-022`
 
-当前状态：VALIDATING
+当前状态：DONE
 
 最后更新：2026-05-23
 
@@ -132,3 +132,15 @@ broker、replay 或 trading execution。
   `tests/trading_engine`、全量 `pytest`、`ruff check scripts src tests` 和 repo 外 OK /
   ACTION_REQUIRED / URGENT / SAFETY_BLOCKED smoke。`black --check scripts src tests`
   仅被既有无关 `tests/test_market_data.py` formatting baseline 阻断，未混入无关格式化 diff。
+- 2026-05-23：最终收尾验证通过并进入 `DONE`。再次执行 repo 外临时 fixture smoke：
+  OK 输出 `OK/NORMAL` 且 Markdown 包含 `Continue observation`；ACTION_REQUIRED 顶部包含
+  `Action Required` 且 pending manual actions 为 true；URGENT 顶部包含
+  `URGENT: Manual Attention Required` 且 critical alert 非空；SAFETY_BLOCKED 顶部包含
+  `Operator Brief Safety Blocked`。四路径均确认 operator brief 输出固定
+  `production_effect=none`、`manual_review_only=true`、`operator_brief_only=true`、
+  `read_only=true`、`apply_executed_by_operator_brief=false`、
+  `rollback_executed_by_operator_brief=false`、`broker_execution=false`、
+  `replay_execution=false`、`trading_execution=false`，且 optional artifacts 缺失时显示
+  `UNKNOWN` 而不是失败。Dashboard import guard 和专项测试确认 Daily Trading System Operator
+  Brief 卡片只读读取 operator brief artifact，不触发 018B-022、market、backtest、scoring、
+  broker、replay 或 trading execution。
