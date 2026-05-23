@@ -204,6 +204,7 @@ def build_daily_task_dashboard_payload(
         "shadow_promotion_rollback": _shadow_promotion_rollback_summary(report),
         "shadow_promotion_lifecycle_audit": _shadow_promotion_lifecycle_audit_summary(report),
         "parameter_governance_summary": _parameter_governance_summary_summary(report),
+        "parameter_governance_web_view": _parameter_governance_web_view_summary(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -310,6 +311,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_shadow_promotion_rollback(report),
             _render_shadow_promotion_lifecycle_audit(report),
             _render_parameter_governance_summary(report),
+            _render_parameter_governance_web_view(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -2993,6 +2995,138 @@ def _parameter_governance_summary_summary(report: DailyTaskDashboardReport) -> T
     }
 
 
+def _parameter_governance_web_view_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_parameter_governance_web_view_metadata_path(report)
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "parameter_governance_web_view":
+        default_html = (
+            report.project_root
+            / "data"
+            / "derived"
+            / "weight_iterations"
+            / "governance"
+            / "web"
+            / f"parameter_governance_web_view_{report.as_of.isoformat()}.html"
+        )
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "latest_web_view_html_path": str(default_html),
+            "latest_render_metadata_path": str(path),
+            "render_decision": "MISSING",
+            "governance_state": "MISSING",
+            "action_required": False,
+            "action_level": "NONE",
+            "safety_boundary_status": "MISSING",
+            "critical_findings_count": 0,
+            "warnings_count": 0,
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_only": True,
+            "governance_only": True,
+            "web_view_only": True,
+            "apply_executed_by_web_view": False,
+            "rollback_executed_by_web_view": False,
+            "broker_execution": False,
+            "replay_execution": False,
+            "trading_execution": False,
+            "risk": (
+                "parameter governance web view metadata 缺失；dashboard 不运行 "
+                "TRADING-020 render script、TRADING-019 或任何 018B-018F / scoring / "
+                "broker / replay / trading pipeline。"
+            ),
+        }
+
+    output_artifacts = _mapping_value(payload, "output_artifacts")
+    html_artifact = _mapping_value(output_artifacts, "html")
+    html_path = Path(_string_value(html_artifact.get("path")) or str(path.with_suffix(".html")))
+    report_href = _report_href(html_path, report.reports_dir) if html_path.exists() else ""
+    render_summary = _mapping_value(payload, "render_summary")
+    contract = _mapping_value(payload, "pipeline_contract")
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    broker_execution = payload.get("broker_execution") is True
+    replay_execution = payload.get("replay_execution") is True
+    trading_execution = payload.get("trading_execution") is True
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("TRADING-020 metadata production_effect 必须为 none。")
+    if payload.get("manual_review_only") is not True:
+        risks.append("TRADING-020 metadata 必须 manual_review_only=true。")
+    if payload.get("governance_only") is not True:
+        risks.append("TRADING-020 metadata 必须 governance_only=true。")
+    if payload.get("web_view_only") is not True:
+        risks.append("TRADING-020 metadata 必须 web_view_only=true。")
+    if payload.get("apply_executed_by_web_view") is not False:
+        risks.append("TRADING-020 web view 不允许执行 apply。")
+    if payload.get("rollback_executed_by_web_view") is not False:
+        risks.append("TRADING-020 web view 不允许执行 rollback。")
+    if broker_execution:
+        risks.append("TRADING-020 web view 不允许 broker_execution=true。")
+    if replay_execution:
+        risks.append("TRADING-020 web view 不允许 replay_execution=true。")
+    if trading_execution:
+        risks.append("TRADING-020 web view 不允许 trading_execution=true。")
+    for field in (
+        "runs_shadow_iteration_pipeline",
+        "runs_comparison_pipeline",
+        "runs_multi_day_review_pipeline",
+        "runs_promotion_proposal_pipeline",
+        "runs_apply_preflight_pipeline",
+        "runs_promotion_apply",
+        "runs_promotion_rollback",
+        "runs_lifecycle_audit_pipeline",
+        "runs_governance_summary_pipeline",
+        "runs_web_view_render_script",
+        "runs_scoring_pipeline",
+        "runs_broker_runner",
+        "runs_paper_runner",
+        "runs_replay_runner",
+        "writes_production_profile",
+        "writes_production_weights",
+        "writes_shadow_weights",
+        "writes_approved_profile",
+        "promotes_shadow_to_production",
+        "changes_daily_dashboard_main_conclusion",
+        "triggers_trade",
+    ):
+        if contract.get(field) is True:
+            risks.append(f"parameter governance web view safety contract 异常：{field}。")
+
+    return {
+        "status": _string_value(payload.get("render_decision")) or "MISSING",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "latest_web_view_html_path": str(html_path),
+        "latest_render_metadata_path": str(path),
+        "render_decision": _string_value(payload.get("render_decision")) or "MISSING",
+        "governance_state": _string_value(render_summary.get("governance_state")) or "MISSING",
+        "action_required": render_summary.get("action_required") is True,
+        "action_level": _string_value(render_summary.get("action_level")) or "NONE",
+        "safety_boundary_status": (
+            _string_value(render_summary.get("safety_boundary_status")) or "MISSING"
+        ),
+        "critical_findings_count": _optional_int(render_summary.get("critical_findings_count"))
+        or 0,
+        "warnings_count": _optional_int(render_summary.get("warnings_count")) or 0,
+        "production_effect": production_effect,
+        "manual_review_only": payload.get("manual_review_only") is True,
+        "governance_only": payload.get("governance_only") is True,
+        "web_view_only": payload.get("web_view_only") is True,
+        "apply_executed_by_web_view": payload.get("apply_executed_by_web_view") is True,
+        "rollback_executed_by_web_view": payload.get("rollback_executed_by_web_view") is True,
+        "broker_execution": broker_execution,
+        "replay_execution": replay_execution,
+        "trading_execution": trading_execution,
+        "risk": "；".join(risks) or "Parameter Governance Web View 当前仅作只读展示。",
+    }
+
+
 def _latest_shadow_vs_production_review_path(report: DailyTaskDashboardReport) -> Path:
     review_root = (
         report.project_root / "data" / "derived" / "weight_iterations" / "comparison" / "reviews"
@@ -3122,6 +3256,22 @@ def _latest_parameter_governance_summary_path(report: DailyTaskDashboardReport) 
     candidates: list[tuple[date, Path]] = []
     for path in governance_root.glob("parameter_governance_summary_*.json"):
         raw_date = path.stem.removeprefix("parameter_governance_summary_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_parameter_governance_web_view_metadata_path(report: DailyTaskDashboardReport) -> Path:
+    web_root = report.project_root / "data" / "derived" / "weight_iterations" / "governance" / "web"
+    default_path = web_root / f"parameter_governance_web_view_{report.as_of.isoformat()}.json"
+    if not web_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in web_root.glob("parameter_governance_web_view_*.json"):
+        raw_date = path.stem.removeprefix("parameter_governance_web_view_")
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= report.as_of:
             candidates.append((parsed, path))
@@ -5249,6 +5399,60 @@ def _render_parameter_governance_summary(report: DailyTaskDashboardReport) -> st
                 "summary markdown path",
                 summary.get("latest_summary_markdown_path", ""),
             ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_parameter_governance_web_view(report: DailyTaskDashboardReport) -> str:
+    summary = _parameter_governance_web_view_summary(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}"><span>Parameter Governance Web View</span>'
+        f"<small>{_text(summary.get('render_decision', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>Parameter Governance Web View</span><small>MISSING</small></span>"
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="parameter-governance-web-view-title">',
+            '<div class="section-head">',
+            ('<h2 id="parameter-governance-web-view-title">' "Parameter Governance Web View</h2>"),
+            (
+                "<p>参数治理 Web View 只读卡片；dashboard 只读取 TRADING-020 "
+                "render metadata artifact，不触发 018B/018C/018C2/018D/018E1/"
+                "018E2/018E3/018F/019/020/scoring/broker/replay/交易。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item(
+                "latest web view html path",
+                summary.get("latest_web_view_html_path", ""),
+            ),
+            _summary_item(
+                "latest render metadata path",
+                summary.get("latest_render_metadata_path", ""),
+            ),
+            _summary_item("render_decision", summary.get("render_decision", "MISSING")),
+            _summary_item("governance_state", summary.get("governance_state", "MISSING")),
+            _summary_item("action_required", summary.get("action_required", False)),
+            _summary_item("action_level", summary.get("action_level", "NONE")),
+            _summary_item(
+                "safety_boundary_status",
+                summary.get("safety_boundary_status", "MISSING"),
+            ),
+            _summary_item("critical_findings", summary.get("critical_findings_count", 0)),
+            _summary_item("warnings", summary.get("warnings_count", 0)),
             "</div>",
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'
