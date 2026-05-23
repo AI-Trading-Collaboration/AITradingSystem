@@ -2,6 +2,8 @@
 
 关联任务：`TRADING-026`
 
+状态：`DONE`
+
 ## 目标
 
 在创建任何真实定时任务前，新增一个只读 scheduler dry-run 层，验证 Daily Trading System Operator Brief 是否具备未来每日定时生成条件。
@@ -89,9 +91,10 @@ Dashboard 禁止触发 018B-025、026 script、operator brief、scheduler creati
 |3. CLI|DONE|新增 `scripts/run_daily_operator_brief_scheduler_dry_run.py`，支持 date、data-root、run time、timezone、lookback、strict、fail-on-missing-required。|
 |4. Dashboard|DONE|新增只读卡片，只读取 TRADING-026 artifact，不 import 或运行 dry-run builder/CLI。|
 |5. 文档|DONE|更新 runbook、system flow 和 artifact catalog。|
-|6. 测试与验证|VALIDATING|覆盖 decision mapping、safety validation、no execution、Markdown、dashboard 和 safety invariants；全仓 Black check 仍被既有无关 `tests/test_market_data.py` baseline 阻断。|
+|6. 测试与验证|DONE|覆盖 decision mapping、safety validation、no execution、Markdown、dashboard 和 safety invariants；最终收尾验证已完成；全仓 Black check 仍被既有无关 `tests/test_market_data.py` baseline 阻断。|
 
 ## 进展记录
 
 - 2026-05-24：新增并进入 `IN_PROGRESS`。本阶段只允许新增只读 scheduler dry-run artifact，不创建真实 scheduler、不执行 operator brief 或上游任务、不触发任何交易或数据流水线。
 - 2026-05-24：实现完成并进入 `VALIDATING`。新增核心 builder、CLI、JSON/Markdown/run log、dashboard 只读卡片、runbook、system flow、artifact catalog 和专项测试；验证通过 `tests/trading_engine/test_daily_operator_brief_scheduler_dry_run.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量 pytest、ruff 和 repo 外 READY / READY_WITH_WARNINGS / NOT_READY / SAFETY_BLOCKED smoke；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断。
+- 2026-05-24：最终收尾验证完成并改为 `DONE`。repo 外 smoke 再次确认 READY / READY_WITH_WARNINGS / NOT_READY / SAFETY_BLOCKED 的 decision/status、13 项 dry-run 安全 invariant 和 Markdown banner/section；dashboard import guard 确认只读读取 TRADING-026 artifact，不触发 018B-025、026 script、operator brief、scheduler creation、market/backtest/scoring/data download/broker/replay/trading；目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff 通过；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。
