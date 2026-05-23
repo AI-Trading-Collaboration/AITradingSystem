@@ -203,6 +203,7 @@ def build_daily_task_dashboard_payload(
         "shadow_promotion_apply": _shadow_promotion_apply_summary(report),
         "shadow_promotion_rollback": _shadow_promotion_rollback_summary(report),
         "shadow_promotion_lifecycle_audit": _shadow_promotion_lifecycle_audit_summary(report),
+        "parameter_governance_summary": _parameter_governance_summary_summary(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -308,6 +309,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_shadow_promotion_apply(report),
             _render_shadow_promotion_rollback(report),
             _render_shadow_promotion_lifecycle_audit(report),
+            _render_parameter_governance_summary(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -1028,6 +1030,11 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
             "shadow_promotion_lifecycle_audit_json",
             "shadow promotion lifecycle audit JSON",
             _latest_shadow_promotion_lifecycle_audit_path(report),
+        ),
+        (
+            "parameter_governance_summary_json",
+            "parameter governance summary JSON",
+            _latest_parameter_governance_summary_path(report),
         ),
     )
     for artifact_id, label, path in extras:
@@ -2856,6 +2863,136 @@ def _shadow_promotion_lifecycle_audit_summary(report: DailyTaskDashboardReport) 
     }
 
 
+def _parameter_governance_summary_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_parameter_governance_summary_path(report)
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "parameter_governance_summary":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "governance_state": "MISSING",
+            "action_required": False,
+            "action_level": "NONE",
+            "recommended_action": "",
+            "production_weights_summary": "MISSING",
+            "shadow_weights_summary": "MISSING",
+            "review_decision": "MISSING",
+            "proposal_decision": "MISSING",
+            "preflight_decision": "MISSING",
+            "apply_decision": "MISSING",
+            "rollback_decision": "MISSING",
+            "lifecycle_decision": "MISSING",
+            "safety_boundary_status": "MISSING",
+            "critical_findings_count": 0,
+            "warnings_count": 0,
+            "latest_summary_markdown_path": "",
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_only": True,
+            "governance_only": True,
+            "broker_execution": False,
+            "replay_execution": False,
+            "trading_execution": False,
+            "risk": (
+                "parameter governance summary JSON 缺失；dashboard 不运行 TRADING-019 "
+                "或任何 018B-018F / scoring / broker / replay / trading pipeline。"
+            ),
+        }
+
+    outputs = _mapping_value(payload, "outputs")
+    markdown_path = Path(_string_value(outputs.get("markdown")) or str(path.with_suffix(".md")))
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    production = _mapping_value(payload, "production_state")
+    shadow = _mapping_value(payload, "shadow_state")
+    review = _mapping_value(payload, "shadow_vs_production_review")
+    promotion = _mapping_value(payload, "promotion_status")
+    safety = _mapping_value(payload, "safety_boundary_audit")
+    findings = _mapping_value(payload, "audit_findings")
+    contract = _mapping_value(payload, "pipeline_contract")
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    broker_execution = payload.get("broker_execution") is True
+    replay_execution = payload.get("replay_execution") is True
+    trading_execution = payload.get("trading_execution") is True
+    critical = list(_strings(findings.get("critical_findings")))
+    warnings = list(_strings(findings.get("warnings")))
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("TRADING-019 summary production_effect 必须为 none。")
+    if payload.get("manual_review_only") is not True:
+        risks.append("TRADING-019 summary 必须 manual_review_only=true。")
+    if payload.get("governance_only") is not True:
+        risks.append("TRADING-019 summary 必须 governance_only=true。")
+    if payload.get("apply_executed_by_governance") is not False:
+        risks.append("TRADING-019 summary 不允许执行 apply。")
+    if payload.get("rollback_executed_by_governance") is not False:
+        risks.append("TRADING-019 summary 不允许执行 rollback。")
+    if broker_execution:
+        risks.append("TRADING-019 summary 不允许 broker_execution=true。")
+    if replay_execution:
+        risks.append("TRADING-019 summary 不允许 replay_execution=true。")
+    if trading_execution:
+        risks.append("TRADING-019 summary 不允许 trading_execution=true。")
+    for field in (
+        "runs_shadow_iteration_pipeline",
+        "runs_comparison_pipeline",
+        "runs_multi_day_review_pipeline",
+        "runs_promotion_proposal_pipeline",
+        "runs_apply_preflight_pipeline",
+        "runs_promotion_apply",
+        "runs_promotion_rollback",
+        "runs_lifecycle_audit_pipeline",
+        "runs_governance_summary_pipeline",
+        "runs_scoring_pipeline",
+        "runs_broker_runner",
+        "runs_paper_runner",
+        "runs_replay_runner",
+        "writes_production_profile",
+        "writes_production_weights",
+        "writes_shadow_weights",
+        "writes_approved_profile",
+        "promotes_shadow_to_production",
+        "changes_daily_dashboard_main_conclusion",
+        "triggers_trade",
+    ):
+        if contract.get(field) is True:
+            risks.append(f"parameter governance summary safety contract 异常：{field}。")
+
+    return {
+        "status": _string_value(payload.get("governance_state")) or "INCOMPLETE_DATA",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "governance_state": _string_value(payload.get("governance_state")) or "INCOMPLETE_DATA",
+        "action_required": payload.get("action_required") is True,
+        "action_level": _string_value(payload.get("action_level")) or "REVIEW_REQUIRED",
+        "recommended_action": _string_value(payload.get("recommended_action")),
+        "production_weights_summary": _weight_summary(_mapping_value(production, "weights")),
+        "shadow_weights_summary": _weight_summary(_mapping_value(shadow, "weights")),
+        "review_decision": _string_value(review.get("review_decision")) or "MISSING",
+        "proposal_decision": _string_value(promotion.get("proposal_decision")) or "MISSING",
+        "preflight_decision": _string_value(promotion.get("preflight_decision")) or "MISSING",
+        "apply_decision": _string_value(promotion.get("apply_decision")) or "MISSING",
+        "rollback_decision": _string_value(promotion.get("rollback_decision")) or "MISSING",
+        "lifecycle_decision": _string_value(promotion.get("lifecycle_decision")) or "MISSING",
+        "safety_boundary_status": _string_value(safety.get("status")) or "MISSING",
+        "critical_findings_count": len(critical),
+        "warnings_count": len(warnings),
+        "latest_summary_markdown_path": str(markdown_path),
+        "production_effect": production_effect,
+        "manual_review_only": payload.get("manual_review_only") is True,
+        "governance_only": payload.get("governance_only") is True,
+        "broker_execution": broker_execution,
+        "replay_execution": replay_execution,
+        "trading_execution": trading_execution,
+        "risk": "；".join(risks) or "Parameter Governance Summary 当前仅作只读展示。",
+    }
+
+
 def _latest_shadow_vs_production_review_path(report: DailyTaskDashboardReport) -> Path:
     review_root = (
         report.project_root / "data" / "derived" / "weight_iterations" / "comparison" / "reviews"
@@ -2967,6 +3104,24 @@ def _latest_shadow_promotion_lifecycle_audit_path(report: DailyTaskDashboardRepo
     candidates: list[tuple[date, Path]] = []
     for path in audit_root.glob("shadow_promotion_lifecycle_audit_*.json"):
         raw_date = path.stem.removeprefix("shadow_promotion_lifecycle_audit_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_parameter_governance_summary_path(report: DailyTaskDashboardReport) -> Path:
+    governance_root = report.project_root / "data" / "derived" / "weight_iterations" / "governance"
+    default_path = governance_root / (
+        f"parameter_governance_summary_{report.as_of.isoformat()}.json"
+    )
+    if not governance_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in governance_root.glob("parameter_governance_summary_*.json"):
+        raw_date = path.stem.removeprefix("parameter_governance_summary_")
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= report.as_of:
             candidates.append((parsed, path))
@@ -5047,6 +5202,66 @@ def _render_shadow_promotion_lifecycle_audit(report: DailyTaskDashboardReport) -
     )
 
 
+def _render_parameter_governance_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _parameter_governance_summary_summary(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}"><span>Parameter Governance Summary</span>'
+        f"<small>{_text(summary.get('governance_state', 'INCOMPLETE_DATA'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>Parameter Governance Summary</span><small>MISSING</small></span>"
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="parameter-governance-summary-title">',
+            '<div class="section-head">',
+            ('<h2 id="parameter-governance-summary-title">' "Parameter Governance Summary</h2>"),
+            (
+                "<p>参数治理总览只读卡片；dashboard 只读取 TRADING-019 summary "
+                "artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/018F/019/"
+                "scoring/broker/replay/交易。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("governance_state", summary.get("governance_state", "MISSING")),
+            _summary_item("action_required", summary.get("action_required", False)),
+            _summary_item("action_level", summary.get("action_level", "NONE")),
+            _summary_item("recommended_action", summary.get("recommended_action", "")),
+            _summary_item(
+                "production weights", summary.get("production_weights_summary", "MISSING")
+            ),
+            _summary_item("shadow weights", summary.get("shadow_weights_summary", "MISSING")),
+            _summary_item("latest 018C2 review", summary.get("review_decision", "MISSING")),
+            _summary_item("latest proposal", summary.get("proposal_decision", "MISSING")),
+            _summary_item("latest preflight", summary.get("preflight_decision", "MISSING")),
+            _summary_item("latest apply", summary.get("apply_decision", "MISSING")),
+            _summary_item("latest rollback", summary.get("rollback_decision", "MISSING")),
+            _summary_item("latest lifecycle", summary.get("lifecycle_decision", "MISSING")),
+            _summary_item(
+                "safety_boundary_audit.status",
+                summary.get("safety_boundary_status", "MISSING"),
+            ),
+            _summary_item("critical_findings", summary.get("critical_findings_count", 0)),
+            _summary_item("warnings", summary.get("warnings_count", 0)),
+            _summary_item(
+                "summary markdown path",
+                summary.get("latest_summary_markdown_path", ""),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
 def _shadow_impact_sample_text(impact: TraceRecord) -> str:
     counts = _mapping_value(impact, "window_sample_counts")
     parts = []
@@ -5478,6 +5693,16 @@ def _format_percent_mapping(values: TraceRecord) -> str:
             continue
         parts.append(f"{key}={_format_percent(number)}")
     return "，".join(parts)
+
+
+def _weight_summary(values: TraceRecord) -> str:
+    parts: list[str] = []
+    for key in sorted(values):
+        number = _optional_float(values.get(key))
+        if number is None:
+            continue
+        parts.append(f"{key}={number:.4f}")
+    return "，".join(parts) or "MISSING"
 
 
 def _floats_equal(left: float | None, right: float | None) -> bool:
