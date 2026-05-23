@@ -2,7 +2,7 @@
 
 关联任务：`TRADING-022`、`TRADING-025`
 
-当前状态：TRADING-022 DONE；TRADING-025 VALIDATING
+当前状态：TRADING-022 DONE；TRADING-025 DONE
 
 最后更新：2026-05-24
 
@@ -217,3 +217,16 @@ Pipeline Health / Data Freshness section，以及 Daily Task Dashboard 的 opera
   `tests/trading_engine`、全量 `pytest` 和 `ruff check scripts src tests`。全仓
   `black --check scripts src tests` 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未格式化
   无关文件。
+- 2026-05-24：TRADING-025 最终收尾验证完成并进入 `DONE`。repo 外 smoke 再次覆盖 OK /
+  WATCH / ACTION_REQUIRED / URGENT / SAFETY_BLOCKED；五路径均确认 operator brief 安全字段固定
+  `production_effect=none`、`manual_review_only=true`、`operator_brief_only=true`、`read_only=true`、
+  `apply_executed_by_operator_brief=false`、`rollback_executed_by_operator_brief=false`、
+  `broker_execution=false`、`replay_execution=false`、`trading_execution=false`。Markdown 验证
+  OK 显示 Pipeline Health / Data Freshness 明确状态，WATCH 顶部包含
+  `Watch: Monitoring Recommended` 且 023/024 缺失显示 `UNKNOWN` 而非 `INPUT_MISSING`，
+  ACTION_REQUIRED / URGENT / SAFETY_BLOCKED banner 正确。输入 023/024 artifact checksum 在
+  operator brief 生成前后不变。Dashboard import guard 验证 Daily Trading System Operator Brief
+  卡片只读读取 TRADING-022 artifact，不触发 TRADING-023/024、market/backtest/scoring/data
+  download/broker/replay/trading，并展示 health/freshness 状态和 missing/stale counts。收尾验证通过
+  目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check 仍只被
+  既有无关 `tests/test_market_data.py` baseline 阻断。
