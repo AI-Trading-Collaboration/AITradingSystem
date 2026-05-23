@@ -2,7 +2,7 @@
 
 关联任务：`TRADING-020`
 
-当前状态：VALIDATING
+当前状态：DONE
 
 最后更新：2026-05-23
 
@@ -119,3 +119,16 @@ promotion、apply、rollback，不得触发 broker、replay runner、trading exe
   `trading_execution=false`。验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、
   全量 pytest 和 ruff；全仓 black check 仍只被既有无关 `tests/test_market_data.py` baseline
   阻断，未混入无关格式化 diff。
+- 2026-05-23：从 `VALIDATING` 改为 `DONE`。最终收尾验证再次通过 repo 外临时 fixture
+  三路径 smoke：`RENDERED` 页面包含 `governance_state`、`action_level`、production vs shadow
+  weights、promotion lifecycle timeline、pending items 和 safety boundary audit；`SAFETY_ANOMALY`
+  页面顶部显示 urgent banner，critical findings 已 HTML escape；`SAFETY_BLOCKED` 对 summary
+  `broker_execution=true` 明确显示 render blocked。三路径均确认 render metadata 顶层
+  `production_effect=none`、`manual_review_only=true`、`governance_only=true`、
+  `web_view_only=true`、`apply_executed_by_web_view=false`、
+  `rollback_executed_by_web_view=false`、`broker_execution=false`、`replay_execution=false`、
+  `trading_execution=false`。Dashboard import guard 验证 Parameter Governance Web View 卡片只读读取
+  render metadata artifact，不触发 018B/018C/018C2/018D/018E1/018E2/018E3/018F/019/020、
+  scoring、broker、replay 或 trading。收尾验证通过目标 pytest、dashboard pytest、
+  `tests/trading_engine`、全量 pytest 和 ruff；全仓 black check 仍只被既有无关
+  `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。
