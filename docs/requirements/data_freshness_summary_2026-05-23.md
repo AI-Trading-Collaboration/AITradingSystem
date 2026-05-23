@@ -2,9 +2,9 @@
 
 关联任务：`TRADING-024`
 
-当前状态：VALIDATING
+当前状态：DONE
 
-最后更新：2026-05-23
+最后更新：2026-05-24
 
 ## 背景
 
@@ -124,3 +124,20 @@ TRADING-023 和 TRADING-024 artifacts，把 operator brief 的 `pipeline_health`
   `data_downloaded_by_freshness_check=false`、`pipelines_executed_by_freshness_check=false`。
   `python -m black --check scripts src tests` 仍仅被既有无关 `tests/test_market_data.py`
   baseline 阻断；本次触达文件 Black check 已通过。
+- 2026-05-24：最终收尾验证完成，从 `VALIDATING` 改为 `DONE`。再次使用 repo 外临时
+  fixture 验证 OK / MISSING / CRITICAL / STALE / optional-missing 五路径；OK Markdown 包含
+  `Freshness Summary`、`Required Sources`、`Optional Sources`；MISSING Markdown 顶部包含
+  `Required Data Missing`；CRITICAL Markdown 顶部包含
+  `CRITICAL: Data Freshness Issue Detected`；STALE Markdown 顶部包含
+  `Stale Required Data Detected`；optional missing 输出 `WATCH` 而不是 `MISSING`。所有 smoke
+  输出均确认固定安全边界：`production_effect=none`、`manual_review_only=true`、
+  `data_freshness_only=true`、`read_only=true`、
+  `data_downloaded_by_freshness_check=false`、
+  `pipelines_executed_by_freshness_check=false`、
+  `apply_executed_by_freshness_check=false`、
+  `rollback_executed_by_freshness_check=false`、`broker_execution=false`、
+  `replay_execution=false`、`trading_execution=false`。Dashboard import guard 确认
+  Data Freshness Summary 卡片只读读取 TRADING-024 artifact，不触发 018B-023、TRADING-024
+  script、market/backtest/scoring/data download/broker/replay/trading。随后重新执行目标 pytest、
+  dashboard pytest、`tests/trading_engine`、全量 pytest、ruff 和 Black check；全仓 Black check
+  仍只被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。
