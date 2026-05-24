@@ -2,7 +2,7 @@
 
 关联任务：`TRADING-029`
 
-状态：`VALIDATING`
+状态：`DONE`
 
 ## 目标
 
@@ -131,9 +131,10 @@ Dashboard 禁止触发 018B-028、TRADING-029 script、template generator、oper
 |3. CLI|DONE|新增 `scripts/validate_daily_operator_brief_scheduler_templates.py`。|
 |4. Dashboard|DONE|新增只读卡片，只读取 TRADING-029 validation artifact。|
 |5. 文档|DONE|新增 runbook，更新 system flow 和 artifact catalog。|
-|6. 测试与验证|VALIDATING|覆盖 metadata、coverage、syntax、dangerous commands、required safety text、status aggregation、dashboard 和 output safety invariants；全仓 Black check 仍被既有无关 `tests/test_market_data.py` baseline 阻断。|
+|6. 测试与验证|DONE|覆盖 metadata、coverage、syntax、dangerous commands、required safety text、status aggregation、dashboard 和 output safety invariants；全仓 Black check 仍被既有无关 `tests/test_market_data.py` baseline 阻断。|
 
 ## 进展记录
 
 - 2026-05-24：新增并进入 `IN_PROGRESS`。本阶段只允许静态验证 TRADING-028 `.template` artifact，不创建或启用 scheduler，不执行模板、operator brief、上游 pipeline 或交易执行。
 - 2026-05-24：实现完成并进入 `VALIDATING`。新增核心 validator、CLI、validation JSON/Markdown/run log、dashboard 只读卡片、runbook、system flow、artifact catalog 和专项测试；repo 外 smoke 确认正常模板 `PASS`、invalid XML `FAIL`、apply script `SAFETY_BLOCKED`、placeholder path `PASS_WITH_WARNINGS`；验证通过 `tests/trading_engine/test_daily_operator_brief_scheduler_template_validation.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量 pytest 和 ruff；`python -m black --check scripts src tests` 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。
+- 2026-05-24：最终收尾验证完成并改为 `DONE`。repo 外 smoke 再次确认正常模板 `PASS`、invalid XML 输出 `FAIL`、模板包含 `run_shadow_promotion_apply.py` 输出 `SAFETY_BLOCKED`、placeholder path 输出 `PASS_WITH_WARNINGS`；四路径均确认 validation output 顶层安全边界为 `production_effect=none`、`manual_review_only=true`、`scheduler_template_validation_only=true`、`read_only=true`、`scheduler_created=false`、`scheduler_installed=false`、`scheduler_enabled=false`、`templates_executed_by_validator=false`、`operator_brief_executed_by_validator=false`、`pipelines_executed_by_validator=false`、`data_downloaded_by_validator=false`、`apply_executed_by_validator=false`、`rollback_executed_by_validator=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard import guard 确认 Scheduler Template Validation Report 卡片只读读取 TRADING-029 artifact，不触发 018B-028、TRADING-029 script、template generator、operator brief、scheduler creation、market/backtest/scoring/data download/broker/replay/trading；收尾验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；`python -m black --check scripts src tests` 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。
