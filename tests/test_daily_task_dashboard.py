@@ -1003,6 +1003,107 @@ def test_daily_task_dashboard_scheduler_template_validation_card_is_read_only(
     assert validation["output_artifacts"]["validation_markdown"]["path"] in html
 
 
+def test_daily_task_dashboard_operator_brief_notification_draft_card_is_read_only(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    as_of = date(2026, 5, 24)
+    metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
+    _write_detail_reports(tmp_path, as_of)
+    notification = _write_operator_brief_notification_draft(tmp_path, as_of)
+
+    original_import = builtins.__import__
+
+    def guarded_import(
+        name: str,
+        globals_: dict[str, object] | None = None,
+        locals_: dict[str, object] | None = None,
+        fromlist: tuple[str, ...] = (),
+        level: int = 0,
+    ) -> object:
+        blocked_module_tokens = (
+            "run_daily_shadow_weight_iteration",
+            "run_daily_shadow_vs_production_comparison",
+            "run_shadow_vs_production_multi_day_review",
+            "run_shadow_promotion_proposal",
+            "run_shadow_promotion_apply_preflight",
+            "run_shadow_promotion_apply",
+            "run_shadow_promotion_rollback",
+            "run_shadow_promotion_lifecycle_audit",
+            "run_parameter_governance_summary",
+            "render_parameter_governance_web_view",
+            "run_parameter_governance_daily_digest",
+            "run_pipeline_health_summary",
+            "run_data_freshness_summary",
+            "run_daily_trading_system_operator_brief",
+            "run_daily_operator_brief_scheduler_dry_run",
+            "generate_daily_operator_brief_scheduler_templates",
+            "validate_daily_operator_brief_scheduler_templates",
+            "generate_operator_brief_notification_draft",
+            "ai_trading_system.trading_engine.daily_trading_system_operator_brief",
+            "ai_trading_system.trading_engine.pipeline_health_summary",
+            "ai_trading_system.trading_engine.data_freshness_summary",
+            "ai_trading_system.trading_engine.daily_operator_brief_scheduler_dry_run",
+            "ai_trading_system.trading_engine.daily_operator_brief_scheduler_templates",
+            "ai_trading_system.trading_engine.daily_operator_brief_scheduler_template_validation",
+            "ai_trading_system.trading_engine.operator_brief_notification_draft",
+            "smtplib",
+            "slack_sdk",
+            "discord",
+            "gmail",
+            "ai_trading_system.data.download",
+            "ai_trading_system.scoring",
+            "ai_trading_system.backtest",
+            "ai_trading_system.trading_engine.brokers",
+            "run_paper_trading_replay",
+        )
+        if any(token in name for token in blocked_module_tokens):
+            raise AssertionError(
+                f"dashboard must not import notification or execution path: {name}"
+            )
+        return original_import(name, globals_, locals_, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+
+    report = build_daily_task_dashboard_report(
+        as_of=as_of,
+        metadata_path=metadata_path,
+        run_report_path=None,
+        reports_dir=tmp_path,
+    )
+    html = render_daily_task_dashboard(report)
+    payload = build_daily_task_dashboard_payload(report)
+
+    summary = payload["operator_brief_notification_draft"]
+    assert summary["draft_status"] == "GENERATED"
+    assert summary["notification_severity"] == "NORMAL"
+    assert summary["headline"] == notification["headline"]
+    assert summary["email_draft_path"].endswith("operator_brief_email_draft_2026-05-24.md")
+    assert summary["chat_draft_path"].endswith("operator_brief_chat_draft_2026-05-24.md")
+    assert summary["mobile_summary_path"].endswith("operator_brief_mobile_summary_2026-05-24.md")
+    assert summary["manual_review_required"] is True
+    assert summary["email_sent"] is False
+    assert summary["slack_sent"] is False
+    assert summary["discord_sent"] is False
+    assert summary["mobile_push_sent"] is False
+    assert summary["production_effect"] == "none"
+    assert summary["manual_review_only"] is True
+    assert summary["notification_draft_only"] is True
+    assert summary["read_only"] is True
+    assert summary["operator_brief_executed_by_notification_draft"] is False
+    assert summary["pipelines_executed_by_notification_draft"] is False
+    assert summary["data_downloaded_by_notification_draft"] is False
+    assert summary["apply_executed_by_notification_draft"] is False
+    assert summary["rollback_executed_by_notification_draft"] is False
+    assert summary["broker_execution"] is False
+    assert summary["replay_execution"] is False
+    assert summary["trading_execution"] is False
+    assert "Operator Brief Notification Draft" in html
+    assert "notification_severity" in html
+    assert "email_sent" in html
+    assert notification["draft_outputs"]["summary_markdown"]["path"] in html
+
+
 def test_daily_task_dashboard_pipeline_health_summary_card_is_read_only(
     tmp_path: Path,
     monkeypatch: Any,
@@ -1815,6 +1916,99 @@ def _write_operator_brief_scheduler_template_validation(
     json_path.parent.mkdir(parents=True, exist_ok=True)
     json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     markdown_path.write_text("# Scheduler Template Validation Report\n", encoding="utf-8")
+    return payload
+
+
+def _write_operator_brief_notification_draft(tmp_path: Path, as_of: date) -> dict[str, Any]:
+    suffix = as_of.isoformat()
+    notification_root = tmp_path / "data" / "derived" / "operator_briefs" / "notifications"
+    json_path = notification_root / f"operator_brief_notification_draft_{suffix}.json"
+    markdown_path = json_path.with_suffix(".md")
+    email_path = notification_root / "email" / f"operator_brief_email_draft_{suffix}.md"
+    chat_path = notification_root / "chat" / f"operator_brief_chat_draft_{suffix}.md"
+    mobile_path = notification_root / "mobile" / f"operator_brief_mobile_summary_{suffix}.md"
+    payload: dict[str, Any] = {
+        "schema_version": "1.0",
+        "report_type": "operator_brief_notification_draft",
+        "task_id": "TRADING-030",
+        "date": suffix,
+        "mode": "operator_brief_notification_draft_only",
+        "production_effect": "none",
+        "manual_review_only": True,
+        "notification_draft_only": True,
+        "read_only": True,
+        "safe_for_scheduler": True,
+        "email_sent": False,
+        "gmail_draft_created": False,
+        "slack_sent": False,
+        "discord_sent": False,
+        "mobile_push_sent": False,
+        "operator_brief_executed_by_notification_draft": False,
+        "pipelines_executed_by_notification_draft": False,
+        "data_downloaded_by_notification_draft": False,
+        "apply_executed_by_notification_draft": False,
+        "rollback_executed_by_notification_draft": False,
+        "broker_execution": False,
+        "replay_execution": False,
+        "trading_execution": False,
+        "draft_status": "GENERATED",
+        "notification_severity": "NORMAL",
+        "headline": "Trading system status is stable. No immediate manual action is required.",
+        "source_snapshot": {
+            "brief_status": "OK",
+            "summary_level": "NORMAL",
+            "headline": "Trading system status is stable. No immediate manual action is required.",
+            "can_trust_outputs_today": True,
+            "manual_action_required": False,
+            "parameter_governance_status": "OK",
+            "pipeline_health_status": "OK",
+            "data_freshness_status": "OK",
+            "critical_alert_count": 0,
+            "warning_count": 0,
+        },
+        "draft_outputs": {
+            "email_draft": {
+                "path": f"data/derived/operator_briefs/notifications/email/{email_path.name}",
+                "subject": "[Trading System] Daily Operator Brief - OK - 2026-05-24",
+            },
+            "chat_draft": {
+                "path": f"data/derived/operator_briefs/notifications/chat/{chat_path.name}"
+            },
+            "mobile_summary": {
+                "path": f"data/derived/operator_briefs/notifications/mobile/{mobile_path.name}"
+            },
+            "summary_markdown": {
+                "path": f"data/derived/operator_briefs/notifications/{markdown_path.name}"
+            },
+        },
+        "safety_validation": {
+            "status": "PASS",
+            "operator_brief_task_id_valid": True,
+            "operator_brief_production_effect_none": True,
+            "operator_brief_read_only": True,
+            "operator_brief_no_execution_flags": True,
+            "no_notification_sent": True,
+            "no_external_webhook_called": True,
+            "no_pipeline_execution": True,
+            "no_data_download": True,
+            "no_apply_or_rollback": True,
+            "no_broker_replay_trading": True,
+            "blocking_reasons": [],
+        },
+        "manual_review_required": {
+            "required": True,
+            "instructions": ["Review notification drafts before sending."],
+        },
+    }
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    email_path.parent.mkdir(parents=True, exist_ok=True)
+    chat_path.parent.mkdir(parents=True, exist_ok=True)
+    mobile_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    markdown_path.write_text("# Operator Brief Notification Draft\n", encoding="utf-8")
+    email_path.write_text("# Email Draft\n", encoding="utf-8")
+    chat_path.write_text("# Chat Draft\n", encoding="utf-8")
+    mobile_path.write_text("Trading System OK - no manual action required.\n", encoding="utf-8")
     return payload
 
 
