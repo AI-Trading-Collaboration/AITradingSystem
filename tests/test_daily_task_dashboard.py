@@ -1393,6 +1393,112 @@ def test_daily_task_dashboard_operator_brief_notification_approval_gate_card_is_
     assert gate["output_artifacts"]["approval_gate_markdown"]["path"] in html
 
 
+def test_daily_task_dashboard_operator_brief_notification_draft_dispatch_card_is_read_only(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    as_of = date(2026, 5, 24)
+    metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
+    _write_detail_reports(tmp_path, as_of)
+    draft_dispatch = _write_operator_brief_notification_draft_dispatch(tmp_path, as_of)
+
+    original_import = builtins.__import__
+
+    def guarded_import(
+        name: str,
+        globals_: dict[str, object] | None = None,
+        locals_: dict[str, object] | None = None,
+        fromlist: tuple[str, ...] = (),
+        level: int = 0,
+    ) -> object:
+        blocked_module_tokens = (
+            "run_daily_trading_system_operator_brief",
+            "generate_operator_brief_notification_draft",
+            "run_operator_brief_notification_delivery_preflight",
+            "run_operator_brief_notification_dispatch_preview",
+            "run_operator_brief_notification_approval_gate",
+            "run_operator_brief_notification_draft_dispatch",
+            "ai_trading_system.trading_engine.daily_trading_system_operator_brief",
+            "ai_trading_system.trading_engine.operator_brief_notification_draft",
+            "ai_trading_system.trading_engine.operator_brief_notification_delivery_preflight",
+            "ai_trading_system.trading_engine.operator_brief_notification_dispatch_preview",
+            "ai_trading_system.trading_engine.operator_brief_notification_approval_gate",
+            "ai_trading_system.trading_engine.operator_brief_notification_draft_dispatch",
+            "smtplib",
+            "slack_sdk",
+            "telegram",
+            "discord",
+            "gmail",
+            "webhook",
+            "ai_trading_system.data.download",
+            "ai_trading_system.scoring",
+            "ai_trading_system.backtest",
+            "ai_trading_system.trading_engine.brokers",
+            "run_paper_trading_replay",
+        )
+        if any(token in name for token in blocked_module_tokens):
+            raise AssertionError(
+                f"dashboard must not import draft dispatch or execution path: {name}"
+            )
+        return original_import(name, globals_, locals_, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+
+    report = build_daily_task_dashboard_report(
+        as_of=as_of,
+        metadata_path=metadata_path,
+        run_report_path=None,
+        reports_dir=tmp_path,
+    )
+    html = render_daily_task_dashboard(report)
+    payload = build_daily_task_dashboard_payload(report)
+
+    summary = payload["operator_brief_notification_draft_dispatch"]
+    assert summary["final_status"] == "DRAFT_READY"
+    assert summary["ready_for_actual_dispatch"] is True
+    assert summary["approval_gate_status"] == "APPROVED"
+    assert summary["channel_count"] == 2
+    assert summary["draft_ready_channel_count"] == 1
+    assert summary["draft_hash"] == "sha256:abc123"
+    assert summary["generated_at"] == "2026-05-24T00:00:00Z"
+    assert summary["next_recommended_action"] == (
+        "Review this local draft dispatch artifact before any future actual dispatch task; "
+        "TRADING-034 sent nothing."
+    )
+    assert summary["production_effect"] == "none"
+    assert summary["manual_review_only"] is True
+    assert summary["draft_dispatch_only"] is True
+    assert summary["read_only"] is True
+    assert summary["external_side_effects"] is False
+    assert summary["network_access_required"] is False
+    assert summary["secrets_required"] is False
+    assert summary["email_sent"] is False
+    assert summary["gmail_draft_created"] is False
+    assert summary["gmail_draft_modified"] is False
+    assert summary["smtp_called"] is False
+    assert summary["slack_sent"] is False
+    assert summary["telegram_sent"] is False
+    assert summary["discord_sent"] is False
+    assert summary["webhook_called"] is False
+    assert summary["mobile_push_sent"] is False
+    assert summary["operator_brief_executed_by_draft_dispatch"] is False
+    assert summary["notification_draft_executed_by_draft_dispatch"] is False
+    assert summary["delivery_preflight_executed_by_draft_dispatch"] is False
+    assert summary["dispatch_preview_executed_by_draft_dispatch"] is False
+    assert summary["approval_gate_executed_by_draft_dispatch"] is False
+    assert summary["pipelines_executed_by_draft_dispatch"] is False
+    assert summary["data_downloaded_by_draft_dispatch"] is False
+    assert summary["apply_executed_by_draft_dispatch"] is False
+    assert summary["rollback_executed_by_draft_dispatch"] is False
+    assert summary["broker_execution"] is False
+    assert summary["replay_execution"] is False
+    assert summary["trading_execution"] is False
+    assert "Operator Brief Notification Draft Dispatch" in html
+    assert "ready_for_actual_dispatch" in html
+    assert "draft_ready_channel_count" in html
+    assert draft_dispatch["output_artifacts"]["draft_dispatch_markdown"]["path"] in html
+
+
 def test_daily_task_dashboard_pipeline_health_summary_card_is_read_only(
     tmp_path: Path,
     monkeypatch: Any,
@@ -2767,6 +2873,175 @@ def _write_operator_brief_notification_approval_gate(
         encoding="utf-8",
     )
     run_log_path.write_text("approval_gate_status=APPROVED\n", encoding="utf-8")
+    return payload
+
+
+def _write_operator_brief_notification_draft_dispatch(
+    tmp_path: Path,
+    as_of: date,
+) -> dict[str, Any]:
+    suffix = as_of.isoformat()
+    draft_root = (
+        tmp_path / "data" / "derived" / "operator_briefs" / "notifications" / "draft_dispatch"
+    )
+    json_path = draft_root / f"operator_brief_notification_draft_dispatch_{suffix}.json"
+    markdown_path = json_path.with_suffix(".md")
+    latest_json_path = draft_root / "latest.json"
+    latest_markdown_path = draft_root / "latest.md"
+    run_log_path = draft_root / "run.log"
+    payload: dict[str, Any] = {
+        "schema_version": "1.0",
+        "report_type": "operator_brief_notification_draft_dispatch",
+        "task_id": "TRADING-034",
+        "date": suffix,
+        "mode": "draft_dispatch",
+        "production_effect": "none",
+        "manual_review_only": True,
+        "draft_dispatch_only": True,
+        "read_only": True,
+        "safe_for_scheduler": True,
+        "external_side_effects": False,
+        "network_access_required": False,
+        "secrets_required": False,
+        "email_sent": False,
+        "gmail_draft_created": False,
+        "gmail_draft_modified": False,
+        "smtp_called": False,
+        "slack_sent": False,
+        "telegram_sent": False,
+        "discord_sent": False,
+        "webhook_called": False,
+        "mobile_push_sent": False,
+        "operator_brief_executed_by_draft_dispatch": False,
+        "notification_draft_executed_by_draft_dispatch": False,
+        "delivery_preflight_executed_by_draft_dispatch": False,
+        "dispatch_preview_executed_by_draft_dispatch": False,
+        "approval_gate_executed_by_draft_dispatch": False,
+        "pipelines_executed_by_draft_dispatch": False,
+        "data_downloaded_by_draft_dispatch": False,
+        "apply_executed_by_draft_dispatch": False,
+        "rollback_executed_by_draft_dispatch": False,
+        "broker_execution": False,
+        "replay_execution": False,
+        "trading_execution": False,
+        "metadata": {
+            "task_id": "TRADING-034",
+            "task_name": "Operator Brief Notification Draft Dispatch",
+            "run_date": suffix,
+            "generated_at": "2026-05-24T00:00:00Z",
+            "mode": "draft_dispatch",
+            "production_effect": "none",
+            "manual_review_only": True,
+        },
+        "input_refs": {
+            "approval_gate_artifact": {
+                "path": "data/derived/operator_briefs/notifications/approval_gate/latest.json",
+                "status": "FOUND",
+                "sha256": "abc",
+            },
+            "dispatch_preview_artifact": {
+                "path": "data/derived/operator_briefs/notifications/dispatch_preview/latest.json",
+                "status": "FOUND",
+                "sha256": "def",
+            },
+        },
+        "approval_gate_summary": {
+            "approval_gate_status": "APPROVED",
+            "allowed_to_enter_dispatch": True,
+            "dispatch_preview_hash": "sha256:preview",
+            "current_dispatch_preview_hash": "sha256:preview",
+        },
+        "draft": {
+            "draft_status": "DRAFT_READY",
+            "draft_id": "local-draft-abc123",
+            "channel_count": 2,
+            "draft_ready_channel_count": 1,
+            "channels": [
+                {
+                    "channel_type": "email",
+                    "target_ref": "o***@example.com",
+                    "enabled": True,
+                    "draft_ready": True,
+                    "reason": "email channel ready.",
+                },
+                {
+                    "channel_type": "file",
+                    "target_ref": "operator-chat-channel",
+                    "enabled": True,
+                    "draft_ready": False,
+                    "reason": "chat is not selected for actual dispatch.",
+                },
+            ],
+            "message": {
+                "subject": "[Trading System] Daily Operator Brief - OK - 2026-05-24",
+                "title": "Daily Trading System Operator Brief - 2026-05-24",
+                "body_markdown": "# Operator Brief\nReady.\n",
+                "body_length": 24,
+                "contains_markdown": True,
+            },
+        },
+        "hashes": {
+            "dispatch_preview_hash": "sha256:preview",
+            "approval_gate_dispatch_preview_hash": "sha256:preview",
+            "draft_hash": "sha256:abc123",
+            "hash_algorithm": "sha256",
+            "hash_scope": "canonical_draft_dispatch_json",
+        },
+        "decision": {
+            "final_status": "DRAFT_READY",
+            "ready_for_actual_dispatch": True,
+            "human_action_required": True,
+            "next_recommended_action": (
+                "Review this local draft dispatch artifact before any future actual dispatch task; "
+                "TRADING-034 sent nothing."
+            ),
+        },
+        "safety": {
+            "external_side_effects": False,
+            "network_access_required": False,
+            "secrets_required": False,
+            "recipient_masking_applied": True,
+            "approval_gate_required": True,
+            "approval_gate_passed": True,
+            "sensitive_content_flags": [],
+        },
+        "reasons": ["Approved TRADING-033 gate and TRADING-032 preview are aligned."],
+        "warnings": [],
+        "output_artifacts": {
+            "draft_dispatch_json": {
+                "path": (
+                    "data/derived/operator_briefs/notifications/draft_dispatch/" f"{json_path.name}"
+                )
+            },
+            "draft_dispatch_markdown": {
+                "path": (
+                    "data/derived/operator_briefs/notifications/draft_dispatch/"
+                    f"{markdown_path.name}"
+                )
+            },
+            "latest_json": {
+                "path": "data/derived/operator_briefs/notifications/draft_dispatch/latest.json"
+            },
+            "latest_markdown": {
+                "path": "data/derived/operator_briefs/notifications/draft_dispatch/latest.md"
+            },
+            "run_log": {
+                "path": "data/derived/operator_briefs/notifications/draft_dispatch/run.log"
+            },
+        },
+    }
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    markdown_path.write_text("# Operator Brief Notification Draft Dispatch\n", encoding="utf-8")
+    latest_json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    latest_markdown_path.write_text(
+        "# Operator Brief Notification Draft Dispatch\n",
+        encoding="utf-8",
+    )
+    run_log_path.write_text("final_status=DRAFT_READY\n", encoding="utf-8")
     return payload
 
 

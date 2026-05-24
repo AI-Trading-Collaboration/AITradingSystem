@@ -230,6 +230,9 @@ def build_daily_task_dashboard_payload(
         "operator_brief_notification_approval_gate": (
             _operator_brief_notification_approval_gate_summary(report)
         ),
+        "operator_brief_notification_draft_dispatch": (
+            _operator_brief_notification_draft_dispatch_summary(report)
+        ),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -348,6 +351,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_operator_brief_notification_delivery_preflight(report),
             _render_operator_brief_notification_dispatch_preview(report),
             _render_operator_brief_notification_approval_gate(report),
+            _render_operator_brief_notification_draft_dispatch(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -4996,6 +5000,231 @@ def _operator_brief_notification_approval_gate_summary(
     }
 
 
+def _operator_brief_notification_draft_dispatch_summary(
+    report: DailyTaskDashboardReport,
+) -> TraceRecord:
+    path = _latest_operator_brief_notification_draft_dispatch_path(report)
+    payload = _read_json_object(path)
+    default_markdown = (
+        report.project_root
+        / "data"
+        / "derived"
+        / "operator_briefs"
+        / "notifications"
+        / "draft_dispatch"
+        / f"operator_brief_notification_draft_dispatch_{report.as_of.isoformat()}.md"
+    )
+    if payload.get("report_type") != "operator_brief_notification_draft_dispatch":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "draft_dispatch_markdown_path": str(default_markdown),
+            "latest_artifact_path": str(path),
+            "final_status": "MISSING",
+            "ready_for_actual_dispatch": False,
+            "approval_gate_status": "MISSING",
+            "channel_count": 0,
+            "draft_ready_channel_count": 0,
+            "draft_hash": "",
+            "generated_at": "",
+            "next_recommended_action": "",
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_only": True,
+            "draft_dispatch_only": True,
+            "read_only": True,
+            "external_side_effects": False,
+            "network_access_required": False,
+            "secrets_required": False,
+            "email_sent": False,
+            "gmail_draft_created": False,
+            "gmail_draft_modified": False,
+            "smtp_called": False,
+            "slack_sent": False,
+            "telegram_sent": False,
+            "discord_sent": False,
+            "webhook_called": False,
+            "mobile_push_sent": False,
+            "operator_brief_executed_by_draft_dispatch": False,
+            "notification_draft_executed_by_draft_dispatch": False,
+            "delivery_preflight_executed_by_draft_dispatch": False,
+            "dispatch_preview_executed_by_draft_dispatch": False,
+            "approval_gate_executed_by_draft_dispatch": False,
+            "pipelines_executed_by_draft_dispatch": False,
+            "data_downloaded_by_draft_dispatch": False,
+            "apply_executed_by_draft_dispatch": False,
+            "rollback_executed_by_draft_dispatch": False,
+            "broker_execution": False,
+            "replay_execution": False,
+            "trading_execution": False,
+            "risk": (
+                "TRADING-034 draft dispatch artifact 缺失；dashboard 只读取 latest.json，"
+                "不运行 TRADING-034 script、approval gate、dispatch preview、delivery "
+                "preflight、operator brief、notification draft generator、email/Gmail/"
+                "SMTP/Slack/Telegram/Discord/webhook/mobile、broker/replay/交易。"
+            ),
+        }
+
+    outputs = _mapping_value(payload, "output_artifacts")
+    draft_output = _mapping_value(outputs, "draft_dispatch_markdown")
+    markdown_path = (
+        _project_path(report.project_root, _string_value(draft_output.get("path")))
+        or default_markdown
+    )
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    metadata = _mapping_value(payload, "metadata")
+    gate = _mapping_value(payload, "approval_gate_summary")
+    draft = _mapping_value(payload, "draft")
+    decision = _mapping_value(payload, "decision")
+    hashes = _mapping_value(payload, "hashes")
+    safety = _mapping_value(payload, "safety")
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    external_side_effects = payload.get("external_side_effects") is True
+    network_access_required = payload.get("network_access_required") is True
+    secrets_required = payload.get("secrets_required") is True
+    email_sent = payload.get("email_sent") is True
+    gmail_draft_created = payload.get("gmail_draft_created") is True
+    gmail_draft_modified = payload.get("gmail_draft_modified") is True
+    smtp_called = payload.get("smtp_called") is True
+    slack_sent = payload.get("slack_sent") is True
+    telegram_sent = payload.get("telegram_sent") is True
+    discord_sent = payload.get("discord_sent") is True
+    webhook_called = payload.get("webhook_called") is True
+    mobile_push_sent = payload.get("mobile_push_sent") is True
+    operator_brief_executed = payload.get("operator_brief_executed_by_draft_dispatch") is True
+    notification_draft_executed = (
+        payload.get("notification_draft_executed_by_draft_dispatch") is True
+    )
+    delivery_preflight_executed = (
+        payload.get("delivery_preflight_executed_by_draft_dispatch") is True
+    )
+    dispatch_preview_executed = payload.get("dispatch_preview_executed_by_draft_dispatch") is True
+    approval_gate_executed = payload.get("approval_gate_executed_by_draft_dispatch") is True
+    pipelines_executed = payload.get("pipelines_executed_by_draft_dispatch") is True
+    data_downloaded = payload.get("data_downloaded_by_draft_dispatch") is True
+    apply_executed = payload.get("apply_executed_by_draft_dispatch") is True
+    rollback_executed = payload.get("rollback_executed_by_draft_dispatch") is True
+    broker_execution = payload.get("broker_execution") is True
+    replay_execution = payload.get("replay_execution") is True
+    trading_execution = payload.get("trading_execution") is True
+    final_status = _string_value(decision.get("final_status")) or "MISSING"
+    ready_for_actual_dispatch = decision.get("ready_for_actual_dispatch") is True
+    approval_gate_status = _string_value(gate.get("approval_gate_status")) or "MISSING"
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("TRADING-034 draft dispatch production_effect 必须为 none。")
+    if payload.get("manual_review_only") is not True:
+        risks.append("TRADING-034 draft dispatch 必须 manual_review_only=true。")
+    if payload.get("draft_dispatch_only") is not True:
+        risks.append("TRADING-034 必须 draft_dispatch_only=true。")
+    if payload.get("read_only") is not True:
+        risks.append("TRADING-034 draft dispatch 必须 read_only=true。")
+    if external_side_effects:
+        risks.append("TRADING-034 不允许 external_side_effects=true。")
+    if network_access_required:
+        risks.append("TRADING-034 不允许 network_access_required=true。")
+    if secrets_required:
+        risks.append("TRADING-034 不允许 secrets_required=true。")
+    if email_sent:
+        risks.append("TRADING-034 不允许发送 email。")
+    if gmail_draft_created:
+        risks.append("TRADING-034 不允许创建 Gmail draft。")
+    if gmail_draft_modified:
+        risks.append("TRADING-034 不允许修改 Gmail draft。")
+    if smtp_called:
+        risks.append("TRADING-034 不允许调用 SMTP。")
+    if slack_sent:
+        risks.append("TRADING-034 不允许发送 Slack 通知。")
+    if telegram_sent:
+        risks.append("TRADING-034 不允许发送 Telegram 通知。")
+    if discord_sent:
+        risks.append("TRADING-034 不允许发送 Discord 通知。")
+    if webhook_called:
+        risks.append("TRADING-034 不允许调用 webhook。")
+    if mobile_push_sent:
+        risks.append("TRADING-034 不允许发送 mobile push。")
+    if operator_brief_executed:
+        risks.append("TRADING-034 不允许运行 operator brief。")
+    if notification_draft_executed:
+        risks.append("TRADING-034 不允许运行 notification draft generator。")
+    if delivery_preflight_executed:
+        risks.append("TRADING-034 不允许运行 delivery preflight。")
+    if dispatch_preview_executed:
+        risks.append("TRADING-034 不允许运行 dispatch preview。")
+    if approval_gate_executed:
+        risks.append("TRADING-034 不允许运行 approval gate。")
+    if pipelines_executed:
+        risks.append("TRADING-034 不允许运行上游 pipeline。")
+    if data_downloaded:
+        risks.append("TRADING-034 不允许下载或刷新数据。")
+    if apply_executed:
+        risks.append("TRADING-034 不允许执行 apply。")
+    if rollback_executed:
+        risks.append("TRADING-034 不允许执行 rollback。")
+    if broker_execution:
+        risks.append("TRADING-034 不允许 broker_execution=true。")
+    if replay_execution:
+        risks.append("TRADING-034 不允许 replay_execution=true。")
+    if trading_execution:
+        risks.append("TRADING-034 不允许 trading_execution=true。")
+    if ready_for_actual_dispatch and final_status != "DRAFT_READY":
+        risks.append("TRADING-034 只有 DRAFT_READY 才允许 ready_for_actual_dispatch=true。")
+    if final_status == "DRAFT_READY" and approval_gate_status != "APPROVED":
+        risks.append("TRADING-034 DRAFT_READY 必须来自 APPROVED approval gate。")
+    risks.extend(_strings(safety.get("sensitive_content_flags")))
+    return {
+        "status": final_status,
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "draft_dispatch_markdown_path": str(markdown_path),
+        "latest_artifact_path": str(path),
+        "final_status": final_status,
+        "ready_for_actual_dispatch": ready_for_actual_dispatch,
+        "approval_gate_status": approval_gate_status,
+        "channel_count": draft.get("channel_count", 0),
+        "draft_ready_channel_count": draft.get("draft_ready_channel_count", 0),
+        "draft_hash": _string_value(hashes.get("draft_hash")),
+        "generated_at": _string_value(metadata.get("generated_at")),
+        "next_recommended_action": _string_value(decision.get("next_recommended_action")),
+        "production_effect": production_effect,
+        "manual_review_only": payload.get("manual_review_only") is True,
+        "draft_dispatch_only": payload.get("draft_dispatch_only") is True,
+        "read_only": payload.get("read_only") is True,
+        "external_side_effects": external_side_effects,
+        "network_access_required": network_access_required,
+        "secrets_required": secrets_required,
+        "email_sent": email_sent,
+        "gmail_draft_created": gmail_draft_created,
+        "gmail_draft_modified": gmail_draft_modified,
+        "smtp_called": smtp_called,
+        "slack_sent": slack_sent,
+        "telegram_sent": telegram_sent,
+        "discord_sent": discord_sent,
+        "webhook_called": webhook_called,
+        "mobile_push_sent": mobile_push_sent,
+        "operator_brief_executed_by_draft_dispatch": operator_brief_executed,
+        "notification_draft_executed_by_draft_dispatch": notification_draft_executed,
+        "delivery_preflight_executed_by_draft_dispatch": delivery_preflight_executed,
+        "dispatch_preview_executed_by_draft_dispatch": dispatch_preview_executed,
+        "approval_gate_executed_by_draft_dispatch": approval_gate_executed,
+        "pipelines_executed_by_draft_dispatch": pipelines_executed,
+        "data_downloaded_by_draft_dispatch": data_downloaded,
+        "apply_executed_by_draft_dispatch": apply_executed,
+        "rollback_executed_by_draft_dispatch": rollback_executed,
+        "broker_execution": broker_execution,
+        "replay_execution": replay_execution,
+        "trading_execution": trading_execution,
+        "risk": "；".join(risks)
+        or ("Operator Brief Notification Draft Dispatch 当前仅作只读展示。"),
+    }
+
+
 def _latest_shadow_vs_production_review_path(report: DailyTaskDashboardReport) -> Path:
     review_root = (
         report.project_root / "data" / "derived" / "weight_iterations" / "comparison" / "reviews"
@@ -5382,6 +5611,20 @@ def _latest_operator_brief_notification_approval_gate_path(
     if latest.exists():
         return latest
     return default_path
+
+
+def _latest_operator_brief_notification_draft_dispatch_path(
+    report: DailyTaskDashboardReport,
+) -> Path:
+    draft_dispatch_root = (
+        report.project_root
+        / "data"
+        / "derived"
+        / "operator_briefs"
+        / "notifications"
+        / "draft_dispatch"
+    )
+    return draft_dispatch_root / "latest.json"
 
 
 def _paper_trading_snapshot_source_counts(payload: TraceRecord) -> Counter[str]:
@@ -8275,6 +8518,73 @@ def _render_operator_brief_notification_approval_gate(
             ),
             _summary_item("hash_matches", summary.get("hash_matches", False)),
             _summary_item("expired", summary.get("expired", False)),
+            _summary_item("generated_at", summary.get("generated_at", "")),
+            _summary_item("latest artifact path", summary.get("latest_artifact_path", "")),
+            _summary_item(
+                "next_recommended_action",
+                summary.get("next_recommended_action", ""),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_operator_brief_notification_draft_dispatch(
+    report: DailyTaskDashboardReport,
+) -> str:
+    summary = _operator_brief_notification_draft_dispatch_summary(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}">'
+        "<span>Operator Brief Notification Draft Dispatch</span>"
+        f"<small>{_text(summary.get('final_status', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>Operator Brief Notification Draft Dispatch</span>"
+        "<small>MISSING</small></span>"
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="operator-brief-notification-draft-dispatch-title">',
+            '<div class="section-head">',
+            (
+                '<h2 id="operator-brief-notification-draft-dispatch-title">'
+                "Operator Brief Notification Draft Dispatch</h2>"
+            ),
+            (
+                "<p>Operator brief notification draft dispatch 只读卡片；dashboard "
+                "只读取 TRADING-034 latest.json artifact，不触发 TRADING-034 script、"
+                "approval gate、dispatch preview、delivery preflight、operator brief、"
+                "notification draft generator、email/Gmail/SMTP/Slack/Telegram/"
+                "Discord/webhook/mobile、market/backtest/scoring/data download/broker/"
+                "replay/交易。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("final_status", summary.get("final_status", "MISSING")),
+            _summary_item(
+                "ready_for_actual_dispatch",
+                summary.get("ready_for_actual_dispatch", False),
+            ),
+            _summary_item(
+                "approval_gate_status",
+                summary.get("approval_gate_status", "MISSING"),
+            ),
+            _summary_item("channel_count", summary.get("channel_count", 0)),
+            _summary_item(
+                "draft_ready_channel_count",
+                summary.get("draft_ready_channel_count", 0),
+            ),
+            _summary_item("draft_hash", summary.get("draft_hash", "")),
             _summary_item("generated_at", summary.get("generated_at", "")),
             _summary_item("latest artifact path", summary.get("latest_artifact_path", "")),
             _summary_item(

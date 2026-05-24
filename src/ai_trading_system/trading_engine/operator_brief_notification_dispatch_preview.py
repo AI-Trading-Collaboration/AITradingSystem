@@ -297,6 +297,7 @@ def build_operator_brief_notification_dispatch_preview(
         "subject_preview": redacted_subject,
         "title_preview": redacted_title,
         "body_excerpt": _body_excerpt(redacted_body),
+        "body_markdown": redacted_body,
         "body_length": len(body_source),
         "contains_markdown": _contains_markdown(body_source),
     }

@@ -36,6 +36,9 @@ def test_dispatch_preview_pass_preflight_generates_would_send(tmp_path: Path) ->
     assert payload["dispatch_preview"]["message"]["subject_preview"] == (
         "[Trading System] Daily Operator Brief - OK - 2026-05-24"
     )
+    assert payload["dispatch_preview"]["message"]["body_markdown"] == (
+        "# Email Draft\nReady for manual review.\n"
+    )
     assert Path(payload["output_artifacts"]["dispatch_preview_json"]["path"]).exists()
     assert Path(payload["output_artifacts"]["dispatch_preview_markdown"]["path"]).exists()
     assert Path(payload["output_artifacts"]["latest_json"]["path"]).exists()
