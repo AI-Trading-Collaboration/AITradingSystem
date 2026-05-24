@@ -217,6 +217,9 @@ def build_daily_task_dashboard_payload(
         "daily_operator_brief_scheduler_templates": (
             _daily_operator_brief_scheduler_templates_summary(report)
         ),
+        "daily_operator_brief_scheduler_template_validation": (
+            _daily_operator_brief_scheduler_template_validation_summary(report)
+        ),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -330,6 +333,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_daily_trading_system_operator_brief(report),
             _render_daily_operator_brief_scheduler_dry_run(report),
             _render_daily_operator_brief_scheduler_templates(report),
+            _render_daily_operator_brief_scheduler_template_validation(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -4070,6 +4074,164 @@ def _daily_operator_brief_scheduler_templates_summary(
     }
 
 
+def _daily_operator_brief_scheduler_template_validation_summary(
+    report: DailyTaskDashboardReport,
+) -> TraceRecord:
+    path = _latest_daily_operator_brief_scheduler_template_validation_path(report)
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "daily_operator_brief_scheduler_template_validation":
+        default_markdown = (
+            report.project_root
+            / "data"
+            / "derived"
+            / "operator_briefs"
+            / "scheduler_template_validation"
+            / f"daily_operator_brief_scheduler_template_validation_{report.as_of.isoformat()}.md"
+        )
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "validation_markdown_path": str(default_markdown),
+            "validation_status": "MISSING",
+            "summary_level": "UNKNOWN",
+            "templates_declared": 0,
+            "templates_found": 0,
+            "templates_passed": 0,
+            "templates_with_warnings": 0,
+            "templates_failed": 0,
+            "critical_findings_count": 0,
+            "warnings_count": 0,
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_only": True,
+            "scheduler_template_validation_only": True,
+            "read_only": True,
+            "scheduler_created": False,
+            "scheduler_installed": False,
+            "scheduler_enabled": False,
+            "templates_executed_by_validator": False,
+            "operator_brief_executed_by_validator": False,
+            "pipelines_executed_by_validator": False,
+            "data_downloaded_by_validator": False,
+            "apply_executed_by_validator": False,
+            "rollback_executed_by_validator": False,
+            "broker_execution": False,
+            "replay_execution": False,
+            "trading_execution": False,
+            "risk": (
+                "TRADING-029 scheduler template validation JSON 缺失；dashboard 不运行 "
+                "018B-028、TRADING-029 script、template generator、operator brief、"
+                "scheduler creation、market / backtest / scoring / data download / "
+                "broker / replay / trading。"
+            ),
+        }
+
+    output_artifacts = _mapping_value(payload, "output_artifacts")
+    validation_markdown_value = _string_value(
+        _mapping_value(output_artifacts, "validation_markdown").get("path")
+    )
+    validation_markdown_path = _project_path(report.project_root, validation_markdown_value) or (
+        path.with_suffix(".md")
+    )
+    report_href = (
+        _report_href(validation_markdown_path, report.reports_dir)
+        if validation_markdown_path.exists()
+        else ""
+    )
+    coverage = _mapping_value(payload, "coverage")
+    alerts = _mapping_value(payload, "alerts")
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    scheduler_created = payload.get("scheduler_created") is True
+    scheduler_installed = payload.get("scheduler_installed") is True
+    scheduler_enabled = payload.get("scheduler_enabled") is True
+    templates_executed = payload.get("templates_executed_by_validator") is True
+    operator_brief_executed = payload.get("operator_brief_executed_by_validator") is True
+    pipelines_executed = payload.get("pipelines_executed_by_validator") is True
+    data_downloaded = payload.get("data_downloaded_by_validator") is True
+    apply_executed = payload.get("apply_executed_by_validator") is True
+    rollback_executed = payload.get("rollback_executed_by_validator") is True
+    broker_execution = payload.get("broker_execution") is True
+    replay_execution = payload.get("replay_execution") is True
+    trading_execution = payload.get("trading_execution") is True
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("TRADING-029 scheduler template validation production_effect 必须为 none。")
+    if payload.get("manual_review_only") is not True:
+        risks.append("TRADING-029 scheduler template validation 必须 manual_review_only=true。")
+    if payload.get("scheduler_template_validation_only") is not True:
+        risks.append(
+            "TRADING-029 scheduler template validation 必须 "
+            "scheduler_template_validation_only=true。"
+        )
+    if payload.get("read_only") is not True:
+        risks.append("TRADING-029 scheduler template validation 必须 read_only=true。")
+    if scheduler_created:
+        risks.append("TRADING-029 不允许创建真实 scheduler。")
+    if scheduler_installed:
+        risks.append("TRADING-029 不允许安装 scheduler。")
+    if scheduler_enabled:
+        risks.append("TRADING-029 不允许启用 scheduler。")
+    if templates_executed:
+        risks.append("TRADING-029 validator 不允许运行模板。")
+    if operator_brief_executed:
+        risks.append("TRADING-029 validator 不允许运行 operator brief。")
+    if pipelines_executed:
+        risks.append("TRADING-029 validator 不允许运行上游 pipeline。")
+    if data_downloaded:
+        risks.append("TRADING-029 validator 不允许下载或刷新数据。")
+    if apply_executed:
+        risks.append("TRADING-029 validator 不允许执行 apply。")
+    if rollback_executed:
+        risks.append("TRADING-029 validator 不允许执行 rollback。")
+    if broker_execution:
+        risks.append("TRADING-029 validator 不允许 broker_execution=true。")
+    if replay_execution:
+        risks.append("TRADING-029 validator 不允许 replay_execution=true。")
+    if trading_execution:
+        risks.append("TRADING-029 validator 不允许 trading_execution=true。")
+
+    return {
+        "status": _string_value(payload.get("validation_status")) or "MISSING",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "validation_markdown_path": str(validation_markdown_path),
+        "validation_status": _string_value(payload.get("validation_status")) or "MISSING",
+        "summary_level": _string_value(payload.get("summary_level")) or "UNKNOWN",
+        "templates_declared": _int_value(coverage.get("templates_declared")),
+        "templates_found": _int_value(coverage.get("templates_found")),
+        "templates_passed": _int_value(coverage.get("templates_passed")),
+        "templates_with_warnings": _int_value(coverage.get("templates_with_warnings")),
+        "templates_failed": _int_value(coverage.get("templates_failed")),
+        "critical_findings_count": len(_strings(alerts.get("critical"))),
+        "warnings_count": len(_strings(alerts.get("warnings"))),
+        "production_effect": production_effect,
+        "manual_review_only": payload.get("manual_review_only") is True,
+        "scheduler_template_validation_only": (
+            payload.get("scheduler_template_validation_only") is True
+        ),
+        "read_only": payload.get("read_only") is True,
+        "scheduler_created": scheduler_created,
+        "scheduler_installed": scheduler_installed,
+        "scheduler_enabled": scheduler_enabled,
+        "templates_executed_by_validator": templates_executed,
+        "operator_brief_executed_by_validator": operator_brief_executed,
+        "pipelines_executed_by_validator": pipelines_executed,
+        "data_downloaded_by_validator": data_downloaded,
+        "apply_executed_by_validator": apply_executed,
+        "rollback_executed_by_validator": rollback_executed,
+        "broker_execution": broker_execution,
+        "replay_execution": replay_execution,
+        "trading_execution": trading_execution,
+        "risk": ("；".join(risks) or "Scheduler Template Validation Report 当前仅作只读展示。"),
+    }
+
+
 def _latest_shadow_vs_production_review_path(report: DailyTaskDashboardReport) -> Path:
     review_root = (
         report.project_root / "data" / "derived" / "weight_iterations" / "comparison" / "reviews"
@@ -4329,6 +4491,32 @@ def _latest_daily_operator_brief_scheduler_templates_path(
     candidates: list[tuple[date, Path]] = []
     for path in template_root.glob("daily_operator_brief_scheduler_templates_*.json"):
         raw_date = path.stem.removeprefix("daily_operator_brief_scheduler_templates_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_daily_operator_brief_scheduler_template_validation_path(
+    report: DailyTaskDashboardReport,
+) -> Path:
+    validation_root = (
+        report.project_root
+        / "data"
+        / "derived"
+        / "operator_briefs"
+        / "scheduler_template_validation"
+    )
+    default_path = validation_root / (
+        f"daily_operator_brief_scheduler_template_validation_{report.as_of.isoformat()}.json"
+    )
+    if not validation_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in validation_root.glob("daily_operator_brief_scheduler_template_validation_*.json"):
+        raw_date = path.stem.removeprefix("daily_operator_brief_scheduler_template_validation_")
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= report.as_of:
             candidates.append((parsed, path))
@@ -6904,6 +7092,67 @@ def _render_daily_operator_brief_scheduler_templates(report: DailyTaskDashboardR
             _summary_item(
                 "summary markdown path",
                 summary.get("summary_markdown_path", ""),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_daily_operator_brief_scheduler_template_validation(
+    report: DailyTaskDashboardReport,
+) -> str:
+    summary = _daily_operator_brief_scheduler_template_validation_summary(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}"><span>Scheduler Template Validation</span>'
+        f"<small>{_text(summary.get('validation_status', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>Scheduler Template Validation</span><small>MISSING</small></span>"
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="daily-operator-brief-scheduler-template-validation-title">',
+            '<div class="section-head">',
+            (
+                '<h2 id="daily-operator-brief-scheduler-template-validation-title">'
+                "Scheduler Template Validation Report</h2>"
+            ),
+            (
+                "<p>Scheduler template validation 只读卡片；dashboard 只读取 TRADING-029 "
+                "validation artifact，不触发 018B-028、TRADING-029 script、template "
+                "generator、operator brief、scheduler creation、market/backtest/scoring/"
+                "data download/broker/replay/交易。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("validation_status", summary.get("validation_status", "MISSING")),
+            _summary_item("summary_level", summary.get("summary_level", "UNKNOWN")),
+            _summary_item("templates_declared", summary.get("templates_declared", 0)),
+            _summary_item("templates_found", summary.get("templates_found", 0)),
+            _summary_item("templates_passed", summary.get("templates_passed", 0)),
+            _summary_item(
+                "templates_with_warnings",
+                summary.get("templates_with_warnings", 0),
+            ),
+            _summary_item("templates_failed", summary.get("templates_failed", 0)),
+            _summary_item(
+                "critical findings count",
+                summary.get("critical_findings_count", 0),
+            ),
+            _summary_item("warnings count", summary.get("warnings_count", 0)),
+            _summary_item(
+                "validation markdown path",
+                summary.get("validation_markdown_path", ""),
             ),
             "</div>",
             (

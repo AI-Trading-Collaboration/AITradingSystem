@@ -905,6 +905,104 @@ def test_daily_task_dashboard_scheduler_templates_card_is_read_only(
     assert templates["summary_markdown_path"] in html
 
 
+def test_daily_task_dashboard_scheduler_template_validation_card_is_read_only(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    as_of = date(2026, 5, 24)
+    metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
+    _write_detail_reports(tmp_path, as_of)
+    validation = _write_operator_brief_scheduler_template_validation(tmp_path, as_of)
+
+    original_import = builtins.__import__
+
+    def guarded_import(
+        name: str,
+        globals_: dict[str, object] | None = None,
+        locals_: dict[str, object] | None = None,
+        fromlist: tuple[str, ...] = (),
+        level: int = 0,
+    ) -> object:
+        blocked_module_tokens = (
+            "run_daily_shadow_weight_iteration",
+            "run_daily_shadow_vs_production_comparison",
+            "run_shadow_vs_production_multi_day_review",
+            "run_shadow_promotion_proposal",
+            "run_shadow_promotion_apply_preflight",
+            "run_shadow_promotion_apply",
+            "run_shadow_promotion_rollback",
+            "run_shadow_promotion_lifecycle_audit",
+            "run_parameter_governance_summary",
+            "render_parameter_governance_web_view",
+            "run_parameter_governance_daily_digest",
+            "run_pipeline_health_summary",
+            "run_data_freshness_summary",
+            "run_daily_trading_system_operator_brief",
+            "run_daily_operator_brief_scheduler_dry_run",
+            "generate_daily_operator_brief_scheduler_templates",
+            "validate_daily_operator_brief_scheduler_templates",
+            "ai_trading_system.trading_engine.daily_trading_system_operator_brief",
+            "ai_trading_system.trading_engine.pipeline_health_summary",
+            "ai_trading_system.trading_engine.data_freshness_summary",
+            "ai_trading_system.trading_engine.daily_operator_brief_scheduler_dry_run",
+            "ai_trading_system.trading_engine.daily_operator_brief_scheduler_templates",
+            "ai_trading_system.trading_engine.daily_operator_brief_scheduler_template_validation",
+            "ai_trading_system.data.download",
+            "ai_trading_system.scoring",
+            "ai_trading_system.backtest",
+            "ai_trading_system.trading_engine.brokers",
+            "run_paper_trading_replay",
+        )
+        if any(token in name for token in blocked_module_tokens):
+            raise AssertionError(f"dashboard must not import scheduler or pipeline path: {name}")
+        return original_import(name, globals_, locals_, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+
+    report = build_daily_task_dashboard_report(
+        as_of=as_of,
+        metadata_path=metadata_path,
+        run_report_path=None,
+        reports_dir=tmp_path,
+    )
+    html = render_daily_task_dashboard(report)
+    payload = build_daily_task_dashboard_payload(report)
+
+    summary = payload["daily_operator_brief_scheduler_template_validation"]
+    assert summary["validation_status"] == "PASS_WITH_WARNINGS"
+    assert summary["summary_level"] == "WATCH"
+    assert summary["templates_declared"] == 5
+    assert summary["templates_found"] == 5
+    assert summary["templates_passed"] == 4
+    assert summary["templates_with_warnings"] == 1
+    assert summary["templates_failed"] == 0
+    assert summary["critical_findings_count"] == 0
+    assert summary["warnings_count"] == 1
+    assert summary["validation_markdown_path"].endswith(
+        "daily_operator_brief_scheduler_template_validation_2026-05-24.md"
+    )
+    assert summary["production_effect"] == "none"
+    assert summary["manual_review_only"] is True
+    assert summary["scheduler_template_validation_only"] is True
+    assert summary["read_only"] is True
+    assert summary["scheduler_created"] is False
+    assert summary["scheduler_installed"] is False
+    assert summary["scheduler_enabled"] is False
+    assert summary["templates_executed_by_validator"] is False
+    assert summary["operator_brief_executed_by_validator"] is False
+    assert summary["pipelines_executed_by_validator"] is False
+    assert summary["data_downloaded_by_validator"] is False
+    assert summary["apply_executed_by_validator"] is False
+    assert summary["rollback_executed_by_validator"] is False
+    assert summary["broker_execution"] is False
+    assert summary["replay_execution"] is False
+    assert summary["trading_execution"] is False
+    assert "Scheduler Template Validation Report" in html
+    assert "validation_status" in html
+    assert "templates_with_warnings" in html
+    assert validation["output_artifacts"]["validation_markdown"]["path"] in html
+
+
 def test_daily_task_dashboard_pipeline_health_summary_card_is_read_only(
     tmp_path: Path,
     monkeypatch: Any,
@@ -1645,6 +1743,78 @@ def _write_operator_brief_scheduler_templates(tmp_path: Path, as_of: date) -> di
     json_path.parent.mkdir(parents=True, exist_ok=True)
     json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     markdown_path.write_text("# Daily Operator Brief Scheduler Templates\n", encoding="utf-8")
+    return payload
+
+
+def _write_operator_brief_scheduler_template_validation(
+    tmp_path: Path,
+    as_of: date,
+) -> dict[str, Any]:
+    suffix = as_of.isoformat()
+    validation_root = (
+        tmp_path / "data" / "derived" / "operator_briefs" / "scheduler_template_validation"
+    )
+    json_path = (
+        validation_root / f"daily_operator_brief_scheduler_template_validation_{suffix}.json"
+    )
+    markdown_path = json_path.with_suffix(".md")
+    payload: dict[str, Any] = {
+        "schema_version": "1.0",
+        "report_type": "daily_operator_brief_scheduler_template_validation",
+        "task_id": "TRADING-029",
+        "date": suffix,
+        "mode": "daily_operator_brief_scheduler_template_validation_only",
+        "production_effect": "none",
+        "manual_review_only": True,
+        "scheduler_template_validation_only": True,
+        "read_only": True,
+        "safe_for_scheduler": True,
+        "scheduler_created": False,
+        "scheduler_installed": False,
+        "scheduler_enabled": False,
+        "templates_executed_by_validator": False,
+        "operator_brief_executed_by_validator": False,
+        "pipelines_executed_by_validator": False,
+        "data_downloaded_by_validator": False,
+        "apply_executed_by_validator": False,
+        "rollback_executed_by_validator": False,
+        "broker_execution": False,
+        "replay_execution": False,
+        "trading_execution": False,
+        "validation_status": "PASS_WITH_WARNINGS",
+        "summary_level": "WATCH",
+        "headline": "Scheduler templates passed static validation with warnings.",
+        "coverage": {
+            "templates_declared": 5,
+            "templates_found": 5,
+            "templates_missing": 0,
+            "templates_passed": 4,
+            "templates_with_warnings": 1,
+            "templates_failed": 0,
+        },
+        "alerts": {
+            "critical": [],
+            "warnings": ["Placeholder repo path detected. Manual review required."],
+            "notes": ["Validation is static and does not install or run any scheduler."],
+        },
+        "output_artifacts": {
+            "validation_json": {
+                "path": (
+                    "data/derived/operator_briefs/scheduler_template_validation/"
+                    f"{json_path.name}"
+                )
+            },
+            "validation_markdown": {
+                "path": (
+                    "data/derived/operator_briefs/scheduler_template_validation/"
+                    f"{markdown_path.name}"
+                )
+            },
+        },
+    }
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    markdown_path.write_text("# Scheduler Template Validation Report\n", encoding="utf-8")
     return payload
 
 
