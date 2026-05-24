@@ -418,6 +418,8 @@ flowchart TD
         TEWSON["python scripts/generate_operator_brief_notification_draft.py --date YYYY-MM-DD<br/>TRADING-030 只读读取 latest TRADING-022 operator brief 和可选 021/023/024/026 artifacts；生成 email/chat/mobile notification drafts 和 metadata；不发送通知、不创建 Gmail draft、不调用 webhook、不运行 operator brief 或 pipeline"]
         TEWSONP["python scripts/run_operator_brief_notification_delivery_preflight.py --date YYYY-MM-DD<br/>TRADING-031 只读读取 latest TRADING-030 notification draft metadata 和 email/chat/mobile drafts；检查 redaction、敏感字段、approval need 和 channel readiness；不发送通知、不创建或修改 Gmail draft、不调用 webhook"]
         TEWSONDP["python scripts/run_operator_brief_notification_dispatch_preview.py --date YYYY-MM-DD<br/>TRADING-032 只读读取 latest TRADING-031 preflight、TRADING-022 operator brief 和 TRADING-030 drafts；生成 dry-run dispatch plan、masked targets、message preview 和 final decision；不发送通知、不访问网络、不读取 secrets"]
+        TEWSONAG["python scripts/run_operator_brief_notification_approval_gate.py --date YYYY-MM-DD<br/>TRADING-033 只读读取 latest TRADING-032 dispatch preview 和可选本地 approval marker；计算稳定 preview hash 并判断 approval gate；不发送通知、不访问网络、不读取 secrets、不自动审批"]
+        TEWSONFAD["Future Actual Dispatch<br/>未来真实发送任务只能读取 APPROVED approval gate artifact；当前未实现，TRADING-033 不执行发送"]
         TEWSPH["python scripts/run_pipeline_health_summary.py --date YYYY-MM-DD<br/>TRADING-023 只读扫描既有 pipeline artifacts、日期、status field、新鲜度和安全字段；不运行 018B-022、market/backtest/scoring、broker/replay/trading"]
         TEWSDF["python scripts/run_data_freshness_summary.py --date YYYY-MM-DD<br/>TRADING-024 只读扫描既有数据/artifacts、日期字段、metadata、modified time、status field 和安全字段；不下载数据、不运行 018B-023、market/backtest/scoring、broker/replay/trading"]
         TEFMCAL["python scripts/run_paperbroker_fill_model_calibration.py --date YYYY-MM-DD<br/>只读读取最近 PaperBroker vs IBKR Paper comparison、controlled fill no-fill artifacts、可选 replay quality flags 和 paper_signal_quality；calibration_mode=diagnostic_only；不触发 runner、replay、broker 或 fill model 修改"]
@@ -463,6 +465,7 @@ flowchart TD
         TEWSONR["data/derived/operator_briefs/notifications/operator_brief_notification_draft_YYYY-MM-DD.json/md + email/chat/mobile drafts + notifications/logs/<br/>TRADING-030 notification draft；draft_status、notification_severity、source_snapshot、draft_outputs、content_summary、safety_validation；notification_draft_only=true、read_only=true、email/slack/discord/mobile_sent=false"]
         TEWSONPR["data/derived/operator_briefs/notifications/delivery_preflight/operator_brief_notification_delivery_preflight_YYYY-MM-DD.json/md + delivery_preflight/logs/<br/>TRADING-031 delivery preflight；preflight_status、delivery_readiness、draft_validation、approval_validation、channel_readiness、safety_validation；notification_delivery_preflight_only=true、read_only=true、all sent/webhook/execution flags=false"]
         TEWSONDPR["data/derived/operator_briefs/notifications/dispatch_preview/operator_brief_notification_dispatch_preview_YYYY-MM-DD.json/md + latest.json/latest.md + run.log<br/>TRADING-032 dry-run dispatch preview；metadata、input_refs、preflight_summary、dispatch_preview、safety、decision；dispatch_preview_only=true、read_only=true、external_side_effects=false、all sent/webhook/execution flags=false"]
+        TEWSONAGR["data/derived/operator_briefs/notifications/approval_gate/operator_brief_notification_approval_gate_YYYY-MM-DD.json/md + latest.json/latest.md + run.log<br/>TRADING-033 approval gate；dispatch_preview_summary、approval_marker_summary、hashes、decision.allowed_to_enter_dispatch；approval_gate_only=true、read_only=true、external_side_effects=false、all sent/webhook/execution flags=false"]
         TEWSPHR["data/derived/pipeline_health/pipeline_health_summary_YYYY-MM-DD.json/md + pipeline_health/logs/<br/>TRADING-023 pipeline health summary；health_status、coverage、pipeline_results、missing/stale/critical/warning lists、operator_brief_integration 和 safety_validation；pipeline_health_only=true、read_only=true"]
         TEWSDR["data/derived/data_freshness/data_freshness_summary_YYYY-MM-DD.json/md + data_freshness/logs/<br/>TRADING-024 data freshness summary；freshness_status、coverage、source_results、missing/stale/critical/warning lists、operator_brief_integration 和 safety_validation；data_freshness_only=true、read_only=true"]
         TEIBKRR["outputs/reports/ibkr_paper_account_snapshot_YYYY-MM-DD.json/md<br/>masked account、connection status、summary、positions、open orders、executions、contract sample、reconciliation；readonly=true；production_effect=none"]
@@ -794,6 +797,9 @@ flowchart TD
     TEWSONP --> TEWSONPR
     TEWSONPR -. "必需 TRADING-031 preflight；聚合 operator brief 与 draft content；只生成 dispatch preview" .-> TEWSONDP
     TEWSONDP --> TEWSONDPR
+    TEWSONDPR -. "必需 TRADING-032 dispatch preview；可选本地 approval marker；只判断审批门控" .-> TEWSONAG
+    TEWSONAG --> TEWSONAGR
+    TEWSONAGR -. "未来真实发送只能读取 APPROVED gate；当前阶段未实现真实 dispatch" .-> TEWSONFAD
     TEWSGDR -. "检查 required TRADING-021 digest 是否存在、fresh 且 safety pass" .-> TEWSODS
     TEWSPHR -. "检查 optional TRADING-023 pipeline health summary；缺失/stale 只降级 WATCH" .-> TEWSODS
     TEWSDR -. "检查 optional TRADING-024 data freshness summary；缺失/stale 只降级 WATCH" .-> TEWSODS
@@ -873,6 +879,7 @@ flowchart TD
     TEWSONR -. "dashboard 只显示 Operator Brief Notification Draft 卡片，不触发 030 script、operator brief、email/Gmail/Slack/Discord/mobile push 或交易 pipeline" .-> DTASKDR
     TEWSONPR -. "dashboard 只显示 Operator Brief Notification Delivery Preflight 卡片，不触发 031 script、030 generator、email/Gmail/webhook/mobile/broker/replay/trading" .-> DTASKDR
     TEWSONDPR -. "dashboard 只显示 Operator Brief Notification Dispatch Preview 卡片，不触发 032 script、031 preflight、030 generator、email/Gmail/Slack/Telegram/Discord/webhook/mobile/broker/replay/trading" .-> DTASKDR
+    TEWSONAGR -. "dashboard 只显示 Operator Brief Notification Approval Gate 卡片，不触发 033 script、032 preview、031 preflight、030 generator、email/Gmail/SMTP/webhook/mobile/broker/replay/trading" .-> DTASKDR
     TEWSDR -. "dashboard 只显示 Data Freshness Summary 卡片，不触发 024、023、022、021、018B-018F、data download、market/backtest/scoring/broker/replay/trading pipeline" .-> DTASKDR
     DRT --> DSNAP
     DSNAP --> PLED
@@ -1913,3 +1920,4 @@ flowchart TD
 |交易记录|`data/external/trades/`|记录真实交易、价格、仓位和 thesis_id；`recorded_at` 用于证明记录可见性，`updated_at/opened_at/closed_at` 用于 replay 过滤和未来平仓信息隔离|已实现基础版|
 |交易复盘|`aits review-trades`|先过数据质量门禁，再对比 SPY/QQQ/SMH/SOXX 做基础归因|已实现基础版|
 |日报复核摘要|`aits score-daily`|汇总 thesis、风险事件规则与发生记录、估值快照和交易复盘状态；交易复盘复用同一份数据质量门禁结果|已实现基础版|
+|Operator brief notification approval gate|`python scripts/run_operator_brief_notification_approval_gate.py --date YYYY-MM-DD` / `data/derived/operator_briefs/notifications/approval_gate/operator_brief_notification_approval_gate_YYYY-MM-DD.json` / `.md` / `approval_gate/latest.json` / `approval_gate/latest.md` / `approval_gate/run.log`|TRADING-033 只读读取 latest TRADING-032 dispatch preview 和可选本地 approval marker；生成 `dispatch_preview_summary`、`approval_marker_summary`、`hashes.dispatch_preview_hash`、`decision.approval_gate_status`（`APPROVED` / `APPROVAL_REQUIRED` / `APPROVAL_EXPIRED` / `APPROVAL_MISMATCH` / `SAFETY_BLOCKED` / `BLOCKED` / `NOOP`）和 `allowed_to_enter_dispatch`；所有输出固定 `production_effect=none`、`manual_review_only=true`、`approval_gate_only=true`、`read_only=true`、`external_side_effects=false`、`network_access_required=false`、`secrets_required=false` 和全部 sent/webhook/execution flags=false；dashboard 只读 latest TRADING-033 artifact，不触发 033 script、032 preview、031 preflight、030 generator、email/Gmail/SMTP/Slack/Telegram/Discord/webhook/mobile/broker/replay/trading；approval marker 不能覆盖 `SAFETY_BLOCKED`、hash mismatch 或 expired approval|这是人工审批门控，不是真实发送；`APPROVED` 只表示未来真实 dispatch 可读取该 gate artifact，TRADING-033 不发送通知|

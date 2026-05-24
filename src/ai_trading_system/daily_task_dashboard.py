@@ -227,6 +227,9 @@ def build_daily_task_dashboard_payload(
         "operator_brief_notification_dispatch_preview": (
             _operator_brief_notification_dispatch_preview_summary(report)
         ),
+        "operator_brief_notification_approval_gate": (
+            _operator_brief_notification_approval_gate_summary(report)
+        ),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -344,6 +347,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_operator_brief_notification_draft(report),
             _render_operator_brief_notification_delivery_preflight(report),
             _render_operator_brief_notification_dispatch_preview(report),
+            _render_operator_brief_notification_approval_gate(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -4781,6 +4785,217 @@ def _operator_brief_notification_dispatch_preview_summary(
     }
 
 
+def _operator_brief_notification_approval_gate_summary(
+    report: DailyTaskDashboardReport,
+) -> TraceRecord:
+    path = _latest_operator_brief_notification_approval_gate_path(report)
+    payload = _read_json_object(path)
+    default_markdown = (
+        report.project_root
+        / "data"
+        / "derived"
+        / "operator_briefs"
+        / "notifications"
+        / "approval_gate"
+        / f"operator_brief_notification_approval_gate_{report.as_of.isoformat()}.md"
+    )
+    if payload.get("report_type") != "operator_brief_notification_approval_gate":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "approval_gate_markdown_path": str(default_markdown),
+            "latest_artifact_path": str(path),
+            "approval_gate_status": "MISSING",
+            "allowed_to_enter_dispatch": False,
+            "human_action_required": True,
+            "dispatch_preview_status": "MISSING",
+            "approval_marker_exists": False,
+            "hash_matches": False,
+            "expired": False,
+            "generated_at": "",
+            "next_recommended_action": "",
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_only": True,
+            "approval_gate_only": True,
+            "read_only": True,
+            "external_side_effects": False,
+            "network_access_required": False,
+            "secrets_required": False,
+            "email_sent": False,
+            "gmail_draft_created": False,
+            "gmail_draft_modified": False,
+            "slack_sent": False,
+            "telegram_sent": False,
+            "discord_sent": False,
+            "webhook_called": False,
+            "mobile_push_sent": False,
+            "operator_brief_executed_by_approval_gate": False,
+            "notification_draft_executed_by_approval_gate": False,
+            "delivery_preflight_executed_by_approval_gate": False,
+            "dispatch_preview_executed_by_approval_gate": False,
+            "pipelines_executed_by_approval_gate": False,
+            "data_downloaded_by_approval_gate": False,
+            "apply_executed_by_approval_gate": False,
+            "rollback_executed_by_approval_gate": False,
+            "broker_execution": False,
+            "replay_execution": False,
+            "trading_execution": False,
+            "risk": (
+                "TRADING-033 approval gate artifact 缺失；dashboard 不运行 "
+                "018B-032、TRADING-033 script、dispatch preview、delivery preflight、"
+                "operator brief、notification draft generator、email/Gmail/SMTP/Slack/"
+                "Telegram/Discord/webhook/mobile、broker/replay/交易。"
+            ),
+        }
+
+    outputs = _mapping_value(payload, "output_artifacts")
+    gate_output = _mapping_value(outputs, "approval_gate_markdown")
+    markdown_path = (
+        _project_path(report.project_root, _string_value(gate_output.get("path")))
+        or default_markdown
+    )
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    metadata = _mapping_value(payload, "metadata")
+    preview = _mapping_value(payload, "dispatch_preview_summary")
+    marker = _mapping_value(payload, "approval_marker_summary")
+    decision = _mapping_value(payload, "decision")
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    external_side_effects = payload.get("external_side_effects") is True
+    network_access_required = payload.get("network_access_required") is True
+    secrets_required = payload.get("secrets_required") is True
+    email_sent = payload.get("email_sent") is True
+    gmail_draft_created = payload.get("gmail_draft_created") is True
+    gmail_draft_modified = payload.get("gmail_draft_modified") is True
+    slack_sent = payload.get("slack_sent") is True
+    telegram_sent = payload.get("telegram_sent") is True
+    discord_sent = payload.get("discord_sent") is True
+    webhook_called = payload.get("webhook_called") is True
+    mobile_push_sent = payload.get("mobile_push_sent") is True
+    operator_brief_executed = payload.get("operator_brief_executed_by_approval_gate") is True
+    notification_draft_executed = (
+        payload.get("notification_draft_executed_by_approval_gate") is True
+    )
+    delivery_preflight_executed = (
+        payload.get("delivery_preflight_executed_by_approval_gate") is True
+    )
+    dispatch_preview_executed = payload.get("dispatch_preview_executed_by_approval_gate") is True
+    pipelines_executed = payload.get("pipelines_executed_by_approval_gate") is True
+    data_downloaded = payload.get("data_downloaded_by_approval_gate") is True
+    apply_executed = payload.get("apply_executed_by_approval_gate") is True
+    rollback_executed = payload.get("rollback_executed_by_approval_gate") is True
+    broker_execution = payload.get("broker_execution") is True
+    replay_execution = payload.get("replay_execution") is True
+    trading_execution = payload.get("trading_execution") is True
+    approval_gate_status = _string_value(decision.get("approval_gate_status")) or "MISSING"
+    allowed_to_enter_dispatch = decision.get("allowed_to_enter_dispatch") is True
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("TRADING-033 approval gate production_effect 必须为 none。")
+    if payload.get("manual_review_only") is not True:
+        risks.append("TRADING-033 approval gate 必须 manual_review_only=true。")
+    if payload.get("approval_gate_only") is not True:
+        risks.append("TRADING-033 必须 approval_gate_only=true。")
+    if payload.get("read_only") is not True:
+        risks.append("TRADING-033 approval gate 必须 read_only=true。")
+    if external_side_effects:
+        risks.append("TRADING-033 不允许 external_side_effects=true。")
+    if network_access_required:
+        risks.append("TRADING-033 不允许 network_access_required=true。")
+    if secrets_required:
+        risks.append("TRADING-033 不允许 secrets_required=true。")
+    if email_sent:
+        risks.append("TRADING-033 不允许发送 email。")
+    if gmail_draft_created:
+        risks.append("TRADING-033 不允许创建 Gmail draft。")
+    if gmail_draft_modified:
+        risks.append("TRADING-033 不允许修改 Gmail draft。")
+    if slack_sent:
+        risks.append("TRADING-033 不允许发送 Slack 通知。")
+    if telegram_sent:
+        risks.append("TRADING-033 不允许发送 Telegram 通知。")
+    if discord_sent:
+        risks.append("TRADING-033 不允许发送 Discord 通知。")
+    if webhook_called:
+        risks.append("TRADING-033 不允许调用 webhook。")
+    if mobile_push_sent:
+        risks.append("TRADING-033 不允许发送 mobile push。")
+    if operator_brief_executed:
+        risks.append("TRADING-033 不允许运行 operator brief。")
+    if notification_draft_executed:
+        risks.append("TRADING-033 不允许运行 notification draft generator。")
+    if delivery_preflight_executed:
+        risks.append("TRADING-033 不允许运行 delivery preflight。")
+    if dispatch_preview_executed:
+        risks.append("TRADING-033 不允许运行 dispatch preview。")
+    if pipelines_executed:
+        risks.append("TRADING-033 不允许运行上游 pipeline。")
+    if data_downloaded:
+        risks.append("TRADING-033 不允许下载或刷新数据。")
+    if apply_executed:
+        risks.append("TRADING-033 不允许执行 apply。")
+    if rollback_executed:
+        risks.append("TRADING-033 不允许执行 rollback。")
+    if broker_execution:
+        risks.append("TRADING-033 不允许 broker_execution=true。")
+    if replay_execution:
+        risks.append("TRADING-033 不允许 replay_execution=true。")
+    if trading_execution:
+        risks.append("TRADING-033 不允许 trading_execution=true。")
+    if allowed_to_enter_dispatch and approval_gate_status != "APPROVED":
+        risks.append("TRADING-033 只有 APPROVED 才允许 allowed_to_enter_dispatch=true。")
+    return {
+        "status": approval_gate_status,
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "approval_gate_markdown_path": str(markdown_path),
+        "latest_artifact_path": str(path),
+        "approval_gate_status": approval_gate_status,
+        "allowed_to_enter_dispatch": allowed_to_enter_dispatch,
+        "human_action_required": decision.get("human_action_required") is True,
+        "dispatch_preview_status": _string_value(preview.get("final_status")) or "MISSING",
+        "approval_marker_exists": marker.get("exists") is True,
+        "hash_matches": marker.get("hash_matches") is True,
+        "expired": marker.get("expired") is True,
+        "generated_at": _string_value(metadata.get("generated_at")),
+        "next_recommended_action": _string_value(decision.get("next_recommended_action")),
+        "production_effect": production_effect,
+        "manual_review_only": payload.get("manual_review_only") is True,
+        "approval_gate_only": payload.get("approval_gate_only") is True,
+        "read_only": payload.get("read_only") is True,
+        "external_side_effects": external_side_effects,
+        "network_access_required": network_access_required,
+        "secrets_required": secrets_required,
+        "email_sent": email_sent,
+        "gmail_draft_created": gmail_draft_created,
+        "gmail_draft_modified": gmail_draft_modified,
+        "slack_sent": slack_sent,
+        "telegram_sent": telegram_sent,
+        "discord_sent": discord_sent,
+        "webhook_called": webhook_called,
+        "mobile_push_sent": mobile_push_sent,
+        "operator_brief_executed_by_approval_gate": operator_brief_executed,
+        "notification_draft_executed_by_approval_gate": notification_draft_executed,
+        "delivery_preflight_executed_by_approval_gate": delivery_preflight_executed,
+        "dispatch_preview_executed_by_approval_gate": dispatch_preview_executed,
+        "pipelines_executed_by_approval_gate": pipelines_executed,
+        "data_downloaded_by_approval_gate": data_downloaded,
+        "apply_executed_by_approval_gate": apply_executed,
+        "rollback_executed_by_approval_gate": rollback_executed,
+        "broker_execution": broker_execution,
+        "replay_execution": replay_execution,
+        "trading_execution": trading_execution,
+        "risk": "；".join(risks)
+        or ("Operator Brief Notification Approval Gate 当前仅作只读展示。"),
+    }
+
+
 def _latest_shadow_vs_production_review_path(report: DailyTaskDashboardReport) -> Path:
     review_root = (
         report.project_root / "data" / "derived" / "weight_iterations" / "comparison" / "reviews"
@@ -5147,6 +5362,26 @@ def _latest_operator_brief_notification_dispatch_preview_path(
         return max(candidates, key=lambda item: item[0])[1]
     latest = preview_root / "latest.json"
     return latest if latest.exists() else default_path
+
+
+def _latest_operator_brief_notification_approval_gate_path(
+    report: DailyTaskDashboardReport,
+) -> Path:
+    approval_root = (
+        report.project_root
+        / "data"
+        / "derived"
+        / "operator_briefs"
+        / "notifications"
+        / "approval_gate"
+    )
+    default_path = approval_root / (
+        f"operator_brief_notification_approval_gate_{report.as_of.isoformat()}.json"
+    )
+    latest = approval_root / "latest.json"
+    if latest.exists():
+        return latest
+    return default_path
 
 
 def _paper_trading_snapshot_source_counts(payload: TraceRecord) -> Counter[str]:
@@ -7973,6 +8208,79 @@ def _render_operator_brief_notification_dispatch_preview(
             ),
             _summary_item("latest artifact path", summary.get("latest_artifact_path", "")),
             _summary_item("generated_at", summary.get("generated_at", "")),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_operator_brief_notification_approval_gate(
+    report: DailyTaskDashboardReport,
+) -> str:
+    summary = _operator_brief_notification_approval_gate_summary(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}">'
+        "<span>Operator Brief Notification Approval Gate</span>"
+        f"<small>{_text(summary.get('approval_gate_status', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>Operator Brief Notification Approval Gate</span>"
+        "<small>MISSING</small></span>"
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="operator-brief-notification-approval-gate-title">',
+            '<div class="section-head">',
+            (
+                '<h2 id="operator-brief-notification-approval-gate-title">'
+                "Operator Brief Notification Approval Gate</h2>"
+            ),
+            (
+                "<p>Operator brief notification approval gate 只读卡片；dashboard "
+                "只读取 TRADING-033 artifact，不触发 018B-032、TRADING-033 script、"
+                "dispatch preview、delivery preflight、operator brief、notification draft "
+                "generator、email/Gmail/SMTP/Slack/Telegram/Discord/webhook/mobile、"
+                "market/backtest/scoring/data download/broker/replay/交易。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item(
+                "approval_gate_status",
+                summary.get("approval_gate_status", "MISSING"),
+            ),
+            _summary_item(
+                "allowed_to_enter_dispatch",
+                summary.get("allowed_to_enter_dispatch", False),
+            ),
+            _summary_item(
+                "human_action_required",
+                summary.get("human_action_required", True),
+            ),
+            _summary_item(
+                "dispatch_preview_status",
+                summary.get("dispatch_preview_status", "MISSING"),
+            ),
+            _summary_item(
+                "approval_marker_exists",
+                summary.get("approval_marker_exists", False),
+            ),
+            _summary_item("hash_matches", summary.get("hash_matches", False)),
+            _summary_item("expired", summary.get("expired", False)),
+            _summary_item("generated_at", summary.get("generated_at", "")),
+            _summary_item("latest artifact path", summary.get("latest_artifact_path", "")),
+            _summary_item(
+                "next_recommended_action",
+                summary.get("next_recommended_action", ""),
+            ),
             "</div>",
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'

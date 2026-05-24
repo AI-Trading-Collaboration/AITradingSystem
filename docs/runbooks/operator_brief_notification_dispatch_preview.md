@@ -103,7 +103,8 @@ data/derived/operator_briefs/notifications/dispatch_preview/
 3. 确认所有 `target_ref` 已脱敏，且没有完整邮箱、token、key、password 或 private key。
 4. 打开 TRADING-031 preflight、TRADING-030 draft 和 TRADING-022 operator brief 交叉核对。
 5. 如果状态不是 `WOULD_SEND`，不要进入真实发送任务。
-6. 如果状态是 `WOULD_SEND`，仍必须由人工在独立后续任务中批准真实发送。
+6. 如果状态是 `WOULD_SEND`，继续运行 TRADING-033 approval gate；真实发送只能读取
+   `APPROVED` gate artifact，TRADING-032 本身不批准发送。
 
 ## 6. Dashboard 行为
 
@@ -140,4 +141,4 @@ Dashboard 不运行 TRADING-032 script、不重跑 TRADING-031、不运行 TRADI
 
 1. 核对 ACTION/URGENT 或 approval policy 原因。
 2. 记录人工审批证据。
-3. 在独立真实 delivery 任务中引用该审批证据；不要让 TRADING-032 自动审批。
+3. 通过 TRADING-033 approval gate 绑定当前 preview hash；不要让 TRADING-032 自动审批。
