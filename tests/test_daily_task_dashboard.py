@@ -1490,6 +1490,11 @@ def test_daily_task_dashboard_operator_brief_notification_draft_dispatch_card_is
     assert summary["data_downloaded_by_draft_dispatch"] is False
     assert summary["apply_executed_by_draft_dispatch"] is False
     assert summary["rollback_executed_by_draft_dispatch"] is False
+    assert summary["operator_brief_executed_by_dispatch"] is False
+    assert summary["pipelines_executed_by_dispatch"] is False
+    assert summary["data_downloaded_by_dispatch"] is False
+    assert summary["apply_executed_by_dispatch"] is False
+    assert summary["rollback_executed_by_dispatch"] is False
     assert summary["broker_execution"] is False
     assert summary["replay_execution"] is False
     assert summary["trading_execution"] is False
@@ -2921,6 +2926,11 @@ def _write_operator_brief_notification_draft_dispatch(
         "data_downloaded_by_draft_dispatch": False,
         "apply_executed_by_draft_dispatch": False,
         "rollback_executed_by_draft_dispatch": False,
+        "operator_brief_executed_by_dispatch": False,
+        "pipelines_executed_by_dispatch": False,
+        "data_downloaded_by_dispatch": False,
+        "apply_executed_by_dispatch": False,
+        "rollback_executed_by_dispatch": False,
         "broker_execution": False,
         "replay_execution": False,
         "trading_execution": False,

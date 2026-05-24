@@ -648,6 +648,11 @@ def _assert_invariants(payload: dict[str, Any]) -> None:
     assert payload["data_downloaded_by_draft_dispatch"] is False
     assert payload["apply_executed_by_draft_dispatch"] is False
     assert payload["rollback_executed_by_draft_dispatch"] is False
+    assert payload["operator_brief_executed_by_dispatch"] is False
+    assert payload["pipelines_executed_by_dispatch"] is False
+    assert payload["data_downloaded_by_dispatch"] is False
+    assert payload["apply_executed_by_dispatch"] is False
+    assert payload["rollback_executed_by_dispatch"] is False
     assert payload["broker_execution"] is False
     assert payload["replay_execution"] is False
     assert payload["trading_execution"] is False

@@ -5056,6 +5056,11 @@ def _operator_brief_notification_draft_dispatch_summary(
             "data_downloaded_by_draft_dispatch": False,
             "apply_executed_by_draft_dispatch": False,
             "rollback_executed_by_draft_dispatch": False,
+            "operator_brief_executed_by_dispatch": False,
+            "pipelines_executed_by_dispatch": False,
+            "data_downloaded_by_dispatch": False,
+            "apply_executed_by_dispatch": False,
+            "rollback_executed_by_dispatch": False,
             "broker_execution": False,
             "replay_execution": False,
             "trading_execution": False,
@@ -5108,6 +5113,11 @@ def _operator_brief_notification_draft_dispatch_summary(
     data_downloaded = payload.get("data_downloaded_by_draft_dispatch") is True
     apply_executed = payload.get("apply_executed_by_draft_dispatch") is True
     rollback_executed = payload.get("rollback_executed_by_draft_dispatch") is True
+    operator_brief_executed_by_dispatch = payload.get("operator_brief_executed_by_dispatch") is True
+    pipelines_executed_by_dispatch = payload.get("pipelines_executed_by_dispatch") is True
+    data_downloaded_by_dispatch = payload.get("data_downloaded_by_dispatch") is True
+    apply_executed_by_dispatch = payload.get("apply_executed_by_dispatch") is True
+    rollback_executed_by_dispatch = payload.get("rollback_executed_by_dispatch") is True
     broker_execution = payload.get("broker_execution") is True
     replay_execution = payload.get("replay_execution") is True
     trading_execution = payload.get("trading_execution") is True
@@ -5165,6 +5175,16 @@ def _operator_brief_notification_draft_dispatch_summary(
         risks.append("TRADING-034 不允许执行 apply。")
     if rollback_executed:
         risks.append("TRADING-034 不允许执行 rollback。")
+    if operator_brief_executed_by_dispatch:
+        risks.append("TRADING-034 不允许通用 dispatch 路径运行 operator brief。")
+    if pipelines_executed_by_dispatch:
+        risks.append("TRADING-034 不允许通用 dispatch 路径运行上游 pipeline。")
+    if data_downloaded_by_dispatch:
+        risks.append("TRADING-034 不允许通用 dispatch 路径下载或刷新数据。")
+    if apply_executed_by_dispatch:
+        risks.append("TRADING-034 不允许通用 dispatch 路径执行 apply。")
+    if rollback_executed_by_dispatch:
+        risks.append("TRADING-034 不允许通用 dispatch 路径执行 rollback。")
     if broker_execution:
         risks.append("TRADING-034 不允许 broker_execution=true。")
     if replay_execution:
@@ -5217,6 +5237,11 @@ def _operator_brief_notification_draft_dispatch_summary(
         "data_downloaded_by_draft_dispatch": data_downloaded,
         "apply_executed_by_draft_dispatch": apply_executed,
         "rollback_executed_by_draft_dispatch": rollback_executed,
+        "operator_brief_executed_by_dispatch": operator_brief_executed_by_dispatch,
+        "pipelines_executed_by_dispatch": pipelines_executed_by_dispatch,
+        "data_downloaded_by_dispatch": data_downloaded_by_dispatch,
+        "apply_executed_by_dispatch": apply_executed_by_dispatch,
+        "rollback_executed_by_dispatch": rollback_executed_by_dispatch,
         "broker_execution": broker_execution,
         "replay_execution": replay_execution,
         "trading_execution": trading_execution,
