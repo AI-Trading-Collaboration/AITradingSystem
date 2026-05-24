@@ -221,6 +221,9 @@ def build_daily_task_dashboard_payload(
             _daily_operator_brief_scheduler_template_validation_summary(report)
         ),
         "operator_brief_notification_draft": _operator_brief_notification_draft_summary(report),
+        "operator_brief_notification_delivery_preflight": (
+            _operator_brief_notification_delivery_preflight_summary(report)
+        ),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -336,6 +339,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_daily_operator_brief_scheduler_templates(report),
             _render_daily_operator_brief_scheduler_template_validation(report),
             _render_operator_brief_notification_draft(report),
+            _render_operator_brief_notification_delivery_preflight(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -4389,6 +4393,185 @@ def _operator_brief_notification_draft_summary(report: DailyTaskDashboardReport)
     }
 
 
+def _operator_brief_notification_delivery_preflight_summary(
+    report: DailyTaskDashboardReport,
+) -> TraceRecord:
+    path = _latest_operator_brief_notification_delivery_preflight_path(report)
+    payload = _read_json_object(path)
+    default_markdown = (
+        report.project_root
+        / "data"
+        / "derived"
+        / "operator_briefs"
+        / "notifications"
+        / "delivery_preflight"
+        / f"operator_brief_notification_delivery_preflight_{report.as_of.isoformat()}.md"
+    )
+    if payload.get("report_type") != "operator_brief_notification_delivery_preflight":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "preflight_markdown_path": str(default_markdown),
+            "preflight_status": "MISSING",
+            "delivery_readiness": "UNKNOWN",
+            "notification_severity": "UNKNOWN",
+            "email_channel_status": "MISSING",
+            "chat_channel_status": "MISSING",
+            "mobile_channel_status": "MISSING",
+            "approval_required": True,
+            "critical_alert_count": 0,
+            "warning_count": 0,
+            "email_sent": False,
+            "gmail_draft_created": False,
+            "gmail_draft_modified": False,
+            "slack_sent": False,
+            "discord_sent": False,
+            "webhook_called": False,
+            "mobile_push_sent": False,
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_only": True,
+            "notification_delivery_preflight_only": True,
+            "read_only": True,
+            "operator_brief_executed_by_delivery_preflight": False,
+            "notification_draft_executed_by_delivery_preflight": False,
+            "pipelines_executed_by_delivery_preflight": False,
+            "data_downloaded_by_delivery_preflight": False,
+            "apply_executed_by_delivery_preflight": False,
+            "rollback_executed_by_delivery_preflight": False,
+            "broker_execution": False,
+            "replay_execution": False,
+            "trading_execution": False,
+            "risk": (
+                "TRADING-031 delivery preflight artifact 缺失；dashboard 不运行 "
+                "018B-030、TRADING-031 script、operator brief、notification draft "
+                "generator、email/Gmail/Slack/Discord/webhook/mobile、broker/replay/交易。"
+            ),
+        }
+
+    outputs = _mapping_value(payload, "output_artifacts")
+    preflight_output = _mapping_value(outputs, "preflight_markdown")
+    markdown_path = (
+        _project_path(report.project_root, _string_value(preflight_output.get("path")))
+        or default_markdown
+    )
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    approval = _mapping_value(payload, "approval_validation")
+    channels = _mapping_value(payload, "channel_readiness")
+    email_channel = _mapping_value(channels, "email")
+    chat_channel = _mapping_value(channels, "chat")
+    mobile_channel = _mapping_value(channels, "mobile")
+    alerts = _mapping_value(payload, "alerts")
+    safety = _mapping_value(payload, "safety_validation")
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    email_sent = payload.get("email_sent") is True
+    gmail_draft_created = payload.get("gmail_draft_created") is True
+    gmail_draft_modified = payload.get("gmail_draft_modified") is True
+    slack_sent = payload.get("slack_sent") is True
+    discord_sent = payload.get("discord_sent") is True
+    webhook_called = payload.get("webhook_called") is True
+    mobile_push_sent = payload.get("mobile_push_sent") is True
+    operator_brief_executed = payload.get("operator_brief_executed_by_delivery_preflight") is True
+    notification_draft_executed = (
+        payload.get("notification_draft_executed_by_delivery_preflight") is True
+    )
+    pipelines_executed = payload.get("pipelines_executed_by_delivery_preflight") is True
+    data_downloaded = payload.get("data_downloaded_by_delivery_preflight") is True
+    apply_executed = payload.get("apply_executed_by_delivery_preflight") is True
+    rollback_executed = payload.get("rollback_executed_by_delivery_preflight") is True
+    broker_execution = payload.get("broker_execution") is True
+    replay_execution = payload.get("replay_execution") is True
+    trading_execution = payload.get("trading_execution") is True
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("TRADING-031 delivery preflight production_effect 必须为 none。")
+    if payload.get("manual_review_only") is not True:
+        risks.append("TRADING-031 delivery preflight 必须 manual_review_only=true。")
+    if payload.get("notification_delivery_preflight_only") is not True:
+        risks.append("TRADING-031 必须 notification_delivery_preflight_only=true。")
+    if payload.get("read_only") is not True:
+        risks.append("TRADING-031 delivery preflight 必须 read_only=true。")
+    if email_sent:
+        risks.append("TRADING-031 不允许发送 email。")
+    if gmail_draft_created:
+        risks.append("TRADING-031 不允许创建 Gmail draft。")
+    if gmail_draft_modified:
+        risks.append("TRADING-031 不允许修改 Gmail draft。")
+    if slack_sent:
+        risks.append("TRADING-031 不允许发送 Slack 通知。")
+    if discord_sent:
+        risks.append("TRADING-031 不允许发送 Discord 通知。")
+    if webhook_called:
+        risks.append("TRADING-031 不允许调用 webhook。")
+    if mobile_push_sent:
+        risks.append("TRADING-031 不允许发送 mobile push。")
+    if operator_brief_executed:
+        risks.append("TRADING-031 不允许运行 operator brief。")
+    if notification_draft_executed:
+        risks.append("TRADING-031 不允许运行 notification draft generator。")
+    if pipelines_executed:
+        risks.append("TRADING-031 不允许运行上游 pipeline。")
+    if data_downloaded:
+        risks.append("TRADING-031 不允许下载或刷新数据。")
+    if apply_executed:
+        risks.append("TRADING-031 不允许执行 apply。")
+    if rollback_executed:
+        risks.append("TRADING-031 不允许执行 rollback。")
+    if broker_execution:
+        risks.append("TRADING-031 不允许 broker_execution=true。")
+    if replay_execution:
+        risks.append("TRADING-031 不允许 replay_execution=true。")
+    if trading_execution:
+        risks.append("TRADING-031 不允许 trading_execution=true。")
+    if safety.get("status") == "FAIL":
+        risks.extend(_strings(safety.get("blocking_reasons")))
+    return {
+        "status": _string_value(payload.get("preflight_status")) or "MISSING",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "preflight_markdown_path": str(markdown_path),
+        "preflight_status": _string_value(payload.get("preflight_status")) or "MISSING",
+        "delivery_readiness": _string_value(payload.get("delivery_readiness")) or "UNKNOWN",
+        "notification_severity": (_string_value(payload.get("notification_severity")) or "UNKNOWN"),
+        "email_channel_status": _string_value(email_channel.get("status")) or "MISSING",
+        "chat_channel_status": _string_value(chat_channel.get("status")) or "MISSING",
+        "mobile_channel_status": _string_value(mobile_channel.get("status")) or "MISSING",
+        "approval_required": approval.get("approval_required") is True,
+        "critical_alert_count": len(_strings(alerts.get("critical"))),
+        "warning_count": len(_strings(alerts.get("warnings"))),
+        "email_sent": email_sent,
+        "gmail_draft_created": gmail_draft_created,
+        "gmail_draft_modified": gmail_draft_modified,
+        "slack_sent": slack_sent,
+        "discord_sent": discord_sent,
+        "webhook_called": webhook_called,
+        "mobile_push_sent": mobile_push_sent,
+        "production_effect": production_effect,
+        "manual_review_only": payload.get("manual_review_only") is True,
+        "notification_delivery_preflight_only": (
+            payload.get("notification_delivery_preflight_only") is True
+        ),
+        "read_only": payload.get("read_only") is True,
+        "operator_brief_executed_by_delivery_preflight": operator_brief_executed,
+        "notification_draft_executed_by_delivery_preflight": notification_draft_executed,
+        "pipelines_executed_by_delivery_preflight": pipelines_executed,
+        "data_downloaded_by_delivery_preflight": data_downloaded,
+        "apply_executed_by_delivery_preflight": apply_executed,
+        "rollback_executed_by_delivery_preflight": rollback_executed,
+        "broker_execution": broker_execution,
+        "replay_execution": replay_execution,
+        "trading_execution": trading_execution,
+        "risk": "；".join(risks)
+        or ("Operator Brief Notification Delivery Preflight 当前仅作只读展示。"),
+    }
+
+
 def _latest_shadow_vs_production_review_path(report: DailyTaskDashboardReport) -> Path:
     review_root = (
         report.project_root / "data" / "derived" / "weight_iterations" / "comparison" / "reviews"
@@ -4694,6 +4877,33 @@ def _latest_operator_brief_notification_draft_path(report: DailyTaskDashboardRep
     candidates: list[tuple[date, Path]] = []
     for path in notification_root.glob("operator_brief_notification_draft_*.json"):
         raw_date = path.stem.removeprefix("operator_brief_notification_draft_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_operator_brief_notification_delivery_preflight_path(
+    report: DailyTaskDashboardReport,
+) -> Path:
+    preflight_root = (
+        report.project_root
+        / "data"
+        / "derived"
+        / "operator_briefs"
+        / "notifications"
+        / "delivery_preflight"
+    )
+    default_path = preflight_root / (
+        f"operator_brief_notification_delivery_preflight_{report.as_of.isoformat()}.json"
+    )
+    if not preflight_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in preflight_root.glob("operator_brief_notification_delivery_preflight_*.json"):
+        raw_date = path.stem.removeprefix("operator_brief_notification_delivery_preflight_")
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= report.as_of:
             candidates.append((parsed, path))
@@ -7391,6 +7601,77 @@ def _render_operator_brief_notification_draft(report: DailyTaskDashboardReport) 
             _summary_item(
                 "summary markdown path",
                 summary.get("summary_markdown_path", ""),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_operator_brief_notification_delivery_preflight(
+    report: DailyTaskDashboardReport,
+) -> str:
+    summary = _operator_brief_notification_delivery_preflight_summary(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}">'
+        "<span>Operator Brief Notification Delivery Preflight</span>"
+        f"<small>{_text(summary.get('preflight_status', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>Operator Brief Notification Delivery Preflight</span>"
+        "<small>MISSING</small></span>"
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="operator-brief-notification-delivery-preflight-title">',
+            '<div class="section-head">',
+            (
+                '<h2 id="operator-brief-notification-delivery-preflight-title">'
+                "Operator Brief Notification Delivery Preflight</h2>"
+            ),
+            (
+                "<p>Operator brief notification delivery preflight 只读卡片；dashboard "
+                "只读取 TRADING-031 metadata artifact，不触发 018B-030、TRADING-031 "
+                "script、operator brief、notification draft generator、email/Gmail/"
+                "Slack/Discord/webhook/mobile、market/backtest/scoring/data download/"
+                "broker/replay/交易。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("preflight_status", summary.get("preflight_status", "MISSING")),
+            _summary_item("delivery_readiness", summary.get("delivery_readiness", "UNKNOWN")),
+            _summary_item(
+                "notification_severity",
+                summary.get("notification_severity", "UNKNOWN"),
+            ),
+            _summary_item("email channel", summary.get("email_channel_status", "MISSING")),
+            _summary_item("chat channel", summary.get("chat_channel_status", "MISSING")),
+            _summary_item("mobile channel", summary.get("mobile_channel_status", "MISSING")),
+            _summary_item("approval_required", summary.get("approval_required", True)),
+            _summary_item(
+                "critical_alert_count",
+                summary.get("critical_alert_count", 0),
+            ),
+            _summary_item("warning_count", summary.get("warning_count", 0)),
+            _summary_item("email_sent", summary.get("email_sent", False)),
+            _summary_item("gmail_draft_created", summary.get("gmail_draft_created", False)),
+            _summary_item("gmail_draft_modified", summary.get("gmail_draft_modified", False)),
+            _summary_item("slack_sent", summary.get("slack_sent", False)),
+            _summary_item("discord_sent", summary.get("discord_sent", False)),
+            _summary_item("webhook_called", summary.get("webhook_called", False)),
+            _summary_item("mobile_push_sent", summary.get("mobile_push_sent", False)),
+            _summary_item(
+                "preflight markdown path",
+                summary.get("preflight_markdown_path", ""),
             ),
             "</div>",
             (

@@ -1104,6 +1104,95 @@ def test_daily_task_dashboard_operator_brief_notification_draft_card_is_read_onl
     assert notification["draft_outputs"]["summary_markdown"]["path"] in html
 
 
+def test_daily_task_dashboard_operator_brief_notification_delivery_preflight_card_is_read_only(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    as_of = date(2026, 5, 24)
+    metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
+    _write_detail_reports(tmp_path, as_of)
+    preflight = _write_operator_brief_notification_delivery_preflight(tmp_path, as_of)
+
+    original_import = builtins.__import__
+
+    def guarded_import(
+        name: str,
+        globals_: dict[str, object] | None = None,
+        locals_: dict[str, object] | None = None,
+        fromlist: tuple[str, ...] = (),
+        level: int = 0,
+    ) -> object:
+        blocked_module_tokens = (
+            "run_daily_trading_system_operator_brief",
+            "generate_operator_brief_notification_draft",
+            "run_operator_brief_notification_delivery_preflight",
+            "ai_trading_system.trading_engine.daily_trading_system_operator_brief",
+            "ai_trading_system.trading_engine.operator_brief_notification_draft",
+            "ai_trading_system.trading_engine.operator_brief_notification_delivery_preflight",
+            "smtplib",
+            "slack_sdk",
+            "discord",
+            "gmail",
+            "webhook",
+            "ai_trading_system.data.download",
+            "ai_trading_system.scoring",
+            "ai_trading_system.backtest",
+            "ai_trading_system.trading_engine.brokers",
+            "run_paper_trading_replay",
+        )
+        if any(token in name for token in blocked_module_tokens):
+            raise AssertionError(
+                f"dashboard must not import delivery preflight or execution path: {name}"
+            )
+        return original_import(name, globals_, locals_, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+
+    report = build_daily_task_dashboard_report(
+        as_of=as_of,
+        metadata_path=metadata_path,
+        run_report_path=None,
+        reports_dir=tmp_path,
+    )
+    html = render_daily_task_dashboard(report)
+    payload = build_daily_task_dashboard_payload(report)
+
+    summary = payload["operator_brief_notification_delivery_preflight"]
+    assert summary["preflight_status"] == "PASS"
+    assert summary["delivery_readiness"] == "READY_FOR_MANUAL_REVIEW"
+    assert summary["notification_severity"] == "NORMAL"
+    assert summary["email_channel_status"] == "READY_FOR_MANUAL_REVIEW"
+    assert summary["chat_channel_status"] == "READY_FOR_MANUAL_REVIEW"
+    assert summary["mobile_channel_status"] == "READY_FOR_MANUAL_REVIEW"
+    assert summary["approval_required"] is False
+    assert summary["critical_alert_count"] == 0
+    assert summary["warning_count"] == 1
+    assert summary["email_sent"] is False
+    assert summary["gmail_draft_created"] is False
+    assert summary["gmail_draft_modified"] is False
+    assert summary["slack_sent"] is False
+    assert summary["discord_sent"] is False
+    assert summary["webhook_called"] is False
+    assert summary["mobile_push_sent"] is False
+    assert summary["production_effect"] == "none"
+    assert summary["manual_review_only"] is True
+    assert summary["notification_delivery_preflight_only"] is True
+    assert summary["read_only"] is True
+    assert summary["operator_brief_executed_by_delivery_preflight"] is False
+    assert summary["notification_draft_executed_by_delivery_preflight"] is False
+    assert summary["pipelines_executed_by_delivery_preflight"] is False
+    assert summary["data_downloaded_by_delivery_preflight"] is False
+    assert summary["apply_executed_by_delivery_preflight"] is False
+    assert summary["rollback_executed_by_delivery_preflight"] is False
+    assert summary["broker_execution"] is False
+    assert summary["replay_execution"] is False
+    assert summary["trading_execution"] is False
+    assert "Operator Brief Notification Delivery Preflight" in html
+    assert "delivery_readiness" in html
+    assert "webhook_called" in html
+    assert preflight["output_artifacts"]["preflight_markdown"]["path"] in html
+
+
 def test_daily_task_dashboard_pipeline_health_summary_card_is_read_only(
     tmp_path: Path,
     monkeypatch: Any,
@@ -2009,6 +2098,158 @@ def _write_operator_brief_notification_draft(tmp_path: Path, as_of: date) -> dic
     email_path.write_text("# Email Draft\n", encoding="utf-8")
     chat_path.write_text("# Chat Draft\n", encoding="utf-8")
     mobile_path.write_text("Trading System OK - no manual action required.\n", encoding="utf-8")
+    return payload
+
+
+def _write_operator_brief_notification_delivery_preflight(
+    tmp_path: Path,
+    as_of: date,
+) -> dict[str, Any]:
+    suffix = as_of.isoformat()
+    preflight_root = (
+        tmp_path / "data" / "derived" / "operator_briefs" / "notifications" / "delivery_preflight"
+    )
+    json_path = preflight_root / f"operator_brief_notification_delivery_preflight_{suffix}.json"
+    markdown_path = json_path.with_suffix(".md")
+    run_log_json_path = (
+        preflight_root
+        / "logs"
+        / f"operator_brief_notification_delivery_preflight_run_{suffix}.json"
+    )
+    run_log_markdown_path = run_log_json_path.with_suffix(".md")
+    payload: dict[str, Any] = {
+        "schema_version": "1.0",
+        "report_type": "operator_brief_notification_delivery_preflight",
+        "task_id": "TRADING-031",
+        "date": suffix,
+        "mode": "operator_brief_notification_delivery_preflight_only",
+        "production_effect": "none",
+        "manual_review_only": True,
+        "notification_delivery_preflight_only": True,
+        "read_only": True,
+        "safe_for_scheduler": True,
+        "email_sent": False,
+        "gmail_draft_created": False,
+        "gmail_draft_modified": False,
+        "slack_sent": False,
+        "discord_sent": False,
+        "webhook_called": False,
+        "mobile_push_sent": False,
+        "operator_brief_executed_by_delivery_preflight": False,
+        "notification_draft_executed_by_delivery_preflight": False,
+        "pipelines_executed_by_delivery_preflight": False,
+        "data_downloaded_by_delivery_preflight": False,
+        "apply_executed_by_delivery_preflight": False,
+        "rollback_executed_by_delivery_preflight": False,
+        "broker_execution": False,
+        "replay_execution": False,
+        "trading_execution": False,
+        "preflight_status": "PASS",
+        "delivery_readiness": "READY_FOR_MANUAL_REVIEW",
+        "notification_severity": "NORMAL",
+        "headline": (
+            "Notification drafts are available and ready for manual review. "
+            "No notification was sent."
+        ),
+        "approval_validation": {
+            "status": "PASS",
+            "approval_required": False,
+            "approval_policy_available": False,
+            "approval_reason": "NORMAL severity does not require delivery approval.",
+            "blocking_reasons": [],
+            "warnings": [],
+        },
+        "channel_readiness": {
+            "email": {
+                "status": "READY_FOR_MANUAL_REVIEW",
+                "draft_available": True,
+                "recipient_config_available": False,
+                "can_send_automatically": False,
+                "manual_send_only": True,
+                "blocking_reasons": [],
+                "warnings": [
+                    "Recipient/channel configs were not found. Drafts are manual-review only."
+                ],
+            },
+            "chat": {
+                "status": "READY_FOR_MANUAL_REVIEW",
+                "draft_available": True,
+                "channel_config_available": False,
+                "can_send_automatically": False,
+                "manual_send_only": True,
+                "blocking_reasons": [],
+                "warnings": [],
+            },
+            "mobile": {
+                "status": "READY_FOR_MANUAL_REVIEW",
+                "draft_available": True,
+                "channel_config_available": False,
+                "can_send_automatically": False,
+                "manual_send_only": True,
+                "blocking_reasons": [],
+                "warnings": [],
+            },
+        },
+        "safety_validation": {
+            "status": "PASS",
+            "notification_metadata_task_id_valid": True,
+            "notification_metadata_safe": True,
+            "no_email_sent": True,
+            "no_gmail_draft_created": True,
+            "no_webhook_called": True,
+            "no_mobile_push_sent": True,
+            "no_pipeline_execution": True,
+            "no_data_download": True,
+            "no_apply_or_rollback": True,
+            "no_broker_replay_trading": True,
+            "blocking_reasons": [],
+        },
+        "alerts": {
+            "critical": [],
+            "warnings": [
+                "Recipient/channel configs were not found. Drafts are manual-review only."
+            ],
+            "notes": ["Delivery preflight is read-only and did not send any notification."],
+        },
+        "output_artifacts": {
+            "preflight_json": {
+                "path": (
+                    "data/derived/operator_briefs/notifications/delivery_preflight/"
+                    f"{json_path.name}"
+                )
+            },
+            "preflight_markdown": {
+                "path": (
+                    "data/derived/operator_briefs/notifications/delivery_preflight/"
+                    f"{markdown_path.name}"
+                )
+            },
+            "run_log_json": {
+                "path": (
+                    "data/derived/operator_briefs/notifications/delivery_preflight/logs/"
+                    f"{run_log_json_path.name}"
+                )
+            },
+            "run_log_markdown": {
+                "path": (
+                    "data/derived/operator_briefs/notifications/delivery_preflight/logs/"
+                    f"{run_log_markdown_path.name}"
+                )
+            },
+        },
+    }
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    run_log_json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    markdown_path.write_text("# Operator Brief Notification Delivery Preflight\n", encoding="utf-8")
+    run_log_json_path.write_text(
+        json.dumps({"report_type": "operator_brief_notification_delivery_preflight_run"}),
+        encoding="utf-8",
+    )
+    run_log_markdown_path.write_text(
+        "# Operator Brief Notification Delivery Preflight Run\n",
+        encoding="utf-8",
+    )
     return payload
 
 
