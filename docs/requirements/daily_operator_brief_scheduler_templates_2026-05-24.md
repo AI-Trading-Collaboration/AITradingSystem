@@ -2,7 +2,7 @@
 
 关联任务：`TRADING-028`
 
-状态：`VALIDATING`
+状态：`DONE`
 
 ## 目标
 
@@ -98,3 +98,4 @@ Dashboard 禁止触发 018B-027、028 script、operator brief、scheduler creati
 
 - 2026-05-24：新增并进入 `IN_PROGRESS`。本阶段只允许生成可审阅模板 artifact，不创建真实 scheduler、不执行 operator brief 或上游任务、不触发任何交易或数据流水线。
 - 2026-05-24：实现完成并进入 `VALIDATING`。新增核心 builder、CLI、Windows Task Scheduler XML / PowerShell / batch / cron / GitHub Actions `.template` 输出、metadata JSON、summary Markdown、dashboard 只读卡片、runbook、system flow、artifact catalog 和专项测试；验证通过 GENERATED / SAFETY_BLOCKED / template content smoke、`tests/trading_engine/test_daily_operator_brief_scheduler_templates.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量 pytest 和 ruff；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。
+- 2026-05-24：最终收尾验证完成并改为 `DONE`。repo 外 smoke 确认默认生成 `GENERATED`、5 个 `.template` 输出存在、危险 `.github/workflows` 输出为 `SAFETY_BLOCKED` 且不创建 unsafe 目录；模板内容全部包含 `TEMPLATE ONLY` 和 `Manual review required`，不包含 `run_shadow_promotion_apply.py`、`run_shadow_promotion_rollback.py`、`schtasks /Create`、`crontab -` 安装命令，active command 不包含 broker / replay / trading execution；metadata 15 项安全边界全部为预期值；确认无真实 Windows Task Scheduler XML 安装文件、crontab 文件、`.github/workflows/*.yml` 或 scheduler 自动安装脚本；dashboard import guard 确认 Scheduler Configuration Templates 卡片只读读取 TRADING-028 metadata artifact，不触发 018B-027、028 script、operator brief、scheduler creation、market/backtest/scoring/data download/broker/replay/trading；目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff 通过；全仓 Black check 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断。
