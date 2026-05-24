@@ -2,7 +2,7 @@
 
 关联任务：`TRADING-030`
 
-状态：`VALIDATING`
+状态：`DONE`
 
 ## 目标
 
@@ -109,3 +109,4 @@ Dashboard 禁止触发 018B-029、TRADING-030 script、operator brief、email/Gm
 
 - 2026-05-24：新增并进入 `IN_PROGRESS`。本阶段只生成人工审阅通知草稿，不发送任何通知、不创建 Gmail draft、不调用 webhook、不推送手机、不运行 operator brief、scheduler、数据、评分、回测或交易执行流水线。
 - 2026-05-24：实现完成并进入 `VALIDATING`。新增核心 generator、CLI、metadata JSON、summary Markdown、email/chat/mobile 草稿、run log、dashboard 只读卡片、runbook、system flow、artifact catalog 和专项测试；临时目录 smoke 覆盖 NORMAL、ACTION、URGENT、SAFETY_BLOCKED 和 REDACTION，确认 sent flags 全为 false 且 redaction 未泄露构造的 secret；验证通过 `tests/trading_engine/test_operator_brief_notification_draft.py`、`tests/test_daily_task_dashboard.py`、`tests/trading_engine`、全量 pytest 和 ruff；`python -m black --check scripts src tests` 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。
+- 2026-05-24：最终收尾验证完成并改为 `DONE`。repo 外 smoke 再次确认 NORMAL 生成 email/chat/mobile/summary/metadata，ACTION draft 包含 `Action Required`，URGENT draft 包含 `URGENT` banner，SAFETY_BLOCKED draft 明确标记 blocked，REDACTION 场景中构造的 `api_key` / `token` / `password` / `credential` 值未出现在 draft 输出中；五路径 metadata 均确认 `production_effect=none`、`manual_review_only=true`、`notification_draft_only=true`、`read_only=true`、`email_sent=false`、`gmail_draft_created=false`、`slack_sent=false`、`discord_sent=false`、`mobile_push_sent=false`、`operator_brief_executed_by_notification_draft=false`、`pipelines_executed_by_notification_draft=false`、`data_downloaded_by_notification_draft=false`、`apply_executed_by_notification_draft=false`、`rollback_executed_by_notification_draft=false`、`broker_execution=false`、`replay_execution=false`、`trading_execution=false`；dashboard import guard 确认 Operator Brief Notification Draft 卡片只读读取 TRADING-030 metadata artifact，不触发 018B-029、TRADING-030 script、operator brief、email/Gmail/Slack/Discord/mobile push、market/backtest/scoring/data download/broker/replay/trading；收尾验证通过目标 pytest、dashboard pytest、`tests/trading_engine`、全量 pytest 和 ruff；`python -m black --check scripts src tests` 仍仅被既有无关 `tests/test_market_data.py` baseline 阻断，未混入无关格式化 diff。
