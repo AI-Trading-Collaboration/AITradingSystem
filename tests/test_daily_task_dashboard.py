@@ -747,10 +747,12 @@ def test_daily_task_dashboard_operator_brief_scheduler_dry_run_card_is_read_only
             "run_data_freshness_summary",
             "run_daily_trading_system_operator_brief",
             "run_daily_operator_brief_scheduler_dry_run",
+            "generate_daily_operator_brief_scheduler_templates",
             "ai_trading_system.trading_engine.daily_trading_system_operator_brief",
             "ai_trading_system.trading_engine.pipeline_health_summary",
             "ai_trading_system.trading_engine.data_freshness_summary",
             "ai_trading_system.trading_engine.daily_operator_brief_scheduler_dry_run",
+            "ai_trading_system.trading_engine.daily_operator_brief_scheduler_templates",
             "ai_trading_system.data.download",
             "ai_trading_system.scoring",
             "ai_trading_system.backtest",
@@ -803,6 +805,104 @@ def test_daily_task_dashboard_operator_brief_scheduler_dry_run_card_is_read_only
     assert "safety_check.status" in html
     assert "missing_optional_inputs_count" in html
     assert dry_run["output_artifacts"]["markdown"]["path"] in html
+
+
+def test_daily_task_dashboard_scheduler_templates_card_is_read_only(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    as_of = date(2026, 5, 24)
+    metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
+    _write_detail_reports(tmp_path, as_of)
+    templates = _write_operator_brief_scheduler_templates(tmp_path, as_of)
+
+    original_import = builtins.__import__
+
+    def guarded_import(
+        name: str,
+        globals_: dict[str, object] | None = None,
+        locals_: dict[str, object] | None = None,
+        fromlist: tuple[str, ...] = (),
+        level: int = 0,
+    ) -> object:
+        blocked_module_tokens = (
+            "run_daily_shadow_weight_iteration",
+            "run_daily_shadow_vs_production_comparison",
+            "run_shadow_vs_production_multi_day_review",
+            "run_shadow_promotion_proposal",
+            "run_shadow_promotion_apply_preflight",
+            "run_shadow_promotion_apply",
+            "run_shadow_promotion_rollback",
+            "run_shadow_promotion_lifecycle_audit",
+            "run_parameter_governance_summary",
+            "render_parameter_governance_web_view",
+            "run_parameter_governance_daily_digest",
+            "run_pipeline_health_summary",
+            "run_data_freshness_summary",
+            "run_daily_trading_system_operator_brief",
+            "run_daily_operator_brief_scheduler_dry_run",
+            "generate_daily_operator_brief_scheduler_templates",
+            "ai_trading_system.trading_engine.daily_trading_system_operator_brief",
+            "ai_trading_system.trading_engine.pipeline_health_summary",
+            "ai_trading_system.trading_engine.data_freshness_summary",
+            "ai_trading_system.trading_engine.daily_operator_brief_scheduler_dry_run",
+            "ai_trading_system.trading_engine.daily_operator_brief_scheduler_templates",
+            "ai_trading_system.data.download",
+            "ai_trading_system.scoring",
+            "ai_trading_system.backtest",
+            "ai_trading_system.trading_engine.brokers",
+            "run_paper_trading_replay",
+        )
+        if any(token in name for token in blocked_module_tokens):
+            raise AssertionError(f"dashboard must not import scheduler or pipeline path: {name}")
+        return original_import(name, globals_, locals_, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+
+    report = build_daily_task_dashboard_report(
+        as_of=as_of,
+        metadata_path=metadata_path,
+        run_report_path=None,
+        reports_dir=tmp_path,
+    )
+    html = render_daily_task_dashboard(report)
+    payload = build_daily_task_dashboard_payload(report)
+
+    summary = payload["daily_operator_brief_scheduler_templates"]
+    assert summary["template_generation_status"] == "GENERATED"
+    assert summary["scheduler_created"] is False
+    assert summary["scheduler_installed"] is False
+    assert summary["scheduler_enabled"] is False
+    assert summary["manual_review_required"] is True
+    assert summary["generated_template_count"] == 5
+    assert summary["windows_template_path"].endswith(
+        "windows/daily_operator_brief_task_2026-05-24.xml.template"
+    )
+    assert summary["cron_template_path"].endswith(
+        "cron/daily_operator_brief_cron_2026-05-24.txt.template"
+    )
+    assert summary["github_actions_template_path"].endswith(
+        "github_actions/daily_operator_brief_workflow_2026-05-24.yml.template"
+    )
+    assert summary["summary_markdown_path"].endswith(
+        "daily_operator_brief_scheduler_templates_2026-05-24.md"
+    )
+    assert summary["production_effect"] == "none"
+    assert summary["manual_review_only"] is True
+    assert summary["scheduler_template_only"] is True
+    assert summary["read_only"] is True
+    assert summary["operator_brief_executed_by_template_generator"] is False
+    assert summary["pipelines_executed_by_template_generator"] is False
+    assert summary["data_downloaded_by_template_generator"] is False
+    assert summary["apply_executed_by_template_generator"] is False
+    assert summary["rollback_executed_by_template_generator"] is False
+    assert summary["broker_execution"] is False
+    assert summary["replay_execution"] is False
+    assert summary["trading_execution"] is False
+    assert "Scheduler Configuration Templates" in html
+    assert "template_generation_status" in html
+    assert "scheduler_installed" in html
+    assert templates["summary_markdown_path"] in html
 
 
 def test_daily_task_dashboard_pipeline_health_summary_card_is_read_only(
@@ -1433,6 +1533,118 @@ def _write_operator_brief_scheduler_dry_run(tmp_path: Path, as_of: date) -> dict
         encoding="utf-8",
     )
     markdown_path.write_text("# Daily Operator Brief Scheduler Dry Run\n", encoding="utf-8")
+    return payload
+
+
+def _write_operator_brief_scheduler_templates(tmp_path: Path, as_of: date) -> dict[str, Any]:
+    suffix = as_of.isoformat()
+    template_root = tmp_path / "data" / "derived" / "operator_briefs" / "scheduler_templates"
+    json_path = template_root / f"daily_operator_brief_scheduler_templates_{suffix}.json"
+    markdown_path = template_root / f"daily_operator_brief_scheduler_templates_{suffix}.md"
+    output_templates = {
+        "windows_task_xml": {
+            "enabled": True,
+            "generated": True,
+            "path": (
+                "data/derived/operator_briefs/scheduler_templates/windows/"
+                f"daily_operator_brief_task_{suffix}.xml.template"
+            ),
+        },
+        "powershell_wrapper": {
+            "enabled": True,
+            "generated": True,
+            "path": (
+                "data/derived/operator_briefs/scheduler_templates/windows/"
+                f"run_daily_operator_brief_{suffix}.ps1.template"
+            ),
+        },
+        "batch_wrapper": {
+            "enabled": True,
+            "generated": True,
+            "path": (
+                "data/derived/operator_briefs/scheduler_templates/windows/"
+                f"run_daily_operator_brief_{suffix}.bat.template"
+            ),
+        },
+        "cron_line": {
+            "enabled": True,
+            "generated": True,
+            "path": (
+                "data/derived/operator_briefs/scheduler_templates/cron/"
+                f"daily_operator_brief_cron_{suffix}.txt.template"
+            ),
+        },
+        "github_actions_workflow": {
+            "enabled": True,
+            "generated": True,
+            "path": (
+                "data/derived/operator_briefs/scheduler_templates/github_actions/"
+                f"daily_operator_brief_workflow_{suffix}.yml.template"
+            ),
+        },
+    }
+    payload: dict[str, Any] = {
+        "schema_version": "1.0",
+        "report_type": "daily_operator_brief_scheduler_templates",
+        "task_id": "TRADING-028",
+        "date": suffix,
+        "mode": "daily_operator_brief_scheduler_template_generation_only",
+        "production_effect": "none",
+        "manual_review_only": True,
+        "scheduler_template_only": True,
+        "read_only": True,
+        "safe_for_scheduler": True,
+        "scheduler_created": False,
+        "scheduler_installed": False,
+        "scheduler_enabled": False,
+        "operator_brief_executed_by_template_generator": False,
+        "pipelines_executed_by_template_generator": False,
+        "data_downloaded_by_template_generator": False,
+        "apply_executed_by_template_generator": False,
+        "rollback_executed_by_template_generator": False,
+        "broker_execution": False,
+        "replay_execution": False,
+        "trading_execution": False,
+        "template_generation_status": "GENERATED",
+        "summary_level": "NORMAL",
+        "headline": "Scheduler configuration templates were generated for manual review.",
+        "generated_template_count": 5,
+        "output_templates": output_templates,
+        "output_artifacts": {
+            "metadata_json": {
+                "path": f"data/derived/operator_briefs/scheduler_templates/{json_path.name}"
+            },
+            "summary_markdown": {
+                "path": f"data/derived/operator_briefs/scheduler_templates/{markdown_path.name}"
+            },
+        },
+        "summary_markdown_path": (
+            f"data/derived/operator_briefs/scheduler_templates/{markdown_path.name}"
+        ),
+        "safety_validation": {
+            "status": "PASS",
+            "templates_only": True,
+            "no_scheduler_created": True,
+            "no_scheduler_installed": True,
+            "no_scheduler_enabled": True,
+            "no_operator_brief_execution": True,
+            "no_pipeline_execution": True,
+            "no_data_download": True,
+            "no_apply_or_rollback": True,
+            "no_broker_replay_trading": True,
+            "blocking_reasons": [],
+        },
+        "manual_review_required": {
+            "required": True,
+            "instructions": [
+                "Review generated templates before copying them.",
+                "Run TRADING-026 scheduler dry run before enabling any scheduler.",
+            ],
+        },
+    }
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    markdown_path.write_text("# Daily Operator Brief Scheduler Templates\n", encoding="utf-8")
     return payload
 
 

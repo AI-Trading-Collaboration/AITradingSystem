@@ -303,3 +303,27 @@ TRADING-028: Scheduler Configuration Template Generator
 ```
 
 TRADING-028 should generate reviewable templates such as Windows Task Scheduler XML, cron line, or GitHub Actions workflow examples. It still should not automatically install scheduler entries.
+
+## 15. Generated Templates From TRADING-028
+
+TRADING-028 已提供 template-only 生成器：
+
+```bash
+python scripts/generate_daily_operator_brief_scheduler_templates.py --date YYYY-MM-DD
+```
+
+生成目录：
+
+```text
+data/derived/operator_briefs/scheduler_templates/
+```
+
+使用要求：
+
+- 只把生成的 `.template` 文件作为人工审查输入。
+- 不要直接把 GitHub Actions template 写入 `.github/workflows/`。
+- 不要把 cron template 写入 crontab。
+- 不要导入 Windows Task Scheduler XML，除非 TRADING-026 dry run 已经 `READY` 且本 runbook checklist 已通过。
+- 若 metadata `template_generation_status=SAFETY_BLOCKED`，不得复制或安装任何模板。
+
+TRADING-028 仍然不创建、不安装、不启用 scheduler，不运行 TRADING-021/022/023/024/026，也不触发 apply、rollback、broker、replay、trading execution、data download、market/backtest/scoring pipeline。
