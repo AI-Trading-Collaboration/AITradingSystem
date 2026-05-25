@@ -233,6 +233,7 @@ def build_daily_task_dashboard_payload(
         "operator_brief_notification_draft_dispatch": (
             _operator_brief_notification_draft_dispatch_summary(report)
         ),
+        "notification_delivery_audit_summary": _notification_delivery_audit_summary(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -352,6 +353,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_operator_brief_notification_dispatch_preview(report),
             _render_operator_brief_notification_approval_gate(report),
             _render_operator_brief_notification_draft_dispatch(report),
+            _render_notification_delivery_audit_summary(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -5250,6 +5252,200 @@ def _operator_brief_notification_draft_dispatch_summary(
     }
 
 
+def _notification_delivery_audit_summary(
+    report: DailyTaskDashboardReport,
+) -> TraceRecord:
+    path = _latest_notification_delivery_audit_summary_path(report)
+    payload = _read_json_object(path)
+    default_markdown = (
+        report.project_root
+        / "data"
+        / "derived"
+        / "operator_briefs"
+        / "notifications"
+        / "delivery_audit"
+        / f"notification_delivery_audit_summary_{report.as_of.isoformat()}.md"
+    )
+    if payload.get("report_type") != "notification_delivery_audit_summary":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "markdown_path": str(default_markdown),
+            "audit_status": "MISSING",
+            "notification_lifecycle_status": "UNKNOWN",
+            "summary_level": "UNKNOWN",
+            "draft_status": "MISSING",
+            "preflight_status": "MISSING",
+            "dispatch_status": "MISSING",
+            "draft_hash_match": False,
+            "latest_json_match": False,
+            "external_side_effect_audit_status": "MISSING",
+            "critical_alert_count": 0,
+            "warning_count": 0,
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_only": True,
+            "notification_delivery_audit_only": True,
+            "read_only": True,
+            "email_sent": False,
+            "gmail_draft_created": False,
+            "gmail_draft_modified": False,
+            "slack_sent": False,
+            "discord_sent": False,
+            "webhook_called": False,
+            "mobile_push_sent": False,
+            "notification_draft_executed_by_audit": False,
+            "delivery_preflight_executed_by_audit": False,
+            "draft_dispatch_executed_by_audit": False,
+            "operator_brief_executed_by_audit": False,
+            "pipelines_executed_by_audit": False,
+            "data_downloaded_by_audit": False,
+            "apply_executed_by_audit": False,
+            "rollback_executed_by_audit": False,
+            "broker_execution": False,
+            "replay_execution": False,
+            "trading_execution": False,
+            "risk": (
+                "TRADING-035 notification delivery audit artifact 缺失；dashboard 只读取 "
+                "TRADING-035 audit artifact，不运行 018B-034、TRADING-035 script、"
+                "notification draft generator、delivery preflight、draft dispatch、"
+                "operator brief、email/Gmail/webhook/mobile 或任何交易路径。"
+            ),
+        }
+
+    outputs = _mapping_value(payload, "output_artifacts")
+    markdown_output = _mapping_value(outputs, "audit_markdown")
+    markdown_path = (
+        _project_path(report.project_root, _string_value(markdown_output.get("path")))
+        or default_markdown
+    )
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    chain = _mapping_value(payload, "artifact_chain")
+    draft = _mapping_value(payload, "draft_summary")
+    preflight = _mapping_value(payload, "preflight_summary")
+    dispatch = _mapping_value(payload, "dispatch_summary")
+    side_effects = _mapping_value(payload, "external_side_effect_audit")
+    alerts = _mapping_value(payload, "alerts")
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    email_sent = payload.get("email_sent") is True
+    gmail_draft_created = payload.get("gmail_draft_created") is True
+    gmail_draft_modified = payload.get("gmail_draft_modified") is True
+    slack_sent = payload.get("slack_sent") is True
+    discord_sent = payload.get("discord_sent") is True
+    webhook_called = payload.get("webhook_called") is True
+    mobile_push_sent = payload.get("mobile_push_sent") is True
+    notification_draft_executed = payload.get("notification_draft_executed_by_audit") is True
+    delivery_preflight_executed = payload.get("delivery_preflight_executed_by_audit") is True
+    draft_dispatch_executed = payload.get("draft_dispatch_executed_by_audit") is True
+    operator_brief_executed = payload.get("operator_brief_executed_by_audit") is True
+    pipelines_executed = payload.get("pipelines_executed_by_audit") is True
+    data_downloaded = payload.get("data_downloaded_by_audit") is True
+    apply_executed = payload.get("apply_executed_by_audit") is True
+    rollback_executed = payload.get("rollback_executed_by_audit") is True
+    broker_execution = payload.get("broker_execution") is True
+    replay_execution = payload.get("replay_execution") is True
+    trading_execution = payload.get("trading_execution") is True
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("TRADING-035 audit production_effect 必须为 none。")
+    if payload.get("manual_review_only") is not True:
+        risks.append("TRADING-035 audit 必须 manual_review_only=true。")
+    if payload.get("notification_delivery_audit_only") is not True:
+        risks.append("TRADING-035 必须 notification_delivery_audit_only=true。")
+    if payload.get("read_only") is not True:
+        risks.append("TRADING-035 audit 必须 read_only=true。")
+    if email_sent:
+        risks.append("TRADING-035 不允许发送 email。")
+    if gmail_draft_created:
+        risks.append("TRADING-035 不允许创建 Gmail draft。")
+    if gmail_draft_modified:
+        risks.append("TRADING-035 不允许修改 Gmail draft。")
+    if slack_sent:
+        risks.append("TRADING-035 不允许发送 Slack 通知。")
+    if discord_sent:
+        risks.append("TRADING-035 不允许发送 Discord 通知。")
+    if webhook_called:
+        risks.append("TRADING-035 不允许调用 webhook。")
+    if mobile_push_sent:
+        risks.append("TRADING-035 不允许发送 mobile push。")
+    if notification_draft_executed:
+        risks.append("TRADING-035 不允许运行 notification draft generator。")
+    if delivery_preflight_executed:
+        risks.append("TRADING-035 不允许运行 delivery preflight。")
+    if draft_dispatch_executed:
+        risks.append("TRADING-035 不允许运行 draft dispatch。")
+    if operator_brief_executed:
+        risks.append("TRADING-035 不允许运行 operator brief。")
+    if pipelines_executed:
+        risks.append("TRADING-035 不允许运行上游 pipeline。")
+    if data_downloaded:
+        risks.append("TRADING-035 不允许下载或刷新数据。")
+    if apply_executed:
+        risks.append("TRADING-035 不允许执行 apply。")
+    if rollback_executed:
+        risks.append("TRADING-035 不允许执行 rollback。")
+    if broker_execution:
+        risks.append("TRADING-035 不允许 broker_execution=true。")
+    if replay_execution:
+        risks.append("TRADING-035 不允许 replay_execution=true。")
+    if trading_execution:
+        risks.append("TRADING-035 不允许 trading_execution=true。")
+    if side_effects.get("status") == "FAIL":
+        risks.extend(_strings(side_effects.get("blocking_reasons")))
+    return {
+        "status": _string_value(payload.get("audit_status")) or "MISSING",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "markdown_path": str(markdown_path),
+        "audit_status": _string_value(payload.get("audit_status")) or "MISSING",
+        "notification_lifecycle_status": (
+            _string_value(payload.get("notification_lifecycle_status")) or "UNKNOWN"
+        ),
+        "summary_level": _string_value(payload.get("summary_level")) or "UNKNOWN",
+        "draft_status": _string_value(draft.get("draft_status")) or "MISSING",
+        "preflight_status": _string_value(preflight.get("preflight_status")) or "MISSING",
+        "dispatch_status": _string_value(dispatch.get("dispatch_status")) or "MISSING",
+        "draft_hash_match": chain.get("draft_hash_match") is True,
+        "latest_json_match": chain.get("dispatch_latest_match") is True,
+        "external_side_effect_audit_status": (
+            _string_value(side_effects.get("status")) or "MISSING"
+        ),
+        "critical_alert_count": len(_strings(alerts.get("critical"))),
+        "warning_count": len(_strings(alerts.get("warnings"))),
+        "production_effect": production_effect,
+        "manual_review_only": payload.get("manual_review_only") is True,
+        "notification_delivery_audit_only": (
+            payload.get("notification_delivery_audit_only") is True
+        ),
+        "read_only": payload.get("read_only") is True,
+        "email_sent": email_sent,
+        "gmail_draft_created": gmail_draft_created,
+        "gmail_draft_modified": gmail_draft_modified,
+        "slack_sent": slack_sent,
+        "discord_sent": discord_sent,
+        "webhook_called": webhook_called,
+        "mobile_push_sent": mobile_push_sent,
+        "notification_draft_executed_by_audit": notification_draft_executed,
+        "delivery_preflight_executed_by_audit": delivery_preflight_executed,
+        "draft_dispatch_executed_by_audit": draft_dispatch_executed,
+        "operator_brief_executed_by_audit": operator_brief_executed,
+        "pipelines_executed_by_audit": pipelines_executed,
+        "data_downloaded_by_audit": data_downloaded,
+        "apply_executed_by_audit": apply_executed,
+        "rollback_executed_by_audit": rollback_executed,
+        "broker_execution": broker_execution,
+        "replay_execution": replay_execution,
+        "trading_execution": trading_execution,
+        "risk": "；".join(risks) or ("Notification Delivery Audit Summary 当前仅作只读展示。"),
+    }
+
+
 def _latest_shadow_vs_production_review_path(report: DailyTaskDashboardReport) -> Path:
     review_root = (
         report.project_root / "data" / "derived" / "weight_iterations" / "comparison" / "reviews"
@@ -5650,6 +5846,33 @@ def _latest_operator_brief_notification_draft_dispatch_path(
         / "draft_dispatch"
     )
     return draft_dispatch_root / "latest.json"
+
+
+def _latest_notification_delivery_audit_summary_path(
+    report: DailyTaskDashboardReport,
+) -> Path:
+    audit_root = (
+        report.project_root
+        / "data"
+        / "derived"
+        / "operator_briefs"
+        / "notifications"
+        / "delivery_audit"
+    )
+    default_path = audit_root / (
+        f"notification_delivery_audit_summary_{report.as_of.isoformat()}.json"
+    )
+    if not audit_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in audit_root.glob("notification_delivery_audit_summary_*.json"):
+        raw_date = path.stem.removeprefix("notification_delivery_audit_summary_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
 
 
 def _paper_trading_snapshot_source_counts(payload: TraceRecord) -> Counter[str]:
@@ -8616,6 +8839,70 @@ def _render_operator_brief_notification_draft_dispatch(
                 "next_recommended_action",
                 summary.get("next_recommended_action", ""),
             ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_notification_delivery_audit_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _notification_delivery_audit_summary(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}">'
+        "<span>Notification Delivery Audit Summary</span>"
+        f"<small>{_text(summary.get('audit_status', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>Notification Delivery Audit Summary</span>"
+        "<small>MISSING</small></span>"
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="notification-delivery-audit-summary-title">',
+            '<div class="section-head">',
+            (
+                '<h2 id="notification-delivery-audit-summary-title">'
+                "Notification Delivery Audit Summary</h2>"
+            ),
+            (
+                "<p>Notification delivery audit summary 只读卡片；dashboard 只读取 "
+                "TRADING-035 audit artifact，不触发 018B-034、TRADING-035 script、"
+                "notification draft generator、delivery preflight、draft dispatch、"
+                "operator brief、email/Gmail/Slack/Discord/webhook/mobile、market/"
+                "backtest/scoring/data download/broker/replay/交易。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("audit_status", summary.get("audit_status", "MISSING")),
+            _summary_item(
+                "notification_lifecycle_status",
+                summary.get("notification_lifecycle_status", "UNKNOWN"),
+            ),
+            _summary_item("summary_level", summary.get("summary_level", "UNKNOWN")),
+            _summary_item("draft_status", summary.get("draft_status", "MISSING")),
+            _summary_item("preflight_status", summary.get("preflight_status", "MISSING")),
+            _summary_item("dispatch_status", summary.get("dispatch_status", "MISSING")),
+            _summary_item("draft_hash_match", summary.get("draft_hash_match", False)),
+            _summary_item("latest_json_match", summary.get("latest_json_match", False)),
+            _summary_item(
+                "external_side_effect_audit.status",
+                summary.get("external_side_effect_audit_status", "MISSING"),
+            ),
+            _summary_item(
+                "critical_alert_count",
+                summary.get("critical_alert_count", 0),
+            ),
+            _summary_item("warning_count", summary.get("warning_count", 0)),
+            _summary_item("markdown path", summary.get("markdown_path", "")),
             "</div>",
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'
