@@ -82,6 +82,7 @@ flowchart TD
         SEC["config/sec_companies.yaml<br/>SEC CIK、taxonomy 预期和指标周期"]
         FM["config/fundamental_metrics.yaml<br/>SEC 指标映射、支撑指标和派生规则"]
         FF["config/fundamental_features.yaml<br/>SEC 基本面特征公式和周期偏好"]
+        SEPEP["config/sec_pit_evaluation_policy.yaml<br/>SEC PIT 解释性阈值、shadow candidate 样本门槛和 policy version"]
         TSMPDF["TSMC IR Management Report PDF<br/>官方季度资料 PDF"]
         TSMTXT["TSMC IR Management Report 文本<br/>官方季度资料的已抽取文本"]
         TSMMAN["TSMC IR 批量导入 manifest CSV<br/>季度、官方 URL 和本地文本路径"]
@@ -131,6 +132,8 @@ flowchart TD
         SECPITFACT["data/processed/sec_edgar/xbrl_facts_long.csv<br/>fact-level accession join 和 availability"]
         SECPITPAN["data/processed/sec_edgar/mapped_metrics_long.csv<br/>fundamental_pit_intervals.csv / daily panel / sec_pit_feature_panel.csv"]
         SECPITR["outputs/reports/sec_pit_backfill/*<br/>validation JSON、coverage、leakage、run.log<br/>backtest_data_grade=B_RECONSTRUCTED_SEC_FILING_PIT"]
+        SECPITEVAL["aits sec-pit evaluate<br/>先运行 validate_data_cache，再做 PIT safety、coverage、rank IC、top-bottom spread 和 shadow/research/excluded 分层"]
+        SECPITEVALR["outputs/sec_pit_evaluation/*<br/>evaluation JSON/Markdown、feature contributions CSV、shadow candidates CSV、run.log<br/>production_effect=none"]
         TSMP["aits fundamentals extract-tsm-ir-pdf-text"]
         TSMF["aits fundamentals fetch-tsm-ir-quarterly"]
         TSMI["aits fundamentals import-tsm-ir-quarterly"]
@@ -565,6 +568,14 @@ flowchart TD
     SECPITTL --> SECPITFACT
     SECPITFACT --> SECPITPAN
     SECPITPAN --> SECPITR
+    SECPITPAN --> SECPITEVAL
+    SEPEP --> SECPITEVAL
+    SEC --> SECPITEVAL
+    R --> SECPITEVAL
+    PR --> SECPITEVAL
+    RR --> SECPITEVAL
+    QR --> SECPITEVAL
+    SECPITEVAL --> SECPITEVALR
     DS --> TSMP
     TSMPDF --> TSMP
     TSMP --> TSMTXT

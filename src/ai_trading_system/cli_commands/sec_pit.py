@@ -10,8 +10,11 @@ import typer
 from rich.console import Console
 
 from ai_trading_system.config import (
+    DEFAULT_CONFIG_PATH,
+    DEFAULT_DATA_QUALITY_CONFIG_PATH,
     DEFAULT_FUNDAMENTAL_FEATURES_CONFIG_PATH,
     DEFAULT_FUNDAMENTAL_METRICS_CONFIG_PATH,
+    DEFAULT_MARKET_REGIMES_CONFIG_PATH,
     DEFAULT_SEC_COMPANIES_CONFIG_PATH,
     load_fundamental_features,
     load_fundamental_metrics,
@@ -27,6 +30,13 @@ from ai_trading_system.fundamentals.sec_pit_backfill import (
     fetch_sec_pit_raw,
     load_sec_pit_backfill_config,
     run_sec_pit_backfill,
+)
+from ai_trading_system.fundamentals.sec_pit_evaluation import (
+    DEFAULT_PRICES_PATH,
+    DEFAULT_RATES_PATH,
+    DEFAULT_SEC_PIT_EVALUATION_OUTPUT_DIR,
+    DEFAULT_SEC_PIT_EVALUATION_POLICY_PATH,
+    run_sec_pit_evaluation,
 )
 from ai_trading_system.fundamentals.sec_pit_metrics import build_mapped_metrics_csv
 from ai_trading_system.fundamentals.sec_pit_panel import (
@@ -402,6 +412,104 @@ def backfill_command(
     validation_path = artifacts.get("sec_pit_validation_json")
     if validation_path is not None:
         _exit_if_validation_failed(validation_path)
+
+
+@sec_pit_app.command("evaluate")
+def evaluate_command(
+    start: Annotated[
+        str,
+        typer.Option("--start", help="评估开始日期 YYYY-MM-DD。"),
+    ],
+    end: Annotated[
+        str,
+        typer.Option("--end", help="评估结束日期 YYYY-MM-DD。"),
+    ],
+    feature_panel: Annotated[
+        Path,
+        typer.Option("--feature-panel", help="TRADING-039 SEC PIT feature panel CSV。"),
+    ] = DEFAULT_SEC_EDGAR_PROCESSED_DIR
+    / "sec_pit_feature_panel.csv",
+    universe: Annotated[
+        Path,
+        typer.Option("--universe", help="SEC company universe 配置路径。"),
+    ] = DEFAULT_SEC_COMPANIES_CONFIG_PATH,
+    benchmark: Annotated[
+        str,
+        typer.Option("--benchmark", help="用于 forward excess return 的 benchmark ticker。"),
+    ] = "QQQ",
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="SEC PIT evaluation 输出目录。"),
+    ] = DEFAULT_SEC_PIT_EVALUATION_OUTPUT_DIR,
+    prices_path: Annotated[
+        Path,
+        typer.Option(help="缓存价格 CSV，用于 validate-data gate 和 forward return。"),
+    ] = DEFAULT_PRICES_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option(help="缓存宏观利率 CSV，用于 validate-data gate。"),
+    ] = DEFAULT_RATES_PATH,
+    market_universe_path: Annotated[
+        Path,
+        typer.Option(help="市场 universe 配置路径，用于数据质量门禁的 macro series。"),
+    ] = DEFAULT_CONFIG_PATH,
+    data_quality_config_path: Annotated[
+        Path,
+        typer.Option(help="数据质量 policy 配置路径。"),
+    ] = DEFAULT_DATA_QUALITY_CONFIG_PATH,
+    quality_report_path: Annotated[
+        Path | None,
+        typer.Option(help="数据质量报告输出路径；默认写入 output-dir。"),
+    ] = None,
+    quality_as_of: Annotated[
+        str | None,
+        typer.Option(help="数据质量校验日期 YYYY-MM-DD；默认使用 --end。"),
+    ] = None,
+    policy_path: Annotated[
+        Path,
+        typer.Option(help="SEC PIT evaluation policy 配置路径。"),
+    ] = DEFAULT_SEC_PIT_EVALUATION_POLICY_PATH,
+    regime: Annotated[
+        str | None,
+        typer.Option(
+            "--regime",
+            help="市场阶段 ID，默认使用 config/market_regimes.yaml 的 default_backtest_regime。",
+        ),
+    ] = None,
+    market_regimes_path: Annotated[
+        Path,
+        typer.Option(help="市场阶段配置路径。"),
+    ] = DEFAULT_MARKET_REGIMES_CONFIG_PATH,
+) -> None:
+    """评估 SEC PIT feature 的解释力、PIT 安全性和 shadow 候选分层。"""
+    artifacts = run_sec_pit_evaluation(
+        start=_parse_date(start),
+        end=_parse_date(end),
+        feature_panel_path=feature_panel,
+        universe_path=universe,
+        benchmark=benchmark,
+        output_dir=output_dir,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        market_universe_path=market_universe_path,
+        data_quality_config_path=data_quality_config_path,
+        quality_report_path=quality_report_path,
+        quality_as_of=_parse_date(quality_as_of) if quality_as_of else None,
+        policy_path=policy_path,
+        market_regimes_path=market_regimes_path,
+        regime=regime,
+    )
+    console.print(f"SEC PIT evaluation status: {artifacts.status}")
+    console.print(f"Evaluation JSON: {artifacts.json_path}")
+    console.print(f"Evaluation report: {artifacts.markdown_path}")
+    if artifacts.feature_contributions_path is not None:
+        console.print(f"Feature contributions: {artifacts.feature_contributions_path}")
+    if artifacts.shadow_candidates_path is not None:
+        console.print(f"Shadow candidates: {artifacts.shadow_candidates_path}")
+    console.print(f"Data quality report: {artifacts.data_quality_report_path}")
+    console.print(f"Run log: {artifacts.run_log_path}")
+    if artifacts.status in {"DATA_QUALITY_FAILED", "SAFETY_BLOCKED"}:
+        raise typer.Exit(code=2)
 
 
 def _resolve_user_agent(value: str | None) -> str:
