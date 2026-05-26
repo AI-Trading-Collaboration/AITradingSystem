@@ -125,6 +125,12 @@ flowchart TD
         SFF["aits fundamentals build-sec-features"]
         SFFC["data/processed/sec_fundamental_features_YYYY-MM-DD.csv"]
         SFFR["outputs/reports/sec_fundamental_features_YYYY-MM-DD.md"]
+        SECPIT["aits sec-pit backfill<br/>fetch-raw / build-filing-timeline / build-facts / build-metrics / build-panel / validate"]
+        SECPITRAW["data/raw/sec_edgar/submissions + companyfacts<br/>raw JSON + manifest checksum / row count"]
+        SECPITTL["data/processed/sec_edgar/filing_timeline.csv<br/>acceptance_datetime_utc / available_for_signal_date / PIT grade"]
+        SECPITFACT["data/processed/sec_edgar/xbrl_facts_long.csv<br/>fact-level accession join 和 availability"]
+        SECPITPAN["data/processed/sec_edgar/mapped_metrics_long.csv<br/>fundamental_pit_intervals.csv / daily panel / sec_pit_feature_panel.csv"]
+        SECPITR["outputs/reports/sec_pit_backfill/*<br/>validation JSON、coverage、leakage、run.log<br/>backtest_data_grade=B_RECONSTRUCTED_SEC_FILING_PIT"]
         TSMP["aits fundamentals extract-tsm-ir-pdf-text"]
         TSMF["aits fundamentals fetch-tsm-ir-quarterly"]
         TSMI["aits fundamentals import-tsm-ir-quarterly"]
@@ -421,7 +427,11 @@ flowchart TD
         TEWSONAG["python scripts/run_operator_brief_notification_approval_gate.py --date YYYY-MM-DD<br/>TRADING-033 只读读取 latest TRADING-032 dispatch preview 和可选本地 approval marker；计算稳定 preview hash 并判断 approval gate；不发送通知、不访问网络、不读取 secrets、不自动审批"]
         TEWSONDD["python scripts/run_operator_brief_notification_draft_dispatch.py --date YYYY-MM-DD<br/>TRADING-034 只读读取 latest TRADING-033 approval gate 和 TRADING-032 dispatch preview；生成最终本地 draft dispatch artifact、draft hash 和 masked channels；不发送通知、不创建 Gmail draft、不访问网络、不读取 secrets"]
         TEWSONA["python scripts/run_notification_delivery_audit_summary.py --date YYYY-MM-DD<br/>TRADING-035 只读读取 latest TRADING-030 draft metadata、TRADING-031 delivery preflight 和 TRADING-034 draft dispatch latest/artifact；校验 artifact chain、hash/latest、一致性和外部副作用；不发送通知、不创建 Gmail draft、不运行上游或交易 pipeline"]
+        TEWSONC["python scripts/run_notification_delivery_failure_classification.py [--audit-summary ...] [--as-of-date YYYY-MM-DD]<br/>TRADING-036 只读读取 latest 或指定 TRADING-035 audit summary；分类 failure category、manual review、retry readiness 和 notification chain blocking；不发送通知、不自动 retry、不修改状态或 production 参数"]
+        TEWSONQ["python scripts/run_retry_candidate_queue.py [--classification-report ...] [--as-of-date YYYY-MM-DD]<br/>TRADING-037 只读读取 latest 或指定 TRADING-036 classification JSON；生成 retry candidate queue、blocked items 和 manual approval gate；不执行 retry、不发送 notification、不修改 delivery/approval state 或 production 参数"]
+        TEWSONDR["python scripts/run_retry_execution_dry_run.py [--queue-report ...] [--approval-record ...] [--as-of-date YYYY-MM-DD]<br/>TRADING-038 只读读取 latest 或指定 TRADING-037 queue 和可选人工 approval record；生成 retry execution dry-run；不执行 retry、不发送 notification、不修改 approval/delivery state 或 production 参数"]
         TEWSONFAD["Future Actual Dispatch<br/>未来真实发送任务只能读取 DRAFT_READY draft dispatch artifact；当前未实现，TRADING-034 不执行发送"]
+        TEWSONFRETRY["Future Retry Execution Adapter<br/>未来真实 retry executor 必须读取 TRADING-038 dry-run artifact 和独立 executor disable policy；当前未实现，TRADING-038 不执行 retry"]
         TEWSPH["python scripts/run_pipeline_health_summary.py --date YYYY-MM-DD<br/>TRADING-023 只读扫描既有 pipeline artifacts、日期、status field、新鲜度和安全字段；不运行 018B-022、market/backtest/scoring、broker/replay/trading"]
         TEWSDF["python scripts/run_data_freshness_summary.py --date YYYY-MM-DD<br/>TRADING-024 只读扫描既有数据/artifacts、日期字段、metadata、modified time、status field 和安全字段；不下载数据、不运行 018B-023、market/backtest/scoring、broker/replay/trading"]
         TEFMCAL["python scripts/run_paperbroker_fill_model_calibration.py --date YYYY-MM-DD<br/>只读读取最近 PaperBroker vs IBKR Paper comparison、controlled fill no-fill artifacts、可选 replay quality flags 和 paper_signal_quality；calibration_mode=diagnostic_only；不触发 runner、replay、broker 或 fill model 修改"]
@@ -470,6 +480,10 @@ flowchart TD
         TEWSONAGR["data/derived/operator_briefs/notifications/approval_gate/operator_brief_notification_approval_gate_YYYY-MM-DD.json/md + latest.json/latest.md + run.log<br/>TRADING-033 approval gate；dispatch_preview_summary、approval_marker_summary、hashes、decision.allowed_to_enter_dispatch；approval_gate_only=true、read_only=true、external_side_effects=false、all sent/webhook/execution flags=false"]
         TEWSONDDR["data/derived/operator_briefs/notifications/draft_dispatch/operator_brief_notification_draft_dispatch_YYYY-MM-DD.json/md + latest.json/latest.md + run.log<br/>TRADING-034 draft dispatch；approval_gate_summary、draft channels/message、hashes.draft_hash、decision.ready_for_actual_dispatch；draft_dispatch_only=true、read_only=true、external_side_effects=false、all sent/webhook/execution flags=false"]
         TEWSONAR["data/derived/operator_briefs/notifications/delivery_audit/notification_delivery_audit_summary_YYYY-MM-DD.json/md + delivery_audit/logs/<br/>TRADING-035 notification delivery audit summary；audit_status、notification_lifecycle_status、artifact_chain、draft/preflight/dispatch summary、external_side_effect_audit、安全边界和 run log；notification_delivery_audit_only=true、read_only=true、all sent/webhook/execution flags=false"]
+        TEWSONCR["outputs/notification_delivery_failure_classification/notification_delivery_failure_classification_YYYY-MM-DD.json/md/log<br/>TRADING-036 failure classification / retry readiness；source_audit、classification_summary、failure_categories、retry_readiness、recommended_actions 和 safety_invariants；classification_only=true、read_only=true、no external delivery / retry / state mutation / production parameter change"]
+        TEWSONQR["outputs/retry_candidate_queue/retry_candidate_queue_YYYY-MM-DD.json/md/log<br/>TRADING-037 retry candidate queue / manual approval gate；source_classification、queue_summary、candidate_queue、blocked_items、approval_gate、recommended_actions 和 safety_invariants；queue_only=true、read_only=true、no external delivery / retry execution / state mutation / approval state mutation / production parameter change"]
+        TEWSONAPPR["inputs/manual_retry_approvals/manual_retry_approval_YYYY-MM-DD.json<br/>TRADING-038 manual retry approval record；人工创建或编辑，程序只读；APPROVED_FOR_DRY_RUN / REJECTED；safety_constraints dry_run_only=true、real_retry_allowed=false、external_delivery_allowed=false"]
+        TEWSONDRR["outputs/retry_execution_dry_run/retry_execution_dry_run_YYYY-MM-DD.json/md/log<br/>TRADING-038 retry execution dry-run；source_queue、approval_record、dry_run_summary、simulated_retry_actions、blocked_items、recommended_actions 和 safety_invariants；dry_run_only=true、no external delivery / retry execution / state mutation / approval record mutation / production parameter change"]
         TEWSPHR["data/derived/pipeline_health/pipeline_health_summary_YYYY-MM-DD.json/md + pipeline_health/logs/<br/>TRADING-023 pipeline health summary；health_status、coverage、pipeline_results、missing/stale/critical/warning lists、operator_brief_integration 和 safety_validation；pipeline_health_only=true、read_only=true"]
         TEWSDR["data/derived/data_freshness/data_freshness_summary_YYYY-MM-DD.json/md + data_freshness/logs/<br/>TRADING-024 data freshness summary；freshness_status、coverage、source_results、missing/stale/critical/warning lists、operator_brief_integration 和 safety_validation；data_freshness_only=true、read_only=true"]
         TEIBKRR["outputs/reports/ibkr_paper_account_snapshot_YYYY-MM-DD.json/md<br/>masked account、connection status、summary、positions、open orders、executions、contract sample、reconciliation；readonly=true；production_effect=none"]
@@ -490,6 +504,7 @@ flowchart TD
     ERC -. "HIT 复用；MISS 后归档" .-> SFD
     ERC -. "HIT 复用；MISS 后归档" .-> SFSD
     ERC -. "HIT 复用；MISS 后归档" .-> SFAD
+    ERC -. "HIT 复用；MISS 后归档" .-> SECPIT
     ERC -. "HIT 复用；MISS 后归档" .-> TSMF
     ERC -. "HIT 复用；MISS 后归档" .-> OPF
     ERC -. "HIT 复用；MISS 后归档" .-> PSMF
@@ -540,6 +555,16 @@ flowchart TD
     SFF --> SFCR
     SFF --> SFFC
     SFF --> SFFR
+    SEC --> SECPIT
+    DS --> SECPIT
+    FM --> SECPIT
+    FF --> SECPIT
+    SECPIT --> SECPITRAW
+    SECPITRAW --> SECPITTL
+    SECPITRAW --> SECPITFACT
+    SECPITTL --> SECPITFACT
+    SECPITFACT --> SECPITPAN
+    SECPITPAN --> SECPITR
     DS --> TSMP
     TSMPDF --> TSMP
     TSMP --> TSMTXT
@@ -810,7 +835,14 @@ flowchart TD
     TEWSONPR -. "TRADING-035 只读审计 delivery preflight，不重跑 031" .-> TEWSONA
     TEWSONDDR -. "TRADING-035 只读审计 draft dispatch latest/artifact，不重跑 034" .-> TEWSONA
     TEWSONA --> TEWSONAR
-    TEWSONAR -. "audit summary 只作为人工处理前追溯记录；不授权自动发送" .-> TEWSONFAD
+    TEWSONAR -. "TRADING-036 只读分类 audit status；不重跑 035、不发送、不 retry" .-> TEWSONC
+    TEWSONC --> TEWSONCR
+    TEWSONCR -. "TRADING-037 只读读取 classification JSON；不重跑 036、不发送、不 retry" .-> TEWSONQ
+    TEWSONQ --> TEWSONQR
+    TEWSONQR -. "TRADING-038 只读读取 retry candidate queue；不重跑 037、不发送、不 retry" .-> TEWSONDR
+    TEWSONAPPR -. "人工 approval record 是 input-only；TRADING-038 不创建、不修改、不反写" .-> TEWSONDR
+    TEWSONDR --> TEWSONDRR
+    TEWSONDRR -. "dry-run artifact 只进入未来 disabled-by-default retry executor skeleton；不授权真实 retry" .-> TEWSONFRETRY
     TEWSGDR -. "检查 required TRADING-021 digest 是否存在、fresh 且 safety pass" .-> TEWSODS
     TEWSPHR -. "检查 optional TRADING-023 pipeline health summary；缺失/stale 只降级 WATCH" .-> TEWSODS
     TEWSDR -. "检查 optional TRADING-024 data freshness summary；缺失/stale 只降级 WATCH" .-> TEWSODS
@@ -893,6 +925,9 @@ flowchart TD
     TEWSONAGR -. "dashboard 只显示 Operator Brief Notification Approval Gate 卡片，不触发 033 script、032 preview、031 preflight、030 generator、email/Gmail/SMTP/webhook/mobile/broker/replay/trading" .-> DTASKDR
     TEWSONDDR -. "dashboard 只显示 Operator Brief Notification Draft Dispatch 卡片，只读 latest.json，不触发 034 script、033 gate、032 preview、email/Gmail/SMTP/webhook/mobile/broker/replay/trading" .-> DTASKDR
     TEWSONAR -. "dashboard 只显示 Notification Delivery Audit Summary 卡片，只读 TRADING-035 artifact，不触发 035 script、030/031/034 或任何发送/交易 pipeline" .-> DTASKDR
+    TEWSONCR -. "dashboard 只显示 Notification Delivery Failure Classification 卡片，只读 TRADING-036 JSON，不运行 classifier、035、发送、retry 或交易 pipeline" .-> DTASKDR
+    TEWSONQR -. "dashboard 只显示 Retry Candidate Queue 卡片，只读 TRADING-037 JSON，不运行 queue generator、036、035、发送、retry 或修改 approval state" .-> DTASKDR
+    TEWSONDRR -. "dashboard 只显示 Retry Execution Dry Run 卡片，只读 TRADING-038 JSON，不运行 dry-run generator、037、036、035、发送、retry 或修改 approval/delivery state" .-> DTASKDR
     TEWSDR -. "dashboard 只显示 Data Freshness Summary 卡片，不触发 024、023、022、021、018B-018F、data download、market/backtest/scoring/broker/replay/trading pipeline" .-> DTASKDR
     DRT --> DSNAP
     DSNAP --> PLED
@@ -1393,13 +1428,13 @@ flowchart TD
     FAV0 -->|FAIL| FAVF["停止回测<br/>输出 feature_availability 报告"]
     FAV0 -->|PASS| W0["校验 watchlist_lifecycle<br/>缺少当前核心 ticker 或重复记录时停止"]
     W0 -->|FAIL| WF["停止回测<br/>输出 watchlist_lifecycle 报告"]
-    W0 -->|PASS 或 PASS_WITH_WARNINGS| S1["校验 SEC companyfacts 缓存<br/>validate_sec_companyfacts_cache"]
+    W0 -->|PASS 或 PASS_WITH_WARNINGS| S1["校验 SEC companyfacts 缓存或 SEC PIT validation artifact<br/>legacy companyfacts / sec_pit_feature_panel 均需可见时间门禁"]
     S1 -->|FAIL| S2["停止回测<br/>输出 SEC companyfacts 校验报告"]
     S1 -->|PASS 或 PASS_WITH_WARNINGS| TSM["读取 TSM IR 季度缓存<br/>按 filed_date 参与 TSM quarterly 补齐"]
     TSM --> G["生成交易日序列<br/>signal_date -> return_date<br/>lag sensitivity 额外计算 feature_as_of / universe_as_of"]
     G --> WL0["按 universe_as_of 过滤观察池 lifecycle<br/>只使用当日已进入且节点映射可见的 ticker"]
     WL0 --> H["逐日构建市场特征<br/>只使用 feature_as_of 当日及之前数据"]
-    G --> H2["逐日构建 point-in-time SEC 特征<br/>只使用 filed_date <= feature_as_of 的 SEC facts 与 TSM IR 季度"]
+    G --> H2["逐日构建 point-in-time SEC 特征<br/>legacy: filed_date <= feature_as_of；SEC PIT panel: available_for_signal_date <= decision_date / max_input_available_time_utc <= decision_date"]
     H --> I["逐日评分<br/>使用同一套 scoring_rules"]
     H2 --> I
     I --> C0["判断置信度<br/>保存 confidence_score / confidence_level"]
@@ -1936,3 +1971,6 @@ flowchart TD
 |Operator brief notification approval gate|`python scripts/run_operator_brief_notification_approval_gate.py --date YYYY-MM-DD` / `data/derived/operator_briefs/notifications/approval_gate/operator_brief_notification_approval_gate_YYYY-MM-DD.json` / `.md` / `approval_gate/latest.json` / `approval_gate/latest.md` / `approval_gate/run.log`|TRADING-033 只读读取 latest TRADING-032 dispatch preview 和可选本地 approval marker；生成 `dispatch_preview_summary`、`approval_marker_summary`、`hashes.dispatch_preview_hash`、`decision.approval_gate_status`（`APPROVED` / `APPROVAL_REQUIRED` / `APPROVAL_EXPIRED` / `APPROVAL_MISMATCH` / `SAFETY_BLOCKED` / `BLOCKED` / `NOOP`）和 `allowed_to_enter_dispatch`；所有输出固定 `production_effect=none`、`manual_review_only=true`、`approval_gate_only=true`、`read_only=true`、`external_side_effects=false`、`network_access_required=false`、`secrets_required=false` 和全部 sent/webhook/execution flags=false；dashboard 只读 latest TRADING-033 artifact，不触发 033 script、032 preview、031 preflight、030 generator、email/Gmail/SMTP/Slack/Telegram/Discord/webhook/mobile/broker/replay/trading；approval marker 不能覆盖 `SAFETY_BLOCKED`、hash mismatch 或 expired approval|这是人工审批门控，不是真实发送；`APPROVED` 只表示未来真实 dispatch 可读取该 gate artifact，TRADING-033 不发送通知|
 |Operator brief notification draft dispatch|`python scripts/run_operator_brief_notification_draft_dispatch.py --date YYYY-MM-DD` / `data/derived/operator_briefs/notifications/draft_dispatch/operator_brief_notification_draft_dispatch_YYYY-MM-DD.json` / `.md` / `draft_dispatch/latest.json` / `draft_dispatch/latest.md` / `draft_dispatch/run.log`|TRADING-034 只读读取 latest TRADING-033 approval gate 和 latest TRADING-032 dispatch preview；生成 `approval_gate_summary`、`draft.channels`、`draft.message.subject/body_markdown`、`hashes.dispatch_preview_hash`、`hashes.draft_hash`、`decision.final_status`（`DRAFT_READY` / `APPROVAL_REQUIRED` / `APPROVAL_EXPIRED` / `APPROVAL_MISMATCH` / `SAFETY_BLOCKED` / `BLOCKED` / `NOOP`）和 `ready_for_actual_dispatch`；所有输出固定 `production_effect=none`、`manual_review_only=true`、`draft_dispatch_only=true`、`read_only=true`、`external_side_effects=false`、`network_access_required=false`、`secrets_required=false` 和全部 sent/webhook/execution flags=false；dashboard 只读 TRADING-034 `latest.json`，不触发 034 script、033 gate、032 preview、031 preflight、030 generator、email/Gmail/SMTP/Slack/Telegram/Discord/webhook/mobile/broker/replay/trading；hash mismatch、未审批和 safety block 都不能生成 `DRAFT_READY`|这是本地最终发送草稿 artifact，不是真实发送，不创建 Gmail draft；未来真实发送任务只能读取 `DRAFT_READY` draft dispatch artifact|
 |Notification delivery audit summary|`python scripts/run_notification_delivery_audit_summary.py --date YYYY-MM-DD` / `data/derived/operator_briefs/notifications/delivery_audit/notification_delivery_audit_summary_YYYY-MM-DD.json` / `.md` / `delivery_audit/logs/notification_delivery_audit_summary_run_YYYY-MM-DD.json` / `.md`|TRADING-035 只读读取 latest TRADING-030 notification draft metadata、latest TRADING-031 delivery preflight、TRADING-034 `draft_dispatch/latest.json` 和 dated draft dispatch artifact；校验 draft→preflight、preflight→dispatch、latest→dispatch 的 path/hash/date/status 一致性，扫描 email/Gmail/Slack/Discord/webhook/mobile side effects、pipeline/data/apply/rollback/broker/replay/trading execution flags，输出 `audit_status`（`PASS` / `PASS_WITH_WARNINGS` / `INCOMPLETE` / `MISMATCH` / `SAFETY_BLOCKED` / `ERROR`）、`notification_lifecycle_status`（`DRAFT_ONLY` / `PREFLIGHT_READY` / `DRAFT_READY` / `BLOCKED` / `APPROVAL_MISMATCH` / `SAFETY_BLOCKED` / `INCOMPLETE` / `UNKNOWN`）、artifact chain、draft/preflight/dispatch summary、external side effect audit、safety validation、alerts、manual review instructions 和 run log；所有输出固定 `production_effect=none`、`manual_review_only=true`、`notification_delivery_audit_only=true`、`read_only=true`、`safe_for_scheduler=true` 和全部 sent/webhook/execution flags=false；dashboard 只读 TRADING-035 audit artifact，不触发 018B-034、035 script、030 generator、031 preflight、034 draft dispatch、operator brief、email/Gmail/webhook/mobile 或任何 market/backtest/scoring/data download/broker/replay/trading|TRADING-035 audits notification delivery readiness only. It does not send notifications or create Gmail drafts；`safe_for_scheduler=true` 只表示 audit summary 可定时生成，不表示允许自动发送|
+|Notification delivery failure classification|`python scripts/run_notification_delivery_failure_classification.py [--audit-summary ...] [--output-dir ...] [--as-of-date YYYY-MM-DD] [--fail-on-critical]` / `outputs/notification_delivery_failure_classification/notification_delivery_failure_classification_YYYY-MM-DD.json` / `.md` / `.log`|TRADING-036 只读读取 latest 或指定 TRADING-035 audit summary；分类 `TRANSIENT_DELIVERY_FAILURE`、`CONFIGURATION_FAILURE`、`SAFETY_BLOCKED`、`CONTENT_MISMATCH`、`MISSING_ARTIFACT`、`UNKNOWN`；输出 `source_audit`、`classification_summary`、`failure_categories`、`retry_readiness`、`recommended_actions` 和 `safety_invariants`；所有输出固定 `mode=read_only`、`production_effect=none`、`manual_review_only=true`、`notification_delivery_failure_classification_only=true`、`read_only=true` 和全部 sent/webhook/retry/state mutation/upstream execution/data/apply/rollback/broker/replay/trading flags=false；dashboard 只读 TRADING-036 JSON，不运行 classifier、TRADING-035、发送、retry 或交易 pipeline|TRADING-036 只做 failure classification / retry readiness 报告；`safe_to_retry` 不是自动发送或自动重试授权；未来 TRADING-037 retry candidate queue 必须单独设计和审批|
+|Retry candidate queue / manual approval gate|`python scripts/run_retry_candidate_queue.py [--classification-report ...] [--output-dir ...] [--as-of-date YYYY-MM-DD] [--fail-on-safety-blocked]` / `outputs/retry_candidate_queue/retry_candidate_queue_YYYY-MM-DD.json` / `.md` / `.log`|TRADING-037 只读读取 latest 或指定 TRADING-036 classification JSON；把 retryable failure 转为 `PENDING_APPROVAL` candidate，把 non-retryable failure 转为 blocked item；输出 `source_classification`、`queue_summary`（`EMPTY` / `PENDING_APPROVAL` / `BLOCKED` / `SAFETY_BLOCKED` / `SOURCE_UNAVAILABLE`）、`candidate_queue`、`blocked_items`、`approval_gate`、`recommended_actions` 和 `safety_invariants`；所有输出固定 `mode=read_only`、`production_effect=none`、`manual_review_only=true`、`retry_candidate_queue_only=true`、`read_only=true` 和全部 sent/webhook/retry/state mutation/approval state/upstream execution/data/apply/rollback/broker/replay/trading flags=false；dashboard 只读 TRADING-037 JSON，不运行 queue generator、TRADING-036、TRADING-035、发送、retry 或交易 pipeline|TRADING-037 只做 read-only queue generation + manual approval gate report；`PENDING_APPROVAL` 不是 retry 授权，`retry_execution_allowed=false`；未来 TRADING-038 可在此基础上记录人工批准意图并做 retry dry-run|
+|Manual approval record / retry execution dry-run|`python scripts/run_retry_execution_dry_run.py [--queue-report ...] [--approval-record ...] [--output-dir ...] [--as-of-date YYYY-MM-DD] [--fail-on-safety-blocked] [--fail-on-approval-mismatch]` / `inputs/manual_retry_approvals/manual_retry_approval_YYYY-MM-DD.json` / `outputs/retry_execution_dry_run/retry_execution_dry_run_YYYY-MM-DD.json` / `.md` / `.log`|TRADING-038 只读读取 latest 或指定 TRADING-037 retry candidate queue JSON 和可选人工 approval record；输出 `source_queue`、`approval_record`、`dry_run_summary`（`SOURCE_QUEUE_UNAVAILABLE` / `NOTHING_TO_DRY_RUN` / `WAITING_FOR_MANUAL_APPROVAL` / `READY_FOR_DRY_RUN` / `APPROVAL_MISMATCH` / `SAFETY_BLOCKED`）、`simulated_retry_actions`、`blocked_items`、`recommended_actions` 和 `safety_invariants`；所有输出固定 `mode=dry_run_only`、`production_effect=none`、`manual_review_only=true`、`retry_execution_dry_run_only=true`、`dry_run_only=true`、`read_only=true` 和全部 sent/webhook/retry/state mutation/approval record mutation/upstream execution/data/apply/rollback/broker/replay/trading flags=false；每个 simulated action 固定 `actual_retry_executed=false`、`external_delivery_executed=false`、`state_mutation_executed=false`；dashboard 只读 TRADING-038 JSON，不运行 dry-run generator、TRADING-037、TRADING-036、TRADING-035、发送、retry 或交易 pipeline|TRADING-038 只做 manual approval record read + retry dry-run report；`APPROVED_FOR_DRY_RUN` 不是真实 retry 授权，`READY_FOR_DRY_RUN` 也不允许发送 notification 或修改 state；approval record 是 input-only，程序不得创建、修改或反写|

@@ -54,10 +54,11 @@ rules:
     label: SEC and TSM IR fundamentals
     sources:
       - sec_fundamental_features
+      - sec_edgar_reconstructed_pit_features
       - tsm_ir_quarterly_metrics
     event_time: fiscal period end
     source_published_at: SEC accepted time or official IR filed_date
-    available_time: filed_date or accepted_time, with conservative daily availability
+    available_time: filed_date, accepted_time, or max_input_available_time_utc, with conservative daily availability
     decision_time: score/backtest signal_date
     default_lag_days: 1
     minimum_backtest_grade: B
@@ -65,7 +66,7 @@ rules:
     enforced_in:
       - score-daily
       - backtest
-    notes: Period end alone is never sufficient for historical availability.
+    notes: Period end alone is never sufficient for historical availability; SEC EDGAR reconstructed PIT panels must enforce available_for_signal_date <= decision_date.
   - rule_id: valuation_snapshots
     family: valuation
     label: Valuation and analyst expectation snapshots

@@ -1205,6 +1205,74 @@ sources:
       reviewed_at: 2026-05-04
     owner_notes: DATA-004 baseline；请求必须符合 SEC fair access，默认节流低于每秒 10 次。
 
+  - source_id: sec_edgar_reconstructed_pit_features
+    provider: SEC EDGAR
+    source_type: primary_source
+    status: active
+    domains:
+      - fundamentals
+    endpoint: https://data.sec.gov/submissions/CIK##########.json; https://data.sec.gov/api/xbrl/companyfacts/CIK##########.json
+    adapter: sec_pit_backfill
+    cadence: quarterly
+    requires_credentials: false
+    cache_paths:
+      - data/raw/sec_edgar/submissions
+      - data/raw/sec_edgar/companyfacts
+      - data/raw/sec_edgar/manifest/sec_edgar_raw_manifest.csv
+      - data/processed/sec_edgar/filing_timeline.csv
+      - data/processed/sec_edgar/xbrl_facts_long.csv
+      - data/processed/sec_edgar/mapped_metrics_long.csv
+      - data/processed/sec_edgar/fundamental_pit_intervals.csv
+      - data/processed/sec_edgar/fundamental_pit_daily_panel.csv
+      - data/processed/sec_edgar/sec_pit_feature_panel.csv
+      - outputs/reports/sec_pit_backfill
+    primary_for:
+      - reconstructed_filing_time_pit_fundamentals
+      - sec_ratio_features
+      - ai_after_chatgpt_backtest_fundamentals
+    audit_fields:
+      - provider
+      - endpoint
+      - request_parameters
+      - downloaded_at
+      - row_count
+      - checksum_sha256
+      - ticker
+      - cik
+      - accession_number
+      - acceptance_datetime_utc
+      - available_for_signal_date
+      - pit_data_grade
+      - confidence_level
+    validation_checks:
+      - user_agent_required
+      - external_request_cache_metadata
+      - raw_manifest_checksum
+      - b_grade_accession_timeline_join
+      - future_available_time_rejection
+      - allowed_form_whitelist
+      - cross_currency_ratio_block
+      - duplicate_interval_overlap
+      - restatement_supersession_after_amendment
+      - coverage_thresholds
+      - staleness
+    limitations:
+      - "默认等级为 `B_RECONSTRUCTED_SEC_FILING_PIT`，因为该层从 SEC 当前可下载 submissions/companyfacts 重建历史可见性，不是严格 vendor archive。"
+      - "`strict_vendor_archive=false`、`retroactive_strict_pit=false`；升级等级前必须进行人工复核和 vendor/archive 对照。"
+      - companyfacts 聚合 API 可能受 SEC 后续解析修正影响；报告必须保留 raw manifest checksum 和来源 endpoint。
+      - 外国发行人或 6-K 半年度披露可能无法提供完整季度 XBRL；默认只进入 C 级或 coverage warning。
+      - "不允许只按 fiscal period end 合并；所有 feature panel 行必须满足 `available_for_signal_date <= decision_date`。"
+    llm_permission:
+      license_scope: public_primary_source_owner_review
+      personal_use_only: true
+      external_llm_allowed: true
+      cache_allowed: true
+      redistribution_allowed: true
+      max_content_sent_level: metadata_only
+      approval_ref: owner_primary_source_llm_policy_2026-05-04
+      reviewed_at: 2026-05-04
+    owner_notes: TRADING-039 reconstructed PIT backfill；下载必须提供符合 SEC fair access 要求的 User-Agent，默认节流不高于每秒 5 次。
+
   - source_id: tsm_investor_relations_quarterly_results
     provider: TSMC Investor Relations
     source_type: primary_source
