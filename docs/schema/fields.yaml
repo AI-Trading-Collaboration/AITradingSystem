@@ -1,4 +1,4 @@
-version: 2026-05-17
+version: 2026-05-26
 status: baseline
 owner: system
 purpose: >
@@ -244,6 +244,46 @@ fields:
       - Data Lineage Card follow-up review
     production_effect: audit_metadata
     common_misunderstanding: quality ref 说明本次使用的质量上下文，不代表所有外部来源永久可信。
+
+  sec_pit_feature_panel.decision_date:
+    meaning: SEC reconstructed PIT feature 可用于信号的日频决策日期。
+    produced_by: aits sec-pit build-panel / backfill
+    upstream_fields:
+      - filing_timeline.available_for_signal_date
+      - fundamental_pit_intervals.available_from_signal_date
+    downstream_usage:
+      - SEC PIT feature loader
+      - backtest feature_as_of slice
+      - leakage validation
+    production_effect: none
+    common_misunderstanding: 不是 fiscal period end；只有 decision_date 当天可见的输入才能出现在该行。
+
+  sec_pit_feature_panel.max_input_available_time_utc:
+    meaning: ratio feature 所有输入 metric 的最大 SEC 可见时间，用于阻止未来函数。
+    produced_by: aits sec-pit build-panel / backfill
+    upstream_fields:
+      - xbrl_facts_long.available_time_utc
+      - mapped_metrics_long.available_time_utc
+    downstream_usage:
+      - load_sec_pit_feature_panel
+      - sec_pit_leakage_check
+      - feature availability report
+    production_effect: none
+    common_misunderstanding: 小于 fiscal period end 没有意义；约束对象是 decision_date，不是报告期。
+
+  sec_pit_feature_panel.pit_data_grade:
+    meaning: SEC reconstructed PIT feature 的数据等级，默认 `B_RECONSTRUCTED_SEC_FILING_PIT`，缺 accepted time 或弱披露路径降为 C。
+    produced_by: aits sec-pit build-panel / backfill
+    upstream_fields:
+      - filing_timeline.pit_data_grade
+      - xbrl_facts_long.pit_data_grade
+      - mapped_metrics_long.pit_data_grade
+    downstream_usage:
+      - SEC PIT validation JSON/Markdown
+      - backtest data quality explanation
+      - manual grade-upgrade review
+    production_effect: none
+    common_misunderstanding: B 级不等于 strict vendor archive；升级前必须人工复核并对照更严格来源。
 
   prediction_ledger.candidate_id:
     meaning: production 或 challenger/shadow prediction 的候选标识。

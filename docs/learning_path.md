@@ -120,6 +120,7 @@
 - `data/processed/features_daily.csv`
 - `data/processed/sec_fundamentals_YYYY-MM-DD.csv`
 - `data/processed/sec_features_YYYY-MM-DD.csv`
+- `data/processed/sec_edgar/sec_pit_feature_panel.csv`
 - `data/external/valuation_snapshots/*.yaml`
 - `data/external/risk_event_occurrences/*.yaml`
 - `data/external/trade_theses/*.yaml`

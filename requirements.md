@@ -1,8 +1,54 @@
 # Requirements Index
 
-最后更新：2026-05-25
+最后更新：2026-05-26
 
 本文件记录当前新增需求文档入口。详细任务登记仍以 `docs/task_register.md` 为准。
+
+## TRADING-039
+
+- 需求文档：`docs/requirements/sec_edgar_reconstructed_pit_backfill_2026-05-26.md`
+- 任务：SEC EDGAR Reconstructed PIT Backfill
+- 状态：`IN_PROGRESS`
+- 需求：The system shall reconstruct a conservative SEC filing-time PIT fundamentals layer from submissions metadata and companyfacts facts, and enforce `available_for_signal_date <= decision_date` for metrics, features, backtests, and validation.
+- 安全边界：`production_effect=none`；输出数据等级固定为 `B_RECONSTRUCTED_SEC_FILING_PIT`，不得伪装成 strict vendor archive；不执行交易、不调用 broker、不读取真实券商 API key、不改变 paper trading 下单路径。
+- 主要输入：`config/sec_companies.yaml`、`config/fundamental_metrics.yaml`、`config/fundamental_features.yaml`、SEC submissions API、SEC companyfacts API。
+- 主要输出：`data/raw/sec_edgar/manifest/sec_edgar_raw_manifest.csv`、`data/processed/sec_edgar/sec_pit_feature_panel.csv`、`outputs/reports/sec_pit_backfill/sec_pit_backfill_YYYY-MM-DD.md`、coverage/leakage/validation reports。
+
+## TRADING-038
+
+- 需求文档：`docs/requirements/retry_execution_dry_run_2026-05-26.md`
+- 任务：Manual Approval Record / Retry Execution Dry Run
+- 状态：`VALIDATING`
+- 需求：The system shall support manual retry approval records and generate retry execution dry-run reports without executing retries, sending notifications, or mutating production state.
+- 安全边界：只读 manual approval record + retry execution dry-run，不执行 retry，不发送通知，不修改 approval record/state、delivery state、TRADING-035/036/037 artifact 或 production 参数，不运行 TRADING-037 generator 或任何上游 notification pipeline。
+- 主要输入：`inputs/manual_retry_approvals/manual_retry_approval_YYYY-MM-DD.json`。
+- 主要输出：`outputs/retry_execution_dry_run/retry_execution_dry_run_YYYY-MM-DD.json`、`.md`、`.log`。
+
+## TRADING-037
+
+- 需求文档：`docs/requirements/retry_candidate_queue_2026-05-26.md`
+- 任务：Retry Candidate Queue / Manual Approval Gate
+- 状态：`VALIDATING`
+- 需求：The system shall generate a read-only retry candidate queue from notification delivery failure classification results and require manual approval before any retry execution is allowed.
+- 安全边界：只读 retry candidate queue，不执行 retry，不发送通知，不修改 delivery state、approval state、TRADING-035/036 artifact 或 production 参数，不运行 TRADING-036 generator 或任何上游 notification pipeline。
+- 主要输出：`outputs/retry_candidate_queue/retry_candidate_queue_YYYY-MM-DD.json`、`.md`、`.log`。
+
+## TRADING-036
+
+- 需求文档：`docs/requirements/notification_delivery_failure_classification_2026-05-26.md`
+- 任务：Notification Delivery Failure Classification / Retry Readiness
+- 状态：`VALIDATING`
+- 需求：The system shall classify notification delivery audit failures into actionable categories and produce retry readiness guidance without sending notifications or mutating production state.
+- 安全边界：只读 failure classification，不发送通知，不创建或修改 Gmail draft，不调用 webhook，不自动 retry，不修改 delivery state 或 production 参数，不运行 TRADING-035 或任何上游 notification pipeline。
+- 主要输出：`outputs/notification_delivery_failure_classification/notification_delivery_failure_classification_YYYY-MM-DD.json`、`.md`、`.log`。
+
+## TRADING-035
+
+- 需求文档：`docs/requirements/notification_delivery_audit_summary_2026-05-25.md`
+- 任务：Notification Delivery Audit Summary
+- 状态：`VALIDATING`
+- 安全边界：只读 delivery audit summary，不发送通知，不创建或修改 Gmail draft，不调用 webhook，不运行 TRADING-030/031/034 或任何上游/发送/交易流水线。
+- 主要输出：`data/derived/operator_briefs/notifications/delivery_audit/notification_delivery_audit_summary_YYYY-MM-DD.json`、`.md`、`logs/notification_delivery_audit_summary_run_YYYY-MM-DD.json`、`.md`。
 
 ## TRADING-034
 

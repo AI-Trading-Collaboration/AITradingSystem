@@ -120,6 +120,7 @@ from ai_trading_system.catalyst_calendar import (
     write_catalyst_calendar_report,
 )
 from ai_trading_system.cli_commands.docs import docs_app
+from ai_trading_system.cli_commands.sec_pit import sec_pit_app
 from ai_trading_system.config import (
     DEFAULT_BACKTEST_VALIDATION_POLICY_CONFIG_PATH,
     DEFAULT_CATALYST_CALENDAR_CONFIG_PATH,
@@ -141,6 +142,7 @@ from ai_trading_system.config import (
     PROJECT_ROOT,
     IndustryChainConfig,
     ScoringRulesConfig,
+    SecCompaniesConfig,
     UniverseConfig,
     WatchlistConfig,
     configured_price_tickers,
@@ -330,6 +332,10 @@ from ai_trading_system.fundamentals.sec_metrics import (
     write_sec_fundamental_metrics_csv,
     write_sec_fundamental_metrics_report,
     write_sec_fundamental_metrics_validation_report,
+)
+from ai_trading_system.fundamentals.sec_pit_backfill import DEFAULT_SEC_EDGAR_PROCESSED_DIR
+from ai_trading_system.fundamentals.sec_pit_panel import (
+    sec_pit_feature_panel_to_feature_reports,
 )
 from ai_trading_system.fundamentals.sec_validation import (
     default_sec_companyfacts_validation_report_path,
@@ -766,6 +772,7 @@ app.add_typer(security_app, name="security")
 app.add_typer(llm_app, name="llm")
 app.add_typer(pit_snapshots_app, name="pit-snapshots")
 app.add_typer(docs_app, name="docs")
+app.add_typer(sec_pit_app, name="sec-pit")
 console = Console()
 DEFAULT_RISK_EVENT_OCCURRENCES_PATH = PROJECT_ROOT / "data" / "external" / "risk_event_occurrences"
 DEFAULT_RISK_EVENT_PREREVIEW_QUEUE_PATH = (
@@ -4045,6 +4052,21 @@ def backtest(
         Path | None,
         typer.Option(help="Markdown SEC companyfacts 缓存校验报告输出路径。"),
     ] = None,
+    sec_fundamental_source: Annotated[
+        Literal["legacy_companyfacts", "sec_pit_feature_panel"],
+        typer.Option(
+            "--sec-fundamental-source",
+            help=(
+                "回测基本面来源；legacy_companyfacts 使用 filed_date as-of，"
+                "sec_pit_feature_panel 使用 TRADING-039 reconstructed PIT panel。"
+            ),
+        ),
+    ] = "legacy_companyfacts",
+    sec_pit_feature_panel_path: Annotated[
+        Path,
+        typer.Option(help="SEC reconstructed PIT feature panel CSV 路径。"),
+    ] = DEFAULT_SEC_EDGAR_PROCESSED_DIR
+    / "sec_pit_feature_panel.csv",
     valuation_path: Annotated[
         Path,
         typer.Option(help="估值快照 YAML 文件或目录路径，用于 point-in-time 回测评分。"),
@@ -4341,6 +4363,27 @@ def backtest(
 
     prices_frame = pd.read_csv(prices_path)
     rates_frame = pd.read_csv(rates_path)
+    fundamental_source_id = (
+        "sec_edgar_reconstructed_pit_features"
+        if sec_fundamental_source == "sec_pit_feature_panel"
+        else "sec_fundamental_features"
+    )
+    feature_source_checks = list(
+        _market_feature_source_checks(
+            prices_frame=prices_frame,
+            rates_frame=rates_frame,
+            prices_path=prices_path,
+            rates_path=rates_path,
+            decision_time=quality_date,
+        )
+    )
+    if sec_fundamental_source == "sec_pit_feature_panel":
+        feature_source_checks.append(
+            _sec_pit_feature_source_check(
+                feature_panel_path=sec_pit_feature_panel_path,
+                decision_time=quality_date,
+            )
+        )
     backtest_feature_availability_report = build_feature_availability_report(
         input_path=feature_availability_path,
         as_of=quality_date,
@@ -4348,7 +4391,7 @@ def backtest(
             "prices_daily",
             "rates_daily",
             "watchlist_lifecycle",
-            "sec_fundamental_features",
+            fundamental_source_id,
             "valuation_snapshots",
             "risk_event_occurrences",
         ),
@@ -4356,17 +4399,11 @@ def backtest(
             "prices_daily",
             "rates_daily",
             "watchlist_lifecycle",
-            "sec_fundamental_features",
+            fundamental_source_id,
             "valuation_snapshots",
             "risk_event_occurrences",
         ),
-        source_checks=_market_feature_source_checks(
-            prices_frame=prices_frame,
-            rates_frame=rates_frame,
-            prices_path=prices_path,
-            rates_path=rates_path,
-            decision_time=quality_date,
-        ),
+        source_checks=tuple(feature_source_checks),
     )
     write_feature_availability_report(
         backtest_feature_availability_report,
@@ -4424,15 +4461,28 @@ def backtest(
         if should_run_lag_sensitivity
         else signal_dates
     )
-    sec_fundamental_feature_reports = _build_backtest_sec_fundamental_feature_reports(
-        signal_dates=input_signal_dates,
-        sec_companies_path=sec_companies_path,
-        sec_metrics_path=sec_metrics_path,
-        fundamental_feature_config_path=fundamental_feature_config_path,
-        sec_companyfacts_dir=sec_companyfacts_dir,
-        tsm_ir_input_path=tsm_ir_input_path,
-        validation_as_of=quality_date,
-        validation_report_output=sec_companyfacts_validation_output,
+    sec_fundamental_feature_reports = (
+        _build_backtest_sec_pit_feature_reports(
+            signal_dates=input_signal_dates,
+            sec_companies_path=sec_companies_path,
+            sec_pit_feature_panel_path=sec_pit_feature_panel_path,
+        )
+        if sec_fundamental_source == "sec_pit_feature_panel"
+        else _build_backtest_sec_fundamental_feature_reports(
+            signal_dates=input_signal_dates,
+            sec_companies_path=sec_companies_path,
+            sec_metrics_path=sec_metrics_path,
+            fundamental_feature_config_path=fundamental_feature_config_path,
+            sec_companyfacts_dir=sec_companyfacts_dir,
+            tsm_ir_input_path=tsm_ir_input_path,
+            validation_as_of=quality_date,
+            validation_report_output=sec_companyfacts_validation_output,
+        )
+    )
+    fundamental_validation_report_output = (
+        None
+        if sec_fundamental_source == "sec_pit_feature_panel"
+        else sec_companyfacts_validation_output
     )
     valuation_review_reports = _build_backtest_valuation_review_reports(
         signal_dates=input_signal_dates,
@@ -4558,7 +4608,7 @@ def backtest(
         backtest_report_path=backtest_report_output,
         daily_output_path=daily_output,
         input_coverage_output_path=input_coverage_output,
-        sec_companyfacts_validation_report_path=sec_companyfacts_validation_output,
+        sec_companyfacts_validation_report_path=fundamental_validation_report_output,
         minimum_component_coverage=minimum_component_coverage,
     )
     audit_output = write_backtest_audit_report(audit_report, backtest_audit_output)
@@ -4582,7 +4632,7 @@ def backtest(
             feature_availability_path=feature_availability_path,
         ),
         rule_version_manifest=backtest_rule_version_manifest,
-        sec_companyfacts_validation_report_path=sec_companyfacts_validation_output,
+        sec_companyfacts_validation_report_path=fundamental_validation_report_output,
         feature_availability_report_path=backtest_feature_availability_output,
         feature_availability_summary=feature_availability_summary_record(
             backtest_feature_availability_report,
@@ -4598,7 +4648,7 @@ def backtest(
         data_quality_report_path=quality_output,
         daily_output_path=daily_output,
         output_path=backtest_report_output,
-        sec_companyfacts_validation_report_path=sec_companyfacts_validation_output,
+        sec_companyfacts_validation_report_path=fundamental_validation_report_output,
         input_coverage_output_path=input_coverage_output,
         audit_report_path=audit_output,
         feature_availability_section=backtest_feature_availability_section,
@@ -4971,7 +5021,7 @@ def backtest(
             data_quality_report_path=quality_output,
             daily_output_path=daily_output,
             output_path=backtest_report_output,
-            sec_companyfacts_validation_report_path=(sec_companyfacts_validation_output),
+            sec_companyfacts_validation_report_path=fundamental_validation_report_output,
             input_coverage_output_path=input_coverage_output,
             audit_report_path=audit_output,
             feature_availability_section=backtest_feature_availability_section,
@@ -5020,7 +5070,10 @@ def backtest(
         "风险事件发生记录切片："
         f"{result.risk_event_occurrence_review_report_count} 个 signal_date"
     )
-    console.print(f"SEC companyfacts 校验报告：{sec_companyfacts_validation_output}")
+    if sec_fundamental_source == "sec_pit_feature_panel":
+        console.print(f"SEC PIT feature panel：{sec_pit_feature_panel_path}")
+    else:
+        console.print(f"SEC companyfacts 校验报告：{sec_companyfacts_validation_output}")
     console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
     console.print(
         "规则版本："
@@ -10498,6 +10551,21 @@ def score_daily(
         Path | None,
         typer.Option(help="Markdown SEC 基本面指标 CSV 校验报告输出路径。"),
     ] = None,
+    sec_fundamental_source: Annotated[
+        Literal["legacy_companyfacts", "sec_pit_feature_panel"],
+        typer.Option(
+            "--sec-fundamental-source",
+            help=(
+                "日报基本面来源；legacy_companyfacts 使用 SEC-style 指标 CSV，"
+                "sec_pit_feature_panel 使用 TRADING-039 reconstructed PIT panel。"
+            ),
+        ),
+    ] = "legacy_companyfacts",
+    sec_pit_feature_panel_path: Annotated[
+        Path,
+        typer.Option(help="SEC reconstructed PIT feature panel CSV 路径。"),
+    ] = DEFAULT_SEC_EDGAR_PROCESSED_DIR
+    / "sec_pit_feature_panel.csv",
     thesis_path: Annotated[
         Path,
         typer.Option(help="交易 thesis YAML 文件或目录路径，用于写入日报复核摘要。"),
@@ -10847,6 +10915,27 @@ def score_daily(
 
     prices_frame = pd.read_csv(prices_path)
     rates_frame = pd.read_csv(rates_path)
+    fundamental_source_id = (
+        "sec_edgar_reconstructed_pit_features"
+        if sec_fundamental_source == "sec_pit_feature_panel"
+        else "sec_fundamental_features"
+    )
+    feature_source_checks = list(
+        _market_feature_source_checks(
+            prices_frame=prices_frame,
+            rates_frame=rates_frame,
+            prices_path=prices_path,
+            rates_path=rates_path,
+            decision_time=score_date,
+        )
+    )
+    if sec_fundamental_source == "sec_pit_feature_panel":
+        feature_source_checks.append(
+            _sec_pit_feature_source_check(
+                feature_panel_path=sec_pit_feature_panel_path,
+                decision_time=score_date,
+            )
+        )
     feature_set = build_market_features(
         prices=prices_frame,
         rates=rates_frame,
@@ -10861,17 +10950,11 @@ def score_daily(
         required_sources=(
             "prices_daily",
             "rates_daily",
-            "sec_fundamental_features",
+            fundamental_source_id,
             "valuation_snapshots",
             "risk_event_occurrences",
         ),
-        source_checks=_market_feature_source_checks(
-            prices_frame=prices_frame,
-            rates_frame=rates_frame,
-            prices_path=prices_path,
-            rates_path=rates_path,
-            decision_time=score_date,
-        ),
+        source_checks=tuple(feature_source_checks),
     )
     write_feature_availability_report(
         feature_availability_report,
@@ -10918,44 +11001,53 @@ def score_daily(
         raise typer.Exit(code=1)
     sec_companies = load_sec_companies(sec_companies_path)
     sec_metrics = load_fundamental_metrics(sec_metrics_path)
-    if tsm_ir_merge:
-        _merge_tsm_ir_for_daily_score(
-            sec_fundamentals_path=sec_fundamentals_input,
-            tsm_ir_path=tsm_ir_quarterly_metrics_path,
+    if sec_fundamental_source == "sec_pit_feature_panel":
+        sec_fundamental_feature_report = _build_score_daily_sec_pit_feature_report(
+            score_date=score_date,
             sec_companies=sec_companies,
+            sec_pit_feature_panel_path=sec_pit_feature_panel_path,
+        )
+        sec_metrics_validation_reference = sec_pit_feature_panel_path
+    else:
+        if tsm_ir_merge:
+            _merge_tsm_ir_for_daily_score(
+                sec_fundamentals_path=sec_fundamentals_input,
+                tsm_ir_path=tsm_ir_quarterly_metrics_path,
+                sec_companies=sec_companies,
+                as_of=score_date,
+            )
+        sec_metrics_validation_report = validate_sec_fundamental_metrics_csv(
+            companies=sec_companies,
+            metrics=sec_metrics,
+            input_path=sec_fundamentals_input,
             as_of=score_date,
         )
-    sec_metrics_validation_report = validate_sec_fundamental_metrics_csv(
-        companies=sec_companies,
-        metrics=sec_metrics,
-        input_path=sec_fundamentals_input,
-        as_of=score_date,
-    )
-    write_sec_fundamental_metrics_validation_report(
-        sec_metrics_validation_report,
-        sec_metrics_validation_output,
-    )
-    if not sec_metrics_validation_report.passed:
-        console.print("[red]SEC 基本面指标 CSV 校验失败，已停止每日评分。[/red]")
-        console.print(f"SEC 指标 CSV 校验报告：{sec_metrics_validation_output}")
-        console.print(f"SEC 指标 CSV：{sec_fundamentals_input}")
-        console.print(
-            f"错误数：{sec_metrics_validation_report.error_count}；"
-            f"警告数：{sec_metrics_validation_report.warning_count}"
+        write_sec_fundamental_metrics_validation_report(
+            sec_metrics_validation_report,
+            sec_metrics_validation_output,
         )
-        raise typer.Exit(code=1)
+        if not sec_metrics_validation_report.passed:
+            console.print("[red]SEC 基本面指标 CSV 校验失败，已停止每日评分。[/red]")
+            console.print(f"SEC 指标 CSV 校验报告：{sec_metrics_validation_output}")
+            console.print(f"SEC 指标 CSV：{sec_fundamentals_input}")
+            console.print(
+                f"错误数：{sec_metrics_validation_report.error_count}；"
+                f"警告数：{sec_metrics_validation_report.warning_count}"
+            )
+            raise typer.Exit(code=1)
 
-    sec_fundamental_feature_report = build_sec_fundamental_features_report(
-        companies=sec_companies,
-        feature_config=load_fundamental_features(fundamental_feature_config_path),
-        input_path=sec_fundamentals_input,
-        as_of=score_date,
-        validation_report=sec_metrics_validation_report,
-    )
+        sec_fundamental_feature_report = build_sec_fundamental_features_report(
+            companies=sec_companies,
+            feature_config=load_fundamental_features(fundamental_feature_config_path),
+            input_path=sec_fundamentals_input,
+            as_of=score_date,
+            validation_report=sec_metrics_validation_report,
+        )
+        sec_metrics_validation_reference = sec_metrics_validation_output
     if not sec_fundamental_feature_report.passed:
         write_sec_fundamental_features_report(
             report=sec_fundamental_feature_report,
-            validation_report_path=sec_metrics_validation_output,
+            validation_report_path=sec_metrics_validation_reference,
             output_csv_path=sec_fundamental_features_output,
             output_path=sec_fundamental_feature_report_output,
         )
@@ -10974,7 +11066,7 @@ def score_daily(
     )
     sec_fundamental_feature_report_output = write_sec_fundamental_features_report(
         report=sec_fundamental_feature_report,
-        validation_report_path=sec_metrics_validation_output,
+        validation_report_path=sec_metrics_validation_reference,
         output_csv_path=sec_fundamental_features_output,
         output_path=sec_fundamental_feature_report_output,
     )
@@ -12018,6 +12110,24 @@ def _market_feature_source_checks(
     )
 
 
+def _sec_pit_feature_source_check(
+    *,
+    feature_panel_path: Path,
+    decision_time: date,
+) -> FeatureAvailabilitySourceCheck:
+    frame = pd.read_csv(feature_panel_path) if feature_panel_path.exists() else pd.DataFrame()
+    return build_feature_source_check(
+        source="sec_edgar_reconstructed_pit_features",
+        frame=frame,
+        decision_time=decision_time,
+        input_path=feature_panel_path,
+        event_time_columns=("period_end", "decision_date"),
+        available_time_columns=("max_input_available_time_utc",),
+        fallback_policy="",
+        notes="TRADING-039 SEC reconstructed filing-time PIT feature panel.",
+    )
+
+
 def _path_from_snapshot_trace(snapshot: dict[str, object]) -> Path | None:
     trace = snapshot.get("trace")
     if not isinstance(trace, dict):
@@ -12289,6 +12399,55 @@ def _build_backtest_sec_fundamental_feature_reports(
             raise typer.Exit(code=1)
         reports[signal_date] = feature_report
     return reports
+
+
+def _build_backtest_sec_pit_feature_reports(
+    signal_dates: tuple[date, ...],
+    sec_companies_path: Path,
+    sec_pit_feature_panel_path: Path,
+) -> dict[date, SecFundamentalFeaturesReport]:
+    if not sec_pit_feature_panel_path.exists():
+        console.print("[red]SEC PIT feature panel 不存在，已停止回测。[/red]")
+        console.print(f"SEC PIT feature panel：{sec_pit_feature_panel_path}")
+        raise typer.Exit(code=1)
+    sec_companies = load_sec_companies(sec_companies_path)
+    tickers = [company.ticker for company in sec_companies.companies if company.active]
+    try:
+        return sec_pit_feature_panel_to_feature_reports(
+            sec_pit_feature_panel_path,
+            signal_dates,
+            tickers,
+        )
+    except ValueError as exc:
+        console.print("[red]SEC PIT feature panel 可见时间校验失败，已停止回测。[/red]")
+        console.print(f"SEC PIT feature panel：{sec_pit_feature_panel_path}")
+        console.print(str(exc))
+        raise typer.Exit(code=1) from exc
+
+
+def _build_score_daily_sec_pit_feature_report(
+    *,
+    score_date: date,
+    sec_companies: SecCompaniesConfig,
+    sec_pit_feature_panel_path: Path,
+) -> SecFundamentalFeaturesReport:
+    if not sec_pit_feature_panel_path.exists():
+        console.print("[red]SEC PIT feature panel 不存在，已停止每日评分。[/red]")
+        console.print(f"SEC PIT feature panel：{sec_pit_feature_panel_path}")
+        raise typer.Exit(code=1)
+    tickers = [company.ticker for company in sec_companies.companies if company.active]
+    try:
+        reports = sec_pit_feature_panel_to_feature_reports(
+            sec_pit_feature_panel_path,
+            (score_date,),
+            tickers,
+        )
+    except ValueError as exc:
+        console.print("[red]SEC PIT feature panel 可见时间校验失败，已停止每日评分。[/red]")
+        console.print(f"SEC PIT feature panel：{sec_pit_feature_panel_path}")
+        console.print(str(exc))
+        raise typer.Exit(code=1) from exc
+    return reports[score_date]
 
 
 def _build_backtest_valuation_review_reports(

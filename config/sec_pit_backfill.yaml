@@ -1,0 +1,54 @@
+sec_pit_backfill:
+  policy_id: sec_edgar_reconstructed_pit_backfill
+  policy_version: sec_pit_backfill.v1
+  owner: system
+  status: pilot_baseline
+  rationale: >
+    Reconstruct filing-time point-in-time availability from SEC submissions
+    acceptance timestamps and SEC companyfacts accession-level facts for
+    post-ChatGPT AI-cycle backtests.
+  intended_effect: >
+    Provide B-grade reconstructed SEC filing-time PIT fundamentals while
+    making non-strict archive limitations explicit in reports.
+  validation_evidence: >
+    Unit tests cover T+1 availability, amendment supersession, missing
+    acceptance downgrade, cross-currency ratio blocking, interval overlap
+    rejection, feature-panel leakage rejection, and mocked full-pipeline
+    CLI execution. Real SEC runs still require owner review before any
+    grade upgrade.
+  review_condition: >
+    Revisit after comparing reconstructed availability against a strict
+    vendor archive such as WRDS/Compustat Snapshot or after material SEC
+    endpoint/schema behavior changes.
+  daily_availability_policy: next_trading_day
+  intraday_policy_enabled: false
+  max_requests_per_second: 5
+  allowed_forms:
+    - 10-K
+    - 10-K/A
+    - 10-Q
+    - 10-Q/A
+    - 20-F
+    - 20-F/A
+    - 40-F
+    - 40-F/A
+    - 6-K
+    - 6-K/A
+    - 8-K
+    - 8-K/A
+  metric_panel_forms:
+    - 10-K
+    - 10-K/A
+    - 10-Q
+    - 10-Q/A
+    - 20-F
+    - 20-F/A
+    - 40-F
+    - 40-F/A
+    - 6-K
+    - 6-K/A
+  six_k_default_grade: C_CURRENT_HISTORY_APPROX
+  coverage_warning_threshold: 0.70
+  coverage_error_threshold: 0.40
+  stale_quarterly_days: 180
+  stale_annual_days: 540
