@@ -1504,6 +1504,109 @@ def test_daily_task_dashboard_operator_brief_notification_draft_dispatch_card_is
     assert draft_dispatch["output_artifacts"]["draft_dispatch_markdown"]["path"] in html
 
 
+def test_daily_task_dashboard_retry_execution_dry_run_card_is_read_only(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    as_of = date(2026, 5, 26)
+    metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
+    _write_detail_reports(tmp_path, as_of)
+    dry_run = _write_retry_execution_dry_run(tmp_path, as_of)
+
+    original_import = builtins.__import__
+
+    def guarded_import(
+        name: str,
+        globals_: dict[str, object] | None = None,
+        locals_: dict[str, object] | None = None,
+        fromlist: tuple[str, ...] = (),
+        level: int = 0,
+    ) -> object:
+        blocked_module_tokens = (
+            "run_retry_execution_dry_run",
+            "ai_trading_system.trading_engine.retry_execution_dry_run",
+            "run_retry_candidate_queue",
+            "ai_trading_system.trading_engine.retry_candidate_queue",
+            "run_notification_delivery_failure_classification",
+            "ai_trading_system.trading_engine.notification_delivery_failure_classification",
+            "run_notification_delivery_audit_summary",
+            "ai_trading_system.trading_engine.notification_delivery_audit_summary",
+            "smtplib",
+            "slack_sdk",
+            "discord",
+            "gmail",
+            "webhook",
+            "ai_trading_system.data.download",
+            "ai_trading_system.scoring",
+            "ai_trading_system.backtest",
+            "ai_trading_system.trading_engine.brokers",
+            "run_paper_trading_replay",
+        )
+        if any(token in name for token in blocked_module_tokens):
+            raise AssertionError(f"dashboard must not import retry dry-run path: {name}")
+        return original_import(name, globals_, locals_, fromlist, level)
+
+    monkeypatch.setattr(builtins, "__import__", guarded_import)
+
+    report = build_daily_task_dashboard_report(
+        as_of=as_of,
+        metadata_path=metadata_path,
+        run_report_path=None,
+        reports_dir=tmp_path,
+    )
+    html = render_daily_task_dashboard(report)
+    payload = build_daily_task_dashboard_payload(report)
+
+    summary = payload["retry_execution_dry_run"]
+    assert summary["dry_run_status"] == "READY_FOR_DRY_RUN"
+    assert summary["total_candidates"] == 1
+    assert summary["approved_for_dry_run"] == 1
+    assert summary["blocked_from_dry_run"] == 0
+    assert summary["simulated_retry_actions"] == 1
+    assert summary["real_retry_allowed"] is False
+    assert summary["external_delivery_allowed"] is False
+    assert summary["production_state_mutation_allowed"] is False
+    assert summary["source_queue_status"] == "PENDING_APPROVAL"
+    assert summary["approval_record_available"] is True
+    assert summary["approval_parse_status"] == "OK"
+    assert summary["production_effect"] == "none"
+    assert summary["manual_review_only"] is True
+    assert summary["retry_execution_dry_run_only"] is True
+    assert summary["dry_run_only"] is True
+    assert summary["read_only"] is True
+    assert summary["approval_record_modified"] is False
+    assert summary["retry_executed"] is False
+    assert summary["actual_retry_executed"] is False
+    assert summary["external_delivery_executed"] is False
+    assert summary["delivery_state_mutated"] is False
+    assert summary["state_mutation_executed"] is False
+    assert "Retry Execution Dry Run" in html
+    assert "dry_run_status" in html
+    assert dry_run["output_artifacts"]["retry_execution_dry_run_markdown"]["path"] in html
+
+
+def test_daily_task_dashboard_retry_execution_dry_run_handles_missing_report_gracefully(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 5, 26)
+    metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
+
+    report = build_daily_task_dashboard_report(
+        as_of=as_of,
+        metadata_path=metadata_path,
+        run_report_path=None,
+        reports_dir=tmp_path,
+    )
+    html = render_daily_task_dashboard(report)
+    payload = build_daily_task_dashboard_payload(report)
+
+    summary = payload["retry_execution_dry_run"]
+    assert summary["exists"] is False
+    assert summary["dry_run_status"] == "MISSING"
+    assert summary["real_retry_allowed"] is False
+    assert "No retry execution dry-run report available." in html
+
+
 def test_daily_task_dashboard_pipeline_health_summary_card_is_read_only(
     tmp_path: Path,
     monkeypatch: Any,
@@ -3052,6 +3155,134 @@ def _write_operator_brief_notification_draft_dispatch(
         encoding="utf-8",
     )
     run_log_path.write_text("final_status=DRAFT_READY\n", encoding="utf-8")
+    return payload
+
+
+def _write_retry_execution_dry_run(tmp_path: Path, as_of: date) -> dict[str, Any]:
+    root = tmp_path / "outputs" / "retry_execution_dry_run"
+    json_path = root / f"retry_execution_dry_run_{as_of.isoformat()}.json"
+    markdown_path = json_path.with_suffix(".md")
+    log_path = json_path.with_suffix(".log")
+    payload = {
+        "schema_version": "1.0",
+        "report_type": "retry_execution_dry_run",
+        "task_id": "TRADING-038",
+        "date": as_of.isoformat(),
+        "mode": "dry_run_only",
+        "production_effect": "none",
+        "manual_review_only": True,
+        "retry_execution_dry_run_only": True,
+        "dry_run_only": True,
+        "read_only": True,
+        "approval_record_modified": False,
+        "approval_state_modified": False,
+        "email_sent": False,
+        "gmail_draft_created": False,
+        "gmail_draft_modified": False,
+        "slack_sent": False,
+        "discord_sent": False,
+        "webhook_called": False,
+        "mobile_push_sent": False,
+        "retry_executed": False,
+        "actual_retry_executed": False,
+        "external_delivery_executed": False,
+        "delivery_state_mutated": False,
+        "state_mutation_executed": False,
+        "production_parameters_modified": False,
+        "retry_candidate_queue_executed_by_dry_run": False,
+        "notification_delivery_failure_classification_executed_by_dry_run": False,
+        "notification_delivery_audit_executed_by_dry_run": False,
+        "notification_draft_executed_by_dry_run": False,
+        "delivery_preflight_executed_by_dry_run": False,
+        "draft_dispatch_executed_by_dry_run": False,
+        "operator_brief_executed_by_dry_run": False,
+        "pipelines_executed_by_dry_run": False,
+        "data_downloaded_by_dry_run": False,
+        "apply_executed_by_dry_run": False,
+        "rollback_executed_by_dry_run": False,
+        "broker_execution": False,
+        "replay_execution": False,
+        "trading_execution": False,
+        "metadata": {
+            "task_id": "TRADING-038",
+            "task_name": "Manual Approval Record / Retry Execution Dry Run",
+            "mode": "dry_run_only",
+            "production_effect": "none",
+            "manual_review_only": True,
+            "generated_at": "2026-05-26T00:00:00Z",
+            "schema_version": "1.0",
+        },
+        "source_queue": {
+            "task_id": "TRADING-037",
+            "queue_report_path": (
+                "outputs/retry_candidate_queue/retry_candidate_queue_2026-05-26.json"
+            ),
+            "queue_status": "PENDING_APPROVAL",
+            "source_available": True,
+            "source_parse_status": "OK",
+            "source_error": "",
+        },
+        "approval_record": {
+            "approval_record_path": (
+                "inputs/manual_retry_approvals/manual_retry_approval_2026-05-26.json"
+            ),
+            "approval_record_available": True,
+            "approval_parse_status": "OK",
+            "approval_error": "",
+            "approved_candidate_count": 1,
+            "rejected_candidate_count": 0,
+            "unapproved_candidate_count": 0,
+            "approval_mismatch_count": 0,
+        },
+        "dry_run_summary": {
+            "dry_run_status": "READY_FOR_DRY_RUN",
+            "total_candidates": 1,
+            "approved_for_dry_run": 1,
+            "blocked_from_dry_run": 0,
+            "simulated_retry_actions": 1,
+            "real_retry_allowed": False,
+            "external_delivery_allowed": False,
+            "production_state_mutation_allowed": False,
+        },
+        "simulated_retry_actions": [
+            {
+                "candidate_id": "retry_candidate_2026-05-26_001",
+                "dry_run_action_id": "dry_run_retry_2026-05-26_001",
+                "source_category": "TRANSIENT_DELIVERY_FAILURE",
+                "simulated_channel": "notification_channel_placeholder",
+                "simulated_target": "redacted_or_placeholder",
+                "payload_available": False,
+                "would_retry": True,
+                "actual_retry_executed": False,
+                "external_delivery_executed": False,
+                "state_mutation_executed": False,
+                "safety_result": "PASS",
+            }
+        ],
+        "blocked_items": [],
+        "recommended_actions": ["Review the simulated retry actions."],
+        "safety_invariants": {
+            "dry_run_only": True,
+            "no_external_delivery": True,
+            "no_retry_execution": True,
+            "no_state_mutation": True,
+            "no_production_parameter_change": True,
+            "approval_record_is_input_only": True,
+            "dashboard_read_only": True,
+        },
+        "output_artifacts": {
+            "retry_execution_dry_run_json": {"path": str(json_path)},
+            "retry_execution_dry_run_markdown": {"path": str(markdown_path)},
+            "run_log": {"path": str(log_path)},
+        },
+    }
+    root.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    markdown_path.write_text(
+        "# Manual Approval Record / Retry Execution Dry Run\n",
+        encoding="utf-8",
+    )
+    log_path.write_text("dry_run_status=READY_FOR_DRY_RUN\n", encoding="utf-8")
     return payload
 
 

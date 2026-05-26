@@ -132,6 +132,7 @@
 - `data/processed/scores_daily.csv`
 - `outputs/reports/daily_score_YYYY-MM-DD.md`
 - `outputs/sec_pit_evaluation/sec_pit_evaluation_summary_YYYY-MM-DD.md`
+- `outputs/sec_pit_baseline_comparison/sec_pit_baseline_comparison_summary_YYYY-MM-DD.md`
 
 应该看哪份报告确认：
 
@@ -140,6 +141,10 @@
 - 若问题是 SEC reconstructed PIT feature 是否具备 shadow iteration 证据，查看
   `docs/runbooks/sec_pit_evaluation.md`、`sec_pit_feature_effectiveness_YYYY-MM-DD.csv`
   和 `sec_pit_signal_attribution_YYYY-MM-DD.csv`。
+- 若问题是 SEC PIT enhanced signal 相比 price-only / score-daily baseline 是否改善排序或
+  回撤规避，查看 `docs/runbooks/sec_pit_baseline_comparison.md`、
+  `sec_pit_decision_impact_YYYY-MM-DD.csv`、`sec_pit_rank_shift_YYYY-MM-DD.csv` 和
+  `sec_pit_incremental_alpha_YYYY-MM-DD.csv`。
 
 ## 第 5 步：权重如何合成 overall score
 

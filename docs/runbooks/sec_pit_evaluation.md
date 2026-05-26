@@ -45,6 +45,9 @@ aits sec-pit evaluate --start 2023-01-01 --end 2026-05-26 --tickers NVDA MSFT AM
 2. 再看 `feature_effectiveness` 的 coverage、RankIC、stability 和 recommendation。
 3. 用 `signal_attribution` 复核 ticker/date 层的 normalized contribution。
 4. 只把 `shadow_candidate_weights` 当作人工 review 输入，不得写回 production weights。
+5. 若要判断这些 feature 是否真的改善 decision-level 排名、回撤规避或 action review
+   queue，继续运行 `docs/runbooks/sec_pit_baseline_comparison.md` 中的
+   `aits sec-pit compare-baseline`。
 
 ## Dashboard
 

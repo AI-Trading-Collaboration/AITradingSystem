@@ -31,6 +31,12 @@ from ai_trading_system.fundamentals.sec_pit_backfill import (
     load_sec_pit_backfill_config,
     run_sec_pit_backfill,
 )
+from ai_trading_system.fundamentals.sec_pit_baseline_comparison import (
+    DEFAULT_BASELINE_SCORE_DIR,
+    DEFAULT_SEC_PIT_BASELINE_COMPARISON_OUTPUT_DIR,
+    DEFAULT_SEC_PIT_EVALUATION_DIR,
+    run_sec_pit_baseline_comparison,
+)
 from ai_trading_system.fundamentals.sec_pit_evaluation import (
     DEFAULT_PRICES_PATH,
     DEFAULT_RATES_PATH,
@@ -519,6 +525,68 @@ def evaluate_command(
         raise typer.Exit(code=2)
 
 
+@sec_pit_app.command("compare-baseline")
+def compare_baseline_command(
+    start: Annotated[
+        str,
+        typer.Option("--start", help="比较开始日期 YYYY-MM-DD。"),
+    ],
+    end: Annotated[
+        str,
+        typer.Option("--end", help="比较结束日期 YYYY-MM-DD。"),
+    ],
+    sec_pit_evaluation_dir: Annotated[
+        Path,
+        typer.Option(
+            "--sec-pit-evaluation-dir",
+            help="TRADING-040 SEC PIT evaluation artifact 目录。",
+        ),
+    ] = DEFAULT_SEC_PIT_EVALUATION_DIR,
+    baseline_score_dir: Annotated[
+        Path,
+        typer.Option("--baseline-score-dir", help="score-daily baseline artifact 目录或 CSV。"),
+    ] = DEFAULT_BASELINE_SCORE_DIR,
+    benchmark: Annotated[
+        str,
+        typer.Option("--benchmark", help="用于 relative return 的 benchmark ticker。"),
+    ] = "QQQ",
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="SEC PIT baseline comparison 输出目录。"),
+    ] = DEFAULT_SEC_PIT_BASELINE_COMPARISON_OUTPUT_DIR,
+    tickers: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--tickers",
+            help="覆盖 artifact universe 的 ticker 列表；可重复，也可用逗号或空格分隔。",
+        ),
+    ] = None,
+    strict: Annotated[
+        bool,
+        typer.Option("--strict", help="缺少 baseline / SEC PIT evaluation / overlap 时返回失败。"),
+    ] = False,
+) -> None:
+    """比较 SEC PIT enhanced output 与现有 baseline 的 decision-level 影响。"""
+    artifacts = run_sec_pit_baseline_comparison(
+        start=_parse_date(start),
+        end=_parse_date(end),
+        sec_pit_evaluation_dir=sec_pit_evaluation_dir,
+        baseline_score_dir=baseline_score_dir,
+        benchmark=benchmark,
+        output_dir=output_dir,
+        tickers=_flatten_ticker_options(tickers) if tickers else None,
+    )
+    console.print(f"SEC PIT baseline comparison status: {artifacts.status}")
+    console.print(f"Summary JSON: {artifacts.summary_json_path}")
+    console.print(f"Summary report: {artifacts.summary_markdown_path}")
+    console.print(f"Decision impact: {artifacts.decision_impact_path}")
+    console.print(f"Rank shift: {artifacts.rank_shift_path}")
+    console.print(f"Incremental alpha: {artifacts.incremental_alpha_path}")
+    console.print(f"Run log: {artifacts.run_log_path}")
+    if strict and artifacts.status != "OK":
+        raise typer.Exit(code=2)
+
+
 def _resolve_user_agent(value: str | None) -> str:
     user_agent = value or os.getenv("SEC_USER_AGENT")
     if user_agent is None or not user_agent.strip():
@@ -541,3 +609,10 @@ def _exit_if_validation_failed(path: Path) -> None:
     console.print(f"SEC PIT validation status: {status}")
     if status == "FAIL":
         raise typer.Exit(code=2)
+
+
+def _flatten_ticker_options(values: list[str]) -> list[str]:
+    flattened: list[str] = []
+    for value in values:
+        flattened.extend(part.strip().upper() for part in str(value).replace(",", " ").split())
+    return [item for item in flattened if item]

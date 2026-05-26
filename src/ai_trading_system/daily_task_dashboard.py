@@ -234,7 +234,13 @@ def build_daily_task_dashboard_payload(
             _operator_brief_notification_draft_dispatch_summary(report)
         ),
         "notification_delivery_audit_summary": _notification_delivery_audit_summary(report),
+        "notification_delivery_failure_classification": (
+            _notification_delivery_failure_classification(report)
+        ),
+        "retry_candidate_queue": _retry_candidate_queue(report),
+        "retry_execution_dry_run": _retry_execution_dry_run(report),
         "sec_pit_evaluation_summary": _sec_pit_evaluation_summary(report),
+        "sec_pit_baseline_comparison": _sec_pit_baseline_comparison(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -355,7 +361,11 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_operator_brief_notification_approval_gate(report),
             _render_operator_brief_notification_draft_dispatch(report),
             _render_notification_delivery_audit_summary(report),
+            _render_notification_delivery_failure_classification(report),
+            _render_retry_candidate_queue(report),
+            _render_retry_execution_dry_run(report),
             _render_sec_pit_evaluation_summary(report),
+            _render_sec_pit_baseline_comparison(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -5524,6 +5534,106 @@ def _sec_pit_evaluation_summary(report: DailyTaskDashboardReport) -> TraceRecord
     }
 
 
+def _sec_pit_baseline_comparison(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_sec_pit_baseline_comparison_path(report)
+    payload = _read_json_object(path)
+    default_markdown = (
+        report.project_root
+        / "outputs"
+        / "sec_pit_baseline_comparison"
+        / f"sec_pit_baseline_comparison_summary_{report.as_of.isoformat()}.md"
+    )
+    if payload.get("report_type") != "sec_pit_baseline_comparison":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "markdown_path": str(default_markdown),
+            "latest_comparison_date": "",
+            "decision_count": 0,
+            "action_changed_count": 0,
+            "material_rank_shift_count": 0,
+            "incremental_alpha_20d": None,
+            "drawdown_improvement_20d": None,
+            "top_promoted_tickers": [],
+            "top_downgraded_tickers": [],
+            "production_effect": ProductionEffect.NONE.value,
+            "read_only": True,
+            "risk": (
+                "No SEC PIT baseline comparison summary available. Dashboard 只读取 "
+                "TRADING-041 artifact，不运行 comparison、不读取 market data、"
+                "不修改 production 权重。"
+            ),
+        }
+
+    outputs = _mapping_value(payload, "output_artifacts")
+    markdown_path = (
+        _project_path(report.project_root, _string_value(outputs.get("summary_markdown")))
+        or default_markdown
+    )
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    safety = _mapping_value(payload, "safety")
+    production_effect = (
+        _string_value(safety.get("production_effect"))
+        or _string_value(payload.get("production_effect"))
+        or ProductionEffect.NONE.value
+    )
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("TRADING-041 comparison production_effect 必须为 none。")
+    if safety.get("manual_review_required") is not True:
+        risks.append("TRADING-041 comparison 必须要求人工复核。")
+    if safety.get("production_weights_modified") is True:
+        risks.append("TRADING-041 comparison 不得修改 production weights。")
+    if safety.get("production_actions_modified") is True:
+        risks.append("TRADING-041 comparison 不得修改 production actions。")
+    status = _string_value(payload.get("comparison_status")) or "UNKNOWN"
+    if status.startswith("LIMITED") or status == "INSUFFICIENT_OVERLAP":
+        risks.append(f"Comparison status is {status}; conclusions are limited.")
+    return {
+        "status": status,
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "markdown_path": str(markdown_path),
+        "latest_comparison_date": _string_value(payload.get("end_date")),
+        "decision_count": _int_value(payload.get("decision_count")),
+        "action_changed_count": _int_value(payload.get("action_changed_count")),
+        "material_rank_shift_count": _int_value(payload.get("material_rank_shift_count")),
+        "incremental_alpha_20d": _optional_float(payload.get("incremental_alpha_20d")),
+        "drawdown_improvement_20d": _optional_float(payload.get("drawdown_improvement_20d")),
+        "top_promoted_tickers": _dashboard_ticker_delta_list(
+            payload.get("top_promoted_tickers"),
+        ),
+        "top_downgraded_tickers": _dashboard_ticker_delta_list(
+            payload.get("top_downgraded_tickers"),
+        ),
+        "production_effect": production_effect,
+        "read_only": True,
+        "risk": "；".join(risks) or "SEC PIT baseline comparison dashboard card 当前仅作只读展示。",
+    }
+
+
+def _dashboard_ticker_delta_list(value: object) -> list[TraceRecord]:
+    if not isinstance(value, list):
+        return []
+    records: list[TraceRecord] = []
+    for item in value[:5]:
+        if not isinstance(item, dict):
+            continue
+        records.append(
+            {
+                "ticker": _string_value(item.get("ticker")),
+                "rank_delta": _int_value(item.get("rank_delta")),
+                "score_delta": _optional_float(item.get("score_delta")),
+            }
+        )
+    return records
+
+
 def _sec_pit_top_features(value: object) -> list[TraceRecord]:
     if not isinstance(value, list):
         return []
@@ -5539,6 +5649,474 @@ def _sec_pit_top_features(value: object) -> list[TraceRecord]:
                 }
             )
     return records
+
+
+def _notification_delivery_failure_classification(
+    report: DailyTaskDashboardReport,
+) -> TraceRecord:
+    path = _latest_notification_delivery_failure_classification_path(report)
+    payload = _read_json_object(path)
+    default_markdown = (
+        report.project_root
+        / "outputs"
+        / "notification_delivery_failure_classification"
+        / f"notification_delivery_failure_classification_{report.as_of.isoformat()}.md"
+    )
+    if payload.get("report_type") != "notification_delivery_failure_classification":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "markdown_path": str(default_markdown),
+            "overall_status": "MISSING",
+            "highest_severity": "UNKNOWN",
+            "total_failures": 0,
+            "requires_manual_review": False,
+            "safe_to_retry": False,
+            "blocks_notification_chain": False,
+            "source_audit_status": "MISSING",
+            "generated_at": "",
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_only": True,
+            "read_only": True,
+            "notification_delivery_failure_classification_only": True,
+            "risk": (
+                "No notification delivery failure classification report available. "
+                "Dashboard 只读取 TRADING-036 JSON，不运行 classifier、不读取外部通知状态、"
+                "不发送 notification、不触发 retry。"
+            ),
+        }
+
+    outputs = _mapping_value(payload, "output_artifacts")
+    markdown_output = _mapping_value(outputs, "classification_markdown")
+    markdown_path = (
+        _project_path(report.project_root, _string_value(markdown_output.get("path")))
+        or default_markdown
+    )
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    metadata = _mapping_value(payload, "metadata")
+    source = _mapping_value(payload, "source_audit")
+    summary = _mapping_value(payload, "classification_summary")
+    safety = _mapping_value(payload, "safety_invariants")
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("TRADING-036 classification production_effect 必须为 none。")
+    if payload.get("manual_review_only") is not True:
+        risks.append("TRADING-036 classification 必须 manual_review_only=true。")
+    if payload.get("read_only") is not True:
+        risks.append("TRADING-036 classification 必须 read_only=true。")
+    if payload.get("notification_delivery_failure_classification_only") is not True:
+        risks.append("TRADING-036 必须 classification-only。")
+    if safety.get("no_external_delivery") is not True:
+        risks.append("TRADING-036 safety_invariants.no_external_delivery 必须为 true。")
+    if safety.get("no_state_mutation") is not True:
+        risks.append("TRADING-036 safety_invariants.no_state_mutation 必须为 true。")
+    if safety.get("no_production_parameter_change") is not True:
+        risks.append("TRADING-036 不允许修改 production 参数。")
+    if payload.get("email_sent") is True:
+        risks.append("TRADING-036 不允许发送 email。")
+    if payload.get("gmail_draft_created") is True:
+        risks.append("TRADING-036 不允许创建 Gmail draft。")
+    if payload.get("gmail_draft_modified") is True:
+        risks.append("TRADING-036 不允许修改 Gmail draft。")
+    if payload.get("slack_sent") is True:
+        risks.append("TRADING-036 不允许发送 Slack 通知。")
+    if payload.get("discord_sent") is True:
+        risks.append("TRADING-036 不允许发送 Discord 通知。")
+    if payload.get("webhook_called") is True:
+        risks.append("TRADING-036 不允许调用 webhook。")
+    if payload.get("mobile_push_sent") is True:
+        risks.append("TRADING-036 不允许发送 mobile push。")
+    if payload.get("retry_executed") is True:
+        risks.append("TRADING-036 不允许自动 retry。")
+    if payload.get("delivery_state_mutated") is True:
+        risks.append("TRADING-036 不允许修改 delivery state。")
+    if payload.get("notification_delivery_audit_executed_by_classifier") is True:
+        risks.append("TRADING-036 不允许运行 TRADING-035 audit。")
+    if payload.get("notification_draft_executed_by_classifier") is True:
+        risks.append("TRADING-036 不允许运行 notification draft generator。")
+    if payload.get("delivery_preflight_executed_by_classifier") is True:
+        risks.append("TRADING-036 不允许运行 delivery preflight。")
+    if payload.get("draft_dispatch_executed_by_classifier") is True:
+        risks.append("TRADING-036 不允许运行 draft dispatch。")
+    if payload.get("operator_brief_executed_by_classifier") is True:
+        risks.append("TRADING-036 不允许运行 operator brief。")
+    if payload.get("pipelines_executed_by_classifier") is True:
+        risks.append("TRADING-036 不允许运行上游 pipeline。")
+    if payload.get("data_downloaded_by_classifier") is True:
+        risks.append("TRADING-036 不允许下载或刷新数据。")
+    if payload.get("broker_execution") is True:
+        risks.append("TRADING-036 不允许 broker_execution=true。")
+    if payload.get("replay_execution") is True:
+        risks.append("TRADING-036 不允许 replay_execution=true。")
+    if payload.get("trading_execution") is True:
+        risks.append("TRADING-036 不允许 trading_execution=true。")
+    return {
+        "status": _string_value(summary.get("overall_status")) or "UNKNOWN",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "markdown_path": str(markdown_path),
+        "overall_status": _string_value(summary.get("overall_status")) or "UNKNOWN",
+        "highest_severity": _string_value(summary.get("highest_severity")) or "UNKNOWN",
+        "total_failures": _int_value(summary.get("total_failures")),
+        "requires_manual_review": summary.get("requires_manual_review") is True,
+        "safe_to_retry": summary.get("safe_to_retry") is True,
+        "blocks_notification_chain": summary.get("blocks_notification_chain") is True,
+        "source_audit_status": _string_value(source.get("audit_status")) or "UNKNOWN",
+        "source_parse_status": _string_value(source.get("source_parse_status")) or "UNKNOWN",
+        "generated_at": _string_value(metadata.get("generated_at")),
+        "production_effect": production_effect,
+        "manual_review_only": payload.get("manual_review_only") is True,
+        "read_only": payload.get("read_only") is True,
+        "notification_delivery_failure_classification_only": (
+            payload.get("notification_delivery_failure_classification_only") is True
+        ),
+        "risk": "；".join(risks)
+        or ("Notification Delivery Failure Classification 当前仅作只读展示。"),
+    }
+
+
+def _retry_candidate_queue(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_retry_candidate_queue_path(report)
+    payload = _read_json_object(path)
+    default_markdown = (
+        report.project_root
+        / "outputs"
+        / "retry_candidate_queue"
+        / f"retry_candidate_queue_{report.as_of.isoformat()}.md"
+    )
+    if payload.get("report_type") != "retry_candidate_queue":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "markdown_path": str(default_markdown),
+            "queue_status": "MISSING",
+            "total_candidates": 0,
+            "blocked_candidates": 0,
+            "manual_review_required": False,
+            "has_retryable_candidates": False,
+            "safe_to_execute_retry": False,
+            "approval_required": True,
+            "approval_status": "MISSING",
+            "retry_execution_allowed": False,
+            "source_classification_status": "MISSING",
+            "source_parse_status": "MISSING",
+            "generated_at": "",
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_only": True,
+            "retry_candidate_queue_only": True,
+            "read_only": True,
+            "risk": (
+                "No retry candidate queue report available. Dashboard 只读取 "
+                "TRADING-037 JSON，不运行 queue generator、不执行 retry、不发送 "
+                "notification、不修改 approval state。"
+            ),
+        }
+
+    outputs = _mapping_value(payload, "output_artifacts")
+    markdown_output = _mapping_value(outputs, "retry_candidate_queue_markdown")
+    markdown_path = (
+        _project_path(report.project_root, _string_value(markdown_output.get("path")))
+        or default_markdown
+    )
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    metadata = _mapping_value(payload, "metadata")
+    source = _mapping_value(payload, "source_classification")
+    summary = _mapping_value(payload, "queue_summary")
+    approval = _mapping_value(payload, "approval_gate")
+    safety = _mapping_value(payload, "safety_invariants")
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("TRADING-037 queue production_effect 必须为 none。")
+    if payload.get("manual_review_only") is not True:
+        risks.append("TRADING-037 queue 必须 manual_review_only=true。")
+    if payload.get("read_only") is not True:
+        risks.append("TRADING-037 queue 必须 read_only=true。")
+    if payload.get("retry_candidate_queue_only") is not True:
+        risks.append("TRADING-037 必须 retry_candidate_queue_only=true。")
+    if safety.get("no_external_delivery") is not True:
+        risks.append("TRADING-037 safety_invariants.no_external_delivery 必须为 true。")
+    if safety.get("no_retry_execution") is not True:
+        risks.append("TRADING-037 safety_invariants.no_retry_execution 必须为 true。")
+    if safety.get("no_state_mutation") is not True:
+        risks.append("TRADING-037 safety_invariants.no_state_mutation 必须为 true。")
+    if safety.get("no_production_parameter_change") is not True:
+        risks.append("TRADING-037 不允许修改 production 参数。")
+    if approval.get("retry_execution_allowed") is True:
+        risks.append("TRADING-037 approval gate 不允许 retry_execution_allowed=true。")
+    if payload.get("email_sent") is True:
+        risks.append("TRADING-037 不允许发送 email。")
+    if payload.get("gmail_draft_created") is True:
+        risks.append("TRADING-037 不允许创建 Gmail draft。")
+    if payload.get("gmail_draft_modified") is True:
+        risks.append("TRADING-037 不允许修改 Gmail draft。")
+    if payload.get("slack_sent") is True:
+        risks.append("TRADING-037 不允许发送 Slack 通知。")
+    if payload.get("discord_sent") is True:
+        risks.append("TRADING-037 不允许发送 Discord 通知。")
+    if payload.get("webhook_called") is True:
+        risks.append("TRADING-037 不允许调用 webhook。")
+    if payload.get("mobile_push_sent") is True:
+        risks.append("TRADING-037 不允许发送 mobile push。")
+    if payload.get("retry_executed") is True:
+        risks.append("TRADING-037 不允许执行 retry。")
+    if payload.get("delivery_state_mutated") is True:
+        risks.append("TRADING-037 不允许修改 delivery state。")
+    if payload.get("approval_state_modified") is True:
+        risks.append("TRADING-037 dashboard/queue 不允许修改 approval state。")
+    if payload.get("notification_delivery_failure_classification_executed_by_queue") is True:
+        risks.append("TRADING-037 不允许运行 TRADING-036 classifier。")
+    if payload.get("notification_delivery_audit_executed_by_queue") is True:
+        risks.append("TRADING-037 不允许运行 TRADING-035 audit。")
+    if payload.get("notification_draft_executed_by_queue") is True:
+        risks.append("TRADING-037 不允许运行 notification draft generator。")
+    if payload.get("delivery_preflight_executed_by_queue") is True:
+        risks.append("TRADING-037 不允许运行 delivery preflight。")
+    if payload.get("draft_dispatch_executed_by_queue") is True:
+        risks.append("TRADING-037 不允许运行 draft dispatch。")
+    if payload.get("operator_brief_executed_by_queue") is True:
+        risks.append("TRADING-037 不允许运行 operator brief。")
+    if payload.get("pipelines_executed_by_queue") is True:
+        risks.append("TRADING-037 不允许运行上游 pipeline。")
+    if payload.get("data_downloaded_by_queue") is True:
+        risks.append("TRADING-037 不允许下载或刷新数据。")
+    if payload.get("broker_execution") is True:
+        risks.append("TRADING-037 不允许 broker_execution=true。")
+    if payload.get("replay_execution") is True:
+        risks.append("TRADING-037 不允许 replay_execution=true。")
+    if payload.get("trading_execution") is True:
+        risks.append("TRADING-037 不允许 trading_execution=true。")
+    return {
+        "status": _string_value(summary.get("queue_status")) or "UNKNOWN",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "markdown_path": str(markdown_path),
+        "queue_status": _string_value(summary.get("queue_status")) or "UNKNOWN",
+        "total_candidates": _int_value(summary.get("total_candidates")),
+        "blocked_candidates": _int_value(summary.get("blocked_candidates")),
+        "manual_review_required": summary.get("manual_review_required") is True,
+        "has_retryable_candidates": summary.get("has_retryable_candidates") is True,
+        "safe_to_execute_retry": summary.get("safe_to_execute_retry") is True,
+        "approval_required": approval.get("approval_required") is True,
+        "approval_status": _string_value(approval.get("approval_status")) or "UNKNOWN",
+        "retry_execution_allowed": approval.get("retry_execution_allowed") is True,
+        "source_classification_status": (_string_value(source.get("overall_status")) or "UNKNOWN"),
+        "source_parse_status": _string_value(source.get("source_parse_status")) or "UNKNOWN",
+        "generated_at": _string_value(metadata.get("generated_at")),
+        "production_effect": production_effect,
+        "manual_review_only": payload.get("manual_review_only") is True,
+        "retry_candidate_queue_only": payload.get("retry_candidate_queue_only") is True,
+        "read_only": payload.get("read_only") is True,
+        "risk": "；".join(risks) or ("Retry Candidate Queue 当前仅作只读展示。"),
+    }
+
+
+def _retry_execution_dry_run(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_retry_execution_dry_run_path(report)
+    payload = _read_json_object(path)
+    default_markdown = (
+        report.project_root
+        / "outputs"
+        / "retry_execution_dry_run"
+        / f"retry_execution_dry_run_{report.as_of.isoformat()}.md"
+    )
+    if payload.get("report_type") != "retry_execution_dry_run":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "markdown_path": str(default_markdown),
+            "dry_run_status": "MISSING",
+            "total_candidates": 0,
+            "approved_for_dry_run": 0,
+            "blocked_from_dry_run": 0,
+            "simulated_retry_actions": 0,
+            "real_retry_allowed": False,
+            "external_delivery_allowed": False,
+            "production_state_mutation_allowed": False,
+            "source_queue_status": "MISSING",
+            "source_parse_status": "MISSING",
+            "approval_record_available": False,
+            "approval_parse_status": "MISSING",
+            "approved_candidate_count": 0,
+            "rejected_candidate_count": 0,
+            "unapproved_candidate_count": 0,
+            "generated_at": "",
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_only": True,
+            "retry_execution_dry_run_only": True,
+            "dry_run_only": True,
+            "read_only": True,
+            "approval_record_modified": False,
+            "retry_executed": False,
+            "actual_retry_executed": False,
+            "external_delivery_executed": False,
+            "delivery_state_mutated": False,
+            "state_mutation_executed": False,
+            "risk": (
+                "No retry execution dry-run report available. Dashboard 只读取 "
+                "TRADING-038 JSON，不运行 dry-run generator、不执行 retry、不发送 "
+                "notification、不修改 approval record 或 delivery state。"
+            ),
+        }
+
+    outputs = _mapping_value(payload, "output_artifacts")
+    markdown_output = _mapping_value(outputs, "retry_execution_dry_run_markdown")
+    markdown_path = (
+        _project_path(report.project_root, _string_value(markdown_output.get("path")))
+        or default_markdown
+    )
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    metadata = _mapping_value(payload, "metadata")
+    source = _mapping_value(payload, "source_queue")
+    approval = _mapping_value(payload, "approval_record")
+    summary = _mapping_value(payload, "dry_run_summary")
+    safety = _mapping_value(payload, "safety_invariants")
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("TRADING-038 dry-run production_effect 必须为 none。")
+    if payload.get("manual_review_only") is not True:
+        risks.append("TRADING-038 dry-run 必须 manual_review_only=true。")
+    if payload.get("dry_run_only") is not True:
+        risks.append("TRADING-038 必须 dry_run_only=true。")
+    if payload.get("read_only") is not True:
+        risks.append("TRADING-038 必须 read_only=true。")
+    if payload.get("retry_execution_dry_run_only") is not True:
+        risks.append("TRADING-038 必须 retry_execution_dry_run_only=true。")
+    if safety.get("dry_run_only") is not True:
+        risks.append("TRADING-038 safety_invariants.dry_run_only 必须为 true。")
+    if safety.get("no_external_delivery") is not True:
+        risks.append("TRADING-038 safety_invariants.no_external_delivery 必须为 true。")
+    if safety.get("no_retry_execution") is not True:
+        risks.append("TRADING-038 safety_invariants.no_retry_execution 必须为 true。")
+    if safety.get("no_state_mutation") is not True:
+        risks.append("TRADING-038 safety_invariants.no_state_mutation 必须为 true。")
+    if safety.get("no_production_parameter_change") is not True:
+        risks.append("TRADING-038 不允许修改 production 参数。")
+    if safety.get("approval_record_is_input_only") is not True:
+        risks.append("TRADING-038 approval record 必须保持 input-only。")
+    if summary.get("real_retry_allowed") is True:
+        risks.append("TRADING-038 dry-run 不允许 real_retry_allowed=true。")
+    if summary.get("external_delivery_allowed") is True:
+        risks.append("TRADING-038 dry-run 不允许 external_delivery_allowed=true。")
+    if summary.get("production_state_mutation_allowed") is True:
+        risks.append("TRADING-038 dry-run 不允许 production state mutation。")
+    if payload.get("approval_record_modified") is True:
+        risks.append("TRADING-038 不允许修改 approval record。")
+    if payload.get("approval_state_modified") is True:
+        risks.append("TRADING-038 不允许修改 approval state。")
+    if payload.get("email_sent") is True:
+        risks.append("TRADING-038 不允许发送 email。")
+    if payload.get("gmail_draft_created") is True:
+        risks.append("TRADING-038 不允许创建 Gmail draft。")
+    if payload.get("gmail_draft_modified") is True:
+        risks.append("TRADING-038 不允许修改 Gmail draft。")
+    if payload.get("slack_sent") is True:
+        risks.append("TRADING-038 不允许发送 Slack 通知。")
+    if payload.get("discord_sent") is True:
+        risks.append("TRADING-038 不允许发送 Discord 通知。")
+    if payload.get("webhook_called") is True:
+        risks.append("TRADING-038 不允许调用 webhook。")
+    if payload.get("mobile_push_sent") is True:
+        risks.append("TRADING-038 不允许发送 mobile push。")
+    if payload.get("retry_executed") is True or payload.get("actual_retry_executed") is True:
+        risks.append("TRADING-038 不允许执行 retry。")
+    if payload.get("external_delivery_executed") is True:
+        risks.append("TRADING-038 不允许执行外部 delivery。")
+    if (
+        payload.get("delivery_state_mutated") is True
+        or payload.get("state_mutation_executed") is True
+    ):
+        risks.append("TRADING-038 不允许修改 delivery state。")
+    if payload.get("retry_candidate_queue_executed_by_dry_run") is True:
+        risks.append("TRADING-038 不允许运行 TRADING-037 queue generator。")
+    if payload.get("notification_delivery_failure_classification_executed_by_dry_run") is True:
+        risks.append("TRADING-038 不允许运行 TRADING-036 classifier。")
+    if payload.get("notification_delivery_audit_executed_by_dry_run") is True:
+        risks.append("TRADING-038 不允许运行 TRADING-035 audit。")
+    if payload.get("notification_draft_executed_by_dry_run") is True:
+        risks.append("TRADING-038 不允许运行 notification draft generator。")
+    if payload.get("delivery_preflight_executed_by_dry_run") is True:
+        risks.append("TRADING-038 不允许运行 delivery preflight。")
+    if payload.get("draft_dispatch_executed_by_dry_run") is True:
+        risks.append("TRADING-038 不允许运行 draft dispatch。")
+    if payload.get("operator_brief_executed_by_dry_run") is True:
+        risks.append("TRADING-038 不允许运行 operator brief。")
+    if payload.get("pipelines_executed_by_dry_run") is True:
+        risks.append("TRADING-038 不允许运行上游 pipeline。")
+    if payload.get("data_downloaded_by_dry_run") is True:
+        risks.append("TRADING-038 不允许下载或刷新数据。")
+    if payload.get("broker_execution") is True:
+        risks.append("TRADING-038 不允许 broker_execution=true。")
+    if payload.get("replay_execution") is True:
+        risks.append("TRADING-038 不允许 replay_execution=true。")
+    if payload.get("trading_execution") is True:
+        risks.append("TRADING-038 不允许 trading_execution=true。")
+    for action in _records(payload.get("simulated_retry_actions")):
+        if action.get("actual_retry_executed") is not False:
+            risks.append("TRADING-038 simulated action 必须 actual_retry_executed=false。")
+        if action.get("external_delivery_executed") is not False:
+            risks.append("TRADING-038 simulated action 必须 external_delivery_executed=false。")
+        if action.get("state_mutation_executed") is not False:
+            risks.append("TRADING-038 simulated action 必须 state_mutation_executed=false。")
+    return {
+        "status": _string_value(summary.get("dry_run_status")) or "UNKNOWN",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "markdown_path": str(markdown_path),
+        "dry_run_status": _string_value(summary.get("dry_run_status")) or "UNKNOWN",
+        "total_candidates": _int_value(summary.get("total_candidates")),
+        "approved_for_dry_run": _int_value(summary.get("approved_for_dry_run")),
+        "blocked_from_dry_run": _int_value(summary.get("blocked_from_dry_run")),
+        "simulated_retry_actions": _int_value(summary.get("simulated_retry_actions")),
+        "real_retry_allowed": summary.get("real_retry_allowed") is True,
+        "external_delivery_allowed": summary.get("external_delivery_allowed") is True,
+        "production_state_mutation_allowed": (
+            summary.get("production_state_mutation_allowed") is True
+        ),
+        "source_queue_status": _string_value(source.get("queue_status")) or "UNKNOWN",
+        "source_parse_status": _string_value(source.get("source_parse_status")) or "UNKNOWN",
+        "approval_record_available": approval.get("approval_record_available") is True,
+        "approval_parse_status": _string_value(approval.get("approval_parse_status")) or "UNKNOWN",
+        "approved_candidate_count": _int_value(approval.get("approved_candidate_count")),
+        "rejected_candidate_count": _int_value(approval.get("rejected_candidate_count")),
+        "unapproved_candidate_count": _int_value(approval.get("unapproved_candidate_count")),
+        "generated_at": _string_value(metadata.get("generated_at")),
+        "production_effect": production_effect,
+        "manual_review_only": payload.get("manual_review_only") is True,
+        "retry_execution_dry_run_only": payload.get("retry_execution_dry_run_only") is True,
+        "dry_run_only": payload.get("dry_run_only") is True,
+        "read_only": payload.get("read_only") is True,
+        "approval_record_modified": payload.get("approval_record_modified") is True,
+        "retry_executed": payload.get("retry_executed") is True,
+        "actual_retry_executed": payload.get("actual_retry_executed") is True,
+        "external_delivery_executed": payload.get("external_delivery_executed") is True,
+        "delivery_state_mutated": payload.get("delivery_state_mutated") is True,
+        "state_mutation_executed": payload.get("state_mutation_executed") is True,
+        "risk": "；".join(risks) or ("Retry Execution Dry Run 当前仅作只读展示。"),
+    }
 
 
 def _latest_shadow_vs_production_review_path(report: DailyTaskDashboardReport) -> Path:
@@ -5970,14 +6548,86 @@ def _latest_notification_delivery_audit_summary_path(
     return max(candidates, key=lambda item: item[0])[1]
 
 
+def _latest_notification_delivery_failure_classification_path(
+    report: DailyTaskDashboardReport,
+) -> Path:
+    classification_root = (
+        report.project_root / "outputs" / "notification_delivery_failure_classification"
+    )
+    default_path = classification_root / (
+        f"notification_delivery_failure_classification_{report.as_of.isoformat()}.json"
+    )
+    if not classification_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in classification_root.glob("notification_delivery_failure_classification_*.json"):
+        raw_date = path.stem.removeprefix("notification_delivery_failure_classification_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
 def _latest_sec_pit_evaluation_summary_path(report: DailyTaskDashboardReport) -> Path:
     evaluation_root = report.project_root / "outputs" / "sec_pit_evaluation"
-    default_path = evaluation_root / (f"sec_pit_evaluation_summary_{report.as_of.isoformat()}.json")
+    default_path = evaluation_root / f"sec_pit_evaluation_summary_{report.as_of.isoformat()}.json"
     if not evaluation_root.exists():
         return default_path
     candidates: list[tuple[date, Path]] = []
     for path in evaluation_root.glob("sec_pit_evaluation_summary_*.json"):
         raw_date = path.stem.removeprefix("sec_pit_evaluation_summary_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_sec_pit_baseline_comparison_path(report: DailyTaskDashboardReport) -> Path:
+    comparison_root = report.project_root / "outputs" / "sec_pit_baseline_comparison"
+    default_path = (
+        comparison_root / f"sec_pit_baseline_comparison_summary_{report.as_of.isoformat()}.json"
+    )
+    if not comparison_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in comparison_root.glob("sec_pit_baseline_comparison_summary_*.json"):
+        raw_date = path.stem.removeprefix("sec_pit_baseline_comparison_summary_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_retry_candidate_queue_path(report: DailyTaskDashboardReport) -> Path:
+    queue_root = report.project_root / "outputs" / "retry_candidate_queue"
+    default_path = queue_root / f"retry_candidate_queue_{report.as_of.isoformat()}.json"
+    if not queue_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in queue_root.glob("retry_candidate_queue_*.json"):
+        raw_date = path.stem.removeprefix("retry_candidate_queue_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_retry_execution_dry_run_path(report: DailyTaskDashboardReport) -> Path:
+    dry_run_root = report.project_root / "outputs" / "retry_execution_dry_run"
+    default_path = dry_run_root / f"retry_execution_dry_run_{report.as_of.isoformat()}.json"
+    if not dry_run_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in dry_run_root.glob("retry_execution_dry_run_*.json"):
+        raw_date = path.stem.removeprefix("retry_execution_dry_run_")
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= report.as_of:
             candidates.append((parsed, path))
@@ -9027,6 +9677,226 @@ def _render_notification_delivery_audit_summary(report: DailyTaskDashboardReport
     )
 
 
+def _render_notification_delivery_failure_classification(
+    report: DailyTaskDashboardReport,
+) -> str:
+    summary = _notification_delivery_failure_classification(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}">'
+        "<span>Notification Delivery Failure Classification</span>"
+        f"<small>{_text(summary.get('overall_status', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>Notification Delivery Failure Classification</span>"
+        "<small>MISSING</small></span>"
+    )
+    missing_note = (
+        '<p class="subtle">'
+        "No notification delivery failure classification report available."
+        "</p>"
+        if summary.get("exists") is not True
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="notification-delivery-failure-classification-title">',
+            '<div class="section-head">',
+            (
+                '<h2 id="notification-delivery-failure-classification-title">'
+                "Notification Delivery Failure Classification</h2>"
+            ),
+            (
+                "<p>Notification delivery failure classification 只读卡片；dashboard 只读取 "
+                "TRADING-036 JSON，不运行 classifier、不读取或修改外部通知状态、不发送 "
+                "notification、不触发 retry、不修改 production 参数。</p>"
+            ),
+            "</div>",
+            missing_note,
+            '<div class="summary-grid">',
+            _summary_item("overall_status", summary.get("overall_status", "MISSING")),
+            _summary_item("highest_severity", summary.get("highest_severity", "UNKNOWN")),
+            _summary_item("total_failures", summary.get("total_failures", 0)),
+            _summary_item(
+                "requires_manual_review",
+                summary.get("requires_manual_review", False),
+            ),
+            _summary_item("safe_to_retry", summary.get("safe_to_retry", False)),
+            _summary_item(
+                "blocks_notification_chain",
+                summary.get("blocks_notification_chain", False),
+            ),
+            _summary_item(
+                "source audit status",
+                summary.get("source_audit_status", "MISSING"),
+            ),
+            _summary_item("generated_at", summary.get("generated_at", "")),
+            _summary_item("markdown path", summary.get("markdown_path", "")),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_retry_candidate_queue(report: DailyTaskDashboardReport) -> str:
+    summary = _retry_candidate_queue(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}">'
+        "<span>Retry Candidate Queue</span>"
+        f"<small>{_text(summary.get('queue_status', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>Retry Candidate Queue</span>"
+        "<small>MISSING</small></span>"
+    )
+    missing_note = (
+        '<p class="subtle">No retry candidate queue report available.</p>'
+        if summary.get("exists") is not True
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="retry-candidate-queue-title">',
+            '<div class="section-head">',
+            '<h2 id="retry-candidate-queue-title">Retry Candidate Queue</h2>',
+            (
+                "<p>Retry candidate queue 只读卡片；dashboard 只读取 TRADING-037 "
+                "JSON，不运行 queue generator、不执行 retry、不发送 notification、"
+                "不修改 approval state 或 production 参数。</p>"
+            ),
+            "</div>",
+            missing_note,
+            '<div class="summary-grid">',
+            _summary_item("queue_status", summary.get("queue_status", "MISSING")),
+            _summary_item("total_candidates", summary.get("total_candidates", 0)),
+            _summary_item("blocked_candidates", summary.get("blocked_candidates", 0)),
+            _summary_item(
+                "manual_review_required",
+                summary.get("manual_review_required", False),
+            ),
+            _summary_item(
+                "has_retryable_candidates",
+                summary.get("has_retryable_candidates", False),
+            ),
+            _summary_item(
+                "safe_to_execute_retry",
+                summary.get("safe_to_execute_retry", False),
+            ),
+            _summary_item("approval_status", summary.get("approval_status", "MISSING")),
+            _summary_item(
+                "retry_execution_allowed",
+                summary.get("retry_execution_allowed", False),
+            ),
+            _summary_item(
+                "source classification status",
+                summary.get("source_classification_status", "MISSING"),
+            ),
+            _summary_item(
+                "source parse status",
+                summary.get("source_parse_status", "MISSING"),
+            ),
+            _summary_item("generated_at", summary.get("generated_at", "")),
+            _summary_item("markdown path", summary.get("markdown_path", "")),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_retry_execution_dry_run(report: DailyTaskDashboardReport) -> str:
+    summary = _retry_execution_dry_run(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}">'
+        "<span>Retry Execution Dry Run</span>"
+        f"<small>{_text(summary.get('dry_run_status', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>Retry Execution Dry Run</span>"
+        "<small>MISSING</small></span>"
+    )
+    missing_note = (
+        '<p class="subtle">No retry execution dry-run report available.</p>'
+        if summary.get("exists") is not True
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="retry-execution-dry-run-title">',
+            '<div class="section-head">',
+            '<h2 id="retry-execution-dry-run-title">Retry Execution Dry Run</h2>',
+            (
+                "<p>Retry execution dry-run 只读卡片；dashboard 只读取 TRADING-038 "
+                "JSON，不运行 dry-run generator、不执行 retry、不发送 notification、"
+                "不修改 approval record、delivery state 或 production 参数。</p>"
+            ),
+            "</div>",
+            missing_note,
+            '<div class="summary-grid">',
+            _summary_item("dry_run_status", summary.get("dry_run_status", "MISSING")),
+            _summary_item("total_candidates", summary.get("total_candidates", 0)),
+            _summary_item(
+                "approved_for_dry_run",
+                summary.get("approved_for_dry_run", 0),
+            ),
+            _summary_item(
+                "blocked_from_dry_run",
+                summary.get("blocked_from_dry_run", 0),
+            ),
+            _summary_item(
+                "simulated_retry_actions",
+                summary.get("simulated_retry_actions", 0),
+            ),
+            _summary_item("real_retry_allowed", summary.get("real_retry_allowed", False)),
+            _summary_item(
+                "external_delivery_allowed",
+                summary.get("external_delivery_allowed", False),
+            ),
+            _summary_item(
+                "production_state_mutation_allowed",
+                summary.get("production_state_mutation_allowed", False),
+            ),
+            _summary_item(
+                "source queue status",
+                summary.get("source_queue_status", "MISSING"),
+            ),
+            _summary_item(
+                "approval parse status",
+                summary.get("approval_parse_status", "MISSING"),
+            ),
+            _summary_item("generated_at", summary.get("generated_at", "")),
+            _summary_item("markdown path", summary.get("markdown_path", "")),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
 def _render_sec_pit_evaluation_summary(report: DailyTaskDashboardReport) -> str:
     summary = _sec_pit_evaluation_summary(report)
     report_href = _string_value(summary.get("report_href"))
@@ -9092,6 +9962,89 @@ def _render_sec_pit_evaluation_summary(report: DailyTaskDashboardReport) -> str:
             "</section>",
         ]
     )
+
+
+def _render_sec_pit_baseline_comparison(report: DailyTaskDashboardReport) -> str:
+    summary = _sec_pit_baseline_comparison(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}">'
+        "<span>SEC PIT Baseline Comparison</span>"
+        f"<small>{_text(summary.get('status', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>SEC PIT Baseline Comparison</span>"
+        "<small>MISSING</small></span>"
+    )
+    missing_note = (
+        '<p class="subtle">No SEC PIT baseline comparison summary available.</p>'
+        if summary.get("exists") is not True
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="sec-pit-baseline-comparison-title">',
+            '<div class="section-head">',
+            '<h2 id="sec-pit-baseline-comparison-title">SEC PIT Baseline Comparison</h2>',
+            (
+                "<p>TRADING-041 只读卡片；dashboard 只读取 comparison artifact，"
+                "不运行 comparison、不重新读取 market data、不修改 production 权重或 action。</p>"
+            ),
+            "</div>",
+            missing_note,
+            '<div class="summary-grid">',
+            _summary_item("latest comparison date", summary.get("latest_comparison_date", "")),
+            _summary_item("comparison status", summary.get("status", "MISSING")),
+            _summary_item("decision count", summary.get("decision_count", 0)),
+            _summary_item("action changed count", summary.get("action_changed_count", 0)),
+            _summary_item(
+                "material rank shift count",
+                summary.get("material_rank_shift_count", 0),
+            ),
+            _summary_item(
+                "incremental alpha 20d",
+                _format_signed_percent(summary.get("incremental_alpha_20d")),
+            ),
+            _summary_item(
+                "drawdown improvement 20d",
+                _format_signed_percent(summary.get("drawdown_improvement_20d")),
+            ),
+            _summary_item(
+                "top promoted tickers",
+                _dashboard_ticker_delta_text(summary.get("top_promoted_tickers")),
+            ),
+            _summary_item(
+                "top downgraded tickers",
+                _dashboard_ticker_delta_text(summary.get("top_downgraded_tickers")),
+            ),
+            _summary_item("production_effect", summary.get("production_effect", "none")),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _dashboard_ticker_delta_text(value: object) -> str:
+    if not isinstance(value, list) or not value:
+        return "none"
+    parts: list[str] = []
+    for item in value[:5]:
+        if not isinstance(item, dict):
+            continue
+        ticker = item.get("ticker", "")
+        rank_delta = item.get("rank_delta", 0)
+        score_delta = item.get("score_delta")
+        score_text = "NA" if score_delta is None else f"{float(score_delta):+.2f}"
+        parts.append(f"{ticker} rank {rank_delta:+} / score {score_text}")
+    return "；".join(parts) or "none"
 
 
 def _shadow_impact_sample_text(impact: TraceRecord) -> str:
