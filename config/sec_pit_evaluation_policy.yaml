@@ -1,0 +1,22 @@
+sec_pit_evaluation:
+  policy_version: sec_pit_evaluation.v1
+  owner: system
+  status: pilot_baseline
+  rationale: >
+    首版用于把 TRADING-039 reconstructed filing-time SEC PIT feature 从数据底座推进到
+    可审计研究评价；阈值只筛选 shadow weight iteration 候选，不授权 production 权重变更。
+  review_condition: >
+    当 SEC PIT panel 覆盖完整 AI universe 至少两个财报季且 shadow outcome 样本可复核后，
+    owner 应复审 rank IC、稳定性、top-bottom spread 与样本门槛。
+  forward_return_trading_days: 1
+  min_cross_sectional_tickers: 3
+  research_only_min_observations: 10
+  shadow_candidate_min_observations: 60
+  shadow_candidate_min_months: 3
+  shadow_candidate_min_ticker_coverage: 0.50
+  shadow_candidate_min_decision_day_coverage: 0.50
+  shadow_candidate_min_abs_mean_rank_ic: 0.03
+  shadow_candidate_min_rank_ic_sign_stability: 0.55
+  shadow_candidate_min_directional_spread: 0.0
+  top_bottom_quantile: 0.33
+  min_shadow_candidate_count_for_positive_loop: 1
