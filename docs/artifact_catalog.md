@@ -20,7 +20,7 @@
 | `data/processed/sec_fundamentals_YYYY-MM-DD.csv` | SEC/TSM fundamentals pipeline | SEC companyfacts、TSMC IR | metric、period、filed/disclosed dates、value | fundamental scoring | 是 | TSM 可由官方 IR 合并，不等同 SEC companyfacts 缺失 |
 | `data/processed/sec_features_YYYY-MM-DD.csv` | `aits fundamentals build-sec-features` / `score-daily` | SEC-style metrics | margin、R&D、CapEx 等特征 | fundamental component | 是 | 单位或周期不一致时会跳过或告警，不应手工平滑 |
 | `data/raw/sec_edgar/*` + `data/processed/sec_edgar/*.csv` + `outputs/reports/sec_pit_backfill/*` | `aits sec-pit backfill` / `scripts/run_sec_pit_backfill.py` | SEC submissions、SEC companyfacts、fundamental metric/feature policy | raw manifest checksum、filing timeline、fact availability、PIT intervals、daily panel、feature panel、coverage/leakage validation | B-grade reconstructed filing-time fundamentals for backtest/score loaders | 否，`production_effect=none` | 默认是 `B_RECONSTRUCTED_SEC_FILING_PIT`，不是 strict vendor archive；不得只按 fiscal period end 合并 |
-| `outputs/sec_pit_evaluation/*` | `aits sec-pit evaluate` | `sec_pit_feature_panel.csv`、SEC company universe、cached prices/rates、`config/sec_pit_evaluation_policy.yaml` | evaluation JSON/Markdown、feature contribution CSV、shadow candidate CSV、data quality status、PIT safety、rank IC、top-bottom spread、classification | SEC PIT cognitive evaluation、shadow weight iteration 候选输入 | 否，`production_effect=none` | shadow candidate 不是 production 权重晋级；本命令会先跑 `validate_data_cache`，PIT 泄漏或数据质量失败时不生成成功评价结论 |
+| `outputs/sec_pit_evaluation/sec_pit_evaluation_summary_YYYY-MM-DD.json/md` + `sec_pit_feature_effectiveness_YYYY-MM-DD.csv` + `sec_pit_signal_attribution_YYYY-MM-DD.csv` + `sec_pit_shadow_candidate_weights_YYYY-MM-DD.csv` | `aits sec-pit evaluate` / `scripts/run_sec_pit_evaluation.py` | `sec_pit_feature_panel.csv`、SEC company universe 或 `--tickers`、cached prices/rates、`config/sec_pit_evaluation.yaml` | summary JSON/Markdown、feature effectiveness、signal attribution、shadow candidate weights、data quality status、PIT safety、IC/RankIC、top-bottom spread、coverage、stability、PIT quality、recommendation | SEC PIT cognitive evaluation、shadow weight iteration 候选输入；daily task dashboard 只读卡片 | 否，`production_effect=none` | shadow candidate 不是 production 权重晋级；本命令会先跑 `validate_data_cache`；缺少 `available_time` 或 `available_time > decision_time` 的行会被排除并计数；所有 shadow weights 固定 `manual_review_required=true`、`production_effect=none` |
 | `data/external/valuation_snapshots/*.yaml` | `aits valuation fetch-fmp` 或人工导入 | FMP / 可审计估值来源 | valuation percentile、crowding、EPS revision、PIT metadata | valuation component、valuation gate | 是 | 过期或 public convenience 来源不能伪装成高可信生产输入 |
 | `data/external/risk_event_occurrences/*.yaml` | 风险事件导入、LLM formal、人工复核 | 官方来源、LLM precheck、review attestation | risk id、level、evidence grade、lifecycle、action class | policy/geopolitics score、risk gate、alerts | 是 | LLM formal 不是人工复核，B 级 evidence 不能单独触发 gate |
 | `data/external/trade_theses/*.yaml` | 人工维护 | thesis、验证指标、证伪条件 | status、review state、invalidators | thesis gate、日报解释 | 是，对 active_trade 纪律有效 | watch_only ticker 缺 thesis 不等于 thesis 失败 |
@@ -46,6 +46,10 @@
 | `outputs/replays/YYYY-MM-DD/<run_id>/diff_vs_production.md` | `replay-day --compare-to-production` | replay bundle、production artifacts | checksum、row count、status diff | PIT 复核 | 否 | diff 说明产物不同，不自动说明哪个结论正确 |
 
 注：Daily task dashboard 还会只读读取 latest
+`outputs/sec_pit_evaluation/sec_pit_evaluation_summary_YYYY-MM-DD.json`
+并展示 SEC PIT Evaluation Summary 轻量卡片；dashboard 不运行 `aits sec-pit evaluate`、
+不重新读取 market data、不修改 production score 权重或 shadow weight artifact。
+同时会只读读取 latest
 `data/derived/weight_iterations/promotion/proposals/shadow_promotion_proposal_YYYY-MM-DD.json`
 并展示 Shadow Promotion Proposal 轻量卡片；dashboard 不运行 TRADING-018D proposal
 script，也不重跑 018B/018C/018C2、scoring、broker、paper runner 或 replay runner。

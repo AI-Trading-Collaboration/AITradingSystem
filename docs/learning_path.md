@@ -131,11 +131,15 @@
 
 - `data/processed/scores_daily.csv`
 - `outputs/reports/daily_score_YYYY-MM-DD.md`
+- `outputs/sec_pit_evaluation/sec_pit_evaluation_summary_YYYY-MM-DD.md`
 
 应该看哪份报告确认：
 
 - 日报的 `模块评分`、`硬数据信号`、`人工复核摘要` 和 `Score-to-Position Funnel`。
 - `docs/calculation_logic.md` 的“第 3 步”和“第 4 步”。
+- 若问题是 SEC reconstructed PIT feature 是否具备 shadow iteration 证据，查看
+  `docs/runbooks/sec_pit_evaluation.md`、`sec_pit_feature_effectiveness_YYYY-MM-DD.csv`
+  和 `sec_pit_signal_attribution_YYYY-MM-DD.csv`。
 
 ## 第 5 步：权重如何合成 overall score
 

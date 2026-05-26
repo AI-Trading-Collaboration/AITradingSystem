@@ -1,0 +1,27 @@
+sec_pit_evaluation:
+  policy_version: sec_pit_evaluation.v2
+  owner: system
+  status: pilot_baseline
+  rationale: >
+    首版 TRADING-040 cognitive evaluation policy，用于将 reconstructed filing-time SEC PIT
+    features 分层为 shadow candidate、research-only、downweight 或 insufficient-data。
+    这些阈值只控制 observe-only shadow 建议，不授权 production score 权重变更。
+  review_condition: >
+    当 SEC PIT panel 覆盖完整 AI universe 至少两个财报季，且 shadow outcome 样本可独立复核后，
+    owner 应复审 coverage、RankIC、stability、PIT quality 和 shadow weight 上限。
+  min_coverage_ratio: 0.6
+  min_valid_ticker_count: 5
+  min_sample_count: 30
+  min_abs_rank_ic_20d: 0.03
+  min_stability_score: 0.5
+  min_pit_quality_score: 0.8
+  winsorize_lower_quantile: 0.01
+  winsorize_upper_quantile: 0.99
+  top_quantile: 0.20
+  max_abs_shadow_weight: 0.05
+  pit_quality_weights:
+    pit_grade: 0.25
+    accession_number: 0.25
+    accepted_datetime: 0.15
+    filed_date: 0.15
+    raw_sha256: 0.20

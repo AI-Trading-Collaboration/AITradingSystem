@@ -36,6 +36,7 @@ from ai_trading_system.fundamentals.sec_pit_evaluation import (
     DEFAULT_RATES_PATH,
     DEFAULT_SEC_PIT_EVALUATION_OUTPUT_DIR,
     DEFAULT_SEC_PIT_EVALUATION_POLICY_PATH,
+    DEFAULT_SEC_PIT_FEATURE_PANEL_PATH,
     run_sec_pit_evaluation,
 )
 from ai_trading_system.fundamentals.sec_pit_metrics import build_mapped_metrics_csv
@@ -427,8 +428,7 @@ def evaluate_command(
     feature_panel: Annotated[
         Path,
         typer.Option("--feature-panel", help="TRADING-039 SEC PIT feature panel CSV。"),
-    ] = DEFAULT_SEC_EDGAR_PROCESSED_DIR
-    / "sec_pit_feature_panel.csv",
+    ] = DEFAULT_SEC_PIT_FEATURE_PANEL_PATH,
     universe: Annotated[
         Path,
         typer.Option("--universe", help="SEC company universe 配置路径。"),
@@ -437,6 +437,13 @@ def evaluate_command(
         str,
         typer.Option("--benchmark", help="用于 forward excess return 的 benchmark ticker。"),
     ] = "QQQ",
+    tickers: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--tickers",
+            help="覆盖 universe 的 ticker 列表；可重复，也可用逗号或空格分隔。",
+        ),
+    ] = None,
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="SEC PIT evaluation 输出目录。"),
@@ -498,17 +505,17 @@ def evaluate_command(
         policy_path=policy_path,
         market_regimes_path=market_regimes_path,
         regime=regime,
+        tickers=tickers,
     )
     console.print(f"SEC PIT evaluation status: {artifacts.status}")
-    console.print(f"Evaluation JSON: {artifacts.json_path}")
-    console.print(f"Evaluation report: {artifacts.markdown_path}")
-    if artifacts.feature_contributions_path is not None:
-        console.print(f"Feature contributions: {artifacts.feature_contributions_path}")
-    if artifacts.shadow_candidates_path is not None:
-        console.print(f"Shadow candidates: {artifacts.shadow_candidates_path}")
+    console.print(f"Evaluation summary JSON: {artifacts.summary_json_path}")
+    console.print(f"Evaluation summary report: {artifacts.summary_markdown_path}")
+    console.print(f"Feature effectiveness: {artifacts.feature_effectiveness_path}")
+    console.print(f"Signal attribution: {artifacts.signal_attribution_path}")
+    console.print(f"Shadow candidate weights: {artifacts.shadow_candidate_weights_path}")
     console.print(f"Data quality report: {artifacts.data_quality_report_path}")
     console.print(f"Run log: {artifacts.run_log_path}")
-    if artifacts.status in {"DATA_QUALITY_FAILED", "SAFETY_BLOCKED"}:
+    if artifacts.status in {"DATA_QUALITY_FAILED"}:
         raise typer.Exit(code=2)
 
 

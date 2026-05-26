@@ -76,6 +76,7 @@ outputs/runs/daily/<executed_at_utc>/
 |历史复现被 daily-run 阻断|改用 `outputs/replays/` 下的 `ops replay-day --mode cache-only` bundle，检查 `input_freeze_manifest.csv` 和 replay report。|
 |报告存在但结论不可用|日报“结论使用等级”、Decision Card 的 Data Gate、人工复核摘要。|
 |OpenAI 预审失败|`risk_event_prereview_openai_YYYY-MM-DD.md` 和本地 request cache，不保存 API key。|
+|SEC PIT feature 需要认知评估|先确认 TRADING-039 `data/processed/sec_edgar/sec_pit_feature_panel.csv` 和数据质量门禁可用，再运行 `aits sec-pit evaluate --start 2023-01-01 --end YYYY-MM-DD --feature-panel data/processed/sec_edgar/sec_pit_feature_panel.csv --universe config/sec_companies.yaml --benchmark QQQ --output-dir outputs/sec_pit_evaluation`；只读取 evaluation artifacts，shadow weight 输出不修改 production。|
 |疑似 secret|`secret_hygiene_YYYY-MM-DD.md`，只输出脱敏片段。|
 
 ## 调度示例

@@ -1226,6 +1226,7 @@ sources:
       - data/processed/sec_edgar/fundamental_pit_daily_panel.csv
       - data/processed/sec_edgar/sec_pit_feature_panel.csv
       - outputs/reports/sec_pit_backfill
+      - outputs/sec_pit_evaluation
     primary_for:
       - reconstructed_filing_time_pit_fundamentals
       - sec_ratio_features
@@ -1256,12 +1257,15 @@ sources:
       - restatement_supersession_after_amendment
       - coverage_thresholds
       - staleness
+      - cognitive_evaluation_available_time_gate
+      - shadow_candidate_observe_only
     limitations:
       - "默认等级为 `B_RECONSTRUCTED_SEC_FILING_PIT`，因为该层从 SEC 当前可下载 submissions/companyfacts 重建历史可见性，不是严格 vendor archive。"
       - "`strict_vendor_archive=false`、`retroactive_strict_pit=false`；升级等级前必须进行人工复核和 vendor/archive 对照。"
       - companyfacts 聚合 API 可能受 SEC 后续解析修正影响；报告必须保留 raw manifest checksum 和来源 endpoint。
       - 外国发行人或 6-K 半年度披露可能无法提供完整季度 XBRL；默认只进入 C 级或 coverage warning。
       - "不允许只按 fiscal period end 合并；所有 feature panel 行必须满足 `available_for_signal_date <= decision_date`。"
+      - "TRADING-040 evaluation 只生成 feature effectiveness、signal attribution 和 shadow candidate weights；`manual_review_required=true`、`production_effect=none`，不得自动修改 production score 权重。"
     llm_permission:
       license_scope: public_primary_source_owner_review
       personal_use_only: true

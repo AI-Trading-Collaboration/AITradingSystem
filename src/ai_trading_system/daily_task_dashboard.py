@@ -234,6 +234,7 @@ def build_daily_task_dashboard_payload(
             _operator_brief_notification_draft_dispatch_summary(report)
         ),
         "notification_delivery_audit_summary": _notification_delivery_audit_summary(report),
+        "sec_pit_evaluation_summary": _sec_pit_evaluation_summary(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -354,6 +355,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_operator_brief_notification_approval_gate(report),
             _render_operator_brief_notification_draft_dispatch(report),
             _render_notification_delivery_audit_summary(report),
+            _render_sec_pit_evaluation_summary(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -5446,6 +5448,99 @@ def _notification_delivery_audit_summary(
     }
 
 
+def _sec_pit_evaluation_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_sec_pit_evaluation_summary_path(report)
+    payload = _read_json_object(path)
+    default_markdown = (
+        report.project_root
+        / "outputs"
+        / "sec_pit_evaluation"
+        / f"sec_pit_evaluation_summary_{report.as_of.isoformat()}.md"
+    )
+    if payload.get("report_type") != "sec_pit_cognitive_evaluation":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "markdown_path": str(default_markdown),
+            "latest_evaluation_date": "",
+            "universe_size": 0,
+            "feature_count": 0,
+            "promote_to_shadow_count": 0,
+            "research_only_count": 0,
+            "excluded_count": 0,
+            "top_features": [],
+            "pit_safety_status": "MISSING",
+            "production_effect": ProductionEffect.NONE.value,
+            "read_only": True,
+            "risk": (
+                "No SEC PIT evaluation summary available. Dashboard 只读取 "
+                "TRADING-040 artifact，不运行 evaluation、不读取市场数据、不修改权重。"
+            ),
+        }
+
+    outputs = _mapping_value(payload, "output_artifacts")
+    markdown_path = (
+        _project_path(report.project_root, _string_value(outputs.get("summary_markdown")))
+        or default_markdown
+    )
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    recommendations = _mapping_value(payload, "recommendations")
+    coverage = _mapping_value(payload, "data_coverage")
+    pit_violations = _int_value(coverage.get("pit_violation_count"))
+    missing_available = _int_value(coverage.get("missing_available_time"))
+    excluded = _int_value(coverage.get("excluded_rows"))
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("TRADING-040 evaluation production_effect 必须为 none。")
+    if pit_violations:
+        risks.append("存在 available_time 晚于 decision_time 的排除行。")
+    if missing_available:
+        risks.append("存在缺少 available_time 的排除行。")
+    top_features = _sec_pit_top_features(payload.get("top_features"))
+    return {
+        "status": _string_value(payload.get("status")) or "UNKNOWN",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "markdown_path": str(markdown_path),
+        "latest_evaluation_date": _string_value(payload.get("end_date")),
+        "universe_size": _int_value(payload.get("universe_size")),
+        "feature_count": _int_value(payload.get("feature_count")),
+        "promote_to_shadow_count": _int_value(recommendations.get("promote_to_shadow")),
+        "research_only_count": _int_value(recommendations.get("keep_research_only")),
+        "excluded_count": excluded + _int_value(recommendations.get("exclude_insufficient_data")),
+        "top_features": top_features,
+        "pit_safety_status": "PASS" if pit_violations == 0 and missing_available == 0 else "WATCH",
+        "production_effect": production_effect,
+        "read_only": True,
+        "risk": "；".join(risks) or "SEC PIT evaluation dashboard card 当前仅作只读展示。",
+    }
+
+
+def _sec_pit_top_features(value: object) -> list[TraceRecord]:
+    if not isinstance(value, list):
+        return []
+    records: list[TraceRecord] = []
+    for item in value[:5]:
+        if isinstance(item, dict):
+            records.append(
+                {
+                    "feature_id": _string_value(item.get("feature_id")),
+                    "metric_id": _string_value(item.get("metric_id")),
+                    "rank_ic_20d": item.get("rank_ic_20d"),
+                    "recommendation": _string_value(item.get("recommendation")),
+                }
+            )
+    return records
+
+
 def _latest_shadow_vs_production_review_path(report: DailyTaskDashboardReport) -> Path:
     review_root = (
         report.project_root / "data" / "derived" / "weight_iterations" / "comparison" / "reviews"
@@ -5867,6 +5962,22 @@ def _latest_notification_delivery_audit_summary_path(
     candidates: list[tuple[date, Path]] = []
     for path in audit_root.glob("notification_delivery_audit_summary_*.json"):
         raw_date = path.stem.removeprefix("notification_delivery_audit_summary_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_sec_pit_evaluation_summary_path(report: DailyTaskDashboardReport) -> Path:
+    evaluation_root = report.project_root / "outputs" / "sec_pit_evaluation"
+    default_path = evaluation_root / (f"sec_pit_evaluation_summary_{report.as_of.isoformat()}.json")
+    if not evaluation_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in evaluation_root.glob("sec_pit_evaluation_summary_*.json"):
+        raw_date = path.stem.removeprefix("sec_pit_evaluation_summary_")
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= report.as_of:
             candidates.append((parsed, path))
@@ -8903,6 +9014,73 @@ def _render_notification_delivery_audit_summary(report: DailyTaskDashboardReport
             ),
             _summary_item("warning_count", summary.get("warning_count", 0)),
             _summary_item("markdown path", summary.get("markdown_path", "")),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_sec_pit_evaluation_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _sec_pit_evaluation_summary(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}">'
+        "<span>SEC PIT Evaluation Summary</span>"
+        f"<small>{_text(summary.get('status', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>SEC PIT Evaluation Summary</span>"
+        "<small>MISSING</small></span>"
+    )
+    missing_note = (
+        '<p class="subtle">No SEC PIT evaluation summary available.</p>'
+        if summary.get("exists") is not True
+        else ""
+    )
+    top_features = summary.get("top_features")
+    feature_text = "none"
+    if isinstance(top_features, list) and top_features:
+        parts = []
+        for item in top_features[:5]:
+            if isinstance(item, dict):
+                parts.append(
+                    f"{item.get('feature_id', '')}:"
+                    f"{_text(item.get('rank_ic_20d', ''))}:"
+                    f"{item.get('recommendation', '')}"
+                )
+        feature_text = "；".join(parts) or "none"
+    return "\n".join(
+        [
+            '<section aria-labelledby="sec-pit-evaluation-summary-title">',
+            '<div class="section-head">',
+            '<h2 id="sec-pit-evaluation-summary-title">SEC PIT Evaluation Summary</h2>',
+            (
+                "<p>SEC PIT evaluation 只读卡片；dashboard 只读取 TRADING-040 "
+                "artifact，不运行 evaluation、不重新读取 market data、不修改 production 权重。</p>"
+            ),
+            "</div>",
+            missing_note,
+            '<div class="summary-grid">',
+            _summary_item("latest evaluation date", summary.get("latest_evaluation_date", "")),
+            _summary_item("universe size", summary.get("universe_size", 0)),
+            _summary_item("feature count", summary.get("feature_count", 0)),
+            _summary_item(
+                "promote_to_shadow",
+                summary.get("promote_to_shadow_count", 0),
+            ),
+            _summary_item("research_only", summary.get("research_only_count", 0)),
+            _summary_item("excluded", summary.get("excluded_count", 0)),
+            _summary_item("top 5 features by rank_ic_20d", feature_text),
+            _summary_item("PIT safety status", summary.get("pit_safety_status", "MISSING")),
+            _summary_item("production_effect", summary.get("production_effect", "none")),
             "</div>",
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'
