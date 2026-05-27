@@ -245,6 +245,7 @@ def build_daily_task_dashboard_payload(
         "sec_pit_candidate_review": _sec_pit_candidate_review(report),
         "sec_pit_baseline_coverage": _sec_pit_baseline_coverage(report),
         "sec_pit_shadow_observe": _sec_pit_shadow_observe(report),
+        "sec_pit_shadow_monitor": _sec_pit_shadow_monitor(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -374,6 +375,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_sec_pit_candidate_review(report),
             _render_sec_pit_baseline_coverage(report),
             _render_sec_pit_shadow_observe(report),
+            _render_sec_pit_shadow_monitor(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -5958,6 +5960,83 @@ def _sec_pit_baseline_coverage(report: DailyTaskDashboardReport) -> TraceRecord:
     }
 
 
+def _sec_pit_shadow_monitor(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_sec_pit_shadow_monitor_path(report)
+    payload = _read_json_object(path)
+    default_markdown = (
+        report.project_root
+        / "outputs"
+        / "sec_pit_shadow_monitor"
+        / f"sec_pit_shadow_monitor_summary_{report.as_of.isoformat()}.md"
+    )
+    if payload.get("report_type") != "sec_pit_shadow_monitor":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "markdown_path": str(default_markdown),
+            "latest_monitor_date": "",
+            "candidate_feature": "",
+            "observe_weight": None,
+            "rolling_rank_ic_20d": None,
+            "rolling_rank_ic_60d": None,
+            "monitoring_sample_count": 0,
+            "monitoring_days_elapsed": 0,
+            "monitoring_days_remaining": 0,
+            "warning_count": 0,
+            "rollback_recommended": False,
+            "production_effect": ProductionEffect.NONE.value,
+            "read_only": True,
+            "risk": (
+                "No SEC PIT shadow monitor summary available. Dashboard 只读取 "
+                "TRADING-046 artifact，不运行 shadow-monitor、不运行 shadow-observe、"
+                "不运行 baseline coverage audit。"
+            ),
+        }
+    outputs = _mapping_value(payload, "output_artifacts")
+    markdown_path = (
+        _project_path(report.project_root, _string_value(outputs.get("summary_markdown")))
+        or default_markdown
+    )
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    status = _string_value(payload.get("monitor_status")) or "UNKNOWN"
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("TRADING-046 shadow monitor production_effect 必须为 none。")
+    if payload.get("manual_review_required") is not True:
+        risks.append("TRADING-046 shadow monitor 必须要求人工复核。")
+    if payload.get("rollback_recommended") is True:
+        risks.append("Shadow monitor recommends rollback; manual review is required.")
+    if status in {"FAILED_VALIDATION", "INSUFFICIENT_MONITORING_SAMPLE", "WARNING"}:
+        risks.append(f"Shadow monitor status is {status}; conclusions are limited.")
+    return {
+        "status": status,
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "markdown_path": str(markdown_path),
+        "latest_monitor_date": _string_value(payload.get("monitor_date")),
+        "candidate_feature": _string_value(payload.get("candidate_feature")),
+        "observe_weight": _optional_float(payload.get("observe_weight")),
+        "rolling_rank_ic_20d": _optional_float(payload.get("rolling_rank_ic_20d")),
+        "rolling_rank_ic_60d": _optional_float(payload.get("rolling_rank_ic_60d")),
+        "monitoring_sample_count": _int_value(payload.get("monitoring_sample_count")),
+        "monitoring_days_elapsed": _int_value(payload.get("monitoring_days_elapsed")),
+        "monitoring_days_remaining": _int_value(payload.get("monitoring_days_remaining")),
+        "warning_count": _int_value(payload.get("warning_count")),
+        "rollback_recommended": payload.get("rollback_recommended") is True,
+        "production_effect": production_effect,
+        "read_only": True,
+        "risk": "；".join(risks) or "SEC PIT shadow monitor dashboard card 当前仅作只读展示。",
+    }
+
+
 def _dashboard_ticker_delta_list(value: object) -> list[TraceRecord]:
     if not isinstance(value, list):
         return []
@@ -7033,6 +7112,22 @@ def _latest_sec_pit_baseline_coverage_path(report: DailyTaskDashboardReport) -> 
     candidates: list[tuple[date, Path]] = []
     for path in coverage_root.glob("sec_pit_baseline_coverage_summary_*.json"):
         raw_date = path.stem.removeprefix("sec_pit_baseline_coverage_summary_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_sec_pit_shadow_monitor_path(report: DailyTaskDashboardReport) -> Path:
+    monitor_root = report.project_root / "outputs" / "sec_pit_shadow_monitor"
+    default_path = monitor_root / f"sec_pit_shadow_monitor_summary_{report.as_of.isoformat()}.json"
+    if not monitor_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in monitor_root.glob("sec_pit_shadow_monitor_summary_*.json"):
+        raw_date = path.stem.removeprefix("sec_pit_shadow_monitor_summary_")
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= report.as_of:
             candidates.append((parsed, path))
@@ -10726,6 +10821,74 @@ def _render_sec_pit_baseline_coverage(report: DailyTaskDashboardReport) -> str:
             _summary_item(
                 "score completeness avg",
                 _format_percent(summary.get("score_completeness_avg")),
+            ),
+            _summary_item("production effect", summary.get("production_effect", "none")),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_sec_pit_shadow_monitor(report: DailyTaskDashboardReport) -> str:
+    summary = _sec_pit_shadow_monitor(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}">'
+        "<span>SEC PIT Shadow Monitor</span>"
+        f"<small>{_text(summary.get('status', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>SEC PIT Shadow Monitor</span>"
+        "<small>MISSING</small></span>"
+    )
+    missing_note = (
+        '<p class="subtle">No SEC PIT shadow monitor summary available.</p>'
+        if summary.get("exists") is not True
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="sec-pit-shadow-monitor-title">',
+            '<div class="section-head">',
+            '<h2 id="sec-pit-shadow-monitor-title">SEC PIT Shadow Monitor</h2>',
+            (
+                "<p>TRADING-046 只读卡片；dashboard 只读取 rolling monitor artifact，"
+                "不运行 shadow-monitor、不运行 shadow-observe、不写任何 production 或 "
+                "active shadow config。</p>"
+            ),
+            "</div>",
+            missing_note,
+            '<div class="summary-grid">',
+            _summary_item("latest monitor date", summary.get("latest_monitor_date", "")),
+            _summary_item("monitor status", summary.get("status", "MISSING")),
+            _summary_item("candidate feature", summary.get("candidate_feature", "")),
+            _summary_item(
+                "observe weight",
+                _format_decimal(summary.get("observe_weight"), digits=4),
+            ),
+            _summary_item(
+                "rolling rank IC 20D",
+                _format_decimal(summary.get("rolling_rank_ic_20d"), digits=4),
+            ),
+            _summary_item(
+                "rolling rank IC 60D",
+                _format_decimal(summary.get("rolling_rank_ic_60d"), digits=4),
+            ),
+            _summary_item("sample count", summary.get("monitoring_sample_count", 0)),
+            _summary_item("days elapsed", summary.get("monitoring_days_elapsed", 0)),
+            _summary_item("days remaining", summary.get("monitoring_days_remaining", 0)),
+            _summary_item("warning count", summary.get("warning_count", 0)),
+            _summary_item(
+                "rollback recommended",
+                "yes" if summary.get("rollback_recommended") else "no",
             ),
             _summary_item("production effect", summary.get("production_effect", "none")),
             "</div>",

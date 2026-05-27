@@ -64,6 +64,11 @@ from ai_trading_system.fundamentals.sec_pit_real_run_diagnostics import (
     DEFAULT_SEC_PIT_DIAGNOSTICS_OUTPUT_DIR,
     run_sec_pit_real_run_diagnostics,
 )
+from ai_trading_system.fundamentals.sec_pit_shadow_monitor import (
+    DEFAULT_SEC_PIT_RESEARCH_BASELINE_SCORE_PATH,
+    DEFAULT_SEC_PIT_SHADOW_MONITOR_OUTPUT_DIR,
+    run_sec_pit_shadow_monitor,
+)
 from ai_trading_system.fundamentals.sec_pit_shadow_observe import (
     DEFAULT_SEC_PIT_SHADOW_OBSERVE_CONFIG_PATH,
     DEFAULT_SEC_PIT_SHADOW_OBSERVE_OUTPUT_DIR,
@@ -879,6 +884,66 @@ def shadow_observe_command(
     console.print(f"Bucket comparison: {artifacts.bucket_comparison_path}")
     console.print(f"Monitoring plan: {artifacts.monitoring_plan_path}")
     console.print(f"Safety audit: {artifacts.safety_audit_path}")
+
+
+@sec_pit_app.command("shadow-monitor")
+def shadow_monitor_command(
+    shadow_observe_dir: Annotated[
+        Path,
+        typer.Option(
+            "--shadow-observe-dir",
+            help="TRADING-044 SEC PIT shadow observe artifact 目录。",
+        ),
+    ] = DEFAULT_SEC_PIT_SHADOW_OBSERVE_OUTPUT_DIR,
+    baseline_coverage_dir: Annotated[
+        Path,
+        typer.Option(
+            "--baseline-coverage-dir",
+            help="TRADING-045 baseline coverage artifact 目录。",
+        ),
+    ] = DEFAULT_SEC_PIT_BASELINE_COVERAGE_OUTPUT_DIR,
+    baseline_score_path: Annotated[
+        Path,
+        typer.Option(
+            "--baseline-score-path",
+            help="Research-only historical baseline score CSV。",
+        ),
+    ] = DEFAULT_SEC_PIT_RESEARCH_BASELINE_SCORE_PATH,
+    window_days: Annotated[
+        tuple[int, int],
+        typer.Option(
+            "--window-days",
+            help="Rolling monitor window days，例如：--window-days 20 60。",
+        ),
+    ] = (20, 60),
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="SEC PIT shadow monitor 输出目录。"),
+    ] = DEFAULT_SEC_PIT_SHADOW_MONITOR_OUTPUT_DIR,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="自动发现 latest SEC PIT shadow observe artifacts。"),
+    ] = False,
+) -> None:
+    """生成 SEC PIT observe-only shadow lane 的滚动监控报告。"""
+    try:
+        artifacts = run_sec_pit_shadow_monitor(
+            shadow_observe_dir=shadow_observe_dir,
+            baseline_coverage_dir=baseline_coverage_dir,
+            baseline_score_path=baseline_score_path,
+            window_days=window_days,
+            output_dir=output_dir,
+            latest=latest,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"SEC PIT shadow monitor status: {artifacts.status}")
+    console.print(f"Summary JSON: {artifacts.summary_json_path}")
+    console.print(f"Summary report: {artifacts.summary_markdown_path}")
+    console.print(f"Rolling metrics: {artifacts.rolling_metrics_path}")
+    console.print(f"Warning events: {artifacts.warning_events_path}")
+    if artifacts.status == "FAILED_VALIDATION":
+        raise typer.Exit(code=1)
 
 
 def _resolve_user_agent(value: str | None) -> str:

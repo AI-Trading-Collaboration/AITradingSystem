@@ -127,3 +127,18 @@ observe date、shadow status、lane id、candidate feature、observe weight、pr
 rows、top positive / negative rank shifts、safety check status、baseline coverage ratio/status、
 monitoring status reason、factor rollback triggered 和 data limitation triggered。Dashboard 不运行
 `aits sec-pit shadow-observe`，不写任何配置，也不运行 baseline coverage audit 或 backfill。
+
+## Rolling Monitor
+
+持续观察阶段使用 `TRADING-046`：
+
+```bash
+aits sec-pit shadow-monitor --latest
+```
+
+该命令只读读取 shadow observe、baseline coverage 和 research-only baseline score artifacts，输出
+`outputs/sec_pit_shadow_monitor/sec_pit_shadow_monitor_summary_YYYY-MM-DD.json/md`、
+`sec_pit_shadow_rolling_metrics_YYYY-MM-DD.csv` 和
+`sec_pit_shadow_warning_events_YYYY-MM-DD.csv`。它用于判断 rolling RankIC、bucket 表现、
+relative return、drawdown improvement 和观察期剩余天数，不新增因子、不修改 observe weight，也不触发
+production 或 active shadow 配置写入。
