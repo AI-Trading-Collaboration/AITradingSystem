@@ -168,6 +168,28 @@ def test_missing_baseline_degrades_but_preserves_shadow_score_schema(tmp_path: P
     assert rank_shift.empty
 
 
+def test_partial_baseline_gap_does_not_limit_shadow_status_when_gate_passes(
+    tmp_path: Path,
+) -> None:
+    paths = _write_shadow_inputs(tmp_path)
+    baseline = pd.read_csv(paths["baseline_score_path"])
+    baseline.iloc[:-1].to_csv(paths["baseline_score_path"], index=False)
+    config_path = _write_shadow_config(
+        tmp_path,
+        min_baseline_coverage_ratio=0.75,
+        min_monitoring_sample_count=20,
+    )
+
+    artifacts = _run_shadow_observe(paths, tmp_path, config_path=config_path)
+
+    summary = _read_json(artifacts.summary_json_path)
+    assert summary["shadow_status"] == "OK"
+    assert summary["baseline_coverage_status"] == "OK"
+    assert summary["baseline_coverage_ratio"] >= 0.75
+    assert summary["monitoring_status"] == "INSUFFICIENT_MONITORING_SAMPLE"
+    assert any("baseline coverage passed" in limitation for limitation in summary["limitations"])
+
+
 def test_factor_rollback_requires_monitoring_quality_gates(tmp_path: Path) -> None:
     paths = _write_shadow_inputs(tmp_path)
     _make_signal_attribution_wrong_direction(paths["evaluation_dir"])
@@ -643,7 +665,12 @@ def _make_signal_attribution_wrong_direction(evaluation_dir: Path) -> None:
     frame.to_csv(path, index=False)
 
 
-def _write_shadow_config(tmp_path: Path, *, min_monitoring_sample_count: int) -> Path:
+def _write_shadow_config(
+    tmp_path: Path,
+    *,
+    min_monitoring_sample_count: int,
+    min_baseline_coverage_ratio: float = 0.90,
+) -> Path:
     path = tmp_path / "sec_pit_shadow_observe.yaml"
     path.write_text(
         "\n".join(
@@ -679,7 +706,7 @@ def _write_shadow_config(tmp_path: Path, *, min_monitoring_sample_count: int) ->
                 "  semiconductor_tickers: [NVDA, AMD, AVGO]",
                 "  platform_tickers: [MSFT, GOOG, META, AMZN]",
                 "monitoring_quality_gate:",
-                "  min_baseline_coverage_ratio: 0.90",
+                f"  min_baseline_coverage_ratio: {min_baseline_coverage_ratio:.2f}",
                 "  min_label_coverage_ratio: 0.90",
                 f"  min_monitoring_sample_count: {min_monitoring_sample_count}",
                 "  data_limited_status_prevents_factor_rollback: true",

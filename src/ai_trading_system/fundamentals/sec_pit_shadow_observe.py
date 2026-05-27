@@ -413,14 +413,11 @@ def run_sec_pit_shadow_observe(
             end=end,
         )
         monitoring_quality = _monitoring_quality(shadow_scores, config)
-        if (
-            not inputs.baseline.exists
-            or _baseline_missing(shadow_scores)
-            or monitoring_quality.status == "LIMITED_BASELINE_MISSING"
-        ):
+        baseline_missing = _baseline_missing(shadow_scores)
+        if not inputs.baseline.exists or monitoring_quality.status == "LIMITED_BASELINE_MISSING":
             status = "LIMITED_BASELINE_MISSING"
             limitations.append(
-                "Baseline score is missing for part or all of the requested shadow rows; "
+                "Baseline score coverage is below the configured monitoring quality gate; "
                 "rank shift fields are limited."
             )
         elif (
@@ -430,6 +427,11 @@ def run_sec_pit_shadow_observe(
             limitations.append("Forward return labels are missing or incomplete.")
         else:
             status = "OK"
+            if baseline_missing:
+                limitations.append(
+                    "Some baseline score rows are missing, but baseline coverage passed "
+                    "the configured monitoring quality gate."
+                )
         rank_shift = _rank_shift(shadow_scores)
         bucket_comparison = _bucket_comparison(shadow_scores, config=config)
         monitoring_plan = _monitoring_plan(
