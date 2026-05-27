@@ -59,7 +59,8 @@ aits sec-pit shadow-monitor --latest
 
 ## 状态枚举
 
-- `INSUFFICIENT_MONITORING_SAMPLE`
+- `INSUFFICIENT_MONITORING_SAMPLE`（TRADING-046A 后仅保留为历史兼容状态）
+- `MONITORING_ACTIVE`
 - `OK_MONITORING`
 - `WARNING`
 - `ROLLBACK_RECOMMENDED`
@@ -69,6 +70,9 @@ aits sec-pit shadow-monitor --latest
 
 - baseline coverage gate 未通过时不得输出 `ROLLBACK_RECOMMENDED`。
 - label/sample/观察期不足时不得输出 `ROLLBACK_RECOMMENDED`。
+- TRADING-046A 后，coverage gate 已通过但 minimum evidence 未达标时输出 `MONITORING_ACTIVE`；
+  coverage、minimum sample、observation days 达标且无 warning/rollback 时输出 `OK_MONITORING`，
+  rolling metrics 暂不完整只阻断 rollback，不再被解释为 sample insufficiency。
 - factor underperformance 必须被确认后才能输出 `ROLLBACK_RECOMMENDED`。
 - 本任务的 pilot rollback confirmation baseline 要求至少一个 RankIC rollback breach 且至少一个 outcome
   metric rollback breach 同时出现；这是人工复核前的保守保护，不是 production promotion policy。

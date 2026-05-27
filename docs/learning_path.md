@@ -169,10 +169,12 @@
   `capex_intensity` 对 score/rank 的假设影响，不影响 production。monitoring status 需要同时看
   baseline coverage、label coverage 和 monitoring sample count；coverage gate 未通过时不得解释成
   因子回滚。
-- 若问题是 observe-only lane 是否已经从 `INSUFFICIENT_MONITORING_SAMPLE` 进入可持续观察状态，查看
+- 若问题是 observe-only lane 是否仍在 `MONITORING_ACTIVE` 观察期，或是否已经进入
+  `OK_MONITORING`，查看
   `docs/runbooks/sec_pit_shadow_monitor.md`、`sec_pit_shadow_rolling_metrics_YYYY-MM-DD.csv` 和
   `sec_pit_shadow_warning_events_YYYY-MM-DD.csv`；该步骤只读监控 rolling RankIC、bucket 表现、
-  relative return、drawdown improvement 和观察期剩余天数，不新增因子、不改权重。
+  relative return、drawdown improvement、monitor maturity、rolling metrics availability 和观察期剩余天数，
+  不新增因子、不改权重。
 
 ## 第 5 步：权重如何合成 overall score
 

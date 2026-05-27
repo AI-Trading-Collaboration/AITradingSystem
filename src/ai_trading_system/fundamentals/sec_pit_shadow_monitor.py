@@ -22,6 +22,7 @@ from ai_trading_system.fundamentals.sec_pit_shadow_observe import (
 )
 
 SEC_PIT_SHADOW_MONITOR_TASK_ID = "TRADING-046"
+SEC_PIT_SHADOW_MONITOR_STATE_POLICY_TASK_ID = "TRADING-046A"
 SEC_PIT_SHADOW_MONITOR_REPORT_TYPE = "sec_pit_shadow_monitor"
 SEC_PIT_SHADOW_MONITOR_PRODUCTION_EFFECT = "none"
 DEFAULT_SEC_PIT_SHADOW_MONITOR_OUTPUT_DIR = PROJECT_ROOT / "outputs" / "sec_pit_shadow_monitor"
@@ -31,6 +32,7 @@ DEFAULT_SEC_PIT_RESEARCH_BASELINE_SCORE_PATH = (
 
 MONITOR_STATUSES: tuple[str, ...] = (
     "INSUFFICIENT_MONITORING_SAMPLE",
+    "MONITORING_ACTIVE",
     "OK_MONITORING",
     "WARNING",
     "ROLLBACK_RECOMMENDED",
@@ -98,6 +100,15 @@ MONITORING_PLAN_REQUIRED_COLUMNS: frozenset[str] = frozenset(
 # outcome breach after coverage/sample gates pass, so a single noisy rolling metric cannot
 # become an investment-facing rollback recommendation.
 FACTOR_ROLLBACK_REQUIRES_RANK_AND_OUTCOME_BREACH = True
+
+# TRADING-046A state policy: rollback confirmation requires both RankIC direction
+# and outcome evidence to be observable; bucket metrics remain diagnostics.
+ROLLBACK_REQUIRED_ROLLING_METRICS: tuple[str, ...] = (
+    "rolling_rank_ic_20d",
+    "rolling_rank_ic_60d",
+    "rolling_relative_return_vs_baseline_20d",
+    "rolling_drawdown_improvement_20d",
+)
 
 
 @dataclass(frozen=True)
@@ -178,30 +189,52 @@ def run_sec_pit_shadow_monitor(
         rolling_metrics = _rolling_metrics(inputs.shadow_scores, policy, window_days)
         latest_metrics = _latest_metrics(rolling_metrics)
         coverage_gate_passed = _coverage_gate_passed(inputs)
-        monitoring_ready = _monitoring_ready(latest_metrics, policy)
+        minimum_evidence_achieved = _minimum_evidence_achieved(latest_metrics, policy)
+        monitoring_ready = coverage_gate_passed and minimum_evidence_achieved
+        rolling_metrics_available = _rolling_metrics_available(latest_metrics)
         warning_events = _warning_events(
             latest_metrics=latest_metrics,
             policy=policy,
             coverage_gate_passed=coverage_gate_passed,
             monitoring_ready=monitoring_ready,
+            rollback_gate_passed=(
+                coverage_gate_passed and minimum_evidence_achieved and rolling_metrics_available
+            ),
         )
         rollback_recommended = _rollback_recommended(
             warning_events,
             coverage_gate_passed=coverage_gate_passed,
-            monitoring_ready=monitoring_ready,
+            minimum_evidence_achieved=minimum_evidence_achieved,
+            rolling_metrics_available=rolling_metrics_available,
         )
         status = _monitor_status(
             coverage_gate_passed=coverage_gate_passed,
-            monitoring_ready=monitoring_ready,
+            minimum_evidence_achieved=minimum_evidence_achieved,
+            warning_events=warning_events,
+            rollback_recommended=rollback_recommended,
+        )
+        monitor_maturity = _monitor_maturity(
+            coverage_gate_passed=coverage_gate_passed,
+            minimum_evidence_achieved=minimum_evidence_achieved,
+        )
+        state_transition_reason = _state_transition_reason(
+            status=status,
+            coverage_gate_passed=coverage_gate_passed,
+            minimum_evidence_achieved=minimum_evidence_achieved,
+            rolling_metrics_available=rolling_metrics_available,
             warning_events=warning_events,
             rollback_recommended=rollback_recommended,
         )
         if not coverage_gate_passed:
             limitations.append("Baseline coverage gate did not pass; rollback is blocked.")
-        if not monitoring_ready:
+        if coverage_gate_passed and not minimum_evidence_achieved:
             limitations.append(
-                "Monitoring sample, observation-day, or rolling metric availability gate "
-                "has not matured."
+                "Monitoring sample or observation-day evidence is still accumulating."
+            )
+        if coverage_gate_passed and minimum_evidence_achieved and not rolling_metrics_available:
+            limitations.append(
+                "Rolling metrics are not fully available; rollback remains blocked until "
+                "RankIC and outcome metrics are observable."
             )
     except (KeyError, ValueError, pd.errors.ParserError) as exc:
         inputs = _failed_inputs(
@@ -215,9 +248,13 @@ def run_sec_pit_shadow_monitor(
         warning_events = _empty_frame(WARNING_EVENTS_COLUMNS)
         latest_metrics = {}
         coverage_gate_passed = False
+        minimum_evidence_achieved = False
         monitoring_ready = False
+        rolling_metrics_available = False
         rollback_recommended = False
         status = "FAILED_VALIDATION"
+        monitor_maturity = "VALIDATION_FAILED"
+        state_transition_reason = "输入 artifact validation failed，monitor 状态不可用。"
         limitations.append(f"Input artifact validation failed: {exc}")
 
     _write_csv(rolling_metrics, rolling_metrics_path, ROLLING_METRICS_COLUMNS)
@@ -228,7 +265,11 @@ def run_sec_pit_shadow_monitor(
         policy=policy,
         latest_metrics=latest_metrics,
         coverage_gate_passed=coverage_gate_passed,
+        minimum_evidence_achieved=minimum_evidence_achieved,
         monitoring_ready=monitoring_ready,
+        rolling_metrics_available=rolling_metrics_available,
+        monitor_maturity=monitor_maturity,
+        state_transition_reason=state_transition_reason,
         warning_events=warning_events,
         rollback_recommended=rollback_recommended,
         limitations=limitations,
@@ -281,10 +322,14 @@ def render_sec_pit_shadow_monitor_summary(
         "",
         "## 状态摘要",
         f"- monitor_status: {summary.get('monitor_status', '')}",
+        f"- monitor_maturity: {summary.get('monitor_maturity', '')}",
         f"- coverage_gate_passed: {summary.get('coverage_gate_passed', False)}",
+        f"- minimum_evidence_achieved: {summary.get('minimum_evidence_achieved', False)}",
         f"- monitoring_ready: {summary.get('monitoring_ready', False)}",
+        f"- rolling_metrics_available: {summary.get('rolling_metrics_available', False)}",
         f"- rollback_recommended: {summary.get('rollback_recommended', False)}",
         f"- warning_count: {summary.get('warning_count', 0)}",
+        f"- state_transition_reason: {summary.get('state_transition_reason', '')}",
         f"- key limitations: {_limitations_text(summary.get('limitations'))}",
         "",
         "## Rolling Metrics",
@@ -534,6 +579,7 @@ def _warning_events(
     policy: _MonitorPolicy,
     coverage_gate_passed: bool,
     monitoring_ready: bool,
+    rollback_gate_passed: bool,
 ) -> pd.DataFrame:
     if not latest_metrics:
         return _empty_frame(WARNING_EVENTS_COLUMNS)
@@ -548,6 +594,7 @@ def _warning_events(
         rollback_threshold=policy.rank_ic_rollback_threshold,
         coverage_gate_passed=coverage_gate_passed,
         monitoring_ready=monitoring_ready,
+        rollback_gate_passed=rollback_gate_passed,
         reason="20D rolling RankIC no longer supports the observe component direction.",
     )
     _append_threshold_event(
@@ -559,6 +606,7 @@ def _warning_events(
         rollback_threshold=policy.rank_ic_rollback_threshold,
         coverage_gate_passed=coverage_gate_passed,
         monitoring_ready=monitoring_ready,
+        rollback_gate_passed=rollback_gate_passed,
         reason="60D rolling RankIC no longer supports the observe component direction.",
     )
     _append_threshold_event(
@@ -570,6 +618,7 @@ def _warning_events(
         rollback_threshold=policy.relative_return_rollback_threshold,
         coverage_gate_passed=coverage_gate_passed,
         monitoring_ready=monitoring_ready,
+        rollback_gate_passed=rollback_gate_passed,
         reason="Top observe-ranked return is weaker than the baseline top-ranked return.",
     )
     _append_threshold_event(
@@ -581,6 +630,7 @@ def _warning_events(
         rollback_threshold=policy.drawdown_rollback_threshold,
         coverage_gate_passed=coverage_gate_passed,
         monitoring_ready=monitoring_ready,
+        rollback_gate_passed=rollback_gate_passed,
         reason="Top observe-ranked drawdown is worse than the baseline top-ranked drawdown.",
     )
     semis = _float_or_nan(latest_metrics.get("semiconductor_bucket_rank_ic_20d"))
@@ -618,13 +668,13 @@ def _append_threshold_event(
     rollback_threshold: float,
     coverage_gate_passed: bool,
     monitoring_ready: bool,
+    rollback_gate_passed: bool,
     reason: str,
 ) -> None:
     number = _float_or_nan(value)
     if pd.isna(number):
         return
     if number < rollback_threshold:
-        rollback = coverage_gate_passed and monitoring_ready
         events.append(
             _warning_event(
                 event_date=event_date,
@@ -635,7 +685,7 @@ def _append_threshold_event(
                 threshold=f"< {rollback_threshold:.6f}",
                 coverage_gate_passed=coverage_gate_passed,
                 monitoring_ready=monitoring_ready,
-                rollback_recommended=rollback,
+                rollback_recommended=rollback_gate_passed,
                 reason=reason,
             )
         )
@@ -693,7 +743,11 @@ def _summary_payload(
     policy: _MonitorPolicy,
     latest_metrics: dict[str, Any],
     coverage_gate_passed: bool,
+    minimum_evidence_achieved: bool,
     monitoring_ready: bool,
+    rolling_metrics_available: bool,
+    monitor_maturity: str,
+    state_transition_reason: str,
     warning_events: pd.DataFrame,
     rollback_recommended: bool,
     limitations: list[str],
@@ -708,12 +762,15 @@ def _summary_payload(
         "read_only": True,
     }
     return {
-        "schema_version": "1.0",
+        "schema_version": "1.1",
         "report_type": SEC_PIT_SHADOW_MONITOR_REPORT_TYPE,
         "task_id": SEC_PIT_SHADOW_MONITOR_TASK_ID,
+        "state_policy_task_id": SEC_PIT_SHADOW_MONITOR_STATE_POLICY_TASK_ID,
         "generated_at": _deterministic_generated_at(inputs.monitor_date),
         "monitor_date": inputs.monitor_date.isoformat(),
         "monitor_status": status,
+        "monitor_maturity": monitor_maturity,
+        "state_transition_reason": state_transition_reason,
         "candidate_feature": str(inputs.shadow_summary.get("candidate_feature") or ""),
         "observe_weight": _json_number(inputs.shadow_summary.get("observe_weight")),
         "production_effect": SEC_PIT_SHADOW_MONITOR_PRODUCTION_EFFECT,
@@ -727,7 +784,9 @@ def _summary_payload(
         ),
         "coverage_ratio": _json_number(inputs.baseline_coverage_summary.get("coverage_ratio")),
         "coverage_gate_passed": coverage_gate_passed,
+        "minimum_evidence_achieved": minimum_evidence_achieved,
         "monitoring_ready": monitoring_ready,
+        "rolling_metrics_available": rolling_metrics_available,
         "minimum_monitoring_days": policy.minimum_monitoring_days,
         "preferred_monitoring_days": policy.preferred_monitoring_days,
         "min_monitoring_sample_count": policy.min_monitoring_sample_count,
@@ -838,29 +897,35 @@ def _default_policy(inputs: _MonitorInputs) -> _MonitorPolicy:
 def _monitor_status(
     *,
     coverage_gate_passed: bool,
-    monitoring_ready: bool,
+    minimum_evidence_achieved: bool,
     warning_events: pd.DataFrame,
     rollback_recommended: bool,
 ) -> str:
     if not coverage_gate_passed:
         return "FAILED_VALIDATION"
-    if not monitoring_ready:
-        return "INSUFFICIENT_MONITORING_SAMPLE"
     if rollback_recommended:
         return "ROLLBACK_RECOMMENDED"
-    if not warning_events.empty:
+    if minimum_evidence_achieved and not warning_events.empty:
         return "WARNING"
-    return "OK_MONITORING"
+    if minimum_evidence_achieved:
+        return "OK_MONITORING"
+    return "MONITORING_ACTIVE"
 
 
-def _monitoring_ready(latest_metrics: dict[str, Any], policy: _MonitorPolicy) -> bool:
+def _minimum_evidence_achieved(latest_metrics: dict[str, Any], policy: _MonitorPolicy) -> bool:
     if not latest_metrics:
         return False
     if _int_metric(latest_metrics, "monitoring_sample_count") < policy.min_monitoring_sample_count:
         return False
     if _int_metric(latest_metrics, "monitoring_days_elapsed") < policy.minimum_monitoring_days:
         return False
-    for metric in ("rolling_rank_ic_20d", "rolling_rank_ic_60d"):
+    return True
+
+
+def _rolling_metrics_available(latest_metrics: dict[str, Any]) -> bool:
+    if not latest_metrics:
+        return False
+    for metric in ROLLBACK_REQUIRED_ROLLING_METRICS:
         if pd.isna(_float_or_nan(latest_metrics.get(metric))):
             return False
     return True
@@ -870,11 +935,52 @@ def _rollback_recommended(
     warning_events: pd.DataFrame,
     *,
     coverage_gate_passed: bool,
-    monitoring_ready: bool,
+    minimum_evidence_achieved: bool,
+    rolling_metrics_available: bool,
 ) -> bool:
-    if not coverage_gate_passed or not monitoring_ready:
+    if not coverage_gate_passed or not minimum_evidence_achieved or not rolling_metrics_available:
         return False
     return _factor_underperformance_confirmed(warning_events)
+
+
+def _monitor_maturity(
+    *,
+    coverage_gate_passed: bool,
+    minimum_evidence_achieved: bool,
+) -> str:
+    if not coverage_gate_passed:
+        return "COVERAGE_GATE_BLOCKED"
+    if minimum_evidence_achieved:
+        return "MINIMUM_EVIDENCE_ACHIEVED"
+    return "ACCUMULATING_EVIDENCE"
+
+
+def _state_transition_reason(
+    *,
+    status: str,
+    coverage_gate_passed: bool,
+    minimum_evidence_achieved: bool,
+    rolling_metrics_available: bool,
+    warning_events: pd.DataFrame,
+    rollback_recommended: bool,
+) -> str:
+    if not coverage_gate_passed:
+        return "coverage gate 未通过，monitor validation failed，rollback 被阻断。"
+    if rollback_recommended or status == "ROLLBACK_RECOMMENDED":
+        return (
+            "coverage、minimum evidence 与 rolling metrics gates 均通过，且 factor "
+            "deterioration 已由 RankIC + outcome 双重条件确认。"
+        )
+    if minimum_evidence_achieved and not warning_events.empty:
+        return "minimum evidence 已达到，但 warning event 存在，需要人工复核。"
+    if minimum_evidence_achieved and rolling_metrics_available:
+        return "minimum evidence 与 rolling metrics 均可用，且无 warning 或 rollback。"
+    if minimum_evidence_achieved:
+        return (
+            "minimum evidence 已达到且无 warning 或 rollback；rolling metrics 暂不完整，"
+            "只阻断 rollback，不再视为 monitoring sample 不足。"
+        )
+    return "coverage gate 已通过，monitor 仍在积累 minimum sample / observation-day evidence。"
 
 
 def _factor_underperformance_confirmed(warning_events: pd.DataFrame) -> bool:

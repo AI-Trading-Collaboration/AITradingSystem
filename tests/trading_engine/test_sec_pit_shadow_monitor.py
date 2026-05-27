@@ -36,10 +36,15 @@ def test_sec_pit_shadow_monitor_writes_expected_artifacts(tmp_path: Path) -> Non
     markdown = artifacts.summary_markdown_path.read_text(encoding="utf-8")
 
     assert artifacts.status == "OK_MONITORING"
-    assert summary["schema_version"] == "1.0"
+    assert summary["schema_version"] == "1.1"
     assert summary["report_type"] == "sec_pit_shadow_monitor"
     assert summary["task_id"] == "TRADING-046"
+    assert summary["state_policy_task_id"] == "TRADING-046A"
     assert summary["monitor_status"] == "OK_MONITORING"
+    assert summary["monitor_maturity"] == "MINIMUM_EVIDENCE_ACHIEVED"
+    assert summary["minimum_evidence_achieved"] is True
+    assert summary["rolling_metrics_available"] is True
+    assert "无 warning 或 rollback" in summary["state_transition_reason"]
     assert summary["candidate_feature"] == "capex_intensity"
     assert summary["observe_weight"] == -0.025
     assert summary["production_effect"] == "none"
@@ -51,11 +56,15 @@ def test_sec_pit_shadow_monitor_writes_expected_artifacts(tmp_path: Path) -> Non
     assert tuple(metrics.columns) == ROLLING_METRICS_COLUMNS
     assert tuple(warnings.columns) == WARNING_EVENTS_COLUMNS
     assert warnings.empty
+    assert summary["warning_count"] == 0
     assert "# SEC PIT Shadow Observe Rolling Monitor" in markdown
     assert "production_effect: none" in markdown
+    assert "monitor_maturity: MINIMUM_EVIDENCE_ACHIEVED" in markdown
 
 
-def test_sec_pit_shadow_monitor_insufficient_monitoring_sample(tmp_path: Path) -> None:
+def test_sec_pit_shadow_monitor_transitions_insufficient_sample_to_monitoring_active(
+    tmp_path: Path,
+) -> None:
     paths = _write_monitor_inputs(tmp_path, days=3, minimum_days=5, min_sample=4)
 
     artifacts = run_sec_pit_shadow_monitor(
@@ -67,12 +76,42 @@ def test_sec_pit_shadow_monitor_insufficient_monitoring_sample(tmp_path: Path) -
     )
 
     summary = _read_json(artifacts.summary_json_path)
-    assert artifacts.status == "INSUFFICIENT_MONITORING_SAMPLE"
-    assert summary["monitor_status"] == "INSUFFICIENT_MONITORING_SAMPLE"
+    assert artifacts.status == "MONITORING_ACTIVE"
+    assert summary["monitor_status"] == "MONITORING_ACTIVE"
+    assert summary["monitor_maturity"] == "ACCUMULATING_EVIDENCE"
+    assert summary["minimum_evidence_achieved"] is False
     assert summary["monitoring_ready"] is False
     assert summary["monitoring_days_elapsed"] == 3
     assert summary["monitoring_days_remaining"] == 2
     assert summary["rollback_recommended"] is False
+    assert "仍在积累" in summary["state_transition_reason"]
+
+
+def test_sec_pit_shadow_monitor_transitions_active_to_ok_when_minimum_evidence_is_met(
+    tmp_path: Path,
+) -> None:
+    paths = _write_monitor_inputs(tmp_path, days=4, minimum_days=2, min_sample=4)
+
+    artifacts = run_sec_pit_shadow_monitor(
+        shadow_observe_dir=paths["shadow_observe_dir"],
+        baseline_coverage_dir=paths["baseline_coverage_dir"],
+        baseline_score_path=paths["baseline_score_path"],
+        window_days=(20, 10),
+        output_dir=paths["monitor_dir"],
+    )
+
+    summary = _read_json(artifacts.summary_json_path)
+    assert artifacts.status == "OK_MONITORING"
+    assert summary["monitor_status"] == "OK_MONITORING"
+    assert summary["monitor_maturity"] == "MINIMUM_EVIDENCE_ACHIEVED"
+    assert summary["minimum_evidence_achieved"] is True
+    assert summary["monitoring_ready"] is True
+    assert summary["rolling_metrics_available"] is False
+    assert summary["monitoring_sample_count"] >= summary["min_monitoring_sample_count"]
+    assert summary["monitoring_days_remaining"] == 0
+    assert summary["warning_count"] == 0
+    assert summary["rollback_recommended"] is False
+    assert "不再视为 monitoring sample 不足" in summary["state_transition_reason"]
 
 
 def test_sec_pit_shadow_monitor_recommends_rollback_only_after_coverage_gates_pass(
@@ -119,6 +158,34 @@ def test_sec_pit_shadow_monitor_recommends_rollback_only_after_coverage_gates_pa
     assert second_summary["coverage_gate_passed"] is False
     assert second_summary["factor_underperformance_confirmed"] is True
     assert second_summary["rollback_recommended"] is False
+
+
+def test_sec_pit_shadow_monitor_blocks_rollback_without_rolling_metrics(
+    tmp_path: Path,
+) -> None:
+    paths = _write_monitor_inputs(
+        tmp_path,
+        days=4,
+        minimum_days=2,
+        min_sample=4,
+        wrong_direction=True,
+    )
+
+    artifacts = run_sec_pit_shadow_monitor(
+        shadow_observe_dir=paths["shadow_observe_dir"],
+        baseline_coverage_dir=paths["baseline_coverage_dir"],
+        baseline_score_path=paths["baseline_score_path"],
+        window_days=(20, 10),
+        output_dir=paths["monitor_dir"],
+    )
+    summary = _read_json(artifacts.summary_json_path)
+
+    assert artifacts.status == "WARNING"
+    assert summary["coverage_gate_passed"] is True
+    assert summary["minimum_evidence_achieved"] is True
+    assert summary["rolling_metrics_available"] is False
+    assert summary["factor_underperformance_confirmed"] is True
+    assert summary["rollback_recommended"] is False
 
 
 def test_sec_pit_shadow_monitor_cli_latest_mode(tmp_path: Path) -> None:
@@ -239,6 +306,12 @@ def test_dashboard_reads_sec_pit_shadow_monitor_artifact_only(
     assert summary["latest_monitor_date"] == "2023-01-05"
     assert summary["candidate_feature"] == "capex_intensity"
     assert summary["observe_weight"] == -0.025
+    assert summary["monitor_maturity"] == "MINIMUM_EVIDENCE_ACHIEVED"
+    assert summary["rolling_metrics_available"] is True
+    assert (
+        summary["state_transition_reason"]
+        == "minimum evidence 与 rolling metrics 均可用，且无 warning 或 rollback。"
+    )
     assert summary["rolling_rank_ic_20d"] == 0.42
     assert summary["rolling_rank_ic_60d"] == 0.31
     assert summary["monitoring_sample_count"] == 16
@@ -249,6 +322,7 @@ def test_dashboard_reads_sec_pit_shadow_monitor_artifact_only(
     assert summary["production_effect"] == "none"
     assert "SEC PIT Shadow Monitor" in html
     assert "capex_intensity" in html
+    assert "MINIMUM_EVIDENCE_ACHIEVED" in html
 
 
 def _write_monitor_inputs(
@@ -487,6 +561,11 @@ def _write_dashboard_shadow_monitor_summary(tmp_path: Path, as_of: date) -> None
             {
                 "report_type": "sec_pit_shadow_monitor",
                 "monitor_status": "OK_MONITORING",
+                "monitor_maturity": "MINIMUM_EVIDENCE_ACHIEVED",
+                "rolling_metrics_available": True,
+                "state_transition_reason": (
+                    "minimum evidence 与 rolling metrics 均可用，且无 warning 或 rollback。"
+                ),
                 "monitor_date": as_of.isoformat(),
                 "candidate_feature": "capex_intensity",
                 "observe_weight": -0.025,

@@ -5980,6 +5980,9 @@ def _sec_pit_shadow_monitor(report: DailyTaskDashboardReport) -> TraceRecord:
             "latest_monitor_date": "",
             "candidate_feature": "",
             "observe_weight": None,
+            "monitor_maturity": "",
+            "rolling_metrics_available": False,
+            "state_transition_reason": "",
             "rolling_rank_ic_20d": None,
             "rolling_rank_ic_60d": None,
             "monitoring_sample_count": 0,
@@ -6005,6 +6008,9 @@ def _sec_pit_shadow_monitor(report: DailyTaskDashboardReport) -> TraceRecord:
         _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
     )
     status = _string_value(payload.get("monitor_status")) or "UNKNOWN"
+    monitor_maturity = _string_value(payload.get("monitor_maturity"))
+    rolling_metrics_available = payload.get("rolling_metrics_available") is True
+    state_transition_reason = _string_value(payload.get("state_transition_reason"))
     risks: list[str] = []
     if production_effect != ProductionEffect.NONE.value:
         risks.append("TRADING-046 shadow monitor production_effect 必须为 none。")
@@ -6012,8 +6018,17 @@ def _sec_pit_shadow_monitor(report: DailyTaskDashboardReport) -> TraceRecord:
         risks.append("TRADING-046 shadow monitor 必须要求人工复核。")
     if payload.get("rollback_recommended") is True:
         risks.append("Shadow monitor recommends rollback; manual review is required.")
-    if status in {"FAILED_VALIDATION", "INSUFFICIENT_MONITORING_SAMPLE", "WARNING"}:
+    if status in {
+        "FAILED_VALIDATION",
+        "INSUFFICIENT_MONITORING_SAMPLE",
+        "MONITORING_ACTIVE",
+        "WARNING",
+    }:
         risks.append(f"Shadow monitor status is {status}; conclusions are limited.")
+    if status != "FAILED_VALIDATION" and not rolling_metrics_available:
+        risks.append(
+            "Rolling metrics availability is incomplete; rollback trigger remains disabled."
+        )
     return {
         "status": status,
         "exists": True,
@@ -6024,6 +6039,9 @@ def _sec_pit_shadow_monitor(report: DailyTaskDashboardReport) -> TraceRecord:
         "latest_monitor_date": _string_value(payload.get("monitor_date")),
         "candidate_feature": _string_value(payload.get("candidate_feature")),
         "observe_weight": _optional_float(payload.get("observe_weight")),
+        "monitor_maturity": monitor_maturity,
+        "rolling_metrics_available": rolling_metrics_available,
+        "state_transition_reason": state_transition_reason,
         "rolling_rank_ic_20d": _optional_float(payload.get("rolling_rank_ic_20d")),
         "rolling_rank_ic_60d": _optional_float(payload.get("rolling_rank_ic_60d")),
         "monitoring_sample_count": _int_value(payload.get("monitoring_sample_count")),
@@ -10869,6 +10887,11 @@ def _render_sec_pit_shadow_monitor(report: DailyTaskDashboardReport) -> str:
             '<div class="summary-grid">',
             _summary_item("latest monitor date", summary.get("latest_monitor_date", "")),
             _summary_item("monitor status", summary.get("status", "MISSING")),
+            _summary_item("monitor maturity", summary.get("monitor_maturity", "")),
+            _summary_item(
+                "rolling metrics available",
+                "yes" if summary.get("rolling_metrics_available") else "no",
+            ),
             _summary_item("candidate feature", summary.get("candidate_feature", "")),
             _summary_item(
                 "observe weight",
@@ -10891,6 +10914,10 @@ def _render_sec_pit_shadow_monitor(report: DailyTaskDashboardReport) -> str:
                 "yes" if summary.get("rollback_recommended") else "no",
             ),
             _summary_item("production effect", summary.get("production_effect", "none")),
+            _summary_item(
+                "state transition",
+                summary.get("state_transition_reason", ""),
+            ),
             "</div>",
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'
