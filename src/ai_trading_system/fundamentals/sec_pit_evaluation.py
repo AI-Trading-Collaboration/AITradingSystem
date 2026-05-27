@@ -32,6 +32,11 @@ from ai_trading_system.data.quality import (
     validate_data_cache,
     write_data_quality_report,
 )
+from ai_trading_system.fundamentals.sec_pit_aliases import (
+    canonicalize_ticker_series,
+    canonicalize_tickers,
+    load_ticker_aliases,
+)
 from ai_trading_system.fundamentals.sec_pit_backfill import SEC_PIT_BACKTEST_DATA_GRADE
 
 SEC_PIT_EVALUATION_TASK_ID = "TRADING-040"
@@ -93,9 +98,17 @@ SIGNAL_ATTRIBUTION_COLUMNS: tuple[str, ...] = (
     "period",
     "form",
     "accession_number",
+    "accepted_datetime",
+    "filed_date",
+    "source_concept",
+    "source_taxonomy",
+    "raw_sha256",
+    "source_url_or_raw_path",
     "pit_grade",
+    "source_lineage",
     "forward_return_20d",
     "relative_return_vs_QQQ_20d",
+    "max_drawdown_forward_20d",
 )
 
 SHADOW_CANDIDATE_WEIGHT_COLUMNS: tuple[str, ...] = (
@@ -524,10 +537,20 @@ def _validate_policy(policy: SecPitEvaluationPolicy) -> None:
 
 
 def _resolve_tickers(*, universe_path: Path, tickers: list[str] | None) -> list[str]:
+    aliases = load_ticker_aliases()
+    sec_companies = load_sec_companies(universe_path)
+    sec_company_tickers = {company.ticker.upper() for company in sec_companies.companies}
     if tickers:
-        resolved = [item.upper() for item in _flatten_ticker_options(tickers) if item.strip()]
+        requested = [item.upper() for item in _flatten_ticker_options(tickers) if item.strip()]
+        resolved, audit = canonicalize_tickers(
+            requested,
+            aliases=aliases,
+            sec_company_tickers=sec_company_tickers,
+        )
+        unresolved = [item.input_ticker for item in audit if not item.resolved]
+        if unresolved:
+            raise ValueError(f"unresolved SEC PIT ticker aliases: {', '.join(unresolved)}")
     else:
-        sec_companies = load_sec_companies(universe_path)
         resolved = [company.ticker.upper() for company in sec_companies.companies if company.active]
     resolved = dedupe_preserving_order(resolved)
     if not resolved:
@@ -583,9 +606,15 @@ def _normalize_feature_panel(frame: pd.DataFrame) -> pd.DataFrame:
             ),
             "form": _first_existing(frame, ("form",)),
             "source_concept": _first_existing(frame, ("source_concept", "input_metric_ids")),
+            "source_taxonomy": _first_existing(frame, ("source_taxonomy",)),
             "raw_sha256": _first_existing(frame, ("raw_sha256",)),
+            "source_url_or_raw_path": _first_existing(
+                frame,
+                ("source_url_or_raw_path", "raw_payload_path", "source_path"),
+            ),
             "accepted_datetime": _first_existing(frame, ("accepted_datetime",)),
             "filed_date": _first_existing(frame, ("filed_date",)),
+            "source_lineage": _first_existing(frame, ("source_lineage",)),
         }
     ).fillna("")
     normalized["ticker"] = normalized["ticker"].astype(str).str.upper()
@@ -613,7 +642,11 @@ def _prepare_feature_panel(
     if frame.empty:
         return frame.copy(), _empty_coverage(input_rows=input_rows)
     requested = set(tickers)
+    aliases = {
+        source: target for source, target in load_ticker_aliases().items() if target in requested
+    }
     prepared = frame.copy()
+    prepared["ticker"] = canonicalize_ticker_series(prepared["ticker"], aliases=aliases)
     prepared["_decision_date"] = pd.to_datetime(prepared["decision_date"], errors="coerce")
     prepared["_available_time"] = pd.to_datetime(
         prepared["available_time"], errors="coerce", utc=True
@@ -650,6 +683,15 @@ def _prepare_feature_panel(
         valid["decision_date"] = valid["_decision_date"].dt.date.astype(str)
         valid["feature_value"] = valid["_feature_value"].astype(float)
         valid["pit_quality_score"] = valid["_pit_quality_score"].astype(float)
+    duplicate_key_columns = ["decision_date", "ticker", "feature_id", "metric_id"]
+    duplicate_observations = (
+        int(valid.duplicated(subset=duplicate_key_columns, keep=False).sum())
+        if not valid.empty
+        else 0
+    )
+    deduped = _dedupe_feature_observations(valid)
+    duplicates_removed = int(len(valid) - len(deduped))
+    valid = deduped
     b_grade = prepared["pit_grade"].astype(str) == SEC_PIT_BACKTEST_DATA_GRADE
     expected_rows = len(tickers) * max(_calendar_day_count(start, end), 1)
     coverage = {
@@ -663,6 +705,12 @@ def _prepare_feature_panel(
         "ticker_excluded_rows": int(ticker_excluded.sum()),
         "non_numeric_feature_value_rows": int(non_numeric.sum()),
         "missing_provenance_rows": int(missing_provenance.sum()),
+        "duplicate_observations": duplicate_observations,
+        "duplicates_removed": duplicates_removed,
+        "dedup_rule": (
+            "ticker/feature/metric/decision_date: keep highest pit_quality_score, "
+            "latest available_time, latest period"
+        ),
         "downgraded_rows": int(
             (prepared["_pit_quality_score"] < policy.min_pit_quality_score).sum()
         ),
@@ -702,6 +750,29 @@ def _missing_provenance_mask(frame: pd.DataFrame) -> pd.Series:
     return mask
 
 
+def _dedupe_feature_observations(frame: pd.DataFrame) -> pd.DataFrame:
+    if frame.empty:
+        return frame
+    sort_columns = [
+        "decision_date",
+        "ticker",
+        "feature_id",
+        "metric_id",
+        "pit_quality_score",
+        "_available_time",
+        "period",
+    ]
+    sorted_frame = frame.sort_values(
+        sort_columns,
+        ascending=[True, True, True, True, False, False, False],
+        na_position="last",
+    )
+    return sorted_frame.drop_duplicates(
+        subset=["decision_date", "ticker", "feature_id", "metric_id"],
+        keep="first",
+    ).reset_index(drop=True)
+
+
 def _build_forward_labels(
     *,
     prices: pd.DataFrame,
@@ -714,9 +785,15 @@ def _build_forward_labels(
     missing = sorted(required - set(prices.columns))
     if missing:
         raise ValueError(f"prices CSV missing columns: {', '.join(missing)}")
-    required_tickers = set(tickers) | {benchmark}
-    frame = prices.loc[prices["ticker"].astype(str).str.upper().isin(required_tickers)].copy()
-    frame["ticker"] = frame["ticker"].astype(str).str.upper()
+    allowed_tickers = set(tickers) | {benchmark}
+    aliases = {
+        source: target
+        for source, target in load_ticker_aliases().items()
+        if target in allowed_tickers
+    }
+    frame = prices.copy()
+    frame["ticker"] = canonicalize_ticker_series(frame["ticker"], aliases=aliases)
+    frame = frame.loc[frame["ticker"].isin(allowed_tickers)].copy()
     frame["_date"] = pd.to_datetime(frame["date"], errors="coerce")
     frame["_adj_close"] = pd.to_numeric(frame["adj_close"], errors="coerce")
     frame = frame.loc[frame["_date"].notna() & frame["_adj_close"].notna()].sort_values(
@@ -811,7 +888,14 @@ def _empty_evaluation_frame() -> pd.DataFrame:
             "period",
             "form",
             "accession_number",
+            "accepted_datetime",
+            "filed_date",
+            "source_concept",
+            "source_taxonomy",
+            "raw_sha256",
+            "source_url_or_raw_path",
             "pit_grade",
+            "source_lineage",
             "pit_quality_score",
         ]
     )
@@ -868,7 +952,8 @@ def _feature_effectiveness(
         rank_ic_20d = _mean_or_nan(daily_rank_ic_20d)
         stability_score = _stability_score(rank_ic_20d, daily_rank_ic_20d)
         quantile = _quantile_spread(group, policy)
-        coverage_ratio = _safe_ratio(len(group), expected_row_count)
+        valid_observations = int(group[["decision_date", "ticker"]].drop_duplicates().shape[0])
+        coverage_ratio = min(_safe_ratio(valid_observations, expected_row_count), 1.0)
         pit_grade = _dominant_value(group["pit_grade"])
         data_quality_score = float(group["pit_quality_score"].mean()) if len(group) else np.nan
         hit_rate = _hit_rate(matched, rank_ic_20d)
@@ -1122,12 +1207,22 @@ def _signal_attribution(
                 "period": row.get("period", ""),
                 "form": row.get("form", ""),
                 "accession_number": row.get("accession_number", ""),
+                "accepted_datetime": row.get("accepted_datetime", ""),
+                "filed_date": row.get("filed_date", ""),
+                "source_concept": row.get("source_concept", ""),
+                "source_taxonomy": row.get("source_taxonomy", ""),
+                "raw_sha256": row.get("raw_sha256", ""),
+                "source_url_or_raw_path": row.get("source_url_or_raw_path", ""),
                 "pit_grade": row.get("pit_grade", ""),
+                "source_lineage": row.get("source_lineage", ""),
                 "forward_return_20d": _float_value(
                     row.get(f"forward_return_{PRIMARY_FORWARD_RETURN_HORIZON}d")
                 ),
                 "relative_return_vs_QQQ_20d": _float_value(
                     row.get(f"relative_return_vs_QQQ_{PRIMARY_FORWARD_RETURN_HORIZON}d")
+                ),
+                "max_drawdown_forward_20d": _float_value(
+                    row.get(f"max_drawdown_forward_{PRIMARY_FORWARD_RETURN_HORIZON}d")
                 ),
             }
         )
@@ -1323,6 +1418,12 @@ def _empty_coverage(input_rows: int = 0) -> dict[str, Any]:
         "ticker_excluded_rows": 0,
         "non_numeric_feature_value_rows": 0,
         "missing_provenance_rows": 0,
+        "duplicate_observations": 0,
+        "duplicates_removed": 0,
+        "dedup_rule": (
+            "ticker/feature/metric/decision_date: keep highest pit_quality_score, "
+            "latest available_time, latest period"
+        ),
         "downgraded_rows": 0,
         "b_grade_reconstructed_ratio": 0.0,
         "ticker_coverage_ratio": 0.0,

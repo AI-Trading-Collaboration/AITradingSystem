@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date, timedelta
@@ -31,12 +32,22 @@ SEC_PIT_INTERVAL_COLUMNS = (
     "value",
     "unit",
     "source_accession_number",
+    "accession_number",
     "available_from_signal_date",
     "available_until_signal_date",
     "available_time_utc",
+    "accepted_datetime",
+    "filed_date",
+    "form",
+    "source_concept",
+    "source_taxonomy",
+    "raw_sha256",
+    "source_url_or_raw_path",
     "superseded_by_accession_number",
     "pit_data_grade",
+    "pit_grade",
     "confidence_level",
+    "source_lineage",
 )
 
 SEC_PIT_DAILY_PANEL_COLUMNS = (
@@ -48,12 +59,52 @@ SEC_PIT_DAILY_PANEL_COLUMNS = (
     "value",
     "unit",
     "source_accession_number",
+    "accession_number",
     "available_time_utc",
+    "accepted_datetime",
+    "filed_date",
+    "form",
+    "source_concept",
+    "source_taxonomy",
+    "raw_sha256",
+    "source_url_or_raw_path",
     "pit_data_grade",
+    "pit_grade",
     "confidence_level",
+    "source_lineage",
 )
 
 SEC_PIT_FEATURE_PANEL_COLUMNS = (
+    "decision_date",
+    "ticker",
+    "feature_id",
+    "feature_value",
+    "feature_unit",
+    "input_metric_ids",
+    "input_accession_numbers",
+    "input_available_times_utc",
+    "max_input_available_time_utc",
+    "pit_data_grade",
+    "confidence_level",
+    "confidence_reason",
+    "period_type",
+    "period_end",
+    "input_metric_units",
+    "accession_number",
+    "accepted_datetime",
+    "filed_date",
+    "form",
+    "period",
+    "source_concept",
+    "source_taxonomy",
+    "raw_sha256",
+    "source_url_or_raw_path",
+    "pit_grade",
+    "available_time",
+    "source_lineage",
+)
+
+_SEC_PIT_FEATURE_PANEL_REQUIRED_COLUMNS = (
     "decision_date",
     "ticker",
     "feature_id",
@@ -106,16 +157,34 @@ def build_fundamental_pit_intervals(mapped_metrics: pd.DataFrame) -> pd.DataFram
                     "value": row.get("value", ""),
                     "unit": row.get("unit", ""),
                     "source_accession_number": row.get("source_accession_number", ""),
+                    "accession_number": _first_text(
+                        row,
+                        "accession_number",
+                        "source_accession_number",
+                    ),
                     "available_from_signal_date": start.isoformat(),
                     "available_until_signal_date": until.isoformat() if until else "",
                     "available_time_utc": row.get("available_time_utc", ""),
+                    "accepted_datetime": _first_text(
+                        row,
+                        "accepted_datetime",
+                        "filing_acceptance_datetime_utc",
+                    ),
+                    "filed_date": _first_text(row, "filed_date"),
+                    "form": _first_text(row, "form", "source_form"),
+                    "source_concept": _first_text(row, "source_concept"),
+                    "source_taxonomy": _first_text(row, "source_taxonomy"),
+                    "raw_sha256": _first_text(row, "raw_sha256"),
+                    "source_url_or_raw_path": _first_text(row, "source_url_or_raw_path"),
                     "superseded_by_accession_number": (
                         rows[index + 1].get("source_accession_number", "")
                         if index + 1 < len(rows)
                         else ""
                     ),
                     "pit_data_grade": row.get("pit_data_grade", ""),
+                    "pit_grade": row.get("pit_data_grade", ""),
                     "confidence_level": row.get("confidence_level", ""),
+                    "source_lineage": _first_text(row, "source_lineage"),
                 }
             )
     frame = pd.DataFrame(records, columns=list(SEC_PIT_INTERVAL_COLUMNS))
@@ -166,9 +235,27 @@ def build_fundamental_pit_daily_panel(
                     "value": row.get("value", ""),
                     "unit": row.get("unit", ""),
                     "source_accession_number": row.get("source_accession_number", ""),
+                    "accession_number": _first_text(
+                        row,
+                        "accession_number",
+                        "source_accession_number",
+                    ),
                     "available_time_utc": row.get("available_time_utc", ""),
+                    "accepted_datetime": _first_text(
+                        row,
+                        "accepted_datetime",
+                        "filing_acceptance_datetime_utc",
+                    ),
+                    "filed_date": _first_text(row, "filed_date"),
+                    "form": _first_text(row, "form", "source_form"),
+                    "source_concept": _first_text(row, "source_concept"),
+                    "source_taxonomy": _first_text(row, "source_taxonomy"),
+                    "raw_sha256": _first_text(row, "raw_sha256"),
+                    "source_url_or_raw_path": _first_text(row, "source_url_or_raw_path"),
                     "pit_data_grade": row.get("pit_data_grade", ""),
+                    "pit_grade": row.get("pit_data_grade", ""),
                     "confidence_level": row.get("confidence_level", ""),
+                    "source_lineage": _first_text(row, "source_lineage"),
                 }
             )
     return pd.DataFrame(records, columns=list(SEC_PIT_DAILY_PANEL_COLUMNS))
@@ -266,9 +353,13 @@ def load_sec_pit_feature_panel(
     if not path.exists():
         return pd.DataFrame(columns=list(SEC_PIT_FEATURE_PANEL_COLUMNS))
     frame = pd.read_csv(path, dtype=str).fillna("")
-    missing = sorted(set(SEC_PIT_FEATURE_PANEL_COLUMNS) - set(frame.columns))
+    missing = sorted(set(_SEC_PIT_FEATURE_PANEL_REQUIRED_COLUMNS) - set(frame.columns))
     if missing:
         raise ValueError(f"SEC PIT feature panel missing columns: {', '.join(missing)}")
+    for column in SEC_PIT_FEATURE_PANEL_COLUMNS:
+        if column not in frame.columns:
+            frame[column] = ""
+    frame = frame.loc[:, list(SEC_PIT_FEATURE_PANEL_COLUMNS)]
     requested = {ticker.upper() for ticker in tickers}
     selected = frame.loc[
         (frame["decision_date"].astype(str) == decision_date.isoformat())
@@ -349,6 +440,38 @@ def _feature_row_for(
         str(numerator.get("available_time_utc") or ""),
         str(denominator.get("available_time_utc") or ""),
     )
+    input_accessions = (
+        _first_text(numerator, "accession_number", "source_accession_number"),
+        _first_text(denominator, "accession_number", "source_accession_number"),
+    )
+    accepted_datetimes = (
+        _first_text(numerator, "accepted_datetime", "filing_acceptance_datetime_utc"),
+        _first_text(denominator, "accepted_datetime", "filing_acceptance_datetime_utc"),
+    )
+    filed_dates = (
+        _first_text(numerator, "filed_date"),
+        _first_text(denominator, "filed_date"),
+    )
+    forms = (
+        _first_text(numerator, "form", "source_form"),
+        _first_text(denominator, "form", "source_form"),
+    )
+    source_concepts = (
+        _first_text(numerator, "source_concept"),
+        _first_text(denominator, "source_concept"),
+    )
+    source_taxonomies = (
+        _first_text(numerator, "source_taxonomy"),
+        _first_text(denominator, "source_taxonomy"),
+    )
+    raw_hashes = (
+        _first_text(numerator, "raw_sha256"),
+        _first_text(denominator, "raw_sha256"),
+    )
+    source_paths = (
+        _first_text(numerator, "source_url_or_raw_path"),
+        _first_text(denominator, "source_url_or_raw_path"),
+    )
     grades = {
         str(numerator.get("pit_data_grade") or ""),
         str(denominator.get("pit_data_grade") or ""),
@@ -357,6 +480,12 @@ def _feature_row_for(
         str(numerator.get("confidence_level") or ""),
         str(denominator.get("confidence_level") or ""),
     )
+    pit_grade = (
+        SEC_PIT_CURRENT_HISTORY_GRADE
+        if SEC_PIT_CURRENT_HISTORY_GRADE in grades
+        else SEC_PIT_BACKTEST_DATA_GRADE
+    )
+    max_available_time = max(input_available_times)
     return {
         "decision_date": decision_date.isoformat(),
         "ticker": str(numerator.get("ticker") or ""),
@@ -364,17 +493,10 @@ def _feature_row_for(
         "feature_value": numerator_value / denominator_value,
         "feature_unit": "ratio",
         "input_metric_ids": f"{numerator_metric_id},{denominator_metric_id}",
-        "input_accession_numbers": (
-            f"{numerator.get('source_accession_number')},"
-            f"{denominator.get('source_accession_number')}"
-        ),
+        "input_accession_numbers": ",".join(input_accessions),
         "input_available_times_utc": ",".join(input_available_times),
-        "max_input_available_time_utc": max(input_available_times),
-        "pit_data_grade": (
-            SEC_PIT_CURRENT_HISTORY_GRADE
-            if SEC_PIT_CURRENT_HISTORY_GRADE in grades
-            else SEC_PIT_BACKTEST_DATA_GRADE
-        ),
+        "max_input_available_time_utc": max_available_time,
+        "pit_data_grade": pit_grade,
         "confidence_level": confidence,
         "confidence_reason": (
             "all required ratio inputs were available by decision_date; "
@@ -383,6 +505,23 @@ def _feature_row_for(
         "period_type": period_type,
         "period_end": period_end,
         "input_metric_units": f"{numerator.get('unit')},{denominator.get('unit')}",
+        "accession_number": ",".join(input_accessions),
+        "accepted_datetime": ",".join(accepted_datetimes),
+        "filed_date": ",".join(filed_dates),
+        "form": ",".join(forms),
+        "period": period_end,
+        "source_concept": ",".join(source_concepts),
+        "source_taxonomy": ",".join(source_taxonomies),
+        "raw_sha256": ",".join(raw_hashes),
+        "source_url_or_raw_path": ",".join(source_paths),
+        "pit_grade": pit_grade,
+        "available_time": max_available_time,
+        "source_lineage": _feature_source_lineage_text(
+            (
+                (numerator_metric_id, numerator),
+                (denominator_metric_id, denominator),
+            )
+        ),
     }
 
 
@@ -447,6 +586,46 @@ def _combined_confidence(*levels: str) -> str:
     if "medium" in normalized:
         return "medium"
     return "high"
+
+
+def _feature_source_lineage_text(inputs: tuple[tuple[str, pd.Series], ...]) -> str:
+    lineage: list[dict[str, str]] = []
+    for metric_id, row in inputs:
+        raw_lineage = str(row.get("source_lineage") or "").strip()
+        if raw_lineage:
+            try:
+                parsed = json.loads(raw_lineage)
+            except json.JSONDecodeError:
+                parsed = None
+            if isinstance(parsed, list):
+                for item in parsed:
+                    if isinstance(item, dict):
+                        lineage.append(
+                            {
+                                "metric_id": str(item.get("metric_id") or metric_id),
+                                "accession_number": str(item.get("accession_number") or ""),
+                                "available_time": str(item.get("available_time") or ""),
+                                "raw_sha256": str(item.get("raw_sha256") or ""),
+                            }
+                        )
+                continue
+        lineage.append(
+            {
+                "metric_id": metric_id,
+                "accession_number": _first_text(row, "accession_number", "source_accession_number"),
+                "available_time": _first_text(row, "available_time", "available_time_utc"),
+                "raw_sha256": _first_text(row, "raw_sha256"),
+            }
+        )
+    return json.dumps(lineage, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def _first_text(row: pd.Series | dict[str, object], *columns: str) -> str:
+    for column in columns:
+        value = row.get(column, "")
+        if value is not None and str(value).strip():
+            return str(value)
+    return ""
 
 
 def _required_date(value: object) -> date:

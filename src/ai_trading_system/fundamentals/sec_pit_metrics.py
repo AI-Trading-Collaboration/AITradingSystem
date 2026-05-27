@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import math
 from dataclasses import dataclass
 from datetime import date
@@ -40,6 +41,13 @@ SEC_PIT_MAPPED_METRIC_COLUMNS = (
     "pit_data_grade",
     "confidence_level",
     "confidence_reason",
+    "accession_number",
+    "accepted_datetime",
+    "filed_date",
+    "form",
+    "raw_sha256",
+    "source_url_or_raw_path",
+    "source_lineage",
 )
 
 
@@ -203,6 +211,15 @@ def _mapped_record(candidate: _MetricCandidate, selection_rank: int) -> dict[str
         "pit_data_grade": str(record.get("pit_data_grade") or SEC_PIT_BACKTEST_DATA_GRADE),
         "confidence_level": str(record.get("confidence_level") or "medium"),
         "confidence_reason": str(record.get("confidence_reason") or ""),
+        "accession_number": str(record.get("accession_number") or ""),
+        "accepted_datetime": str(record.get("filing_acceptance_datetime_utc") or ""),
+        "filed_date": str(record.get("filed_date") or ""),
+        "form": str(record.get("form") or "").upper(),
+        "raw_sha256": str(record.get("raw_payload_sha256") or ""),
+        "source_url_or_raw_path": str(
+            record.get("raw_payload_path") or record.get("source_endpoint") or ""
+        ),
+        "source_lineage": _source_lineage_text(record, candidate.metric.metric_id),
     }
 
 
@@ -242,6 +259,12 @@ def _derived_metric_records(
                     "concept": (
                         "derived:" f"{derived.minuend_metric_id}-{derived.subtrahend_metric_id}"
                     ),
+                    "source_lineage": _derived_source_lineage_text(
+                        (
+                            (derived.minuend_metric_id, candidate.record),
+                            (derived.subtrahend_metric_id, matched.record),
+                        )
+                    ),
                 },
                 metric=metric,
                 concept_priority=0,
@@ -278,6 +301,60 @@ def _attach_restatement_lineage(frame: pd.DataFrame) -> pd.DataFrame:
             if accession:
                 previous_accession = accession
     return frame
+
+
+def _source_lineage_text(record: dict[str, object], metric_id: str) -> str:
+    existing = record.get("source_lineage")
+    if isinstance(existing, str) and existing.strip():
+        return existing
+    return _stable_json(
+        [
+            {
+                "metric_id": metric_id,
+                "accession_number": str(record.get("accession_number") or ""),
+                "available_time": str(record.get("available_time_utc") or ""),
+                "raw_sha256": str(record.get("raw_payload_sha256") or ""),
+            }
+        ]
+    )
+
+
+def _derived_source_lineage_text(
+    inputs: tuple[tuple[str, dict[str, object]], ...],
+) -> str:
+    lineage: list[dict[str, str]] = []
+    for metric_id, record in inputs:
+        raw_lineage = record.get("source_lineage")
+        if isinstance(raw_lineage, str) and raw_lineage.strip():
+            try:
+                parsed = json.loads(raw_lineage)
+            except json.JSONDecodeError:
+                parsed = None
+            if isinstance(parsed, list):
+                for item in parsed:
+                    if isinstance(item, dict):
+                        lineage.append(
+                            {
+                                "metric_id": str(item.get("metric_id") or metric_id),
+                                "accession_number": str(item.get("accession_number") or ""),
+                                "available_time": str(item.get("available_time") or ""),
+                                "raw_sha256": str(item.get("raw_sha256") or ""),
+                            }
+                        )
+                continue
+        lineage.append(
+            {
+                "metric_id": metric_id,
+                "accession_number": str(record.get("accession_number") or ""),
+                "available_time": str(record.get("available_time_utc") or ""),
+                "raw_sha256": str(record.get("raw_payload_sha256") or ""),
+            }
+        )
+    return _stable_json(lineage)
+
+
+def _stable_json(value: object) -> str:
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
 def _candidate_sort_key(candidate: _MetricCandidate) -> tuple[str, str, str, int]:

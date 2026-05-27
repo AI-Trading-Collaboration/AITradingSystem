@@ -241,6 +241,7 @@ def build_daily_task_dashboard_payload(
         "retry_execution_dry_run": _retry_execution_dry_run(report),
         "sec_pit_evaluation_summary": _sec_pit_evaluation_summary(report),
         "sec_pit_baseline_comparison": _sec_pit_baseline_comparison(report),
+        "sec_pit_real_run_diagnostics": _sec_pit_real_run_diagnostics(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -366,6 +367,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_retry_execution_dry_run(report),
             _render_sec_pit_evaluation_summary(report),
             _render_sec_pit_baseline_comparison(report),
+            _render_sec_pit_real_run_diagnostics(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -5617,6 +5619,93 @@ def _sec_pit_baseline_comparison(report: DailyTaskDashboardReport) -> TraceRecor
     }
 
 
+def _sec_pit_real_run_diagnostics(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_sec_pit_real_run_diagnostics_path(report)
+    payload = _read_json_object(path)
+    default_markdown = (
+        report.project_root
+        / "outputs"
+        / "sec_pit_diagnostics"
+        / f"sec_pit_real_run_diagnostics_{report.as_of.isoformat()}.md"
+    )
+    if payload.get("report_type") != "sec_pit_real_run_diagnostics":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "markdown_path": str(default_markdown),
+            "latest_diagnostics_date": "",
+            "missing_provenance_rows": 0,
+            "first_provenance_loss_stage": "",
+            "alias_unresolved_count": 0,
+            "baseline_artifact_status": "MISSING",
+            "drawdown_label_coverage": 0.0,
+            "features_with_coverage_ratio_above_1": 0,
+            "near_promotion_feature_count": 0,
+            "promotion_readiness": "NOT_READY",
+            "production_effect": ProductionEffect.NONE.value,
+            "read_only": True,
+            "risk": (
+                "No SEC PIT real-run diagnostics available. Dashboard 只读取 "
+                "TRADING-042 artifact，不运行 diagnostics、不运行 evaluation/comparison、"
+                "不修改 production 或 shadow 权重。"
+            ),
+        }
+
+    outputs = _mapping_value(payload, "output_artifacts")
+    markdown_path = (
+        _project_path(report.project_root, _string_value(outputs.get("summary_markdown")))
+        or default_markdown
+    )
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    provenance = _mapping_value(payload, "provenance")
+    alias = _mapping_value(payload, "alias_resolution")
+    baseline = _mapping_value(payload, "baseline")
+    labels = _mapping_value(payload, "labels")
+    coverage = _mapping_value(payload, "coverage")
+    sensitivity = _mapping_value(payload, "candidate_sensitivity")
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("TRADING-042 diagnostics production_effect 必须为 none。")
+    if _int_value(provenance.get("missing_rows")):
+        risks.append("SEC provenance 仍有缺失，不能进入 shadow promotion。")
+    if _int_value(alias.get("unresolved_count")):
+        risks.append("存在未解析 ticker alias。")
+    if _int_value(coverage.get("features_with_ratio_above_1_before_fix")):
+        risks.append("存在 coverage ratio 修正前大于 1 的 feature。")
+    if _optional_float(labels.get("max_drawdown_forward_20d_coverage")) in {None, 0.0}:
+        risks.append("drawdown label coverage 缺失或为 0。")
+    return {
+        "status": _string_value(payload.get("diagnostics_status")) or "UNKNOWN",
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "markdown_path": str(markdown_path),
+        "latest_diagnostics_date": _string_value(payload.get("end_date")),
+        "missing_provenance_rows": _int_value(provenance.get("missing_rows")),
+        "first_provenance_loss_stage": _string_value(provenance.get("first_loss_stage")),
+        "alias_unresolved_count": _int_value(alias.get("unresolved_count")),
+        "baseline_artifact_status": _string_value(baseline.get("status")) or "UNKNOWN",
+        "drawdown_label_coverage": _optional_float(labels.get("max_drawdown_forward_20d_coverage")),
+        "features_with_coverage_ratio_above_1": _int_value(
+            coverage.get("features_with_ratio_above_1_before_fix")
+        ),
+        "near_promotion_feature_count": _int_value(sensitivity.get("near_promotion_count")),
+        "promotion_readiness": "NOT_READY",
+        "production_effect": production_effect,
+        "read_only": True,
+        "risk": (
+            "；".join(risks) or "SEC PIT real-run diagnostics dashboard card 当前仅作只读展示。"
+        ),
+    }
+
+
 def _dashboard_ticker_delta_list(value: object) -> list[TraceRecord]:
     if not isinstance(value, list):
         return []
@@ -6596,6 +6685,24 @@ def _latest_sec_pit_baseline_comparison_path(report: DailyTaskDashboardReport) -
     candidates: list[tuple[date, Path]] = []
     for path in comparison_root.glob("sec_pit_baseline_comparison_summary_*.json"):
         raw_date = path.stem.removeprefix("sec_pit_baseline_comparison_summary_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_sec_pit_real_run_diagnostics_path(report: DailyTaskDashboardReport) -> Path:
+    diagnostics_root = report.project_root / "outputs" / "sec_pit_diagnostics"
+    default_path = (
+        diagnostics_root / f"sec_pit_real_run_diagnostics_{report.as_of.isoformat()}.json"
+    )
+    if not diagnostics_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in diagnostics_root.glob("sec_pit_real_run_diagnostics_*.json"):
+        raw_date = path.stem.removeprefix("sec_pit_real_run_diagnostics_")
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= report.as_of:
             candidates.append((parsed, path))
@@ -10019,6 +10126,78 @@ def _render_sec_pit_baseline_comparison(report: DailyTaskDashboardReport) -> str
                 _dashboard_ticker_delta_text(summary.get("top_downgraded_tickers")),
             ),
             _summary_item("production_effect", summary.get("production_effect", "none")),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_sec_pit_real_run_diagnostics(report: DailyTaskDashboardReport) -> str:
+    summary = _sec_pit_real_run_diagnostics(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}">'
+        "<span>SEC PIT Real Run Diagnostics</span>"
+        f"<small>{_text(summary.get('status', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>SEC PIT Real Run Diagnostics</span>"
+        "<small>MISSING</small></span>"
+    )
+    missing_note = (
+        '<p class="subtle">No SEC PIT real-run diagnostics summary available.</p>'
+        if summary.get("exists") is not True
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="sec-pit-real-run-diagnostics-title">',
+            '<div class="section-head">',
+            '<h2 id="sec-pit-real-run-diagnostics-title">SEC PIT Real Run Diagnostics</h2>',
+            (
+                "<p>TRADING-042 只读卡片；dashboard 只读取 diagnostics artifact，"
+                "不运行 diagnostics、不运行 evaluation/comparison、不修改 production "
+                "或 shadow 权重。</p>"
+            ),
+            "</div>",
+            missing_note,
+            '<div class="summary-grid">',
+            _summary_item("latest diagnostics date", summary.get("latest_diagnostics_date", "")),
+            _summary_item("diagnostics status", summary.get("status", "MISSING")),
+            _summary_item(
+                "missing provenance rows",
+                summary.get("missing_provenance_rows", 0),
+            ),
+            _summary_item(
+                "first provenance loss stage",
+                summary.get("first_provenance_loss_stage", ""),
+            ),
+            _summary_item("alias unresolved count", summary.get("alias_unresolved_count", 0)),
+            _summary_item(
+                "baseline artifact status",
+                summary.get("baseline_artifact_status", "MISSING"),
+            ),
+            _summary_item(
+                "drawdown label coverage",
+                _format_percent(summary.get("drawdown_label_coverage")),
+            ),
+            _summary_item(
+                "features with coverage ratio > 1",
+                summary.get("features_with_coverage_ratio_above_1", 0),
+            ),
+            _summary_item(
+                "near-promotion feature count",
+                summary.get("near_promotion_feature_count", 0),
+            ),
+            _summary_item("promotion readiness", summary.get("promotion_readiness", "NOT_READY")),
             "</div>",
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'

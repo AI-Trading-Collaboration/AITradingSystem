@@ -133,6 +133,7 @@
 - `outputs/reports/daily_score_YYYY-MM-DD.md`
 - `outputs/sec_pit_evaluation/sec_pit_evaluation_summary_YYYY-MM-DD.md`
 - `outputs/sec_pit_baseline_comparison/sec_pit_baseline_comparison_summary_YYYY-MM-DD.md`
+- `outputs/sec_pit_diagnostics/sec_pit_real_run_diagnostics_YYYY-MM-DD.md`
 
 应该看哪份报告确认：
 
@@ -145,6 +146,10 @@
   回撤规避，查看 `docs/runbooks/sec_pit_baseline_comparison.md`、
   `sec_pit_decision_impact_YYYY-MM-DD.csv`、`sec_pit_rank_shift_YYYY-MM-DD.csv` 和
   `sec_pit_incremental_alpha_YYYY-MM-DD.csv`。
+- 若真实 run 出现 provenance 缺失、`GOOG` / `GOOGL` alias、baseline artifact fallback、
+  drawdown label NaN 或 coverage ratio 大于 1，查看
+  `docs/runbooks/sec_pit_real_run_diagnostics.md` 和
+  `outputs/sec_pit_diagnostics/sec_pit_real_run_diagnostics_YYYY-MM-DD.md`。
 
 ## 第 5 步：权重如何合成 overall score
 

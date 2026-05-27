@@ -51,6 +51,10 @@ from ai_trading_system.fundamentals.sec_pit_panel import (
     build_fundamental_pit_intervals_csv,
     build_sec_pit_feature_panel_csv,
 )
+from ai_trading_system.fundamentals.sec_pit_real_run_diagnostics import (
+    DEFAULT_SEC_PIT_DIAGNOSTICS_OUTPUT_DIR,
+    run_sec_pit_real_run_diagnostics,
+)
 from ai_trading_system.fundamentals.sec_pit_validation import (
     validate_and_write_sec_pit_artifacts,
 )
@@ -546,6 +550,10 @@ def compare_baseline_command(
         Path,
         typer.Option("--baseline-score-dir", help="score-daily baseline artifact 目录或 CSV。"),
     ] = DEFAULT_BASELINE_SCORE_DIR,
+    baseline_score_path: Annotated[
+        Path | None,
+        typer.Option("--baseline-score-path", help="显式 score-daily baseline CSV 路径。"),
+    ] = None,
     benchmark: Annotated[
         str,
         typer.Option("--benchmark", help="用于 relative return 的 benchmark ticker。"),
@@ -572,6 +580,7 @@ def compare_baseline_command(
         end=_parse_date(end),
         sec_pit_evaluation_dir=sec_pit_evaluation_dir,
         baseline_score_dir=baseline_score_dir,
+        baseline_score_path=baseline_score_path,
         benchmark=benchmark,
         output_dir=output_dir,
         tickers=_flatten_ticker_options(tickers) if tickers else None,
@@ -585,6 +594,75 @@ def compare_baseline_command(
     console.print(f"Run log: {artifacts.run_log_path}")
     if strict and artifacts.status != "OK":
         raise typer.Exit(code=2)
+
+
+@sec_pit_app.command("diagnose-run")
+def diagnose_run_command(
+    start: Annotated[
+        str | None,
+        typer.Option("--start", help="诊断开始日期 YYYY-MM-DD；--latest 可从 artifact 推断。"),
+    ] = None,
+    end: Annotated[
+        str | None,
+        typer.Option("--end", help="诊断结束日期 YYYY-MM-DD；--latest 可从 artifact 推断。"),
+    ] = None,
+    tickers: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--tickers",
+            help="诊断 ticker 列表；可重复，也可用逗号或空格分隔。",
+        ),
+    ] = None,
+    feature_panel: Annotated[
+        Path,
+        typer.Option("--feature-panel", help="SEC PIT feature panel CSV。"),
+    ] = DEFAULT_SEC_PIT_FEATURE_PANEL_PATH,
+    evaluation_dir: Annotated[
+        Path,
+        typer.Option("--evaluation-dir", help="SEC PIT evaluation artifact 目录。"),
+    ] = DEFAULT_SEC_PIT_EVALUATION_DIR,
+    comparison_dir: Annotated[
+        Path,
+        typer.Option("--comparison-dir", help="SEC PIT baseline comparison artifact 目录。"),
+    ] = DEFAULT_SEC_PIT_BASELINE_COMPARISON_OUTPUT_DIR,
+    baseline_score_path: Annotated[
+        Path | None,
+        typer.Option("--baseline-score-path", help="显式 baseline score CSV 路径。"),
+    ] = None,
+    baseline_score_dir: Annotated[
+        Path,
+        typer.Option("--baseline-score-dir", help="baseline score artifact 目录。"),
+    ] = DEFAULT_BASELINE_SCORE_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="SEC PIT diagnostics 输出目录。"),
+    ] = DEFAULT_SEC_PIT_DIAGNOSTICS_OUTPUT_DIR,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="自动发现 latest SEC PIT evaluation/comparison artifact。"),
+    ] = False,
+) -> None:
+    """生成 SEC PIT 真实运行 provenance、coverage、alias、label 和候选敏感性诊断。"""
+    artifacts = run_sec_pit_real_run_diagnostics(
+        start=_parse_date(start) if start else None,
+        end=_parse_date(end) if end else None,
+        tickers=_flatten_ticker_options(tickers) if tickers else None,
+        feature_panel_path=feature_panel,
+        evaluation_dir=evaluation_dir,
+        comparison_dir=comparison_dir,
+        baseline_score_path=baseline_score_path,
+        baseline_score_dir=baseline_score_dir,
+        output_dir=output_dir,
+        latest=latest,
+    )
+    console.print(f"SEC PIT diagnostics status: {artifacts.status}")
+    console.print(f"Summary JSON: {artifacts.summary_json_path}")
+    console.print(f"Summary report: {artifacts.summary_markdown_path}")
+    console.print(f"Provenance gap: {artifacts.provenance_gap_path}")
+    console.print(f"Coverage audit: {artifacts.coverage_audit_path}")
+    console.print(f"Alias audit: {artifacts.alias_resolution_audit_path}")
+    console.print(f"Label coverage audit: {artifacts.label_coverage_audit_path}")
+    console.print(f"Candidate sensitivity: {artifacts.candidate_sensitivity_path}")
 
 
 def _resolve_user_agent(value: str | None) -> str:

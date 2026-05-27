@@ -15,14 +15,22 @@ aits sec-pit compare-baseline \
   --output-dir outputs/sec_pit_baseline_comparison
 ```
 
-如果 baseline score CSV 不在默认目录，可直接把 `--baseline-score-dir` 指向 CSV：
+如果 baseline score CSV 不在默认目录，优先使用显式 path：
 
 ```bash
 aits sec-pit compare-baseline \
   --start 2023-01-01 \
   --end 2026-05-26 \
-  --baseline-score-dir data/processed/scores_daily.csv
+  --baseline-score-path data/processed/scores_daily.csv
 ```
+
+baseline resolver 优先级：
+
+1. `--baseline-score-path`
+2. `--baseline-score-dir` 中最新 artifact
+3. 默认 `outputs/daily_score`
+4. `data/processed/scores_daily.csv` fallback，并在 summary 中记录 `FALLBACK_USED`
+5. `LIMITED_BASELINE_MISSING`
 
 ## 必须检查
 
@@ -48,6 +56,9 @@ aits sec-pit compare-baseline \
 - 不修改 production weights、approved overlay、score-daily 输出或 production action。
 - `decision_impact` 每行固定 `manual_review_required=true`、`production_effect=none`。
 - `available_time > decision_date` 的 attribution row 必须排除。
+- baseline join 使用 canonical ticker；`GOOGL` 应按 SEC PIT alias 解析为 `GOOG`。
+- decision impact 会保留 SEC PIT attribution 汇总后的 provenance / `source_lineage`，用于
+  TRADING-042 诊断。
 - 报告继续披露 `B_RECONSTRUCTED_SEC_FILING_PIT` 限制；不能把 reconstructed PIT 当作
   strict vendor archive PIT。
 

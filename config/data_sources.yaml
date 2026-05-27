@@ -1228,6 +1228,7 @@ sources:
       - outputs/reports/sec_pit_backfill
       - outputs/sec_pit_evaluation
       - outputs/sec_pit_baseline_comparison
+      - outputs/sec_pit_diagnostics
     primary_for:
       - reconstructed_filing_time_pit_fundamentals
       - sec_ratio_features
@@ -1242,10 +1243,23 @@ sources:
       - ticker
       - cik
       - accession_number
+      - accepted_datetime
+      - filed_date
+      - form
+      - period
+      - source_concept
+      - source_taxonomy
+      - raw_sha256
+      - source_url_or_raw_path
+      - source_lineage
       - acceptance_datetime_utc
       - available_for_signal_date
+      - available_time
+      - pit_grade
       - pit_data_grade
       - confidence_level
+      - baseline_artifact_path
+      - baseline_artifact_status
     validation_checks:
       - user_agent_required
       - external_request_cache_metadata
@@ -1261,6 +1275,12 @@ sources:
       - cognitive_evaluation_available_time_gate
       - shadow_candidate_observe_only
       - baseline_comparison_manual_review_only
+      - provenance_gap_diagnostics
+      - ticker_alias_resolution
+      - baseline_artifact_fallback_audit
+      - label_coverage_audit
+      - coverage_ratio_capped_after_dedup
+      - candidate_sensitivity_manual_review_only
     limitations:
       - "默认等级为 `B_RECONSTRUCTED_SEC_FILING_PIT`，因为该层从 SEC 当前可下载 submissions/companyfacts 重建历史可见性，不是严格 vendor archive。"
       - "`strict_vendor_archive=false`、`retroactive_strict_pit=false`；升级等级前必须进行人工复核和 vendor/archive 对照。"
@@ -1269,6 +1289,7 @@ sources:
       - "不允许只按 fiscal period end 合并；所有 feature panel 行必须满足 `available_for_signal_date <= decision_date`。"
       - "TRADING-040 evaluation 只生成 feature effectiveness、signal attribution 和 shadow candidate weights；`manual_review_required=true`、`production_effect=none`，不得自动修改 production score 权重。"
       - "TRADING-041 baseline comparison 只读比较 score baseline 与 SEC PIT enhanced output；缺 baseline 或 evaluation artifact 时默认 LIMITED，不得修改 production weights/actions。"
+      - "TRADING-042 real-run diagnostics 只读定位 provenance gap、alias、baseline fallback、label coverage、coverage ratio 和 candidate sensitivity；candidate sensitivity 固定 `manual_review_required=true`、`production_effect=none`，不得自动 promotion。"
     llm_permission:
       license_scope: public_primary_source_owner_review
       personal_use_only: true

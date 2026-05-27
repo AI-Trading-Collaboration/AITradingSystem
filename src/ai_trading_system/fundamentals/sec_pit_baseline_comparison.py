@@ -12,6 +12,10 @@ import numpy as np
 import pandas as pd
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.fundamentals.sec_pit_aliases import (
+    canonicalize_ticker_series,
+    load_ticker_aliases,
+)
 from ai_trading_system.fundamentals.sec_pit_backfill import SEC_PIT_BACKTEST_DATA_GRADE
 
 SEC_PIT_BASELINE_COMPARISON_TASK_ID = "TRADING-041"
@@ -23,6 +27,7 @@ DEFAULT_SEC_PIT_BASELINE_COMPARISON_OUTPUT_DIR = (
 )
 DEFAULT_SEC_PIT_EVALUATION_DIR = PROJECT_ROOT / "outputs" / "sec_pit_evaluation"
 DEFAULT_BASELINE_SCORE_DIR = PROJECT_ROOT / "outputs" / "daily_score"
+DEFAULT_PROCESSED_BASELINE_SCORE_PATH = PROJECT_ROOT / "data" / "processed" / "scores_daily.csv"
 
 COMPARISON_STATUSES: tuple[str, ...] = (
     "OK",
@@ -49,7 +54,18 @@ DECISION_IMPACT_COLUMNS: tuple[str, ...] = (
     "forward_return_20d",
     "relative_return_vs_QQQ_20d",
     "max_drawdown_forward_20d",
+    "accession_number",
+    "accepted_datetime",
+    "filed_date",
+    "form",
+    "period",
+    "source_concept",
+    "source_taxonomy",
+    "raw_sha256",
+    "source_url_or_raw_path",
     "pit_grade",
+    "available_time",
+    "source_lineage",
     "manual_review_required",
     "production_effect",
 )
@@ -129,10 +145,36 @@ class _SecPitEvaluationInputs:
 class _BaselineInputs:
     path: Path
     frame: pd.DataFrame
+    status: str = "OK"
 
     @property
     def exists(self) -> bool:
         return not self.frame.empty
+
+    @property
+    def rows(self) -> int:
+        return int(len(self.frame))
+
+    @property
+    def date_range(self) -> list[str]:
+        if self.frame.empty:
+            return []
+        date_column = _first_existing_column(self.frame, ("decision_date", "as_of", "date"))
+        if date_column is None:
+            return []
+        values = pd.to_datetime(self.frame[date_column], errors="coerce").dropna()
+        if values.empty:
+            return []
+        return [values.min().date().isoformat(), values.max().date().isoformat()]
+
+    @property
+    def ticker_count(self) -> int:
+        if self.frame.empty:
+            return 0
+        ticker_column = _first_existing_column(self.frame, ("ticker", "symbol"))
+        if ticker_column is None:
+            return 0
+        return int(self.frame[ticker_column].dropna().astype(str).str.upper().nunique())
 
 
 def run_sec_pit_baseline_comparison(
@@ -141,6 +183,7 @@ def run_sec_pit_baseline_comparison(
     end: date,
     sec_pit_evaluation_dir: Path = DEFAULT_SEC_PIT_EVALUATION_DIR,
     baseline_score_dir: Path = DEFAULT_BASELINE_SCORE_DIR,
+    baseline_score_path: Path | None = None,
     benchmark: str = "QQQ",
     output_dir: Path = DEFAULT_SEC_PIT_BASELINE_COMPARISON_OUTPUT_DIR,
     tickers: list[str] | None = None,
@@ -162,7 +205,11 @@ def run_sec_pit_baseline_comparison(
 
     try:
         sec_inputs = _load_sec_pit_evaluation_inputs(sec_pit_evaluation_dir, end)
-        baseline_inputs = _load_baseline_inputs(baseline_score_dir, end)
+        baseline_inputs = _load_baseline_inputs(
+            baseline_score_dir,
+            end,
+            baseline_score_path=baseline_score_path,
+        )
         if not sec_inputs.exists:
             status = "LIMITED_SEC_PIT_EVALUATION_MISSING"
             limitations.append("SEC PIT evaluation artifacts are missing or incomplete.")
@@ -176,6 +223,11 @@ def run_sec_pit_baseline_comparison(
             rank_shift = _empty_rank_shift()
             incremental_alpha = _empty_incremental_alpha()
         else:
+            if baseline_inputs.status == "FALLBACK_USED":
+                limitations.append(
+                    "baseline_artifact_status=FALLBACK_USED; default outputs/daily_score "
+                    "artifact was unavailable, so data/processed/scores_daily.csv was used."
+                )
             attribution, exclusion_counts = _normalize_signal_attribution(
                 sec_inputs.signal_attribution,
                 start=start,
@@ -285,6 +337,8 @@ def render_sec_pit_baseline_comparison_summary(
         f"- start_date: {summary['start_date']}",
         f"- end_date: {summary['end_date']}",
         f"- baseline source: {summary['baseline_source']}",
+        f"- baseline artifact status: {summary.get('baseline_artifact_status', 'UNKNOWN')}",
+        f"- baseline rows: {summary.get('baseline_rows', 0)}",
         f"- SEC PIT evaluation source: {summary['sec_pit_evaluation_source']}",
         f"- comparison status: {summary['comparison_status']}",
         "",
@@ -389,13 +443,41 @@ def _empty_sec_inputs(root: Path, end: date) -> _SecPitEvaluationInputs:
     )
 
 
-def _load_baseline_inputs(root: Path, end: date) -> _BaselineInputs:
+def _load_baseline_inputs(
+    root: Path,
+    end: date,
+    *,
+    baseline_score_path: Path | None = None,
+) -> _BaselineInputs:
+    if baseline_score_path is not None:
+        frame = _read_csv_or_empty(baseline_score_path)
+        status = "OK" if not frame.empty else "LIMITED_BASELINE_MISSING"
+        return _BaselineInputs(path=baseline_score_path, frame=frame, status=status)
+
     path = _baseline_path(root, end)
-    return _BaselineInputs(path=path, frame=_read_csv_or_empty(path))
+    frame = _read_csv_or_empty(path)
+    if not frame.empty:
+        return _BaselineInputs(path=path, frame=frame, status="OK")
+
+    if _is_default_baseline_score_dir(root) and DEFAULT_PROCESSED_BASELINE_SCORE_PATH.exists():
+        fallback_frame = _read_csv_or_empty(DEFAULT_PROCESSED_BASELINE_SCORE_PATH)
+        if not fallback_frame.empty:
+            return _BaselineInputs(
+                path=DEFAULT_PROCESSED_BASELINE_SCORE_PATH,
+                frame=fallback_frame,
+                status="FALLBACK_USED",
+            )
+    return _BaselineInputs(path=path, frame=frame, status="LIMITED_BASELINE_MISSING")
 
 
 def _empty_baseline_inputs(root: Path) -> _BaselineInputs:
-    return _BaselineInputs(path=root, frame=pd.DataFrame())
+    return _BaselineInputs(path=root, frame=pd.DataFrame(), status="LIMITED_BASELINE_MISSING")
+
+
+def _is_default_baseline_score_dir(root: Path) -> bool:
+    path = Path(root)
+    normalized = path if path.is_absolute() else PROJECT_ROOT / path
+    return normalized.resolve() == DEFAULT_BASELINE_SCORE_DIR.resolve()
 
 
 def _baseline_path(root: Path, end: date) -> Path:
@@ -461,7 +543,8 @@ def _normalize_signal_attribution(
         errors="coerce",
         utc=True,
     )
-    normalized["ticker"] = normalized["ticker"].astype(str).str.upper()
+    aliases = load_ticker_aliases()
+    normalized["ticker"] = canonicalize_ticker_series(normalized["ticker"], aliases=aliases)
     normalized["feature_id"] = normalized["feature_id"].astype(str)
     normalized["_contribution"] = pd.to_numeric(
         normalized["contribution"],
@@ -485,6 +568,20 @@ def _normalize_signal_attribution(
     )
     if "pit_grade" not in normalized.columns:
         normalized["pit_grade"] = SEC_PIT_BACKTEST_DATA_GRADE
+    for column in (
+        "accession_number",
+        "accepted_datetime",
+        "filed_date",
+        "form",
+        "period",
+        "source_concept",
+        "source_taxonomy",
+        "raw_sha256",
+        "source_url_or_raw_path",
+        "source_lineage",
+    ):
+        if column not in normalized.columns:
+            normalized[column] = ""
 
     exclusions: Counter[str] = Counter()
     valid = normalized["_decision_date"].notna()
@@ -533,6 +630,7 @@ def _normalize_baseline_scores(
     if date_column is None or score_column is None:
         raise ValueError("baseline score artifact must include a date and score column")
     normalized = frame.copy().fillna("")
+    aliases = load_ticker_aliases()
     if "component" in normalized.columns:
         overall = normalized.loc[normalized["component"].astype(str) == "overall"].copy()
         if not overall.empty:
@@ -554,7 +652,8 @@ def _normalize_baseline_scores(
     action_column = _first_existing_column(normalized, ("baseline_action", "action", "label"))
     records: list[dict[str, Any]] = []
     for row in normalized.to_dict(orient="records"):
-        row_ticker = str(row.get(ticker_column or "") or "").upper()
+        raw_ticker = str(row.get(ticker_column or "") or "").upper()
+        row_ticker = aliases.get(raw_ticker, raw_ticker)
         row_tickers = [row_ticker] if row_ticker else tickers
         score = float(row["_score"])
         action = str(row.get(action_column or "") or "") or _action_from_score(score)
@@ -620,7 +719,18 @@ def _aggregate_sec_contributions(attribution: pd.DataFrame, *, benchmark: str) -
                 ),
                 "relative_return_vs_QQQ_20d": _mean_or_nan(group["_relative_return_20d"]),
                 "max_drawdown_forward_20d": _mean_or_nan(group["_max_drawdown_forward_20d"]),
+                "accession_number": _unique_join(group["accession_number"]),
+                "accepted_datetime": _unique_join(group["accepted_datetime"]),
+                "filed_date": _unique_join(group["filed_date"]),
+                "form": _unique_join(group["form"]),
+                "period": _unique_join(group["period"]),
+                "source_concept": _unique_join(group["source_concept"]),
+                "source_taxonomy": _unique_join(group["source_taxonomy"]),
+                "raw_sha256": _unique_join(group["raw_sha256"]),
+                "source_url_or_raw_path": _unique_join(group["source_url_or_raw_path"]),
                 "pit_grade": _dominant_value(group["pit_grade"]),
+                "available_time": _unique_join(group["available_time"]),
+                "source_lineage": _unique_join(group["source_lineage"]),
             }
         )
     return pd.DataFrame(records).sort_values(["decision_date", "ticker"]).reset_index(drop=True)
@@ -752,6 +862,11 @@ def _summary_payload(
         "end_date": end.isoformat(),
         "comparison_status": status,
         "baseline_source": str(baseline_inputs.path),
+        "baseline_artifact_path": str(baseline_inputs.path),
+        "baseline_artifact_status": baseline_inputs.status,
+        "baseline_rows": baseline_inputs.rows,
+        "baseline_date_range": baseline_inputs.date_range,
+        "baseline_ticker_count": baseline_inputs.ticker_count,
         "sec_pit_evaluation_source": str(sec_inputs.summary_path),
         "benchmark": benchmark,
         "universe_size": int(impact["ticker"].nunique()) if not impact.empty else 0,
@@ -891,8 +1006,9 @@ def _empty_incremental_alpha() -> pd.DataFrame:
 
 
 def _active_tickers(attribution: pd.DataFrame, tickers: list[str] | None) -> list[str]:
+    aliases = load_ticker_aliases()
     if tickers:
-        return sorted({ticker.upper() for ticker in tickers})
+        return sorted({aliases.get(ticker.upper(), ticker.upper()) for ticker in tickers})
     if attribution.empty:
         return []
     return sorted(attribution["ticker"].dropna().astype(str).str.upper().unique().tolist())
@@ -923,6 +1039,18 @@ def _feature_contribution_text(group: pd.DataFrame, *, positive: bool) -> str:
         for row in values.head(3).to_dict(orient="records")
     ]
     return ";".join(parts)
+
+
+def _unique_join(values: pd.Series) -> str:
+    result: list[str] = []
+    seen: set[str] = set()
+    for value in values.dropna().astype(str):
+        for item in value.split(","):
+            normalized = item.strip()
+            if normalized and normalized not in seen:
+                result.append(normalized)
+                seen.add(normalized)
+    return ";".join(result)
 
 
 def _first_feature(value: str) -> str:

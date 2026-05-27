@@ -68,7 +68,8 @@ rules:
       - backtest
       - sec-pit evaluate
       - sec-pit compare-baseline
-    notes: Period end alone is never sufficient for historical availability; SEC EDGAR reconstructed PIT panels must enforce available_time <= decision_time for evaluation, available_time <= decision_date for baseline comparison attribution, and available_for_signal_date <= decision_date for daily/backtest loaders.
+      - sec-pit diagnose-run
+    notes: Period end alone is never sufficient for historical availability; SEC EDGAR reconstructed PIT panels must enforce available_time <= decision_time for evaluation, available_time <= decision_date for baseline comparison attribution, and available_for_signal_date <= decision_date for daily/backtest loaders. SEC PIT diagnostics must preserve and audit provenance fields plus source_lineage; forward_return, relative_return, and max_drawdown labels are evaluation labels only and must never become features.
   - rule_id: valuation_snapshots
     family: valuation
     label: Valuation and analyst expectation snapshots

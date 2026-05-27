@@ -21,6 +21,9 @@ aits sec-pit evaluate \
 aits sec-pit evaluate --start 2023-01-01 --end 2026-05-26 --tickers NVDA MSFT AMD AVGO GOOGL META AMZN
 ```
 
+`GOOGL` 会通过 `config/ticker_aliases.yaml` 解析为 SEC canonical ticker `GOOG`，前提是
+`config/sec_companies.yaml` 中存在 `GOOG`。
+
 ## 必须检查
 
 - `outputs/sec_pit_evaluation/sec_pit_evaluation_summary_YYYY-MM-DD.json`
@@ -37,6 +40,8 @@ aits sec-pit evaluate --start 2023-01-01 --end 2026-05-26 --tickers NVDA MSFT AM
 - `pit_grade_policy` 固定为 `B_RECONSTRUCTED_SEC_FILING_PIT`。
 - 缺少 `accession_number`、`accepted_datetime`、`filed_date` 或 `raw_sha256` 会降低
   `pit_quality_score`，不得 promoted。
+- `signal_attribution` 必须保留 SEC provenance 和 `source_lineage`，并输出
+  `max_drawdown_forward_20d` 作为 evaluation label，不得作为 feature 使用。
 - 所有 shadow weights 固定 `manual_review_required=true`、`production_effect=none`。
 
 ## 解释顺序
@@ -48,6 +53,8 @@ aits sec-pit evaluate --start 2023-01-01 --end 2026-05-26 --tickers NVDA MSFT AM
 5. 若要判断这些 feature 是否真的改善 decision-level 排名、回撤规避或 action review
    queue，继续运行 `docs/runbooks/sec_pit_baseline_comparison.md` 中的
    `aits sec-pit compare-baseline`。
+6. 若真实 run 出现 provenance 缺失、coverage ratio 大于 1、drawdown label NaN 或 baseline
+   artifact fallback，运行 `docs/runbooks/sec_pit_real_run_diagnostics.md`。
 
 ## Dashboard
 
