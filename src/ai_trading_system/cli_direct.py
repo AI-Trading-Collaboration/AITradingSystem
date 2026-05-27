@@ -52,6 +52,10 @@ def _dispatch(args: list[str]) -> None:
     if args[:2] == ["valuation", "fetch-fmp"]:
         cli.fetch_fmp_valuations(as_of=_option(args, "--as-of"))
         return
+    if args[:2] == ["score-daily", "backfill-baseline"]:
+        raise typer.BadParameter(
+            "daily-run direct dispatcher 不支持 score-daily backfill-baseline；请使用主 CLI。"
+        )
     if args[:1] == ["score-daily"]:
         max_candidates = _option(args, "--risk-event-openai-precheck-max-candidates")
         cli.score_daily(

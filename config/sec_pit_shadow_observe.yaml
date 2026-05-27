@@ -44,6 +44,12 @@ monitoring:
     - META
     - AMZN
 
+monitoring_quality_gate:
+  min_baseline_coverage_ratio: 0.90
+  min_label_coverage_ratio: 0.90
+  min_monitoring_sample_count: 20
+  data_limited_status_prevents_factor_rollback: true
+
 rollback:
   rolling_rank_ic_20d_wrong_direction_threshold: 0.02
   max_negative_relative_return_20d: -0.05

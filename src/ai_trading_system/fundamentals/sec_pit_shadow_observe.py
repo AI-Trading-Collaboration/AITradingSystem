@@ -47,6 +47,7 @@ SHADOW_STATUSES: tuple[str, ...] = (
     "OK",
     "LIMITED_BASELINE_MISSING",
     "LIMITED_LABELS_MISSING",
+    "INSUFFICIENT_MONITORING_SAMPLE",
     "LIMITED_CANDIDATE_REVIEW_MISSING",
     "FAILED_SAFETY_CHECK",
     "FAILED_VALIDATION",
@@ -153,6 +154,16 @@ MONITORING_METRICS: tuple[str, ...] = (
     "baseline_overlap",
 )
 
+FACTOR_MONITORING_METRICS: frozenset[str] = frozenset(
+    {
+        "rolling_rank_ic_20d",
+        "rolling_rank_ic_60d",
+        "relative_return_vs_baseline_20d",
+        "drawdown_improvement_20d",
+        "hit_rate_20d",
+    }
+)
+
 PRODUCTION_CONFIG_PATHS: tuple[Path, ...] = (
     PROJECT_ROOT / "config" / "weights" / "weight_profile_current.yaml",
 )
@@ -185,6 +196,7 @@ class SecPitShadowObserveConfig:
     safety: dict[str, Any]
     monitoring: dict[str, Any]
     rollback: dict[str, Any]
+    monitoring_quality_gate: dict[str, Any]
 
 
 @dataclass(frozen=True)
@@ -271,6 +283,7 @@ def load_sec_pit_shadow_observe_config(
         safety=_mapping_value(raw.get("safety")),
         monitoring=_mapping_value(raw.get("monitoring")),
         rollback=_mapping_value(raw.get("rollback")),
+        monitoring_quality_gate=_mapping_value(raw.get("monitoring_quality_gate")),
     )
     _validate_config(config)
     return config
@@ -399,13 +412,20 @@ def run_sec_pit_shadow_observe(
             start=start,
             end=end,
         )
-        if not inputs.baseline.exists or _baseline_missing(shadow_scores):
+        monitoring_quality = _monitoring_quality(shadow_scores, config)
+        if (
+            not inputs.baseline.exists
+            or _baseline_missing(shadow_scores)
+            or monitoring_quality.status == "LIMITED_BASELINE_MISSING"
+        ):
             status = "LIMITED_BASELINE_MISSING"
             limitations.append(
                 "Baseline score is missing for part or all of the requested shadow rows; "
                 "rank shift fields are limited."
             )
-        elif _labels_missing(shadow_scores):
+        elif (
+            _labels_missing(shadow_scores) or monitoring_quality.status == "LIMITED_LABELS_MISSING"
+        ):
             status = "LIMITED_LABELS_MISSING"
             limitations.append("Forward return labels are missing or incomplete.")
         else:
@@ -553,6 +573,19 @@ def render_sec_pit_shadow_observe_summary(
         [
             "",
             "## Monitoring Plan",
+            f"- monitoring_status: {summary.get('monitoring_status', 'UNKNOWN')}",
+            f"- monitoring_status_reason: {summary.get('monitoring_status_reason', '')}",
+            f"- baseline coverage ratio: {_format_float(summary.get('baseline_coverage_ratio'))}",
+            f"- label coverage ratio: {_format_float(summary.get('label_coverage_ratio'))}",
+            f"- monitoring sample count: {summary.get('monitoring_sample_count', 0)}",
+            (
+                "- factor rollback triggered: "
+                f"{'yes' if summary.get('factor_rollback_triggered') else 'no'}"
+            ),
+            (
+                "- data limitation triggered: "
+                f"{'yes' if summary.get('data_limitation_triggered') else 'no'}"
+            ),
         ]
     )
     lines.extend(_monitoring_lines(monitoring_plan))
@@ -1245,6 +1278,26 @@ def _bucket_row(scores: pd.DataFrame, bucket: str) -> dict[str, Any]:
     }
 
 
+@dataclass(frozen=True)
+class _MonitoringQuality:
+    baseline_coverage_ratio: float
+    label_coverage_ratio: float
+    monitoring_sample_count: int
+    min_baseline_coverage_ratio: float
+    min_label_coverage_ratio: float
+    min_monitoring_sample_count: int
+    status: str
+    reason: str
+
+    @property
+    def data_limited(self) -> bool:
+        return self.status in {
+            "LIMITED_BASELINE_MISSING",
+            "LIMITED_LABELS_MISSING",
+            "INSUFFICIENT_MONITORING_SAMPLE",
+        }
+
+
 def _monitoring_plan(
     *,
     config: SecPitShadowObserveConfig,
@@ -1255,6 +1308,7 @@ def _monitoring_plan(
     bucket_comparison: pd.DataFrame,
     candidate_review: _CandidateReviewValues,
 ) -> pd.DataFrame:
+    quality = _monitoring_quality(scores, config)
     all_bucket = _bucket_record(bucket_comparison, "all")
     current_values = {
         "rolling_rank_ic_20d": _float_or_nan(all_bucket.get("rank_ic_20d")),
@@ -1283,7 +1337,13 @@ def _monitoring_plan(
                 "warning_threshold": threshold["warning_threshold"],
                 "rollback_threshold": threshold["rollback_threshold"],
                 "current_value": _monitoring_value(metric, current, candidate_review),
-                "status": _monitoring_status(metric, current, candidate_review, config),
+                "status": _monitoring_status(
+                    metric,
+                    current,
+                    candidate_review,
+                    config,
+                    quality,
+                ),
                 "manual_review_required": True,
                 "production_effect": SEC_PIT_SHADOW_OBSERVE_PRODUCTION_EFFECT,
             }
@@ -1312,6 +1372,8 @@ def _summary_payload(
     artifacts: dict[str, Path],
 ) -> dict[str, Any]:
     values = _candidate_review_values(inputs, candidate_feature)
+    monitoring_quality = _monitoring_quality(shadow_scores, config)
+    monitoring_status = _monitoring_overall_status(monitoring_plan)
     return {
         "schema_version": "1.0",
         "report_type": SEC_PIT_SHADOW_OBSERVE_REPORT_TYPE,
@@ -1341,7 +1403,27 @@ def _summary_payload(
         "score_rows": int(len(shadow_scores)),
         "rank_shift_rows": int(len(rank_shift)),
         "bucket_comparison_rows": int(len(bucket_comparison)),
-        "monitoring_status": _monitoring_overall_status(monitoring_plan),
+        "baseline_coverage_ratio": _json_number(monitoring_quality.baseline_coverage_ratio) or 0.0,
+        "label_coverage_ratio": _json_number(monitoring_quality.label_coverage_ratio) or 0.0,
+        "monitoring_sample_count": monitoring_quality.monitoring_sample_count,
+        "min_baseline_coverage_ratio": monitoring_quality.min_baseline_coverage_ratio,
+        "min_label_coverage_ratio": monitoring_quality.min_label_coverage_ratio,
+        "min_monitoring_sample_count": monitoring_quality.min_monitoring_sample_count,
+        "baseline_coverage_status": (
+            "OK"
+            if monitoring_quality.baseline_coverage_ratio
+            >= monitoring_quality.min_baseline_coverage_ratio
+            else "LIMITED_BASELINE_MISSING"
+        ),
+        "monitoring_status": monitoring_status,
+        "monitoring_status_reason": (
+            monitoring_quality.reason
+            if monitoring_quality.data_limited
+            else _monitoring_status_reason(monitoring_status)
+        ),
+        "factor_rollback_triggered": monitoring_status == "ROLLBACK_TRIGGERED_BY_FACTOR",
+        "data_limitation_triggered": monitoring_quality.data_limited
+        or monitoring_status == "ROLLBACK_TRIGGERED_BY_DATA",
         "average_score_delta": _json_number(
             _mean_or_nan(_score_delta_series(shadow_scores)),
         ),
@@ -1651,15 +1733,109 @@ def _monitoring_value(
     return current
 
 
+def _monitoring_quality(
+    scores: pd.DataFrame,
+    config: SecPitShadowObserveConfig,
+) -> _MonitoringQuality:
+    gate = config.monitoring_quality_gate
+    min_baseline = _float_or_default(gate.get("min_baseline_coverage_ratio"), 0.90)
+    min_labels = _float_or_default(gate.get("min_label_coverage_ratio"), 0.90)
+    min_sample = int(
+        gate.get("min_monitoring_sample_count")
+        or config.rollback.get("min_monitoring_sample_count")
+        or 20
+    )
+    if scores.empty:
+        return _MonitoringQuality(
+            baseline_coverage_ratio=0.0,
+            label_coverage_ratio=0.0,
+            monitoring_sample_count=0,
+            min_baseline_coverage_ratio=min_baseline,
+            min_label_coverage_ratio=min_labels,
+            min_monitoring_sample_count=min_sample,
+            status="LIMITED_BASELINE_MISSING",
+            reason="No shadow score rows were available for monitoring coverage gates.",
+        )
+    baseline_values = pd.to_numeric(scores.get("baseline_score"), errors="coerce")
+    label_values = pd.to_numeric(scores.get("forward_return_20d"), errors="coerce")
+    baseline_present = baseline_values.notna()
+    label_present = label_values.notna()
+    row_count = int(len(scores))
+    baseline_ratio = float(baseline_present.sum() / row_count) if row_count else 0.0
+    label_ratio = float(label_present.sum() / row_count) if row_count else 0.0
+    sample_count = int((baseline_present & label_present).sum())
+    if baseline_ratio < min_baseline:
+        return _MonitoringQuality(
+            baseline_coverage_ratio=baseline_ratio,
+            label_coverage_ratio=label_ratio,
+            monitoring_sample_count=sample_count,
+            min_baseline_coverage_ratio=min_baseline,
+            min_label_coverage_ratio=min_labels,
+            min_monitoring_sample_count=min_sample,
+            status="LIMITED_BASELINE_MISSING",
+            reason=(
+                "Baseline score coverage is below the configured monitoring quality gate "
+                f"({baseline_ratio:.2%} < {min_baseline:.2%})."
+            ),
+        )
+    if label_ratio < min_labels:
+        return _MonitoringQuality(
+            baseline_coverage_ratio=baseline_ratio,
+            label_coverage_ratio=label_ratio,
+            monitoring_sample_count=sample_count,
+            min_baseline_coverage_ratio=min_baseline,
+            min_label_coverage_ratio=min_labels,
+            min_monitoring_sample_count=min_sample,
+            status="LIMITED_LABELS_MISSING",
+            reason=(
+                "Forward label coverage is below the configured monitoring quality gate "
+                f"({label_ratio:.2%} < {min_labels:.2%})."
+            ),
+        )
+    if sample_count < min_sample:
+        return _MonitoringQuality(
+            baseline_coverage_ratio=baseline_ratio,
+            label_coverage_ratio=label_ratio,
+            monitoring_sample_count=sample_count,
+            min_baseline_coverage_ratio=min_baseline,
+            min_label_coverage_ratio=min_labels,
+            min_monitoring_sample_count=min_sample,
+            status="INSUFFICIENT_MONITORING_SAMPLE",
+            reason=(
+                "Monitoring sample count is below the configured minimum "
+                f"({sample_count} < {min_sample})."
+            ),
+        )
+    return _MonitoringQuality(
+        baseline_coverage_ratio=baseline_ratio,
+        label_coverage_ratio=label_ratio,
+        monitoring_sample_count=sample_count,
+        min_baseline_coverage_ratio=min_baseline,
+        min_label_coverage_ratio=min_labels,
+        min_monitoring_sample_count=min_sample,
+        status="OK",
+        reason="Monitoring quality gates passed.",
+    )
+
+
 def _monitoring_status(
     metric: str,
     current: object,
     candidate_review: _CandidateReviewValues,
     config: SecPitShadowObserveConfig,
+    quality: _MonitoringQuality,
 ) -> str:
+    if (
+        quality.data_limited
+        and bool(
+            config.monitoring_quality_gate.get("data_limited_status_prevents_factor_rollback", True)
+        )
+        and metric in FACTOR_MONITORING_METRICS
+    ):
+        return quality.status
     if metric == "baseline_overlap":
         if candidate_review.baseline_overlap_risk == "HIGH":
-            return "ROLLBACK_TRIGGERED"
+            return "ROLLBACK_TRIGGERED_BY_DATA"
         if candidate_review.baseline_overlap_risk in {"MEDIUM", "UNKNOWN"}:
             return "WATCH"
         return "OK"
@@ -1675,41 +1851,62 @@ def _monitoring_status(
             0.02,
         )
         if value < -threshold:
-            return "ROLLBACK_TRIGGERED"
+            return "ROLLBACK_TRIGGERED_BY_FACTOR"
         if value < threshold:
             return "WATCH"
         return "OK"
     if metric == "relative_return_vs_baseline_20d":
         limit = _float_or_default(rollback.get("max_negative_relative_return_20d"), -0.05)
         if value < limit:
-            return "ROLLBACK_TRIGGERED"
+            return "ROLLBACK_TRIGGERED_BY_FACTOR"
         if value < 0:
             return "WATCH"
         return "OK"
     if metric == "drawdown_improvement_20d":
         limit = _float_or_default(rollback.get("max_drawdown_deterioration_20d"), -0.03)
         if value < limit:
-            return "ROLLBACK_TRIGGERED"
+            return "ROLLBACK_TRIGGERED_BY_FACTOR"
         if value < 0:
             return "WATCH"
         return "OK"
     if metric == "data_quality_score":
         limit = _float_or_default(config.safety.get("min_data_quality_score"), 0.0)
-        return "OK" if value >= limit else "ROLLBACK_TRIGGERED"
+        return "OK" if value >= limit else "ROLLBACK_TRIGGERED_BY_DATA"
     return "OK"
 
 
 def _monitoring_overall_status(frame: pd.DataFrame) -> str:
     if frame.empty or "status" not in frame.columns:
-        return "LIMITED"
+        return "INSUFFICIENT_MONITORING_SAMPLE"
     statuses = set(frame["status"].astype(str))
-    if "ROLLBACK_TRIGGERED" in statuses:
-        return "ROLLBACK_TRIGGERED"
-    if "WATCH" in statuses:
-        return "WATCH"
+    for status in (
+        "FAILED_SAFETY_CHECK",
+        "LIMITED_BASELINE_MISSING",
+        "LIMITED_LABELS_MISSING",
+        "INSUFFICIENT_MONITORING_SAMPLE",
+        "ROLLBACK_TRIGGERED_BY_DATA",
+        "ROLLBACK_TRIGGERED_BY_FACTOR",
+    ):
+        if status in statuses:
+            return status
+    if "LIMITED" in statuses:
+        return "INSUFFICIENT_MONITORING_SAMPLE"
     if statuses and statuses <= {"OK"}:
         return "OK"
-    return "LIMITED"
+    return "OK"
+
+
+def _monitoring_status_reason(status: str) -> str:
+    if status == "ROLLBACK_TRIGGERED_BY_FACTOR":
+        return (
+            "Factor monitoring metric breached a configured rollback threshold "
+            "after data gates passed."
+        )
+    if status == "ROLLBACK_TRIGGERED_BY_DATA":
+        return "A data or design quality condition breached monitoring safety thresholds."
+    if status == "OK":
+        return "Monitoring quality gates passed and no factor rollback threshold was breached."
+    return "Monitoring output is limited by data coverage or sample availability."
 
 
 def _top_rank_label_delta(scores: pd.DataFrame, label_column: str) -> float:

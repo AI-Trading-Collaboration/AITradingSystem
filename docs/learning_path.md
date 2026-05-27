@@ -130,9 +130,11 @@
 输出文件：
 
 - `data/processed/scores_daily.csv`
+- `data/processed/research/scores_daily_backfill_*.csv`
 - `outputs/reports/daily_score_YYYY-MM-DD.md`
 - `outputs/sec_pit_evaluation/sec_pit_evaluation_summary_YYYY-MM-DD.md`
 - `outputs/sec_pit_baseline_comparison/sec_pit_baseline_comparison_summary_YYYY-MM-DD.md`
+- `outputs/sec_pit_baseline_coverage/sec_pit_baseline_coverage_summary_YYYY-MM-DD.md`
 - `outputs/sec_pit_diagnostics/sec_pit_real_run_diagnostics_YYYY-MM-DD.md`
 - `outputs/sec_pit_candidate_review/sec_pit_candidate_review_summary_YYYY-MM-DD.md`
 - `outputs/sec_pit_shadow_observe/sec_pit_shadow_observe_summary_YYYY-MM-DD.md`
@@ -148,6 +150,10 @@
   回撤规避，查看 `docs/runbooks/sec_pit_baseline_comparison.md`、
   `sec_pit_decision_impact_YYYY-MM-DD.csv`、`sec_pit_rank_shift_YYYY-MM-DD.csv` 和
   `sec_pit_incremental_alpha_YYYY-MM-DD.csv`。
+- 若问题是 historical baseline score 覆盖是否足以支撑 shadow observe monitoring，先查看
+  `docs/runbooks/baseline_score_backfill.md`、`docs/runbooks/sec_pit_baseline_coverage.md`、
+  `sec_pit_baseline_coverage_summary_YYYY-MM-DD.md`、by-ticker / by-date coverage CSV 和 gap CSV；
+  baseline 覆盖不足是数据限制，不是 factor failure。
 - 若真实 run 出现 provenance 缺失、`GOOG` / `GOOGL` alias、baseline artifact fallback、
   drawdown label NaN 或 coverage ratio 大于 1，查看
   `docs/runbooks/sec_pit_real_run_diagnostics.md` 和
@@ -159,7 +165,9 @@
 - 若 owner 已人工批准 `APPROVE_OBSERVE_ONLY_SHADOW`，查看
   `docs/runbooks/sec_pit_shadow_observe.md`、`sec_pit_shadow_scores_YYYY-MM-DD.csv`、
   `sec_pit_shadow_rank_shift_YYYY-MM-DD.csv` 和 safety audit；该 lane 只观察
-  `capex_intensity` 对 score/rank 的假设影响，不影响 production。
+  `capex_intensity` 对 score/rank 的假设影响，不影响 production。monitoring status 需要同时看
+  baseline coverage、label coverage 和 monitoring sample count；coverage gate 未通过时不得解释成
+  因子回滚。
 
 ## 第 5 步：权重如何合成 overall score
 

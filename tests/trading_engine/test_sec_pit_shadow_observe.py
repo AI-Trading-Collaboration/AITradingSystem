@@ -47,6 +47,9 @@ def test_sec_pit_shadow_observe_writes_expected_artifacts(tmp_path: Path) -> Non
     assert summary["diagnostics_status"] == "OK"
     assert summary["provenance_complete"] is True
     assert summary["baseline_overlap_risk"] == "LOW"
+    assert summary["monitoring_status"] == "INSUFFICIENT_MONITORING_SAMPLE"
+    assert summary["factor_rollback_triggered"] is False
+    assert summary["data_limitation_triggered"] is True
     assert tuple(scores.columns) == SHADOW_SCORE_COLUMNS
     assert tuple(rank_shift.columns) == RANK_SHIFT_COLUMNS
     assert tuple(buckets.columns) == BUCKET_COMPARISON_COLUMNS
@@ -156,10 +159,27 @@ def test_missing_baseline_degrades_but_preserves_shadow_score_schema(tmp_path: P
     rank_shift = pd.read_csv(artifacts.rank_shift_path)
     assert artifacts.status == "LIMITED_BASELINE_MISSING"
     assert summary["shadow_status"] == "LIMITED_BASELINE_MISSING"
+    assert summary["monitoring_status"] == "LIMITED_BASELINE_MISSING"
+    assert summary["factor_rollback_triggered"] is False
+    assert summary["data_limitation_triggered"] is True
     assert tuple(scores.columns) == SHADOW_SCORE_COLUMNS
     assert tuple(rank_shift.columns) == RANK_SHIFT_COLUMNS
     assert len(scores) > 0
     assert rank_shift.empty
+
+
+def test_factor_rollback_requires_monitoring_quality_gates(tmp_path: Path) -> None:
+    paths = _write_shadow_inputs(tmp_path)
+    _make_signal_attribution_wrong_direction(paths["evaluation_dir"])
+    config_path = _write_shadow_config(tmp_path, min_monitoring_sample_count=1)
+
+    artifacts = _run_shadow_observe(paths, tmp_path, config_path=config_path)
+
+    summary = _read_json(artifacts.summary_json_path)
+    assert summary["shadow_status"] == "OK"
+    assert summary["monitoring_status"] == "ROLLBACK_TRIGGERED_BY_FACTOR"
+    assert summary["factor_rollback_triggered"] is True
+    assert summary["data_limitation_triggered"] is False
 
 
 def test_missing_candidate_review_degrades_without_emitting_score_rows(tmp_path: Path) -> None:
@@ -214,6 +234,7 @@ def test_dashboard_reads_sec_pit_shadow_observe_artifact_only(
     as_of = date(2023, 1, 5)
     metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
     _write_dashboard_shadow_summary(tmp_path, as_of)
+    _write_dashboard_baseline_coverage_summary(tmp_path, as_of)
     original_import = builtins.__import__
 
     def guarded_import(
@@ -257,7 +278,13 @@ def test_dashboard_reads_sec_pit_shadow_observe_artifact_only(
     assert summary["score_rows"] == 8
     assert summary["safety_check_status"] == "PASS"
     assert summary["monitoring_status"] == "OK"
+    assert summary["baseline_coverage_ratio"] == 1.0
+    coverage = payload["sec_pit_baseline_coverage"]
+    assert coverage["exists"] is True
+    assert coverage["coverage_status"] == "OK"
+    assert coverage["coverage_ratio"] == 1.0
     assert "SEC PIT Observe-Only Shadow Lane" in html
+    assert "SEC PIT Baseline Coverage" in html
     assert "capex_intensity" in html
 
 
@@ -267,21 +294,25 @@ def _run_shadow_observe(
     *,
     observe_weight: float = -0.025,
     output_dir: Path | None = None,
+    config_path: Path | None = None,
 ) -> Any:
-    return run_sec_pit_shadow_observe(
-        start=date(2023, 1, 1),
-        end=date(2023, 1, 5),
-        candidate_review_dir=paths["candidate_review_dir"],
-        evaluation_dir=paths["evaluation_dir"],
-        comparison_dir=paths["comparison_dir"],
-        diagnostics_dir=paths["diagnostics_dir"],
-        feature_panel_path=paths["feature_panel_path"],
-        baseline_score_path=paths["baseline_score_path"],
-        candidate_feature="capex_intensity",
-        observe_weight=observe_weight,
-        max_allowed_weight=0.05,
-        output_dir=output_dir or tmp_path / "outputs" / "sec_pit_shadow_observe",
-    )
+    kwargs: dict[str, Any] = {
+        "start": date(2023, 1, 1),
+        "end": date(2023, 1, 5),
+        "candidate_review_dir": paths["candidate_review_dir"],
+        "evaluation_dir": paths["evaluation_dir"],
+        "comparison_dir": paths["comparison_dir"],
+        "diagnostics_dir": paths["diagnostics_dir"],
+        "feature_panel_path": paths["feature_panel_path"],
+        "baseline_score_path": paths["baseline_score_path"],
+        "candidate_feature": "capex_intensity",
+        "observe_weight": observe_weight,
+        "max_allowed_weight": 0.05,
+        "output_dir": output_dir or tmp_path / "outputs" / "sec_pit_shadow_observe",
+    }
+    if config_path is not None:
+        kwargs["config_path"] = config_path
+    return run_sec_pit_shadow_observe(**kwargs)
 
 
 def _write_shadow_inputs(
@@ -604,6 +635,67 @@ def _write_baseline_scores(path: Path) -> None:
     pd.DataFrame(rows).to_csv(path, index=False)
 
 
+def _make_signal_attribution_wrong_direction(evaluation_dir: Path) -> None:
+    path = evaluation_dir / "sec_pit_signal_attribution_2023-01-05.csv"
+    frame = pd.read_csv(path)
+    frame["forward_return_20d"] = pd.to_numeric(frame["normalized_value"], errors="coerce")
+    frame["forward_return_60d"] = pd.to_numeric(frame["normalized_value"], errors="coerce")
+    frame.to_csv(path, index=False)
+
+
+def _write_shadow_config(tmp_path: Path, *, min_monitoring_sample_count: int) -> Path:
+    path = tmp_path / "sec_pit_shadow_observe.yaml"
+    path.write_text(
+        "\n".join(
+            [
+                "lane_id: sec_pit_capex_intensity_observe_only",
+                "lane_status: observe_only",
+                "production_effect: none",
+                "manual_review_required: true",
+                "candidates:",
+                "  - feature_id: capex_intensity",
+                "    metric_id: capex,revenue",
+                "    approval_status: APPROVE_OBSERVE_ONLY_SHADOW",
+                "    observe_weight: -0.025",
+                "    max_allowed_initial_weight: 0.05",
+                "    weight_direction: negative",
+                "    pit_grade_policy: B_RECONSTRUCTED_SEC_FILING_PIT",
+                "    minimum_monitoring_days: 60",
+                "    preferred_monitoring_days: 90",
+                "    enabled: true",
+                "safety:",
+                "  allow_production_write: false",
+                "  allow_active_shadow_write: false",
+                "  require_candidate_review_status: READY_FOR_MANUAL_REVIEW",
+                "  require_diagnostics_status: OK",
+                "  require_provenance_complete: true",
+                "  min_data_quality_score: 0.90",
+                "  min_drawdown_label_coverage: 0.90",
+                "  max_abs_initial_weight: 0.05",
+                "monitoring:",
+                "  forward_windows: [20, 60]",
+                "  compare_against: [baseline_score, score_daily]",
+                "  buckets: [semiconductor, platform, all]",
+                "  semiconductor_tickers: [NVDA, AMD, AVGO]",
+                "  platform_tickers: [MSFT, GOOG, META, AMZN]",
+                "monitoring_quality_gate:",
+                "  min_baseline_coverage_ratio: 0.90",
+                "  min_label_coverage_ratio: 0.90",
+                f"  min_monitoring_sample_count: {min_monitoring_sample_count}",
+                "  data_limited_status_prevents_factor_rollback: true",
+                "rollback:",
+                "  rolling_rank_ic_20d_wrong_direction_threshold: 0.02",
+                "  max_negative_relative_return_20d: -0.05",
+                "  max_drawdown_deterioration_20d: -0.03",
+                f"  min_monitoring_sample_count: {min_monitoring_sample_count}",
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
 def _write_daily_ops_metadata(tmp_path: Path, as_of: date) -> Path:
     path = tmp_path / f"daily_ops_metadata_{as_of.isoformat()}.json"
     payload = {
@@ -655,6 +747,11 @@ def _write_dashboard_shadow_summary(tmp_path: Path, as_of: date) -> None:
                 ],
                 "safety_checks": {"passed": 14, "warning": 0, "failed": 0},
                 "monitoring_status": "OK",
+                "monitoring_status_reason": "Monitoring quality gates passed.",
+                "baseline_coverage_ratio": 1.0,
+                "baseline_coverage_status": "OK",
+                "factor_rollback_triggered": False,
+                "data_limitation_triggered": False,
                 "safety": {
                     "manual_review_required": True,
                     "production_effect": "none",
@@ -669,6 +766,32 @@ def _write_dashboard_shadow_summary(tmp_path: Path, as_of: date) -> None:
         encoding="utf-8",
     )
     markdown_path.write_text("# SEC PIT Observe-Only Shadow Lane Summary\n", encoding="utf-8")
+
+
+def _write_dashboard_baseline_coverage_summary(tmp_path: Path, as_of: date) -> None:
+    root = tmp_path / "outputs" / "sec_pit_baseline_coverage"
+    root.mkdir(parents=True)
+    summary_path = root / f"sec_pit_baseline_coverage_summary_{as_of.isoformat()}.json"
+    markdown_path = root / f"sec_pit_baseline_coverage_summary_{as_of.isoformat()}.md"
+    summary_path.write_text(
+        json.dumps(
+            {
+                "report_type": "sec_pit_baseline_coverage",
+                "coverage_status": "OK",
+                "end_date": as_of.isoformat(),
+                "expected_rows": 8,
+                "actual_rows": 8,
+                "missing_rows": 0,
+                "coverage_ratio": 1.0,
+                "score_completeness_avg": 1.0,
+                "output_artifacts": {"summary_markdown": str(markdown_path)},
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+    markdown_path.write_text("# SEC PIT Baseline Coverage Summary\n", encoding="utf-8")
 
 
 def _hash_paths(paths: tuple[Path, ...]) -> dict[str, str]:

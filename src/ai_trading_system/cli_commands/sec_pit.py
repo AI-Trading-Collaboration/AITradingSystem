@@ -37,6 +37,11 @@ from ai_trading_system.fundamentals.sec_pit_baseline_comparison import (
     DEFAULT_SEC_PIT_EVALUATION_DIR,
     run_sec_pit_baseline_comparison,
 )
+from ai_trading_system.fundamentals.sec_pit_baseline_coverage import (
+    DEFAULT_SEC_PIT_BASELINE_COVERAGE_OUTPUT_DIR,
+    DEFAULT_SEC_PIT_BASELINE_SCORE_PATH,
+    run_sec_pit_baseline_coverage_audit,
+)
 from ai_trading_system.fundamentals.sec_pit_candidate_review import (
     DEFAULT_SEC_PIT_CANDIDATE_REVIEW_OUTPUT_DIR,
     run_sec_pit_candidate_review,
@@ -603,6 +608,47 @@ def compare_baseline_command(
     console.print(f"Run log: {artifacts.run_log_path}")
     if strict and artifacts.status != "OK":
         raise typer.Exit(code=2)
+
+
+@sec_pit_app.command("audit-baseline-coverage")
+def audit_baseline_coverage_command(
+    start: Annotated[
+        str,
+        typer.Option("--start", help="开始日期 YYYY-MM-DD。"),
+    ],
+    end: Annotated[
+        str,
+        typer.Option("--end", help="结束日期 YYYY-MM-DD。"),
+    ],
+    baseline_score_path: Annotated[
+        Path,
+        typer.Option("--baseline-score-path", help="Baseline score CSV 路径。"),
+    ] = DEFAULT_SEC_PIT_BASELINE_SCORE_PATH,
+    feature_panel: Annotated[
+        Path,
+        typer.Option("--feature-panel", help="SEC PIT feature panel CSV 路径。"),
+    ] = DEFAULT_SEC_PIT_FEATURE_PANEL_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="Baseline coverage audit 输出目录。"),
+    ] = DEFAULT_SEC_PIT_BASELINE_COVERAGE_OUTPUT_DIR,
+) -> None:
+    """审计 SEC PIT shadow monitoring 所需 baseline score 覆盖。"""
+    artifacts = run_sec_pit_baseline_coverage_audit(
+        start=_parse_date(start),
+        end=_parse_date(end),
+        baseline_score_path=baseline_score_path,
+        feature_panel_path=feature_panel,
+        output_dir=output_dir,
+    )
+    console.print(f"SEC PIT baseline coverage status: {artifacts.status}")
+    console.print(f"Summary JSON: {artifacts.summary_json_path}")
+    console.print(f"Summary Markdown: {artifacts.summary_markdown_path}")
+    console.print(f"By ticker CSV: {artifacts.by_ticker_path}")
+    console.print(f"By date CSV: {artifacts.by_date_path}")
+    console.print(f"Gap CSV: {artifacts.gap_path}")
+    if artifacts.status == "FAILED_VALIDATION":
+        raise typer.Exit(code=1)
 
 
 @sec_pit_app.command("diagnose-run")

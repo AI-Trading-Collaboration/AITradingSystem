@@ -602,6 +602,10 @@ from ai_trading_system.scenario_library import (
     validate_scenario_library,
     write_scenario_library_report,
 )
+from ai_trading_system.scoring.baseline_score_backfill import (
+    BASELINE_SCORE_BACKFILL_MODE,
+    run_baseline_score_backfill,
+)
 from ai_trading_system.scoring.daily import (
     DailyManualReviewStatus,
     DailyReviewSummary,
@@ -752,6 +756,7 @@ ops_app = typer.Typer(help="运行监控和 pipeline health。", no_args_is_help
 security_app = typer.Typer(help="密钥卫生和供应商权限治理。", no_args_is_help=True)
 llm_app = typer.Typer(help="LLM 结构化预审和待复核队列。", no_args_is_help=True)
 pit_snapshots_app = typer.Typer(help="Forward-only PIT raw snapshot 归档。", no_args_is_help=True)
+score_daily_app = typer.Typer(help="每日评分和 research baseline backfill。", no_args_is_help=False)
 app.add_typer(watchlist_app, name="watchlist")
 app.add_typer(industry_chain_app, name="industry-chain")
 app.add_typer(thesis_app, name="thesis")
@@ -771,6 +776,7 @@ app.add_typer(ops_app, name="ops")
 app.add_typer(security_app, name="security")
 app.add_typer(llm_app, name="llm")
 app.add_typer(pit_snapshots_app, name="pit-snapshots")
+app.add_typer(score_daily_app, name="score-daily")
 app.add_typer(docs_app, name="docs")
 app.add_typer(sec_pit_app, name="sec-pit")
 console = Console()
@@ -10397,8 +10403,170 @@ def build_features(
     console.print(f"特征警告数：{len(feature_set.warnings)}")
 
 
-@app.command("score-daily")
+@score_daily_app.command(
+    "backfill-baseline",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def score_daily_backfill_baseline_command(
+    ctx: typer.Context,
+    start: Annotated[
+        str,
+        typer.Option(help="Backfill 开始日期 YYYY-MM-DD。"),
+    ],
+    end: Annotated[
+        str,
+        typer.Option(help="Backfill 结束日期 YYYY-MM-DD。"),
+    ],
+    tickers: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--tickers",
+            help="Backfill ticker；可重复。若使用 `--tickers A B C`，B/C 会作为额外 ticker 读取。",
+        ),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(
+            help=(
+                "Baseline score CSV 输出路径；默认写入 data/processed/research/ "
+                "research-only 路径。"
+            )
+        ),
+    ] = None,
+    mode: Annotated[
+        str,
+        typer.Option(help="Backfill 模式；当前只允许 research_backfill。"),
+    ] = BASELINE_SCORE_BACKFILL_MODE,
+    prices_path: Annotated[
+        Path,
+        typer.Option(help="标准化日线价格 CSV 路径。"),
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "prices_daily.csv",
+    rates_path: Annotated[
+        Path,
+        typer.Option(help="标准化日线利率 CSV 路径。"),
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
+    quality_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 数据质量报告路径。"),
+    ] = None,
+    overwrite: Annotated[
+        bool,
+        typer.Option("--overwrite", help="显式允许覆盖既有 output path。"),
+    ] = False,
+    overwrite_production_path: Annotated[
+        bool,
+        typer.Option(
+            "--overwrite-production-path",
+            help=(
+                "允许把 research backfill 写入 production scores_daily.csv 路径；"
+                "仍需在文件存在时同时传 --overwrite。"
+            ),
+        ),
+    ] = False,
+) -> None:
+    """生成 research-only historical baseline score rows。"""
+    start_date = _parse_date(start)
+    end_date = _parse_date(end)
+    resolved_output_path = (
+        _default_baseline_backfill_output_path(start_date, end_date)
+        if output_path is None
+        else _project_relative_path(output_path)
+    )
+    if _is_production_scores_daily_path(resolved_output_path) and not overwrite_production_path:
+        raise typer.BadParameter(
+            "research backfill 默认不得写入 data/processed/scores_daily.csv；"
+            "如确需覆盖 production score path，请同时传 --overwrite-production-path。"
+        )
+    requested_tickers = [*(tickers or []), *[str(item) for item in ctx.args]]
+    requested_tickers = [ticker for ticker in requested_tickers if ticker.strip()]
+    if not requested_tickers:
+        raise typer.BadParameter("至少需要一个 --tickers ticker。")
+
+    universe = load_universe()
+    expected_price_tickers = list(
+        dict.fromkeys([*configured_price_tickers(universe), *requested_tickers])
+    )
+    expected_rate_series = configured_rate_series(universe)
+    data_quality_config = load_data_quality()
+    quality_output = quality_report_path or (
+        PROJECT_ROOT
+        / "outputs"
+        / "reports"
+        / f"baseline_score_backfill_data_quality_{end_date.isoformat()}.md"
+    )
+    data_quality_report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=expected_price_tickers,
+        expected_rate_series=expected_rate_series,
+        quality_config=data_quality_config,
+        as_of=end_date,
+        manifest_path=_download_manifest_path(prices_path),
+        secondary_prices_path=_marketstack_prices_path(prices_path),
+        require_secondary_prices=_requires_marketstack_prices(prices_path),
+    )
+    write_data_quality_report(data_quality_report, quality_output)
+    if not data_quality_report.passed:
+        console.print("[red]数据质量门禁失败，已停止 baseline research backfill。[/red]")
+        console.print(f"数据质量报告：{quality_output}")
+        console.print(
+            f"错误数：{data_quality_report.error_count}；"
+            f"警告数：{data_quality_report.warning_count}"
+        )
+        raise typer.Exit(code=1)
+
+    result = run_baseline_score_backfill(
+        start=start_date,
+        end=end_date,
+        tickers=requested_tickers,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        output_path=resolved_output_path,
+        feature_config=load_features(),
+        scoring_rules=load_scoring_rules(),
+        portfolio=load_portfolio(),
+        data_quality_status=data_quality_report.status,
+        data_quality_report_path=quality_output,
+        mode=mode,
+        overwrite=overwrite,
+    )
+    console.print("[green]Baseline research backfill 完成。[/green]")
+    console.print(f"输出：{result.output_path}")
+    console.print(
+        f"行数：{result.row_count}；ticker 数：{result.ticker_count}；日期数：{result.date_count}"
+    )
+    console.print(f"research_backfill=true；production_effect={result.production_effect}")
+    console.print(f"数据质量报告：{quality_output}（{data_quality_report.status}）")
+
+
+def _default_baseline_backfill_output_path(start_date: date, end_date: date) -> Path:
+    return (
+        PROJECT_ROOT
+        / "data"
+        / "processed"
+        / "research"
+        / ("scores_daily_backfill_sec_pit_" f"{start_date:%Y%m%d}_{end_date:%Y%m%d}.csv")
+    )
+
+
+def _project_relative_path(path: Path) -> Path:
+    return path if path.is_absolute() else PROJECT_ROOT / path
+
+
+def _is_production_scores_daily_path(path: Path) -> bool:
+    production_path = PROJECT_ROOT / "data" / "processed" / "scores_daily.csv"
+    return path.resolve() == production_path.resolve()
+
+
+@score_daily_app.callback(invoke_without_command=True)
 def score_daily(
+    ctx: typer.Context = None,
     prices_path: Annotated[
         Path,
         typer.Option(help="标准化日线价格 CSV 路径。"),
@@ -10721,6 +10889,8 @@ def score_daily(
     ] = False,
 ) -> None:
     """构建特征并生成每日市场评分报告。"""
+    if ctx is not None and ctx.invoked_subcommand is not None:
+        return
     universe = load_universe()
     industry_chain = load_industry_chain()
     watchlist = load_watchlist()

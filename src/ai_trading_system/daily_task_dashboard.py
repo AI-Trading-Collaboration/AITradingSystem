@@ -243,6 +243,7 @@ def build_daily_task_dashboard_payload(
         "sec_pit_baseline_comparison": _sec_pit_baseline_comparison(report),
         "sec_pit_real_run_diagnostics": _sec_pit_real_run_diagnostics(report),
         "sec_pit_candidate_review": _sec_pit_candidate_review(report),
+        "sec_pit_baseline_coverage": _sec_pit_baseline_coverage(report),
         "sec_pit_shadow_observe": _sec_pit_shadow_observe(report),
         "tasks": [
             {
@@ -371,6 +372,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_sec_pit_baseline_comparison(report),
             _render_sec_pit_real_run_diagnostics(report),
             _render_sec_pit_candidate_review(report),
+            _render_sec_pit_baseline_coverage(report),
             _render_sec_pit_shadow_observe(report),
             _render_risks(report),
             _render_summary(report),
@@ -5824,6 +5826,11 @@ def _sec_pit_shadow_observe(report: DailyTaskDashboardReport) -> TraceRecord:
             "top_negative_rank_shifts": [],
             "safety_check_status": "MISSING",
             "monitoring_status": "MISSING",
+            "monitoring_status_reason": "",
+            "baseline_coverage_ratio": None,
+            "baseline_coverage_status": "MISSING",
+            "factor_rollback_triggered": False,
+            "data_limitation_triggered": False,
             "read_only": True,
             "risk": (
                 "No SEC PIT shadow observe summary available. Dashboard 只读取 "
@@ -5879,8 +5886,75 @@ def _sec_pit_shadow_observe(report: DailyTaskDashboardReport) -> TraceRecord:
         ),
         "safety_check_status": safety_status,
         "monitoring_status": _string_value(payload.get("monitoring_status")) or "UNKNOWN",
+        "monitoring_status_reason": _string_value(payload.get("monitoring_status_reason")),
+        "baseline_coverage_ratio": _optional_float(payload.get("baseline_coverage_ratio")),
+        "baseline_coverage_status": _string_value(payload.get("baseline_coverage_status"))
+        or "UNKNOWN",
+        "factor_rollback_triggered": payload.get("factor_rollback_triggered") is True,
+        "data_limitation_triggered": payload.get("data_limitation_triggered") is True,
         "read_only": True,
         "risk": "；".join(risks) or "SEC PIT shadow observe dashboard card 当前仅作只读展示。",
+    }
+
+
+def _sec_pit_baseline_coverage(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_sec_pit_baseline_coverage_path(report)
+    payload = _read_json_object(path)
+    default_markdown = (
+        report.project_root
+        / "outputs"
+        / "sec_pit_baseline_coverage"
+        / f"sec_pit_baseline_coverage_summary_{report.as_of.isoformat()}.md"
+    )
+    if payload.get("report_type") != "sec_pit_baseline_coverage":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "markdown_path": str(default_markdown),
+            "latest_coverage_date": "",
+            "coverage_ratio": None,
+            "coverage_status": "MISSING",
+            "expected_rows": 0,
+            "actual_rows": 0,
+            "missing_rows": 0,
+            "score_completeness_avg": None,
+            "production_effect": ProductionEffect.NONE.value,
+            "read_only": True,
+            "risk": (
+                "No SEC PIT baseline coverage summary available. Dashboard 只读取 "
+                "TRADING-045 coverage artifact，不运行 coverage audit、不运行 backfill。"
+            ),
+        }
+    outputs = _mapping_value(payload, "output_artifacts")
+    markdown_path = (
+        _project_path(report.project_root, _string_value(outputs.get("summary_markdown")))
+        or default_markdown
+    )
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    status = _string_value(payload.get("coverage_status")) or "UNKNOWN"
+    risks: list[str] = []
+    if status != "OK":
+        risks.append(f"Baseline coverage status is {status}; shadow monitoring is limited.")
+    return {
+        "status": status,
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "markdown_path": str(markdown_path),
+        "latest_coverage_date": _string_value(payload.get("end_date")),
+        "coverage_ratio": _optional_float(payload.get("coverage_ratio")),
+        "coverage_status": status,
+        "expected_rows": _int_value(payload.get("expected_rows")),
+        "actual_rows": _int_value(payload.get("actual_rows")),
+        "missing_rows": _int_value(payload.get("missing_rows")),
+        "score_completeness_avg": _optional_float(payload.get("score_completeness_avg")),
+        "production_effect": ProductionEffect.NONE.value,
+        "read_only": True,
+        "risk": "；".join(risks) or "SEC PIT baseline coverage dashboard card 当前仅作只读展示。",
     }
 
 
@@ -6941,6 +7015,24 @@ def _latest_sec_pit_shadow_observe_path(report: DailyTaskDashboardReport) -> Pat
     candidates: list[tuple[date, Path]] = []
     for path in shadow_root.glob("sec_pit_shadow_observe_summary_*.json"):
         raw_date = path.stem.removeprefix("sec_pit_shadow_observe_summary_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_sec_pit_baseline_coverage_path(report: DailyTaskDashboardReport) -> Path:
+    coverage_root = report.project_root / "outputs" / "sec_pit_baseline_coverage"
+    default_path = (
+        coverage_root / f"sec_pit_baseline_coverage_summary_{report.as_of.isoformat()}.json"
+    )
+    if not coverage_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in coverage_root.glob("sec_pit_baseline_coverage_summary_*.json"):
+        raw_date = path.stem.removeprefix("sec_pit_baseline_coverage_summary_")
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= report.as_of:
             candidates.append((parsed, path))
@@ -10562,6 +10654,80 @@ def _render_sec_pit_shadow_observe(report: DailyTaskDashboardReport) -> str:
             ),
             _summary_item("safety check status", summary.get("safety_check_status", "MISSING")),
             _summary_item("monitoring status", summary.get("monitoring_status", "MISSING")),
+            _summary_item(
+                "baseline coverage ratio",
+                _format_percent(summary.get("baseline_coverage_ratio")),
+            ),
+            _summary_item(
+                "baseline coverage status",
+                summary.get("baseline_coverage_status", "MISSING"),
+            ),
+            _summary_item(
+                "monitoring status reason",
+                summary.get("monitoring_status_reason", ""),
+            ),
+            _summary_item(
+                "factor rollback triggered",
+                "yes" if summary.get("factor_rollback_triggered") else "no",
+            ),
+            _summary_item(
+                "data limitation triggered",
+                "yes" if summary.get("data_limitation_triggered") else "no",
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_sec_pit_baseline_coverage(report: DailyTaskDashboardReport) -> str:
+    summary = _sec_pit_baseline_coverage(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}">'
+        "<span>SEC PIT Baseline Coverage</span>"
+        f"<small>{_text(summary.get('status', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>SEC PIT Baseline Coverage</span>"
+        "<small>MISSING</small></span>"
+    )
+    missing_note = (
+        '<p class="subtle">No SEC PIT baseline coverage summary available.</p>'
+        if summary.get("exists") is not True
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="sec-pit-baseline-coverage-title">',
+            '<div class="section-head">',
+            '<h2 id="sec-pit-baseline-coverage-title">SEC PIT Baseline Coverage</h2>',
+            (
+                "<p>TRADING-045 只读卡片；dashboard 只读取 coverage artifact，"
+                "不运行 baseline backfill、不运行 coverage audit、不写 production。</p>"
+            ),
+            "</div>",
+            missing_note,
+            '<div class="summary-grid">',
+            _summary_item("latest coverage date", summary.get("latest_coverage_date", "")),
+            _summary_item("coverage status", summary.get("coverage_status", "MISSING")),
+            _summary_item("coverage ratio", _format_percent(summary.get("coverage_ratio"))),
+            _summary_item("expected rows", summary.get("expected_rows", 0)),
+            _summary_item("actual rows", summary.get("actual_rows", 0)),
+            _summary_item("missing rows", summary.get("missing_rows", 0)),
+            _summary_item(
+                "score completeness avg",
+                _format_percent(summary.get("score_completeness_avg")),
+            ),
+            _summary_item("production effect", summary.get("production_effect", "none")),
             "</div>",
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'
