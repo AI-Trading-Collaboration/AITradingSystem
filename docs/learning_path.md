@@ -134,6 +134,7 @@
 - `outputs/sec_pit_evaluation/sec_pit_evaluation_summary_YYYY-MM-DD.md`
 - `outputs/sec_pit_baseline_comparison/sec_pit_baseline_comparison_summary_YYYY-MM-DD.md`
 - `outputs/sec_pit_diagnostics/sec_pit_real_run_diagnostics_YYYY-MM-DD.md`
+- `outputs/sec_pit_candidate_review/sec_pit_candidate_review_summary_YYYY-MM-DD.md`
 
 应该看哪份报告确认：
 
@@ -150,6 +151,10 @@
   drawdown label NaN 或 coverage ratio 大于 1，查看
   `docs/runbooks/sec_pit_real_run_diagnostics.md` 和
   `outputs/sec_pit_diagnostics/sec_pit_real_run_diagnostics_YYYY-MM-DD.md`。
+- 若真实 run remediation 后已有 `capex_intensity` 等 manual-review shadow candidate，
+  查看 `docs/runbooks/sec_pit_candidate_review.md`、
+  `sec_pit_candidate_evidence_YYYY-MM-DD.csv`、by-ticker / by-period evidence 和
+  `sec_pit_candidate_shadow_proposal_YYYY-MM-DD.csv`；该步骤只支持人工复核，不自动改权重。
 
 ## 第 5 步：权重如何合成 overall score
 

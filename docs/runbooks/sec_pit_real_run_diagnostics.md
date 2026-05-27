@@ -56,6 +56,10 @@ feature 或 provenance 缺失。`max_drawdown_forward_20d` 应为非正数，单
   promotion 决策。
 - 当前真实 run 若 provenance、coverage 或 label 有 remediation blocker，不进入 TRADING-043；
   若仅剩 baseline fallback 或尾部未来 20D label 窗口限制，进入 review 前必须显式披露。
+- remediation 后若 diagnostics status 为 `OK`，且 candidate sensitivity / evaluation
+  显示某个 feature 已进入 manual-review shadow candidate 状态，才运行
+  `docs/runbooks/sec_pit_candidate_review.md` 生成 evidence pack；该 review 仍不是自动
+  promotion。
 
 ## Dashboard
 

@@ -37,6 +37,10 @@ from ai_trading_system.fundamentals.sec_pit_baseline_comparison import (
     DEFAULT_SEC_PIT_EVALUATION_DIR,
     run_sec_pit_baseline_comparison,
 )
+from ai_trading_system.fundamentals.sec_pit_candidate_review import (
+    DEFAULT_SEC_PIT_CANDIDATE_REVIEW_OUTPUT_DIR,
+    run_sec_pit_candidate_review,
+)
 from ai_trading_system.fundamentals.sec_pit_evaluation import (
     DEFAULT_PRICES_PATH,
     DEFAULT_RATES_PATH,
@@ -665,6 +669,73 @@ def diagnose_run_command(
     console.print(f"Candidate sensitivity: {artifacts.candidate_sensitivity_path}")
 
 
+@sec_pit_app.command("review-candidates")
+def review_candidates_command(
+    start: Annotated[
+        str | None,
+        typer.Option("--start", help="review 开始日期 YYYY-MM-DD；--latest 可从 artifact 推断。"),
+    ] = None,
+    end: Annotated[
+        str | None,
+        typer.Option("--end", help="review 结束日期 YYYY-MM-DD；--latest 可从 artifact 推断。"),
+    ] = None,
+    evaluation_dir: Annotated[
+        Path,
+        typer.Option("--evaluation-dir", help="TRADING-040 SEC PIT evaluation artifact 目录。"),
+    ] = DEFAULT_SEC_PIT_EVALUATION_DIR,
+    comparison_dir: Annotated[
+        Path,
+        typer.Option("--comparison-dir", help="TRADING-041 baseline comparison artifact 目录。"),
+    ] = DEFAULT_SEC_PIT_BASELINE_COMPARISON_OUTPUT_DIR,
+    diagnostics_dir: Annotated[
+        Path,
+        typer.Option("--diagnostics-dir", help="TRADING-042 diagnostics artifact 目录。"),
+    ] = DEFAULT_SEC_PIT_DIAGNOSTICS_OUTPUT_DIR,
+    candidate_features: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--candidate-feature",
+            help="只 review 指定 feature；可重复，也可用逗号或空格分隔。",
+        ),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="SEC PIT candidate review 输出目录。"),
+    ] = DEFAULT_SEC_PIT_CANDIDATE_REVIEW_OUTPUT_DIR,
+    latest: Annotated[
+        bool,
+        typer.Option(
+            "--latest",
+            help="自动发现 latest evaluation/comparison/diagnostics artifact。",
+        ),
+    ] = False,
+) -> None:
+    """生成 SEC PIT shadow candidate 人工复核 evidence pack。"""
+    try:
+        artifacts = run_sec_pit_candidate_review(
+            start=_parse_date(start) if start else None,
+            end=_parse_date(end) if end else None,
+            evaluation_dir=evaluation_dir,
+            comparison_dir=comparison_dir,
+            diagnostics_dir=diagnostics_dir,
+            candidate_features=(
+                _flatten_feature_options(candidate_features) if candidate_features else None
+            ),
+            output_dir=output_dir,
+            latest=latest,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"SEC PIT candidate review status: {artifacts.status}")
+    console.print(f"Summary JSON: {artifacts.summary_json_path}")
+    console.print(f"Summary report: {artifacts.summary_markdown_path}")
+    console.print(f"Candidate evidence: {artifacts.candidate_evidence_path}")
+    console.print(f"By ticker: {artifacts.by_ticker_path}")
+    console.print(f"By period: {artifacts.by_period_path}")
+    console.print(f"Baseline overlap: {artifacts.baseline_overlap_path}")
+    console.print(f"Shadow proposal: {artifacts.shadow_proposal_path}")
+
+
 def _resolve_user_agent(value: str | None) -> str:
     user_agent = value or os.getenv("SEC_USER_AGENT")
     if user_agent is None or not user_agent.strip():
@@ -693,4 +764,11 @@ def _flatten_ticker_options(values: list[str]) -> list[str]:
     flattened: list[str] = []
     for value in values:
         flattened.extend(part.strip().upper() for part in str(value).replace(",", " ").split())
+    return [item for item in flattened if item]
+
+
+def _flatten_feature_options(values: list[str]) -> list[str]:
+    flattened: list[str] = []
+    for value in values:
+        flattened.extend(part.strip() for part in str(value).replace(",", " ").split())
     return [item for item in flattened if item]

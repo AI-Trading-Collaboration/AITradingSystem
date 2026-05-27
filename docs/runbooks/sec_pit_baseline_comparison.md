@@ -69,3 +69,11 @@ latest comparison date、comparison status、decision count、action changed cou
 rank shift count、incremental alpha 20d、drawdown improvement 20d、top promoted tickers 和
 top downgraded tickers。Dashboard 不运行 comparison、不重新读取 market data、不修改权重或
 action。
+
+## 下游 Candidate Review
+
+若 TRADING-042 diagnostics 显示 provenance、coverage 和 label 质量已足够复核，并且
+TRADING-040/041 产物中存在 manual-review shadow candidate，继续运行
+`docs/runbooks/sec_pit_candidate_review.md`。Candidate review 会读取本 runbook 的
+decision impact / incremental alpha artifact 来判断 baseline redundancy 和 incremental
+evidence，但仍只生成人工复核包，不修改 production 或 active shadow weights。

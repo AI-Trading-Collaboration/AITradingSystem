@@ -242,6 +242,7 @@ def build_daily_task_dashboard_payload(
         "sec_pit_evaluation_summary": _sec_pit_evaluation_summary(report),
         "sec_pit_baseline_comparison": _sec_pit_baseline_comparison(report),
         "sec_pit_real_run_diagnostics": _sec_pit_real_run_diagnostics(report),
+        "sec_pit_candidate_review": _sec_pit_candidate_review(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -368,6 +369,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_sec_pit_evaluation_summary(report),
             _render_sec_pit_baseline_comparison(report),
             _render_sec_pit_real_run_diagnostics(report),
+            _render_sec_pit_candidate_review(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -5706,6 +5708,93 @@ def _sec_pit_real_run_diagnostics(report: DailyTaskDashboardReport) -> TraceReco
     }
 
 
+def _sec_pit_candidate_review(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_sec_pit_candidate_review_path(report)
+    payload = _read_json_object(path)
+    default_markdown = (
+        report.project_root
+        / "outputs"
+        / "sec_pit_candidate_review"
+        / f"sec_pit_candidate_review_summary_{report.as_of.isoformat()}.md"
+    )
+    if payload.get("report_type") != "sec_pit_candidate_review":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "markdown_path": str(default_markdown),
+            "latest_review_date": "",
+            "candidate_count": 0,
+            "ready_for_manual_review_count": 0,
+            "primary_candidate": "",
+            "diagnostics_status": "MISSING",
+            "drawdown_label_coverage": 0.0,
+            "top_candidate_feature": "",
+            "proposal_status": "MISSING",
+            "production_effect": ProductionEffect.NONE.value,
+            "read_only": True,
+            "risk": (
+                "No SEC PIT candidate review summary available. Dashboard 只读取 "
+                "TRADING-043 artifact，不运行 review、不运行 evaluation/comparison/diagnostics、"
+                "不修改 production 或 shadow 权重。"
+            ),
+        }
+
+    outputs = _mapping_value(payload, "output_artifacts")
+    markdown_path = (
+        _project_path(report.project_root, _string_value(outputs.get("summary_markdown")))
+        or default_markdown
+    )
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    safety = _mapping_value(payload, "safety")
+    production_effect = (
+        _string_value(payload.get("production_effect"))
+        or _string_value(safety.get("production_effect"))
+        or ProductionEffect.NONE.value
+    )
+    top_candidates = payload.get("top_candidates")
+    top_candidate_feature = ""
+    proposal_status = ""
+    if isinstance(top_candidates, list) and top_candidates:
+        first = top_candidates[0]
+        if isinstance(first, dict):
+            top_candidate_feature = _string_value(first.get("feature_id"))
+            proposal_status = _string_value(first.get("proposal_status"))
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("TRADING-043 candidate review production_effect 必须为 none。")
+    if payload.get("manual_review_required") is not True:
+        risks.append("TRADING-043 candidate review 必须要求人工复核。")
+    if safety.get("production_weights_modified") is True:
+        risks.append("TRADING-043 candidate review 不得修改 production weights。")
+    if safety.get("active_shadow_weights_modified") is True:
+        risks.append("TRADING-043 candidate review 不得修改 active shadow weights。")
+    status = _string_value(payload.get("review_status")) or "UNKNOWN"
+    if status.startswith("LIMITED") or status == "INSUFFICIENT_EVIDENCE":
+        risks.append(f"Candidate review status is {status}; conclusions are limited.")
+    return {
+        "status": status,
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "markdown_path": str(markdown_path),
+        "latest_review_date": _string_value(payload.get("end_date")),
+        "candidate_count": _int_value(payload.get("candidate_count")),
+        "ready_for_manual_review_count": _int_value(payload.get("ready_for_manual_review_count")),
+        "primary_candidate": _string_value(payload.get("primary_candidate")),
+        "diagnostics_status": _string_value(payload.get("diagnostics_status")) or "UNKNOWN",
+        "drawdown_label_coverage": _optional_float(payload.get("drawdown_label_coverage")),
+        "top_candidate_feature": top_candidate_feature,
+        "proposal_status": proposal_status or "UNKNOWN",
+        "production_effect": production_effect,
+        "read_only": True,
+        "risk": "；".join(risks) or "SEC PIT candidate review dashboard card 当前仅作只读展示。",
+    }
+
+
 def _dashboard_ticker_delta_list(value: object) -> list[TraceRecord]:
     if not isinstance(value, list):
         return []
@@ -6703,6 +6792,22 @@ def _latest_sec_pit_real_run_diagnostics_path(report: DailyTaskDashboardReport) 
     candidates: list[tuple[date, Path]] = []
     for path in diagnostics_root.glob("sec_pit_real_run_diagnostics_*.json"):
         raw_date = path.stem.removeprefix("sec_pit_real_run_diagnostics_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_sec_pit_candidate_review_path(report: DailyTaskDashboardReport) -> Path:
+    review_root = report.project_root / "outputs" / "sec_pit_candidate_review"
+    default_path = review_root / f"sec_pit_candidate_review_summary_{report.as_of.isoformat()}.json"
+    if not review_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in review_root.glob("sec_pit_candidate_review_summary_*.json"):
+        raw_date = path.stem.removeprefix("sec_pit_candidate_review_summary_")
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= report.as_of:
             candidates.append((parsed, path))
@@ -10198,6 +10303,66 @@ def _render_sec_pit_real_run_diagnostics(report: DailyTaskDashboardReport) -> st
                 summary.get("near_promotion_feature_count", 0),
             ),
             _summary_item("promotion readiness", summary.get("promotion_readiness", "NOT_READY")),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_sec_pit_candidate_review(report: DailyTaskDashboardReport) -> str:
+    summary = _sec_pit_candidate_review(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}">'
+        "<span>SEC PIT Candidate Review</span>"
+        f"<small>{_text(summary.get('status', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>SEC PIT Candidate Review</span>"
+        "<small>MISSING</small></span>"
+    )
+    missing_note = (
+        '<p class="subtle">No SEC PIT candidate review summary available.</p>'
+        if summary.get("exists") is not True
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="sec-pit-candidate-review-title">',
+            '<div class="section-head">',
+            '<h2 id="sec-pit-candidate-review-title">SEC PIT Candidate Review</h2>',
+            (
+                "<p>TRADING-043 只读卡片；dashboard 只读取 candidate review artifact，"
+                "不运行 review、不运行 evaluation/comparison/diagnostics、不修改 production "
+                "或 shadow 权重。</p>"
+            ),
+            "</div>",
+            missing_note,
+            '<div class="summary-grid">',
+            _summary_item("latest review date", summary.get("latest_review_date", "")),
+            _summary_item("review status", summary.get("status", "MISSING")),
+            _summary_item("candidate count", summary.get("candidate_count", 0)),
+            _summary_item(
+                "ready for manual review",
+                summary.get("ready_for_manual_review_count", 0),
+            ),
+            _summary_item("primary candidate", summary.get("primary_candidate", "")),
+            _summary_item("diagnostics status", summary.get("diagnostics_status", "MISSING")),
+            _summary_item(
+                "drawdown label coverage",
+                _format_percent(summary.get("drawdown_label_coverage")),
+            ),
+            _summary_item("top candidate feature", summary.get("top_candidate_feature", "")),
+            _summary_item("proposal status", summary.get("proposal_status", "MISSING")),
+            _summary_item("production_effect", summary.get("production_effect", "none")),
             "</div>",
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'

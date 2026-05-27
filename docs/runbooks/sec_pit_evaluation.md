@@ -56,6 +56,9 @@ aits sec-pit evaluate --start 2023-01-01 --end 2026-05-26 --tickers NVDA,MSFT,AM
    `aits sec-pit compare-baseline`。
 6. 若真实 run 出现 provenance 缺失、coverage ratio 大于 1、drawdown label NaN 或 baseline
    artifact fallback，运行 `docs/runbooks/sec_pit_real_run_diagnostics.md`。
+7. 若 diagnostics 已确认 remediation 后状态可复核，且某个 feature 进入 manual-review
+   shadow candidate 状态，运行 `docs/runbooks/sec_pit_candidate_review.md` 生成 evidence
+   pack；不得直接把 `sec_pit_shadow_candidate_weights` 写入 active shadow config。
 
 ## Dashboard
 
