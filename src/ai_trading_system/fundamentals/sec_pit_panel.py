@@ -313,6 +313,7 @@ def build_sec_pit_feature_panel(
                         records.append(row)
     frame = pd.DataFrame(records, columns=list(SEC_PIT_FEATURE_PANEL_COLUMNS))
     if not frame.empty:
+        frame = _dedupe_feature_panel_observations(frame)
         frame = frame.sort_values(
             ["decision_date", "ticker", "feature_id", "period_type"]
         ).reset_index(drop=True)
@@ -533,6 +534,46 @@ def _metric_rows(frame: pd.DataFrame, metric_id: str, period_type: str) -> pd.Da
     if rows.empty:
         return rows
     return rows.sort_values(["period_end", "available_from_signal_date", "available_time_utc"])
+
+
+def _dedupe_feature_panel_observations(frame: pd.DataFrame) -> pd.DataFrame:
+    if frame.empty:
+        return frame
+    working = frame.copy()
+    working["_pit_quality_rank"] = working["pit_grade"].map(_feature_pit_quality_rank)
+    working["_available_time_sort"] = pd.to_datetime(
+        working["available_time"],
+        errors="coerce",
+        utc=True,
+    )
+    working["_period_sort"] = pd.to_datetime(working["period_end"], errors="coerce")
+    working = working.sort_values(
+        [
+            "decision_date",
+            "ticker",
+            "feature_id",
+            "input_metric_ids",
+            "_pit_quality_rank",
+            "_available_time_sort",
+            "_period_sort",
+            "period_type",
+        ],
+        ascending=[True, True, True, True, False, False, False, False],
+        na_position="last",
+    )
+    deduped = working.drop_duplicates(
+        subset=["decision_date", "ticker", "feature_id", "input_metric_ids"],
+        keep="first",
+    )
+    return deduped.loc[:, list(SEC_PIT_FEATURE_PANEL_COLUMNS)].reset_index(drop=True)
+
+
+def _feature_pit_quality_rank(value: object) -> int:
+    if str(value or "") == SEC_PIT_BACKTEST_DATA_GRADE:
+        return 2
+    if str(value or "") == SEC_PIT_CURRENT_HISTORY_GRADE:
+        return 1
+    return 0
 
 
 def _active_intervals(intervals: pd.DataFrame, decision_date: date) -> pd.DataFrame:

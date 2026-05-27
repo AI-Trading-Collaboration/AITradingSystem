@@ -154,6 +154,66 @@ def test_cross_currency_ratio_is_blocked() -> None:
     assert panel.empty
 
 
+def test_feature_panel_resolves_duplicate_feature_observations() -> None:
+    features = FundamentalFeaturesConfig(
+        features=[
+            FundamentalRatioFeatureConfig(
+                feature_id="gross_margin",
+                name="Gross Margin",
+                description="Gross profit divided by revenue.",
+                numerator_metric_id="gross_profit",
+                denominator_metric_id="revenue",
+                preferred_periods=["annual", "quarterly"],
+            )
+        ]
+    )
+    intervals = pd.DataFrame(
+        [
+            {
+                **_interval_record("gross_profit", "USD", 60),
+                "period_type": "annual",
+                "period_end": "2022-12-31",
+                "available_time_utc": "2023-02-01T20:30:00+00:00",
+                "available_from_signal_date": "2023-02-02",
+            },
+            {
+                **_interval_record("revenue", "USD", 100),
+                "period_type": "annual",
+                "period_end": "2022-12-31",
+                "available_time_utc": "2023-02-01T20:30:00+00:00",
+                "available_from_signal_date": "2023-02-02",
+            },
+            {
+                **_interval_record("gross_profit", "USD", 40),
+                "period_type": "quarterly",
+                "period_end": "2023-03-31",
+                "available_time_utc": "2023-04-20T20:30:00+00:00",
+                "available_from_signal_date": "2023-04-21",
+            },
+            {
+                **_interval_record("revenue", "USD", 100),
+                "period_type": "quarterly",
+                "period_end": "2023-03-31",
+                "available_time_utc": "2023-04-20T20:30:00+00:00",
+                "available_from_signal_date": "2023-04-21",
+            },
+        ]
+    )
+
+    panel = build_sec_pit_feature_panel(
+        intervals=intervals,
+        features=features,
+        sec_companies=_companies(),
+        start=date(2023, 4, 21),
+        end=date(2023, 4, 21),
+    )
+
+    assert len(panel) == 1
+    row = panel.iloc[0]
+    assert row["period_type"] == "quarterly"
+    assert row["feature_value"] == 0.4
+
+
 def test_duplicate_interval_overlap_fails_validation(tmp_path: Path) -> None:
     paths = _minimal_validation_inputs(tmp_path)
     intervals = pd.DataFrame(

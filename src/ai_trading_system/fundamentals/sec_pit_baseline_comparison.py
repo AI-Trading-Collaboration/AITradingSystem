@@ -730,7 +730,7 @@ def _aggregate_sec_contributions(attribution: pd.DataFrame, *, benchmark: str) -
                 "source_url_or_raw_path": _unique_join(group["source_url_or_raw_path"]),
                 "pit_grade": _dominant_value(group["pit_grade"]),
                 "available_time": _unique_join(group["available_time"]),
-                "source_lineage": _unique_join(group["source_lineage"]),
+                "source_lineage": _source_lineage_join(group["source_lineage"]),
             }
         )
     return pd.DataFrame(records).sort_values(["decision_date", "ticker"]).reset_index(drop=True)
@@ -1051,6 +1051,36 @@ def _unique_join(values: pd.Series) -> str:
                 result.append(normalized)
                 seen.add(normalized)
     return ";".join(result)
+
+
+def _source_lineage_join(values: pd.Series) -> str:
+    records: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for value in values.dropna().astype(str):
+        raw = value.strip()
+        if not raw:
+            continue
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError:
+            parsed = None
+        items = parsed if isinstance(parsed, list) else []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            cleaned = {
+                str(key): str(val)
+                for key, val in item.items()
+                if val is not None and str(val).strip()
+            }
+            if not cleaned:
+                continue
+            stable = json.dumps(cleaned, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+            if stable in seen:
+                continue
+            records.append(cleaned)
+            seen.add(stable)
+    return json.dumps(records, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
 
 
 def _first_feature(value: str) -> str:

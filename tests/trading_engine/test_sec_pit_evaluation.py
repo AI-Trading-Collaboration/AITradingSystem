@@ -14,6 +14,7 @@ from ai_trading_system.fundamentals.sec_pit_evaluation import (
     FEATURE_EFFECTIVENESS_COLUMNS,
     SHADOW_CANDIDATE_WEIGHT_COLUMNS,
     SIGNAL_ATTRIBUTION_COLUMNS,
+    _forward_max_drawdown,
     run_sec_pit_evaluation,
 )
 
@@ -76,6 +77,14 @@ def test_sec_pit_signal_attribution_schema_is_stable(tmp_path: Path) -> None:
     assert tuple(attribution.columns) == SIGNAL_ATTRIBUTION_COLUMNS
     assert set(attribution["signal_direction"]) == {"POSITIVE"}
     assert attribution["contribution"].notna().any()
+
+
+def test_sec_pit_forward_max_drawdown_is_never_positive() -> None:
+    rising = _forward_max_drawdown(pd.Series([100.0, 101.0, 102.0, 103.0]).to_numpy(), 3)
+    falling = _forward_max_drawdown(pd.Series([100.0, 105.0, 95.0, 110.0]).to_numpy(), 3)
+
+    assert rising[0] == 0.0
+    assert round(float(falling[0]), 6) == -0.05
 
 
 def test_sec_pit_shadow_candidate_weights_are_observe_only(tmp_path: Path) -> None:

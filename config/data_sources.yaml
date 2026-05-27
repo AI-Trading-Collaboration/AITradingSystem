@@ -1280,6 +1280,8 @@ sources:
       - baseline_artifact_fallback_audit
       - label_coverage_audit
       - coverage_ratio_capped_after_dedup
+      - feature_panel_deterministic_dedup
+      - max_drawdown_forward_label_non_positive
       - candidate_sensitivity_manual_review_only
     limitations:
       - "默认等级为 `B_RECONSTRUCTED_SEC_FILING_PIT`，因为该层从 SEC 当前可下载 submissions/companyfacts 重建历史可见性，不是严格 vendor archive。"

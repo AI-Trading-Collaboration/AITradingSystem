@@ -18,7 +18,7 @@ aits sec-pit evaluate \
 可选覆盖 universe：
 
 ```bash
-aits sec-pit evaluate --start 2023-01-01 --end 2026-05-26 --tickers NVDA MSFT AMD AVGO GOOGL META AMZN
+aits sec-pit evaluate --start 2023-01-01 --end 2026-05-26 --tickers NVDA,MSFT,AMD,AVGO,GOOGL,META,AMZN
 ```
 
 `GOOGL` 会通过 `config/ticker_aliases.yaml` 解析为 SEC canonical ticker `GOOG`，前提是
@@ -41,7 +41,8 @@ aits sec-pit evaluate --start 2023-01-01 --end 2026-05-26 --tickers NVDA MSFT AM
 - 缺少 `accession_number`、`accepted_datetime`、`filed_date` 或 `raw_sha256` 会降低
   `pit_quality_score`，不得 promoted。
 - `signal_attribution` 必须保留 SEC provenance 和 `source_lineage`，并输出
-  `max_drawdown_forward_20d` 作为 evaluation label，不得作为 feature 使用。
+  `max_drawdown_forward_20d` 作为 evaluation label，不得作为 feature 使用；该 drawdown
+  label 必须为 `<= 0`，单调上涨窗口记为 `0.0`。
 - 所有 shadow weights 固定 `manual_review_required=true`、`production_effect=none`。
 
 ## 解释顺序

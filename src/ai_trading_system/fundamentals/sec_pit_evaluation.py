@@ -852,7 +852,7 @@ def _forward_max_drawdown(values: np.ndarray, horizon: int) -> np.ndarray:
         if len(future) == 0 or not np.isfinite(current) or current == 0:
             results.append(np.nan)
             continue
-        results.append(float(np.nanmin(future / current - 1.0)))
+        results.append(min(float(np.nanmin(future / current - 1.0)), 0.0))
     return np.array(results, dtype=float)
 
 

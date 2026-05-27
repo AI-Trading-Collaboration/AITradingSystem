@@ -41,6 +41,14 @@ def test_sec_pit_baseline_comparison_writes_expected_artifacts(tmp_path: Path) -
     assert tuple(incremental_alpha.columns) == INCREMENTAL_ALPHA_COLUMNS
     assert impact["manual_review_required"].all()
     assert set(impact["production_effect"]) == {"none"}
+    assert json.loads(impact.loc[impact["ticker"] == "NVDA", "source_lineage"].iloc[0]) == [
+        {
+            "accession_number": "NVDA-23-000001",
+            "available_time": "2023-01-02T00:00:00+00:00",
+            "metric_id": "gross_margin",
+            "raw_sha256": "hash-NVDA",
+        }
+    ]
     assert set(incremental_alpha["bucket"]) == {
         "top_baseline",
         "top_sec_pit",
@@ -321,6 +329,20 @@ def _write_sec_pit_evaluation(root: Path, as_of: date) -> None:
                 "period": "2022Q4",
                 "form": "10-Q",
                 "accession_number": f"{ticker}-23-000001",
+                "accepted_datetime": f"{suffix}T00:00:00+00:00",
+                "filed_date": suffix,
+                "raw_sha256": f"hash-{ticker}",
+                "source_lineage": json.dumps(
+                    [
+                        {
+                            "metric_id": feature,
+                            "accession_number": f"{ticker}-23-000001",
+                            "available_time": f"{suffix}T00:00:00+00:00",
+                            "raw_sha256": f"hash-{ticker}",
+                        }
+                    ],
+                    sort_keys=True,
+                ),
                 "pit_grade": "B_RECONSTRUCTED_SEC_FILING_PIT",
                 "forward_return_20d": forward_return,
                 "relative_return_vs_QQQ_20d": relative_return,

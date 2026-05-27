@@ -10,7 +10,7 @@
 aits sec-pit diagnose-run \
   --start 2023-01-01 \
   --end 2026-05-26 \
-  --tickers NVDA MSFT AMD AVGO GOOGL META AMZN \
+  --tickers NVDA,MSFT,AMD,AVGO,GOOGL,META,AMZN \
   --feature-panel data/processed/sec_edgar/sec_pit_feature_panel.csv \
   --evaluation-dir outputs/sec_pit_evaluation \
   --comparison-dir outputs/sec_pit_baseline_comparison \
@@ -45,13 +45,17 @@ aits sec-pit diagnose-run --latest
 6. 用 coverage audit 确认修正后 `coverage_ratio_after <= 1`，并复核 duplicate observations。
 7. 用 candidate sensitivity 只识别 near-promotion feature；不得自动 promotion。
 
+尾部 decision date 若没有未来 20 个交易日价格，`forward_return_20d` 和
+`relative_return_vs_QQQ_20d` 会按 label coverage audit 标记为未来价格窗口限制；这不是
+feature 或 provenance 缺失。`max_drawdown_forward_20d` 应为非正数，单调上涨窗口为 `0.0`。
+
 ## 安全边界
 
 - 所有输出固定 `manual_review_required=true`、`production_effect=none`。
 - Candidate sensitivity 的 `hypothetical_recommendation_if_provenance_fixed` 不是 shadow
   promotion 决策。
-- 当前真实 run 若 provenance、coverage、label 或 baseline status 仍有限制，不进入
-  TRADING-043。
+- 当前真实 run 若 provenance、coverage 或 label 有 remediation blocker，不进入 TRADING-043；
+  若仅剩 baseline fallback 或尾部未来 20D label 窗口限制，进入 review 前必须显式披露。
 
 ## Dashboard
 

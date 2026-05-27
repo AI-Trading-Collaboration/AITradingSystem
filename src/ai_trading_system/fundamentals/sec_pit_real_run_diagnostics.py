@@ -516,6 +516,7 @@ def build_label_coverage_audit(
         missing_mask = values.isna()
         dates = _date_series(frame)
         missing_dates = dates.loc[missing_mask & dates.notna()]
+        available_dates = dates.loc[values.notna() & dates.notna()]
         records.append(
             {
                 "label_name": label,
@@ -531,10 +532,11 @@ def build_label_coverage_audit(
                 ),
                 "affected_ticker_count": _affected_ticker_count(frame, missing_mask),
                 "source_artifact": str(source_path),
-                "recommended_fix": (
-                    ""
-                    if available == len(frame)
-                    else "rerun SEC PIT evaluation after label/provenance propagation fix"
+                "recommended_fix": _label_recommended_fix(
+                    available=available,
+                    total=len(frame),
+                    missing_dates=missing_dates,
+                    available_dates=available_dates,
                 ),
             }
         )
@@ -594,6 +596,27 @@ def build_candidate_sensitivity(*, evaluation_dir: Path, end: date) -> pd.DataFr
     )
 
 
+def _label_recommended_fix(
+    *,
+    available: int,
+    total: int,
+    missing_dates: pd.Series,
+    available_dates: pd.Series,
+) -> str:
+    if available == total:
+        return ""
+    if available > 0 and not missing_dates.empty and not available_dates.empty:
+        latest_available = available_dates.max()
+        earliest_missing = missing_dates.min()
+        if pd.notna(latest_available) and pd.notna(earliest_missing):
+            if earliest_missing > latest_available:
+                return (
+                    "future 20D price horizon unavailable for tail decision dates; "
+                    "rerun after enough future price data or use an earlier evaluation end date"
+                )
+    return "rerun SEC PIT evaluation after label/provenance propagation fix"
+
+
 def render_sec_pit_real_run_diagnostics(summary: dict[str, Any]) -> str:
     provenance = summary["provenance"]
     alias = summary["alias_resolution"]
@@ -601,6 +624,8 @@ def render_sec_pit_real_run_diagnostics(summary: dict[str, Any]) -> str:
     labels = summary["labels"]
     coverage = summary["coverage"]
     sensitivity = summary["candidate_sensitivity"]
+    main_blockers = _diagnostic_blockers(summary)
+    recommendation_lines = _diagnostic_recommendations(summary)
     lines = [
         "# SEC PIT Real Run Diagnostics",
         "",
@@ -614,15 +639,8 @@ def render_sec_pit_real_run_diagnostics(summary: dict[str, Any]) -> str:
         "",
         "## Executive Summary",
         f"- diagnostics_status: {summary['diagnostics_status']}",
-        "- promotion_ready: false",
-        (
-            "- main blockers: "
-            f"provenance first_loss_stage={provenance['first_loss_stage']}; "
-            f"baseline_status={baseline['status']}; "
-            f"drawdown_coverage={labels['max_drawdown_forward_20d_coverage']:.4f}; "
-            f"coverage_ratio_above_1_before_fix="
-            f"{coverage['features_with_ratio_above_1_before_fix']}"
-        ),
+        "- promotion_ready: false (manual review required)",
+        f"- main blockers: {'; '.join(main_blockers) if main_blockers else 'none'}",
         "",
         "## Provenance Gap",
         f"- missing provenance count: {provenance['missing_rows']}",
@@ -660,12 +678,10 @@ def render_sec_pit_real_run_diagnostics(summary: dict[str, Any]) -> str:
             "- blocking reasons: "
             f"{json.dumps(sensitivity['top_blocked_features'], ensure_ascii=False)}"
         ),
-        "- minimum required fixes: restore provenance quality, then rerun evaluation/comparison.",
+        f"- minimum required fixes: {recommendation_lines[0]}",
         "",
         "## Recommendation",
-        "- Do not proceed to shadow promotion from the current run.",
-        "- Another data coverage/provenance task is required before TRADING-043.",
-        "- Fix provenance propagation first, then rerun end-to-end diagnostics.",
+        *[f"- {line}" for line in recommendation_lines],
         "",
         "## Manual Review Checklist",
         "- Verify first provenance loss stage against upstream artifacts.",
@@ -676,6 +692,53 @@ def render_sec_pit_real_run_diagnostics(summary: dict[str, Any]) -> str:
     for limitation in summary.get("limitations", []):
         lines.append(f"- limitation: {limitation}")
     return "\n".join(lines) + "\n"
+
+
+def _diagnostic_blockers(summary: dict[str, Any]) -> list[str]:
+    provenance = summary["provenance"]
+    baseline = summary["baseline"]
+    labels = summary["labels"]
+    coverage = summary["coverage"]
+    blockers: list[str] = []
+    if int(provenance.get("missing_rows") or 0):
+        blockers.append(f"provenance first_loss_stage={provenance.get('first_loss_stage')}")
+    if int(coverage.get("features_with_ratio_above_1_before_fix") or 0):
+        blockers.append(
+            "coverage_ratio_above_1_before_fix="
+            f"{coverage.get('features_with_ratio_above_1_before_fix')}"
+        )
+    if float(labels.get("max_drawdown_forward_20d_coverage") or 0.0) <= 0.0:
+        blockers.append("drawdown label unavailable")
+    if baseline.get("status") == "LIMITED_BASELINE_MISSING":
+        blockers.append("baseline artifact missing")
+    return blockers
+
+
+def _diagnostic_recommendations(summary: dict[str, Any]) -> list[str]:
+    blockers = _diagnostic_blockers(summary)
+    baseline = summary["baseline"]
+    labels = summary["labels"]
+    if blockers:
+        return [
+            "fix remaining diagnostics blockers, then rerun SEC PIT evaluation/comparison.",
+            "Do not proceed to TRADING-043 until blockers are cleared.",
+            "No production or shadow weights may be modified automatically.",
+        ]
+    recommendations = [
+        "no provenance or coverage-ratio remediation blocker remains in diagnostics.",
+        "Do not auto-promote; review SEC PIT evaluation shadow candidates manually.",
+    ]
+    if baseline.get("status") == "FALLBACK_USED":
+        recommendations.append(
+            "baseline fallback is acceptable for diagnostics but should be acknowledged in review."
+        )
+    if float(labels.get("forward_return_20d_coverage") or 0.0) < 1.0:
+        recommendations.append(
+            "tail forward-return labels are limited by unavailable future 20D prices; "
+            "rerun after more price history for final review."
+        )
+    recommendations.append("production_effect remains none.")
+    return recommendations
 
 
 def _summary_payload(
@@ -695,7 +758,6 @@ def _summary_payload(
     sensitivity: pd.DataFrame,
     artifacts: dict[str, Path],
 ) -> dict[str, Any]:
-    first_loss_stage = _first_provenance_loss_stage(provenance_gap)
     feature_stage = provenance_gap.loc[provenance_gap["stage"] == "feature_panel"]
     provenance_complete_ratio = (
         float(pd.to_numeric(feature_stage["provenance_complete_ratio"], errors="coerce").mean())
@@ -703,6 +765,7 @@ def _summary_payload(
         else 0.0
     )
     missing_rows = _missing_provenance_rows(feature_stage)
+    first_loss_stage = "" if missing_rows == 0 else _first_provenance_loss_stage(provenance_gap)
     unresolved = int((alias_audit["resolved"].astype(str).str.lower() == "false").sum())
     remapped = int(
         (
@@ -725,14 +788,16 @@ def _summary_payload(
         if not coverage_audit.empty
         else 0
     )
-    near = (
-        sensitivity.loc[
-            sensitivity["hypothetical_recommendation_if_provenance_fixed"].astype(str)
-            == "PROMOTE_TO_SHADOW"
+    if sensitivity.empty:
+        near = pd.DataFrame()
+    else:
+        near = sensitivity.loc[
+            (
+                sensitivity["hypothetical_recommendation_if_provenance_fixed"].astype(str)
+                == "PROMOTE_TO_SHADOW"
+            )
+            & (sensitivity["current_recommendation"].astype(str) != "PROMOTE_TO_SHADOW")
         ]
-        if not sensitivity.empty
-        else pd.DataFrame()
-    )
     missing_artifacts = (
         int((provenance_gap["stage_status"].astype(str) == "MISSING_ARTIFACT").sum())
         if not provenance_gap.empty
@@ -1051,7 +1116,7 @@ def _missing_provenance_rows(frame: pd.DataFrame) -> int:
 
 def _provenance_recommended_fix(stage: str) -> str:
     if not stage:
-        return "no sharp provenance loss detected"
+        return "no downstream provenance loss detected"
     return (
         f"preserve accession/accepted/filed/raw/source/pit lineage through {stage} and "
         "rerun SEC PIT evaluation/comparison"
