@@ -60,6 +60,9 @@ feature 或 provenance 缺失。`max_drawdown_forward_20d` 应为非正数，单
   显示某个 feature 已进入 manual-review shadow candidate 状态，才运行
   `docs/runbooks/sec_pit_candidate_review.md` 生成 evidence pack；该 review 仍不是自动
   promotion。
+- Candidate review 后若 owner 明确批准 `APPROVE_OBSERVE_ONLY_SHADOW`，再运行
+  `docs/runbooks/sec_pit_shadow_observe.md`。Observe-only lane 仍必须保留
+  `production_effect=none`，不得写 production 或 active shadow 权重。
 
 ## Dashboard
 

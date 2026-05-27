@@ -59,6 +59,11 @@ from ai_trading_system.fundamentals.sec_pit_real_run_diagnostics import (
     DEFAULT_SEC_PIT_DIAGNOSTICS_OUTPUT_DIR,
     run_sec_pit_real_run_diagnostics,
 )
+from ai_trading_system.fundamentals.sec_pit_shadow_observe import (
+    DEFAULT_SEC_PIT_SHADOW_OBSERVE_CONFIG_PATH,
+    DEFAULT_SEC_PIT_SHADOW_OBSERVE_OUTPUT_DIR,
+    run_sec_pit_shadow_observe,
+)
 from ai_trading_system.fundamentals.sec_pit_validation import (
     validate_and_write_sec_pit_artifacts,
 )
@@ -734,6 +739,100 @@ def review_candidates_command(
     console.print(f"By period: {artifacts.by_period_path}")
     console.print(f"Baseline overlap: {artifacts.baseline_overlap_path}")
     console.print(f"Shadow proposal: {artifacts.shadow_proposal_path}")
+
+
+@sec_pit_app.command("shadow-observe")
+def shadow_observe_command(
+    start: Annotated[
+        str | None,
+        typer.Option("--start", help="observe-only 开始日期 YYYY-MM-DD；--latest 可推断。"),
+    ] = None,
+    end: Annotated[
+        str | None,
+        typer.Option("--end", help="observe-only 结束日期 YYYY-MM-DD；--latest 可推断。"),
+    ] = None,
+    candidate_review_dir: Annotated[
+        Path,
+        typer.Option("--candidate-review-dir", help="TRADING-043 candidate review artifact 目录。"),
+    ] = DEFAULT_SEC_PIT_CANDIDATE_REVIEW_OUTPUT_DIR,
+    evaluation_dir: Annotated[
+        Path,
+        typer.Option("--evaluation-dir", help="TRADING-040 SEC PIT evaluation artifact 目录。"),
+    ] = DEFAULT_SEC_PIT_EVALUATION_DIR,
+    comparison_dir: Annotated[
+        Path,
+        typer.Option("--comparison-dir", help="TRADING-041 baseline comparison artifact 目录。"),
+    ] = DEFAULT_SEC_PIT_BASELINE_COMPARISON_OUTPUT_DIR,
+    diagnostics_dir: Annotated[
+        Path,
+        typer.Option("--diagnostics-dir", help="TRADING-042 diagnostics artifact 目录。"),
+    ] = DEFAULT_SEC_PIT_DIAGNOSTICS_OUTPUT_DIR,
+    feature_panel: Annotated[
+        Path,
+        typer.Option("--feature-panel", help="SEC PIT feature panel CSV。"),
+    ] = DEFAULT_SEC_PIT_FEATURE_PANEL_PATH,
+    baseline_score_path: Annotated[
+        Path | None,
+        typer.Option("--baseline-score-path", help="显式 score-daily baseline CSV 路径。"),
+    ] = None,
+    baseline_score_dir: Annotated[
+        Path,
+        typer.Option("--baseline-score-dir", help="baseline score artifact 目录。"),
+    ] = DEFAULT_BASELINE_SCORE_DIR,
+    candidate_feature: Annotated[
+        str,
+        typer.Option("--candidate-feature", help="observe-only SEC PIT candidate feature。"),
+    ] = "capex_intensity",
+    observe_weight: Annotated[
+        float | None,
+        typer.Option("--observe-weight", help="observe-only 权重；默认读取配置。"),
+    ] = None,
+    max_allowed_weight: Annotated[
+        float | None,
+        typer.Option("--max-allowed-weight", help="最大允许初始绝对权重；默认读取配置。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="SEC PIT observe-only shadow 输出目录。"),
+    ] = DEFAULT_SEC_PIT_SHADOW_OBSERVE_OUTPUT_DIR,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="SEC PIT observe-only shadow 配置路径。"),
+    ] = DEFAULT_SEC_PIT_SHADOW_OBSERVE_CONFIG_PATH,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="自动发现 latest review/evaluation/comparison/diagnostics。"),
+    ] = False,
+) -> None:
+    """生成隔离的 SEC PIT observe-only shadow lane artifact。"""
+    try:
+        artifacts = run_sec_pit_shadow_observe(
+            start=_parse_date(start) if start else None,
+            end=_parse_date(end) if end else None,
+            candidate_review_dir=candidate_review_dir,
+            evaluation_dir=evaluation_dir,
+            comparison_dir=comparison_dir,
+            diagnostics_dir=diagnostics_dir,
+            feature_panel_path=feature_panel,
+            baseline_score_path=baseline_score_path,
+            baseline_score_dir=baseline_score_dir,
+            candidate_feature=candidate_feature,
+            observe_weight=observe_weight,
+            max_allowed_weight=max_allowed_weight,
+            output_dir=output_dir,
+            config_path=config_path,
+            latest=latest,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(f"SEC PIT shadow observe status: {artifacts.status}")
+    console.print(f"Summary JSON: {artifacts.summary_json_path}")
+    console.print(f"Summary report: {artifacts.summary_markdown_path}")
+    console.print(f"Shadow scores: {artifacts.shadow_scores_path}")
+    console.print(f"Rank shift: {artifacts.rank_shift_path}")
+    console.print(f"Bucket comparison: {artifacts.bucket_comparison_path}")
+    console.print(f"Monitoring plan: {artifacts.monitoring_plan_path}")
+    console.print(f"Safety audit: {artifacts.safety_audit_path}")
 
 
 def _resolve_user_agent(value: str | None) -> str:

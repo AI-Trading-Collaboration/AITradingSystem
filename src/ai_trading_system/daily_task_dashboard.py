@@ -243,6 +243,7 @@ def build_daily_task_dashboard_payload(
         "sec_pit_baseline_comparison": _sec_pit_baseline_comparison(report),
         "sec_pit_real_run_diagnostics": _sec_pit_real_run_diagnostics(report),
         "sec_pit_candidate_review": _sec_pit_candidate_review(report),
+        "sec_pit_shadow_observe": _sec_pit_shadow_observe(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -370,6 +371,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_sec_pit_baseline_comparison(report),
             _render_sec_pit_real_run_diagnostics(report),
             _render_sec_pit_candidate_review(report),
+            _render_sec_pit_shadow_observe(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -5795,6 +5797,93 @@ def _sec_pit_candidate_review(report: DailyTaskDashboardReport) -> TraceRecord:
     }
 
 
+def _sec_pit_shadow_observe(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_sec_pit_shadow_observe_path(report)
+    payload = _read_json_object(path)
+    default_markdown = (
+        report.project_root
+        / "outputs"
+        / "sec_pit_shadow_observe"
+        / f"sec_pit_shadow_observe_summary_{report.as_of.isoformat()}.md"
+    )
+    if payload.get("report_type") != "sec_pit_shadow_observe":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "markdown_path": str(default_markdown),
+            "latest_shadow_observe_date": "",
+            "lane_id": "",
+            "candidate_feature": "",
+            "observe_weight": None,
+            "production_effect": ProductionEffect.NONE.value,
+            "score_rows": 0,
+            "top_positive_rank_shifts": [],
+            "top_negative_rank_shifts": [],
+            "safety_check_status": "MISSING",
+            "monitoring_status": "MISSING",
+            "read_only": True,
+            "risk": (
+                "No SEC PIT shadow observe summary available. Dashboard 只读取 "
+                "TRADING-044 artifact，不运行 shadow-observe、不写 production 或 "
+                "active shadow config。"
+            ),
+        }
+
+    outputs = _mapping_value(payload, "output_artifacts")
+    markdown_path = (
+        _project_path(report.project_root, _string_value(outputs.get("summary_markdown")))
+        or default_markdown
+    )
+    report_href = _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+    safety = _mapping_value(payload, "safety")
+    safety_counts = _mapping_value(payload, "safety_checks")
+    production_effect = (
+        _string_value(payload.get("production_effect"))
+        or _string_value(safety.get("production_effect"))
+        or ProductionEffect.NONE.value
+    )
+    shadow_status = _string_value(payload.get("shadow_status")) or "UNKNOWN"
+    safety_status = _sec_pit_shadow_safety_status(safety_counts)
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("TRADING-044 shadow observe production_effect 必须为 none。")
+    if payload.get("manual_review_required") is not True:
+        risks.append("TRADING-044 shadow observe 必须要求人工复核。")
+    if safety.get("production_weights_modified") is True:
+        risks.append("TRADING-044 不得修改 production weights。")
+    if safety.get("active_shadow_weights_modified") is True:
+        risks.append("TRADING-044 不得修改 active shadow weights。")
+    if shadow_status.startswith("FAILED") or shadow_status.startswith("LIMITED"):
+        risks.append(f"Shadow observe status is {shadow_status}; conclusions are limited.")
+    return {
+        "status": shadow_status,
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "markdown_path": str(markdown_path),
+        "latest_shadow_observe_date": _string_value(payload.get("end_date")),
+        "lane_id": _string_value(payload.get("lane_id")),
+        "candidate_feature": _string_value(payload.get("candidate_feature")),
+        "observe_weight": _optional_float(payload.get("observe_weight")),
+        "production_effect": production_effect,
+        "score_rows": _int_value(payload.get("score_rows")),
+        "top_positive_rank_shifts": _sec_pit_shadow_shift_list(
+            payload.get("top_positive_rank_shifts"),
+        ),
+        "top_negative_rank_shifts": _sec_pit_shadow_shift_list(
+            payload.get("top_negative_rank_shifts"),
+        ),
+        "safety_check_status": safety_status,
+        "monitoring_status": _string_value(payload.get("monitoring_status")) or "UNKNOWN",
+        "read_only": True,
+        "risk": "；".join(risks) or "SEC PIT shadow observe dashboard card 当前仅作只读展示。",
+    }
+
+
 def _dashboard_ticker_delta_list(value: object) -> list[TraceRecord]:
     if not isinstance(value, list):
         return []
@@ -5810,6 +5899,34 @@ def _dashboard_ticker_delta_list(value: object) -> list[TraceRecord]:
             }
         )
     return records
+
+
+def _sec_pit_shadow_shift_list(value: object) -> list[TraceRecord]:
+    if not isinstance(value, list):
+        return []
+    records: list[TraceRecord] = []
+    for item in value[:5]:
+        if not isinstance(item, dict):
+            continue
+        records.append(
+            {
+                "decision_date": _string_value(item.get("decision_date")),
+                "ticker": _string_value(item.get("ticker")),
+                "rank_delta": _optional_float(item.get("rank_delta")),
+                "score_delta": _optional_float(item.get("score_delta")),
+            }
+        )
+    return records
+
+
+def _sec_pit_shadow_safety_status(counts: TraceRecord) -> str:
+    failed = _int_value(counts.get("failed"))
+    warnings = _int_value(counts.get("warning"))
+    if failed:
+        return "FAIL"
+    if warnings:
+        return "WARN"
+    return "PASS"
 
 
 def _sec_pit_top_features(value: object) -> list[TraceRecord]:
@@ -6808,6 +6925,22 @@ def _latest_sec_pit_candidate_review_path(report: DailyTaskDashboardReport) -> P
     candidates: list[tuple[date, Path]] = []
     for path in review_root.glob("sec_pit_candidate_review_summary_*.json"):
         raw_date = path.stem.removeprefix("sec_pit_candidate_review_summary_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_sec_pit_shadow_observe_path(report: DailyTaskDashboardReport) -> Path:
+    shadow_root = report.project_root / "outputs" / "sec_pit_shadow_observe"
+    default_path = shadow_root / f"sec_pit_shadow_observe_summary_{report.as_of.isoformat()}.json"
+    if not shadow_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in shadow_root.glob("sec_pit_shadow_observe_summary_*.json"):
+        raw_date = path.stem.removeprefix("sec_pit_shadow_observe_summary_")
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= report.as_of:
             candidates.append((parsed, path))
@@ -10374,6 +10507,89 @@ def _render_sec_pit_candidate_review(report: DailyTaskDashboardReport) -> str:
             "</section>",
         ]
     )
+
+
+def _render_sec_pit_shadow_observe(report: DailyTaskDashboardReport) -> str:
+    summary = _sec_pit_shadow_observe(report)
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}">'
+        "<span>SEC PIT Observe-Only Shadow Lane</span>"
+        f"<small>{_text(summary.get('status', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>SEC PIT Observe-Only Shadow Lane</span>"
+        "<small>MISSING</small></span>"
+    )
+    missing_note = (
+        '<p class="subtle">No SEC PIT shadow observe summary available.</p>'
+        if summary.get("exists") is not True
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="sec-pit-shadow-observe-title">',
+            '<div class="section-head">',
+            '<h2 id="sec-pit-shadow-observe-title">SEC PIT Observe-Only Shadow Lane</h2>',
+            (
+                "<p>TRADING-044 只读卡片；dashboard 只读取 shadow observe artifact，"
+                "不运行 shadow-observe、不写 production config、不写 active shadow config。</p>"
+            ),
+            "</div>",
+            missing_note,
+            '<div class="summary-grid">',
+            _summary_item(
+                "latest shadow observe date",
+                summary.get("latest_shadow_observe_date", ""),
+            ),
+            _summary_item("shadow status", summary.get("status", "MISSING")),
+            _summary_item("lane id", summary.get("lane_id", "")),
+            _summary_item("candidate feature", summary.get("candidate_feature", "")),
+            _summary_item(
+                "observe weight",
+                _format_decimal(summary.get("observe_weight"), digits=4),
+            ),
+            _summary_item("production effect", summary.get("production_effect", "none")),
+            _summary_item("score rows", summary.get("score_rows", 0)),
+            _summary_item(
+                "top positive rank shifts",
+                _sec_pit_shadow_shift_text(summary.get("top_positive_rank_shifts")),
+            ),
+            _summary_item(
+                "top negative rank shifts",
+                _sec_pit_shadow_shift_text(summary.get("top_negative_rank_shifts")),
+            ),
+            _summary_item("safety check status", summary.get("safety_check_status", "MISSING")),
+            _summary_item("monitoring status", summary.get("monitoring_status", "MISSING")),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _sec_pit_shadow_shift_text(value: object) -> str:
+    if not isinstance(value, list) or not value:
+        return "none"
+    parts: list[str] = []
+    for item in value[:5]:
+        if not isinstance(item, dict):
+            continue
+        ticker = item.get("ticker", "")
+        rank_delta = _optional_float(item.get("rank_delta"))
+        score_delta = _optional_float(item.get("score_delta"))
+        rank_text = "NA" if rank_delta is None else f"{rank_delta:+.0f}"
+        score_text = "NA" if score_delta is None else f"{score_delta:+.4f}"
+        date_text = item.get("decision_date", "")
+        parts.append(f"{ticker} {date_text} rank {rank_text} / score {score_text}")
+    return "；".join(parts) or "none"
 
 
 def _dashboard_ticker_delta_text(value: object) -> str:

@@ -135,6 +135,7 @@
 - `outputs/sec_pit_baseline_comparison/sec_pit_baseline_comparison_summary_YYYY-MM-DD.md`
 - `outputs/sec_pit_diagnostics/sec_pit_real_run_diagnostics_YYYY-MM-DD.md`
 - `outputs/sec_pit_candidate_review/sec_pit_candidate_review_summary_YYYY-MM-DD.md`
+- `outputs/sec_pit_shadow_observe/sec_pit_shadow_observe_summary_YYYY-MM-DD.md`
 
 应该看哪份报告确认：
 
@@ -155,6 +156,10 @@
   查看 `docs/runbooks/sec_pit_candidate_review.md`、
   `sec_pit_candidate_evidence_YYYY-MM-DD.csv`、by-ticker / by-period evidence 和
   `sec_pit_candidate_shadow_proposal_YYYY-MM-DD.csv`；该步骤只支持人工复核，不自动改权重。
+- 若 owner 已人工批准 `APPROVE_OBSERVE_ONLY_SHADOW`，查看
+  `docs/runbooks/sec_pit_shadow_observe.md`、`sec_pit_shadow_scores_YYYY-MM-DD.csv`、
+  `sec_pit_shadow_rank_shift_YYYY-MM-DD.csv` 和 safety audit；该 lane 只观察
+  `capex_intensity` 对 score/rank 的假设影响，不影响 production。
 
 ## 第 5 步：权重如何合成 overall score
 

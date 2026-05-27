@@ -1,0 +1,51 @@
+lane_id: sec_pit_capex_intensity_observe_only
+lane_status: observe_only
+production_effect: none
+manual_review_required: true
+
+candidates:
+  - feature_id: capex_intensity
+    metric_id: capex,revenue
+    approval_status: APPROVE_OBSERVE_ONLY_SHADOW
+    observe_weight: -0.025
+    max_allowed_initial_weight: 0.05
+    weight_direction: negative
+    pit_grade_policy: B_RECONSTRUCTED_SEC_FILING_PIT
+    minimum_monitoring_days: 60
+    preferred_monitoring_days: 90
+    enabled: true
+
+safety:
+  allow_production_write: false
+  allow_active_shadow_write: false
+  require_candidate_review_status: READY_FOR_MANUAL_REVIEW
+  require_diagnostics_status: OK
+  require_provenance_complete: true
+  min_data_quality_score: 0.90
+  min_drawdown_label_coverage: 0.90
+  max_abs_initial_weight: 0.05
+
+monitoring:
+  forward_windows: [20, 60]
+  compare_against:
+    - baseline_score
+    - score_daily
+  buckets:
+    - semiconductor
+    - platform
+    - all
+  semiconductor_tickers:
+    - NVDA
+    - AMD
+    - AVGO
+  platform_tickers:
+    - MSFT
+    - GOOG
+    - META
+    - AMZN
+
+rollback:
+  rolling_rank_ic_20d_wrong_direction_threshold: 0.02
+  max_negative_relative_return_20d: -0.05
+  max_drawdown_deterioration_20d: -0.03
+  min_monitoring_sample_count: 20

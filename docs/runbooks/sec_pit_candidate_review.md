@@ -48,6 +48,9 @@ aits sec-pit review-candidates --latest
    `LIMITED_BASELINE_FIELDS_MISSING`。
 6. 最后看 shadow proposal CSV。`READY_FOR_MANUAL_REVIEW` 只表示可以进入人工讨论，
    不是自动 observe-only shadow iteration，更不是 production promotion。
+7. 若项目 owner 明确批准 `APPROVE_OBSERVE_ONLY_SHADOW`，下一步运行
+   `docs/runbooks/sec_pit_shadow_observe.md`。该步骤仍只生成隔离 observe-only artifact，
+   不写 production 或 active shadow 权重。
 
 ## 状态解释
 
@@ -76,3 +79,11 @@ review date、review status、candidate count、ready for manual review count、
 diagnostics status、drawdown label coverage、top candidate feature、proposal status 和
 `production_effect`。Dashboard 不运行 `aits sec-pit review-candidates`，不运行
 evaluation/comparison/diagnostics，不修改 production 或 shadow 权重。
+
+## 下游 Observe-Only Lane
+
+当 `sec_pit_candidate_shadow_proposal_YYYY-MM-DD.csv` 中的 candidate 为
+`READY_FOR_MANUAL_REVIEW`，且 owner 人工决策为 `APPROVE_OBSERVE_ONLY_SHADOW` 时，才运行
+`aits sec-pit shadow-observe`。该命令会重新检查 candidate review、diagnostics、provenance、
+data quality、drawdown label coverage、weight 上限、PIT grade、source lineage 和 baseline
+overlap；critical check 失败时不会生成 shadow score 长表。

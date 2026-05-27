@@ -77,3 +77,7 @@ TRADING-040/041 产物中存在 manual-review shadow candidate，继续运行
 `docs/runbooks/sec_pit_candidate_review.md`。Candidate review 会读取本 runbook 的
 decision impact / incremental alpha artifact 来判断 baseline redundancy 和 incremental
 evidence，但仍只生成人工复核包，不修改 production 或 active shadow weights。
+
+若 candidate review 后 owner 明确批准 observe-only shadow lane，再运行
+`docs/runbooks/sec_pit_shadow_observe.md`。该 observe lane 仍只读取 baseline score 和 SEC PIT
+artifact，不覆盖 baseline score 或 production score。
