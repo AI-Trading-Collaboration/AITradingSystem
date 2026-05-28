@@ -75,6 +75,14 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     assert valuation_gate["binding"] is True
     assert payload["data_quality_pit_safety"]["data_gate_status"] == "PASS"
     assert payload["backtest_shadow_governance"]["source"] == "research_governance_summary"
+    assert payload["backtest_shadow_governance"]["promotion_status"] == "NOT_PROMOTABLE"
+    assert (
+        "promotion_status = NOT_PROMOTABLE" in payload["executive_summary"]["research_governance"]
+    )
+    assert (
+        "research governance status = PASS_WITH_LIMITATIONS"
+        in payload["narrative_executive_summary"]["research_governance_summary"]
+    )
     assert payload["backtest_shadow_governance"]["candidate_research_count"] == 3
     assert payload["manual_review_queue"]["status"] == "ACTION_REQUIRED"
     assert payload["manual_review_queue"]["groups"][0]["label"] == "Critical / Must Review Today"
@@ -87,6 +95,13 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     assert any(item["artifact_id"] == "daily_report" for item in payload["appendix_links"])
     assert any(item["artifact_id"] == "trace_bundle" for item in payload["appendix_links"])
     assert any(item["artifact_id"] == "artifact_catalog" for item in payload["report_navigation"])
+    core_items = payload["report_navigation_groups"]["groups"][0]["items"]
+    daily_summary_rows = [
+        item for item in core_items if item["artifact_id"] == "daily_decision_summary"
+    ]
+    assert len(daily_summary_rows) == 1
+    assert daily_summary_rows[0]["status"] == "limited"
+    assert len(daily_summary_rows[0]["navigation_sources"]) == 2
     assert payload["report_navigation_groups"]["groups"][0]["purpose"] == "Core decision artifacts"
 
 
@@ -565,7 +580,48 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                 "report_type": "research_governance_summary",
                 "as_of": "2026-05-04",
                 "status": "PASS_WITH_WARNINGS",
+                "governance_status": "PASS_WITH_LIMITATIONS",
+                "research_readiness": "READY_FOR_REVIEW",
+                "promotion_status": "NOT_PROMOTABLE",
+                "manual_review_required": True,
                 "production_effect": "none",
+                "summary_text": (
+                    "当前研究治理状态为 PASS_WITH_LIMITATIONS；promotion_status=NOT_PROMOTABLE。"
+                ),
+                "backtest": {
+                    "backtest_status": "AVAILABLE",
+                    "robustness_status": "PASS_WITH_LIMITATIONS",
+                },
+                "weight_iteration": {
+                    "promotion_status": "NOT_PROMOTABLE",
+                    "weight_candidate_evaluation_status": "MISSING",
+                    "weight_promotion_gate_status": "MISSING",
+                },
+                "shadow_observe": {
+                    "shadow_monitor_status": "OK_MONITORING",
+                    "rollback_recommended": False,
+                },
+                "sec_pit": {
+                    "sec_pit_shadow_observe_status": "OK",
+                    "pit_grade_policy": "B_RECONSTRUCTED_SEC_FILING_PIT",
+                    "production_effect": "none",
+                },
+                "documentation": {
+                    "documentation_contract_status": "PASS",
+                    "report_index_status": "PASS_WITH_WARNINGS",
+                },
+                "manual_review_queue": [
+                    {
+                        "item_id": "missing_weight_promotion_gate",
+                        "severity": "critical",
+                        "category": "weight_iteration",
+                        "reason": "缺少 weight_promotion_gate，promotion 默认阻断。",
+                        "recommended_next_action": "run_weight_promotion_gate",
+                        "decision_impact": "promotion_status=BLOCKED_BY_MISSING_ARTIFACTS",
+                        "source_artifact": "weight_promotion_gate",
+                        "production_effect": "none",
+                    }
+                ],
                 "summary": {
                     "card_count": 8,
                     "missing_count": 1,
@@ -624,6 +680,19 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                         "owner_action": "run_validate_data",
                         "production_effect": "none",
                         "required_for_daily_reading": True,
+                    },
+                    {
+                        "report_id": "daily_decision_summary",
+                        "title": "Daily Decision Summary",
+                        "cadence": "daily",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "limited",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(daily_decision_summary_path),
+                        "exists": True,
+                        "owner_action": "regenerate_daily_tasks_if_missing",
+                        "production_effect": "none",
                     },
                 ],
             },

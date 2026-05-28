@@ -150,7 +150,7 @@ reports:
     cadence: daily
     audience: reviewer
     owner: system
-    command: aits reports research-governance-summary
+    command: aits reports research-governance-summary --date YYYY-MM-DD
     artifact_globs:
       - outputs/reports/research_governance_summary_*.json
       - outputs/reports/research_governance_summary_*.md

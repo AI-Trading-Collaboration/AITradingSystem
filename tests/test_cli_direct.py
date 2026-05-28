@@ -210,3 +210,24 @@ def test_cli_direct_dispatches_score_change_and_market_panel_latest(monkeypatch)
         ("market_panel", {"as_of": "2026-05-13", "latest": False}),
         ("market_panel", {"as_of": None, "latest": True}),
     ]
+
+
+def test_cli_direct_dispatches_research_governance_date_and_latest(monkeypatch) -> None:
+    calls: list[dict[str, object]] = []
+
+    def fake_research_governance(**kwargs: object) -> None:
+        calls.append(kwargs)
+
+    monkeypatch.setattr(
+        cli_direct.cli,
+        "research_governance_summary_command",
+        fake_research_governance,
+    )
+
+    assert cli_direct.main(["reports", "research-governance-summary", "--date", "2026-05-13"]) == 0
+    assert cli_direct.main(["reports", "research-governance-summary", "--latest"]) == 0
+
+    assert calls == [
+        {"as_of": "2026-05-13", "latest": False},
+        {"as_of": None, "latest": True},
+    ]

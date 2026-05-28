@@ -203,6 +203,7 @@ def build_reader_brief_payload(
         market_situation=market_situation,
         score_changes=score_change_summary,
         contribution_summary=contribution_summary,
+        governance_summary=governance_summary,
         manual_review_queue=manual_review_queue,
         missing_artifact_impact=missing_artifact_impact,
     )
@@ -1311,10 +1312,30 @@ def _backtest_shadow_governance(
     if research_governance_summary:
         summary = _mapping(research_governance_summary.get("summary"))
         groups = _mapping(summary.get("groups"))
+        backtest = _mapping(research_governance_summary.get("backtest"))
+        weight_iteration = _mapping(research_governance_summary.get("weight_iteration"))
+        shadow_observe = _mapping(research_governance_summary.get("shadow_observe"))
+        sec_pit = _mapping(research_governance_summary.get("sec_pit"))
+        documentation = _mapping(research_governance_summary.get("documentation"))
         return {
             "availability": "AVAILABLE",
             "source": "research_governance_summary",
-            "status": _text(research_governance_summary.get("status"), "UNKNOWN"),
+            "status": _text(
+                research_governance_summary.get("governance_status"),
+                _text(research_governance_summary.get("status"), "UNKNOWN"),
+            ),
+            "research_readiness": _text(
+                research_governance_summary.get("research_readiness"),
+                "UNKNOWN",
+            ),
+            "promotion_status": _text(
+                research_governance_summary.get("promotion_status"),
+                _text(weight_iteration.get("promotion_status"), "UNKNOWN"),
+            ),
+            "manual_review_required": bool(
+                research_governance_summary.get("manual_review_required")
+            ),
+            "summary_text": _text(research_governance_summary.get("summary_text")),
             "card_count": summary.get("card_count"),
             "missing_count": summary.get("missing_count"),
             "warning_count": summary.get("warning_count"),
@@ -1322,6 +1343,20 @@ def _backtest_shadow_governance(
             "shadow_observe_count": groups.get("Shadow observe-only"),
             "candidate_research_count": groups.get("Candidate / research-only"),
             "blocked_count": groups.get("Blocked / insufficient data"),
+            "backtest_status": _text(backtest.get("backtest_status"), "UNKNOWN"),
+            "robustness_status": _text(backtest.get("robustness_status"), "UNKNOWN"),
+            "shadow_monitor_status": _text(
+                shadow_observe.get("shadow_monitor_status"),
+                "UNKNOWN",
+            ),
+            "sec_pit_shadow_observe_status": _text(
+                sec_pit.get("sec_pit_shadow_observe_status"),
+                "UNKNOWN",
+            ),
+            "documentation_contract_status": _text(
+                documentation.get("documentation_contract_status"),
+                "UNKNOWN",
+            ),
             "production_effect": PRODUCTION_EFFECT,
             "limitation": "详细卡片见 research_governance_summary artifact。",
         }
@@ -1394,15 +1429,54 @@ def _manual_review_queue(
                     "production_impact": "reader_visibility_or_required_report_gap",
                 }
             )
-    research_summary = _mapping(research_governance_summary.get("summary"))
-    manual_count = _int(research_summary.get("manual_review_required_count"))
-    if manual_count:
+    governance_review_items = _records(research_governance_summary.get("manual_review_queue"))
+    if governance_review_items:
+        for review_item in governance_review_items:
+            items.append(
+                {
+                    "action_id": _text(review_item.get("item_id"), "research_governance_review"),
+                    "severity": _text(review_item.get("severity"), "warning"),
+                    "category": _text(review_item.get("category"), "research_governance"),
+                    "reason": _text(review_item.get("reason"), "research governance review"),
+                    "source_artifact": _text(
+                        review_item.get("source_artifact_full_path"),
+                        _text(review_item.get("source_artifact"), "research_governance_summary"),
+                    ),
+                    "recommended_next_action": _text(
+                        review_item.get("recommended_next_action"),
+                    ),
+                    "decision_impact": _text(review_item.get("decision_impact")),
+                    "production_impact": "manual_review_only",
+                }
+            )
+    else:
+        research_summary = _mapping(research_governance_summary.get("summary"))
+        manual_count = _int(research_summary.get("manual_review_required_count"))
+        if manual_count:
+            items.append(
+                {
+                    "action_id": "research_governance_manual_review",
+                    "severity": "warning",
+                    "category": "research_governance",
+                    "reason": (
+                        f"{manual_count} research/shadow/governance cards require manual review."
+                    ),
+                    "source_artifact": "research_governance_summary",
+                    "production_impact": "manual_review_only",
+                }
+            )
+    governance_status = _text(research_governance_summary.get("governance_status"))
+    promotion_status = _text(research_governance_summary.get("promotion_status"))
+    if governance_status or promotion_status:
         items.append(
             {
-                "action_id": "research_governance_manual_review",
-                "severity": "warning",
+                "action_id": "research_governance_status_review",
+                "severity": "warning" if promotion_status != "PROMOTABLE" else "info",
                 "category": "research_governance",
-                "reason": f"{manual_count} research/shadow/governance cards require manual review.",
+                "reason": (
+                    f"research governance status={governance_status or 'UNKNOWN'}; "
+                    f"promotion_status={promotion_status or 'UNKNOWN'}"
+                ),
                 "source_artifact": "research_governance_summary",
                 "production_impact": "manual_review_only",
             }
@@ -1458,13 +1532,17 @@ def _manual_review_item(item: Mapping[str, Any]) -> dict[str, Any]:
         "documentation_contract": "影响文档治理可信度，不直接改变投资结论。",
         "manual_review": "可能降低某一分项或数据来源的解释置信度。",
     }
+    provided_action = _text(item.get("recommended_next_action"))
+    provided_decision_impact = _text(item.get("decision_impact"))
     return {
         **dict(item),
-        "recommended_next_action": action_by_category.get(
+        "recommended_next_action": provided_action
+        or action_by_category.get(
             category,
             f"复核 {category}：{reason}",
         ),
-        "decision_impact": decision_impact_by_category.get(
+        "decision_impact": provided_decision_impact
+        or decision_impact_by_category.get(
             category,
             "需人工判断是否影响今日结论使用。",
         ),
@@ -1545,6 +1623,10 @@ def _executive_summary(
             f"required_missing={_text(report_index_summary.get('required_missing_count'), '0')}"
         ),
         "governance_status": _text(governance_summary.get("status"), "UNKNOWN"),
+        "research_governance": (
+            f"research governance status = {_text(governance_summary.get('status'), 'UNKNOWN')}; "
+            f"promotion_status = {_text(governance_summary.get('promotion_status'), 'UNKNOWN')}"
+        ),
         "manual_review_count": len(_records(manual_review_queue.get("items"))),
         "production_effect": PRODUCTION_EFFECT,
     }
@@ -1557,6 +1639,7 @@ def _narrative_executive_summary(
     market_situation: Mapping[str, Any],
     score_changes: Mapping[str, Any],
     contribution_summary: Mapping[str, Any],
+    governance_summary: Mapping[str, Any],
     manual_review_queue: Mapping[str, Any],
     missing_artifact_impact: Mapping[str, Any],
 ) -> dict[str, Any]:
@@ -1600,6 +1683,10 @@ def _narrative_executive_summary(
         "manual_review_summary": (
             f"当前有 {manual_count} 个复核项，其中 critical={critical_count}；"
             f"缺失/受限 artifact 中 blocking={blocking_missing}, important={important_missing}。"
+        ),
+        "research_governance_summary": (
+            f"research governance status = {_text(governance_summary.get('status'), 'UNKNOWN')}; "
+            f"promotion_status = {_text(governance_summary.get('promotion_status'), 'UNKNOWN')}。"
         ),
         "production_effect_statement": (
             "Reader Brief 为只读阅读入口，production_effect=none；"
@@ -1772,6 +1859,7 @@ def _report_navigation(
         link["purpose"] = _navigation_purpose(artifact_id, link["status"])
         link["why_open_this"] = _navigation_reason(artifact_id, link["status"])
         link["impact_level"] = impact_by_id.get(artifact_id, "INFO")
+        link["navigation_source"] = "reader_brief_runtime_input"
     for report in _records(report_index.get("reports")):
         path_text = _text(report.get("latest_artifact_path"))
         if not path_text:
@@ -1798,6 +1886,7 @@ def _report_navigation(
                     _text(report.get("freshness_status"), "UNKNOWN"),
                 ),
                 "impact_level": impact_by_id.get(_text(report.get("report_id")), "INFO"),
+                "navigation_source": "report_index_runtime",
             }
         )
     links.append(
@@ -1815,9 +1904,10 @@ def _report_navigation(
             "purpose": "Governance / documentation",
             "why_open_this": "查看产物边界、schema/status 术语和 common misread。",
             "impact_level": "INFO",
+            "navigation_source": "documentation_static",
         }
     )
-    return links
+    return _dedupe_navigation_links(links)
 
 
 def _report_navigation_groups(navigation: list[dict[str, Any]]) -> dict[str, Any]:
@@ -1829,7 +1919,10 @@ def _report_navigation_groups(navigation: list[dict[str, Any]]) -> dict[str, Any
     ]
     groups = []
     for purpose in purposes:
-        items = [item for item in navigation if _text(item.get("purpose")) == purpose]
+        items = sorted(
+            [item for item in navigation if _text(item.get("purpose")) == purpose],
+            key=_navigation_sort_key,
+        )
         groups.append({"purpose": purpose, "count": len(items), "items": items})
     return {
         "status": "AVAILABLE",
@@ -1838,8 +1931,149 @@ def _report_navigation_groups(navigation: list[dict[str, Any]]) -> dict[str, Any
     }
 
 
+def _dedupe_navigation_links(links: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    merged: dict[tuple[str, str], dict[str, Any]] = {}
+    for link in links:
+        artifact_id = _text(link.get("artifact_id"))
+        purpose = _text(link.get("purpose"), _navigation_purpose(artifact_id, "UNKNOWN"))
+        key = (purpose, artifact_id)
+        current = merged.get(key)
+        if current is None:
+            record = dict(link)
+            record["navigation_sources"] = [_navigation_source_record(link)]
+            merged[key] = record
+            continue
+        merged[key] = _merge_navigation_link(current, link)
+    return sorted(merged.values(), key=_navigation_sort_key)
+
+
+def _merge_navigation_link(
+    current: Mapping[str, Any], incoming: Mapping[str, Any]
+) -> dict[str, Any]:
+    merged = dict(current)
+    incoming_source = _navigation_source_record(incoming)
+    merged["navigation_sources"] = _dedupe_navigation_sources(
+        [*_records(merged.get("navigation_sources")), incoming_source]
+    )
+    merged["status"] = _more_specific_status(
+        _text(merged.get("status")),
+        _text(incoming.get("status")),
+    )
+    merged["freshness_status"] = _more_specific_status(
+        _text(merged.get("freshness_status")),
+        _text(incoming.get("freshness_status")),
+    )
+    if _prefer_navigation_record(merged, incoming):
+        for key in (
+            "title",
+            "short_name",
+            "path",
+            "full_path",
+            "href",
+            "exists",
+            "production_effect",
+            "why_open_this",
+            "navigation_source",
+        ):
+            if _text(incoming.get(key)) or key == "exists":
+                merged[key] = incoming.get(key)
+    merged["impact_level"] = _higher_impact_level(
+        _text(merged.get("impact_level"), "INFO"),
+        _text(incoming.get("impact_level"), "INFO"),
+    )
+    return merged
+
+
+def _navigation_source_record(record: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "source": _text(record.get("navigation_source"), "unknown"),
+        "status": _text(record.get("status"), "UNKNOWN"),
+        "freshness_status": _text(record.get("freshness_status"), "UNKNOWN"),
+        "path": _text(record.get("full_path"), _text(record.get("path"))),
+    }
+
+
+def _dedupe_navigation_sources(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    by_key: dict[tuple[str, str], dict[str, Any]] = {}
+    for record in records:
+        key = (_text(record.get("source")), _text(record.get("path")))
+        by_key[key] = record
+    return sorted(
+        by_key.values(),
+        key=lambda item: (_text(item.get("source")), _text(item.get("path"))),
+    )
+
+
+def _prefer_navigation_record(current: Mapping[str, Any], incoming: Mapping[str, Any]) -> bool:
+    current_rank = _navigation_source_rank(_text(current.get("navigation_source")))
+    incoming_rank = _navigation_source_rank(_text(incoming.get("navigation_source")))
+    if incoming_rank != current_rank:
+        return incoming_rank > current_rank
+    if bool(incoming.get("exists")) != bool(current.get("exists")):
+        return bool(incoming.get("exists"))
+    return _status_specificity(_text(incoming.get("status"))) > _status_specificity(
+        _text(current.get("status"))
+    )
+
+
+def _navigation_source_rank(source: str) -> int:
+    return {
+        "documentation_static": 1,
+        "reader_brief_runtime_input": 2,
+        "report_index_runtime": 3,
+    }.get(source, 0)
+
+
+def _more_specific_status(left: str, right: str) -> str:
+    return right if _status_specificity(right) > _status_specificity(left) else left
+
+
+def _status_specificity(status: str) -> int:
+    normalized = status.upper()
+    if not normalized or normalized == "UNKNOWN":
+        return 0
+    if normalized in {"AVAILABLE", "DOCUMENTATION"}:
+        return 1
+    if normalized == "FRESH":
+        return 2
+    if normalized in {"PASS", "OK"}:
+        return 2
+    if normalized in {"LIMITED", "PASS_WITH_WARNINGS", "PASS_WITH_LIMITATIONS"}:
+        return 3
+    if normalized in {"MISSING", "STALE", "REQUIRED_MISSING", "FAILED", "FAIL"}:
+        return 4
+    return 2
+
+
+def _higher_impact_level(left: str, right: str) -> str:
+    ranks = {"INFO": 0, "OPTIONAL": 1, "IMPORTANT": 2, "BLOCKING": 3}
+    return right if ranks.get(right, 0) > ranks.get(left, 0) else left
+
+
+def _navigation_sort_key(item: Mapping[str, Any]) -> tuple[int, str]:
+    order = {
+        "decision_snapshot": 10,
+        "daily_decision_summary": 20,
+        "daily_report": 30,
+        "reader_brief": 40,
+        "market_panel": 100,
+        "score_change_attribution": 110,
+        "evidence_dashboard": 120,
+        "daily_task_dashboard": 130,
+        "calculation_explainers": 140,
+        "trace_bundle": 150,
+        "research_governance_summary": 200,
+        "report_index": 210,
+        "documentation_contract": 220,
+        "reader_brief_quality": 230,
+        "artifact_catalog": 240,
+    }
+    artifact_id = _text(item.get("artifact_id"))
+    return (order.get(artifact_id, 999), artifact_id)
+
+
 def _navigation_purpose(artifact_id: str, status: str) -> str:
-    if status in {"MISSING", "STALE", "REQUIRED_MISSING"}:
+    if status.upper() in {"MISSING", "STALE", "REQUIRED_MISSING"}:
         return "Missing but expected"
     if artifact_id in {
         "decision_snapshot",
@@ -2105,10 +2339,12 @@ def _narrative_summary_html(summary: Mapping[str, Any]) -> str:
     today = html.escape(_text(summary.get("today_conclusion"), "UNKNOWN"))
     why = html.escape(_text(summary.get("why_this_conclusion"), "UNKNOWN"))
     review = html.escape(_text(summary.get("manual_review_summary"), "UNKNOWN"))
+    governance = html.escape(_text(summary.get("research_governance_summary"), "UNKNOWN"))
     return (
         '<div class="narrative">'
         f"<p><strong>今日结论：</strong>{today}</p>"
         f"<p><strong>为什么：</strong>{why}</p>"
+        f"<p><strong>研究治理：</strong>{governance}</p>"
         f"<p><strong>需要复核：</strong>{review}</p>"
         "</div>"
     )
@@ -2222,6 +2458,7 @@ def _navigation_table(records: list[dict[str, Any]]) -> str:
                 ("artifact_id", record.get("artifact_id")),
                 ("exists", record.get("exists")),
                 ("production_effect", record.get("production_effect")),
+                ("navigation_sources", record.get("navigation_sources")),
             ]
         )
         rows.append(

@@ -6498,8 +6498,16 @@ def market_panel_command(
 def research_governance_summary_command(
     as_of: Annotated[
         str | None,
-        typer.Option(help="Research governance summary 日期，格式为 YYYY-MM-DD，默认今天。"),
+        typer.Option(
+            "--as-of",
+            "--date",
+            help="Research governance summary 日期，格式为 YYYY-MM-DD，默认今天。",
+        ),
     ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用默认 decision snapshot 目录中的最新 signal-date。"),
+    ] = False,
     output_path: Annotated[
         Path | None,
         typer.Option(help="Research governance summary Markdown 输出路径。"),
@@ -6514,7 +6522,14 @@ def research_governance_summary_command(
     ] = PROJECT_ROOT,
 ) -> None:
     """生成只读 research governance summary。"""
-    report_date = _parse_date(as_of) if as_of else date.today()
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if latest:
+        report_date = _decision_snapshot_date(
+            _latest_decision_snapshot_path(DEFAULT_DECISION_SNAPSHOT_DIR)
+        )
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
     reports_dir = project_root / "outputs" / "reports"
     markdown_output = output_path or default_research_governance_summary_report_path(
         reports_dir,
@@ -6530,13 +6545,14 @@ def research_governance_summary_command(
     )
     report_path = write_research_governance_summary_report(payload, markdown_output)
     json_path = write_research_governance_summary_json(payload, json_output)
-    style = "green" if payload["status"] == "PASS" else "yellow"
-    console.print(f"[{style}]Research governance summary：{payload['status']}[/{style}]")
+    style = "green" if payload["governance_status"] == "OK" else "yellow"
+    console.print(f"[{style}]Research governance summary：{payload['governance_status']}[/{style}]")
     console.print(f"Research governance summary report：{report_path}")
     console.print(f"Research governance summary JSON：{json_path}")
     console.print(
         f"cards：{payload['summary']['card_count']}；"
-        f"warnings：{len(payload['warnings'])}；"
+        f"manual_review：{len(payload['manual_review_queue'])}；"
+        f"promotion_status={payload['promotion_status']}；"
         f"production_effect={payload['production_effect']}；"
         "只读汇总"
     )

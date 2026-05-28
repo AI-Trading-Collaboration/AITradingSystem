@@ -119,7 +119,10 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:2] == ["reports", "research-governance-summary"]:
-        cli.research_governance_summary_command(as_of=_option(args, "--as-of"))
+        cli.research_governance_summary_command(
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            latest=_flag(args, "--latest"),
+        )
         return
     if args[:2] == ["reports", "index"]:
         cli.report_index_command(as_of=_option(args, "--as-of"))
