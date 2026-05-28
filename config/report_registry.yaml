@@ -150,7 +150,7 @@ reports:
     cadence: daily
     audience: investor
     owner: system
-    command: aits reports reader-brief
+    command: aits reports reader-brief --date YYYY-MM-DD
     artifact_globs:
       - outputs/reports/reader_brief_*.json
       - outputs/reports/reader_brief_*.html

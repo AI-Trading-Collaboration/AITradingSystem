@@ -30,11 +30,13 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
         score_change_attribution_path=inputs["score_change_attribution"],
         research_governance_summary_path=inputs["research_governance_summary"],
         report_index_path=inputs["report_index"],
+        documentation_contract_path=inputs["documentation_contract"],
     )
 
     assert payload["status"] == "PASS"
     assert payload["production_effect"] == "none"
     assert payload["reader_entry_role"] == "daily_reading_home"
+    assert payload["executive_summary"]["manual_review_count"] >= 1
     assert payload["run_context"]["market_regime"] == "ai_after_chatgpt"
     assert payload["executive_decision"]["action"] == "观察"
     assert payload["executive_decision"]["final_risk_asset_ai_position"] == "40%-60%"
@@ -46,6 +48,8 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     assert payload["score_change_attribution_summary"]["drivers"][0]["driver"] == "trend"
     assert payload["report_index_summary"]["missing_count"] == 1
     assert payload["report_index_summary"]["problem_reports"][0]["report_id"] == "data_quality"
+    assert payload["task_cadence_calendar"]["groups"][0]["cadence"] == "daily"
+    assert payload["documentation_contract_summary"]["status"] == "PASS"
     trend = payload["component_score_explainability"]["components"][0]
     assert trend["component"] == "trend"
     assert trend["effective_weight"] == 0.25
@@ -58,8 +62,12 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     assert payload["backtest_shadow_governance"]["source"] == "research_governance_summary"
     assert payload["backtest_shadow_governance"]["candidate_research_count"] == 3
     assert payload["manual_review_queue"]["status"] == "ACTION_REQUIRED"
+    assert any(
+        item["category"] == "report_freshness" for item in payload["manual_review_queue"]["items"]
+    )
     assert any(item["artifact_id"] == "daily_report" for item in payload["appendix_links"])
     assert any(item["artifact_id"] == "trace_bundle" for item in payload["appendix_links"])
+    assert any(item["artifact_id"] == "artifact_catalog" for item in payload["report_navigation"])
 
 
 def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: Path) -> None:
@@ -78,6 +86,7 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
         score_change_attribution_path=tmp_path / "missing_score_change.json",
         research_governance_summary_path=tmp_path / "missing_research_governance.json",
         report_index_path=tmp_path / "missing_report_index.json",
+        documentation_contract_path=tmp_path / "missing_documentation_contract.json",
     )
 
     assert payload["status"] == "PASS_WITH_WARNINGS"
@@ -85,6 +94,8 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
     assert payload["component_score_explainability"]["status"] == "AVAILABLE"
     assert payload["backtest_shadow_governance"]["availability"] == "LIMITED"
     assert payload["report_index_summary"]["availability"] == "MISSING"
+    assert payload["documentation_contract_summary"]["availability"] == "MISSING"
+    assert payload["task_cadence_calendar"]["availability"] == "MISSING"
     assert payload["source_inputs"]["daily_report"]["availability"] == "MISSING"
     assert "daily_report_missing" in ";".join(payload["warnings"])
 
@@ -99,7 +110,7 @@ def test_reports_reader_brief_cli_writes_html_and_json(tmp_path: Path) -> None:
         [
             "reports",
             "reader-brief",
-            "--as-of",
+            "--date",
             "2026-05-04",
             "--reports-dir",
             str(tmp_path),
@@ -123,6 +134,8 @@ def test_reports_reader_brief_cli_writes_html_and_json(tmp_path: Path) -> None:
             str(inputs["research_governance_summary"]),
             "--report-index-path",
             str(inputs["report_index"]),
+            "--documentation-contract-path",
+            str(inputs["documentation_contract"]),
             "--output-path",
             str(html_path),
             "--json-output-path",
@@ -139,10 +152,14 @@ def test_reports_reader_brief_cli_writes_html_and_json(tmp_path: Path) -> None:
     assert json_path.exists()
     html = html_path.read_text(encoding="utf-8")
     assert "Reader Brief" in html
-    assert "核心结论" in html
-    assert "Score-to-Position Funnel" in html
+    assert "Executive Summary" in html
+    assert "Core Decision" in html
+    assert "Score &amp; Decision Funnel" in html
     assert "Score Change Attribution" in html
     assert "Report Index Freshness" in html
+    assert "Task Cadence Calendar" in html
+    assert "Report Navigation" in html
+    assert "<details" in html
     assert "不是实盘交易指令" in html
     payload = json.loads(json_path.read_text(encoding="utf-8"))
     assert payload["production_effect"] == "none"
@@ -343,16 +360,49 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                     {
                         "report_id": "daily_score",
                         "title": "Daily Score",
+                        "cadence": "daily",
+                        "owner": "system",
                         "freshness_status": "FRESH",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(daily_report_path),
+                        "exists": True,
                         "owner_action": "none",
+                        "production_effect": "none",
                     },
                     {
                         "report_id": "data_quality",
                         "title": "Data Quality",
+                        "cadence": "daily",
+                        "owner": "system",
                         "freshness_status": "MISSING",
+                        "artifact_date": "",
+                        "latest_artifact_path": "",
+                        "exists": False,
                         "owner_action": "run_validate_data",
+                        "production_effect": "none",
+                        "required_for_daily_reading": True,
                     },
                 ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    documentation_contract_path = tmp_path / "documentation_contract_2026-05-04.json"
+    documentation_contract_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "documentation_contract",
+                "as_of": "2026-05-04",
+                "status": "PASS",
+                "production_effect": "none",
+                "summary": {
+                    "report_count": 3,
+                    "error_count": 0,
+                    "warning_count": 0,
+                },
+                "issues": [],
             },
             ensure_ascii=False,
         ),
@@ -373,6 +423,7 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
         "score_change_attribution": score_change_path,
         "research_governance_summary": research_governance_path,
         "report_index": report_index_path,
+        "documentation_contract": documentation_contract_path,
     }
 
 

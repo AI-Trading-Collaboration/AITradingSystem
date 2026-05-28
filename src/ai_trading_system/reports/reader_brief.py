@@ -34,6 +34,7 @@ def build_reader_brief_payload(
     score_change_attribution_path: Path | None = None,
     research_governance_summary_path: Path | None = None,
     report_index_path: Path | None = None,
+    documentation_contract_path: Path | None = None,
 ) -> dict[str, Any]:
     snapshot = _read_required_json(decision_snapshot_path, "decision_snapshot")
     calculation_explainers = _read_optional_json(calculation_explainers_path)
@@ -43,6 +44,7 @@ def build_reader_brief_payload(
     score_change_attribution = _read_optional_json(score_change_attribution_path)
     research_governance_summary = _read_optional_json(research_governance_summary_path)
     report_index = _read_optional_json(report_index_path)
+    documentation_contract = _read_optional_json(documentation_contract_path)
     warnings = _input_warnings(
         {
             "calculation_explainers": calculation_explainers_path,
@@ -54,6 +56,7 @@ def build_reader_brief_payload(
             "score_change_attribution": score_change_attribution_path,
             "research_governance_summary": research_governance_summary_path,
             "report_index": report_index_path,
+            "documentation_contract": documentation_contract_path,
         }
     )
     source_inputs = {
@@ -104,8 +107,39 @@ def build_reader_brief_payload(
             report_index_path,
             report_index_path is not None and report_index_path.exists(),
         ),
+        "documentation_contract": _source_input(
+            "documentation_contract",
+            documentation_contract_path,
+            documentation_contract_path is not None and documentation_contract_path.exists(),
+        ),
     }
 
+    run_context = _run_context(
+        as_of=as_of,
+        snapshot=snapshot,
+        daily_decision_summary=daily_decision_summary,
+        daily_task_dashboard=daily_task_dashboard,
+    )
+    score_change_summary = _score_change_attribution_summary(score_change_attribution)
+    report_index_summary = _report_index_summary(report_index)
+    governance_summary = _backtest_shadow_governance(
+        daily_decision_summary=daily_decision_summary,
+        daily_task_dashboard=daily_task_dashboard,
+        research_governance_summary=research_governance_summary,
+    )
+    manual_review_queue = _manual_review_queue(
+        snapshot=snapshot,
+        daily_decision_summary=daily_decision_summary,
+        report_index=report_index,
+        research_governance_summary=research_governance_summary,
+        documentation_contract=documentation_contract,
+    )
+    task_cadence_calendar = _task_cadence_calendar(report_index)
+    report_navigation = _report_navigation(
+        reports_dir=reports_dir,
+        source_inputs=source_inputs,
+        report_index=report_index,
+    )
     payload = {
         "schema_version": SCHEMA_VERSION,
         "report_type": REPORT_TYPE,
@@ -116,12 +150,7 @@ def build_reader_brief_payload(
         "reader_entry_role": "daily_reading_home",
         "source_inputs": source_inputs,
         "warnings": warnings,
-        "run_context": _run_context(
-            as_of=as_of,
-            snapshot=snapshot,
-            daily_decision_summary=daily_decision_summary,
-            daily_task_dashboard=daily_task_dashboard,
-        ),
+        "run_context": run_context,
         "executive_decision": _executive_decision(
             snapshot=snapshot,
             daily_decision_summary=daily_decision_summary,
@@ -135,11 +164,14 @@ def build_reader_brief_payload(
         "score_to_position_funnel": _score_to_position_funnel(
             snapshot=snapshot,
             calculation_explainers=calculation_explainers,
+            source_inputs=source_inputs,
         ),
-        "score_change_attribution_summary": _score_change_attribution_summary(
-            score_change_attribution
+        "score_change_attribution_summary": score_change_summary,
+        "report_index_summary": report_index_summary,
+        "task_cadence_calendar": task_cadence_calendar,
+        "documentation_contract_summary": _documentation_contract_summary(
+            documentation_contract,
         ),
-        "report_index_summary": _report_index_summary(report_index),
         "component_score_explainability": _component_score_explainability(
             snapshot=snapshot,
             calculation_explainers=calculation_explainers,
@@ -151,17 +183,25 @@ def build_reader_brief_payload(
         "data_quality_pit_safety": _data_quality_pit_safety(
             snapshot=snapshot,
             daily_decision_summary=daily_decision_summary,
+            report_index_summary=report_index_summary,
         ),
-        "backtest_shadow_governance": _backtest_shadow_governance(
-            daily_decision_summary=daily_decision_summary,
-            daily_task_dashboard=daily_task_dashboard,
-            research_governance_summary=research_governance_summary,
-        ),
-        "manual_review_queue": _manual_review_queue(
-            snapshot=snapshot,
-            daily_decision_summary=daily_decision_summary,
+        "backtest_shadow_governance": governance_summary,
+        "manual_review_queue": manual_review_queue,
+        "executive_summary": _executive_summary(
+            run_context=run_context,
+            decision=_executive_decision(
+                snapshot=snapshot,
+                daily_decision_summary=daily_decision_summary,
+                evidence_dashboard=evidence_dashboard,
+                calculation_explainers=calculation_explainers,
+            ),
+            score_changes=score_change_summary,
+            report_index_summary=report_index_summary,
+            governance_summary=governance_summary,
+            manual_review_queue=manual_review_queue,
         ),
         "appendix_links": _appendix_links(reports_dir, source_inputs),
+        "report_navigation": report_navigation,
     }
     return payload
 
@@ -185,16 +225,20 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     as_of = _text(payload.get("as_of"), "UNKNOWN")
     status = _text(payload.get("status"), "UNKNOWN")
     run_context = _mapping(payload.get("run_context"))
+    executive_summary = _mapping(payload.get("executive_summary"))
     decision = _mapping(payload.get("executive_decision"))
     market = _mapping(payload.get("market_situation_snapshot"))
     funnel = _records(_mapping(payload.get("score_to_position_funnel")).get("steps"))
     score_changes = _mapping(payload.get("score_change_attribution_summary"))
     report_index = _mapping(payload.get("report_index_summary"))
+    cadence_calendar = _mapping(payload.get("task_cadence_calendar"))
+    documentation_contract = _mapping(payload.get("documentation_contract_summary"))
     components = _records(_mapping(payload.get("component_score_explainability")).get("components"))
     gates = _records(_mapping(payload.get("binding_gate_ladder")).get("gates"))
     quality = _mapping(payload.get("data_quality_pit_safety"))
     governance = _mapping(payload.get("backtest_shadow_governance"))
     manual_queue = _records(_mapping(payload.get("manual_review_queue")).get("items"))
+    navigation = _records(payload.get("report_navigation"))
     appendix = _records(payload.get("appendix_links"))
 
     html_parts = [
@@ -211,7 +255,21 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
         f"<header><p>Reader Brief</p><h1>{html.escape(as_of)}</h1>"
         f"<span>Status: {html.escape(status)}</span></header>",
         _section(
-            "运行上下文",
+            "Executive Summary",
+            _definition_table(
+                [
+                    ("market_regime", executive_summary.get("market_regime_summary")),
+                    ("top_model_conclusion", executive_summary.get("top_model_conclusion")),
+                    ("major_score_change", executive_summary.get("major_score_change")),
+                    ("report_freshness", executive_summary.get("report_freshness")),
+                    ("governance_status", executive_summary.get("governance_status")),
+                    ("manual_review_count", executive_summary.get("manual_review_count")),
+                    ("production_effect", executive_summary.get("production_effect")),
+                ]
+            ),
+        ),
+        _section(
+            "Run Context",
             _definition_table(
                 [
                     ("run_id", run_context.get("run_id")),
@@ -222,7 +280,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
             ),
         ),
         _section(
-            "核心结论",
+            "Core Decision",
             _definition_table(
                 [
                     ("执行动作", decision.get("action")),
@@ -243,8 +301,8 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                 ]
             ),
         ),
-        _section("市场状态", _definition_table(list(market.items()))),
-        _section("Score-to-Position Funnel", _records_table(funnel)),
+        _section("Market Situation", _definition_table(list(market.items()))),
+        _section("Score & Decision Funnel", _funnel_details(funnel)),
         _section(
             "Score Change Attribution",
             _definition_table(
@@ -272,11 +330,24 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
             )
             + _records_table(_records(report_index.get("problem_reports"))),
         ),
+        _section(
+            "Task Cadence Calendar",
+            _definition_table(
+                [
+                    ("availability", cadence_calendar.get("availability")),
+                    ("status", cadence_calendar.get("status")),
+                    ("production_effect", cadence_calendar.get("production_effect")),
+                ]
+            )
+            + _cadence_calendar_tables(cadence_calendar),
+        ),
         _section("Component Explainability", _records_table(components)),
         _section("Binding Gate Ladder", _records_table(gates)),
         _section("Data Quality & PIT Safety", _definition_table(list(quality.items()))),
         _section("Backtest / Shadow / Governance", _definition_table(list(governance.items()))),
+        _section("Documentation Contract", _definition_table(list(documentation_contract.items()))),
         _section("Manual Review Queue", _records_table(manual_queue)),
+        _section("Report Navigation", _records_table(navigation)),
         _section("Appendix Links", _records_table(appendix)),
         "</main>",
         "</body>",
@@ -377,6 +448,7 @@ def _score_to_position_funnel(
     *,
     snapshot: Mapping[str, Any],
     calculation_explainers: Mapping[str, Any],
+    source_inputs: Mapping[str, Any],
 ) -> dict[str, Any]:
     metrics = _mapping(calculation_explainers.get("metrics"))
     positions = _mapping(snapshot.get("positions"))
@@ -387,31 +459,42 @@ def _score_to_position_funnel(
             metrics,
             _text(len(_records(scores.get("components")))),
             "decision_snapshot.scores.components",
+            source_inputs,
         ),
-        _funnel_step("overall_score", metrics, _text(scores.get("overall_score")), "scores"),
+        _funnel_step(
+            "overall_score",
+            metrics,
+            _text(scores.get("overall_score")),
+            "scores",
+            source_inputs,
+        ),
         _funnel_step(
             "model_position_band",
             metrics,
             _format_band(_mapping(positions.get("model_risk_asset_ai_band"))),
             "decision_snapshot.positions",
+            source_inputs,
         ),
         _funnel_step(
             "confidence_adjusted_position",
             metrics,
             _format_band(_mapping(positions.get("confidence_adjusted_risk_asset_ai_band"))),
             "decision_snapshot.positions",
+            source_inputs,
         ),
         _funnel_step(
             "position_gate",
             metrics,
             _text(len(_records(positions.get("position_gates")))),
             "decision_snapshot.positions.position_gates",
+            source_inputs,
         ),
         _funnel_step(
             "final_position_band",
             metrics,
             _format_band(_mapping(positions.get("final_risk_asset_ai_band"))),
             "decision_snapshot.positions.final_risk_asset_ai_band",
+            source_inputs,
         ),
     ]
     return {"status": "AVAILABLE", "steps": steps}
@@ -567,6 +650,7 @@ def _data_quality_pit_safety(
     *,
     snapshot: Mapping[str, Any],
     daily_decision_summary: Mapping[str, Any],
+    report_index_summary: Mapping[str, Any],
 ) -> dict[str, Any]:
     quality = _mapping(snapshot.get("quality"))
     data_gate = _mapping(daily_decision_summary.get("data_gate"))
@@ -578,6 +662,8 @@ def _data_quality_pit_safety(
         "feature_status": _text(quality.get("feature_status"), "UNKNOWN"),
         "sec_feature_status": _text(quality.get("sec_feature_status"), "UNKNOWN"),
         "blocking_reasons": _texts(data_gate.get("blocking_reasons")),
+        "stale_report_count": report_index_summary.get("stale_count"),
+        "missing_report_count": report_index_summary.get("missing_count"),
         "production_effect": PRODUCTION_EFFECT,
     }
 
@@ -629,6 +715,9 @@ def _manual_review_queue(
     *,
     snapshot: Mapping[str, Any],
     daily_decision_summary: Mapping[str, Any],
+    report_index: Mapping[str, Any],
+    research_governance_summary: Mapping[str, Any],
+    documentation_contract: Mapping[str, Any],
 ) -> dict[str, Any]:
     items: list[dict[str, Any]] = []
     for item in _records(snapshot.get("manual_review")):
@@ -656,6 +745,46 @@ def _manual_review_queue(
                 "production_impact": "blocks_or_limits_reader_brief",
             }
         )
+    for report in _records(report_index.get("reports")):
+        freshness = _text(report.get("freshness_status"))
+        if freshness in {"MISSING", "STALE"}:
+            items.append(
+                {
+                    "action_id": f"report_freshness:{_text(report.get('report_id'))}",
+                    "severity": (
+                        "critical" if report.get("required_for_daily_reading") else "warning"
+                    ),
+                    "category": "report_freshness",
+                    "reason": f"{_text(report.get('title'), 'report')} freshness={freshness}",
+                    "source_artifact": _text(report.get("latest_artifact_path"), "report_index"),
+                    "production_impact": "reader_visibility_or_required_report_gap",
+                }
+            )
+    research_summary = _mapping(research_governance_summary.get("summary"))
+    manual_count = _int(research_summary.get("manual_review_required_count"))
+    if manual_count:
+        items.append(
+            {
+                "action_id": "research_governance_manual_review",
+                "severity": "warning",
+                "category": "research_governance",
+                "reason": f"{manual_count} research/shadow/governance cards require manual review.",
+                "source_artifact": "research_governance_summary",
+                "production_impact": "manual_review_only",
+            }
+        )
+    for issue in _records(documentation_contract.get("issues")):
+        severity = _text(issue.get("severity"), "WARNING")
+        items.append(
+            {
+                "action_id": f"documentation_contract:{_text(issue.get('report_id'))}",
+                "severity": "critical" if severity == "ERROR" else "warning",
+                "category": "documentation_contract",
+                "reason": f"{_text(issue.get('code'))}: {_text(issue.get('message'))}",
+                "source_artifact": "documentation_contract",
+                "production_impact": "documentation_governance_gap",
+            }
+        )
     return {"status": "EMPTY" if not items else "ACTION_REQUIRED", "items": items}
 
 
@@ -666,20 +795,181 @@ def _appendix_links(reports_dir: Path, source_inputs: Mapping[str, Any]) -> list
         if not path_text:
             continue
         path = Path(path_text)
-        href = path.name
-        try:
-            href = str(path.relative_to(reports_dir))
-        except ValueError:
-            pass
         links.append(
             {
                 "artifact_id": source_id,
                 "path": path_text,
-                "href": href,
+                "href": _relative_href(path, reports_dir),
                 "exists": bool(_mapping(record).get("exists")),
+                "production_effect": PRODUCTION_EFFECT,
             }
         )
     return links
+
+
+def _executive_summary(
+    *,
+    run_context: Mapping[str, Any],
+    decision: Mapping[str, Any],
+    score_changes: Mapping[str, Any],
+    report_index_summary: Mapping[str, Any],
+    governance_summary: Mapping[str, Any],
+    manual_review_queue: Mapping[str, Any],
+) -> dict[str, Any]:
+    return {
+        "market_regime_summary": (
+            f"{_text(run_context.get('market_regime'), 'UNKNOWN')} "
+            f"since {_text(run_context.get('market_regime_start'), 'UNKNOWN')}"
+        ),
+        "top_model_conclusion": (
+            f"{_text(decision.get('action'), 'UNKNOWN')} / "
+            f"{_text(decision.get('final_risk_asset_ai_position'), 'UNKNOWN')}"
+        ),
+        "major_score_change": (
+            f"overall_delta={_text(score_changes.get('overall_score_delta'), 'MISSING')}; "
+            f"position_max_delta={_text(score_changes.get('final_position_max_delta'), 'MISSING')}"
+        ),
+        "report_freshness": (
+            f"missing={_text(report_index_summary.get('missing_count'), '0')}; "
+            f"stale={_text(report_index_summary.get('stale_count'), '0')}; "
+            f"required_missing={_text(report_index_summary.get('required_missing_count'), '0')}"
+        ),
+        "governance_status": _text(governance_summary.get("status"), "UNKNOWN"),
+        "manual_review_count": len(_records(manual_review_queue.get("items"))),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _documentation_contract_summary(payload: Mapping[str, Any]) -> dict[str, Any]:
+    if not payload:
+        return {
+            "availability": "MISSING",
+            "status": "MISSING",
+            "error_count": 0,
+            "warning_count": 0,
+            "production_effect": PRODUCTION_EFFECT,
+            "limitation": (
+                "documentation_contract artifact missing; " "Reader Brief 不补造文档治理结论。"
+            ),
+        }
+    summary = _mapping(payload.get("summary"))
+    return {
+        "availability": "AVAILABLE",
+        "status": _text(payload.get("status"), "UNKNOWN"),
+        "report_count": summary.get("report_count"),
+        "error_count": summary.get("error_count"),
+        "warning_count": summary.get("warning_count"),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "limitation": "Documentation contract 只读检查 registry 与 artifact catalog 覆盖。",
+    }
+
+
+def _task_cadence_calendar(payload: Mapping[str, Any]) -> dict[str, Any]:
+    if not payload:
+        return {
+            "availability": "MISSING",
+            "status": "MISSING",
+            "production_effect": PRODUCTION_EFFECT,
+            "groups": [],
+        }
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for report in _records(payload.get("reports")):
+        cadence = _normalize_cadence(_text(report.get("cadence"), "ad_hoc"))
+        groups.setdefault(cadence, []).append(
+            {
+                "report_id": _text(report.get("report_id")),
+                "title": _text(report.get("title")),
+                "last_run": _text(report.get("artifact_date"), "MISSING"),
+                "status": _text(report.get("freshness_status"), "UNKNOWN"),
+                "artifact_path": _text(report.get("latest_artifact_path"), "MISSING"),
+                "owner": _text(report.get("owner"), "UNKNOWN"),
+                "owner_action": _text(report.get("owner_action"), "UNKNOWN"),
+                "production_effect": _text(report.get("production_effect"), PRODUCTION_EFFECT),
+            }
+        )
+    ordered = [
+        {"cadence": cadence, "reports": groups[cadence]}
+        for cadence in ("daily", "weekly", "bi_weekly", "monthly", "ad_hoc")
+        if cadence in groups
+    ]
+    return {
+        "availability": "AVAILABLE",
+        "status": _text(payload.get("status"), "UNKNOWN"),
+        "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
+        "groups": ordered,
+    }
+
+
+def _report_navigation(
+    *,
+    reports_dir: Path,
+    source_inputs: Mapping[str, Any],
+    report_index: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    links = _appendix_links(reports_dir, source_inputs)
+    for report in _records(report_index.get("reports")):
+        path_text = _text(report.get("latest_artifact_path"))
+        if not path_text:
+            continue
+        path = Path(path_text)
+        links.append(
+            {
+                "artifact_id": _text(report.get("report_id")),
+                "title": _text(report.get("title")),
+                "path": path_text,
+                "href": _relative_href(path, reports_dir),
+                "exists": bool(report.get("exists")),
+                "freshness_status": _text(report.get("freshness_status"), "UNKNOWN"),
+                "production_effect": _text(report.get("production_effect"), PRODUCTION_EFFECT),
+            }
+        )
+    links.append(
+        {
+            "artifact_id": "artifact_catalog",
+            "title": "Artifact Catalog",
+            "path": "docs/artifact_catalog.md",
+            "href": "../../docs/artifact_catalog.md",
+            "exists": True,
+            "freshness_status": "DOCUMENTATION",
+            "production_effect": PRODUCTION_EFFECT,
+        }
+    )
+    return links
+
+
+def _normalize_cadence(value: str) -> str:
+    normalized = value.lower().replace("-", "_").replace(" ", "_")
+    if normalized in {"biweekly", "bi_weekly"}:
+        return "bi_weekly"
+    if normalized in {"ad_hoc", "adhoc", "research", "ad_hoc_research"}:
+        return "ad_hoc"
+    if normalized in {"daily", "weekly", "monthly"}:
+        return normalized
+    return "ad_hoc"
+
+
+def _relative_href(path: Path, reports_dir: Path) -> str:
+    try:
+        return str(path.relative_to(reports_dir))
+    except ValueError:
+        return str(path)
+
+
+def _source_freshness(
+    source_artifacts: list[dict[str, Any]],
+    source_inputs: Mapping[str, Any],
+) -> str:
+    statuses = [
+        _text(item.get("freshness_status"))
+        or _text(item.get("availability"))
+        or _text(item.get("status"))
+        for item in source_artifacts
+        if isinstance(item, Mapping)
+    ]
+    if statuses:
+        return ", ".join(status for status in statuses if status) or "UNKNOWN"
+    snapshot = _mapping(source_inputs.get("decision_snapshot"))
+    return _text(snapshot.get("availability"), "UNKNOWN")
 
 
 def _funnel_step(
@@ -687,15 +977,23 @@ def _funnel_step(
     metrics: Mapping[str, Any],
     fallback_value: str,
     source_field: str,
+    source_inputs: Mapping[str, Any],
 ) -> dict[str, Any]:
     metric = _mapping(metrics.get(metric_id))
+    source_artifacts = _records(metric.get("source_artifacts"))
     return {
         "metric_id": metric_id,
         "label": _text(metric.get("audience_label"), metric_id),
         "current_value": _text(metric.get("value"), fallback_value),
         "formula": _text(metric.get("formula"), "MISSING_EXPLAINER"),
         "source_field": source_field,
+        "source_artifacts": source_artifacts
+        or [
+            _mapping(source_inputs.get("decision_snapshot")),
+        ],
+        "source_freshness": _source_freshness(source_artifacts, source_inputs),
         "pit_policy": _text(metric.get("pit_policy"), "UNKNOWN"),
+        "common_misread": _text(metric.get("common_misread"), "MISSING"),
         "production_effect": PRODUCTION_EFFECT,
     }
 
@@ -855,6 +1153,45 @@ def _records_table(records: list[dict[str, Any]]) -> str:
     )
 
 
+def _funnel_details(records: list[dict[str, Any]]) -> str:
+    if not records:
+        return "<p>无可用 funnel 记录。</p>"
+    parts: list[str] = ['<div class="funnel-list">']
+    for record in records:
+        label = html.escape(_text(record.get("label"), _text(record.get("metric_id"))))
+        value = html.escape(_text(record.get("current_value"), "UNKNOWN"))
+        detail_rows = [
+            ("metric_id", record.get("metric_id")),
+            ("formula", record.get("formula")),
+            ("source_field", record.get("source_field")),
+            ("source_freshness", record.get("source_freshness")),
+            ("pit_policy", record.get("pit_policy")),
+            ("common_misread", record.get("common_misread")),
+            ("production_effect", record.get("production_effect")),
+            ("source_artifacts", record.get("source_artifacts")),
+        ]
+        parts.append(
+            '<details class="funnel-step">'
+            f"<summary><strong>{label}</strong><span>{value}</span></summary>"
+            + _definition_table(detail_rows)
+            + "</details>"
+        )
+    parts.append("</div>")
+    return "\n".join(parts)
+
+
+def _cadence_calendar_tables(calendar: Mapping[str, Any]) -> str:
+    groups = _records(calendar.get("groups"))
+    if not groups:
+        return "<p>无 cadence 记录。</p>"
+    parts: list[str] = []
+    for group in groups:
+        cadence = html.escape(_text(group.get("cadence"), "unknown"))
+        parts.append(f"<h3>{cadence}</h3>")
+        parts.append(_records_table(_records(group.get("reports"))))
+    return "\n".join(parts)
+
+
 def _css() -> str:
     return """
 :root {
@@ -895,6 +1232,22 @@ section {
   border-radius: 6px;
   margin: 14px 0;
   padding: 16px;
+}
+details.funnel-step {
+  border-top: 1px solid #e7ebf0;
+  padding: 10px 0;
+}
+details.funnel-step summary {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  list-style-position: inside;
+}
+h3 {
+  margin: 14px 0 6px;
+  font-size: 15px;
+  letter-spacing: 0;
 }
 table {
   width: 100%;

@@ -233,6 +233,7 @@ from ai_trading_system.decision_snapshots import (
     default_decision_snapshot_path,
     write_decision_snapshot,
 )
+from ai_trading_system.documentation_contract import default_documentation_contract_json_path
 from ai_trading_system.evidence_dashboard import (
     build_evidence_dashboard_report,
     default_evidence_dashboard_json_path,
@@ -6063,8 +6064,12 @@ def calculation_explainers_command(
 def reader_brief_command(
     as_of: Annotated[
         str | None,
-        typer.Option(help="Reader Brief 日期，格式为 YYYY-MM-DD，默认今天。"),
+        typer.Option("--as-of", "--date", help="Reader Brief 日期，格式为 YYYY-MM-DD，默认今天。"),
     ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用默认 decision snapshot 目录中的最新 signal-date snapshot。"),
+    ] = False,
     reports_dir: Annotated[
         Path,
         typer.Option(help="同日报告 artifact 所在目录。"),
@@ -6113,6 +6118,10 @@ def reader_brief_command(
         Path | None,
         typer.Option(help="report_index JSON 路径；不传时按 as_of 使用默认报告路径。"),
     ] = None,
+    documentation_contract_path: Annotated[
+        Path | None,
+        typer.Option(help="documentation_contract JSON 路径；不传时按 as_of 使用默认报告路径。"),
+    ] = None,
     output_path: Annotated[
         Path | None,
         typer.Option(help="Reader Brief HTML 输出路径。"),
@@ -6123,11 +6132,19 @@ def reader_brief_command(
     ] = None,
 ) -> None:
     """生成只读统一读者入口 HTML/JSON。"""
-    report_date = _parse_date(as_of) if as_of else date.today()
-    snapshot_path = decision_snapshot_path or default_decision_snapshot_path(
-        DEFAULT_DECISION_SNAPSHOT_DIR,
-        report_date,
-    )
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if latest:
+        snapshot_path = decision_snapshot_path or _latest_decision_snapshot_path(
+            DEFAULT_DECISION_SNAPSHOT_DIR
+        )
+        report_date = _decision_snapshot_date(snapshot_path)
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        snapshot_path = decision_snapshot_path or default_decision_snapshot_path(
+            DEFAULT_DECISION_SNAPSHOT_DIR,
+            report_date,
+        )
     calc_path = calculation_explainers_path or default_calculation_explainers_path(
         reports_dir,
         report_date,
@@ -6157,6 +6174,10 @@ def reader_brief_command(
         or default_research_governance_summary_json_path(reports_dir, report_date)
     )
     index_path = report_index_path or default_report_index_json_path(reports_dir, report_date)
+    docs_contract_path = documentation_contract_path or default_documentation_contract_json_path(
+        reports_dir,
+        report_date,
+    )
     html_output = output_path or default_reader_brief_html_path(reports_dir, report_date)
     json_output = json_output_path or default_reader_brief_json_path(reports_dir, report_date)
     try:
@@ -6173,6 +6194,7 @@ def reader_brief_command(
             score_change_attribution_path=score_change_path,
             research_governance_summary_path=research_governance_path,
             report_index_path=index_path,
+            documentation_contract_path=docs_contract_path,
         )
     except FileNotFoundError as exc:
         raise typer.BadParameter(str(exc)) from exc
@@ -13108,6 +13130,37 @@ def _parse_date(value: str) -> date:
         return date.fromisoformat(value)
     except ValueError as exc:
         raise typer.BadParameter("日期必须使用 YYYY-MM-DD 格式。") from exc
+
+
+def _latest_decision_snapshot_path(snapshot_dir: Path) -> Path:
+    candidates: list[tuple[date, Path]] = []
+    for path in snapshot_dir.glob("decision_snapshot_*.json"):
+        if not path.is_file():
+            continue
+        try:
+            candidates.append((_decision_snapshot_date(path), path))
+        except typer.BadParameter:
+            continue
+    if not candidates:
+        raise typer.BadParameter(f"未找到可用 decision_snapshot：{snapshot_dir}")
+    return max(candidates, key=lambda item: (item[0], item[1].name))[1]
+
+
+def _decision_snapshot_date(path: Path) -> date:
+    raw_date = path.stem.removeprefix("decision_snapshot_")
+    try:
+        return date.fromisoformat(raw_date)
+    except ValueError:
+        pass
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise typer.BadParameter(f"无法读取 decision_snapshot 日期：{path}") from exc
+    if isinstance(payload, dict):
+        signal_date = payload.get("signal_date") or payload.get("as_of")
+        if signal_date:
+            return _parse_date(str(signal_date))
+    raise typer.BadParameter(f"decision_snapshot 文件名或内容缺少 YYYY-MM-DD 日期：{path}")
 
 
 def _parse_datetime(value: str) -> datetime:

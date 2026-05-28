@@ -151,3 +151,20 @@ def test_cli_direct_dispatches_report_index(monkeypatch) -> None:
 
     assert exit_code == 0
     assert captured == {"as_of": "2026-05-13"}
+
+
+def test_cli_direct_dispatches_reader_brief_date_and_latest(monkeypatch) -> None:
+    calls: list[dict[str, object]] = []
+
+    def fake_reader_brief(**kwargs: object) -> None:
+        calls.append(kwargs)
+
+    monkeypatch.setattr(cli_direct.cli, "reader_brief_command", fake_reader_brief)
+
+    assert cli_direct.main(["reports", "reader-brief", "--date", "2026-05-13"]) == 0
+    assert cli_direct.main(["reports", "reader-brief", "--latest"]) == 0
+
+    assert calls == [
+        {"as_of": "2026-05-13", "latest": False},
+        {"as_of": None, "latest": True},
+    ]

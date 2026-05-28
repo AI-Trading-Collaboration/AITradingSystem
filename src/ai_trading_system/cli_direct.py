@@ -95,7 +95,10 @@ def _dispatch(args: list[str]) -> None:
         cli.calculation_explainers_command(as_of=_option(args, "--as-of"))
         return
     if args[:2] == ["reports", "reader-brief"]:
-        cli.reader_brief_command(as_of=_option(args, "--as-of"))
+        cli.reader_brief_command(
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            latest=_flag(args, "--latest"),
+        )
         return
     if args[:2] == ["reports", "score-change-attribution"]:
         cli.score_change_attribution_command(as_of=_option(args, "--as-of"))
