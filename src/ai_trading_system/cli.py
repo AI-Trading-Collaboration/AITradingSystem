@@ -527,10 +527,15 @@ from ai_trading_system.reports.calculation_explainers import (
 from ai_trading_system.reports.daily import render_recommendation_markdown
 from ai_trading_system.reports.reader_brief import (
     build_reader_brief_payload,
+    build_reader_brief_quality_payload,
     default_reader_brief_html_path,
     default_reader_brief_json_path,
+    default_reader_brief_quality_json_path,
+    default_reader_brief_quality_markdown_path,
     write_reader_brief_html,
     write_reader_brief_json,
+    write_reader_brief_quality_json,
+    write_reader_brief_quality_markdown,
 )
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
@@ -6210,6 +6215,88 @@ def reader_brief_command(
         f"warnings：{len(payload['warnings'])}；"
         f"production_effect={payload['production_effect']}；"
         "不生成交易指令"
+    )
+
+
+@reports_app.command("validate-reader-brief")
+def validate_reader_brief_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Reader Brief 质量校验日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option(
+            help="使用默认 decision snapshot 目录中的最新 signal-date，并校验对应 Reader Brief。"
+        ),
+    ] = False,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="Reader Brief artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    reader_brief_json_path: Annotated[
+        Path | None,
+        typer.Option(help="Reader Brief JSON 路径；不传时按日期使用默认路径。"),
+    ] = None,
+    reader_brief_html_path: Annotated[
+        Path | None,
+        typer.Option(help="Reader Brief HTML 路径；不传时按日期使用默认路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Reader Brief quality JSON 输出路径。"),
+    ] = None,
+    markdown_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Reader Brief quality Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验既有 Reader Brief，并生成只读 quality report。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if latest:
+        snapshot_path = _latest_decision_snapshot_path(DEFAULT_DECISION_SNAPSHOT_DIR)
+        report_date = _decision_snapshot_date(snapshot_path)
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+    source_json = reader_brief_json_path or default_reader_brief_json_path(
+        reports_dir,
+        report_date,
+    )
+    source_html = reader_brief_html_path or default_reader_brief_html_path(
+        reports_dir,
+        report_date,
+    )
+    if not source_json.exists():
+        raise typer.BadParameter(f"Reader Brief JSON not found: {source_json}")
+    raw = json.loads(source_json.read_text(encoding="utf-8"))
+    if not isinstance(raw, dict):
+        raise typer.BadParameter(f"Reader Brief JSON must be an object: {source_json}")
+    payload = build_reader_brief_quality_payload(
+        reader_brief_payload=raw,
+        reader_brief_json_path=source_json,
+        reader_brief_html_path=source_html,
+    )
+    quality_json = json_output_path or default_reader_brief_quality_json_path(
+        reports_dir,
+        report_date,
+    )
+    quality_md = markdown_output_path or default_reader_brief_quality_markdown_path(
+        reports_dir,
+        report_date,
+    )
+    json_path = write_reader_brief_quality_json(payload, quality_json)
+    md_path = write_reader_brief_quality_markdown(payload, quality_md)
+    style = "green" if payload["status"] == "OK" else "yellow"
+    console.print(f"[{style}]Reader Brief quality：{payload['status']}[/{style}]")
+    console.print(f"Reader Brief quality JSON：{json_path}")
+    console.print(f"Reader Brief quality Markdown：{md_path}")
+    console.print(
+        f"checks：{payload['summary']['check_count']}；"
+        f"failed：{payload['summary']['failed_check_count']}；"
+        f"production_effect={payload['production_effect']}；只读校验"
     )
 
 

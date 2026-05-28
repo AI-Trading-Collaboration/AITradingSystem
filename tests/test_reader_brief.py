@@ -11,7 +11,10 @@ from ai_trading_system.reports.calculation_explainers import (
     build_calculation_explainers_payload,
     write_calculation_explainers_json,
 )
-from ai_trading_system.reports.reader_brief import build_reader_brief_payload
+from ai_trading_system.reports.reader_brief import (
+    build_reader_brief_payload,
+    build_reader_brief_quality_payload,
+)
 
 
 def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -> None:
@@ -33,9 +36,11 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
         documentation_contract_path=inputs["documentation_contract"],
     )
 
-    assert payload["status"] == "PASS"
+    assert payload["status"] == "LIMITED_READER_CONTEXT"
     assert payload["production_effect"] == "none"
     assert payload["reader_entry_role"] == "daily_reading_home"
+    assert payload["narrative_executive_summary"]["today_conclusion"]
+    assert payload["narrative_executive_summary"]["production_effect_statement"]
     assert payload["executive_summary"]["manual_review_count"] >= 1
     assert payload["run_context"]["market_regime"] == "ai_after_chatgpt"
     assert payload["executive_decision"]["action"] == "观察"
@@ -49,6 +54,9 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     assert payload["report_index_summary"]["missing_count"] == 1
     assert payload["report_index_summary"]["problem_reports"][0]["report_id"] == "data_quality"
     assert payload["task_cadence_calendar"]["groups"][0]["cadence"] == "daily"
+    impact = payload["missing_limited_artifact_impact"]
+    assert any(item["impact_level"] == "BLOCKING" for item in impact["items"])
+    assert "trend" in payload["contribution_summary"]["top_positive_contributors"]
     assert payload["documentation_contract_summary"]["status"] == "PASS"
     trend = payload["component_score_explainability"]["components"][0]
     assert trend["component"] == "trend"
@@ -62,12 +70,17 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     assert payload["backtest_shadow_governance"]["source"] == "research_governance_summary"
     assert payload["backtest_shadow_governance"]["candidate_research_count"] == 3
     assert payload["manual_review_queue"]["status"] == "ACTION_REQUIRED"
+    assert payload["manual_review_queue"]["groups"][0]["label"] == "Critical / Must Review Today"
+    assert all(
+        "recommended_next_action" in item for item in payload["manual_review_queue"]["items"]
+    )
     assert any(
         item["category"] == "report_freshness" for item in payload["manual_review_queue"]["items"]
     )
     assert any(item["artifact_id"] == "daily_report" for item in payload["appendix_links"])
     assert any(item["artifact_id"] == "trace_bundle" for item in payload["appendix_links"])
     assert any(item["artifact_id"] == "artifact_catalog" for item in payload["report_navigation"])
+    assert payload["report_navigation_groups"]["groups"][0]["purpose"] == "Core decision artifacts"
 
 
 def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: Path) -> None:
@@ -89,15 +102,20 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
         documentation_contract_path=tmp_path / "missing_documentation_contract.json",
     )
 
-    assert payload["status"] == "PASS_WITH_WARNINGS"
+    assert payload["status"] == "LIMITED_READER_CONTEXT"
     assert payload["executive_decision"]["binding_gate_id"] == "valuation"
     assert payload["component_score_explainability"]["status"] == "AVAILABLE"
     assert payload["backtest_shadow_governance"]["availability"] == "LIMITED"
     assert payload["report_index_summary"]["availability"] == "MISSING"
     assert payload["documentation_contract_summary"]["availability"] == "MISSING"
-    assert payload["task_cadence_calendar"]["availability"] == "MISSING"
+    assert payload["task_cadence_calendar"]["availability"] == "REGISTRY_FALLBACK"
+    assert payload["task_cadence_calendar"]["source"] == "registry_fallback"
     assert payload["source_inputs"]["daily_report"]["availability"] == "MISSING"
     assert "daily_report_missing" in ";".join(payload["warnings"])
+    assert any(
+        item["artifact_id"] == "task_cadence_calendar" and item["impact_level"] == "IMPORTANT"
+        for item in payload["missing_limited_artifact_impact"]["items"]
+    )
 
 
 def test_reports_reader_brief_cli_writes_html_and_json(tmp_path: Path) -> None:
@@ -146,24 +164,137 @@ def test_reports_reader_brief_cli_writes_html_and_json(tmp_path: Path) -> None:
     )
 
     assert result.exit_code == 0, result.output
-    assert "Reader Brief：PASS" in result.output
+    assert "Reader Brief：LIMITED_READER_CONTEXT" in result.output
     assert "不生成交易指令" in result.output
     assert html_path.exists()
     assert json_path.exists()
     html = html_path.read_text(encoding="utf-8")
     assert "Reader Brief" in html
     assert "Executive Summary" in html
+    assert "今日结论" in html
+    assert "Missing / Limited Artifact Impact" in html
     assert "Core Decision" in html
     assert "Score &amp; Decision Funnel" in html
     assert "Score Change Attribution" in html
     assert "Report Index Freshness" in html
     assert "Task Cadence Calendar" in html
     assert "Report Navigation" in html
+    assert "Critical / Must Review Today" in html
+    assert "Contribution Summary" in html
     assert "<details" in html
     assert "不是实盘交易指令" in html
     payload = json.loads(json_path.read_text(encoding="utf-8"))
     assert payload["production_effect"] == "none"
     assert payload["executive_decision"]["not_trade_instruction"] is True
+
+
+def test_reader_brief_quality_payload_summarizes_reader_ux_checks(tmp_path: Path) -> None:
+    inputs = _write_reader_brief_inputs(tmp_path)
+    payload = build_reader_brief_payload(
+        as_of=date(2026, 5, 4),
+        reports_dir=tmp_path,
+        decision_snapshot_path=inputs["snapshot"],
+        calculation_explainers_path=inputs["calculation_explainers"],
+        daily_decision_summary_path=inputs["daily_decision_summary"],
+        evidence_dashboard_json_path=inputs["evidence_dashboard"],
+        daily_task_dashboard_json_path=inputs["daily_task_dashboard"],
+        daily_report_path=inputs["daily_report"],
+        trace_bundle_path=inputs["trace_bundle"],
+        score_change_attribution_path=inputs["score_change_attribution"],
+        research_governance_summary_path=inputs["research_governance_summary"],
+        report_index_path=inputs["report_index"],
+        documentation_contract_path=inputs["documentation_contract"],
+    )
+
+    quality = build_reader_brief_quality_payload(
+        reader_brief_payload=payload,
+        reader_brief_json_path=tmp_path / "reader_brief_2026-05-04.json",
+        reader_brief_html_path=tmp_path / "reader_brief_2026-05-04.html",
+    )
+
+    assert quality["report_type"] == "reader_brief_quality"
+    assert quality["status"] == "LIMITED_READER_CONTEXT"
+    assert quality["production_effect"] == "none"
+    assert quality["summary"]["check_count"] >= 7
+    assert quality["summary"]["failed_check_count"] == 0
+    assert any(check["check_id"] == "grouped_report_navigation" for check in quality["checks"])
+
+
+def test_reports_validate_reader_brief_cli_writes_quality_outputs(tmp_path: Path) -> None:
+    inputs = _write_reader_brief_inputs(tmp_path)
+    reader_json = tmp_path / "reader_brief_2026-05-04.json"
+    reader_html = tmp_path / "reader_brief_2026-05-04.html"
+    result = CliRunner().invoke(
+        app,
+        [
+            "reports",
+            "reader-brief",
+            "--date",
+            "2026-05-04",
+            "--reports-dir",
+            str(tmp_path),
+            "--decision-snapshot-path",
+            str(inputs["snapshot"]),
+            "--calculation-explainers-path",
+            str(inputs["calculation_explainers"]),
+            "--daily-decision-summary-path",
+            str(inputs["daily_decision_summary"]),
+            "--evidence-dashboard-json-path",
+            str(inputs["evidence_dashboard"]),
+            "--daily-task-dashboard-json-path",
+            str(inputs["daily_task_dashboard"]),
+            "--daily-report-path",
+            str(inputs["daily_report"]),
+            "--trace-bundle-path",
+            str(inputs["trace_bundle"]),
+            "--score-change-attribution-path",
+            str(inputs["score_change_attribution"]),
+            "--research-governance-summary-path",
+            str(inputs["research_governance_summary"]),
+            "--report-index-path",
+            str(inputs["report_index"]),
+            "--documentation-contract-path",
+            str(inputs["documentation_contract"]),
+            "--output-path",
+            str(reader_html),
+            "--json-output-path",
+            str(reader_json),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+    assert result.exit_code == 0, result.output
+
+    quality_json = tmp_path / "reader_brief_quality_2026-05-04.json"
+    quality_md = tmp_path / "reader_brief_quality_2026-05-04.md"
+    quality_result = CliRunner().invoke(
+        app,
+        [
+            "reports",
+            "validate-reader-brief",
+            "--date",
+            "2026-05-04",
+            "--reports-dir",
+            str(tmp_path),
+            "--reader-brief-json-path",
+            str(reader_json),
+            "--reader-brief-html-path",
+            str(reader_html),
+            "--json-output-path",
+            str(quality_json),
+            "--markdown-output-path",
+            str(quality_md),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert quality_result.exit_code == 0, quality_result.output
+    assert "Reader Brief quality：LIMITED_READER_CONTEXT" in quality_result.output
+    assert quality_json.exists()
+    assert quality_md.exists()
+    quality_payload = json.loads(quality_json.read_text(encoding="utf-8"))
+    assert quality_payload["report_type"] == "reader_brief_quality"
 
 
 def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:

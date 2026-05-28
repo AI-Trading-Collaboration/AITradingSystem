@@ -160,6 +160,22 @@ reports:
     include_in_reader_brief: false
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: reader_brief_quality
+    title: Reader Brief Quality
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits reports validate-reader-brief --date YYYY-MM-DD
+    artifact_globs:
+      - outputs/reports/reader_brief_quality_*.json
+      - outputs/reports/reader_brief_quality_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Reader Brief quality should be checked against the current daily reading home.
+    owner_action: run_validate_reader_brief_after_reader_brief_generation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: documentation_contract
     title: Documentation Contract
     group: docs

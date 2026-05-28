@@ -7,9 +7,15 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.reports.report_index import (
+    DEFAULT_REPORT_REGISTRY_PATH,
+    load_report_registry,
+)
+
 SCHEMA_VERSION = 1
 REPORT_TYPE = "reader_brief"
 PRODUCTION_EFFECT = "none"
+QUALITY_REPORT_TYPE = "reader_brief_quality"
 
 
 def default_reader_brief_json_path(output_dir: Path, as_of: date) -> Path:
@@ -18,6 +24,14 @@ def default_reader_brief_json_path(output_dir: Path, as_of: date) -> Path:
 
 def default_reader_brief_html_path(output_dir: Path, as_of: date) -> Path:
     return output_dir / f"reader_brief_{as_of.isoformat()}.html"
+
+
+def default_reader_brief_quality_json_path(output_dir: Path, as_of: date) -> Path:
+    return output_dir / f"reader_brief_quality_{as_of.isoformat()}.json"
+
+
+def default_reader_brief_quality_markdown_path(output_dir: Path, as_of: date) -> Path:
+    return output_dir / f"reader_brief_quality_{as_of.isoformat()}.md"
 
 
 def build_reader_brief_payload(
@@ -35,6 +49,7 @@ def build_reader_brief_payload(
     research_governance_summary_path: Path | None = None,
     report_index_path: Path | None = None,
     documentation_contract_path: Path | None = None,
+    report_registry_path: Path = DEFAULT_REPORT_REGISTRY_PATH,
 ) -> dict[str, Any]:
     snapshot = _read_required_json(decision_snapshot_path, "decision_snapshot")
     calculation_explainers = _read_optional_json(calculation_explainers_path)
@@ -120,6 +135,12 @@ def build_reader_brief_payload(
         daily_decision_summary=daily_decision_summary,
         daily_task_dashboard=daily_task_dashboard,
     )
+    executive_decision = _executive_decision(
+        snapshot=snapshot,
+        daily_decision_summary=daily_decision_summary,
+        evidence_dashboard=evidence_dashboard,
+        calculation_explainers=calculation_explainers,
+    )
     score_change_summary = _score_change_attribution_summary(score_change_attribution)
     report_index_summary = _report_index_summary(report_index)
     governance_summary = _backtest_shadow_governance(
@@ -134,29 +155,61 @@ def build_reader_brief_payload(
         research_governance_summary=research_governance_summary,
         documentation_contract=documentation_contract,
     )
-    task_cadence_calendar = _task_cadence_calendar(report_index)
+    component_explainability = _component_score_explainability(
+        snapshot=snapshot,
+        calculation_explainers=calculation_explainers,
+    )
+    gate_ladder = _binding_gate_ladder(
+        snapshot=snapshot,
+        calculation_explainers=calculation_explainers,
+    )
+    task_cadence_calendar = _task_cadence_calendar(
+        report_index,
+        report_registry_path=report_registry_path,
+    )
+    missing_artifact_impact = _missing_artifact_impact(
+        source_inputs=source_inputs,
+        report_index_summary=report_index_summary,
+        task_cadence_calendar=task_cadence_calendar,
+    )
+    contribution_summary = _contribution_summary(
+        component_explainability=component_explainability,
+        gate_ladder=gate_ladder,
+        decision=executive_decision,
+    )
     report_navigation = _report_navigation(
         reports_dir=reports_dir,
         source_inputs=source_inputs,
         report_index=report_index,
+        missing_artifact_impact=missing_artifact_impact,
+    )
+    report_navigation_groups = _report_navigation_groups(report_navigation)
+    narrative_summary = _narrative_executive_summary(
+        run_context=run_context,
+        decision=executive_decision,
+        score_changes=score_change_summary,
+        contribution_summary=contribution_summary,
+        manual_review_queue=manual_review_queue,
+        missing_artifact_impact=missing_artifact_impact,
+    )
+    quality_status = _reader_brief_status(
+        warnings=warnings,
+        missing_artifact_impact=missing_artifact_impact,
+        decision=executive_decision,
     )
     payload = {
         "schema_version": SCHEMA_VERSION,
         "report_type": REPORT_TYPE,
         "as_of": as_of.isoformat(),
         "generated_at": datetime.now(tz=UTC).isoformat(),
-        "status": "PASS_WITH_WARNINGS" if warnings else "PASS",
+        "status": quality_status,
         "production_effect": PRODUCTION_EFFECT,
         "reader_entry_role": "daily_reading_home",
         "source_inputs": source_inputs,
         "warnings": warnings,
         "run_context": run_context,
-        "executive_decision": _executive_decision(
-            snapshot=snapshot,
-            daily_decision_summary=daily_decision_summary,
-            evidence_dashboard=evidence_dashboard,
-            calculation_explainers=calculation_explainers,
-        ),
+        "narrative_executive_summary": narrative_summary,
+        "executive_decision": executive_decision,
         "market_situation_snapshot": _market_situation_snapshot(
             evidence_dashboard=evidence_dashboard,
             snapshot=snapshot,
@@ -168,18 +221,14 @@ def build_reader_brief_payload(
         ),
         "score_change_attribution_summary": score_change_summary,
         "report_index_summary": report_index_summary,
+        "missing_limited_artifact_impact": missing_artifact_impact,
         "task_cadence_calendar": task_cadence_calendar,
         "documentation_contract_summary": _documentation_contract_summary(
             documentation_contract,
         ),
-        "component_score_explainability": _component_score_explainability(
-            snapshot=snapshot,
-            calculation_explainers=calculation_explainers,
-        ),
-        "binding_gate_ladder": _binding_gate_ladder(
-            snapshot=snapshot,
-            calculation_explainers=calculation_explainers,
-        ),
+        "contribution_summary": contribution_summary,
+        "component_score_explainability": component_explainability,
+        "binding_gate_ladder": gate_ladder,
         "data_quality_pit_safety": _data_quality_pit_safety(
             snapshot=snapshot,
             daily_decision_summary=daily_decision_summary,
@@ -189,12 +238,7 @@ def build_reader_brief_payload(
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
-            decision=_executive_decision(
-                snapshot=snapshot,
-                daily_decision_summary=daily_decision_summary,
-                evidence_dashboard=evidence_dashboard,
-                calculation_explainers=calculation_explainers,
-            ),
+            decision=executive_decision,
             score_changes=score_change_summary,
             report_index_summary=report_index_summary,
             governance_summary=governance_summary,
@@ -202,6 +246,7 @@ def build_reader_brief_payload(
         ),
         "appendix_links": _appendix_links(reports_dir, source_inputs),
         "report_navigation": report_navigation,
+        "report_navigation_groups": report_navigation_groups,
     }
     return payload
 
@@ -221,24 +266,195 @@ def write_reader_brief_html(payload: Mapping[str, Any], output_path: Path) -> Pa
     return output_path
 
 
+def build_reader_brief_quality_payload(
+    *,
+    reader_brief_payload: Mapping[str, Any],
+    reader_brief_json_path: Path | None = None,
+    reader_brief_html_path: Path | None = None,
+) -> dict[str, Any]:
+    missing_impact = _mapping(reader_brief_payload.get("missing_limited_artifact_impact"))
+    manual_queue = _mapping(reader_brief_payload.get("manual_review_queue"))
+    checks = [
+        _quality_check(
+            "narrative_executive_summary",
+            bool(_mapping(reader_brief_payload.get("narrative_executive_summary"))),
+            "首屏 narrative summary 存在。",
+        ),
+        _quality_check(
+            "missing_artifact_impact",
+            bool(_records(missing_impact.get("items"))) or missing_impact.get("status") == "OK",
+            "缺失/受限 artifact 影响层存在。",
+        ),
+        _quality_check(
+            "manual_review_groups",
+            bool(_records(manual_queue.get("groups"))),
+            "Manual Review Queue 已按 severity 分组。",
+        ),
+        _quality_check(
+            "contribution_summary",
+            bool(_mapping(reader_brief_payload.get("contribution_summary"))),
+            "Component contribution summary 存在。",
+        ),
+        _quality_check(
+            "market_minimum_panel",
+            bool(
+                _mapping(reader_brief_payload.get("market_situation_snapshot")).get(
+                    "market_price_panel_status"
+                )
+            ),
+            "Market Situation 披露 price panel 状态。",
+        ),
+        _quality_check(
+            "grouped_report_navigation",
+            bool(
+                _records(
+                    _mapping(reader_brief_payload.get("report_navigation_groups")).get("groups")
+                )
+            ),
+            "Report Navigation 已按目的分组。",
+        ),
+        _quality_check(
+            "production_effect_none",
+            _text(reader_brief_payload.get("production_effect")) == PRODUCTION_EFFECT,
+            "Reader Brief production_effect=none。",
+        ),
+    ]
+    failed_checks = [check for check in checks if check["status"] == "FAIL"]
+    blocking = _int(missing_impact.get("blocking_count"))
+    important = _int(missing_impact.get("important_count"))
+    source_status = _text(reader_brief_payload.get("status"), "UNKNOWN")
+    if failed_checks or source_status == "FAILED":
+        quality_status = "FAILED"
+    elif blocking or important or source_status == "LIMITED_READER_CONTEXT":
+        quality_status = "LIMITED_READER_CONTEXT"
+    elif source_status == "PASS_WITH_WARNINGS":
+        quality_status = "PASS_WITH_WARNINGS"
+    else:
+        quality_status = "OK"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": QUALITY_REPORT_TYPE,
+        "as_of": _text(reader_brief_payload.get("as_of"), "UNKNOWN"),
+        "generated_at": datetime.now(tz=UTC).isoformat(),
+        "status": quality_status,
+        "source_reader_brief_status": source_status,
+        "production_effect": PRODUCTION_EFFECT,
+        "source_artifacts": {
+            "reader_brief_json": (
+                "" if reader_brief_json_path is None else str(reader_brief_json_path)
+            ),
+            "reader_brief_html": (
+                "" if reader_brief_html_path is None else str(reader_brief_html_path)
+            ),
+        },
+        "summary": {
+            "check_count": len(checks),
+            "failed_check_count": len(failed_checks),
+            "blocking_artifact_count": blocking,
+            "important_artifact_count": important,
+            "manual_review_count": len(_records(manual_queue.get("items"))),
+        },
+        "checks": checks,
+        "missing_limited_artifact_impact": missing_impact,
+        "manual_review_queue_groups": _records(manual_queue.get("groups")),
+        "methodology": {
+            "mode": "read_existing_reader_brief_only",
+            "does_not_run_upstream_commands": True,
+            "does_not_modify_production": True,
+            "production_effect": PRODUCTION_EFFECT,
+        },
+    }
+
+
+def write_reader_brief_quality_json(payload: Mapping[str, Any], output_path: Path) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True),
+        encoding="utf-8",
+    )
+    return output_path
+
+
+def write_reader_brief_quality_markdown(payload: Mapping[str, Any], output_path: Path) -> Path:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(render_reader_brief_quality_markdown(payload), encoding="utf-8")
+    return output_path
+
+
+def render_reader_brief_quality_markdown(payload: Mapping[str, Any]) -> str:
+    summary = _mapping(payload.get("summary"))
+    lines = [
+        f"# Reader Brief Quality {payload.get('as_of')}",
+        "",
+        f"- 状态：{_text(payload.get('status'), 'UNKNOWN')}",
+        f"- Reader Brief 状态：{_text(payload.get('source_reader_brief_status'), 'UNKNOWN')}",
+        f"- production_effect：{_text(payload.get('production_effect'), PRODUCTION_EFFECT)}",
+        f"- checks：{summary.get('check_count')}，failed：{summary.get('failed_check_count')}",
+        (
+            f"- blocking artifact：{summary.get('blocking_artifact_count')}，"
+            f"important artifact：{summary.get('important_artifact_count')}"
+        ),
+        "",
+        "## Checks",
+        "",
+        "|check_id|status|message|",
+        "|---|---|---|",
+    ]
+    for check in _records(payload.get("checks")):
+        lines.append(
+            f"|{_text(check.get('check_id'))}|{_text(check.get('status'))}|"
+            f"{_text(check.get('message'))}|"
+        )
+    lines.extend(
+        [
+            "",
+            "## Missing / Limited Artifact Impact",
+            "",
+            "|artifact_id|status|impact_level|recommended_action|",
+            "|---|---|---|---|",
+        ]
+    )
+    for item in _records(_mapping(payload.get("missing_limited_artifact_impact")).get("items")):
+        lines.append(
+            f"|{_text(item.get('artifact_id'))}|{_text(item.get('status'))}|"
+            f"{_text(item.get('impact_level'))}|{_text(item.get('recommended_action'))}|"
+        )
+    lines.extend(
+        [
+            "",
+            "## Methodology",
+            "",
+            "本质量报告只读取既有 Reader Brief JSON，不运行上游 scoring、backtest、"
+            "shadow、SEC PIT、weight 或 docs 任务。",
+            "",
+        ]
+    )
+    return "\n".join(lines)
+
+
 def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     as_of = _text(payload.get("as_of"), "UNKNOWN")
     status = _text(payload.get("status"), "UNKNOWN")
     run_context = _mapping(payload.get("run_context"))
+    narrative_summary = _mapping(payload.get("narrative_executive_summary"))
     executive_summary = _mapping(payload.get("executive_summary"))
     decision = _mapping(payload.get("executive_decision"))
     market = _mapping(payload.get("market_situation_snapshot"))
     funnel = _records(_mapping(payload.get("score_to_position_funnel")).get("steps"))
     score_changes = _mapping(payload.get("score_change_attribution_summary"))
     report_index = _mapping(payload.get("report_index_summary"))
+    missing_impact = _mapping(payload.get("missing_limited_artifact_impact"))
     cadence_calendar = _mapping(payload.get("task_cadence_calendar"))
     documentation_contract = _mapping(payload.get("documentation_contract_summary"))
+    contribution_summary = _mapping(payload.get("contribution_summary"))
     components = _records(_mapping(payload.get("component_score_explainability")).get("components"))
     gates = _records(_mapping(payload.get("binding_gate_ladder")).get("gates"))
     quality = _mapping(payload.get("data_quality_pit_safety"))
     governance = _mapping(payload.get("backtest_shadow_governance"))
-    manual_queue = _records(_mapping(payload.get("manual_review_queue")).get("items"))
+    manual_review = _mapping(payload.get("manual_review_queue"))
+    manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
+    navigation_groups = _mapping(payload.get("report_navigation_groups"))
     appendix = _records(payload.get("appendix_links"))
 
     html_parts = [
@@ -256,7 +472,20 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
         f"<span>Status: {html.escape(status)}</span></header>",
         _section(
             "Executive Summary",
-            _definition_table(
+            _narrative_summary_html(narrative_summary)
+            + _definition_table(
+                [
+                    ("today_conclusion", narrative_summary.get("today_conclusion")),
+                    ("why_this_conclusion", narrative_summary.get("why_this_conclusion")),
+                    ("binding_constraint", narrative_summary.get("binding_constraint")),
+                    ("manual_review_summary", narrative_summary.get("manual_review_summary")),
+                    (
+                        "production_effect_statement",
+                        narrative_summary.get("production_effect_statement"),
+                    ),
+                ]
+            )
+            + _definition_table(
                 [
                     ("market_regime", executive_summary.get("market_regime_summary")),
                     ("top_model_conclusion", executive_summary.get("top_model_conclusion")),
@@ -331,23 +560,61 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
             + _records_table(_records(report_index.get("problem_reports"))),
         ),
         _section(
+            "Missing / Limited Artifact Impact",
+            _definition_table(
+                [
+                    ("status", missing_impact.get("status")),
+                    ("blocking_count", missing_impact.get("blocking_count")),
+                    ("important_count", missing_impact.get("important_count")),
+                    ("production_effect", missing_impact.get("production_effect")),
+                ]
+            )
+            + _artifact_impact_table(_records(missing_impact.get("items"))),
+        ),
+        _section(
             "Task Cadence Calendar",
             _definition_table(
                 [
                     ("availability", cadence_calendar.get("availability")),
                     ("status", cadence_calendar.get("status")),
+                    ("source", cadence_calendar.get("source")),
                     ("production_effect", cadence_calendar.get("production_effect")),
                 ]
             )
             + _cadence_calendar_tables(cadence_calendar),
+        ),
+        _section(
+            "Contribution Summary",
+            _definition_table(
+                [
+                    (
+                        "top_positive_contributors",
+                        contribution_summary.get("top_positive_contributors"),
+                    ),
+                    (
+                        "top_negative_or_zero_contributors",
+                        contribution_summary.get("top_negative_or_zero_contributors"),
+                    ),
+                    (
+                        "largest_weighted_contribution",
+                        contribution_summary.get("largest_weighted_contribution"),
+                    ),
+                    ("largest_drag", contribution_summary.get("largest_drag")),
+                    (
+                        "binding_gate_vs_score_explanation",
+                        contribution_summary.get("binding_gate_vs_score_explanation"),
+                    ),
+                    ("production_effect", contribution_summary.get("production_effect")),
+                ]
+            ),
         ),
         _section("Component Explainability", _records_table(components)),
         _section("Binding Gate Ladder", _records_table(gates)),
         _section("Data Quality & PIT Safety", _definition_table(list(quality.items()))),
         _section("Backtest / Shadow / Governance", _definition_table(list(governance.items()))),
         _section("Documentation Contract", _definition_table(list(documentation_contract.items()))),
-        _section("Manual Review Queue", _records_table(manual_queue)),
-        _section("Report Navigation", _records_table(navigation)),
+        _section("Manual Review Queue", _manual_review_groups_html(manual_review, manual_queue)),
+        _section("Report Navigation", _navigation_groups_html(navigation_groups, navigation)),
         _section("Appendix Links", _records_table(appendix)),
         "</main>",
         "</body>",
@@ -431,16 +698,44 @@ def _market_situation_snapshot(
     snapshot: Mapping[str, Any],
 ) -> dict[str, Any]:
     decision = _mapping(evidence_dashboard.get("decision"))
+    dashboard_quality = _mapping(evidence_dashboard.get("quality"))
     quality = _mapping(snapshot.get("quality"))
+    benchmark_proxy = _text(decision.get("benchmark_proxy")) or _text(
+        decision.get("benchmark_direction"),
+        "MISSING",
+    )
+    ai_sector_proxy = _text(decision.get("ai_sector_proxy"), "MISSING")
+    risk_proxy = _text(decision.get("risk_proxy"), "MISSING")
+    liquidity_proxy = _text(decision.get("liquidity_proxy"), "MISSING")
+    price_panel_status = (
+        "AVAILABLE"
+        if any(value != "MISSING" for value in (benchmark_proxy, ai_sector_proxy, risk_proxy))
+        else "MISSING_PRICE_PANEL"
+    )
     return {
         "availability": "LIMITED",
         "risk_regime_label": _text(decision.get("market_regime"), "not_available"),
-        "market_data_status": _text(quality.get("market_data_status"), "UNKNOWN"),
-        "feature_status": _text(quality.get("feature_status"), "UNKNOWN"),
-        "limitation": (
-            "Reader Brief 首版只读取现有 daily artifacts；"
-            "SPY/QQQ/SMH/SOXX/VIX/rates market panel 将在后续阶段补充。"
+        "benchmark_proxy": benchmark_proxy,
+        "ai_sector_proxy": ai_sector_proxy,
+        "risk_proxy": risk_proxy,
+        "liquidity_proxy": liquidity_proxy,
+        "market_price_panel_status": price_panel_status,
+        "market_data_status": _text(
+            dashboard_quality.get("market_data_status"),
+            _text(quality.get("market_data_status"), "UNKNOWN"),
         ),
+        "feature_status": _text(quality.get("feature_status"), "UNKNOWN"),
+        "recommended_action": (
+            "generate_market_panel_in_future_task"
+            if price_panel_status == "MISSING_PRICE_PANEL"
+            else "review_price_panel_sources"
+        ),
+        "limitation": (
+            "当前 Reader Brief 只读现有 daily artifacts。若 market_price_panel_status="
+            "MISSING_PRICE_PANEL，则今日不披露 benchmark/AI sector/risk proxy 实际涨跌，"
+            "不应把 Market Situation 解读为完整市场复盘。"
+        ),
+        "production_effect": PRODUCTION_EFFECT,
     }
 
 
@@ -533,6 +828,71 @@ def _component_score_explainability(
     return {"status": "AVAILABLE" if rows else "MISSING", "components": rows}
 
 
+def _contribution_summary(
+    *,
+    component_explainability: Mapping[str, Any],
+    gate_ladder: Mapping[str, Any],
+    decision: Mapping[str, Any],
+) -> dict[str, Any]:
+    components = _records(component_explainability.get("components"))
+    scored = [
+        (
+            _text(component.get("component"), "UNKNOWN"),
+            _float_or_none(component.get("contribution_to_overall_score")),
+            _float_or_none(component.get("score")),
+        )
+        for component in components
+    ]
+    positive = sorted(
+        [item for item in scored if item[1] is not None and item[1] > 0],
+        key=lambda item: item[1] or 0,
+        reverse=True,
+    )
+    negative_or_zero = sorted(
+        [
+            item
+            for item in scored
+            if (item[1] is not None and item[1] <= 0) or (item[2] is not None and item[2] <= 0)
+        ],
+        key=lambda item: item[1] if item[1] is not None else -1,
+    )
+    if not negative_or_zero:
+        low_scores = sorted(
+            [item for item in scored if item[2] is not None],
+            key=lambda item: item[2] or 0,
+        )
+        negative_or_zero = low_scores[:2]
+    largest_positive = positive[0] if positive else None
+    largest_drag = negative_or_zero[0] if negative_or_zero else None
+    binding_gate = _text(gate_ladder.get("binding_gate_id"), _text(decision.get("binding_gate_id")))
+    final_position = _text(decision.get("final_risk_asset_ai_position"), "UNKNOWN")
+    return {
+        "status": "AVAILABLE" if components else "MISSING",
+        "top_positive_contributors": [item[0] for item in positive[:3]],
+        "top_negative_or_zero_contributors": [item[0] for item in negative_or_zero[:3]],
+        "largest_weighted_contribution": (
+            f"{largest_positive[0]}={largest_positive[1]:.2f}"
+            if largest_positive and largest_positive[1] is not None
+            else "MISSING"
+        ),
+        "largest_drag": (
+            f"{largest_drag[0]}={largest_drag[1]:.2f}"
+            if largest_drag and largest_drag[1] is not None
+            else (_text(largest_drag[0]) if largest_drag else "MISSING")
+        ),
+        "binding_gate_vs_score_explanation": (
+            f"最终仓位 {final_position} 由 binding gate={binding_gate} 约束；"
+            "Reader Brief 不把综合分数自动解读为可执行仓位。"
+            if binding_gate and binding_gate != "UNKNOWN"
+            else (
+                "当前缺少 binding gate 解释，需打开 calculation_explainers / "
+                "decision snapshot 审计。"
+            )
+        ),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
 def _score_change_attribution_summary(payload: Mapping[str, Any]) -> dict[str, Any]:
     if not payload:
         return {
@@ -613,6 +973,157 @@ def _report_index_summary(payload: Mapping[str, Any]) -> dict[str, Any]:
         "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
         "problem_reports": problem_reports[:8],
         "limitation": "Reader Brief 只展示 report_index 的 freshness 摘要和 stale/missing 报告。",
+    }
+
+
+_ARTIFACT_IMPACT_POLICY: dict[str, tuple[str, str, str, str]] = {
+    "decision_snapshot": (
+        "BLOCKING",
+        "缺少 decision snapshot 时 Reader Brief 无法形成当日核心结论。",
+        "阻断今日 Reader Brief 结论。",
+        "重新生成或提供当日 decision snapshot。",
+    ),
+    "daily_decision_summary": (
+        "IMPORTANT",
+        "缺少 daily decision summary 会降低首屏结论和 data gate 可读性。",
+        "不直接改写 snapshot 结论，但会降低读者对 action/data gate 的信心。",
+        "运行或补齐 daily task dashboard 生成的 daily_decision_summary。",
+    ),
+    "calculation_explainers": (
+        "IMPORTANT",
+        "缺少 calculation explainers 会让关键数字缺少公式、输入和 PIT 解释。",
+        "不重算 score，但限制计算审计能力。",
+        "运行 aits reports calculation-explainers。",
+    ),
+    "evidence_dashboard": (
+        "IMPORTANT",
+        "缺少 evidence dashboard 会削弱结论证据下钻。",
+        "不覆盖最终决策，但减少证据链可见性。",
+        "运行 aits reports dashboard 或打开 trace bundle。",
+    ),
+    "daily_task_dashboard": (
+        "IMPORTANT",
+        "缺少 daily task dashboard 会限制 backtest/shadow/SEC PIT/weight 状态聚合。",
+        "不改变 production_effect，但可能遗漏治理 warning。",
+        "运行 aits reports daily-tasks。",
+    ),
+    "daily_report": (
+        "IMPORTANT",
+        "缺少 Markdown 日报会减少面向人的完整叙事和风险注释。",
+        "不改变 snapshot 决策，但减少解释上下文。",
+        "运行 aits score-daily 或打开 canonical run bundle。",
+    ),
+    "trace_bundle": (
+        "IMPORTANT",
+        "缺少 trace bundle 会削弱 source/evidence audit trail。",
+        "不重算结论，但降低可追溯性。",
+        "重新生成 daily score trace bundle。",
+    ),
+    "score_change_attribution": (
+        "IMPORTANT",
+        "缺少 score change attribution 时读者难以判断今天相对上一期为何变化。",
+        "不改变今日分数，但限制变化原因解释。",
+        "运行 aits reports score-change-attribution。",
+    ),
+    "research_governance_summary": (
+        "IMPORTANT",
+        "缺少 research governance summary 会分散 backtest/shadow/weight/SEC PIT 状态。",
+        "不允许把 observe-only 结果当作 production，但会降低治理可读性。",
+        "运行 aits reports research-governance-summary。",
+    ),
+    "report_index": (
+        "OPTIONAL",
+        "缺少 report index 时 freshness 摘要来自 registry fallback，缺少真实 last-run 状态。",
+        "不改变今日决策，但限制报告新鲜度判断。",
+        "运行 aits reports index。",
+    ),
+    "documentation_contract": (
+        "OPTIONAL",
+        "缺少 documentation contract 时无法证明 registry 与 artifact catalog 完全同步。",
+        "不改变今日投资结论，但留下文档治理缺口。",
+        "运行 aits docs report-contract。",
+    ),
+}
+
+
+def _missing_artifact_impact(
+    *,
+    source_inputs: Mapping[str, Any],
+    report_index_summary: Mapping[str, Any],
+    task_cadence_calendar: Mapping[str, Any],
+) -> dict[str, Any]:
+    items: list[dict[str, Any]] = []
+    for artifact_id, source in source_inputs.items():
+        record = _mapping(source)
+        status = _text(record.get("availability"), "UNKNOWN")
+        if status == "AVAILABLE":
+            continue
+        impact, reader_impact, decision_impact, action = _ARTIFACT_IMPACT_POLICY.get(
+            artifact_id,
+            (
+                "INFO",
+                "该 artifact 缺失，但当前 Reader Brief 未配置专门影响说明。",
+                "不直接改变今日决策。",
+                "确认该 artifact 是否仍应进入 Reader Brief。",
+            ),
+        )
+        items.append(
+            {
+                "artifact_id": artifact_id,
+                "short_name": _short_path(record.get("path")),
+                "status": status,
+                "impact_level": impact,
+                "reader_impact": reader_impact,
+                "decision_impact": decision_impact,
+                "recommended_action": action,
+                "production_effect": PRODUCTION_EFFECT,
+                "full_path": _text(record.get("path")),
+            }
+        )
+    if _text(task_cadence_calendar.get("source")) == "registry_fallback":
+        items.append(
+            {
+                "artifact_id": "task_cadence_calendar",
+                "short_name": "config/report_registry.yaml",
+                "status": "REGISTRY_FALLBACK",
+                "impact_level": "IMPORTANT",
+                "reader_impact": (
+                    "缺少 runtime report_index，cadence calendar 只能展示 registry 预期项。"
+                ),
+                "decision_impact": (
+                    "不改变今日决策，但 next expected run / last run 不是运行时事实。"
+                ),
+                "recommended_action": "运行 aits reports index 后重新生成 Reader Brief。",
+                "production_effect": PRODUCTION_EFFECT,
+                "full_path": _text(task_cadence_calendar.get("registry_path")),
+            }
+        )
+    if _int(report_index_summary.get("required_missing_count")):
+        items.append(
+            {
+                "artifact_id": "required_daily_reading_reports",
+                "short_name": "report_index required reports",
+                "status": "REQUIRED_MISSING",
+                "impact_level": "BLOCKING",
+                "reader_impact": "一个或多个 daily reading 必需报告缺失。",
+                "decision_impact": "Reader Brief 结论应视为受限，需先补齐必需报告。",
+                "recommended_action": (
+                    "打开 Report Index Freshness 并补跑 required_for_daily_reading 报告。"
+                ),
+                "production_effect": PRODUCTION_EFFECT,
+                "full_path": "",
+            }
+        )
+    blocking = len([item for item in items if item["impact_level"] == "BLOCKING"])
+    important = len([item for item in items if item["impact_level"] == "IMPORTANT"])
+    return {
+        "status": "OK" if not items else "IMPACT_REVIEW_REQUIRED",
+        "blocking_count": blocking,
+        "important_count": important,
+        "optional_count": len([item for item in items if item["impact_level"] == "OPTIONAL"]),
+        "info_count": len([item for item in items if item["impact_level"] == "INFO"]),
+        "production_effect": PRODUCTION_EFFECT,
+        "items": items,
     }
 
 
@@ -785,7 +1296,76 @@ def _manual_review_queue(
                 "production_impact": "documentation_governance_gap",
             }
         )
-    return {"status": "EMPTY" if not items else "ACTION_REQUIRED", "items": items}
+    enriched = [_manual_review_item(item) for item in items]
+    return {
+        "status": "EMPTY" if not enriched else "ACTION_REQUIRED",
+        "items": enriched,
+        "groups": _manual_review_groups(enriched),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _manual_review_item(item: Mapping[str, Any]) -> dict[str, Any]:
+    category = _text(item.get("category"), "manual_review")
+    reason = _text(item.get("reason"), "UNKNOWN")
+    source_artifact = _text(item.get("source_artifact"), "UNKNOWN")
+    action_by_category = {
+        "data_quality": (
+            "打开 data quality / daily decision summary，确认 blocking reason 是否影响今日结论。"
+        ),
+        "report_freshness": (
+            "打开 report index 或对应 report，补齐缺失/过期 artifact 后重跑 Reader Brief。"
+        ),
+        "research_governance": (
+            "打开 research governance summary，确认 observe-only warning 是否需要人工处置。"
+        ),
+        "documentation_contract": (
+            "打开 documentation contract，修复 registry / artifact catalog 契约缺口。"
+        ),
+        "manual_review": (
+            "打开 decision snapshot manual_review 来源，确认 warning 是否影响结论使用等级。"
+        ),
+    }
+    decision_impact_by_category = {
+        "data_quality": "可能限制或阻断今日 Reader Brief 结论使用。",
+        "report_freshness": "可能让读者缺少必要上下文，但不直接重算 score。",
+        "research_governance": (
+            "影响 observe-only / research-only 状态解释，不得视作 production promotion。"
+        ),
+        "documentation_contract": "影响文档治理可信度，不直接改变投资结论。",
+        "manual_review": "可能降低某一分项或数据来源的解释置信度。",
+    }
+    return {
+        **dict(item),
+        "recommended_next_action": action_by_category.get(
+            category,
+            f"复核 {category}：{reason}",
+        ),
+        "decision_impact": decision_impact_by_category.get(
+            category,
+            "需人工判断是否影响今日结论使用。",
+        ),
+        "source_artifact": _short_path(source_artifact),
+        "source_artifact_full_path": source_artifact,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _manual_review_groups(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    labels = [
+        ("critical", "Critical / Must Review Today"),
+        ("warning", "Warning / Review Before Acting"),
+        ("info", "Info / No Immediate Action"),
+    ]
+    return [
+        {
+            "severity": severity,
+            "label": label,
+            "count": len([item for item in items if _text(item.get("severity")) == severity]),
+            "items": [item for item in items if _text(item.get("severity")) == severity],
+        }
+        for severity, label in labels
+    ]
 
 
 def _appendix_links(reports_dir: Path, source_inputs: Mapping[str, Any]) -> list[dict[str, Any]]:
@@ -798,7 +1378,9 @@ def _appendix_links(reports_dir: Path, source_inputs: Mapping[str, Any]) -> list
         links.append(
             {
                 "artifact_id": source_id,
+                "short_name": _short_path(path_text),
                 "path": path_text,
+                "full_path": path_text,
                 "href": _relative_href(path, reports_dir),
                 "exists": bool(_mapping(record).get("exists")),
                 "production_effect": PRODUCTION_EFFECT,
@@ -840,6 +1422,77 @@ def _executive_summary(
     }
 
 
+def _narrative_executive_summary(
+    *,
+    run_context: Mapping[str, Any],
+    decision: Mapping[str, Any],
+    score_changes: Mapping[str, Any],
+    contribution_summary: Mapping[str, Any],
+    manual_review_queue: Mapping[str, Any],
+    missing_artifact_impact: Mapping[str, Any],
+) -> dict[str, Any]:
+    action = _text(decision.get("action"), "UNKNOWN")
+    position = _text(decision.get("final_risk_asset_ai_position"), "UNKNOWN")
+    binding = _text(decision.get("binding_gate_label"), "UNKNOWN")
+    positives = _texts(contribution_summary.get("top_positive_contributors"))
+    negatives = _texts(contribution_summary.get("top_negative_or_zero_contributors"))
+    critical_count = sum(
+        _int(group.get("count"))
+        for group in _records(manual_review_queue.get("groups"))
+        if _text(group.get("severity")) == "critical"
+    )
+    manual_count = len(_records(manual_review_queue.get("items")))
+    important_missing = _int(missing_artifact_impact.get("important_count"))
+    blocking_missing = _int(missing_artifact_impact.get("blocking_count"))
+    return {
+        "today_conclusion": (
+            f"今日系统结论为 {action}，最终 AI 风险资产仓位为 {position}。"
+            f"当前适用市场 regime 为 {_text(run_context.get('market_regime'), 'UNKNOWN')}。"
+        ),
+        "why_this_conclusion": (
+            "主要正向贡献来自 "
+            + (", ".join(positives) if positives else "MISSING")
+            + "；主要拖累或零贡献来自 "
+            + (", ".join(negatives) if negatives else "MISSING")
+            + (
+                "；score change overall_delta="
+                f"{_text(score_changes.get('overall_score_delta'), 'MISSING')}。"
+            )
+        ),
+        "main_positive_drivers": positives,
+        "main_negative_drivers": negatives,
+        "binding_constraint": (
+            f"最终仓位受 {binding} 约束。{_text(decision.get('binding_gate_reason'))}"
+        ),
+        "manual_review_summary": (
+            f"当前有 {manual_count} 个复核项，其中 critical={critical_count}；"
+            f"缺失/受限 artifact 中 blocking={blocking_missing}, important={important_missing}。"
+        ),
+        "production_effect_statement": (
+            "Reader Brief 为只读阅读入口，production_effect=none；"
+            "不运行 scoring/backtest/shadow/SEC PIT/weight，也不生成交易指令。"
+        ),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _reader_brief_status(
+    *,
+    warnings: list[str],
+    missing_artifact_impact: Mapping[str, Any],
+    decision: Mapping[str, Any],
+) -> str:
+    if _text(decision.get("production_effect"), PRODUCTION_EFFECT) != PRODUCTION_EFFECT:
+        return "FAILED"
+    if _int(missing_artifact_impact.get("blocking_count")):
+        return "LIMITED_READER_CONTEXT"
+    if _int(missing_artifact_impact.get("important_count")):
+        return "LIMITED_READER_CONTEXT"
+    if warnings:
+        return "PASS_WITH_WARNINGS"
+    return "OK"
+
+
 def _documentation_contract_summary(payload: Mapping[str, Any]) -> dict[str, Any]:
     if not payload:
         return {
@@ -864,37 +1517,103 @@ def _documentation_contract_summary(payload: Mapping[str, Any]) -> dict[str, Any
     }
 
 
-def _task_cadence_calendar(payload: Mapping[str, Any]) -> dict[str, Any]:
+def _task_cadence_calendar(
+    payload: Mapping[str, Any],
+    *,
+    report_registry_path: Path,
+) -> dict[str, Any]:
     if not payload:
+        try:
+            registry = load_report_registry(report_registry_path)
+        except (FileNotFoundError, ValueError) as exc:
+            return {
+                "availability": "MISSING",
+                "status": "MISSING",
+                "source": "missing_report_index_and_registry_unavailable",
+                "registry_error": str(exc),
+                "production_effect": PRODUCTION_EFFECT,
+                "groups": [],
+            }
+        groups: dict[str, list[dict[str, Any]]] = {}
+        for report in _records(registry.get("reports")):
+            if not report.get("include_in_reader_brief"):
+                continue
+            group_key = _cadence_group(report)
+            expected = _texts(report.get("artifact_globs"))
+            groups.setdefault(group_key, []).append(
+                {
+                    "report_id": _text(report.get("report_id")),
+                    "title": _text(report.get("title")),
+                    "cadence": _normalize_cadence(_text(report.get("cadence"), "ad_hoc")),
+                    "latest_status": "UNKNOWN",
+                    "last_run": "MISSING_RUNTIME_INDEX",
+                    "next_expected_run": "按 registry freshness_sla_days 复核",
+                    "expected_artifact": expected[0] if expected else "MISSING",
+                    "artifact_path": expected[0] if expected else "MISSING",
+                    "reader_role": _text(report.get("audience"), "UNKNOWN"),
+                    "owner": _text(report.get("owner"), "UNKNOWN"),
+                    "review_need": _text(report.get("owner_action"), "UNKNOWN"),
+                    "next_action": _text(report.get("owner_action"), "UNKNOWN"),
+                    "source": "registry_fallback",
+                    "production_effect": _text(report.get("production_effect"), PRODUCTION_EFFECT),
+                }
+            )
+        ordered = [
+            {"cadence": cadence, "reports": groups[cadence]}
+            for cadence in (
+                "daily",
+                "weekly",
+                "bi_weekly",
+                "monthly",
+                "ad_hoc_research",
+                "governance",
+            )
+            if cadence in groups
+        ]
         return {
-            "availability": "MISSING",
-            "status": "MISSING",
+            "availability": "REGISTRY_FALLBACK",
+            "status": "LIMITED_READER_CONTEXT",
+            "source": "registry_fallback",
+            "registry_path": str(report_registry_path),
             "production_effect": PRODUCTION_EFFECT,
-            "groups": [],
+            "groups": ordered,
         }
     groups: dict[str, list[dict[str, Any]]] = {}
     for report in _records(payload.get("reports")):
-        cadence = _normalize_cadence(_text(report.get("cadence"), "ad_hoc"))
+        cadence = _cadence_group(report)
+        path_text = _text(report.get("latest_artifact_path"), "MISSING")
         groups.setdefault(cadence, []).append(
             {
                 "report_id": _text(report.get("report_id")),
                 "title": _text(report.get("title")),
                 "last_run": _text(report.get("artifact_date"), "MISSING"),
+                "next_expected_run": "按 report_index freshness_sla_days 复核",
+                "latest_status": _text(report.get("freshness_status"), "UNKNOWN"),
                 "status": _text(report.get("freshness_status"), "UNKNOWN"),
-                "artifact_path": _text(report.get("latest_artifact_path"), "MISSING"),
+                "artifact_path": _short_path(path_text),
+                "full_path": "" if path_text == "MISSING" else path_text,
                 "owner": _text(report.get("owner"), "UNKNOWN"),
-                "owner_action": _text(report.get("owner_action"), "UNKNOWN"),
+                "review_need": _text(report.get("owner_action"), "UNKNOWN"),
+                "next_action": _text(report.get("owner_action"), "UNKNOWN"),
                 "production_effect": _text(report.get("production_effect"), PRODUCTION_EFFECT),
             }
         )
     ordered = [
         {"cadence": cadence, "reports": groups[cadence]}
-        for cadence in ("daily", "weekly", "bi_weekly", "monthly", "ad_hoc")
+        for cadence in (
+            "daily",
+            "weekly",
+            "bi_weekly",
+            "monthly",
+            "ad_hoc_research",
+            "governance",
+        )
         if cadence in groups
     ]
     return {
         "availability": "AVAILABLE",
         "status": _text(payload.get("status"), "UNKNOWN"),
+        "source": "report_index",
         "production_effect": _text(payload.get("production_effect"), PRODUCTION_EFFECT),
         "groups": ordered,
     }
@@ -905,8 +1624,21 @@ def _report_navigation(
     reports_dir: Path,
     source_inputs: Mapping[str, Any],
     report_index: Mapping[str, Any],
+    missing_artifact_impact: Mapping[str, Any],
 ) -> list[dict[str, Any]]:
     links = _appendix_links(reports_dir, source_inputs)
+    impact_by_id = {
+        _text(item.get("artifact_id")): _text(item.get("impact_level"), "INFO")
+        for item in _records(missing_artifact_impact.get("items"))
+    }
+    for link in links:
+        artifact_id = _text(link.get("artifact_id"))
+        link["title"] = artifact_id
+        link["status"] = "AVAILABLE" if link.get("exists") else "MISSING"
+        link["freshness_status"] = link["status"]
+        link["purpose"] = _navigation_purpose(artifact_id, link["status"])
+        link["why_open_this"] = _navigation_reason(artifact_id, link["status"])
+        link["impact_level"] = impact_by_id.get(artifact_id, "INFO")
     for report in _records(report_index.get("reports")):
         path_text = _text(report.get("latest_artifact_path"))
         if not path_text:
@@ -916,25 +1648,100 @@ def _report_navigation(
             {
                 "artifact_id": _text(report.get("report_id")),
                 "title": _text(report.get("title")),
+                "short_name": _short_path(path_text),
                 "path": path_text,
+                "full_path": path_text,
                 "href": _relative_href(path, reports_dir),
                 "exists": bool(report.get("exists")),
+                "status": _text(report.get("artifact_status"), "UNKNOWN"),
                 "freshness_status": _text(report.get("freshness_status"), "UNKNOWN"),
                 "production_effect": _text(report.get("production_effect"), PRODUCTION_EFFECT),
+                "purpose": _navigation_purpose(
+                    _text(report.get("report_id")),
+                    _text(report.get("freshness_status"), "UNKNOWN"),
+                ),
+                "why_open_this": _navigation_reason(
+                    _text(report.get("report_id")),
+                    _text(report.get("freshness_status"), "UNKNOWN"),
+                ),
+                "impact_level": impact_by_id.get(_text(report.get("report_id")), "INFO"),
             }
         )
     links.append(
         {
             "artifact_id": "artifact_catalog",
             "title": "Artifact Catalog",
+            "short_name": "artifact_catalog.md",
             "path": "docs/artifact_catalog.md",
+            "full_path": "docs/artifact_catalog.md",
             "href": "../../docs/artifact_catalog.md",
             "exists": True,
+            "status": "DOCUMENTATION",
             "freshness_status": "DOCUMENTATION",
             "production_effect": PRODUCTION_EFFECT,
+            "purpose": "Governance / documentation",
+            "why_open_this": "查看产物边界、schema/status 术语和 common misread。",
+            "impact_level": "INFO",
         }
     )
     return links
+
+
+def _report_navigation_groups(navigation: list[dict[str, Any]]) -> dict[str, Any]:
+    purposes = [
+        "Core decision artifacts",
+        "Detailed evidence",
+        "Governance / documentation",
+        "Missing but expected",
+    ]
+    groups = []
+    for purpose in purposes:
+        items = [item for item in navigation if _text(item.get("purpose")) == purpose]
+        groups.append({"purpose": purpose, "count": len(items), "items": items})
+    return {
+        "status": "AVAILABLE",
+        "production_effect": PRODUCTION_EFFECT,
+        "groups": groups,
+    }
+
+
+def _navigation_purpose(artifact_id: str, status: str) -> str:
+    if status in {"MISSING", "STALE", "REQUIRED_MISSING"}:
+        return "Missing but expected"
+    if artifact_id in {
+        "decision_snapshot",
+        "daily_decision_summary",
+        "daily_report",
+        "reader_brief",
+    }:
+        return "Core decision artifacts"
+    if artifact_id in {
+        "evidence_dashboard",
+        "calculation_explainers",
+        "trace_bundle",
+        "score_change_attribution",
+        "daily_task_dashboard",
+    }:
+        return "Detailed evidence"
+    return "Governance / documentation"
+
+
+def _navigation_reason(artifact_id: str, status: str) -> str:
+    if status in {"MISSING", "STALE", "REQUIRED_MISSING"}:
+        return "确认缺失或过期是否影响今日阅读上下文。"
+    reasons = {
+        "decision_snapshot": "审计最终 score、gate、position 和 manual review 原始字段。",
+        "daily_decision_summary": "查看面向 daily task 的核心决策摘要和 data gate。",
+        "daily_report": "阅读全文叙事和风险注释。",
+        "evidence_dashboard": "下钻核心证据、trace 和 source artifacts。",
+        "calculation_explainers": "查看关键数字公式、输入、PIT policy 和 common misread。",
+        "trace_bundle": "审计 claim、dataset 和 report trace。",
+        "score_change_attribution": "查看今天相对上一期为何变化。",
+        "research_governance_summary": "确认 backtest/shadow/SEC PIT/weight 是否仍 observe-only。",
+        "report_index": "检查报告 freshness、missing/stale 和 owner action。",
+        "documentation_contract": "检查 registry 与 artifact catalog 契约覆盖。",
+    }
+    return reasons.get(artifact_id, "打开该 artifact 获取详细证据或治理上下文。")
 
 
 def _normalize_cadence(value: str) -> str:
@@ -942,10 +1749,17 @@ def _normalize_cadence(value: str) -> str:
     if normalized in {"biweekly", "bi_weekly"}:
         return "bi_weekly"
     if normalized in {"ad_hoc", "adhoc", "research", "ad_hoc_research"}:
-        return "ad_hoc"
+        return "ad_hoc_research"
     if normalized in {"daily", "weekly", "monthly"}:
         return normalized
-    return "ad_hoc"
+    return "ad_hoc_research"
+
+
+def _cadence_group(report: Mapping[str, Any]) -> str:
+    group = _text(report.get("group")).lower().replace("-", "_").replace(" ", "_")
+    if group in {"governance", "docs", "documentation"}:
+        return "governance"
+    return _normalize_cadence(_text(report.get("cadence"), "ad_hoc"))
 
 
 def _relative_href(path: Path, reports_dir: Path) -> str:
@@ -1030,9 +1844,12 @@ def _input_warnings(paths: Mapping[str, Path | None]) -> list[str]:
 
 
 def _source_input(source_id: str, path: Path | None, exists: bool) -> dict[str, Any]:
+    path_text = "" if path is None else str(path)
     return {
         "id": source_id,
-        "path": "" if path is None else str(path),
+        "path": path_text,
+        "short_name": _short_path(path_text),
+        "full_path": path_text,
         "exists": exists,
         "availability": "AVAILABLE" if exists else "MISSING",
         "production_effect": PRODUCTION_EFFECT,
@@ -1118,8 +1935,167 @@ def _text(value: object, default: str = "") -> str:
     return str(value)
 
 
+def _short_path(value: object) -> str:
+    text = _text(value)
+    if not text:
+        return ""
+    return Path(text).name or text
+
+
+def _quality_check(check_id: str, passed: bool, message: str) -> dict[str, Any]:
+    return {
+        "check_id": check_id,
+        "status": "PASS" if passed else "FAIL",
+        "message": message,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
 def _section(title: str, body: str) -> str:
     return f"<section><h2>{html.escape(title)}</h2>{body}</section>"
+
+
+def _narrative_summary_html(summary: Mapping[str, Any]) -> str:
+    if not summary:
+        return '<p class="narrative">Narrative summary missing.</p>'
+    today = html.escape(_text(summary.get("today_conclusion"), "UNKNOWN"))
+    why = html.escape(_text(summary.get("why_this_conclusion"), "UNKNOWN"))
+    review = html.escape(_text(summary.get("manual_review_summary"), "UNKNOWN"))
+    return (
+        '<div class="narrative">'
+        f"<p><strong>今日结论：</strong>{today}</p>"
+        f"<p><strong>为什么：</strong>{why}</p>"
+        f"<p><strong>需要复核：</strong>{review}</p>"
+        "</div>"
+    )
+
+
+def _artifact_impact_table(records: list[dict[str, Any]]) -> str:
+    if not records:
+        return "<p>未发现缺失或受限 artifact。</p>"
+    rows = []
+    for record in records:
+        details = ""
+        full_path = _text(record.get("full_path"))
+        if full_path:
+            details = (
+                "<details><summary>audit</summary>"
+                + _definition_table(
+                    [
+                        ("full_path", full_path),
+                        ("artifact_id", record.get("artifact_id")),
+                        ("production_effect", record.get("production_effect")),
+                    ]
+                )
+                + "</details>"
+            )
+        rows.append(
+            "<tr>"
+            f"<td>{html.escape(_text(record.get('artifact_id')))}</td>"
+            f"<td>{html.escape(_text(record.get('short_name'), 'MISSING'))}</td>"
+            f"<td>{html.escape(_text(record.get('status'), 'UNKNOWN'))}</td>"
+            f"<td>{html.escape(_text(record.get('impact_level'), 'INFO'))}</td>"
+            f"<td>{html.escape(_text(record.get('reader_impact'), 'UNKNOWN'))}</td>"
+            f"<td>{html.escape(_text(record.get('decision_impact'), 'UNKNOWN'))}</td>"
+            f"<td>{html.escape(_text(record.get('recommended_action'), 'UNKNOWN'))}{details}</td>"
+            "</tr>"
+        )
+    return (
+        "<table><thead><tr><th>artifact_id</th><th>short_name</th><th>status</th>"
+        "<th>impact_level</th><th>reader_impact</th><th>decision_impact</th>"
+        "<th>recommended_action</th></tr></thead><tbody>" + "\n".join(rows) + "</tbody></table>"
+    )
+
+
+def _manual_review_groups_html(
+    manual_review: Mapping[str, Any],
+    fallback_items: list[dict[str, Any]],
+) -> str:
+    groups = _records(manual_review.get("groups"))
+    if not groups:
+        return _records_table(fallback_items)
+    parts: list[str] = []
+    for group in groups:
+        label = html.escape(_text(group.get("label"), "UNKNOWN"))
+        parts.append(f"<h3>{label}</h3>")
+        parts.append(_manual_review_table(_records(group.get("items"))))
+    return "\n".join(parts)
+
+
+def _manual_review_table(records: list[dict[str, Any]]) -> str:
+    if not records:
+        return "<p>无。</p>"
+    rows = []
+    for record in records:
+        audit = _definition_table(
+            [
+                ("source_artifact_full_path", record.get("source_artifact_full_path")),
+                ("production_effect", record.get("production_effect")),
+            ]
+        )
+        rows.append(
+            "<tr>"
+            f"<td>{html.escape(_text(record.get('action_id')))}</td>"
+            f"<td>{html.escape(_text(record.get('category')))}</td>"
+            f"<td>{html.escape(_text(record.get('reason')))}</td>"
+            f"<td>{html.escape(_text(record.get('recommended_next_action')))}</td>"
+            f"<td>{html.escape(_text(record.get('decision_impact')))}</td>"
+            f"<td>{html.escape(_text(record.get('source_artifact')))}"
+            f"<details><summary>audit</summary>{audit}</details></td>"
+            "</tr>"
+        )
+    return (
+        "<table><thead><tr><th>action_id</th><th>category</th><th>reason</th>"
+        "<th>recommended_next_action</th><th>decision_impact</th><th>source</th>"
+        "</tr></thead><tbody>" + "\n".join(rows) + "</tbody></table>"
+    )
+
+
+def _navigation_groups_html(
+    navigation_groups: Mapping[str, Any],
+    fallback_navigation: list[dict[str, Any]],
+) -> str:
+    groups = _records(navigation_groups.get("groups"))
+    if not groups:
+        return _records_table(fallback_navigation)
+    parts: list[str] = []
+    for group in groups:
+        label = html.escape(_text(group.get("purpose"), "UNKNOWN"))
+        parts.append(f"<h3>{label}</h3>")
+        parts.append(_navigation_table(_records(group.get("items"))))
+    return "\n".join(parts)
+
+
+def _navigation_table(records: list[dict[str, Any]]) -> str:
+    if not records:
+        return "<p>无。</p>"
+    rows = []
+    for record in records:
+        audit = _definition_table(
+            [
+                ("full_path", record.get("full_path")),
+                ("href", record.get("href")),
+                ("artifact_id", record.get("artifact_id")),
+                ("exists", record.get("exists")),
+                ("production_effect", record.get("production_effect")),
+            ]
+        )
+        rows.append(
+            "<tr>"
+            f"<td>{html.escape(_text(record.get('artifact_id')))}</td>"
+            f"<td>{html.escape(_text(record.get('short_name'), _text(record.get('title'))))}</td>"
+            f"<td>{html.escape(_text(record.get('status'), 'UNKNOWN'))}</td>"
+            f"<td>{html.escape(_text(record.get('freshness_status'), 'UNKNOWN'))}</td>"
+            f"<td>{html.escape(_text(record.get('production_effect'), PRODUCTION_EFFECT))}</td>"
+            f"<td>{html.escape(_text(record.get('why_open_this'), 'UNKNOWN'))}"
+            f"<details><summary>audit</summary>{audit}</details></td>"
+            "</tr>"
+        )
+    return (
+        "<table><thead><tr><th>artifact_id</th><th>short_name</th><th>status</th>"
+        "<th>freshness_status</th><th>production_effect</th><th>why_open_this</th>"
+        "</tr></thead><tbody>" + "\n".join(rows) + "</tbody></table>"
+    )
 
 
 def _definition_table(rows: list[tuple[object, object]]) -> str:
@@ -1188,8 +2164,50 @@ def _cadence_calendar_tables(calendar: Mapping[str, Any]) -> str:
     for group in groups:
         cadence = html.escape(_text(group.get("cadence"), "unknown"))
         parts.append(f"<h3>{cadence}</h3>")
-        parts.append(_records_table(_records(group.get("reports"))))
+        parts.append(_cadence_report_table(_records(group.get("reports"))))
     return "\n".join(parts)
+
+
+def _cadence_report_table(records: list[dict[str, Any]]) -> str:
+    if not records:
+        return "<p>无 cadence 记录。</p>"
+    rows = []
+    for record in records:
+        status = _text(
+            record.get("latest_status"),
+            _text(record.get("status"), "UNKNOWN"),
+        )
+        next_action = _text(
+            record.get("next_action"),
+            _text(record.get("review_need"), "UNKNOWN"),
+        )
+        audit = _definition_table(
+            [
+                ("full_path", record.get("full_path")),
+                ("expected_artifact", record.get("expected_artifact")),
+                ("source", record.get("source")),
+                ("production_effect", record.get("production_effect")),
+            ]
+        )
+        artifact = _text(record.get("artifact_path"), _text(record.get("expected_artifact")))
+        rows.append(
+            "<tr>"
+            f"<td>{html.escape(_text(record.get('report_id')))}</td>"
+            f"<td>{html.escape(_text(record.get('cadence'), ''))}</td>"
+            f"<td>{html.escape(_text(record.get('last_run'), 'MISSING'))}</td>"
+            f"<td>{html.escape(_text(record.get('next_expected_run'), 'UNKNOWN'))}</td>"
+            f"<td>{html.escape(_short_path(artifact) or artifact)}</td>"
+            f"<td>{html.escape(status)}</td>"
+            f"<td>{html.escape(_text(record.get('owner'), 'UNKNOWN'))}</td>"
+            f"<td>{html.escape(next_action)}"
+            f"<details><summary>audit</summary>{audit}</details></td>"
+            "</tr>"
+        )
+    return (
+        "<table><thead><tr><th>report_id</th><th>cadence</th><th>last_run</th>"
+        "<th>next_expected_run</th><th>artifact</th><th>status</th><th>owner</th>"
+        "<th>next_action</th></tr></thead><tbody>" + "\n".join(rows) + "</tbody></table>"
+    )
 
 
 def _css() -> str:
