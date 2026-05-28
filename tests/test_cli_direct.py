@@ -185,3 +185,28 @@ def test_cli_direct_dispatches_validate_reader_brief(monkeypatch) -> None:
         {"as_of": "2026-05-13", "latest": False},
         {"as_of": None, "latest": True},
     ]
+
+
+def test_cli_direct_dispatches_score_change_and_market_panel_latest(monkeypatch) -> None:
+    calls: list[tuple[str, dict[str, object]]] = []
+
+    def fake_score_change(**kwargs: object) -> None:
+        calls.append(("score_change", kwargs))
+
+    def fake_market_panel(**kwargs: object) -> None:
+        calls.append(("market_panel", kwargs))
+
+    monkeypatch.setattr(cli_direct.cli, "score_change_attribution_command", fake_score_change)
+    monkeypatch.setattr(cli_direct.cli, "market_panel_command", fake_market_panel)
+
+    assert cli_direct.main(["reports", "score-change-attribution", "--date", "2026-05-13"]) == 0
+    assert cli_direct.main(["reports", "score-change-attribution", "--latest"]) == 0
+    assert cli_direct.main(["reports", "market-panel", "--date", "2026-05-13"]) == 0
+    assert cli_direct.main(["reports", "market-panel", "--latest"]) == 0
+
+    assert calls == [
+        ("score_change", {"as_of": "2026-05-13", "latest": False}),
+        ("score_change", {"as_of": None, "latest": True}),
+        ("market_panel", {"as_of": "2026-05-13", "latest": False}),
+        ("market_panel", {"as_of": None, "latest": True}),
+    ]

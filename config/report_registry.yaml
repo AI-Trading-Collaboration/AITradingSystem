@@ -128,6 +128,22 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: market_panel
+    title: Market Price Panel
+    group: daily
+    cadence: daily
+    audience: investor
+    owner: system
+    command: aits reports market-panel
+    artifact_globs:
+      - outputs/reports/market_panel_*.json
+      - outputs/reports/market_panel_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Reader Brief market context should match today's decision date.
+    owner_action: regenerate_after_validate_data_if_missing
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_governance_summary
     title: Research Governance Summary
     group: governance

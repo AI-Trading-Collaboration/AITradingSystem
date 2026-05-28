@@ -525,6 +525,13 @@ from ai_trading_system.reports.calculation_explainers import (
     write_calculation_explainers_json,
 )
 from ai_trading_system.reports.daily import render_recommendation_markdown
+from ai_trading_system.reports.market_panel import (
+    build_market_panel_payload,
+    default_market_panel_json_path,
+    default_market_panel_report_path,
+    write_market_panel_json,
+    write_market_panel_report,
+)
 from ai_trading_system.reports.reader_brief import (
     build_reader_brief_payload,
     build_reader_brief_quality_payload,
@@ -6113,6 +6120,10 @@ def reader_brief_command(
         Path | None,
         typer.Option(help="score_change_attribution JSON 路径；不传时按 as_of 使用默认报告路径。"),
     ] = None,
+    market_panel_path: Annotated[
+        Path | None,
+        typer.Option(help="market_panel JSON 路径；不传时按 as_of 使用默认报告路径。"),
+    ] = None,
     research_governance_summary_path: Annotated[
         Path | None,
         typer.Option(
@@ -6174,6 +6185,10 @@ def reader_brief_command(
     score_change_path = score_change_attribution_path or default_score_change_attribution_json_path(
         reports_dir, report_date
     )
+    market_panel_json_path = market_panel_path or default_market_panel_json_path(
+        reports_dir,
+        report_date,
+    )
     research_governance_path = (
         research_governance_summary_path
         or default_research_governance_summary_json_path(reports_dir, report_date)
@@ -6197,6 +6212,7 @@ def reader_brief_command(
             daily_report_path=daily_path,
             trace_bundle_path=trace_path,
             score_change_attribution_path=score_change_path,
+            market_panel_path=market_panel_json_path,
             research_governance_summary_path=research_governance_path,
             report_index_path=index_path,
             documentation_contract_path=docs_contract_path,
@@ -6304,8 +6320,12 @@ def validate_reader_brief_command(
 def score_change_attribution_command(
     as_of: Annotated[
         str | None,
-        typer.Option(help="变化归因日期，格式为 YYYY-MM-DD，默认今天。"),
+        typer.Option("--as-of", "--date", help="变化归因日期，格式为 YYYY-MM-DD，默认今天。"),
     ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用默认 decision snapshot 目录中的最新 signal-date snapshot。"),
+    ] = False,
     decision_snapshot_path: Annotated[
         Path | None,
         typer.Option(help="当前 decision snapshot JSON 路径；不传时按 as_of 使用默认路径。"),
@@ -6328,11 +6348,17 @@ def score_change_attribution_command(
     ] = None,
 ) -> None:
     """生成只读 score change attribution 报告。"""
-    report_date = _parse_date(as_of) if as_of else date.today()
-    snapshot_path = decision_snapshot_path or default_decision_snapshot_path(
-        snapshot_dir,
-        report_date,
-    )
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if latest:
+        snapshot_path = decision_snapshot_path or _latest_decision_snapshot_path(snapshot_dir)
+        report_date = _decision_snapshot_date(snapshot_path)
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+        snapshot_path = decision_snapshot_path or default_decision_snapshot_path(
+            snapshot_dir,
+            report_date,
+        )
     reports_dir = PROJECT_ROOT / "outputs" / "reports"
     markdown_output = output_path or default_score_change_attribution_report_path(
         reports_dir,
@@ -6363,6 +6389,108 @@ def score_change_attribution_command(
         f"warnings：{len(payload['warnings'])}；"
         f"production_effect={payload['production_effect']}；"
         "不重算 score"
+    )
+
+
+@reports_app.command("market-panel")
+def market_panel_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="Market panel 日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用默认 decision snapshot 目录中的最新 signal-date。"),
+    ] = False,
+    prices_path: Annotated[
+        Path,
+        typer.Option(help="标准化日线价格 CSV 路径。"),
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "prices_daily.csv",
+    rates_path: Annotated[
+        Path,
+        typer.Option(help="标准化 FRED 宏观序列 CSV 路径。"),
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Market panel Markdown 输出路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Market panel JSON 输出路径。"),
+    ] = None,
+    data_quality_output_path: Annotated[
+        Path | None,
+        typer.Option(help="数据质量 Markdown 输出路径；不传时按日期使用默认报告路径。"),
+    ] = None,
+) -> None:
+    """生成只读 market price panel 报告。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if latest:
+        report_date = _decision_snapshot_date(
+            _latest_decision_snapshot_path(DEFAULT_DECISION_SNAPSHOT_DIR)
+        )
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
+    reports_dir = PROJECT_ROOT / "outputs" / "reports"
+    markdown_output = output_path or default_market_panel_report_path(reports_dir, report_date)
+    json_output = json_output_path or default_market_panel_json_path(reports_dir, report_date)
+    quality_report_path = data_quality_output_path or default_quality_report_path(
+        reports_dir,
+        report_date,
+    )
+    quality_config = load_data_quality()
+    quality_report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=["SPY", "QQQ", "SMH", "SOXX", "^VIX"],
+        expected_rate_series=["DGS10"],
+        quality_config=quality_config,
+        as_of=report_date,
+        manifest_path=_download_manifest_path(prices_path),
+        secondary_prices_path=_marketstack_prices_path(prices_path),
+        require_secondary_prices=_requires_marketstack_prices(prices_path),
+    )
+    write_data_quality_report(quality_report, quality_report_path)
+    if not quality_report.passed:
+        payload = build_market_panel_payload(
+            as_of=report_date,
+            prices_path=prices_path,
+            rates_path=rates_path,
+            data_quality_status=quality_report.status,
+            data_quality_report_path=quality_report_path,
+            read_cached_data=False,
+        )
+        report_path = write_market_panel_report(payload, markdown_output)
+        json_path = write_market_panel_json(payload, json_output)
+        console.print("[red]Market panel 数据质量状态：FAIL[/red]")
+        console.print(f"数据质量报告：{quality_report_path}")
+        console.print(f"Market panel report：{report_path}")
+        console.print(f"Market panel JSON：{json_path}")
+        raise typer.Exit(code=1)
+    payload = build_market_panel_payload(
+        as_of=report_date,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        data_quality_status=quality_report.status,
+        data_quality_report_path=quality_report_path,
+    )
+    report_path = write_market_panel_report(payload, markdown_output)
+    json_path = write_market_panel_json(payload, json_output)
+    style = "green" if payload["status"] == "PASS" else "yellow"
+    console.print(f"[{style}]Market panel：{payload['status']}[/{style}]")
+    console.print(f"Market panel report：{report_path}")
+    console.print(f"Market panel JSON：{json_path}")
+    console.print(
+        f"available：{payload['summary']['available_proxy_count']}/"
+        f"{payload['summary']['proxy_count']}；"
+        f"production_effect={payload['production_effect']}；只读市场面板"
     )
 
 

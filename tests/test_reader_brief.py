@@ -31,6 +31,7 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
         daily_report_path=inputs["daily_report"],
         trace_bundle_path=inputs["trace_bundle"],
         score_change_attribution_path=inputs["score_change_attribution"],
+        market_panel_path=inputs["market_panel"],
         research_governance_summary_path=inputs["research_governance_summary"],
         report_index_path=inputs["report_index"],
         documentation_contract_path=inputs["documentation_contract"],
@@ -51,6 +52,12 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     assert payload["score_to_position_funnel"]["steps"][1]["metric_id"] == "overall_score"
     assert payload["score_change_attribution_summary"]["overall_score_delta"] == 3.0
     assert payload["score_change_attribution_summary"]["drivers"][0]["driver"] == "trend"
+    assert payload["market_situation_snapshot"]["market_price_panel_status"] == "AVAILABLE"
+    assert "SPY 1D=+1.00%" in payload["executive_summary"]["market_movement"]
+    assert not any(
+        item["artifact_id"] == "market_panel"
+        for item in payload["missing_limited_artifact_impact"]["items"]
+    )
     assert payload["report_index_summary"]["missing_count"] == 1
     assert payload["report_index_summary"]["problem_reports"][0]["report_id"] == "data_quality"
     assert payload["task_cadence_calendar"]["groups"][0]["cadence"] == "daily"
@@ -97,6 +104,7 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
         daily_report_path=tmp_path / "missing_daily_score.md",
         trace_bundle_path=tmp_path / "missing_trace.json",
         score_change_attribution_path=tmp_path / "missing_score_change.json",
+        market_panel_path=tmp_path / "missing_market_panel.json",
         research_governance_summary_path=tmp_path / "missing_research_governance.json",
         report_index_path=tmp_path / "missing_report_index.json",
         documentation_contract_path=tmp_path / "missing_documentation_contract.json",
@@ -114,6 +122,10 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
     assert "daily_report_missing" in ";".join(payload["warnings"])
     assert any(
         item["artifact_id"] == "task_cadence_calendar" and item["impact_level"] == "IMPORTANT"
+        for item in payload["missing_limited_artifact_impact"]["items"]
+    )
+    assert any(
+        item["artifact_id"] == "market_panel" and item["impact_level"] == "IMPORTANT"
         for item in payload["missing_limited_artifact_impact"]["items"]
     )
 
@@ -148,6 +160,8 @@ def test_reports_reader_brief_cli_writes_html_and_json(tmp_path: Path) -> None:
             str(inputs["trace_bundle"]),
             "--score-change-attribution-path",
             str(inputs["score_change_attribution"]),
+            "--market-panel-path",
+            str(inputs["market_panel"]),
             "--research-governance-summary-path",
             str(inputs["research_governance_summary"]),
             "--report-index-path",
@@ -201,6 +215,7 @@ def test_reader_brief_quality_payload_summarizes_reader_ux_checks(tmp_path: Path
         daily_report_path=inputs["daily_report"],
         trace_bundle_path=inputs["trace_bundle"],
         score_change_attribution_path=inputs["score_change_attribution"],
+        market_panel_path=inputs["market_panel"],
         research_governance_summary_path=inputs["research_governance_summary"],
         report_index_path=inputs["report_index"],
         documentation_contract_path=inputs["documentation_contract"],
@@ -249,6 +264,8 @@ def test_reports_validate_reader_brief_cli_writes_quality_outputs(tmp_path: Path
             str(inputs["trace_bundle"]),
             "--score-change-attribution-path",
             str(inputs["score_change_attribution"]),
+            "--market-panel-path",
+            str(inputs["market_panel"]),
             "--research-governance-summary-path",
             str(inputs["research_governance_summary"]),
             "--report-index-path",
@@ -445,6 +462,101 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
         ),
         encoding="utf-8",
     )
+    market_panel_path = tmp_path / "market_panel_2026-05-04.json"
+    market_panel_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "market_panel",
+                "as_of": "2026-05-04",
+                "status": "PASS",
+                "production_effect": "none",
+                "data_quality": {
+                    "status": "PASS",
+                    "report_path": str(tmp_path / "data_quality.md"),
+                },
+                "source_artifacts": {
+                    "prices_daily": {
+                        "path": str(tmp_path / "prices_daily.csv"),
+                        "exists": True,
+                    },
+                    "rates_daily": {
+                        "path": str(tmp_path / "rates_daily.csv"),
+                        "exists": True,
+                    },
+                },
+                "summary": {
+                    "proxy_count": 4,
+                    "available_proxy_count": 4,
+                    "missing_proxy_count": 0,
+                    "missing_roles": [],
+                    "market_movement_sentence": (
+                        "SPY 1D=+1.00%；SMH 1D=+2.00%；" "^VIX 1D=-3.00%；DGS10 1D=+0.0100pp。"
+                    ),
+                },
+                "proxies": [
+                    {
+                        "symbol": "SPY",
+                        "role": "benchmark_proxy",
+                        "last_price": 505.0,
+                        "return_1d": 0.01,
+                        "return_5d": 0.02,
+                        "return_20d": 0.04,
+                        "trend_label": "UP_20D",
+                        "risk_interpretation": "benchmark proxy 上行。",
+                        "data_status": "AVAILABLE",
+                        "source_artifact": str(tmp_path / "prices_daily.csv"),
+                        "change_mode": "ratio",
+                        "production_effect": "none",
+                    },
+                    {
+                        "symbol": "SMH",
+                        "role": "ai_sector_proxy",
+                        "last_price": 250.0,
+                        "return_1d": 0.02,
+                        "return_5d": 0.03,
+                        "return_20d": 0.08,
+                        "trend_label": "UP_20D",
+                        "risk_interpretation": "AI sector proxy 上行。",
+                        "data_status": "AVAILABLE",
+                        "source_artifact": str(tmp_path / "prices_daily.csv"),
+                        "change_mode": "ratio",
+                        "production_effect": "none",
+                    },
+                    {
+                        "symbol": "^VIX",
+                        "role": "risk_proxy",
+                        "last_price": 14.0,
+                        "return_1d": -0.03,
+                        "return_5d": -0.05,
+                        "return_20d": -0.10,
+                        "trend_label": "DOWN_20D",
+                        "risk_interpretation": "VIX 下行，风险压力缓和。",
+                        "data_status": "AVAILABLE",
+                        "source_artifact": str(tmp_path / "prices_daily.csv"),
+                        "change_mode": "ratio",
+                        "production_effect": "none",
+                    },
+                    {
+                        "symbol": "DGS10",
+                        "role": "liquidity_proxy",
+                        "last_price": 4.2,
+                        "return_1d": 0.01,
+                        "return_5d": 0.02,
+                        "return_20d": 0.03,
+                        "trend_label": "UP_20D",
+                        "risk_interpretation": "10Y yield 上行，流动性压力上升。",
+                        "data_status": "AVAILABLE",
+                        "source_artifact": str(tmp_path / "rates_daily.csv"),
+                        "change_mode": "difference",
+                        "production_effect": "none",
+                    },
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     research_governance_path = tmp_path / "research_governance_summary_2026-05-04.json"
     research_governance_path.write_text(
         json.dumps(
@@ -552,6 +664,7 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
         "daily_report": daily_report_path,
         "trace_bundle": trace_bundle_path,
         "score_change_attribution": score_change_path,
+        "market_panel": market_panel_path,
         "research_governance_summary": research_governance_path,
         "report_index": report_index_path,
         "documentation_contract": documentation_contract_path,

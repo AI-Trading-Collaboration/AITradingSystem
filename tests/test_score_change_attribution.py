@@ -51,8 +51,19 @@ def test_score_change_attribution_decomposes_snapshot_deltas(tmp_path: Path) -> 
 
     assert payload["status"] == "PASS"
     assert payload["production_effect"] == "none"
+    assert payload["current_date"] == "2026-05-04"
+    assert payload["previous_date"] == "2026-05-03"
     assert payload["comparison_window"]["previous_signal_date"] == "2026-05-03"
+    assert payload["overall_score_current"] == 73.0
+    assert payload["overall_score_previous"] == 70.0
     assert payload["overall_score_delta"]["delta"] == 3.0
+    assert payload["final_position_current"]["max"] == 0.40
+    assert payload["final_position_previous"]["max"] == 0.50
+    assert payload["final_position_delta"]["max_delta"] == pytest.approx(-0.1)
+    assert payload["binding_gate_current"]["gate_id"] == "valuation"
+    assert payload["binding_gate_previous"]["gate_id"] == "valuation"
+    assert payload["binding_gate_changed"] is False
+    assert payload["manual_review_count_delta"] == 0
     trend = next(row for row in payload["component_attribution"] if row["component"] == "trend")
     assert trend["score_delta"] == 7.0
     assert trend["effective_weight_delta"] == pytest.approx(0.05)
@@ -65,10 +76,18 @@ def test_score_change_attribution_decomposes_snapshot_deltas(tmp_path: Path) -> 
     )
     assert valuation_gate["cap_delta"] == pytest.approx(-0.1)
     assert "CAP_CHANGED" in valuation_gate["change_flags"]
+    assert payload["component_score_deltas"][0]["component"] == "trend"
+    assert payload["component_contribution_deltas"][0]["component"] == "trend"
+    assert payload["gate_state_changes"][0]["gate_id"] == "valuation"
     assert payload["data_quality_attribution"]["market_data_status_changed"] is True
+    assert payload["data_quality_status_delta"]["market_data_status_changed"] is True
     assert payload["top_changes"]["positive_contribution_drivers"][0]["component"] == "trend"
+    assert payload["top_positive_change_drivers"][0]["component"] == "trend"
+    assert payload["top_negative_change_drivers"]
     assert "Score Change Attribution 2026-05-04" in markdown
     assert "production_effect=none" in markdown
+    assert "## 读者解释" in markdown
+    assert "今天变化主要来自" in markdown
     assert "## Component Attribution" in markdown
 
 
@@ -107,7 +126,7 @@ def test_reports_score_change_attribution_cli_writes_markdown_and_json(tmp_path:
         [
             "reports",
             "score-change-attribution",
-            "--as-of",
+            "--date",
             "2026-05-04",
             "--snapshot-dir",
             str(tmp_path),
@@ -128,6 +147,58 @@ def test_reports_score_change_attribution_cli_writes_markdown_and_json(tmp_path:
     payload = json.loads(json_path.read_text(encoding="utf-8"))
     assert payload["comparison_window"]["previous_signal_date"] == "2026-05-03"
     assert payload["source_inputs"]["previous_decision_snapshot"]["exists"] is True
+
+
+def test_reports_score_change_attribution_cli_supports_latest(tmp_path: Path) -> None:
+    _write_decision_snapshot(
+        tmp_path,
+        date(2026, 5, 3),
+        overall_score=70.0,
+        confidence_score=60.0,
+        final_max=0.50,
+        valuation_cap=0.50,
+        trend_score=65.0,
+        trend_weight=25.0,
+        valuation_score=80.0,
+        valuation_weight=25.0,
+        market_data_status="PASS",
+    )
+    _write_decision_snapshot(
+        tmp_path,
+        date(2026, 5, 4),
+        overall_score=73.0,
+        confidence_score=66.0,
+        final_max=0.40,
+        valuation_cap=0.40,
+        trend_score=72.0,
+        trend_weight=30.0,
+        valuation_score=82.0,
+        valuation_weight=20.0,
+        market_data_status="PASS",
+    )
+    json_path = tmp_path / "score_change_attribution_latest.json"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "reports",
+            "score-change-attribution",
+            "--latest",
+            "--snapshot-dir",
+            str(tmp_path),
+            "--output-path",
+            str(tmp_path / "score_change_attribution_latest.md"),
+            "--json-output-path",
+            str(json_path),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+    assert payload["current_date"] == "2026-05-04"
+    assert payload["previous_date"] == "2026-05-03"
 
 
 def test_score_change_attribution_missing_previous_is_insufficient_data(
@@ -155,6 +226,9 @@ def test_score_change_attribution_missing_previous_is_insufficient_data(
 
     assert payload["status"] == "INSUFFICIENT_DATA"
     assert payload["component_attribution"] == []
+    assert payload["component_score_deltas"] == []
+    assert payload["previous_date"] is None
+    assert payload["production_effect"] == "none"
     assert payload["warnings"] == ["previous_decision_snapshot_missing"]
 
 

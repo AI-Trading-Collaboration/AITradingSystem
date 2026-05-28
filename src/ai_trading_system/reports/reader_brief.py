@@ -46,6 +46,7 @@ def build_reader_brief_payload(
     daily_report_path: Path | None = None,
     trace_bundle_path: Path | None = None,
     score_change_attribution_path: Path | None = None,
+    market_panel_path: Path | None = None,
     research_governance_summary_path: Path | None = None,
     report_index_path: Path | None = None,
     documentation_contract_path: Path | None = None,
@@ -57,6 +58,7 @@ def build_reader_brief_payload(
     evidence_dashboard = _read_optional_json(evidence_dashboard_json_path)
     daily_task_dashboard = _read_optional_json(daily_task_dashboard_json_path)
     score_change_attribution = _read_optional_json(score_change_attribution_path)
+    market_panel = _read_optional_json(market_panel_path)
     research_governance_summary = _read_optional_json(research_governance_summary_path)
     report_index = _read_optional_json(report_index_path)
     documentation_contract = _read_optional_json(documentation_contract_path)
@@ -69,6 +71,7 @@ def build_reader_brief_payload(
             "daily_report": daily_report_path,
             "trace_bundle": trace_bundle_path,
             "score_change_attribution": score_change_attribution_path,
+            "market_panel": market_panel_path,
             "research_governance_summary": research_governance_summary_path,
             "report_index": report_index_path,
             "documentation_contract": documentation_contract_path,
@@ -111,6 +114,11 @@ def build_reader_brief_payload(
             score_change_attribution_path,
             score_change_attribution_path is not None and score_change_attribution_path.exists(),
         ),
+        "market_panel": _source_input(
+            "market_panel",
+            market_panel_path,
+            market_panel_path is not None and market_panel_path.exists(),
+        ),
         "research_governance_summary": _source_input(
             "research_governance_summary",
             research_governance_summary_path,
@@ -142,6 +150,11 @@ def build_reader_brief_payload(
         calculation_explainers=calculation_explainers,
     )
     score_change_summary = _score_change_attribution_summary(score_change_attribution)
+    market_situation = _market_situation_snapshot(
+        evidence_dashboard=evidence_dashboard,
+        snapshot=snapshot,
+        market_panel=market_panel,
+    )
     report_index_summary = _report_index_summary(report_index)
     governance_summary = _backtest_shadow_governance(
         daily_decision_summary=daily_decision_summary,
@@ -187,6 +200,7 @@ def build_reader_brief_payload(
     narrative_summary = _narrative_executive_summary(
         run_context=run_context,
         decision=executive_decision,
+        market_situation=market_situation,
         score_changes=score_change_summary,
         contribution_summary=contribution_summary,
         manual_review_queue=manual_review_queue,
@@ -210,10 +224,7 @@ def build_reader_brief_payload(
         "run_context": run_context,
         "narrative_executive_summary": narrative_summary,
         "executive_decision": executive_decision,
-        "market_situation_snapshot": _market_situation_snapshot(
-            evidence_dashboard=evidence_dashboard,
-            snapshot=snapshot,
-        ),
+        "market_situation_snapshot": market_situation,
         "score_to_position_funnel": _score_to_position_funnel(
             snapshot=snapshot,
             calculation_explainers=calculation_explainers,
@@ -239,6 +250,7 @@ def build_reader_brief_payload(
         "executive_summary": _executive_summary(
             run_context=run_context,
             decision=executive_decision,
+            market_situation=market_situation,
             score_changes=score_change_summary,
             report_index_summary=report_index_summary,
             governance_summary=governance_summary,
@@ -476,6 +488,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
             + _definition_table(
                 [
                     ("today_conclusion", narrative_summary.get("today_conclusion")),
+                    ("today_market_movement", narrative_summary.get("today_market_movement")),
                     ("why_this_conclusion", narrative_summary.get("why_this_conclusion")),
                     ("binding_constraint", narrative_summary.get("binding_constraint")),
                     ("manual_review_summary", narrative_summary.get("manual_review_summary")),
@@ -489,6 +502,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                 [
                     ("market_regime", executive_summary.get("market_regime_summary")),
                     ("top_model_conclusion", executive_summary.get("top_model_conclusion")),
+                    ("market_movement", executive_summary.get("market_movement")),
                     ("major_score_change", executive_summary.get("major_score_change")),
                     ("report_freshness", executive_summary.get("report_freshness")),
                     ("governance_status", executive_summary.get("governance_status")),
@@ -530,7 +544,26 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                 ]
             ),
         ),
-        _section("Market Situation", _definition_table(list(market.items()))),
+        _section(
+            "Market Situation",
+            _definition_table(
+                [
+                    ("availability", market.get("availability")),
+                    ("market_price_panel_status", market.get("market_price_panel_status")),
+                    ("market_movement", market.get("market_movement_sentence")),
+                    ("benchmark_proxy", market.get("benchmark_proxy")),
+                    ("ai_sector_proxy", market.get("ai_sector_proxy")),
+                    ("risk_proxy", market.get("risk_proxy")),
+                    ("liquidity_proxy", market.get("liquidity_proxy")),
+                    ("market_data_status", market.get("market_data_status")),
+                    ("feature_status", market.get("feature_status")),
+                    ("recommended_action", market.get("recommended_action")),
+                    ("production_effect", market.get("production_effect")),
+                    ("limitation", market.get("limitation")),
+                ]
+            )
+            + _records_table(_records(market.get("proxy_rows"))),
+        ),
         _section("Score & Decision Funnel", _funnel_details(funnel)),
         _section(
             "Score Change Attribution",
@@ -696,10 +729,60 @@ def _market_situation_snapshot(
     *,
     evidence_dashboard: Mapping[str, Any],
     snapshot: Mapping[str, Any],
+    market_panel: Mapping[str, Any],
 ) -> dict[str, Any]:
     decision = _mapping(evidence_dashboard.get("decision"))
     dashboard_quality = _mapping(evidence_dashboard.get("quality"))
     quality = _mapping(snapshot.get("quality"))
+    if market_panel:
+        panel_summary = _mapping(market_panel.get("summary"))
+        panel_quality = _mapping(market_panel.get("data_quality"))
+        proxies = _records(market_panel.get("proxies"))
+        panel_status = _text(market_panel.get("status"), "UNKNOWN")
+        return {
+            "availability": (
+                "LIMITED" if panel_status == "MISSING_MARKET_PRICE_DATA" else "AVAILABLE"
+            ),
+            "risk_regime_label": _text(decision.get("market_regime"), "not_available"),
+            "benchmark_proxy": _role_proxy_summary(proxies, "benchmark_proxy"),
+            "ai_sector_proxy": _role_proxy_summary(proxies, "ai_sector_proxy"),
+            "risk_proxy": _role_proxy_summary(proxies, "risk_proxy"),
+            "liquidity_proxy": _role_proxy_summary(proxies, "liquidity_proxy"),
+            "market_price_panel_status": (
+                "MISSING_MARKET_PRICE_DATA"
+                if panel_status == "MISSING_MARKET_PRICE_DATA"
+                else "AVAILABLE"
+            ),
+            "market_panel_status": panel_status,
+            "market_movement_sentence": _text(
+                panel_summary.get("market_movement_sentence"),
+                "市场面板未提供 movement summary。",
+            ),
+            "market_data_status": _text(
+                panel_quality.get("status"),
+                _text(
+                    dashboard_quality.get("market_data_status"),
+                    _text(quality.get("market_data_status"), "UNKNOWN"),
+                ),
+            ),
+            "feature_status": _text(quality.get("feature_status"), "UNKNOWN"),
+            "proxy_rows": _reader_market_proxy_rows(proxies),
+            "recommended_action": (
+                "review_missing_market_data"
+                if panel_status == "MISSING_MARKET_PRICE_DATA"
+                else "review_market_panel_sources"
+            ),
+            "limitation": (
+                "Market panel 只读缓存价格/利率 artifact；缺失或 PARTIAL_HISTORY 的 proxy "
+                "不得被解读为完整市场复盘。"
+            ),
+            "source_artifact": _text(
+                _mapping(_mapping(market_panel.get("source_artifacts")).get("prices_daily")).get(
+                    "path"
+                )
+            ),
+            "production_effect": PRODUCTION_EFFECT,
+        }
     benchmark_proxy = _text(decision.get("benchmark_proxy")) or _text(
         decision.get("benchmark_direction"),
         "MISSING",
@@ -939,6 +1022,40 @@ def _score_change_attribution_summary(payload: Mapping[str, Any]) -> dict[str, A
     }
 
 
+def _role_proxy_summary(proxies: list[dict[str, Any]], role: str) -> str:
+    records = [row for row in proxies if _text(row.get("role")) == role]
+    if not records:
+        return "MISSING"
+    parts = []
+    for row in records:
+        change = _format_market_change(row.get("return_1d"), row.get("change_mode"))
+        status = _text(row.get("data_status"), "UNKNOWN")
+        if status == "MISSING_MARKET_PRICE_DATA":
+            parts.append(f"{_text(row.get('symbol'), 'UNKNOWN')}:MISSING")
+        else:
+            parts.append(f"{_text(row.get('symbol'), 'UNKNOWN')} 1D={change}")
+    return "; ".join(parts)
+
+
+def _reader_market_proxy_rows(proxies: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {
+            "symbol": _text(row.get("symbol")),
+            "role": _text(row.get("role")),
+            "last_price": row.get("last_price"),
+            "return_1d": _format_market_change(row.get("return_1d"), row.get("change_mode")),
+            "return_5d": _format_market_change(row.get("return_5d"), row.get("change_mode")),
+            "return_20d": _format_market_change(row.get("return_20d"), row.get("change_mode")),
+            "trend_label": _text(row.get("trend_label"), "UNKNOWN"),
+            "risk_interpretation": _text(row.get("risk_interpretation"), "UNKNOWN"),
+            "data_status": _text(row.get("data_status"), "UNKNOWN"),
+            "source_artifact": _short_path(_text(row.get("source_artifact"))),
+            "production_effect": _text(row.get("production_effect"), PRODUCTION_EFFECT),
+        }
+        for row in proxies
+    ]
+
+
 def _report_index_summary(payload: Mapping[str, Any]) -> dict[str, Any]:
     if not payload:
         return {
@@ -1024,6 +1141,12 @@ _ARTIFACT_IMPACT_POLICY: dict[str, tuple[str, str, str, str]] = {
         "缺少 score change attribution 时读者难以判断今天相对上一期为何变化。",
         "不改变今日分数，但限制变化原因解释。",
         "运行 aits reports score-change-attribution。",
+    ),
+    "market_panel": (
+        "IMPORTANT",
+        "缺少 market panel 时读者无法看到 benchmark、AI sector、risk 和 liquidity 代理实际涨跌。",
+        "不改变今日 score，但限制 Market Situation 的可读性。",
+        "运行 aits reports market-panel。",
     ),
     "research_governance_summary": (
         "IMPORTANT",
@@ -1393,6 +1516,7 @@ def _executive_summary(
     *,
     run_context: Mapping[str, Any],
     decision: Mapping[str, Any],
+    market_situation: Mapping[str, Any],
     score_changes: Mapping[str, Any],
     report_index_summary: Mapping[str, Any],
     governance_summary: Mapping[str, Any],
@@ -1406,6 +1530,10 @@ def _executive_summary(
         "top_model_conclusion": (
             f"{_text(decision.get('action'), 'UNKNOWN')} / "
             f"{_text(decision.get('final_risk_asset_ai_position'), 'UNKNOWN')}"
+        ),
+        "market_movement": _text(
+            market_situation.get("market_movement_sentence"),
+            "MISSING",
         ),
         "major_score_change": (
             f"overall_delta={_text(score_changes.get('overall_score_delta'), 'MISSING')}; "
@@ -1426,6 +1554,7 @@ def _narrative_executive_summary(
     *,
     run_context: Mapping[str, Any],
     decision: Mapping[str, Any],
+    market_situation: Mapping[str, Any],
     score_changes: Mapping[str, Any],
     contribution_summary: Mapping[str, Any],
     manual_review_queue: Mapping[str, Any],
@@ -1448,6 +1577,10 @@ def _narrative_executive_summary(
         "today_conclusion": (
             f"今日系统结论为 {action}，最终 AI 风险资产仓位为 {position}。"
             f"当前适用市场 regime 为 {_text(run_context.get('market_regime'), 'UNKNOWN')}。"
+        ),
+        "today_market_movement": _text(
+            market_situation.get("market_movement_sentence"),
+            "市场面板缺失，不能描述今日 benchmark/AI sector/risk/liquidity 变化。",
         ),
         "why_this_conclusion": (
             "主要正向贡献来自 "
@@ -1720,6 +1853,7 @@ def _navigation_purpose(artifact_id: str, status: str) -> str:
         "calculation_explainers",
         "trace_bundle",
         "score_change_attribution",
+        "market_panel",
         "daily_task_dashboard",
     }:
         return "Detailed evidence"
@@ -1737,6 +1871,7 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
         "calculation_explainers": "查看关键数字公式、输入、PIT policy 和 common misread。",
         "trace_bundle": "审计 claim、dataset 和 report trace。",
         "score_change_attribution": "查看今天相对上一期为何变化。",
+        "market_panel": "查看 benchmark、AI sector、risk 和 liquidity 代理实际涨跌。",
         "research_governance_summary": "确认 backtest/shadow/SEC PIT/weight 是否仍 observe-only。",
         "report_index": "检查报告 freshness、missing/stale 和 owner action。",
         "documentation_contract": "检查 registry 与 artifact catalog 契约覆盖。",
@@ -1896,6 +2031,15 @@ def _format_percent(value: object) -> str:
     if number is None:
         return "UNKNOWN"
     return f"{number:.0%}"
+
+
+def _format_market_change(value: object, change_mode: object) -> str:
+    number = _float_or_none(value)
+    if number is None:
+        return "UNKNOWN"
+    if change_mode == "difference":
+        return f"{number:+.4f}pp"
+    return f"{number:+.2%}"
 
 
 def _float_or_none(value: object) -> float | None:

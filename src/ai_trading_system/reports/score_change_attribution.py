@@ -87,6 +87,9 @@ def build_score_change_attribution_payload(
     confidence = _confidence_attribution(current, previous)
     position = _position_attribution(current, previous)
     data_quality = _data_quality_attribution(current, previous)
+    top_changes = _top_changes(components, gates, confidence, data_quality)
+    current_binding_gate = _binding_gate_record(current)
+    previous_binding_gate = _binding_gate_record(previous)
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": REPORT_TYPE,
@@ -102,6 +105,10 @@ def build_score_change_attribution_payload(
             ),
             "previous_signal_date": previous_signal_date.isoformat(),
         },
+        "current_date": (
+            current_signal_date.isoformat() if current_signal_date else as_of.isoformat()
+        ),
+        "previous_date": previous_signal_date.isoformat(),
         "source_inputs": _source_inputs(
             decision_snapshot_path=decision_snapshot_path,
             previous_decision_snapshot_path=previous_path,
@@ -109,12 +116,35 @@ def build_score_change_attribution_payload(
         ),
         "warnings": warnings,
         "overall_score_delta": overall,
+        "overall_score_current": overall.get("current"),
+        "overall_score_previous": overall.get("previous"),
         "component_attribution": components,
+        "component_score_deltas": _component_score_deltas(components),
+        "component_contribution_deltas": _component_contribution_deltas(components),
         "confidence_attribution": confidence,
         "position_attribution": position,
+        "final_position_current": _position_band(current),
+        "final_position_previous": _position_band(previous),
+        "final_position_delta": {
+            "min_delta": position.get("final_min_delta"),
+            "max_delta": position.get("final_max_delta"),
+        },
         "gate_attribution": gates,
+        "binding_gate_current": current_binding_gate,
+        "binding_gate_previous": previous_binding_gate,
+        "binding_gate_changed": _text(current_binding_gate.get("gate_id"))
+        != _text(previous_binding_gate.get("gate_id")),
+        "gate_state_changes": _gate_state_changes(gates),
         "data_quality_attribution": data_quality,
-        "top_changes": _top_changes(components, gates, confidence, data_quality),
+        "data_quality_status_delta": data_quality,
+        "manual_review_count_current": _manual_review_count(current),
+        "manual_review_count_previous": _manual_review_count(previous),
+        "manual_review_count_delta": _manual_review_count(current) - _manual_review_count(previous),
+        "top_changes": top_changes,
+        "top_positive_change_drivers": _records(top_changes.get("positive_contribution_drivers"))
+        or _records(top_changes.get("positive_score_drivers")),
+        "top_negative_change_drivers": _records(top_changes.get("negative_contribution_drivers"))
+        or _records(top_changes.get("negative_score_drivers")),
         "methodology": {
             "component_contribution_formula": "component_score * effective_weight",
             "component_delta_decomposition": (
@@ -159,6 +189,8 @@ def render_score_change_attribution_markdown(payload: Mapping[str, Any]) -> str:
         "previous_final_max",
         "final_max_delta",
     )
+    positive_change_drivers = _driver_list_from_records(payload.get("top_positive_change_drivers"))
+    negative_change_drivers = _driver_list_from_records(payload.get("top_negative_change_drivers"))
     lines = [
         f"# Score Change Attribution {as_of}",
         "",
@@ -204,6 +236,26 @@ def render_score_change_attribution_markdown(payload: Mapping[str, Any]) -> str:
                 f"{_text(data_quality.get('previous_market_data_status'), 'UNKNOWN')} -> "
                 f"{_text(data_quality.get('current_market_data_status'), 'UNKNOWN')}"
             ),
+            (
+                "- Binding gate："
+                f"{_text(_mapping(payload.get('binding_gate_previous')).get('gate_id'), 'UNKNOWN')}"
+                " -> "
+                f"{_text(_mapping(payload.get('binding_gate_current')).get('gate_id'), 'UNKNOWN')}"
+            ),
+            (
+                "- Manual review count："
+                f"{_text(payload.get('manual_review_count_previous'), 'UNKNOWN')} -> "
+                f"{_text(payload.get('manual_review_count_current'), 'UNKNOWN')} "
+                f"({_text(payload.get('manual_review_count_delta'), 'UNKNOWN')})"
+            ),
+            "",
+            "## 读者解释",
+            "",
+            f"- 今天变化主要来自：{positive_change_drivers}；负向拖累来自："
+            f"{negative_change_drivers}。",
+            f"- {_score_vs_gate_sentence(payload)}",
+            f"- {_final_position_sentence(payload)}",
+            f"- {_quality_manual_review_sentence(payload)}",
             "",
             "## Top Changes",
             "",
@@ -301,6 +353,10 @@ def _insufficient_payload(
             ),
             "previous_signal_date": None,
         },
+        "current_date": (
+            current_signal_date.isoformat() if current_signal_date else as_of.isoformat()
+        ),
+        "previous_date": None,
         "source_inputs": _source_inputs(
             decision_snapshot_path=decision_snapshot_path,
             previous_decision_snapshot_path=previous_decision_snapshot_path,
@@ -308,12 +364,31 @@ def _insufficient_payload(
         ),
         "warnings": warnings,
         "overall_score_delta": {},
+        "overall_score_current": _float_or_none(
+            _mapping(current.get("scores")).get("overall_score")
+        ),
+        "overall_score_previous": None,
         "component_attribution": [],
+        "component_score_deltas": [],
+        "component_contribution_deltas": [],
         "confidence_attribution": {},
         "position_attribution": {},
+        "final_position_current": _position_band(current),
+        "final_position_previous": {},
+        "final_position_delta": {},
         "gate_attribution": [],
+        "binding_gate_current": _binding_gate_record(current),
+        "binding_gate_previous": {},
+        "binding_gate_changed": False,
+        "gate_state_changes": [],
         "data_quality_attribution": {},
+        "data_quality_status_delta": {},
+        "manual_review_count_current": _manual_review_count(current),
+        "manual_review_count_previous": None,
+        "manual_review_count_delta": None,
         "top_changes": {},
+        "top_positive_change_drivers": [],
+        "top_negative_change_drivers": [],
         "methodology": {
             "production_effect": PRODUCTION_EFFECT,
             "does_not_recompute_score": True,
@@ -619,6 +694,86 @@ def _top_changes(
     }
 
 
+def _component_score_deltas(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {
+            "component": row.get("component"),
+            "status": row.get("status"),
+            "current_score": row.get("current_score"),
+            "previous_score": row.get("previous_score"),
+            "score_delta": row.get("score_delta"),
+            "current_reason": row.get("current_reason"),
+            "previous_reason": row.get("previous_reason"),
+        }
+        for row in rows
+    ]
+
+
+def _component_contribution_deltas(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {
+            "component": row.get("component"),
+            "status": row.get("status"),
+            "current_contribution": row.get("current_contribution"),
+            "previous_contribution": row.get("previous_contribution"),
+            "contribution_delta": row.get("contribution_delta"),
+            "score_delta_effect": row.get("score_delta_effect"),
+            "weight_delta_effect": row.get("weight_delta_effect"),
+            "interaction_effect": row.get("interaction_effect"),
+        }
+        for row in rows
+    ]
+
+
+def _gate_state_changes(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {
+            "gate_id": row.get("gate_id"),
+            "label": row.get("label"),
+            "previous_cap": row.get("previous_cap"),
+            "current_cap": row.get("current_cap"),
+            "cap_delta": row.get("cap_delta"),
+            "previous_triggered": row.get("previous_triggered"),
+            "current_triggered": row.get("current_triggered"),
+            "binding_change": row.get("binding_change"),
+            "change_flags": row.get("change_flags"),
+        }
+        for row in rows
+        if row.get("change_flags")
+    ]
+
+
+def _position_band(snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    final = _mapping(_mapping(snapshot.get("positions")).get("final_risk_asset_ai_band"))
+    return {
+        "min": _float_or_none(final.get("min_position")),
+        "max": _float_or_none(final.get("max_position")),
+        "label": _text(final.get("label")),
+    }
+
+
+def _binding_gate_record(snapshot: Mapping[str, Any]) -> dict[str, Any]:
+    gate_id = _binding_gate_id(snapshot)
+    gate = _gate_index(snapshot).get(gate_id, {})
+    return {
+        "gate_id": gate_id,
+        "label": _text(gate.get("label")),
+        "max_position": _float_or_none(gate.get("max_position")),
+        "triggered": gate.get("triggered"),
+        "reason": _text(gate.get("reason")),
+    }
+
+
+def _manual_review_count(snapshot: Mapping[str, Any]) -> int:
+    return len(
+        [
+            item
+            for item in _records(snapshot.get("manual_review"))
+            if _text(item.get("status"), "UNKNOWN") != "PASS"
+        ]
+    )
+
+
 def _component_drivers(
     rows: list[dict[str, Any]],
     *,
@@ -900,3 +1055,79 @@ def _driver_list(top_changes: Mapping[str, Any], key: str) -> str:
             metrics.append("flags=" + ",".join(str(item) for item in record["change_flags"]))
         parts.append(f"{component} ({'; '.join(metrics)})")
     return "；".join(parts)
+
+
+def _driver_list_from_records(value: object) -> str:
+    records = _records(value)
+    if not records:
+        return "无"
+    parts = []
+    for record in records[:5]:
+        component = _text(record.get("component"), _text(record.get("gate_id"), "UNKNOWN"))
+        metric_parts = [
+            f"{key}={_format_optional_number(metric_value)}"
+            for key, metric_value in record.items()
+            if key not in {"component", "gate_id", "status", "change_flags"}
+            and _float_or_none(metric_value) is not None
+        ]
+        parts.append(component if not metric_parts else f"{component} ({'; '.join(metric_parts)})")
+    return "；".join(parts)
+
+
+def _score_vs_gate_sentence(payload: Mapping[str, Any]) -> str:
+    overall = _mapping(payload.get("overall_score_delta"))
+    score_delta = _float_or_none(overall.get("delta"))
+    gate_changed = payload.get("binding_gate_changed") is True or bool(
+        _records(payload.get("gate_state_changes"))
+    )
+    if score_delta not in {None, 0} and gate_changed:
+        return (
+            "本次变化同时包含 score 变化和 gate 状态变化，最终解释需同时查看 "
+            "component 与 gate attribution。"
+        )
+    if gate_changed:
+        return "本次最终状态主要需要关注 gate 变化；score 变化不是唯一解释。"
+    if score_delta not in {None, 0}:
+        return "本次变化主要来自 score/component 变化，binding gate 未发生实质切换。"
+    return "overall score 和 binding gate 均未显示实质变化。"
+
+
+def _final_position_sentence(payload: Mapping[str, Any]) -> str:
+    current = _mapping(payload.get("final_position_current"))
+    previous = _mapping(payload.get("final_position_previous"))
+    delta = _mapping(payload.get("final_position_delta"))
+    max_delta = _float_or_none(delta.get("max_delta"))
+    if max_delta in {None, 0}:
+        return (
+            "最终仓位上限未发生变化："
+            f"{_format_percent(previous.get('max'))} -> {_format_percent(current.get('max'))}。"
+        )
+    return (
+        "最终仓位上限发生变化："
+        f"{_format_percent(previous.get('max'))} -> {_format_percent(current.get('max'))} "
+        f"({_format_optional_number(max_delta)})。"
+    )
+
+
+def _quality_manual_review_sentence(payload: Mapping[str, Any]) -> str:
+    data_quality = _mapping(payload.get("data_quality_status_delta"))
+    changed = any(
+        data_quality.get(key) is True
+        for key in (
+            "market_data_status_changed",
+            "feature_status_changed",
+            "sec_feature_status_changed",
+        )
+    )
+    manual_delta = _float_or_none(payload.get("manual_review_count_delta"))
+    current_manual = _float_or_none(payload.get("manual_review_count_current"))
+    if changed and (manual_delta not in {None, 0} or (current_manual or 0) > 0):
+        return (
+            "data quality 状态与 manual review 数量均有变化，"
+            "Reader Brief 使用结论时应保留限制说明。"
+        )
+    if changed:
+        return "data quality 状态发生变化，需确认是否限制今日结论使用。"
+    if manual_delta not in {None, 0} or (current_manual or 0) > 0:
+        return "manual review 项存在或数量变化，需人工确认是否限制今日结论使用。"
+    return "未观察到 data quality 或 manual review 导致的新增使用限制。"
