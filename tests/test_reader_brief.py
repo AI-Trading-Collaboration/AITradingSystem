@@ -14,6 +14,7 @@ from ai_trading_system.reports.calculation_explainers import (
 from ai_trading_system.reports.reader_brief import (
     build_reader_brief_payload,
     build_reader_brief_quality_payload,
+    render_reader_brief_html,
 )
 
 
@@ -143,6 +144,9 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
         item["artifact_id"] == "market_panel" and item["impact_level"] == "IMPORTANT"
         for item in payload["missing_limited_artifact_impact"]["items"]
     )
+    html = render_reader_brief_html(payload)
+    assert "impact-group impact-important" in html
+    assert "status-badge status-important" in html
 
 
 def test_reports_reader_brief_cli_writes_html_and_json(tmp_path: Path) -> None:
@@ -212,9 +216,34 @@ def test_reports_reader_brief_cli_writes_html_and_json(tmp_path: Path) -> None:
     assert "Contribution Summary" in html
     assert "<details" in html
     assert "不是实盘交易指令" in html
+    assert 'class="summary-card-grid"' in html
+    assert "Final Action" in html
+    assert "Final AI Position" in html
+    assert "Binding Gate" in html
+    assert "Market Movement" in html
+    assert "Manual Review" in html
+    assert "production_effect=none" in html
+    assert "status-badge status-limited-reader-context" in html
+    assert "status-badge status-not-promotable" in html
+    assert 'class="market-card-grid"' in html
+    assert "SPY" in html
+    assert "QQQ" in html
+    assert "SMH" in html
+    assert "SOXX" in html
+    assert "VIX" in html
+    assert "DGS10" in html
+    assert "1D" in html
+    assert "5D" in html
+    assert "20D" in html
+    assert 'class="funnel-flow"' in html
+    assert 'class="funnel-node binding"' in html
+    assert 'class="binding-row"' in html
+    assert "recommended-action" in html
+    assert "impact-group impact-blocking" in html
     payload = json.loads(json_path.read_text(encoding="utf-8"))
     assert payload["production_effect"] == "none"
     assert payload["executive_decision"]["not_trade_instruction"] is True
+    assert render_reader_brief_html(payload) == render_reader_brief_html(payload)
 
 
 def test_reader_brief_quality_payload_summarizes_reader_ux_checks(tmp_path: Path) -> None:

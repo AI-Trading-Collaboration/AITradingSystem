@@ -482,10 +482,18 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
         "<body>",
         "<main>",
         f"<header><p>Reader Brief</p><h1>{html.escape(as_of)}</h1>"
-        f"<span>Status: {html.escape(status)}</span></header>",
+        f"<span>Status: {_status_badge(status)}</span></header>",
         _section(
             "Executive Summary",
-            _narrative_summary_html(narrative_summary)
+            _top_summary_cards(
+                decision=decision,
+                market=market,
+                manual_review=manual_review,
+                governance=governance,
+                payload_status=status,
+                production_effect=_text(payload.get("production_effect"), PRODUCTION_EFFECT),
+            )
+            + _narrative_summary_html(narrative_summary)
             + _definition_table(
                 [
                     ("today_conclusion", narrative_summary.get("today_conclusion")),
@@ -547,7 +555,8 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
         ),
         _section(
             "Market Situation",
-            _definition_table(
+            _market_proxy_cards(market)
+            + _definition_table(
                 [
                     ("availability", market.get("availability")),
                     ("market_price_panel_status", market.get("market_price_panel_status")),
@@ -565,7 +574,10 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
             )
             + _records_table(_records(market.get("proxy_rows"))),
         ),
-        _section("Score & Decision Funnel", _funnel_details(funnel)),
+        _section(
+            "Score & Decision Funnel",
+            _funnel_flow(funnel, decision) + _funnel_details(funnel),
+        ),
         _section(
             "Score Change Attribution",
             _definition_table(
@@ -603,7 +615,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("production_effect", missing_impact.get("production_effect")),
                 ]
             )
-            + _artifact_impact_table(_records(missing_impact.get("items"))),
+            + _artifact_impact_sections(_records(missing_impact.get("items"))),
         ),
         _section(
             "Task Cadence Calendar",
@@ -643,7 +655,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
             ),
         ),
         _section("Component Explainability", _records_table(components)),
-        _section("Binding Gate Ladder", _records_table(gates)),
+        _section("Binding Gate Ladder", _gate_ladder_html(gates)),
         _section("Data Quality & PIT Safety", _definition_table(list(quality.items()))),
         _section("Backtest / Shadow / Governance", _definition_table(list(governance.items()))),
         _section("Documentation Contract", _definition_table(list(documentation_contract.items()))),
@@ -2313,6 +2325,100 @@ def _text(value: object, default: str = "") -> str:
     return str(value)
 
 
+_BADGE_VALUES = {
+    "ACTION_REQUIRED",
+    "AVAILABLE",
+    "BLOCKING",
+    "BLOCKED_BY_DATA_QUALITY",
+    "BLOCKED_BY_MANUAL_REVIEW",
+    "BLOCKED_BY_MISSING_ARTIFACTS",
+    "CRITICAL",
+    "DOCUMENTATION",
+    "FAILED",
+    "FAIL",
+    "FALSE",
+    "FRESH",
+    "INFO",
+    "IMPORTANT",
+    "LIMITED",
+    "LIMITED_CONTEXT",
+    "LIMITED_READER_CONTEXT",
+    "MISSING",
+    "MISSING_MARKET_PRICE_DATA",
+    "NOT_PROMOTABLE",
+    "OK",
+    "OPTIONAL",
+    "PASS",
+    "PASS_WITH_LIMITATIONS",
+    "PASS_WITH_WARNINGS",
+    "PROMOTABLE",
+    "REGISTRY_FALLBACK",
+    "REQUIRED_MISSING",
+    "STALE",
+    "TRUE",
+    "WARNING",
+}
+
+
+def _value_html(label: object, value: object, *, default: str = "UNKNOWN") -> str:
+    text = _text(value, default)
+    label_text = _text(label).lower()
+    if label_text == "production_effect":
+        return _status_badge(text)
+    status_label = label_text.endswith("status") or label_text in {
+        "availability",
+        "impact_level",
+        "freshness_status",
+        "triggered",
+    }
+    if (status_label and _is_badge_value(text)) or _is_badge_value(text):
+        return _status_badge(text)
+    return html.escape(text)
+
+
+def _status_badge(value: object) -> str:
+    text = _text(value, "UNKNOWN")
+    normalized = text.upper()
+    if normalized == "NONE":
+        label = "production_effect=none"
+        class_name = "production-none"
+    elif normalized == "BINDING GATE":
+        label = "binding gate"
+        class_name = "binding-gate"
+    elif not _is_badge_value(text):
+        label = text
+        class_name = "custom"
+    else:
+        label = text
+        class_name = _css_token(normalized)
+    return (
+        f'<span class="status-badge status-{html.escape(class_name)}">'
+        f"{html.escape(label)}</span>"
+    )
+
+
+def _is_badge_value(value: str) -> bool:
+    normalized = value.upper()
+    return normalized in _BADGE_VALUES or normalized == "NONE"
+
+
+def _leading_status(value: object) -> str:
+    text = _text(value, "UNKNOWN").strip()
+    for separator in ("；", ";", "，", ",", " "):
+        if separator in text:
+            text = text.split(separator, maxsplit=1)[0]
+            break
+    return text or "UNKNOWN"
+
+
+def _css_token(value: str) -> str:
+    chars = [char.lower() if char.isalnum() else "-" for char in value]
+    token = "".join(chars).strip("-")
+    while "--" in token:
+        token = token.replace("--", "-")
+    return token or "unknown"
+
+
 def _short_path(value: object) -> str:
     text = _text(value)
     if not text:
@@ -2350,6 +2456,190 @@ def _narrative_summary_html(summary: Mapping[str, Any]) -> str:
     )
 
 
+def _top_summary_cards(
+    *,
+    decision: Mapping[str, Any],
+    market: Mapping[str, Any],
+    manual_review: Mapping[str, Any],
+    governance: Mapping[str, Any],
+    payload_status: str,
+    production_effect: str,
+) -> str:
+    manual_items = _records(manual_review.get("items"))
+    critical_count = sum(
+        _int(group.get("count"))
+        for group in _records(manual_review.get("groups"))
+        if _text(group.get("severity")) == "critical"
+    )
+    cards = [
+        {
+            "label": "Final Action",
+            "value": _text(decision.get("action"), "UNKNOWN"),
+            "detail": f"reader_status={payload_status}",
+            "badge": payload_status,
+            "class": "summary-card--decision",
+        },
+        {
+            "label": "Final AI Position",
+            "value": _text(decision.get("final_risk_asset_ai_position"), "UNKNOWN"),
+            "detail": _text(decision.get("total_risk_asset_budget"), "UNKNOWN"),
+            "badge": _leading_status(decision.get("data_gate")),
+            "class": "summary-card--position",
+        },
+        {
+            "label": "Binding Gate",
+            "value": _text(decision.get("binding_gate_label"), "UNKNOWN"),
+            "detail": _text(decision.get("binding_gate_reason"), "打开 gate ladder 查看约束来源。"),
+            "badge": "binding gate",
+            "class": "summary-card--binding",
+        },
+        {
+            "label": "Market Movement",
+            "value": _text(market.get("market_movement_sentence"), "MISSING"),
+            "detail": _text(market.get("market_price_panel_status"), "UNKNOWN"),
+            "badge": _text(market.get("market_price_panel_status"), "UNKNOWN"),
+            "class": "summary-card--market",
+        },
+        {
+            "label": "Manual Review",
+            "value": _text(len(manual_items)),
+            "detail": f"critical={critical_count}",
+            "badge": "ACTION_REQUIRED" if manual_items else "OK",
+            "class": "summary-card--review",
+        },
+        {
+            "label": "Production Effect",
+            "value": f"production_effect={production_effect}",
+            "detail": (f"promotion_status={_text(governance.get('promotion_status'), 'UNKNOWN')}"),
+            "badge": production_effect,
+            "extra_badge": _text(governance.get("promotion_status"), "UNKNOWN"),
+            "class": "summary-card--safety",
+        },
+    ]
+    rendered = []
+    for card in cards:
+        badges = _status_badge(_text(card.get("badge"), "UNKNOWN"))
+        extra_badge = _text(card.get("extra_badge"))
+        if extra_badge:
+            badges += _status_badge(extra_badge)
+        rendered.append(
+            '<article class="summary-card {}">'.format(html.escape(_text(card.get("class"))))
+            + f"<div>{html.escape(_text(card.get('label')))}</div>"
+            + f"<strong>{html.escape(_text(card.get('value'), 'UNKNOWN'))}</strong>"
+            + f"<p>{html.escape(_text(card.get('detail'), 'UNKNOWN'))}</p>"
+            + f'<div class="badge-row">{badges}</div>'
+            + "</article>"
+        )
+    return '<div class="summary-card-grid">' + "\n".join(rendered) + "</div>"
+
+
+def _market_proxy_cards(market: Mapping[str, Any]) -> str:
+    rows = _records(market.get("proxy_rows"))
+    rows_by_symbol = {_normalize_market_symbol(row.get("symbol")): row for row in rows}
+    cards = []
+    for symbol in ("SPY", "QQQ", "SMH", "SOXX", "VIX", "DGS10"):
+        row = rows_by_symbol.get(symbol, {})
+        status = _text(row.get("data_status"), "MISSING")
+        cards.append(
+            '<article class="market-card">'
+            f"<div>{html.escape(symbol)}</div>"
+            f"<strong>{html.escape(_text(row.get('last_price'), 'MISSING'))}</strong>"
+            '<dl class="market-metrics">'
+            f"<dt>1D</dt><dd>{html.escape(_text(row.get('return_1d'), 'MISSING'))}</dd>"
+            f"<dt>5D</dt><dd>{html.escape(_text(row.get('return_5d'), 'MISSING'))}</dd>"
+            f"<dt>20D</dt><dd>{html.escape(_text(row.get('return_20d'), 'MISSING'))}</dd>"
+            "</dl>"
+            + _status_badge(status)
+            + f"<p>{html.escape(_text(row.get('risk_interpretation'), '未提供该 proxy。'))}</p>"
+            + "</article>"
+        )
+    return '<div class="market-card-grid">' + "\n".join(cards) + "</div>"
+
+
+def _normalize_market_symbol(value: object) -> str:
+    text = _text(value).upper()
+    return text[1:] if text.startswith("^") else text
+
+
+def _funnel_flow(records: list[dict[str, Any]], decision: Mapping[str, Any]) -> str:
+    by_metric = {_text(record.get("metric_id")): record for record in records}
+    sequence = [
+        ("overall_score", "Score"),
+        ("model_position_band", "Raw Position"),
+        ("confidence_adjusted_position", "Confidence Adjustment"),
+        ("position_gate", "Gate Cap"),
+        ("final_position_band", "Final Position"),
+    ]
+    nodes = []
+    for metric_id, label in sequence:
+        record = by_metric.get(metric_id, {})
+        is_binding = metric_id == "position_gate"
+        node_classes = "funnel-node" + (" binding" if is_binding else "")
+        value = _text(record.get("current_value"), "MISSING")
+        detail = (
+            _text(decision.get("binding_gate_label"), "UNKNOWN")
+            if is_binding
+            else _text(record.get("source_field"), metric_id)
+        )
+        badge = _status_badge("binding gate") if is_binding else ""
+        nodes.append(
+            f'<div class="{node_classes}">'
+            f"<span>{html.escape(label)}</span>"
+            f"<strong>{html.escape(value)}</strong>"
+            f"<small>{html.escape(detail)}</small>"
+            f"{badge}"
+            "</div>"
+        )
+    return '<div class="funnel-flow">' + "\n".join(nodes) + "</div>"
+
+
+def _gate_ladder_html(records: list[dict[str, Any]]) -> str:
+    if not records:
+        return "<p>无可用 gate 记录。</p>"
+    rows = []
+    for record in records:
+        is_binding = bool(record.get("binding"))
+        row_class = ' class="binding-row"' if is_binding else ""
+        state_badge = (
+            _status_badge("binding gate")
+            if is_binding
+            else _status_badge(_text(record.get("triggered"), "UNKNOWN"))
+        )
+        rows.append(
+            f"<tr{row_class}>"
+            f"<td>{html.escape(_text(record.get('gate_id')))}</td>"
+            f"<td>{html.escape(_text(record.get('label')))}</td>"
+            f"<td>{html.escape(_text(record.get('cap'), 'UNKNOWN'))}</td>"
+            f"<td>{state_badge}</td>"
+            f"<td>{html.escape(_text(record.get('source')))}</td>"
+            f"<td>{html.escape(_text(record.get('reason')))}</td>"
+            f"<td>{html.escape(_text(record.get('release_condition')))}</td>"
+            "</tr>"
+        )
+    return (
+        "<table><thead><tr><th>gate_id</th><th>label</th><th>cap</th>"
+        "<th>state</th><th>source</th><th>reason</th><th>release_condition</th>"
+        "</tr></thead><tbody>" + "\n".join(rows) + "</tbody></table>"
+    )
+
+
+def _artifact_impact_sections(records: list[dict[str, Any]]) -> str:
+    if not records:
+        return "<p>未发现缺失或受限 artifact。</p>"
+    parts: list[str] = []
+    for level in ("BLOCKING", "IMPORTANT", "OPTIONAL", "INFO"):
+        subset = [record for record in records if _text(record.get("impact_level")) == level]
+        if not subset:
+            continue
+        parts.append(
+            f'<div class="impact-group impact-{_css_token(level)}">'
+            f"<h3>{_status_badge(level)} {html.escape(level.title())}</h3>"
+            + _artifact_impact_table(subset)
+            + "</div>"
+        )
+    return "\n".join(parts)
+
+
 def _artifact_impact_table(records: list[dict[str, Any]]) -> str:
     if not records:
         return "<p>未发现缺失或受限 artifact。</p>"
@@ -2373,8 +2663,8 @@ def _artifact_impact_table(records: list[dict[str, Any]]) -> str:
             "<tr>"
             f"<td>{html.escape(_text(record.get('artifact_id')))}</td>"
             f"<td>{html.escape(_text(record.get('short_name'), 'MISSING'))}</td>"
-            f"<td>{html.escape(_text(record.get('status'), 'UNKNOWN'))}</td>"
-            f"<td>{html.escape(_text(record.get('impact_level'), 'INFO'))}</td>"
+            f"<td>{_status_badge(_text(record.get('status'), 'UNKNOWN'))}</td>"
+            f"<td>{_status_badge(_text(record.get('impact_level'), 'INFO'))}</td>"
             f"<td>{html.escape(_text(record.get('reader_impact'), 'UNKNOWN'))}</td>"
             f"<td>{html.escape(_text(record.get('decision_impact'), 'UNKNOWN'))}</td>"
             f"<td>{html.escape(_text(record.get('recommended_action'), 'UNKNOWN'))}{details}</td>"
@@ -2397,8 +2687,13 @@ def _manual_review_groups_html(
     parts: list[str] = []
     for group in groups:
         label = html.escape(_text(group.get("label"), "UNKNOWN"))
-        parts.append(f"<h3>{label}</h3>")
+        severity = _text(group.get("severity"), "info")
+        parts.append(
+            f'<div class="review-group review-{html.escape(_css_token(severity))}">'
+            f"<h3>{_status_badge(severity)} {label}</h3>"
+        )
         parts.append(_manual_review_table(_records(group.get("items"))))
+        parts.append("</div>")
     return "\n".join(parts)
 
 
@@ -2418,7 +2713,8 @@ def _manual_review_table(records: list[dict[str, Any]]) -> str:
             f"<td>{html.escape(_text(record.get('action_id')))}</td>"
             f"<td>{html.escape(_text(record.get('category')))}</td>"
             f"<td>{html.escape(_text(record.get('reason')))}</td>"
-            f"<td>{html.escape(_text(record.get('recommended_next_action')))}</td>"
+            '<td><strong class="recommended-action">'
+            f"{html.escape(_text(record.get('recommended_next_action')))}</strong></td>"
             f"<td>{html.escape(_text(record.get('decision_impact')))}</td>"
             f"<td>{html.escape(_text(record.get('source_artifact')))}"
             f"<details><summary>audit</summary>{audit}</details></td>"
@@ -2465,9 +2761,9 @@ def _navigation_table(records: list[dict[str, Any]]) -> str:
             "<tr>"
             f"<td>{html.escape(_text(record.get('artifact_id')))}</td>"
             f"<td>{html.escape(_text(record.get('short_name'), _text(record.get('title'))))}</td>"
-            f"<td>{html.escape(_text(record.get('status'), 'UNKNOWN'))}</td>"
-            f"<td>{html.escape(_text(record.get('freshness_status'), 'UNKNOWN'))}</td>"
-            f"<td>{html.escape(_text(record.get('production_effect'), PRODUCTION_EFFECT))}</td>"
+            f"<td>{_status_badge(_text(record.get('status'), 'UNKNOWN'))}</td>"
+            f"<td>{_status_badge(_text(record.get('freshness_status'), 'UNKNOWN'))}</td>"
+            f"<td>{_status_badge(_text(record.get('production_effect'), PRODUCTION_EFFECT))}</td>"
             f"<td>{html.escape(_text(record.get('why_open_this'), 'UNKNOWN'))}"
             f"<details><summary>audit</summary>{audit}</details></td>"
             "</tr>"
@@ -2481,10 +2777,7 @@ def _navigation_table(records: list[dict[str, Any]]) -> str:
 
 def _definition_table(rows: list[tuple[object, object]]) -> str:
     table_rows = [
-        "<tr><th>{}</th><td>{}</td></tr>".format(
-            html.escape(_text(label)),
-            html.escape(_text(value, "UNKNOWN")),
-        )
+        f"<tr><th>{html.escape(_text(label))}</th><td>{_value_html(label, value)}</td></tr>"
         for label, value in rows
     ]
     return "<table><tbody>" + "\n".join(table_rows) + "</tbody></table>"
@@ -2497,7 +2790,9 @@ def _records_table(records: list[dict[str, Any]]) -> str:
     header = "".join(f"<th>{html.escape(column)}</th>" for column in columns)
     body_rows = [
         "<tr>"
-        + "".join(f"<td>{html.escape(_text(record.get(column), ''))}</td>" for column in columns)
+        + "".join(
+            f"<td>{_value_html(column, record.get(column), default='')}</td>" for column in columns
+        )
         + "</tr>"
         for record in records
     ]
@@ -2578,7 +2873,7 @@ def _cadence_report_table(records: list[dict[str, Any]]) -> str:
             f"<td>{html.escape(_text(record.get('last_run'), 'MISSING'))}</td>"
             f"<td>{html.escape(_text(record.get('next_expected_run'), 'UNKNOWN'))}</td>"
             f"<td>{html.escape(_short_path(artifact) or artifact)}</td>"
-            f"<td>{html.escape(status)}</td>"
+            f"<td>{_status_badge(status)}</td>"
             f"<td>{html.escape(_text(record.get('owner'), 'UNKNOWN'))}</td>"
             f"<td>{html.escape(next_action)}"
             f"<details><summary>audit</summary>{audit}</details></td>"
@@ -2626,11 +2921,172 @@ h2 {
   letter-spacing: 0;
 }
 section {
+  margin: 24px 0;
+  padding: 0;
+}
+.summary-card-grid,
+.market-card-grid,
+.funnel-flow {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 14px;
+}
+.summary-card-grid {
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+}
+.market-card-grid {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.summary-card,
+.market-card,
+.funnel-node {
   background: #ffffff;
   border: 1px solid #d9dee7;
   border-radius: 6px;
-  margin: 14px 0;
-  padding: 16px;
+  padding: 12px;
+  min-width: 0;
+}
+.summary-card div,
+.market-card div,
+.funnel-node span {
+  color: #586069;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.summary-card strong,
+.market-card strong,
+.funnel-node strong {
+  display: block;
+  margin: 6px 0;
+  color: #1b1f23;
+  font-size: 20px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.summary-card p,
+.market-card p,
+.funnel-node small {
+  color: #4d5968;
+  display: block;
+  font-size: 12px;
+  line-height: 1.35;
+  margin: 0 0 8px;
+  overflow-wrap: anywhere;
+}
+.summary-card--binding,
+.funnel-node.binding,
+tr.binding-row {
+  border-color: #b7791f;
+  box-shadow: inset 3px 0 0 #b7791f;
+}
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.status-badge {
+  background: #eef2f7;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  color: #29313d;
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  margin: 1px 4px 1px 0;
+  padding: 4px 7px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.status-ok,
+.status-pass,
+.status-available,
+.status-fresh,
+.status-production-none {
+  background: #e8f5ee;
+  border-color: #9fd3b4;
+  color: #0f5132;
+}
+.status-pass-with-warnings,
+.status-pass-with-limitations,
+.status-limited,
+.status-limited-reader-context,
+.status-registry-fallback,
+.status-warning,
+.status-important,
+.status-true,
+.status-binding-gate {
+  background: #fff4db;
+  border-color: #e3b45d;
+  color: #7a4f01;
+}
+.status-missing,
+.status-stale,
+.status-required-missing,
+.status-blocking,
+.status-failed,
+.status-fail,
+.status-critical,
+.status-blocked-by-missing-artifacts,
+.status-blocked-by-manual-review,
+.status-blocked-by-data-quality {
+  background: #fdecec;
+  border-color: #efaaa7;
+  color: #842029;
+}
+.status-info,
+.status-optional,
+.status-documentation,
+.status-not-promotable,
+.status-false {
+  background: #edf4ff;
+  border-color: #b7cbed;
+  color: #25476a;
+}
+.market-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px 8px;
+  margin: 8px 0;
+}
+.market-metrics dt {
+  color: #586069;
+  font-size: 11px;
+  font-weight: 700;
+}
+.market-metrics dd {
+  font-size: 13px;
+  margin: 0;
+}
+.funnel-flow {
+  align-items: stretch;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.funnel-node {
+  position: relative;
+}
+.review-group,
+.impact-group {
+  border-left: 3px solid #d9dee7;
+  margin: 12px 0;
+  padding-left: 12px;
+}
+.review-critical,
+.impact-blocking {
+  border-left-color: #c2413d;
+}
+.review-warning,
+.impact-important {
+  border-left-color: #b7791f;
+}
+.review-info,
+.impact-info,
+.impact-optional {
+  border-left-color: #4676b6;
+}
+.recommended-action {
+  color: #1b1f23;
 }
 details.funnel-step {
   border-top: 1px solid #e7ebf0;
@@ -2649,6 +3105,7 @@ h3 {
   letter-spacing: 0;
 }
 table {
+  background: #ffffff;
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
