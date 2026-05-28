@@ -7135,6 +7135,7 @@ def daily_ops_run_command(
         project_root=PROJECT_ROOT,
         env=os.environ,
         run_id=resolved_run_id,
+        diagnostics_dir=run_paths.reports_dir / "diagnostics",
     )
     metadata_path = default_daily_ops_run_metadata_path(
         run_paths.metadata_dir,

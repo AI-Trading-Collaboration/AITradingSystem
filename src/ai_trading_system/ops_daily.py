@@ -30,6 +30,7 @@ from ai_trading_system.evidence_dashboard import (
     default_evidence_dashboard_json_path,
     default_evidence_dashboard_path,
 )
+from ai_trading_system.external_request_cache import sanitize_diagnostic_text
 from ai_trading_system.features.market import default_feature_report_path
 from ai_trading_system.feedback_loop_review import default_feedback_loop_review_report_path
 from ai_trading_system.fmp_forward_pit import (
@@ -145,6 +146,7 @@ class DailyOpsStepResult:
     stdout_line_count: int = 0
     stderr_line_count: int = 0
     error: str | None = None
+    diagnostic_path: Path | None = None
 
 
 @dataclass(frozen=True)
@@ -210,6 +212,15 @@ class DailyOpsRunReport:
 
 
 DailyOpsCommandRunner = subprocess.run
+_DIAGNOSTIC_TEXT_MAX_CHARS = 60_000
+_DIAGNOSTIC_ENV_SECRET_TOKENS = (
+    "KEY",
+    "TOKEN",
+    "SECRET",
+    "PASSWORD",
+    "CREDENTIAL",
+    "AUTH",
+)
 
 
 def daily_ops_step_to_workflow_step(step: DailyOpsStep) -> WorkflowStep:
@@ -878,10 +889,16 @@ def run_daily_ops_plan(
     runner: Any = DailyOpsCommandRunner,
     stop_on_failure: bool = True,
     run_id: str | None = None,
+    diagnostics_dir: Path | None = None,
     visibility_check_date: date | None = None,
     visibility_latest_completed_trading_day: date | None = None,
 ) -> DailyOpsRunReport:
     started_at = datetime.now(tz=UTC)
+    resolved_diagnostics_dir = (
+        diagnostics_dir
+        if diagnostics_dir is not None
+        else project_root / "outputs" / "reports" / "diagnostics" / "daily_ops"
+    )
     checked_env = dict(os.environ if env is None else env)
     checked_env["PYTHONFAULTHANDLER"] = "1"
     checked_env["PYTHONMALLOC"] = "malloc"
@@ -999,11 +1016,26 @@ def run_daily_ops_plan(
             stdout_text = completed.stdout or ""
             stderr_text = completed.stderr or ""
             artifact_error = _post_step_artifact_status_error(step) if return_code == 0 else None
+            status = "PASS" if return_code == 0 and artifact_error is None else "FAIL"
+            diagnostic_path = None
+            if status == "FAIL":
+                diagnostic_path = _write_step_failure_diagnostic(
+                    step=step,
+                    as_of=plan.as_of,
+                    started_at=step_started,
+                    ended_at=step_ended,
+                    return_code=return_code,
+                    stdout_text=stdout_text,
+                    stderr_text=stderr_text,
+                    error=artifact_error,
+                    env=checked_env,
+                    diagnostics_dir=resolved_diagnostics_dir,
+                )
             result = DailyOpsStepResult(
                 step_id=step.step_id,
                 title=step.title,
                 command=step.command,
-                status="PASS" if return_code == 0 and artifact_error is None else "FAIL",
+                status=status,
                 return_code=return_code,
                 started_at=step_started,
                 ended_at=step_ended,
@@ -1013,9 +1045,23 @@ def run_daily_ops_plan(
                 stdout_line_count=len(stdout_text.splitlines()),
                 stderr_line_count=len(stderr_text.splitlines()),
                 error=artifact_error,
+                diagnostic_path=diagnostic_path,
             )
         except OSError as exc:
             step_ended = datetime.now(tz=UTC)
+            error = f"{type(exc).__name__}: {exc}"
+            diagnostic_path = _write_step_failure_diagnostic(
+                step=step,
+                as_of=plan.as_of,
+                started_at=step_started,
+                ended_at=step_ended,
+                return_code=None,
+                stdout_text="",
+                stderr_text="",
+                error=error,
+                env=checked_env,
+                diagnostics_dir=resolved_diagnostics_dir,
+            )
             result = DailyOpsStepResult(
                 step_id=step.step_id,
                 title=step.title,
@@ -1027,7 +1073,8 @@ def run_daily_ops_plan(
                 duration_seconds=(step_ended - step_started).total_seconds(),
                 produced_paths=step.produced_paths,
                 blocks_downstream=step.blocks_downstream,
-                error=f"{type(exc).__name__}: {exc}",
+                error=error,
+                diagnostic_path=diagnostic_path,
             )
         results.append(result)
         if result.status == "FAIL" and (stop_on_failure or step.blocks_downstream):
@@ -1253,7 +1300,9 @@ def render_daily_ops_run_report(
             "- 启动子命令前会清理项目源码目录下已有 `__pycache__`，避免损坏的本地 "
             "bytecode cache 被后续子进程读取。",
             "- 执行报告只记录命令状态、退出码、耗时和预期 artifact 路径；",
-            "不写入 stdout/stderr 原文、API key、token 或付费内容原文。",
+            "不在主报告写入 stdout/stderr 原文、API key、token 或付费内容原文。",
+            "- 失败步骤会写入单独的脱敏 stdout/stderr 诊断 artifact，并在阻断步骤和 "
+            "metadata 中记录路径。",
             "- Metadata sidecar 记录 run id、git/config/rule hash、命令清单、"
             "env presence 和 artifact checksum；不记录 secret 值。",
             "- 投资结论仍以 `score-daily`、数据质量报告、SEC/估值校验、",
@@ -1318,6 +1367,8 @@ def render_daily_ops_run_report(
         )
         if failed.error:
             lines.append(f"- Error：`{_escape_table(failed.error)}`")
+        if failed.diagnostic_path is not None:
+            lines.append(f"- 失败诊断：`{failed.diagnostic_path}`")
         lines.append("")
     lines.extend(
         [
@@ -1357,7 +1408,9 @@ def render_daily_ops_run_report(
             "",
             "- `PASS` 表示命令退出码为 0；`FAIL` 表示命令退出码非 0 或命令无法启动。",
             "- `SKIPPED` 只会出现在显式传入 `--skip-*` 选项的步骤。",
-            "- 报告中的 `Stdout Lines` / `Stderr Lines` 只记录行数，不保存原文。",
+            "- 报告中的 `Stdout Lines` / `Stderr Lines` 只记录行数，不在主报告保存原文。",
+            "- 失败步骤如生成诊断 artifact，仅保存脱敏 stdout/stderr，"
+            "并在阻断步骤和 metadata 中记录路径。",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -1502,6 +1555,94 @@ def _purge_source_pycache_dirs(project_root: Path) -> None:
         shutil.rmtree(resolved, ignore_errors=True)
 
 
+def _write_step_failure_diagnostic(
+    *,
+    step: DailyOpsStep,
+    as_of: date,
+    started_at: datetime,
+    ended_at: datetime,
+    return_code: int | None,
+    stdout_text: str,
+    stderr_text: str,
+    error: str | None,
+    env: Mapping[str, str],
+    diagnostics_dir: Path,
+) -> Path:
+    diagnostics_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = started_at.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
+    output_path = diagnostics_dir / (
+        "daily_ops_step_failure_"
+        f"{as_of.isoformat()}_{_safe_file_token(step.step_id)}_{timestamp}.md"
+    )
+    stdout_redacted = _redact_diagnostic_output(stdout_text, env)
+    stderr_redacted = _redact_diagnostic_output(stderr_text, env)
+    error_redacted = "" if error is None else _redact_diagnostic_output(error, env)
+    duration_seconds = (ended_at - started_at).total_seconds()
+    lines = [
+        "# Daily ops step failure diagnostic",
+        "",
+        f"- as_of: {as_of.isoformat()}",
+        f"- step_id: {step.step_id}",
+        f"- title: {step.title}",
+        f"- command: `{_join_command(step.command) if step.command else 'PRECHECK'}`",
+        f"- return_code: {_display_return_code(return_code)}",
+        f"- started_at: {started_at.isoformat()}",
+        f"- ended_at: {ended_at.isoformat()}",
+        f"- duration_seconds: {duration_seconds:.1f}",
+        f"- stdout_line_count: {len(stdout_text.splitlines())}",
+        f"- stderr_line_count: {len(stderr_text.splitlines())}",
+        "- redaction: env secret values and sensitive URL/header tokens are replaced with `***`",
+    ]
+    if error_redacted:
+        lines.extend(["", "## Error", "", "```text", _fence_safe(error_redacted), "```"])
+    lines.extend(
+        [
+            "",
+            "## Stdout redacted",
+            "",
+            "```text",
+            _fence_safe(stdout_redacted),
+            "```",
+            "",
+            "## Stderr redacted",
+            "",
+            "```text",
+            _fence_safe(stderr_redacted),
+            "```",
+        ]
+    )
+    output_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return output_path
+
+
+def _redact_diagnostic_output(text: str, env: Mapping[str, str]) -> str:
+    return sanitize_diagnostic_text(
+        text,
+        extra_secrets=_diagnostic_secret_values(env),
+        max_length=_DIAGNOSTIC_TEXT_MAX_CHARS,
+    )
+
+
+def _diagnostic_secret_values(env: Mapping[str, str]) -> tuple[str, ...]:
+    values: list[str] = []
+    for name, value in env.items():
+        if not value:
+            continue
+        normalized = name.upper()
+        if any(token in normalized for token in _DIAGNOSTIC_ENV_SECRET_TOKENS):
+            values.append(value)
+    return tuple(dict.fromkeys(values))
+
+
+def _safe_file_token(value: str) -> str:
+    token = "".join(char if char.isalnum() or char in {"-", "_"} else "_" for char in value)
+    return "_".join(part for part in token.split("_") if part) or "step"
+
+
+def _fence_safe(text: str) -> str:
+    return text.replace("```", "` ` `")
+
+
 def _quote_command_arg(value: str) -> str:
     if not value:
         return "''"
@@ -1603,7 +1744,16 @@ def _build_daily_ops_run_metadata(
 ) -> DailyOpsRunMetadata:
     required_env = sorted({env_var for step in plan.steps for env_var in step.required_env_vars})
     produced_paths = tuple(
-        dict.fromkeys(path for step in plan.steps for path in step.produced_paths)
+        dict.fromkeys(
+            (
+                *(path for step in plan.steps for path in step.produced_paths),
+                *(
+                    result.diagnostic_path
+                    for result in results
+                    if result.diagnostic_path is not None
+                ),
+            )
+        )
     )
     config_paths = tuple(sorted((project_root / "config").glob("*.yaml")))
     resolved_run_id = run_id or (
@@ -1660,6 +1810,7 @@ def _metadata_step_result(result: DailyOpsStepResult) -> Mapping[str, object]:
         "stdout_line_count": result.stdout_line_count,
         "stderr_line_count": result.stderr_line_count,
         "error": result.error,
+        "diagnostic_path": None if result.diagnostic_path is None else str(result.diagnostic_path),
     }
 
 

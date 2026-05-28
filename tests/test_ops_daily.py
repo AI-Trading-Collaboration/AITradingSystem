@@ -368,6 +368,7 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
         project_root,
         env,
         run_id,
+        diagnostics_dir,
     ) -> DailyOpsRunReport:
         reports_dir = project_root / "outputs" / "reports"
         reports_dir.mkdir(parents=True, exist_ok=True)
@@ -714,6 +715,64 @@ def test_run_daily_ops_plan_stops_on_first_failed_command() -> None:
         ("fundamentals", "download-sec-companyfacts"),
         ("fundamentals", "extract-sec-metrics", "--as-of", "2026-05-06"),
     ]
+
+
+def test_run_daily_ops_plan_writes_redacted_failure_diagnostic(tmp_path: Path) -> None:
+    plan = build_daily_ops_plan(
+        as_of=date(2026, 5, 6),
+        project_root=tmp_path,
+        include_download_data=False,
+        include_pit_snapshots=False,
+        include_valuation_snapshots=False,
+        include_secret_scan=False,
+        skip_risk_event_openai_precheck=True,
+    )
+    secret = "sk-live-test-secret"
+
+    def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
+        return_code = 1 if "extract-sec-metrics" in command else 0
+        stderr = (
+            "Traceback line\n"
+            f"https://example.test?apikey={secret}\n"
+            f"Authorization: Bearer {secret}\n"
+        )
+        return subprocess.CompletedProcess(
+            command,
+            return_code,
+            stdout=f"stdout contains {secret}\n",
+            stderr=stderr if return_code else "",
+        )
+
+    report = run_daily_ops_plan(
+        plan,
+        project_root=tmp_path,
+        env={
+            "SEC_USER_AGENT": "AITradingSystem test@example.com",
+            "FMP_API_KEY": secret,
+        },
+        runner=fake_runner,
+        visibility_check_date=date(2026, 5, 6),
+    )
+    assert report.failed_step is not None
+    diagnostic_path = report.failed_step.diagnostic_path
+    assert diagnostic_path is not None
+    diagnostic_text = diagnostic_path.read_text(encoding="utf-8")
+    markdown = render_daily_ops_run_report(report)
+
+    assert report.status == "FAIL"
+    assert str(diagnostic_path) in markdown
+    assert "Traceback line" in diagnostic_text
+    assert "apikey=***" in diagnostic_text
+    assert "Authorization: Bearer ***" in diagnostic_text
+    assert secret not in diagnostic_text
+    assert secret not in markdown
+    assert report.metadata is not None
+    failed_step = next(
+        item for item in report.metadata.step_results if item["step_id"] == "sec_metrics"
+    )
+    assert failed_step["diagnostic_path"] == str(diagnostic_path)
+    produced_paths = {artifact.path for artifact in report.metadata.produced_artifacts}
+    assert diagnostic_path in produced_paths
 
 
 def test_run_daily_ops_plan_sets_stable_child_python_env() -> None:
