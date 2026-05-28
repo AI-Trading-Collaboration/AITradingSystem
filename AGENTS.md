@@ -194,9 +194,13 @@ the current local branch after the relevant validation has passed. The commit
 must include the task-register/status update, supporting documentation updates,
 and the implementation or test changes that caused the task to move forward.
 
-This permission applies to local commits only. Pushing a branch, opening or
-updating a pull request, rewriting history, or including unrelated user changes
-still requires an explicit project-owner request.
+After the local commit succeeds and the relevant validation has passed, push the
+current branch by default. Do not push if the user explicitly asks not to push,
+if the commit includes unrelated user changes, if the branch has no configured
+remote/upstream, or if the push would require rewriting history or force-push.
+Opening or updating a pull request, rewriting history, force-pushing, or
+including unrelated user changes still requires an explicit project-owner
+request.
 
 ## Parallel Development Discipline
 
