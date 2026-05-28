@@ -1,0 +1,499 @@
+from __future__ import annotations
+
+import json
+from datetime import date
+from pathlib import Path
+
+from typer.testing import CliRunner
+
+from ai_trading_system.cli import app
+from ai_trading_system.reports.calculation_explainers import (
+    build_calculation_explainers_payload,
+    write_calculation_explainers_json,
+)
+from ai_trading_system.reports.reader_brief import build_reader_brief_payload
+
+
+def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -> None:
+    inputs = _write_reader_brief_inputs(tmp_path)
+
+    payload = build_reader_brief_payload(
+        as_of=date(2026, 5, 4),
+        reports_dir=tmp_path,
+        decision_snapshot_path=inputs["snapshot"],
+        calculation_explainers_path=inputs["calculation_explainers"],
+        daily_decision_summary_path=inputs["daily_decision_summary"],
+        evidence_dashboard_json_path=inputs["evidence_dashboard"],
+        daily_task_dashboard_json_path=inputs["daily_task_dashboard"],
+        daily_report_path=inputs["daily_report"],
+        trace_bundle_path=inputs["trace_bundle"],
+        score_change_attribution_path=inputs["score_change_attribution"],
+        research_governance_summary_path=inputs["research_governance_summary"],
+        report_index_path=inputs["report_index"],
+    )
+
+    assert payload["status"] == "PASS"
+    assert payload["production_effect"] == "none"
+    assert payload["reader_entry_role"] == "daily_reading_home"
+    assert payload["run_context"]["market_regime"] == "ai_after_chatgpt"
+    assert payload["executive_decision"]["action"] == "观察"
+    assert payload["executive_decision"]["final_risk_asset_ai_position"] == "40%-60%"
+    assert payload["executive_decision"]["data_gate"] == "PASS"
+    assert payload["executive_decision"]["binding_gate_id"] == "valuation"
+    assert payload["executive_decision"]["not_trade_instruction"] is True
+    assert payload["score_to_position_funnel"]["steps"][1]["metric_id"] == "overall_score"
+    assert payload["score_change_attribution_summary"]["overall_score_delta"] == 3.0
+    assert payload["score_change_attribution_summary"]["drivers"][0]["driver"] == "trend"
+    assert payload["report_index_summary"]["missing_count"] == 1
+    assert payload["report_index_summary"]["problem_reports"][0]["report_id"] == "data_quality"
+    trend = payload["component_score_explainability"]["components"][0]
+    assert trend["component"] == "trend"
+    assert trend["effective_weight"] == 0.25
+    assert trend["contribution_to_overall_score"] == 18.0
+    valuation_gate = next(
+        row for row in payload["binding_gate_ladder"]["gates"] if row["gate_id"] == "valuation"
+    )
+    assert valuation_gate["binding"] is True
+    assert payload["data_quality_pit_safety"]["data_gate_status"] == "PASS"
+    assert payload["backtest_shadow_governance"]["source"] == "research_governance_summary"
+    assert payload["backtest_shadow_governance"]["candidate_research_count"] == 3
+    assert payload["manual_review_queue"]["status"] == "ACTION_REQUIRED"
+    assert any(item["artifact_id"] == "daily_report" for item in payload["appendix_links"])
+    assert any(item["artifact_id"] == "trace_bundle" for item in payload["appendix_links"])
+
+
+def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: Path) -> None:
+    snapshot_path = _write_decision_snapshot(tmp_path)
+
+    payload = build_reader_brief_payload(
+        as_of=date(2026, 5, 4),
+        reports_dir=tmp_path,
+        decision_snapshot_path=snapshot_path,
+        calculation_explainers_path=tmp_path / "missing_calculation_explainers.json",
+        daily_decision_summary_path=tmp_path / "missing_daily_decision_summary.json",
+        evidence_dashboard_json_path=tmp_path / "missing_evidence_dashboard.json",
+        daily_task_dashboard_json_path=tmp_path / "missing_daily_task_dashboard.json",
+        daily_report_path=tmp_path / "missing_daily_score.md",
+        trace_bundle_path=tmp_path / "missing_trace.json",
+        score_change_attribution_path=tmp_path / "missing_score_change.json",
+        research_governance_summary_path=tmp_path / "missing_research_governance.json",
+        report_index_path=tmp_path / "missing_report_index.json",
+    )
+
+    assert payload["status"] == "PASS_WITH_WARNINGS"
+    assert payload["executive_decision"]["binding_gate_id"] == "valuation"
+    assert payload["component_score_explainability"]["status"] == "AVAILABLE"
+    assert payload["backtest_shadow_governance"]["availability"] == "LIMITED"
+    assert payload["report_index_summary"]["availability"] == "MISSING"
+    assert payload["source_inputs"]["daily_report"]["availability"] == "MISSING"
+    assert "daily_report_missing" in ";".join(payload["warnings"])
+
+
+def test_reports_reader_brief_cli_writes_html_and_json(tmp_path: Path) -> None:
+    inputs = _write_reader_brief_inputs(tmp_path)
+    html_path = tmp_path / "reader_brief_2026-05-04.html"
+    json_path = tmp_path / "reader_brief_2026-05-04.json"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "reports",
+            "reader-brief",
+            "--as-of",
+            "2026-05-04",
+            "--reports-dir",
+            str(tmp_path),
+            "--decision-snapshot-path",
+            str(inputs["snapshot"]),
+            "--calculation-explainers-path",
+            str(inputs["calculation_explainers"]),
+            "--daily-decision-summary-path",
+            str(inputs["daily_decision_summary"]),
+            "--evidence-dashboard-json-path",
+            str(inputs["evidence_dashboard"]),
+            "--daily-task-dashboard-json-path",
+            str(inputs["daily_task_dashboard"]),
+            "--daily-report-path",
+            str(inputs["daily_report"]),
+            "--trace-bundle-path",
+            str(inputs["trace_bundle"]),
+            "--score-change-attribution-path",
+            str(inputs["score_change_attribution"]),
+            "--research-governance-summary-path",
+            str(inputs["research_governance_summary"]),
+            "--report-index-path",
+            str(inputs["report_index"]),
+            "--output-path",
+            str(html_path),
+            "--json-output-path",
+            str(json_path),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Reader Brief：PASS" in result.output
+    assert "不生成交易指令" in result.output
+    assert html_path.exists()
+    assert json_path.exists()
+    html = html_path.read_text(encoding="utf-8")
+    assert "Reader Brief" in html
+    assert "核心结论" in html
+    assert "Score-to-Position Funnel" in html
+    assert "Score Change Attribution" in html
+    assert "Report Index Freshness" in html
+    assert "不是实盘交易指令" in html
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+    assert payload["production_effect"] == "none"
+    assert payload["executive_decision"]["not_trade_instruction"] is True
+
+
+def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
+    snapshot_path = _write_decision_snapshot(tmp_path)
+    calculation_explainers_path = tmp_path / "calculation_explainers_2026-05-04.json"
+    calculation_payload = build_calculation_explainers_payload(
+        as_of=date(2026, 5, 4),
+        decision_snapshot_path=snapshot_path,
+        scores_daily_path=tmp_path / "scores_daily.csv",
+    )
+    write_calculation_explainers_json(calculation_payload, calculation_explainers_path)
+
+    daily_decision_summary_path = tmp_path / "daily_decision_summary_2026-05-04.json"
+    daily_decision_summary_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "daily_decision_summary",
+                "as_of": "2026-05-04",
+                "run_id": "daily_run:2026-05-04:test",
+                "production_effect": "none",
+                "data_gate": {
+                    "availability": "available",
+                    "status": "PASS",
+                    "blocking_reasons": [],
+                },
+                "investment_conclusion": {
+                    "availability": "available",
+                    "action_bias": "观察",
+                    "confidence": "0.71",
+                    "position_band": "40%-60%",
+                    "major_risks": ["估值拥挤"],
+                    "production_effect": "none",
+                },
+                "parameter_governance": {
+                    "availability": "available",
+                    "status": "PASS_WITH_LIMITATIONS",
+                    "promotion_status": "NOT_PROMOTABLE",
+                    "blocking_reasons": ["available=8，contract floor=30"],
+                },
+                "feedback_review": {
+                    "availability": "available",
+                    "status": "PASS_WITH_LIMITATIONS",
+                    "summary": "shadow return 9.02%，production 4.74%",
+                },
+                "system_health": {"status": "PASS", "warnings": []},
+                "source_artifacts": [],
+                "hrefs": {},
+                "checksums": {},
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    evidence_dashboard_path = tmp_path / "evidence_dashboard_2026-05-04.json"
+    evidence_dashboard_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "evidence_dashboard",
+                "production_effect": "none",
+                "decision": {
+                    "action": "观察，不形成交易结论",
+                    "final_risk_asset_ai_position": "40%-60%",
+                    "total_risk_asset_budget": "40%-60%",
+                    "confidence": "0.71",
+                    "data_gate": "PASS",
+                    "largest_constraint": "估值拥挤 上限 40%",
+                    "market_regime": "ai_after_chatgpt",
+                },
+                "quality": {"market_data_status": "PASS"},
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    daily_task_dashboard_path = tmp_path / "daily_task_dashboard_2026-05-04.json"
+    daily_task_dashboard_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "daily_task_dashboard",
+                "run_id": "daily_run:2026-05-04:test",
+                "production_effect": "none",
+                "summary": {"task_count": 4, "risk_count": 1},
+                "key_conclusions": [
+                    {
+                        "area": "Shadow Iteration",
+                        "status": "PASS_WITH_LIMITATIONS",
+                        "primary": "shadow candidate 仍处 observe-only",
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    daily_report_path = tmp_path / "daily_score_2026-05-04.md"
+    daily_report_path.write_text(
+        "# AI 产业链日报\n\n- 生产影响：advisory only\n",
+        encoding="utf-8",
+    )
+    trace_bundle_path = tmp_path / "daily_score_2026-05-04_trace.json"
+    trace_bundle_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "claims": [{"claim_id": "overall_claim", "text": "score 支持观察"}],
+                "dataset_refs": [{"dataset_id": "scores_daily"}],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    score_change_path = tmp_path / "score_change_attribution_2026-05-04.json"
+    score_change_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "score_change_attribution",
+                "as_of": "2026-05-04",
+                "status": "PASS",
+                "production_effect": "none",
+                "comparison_window": {
+                    "previous_signal_date": "2026-05-03",
+                    "current_signal_date": "2026-05-04",
+                },
+                "overall_score_delta": {"delta": 3.0},
+                "position_attribution": {"final_max_delta": -0.1},
+                "top_changes": {
+                    "positive_contribution_drivers": [
+                        {"component": "trend", "contribution_delta": 5.35}
+                    ],
+                    "negative_contribution_drivers": [
+                        {"component": "valuation", "contribution_delta": -3.6}
+                    ],
+                    "weight_changes": [{"component": "trend", "effective_weight_delta": 0.05}],
+                    "coverage_changes": [],
+                    "gate_changes": [
+                        {"gate_id": "valuation", "cap_delta": -0.1, "change_flags": ["CAP_CHANGED"]}
+                    ],
+                },
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    research_governance_path = tmp_path / "research_governance_summary_2026-05-04.json"
+    research_governance_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "research_governance_summary",
+                "as_of": "2026-05-04",
+                "status": "PASS_WITH_WARNINGS",
+                "production_effect": "none",
+                "summary": {
+                    "card_count": 8,
+                    "missing_count": 1,
+                    "warning_count": 2,
+                    "manual_review_required_count": 4,
+                    "groups": {
+                        "Shadow observe-only": 2,
+                        "Candidate / research-only": 3,
+                        "Blocked / insufficient data": 1,
+                    },
+                },
+                "cards": [],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    report_index_path = tmp_path / "report_index_2026-05-04.json"
+    report_index_path.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "report_type": "report_index",
+                "as_of": "2026-05-04",
+                "status": "PASS_WITH_WARNINGS",
+                "production_effect": "none",
+                "summary": {
+                    "report_count": 3,
+                    "available_count": 2,
+                    "missing_count": 1,
+                    "stale_count": 0,
+                    "required_missing_count": 1,
+                },
+                "reports": [
+                    {
+                        "report_id": "daily_score",
+                        "title": "Daily Score",
+                        "freshness_status": "FRESH",
+                        "owner_action": "none",
+                    },
+                    {
+                        "report_id": "data_quality",
+                        "title": "Data Quality",
+                        "freshness_status": "MISSING",
+                        "owner_action": "run_validate_data",
+                    },
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    (tmp_path / "scores_daily.csv").write_text(
+        "as_of,overall_score\n2026-05-04,73\n",
+        encoding="utf-8",
+    )
+    return {
+        "snapshot": snapshot_path,
+        "calculation_explainers": calculation_explainers_path,
+        "daily_decision_summary": daily_decision_summary_path,
+        "evidence_dashboard": evidence_dashboard_path,
+        "daily_task_dashboard": daily_task_dashboard_path,
+        "daily_report": daily_report_path,
+        "trace_bundle": trace_bundle_path,
+        "score_change_attribution": score_change_path,
+        "research_governance_summary": research_governance_path,
+        "report_index": report_index_path,
+    }
+
+
+def _write_decision_snapshot(tmp_path: Path) -> Path:
+    path = tmp_path / "decision_snapshot_2026-05-04.json"
+    path.write_text(
+        json.dumps(
+            {
+                "snapshot_id": "decision_snapshot:2026-05-04",
+                "signal_date": "2026-05-04",
+                "market_regime": {
+                    "regime_id": "ai_after_chatgpt",
+                    "start_date": "2022-12-01",
+                },
+                "scores": {
+                    "overall_score": 73.0,
+                    "confidence_score": 66.0,
+                    "confidence_level": "medium",
+                    "confidence_reasons": ["data coverage medium"],
+                    "components": [
+                        {
+                            "component": "trend",
+                            "score": 72.0,
+                            "weight": 25.0,
+                            "source_type": "hard_data",
+                            "coverage": 1.0,
+                            "confidence": 0.9,
+                            "reason": "趋势支持。",
+                        },
+                        {
+                            "component": "fundamentals",
+                            "score": 68.0,
+                            "weight": 25.0,
+                            "source_type": "hard_data",
+                            "coverage": 0.8,
+                            "confidence": 0.75,
+                            "reason": "基本面支持。",
+                        },
+                        {
+                            "component": "macro_liquidity",
+                            "score": 70.0,
+                            "weight": 25.0,
+                            "source_type": "hard_data",
+                            "coverage": 1.0,
+                            "confidence": 0.8,
+                            "reason": "宏观中性偏正。",
+                        },
+                        {
+                            "component": "valuation",
+                            "score": 82.0,
+                            "weight": 25.0,
+                            "source_type": "manual_input",
+                            "coverage": 0.7,
+                            "confidence": 0.6,
+                            "reason": "估值偏贵。",
+                        },
+                    ],
+                },
+                "positions": {
+                    "model_risk_asset_ai_band": {
+                        "min_position": 0.4,
+                        "max_position": 0.6,
+                        "label": "中高配",
+                    },
+                    "confidence_adjusted_risk_asset_ai_band": {
+                        "min_position": 0.4,
+                        "max_position": 0.5,
+                        "label": "置信度受限",
+                    },
+                    "final_risk_asset_ai_band": {
+                        "min_position": 0.4,
+                        "max_position": 0.4,
+                        "label": "受限中配",
+                    },
+                    "final_total_risk_asset_band": {
+                        "min_position": 0.4,
+                        "max_position": 0.6,
+                        "label": "总风险资产预算",
+                    },
+                    "macro_risk_asset_budget": {
+                        "level": "neutral",
+                        "triggered": False,
+                        "source": "portfolio_policy",
+                        "reasons": ["宏观预算中性。"],
+                    },
+                    "position_gates": [
+                        {
+                            "gate_id": "score_model",
+                            "label": "评分模型仓位",
+                            "source": "weighted_score_model",
+                            "max_position": 0.6,
+                            "triggered": True,
+                            "reason": "score band cap",
+                        },
+                        {
+                            "gate_id": "valuation",
+                            "label": "估值拥挤",
+                            "source": "valuation_review",
+                            "max_position": 0.4,
+                            "triggered": True,
+                            "reason": "估值分位过高。",
+                        },
+                    ],
+                },
+                "quality": {
+                    "market_data_status": "PASS",
+                    "market_data_error_count": 0,
+                    "market_data_warning_count": 0,
+                    "feature_status": "PASS",
+                    "sec_feature_status": "PASS",
+                },
+                "manual_review": [
+                    {
+                        "name": "owner_review",
+                        "status": "WARNING",
+                        "summary": "人工复核摘要存在警告项",
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    return path

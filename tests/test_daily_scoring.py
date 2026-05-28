@@ -920,6 +920,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     valuation_path = tmp_path / "valuation_snapshots"
     risk_event_occurrences_path = tmp_path / "risk_event_occurrences"
     decision_snapshot_path = tmp_path / "decision_snapshot.json"
+    calculation_explainers_path = tmp_path / "calculation_explainers.json"
     prediction_ledger_path = tmp_path / "prediction_ledger.csv"
     belief_state_path = tmp_path / "belief_state.json"
     belief_state_history_path = tmp_path / "belief_state_history.csv"
@@ -981,6 +982,8 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
             str(risk_event_occurrences_path),
             "--decision-snapshot-path",
             str(decision_snapshot_path),
+            "--calculation-explainers-path",
+            str(calculation_explainers_path),
             "--prediction-ledger-path",
             str(prediction_ledger_path),
             "--belief-state-path",
@@ -998,11 +1001,13 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert execution_policy_report_path.exists()
     assert portfolio_exposure_report_path.exists()
     assert feature_availability_report_path.exists()
+    assert calculation_explainers_path.exists()
     assert prediction_ledger_path.exists()
     trace_path = tmp_path / "evidence" / "daily_score_trace.json"
     assert trace_path.exists()
     trace = json.loads(trace_path.read_text(encoding="utf-8"))
     snapshot = json.loads(decision_snapshot_path.read_text(encoding="utf-8"))
+    calculation_explainers = json.loads(calculation_explainers_path.read_text(encoding="utf-8"))
     belief_state = json.loads(belief_state_path.read_text(encoding="utf-8"))
     belief_history = pd.read_csv(belief_state_history_path)
     claim_ids = {claim["claim_id"] for claim in trace["claims"]}
@@ -1039,6 +1044,14 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
         "fundamentals",
     ]
     assert snapshot["positions"]["position_gates"]
+    assert calculation_explainers["report_type"] == "calculation_explainers"
+    assert calculation_explainers["production_effect"] == "none"
+    assert calculation_explainers["metrics"]["overall_score"]["value"] == (
+        snapshot["scores"]["overall_score"]
+    )
+    assert calculation_explainers["metrics"]["final_position_max"]["value"] == (
+        snapshot["positions"]["final_risk_asset_ai_band"]["max_position"]
+    )
     assert features_path.exists()
     assert sec_features_path.exists()
     assert sec_feature_report_path.exists()
@@ -1084,6 +1097,7 @@ def test_score_daily_cli_writes_report_and_scores(tmp_path: Path) -> None:
     assert "产业链节点热度与健康度：" in result.output
     assert "关注股票趋势分析：" in result.output
     assert "组合暴露：" in result.output
+    assert "Calculation explainers：" in result.output
     assert "Prediction" in result.output
     assert "belief_state.json" in result.output
     lookup_result = CliRunner().invoke(

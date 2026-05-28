@@ -1,0 +1,289 @@
+schema_version: 1
+policy_version: report_registry_v1
+policy_metadata:
+  owner: system
+  status: pilot_baseline
+  rationale: >
+    Provide a single read-only index for report freshness, owner action, and
+    production-effect boundaries without replacing docs/artifact_catalog.md.
+  intended_effect: >
+    Make stale or missing report artifacts visible to Reader Brief, daily task
+    dashboard, and manual reviewers.
+  validation_evidence: >
+    Contract tests cover registry loading, latest artifact selection,
+    freshness classification, HTML/JSON output, and read-only behavior.
+  review_condition: >
+    Review after report registry is used by at least one real daily-run bundle
+    and before deriving docs/artifact_catalog.md from this registry.
+defaults:
+  production_effect: none
+  missing_status: MISSING
+  stale_status: STALE
+reports:
+  - report_id: daily_score
+    title: Daily Score Report
+    group: daily
+    cadence: daily
+    audience: investor
+    owner: system
+    command: aits score-daily
+    artifact_globs:
+      - outputs/reports/daily_score_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Daily decision reports should be same-day or prior trading day only.
+    owner_action: review_if_missing_or_stale
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: true
+  - report_id: data_quality
+    title: Data Quality Report
+    group: daily
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits validate-data
+    artifact_globs:
+      - outputs/reports/data_quality_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Cached data-dependent reports must disclose current data quality.
+    owner_action: stop_data_dependent_workflow_if_missing_or_failed
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: true
+  - report_id: evidence_dashboard
+    title: Evidence Dashboard
+    group: daily
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits reports dashboard
+    artifact_globs:
+      - outputs/reports/evidence_dashboard_*.json
+      - outputs/reports/evidence_dashboard_*.html
+    freshness_sla_days: 1
+    freshness_rationale: Evidence drill-down should match the daily decision date.
+    owner_action: review_trace_bundle_if_missing
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: daily_task_dashboard
+    title: Daily Task Dashboard
+    group: daily
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits reports daily-tasks
+    artifact_globs:
+      - outputs/reports/daily_task_dashboard_*.json
+      - outputs/reports/daily_task_dashboard_*.html
+    freshness_sla_days: 1
+    freshness_rationale: Daily task status should describe the current run bundle.
+    owner_action: review_daily_ops_run_if_missing
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: daily_decision_summary
+    title: Daily Decision Summary
+    group: daily
+    cadence: daily
+    audience: system
+    owner: system
+    command: aits reports daily-tasks
+    artifact_globs:
+      - outputs/reports/daily_decision_summary_*.json
+    freshness_sla_days: 1
+    freshness_rationale: Downstream order-intent and reader surfaces need same-day summary.
+    owner_action: regenerate_daily_tasks_if_missing
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: true
+  - report_id: calculation_explainers
+    title: Calculation Explainers
+    group: daily
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits reports calculation-explainers
+    artifact_globs:
+      - outputs/reports/calculation_explainers_*.json
+    freshness_sla_days: 1
+    freshness_rationale: Metric explanations should match the decision snapshot date.
+    owner_action: regenerate_from_decision_snapshot_if_missing
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: score_change_attribution
+    title: Score Change Attribution
+    group: daily
+    cadence: daily
+    audience: investor
+    owner: system
+    command: aits reports score-change-attribution
+    artifact_globs:
+      - outputs/reports/score_change_attribution_*.json
+      - outputs/reports/score_change_attribution_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Change attribution is only useful when aligned with today's snapshot.
+    owner_action: regenerate_if_prior_snapshot_available
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: research_governance_summary
+    title: Research Governance Summary
+    group: governance
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits reports research-governance-summary
+    artifact_globs:
+      - outputs/reports/research_governance_summary_*.json
+      - outputs/reports/research_governance_summary_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Governance boundary summary should reflect the latest daily report set.
+    owner_action: regenerate_if_missing_or_stale
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: reader_brief
+    title: Reader Brief
+    group: daily
+    cadence: daily
+    audience: investor
+    owner: system
+    command: aits reports reader-brief
+    artifact_globs:
+      - outputs/reports/reader_brief_*.json
+      - outputs/reports/reader_brief_*.html
+    freshness_sla_days: 1
+    freshness_rationale: Reader Brief is the daily reading home and should be current.
+    owner_action: regenerate_after_upstream_reports
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: documentation_contract
+    title: Documentation Contract
+    group: docs
+    cadence: ad_hoc
+    audience: operator
+    owner: system
+    command: aits docs report-contract
+    artifact_globs:
+      - outputs/reports/documentation_contract_*.json
+      - outputs/reports/documentation_contract_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Documentation contract should be refreshed after report registry or artifact catalog changes; monthly review is the pilot baseline.
+    owner_action: regenerate_after_report_registry_or_artifact_catalog_change
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: parameter_governance
+    title: Parameter Governance
+    group: governance
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits feedback evaluate-parameter-governance
+    artifact_globs:
+      - outputs/reports/parameter_governance_*.json
+      - outputs/reports/parameter_governance_*.md
+    freshness_sla_days: 7
+    freshness_rationale: Parameter governance can remain useful for a short validation window.
+    owner_action: review_owner_input_if_limited
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: sec_pit_shadow_monitor
+    title: SEC PIT Shadow Monitor
+    group: research
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits sec-pit shadow-monitor
+    artifact_globs:
+      - outputs/sec_pit_shadow_monitor/sec_pit_shadow_monitor_summary_*.json
+      - outputs/sec_pit_shadow_monitor/sec_pit_shadow_monitor_summary_*.md
+    freshness_sla_days: 7
+    freshness_rationale: Observe-only monitor may be reviewed weekly while evidence matures.
+    owner_action: review_warning_or_rollback_recommendation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: sec_pit_shadow_observe
+    title: SEC PIT Shadow Observe
+    group: research
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits sec-pit shadow-observe
+    artifact_globs:
+      - outputs/sec_pit_shadow_observe/sec_pit_shadow_observe_summary_*.json
+      - outputs/sec_pit_shadow_observe/sec_pit_shadow_observe_summary_*.md
+    freshness_sla_days: 14
+    freshness_rationale: Observe-only lane summary changes only when the lane is rerun.
+    owner_action: regenerate_before_new_shadow_monitor_window
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: weight_candidate_evaluation
+    title: Weight Candidate Evaluation
+    group: research
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: python scripts/run_weight_candidate_evaluation.py
+    artifact_globs:
+      - outputs/reports/weight_candidate_evaluation_*.json
+      - outputs/reports/weight_candidate_evaluation_*.md
+    freshness_sla_days: 7
+    freshness_rationale: Weight candidates should be refreshed before manual promotion review.
+    owner_action: review_candidate_if_ready
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: weight_promotion_gate
+    title: Weight Promotion Gate
+    group: governance
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: python scripts/run_weight_promotion_gate.py
+    artifact_globs:
+      - outputs/reports/weight_promotion_gate_*.json
+      - outputs/reports/weight_promotion_gate_*.md
+    freshness_sla_days: 7
+    freshness_rationale: Promotion gate should be recent before any manual approval decision.
+    owner_action: block_promotion_if_missing_or_stale
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: backtest_daily
+    title: Daily Score Backtest
+    group: backtest
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits backtest
+    artifact_globs:
+      - outputs/backtests/backtest_*.md
+    freshness_sla_days: 90
+    freshness_rationale: Backtest evidence should be revisited when strategy logic changes materially.
+    owner_action: rerun_after_scoring_or_gate_change
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: backtest_robustness
+    title: Backtest Robustness
+    group: backtest
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits backtest --robustness-report
+    artifact_globs:
+      - outputs/backtests/backtest_robustness_*.json
+      - outputs/backtests/backtest_robustness_*.md
+    freshness_sla_days: 90
+    freshness_rationale: Robustness evidence should be refreshed after scoring or policy changes.
+    owner_action: rerun_before_promotion_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false

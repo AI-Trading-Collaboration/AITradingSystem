@@ -91,6 +91,21 @@ def _dispatch(args: list[str]) -> None:
     if args[:2] == ["reports", "dashboard"]:
         cli.evidence_dashboard_command(as_of=_option(args, "--as-of"))
         return
+    if args[:2] == ["reports", "calculation-explainers"]:
+        cli.calculation_explainers_command(as_of=_option(args, "--as-of"))
+        return
+    if args[:2] == ["reports", "reader-brief"]:
+        cli.reader_brief_command(as_of=_option(args, "--as-of"))
+        return
+    if args[:2] == ["reports", "score-change-attribution"]:
+        cli.score_change_attribution_command(as_of=_option(args, "--as-of"))
+        return
+    if args[:2] == ["reports", "research-governance-summary"]:
+        cli.research_governance_summary_command(as_of=_option(args, "--as-of"))
+        return
+    if args[:2] == ["reports", "index"]:
+        cli.report_index_command(as_of=_option(args, "--as-of"))
+        return
     if args[:2] == ["ops", "health"]:
         cli.pipeline_health_command(
             as_of=_option(args, "--as-of"),

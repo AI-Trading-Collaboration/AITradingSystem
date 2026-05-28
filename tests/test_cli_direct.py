@@ -137,3 +137,17 @@ def test_cli_direct_dispatches_daily_feedback_reports(monkeypatch) -> None:
         ("loop_review", {"as_of": "2026-05-13"}),
         ("investment_review", {"period": "weekly", "as_of": "2026-05-13"}),
     ]
+
+
+def test_cli_direct_dispatches_report_index(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_report_index(**kwargs: object) -> None:
+        captured.update(kwargs)
+
+    monkeypatch.setattr(cli_direct.cli, "report_index_command", fake_report_index)
+
+    exit_code = cli_direct.main(["reports", "index", "--as-of", "2026-05-13"])
+
+    assert exit_code == 0
+    assert captured == {"as_of": "2026-05-13"}

@@ -517,7 +517,42 @@ from ai_trading_system.report_traceability import (
     render_traceability_section,
     write_trace_bundle,
 )
+from ai_trading_system.reports.calculation_explainers import (
+    DEFAULT_METRIC_EXPLAINERS_CONFIG_PATH,
+    build_calculation_explainers_payload,
+    default_calculation_explainers_path,
+    write_calculation_explainers_json,
+)
 from ai_trading_system.reports.daily import render_recommendation_markdown
+from ai_trading_system.reports.reader_brief import (
+    build_reader_brief_payload,
+    default_reader_brief_html_path,
+    default_reader_brief_json_path,
+    write_reader_brief_html,
+    write_reader_brief_json,
+)
+from ai_trading_system.reports.report_index import (
+    DEFAULT_REPORT_REGISTRY_PATH,
+    build_report_index_payload,
+    default_report_index_html_path,
+    default_report_index_json_path,
+    write_report_index_html,
+    write_report_index_json,
+)
+from ai_trading_system.reports.research_governance_summary import (
+    build_research_governance_summary_payload,
+    default_research_governance_summary_json_path,
+    default_research_governance_summary_report_path,
+    write_research_governance_summary_json,
+    write_research_governance_summary_report,
+)
+from ai_trading_system.reports.score_change_attribution import (
+    build_score_change_attribution_payload,
+    default_score_change_attribution_json_path,
+    default_score_change_attribution_report_path,
+    write_score_change_attribution_json,
+    write_score_change_attribution_report,
+)
 from ai_trading_system.risk_event_candidate_triage import (
     default_risk_event_candidate_triage_csv_path,
     default_risk_event_candidate_triage_input_path,
@@ -5969,6 +6004,360 @@ def investment_periodic_review_command(
     )
 
 
+@reports_app.command("calculation-explainers")
+def calculation_explainers_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="计算解释日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    decision_snapshot_path: Annotated[
+        Path | None,
+        typer.Option(help="decision snapshot JSON 路径；不传时按 as_of 使用默认路径。"),
+    ] = None,
+    registry_path: Annotated[
+        Path,
+        typer.Option(help="metric explainer registry YAML 路径。"),
+    ] = DEFAULT_METRIC_EXPLAINERS_CONFIG_PATH,
+    scores_daily_path: Annotated[
+        Path | None,
+        typer.Option(help="scores_daily.csv 路径；不传时使用默认处理后评分缓存。"),
+    ] = DEFAULT_SCORES_DAILY_PATH,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="calculation explainers JSON 输出路径。"),
+    ] = None,
+) -> None:
+    """生成只读计算解释 JSON。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    snapshot_path = decision_snapshot_path or default_decision_snapshot_path(
+        DEFAULT_DECISION_SNAPSHOT_DIR,
+        report_date,
+    )
+    resolved_output_path = output_path or default_calculation_explainers_path(
+        PROJECT_ROOT / "outputs" / "reports",
+        report_date,
+    )
+    try:
+        payload = build_calculation_explainers_payload(
+            as_of=report_date,
+            decision_snapshot_path=snapshot_path,
+            registry_path=registry_path,
+            scores_daily_path=scores_daily_path,
+        )
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path = write_calculation_explainers_json(payload, resolved_output_path)
+    style = "green" if payload["status"] == "PASS" else "yellow"
+    console.print(f"[{style}]计算解释：{payload['status']}[/{style}]")
+    console.print(f"Calculation explainers JSON：{json_path}")
+    console.print(
+        f"metrics：{len(payload['metrics'])}；"
+        f"warnings：{len(payload['warnings'])}；"
+        f"production_effect={payload['production_effect']}"
+    )
+
+
+@reports_app.command("reader-brief")
+def reader_brief_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="Reader Brief 日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="同日报告 artifact 所在目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+    decision_snapshot_path: Annotated[
+        Path | None,
+        typer.Option(help="decision snapshot JSON 路径；不传时按 as_of 使用默认路径。"),
+    ] = None,
+    calculation_explainers_path: Annotated[
+        Path | None,
+        typer.Option(help="calculation explainers JSON 路径；不传时按 as_of 使用默认报告路径。"),
+    ] = None,
+    daily_decision_summary_path: Annotated[
+        Path | None,
+        typer.Option(help="daily_decision_summary JSON 路径；不传时按 as_of 使用默认报告路径。"),
+    ] = None,
+    evidence_dashboard_json_path: Annotated[
+        Path | None,
+        typer.Option(help="evidence dashboard JSON 路径；不传时按 as_of 使用默认报告路径。"),
+    ] = None,
+    daily_task_dashboard_json_path: Annotated[
+        Path | None,
+        typer.Option(help="daily task dashboard JSON 路径；不传时按 as_of 使用默认报告路径。"),
+    ] = None,
+    daily_report_path: Annotated[
+        Path | None,
+        typer.Option(help="Markdown 日报路径；不传时按 as_of 使用默认报告路径。"),
+    ] = None,
+    trace_bundle_path: Annotated[
+        Path | None,
+        typer.Option(help="日报 trace bundle JSON 路径；不传时按日报路径推导。"),
+    ] = None,
+    score_change_attribution_path: Annotated[
+        Path | None,
+        typer.Option(help="score_change_attribution JSON 路径；不传时按 as_of 使用默认报告路径。"),
+    ] = None,
+    research_governance_summary_path: Annotated[
+        Path | None,
+        typer.Option(
+            help="research_governance_summary JSON 路径；不传时按 as_of 使用默认报告路径。"
+        ),
+    ] = None,
+    report_index_path: Annotated[
+        Path | None,
+        typer.Option(help="report_index JSON 路径；不传时按 as_of 使用默认报告路径。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Reader Brief HTML 输出路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Reader Brief JSON 输出路径。"),
+    ] = None,
+) -> None:
+    """生成只读统一读者入口 HTML/JSON。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    snapshot_path = decision_snapshot_path or default_decision_snapshot_path(
+        DEFAULT_DECISION_SNAPSHOT_DIR,
+        report_date,
+    )
+    calc_path = calculation_explainers_path or default_calculation_explainers_path(
+        reports_dir,
+        report_date,
+    )
+    decision_summary_path = daily_decision_summary_path or default_daily_decision_summary_path(
+        reports_dir,
+        report_date,
+    )
+    dashboard_json_path = evidence_dashboard_json_path or default_evidence_dashboard_json_path(
+        reports_dir,
+        report_date,
+    )
+    task_dashboard_json_path = (
+        daily_task_dashboard_json_path
+        or default_daily_task_dashboard_json_path(
+            reports_dir,
+            report_date,
+        )
+    )
+    daily_path = daily_report_path or default_daily_score_report_path(reports_dir, report_date)
+    trace_path = trace_bundle_path or default_report_trace_bundle_path(daily_path)
+    score_change_path = score_change_attribution_path or default_score_change_attribution_json_path(
+        reports_dir, report_date
+    )
+    research_governance_path = (
+        research_governance_summary_path
+        or default_research_governance_summary_json_path(reports_dir, report_date)
+    )
+    index_path = report_index_path or default_report_index_json_path(reports_dir, report_date)
+    html_output = output_path or default_reader_brief_html_path(reports_dir, report_date)
+    json_output = json_output_path or default_reader_brief_json_path(reports_dir, report_date)
+    try:
+        payload = build_reader_brief_payload(
+            as_of=report_date,
+            reports_dir=reports_dir,
+            decision_snapshot_path=snapshot_path,
+            calculation_explainers_path=calc_path,
+            daily_decision_summary_path=decision_summary_path,
+            evidence_dashboard_json_path=dashboard_json_path,
+            daily_task_dashboard_json_path=task_dashboard_json_path,
+            daily_report_path=daily_path,
+            trace_bundle_path=trace_path,
+            score_change_attribution_path=score_change_path,
+            research_governance_summary_path=research_governance_path,
+            report_index_path=index_path,
+        )
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    html_path = write_reader_brief_html(payload, html_output)
+    json_path = write_reader_brief_json(payload, json_output)
+    style = "green" if payload["status"] == "PASS" else "yellow"
+    console.print(f"[{style}]Reader Brief：{payload['status']}[/{style}]")
+    console.print(f"Reader Brief HTML：{html_path}")
+    console.print(f"Reader Brief JSON：{json_path}")
+    console.print(
+        f"warnings：{len(payload['warnings'])}；"
+        f"production_effect={payload['production_effect']}；"
+        "不生成交易指令"
+    )
+
+
+@reports_app.command("score-change-attribution")
+def score_change_attribution_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="变化归因日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    decision_snapshot_path: Annotated[
+        Path | None,
+        typer.Option(help="当前 decision snapshot JSON 路径；不传时按 as_of 使用默认路径。"),
+    ] = None,
+    previous_decision_snapshot_path: Annotated[
+        Path | None,
+        typer.Option(help="上一条 decision snapshot JSON 路径；不传时从 snapshot 目录自动发现。"),
+    ] = None,
+    snapshot_dir: Annotated[
+        Path,
+        typer.Option(help="用于自动发现上一条 decision snapshot 的目录。"),
+    ] = DEFAULT_DECISION_SNAPSHOT_DIR,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Score change attribution Markdown 输出路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Score change attribution JSON 输出路径。"),
+    ] = None,
+) -> None:
+    """生成只读 score change attribution 报告。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    snapshot_path = decision_snapshot_path or default_decision_snapshot_path(
+        snapshot_dir,
+        report_date,
+    )
+    reports_dir = PROJECT_ROOT / "outputs" / "reports"
+    markdown_output = output_path or default_score_change_attribution_report_path(
+        reports_dir,
+        report_date,
+    )
+    json_output = json_output_path or default_score_change_attribution_json_path(
+        reports_dir,
+        report_date,
+    )
+    try:
+        payload = build_score_change_attribution_payload(
+            as_of=report_date,
+            decision_snapshot_path=snapshot_path,
+            previous_decision_snapshot_path=previous_decision_snapshot_path,
+            snapshot_dir=snapshot_dir,
+        )
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    report_path = write_score_change_attribution_report(payload, markdown_output)
+    json_path = write_score_change_attribution_json(payload, json_output)
+    style = "green" if payload["status"] == "PASS" else "yellow"
+    console.print(f"[{style}]Score change attribution：{payload['status']}[/{style}]")
+    console.print(f"Score change attribution report：{report_path}")
+    console.print(f"Score change attribution JSON：{json_path}")
+    console.print(
+        f"warnings：{len(payload['warnings'])}；"
+        f"production_effect={payload['production_effect']}；"
+        "不重算 score"
+    )
+
+
+@reports_app.command("research-governance-summary")
+def research_governance_summary_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="Research governance summary 日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Research governance summary Markdown 输出路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Research governance summary JSON 输出路径。"),
+    ] = None,
+    project_root: Annotated[
+        Path,
+        typer.Option(help="用于发现 research / shadow / governance artifacts 的项目根目录。"),
+    ] = PROJECT_ROOT,
+) -> None:
+    """生成只读 research governance summary。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    reports_dir = project_root / "outputs" / "reports"
+    markdown_output = output_path or default_research_governance_summary_report_path(
+        reports_dir,
+        report_date,
+    )
+    json_output = json_output_path or default_research_governance_summary_json_path(
+        reports_dir,
+        report_date,
+    )
+    payload = build_research_governance_summary_payload(
+        as_of=report_date,
+        project_root=project_root,
+    )
+    report_path = write_research_governance_summary_report(payload, markdown_output)
+    json_path = write_research_governance_summary_json(payload, json_output)
+    style = "green" if payload["status"] == "PASS" else "yellow"
+    console.print(f"[{style}]Research governance summary：{payload['status']}[/{style}]")
+    console.print(f"Research governance summary report：{report_path}")
+    console.print(f"Research governance summary JSON：{json_path}")
+    console.print(
+        f"cards：{payload['summary']['card_count']}；"
+        f"warnings：{len(payload['warnings'])}；"
+        f"production_effect={payload['production_effect']}；"
+        "只读汇总"
+    )
+
+
+@reports_app.command("index")
+def report_index_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="Report index 日期，格式为 YYYY-MM-DD，默认今天。"),
+    ] = None,
+    registry_path: Annotated[
+        Path,
+        typer.Option(help="report_registry.yaml 路径。"),
+    ] = DEFAULT_REPORT_REGISTRY_PATH,
+    project_root: Annotated[
+        Path,
+        typer.Option(help="用于扫描 report artifacts 的项目根目录。"),
+    ] = PROJECT_ROOT,
+    output_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index HTML 输出路径。"),
+    ] = None,
+    json_output_path: Annotated[
+        Path | None,
+        typer.Option(help="Report index JSON 输出路径。"),
+    ] = None,
+) -> None:
+    """生成只读报告 registry / cadence index。"""
+    report_date = _parse_date(as_of) if as_of else date.today()
+    reports_dir = project_root / "outputs" / "reports"
+    html_output = output_path or default_report_index_html_path(reports_dir, report_date)
+    json_output = json_output_path or default_report_index_json_path(reports_dir, report_date)
+    try:
+        payload = build_report_index_payload(
+            as_of=report_date,
+            project_root=project_root,
+            registry_path=registry_path,
+        )
+    except FileNotFoundError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    html_path = write_report_index_html(payload, html_output)
+    json_path = write_report_index_json(payload, json_output)
+    style = "green" if payload["status"] == "PASS" else "yellow"
+    console.print(f"[{style}]Report index：{payload['status']}[/{style}]")
+    console.print(f"Report index HTML：{html_path}")
+    console.print(f"Report index JSON：{json_path}")
+    console.print(
+        f"reports：{payload['summary']['report_count']}；"
+        f"missing：{payload['summary']['missing_count']}；"
+        f"stale：{payload['summary']['stale_count']}；"
+        f"production_effect={payload['production_effect']}；"
+        "只读扫描"
+    )
+
+
 @reports_app.command("dashboard")
 def evidence_dashboard_command(
     as_of: Annotated[
@@ -10627,6 +11016,10 @@ def score_daily(
         Path | None,
         typer.Option(help="JSON 决策快照输出路径。"),
     ] = None,
+    calculation_explainers_path: Annotated[
+        Path | None,
+        typer.Option(help="JSON 计算解释输出路径。"),
+    ] = None,
     belief_state_path: Annotated[
         Path | None,
         typer.Option(help="JSON 只读认知状态输出路径。"),
@@ -10975,6 +11368,13 @@ def score_daily(
     decision_snapshot_output = decision_snapshot_path or default_decision_snapshot_path(
         DEFAULT_DECISION_SNAPSHOT_DIR,
         score_date,
+    )
+    calculation_explainers_output = (
+        calculation_explainers_path
+        or default_calculation_explainers_path(
+            score_report_output.parent,
+            score_date,
+        )
     )
     belief_state_output = belief_state_path or default_belief_state_path(
         DEFAULT_BELIEF_STATE_DIR,
@@ -11679,6 +12079,15 @@ def score_daily(
         decision_snapshot,
         decision_snapshot_output,
     )
+    calculation_explainers_payload = build_calculation_explainers_payload(
+        as_of=score_date,
+        decision_snapshot_path=daily_decision_snapshot_output,
+        scores_daily_path=scores_output,
+    )
+    calculation_explainers_output = write_calculation_explainers_json(
+        calculation_explainers_payload,
+        calculation_explainers_output,
+    )
     prediction_ledger_output = append_prediction_records(
         (
             build_prediction_record_from_decision_snapshot(
@@ -11784,6 +12193,7 @@ def score_daily(
     console.print(f"告警报告：{daily_alert_output}")
     console.print(f"Evidence bundle：{daily_trace_output}")
     console.print(f"Decision snapshot：{daily_decision_snapshot_output}")
+    console.print(f"Calculation explainers：{calculation_explainers_output}")
     if current_context_output is not None and current_effective_weights_output is not None:
         console.print(f"Current context：{current_context_output}")
         console.print(f"Current effective weights：{current_effective_weights_output}")

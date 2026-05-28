@@ -36,6 +36,8 @@ flowchart TD
         F["config/features.yaml<br/>特征窗口和相对强弱组合"]
         FAVC["config/feature_availability.yaml<br/>PIT feature availability 目录<br/>event_time / available_time / decision_time"]
         S["config/scoring_rules.yaml<br/>评分模块、signal 规则、score->position band、日报结论 policy、confidence/source-type policy、仓位动作阈值和 position_gates 上限<br/>legacy weights 只作未接入 resolver 时的 fallback"]
+        MEC["config/metric_explainers.yaml<br/>关键指标公式、输入字段、PIT policy、常见误读和报告章节映射"]
+        RREG["config/report_registry.yaml<br/>报告 cadence、freshness SLA、owner action、audience、artifact glob 和 production_effect 可见性 policy"]
         WPC["config/weights/weight_profile_current.yaml<br/>生产评分/回测基础权重 profile、bounds、score-point confidence delta 语义"]
         SWPC["config/weights/shadow_weight_profiles.yaml<br/>隔离测试权重 profile：production_effect=none，用于长期观察和主线评分对比"]
         SGPC["config/weights/shadow_position_gate_profiles.yaml<br/>隔离测试 hard gate / confidence / risk budget cap：production_effect=none"]
@@ -208,6 +210,8 @@ flowchart TD
         BS["data/processed/belief_state/belief_state_YYYY-MM-DD.json<br/>只读认知状态"]
         BSH["data/processed/belief_state_history.csv<br/>只读认知状态历史索引"]
         DRT["outputs/reports/evidence/daily_score_YYYY-MM-DD_trace.json<br/>claim / evidence / dataset / quality / run_id / run manifest / belief_state / rule_versions"]
+        CEXP["aits reports calculation-explainers<br/>或 score-daily 自动生成；只读绑定 metric registry 公式与 decision snapshot 当日值"]
+        CEXPR["outputs/reports/calculation_explainers_YYYY-MM-DD.json<br/>formula、input_values、source_artifacts、PIT policy、limitations；production_effect=none"]
     end
 
     subgraph Backtest["历史回测"]
@@ -303,8 +307,16 @@ flowchart TD
         EDASH["aits reports dashboard<br/>证据下钻型静态 dashboard v2"]
         EDASHR["outputs/reports/evidence_dashboard_YYYY-MM-DD.html/json<br/>Decision Card、alerts、history、feedback review、trace 下钻"]
         DTASKD["aits reports daily-tasks<br/>每日关键结论展示页"]
-        DTASKDR["outputs/reports/daily_task_dashboard_YYYY-MM-DD.html/json<br/>key_conclusions、shadow parameter 结果/参数对比表、SEC PIT baseline coverage / shadow observe / shadow monitor 只读卡片、Paper Trading Summary + 7/14/30 日 Paper Trading Trend + latest replay summary、Paper Signal Quality 轻量卡片、Shadow Impact 轻量卡片、Weight Adjustment Candidate / Evaluation / Promotion Gate / Daily Summary 轻量卡片、synthetic snapshot 比例、top blocked_by/reason_code、return 口径、重要风险、任务状态和可点击子报告链接"]
+        DTASKDR["outputs/reports/daily_task_dashboard_YYYY-MM-DD.html/json<br/>key_conclusions、shadow parameter 结果/参数对比表、SEC PIT baseline coverage / shadow observe / shadow monitor 只读卡片、Research Governance Summary 只读卡片、Paper Trading Summary + 7/14/30 日 Paper Trading Trend + latest replay summary、Paper Signal Quality 轻量卡片、Shadow Impact 轻量卡片、Weight Adjustment Candidate / Evaluation / Promotion Gate / Daily Summary 轻量卡片、synthetic snapshot 比例、top blocked_by/reason_code、return 口径、重要风险、任务状态和可点击子报告链接"]
         DDBUS["outputs/reports/daily_decision_summary_YYYY-MM-DD.json<br/>每日决策总线 JSON：data_gate、investment_conclusion、parameter_governance、feedback_review、system_health、source_artifacts；production_effect=none"]
+        SCA["aits reports score-change-attribution<br/>只读比较今日与上一条 signal-time decision snapshot"]
+        SCAR["outputs/reports/score_change_attribution_YYYY-MM-DD.md/json<br/>overall/component/weight/coverage/confidence/gate/data quality delta；production_effect=none"]
+        RGS["aits reports research-governance-summary<br/>统一只读汇总 backtest、SEC PIT、shadow、weight governance 和 owner action artifacts"]
+        RGSR["outputs/reports/research_governance_summary_YYYY-MM-DD.md/json<br/>production-active、observe-only、research-only、blocked 和 warning 分组；production_effect=none"]
+        RIDX["aits reports index<br/>按 report_registry 只读扫描 latest report artifacts、freshness、missing/stale 和 owner action"]
+        RIDXR["outputs/reports/report_index_YYYY-MM-DD.html/json<br/>report freshness、cadence、missing/stale、required_missing、owner action 和 production_effect 边界"]
+        RBRIEF["aits reports reader-brief<br/>统一每日读者入口；只读汇总 decision summary、dashboard、task dashboard、calculation explainers、score change、research governance、report index、snapshot 和 trace"]
+        RBRIEFR["outputs/reports/reader_brief_YYYY-MM-DD.html/json<br/>首屏结论、Score-to-Position funnel、Score Change Attribution、component contribution、gate ladder、Data/PIT safety、report freshness、research governance 摘要和 manual review queue；production_effect=none"]
         OICAND["outputs/reports/order_intent_candidates_YYYY-MM-DD.json<br/>OrderIntentCandidate schema-compatible 候选方向：来自 daily_decision_summary、decision snapshot、position/gate；默认 blocked，Data Gate 缺失用 data_gate_blocked，不接入 broker"]
         ALERT["score-daily alert evaluation<br/>data/system + investment/risk 只读告警"]
         ALERTR["outputs/reports/alerts_YYYY-MM-DD.md<br/>等级、触发/解除条件、引用和去重键"]
@@ -969,6 +981,7 @@ flowchart TD
     SECPITBLCOVR -. "dashboard 只显示 SEC PIT Baseline Coverage 卡片，不触发 audit 或 backfill" .-> DTASKDR
     SECPITOBSR -. "dashboard 只显示 Shadow Observe 卡片，不触发 observe run 或写 production/shadow 权重" .-> DTASKDR
     SECPITMONR -. "dashboard 只显示 SEC PIT Shadow Monitor 卡片，不触发 rolling monitor 或上游重跑" .-> DTASKDR
+    RGSR -. "dashboard 只显示 Research Governance Summary 卡片，不触发 backtest/SEC PIT/shadow/weight governance 上游重跑" .-> DTASKDR
     TESUM -. "daily task dashboard 只读展示" .-> DTASKDR
     TESUM -. "dashboard Trend 只读读取最近 N 日；缺失显示 LIMITED" .-> DTASKDR
     TEQUALR -. "dashboard 只显示轻量 quality 卡片，不展示详细表格" .-> DTASKDR
@@ -1000,6 +1013,45 @@ flowchart TD
     TEWSONDRR -. "dashboard 只显示 Retry Execution Dry Run 卡片，只读 TRADING-038 JSON，不运行 dry-run generator、037、036、035、发送、retry 或修改 approval/delivery state" .-> DTASKDR
     TEWSDR -. "dashboard 只显示 Data Freshness Summary 卡片，不触发 024、023、022、021、018B-018F、data download、market/backtest/scoring/broker/replay/trading pipeline" .-> DTASKDR
     DRT --> DSNAP
+    MEC --> CEXP
+    DSNAP --> CEXP
+    SC --> CEXP
+    CEXP --> CEXPR
+    BR -. "latest backtest report" .-> RGS
+    BROB -. "latest robustness summary" .-> RGS
+    BGAR -. "latest gate attribution report" .-> RGS
+    FPGR -. "parameter governance JSON" .-> RGS
+    SECPITEVALR -. "SEC PIT evaluation summary" .-> RGS
+    SECPITCMPR -. "SEC PIT baseline comparison summary" .-> RGS
+    SECPITDIAGR -. "SEC PIT diagnostics summary" .-> RGS
+    SECPITREVIEWR -. "SEC PIT candidate review summary" .-> RGS
+    SECPITBLCOVR -. "SEC PIT baseline coverage summary" .-> RGS
+    SECPITOBSR -. "SEC PIT shadow observe summary" .-> RGS
+    SECPITMONR -. "SEC PIT shadow monitor summary" .-> RGS
+    TEIMPACTR -. "shadow impact summary" .-> RGS
+    TEWACR -. "weight adjustment candidate summary" .-> RGS
+    TEWCER -. "weight candidate evaluation summary" .-> RGS
+    TEWPGR -. "weight promotion gate summary" .-> RGS
+    TEWDAR -. "daily weight adjustment summary" .-> RGS
+    RGS --> RGSR
+    RREG --> RIDX
+    QR -. "data quality report freshness" .-> RIDX
+    DR -. "daily score report freshness" .-> RIDX
+    EDASHR -. "evidence dashboard freshness" .-> RIDX
+    DTASKDR -. "daily task dashboard freshness" .-> RIDX
+    DDBUS -. "daily decision summary freshness" .-> RIDX
+    CEXPR -. "calculation explainers freshness" .-> RIDX
+    SCAR -. "score change attribution freshness" .-> RIDX
+    RGSR -. "research governance summary freshness" .-> RIDX
+    RBRIEFR -. "reader brief freshness" .-> RIDX
+    FPGR -. "parameter governance freshness" .-> RIDX
+    SECPITOBSR -. "SEC PIT observe freshness" .-> RIDX
+    SECPITMONR -. "SEC PIT monitor freshness" .-> RIDX
+    TEWCER -. "weight candidate evaluation freshness" .-> RIDX
+    TEWPGR -. "weight promotion gate freshness" .-> RIDX
+    BR -. "backtest report freshness" .-> RIDX
+    BROB -. "backtest robustness freshness" .-> RIDX
+    RIDX --> RIDXR
     DSNAP --> PLED
 
     PR --> BT
@@ -1181,6 +1233,19 @@ flowchart TD
     SCSR --> DTASKD
     DTASKD --> DTASKDR
     DTASKDR --> DDBUS
+    DSNAP --> SCA
+    SCA --> SCAR
+    DR --> RBRIEF
+    DRT --> RBRIEF
+    DSNAP --> RBRIEF
+    CEXPR --> RBRIEF
+    SCAR --> RBRIEF
+    RGSR --> RBRIEF
+    RIDXR --> RBRIEF
+    EDASHR --> RBRIEF
+    DTASKDR --> RBRIEF
+    DDBUS --> RBRIEF
+    RBRIEF --> RBRIEFR
     DDBUS --> OICAND
     DSNAP --> OICAND
     QR --> ALERT
@@ -1802,6 +1867,11 @@ flowchart TD
 |每日运行报告|`outputs/runs/daily/<executed_at_utc>/as_of_YYYY-MM-DD__<safe_run_id>/reports/daily_ops_plan_YYYY-MM-DD.md` / `reports/daily_ops_run_YYYY-MM-DD.md` / `metadata/daily_ops_run_metadata_YYYY-MM-DD.json`，默认镜像到 `outputs/reports/daily_ops_*`|计划报告中文输出计划状态、评估日期、market session、上一交易日、休市原因、必需环境变量是否可见、逐步骤命令、输入可见性类别、输出路径、质量门禁和显式跳过声明；执行报告中文输出真实执行状态、开始/结束时间、退出码、耗时、stdout/stderr 行数、输入可见性阻断和预期 artifact 路径，不保存 stdout/stderr 原文、API key、token 或付费内容原文；`download_data` 失败时预期产物包含 `download_data_diagnostics_YYYY-MM-DD.md`，用于定位 provider/cache 阶段但不改变 fail-closed 行为；metadata sidecar 结构化记录 run id、git commit/dirty diff hash、config/rule card hash、命令清单、必需 env presence、input visibility status/issues、production visibility cutoff、pre-run input checksum、step result 摘要和 produced artifact checksum，不保存 secret 值、stdout/stderr 原文或付费内容原文；当前仍未接入主动 GitHub Actions 生产 cron、通知或云备份|已实现|
 |每日关键结论 Dashboard|`aits reports daily-tasks` / `outputs/runs/daily/<executed_at_utc>/as_of_YYYY-MM-DD__<safe_run_id>/reports/daily_task_dashboard_YYYY-MM-DD.html` / `.json`，默认镜像到 `outputs/reports/daily_task_dashboard_*`|读取 `daily_ops_run_metadata_YYYY-MM-DD.json`、执行报告路径、本轮同日子报告、evidence dashboard JSON、最近一个 search window 不晚于 as-of 的 shadow parameter search bundle、最近 7/14/30 日已存在的 `paper_trading_summary_YYYY-MM-DD.json` 和 `order_intent_candidates_YYYY-MM-DD.json`、可选最近不晚于 as-of 的 `paper_trading_replay_START_END.json`、可选同日 `shadow_parameter_impact_YYYY-MM-DD.json` 和 `weight_adjustment_candidates_YYYY-MM-DD.json`，以及该 search window 内 production decision snapshots；首屏输出 `key_conclusions`，按投资结论、数据可信度、参数治理、反馈复盘、运行健康汇总关键业务结论、支撑要点、重点风险和来源步骤；Paper Trading Summary 只读展示 candidate_count、blocked_candidates、generated_intents、approved/rejected、submitted、filled/open、reconciliation_status、`production_effect=none`、trading daily report 和 audit root；Paper Trading Trend 同时聚合 7/14/30 日窗口，缺 summary 或 candidate 数据时显示 `LIMITED` 且不运行 replay、不补造趋势结论；若没有 continuous replay，趋势继续显示 `daily_independent` / `portfolio_carry_forward=false` warning；若最近 replay 为 `continuous_portfolio`，趋势顶层显示 latest `replay_mode`、`portfolio_carry_forward=true`、final_equity、max_drawdown、exposure_peak、final_positions count 和 expired DAY orders，但窗口 totals 仍来自既有 summary/candidate JSON；Shadow Impact 只读展示 impact_status、主要 blocked_by/warnings、样本数、filled count、paper PnL、continuous replay availability/mode 和 report link，不展示长表；Weight Adjustment Candidate 只读展示 candidate_count、top_candidate_id、gate_status、main blocked_by、report link 和 `production_effect=none`，不生成候选、不应用参数、不触发交易，也不改变 key_conclusions；SEC PIT Baseline Coverage、Shadow Observe 和 Shadow Monitor 卡片只读展示 coverage ratio/status、monitoring reason、factor rollback flag、data limitation flag、rolling RankIC、monitor maturity、rolling metrics availability、state transition reason、warning count 和 rollback recommendation，不运行 audit/backfill/shadow-observe/shadow-monitor；反馈复盘会展示 shadow parameter 诊断领先 trial、shadow vs production return、excess、主因、关键 cap、promotion 状态和阻断条件，并先输出 production/current vs shadow candidate 的结果对比（Total return、Max drawdown、Turnover、Beat rate、样本覆盖和 return 计算口径），再把参数对比拆成 Gate cap override 与权重参数两个分区；Gate cap override 的 production/current 列展示回测窗口内实际 production gate cap 数值或区间，声明诊断领先不等于可上线；子任务详情入口以卡片形式展示阶段性结论、风险和同目录 Markdown/HTML/JSON 子报告相对链接，作为后续 PIT、SEC、valuation、score、feedback、health、secret hygiene 专属网页的统一入口；运行状态摘要、失败/跳过/风险限制计数、visibility cutoff、逐步骤状态、耗时、return code、stdout/stderr 行数、输入可见性类别和详情报告路径后置为审计/排错信息；缺失子报告、`PASS_WITH_*`、`ACTIVE_WARNINGS` 或 `SKIPPED` 均显式进入风险区；该页不替代 evidence dashboard 的投资论证，也不替代各子任务 Markdown/HTML 审计源；Paper Trading Trend / latest replay summary、Shadow Impact、SEC PIT 卡片和 Weight Adjustment Candidate 卡片只读展示 paper-only / observe-only 复盘信息，不触发 replay、不调用 broker、不改变 production 仓位建议、参数晋级或正式 ledger，continuous 摘要、SEC PIT shadow observe / monitor 和 weight candidate 均不是实盘收益或上线依据|已实现基础版|
 |每日决策总线 JSON|`outputs/reports/daily_decision_summary_YYYY-MM-DD.json` / canonical run bundle 同名文件|由 `aits reports daily-tasks` 和 `aits ops daily-run` 在 dashboard view model 上生成，读取同一批子报告、evidence dashboard JSON、parameter governance JSON、shadow parameter/iteration 只读摘要、pipeline health 和 source artifact 信息；固定输出 `schema_version=1`、`report_type=daily_decision_summary`、`as_of`、`run_id`、`production_effect=none`、`decision_bus_role`、data_gate、investment_conclusion、parameter_governance、feedback_review、system_health、source_artifacts、hrefs 和 checksums；缺少 evidence dashboard / parameter governance / feedback / health 子报告时标记 `missing` 或 `limited` 并写入 blocking reasons，不从任务成功状态补造投资动作、置信度或仓位；该 JSON 是后续 OrderIntentBuilder / order intent candidate adapter 的上游输入，但本身不生成 `OrderIntent`、不调用 trading engine、不触发交易|已实现基础版|
+|Score Change Attribution|`aits reports score-change-attribution` / `outputs/reports/score_change_attribution_YYYY-MM-DD.md` / `.json`|读取当前 decision snapshot 和上一条 signal-time decision snapshot；显式 previous path 优先，否则从 snapshot 目录按日期发现最新 prior；输出 comparison window、overall score delta、component score/effective weight/coverage/confidence/contribution delta、gate cap/binding delta、final position delta、data quality status delta 和 top changes；缺少上一快照、上一快照不是 prior 或字段不足时输出 `INSUFFICIENT_DATA`，不补造变化原因；固定 `production_effect=none`，不重算 score、不修改 weights/gates、不读取后验 outcome|已实现基础版|
+|Research Governance Summary|`aits reports research-governance-summary` / `outputs/reports/research_governance_summary_YYYY-MM-DD.md` / `.json`|只读读取 latest backtest / robustness / gate attribution、parameter governance、SEC PIT evaluation / baseline comparison / diagnostics / candidate review / baseline coverage / shadow observe / shadow monitor、shadow impact、weight adjustment candidates / candidate evaluation / promotion gate / daily summary artifacts；按 `Production-active`、`Approved but inactive`、`Shadow observe-only`、`Candidate / research-only`、`Blocked / insufficient data`、`Rollback / warning` 分组，输出 candidate_id、status、production_effect、manual_review_required、next action 和 source path；缺失 artifact 只标记 `MISSING` / `LIMITED`，不运行任何上游任务；固定 `production_effect=none`，不修改 production scoring、weights、position gates 或 trading 行为|已实现基础版|
+|Report Registry / Cadence Index|`config/report_registry.yaml` + `aits reports index` / `outputs/reports/report_index_YYYY-MM-DD.html` / `.json`|registry 登记 report_id、title、group、cadence、audience、owner、command、artifact_globs、freshness_sla_days、freshness_rationale、owner_action、Reader Brief / daily task dashboard 可见性和 required_for_daily_reading；命令只读扫描 latest artifact，输出 freshness_status、age_days、missing/stale/required_missing、artifact_status、artifact production_effect risk 和 owner action；缺失或过期只进入 warning，不运行上游报告、不修改 production、不替代 `docs/artifact_catalog.md`|已实现基础版|
+|Documentation Contract|`aits docs report-contract` / `outputs/reports/documentation_contract_YYYY-MM-DD.md` / `.json`|只读读取 `config/report_registry.yaml` 与 `docs/artifact_catalog.md`，按 registry report 生成 documentation contract / generated catalog 摘要；每项 report 显示 matched source artifact、command_documented、schema/status terms、catalog production_effect、common misread 和 documentation_issues；缺 artifact catalog 覆盖、production_effect 或 common misread 时 `FAIL`，命令或 schema/status 缺口可作为 warning；固定 `production_effect=none`，不运行上游报告、不自动改写 artifact catalog、不拆分 task register 或 system flow|已实现基础版|
+|Reader Brief|`aits reports reader-brief` / `outputs/reports/reader_brief_YYYY-MM-DD.html` / `.json`|只读读取 `daily_decision_summary`、Markdown 日报、evidence dashboard JSON、daily task dashboard JSON、calculation explainers JSON、score change attribution JSON、research governance summary JSON、report index JSON、decision snapshot 和日报 trace bundle；首屏展示 run context、核心结论、仓位语言、置信度、binding gate、Data Gate、人工复核和“不是实盘交易指令”边界；正文展示 Score-to-Position funnel、Score Change Attribution top changes、Report Index freshness、component contribution、binding gate ladder、Data/PIT safety、research governance 摘要、manual review queue 和 artifact links；缺少可选 artifact 时输出 `PASS_WITH_WARNINGS`、`MISSING` 或 `LIMITED`，不得补造投资结论；固定 `production_effect=none`，不重算 score、不修改 weights/gates、不触发 paper trading 或 broker|已实现基础版|
 |Order intent candidate JSON|`outputs/reports/order_intent_candidates_YYYY-MM-DD.json` / canonical run bundle 同名文件|由 `aits reports daily-tasks` 和 `aits ops daily-run` 在 `daily_decision_summary` 写出后生成；default `scripts/run_paper_trading_from_candidates.py --date YYYY-MM-DD` 在候选文件缺失时也会先补齐 limited/missing `daily_decision_summary` 和正式 candidate JSON；读取 `daily_decision_summary`、decision snapshot 的 score snapshot 和 position/gate 结论，输出 `schema_version=1`、`report_type=order_intent_candidates`、`production_effect=none`、`execution_boundary`、`source_inputs`、`source_artifacts`、OrderIntentCandidate schema-compatible candidate、`source_decision`、score snapshot 和 position context；自动生成的 candidate 默认 `blocked=true`，`blocked_by` 至少包含 `trading_engine_not_enabled` 和 `manual_approval_required`，Data Gate 不通过或缺失时包含 `data_gate_blocked`；缺少 snapshot 或上游结论时只能标记 missing/blocked reason，不补造订单方向、数量、金额或价格；该 JSON 只表达“如果未来允许交易，系统可能想做什么”，默认不生成 `OrderIntent`、不调用真实 broker API、真实下单接口或账户状态；只有外部审查后显式 `blocked=false` 且 `mode=paper` 的 candidate 才能通过 adapter 转换为 paper `OrderIntent`|已实现基础版|
 |每日运行 Bundle|`outputs/runs/daily/<executed_at_utc>/as_of_YYYY-MM-DD__<safe_run_id>/manifest.json` / `reports/` / `traces/` / `metadata/`|`daily-run` 的 canonical artifact bundle；第一层 `<executed_at_utc>` 表示本轮实际执行 UTC 时间，第二层同时记录评估日 `as_of` 和 safe run id，便于同一 as-of 多次运行按执行时间归档；manifest 记录 schema version、run id、safe run id、execution timestamp、as_of、run root、状态、visibility cutoff、legacy output mode、输入 artifact、canonical 输出 artifact、legacy mirror artifact、checksum、size 和 file count；artifact 记录由 `ArtifactRef` 统一生成；`data/raw` 与 `data/processed` 仍是状态缓存和校验引用来源，不是每轮完整复制的归档副本，bundle 只归档本次运行报告、trace 和 metadata；legacy mirror 迁移期保留旧路径可读性|已实现基础版|
 |文档新鲜度检查|`aits docs validate-freshness` / 可选 `outputs/reports/docs_freshness_YYYY-MM-DD.md`|CI 中检查 task register、implementation backlog、runbook 和 `docs/requirements/*.md` 是否包含 `最后更新：YYYY-MM-DD`，且该日期不得早于文档内部最新状态记录日期；失败时命令返回非 0，防止任务状态和需求文档继续漂移|已实现|
@@ -1820,6 +1890,7 @@ flowchart TD
 |风险预算 gate|`score-daily` / `backtest` 仓位闸门|在共享 `position_gate` 层读取 `config/portfolio.yaml:risk_budget`；高 VIX 或高 VIX 分位会压低最终 AI 仓位上限，真实持仓接入后单票、节点、相关性簇集中或 ETF beta 覆盖不足也会压低上限；缺少真实持仓时不使用观察池替代组合集中度|已实现基础版|
 |日报 Evidence Bundle|`outputs/reports/evidence/daily_score_YYYY-MM-DD_trace.json`|记录日报 `claim`、`evidence`、`dataset`、`quality` 和 `run_manifest`；`run_manifest.run_id` 可由 `score-daily --run-id` 或 `daily-run --run-id` 贯穿到 Decision Card；bundle 包括 `belief_state`、关注股票趋势分析 dataset/claim 引用、本次运行适用的 production rule version manifest 和 weight calibration 参数，用于从核心结论反查输入上下文、数据快照、effective weights、只读认知状态和规则版本|已实现|
 |决策快照|`data/processed/decision_snapshots/decision_snapshot_YYYY-MM-DD.json`|每次 `score-daily` 通过质量门禁后保存 signal_date、market regime、整体分、模块分、判断置信度、模型/最终/置信度调整仓位、静态和宏观调整后总风险资产预算、position gates、质量状态、人工复核、估值状态、风险事件状态、trace bundle 引用、`belief_state_ref`、rule version manifest 和配置路径|已实现基础版|
+|计算解释 JSON|`outputs/reports/calculation_explainers_YYYY-MM-DD.json` / `aits reports calculation-explainers`|由 `score-daily` 自动生成，也可用只读命令重建；读取 `config/metric_explainers.yaml`、decision snapshot 和可选 `scores_daily.csv`，输出 `schema_version=1`、`report_type=calculation_explainers`、`production_effect=none`、每个 metric 的 formula、input fields / values、source artifacts、PIT policy、limitations 和 common misread；首版覆盖 overall score、component score、effective weight、confidence、model / confidence-adjusted / final position、macro risk budget、position gate、RankIC、max drawdown 和 baseline coverage，其中回测/研究指标在非回测上下文为 `DEFINITION_ONLY`；缺少 optional scores cache 只进入 warning，不补造结论，不修改 production scoring、weights、position gates 或 trading 行为|已实现基础版|
 |当前校准上下文与有效权重|`outputs/current_context.json` / `outputs/current_effective_weights.json`|默认 `score-daily` 在生产输出路径下写出最近一次校准匹配上下文和 resolver 结果，供 `aits feedback apply-calibration-overlay`、市场反馈 dashboard 和人工审计读取；自定义测试/临时输出不覆盖全局 current 文件；当没有 approved overlay 时，独立 overlay 命令允许缺少 current context 并只输出 base/effective weights 相等的审计结果；一旦存在 approved overlay 但缺 context，仍然 fail closed；该产物不批准 overlay、不改变 production scoring 或 position gate|已实现基础版|
 |Shadow weight profile 观察|`aits feedback run-shadow-weight-profiles` / `data/processed/shadow_weight_profile_observations.csv` / `outputs/reports/shadow_weight_profiles_YYYY-MM-DD.md`|读取 production `decision_snapshot` 的组件分数和当前 gate，按 `shadow_weight_profiles.yaml` 中每套测试权重计算 shadow overall score、score delta、模型仓位和 gate 后观察仓位；默认只 upsert 独立 observation ledger，可显式提供隔离 prediction ledger 路径写入 `production_effect=none` challenger prediction，再由 `calibrate-predictions` 和 `shadow-maturity` 长期观察；observation ledger 同步记录 production/shadow 的模型目标仓位和 gate 后目标仓位；不修改 production `weight_profile_current.yaml`、approved overlay、正式 prediction ledger、日报结论或仓位 gate|已实现基础版|
 |Shadow weight 表现评估|`aits feedback evaluate-shadow-weight-performance` / `outputs/reports/shadow_weight_performance_YYYY-MM-DD.md` / `.csv`|读取隔离 shadow weight observation ledger 和价格缓存，按同一 signal date 比较 production gate 后仓位与 shadow gate 后仓位的 position-weighted return、最大回撤、换手和显式成本，输出 return-leading profile；该报告只用于 validation 调参方向，不批准 overlay、不写生产权重、不改变正式 prediction ledger、日报结论或仓位 gate|已实现基础版|

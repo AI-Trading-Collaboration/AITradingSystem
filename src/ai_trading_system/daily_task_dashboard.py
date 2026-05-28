@@ -21,6 +21,15 @@ from ai_trading_system.reports.daily_task_dashboard_view_model import (
 DAILY_DECISION_SUMMARY_SCHEMA_VERSION = 1
 PAPER_TRADING_TREND_WINDOWS: tuple[int, ...] = (7, 14, 30)
 PAPER_TRADING_TREND_REPLAY_MODE = "daily_independent"
+RESEARCH_GOVERNANCE_REPORT_TYPE = "research_governance_summary"
+RESEARCH_GOVERNANCE_GROUPS: tuple[str, ...] = (
+    "Production-active",
+    "Approved but inactive",
+    "Shadow observe-only",
+    "Candidate / research-only",
+    "Blocked / insufficient data",
+    "Rollback / warning",
+)
 
 
 @dataclass(frozen=True)
@@ -246,6 +255,7 @@ def build_daily_task_dashboard_payload(
         "sec_pit_baseline_coverage": _sec_pit_baseline_coverage(report),
         "sec_pit_shadow_observe": _sec_pit_shadow_observe(report),
         "sec_pit_shadow_monitor": _sec_pit_shadow_monitor(report),
+        "research_governance_summary": _research_governance_summary(report),
         "tasks": [
             {
                 "step_id": task.step_id,
@@ -376,6 +386,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_sec_pit_baseline_coverage(report),
             _render_sec_pit_shadow_observe(report),
             _render_sec_pit_shadow_monitor(report),
+            _render_research_governance_summary(report),
             _render_risks(report),
             _render_summary(report),
             _render_task_table(report),
@@ -6055,6 +6066,86 @@ def _sec_pit_shadow_monitor(report: DailyTaskDashboardReport) -> TraceRecord:
     }
 
 
+def _research_governance_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_research_governance_summary_path(report)
+    payload = _read_json_object(path)
+    default_markdown = (
+        report.project_root
+        / "outputs"
+        / "reports"
+        / f"research_governance_summary_{report.as_of.isoformat()}.md"
+    )
+    group_counts = {group: 0 for group in RESEARCH_GOVERNANCE_GROUPS}
+    if payload.get("report_type") != RESEARCH_GOVERNANCE_REPORT_TYPE:
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": "",
+            "markdown_path": str(default_markdown),
+            "latest_summary_date": "",
+            "card_count": 0,
+            "missing_count": 0,
+            "limited_count": 0,
+            "warning_count": 0,
+            "manual_review_required_count": 0,
+            "production_effect_risk_count": 0,
+            "group_counts": group_counts,
+            "production_effect": ProductionEffect.NONE.value,
+            "read_only": True,
+            "risk": (
+                "No research governance summary available. Dashboard 只读取 "
+                "REPORT-051 artifact，不运行 backtest、SEC PIT、shadow 或 weight "
+                "governance 上游任务。"
+            ),
+        }
+
+    summary = _mapping_value(payload, "summary")
+    raw_groups = _mapping_value(summary, "groups")
+    for group in RESEARCH_GOVERNANCE_GROUPS:
+        group_counts[group] = _int_value(raw_groups.get(group))
+    report_href = (
+        _report_href(default_markdown, report.reports_dir) if default_markdown.exists() else ""
+    )
+    production_effect = (
+        _string_value(payload.get("production_effect")) or ProductionEffect.NONE.value
+    )
+    status = _string_value(payload.get("status")) or "UNKNOWN"
+    warning_count = _int_value(summary.get("warning_count"))
+    missing_count = _int_value(summary.get("missing_count"))
+    limited_count = _int_value(summary.get("limited_count"))
+    production_effect_risk_count = _int_value(summary.get("production_effect_risk_count"))
+    risks: list[str] = []
+    if production_effect != ProductionEffect.NONE.value:
+        risks.append("REPORT-051 research governance summary production_effect 必须为 none。")
+    if production_effect_risk_count:
+        risks.append("存在 production_effect_risk=true 的治理卡片，必须人工复核。")
+    if missing_count or limited_count:
+        risks.append("Research governance summary 存在缺失或受限 artifact。")
+    if warning_count:
+        risks.append("Research governance summary 存在 rollback/warning 分组卡片。")
+    return {
+        "status": status,
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": report_href or _report_href(path, report.reports_dir),
+        "markdown_path": str(default_markdown),
+        "latest_summary_date": _string_value(payload.get("as_of")),
+        "card_count": _int_value(summary.get("card_count")),
+        "missing_count": missing_count,
+        "limited_count": limited_count,
+        "warning_count": warning_count,
+        "manual_review_required_count": _int_value(summary.get("manual_review_required_count")),
+        "production_effect_risk_count": production_effect_risk_count,
+        "group_counts": group_counts,
+        "production_effect": production_effect,
+        "read_only": True,
+        "risk": "；".join(risks) or "Research Governance Summary dashboard card 当前仅作只读展示。",
+    }
+
+
 def _dashboard_ticker_delta_list(value: object) -> list[TraceRecord]:
     if not isinstance(value, list):
         return []
@@ -7146,6 +7237,22 @@ def _latest_sec_pit_shadow_monitor_path(report: DailyTaskDashboardReport) -> Pat
     candidates: list[tuple[date, Path]] = []
     for path in monitor_root.glob("sec_pit_shadow_monitor_summary_*.json"):
         raw_date = path.stem.removeprefix("sec_pit_shadow_monitor_summary_")
+        parsed = _parse_iso_date(raw_date)
+        if parsed is not None and parsed <= report.as_of:
+            candidates.append((parsed, path))
+    if not candidates:
+        return default_path
+    return max(candidates, key=lambda item: item[0])[1]
+
+
+def _latest_research_governance_summary_path(report: DailyTaskDashboardReport) -> Path:
+    reports_root = report.project_root / "outputs" / "reports"
+    default_path = reports_root / f"research_governance_summary_{report.as_of.isoformat()}.json"
+    if not reports_root.exists():
+        return default_path
+    candidates: list[tuple[date, Path]] = []
+    for path in reports_root.glob("research_governance_summary_*.json"):
+        raw_date = path.stem.removeprefix("research_governance_summary_")
         parsed = _parse_iso_date(raw_date)
         if parsed is not None and parsed <= report.as_of:
             candidates.append((parsed, path))
@@ -10918,6 +11025,82 @@ def _render_sec_pit_shadow_monitor(report: DailyTaskDashboardReport) -> str:
                 "state transition",
                 summary.get("state_transition_reason", ""),
             ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_research_governance_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _research_governance_summary(report)
+    group_counts = _mapping_value(summary, "group_counts")
+    report_href = _string_value(summary.get("report_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(report_href)}">'
+        "<span>Research Governance Summary</span>"
+        f"<small>{_text(summary.get('status', 'MISSING'))}</small></a>"
+        if report_href
+        else '<span class="report-link missing">'
+        "<span>Research Governance Summary</span>"
+        "<small>MISSING</small></span>"
+    )
+    missing_note = (
+        '<p class="subtle">No research governance summary available.</p>'
+        if summary.get("exists") is not True
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="research-governance-summary-title">',
+            '<div class="section-head">',
+            '<h2 id="research-governance-summary-title">Research Governance Summary</h2>',
+            (
+                "<p>REPORT-051 只读卡片；dashboard 只读取统一 research governance "
+                "summary，不运行 backtest、SEC PIT、shadow、weight governance "
+                "或 promotion 上游任务。</p>"
+            ),
+            "</div>",
+            missing_note,
+            '<div class="summary-grid">',
+            _summary_item("latest summary date", summary.get("latest_summary_date", "")),
+            _summary_item("summary status", summary.get("status", "MISSING")),
+            _summary_item("card count", summary.get("card_count", 0)),
+            _summary_item("missing", summary.get("missing_count", 0)),
+            _summary_item("limited", summary.get("limited_count", 0)),
+            _summary_item("warnings", summary.get("warning_count", 0)),
+            _summary_item(
+                "manual review required",
+                summary.get("manual_review_required_count", 0),
+            ),
+            _summary_item(
+                "production effect risk",
+                summary.get("production_effect_risk_count", 0),
+            ),
+            _summary_item(
+                "shadow observe-only",
+                group_counts.get("Shadow observe-only", 0),
+            ),
+            _summary_item(
+                "candidate / research-only",
+                group_counts.get("Candidate / research-only", 0),
+            ),
+            _summary_item(
+                "blocked / insufficient data",
+                group_counts.get("Blocked / insufficient data", 0),
+            ),
+            _summary_item(
+                "rollback / warning",
+                group_counts.get("Rollback / warning", 0),
+            ),
+            _summary_item("production effect", summary.get("production_effect", "none")),
             "</div>",
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'

@@ -1,0 +1,192 @@
+schema_version: 1
+policy_version: metric_explainers_v1
+metrics:
+  overall_score:
+    label: Overall Score
+    audience_label: 综合分数
+    formula: sum(component_score[module] * effective_weight[module])
+    input_fields:
+      - component_score
+      - effective_weight
+    output_range: 0-100
+    pit_policy: uses as-of filtered inputs from decision snapshot and scores cache
+    interpretation:
+      high: AI risk exposure environment is more supportive.
+      low: AI risk exposure environment is less supportive.
+    common_misread:
+      - It is not a probability of price going up.
+      - It is not the final position.
+    report_sections:
+      - score_to_position_funnel
+  component_score:
+    label: Component Score
+    audience_label: 模块分数
+    formula: module-specific normalized signal score aggregated to 0-100
+    input_fields:
+      - normalized_signals
+      - component_policy
+    output_range: 0-100
+    pit_policy: pit-sensitive; inputs must be visible by signal date
+    common_misread:
+      - A score of 50 is neutral, not a forecast.
+      - Low coverage reduces confidence.
+    report_sections:
+      - component_score_explainability
+  effective_weight:
+    label: Effective Weight
+    audience_label: 有效权重
+    formula: component_weight / sum(component_weight)
+    input_fields:
+      - component_weight
+    output_range: 0-1
+    pit_policy: policy/config value selected for the run
+    common_misread:
+      - Effective weight is not the same as signal confidence.
+      - Shadow weights do not affect production unless separately approved.
+    report_sections:
+      - score_to_position_funnel
+      - component_score_explainability
+  confidence_score:
+    label: Confidence Score
+    audience_label: 判断置信度
+    formula: coverage/source quality/manual review policy converted to confidence score
+    input_fields:
+      - component_coverage
+      - source_type
+      - manual_review
+      - confidence_policy
+    output_range: 0-100
+    pit_policy: uses current run quality and review state
+    common_misread:
+      - Confidence can reduce usage or caps; it does not prove low risk.
+      - High score with low confidence is not a strong trade instruction.
+    report_sections:
+      - score_to_position_funnel
+      - data_quality_pit_safety
+  model_position_band:
+    label: Model Position Band
+    audience_label: 评分映射仓位
+    formula: score band mapping from overall_score to raw AI risk-asset position band
+    input_fields:
+      - overall_score
+      - position_band_policy
+    output_range: 0-1 position band
+    pit_policy: deterministic policy mapping for the run
+    common_misread:
+      - This is not final position; gates can cap it.
+    report_sections:
+      - score_to_position_funnel
+  confidence_adjusted_position:
+    label: Confidence Adjusted Position
+    audience_label: 置信度调整后仓位
+    formula: apply confidence cap to model position band when confidence is not high enough
+    input_fields:
+      - model_position_band
+      - confidence_score
+      - confidence_policy
+    output_range: 0-1 position band
+    pit_policy: deterministic policy mapping for the run
+    common_misread:
+      - A confidence cap is not a bearish score by itself.
+    report_sections:
+      - score_to_position_funnel
+  macro_risk_asset_budget:
+    label: Macro Risk Asset Budget
+    audience_label: 总风险资产预算
+    formula: portfolio macro risk budget policy selects total risk-asset band
+    input_fields:
+      - macro_risk_asset_budget
+      - portfolio_policy
+    output_range: 0-1 total risk-asset band
+    pit_policy: policy/config value selected for the run
+    common_misread:
+      - It caps total risk assets, not only AI theme exposure.
+    report_sections:
+      - score_to_position_funnel
+  position_gate:
+    label: Position Gate
+    audience_label: 仓位闸门
+    formula: each triggered gate contributes a max_position cap; final cap uses the minimum cap
+    input_fields:
+      - gate_id
+      - triggered
+      - max_position
+      - reason
+    output_range: 0-1 max position cap
+    pit_policy: uses validated run inputs and policy rules
+    common_misread:
+      - A binding gate may cap a supportive score.
+      - Non-binding gates still matter as audit evidence.
+    report_sections:
+      - binding_gate_ladder
+  final_position_max:
+    label: Final Position Max
+    audience_label: 最终仓位上限
+    formula: min(model_position_max, confidence_cap, macro_budget_cap, all_gate_caps)
+    input_fields:
+      - model_position_band
+      - confidence_adjusted_position
+      - macro_risk_asset_budget
+      - position_gates
+    output_range: 0-1
+    pit_policy: deterministic result of current run policy and validated inputs
+    common_misread:
+      - A low final position may be caused by a gate, not by a bearish score.
+    report_sections:
+      - score_to_position_funnel
+      - binding_gate_ladder
+  final_position_band:
+    label: Final Position Band
+    audience_label: 最终仓位区间
+    formula: final position min/max after all caps and risk budget constraints
+    input_fields:
+      - final_position_min
+      - final_position_max
+    output_range: 0-1 position band
+    pit_policy: deterministic result of current run policy and validated inputs
+    common_misread:
+      - This is advisory decision-support language, not an automatic broker order.
+    report_sections:
+      - executive_decision_card
+      - score_to_position_funnel
+  rank_ic:
+    label: RankIC
+    audience_label: 横截面排序相关
+    formula: Spearman correlation between signal ranks and forward outcome ranks
+    input_fields:
+      - signal_rank
+      - forward_return_rank
+    output_range: -1 to 1
+    pit_policy: only valid when forward labels and PIT-safe signal dates are separated
+    common_misread:
+      - RankIC is research evidence, not today's production score.
+    report_sections:
+      - backtest_outcome_status
+      - research_governance
+  max_drawdown:
+    label: Max Drawdown
+    audience_label: 最大回撤
+    formula: min(portfolio_value / running_peak - 1)
+    input_fields:
+      - portfolio_value
+      - running_peak
+    output_range: -1 to 0
+    pit_policy: backtest or replay metric; depends on input coverage and execution assumptions
+    common_misread:
+      - Drawdown improvement does not prove live readiness without PIT and cost checks.
+    report_sections:
+      - backtest_outcome_status
+  baseline_coverage:
+    label: Baseline Coverage
+    audience_label: baseline 覆盖率
+    formula: available baseline observations / required baseline observations
+    input_fields:
+      - available_observations
+      - required_observations
+    output_range: 0-1
+    pit_policy: coverage is only meaningful for the stated date range and universe
+    common_misread:
+      - High coverage does not prove a signal is effective.
+    report_sections:
+      - data_quality_pit_safety
+      - research_governance

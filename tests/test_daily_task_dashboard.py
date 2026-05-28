@@ -296,6 +296,41 @@ def test_reports_daily_tasks_cli_writes_html_and_json(tmp_path: Path) -> None:
     assert order_candidate["execution_action"] == "none"
 
 
+def test_daily_task_dashboard_reads_research_governance_summary_card(
+    tmp_path: Path,
+) -> None:
+    as_of = date(2026, 5, 4)
+    metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
+    _write_research_governance_summary(tmp_path, as_of)
+
+    report = build_daily_task_dashboard_report(
+        as_of=as_of,
+        metadata_path=metadata_path,
+        run_report_path=tmp_path / "daily_ops_run_2026-05-04.md",
+        reports_dir=tmp_path / "outputs" / "reports",
+    )
+
+    html = render_daily_task_dashboard(report)
+    payload = build_daily_task_dashboard_payload(report)
+    summary = payload["research_governance_summary"]
+
+    assert "REPORT-051 只读卡片" in html
+    assert "Research Governance Summary" in html
+    assert summary["status"] == "PASS_WITH_WARNINGS"
+    assert summary["production_effect"] == "none"
+    assert summary["read_only"] is True
+    assert summary["card_count"] == 6
+    assert summary["missing_count"] == 1
+    assert summary["limited_count"] == 1
+    assert summary["warning_count"] == 1
+    assert summary["manual_review_required_count"] == 3
+    assert summary["group_counts"]["Shadow observe-only"] == 2
+    assert summary["group_counts"]["Candidate / research-only"] == 1
+    assert summary["group_counts"]["Blocked / insufficient data"] == 1
+    assert summary["group_counts"]["Rollback / warning"] == 1
+    assert "research_governance_summary_2026-05-04.md" in summary["report_href"]
+
+
 def test_daily_decision_summary_schema_is_stable(tmp_path: Path) -> None:
     as_of = date(2026, 5, 4)
     metadata_path = _write_daily_ops_metadata(tmp_path, as_of)
@@ -1761,6 +1796,42 @@ def test_daily_task_dashboard_data_freshness_summary_card_is_read_only(
     assert summary["trading_execution"] is False
     assert "Data Freshness Summary" in html
     assert "data_freshness_summary_2026-05-23.md" in html
+
+
+def _write_research_governance_summary(tmp_path: Path, as_of: date) -> None:
+    suffix = as_of.isoformat()
+    output_dir = tmp_path / "outputs" / "reports"
+    json_path = output_dir / f"research_governance_summary_{suffix}.json"
+    markdown_path = output_dir / f"research_governance_summary_{suffix}.md"
+    payload: dict[str, Any] = {
+        "schema_version": 1,
+        "report_type": "research_governance_summary",
+        "as_of": suffix,
+        "status": "PASS_WITH_WARNINGS",
+        "production_effect": "none",
+        "summary": {
+            "card_count": 6,
+            "missing_count": 1,
+            "limited_count": 1,
+            "warning_count": 1,
+            "production_effect_risk_count": 0,
+            "manual_review_required_count": 3,
+            "groups": {
+                "Production-active": 1,
+                "Approved but inactive": 0,
+                "Shadow observe-only": 2,
+                "Candidate / research-only": 1,
+                "Blocked / insufficient data": 1,
+                "Rollback / warning": 1,
+            },
+        },
+    }
+    output_dir.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.write_text("# Research Governance Summary\n", encoding="utf-8")
 
 
 def _write_daily_ops_metadata(tmp_path: Path, as_of: date) -> Path:
