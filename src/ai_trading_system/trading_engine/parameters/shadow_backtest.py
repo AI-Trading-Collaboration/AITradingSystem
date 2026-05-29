@@ -537,7 +537,11 @@ def _summary_payload(
         ),
         "passing_windows_ratio": passing_ratio,
         "overfitting_risk": _overfitting_risk(passing_ratio, len(windows)),
-        "promotion_decision": promotion_decision.to_dict(),
+        "promotion_decision": _promotion_decision_payload(
+            promotion_decision,
+            as_of=as_of,
+            backtest_mode=_diagnostic_backtest_mode(backtest_input_diagnostics),
+        ),
         "promotion_constraints": _promotion_constraints_for_mode(
             _diagnostic_backtest_mode(backtest_input_diagnostics)
         ),
@@ -631,6 +635,39 @@ def _promotion_payload_from_summary(payload: dict[str, Any]) -> dict[str, Any]:
         "source_shadow_backtest": metadata.get("run_id"),
         "safety": payload.get("safety", {}),
     }
+
+
+def _promotion_decision_payload(
+    decision: PromotionDecision,
+    *,
+    as_of: date,
+    backtest_mode: str,
+) -> dict[str, object]:
+    payload = decision.to_dict()
+    ablation_path = (
+        PROJECT_ROOT
+        / "artifacts"
+        / "signal_ablation"
+        / as_of.isoformat()
+        / "signal_ablation_summary.json"
+    )
+    if not ablation_path.exists():
+        return payload
+    supporting = payload.get("supporting_artifacts")
+    if not isinstance(supporting, dict):
+        supporting = {}
+    supporting["signal_ablation"] = str(ablation_path)
+    payload["supporting_artifacts"] = supporting
+    if backtest_mode == "full_signal_backtest_limited":
+        reason = str(payload.get("reason") or "")
+        if "signal ablation" not in reason.lower():
+            payload["reason"] = (
+                reason.rstrip(".")
+                + ". Signal ablation summary is available as supporting evidence, "
+                "but candidate promotion remains disabled while signal quality is limited "
+                "and fallback signals remain present."
+            )
+    return payload
 
 
 def _write_artifacts(

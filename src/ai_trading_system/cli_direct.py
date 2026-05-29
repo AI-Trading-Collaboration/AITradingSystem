@@ -75,6 +75,23 @@ def _dispatch(args: list[str]) -> None:
             input_path=_optional_path(args, "--input-path"),
         )
         return
+    if args[:2] == ["signals", "ablation"]:
+        cli.signals_ablation_command(
+            ctx=SimpleNamespace(args=[]),
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            config_path=_signal_ablation_config_option(args, "--config"),
+            signals=_values_after_option(args, "--signals"),
+            dry_run=_flag(args, "--dry-run"),
+        )
+        return
+    if args[:2] == ["signals", "validate-ablation"]:
+        cli.signals_validate_ablation_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            input_path=_optional_path(args, "--input-path"),
+        )
+        return
     if args[:2] == ["pit-snapshots", "fetch-fmp-forward"]:
         cli.fetch_fmp_forward_pit_command(
             as_of=_option(args, "--as-of"),
@@ -182,6 +199,13 @@ def _dispatch(args: list[str]) -> None:
             source_path=_optional_path(args, "--source-path"),
         )
         return
+    if args[:2] == ["reports", "signal-ablation"]:
+        cli.signal_ablation_report_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            source_path=_optional_path(args, "--source-path"),
+        )
+        return
     if args[:2] == ["reports", "reader-brief"]:
         cli.reader_brief_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),
@@ -264,6 +288,11 @@ def _path_option(args: Sequence[str], name: str):
 def _optional_path(args: Sequence[str], name: str):
     value = _option(args, name)
     return None if value is None else Path(value)
+
+
+def _signal_ablation_config_option(args: Sequence[str], name: str):
+    value = _option(args, name)
+    return cli.DEFAULT_SIGNAL_ABLATION_CONFIG_PATH if value is None else Path(value)
 
 
 def _values_after_option(args: Sequence[str], name: str) -> list[str]:

@@ -747,6 +747,19 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("max_drawdown_delta", parameter_shadow.get("max_drawdown_delta")),
                     ("sharpe_ratio_delta", parameter_shadow.get("sharpe_ratio_delta")),
                     ("turnover_delta", parameter_shadow.get("turnover_delta")),
+                    ("signal_ablation_status", parameter_shadow.get("signal_ablation_status")),
+                    (
+                        "signal_ablation_summary",
+                        parameter_shadow.get("signal_ablation_summary"),
+                    ),
+                    (
+                        "signal_ablation_promotion_credit_signals",
+                        parameter_shadow.get("signal_ablation_promotion_credit_signals"),
+                    ),
+                    (
+                        "signal_ablation_negative_signals",
+                        parameter_shadow.get("signal_ablation_negative_signals"),
+                    ),
                     ("manual_review_required", parameter_shadow.get("manual_review_required")),
                     ("risk", parameter_shadow.get("risk")),
                     ("diagnostic_report", parameter_shadow.get("diagnostic_report")),
@@ -1602,6 +1615,7 @@ def _backtest_shadow_governance(
 
 
 def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
+    ablation_summary = _signal_ablation_review_summary(as_of)
     path = (
         PROJECT_ROOT
         / "artifacts"
@@ -1639,6 +1653,13 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
             "max_drawdown_delta": "NA",
             "sharpe_ratio_delta": "NA",
             "turnover_delta": "NA",
+            "signal_ablation_status": ablation_summary.get("status", "MISSING"),
+            "signal_ablation_summary": ablation_summary.get("summary_sentence", ""),
+            "signal_ablation_promotion_credit_signals": ablation_summary.get(
+                "promotion_credit_signals",
+                [],
+            ),
+            "signal_ablation_negative_signals": ablation_summary.get("negative_signals", []),
             "manual_review_required": True,
             "risk": "Shadow parameter backtest artifact missing; Reader Brief does not run it.",
             "diagnostic_report": str(diagnostic_path) if diagnostic_path.exists() else "",
@@ -1688,6 +1709,13 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
         "max_drawdown_delta": _format_number(comparison.get("max_drawdown_delta"), digits=4),
         "sharpe_ratio_delta": _format_number(comparison.get("sharpe_ratio_delta"), digits=4),
         "turnover_delta": _format_number(comparison.get("turnover_delta"), digits=4),
+        "signal_ablation_status": ablation_summary.get("status", "MISSING"),
+        "signal_ablation_summary": ablation_summary.get("summary_sentence", ""),
+        "signal_ablation_promotion_credit_signals": ablation_summary.get(
+            "promotion_credit_signals",
+            [],
+        ),
+        "signal_ablation_negative_signals": ablation_summary.get("negative_signals", []),
         "manual_review_required": metadata.get("manual_review_required") is True,
         "risk": _text(decision.get("reason"), "Open shadow backtest report before review."),
         "diagnostic_report": diagnostic_path_text,
@@ -1733,6 +1761,54 @@ def _signal_snapshot_review_summary(
         "real_signal_count": len(_texts(signal_snapshots.get("real_signals"))),
         "fallback_signal_count": len(_texts(signal_snapshots.get("neutral_fallback_signals"))),
         "missing_signal_count": len(_texts(signal_snapshots.get("missing_signals"))),
+    }
+
+
+def _signal_ablation_review_summary(as_of: date) -> dict[str, Any]:
+    path = (
+        PROJECT_ROOT
+        / "artifacts"
+        / "signal_ablation"
+        / as_of.isoformat()
+        / "signal_ablation_summary.json"
+    )
+    payload = _read_optional_json(path)
+    if not payload:
+        return {
+            "status": "MISSING",
+            "promotion_credit_signals": [],
+            "negative_signals": [],
+            "summary_sentence": (
+                "Signal ablation summary is missing; Reader Brief does not run ablation."
+            ),
+        }
+    metadata = _mapping(payload.get("metadata"))
+    summary = _mapping(payload.get("summary"))
+    promotion_credit = _texts(summary.get("promotion_credit_signals"))
+    negative = _texts(summary.get("negative_signals"))
+    fallback = _texts(summary.get("fallback_signals"))
+    status = _text(metadata.get("status"), "UNKNOWN")
+    if negative:
+        sentence = (
+            "Signal ablation detected potential negative contribution from "
+            f"{_format_english_list(negative)}. This should be reviewed before expanding "
+            "promotion eligibility."
+        )
+    else:
+        sentence = (
+            f"Signal ablation remains {status}. "
+            f"Promotion-credit-eligible signals: "
+            f"{_format_english_list(promotion_credit) or 'none'}. "
+            f"Fallback signals: {_format_english_list(fallback) or 'none'}; "
+            "candidate promotion remains disabled."
+        )
+    return {
+        "status": status,
+        "source_artifact": str(path),
+        "promotion_credit_signals": promotion_credit,
+        "negative_signals": negative,
+        "fallback_signals": fallback,
+        "summary_sentence": sentence,
     }
 
 

@@ -204,6 +204,7 @@ def build_daily_task_dashboard_payload(
         "shadow_parameter_impact": _shadow_parameter_impact_summary(report),
         "backtest_data_quality": _backtest_data_quality_summary(report),
         "shadow_parameter_backtest": _shadow_parameter_backtest_summary(report),
+        "signal_ablation_summary": _signal_ablation_summary(report),
         "weight_adjustment_candidates": _weight_adjustment_candidates_summary(report),
         "weight_candidate_evaluation": _weight_candidate_evaluation_summary(report),
         "weight_promotion_gate": _weight_promotion_gate_summary(report),
@@ -357,6 +358,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_shadow_parameter_impact(report),
             _render_backtest_data_quality(report),
             _render_shadow_parameter_backtest(report),
+            _render_signal_ablation_summary(report),
             _render_weight_adjustment_candidates(report),
             _render_weight_candidate_evaluation(report),
             _render_weight_promotion_gate(report),
@@ -2218,6 +2220,90 @@ def _shadow_parameter_backtest_summary(report: DailyTaskDashboardReport) -> Trac
         "production_effect": metadata.get("production_effect", ProductionEffect.NONE.value),
         "risk": "；".join(risks) or "Shadow parameter backtest 只读展示，不修改 production 参数。",
     }
+
+
+def _signal_ablation_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    suffix = report.as_of.isoformat()
+    path = (
+        report.project_root
+        / "artifacts"
+        / "signal_ablation"
+        / suffix
+        / "signal_ablation_summary.json"
+    )
+    if not path.exists():
+        latest_path = _latest_signal_ablation_path(report)
+        if latest_path is not None:
+            path = latest_path
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "signal_ablation":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "markdown_href": "",
+            "backtest_mode": "MISSING",
+            "positive_signals_count": 0,
+            "negative_signals_count": 0,
+            "unstable_signals_count": 0,
+            "fallback_signals_count": 0,
+            "promotion_credit_signals": [],
+            "can_support_candidate_promotion": False,
+            "manual_review_required": True,
+            "production_effect": ProductionEffect.NONE.value,
+            "risk": "Signal ablation summary 缺失；dashboard 不运行 ablation。",
+        }
+    metadata = _mapping_value(payload, "metadata")
+    summary = _mapping_value(payload, "summary")
+    warnings = _strings(payload.get("warnings"))
+    risks: list[str] = []
+    if metadata.get("production_effect") != ProductionEffect.NONE.value:
+        risks.append("signal ablation production_effect 不是 none。")
+    if metadata.get("auto_promotion") is not False:
+        risks.append("signal ablation auto_promotion 不是 false。")
+    if summary.get("can_support_candidate_promotion") is not False:
+        risks.append("signal ablation 不应直接支持 candidate promotion。")
+    risks.extend(warnings[:2])
+    markdown_path = path.with_suffix(".md")
+    return {
+        "status": metadata.get("status", "UNKNOWN"),
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "markdown_href": _report_href(markdown_path, report.reports_dir)
+        if markdown_path.exists()
+        else "",
+        "backtest_mode": metadata.get("backtest_mode", "UNKNOWN"),
+        "positive_signals_count": len(_strings(summary.get("positive_signals"))),
+        "negative_signals_count": len(_strings(summary.get("negative_signals"))),
+        "unstable_signals_count": len(_strings(summary.get("unstable_signals"))),
+        "fallback_signals_count": len(_strings(summary.get("fallback_signals"))),
+        "promotion_credit_signals": _strings(summary.get("promotion_credit_signals")),
+        "can_support_candidate_promotion": summary.get(
+            "can_support_candidate_promotion",
+            False,
+        ),
+        "manual_review_required": metadata.get("manual_review_required") is True,
+        "production_effect": metadata.get("production_effect", ProductionEffect.NONE.value),
+        "risk": "；".join(risks)
+        or "Signal ablation 只读展示，不修改 production 参数或 promotion 状态。",
+    }
+
+
+def _latest_signal_ablation_path(report: DailyTaskDashboardReport) -> Path | None:
+    root = report.project_root / "artifacts" / "signal_ablation"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/signal_ablation_summary.json"):
+        try:
+            as_of = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if as_of <= report.as_of:
+            candidates.append((as_of, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[0], item[1].stat().st_mtime))[1]
 
 
 def _shadow_impact_window_sample_counts(payload: TraceRecord) -> TraceRecord:
@@ -9101,6 +9187,72 @@ def _render_shadow_parameter_backtest(report: DailyTaskDashboardReport) -> str:
             ),
             '<div class="report-link-list">',
             report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_signal_ablation_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _signal_ablation_summary(report)
+    href = _string_value(summary.get("href"))
+    markdown_href = _string_value(summary.get("markdown_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(href)}"><span>Signal Ablation Summary</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if summary.get("exists")
+        else '<span class="report-link missing"><span>Signal Ablation Summary</span>'
+        "<small>MISSING</small></span>"
+    )
+    markdown_link = (
+        '<a class="report-link" '
+        f'href="{_text(markdown_href)}"><span>Signal Ablation Markdown</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if markdown_href
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="signal-ablation-summary-title">',
+            '<div class="section-head">',
+            '<h2 id="signal-ablation-summary-title">Signal Ablation Summary</h2>',
+            (
+                "<p>逐信号 remove-one-signal 贡献验证；dashboard 只读已有 JSON，"
+                "不修改权重或 promotion 状态。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("status", summary.get("status", "MISSING")),
+            _summary_item(
+                "Backtest Mode",
+                _backtest_mode_display(summary.get("backtest_mode", "MISSING")),
+            ),
+            _summary_item("positive signals", summary.get("positive_signals_count", 0)),
+            _summary_item("negative signals", summary.get("negative_signals_count", 0)),
+            _summary_item("unstable signals", summary.get("unstable_signals_count", 0)),
+            _summary_item("fallback signals", summary.get("fallback_signals_count", 0)),
+            _summary_item(
+                "promotion credit signals",
+                ", ".join(_strings(summary.get("promotion_credit_signals"))) or "none",
+            ),
+            _summary_item(
+                "Can support candidate promotion",
+                summary.get("can_support_candidate_promotion", False),
+            ),
+            _summary_item("manual review", summary.get("manual_review_required", True)),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            markdown_link,
             "</div>",
             "</section>",
         ]

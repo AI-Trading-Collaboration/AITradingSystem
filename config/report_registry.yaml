@@ -323,6 +323,24 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: signal_ablation
+    title: Signal Ablation Summary
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits reports signal-ablation --latest
+    artifact_globs:
+      - artifacts/signal_ablation/*/signal_ablation_summary.json
+      - artifacts/signal_ablation/*/signal_ablation_summary.md
+      - outputs/reports/signal_ablation_*.json
+      - outputs/reports/signal_ablation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Signal contribution validation should be reviewed alongside shadow parameter backtests.
+    owner_action: review_signal_contribution_before_promotion_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: parameter_promotion_decision
     title: Parameter Promotion Decision
     group: governance

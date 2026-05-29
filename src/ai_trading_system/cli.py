@@ -735,6 +735,7 @@ from ai_trading_system.trading_engine.data.price_history_repair import (
 )
 from ai_trading_system.trading_engine.parameters import (
     DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+    DEFAULT_SIGNAL_ABLATION_CONFIG_PATH,
     run_shadow_parameter_backtest,
 )
 from ai_trading_system.trading_engine.reports.parameter_promotion_report import (
@@ -749,6 +750,14 @@ from ai_trading_system.trading_engine.reports.shadow_backtest_report import (
     load_shadow_backtest_payload,
     validate_shadow_backtest_payload,
     write_shadow_backtest_report_alias,
+)
+from ai_trading_system.trading_engine.signal_ablation import (
+    latest_signal_ablation_path,
+    load_signal_ablation_payload,
+    run_signal_ablation,
+    signal_ablation_payload_date,
+    validate_signal_ablation_payload,
+    write_signal_ablation_report_alias,
 )
 from ai_trading_system.trading_engine.signal_snapshots import (
     default_signal_snapshot_json_path,
@@ -4117,6 +4126,104 @@ def signals_validate_snapshot_command(
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
 
 
+@signals_app.command(
+    "ablation",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def signals_ablation_command(
+    ctx: typer.Context,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用 prices_daily.csv 中最新可用日期。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="ablation 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="signal ablation 配置路径。"),
+    ] = DEFAULT_SIGNAL_ABLATION_CONFIG_PATH,
+    signals: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--signals",
+            help="指定 signal，可重复；也兼容 `--signals trend_momentum sector_strength`。",
+        ),
+    ] = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="写入 outputs/dry_runs/signal_ablation，不写正式 artifacts。"),
+    ] = False,
+) -> None:
+    """运行 remove-one-signal ablation 并生成只读贡献验证报告。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    requested_signals = tuple([*(signals or []), *[str(item) for item in ctx.args]])
+    try:
+        run = run_signal_ablation(
+            as_of=run_date,
+            signals=requested_signals or None,
+            config_path=config_path,
+            dry_run=dry_run,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    metadata = run.payload.get("metadata", {})
+    summary = run.payload.get("summary", {})
+    status = metadata.get("status", "UNKNOWN") if isinstance(metadata, dict) else "UNKNOWN"
+    style = "green" if status == "OK" else "yellow" if status == "LIMITED" else "red"
+    console.print(f"[{style}]Signal ablation：{status}[/{style}]")
+    console.print(f"JSON：{run.json_path}")
+    console.print(f"Markdown：{run.markdown_path}")
+    if isinstance(summary, dict):
+        console.print(
+            f"positive_signals={len(summary.get('positive_signals', []))}；"
+            f"negative_signals={len(summary.get('negative_signals', []))}；"
+            f"fallback_signals={len(summary.get('fallback_signals', []))}；"
+            "can_support_candidate_promotion="
+            f"{summary.get('can_support_candidate_promotion', False)}"
+        )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@signals_app.command("validate-ablation")
+def signals_validate_ablation_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验最新正式 signal ablation artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="ablation 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 signal_ablation_summary.json 路径。"),
+    ] = None,
+) -> None:
+    """校验 signal ablation JSON schema 和只读安全字段。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    source_path = input_path or _resolve_signal_ablation_path(latest=latest, as_of=as_of)
+    payload = load_signal_ablation_payload(source_path)
+    issues = validate_signal_ablation_payload(payload)
+    metadata = payload.get("metadata", {}) if isinstance(payload, dict) else {}
+    status = metadata.get("status", "UNKNOWN") if isinstance(metadata, dict) else "UNKNOWN"
+    style = "green" if not issues and status == "OK" else "yellow" if not issues else "red"
+    console.print(f"[{style}]Signal ablation validation：{status}[/{style}]")
+    console.print(f"source：{source_path}")
+    if issues:
+        for issue in issues:
+            console.print(f"[red]- {issue}[/red]")
+        raise typer.Exit(code=1)
+    console.print(
+        f"status={status}；production_effect=none；manual_review_required=true；"
+        "auto_promotion=false"
+    )
+
+
 @app.command("backtest")
 def backtest(
     prices_path: Annotated[
@@ -6550,6 +6657,57 @@ def signal_snapshot_report_command(
     summary = signal_snapshot_summary(payload)
     console.print("[green]Signal snapshot report：OK[/green]")
     console.print(f"status：{summary.get('status', 'UNKNOWN')}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{markdown_path}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@reports_app.command("signal-ablation")
+def signal_ablation_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新正式 signal ablation artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="报告日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    source_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 signal_ablation_summary.json 路径。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 alias 输出目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """从正式 artifact 生成 signal ablation 报告 alias。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    json_source = source_path or _resolve_signal_ablation_path(latest=latest, as_of=as_of)
+    payload = load_signal_ablation_payload(json_source)
+    issues = validate_signal_ablation_payload(payload)
+    if issues:
+        raise typer.BadParameter("signal ablation JSON 校验失败：" + "; ".join(issues))
+    try:
+        report_date = signal_ablation_payload_date(payload, json_source)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, markdown_path = write_signal_ablation_report_alias(
+        payload,
+        reports_dir,
+        report_date,
+    )
+    summary = payload.get("summary", {}) if isinstance(payload, dict) else {}
+    console.print("[green]Signal ablation report：OK[/green]")
+    if isinstance(summary, dict):
+        console.print(
+            f"positive_signals={len(summary.get('positive_signals', []))}；"
+            f"negative_signals={len(summary.get('negative_signals', []))}；"
+            f"promotion_credit_signals={len(summary.get('promotion_credit_signals', []))}"
+        )
     console.print(f"JSON：{json_path}")
     console.print(f"Markdown：{markdown_path}")
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
@@ -13868,6 +14026,16 @@ def _resolve_signal_snapshot_path(*, latest: bool, as_of: str | None) -> Path:
             raise typer.BadParameter(f"未找到 signal snapshot artifact：{root}")
         return latest_path
     return default_signal_snapshot_json_path(root, _parse_date(as_of))
+
+
+def _resolve_signal_ablation_path(*, latest: bool, as_of: str | None) -> Path:
+    root = PROJECT_ROOT / "artifacts" / "signal_ablation"
+    if latest or as_of is None:
+        latest_path = latest_signal_ablation_path(root)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 signal ablation artifact：{root}")
+        return latest_path
+    return root / _parse_date(as_of).isoformat() / "signal_ablation_summary.json"
 
 
 def _resolve_parameter_promotion_path(*, latest: bool, as_of: str | None) -> Path:

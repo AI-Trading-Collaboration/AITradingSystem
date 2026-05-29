@@ -7,6 +7,7 @@ from ai_trading_system.trading_engine.parameters.parameter_schema import (
     ProductionParameters,
     PromotionRulesConfig,
     ShadowBacktestConfig,
+    SignalAblationConfig,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -18,6 +19,9 @@ DEFAULT_SHADOW_BACKTEST_CONFIG_PATH = (
 )
 DEFAULT_PROMOTION_RULES_PATH = (
     PROJECT_ROOT / "config" / "parameters" / "promotion" / "promotion_rules.yaml"
+)
+DEFAULT_SIGNAL_ABLATION_CONFIG_PATH = (
+    PROJECT_ROOT / "config" / "parameters" / "signal_ablation.yaml"
 )
 
 
@@ -38,6 +42,13 @@ def load_shadow_backtest_config(
 def load_promotion_rules(path: Path | str = DEFAULT_PROMOTION_RULES_PATH) -> PromotionRulesConfig:
     payload = _load_mapping(Path(path))
     return PromotionRulesConfig.model_validate(payload)
+
+
+def load_signal_ablation_config(
+    path: Path | str = DEFAULT_SIGNAL_ABLATION_CONFIG_PATH,
+) -> SignalAblationConfig:
+    payload = _load_mapping(Path(path))
+    return SignalAblationConfig.model_validate(payload)
 
 
 def resolve_project_path(path_text: str, *, project_root: Path = PROJECT_ROOT) -> Path:

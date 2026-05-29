@@ -222,6 +222,48 @@ class ShadowBacktestConfig(BaseModel):
     point_in_time_status: dict[str, str]
 
 
+class SignalAblationThresholds(BaseModel):
+    annualized_return_noise_band: float = Field(ge=0.0)
+    sharpe_noise_band: float = Field(ge=0.0)
+    max_drawdown_noise_band: float = Field(ge=0.0)
+    turnover_noise_band: float = Field(ge=0.0)
+
+
+class SignalAblationStabilityConfig(BaseModel):
+    min_walk_forward_windows: int = Field(gt=0)
+
+
+class SignalAblationOutputConfig(BaseModel):
+    signal_ablation_dir: str
+    report_alias_dir: str
+
+
+class SignalAblationConfig(BaseModel):
+    version: str = Field(min_length=1)
+    owner: str = Field(min_length=1)
+    status: str = Field(min_length=1)
+    production_effect: Literal["none"]
+    manual_review_required: Literal[True]
+    auto_promotion: Literal[False]
+    observe_only: Literal[True]
+    rationale: str = Field(min_length=1)
+    intended_effect: str = Field(min_length=1)
+    validation_evidence: str = Field(min_length=1)
+    review_condition: str = Field(min_length=1)
+    shadow_backtest_config_path: str
+    ablation_modes: tuple[Literal["remove_one_signal", "neutralize_one_signal"], ...]
+    default_mode: Literal["remove_one_signal", "neutralize_one_signal"]
+    thresholds: SignalAblationThresholds
+    stability: SignalAblationStabilityConfig
+    output: SignalAblationOutputConfig
+
+    @model_validator(mode="after")
+    def validate_default_mode_enabled(self) -> Self:
+        if self.default_mode not in self.ablation_modes:
+            raise ValueError("default_mode must be included in ablation_modes")
+        return self
+
+
 class PromotionRulesConfig(BaseModel):
     version: str = Field(min_length=1)
     owner: str = Field(min_length=1)

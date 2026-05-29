@@ -1,0 +1,34 @@
+version: "signal_ablation_v0_1"
+owner: "system"
+status: "pilot_baseline"
+production_effect: "none"
+manual_review_required: true
+auto_promotion: false
+observe_only: true
+rationale: >
+  Validate whether each required signal contributes to full-signal-limited
+  shadow backtest behavior before adding more signal families.
+intended_effect: >
+  Produce manual-review-only contribution evidence for existing required
+  signals, including proxy and neutral fallback limitations.
+validation_evidence: >
+  Unit tests cover remove-one-signal ablation, contribution classification,
+  proxy/fallback warnings, report generation, Dashboard/Reader Brief display,
+  and promotion decision safety boundaries.
+review_condition: >
+  Revisit thresholds after at least five real signal ablation reports or before
+  candidate promotion eligibility is expanded.
+shadow_backtest_config_path: "config/parameters/shadow/shadow_backtest.yaml"
+ablation_modes:
+  - "remove_one_signal"
+default_mode: "remove_one_signal"
+thresholds:
+  annualized_return_noise_band: 0.01
+  sharpe_noise_band: 0.05
+  max_drawdown_noise_band: 0.02
+  turnover_noise_band: 0.10
+stability:
+  min_walk_forward_windows: 2
+output:
+  signal_ablation_dir: "artifacts/signal_ablation"
+  report_alias_dir: "outputs/reports"
