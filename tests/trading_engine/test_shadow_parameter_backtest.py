@@ -34,11 +34,20 @@ def test_shadow_parameter_backtest_writes_observe_only_artifacts(tmp_path: Path)
     assert run.artifacts.shadow_parameters_json.exists()
     assert run.artifacts.candidate_parameters_json.exists()
     assert run.artifacts.promotion_json.exists()
-    assert run.payload["data_quality"]["status"] == "OK"
-    assert run.payload["metadata"]["status"] == "OK"
+    assert run.payload["data_quality"]["status"] == "LIMITED"
+    assert run.payload["metadata"]["status"] == "LIMITED"
+    assert run.payload["metadata"]["backtest_mode"] == "price_only_shadow_backtest"
     assert run.payload["metadata"]["production_effect"] == "none"
     assert run.payload["metadata"]["manual_review_required"] is True
     assert run.payload["metadata"]["auto_promotion"] is False
+    assert run.payload["data_quality"]["price_data_status"] == "OK"
+    assert run.payload["data_quality"]["signal_snapshots_status"] == "LIMITED"
+    assert run.payload["data_quality"]["can_run_shadow_backtest"] is True
+    assert run.payload["data_quality"]["can_promote_candidate"] is False
+    assert run.payload["promotion_constraints"]["allow_candidate"] is False
+    assert run.payload["promotion_constraints"]["max_promotion_status"] == "watch"
+    assert run.payload["promotion_decision"]["status"] in {"watch", "rejected"}
+    assert run.payload["candidate_parameters"]["promotion_eligible"] is False
     assert run.payload["metadata"]["market_regime"] == "ai_after_chatgpt"
     assert run.payload["walk_forward_windows"]
     assert validate_shadow_backtest_payload(run.payload) == []
@@ -138,8 +147,11 @@ def test_dashboard_reads_shadow_parameter_backtest_card(tmp_path: Path) -> None:
     assert card["baseline_version"] == "production-test"
     assert card["candidate_version"] == "shadow-test"
     assert card["promotion_status"] == "watch"
+    assert card["backtest_mode"] == "price_only_shadow_backtest"
+    assert card["promotion_eligibility"] == "Disabled due to limited signals"
     assert card["manual_review_required"] is True
     assert "Shadow Parameter Backtest" in html
+    assert "Price-only" in html
     assert "production_effect" in html
 
 
@@ -455,10 +467,19 @@ def _write_shadow_summary_artifact(tmp_path: Path, as_of: date) -> Path:
                     "production_effect": "none",
                     "manual_review_required": True,
                     "auto_promotion": False,
+                    "backtest_mode": "price_only_shadow_backtest",
                     "baseline_parameter_version": "production-test",
                     "candidate_parameter_version": "shadow-test",
                 },
-                "data_quality": {"status": "OK"},
+                "data_quality": {
+                    "status": "LIMITED",
+                    "overall_status": "LIMITED",
+                    "price_data_status": "OK",
+                    "signal_snapshots_status": "LIMITED",
+                    "backtest_mode": "price_only_shadow_backtest",
+                    "can_run_shadow_backtest": True,
+                    "can_promote_candidate": False,
+                },
                 "relative_comparison": {
                     "annualized_return_delta": 0.02,
                     "max_drawdown_delta": 0.01,
@@ -470,6 +491,13 @@ def _write_shadow_summary_artifact(tmp_path: Path, as_of: date) -> Path:
                     "reason": "Needs more validation windows.",
                     "hard_rejections": [],
                     "manual_review_items": ["criterion_failed:stability"],
+                },
+                "promotion_constraints": {
+                    "max_promotion_status": "watch",
+                    "allow_candidate": False,
+                    "allow_production_promotion": False,
+                    "manual_review_required": True,
+                    "reason": "signal_snapshots_limited",
                 },
             },
             ensure_ascii=False,

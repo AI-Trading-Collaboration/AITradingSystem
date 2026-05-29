@@ -19,6 +19,37 @@ validation_evidence: >
 review_condition: >
   Review after the first five real shadow backtest reports or before any
   manual promotion workflow is implemented.
+backtest_modes:
+  full_signal_backtest:
+    owner: "system"
+    status: "pilot_baseline"
+    rationale: >
+      Full signal snapshots are available, so the shadow backtest can evaluate
+      both price path behavior and configured signal inputs.
+    max_promotion_status: "candidate"
+    allow_candidate: true
+    allow_production_promotion: false
+    manual_review_required: true
+    review_condition: >
+      Revisit before any workflow is allowed to write production parameters.
+  price_only_shadow_backtest:
+    owner: "system"
+    status: "pilot_baseline"
+    rationale: >
+      Required price history is available but signal snapshots are limited.
+      This mode validates the shadow backtest framework, walk-forward plumbing,
+      and price-path sensitivity without claiming full signal evidence.
+    max_promotion_status: "watch"
+    allow_candidate: false
+    allow_production_promotion: false
+    manual_review_required: true
+    validation_evidence: >
+      TRADING-049 tests cover diagnostics LIMITED-but-runnable behavior,
+      promotion constraint enforcement, dashboard display, and Reader Brief
+      limited-signal warning.
+    review_condition: >
+      Remove the candidate block only after full PIT signal snapshots are
+      available and full_signal_backtest diagnostics return OK.
 market_regime:
   id: "ai_after_chatgpt"
   anchor_event: "ChatGPT public launch"
@@ -103,6 +134,11 @@ data_quality_rules:
     status: "FAILED"
   missing_signal_snapshot:
     status: "LIMITED"
+  cache_freshness:
+    max_age_days:
+      price_data: 3
+      signal_snapshot: 3
+      macro_data: 7
 point_in_time_status:
   price_data: "OK"
   fundamental_data: "LIMITED"

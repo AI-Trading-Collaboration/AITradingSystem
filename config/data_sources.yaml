@@ -38,6 +38,7 @@ sources:
       - "`^VIX` 不通过 FMP 股票价格主源抓取，由 `cboe_vix_daily_prices` 单独补入主价格缓存。"
       - "股票/ETF 价格路径直接按内部 ticker 请求；`GOOG` 不再映射为 `GOOGL`。估值/PIT 路径的 provider alias 独立维护，不能复用到价格路径。"
       - 2026-05-05 质量复核显示，此前 SPY、INTC、MSFT、SOXX 的硬错误主要落在 Marketstack 第二源缓存；下一次真实下载后仍必须用质量门禁重新验证 FMP 主源，不能本地静默修正。
+      - "TRADING-049 price history repair 复用 FMP 主源补齐 shadow backtest 缺失资产；`BRK.B` 请求时映射为 source symbol `BRK-B`，manifest 必须记录 canonical/source symbol mapping。"
       - 与 Marketstack 的 adjusted close 分红复权口径差异必须保留为质量门禁限制或调查项，不能自动平滑。
       - API plan 可能限制历史深度、请求频率和字段覆盖。
     llm_permission:
@@ -49,7 +50,7 @@ sources:
       max_content_sent_level: metadata_only
       approval_ref: not_approved_for_external_llm_2026-05-05
       reviewed_at: 2026-05-05
-    owner_notes: FMP_API_KEY 只从环境变量读取；默认 `aits download-data` 使用该来源写入主价格缓存，命令、报告和 manifest 不得输出密钥。
+    owner_notes: FMP_API_KEY 只从环境变量读取；默认 `aits download-data` 使用该来源写入主价格缓存，`aits data repair-backtest-inputs --price-only` 也可用它幂等补齐 shadow backtest 缺失价格历史；命令、报告和 manifest 不得输出密钥。
 
   - source_id: cboe_vix_daily_prices
     provider: Cboe Global Markets
@@ -130,6 +131,7 @@ sources:
       - 公开便利源，不是交易所一手行情源。
       - 公司行动和复权调整必须在下游评分前通过校验。
       - 2026-05-05 数据质量门禁发现 SPY 非正价格、OHLC 逻辑异常和供应商复权口径冲突，已从默认生产主源移除。
+      - TRADING-049 仅允许显式 `--price-provider yahoo` 用作人工确认过的价格 repair 诊断路径；默认 repair 不使用 Yahoo。
       - 后续可作为 Marketstack 明显自身坏行的显式诊断性第三来源复查；复查结果只能进入数据源健康或调查报告，不得写入主价格缓存、第二源缓存、评分、回测真值或仓位闸门。
     owner_notes: 仅保留为显式 `--price-provider yahoo` 迁移调查选项和 DATA-012 诊断复查候选；默认生产主源已切换为 FMP。
 

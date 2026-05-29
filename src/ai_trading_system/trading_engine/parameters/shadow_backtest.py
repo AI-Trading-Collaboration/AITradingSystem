@@ -158,12 +158,34 @@ def build_shadow_backtest_summary(
         as_of=resolved_as_of,
         report_path=data_quality_report_path,
     )
+    from ai_trading_system.trading_engine.backtest_input_diagnostics import (
+        run_backtest_input_diagnostics,
+    )
+
+    diagnostic_run = run_backtest_input_diagnostics(
+        as_of=resolved_as_of,
+        config_path=config_file,
+        output_root=resolve_project_path(config.output.shadow_backtest_dir).parent,
+        generated_at=datetime(
+            resolved_as_of.year,
+            resolved_as_of.month,
+            resolved_as_of.day,
+            tzinfo=UTC,
+        ),
+    )
+    input_artifacts["backtest_input_diagnostic"] = str(diagnostic_run.json_path)
+    input_artifacts["backtest_input_manifest"] = str(diagnostic_run.manifest_path)
     quality_status, quality_warnings = _shadow_data_quality_status(
         config=config,
         baseline=baseline,
         prices=prices,
         as_of=resolved_as_of,
         data_quality_report=data_quality_report,
+    )
+    quality_status, quality_warnings = _merge_backtest_input_diagnostic_status(
+        quality_status,
+        quality_warnings,
+        diagnostic_run.payload,
     )
     trading_dates = _trading_dates(prices, baseline, resolved_as_of)
     windows = generate_walk_forward_windows(trading_dates, config.walk_forward)
@@ -218,6 +240,11 @@ def build_shadow_backtest_summary(
         data_quality_status=quality_status,
         missing_required_input_artifacts=_missing_required_input_artifacts(input_artifacts),
     )
+    backtest_mode = _diagnostic_backtest_mode(diagnostic_run.payload)
+    promotion_decision = _apply_backtest_mode_promotion_constraints(
+        promotion_decision,
+        backtest_mode=backtest_mode,
+    )
     passing_ratio = evaluation.passing_ratio if evaluation is not None else 0.0
     payload = _summary_payload(
         as_of=resolved_as_of,
@@ -235,6 +262,8 @@ def build_shadow_backtest_summary(
         data_quality_status=quality_status,
         data_quality_report=data_quality_report,
         data_quality_report_path=data_quality_report_path,
+        backtest_input_diagnostics=diagnostic_run.payload,
+        backtest_input_diagnostics_path=diagnostic_run.json_path,
         input_artifacts=input_artifacts,
         output_artifacts={},
         passing_ratio=passing_ratio,
@@ -369,6 +398,8 @@ def _summary_payload(
     data_quality_status: DataQualityStatus,
     data_quality_report: DataQualityReport,
     data_quality_report_path: Path,
+    backtest_input_diagnostics: dict[str, Any],
+    backtest_input_diagnostics_path: Path,
     input_artifacts: dict[str, str],
     output_artifacts: dict[str, str],
     passing_ratio: float,
@@ -378,15 +409,23 @@ def _summary_payload(
     baseline_metrics = baseline_result.metrics.to_dict()
     candidate_metrics = candidate_result.metrics.to_dict()
     date_range = _date_range_from_rows(baseline_result.daily_rows)
+    metadata_status = (
+        "OK"
+        if data_quality_status == "OK"
+        else "LIMITED"
+        if data_quality_status == "LIMITED"
+        else "DEGRADED"
+    )
     metadata = {
         "run_id": f"shadow-backtest-{as_of.isoformat()}",
         "generated_at": generated_at.isoformat(),
-        "status": "OK" if data_quality_status in {"OK", "LIMITED"} else "DEGRADED",
+        "status": metadata_status,
         "production_effect": "none",
         "manual_review_required": True,
         "auto_promotion": False,
         "observe_only": True,
         "dry_run": dry_run,
+        "backtest_mode": _diagnostic_backtest_mode(backtest_input_diagnostics),
         "code_version": git_commit_sha() or "unknown",
         "git_worktree_dirty": git_worktree_dirty(),
         "config_hash": _config_hash(config_path, input_artifacts),
@@ -406,8 +445,25 @@ def _summary_payload(
         "output_artifacts": output_artifacts,
         "data_quality": {
             "status": data_quality_status,
+            "overall_status": _diagnostic_overall_status(backtest_input_diagnostics),
+            "price_data_status": _diagnostic_check_status(
+                backtest_input_diagnostics,
+                "price_data",
+            ),
+            "signal_snapshots_status": _diagnostic_check_status(
+                backtest_input_diagnostics,
+                "signal_snapshots",
+            ),
+            "backtest_mode": _diagnostic_backtest_mode(backtest_input_diagnostics),
             "validate_data_status": data_quality_report.status,
             "quality_report_path": str(data_quality_report_path),
+            "diagnostic_report": str(backtest_input_diagnostics_path),
+            "blocking_errors": _diagnostic_blocking_errors(backtest_input_diagnostics),
+            "blocking_reasons": _diagnostic_blocking_reasons(backtest_input_diagnostics),
+            "can_run_shadow_backtest": _diagnostic_can_run_shadow_backtest(
+                backtest_input_diagnostics
+            ),
+            "can_promote_candidate": _diagnostic_can_promote_candidate(backtest_input_diagnostics),
             "error_count": data_quality_report.error_count,
             "warning_count": data_quality_report.warning_count,
         },
@@ -424,12 +480,16 @@ def _summary_payload(
             "hard_gates": baseline.hard_gates,
             "position_limits": baseline.position_limits.model_dump(mode="json"),
             "mode": "observe_only",
+            "backtest_mode": _diagnostic_backtest_mode(backtest_input_diagnostics),
+            "promotion_eligible": _diagnostic_can_promote_candidate(backtest_input_diagnostics),
         },
         "candidate_parameters": {
             "version": candidate_version,
             "weights": dict(candidate_weights),
             "hard_gates": baseline.hard_gates,
             "position_limits": baseline.position_limits.model_dump(mode="json"),
+            "backtest_mode": _diagnostic_backtest_mode(backtest_input_diagnostics),
+            "promotion_eligible": _diagnostic_can_promote_candidate(backtest_input_diagnostics),
         },
         "baseline_result": baseline_metrics,
         "candidate_result": candidate_metrics,
@@ -439,6 +499,9 @@ def _summary_payload(
         "passing_windows_ratio": passing_ratio,
         "overfitting_risk": _overfitting_risk(passing_ratio, len(windows)),
         "promotion_decision": promotion_decision.to_dict(),
+        "promotion_constraints": _promotion_constraints_for_mode(
+            _diagnostic_backtest_mode(backtest_input_diagnostics)
+        ),
         "warnings": list(warnings),
         "safety": {
             "production_effect": "none",
@@ -791,6 +854,143 @@ def _shadow_data_quality_status(
         status = "LIMITED"
         warnings.append(f"validate-data produced {data_quality_report.warning_count} warnings")
     return status, warnings
+
+
+def _merge_backtest_input_diagnostic_status(
+    status: DataQualityStatus,
+    warnings: list[str],
+    diagnostic_payload: dict[str, Any],
+) -> tuple[DataQualityStatus, list[str]]:
+    summary = diagnostic_payload.get("summary")
+    if not isinstance(summary, dict):
+        return status, warnings
+    diagnostic_status = str(summary.get("overall_status") or "UNKNOWN")
+    blocking_errors = int(summary.get("blocking_errors") or 0)
+    diagnostic_warnings = int(summary.get("warnings") or 0)
+    merged_warnings = list(warnings)
+    if diagnostic_status == "FAILED":
+        merged_warnings.append(f"backtest input diagnostics failed: {blocking_errors} blockers")
+        if status == "INSUFFICIENT_DATA":
+            return status, merged_warnings
+        return "FAILED", merged_warnings
+    if diagnostic_status == "LIMITED" and status == "OK":
+        merged_warnings.append(
+            f"backtest input diagnostics limited: {diagnostic_warnings} warnings"
+        )
+        return "LIMITED", merged_warnings
+    return status, merged_warnings
+
+
+def _diagnostic_blocking_errors(payload: dict[str, Any]) -> int:
+    summary = payload.get("summary")
+    if not isinstance(summary, dict):
+        return 0
+    try:
+        return int(summary.get("blocking_errors") or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _diagnostic_blocking_reasons(payload: dict[str, Any]) -> list[str]:
+    summary = payload.get("summary")
+    if not isinstance(summary, dict):
+        return []
+    reasons = summary.get("blocking_reasons")
+    if not isinstance(reasons, list):
+        return []
+    return [str(reason) for reason in reasons if str(reason)]
+
+
+def _diagnostic_overall_status(payload: dict[str, Any]) -> str:
+    summary = payload.get("summary")
+    if not isinstance(summary, dict):
+        return "UNKNOWN"
+    return str(summary.get("overall_status") or "UNKNOWN")
+
+
+def _diagnostic_backtest_mode(payload: dict[str, Any]) -> str:
+    summary = payload.get("summary")
+    if not isinstance(summary, dict):
+        return "blocked"
+    return str(summary.get("backtest_mode") or "blocked")
+
+
+def _diagnostic_check_status(payload: dict[str, Any], check_name: str) -> str:
+    checks = payload.get("checks")
+    if not isinstance(checks, dict):
+        return "UNKNOWN"
+    check = checks.get(check_name)
+    if not isinstance(check, dict):
+        return "UNKNOWN"
+    return str(check.get("status") or "UNKNOWN")
+
+
+def _diagnostic_can_run_shadow_backtest(payload: dict[str, Any]) -> bool:
+    summary = payload.get("summary")
+    return bool(summary.get("can_run_shadow_backtest")) if isinstance(summary, dict) else False
+
+
+def _diagnostic_can_promote_candidate(payload: dict[str, Any]) -> bool:
+    summary = payload.get("summary")
+    return bool(summary.get("can_promote_candidate")) if isinstance(summary, dict) else False
+
+
+def _promotion_constraints_for_mode(backtest_mode: str) -> dict[str, object]:
+    if backtest_mode == "price_only_shadow_backtest":
+        return {
+            "max_promotion_status": "watch",
+            "allow_candidate": False,
+            "allow_production_promotion": False,
+            "manual_review_required": True,
+            "reason": "signal_snapshots_limited",
+        }
+    return {
+        "max_promotion_status": "candidate",
+        "allow_candidate": True,
+        "allow_production_promotion": False,
+        "manual_review_required": True,
+        "reason": "observe_only_shadow_backtest",
+    }
+
+
+def _apply_backtest_mode_promotion_constraints(
+    decision: PromotionDecision,
+    *,
+    backtest_mode: str,
+) -> PromotionDecision:
+    if backtest_mode != "price_only_shadow_backtest":
+        return decision
+    review_items = tuple(
+        dict.fromkeys(
+            [
+                *decision.manual_review_items,
+                "price_only_shadow_backtest_signal_snapshots_limited",
+            ]
+        )
+    )
+    reason = (
+        "Price-only shadow backtest completed, but signal snapshots are LIMITED. "
+        "Candidate promotion is disabled until full signal inputs are available."
+    )
+    if decision.status == "rejected":
+        reason = (
+            "Price-only backtest completed but cannot be promoted because signal snapshots "
+            f"are LIMITED. Original promotion decision was rejected: {decision.reason}"
+        )
+        return PromotionDecision(
+            status="rejected",
+            reason=reason,
+            hard_rejections=decision.hard_rejections,
+            manual_review_items=review_items,
+            criteria_results=decision.criteria_results,
+        )
+    return PromotionDecision(
+        status="watch",
+        reason=reason,
+        hard_rejections=decision.hard_rejections,
+        manual_review_items=review_items,
+        criteria_results=decision.criteria_results,
+    )
 
 
 def _trading_dates(

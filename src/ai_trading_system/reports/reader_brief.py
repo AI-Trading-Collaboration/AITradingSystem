@@ -728,6 +728,10 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                 [
                     ("availability", parameter_shadow.get("availability")),
                     ("status", parameter_shadow.get("status")),
+                    ("backtest_mode", parameter_shadow.get("backtest_mode")),
+                    ("promotion_eligibility", parameter_shadow.get("promotion_eligibility")),
+                    ("data_quality_status", parameter_shadow.get("data_quality_status")),
+                    ("data_quality_summary", parameter_shadow.get("data_quality_summary")),
                     ("promotion_status", parameter_shadow.get("promotion_status")),
                     ("baseline_version", parameter_shadow.get("baseline_version")),
                     ("candidate_version", parameter_shadow.get("candidate_version")),
@@ -737,6 +741,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("turnover_delta", parameter_shadow.get("turnover_delta")),
                     ("manual_review_required", parameter_shadow.get("manual_review_required")),
                     ("risk", parameter_shadow.get("risk")),
+                    ("diagnostic_report", parameter_shadow.get("diagnostic_report")),
                 ]
             ),
         ),
@@ -1598,9 +1603,22 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
     )
     payload = _read_optional_json(path)
     if not payload:
+        diagnostic_path = _default_backtest_input_diagnostic_path(as_of)
+        diagnostic_payload = _read_optional_json(diagnostic_path)
+        diagnostic_summary = _mapping(diagnostic_payload.get("summary"))
+        data_quality_status = _text(diagnostic_summary.get("overall_status"), "MISSING")
+        backtest_mode = _text(diagnostic_summary.get("backtest_mode"), "MISSING")
         return {
             "availability": "MISSING",
             "status": "MISSING",
+            "backtest_mode": backtest_mode,
+            "promotion_eligibility": _parameter_shadow_promotion_eligibility(backtest_mode),
+            "data_quality_status": data_quality_status,
+            "data_quality_summary": _parameter_shadow_data_quality_sentence(
+                data_quality_status=data_quality_status,
+                promotion_status="UNKNOWN",
+                diagnostic_summary=diagnostic_summary,
+            ),
             "promotion_status": "UNKNOWN",
             "baseline_version": "UNKNOWN",
             "candidate_version": "UNKNOWN",
@@ -1610,6 +1628,7 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
             "turnover_delta": "NA",
             "manual_review_required": True,
             "risk": "Shadow parameter backtest artifact missing; Reader Brief does not run it.",
+            "diagnostic_report": str(diagnostic_path) if diagnostic_path.exists() else "",
             "production_effect": PRODUCTION_EFFECT,
         }
     metadata = _mapping(payload.get("metadata"))
@@ -1618,10 +1637,29 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
     data_quality = _mapping(payload.get("data_quality"))
     status = _text(metadata.get("status"), "UNKNOWN")
     promotion_status = _text(decision.get("status"), "UNKNOWN")
+    diagnostic_path_text = _text(data_quality.get("diagnostic_report"))
+    diagnostic_payload = (
+        _read_optional_json(Path(diagnostic_path_text)) if diagnostic_path_text else {}
+    )
+    diagnostic_summary = _mapping(diagnostic_payload.get("summary"))
+    data_quality_status = _text(data_quality.get("status"), "UNKNOWN")
+    backtest_mode = _text(
+        metadata.get("backtest_mode")
+        or data_quality.get("backtest_mode")
+        or diagnostic_summary.get("backtest_mode"),
+        "UNKNOWN",
+    )
     return {
         "availability": "AVAILABLE",
         "status": status,
-        "data_quality_status": _text(data_quality.get("status"), "UNKNOWN"),
+        "backtest_mode": backtest_mode,
+        "promotion_eligibility": _parameter_shadow_promotion_eligibility(backtest_mode),
+        "data_quality_status": data_quality_status,
+        "data_quality_summary": _parameter_shadow_data_quality_sentence(
+            data_quality_status=data_quality_status,
+            promotion_status=promotion_status,
+            diagnostic_summary=diagnostic_summary,
+        ),
         "promotion_status": promotion_status,
         "baseline_version": _text(metadata.get("baseline_parameter_version"), "UNKNOWN"),
         "candidate_version": _text(metadata.get("candidate_parameter_version"), "UNKNOWN"),
@@ -1634,9 +1672,106 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
         "turnover_delta": _format_number(comparison.get("turnover_delta"), digits=4),
         "manual_review_required": metadata.get("manual_review_required") is True,
         "risk": _text(decision.get("reason"), "Open shadow backtest report before review."),
+        "diagnostic_report": diagnostic_path_text,
         "source_artifact": str(path),
         "production_effect": PRODUCTION_EFFECT,
     }
+
+
+def _default_backtest_input_diagnostic_path(as_of: date) -> Path:
+    return (
+        PROJECT_ROOT
+        / "artifacts"
+        / "data_quality"
+        / as_of.isoformat()
+        / "backtest_input_diagnostics.json"
+    )
+
+
+def _parameter_shadow_data_quality_sentence(
+    *,
+    data_quality_status: str,
+    promotion_status: str,
+    diagnostic_summary: Mapping[str, Any],
+) -> str:
+    normalized_status = data_quality_status.upper()
+    backtest_mode = _text(diagnostic_summary.get("backtest_mode"))
+    can_run_shadow = diagnostic_summary.get("can_run_shadow_backtest") is True
+    can_promote = diagnostic_summary.get("can_promote_candidate") is True
+    if backtest_mode == "price_only_shadow_backtest" and can_run_shadow and not can_promote:
+        return (
+            "Shadow parameter review can now run in price-only mode because required price "
+            "history is available. However, signal snapshots remain limited, so candidate "
+            "promotion is disabled until full signal inputs are available."
+        )
+    if normalized_status in {"FAILED", "FAIL", "INSUFFICIENT_DATA"}:
+        reasons = diagnostic_summary.get("blocking_reasons")
+        reason_items = (
+            [str(reason) for reason in reasons if str(reason)]
+            if isinstance(reasons, list)
+            else []
+        )
+        missing_assets = _missing_price_assets_from_reasons(reason_items)
+        if missing_assets:
+            return (
+                "Shadow parameter review remains blocked because required price history is "
+                f"missing for {_format_english_list(missing_assets)}."
+            )
+        if isinstance(reasons, list) and reasons:
+            return (
+                "Shadow parameter review remains blocked because "
+                + "; ".join(str(reason) for reason in reasons if str(reason))
+            )
+        return (
+            "Shadow parameter review remains rejected because the backtest input data quality "
+            "gate failed. Missing or stale input data must be repaired before candidate "
+            "parameters can be evaluated for promotion."
+        )
+    if normalized_status in {"OK", "PASS"}:
+        return (
+            "Shadow parameter review completed with valid backtest inputs. Candidate promotion "
+            f"status is currently {promotion_status.upper()}."
+        )
+    blocking_errors = _text(diagnostic_summary.get("blocking_errors"), "0")
+    return (
+        "Shadow parameter review is limited by backtest input data quality warnings. "
+        f"blocking_errors={blocking_errors}; promotion remains disabled until input quality is OK."
+    )
+
+
+def _parameter_shadow_promotion_eligibility(backtest_mode: str) -> str:
+    if backtest_mode == "price_only_shadow_backtest":
+        return "Disabled due to limited signals"
+    if backtest_mode == "full_signal_backtest":
+        return "Manual review required"
+    if backtest_mode == "blocked":
+        return "Blocked by data quality"
+    return "Unknown"
+
+
+def _missing_price_assets_from_reasons(reasons: list[str]) -> list[str]:
+    assets: list[str] = []
+    for reason in reasons:
+        if "price history" not in reason.lower():
+            continue
+        _, _, tail = reason.partition(" for ")
+        if not tail:
+            continue
+        for token in tail.replace(" and ", ", ").split(","):
+            symbol = token.strip().strip(".;")
+            if symbol and symbol not in assets:
+                assets.append(symbol)
+    return assets
+
+
+def _format_english_list(items: list[str]) -> str:
+    if not items:
+        return ""
+    if len(items) == 1:
+        return items[0]
+    if len(items) == 2:
+        return f"{items[0]} and {items[1]}"
+    return ", ".join(items[:-1]) + f", and {items[-1]}"
 
 
 def _manual_review_queue(

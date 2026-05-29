@@ -198,6 +198,7 @@ def build_daily_task_dashboard_payload(
         "paper_trading_trend": _paper_trading_trend(report),
         "paper_signal_quality": _paper_signal_quality_summary(report),
         "shadow_parameter_impact": _shadow_parameter_impact_summary(report),
+        "backtest_data_quality": _backtest_data_quality_summary(report),
         "shadow_parameter_backtest": _shadow_parameter_backtest_summary(report),
         "weight_adjustment_candidates": _weight_adjustment_candidates_summary(report),
         "weight_candidate_evaluation": _weight_candidate_evaluation_summary(report),
@@ -350,6 +351,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_paper_trading_trend(report),
             _render_paper_signal_quality(report),
             _render_shadow_parameter_impact(report),
+            _render_backtest_data_quality(report),
             _render_shadow_parameter_backtest(report),
             _render_weight_adjustment_candidates(report),
             _render_weight_candidate_evaluation(report),
@@ -1049,6 +1051,11 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
             "shadow_parameter_impact_json",
             "shadow parameter impact JSON",
             report.reports_dir / f"shadow_parameter_impact_{suffix}.json",
+        ),
+        (
+            "backtest_input_diagnostics_json",
+            "backtest input diagnostics JSON",
+            _backtest_input_diagnostic_path(report),
         ),
         (
             "shadow_parameter_backtest_json",
@@ -1984,6 +1991,103 @@ def _shadow_parameter_impact_summary(report: DailyTaskDashboardReport) -> TraceR
     }
 
 
+def _backtest_data_quality_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _backtest_input_diagnostic_path(report)
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "backtest_input_diagnostics":
+        latest_path = _latest_backtest_input_diagnostic_path(report)
+        if latest_path is not None:
+            path = latest_path
+            payload = _read_json_object(path)
+    if payload.get("report_type") != "backtest_input_diagnostics":
+        return {
+            "status": "MISSING",
+            "overall_status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "report_href": _report_href(path, report.reports_dir),
+            "repair_plan_href": "",
+            "blocking_errors": 0,
+            "warnings": 0,
+            "asset_coverage_status": "MISSING",
+            "date_coverage_status": "MISSING",
+            "price_data_status": "MISSING",
+            "signal_snapshot_status": "MISSING",
+            "cache_freshness_status": "MISSING",
+            "backtest_mode": "MISSING",
+            "can_run_shadow_backtest": False,
+            "can_promote_candidate": False,
+            "missing_assets": [],
+            "missing_signals": [],
+            "production_effect": ProductionEffect.NONE.value,
+            "risk": "Backtest input diagnostics 缺失；dashboard 不运行诊断或 repair。",
+        }
+    summary = _mapping_value(payload, "summary")
+    checks = _mapping_value(payload, "checks")
+    asset_coverage = _mapping_value(checks, "asset_coverage")
+    date_coverage = _mapping_value(checks, "date_coverage")
+    price_data = _mapping_value(checks, "price_data")
+    signal_snapshots = _mapping_value(checks, "signal_snapshots")
+    cache_freshness = _mapping_value(checks, "cache_freshness")
+    markdown_path = path.with_suffix(".md")
+    blocking_errors = _optional_int(summary.get("blocking_errors")) or 0
+    warnings = _optional_int(summary.get("warnings")) or 0
+    risks: list[str] = []
+    if blocking_errors:
+        risks.append(f"blocking_errors={blocking_errors}")
+    missing_assets = _strings(asset_coverage.get("missing_assets"))
+    if missing_assets:
+        risks.append("missing_assets=" + ", ".join(missing_assets))
+    missing_signals = _strings(signal_snapshots.get("missing_signals"))
+    if missing_signals:
+        risks.append("missing_signals=" + ", ".join(missing_signals[:4]))
+    return {
+        "status": summary.get("overall_status", "UNKNOWN"),
+        "overall_status": summary.get("overall_status", "UNKNOWN"),
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "report_href": _report_href(path, report.reports_dir),
+        "repair_plan_href": _report_href(markdown_path, report.reports_dir),
+        "blocking_errors": blocking_errors,
+        "warnings": warnings,
+        "can_run_shadow_backtest": bool(summary.get("can_run_shadow_backtest")),
+        "can_promote_candidate": bool(summary.get("can_promote_candidate")),
+        "backtest_mode": summary.get("backtest_mode", "UNKNOWN"),
+        "asset_coverage_status": asset_coverage.get("status", "UNKNOWN"),
+        "date_coverage_status": date_coverage.get("status", "UNKNOWN"),
+        "price_data_status": price_data.get("status", "UNKNOWN"),
+        "signal_snapshot_status": signal_snapshots.get("status", "UNKNOWN"),
+        "cache_freshness_status": cache_freshness.get("status", "UNKNOWN"),
+        "missing_assets": missing_assets,
+        "missing_signals": missing_signals,
+        "production_effect": _mapping_value(payload, "metadata").get(
+            "production_effect",
+            ProductionEffect.NONE.value,
+        ),
+        "risk": "；".join(risks) or "Backtest input diagnostics 未发现阻断项。",
+    }
+
+
+def _backtest_input_diagnostic_path(report: DailyTaskDashboardReport) -> Path:
+    return (
+        report.project_root
+        / "artifacts"
+        / "data_quality"
+        / report.as_of.isoformat()
+        / "backtest_input_diagnostics.json"
+    )
+
+
+def _latest_backtest_input_diagnostic_path(report: DailyTaskDashboardReport) -> Path | None:
+    root = report.project_root / "artifacts" / "data_quality"
+    candidates = sorted(root.glob("*/backtest_input_diagnostics.json"))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda candidate: candidate.stat().st_mtime)
+
+
 def _shadow_parameter_backtest_summary(report: DailyTaskDashboardReport) -> TraceRecord:
     suffix = report.as_of.isoformat()
     path = (
@@ -2007,6 +2111,11 @@ def _shadow_parameter_backtest_summary(report: DailyTaskDashboardReport) -> Trac
             "sharpe_ratio_delta": None,
             "turnover_delta": None,
             "promotion_status": "UNKNOWN",
+            "backtest_mode": "MISSING",
+            "promotion_eligibility": "MISSING",
+            "data_quality_status": "MISSING",
+            "data_quality_diagnostic_report": "",
+            "data_quality_blocking_errors": 0,
             "manual_review_required": True,
             "production_effect": ProductionEffect.NONE.value,
             "risk": "Shadow parameter backtest JSON 缺失；dashboard 不运行回测或调参。",
@@ -2023,6 +2132,14 @@ def _shadow_parameter_backtest_summary(report: DailyTaskDashboardReport) -> Trac
     hard_rejections = _strings(decision.get("hard_rejections"))
     if hard_rejections:
         risks.append(f"hard rejection：{', '.join(hard_rejections)}。")
+    data_quality_blocking_errors = _optional_int(data_quality.get("blocking_errors")) or 0
+    if data_quality_blocking_errors:
+        risks.append(f"data quality blocking errors：{data_quality_blocking_errors}。")
+    backtest_mode = metadata.get("backtest_mode", "UNKNOWN")
+    promotion_constraints = _mapping_value(payload, "promotion_constraints")
+    allow_candidate = promotion_constraints.get("allow_candidate")
+    if allow_candidate is False:
+        risks.append("candidate promotion disabled by backtest mode。")
     return {
         "status": metadata.get("status", "UNKNOWN"),
         "exists": True,
@@ -2035,7 +2152,13 @@ def _shadow_parameter_backtest_summary(report: DailyTaskDashboardReport) -> Trac
         "sharpe_ratio_delta": _optional_float(comparison.get("sharpe_ratio_delta")),
         "turnover_delta": _optional_float(comparison.get("turnover_delta")),
         "promotion_status": decision.get("status", "UNKNOWN"),
+        "backtest_mode": backtest_mode,
+        "promotion_eligibility": (
+            "Disabled due to limited signals" if allow_candidate is False else "Review required"
+        ),
         "data_quality_status": data_quality.get("status", "UNKNOWN"),
+        "data_quality_diagnostic_report": data_quality.get("diagnostic_report", ""),
+        "data_quality_blocking_errors": data_quality_blocking_errors,
         "manual_review_required": metadata.get("manual_review_required") is True,
         "production_effect": metadata.get("production_effect", ProductionEffect.NONE.value),
         "risk": "；".join(risks) or "Shadow parameter backtest 只读展示，不修改 production 参数。",
@@ -8776,6 +8899,71 @@ def _render_shadow_parameter_impact(report: DailyTaskDashboardReport) -> str:
     )
 
 
+def _render_backtest_data_quality(report: DailyTaskDashboardReport) -> str:
+    quality = _backtest_data_quality_summary(report)
+    href = _string_value(quality.get("report_href") or quality.get("href"))
+    repair_href = _string_value(quality.get("repair_plan_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(href)}"><span>Backtest Data Quality</span>'
+        f"<small>{_text(quality.get('overall_status', 'UNKNOWN'))}</small></a>"
+        if quality.get("exists")
+        else '<span class="report-link missing"><span>Backtest Data Quality</span>'
+        "<small>MISSING</small></span>"
+    )
+    repair_link = (
+        '<a class="report-link" '
+        f'href="{_text(repair_href)}"><span>Repair Plan</span>'
+        f"<small>{_text(quality.get('overall_status', 'UNKNOWN'))}</small></a>"
+        if quality.get("exists") and repair_href
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="backtest-data-quality-title">',
+            '<div class="section-head">',
+            '<h2 id="backtest-data-quality-title">Backtest Data Quality</h2>',
+            (
+                "<p>shadow backtest 输入质量诊断；dashboard 只读已有 diagnostic，"
+                "不执行 repair 或下载。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("overall status", quality.get("overall_status", "MISSING")),
+            _summary_item(
+                "Backtest mode",
+                _backtest_mode_display(quality.get("backtest_mode", "MISSING")),
+            ),
+            _summary_item("blocking errors", quality.get("blocking_errors", 0)),
+            _summary_item("warnings", quality.get("warnings", 0)),
+            _summary_item("asset coverage", quality.get("asset_coverage_status", "MISSING")),
+            _summary_item("date coverage", quality.get("date_coverage_status", "MISSING")),
+            _summary_item("price data", quality.get("price_data_status", "MISSING")),
+            _summary_item("signal snapshots", quality.get("signal_snapshot_status", "MISSING")),
+            _summary_item("cache freshness", quality.get("cache_freshness_status", "MISSING")),
+            _summary_item(
+                "Can run shadow backtest",
+                quality.get("can_run_shadow_backtest", False),
+            ),
+            _summary_item("Can promote candidate", quality.get("can_promote_candidate", False)),
+            _summary_item(
+                "production_effect",
+                quality.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(quality.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            repair_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
 def _render_shadow_parameter_backtest(report: DailyTaskDashboardReport) -> str:
     summary = _shadow_parameter_backtest_summary(report)
     href = _string_value(summary.get("href"))
@@ -8818,6 +9006,19 @@ def _render_shadow_parameter_backtest(report: DailyTaskDashboardReport) -> str:
                 _format_signed_decimal_delta(0.0, summary.get("turnover_delta"), digits=4),
             ),
             _summary_item("promotion status", summary.get("promotion_status", "UNKNOWN")),
+            _summary_item(
+                "Backtest Mode",
+                _backtest_mode_display(summary.get("backtest_mode", "UNKNOWN")),
+            ),
+            _summary_item(
+                "Promotion Eligibility",
+                summary.get("promotion_eligibility", "UNKNOWN"),
+            ),
+            _summary_item("Data Quality", summary.get("data_quality_status", "UNKNOWN")),
+            _summary_item(
+                "DQ blocking errors",
+                summary.get("data_quality_blocking_errors", 0),
+            ),
             _summary_item("manual review", summary.get("manual_review_required", True)),
             _summary_item(
                 "production_effect",
@@ -11747,6 +11948,15 @@ def _summary_item(label: str, value: object) -> str:
         f"<strong>{_text(value)}</strong>"
         "</div>"
     )
+
+
+def _backtest_mode_display(value: object) -> str:
+    mapping = {
+        "price_only_shadow_backtest": "Price-only",
+        "full_signal_backtest": "Full signal",
+        "blocked": "Blocked",
+    }
+    return mapping.get(str(value), str(value))
 
 
 def _status_badge(status: str) -> str:

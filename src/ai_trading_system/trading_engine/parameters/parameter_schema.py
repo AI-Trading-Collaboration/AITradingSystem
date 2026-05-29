@@ -159,11 +159,39 @@ class SimpleStatusRule(BaseModel):
     status: Literal["LIMITED", "FAILED", "INSUFFICIENT_DATA", "OK"]
 
 
+DEFAULT_BACKTEST_INPUT_CACHE_FRESHNESS_MAX_AGE_DAYS: dict[str, int] = {
+    # Pilot defaults are used only when legacy shadow configs predate the explicit
+    # cache freshness policy. The repository config pins the same values for audit.
+    "price_data": 3,
+    "signal_snapshot": 3,
+    "macro_data": 7,
+}
+
+
+class CacheFreshnessRule(BaseModel):
+    max_age_days: dict[str, int] = Field(
+        default_factory=lambda: dict(DEFAULT_BACKTEST_INPUT_CACHE_FRESHNESS_MAX_AGE_DAYS)
+    )
+
+    @field_validator("max_age_days")
+    @classmethod
+    def validate_max_age_days(cls, value: dict[str, int]) -> dict[str, int]:
+        invalid = [name for name, days in value.items() if days < 0]
+        if invalid:
+            raise ValueError(
+                "cache freshness max_age_days must be non-negative: " + ", ".join(invalid)
+            )
+        merged = dict(DEFAULT_BACKTEST_INPUT_CACHE_FRESHNESS_MAX_AGE_DAYS)
+        merged.update(value)
+        return merged
+
+
 class DataQualityRulesConfig(BaseModel):
     insufficient_history: InsufficientHistoryRule
     missing_price_data: MissingPriceDataRule
     missing_required_asset: SimpleStatusRule
     missing_signal_snapshot: SimpleStatusRule
+    cache_freshness: CacheFreshnessRule = Field(default_factory=CacheFreshnessRule)
 
 
 class ShadowBacktestConfig(BaseModel):

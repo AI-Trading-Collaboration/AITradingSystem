@@ -42,6 +42,7 @@ def render_shadow_backtest_markdown(payload: dict[str, Any]) -> str:
     comparison = _mapping(payload.get("relative_comparison"))
     decision = _mapping(payload.get("promotion_decision"))
     data_quality = _mapping(payload.get("data_quality"))
+    promotion_constraints = _mapping(payload.get("promotion_constraints"))
     lines = [
         "# Shadow Parameter Backtest Summary",
         "",
@@ -50,6 +51,7 @@ def render_shadow_backtest_markdown(payload: dict[str, Any]) -> str:
         f"- run_id: `{metadata.get('run_id', 'UNKNOWN')}`",
         f"- generated_at: `{metadata.get('generated_at', 'UNKNOWN')}`",
         f"- status: `{metadata.get('status', 'UNKNOWN')}`",
+        f"- backtest_mode: `{metadata.get('backtest_mode', 'UNKNOWN')}`",
         f"- market_regime: `{metadata.get('market_regime', 'UNKNOWN')}`",
         f"- date_range: `{metadata.get('date_range', 'UNKNOWN')}`",
         f"- production_effect: `{metadata.get('production_effect', 'none')}`",
@@ -59,10 +61,27 @@ def render_shadow_backtest_markdown(payload: dict[str, Any]) -> str:
         "## 2. Executive Summary",
         "",
         f"- 数据质量状态：`{data_quality.get('status', 'UNKNOWN')}`",
+        f"- Backtest mode：`{metadata.get('backtest_mode', 'UNKNOWN')}`",
         f"- Baseline version：`{metadata.get('baseline_parameter_version', 'UNKNOWN')}`",
         f"- Candidate version：`{metadata.get('candidate_parameter_version', 'UNKNOWN')}`",
         f"- Promotion status：`{decision.get('status', 'UNKNOWN')}`",
         f"- 结论：{decision.get('reason', 'No decision reason provided.')}",
+        "",
+        "## Data Quality Gate",
+        "",
+        f"Status: {data_quality.get('status', 'UNKNOWN')}",
+        f"Overall diagnostic status: {data_quality.get('overall_status', 'UNKNOWN')}",
+        f"Price data status: {data_quality.get('price_data_status', 'UNKNOWN')}",
+        f"Signal snapshots status: {data_quality.get('signal_snapshots_status', 'UNKNOWN')}",
+        f"Backtest mode: {data_quality.get('backtest_mode', 'UNKNOWN')}",
+        "",
+        "Blocking errors:",
+        *_data_quality_blocking_lines(data_quality),
+        "",
+        "Recommended action:",
+        f"- {_data_quality_recommended_action(data_quality)}",
+        "",
+        f"Diagnostic report: `{data_quality.get('diagnostic_report', 'UNKNOWN')}`",
         "",
         "## 3. Baseline vs Candidate",
         "",
@@ -143,6 +162,9 @@ def render_shadow_backtest_markdown(payload: dict[str, Any]) -> str:
             f"- status：`{decision.get('status', 'UNKNOWN')}`",
             f"- reason：{decision.get('reason', '')}",
             f"- hard_rejections：`{', '.join(decision.get('hard_rejections', [])) or 'none'}`",
+            f"- allow_candidate：`{promotion_constraints.get('allow_candidate', 'UNKNOWN')}`",
+            "- max_promotion_status："
+            f"`{promotion_constraints.get('max_promotion_status', 'UNKNOWN')}`",
             "",
             "## 9. Manual Review Checklist",
             "",
@@ -251,3 +273,31 @@ def _format_metric(value: object) -> str:
 
 def _escape_table(value: object) -> str:
     return str(value).replace("|", "\\|").replace("\n", " ")
+
+
+def _data_quality_blocking_lines(data_quality: dict[str, Any]) -> list[str]:
+    reasons = data_quality.get("blocking_reasons")
+    if isinstance(reasons, list):
+        lines = [f"- {reason}" for reason in reasons if str(reason)]
+        if lines:
+            return lines
+    blocking_errors = data_quality.get("blocking_errors")
+    try:
+        count = int(blocking_errors)
+    except (TypeError, ValueError):
+        count = 0
+    if count <= 0:
+        return ["- none"]
+    return [f"- Backtest input diagnostics reported {count} blocking error(s)."]
+
+
+def _data_quality_recommended_action(data_quality: dict[str, Any]) -> str:
+    status = str(data_quality.get("status") or "UNKNOWN")
+    if data_quality.get("backtest_mode") == "price_only_shadow_backtest":
+        return (
+            "Price-only shadow backtest may be reviewed, but candidate promotion remains "
+            "disabled until full signal snapshots are available."
+        )
+    if status in {"FAILED", "INSUFFICIENT_DATA", "LIMITED"}:
+        return "Run `aits data repair-backtest-inputs --latest --dry-run`."
+    return "No repair action required before observe-only review."

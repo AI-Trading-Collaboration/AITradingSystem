@@ -50,6 +50,23 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: true
+  - report_id: backtest_input_diagnostics
+    title: Backtest Input Diagnostics
+    group: shadow
+    cadence: ad_hoc
+    audience: operator
+    owner: system
+    command: aits data diagnose-backtest-inputs --latest
+    artifact_globs:
+      - artifacts/data_quality/*/backtest_input_diagnostics.json
+      - artifacts/data_quality/*/backtest_input_diagnostics.md
+      - artifacts/backtest_snapshots/*/backtest_input_manifest.json
+    freshness_sla_days: 3
+    freshness_rationale: Shadow backtest input diagnostics should match the latest cached data before interpreting candidate results.
+    owner_action: run_repair_backtest_inputs_dry_run_if_failed
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: evidence_dashboard
     title: Evidence Dashboard
     group: daily

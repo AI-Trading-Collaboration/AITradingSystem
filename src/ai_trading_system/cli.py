@@ -726,6 +726,13 @@ from ai_trading_system.trade_review import (
     validate_trade_record_store,
     write_trade_review_report,
 )
+from ai_trading_system.trading_engine.backtest_input_diagnostics import (
+    run_backtest_input_diagnostics,
+)
+from ai_trading_system.trading_engine.data.price_history_repair import (
+    build_price_history_repair_provider,
+    repair_backtest_price_history,
+)
 from ai_trading_system.trading_engine.parameters import (
     DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
     run_shadow_parameter_backtest,
@@ -808,6 +815,7 @@ thesis_app = typer.Typer(help="交易 thesis 和假设验证管理。", no_args_
 risk_events_app = typer.Typer(help="风险事件分级和动作规则管理。", no_args_is_help=True)
 valuation_app = typer.Typer(help="估值、预期和拥挤度快照管理。", no_args_is_help=True)
 data_sources_app = typer.Typer(help="数据源目录和审计规则管理。", no_args_is_help=True)
+data_app = typer.Typer(help="缓存数据诊断和 backtest input repair planning。", no_args_is_help=True)
 fundamentals_app = typer.Typer(help="基本面数据源下载和审计。", no_args_is_help=True)
 trace_app = typer.Typer(help="报告 evidence bundle 反查。", no_args_is_help=True)
 evidence_app = typer.Typer(help="新市场信息 evidence 账本。", no_args_is_help=True)
@@ -828,6 +836,7 @@ app.add_typer(industry_chain_app, name="industry-chain")
 app.add_typer(thesis_app, name="thesis")
 app.add_typer(risk_events_app, name="risk-events")
 app.add_typer(valuation_app, name="valuation")
+app.add_typer(data_app, name="data")
 app.add_typer(data_sources_app, name="data-sources")
 app.add_typer(fundamentals_app, name="fundamentals")
 app.add_typer(trace_app, name="trace")
@@ -3865,6 +3874,152 @@ def validate_data(
         raise typer.Exit(code=1)
 
 
+@data_app.command("diagnose-backtest-inputs")
+def data_diagnose_backtest_inputs_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用价格缓存中的最新可用日期。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="诊断日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="shadow backtest 配置路径。"),
+    ] = DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+) -> None:
+    """诊断 shadow backtest 输入数据并生成结构化质量报告。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    run = run_backtest_input_diagnostics(as_of=run_date, config_path=config_path)
+    summary = run.payload.get("summary", {})
+    status = summary.get("overall_status", "UNKNOWN") if isinstance(summary, dict) else "UNKNOWN"
+    style = "green" if status == "OK" else "yellow" if status == "LIMITED" else "red"
+    console.print(f"[{style}]Backtest input diagnostics：{status}[/{style}]")
+    console.print(f"JSON：{run.json_path}")
+    console.print(f"Markdown：{run.markdown_path}")
+    console.print(f"Snapshot manifest：{run.manifest_path}")
+    if isinstance(summary, dict):
+        console.print(
+            f"blocking_errors={summary.get('blocking_errors', 0)}；"
+            f"warnings={summary.get('warnings', 0)}；"
+            f"can_run_shadow_backtest={summary.get('can_run_shadow_backtest', False)}"
+        )
+    console.print("production_effect=none；不修改 production 参数或 promotion 规则")
+
+
+@data_app.command(
+    "repair-backtest-inputs",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def data_repair_backtest_inputs_command(
+    ctx: typer.Context,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用价格缓存中的最新可用日期。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="repair planning 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="shadow backtest 配置路径。"),
+    ] = DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="只输出 repair plan，不下载或改写外部数据。"),
+    ] = False,
+    price_only: Annotated[
+        bool,
+        typer.Option("--price-only", help="只修复价格历史，不尝试生成 signal snapshots。"),
+    ] = False,
+    symbols: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--symbols",
+            help="指定修复资产；可重复。也兼容 `--symbols GOOGL BRK.B SGOV`。",
+        ),
+    ] = None,
+    price_provider: Annotated[
+        str,
+        typer.Option(help="价格 repair provider：fmp 或 yahoo。默认使用 active 主源 fmp。"),
+    ] = "fmp",
+    fmp_api_key_env: Annotated[
+        str,
+        typer.Option(help="读取 FMP API key 的环境变量名。"),
+    ] = "FMP_API_KEY",
+) -> None:
+    """修复 shadow backtest 输入价格历史；dry-run 只输出 repair plan。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    extra_symbol_args = [str(item) for item in ctx.args]
+    requested_symbols = tuple([*(symbols or []), *extra_symbol_args])
+    run = run_backtest_input_diagnostics(as_of=run_date, config_path=config_path)
+    repair_plan = run.payload.get("repair_plan", {})
+    status = repair_plan.get("status", "UNKNOWN") if isinstance(repair_plan, dict) else "UNKNOWN"
+    mode = "DRY_RUN" if dry_run else "EXECUTE"
+    style = "green" if status == "NOT_REQUIRED" else "yellow"
+    console.print(f"[{style}]Backtest input repair plan：{status} ({mode})[/{style}]")
+    console.print(f"Diagnostic JSON：{run.json_path}")
+    console.print(f"Diagnostic Markdown：{run.markdown_path}")
+    if isinstance(repair_plan, dict):
+        steps = repair_plan.get("steps", [])
+        if isinstance(steps, list) and steps:
+            for step in steps:
+                if isinstance(step, dict):
+                    console.print(
+                        f"- step {step.get('step')}: {step.get('action')} "
+                        f"required={step.get('required', False)}"
+                    )
+        else:
+            console.print("- repair plan 为空。")
+    if dry_run:
+        console.print("production_effect=none；不修改 production 参数或 promotion 规则")
+        return
+
+    try:
+        provider = build_price_history_repair_provider(
+            provider_name=price_provider,
+            fmp_api_key=os.getenv(fmp_api_key_env, ""),
+        )
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+    repair = repair_backtest_price_history(
+        as_of=run_date,
+        config_path=config_path,
+        symbols=requested_symbols,
+        price_provider=provider,
+        provider_name=price_provider,
+        price_only=price_only,
+    )
+    result_style = "green" if repair.status in {"REPAIRED", "NOT_REQUIRED"} else "yellow"
+    console.print(f"[{result_style}]Price history repair：{repair.status}[/{result_style}]")
+    for result in repair.asset_results:
+        console.print(
+            f"- {result.symbol}: {result.status}; source_symbol={result.source_symbol}; "
+            f"rows={result.rows_written}; error={result.error or 'none'}"
+        )
+    final_summary = repair.final_diagnostics.payload.get("summary", {})
+    if isinstance(final_summary, dict):
+        console.print(
+            f"final_status={final_summary.get('overall_status', 'UNKNOWN')}；"
+            f"backtest_mode={final_summary.get('backtest_mode', 'UNKNOWN')}；"
+            f"can_run_shadow_backtest={final_summary.get('can_run_shadow_backtest', False)}；"
+            f"can_promote_candidate={final_summary.get('can_promote_candidate', False)}"
+        )
+    console.print(f"Price cache：{repair.price_cache_path}")
+    console.print(f"Download manifest：{repair.manifest_path}")
+    console.print(f"Final diagnostic JSON：{repair.final_diagnostics.json_path}")
+    console.print(f"Final snapshot manifest：{repair.final_diagnostics.manifest_path}")
+    console.print("production_effect=none；不修改 production 参数或 promotion 规则")
+
+
 @app.command("backtest")
 def backtest(
     prices_path: Annotated[
@@ -5991,9 +6146,17 @@ def parameters_shadow_backtest_command(
     promotion_status = (
         decision.get("status", "UNKNOWN") if isinstance(decision, dict) else "UNKNOWN"
     )
+    backtest_mode = (
+        metadata.get("backtest_mode", "UNKNOWN")
+        if isinstance(metadata, dict)
+        else "UNKNOWN"
+    )
     style = "green" if status == "OK" else "yellow"
     console.print(f"[{style}]Shadow parameter backtest：{status}[/{style}]")
-    console.print(f"as_of：{run.as_of.isoformat()}；promotion_status={promotion_status}")
+    console.print(
+        f"as_of：{run.as_of.isoformat()}；backtest_mode={backtest_mode}；"
+        f"promotion_status={promotion_status}"
+    )
     if run.artifacts is not None:
         console.print(f"JSON：{run.artifacts.summary_json}")
         console.print(f"Markdown：{run.artifacts.summary_markdown}")

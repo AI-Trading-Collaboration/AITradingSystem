@@ -266,8 +266,11 @@ flowchart TD
         SPSR["outputs/parameter_search/<run_id>/{manifest.json,trials.csv,pareto_front.csv,best_profiles.yaml,search_report.md}<br/>可复现搜索登记、lineage checksum、factorial/cap attribution、最优/诊断候选和治理边界"]
         FSPP["aits feedback evaluate-shadow-parameter-promotion<br/>读取 search bundle + promotion contract；只评估晋级 readiness"]
         SPPR["outputs/parameter_search/<run_id>/shadow_parameter_promotion_<run_id>.md/json<br/>NOT_PROMOTABLE / READY_FOR_FORWARD_SHADOW / READY_FOR_OWNER_REVIEW；production_effect=none"]
-        PSPBT["aits parameters shadow-backtest<br/>先执行 validate_data_cache 质量门禁，再用 production baseline 参数、bounded candidate 和 walk-forward 验证生成 observe-only 参数回测"]
-        PSPBTR["artifacts/shadow_backtest/YYYY-MM-DD/shadow_backtest_summary.json/md<br/>baseline vs candidate metrics、walk-forward windows、参数变化归因、data_quality_status、promotion_decision；production_effect=none"]
+        PBDIAG["aits data diagnose-backtest-inputs<br/>检查 shadow backtest asset/date/price/signal/cache 输入闭环，输出 can_run / can_promote / backtest_mode；production_effect=none"]
+        PBDIAGR["artifacts/data_quality/YYYY-MM-DD/backtest_input_diagnostics.json/md<br/>+ artifacts/backtest_snapshots/YYYY-MM-DD/backtest_input_manifest.json<br/>blocking_errors、repair_plan、symbol_mapping、可复现输入 manifest"]
+        PBREPAIR["aits data repair-backtest-inputs --latest/--date/--price-only/--symbols<br/>复用 market data adapter 补齐缺失日频价格，写入主价格 cache 与 download_manifest，并重生 diagnostics/manifest"]
+        PSPBT["aits parameters shadow-backtest<br/>先执行 validate_data_cache 质量门禁并引用 backtest input diagnostics；price OK + signal LIMITED 时进入 price_only_shadow_backtest，候选晋升禁用"]
+        PSPBTR["artifacts/shadow_backtest/YYYY-MM-DD/shadow_backtest_summary.json/md<br/>baseline vs candidate metrics、walk-forward windows、参数变化归因、data_quality diagnostic、backtest_mode、promotion_constraints、promotion_decision；production_effect=none"]
         PSPVAL["aits parameters validate-shadow-backtest<br/>校验 shadow_backtest_summary JSON schema 和只读安全字段"]
         PSPREP["aits reports shadow-parameter-backtest / aits reports parameter-promotion<br/>从 artifacts 生成 outputs/reports alias；不重跑回测、不修改 production"]
         PSPPROM["artifacts/parameter_promotion/YYYY-MM-DD/parameter_promotion_decision.json/md<br/>rejected/watch/candidate/manual_review_required；manual_review_required=true / auto_promotion=false"]
@@ -1154,6 +1157,14 @@ flowchart TD
     SPPC --> FSPP
     SPSR --> FSPP
     FSPP --> SPPR
+    PPBC --> PBDIAG
+    SPBTC --> PBDIAG
+    PR --> PBDIAG
+    RR --> PBDIAG
+    DM --> PBDIAG
+    PBDIAG --> PBDIAGR
+    PBDIAGR --> PBREPAIR
+    PBDIAGR --> PSPBT
     PPBC --> PSPBT
     SPBTC --> PSPBT
     PPRC --> PSPBT
@@ -1165,6 +1176,7 @@ flowchart TD
     PSPBTR --> PSPVAL
     PSPBTR --> PSPREP
     PSPPROM --> PSPREP
+    PBDIAGR --> DTASKD
     PSPBTR --> DTASKD
     SPSR --> FSPI
     SPPC --> FSPI
@@ -1900,9 +1912,11 @@ flowchart TD
 |Shadow 参数搜索配置|`config/weights/shadow_parameter_search_space.yaml` / `config/weights/shadow_parameter_objective.yaml`|定义 validation-only 参数搜索的权重网格、gate cap 网格、目标函数、验证级样本门槛、gate relaxation / weight distance / changed dimension regularization、生产邻近性限制和 top-N 输出策略；配置 checksum 会写入搜索 manifest 和报告；报告输出 weight-only / gate-only / combined factorial attribution、cap-level attribution 和最终仓位变化解释，未达 objective 门槛时只展示 diagnostic-leading trial，不批准生产替换|已实现基础版|
 |Shadow 参数晋级 contract|`config/weights/shadow_parameter_promotion_contract.yaml`|把 search ranking 与生产晋级检查分离；要求 eligible best、样本 floor、正 excess、回撤/换手约束、gate 主导 cap review、forward shadow、owner approval、rollback condition，并保持 `approved_hard_allowed=false`；输出只用于 readiness，不写 production 配置|已实现基础版|
 |Production 参数 baseline|`config/parameters/production/current.yaml`|Shadow Parameter Backtest 的只读 production 参数快照，包含资产池、日频/周频决策设置、signal weights、hard gates 和 position limits；`aits parameters shadow-backtest` 只读取它作为 baseline，不自动改写|CALIBRATION-020 新增|
-|Shadow backtest policy|`config/parameters/shadow/shadow_backtest.yaml`|定义 v0.1 observe-only 参数回测的 market regime、walk-forward 窗口、交易成本、搜索空间、guardrails、数据质量规则、PIT 限制和输出目录；固定 `production_effect=none`、`manual_review_required=true`、`auto_promotion=false`|CALIBRATION-020 新增|
+|Shadow backtest policy|`config/parameters/shadow/shadow_backtest.yaml`|定义 v0.1 observe-only 参数回测的 market regime、walk-forward 窗口、交易成本、搜索空间、guardrails、数据质量规则、cache freshness、PIT 限制和输出目录；固定 `production_effect=none`、`manual_review_required=true`、`auto_promotion=false`|CALIBRATION-020 新增；BTINPUT-002 补充输入诊断 freshness policy|
 |Shadow promotion rules|`config/parameters/promotion/promotion_rules.yaml`|定义 `rejected` / `watch` / `candidate` / `manual_review_required`、保守晋升条件和一票否决规则；只输出人工复核建议，不批准 production 修改|CALIBRATION-020 新增|
-|Shadow Parameter Backtest|`aits parameters shadow-backtest --latest` / `--date YYYY-MM-DD` / `--config ...`|复用 `validate_data_cache` 作为 cached market/macro 数据质量门禁；读取 production baseline 参数，按 bounded grid 生成 shadow candidate，用日频 walk-forward 验证 baseline vs candidate，输出参数变化归因、风险指标、overfitting risk、PIT 限制和 promotion decision；`--dry-run` 只写 `outputs/dry_runs/shadow_backtest`，不写正式 artifacts|CALIBRATION-020 新增；observe-only|
+|Shadow backtest input diagnostics|`aits data diagnose-backtest-inputs --latest` / `--date YYYY-MM-DD` / `--config ...`|只读检查 shadow backtest 所需 asset coverage、date coverage、price completeness、signal snapshot availability 和 local cache freshness；输出 blocking_errors、warnings、price_data_status、signal_snapshots_status、backtest_mode、can_run_shadow_backtest、can_promote_candidate、repair_plan、symbol_mapping 和 snapshot manifest；不下载数据、不改 production 参数或 promotion criteria|BTINPUT-002 新增；TRADING-049 增加 price-only runnable mode；`production_effect=none`|
+|Shadow backtest input repair|`aits data repair-backtest-inputs --latest --price-only` / `--date YYYY-MM-DD` / `--symbols GOOGL BRK.B SGOV` / `--dry-run`|读取同一路诊断；dry-run 只输出 repair plan，实际执行时复用 market data adapter 下载缺失日频 OHLCV/adjusted close，标准化写入 `data/raw/prices_daily.csv`，在 `download_manifest.csv` 记录 provider、endpoint、请求参数、row count、checksum 和 canonical/source symbol mapping，并重新生成 diagnostics 与 manifest；单资产失败不会中断其他资产 repair|TRADING-049 新增；`production_effect=none`|
+|Shadow Parameter Backtest|`aits parameters shadow-backtest --latest` / `--date YYYY-MM-DD` / `--config ...`|复用 `validate_data_cache` 作为 cached market/macro 数据质量门禁，并引用最新 backtest input diagnostics；读取 production baseline 参数，按 bounded grid 生成 shadow candidate，用日频 walk-forward 验证 baseline vs candidate；price data OK 但 signal snapshots LIMITED 时允许 `price_only_shadow_backtest`，输出参数变化归因、风险指标、overfitting risk、PIT 限制、Data Quality Gate、backtest_mode、promotion_constraints 和 promotion decision；`--dry-run` 只写 `outputs/dry_runs/shadow_backtest`，不写正式 shadow artifacts|CALIBRATION-020 新增；BTINPUT-002 增强诊断引用；TRADING-049 增加 price-only observe-only baseline；production promotion 仍禁用|
 |Shadow backtest validation|`aits parameters validate-shadow-backtest --latest`|校验 `shadow_backtest_summary.json` 的 schema、`production_effect=none`、`manual_review_required=true` 和 `auto_promotion=false`；不重跑回测、不改 production|CALIBRATION-020 新增|
 |Shadow parameter reports|`aits reports shadow-parameter-backtest --latest` / `aits reports parameter-promotion --latest`|从 `artifacts/shadow_backtest` 与 `artifacts/parameter_promotion` 读取既有 JSON 并写入 `outputs/reports` alias；不运行上游回测、不生成 candidate、不修改 production|CALIBRATION-020 新增|
 |LLM 请求 profile 配置|`config/llm_request_profiles.yaml`|按请求类型配置 OpenAI Responses endpoint、model、reasoning effort、请求读超时、HTTP client、本地 request cache TTL、最大重试次数、候选上限、官方来源抓取 limit 和 LLM formal 写入参数；`llm precheck-claims`、`risk-events precheck-openai`、`risk-events precheck-triaged-official-candidates`、`score-daily` 和 `daily-run` 默认读取 profile，CLI 显式参数只覆盖本次运行；不开放 prompt/schema 版本配置，避免破坏结构化输出契约|已实现基础版|

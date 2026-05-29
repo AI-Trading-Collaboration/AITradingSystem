@@ -4,6 +4,7 @@ import os
 import sys
 from collections.abc import Sequence
 from pathlib import Path
+from types import SimpleNamespace
 
 import typer
 
@@ -36,6 +37,26 @@ def _dispatch(args: list[str]) -> None:
         cli.validate_data(
             as_of=_option(args, "--as-of"),
             full_universe=_flag(args, "--full-universe"),
+        )
+        return
+    if args[:2] == ["data", "diagnose-backtest-inputs"]:
+        cli.data_diagnose_backtest_inputs_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            config_path=_path_option(args, "--config"),
+        )
+        return
+    if args[:2] == ["data", "repair-backtest-inputs"]:
+        cli.data_repair_backtest_inputs_command(
+            ctx=SimpleNamespace(args=[]),
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            config_path=_path_option(args, "--config"),
+            dry_run=_flag(args, "--dry-run"),
+            price_only=_flag(args, "--price-only"),
+            symbols=_values_after_option(args, "--symbols"),
+            price_provider=_option(args, "--price-provider", "fmp") or "fmp",
+            fmp_api_key_env=_option(args, "--fmp-api-key-env", "FMP_API_KEY") or "FMP_API_KEY",
         )
         return
     if args[:2] == ["pit-snapshots", "fetch-fmp-forward"]:
@@ -220,6 +241,20 @@ def _path_option(args: Sequence[str], name: str):
 def _optional_path(args: Sequence[str], name: str):
     value = _option(args, name)
     return None if value is None else Path(value)
+
+
+def _values_after_option(args: Sequence[str], name: str) -> list[str]:
+    values: list[str] = []
+    index = 0
+    while index < len(args):
+        if args[index] != name:
+            index += 1
+            continue
+        index += 1
+        while index < len(args) and not args[index].startswith("--"):
+            values.append(args[index])
+            index += 1
+    return values
 
 
 if __name__ == "__main__":
