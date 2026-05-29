@@ -726,6 +726,23 @@ from ai_trading_system.trade_review import (
     validate_trade_record_store,
     write_trade_review_report,
 )
+from ai_trading_system.trading_engine.parameters import (
+    DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+    run_shadow_parameter_backtest,
+)
+from ai_trading_system.trading_engine.reports.parameter_promotion_report import (
+    default_parameter_promotion_json_path,
+    load_parameter_promotion_payload,
+    write_parameter_promotion_report_alias,
+)
+from ai_trading_system.trading_engine.reports.shadow_backtest_report import (
+    default_formal_shadow_backtest_root,
+    default_shadow_backtest_summary_json_path,
+    latest_shadow_backtest_summary_path,
+    load_shadow_backtest_payload,
+    validate_shadow_backtest_payload,
+    write_shadow_backtest_report_alias,
+)
 from ai_trading_system.valuation import (
     ValuationReviewReport,
     build_valuation_review_report,
@@ -799,6 +816,7 @@ scenarios_app = typer.Typer(help="AI 产业链情景压力测试库。", no_args
 catalysts_app = typer.Typer(help="未来催化剂日历和事件前复核。", no_args_is_help=True)
 execution_app = typer.Typer(help="Advisory execution policy 和执行纪律。", no_args_is_help=True)
 portfolio_app = typer.Typer(help="真实组合持仓和暴露解释。", no_args_is_help=True)
+parameters_app = typer.Typer(help="生产参数快照、shadow 回测和晋升复核。", no_args_is_help=True)
 reports_app = typer.Typer(help="投资报告和周期复盘。", no_args_is_help=True)
 ops_app = typer.Typer(help="运行监控和 pipeline health。", no_args_is_help=True)
 security_app = typer.Typer(help="密钥卫生和供应商权限治理。", no_args_is_help=True)
@@ -819,6 +837,7 @@ app.add_typer(scenarios_app, name="scenarios")
 app.add_typer(catalysts_app, name="catalysts")
 app.add_typer(execution_app, name="execution")
 app.add_typer(portfolio_app, name="portfolio")
+app.add_typer(parameters_app, name="parameters")
 app.add_typer(reports_app, name="reports")
 app.add_typer(ops_app, name="ops")
 app.add_typer(security_app, name="security")
@@ -5938,6 +5957,81 @@ def portfolio_exposure_command(
         raise typer.Exit(code=1)
 
 
+@parameters_app.command("shadow-backtest")
+def parameters_shadow_backtest_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用 prices_daily.csv 中最新可用日期。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="回测评估日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="shadow backtest 配置路径。"),
+    ] = DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="写入 outputs/dry_runs/shadow_backtest，不写正式 artifacts。"),
+    ] = False,
+) -> None:
+    """运行 observe-only shadow 参数 walk-forward 回测。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    run = run_shadow_parameter_backtest(
+        as_of=run_date,
+        config_path=config_path,
+        dry_run=dry_run,
+    )
+    metadata = run.payload.get("metadata", {})
+    decision = run.payload.get("promotion_decision", {})
+    status = metadata.get("status", "UNKNOWN") if isinstance(metadata, dict) else "UNKNOWN"
+    promotion_status = (
+        decision.get("status", "UNKNOWN") if isinstance(decision, dict) else "UNKNOWN"
+    )
+    style = "green" if status == "OK" else "yellow"
+    console.print(f"[{style}]Shadow parameter backtest：{status}[/{style}]")
+    console.print(f"as_of：{run.as_of.isoformat()}；promotion_status={promotion_status}")
+    if run.artifacts is not None:
+        console.print(f"JSON：{run.artifacts.summary_json}")
+        console.print(f"Markdown：{run.artifacts.summary_markdown}")
+        console.print(f"Promotion decision：{run.artifacts.promotion_json}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@parameters_app.command("validate-shadow-backtest")
+def validate_shadow_backtest_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验最新正式 shadow backtest JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="校验日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 shadow_backtest_summary.json 路径。"),
+    ] = None,
+) -> None:
+    """校验 shadow backtest JSON schema 和只读安全字段。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    source_path = input_path or _resolve_shadow_backtest_summary_path(latest=latest, as_of=as_of)
+    payload = load_shadow_backtest_payload(source_path)
+    issues = validate_shadow_backtest_payload(payload)
+    if issues:
+        console.print("[red]Shadow backtest validation：FAIL[/red]")
+        for issue in issues:
+            console.print(f"- {issue}")
+        raise typer.Exit(code=1)
+    console.print("[green]Shadow backtest validation：PASS[/green]")
+    console.print(f"JSON：{source_path}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
 @reports_app.command("investment-review")
 def investment_periodic_review_command(
     period: Annotated[
@@ -6070,6 +6164,96 @@ def calculation_explainers_command(
         f"warnings：{len(payload['warnings'])}；"
         f"production_effect={payload['production_effect']}"
     )
+
+
+@reports_app.command("shadow-parameter-backtest")
+def shadow_parameter_backtest_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新正式 shadow backtest artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="报告日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    source_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 shadow_backtest_summary.json 路径。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 alias 输出目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """从正式 artifact 生成 shadow parameter backtest 报告 alias。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    json_source = source_path or _resolve_shadow_backtest_summary_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_shadow_backtest_payload(json_source)
+    issues = validate_shadow_backtest_payload(payload)
+    if issues:
+        raise typer.BadParameter("shadow backtest JSON 校验失败：" + "; ".join(issues))
+    report_date = _shadow_backtest_payload_date(payload, json_source)
+    json_path, markdown_path = write_shadow_backtest_report_alias(
+        payload,
+        reports_dir,
+        report_date,
+    )
+    console.print("[green]Shadow parameter backtest report：OK[/green]")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{markdown_path}")
+    console.print("production_effect=none；不修改 production 参数")
+
+
+@reports_app.command("parameter-promotion")
+def parameter_promotion_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新正式 parameter promotion artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="报告日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    source_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 parameter_promotion_decision.json 路径。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 alias 输出目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """从正式 artifact 生成 parameter promotion decision 报告 alias。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    json_source = source_path or _resolve_parameter_promotion_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_parameter_promotion_payload(json_source)
+    if not payload:
+        raise typer.BadParameter(f"无法读取 parameter promotion JSON：{json_source}")
+    report_date = _parameter_promotion_payload_date(payload, json_source)
+    json_path, markdown_path = write_parameter_promotion_report_alias(
+        payload,
+        reports_dir,
+        report_date,
+    )
+    decision = payload.get("promotion_decision", {})
+    status = decision.get("status", "UNKNOWN") if isinstance(decision, dict) else "UNKNOWN"
+    console.print("[green]Parameter promotion report：OK[/green]")
+    console.print(f"promotion_status：{status}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{markdown_path}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
 
 
 @reports_app.command("reader-brief")
@@ -13365,6 +13549,58 @@ def _build_backtest_risk_event_occurrence_review_reports(
             raise typer.Exit(code=1)
         reports[signal_date] = report
     return reports
+
+
+def _resolve_shadow_backtest_summary_path(*, latest: bool, as_of: str | None) -> Path:
+    root = default_formal_shadow_backtest_root()
+    if latest or as_of is None:
+        latest_path = latest_shadow_backtest_summary_path(root)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 shadow backtest artifact：{root}")
+        return latest_path
+    return default_shadow_backtest_summary_json_path(root, _parse_date(as_of))
+
+
+def _resolve_parameter_promotion_path(*, latest: bool, as_of: str | None) -> Path:
+    root = PROJECT_ROOT / "artifacts" / "parameter_promotion"
+    if latest or as_of is None:
+        candidates = sorted(root.glob("*/parameter_promotion_decision.json"))
+        if not candidates:
+            raise typer.BadParameter(f"未找到 parameter promotion artifact：{root}")
+        return max(candidates, key=lambda path: path.stat().st_mtime)
+    return default_parameter_promotion_json_path(root, _parse_date(as_of))
+
+
+def _shadow_backtest_payload_date(payload: dict[str, object], source_path: Path) -> date:
+    metadata = payload.get("metadata")
+    if isinstance(metadata, dict):
+        run_id = str(metadata.get("run_id") or "")
+        raw_date = run_id.removeprefix("shadow-backtest-")
+        try:
+            return date.fromisoformat(raw_date)
+        except ValueError:
+            pass
+    try:
+        return date.fromisoformat(source_path.parent.name)
+    except ValueError as exc:
+        message = f"无法从 shadow backtest artifact 推断日期：{source_path}"
+        raise typer.BadParameter(message) from exc
+
+
+def _parameter_promotion_payload_date(payload: dict[str, object], source_path: Path) -> date:
+    metadata = payload.get("metadata")
+    if isinstance(metadata, dict):
+        run_id = str(metadata.get("run_id") or "")
+        raw_date = run_id.removeprefix("shadow-backtest-")
+        try:
+            return date.fromisoformat(raw_date)
+        except ValueError:
+            pass
+    try:
+        return date.fromisoformat(source_path.parent.name)
+    except ValueError as exc:
+        message = f"无法从 parameter promotion artifact 推断日期：{source_path}"
+        raise typer.BadParameter(message) from exc
 
 
 def _parse_date(value: str) -> date:

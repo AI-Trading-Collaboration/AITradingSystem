@@ -7,6 +7,7 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
+from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     load_report_registry,
@@ -161,6 +162,7 @@ def build_reader_brief_payload(
         daily_task_dashboard=daily_task_dashboard,
         research_governance_summary=research_governance_summary,
     )
+    parameter_shadow_review = _parameter_shadow_review(as_of)
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -274,6 +276,7 @@ def build_reader_brief_payload(
         "binding_gate_ladder": gate_ladder,
         "data_quality_pit_safety": data_quality_pit_safety,
         "backtest_shadow_governance": governance_summary,
+        "parameter_shadow_review": parameter_shadow_review,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -519,6 +522,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     gates = _records(_mapping(payload.get("binding_gate_ladder")).get("gates"))
     quality = _mapping(payload.get("data_quality_pit_safety"))
     governance = _mapping(payload.get("backtest_shadow_governance"))
+    parameter_shadow = _mapping(payload.get("parameter_shadow_review"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -718,6 +722,24 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
         _section("Binding Gate Ladder", _gate_ladder_html(gates)),
         _section("Data Quality & PIT Safety", _definition_table(list(quality.items()))),
         _section("Backtest / Shadow / Governance", _definition_table(list(governance.items()))),
+        _section(
+            "Parameter Shadow Review",
+            _definition_table(
+                [
+                    ("availability", parameter_shadow.get("availability")),
+                    ("status", parameter_shadow.get("status")),
+                    ("promotion_status", parameter_shadow.get("promotion_status")),
+                    ("baseline_version", parameter_shadow.get("baseline_version")),
+                    ("candidate_version", parameter_shadow.get("candidate_version")),
+                    ("annualized_return_delta", parameter_shadow.get("annualized_return_delta")),
+                    ("max_drawdown_delta", parameter_shadow.get("max_drawdown_delta")),
+                    ("sharpe_ratio_delta", parameter_shadow.get("sharpe_ratio_delta")),
+                    ("turnover_delta", parameter_shadow.get("turnover_delta")),
+                    ("manual_review_required", parameter_shadow.get("manual_review_required")),
+                    ("risk", parameter_shadow.get("risk")),
+                ]
+            ),
+        ),
         _section("Documentation Contract", _definition_table(list(documentation_contract.items()))),
         _section(
             "Manual Review Queue",
@@ -1563,6 +1585,57 @@ def _backtest_shadow_governance(
         "shadow_summary": "; ".join(item for item in shadow_conclusions if item) or "MISSING",
         "production_effect": PRODUCTION_EFFECT,
         "limitation": "完整 research governance summary 将由 REPORT-051 统一生成。",
+    }
+
+
+def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
+    path = (
+        PROJECT_ROOT
+        / "artifacts"
+        / "shadow_backtest"
+        / as_of.isoformat()
+        / "shadow_backtest_summary.json"
+    )
+    payload = _read_optional_json(path)
+    if not payload:
+        return {
+            "availability": "MISSING",
+            "status": "MISSING",
+            "promotion_status": "UNKNOWN",
+            "baseline_version": "UNKNOWN",
+            "candidate_version": "UNKNOWN",
+            "annualized_return_delta": "NA",
+            "max_drawdown_delta": "NA",
+            "sharpe_ratio_delta": "NA",
+            "turnover_delta": "NA",
+            "manual_review_required": True,
+            "risk": "Shadow parameter backtest artifact missing; Reader Brief does not run it.",
+            "production_effect": PRODUCTION_EFFECT,
+        }
+    metadata = _mapping(payload.get("metadata"))
+    comparison = _mapping(payload.get("relative_comparison"))
+    decision = _mapping(payload.get("promotion_decision"))
+    data_quality = _mapping(payload.get("data_quality"))
+    status = _text(metadata.get("status"), "UNKNOWN")
+    promotion_status = _text(decision.get("status"), "UNKNOWN")
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "data_quality_status": _text(data_quality.get("status"), "UNKNOWN"),
+        "promotion_status": promotion_status,
+        "baseline_version": _text(metadata.get("baseline_parameter_version"), "UNKNOWN"),
+        "candidate_version": _text(metadata.get("candidate_parameter_version"), "UNKNOWN"),
+        "annualized_return_delta": _format_number(
+            comparison.get("annualized_return_delta"),
+            digits=4,
+        ),
+        "max_drawdown_delta": _format_number(comparison.get("max_drawdown_delta"), digits=4),
+        "sharpe_ratio_delta": _format_number(comparison.get("sharpe_ratio_delta"), digits=4),
+        "turnover_delta": _format_number(comparison.get("turnover_delta"), digits=4),
+        "manual_review_required": metadata.get("manual_review_required") is True,
+        "risk": _text(decision.get("reason"), "Open shadow backtest report before review."),
+        "source_artifact": str(path),
+        "production_effect": PRODUCTION_EFFECT,
     }
 
 

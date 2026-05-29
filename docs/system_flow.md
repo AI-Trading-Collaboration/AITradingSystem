@@ -46,6 +46,9 @@ flowchart TD
         SPSC["config/weights/shadow_parameter_search_space.yaml<br/>validation-only shadow weight/gate 参数搜索空间"]
         SPOC["config/weights/shadow_parameter_objective.yaml<br/>shadow 参数搜索目标函数、样本门槛、生产邻近性 regularization 和 top-N 策略"]
         SPPC["config/weights/shadow_parameter_promotion_contract.yaml<br/>shadow 参数 search 与 production 晋级分层 contract；production_effect=none"]
+        PPBC["config/parameters/production/current.yaml<br/>production 参数 baseline 快照；shadow backtest 只读读取，不自动改写"]
+        SPBTC["config/parameters/shadow/shadow_backtest.yaml<br/>Shadow Parameter Backtest v0.1 policy、walk-forward、成本、搜索空间和数据质量规则；production_effect=none"]
+        PPRC["config/parameters/promotion/promotion_rules.yaml<br/>Shadow 参数晋升建议规则；manual_review_required=true / auto_promotion=false"]
         WPM["config/weights/calibration_protocol.yaml<br/>调权实验 protocol manifest：数据、成本、执行、切分、trial 和 benchmark"]
         FSP["config/feedback_sample_policy.yaml<br/>市场反馈优化样本政策：reporting / pilot / diagnostic / promotion floor"]
         BVP["config/backtest_validation_policy.yaml<br/>回测数据可信度覆盖率、稳健性默认实验参数、解释阈值、candidate 多目标 veto 阈值和 promotion gate policy"]
@@ -263,6 +266,11 @@ flowchart TD
         SPSR["outputs/parameter_search/<run_id>/{manifest.json,trials.csv,pareto_front.csv,best_profiles.yaml,search_report.md}<br/>可复现搜索登记、lineage checksum、factorial/cap attribution、最优/诊断候选和治理边界"]
         FSPP["aits feedback evaluate-shadow-parameter-promotion<br/>读取 search bundle + promotion contract；只评估晋级 readiness"]
         SPPR["outputs/parameter_search/<run_id>/shadow_parameter_promotion_<run_id>.md/json<br/>NOT_PROMOTABLE / READY_FOR_FORWARD_SHADOW / READY_FOR_OWNER_REVIEW；production_effect=none"]
+        PSPBT["aits parameters shadow-backtest<br/>先执行 validate_data_cache 质量门禁，再用 production baseline 参数、bounded candidate 和 walk-forward 验证生成 observe-only 参数回测"]
+        PSPBTR["artifacts/shadow_backtest/YYYY-MM-DD/shadow_backtest_summary.json/md<br/>baseline vs candidate metrics、walk-forward windows、参数变化归因、data_quality_status、promotion_decision；production_effect=none"]
+        PSPVAL["aits parameters validate-shadow-backtest<br/>校验 shadow_backtest_summary JSON schema 和只读安全字段"]
+        PSPREP["aits reports shadow-parameter-backtest / aits reports parameter-promotion<br/>从 artifacts 生成 outputs/reports alias；不重跑回测、不修改 production"]
+        PSPPROM["artifacts/parameter_promotion/YYYY-MM-DD/parameter_promotion_decision.json/md<br/>rejected/watch/candidate/manual_review_required；manual_review_required=true / auto_promotion=false"]
         FSPI["aits feedback run-shadow-iteration<br/>读取已有 search bundle + promotion contract<br/>分类 weight_only / gate_only / weight_gate_bundle，维护 shadow-only iteration 状态"]
         SPIR["data/processed/shadow_iteration_registry.csv<br/>+ outputs/reports/shadow_iteration_YYYY-MM-DD.md/json<br/>+ outputs/shadow_iterations/<run_id>/*<br/>dashboard 只读候选状态、Trial Card、blocked reasons 和 lineage；production_effect=none"]
         FSRFS["aits feedback register-forward-shadow<br/>仅把 registry 中指定候选标记为 FORWARD_SHADOW_ACTIVE<br/>不修改 production 配置、approved overlay 或正式 ledger"]
@@ -1146,6 +1154,18 @@ flowchart TD
     SPPC --> FSPP
     SPSR --> FSPP
     FSPP --> SPPR
+    PPBC --> PSPBT
+    SPBTC --> PSPBT
+    PPRC --> PSPBT
+    PR --> PSPBT
+    RR --> PSPBT
+    Q --> PSPBT
+    PSPBT --> PSPBTR
+    PSPBT --> PSPPROM
+    PSPBTR --> PSPVAL
+    PSPBTR --> PSPREP
+    PSPPROM --> PSPREP
+    PSPBTR --> DTASKD
     SPSR --> FSPI
     SPPC --> FSPI
     FSPI --> SPIR
@@ -1879,6 +1899,12 @@ flowchart TD
 |Shadow weight profile manifest|`config/weights/shadow_weight_profiles.yaml`|维护若干套隔离测试权重 profile，初始值参考生产 `weight_profile_current.yaml`，每套都必须 `production_effect=none`、信号集合与生产 profile 一致、权重和为 1 且不越过生产 profile bounds；用于长期观察、日报级主线评分对比和隔离 prediction outcome，不替换生产权重|已实现基础版|
 |Shadow 参数搜索配置|`config/weights/shadow_parameter_search_space.yaml` / `config/weights/shadow_parameter_objective.yaml`|定义 validation-only 参数搜索的权重网格、gate cap 网格、目标函数、验证级样本门槛、gate relaxation / weight distance / changed dimension regularization、生产邻近性限制和 top-N 输出策略；配置 checksum 会写入搜索 manifest 和报告；报告输出 weight-only / gate-only / combined factorial attribution、cap-level attribution 和最终仓位变化解释，未达 objective 门槛时只展示 diagnostic-leading trial，不批准生产替换|已实现基础版|
 |Shadow 参数晋级 contract|`config/weights/shadow_parameter_promotion_contract.yaml`|把 search ranking 与生产晋级检查分离；要求 eligible best、样本 floor、正 excess、回撤/换手约束、gate 主导 cap review、forward shadow、owner approval、rollback condition，并保持 `approved_hard_allowed=false`；输出只用于 readiness，不写 production 配置|已实现基础版|
+|Production 参数 baseline|`config/parameters/production/current.yaml`|Shadow Parameter Backtest 的只读 production 参数快照，包含资产池、日频/周频决策设置、signal weights、hard gates 和 position limits；`aits parameters shadow-backtest` 只读取它作为 baseline，不自动改写|CALIBRATION-020 新增|
+|Shadow backtest policy|`config/parameters/shadow/shadow_backtest.yaml`|定义 v0.1 observe-only 参数回测的 market regime、walk-forward 窗口、交易成本、搜索空间、guardrails、数据质量规则、PIT 限制和输出目录；固定 `production_effect=none`、`manual_review_required=true`、`auto_promotion=false`|CALIBRATION-020 新增|
+|Shadow promotion rules|`config/parameters/promotion/promotion_rules.yaml`|定义 `rejected` / `watch` / `candidate` / `manual_review_required`、保守晋升条件和一票否决规则；只输出人工复核建议，不批准 production 修改|CALIBRATION-020 新增|
+|Shadow Parameter Backtest|`aits parameters shadow-backtest --latest` / `--date YYYY-MM-DD` / `--config ...`|复用 `validate_data_cache` 作为 cached market/macro 数据质量门禁；读取 production baseline 参数，按 bounded grid 生成 shadow candidate，用日频 walk-forward 验证 baseline vs candidate，输出参数变化归因、风险指标、overfitting risk、PIT 限制和 promotion decision；`--dry-run` 只写 `outputs/dry_runs/shadow_backtest`，不写正式 artifacts|CALIBRATION-020 新增；observe-only|
+|Shadow backtest validation|`aits parameters validate-shadow-backtest --latest`|校验 `shadow_backtest_summary.json` 的 schema、`production_effect=none`、`manual_review_required=true` 和 `auto_promotion=false`；不重跑回测、不改 production|CALIBRATION-020 新增|
+|Shadow parameter reports|`aits reports shadow-parameter-backtest --latest` / `aits reports parameter-promotion --latest`|从 `artifacts/shadow_backtest` 与 `artifacts/parameter_promotion` 读取既有 JSON 并写入 `outputs/reports` alias；不运行上游回测、不生成 candidate、不修改 production|CALIBRATION-020 新增|
 |LLM 请求 profile 配置|`config/llm_request_profiles.yaml`|按请求类型配置 OpenAI Responses endpoint、model、reasoning effort、请求读超时、HTTP client、本地 request cache TTL、最大重试次数、候选上限、官方来源抓取 limit 和 LLM formal 写入参数；`llm precheck-claims`、`risk-events precheck-openai`、`risk-events precheck-triaged-official-candidates`、`score-daily` 和 `daily-run` 默认读取 profile，CLI 显式参数只覆盖本次运行；不开放 prompt/schema 版本配置，避免破坏结构化输出契约|已实现基础版|
 |SEC PIT 认知评估|`aits sec-pit evaluate` / `outputs/sec_pit_evaluation/sec_pit_evaluation_summary_YYYY-MM-DD.json/md` / `sec_pit_feature_effectiveness_YYYY-MM-DD.csv` / `sec_pit_signal_attribution_YYYY-MM-DD.csv` / `sec_pit_shadow_candidate_weights_YYYY-MM-DD.csv`|复用 `validate_data_cache` 作为 market/macro quality gate，读取 TRADING-039 `sec_pit_feature_panel.csv`、SEC universe、价格标签和 `config/sec_pit_evaluation.yaml`；主评估逐行强制 `available_time <= decision_time`，缺少 `available_time` 或未来可见行只计入 exclusion，不进入 IC / attribution；按 decision_date 做横截面 winsorize/z-score，输出 IC/RankIC、top-bottom spread、coverage、stability、PIT quality、signal attribution、非正数 `max_drawdown_forward_20d` label 和 shadow candidate weights；所有 shadow 输出固定 `manual_review_required=true`、`production_effect=none`，不修改 production weights|已实现基础版|
 |SEC PIT baseline comparison|`aits sec-pit compare-baseline` / `outputs/sec_pit_baseline_comparison/sec_pit_baseline_comparison_summary_YYYY-MM-DD.json/md` / `sec_pit_decision_impact_YYYY-MM-DD.csv` / `sec_pit_rank_shift_YYYY-MM-DD.csv` / `sec_pit_incremental_alpha_YYYY-MM-DD.csv`|读取 TRADING-040 SEC PIT evaluation artifacts 和 baseline score CSV，不创建新的市场数据管线；baseline resolver 按显式 path、显式 dir、默认 `outputs/daily_score`、`data/processed/scores_daily.csv` fallback、LIMITED 顺序选择并在 summary 披露；逐行排除 `available_time > decision_date` 的 attribution，按 canonical ticker/date 计算 SEC PIT enhanced score、rank shift、action change、incremental alpha bucket 和 feature driver；decision impact 保留 SEC provenance，并把多 feature `source_lineage` 汇总为稳定 JSON 字符串；所有 decision impact 行固定 `manual_review_required=true`、`production_effect=none`，不修改 production weights/actions|已实现基础版|

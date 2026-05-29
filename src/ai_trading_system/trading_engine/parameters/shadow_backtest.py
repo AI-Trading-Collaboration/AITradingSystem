@@ -1,0 +1,904 @@
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass
+from datetime import UTC, date, datetime
+from hashlib import sha256
+from pathlib import Path
+from typing import Any
+
+import pandas as pd
+
+from ai_trading_system.config import (
+    PROJECT_ROOT,
+    configured_rate_series,
+    load_data_quality,
+    load_universe,
+)
+from ai_trading_system.data.quality import (
+    DataQualityReport,
+    default_quality_report_path,
+    validate_data_cache,
+    write_data_quality_report,
+)
+from ai_trading_system.shadow.lineage import git_commit_sha, git_worktree_dirty, sha256_file
+from ai_trading_system.trading_engine.backtesting.portfolio_simulator import (
+    PortfolioSimulationResult,
+    simulate_parameter_portfolio,
+)
+from ai_trading_system.trading_engine.backtesting.walk_forward import (
+    WalkForwardWindow,
+    generate_walk_forward_windows,
+)
+from ai_trading_system.trading_engine.parameters.parameter_diff import (
+    ParameterChange,
+    diff_parameters,
+)
+from ai_trading_system.trading_engine.parameters.parameter_loader import (
+    DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+    load_production_parameters,
+    load_promotion_rules,
+    load_shadow_backtest_config,
+    resolve_project_path,
+)
+from ai_trading_system.trading_engine.parameters.parameter_schema import (
+    DataQualityStatus,
+    ProductionParameters,
+    ShadowBacktestConfig,
+)
+from ai_trading_system.trading_engine.parameters.promotion_rules import (
+    PromotionDecision,
+    evaluate_promotion_decision,
+)
+from ai_trading_system.trading_engine.parameters.shadow_parameter_generator import (
+    CandidateWeightSet,
+    generate_bounded_weight_candidates,
+)
+from ai_trading_system.trading_engine.reports.parameter_promotion_report import (
+    PARAMETER_PROMOTION_REPORT_TYPE,
+    PARAMETER_PROMOTION_SCHEMA_VERSION,
+    default_parameter_promotion_json_path,
+    default_parameter_promotion_markdown_path,
+    write_parameter_promotion_decision,
+)
+from ai_trading_system.trading_engine.reports.shadow_backtest_report import (
+    SHADOW_BACKTEST_REPORT_TYPE,
+    SHADOW_BACKTEST_SCHEMA_VERSION,
+    default_shadow_backtest_summary_json_path,
+    default_shadow_backtest_summary_markdown_path,
+    write_shadow_backtest_summary,
+)
+
+
+@dataclass(frozen=True)
+class ShadowBacktestArtifacts:
+    summary_json: Path
+    summary_markdown: Path
+    shadow_parameters_json: Path
+    shadow_parameters_markdown: Path
+    candidate_parameters_json: Path
+    candidate_parameters_markdown: Path
+    promotion_json: Path
+    promotion_markdown: Path
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "shadow_backtest_summary_json": str(self.summary_json),
+            "shadow_backtest_summary_md": str(self.summary_markdown),
+            "shadow_parameters_json": str(self.shadow_parameters_json),
+            "shadow_parameters_md": str(self.shadow_parameters_markdown),
+            "candidate_parameters_json": str(self.candidate_parameters_json),
+            "candidate_parameters_md": str(self.candidate_parameters_markdown),
+            "parameter_promotion_decision_json": str(self.promotion_json),
+            "parameter_promotion_decision_md": str(self.promotion_markdown),
+        }
+
+
+@dataclass(frozen=True)
+class ShadowBacktestRun:
+    as_of: date
+    payload: dict[str, Any]
+    promotion_payload: dict[str, Any]
+    artifacts: ShadowBacktestArtifacts | None
+
+
+@dataclass(frozen=True)
+class CandidateEvaluation:
+    candidate: CandidateWeightSet
+    objective_score: float
+    windows: tuple[dict[str, Any], ...]
+    passing_ratio: float
+
+
+def build_shadow_backtest_summary(
+    *,
+    as_of: date | None = None,
+    config_path: Path | str = DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+    dry_run: bool = False,
+) -> ShadowBacktestRun:
+    config = load_shadow_backtest_config(config_path)
+    config_file = Path(config_path)
+    prices_path = resolve_project_path(config.data.prices_path)
+    prices = _read_prices(prices_path)
+    resolved_as_of = as_of or _latest_price_date(prices) or date.today()
+    output_roots = _output_roots(config, dry_run=dry_run)
+    data_quality_report_path = default_quality_report_path(
+        output_roots["data_quality_report_dir"],
+        resolved_as_of,
+    )
+    generated_at = datetime.now(tz=UTC)
+    baseline_path = resolve_project_path(config.baseline_parameters_path)
+    promotion_rules_path = resolve_project_path(config.promotion_rules_path)
+    input_artifacts = {
+        "baseline_parameters": str(baseline_path),
+        "shadow_backtest_config": str(config_file),
+        "promotion_rules": str(promotion_rules_path),
+        "market_data_snapshot": str(prices_path),
+        "signal_snapshot": "generated_from_price_features_v0_1",
+        "data_quality_report": str(data_quality_report_path),
+    }
+    try:
+        baseline = load_production_parameters(baseline_path)
+        promotion_rules = load_promotion_rules(promotion_rules_path)
+    except (OSError, ValueError) as exc:
+        payload = _failure_payload(
+            as_of=resolved_as_of,
+            generated_at=generated_at,
+            config=config,
+            config_path=config_file,
+            input_artifacts=input_artifacts,
+            reason=str(exc),
+        )
+        promotion_payload = _promotion_payload_from_summary(payload)
+        return ShadowBacktestRun(resolved_as_of, payload, promotion_payload, artifacts=None)
+
+    data_quality_report = _run_data_quality_gate(
+        config=config,
+        baseline=baseline,
+        as_of=resolved_as_of,
+        report_path=data_quality_report_path,
+    )
+    quality_status, quality_warnings = _shadow_data_quality_status(
+        config=config,
+        baseline=baseline,
+        prices=prices,
+        as_of=resolved_as_of,
+        data_quality_report=data_quality_report,
+    )
+    trading_dates = _trading_dates(prices, baseline, resolved_as_of)
+    windows = generate_walk_forward_windows(trading_dates, config.walk_forward)
+    if not windows and quality_status == "OK":
+        quality_status = "INSUFFICIENT_DATA"
+    candidates = generate_bounded_weight_candidates(baseline, config.search)
+    evaluation = _select_candidate(
+        prices=prices,
+        baseline=baseline,
+        candidates=candidates,
+        windows=windows,
+        config=config,
+    )
+    selected_weights = (
+        evaluation.candidate.weights if evaluation is not None else dict(baseline.weights)
+    )
+    window_payloads = evaluation.windows if evaluation is not None else tuple()
+    full_start = _full_result_start(windows, trading_dates, config)
+    full_end = resolved_as_of
+    baseline_result = simulate_parameter_portfolio(
+        prices,
+        baseline,
+        baseline.weights,
+        config.transaction_cost,
+        start=full_start,
+        end=full_end,
+    )
+    candidate_result = simulate_parameter_portfolio(
+        prices,
+        baseline,
+        selected_weights,
+        config.transaction_cost,
+        start=full_start,
+        end=full_end,
+    )
+    candidate_version = (
+        evaluation.candidate.version if evaluation is not None else "no-shadow-candidate"
+    )
+    parameter_changes = _parameter_changes(
+        baseline=baseline,
+        candidate_weights=selected_weights,
+        candidate_result=candidate_result,
+        baseline_result=baseline_result,
+        windows=window_payloads,
+    )
+    promotion_decision = evaluate_promotion_decision(
+        rules=promotion_rules,
+        baseline_result=baseline_result.metrics.to_dict(),
+        candidate_result=candidate_result.metrics.to_dict(),
+        walk_forward_windows=window_payloads,
+        parameter_changes=parameter_changes,
+        data_quality_status=quality_status,
+        missing_required_input_artifacts=_missing_required_input_artifacts(input_artifacts),
+    )
+    passing_ratio = evaluation.passing_ratio if evaluation is not None else 0.0
+    payload = _summary_payload(
+        as_of=resolved_as_of,
+        generated_at=generated_at,
+        config=config,
+        config_path=config_file,
+        baseline=baseline,
+        candidate_version=candidate_version,
+        candidate_weights=selected_weights,
+        baseline_result=baseline_result,
+        candidate_result=candidate_result,
+        parameter_changes=parameter_changes,
+        windows=window_payloads,
+        promotion_decision=promotion_decision,
+        data_quality_status=quality_status,
+        data_quality_report=data_quality_report,
+        data_quality_report_path=data_quality_report_path,
+        input_artifacts=input_artifacts,
+        output_artifacts={},
+        passing_ratio=passing_ratio,
+        warnings=tuple(quality_warnings),
+        dry_run=dry_run,
+    )
+    promotion_payload = _promotion_payload_from_summary(payload)
+    return ShadowBacktestRun(resolved_as_of, payload, promotion_payload, artifacts=None)
+
+
+def run_shadow_parameter_backtest(
+    *,
+    as_of: date | None = None,
+    config_path: Path | str = DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+    dry_run: bool = False,
+) -> ShadowBacktestRun:
+    run = build_shadow_backtest_summary(as_of=as_of, config_path=config_path, dry_run=dry_run)
+    config = load_shadow_backtest_config(config_path)
+    roots = _output_roots(config, dry_run=dry_run)
+    artifacts = _write_artifacts(run.payload, run.promotion_payload, roots, run.as_of)
+    payload = dict(run.payload)
+    payload["output_artifacts"] = artifacts.to_dict()
+    _rewrite_summary_with_outputs(payload, run.promotion_payload, artifacts)
+    return ShadowBacktestRun(
+        as_of=run.as_of,
+        payload=payload,
+        promotion_payload=run.promotion_payload,
+        artifacts=artifacts,
+    )
+
+
+def _run_data_quality_gate(
+    *,
+    config: ShadowBacktestConfig,
+    baseline: ProductionParameters,
+    as_of: date,
+    report_path: Path,
+) -> DataQualityReport:
+    quality_config = load_data_quality()
+    universe = load_universe()
+    expected_tickers = [asset for asset in baseline.flattened_asset_universe() if asset != "CASH"]
+    report = validate_data_cache(
+        resolve_project_path(config.data.prices_path),
+        resolve_project_path(config.data.rates_path),
+        expected_tickers,
+        configured_rate_series(universe),
+        quality_config,
+        as_of,
+        manifest_path=resolve_project_path(config.data.download_manifest_path),
+        secondary_prices_path=resolve_project_path(config.data.secondary_prices_path),
+        require_secondary_prices=False,
+    )
+    write_data_quality_report(report, report_path)
+    return report
+
+
+def _select_candidate(
+    *,
+    prices: pd.DataFrame,
+    baseline: ProductionParameters,
+    candidates: tuple[CandidateWeightSet, ...],
+    windows: tuple[WalkForwardWindow, ...],
+    config: ShadowBacktestConfig,
+) -> CandidateEvaluation | None:
+    if not candidates or not windows:
+        return None
+    baseline_by_window = {
+        window.window_id: simulate_parameter_portfolio(
+            prices,
+            baseline,
+            baseline.weights,
+            config.transaction_cost,
+            start=window.validation_start,
+            end=window.validation_end,
+        )
+        for window in windows
+    }
+    evaluations: list[CandidateEvaluation] = []
+    for candidate in candidates:
+        window_payloads: list[dict[str, Any]] = []
+        objective = 0.0
+        pass_count = 0
+        for window in windows:
+            baseline_result = baseline_by_window[window.window_id]
+            candidate_result = simulate_parameter_portfolio(
+                prices,
+                baseline,
+                candidate.weights,
+                config.transaction_cost,
+                start=window.validation_start,
+                end=window.validation_end,
+            )
+            status = _window_status(baseline_result, candidate_result)
+            if status == "PASS":
+                pass_count += 1
+            objective += _window_objective(baseline_result, candidate_result)
+            window_payloads.append(
+                {
+                    **window.to_dict(),
+                    "baseline_metrics": baseline_result.metrics.to_dict(),
+                    "candidate_metrics": candidate_result.metrics.to_dict(),
+                    "status": status,
+                }
+            )
+        passing_ratio = pass_count / len(windows)
+        objective -= candidate.l1_change * 0.02
+        evaluations.append(
+            CandidateEvaluation(
+                candidate=candidate,
+                objective_score=objective,
+                windows=tuple(window_payloads),
+                passing_ratio=passing_ratio,
+            )
+        )
+    return max(evaluations, key=lambda item: (item.objective_score, item.passing_ratio))
+
+
+def _summary_payload(
+    *,
+    as_of: date,
+    generated_at: datetime,
+    config: ShadowBacktestConfig,
+    config_path: Path,
+    baseline: ProductionParameters,
+    candidate_version: str,
+    candidate_weights: dict[str, float],
+    baseline_result: PortfolioSimulationResult,
+    candidate_result: PortfolioSimulationResult,
+    parameter_changes: tuple[ParameterChange, ...],
+    windows: tuple[dict[str, Any], ...],
+    promotion_decision: PromotionDecision,
+    data_quality_status: DataQualityStatus,
+    data_quality_report: DataQualityReport,
+    data_quality_report_path: Path,
+    input_artifacts: dict[str, str],
+    output_artifacts: dict[str, str],
+    passing_ratio: float,
+    warnings: tuple[str, ...],
+    dry_run: bool,
+) -> dict[str, Any]:
+    baseline_metrics = baseline_result.metrics.to_dict()
+    candidate_metrics = candidate_result.metrics.to_dict()
+    date_range = _date_range_from_rows(baseline_result.daily_rows)
+    metadata = {
+        "run_id": f"shadow-backtest-{as_of.isoformat()}",
+        "generated_at": generated_at.isoformat(),
+        "status": "OK" if data_quality_status in {"OK", "LIMITED"} else "DEGRADED",
+        "production_effect": "none",
+        "manual_review_required": True,
+        "auto_promotion": False,
+        "observe_only": True,
+        "dry_run": dry_run,
+        "code_version": git_commit_sha() or "unknown",
+        "git_worktree_dirty": git_worktree_dirty(),
+        "config_hash": _config_hash(config_path, input_artifacts),
+        "market_regime": config.market_regime.id,
+        "market_regime_anchor": config.market_regime.anchor_date.isoformat(),
+        "market_regime_anchor_event": config.market_regime.anchor_event,
+        "date_range": date_range,
+        "baseline_parameter_version": baseline.version,
+        "candidate_parameter_version": candidate_version,
+        "baseline_parameters_path": input_artifacts["baseline_parameters"],
+    }
+    return {
+        "schema_version": SHADOW_BACKTEST_SCHEMA_VERSION,
+        "report_type": SHADOW_BACKTEST_REPORT_TYPE,
+        "metadata": metadata,
+        "input_artifacts": input_artifacts,
+        "output_artifacts": output_artifacts,
+        "data_quality": {
+            "status": data_quality_status,
+            "validate_data_status": data_quality_report.status,
+            "quality_report_path": str(data_quality_report_path),
+            "error_count": data_quality_report.error_count,
+            "warning_count": data_quality_report.warning_count,
+        },
+        "point_in_time_status": dict(config.point_in_time_status),
+        "baseline_parameters": {
+            "version": baseline.version,
+            "weights": dict(baseline.weights),
+            "hard_gates": baseline.hard_gates,
+            "position_limits": baseline.position_limits.model_dump(mode="json"),
+        },
+        "shadow_parameters": {
+            "version": candidate_version,
+            "weights": dict(candidate_weights),
+            "hard_gates": baseline.hard_gates,
+            "position_limits": baseline.position_limits.model_dump(mode="json"),
+            "mode": "observe_only",
+        },
+        "candidate_parameters": {
+            "version": candidate_version,
+            "weights": dict(candidate_weights),
+            "hard_gates": baseline.hard_gates,
+            "position_limits": baseline.position_limits.model_dump(mode="json"),
+        },
+        "baseline_result": baseline_metrics,
+        "candidate_result": candidate_metrics,
+        "relative_comparison": _relative_comparison(baseline_metrics, candidate_metrics),
+        "parameter_changes": [change.to_dict() for change in parameter_changes],
+        "walk_forward_windows": list(windows),
+        "passing_windows_ratio": passing_ratio,
+        "overfitting_risk": _overfitting_risk(passing_ratio, len(windows)),
+        "promotion_decision": promotion_decision.to_dict(),
+        "warnings": list(warnings),
+        "safety": {
+            "production_effect": "none",
+            "manual_review_required": True,
+            "auto_promotion": False,
+            "production_parameters_modified": False,
+            "broker_action": False,
+            "trading_action": False,
+        },
+    }
+
+
+def _failure_payload(
+    *,
+    as_of: date,
+    generated_at: datetime,
+    config: ShadowBacktestConfig,
+    config_path: Path,
+    input_artifacts: dict[str, str],
+    reason: str,
+) -> dict[str, Any]:
+    decision = PromotionDecision(
+        status="rejected",
+        reason=f"Shadow backtest failed before evaluation: {reason}",
+        hard_rejections=("missing_required_input_artifacts",),
+        manual_review_items=("fix_shadow_backtest_inputs",),
+        criteria_results={},
+    )
+    return {
+        "schema_version": SHADOW_BACKTEST_SCHEMA_VERSION,
+        "report_type": SHADOW_BACKTEST_REPORT_TYPE,
+        "metadata": {
+            "run_id": f"shadow-backtest-{as_of.isoformat()}",
+            "generated_at": generated_at.isoformat(),
+            "status": "FAILED",
+            "production_effect": "none",
+            "manual_review_required": True,
+            "auto_promotion": False,
+            "observe_only": True,
+            "dry_run": False,
+            "code_version": git_commit_sha() or "unknown",
+            "git_worktree_dirty": git_worktree_dirty(),
+            "config_hash": _config_hash(config_path, input_artifacts),
+            "market_regime": config.market_regime.id,
+            "date_range": "",
+            "baseline_parameter_version": "MISSING",
+            "candidate_parameter_version": "MISSING",
+        },
+        "input_artifacts": input_artifacts,
+        "output_artifacts": {},
+        "data_quality": {"status": "FAILED"},
+        "point_in_time_status": dict(config.point_in_time_status),
+        "baseline_result": {},
+        "candidate_result": {},
+        "relative_comparison": {},
+        "parameter_changes": [],
+        "walk_forward_windows": [],
+        "passing_windows_ratio": 0.0,
+        "overfitting_risk": "HIGH",
+        "promotion_decision": decision.to_dict(),
+        "warnings": [reason],
+        "safety": {
+            "production_effect": "none",
+            "manual_review_required": True,
+            "auto_promotion": False,
+            "production_parameters_modified": False,
+            "broker_action": False,
+            "trading_action": False,
+        },
+    }
+
+
+def _promotion_payload_from_summary(payload: dict[str, Any]) -> dict[str, Any]:
+    metadata = dict(payload.get("metadata") or {})
+    return {
+        "schema_version": PARAMETER_PROMOTION_SCHEMA_VERSION,
+        "report_type": PARAMETER_PROMOTION_REPORT_TYPE,
+        "metadata": {
+            "run_id": metadata.get("run_id"),
+            "generated_at": metadata.get("generated_at"),
+            "production_effect": "none",
+            "manual_review_required": True,
+            "auto_promotion": False,
+            "baseline_parameter_version": metadata.get("baseline_parameter_version"),
+            "candidate_parameter_version": metadata.get("candidate_parameter_version"),
+        },
+        "promotion_decision": payload.get("promotion_decision", {}),
+        "source_shadow_backtest": metadata.get("run_id"),
+        "safety": payload.get("safety", {}),
+    }
+
+
+def _write_artifacts(
+    payload: dict[str, Any],
+    promotion_payload: dict[str, Any],
+    roots: dict[str, Path],
+    as_of: date,
+) -> ShadowBacktestArtifacts:
+    summary_json = default_shadow_backtest_summary_json_path(roots["shadow_backtest_dir"], as_of)
+    summary_md = default_shadow_backtest_summary_markdown_path(roots["shadow_backtest_dir"], as_of)
+    shadow_json = roots["shadow_parameters_dir"] / as_of.isoformat() / "shadow_parameters.json"
+    shadow_md = roots["shadow_parameters_dir"] / as_of.isoformat() / "shadow_parameters.md"
+    candidate_json = (
+        roots["candidate_parameters_dir"] / as_of.isoformat() / "candidate_parameters.json"
+    )
+    candidate_md = roots["candidate_parameters_dir"] / as_of.isoformat() / "candidate_parameters.md"
+    promotion_json = default_parameter_promotion_json_path(roots["parameter_promotion_dir"], as_of)
+    promotion_md = default_parameter_promotion_markdown_path(
+        roots["parameter_promotion_dir"],
+        as_of,
+    )
+    write_shadow_backtest_summary(payload, summary_json, summary_md)
+    _write_parameter_snapshot(payload, shadow_json, shadow_md, snapshot_key="shadow_parameters")
+    _write_parameter_snapshot(
+        payload,
+        candidate_json,
+        candidate_md,
+        snapshot_key="candidate_parameters",
+    )
+    write_parameter_promotion_decision(promotion_payload, promotion_json, promotion_md)
+    return ShadowBacktestArtifacts(
+        summary_json=summary_json,
+        summary_markdown=summary_md,
+        shadow_parameters_json=shadow_json,
+        shadow_parameters_markdown=shadow_md,
+        candidate_parameters_json=candidate_json,
+        candidate_parameters_markdown=candidate_md,
+        promotion_json=promotion_json,
+        promotion_markdown=promotion_md,
+    )
+
+
+def _rewrite_summary_with_outputs(
+    payload: dict[str, Any],
+    promotion_payload: dict[str, Any],
+    artifacts: ShadowBacktestArtifacts,
+) -> None:
+    write_shadow_backtest_summary(payload, artifacts.summary_json, artifacts.summary_markdown)
+    promotion_payload["source_artifacts"] = {"shadow_backtest_summary": str(artifacts.summary_json)}
+    write_parameter_promotion_decision(
+        promotion_payload,
+        artifacts.promotion_json,
+        artifacts.promotion_markdown,
+    )
+
+
+def _write_parameter_snapshot(
+    payload: dict[str, Any],
+    json_path: Path,
+    markdown_path: Path,
+    *,
+    snapshot_key: str,
+) -> None:
+    snapshot = {
+        "schema_version": 1,
+        "report_type": snapshot_key,
+        "metadata": payload.get("metadata", {}),
+        "parameters": payload.get(snapshot_key, {}),
+        "parameter_changes": payload.get("parameter_changes", []),
+        "promotion_decision": payload.get("promotion_decision", {}),
+        "production_effect": "none",
+        "manual_review_required": True,
+        "auto_promotion": False,
+    }
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(json.dumps(snapshot, ensure_ascii=False, indent=2), encoding="utf-8")
+    markdown_path.write_text(_render_parameter_snapshot_markdown(snapshot), encoding="utf-8")
+
+
+def _render_parameter_snapshot_markdown(snapshot: dict[str, Any]) -> str:
+    metadata = snapshot.get("metadata") if isinstance(snapshot.get("metadata"), dict) else {}
+    parameters = snapshot.get("parameters") if isinstance(snapshot.get("parameters"), dict) else {}
+    weights = parameters.get("weights") if isinstance(parameters.get("weights"), dict) else {}
+    lines = [
+        f"# {snapshot.get('report_type', 'parameter_snapshot')}",
+        "",
+        f"- version：`{parameters.get('version', 'UNKNOWN')}`",
+        f"- source run：`{metadata.get('run_id', 'UNKNOWN')}`",
+        "- production_effect：`none`",
+        "- manual_review_required：`true`",
+        "- auto_promotion：`false`",
+        "",
+        "## Weights",
+        "",
+        "| Parameter | Weight |",
+        "|---|---:|",
+    ]
+    for key, value in sorted(weights.items()):
+        lines.append(f"| `{key}` | {float(value):.4f} |")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def _window_status(
+    baseline_result: PortfolioSimulationResult,
+    candidate_result: PortfolioSimulationResult,
+) -> str:
+    baseline = baseline_result.metrics
+    candidate = candidate_result.metrics
+    if (
+        candidate.annualized_return >= baseline.annualized_return
+        and candidate.max_drawdown >= baseline.max_drawdown
+    ):
+        return "PASS"
+    if (
+        candidate.sharpe_ratio > baseline.sharpe_ratio
+        and candidate.turnover <= baseline.turnover * 1.2
+    ):
+        return "WATCH"
+    return "FAIL"
+
+
+def _window_objective(
+    baseline_result: PortfolioSimulationResult,
+    candidate_result: PortfolioSimulationResult,
+) -> float:
+    baseline = baseline_result.metrics
+    candidate = candidate_result.metrics
+    return (
+        candidate.annualized_return
+        - baseline.annualized_return
+        + 0.05 * (candidate.sharpe_ratio - baseline.sharpe_ratio)
+        + 0.5 * (candidate.max_drawdown - baseline.max_drawdown)
+        - 0.01 * max(0.0, candidate.turnover - baseline.turnover)
+    )
+
+
+def _parameter_changes(
+    *,
+    baseline: ProductionParameters,
+    candidate_weights: dict[str, float],
+    candidate_result: PortfolioSimulationResult,
+    baseline_result: PortfolioSimulationResult,
+    windows: tuple[dict[str, Any], ...],
+) -> tuple[ParameterChange, ...]:
+    improved_metrics, worsened_metrics = _metric_direction(
+        baseline_result.metrics.to_dict(),
+        candidate_result.metrics.to_dict(),
+    )
+    passing_windows = tuple(
+        str(window.get("window_id")) for window in windows if str(window.get("status")) == "PASS"
+    )
+    reasons: dict[str, str] = {}
+    source_windows: dict[str, tuple[str, ...]] = {}
+    improved: dict[str, tuple[str, ...]] = {}
+    worsened: dict[str, tuple[str, ...]] = {}
+    annualized_delta = (
+        candidate_result.metrics.annualized_return - baseline_result.metrics.annualized_return
+    )
+    sharpe_delta = candidate_result.metrics.sharpe_ratio - baseline_result.metrics.sharpe_ratio
+    for key, candidate_value in candidate_weights.items():
+        baseline_value = baseline.weights.get(key, 0.0)
+        if abs(candidate_value - baseline_value) <= 1e-12:
+            continue
+        reasons[key] = (
+            "Bounded grid search selected this change after walk-forward validation; "
+            f"passing_windows={len(passing_windows)}, "
+            f"annualized_return_delta={annualized_delta:.4f}, "
+            f"sharpe_delta={sharpe_delta:.4f}."
+        )
+        source_windows[key] = passing_windows
+        improved[key] = tuple(improved_metrics)
+        worsened[key] = tuple(worsened_metrics)
+    return diff_parameters(
+        baseline,
+        candidate_weights,
+        reasons=reasons,
+        source_windows=source_windows,
+        improved_metrics=improved,
+        worsened_metrics=worsened,
+    )
+
+
+def _metric_direction(
+    baseline: dict[str, float],
+    candidate: dict[str, float],
+) -> tuple[list[str], list[str]]:
+    improved: list[str] = []
+    worsened: list[str] = []
+    for key in ("annualized_return", "sharpe_ratio", "sortino_ratio", "calmar_ratio"):
+        _append_metric_direction(
+            key,
+            baseline.get(key, 0.0),
+            candidate.get(key, 0.0),
+            improved,
+            worsened,
+        )
+    _append_metric_direction(
+        "max_drawdown",
+        baseline.get("max_drawdown", 0.0),
+        candidate.get("max_drawdown", 0.0),
+        improved,
+        worsened,
+    )
+    _append_metric_direction(
+        "turnover",
+        candidate.get("turnover", 0.0),
+        baseline.get("turnover", 0.0),
+        improved,
+        worsened,
+    )
+    return improved, worsened
+
+
+def _append_metric_direction(
+    key: str,
+    baseline_value: float,
+    candidate_value: float,
+    improved: list[str],
+    worsened: list[str],
+) -> None:
+    if candidate_value > baseline_value + 1e-12:
+        improved.append(key)
+    elif candidate_value < baseline_value - 1e-12:
+        worsened.append(key)
+
+
+def _shadow_data_quality_status(
+    *,
+    config: ShadowBacktestConfig,
+    baseline: ProductionParameters,
+    prices: pd.DataFrame,
+    as_of: date,
+    data_quality_report: DataQualityReport,
+) -> tuple[DataQualityStatus, list[str]]:
+    warnings: list[str] = []
+    if not data_quality_report.passed:
+        return "FAILED", [f"validate-data failed: {data_quality_report.error_count} errors"]
+    required = [asset for asset in baseline.flattened_asset_universe() if asset != "CASH"]
+    if prices.empty or not {"date", "ticker", "adj_close"}.issubset(prices.columns):
+        return "FAILED", ["prices_daily.csv missing required date/ticker/adj_close columns"]
+    frame = prices.copy()
+    frame["_date"] = pd.to_datetime(frame["date"], errors="coerce")
+    frame = frame.loc[frame["_date"].dt.date <= as_of]
+    available = set(frame["ticker"].astype(str).unique())
+    missing_assets = sorted(asset for asset in required if asset not in available)
+    if missing_assets:
+        return "FAILED", [f"missing required price assets: {', '.join(missing_assets)}"]
+    history_days = len(_trading_dates(prices, baseline, as_of))
+    if history_days < config.walk_forward.min_history_days:
+        return (
+            "INSUFFICIENT_DATA",
+            [
+                f"history_days={history_days} below min_history_days="
+                f"{config.walk_forward.min_history_days}"
+            ],
+        )
+    status: DataQualityStatus = "OK"
+    if data_quality_report.warning_count:
+        status = "LIMITED"
+        warnings.append(f"validate-data produced {data_quality_report.warning_count} warnings")
+    return status, warnings
+
+
+def _trading_dates(
+    prices: pd.DataFrame,
+    baseline: ProductionParameters,
+    as_of: date,
+) -> tuple[date, ...]:
+    if prices.empty or "date" not in prices.columns:
+        return ()
+    required_assets = [asset for asset in baseline.flattened_asset_universe() if asset != "CASH"]
+    frame = prices.loc[prices["ticker"].astype(str).isin(required_assets)].copy()
+    frame["_date"] = pd.to_datetime(frame["date"], errors="coerce")
+    frame = frame.loc[frame["_date"].notna() & (frame["_date"].dt.date <= as_of)]
+    counts = frame.groupby(frame["_date"].dt.date)["ticker"].nunique()
+    required_count = len(required_assets)
+    return tuple(sorted(counts.loc[counts >= required_count].index))
+
+
+def _read_prices(path: Path) -> pd.DataFrame:
+    if not path.exists():
+        return pd.DataFrame()
+    try:
+        return pd.read_csv(path)
+    except (OSError, pd.errors.ParserError):
+        return pd.DataFrame()
+
+
+def _latest_price_date(prices: pd.DataFrame) -> date | None:
+    if prices.empty or "date" not in prices.columns:
+        return None
+    parsed = pd.to_datetime(prices["date"], errors="coerce").dropna()
+    if parsed.empty:
+        return None
+    return pd.Timestamp(parsed.max()).date()
+
+
+def _full_result_start(
+    windows: tuple[WalkForwardWindow, ...],
+    trading_dates: tuple[date, ...],
+    config: ShadowBacktestConfig,
+) -> date:
+    if windows:
+        return max(windows[0].validation_start, config.market_regime.default_backtest_start)
+    if trading_dates:
+        return max(trading_dates[0], config.market_regime.default_backtest_start)
+    return config.market_regime.default_backtest_start
+
+
+def _relative_comparison(
+    baseline: dict[str, float],
+    candidate: dict[str, float],
+) -> dict[str, float]:
+    keys = ("annualized_return", "max_drawdown", "sharpe_ratio", "turnover")
+    return {f"{key}_delta": candidate.get(key, 0.0) - baseline.get(key, 0.0) for key in keys}
+
+
+def _overfitting_risk(passing_ratio: float, window_count: int) -> str:
+    if window_count <= 1 or passing_ratio < 0.4:
+        return "HIGH"
+    if passing_ratio < 0.6:
+        return "MEDIUM"
+    return "LOW"
+
+
+def _missing_required_input_artifacts(input_artifacts: dict[str, str]) -> bool:
+    for key, value in input_artifacts.items():
+        if key == "signal_snapshot":
+            continue
+        path = Path(value)
+        if key.endswith("_report"):
+            continue
+        if not path.exists():
+            return True
+    return False
+
+
+def _date_range_from_rows(rows: tuple[dict[str, object], ...]) -> str:
+    if not rows:
+        return ""
+    return f"{rows[0].get('date')}..{rows[-1].get('date')}"
+
+
+def _output_roots(config: ShadowBacktestConfig, *, dry_run: bool) -> dict[str, Path]:
+    if dry_run:
+        root = PROJECT_ROOT / "outputs" / "dry_runs" / "shadow_backtest"
+        return {
+            "shadow_backtest_dir": root / "shadow_backtest",
+            "shadow_parameters_dir": root / "shadow_parameters",
+            "candidate_parameters_dir": root / "candidate_parameters",
+            "parameter_promotion_dir": root / "parameter_promotion",
+            "report_alias_dir": root / "reports",
+            "data_quality_report_dir": root / "reports",
+        }
+    return {
+        "shadow_backtest_dir": resolve_project_path(config.output.shadow_backtest_dir),
+        "shadow_parameters_dir": resolve_project_path(config.output.shadow_parameters_dir),
+        "candidate_parameters_dir": resolve_project_path(config.output.candidate_parameters_dir),
+        "parameter_promotion_dir": resolve_project_path(config.output.parameter_promotion_dir),
+        "report_alias_dir": resolve_project_path(config.output.report_alias_dir),
+        "data_quality_report_dir": resolve_project_path(config.data.data_quality_report_dir),
+    }
+
+
+def _config_hash(config_path: Path, input_artifacts: dict[str, str]) -> str:
+    digest = sha256()
+    for path_text in [str(config_path), *input_artifacts.values()]:
+        path = Path(path_text)
+        if path.exists() and path.is_file():
+            digest.update(str(path).encode("utf-8"))
+            digest.update(sha256_file(path).encode("utf-8"))
+    return digest.hexdigest()

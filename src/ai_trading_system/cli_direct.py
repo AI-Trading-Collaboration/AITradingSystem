@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import sys
 from collections.abc import Sequence
+from pathlib import Path
 
 import typer
 
@@ -108,6 +109,35 @@ def _dispatch(args: list[str]) -> None:
     if args[:2] == ["reports", "calculation-explainers"]:
         cli.calculation_explainers_command(as_of=_option(args, "--as-of"))
         return
+    if args[:2] == ["parameters", "shadow-backtest"]:
+        cli.parameters_shadow_backtest_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            config_path=_path_option(args, "--config"),
+            dry_run=_flag(args, "--dry-run"),
+        )
+        return
+    if args[:2] == ["parameters", "validate-shadow-backtest"]:
+        cli.validate_shadow_backtest_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            input_path=_optional_path(args, "--input-path"),
+        )
+        return
+    if args[:2] == ["reports", "shadow-parameter-backtest"]:
+        cli.shadow_parameter_backtest_report_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            source_path=_optional_path(args, "--source-path"),
+        )
+        return
+    if args[:2] == ["reports", "parameter-promotion"]:
+        cli.parameter_promotion_report_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            source_path=_optional_path(args, "--source-path"),
+        )
+        return
     if args[:2] == ["reports", "reader-brief"]:
         cli.reader_brief_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),
@@ -180,6 +210,16 @@ def _option(args: Sequence[str], name: str, default: str | None = None) -> str |
 
 def _flag(args: Sequence[str], name: str) -> bool:
     return name in args
+
+
+def _path_option(args: Sequence[str], name: str):
+    value = _option(args, name)
+    return cli.DEFAULT_SHADOW_BACKTEST_CONFIG_PATH if value is None else Path(value)
+
+
+def _optional_path(args: Sequence[str], name: str):
+    value = _option(args, name)
+    return None if value is None else Path(value)
 
 
 if __name__ == "__main__":

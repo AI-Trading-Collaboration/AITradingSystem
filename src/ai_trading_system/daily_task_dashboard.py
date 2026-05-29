@@ -198,6 +198,7 @@ def build_daily_task_dashboard_payload(
         "paper_trading_trend": _paper_trading_trend(report),
         "paper_signal_quality": _paper_signal_quality_summary(report),
         "shadow_parameter_impact": _shadow_parameter_impact_summary(report),
+        "shadow_parameter_backtest": _shadow_parameter_backtest_summary(report),
         "weight_adjustment_candidates": _weight_adjustment_candidates_summary(report),
         "weight_candidate_evaluation": _weight_candidate_evaluation_summary(report),
         "weight_promotion_gate": _weight_promotion_gate_summary(report),
@@ -349,6 +350,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_paper_trading_trend(report),
             _render_paper_signal_quality(report),
             _render_shadow_parameter_impact(report),
+            _render_shadow_parameter_backtest(report),
             _render_weight_adjustment_candidates(report),
             _render_weight_candidate_evaluation(report),
             _render_weight_promotion_gate(report),
@@ -1047,6 +1049,15 @@ def _daily_decision_source_artifacts(report: DailyTaskDashboardReport) -> list[T
             "shadow_parameter_impact_json",
             "shadow parameter impact JSON",
             report.reports_dir / f"shadow_parameter_impact_{suffix}.json",
+        ),
+        (
+            "shadow_parameter_backtest_json",
+            "shadow parameter backtest JSON",
+            report.project_root
+            / "artifacts"
+            / "shadow_backtest"
+            / suffix
+            / "shadow_backtest_summary.json",
         ),
         (
             "weight_adjustment_candidates_json",
@@ -1970,6 +1981,64 @@ def _shadow_parameter_impact_summary(report: DailyTaskDashboardReport) -> TraceR
         "continuous_replay_available": bool(continuous.get("available")),
         "continuous_replay_mode": continuous.get("replay_mode", "daily_independent"),
         "risk": "；".join(risks) or "Shadow impact 当前未触发阻断性限制。",
+    }
+
+
+def _shadow_parameter_backtest_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    suffix = report.as_of.isoformat()
+    path = (
+        report.project_root
+        / "artifacts"
+        / "shadow_backtest"
+        / suffix
+        / "shadow_backtest_summary.json"
+    )
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "shadow_parameter_backtest":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "baseline_version": "MISSING",
+            "candidate_version": "MISSING",
+            "annualized_return_delta": None,
+            "max_drawdown_delta": None,
+            "sharpe_ratio_delta": None,
+            "turnover_delta": None,
+            "promotion_status": "UNKNOWN",
+            "manual_review_required": True,
+            "production_effect": ProductionEffect.NONE.value,
+            "risk": "Shadow parameter backtest JSON 缺失；dashboard 不运行回测或调参。",
+        }
+    metadata = _mapping_value(payload, "metadata")
+    comparison = _mapping_value(payload, "relative_comparison")
+    decision = _mapping_value(payload, "promotion_decision")
+    data_quality = _mapping_value(payload, "data_quality")
+    risks: list[str] = []
+    if metadata.get("production_effect") != ProductionEffect.NONE.value:
+        risks.append("shadow parameter backtest production_effect 不是 none。")
+    if metadata.get("auto_promotion") is not False:
+        risks.append("shadow parameter backtest auto_promotion 不是 false。")
+    hard_rejections = _strings(decision.get("hard_rejections"))
+    if hard_rejections:
+        risks.append(f"hard rejection：{', '.join(hard_rejections)}。")
+    return {
+        "status": metadata.get("status", "UNKNOWN"),
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "baseline_version": metadata.get("baseline_parameter_version", "UNKNOWN"),
+        "candidate_version": metadata.get("candidate_parameter_version", "UNKNOWN"),
+        "annualized_return_delta": _optional_float(comparison.get("annualized_return_delta")),
+        "max_drawdown_delta": _optional_float(comparison.get("max_drawdown_delta")),
+        "sharpe_ratio_delta": _optional_float(comparison.get("sharpe_ratio_delta")),
+        "turnover_delta": _optional_float(comparison.get("turnover_delta")),
+        "promotion_status": decision.get("status", "UNKNOWN"),
+        "data_quality_status": data_quality.get("status", "UNKNOWN"),
+        "manual_review_required": metadata.get("manual_review_required") is True,
+        "production_effect": metadata.get("production_effect", ProductionEffect.NONE.value),
+        "risk": "；".join(risks) or "Shadow parameter backtest 只读展示，不修改 production 参数。",
     }
 
 
@@ -8698,6 +8767,66 @@ def _render_shadow_parameter_impact(report: DailyTaskDashboardReport) -> str:
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'
                 f"{_text(impact.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_shadow_parameter_backtest(report: DailyTaskDashboardReport) -> str:
+    summary = _shadow_parameter_backtest_summary(report)
+    href = _string_value(summary.get("href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(href)}"><span>Shadow Parameter Backtest</span>'
+        f"<small>{_text(summary.get('promotion_status', 'UNKNOWN'))}</small></a>"
+        if summary.get("exists")
+        else '<span class="report-link missing"><span>Shadow Parameter Backtest</span>'
+        "<small>MISSING</small></span>"
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="shadow-parameter-backtest-title">',
+            '<div class="section-head">',
+            '<h2 id="shadow-parameter-backtest-title">Shadow Parameter Backtest</h2>',
+            (
+                "<p>observe-only walk-forward 参数回测；dashboard 只读已有 JSON，"
+                "不修改 production 参数。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("status", summary.get("status", "MISSING")),
+            _summary_item("baseline version", summary.get("baseline_version", "MISSING")),
+            _summary_item("candidate version", summary.get("candidate_version", "MISSING")),
+            _summary_item(
+                "annualized return delta",
+                _format_signed_percent(summary.get("annualized_return_delta")),
+            ),
+            _summary_item(
+                "max drawdown delta",
+                _format_signed_percent(summary.get("max_drawdown_delta")),
+            ),
+            _summary_item(
+                "Sharpe delta",
+                _format_signed_decimal_delta(0.0, summary.get("sharpe_ratio_delta"), digits=4),
+            ),
+            _summary_item(
+                "turnover delta",
+                _format_signed_decimal_delta(0.0, summary.get("turnover_delta"), digits=4),
+            ),
+            _summary_item("promotion status", summary.get("promotion_status", "UNKNOWN")),
+            _summary_item("manual review", summary.get("manual_review_required", True)),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
             ),
             '<div class="report-link-list">',
             report_link,

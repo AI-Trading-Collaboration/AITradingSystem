@@ -1,0 +1,48 @@
+version: "promotion_rules_v0_1"
+owner: "system"
+status: "pilot_baseline"
+production_effect: "none"
+manual_review_required: true
+auto_promotion: false
+observe_only: true
+rationale: >
+  Conservative pilot promotion rules for shadow parameter candidates. These
+  rules decide whether a candidate is worth manual review; they do not approve
+  production changes.
+intended_effect: >
+  Reject fragile or overfit parameter changes and keep promotion decisions
+  auditable before any production mutation workflow exists.
+validation_evidence: >
+  Tests cover hard rejections, promotion criteria, insufficient data handling,
+  and requirement that major parameter changes carry explanations.
+review_condition: >
+  Review before adding manual production promotion CLI or after ten shadow
+  backtest reports, whichever comes first.
+promotion_status:
+  - "rejected"
+  - "watch"
+  - "candidate"
+  - "manual_review_required"
+promotion_criteria:
+  max_drawdown:
+    must_be_less_or_equal_to_baseline: true
+  annualized_return:
+    min_relative_improvement: 0.02
+  sharpe_ratio:
+    min_relative_improvement: 0.05
+  turnover:
+    max_relative_increase: 0.20
+  recent_period:
+    must_not_underperform_baseline_by_more_than: 0.03
+  stability:
+    min_passing_windows_ratio: 0.60
+  explainability:
+    all_major_changes_require_reason: true
+hard_rejection_rules:
+  - "max_drawdown_worse_than_baseline_by_more_than_5_percent"
+  - "turnover_more_than_50_percent_above_baseline"
+  - "performance_only_improves_in_one_window"
+  - "parameter_change_without_explanation"
+  - "missing_required_input_artifacts"
+  - "insufficient_data"
+  - "data_quality_status_red"

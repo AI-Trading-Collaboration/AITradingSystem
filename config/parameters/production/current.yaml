@@ -1,0 +1,44 @@
+version: "production-2026-05-29"
+created_at: "2026-05-29T00:00:00+09:00"
+owner: "system"
+status: "pilot_baseline"
+production_effect: "production"
+rationale: >
+  Baseline production parameter snapshot used as the read-only control group
+  for shadow parameter backtests. This file is not modified by the shadow
+  backtest or promotion report commands.
+asset_universe:
+  growth_core:
+    - QQQ
+  semiconductor:
+    - SMH
+    - NVDA
+    - TSM
+  mega_cap_ai:
+    - MSFT
+    - GOOGL
+  defensive:
+    - BRK.B
+    - SGOV
+    - CASH
+decision_frequency: "daily"
+rebalance_frequency: "weekly"
+risk_profile: "balanced_growth"
+weights:
+  macro_liquidity: 0.20
+  trend_momentum: 0.25
+  sector_strength: 0.20
+  earnings_quality: 0.15
+  valuation_risk: 0.10
+  event_risk: 0.10
+hard_gates:
+  max_drawdown_alert:
+    enabled: true
+    threshold: -0.12
+  macro_risk_off:
+    enabled: true
+    threshold: 0.75
+position_limits:
+  max_single_asset_weight: 0.30
+  max_sector_weight: 0.60
+  min_cash_weight: 0.05

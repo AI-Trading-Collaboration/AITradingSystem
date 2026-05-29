@@ -1,0 +1,110 @@
+version: "shadow_backtest_v0_1"
+owner: "system"
+status: "pilot_baseline"
+production_effect: "none"
+manual_review_required: true
+auto_promotion: false
+observe_only: true
+rationale: >
+  Conservative observe-only shadow parameter backtest framework for the
+  ai_after_chatgpt regime. It evaluates candidates against production baseline
+  parameters without writing production configuration.
+intended_effect: >
+  Provide reproducible walk-forward evidence, attribution, and promotion
+  readiness signals before any manual production parameter review.
+validation_evidence: >
+  Unit and integration tests cover schema validation, parameter diff,
+  transaction costs, walk-forward splits, insufficient data handling, JSON and
+  Markdown report generation, and read-only CLI behavior.
+review_condition: >
+  Review after the first five real shadow backtest reports or before any
+  manual promotion workflow is implemented.
+market_regime:
+  id: "ai_after_chatgpt"
+  anchor_event: "ChatGPT public launch"
+  anchor_date: "2022-11-30"
+  default_backtest_start: "2022-12-01"
+data:
+  prices_path: "data/raw/prices_daily.csv"
+  rates_path: "data/raw/rates_daily.csv"
+  download_manifest_path: "data/raw/download_manifest.csv"
+  secondary_prices_path: "data/raw/prices_marketstack_daily.csv"
+  data_quality_report_dir: "outputs/reports"
+baseline_parameters_path: "config/parameters/production/current.yaml"
+promotion_rules_path: "config/parameters/promotion/promotion_rules.yaml"
+output:
+  shadow_backtest_dir: "artifacts/shadow_backtest"
+  shadow_parameters_dir: "artifacts/shadow_parameters"
+  candidate_parameters_dir: "artifacts/candidate_parameters"
+  parameter_promotion_dir: "artifacts/parameter_promotion"
+  report_alias_dir: "outputs/reports"
+walk_forward:
+  train_window_days: 756
+  validation_window_days: 126
+  step_days: 63
+  min_history_days: 1008
+backtest_frequency: "daily"
+rebalance_frequency: "weekly"
+signal_evaluation_frequency: "daily"
+transaction_cost:
+  commission_bps: 1
+  slippage_bps: 5
+  fx_cost_bps: 0
+  tax_model: "ignored_for_v0_1"
+search:
+  algorithm: "bounded_grid"
+  max_candidates: 256
+  hard_gate_tuning:
+    enabled: false
+    reason: "avoid overfitting in v0.1"
+  search_space:
+    macro_liquidity:
+      min: 0.10
+      max: 0.30
+      step: 0.05
+    trend_momentum:
+      min: 0.15
+      max: 0.35
+      step: 0.05
+    sector_strength:
+      min: 0.10
+      max: 0.30
+      step: 0.05
+    earnings_quality:
+      min: 0.05
+      max: 0.25
+      step: 0.05
+    valuation_risk:
+      min: 0.05
+      max: 0.20
+      step: 0.05
+    event_risk:
+      min: 0.05
+      max: 0.20
+      step: 0.05
+  constraints:
+    total_weight_sum: 1.0
+    max_single_weight: 0.35
+    min_single_weight: 0.05
+    max_daily_parameter_delta: 0.05
+    max_weekly_parameter_delta: 0.10
+  parameter_change_guardrails:
+    max_abs_change_per_weight: 0.10
+    max_total_l1_change: 0.30
+    require_reason_for_each_change: true
+data_quality_rules:
+  insufficient_history:
+    min_days: 1008
+    status: "INSUFFICIENT_DATA"
+  missing_price_data:
+    max_missing_ratio: 0.02
+    status: "LIMITED"
+  missing_required_asset:
+    status: "FAILED"
+  missing_signal_snapshot:
+    status: "LIMITED"
+point_in_time_status:
+  price_data: "OK"
+  fundamental_data: "LIMITED"
+  news_data: "NOT_AVAILABLE"
+  macro_data: "LIMITED"

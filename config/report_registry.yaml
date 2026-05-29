@@ -288,6 +288,42 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: shadow_parameter_backtest
+    title: Shadow Parameter Backtest
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits parameters shadow-backtest --latest
+    artifact_globs:
+      - artifacts/shadow_backtest/*/shadow_backtest_summary.json
+      - artifacts/shadow_backtest/*/shadow_backtest_summary.md
+      - outputs/reports/shadow_parameter_backtest_*.json
+      - outputs/reports/shadow_parameter_backtest_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Shadow parameter backtests should be refreshed before manual parameter review.
+    owner_action: review_candidate_or_data_limitations
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: parameter_promotion_decision
+    title: Parameter Promotion Decision
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits reports parameter-promotion --latest
+    artifact_globs:
+      - artifacts/parameter_promotion/*/parameter_promotion_decision.json
+      - artifacts/parameter_promotion/*/parameter_promotion_decision.md
+      - outputs/reports/parameter_promotion_decision_*.json
+      - outputs/reports/parameter_promotion_decision_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Promotion decision should be reviewed alongside each shadow parameter backtest.
+    owner_action: block_production_change_without_manual_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: backtest_daily
     title: Daily Score Backtest
     group: backtest
