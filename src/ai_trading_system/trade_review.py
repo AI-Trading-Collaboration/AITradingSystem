@@ -12,6 +12,7 @@ from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from ai_trading_system.config import UniverseConfig, WatchlistConfig, configured_price_tickers
 from ai_trading_system.data.quality import DataQualityReport
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 TradeDirection = Literal["long", "short"]
 
@@ -470,8 +471,7 @@ def _trade_yaml_paths(path: Path) -> list[Path]:
 
 
 def _load_yaml(path: Path) -> Any:
-    with path.open("r", encoding="utf-8") as file:
-        return yaml.safe_load(file)
+    return safe_load_yaml_path(path)
 
 
 def _raw_trade_items(raw: Any) -> list[Any]:

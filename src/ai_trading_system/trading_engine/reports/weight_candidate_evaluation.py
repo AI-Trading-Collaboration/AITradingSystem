@@ -10,6 +10,8 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.yaml_loader import safe_load_yaml_path
+
 WEIGHT_CANDIDATE_EVALUATION_SCHEMA_VERSION = 1
 WEIGHT_CANDIDATE_EVALUATION_REPORT_TYPE = "weight_candidate_evaluation"
 WEIGHT_CANDIDATE_EVALUATION_WINDOWS: tuple[int, ...] = (7, 14, 30)
@@ -1261,7 +1263,7 @@ def _load_yaml_object(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     try:
-        payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        payload = safe_load_yaml_path(path) or {}
     except (OSError, yaml.YAMLError):
         return {}
     return payload if isinstance(payload, dict) else {}

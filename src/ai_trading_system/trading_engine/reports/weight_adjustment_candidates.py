@@ -9,6 +9,8 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.yaml_loader import safe_load_yaml_path
+
 WEIGHT_ADJUSTMENT_CANDIDATE_SCHEMA_VERSION = 1
 WEIGHT_ADJUSTMENT_CANDIDATE_REPORT_TYPE = "weight_adjustment_candidates"
 MODE_OBSERVE_ONLY = "observe_only"
@@ -854,7 +856,7 @@ def _load_yaml_object(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     try:
-        payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        payload = safe_load_yaml_path(path) or {}
     except (OSError, yaml.YAMLError):
         return {}
     return payload if isinstance(payload, dict) else {}

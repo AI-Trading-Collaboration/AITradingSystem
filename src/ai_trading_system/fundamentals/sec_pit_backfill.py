@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any, Protocol, cast
 
 import pandas as pd
-import yaml
 
 from ai_trading_system.config import (
     DEFAULT_FUNDAMENTAL_FEATURES_CONFIG_PATH,
@@ -30,6 +29,7 @@ from ai_trading_system.external_request_cache import (
     lookup_external_request_cache,
     write_external_request_cache_response,
 )
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SEC_PIT_TASK_ID = "TRADING-039"
 SEC_PIT_BACKTEST_DATA_GRADE = "B_RECONSTRUCTED_SEC_FILING_PIT"
@@ -234,8 +234,7 @@ def load_sec_pit_backfill_config(
     path: Path | str = DEFAULT_SEC_PIT_BACKFILL_CONFIG_PATH,
 ) -> SecPitBackfillConfig:
     raw_path = Path(path)
-    with raw_path.open("r", encoding="utf-8") as file:
-        raw = yaml.safe_load(file) or {}
+    raw = safe_load_yaml_path(raw_path) or {}
     section = raw.get("sec_pit_backfill", raw)
     if not isinstance(section, dict):
         raise ValueError("sec_pit_backfill config must be a mapping")

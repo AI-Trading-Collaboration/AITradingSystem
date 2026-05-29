@@ -7,12 +7,11 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
-import yaml
-
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.parameter_candidates import (
     DEFAULT_PARAMETER_CANDIDATE_LEDGER_PATH,
 )
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SCHEMA_VERSION = 1
 DEFAULT_PARAMETER_GOVERNANCE_MANIFEST_PATH = PROJECT_ROOT / "config" / "parameter_governance.yaml"
@@ -237,7 +236,7 @@ def default_parameter_governance_summary_path(output_dir: Path, as_of: date) -> 
 def load_parameter_governance_manifest(
     path: Path = DEFAULT_PARAMETER_GOVERNANCE_MANIFEST_PATH,
 ) -> ParameterGovernanceManifest:
-    raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    raw = safe_load_yaml_path(path)
     if not isinstance(raw, dict):
         raise ValueError(f"parameter governance manifest must be a mapping: {path}")
     actions = _string_mapping(raw, "actions")

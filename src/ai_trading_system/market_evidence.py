@@ -17,6 +17,7 @@ from ai_trading_system.source_policy import (
     evidence_grade_is_report_only,
     source_type_allows_automatic_scoring,
 )
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 EvidenceSourceType = Literal[
     "primary_source",
@@ -553,8 +554,7 @@ def _market_evidence_policy_label(evidence: MarketEvidence) -> str:
 
 
 def _load_yaml(path: Path) -> Any:
-    with path.open("r", encoding="utf-8") as file:
-        return yaml.safe_load(file)
+    return safe_load_yaml_path(path)
 
 
 def _raw_evidence_items(raw: Any) -> list[Any]:

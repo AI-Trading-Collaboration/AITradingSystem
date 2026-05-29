@@ -9,6 +9,8 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.yaml_loader import safe_load_yaml_path
+
 SHADOW_PARAMETER_IMPACT_SCHEMA_VERSION = 1
 SHADOW_PARAMETER_IMPACT_REPORT_TYPE = "shadow_parameter_impact"
 SHADOW_PARAMETER_IMPACT_WINDOWS: tuple[int, ...] = (7, 14, 30)
@@ -1505,7 +1507,7 @@ def _candidates_by_id(candidates: tuple[dict[str, Any], ...]) -> dict[str, dict[
 
 def _load_policy(path: Path) -> dict[str, Any]:
     try:
-        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+        raw = safe_load_yaml_path(path)
     except (OSError, yaml.YAMLError) as exc:
         raise ValueError(f"failed to read shadow parameter impact policy: {path}") from exc
     if not isinstance(raw, dict):

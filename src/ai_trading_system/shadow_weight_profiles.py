@@ -32,6 +32,7 @@ from ai_trading_system.weight_calibration import (
     WeightProfile,
     load_weight_profile,
 )
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SCHEMA_VERSION = 1
 DEFAULT_SHADOW_WEIGHT_PROFILE_MANIFEST_PATH = (
@@ -894,7 +895,7 @@ def load_shadow_weight_profile_manifest(
     source_profile_path: Path | None = None,
 ) -> tuple[ShadowWeightProfileManifest, WeightProfile, Path]:
     manifest_path = Path(path)
-    raw = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    raw = safe_load_yaml_path(manifest_path)
     if not isinstance(raw, dict):
         raise ValueError(f"shadow weight profile manifest must be a mapping: {path}")
     manifest = ShadowWeightProfileManifest.model_validate(raw)
@@ -909,7 +910,7 @@ def load_shadow_position_gate_profile_manifest(
     path: Path | str = DEFAULT_SHADOW_POSITION_GATE_PROFILE_MANIFEST_PATH,
 ) -> ShadowPositionGateProfileManifest:
     manifest_path = Path(path)
-    raw = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    raw = safe_load_yaml_path(manifest_path)
     if not isinstance(raw, dict):
         raise ValueError(f"shadow position gate profile manifest must be a mapping: {path}")
     return ShadowPositionGateProfileManifest.model_validate(raw)
@@ -919,7 +920,7 @@ def load_shadow_parameter_search_space(
     path: Path | str = DEFAULT_SHADOW_PARAMETER_SEARCH_SPACE_PATH,
 ) -> ShadowParameterSearchSpaceManifest:
     manifest_path = Path(path)
-    raw = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    raw = safe_load_yaml_path(manifest_path)
     if not isinstance(raw, dict):
         raise ValueError(f"shadow parameter search space must be a mapping: {path}")
     return ShadowParameterSearchSpaceManifest.model_validate(raw)
@@ -929,7 +930,7 @@ def load_shadow_parameter_objective(
     path: Path | str = DEFAULT_SHADOW_PARAMETER_OBJECTIVE_PATH,
 ) -> ShadowParameterObjectiveConfig:
     objective_path = Path(path)
-    raw = yaml.safe_load(objective_path.read_text(encoding="utf-8"))
+    raw = safe_load_yaml_path(objective_path)
     if not isinstance(raw, dict):
         raise ValueError(f"shadow parameter objective must be a mapping: {path}")
     return ShadowParameterObjectiveConfig.model_validate(raw)
@@ -939,7 +940,7 @@ def load_shadow_parameter_promotion_contract(
     path: Path | str = DEFAULT_SHADOW_PARAMETER_PROMOTION_CONTRACT_PATH,
 ) -> ShadowParameterPromotionContractConfig:
     contract_path = Path(path)
-    raw = yaml.safe_load(contract_path.read_text(encoding="utf-8"))
+    raw = safe_load_yaml_path(contract_path)
     if not isinstance(raw, dict):
         raise ValueError(f"shadow parameter promotion contract must be a mapping: {path}")
     return ShadowParameterPromotionContractConfig.model_validate(raw)
@@ -3499,7 +3500,7 @@ def _gate_cap(
 
 def _load_position_bands(scoring_rules_path: Path | None) -> tuple[PositionBand, ...]:
     path = scoring_rules_path or PROJECT_ROOT / "config" / "scoring_rules.yaml"
-    raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    raw = safe_load_yaml_path(path)
     if not isinstance(raw, dict) or not isinstance(raw.get("position_bands"), list):
         raise ValueError(f"scoring rules missing position_bands: {path}")
     bands = []

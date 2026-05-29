@@ -10,6 +10,7 @@ import yaml
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from ai_trading_system.config import DEFAULT_EXECUTION_POLICY_CONFIG_PATH
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 ExecutionPolicyStatus = Literal["production", "candidate", "retired"]
 ExecutionActionId = Literal[
@@ -150,8 +151,7 @@ def load_execution_policy(
             load_errors=(f"文件不存在：{path}",),
         )
     try:
-        with path.open("r", encoding="utf-8") as file:
-            raw = yaml.safe_load(file)
+        raw = safe_load_yaml_path(path)
     except (OSError, yaml.YAMLError) as exc:
         return ExecutionPolicyStore(input_path=path, policy=None, load_errors=(str(exc),))
 

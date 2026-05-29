@@ -79,6 +79,7 @@ from ai_trading_system.trade_review import (
 from ai_trading_system.trading_calendar import us_equity_market_session
 from ai_trading_system.valuation import default_valuation_validation_report_path
 from ai_trading_system.valuation_sources import default_fmp_valuation_fetch_report_path
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 ReplayCommandRunner = subprocess.run
 RISK_EVENT_PREREVIEW_QUEUE_NAME = "risk_event_prereview_queue.json"
@@ -2870,8 +2871,7 @@ def _parse_date_value(value: object) -> date | None:
 
 
 def _read_yaml_mapping(path: Path) -> dict[str, Any]:
-    with path.open(encoding="utf-8") as handle:
-        loaded = yaml.safe_load(handle) or {}
+    loaded = safe_load_yaml_path(path) or {}
     return loaded if isinstance(loaded, dict) else {}
 
 

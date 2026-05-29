@@ -16,6 +16,7 @@ from ai_trading_system.config import (
     RiskEventsConfig,
     WatchlistConfig,
 )
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 ScenarioStatus = Literal["active", "candidate", "retired"]
 ScenarioType = Literal["hypothetical_shock", "historical_stress", "active_risk_event_linked"]
@@ -169,8 +170,7 @@ def load_scenario_library(
             load_errors=(f"文件不存在：{path}",),
         )
     try:
-        with path.open("r", encoding="utf-8") as file:
-            raw = yaml.safe_load(file)
+        raw = safe_load_yaml_path(path)
     except (OSError, yaml.YAMLError) as exc:
         return ScenarioLibraryStore(input_path=path, library=None, load_errors=(str(exc),))
 

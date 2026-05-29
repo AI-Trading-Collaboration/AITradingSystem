@@ -1,0 +1,409 @@
+schema_version: 1
+policy_version: scheduled_tasks_v1
+policy_metadata:
+  owner: system
+  status: active_baseline
+  rationale: >
+    Keep daily, weekly, biweekly, monthly, and ad hoc operational chains in one
+    auditable plan so scheduler changes do not silently omit Reader Brief,
+    SEC PIT shadow monitoring, research governance, backtest, parameter, weight,
+    documentation, or report registry tasks.
+  intended_effect: >
+    Make `aits ops daily-plan` and `aits ops daily-run` enforce the default
+    daily trading-day chain while registering non-daily governance chains for
+    manual or future scheduler review.
+  validation_evidence: >
+    OPS-059 tests cover daily command order, closed-market skips, non-daily task
+    registration, and no-production safety invariants for reader/governance/
+    shadow monitor tasks.
+  review_condition: >
+    Review whenever a daily report, governance report, shadow monitor, backtest,
+    parameter, documentation, report registry, or scheduler command is added or
+    renamed.
+market_regime:
+  default_regime_id: ai_after_chatgpt
+  anchor_event: ChatGPT public launch
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+safety_defaults:
+  production_effect: none
+  production_weight_write: false
+  active_shadow_weight_write: false
+  broker_action: false
+  trading_action: false
+cadences:
+  daily_trading_day:
+    description: >
+      Default production daily chain for completed U.S. equity trading days.
+      `daily-plan` lists this order and `daily-run` executes it fail-closed.
+    run_by:
+      - aits ops daily-plan
+      - aits ops daily-run
+    tasks:
+      - task_id: daily_download_data
+        daily_plan_step_id: download_data
+        title: Download market and macro data
+        command: aits download-data --start {download_start} --end {download_end}
+        command_contains:
+          - aits
+          - download-data
+        closed_market_behavior: conditional_previous_trading_day_cache
+        production_effect: local_cache_write
+      - task_id: daily_validate_data
+        daily_plan_step_id: validate_data
+        title: Validate cached market and macro data
+        command: aits validate-data --as-of {download_end}
+        command_contains:
+          - aits
+          - validate-data
+        closed_market_behavior: run_with_previous_trading_day
+        production_effect: none
+      - task_id: daily_pit_fetch_fmp_forward
+        daily_plan_step_id: pit_snapshots_fetch_fmp_forward
+        title: Fetch FMP forward PIT snapshots
+        command: aits pit-snapshots fetch-fmp-forward --as-of {as_of} --continue-on-failure
+        command_contains:
+          - pit-snapshots
+          - fetch-fmp-forward
+          - --continue-on-failure
+        closed_market_behavior: run
+        production_effect: local_cache_write
+      - task_id: daily_pit_build_manifest
+        daily_plan_step_id: pit_snapshots_build_manifest
+        title: Build PIT snapshot manifest
+        command: aits pit-snapshots build-manifest --as-of {as_of}
+        command_contains:
+          - pit-snapshots
+          - build-manifest
+        closed_market_behavior: run
+        production_effect: none
+      - task_id: daily_pit_validate
+        daily_plan_step_id: pit_snapshots_validate
+        title: Validate PIT snapshot manifest
+        command: aits pit-snapshots validate --as-of {as_of}
+        command_contains:
+          - pit-snapshots
+          - validate
+        closed_market_behavior: run
+        production_effect: none
+      - task_id: daily_sec_companyfacts
+        daily_plan_step_id: sec_companyfacts
+        title: Download SEC companyfacts
+        command: aits fundamentals download-sec-companyfacts
+        command_contains:
+          - fundamentals
+          - download-sec-companyfacts
+        closed_market_behavior: run
+        production_effect: local_cache_write
+      - task_id: daily_sec_extract_metrics
+        daily_plan_step_id: sec_metrics
+        title: Extract SEC metrics
+        command: aits fundamentals extract-sec-metrics --as-of {as_of}
+        command_contains:
+          - fundamentals
+          - extract-sec-metrics
+        closed_market_behavior: run
+        production_effect: none
+      - task_id: daily_tsm_ir_sec_merge
+        daily_plan_step_id: tsm_ir_sec_metrics_merge
+        title: Merge TSM IR and SEC metrics
+        command: aits fundamentals merge-tsm-ir-sec-metrics --as-of {as_of}
+        command_contains:
+          - fundamentals
+          - merge-tsm-ir-sec-metrics
+        closed_market_behavior: run
+        production_effect: none
+      - task_id: daily_sec_validate_metrics
+        daily_plan_step_id: sec_metrics_validation
+        title: Validate SEC metrics
+        command: aits fundamentals validate-sec-metrics --as-of {as_of}
+        command_contains:
+          - fundamentals
+          - validate-sec-metrics
+        closed_market_behavior: run
+        production_effect: none
+      - task_id: daily_valuation_fetch_fmp
+        daily_plan_step_id: valuation_snapshots
+        title: Fetch FMP valuation snapshots
+        command: aits valuation fetch-fmp --as-of {as_of}
+        command_contains:
+          - valuation
+          - fetch-fmp
+        closed_market_behavior: run
+        production_effect: local_cache_write
+      - task_id: daily_score_daily
+        daily_plan_step_id: score_daily
+        title: Build daily score and decision artifacts
+        command: aits score-daily --as-of {as_of}
+        command_contains:
+          - aits
+          - score-daily
+        closed_market_behavior: skip_score_artifacts
+        production_effect: local_report_write
+      - task_id: daily_evidence_dashboard
+        daily_plan_step_id: reports_dashboard
+        title: Build evidence dashboard
+        command: aits reports dashboard --as-of {as_of}
+        command_contains:
+          - reports
+          - dashboard
+        closed_market_behavior: skip_score_artifacts
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
+      - task_id: daily_sec_pit_shadow_observe
+        daily_plan_step_id: sec_pit_shadow_observe
+        title: Refresh SEC PIT observe-only shadow lane
+        command: aits sec-pit shadow-observe --latest
+        command_contains:
+          - sec-pit
+          - shadow-observe
+          - --latest
+        closed_market_behavior: skip_score_artifacts
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
+      - task_id: daily_sec_pit_shadow_monitor
+        daily_plan_step_id: sec_pit_shadow_monitor
+        title: Refresh SEC PIT shadow monitor
+        command: aits sec-pit shadow-monitor --latest
+        command_contains:
+          - sec-pit
+          - shadow-monitor
+          - --latest
+        closed_market_behavior: skip_score_artifacts
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
+      - task_id: daily_score_change_attribution
+        daily_plan_step_id: score_change_attribution
+        title: Build score change attribution
+        command: aits reports score-change-attribution --latest
+        command_contains:
+          - reports
+          - score-change-attribution
+          - --latest
+        closed_market_behavior: skip_score_artifacts
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
+      - task_id: daily_market_panel
+        daily_plan_step_id: market_panel
+        title: Build market panel
+        command: aits reports market-panel --latest
+        command_contains:
+          - reports
+          - market-panel
+          - --latest
+        closed_market_behavior: skip_score_artifacts
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
+      - task_id: daily_report_index
+        daily_plan_step_id: report_index
+        title: Build report index
+        command: aits reports index --latest
+        command_contains:
+          - reports
+          - index
+          - --latest
+        closed_market_behavior: skip_score_artifacts
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
+      - task_id: daily_documentation_contract
+        daily_plan_step_id: documentation_contract
+        title: Build documentation contract
+        command: aits docs report-contract --latest
+        command_contains:
+          - docs
+          - report-contract
+          - --latest
+        closed_market_behavior: skip_score_artifacts
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
+      - task_id: daily_research_governance_summary
+        daily_plan_step_id: research_governance_summary
+        title: Build research governance summary
+        command: aits reports research-governance-summary --latest
+        command_contains:
+          - reports
+          - research-governance-summary
+          - --latest
+        closed_market_behavior: skip_score_artifacts
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
+      - task_id: daily_reader_brief
+        daily_plan_step_id: reader_brief
+        title: Build Reader Brief
+        command: aits reports reader-brief --latest
+        command_contains:
+          - reports
+          - reader-brief
+          - --latest
+        closed_market_behavior: skip_score_artifacts
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
+      - task_id: daily_validate_reader_brief
+        daily_plan_step_id: validate_reader_brief
+        title: Validate Reader Brief
+        command: aits reports validate-reader-brief --latest
+        command_contains:
+          - reports
+          - validate-reader-brief
+          - --latest
+        closed_market_behavior: skip_score_artifacts
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
+      - task_id: daily_ops_health
+        daily_plan_step_id: pipeline_health
+        title: Run ops health
+        command: aits ops health --as-of {as_of}
+        command_contains:
+          - ops
+          - health
+        closed_market_behavior: run_with_non_trading_day_flag
+        production_effect: none
+      - task_id: daily_secret_scan
+        daily_plan_step_id: secret_hygiene
+        title: Scan secrets
+        command: aits security scan-secrets --as-of {as_of}
+        command_contains:
+          - security
+          - scan-secrets
+        closed_market_behavior: run
+        production_effect: none
+  weekly:
+    description: Weekly governance and evidence refresh; registered but not part of daily-run.
+    tasks:
+      - task_id: weekly_backtest
+        title: Backtest
+        command: aits backtest --regime ai_after_chatgpt
+        production_effect: none
+      - task_id: weekly_backtest_robustness
+        title: Backtest robustness
+        command: aits backtest --regime ai_after_chatgpt --robustness-report
+        production_effect: none
+      - task_id: weekly_parameter_replay
+        title: Parameter replay
+        command: aits feedback build-parameter-replay --as-of {as_of}
+        production_effect: none
+      - task_id: weekly_parameter_candidates
+        title: Parameter candidates
+        command: aits feedback build-parameter-candidates --as-of {as_of}
+        production_effect: none
+      - task_id: weekly_parameter_governance
+        title: Parameter governance
+        command: aits feedback evaluate-parameter-governance --as-of {as_of}
+        production_effect: none
+      - task_id: weekly_weight_candidate_evaluation
+        title: Weight candidate evaluation
+        command: python scripts/run_weight_candidate_evaluation.py --date {as_of}
+        production_effect: none
+      - task_id: weekly_weight_promotion_gate
+        title: Weight promotion gate
+        command: python scripts/run_weight_promotion_gate.py --date {as_of}
+        production_effect: none
+      - task_id: weekly_research_governance_summary_review
+        title: Research governance summary review
+        command: aits reports research-governance-summary --latest
+        production_effect: none
+  biweekly:
+    description: Biweekly manual review cadence; registered but not part of daily-run.
+    tasks:
+      - task_id: biweekly_investment_review
+        title: Investment review
+        command: aits reports investment-review --period weekly --as-of {as_of}
+        production_effect: none
+      - task_id: biweekly_feedback_loop_review
+        title: Feedback loop review
+        command: aits feedback loop-review --as-of {as_of}
+        production_effect: none
+      - task_id: biweekly_shadow_lane_review
+        title: Shadow lane review
+        command: python scripts/run_shadow_vs_production_multi_day_review.py --date {as_of}
+        production_effect: none
+      - task_id: biweekly_sec_pit_observe_only_review
+        title: SEC PIT observe-only review
+        command: aits sec-pit shadow-monitor --latest
+        production_effect: none
+      - task_id: biweekly_manual_thesis_review
+        title: Manual thesis review
+        command: aits thesis review --as-of {as_of}
+        production_effect: none
+      - task_id: biweekly_manual_risk_review
+        title: Manual risk review
+        command: aits risk-events validate-occurrences --as-of {as_of}
+        production_effect: none
+  monthly:
+    description: Monthly audit cadence; registered but not part of daily-run.
+    tasks:
+      - task_id: monthly_documentation_contract_audit
+        title: Documentation contract audit
+        command: aits docs report-contract --as-of {as_of}
+        production_effect: none
+      - task_id: monthly_artifact_catalog_review
+        title: Artifact catalog review
+        command: manual review docs/artifact_catalog.md against latest report outputs
+        production_effect: none
+      - task_id: monthly_report_registry_audit
+        title: Report registry audit
+        command: aits reports index --as-of {as_of}
+        production_effect: none
+      - task_id: monthly_data_source_coverage_review
+        title: Data source coverage review
+        command: aits data-sources validate --as-of {as_of}
+        production_effect: none
+      - task_id: monthly_pit_coverage_review
+        title: PIT coverage review
+        command: aits backtest-pit-coverage --as-of {as_of}
+        production_effect: none
+      - task_id: monthly_long_window_backtest_review
+        title: Long-window backtest review
+        command: aits backtest --regime ai_after_chatgpt --to {as_of}
+        production_effect: none
+  ad_hoc_research:
+    description: Manual or owner-approved research commands; never part of daily-run.
+    tasks:
+      - task_id: ad_hoc_sec_pit_historical_backfill
+        title: SEC PIT historical backfill
+        command: aits sec-pit backfill
+        production_effect: none
+      - task_id: ad_hoc_sec_pit_cognitive_evaluation
+        title: SEC PIT cognitive evaluation
+        command: aits sec-pit evaluate
+        production_effect: none
+      - task_id: ad_hoc_sec_pit_baseline_comparison
+        title: SEC PIT baseline comparison
+        command: aits sec-pit compare-baseline
+        production_effect: none
+      - task_id: ad_hoc_sec_pit_diagnostics
+        title: SEC PIT diagnostics
+        command: aits sec-pit diagnose-run --latest
+        production_effect: none
+      - task_id: ad_hoc_sec_pit_candidate_review
+        title: SEC PIT candidate review
+        command: aits sec-pit review-candidates --latest
+        production_effect: none
+      - task_id: ad_hoc_large_parameter_search
+        title: Large parameter search
+        command: aits feedback search-shadow-parameters
+        production_effect: none
+      - task_id: ad_hoc_cache_only_replay_window
+        title: Cache-only replay window
+        command: aits ops replay-window --mode cache-only
+        production_effect: none

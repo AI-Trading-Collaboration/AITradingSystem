@@ -8,6 +8,8 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.yaml_loader import safe_load_yaml_text
+
 SCHEMA_VERSION = "1.0"
 REPORT_TYPE = "parameter_governance_summary"
 RUN_REPORT_TYPE = "parameter_governance_summary_run"
@@ -1124,7 +1126,7 @@ def _read_structured_object(path: Path | None) -> dict[str, Any]:
         if path.suffix.lower() == ".json":
             payload = json.loads(text)
         else:
-            payload = yaml.safe_load(text) or {}
+            payload = safe_load_yaml_text(text) or {}
     except (OSError, json.JSONDecodeError, yaml.YAMLError):
         return {}
     return payload if isinstance(payload, dict) else {}

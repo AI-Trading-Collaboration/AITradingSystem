@@ -11,6 +11,7 @@ import yaml
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from ai_trading_system.config import IndustryChainConfig, WatchlistConfig, WatchlistItem
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 ThesisDirection = Literal["long", "short", "hedge", "watch"]
 ThesisTimeHorizon = Literal["short", "medium", "long"]
@@ -512,8 +513,7 @@ def _thesis_yaml_paths(path: Path) -> list[Path]:
 
 
 def _load_yaml(path: Path) -> Any:
-    with path.open("r", encoding="utf-8") as file:
-        return yaml.safe_load(file)
+    return safe_load_yaml_path(path)
 
 
 def _raw_thesis_items(raw: Any) -> list[Any]:

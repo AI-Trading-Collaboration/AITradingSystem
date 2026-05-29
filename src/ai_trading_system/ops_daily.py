@@ -26,13 +26,16 @@ from ai_trading_system.core import (
 )
 from ai_trading_system.data.download import default_download_failure_report_path
 from ai_trading_system.data.quality import default_quality_report_path
+from ai_trading_system.documentation_contract import (
+    default_documentation_contract_json_path,
+    default_documentation_contract_report_path,
+)
 from ai_trading_system.evidence_dashboard import (
     default_evidence_dashboard_json_path,
     default_evidence_dashboard_path,
 )
 from ai_trading_system.external_request_cache import sanitize_diagnostic_text
 from ai_trading_system.features.market import default_feature_report_path
-from ai_trading_system.feedback_loop_review import default_feedback_loop_review_report_path
 from ai_trading_system.fmp_forward_pit import (
     default_fmp_forward_pit_fetch_report_path,
     default_fmp_forward_pit_normalized_path,
@@ -45,22 +48,38 @@ from ai_trading_system.fundamentals.sec_metrics import (
 from ai_trading_system.fundamentals.sec_validation import (
     default_sec_companyfacts_validation_report_path,
 )
-from ai_trading_system.market_feedback_optimization import (
-    default_market_feedback_optimization_report_path,
-)
 from ai_trading_system.official_policy_sources import (
     default_official_policy_candidates_path,
     default_official_policy_fetch_report_path,
 )
-from ai_trading_system.parameter_governance import (
-    default_parameter_governance_report_path,
-    default_parameter_governance_summary_path,
-)
-from ai_trading_system.periodic_investment_review import (
-    default_periodic_investment_review_report_path,
-)
 from ai_trading_system.pipeline_health import default_pipeline_health_report_path
 from ai_trading_system.pit_snapshots import default_pit_snapshot_validation_report_path
+from ai_trading_system.reports.market_panel import (
+    default_market_panel_json_path,
+    default_market_panel_report_path,
+)
+from ai_trading_system.reports.reader_brief import (
+    default_reader_brief_html_path,
+    default_reader_brief_json_path,
+    default_reader_brief_quality_json_path,
+    default_reader_brief_quality_markdown_path,
+)
+from ai_trading_system.reports.report_index import (
+    default_report_index_html_path,
+    default_report_index_json_path,
+)
+from ai_trading_system.reports.research_governance_summary import (
+    default_research_governance_summary_json_path,
+    default_research_governance_summary_report_path,
+)
+from ai_trading_system.reports.score_change_attribution import (
+    default_score_change_attribution_json_path,
+    default_score_change_attribution_report_path,
+)
+from ai_trading_system.scheduled_tasks import (
+    DAILY_CADENCE_ID,
+    load_scheduled_tasks_config,
+)
 from ai_trading_system.scoring.daily import default_daily_score_report_path
 from ai_trading_system.secret_hygiene import default_secret_scan_report_path
 from ai_trading_system.trading_calendar import (
@@ -257,6 +276,55 @@ def resolve_daily_ops_market_date(observed_at: datetime | None = None) -> date:
     return current_us_equity_market_date(observed_at)
 
 
+def _enforce_scheduled_daily_plan(plan: DailyOpsPlan) -> None:
+    scheduled = load_scheduled_tasks_config()
+    daily_tasks = scheduled.cadence(DAILY_CADENCE_ID).tasks
+    expected_step_ids = tuple(
+        task.daily_plan_step_id for task in daily_tasks if task.daily_plan_step_id
+    )
+    step_by_id = {step.step_id: step for step in plan.steps}
+    missing_step_ids = [step_id for step_id in expected_step_ids if step_id not in step_by_id]
+    if missing_step_ids:
+        raise ValueError(
+            "daily ops plan is missing scheduled steps: " + ", ".join(missing_step_ids)
+        )
+    observed_order = tuple(step.step_id for step in plan.steps if step.step_id in expected_step_ids)
+    if observed_order != expected_step_ids:
+        raise ValueError(
+            "daily ops plan order does not match config/scheduled_tasks.yaml: "
+            + " -> ".join(observed_order)
+        )
+    non_daily_ids = {task.task_id for task in scheduled.non_daily_tasks()}
+    leaked = sorted(non_daily_ids & {step.step_id for step in plan.steps})
+    if leaked:
+        raise ValueError(
+            "non-daily scheduled tasks leaked into daily ops plan: " + ", ".join(leaked)
+        )
+
+    for task in daily_tasks:
+        step_id = task.daily_plan_step_id
+        if step_id is None:
+            continue
+        step = step_by_id[step_id]
+        if (
+            not plan.market_session.is_trading_day
+            and task.closed_market_behavior == "skip_score_artifacts"
+            and step.enabled
+        ):
+            raise ValueError(f"closed-market daily plan must skip score artifact step: {step_id}")
+        if not step.enabled:
+            continue
+        command_text = " ".join(step.command)
+        missing_tokens = [
+            token for token in task.command_contains if token and token not in command_text
+        ]
+        if missing_tokens:
+            raise ValueError(
+                f"daily ops step {step_id} does not match scheduled command tokens: "
+                + ", ".join(missing_tokens)
+            )
+
+
 def build_daily_ops_plan(
     *,
     as_of: date,
@@ -384,32 +452,36 @@ def build_daily_ops_plan(
         score_command.extend(["--run-id", run_id])
     score_enabled = market_session.is_trading_day
     dashboard_enabled = score_enabled
-    dashboard_skip_reason = (
+    scoring_artifact_skip_reason = (
         None
         if dashboard_enabled
         else (
             "休市日模式：未生成新的 daily_score、decision snapshot、evidence bundle "
-            "或执行动作，因此不生成新的 dashboard。"
+            "或执行动作，因此跳过 score-derived Reader Brief 链路。"
         )
     )
-    feedback_review_enabled = dashboard_enabled
-    feedback_review_skip_reason = dashboard_skip_reason
-    market_feedback_report = default_market_feedback_optimization_report_path(
+    data_quality_report = default_quality_report_path(reports_dir, download_end)
+    score_change_report = default_score_change_attribution_report_path(reports_dir, as_of)
+    score_change_json = default_score_change_attribution_json_path(reports_dir, as_of)
+    market_panel_report = default_market_panel_report_path(reports_dir, as_of)
+    market_panel_json = default_market_panel_json_path(reports_dir, as_of)
+    report_index_html = default_report_index_html_path(reports_dir, as_of)
+    report_index_json = default_report_index_json_path(reports_dir, as_of)
+    documentation_contract_report = default_documentation_contract_report_path(reports_dir, as_of)
+    documentation_contract_json = default_documentation_contract_json_path(reports_dir, as_of)
+    research_governance_report = default_research_governance_summary_report_path(
         reports_dir,
         as_of,
     )
-    parameter_governance_report = default_parameter_governance_report_path(
+    research_governance_json = default_research_governance_summary_json_path(
         reports_dir,
         as_of,
     )
-    parameter_governance_summary = default_parameter_governance_summary_path(
+    reader_brief_html = default_reader_brief_html_path(reports_dir, as_of)
+    reader_brief_json = default_reader_brief_json_path(reports_dir, as_of)
+    reader_brief_quality_json = default_reader_brief_quality_json_path(reports_dir, as_of)
+    reader_brief_quality_report = default_reader_brief_quality_markdown_path(
         reports_dir,
-        as_of,
-    )
-    feedback_loop_report = default_feedback_loop_review_report_path(reports_dir, as_of)
-    investment_weekly_review_report = default_periodic_investment_review_report_path(
-        reports_dir,
-        "weekly",
         as_of,
     )
 
@@ -434,7 +506,20 @@ def build_daily_ops_plan(
             enabled=download_enabled,
             skip_reason=download_skip_reason,
             input_visibility="live_provider",
-        )
+        ),
+        DailyOpsStep(
+            step_id="validate_data",
+            title="校验市场和宏观缓存",
+            command=("aits", "validate-data", "--as-of", download_end.isoformat()),
+            required_env_vars=(),
+            produced_paths=(data_quality_report,),
+            quality_gate=(
+                "`aits validate-data` 是缓存市场/宏观数据进入技术特征、评分、"
+                "回测和报告链路前的强制质量门禁；失败时停止下游。"
+            ),
+            blocks_downstream=True,
+            input_visibility="derived_local",
+        ),
     ]
     if not market_session.is_trading_day:
         steps.append(
@@ -471,8 +556,8 @@ def build_daily_ops_plan(
     steps.extend(
         [
             DailyOpsStep(
-                step_id="pit_snapshots",
-                title="抓取并校验 forward-only PIT 快照",
+                step_id="pit_snapshots_fetch_fmp_forward",
+                title="抓取 FMP forward-only PIT 快照",
                 command=(
                     (
                         "aits",
@@ -489,13 +574,12 @@ def build_daily_ops_plan(
                 produced_paths=(
                     pit_raw_dir,
                     pit_normalized,
-                    pit_manifest,
                     pit_fetch_report,
-                    pit_validation_report,
                 ),
                 quality_gate=(
-                    "命令读取 FMP_API_KEY 并刷新 PIT manifest；失败会写入脱敏报告或 "
-                    "pipeline health 告警，后续 score-daily 仍执行自身质量门禁。"
+                    "命令读取 FMP_API_KEY 并刷新 forward-only PIT raw/normalized 缓存；"
+                    "`--continue-on-failure` 只保证故障被结构化记录，后续 manifest "
+                    "和 validate 步骤仍会显式披露 PIT 可用性。"
                 ),
                 blocks_downstream=False,
                 enabled=include_pit_snapshots,
@@ -505,6 +589,52 @@ def build_daily_ops_plan(
                     else "显式跳过 PIT 抓取；缺跑日期不能事后补成 strict PIT。"
                 ),
                 input_visibility="live_provider",
+            ),
+            DailyOpsStep(
+                step_id="pit_snapshots_build_manifest",
+                title="重建 PIT 快照 manifest",
+                command=(
+                    ("aits", "pit-snapshots", "build-manifest", "--as-of", as_of_text)
+                    if include_pit_snapshots
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(pit_manifest, pit_validation_report),
+                quality_gate=(
+                    "从现有 PIT raw cache 重建 manifest，记录 provider、endpoint、"
+                    "请求参数、row count 和 checksum；失败时停止下游。"
+                ),
+                blocks_downstream=True,
+                enabled=include_pit_snapshots,
+                skip_reason=(
+                    None
+                    if include_pit_snapshots
+                    else "显式跳过 PIT manifest 重建；缺跑日期不能事后补成 strict PIT。"
+                ),
+                input_visibility="derived_local",
+            ),
+            DailyOpsStep(
+                step_id="pit_snapshots_validate",
+                title="校验 PIT 快照 manifest",
+                command=(
+                    ("aits", "pit-snapshots", "validate", "--as-of", as_of_text)
+                    if include_pit_snapshots
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(pit_validation_report,),
+                quality_gate=(
+                    "校验 PIT manifest schema、checksum、available_time 和 source catalog；"
+                    "失败时停止下游，避免把不可审计 PIT 输入送入报告链。"
+                ),
+                blocks_downstream=True,
+                enabled=include_pit_snapshots,
+                skip_reason=(
+                    None
+                    if include_pit_snapshots
+                    else "显式跳过 PIT manifest 校验；score-daily 仍会执行自身质量门禁。"
+                ),
+                input_visibility="derived_local",
             ),
             DailyOpsStep(
                 step_id="sec_companyfacts",
@@ -700,109 +830,6 @@ def build_daily_ops_plan(
                 ),
             ),
             DailyOpsStep(
-                step_id="parameter_governance",
-                title="生成参数配置治理报告",
-                command=(
-                    (
-                        "aits",
-                        "feedback",
-                        "evaluate-parameter-governance",
-                        "--as-of",
-                        as_of_text,
-                    )
-                    if feedback_review_enabled
-                    else ()
-                ),
-                required_env_vars=(),
-                produced_paths=(parameter_governance_report, parameter_governance_summary),
-                quality_gate=(
-                    "只读读取 parameter candidate ledger 和 config/parameter_governance.yaml；"
-                    "production_effect=none，不写生产参数、overlay 或 rule card。"
-                ),
-                blocks_downstream=True,
-                enabled=feedback_review_enabled,
-                skip_reason=feedback_review_skip_reason,
-                input_visibility="readonly",
-            ),
-            DailyOpsStep(
-                step_id="market_feedback_optimization",
-                title="生成市场反馈优化复盘报告",
-                command=(
-                    (
-                        "aits",
-                        "feedback",
-                        "optimize-market-feedback",
-                        "--as-of",
-                        as_of_text,
-                    )
-                    if feedback_review_enabled
-                    else ()
-                ),
-                required_env_vars=(),
-                produced_paths=(market_feedback_report,),
-                quality_gate=(
-                    "只读读取 data_quality、outcome、学习队列、规则实验、参数 replay/candidate、"
-                    "参数治理和 overlay 审计产物；production_effect=none，"
-                    "不改变生产评分、权重或规则。"
-                ),
-                blocks_downstream=True,
-                enabled=feedback_review_enabled,
-                skip_reason=feedback_review_skip_reason,
-                input_visibility="readonly",
-            ),
-            DailyOpsStep(
-                step_id="feedback_loop_review",
-                title="生成反馈闭环周期复核报告",
-                command=(
-                    (
-                        "aits",
-                        "feedback",
-                        "loop-review",
-                        "--as-of",
-                        as_of_text,
-                    )
-                    if feedback_review_enabled
-                    else ()
-                ),
-                required_env_vars=(),
-                produced_paths=(feedback_loop_report,),
-                quality_gate=(
-                    "只读汇总 evidence、decision/prediction outcome、因果链、学习队列、"
-                    "规则候选和 task register 阻断；production_effect=none。"
-                ),
-                blocks_downstream=True,
-                enabled=feedback_review_enabled,
-                skip_reason=feedback_review_skip_reason,
-                input_visibility="readonly",
-            ),
-            DailyOpsStep(
-                step_id="investment_weekly_review",
-                title="生成投资周度复盘报告",
-                command=(
-                    (
-                        "aits",
-                        "reports",
-                        "investment-review",
-                        "--period",
-                        "weekly",
-                        "--as-of",
-                        as_of_text,
-                    )
-                    if feedback_review_enabled
-                    else ()
-                ),
-                required_env_vars=(),
-                produced_paths=(investment_weekly_review_report,),
-                quality_gate=(
-                    "只读读取 scores、decision snapshots、outcomes、learning queue "
-                    "和 rule experiments；production_effect=none，不改变日报结论或执行动作。"
-                ),
-                blocks_downstream=True,
-                enabled=feedback_review_enabled,
-                skip_reason=feedback_review_skip_reason,
-                input_visibility="readonly",
-            ),
-            DailyOpsStep(
                 step_id="reports_dashboard",
                 title="生成只读决策 dashboard",
                 command=(
@@ -823,12 +850,186 @@ def build_daily_ops_plan(
                 ),
                 quality_gate=(
                     "只读读取日报、trace、decision snapshot、alerts、scores_daily "
-                    "和本次生成的复盘报告；"
-                    "生成 HTML/JSON 展示层，production_effect=none，不改变评分、仓位或执行建议。"
+                    "并生成 HTML/JSON 展示层；production_effect=none，不改变评分、仓位或执行建议。"
                 ),
                 blocks_downstream=False,
                 enabled=dashboard_enabled,
-                skip_reason=dashboard_skip_reason,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
+                step_id="sec_pit_shadow_observe",
+                title="生成 SEC PIT observe-only shadow lane",
+                command=(
+                    ("aits", "sec-pit", "shadow-observe", "--latest") if dashboard_enabled else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(
+                    project_root
+                    / "outputs"
+                    / "sec_pit_shadow_observe"
+                    / f"sec_pit_shadow_observe_summary_{as_of_text}.json",
+                    project_root
+                    / "outputs"
+                    / "sec_pit_shadow_observe"
+                    / f"sec_pit_shadow_observe_summary_{as_of_text}.md",
+                ),
+                quality_gate=(
+                    "只读刷新 SEC PIT observe-only lane；production_effect=none，"
+                    "不写 production weights、不写 active shadow weights、不触发交易。"
+                ),
+                blocks_downstream=True,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
+                step_id="sec_pit_shadow_monitor",
+                title="生成 SEC PIT shadow monitor",
+                command=(
+                    ("aits", "sec-pit", "shadow-monitor", "--latest") if dashboard_enabled else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(
+                    project_root
+                    / "outputs"
+                    / "sec_pit_shadow_monitor"
+                    / f"sec_pit_shadow_monitor_summary_{as_of_text}.json",
+                    project_root
+                    / "outputs"
+                    / "sec_pit_shadow_monitor"
+                    / f"sec_pit_shadow_monitor_summary_{as_of_text}.md",
+                ),
+                quality_gate=(
+                    "只读滚动监控 SEC PIT observe-only lane；production_effect=none，"
+                    "不写 production weights、不写 active shadow weights、不触发交易。"
+                ),
+                blocks_downstream=True,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
+                step_id="score_change_attribution",
+                title="生成 score change attribution",
+                command=(
+                    ("aits", "reports", "score-change-attribution", "--latest")
+                    if dashboard_enabled
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(score_change_report, score_change_json),
+                quality_gate=(
+                    "只读比较 latest decision snapshot 与上一条 snapshot；不重算 score，"
+                    "production_effect=none。"
+                ),
+                blocks_downstream=True,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
+                step_id="market_panel",
+                title="生成 market panel",
+                command=(
+                    ("aits", "reports", "market-panel", "--latest") if dashboard_enabled else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(market_panel_report, market_panel_json),
+                quality_gate=(
+                    "只读生成 SPY/QQQ/SMH/SOXX/VIX/DGS10 市场上下文，"
+                    "先执行同一 data quality 门禁；production_effect=none。"
+                ),
+                blocks_downstream=True,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
+                step_id="report_index",
+                title="生成 report registry index",
+                command=("aits", "reports", "index", "--latest") if dashboard_enabled else (),
+                required_env_vars=(),
+                produced_paths=(report_index_html, report_index_json),
+                quality_gate=(
+                    "只读扫描 report registry 和已存在 artifacts；production_effect=none。"
+                ),
+                blocks_downstream=True,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
+                step_id="documentation_contract",
+                title="生成 documentation contract",
+                command=(
+                    ("aits", "docs", "report-contract", "--latest") if dashboard_enabled else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(documentation_contract_report, documentation_contract_json),
+                quality_gate=(
+                    "只读校验 report registry 与 artifact catalog 契约；"
+                    "production_effect=none，不运行上游报告。"
+                ),
+                blocks_downstream=True,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
+                step_id="research_governance_summary",
+                title="生成 research governance summary",
+                command=(
+                    ("aits", "reports", "research-governance-summary", "--latest")
+                    if dashboard_enabled
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(research_governance_report, research_governance_json),
+                quality_gate=(
+                    "只读汇总 backtest、weight、shadow observe、SEC PIT、documentation "
+                    "和 registry 状态；production_effect=none，不改变生产权重或交易行为。"
+                ),
+                blocks_downstream=True,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
+                step_id="reader_brief",
+                title="生成 Reader Brief",
+                command=(
+                    ("aits", "reports", "reader-brief", "--latest") if dashboard_enabled else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(reader_brief_html, reader_brief_json),
+                quality_gate=(
+                    "只读消费 daily decision summary、dashboard、score change、market panel、"
+                    "research governance、report index 和 documentation contract；"
+                    "production_effect=none。"
+                ),
+                blocks_downstream=True,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
+                step_id="validate_reader_brief",
+                title="校验 Reader Brief",
+                command=(
+                    ("aits", "reports", "validate-reader-brief", "--latest")
+                    if dashboard_enabled
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(reader_brief_quality_json, reader_brief_quality_report),
+                quality_gate=(
+                    "只读校验既有 Reader Brief JSON/HTML；不运行上游报告，"
+                    "production_effect=none。"
+                ),
+                blocks_downstream=True,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
                 input_visibility="readonly",
             ),
             DailyOpsStep(
@@ -873,12 +1074,14 @@ def build_daily_ops_plan(
             ),
         ]
     )
-    return DailyOpsPlan(
+    plan = DailyOpsPlan(
         as_of=as_of,
         generated_at=datetime.now(tz=UTC),
         steps=tuple(steps),
         market_session=market_session,
     )
+    _enforce_scheduled_daily_plan(plan)
+    return plan
 
 
 def run_daily_ops_plan(
@@ -2011,15 +2214,14 @@ def _text_sha256(value: str) -> str:
 def _post_step_artifact_status_error(step: DailyOpsStep) -> str | None:
     status_report_indexes = {
         "official_policy_sources": (2,),
-        "pit_snapshots": (3, 4),
+        "validate_data": (0,),
+        "pit_snapshots_fetch_fmp_forward": (2,),
+        "pit_snapshots_build_manifest": (1,),
+        "pit_snapshots_validate": (0,),
         "sec_metrics": (0, 2),
         "sec_metrics_validation": (0,),
         "valuation_snapshots": (2, 3),
         "score_daily": (2, 4),
-        "parameter_governance": (0,),
-        "market_feedback_optimization": (0,),
-        "feedback_loop_review": (0,),
-        "investment_weekly_review": (0,),
         "pipeline_health": (0,),
         "secret_hygiene": (0,),
     }.get(step.step_id, ())

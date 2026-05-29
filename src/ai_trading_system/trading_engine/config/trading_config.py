@@ -3,11 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal, Self
 
-import yaml
 from pydantic import BaseModel, Field, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.trading_engine.schemas.order_intent import AssetType, OrderSide, OrderType
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_TRADING_ENGINE_CONFIG_PATH = PROJECT_ROOT / "config" / "trading_engine.yaml"
 
@@ -71,6 +71,5 @@ def load_trading_engine_config(
     path: Path | str = DEFAULT_TRADING_ENGINE_CONFIG_PATH,
 ) -> TradingEngineConfig:
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as file:
-        raw = yaml.safe_load(file)
+    raw = safe_load_yaml_path(config_path)
     return TradingEngineConfig.model_validate(raw)

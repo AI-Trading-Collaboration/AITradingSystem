@@ -8,6 +8,8 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.yaml_loader import safe_load_yaml_path
+
 PAPERBROKER_FILL_MODEL_CALIBRATION_SCHEMA_VERSION = 1
 PAPERBROKER_FILL_MODEL_CALIBRATION_REPORT_TYPE = "paperbroker_fill_model_calibration"
 CALIBRATION_MODE = "diagnostic_only"
@@ -796,7 +798,7 @@ def _paper_signal_quality_source_artifact(
 
 def _load_policy(path: Path) -> dict[str, Any]:
     try:
-        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+        raw = safe_load_yaml_path(path)
     except (OSError, yaml.YAMLError) as exc:
         raise ValueError(
             f"failed to read paperbroker fill model calibration policy: {path}"

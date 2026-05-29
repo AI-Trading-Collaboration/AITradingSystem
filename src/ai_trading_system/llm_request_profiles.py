@@ -3,10 +3,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal, Self
 
-import yaml
 from pydantic import BaseModel, Field, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_LLM_REQUEST_PROFILES_CONFIG_PATH = PROJECT_ROOT / "config" / "llm_request_profiles.yaml"
 
@@ -79,6 +79,5 @@ def load_llm_request_profiles(
     path: Path | str = DEFAULT_LLM_REQUEST_PROFILES_CONFIG_PATH,
 ) -> LlmRequestProfilesConfig:
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as file:
-        raw = yaml.safe_load(file)
+    raw = safe_load_yaml_path(config_path)
     return LlmRequestProfilesConfig.model_validate(raw)

@@ -52,7 +52,10 @@ def test_daily_ops_plan_reports_missing_required_env() -> None:
     assert "`aits download-data --start 2018-01-01 --end 2026-05-06`" in markdown
     assert "download_data_diagnostics_2026-05-06.md" in markdown
     assert "失败时写入脱敏 download_data_diagnostics 报告" in markdown
+    assert "`aits validate-data --as-of 2026-05-06`" in markdown
     assert pit_command in markdown
+    assert "`aits pit-snapshots build-manifest --as-of 2026-05-06`" in markdown
+    assert "`aits pit-snapshots validate --as-of 2026-05-06`" in markdown
     assert "`aits fundamentals download-sec-companyfacts`" in markdown
     assert "`aits fundamentals extract-sec-metrics --as-of 2026-05-06`" in markdown
     assert "`aits fundamentals merge-tsm-ir-sec-metrics --as-of 2026-05-06`" in markdown
@@ -61,6 +64,14 @@ def test_daily_ops_plan_reports_missing_required_env() -> None:
     assert "`aits score-daily --as-of 2026-05-06" in markdown
     assert "--llm-request-profile risk_event_daily_official_precheck" in markdown
     assert "`aits reports dashboard --as-of 2026-05-06`" in markdown
+    assert "`aits sec-pit shadow-monitor --latest`" in markdown
+    assert "`aits reports score-change-attribution --latest`" in markdown
+    assert "`aits reports market-panel --latest`" in markdown
+    assert "`aits reports index --latest`" in markdown
+    assert "`aits docs report-contract --latest`" in markdown
+    assert "`aits reports research-governance-summary --latest`" in markdown
+    assert "`aits reports reader-brief --latest`" in markdown
+    assert "`aits reports validate-reader-brief --latest`" in markdown
     assert "`live_provider`" in markdown
     assert "`readonly`" in markdown
     assert "缺少关键环境变量时，后续真实执行器必须 fail closed" in markdown
@@ -243,78 +254,58 @@ def test_daily_ops_step_result_adapter_maps_summary_statuses_to_workflow_statuse
     )
 
 
-def test_daily_ops_plan_generates_feedback_reports_before_dashboard() -> None:
+def test_daily_ops_plan_generates_reader_brief_chain_after_score_daily() -> None:
     plan = build_daily_ops_plan(
         as_of=date(2026, 5, 6),
         skip_risk_event_openai_precheck=True,
     )
     step_ids = [step.step_id for step in plan.steps]
-    parameter_governance_step = next(
-        step for step in plan.steps if step.step_id == "parameter_governance"
-    )
-    market_feedback_step = next(
-        step for step in plan.steps if step.step_id == "market_feedback_optimization"
-    )
-    loop_review_step = next(step for step in plan.steps if step.step_id == "feedback_loop_review")
-    investment_review_step = next(
-        step for step in plan.steps if step.step_id == "investment_weekly_review"
-    )
     dashboard_step = next(step for step in plan.steps if step.step_id == "reports_dashboard")
+    expected_after_score = [
+        "reports_dashboard",
+        "sec_pit_shadow_observe",
+        "sec_pit_shadow_monitor",
+        "score_change_attribution",
+        "market_panel",
+        "report_index",
+        "documentation_contract",
+        "research_governance_summary",
+        "reader_brief",
+        "validate_reader_brief",
+        "pipeline_health",
+    ]
 
-    assert step_ids.index("score_daily") < step_ids.index("parameter_governance")
-    assert step_ids.index("parameter_governance") < step_ids.index("market_feedback_optimization")
-    assert step_ids.index("market_feedback_optimization") < step_ids.index("feedback_loop_review")
-    assert step_ids.index("feedback_loop_review") < step_ids.index("investment_weekly_review")
-    assert step_ids.index("investment_weekly_review") < step_ids.index("reports_dashboard")
-    assert step_ids.index("reports_dashboard") < step_ids.index("pipeline_health")
-    assert parameter_governance_step.command == (
-        "aits",
-        "feedback",
-        "evaluate-parameter-governance",
-        "--as-of",
-        "2026-05-06",
-    )
-    assert parameter_governance_step.produced_paths[0].name == (
-        "parameter_governance_2026-05-06.md"
-    )
-    assert parameter_governance_step.produced_paths[1].name == (
-        "parameter_governance_2026-05-06.json"
-    )
-    assert market_feedback_step.command == (
-        "aits",
-        "feedback",
-        "optimize-market-feedback",
-        "--as-of",
-        "2026-05-06",
-    )
-    assert market_feedback_step.produced_paths[0].name == (
-        "market_feedback_optimization_2026-05-06.md"
-    )
-    assert loop_review_step.command == (
-        "aits",
-        "feedback",
-        "loop-review",
-        "--as-of",
-        "2026-05-06",
-    )
-    assert loop_review_step.produced_paths[0].name == "feedback_loop_review_2026-05-06.md"
-    assert investment_review_step.command == (
-        "aits",
-        "reports",
-        "investment-review",
-        "--period",
-        "weekly",
-        "--as-of",
-        "2026-05-06",
-    )
-    assert investment_review_step.produced_paths[0].name == (
-        "investment_weekly_review_2026-05-06.md"
+    assert step_ids[step_ids.index("score_daily") + 1 : step_ids.index("secret_hygiene")] == (
+        expected_after_score
     )
     assert dashboard_step.command == ("aits", "reports", "dashboard", "--as-of", "2026-05-06")
     assert dashboard_step.required_env_vars == ()
     assert dashboard_step.blocks_downstream is False
     assert dashboard_step.produced_paths[0].name == "evidence_dashboard_2026-05-06.html"
     assert dashboard_step.produced_paths[1].name == "evidence_dashboard_2026-05-06.json"
+    assert next(
+        step for step in plan.steps if step.step_id == "sec_pit_shadow_monitor"
+    ).command == ("aits", "sec-pit", "shadow-monitor", "--latest")
+    assert next(step for step in plan.steps if step.step_id == "report_index").command == (
+        "aits",
+        "reports",
+        "index",
+        "--latest",
+    )
+    assert next(
+        step for step in plan.steps if step.step_id == "documentation_contract"
+    ).command == (
+        "aits",
+        "docs",
+        "report-contract",
+        "--latest",
+    )
+    assert next(step for step in plan.steps if step.step_id == "reader_brief").command == (
+        "aits",
+        "reports",
+        "reader-brief",
+        "--latest",
+    )
 
 
 def test_daily_ops_plan_cli_writes_report(tmp_path: Path) -> None:
@@ -344,14 +335,25 @@ def test_daily_ops_plan_cli_writes_report(tmp_path: Path) -> None:
     assert output_path.exists()
     markdown = output_path.read_text(encoding="utf-8")
     assert "# 每日运行计划" in markdown
+    assert "validate-data --as-of 2026-05-06" in markdown
     assert "pit-snapshots fetch-fmp-forward" in markdown
     assert "--continue-on-failure" in markdown
-    assert "失败会写入脱敏报告或 pipeline health 告警" in markdown
+    assert "pit-snapshots build-manifest --as-of 2026-05-06" in markdown
+    assert "pit-snapshots validate --as-of 2026-05-06" in markdown
     assert "fundamentals download-sec-companyfacts" in markdown
     assert "fundamentals extract-sec-metrics --as-of 2026-05-06" in markdown
     assert "fundamentals merge-tsm-ir-sec-metrics --as-of 2026-05-06" in markdown
     assert "valuation fetch-fmp --as-of 2026-05-06" in markdown
     assert "reports dashboard --as-of 2026-05-06" in markdown
+    assert "sec-pit shadow-observe --latest" in markdown
+    assert "sec-pit shadow-monitor --latest" in markdown
+    assert "reports score-change-attribution --latest" in markdown
+    assert "reports market-panel --latest" in markdown
+    assert "reports index --latest" in markdown
+    assert "docs report-contract --latest" in markdown
+    assert "reports research-governance-summary --latest" in markdown
+    assert "reports reader-brief --latest" in markdown
+    assert "reports validate-reader-brief --latest" in markdown
     assert "ops health --as-of 2026-05-06" in markdown
     assert "security scan-secrets --as-of 2026-05-06" in markdown
 
@@ -559,10 +561,20 @@ def test_daily_ops_plan_pit_failure_is_not_a_downstream_blocker() -> None:
         include_download_data=False,
         skip_risk_event_openai_precheck=True,
     )
-    pit_step = next(step for step in plan.steps if step.step_id == "pit_snapshots")
+    pit_step = next(
+        step for step in plan.steps if step.step_id == "pit_snapshots_fetch_fmp_forward"
+    )
+    pit_manifest_step = next(
+        step for step in plan.steps if step.step_id == "pit_snapshots_build_manifest"
+    )
+    pit_validate_step = next(
+        step for step in plan.steps if step.step_id == "pit_snapshots_validate"
+    )
 
     assert pit_step.required_env_vars == ()
     assert pit_step.blocks_downstream is False
+    assert pit_manifest_step.blocks_downstream is True
+    assert pit_validate_step.blocks_downstream is True
     assert "--continue-on-failure" in pit_step.command
     assert (
         plan.status(
@@ -634,27 +646,39 @@ def test_daily_ops_plan_closed_market_skips_score_and_current_download(
     assert plan.market_session.previous_trading_day == date(2026, 5, 8)
     assert step_by_id["download_data"].enabled is False
     assert "休市日模式" in (step_by_id["download_data"].skip_reason or "")
+    assert step_by_id["validate_data"].enabled is True
+    assert step_by_id["validate_data"].command == (
+        "aits",
+        "validate-data",
+        "--as-of",
+        "2026-05-08",
+    )
     assert step_by_id["score_daily"].enabled is False
     assert step_by_id["score_daily"].required_env_vars == ()
-    assert step_by_id["parameter_governance"].enabled is False
-    assert step_by_id["market_feedback_optimization"].enabled is False
-    assert step_by_id["feedback_loop_review"].enabled is False
-    assert step_by_id["investment_weekly_review"].enabled is False
     assert step_by_id["reports_dashboard"].enabled is False
     assert step_by_id["reports_dashboard"].required_env_vars == ()
-    assert step_by_id["pit_snapshots"].produced_paths[0] == (
+    assert step_by_id["sec_pit_shadow_monitor"].enabled is False
+    assert step_by_id["score_change_attribution"].enabled is False
+    assert step_by_id["market_panel"].enabled is False
+    assert step_by_id["report_index"].enabled is False
+    assert step_by_id["documentation_contract"].enabled is False
+    assert step_by_id["research_governance_summary"].enabled is False
+    assert step_by_id["reader_brief"].enabled is False
+    assert step_by_id["validate_reader_brief"].enabled is False
+    assert step_by_id["pit_snapshots_fetch_fmp_forward"].produced_paths[0] == (
         tmp_path / "data" / "raw" / "fmp_forward_pit"
     )
-    assert step_by_id["pit_snapshots"].produced_paths[1] == (
+    assert step_by_id["pit_snapshots_fetch_fmp_forward"].produced_paths[1] == (
         tmp_path / "data" / "processed" / "pit_snapshots" / "fmp_forward_pit_2026-05-10.csv"
     )
-    assert step_by_id["pit_snapshots"].produced_paths[2] == (
+    assert step_by_id["pit_snapshots_build_manifest"].produced_paths[0] == (
         tmp_path / "data" / "raw" / "pit_snapshots" / "manifest.csv"
     )
     assert "official_policy_sources" in step_by_id
     assert "--non-trading-day" in step_by_id["pipeline_health"].command
     assert "`aits score-daily --as-of 2026-05-10" not in markdown
     assert "`aits reports dashboard --as-of 2026-05-10`" not in markdown
+    assert "`aits reports reader-brief --latest`" not in markdown
     assert "市场日状态：CLOSED_MARKET" in markdown
     assert "不生成新的 daily_score" in markdown
 
@@ -680,15 +704,19 @@ def test_daily_ops_plan_closed_market_downloads_previous_trading_day_when_cache_
     )
 
 
-def test_run_daily_ops_plan_stops_on_first_failed_command() -> None:
+def test_run_daily_ops_plan_stops_on_first_failed_command(tmp_path: Path) -> None:
     plan = build_daily_ops_plan(
         as_of=date(2026, 5, 6),
+        project_root=tmp_path,
         include_download_data=False,
         include_pit_snapshots=False,
         include_valuation_snapshots=False,
         include_secret_scan=False,
         skip_risk_event_openai_precheck=True,
     )
+    validate_step = next(step for step in plan.steps if step.step_id == "validate_data")
+    validate_step.produced_paths[0].parent.mkdir(parents=True, exist_ok=True)
+    validate_step.produced_paths[0].write_text("- 状态：PASS\n", encoding="utf-8")
     calls: list[tuple[str, ...]] = []
 
     def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
@@ -703,6 +731,7 @@ def test_run_daily_ops_plan_stops_on_first_failed_command() -> None:
 
     report = run_daily_ops_plan(
         plan,
+        project_root=tmp_path,
         env={"SEC_USER_AGENT": "AITradingSystem test@example.com"},
         runner=fake_runner,
         visibility_check_date=date(2026, 5, 6),
@@ -712,6 +741,7 @@ def test_run_daily_ops_plan_stops_on_first_failed_command() -> None:
     assert report.failed_step is not None
     assert report.failed_step.step_id == "sec_metrics"
     assert [call[3:] for call in calls] == [
+        ("validate-data", "--as-of", "2026-05-06"),
         ("fundamentals", "download-sec-companyfacts"),
         ("fundamentals", "extract-sec-metrics", "--as-of", "2026-05-06"),
     ]
@@ -728,6 +758,9 @@ def test_run_daily_ops_plan_writes_redacted_failure_diagnostic(tmp_path: Path) -
         skip_risk_event_openai_precheck=True,
     )
     secret = "sk-live-test-secret"
+    validate_step = next(step for step in plan.steps if step.step_id == "validate_data")
+    validate_step.produced_paths[0].parent.mkdir(parents=True, exist_ok=True)
+    validate_step.produced_paths[0].write_text("- 状态：PASS\n", encoding="utf-8")
 
     def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
         return_code = 1 if "extract-sec-metrics" in command else 0
@@ -927,6 +960,9 @@ def test_run_daily_ops_plan_allows_explicit_current_closed_market_day(tmp_path: 
         project_root=tmp_path,
         skip_risk_event_openai_precheck=True,
     )
+    validate_step = next(step for step in plan.steps if step.step_id == "validate_data")
+    validate_step.produced_paths[0].parent.mkdir(parents=True, exist_ok=True)
+    validate_step.produced_paths[0].write_text("- 状态：PASS\n", encoding="utf-8")
     calls: list[tuple[str, ...]] = []
 
     def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
@@ -948,8 +984,9 @@ def test_run_daily_ops_plan_allows_explicit_current_closed_market_day(tmp_path: 
 
     assert calls
     assert report.failed_step is None or report.failed_step.step_id != "input_visibility"
-    assert calls[0][3:6] == ("risk-events", "fetch-official-sources", "--as-of")
-    assert calls[0][6] == "2026-05-10"
+    assert calls[0][3:] == ("validate-data", "--as-of", "2026-05-08")
+    assert calls[1][3:6] == ("risk-events", "fetch-official-sources", "--as-of")
+    assert calls[1][6] == "2026-05-10"
 
 
 def test_daily_ops_run_report_omits_command_output_text(tmp_path: Path) -> None:
@@ -964,15 +1001,10 @@ def test_daily_ops_run_report_omits_command_output_text(tmp_path: Path) -> None:
         skip_risk_event_openai_precheck=True,
     )
     for step in plan.steps:
-        if step.step_id == "score_daily":
-            status_paths = (step.produced_paths[2], step.produced_paths[4])
-        elif step.step_id in {
-            "parameter_governance",
-            "market_feedback_optimization",
-            "feedback_loop_review",
-            "investment_weekly_review",
-        }:
+        if step.step_id == "validate_data":
             status_paths = (step.produced_paths[0],)
+        elif step.step_id == "score_daily":
+            status_paths = (step.produced_paths[2], step.produced_paths[4])
         elif step.step_id == "pipeline_health":
             status_paths = (step.produced_paths[0],)
         else:
@@ -1017,15 +1049,10 @@ def test_daily_ops_run_report_writes_sanitized_metadata_sidecar(tmp_path: Path) 
         skip_risk_event_openai_precheck=True,
     )
     for step in plan.steps:
-        if step.step_id == "score_daily":
-            status_paths = (step.produced_paths[2], step.produced_paths[4])
-        elif step.step_id in {
-            "parameter_governance",
-            "market_feedback_optimization",
-            "feedback_loop_review",
-            "investment_weekly_review",
-        }:
+        if step.step_id == "validate_data":
             status_paths = (step.produced_paths[0],)
+        elif step.step_id == "score_daily":
+            status_paths = (step.produced_paths[2], step.produced_paths[4])
         elif step.step_id == "pipeline_health":
             status_paths = (step.produced_paths[0],)
         else:
@@ -1094,11 +1121,14 @@ def test_run_daily_ops_plan_fails_when_artifact_status_fails(tmp_path: Path) -> 
         include_secret_scan=False,
         skip_risk_event_openai_precheck=True,
     )
-    pit_step = next(step for step in plan.steps if step.step_id == "pit_snapshots")
-    pit_step.produced_paths[3].parent.mkdir(parents=True, exist_ok=True)
-    pit_step.produced_paths[3].write_text("- 状态：FAIL\n", encoding="utf-8")
-    pit_step.produced_paths[4].parent.mkdir(parents=True, exist_ok=True)
-    pit_step.produced_paths[4].write_text("- 状态：PASS\n", encoding="utf-8")
+    validate_step = next(step for step in plan.steps if step.step_id == "validate_data")
+    validate_step.produced_paths[0].parent.mkdir(parents=True, exist_ok=True)
+    validate_step.produced_paths[0].write_text("- 状态：PASS\n", encoding="utf-8")
+    pit_step = next(
+        step for step in plan.steps if step.step_id == "pit_snapshots_fetch_fmp_forward"
+    )
+    pit_step.produced_paths[2].parent.mkdir(parents=True, exist_ok=True)
+    pit_step.produced_paths[2].write_text("- 状态：FAIL\n", encoding="utf-8")
     calls: list[tuple[str, ...]] = []
 
     def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
@@ -1115,9 +1145,12 @@ def test_run_daily_ops_plan_fails_when_artifact_status_fails(tmp_path: Path) -> 
 
     assert report.status == "FAIL"
     assert report.failed_step is not None
-    assert report.failed_step.step_id == "pit_snapshots"
+    assert report.failed_step.step_id == "pit_snapshots_fetch_fmp_forward"
     assert "artifact_status_failed" in (report.failed_step.error or "")
-    assert [call[3:] for call in calls] == [pit_step.command[1:]]
+    assert [call[3:] for call in calls] == [
+        validate_step.command[1:],
+        pit_step.command[1:],
+    ]
 
 
 def _write_price_cache(path: Path, latest_date: str) -> None:

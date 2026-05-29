@@ -15,6 +15,7 @@ from ai_trading_system.fundamentals.sec_pit_shadow_monitor import (
     PRODUCTION_CONFIG_PATHS,
     ROLLING_METRICS_COLUMNS,
     WARNING_EVENTS_COLUMNS,
+    _top_rank_label_delta,
     run_sec_pit_shadow_monitor,
 )
 
@@ -186,6 +187,16 @@ def test_sec_pit_shadow_monitor_blocks_rollback_without_rolling_metrics(
     assert summary["rolling_metrics_available"] is False
     assert summary["factor_underperformance_confirmed"] is True
     assert summary["rollback_recommended"] is False
+
+
+def test_top_rank_label_delta_handles_arrow_string_columns() -> None:
+    frame = pd.DataFrame(_supportive_rows(date(2023, 1, 2)) + _supportive_rows(date(2023, 1, 3)))
+    for column in ("decision_date", "ticker", "bucket", "feature_id", "pit_grade"):
+        frame[column] = frame[column].astype("string[pyarrow]")
+
+    delta = _top_rank_label_delta(frame, "forward_return_20d")
+
+    assert delta == 0.0
 
 
 def test_sec_pit_shadow_monitor_cli_latest_mode(tmp_path: Path) -> None:

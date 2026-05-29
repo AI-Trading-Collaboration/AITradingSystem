@@ -46,6 +46,7 @@ OFFICIAL_POLICY_CANDIDATE_COLUMNS = (
     "production_effect",
     "notes",
 )
+_OFAC_RECORD_TAGS = frozenset({"sdnentry", "entry", "sanctionsentry", "profile"})
 
 _USER_AGENT = "AITradingSystem policy source fetcher; contact=project-owner"
 _DEFAULT_LIMIT = 50
@@ -289,15 +290,29 @@ def fetch_official_policy_sources(
         row_count = 0
         request_candidates: list[OfficialPolicyCandidate] = []
         if response.status_code < 400:
-            row_count = _row_count(response.body, request.parser_kind)
-            request_candidates = _extract_candidates(
-                request=request,
-                body=response.body,
-                output_path=output_path,
-                checksum=checksum,
-                as_of=as_of,
-                row_count=row_count,
-            )
+            try:
+                row_count = _row_count(response.body, request.parser_kind)
+                request_candidates = _extract_candidates(
+                    request=request,
+                    body=response.body,
+                    output_path=output_path,
+                    checksum=checksum,
+                    as_of=as_of,
+                    row_count=row_count,
+                )
+            except Exception as exc:
+                issues.append(
+                    OfficialPolicyIssue(
+                        severity=OfficialPolicyIssueSeverity.ERROR,
+                        code="official_policy_source_parse_failed",
+                        source_id=request.source_id,
+                        message=(
+                            f"{request.source_id} 解析失败；parser_kind={request.parser_kind}；"
+                            f"raw_payload={output_path}；checksum={checksum}；"
+                            f"{type(exc).__name__}: {exc}"
+                        ),
+                    )
+                )
         if response.status_code >= 400:
             issues.append(
                 OfficialPolicyIssue(
@@ -827,7 +842,7 @@ def _ofac_xml_candidates(
     candidates: list[OfficialPolicyCandidate] = []
     for index, element in enumerate(root.iter()):
         tag = _strip_namespace(element.tag).lower()
-        if tag not in {"sdnentry", "entry", "sanctionsentry", "profile"}:
+        if tag not in _OFAC_RECORD_TAGS:
             continue
         text = " ".join(value.strip() for value in element.itertext() if value.strip())
         topics = _matched_topics(text)
@@ -956,12 +971,11 @@ def _row_count(body: bytes, parser_kind: str) -> int:
             root = ET.fromstring(body)
         except ET.ParseError:
             return 0
-        return sum(
-            1
-            for element in root.iter()
-            if _strip_namespace(element.tag).lower()
-            in {"sdnentry", "entry", "sanctionsentry", "profile"}
-        )
+        count = 0
+        for element in root.iter():
+            if _strip_namespace(element.tag).lower() in _OFAC_RECORD_TAGS:
+                count += 1
+        return count
     if parser_kind == "ustr_html":
         parser = _AnchorParser()
         parser.feed(_decode_text(body))
@@ -1304,7 +1318,9 @@ def _split_semicolon_items(value: str) -> tuple[str, ...]:
     return tuple(item.strip() for item in value.split(";") if item.strip())
 
 
-def _strip_namespace(tag: str) -> str:
+def _strip_namespace(tag: object) -> str:
+    if not isinstance(tag, str):
+        return ""
     if "}" in tag:
         return tag.rsplit("}", 1)[1]
     return tag

@@ -16,6 +16,7 @@ from ai_trading_system.config import (
     WatchlistConfig,
     configured_price_tickers,
 )
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 ValuationSourceType = Literal[
     "primary_filing",
@@ -384,6 +385,11 @@ def load_valuation_snapshot_store(input_path: Path | str) -> ValuationSnapshotSt
         except OSError as exc:
             load_errors.append(ValuationLoadError(path=yaml_path, message=str(exc)))
             continue
+        except UnicodeError as exc:
+            load_errors.append(
+                ValuationLoadError(path=yaml_path, message=f"YAML UTF-8 解码失败：{exc}")
+            )
+            continue
         except yaml.YAMLError as exc:
             load_errors.append(ValuationLoadError(path=yaml_path, message=f"YAML 解析失败：{exc}"))
             continue
@@ -722,8 +728,7 @@ def _snapshot_yaml_paths(path: Path) -> list[Path]:
 
 
 def _load_yaml(path: Path) -> Any:
-    with path.open("r", encoding="utf-8") as file:
-        return yaml.safe_load(file)
+    return safe_load_yaml_path(path)
 
 
 def _raw_snapshot_items(raw: Any) -> list[Any]:

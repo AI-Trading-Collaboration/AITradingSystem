@@ -5,8 +5,9 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Literal, Self
 
-import yaml
 from pydantic import BaseModel, Field, model_validator
+
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG_PATH = PROJECT_ROOT / "config" / "universe.yaml"
@@ -1084,17 +1085,19 @@ class BacktestValidationPolicyConfig(BaseModel):
     promotion: BacktestPromotionPolicyConfig = Field(default_factory=BacktestPromotionPolicyConfig)
 
 
+def _load_yaml_config(path: Path) -> dict[str, Any]:
+    return safe_load_yaml_path(path)
+
+
 def load_universe(path: Path | str = DEFAULT_CONFIG_PATH) -> UniverseConfig:
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as file:
-        raw: dict[str, Any] = yaml.safe_load(file)
+    raw: dict[str, Any] = _load_yaml_config(config_path)
     return UniverseConfig.model_validate(raw)
 
 
 def load_watchlist(path: Path | str = DEFAULT_WATCHLIST_CONFIG_PATH) -> WatchlistConfig:
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as file:
-        raw: dict[str, Any] = yaml.safe_load(file)
+    raw: dict[str, Any] = _load_yaml_config(config_path)
     return WatchlistConfig.model_validate(raw)
 
 
@@ -1102,8 +1105,7 @@ def load_industry_chain(
     path: Path | str = DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH,
 ) -> IndustryChainConfig:
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as file:
-        raw: dict[str, Any] = yaml.safe_load(file)
+    raw: dict[str, Any] = _load_yaml_config(config_path)
     return IndustryChainConfig.model_validate(raw)
 
 
@@ -1111,8 +1113,7 @@ def load_market_regimes(
     path: Path | str = DEFAULT_MARKET_REGIMES_CONFIG_PATH,
 ) -> MarketRegimesConfig:
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as file:
-        raw: dict[str, Any] = yaml.safe_load(file)
+    raw: dict[str, Any] = _load_yaml_config(config_path)
     return MarketRegimesConfig.model_validate(raw)
 
 
@@ -1120,8 +1121,7 @@ def load_risk_events(
     path: Path | str = DEFAULT_RISK_EVENTS_CONFIG_PATH,
 ) -> RiskEventsConfig:
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as file:
-        raw: dict[str, Any] = yaml.safe_load(file)
+    raw: dict[str, Any] = _load_yaml_config(config_path)
     return RiskEventsConfig.model_validate(raw)
 
 
@@ -1129,8 +1129,7 @@ def load_data_sources(
     path: Path | str = DEFAULT_DATA_SOURCES_CONFIG_PATH,
 ) -> DataSourcesConfig:
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as file:
-        raw: dict[str, Any] = yaml.safe_load(file)
+    raw: dict[str, Any] = _load_yaml_config(config_path)
     return DataSourcesConfig.model_validate(raw)
 
 
@@ -1138,8 +1137,7 @@ def load_sec_companies(
     path: Path | str = DEFAULT_SEC_COMPANIES_CONFIG_PATH,
 ) -> SecCompaniesConfig:
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as file:
-        raw: dict[str, Any] = yaml.safe_load(file)
+    raw: dict[str, Any] = _load_yaml_config(config_path)
     return SecCompaniesConfig.model_validate(raw)
 
 
@@ -1147,8 +1145,7 @@ def load_fundamental_metrics(
     path: Path | str = DEFAULT_FUNDAMENTAL_METRICS_CONFIG_PATH,
 ) -> FundamentalMetricsConfig:
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as file:
-        raw: dict[str, Any] = yaml.safe_load(file)
+    raw: dict[str, Any] = _load_yaml_config(config_path)
     return FundamentalMetricsConfig.model_validate(raw)
 
 
@@ -1156,8 +1153,7 @@ def load_fundamental_features(
     path: Path | str = DEFAULT_FUNDAMENTAL_FEATURES_CONFIG_PATH,
 ) -> FundamentalFeaturesConfig:
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as file:
-        raw: dict[str, Any] = yaml.safe_load(file)
+    raw: dict[str, Any] = _load_yaml_config(config_path)
     return FundamentalFeaturesConfig.model_validate(raw)
 
 
@@ -1174,8 +1170,7 @@ def market_regime_by_id(
 
 def load_portfolio(path: Path | str = DEFAULT_PORTFOLIO_CONFIG_PATH) -> PortfolioConfig:
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as file:
-        raw: dict[str, Any] = yaml.safe_load(file)
+    raw: dict[str, Any] = _load_yaml_config(config_path)
     return PortfolioConfig.model_validate(raw)
 
 
@@ -1183,15 +1178,13 @@ def load_data_quality(
     path: Path | str = DEFAULT_DATA_QUALITY_CONFIG_PATH,
 ) -> DataQualityConfig:
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as file:
-        raw: dict[str, Any] = yaml.safe_load(file)
+    raw: dict[str, Any] = _load_yaml_config(config_path)
     return DataQualityConfig.model_validate(raw)
 
 
 def load_features(path: Path | str = DEFAULT_FEATURE_CONFIG_PATH) -> FeatureConfig:
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as file:
-        raw: dict[str, Any] = yaml.safe_load(file)
+    raw: dict[str, Any] = _load_yaml_config(config_path)
     return FeatureConfig.model_validate(raw)
 
 
@@ -1199,8 +1192,7 @@ def load_scoring_rules(
     path: Path | str = DEFAULT_SCORING_RULES_CONFIG_PATH,
 ) -> ScoringRulesConfig:
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as file:
-        raw: dict[str, Any] = yaml.safe_load(file)
+    raw: dict[str, Any] = _load_yaml_config(config_path)
     return ScoringRulesConfig.model_validate(raw)
 
 
@@ -1208,8 +1200,7 @@ def load_backtest_validation_policy(
     path: Path | str = DEFAULT_BACKTEST_VALIDATION_POLICY_CONFIG_PATH,
 ) -> BacktestValidationPolicyConfig:
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as file:
-        raw: dict[str, Any] = yaml.safe_load(file)
+    raw: dict[str, Any] = _load_yaml_config(config_path)
     return BacktestValidationPolicyConfig.model_validate(raw)
 
 

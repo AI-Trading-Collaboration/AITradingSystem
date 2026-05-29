@@ -6562,8 +6562,12 @@ def research_governance_summary_command(
 def report_index_command(
     as_of: Annotated[
         str | None,
-        typer.Option(help="Report index 日期，格式为 YYYY-MM-DD，默认今天。"),
+        typer.Option("--as-of", "--date", help="Report index 日期，格式为 YYYY-MM-DD，默认今天。"),
     ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用默认 decision snapshot 目录中的最新 signal-date。"),
+    ] = False,
     registry_path: Annotated[
         Path,
         typer.Option(help="report_registry.yaml 路径。"),
@@ -6582,7 +6586,14 @@ def report_index_command(
     ] = None,
 ) -> None:
     """生成只读报告 registry / cadence index。"""
-    report_date = _parse_date(as_of) if as_of else date.today()
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --as-of/--date 同时使用")
+    if latest:
+        report_date = _decision_snapshot_date(
+            _latest_decision_snapshot_path(DEFAULT_DECISION_SNAPSHOT_DIR)
+        )
+    else:
+        report_date = _parse_date(as_of) if as_of else date.today()
     reports_dir = project_root / "outputs" / "reports"
     html_output = output_path or default_report_index_html_path(reports_dir, report_date)
     json_output = json_output_path or default_report_index_json_path(reports_dir, report_date)

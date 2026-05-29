@@ -15,7 +15,6 @@ from typing import Any, Literal
 from uuid import uuid4
 
 import requests
-import yaml
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from ai_trading_system.agent_request_cache import (
@@ -30,6 +29,7 @@ from ai_trading_system.agent_request_cache import (
     write_agent_request_cache_entry,
 )
 from ai_trading_system.config import DataSourceConfig, DataSourcesConfig
+from ai_trading_system.yaml_loader import safe_load_yaml_text
 
 OpenAIReasoningEffort = Literal["none", "minimal", "low", "medium", "high", "xhigh"]
 OpenAIHttpClient = Literal["requests", "urllib"]
@@ -533,7 +533,7 @@ def load_llm_claim_precheck_input(input_path: Path | str) -> LlmClaimPrecheckInp
     path = Path(input_path)
     raw_text = path.read_text(encoding="utf-8")
     if path.suffix.lower() in {".yaml", ".yml"}:
-        raw = yaml.safe_load(raw_text)
+        raw = safe_load_yaml_text(raw_text)
     else:
         raw = json.loads(raw_text)
     return LlmClaimPrecheckInput.model_validate(raw)

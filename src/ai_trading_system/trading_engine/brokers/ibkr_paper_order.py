@@ -8,7 +8,6 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal, Self
 
-import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
@@ -20,6 +19,7 @@ from ai_trading_system.trading_engine.brokers.ibkr_readonly import (
     mask_account_id,
     sanitize_ibkr_payload,
 )
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_IBKR_PAPER_ORDER_CONFIG_PATH = PROJECT_ROOT / "config" / "ibkr_paper_order.yaml"
 ORDER_LIFECYCLE_PRODUCTION_EFFECT = "none"
@@ -559,8 +559,7 @@ def load_ibkr_paper_order_config(
     path: Path | str = DEFAULT_IBKR_PAPER_ORDER_CONFIG_PATH,
 ) -> IBKRPaperOrderConfig:
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as file:
-        raw = yaml.safe_load(file) or {}
+    raw = safe_load_yaml_path(config_path) or {}
     return IBKRPaperOrderConfig.model_validate(raw)
 
 

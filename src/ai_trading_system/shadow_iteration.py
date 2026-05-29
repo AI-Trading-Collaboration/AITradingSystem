@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Any, Literal, cast
 
 import pandas as pd
-import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.shadow.lineage import git_commit_sha, sha256_file
@@ -22,6 +21,7 @@ from ai_trading_system.shadow_weight_profiles import (
     build_shadow_parameter_promotion_report,
     load_shadow_parameter_promotion_contract,
 )
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SCHEMA_VERSION = 1
 DEFAULT_SHADOW_ITERATION_REGISTRY_PATH = (
@@ -1580,7 +1580,7 @@ def _config_lineage(
     version = None
     checksum = str(manifest.get(checksum_key) or "")
     if path is not None and path.exists():
-        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+        raw = safe_load_yaml_path(path)
         if isinstance(raw, dict):
             version = raw.get("version")
         if not checksum:

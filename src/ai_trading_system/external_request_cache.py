@@ -400,8 +400,8 @@ def external_request_cache_paths(
 
 def safe_request_headers(headers: Mapping[str, str]) -> dict[str, str]:
     safe_headers: dict[str, str] = {}
-    for key, value in headers.items():
-        normalized = key.lower()
+    for key, value in _stable_mapping_items(headers):
+        normalized = str(key).lower()
         if normalized in _EXCLUDED_KEY_HEADERS or _is_sensitive_key(normalized):
             safe_headers[str(key)] = "***"
         else:
@@ -410,7 +410,7 @@ def safe_request_headers(headers: Mapping[str, str]) -> dict[str, str]:
 
 
 def safe_response_headers(headers: Mapping[str, str]) -> dict[str, str]:
-    return {str(key): str(value) for key, value in headers.items()}
+    return {str(key): str(value) for key, value in _stable_mapping_items(headers)}
 
 
 def sanitize_diagnostic_text(
@@ -448,8 +448,8 @@ def sha256_json(payload: Mapping[str, Any]) -> str:
 
 def _headers_for_key(headers: Mapping[str, str]) -> dict[str, str]:
     key_headers: dict[str, str] = {}
-    for key, value in headers.items():
-        normalized = key.lower()
+    for key, value in _stable_mapping_items(headers):
+        normalized = str(key).lower()
         if normalized in _EXCLUDED_KEY_HEADERS or _is_sensitive_key(normalized):
             continue
         key_headers[str(key)] = str(value)
@@ -458,7 +458,7 @@ def _headers_for_key(headers: Mapping[str, str]) -> dict[str, str]:
 
 def _sanitize_mapping(values: Mapping[str, Any]) -> dict[str, Any]:
     sanitized: dict[str, Any] = {}
-    for key, value in values.items():
+    for key, value in _stable_mapping_items(values):
         key_str = str(key)
         if _is_sensitive_key(key_str):
             sanitized[key_str] = "***"
@@ -533,9 +533,9 @@ def _running_under_pytest() -> bool:
 
 def _mapping_from_headers(headers: Any) -> dict[str, str]:
     if isinstance(headers, Mapping):
-        return {str(key): str(value) for key, value in headers.items()}
+        return {str(key): str(value) for key, value in _stable_mapping_items(headers)}
     if hasattr(headers, "items"):
-        return {str(key): str(value) for key, value in headers.items()}
+        return {str(key): str(value) for key, value in _stable_mapping_items(headers)}
     return {}
 
 
@@ -554,15 +554,26 @@ def _valid_metadata(metadata: Any, cache_key: str, content: bytes) -> bool:
 
 def _charset_from_headers(headers: Mapping[str, str]) -> str:
     content_type = ""
-    for key, value in headers.items():
-        if key.lower() == "content-type":
-            content_type = value
+    for key, value in _stable_mapping_items(headers):
+        if str(key).lower() == "content-type":
+            content_type = str(value)
             break
     for part in content_type.split(";"):
         token = part.strip()
         if token.lower().startswith("charset="):
             return token.split("=", 1)[1].strip() or "utf-8"
     return "utf-8"
+
+
+def _stable_mapping_items(values: Any) -> tuple[tuple[Any, Any], ...]:
+    for _ in range(2):
+        try:
+            return tuple(values.items())
+        except RuntimeError as exc:
+            if "dictionary keys changed during iteration" not in str(exc):
+                raise
+    copied = values.copy() if hasattr(values, "copy") else dict(values)
+    return tuple(copied.items())
 
 
 def _write_bytes_atomically(path: Path, content: bytes) -> None:

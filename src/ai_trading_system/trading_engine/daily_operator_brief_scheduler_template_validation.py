@@ -10,6 +10,8 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.yaml_loader import safe_load_yaml_text
+
 SCHEMA_VERSION = "1.0"
 REPORT_TYPE = "daily_operator_brief_scheduler_template_validation"
 TASK_ID = "TRADING-029"
@@ -817,7 +819,7 @@ def _check_github_actions_template(text: str) -> dict[str, Any]:
     if "secrets" in lowered:
         blocking.append("GitHub Actions template must not reference secrets.")
     try:
-        parsed = yaml.safe_load(text) or {}
+        parsed = safe_load_yaml_text(text) or {}
     except yaml.YAMLError as exc:
         return {
             "status": STATUS_FAIL,

@@ -10,7 +10,6 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.fundamentals.sec_pit_aliases import (
@@ -33,12 +32,16 @@ from ai_trading_system.fundamentals.sec_pit_evaluation import (
 from ai_trading_system.fundamentals.sec_pit_real_run_diagnostics import (
     DEFAULT_SEC_PIT_DIAGNOSTICS_OUTPUT_DIR,
 )
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SEC_PIT_SHADOW_OBSERVE_TASK_ID = "TRADING-044"
 SEC_PIT_SHADOW_OBSERVE_REPORT_TYPE = "sec_pit_shadow_observe"
 SEC_PIT_SHADOW_OBSERVE_PRODUCTION_EFFECT = "none"
 DEFAULT_SEC_PIT_SHADOW_OBSERVE_CONFIG_PATH = PROJECT_ROOT / "config" / "sec_pit_shadow_observe.yaml"
 DEFAULT_SEC_PIT_SHADOW_OBSERVE_OUTPUT_DIR = PROJECT_ROOT / "outputs" / "sec_pit_shadow_observe"
+DEFAULT_SEC_PIT_RESEARCH_BASELINE_SCORE_PATH = (
+    PROJECT_ROOT / "data" / "processed" / "research" / "scores_daily_backfill_sec_pit_2023_2026.csv"
+)
 LEGACY_SEC_PIT_FEATURE_PANEL_PATH = (
     PROJECT_ROOT / "data" / "processed" / "sec_pit" / "sec_pit_feature_panel.csv"
 )
@@ -266,8 +269,7 @@ def load_sec_pit_shadow_observe_config(
     path: Path | str = DEFAULT_SEC_PIT_SHADOW_OBSERVE_CONFIG_PATH,
 ) -> SecPitShadowObserveConfig:
     raw_path = Path(path)
-    with raw_path.open("r", encoding="utf-8") as file:
-        raw = yaml.safe_load(file) or {}
+    raw = safe_load_yaml_path(raw_path) or {}
     if not isinstance(raw, dict):
         raise ValueError("sec_pit_shadow_observe config must be a mapping")
     raw_candidates = raw.get("candidates") or []
@@ -807,6 +809,14 @@ def _load_baseline_inputs(
         frame = _read_csv_or_empty(baseline_score_path)
         status = "OK" if not frame.empty else "LIMITED_BASELINE_MISSING"
         return _BaselineInputs(path=baseline_score_path, frame=frame, status=status)
+    if _is_default_baseline_score_dir(baseline_score_dir):
+        research_frame = _read_csv_or_empty(DEFAULT_SEC_PIT_RESEARCH_BASELINE_SCORE_PATH)
+        if not research_frame.empty:
+            return _BaselineInputs(
+                path=DEFAULT_SEC_PIT_RESEARCH_BASELINE_SCORE_PATH,
+                frame=research_frame,
+                status="OK",
+            )
     path = _baseline_path(baseline_score_dir, resolved_end)
     frame = _read_csv_or_empty(path)
     if not frame.empty:

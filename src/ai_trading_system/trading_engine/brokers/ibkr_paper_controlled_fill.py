@@ -9,7 +9,6 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal, Self
 
-import yaml
 from pydantic import BaseModel, Field, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
@@ -42,6 +41,7 @@ from ai_trading_system.trading_engine.schemas.order_intent import (
     OrderType,
     TimeInForce,
 )
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 CONTROLLED_FILL_REPORT_TYPE = "ibkr_paper_controlled_fill"
 CONTROLLED_FILL_PRODUCTION_EFFECT = "none"
@@ -120,8 +120,7 @@ def load_controlled_fill_config(
     path: Path | str = DEFAULT_IBKR_PAPER_CONTROLLED_FILL_CONFIG_PATH,
 ) -> ControlledFillConfig:
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as file:
-        raw = yaml.safe_load(file) or {}
+    raw = safe_load_yaml_path(config_path) or {}
     return ControlledFillConfig.model_validate(raw)
 
 

@@ -8,6 +8,8 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.yaml_loader import safe_load_yaml_path
+
 SHADOW_VS_PRODUCTION_SCHEMA_VERSION = 1
 SHADOW_VS_PRODUCTION_REPORT_TYPE = "daily_shadow_vs_production_comparison"
 SHADOW_VS_PRODUCTION_TASK_ID = "TRADING-018C"
@@ -867,7 +869,7 @@ def _load_yaml_object(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     try:
-        payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        payload = safe_load_yaml_path(path) or {}
     except (OSError, yaml.YAMLError):
         return {}
     return payload if isinstance(payload, dict) else {}

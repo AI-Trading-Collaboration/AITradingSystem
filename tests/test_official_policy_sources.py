@@ -6,11 +6,13 @@ from datetime import date
 from pathlib import Path
 
 import pandas as pd
+import pytest
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
 from ai_trading_system.official_policy_sources import (
     OfficialPolicyHttpResponse,
+    _row_count,
     build_official_policy_source_requests,
     fetch_official_policy_sources,
     load_official_policy_candidates_csv,
@@ -245,6 +247,57 @@ def test_fetch_official_policy_sources_records_download_failure(tmp_path: Path) 
     assert report.payload_count == 0
     assert not manifest_path.exists()
     assert "official_policy_source_download_failed" in {issue.code for issue in report.issues}
+
+
+def test_ofac_xml_row_count_handles_namespaced_records() -> None:
+    body = b"""
+    <sdnList xmlns="https://sanctionslistservice.ofac.treas.gov/api/test">
+      <sdnEntry><uid>1</uid></sdnEntry>
+      <profile><uid>2</uid></profile>
+      <programList><program>CMIC</program></programList>
+    </sdnList>
+    """
+
+    assert _row_count(body, "ofac_xml") == 2
+
+
+def test_fetch_official_policy_sources_records_parser_failure(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    manifest_path = tmp_path / "raw" / "download_manifest.csv"
+
+    def broken_strip_namespace(tag: object) -> str:
+        _ = tag
+        raise TypeError("parser state corrupted")
+
+    monkeypatch.setattr(
+        "ai_trading_system.official_policy_sources._strip_namespace",
+        broken_strip_namespace,
+    )
+
+    report = fetch_official_policy_sources(
+        as_of=date(2026, 5, 5),
+        since=date(2026, 5, 1),
+        raw_dir=tmp_path / "raw" / "official_policy_sources",
+        processed_dir=tmp_path / "processed",
+        selected_source_ids=["official_ofac_sdn_xml"],
+        http_client=FakeOfficialPolicyHttpClient(),
+        download_manifest_path=manifest_path,
+    )
+    markdown = render_official_policy_fetch_report(report)
+    candidates_path = tmp_path / "processed" / "official_policy_source_candidates_2026-05-05.csv"
+
+    assert report.status == "FAIL"
+    assert report.payload_count == 1
+    assert report.payloads[0].source_id == "official_ofac_sdn_xml"
+    assert report.payloads[0].row_count == 0
+    assert report.payloads[0].output_path.exists()
+    assert candidates_path.exists()
+    assert manifest_path.exists()
+    assert "official_policy_source_parse_failed" in {issue.code for issue in report.issues}
+    assert "parser state corrupted" in markdown
+    assert "official_ofac_sdn_xml" in markdown
 
 
 def test_risk_events_fetch_official_sources_cli_help() -> None:

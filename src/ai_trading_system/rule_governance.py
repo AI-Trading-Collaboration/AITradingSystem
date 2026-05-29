@@ -11,6 +11,7 @@ import yaml
 from pydantic import BaseModel, Field, ValidationError, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_RULE_CARDS_PATH = PROJECT_ROOT / "config" / "rule_cards.yaml"
 
@@ -176,8 +177,7 @@ def load_rule_card_store(input_path: Path | str = DEFAULT_RULE_CARDS_PATH) -> Ru
     if not path.exists():
         return RuleCardStore(input_path=path, cards=(), load_errors=(f"文件不存在：{path}",))
     try:
-        with path.open("r", encoding="utf-8") as file:
-            raw = yaml.safe_load(file)
+        raw = safe_load_yaml_path(path)
     except (OSError, yaml.YAMLError) as exc:
         return RuleCardStore(input_path=path, cards=(), load_errors=(str(exc),))
 

@@ -17,6 +17,7 @@ from ai_trading_system.fundamentals.sec_pit_baseline_coverage import (
 )
 from ai_trading_system.fundamentals.sec_pit_shadow_observe import (
     ACTIVE_SHADOW_CONFIG_PATHS,
+    DEFAULT_SEC_PIT_RESEARCH_BASELINE_SCORE_PATH,
     DEFAULT_SEC_PIT_SHADOW_OBSERVE_OUTPUT_DIR,
     PRODUCTION_CONFIG_PATHS,
 )
@@ -26,9 +27,6 @@ SEC_PIT_SHADOW_MONITOR_STATE_POLICY_TASK_ID = "TRADING-046A"
 SEC_PIT_SHADOW_MONITOR_REPORT_TYPE = "sec_pit_shadow_monitor"
 SEC_PIT_SHADOW_MONITOR_PRODUCTION_EFFECT = "none"
 DEFAULT_SEC_PIT_SHADOW_MONITOR_OUTPUT_DIR = PROJECT_ROOT / "outputs" / "sec_pit_shadow_monitor"
-DEFAULT_SEC_PIT_RESEARCH_BASELINE_SCORE_PATH = (
-    PROJECT_ROOT / "data" / "processed" / "research" / "scores_daily_backfill_sec_pit_2023_2026.csv"
-)
 
 MONITOR_STATUSES: tuple[str, ...] = (
     "INSUFFICIENT_MONITORING_SAMPLE",
@@ -1061,22 +1059,29 @@ def _top_rank_label_delta(scores: pd.DataFrame, label_column: str) -> float:
         return np.nan
     deltas: list[float] = []
     for _, group in scores.groupby("decision_date", sort=True):
-        values = group.copy()
-        label = pd.to_numeric(values[label_column], errors="coerce")
-        values = values.loc[label.notna()].copy()
-        if values.empty:
+        label_values = _numeric_array(group[label_column])
+        baseline_rank = _numeric_array(group["baseline_rank"])
+        observe_rank = _numeric_array(group["sec_pit_observe_rank"])
+        valid_label = ~np.isnan(label_values)
+        if not valid_label.any():
             continue
-        baseline_rank = pd.to_numeric(values["baseline_rank"], errors="coerce")
-        observe_rank = pd.to_numeric(values["sec_pit_observe_rank"], errors="coerce")
-        if baseline_rank.isna().all() or observe_rank.isna().all():
+        baseline_mask = valid_label & ~np.isnan(baseline_rank)
+        observe_mask = valid_label & ~np.isnan(observe_rank)
+        if not baseline_mask.any() or not observe_mask.any():
             continue
-        baseline_row = values.loc[baseline_rank.idxmin()]
-        observe_row = values.loc[observe_rank.idxmin()]
-        baseline_label = _float_or_nan(baseline_row.get(label_column))
-        observe_label = _float_or_nan(observe_row.get(label_column))
+        baseline_indices = np.flatnonzero(baseline_mask)
+        observe_indices = np.flatnonzero(observe_mask)
+        baseline_index = baseline_indices[int(np.argmin(baseline_rank[baseline_indices]))]
+        observe_index = observe_indices[int(np.argmin(observe_rank[observe_indices]))]
+        baseline_label = _float_or_nan(label_values[baseline_index])
+        observe_label = _float_or_nan(label_values[observe_index])
         if pd.notna(baseline_label) and pd.notna(observe_label):
             deltas.append(float(observe_label - baseline_label))
     return float(np.mean(deltas)) if deltas else np.nan
+
+
+def _numeric_array(values: object) -> np.ndarray:
+    return pd.to_numeric(values, errors="coerce").to_numpy(dtype=float, na_value=np.nan)
 
 
 def _rank_correlation(left: object, right: object) -> float:

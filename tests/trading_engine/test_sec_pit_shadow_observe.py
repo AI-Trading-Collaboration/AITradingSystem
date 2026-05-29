@@ -10,6 +10,7 @@ import pandas as pd
 from typer.testing import CliRunner
 
 from ai_trading_system.cli_commands import sec_pit as sec_pit_cli
+from ai_trading_system.fundamentals import sec_pit_shadow_observe
 from ai_trading_system.fundamentals.sec_pit_shadow_observe import (
     ACTIVE_SHADOW_CONFIG_PATHS,
     BUCKET_COMPARISON_COLUMNS,
@@ -166,6 +167,64 @@ def test_missing_baseline_degrades_but_preserves_shadow_score_schema(tmp_path: P
     assert tuple(rank_shift.columns) == RANK_SHIFT_COLUMNS
     assert len(scores) > 0
     assert rank_shift.empty
+
+
+def test_default_baseline_dir_prefers_research_backfill_over_production_fallback(
+    tmp_path: Path,
+    monkeypatch: Any,
+) -> None:
+    paths = _write_shadow_inputs(tmp_path)
+    research_baseline = (
+        tmp_path / "data" / "processed" / "research" / "scores_daily_backfill_sec_pit_2023_2026.csv"
+    )
+    production_baseline = tmp_path / "data" / "processed" / "scores_daily.csv"
+    default_baseline_dir = tmp_path / "outputs" / "daily_score"
+    research_baseline.parent.mkdir(parents=True, exist_ok=True)
+    production_baseline.parent.mkdir(parents=True, exist_ok=True)
+    default_baseline_dir.mkdir(parents=True, exist_ok=True)
+    _write_baseline_scores(research_baseline)
+    pd.DataFrame(
+        [
+            {
+                "decision_date": "2023-01-02",
+                "ticker": "NVDA",
+                "baseline_score": 70.0,
+            }
+        ]
+    ).to_csv(production_baseline, index=False)
+    monkeypatch.setattr(
+        sec_pit_shadow_observe,
+        "DEFAULT_SEC_PIT_RESEARCH_BASELINE_SCORE_PATH",
+        research_baseline,
+    )
+    monkeypatch.setattr(
+        sec_pit_shadow_observe,
+        "DEFAULT_PROCESSED_BASELINE_SCORE_PATH",
+        production_baseline,
+    )
+    monkeypatch.setattr(sec_pit_shadow_observe, "DEFAULT_BASELINE_SCORE_DIR", default_baseline_dir)
+
+    artifacts = run_sec_pit_shadow_observe(
+        start=date(2023, 1, 1),
+        end=date(2023, 1, 5),
+        candidate_review_dir=paths["candidate_review_dir"],
+        evaluation_dir=paths["evaluation_dir"],
+        comparison_dir=paths["comparison_dir"],
+        diagnostics_dir=paths["diagnostics_dir"],
+        feature_panel_path=paths["feature_panel_path"],
+        baseline_score_path=None,
+        baseline_score_dir=default_baseline_dir,
+        candidate_feature="capex_intensity",
+        observe_weight=-0.025,
+        max_allowed_weight=0.05,
+        output_dir=tmp_path / "outputs" / "sec_pit_shadow_observe",
+    )
+
+    summary = _read_json(artifacts.summary_json_path)
+    assert summary["artifact_paths"]["baseline_score"] == str(research_baseline)
+    assert summary["baseline_coverage_status"] == "OK"
+    assert summary["baseline_coverage_ratio"] == 1.0
+    assert "Baseline score fallback path was used." not in summary["limitations"]
 
 
 def test_partial_baseline_gap_does_not_limit_shadow_status_when_gate_passes(

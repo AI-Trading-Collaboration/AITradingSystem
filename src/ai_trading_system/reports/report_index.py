@@ -8,9 +8,8 @@ from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
 
-import yaml
-
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 SCHEMA_VERSION = 1
 REPORT_TYPE = "report_index"
@@ -42,7 +41,7 @@ def default_report_index_html_path(output_dir: Path, as_of: date) -> Path:
 def load_report_registry(path: Path = DEFAULT_REPORT_REGISTRY_PATH) -> dict[str, Any]:
     if not path.exists():
         raise FileNotFoundError(f"report registry not found: {path}")
-    raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+    raw = safe_load_yaml_path(path)
     if not isinstance(raw, dict):
         raise ValueError("report registry must be a mapping")
     if raw.get("schema_version") != SCHEMA_VERSION:

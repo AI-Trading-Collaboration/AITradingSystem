@@ -14,6 +14,7 @@ from ai_trading_system.config import (
     DEFAULT_BENCHMARK_POLICY_CONFIG_PATH,
     PROJECT_ROOT,
 )
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 BenchmarkRole = Literal[
     "broad_market_beta",
@@ -182,8 +183,7 @@ def load_benchmark_policy(
             load_errors=(f"文件不存在：{path}",),
         )
     try:
-        with path.open("r", encoding="utf-8") as file:
-            raw = yaml.safe_load(file)
+        raw = safe_load_yaml_path(path)
     except (OSError, yaml.YAMLError) as exc:
         return BenchmarkPolicyStore(input_path=path, policy=None, load_errors=(str(exc),))
 

@@ -4,9 +4,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
-import yaml
 
 from ai_trading_system.config import DEFAULT_SEC_COMPANIES_CONFIG_PATH, PROJECT_ROOT
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_TICKER_ALIASES_CONFIG_PATH = PROJECT_ROOT / "config" / "ticker_aliases.yaml"
 
@@ -25,8 +25,7 @@ class TickerAliasResolution:
 def load_ticker_aliases(path: Path = DEFAULT_TICKER_ALIASES_CONFIG_PATH) -> dict[str, str]:
     if not path.exists():
         return {}
-    with path.open("r", encoding="utf-8") as file:
-        raw = yaml.safe_load(file) or {}
+    raw = safe_load_yaml_path(path) or {}
     aliases = raw.get("aliases", raw)
     if not isinstance(aliases, dict):
         raise ValueError(f"ticker aliases config must be a mapping: {path}")

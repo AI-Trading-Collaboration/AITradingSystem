@@ -10,6 +10,7 @@ import pandas as pd
 import yaml
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_FEATURE_AVAILABILITY_CONFIG_PATH = PROJECT_ROOT / "config" / "feature_availability.yaml"
 ALLOWED_MISSING_AVAILABLE_TIME_POLICIES = {"downgrade_to_c", "exclude_from_a_b"}
@@ -124,7 +125,7 @@ def build_feature_availability_report(
         )
     else:
         try:
-            raw = yaml.safe_load(input_path.read_text(encoding="utf-8")) or {}
+            raw = safe_load_yaml_path(input_path) or {}
             rules = _parse_rules(raw.get("rules", ()), issues)
         except (OSError, yaml.YAMLError, TypeError, ValueError) as exc:
             issues.append(

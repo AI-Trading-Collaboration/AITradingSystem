@@ -6,10 +6,10 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal, Self
 
-import yaml
 from pydantic import BaseModel, Field, model_validator
 
 from ai_trading_system.config import UniverseConfig, WatchlistConfig
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_WATCHLIST_LIFECYCLE_PATH = (
     Path(__file__).resolve().parents[2] / "config" / "watchlist_lifecycle.yaml"
@@ -113,8 +113,7 @@ def load_watchlist_lifecycle(
     path: Path | str = DEFAULT_WATCHLIST_LIFECYCLE_PATH,
 ) -> WatchlistLifecycleConfig:
     input_path = Path(path)
-    with input_path.open("r", encoding="utf-8") as file:
-        raw: Any = yaml.safe_load(file) or {}
+    raw: Any = safe_load_yaml_path(input_path) or {}
     return WatchlistLifecycleConfig.model_validate(raw)
 
 

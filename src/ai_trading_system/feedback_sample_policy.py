@@ -4,9 +4,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import yaml
-
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_FEEDBACK_SAMPLE_POLICY_PATH = PROJECT_ROOT / "config" / "feedback_sample_policy.yaml"
 
@@ -32,7 +31,7 @@ class FeedbackSamplePolicy:
 def load_feedback_sample_policy(
     path: Path = DEFAULT_FEEDBACK_SAMPLE_POLICY_PATH,
 ) -> FeedbackSamplePolicy:
-    payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+    payload = safe_load_yaml_path(path)
     if not isinstance(payload, dict):
         raise ValueError(f"feedback sample policy must be a mapping: {path}")
     policy = FeedbackSamplePolicy(

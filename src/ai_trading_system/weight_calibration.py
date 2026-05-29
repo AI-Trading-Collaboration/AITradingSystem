@@ -7,10 +7,10 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Literal, Self
 
-import yaml
 from pydantic import BaseModel, Field, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_WEIGHT_PROFILE_PATH = PROJECT_ROOT / "config" / "weights" / "weight_profile_current.yaml"
 DEFAULT_APPROVED_CALIBRATION_OVERLAY_PATH = (
@@ -236,8 +236,7 @@ class CalibrationApplication:
 
 def load_weight_profile(path: Path | str = DEFAULT_WEIGHT_PROFILE_PATH) -> WeightProfile:
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as file:
-        raw = yaml.safe_load(file)
+    raw = safe_load_yaml_path(config_path)
     return WeightProfile.model_validate(raw)
 
 

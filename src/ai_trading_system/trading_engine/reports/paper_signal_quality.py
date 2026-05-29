@@ -9,6 +9,8 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.yaml_loader import safe_load_yaml_path
+
 PAPER_SIGNAL_QUALITY_SCHEMA_VERSION = 1
 PAPER_SIGNAL_QUALITY_WINDOWS: tuple[int, ...] = (7, 14, 30)
 PAPER_SIGNAL_QUALITY_REPORT_TYPE = "paper_signal_quality"
@@ -932,7 +934,7 @@ def _empty_group_stats() -> dict[str, dict[str, _GroupStats]]:
 
 def _load_policy(path: Path) -> dict[str, Any]:
     try:
-        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+        raw = safe_load_yaml_path(path)
     except (OSError, yaml.YAMLError) as exc:
         raise ValueError(f"failed to read paper signal quality policy: {path}") from exc
     if not isinstance(raw, dict):

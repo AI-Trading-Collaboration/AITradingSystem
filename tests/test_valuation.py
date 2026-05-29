@@ -5,6 +5,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
+import ai_trading_system.yaml_loader as yaml_loader_module
 from ai_trading_system.cli import app
 from ai_trading_system.config import load_universe, load_watchlist
 from ai_trading_system.valuation import (
@@ -32,6 +33,67 @@ def test_validate_valuation_snapshot_store_passes_manual_snapshot(tmp_path: Path
     assert report.status == "PASS"
     assert report.snapshot_count == 1
     assert report.ticker_count == 1
+
+
+def test_load_valuation_snapshot_store_parses_yaml_from_text_snapshot(
+    tmp_path: Path,
+    monkeypatch,
+) -> None:
+    snapshot_path = tmp_path / "nvda.yaml"
+    _write_valid_snapshot(snapshot_path)
+    seen_payload_types: list[type[object]] = []
+    seen_loader_names: list[str] = []
+    real_yaml_load = yaml_loader_module.yaml.load
+
+    def spy_yaml_load(payload: object, *, Loader: type[object]) -> object:
+        seen_payload_types.append(type(payload))
+        seen_loader_names.append(Loader.__name__)
+        return real_yaml_load(payload, Loader=Loader)
+
+    monkeypatch.setattr(yaml_loader_module.yaml, "load", spy_yaml_load)
+
+    store = load_valuation_snapshot_store(snapshot_path)
+
+    assert store.load_errors == ()
+    assert len(store.loaded) == 1
+    assert seen_payload_types == [str]
+    assert seen_loader_names == [yaml_loader_module._SAFE_LOADER.__name__]
+
+
+def test_load_watchlist_parses_yaml_from_text_snapshot(monkeypatch) -> None:
+    seen_payload_types: list[type[object]] = []
+    seen_loader_names: list[str] = []
+    real_yaml_load = yaml_loader_module.yaml.load
+
+    def spy_yaml_load(payload: object, *, Loader: type[object]) -> object:
+        seen_payload_types.append(type(payload))
+        seen_loader_names.append(Loader.__name__)
+        return real_yaml_load(payload, Loader=Loader)
+
+    monkeypatch.setattr(yaml_loader_module.yaml, "load", spy_yaml_load)
+
+    watchlist = load_watchlist()
+
+    assert watchlist.items
+    assert seen_payload_types == [str]
+    assert seen_loader_names == [yaml_loader_module._SAFE_LOADER.__name__]
+
+
+def test_validate_valuation_snapshot_store_reports_non_utf8_yaml(
+    tmp_path: Path,
+) -> None:
+    snapshot_path = tmp_path / "bad_encoding.yaml"
+    snapshot_path.write_bytes(b"\xff\xfe\x00\x00")
+
+    report = validate_valuation_snapshot_store(
+        store=load_valuation_snapshot_store(snapshot_path),
+        universe=load_universe(),
+        watchlist=load_watchlist(),
+        as_of=date(2026, 5, 2),
+    )
+
+    assert report.passed is False
+    assert "valuation_load_error" in {issue.code for issue in report.issues}
 
 
 def test_validate_valuation_snapshot_store_rejects_unknown_ticker(tmp_path: Path) -> None:

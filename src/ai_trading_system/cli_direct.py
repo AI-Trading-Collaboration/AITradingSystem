@@ -7,6 +7,8 @@ from collections.abc import Sequence
 import typer
 
 from ai_trading_system import cli
+from ai_trading_system.cli_commands import docs as docs_cli
+from ai_trading_system.cli_commands import sec_pit as sec_pit_cli
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -29,11 +31,23 @@ def _dispatch(args: list[str]) -> None:
             full_universe=_flag(args, "--full-universe"),
         )
         return
+    if args[:1] == ["validate-data"]:
+        cli.validate_data(
+            as_of=_option(args, "--as-of"),
+            full_universe=_flag(args, "--full-universe"),
+        )
+        return
     if args[:2] == ["pit-snapshots", "fetch-fmp-forward"]:
         cli.fetch_fmp_forward_pit_command(
             as_of=_option(args, "--as-of"),
             continue_on_failure=_flag(args, "--continue-on-failure"),
         )
+        return
+    if args[:2] == ["pit-snapshots", "build-manifest"]:
+        cli.build_pit_snapshot_manifest_command(as_of=_option(args, "--as-of"))
+        return
+    if args[:2] == ["pit-snapshots", "validate"]:
+        cli.validate_pit_snapshots_command(as_of=_option(args, "--as-of"))
         return
     if args[:2] == ["fundamentals", "download-sec-companyfacts"]:
         cli.download_sec_companyfacts_command(
@@ -125,7 +139,22 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:2] == ["reports", "index"]:
-        cli.report_index_command(as_of=_option(args, "--as-of"))
+        cli.report_index_command(
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            latest=_flag(args, "--latest"),
+        )
+        return
+    if args[:2] == ["docs", "report-contract"]:
+        docs_cli.documentation_contract_command(
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            latest=_flag(args, "--latest"),
+        )
+        return
+    if args[:2] == ["sec-pit", "shadow-observe"]:
+        sec_pit_cli.shadow_observe_command(latest=_flag(args, "--latest"))
+        return
+    if args[:2] == ["sec-pit", "shadow-monitor"]:
+        sec_pit_cli.shadow_monitor_command(latest=_flag(args, "--latest"))
         return
     if args[:2] == ["ops", "health"]:
         cli.pipeline_health_command(

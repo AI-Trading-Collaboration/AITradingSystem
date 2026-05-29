@@ -140,17 +140,20 @@ def test_cli_direct_dispatches_daily_feedback_reports(monkeypatch) -> None:
 
 
 def test_cli_direct_dispatches_report_index(monkeypatch) -> None:
-    captured: dict[str, object] = {}
+    calls: list[dict[str, object]] = []
 
     def fake_report_index(**kwargs: object) -> None:
-        captured.update(kwargs)
+        calls.append(kwargs)
 
     monkeypatch.setattr(cli_direct.cli, "report_index_command", fake_report_index)
 
-    exit_code = cli_direct.main(["reports", "index", "--as-of", "2026-05-13"])
+    assert cli_direct.main(["reports", "index", "--as-of", "2026-05-13"]) == 0
+    assert cli_direct.main(["reports", "index", "--latest"]) == 0
 
-    assert exit_code == 0
-    assert captured == {"as_of": "2026-05-13"}
+    assert calls == [
+        {"as_of": "2026-05-13", "latest": False},
+        {"as_of": None, "latest": True},
+    ]
 
 
 def test_cli_direct_dispatches_reader_brief_date_and_latest(monkeypatch) -> None:
@@ -167,6 +170,55 @@ def test_cli_direct_dispatches_reader_brief_date_and_latest(monkeypatch) -> None
     assert calls == [
         {"as_of": "2026-05-13", "latest": False},
         {"as_of": None, "latest": True},
+    ]
+
+
+def test_cli_direct_dispatches_scheduled_task_commands(monkeypatch) -> None:
+    calls: list[tuple[str, dict[str, object]]] = []
+
+    def fake_validate_data(**kwargs: object) -> None:
+        calls.append(("validate_data", kwargs))
+
+    def fake_build_manifest(**kwargs: object) -> None:
+        calls.append(("build_manifest", kwargs))
+
+    def fake_validate_pit(**kwargs: object) -> None:
+        calls.append(("validate_pit", kwargs))
+
+    def fake_docs_contract(**kwargs: object) -> None:
+        calls.append(("docs_contract", kwargs))
+
+    def fake_shadow_observe(**kwargs: object) -> None:
+        calls.append(("shadow_observe", kwargs))
+
+    def fake_shadow_monitor(**kwargs: object) -> None:
+        calls.append(("shadow_monitor", kwargs))
+
+    monkeypatch.setattr(cli_direct.cli, "validate_data", fake_validate_data)
+    monkeypatch.setattr(cli_direct.cli, "build_pit_snapshot_manifest_command", fake_build_manifest)
+    monkeypatch.setattr(cli_direct.cli, "validate_pit_snapshots_command", fake_validate_pit)
+    monkeypatch.setattr(
+        cli_direct.docs_cli,
+        "documentation_contract_command",
+        fake_docs_contract,
+    )
+    monkeypatch.setattr(cli_direct.sec_pit_cli, "shadow_observe_command", fake_shadow_observe)
+    monkeypatch.setattr(cli_direct.sec_pit_cli, "shadow_monitor_command", fake_shadow_monitor)
+
+    assert cli_direct.main(["validate-data", "--as-of", "2026-05-13"]) == 0
+    assert cli_direct.main(["pit-snapshots", "build-manifest", "--as-of", "2026-05-13"]) == 0
+    assert cli_direct.main(["pit-snapshots", "validate", "--as-of", "2026-05-13"]) == 0
+    assert cli_direct.main(["docs", "report-contract", "--latest"]) == 0
+    assert cli_direct.main(["sec-pit", "shadow-observe", "--latest"]) == 0
+    assert cli_direct.main(["sec-pit", "shadow-monitor", "--latest"]) == 0
+
+    assert calls == [
+        ("validate_data", {"as_of": "2026-05-13", "full_universe": False}),
+        ("build_manifest", {"as_of": "2026-05-13"}),
+        ("validate_pit", {"as_of": "2026-05-13"}),
+        ("docs_contract", {"as_of": None, "latest": True}),
+        ("shadow_observe", {"latest": True}),
+        ("shadow_monitor", {"latest": True}),
     ]
 
 

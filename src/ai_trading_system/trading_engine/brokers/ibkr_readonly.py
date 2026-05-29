@@ -9,12 +9,12 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal, Self
 
-import yaml
 from pydantic import BaseModel, Field, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.trading_engine.portfolio.paper_portfolio import PaperPortfolio
 from ai_trading_system.trading_engine.schemas.portfolio_state import PortfolioState
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_IBKR_PAPER_READONLY_CONFIG_PATH = PROJECT_ROOT / "config" / "ibkr_paper_readonly.yaml"
 READONLY_PRODUCTION_EFFECT = "none"
@@ -302,8 +302,7 @@ def load_ibkr_paper_readonly_config(
     path: Path | str = DEFAULT_IBKR_PAPER_READONLY_CONFIG_PATH,
 ) -> IBKRPaperReadOnlyConfig:
     config_path = Path(path)
-    with config_path.open("r", encoding="utf-8") as file:
-        raw = yaml.safe_load(file) or {}
+    raw = safe_load_yaml_path(config_path) or {}
     return IBKRPaperReadOnlyConfig.model_validate(raw)
 
 

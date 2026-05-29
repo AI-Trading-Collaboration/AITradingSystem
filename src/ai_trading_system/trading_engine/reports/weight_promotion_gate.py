@@ -10,6 +10,8 @@ from typing import Any
 
 import yaml
 
+from ai_trading_system.yaml_loader import safe_load_yaml_path
+
 WEIGHT_PROMOTION_GATE_SCHEMA_VERSION = 1
 WEIGHT_PROMOTION_GATE_REPORT_TYPE = "weight_promotion_gate"
 GATE_MODE_MANUAL_REVIEW_ONLY = "manual_review_only"
@@ -1637,7 +1639,7 @@ def _load_yaml_object(path: Path | None) -> dict[str, Any]:
     if path is None or not path.exists():
         return {}
     try:
-        payload = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+        payload = safe_load_yaml_path(path) or {}
     except (OSError, yaml.YAMLError):
         return {}
     return payload if isinstance(payload, dict) else {}

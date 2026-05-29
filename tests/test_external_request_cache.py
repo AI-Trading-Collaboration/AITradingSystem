@@ -17,7 +17,7 @@ from ai_trading_system.data.market_data import (
     RateRequest,
     YFinancePriceProvider,
 )
-from ai_trading_system.external_request_cache import cached_requests_get
+from ai_trading_system.external_request_cache import cached_requests_get, safe_response_headers
 from ai_trading_system.fundamentals.sec_companyfacts import (
     SecCompanyFactsRequest,
     SecEdgarCompanyFactsProvider,
@@ -57,6 +57,14 @@ def test_cached_requests_get_reuses_identical_request_and_redacts_secret(
     assert metadata["request_identity"]["params"]["apikey"] == "***"
     assert "secret-key" not in metadata_text
     assert "another-secret-key" not in metadata_text
+
+
+def test_safe_response_headers_retries_mutating_mapping() -> None:
+    headers = _RaisesOnceHeaders({"content-type": "application/json", "x-request-id": "abc"})
+
+    safe_headers = safe_response_headers(headers)
+
+    assert safe_headers == {"content-type": "application/json", "x-request-id": "abc"}
 
 
 def test_fmp_price_provider_uses_request_cache_for_repeated_request(tmp_path: Path) -> None:
@@ -244,6 +252,18 @@ class _FakeRequests:
     def get(self, url: str, **kwargs: Any) -> _FakeResponse:
         self.calls.append({"url": url, **kwargs})
         return _FakeResponse(self.payload, content=self.content)
+
+
+class _RaisesOnceHeaders(dict[str, str]):
+    def __init__(self, values: dict[str, str]) -> None:
+        super().__init__(values)
+        self._raised = False
+
+    def items(self):  # type: ignore[override]
+        if not self._raised:
+            self._raised = True
+            raise RuntimeError("dictionary keys changed during iteration")
+        return super().items()
 
 
 class _FailingRequests:

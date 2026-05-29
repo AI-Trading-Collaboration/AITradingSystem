@@ -6,9 +6,8 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Literal
 
-import yaml
-
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 CalibrationProtocolSeverity = Literal["ERROR", "WARNING"]
 
@@ -101,7 +100,7 @@ class CalibrationProtocolReport:
 
 def load_calibration_protocol_manifest(path: Path | str) -> dict[str, Any]:
     input_path = Path(path)
-    raw = yaml.safe_load(input_path.read_text(encoding="utf-8"))
+    raw = safe_load_yaml_path(input_path)
     if raw is None:
         return {}
     if not isinstance(raw, dict):

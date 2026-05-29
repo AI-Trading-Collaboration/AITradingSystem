@@ -16,6 +16,7 @@ from ai_trading_system.config import (
     RiskEventsConfig,
     WatchlistConfig,
 )
+from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 CalendarStatus = Literal["baseline_empty", "active", "retired"]
 CatalystStatus = Literal["scheduled", "tentative", "completed", "cancelled"]
@@ -191,8 +192,7 @@ def load_catalyst_calendar(
             load_errors=(f"文件不存在：{path}",),
         )
     try:
-        with path.open("r", encoding="utf-8") as file:
-            raw = yaml.safe_load(file)
+        raw = safe_load_yaml_path(path)
     except (OSError, yaml.YAMLError) as exc:
         return CatalystCalendarStore(input_path=path, calendar=None, load_errors=(str(exc),))
 
