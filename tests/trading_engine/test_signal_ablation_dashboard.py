@@ -44,9 +44,12 @@ def test_dashboard_reads_latest_signal_ablation_summary(tmp_path: Path) -> None:
     assert card["backtest_mode"] == "full_signal_backtest_limited"
     assert card["fallback_signals_count"] >= 3
     assert card["can_support_candidate_promotion"] is False
+    assert card["real_signals_used_in_score"] is True
+    assert "No promotion-credit signals" in card["no_promotion_credit_reason"]
     assert card["production_effect"] == "none"
     assert "Signal Ablation Summary" in html
     assert "promotion credit signals" in html
+    assert "No-promotion-credit reason" in html
 
 
 def test_reader_brief_displays_signal_ablation_summary(
@@ -74,4 +77,7 @@ def test_reader_brief_displays_signal_ablation_summary(
     assert review["signal_ablation_status"] == "LIMITED"
     assert "Signal ablation" in review["signal_ablation_summary"]
     assert "promotion" in review["signal_ablation_summary"]
+    assert "No promotion-credit signals" in review[
+        "signal_ablation_no_promotion_credit_reason"
+    ]
     assert isinstance(review["signal_ablation_negative_signals"], list)

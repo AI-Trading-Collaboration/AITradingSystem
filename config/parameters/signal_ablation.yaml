@@ -29,6 +29,10 @@ thresholds:
   turnover_noise_band: 0.10
 stability:
   min_walk_forward_windows: 2
+diagnostics:
+  score_delta_epsilon: 0.000001
+  portfolio_weight_delta_epsilon: 0.000001
+  non_neutral_value_epsilon: 0.000001
 output:
   signal_ablation_dir: "artifacts/signal_ablation"
   report_alias_dir: "outputs/reports"

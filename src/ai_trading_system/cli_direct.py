@@ -83,6 +83,14 @@ def _dispatch(args: list[str]) -> None:
             config_path=_signal_ablation_config_option(args, "--config"),
             signals=_values_after_option(args, "--signals"),
             dry_run=_flag(args, "--dry-run"),
+            debug=_flag(args, "--debug"),
+        )
+        return
+    if args[:2] == ["signals", "explain-ablation"]:
+        cli.signals_explain_ablation_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            input_path=_optional_path(args, "--input-path"),
         )
         return
     if args[:2] == ["signals", "validate-ablation"]:

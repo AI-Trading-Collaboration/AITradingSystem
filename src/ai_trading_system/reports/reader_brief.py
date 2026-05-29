@@ -760,6 +760,14 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "signal_ablation_negative_signals",
                         parameter_shadow.get("signal_ablation_negative_signals"),
                     ),
+                    (
+                        "signal_ablation_no_promotion_credit_reason",
+                        parameter_shadow.get("signal_ablation_no_promotion_credit_reason"),
+                    ),
+                    (
+                        "signal_ablation_implementation_warnings",
+                        parameter_shadow.get("signal_ablation_implementation_warnings"),
+                    ),
                     ("manual_review_required", parameter_shadow.get("manual_review_required")),
                     ("risk", parameter_shadow.get("risk")),
                     ("diagnostic_report", parameter_shadow.get("diagnostic_report")),
@@ -1660,6 +1668,14 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
                 [],
             ),
             "signal_ablation_negative_signals": ablation_summary.get("negative_signals", []),
+            "signal_ablation_no_promotion_credit_reason": ablation_summary.get(
+                "no_promotion_credit_reason",
+                "",
+            ),
+            "signal_ablation_implementation_warnings": ablation_summary.get(
+                "implementation_warnings",
+                [],
+            ),
             "manual_review_required": True,
             "risk": "Shadow parameter backtest artifact missing; Reader Brief does not run it.",
             "diagnostic_report": str(diagnostic_path) if diagnostic_path.exists() else "",
@@ -1716,6 +1732,14 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
             [],
         ),
         "signal_ablation_negative_signals": ablation_summary.get("negative_signals", []),
+        "signal_ablation_no_promotion_credit_reason": ablation_summary.get(
+            "no_promotion_credit_reason",
+            "",
+        ),
+        "signal_ablation_implementation_warnings": ablation_summary.get(
+            "implementation_warnings",
+            [],
+        ),
         "manual_review_required": metadata.get("manual_review_required") is True,
         "risk": _text(decision.get("reason"), "Open shadow backtest report before review."),
         "diagnostic_report": diagnostic_path_text,
@@ -1778,17 +1802,28 @@ def _signal_ablation_review_summary(as_of: date) -> dict[str, Any]:
             "status": "MISSING",
             "promotion_credit_signals": [],
             "negative_signals": [],
+            "no_promotion_credit_reason": "",
+            "implementation_warnings": [],
             "summary_sentence": (
                 "Signal ablation summary is missing; Reader Brief does not run ablation."
             ),
         }
     metadata = _mapping(payload.get("metadata"))
     summary = _mapping(payload.get("summary"))
+    diagnostics = _mapping(payload.get("diagnostics"))
     promotion_credit = _texts(summary.get("promotion_credit_signals"))
     negative = _texts(summary.get("negative_signals"))
     fallback = _texts(summary.get("fallback_signals"))
+    implementation_warnings = _texts(diagnostics.get("implementation_warnings"))
+    no_credit_reason = _text(summary.get("no_promotion_credit_reason"))
     status = _text(metadata.get("status"), "UNKNOWN")
-    if negative:
+    if implementation_warnings:
+        sentence = (
+            "Signal ablation detected an implementation warning: "
+            f"{implementation_warnings[0]}. The result should not be used for parameter "
+            "review until fixed."
+        )
+    elif negative:
         sentence = (
             "Signal ablation detected potential negative contribution from "
             f"{_format_english_list(negative)}. This should be reviewed before expanding "
@@ -1799,6 +1834,7 @@ def _signal_ablation_review_summary(as_of: date) -> dict[str, Any]:
             f"Signal ablation remains {status}. "
             f"Promotion-credit-eligible signals: "
             f"{_format_english_list(promotion_credit) or 'none'}. "
+            f"{no_credit_reason or 'Real signal contribution remains below promotion credit.'} "
             f"Fallback signals: {_format_english_list(fallback) or 'none'}; "
             "candidate promotion remains disabled."
         )
@@ -1808,6 +1844,12 @@ def _signal_ablation_review_summary(as_of: date) -> dict[str, Any]:
         "promotion_credit_signals": promotion_credit,
         "negative_signals": negative,
         "fallback_signals": fallback,
+        "no_promotion_credit_reason": no_credit_reason,
+        "implementation_warnings": implementation_warnings,
+        "all_real_signals_used_in_score": diagnostics.get(
+            "all_real_signals_used_in_score",
+            False,
+        ),
         "summary_sentence": sentence,
     }
 

@@ -119,6 +119,10 @@ def simulate_parameter_portfolio(
                 "equity": float(equity.loc[timestamp]),
                 "risk_asset_exposure": float(exposure_series.loc[timestamp]),
                 "average_composite_score": float(allocation.daily_score.loc[timestamp]),
+                "portfolio_weights": {
+                    str(asset): _float_or_zero(shifted_target.loc[timestamp, asset])
+                    for asset in shifted_target.columns
+                },
             }
         )
     return PortfolioSimulationResult(

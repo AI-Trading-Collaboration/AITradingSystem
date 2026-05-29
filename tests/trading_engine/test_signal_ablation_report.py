@@ -35,6 +35,12 @@ def test_signal_ablation_markdown_and_report_alias(tmp_path: Path) -> None:
 
     assert validate_signal_ablation_payload(run.payload) == []
     assert "# Signal Ablation Summary" in markdown
+    assert "## Implementation Diagnostics" in markdown
+    assert "## Signal Usage Diagnostics" in markdown
+    assert "## Score Impact Diagnostics" in markdown
+    assert "## Portfolio Impact Diagnostics" in markdown
+    assert "## Threshold Diagnostics" in markdown
+    assert "## Why No Promotion-credit Signals?" in markdown
     assert "## 3. Signal Contribution Ranking" in markdown
     assert "## 6. Proxy and Fallback Signal Warnings" in markdown
     assert alias_json.exists()

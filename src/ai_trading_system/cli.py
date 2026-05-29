@@ -754,6 +754,7 @@ from ai_trading_system.trading_engine.reports.shadow_backtest_report import (
 from ai_trading_system.trading_engine.signal_ablation import (
     latest_signal_ablation_path,
     load_signal_ablation_payload,
+    render_signal_ablation_diagnostics,
     run_signal_ablation,
     signal_ablation_payload_date,
     validate_signal_ablation_payload,
@@ -4155,6 +4156,10 @@ def signals_ablation_command(
         bool,
         typer.Option(help="写入 outputs/dry_runs/signal_ablation，不写正式 artifacts。"),
     ] = False,
+    debug: Annotated[
+        bool,
+        typer.Option(help="输出逐信号 snapshot -> score -> portfolio -> metrics 诊断。"),
+    ] = False,
 ) -> None:
     """运行 remove-one-signal ablation 并生成只读贡献验证报告。"""
     if latest and as_of:
@@ -4185,6 +4190,39 @@ def signals_ablation_command(
             "can_support_candidate_promotion="
             f"{summary.get('can_support_candidate_promotion', False)}"
         )
+        reason = summary.get("no_promotion_credit_reason")
+        if reason:
+            console.print(f"no_promotion_credit_reason={reason}")
+    if debug:
+        console.print("")
+        console.print(render_signal_ablation_diagnostics(run.payload))
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@signals_app.command("explain-ablation")
+def signals_explain_ablation_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新正式 signal ablation artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="ablation 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 signal_ablation_summary.json 路径。"),
+    ] = None,
+) -> None:
+    """解释既有 signal ablation artifact 的诊断链路。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    source_path = input_path or _resolve_signal_ablation_path(latest=latest, as_of=as_of)
+    payload = load_signal_ablation_payload(source_path)
+    issues = validate_signal_ablation_payload(payload)
+    if issues:
+        raise typer.BadParameter("signal ablation JSON 校验失败：" + "; ".join(issues))
+    console.print(render_signal_ablation_diagnostics(payload))
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
 
 
@@ -4218,9 +4256,23 @@ def signals_validate_ablation_command(
         for issue in issues:
             console.print(f"[red]- {issue}[/red]")
         raise typer.Exit(code=1)
+    diagnostics = payload.get("diagnostics", {}) if isinstance(payload, dict) else {}
+    diagnostics_present = isinstance(diagnostics, dict) and bool(diagnostics)
+    real_signals_used = (
+        diagnostics.get("all_real_signals_used_in_score")
+        if isinstance(diagnostics, dict)
+        else False
+    )
+    classification_reasons = (
+        diagnostics.get("classification_reasons_present")
+        if isinstance(diagnostics, dict)
+        else False
+    )
     console.print(
-        f"status={status}；production_effect=none；manual_review_required=true；"
-        "auto_promotion=false"
+        f"status={status}；diagnostics_present={str(diagnostics_present).lower()}；"
+        f"real_signals_used_in_score={str(real_signals_used is True).lower()}；"
+        f"classification_reasons_present={str(classification_reasons is True).lower()}；"
+        "production_effect=none；manual_review_required=true；auto_promotion=false"
     )
 
 
@@ -6708,6 +6760,9 @@ def signal_ablation_report_command(
             f"negative_signals={len(summary.get('negative_signals', []))}；"
             f"promotion_credit_signals={len(summary.get('promotion_credit_signals', []))}"
         )
+        reason = summary.get("no_promotion_credit_reason")
+        if reason:
+            console.print(f"no_promotion_credit_reason={reason}")
     console.print(f"JSON：{json_path}")
     console.print(f"Markdown：{markdown_path}")
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")

@@ -54,6 +54,14 @@ def test_signal_ablation_remove_one_signal_writes_summary(tmp_path: Path) -> Non
     assert trend["quality"] == "price_derived"
     assert "sharpe_ratio_delta" in trend["remove_one_signal_delta"]
     assert trend["window_stability"]["window_count"] >= 2
+    assert trend["used_in_score_calculation"] is True
+    assert trend["classification_reason"]
+    assert trend["diagnostic_status"] in {
+        "VALID",
+        "BELOW_THRESHOLD",
+        "NO_SCORE_IMPACT",
+        "NO_PORTFOLIO_IMPACT",
+    }
     assert sector["quality"] == "price_derived"
     assert sector["window_stability"]["window_count"] >= 2
 
@@ -68,6 +76,7 @@ def test_signal_ablation_remove_one_signal_writes_summary(tmp_path: Path) -> Non
 
     summary = payload["summary"]
     assert summary["can_support_candidate_promotion"] is False
+    assert "No promotion-credit signals" in summary["no_promotion_credit_reason"]
     assert set(summary["fallback_signals"]) >= {"earnings_quality", "valuation_risk", "event_risk"}
 
 
@@ -233,6 +242,11 @@ def _write_signal_ablation_config(tmp_path: Path, shadow_config_path: Path) -> P
                     "turnover_noise_band": 0.10,
                 },
                 "stability": {"min_walk_forward_windows": 2},
+                "diagnostics": {
+                    "score_delta_epsilon": 0.000001,
+                    "portfolio_weight_delta_epsilon": 0.000001,
+                    "non_neutral_value_epsilon": 0.000001,
+                },
                 "output": {
                     "signal_ablation_dir": str(tmp_path / "artifacts" / "signal_ablation"),
                     "report_alias_dir": str(tmp_path / "outputs" / "reports"),

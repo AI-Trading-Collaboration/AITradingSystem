@@ -2250,13 +2250,20 @@ def _signal_ablation_summary(report: DailyTaskDashboardReport) -> TraceRecord:
             "fallback_signals_count": 0,
             "promotion_credit_signals": [],
             "can_support_candidate_promotion": False,
+            "real_signals_used_in_score": False,
+            "ablation_changed_scores": False,
+            "ablation_changed_portfolio": False,
+            "implementation_warnings_count": 0,
+            "no_promotion_credit_reason": "",
             "manual_review_required": True,
             "production_effect": ProductionEffect.NONE.value,
             "risk": "Signal ablation summary 缺失；dashboard 不运行 ablation。",
         }
     metadata = _mapping_value(payload, "metadata")
     summary = _mapping_value(payload, "summary")
+    diagnostics = _mapping_value(payload, "diagnostics")
     warnings = _strings(payload.get("warnings"))
+    implementation_warnings = _strings(diagnostics.get("implementation_warnings"))
     risks: list[str] = []
     if metadata.get("production_effect") != ProductionEffect.NONE.value:
         risks.append("signal ablation production_effect 不是 none。")
@@ -2264,6 +2271,7 @@ def _signal_ablation_summary(report: DailyTaskDashboardReport) -> TraceRecord:
         risks.append("signal ablation auto_promotion 不是 false。")
     if summary.get("can_support_candidate_promotion") is not False:
         risks.append("signal ablation 不应直接支持 candidate promotion。")
+    risks.extend(implementation_warnings[:2])
     risks.extend(warnings[:2])
     markdown_path = path.with_suffix(".md")
     return {
@@ -2284,6 +2292,14 @@ def _signal_ablation_summary(report: DailyTaskDashboardReport) -> TraceRecord:
             "can_support_candidate_promotion",
             False,
         ),
+        "real_signals_used_in_score": diagnostics.get("all_real_signals_used_in_score")
+        is True,
+        "ablation_changed_scores": diagnostics.get("all_ablation_runs_changed_scores")
+        is True,
+        "ablation_changed_portfolio": diagnostics.get("any_score_to_portfolio_disconnect")
+        is not True,
+        "implementation_warnings_count": len(implementation_warnings),
+        "no_promotion_credit_reason": summary.get("no_promotion_credit_reason", ""),
         "manual_review_required": metadata.get("manual_review_required") is True,
         "production_effect": metadata.get("production_effect", ProductionEffect.NONE.value),
         "risk": "；".join(risks)
@@ -9240,12 +9256,32 @@ def _render_signal_ablation_summary(report: DailyTaskDashboardReport) -> str:
                 "Can support candidate promotion",
                 summary.get("can_support_candidate_promotion", False),
             ),
+            _summary_item(
+                "Real signals used in score",
+                "Yes" if summary.get("real_signals_used_in_score") else "No",
+            ),
+            _summary_item(
+                "Ablation changed scores",
+                "Yes" if summary.get("ablation_changed_scores") else "No",
+            ),
+            _summary_item(
+                "Ablation changed portfolio",
+                "Yes" if summary.get("ablation_changed_portfolio") else "No",
+            ),
+            _summary_item(
+                "Implementation warnings",
+                summary.get("implementation_warnings_count", 0),
+            ),
             _summary_item("manual review", summary.get("manual_review_required", True)),
             _summary_item(
                 "production_effect",
                 summary.get("production_effect", ProductionEffect.NONE.value),
             ),
             "</div>",
+            (
+                '<p class="muted"><strong>No-promotion-credit reason：</strong>'
+                f"{_text(summary.get('no_promotion_credit_reason', ''))}</p>"
+            ),
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'
                 f"{_text(summary.get('risk', ''))}</p>"

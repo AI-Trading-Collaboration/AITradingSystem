@@ -233,6 +233,12 @@ class SignalAblationStabilityConfig(BaseModel):
     min_walk_forward_windows: int = Field(gt=0)
 
 
+class SignalAblationDiagnosticsConfig(BaseModel):
+    score_delta_epsilon: float = Field(default=0.000001, ge=0.0)
+    portfolio_weight_delta_epsilon: float = Field(default=0.000001, ge=0.0)
+    non_neutral_value_epsilon: float = Field(default=0.000001, ge=0.0)
+
+
 class SignalAblationOutputConfig(BaseModel):
     signal_ablation_dir: str
     report_alias_dir: str
@@ -255,6 +261,9 @@ class SignalAblationConfig(BaseModel):
     default_mode: Literal["remove_one_signal", "neutralize_one_signal"]
     thresholds: SignalAblationThresholds
     stability: SignalAblationStabilityConfig
+    diagnostics: SignalAblationDiagnosticsConfig = Field(
+        default_factory=SignalAblationDiagnosticsConfig
+    )
     output: SignalAblationOutputConfig
 
     @model_validator(mode="after")
