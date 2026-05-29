@@ -90,6 +90,20 @@ CI cannot validate local untracked market data because the cache is intentionall
 not committed. This does not weaken the runtime requirement: local data-dependent
 commands must enforce the gate themselves.
 
+## Periodic Operations Runbook
+
+`docs/operations/operations_runbook.md` is the entry-point runbook for periodic
+operations. Before executing any daily, weekly, biweekly, monthly, governance,
+scheduler validation, or artifact catalog consistency task, Codex must read that
+runbook and use it to confirm the cadence, trigger path, required quality gates,
+expected artifacts, and production-effect boundary.
+
+The daily scheduler trigger is the unified external entry point for periodic
+operations. Longer-cadence tasks may only be reached through a documented,
+date- and condition-gated orchestration path, or run manually with the runbook's
+checks applied. Do not scatter weekly, monthly, governance, or catalog checks
+into separate unaudited scheduler entries.
+
 ## Change Discipline
 
 - Prefer durable, well-tested fixes over local patches that only satisfy the
