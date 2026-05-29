@@ -768,6 +768,40 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "signal_ablation_implementation_warnings",
                         parameter_shadow.get("signal_ablation_implementation_warnings"),
                     ),
+                    (
+                        "signal_calibration_status",
+                        parameter_shadow.get("signal_calibration_status"),
+                    ),
+                    (
+                        "signal_calibration_summary",
+                        parameter_shadow.get("signal_calibration_summary"),
+                    ),
+                    (
+                        "signal_calibration_best_profile",
+                        parameter_shadow.get("signal_calibration_best_profile"),
+                    ),
+                    (
+                        "signal_calibration_profiles_tested",
+                        parameter_shadow.get("signal_calibration_profiles_tested"),
+                    ),
+                    (
+                        "signal_calibration_positive_signal_count",
+                        parameter_shadow.get("signal_calibration_positive_signal_count"),
+                    ),
+                    (
+                        "signal_calibration_promotion_credit_signal_count",
+                        parameter_shadow.get(
+                            "signal_calibration_promotion_credit_signal_count"
+                        ),
+                    ),
+                    (
+                        "signal_calibration_neutral_warning",
+                        parameter_shadow.get("signal_calibration_neutral_warning"),
+                    ),
+                    (
+                        "signal_calibration_correlation_warning",
+                        parameter_shadow.get("signal_calibration_correlation_warning"),
+                    ),
                     ("manual_review_required", parameter_shadow.get("manual_review_required")),
                     ("risk", parameter_shadow.get("risk")),
                     ("diagnostic_report", parameter_shadow.get("diagnostic_report")),
@@ -1624,6 +1658,7 @@ def _backtest_shadow_governance(
 
 def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
     ablation_summary = _signal_ablation_review_summary(as_of)
+    calibration_summary = _signal_calibration_review_summary(as_of)
     path = (
         PROJECT_ROOT
         / "artifacts"
@@ -1675,6 +1710,29 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
             "signal_ablation_implementation_warnings": ablation_summary.get(
                 "implementation_warnings",
                 [],
+            ),
+            "signal_calibration_status": calibration_summary.get("status", "MISSING"),
+            "signal_calibration_summary": calibration_summary.get("summary_sentence", ""),
+            "signal_calibration_best_profile": calibration_summary.get("best_profile", ""),
+            "signal_calibration_profiles_tested": calibration_summary.get(
+                "profiles_tested",
+                0,
+            ),
+            "signal_calibration_positive_signal_count": calibration_summary.get(
+                "positive_signal_count",
+                0,
+            ),
+            "signal_calibration_promotion_credit_signal_count": calibration_summary.get(
+                "promotion_credit_signal_count",
+                0,
+            ),
+            "signal_calibration_neutral_warning": calibration_summary.get(
+                "neutral_warning",
+                "",
+            ),
+            "signal_calibration_correlation_warning": calibration_summary.get(
+                "correlation_warning",
+                "",
             ),
             "manual_review_required": True,
             "risk": "Shadow parameter backtest artifact missing; Reader Brief does not run it.",
@@ -1739,6 +1797,23 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
         "signal_ablation_implementation_warnings": ablation_summary.get(
             "implementation_warnings",
             [],
+        ),
+        "signal_calibration_status": calibration_summary.get("status", "MISSING"),
+        "signal_calibration_summary": calibration_summary.get("summary_sentence", ""),
+        "signal_calibration_best_profile": calibration_summary.get("best_profile", ""),
+        "signal_calibration_profiles_tested": calibration_summary.get("profiles_tested", 0),
+        "signal_calibration_positive_signal_count": calibration_summary.get(
+            "positive_signal_count",
+            0,
+        ),
+        "signal_calibration_promotion_credit_signal_count": calibration_summary.get(
+            "promotion_credit_signal_count",
+            0,
+        ),
+        "signal_calibration_neutral_warning": calibration_summary.get("neutral_warning", ""),
+        "signal_calibration_correlation_warning": calibration_summary.get(
+            "correlation_warning",
+            "",
         ),
         "manual_review_required": metadata.get("manual_review_required") is True,
         "risk": _text(decision.get("reason"), "Open shadow backtest report before review."),
@@ -1852,6 +1927,105 @@ def _signal_ablation_review_summary(as_of: date) -> dict[str, Any]:
         ),
         "summary_sentence": sentence,
     }
+
+
+def _signal_calibration_review_summary(as_of: date) -> dict[str, Any]:
+    path = _latest_signal_calibration_path(as_of)
+    if path is None:
+        return {
+            "status": "MISSING",
+            "best_profile": "",
+            "profiles_tested": 0,
+            "positive_signal_count": 0,
+            "promotion_credit_signal_count": 0,
+            "neutral_warning": "",
+            "correlation_warning": "",
+            "summary_sentence": (
+                "Signal calibration summary is missing; Reader Brief does not run calibration."
+            ),
+        }
+    payload = _read_optional_json(path)
+    if not payload:
+        return {
+            "status": "MISSING",
+            "best_profile": "",
+            "profiles_tested": 0,
+            "positive_signal_count": 0,
+            "promotion_credit_signal_count": 0,
+            "neutral_warning": "",
+            "correlation_warning": "",
+            "summary_sentence": (
+                "Signal calibration summary is unreadable; Reader Brief does not run calibration."
+            ),
+        }
+    metadata = _mapping(payload.get("metadata"))
+    ranking = _mapping(payload.get("ranking"))
+    profiles = _records(payload.get("profiles"))
+    best_profile = _text(ranking.get("best_profile"))
+    best = next(
+        (item for item in profiles if _text(item.get("profile_name")) == best_profile),
+        {},
+    )
+    ablation = _mapping(best.get("ablation"))
+    distribution = _mapping(best.get("signal_distribution"))
+    correlation = _mapping(best.get("signal_correlation"))
+    neutral_warnings = [
+        _text(item.get("warning"))
+        for item in distribution.values()
+        if isinstance(item, dict) and _text(item.get("warning"))
+    ]
+    correlation_warning = _text(correlation.get("warning"))
+    positive_count = _int(ablation.get("positive_signals"))
+    promotion_credit_count = _int(ablation.get("promotion_credit_signals"))
+    status = _text(metadata.get("status"), "UNKNOWN")
+    if positive_count > 0:
+        sentence = (
+            "Signal calibration tested multiple trend and sector profiles. "
+            f"Best profile `{best_profile}` produced {positive_count} positive real-signal "
+            "contribution(s), but signal quality remains LIMITED and candidate promotion "
+            "remains disabled."
+        )
+    elif neutral_warnings or correlation_warning:
+        sentence = (
+            "Signal calibration tested multiple trend and sector profiles. "
+            f"Best profile `{best_profile}` still shows neutral compression or signal "
+            "correlation risk; candidate promotion remains disabled."
+        )
+    else:
+        sentence = (
+            "Signal calibration did not find a profile with material contribution above "
+            "threshold. Trend/sector formulas may need stronger feature design or portfolio "
+            "sensitivity diagnostics."
+        )
+    return {
+        "status": status,
+        "source_artifact": str(path),
+        "best_profile": best_profile,
+        "profiles_tested": len(profiles),
+        "positive_signal_count": positive_count,
+        "promotion_credit_signal_count": promotion_credit_count,
+        "neutral_warning": neutral_warnings[0] if neutral_warnings else "",
+        "correlation_warning": correlation_warning,
+        "summary_sentence": sentence,
+    }
+
+
+def _latest_signal_calibration_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "signal_calibration"
+    exact = root / as_of.isoformat() / "signal_calibration_summary.json"
+    if exact.exists():
+        return exact
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/signal_calibration_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[0], item[1].stat().st_mtime))[1]
 
 
 def _parameter_shadow_data_quality_sentence(

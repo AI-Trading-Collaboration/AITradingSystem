@@ -651,23 +651,58 @@ def _promotion_decision_payload(
         / as_of.isoformat()
         / "signal_ablation_summary.json"
     )
-    if not ablation_path.exists():
-        return payload
     supporting = payload.get("supporting_artifacts")
     if not isinstance(supporting, dict):
         supporting = {}
-    supporting["signal_ablation"] = str(ablation_path)
-    payload["supporting_artifacts"] = supporting
+    if ablation_path.exists():
+        supporting["signal_ablation"] = str(ablation_path)
+    calibration_path = _latest_signal_calibration_supporting_path(as_of)
+    if calibration_path is not None:
+        supporting["signal_calibration"] = str(calibration_path)
+    if supporting:
+        payload["supporting_artifacts"] = supporting
     if backtest_mode == "full_signal_backtest_limited":
         reason = str(payload.get("reason") or "")
-        if "signal ablation" not in reason.lower():
+        if ablation_path.exists() and "signal ablation" not in reason.lower():
             payload["reason"] = (
                 reason.rstrip(".")
                 + ". Signal ablation summary is available as supporting evidence, "
                 "but candidate promotion remains disabled while signal quality is limited "
                 "and fallback signals remain present."
             )
+            reason = str(payload.get("reason") or "")
+        if calibration_path is not None and "signal calibration" not in reason.lower():
+            payload["reason"] = (
+                reason.rstrip(".")
+                + ". Signal calibration summary is available as supporting evidence, "
+                "but it does not enable candidate promotion while signal quality remains "
+                "LIMITED and fallback signals remain present."
+            )
     return payload
+
+
+def _latest_signal_calibration_supporting_path(as_of: date) -> Path | None:
+    exact_path = (
+        PROJECT_ROOT
+        / "artifacts"
+        / "signal_calibration"
+        / as_of.isoformat()
+        / "signal_calibration_summary.json"
+    )
+    if exact_path.exists():
+        return exact_path
+    root = PROJECT_ROOT / "artifacts" / "signal_calibration"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/signal_calibration_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[0], item[1].stat().st_mtime))[1]
 
 
 def _write_artifacts(

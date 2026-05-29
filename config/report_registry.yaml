@@ -341,6 +341,27 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: signal_calibration
+    title: Signal Calibration Summary
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits reports signal-calibration --latest
+    artifact_globs:
+      - artifacts/signal_calibration/*/signal_calibration_summary.json
+      - artifacts/signal_calibration/*/signal_calibration_summary.md
+      - artifacts/signal_calibration/*/recommended_signal_profile.yaml
+      - artifacts/signal_calibration/*/profiles/*/signal_snapshot.json
+      - artifacts/signal_calibration/*/profiles/*/signal_snapshot.md
+      - outputs/reports/signal_calibration_*.json
+      - outputs/reports/signal_calibration_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Signal formula calibration should be reviewed alongside signal ablation before deciding whether portfolio sensitivity diagnostics are needed.
+    owner_action: review_signal_calibration_before_profile_or_promotion_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: parameter_promotion_decision
     title: Parameter Promotion Decision
     group: governance

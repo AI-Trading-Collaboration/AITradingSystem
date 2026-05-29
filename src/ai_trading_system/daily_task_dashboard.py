@@ -205,6 +205,7 @@ def build_daily_task_dashboard_payload(
         "backtest_data_quality": _backtest_data_quality_summary(report),
         "shadow_parameter_backtest": _shadow_parameter_backtest_summary(report),
         "signal_ablation_summary": _signal_ablation_summary(report),
+        "signal_calibration_summary": _signal_calibration_summary(report),
         "weight_adjustment_candidates": _weight_adjustment_candidates_summary(report),
         "weight_candidate_evaluation": _weight_candidate_evaluation_summary(report),
         "weight_promotion_gate": _weight_promotion_gate_summary(report),
@@ -359,6 +360,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_backtest_data_quality(report),
             _render_shadow_parameter_backtest(report),
             _render_signal_ablation_summary(report),
+            _render_signal_calibration_summary(report),
             _render_weight_adjustment_candidates(report),
             _render_weight_candidate_evaluation(report),
             _render_weight_promotion_gate(report),
@@ -2311,6 +2313,112 @@ def _latest_signal_ablation_path(report: DailyTaskDashboardReport) -> Path | Non
     root = report.project_root / "artifacts" / "signal_ablation"
     candidates: list[tuple[date, Path]] = []
     for path in root.glob("*/signal_ablation_summary.json"):
+        try:
+            as_of = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if as_of <= report.as_of:
+            candidates.append((as_of, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[0], item[1].stat().st_mtime))[1]
+
+
+def _signal_calibration_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    suffix = report.as_of.isoformat()
+    path = (
+        report.project_root
+        / "artifacts"
+        / "signal_calibration"
+        / suffix
+        / "signal_calibration_summary.json"
+    )
+    if not path.exists():
+        latest_path = _latest_signal_calibration_path(report)
+        if latest_path is not None:
+            path = latest_path
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "signal_calibration":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "markdown_href": "",
+            "profiles_tested": 0,
+            "best_profile": "",
+            "current_profile": "baseline_v0_1",
+            "best_positive_signal_count": 0,
+            "best_promotion_credit_signal_count": 0,
+            "neutral_compression_warning": "",
+            "correlation_warning": "",
+            "can_support_candidate_promotion": False,
+            "manual_review_required": True,
+            "production_effect": ProductionEffect.NONE.value,
+            "risk": "Signal calibration summary 缺失；dashboard 不运行 calibration。",
+        }
+    metadata = _mapping_value(payload, "metadata")
+    ranking = _mapping_value(payload, "ranking")
+    promotion = _mapping_value(payload, "promotion_impact")
+    profiles = _records(payload.get("profiles"))
+    best_profile = _string_value(ranking.get("best_profile"))
+    best = next(
+        (item for item in profiles if _string_value(item.get("profile_name")) == best_profile),
+        {},
+    )
+    best_ablation = _mapping_value(best, "ablation")
+    distribution = _mapping_value(best, "signal_distribution")
+    correlation = _mapping_value(best, "signal_correlation")
+    neutral_warnings = [
+        _string_value(item.get("warning"))
+        for item in distribution.values()
+        if isinstance(item, dict) and _string_value(item.get("warning"))
+    ]
+    correlation_warning = _string_value(correlation.get("warning"))
+    risks: list[str] = []
+    if metadata.get("production_effect") != ProductionEffect.NONE.value:
+        risks.append("signal calibration production_effect 不是 none。")
+    if metadata.get("auto_promotion") is not False:
+        risks.append("signal calibration auto_promotion 不是 false。")
+    if promotion.get("can_support_candidate_promotion") is not False:
+        risks.append("signal calibration 不应直接支持 candidate promotion。")
+    risks.extend(neutral_warnings[:1])
+    if correlation_warning:
+        risks.append(correlation_warning)
+    markdown_path = path.with_suffix(".md")
+    return {
+        "status": metadata.get("status", "UNKNOWN"),
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "markdown_href": _report_href(markdown_path, report.reports_dir)
+        if markdown_path.exists()
+        else "",
+        "profiles_tested": len(profiles),
+        "best_profile": best_profile,
+        "current_profile": "baseline_v0_1",
+        "best_positive_signal_count": best_ablation.get("positive_signals", 0),
+        "best_promotion_credit_signal_count": best_ablation.get(
+            "promotion_credit_signals",
+            0,
+        ),
+        "neutral_compression_warning": neutral_warnings[0] if neutral_warnings else "",
+        "correlation_warning": correlation_warning,
+        "can_support_candidate_promotion": promotion.get(
+            "can_support_candidate_promotion",
+            False,
+        ),
+        "manual_review_required": metadata.get("manual_review_required") is True,
+        "production_effect": metadata.get("production_effect", ProductionEffect.NONE.value),
+        "risk": "；".join(risks)
+        or "Signal calibration 只读展示，不修改 production 参数或 promotion 状态。",
+    }
+
+
+def _latest_signal_calibration_path(report: DailyTaskDashboardReport) -> Path | None:
+    root = report.project_root / "artifacts" / "signal_calibration"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/signal_calibration_summary.json"):
         try:
             as_of = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -9281,6 +9389,79 @@ def _render_signal_ablation_summary(report: DailyTaskDashboardReport) -> str:
             (
                 '<p class="muted"><strong>No-promotion-credit reason：</strong>'
                 f"{_text(summary.get('no_promotion_credit_reason', ''))}</p>"
+            ),
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            markdown_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_signal_calibration_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _signal_calibration_summary(report)
+    href = _string_value(summary.get("href"))
+    markdown_href = _string_value(summary.get("markdown_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(href)}"><span>Signal Calibration Summary</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if summary.get("exists")
+        else '<span class="report-link missing"><span>Signal Calibration Summary</span>'
+        "<small>MISSING</small></span>"
+    )
+    markdown_link = (
+        '<a class="report-link" '
+        f'href="{_text(markdown_href)}"><span>Signal Calibration Markdown</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if markdown_href
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="signal-calibration-summary-title">',
+            '<div class="section-head">',
+            '<h2 id="signal-calibration-summary-title">Signal Calibration Summary</h2>',
+            (
+                "<p>trend/sector profile 校准摘要；dashboard 只读已有 JSON，"
+                "不修改 production 参数或 promotion 状态。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("status", summary.get("status", "MISSING")),
+            _summary_item("profiles tested", summary.get("profiles_tested", 0)),
+            _summary_item("best profile", summary.get("best_profile", "")),
+            _summary_item("current profile", summary.get("current_profile", "")),
+            _summary_item(
+                "best positive signals",
+                summary.get("best_positive_signal_count", 0),
+            ),
+            _summary_item(
+                "promotion credit signals",
+                summary.get("best_promotion_credit_signal_count", 0),
+            ),
+            _summary_item(
+                "Can support candidate promotion",
+                summary.get("can_support_candidate_promotion", False),
+            ),
+            _summary_item("manual review", summary.get("manual_review_required", True)),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
+            (
+                '<p class="muted"><strong>Neutral compression warning：</strong>'
+                f"{_text(summary.get('neutral_compression_warning', ''))}</p>"
+            ),
+            (
+                '<p class="muted"><strong>Correlation warning：</strong>'
+                f"{_text(summary.get('correlation_warning', ''))}</p>"
             ),
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'

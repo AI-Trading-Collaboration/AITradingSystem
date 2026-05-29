@@ -1,0 +1,120 @@
+version: "signal_calibration_profiles_v0_1"
+owner: "system"
+status: "pilot_baseline"
+production_effect: "none"
+manual_review_required: true
+auto_promotion: false
+observe_only: true
+rationale: >
+  Compare alternative trend_momentum and sector_strength price-derived signal
+  formulas after TRADING-051A confirmed that the signals are wired into score
+  and portfolio construction but remain below promotion-credit thresholds.
+intended_effect: >
+  Produce manual-review-only signal calibration diagnostics, profile ranking,
+  and recommended profile artifacts without changing production parameters.
+validation_evidence: >
+  TRADING-052 tests cover profile loading, calibrated signal construction,
+  distribution and correlation diagnostics, profile ranking, reports,
+  Dashboard/Reader Brief display, shadow promotion references, and safety fields.
+review_condition: >
+  Review after at least five real calibration reports or before any profile is
+  proposed for manual production parameter review.
+shadow_backtest_config_path: "config/parameters/shadow/shadow_backtest.yaml"
+signal_ablation_config_path: "config/parameters/signal_ablation.yaml"
+output:
+  signal_calibration_dir: "artifacts/signal_calibration"
+  report_alias_dir: "outputs/reports"
+diagnostics:
+  neutral_band:
+    lower: 0.45
+    upper: 0.55
+  extreme_band:
+    lower: 0.20
+    upper: 0.80
+  neutral_compression_warning_ratio: 0.50
+  correlation_thresholds:
+    high_correlation: 0.75
+    very_high_correlation: 0.90
+normalization_policy:
+  rolling_window: 252
+  min_periods: 20
+  zscore_clip: 3.0
+  zscore_scale: 1.0
+  minmax_epsilon: 0.000000001
+ranking:
+  policy_version: "signal_calibration_ranking_v0_1"
+  rationale: >
+    Prioritize real signal contribution and walk-forward stability, then
+    penalize turnover, neutral compression, and redundant trend/sector signal
+    expression. Single-period return is intentionally low weight.
+  weights:
+    promotion_credit_signal_count: 100.0
+    ablation_positive_signal_count: 20.0
+    walk_forward_stability_ratio: 10.0
+    mean_abs_score_delta: 5.0
+    mean_abs_portfolio_weight_delta: 5.0
+    annualized_return: 1.0
+    max_drawdown_abs: -1.0
+    turnover: -1.0
+    signal_neutral_ratio: -5.0
+    signal_correlation_penalty: -5.0
+profiles:
+  baseline_v0_1:
+    description: "Current TRADING-050 signal formulas."
+    trend_momentum:
+      windows: [20, 60, 120]
+      ma_pairs:
+        - [50, 200]
+      normalization: minmax_rolling
+      clipping:
+        lower: 0.05
+        upper: 0.95
+    sector_strength:
+      benchmark: QQQ
+      windows: [20, 60, 120]
+      normalization: zscore_to_unit
+
+  trend_long_bias:
+    description: "Longer trend windows to reduce noise."
+    trend_momentum:
+      windows: [60, 120, 252]
+      ma_pairs:
+        - [50, 200]
+        - [100, 200]
+      normalization: sigmoid_zscore
+      clipping:
+        lower: 0.03
+        upper: 0.97
+    sector_strength:
+      benchmark: QQQ
+      windows: [60, 120, 252]
+      normalization: sigmoid_zscore
+
+  trend_fast_reactive:
+    description: "More reactive trend profile."
+    trend_momentum:
+      windows: [10, 20, 60]
+      ma_pairs:
+        - [20, 100]
+        - [50, 200]
+      normalization: sigmoid_zscore
+      clipping:
+        lower: 0.05
+        upper: 0.95
+    sector_strength:
+      benchmark: QQQ
+      windows: [20, 60]
+      normalization: zscore_to_unit
+
+  sector_relative_strength_heavy:
+    description: "Emphasize sector and asset relative strength."
+    trend_momentum:
+      windows: [20, 60, 120]
+      ma_pairs:
+        - [50, 200]
+      normalization: sigmoid_zscore
+    sector_strength:
+      benchmark: QQQ
+      windows: [20, 60, 120, 252]
+      normalization: sigmoid_zscore
+      relative_weight: 1.5

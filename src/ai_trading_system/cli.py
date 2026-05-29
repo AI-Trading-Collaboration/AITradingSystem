@@ -760,6 +760,15 @@ from ai_trading_system.trading_engine.signal_ablation import (
     validate_signal_ablation_payload,
     write_signal_ablation_report_alias,
 )
+from ai_trading_system.trading_engine.signal_calibration import (
+    DEFAULT_SIGNAL_CALIBRATION_PROFILES_PATH,
+    latest_signal_calibration_path,
+    load_signal_calibration_payload,
+    run_signal_calibration,
+    signal_calibration_payload_date,
+    validate_signal_calibration_payload,
+    write_signal_calibration_report_alias,
+)
 from ai_trading_system.trading_engine.signal_snapshots import (
     default_signal_snapshot_json_path,
     default_signal_snapshot_root,
@@ -4199,6 +4208,87 @@ def signals_ablation_command(
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
 
 
+@signals_app.command(
+    "calibrate",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def signals_calibrate_command(
+    ctx: typer.Context,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用 prices_daily.csv 中最新可用日期。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="calibration 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="signal calibration profile 配置路径。"),
+    ] = DEFAULT_SIGNAL_CALIBRATION_PROFILES_PATH,
+    profile: Annotated[
+        str | None,
+        typer.Option("--profile", help="指定单一 calibration profile。"),
+    ] = None,
+    profiles: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--profiles",
+            help="指定多个 calibration profile；也兼容 `--profiles a b c`。",
+        ),
+    ] = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="写入 outputs/dry_runs/signal_calibration，不写正式 artifacts。"),
+    ] = False,
+) -> None:
+    """运行 trend/sector signal calibration 并生成只读比较报告。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    requested_profiles = tuple(
+        dict.fromkeys(
+            [
+                *([profile] if profile else []),
+                *(profiles or []),
+                *[str(item) for item in ctx.args],
+            ]
+        )
+    )
+    try:
+        run = run_signal_calibration(
+            as_of=run_date,
+            profile_names=requested_profiles or None,
+            config_path=config_path,
+            dry_run=dry_run,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    metadata = run.payload.get("metadata", {})
+    ranking = run.payload.get("ranking", {})
+    promotion = run.payload.get("promotion_impact", {})
+    status = metadata.get("status", "UNKNOWN") if isinstance(metadata, dict) else "UNKNOWN"
+    style = "green" if status == "OK" else "yellow" if status == "LIMITED" else "red"
+    console.print(f"[{style}]Signal calibration：{status}[/{style}]")
+    console.print(f"JSON：{run.json_path}")
+    console.print(f"Markdown：{run.markdown_path}")
+    console.print(f"Recommended profile：{run.recommended_profile_path}")
+    if isinstance(ranking, dict):
+        console.print(
+            f"profiles_tested={len(run.payload.get('profiles', []))}；"
+            f"best_profile={ranking.get('best_profile', 'UNKNOWN')}"
+        )
+        reason = ranking.get("reason")
+        if reason:
+            console.print(f"reason={reason}")
+    if isinstance(promotion, dict):
+        console.print(
+            "can_support_candidate_promotion="
+            f"{promotion.get('can_support_candidate_promotion', False)}"
+        )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
 @signals_app.command("explain-ablation")
 def signals_explain_ablation_command(
     latest: Annotated[
@@ -6763,6 +6853,56 @@ def signal_ablation_report_command(
         reason = summary.get("no_promotion_credit_reason")
         if reason:
             console.print(f"no_promotion_credit_reason={reason}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{markdown_path}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@reports_app.command("signal-calibration")
+def signal_calibration_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新正式 signal calibration artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="报告日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    source_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 signal_calibration_summary.json 路径。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 alias 输出目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """从正式 artifact 生成 signal calibration 报告 alias。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    json_source = source_path or _resolve_signal_calibration_path(latest=latest, as_of=as_of)
+    payload = load_signal_calibration_payload(json_source)
+    issues = validate_signal_calibration_payload(payload)
+    if issues:
+        raise typer.BadParameter("signal calibration JSON 校验失败：" + "; ".join(issues))
+    try:
+        report_date = signal_calibration_payload_date(payload, json_source)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, markdown_path = write_signal_calibration_report_alias(
+        payload,
+        reports_dir,
+        report_date,
+    )
+    ranking = payload.get("ranking", {}) if isinstance(payload, dict) else {}
+    console.print("[green]Signal calibration report：OK[/green]")
+    if isinstance(ranking, dict):
+        console.print(f"best_profile={ranking.get('best_profile', 'UNKNOWN')}")
+        reason = ranking.get("reason")
+        if reason:
+            console.print(f"reason={reason}")
     console.print(f"JSON：{json_path}")
     console.print(f"Markdown：{markdown_path}")
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
@@ -14091,6 +14231,16 @@ def _resolve_signal_ablation_path(*, latest: bool, as_of: str | None) -> Path:
             raise typer.BadParameter(f"未找到 signal ablation artifact：{root}")
         return latest_path
     return root / _parse_date(as_of).isoformat() / "signal_ablation_summary.json"
+
+
+def _resolve_signal_calibration_path(*, latest: bool, as_of: str | None) -> Path:
+    root = PROJECT_ROOT / "artifacts" / "signal_calibration"
+    if latest or as_of is None:
+        latest_path = latest_signal_calibration_path(root)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 signal calibration artifact：{root}")
+        return latest_path
+    return root / _parse_date(as_of).isoformat() / "signal_calibration_summary.json"
 
 
 def _resolve_parameter_promotion_path(*, latest: bool, as_of: str | None) -> Path:
