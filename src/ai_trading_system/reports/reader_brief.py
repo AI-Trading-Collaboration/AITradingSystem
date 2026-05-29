@@ -184,6 +184,7 @@ def build_reader_brief_payload(
         source_inputs=source_inputs,
         report_index_summary=report_index_summary,
         task_cadence_calendar=task_cadence_calendar,
+        governance_summary=governance_summary,
     )
     contribution_summary = _contribution_summary(
         component_explainability=component_explainability,
@@ -212,18 +213,47 @@ def build_reader_brief_payload(
         missing_artifact_impact=missing_artifact_impact,
         decision=executive_decision,
     )
+    data_quality_pit_safety = _data_quality_pit_safety(
+        as_of=as_of,
+        snapshot=snapshot,
+        daily_decision_summary=daily_decision_summary,
+        report_index_summary=report_index_summary,
+    )
+    status_panel = _status_panel(
+        build_status=quality_status,
+        decision=executive_decision,
+        governance_summary=governance_summary,
+        manual_review_queue=manual_review_queue,
+        missing_artifact_impact=missing_artifact_impact,
+        report_index_summary=report_index_summary,
+        data_quality_pit_safety=data_quality_pit_safety,
+    )
+    action_checklist = _action_checklist(
+        decision=executive_decision,
+        status_panel=status_panel,
+        governance_summary=governance_summary,
+        manual_review_queue=manual_review_queue,
+        data_quality_pit_safety=data_quality_pit_safety,
+    )
+    score_change_narrative = _score_change_narrative(
+        score_changes=score_change_summary,
+        contribution_summary=contribution_summary,
+        decision=executive_decision,
+    )
     payload = {
         "schema_version": SCHEMA_VERSION,
         "report_type": REPORT_TYPE,
         "as_of": as_of.isoformat(),
         "generated_at": datetime.now(tz=UTC).isoformat(),
         "status": quality_status,
+        "status_panel": status_panel,
         "production_effect": PRODUCTION_EFFECT,
         "reader_entry_role": "daily_reading_home",
         "source_inputs": source_inputs,
         "warnings": warnings,
         "run_context": run_context,
         "narrative_executive_summary": narrative_summary,
+        "action_checklist": action_checklist,
         "executive_decision": executive_decision,
         "market_situation_snapshot": market_situation,
         "score_to_position_funnel": _score_to_position_funnel(
@@ -232,6 +262,7 @@ def build_reader_brief_payload(
             source_inputs=source_inputs,
         ),
         "score_change_attribution_summary": score_change_summary,
+        "score_change_narrative": score_change_narrative,
         "report_index_summary": report_index_summary,
         "missing_limited_artifact_impact": missing_artifact_impact,
         "task_cadence_calendar": task_cadence_calendar,
@@ -241,11 +272,7 @@ def build_reader_brief_payload(
         "contribution_summary": contribution_summary,
         "component_score_explainability": component_explainability,
         "binding_gate_ladder": gate_ladder,
-        "data_quality_pit_safety": _data_quality_pit_safety(
-            snapshot=snapshot,
-            daily_decision_summary=daily_decision_summary,
-            report_index_summary=report_index_summary,
-        ),
+        "data_quality_pit_safety": data_quality_pit_safety,
         "backtest_shadow_governance": governance_summary,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
@@ -287,11 +314,30 @@ def build_reader_brief_quality_payload(
 ) -> dict[str, Any]:
     missing_impact = _mapping(reader_brief_payload.get("missing_limited_artifact_impact"))
     manual_queue = _mapping(reader_brief_payload.get("manual_review_queue"))
+    status_panel = _mapping(reader_brief_payload.get("status_panel"))
+    action_checklist = _records(reader_brief_payload.get("action_checklist"))
     checks = [
         _quality_check(
             "narrative_executive_summary",
             bool(_mapping(reader_brief_payload.get("narrative_executive_summary"))),
             "首屏 narrative summary 存在。",
+        ),
+        _quality_check(
+            "status_panel",
+            all(
+                _text(status_panel.get(key))
+                for key in (
+                    "build_status",
+                    "decision_usability",
+                    "research_promotion_status",
+                )
+            ),
+            "首屏拆分 Build / Decision Usability / Research Promotion 状态。",
+        ),
+        _quality_check(
+            "action_checklist",
+            bool(action_checklist),
+            "首屏 Action Checklist 存在。",
         ),
         _quality_check(
             "missing_artifact_impact",
@@ -302,6 +348,12 @@ def build_reader_brief_quality_payload(
             "manual_review_groups",
             bool(_records(manual_queue.get("groups"))),
             "Manual Review Queue 已按 severity 分组。",
+        ),
+        _quality_check(
+            "top_review_items",
+            bool(_records(manual_queue.get("top_items")))
+            or not bool(_records(manual_queue.get("items"))),
+            "Manual Review Queue 已收敛 Top 3 复核项。",
         ),
         _quality_check(
             "contribution_summary",
@@ -448,13 +500,16 @@ def render_reader_brief_quality_markdown(payload: Mapping[str, Any]) -> str:
 def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     as_of = _text(payload.get("as_of"), "UNKNOWN")
     status = _text(payload.get("status"), "UNKNOWN")
+    status_panel = _mapping(payload.get("status_panel"))
     run_context = _mapping(payload.get("run_context"))
     narrative_summary = _mapping(payload.get("narrative_executive_summary"))
+    action_checklist = _records(payload.get("action_checklist"))
     executive_summary = _mapping(payload.get("executive_summary"))
     decision = _mapping(payload.get("executive_decision"))
     market = _mapping(payload.get("market_situation_snapshot"))
     funnel = _records(_mapping(payload.get("score_to_position_funnel")).get("steps"))
     score_changes = _mapping(payload.get("score_change_attribution_summary"))
+    score_change_narrative = _mapping(payload.get("score_change_narrative"))
     report_index = _mapping(payload.get("report_index_summary"))
     missing_impact = _mapping(payload.get("missing_limited_artifact_impact"))
     cadence_calendar = _mapping(payload.get("task_cadence_calendar"))
@@ -482,14 +537,17 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
         "<body>",
         "<main>",
         f"<header><p>Reader Brief</p><h1>{html.escape(as_of)}</h1>"
-        f"<span>Status: {_status_badge(status)}</span></header>",
+        f"{_status_panel_header(status_panel, status)}</header>",
         _section(
             "Executive Summary",
-            _top_summary_cards(
+            _status_panel_html(status_panel)
+            + _action_checklist_html(action_checklist)
+            + _top_summary_cards(
                 decision=decision,
                 market=market,
                 manual_review=manual_review,
                 governance=governance,
+                status_panel=status_panel,
                 payload_status=status,
                 production_effect=_text(payload.get("production_effect"), PRODUCTION_EFFECT),
             )
@@ -580,7 +638,8 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
         ),
         _section(
             "Score Change Attribution",
-            _definition_table(
+            _score_change_narrative_html(score_change_narrative)
+            + _definition_table(
                 [
                     ("availability", score_changes.get("availability")),
                     ("status", score_changes.get("status")),
@@ -615,6 +674,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("production_effect", missing_impact.get("production_effect")),
                 ]
             )
+            + _artifact_impact_summary_html(_records(missing_impact.get("impact_summary")))
             + _artifact_impact_sections(_records(missing_impact.get("items"))),
         ),
         _section(
@@ -659,7 +719,12 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
         _section("Data Quality & PIT Safety", _definition_table(list(quality.items()))),
         _section("Backtest / Shadow / Governance", _definition_table(list(governance.items()))),
         _section("Documentation Contract", _definition_table(list(documentation_contract.items()))),
-        _section("Manual Review Queue", _manual_review_groups_html(manual_review, manual_queue)),
+        _section(
+            "Manual Review Queue",
+            _top_review_items_html(manual_review)
+            + _manual_review_impact_groups_html(manual_review)
+            + _manual_review_groups_html(manual_review, manual_queue),
+        ),
         _section("Report Navigation", _navigation_groups_html(navigation_groups, navigation)),
         _section("Appendix Links", _records_table(appendix)),
         "</main>",
@@ -710,12 +775,15 @@ def _executive_decision(
         calculation_explainers
     ) or _binding_gate_from_snapshot(snapshot)
     manual_items = _records(snapshot.get("manual_review"))
+    action = _text(
+        investment.get("action_bias"),
+        _text(evidence_decision.get("action"), "UNKNOWN"),
+    )
     manual_required = any(_text(item.get("status")) not in {"", "PASS"} for item in manual_items)
+    action_lower = action.lower()
+    manual_required = manual_required or "manual" in action_lower or "人工复核" in action
     return {
-        "action": _text(
-            investment.get("action_bias"),
-            _text(evidence_decision.get("action"), "UNKNOWN"),
-        ),
+        "action": action,
         "final_risk_asset_ai_position": _text(
             investment.get("position_band"),
             _format_band(final_band),
@@ -844,20 +912,23 @@ def _score_to_position_funnel(
     metrics = _mapping(calculation_explainers.get("metrics"))
     positions = _mapping(snapshot.get("positions"))
     scores = _mapping(snapshot.get("scores"))
+    binding_gate = _binding_gate_from_snapshot(snapshot)
     steps = [
         _funnel_step(
             "component_score",
             metrics,
-            _text(len(_records(scores.get("components")))),
+            f"{len(_records(scores.get('components')))} components",
             "decision_snapshot.scores.components",
             source_inputs,
+            display_value=f"{len(_records(scores.get('components')))} components",
         ),
         _funnel_step(
             "overall_score",
             metrics,
-            _text(scores.get("overall_score")),
+            _format_number(scores.get("overall_score"), digits=1),
             "scores",
             source_inputs,
+            display_value=_format_number(scores.get("overall_score"), digits=1),
         ),
         _funnel_step(
             "model_position_band",
@@ -865,6 +936,7 @@ def _score_to_position_funnel(
             _format_band(_mapping(positions.get("model_risk_asset_ai_band"))),
             "decision_snapshot.positions",
             source_inputs,
+            display_value=_format_band(_mapping(positions.get("model_risk_asset_ai_band"))),
         ),
         _funnel_step(
             "confidence_adjusted_position",
@@ -872,13 +944,25 @@ def _score_to_position_funnel(
             _format_band(_mapping(positions.get("confidence_adjusted_risk_asset_ai_band"))),
             "decision_snapshot.positions",
             source_inputs,
+            display_value=_format_band(
+                _mapping(positions.get("confidence_adjusted_risk_asset_ai_band"))
+            ),
+        ),
+        _funnel_step(
+            "portfolio_limit",
+            metrics,
+            _portfolio_limit_value(positions),
+            "decision_snapshot.positions.final_total_risk_asset_band",
+            source_inputs,
+            display_value=_portfolio_limit_value(positions),
         ),
         _funnel_step(
             "position_gate",
             metrics,
-            _text(len(_records(positions.get("position_gates")))),
+            _binding_gate_value(binding_gate),
             "decision_snapshot.positions.position_gates",
             source_inputs,
+            display_value=_binding_gate_value(binding_gate),
         ),
         _funnel_step(
             "final_position_band",
@@ -886,6 +970,7 @@ def _score_to_position_funnel(
             _format_band(_mapping(positions.get("final_risk_asset_ai_band"))),
             "decision_snapshot.positions.final_risk_asset_ai_band",
             source_inputs,
+            display_value=_format_band(_mapping(positions.get("final_risk_asset_ai_band"))),
         ),
     ]
     return {"status": "AVAILABLE", "steps": steps}
@@ -1187,6 +1272,7 @@ def _missing_artifact_impact(
     source_inputs: Mapping[str, Any],
     report_index_summary: Mapping[str, Any],
     task_cadence_calendar: Mapping[str, Any],
+    governance_summary: Mapping[str, Any],
 ) -> dict[str, Any]:
     items: list[dict[str, Any]] = []
     for artifact_id, source in source_inputs.items():
@@ -1258,9 +1344,68 @@ def _missing_artifact_impact(
         "important_count": important,
         "optional_count": len([item for item in items if item["impact_level"] == "OPTIONAL"]),
         "info_count": len([item for item in items if item["impact_level"] == "INFO"]),
+        "impact_summary": _artifact_impact_summary(
+            items=items,
+            report_index_summary=report_index_summary,
+            governance_summary=governance_summary,
+        ),
         "production_effect": PRODUCTION_EFFECT,
         "items": items,
     }
+
+
+def _artifact_impact_summary(
+    *,
+    items: list[dict[str, Any]],
+    report_index_summary: Mapping[str, Any],
+    governance_summary: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    required_missing = _int(report_index_summary.get("required_missing_count"))
+    blocking = len([item for item in items if item.get("impact_level") == "BLOCKING"])
+    reader_missing = _int(report_index_summary.get("missing_count"))
+    reader_stale = _int(report_index_summary.get("stale_count"))
+    important = len([item for item in items if item.get("impact_level") == "IMPORTANT"])
+    promotion_missing = _int(governance_summary.get("missing_count"))
+    promotion_status = _research_promotion_status(governance_summary)
+    return [
+        {
+            "chain": "今日评分链路",
+            "status": "PASS" if required_missing == 0 and blocking == 0 else "BLOCKED",
+            "missing_count": required_missing,
+            "interpretation": (
+                "required_missing=0，不阻断 daily score。"
+                if required_missing == 0 and blocking == 0
+                else "存在 required/blocking artifact 缺口，今日结论使用受限。"
+            ),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "chain": "阅读上下文",
+            "status": (
+                "OK" if reader_missing == 0 and reader_stale == 0 and important == 0 else "LIMITED"
+            ),
+            "missing_count": reader_missing,
+            "stale_count": reader_stale,
+            "important_count": important,
+            "interpretation": (
+                "影响读者下钻和上下文完整性，不等于自动重算 score。"
+                if reader_missing or reader_stale or important
+                else "未发现重要阅读上下文缺口。"
+            ),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+        {
+            "chain": "研究/权重晋升链路",
+            "status": promotion_status,
+            "missing_count": promotion_missing,
+            "interpretation": (
+                "promotion 被缺失 artifact 阻断；不影响今日 score 产物，但不能晋升权重。"
+                if promotion_status == "BLOCKED_BY_MISSING_ARTIFACTS"
+                else "按 research governance summary 的 promotion_status 处理。"
+            ),
+            "production_effect": PRODUCTION_EFFECT,
+        },
+    ]
 
 
 def _binding_gate_ladder(
@@ -1295,22 +1440,51 @@ def _binding_gate_ladder(
 
 def _data_quality_pit_safety(
     *,
+    as_of: date,
     snapshot: Mapping[str, Any],
     daily_decision_summary: Mapping[str, Any],
     report_index_summary: Mapping[str, Any],
 ) -> dict[str, Any]:
     quality = _mapping(snapshot.get("quality"))
     data_gate = _mapping(daily_decision_summary.get("data_gate"))
+    data_gate_status = _text(data_gate.get("status"), _quality_status(snapshot))
+    signal_date = _text(snapshot.get("signal_date"), as_of.isoformat())
+    future_data_status = (
+        "PASS"
+        if _leading_status(data_gate_status).upper() in {"PASS", "PASS_WITH_WARNINGS"}
+        else "REVIEW_REQUIRED"
+    )
     return {
-        "data_gate_status": _text(data_gate.get("status"), _quality_status(snapshot)),
+        "as_of_date": signal_date,
+        "decision_snapshot_id": _text(snapshot.get("snapshot_id"), "UNKNOWN"),
+        "data_gate_status": data_gate_status,
         "market_data_status": _text(quality.get("market_data_status"), "UNKNOWN"),
+        "market_data_latest_date": _text(
+            quality.get("market_data_latest_date"),
+            _text(quality.get("latest_market_data_date"), "UNKNOWN_IN_SNAPSHOT"),
+        ),
         "market_data_error_count": _text(quality.get("market_data_error_count"), "UNKNOWN"),
         "market_data_warning_count": _text(quality.get("market_data_warning_count"), "UNKNOWN"),
         "feature_status": _text(quality.get("feature_status"), "UNKNOWN"),
         "sec_feature_status": _text(quality.get("sec_feature_status"), "UNKNOWN"),
+        "sec_data_latest_filing": _text(
+            quality.get("sec_data_latest_filing"),
+            _text(quality.get("latest_sec_filing"), "UNKNOWN_IN_SNAPSHOT"),
+        ),
+        "fmp_valuation_snapshot_timestamp": _text(
+            quality.get("fmp_valuation_snapshot_timestamp"),
+            _text(quality.get("latest_fmp_valuation_timestamp"), "UNKNOWN_IN_SNAPSHOT"),
+        ),
+        "future_data_check": future_data_status,
+        "carried_forward_fields": _texts(quality.get("carried_forward_fields")),
+        "stale_fields": _texts(quality.get("stale_fields")),
         "blocking_reasons": _texts(data_gate.get("blocking_reasons")),
         "stale_report_count": report_index_summary.get("stale_count"),
         "missing_report_count": report_index_summary.get("missing_count"),
+        "pit_visibility_note": (
+            "UNKNOWN_IN_SNAPSHOT 表示该源的可见时间未在当前 decision snapshot 明确披露；"
+            "不得据此补造 PIT 结论。"
+        ),
         "production_effect": PRODUCTION_EFFECT,
     }
 
@@ -1509,6 +1683,8 @@ def _manual_review_queue(
     return {
         "status": "EMPTY" if not enriched else "ACTION_REQUIRED",
         "items": enriched,
+        "top_items": _top_manual_review_items(enriched),
+        "impact_groups": _manual_review_impact_groups(enriched),
         "groups": _manual_review_groups(enriched),
         "production_effect": PRODUCTION_EFFECT,
     }
@@ -1528,6 +1704,9 @@ def _manual_review_item(item: Mapping[str, Any]) -> dict[str, Any]:
         "research_governance": (
             "打开 research governance summary，确认 observe-only warning 是否需要人工处置。"
         ),
+        "weight_iteration": (
+            "打开 weight candidate / promotion gate 产物，确认是否仅阻断研究晋升。"
+        ),
         "documentation_contract": (
             "打开 documentation contract，修复 registry / artifact catalog 契约缺口。"
         ),
@@ -1541,6 +1720,7 @@ def _manual_review_item(item: Mapping[str, Any]) -> dict[str, Any]:
         "research_governance": (
             "影响 observe-only / research-only 状态解释，不得视作 production promotion。"
         ),
+        "weight_iteration": "影响研究/权重晋升，不直接改变今日 score。",
         "documentation_contract": "影响文档治理可信度，不直接改变投资结论。",
         "manual_review": "可能降低某一分项或数据来源的解释置信度。",
     }
@@ -1548,6 +1728,8 @@ def _manual_review_item(item: Mapping[str, Any]) -> dict[str, Any]:
     provided_decision_impact = _text(item.get("decision_impact"))
     return {
         **dict(item),
+        "impact_type": _manual_review_impact_type(item),
+        "impact_label": _manual_review_impact_label(_manual_review_impact_type(item)),
         "recommended_next_action": provided_action
         or action_by_category.get(
             category,
@@ -1579,6 +1761,75 @@ def _manual_review_groups(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
         }
         for severity, label in labels
     ]
+
+
+def _manual_review_impact_type(item: Mapping[str, Any]) -> str:
+    category = _text(item.get("category")).lower()
+    action_id = _text(item.get("action_id")).lower()
+    reason = _text(item.get("reason")).lower()
+    combined = f"{category} {action_id} {reason}"
+    if category in {"data_quality", "manual_review"}:
+        return "today_decision"
+    if category == "report_freshness" and any(
+        token in combined
+        for token in ("data_quality", "daily_score", "daily_decision", "market_panel")
+    ):
+        return "today_decision"
+    if any(token in combined for token in ("sec", "fmp", "valuation", "fundamental")):
+        return "today_decision"
+    if any(
+        token in combined
+        for token in (
+            "promotion",
+            "weight",
+            "research_governance",
+            "shadow",
+            "backtest",
+            "parameter",
+        )
+    ):
+        return "research_promotion"
+    return "audit_observe"
+
+
+def _manual_review_impact_label(impact_type: str) -> str:
+    return {
+        "today_decision": "影响今日结论",
+        "research_promotion": "影响研究晋升",
+        "audit_observe": "仅审计/观察",
+    }.get(impact_type, "仅审计/观察")
+
+
+def _manual_review_impact_groups(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    order = [
+        ("today_decision", "影响今日结论"),
+        ("research_promotion", "影响研究晋升"),
+        ("audit_observe", "仅审计/观察"),
+    ]
+    return [
+        {
+            "impact_type": impact_type,
+            "label": label,
+            "count": len([item for item in items if _text(item.get("impact_type")) == impact_type]),
+            "items": [item for item in items if _text(item.get("impact_type")) == impact_type],
+        }
+        for impact_type, label in order
+    ]
+
+
+def _top_manual_review_items(
+    items: list[dict[str, Any]], *, limit: int = 3
+) -> list[dict[str, Any]]:
+    severity_rank = {"critical": 0, "warning": 1, "info": 2}
+    impact_rank = {"today_decision": 0, "research_promotion": 1, "audit_observe": 2}
+    return sorted(
+        items,
+        key=lambda item: (
+            severity_rank.get(_text(item.get("severity")), 9),
+            impact_rank.get(_text(item.get("impact_type")), 9),
+            _text(item.get("action_id")),
+        ),
+    )[:limit]
 
 
 def _appendix_links(reports_dir: Path, source_inputs: Mapping[str, Any]) -> list[dict[str, Any]]:
@@ -1626,8 +1877,10 @@ def _executive_summary(
             "MISSING",
         ),
         "major_score_change": (
-            f"overall_delta={_text(score_changes.get('overall_score_delta'), 'MISSING')}; "
-            f"position_max_delta={_text(score_changes.get('final_position_max_delta'), 'MISSING')}"
+            "overall_delta="
+            f"{_format_signed_number(score_changes.get('overall_score_delta'), digits=2)}; "
+            "position_max_delta="
+            f"{_format_signed_number(score_changes.get('final_position_max_delta'), digits=2)}"
         ),
         "report_freshness": (
             f"missing={_text(report_index_summary.get('missing_count'), '0')}; "
@@ -1668,6 +1921,19 @@ def _narrative_executive_summary(
     manual_count = len(_records(manual_review_queue.get("items")))
     important_missing = _int(missing_artifact_impact.get("important_count"))
     blocking_missing = _int(missing_artifact_impact.get("blocking_count"))
+    impact_by_chain = {
+        _text(item.get("chain")): item
+        for item in _records(missing_artifact_impact.get("impact_summary"))
+    }
+    daily_chain = _mapping(impact_by_chain.get("今日评分链路"))
+    reader_chain = _mapping(impact_by_chain.get("阅读上下文"))
+    promotion_chain = _mapping(impact_by_chain.get("研究/权重晋升链路"))
+    score_delta = _float_or_none(score_changes.get("overall_score_delta"))
+    score_delta_text = (
+        _format_signed_number(score_delta, digits=2)
+        if score_delta is not None
+        else _text(score_changes.get("overall_score_delta"), "MISSING")
+    )
     return {
         "today_conclusion": (
             f"今日系统结论为 {action}，最终 AI 风险资产仓位为 {position}。"
@@ -1682,10 +1948,7 @@ def _narrative_executive_summary(
             + (", ".join(positives) if positives else "MISSING")
             + "；主要拖累或零贡献来自 "
             + (", ".join(negatives) if negatives else "MISSING")
-            + (
-                "；score change overall_delta="
-                f"{_text(score_changes.get('overall_score_delta'), 'MISSING')}。"
-            )
+            + (f"；score change overall_delta={score_delta_text}。")
         ),
         "main_positive_drivers": positives,
         "main_negative_drivers": negatives,
@@ -1695,6 +1958,9 @@ def _narrative_executive_summary(
         "manual_review_summary": (
             f"当前有 {manual_count} 个复核项，其中 critical={critical_count}；"
             f"缺失/受限 artifact 中 blocking={blocking_missing}, important={important_missing}。"
+            f"今日评分链路={_text(daily_chain.get('status'), 'UNKNOWN')}；"
+            f"阅读上下文={_text(reader_chain.get('status'), 'UNKNOWN')}；"
+            f"研究/权重晋升链路={_text(promotion_chain.get('status'), 'UNKNOWN')}。"
         ),
         "research_governance_summary": (
             f"research governance status = {_text(governance_summary.get('status'), 'UNKNOWN')}; "
@@ -1723,6 +1989,267 @@ def _reader_brief_status(
     if warnings:
         return "PASS_WITH_WARNINGS"
     return "OK"
+
+
+def _status_panel(
+    *,
+    build_status: str,
+    decision: Mapping[str, Any],
+    governance_summary: Mapping[str, Any],
+    manual_review_queue: Mapping[str, Any],
+    missing_artifact_impact: Mapping[str, Any],
+    report_index_summary: Mapping[str, Any],
+    data_quality_pit_safety: Mapping[str, Any],
+) -> dict[str, Any]:
+    decision_status = _decision_usability_status(
+        decision=decision,
+        manual_review_queue=manual_review_queue,
+        missing_artifact_impact=missing_artifact_impact,
+        report_index_summary=report_index_summary,
+        data_quality_pit_safety=data_quality_pit_safety,
+    )
+    promotion_status = _research_promotion_status(governance_summary)
+    return {
+        "build_status": build_status,
+        "decision_usability": decision_status,
+        "research_promotion_status": promotion_status,
+        "raw_reader_brief_status": build_status,
+        "raw_promotion_status": _text(governance_summary.get("promotion_status"), "UNKNOWN"),
+        "build_status_explanation": (
+            "Reader Brief artifact 已生成；该状态只说明简报构建成功，不等于今日结论可直接行动。"
+            if build_status in {"OK", "PASS", "PASS_WITH_WARNINGS", "LIMITED_READER_CONTEXT"}
+            else "Reader Brief 构建或输入校验存在失败，需要先修复。"
+        ),
+        "decision_usability_explanation": _decision_usability_explanation(decision_status),
+        "research_promotion_explanation": _promotion_status_explanation(
+            promotion_status,
+            governance_summary,
+        ),
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _decision_usability_status(
+    *,
+    decision: Mapping[str, Any],
+    manual_review_queue: Mapping[str, Any],
+    missing_artifact_impact: Mapping[str, Any],
+    report_index_summary: Mapping[str, Any],
+    data_quality_pit_safety: Mapping[str, Any],
+) -> str:
+    data_gate_status = _leading_status(data_quality_pit_safety.get("data_gate_status")).upper()
+    if data_gate_status in {"FAIL", "FAILED", "BLOCKED_BY_DATA_QUALITY"}:
+        return "LIMITED_CONTEXT"
+    if _int(missing_artifact_impact.get("blocking_count")) or _int(
+        report_index_summary.get("required_missing_count")
+    ):
+        return "LIMITED_CONTEXT"
+    manual_items = _records(manual_review_queue.get("items"))
+    critical_count = _manual_review_severity_count(manual_review_queue, "critical")
+    if (
+        bool(decision.get("manual_review_required"))
+        or critical_count > 0
+        or _action_requests_manual_review(decision.get("action"))
+    ):
+        return "MANUAL_REVIEW_REQUIRED"
+    if manual_items or data_gate_status in {"PASS_WITH_WARNINGS", "PASS_WITH_LIMITATIONS"}:
+        return "REVIEW_WITH_LIMITATIONS"
+    if _int(missing_artifact_impact.get("important_count")):
+        return "REVIEW_WITH_LIMITATIONS"
+    return "READY_FOR_READING"
+
+
+def _decision_usability_explanation(status: str) -> str:
+    return {
+        "READY_FOR_READING": "今日结论可阅读；仍然不是交易指令。",
+        "REVIEW_WITH_LIMITATIONS": (
+            "今日结论可阅读，但存在 warning 或重要上下文缺口，行动前需复核。"
+        ),
+        "MANUAL_REVIEW_REQUIRED": "今日结论需要人工复核后才可进入投资讨论或执行前判断。",
+        "LIMITED_CONTEXT": "今日结论上下文受限；存在必需报告缺失、data gate failure 或阻断项。",
+    }.get(status, "今日结论使用等级未知，需打开审计区确认。")
+
+
+def _research_promotion_status(governance_summary: Mapping[str, Any]) -> str:
+    raw_status = _text(governance_summary.get("promotion_status"), "UNKNOWN")
+    missing_count = _int(governance_summary.get("missing_count"))
+    if raw_status == "BLOCKED_BY_MISSING_ARTIFACTS":
+        return raw_status
+    if missing_count and raw_status != "PROMOTABLE":
+        return "BLOCKED_BY_MISSING_ARTIFACTS"
+    return raw_status
+
+
+def _promotion_status_explanation(status: str, governance_summary: Mapping[str, Any]) -> str:
+    missing_count = _int(governance_summary.get("missing_count"))
+    if status == "BLOCKED_BY_MISSING_ARTIFACTS":
+        return (
+            f"研究/权重晋升被缺失 artifact 阻断；当前 missing_count={missing_count}，"
+            "不影响已生成的今日 score，但不能推进 weight promotion。"
+        )
+    if status == "PROMOTABLE":
+        return "研究晋升状态为 PROMOTABLE；仍需遵守人工审批和 production-effect 边界。"
+    if status == "NOT_PROMOTABLE":
+        return "研究晋升当前不可晋级；不得写入 production weights 或 active shadow weights。"
+    return "研究晋升状态未知或受限；需打开 research governance summary。"
+
+
+def _action_checklist(
+    *,
+    decision: Mapping[str, Any],
+    status_panel: Mapping[str, Any],
+    governance_summary: Mapping[str, Any],
+    manual_review_queue: Mapping[str, Any],
+    data_quality_pit_safety: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    position = _text(decision.get("final_risk_asset_ai_position"), "UNKNOWN")
+    binding_gate = _text(decision.get("binding_gate_label"), "UNKNOWN")
+    data_gate_status = _text(data_quality_pit_safety.get("data_gate_status"), "UNKNOWN")
+    promotion_status = _text(
+        status_panel.get("research_promotion_status"),
+        _research_promotion_status(governance_summary),
+    )
+    items = [
+        _checklist_item(
+            1,
+            (
+                f"不新增 AI 风险资产仓位；除非人工确认 {binding_gate} gate 可解除。"
+                if binding_gate != "UNKNOWN"
+                else "不新增 AI 风险资产仓位；先确认当前最大约束。"
+            ),
+            "Decision Usability 不是 READY_FOR_READING 时，首页结论只能进入复核流程。",
+            "today_decision",
+            _text(status_panel.get("decision_usability"), "UNKNOWN"),
+        ),
+        _checklist_item(
+            2,
+            f"保持并复核现有 AI 仓位上限 {position}。",
+            "最终仓位来自 score、confidence 和 gate 后的受限结果。",
+            "today_decision",
+            _text(decision.get("data_gate"), data_gate_status),
+        ),
+    ]
+    top_reviews = _records(manual_review_queue.get("top_items"))
+    if top_reviews:
+        top_sources = ", ".join(_text(item.get("action_id")) for item in top_reviews[:2])
+        items.append(
+            _checklist_item(
+                3,
+                f"优先处理 Top Review Items Today：{top_sources}。",
+                "这些复核项优先级高于完整 23 项队列的逐项阅读。",
+                "today_decision",
+                "ACTION_REQUIRED",
+            )
+        )
+    else:
+        items.append(
+            _checklist_item(
+                3,
+                "确认 Data Quality / SEC / FMP warning 区是否为空。",
+                "PIT 与数据源 warning 直接影响读者对今日结论的信任等级。",
+                "today_decision",
+                data_gate_status,
+            )
+        )
+    if promotion_status != "PROMOTABLE":
+        items.append(
+            _checklist_item(
+                4,
+                "不进行 weight promotion。",
+                (
+                    f"promotion_status={promotion_status}；"
+                    "缺失或受限研究 artifact 只允许进入人工治理复核。"
+                ),
+                "research_promotion",
+                promotion_status,
+            )
+        )
+    items.append(
+        _checklist_item(
+            len(items) + 1,
+            "确认本报告只读，不触发 broker/trading action。",
+            (
+                "production_effect=none；Reader Brief 不写 production weights "
+                "或 active shadow weights。"
+            ),
+            "audit_observe",
+            PRODUCTION_EFFECT,
+        )
+    )
+    return items
+
+
+def _checklist_item(
+    priority: int,
+    action: str,
+    rationale: str,
+    impact_type: str,
+    status: str,
+) -> dict[str, Any]:
+    return {
+        "priority": priority,
+        "action": action,
+        "rationale": rationale,
+        "impact_type": impact_type,
+        "status": status,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _score_change_narrative(
+    *,
+    score_changes: Mapping[str, Any],
+    contribution_summary: Mapping[str, Any],
+    decision: Mapping[str, Any],
+) -> dict[str, Any]:
+    delta = _float_or_none(score_changes.get("overall_score_delta"))
+    position_delta = _float_or_none(score_changes.get("final_position_max_delta"))
+    if delta is None:
+        return {
+            "status": "INSUFFICIENT_DATA",
+            "summary": "缺少上一期对比，不能描述今天相对昨天/上一交易日发生了什么。",
+            "position_interpretation": "仓位变化原因需打开 decision snapshot 和 gate ladder 审计。",
+            "production_effect": PRODUCTION_EFFECT,
+        }
+    positive = _texts(contribution_summary.get("top_positive_contributors"))
+    negative = _texts(contribution_summary.get("top_negative_or_zero_contributors"))
+    direction = "上升" if delta > 0 else "下降" if delta < 0 else "基本持平"
+    driver_text = (
+        f"主要正向来自 {', '.join(positive[:2])}"
+        if positive and delta >= 0
+        else f"主要拖累来自 {', '.join(negative[:2])}" if negative else "主要驱动未充分披露"
+    )
+    binding = _text(decision.get("binding_gate_label"), "UNKNOWN")
+    if position_delta is None:
+        position_sentence = "最终仓位变化缺少上一期可比字段。"
+    elif abs(position_delta) < 1e-9:
+        position_sentence = f"仓位没有提升，主要因为 {binding} 仍是最终约束。"
+    else:
+        position_sentence = (
+            f"最终仓位上限变化 {_format_signed_number(position_delta, digits=2)}；"
+            f"仍需结合 {binding} gate 判断。"
+        )
+    return {
+        "status": _text(score_changes.get("status"), "AVAILABLE"),
+        "summary": (
+            f"今日 score {_format_signed_number(delta, digits=2)}，相对上一期{direction}；"
+            f"{driver_text}。"
+        ),
+        "position_interpretation": position_sentence,
+        "production_effect": PRODUCTION_EFFECT,
+    }
+
+
+def _manual_review_severity_count(manual_review_queue: Mapping[str, Any], severity: str) -> int:
+    for group in _records(manual_review_queue.get("groups")):
+        if _text(group.get("severity")) == severity:
+            return _int(group.get("count"))
+    return 0
+
+
+def _action_requests_manual_review(value: object) -> bool:
+    text = _text(value).lower()
+    return "manual" in text or "人工复核" in text
 
 
 def _documentation_contract_summary(payload: Mapping[str, Any]) -> dict[str, Any]:
@@ -1776,10 +2303,13 @@ def _task_cadence_calendar(
                 {
                     "report_id": _text(report.get("report_id")),
                     "title": _text(report.get("title")),
-                    "cadence": _normalize_cadence(_text(report.get("cadence"), "ad_hoc")),
+                    "cadence": _reader_cadence_label(report),
                     "latest_status": "UNKNOWN",
                     "last_run": "MISSING_RUNTIME_INDEX",
-                    "next_expected_run": "按 registry freshness_sla_days 复核",
+                    "next_expected_run": _reader_next_expected_run(
+                        report,
+                        fallback="按 registry freshness_sla_days 复核",
+                    ),
                     "expected_artifact": expected[0] if expected else "MISSING",
                     "artifact_path": expected[0] if expected else "MISSING",
                     "reader_role": _text(report.get("audience"), "UNKNOWN"),
@@ -1818,8 +2348,12 @@ def _task_cadence_calendar(
             {
                 "report_id": _text(report.get("report_id")),
                 "title": _text(report.get("title")),
+                "cadence": _reader_cadence_label(report),
                 "last_run": _text(report.get("artifact_date"), "MISSING"),
-                "next_expected_run": "按 report_index freshness_sla_days 复核",
+                "next_expected_run": _reader_next_expected_run(
+                    report,
+                    fallback="按 report_index freshness_sla_days 复核",
+                ),
                 "latest_status": _text(report.get("freshness_status"), "UNKNOWN"),
                 "status": _text(report.get("freshness_status"), "UNKNOWN"),
                 "artifact_path": _short_path(path_text),
@@ -2125,6 +2659,72 @@ def _navigation_reason(artifact_id: str, status: str) -> str:
     return reasons.get(artifact_id, "打开该 artifact 获取详细证据或治理上下文。")
 
 
+_READER_CADENCE_OVERRIDES: dict[str, tuple[str, str, str]] = {
+    "daily_score": ("daily", "daily", "下一个完整 U.S. equity trading day。"),
+    "daily_decision_summary": ("daily", "daily", "随 daily-run 每个交易日生成。"),
+    "reader_brief": ("daily", "daily", "随 daily-run 每个交易日生成。"),
+    "reader_brief_quality": ("daily", "daily", "Reader Brief 生成后立即校验。"),
+    "market_panel": ("daily", "daily", "随 daily-run 每个交易日生成。"),
+    "score_change_attribution": ("daily", "daily", "随 daily-run 每个交易日对比上一信号日。"),
+    "report_index": ("daily", "daily", "随 daily-run 每个交易日扫描 latest artifacts。"),
+    "research_governance_summary": (
+        "daily",
+        "daily / weekly review",
+        "daily 汇总；weekly 复核 governance 队列。",
+    ),
+    "backtest_daily": (
+        "weekly",
+        "weekly or scoring policy change",
+        "每周或 scoring policy change 后运行。",
+    ),
+    "backtest_robustness": (
+        "weekly",
+        "weekly or scoring policy change",
+        "每周或 scoring policy change 后运行。",
+    ),
+    "parameter_governance": ("weekly", "weekly", "每周复核参数候选和 owner input。"),
+    "weight_candidate_evaluation": (
+        "bi_weekly",
+        "biweekly",
+        "每两周评估候选权重；缺样本时记录 INSUFFICIENT_DATA。",
+    ),
+    "weight_promotion_gate": (
+        "bi_weekly",
+        "biweekly after candidate evaluation",
+        "candidate evaluation 完成后每两周运行；缺 artifact 时 promotion blocked。",
+    ),
+    "documentation_contract": (
+        "governance",
+        "weekly / registry change",
+        "每周或 registry/artifact catalog 变更后运行。",
+    ),
+    "artifact_catalog_consistency": (
+        "governance",
+        "monthly / artifact contract change",
+        "monthly governance 或 artifact contract 变更后复核。",
+    ),
+}
+
+
+def _reader_cadence_override(report: Mapping[str, Any]) -> tuple[str, str, str] | None:
+    report_id = _text(report.get("report_id"))
+    return _READER_CADENCE_OVERRIDES.get(report_id)
+
+
+def _reader_cadence_label(report: Mapping[str, Any]) -> str:
+    override = _reader_cadence_override(report)
+    if override:
+        return override[1]
+    return _normalize_cadence(_text(report.get("cadence"), "ad_hoc"))
+
+
+def _reader_next_expected_run(report: Mapping[str, Any], *, fallback: str) -> str:
+    override = _reader_cadence_override(report)
+    if override:
+        return override[2]
+    return fallback
+
+
 def _normalize_cadence(value: str) -> str:
     normalized = value.lower().replace("-", "_").replace(" ", "_")
     if normalized in {"biweekly", "bi_weekly"}:
@@ -2137,6 +2737,9 @@ def _normalize_cadence(value: str) -> str:
 
 
 def _cadence_group(report: Mapping[str, Any]) -> str:
+    override = _reader_cadence_override(report)
+    if override:
+        return override[0]
     group = _text(report.get("group")).lower().replace("-", "_").replace(" ", "_")
     if group in {"governance", "docs", "documentation"}:
         return "governance"
@@ -2173,13 +2776,19 @@ def _funnel_step(
     fallback_value: str,
     source_field: str,
     source_inputs: Mapping[str, Any],
+    *,
+    display_value: str | None = None,
 ) -> dict[str, Any]:
     metric = _mapping(metrics.get(metric_id))
     source_artifacts = _records(metric.get("source_artifacts"))
+    raw_value = metric.get("value")
     return {
         "metric_id": metric_id,
         "label": _text(metric.get("audience_label"), metric_id),
-        "current_value": _text(metric.get("value"), fallback_value),
+        "current_value": (
+            display_value if display_value is not None else _text(raw_value, fallback_value)
+        ),
+        "audit_value": fallback_value if raw_value is None or raw_value == "" else raw_value,
         "formula": _text(metric.get("formula"), "MISSING_EXPLAINER"),
         "source_field": source_field,
         "source_artifacts": source_artifacts
@@ -2212,6 +2821,24 @@ def _binding_gate_from_snapshot(snapshot: Mapping[str, Any]) -> dict[str, Any] |
         if cap is not None and abs(cap - final_max) < 1e-9:
             return gate
     return None
+
+
+def _binding_gate_value(gate: Mapping[str, Any] | None) -> str:
+    if not gate:
+        return "UNKNOWN"
+    label = _text(gate.get("label"), _text(gate.get("gate_id"), "gate"))
+    cap = _format_percent(gate.get("max_position"))
+    return f"{label} -> {cap}" if cap != "UNKNOWN" else label
+
+
+def _portfolio_limit_value(positions: Mapping[str, Any]) -> str:
+    for gate in _records(positions.get("position_gates")):
+        gate_id = _text(gate.get("gate_id")).lower()
+        if gate_id in {"portfolio_limit", "portfolio_limits", "portfolio_risk_budget"}:
+            cap = _format_percent(gate.get("max_position"))
+            return f"≤{cap}" if cap != "UNKNOWN" else _text(gate.get("label"), "UNKNOWN")
+    total_band = _format_band(_mapping(positions.get("final_total_risk_asset_band")))
+    return total_band if total_band != "UNKNOWN" else "not separately disclosed"
 
 
 def _input_warnings(paths: Mapping[str, Path | None]) -> list[str]:
@@ -2272,6 +2899,20 @@ def _format_band(raw: Mapping[str, Any]) -> str:
     return f"{min_position}-{max_position}" + (f" ({label})" if label else "")
 
 
+def _format_number(value: object, *, digits: int = 2) -> str:
+    number = _float_or_none(value)
+    if number is None:
+        return _text(value, "UNKNOWN")
+    return f"{number:.{digits}f}"
+
+
+def _format_signed_number(value: object, *, digits: int = 2) -> str:
+    number = _float_or_none(value)
+    if number is None:
+        return _text(value, "UNKNOWN")
+    return f"{number:+.{digits}f}"
+
+
 def _format_percent(value: object) -> str:
     number = _float_or_none(value)
     if number is None:
@@ -2328,6 +2969,7 @@ def _text(value: object, default: str = "") -> str:
 _BADGE_VALUES = {
     "ACTION_REQUIRED",
     "AVAILABLE",
+    "BLOCKED",
     "BLOCKING",
     "BLOCKED_BY_DATA_QUALITY",
     "BLOCKED_BY_MANUAL_REVIEW",
@@ -2343,6 +2985,7 @@ _BADGE_VALUES = {
     "LIMITED",
     "LIMITED_CONTEXT",
     "LIMITED_READER_CONTEXT",
+    "MANUAL_REVIEW_REQUIRED",
     "MISSING",
     "MISSING_MARKET_PRICE_DATA",
     "NOT_PROMOTABLE",
@@ -2354,6 +2997,8 @@ _BADGE_VALUES = {
     "PROMOTABLE",
     "REGISTRY_FALLBACK",
     "REQUIRED_MISSING",
+    "READY_FOR_READING",
+    "REVIEW_WITH_LIMITATIONS",
     "STALE",
     "TRUE",
     "WARNING",
@@ -2361,8 +3006,11 @@ _BADGE_VALUES = {
 
 
 def _value_html(label: object, value: object, *, default: str = "UNKNOWN") -> str:
-    text = _text(value, default)
     label_text = _text(label).lower()
+    if isinstance(value, (int, float)) and not isinstance(value, bool):
+        digits = 1 if "score" in label_text and "delta" not in label_text else 2
+        return html.escape(_format_number(value, digits=digits))
+    text = _text(value, default)
     if label_text == "production_effect":
         return _status_badge(text)
     status_label = label_text.endswith("status") or label_text in {
@@ -2462,6 +3110,7 @@ def _top_summary_cards(
     market: Mapping[str, Any],
     manual_review: Mapping[str, Any],
     governance: Mapping[str, Any],
+    status_panel: Mapping[str, Any],
     payload_status: str,
     production_effect: str,
 ) -> str:
@@ -2475,8 +3124,11 @@ def _top_summary_cards(
         {
             "label": "Final Action",
             "value": _text(decision.get("action"), "UNKNOWN"),
-            "detail": f"reader_status={payload_status}",
-            "badge": payload_status,
+            "detail": (
+                "decision_usability="
+                f"{_text(status_panel.get('decision_usability'), payload_status)}"
+            ),
+            "badge": _text(status_panel.get("decision_usability"), payload_status),
             "class": "summary-card--decision",
         },
         {
@@ -2510,9 +3162,14 @@ def _top_summary_cards(
         {
             "label": "Production Effect",
             "value": f"production_effect={production_effect}",
-            "detail": (f"promotion_status={_text(governance.get('promotion_status'), 'UNKNOWN')}"),
+            "detail": (
+                "研究晋升：" f"{_text(status_panel.get('research_promotion_status'), 'UNKNOWN')}"
+            ),
             "badge": production_effect,
-            "extra_badge": _text(governance.get("promotion_status"), "UNKNOWN"),
+            "extra_badge": _text(
+                status_panel.get("research_promotion_status"),
+                _text(governance.get("promotion_status"), "UNKNOWN"),
+            ),
             "class": "summary-card--safety",
         },
     ]
@@ -2531,6 +3188,122 @@ def _top_summary_cards(
             + "</article>"
         )
     return '<div class="summary-card-grid">' + "\n".join(rendered) + "</div>"
+
+
+def _status_panel_header(status_panel: Mapping[str, Any], fallback_status: str) -> str:
+    build = _text(status_panel.get("build_status"), fallback_status)
+    usability = _text(status_panel.get("decision_usability"), "UNKNOWN")
+    promotion = _text(status_panel.get("research_promotion_status"), "UNKNOWN")
+    return (
+        '<div class="status-strip">'
+        f"<span>Reader Brief Build Status: {_status_badge(build)}</span>"
+        f"<span>Decision Usability: {_status_badge(usability)}</span>"
+        f"<span>Research Promotion Status: {_status_badge(promotion)}</span>"
+        "</div>"
+    )
+
+
+def _status_panel_html(status_panel: Mapping[str, Any]) -> str:
+    if not status_panel:
+        return ""
+    cards = [
+        (
+            "Reader Brief Build Status",
+            status_panel.get("build_status"),
+            status_panel.get("build_status_explanation"),
+        ),
+        (
+            "Decision Usability",
+            status_panel.get("decision_usability"),
+            status_panel.get("decision_usability_explanation"),
+        ),
+        (
+            "Research Promotion Status",
+            status_panel.get("research_promotion_status"),
+            status_panel.get("research_promotion_explanation"),
+        ),
+    ]
+    return (
+        '<div class="status-panel">'
+        + "\n".join(
+            '<article class="status-panel-card">'
+            f"<div>{html.escape(label)}</div>"
+            f"<strong>{_status_badge(value)}</strong>"
+            f"<p>{html.escape(_text(detail, 'UNKNOWN'))}</p>"
+            "</article>"
+            for label, value, detail in cards
+        )
+        + "</div>"
+    )
+
+
+def _action_checklist_html(items: list[dict[str, Any]]) -> str:
+    if not items:
+        return ""
+    rows = []
+    for item in items:
+        rows.append(
+            "<li>"
+            f"<span>{html.escape(_text(item.get('priority')))}</span>"
+            "<div>"
+            f"<strong>{html.escape(_text(item.get('action'), 'UNKNOWN'))}</strong>"
+            f"<p>{html.escape(_text(item.get('rationale'), 'UNKNOWN'))}</p>"
+            f"{_status_badge(_text(item.get('status'), 'UNKNOWN'))}"
+            "</div>"
+            "</li>"
+        )
+    return '<h3>今日建议动作</h3><ol class="action-checklist">' + "\n".join(rows) + "</ol>"
+
+
+def _score_change_narrative_html(summary: Mapping[str, Any]) -> str:
+    if not summary:
+        return ""
+    return (
+        '<div class="narrative callout">'
+        f"<p>{html.escape(_text(summary.get('summary'), 'UNKNOWN'))}</p>"
+        f"<p>{html.escape(_text(summary.get('position_interpretation'), 'UNKNOWN'))}</p>"
+        "</div>"
+    )
+
+
+def _artifact_impact_summary_html(records: list[dict[str, Any]]) -> str:
+    if not records:
+        return ""
+    cards = []
+    for record in records:
+        cards.append(
+            '<article class="impact-summary-card">'
+            f"<div>{html.escape(_text(record.get('chain'), 'UNKNOWN'))}</div>"
+            f"<strong>{_status_badge(_text(record.get('status'), 'UNKNOWN'))}</strong>"
+            f"<p>{html.escape(_text(record.get('interpretation'), 'UNKNOWN'))}</p>"
+            f"<small>missing={html.escape(_text(record.get('missing_count'), '0'))}</small>"
+            "</article>"
+        )
+    return '<div class="impact-summary-grid">' + "\n".join(cards) + "</div>"
+
+
+def _top_review_items_html(manual_review: Mapping[str, Any]) -> str:
+    top_items = _records(manual_review.get("top_items"))
+    if not top_items:
+        return "<h3>Top 3 Review Items Today</h3><p>无优先复核项。</p>"
+    return "<h3>Top 3 Review Items Today</h3>" + _manual_review_table(top_items)
+
+
+def _manual_review_impact_groups_html(manual_review: Mapping[str, Any]) -> str:
+    groups = _records(manual_review.get("impact_groups"))
+    if not groups:
+        return ""
+    parts = ["<h3>按影响类型收敛</h3>"]
+    for group in groups:
+        label = html.escape(_text(group.get("label"), "UNKNOWN"))
+        impact_type = html.escape(_css_token(_text(group.get("impact_type"), "audit_observe")))
+        parts.append(
+            f'<div class="review-impact-group review-impact-{impact_type}">'
+            f"<h4>{label} ({html.escape(_text(group.get('count'), '0'))})</h4>"
+            + _manual_review_table(_records(group.get("items")))
+            + "</div>"
+        )
+    return "\n".join(parts)
 
 
 def _market_proxy_cards(market: Mapping[str, Any]) -> str:
@@ -2564,11 +3337,12 @@ def _normalize_market_symbol(value: object) -> str:
 def _funnel_flow(records: list[dict[str, Any]], decision: Mapping[str, Any]) -> str:
     by_metric = {_text(record.get("metric_id")): record for record in records}
     sequence = [
-        ("overall_score", "Score"),
-        ("model_position_band", "Raw Position"),
-        ("confidence_adjusted_position", "Confidence Adjustment"),
-        ("position_gate", "Gate Cap"),
-        ("final_position_band", "Final Position"),
+        ("overall_score", "综合评分"),
+        ("model_position_band", "评分映射仓位"),
+        ("confidence_adjusted_position", "置信度调整"),
+        ("portfolio_limit", "组合上限"),
+        ("position_gate", "估值/最严闸门"),
+        ("final_position_band", "最终仓位"),
     ]
     nodes = []
     for metric_id, label in sequence:
@@ -2814,6 +3588,7 @@ def _funnel_details(records: list[dict[str, Any]]) -> str:
         value = html.escape(_text(record.get("current_value"), "UNKNOWN"))
         detail_rows = [
             ("metric_id", record.get("metric_id")),
+            ("audit_value", record.get("audit_value")),
             ("formula", record.get("formula")),
             ("source_field", record.get("source_field")),
             ("source_freshness", record.get("source_freshness")),
@@ -2905,6 +3680,12 @@ main {
 header {
   margin-bottom: 18px;
 }
+header .status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
 header p {
   margin: 0 0 6px;
   color: #586069;
@@ -2926,6 +3707,8 @@ section {
 }
 .summary-card-grid,
 .market-card-grid,
+.status-panel,
+.impact-summary-grid,
 .funnel-flow {
   display: grid;
   gap: 10px;
@@ -2934,11 +3717,17 @@ section {
 .summary-card-grid {
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
 }
+.status-panel,
+.impact-summary-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
 .market-card-grid {
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
 }
 .summary-card,
 .market-card,
+.status-panel-card,
+.impact-summary-card,
 .funnel-node {
   background: #ffffff;
   border: 1px solid #d9dee7;
@@ -2948,6 +3737,8 @@ section {
 }
 .summary-card div,
 .market-card div,
+.status-panel-card div,
+.impact-summary-card div,
 .funnel-node span {
   color: #586069;
   font-size: 12px;
@@ -2956,6 +3747,8 @@ section {
 }
 .summary-card strong,
 .market-card strong,
+.status-panel-card strong,
+.impact-summary-card strong,
 .funnel-node strong {
   display: block;
   margin: 6px 0;
@@ -2966,6 +3759,8 @@ section {
 }
 .summary-card p,
 .market-card p,
+.status-panel-card p,
+.impact-summary-card p,
 .funnel-node small {
   color: #4d5968;
   display: block;
@@ -2984,6 +3779,44 @@ tr.binding-row {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+.action-checklist {
+  background: #ffffff;
+  border: 1px solid #d9dee7;
+  border-radius: 6px;
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+}
+.action-checklist li {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px 12px;
+  border-top: 1px solid #e7ebf0;
+}
+.action-checklist li:first-child {
+  border-top: 0;
+}
+.action-checklist li > span {
+  align-items: center;
+  background: #edf4ff;
+  border-radius: 999px;
+  color: #25476a;
+  display: flex;
+  font-weight: 700;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+.action-checklist strong {
+  display: block;
+  margin-bottom: 4px;
+}
+.action-checklist p {
+  color: #4d5968;
+  font-size: 12px;
+  margin: 0 0 6px;
 }
 .status-badge {
   background: #eef2f7;
@@ -3015,6 +3848,7 @@ tr.binding-row {
 .status-registry-fallback,
 .status-warning,
 .status-important,
+.status-review-with-limitations,
 .status-true,
 .status-binding-gate {
   background: #fff4db;
@@ -3024,10 +3858,12 @@ tr.binding-row {
 .status-missing,
 .status-stale,
 .status-required-missing,
+.status-blocked,
 .status-blocking,
 .status-failed,
 .status-fail,
 .status-critical,
+.status-manual-review-required,
 .status-blocked-by-missing-artifacts,
 .status-blocked-by-manual-review,
 .status-blocked-by-data-quality {
@@ -3039,6 +3875,7 @@ tr.binding-row {
 .status-optional,
 .status-documentation,
 .status-not-promotable,
+.status-ready-for-reading,
 .status-false {
   background: #edf4ff;
   border-color: #b7cbed;
@@ -3067,20 +3904,24 @@ tr.binding-row {
   position: relative;
 }
 .review-group,
-.impact-group {
+.impact-group,
+.review-impact-group {
   border-left: 3px solid #d9dee7;
   margin: 12px 0;
   padding-left: 12px;
 }
 .review-critical,
+.review-impact-today-decision,
 .impact-blocking {
   border-left-color: #c2413d;
 }
 .review-warning,
+.review-impact-research-promotion,
 .impact-important {
   border-left-color: #b7791f;
 }
 .review-info,
+.review-impact-audit-observe,
 .impact-info,
 .impact-optional {
   border-left-color: #4676b6;

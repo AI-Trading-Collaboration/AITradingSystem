@@ -41,6 +41,10 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     assert payload["status"] == "LIMITED_READER_CONTEXT"
     assert payload["production_effect"] == "none"
     assert payload["reader_entry_role"] == "daily_reading_home"
+    assert payload["status_panel"]["build_status"] == "LIMITED_READER_CONTEXT"
+    assert payload["status_panel"]["decision_usability"] == "LIMITED_CONTEXT"
+    assert payload["status_panel"]["research_promotion_status"] == "BLOCKED_BY_MISSING_ARTIFACTS"
+    assert payload["action_checklist"][0]["impact_type"] == "today_decision"
     assert payload["narrative_executive_summary"]["today_conclusion"]
     assert payload["narrative_executive_summary"]["production_effect_statement"]
     assert payload["executive_summary"]["manual_review_count"] >= 1
@@ -64,7 +68,18 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     assert payload["task_cadence_calendar"]["groups"][0]["cadence"] == "daily"
     impact = payload["missing_limited_artifact_impact"]
     assert any(item["impact_level"] == "BLOCKING" for item in impact["items"])
+    impact_summary = impact["impact_summary"]
+    assert {item["chain"] for item in impact_summary} == {
+        "今日评分链路",
+        "阅读上下文",
+        "研究/权重晋升链路",
+    }
+    assert (
+        next(item for item in impact_summary if item["chain"] == "研究/权重晋升链路")["status"]
+        == "BLOCKED_BY_MISSING_ARTIFACTS"
+    )
     assert "trend" in payload["contribution_summary"]["top_positive_contributors"]
+    assert "今日 score +3.00" in payload["score_change_narrative"]["summary"]
     assert payload["documentation_contract_summary"]["status"] == "PASS"
     trend = payload["component_score_explainability"]["components"][0]
     assert trend["component"] == "trend"
@@ -75,6 +90,8 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     )
     assert valuation_gate["binding"] is True
     assert payload["data_quality_pit_safety"]["data_gate_status"] == "PASS"
+    assert payload["data_quality_pit_safety"]["as_of_date"] == "2026-05-04"
+    assert payload["data_quality_pit_safety"]["future_data_check"] == "PASS"
     assert payload["backtest_shadow_governance"]["source"] == "research_governance_summary"
     assert payload["backtest_shadow_governance"]["promotion_status"] == "NOT_PROMOTABLE"
     assert (
@@ -87,6 +104,11 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     assert payload["backtest_shadow_governance"]["candidate_research_count"] == 3
     assert payload["manual_review_queue"]["status"] == "ACTION_REQUIRED"
     assert payload["manual_review_queue"]["groups"][0]["label"] == "Critical / Must Review Today"
+    assert payload["manual_review_queue"]["top_items"][0]["impact_type"] in {
+        "today_decision",
+        "research_promotion",
+    }
+    assert payload["manual_review_queue"]["impact_groups"][0]["label"] == "影响今日结论"
     assert all(
         "recommended_next_action" in item for item in payload["manual_review_queue"]["items"]
     )
@@ -204,14 +226,23 @@ def test_reports_reader_brief_cli_writes_html_and_json(tmp_path: Path) -> None:
     html = html_path.read_text(encoding="utf-8")
     assert "Reader Brief" in html
     assert "Executive Summary" in html
+    assert "Reader Brief Build Status" in html
+    assert "Decision Usability" in html
+    assert "Research Promotion Status" in html
+    assert "今日建议动作" in html
     assert "今日结论" in html
     assert "Missing / Limited Artifact Impact" in html
+    assert "研究/权重晋升链路" in html
     assert "Core Decision" in html
     assert "Score &amp; Decision Funnel" in html
+    assert "综合评分" in html
     assert "Score Change Attribution" in html
     assert "Report Index Freshness" in html
     assert "Task Cadence Calendar" in html
     assert "Report Navigation" in html
+    assert "Top 3 Review Items Today" in html
+    assert "影响今日结论" in html
+    assert "影响研究晋升" in html
     assert "Critical / Must Review Today" in html
     assert "Contribution Summary" in html
     assert "<details" in html
