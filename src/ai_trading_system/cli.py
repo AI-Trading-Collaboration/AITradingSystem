@@ -750,6 +750,16 @@ from ai_trading_system.trading_engine.reports.shadow_backtest_report import (
     validate_shadow_backtest_payload,
     write_shadow_backtest_report_alias,
 )
+from ai_trading_system.trading_engine.signal_snapshots import (
+    default_signal_snapshot_json_path,
+    default_signal_snapshot_root,
+    latest_signal_snapshot_path,
+    load_signal_snapshot_payload,
+    run_signal_snapshot_build,
+    signal_snapshot_summary,
+    validate_signal_snapshot_payload,
+    write_signal_snapshot_report_alias,
+)
 from ai_trading_system.valuation import (
     ValuationReviewReport,
     build_valuation_review_report,
@@ -825,6 +835,7 @@ catalysts_app = typer.Typer(help="未来催化剂日历和事件前复核。", n
 execution_app = typer.Typer(help="Advisory execution policy 和执行纪律。", no_args_is_help=True)
 portfolio_app = typer.Typer(help="真实组合持仓和暴露解释。", no_args_is_help=True)
 parameters_app = typer.Typer(help="生产参数快照、shadow 回测和晋升复核。", no_args_is_help=True)
+signals_app = typer.Typer(help="Shadow backtest signal snapshot 构建和校验。", no_args_is_help=True)
 reports_app = typer.Typer(help="投资报告和周期复盘。", no_args_is_help=True)
 ops_app = typer.Typer(help="运行监控和 pipeline health。", no_args_is_help=True)
 security_app = typer.Typer(help="密钥卫生和供应商权限治理。", no_args_is_help=True)
@@ -847,6 +858,7 @@ app.add_typer(catalysts_app, name="catalysts")
 app.add_typer(execution_app, name="execution")
 app.add_typer(portfolio_app, name="portfolio")
 app.add_typer(parameters_app, name="parameters")
+app.add_typer(signals_app, name="signals")
 app.add_typer(reports_app, name="reports")
 app.add_typer(ops_app, name="ops")
 app.add_typer(security_app, name="security")
@@ -4020,6 +4032,91 @@ def data_repair_backtest_inputs_command(
     console.print("production_effect=none；不修改 production 参数或 promotion 规则")
 
 
+@signals_app.command("build-snapshot")
+def signals_build_snapshot_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用价格缓存中的最新可用日期。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="信号快照日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="shadow backtest 配置路径。"),
+    ] = DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="写入 outputs/dry_runs/signal_snapshots，不写正式 artifacts。"),
+    ] = False,
+    price_derived_only: Annotated[
+        bool,
+        typer.Option(help="只构建 price-derived signals，不补 neutral fallback。"),
+    ] = False,
+) -> None:
+    """构建 shadow backtest signal snapshot。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    run = run_signal_snapshot_build(
+        as_of=run_date,
+        config_path=config_path,
+        dry_run=dry_run,
+        price_derived_only=price_derived_only,
+    )
+    summary = signal_snapshot_summary(run.payload)
+    status = str(summary.get("status", "UNKNOWN"))
+    style = "green" if status == "OK" else "yellow" if status == "LIMITED" else "red"
+    console.print(f"[{style}]Signal snapshot：{status}[/{style}]")
+    console.print(f"JSON：{run.json_path}")
+    console.print(f"Markdown：{run.markdown_path}")
+    console.print(
+        f"real_signals={summary.get('real_signal_count', 0)}；"
+        f"fallback_signals={summary.get('fallback_signal_count', 0)}；"
+        f"missing_signals={summary.get('missing_signal_count', 0)}；"
+        f"can_run_full_signal_backtest={summary.get('can_run_full_signal_backtest', False)}"
+    )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@signals_app.command("validate-snapshot")
+def signals_validate_snapshot_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验最新 signal snapshot artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="信号快照日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 signal_snapshot.json 路径。"),
+    ] = None,
+) -> None:
+    """校验 signal snapshot JSON schema 和只读安全字段。"""
+    source_path = input_path or _resolve_signal_snapshot_path(latest=latest, as_of=as_of)
+    payload = load_signal_snapshot_payload(source_path)
+    issues = validate_signal_snapshot_payload(payload)
+    summary = signal_snapshot_summary(payload)
+    status = str(summary.get("status", "UNKNOWN"))
+    style = "green" if status == "OK" else "yellow" if status == "LIMITED" else "red"
+    console.print(f"[{style}]Signal snapshot validation：{status}[/{style}]")
+    console.print(f"source：{source_path}")
+    console.print(
+        f"real_signals={summary.get('real_signal_count', 0)}；"
+        f"fallback_signals={summary.get('fallback_signal_count', 0)}；"
+        f"missing_signals={summary.get('missing_signal_count', 0)}；"
+        f"proxy_signals={summary.get('proxy_signal_count', 0)}"
+    )
+    if issues:
+        for issue in issues:
+            console.print(f"[red]- {issue}[/red]")
+        raise typer.Exit(code=1)
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
 @app.command("backtest")
 def backtest(
     prices_path: Annotated[
@@ -6414,6 +6511,45 @@ def parameter_promotion_report_command(
     status = decision.get("status", "UNKNOWN") if isinstance(decision, dict) else "UNKNOWN"
     console.print("[green]Parameter promotion report：OK[/green]")
     console.print(f"promotion_status：{status}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{markdown_path}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@reports_app.command("signal-snapshot")
+def signal_snapshot_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新正式 signal snapshot artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="报告日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    source_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 signal_snapshot.json 路径。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 alias 输出目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """从正式 artifact 生成 signal snapshot 报告 alias。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    json_source = source_path or _resolve_signal_snapshot_path(latest=latest, as_of=as_of)
+    payload = load_signal_snapshot_payload(json_source)
+    issues = validate_signal_snapshot_payload(payload)
+    if issues:
+        raise typer.BadParameter("signal snapshot JSON 校验失败：" + "; ".join(issues))
+    report_date = _signal_snapshot_payload_date(payload, json_source)
+    json_path, markdown_path = write_signal_snapshot_report_alias(payload, reports_dir, report_date)
+    summary = signal_snapshot_summary(payload)
+    console.print("[green]Signal snapshot report：OK[/green]")
+    console.print(f"status：{summary.get('status', 'UNKNOWN')}")
     console.print(f"JSON：{json_path}")
     console.print(f"Markdown：{markdown_path}")
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
@@ -13724,6 +13860,16 @@ def _resolve_shadow_backtest_summary_path(*, latest: bool, as_of: str | None) ->
     return default_shadow_backtest_summary_json_path(root, _parse_date(as_of))
 
 
+def _resolve_signal_snapshot_path(*, latest: bool, as_of: str | None) -> Path:
+    root = default_signal_snapshot_root()
+    if latest or as_of is None:
+        latest_path = latest_signal_snapshot_path(root)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 signal snapshot artifact：{root}")
+        return latest_path
+    return default_signal_snapshot_json_path(root, _parse_date(as_of))
+
+
 def _resolve_parameter_promotion_path(*, latest: bool, as_of: str | None) -> Path:
     root = PROJECT_ROOT / "artifacts" / "parameter_promotion"
     if latest or as_of is None:
@@ -13747,6 +13893,26 @@ def _shadow_backtest_payload_date(payload: dict[str, object], source_path: Path)
         return date.fromisoformat(source_path.parent.name)
     except ValueError as exc:
         message = f"无法从 shadow backtest artifact 推断日期：{source_path}"
+        raise typer.BadParameter(message) from exc
+
+
+def _signal_snapshot_payload_date(payload: dict[str, object], source_path: Path) -> date:
+    metadata = payload.get("metadata")
+    if isinstance(metadata, dict):
+        raw_date = str(metadata.get("as_of") or "")
+        try:
+            return date.fromisoformat(raw_date)
+        except ValueError:
+            snapshot_id = str(metadata.get("snapshot_id") or "")
+            raw_date = snapshot_id.removeprefix("signal-snapshot-")
+            try:
+                return date.fromisoformat(raw_date)
+            except ValueError:
+                pass
+    try:
+        return date.fromisoformat(source_path.parent.name)
+    except ValueError as exc:
+        message = f"无法从 signal snapshot artifact 推断日期：{source_path}"
         raise typer.BadParameter(message) from exc
 
 

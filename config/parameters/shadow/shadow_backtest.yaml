@@ -39,7 +39,7 @@ backtest_modes:
       Required price history is available but signal snapshots are limited.
       This mode validates the shadow backtest framework, walk-forward plumbing,
       and price-path sensitivity without claiming full signal evidence.
-    max_promotion_status: "watch"
+    max_promotion_status: "rejected"
     allow_candidate: false
     allow_production_promotion: false
     manual_review_required: true
@@ -50,6 +50,25 @@ backtest_modes:
     review_condition: >
       Remove the candidate block only after full PIT signal snapshots are
       available and full_signal_backtest diagnostics return OK.
+  full_signal_backtest_limited:
+    owner: "system"
+    status: "pilot_baseline"
+    rationale: >
+      A signal snapshot exists and all required signals are present, but at
+      least one signal remains proxy or neutral fallback. This mode validates
+      full-signal plumbing and score attribution without claiming full signal
+      quality.
+    max_promotion_status: "watch"
+    allow_candidate: false
+    allow_production_promotion: false
+    manual_review_required: true
+    validation_evidence: >
+      TRADING-050 tests cover signal snapshot generation, diagnostics mode
+      selection, promotion constraint enforcement, dashboard display, and
+      Reader Brief limited-signal wording.
+    review_condition: >
+      Candidate status may be enabled only after required signals all report OK
+      and neutral fallback signals have been replaced by auditable PIT inputs.
 market_regime:
   id: "ai_after_chatgpt"
   anchor_event: "ChatGPT public launch"
@@ -61,6 +80,7 @@ data:
   download_manifest_path: "data/raw/download_manifest.csv"
   secondary_prices_path: "data/raw/prices_marketstack_daily.csv"
   data_quality_report_dir: "outputs/reports"
+  signal_snapshot_dir: "artifacts/signal_snapshots"
 baseline_parameters_path: "config/parameters/production/current.yaml"
 promotion_rules_path: "config/parameters/promotion/promotion_rules.yaml"
 output:

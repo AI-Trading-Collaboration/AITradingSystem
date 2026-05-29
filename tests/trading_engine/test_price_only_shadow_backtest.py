@@ -29,9 +29,9 @@ def test_price_only_mode_caps_candidate_promotion() -> None:
         backtest_mode="price_only_shadow_backtest",
     )
 
-    assert constrained.status == "watch"
-    assert "signal snapshots are LIMITED" in constrained.reason
-    assert "price_only_shadow_backtest_signal_snapshots_limited" in (
+    assert constrained.status == "rejected"
+    assert "signal snapshot is missing" in constrained.reason
+    assert "price_only_shadow_backtest_signal_snapshot_missing" in (
         constrained.manual_review_items
     )
 
@@ -51,9 +51,9 @@ def test_dashboard_displays_price_only_mode_and_disabled_promotion(tmp_path: Pat
 
     card = payload["shadow_parameter_backtest"]
     assert card["backtest_mode"] == "price_only_shadow_backtest"
-    assert card["promotion_eligibility"] == "Disabled due to limited signals"
+    assert card["promotion_eligibility"] == "Disabled"
     assert "Price-only" in html
-    assert "Disabled due to limited signals" in html
+    assert "Disabled" in html
 
 
 def test_reader_brief_displays_limited_signal_price_only_warning(
@@ -74,9 +74,9 @@ def test_reader_brief_displays_limited_signal_price_only_warning(
 
     review = payload["parameter_shadow_review"]
     assert review["backtest_mode"] == "price_only_shadow_backtest"
-    assert review["promotion_eligibility"] == "Disabled due to limited signals"
+    assert review["promotion_eligibility"] == "Disabled"
     assert "can now run in price-only mode" in review["data_quality_summary"]
-    assert "candidate promotion is disabled" in review["data_quality_summary"]
+    assert "candidate promotion is rejected" in review["data_quality_summary"]
 
 
 def _write_price_only_diagnostic(tmp_path: Path, as_of: date) -> Path:
@@ -94,7 +94,7 @@ def _write_price_only_diagnostic(tmp_path: Path, as_of: date) -> Path:
             "asset_coverage_status": "OK",
             "date_coverage_status": "OK",
             "price_data_status": "OK",
-            "signal_snapshots_status": "LIMITED",
+            "signal_snapshots_status": "MISSING",
             "backtest_mode": "price_only_shadow_backtest",
             "blocking_errors": 0,
             "warnings": 1,
@@ -139,7 +139,7 @@ def _write_price_only_shadow_summary(tmp_path: Path, as_of: date) -> Path:
                     "status": "LIMITED",
                     "overall_status": "LIMITED",
                     "price_data_status": "OK",
-                    "signal_snapshots_status": "LIMITED",
+                    "signal_snapshots_status": "MISSING",
                     "backtest_mode": "price_only_shadow_backtest",
                     "diagnostic_report": str(diagnostic_path),
                     "blocking_errors": 0,
@@ -148,23 +148,23 @@ def _write_price_only_shadow_summary(tmp_path: Path, as_of: date) -> Path:
                 },
                 "relative_comparison": {},
                 "promotion_decision": {
-                    "status": "watch",
+                    "status": "rejected",
                     "reason": (
-                        "Price-only shadow backtest completed, but signal snapshots are "
-                        "LIMITED. Candidate promotion is disabled until full signal inputs "
+                        "Price-only shadow backtest completed, but signal snapshot is "
+                        "missing. Candidate promotion is rejected until full signal inputs "
                         "are available."
                     ),
                     "hard_rejections": [],
                     "manual_review_items": [
-                        "price_only_shadow_backtest_signal_snapshots_limited"
+                        "price_only_shadow_backtest_signal_snapshot_missing"
                     ],
                 },
                 "promotion_constraints": {
-                    "max_promotion_status": "watch",
+                    "max_promotion_status": "rejected",
                     "allow_candidate": False,
                     "allow_production_promotion": False,
                     "manual_review_required": True,
-                    "reason": "signal_snapshots_limited",
+                    "reason": "signal_snapshot_missing",
                 },
             },
             ensure_ascii=False,

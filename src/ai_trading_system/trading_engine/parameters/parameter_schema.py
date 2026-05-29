@@ -128,6 +128,7 @@ class DataPathsConfig(BaseModel):
     download_manifest_path: str
     secondary_prices_path: str
     data_quality_report_dir: str
+    signal_snapshot_dir: str = "artifacts/signal_snapshots"
 
 
 class OutputPathsConfig(BaseModel):

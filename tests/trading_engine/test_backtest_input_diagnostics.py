@@ -76,7 +76,7 @@ def test_diagnostics_reports_stale_cache(tmp_path: Path) -> None:
     assert run.payload["summary"]["overall_status"] == "FAILED"
 
 
-def test_diagnostics_reports_missing_signal_snapshot_as_limited(tmp_path: Path) -> None:
+def test_diagnostics_reports_missing_signal_snapshot_as_missing(tmp_path: Path) -> None:
     fixture = _write_fixture(tmp_path, write_signal_snapshots=False)
 
     run = run_backtest_input_diagnostics(
@@ -87,10 +87,11 @@ def test_diagnostics_reports_missing_signal_snapshot_as_limited(tmp_path: Path) 
     )
 
     signals = run.payload["checks"]["signal_snapshots"]
-    assert signals["status"] == "LIMITED"
+    assert signals["status"] == "MISSING"
     assert "macro_liquidity" in signals["missing_signals"]
     assert signals["fallback_mode"] == "price_only_shadow_backtest"
     assert run.payload["summary"]["overall_status"] == "LIMITED"
+    assert run.payload["summary"]["signal_snapshots_status"] == "MISSING"
     assert run.payload["summary"]["backtest_mode"] == "price_only_shadow_backtest"
     assert run.payload["summary"]["can_run_shadow_backtest"] is True
     assert run.payload["summary"]["can_promote_candidate"] is False

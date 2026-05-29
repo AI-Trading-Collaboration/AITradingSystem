@@ -41,12 +41,12 @@ def test_shadow_parameter_backtest_writes_observe_only_artifacts(tmp_path: Path)
     assert run.payload["metadata"]["manual_review_required"] is True
     assert run.payload["metadata"]["auto_promotion"] is False
     assert run.payload["data_quality"]["price_data_status"] == "OK"
-    assert run.payload["data_quality"]["signal_snapshots_status"] == "LIMITED"
+    assert run.payload["data_quality"]["signal_snapshots_status"] == "MISSING"
     assert run.payload["data_quality"]["can_run_shadow_backtest"] is True
     assert run.payload["data_quality"]["can_promote_candidate"] is False
     assert run.payload["promotion_constraints"]["allow_candidate"] is False
-    assert run.payload["promotion_constraints"]["max_promotion_status"] == "watch"
-    assert run.payload["promotion_decision"]["status"] in {"watch", "rejected"}
+    assert run.payload["promotion_constraints"]["max_promotion_status"] == "rejected"
+    assert run.payload["promotion_decision"]["status"] == "rejected"
     assert run.payload["candidate_parameters"]["promotion_eligible"] is False
     assert run.payload["metadata"]["market_regime"] == "ai_after_chatgpt"
     assert run.payload["walk_forward_windows"]
@@ -148,7 +148,7 @@ def test_dashboard_reads_shadow_parameter_backtest_card(tmp_path: Path) -> None:
     assert card["candidate_version"] == "shadow-test"
     assert card["promotion_status"] == "watch"
     assert card["backtest_mode"] == "price_only_shadow_backtest"
-    assert card["promotion_eligibility"] == "Disabled due to limited signals"
+    assert card["promotion_eligibility"] == "Disabled"
     assert card["manual_review_required"] is True
     assert "Shadow Parameter Backtest" in html
     assert "Price-only" in html
@@ -213,6 +213,7 @@ def _write_shadow_backtest_fixture(
         "config_path": config_path,
         "baseline_path": baseline_path,
         "baseline_text": baseline_text,
+        "output_dir": output_dir,
         "formal_shadow_backtest_dir": output_dir / "shadow_backtest",
     }
 
@@ -284,6 +285,7 @@ def _shadow_config_payload(
             "download_manifest_path": str(manifest_path),
             "secondary_prices_path": str(secondary_prices_path),
             "data_quality_report_dir": str(reports_dir),
+            "signal_snapshot_dir": str(output_dir / "signal_snapshots"),
         },
         "baseline_parameters_path": str(baseline_path),
         "promotion_rules_path": str(promotion_path),
@@ -475,7 +477,7 @@ def _write_shadow_summary_artifact(tmp_path: Path, as_of: date) -> Path:
                     "status": "LIMITED",
                     "overall_status": "LIMITED",
                     "price_data_status": "OK",
-                    "signal_snapshots_status": "LIMITED",
+                    "signal_snapshots_status": "MISSING",
                     "backtest_mode": "price_only_shadow_backtest",
                     "can_run_shadow_backtest": True,
                     "can_promote_candidate": False,
@@ -493,11 +495,11 @@ def _write_shadow_summary_artifact(tmp_path: Path, as_of: date) -> Path:
                     "manual_review_items": ["criterion_failed:stability"],
                 },
                 "promotion_constraints": {
-                    "max_promotion_status": "watch",
+                    "max_promotion_status": "rejected",
                     "allow_candidate": False,
                     "allow_production_promotion": False,
                     "manual_review_required": True,
-                    "reason": "signal_snapshots_limited",
+                    "reason": "signal_snapshot_missing",
                 },
             },
             ensure_ascii=False,

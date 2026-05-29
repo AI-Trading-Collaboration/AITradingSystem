@@ -175,6 +175,24 @@ def build_shadow_backtest_summary(
     )
     input_artifacts["backtest_input_diagnostic"] = str(diagnostic_run.json_path)
     input_artifacts["backtest_input_manifest"] = str(diagnostic_run.manifest_path)
+    backtest_mode = _diagnostic_backtest_mode(diagnostic_run.payload)
+    signal_snapshot_path = _signal_snapshot_path_from_diagnostics(diagnostic_run.payload)
+    from ai_trading_system.trading_engine.signal_snapshots import (
+        load_signal_snapshot_payload,
+        signal_snapshot_frames,
+    )
+
+    signal_snapshot_payload = (
+        load_signal_snapshot_payload(signal_snapshot_path)
+        if signal_snapshot_path is not None
+        and backtest_mode in {"full_signal_backtest_limited", "full_signal_backtest"}
+        else {}
+    )
+    signal_frames = (
+        signal_snapshot_frames(signal_snapshot_payload) if signal_snapshot_payload else None
+    )
+    if signal_snapshot_path is not None:
+        input_artifacts["signal_snapshot"] = str(signal_snapshot_path)
     quality_status, quality_warnings = _shadow_data_quality_status(
         config=config,
         baseline=baseline,
@@ -198,6 +216,7 @@ def build_shadow_backtest_summary(
         candidates=candidates,
         windows=windows,
         config=config,
+        signal_frames=signal_frames,
     )
     selected_weights = (
         evaluation.candidate.weights if evaluation is not None else dict(baseline.weights)
@@ -212,6 +231,7 @@ def build_shadow_backtest_summary(
         config.transaction_cost,
         start=full_start,
         end=full_end,
+        signal_frames=signal_frames,
     )
     candidate_result = simulate_parameter_portfolio(
         prices,
@@ -220,6 +240,7 @@ def build_shadow_backtest_summary(
         config.transaction_cost,
         start=full_start,
         end=full_end,
+        signal_frames=signal_frames,
     )
     candidate_version = (
         evaluation.candidate.version if evaluation is not None else "no-shadow-candidate"
@@ -240,7 +261,6 @@ def build_shadow_backtest_summary(
         data_quality_status=quality_status,
         missing_required_input_artifacts=_missing_required_input_artifacts(input_artifacts),
     )
-    backtest_mode = _diagnostic_backtest_mode(diagnostic_run.payload)
     promotion_decision = _apply_backtest_mode_promotion_constraints(
         promotion_decision,
         backtest_mode=backtest_mode,
@@ -266,6 +286,7 @@ def build_shadow_backtest_summary(
         backtest_input_diagnostics_path=diagnostic_run.json_path,
         input_artifacts=input_artifacts,
         output_artifacts={},
+        signal_snapshot_payload=signal_snapshot_payload,
         passing_ratio=passing_ratio,
         warnings=tuple(quality_warnings),
         dry_run=dry_run,
@@ -327,6 +348,7 @@ def _select_candidate(
     candidates: tuple[CandidateWeightSet, ...],
     windows: tuple[WalkForwardWindow, ...],
     config: ShadowBacktestConfig,
+    signal_frames: dict[str, pd.DataFrame] | None = None,
 ) -> CandidateEvaluation | None:
     if not candidates or not windows:
         return None
@@ -338,6 +360,7 @@ def _select_candidate(
             config.transaction_cost,
             start=window.validation_start,
             end=window.validation_end,
+            signal_frames=signal_frames,
         )
         for window in windows
     }
@@ -355,6 +378,7 @@ def _select_candidate(
                 config.transaction_cost,
                 start=window.validation_start,
                 end=window.validation_end,
+                signal_frames=signal_frames,
             )
             status = _window_status(baseline_result, candidate_result)
             if status == "PASS":
@@ -402,6 +426,7 @@ def _summary_payload(
     backtest_input_diagnostics_path: Path,
     input_artifacts: dict[str, str],
     output_artifacts: dict[str, str],
+    signal_snapshot_payload: dict[str, Any],
     passing_ratio: float,
     warnings: tuple[str, ...],
     dry_run: bool,
@@ -496,6 +521,20 @@ def _summary_payload(
         "relative_comparison": _relative_comparison(baseline_metrics, candidate_metrics),
         "parameter_changes": [change.to_dict() for change in parameter_changes],
         "walk_forward_windows": list(windows),
+        "score_calculation": _score_calculation_payload(
+            backtest_mode=_diagnostic_backtest_mode(backtest_input_diagnostics),
+            weights=candidate_weights,
+            signal_snapshot_payload=signal_snapshot_payload,
+            signal_snapshot_path=input_artifacts.get("signal_snapshot", ""),
+        ),
+        "score_attribution": {
+            "mode": _diagnostic_backtest_mode(backtest_input_diagnostics),
+            "row_count": len(candidate_result.score_rows),
+            "rows": list(candidate_result.score_rows),
+        },
+        "parameter_contribution_summary": dict(
+            candidate_result.parameter_contribution_summary or {}
+        ),
         "passing_windows_ratio": passing_ratio,
         "overfitting_risk": _overfitting_risk(passing_ratio, len(windows)),
         "promotion_decision": promotion_decision.to_dict(),
@@ -935,14 +974,84 @@ def _diagnostic_can_promote_candidate(payload: dict[str, Any]) -> bool:
     return bool(summary.get("can_promote_candidate")) if isinstance(summary, dict) else False
 
 
+def _signal_snapshot_path_from_diagnostics(payload: dict[str, Any]) -> Path | None:
+    checks = payload.get("checks")
+    if not isinstance(checks, dict):
+        return None
+    signal_snapshots = checks.get("signal_snapshots")
+    if not isinstance(signal_snapshots, dict):
+        return None
+    files = signal_snapshots.get("snapshot_files")
+    if not isinstance(files, list):
+        return None
+    for file_path in files:
+        path = Path(str(file_path))
+        if path.name == "signal_snapshot.json" and path.exists():
+            return path
+    for file_path in files:
+        path = Path(str(file_path))
+        if path.suffix.lower() == ".json" and path.exists():
+            return path
+    return None
+
+
+def _score_calculation_payload(
+    *,
+    backtest_mode: str,
+    weights: dict[str, float],
+    signal_snapshot_payload: dict[str, Any],
+    signal_snapshot_path: str,
+) -> dict[str, Any]:
+    from ai_trading_system.trading_engine.signal_snapshots import (
+        PRICE_DERIVED_SIGNALS,
+        signal_snapshot_summary,
+    )
+
+    summary = signal_snapshot_summary(signal_snapshot_payload) if signal_snapshot_payload else {}
+    fallback_signals = [
+        *_strings(summary.get("proxy_signals")),
+        *_strings(summary.get("neutral_fallback_signals")),
+    ]
+    return {
+        "mode": backtest_mode,
+        "weights": dict(weights),
+        "signal_snapshot": signal_snapshot_path,
+        "signal_snapshot_status": summary.get(
+            "status",
+            "MISSING" if backtest_mode == "price_only_shadow_backtest" else "UNKNOWN",
+        ),
+        "fallback_signals": sorted(dict.fromkeys(fallback_signals)),
+        "price_derived_signals": list(PRICE_DERIVED_SIGNALS),
+        "real_signals": _strings(summary.get("real_signals")),
+        "proxy_signals": _strings(summary.get("proxy_signals")),
+        "neutral_fallback_signals": _strings(summary.get("neutral_fallback_signals")),
+    }
+
+
 def _promotion_constraints_for_mode(backtest_mode: str) -> dict[str, object]:
     if backtest_mode == "price_only_shadow_backtest":
+        return {
+            "max_promotion_status": "rejected",
+            "allow_candidate": False,
+            "allow_production_promotion": False,
+            "manual_review_required": True,
+            "reason": "signal_snapshot_missing",
+        }
+    if backtest_mode == "full_signal_backtest_limited":
         return {
             "max_promotion_status": "watch",
             "allow_candidate": False,
             "allow_production_promotion": False,
             "manual_review_required": True,
-            "reason": "signal_snapshots_limited",
+            "reason": "signal_quality_limited",
+        }
+    if backtest_mode == "blocked":
+        return {
+            "max_promotion_status": "rejected",
+            "allow_candidate": False,
+            "allow_production_promotion": False,
+            "manual_review_required": True,
+            "reason": "backtest_input_quality_blocked",
         }
     return {
         "max_promotion_status": "candidate",
@@ -958,34 +1067,74 @@ def _apply_backtest_mode_promotion_constraints(
     *,
     backtest_mode: str,
 ) -> PromotionDecision:
-    if backtest_mode != "price_only_shadow_backtest":
+    if backtest_mode == "full_signal_backtest":
         return decision
-    review_items = tuple(
-        dict.fromkeys(
-            [
-                *decision.manual_review_items,
-                "price_only_shadow_backtest_signal_snapshots_limited",
-            ]
+    if backtest_mode == "full_signal_backtest_limited":
+        review_items = tuple(
+            dict.fromkeys(
+                [
+                    *decision.manual_review_items,
+                    "full_signal_backtest_limited_signal_quality_limited",
+                ]
+            )
         )
-    )
-    reason = (
-        "Price-only shadow backtest completed, but signal snapshots are LIMITED. "
-        "Candidate promotion is disabled until full signal inputs are available."
-    )
-    if decision.status == "rejected":
-        reason = (
-            "Price-only backtest completed but cannot be promoted because signal snapshots "
-            f"are LIMITED. Original promotion decision was rejected: {decision.reason}"
-        )
+        if decision.status == "rejected":
+            reason = (
+                "Full-signal-limited backtest completed, but original promotion decision "
+                f"was rejected: {decision.reason}. Signal quality is limited, so "
+                "candidate promotion remains disabled until signal snapshots reach OK."
+            )
+            return PromotionDecision(
+                status="rejected",
+                reason=reason,
+                hard_rejections=decision.hard_rejections,
+                manual_review_items=review_items,
+                criteria_results=decision.criteria_results,
+            )
         return PromotionDecision(
-            status="rejected",
-            reason=reason,
+            status="watch",
+            reason=(
+                "Signal snapshot is available in limited mode. Full-signal-limited "
+                "shadow backtest may be reviewed, but candidate promotion is disabled "
+                "until signal quality reaches OK."
+            ),
             hard_rejections=decision.hard_rejections,
             manual_review_items=review_items,
             criteria_results=decision.criteria_results,
         )
+    if backtest_mode == "blocked":
+        review_items = tuple(
+            dict.fromkeys([*decision.manual_review_items, "backtest_input_quality_blocked"])
+        )
+        return PromotionDecision(
+            status="rejected",
+            reason=(
+                "Shadow backtest input quality is blocked. Candidate promotion is rejected "
+                "until blocking data quality issues are repaired."
+            ),
+            hard_rejections=decision.hard_rejections,
+            manual_review_items=review_items,
+            criteria_results=decision.criteria_results,
+        )
+    review_items = tuple(
+        dict.fromkeys(
+            [
+                *decision.manual_review_items,
+                "price_only_shadow_backtest_signal_snapshot_missing",
+            ]
+        )
+    )
+    reason = (
+        "Price-only shadow backtest completed, but signal snapshot is missing. "
+        "Candidate promotion is rejected until full signal inputs are available."
+    )
+    if decision.status == "rejected":
+        reason = (
+            "Price-only backtest completed but cannot be promoted because signal snapshot "
+            f"is missing. Original promotion decision was rejected: {decision.reason}"
+        )
     return PromotionDecision(
-        status="watch",
+        status="rejected",
         reason=reason,
         hard_rejections=decision.hard_rejections,
         manual_review_items=review_items,
@@ -1102,3 +1251,9 @@ def _config_hash(config_path: Path, input_artifacts: dict[str, str]) -> str:
             digest.update(str(path).encode("utf-8"))
             digest.update(sha256_file(path).encode("utf-8"))
     return digest.hexdigest()
+
+
+def _strings(value: object) -> list[str]:
+    if isinstance(value, list | tuple):
+        return [str(item) for item in value if str(item)]
+    return []

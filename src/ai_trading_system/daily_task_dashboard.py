@@ -17,6 +17,10 @@ from ai_trading_system.reports.daily_task_dashboard_view_model import (
     DailyTaskKeyConclusion,
     TraceRecord,
 )
+from ai_trading_system.trading_engine.signal_snapshots import (
+    load_signal_snapshot_payload,
+    signal_snapshot_summary,
+)
 
 DAILY_DECISION_SUMMARY_SCHEMA_VERSION = 1
 PAPER_TRADING_TREND_WINDOWS: tuple[int, ...] = (7, 14, 30)
@@ -2042,6 +2046,7 @@ def _backtest_data_quality_summary(report: DailyTaskDashboardReport) -> TraceRec
     missing_signals = _strings(signal_snapshots.get("missing_signals"))
     if missing_signals:
         risks.append("missing_signals=" + ", ".join(missing_signals[:4]))
+    snapshot_summary = _signal_snapshot_artifact_summary(signal_snapshots, report)
     return {
         "status": summary.get("overall_status", "UNKNOWN"),
         "overall_status": summary.get("overall_status", "UNKNOWN"),
@@ -2062,11 +2067,63 @@ def _backtest_data_quality_summary(report: DailyTaskDashboardReport) -> TraceRec
         "cache_freshness_status": cache_freshness.get("status", "UNKNOWN"),
         "missing_assets": missing_assets,
         "missing_signals": missing_signals,
+        "signal_snapshot_id": snapshot_summary.get("snapshot_id", ""),
+        "signal_snapshot_href": snapshot_summary.get("href", ""),
+        "signal_snapshot_path": snapshot_summary.get("path", ""),
+        "real_signals_count": snapshot_summary.get("real_signal_count", 0),
+        "proxy_signals_count": snapshot_summary.get("proxy_signal_count", 0),
+        "fallback_signals_count": snapshot_summary.get("fallback_signal_count", 0),
+        "missing_signals_count": snapshot_summary.get("missing_signal_count", len(missing_signals)),
+        "signal_snapshot_coverage": snapshot_summary.get("coverage", 0.0),
         "production_effect": _mapping_value(payload, "metadata").get(
             "production_effect",
             ProductionEffect.NONE.value,
         ),
         "risk": "；".join(risks) or "Backtest input diagnostics 未发现阻断项。",
+    }
+
+
+def _signal_snapshot_artifact_summary(
+    signal_snapshots: TraceRecord,
+    report: DailyTaskDashboardReport,
+) -> TraceRecord:
+    snapshot_files = _strings(signal_snapshots.get("snapshot_files"))
+    candidates = [
+        Path(path)
+        for path in snapshot_files
+        if str(path).endswith("signal_snapshot.json") and Path(path).exists()
+    ]
+    default_path = (
+        report.project_root
+        / "artifacts"
+        / "signal_snapshots"
+        / report.as_of.isoformat()
+        / "signal_snapshot.json"
+    )
+    path = candidates[0] if candidates else default_path
+    payload = load_signal_snapshot_payload(path)
+    if not payload:
+        return {
+            "snapshot_id": "",
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir) if path.exists() else "",
+            "real_signal_count": 0,
+            "proxy_signal_count": 0,
+            "fallback_signal_count": 0,
+            "missing_signal_count": len(_strings(signal_snapshots.get("missing_signals"))),
+            "coverage": 0.0,
+        }
+    summary = signal_snapshot_summary(payload)
+    metadata = _mapping_value(payload, "metadata")
+    return {
+        "snapshot_id": metadata.get("snapshot_id", ""),
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "real_signal_count": summary.get("real_signal_count", 0),
+        "proxy_signal_count": summary.get("proxy_signal_count", 0),
+        "fallback_signal_count": summary.get("fallback_signal_count", 0),
+        "missing_signal_count": summary.get("missing_signal_count", 0),
+        "coverage": summary.get("coverage", 0.0),
     }
 
 
@@ -2153,9 +2210,7 @@ def _shadow_parameter_backtest_summary(report: DailyTaskDashboardReport) -> Trac
         "turnover_delta": _optional_float(comparison.get("turnover_delta")),
         "promotion_status": decision.get("status", "UNKNOWN"),
         "backtest_mode": backtest_mode,
-        "promotion_eligibility": (
-            "Disabled due to limited signals" if allow_candidate is False else "Review required"
-        ),
+        "promotion_eligibility": _promotion_eligibility_label(backtest_mode, allow_candidate),
         "data_quality_status": data_quality.get("status", "UNKNOWN"),
         "data_quality_diagnostic_report": data_quality.get("diagnostic_report", ""),
         "data_quality_blocking_errors": data_quality_blocking_errors,
@@ -8903,6 +8958,7 @@ def _render_backtest_data_quality(report: DailyTaskDashboardReport) -> str:
     quality = _backtest_data_quality_summary(report)
     href = _string_value(quality.get("report_href") or quality.get("href"))
     repair_href = _string_value(quality.get("repair_plan_href"))
+    signal_snapshot_href = _string_value(quality.get("signal_snapshot_href"))
     report_link = (
         '<a class="report-link" '
         f'href="{_text(href)}"><span>Backtest Data Quality</span>'
@@ -8916,6 +8972,13 @@ def _render_backtest_data_quality(report: DailyTaskDashboardReport) -> str:
         f'href="{_text(repair_href)}"><span>Repair Plan</span>'
         f"<small>{_text(quality.get('overall_status', 'UNKNOWN'))}</small></a>"
         if quality.get("exists") and repair_href
+        else ""
+    )
+    signal_snapshot_link = (
+        '<a class="report-link" '
+        f'href="{_text(signal_snapshot_href)}"><span>Signal Snapshot</span>'
+        f"<small>{_text(quality.get('signal_snapshot_status', 'UNKNOWN'))}</small></a>"
+        if signal_snapshot_href
         else ""
     )
     return "\n".join(
@@ -8940,6 +9003,12 @@ def _render_backtest_data_quality(report: DailyTaskDashboardReport) -> str:
             _summary_item("date coverage", quality.get("date_coverage_status", "MISSING")),
             _summary_item("price data", quality.get("price_data_status", "MISSING")),
             _summary_item("signal snapshots", quality.get("signal_snapshot_status", "MISSING")),
+            _summary_item("snapshot id", quality.get("signal_snapshot_id", "")),
+            _summary_item("real signals", quality.get("real_signals_count", 0)),
+            _summary_item("proxy signals", quality.get("proxy_signals_count", 0)),
+            _summary_item("fallback signals", quality.get("fallback_signals_count", 0)),
+            _summary_item("missing signals", quality.get("missing_signals_count", 0)),
+            _summary_item("signal coverage", quality.get("signal_snapshot_coverage", 0.0)),
             _summary_item("cache freshness", quality.get("cache_freshness_status", "MISSING")),
             _summary_item(
                 "Can run shadow backtest",
@@ -8958,6 +9027,7 @@ def _render_backtest_data_quality(report: DailyTaskDashboardReport) -> str:
             '<div class="report-link-list">',
             report_link,
             repair_link,
+            signal_snapshot_link,
             "</div>",
             "</section>",
         ]
@@ -11953,10 +12023,23 @@ def _summary_item(label: str, value: object) -> str:
 def _backtest_mode_display(value: object) -> str:
     mapping = {
         "price_only_shadow_backtest": "Price-only",
+        "full_signal_backtest_limited": "Full signal limited",
         "full_signal_backtest": "Full signal",
         "blocked": "Blocked",
     }
     return mapping.get(str(value), str(value))
+
+
+def _promotion_eligibility_label(backtest_mode: object, allow_candidate: object) -> str:
+    if str(backtest_mode) == "price_only_shadow_backtest":
+        return "Disabled"
+    if str(backtest_mode) == "full_signal_backtest_limited":
+        return "Watch-only"
+    if str(backtest_mode) == "full_signal_backtest":
+        return "Candidate allowed" if allow_candidate is not False else "Manual review required"
+    if str(backtest_mode) == "blocked":
+        return "Blocked by data quality"
+    return "Unknown"
 
 
 def _status_badge(status: str) -> str:

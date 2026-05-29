@@ -12,6 +12,10 @@ from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     load_report_registry,
 )
+from ai_trading_system.trading_engine.signal_snapshots import (
+    load_signal_snapshot_payload,
+    signal_snapshot_summary,
+)
 
 SCHEMA_VERSION = 1
 REPORT_TYPE = "reader_brief"
@@ -730,6 +734,10 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("status", parameter_shadow.get("status")),
                     ("backtest_mode", parameter_shadow.get("backtest_mode")),
                     ("promotion_eligibility", parameter_shadow.get("promotion_eligibility")),
+                    ("signal_snapshot_status", parameter_shadow.get("signal_snapshot_status")),
+                    ("real_signals_count", parameter_shadow.get("real_signals_count")),
+                    ("fallback_signals_count", parameter_shadow.get("fallback_signals_count")),
+                    ("missing_signals_count", parameter_shadow.get("missing_signals_count")),
                     ("data_quality_status", parameter_shadow.get("data_quality_status")),
                     ("data_quality_summary", parameter_shadow.get("data_quality_summary")),
                     ("promotion_status", parameter_shadow.get("promotion_status")),
@@ -1608,11 +1616,16 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
         diagnostic_summary = _mapping(diagnostic_payload.get("summary"))
         data_quality_status = _text(diagnostic_summary.get("overall_status"), "MISSING")
         backtest_mode = _text(diagnostic_summary.get("backtest_mode"), "MISSING")
+        snapshot_summary = _signal_snapshot_review_summary(as_of, diagnostic_payload)
         return {
             "availability": "MISSING",
             "status": "MISSING",
             "backtest_mode": backtest_mode,
             "promotion_eligibility": _parameter_shadow_promotion_eligibility(backtest_mode),
+            "signal_snapshot_status": snapshot_summary.get("status", "MISSING"),
+            "real_signals_count": snapshot_summary.get("real_signal_count", 0),
+            "fallback_signals_count": snapshot_summary.get("fallback_signal_count", 0),
+            "missing_signals_count": snapshot_summary.get("missing_signal_count", 0),
             "data_quality_status": data_quality_status,
             "data_quality_summary": _parameter_shadow_data_quality_sentence(
                 data_quality_status=data_quality_status,
@@ -1642,6 +1655,7 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
         _read_optional_json(Path(diagnostic_path_text)) if diagnostic_path_text else {}
     )
     diagnostic_summary = _mapping(diagnostic_payload.get("summary"))
+    snapshot_summary = _signal_snapshot_review_summary(as_of, diagnostic_payload)
     data_quality_status = _text(data_quality.get("status"), "UNKNOWN")
     backtest_mode = _text(
         metadata.get("backtest_mode")
@@ -1654,6 +1668,10 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
         "status": status,
         "backtest_mode": backtest_mode,
         "promotion_eligibility": _parameter_shadow_promotion_eligibility(backtest_mode),
+        "signal_snapshot_status": snapshot_summary.get("status", "MISSING"),
+        "real_signals_count": snapshot_summary.get("real_signal_count", 0),
+        "fallback_signals_count": snapshot_summary.get("fallback_signal_count", 0),
+        "missing_signals_count": snapshot_summary.get("missing_signal_count", 0),
         "data_quality_status": data_quality_status,
         "data_quality_summary": _parameter_shadow_data_quality_sentence(
             data_quality_status=data_quality_status,
@@ -1688,6 +1706,36 @@ def _default_backtest_input_diagnostic_path(as_of: date) -> Path:
     )
 
 
+def _signal_snapshot_review_summary(
+    as_of: date,
+    diagnostic_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    checks = _mapping(diagnostic_payload.get("checks"))
+    signal_snapshots = _mapping(checks.get("signal_snapshots"))
+    snapshot_files = [
+        Path(path)
+        for path in _texts(signal_snapshots.get("snapshot_files"))
+        if path.endswith("signal_snapshot.json")
+    ]
+    default_path = (
+        PROJECT_ROOT
+        / "artifacts"
+        / "signal_snapshots"
+        / as_of.isoformat()
+        / "signal_snapshot.json"
+    )
+    path = next((candidate for candidate in snapshot_files if candidate.exists()), default_path)
+    payload = load_signal_snapshot_payload(path)
+    if payload:
+        return signal_snapshot_summary(payload)
+    return {
+        "status": _text(signal_snapshots.get("status"), "MISSING"),
+        "real_signal_count": len(_texts(signal_snapshots.get("real_signals"))),
+        "fallback_signal_count": len(_texts(signal_snapshots.get("neutral_fallback_signals"))),
+        "missing_signal_count": len(_texts(signal_snapshots.get("missing_signals"))),
+    }
+
+
 def _parameter_shadow_data_quality_sentence(
     *,
     data_quality_status: str,
@@ -1698,11 +1746,24 @@ def _parameter_shadow_data_quality_sentence(
     backtest_mode = _text(diagnostic_summary.get("backtest_mode"))
     can_run_shadow = diagnostic_summary.get("can_run_shadow_backtest") is True
     can_promote = diagnostic_summary.get("can_promote_candidate") is True
+    if backtest_mode == "full_signal_backtest_limited" and can_run_shadow and not can_promote:
+        return (
+            "Signal snapshot is available in limited mode. The system now runs "
+            "full-signal-limited shadow backtests using price-derived trend and sector "
+            "signals, while remaining limited or fallback signals keep candidate promotion "
+            "disabled until signal quality reaches OK."
+        )
+    if backtest_mode == "full_signal_backtest" and can_run_shadow and can_promote:
+        return (
+            "Signal snapshot quality is OK. Shadow backtest can evaluate candidate "
+            "parameters under full-signal mode, while production promotion still requires "
+            "manual review."
+        )
     if backtest_mode == "price_only_shadow_backtest" and can_run_shadow and not can_promote:
         return (
             "Shadow parameter review can now run in price-only mode because required price "
-            "history is available. However, signal snapshots remain limited, so candidate "
-            "promotion is disabled until full signal inputs are available."
+            "history is available. However, signal snapshot is missing, so candidate "
+            "promotion is rejected until full signal inputs are available."
         )
     if normalized_status in {"FAILED", "FAIL", "INSUFFICIENT_DATA"}:
         reasons = diagnostic_summary.get("blocking_reasons")
@@ -1741,9 +1802,11 @@ def _parameter_shadow_data_quality_sentence(
 
 def _parameter_shadow_promotion_eligibility(backtest_mode: str) -> str:
     if backtest_mode == "price_only_shadow_backtest":
-        return "Disabled due to limited signals"
+        return "Disabled"
+    if backtest_mode == "full_signal_backtest_limited":
+        return "Watch-only"
     if backtest_mode == "full_signal_backtest":
-        return "Manual review required"
+        return "Candidate allowed"
     if backtest_mode == "blocked":
         return "Blocked by data quality"
     return "Unknown"

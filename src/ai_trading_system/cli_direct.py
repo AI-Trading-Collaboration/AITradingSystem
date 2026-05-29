@@ -59,6 +59,22 @@ def _dispatch(args: list[str]) -> None:
             fmp_api_key_env=_option(args, "--fmp-api-key-env", "FMP_API_KEY") or "FMP_API_KEY",
         )
         return
+    if args[:2] == ["signals", "build-snapshot"]:
+        cli.signals_build_snapshot_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            config_path=_path_option(args, "--config"),
+            dry_run=_flag(args, "--dry-run"),
+            price_derived_only=_flag(args, "--price-derived-only"),
+        )
+        return
+    if args[:2] == ["signals", "validate-snapshot"]:
+        cli.signals_validate_snapshot_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            input_path=_optional_path(args, "--input-path"),
+        )
+        return
     if args[:2] == ["pit-snapshots", "fetch-fmp-forward"]:
         cli.fetch_fmp_forward_pit_command(
             as_of=_option(args, "--as-of"),
@@ -154,6 +170,13 @@ def _dispatch(args: list[str]) -> None:
         return
     if args[:2] == ["reports", "parameter-promotion"]:
         cli.parameter_promotion_report_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            source_path=_optional_path(args, "--source-path"),
+        )
+        return
+    if args[:2] == ["reports", "signal-snapshot"]:
+        cli.signal_snapshot_report_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             source_path=_optional_path(args, "--source-path"),

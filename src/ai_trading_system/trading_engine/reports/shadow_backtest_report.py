@@ -43,6 +43,8 @@ def render_shadow_backtest_markdown(payload: dict[str, Any]) -> str:
     decision = _mapping(payload.get("promotion_decision"))
     data_quality = _mapping(payload.get("data_quality"))
     promotion_constraints = _mapping(payload.get("promotion_constraints"))
+    score_calculation = _mapping(payload.get("score_calculation"))
+    contribution_summary = _mapping(payload.get("parameter_contribution_summary"))
     lines = [
         "# Shadow Parameter Backtest Summary",
         "",
@@ -146,7 +148,24 @@ def render_shadow_backtest_markdown(payload: dict[str, Any]) -> str:
             "",
             f"- Passing windows ratio：`{payload.get('passing_windows_ratio', 0.0)}`",
             f"- Overfitting risk：`{payload.get('overfitting_risk', 'UNKNOWN')}`",
+            f"- Score calculation mode：`{score_calculation.get('mode', 'UNKNOWN')}`",
+            "- Fallback signals："
+            f"`{', '.join(_strings(score_calculation.get('fallback_signals'))) or 'none'}`",
             "- Hard gates are evaluated but not tuned in v0.1.",
+            "",
+            "### Parameter Contribution Summary",
+            "",
+            "| Signal | Mean Contribution |",
+            "|---|---:|",
+        ]
+    )
+    if contribution_summary:
+        for key, value in sorted(contribution_summary.items()):
+            lines.append(f"| `{key}` | {_format_metric(value)} |")
+    else:
+        lines.append("| none | NA |")
+    lines.extend(
+        [
             "",
             "## 7. Risk & Overfitting Warnings",
             "",
@@ -232,6 +251,10 @@ def validate_shadow_backtest_payload(payload: dict[str, Any]) -> list[str]:
         issues.append("parameter_changes must be a list")
     if not isinstance(payload.get("promotion_decision"), dict):
         issues.append("promotion_decision must be an object")
+    if "score_calculation" in payload and not isinstance(payload.get("score_calculation"), dict):
+        issues.append("score_calculation must be an object")
+    if "score_attribution" in payload and not isinstance(payload.get("score_attribution"), dict):
+        issues.append("score_attribution must be an object")
     return issues
 
 
@@ -261,6 +284,12 @@ def _mapping(value: object) -> dict[str, Any]:
 
 def _records(value: object) -> list[dict[str, Any]]:
     return [item for item in value if isinstance(item, dict)] if isinstance(value, list) else []
+
+
+def _strings(value: object) -> list[str]:
+    if isinstance(value, list | tuple):
+        return [str(item) for item in value if str(item)]
+    return []
 
 
 def _format_metric(value: object) -> str:

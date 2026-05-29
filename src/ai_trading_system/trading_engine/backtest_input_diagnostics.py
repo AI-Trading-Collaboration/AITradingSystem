@@ -21,6 +21,10 @@ from ai_trading_system.trading_engine.parameters.parameter_schema import (
     DEFAULT_BACKTEST_INPUT_CACHE_FRESHNESS_MAX_AGE_DAYS,
     ShadowBacktestConfig,
 )
+from ai_trading_system.trading_engine.signal_snapshots import (
+    load_signal_snapshot_payload,
+    signal_snapshot_summary,
+)
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 BACKTEST_INPUT_DIAGNOSTICS_SCHEMA_VERSION = 1
@@ -362,6 +366,11 @@ def render_backtest_input_diagnostics_markdown(payload: dict[str, Any]) -> str:
             f"- required_signals：{_join_text(signal_snapshots.get('required_signals'))}",
             f"- available_signals：{_join_text(signal_snapshots.get('available_signals'))}",
             f"- missing_signals：{_join_text(signal_snapshots.get('missing_signals'))}",
+            f"- real_signals：{_join_text(signal_snapshots.get('real_signals'))}",
+            f"- proxy_signals：{_join_text(signal_snapshots.get('proxy_signals'))}",
+            "- neutral_fallback_signals："
+            f"{_join_text(signal_snapshots.get('neutral_fallback_signals'))}",
+            f"- coverage：`{signal_snapshots.get('coverage', 'UNKNOWN')}`",
             f"- fallback_mode：`{signal_snapshots.get('fallback_mode', 'none')}`",
             "",
             "## 7. Cache Freshness",
@@ -403,15 +412,19 @@ def render_backtest_input_diagnostics_markdown(payload: dict[str, Any]) -> str:
         lines.append("- 当前无需 repair。")
     impact_line = (
         "- Shadow backtest input gate passed; candidate evaluation may proceed as " "observe-only."
-        if summary.get("can_run_shadow_backtest")
-        and summary.get("backtest_mode") != "price_only_shadow_backtest"
+        if summary.get("backtest_mode") == "full_signal_backtest"
         else (
+            "- Full-signal-limited shadow backtest may run using the available signal "
+            "snapshot, but candidate promotion remains disabled until signal quality is OK."
+            if summary.get("backtest_mode") == "full_signal_backtest_limited"
+            else (
             "- Price-only shadow backtest may run, but candidate promotion remains disabled "
             "until full signal snapshots are available."
             if summary.get("backtest_mode") == "price_only_shadow_backtest"
             else (
                 "- Shadow backtest input gate failed or is limited; repair cached inputs "
                 "before interpreting candidate performance."
+            )
             )
         )
     )
@@ -546,18 +559,102 @@ def _signal_snapshot_availability(
     as_of: date,
 ) -> dict[str, Any]:
     discovered_files = _signal_snapshot_files(raw_config, required_signals, as_of)
-    available = set(_signals_from_files(discovered_files, required_signals))
-    if not discovered_files and not prices.empty:
-        available.update(PRICE_PROXY_SIGNALS)
+    if not discovered_files:
+        return {
+            "status": "MISSING",
+            "required_signals": list(required_signals),
+            "available_signals": [],
+            "missing_signals": list(required_signals),
+            "signal_statuses": {},
+            "real_signals": [],
+            "proxy_signals": [],
+            "neutral_fallback_signals": [],
+            "fallback_mode": "price_only_shadow_backtest" if not prices.empty else "blocked",
+            "snapshot_files": [],
+            "snapshot_id": "",
+            "coverage": 0.0,
+        }
+    available: set[str] = set()
+    signal_statuses: dict[str, str] = {}
+    real_signals: list[str] = []
+    proxy_signals: list[str] = []
+    fallback_signals: list[str] = []
+    snapshot_ids: list[str] = []
+    coverages: list[float] = []
+    full_payload_paths: set[Path] = set()
+    for path in discovered_files:
+        if path.suffix.lower() != ".json":
+            continue
+        payload = load_signal_snapshot_payload(path)
+        signals = _mapping(payload.get("signals"))
+        if not signals:
+            continue
+        full_payload_paths.add(path)
+        metadata = _mapping(payload.get("metadata"))
+        snapshot_id = _text(metadata.get("snapshot_id"))
+        if snapshot_id:
+            snapshot_ids.append(snapshot_id)
+        summary = signal_snapshot_summary(payload)
+        real_signals.extend(signal for signal in _strings(summary.get("real_signals")) if signal)
+        proxy_signals.extend(signal for signal in _strings(summary.get("proxy_signals")) if signal)
+        fallback_signals.extend(
+            signal for signal in _strings(summary.get("neutral_fallback_signals")) if signal
+        )
+        try:
+            coverages.append(float(summary.get("coverage")))
+        except (TypeError, ValueError):
+            pass
+        for signal, item in signals.items():
+            if signal not in required_signals:
+                continue
+            available.add(signal)
+            signal_statuses[signal] = _text(_mapping(item).get("status"), "MISSING")
+    for path in discovered_files:
+        if path in full_payload_paths:
+            continue
+        stem = path.stem
+        for signal in required_signals:
+            if stem == signal or stem.startswith(f"{signal}_"):
+                available.add(signal)
+                signal_statuses.setdefault(signal, "OK")
     available_signals = [signal for signal in required_signals if signal in available]
     missing_signals = [signal for signal in required_signals if signal not in available]
+    failed_signals = [
+        signal for signal in available_signals if signal_statuses.get(signal) == "FAILED"
+    ]
+    limited_signals = [
+        signal
+        for signal in available_signals
+        if signal_statuses.get(signal) in {"LIMITED", "NEUTRAL_FALLBACK"}
+    ]
+    if failed_signals:
+        status = "FAILED"
+    elif missing_signals:
+        status = "MISSING"
+    elif limited_signals:
+        status = "LIMITED"
+    else:
+        status = "OK"
+    fallback_mode = "none"
+    if status == "MISSING":
+        fallback_mode = "price_only_shadow_backtest"
+    elif status == "LIMITED":
+        fallback_mode = "full_signal_backtest_limited"
     return {
-        "status": "OK" if not missing_signals else "LIMITED",
+        "status": status,
         "required_signals": list(required_signals),
         "available_signals": available_signals,
         "missing_signals": missing_signals,
-        "fallback_mode": "none" if not missing_signals else "price_only_shadow_backtest",
+        "failed_signals": failed_signals,
+        "limited_signals": limited_signals,
+        "signal_statuses": signal_statuses,
+        "real_signals": sorted(dict.fromkeys(real_signals)),
+        "proxy_signals": sorted(dict.fromkeys(proxy_signals)),
+        "neutral_fallback_signals": sorted(dict.fromkeys(fallback_signals)),
+        "fallback_mode": fallback_mode,
         "snapshot_files": [str(path) for path in discovered_files],
+        "snapshot_id": snapshot_ids[0] if snapshot_ids else "",
+        "coverage": round(min(coverages), 6) if coverages else 1.0,
     }
 
 
@@ -701,7 +798,9 @@ def _summary(checks: dict[str, Any]) -> dict[str, Any]:
     elif price_status == "LIMITED":
         warnings += 1
     signal_status = _text(_mapping(checks.get("signal_snapshots")).get("status"))
-    if signal_status == "LIMITED":
+    if signal_status == "FAILED":
+        blocking_errors += 1
+    elif signal_status in {"LIMITED", "MISSING"}:
         warnings += 1
     freshness_items = _records(_mapping(checks.get("cache_freshness")).get("items"))
     stale_required = [
@@ -716,17 +815,18 @@ def _summary(checks: dict[str, Any]) -> dict[str, Any]:
         warnings += 1
     overall = "FAILED" if blocking_errors else "LIMITED" if warnings else "OK"
     can_run_shadow_backtest = blocking_errors == 0
-    can_promote_candidate = overall == "OK"
+    backtest_mode = _backtest_mode(
+        can_run_shadow_backtest=can_run_shadow_backtest,
+        signal_snapshots_status=signal_status,
+    )
+    can_promote_candidate = overall == "OK" and backtest_mode == "full_signal_backtest"
     return {
         "overall_status": overall,
         "asset_coverage_status": asset_status,
         "date_coverage_status": date_status,
         "price_data_status": price_status,
         "signal_snapshots_status": signal_status,
-        "backtest_mode": _backtest_mode(
-            can_run_shadow_backtest=can_run_shadow_backtest,
-            signal_snapshots_status=signal_status,
-        ),
+        "backtest_mode": backtest_mode,
         "blocking_errors": blocking_errors,
         "warnings": warnings,
         "can_run_shadow_backtest": can_run_shadow_backtest,
@@ -741,8 +841,12 @@ def _backtest_mode(
 ) -> str:
     if not can_run_shadow_backtest:
         return "blocked"
-    if signal_snapshots_status == "LIMITED":
+    if signal_snapshots_status == "MISSING":
         return "price_only_shadow_backtest"
+    if signal_snapshots_status == "LIMITED":
+        return "full_signal_backtest_limited"
+    if signal_snapshots_status == "FAILED":
+        return "blocked"
     return "full_signal_backtest"
 
 
@@ -874,6 +978,9 @@ def _signal_snapshot_files(
     for directory in _signal_snapshot_dirs(raw_config, as_of):
         if not directory.exists():
             continue
+        snapshot_json = directory / "signal_snapshot.json"
+        if snapshot_json.is_file():
+            files.append(snapshot_json)
         for signal in required_signals:
             patterns = (f"{signal}.json", f"{signal}.csv", f"{signal}_*.json", f"{signal}_*.csv")
             for pattern in patterns:
@@ -1035,6 +1142,9 @@ def _blocking_error_lines(checks: dict[str, Any]) -> list[str]:
         lines.append(
             "- Required local cache is stale or missing: " + ", ".join(stale_required) + "."
         )
+    failed_signals = _strings(_mapping(checks.get("signal_snapshots")).get("failed_signals"))
+    if failed_signals:
+        lines.append("- Signal snapshot build failed for " + ", ".join(failed_signals) + ".")
     return lines
 
 
