@@ -204,10 +204,15 @@ def build_daily_task_dashboard_payload(
         "shadow_parameter_impact": _shadow_parameter_impact_summary(report),
         "backtest_data_quality": _backtest_data_quality_summary(report),
         "price_cache_reconcile_summary": _price_cache_reconcile_summary(report),
+        "market_data_freshness_summary": _market_data_freshness_summary(report),
+        "market_data_refresh_summary": _market_data_refresh_summary(report),
         "shadow_parameter_backtest": _shadow_parameter_backtest_summary(report),
         "signal_ablation_summary": _signal_ablation_summary(report),
         "signal_calibration_summary": _signal_calibration_summary(report),
         "portfolio_sensitivity_summary": _portfolio_sensitivity_summary(report),
+        "portfolio_candidates_summary": _portfolio_candidates_summary(report),
+        "portfolio_candidate_review_summary": _portfolio_candidate_review_summary(report),
+        "portfolio_candidate_tracking_summary": _portfolio_candidate_tracking_summary(report),
         "weight_adjustment_candidates": _weight_adjustment_candidates_summary(report),
         "weight_candidate_evaluation": _weight_candidate_evaluation_summary(report),
         "weight_promotion_gate": _weight_promotion_gate_summary(report),
@@ -361,10 +366,15 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_shadow_parameter_impact(report),
             _render_backtest_data_quality(report),
             _render_price_cache_reconcile_summary(report),
+            _render_market_data_freshness_summary(report),
+            _render_market_data_refresh_summary(report),
             _render_shadow_parameter_backtest(report),
             _render_signal_ablation_summary(report),
             _render_signal_calibration_summary(report),
             _render_portfolio_sensitivity_summary(report),
+            _render_portfolio_candidates_summary(report),
+            _render_portfolio_candidate_review_summary(report),
+            _render_portfolio_candidate_tracking_summary(report),
             _render_weight_adjustment_candidates(report),
             _render_weight_candidate_evaluation(report),
             _render_weight_promotion_gate(report),
@@ -2550,6 +2560,538 @@ def _latest_portfolio_sensitivity_path(report: DailyTaskDashboardReport) -> Path
     if not candidates:
         return None
     return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _portfolio_candidates_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    suffix = report.as_of.isoformat()
+    path = (
+        report.project_root
+        / "artifacts"
+        / "portfolio_candidates"
+        / suffix
+        / "portfolio_candidates_summary.json"
+    )
+    latest_path = _latest_portfolio_candidates_path(report)
+    if latest_path is not None:
+        path = latest_path
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "portfolio_candidates":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "markdown_href": "",
+            "profiles_tested": 0,
+            "best_profile": "",
+            "signal_transmission_improvement": 0.0,
+            "turnover_impact": 0.0,
+            "drawdown_guardrail_status": "MISSING",
+            "candidate_promotion_eligibility": False,
+            "recommended_candidate_artifact": "",
+            "data_gate": "MISSING",
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_required": True,
+            "risk": "Portfolio candidate summary 缺失；dashboard 不运行 candidate evaluation。",
+        }
+    metadata = _mapping_value(payload, "metadata")
+    data_gate = _mapping_value(payload, "data_gate")
+    ranking = _mapping_value(payload, "ranking")
+    promotion = _mapping_value(payload, "promotion_impact")
+    recommended = _mapping_value(payload, "recommended_candidate")
+    profiles = _records(payload.get("profiles"))
+    baseline = _mapping_value(payload, "baseline")
+    best_profile = _string_value(ranking.get("best_profile"))
+    best = next(
+        (item for item in profiles if _string_value(item.get("profile_name")) == best_profile),
+        {},
+    )
+    best_transmission = _mapping_value(best, "signal_transmission")
+    baseline_transmission = _mapping_value(baseline, "signal_transmission")
+    best_effectiveness = (
+        _optional_float(best_transmission.get("target_to_actual_weight_effectiveness")) or 0.0
+    )
+    baseline_effectiveness = (
+        _optional_float(baseline_transmission.get("target_to_actual_weight_effectiveness"))
+        or 0.0
+    )
+    signal_improvement = best_effectiveness - baseline_effectiveness
+    guardrail = _mapping_value(best, "risk_guardrails")
+    risks: list[str] = []
+    if metadata.get("production_effect") != ProductionEffect.NONE.value:
+        risks.append("portfolio candidates production_effect 不是 none。")
+    if metadata.get("auto_promotion") is not False:
+        risks.append("portfolio candidates auto_promotion 不是 false。")
+    if promotion.get("can_support_candidate_promotion") is not False:
+        risks.append("portfolio candidates 不应直接支持 candidate promotion。")
+    if recommended.get("auto_promotion") is not False:
+        risks.append("recommended candidate auto_promotion 不是 false。")
+    if data_gate.get("status") == "FAILED":
+        risks.append(
+            _string_value(data_gate.get("reason")) or "portfolio candidates data gate failed。"
+        )
+    if guardrail.get("guardrail_status") == "FAIL":
+        risks.append(
+            _string_value(guardrail.get("warning")) or "portfolio candidate guardrail failed。"
+        )
+    markdown_path = path.with_suffix(".md")
+    return {
+        "status": metadata.get("status", "UNKNOWN"),
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "markdown_href": _report_href(markdown_path, report.reports_dir)
+        if markdown_path.exists()
+        else "",
+        "profiles_tested": len(profiles),
+        "best_profile": best_profile,
+        "signal_transmission_improvement": round(signal_improvement, 6),
+        "turnover_impact": _optional_float(guardrail.get("turnover_relative_increase")),
+        "drawdown_guardrail_status": guardrail.get("guardrail_status", "UNKNOWN"),
+        "candidate_promotion_eligibility": promotion.get(
+            "can_support_candidate_promotion",
+            False,
+        ),
+        "recommended_candidate_artifact": recommended.get("artifact", ""),
+        "data_gate": data_gate.get("status", "UNKNOWN"),
+        "production_effect": metadata.get("production_effect", ProductionEffect.NONE.value),
+        "manual_review_required": metadata.get("manual_review_required") is True,
+        "risk": "；".join(risks)
+        or "Portfolio candidate profiles 只读展示，不修改 production 参数或 promotion 状态。",
+    }
+
+
+def _latest_portfolio_candidates_path(report: DailyTaskDashboardReport) -> Path | None:
+    root = report.project_root / "artifacts" / "portfolio_candidates"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/portfolio_candidates_summary.json"):
+        try:
+            as_of = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if as_of <= report.as_of:
+            candidates.append((as_of, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _portfolio_candidate_review_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    suffix = report.as_of.isoformat()
+    path = (
+        report.project_root
+        / "artifacts"
+        / "portfolio_candidate_reviews"
+        / suffix
+        / "portfolio_candidate_review_decision.json"
+    )
+    latest_path = _latest_portfolio_candidate_review_path(report)
+    if latest_path is not None:
+        path = latest_path
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "portfolio_candidate_review_decision":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "markdown_href": "",
+            "package_href": "",
+            "candidate_profile": "",
+            "reviewer": "",
+            "reason": "",
+            "production_effect": ProductionEffect.NONE.value,
+            "production_hash": "",
+            "signal_quality": "MISSING",
+            "allowed_next_step": "",
+            "production_config_modified": False,
+            "risk": "Portfolio candidate review 缺失；dashboard 不生成人工结论。",
+        }
+    metadata = _mapping_value(payload, "metadata")
+    decision = _mapping_value(payload, "decision")
+    candidate = _mapping_value(payload, "candidate")
+    evidence = _mapping_value(payload, "evidence_summary")
+    safety = _mapping_value(payload, "safety")
+    package_path = path.parent / "portfolio_candidate_review_package.json"
+    package_payload = _read_json_object(package_path)
+    production = _mapping_value(package_payload, "current_production")
+    risks: list[str] = []
+    if metadata.get("production_effect") != ProductionEffect.NONE.value:
+        risks.append("portfolio candidate review production_effect 不是 none。")
+    if metadata.get("auto_promotion") is not False:
+        risks.append("portfolio candidate review auto_promotion 不是 false。")
+    if safety.get("production_config_modified") is not False:
+        risks.append("production config 已变化，review decision 不可用于 approval。")
+    if safety.get("candidate_production_promotion_allowed") is not False:
+        risks.append("portfolio candidate review 不应允许 production promotion。")
+    markdown_path = path.with_suffix(".md")
+    package_markdown_path = package_path.with_suffix(".md")
+    return {
+        "status": decision.get("status", metadata.get("status", "UNKNOWN")),
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "markdown_href": _report_href(markdown_path, report.reports_dir)
+        if markdown_path.exists()
+        else "",
+        "package_href": _report_href(package_markdown_path, report.reports_dir)
+        if package_markdown_path.exists()
+        else _report_href(package_path, report.reports_dir),
+        "candidate_profile": candidate.get("profile_name", ""),
+        "reviewer": decision.get("reviewer", ""),
+        "reason": decision.get("reason", ""),
+        "production_effect": metadata.get("production_effect", ProductionEffect.NONE.value),
+        "production_hash": production.get("sha256", ""),
+        "signal_quality": evidence.get("signal_snapshot_status", "UNKNOWN"),
+        "allowed_next_step": decision.get("allowed_next_step", ""),
+        "production_config_modified": safety.get("production_config_modified", False),
+        "risk": "；".join(risks)
+        or (
+            "Portfolio candidate review 只读展示；approved_for_shadow_candidate "
+            "也不代表 production approval。"
+        ),
+    }
+
+
+def _latest_portfolio_candidate_review_path(report: DailyTaskDashboardReport) -> Path | None:
+    root = report.project_root / "artifacts" / "portfolio_candidate_reviews"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/portfolio_candidate_review_decision.json"):
+        try:
+            as_of = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if as_of <= report.as_of:
+            candidates.append((as_of, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _portfolio_candidate_tracking_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    suffix = report.as_of.isoformat()
+    path = (
+        report.project_root
+        / "artifacts"
+        / "portfolio_candidate_tracking"
+        / suffix
+        / "portfolio_candidate_tracking_summary.json"
+    )
+    latest_path = _latest_portfolio_candidate_tracking_path(report)
+    if latest_path is not None:
+        path = latest_path
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "portfolio_candidate_tracking":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "markdown_href": "",
+            "candidate_profile": "",
+            "review_status": "",
+            "tracking_status": "MISSING",
+            "tracking_start_date": "",
+            "effective_data_date": "",
+            "market_data_freshness_status": "MISSING",
+            "market_data_freshness_readiness": "unknown",
+            "market_data_refresh_status": "MISSING",
+            "tracking_recovery": "",
+            "baseline_cumulative_return": "",
+            "candidate_cumulative_return": "",
+            "excess_return": "",
+            "drawdown": "",
+            "turnover": "",
+            "risk_guardrail_status": "MISSING",
+            "promotion_impact": "",
+            "production_effect": ProductionEffect.NONE.value,
+            "risk": "Portfolio candidate tracking 缺失；dashboard 不启动 shadow tracking。",
+        }
+    metadata = _mapping_value(payload, "metadata")
+    candidate = _mapping_value(payload, "candidate")
+    date_resolution = _mapping_value(payload, "date_resolution")
+    metrics = _mapping_value(payload, "tracking_metrics")
+    baseline = _mapping_value(metrics, "baseline")
+    candidate_metrics = _mapping_value(metrics, "candidate")
+    risk_guardrails = _mapping_value(payload, "risk_guardrails")
+    freshness = _mapping_value(payload, "market_data_freshness")
+    promotion = _mapping_value(payload, "promotion_impact")
+    safety = _mapping_value(payload, "safety")
+    risks: list[str] = []
+    if metadata.get("production_effect") != ProductionEffect.NONE.value:
+        risks.append("portfolio candidate tracking production_effect 不是 none。")
+    if metadata.get("auto_promotion") is not False:
+        risks.append("portfolio candidate tracking auto_promotion 不是 false。")
+    if promotion.get("can_support_candidate_promotion") is not False:
+        risks.append("tracking 不应支持 candidate promotion。")
+    if safety.get("production_write_allowed") is not False:
+        risks.append("tracking 不应允许写 production。")
+    markdown_path = path.with_suffix(".md")
+    return {
+        "status": metadata.get("status", "UNKNOWN"),
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "markdown_href": _report_href(markdown_path, report.reports_dir)
+        if markdown_path.exists()
+        else "",
+        "candidate_profile": candidate.get("profile_name", ""),
+        "review_status": candidate.get("review_status", ""),
+        "tracking_status": candidate.get("tracking_status", "UNKNOWN"),
+        "tracking_start_date": candidate.get("review_decision_date", ""),
+        "effective_data_date": date_resolution.get("effective_data_date", ""),
+        "market_data_freshness_status": freshness.get("status", "MISSING"),
+        "market_data_freshness_readiness": freshness.get("tracking_readiness", "unknown"),
+        "market_data_refresh_status": freshness.get("refresh_status", "MISSING"),
+        "tracking_recovery": freshness.get("tracking_recovery", ""),
+        "baseline_cumulative_return": baseline.get(
+            "cumulative_return_since_tracking_start",
+            "",
+        ),
+        "candidate_cumulative_return": candidate_metrics.get(
+            "cumulative_return_since_tracking_start",
+            "",
+        ),
+        "excess_return": candidate_metrics.get("excess_return_vs_baseline", ""),
+        "drawdown": candidate_metrics.get("drawdown", ""),
+        "turnover": candidate_metrics.get("turnover", ""),
+        "risk_guardrail_status": risk_guardrails.get("status", "UNKNOWN"),
+        "promotion_impact": promotion.get("reason", ""),
+        "production_effect": metadata.get("production_effect", ProductionEffect.NONE.value),
+        "risk": "；".join(risks)
+        or "Portfolio candidate tracking 只读展示；不影响 production 或 promotion gate。",
+    }
+
+
+def _latest_portfolio_candidate_tracking_path(report: DailyTaskDashboardReport) -> Path | None:
+    root = report.project_root / "artifacts" / "portfolio_candidate_tracking"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/portfolio_candidate_tracking_summary.json"):
+        try:
+            as_of = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if as_of <= report.as_of:
+            candidates.append((as_of, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _market_data_freshness_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_market_data_freshness_path(report)
+    if path is None:
+        missing_path = (
+            report.project_root
+            / "artifacts"
+            / "data_freshness"
+            / report.as_of.isoformat()
+            / "market_data_freshness_summary.json"
+        )
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(missing_path),
+            "href": _report_href(missing_path, report.reports_dir),
+            "markdown_href": "",
+            "tracking_date": "",
+            "effective_data_date": "",
+            "freshness_status": "MISSING",
+            "calendar_status": "UNKNOWN",
+            "lag_trading_days": "",
+            "latest_registry_date": "",
+            "latest_manifest_date": "",
+            "tracking_readiness": "unknown",
+            "latest_refresh_status": "MISSING",
+            "suggested_action": "",
+            "production_effect": ProductionEffect.NONE.value,
+            "risk": "Market data freshness 缺失；dashboard 不运行 freshness gate。",
+        }
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "market_data_freshness":
+        return {
+            "status": "UNREADABLE",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "markdown_href": "",
+            "tracking_date": "",
+            "effective_data_date": "",
+            "freshness_status": "UNREADABLE",
+            "calendar_status": "UNKNOWN",
+            "lag_trading_days": "",
+            "latest_registry_date": "",
+            "latest_manifest_date": "",
+            "tracking_readiness": "unknown",
+            "latest_refresh_status": "MISSING",
+            "suggested_action": "",
+            "production_effect": ProductionEffect.NONE.value,
+            "risk": "Market data freshness JSON 不可读。",
+        }
+    metadata = _mapping_value(payload, "metadata")
+    calendar = _mapping_value(payload, "calendar")
+    data_dates = _mapping_value(payload, "data_dates")
+    freshness = _mapping_value(payload, "freshness")
+    readiness = _mapping_value(payload, "tracking_readiness")
+    safety = _mapping_value(payload, "safety")
+    actions = _records(payload.get("suggested_actions"))
+    risks: list[str] = []
+    if metadata.get("production_effect") != ProductionEffect.NONE.value:
+        risks.append("market data freshness production_effect 不是 none。")
+    if metadata.get("auto_promotion") is not False:
+        risks.append("market data freshness auto_promotion 不是 false。")
+    if safety.get("production_write_allowed") is not False:
+        risks.append("market data freshness 不应允许写 production。")
+    if safety.get("data_downloaded_by_freshness_check") is not False:
+        risks.append("market data freshness 不应下载或刷新数据。")
+    markdown_path = path.with_suffix(".md")
+    return {
+        "status": metadata.get("status", "UNKNOWN"),
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "markdown_href": _report_href(markdown_path, report.reports_dir)
+        if markdown_path.exists()
+        else "",
+        "tracking_date": data_dates.get("tracking_date", ""),
+        "effective_data_date": data_dates.get("effective_data_date", ""),
+        "freshness_status": freshness.get("status", metadata.get("status", "UNKNOWN")),
+        "calendar_status": calendar.get("calendar_status", "UNKNOWN"),
+        "lag_trading_days": freshness.get("lag_trading_days", ""),
+        "latest_registry_date": data_dates.get("latest_registry_date", ""),
+        "latest_manifest_date": data_dates.get("latest_manifest_date", ""),
+        "tracking_readiness": readiness.get("readiness", "unknown"),
+        "latest_refresh_status": _latest_market_data_refresh_status(report),
+        "suggested_action": actions[0].get("action", "") if actions else "",
+        "production_effect": metadata.get("production_effect", ProductionEffect.NONE.value),
+        "risk": "；".join(risks)
+        or "Market data freshness 只读展示；不下载数据、不写 production。",
+    }
+
+
+def _latest_market_data_freshness_path(report: DailyTaskDashboardReport) -> Path | None:
+    root = report.project_root / "artifacts" / "data_freshness"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/market_data_freshness_summary.json"):
+        try:
+            as_of = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if as_of <= report.as_of:
+            candidates.append((as_of, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _market_data_refresh_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_market_data_refresh_path(report)
+    if path is None:
+        missing_path = (
+            report.project_root
+            / "artifacts"
+            / "data_refresh"
+            / report.as_of.isoformat()
+            / "market_data_refresh_summary.json"
+        )
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(missing_path),
+            "href": _report_href(missing_path, report.reports_dir),
+            "markdown_href": "",
+            "target_date": "",
+            "source": "",
+            "before_freshness": "MISSING",
+            "after_freshness": "MISSING",
+            "refreshed_assets": "",
+            "registry_updated": False,
+            "manifest_refreshed": False,
+            "candidate_tracking_recovered": "",
+            "production_effect": ProductionEffect.NONE.value,
+            "risk": "Market data refresh 缺失；dashboard 不执行 refresh。",
+        }
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "market_data_refresh":
+        return {
+            "status": "UNREADABLE",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "markdown_href": "",
+            "target_date": "",
+            "source": "",
+            "before_freshness": "UNREADABLE",
+            "after_freshness": "UNREADABLE",
+            "refreshed_assets": "",
+            "registry_updated": False,
+            "manifest_refreshed": False,
+            "candidate_tracking_recovered": "",
+            "production_effect": ProductionEffect.NONE.value,
+            "risk": "Market data refresh JSON 不可读。",
+        }
+    metadata = _mapping_value(payload, "metadata")
+    before = _mapping_value(payload, "before")
+    actions = _mapping_value(payload, "actions")
+    after = _mapping_value(payload, "after")
+    safety = _mapping_value(payload, "safety")
+    risks: list[str] = []
+    if metadata.get("production_effect") != ProductionEffect.NONE.value:
+        risks.append("market data refresh production_effect 不是 none。")
+    if metadata.get("auto_promotion") is not False:
+        risks.append("market data refresh auto_promotion 不是 false。")
+    if safety.get("production_write_allowed") is not False:
+        risks.append("market data refresh 不应允许写 production。")
+    if safety.get("fake_price_rows_generated") is not False:
+        risks.append("market data refresh 不应生成假价格。")
+    if safety.get("synthetic_latest_bar_generated") is not False:
+        risks.append("market data refresh 不应生成 synthetic latest bar。")
+    markdown_path = path.with_suffix(".md")
+    fetched_assets = _strings(actions.get("fetched_assets"))
+    return {
+        "status": metadata.get("status", "UNKNOWN"),
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "markdown_href": _report_href(markdown_path, report.reports_dir)
+        if markdown_path.exists()
+        else "",
+        "target_date": actions.get("target_date", ""),
+        "source": actions.get("source", ""),
+        "before_freshness": before.get("freshness_status", "UNKNOWN"),
+        "after_freshness": after.get("freshness_status", "UNKNOWN"),
+        "refreshed_assets": ", ".join(fetched_assets) if fetched_assets else "none",
+        "registry_updated": actions.get("updated_price_cache_registry", False),
+        "manifest_refreshed": actions.get("refreshed_backtest_manifest", False),
+        "candidate_tracking_recovered": after.get("candidate_tracking_status", ""),
+        "production_effect": metadata.get("production_effect", ProductionEffect.NONE.value),
+        "risk": "；".join(risks)
+        or "Market data refresh 只读展示；不修改 production 或 promotion gate。",
+    }
+
+
+def _latest_market_data_refresh_path(report: DailyTaskDashboardReport) -> Path | None:
+    root = report.project_root / "artifacts" / "data_refresh"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/market_data_refresh_summary.json"):
+        try:
+            as_of = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if as_of <= report.as_of:
+            candidates.append((as_of, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _latest_market_data_refresh_status(report: DailyTaskDashboardReport) -> str:
+    path = _latest_market_data_refresh_path(report)
+    if path is None:
+        return "MISSING"
+    payload = _read_json_object(path)
+    metadata = _mapping_value(payload, "metadata")
+    return _string_value(metadata.get("status")) or "UNKNOWN"
 
 
 def _price_cache_reconcile_summary(report: DailyTaskDashboardReport) -> TraceRecord:
@@ -9767,6 +10309,150 @@ def _render_portfolio_sensitivity_summary(report: DailyTaskDashboardReport) -> s
     )
 
 
+def _render_portfolio_candidates_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _portfolio_candidates_summary(report)
+    href = _string_value(summary.get("href"))
+    markdown_href = _string_value(summary.get("markdown_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(href)}"><span>Portfolio Candidate Profiles</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if summary.get("exists")
+        else '<span class="report-link missing"><span>Portfolio Candidate Profiles</span>'
+        "<small>MISSING</small></span>"
+    )
+    markdown_link = (
+        '<a class="report-link" '
+        f'href="{_text(markdown_href)}"><span>Portfolio Candidate Markdown</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if markdown_href
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="portfolio-candidates-summary-title">',
+            '<div class="section-head">',
+            '<h2 id="portfolio-candidates-summary-title">Portfolio Candidate Profiles</h2>',
+            (
+                "<p>portfolio construction 候选 profile 的只读评估；dashboard 只读已有 "
+                "JSON，不修改 production 参数或 promotion 状态。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("status", summary.get("status", "MISSING")),
+            _summary_item("profiles tested", summary.get("profiles_tested", 0)),
+            _summary_item("best profile", summary.get("best_profile", "")),
+            _summary_item(
+                "signal transmission improvement",
+                summary.get("signal_transmission_improvement", 0.0),
+            ),
+            _summary_item("turnover impact", summary.get("turnover_impact", 0.0)),
+            _summary_item(
+                "drawdown guardrail",
+                summary.get("drawdown_guardrail_status", "MISSING"),
+            ),
+            _summary_item(
+                "candidate promotion eligibility",
+                summary.get("candidate_promotion_eligibility", False),
+            ),
+            _summary_item("data gate", summary.get("data_gate", "MISSING")),
+            _summary_item("manual review", summary.get("manual_review_required", True)),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
+            (
+                '<p class="muted"><strong>Recommended candidate artifact：</strong>'
+                f"{_text(summary.get('recommended_candidate_artifact', ''))}</p>"
+            ),
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            markdown_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_portfolio_candidate_review_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _portfolio_candidate_review_summary(report)
+    href = _string_value(summary.get("href"))
+    markdown_href = _string_value(summary.get("markdown_href"))
+    package_href = _string_value(summary.get("package_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(href)}"><span>Portfolio Candidate Review</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if summary.get("exists")
+        else '<span class="report-link missing"><span>Portfolio Candidate Review</span>'
+        "<small>MISSING</small></span>"
+    )
+    markdown_link = (
+        '<a class="report-link" '
+        f'href="{_text(markdown_href)}"><span>Review Decision Markdown</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if markdown_href
+        else ""
+    )
+    package_link = (
+        '<a class="report-link" '
+        f'href="{_text(package_href)}"><span>Review Package</span>'
+        f"<small>{_text(summary.get('signal_quality', 'UNKNOWN'))}</small></a>"
+        if package_href
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="portfolio-candidate-review-summary-title">',
+            '<div class="section-head">',
+            '<h2 id="portfolio-candidate-review-summary-title">Portfolio Candidate Review</h2>',
+            (
+                "<p>recommended portfolio candidate 的人工 review / watch 状态；"
+                "dashboard 只读 decision artifact，不启用 production 参数。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("review status", summary.get("status", "MISSING")),
+            _summary_item("candidate profile", summary.get("candidate_profile", "")),
+            _summary_item("reviewer", summary.get("reviewer", "")),
+            _summary_item("signal quality", summary.get("signal_quality", "MISSING")),
+            _summary_item("allowed next step", summary.get("allowed_next_step", "")),
+            _summary_item(
+                "production config modified",
+                summary.get("production_config_modified", False),
+            ),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
+            (
+                '<p class="muted"><strong>Production hash：</strong>'
+                f"{_text(summary.get('production_hash', ''))}</p>"
+            ),
+            (
+                '<p class="muted"><strong>Reason：</strong>'
+                f"{_text(summary.get('reason', ''))}</p>"
+            ),
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            markdown_link,
+            package_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
 def _render_price_cache_reconcile_summary(report: DailyTaskDashboardReport) -> str:
     summary = _price_cache_reconcile_summary(report)
     href = _string_value(summary.get("href"))
@@ -9812,6 +10498,209 @@ def _render_price_cache_reconcile_summary(report: DailyTaskDashboardReport) -> s
                 '<p class="risk-line"><strong>Remaining limitations：</strong>'
                 f"{_text(summary.get('remaining_limitations', ''))}</p>"
             ),
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            markdown_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_portfolio_candidate_tracking_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _portfolio_candidate_tracking_summary(report)
+    href = _string_value(summary.get("href"))
+    markdown_href = _string_value(summary.get("markdown_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(href)}"><span>Portfolio Candidate Tracking</span>'
+        f"<small>{_text(summary.get('tracking_status', 'UNKNOWN'))}</small></a>"
+        if summary.get("exists")
+        else '<span class="report-link missing"><span>Portfolio Candidate Tracking</span>'
+        "<small>MISSING</small></span>"
+    )
+    markdown_link = (
+        '<a class="report-link" '
+        f'href="{_text(markdown_href)}"><span>Tracking Markdown</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if markdown_href
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="portfolio-candidate-tracking-summary-title">',
+            '<div class="section-head">',
+            (
+                '<h2 id="portfolio-candidate-tracking-summary-title">'
+                "Portfolio Candidate Tracking</h2>"
+            ),
+            (
+                "<p>manual-reviewed candidate 的 shadow tracking 状态；dashboard "
+                "只读 tracking artifact，不重跑候选、不写 production。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("tracking status", summary.get("tracking_status", "MISSING")),
+            _summary_item("candidate profile", summary.get("candidate_profile", "")),
+            _summary_item("review status", summary.get("review_status", "")),
+            _summary_item("tracking start", summary.get("tracking_start_date", "")),
+            _summary_item("effective data", summary.get("effective_data_date", "")),
+            _summary_item(
+                "freshness",
+                summary.get("market_data_freshness_status", "MISSING"),
+            ),
+            _summary_item(
+                "freshness readiness",
+                summary.get("market_data_freshness_readiness", "unknown"),
+            ),
+            _summary_item(
+                "refresh status",
+                summary.get("market_data_refresh_status", "MISSING"),
+            ),
+            _summary_item("tracking recovery", summary.get("tracking_recovery", "")),
+            _summary_item(
+                "baseline cum return",
+                summary.get("baseline_cumulative_return", ""),
+            ),
+            _summary_item(
+                "candidate cum return",
+                summary.get("candidate_cumulative_return", ""),
+            ),
+            _summary_item("excess return", summary.get("excess_return", "")),
+            _summary_item("drawdown", summary.get("drawdown", "")),
+            _summary_item("turnover", summary.get("turnover", "")),
+            _summary_item("risk guardrail", summary.get("risk_guardrail_status", "")),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
+            (
+                '<p class="muted"><strong>Promotion impact：</strong>'
+                f"{_text(summary.get('promotion_impact', ''))}</p>"
+            ),
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            markdown_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_market_data_freshness_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _market_data_freshness_summary(report)
+    href = _string_value(summary.get("href"))
+    markdown_href = _string_value(summary.get("markdown_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(href)}"><span>Market Data Freshness</span>'
+        f"<small>{_text(summary.get('freshness_status', 'MISSING'))}</small></a>"
+        if summary.get("exists")
+        else '<span class="report-link missing"><span>Market Data Freshness</span>'
+        "<small>MISSING</small></span>"
+    )
+    markdown_link = (
+        '<a class="report-link" '
+        f'href="{_text(markdown_href)}"><span>Freshness Markdown</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if markdown_href
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="market-data-freshness-summary-title">',
+            '<div class="section-head">',
+            '<h2 id="market-data-freshness-summary-title">Market Data Freshness</h2>',
+            (
+                "<p>tracking date、effective data date 和 market calendar readiness；"
+                "dashboard 只读 freshness artifact，不刷新 cache、不写 production。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("freshness status", summary.get("freshness_status", "MISSING")),
+            _summary_item("tracking date", summary.get("tracking_date", "")),
+            _summary_item("effective data", summary.get("effective_data_date", "")),
+            _summary_item("calendar status", summary.get("calendar_status", "UNKNOWN")),
+            _summary_item("lag trading days", summary.get("lag_trading_days", "")),
+            _summary_item("latest registry", summary.get("latest_registry_date", "")),
+            _summary_item("latest manifest", summary.get("latest_manifest_date", "")),
+            _summary_item("tracking readiness", summary.get("tracking_readiness", "unknown")),
+            _summary_item("latest refresh", summary.get("latest_refresh_status", "MISSING")),
+            _summary_item("suggested action", summary.get("suggested_action", "")),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            markdown_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_market_data_refresh_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _market_data_refresh_summary(report)
+    href = _string_value(summary.get("href"))
+    markdown_href = _string_value(summary.get("markdown_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(href)}"><span>Market Data Refresh</span>'
+        f"<small>{_text(summary.get('status', 'MISSING'))}</small></a>"
+        if summary.get("exists")
+        else '<span class="report-link missing"><span>Market Data Refresh</span>'
+        "<small>MISSING</small></span>"
+    )
+    markdown_link = (
+        '<a class="report-link" '
+        f'href="{_text(markdown_href)}"><span>Refresh Markdown</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if markdown_href
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="market-data-refresh-summary-title">',
+            '<div class="section-head">',
+            '<h2 id="market-data-refresh-summary-title">Market Data Refresh</h2>',
+            (
+                "<p>freshness stale 后的 refresh/recovery 摘要；dashboard 只读 "
+                "refresh artifact，不下载数据、不写 production。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("refresh status", summary.get("status", "MISSING")),
+            _summary_item("target date", summary.get("target_date", "")),
+            _summary_item("source", summary.get("source", "")),
+            _summary_item("before freshness", summary.get("before_freshness", "MISSING")),
+            _summary_item("after freshness", summary.get("after_freshness", "MISSING")),
+            _summary_item("refreshed assets", summary.get("refreshed_assets", "")),
+            _summary_item("registry updated", summary.get("registry_updated", False)),
+            _summary_item("manifest refreshed", summary.get("manifest_refreshed", False)),
+            _summary_item(
+                "tracking recovery",
+                summary.get("candidate_tracking_recovered", ""),
+            ),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'
                 f"{_text(summary.get('risk', ''))}</p>"

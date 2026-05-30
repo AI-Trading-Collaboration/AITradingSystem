@@ -737,10 +737,56 @@ from ai_trading_system.trading_engine.data_registry_consistency import (
     run_data_registry_consistency,
     validate_backtest_manifest_consistency,
 )
+from ai_trading_system.trading_engine.market_data_freshness import (
+    DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH,
+    latest_market_data_freshness_path,
+    load_market_data_freshness_payload,
+    market_data_freshness_payload_date,
+    run_market_data_freshness,
+    validate_market_data_freshness_payload,
+    write_market_data_freshness_report_alias,
+)
+from ai_trading_system.trading_engine.market_data_refresh import (
+    DEFAULT_MARKET_DATA_REFRESH_CONFIG_PATH,
+    latest_market_data_refresh_path,
+    load_market_data_refresh_payload,
+    market_data_refresh_payload_date,
+    run_market_data_refresh,
+    validate_market_data_refresh_payload,
+    write_market_data_refresh_report_alias,
+)
 from ai_trading_system.trading_engine.parameters import (
     DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
     DEFAULT_SIGNAL_ABLATION_CONFIG_PATH,
     run_shadow_parameter_backtest,
+)
+from ai_trading_system.trading_engine.portfolio_candidate_review import (
+    DEFAULT_PORTFOLIO_CANDIDATE_REVIEW_CONFIG_PATH,
+    decide_portfolio_candidate,
+    latest_portfolio_candidate_review_decision_path,
+    load_portfolio_candidate_review_payload,
+    portfolio_candidate_review_payload_date,
+    run_portfolio_candidate_review,
+    validate_portfolio_candidate_review_decision_payload,
+    write_portfolio_candidate_review_report_alias,
+)
+from ai_trading_system.trading_engine.portfolio_candidate_tracking import (
+    DEFAULT_PORTFOLIO_CANDIDATE_TRACKING_CONFIG_PATH,
+    latest_portfolio_candidate_tracking_path,
+    load_portfolio_candidate_tracking_payload,
+    portfolio_candidate_tracking_payload_date,
+    run_portfolio_candidate_tracking,
+    validate_portfolio_candidate_tracking_payload,
+    write_portfolio_candidate_tracking_report_alias,
+)
+from ai_trading_system.trading_engine.portfolio_candidates import (
+    DEFAULT_PORTFOLIO_CANDIDATE_PROFILES_PATH,
+    latest_portfolio_candidates_path,
+    load_portfolio_candidates_payload,
+    portfolio_candidates_payload_date,
+    run_portfolio_candidates,
+    validate_portfolio_candidates_payload,
+    write_portfolio_candidates_report_alias,
 )
 from ai_trading_system.trading_engine.portfolio_sensitivity import (
     DEFAULT_PORTFOLIO_SENSITIVITY_PROFILES_PATH,
@@ -4193,6 +4239,336 @@ def data_refresh_backtest_manifest_command(
         raise typer.Exit(code=1)
 
 
+@data_app.command("freshness")
+def data_freshness_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用 raw price cache latest date 作为 tracking date。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="freshness tracking 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    market: Annotated[
+        str,
+        typer.Option("--market", help="市场代码；当前支持 US。"),
+    ] = "US",
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="market data freshness 配置路径。"),
+    ] = DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="写入 outputs/dry_runs/data_freshness，不改正式 artifacts。"),
+    ] = False,
+) -> None:
+    """生成 market data freshness 和 tracking readiness 报告。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    try:
+        run = run_market_data_freshness(
+            as_of=run_date,
+            market=market,
+            config_path=config_path,
+            dry_run=dry_run,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    metadata = run.payload.get("metadata", {}) if isinstance(run.payload, dict) else {}
+    freshness = run.payload.get("freshness", {}) if isinstance(run.payload, dict) else {}
+    data_dates = run.payload.get("data_dates", {}) if isinstance(run.payload, dict) else {}
+    readiness = run.payload.get("tracking_readiness", {}) if isinstance(run.payload, dict) else {}
+    status = freshness.get("status", metadata.get("status", "UNKNOWN"))
+    style = "green" if status in {"OK", "NON_TRADING_DAY"} else "yellow"
+    if status in {"MISSING", "FAILED", "MARKET_CALENDAR_UNKNOWN"}:
+        style = "red"
+    console.print(f"[{style}]Market data freshness：{status}[/{style}]")
+    console.print(f"JSON：{run.json_path}")
+    console.print(f"Markdown：{run.markdown_path}")
+    if isinstance(data_dates, dict):
+        console.print(
+            "data_dates="
+            f"tracking_date={data_dates.get('tracking_date', 'UNKNOWN')}；"
+            f"effective_data_date={data_dates.get('effective_data_date', 'UNKNOWN')}；"
+            f"latest_manifest_date={data_dates.get('latest_manifest_date', 'UNKNOWN')}"
+        )
+    if isinstance(freshness, dict):
+        console.print(
+            "freshness_status="
+            f"{freshness.get('status', 'UNKNOWN')}；"
+            f"lag_trading_days={freshness.get('lag_trading_days', 'UNKNOWN')}；"
+            f"lag_calendar_days={freshness.get('lag_calendar_days', 'UNKNOWN')}"
+        )
+    if isinstance(readiness, dict):
+        console.print(
+            "tracking_readiness="
+            f"{readiness.get('readiness', 'UNKNOWN')}；"
+            f"tracking_status_recommendation="
+            f"{readiness.get('tracking_status_recommendation', 'UNKNOWN')}"
+        )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@data_app.command("validate-freshness")
+def data_validate_freshness_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验最新正式 market data freshness artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="freshness 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 market_data_freshness_summary.json 路径。"),
+    ] = None,
+) -> None:
+    """校验 market data freshness report schema、安全字段和 readiness 输出。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    source_path = input_path or _resolve_market_data_freshness_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_market_data_freshness_payload(source_path)
+    issues = validate_market_data_freshness_payload(payload)
+    metadata = payload.get("metadata", {}) if isinstance(payload, dict) else {}
+    freshness = payload.get("freshness", {}) if isinstance(payload, dict) else {}
+    readiness = payload.get("tracking_readiness", {}) if isinstance(payload, dict) else {}
+    status = (
+        freshness.get("status", metadata.get("status", "UNKNOWN"))
+        if isinstance(freshness, dict)
+        else "UNKNOWN"
+    )
+    style = "green" if not issues and status in {"OK", "NON_TRADING_DAY"} else "yellow"
+    if issues or status in {"MISSING", "FAILED", "MARKET_CALENDAR_UNKNOWN"}:
+        style = "red"
+    console.print(f"[{style}]Market data freshness validation：{status}[/{style}]")
+    console.print(f"source：{source_path}")
+    if issues:
+        for issue in issues:
+            console.print(f"[red]- {issue}[/red]")
+        raise typer.Exit(code=1)
+    if isinstance(freshness, dict):
+        console.print(f"freshness_status={freshness.get('status', 'UNKNOWN')}")
+    if isinstance(readiness, dict):
+        console.print(f"tracking_readiness={readiness.get('readiness', 'UNKNOWN')}")
+        console.print(
+            "tracking_status_recommendation="
+            f"{readiness.get('tracking_status_recommendation', 'UNKNOWN')}"
+        )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+    if status in {"FAILED", "MISSING", "MARKET_CALENDAR_UNKNOWN"}:
+        raise typer.Exit(code=1)
+
+
+@data_app.command(
+    "refresh-market",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def data_refresh_market_command(
+    ctx: typer.Context,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用最新 market data freshness report 生成或执行 refresh。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="refresh 目标日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="market data refresh 配置路径。"),
+    ] = DEFAULT_MARKET_DATA_REFRESH_CONFIG_PATH,
+    symbols: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--symbols",
+            help="指定 refresh 资产；可重复。也兼容 `--symbols GOOGL BRK.B SGOV`。",
+        ),
+    ] = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="只生成 refresh plan，不写价格缓存、registry 或 manifest。"),
+    ] = False,
+    plan_only: Annotated[
+        bool,
+        typer.Option(help="只生成 refresh plan，不执行 recovery。"),
+    ] = False,
+) -> None:
+    """刷新 stale market data 并输出 freshness recovery summary。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    requested_symbols = tuple([*(symbols or []), *[str(item) for item in ctx.args]])
+    run = run_market_data_refresh(
+        as_of=run_date,
+        symbols=requested_symbols,
+        config_path=config_path,
+        dry_run=dry_run,
+        plan_only=plan_only,
+    )
+    metadata = run.payload.get("metadata", {}) if isinstance(run.payload, dict) else {}
+    status = str(metadata.get("status") or "UNKNOWN")
+    style = "green" if status in {"OK", "NOT_NEEDED"} else "yellow"
+    if status in {"FAILED", "BLOCKED"}:
+        style = "red"
+    mode = "PLAN" if dry_run or plan_only else "EXECUTE"
+    console.print(f"[{style}]Market data refresh：{status} ({mode})[/{style}]")
+    console.print(f"Plan JSON：{run.plan_path}")
+    if run.json_path is not None:
+        console.print(f"JSON：{run.json_path}")
+    if run.markdown_path is not None:
+        console.print(f"Markdown：{run.markdown_path}")
+    freshness_input = run.payload.get("freshness_input", {})
+    if not isinstance(freshness_input, dict) or not freshness_input:
+        before = run.payload.get("before", {})
+        actions = run.payload.get("actions", {})
+        if isinstance(before, dict) and isinstance(actions, dict):
+            freshness_input = {
+                "freshness_status": before.get("freshness_status", "UNKNOWN"),
+                "required_target_date": actions.get("target_date", ""),
+            }
+    if isinstance(freshness_input, dict):
+        console.print(
+            "freshness_input="
+            f"status={freshness_input.get('freshness_status', 'UNKNOWN')}；"
+            f"target_date={freshness_input.get('required_target_date', '')}"
+        )
+    actions = run.payload.get("actions", {})
+    if isinstance(actions, dict):
+        fetched_assets = ", ".join(
+            str(item) for item in actions.get("fetched_assets", [])
+        ) or "none"
+        console.print(
+            "actions="
+            f"target_date={actions.get('target_date', '')}；"
+            f"fetched_assets={fetched_assets}；"
+            f"manifest_refreshed={actions.get('refreshed_backtest_manifest', False)}"
+        )
+    after = run.payload.get("after", {})
+    if isinstance(after, dict):
+        console.print(
+            "after="
+            f"freshness_status={after.get('freshness_status', 'UNKNOWN')}；"
+            f"tracking_readiness={after.get('tracking_readiness', 'UNKNOWN')}；"
+            f"candidate_tracking_status={after.get('candidate_tracking_status', 'UNKNOWN')}"
+        )
+    for item in run.payload.get("asset_results", []):
+        if isinstance(item, dict):
+            console.print(
+                f"{item.get('symbol', '')}: {item.get('status', '')} "
+                f"via {item.get('source_symbol', '')} source={item.get('source', '')}"
+            )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+    if status in {"FAILED", "BLOCKED"}:
+        raise typer.Exit(code=1)
+
+
+@data_app.command("validate-refresh")
+def data_validate_refresh_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验最新正式 market data refresh artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="refresh 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 market_data_refresh_summary.json 路径。"),
+    ] = None,
+) -> None:
+    """校验 market data refresh report schema、安全字段和 recovery 输出。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    source_path = input_path or _resolve_market_data_refresh_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_market_data_refresh_payload(source_path)
+    issues = validate_market_data_refresh_payload(payload)
+    metadata = payload.get("metadata", {}) if isinstance(payload, dict) else {}
+    status = str(metadata.get("status") or "UNKNOWN")
+    style = "green" if not issues and status in {"OK", "NOT_NEEDED"} else "yellow"
+    if issues or status in {"FAILED", "BLOCKED"}:
+        style = "red"
+    console.print(f"[{style}]Market data refresh validation：{status}[/{style}]")
+    console.print(f"source：{source_path}")
+    if issues:
+        for issue in issues:
+            console.print(f"[red]- {issue}[/red]")
+        raise typer.Exit(code=1)
+    console.print(f"refresh_status={status}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+    if status in {"FAILED", "BLOCKED"}:
+        raise typer.Exit(code=1)
+
+
+@data_app.command("recover-freshness")
+def data_recover_freshness_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用 latest freshness/tracking 日期执行 recovery。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="recovery 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    refresh_config_path: Annotated[
+        Path,
+        typer.Option("--refresh-config", help="market data refresh 配置路径。"),
+    ] = DEFAULT_MARKET_DATA_REFRESH_CONFIG_PATH,
+    freshness_config_path: Annotated[
+        Path,
+        typer.Option("--freshness-config", help="market data freshness 配置路径。"),
+    ] = DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH,
+) -> None:
+    """执行 freshness -> refresh -> manifest/freshness/tracking recovery 链路。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    freshness_run = run_market_data_freshness(
+        as_of=run_date,
+        config_path=freshness_config_path,
+        dry_run=False,
+    )
+    freshness = freshness_run.payload.get("freshness", {})
+    freshness_status = (
+        freshness.get("status", "UNKNOWN") if isinstance(freshness, dict) else "UNKNOWN"
+    )
+    console.print(f"freshness_before={freshness_status}；report={freshness_run.json_path}")
+    refresh_run = run_market_data_refresh(
+        as_of=freshness_run.as_of,
+        config_path=refresh_config_path,
+        dry_run=False,
+    )
+    metadata = (
+        refresh_run.payload.get("metadata", {})
+        if isinstance(refresh_run.payload, dict)
+        else {}
+    )
+    status = str(metadata.get("status") or "UNKNOWN")
+    style = "green" if status in {"OK", "NOT_NEEDED"} else "yellow"
+    if status in {"FAILED", "BLOCKED"}:
+        style = "red"
+    console.print(f"[{style}]Freshness recovery：{status}[/{style}]")
+    console.print(f"Refresh JSON：{refresh_run.json_path}")
+    after = refresh_run.payload.get("after", {})
+    if isinstance(after, dict):
+        console.print(
+            f"freshness_status={after.get('freshness_status', 'UNKNOWN')}；"
+            f"tracking_readiness={after.get('tracking_readiness', 'UNKNOWN')}；"
+            f"tracking_status={after.get('candidate_tracking_status', 'UNKNOWN')}"
+        )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+    if status in {"FAILED", "BLOCKED"}:
+        raise typer.Exit(code=1)
+
+
 @data_app.command(
     "repair-backtest-inputs",
     context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
@@ -6858,6 +7234,514 @@ def portfolio_validate_sensitivity_command(
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
 
 
+@portfolio_app.command(
+    "candidates",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def portfolio_candidates_command(
+    ctx: typer.Context,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用 latest valid backtest manifest 对应日期。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="candidate evaluation 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="portfolio candidate profile 配置路径。"),
+    ] = DEFAULT_PORTFOLIO_CANDIDATE_PROFILES_PATH,
+    profile: Annotated[
+        str | None,
+        typer.Option("--profile", help="指定单一 candidate profile。"),
+    ] = None,
+    profiles: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--profiles",
+            help="指定多个 candidate profile；也兼容 `--profiles a b c`。",
+        ),
+    ] = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="写入 outputs/dry_runs/portfolio_candidates，不写正式 artifacts。"),
+    ] = False,
+) -> None:
+    """运行 portfolio construction candidate profile evaluation。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    requested_profiles = tuple(
+        dict.fromkeys(
+            [
+                *([profile] if profile else []),
+                *(profiles or []),
+                *[str(item) for item in ctx.args],
+            ]
+        )
+    )
+    try:
+        run = run_portfolio_candidates(
+            as_of=run_date,
+            profile_names=requested_profiles or None,
+            config_path=config_path,
+            dry_run=dry_run,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    metadata = run.payload.get("metadata", {})
+    ranking = run.payload.get("ranking", {})
+    promotion = run.payload.get("promotion_impact", {})
+    data_gate = run.payload.get("data_gate", {})
+    status = metadata.get("status", "UNKNOWN") if isinstance(metadata, dict) else "UNKNOWN"
+    style = "green" if status == "OK" else "yellow" if status == "LIMITED" else "red"
+    console.print(f"[{style}]Portfolio candidates：{status}[/{style}]")
+    console.print(f"JSON：{run.json_path}")
+    console.print(f"Markdown：{run.markdown_path}")
+    console.print(f"Recommended candidate：{run.recommended_candidate_path}")
+    if isinstance(ranking, dict):
+        console.print(
+            f"profiles_tested={len(run.payload.get('profiles', []))}；"
+            f"candidates_tested={len(run.payload.get('candidates', []))}；"
+            f"best_profile={ranking.get('best_profile', 'UNKNOWN')}"
+        )
+        reason = ranking.get("reason")
+        if reason:
+            console.print(f"reason={reason}")
+    if isinstance(data_gate, dict):
+        console.print(
+            "data_gate="
+            f"{data_gate.get('status', 'UNKNOWN')}；"
+            f"error_code={data_gate.get('error_code', 'OK')}；"
+            f"latest_resolution={data_gate.get('latest_resolution_status', 'UNKNOWN')}"
+        )
+        reason = data_gate.get("reason")
+        if reason:
+            console.print(f"data_gate_reason={reason}")
+    if isinstance(promotion, dict):
+        console.print(
+            "can_support_candidate_promotion="
+            f"{promotion.get('can_support_candidate_promotion', False)}"
+        )
+    if "portfolio sensitivity summary is missing" in str(run.payload.get("warnings", [])):
+        console.print("请先运行：aits portfolio sensitivity --latest")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@portfolio_app.command("validate-candidates")
+def portfolio_validate_candidates_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验最新正式 portfolio candidates artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="candidate evaluation 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 portfolio_candidates_summary.json 路径。"),
+    ] = None,
+) -> None:
+    """校验 portfolio candidates JSON schema 和只读安全字段。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    source_path = input_path or _resolve_portfolio_candidates_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_portfolio_candidates_payload(source_path)
+    issues = validate_portfolio_candidates_payload(payload)
+    metadata = payload.get("metadata", {}) if isinstance(payload, dict) else {}
+    status = metadata.get("status", "UNKNOWN") if isinstance(metadata, dict) else "UNKNOWN"
+    style = "green" if not issues and status == "OK" else "yellow" if not issues else "red"
+    console.print(f"[{style}]Portfolio candidates validation：{status}[/{style}]")
+    console.print(f"source：{source_path}")
+    if issues:
+        for issue in issues:
+            console.print(f"[red]- {issue}[/red]")
+        raise typer.Exit(code=1)
+    promotion = payload.get("promotion_impact", {}) if isinstance(payload, dict) else {}
+    console.print(
+        "can_support_candidate_promotion="
+        f"{promotion.get('can_support_candidate_promotion', False)}"
+    )
+    recommended = payload.get("recommended_candidate", {}) if isinstance(payload, dict) else {}
+    if isinstance(recommended, dict):
+        console.print(f"recommended_profile={recommended.get('profile_name', 'UNKNOWN')}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@portfolio_app.command("review-candidate")
+def portfolio_review_candidate_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新正式 recommended portfolio candidate。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="review package 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    candidate_path: Annotated[
+        Path | None,
+        typer.Option("--candidate", help="显式 recommended_portfolio_candidate.yaml 路径。"),
+    ] = None,
+    reviewer: Annotated[
+        str | None,
+        typer.Option(help="人工 review package 记录的 reviewer 名称。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="portfolio candidate review 配置路径。"),
+    ] = DEFAULT_PORTFOLIO_CANDIDATE_REVIEW_CONFIG_PATH,
+) -> None:
+    """生成 portfolio candidate manual review package 和 pending decision。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    try:
+        run = run_portfolio_candidate_review(
+            as_of=run_date,
+            candidate_path=candidate_path,
+            reviewer=reviewer,
+            config_path=config_path,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    metadata = run.package_payload.get("metadata", {})
+    candidate = run.package_payload.get("candidate", {})
+    evidence = run.package_payload.get("evidence_summary", {})
+    decision = run.decision_payload.get("decision", {})
+    status = metadata.get("status", "UNKNOWN") if isinstance(metadata, dict) else "UNKNOWN"
+    decision_status = (
+        decision.get("status", "UNKNOWN") if isinstance(decision, dict) else "UNKNOWN"
+    )
+    style = "yellow" if status == "PENDING_REVIEW" else "green"
+    console.print(f"[{style}]Portfolio candidate review package：{status}[/{style}]")
+    console.print(f"Package JSON：{run.package_json_path}")
+    console.print(f"Package Markdown：{run.package_markdown_path}")
+    console.print(f"Decision JSON：{run.decision_json_path}")
+    console.print(f"Decision Markdown：{run.decision_markdown_path}")
+    if isinstance(candidate, dict):
+        console.print(f"candidate_profile={candidate.get('profile_name', 'UNKNOWN')}")
+    if isinstance(evidence, dict):
+        console.print(
+            "data_gate="
+            f"{evidence.get('data_gate', 'UNKNOWN')}；"
+            f"signal_quality={evidence.get('signal_snapshot_status', 'UNKNOWN')}；"
+            f"best_profile={evidence.get('best_profile', 'UNKNOWN')}"
+        )
+    console.print(f"review_status={decision_status}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@portfolio_app.command("decide-candidate")
+def portfolio_decide_candidate_command(
+    decision: Annotated[
+        str,
+        typer.Option(
+            help=(
+                "人工决策：watch / rejected / needs_more_data / "
+                "approved_for_shadow_candidate。"
+            ),
+        ),
+    ],
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新 review package。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="decision 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    candidate_path: Annotated[
+        Path | None,
+        typer.Option("--candidate", help="显式 recommended_portfolio_candidate.yaml 路径。"),
+    ] = None,
+    reviewer: Annotated[
+        str | None,
+        typer.Option(help="人工 reviewer 名称。"),
+    ] = None,
+    reason: Annotated[
+        str | None,
+        typer.Option(help="人工 decision reason。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="portfolio candidate review 配置路径。"),
+    ] = DEFAULT_PORTFOLIO_CANDIDATE_REVIEW_CONFIG_PATH,
+) -> None:
+    """提交 portfolio candidate manual review decision。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    try:
+        run = decide_portfolio_candidate(
+            decision=decision,
+            as_of=run_date,
+            candidate_path=candidate_path,
+            reviewer=reviewer,
+            reason=reason,
+            config_path=config_path,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    decision_payload = run.decision_payload.get("decision", {})
+    candidate = run.decision_payload.get("candidate", {})
+    safety = run.decision_payload.get("safety", {})
+    status = (
+        decision_payload.get("status", "UNKNOWN")
+        if isinstance(decision_payload, dict)
+        else "UNKNOWN"
+    )
+    style = "green" if status in {"watch", "approved_for_shadow_candidate"} else "yellow"
+    console.print(f"[{style}]Portfolio candidate decision：{status}[/{style}]")
+    console.print(f"Decision JSON：{run.decision_json_path}")
+    console.print(f"Decision Markdown：{run.decision_markdown_path}")
+    if isinstance(candidate, dict):
+        console.print(f"candidate_profile={candidate.get('profile_name', 'UNKNOWN')}")
+    if isinstance(decision_payload, dict):
+        console.print(f"allowed_next_step={decision_payload.get('allowed_next_step', 'UNKNOWN')}")
+        console.print(f"reason={decision_payload.get('reason', '')}")
+    if isinstance(safety, dict):
+        console.print(
+            "production_config_modified="
+            f"{safety.get('production_config_modified', 'UNKNOWN')}"
+        )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@portfolio_app.command("validate-review")
+def portfolio_validate_review_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验最新正式 portfolio candidate review decision。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="review decision 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 portfolio_candidate_review_decision.json 路径。"),
+    ] = None,
+) -> None:
+    """校验 portfolio candidate review decision schema 和 safety 字段。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    source_path = input_path or _resolve_portfolio_candidate_review_decision_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_portfolio_candidate_review_payload(source_path)
+    issues = validate_portfolio_candidate_review_decision_payload(payload)
+    decision = payload.get("decision", {}) if isinstance(payload, dict) else {}
+    safety = payload.get("safety", {}) if isinstance(payload, dict) else {}
+    status = decision.get("status", "UNKNOWN") if isinstance(decision, dict) else "UNKNOWN"
+    style = "green" if not issues and status in {"watch", "approved_for_shadow_candidate"} else (
+        "yellow" if not issues else "red"
+    )
+    console.print(f"[{style}]Portfolio candidate review validation：{status}[/{style}]")
+    console.print(f"source：{source_path}")
+    if issues:
+        for issue in issues:
+            console.print(f"[red]- {issue}[/red]")
+        raise typer.Exit(code=1)
+    if isinstance(safety, dict):
+        console.print(
+            "production_config_modified="
+            f"{safety.get('production_config_modified', 'UNKNOWN')}"
+        )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@portfolio_app.command("track-candidate")
+def portfolio_track_candidate_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用最新价格日期并 roll-forward 最近 review decision。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="tracking 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    review_path: Annotated[
+        Path | None,
+        typer.Option("--review", help="显式 portfolio_candidate_review_decision.json 路径。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="portfolio candidate tracking 配置路径。"),
+    ] = DEFAULT_PORTFOLIO_CANDIDATE_TRACKING_CONFIG_PATH,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="写入 outputs/dry_runs/portfolio_candidate_tracking，不更新正式 state。"),
+    ] = False,
+) -> None:
+    """跟踪已人工 review 的 portfolio candidate shadow profile。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    try:
+        run = run_portfolio_candidate_tracking(
+            as_of=run_date,
+            review_path=review_path,
+            config_path=config_path,
+            dry_run=dry_run,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    metadata = run.payload.get("metadata", {}) if isinstance(run.payload, dict) else {}
+    candidate = run.payload.get("candidate", {}) if isinstance(run.payload, dict) else {}
+    date_resolution = (
+        run.payload.get("date_resolution", {}) if isinstance(run.payload, dict) else {}
+    )
+    data_gate = run.payload.get("data_gate", {}) if isinstance(run.payload, dict) else {}
+    freshness = (
+        run.payload.get("market_data_freshness", {}) if isinstance(run.payload, dict) else {}
+    )
+    status = metadata.get("status", "UNKNOWN") if isinstance(metadata, dict) else "UNKNOWN"
+    tracking_status = (
+        candidate.get("tracking_status", "UNKNOWN")
+        if isinstance(candidate, dict)
+        else "UNKNOWN"
+    )
+    style = "green" if status == "OK" else "yellow" if status == "DEGRADED" else "red"
+    console.print(f"[{style}]Portfolio candidate tracking：{status}[/{style}]")
+    console.print(f"JSON：{run.json_path}")
+    console.print(f"Markdown：{run.markdown_path}")
+    console.print(f"Daily state：{run.daily_state_path}")
+    if run.active_state_path is not None:
+        console.print(f"Active state：{run.active_state_path}")
+    if isinstance(candidate, dict):
+        console.print(f"candidate_profile={candidate.get('profile_name', 'UNKNOWN')}")
+        console.print(f"tracking_status={tracking_status}")
+        console.print(f"review_status={candidate.get('review_status', 'UNKNOWN')}")
+    if isinstance(date_resolution, dict):
+        console.print(
+            "date_resolution="
+            f"tracking_date={date_resolution.get('tracking_date', 'UNKNOWN')}；"
+            f"effective_data_date={date_resolution.get('effective_data_date', 'UNKNOWN')}；"
+            f"roll_forward_status={date_resolution.get('roll_forward_status', 'UNKNOWN')}"
+        )
+        reason = date_resolution.get("reason")
+        if reason:
+            console.print(f"roll_forward_reason={reason}")
+    if isinstance(data_gate, dict):
+        console.print(
+            "data_gate="
+            f"{data_gate.get('status', 'UNKNOWN')}；"
+            f"manifest_date={data_gate.get('manifest_date', 'UNKNOWN')}；"
+            f"price_cache_registry={data_gate.get('price_cache_registry_status', 'UNKNOWN')}"
+        )
+    if isinstance(freshness, dict):
+        console.print(
+            "market_data_freshness_status="
+            f"{freshness.get('status', 'MISSING')}；"
+            f"tracking_readiness={freshness.get('tracking_readiness', 'unknown')}"
+        )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@portfolio_app.command("validate-tracking")
+def portfolio_validate_tracking_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验最新正式 portfolio candidate tracking artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="tracking 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 portfolio_candidate_tracking_summary.json 路径。"),
+    ] = None,
+) -> None:
+    """校验 portfolio candidate tracking summary schema 和 safety 字段。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    source_path = input_path or _resolve_portfolio_candidate_tracking_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_portfolio_candidate_tracking_payload(source_path)
+    issues = validate_portfolio_candidate_tracking_payload(payload)
+    metadata = payload.get("metadata", {}) if isinstance(payload, dict) else {}
+    candidate = payload.get("candidate", {}) if isinstance(payload, dict) else {}
+    freshness = payload.get("market_data_freshness", {}) if isinstance(payload, dict) else {}
+    status = metadata.get("status", "UNKNOWN") if isinstance(metadata, dict) else "UNKNOWN"
+    tracking_status = (
+        candidate.get("tracking_status", "UNKNOWN")
+        if isinstance(candidate, dict)
+        else "UNKNOWN"
+    )
+    style = "green" if not issues and status == "OK" else "yellow" if not issues else "red"
+    console.print(f"[{style}]Portfolio candidate tracking validation：{status}[/{style}]")
+    console.print(f"source：{source_path}")
+    if issues:
+        for issue in issues:
+            console.print(f"[red]- {issue}[/red]")
+        raise typer.Exit(code=1)
+    if isinstance(candidate, dict):
+        console.print(f"candidate_profile={candidate.get('profile_name', 'UNKNOWN')}")
+        console.print(f"tracking_status={tracking_status}")
+    if isinstance(freshness, dict):
+        console.print(
+            "market_data_freshness_status="
+            f"{freshness.get('status', 'MISSING')}"
+        )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@portfolio_app.command("tracking-status")
+def portfolio_tracking_status_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新正式 portfolio candidate tracking artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="tracking 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 portfolio_candidate_tracking_summary.json 路径。"),
+    ] = None,
+) -> None:
+    """查看 portfolio candidate shadow tracking 状态。"""
+    source_path = input_path or _resolve_portfolio_candidate_tracking_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_portfolio_candidate_tracking_payload(source_path)
+    candidate = payload.get("candidate", {}) if isinstance(payload, dict) else {}
+    date_resolution = payload.get("date_resolution", {}) if isinstance(payload, dict) else {}
+    data_gate = payload.get("data_gate", {}) if isinstance(payload, dict) else {}
+    freshness = payload.get("market_data_freshness", {}) if isinstance(payload, dict) else {}
+    if isinstance(candidate, dict):
+        console.print(f"candidate_profile={candidate.get('profile_name', 'UNKNOWN')}")
+        console.print(f"review_status={candidate.get('review_status', 'UNKNOWN')}")
+        console.print(f"tracking_status={candidate.get('tracking_status', 'UNKNOWN')}")
+    if isinstance(date_resolution, dict):
+        console.print(f"tracking_date={date_resolution.get('tracking_date', 'UNKNOWN')}")
+        console.print(
+            f"effective_data_date={date_resolution.get('effective_data_date', 'UNKNOWN')}"
+        )
+        console.print(
+            f"roll_forward_status={date_resolution.get('roll_forward_status', 'UNKNOWN')}"
+        )
+    if isinstance(data_gate, dict):
+        console.print(f"data_gate={data_gate.get('status', 'UNKNOWN')}")
+    if isinstance(freshness, dict):
+        console.print(
+            "market_data_freshness_status="
+            f"{freshness.get('status', 'MISSING')}"
+        )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
 @parameters_app.command("shadow-backtest")
 def parameters_shadow_backtest_command(
     latest: Annotated[
@@ -7356,6 +8240,279 @@ def portfolio_sensitivity_report_command(
         console.print(f"best_profile={ranking.get('best_profile', 'UNKNOWN')}")
     if isinstance(diagnosis, dict):
         console.print(f"primary_bottleneck={diagnosis.get('primary_bottleneck', 'UNKNOWN')}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{markdown_path}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@reports_app.command("portfolio-candidates")
+def portfolio_candidates_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新正式 portfolio candidates artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="报告日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    source_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 portfolio_candidates_summary.json 路径。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 alias 输出目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """从正式 artifact 生成 portfolio candidates 报告 alias。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    json_source = source_path or _resolve_portfolio_candidates_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_portfolio_candidates_payload(json_source)
+    issues = validate_portfolio_candidates_payload(payload)
+    if issues:
+        raise typer.BadParameter("portfolio candidates JSON 校验失败：" + "; ".join(issues))
+    try:
+        report_date = portfolio_candidates_payload_date(payload, json_source)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, markdown_path = write_portfolio_candidates_report_alias(
+        payload,
+        reports_dir,
+        report_date,
+    )
+    ranking = payload.get("ranking", {}) if isinstance(payload, dict) else {}
+    console.print("[green]Portfolio candidates report：OK[/green]")
+    if isinstance(ranking, dict):
+        console.print(f"best_profile={ranking.get('best_profile', 'UNKNOWN')}")
+        reason = ranking.get("reason")
+        if reason:
+            console.print(f"reason={reason}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{markdown_path}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@reports_app.command("portfolio-candidate-review")
+def portfolio_candidate_review_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新正式 portfolio candidate review decision。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="报告日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    source_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 portfolio_candidate_review_decision.json 路径。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 alias 输出目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """从正式 artifact 生成 portfolio candidate review 报告 alias。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    decision_source = source_path or _resolve_portfolio_candidate_review_decision_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    decision_payload = load_portfolio_candidate_review_payload(decision_source)
+    issues = validate_portfolio_candidate_review_decision_payload(decision_payload)
+    if issues:
+        raise typer.BadParameter("portfolio candidate review JSON 校验失败：" + "; ".join(issues))
+    package_source = decision_source.parent / "portfolio_candidate_review_package.json"
+    package_payload = load_portfolio_candidate_review_payload(package_source)
+    if not package_payload:
+        raise typer.BadParameter(f"未找到 review package artifact：{package_source}")
+    try:
+        report_date = portfolio_candidate_review_payload_date(
+            decision_payload,
+            decision_source,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, markdown_path = write_portfolio_candidate_review_report_alias(
+        package_payload,
+        decision_payload,
+        reports_dir,
+        report_date,
+    )
+    decision = decision_payload.get("decision", {}) if isinstance(decision_payload, dict) else {}
+    candidate = decision_payload.get("candidate", {}) if isinstance(decision_payload, dict) else {}
+    console.print("[green]Portfolio candidate review report：OK[/green]")
+    if isinstance(decision, dict):
+        console.print(f"status={decision.get('status', 'UNKNOWN')}")
+        console.print(f"allowed_next_step={decision.get('allowed_next_step', 'UNKNOWN')}")
+    if isinstance(candidate, dict):
+        console.print(f"candidate_profile={candidate.get('profile_name', 'UNKNOWN')}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{markdown_path}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@reports_app.command("portfolio-candidate-tracking")
+def portfolio_candidate_tracking_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新正式 portfolio candidate tracking summary。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="报告日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    source_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 portfolio_candidate_tracking_summary.json 路径。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 alias 输出目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """从正式 artifact 生成 portfolio candidate tracking 报告 alias。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    json_source = source_path or _resolve_portfolio_candidate_tracking_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_portfolio_candidate_tracking_payload(json_source)
+    issues = validate_portfolio_candidate_tracking_payload(payload)
+    if issues:
+        raise typer.BadParameter("portfolio candidate tracking JSON 校验失败：" + "; ".join(issues))
+    try:
+        report_date = portfolio_candidate_tracking_payload_date(payload, json_source)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, markdown_path = write_portfolio_candidate_tracking_report_alias(
+        payload,
+        reports_dir,
+        report_date,
+    )
+    candidate = payload.get("candidate", {}) if isinstance(payload, dict) else {}
+    console.print("[green]Portfolio candidate tracking report：OK[/green]")
+    if isinstance(candidate, dict):
+        console.print(f"candidate_profile={candidate.get('profile_name', 'UNKNOWN')}")
+        console.print(f"tracking_status={candidate.get('tracking_status', 'UNKNOWN')}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{markdown_path}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@reports_app.command("data-freshness")
+def market_data_freshness_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新正式 market data freshness summary。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="报告日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    source_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 market_data_freshness_summary.json 路径。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 alias 输出目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """从正式 artifact 生成 market data freshness 报告 alias。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    json_source = source_path or _resolve_market_data_freshness_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_market_data_freshness_payload(json_source)
+    issues = validate_market_data_freshness_payload(payload)
+    if issues:
+        raise typer.BadParameter("market data freshness JSON 校验失败：" + "; ".join(issues))
+    try:
+        report_date = market_data_freshness_payload_date(payload, json_source)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, markdown_path = write_market_data_freshness_report_alias(
+        payload,
+        reports_dir,
+        report_date,
+    )
+    freshness = payload.get("freshness", {}) if isinstance(payload, dict) else {}
+    readiness = payload.get("tracking_readiness", {}) if isinstance(payload, dict) else {}
+    console.print("[green]Market data freshness report：OK[/green]")
+    if isinstance(freshness, dict):
+        console.print(f"freshness_status={freshness.get('status', 'UNKNOWN')}")
+    if isinstance(readiness, dict):
+        console.print(f"tracking_readiness={readiness.get('readiness', 'UNKNOWN')}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{markdown_path}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@reports_app.command("data-refresh")
+def market_data_refresh_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新正式 market data refresh summary。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="报告日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    source_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 market_data_refresh_summary.json 路径。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 alias 输出目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """从正式 artifact 生成 market data refresh 报告 alias。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    json_source = source_path or _resolve_market_data_refresh_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_market_data_refresh_payload(json_source)
+    issues = validate_market_data_refresh_payload(payload)
+    if issues:
+        raise typer.BadParameter("market data refresh JSON 校验失败：" + "; ".join(issues))
+    try:
+        report_date = market_data_refresh_payload_date(payload, json_source)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, markdown_path = write_market_data_refresh_report_alias(
+        payload,
+        reports_dir,
+        report_date,
+    )
+    metadata = payload.get("metadata", {}) if isinstance(payload, dict) else {}
+    after = payload.get("after", {}) if isinstance(payload, dict) else {}
+    console.print("[green]Market data refresh report：OK[/green]")
+    if isinstance(metadata, dict):
+        console.print(f"refresh_status={metadata.get('status', 'UNKNOWN')}")
+    if isinstance(after, dict):
+        console.print(f"freshness_status={after.get('freshness_status', 'UNKNOWN')}")
+        console.print(f"tracking_status={after.get('candidate_tracking_status', 'UNKNOWN')}")
     console.print(f"JSON：{json_path}")
     console.print(f"Markdown：{markdown_path}")
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
@@ -14704,6 +15861,60 @@ def _resolve_portfolio_sensitivity_path(*, latest: bool, as_of: str | None) -> P
             raise typer.BadParameter(f"未找到 portfolio sensitivity artifact：{root}")
         return latest_path
     return root / _parse_date(as_of).isoformat() / "portfolio_sensitivity_summary.json"
+
+
+def _resolve_portfolio_candidates_path(*, latest: bool, as_of: str | None) -> Path:
+    root = PROJECT_ROOT / "artifacts" / "portfolio_candidates"
+    if latest or as_of is None:
+        latest_path = latest_portfolio_candidates_path(root)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 portfolio candidates artifact：{root}")
+        return latest_path
+    return root / _parse_date(as_of).isoformat() / "portfolio_candidates_summary.json"
+
+
+def _resolve_portfolio_candidate_review_decision_path(
+    *,
+    latest: bool,
+    as_of: str | None,
+) -> Path:
+    root = PROJECT_ROOT / "artifacts" / "portfolio_candidate_reviews"
+    if latest or as_of is None:
+        latest_path = latest_portfolio_candidate_review_decision_path(root)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 portfolio candidate review artifact：{root}")
+        return latest_path
+    return root / _parse_date(as_of).isoformat() / "portfolio_candidate_review_decision.json"
+
+
+def _resolve_portfolio_candidate_tracking_path(*, latest: bool, as_of: str | None) -> Path:
+    root = PROJECT_ROOT / "artifacts" / "portfolio_candidate_tracking"
+    if latest or as_of is None:
+        latest_path = latest_portfolio_candidate_tracking_path(root)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 portfolio candidate tracking artifact：{root}")
+        return latest_path
+    return root / _parse_date(as_of).isoformat() / "portfolio_candidate_tracking_summary.json"
+
+
+def _resolve_market_data_freshness_path(*, latest: bool, as_of: str | None) -> Path:
+    root = PROJECT_ROOT / "artifacts" / "data_freshness"
+    if latest or as_of is None:
+        latest_path = latest_market_data_freshness_path(root)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 market data freshness artifact：{root}")
+        return latest_path
+    return root / _parse_date(as_of).isoformat() / "market_data_freshness_summary.json"
+
+
+def _resolve_market_data_refresh_path(*, latest: bool, as_of: str | None) -> Path:
+    root = PROJECT_ROOT / "artifacts" / "data_refresh"
+    if latest or as_of is None:
+        latest_path = latest_market_data_refresh_path(root)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 market data refresh artifact：{root}")
+        return latest_path
+    return root / _parse_date(as_of).isoformat() / "market_data_refresh_summary.json"
 
 
 def _resolve_parameter_promotion_path(*, latest: bool, as_of: str | None) -> Path:

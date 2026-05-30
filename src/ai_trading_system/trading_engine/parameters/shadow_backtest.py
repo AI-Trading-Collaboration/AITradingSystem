@@ -664,6 +664,21 @@ def _promotion_decision_payload(
     sensitivity_path = _latest_portfolio_sensitivity_supporting_path(as_of)
     if sensitivity_path is not None:
         supporting["portfolio_sensitivity"] = str(sensitivity_path)
+    candidates_path = _latest_portfolio_candidates_supporting_path(as_of)
+    if candidates_path is not None:
+        supporting["portfolio_candidates"] = str(candidates_path)
+    review_path = _latest_portfolio_candidate_review_supporting_path(as_of)
+    if review_path is not None:
+        supporting["portfolio_candidate_review"] = str(review_path)
+    tracking_path = _latest_portfolio_candidate_tracking_supporting_path(as_of)
+    if tracking_path is not None:
+        supporting["portfolio_candidate_tracking"] = str(tracking_path)
+    freshness_path = _latest_market_data_freshness_supporting_path(as_of)
+    if freshness_path is not None:
+        supporting["market_data_freshness"] = str(freshness_path)
+    refresh_path = _latest_market_data_refresh_supporting_path(as_of)
+    if refresh_path is not None:
+        supporting["market_data_refresh"] = str(refresh_path)
     if supporting:
         payload["supporting_artifacts"] = supporting
     if backtest_mode == "full_signal_backtest_limited":
@@ -690,6 +705,73 @@ def _promotion_decision_payload(
             reason.rstrip(".")
             + ". Portfolio sensitivity summary is available as supporting evidence, "
             "but it is advisory only and cannot enable candidate promotion."
+        )
+        reason = str(payload.get("reason") or "")
+    if candidates_path is not None and "portfolio candidate" not in reason.lower():
+        payload["reason"] = (
+            reason.rstrip(".")
+            + ". Portfolio candidate profiles improved or evaluated signal transmission, "
+            "but signal snapshot quality remains LIMITED and candidate promotion remains "
+            "disabled."
+        )
+        reason = str(payload.get("reason") or "")
+    review_status = _portfolio_candidate_review_status(review_path)
+    if review_status == "watch" and "manual watch" not in reason.lower():
+        payload["reason"] = (
+            reason.rstrip(".")
+            + ". Portfolio candidate is under manual watch. Candidate improves "
+            "responsiveness but signal quality remains LIMITED."
+        )
+        reason = str(payload.get("reason") or "")
+    elif review_status == "approved_for_shadow_candidate":
+        payload["shadow_candidate_status"] = "approved_for_tracking"
+        if "shadow tracking only" not in reason.lower():
+            payload["reason"] = (
+                reason.rstrip(".")
+                + ". Manual review approved the portfolio profile for shadow tracking only. "
+                "Production promotion remains disabled because signal quality is LIMITED."
+            )
+            reason = str(payload.get("reason") or "")
+    tracking_status = _portfolio_candidate_tracking_status(tracking_path)
+    if tracking_status == "active_tracking":
+        payload["shadow_candidate_tracking"] = "active_tracking"
+        if "tracked in shadow mode" not in reason.lower():
+            payload["reason"] = (
+                reason.rstrip(".")
+                + ". Portfolio candidate is being tracked in shadow mode. Production "
+                "promotion remains disabled because signal quality is LIMITED."
+            )
+    elif tracking_status == "degraded_tracking":
+        payload["shadow_candidate_tracking"] = "degraded_tracking"
+        if "tracking is degraded" not in reason.lower():
+            payload["reason"] = (
+                reason.rstrip(".")
+                + ". Portfolio candidate tracking is degraded due to latest data "
+                "roll-forward. Production promotion remains disabled."
+            )
+    elif tracking_status == "tracking_blocked":
+        payload["shadow_candidate_tracking"] = "tracking_blocked"
+        if "tracking is blocked" not in reason.lower():
+            payload["reason"] = (
+                reason.rstrip(".")
+                + ". Portfolio candidate tracking is blocked, so it cannot support "
+                "production promotion."
+            )
+            reason = str(payload.get("reason") or "")
+    freshness_status = _market_data_freshness_status(freshness_path)
+    if freshness_status and "market data freshness" not in reason.lower():
+        payload["reason"] = (
+            reason.rstrip(".")
+            + f". Market data freshness is {freshness_status}; it is supporting "
+            "readiness evidence only and does not enable production promotion."
+        )
+        reason = str(payload.get("reason") or "")
+    refresh_status = _market_data_refresh_status(refresh_path)
+    if refresh_status and "market data refresh" not in reason.lower():
+        payload["reason"] = (
+            reason.rstrip(".")
+            + f". Market data refresh is {refresh_status}; production promotion "
+            "remains disabled."
         )
     return payload
 
@@ -731,6 +813,136 @@ def _latest_portfolio_sensitivity_supporting_path(as_of: date) -> Path | None:
     if not candidates:
         return None
     return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _latest_portfolio_candidates_supporting_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "portfolio_candidates"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/portfolio_candidates_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _latest_portfolio_candidate_review_supporting_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "portfolio_candidate_reviews"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/portfolio_candidate_review_decision.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _latest_portfolio_candidate_tracking_supporting_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "portfolio_candidate_tracking"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/portfolio_candidate_tracking_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _latest_market_data_freshness_supporting_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "data_freshness"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/market_data_freshness_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _latest_market_data_refresh_supporting_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "data_refresh"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/market_data_refresh_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _portfolio_candidate_review_status(path: Path | None) -> str:
+    if path is None:
+        return ""
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ""
+    decision = payload.get("decision") if isinstance(payload, dict) else None
+    if not isinstance(decision, dict):
+        return ""
+    return str(decision.get("status") or "")
+
+
+def _portfolio_candidate_tracking_status(path: Path | None) -> str:
+    if path is None:
+        return ""
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ""
+    candidate = payload.get("candidate") if isinstance(payload, dict) else None
+    if not isinstance(candidate, dict):
+        return ""
+    return str(candidate.get("tracking_status") or "")
+
+
+def _market_data_freshness_status(path: Path | None) -> str:
+    if path is None:
+        return ""
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ""
+    freshness = payload.get("freshness") if isinstance(payload, dict) else None
+    if isinstance(freshness, dict):
+        return str(freshness.get("status") or "")
+    metadata = payload.get("metadata") if isinstance(payload, dict) else None
+    if isinstance(metadata, dict):
+        return str(metadata.get("status") or "")
+    return ""
+
+
+def _market_data_refresh_status(path: Path | None) -> str:
+    if path is None:
+        return ""
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ""
+    metadata = payload.get("metadata") if isinstance(payload, dict) else None
+    if isinstance(metadata, dict):
+        return str(metadata.get("status") or "")
+    return ""
 
 
 def _write_artifacts(

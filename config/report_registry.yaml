@@ -414,6 +414,102 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: portfolio_candidates
+    title: Portfolio Candidate Profiles
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits reports portfolio-candidates --latest
+    artifact_globs:
+      - artifacts/portfolio_candidates/*/portfolio_candidates_summary.json
+      - artifacts/portfolio_candidates/*/portfolio_candidates_summary.md
+      - artifacts/portfolio_candidates/*/recommended_portfolio_candidate.yaml
+      - outputs/reports/portfolio_candidates_*.json
+      - outputs/reports/portfolio_candidates_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Portfolio construction candidate profiles should be reviewed after sensitivity diagnostics identify rebalance threshold or mapping bottlenecks.
+    owner_action: review_portfolio_candidate_before_manual_config_workflow
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: portfolio_candidate_review
+    title: Portfolio Candidate Review
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits reports portfolio-candidate-review --latest
+    artifact_globs:
+      - artifacts/portfolio_candidate_reviews/*/portfolio_candidate_review_package.json
+      - artifacts/portfolio_candidate_reviews/*/portfolio_candidate_review_package.md
+      - artifacts/portfolio_candidate_reviews/*/portfolio_candidate_review_decision.json
+      - artifacts/portfolio_candidate_reviews/*/portfolio_candidate_review_decision.md
+      - outputs/reports/portfolio_candidate_review_*.json
+      - outputs/reports/portfolio_candidate_review_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Portfolio candidate review decisions should be checked before a recommended construction profile is tracked as a shadow candidate.
+    owner_action: review_portfolio_candidate_decision_before_shadow_tracking
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: portfolio_candidate_tracking
+    title: Portfolio Candidate Tracking
+    group: research
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits reports portfolio-candidate-tracking --latest
+    artifact_globs:
+      - artifacts/portfolio_candidate_tracking/*/portfolio_candidate_tracking_summary.json
+      - artifacts/portfolio_candidate_tracking/*/portfolio_candidate_tracking_summary.md
+      - artifacts/portfolio_candidate_tracking/*/portfolio_candidate_tracking_state.json
+      - artifacts/portfolio_candidate_tracking/state/active_shadow_candidates.json
+      - outputs/reports/portfolio_candidate_tracking_*.json
+      - outputs/reports/portfolio_candidate_tracking_*.md
+    freshness_sla_days: 3
+    freshness_rationale: Shadow candidate tracking should roll forward daily after a manual watch or approved-for-shadow decision.
+    owner_action: review_tracking_status_before_any_candidate_promotion_discussion
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: market_data_freshness
+    title: Market Data Freshness
+    group: data_quality
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits reports data-freshness --latest
+    artifact_globs:
+      - artifacts/data_freshness/*/market_data_freshness_summary.json
+      - artifacts/data_freshness/*/market_data_freshness_summary.md
+      - outputs/reports/market_data_freshness_*.json
+      - outputs/reports/market_data_freshness_*.md
+    freshness_sla_days: 1
+    freshness_rationale: Market data freshness should be reviewed before shadow candidate tracking interprets tracking-date/effective-date mismatches.
+    owner_action: refresh_market_data_cache_or_accept_documented_lag_before_tracking_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: market_data_refresh
+    title: Market Data Refresh
+    group: data_quality
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits reports data-refresh --latest
+    artifact_globs:
+      - artifacts/data_refresh/*/market_data_refresh_plan.json
+      - artifacts/data_refresh/*/market_data_refresh_summary.json
+      - artifacts/data_refresh/*/market_data_refresh_summary.md
+      - outputs/reports/market_data_refresh_*.json
+      - outputs/reports/market_data_refresh_*.md
+    freshness_sla_days: 3
+    freshness_rationale: Market data refresh should be reviewed when freshness is stale or after recovery updates the price cache, registry, manifest, freshness, and candidate tracking artifacts.
+    owner_action: review_refresh_source_status_before_candidate_tracking_or_promotion_discussion
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: parameter_promotion_decision
     title: Parameter Promotion Decision
     group: governance

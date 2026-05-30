@@ -1,0 +1,65 @@
+version: "portfolio_candidate_review_v0_1"
+owner: "system"
+status: "pilot_baseline"
+production_effect: "none"
+manual_review_required: true
+auto_promotion: false
+observe_only: true
+rationale: >
+  Provide an auditable manual review workflow for TRADING-054 recommended
+  portfolio construction candidates without changing production parameters.
+intended_effect: >
+  Convert a recommended portfolio candidate artifact into a manual review
+  package and explicit decision record for watch / rejection / shadow tracking.
+validation_evidence: >
+  TRADING-055 tests cover pending package generation, decision statuses,
+  production hash checks, hard rejection rules, reports, Dashboard/Reader Brief,
+  shadow backtest supporting artifacts, and production safety fields.
+review_condition: >
+  Review each recommended portfolio candidate before it can be tracked as a
+  shadow candidate. A positive review decision must not be treated as production
+  approval.
+input:
+  portfolio_candidates_dir: "artifacts/portfolio_candidates"
+  portfolio_sensitivity_dir: "artifacts/portfolio_sensitivity"
+  signal_calibration_dir: "artifacts/signal_calibration"
+  signal_ablation_dir: "artifacts/signal_ablation"
+  signal_snapshot_dir: "artifacts/signal_snapshots"
+  backtest_snapshot_dir: "artifacts/backtest_snapshots"
+  price_cache_reconcile_dir: "artifacts/data_quality"
+  shadow_backtest_dir: "artifacts/shadow_backtest"
+  production_parameters_path: "config/parameters/production/current.yaml"
+output:
+  portfolio_candidate_reviews_dir: "artifacts/portfolio_candidate_reviews"
+  report_alias_dir: "outputs/reports"
+review_status:
+  - "pending_review"
+  - "approved_for_shadow_candidate"
+  - "rejected"
+  - "watch"
+  - "needs_more_data"
+default_decision:
+  status: "pending_review"
+  reviewer: "manual"
+  reason: "Review package generated; awaiting explicit manual decision."
+decision_rules:
+  signal_limited_production_promotion_allowed: false
+  approved_for_shadow_candidate_means: "shadow_tracking_only"
+  default_recommendation_when_limited: "watch"
+  hard_rejection:
+    - "data_gate_not_ok"
+    - "production_config_modified"
+    - "missing_candidate_artifact"
+    - "missing_portfolio_candidates_summary"
+    - "auto_promotion_true"
+    - "production_effect_not_none"
+allowed_next_steps:
+  pending_review: "await_manual_review"
+  watch: "continue_shadow_tracking"
+  approved_for_shadow_candidate: "continue_shadow_tracking"
+  rejected: "stop_candidate_review"
+  needs_more_data: "collect_more_evidence"
+safety:
+  production_write_allowed: false
+  candidate_promotion_enabled: false
+  candidate_production_promotion_allowed: false

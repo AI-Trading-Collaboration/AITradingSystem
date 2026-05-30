@@ -1,0 +1,54 @@
+version: "market_data_freshness_v0_1"
+owner: "system"
+status: "pilot_baseline"
+production_effect: "none"
+manual_review_required: true
+auto_promotion: false
+observe_only: true
+rationale: >
+  Explain whether the market data date used by shadow candidate tracking is current,
+  acceptably delayed, stale, missing, or a non-trading-day roll-forward.
+intended_effect: >
+  Provide a readiness gate for portfolio candidate tracking without downloading data,
+  modifying production parameters, or weakening the existing data quality gate.
+validation_evidence: >
+  TRADING-057 tests cover freshness status classification, report generation,
+  tracking integration, Dashboard, Reader Brief, and shadow backtest references.
+review_condition: >
+  Review after several real daily tracking runs, especially when source delays or
+  stale cache states recur.
+market:
+  id: "US"
+  timezone: "America/New_York"
+  close_time: "16:00"
+  expected_data_ready_after_close_minutes: 180
+  allow_previous_trading_day_before_ready_time: true
+freshness:
+  max_acceptable_lag_trading_days: 1
+  max_acceptable_lag_calendar_days: 3
+  require_all_assets_same_effective_date: true
+assets:
+  required:
+    - QQQ
+    - SMH
+    - NVDA
+    - TSM
+    - MSFT
+    - GOOGL
+    - BRK.B
+    - SGOV
+input:
+  prices_path: "data/raw/prices_daily.csv"
+  shadow_backtest_config_path: "config/parameters/shadow/shadow_backtest.yaml"
+  backtest_snapshot_dir: "artifacts/backtest_snapshots"
+  price_cache_registry_path: "artifacts/data_registry/price_cache_registry.json"
+  download_manifest_path: "data/raw/download_manifest.csv"
+output:
+  market_data_freshness_dir: "artifacts/data_freshness"
+  report_alias_dir: "outputs/reports"
+  dry_run_dir: "outputs/dry_runs/data_freshness"
+safety:
+  production_write_allowed: false
+  data_download_allowed: false
+  fake_price_rows_allowed: false
+  data_quality_gate_lowered: false

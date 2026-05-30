@@ -1,0 +1,59 @@
+version: "portfolio_candidate_tracking_v0_1"
+owner: "system"
+status: "pilot_baseline"
+production_effect: "none"
+manual_review_required: true
+auto_promotion: false
+observe_only: true
+rationale: >
+  Track manually reviewed portfolio construction candidates in shadow mode after
+  TRADING-055 without changing production parameters or promotion gates.
+intended_effect: >
+  Roll a watch or approved-for-shadow candidate forward each day, compare it
+  with the current baseline using audited candidate artifacts, and expose data
+  gate or date roll-forward limitations.
+validation_evidence: >
+  TRADING-056 tests cover eligible and ineligible review decisions, production
+  hash blocking, degraded latest-data roll-forward, report alias, Dashboard,
+  Reader Brief, shadow backtest references, state updates, and safety fields.
+review_condition: >
+  Review after several trading days of shadow tracking before considering any
+  separate candidate promotion gate. Shadow tracking alone must not authorize
+  production changes.
+input:
+  portfolio_candidate_reviews_dir: "artifacts/portfolio_candidate_reviews"
+  portfolio_candidates_dir: "artifacts/portfolio_candidates"
+  portfolio_sensitivity_dir: "artifacts/portfolio_sensitivity"
+  market_data_freshness_dir: "artifacts/data_freshness"
+  market_data_refresh_dir: "artifacts/data_refresh"
+  signal_snapshot_dir: "artifacts/signal_snapshots"
+  backtest_snapshot_dir: "artifacts/backtest_snapshots"
+  price_cache_registry_path: "artifacts/data_registry/price_cache_registry.json"
+  shadow_backtest_dir: "artifacts/shadow_backtest"
+  shadow_backtest_dry_run_dir: "outputs/dry_runs/shadow_backtest/shadow_backtest"
+  production_parameters_path: "config/parameters/production/current.yaml"
+  shadow_backtest_config_path: "config/parameters/shadow/shadow_backtest.yaml"
+output:
+  portfolio_candidate_tracking_dir: "artifacts/portfolio_candidate_tracking"
+  report_alias_dir: "outputs/reports"
+  dry_run_dir: "outputs/dry_runs/portfolio_candidate_tracking"
+eligible_review_status:
+  - "watch"
+  - "approved_for_shadow_candidate"
+ineligible_review_status:
+  - "pending_review"
+  - "rejected"
+  - "needs_more_data"
+shadow_candidate_status:
+  - "not_started"
+  - "active_tracking"
+  - "tracking_blocked"
+  - "degraded_tracking"
+  - "watch"
+  - "paused"
+  - "retired"
+safety:
+  production_write_allowed: false
+  candidate_promotion_enabled: false
+  candidate_production_promotion_allowed: false
+  data_quality_gate_lowered: false

@@ -1,0 +1,122 @@
+version: "portfolio_candidate_profiles_v0_1"
+owner: "system"
+status: "pilot_baseline"
+production_effect: "none"
+manual_review_required: true
+auto_promotion: false
+observe_only: true
+rationale: >
+  Evaluate portfolio construction candidate profiles after TRADING-053B moved
+  the primary blocker from price cache consistency to rebalance-threshold signal
+  transmission.
+intended_effect: >
+  Produce manual-review-only portfolio construction candidate diagnostics,
+  ranking, and recommended candidate artifacts without changing production
+  parameters.
+validation_evidence: >
+  TRADING-054 tests cover candidate profile loading, rebalance threshold,
+  score sensitivity, softmax mapping, transmission deltas, risk guardrails,
+  ranking, reports, Dashboard/Reader Brief display, shadow promotion references,
+  and safety fields.
+review_condition: >
+  Review before any rebalance threshold, score sensitivity multiplier,
+  score-to-weight mapping, position cap, sector cap, or cash floor change is
+  proposed for manual production parameter review.
+shadow_backtest_config_path: "config/parameters/shadow/shadow_backtest.yaml"
+signal_ablation_config_path: "config/parameters/signal_ablation.yaml"
+input:
+  portfolio_sensitivity_dir: "artifacts/portfolio_sensitivity"
+  signal_calibration_dir: "artifacts/signal_calibration"
+  shadow_backtest_dir: "artifacts/shadow_backtest"
+output:
+  portfolio_candidates_dir: "artifacts/portfolio_candidates"
+  report_alias_dir: "outputs/reports"
+baseline_profile: "baseline_current"
+guardrails:
+  max_drawdown_worse_limit: 0.03
+  turnover_relative_increase_limit: 0.30
+  max_single_asset_binding_ratio: 0.25
+  max_sector_cap_binding_ratio: 0.25
+  max_cash_floor_binding_ratio: 0.25
+ranking:
+  policy_version: "portfolio_candidate_ranking_v0_1"
+  rationale: >
+    Candidate ranking prioritizes signal transmission, risk-adjusted
+    improvement, drawdown control, turnover discipline, and guardrail pass
+    status. Single-period return is intentionally not the dominant factor.
+  weights:
+    signal_transmission_improvement: 0.30
+    sharpe_improvement: 0.20
+    drawdown_control: 0.20
+    turnover_penalty: 0.15
+    guardrail_pass: 0.15
+  hard_rejection:
+    - max_drawdown_worse_than_baseline_by_more_than_3pct
+    - turnover_increase_more_than_30pct
+    - data_gate_not_ok
+    - production_effect_not_none
+    - missing_manual_review_required
+profiles:
+  baseline_current:
+    description: "Current production-like portfolio construction."
+    rebalance_threshold: 0.05
+    score_sensitivity_multiplier: 1.0
+    score_to_weight_method: "linear"
+    max_single_asset_weight: 0.30
+    max_sector_weight: 0.60
+    min_cash_weight: 0.05
+
+  lower_rebalance_threshold_3pct:
+    description: "Lower rebalance threshold to improve signal transmission."
+    rebalance_threshold: 0.03
+    score_sensitivity_multiplier: 1.0
+    score_to_weight_method: "linear"
+    max_single_asset_weight: 0.30
+    max_sector_weight: 0.60
+    min_cash_weight: 0.05
+
+  lower_rebalance_threshold_2pct:
+    description: "More responsive rebalance threshold."
+    rebalance_threshold: 0.02
+    score_sensitivity_multiplier: 1.0
+    score_to_weight_method: "linear"
+    max_single_asset_weight: 0.30
+    max_sector_weight: 0.60
+    min_cash_weight: 0.05
+
+  higher_score_sensitivity:
+    description: "Increase score impact while keeping rebalance threshold unchanged."
+    rebalance_threshold: 0.05
+    score_sensitivity_multiplier: 1.5
+    score_to_weight_method: "linear"
+    max_single_asset_weight: 0.30
+    max_sector_weight: 0.60
+    min_cash_weight: 0.05
+
+  balanced_responsive:
+    description: "Moderately lower threshold and moderately higher score sensitivity."
+    rebalance_threshold: 0.03
+    score_sensitivity_multiplier: 1.25
+    score_to_weight_method: "linear"
+    max_single_asset_weight: 0.30
+    max_sector_weight: 0.60
+    min_cash_weight: 0.05
+
+  softmax_mapping:
+    description: "Nonlinear score-to-weight mapping for stronger differentiation."
+    rebalance_threshold: 0.04
+    score_sensitivity_multiplier: 1.0
+    score_to_weight_method: "softmax"
+    softmax_temperature: 0.75
+    max_single_asset_weight: 0.30
+    max_sector_weight: 0.60
+    min_cash_weight: 0.05
+
+  relaxed_caps_responsive:
+    description: "Test whether caps suppress signal expression."
+    rebalance_threshold: 0.03
+    score_sensitivity_multiplier: 1.25
+    score_to_weight_method: "linear"
+    max_single_asset_weight: 0.35
+    max_sector_weight: 0.65
+    min_cash_weight: 0.03

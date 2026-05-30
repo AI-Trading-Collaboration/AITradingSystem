@@ -822,6 +822,96 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "portfolio_is_too_insensitive",
                         parameter_shadow.get("portfolio_is_too_insensitive"),
                     ),
+                    (
+                        "portfolio_candidates_status",
+                        parameter_shadow.get("portfolio_candidates_status"),
+                    ),
+                    (
+                        "portfolio_candidates_summary",
+                        parameter_shadow.get("portfolio_candidates_summary"),
+                    ),
+                    (
+                        "portfolio_candidates_best_profile",
+                        parameter_shadow.get("portfolio_candidates_best_profile"),
+                    ),
+                    (
+                        "portfolio_candidates_profiles_tested",
+                        parameter_shadow.get("portfolio_candidates_profiles_tested"),
+                    ),
+                    (
+                        "portfolio_candidates_guardrail_status",
+                        parameter_shadow.get("portfolio_candidates_guardrail_status"),
+                    ),
+                    (
+                        "portfolio_candidates_promotion_eligibility",
+                        parameter_shadow.get("portfolio_candidates_promotion_eligibility"),
+                    ),
+                    (
+                        "portfolio_candidate_review_status",
+                        parameter_shadow.get("portfolio_candidate_review_status"),
+                    ),
+                    (
+                        "portfolio_candidate_review_summary",
+                        parameter_shadow.get("portfolio_candidate_review_summary"),
+                    ),
+                    (
+                        "portfolio_candidate_review_profile",
+                        parameter_shadow.get("portfolio_candidate_review_profile"),
+                    ),
+                    (
+                        "portfolio_candidate_review_next_step",
+                        parameter_shadow.get("portfolio_candidate_review_next_step"),
+                    ),
+                    (
+                        "market_data_freshness_status",
+                        parameter_shadow.get("market_data_freshness_status"),
+                    ),
+                    (
+                        "market_data_freshness_summary",
+                        parameter_shadow.get("market_data_freshness_summary"),
+                    ),
+                    (
+                        "market_data_freshness_tracking_date",
+                        parameter_shadow.get("market_data_freshness_tracking_date"),
+                    ),
+                    (
+                        "market_data_freshness_effective_data_date",
+                        parameter_shadow.get("market_data_freshness_effective_data_date"),
+                    ),
+                    (
+                        "market_data_tracking_readiness",
+                        parameter_shadow.get("market_data_tracking_readiness"),
+                    ),
+                    (
+                        "market_data_refresh_status",
+                        parameter_shadow.get("market_data_refresh_status"),
+                    ),
+                    (
+                        "market_data_refresh_summary",
+                        parameter_shadow.get("market_data_refresh_summary"),
+                    ),
+                    (
+                        "market_data_refresh_target_date",
+                        parameter_shadow.get("market_data_refresh_target_date"),
+                    ),
+                    (
+                        "portfolio_candidate_tracking_status",
+                        parameter_shadow.get("portfolio_candidate_tracking_status"),
+                    ),
+                    (
+                        "portfolio_candidate_tracking_summary",
+                        parameter_shadow.get("portfolio_candidate_tracking_summary"),
+                    ),
+                    (
+                        "portfolio_candidate_tracking_effective_data_date",
+                        parameter_shadow.get(
+                            "portfolio_candidate_tracking_effective_data_date"
+                        ),
+                    ),
+                    (
+                        "portfolio_candidate_tracking_excess_return",
+                        parameter_shadow.get("portfolio_candidate_tracking_excess_return"),
+                    ),
                     ("manual_review_required", parameter_shadow.get("manual_review_required")),
                     ("risk", parameter_shadow.get("risk")),
                     ("diagnostic_report", parameter_shadow.get("diagnostic_report")),
@@ -1680,6 +1770,11 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
     ablation_summary = _signal_ablation_review_summary(as_of)
     calibration_summary = _signal_calibration_review_summary(as_of)
     sensitivity_summary = _portfolio_sensitivity_review_summary(as_of)
+    candidates_summary = _portfolio_candidates_review_summary(as_of)
+    candidate_review_summary = _portfolio_candidate_review_summary(as_of)
+    market_freshness_summary = _market_data_freshness_review_summary(as_of)
+    market_refresh_summary = _market_data_refresh_review_summary(as_of)
+    candidate_tracking_summary = _portfolio_candidate_tracking_summary(as_of)
     path = (
         PROJECT_ROOT
         / "artifacts"
@@ -1769,6 +1864,85 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
             "portfolio_is_too_insensitive": sensitivity_summary.get(
                 "portfolio_is_too_insensitive",
                 False,
+            ),
+            "portfolio_candidates_status": candidates_summary.get("status", "MISSING"),
+            "portfolio_candidates_summary": candidates_summary.get("summary_sentence", ""),
+            "portfolio_candidates_best_profile": candidates_summary.get("best_profile", ""),
+            "portfolio_candidates_profiles_tested": candidates_summary.get(
+                "profiles_tested",
+                0,
+            ),
+            "portfolio_candidates_guardrail_status": candidates_summary.get(
+                "guardrail_status",
+                "MISSING",
+            ),
+            "portfolio_candidates_promotion_eligibility": candidates_summary.get(
+                "candidate_promotion_eligibility",
+                False,
+            ),
+            "portfolio_candidate_review_status": candidate_review_summary.get(
+                "status",
+                "MISSING",
+            ),
+            "portfolio_candidate_review_summary": candidate_review_summary.get(
+                "summary_sentence",
+                "",
+            ),
+            "portfolio_candidate_review_profile": candidate_review_summary.get(
+                "candidate_profile",
+                "",
+            ),
+            "portfolio_candidate_review_reviewer": candidate_review_summary.get(
+                "reviewer",
+                "",
+            ),
+            "portfolio_candidate_review_next_step": candidate_review_summary.get(
+                "allowed_next_step",
+                "",
+            ),
+            "market_data_freshness_status": market_freshness_summary.get(
+                "status",
+                "MISSING",
+            ),
+            "market_data_freshness_summary": market_freshness_summary.get(
+                "summary_sentence",
+                "",
+            ),
+            "market_data_freshness_tracking_date": market_freshness_summary.get(
+                "tracking_date",
+                "",
+            ),
+            "market_data_freshness_effective_data_date": market_freshness_summary.get(
+                "effective_data_date",
+                "",
+            ),
+            "market_data_tracking_readiness": market_freshness_summary.get(
+                "tracking_readiness",
+                "unknown",
+            ),
+            "market_data_refresh_status": market_refresh_summary.get("status", "MISSING"),
+            "market_data_refresh_summary": market_refresh_summary.get(
+                "summary_sentence",
+                "",
+            ),
+            "market_data_refresh_target_date": market_refresh_summary.get(
+                "target_date",
+                "",
+            ),
+            "portfolio_candidate_tracking_status": candidate_tracking_summary.get(
+                "tracking_status",
+                "MISSING",
+            ),
+            "portfolio_candidate_tracking_summary": candidate_tracking_summary.get(
+                "summary_sentence",
+                "",
+            ),
+            "portfolio_candidate_tracking_effective_data_date": (
+                candidate_tracking_summary.get("effective_data_date", "")
+            ),
+            "portfolio_candidate_tracking_excess_return": candidate_tracking_summary.get(
+                "excess_return",
+                "",
             ),
             "manual_review_required": True,
             "risk": "Shadow parameter backtest artifact missing; Reader Brief does not run it.",
@@ -1865,6 +2039,68 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
         "portfolio_is_too_insensitive": sensitivity_summary.get(
             "portfolio_is_too_insensitive",
             False,
+        ),
+        "portfolio_candidates_status": candidates_summary.get("status", "MISSING"),
+        "portfolio_candidates_summary": candidates_summary.get("summary_sentence", ""),
+        "portfolio_candidates_best_profile": candidates_summary.get("best_profile", ""),
+        "portfolio_candidates_profiles_tested": candidates_summary.get("profiles_tested", 0),
+        "portfolio_candidates_guardrail_status": candidates_summary.get(
+            "guardrail_status",
+            "MISSING",
+        ),
+        "portfolio_candidates_promotion_eligibility": candidates_summary.get(
+            "candidate_promotion_eligibility",
+            False,
+        ),
+        "portfolio_candidate_review_status": candidate_review_summary.get(
+            "status",
+            "MISSING",
+        ),
+        "portfolio_candidate_review_summary": candidate_review_summary.get(
+            "summary_sentence",
+            "",
+        ),
+        "portfolio_candidate_review_profile": candidate_review_summary.get(
+            "candidate_profile",
+            "",
+        ),
+        "portfolio_candidate_review_reviewer": candidate_review_summary.get("reviewer", ""),
+        "portfolio_candidate_review_next_step": candidate_review_summary.get(
+            "allowed_next_step",
+            "",
+        ),
+        "market_data_freshness_status": market_freshness_summary.get("status", "MISSING"),
+        "market_data_freshness_summary": market_freshness_summary.get("summary_sentence", ""),
+        "market_data_freshness_tracking_date": market_freshness_summary.get(
+            "tracking_date",
+            "",
+        ),
+        "market_data_freshness_effective_data_date": market_freshness_summary.get(
+            "effective_data_date",
+            "",
+        ),
+        "market_data_tracking_readiness": market_freshness_summary.get(
+            "tracking_readiness",
+            "unknown",
+        ),
+        "market_data_refresh_status": market_refresh_summary.get("status", "MISSING"),
+        "market_data_refresh_summary": market_refresh_summary.get("summary_sentence", ""),
+        "market_data_refresh_target_date": market_refresh_summary.get("target_date", ""),
+        "portfolio_candidate_tracking_status": candidate_tracking_summary.get(
+            "tracking_status",
+            "MISSING",
+        ),
+        "portfolio_candidate_tracking_summary": candidate_tracking_summary.get(
+            "summary_sentence",
+            "",
+        ),
+        "portfolio_candidate_tracking_effective_data_date": candidate_tracking_summary.get(
+            "effective_data_date",
+            "",
+        ),
+        "portfolio_candidate_tracking_excess_return": candidate_tracking_summary.get(
+            "excess_return",
+            "",
         ),
         "manual_review_required": metadata.get("manual_review_required") is True,
         "risk": _text(decision.get("reason"), "Open shadow backtest report before review."),
@@ -2148,6 +2384,364 @@ def _portfolio_sensitivity_review_summary(as_of: date) -> dict[str, Any]:
     }
 
 
+def _portfolio_candidates_review_summary(as_of: date) -> dict[str, Any]:
+    path = _latest_portfolio_candidates_path(as_of)
+    if path is None:
+        return {
+            "status": "MISSING",
+            "best_profile": "",
+            "profiles_tested": 0,
+            "guardrail_status": "MISSING",
+            "candidate_promotion_eligibility": False,
+            "summary_sentence": (
+                "Portfolio candidate evaluation is missing; Reader Brief does not run "
+                "candidate profile evaluation."
+            ),
+        }
+    payload = _read_optional_json(path)
+    if not payload:
+        return {
+            "status": "MISSING",
+            "best_profile": "",
+            "profiles_tested": 0,
+            "guardrail_status": "MISSING",
+            "candidate_promotion_eligibility": False,
+            "summary_sentence": (
+                "Portfolio candidate evaluation is unreadable; Reader Brief does not run "
+                "candidate profile evaluation."
+            ),
+        }
+    metadata = _mapping(payload.get("metadata"))
+    ranking = _mapping(payload.get("ranking"))
+    baseline = _mapping(payload.get("baseline"))
+    promotion = _mapping(payload.get("promotion_impact"))
+    profiles = _records(payload.get("profiles"))
+    best_profile = _text(ranking.get("best_profile"))
+    best = next(
+        (item for item in profiles if _text(item.get("profile_name")) == best_profile),
+        {},
+    )
+    best_guardrail = _mapping(best.get("risk_guardrails"))
+    best_transmission = _mapping(best.get("signal_transmission"))
+    baseline_transmission = _mapping(baseline.get("signal_transmission"))
+    transmission_delta = (
+        (_float_or_none(best_transmission.get("target_to_actual_weight_effectiveness")) or 0.0)
+        - (
+            _float_or_none(
+                baseline_transmission.get("target_to_actual_weight_effectiveness")
+            )
+            or 0.0
+        )
+    )
+    turnover_impact = _float_or_none(best_guardrail.get("turnover_relative_increase")) or 0.0
+    status = _text(metadata.get("status"), "UNKNOWN")
+    guardrail_status = _text(best_guardrail.get("guardrail_status"), "UNKNOWN")
+    can_promote = promotion.get("can_support_candidate_promotion") is True
+    if best_profile and best_profile != _text(baseline.get("profile_name")):
+        if guardrail_status == "PASS":
+            sentence = (
+                "Portfolio candidate evaluation found a candidate profile with improved "
+                f"signal-to-weight transmission. Best profile `{best_profile}` has "
+                f"turnover impact {_format_number(turnover_impact, digits=4)} and guardrail "
+                f"status `{guardrail_status}`, but recommendation remains advisory only."
+            )
+        else:
+            sentence = (
+                "Portfolio candidate evaluation found transmission changes, but the best "
+                f"profile `{best_profile}` has guardrail status `{guardrail_status}`. "
+                "Manual review is required and candidate promotion remains disabled."
+            )
+    else:
+        sentence = (
+            "Portfolio candidate evaluation did not find a safe improvement profile. "
+            "Lower thresholds or stronger mappings may increase responsiveness, but turnover, "
+            "drawdown, or guardrail checks must dominate single-period return."
+        )
+    if transmission_delta > 0.0 and guardrail_status == "PASS":
+        sentence = (
+            "Portfolio candidate evaluation found that a moderately more responsive "
+            "construction can improve signal-to-weight transmission without breaching "
+            "drawdown or turnover guardrails. " + sentence
+        )
+    if can_promote:
+        sentence += " Safety warning: candidate artifact unexpectedly supports promotion."
+    return {
+        "status": status,
+        "source_artifact": str(path),
+        "best_profile": best_profile,
+        "profiles_tested": len(profiles),
+        "guardrail_status": guardrail_status,
+        "candidate_promotion_eligibility": can_promote,
+        "summary_sentence": sentence,
+    }
+
+
+def _portfolio_candidate_review_summary(as_of: date) -> dict[str, Any]:
+    path = _latest_portfolio_candidate_review_path(as_of)
+    if path is None:
+        return {
+            "status": "MISSING",
+            "candidate_profile": "",
+            "reviewer": "",
+            "allowed_next_step": "",
+            "summary_sentence": (
+                "Portfolio candidate review is missing; Reader Brief does not create "
+                "manual review decisions."
+            ),
+        }
+    payload = _read_optional_json(path)
+    if not payload:
+        return {
+            "status": "MISSING",
+            "candidate_profile": "",
+            "reviewer": "",
+            "allowed_next_step": "",
+            "summary_sentence": (
+                "Portfolio candidate review is unreadable; Reader Brief does not create "
+                "manual review decisions."
+            ),
+        }
+    decision = _mapping(payload.get("decision"))
+    candidate = _mapping(payload.get("candidate"))
+    evidence = _mapping(payload.get("evidence_summary"))
+    status = _text(decision.get("status"), "UNKNOWN")
+    profile = _text(candidate.get("profile_name"))
+    reviewer = _text(decision.get("reviewer"))
+    next_step = _text(decision.get("allowed_next_step"))
+    signal_quality = _text(evidence.get("signal_snapshot_status"), "UNKNOWN")
+    if status == "pending_review":
+        sentence = (
+            f"Portfolio candidate review is pending for `{profile}`. The candidate remains "
+            f"advisory only because signal quality is `{signal_quality}` and production "
+            "parameters are unchanged."
+        )
+    elif status == "watch":
+        sentence = (
+            "The portfolio candidate is under watch after manual review. It will continue "
+            "to be tracked in shadow mode, but production promotion remains disabled."
+        )
+    elif status == "approved_for_shadow_candidate":
+        sentence = (
+            "The portfolio candidate has been manually approved for shadow tracking only. "
+            "Production promotion remains disabled until signal quality improves and a "
+            "separate promotion gate is passed."
+        )
+    elif status == "needs_more_data":
+        sentence = (
+            "Portfolio candidate review requires more data before shadow tracking approval. "
+            "Production parameters remain unchanged."
+        )
+    elif status == "rejected":
+        sentence = (
+            "Portfolio candidate review rejected the recommended profile. Production "
+            "parameters remain unchanged."
+        )
+    else:
+        sentence = (
+            "Portfolio candidate review status is unavailable; production parameters remain "
+            "unchanged."
+        )
+    return {
+        "status": status,
+        "source_artifact": str(path),
+        "candidate_profile": profile,
+        "reviewer": reviewer,
+        "allowed_next_step": next_step,
+        "summary_sentence": sentence,
+    }
+
+
+def _portfolio_candidate_tracking_summary(as_of: date) -> dict[str, Any]:
+    path = _latest_portfolio_candidate_tracking_path(as_of)
+    if path is None:
+        return {
+            "tracking_status": "MISSING",
+            "candidate_profile": "",
+            "effective_data_date": "",
+            "excess_return": "",
+            "summary_sentence": (
+                "Portfolio candidate tracking is missing; Reader Brief does not start "
+                "shadow tracking."
+            ),
+        }
+    payload = _read_optional_json(path)
+    if not payload:
+        return {
+            "tracking_status": "MISSING",
+            "candidate_profile": "",
+            "effective_data_date": "",
+            "excess_return": "",
+            "summary_sentence": (
+                "Portfolio candidate tracking is unreadable; production parameters remain "
+                "unchanged."
+            ),
+        }
+    candidate = _mapping(payload.get("candidate"))
+    date_resolution = _mapping(payload.get("date_resolution"))
+    metrics = _mapping(payload.get("tracking_metrics"))
+    candidate_metrics = _mapping(metrics.get("candidate"))
+    tracking_status = _text(candidate.get("tracking_status"), "UNKNOWN")
+    profile = _text(candidate.get("profile_name"))
+    effective_data_date = _text(date_resolution.get("effective_data_date"))
+    tracking_date = _text(date_resolution.get("tracking_date"))
+    excess_return = candidate_metrics.get("excess_return_vs_baseline", "")
+    if tracking_status == "active_tracking":
+        sentence = (
+            f"Portfolio candidate `{profile}` is actively tracked in shadow mode. "
+            "Candidate performance is compared with the current baseline while "
+            "production parameters remain unchanged."
+        )
+    elif tracking_status == "degraded_tracking":
+        sentence = (
+            f"Portfolio candidate `{profile}` is under shadow tracking, but latest "
+            f"tracking is degraded because effective data remains on {effective_data_date} "
+            f"while the run date is {tracking_date}. Tracking is advisory only."
+        )
+    elif tracking_status == "tracking_blocked":
+        sentence = (
+            f"Portfolio candidate `{profile}` tracking is blocked; production parameters "
+            "remain unchanged and promotion remains disabled."
+        )
+    else:
+        sentence = (
+            f"Portfolio candidate `{profile}` tracking status is `{tracking_status}`; "
+            "production parameters remain unchanged."
+        )
+    return {
+        "tracking_status": tracking_status,
+        "candidate_profile": profile,
+        "effective_data_date": effective_data_date,
+        "excess_return": excess_return,
+        "source_artifact": str(path),
+        "summary_sentence": sentence,
+    }
+
+
+def _market_data_freshness_review_summary(as_of: date) -> dict[str, Any]:
+    path = _latest_market_data_freshness_path(as_of)
+    if path is None:
+        return {
+            "status": "MISSING",
+            "tracking_date": "",
+            "effective_data_date": "",
+            "tracking_readiness": "unknown",
+            "summary_sentence": (
+                "Market data freshness summary is missing; Reader Brief does not run "
+                "freshness checks."
+            ),
+        }
+    payload = _read_optional_json(path)
+    if not payload:
+        return {
+            "status": "MISSING",
+            "tracking_date": "",
+            "effective_data_date": "",
+            "tracking_readiness": "unknown",
+            "summary_sentence": (
+                "Market data freshness summary is unreadable; shadow tracking readiness "
+                "requires manual review."
+            ),
+        }
+    freshness = _mapping(payload.get("freshness"))
+    data_dates = _mapping(payload.get("data_dates"))
+    readiness = _mapping(payload.get("tracking_readiness"))
+    status = _text(freshness.get("status"), _text(_mapping(payload.get("metadata")).get("status")))
+    tracking_date = _text(data_dates.get("tracking_date"))
+    effective_data_date = _text(data_dates.get("effective_data_date"))
+    tracking_readiness = _text(readiness.get("readiness"), "unknown")
+    if status == "OK":
+        sentence = (
+            "Market data freshness is OK. Shadow candidate tracking uses current "
+            "effective data and remains advisory only."
+        )
+    elif status == "ACCEPTABLE_LAG":
+        sentence = (
+            f"Market data freshness is ACCEPTABLE_LAG: tracking date is {tracking_date} "
+            f"while effective data remains {effective_data_date}. Shadow candidate "
+            "tracking can continue in degraded mode, but production promotion remains "
+            "disabled."
+        )
+    elif status == "NON_TRADING_DAY":
+        sentence = (
+            "Market data freshness is NON_TRADING_DAY. Shadow candidate tracking can use "
+            "the latest previous trading day data and remains advisory only."
+        )
+    elif status == "STALE":
+        sentence = (
+            "Market data freshness is STALE. Shadow candidate tracking is blocked until "
+            "market data cache and manifest are refreshed."
+        )
+    else:
+        sentence = (
+            f"Market data freshness is {status}. Shadow candidate tracking readiness is "
+            f"{tracking_readiness}; production promotion remains disabled."
+        )
+    return {
+        "status": status,
+        "tracking_date": tracking_date,
+        "effective_data_date": effective_data_date,
+        "tracking_readiness": tracking_readiness,
+        "source_artifact": str(path),
+        "summary_sentence": sentence,
+    }
+
+
+def _market_data_refresh_review_summary(as_of: date) -> dict[str, Any]:
+    path = _latest_market_data_refresh_path(as_of)
+    if path is None:
+        return {
+            "status": "MISSING",
+            "target_date": "",
+            "summary_sentence": (
+                "Market data refresh summary is missing; Reader Brief does not run "
+                "refresh or recovery actions."
+            ),
+        }
+    payload = _read_optional_json(path)
+    if not payload:
+        return {
+            "status": "MISSING",
+            "target_date": "",
+            "summary_sentence": (
+                "Market data refresh summary is unreadable; recovery status requires "
+                "manual review."
+            ),
+        }
+    metadata = _mapping(payload.get("metadata"))
+    actions = _mapping(payload.get("actions"))
+    before = _mapping(payload.get("before"))
+    after = _mapping(payload.get("after"))
+    status = _text(metadata.get("status"), "UNKNOWN")
+    target_date = _text(actions.get("target_date"))
+    if status == "OK":
+        sentence = (
+            f"Market data refresh recovered freshness for {target_date}. Required "
+            "assets were refreshed and the candidate tracking workflow is active again. "
+            "Production promotion remains disabled."
+        )
+    elif status == "SOURCE_DELAYED":
+        sentence = (
+            "Market data refresh could not recover freshness because the data source "
+            "has not provided the latest daily bars. Shadow candidate tracking remains "
+            "blocked until data is available."
+        )
+    elif status == "NOT_NEEDED":
+        sentence = "Market data refresh is NOT_NEEDED because freshness does not require recovery."
+    else:
+        sentence = (
+            f"Market data refresh is {status}: before freshness was "
+            f"{_text(before.get('freshness_status'), 'UNKNOWN')} and after freshness is "
+            f"{_text(after.get('freshness_status'), 'UNKNOWN')}. Production promotion "
+            "remains disabled."
+        )
+    return {
+        "status": status,
+        "target_date": target_date,
+        "source_artifact": str(path),
+        "summary_sentence": sentence,
+    }
+
+
 def _price_cache_reconcile_review_summary(as_of: date) -> dict[str, Any]:
     path = _latest_price_cache_reconcile_path(as_of)
     if path is None:
@@ -2218,6 +2812,81 @@ def _latest_portfolio_sensitivity_path(as_of: date) -> Path | None:
     root = PROJECT_ROOT / "artifacts" / "portfolio_sensitivity"
     candidates: list[tuple[date, Path]] = []
     for path in root.glob("*/portfolio_sensitivity_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _latest_portfolio_candidates_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "portfolio_candidates"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/portfolio_candidates_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _latest_portfolio_candidate_review_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "portfolio_candidate_reviews"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/portfolio_candidate_review_decision.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _latest_portfolio_candidate_tracking_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "portfolio_candidate_tracking"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/portfolio_candidate_tracking_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _latest_market_data_freshness_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "data_freshness"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/market_data_freshness_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _latest_market_data_refresh_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "data_refresh"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/market_data_refresh_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:

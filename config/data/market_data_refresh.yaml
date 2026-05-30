@@ -1,0 +1,66 @@
+version: "market_data_refresh_v0_1"
+owner: "system"
+status: "pilot_baseline"
+production_effect: "none"
+manual_review_required: true
+auto_promotion: false
+observe_only: true
+rationale: >
+  Provide an audited recovery workflow when market data freshness is stale, without
+  modifying production parameters or weakening data quality gates.
+intended_effect: >
+  Refresh required asset daily bars from audited raw cache or configured providers,
+  update the primary price cache registry and backtest manifest, then rerun freshness
+  and shadow candidate tracking.
+validation_evidence: >
+  TRADING-057A tests cover refresh planning, source delayed handling, registry and
+  manifest updates, recovery flow, Dashboard, Reader Brief, and shadow backtest
+  references.
+review_condition: >
+  Review after several real stale-data recovery runs and after any provider/source
+  ordering change.
+refresh:
+  enabled: true
+  mode: "required_assets_only"
+  allow_external_fetch: true
+  allow_audited_raw_cache: true
+  allow_partial_refresh: false
+  require_schema_validation: true
+  require_registry_update: true
+  require_manifest_refresh: true
+sources:
+  preferred_order:
+    - audited_fmp_raw_cache
+    - fmp
+    - yahoo
+  fmp_api_key_env: "FMP_API_KEY"
+assets:
+  required:
+    - QQQ
+    - SMH
+    - NVDA
+    - TSM
+    - MSFT
+    - GOOGL
+    - BRK.B
+    - SGOV
+input:
+  prices_path: "data/raw/prices_daily.csv"
+  market_data_freshness_dir: "artifacts/data_freshness"
+  market_data_freshness_config_path: "config/data/market_data_freshness.yaml"
+  shadow_backtest_config_path: "config/parameters/shadow/shadow_backtest.yaml"
+  portfolio_candidate_tracking_config_path: "config/portfolio/portfolio_candidate_tracking.yaml"
+  external_request_cache_dir: "data/raw/external_request_cache"
+  price_cache_registry_path: "artifacts/data_registry/price_cache_registry.json"
+output:
+  market_data_refresh_dir: "artifacts/data_refresh"
+  report_alias_dir: "outputs/reports"
+  dry_run_dir: "outputs/dry_runs/data_refresh"
+safety:
+  production_effect: "none"
+  auto_promotion: false
+  manual_review_required: true
+  production_write_allowed: false
+  forbid_mock_prices: true
+  forbid_synthetic_latest_bar: true
+  data_quality_gate_lowered: false

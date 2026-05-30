@@ -821,6 +821,7 @@ def _simulate_sensitivity_profile(
     signal_frames: dict[str, pd.DataFrame],
     start: date,
     end: date,
+    signal_weights: dict[str, float] | None = None,
 ) -> SensitivitySimulation:
     price_panel = _prepare_price_panel(prices, baseline.flattened_asset_universe())
     if price_panel.empty:
@@ -836,9 +837,10 @@ def _simulate_sensitivity_profile(
         asset for asset in baseline.flattened_asset_universe() if asset not in DEFENSIVE_ASSETS
     ]
     defensive_assets = [asset for asset in ("SGOV", "CASH") if asset in price_panel.columns]
+    effective_signal_weights = signal_weights or baseline.weights
     composite, contribution_frames = _composite_scores(
         features,
-        weights=baseline.weights,
+        weights=effective_signal_weights,
         tradable_assets=tradable_assets,
     )
     multiplier = _float_value(profile_config.get("score_sensitivity_multiplier"), default=1.0)
@@ -894,7 +896,7 @@ def _simulate_sensitivity_profile(
         composite=composite,
         adjusted_score=adjusted_score,
         contribution_frames=contribution_frames,
-        weights=baseline.weights,
+        weights=effective_signal_weights,
         tradable_assets=tradable_assets,
     )
     return SensitivitySimulation(
