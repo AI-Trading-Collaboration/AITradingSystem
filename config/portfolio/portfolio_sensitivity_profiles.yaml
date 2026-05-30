@@ -1,0 +1,101 @@
+version: "portfolio_sensitivity_profiles_v0_1"
+owner: "system"
+status: "pilot_baseline"
+production_effect: "none"
+manual_review_required: true
+auto_promotion: false
+observe_only: true
+rationale: >
+  Diagnose whether current portfolio construction is too insensitive to
+  signal-score changes after TRADING-052 found a better trend/sector profile
+  but still could not support candidate promotion.
+intended_effect: >
+  Produce manual-review-only score-to-weight transmission diagnostics,
+  sensitivity profile ranking, and recommended profile artifacts without
+  changing production parameters.
+validation_evidence: >
+  TRADING-053 tests cover profile loading, score dispersion, score-to-target
+  transmission, target-to-actual rebalance suppression, constraint binding,
+  turnover/cost impact, ranking, reports, Dashboard/Reader Brief display,
+  shadow promotion references, and safety fields.
+review_condition: >
+  Review after at least five real portfolio sensitivity reports or before any
+  rebalance threshold, score-to-weight mapping, position cap, sector cap, or
+  cash floor change is proposed for manual production parameter review.
+shadow_backtest_config_path: "config/parameters/shadow/shadow_backtest.yaml"
+output:
+  portfolio_sensitivity_dir: "artifacts/portfolio_sensitivity"
+  report_alias_dir: "outputs/reports"
+diagnostics:
+  neutral_band:
+    lower: 0.45
+    upper: 0.55
+  neutral_compression_warning_ratio: 0.50
+  min_score_std: 0.03
+  min_score_to_target_delta: 0.005
+  weight_change_epsilon: 0.000001
+  rebalance_suppression_warning_ratio: 0.70
+  constraint_binding_warning_ratio: 0.25
+  fallback_weight_warning_ratio: 0.30
+  turnover_warning_delta_vs_baseline: 0.20
+  max_turnover_delta_for_recommendation: 0.35
+ranking:
+  policy_version: "portfolio_sensitivity_ranking_v0_1"
+  rationale: >
+    Prioritize clear score-to-actual-weight transmission and risk-adjusted
+    improvement while penalizing turnover and frequent constraint binding.
+    Single-period return is intentionally not the dominant factor.
+  weights:
+    score_to_weight_effectiveness: 20.0
+    actual_rebalance_effectiveness: 20.0
+    improvement_in_sharpe: 10.0
+    improvement_in_max_drawdown: 10.0
+    turnover_penalty: -8.0
+    constraint_binding_penalty: -8.0
+    stability_across_walk_forward_windows: 12.0
+profiles:
+  baseline_v0_1:
+    description: "Current portfolio construction settings."
+    score_sensitivity_multiplier: 1.0
+    rebalance_threshold: 0.05
+    max_single_asset_weight: 0.30
+    max_sector_weight: 0.60
+    min_cash_weight: 0.05
+    score_to_weight_method: "linear"
+
+  more_sensitive_scores:
+    description: "Increase score sensitivity while keeping risk limits unchanged."
+    score_sensitivity_multiplier: 1.5
+    rebalance_threshold: 0.05
+    max_single_asset_weight: 0.30
+    max_sector_weight: 0.60
+    min_cash_weight: 0.05
+    score_to_weight_method: "linear"
+
+  lower_rebalance_threshold:
+    description: "Allow smaller score changes to affect actual weights."
+    score_sensitivity_multiplier: 1.0
+    rebalance_threshold: 0.025
+    max_single_asset_weight: 0.30
+    max_sector_weight: 0.60
+    min_cash_weight: 0.05
+    score_to_weight_method: "linear"
+
+  relaxed_position_caps:
+    description: "Test whether position caps suppress signal expression."
+    score_sensitivity_multiplier: 1.0
+    rebalance_threshold: 0.05
+    max_single_asset_weight: 0.40
+    max_sector_weight: 0.70
+    min_cash_weight: 0.03
+    score_to_weight_method: "linear"
+
+  nonlinear_score_mapping:
+    description: "Test stronger differentiation for high-confidence scores."
+    score_sensitivity_multiplier: 1.0
+    rebalance_threshold: 0.05
+    max_single_asset_weight: 0.30
+    max_sector_weight: 0.60
+    min_cash_weight: 0.05
+    score_to_weight_method: "softmax"
+    softmax_temperature: 0.75

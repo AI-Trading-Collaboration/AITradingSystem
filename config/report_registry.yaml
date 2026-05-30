@@ -67,6 +67,39 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: data_registry_consistency
+    title: Data Registry Consistency
+    group: shadow
+    cadence: ad_hoc
+    audience: operator
+    owner: system
+    command: aits data inspect-registry --latest
+    artifact_globs:
+      - artifacts/data_quality/*/data_registry_consistency.json
+      - artifacts/data_quality/*/data_registry_consistency.md
+    freshness_sla_days: 3
+    freshness_rationale: Portfolio sensitivity and shadow backtest should use a consistent latest manifest and price cache view.
+    owner_action: run_reconcile_price_cache_dry_run_if_failed
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: price_cache_reconcile
+    title: Price Cache Reconcile
+    group: shadow
+    cadence: ad_hoc
+    audience: operator
+    owner: system
+    command: aits data reconcile-price-cache --latest
+    artifact_globs:
+      - artifacts/data_quality/*/price_cache_reconcile_summary.json
+      - artifacts/data_quality/*/price_cache_reconcile_summary.md
+      - artifacts/data_registry/price_cache_registry.json
+    freshness_sla_days: 3
+    freshness_rationale: Reconcile evidence should stay close to the latest manifest/cache state before interpreting portfolio sensitivity diagnostics.
+    owner_action: run_reconcile_price_cache_if_registry_or_manifest_mismatch
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: evidence_dashboard
     title: Evidence Dashboard
     group: daily
@@ -359,6 +392,25 @@ reports:
     freshness_sla_days: 30
     freshness_rationale: Signal formula calibration should be reviewed alongside signal ablation before deciding whether portfolio sensitivity diagnostics are needed.
     owner_action: review_signal_calibration_before_profile_or_promotion_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: portfolio_sensitivity
+    title: Portfolio Sensitivity Summary
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits reports portfolio-sensitivity --latest
+    artifact_globs:
+      - artifacts/portfolio_sensitivity/*/portfolio_sensitivity_summary.json
+      - artifacts/portfolio_sensitivity/*/portfolio_sensitivity_summary.md
+      - artifacts/portfolio_sensitivity/*/recommended_portfolio_sensitivity_profile.yaml
+      - outputs/reports/portfolio_sensitivity_*.json
+      - outputs/reports/portfolio_sensitivity_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Portfolio sensitivity diagnostics should be reviewed before changing portfolio construction or deciding that weak signal contribution is purely a signal-quality issue.
+    owner_action: review_portfolio_sensitivity_before_portfolio_construction_change
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false

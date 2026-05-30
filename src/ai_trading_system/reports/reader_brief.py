@@ -802,6 +802,26 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "signal_calibration_correlation_warning",
                         parameter_shadow.get("signal_calibration_correlation_warning"),
                     ),
+                    (
+                        "portfolio_sensitivity_status",
+                        parameter_shadow.get("portfolio_sensitivity_status"),
+                    ),
+                    (
+                        "portfolio_sensitivity_summary",
+                        parameter_shadow.get("portfolio_sensitivity_summary"),
+                    ),
+                    (
+                        "portfolio_sensitivity_best_profile",
+                        parameter_shadow.get("portfolio_sensitivity_best_profile"),
+                    ),
+                    (
+                        "portfolio_sensitivity_primary_bottleneck",
+                        parameter_shadow.get("portfolio_sensitivity_primary_bottleneck"),
+                    ),
+                    (
+                        "portfolio_is_too_insensitive",
+                        parameter_shadow.get("portfolio_is_too_insensitive"),
+                    ),
                     ("manual_review_required", parameter_shadow.get("manual_review_required")),
                     ("risk", parameter_shadow.get("risk")),
                     ("diagnostic_report", parameter_shadow.get("diagnostic_report")),
@@ -1659,6 +1679,7 @@ def _backtest_shadow_governance(
 def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
     ablation_summary = _signal_ablation_review_summary(as_of)
     calibration_summary = _signal_calibration_review_summary(as_of)
+    sensitivity_summary = _portfolio_sensitivity_review_summary(as_of)
     path = (
         PROJECT_ROOT
         / "artifacts"
@@ -1733,6 +1754,21 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
             "signal_calibration_correlation_warning": calibration_summary.get(
                 "correlation_warning",
                 "",
+            ),
+            "portfolio_sensitivity_status": sensitivity_summary.get("status", "MISSING"),
+            "portfolio_sensitivity_summary": sensitivity_summary.get("summary_sentence", ""),
+            "portfolio_sensitivity_best_profile": sensitivity_summary.get("best_profile", ""),
+            "portfolio_sensitivity_primary_bottleneck": sensitivity_summary.get(
+                "primary_bottleneck",
+                "",
+            ),
+            "portfolio_sensitivity_data_registry": sensitivity_summary.get(
+                "data_registry_consistency",
+                "MISSING",
+            ),
+            "portfolio_is_too_insensitive": sensitivity_summary.get(
+                "portfolio_is_too_insensitive",
+                False,
             ),
             "manual_review_required": True,
             "risk": "Shadow parameter backtest artifact missing; Reader Brief does not run it.",
@@ -1814,6 +1850,21 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
         "signal_calibration_correlation_warning": calibration_summary.get(
             "correlation_warning",
             "",
+        ),
+        "portfolio_sensitivity_status": sensitivity_summary.get("status", "MISSING"),
+        "portfolio_sensitivity_summary": sensitivity_summary.get("summary_sentence", ""),
+        "portfolio_sensitivity_best_profile": sensitivity_summary.get("best_profile", ""),
+        "portfolio_sensitivity_primary_bottleneck": sensitivity_summary.get(
+            "primary_bottleneck",
+            "",
+        ),
+        "portfolio_sensitivity_data_registry": sensitivity_summary.get(
+            "data_registry_consistency",
+            "MISSING",
+        ),
+        "portfolio_is_too_insensitive": sensitivity_summary.get(
+            "portfolio_is_too_insensitive",
+            False,
         ),
         "manual_review_required": metadata.get("manual_review_required") is True,
         "risk": _text(decision.get("reason"), "Open shadow backtest report before review."),
@@ -2010,6 +2061,141 @@ def _signal_calibration_review_summary(as_of: date) -> dict[str, Any]:
     }
 
 
+def _portfolio_sensitivity_review_summary(as_of: date) -> dict[str, Any]:
+    path = _latest_portfolio_sensitivity_path(as_of)
+    if path is None:
+        return {
+            "status": "MISSING",
+            "best_profile": "",
+            "primary_bottleneck": "",
+            "portfolio_is_too_insensitive": False,
+            "summary_sentence": (
+                "Portfolio sensitivity summary is missing; Reader Brief does not run "
+                "sensitivity diagnostics."
+            ),
+        }
+    payload = _read_optional_json(path)
+    if not payload:
+        return {
+            "status": "MISSING",
+            "best_profile": "",
+            "primary_bottleneck": "",
+            "portfolio_is_too_insensitive": False,
+            "summary_sentence": (
+                "Portfolio sensitivity summary is unreadable; Reader Brief does not run "
+                "sensitivity diagnostics."
+            ),
+        }
+    metadata = _mapping(payload.get("metadata"))
+    ranking = _mapping(payload.get("ranking"))
+    diagnosis = _mapping(payload.get("diagnosis"))
+    promotion = _mapping(payload.get("promotion_impact"))
+    data_gate = _mapping(payload.get("data_gate"))
+    status = _text(metadata.get("status"), "UNKNOWN")
+    best_profile = _text(ranking.get("best_profile"))
+    primary = _text(diagnosis.get("primary_bottleneck"), "UNKNOWN")
+    too_insensitive = diagnosis.get("portfolio_is_too_insensitive") is True
+    can_promote = promotion.get("can_support_candidate_promotion") is True
+    data_registry_status = _text(data_gate.get("data_registry_consistency"), "UNKNOWN")
+    reconcile = _price_cache_reconcile_review_summary(as_of)
+    if data_gate.get("status") == "FAILED":
+        reason = _text(
+            data_gate.get("reason"),
+            (
+                "repaired price history exists but validate-data does not currently resolve it "
+                "as the primary price source"
+            ),
+        )
+        sentence = (
+            "Portfolio sensitivity remains blocked by a data registry inconsistency: "
+            f"{reason}. A cache/manifest reconciliation is required before sensitivity "
+            "results can be interpreted."
+        )
+        if reconcile.get("status") == "FAILED":
+            sentence = _text(reconcile.get("summary_sentence"), sentence)
+    elif too_insensitive:
+        sentence = (
+            "Portfolio sensitivity diagnostics suggest the current portfolio construction "
+            f"is too insensitive to signal changes. Best profile `{best_profile}` points to "
+            f"`{primary}`, but signal quality remains LIMITED, so candidate promotion remains "
+            "disabled."
+        )
+    elif primary and primary != "none":
+        sentence = (
+            "Portfolio sensitivity diagnostics found a possible transmission bottleneck at "
+            f"`{primary}`. The result is advisory only and candidate promotion remains disabled."
+        )
+    else:
+        sentence = (
+            "Portfolio sensitivity diagnostics did not find a major score-to-weight "
+            "transmission bottleneck. The remaining issue is likely signal quality rather "
+            "than portfolio construction."
+        )
+    if data_gate.get("status") == "OK" and data_registry_status in {"OK", "LIMITED"}:
+        sentence = "Portfolio sensitivity data registry is consistent. " + sentence
+        if reconcile.get("status") in {"OK", "LIMITED"}:
+            sentence = _text(reconcile.get("summary_sentence"), "") + " " + sentence
+    if can_promote:
+        sentence += " Safety warning: sensitivity artifact unexpectedly supports promotion."
+    return {
+        "status": status,
+        "source_artifact": str(path),
+        "best_profile": best_profile,
+        "primary_bottleneck": primary,
+        "data_registry_consistency": data_registry_status,
+        "portfolio_is_too_insensitive": too_insensitive,
+        "summary_sentence": sentence,
+    }
+
+
+def _price_cache_reconcile_review_summary(as_of: date) -> dict[str, Any]:
+    path = _latest_price_cache_reconcile_path(as_of)
+    if path is None:
+        return {"status": "MISSING", "summary_sentence": ""}
+    payload = _read_optional_json(path)
+    if not payload:
+        return {"status": "MISSING", "summary_sentence": ""}
+    metadata = _mapping(payload.get("metadata"))
+    actions = _mapping(payload.get("actions"))
+    after = _mapping(payload.get("after"))
+    registered = _texts(actions.get("registered_repaired_artifacts"))
+    status = _text(metadata.get("status"), "UNKNOWN")
+    if status in {"OK", "LIMITED"}:
+        return {
+            "status": status,
+            "summary_sentence": (
+                "Price cache reconciliation resolved the manifest/cache asset view for "
+                f"{', '.join(registered) or 'repaired assets'}; latest_resolution="
+                f"{_text(after.get('latest_resolution'), 'UNKNOWN')}."
+            ),
+        }
+    if status == "FAILED":
+        return {
+            "status": status,
+            "summary_sentence": (
+                "Price cache reconciliation remains blocked. Repaired price histories exist "
+                "only if a validated cache artifact can be recovered and the manifest can be "
+                "refreshed without lowering the data quality gate."
+            ),
+        }
+    return {"status": status, "summary_sentence": ""}
+
+
+def _latest_price_cache_reconcile_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "data_quality"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/price_cache_reconcile_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
 def _latest_signal_calibration_path(as_of: date) -> Path | None:
     root = PROJECT_ROOT / "artifacts" / "signal_calibration"
     exact = root / as_of.isoformat() / "signal_calibration_summary.json"
@@ -2026,6 +2212,21 @@ def _latest_signal_calibration_path(as_of: date) -> Path | None:
     if not candidates:
         return None
     return max(candidates, key=lambda item: (item[0], item[1].stat().st_mtime))[1]
+
+
+def _latest_portfolio_sensitivity_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "portfolio_sensitivity"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/portfolio_sensitivity_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
 
 
 def _parameter_shadow_data_quality_sentence(

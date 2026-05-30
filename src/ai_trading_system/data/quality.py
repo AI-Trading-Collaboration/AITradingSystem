@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from enum import StrEnum
@@ -120,6 +121,7 @@ def validate_data_cache(
     quality_config: DataQualityConfig,
     as_of: date,
     manifest_path: Path | None = None,
+    backtest_manifest_path: Path | None = None,
     secondary_prices_path: Path | None = None,
     require_secondary_prices: bool = False,
 ) -> DataQualityReport:
@@ -144,6 +146,7 @@ def validate_data_cache(
         if manifest_path is not None
         else None
     )
+    backtest_manifest_context = _load_backtest_manifest_context(backtest_manifest_path)
 
     if prices is not None:
         price_summary = _validate_prices(
@@ -154,6 +157,8 @@ def validate_data_cache(
             as_of,
             issues,
             source="价格主源",
+            prices_path=prices_path,
+            backtest_manifest_context=backtest_manifest_context,
         )
 
     if secondary_prices is not None and secondary_price_summary is not None:
@@ -491,6 +496,8 @@ def _validate_prices(
     *,
     source: str = "价格主源",
     error_severity: Severity = Severity.ERROR,
+    prices_path: Path | None = None,
+    backtest_manifest_context: dict[str, Any] | None = None,
 ) -> DataFileSummary:
     if prices.empty:
         issues.append(
@@ -521,14 +528,14 @@ def _validate_prices(
     _check_duplicate_keys(
         frame, ["date", "ticker"], "prices", issues, source=source, severity=error_severity
     )
-    _check_expected_values(
+    _check_expected_price_tickers(
         frame,
-        "ticker",
         expected_tickers,
-        "prices",
         issues,
         source=source,
         severity=error_severity,
+        prices_path=prices_path,
+        backtest_manifest_context=backtest_manifest_context,
     )
     _check_price_numeric_rules(
         frame,
@@ -685,6 +692,107 @@ def _check_expected_values(
                 source=source or _source_label(label),
             )
         )
+
+
+def _check_expected_price_tickers(
+    data: pd.DataFrame,
+    expected_tickers: list[str],
+    issues: list[DataQualityIssue],
+    *,
+    source: str | None,
+    severity: Severity,
+    prices_path: Path | None,
+    backtest_manifest_context: dict[str, Any] | None,
+) -> None:
+    if not backtest_manifest_context:
+        _check_expected_values(
+            data,
+            "ticker",
+            expected_tickers,
+            "prices",
+            issues,
+            source=source,
+            severity=severity,
+        )
+        return
+    present = set(str(value) for value in data["ticker"].dropna().unique())
+    missing = [value for value in expected_tickers if value not in present]
+    if not missing:
+        return
+    grouped: dict[str, list[str]] = {}
+    for ticker in missing:
+        grouped.setdefault(_manifest_context_error_code(ticker, backtest_manifest_context), [])
+        grouped[_manifest_context_error_code(ticker, backtest_manifest_context)].append(ticker)
+    context_path = _text_value(backtest_manifest_context.get("path"))
+    read_path = "" if prices_path is None else str(prices_path)
+    for code, symbols in grouped.items():
+        issues.append(
+            DataQualityIssue(
+                severity,
+                code,
+                (
+                    "价格主源缺少预期 ticker："
+                    f"{', '.join(symbols)}；validate-data read_path={read_path}；"
+                    f"backtest_manifest={context_path}"
+                ),
+                source=source or _source_label("prices"),
+                sample=f"read_path={read_path}; manifest={context_path}",
+            )
+        )
+
+
+def _manifest_context_error_code(
+    ticker: str,
+    backtest_manifest_context: dict[str, Any],
+) -> str:
+    manifest_assets = set(_string_values(backtest_manifest_context.get("assets")))
+    symbol_mapping = _mapping_value(backtest_manifest_context.get("symbol_mapping"))
+    price_files = _string_values(backtest_manifest_context.get("price_data_files"))
+    if ticker == "BRK.B":
+        raw = symbol_mapping.get("BRK.B")
+        source_symbol = _mapping_value(raw).get("source_symbol") if isinstance(raw, dict) else ""
+        if source_symbol != "BRK-B":
+            return "SYMBOL_MAPPING_MISSING"
+    if ticker in manifest_assets:
+        return "MANIFEST_PRICE_CACHE_MISMATCH" if price_files else "UNREGISTERED_REPAIR_ARTIFACT"
+    return "MISSING_PRICE_SOURCE"
+
+
+def _load_backtest_manifest_context(path: Path | None) -> dict[str, Any] | None:
+    if path is None:
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {
+            "path": str(path),
+            "assets": [],
+            "symbol_mapping": {},
+            "price_data_files": [],
+        }
+    if not isinstance(payload, dict):
+        payload = {}
+    return {
+        "path": str(path),
+        "assets": _string_values(payload.get("assets")),
+        "symbol_mapping": _mapping_value(payload.get("symbol_mapping")),
+        "price_data_files": _string_values(payload.get("price_data_files")),
+        "status": _text_value(payload.get("status")),
+    }
+
+
+def _mapping_value(value: object) -> dict[str, Any]:
+    return value if isinstance(value, dict) else {}
+
+
+def _string_values(value: object) -> list[str]:
+    if isinstance(value, list | tuple):
+        return [str(item) for item in value if str(item)]
+    return []
+
+
+def _text_value(value: object) -> str:
+    return "" if value is None else str(value)
 
 
 def _check_price_numeric_rules(

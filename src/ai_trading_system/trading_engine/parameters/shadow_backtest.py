@@ -322,6 +322,7 @@ def _run_data_quality_gate(
     baseline: ProductionParameters,
     as_of: date,
     report_path: Path,
+    backtest_manifest_path: Path | None = None,
 ) -> DataQualityReport:
     quality_config = load_data_quality()
     universe = load_universe()
@@ -334,6 +335,7 @@ def _run_data_quality_gate(
         quality_config,
         as_of,
         manifest_path=resolve_project_path(config.data.download_manifest_path),
+        backtest_manifest_path=backtest_manifest_path,
         secondary_prices_path=resolve_project_path(config.data.secondary_prices_path),
         require_secondary_prices=False,
     )
@@ -659,6 +661,9 @@ def _promotion_decision_payload(
     calibration_path = _latest_signal_calibration_supporting_path(as_of)
     if calibration_path is not None:
         supporting["signal_calibration"] = str(calibration_path)
+    sensitivity_path = _latest_portfolio_sensitivity_supporting_path(as_of)
+    if sensitivity_path is not None:
+        supporting["portfolio_sensitivity"] = str(sensitivity_path)
     if supporting:
         payload["supporting_artifacts"] = supporting
     if backtest_mode == "full_signal_backtest_limited":
@@ -678,6 +683,14 @@ def _promotion_decision_payload(
                 "but it does not enable candidate promotion while signal quality remains "
                 "LIMITED and fallback signals remain present."
             )
+            reason = str(payload.get("reason") or "")
+    reason = str(payload.get("reason") or "")
+    if sensitivity_path is not None and "portfolio sensitivity" not in reason.lower():
+        payload["reason"] = (
+            reason.rstrip(".")
+            + ". Portfolio sensitivity summary is available as supporting evidence, "
+            "but it is advisory only and cannot enable candidate promotion."
+        )
     return payload
 
 
@@ -703,6 +716,21 @@ def _latest_signal_calibration_supporting_path(as_of: date) -> Path | None:
     if not candidates:
         return None
     return max(candidates, key=lambda item: (item[0], item[1].stat().st_mtime))[1]
+
+
+def _latest_portfolio_sensitivity_supporting_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "portfolio_sensitivity"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/portfolio_sensitivity_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
 
 
 def _write_artifacts(

@@ -21,6 +21,10 @@ from ai_trading_system.trading_engine.backtest_input_diagnostics import (
     BacktestInputDiagnosticsRun,
     run_backtest_input_diagnostics,
 )
+from ai_trading_system.trading_engine.data.symbol_resolver import (
+    DEFAULT_PRICE_SYMBOL_ALIASES,
+    source_symbol_for,
+)
 from ai_trading_system.trading_engine.parameters.parameter_loader import (
     DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
     load_shadow_backtest_config,
@@ -29,7 +33,7 @@ from ai_trading_system.trading_engine.parameters.parameter_loader import (
 
 PRICE_HISTORY_REPAIR_SCHEMA_VERSION = 1
 PRICE_HISTORY_REPAIR_SOURCE = "price_history_repair"
-PRICE_REPAIR_SYMBOL_ALIASES: dict[str, str] = {"BRK.B": "BRK-B"}
+PRICE_REPAIR_SYMBOL_ALIASES: dict[str, str] = dict(DEFAULT_PRICE_SYMBOL_ALIASES)
 PRICE_CACHE_OUTPUT_COLUMNS: tuple[str, ...] = (
     "date",
     "ticker",
@@ -322,7 +326,7 @@ def upsert_price_history_cache(
 
 
 def source_symbol_for_price_repair(canonical_symbol: str) -> str:
-    return PRICE_REPAIR_SYMBOL_ALIASES.get(canonical_symbol, canonical_symbol)
+    return source_symbol_for(canonical_symbol, aliases=PRICE_REPAIR_SYMBOL_ALIASES)
 
 
 def _repair_target_symbols(

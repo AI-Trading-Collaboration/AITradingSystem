@@ -733,10 +733,27 @@ from ai_trading_system.trading_engine.data.price_history_repair import (
     build_price_history_repair_provider,
     repair_backtest_price_history,
 )
+from ai_trading_system.trading_engine.data_registry_consistency import (
+    run_data_registry_consistency,
+    validate_backtest_manifest_consistency,
+)
 from ai_trading_system.trading_engine.parameters import (
     DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
     DEFAULT_SIGNAL_ABLATION_CONFIG_PATH,
     run_shadow_parameter_backtest,
+)
+from ai_trading_system.trading_engine.portfolio_sensitivity import (
+    DEFAULT_PORTFOLIO_SENSITIVITY_PROFILES_PATH,
+    latest_portfolio_sensitivity_path,
+    load_portfolio_sensitivity_payload,
+    portfolio_sensitivity_payload_date,
+    run_portfolio_sensitivity,
+    validate_portfolio_sensitivity_payload,
+    write_portfolio_sensitivity_report_alias,
+)
+from ai_trading_system.trading_engine.price_cache_reconcile import (
+    refresh_backtest_manifest,
+    run_price_cache_reconcile,
 )
 from ai_trading_system.trading_engine.reports.parameter_promotion_report import (
     default_parameter_promotion_json_path,
@@ -3863,6 +3880,13 @@ def validate_data(
             help="校验配置中的完整 AI 产业链标的，而不只校验核心观察池。",
         ),
     ] = False,
+    backtest_manifest_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--backtest-manifest",
+            help="可选 backtest_input_manifest.json，用于 manifest context 下的数据门禁诊断。",
+        ),
+    ] = None,
 ) -> None:
     """校验缓存数据并写入 Markdown 质量报告。"""
     universe = load_universe()
@@ -3884,6 +3908,7 @@ def validate_data(
         quality_config=quality_config,
         as_of=validation_date,
         manifest_path=_download_manifest_path(prices_path),
+        backtest_manifest_path=backtest_manifest_path,
         secondary_prices_path=_marketstack_prices_path(prices_path),
         require_secondary_prices=_requires_marketstack_prices(prices_path),
     )
@@ -3939,6 +3964,233 @@ def data_diagnose_backtest_inputs_command(
             f"can_run_shadow_backtest={summary.get('can_run_shadow_backtest', False)}"
         )
     console.print("production_effect=none；不修改 production 参数或 promotion 规则")
+
+
+@data_app.command("inspect-registry")
+def data_inspect_registry_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="解析 latest data registry / manifest 状态。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="registry 诊断日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="shadow backtest 配置路径。"),
+    ] = DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+) -> None:
+    """检查 repair、manifest、validate-data 与 portfolio sensitivity 的数据视图一致性。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    run = run_data_registry_consistency(as_of=run_date, config_path=config_path)
+    metadata = run.payload.get("metadata", {})
+    latest_resolution = run.payload.get("latest_resolution", {})
+    path_consistency = run.payload.get("path_consistency", {})
+    status = metadata.get("status", "UNKNOWN") if isinstance(metadata, dict) else "UNKNOWN"
+    style = "green" if status == "OK" else "yellow" if status == "LIMITED" else "red"
+    console.print(f"[{style}]Data registry consistency：{status}[/{style}]")
+    console.print(f"JSON：{run.json_path}")
+    console.print(f"Markdown：{run.markdown_path}")
+    if isinstance(latest_resolution, dict):
+        console.print(
+            "latest_resolution="
+            f"{latest_resolution.get('status', 'UNKNOWN')}；"
+            f"market_data={latest_resolution.get('resolved_market_data_date', '')}；"
+            f"manifest={latest_resolution.get('resolved_backtest_manifest_date', '')}"
+        )
+    if isinstance(path_consistency, dict):
+        console.print(
+            "price_cache_paths="
+            f"{path_consistency.get('status', 'UNKNOWN')}；"
+            f"validate_data_read_path={path_consistency.get('validate_data_read_path', '')}"
+        )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@data_app.command("validate-backtest-manifest")
+def data_validate_backtest_manifest_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 latest valid backtest input manifest 与价格缓存一致性。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="manifest 校验日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="shadow backtest 配置路径。"),
+    ] = DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+) -> None:
+    """验证 backtest_input_manifest 与实际价格缓存、symbol mapping 是否一致。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    result = validate_backtest_manifest_consistency(as_of=run_date, config_path=config_path)
+    status = str(result.get("status") or "UNKNOWN")
+    style = "green" if status == "OK" else "yellow" if status == "LIMITED" else "red"
+    console.print(f"[{style}]Backtest manifest consistency：{status}[/{style}]")
+    manifest = result.get("backtest_manifest", {})
+    if isinstance(manifest, dict):
+        console.print(f"manifest：{manifest.get('path', '')}")
+        console.print(f"manifest_validation={manifest.get('validation_status', 'UNKNOWN')}")
+    for asset in result.get("asset_registry", []):
+        if not isinstance(asset, dict):
+            continue
+        symbol = asset.get("canonical_symbol", "")
+        source_symbol = asset.get("source_symbol", "")
+        code = asset.get("error_code", "OK")
+        if code == "OK":
+            suffix = f" via {source_symbol}" if source_symbol and source_symbol != symbol else ""
+            console.print(f"{symbol}: OK{suffix}")
+        else:
+            console.print(f"[red]{symbol}: {code}[/red] - {asset.get('diagnosis', '')}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+    if status == "FAILED":
+        raise typer.Exit(code=1)
+
+
+@data_app.command(
+    "reconcile-price-cache",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def data_reconcile_price_cache_command(
+    ctx: typer.Context,
+    latest: Annotated[
+        bool,
+        typer.Option(help="为 latest data registry mismatch 执行或规划 reconcile。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="reconcile 诊断日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="shadow backtest 配置路径。"),
+    ] = DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="只输出修复计划，不改写价格缓存。"),
+    ] = False,
+    refresh_manifest_only: Annotated[
+        bool,
+        typer.Option(help="只刷新 backtest input manifest，不注册 repaired artifacts。"),
+    ] = False,
+    register_repaired_only: Annotated[
+        bool,
+        typer.Option(help="只注册 repaired artifacts，不刷新 backtest input manifest。"),
+    ] = False,
+    symbols: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--symbols",
+            help="指定 reconcile 资产；可重复。也兼容 `--symbols GOOGL BRK.B SGOV`。",
+        ),
+    ] = None,
+) -> None:
+    """执行 price cache / manifest reconcile；dry-run 只输出计划。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    if refresh_manifest_only and register_repaired_only:
+        raise typer.BadParameter("--refresh-manifest-only 不能和 --register-repaired-only 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    requested_symbols = tuple([*(symbols or []), *[str(item) for item in ctx.args]])
+    run = run_price_cache_reconcile(
+        as_of=run_date,
+        config_path=config_path,
+        dry_run=dry_run,
+        refresh_manifest_only=refresh_manifest_only,
+        register_repaired_only=register_repaired_only,
+        symbols=requested_symbols,
+    )
+    result = run.payload
+    metadata = result.get("metadata", {})
+    status = str(result.get("status") or "UNKNOWN")
+    if isinstance(metadata, dict):
+        status = str(metadata.get("status") or status)
+    style = "green" if status in {"OK", "NOT_REQUIRED"} else "yellow" if status in {
+        "DRY_RUN",
+        "LIMITED",
+    } else "red"
+    console.print(f"[{style}]Price cache reconcile：{status}[/{style}]")
+    if run.json_path is not None:
+        console.print(f"JSON：{run.json_path}")
+    if run.markdown_path is not None:
+        console.print(f"Markdown：{run.markdown_path}")
+    console.print(f"Price cache registry：{run.registry_path}")
+    for step in result.get("planned_actions", []):
+        if not isinstance(step, dict):
+            continue
+        console.print(
+            "- "
+            f"action={step.get('action', '')}；"
+            f"symbols={', '.join(str(item) for item in step.get('symbols', [])) or 'n/a'}"
+        )
+    for item in result.get("repaired_artifact_inspection", []):
+        if not isinstance(item, dict):
+            continue
+        console.print(
+            f"{item.get('canonical_symbol')}: {item.get('status')} "
+            f"via {item.get('source_symbol')} rows={item.get('rows')} "
+            f"error_code={item.get('error_code')}"
+        )
+    after = result.get("after", {})
+    if isinstance(after, dict):
+        console.print(
+            "after="
+            f"latest_resolution={after.get('latest_resolution', 'UNKNOWN')}；"
+            f"market_data={after.get('market_data_date', '')}；"
+            f"manifest={after.get('manifest_date', '')}"
+        )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+    if status == "FAILED":
+        raise typer.Exit(code=1)
+
+
+@data_app.command("refresh-backtest-manifest")
+def data_refresh_backtest_manifest_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="刷新 latest backtest input manifest。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="manifest 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="shadow backtest 配置路径。"),
+    ] = DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="只显示将写入的 manifest，不实际生成。"),
+    ] = False,
+) -> None:
+    """刷新 backtest input manifest；dry-run 不写 artifact。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    run = refresh_backtest_manifest(
+        as_of=run_date,
+        config_path=config_path,
+        dry_run=dry_run,
+    )
+    metadata = run.payload.get("metadata", {})
+    status = str(metadata.get("status") if isinstance(metadata, dict) else "UNKNOWN")
+    style = "green" if status == "OK" else "yellow" if status == "DRY_RUN" else "red"
+    console.print(f"[{style}]Backtest manifest refresh：{status}[/{style}]")
+    console.print(f"target_manifest_date={run.payload.get('target_manifest_date', '')}")
+    if run.diagnostic_run is not None:
+        console.print(f"Diagnostic JSON：{run.diagnostic_run.json_path}")
+        console.print(f"Snapshot manifest：{run.diagnostic_run.manifest_path}")
+    else:
+        console.print(f"would_write_manifest={run.payload.get('would_write_manifest', '')}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+    if status == "FAILED":
+        raise typer.Exit(code=1)
 
 
 @data_app.command(
@@ -6458,6 +6710,154 @@ def portfolio_exposure_command(
         raise typer.Exit(code=1)
 
 
+@portfolio_app.command(
+    "sensitivity",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def portfolio_sensitivity_command(
+    ctx: typer.Context,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用 prices_daily.csv 中最新可用日期。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="sensitivity 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="portfolio sensitivity profile 配置路径。"),
+    ] = DEFAULT_PORTFOLIO_SENSITIVITY_PROFILES_PATH,
+    profile: Annotated[
+        str | None,
+        typer.Option("--profile", help="指定单一 sensitivity profile。"),
+    ] = None,
+    profiles: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--profiles",
+            help="指定多个 sensitivity profile；也兼容 `--profiles a b c`。",
+        ),
+    ] = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="写入 outputs/dry_runs/portfolio_sensitivity，不写正式 artifacts。"),
+    ] = False,
+) -> None:
+    """运行 portfolio sensitivity diagnostics 并生成只读比较报告。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    requested_profiles = tuple(
+        dict.fromkeys(
+            [
+                *([profile] if profile else []),
+                *(profiles or []),
+                *[str(item) for item in ctx.args],
+            ]
+        )
+    )
+    try:
+        run = run_portfolio_sensitivity(
+            as_of=run_date,
+            profile_names=requested_profiles or None,
+            config_path=config_path,
+            dry_run=dry_run,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    metadata = run.payload.get("metadata", {})
+    ranking = run.payload.get("ranking", {})
+    diagnosis = run.payload.get("diagnosis", {})
+    promotion = run.payload.get("promotion_impact", {})
+    data_gate = run.payload.get("data_gate", {})
+    status = metadata.get("status", "UNKNOWN") if isinstance(metadata, dict) else "UNKNOWN"
+    style = "green" if status == "OK" else "yellow" if status == "LIMITED" else "red"
+    console.print(f"[{style}]Portfolio sensitivity：{status}[/{style}]")
+    console.print(f"JSON：{run.json_path}")
+    console.print(f"Markdown：{run.markdown_path}")
+    console.print(f"Recommended profile：{run.recommended_profile_path}")
+    if isinstance(ranking, dict):
+        console.print(
+            f"profiles_tested={len(run.payload.get('profiles', []))}；"
+            f"best_profile={ranking.get('best_profile', 'UNKNOWN')}"
+        )
+        reason = ranking.get("reason")
+        if reason:
+            console.print(f"reason={reason}")
+    if isinstance(diagnosis, dict):
+        console.print(
+            f"primary_bottleneck={diagnosis.get('primary_bottleneck', 'UNKNOWN')}；"
+            "portfolio_is_too_insensitive="
+            f"{diagnosis.get('portfolio_is_too_insensitive', False)}"
+        )
+    if isinstance(promotion, dict):
+        console.print(
+            "can_support_candidate_promotion="
+            f"{promotion.get('can_support_candidate_promotion', False)}"
+        )
+    if isinstance(data_gate, dict):
+        console.print(
+            "data_gate="
+            f"{data_gate.get('status', 'UNKNOWN')}；"
+            f"error_code={data_gate.get('error_code', 'OK')}；"
+            f"latest_resolution={data_gate.get('latest_resolution_status', 'UNKNOWN')}"
+        )
+        reason = data_gate.get("reason")
+        if reason:
+            console.print(f"data_gate_reason={reason}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@portfolio_app.command("validate-sensitivity")
+def portfolio_validate_sensitivity_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验最新正式 portfolio sensitivity artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="sensitivity 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 portfolio_sensitivity_summary.json 路径。"),
+    ] = None,
+) -> None:
+    """校验 portfolio sensitivity JSON schema 和只读安全字段。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    source_path = input_path or _resolve_portfolio_sensitivity_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_portfolio_sensitivity_payload(source_path)
+    issues = validate_portfolio_sensitivity_payload(payload)
+    metadata = payload.get("metadata", {}) if isinstance(payload, dict) else {}
+    status = metadata.get("status", "UNKNOWN") if isinstance(metadata, dict) else "UNKNOWN"
+    style = "green" if not issues and status == "OK" else "yellow" if not issues else "red"
+    console.print(f"[{style}]Portfolio sensitivity validation：{status}[/{style}]")
+    console.print(f"source：{source_path}")
+    if issues:
+        for issue in issues:
+            console.print(f"[red]- {issue}[/red]")
+        raise typer.Exit(code=1)
+    promotion = payload.get("promotion_impact", {}) if isinstance(payload, dict) else {}
+    console.print(
+        "can_support_candidate_promotion="
+        f"{promotion.get('can_support_candidate_promotion', False)}"
+    )
+    data_gate = payload.get("data_gate", {}) if isinstance(payload, dict) else {}
+    if isinstance(data_gate, dict):
+        console.print(
+            "data_gate="
+            f"{data_gate.get('status', 'UNKNOWN')}；"
+            f"error_code={data_gate.get('error_code', 'OK')}；"
+            f"latest_resolution={data_gate.get('latest_resolution_status', 'UNKNOWN')}"
+        )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
 @parameters_app.command("shadow-backtest")
 def parameters_shadow_backtest_command(
     latest: Annotated[
@@ -6903,6 +7303,59 @@ def signal_calibration_report_command(
         reason = ranking.get("reason")
         if reason:
             console.print(f"reason={reason}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{markdown_path}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@reports_app.command("portfolio-sensitivity")
+def portfolio_sensitivity_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新正式 portfolio sensitivity artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="报告日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    source_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 portfolio_sensitivity_summary.json 路径。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 alias 输出目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """从正式 artifact 生成 portfolio sensitivity 报告 alias。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    json_source = source_path or _resolve_portfolio_sensitivity_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_portfolio_sensitivity_payload(json_source)
+    issues = validate_portfolio_sensitivity_payload(payload)
+    if issues:
+        raise typer.BadParameter("portfolio sensitivity JSON 校验失败：" + "; ".join(issues))
+    try:
+        report_date = portfolio_sensitivity_payload_date(payload, json_source)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, markdown_path = write_portfolio_sensitivity_report_alias(
+        payload,
+        reports_dir,
+        report_date,
+    )
+    ranking = payload.get("ranking", {}) if isinstance(payload, dict) else {}
+    diagnosis = payload.get("diagnosis", {}) if isinstance(payload, dict) else {}
+    console.print("[green]Portfolio sensitivity report：OK[/green]")
+    if isinstance(ranking, dict):
+        console.print(f"best_profile={ranking.get('best_profile', 'UNKNOWN')}")
+    if isinstance(diagnosis, dict):
+        console.print(f"primary_bottleneck={diagnosis.get('primary_bottleneck', 'UNKNOWN')}")
     console.print(f"JSON：{json_path}")
     console.print(f"Markdown：{markdown_path}")
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
@@ -14241,6 +14694,16 @@ def _resolve_signal_calibration_path(*, latest: bool, as_of: str | None) -> Path
             raise typer.BadParameter(f"未找到 signal calibration artifact：{root}")
         return latest_path
     return root / _parse_date(as_of).isoformat() / "signal_calibration_summary.json"
+
+
+def _resolve_portfolio_sensitivity_path(*, latest: bool, as_of: str | None) -> Path:
+    root = PROJECT_ROOT / "artifacts" / "portfolio_sensitivity"
+    if latest or as_of is None:
+        latest_path = latest_portfolio_sensitivity_path(root)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 portfolio sensitivity artifact：{root}")
+        return latest_path
+    return root / _parse_date(as_of).isoformat() / "portfolio_sensitivity_summary.json"
 
 
 def _resolve_parameter_promotion_path(*, latest: bool, as_of: str | None) -> Path:

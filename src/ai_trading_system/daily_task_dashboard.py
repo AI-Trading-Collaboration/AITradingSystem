@@ -203,9 +203,11 @@ def build_daily_task_dashboard_payload(
         "paper_signal_quality": _paper_signal_quality_summary(report),
         "shadow_parameter_impact": _shadow_parameter_impact_summary(report),
         "backtest_data_quality": _backtest_data_quality_summary(report),
+        "price_cache_reconcile_summary": _price_cache_reconcile_summary(report),
         "shadow_parameter_backtest": _shadow_parameter_backtest_summary(report),
         "signal_ablation_summary": _signal_ablation_summary(report),
         "signal_calibration_summary": _signal_calibration_summary(report),
+        "portfolio_sensitivity_summary": _portfolio_sensitivity_summary(report),
         "weight_adjustment_candidates": _weight_adjustment_candidates_summary(report),
         "weight_candidate_evaluation": _weight_candidate_evaluation_summary(report),
         "weight_promotion_gate": _weight_promotion_gate_summary(report),
@@ -358,9 +360,11 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_paper_signal_quality(report),
             _render_shadow_parameter_impact(report),
             _render_backtest_data_quality(report),
+            _render_price_cache_reconcile_summary(report),
             _render_shadow_parameter_backtest(report),
             _render_signal_ablation_summary(report),
             _render_signal_calibration_summary(report),
+            _render_portfolio_sensitivity_summary(report),
             _render_weight_adjustment_candidates(report),
             _render_weight_candidate_evaluation(report),
             _render_weight_promotion_gate(report),
@@ -2428,6 +2432,207 @@ def _latest_signal_calibration_path(report: DailyTaskDashboardReport) -> Path | 
     if not candidates:
         return None
     return max(candidates, key=lambda item: (item[0], item[1].stat().st_mtime))[1]
+
+
+def _portfolio_sensitivity_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    suffix = report.as_of.isoformat()
+    path = (
+        report.project_root
+        / "artifacts"
+        / "portfolio_sensitivity"
+        / suffix
+        / "portfolio_sensitivity_summary.json"
+    )
+    latest_path = _latest_portfolio_sensitivity_path(report)
+    if latest_path is not None:
+        path = latest_path
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "portfolio_sensitivity":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "markdown_href": "",
+            "profiles_tested": 0,
+            "best_profile": "",
+            "primary_bottleneck": "MISSING",
+            "portfolio_is_too_insensitive": False,
+            "rebalance_suppression_ratio": 0.0,
+            "constraint_binding_warning": "",
+            "turnover_delta_vs_baseline": 0.0,
+            "data_registry_consistency": "MISSING",
+            "latest_resolution_status": "MISSING",
+            "price_cache_registry": "MISSING",
+            "symbol_mapping_status": "MISSING",
+            "can_support_candidate_promotion": False,
+            "manual_review_required": True,
+            "production_effect": ProductionEffect.NONE.value,
+            "risk": "Portfolio sensitivity summary 缺失；dashboard 不运行 sensitivity。",
+        }
+    metadata = _mapping_value(payload, "metadata")
+    data_gate = _mapping_value(payload, "data_gate")
+    ranking = _mapping_value(payload, "ranking")
+    diagnosis = _mapping_value(payload, "diagnosis")
+    promotion = _mapping_value(payload, "promotion_impact")
+    profiles = _records(payload.get("profiles"))
+    best_profile = _string_value(ranking.get("best_profile"))
+    best = next(
+        (item for item in profiles if _string_value(item.get("profile_name")) == best_profile),
+        {},
+    )
+    target_to_actual = _mapping_value(best, "target_to_actual_weight")
+    constraint = _mapping_value(best, "constraint_binding")
+    turnover = _mapping_value(best, "turnover_cost_impact")
+    risks: list[str] = []
+    if metadata.get("production_effect") != ProductionEffect.NONE.value:
+        risks.append("portfolio sensitivity production_effect 不是 none。")
+    if metadata.get("auto_promotion") is not False:
+        risks.append("portfolio sensitivity auto_promotion 不是 false。")
+    if promotion.get("can_support_candidate_promotion") is not False:
+        risks.append("portfolio sensitivity 不应直接支持 candidate promotion。")
+    if data_gate.get("status") == "FAILED":
+        gate_reason = _string_value(data_gate.get("reason"))
+        risks.append(gate_reason or "portfolio sensitivity data registry gate failed。")
+    for warning in (
+        constraint.get("warning"),
+        target_to_actual.get("warning"),
+        turnover.get("warning"),
+    ):
+        if _string_value(warning):
+            risks.append(_string_value(warning))
+    markdown_path = path.with_suffix(".md")
+    return {
+        "status": metadata.get("status", "UNKNOWN"),
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "markdown_href": _report_href(markdown_path, report.reports_dir)
+        if markdown_path.exists()
+        else "",
+        "profiles_tested": len(profiles),
+        "best_profile": best_profile,
+        "primary_bottleneck": diagnosis.get("primary_bottleneck", "UNKNOWN"),
+        "portfolio_is_too_insensitive": diagnosis.get("portfolio_is_too_insensitive")
+        is True,
+        "rebalance_suppression_ratio": _optional_float(
+            target_to_actual.get("rebalance_suppression_ratio")
+        ),
+        "constraint_binding_warning": constraint.get("warning", ""),
+        "turnover_delta_vs_baseline": _optional_float(
+            turnover.get("turnover_delta_vs_baseline")
+        ),
+        "data_registry_consistency": data_gate.get("data_registry_consistency", "UNKNOWN"),
+        "latest_resolution_status": data_gate.get("latest_resolution_status", "UNKNOWN"),
+        "price_cache_registry": data_gate.get("price_cache_registry", "UNKNOWN"),
+        "symbol_mapping_status": data_gate.get("symbol_mapping", "UNKNOWN"),
+        "can_support_candidate_promotion": promotion.get(
+            "can_support_candidate_promotion",
+            False,
+        ),
+        "manual_review_required": metadata.get("manual_review_required") is True,
+        "production_effect": metadata.get("production_effect", ProductionEffect.NONE.value),
+        "risk": "；".join(risks)
+        or "Portfolio sensitivity 只读展示，不修改 production 参数或 promotion 状态。",
+    }
+
+
+def _latest_portfolio_sensitivity_path(report: DailyTaskDashboardReport) -> Path | None:
+    root = report.project_root / "artifacts" / "portfolio_sensitivity"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/portfolio_sensitivity_summary.json"):
+        try:
+            as_of = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if as_of <= report.as_of:
+            candidates.append((as_of, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _price_cache_reconcile_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_price_cache_reconcile_path(report)
+    if path is None:
+        missing_path = (
+            report.project_root
+            / "artifacts"
+            / "data_quality"
+            / report.as_of.isoformat()
+            / "price_cache_reconcile_summary.json"
+        )
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(missing_path),
+            "href": _report_href(missing_path, report.reports_dir),
+            "markdown_href": "",
+            "latest_resolution": "MISSING",
+            "manifest_date": "",
+            "market_data_date": "",
+            "registered_assets": "",
+            "remaining_limitations": "",
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_required": True,
+            "risk": "Price cache reconcile summary 缺失；dashboard 不运行 reconcile。",
+        }
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "price_cache_reconcile":
+        return {
+            "status": "UNREADABLE",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "markdown_href": "",
+            "latest_resolution": "UNKNOWN",
+            "manifest_date": "",
+            "market_data_date": "",
+            "registered_assets": "",
+            "remaining_limitations": "price_cache_reconcile_summary report_type invalid。",
+            "production_effect": ProductionEffect.NONE.value,
+            "manual_review_required": True,
+            "risk": "Price cache reconcile artifact unreadable。",
+        }
+    metadata = _mapping_value(payload, "metadata")
+    after = _mapping_value(payload, "after")
+    actions = _mapping_value(payload, "actions")
+    markdown_path = path.with_suffix(".md")
+    registered = _string_list(actions.get("registered_repaired_artifacts"), limit=8)
+    limitations = _string_list(payload.get("remaining_limitations"), limit=4)
+    return {
+        "status": metadata.get("status", "UNKNOWN"),
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "markdown_href": _report_href(markdown_path, report.reports_dir)
+        if markdown_path.exists()
+        else "",
+        "latest_resolution": after.get("latest_resolution", "UNKNOWN"),
+        "manifest_date": after.get("manifest_date", ""),
+        "market_data_date": after.get("market_data_date", ""),
+        "registered_assets": ", ".join(registered),
+        "remaining_limitations": "；".join(limitations),
+        "production_effect": metadata.get("production_effect", ProductionEffect.NONE.value),
+        "manual_review_required": metadata.get("manual_review_required") is True,
+        "risk": "；".join(limitations)
+        or "Price cache reconcile 只读展示，不修改 production 参数或 promotion 状态。",
+    }
+
+
+def _latest_price_cache_reconcile_path(report: DailyTaskDashboardReport) -> Path | None:
+    root = report.project_root / "artifacts" / "data_quality"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/price_cache_reconcile_summary.json"):
+        try:
+            as_of = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if as_of <= report.as_of:
+            candidates.append((as_of, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
 
 
 def _shadow_impact_window_sample_counts(payload: TraceRecord) -> TraceRecord:
@@ -9462,6 +9667,150 @@ def _render_signal_calibration_summary(report: DailyTaskDashboardReport) -> str:
             (
                 '<p class="muted"><strong>Correlation warning：</strong>'
                 f"{_text(summary.get('correlation_warning', ''))}</p>"
+            ),
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            markdown_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_portfolio_sensitivity_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _portfolio_sensitivity_summary(report)
+    href = _string_value(summary.get("href"))
+    markdown_href = _string_value(summary.get("markdown_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(href)}"><span>Portfolio Sensitivity Summary</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if summary.get("exists")
+        else '<span class="report-link missing"><span>Portfolio Sensitivity Summary</span>'
+        "<small>MISSING</small></span>"
+    )
+    markdown_link = (
+        '<a class="report-link" '
+        f'href="{_text(markdown_href)}"><span>Portfolio Sensitivity Markdown</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if markdown_href
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="portfolio-sensitivity-summary-title">',
+            '<div class="section-head">',
+            '<h2 id="portfolio-sensitivity-summary-title">Portfolio Sensitivity Summary</h2>',
+            (
+                "<p>score 到 target / actual weight 的传导诊断；dashboard 只读已有 JSON，"
+                "不修改 production 参数或 promotion 状态。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("status", summary.get("status", "MISSING")),
+            _summary_item("profiles tested", summary.get("profiles_tested", 0)),
+            _summary_item("best profile", summary.get("best_profile", "")),
+            _summary_item("primary bottleneck", summary.get("primary_bottleneck", "")),
+            _summary_item(
+                "too insensitive",
+                "Yes" if summary.get("portfolio_is_too_insensitive") else "No",
+            ),
+            _summary_item(
+                "rebalance suppression",
+                summary.get("rebalance_suppression_ratio", 0.0),
+            ),
+            _summary_item(
+                "turnover delta",
+                summary.get("turnover_delta_vs_baseline", 0.0),
+            ),
+            _summary_item(
+                "Data Registry Consistency",
+                summary.get("data_registry_consistency", "MISSING"),
+            ),
+            _summary_item(
+                "Latest Resolution",
+                summary.get("latest_resolution_status", "MISSING"),
+            ),
+            _summary_item(
+                "Price Cache Registry",
+                summary.get("price_cache_registry", "MISSING"),
+            ),
+            _summary_item("Symbol Mapping", summary.get("symbol_mapping_status", "MISSING")),
+            _summary_item(
+                "Can support candidate promotion",
+                summary.get("can_support_candidate_promotion", False),
+            ),
+            _summary_item("manual review", summary.get("manual_review_required", True)),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
+            (
+                '<p class="muted"><strong>Constraint warning：</strong>'
+                f"{_text(summary.get('constraint_binding_warning', ''))}</p>"
+            ),
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            markdown_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_price_cache_reconcile_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _price_cache_reconcile_summary(report)
+    href = _string_value(summary.get("href"))
+    markdown_href = _string_value(summary.get("markdown_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(href)}"><span>Price Cache Reconcile</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if summary.get("exists")
+        else '<span class="report-link missing"><span>Price Cache Reconcile</span>'
+        "<small>MISSING</small></span>"
+    )
+    markdown_link = (
+        '<a class="report-link" '
+        f'href="{_text(markdown_href)}"><span>Reconcile Markdown</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if markdown_href
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="price-cache-reconcile-title">',
+            '<div class="section-head">',
+            '<h2 id="price-cache-reconcile-title">Price Cache Reconcile</h2>',
+            (
+                "<p>primary price cache、repaired artifacts、backtest manifest 和 latest "
+                "resolution 的一致性摘要；dashboard 只读已有 artifact。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("status", summary.get("status", "MISSING")),
+            _summary_item("Latest Resolution", summary.get("latest_resolution", "MISSING")),
+            _summary_item("Manifest Date", summary.get("manifest_date", "")),
+            _summary_item("Market Data Date", summary.get("market_data_date", "")),
+            _summary_item("Registered Assets", summary.get("registered_assets", "")),
+            _summary_item("manual review", summary.get("manual_review_required", True)),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>Remaining limitations：</strong>'
+                f"{_text(summary.get('remaining_limitations', ''))}</p>"
             ),
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'
