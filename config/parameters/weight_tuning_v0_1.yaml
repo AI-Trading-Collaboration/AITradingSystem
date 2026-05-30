@@ -1,0 +1,140 @@
+metadata:
+  version: "weight-tuning-v0.1"
+  owner: "system"
+  status: "pilot_baseline"
+  description: "Restricted shadow weight tuning for LIMITED signal quality."
+  production_effect: none
+  manual_review_required: true
+  auto_promotion: false
+  rationale: >
+    TRADING-059 evaluates whether a restricted set of signal weights can improve
+    the current baseline in walk-forward backtests without treating proxy or
+    fallback signals as production-grade inputs.
+  intended_effect: >
+    Produce advisory shadow weight candidates for manual review only. This
+    policy must not modify production parameters, trigger broker actions, or
+    enable automatic promotion.
+  validation_evidence: >
+    Tests cover restricted grid generation, fixed fallback signals, capped
+    valuation risk, normalization, L1 distance, guardrails, reports, Dashboard,
+    Reader Brief, and shadow backtest supporting-artifact references.
+  review_condition: >
+    Review before any signal weight is proposed for production parameter
+    governance, and expire this pilot when signal snapshot quality changes from
+    LIMITED to OK or when stronger valuation/macro/earnings/event sources are
+    approved.
+
+market_regime:
+  id: "ai_after_chatgpt"
+  anchor_event: "ChatGPT public launch"
+  anchor_date: "2022-11-30"
+  default_backtest_start: "2022-12-01"
+
+inputs:
+  baseline_parameters: "config/parameters/production/current.yaml"
+  shadow_backtest_config: "config/parameters/shadow/shadow_backtest.yaml"
+  portfolio_candidate_profiles: "config/portfolio/portfolio_candidate_profiles.yaml"
+  default_portfolio_profile: "lower_rebalance_threshold_2pct"
+  require_data_gate: OK
+  require_freshness_status: OK
+  allow_signal_snapshot_status:
+    - LIMITED
+    - OK
+
+tuning_scope:
+  tunable_weights:
+    trend_momentum:
+      min: 0.25
+      max: 0.55
+      step: 0.05
+      quality_required:
+        - price_derived
+        - OK
+    sector_strength:
+      min: 0.15
+      max: 0.40
+      step: 0.05
+      quality_required:
+        - price_derived
+        - OK
+    macro_liquidity:
+      min: 0.05
+      max: 0.25
+      step: 0.05
+      quality_required:
+        - proxy
+        - LIMITED
+  fixed_weights:
+    earnings_quality:
+      value: 0.05
+      reason: "neutral fallback signal; not eligible for free tuning"
+    event_risk:
+      value: 0.05
+      reason: "neutral fallback signal; not eligible for free tuning"
+  capped_weights:
+    valuation_risk:
+      min: 0.05
+      max: 0.15
+      step: 0.05
+      reason: "limited or fallback signal; capped until stronger data source exists"
+
+constraints:
+  total_weight_sum: 1.0
+  normalize_after_search: true
+  min_single_weight: 0.05
+  max_single_weight: 0.55
+  max_total_l1_distance_from_baseline: 0.50
+  forbid_negative_weights: true
+  forbid_free_fallback_weight_tuning: true
+
+walk_forward:
+  enabled: true
+  train_window_days: 756
+  validation_window_days: 126
+  step_days: 63
+  min_history_days: 1008
+
+search:
+  method: "restricted_grid_search"
+  max_candidates: 240
+  candidate_selection: "conservative_l1_nearest_grid_cap"
+  rationale: >
+    The v0.1 implementation keeps the full configured grid deterministic but
+    evaluates the nearest-to-baseline subset first so local advisory runs finish
+    without introducing a stochastic optimizer.
+
+objective:
+  ranking_weights:
+    sharpe_improvement: 0.35
+    max_drawdown_improvement: 0.25
+    annualized_return_improvement: 0.20
+    signal_transmission_improvement: 0.10
+    turnover_penalty: 0.10
+
+candidate_status_policy:
+  rationale: >
+    These pilot thresholds classify advisory shadow candidates only. They do
+    not authorize production promotion and must be revisited when signal
+    quality leaves LIMITED.
+  watch_objective_score_min: 0.0
+  shadow_candidate_min_sharpe_delta: 0.05
+  shadow_candidate_min_annualized_return_delta: 0.01
+  shadow_candidate_min_non_worse_ratio: 0.60
+
+guardrails:
+  max_drawdown_worse_limit: 0.02
+  annualized_return_underperformance_limit: 0.01
+  turnover_relative_increase_limit: 0.30
+  min_non_worse_walk_forward_ratio: 0.60
+  min_validation_windows: 3
+
+safety:
+  production_effect: none
+  manual_review_required: true
+  auto_promotion: false
+  forbid_production_write: true
+  forbid_auto_candidate_promotion: true
+
+output:
+  weight_tuning_dir: "artifacts/weight_tuning"
+  report_alias_dir: "outputs/reports"

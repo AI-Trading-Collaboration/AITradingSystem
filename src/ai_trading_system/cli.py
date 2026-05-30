@@ -760,6 +760,16 @@ from ai_trading_system.trading_engine.parameters import (
     DEFAULT_SIGNAL_ABLATION_CONFIG_PATH,
     run_shadow_parameter_backtest,
 )
+from ai_trading_system.trading_engine.parameters.weight_tuning import (
+    DEFAULT_WEIGHT_TUNING_CONFIG_PATH,
+    latest_weight_tuning_path,
+    load_weight_tuning_payload,
+    render_weight_tuning_explanation,
+    run_weight_tuning,
+    validate_weight_tuning_payload,
+    weight_tuning_payload_date,
+    write_weight_tuning_report_alias,
+)
 from ai_trading_system.trading_engine.portfolio_candidate_review import (
     DEFAULT_PORTFOLIO_CANDIDATE_REVIEW_CONFIG_PATH,
     decide_portfolio_candidate,
@@ -8018,6 +8028,156 @@ def validate_shadow_backtest_command(
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
 
 
+@parameters_app.command(
+    "tune-weights",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def parameters_tune_weights_command(
+    ctx: typer.Context,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用 latest valid backtest input manifest 对应日期。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="调参日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="weight tuning 配置路径。"),
+    ] = DEFAULT_WEIGHT_TUNING_CONFIG_PATH,
+    portfolio_profile: Annotated[
+        str | None,
+        typer.Option("--portfolio-profile", help="portfolio candidate profile 名称。"),
+    ] = None,
+    signals: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--signals",
+            help="指定可调 signal，可重复；也兼容 `--signals a b c`。",
+        ),
+    ] = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="写入 outputs/dry_runs/weight_tuning，不写正式 artifacts。"),
+    ] = False,
+) -> None:
+    """运行 TRADING-059 restricted shadow signal weight tuning。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    requested_signals = tuple([*(signals or []), *[str(item) for item in ctx.args]])
+    try:
+        run = run_weight_tuning(
+            as_of=run_date,
+            config_path=config_path,
+            portfolio_profile=portfolio_profile,
+            signals=requested_signals or None,
+            dry_run=dry_run,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    metadata = run.payload.get("metadata", {})
+    recommended = run.payload.get("recommended_candidate", {})
+    search = run.payload.get("search", {})
+    status = metadata.get("status", "UNKNOWN") if isinstance(metadata, dict) else "UNKNOWN"
+    candidate_status = (
+        recommended.get("status", "UNKNOWN") if isinstance(recommended, dict) else "UNKNOWN"
+    )
+    style = "green" if status == "OK" else "yellow" if status == "LIMITED" else "red"
+    console.print(f"[{style}]Restricted weight tuning：{status}[/{style}]")
+    console.print(
+        f"as_of={run.as_of.isoformat()}；candidate_status={candidate_status}；"
+        f"candidates_evaluated={search.get('candidates_evaluated', 0)}"
+    )
+    console.print(f"JSON：{run.json_path}")
+    console.print(f"Markdown：{run.markdown_path}")
+    console.print(f"Recommended shadow weights：{run.recommended_weights_path}")
+    console.print(f"Candidates：{run.candidates_path}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@parameters_app.command("validate-weight-tuning")
+def validate_weight_tuning_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验最新正式 weight tuning JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="校验日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 weight_tuning_summary.json 路径。"),
+    ] = None,
+) -> None:
+    """校验 weight tuning JSON schema 和只读安全字段。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    source_path = input_path or _resolve_weight_tuning_path(latest=latest, as_of=as_of)
+    payload = load_weight_tuning_payload(source_path)
+    issues = validate_weight_tuning_payload(payload)
+    if issues:
+        console.print("[red]Weight tuning validation：FAIL[/red]")
+        for issue in issues:
+            console.print(f"- {issue}")
+        raise typer.Exit(code=1)
+    metadata = payload.get("metadata", {})
+    recommended = payload.get("recommended_candidate", {})
+    safety = payload.get("safety", {})
+    status = metadata.get("status", "UNKNOWN") if isinstance(metadata, dict) else "UNKNOWN"
+    candidate_status = (
+        recommended.get("status", "UNKNOWN") if isinstance(recommended, dict) else "UNKNOWN"
+    )
+    fallback_free = (
+        safety.get("fallback_signals_free_tuned", "UNKNOWN")
+        if isinstance(safety, dict)
+        else "UNKNOWN"
+    )
+    production_modified = (
+        safety.get("production_config_modified", "UNKNOWN")
+        if isinstance(safety, dict)
+        else "UNKNOWN"
+    )
+    console.print("[green]Weight tuning validation：PASS[/green]")
+    console.print(f"JSON：{source_path}")
+    console.print(
+        f"status={status}；weight_candidate_status={candidate_status}；"
+        f"fallback_signals_free_tuned={str(fallback_free).lower()}；"
+        f"production_config_modified={str(production_modified).lower()}"
+    )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@parameters_app.command("explain-weight-tuning")
+def explain_weight_tuning_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="解释最新正式 weight tuning JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="解释日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 weight_tuning_summary.json 路径。"),
+    ] = None,
+) -> None:
+    """输出 weight tuning 推荐、guardrail 和 promotion 影响摘要。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    source_path = input_path or _resolve_weight_tuning_path(latest=latest, as_of=as_of)
+    payload = load_weight_tuning_payload(source_path)
+    issues = validate_weight_tuning_payload(payload)
+    if issues:
+        for issue in issues:
+            console.print(f"[red]- {issue}[/red]")
+        raise typer.Exit(code=1)
+    console.print(render_weight_tuning_explanation(payload))
+
+
 @reports_app.command("investment-review")
 def investment_periodic_review_command(
     period: Annotated[
@@ -8653,6 +8813,59 @@ def portfolio_tracking_review_report_command(
         console.print(f"tracking_days={candidate.get('tracking_days', 0)}")
     if isinstance(recommendation, dict):
         console.print(f"recommendation={recommendation.get('status', 'UNKNOWN')}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{markdown_path}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@reports_app.command("weight-tuning")
+def weight_tuning_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新正式 weight tuning summary。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="报告日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    source_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 weight_tuning_summary.json 路径。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 alias 输出目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """从正式 artifact 生成 weight tuning 报告 alias。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    json_source = source_path or _resolve_weight_tuning_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_weight_tuning_payload(json_source)
+    issues = validate_weight_tuning_payload(payload)
+    if issues:
+        raise typer.BadParameter("weight tuning JSON 校验失败：" + "; ".join(issues))
+    try:
+        report_date = weight_tuning_payload_date(payload, json_source)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, markdown_path = write_weight_tuning_report_alias(
+        payload,
+        reports_dir,
+        report_date,
+    )
+    recommended = payload.get("recommended_candidate", {}) if isinstance(payload, dict) else {}
+    search = payload.get("search", {}) if isinstance(payload, dict) else {}
+    console.print("[green]Weight tuning report：OK[/green]")
+    if isinstance(recommended, dict):
+        console.print(f"weight_candidate_status={recommended.get('status', 'UNKNOWN')}")
+    if isinstance(search, dict):
+        console.print(f"candidates_evaluated={search.get('candidates_evaluated', 0)}")
     console.print(f"JSON：{json_path}")
     console.print(f"Markdown：{markdown_path}")
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
@@ -16152,6 +16365,16 @@ def _resolve_portfolio_tracking_review_path(*, latest: bool, as_of: str | None) 
             raise typer.BadParameter(f"未找到 portfolio tracking review artifact：{root}")
         return latest_path
     return root / _parse_date(as_of).isoformat() / "portfolio_tracking_review_summary.json"
+
+
+def _resolve_weight_tuning_path(*, latest: bool, as_of: str | None) -> Path:
+    root = PROJECT_ROOT / "artifacts" / "weight_tuning"
+    if latest or as_of is None:
+        latest_path = latest_weight_tuning_path(root)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 weight tuning artifact：{root}")
+        return latest_path
+    return root / _parse_date(as_of).isoformat() / "weight_tuning_summary.json"
 
 
 def _print_portfolio_tracking_window_progress(

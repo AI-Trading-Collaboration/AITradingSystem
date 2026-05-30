@@ -491,6 +491,26 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: weight_tuning
+    title: Restricted Weight Tuning
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits reports weight-tuning --latest
+    artifact_globs:
+      - artifacts/weight_tuning/*/weight_tuning_summary.json
+      - artifacts/weight_tuning/*/weight_tuning_summary.md
+      - artifacts/weight_tuning/*/recommended_shadow_weights.yaml
+      - artifacts/weight_tuning/*/weight_tuning_candidates.json
+      - outputs/reports/weight_tuning_*.json
+      - outputs/reports/weight_tuning_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Restricted weight tuning is an advisory shadow candidate review artifact and should be refreshed after material signal snapshot, data gate, or portfolio profile changes.
+    owner_action: review_shadow_weight_candidate_before_any_parameter_governance_discussion
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: market_data_freshness
     title: Market Data Freshness
     group: data_quality

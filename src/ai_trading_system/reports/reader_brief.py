@@ -944,6 +944,24 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "portfolio_tracking_review_excess_return",
                         parameter_shadow.get("portfolio_tracking_review_excess_return"),
                     ),
+                    ("weight_tuning_status", parameter_shadow.get("weight_tuning_status")),
+                    ("weight_tuning_summary", parameter_shadow.get("weight_tuning_summary")),
+                    (
+                        "weight_tuning_candidate_status",
+                        parameter_shadow.get("weight_tuning_candidate_status"),
+                    ),
+                    (
+                        "weight_tuning_candidates_evaluated",
+                        parameter_shadow.get("weight_tuning_candidates_evaluated"),
+                    ),
+                    (
+                        "weight_tuning_guardrail_status",
+                        parameter_shadow.get("weight_tuning_guardrail_status"),
+                    ),
+                    (
+                        "weight_tuning_non_worse_walk_forward_ratio",
+                        parameter_shadow.get("weight_tuning_non_worse_walk_forward_ratio"),
+                    ),
                     ("manual_review_required", parameter_shadow.get("manual_review_required")),
                     ("risk", parameter_shadow.get("risk")),
                     ("diagnostic_report", parameter_shadow.get("diagnostic_report")),
@@ -1808,6 +1826,7 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
     market_refresh_summary = _market_data_refresh_review_summary(as_of)
     candidate_tracking_summary = _portfolio_candidate_tracking_summary(as_of)
     tracking_review_summary = _portfolio_tracking_review_summary(as_of)
+    weight_tuning_summary = _weight_tuning_review_summary(as_of)
     path = (
         PROJECT_ROOT
         / "artifacts"
@@ -2005,6 +2024,24 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
                 "excess_return",
                 "",
             ),
+            "weight_tuning_status": weight_tuning_summary.get("status", "MISSING"),
+            "weight_tuning_summary": weight_tuning_summary.get("summary_sentence", ""),
+            "weight_tuning_candidate_status": weight_tuning_summary.get(
+                "candidate_status",
+                "MISSING",
+            ),
+            "weight_tuning_candidates_evaluated": weight_tuning_summary.get(
+                "candidates_evaluated",
+                0,
+            ),
+            "weight_tuning_guardrail_status": weight_tuning_summary.get(
+                "guardrail_status",
+                "MISSING",
+            ),
+            "weight_tuning_non_worse_walk_forward_ratio": weight_tuning_summary.get(
+                "non_worse_walk_forward_ratio",
+                "",
+            ),
             "manual_review_required": True,
             "risk": "Shadow parameter backtest artifact missing; Reader Brief does not run it.",
             "diagnostic_report": str(diagnostic_path) if diagnostic_path.exists() else "",
@@ -2189,6 +2226,24 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
         ),
         "portfolio_tracking_review_excess_return": tracking_review_summary.get(
             "excess_return",
+            "",
+        ),
+        "weight_tuning_status": weight_tuning_summary.get("status", "MISSING"),
+        "weight_tuning_summary": weight_tuning_summary.get("summary_sentence", ""),
+        "weight_tuning_candidate_status": weight_tuning_summary.get(
+            "candidate_status",
+            "MISSING",
+        ),
+        "weight_tuning_candidates_evaluated": weight_tuning_summary.get(
+            "candidates_evaluated",
+            0,
+        ),
+        "weight_tuning_guardrail_status": weight_tuning_summary.get(
+            "guardrail_status",
+            "MISSING",
+        ),
+        "weight_tuning_non_worse_walk_forward_ratio": weight_tuning_summary.get(
+            "non_worse_walk_forward_ratio",
             "",
         ),
         "manual_review_required": metadata.get("manual_review_required") is True,
@@ -2802,6 +2857,79 @@ def _portfolio_tracking_review_summary(as_of: date) -> dict[str, Any]:
     }
 
 
+def _weight_tuning_review_summary(as_of: date) -> dict[str, Any]:
+    path = _latest_weight_tuning_path(as_of)
+    if path is None:
+        return {
+            "status": "MISSING",
+            "candidate_status": "MISSING",
+            "candidates_evaluated": 0,
+            "guardrail_status": "MISSING",
+            "non_worse_walk_forward_ratio": "",
+            "summary_sentence": (
+                "Restricted backtest weight tuning is missing; Reader Brief does not run "
+                "signal weight tuning."
+            ),
+        }
+    payload = _read_optional_json(path)
+    if not payload:
+        return {
+            "status": "MISSING",
+            "candidate_status": "MISSING",
+            "candidates_evaluated": 0,
+            "guardrail_status": "MISSING",
+            "non_worse_walk_forward_ratio": "",
+            "summary_sentence": (
+                "Restricted backtest weight tuning is unreadable; production parameters "
+                "remain unchanged."
+            ),
+        }
+    metadata = _mapping(payload.get("metadata"))
+    search = _mapping(payload.get("search"))
+    recommended = _mapping(payload.get("recommended_candidate"))
+    guardrails = _mapping(recommended.get("guardrails"))
+    relative = _mapping(recommended.get("relative_metrics"))
+    status = _text(metadata.get("status"), "UNKNOWN")
+    candidate_status = _text(recommended.get("status"), "UNKNOWN")
+    candidates_evaluated = search.get("candidates_evaluated", 0)
+    guardrail_status = _text(guardrails.get("status"), "UNKNOWN")
+    non_worse_ratio = relative.get("non_worse_walk_forward_ratio", "")
+    if candidate_status in {"watch", "shadow_candidate_only"}:
+        sentence = (
+            "Restricted backtest weight tuning produced a shadow-only candidate that "
+            "improves selected walk-forward metrics versus the current baseline. The "
+            "candidate remains advisory because signal quality is LIMITED and fallback "
+            "signals are not eligible for production tuning."
+        )
+    elif status == "NO_CANDIDATE" or candidate_status == "rejected":
+        sentence = (
+            "Restricted backtest weight tuning did not find a candidate that passed "
+            "guardrails. The current baseline remains the reference configuration."
+        )
+    elif status == "INSUFFICIENT_DATA" or candidate_status in {
+        "needs_more_data",
+        "insufficient_data",
+    }:
+        sentence = (
+            "Restricted backtest weight tuning could not run because data readiness or "
+            "signal snapshot requirements were not met."
+        )
+    else:
+        sentence = (
+            f"Restricted backtest weight tuning status is `{status}` with candidate "
+            f"`{candidate_status}`. Production parameters remain unchanged."
+        )
+    return {
+        "status": status,
+        "candidate_status": candidate_status,
+        "candidates_evaluated": candidates_evaluated,
+        "guardrail_status": guardrail_status,
+        "non_worse_walk_forward_ratio": non_worse_ratio,
+        "source_artifact": str(path),
+        "summary_sentence": sentence,
+    }
+
+
 def _market_data_freshness_review_summary(as_of: date) -> dict[str, Any]:
     path = _latest_market_data_freshness_path(as_of)
     if path is None:
@@ -3057,6 +3185,21 @@ def _latest_portfolio_tracking_review_path(as_of: date) -> Path | None:
     root = PROJECT_ROOT / "artifacts" / "portfolio_tracking_reviews"
     candidates: list[tuple[date, Path]] = []
     for path in root.glob("*/portfolio_tracking_review_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _latest_weight_tuning_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "weight_tuning"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/weight_tuning_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:

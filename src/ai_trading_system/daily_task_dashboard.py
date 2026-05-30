@@ -214,6 +214,7 @@ def build_daily_task_dashboard_payload(
         "portfolio_candidate_review_summary": _portfolio_candidate_review_summary(report),
         "portfolio_candidate_tracking_summary": _portfolio_candidate_tracking_summary(report),
         "portfolio_tracking_review_summary": _portfolio_tracking_review_summary(report),
+        "weight_tuning_summary": _weight_tuning_summary(report),
         "weight_adjustment_candidates": _weight_adjustment_candidates_summary(report),
         "weight_candidate_evaluation": _weight_candidate_evaluation_summary(report),
         "weight_promotion_gate": _weight_promotion_gate_summary(report),
@@ -377,6 +378,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_portfolio_candidate_review_summary(report),
             _render_portfolio_candidate_tracking_summary(report),
             _render_portfolio_tracking_review_summary(report),
+            _render_weight_tuning_summary(report),
             _render_weight_adjustment_candidates(report),
             _render_weight_candidate_evaluation(report),
             _render_weight_promotion_gate(report),
@@ -2984,6 +2986,112 @@ def _latest_portfolio_tracking_review_path(report: DailyTaskDashboardReport) -> 
     root = report.project_root / "artifacts" / "portfolio_tracking_reviews"
     candidates: list[tuple[date, Path]] = []
     for path in root.glob("*/portfolio_tracking_review_summary.json"):
+        try:
+            as_of = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if as_of <= report.as_of:
+            candidates.append((as_of, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _weight_tuning_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_weight_tuning_path(report)
+    if path is None:
+        missing_path = (
+            report.project_root
+            / "artifacts"
+            / "weight_tuning"
+            / report.as_of.isoformat()
+            / "weight_tuning_summary.json"
+        )
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(missing_path),
+            "href": _report_href(missing_path, report.reports_dir),
+            "markdown_href": "",
+            "portfolio_profile": "",
+            "candidates_evaluated": 0,
+            "recommended_status": "MISSING",
+            "baseline_sharpe": "",
+            "candidate_sharpe": "",
+            "baseline_max_drawdown": "",
+            "candidate_max_drawdown": "",
+            "non_worse_walk_forward_ratio": "",
+            "guardrail_status": "MISSING",
+            "production_effect": ProductionEffect.NONE.value,
+            "risk": "Weight tuning summary 缺失；dashboard 不运行调参。",
+        }
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "weight_tuning":
+        return {
+            "status": "UNREADABLE",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "markdown_href": "",
+            "portfolio_profile": "",
+            "candidates_evaluated": 0,
+            "recommended_status": "UNREADABLE",
+            "baseline_sharpe": "",
+            "candidate_sharpe": "",
+            "baseline_max_drawdown": "",
+            "candidate_max_drawdown": "",
+            "non_worse_walk_forward_ratio": "",
+            "guardrail_status": "UNREADABLE",
+            "production_effect": ProductionEffect.NONE.value,
+            "risk": "Weight tuning summary JSON 不可读；dashboard 不运行调参。",
+        }
+    metadata = _mapping_value(payload, "metadata")
+    inputs = _mapping_value(payload, "inputs")
+    search = _mapping_value(payload, "search")
+    baseline = _mapping_value(payload, "baseline")
+    baseline_metrics = _mapping_value(baseline, "metrics")
+    recommended = _mapping_value(payload, "recommended_candidate")
+    candidate_metrics = _mapping_value(recommended, "metrics")
+    relative = _mapping_value(recommended, "relative_metrics")
+    guardrails = _mapping_value(recommended, "guardrails")
+    safety = _mapping_value(payload, "safety")
+    risks: list[str] = []
+    if metadata.get("production_effect") != ProductionEffect.NONE.value:
+        risks.append("weight tuning production_effect 不是 none。")
+    if metadata.get("auto_promotion") is not False:
+        risks.append("weight tuning auto_promotion 不是 false。")
+    if safety.get("production_write_allowed") is not False:
+        risks.append("weight tuning 不应允许写 production。")
+    if safety.get("fallback_signals_free_tuned") is not False:
+        risks.append("fallback signals 不应自由调参。")
+    markdown_path = path.with_suffix(".md")
+    return {
+        "status": metadata.get("status", "UNKNOWN"),
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "markdown_href": _report_href(markdown_path, report.reports_dir)
+        if markdown_path.exists()
+        else "",
+        "portfolio_profile": inputs.get("portfolio_profile", ""),
+        "candidates_evaluated": search.get("candidates_evaluated", 0),
+        "recommended_status": recommended.get("status", "UNKNOWN"),
+        "baseline_sharpe": baseline_metrics.get("sharpe_ratio", ""),
+        "candidate_sharpe": candidate_metrics.get("sharpe_ratio", ""),
+        "baseline_max_drawdown": baseline_metrics.get("max_drawdown", ""),
+        "candidate_max_drawdown": candidate_metrics.get("max_drawdown", ""),
+        "non_worse_walk_forward_ratio": relative.get("non_worse_walk_forward_ratio", ""),
+        "guardrail_status": guardrails.get("status", "UNKNOWN"),
+        "production_effect": metadata.get("production_effect", ProductionEffect.NONE.value),
+        "risk": "；".join(risks)
+        or "Weight tuning 只生成 shadow-only advisory artifact，不写 production。",
+    }
+
+
+def _latest_weight_tuning_path(report: DailyTaskDashboardReport) -> Path | None:
+    root = report.project_root / "artifacts" / "weight_tuning"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/weight_tuning_summary.json"):
         try:
             as_of = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -10783,6 +10891,67 @@ def _render_portfolio_tracking_review_summary(report: DailyTaskDashboardReport) 
             _summary_item("excess return", summary.get("excess_return", "")),
             _summary_item("drawdown delta", summary.get("drawdown_delta", "")),
             _summary_item("turnover delta", summary.get("turnover_delta", "")),
+            _summary_item("guardrail", summary.get("guardrail_status", "")),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            markdown_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_weight_tuning_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _weight_tuning_summary(report)
+    href = _string_value(summary.get("href"))
+    markdown_href = _string_value(summary.get("markdown_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(href)}"><span>Weight Tuning Summary</span>'
+        f"<small>{_text(summary.get('recommended_status', 'UNKNOWN'))}</small></a>"
+        if summary.get("exists")
+        else '<span class="report-link missing"><span>Weight Tuning Summary</span>'
+        "<small>MISSING</small></span>"
+    )
+    markdown_link = (
+        '<a class="report-link" '
+        f'href="{_text(markdown_href)}"><span>Weight Tuning Markdown</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if markdown_href
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="weight-tuning-summary-title">',
+            '<div class="section-head">',
+            '<h2 id="weight-tuning-summary-title">Weight Tuning Summary</h2>',
+            (
+                "<p>TRADING-059 restricted signal weight tuning；dashboard 只读 "
+                "shadow-only artifact，不修改 production 参数或 promotion gate。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("latest status", summary.get("status", "MISSING")),
+            _summary_item("portfolio profile", summary.get("portfolio_profile", "")),
+            _summary_item("candidates evaluated", summary.get("candidates_evaluated", 0)),
+            _summary_item("recommended status", summary.get("recommended_status", "MISSING")),
+            _summary_item("baseline Sharpe", summary.get("baseline_sharpe", "")),
+            _summary_item("candidate Sharpe", summary.get("candidate_sharpe", "")),
+            _summary_item("baseline max drawdown", summary.get("baseline_max_drawdown", "")),
+            _summary_item("candidate max drawdown", summary.get("candidate_max_drawdown", "")),
+            _summary_item(
+                "non-worse WF ratio",
+                summary.get("non_worse_walk_forward_ratio", ""),
+            ),
             _summary_item("guardrail", summary.get("guardrail_status", "")),
             _summary_item(
                 "production_effect",

@@ -676,6 +676,9 @@ def _promotion_decision_payload(
     tracking_review_path = _latest_portfolio_tracking_review_supporting_path(as_of)
     if tracking_review_path is not None:
         supporting["portfolio_tracking_review"] = str(tracking_review_path)
+    weight_tuning_path = _latest_weight_tuning_supporting_path(as_of)
+    if weight_tuning_path is not None:
+        supporting["weight_tuning"] = str(weight_tuning_path)
     freshness_path = _latest_market_data_freshness_supporting_path(as_of)
     if freshness_path is not None:
         supporting["market_data_freshness"] = str(freshness_path)
@@ -804,6 +807,33 @@ def _promotion_decision_payload(
                 + review_reason
             )
             reason = str(payload.get("reason") or "")
+    weight_tuning = _weight_tuning_details(weight_tuning_path)
+    weight_status = str(weight_tuning.get("status") or "")
+    if weight_status:
+        payload["weight_tuning_status"] = weight_status
+        payload["weight_tuning_candidate_status"] = weight_tuning.get(
+            "candidate_status",
+            "",
+        )
+        if "weight tuning" not in reason.lower():
+            if weight_status == "NO_CANDIDATE":
+                tuning_reason = (
+                    "Restricted weight tuning did not find a candidate that passed "
+                    "guardrails. Production parameters remain unchanged."
+                )
+            elif weight_tuning.get("candidate_status") in {"watch", "shadow_candidate_only"}:
+                tuning_reason = (
+                    "Restricted weight tuning produced a shadow-only candidate, but "
+                    "production promotion remains disabled because signal quality is "
+                    "LIMITED and fallback signals are not eligible for production tuning."
+                )
+            else:
+                tuning_reason = (
+                    f"Restricted weight tuning status is {weight_status}; it is "
+                    "supporting evidence only and cannot enable production promotion."
+                )
+            payload["reason"] = reason.rstrip(".") + ". " + tuning_reason
+            reason = str(payload.get("reason") or "")
     freshness_status = _market_data_freshness_status(freshness_path)
     if freshness_status and "market data freshness" not in reason.lower():
         payload["reason"] = (
@@ -921,6 +951,21 @@ def _latest_portfolio_tracking_review_supporting_path(as_of: date) -> Path | Non
     return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
 
 
+def _latest_weight_tuning_supporting_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "weight_tuning"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/weight_tuning_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
 def _latest_market_data_freshness_supporting_path(as_of: date) -> Path | None:
     root = PROJECT_ROOT / "artifacts" / "data_freshness"
     candidates: list[tuple[date, Path]] = []
@@ -1015,6 +1060,27 @@ def _portfolio_tracking_review_details(path: Path | None) -> dict[str, object]:
         "stage": str(tracking_window.get("stage") or ""),
         "min_days_for_short_review": tracking_window.get("min_days_for_short_review", 5),
         "min_days_for_extended_review": tracking_window.get("min_days_for_extended_review", 20),
+    }
+
+
+def _weight_tuning_details(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    metadata = payload.get("metadata") if isinstance(payload.get("metadata"), dict) else {}
+    recommended = (
+        payload.get("recommended_candidate")
+        if isinstance(payload.get("recommended_candidate"), dict)
+        else {}
+    )
+    return {
+        "status": str(metadata.get("status") or ""),
+        "candidate_status": str(recommended.get("status") or ""),
     }
 
 
