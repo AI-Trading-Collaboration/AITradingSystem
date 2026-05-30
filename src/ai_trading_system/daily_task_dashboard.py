@@ -213,6 +213,7 @@ def build_daily_task_dashboard_payload(
         "portfolio_candidates_summary": _portfolio_candidates_summary(report),
         "portfolio_candidate_review_summary": _portfolio_candidate_review_summary(report),
         "portfolio_candidate_tracking_summary": _portfolio_candidate_tracking_summary(report),
+        "portfolio_tracking_review_summary": _portfolio_tracking_review_summary(report),
         "weight_adjustment_candidates": _weight_adjustment_candidates_summary(report),
         "weight_candidate_evaluation": _weight_candidate_evaluation_summary(report),
         "weight_promotion_gate": _weight_promotion_gate_summary(report),
@@ -375,6 +376,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_portfolio_candidates_summary(report),
             _render_portfolio_candidate_review_summary(report),
             _render_portfolio_candidate_tracking_summary(report),
+            _render_portfolio_tracking_review_summary(report),
             _render_weight_adjustment_candidates(report),
             _render_weight_candidate_evaluation(report),
             _render_weight_promotion_gate(report),
@@ -2867,6 +2869,99 @@ def _latest_portfolio_candidate_tracking_path(report: DailyTaskDashboardReport) 
     root = report.project_root / "artifacts" / "portfolio_candidate_tracking"
     candidates: list[tuple[date, Path]] = []
     for path in root.glob("*/portfolio_candidate_tracking_summary.json"):
+        try:
+            as_of = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if as_of <= report.as_of:
+            candidates.append((as_of, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _portfolio_tracking_review_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    suffix = report.as_of.isoformat()
+    path = (
+        report.project_root
+        / "artifacts"
+        / "portfolio_tracking_reviews"
+        / suffix
+        / "portfolio_tracking_review_summary.json"
+    )
+    latest_path = _latest_portfolio_tracking_review_path(report)
+    if latest_path is not None:
+        path = latest_path
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "portfolio_tracking_review":
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "markdown_href": "",
+            "candidate_profile": "",
+            "tracking_days": 0,
+            "freshness_status": "MISSING",
+            "baseline_cumulative_return": "",
+            "candidate_cumulative_return": "",
+            "excess_return": "",
+            "drawdown_delta": "",
+            "turnover_delta": "",
+            "guardrail_status": "MISSING",
+            "recommendation": "MISSING",
+            "production_effect": ProductionEffect.NONE.value,
+            "risk": "Portfolio tracking review 缺失；dashboard 不运行 performance review。",
+        }
+    metadata = _mapping_value(payload, "metadata")
+    candidate = _mapping_value(payload, "candidate")
+    readiness = _mapping_value(payload, "data_readiness")
+    performance = _mapping_value(payload, "performance_review")
+    baseline = _mapping_value(performance, "baseline")
+    candidate_perf = _mapping_value(performance, "candidate")
+    relative = _mapping_value(performance, "relative_performance")
+    guardrails = _mapping_value(payload, "risk_guardrails")
+    recommendation = _mapping_value(payload, "recommendation")
+    promotion = _mapping_value(payload, "promotion_impact")
+    safety = _mapping_value(payload, "safety")
+    risks: list[str] = []
+    if metadata.get("production_effect") != ProductionEffect.NONE.value:
+        risks.append("portfolio tracking review production_effect 不是 none。")
+    if metadata.get("auto_promotion") is not False:
+        risks.append("portfolio tracking review auto_promotion 不是 false。")
+    if promotion.get("can_support_candidate_promotion") is not False:
+        risks.append("tracking review 不应支持 candidate promotion。")
+    if safety.get("production_write_allowed") is not False:
+        risks.append("tracking review 不应允许写 production。")
+    markdown_path = path.with_suffix(".md")
+    return {
+        "status": metadata.get("status", "UNKNOWN"),
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "markdown_href": _report_href(markdown_path, report.reports_dir)
+        if markdown_path.exists()
+        else "",
+        "candidate_profile": candidate.get("profile_name", ""),
+        "tracking_days": candidate.get("tracking_days", 0),
+        "freshness_status": readiness.get("freshness_status", "MISSING"),
+        "baseline_cumulative_return": baseline.get("cumulative_return", ""),
+        "candidate_cumulative_return": candidate_perf.get("cumulative_return", ""),
+        "excess_return": relative.get("excess_return", ""),
+        "drawdown_delta": relative.get("drawdown_delta", ""),
+        "turnover_delta": relative.get("turnover_delta", ""),
+        "guardrail_status": guardrails.get("status", "UNKNOWN"),
+        "recommendation": recommendation.get("status", "UNKNOWN"),
+        "production_effect": metadata.get("production_effect", ProductionEffect.NONE.value),
+        "risk": "；".join(risks)
+        or "Portfolio tracking review 只读展示；recommendation 不代表 production approval。",
+    }
+
+
+def _latest_portfolio_tracking_review_path(report: DailyTaskDashboardReport) -> Path | None:
+    root = report.project_root / "artifacts" / "portfolio_tracking_reviews"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/portfolio_tracking_review_summary.json"):
         try:
             as_of = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -10583,6 +10678,74 @@ def _render_portfolio_candidate_tracking_summary(report: DailyTaskDashboardRepor
                 '<p class="muted"><strong>Promotion impact：</strong>'
                 f"{_text(summary.get('promotion_impact', ''))}</p>"
             ),
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            markdown_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_portfolio_tracking_review_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _portfolio_tracking_review_summary(report)
+    href = _string_value(summary.get("href"))
+    markdown_href = _string_value(summary.get("markdown_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(href)}"><span>Portfolio Tracking Review</span>'
+        f"<small>{_text(summary.get('recommendation', 'UNKNOWN'))}</small></a>"
+        if summary.get("exists")
+        else '<span class="report-link missing"><span>Portfolio Tracking Review</span>'
+        "<small>MISSING</small></span>"
+    )
+    markdown_link = (
+        '<a class="report-link" '
+        f'href="{_text(markdown_href)}"><span>Tracking Review Markdown</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if markdown_href
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="portfolio-tracking-review-summary-title">',
+            '<div class="section-head">',
+            (
+                '<h2 id="portfolio-tracking-review-summary-title">'
+                "Portfolio Tracking Review</h2>"
+            ),
+            (
+                "<p>active shadow candidate 的 rolling performance review；dashboard "
+                "只读 review artifact，不改变 production 参数或 promotion gate。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("status", summary.get("status", "MISSING")),
+            _summary_item("recommendation", summary.get("recommendation", "MISSING")),
+            _summary_item("candidate profile", summary.get("candidate_profile", "")),
+            _summary_item("tracking days", summary.get("tracking_days", 0)),
+            _summary_item("freshness", summary.get("freshness_status", "MISSING")),
+            _summary_item(
+                "baseline cum return",
+                summary.get("baseline_cumulative_return", ""),
+            ),
+            _summary_item(
+                "candidate cum return",
+                summary.get("candidate_cumulative_return", ""),
+            ),
+            _summary_item("excess return", summary.get("excess_return", "")),
+            _summary_item("drawdown delta", summary.get("drawdown_delta", "")),
+            _summary_item("turnover delta", summary.get("turnover_delta", "")),
+            _summary_item("guardrail", summary.get("guardrail_status", "")),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
             (
                 '<p class="risk-line"><strong>重点风险：</strong>'
                 f"{_text(summary.get('risk', ''))}</p>"

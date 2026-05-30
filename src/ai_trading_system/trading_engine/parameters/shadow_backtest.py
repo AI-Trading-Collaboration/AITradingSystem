@@ -673,6 +673,9 @@ def _promotion_decision_payload(
     tracking_path = _latest_portfolio_candidate_tracking_supporting_path(as_of)
     if tracking_path is not None:
         supporting["portfolio_candidate_tracking"] = str(tracking_path)
+    tracking_review_path = _latest_portfolio_tracking_review_supporting_path(as_of)
+    if tracking_review_path is not None:
+        supporting["portfolio_tracking_review"] = str(tracking_review_path)
     freshness_path = _latest_market_data_freshness_supporting_path(as_of)
     if freshness_path is not None:
         supporting["market_data_freshness"] = str(freshness_path)
@@ -756,6 +759,17 @@ def _promotion_decision_payload(
                 reason.rstrip(".")
                 + ". Portfolio candidate tracking is blocked, so it cannot support "
                 "production promotion."
+            )
+            reason = str(payload.get("reason") or "")
+    tracking_review_status = _portfolio_tracking_review_recommendation(tracking_review_path)
+    if tracking_review_status:
+        payload["portfolio_tracking_review_recommendation"] = tracking_review_status
+        if "tracking review" not in reason.lower():
+            payload["reason"] = (
+                reason.rstrip(".")
+                + ". Shadow candidate tracking review is "
+                f"{tracking_review_status}; this review is advisory only and cannot "
+                "enable production promotion."
             )
             reason = str(payload.get("reason") or "")
     freshness_status = _market_data_freshness_status(freshness_path)
@@ -860,6 +874,21 @@ def _latest_portfolio_candidate_tracking_supporting_path(as_of: date) -> Path | 
     return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
 
 
+def _latest_portfolio_tracking_review_supporting_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "portfolio_tracking_reviews"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/portfolio_tracking_review_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
 def _latest_market_data_freshness_supporting_path(as_of: date) -> Path | None:
     root = PROJECT_ROOT / "artifacts" / "data_freshness"
     candidates: list[tuple[date, Path]] = []
@@ -914,6 +943,19 @@ def _portfolio_candidate_tracking_status(path: Path | None) -> str:
     if not isinstance(candidate, dict):
         return ""
     return str(candidate.get("tracking_status") or "")
+
+
+def _portfolio_tracking_review_recommendation(path: Path | None) -> str:
+    if path is None:
+        return ""
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return ""
+    recommendation = payload.get("recommendation") if isinstance(payload, dict) else None
+    if not isinstance(recommendation, dict):
+        return ""
+    return str(recommendation.get("status") or "")
 
 
 def _market_data_freshness_status(path: Path | None) -> str:

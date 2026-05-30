@@ -1,0 +1,67 @@
+version: "portfolio_tracking_review_v0_1"
+owner: "system"
+status: "pilot_baseline"
+production_effect: "none"
+manual_review_required: true
+auto_promotion: false
+observe_only: true
+rationale: >
+  Review active shadow candidate tracking performance after TRADING-057A without
+  changing production parameters, candidate promotion gates, or data quality
+  requirements.
+intended_effect: >
+  Compare the active shadow candidate against baseline over rolling tracking
+  windows, expose signal transmission and risk guardrail behavior, and produce an
+  advisory-only recommendation for continued shadow observation.
+validation_evidence: >
+  TRADING-058 tests cover missing active state, insufficient data,
+  continue_tracking, extended review eligibility, retire recommendation,
+  freshness/data gate blocking, report alias, Dashboard, Reader Brief, shadow
+  backtest references, and safety fields.
+review_condition: >
+  Revisit after at least 20 tracked trading days before discussing any extended
+  review. This review never authorizes production promotion by itself.
+input:
+  portfolio_candidate_tracking_dir: "artifacts/portfolio_candidate_tracking"
+  active_shadow_candidates_path: "artifacts/portfolio_candidate_tracking/state/active_shadow_candidates.json"
+  portfolio_candidate_reviews_dir: "artifacts/portfolio_candidate_reviews"
+  portfolio_candidates_dir: "artifacts/portfolio_candidates"
+  market_data_freshness_dir: "artifacts/data_freshness"
+  market_data_refresh_dir: "artifacts/data_refresh"
+  backtest_snapshot_dir: "artifacts/backtest_snapshots"
+  production_parameters_path: "config/parameters/production/current.yaml"
+output:
+  portfolio_tracking_reviews_dir: "artifacts/portfolio_tracking_reviews"
+  report_alias_dir: "outputs/reports"
+  dry_run_dir: "outputs/dry_runs/portfolio_tracking_reviews"
+review_windows:
+  - "latest_day"
+  - "rolling_5d"
+  - "rolling_20d"
+  - "since_tracking_start"
+default_window: "since_tracking_start"
+performance_review_recommendation:
+  - "continue_tracking"
+  - "watch"
+  - "pause_tracking"
+  - "retire_candidate"
+  - "needs_more_data"
+  - "eligible_for_extended_review"
+tracking_guardrails:
+  max_drawdown_worse_than_baseline_limit: 0.02
+  turnover_relative_increase_limit: 0.30
+  cost_drag_relative_increase_limit: 0.20
+  min_tracking_days_for_positive_recommendation: 5
+  min_tracking_days_for_extended_review: 20
+hard_rejection:
+  - "data_gate_not_ok"
+  - "freshness_status_stale"
+  - "tracking_status_not_active"
+  - "production_effect_not_none"
+  - "auto_promotion_true"
+  - "production_config_modified"
+safety:
+  production_write_allowed: false
+  candidate_promotion_enabled: false
+  candidate_production_promotion_allowed: false
+  data_quality_gate_lowered: false

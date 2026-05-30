@@ -912,6 +912,22 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "portfolio_candidate_tracking_excess_return",
                         parameter_shadow.get("portfolio_candidate_tracking_excess_return"),
                     ),
+                    (
+                        "portfolio_tracking_review_recommendation",
+                        parameter_shadow.get("portfolio_tracking_review_recommendation"),
+                    ),
+                    (
+                        "portfolio_tracking_review_summary",
+                        parameter_shadow.get("portfolio_tracking_review_summary"),
+                    ),
+                    (
+                        "portfolio_tracking_review_tracking_days",
+                        parameter_shadow.get("portfolio_tracking_review_tracking_days"),
+                    ),
+                    (
+                        "portfolio_tracking_review_excess_return",
+                        parameter_shadow.get("portfolio_tracking_review_excess_return"),
+                    ),
                     ("manual_review_required", parameter_shadow.get("manual_review_required")),
                     ("risk", parameter_shadow.get("risk")),
                     ("diagnostic_report", parameter_shadow.get("diagnostic_report")),
@@ -1775,6 +1791,7 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
     market_freshness_summary = _market_data_freshness_review_summary(as_of)
     market_refresh_summary = _market_data_refresh_review_summary(as_of)
     candidate_tracking_summary = _portfolio_candidate_tracking_summary(as_of)
+    tracking_review_summary = _portfolio_tracking_review_summary(as_of)
     path = (
         PROJECT_ROOT
         / "artifacts"
@@ -1944,6 +1961,22 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
                 "excess_return",
                 "",
             ),
+            "portfolio_tracking_review_recommendation": tracking_review_summary.get(
+                "recommendation",
+                "MISSING",
+            ),
+            "portfolio_tracking_review_summary": tracking_review_summary.get(
+                "summary_sentence",
+                "",
+            ),
+            "portfolio_tracking_review_tracking_days": tracking_review_summary.get(
+                "tracking_days",
+                0,
+            ),
+            "portfolio_tracking_review_excess_return": tracking_review_summary.get(
+                "excess_return",
+                "",
+            ),
             "manual_review_required": True,
             "risk": "Shadow parameter backtest artifact missing; Reader Brief does not run it.",
             "diagnostic_report": str(diagnostic_path) if diagnostic_path.exists() else "",
@@ -2099,6 +2132,22 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
             "",
         ),
         "portfolio_candidate_tracking_excess_return": candidate_tracking_summary.get(
+            "excess_return",
+            "",
+        ),
+        "portfolio_tracking_review_recommendation": tracking_review_summary.get(
+            "recommendation",
+            "MISSING",
+        ),
+        "portfolio_tracking_review_summary": tracking_review_summary.get(
+            "summary_sentence",
+            "",
+        ),
+        "portfolio_tracking_review_tracking_days": tracking_review_summary.get(
+            "tracking_days",
+            0,
+        ),
+        "portfolio_tracking_review_excess_return": tracking_review_summary.get(
             "excess_return",
             "",
         ),
@@ -2617,6 +2666,82 @@ def _portfolio_candidate_tracking_summary(as_of: date) -> dict[str, Any]:
     }
 
 
+def _portfolio_tracking_review_summary(as_of: date) -> dict[str, Any]:
+    path = _latest_portfolio_tracking_review_path(as_of)
+    if path is None:
+        return {
+            "recommendation": "MISSING",
+            "tracking_days": 0,
+            "excess_return": "",
+            "summary_sentence": (
+                "Portfolio tracking review is missing; Reader Brief does not run "
+                "candidate performance review."
+            ),
+        }
+    payload = _read_optional_json(path)
+    if not payload:
+        return {
+            "recommendation": "MISSING",
+            "tracking_days": 0,
+            "excess_return": "",
+            "summary_sentence": (
+                "Portfolio tracking review is unreadable; production parameters remain "
+                "unchanged."
+            ),
+        }
+    metadata = _mapping(payload.get("metadata"))
+    candidate = _mapping(payload.get("candidate"))
+    recommendation = _mapping(payload.get("recommendation"))
+    performance = _mapping(payload.get("performance_review"))
+    relative = _mapping(performance.get("relative_performance"))
+    status = _text(metadata.get("status"), "UNKNOWN")
+    rec_status = _text(recommendation.get("status"), "UNKNOWN")
+    profile = _text(candidate.get("profile_name"))
+    tracking_days = candidate.get("tracking_days", 0)
+    excess_return = relative.get("excess_return", "")
+    if rec_status == "needs_more_data":
+        sentence = (
+            f"Portfolio tracking review remains in needs-more-data status. The `{profile}` "
+            f"candidate is actively tracked, but only {tracking_days} tracking day(s) are "
+            "available, so no promotion conclusion should be drawn."
+        )
+    elif rec_status == "eligible_for_extended_review":
+        sentence = (
+            "Portfolio tracking review shows the candidate is outperforming baseline with "
+            "acceptable drawdown and turnover. It remains advisory only and requires "
+            "extended review before any promotion discussion."
+        )
+    elif rec_status == "continue_tracking":
+        sentence = (
+            f"Portfolio tracking review recommends continuing shadow tracking for `{profile}`. "
+            "Data readiness and guardrails are acceptable, but production promotion remains "
+            "disabled."
+        )
+    elif rec_status == "retire_candidate":
+        sentence = (
+            f"Portfolio tracking review recommends retiring `{profile}` because it is weaker "
+            "than baseline or breached guardrails. Production parameters remain unchanged."
+        )
+    elif rec_status == "pause_tracking":
+        sentence = (
+            f"Portfolio tracking review recommends pausing `{profile}` tracking until the "
+            "blocking data, freshness, or guardrail issue is resolved."
+        )
+    else:
+        sentence = (
+            f"Portfolio tracking review status is `{status}` with recommendation "
+            f"`{rec_status}`. Production parameters remain unchanged."
+        )
+    return {
+        "status": status,
+        "recommendation": rec_status,
+        "tracking_days": tracking_days,
+        "excess_return": excess_return,
+        "source_artifact": str(path),
+        "summary_sentence": sentence,
+    }
+
+
 def _market_data_freshness_review_summary(as_of: date) -> dict[str, Any]:
     path = _latest_market_data_freshness_path(as_of)
     if path is None:
@@ -2857,6 +2982,21 @@ def _latest_portfolio_candidate_tracking_path(as_of: date) -> Path | None:
     root = PROJECT_ROOT / "artifacts" / "portfolio_candidate_tracking"
     candidates: list[tuple[date, Path]] = []
     for path in root.glob("*/portfolio_candidate_tracking_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _latest_portfolio_tracking_review_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "portfolio_tracking_reviews"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/portfolio_tracking_review_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:

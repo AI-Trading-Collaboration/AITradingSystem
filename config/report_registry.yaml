@@ -473,6 +473,24 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: portfolio_tracking_review
+    title: Portfolio Tracking Review
+    group: research
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits reports portfolio-tracking-review --latest
+    artifact_globs:
+      - artifacts/portfolio_tracking_reviews/*/portfolio_tracking_review_summary.json
+      - artifacts/portfolio_tracking_reviews/*/portfolio_tracking_review_summary.md
+      - outputs/reports/portfolio_tracking_review_*.json
+      - outputs/reports/portfolio_tracking_review_*.md
+    freshness_sla_days: 3
+    freshness_rationale: Active shadow candidates need rolling performance review before any extended manual promotion discussion.
+    owner_action: review_tracking_performance_before_any_candidate_promotion_discussion
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: market_data_freshness
     title: Market Data Freshness
     group: data_quality
