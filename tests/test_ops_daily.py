@@ -267,6 +267,11 @@ def test_daily_ops_plan_generates_reader_brief_chain_after_score_daily() -> None
         "sec_pit_shadow_monitor",
         "score_change_attribution",
         "market_panel",
+        "market_data_freshness",
+        "market_data_recover_freshness",
+        "portfolio_candidate_tracking",
+        "portfolio_tracking_review",
+        "portfolio_tracking_review_report",
         "report_index",
         "documentation_contract",
         "research_governance_summary",
@@ -286,6 +291,21 @@ def test_daily_ops_plan_generates_reader_brief_chain_after_score_daily() -> None
     assert next(
         step for step in plan.steps if step.step_id == "sec_pit_shadow_monitor"
     ).command == ("aits", "sec-pit", "shadow-monitor", "--latest")
+    assert next(step for step in plan.steps if step.step_id == "market_data_freshness").command == (
+        "aits",
+        "data",
+        "freshness",
+        "--latest",
+    )
+    assert next(
+        step for step in plan.steps if step.step_id == "portfolio_tracking_review"
+    ).command == (
+        "aits",
+        "portfolio",
+        "review-tracking",
+        "--latest",
+        "--show-window-progress",
+    )
     assert next(step for step in plan.steps if step.step_id == "report_index").command == (
         "aits",
         "reports",
@@ -349,6 +369,11 @@ def test_daily_ops_plan_cli_writes_report(tmp_path: Path) -> None:
     assert "sec-pit shadow-monitor --latest" in markdown
     assert "reports score-change-attribution --latest" in markdown
     assert "reports market-panel --latest" in markdown
+    assert "data freshness --latest" in markdown
+    assert "data recover-freshness --latest" in markdown
+    assert "portfolio track-candidate --latest" in markdown
+    assert "portfolio review-tracking --latest --show-window-progress" in markdown
+    assert "reports portfolio-tracking-review --latest" in markdown
     assert "reports index --latest" in markdown
     assert "docs report-contract --latest" in markdown
     assert "reports research-governance-summary --latest" in markdown
@@ -660,6 +685,11 @@ def test_daily_ops_plan_closed_market_skips_score_and_current_download(
     assert step_by_id["sec_pit_shadow_monitor"].enabled is False
     assert step_by_id["score_change_attribution"].enabled is False
     assert step_by_id["market_panel"].enabled is False
+    assert step_by_id["market_data_freshness"].enabled is False
+    assert step_by_id["market_data_recover_freshness"].enabled is False
+    assert step_by_id["portfolio_candidate_tracking"].enabled is False
+    assert step_by_id["portfolio_tracking_review"].enabled is False
+    assert step_by_id["portfolio_tracking_review_report"].enabled is False
     assert step_by_id["report_index"].enabled is False
     assert step_by_id["documentation_contract"].enabled is False
     assert step_by_id["research_governance_summary"].enabled is False

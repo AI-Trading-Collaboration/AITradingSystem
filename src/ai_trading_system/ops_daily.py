@@ -88,6 +88,25 @@ from ai_trading_system.trading_calendar import (
     latest_completed_us_equity_trading_day,
     us_equity_market_session,
 )
+from ai_trading_system.trading_engine.market_data_freshness import (
+    default_market_data_freshness_json_path,
+    default_market_data_freshness_markdown_path,
+)
+from ai_trading_system.trading_engine.market_data_refresh import (
+    default_market_data_refresh_json_path,
+    default_market_data_refresh_markdown_path,
+    default_market_data_refresh_plan_path,
+)
+from ai_trading_system.trading_engine.portfolio_candidate_tracking import (
+    default_active_shadow_candidates_path,
+    default_portfolio_candidate_tracking_json_path,
+    default_portfolio_candidate_tracking_markdown_path,
+)
+from ai_trading_system.trading_engine.portfolio_tracking_review import (
+    default_portfolio_tracking_review_json_path,
+    default_portfolio_tracking_review_markdown_path,
+    portfolio_tracking_review_report_alias_paths,
+)
 from ai_trading_system.valuation import default_valuation_validation_report_path
 from ai_trading_system.valuation_sources import (
     default_fmp_analyst_estimate_history_dir,
@@ -465,6 +484,56 @@ def build_daily_ops_plan(
     score_change_json = default_score_change_attribution_json_path(reports_dir, as_of)
     market_panel_report = default_market_panel_report_path(reports_dir, as_of)
     market_panel_json = default_market_panel_json_path(reports_dir, as_of)
+    market_data_freshness_root = project_root / "artifacts" / "data_freshness"
+    market_data_refresh_root = project_root / "artifacts" / "data_refresh"
+    portfolio_candidate_tracking_root = (
+        project_root / "artifacts" / "portfolio_candidate_tracking"
+    )
+    portfolio_tracking_review_root = (
+        project_root / "artifacts" / "portfolio_tracking_reviews"
+    )
+    market_data_freshness_json = default_market_data_freshness_json_path(
+        market_data_freshness_root,
+        as_of,
+    )
+    market_data_freshness_md = default_market_data_freshness_markdown_path(
+        market_data_freshness_root,
+        as_of,
+    )
+    market_data_refresh_plan = default_market_data_refresh_plan_path(
+        market_data_refresh_root,
+        as_of,
+    )
+    market_data_refresh_json = default_market_data_refresh_json_path(
+        market_data_refresh_root,
+        as_of,
+    )
+    market_data_refresh_md = default_market_data_refresh_markdown_path(
+        market_data_refresh_root,
+        as_of,
+    )
+    portfolio_candidate_tracking_json = default_portfolio_candidate_tracking_json_path(
+        portfolio_candidate_tracking_root,
+        as_of,
+    )
+    portfolio_candidate_tracking_md = default_portfolio_candidate_tracking_markdown_path(
+        portfolio_candidate_tracking_root,
+        as_of,
+    )
+    active_shadow_candidates = default_active_shadow_candidates_path(
+        portfolio_candidate_tracking_root,
+    )
+    portfolio_tracking_review_json = default_portfolio_tracking_review_json_path(
+        portfolio_tracking_review_root,
+        as_of,
+    )
+    portfolio_tracking_review_md = default_portfolio_tracking_review_markdown_path(
+        portfolio_tracking_review_root,
+        as_of,
+    )
+    portfolio_tracking_review_alias_json, portfolio_tracking_review_alias_md = (
+        portfolio_tracking_review_report_alias_paths(reports_dir, as_of)
+    )
     report_index_html = default_report_index_html_path(reports_dir, as_of)
     report_index_json = default_report_index_json_path(reports_dir, as_of)
     documentation_contract_report = default_documentation_contract_report_path(reports_dir, as_of)
@@ -939,6 +1008,114 @@ def build_daily_ops_plan(
                 quality_gate=(
                     "只读生成 SPY/QQQ/SMH/SOXX/VIX/DGS10 市场上下文，"
                     "先执行同一 data quality 门禁；production_effect=none。"
+                ),
+                blocks_downstream=True,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
+                step_id="market_data_freshness",
+                title="生成 market data freshness tracking readiness",
+                command=(("aits", "data", "freshness", "--latest") if dashboard_enabled else ()),
+                required_env_vars=(),
+                produced_paths=(market_data_freshness_json, market_data_freshness_md),
+                quality_gate=(
+                    "只读检查 latest market data freshness 和 candidate tracking readiness；"
+                    "不降低 data gate，不把 stale 数据静默传给 tracking review。"
+                ),
+                blocks_downstream=True,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="derived_local",
+            ),
+            DailyOpsStep(
+                step_id="market_data_recover_freshness",
+                title="执行 market data freshness recovery",
+                command=(
+                    ("aits", "data", "recover-freshness", "--latest")
+                    if dashboard_enabled
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(
+                    market_data_refresh_plan,
+                    market_data_refresh_json,
+                    market_data_refresh_md,
+                ),
+                quality_gate=(
+                    "在 freshness 不足时尝试受控 refresh / manifest recovery；"
+                    "失败必须显式阻断，不伪造价格或 tracking days。"
+                ),
+                blocks_downstream=True,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="live_provider_or_cached",
+            ),
+            DailyOpsStep(
+                step_id="portfolio_candidate_tracking",
+                title="滚动 active portfolio candidate tracking",
+                command=(
+                    ("aits", "portfolio", "track-candidate", "--latest")
+                    if dashboard_enabled
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(
+                    portfolio_candidate_tracking_json,
+                    portfolio_candidate_tracking_md,
+                    active_shadow_candidates,
+                ),
+                quality_gate=(
+                    "读取 latest candidate review、freshness 和 data gate 后写 shadow "
+                    "tracking artifact；production_effect=none，不启用 candidate。"
+                ),
+                blocks_downstream=True,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
+                step_id="portfolio_tracking_review",
+                title="生成 portfolio tracking review window progress",
+                command=(
+                    (
+                        "aits",
+                        "portfolio",
+                        "review-tracking",
+                        "--latest",
+                        "--show-window-progress",
+                    )
+                    if dashboard_enabled
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(portfolio_tracking_review_json, portfolio_tracking_review_md),
+                quality_gate=(
+                    "读取真实 daily tracking summaries 生成 window progress；"
+                    "tracking_days<5 时保持 needs_more_data，不作为失败。"
+                ),
+                blocks_downstream=True,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
+                step_id="portfolio_tracking_review_report",
+                title="生成 portfolio tracking review report alias",
+                command=(
+                    ("aits", "reports", "portfolio-tracking-review", "--latest")
+                    if dashboard_enabled
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(
+                    portfolio_tracking_review_alias_json,
+                    portfolio_tracking_review_alias_md,
+                ),
+                quality_gate=(
+                    "只读读取 tracking review artifact 并写 reports alias；不运行上游 "
+                    "candidate tracking 或修改 production。"
                 ),
                 blocks_downstream=True,
                 enabled=dashboard_enabled,

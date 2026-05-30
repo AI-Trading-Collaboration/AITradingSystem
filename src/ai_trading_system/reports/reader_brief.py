@@ -925,6 +925,22 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         parameter_shadow.get("portfolio_tracking_review_tracking_days"),
                     ),
                     (
+                        "portfolio_tracking_review_stage",
+                        parameter_shadow.get("portfolio_tracking_review_stage"),
+                    ),
+                    (
+                        "portfolio_tracking_review_days_until_short_review",
+                        parameter_shadow.get(
+                            "portfolio_tracking_review_days_until_short_review"
+                        ),
+                    ),
+                    (
+                        "portfolio_tracking_review_days_until_extended_review",
+                        parameter_shadow.get(
+                            "portfolio_tracking_review_days_until_extended_review"
+                        ),
+                    ),
+                    (
                         "portfolio_tracking_review_excess_return",
                         parameter_shadow.get("portfolio_tracking_review_excess_return"),
                     ),
@@ -1973,6 +1989,18 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
                 "tracking_days",
                 0,
             ),
+            "portfolio_tracking_review_stage": tracking_review_summary.get(
+                "stage",
+                "MISSING",
+            ),
+            "portfolio_tracking_review_days_until_short_review": tracking_review_summary.get(
+                "days_until_short_review",
+                "",
+            ),
+            "portfolio_tracking_review_days_until_extended_review": tracking_review_summary.get(
+                "days_until_extended_review",
+                "",
+            ),
             "portfolio_tracking_review_excess_return": tracking_review_summary.get(
                 "excess_return",
                 "",
@@ -2146,6 +2174,18 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
         "portfolio_tracking_review_tracking_days": tracking_review_summary.get(
             "tracking_days",
             0,
+        ),
+        "portfolio_tracking_review_stage": tracking_review_summary.get(
+            "stage",
+            "MISSING",
+        ),
+        "portfolio_tracking_review_days_until_short_review": tracking_review_summary.get(
+            "days_until_short_review",
+            "",
+        ),
+        "portfolio_tracking_review_days_until_extended_review": tracking_review_summary.get(
+            "days_until_extended_review",
+            "",
         ),
         "portfolio_tracking_review_excess_return": tracking_review_summary.get(
             "excess_return",
@@ -2691,32 +2731,49 @@ def _portfolio_tracking_review_summary(as_of: date) -> dict[str, Any]:
         }
     metadata = _mapping(payload.get("metadata"))
     candidate = _mapping(payload.get("candidate"))
+    tracking_window = _mapping(payload.get("tracking_window"))
     recommendation = _mapping(payload.get("recommendation"))
     performance = _mapping(payload.get("performance_review"))
     relative = _mapping(performance.get("relative_performance"))
     status = _text(metadata.get("status"), "UNKNOWN")
     rec_status = _text(recommendation.get("status"), "UNKNOWN")
     profile = _text(candidate.get("profile_name"))
-    tracking_days = candidate.get("tracking_days", 0)
+    tracking_days = tracking_window.get("tracking_days", candidate.get("tracking_days", 0))
+    stage = _text(tracking_window.get("stage"), "UNKNOWN")
+    min_short = tracking_window.get("min_days_for_short_review", 5)
+    min_extended = tracking_window.get("min_days_for_extended_review", 20)
+    days_until_short = tracking_window.get("days_until_short_review", "")
+    days_until_extended = tracking_window.get("days_until_extended_review", "")
     excess_return = relative.get("excess_return", "")
     if rec_status == "needs_more_data":
         sentence = (
-            f"Portfolio tracking review remains in needs-more-data status. The `{profile}` "
-            f"candidate is actively tracked, but only {tracking_days} tracking day(s) are "
-            "available, so no promotion conclusion should be drawn."
+            "Portfolio tracking review remains in needs-more-data status. "
+            f"Only {tracking_days} tracking {_day_label(tracking_days)} "
+            f"{_is_are(tracking_days)} available for the `{profile}` candidate; "
+            f"at least {min_short} valid tracking days are required before a "
+            "short-window conclusion can be formed. "
+            f"Days until short-window review: {days_until_short}."
         )
     elif rec_status == "eligible_for_extended_review":
         sentence = (
-            "Portfolio tracking review shows the candidate is outperforming baseline with "
-            "acceptable drawdown and turnover. It remains advisory only and requires "
-            "extended review before any promotion discussion."
+            "Portfolio tracking review has reached the extended review window. The "
+            "candidate may be considered for extended manual review, but production "
+            "promotion remains disabled unless a separate promotion gate is passed."
         )
     elif rec_status == "continue_tracking":
-        sentence = (
-            f"Portfolio tracking review recommends continuing shadow tracking for `{profile}`. "
-            "Data readiness and guardrails are acceptable, but production promotion remains "
-            "disabled."
-        )
+        if stage == "short_window_review":
+            sentence = (
+                "Portfolio tracking review has entered short-window review. Candidate "
+                "performance can now be compared against baseline, but extended review "
+                f"still requires {min_extended} valid tracking days; "
+                f"{days_until_extended} day(s) remain."
+            )
+        else:
+            sentence = (
+                f"Portfolio tracking review recommends continuing shadow tracking for "
+                f"`{profile}`. Data readiness and guardrails are acceptable, but "
+                "production promotion remains disabled."
+            )
     elif rec_status == "retire_candidate":
         sentence = (
             f"Portfolio tracking review recommends retiring `{profile}` because it is weaker "
@@ -2736,6 +2793,9 @@ def _portfolio_tracking_review_summary(as_of: date) -> dict[str, Any]:
         "status": status,
         "recommendation": rec_status,
         "tracking_days": tracking_days,
+        "stage": stage,
+        "days_until_short_review": days_until_short,
+        "days_until_extended_review": days_until_extended,
         "excess_return": excess_return,
         "source_artifact": str(path),
         "summary_sentence": sentence,
@@ -4537,6 +4597,22 @@ def _text(value: object, default: str = "") -> str:
     if isinstance(value, (dict, list)):
         return json.dumps(value, ensure_ascii=False, sort_keys=True)
     return str(value)
+
+
+def _day_label(value: object) -> str:
+    try:
+        count = int(value)
+    except (TypeError, ValueError):
+        count = 0
+    return "day" if count == 1 else "days"
+
+
+def _is_are(value: object) -> str:
+    try:
+        count = int(value)
+    except (TypeError, ValueError):
+        count = 0
+    return "is" if count == 1 else "are"
 
 
 _BADGE_VALUES = {

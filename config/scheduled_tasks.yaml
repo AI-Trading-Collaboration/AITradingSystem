@@ -204,6 +204,72 @@ cadences:
         production_weight_write: false
         active_shadow_weight_write: false
         broker_action: false
+      - task_id: daily_market_data_freshness
+        daily_plan_step_id: market_data_freshness
+        title: Build market data freshness tracking readiness
+        command: aits data freshness --latest
+        command_contains:
+          - data
+          - freshness
+          - --latest
+        closed_market_behavior: skip_score_artifacts
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
+      - task_id: daily_market_data_recover_freshness
+        daily_plan_step_id: market_data_recover_freshness
+        title: Recover market data freshness if needed
+        command: aits data recover-freshness --latest
+        command_contains:
+          - data
+          - recover-freshness
+          - --latest
+        closed_market_behavior: skip_score_artifacts
+        production_effect: local_cache_write
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
+      - task_id: daily_portfolio_candidate_tracking
+        daily_plan_step_id: portfolio_candidate_tracking
+        title: Track active portfolio candidate
+        command: aits portfolio track-candidate --latest
+        command_contains:
+          - portfolio
+          - track-candidate
+          - --latest
+        closed_market_behavior: skip_score_artifacts
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
+      - task_id: daily_portfolio_tracking_review
+        daily_plan_step_id: portfolio_tracking_review
+        title: Review portfolio tracking window progress
+        command: aits portfolio review-tracking --latest --show-window-progress
+        command_contains:
+          - portfolio
+          - review-tracking
+          - --latest
+          - --show-window-progress
+        closed_market_behavior: skip_score_artifacts
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
+      - task_id: daily_portfolio_tracking_review_report
+        daily_plan_step_id: portfolio_tracking_review_report
+        title: Build portfolio tracking review report alias
+        command: aits reports portfolio-tracking-review --latest
+        command_contains:
+          - reports
+          - portfolio-tracking-review
+          - --latest
+        closed_market_behavior: skip_score_artifacts
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
       - task_id: daily_report_index
         daily_plan_step_id: report_index
         title: Build report index

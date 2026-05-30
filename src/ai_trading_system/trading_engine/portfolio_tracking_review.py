@@ -25,6 +25,9 @@ PORTFOLIO_TRACKING_REVIEW_ALIAS_REPORT_TYPE = "portfolio_tracking_review_report"
 DEFAULT_PORTFOLIO_TRACKING_REVIEW_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "portfolio" / "portfolio_tracking_review.yaml"
 )
+DEFAULT_PORTFOLIO_TRACKING_REVIEW_WINDOWS_CONFIG_PATH = (
+    PROJECT_ROOT / "config" / "portfolio" / "portfolio_tracking_review_windows.yaml"
+)
 RECOMMENDATIONS = {
     "continue_tracking",
     "watch",
@@ -32,6 +35,11 @@ RECOMMENDATIONS = {
     "retire_candidate",
     "needs_more_data",
     "eligible_for_extended_review",
+}
+TRACKING_REVIEW_STAGES = {
+    "initial_observation",
+    "short_window_review",
+    "extended_review_ready",
 }
 WINDOW_ALIASES = {
     "latest": "latest_day",
@@ -122,6 +130,16 @@ def load_portfolio_tracking_review_config(
     if not isinstance(payload, dict):
         raise ValueError(f"portfolio tracking review config must be a mapping: {path}")
     _validate_config(payload)
+    return payload
+
+
+def load_portfolio_tracking_review_windows_config(
+    path: Path | str = DEFAULT_PORTFOLIO_TRACKING_REVIEW_WINDOWS_CONFIG_PATH,
+) -> dict[str, Any]:
+    payload = safe_load_yaml_path(Path(path))
+    if not isinstance(payload, dict):
+        raise ValueError(f"portfolio tracking review windows config must be a mapping: {path}")
+    _validate_tracking_window_config(payload)
     return payload
 
 
@@ -250,6 +268,17 @@ def build_portfolio_tracking_review_payload(
         total_tracking_days,
         config,
     )
+    freshness_status = str(latest["freshness"].get("status") or "MISSING")
+    data_gate_status = str(latest["data_gate"].get("status") or "UNKNOWN")
+    tracking_status = str(latest["candidate"].get("tracking_status") or "UNKNOWN")
+    tracking_window_progress = _tracking_window_progress(
+        tracking_days=total_tracking_days,
+        config=config,
+        recommendation_status=str(recommendation.get("status") or ""),
+        data_gate_status=data_gate_status,
+        freshness_status=freshness_status,
+        tracking_status=tracking_status,
+    )
     supporting = _supporting_artifacts(
         active_state_path=active_state_path,
         latest=latest,
@@ -286,13 +315,14 @@ def build_portfolio_tracking_review_payload(
             "review_status_recommendation": recommendation["status"],
         },
         "data_readiness": {
-            "data_gate": latest["data_gate"].get("status", "UNKNOWN"),
-            "freshness_status": latest["freshness"].get("status", "MISSING"),
+            "data_gate": data_gate_status,
+            "freshness_status": freshness_status,
             "effective_data_date": latest["date_resolution"].get("effective_data_date", ""),
             "tracking_readiness": latest["freshness"].get("tracking_readiness", "unknown"),
             "quality_report": latest["data_gate"].get("manifest", ""),
         },
         "tracking_window": {
+            **tracking_window_progress,
             "window": review_window,
             "requested_window": window or config.get("default_window", "since_tracking_start"),
             "available_tracking_days": total_tracking_days,
@@ -326,6 +356,7 @@ def build_portfolio_tracking_review_payload(
             "manual_review_required": True,
             "auto_promotion": False,
             "data_quality_gate_lowered": False,
+            **_tracking_window_safety(config),
         },
     }
 
@@ -370,6 +401,8 @@ def validate_portfolio_tracking_review_payload(payload: dict[str, Any]) -> list[
     }:
         issues.append("report_type mismatch")
     metadata = _mapping(payload.get("metadata"))
+    candidate = _mapping(payload.get("candidate"))
+    tracking_window = _mapping(payload.get("tracking_window"))
     recommendation = _mapping(payload.get("recommendation"))
     promotion = _mapping(payload.get("promotion_impact"))
     safety = _mapping(payload.get("safety"))
@@ -381,6 +414,33 @@ def validate_portfolio_tracking_review_payload(payload: dict[str, Any]) -> list[
         issues.append("auto_promotion must be false")
     if recommendation.get("status") not in RECOMMENDATIONS:
         issues.append("recommendation status is invalid")
+    stage = str(tracking_window.get("stage") or "")
+    if stage not in TRACKING_REVIEW_STAGES:
+        issues.append("tracking_window stage is invalid")
+    for key in (
+        "tracking_days",
+        "min_days_for_short_review",
+        "min_days_for_extended_review",
+        "days_until_short_review",
+        "days_until_extended_review",
+        "can_form_short_window_conclusion",
+        "can_form_extended_review_conclusion",
+        "done_condition_met",
+    ):
+        if key not in tracking_window:
+            issues.append(f"tracking_window missing {key}")
+    tracking_days = _int_value(
+        tracking_window.get("tracking_days"),
+        default=_int_value(candidate.get("tracking_days")),
+    )
+    min_short = _int_value(tracking_window.get("min_days_for_short_review"), default=5)
+    if (
+        metadata.get("status") != "BLOCKED"
+        and tracking_days > 0
+        and tracking_days < min_short
+        and recommendation.get("status") != "needs_more_data"
+    ):
+        issues.append("tracking_days below short window must be needs_more_data")
     if promotion.get("can_support_candidate_promotion") is not False:
         issues.append("tracking review must not support candidate promotion")
     if safety.get("production_write_allowed") is not False:
@@ -397,6 +457,10 @@ def validate_portfolio_tracking_review_payload(payload: dict[str, Any]) -> list[
         issues.append("safety auto_promotion must be false")
     if safety.get("data_quality_gate_lowered") is not False:
         issues.append("data_quality_gate_lowered must be false")
+    if safety.get("forbid_backfilled_tracking_days") is not True:
+        issues.append("forbid_backfilled_tracking_days must be true")
+    if safety.get("forbid_synthetic_tracking_days") is not True:
+        issues.append("forbid_synthetic_tracking_days must be true")
     return issues
 
 
@@ -456,11 +520,13 @@ def render_portfolio_tracking_review_markdown(payload: dict[str, Any]) -> str:
         f"- profile_name: `{candidate.get('profile_name', '')}`",
         f"- tracking_start_date: `{candidate.get('tracking_start_date', '')}`",
         "",
-        "## 3. Tracking Window",
+        "## 3. Tracking Window Progress",
         "",
     ]
     for key, value in window.items():
         lines.append(f"- `{key}`: `{value}`")
+    if recommendation.get("status") == "needs_more_data":
+        lines.append(f"- `needs_more_data_reason`: {recommendation.get('reason', '')}")
     lines.extend(["", "## 4. Data Readiness", ""])
     for key, value in readiness.items():
         lines.append(f"- `{key}`: `{value}`")
@@ -591,6 +657,14 @@ def _blocked_payload(
             "effective_data_date": "",
         },
         "tracking_window": {
+            **_tracking_window_progress(
+                tracking_days=0,
+                config=config,
+                recommendation_status="pause_tracking",
+                data_gate_status="UNKNOWN",
+                freshness_status="UNKNOWN",
+                tracking_status=str((active_record or {}).get("status") or "UNKNOWN"),
+            ),
             "window": window,
             "available_tracking_days": 0,
             "window_observation_days": 0,
@@ -632,6 +706,7 @@ def _blocked_payload(
             "manual_review_required": True,
             "auto_promotion": False,
             "data_quality_gate_lowered": False,
+            **_tracking_window_safety(config),
         },
     }
 
@@ -980,8 +1055,9 @@ def _recommendation(
         return {
             "status": "needs_more_data",
             "reason": (
-                f"Only {tracking_days} tracking day(s) are available. Continue shadow "
-                "tracking before drawing conclusions."
+                f"Only {tracking_days} tracking {_day_label(tracking_days)} "
+                f"{_is_are(tracking_days)} available. At least {min_positive} valid "
+                "tracking days are required before short-window review."
             ),
             "allowed_next_step": "continue_shadow_tracking",
         }
@@ -1020,6 +1096,101 @@ def _recommendation(
             "and no guardrail breach was found."
         ),
         "allowed_next_step": "continue_shadow_tracking",
+    }
+
+
+def _tracking_window_progress(
+    *,
+    tracking_days: int,
+    config: dict[str, Any],
+    recommendation_status: str,
+    data_gate_status: str,
+    freshness_status: str,
+    tracking_status: str,
+) -> dict[str, Any]:
+    policy = _tracking_window_policy(config)
+    min_short = _int_value(policy.get("min_days_for_short_review"), default=5)
+    min_extended = _int_value(policy.get("min_days_for_extended_review"), default=20)
+    stage = "initial_observation"
+    if tracking_days >= min_extended:
+        stage = "extended_review_ready"
+    elif tracking_days >= min_short:
+        stage = "short_window_review"
+
+    data_ready = data_gate_status == "OK" and freshness_status == "OK"
+    tracking_active = tracking_status == "active_tracking"
+    can_form_short = tracking_days >= min_short
+    can_form_extended = tracking_days >= min_extended
+    done_condition_met = (
+        can_form_short
+        and recommendation_status not in {"", "needs_more_data"}
+        and data_ready
+        and tracking_active
+    )
+    return {
+        "tracking_days": tracking_days,
+        "stage": stage,
+        "policy_version": policy.get("version", "portfolio_tracking_review_windows_v0_1"),
+        "min_days_for_short_review": min_short,
+        "min_days_for_extended_review": min_extended,
+        "days_until_short_review": max(0, min_short - tracking_days),
+        "days_until_extended_review": max(0, min_extended - tracking_days),
+        "can_form_short_window_conclusion": can_form_short,
+        "can_form_extended_review_conclusion": can_form_extended,
+        "done_condition_met": done_condition_met,
+    }
+
+
+def _tracking_window_safety(config: dict[str, Any]) -> dict[str, bool]:
+    policy = _tracking_window_policy(config)
+    return {
+        "forbid_backfilled_tracking_days": bool(
+            policy.get("forbid_backfilled_tracking_days", True)
+        ),
+        "forbid_synthetic_tracking_days": bool(
+            policy.get("forbid_synthetic_tracking_days", True)
+        ),
+    }
+
+
+def _tracking_window_policy(config: dict[str, Any]) -> dict[str, Any]:
+    raw_policy = _mapping(config.get("tracking_window_policy"))
+    policy_path = str(config.get("tracking_window_policy_path") or "").strip()
+    if not raw_policy:
+        raw_path = policy_path or str(
+            _mapping(config.get("input")).get("tracking_window_policy_path") or ""
+        ).strip()
+        if raw_path:
+            resolved_path = resolve_project_path(raw_path)
+            if not resolved_path.exists():
+                raise ValueError(f"tracking window policy config does not exist: {resolved_path}")
+            raw_policy = load_portfolio_tracking_review_windows_config(resolved_path)
+        elif DEFAULT_PORTFOLIO_TRACKING_REVIEW_WINDOWS_CONFIG_PATH.exists():
+            raw_policy = load_portfolio_tracking_review_windows_config()
+
+    guardrails = _mapping(config.get("tracking_guardrails"))
+    windows = _mapping(raw_policy.get("tracking_windows"))
+    safety = _mapping(raw_policy.get("safety"))
+    min_short = _int_value(
+        windows.get("min_days_for_short_review"),
+        default=_int_value(
+            guardrails.get("min_tracking_days_for_positive_recommendation"),
+            default=5,
+        ),
+    )
+    min_extended = _int_value(
+        windows.get("min_days_for_extended_review"),
+        default=_int_value(
+            guardrails.get("min_tracking_days_for_extended_review"),
+            default=20,
+        ),
+    )
+    return {
+        "version": raw_policy.get("version", "portfolio_tracking_review_windows_inline"),
+        "min_days_for_short_review": min_short,
+        "min_days_for_extended_review": min_extended,
+        "forbid_backfilled_tracking_days": safety.get("forbid_backfilled_tracking_days", True),
+        "forbid_synthetic_tracking_days": safety.get("forbid_synthetic_tracking_days", True),
     }
 
 
@@ -1339,6 +1510,34 @@ def _validate_config(config: dict[str, Any]) -> None:
             raise ValueError(f"portfolio tracking review missing guardrail: {key}")
 
 
+def _validate_tracking_window_config(config: dict[str, Any]) -> None:
+    windows = _mapping(config.get("tracking_windows"))
+    min_short = _int_value(windows.get("min_days_for_short_review"))
+    min_extended = _int_value(windows.get("min_days_for_extended_review"))
+    if min_short < 1:
+        raise ValueError("min_days_for_short_review must be at least 1")
+    if min_extended < min_short:
+        raise ValueError("min_days_for_extended_review must be >= short review minimum")
+    stages = _mapping(config.get("review_stages"))
+    missing_stages = TRACKING_REVIEW_STAGES - set(stages)
+    if missing_stages:
+        raise ValueError(
+            "portfolio tracking review windows missing stages: "
+            + ", ".join(sorted(missing_stages))
+        )
+    safety = _mapping(config.get("safety"))
+    if safety.get("production_effect") != "none":
+        raise ValueError("tracking window production_effect must be none")
+    if safety.get("manual_review_required") is not True:
+        raise ValueError("tracking window manual_review_required must be true")
+    if safety.get("auto_promotion") is not False:
+        raise ValueError("tracking window auto_promotion must be false")
+    if safety.get("forbid_backfilled_tracking_days") is not True:
+        raise ValueError("tracking window must forbid backfilled tracking days")
+    if safety.get("forbid_synthetic_tracking_days") is not True:
+        raise ValueError("tracking window must forbid synthetic tracking days")
+
+
 def _load_json(path: Path) -> dict[str, Any]:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
@@ -1380,3 +1579,11 @@ def _int_value(value: object, default: int = 0) -> int:
 
 def _round_float(value: object) -> float:
     return round(_float_value(value), 6)
+
+
+def _day_label(value: int) -> str:
+    return "day" if value == 1 else "days"
+
+
+def _is_are(value: int) -> str:
+    return "is" if value == 1 else "are"

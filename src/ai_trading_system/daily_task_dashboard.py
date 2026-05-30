@@ -2902,6 +2902,12 @@ def _portfolio_tracking_review_summary(report: DailyTaskDashboardReport) -> Trac
             "markdown_href": "",
             "candidate_profile": "",
             "tracking_days": 0,
+            "review_stage": "MISSING",
+            "days_until_short_review": "",
+            "days_until_extended_review": "",
+            "can_form_short_window_conclusion": False,
+            "can_form_extended_review_conclusion": False,
+            "done_condition_met": False,
             "freshness_status": "MISSING",
             "baseline_cumulative_return": "",
             "candidate_cumulative_return": "",
@@ -2916,6 +2922,7 @@ def _portfolio_tracking_review_summary(report: DailyTaskDashboardReport) -> Trac
     metadata = _mapping_value(payload, "metadata")
     candidate = _mapping_value(payload, "candidate")
     readiness = _mapping_value(payload, "data_readiness")
+    tracking_window = _mapping_value(payload, "tracking_window")
     performance = _mapping_value(payload, "performance_review")
     baseline = _mapping_value(performance, "baseline")
     candidate_perf = _mapping_value(performance, "candidate")
@@ -2943,7 +2950,22 @@ def _portfolio_tracking_review_summary(report: DailyTaskDashboardReport) -> Trac
         if markdown_path.exists()
         else "",
         "candidate_profile": candidate.get("profile_name", ""),
-        "tracking_days": candidate.get("tracking_days", 0),
+        "tracking_days": tracking_window.get(
+            "tracking_days",
+            candidate.get("tracking_days", 0),
+        ),
+        "review_stage": tracking_window.get("stage", "UNKNOWN"),
+        "days_until_short_review": tracking_window.get("days_until_short_review", ""),
+        "days_until_extended_review": tracking_window.get("days_until_extended_review", ""),
+        "can_form_short_window_conclusion": tracking_window.get(
+            "can_form_short_window_conclusion",
+            False,
+        ),
+        "can_form_extended_review_conclusion": tracking_window.get(
+            "can_form_extended_review_conclusion",
+            False,
+        ),
+        "done_condition_met": tracking_window.get("done_condition_met", False),
         "freshness_status": readiness.get("freshness_status", "MISSING"),
         "baseline_cumulative_return": baseline.get("cumulative_return", ""),
         "candidate_cumulative_return": candidate_perf.get("cumulative_return", ""),
@@ -10728,6 +10750,27 @@ def _render_portfolio_tracking_review_summary(report: DailyTaskDashboardReport) 
             _summary_item("recommendation", summary.get("recommendation", "MISSING")),
             _summary_item("candidate profile", summary.get("candidate_profile", "")),
             _summary_item("tracking days", summary.get("tracking_days", 0)),
+            _summary_item("review stage", summary.get("review_stage", "MISSING")),
+            _summary_item(
+                "days until short review",
+                summary.get("days_until_short_review", ""),
+            ),
+            _summary_item(
+                "days until extended review",
+                summary.get("days_until_extended_review", ""),
+            ),
+            _summary_item(
+                "short-window allowed",
+                "yes" if summary.get("can_form_short_window_conclusion") else "no",
+            ),
+            _summary_item(
+                "extended review allowed",
+                "yes" if summary.get("can_form_extended_review_conclusion") else "no",
+            ),
+            _summary_item(
+                "done condition met",
+                "yes" if summary.get("done_condition_met") else "no",
+            ),
             _summary_item("freshness", summary.get("freshness_status", "MISSING")),
             _summary_item(
                 "baseline cum return",

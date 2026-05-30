@@ -1,0 +1,43 @@
+version: "portfolio_tracking_review_windows_v0_1"
+owner: "system"
+status: "pilot_baseline"
+rationale: >
+  Make shadow candidate tracking-window maturity explicit so TRADING-058 remains
+  VALIDATING until enough real daily tracking observations exist.
+intended_effect: >
+  Keep 1-4 tracking days in needs_more_data, allow short-window review from 5
+  real tracking days, and allow extended-review readiness only from 20 real
+  tracking days without enabling production promotion.
+validation_evidence: >
+  TRADING-058A tests cover stage boundaries, days remaining, forced
+  needs_more_data, dashboard and Reader Brief progress, shadow backtest reason,
+  safety fields, and production/current.yaml unchanged.
+review_condition: >
+  Revisit after 20 valid tracking days or before changing any review-window
+  threshold, recommendation gate, or production promotion policy.
+
+tracking_windows:
+  min_days_for_short_review: 5
+  min_days_for_extended_review: 20
+
+review_stages:
+  initial_observation:
+    min_days: 1
+    max_days: 4
+    force_recommendation: "needs_more_data"
+  short_window_review:
+    min_days: 5
+    max_days: 19
+    allow_performance_conclusion: true
+    allow_extended_review: false
+  extended_review_ready:
+    min_days: 20
+    allow_performance_conclusion: true
+    allow_extended_review: true
+
+safety:
+  production_effect: "none"
+  manual_review_required: true
+  auto_promotion: false
+  forbid_backfilled_tracking_days: true
+  forbid_synthetic_tracking_days: true

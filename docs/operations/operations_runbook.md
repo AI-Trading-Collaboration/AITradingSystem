@@ -57,10 +57,15 @@ aits ops daily-run --as-of YYYY-MM-DD
 |Dashboard/latest checks|刷新 report index|`aits reports index --latest`|只读扫描既有报告；`STALE` / `MISSING` 需要进入人工复核。|
 |Dashboard/latest checks|刷新 documentation contract|`aits docs report-contract --latest`|用于检查 registry 与 artifact catalog 文档覆盖。|
 |Dashboard/latest checks|刷新 research governance summary|`aits reports research-governance-summary --latest`|必须在 Reader Brief 前完成；缺失时 Reader Brief 只能披露受限上下文。|
+|Shadow candidate tracking|生成 market data freshness readiness|`aits data freshness --latest`|只读检查 tracking readiness；stale/missing freshness 不得静默进入 tracking review。|
+|Shadow candidate tracking|执行受控 freshness recovery|`aits data recover-freshness --latest`|失败时显式阻断；不得伪造价格、manifest 或 tracking days。|
+|Shadow candidate tracking|滚动 active candidate tracking|`aits portfolio track-candidate --latest`|只写 shadow tracking artifact；不启用 candidate、不修改 production。|
+|Shadow candidate tracking|生成 tracking window review|`aits portfolio review-tracking --latest --show-window-progress`|`tracking_days<5` 必须保持 `needs_more_data`；这是 VALIDATING 正常状态，不是 scheduler 失败。|
+|Shadow candidate tracking|生成 tracking review report alias|`aits reports portfolio-tracking-review --latest`|只读读取 review artifact，供 Dashboard / Reader Brief 展示。|
 |Reader Brief|生成读者入口|`aits reports reader-brief --latest`|只读消费既有 artifact，不重跑 scoring、backtest、SEC PIT、shadow、weight 或 docs 上游。|
 |Reader Brief|校验读者入口质量|`aits reports validate-reader-brief --latest`|质量失败或上下文受限必须在后续输出中可见。|
 
-Daily chain 还包括 `download-data`、`validate-data`、SEC companyfacts / metrics、valuation fetch、SEC PIT shadow observe / monitor、score change attribution、market panel、`ops health` 和 secret scan。休市日模式下，系统不得生成新的 score、decision snapshot、Reader Brief scoring artifacts、prediction ledger 行或执行动作。
+Daily chain 还包括 `download-data`、`validate-data`、SEC companyfacts / metrics、valuation fetch、SEC PIT shadow observe / monitor、score change attribution、market panel、`ops health` 和 secret scan。休市日模式下，系统不得生成新的 score、decision snapshot、Reader Brief scoring artifacts、tracking review artifacts、prediction ledger 行或执行动作。
 
 ## Periodic Task Register
 

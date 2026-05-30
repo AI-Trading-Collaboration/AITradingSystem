@@ -26,15 +26,20 @@
 14. `sec-pit shadow-monitor --latest`
 15. `reports score-change-attribution --latest`
 16. `reports market-panel --latest`
-17. `reports index --latest`
-18. `docs report-contract --latest`
-19. `reports research-governance-summary --latest`
-20. `reports reader-brief --latest`
-21. `reports validate-reader-brief --latest`
-22. `ops health`
-23. `security scan-secrets`
+17. `data freshness --latest`
+18. `data recover-freshness --latest`
+19. `portfolio track-candidate --latest`
+20. `portfolio review-tracking --latest --show-window-progress`
+21. `reports portfolio-tracking-review --latest`
+22. `reports index --latest`
+23. `docs report-contract --latest`
+24. `reports research-governance-summary --latest`
+25. `reports reader-brief --latest`
+26. `reports validate-reader-brief --latest`
+27. `ops health`
+28. `security scan-secrets`
 
-`validate-data` 是 cached market / macro data 的必需质量门禁。任何 downstream scoring、technical features、backtest 或 daily report 不得绕过该门禁。
+`validate-data` 是 cached market / macro data 的必需质量门禁。任何 downstream scoring、technical features、backtest 或 daily report 不得绕过该门禁。Portfolio tracking review 的 `needs_more_data` 是 VALIDATING 下的正常窗口状态，不得作为 scheduler 失败或 production approval。
 
 ## 验证 Daily Plan
 
@@ -57,7 +62,7 @@ aits ops daily-run --as-of 2026-05-06
 周末或 NYSE 常规整日休市日：
 
 - 仍运行 `validate-data`、PIT fetch/build/validate、SEC companyfacts/metrics、valuation、`ops health --non-trading-day` 和 secret scan。
-- 跳过 `score-daily`、dashboard、SEC PIT shadow observe / monitor、score change attribution、market panel、report index、documentation contract、research governance summary、Reader Brief 和 Reader Brief quality。
+- 跳过 `score-daily`、dashboard、SEC PIT shadow observe / monitor、score change attribution、market panel、market data freshness review、freshness recovery、portfolio candidate tracking、portfolio tracking review、report index、documentation contract、research governance summary、Reader Brief 和 Reader Brief quality。
 - 不生成新的日报评分、decision snapshot、Reader Brief scoring artifacts、prediction ledger 行或执行动作。
 
 ## Weekly Cadence

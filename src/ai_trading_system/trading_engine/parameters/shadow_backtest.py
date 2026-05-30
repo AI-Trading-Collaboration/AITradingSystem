@@ -761,15 +761,47 @@ def _promotion_decision_payload(
                 "production promotion."
             )
             reason = str(payload.get("reason") or "")
-    tracking_review_status = _portfolio_tracking_review_recommendation(tracking_review_path)
+    tracking_review = _portfolio_tracking_review_details(tracking_review_path)
+    tracking_review_status = str(tracking_review.get("recommendation") or "")
     if tracking_review_status:
         payload["portfolio_tracking_review_recommendation"] = tracking_review_status
+        payload["portfolio_tracking_review_tracking_days"] = tracking_review.get(
+            "tracking_days",
+            0,
+        )
+        payload["portfolio_tracking_review_stage"] = tracking_review.get("stage", "")
         if "tracking review" not in reason.lower():
+            tracking_days = int(tracking_review.get("tracking_days") or 0)
+            min_short = int(tracking_review.get("min_days_for_short_review") or 5)
+            stage = str(tracking_review.get("stage") or "")
+            if tracking_review_status == "needs_more_data" and tracking_days < min_short:
+                review_reason = (
+                    "Shadow candidate tracking is active, but only "
+                    f"{tracking_days} tracking {_day_label(tracking_days)} "
+                    f"{_is_are(tracking_days)} available. At least {min_short} "
+                    "tracking days are required before short-window review."
+                )
+            elif stage == "short_window_review":
+                review_reason = (
+                    "Shadow candidate has entered short-window review, but "
+                    "production promotion remains disabled because signal quality is "
+                    "LIMITED and manual promotion gate has not been passed."
+                )
+            elif stage == "extended_review_ready":
+                review_reason = (
+                    "Shadow candidate has reached the extended review window, but "
+                    "production promotion remains disabled unless a separate manual "
+                    "promotion gate is passed."
+                )
+            else:
+                review_reason = (
+                    f"Shadow candidate tracking review is {tracking_review_status}; "
+                    "this review is advisory only and cannot enable production promotion."
+                )
             payload["reason"] = (
                 reason.rstrip(".")
-                + ". Shadow candidate tracking review is "
-                f"{tracking_review_status}; this review is advisory only and cannot "
-                "enable production promotion."
+                + ". "
+                + review_reason
             )
             reason = str(payload.get("reason") or "")
     freshness_status = _market_data_freshness_status(freshness_path)
@@ -956,6 +988,34 @@ def _portfolio_tracking_review_recommendation(path: Path | None) -> str:
     if not isinstance(recommendation, dict):
         return ""
     return str(recommendation.get("status") or "")
+
+
+def _portfolio_tracking_review_details(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    candidate = payload.get("candidate") if isinstance(payload.get("candidate"), dict) else {}
+    recommendation = (
+        payload.get("recommendation") if isinstance(payload.get("recommendation"), dict) else {}
+    )
+    tracking_window = (
+        payload.get("tracking_window") if isinstance(payload.get("tracking_window"), dict) else {}
+    )
+    return {
+        "recommendation": str(recommendation.get("status") or ""),
+        "tracking_days": tracking_window.get(
+            "tracking_days",
+            candidate.get("tracking_days", 0),
+        ),
+        "stage": str(tracking_window.get("stage") or ""),
+        "min_days_for_short_review": tracking_window.get("min_days_for_short_review", 5),
+        "min_days_for_extended_review": tracking_window.get("min_days_for_extended_review", 20),
+    }
 
 
 def _market_data_freshness_status(path: Path | None) -> str:
@@ -1605,6 +1665,14 @@ def _config_hash(config_path: Path, input_artifacts: dict[str, str]) -> str:
             digest.update(str(path).encode("utf-8"))
             digest.update(sha256_file(path).encode("utf-8"))
     return digest.hexdigest()
+
+
+def _day_label(value: int) -> str:
+    return "day" if value == 1 else "days"
+
+
+def _is_are(value: int) -> str:
+    return "is" if value == 1 else "are"
 
 
 def _strings(value: object) -> list[str]:

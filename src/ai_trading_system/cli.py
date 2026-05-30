@@ -7769,6 +7769,13 @@ def portfolio_review_tracking_command(
         str | None,
         typer.Option(help="review 窗口：latest_day / 5d / 20d / since-start。"),
     ] = None,
+    show_window_progress: Annotated[
+        bool,
+        typer.Option(
+            "--show-window-progress",
+            help="显示 tracking window 阶段、剩余天数和结论许可。",
+        ),
+    ] = False,
     config_path: Annotated[
         Path,
         typer.Option("--config", help="portfolio tracking review 配置路径。"),
@@ -7795,6 +7802,9 @@ def portfolio_review_tracking_command(
     metadata = run.payload.get("metadata", {}) if isinstance(run.payload, dict) else {}
     candidate = run.payload.get("candidate", {}) if isinstance(run.payload, dict) else {}
     readiness = run.payload.get("data_readiness", {}) if isinstance(run.payload, dict) else {}
+    tracking_window = (
+        run.payload.get("tracking_window", {}) if isinstance(run.payload, dict) else {}
+    )
     recommendation = run.payload.get("recommendation", {}) if isinstance(run.payload, dict) else {}
     performance = run.payload.get("performance_review", {}) if isinstance(run.payload, dict) else {}
     relative = performance.get("relative_performance", {}) if isinstance(performance, dict) else {}
@@ -7829,7 +7839,57 @@ def portfolio_review_tracking_command(
     if isinstance(recommendation, dict):
         console.print(f"recommendation={rec_status}")
         console.print(f"reason={recommendation.get('reason', '')}")
+    if show_window_progress and isinstance(tracking_window, dict):
+        _print_portfolio_tracking_window_progress(
+            candidate=candidate if isinstance(candidate, dict) else {},
+            tracking_window=tracking_window,
+            recommendation=recommendation if isinstance(recommendation, dict) else {},
+            metadata=metadata if isinstance(metadata, dict) else {},
+            safety=run.payload.get("safety", {}) if isinstance(run.payload, dict) else {},
+        )
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@portfolio_app.command("tracking-window-status")
+def portfolio_tracking_window_status_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新正式 portfolio tracking review artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="tracking review 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 portfolio_tracking_review_summary.json 路径。"),
+    ] = None,
+) -> None:
+    """显示 active shadow candidate 的 tracking window 进度。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    if input_path is None and not latest and as_of is None:
+        latest = True
+    source_path = input_path or _resolve_portfolio_tracking_review_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_portfolio_tracking_review_payload(source_path)
+    issues = validate_portfolio_tracking_review_payload(payload)
+    if issues:
+        raise typer.BadParameter("portfolio tracking review JSON 校验失败：" + "; ".join(issues))
+    candidate = payload.get("candidate", {}) if isinstance(payload, dict) else {}
+    tracking_window = payload.get("tracking_window", {}) if isinstance(payload, dict) else {}
+    recommendation = payload.get("recommendation", {}) if isinstance(payload, dict) else {}
+    metadata = payload.get("metadata", {}) if isinstance(payload, dict) else {}
+    safety = payload.get("safety", {}) if isinstance(payload, dict) else {}
+    _print_portfolio_tracking_window_progress(
+        candidate=candidate if isinstance(candidate, dict) else {},
+        tracking_window=tracking_window if isinstance(tracking_window, dict) else {},
+        recommendation=recommendation if isinstance(recommendation, dict) else {},
+        metadata=metadata if isinstance(metadata, dict) else {},
+        safety=safety if isinstance(safety, dict) else {},
+    )
 
 
 @portfolio_app.command("validate-tracking-review")
@@ -16092,6 +16152,45 @@ def _resolve_portfolio_tracking_review_path(*, latest: bool, as_of: str | None) 
             raise typer.BadParameter(f"未找到 portfolio tracking review artifact：{root}")
         return latest_path
     return root / _parse_date(as_of).isoformat() / "portfolio_tracking_review_summary.json"
+
+
+def _print_portfolio_tracking_window_progress(
+    *,
+    candidate: dict[str, object],
+    tracking_window: dict[str, object],
+    recommendation: dict[str, object],
+    metadata: dict[str, object],
+    safety: dict[str, object],
+) -> None:
+    console.print(f"candidate_profile={candidate.get('profile_name', 'UNKNOWN')}")
+    console.print(f"tracking_days={tracking_window.get('tracking_days', 0)}")
+    console.print(f"stage={tracking_window.get('stage', 'UNKNOWN')}")
+    console.print(f"recommendation={recommendation.get('status', 'UNKNOWN')}")
+    console.print(
+        "days_until_short_review="
+        f"{tracking_window.get('days_until_short_review', 0)}"
+    )
+    console.print(
+        "days_until_extended_review="
+        f"{tracking_window.get('days_until_extended_review', 0)}"
+    )
+    console.print(
+        "can_form_short_window_conclusion="
+        f"{str(tracking_window.get('can_form_short_window_conclusion') is True).lower()}"
+    )
+    console.print(
+        "can_form_extended_review_conclusion="
+        f"{str(tracking_window.get('can_form_extended_review_conclusion') is True).lower()}"
+    )
+    console.print(
+        f"done_condition_met={str(tracking_window.get('done_condition_met') is True).lower()}"
+    )
+    console.print(f"production_effect={metadata.get('production_effect', 'none')}")
+    console.print(
+        "manual_review_required="
+        f"{str(metadata.get('manual_review_required') is True).lower()}"
+    )
+    console.print(f"auto_promotion={str(safety.get('auto_promotion') is True).lower()}")
 
 
 def _resolve_market_data_freshness_path(*, latest: bool, as_of: str | None) -> Path:
