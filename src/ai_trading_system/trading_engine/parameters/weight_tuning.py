@@ -1186,17 +1186,31 @@ def _evaluate_candidate(
         signal_quality,
         config,
     )
+    rejection_reasons = _candidate_rejection_reasons(
+        objective=objective,
+        relative=relative,
+        guardrails=guardrails,
+        signal_quality=signal_quality,
+        config=config,
+    )
     return {
         "candidate_id": candidate["candidate_id"],
         "weights": weights,
+        "constraint_status": "PASS",
         "metrics": _metrics_payload(candidate_full),
         "relative_metrics": relative,
         "objective_breakdown": objective,
         "guardrails": guardrails,
         "guardrail_status": guardrails["status"],
+        "rejection_reasons": rejection_reasons,
         "status": status,
         "reason": reason,
         "walk_forward_windows": window_payloads,
+        "walk_forward_summary": _candidate_walk_forward_summary(
+            window_payloads,
+            relative,
+            _mapping(config.get("guardrails")),
+        ),
         "l1_distance_from_baseline": candidate.get("l1_distance_from_baseline", 0.0),
         "fallback_signals_free_tuned": False,
     }
@@ -1371,6 +1385,85 @@ def _guardrail_payload(
         "hard_rejections": failed,
         "turnover_relative_increase": _round_float(turnover_relative),
         "validation_window_count": validation_window_count,
+    }
+
+
+def _candidate_rejection_reasons(
+    *,
+    objective: Mapping[str, Any],
+    relative: Mapping[str, Any],
+    guardrails: Mapping[str, Any],
+    signal_quality: Mapping[str, Any],
+    config: Mapping[str, Any],
+) -> list[str]:
+    reasons: list[str] = []
+    hard_rejections = _strings(guardrails.get("hard_rejections"))
+    for reason in hard_rejections:
+        reasons.append(_failure_reason_code(reason))
+    if _float_value(relative.get("annualized_return_delta")) <= 0.0:
+        reasons.append("no_return_improvement")
+    if _float_value(relative.get("sharpe_ratio_delta")) <= 0.0:
+        reasons.append("sharpe_not_improved")
+    if _float_value(relative.get("max_drawdown_delta")) < 0.0:
+        reasons.append("max_drawdown_worse")
+    if _float_value(relative.get("cost_drag_delta")) > 0.0:
+        reasons.append("cost_drag_too_high")
+    if _float_value(objective.get("objective_score")) <= _float_value(
+        _mapping(config.get("candidate_status_policy")).get("watch_objective_score_min"),
+        default=0.0,
+    ):
+        reasons.append("risk_adjusted_performance_worse")
+    if signal_quality.get("status") == "LIMITED" and guardrails.get("status") == "PASS":
+        reasons.append("signal_quality_limited")
+    return sorted(dict.fromkeys(reasons))
+
+
+def _failure_reason_code(reason: str) -> str:
+    return {
+        "max_drawdown_worse_than_baseline_by_more_than_limit": "drawdown_guardrail_failed",
+        "annualized_return_underperformance_more_than_limit": "return_guardrail_failed",
+        "turnover_increase_more_than_limit": "turnover_guardrail_failed",
+        "non_worse_walk_forward_ratio_below_minimum": "walk_forward_guardrail_failed",
+        "fallback_signal_free_tuned": "fallback_free_tuning_guardrail_failed",
+        "production_effect_not_none": "production_safety_guardrail_failed",
+        "auto_promotion_true": "production_safety_guardrail_failed",
+    }.get(reason, reason)
+
+
+def _candidate_walk_forward_summary(
+    windows: Sequence[Mapping[str, Any]],
+    relative: Mapping[str, Any],
+    guardrails: Mapping[str, Any],
+) -> dict[str, Any]:
+    positive = 0
+    negative = 0
+    worst_window = ""
+    worst_score = 0.0
+    for window in windows:
+        window_relative = _mapping(window.get("relative_metrics"))
+        return_delta = _float_value(window_relative.get("annualized_return_delta"))
+        sharpe_delta = _float_value(window_relative.get("sharpe_ratio_delta"))
+        score = return_delta + sharpe_delta
+        if return_delta > 0.0 or sharpe_delta > 0.0:
+            positive += 1
+        if return_delta < 0.0 or sharpe_delta < 0.0:
+            negative += 1
+        if not worst_window or score < worst_score:
+            worst_window = str(window.get("window_id") or "")
+            worst_score = score
+    count = len(windows)
+    return {
+        "validation_window_count": count,
+        "non_worse_ratio": _round_float(relative.get("non_worse_walk_forward_ratio")),
+        "non_worse_ratio_threshold": _round_float(
+            guardrails.get("min_non_worse_walk_forward_ratio"),
+        ),
+        "positive_windows": positive,
+        "negative_windows": negative,
+        "unstable_windows": negative,
+        "positive_window_ratio": _round_float(positive / count if count else 0.0),
+        "worst_window": worst_window,
+        "worst_window_status": "worse" if negative else "",
     }
 
 
@@ -1644,9 +1737,12 @@ def _candidate_ranking_row(row: Mapping[str, Any]) -> dict[str, Any]:
         "rank": row.get("rank", ""),
         "candidate_id": row.get("candidate_id", ""),
         "status": row.get("status", "UNKNOWN"),
+        "constraint_status": row.get("constraint_status", "PASS"),
         "guardrail_status": row.get("guardrail_status", "UNKNOWN"),
+        "rejection_reasons": _strings(row.get("rejection_reasons")),
         "objective_score": _mapping(row.get("objective_breakdown")).get("objective_score", 0.0),
         "relative_metrics": row.get("relative_metrics", {}),
+        "walk_forward_summary": row.get("walk_forward_summary", {}),
         "weights": row.get("weights", {}),
         "reason": row.get("reason", ""),
     }

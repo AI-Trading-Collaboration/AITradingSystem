@@ -770,6 +770,15 @@ from ai_trading_system.trading_engine.parameters.weight_tuning import (
     weight_tuning_payload_date,
     write_weight_tuning_report_alias,
 )
+from ai_trading_system.trading_engine.parameters.weight_tuning_failure import (
+    latest_weight_tuning_failure_path,
+    load_weight_tuning_failure_payload,
+    render_weight_tuning_failure_explanation,
+    run_weight_tuning_failure_attribution,
+    validate_weight_tuning_failure_payload,
+    weight_tuning_failure_payload_date,
+    write_weight_tuning_failure_report_alias,
+)
 from ai_trading_system.trading_engine.portfolio_candidate_review import (
     DEFAULT_PORTFOLIO_CANDIDATE_REVIEW_CONFIG_PATH,
     decide_portfolio_candidate,
@@ -8178,6 +8187,95 @@ def explain_weight_tuning_command(
     console.print(render_weight_tuning_explanation(payload))
 
 
+@parameters_app.command("explain-weight-tuning-failure")
+def explain_weight_tuning_failure_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="解释最新正式 weight tuning failure attribution。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="解释日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    summary_path: Annotated[
+        Path | None,
+        typer.Option("--summary", help="显式 weight_tuning_summary.json 路径。"),
+    ] = None,
+    debug: Annotated[
+        bool,
+        typer.Option(help="额外写出候选 debug JSON。"),
+    ] = False,
+) -> None:
+    """生成并输出 TRADING-059A weight tuning failure attribution 摘要。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    if summary_path is not None and (latest or as_of):
+        raise typer.BadParameter("--summary 不能和 --latest/--date 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    run = run_weight_tuning_failure_attribution(
+        as_of=run_date,
+        summary_path=summary_path,
+        debug=debug,
+    )
+    issues = validate_weight_tuning_failure_payload(run.payload)
+    if issues:
+        for issue in issues:
+            console.print(f"[red]- {issue}[/red]")
+        raise typer.Exit(code=1)
+    console.print(render_weight_tuning_failure_explanation(run.payload))
+    console.print(f"JSON：{run.json_path}")
+    console.print(f"Markdown：{run.markdown_path}")
+    if run.debug_path is not None:
+        console.print(f"Debug：{run.debug_path}")
+
+
+@parameters_app.command("validate-weight-tuning-failure")
+def validate_weight_tuning_failure_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验最新正式 weight tuning failure attribution JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="校验日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 weight_tuning_failure_summary.json 路径。"),
+    ] = None,
+) -> None:
+    """校验 TRADING-059A failure attribution JSON 和只读安全字段。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    source_path = input_path or _resolve_weight_tuning_failure_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_weight_tuning_failure_payload(source_path)
+    issues = validate_weight_tuning_failure_payload(payload)
+    if issues:
+        console.print("[red]Weight tuning failure validation：FAIL[/red]")
+        for issue in issues:
+            console.print(f"- {issue}")
+        raise typer.Exit(code=1)
+    metadata = payload.get("metadata", {}) if isinstance(payload, dict) else {}
+    root_cause = payload.get("root_cause", {}) if isinstance(payload, dict) else {}
+    status = metadata.get("status", "UNKNOWN") if isinstance(metadata, dict) else "UNKNOWN"
+    category = root_cause.get("category", "mixed") if isinstance(root_cause, dict) else "mixed"
+    production_modified = (
+        metadata.get("production_config_modified", "UNKNOWN")
+        if isinstance(metadata, dict)
+        else "UNKNOWN"
+    )
+    console.print("[green]Weight tuning failure validation：PASS[/green]")
+    console.print(f"JSON：{source_path}")
+    console.print(
+        f"status={status}；root_cause_category={category}；"
+        f"production_config_modified={str(production_modified).lower()}"
+    )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
 @reports_app.command("investment-review")
 def investment_periodic_review_command(
     period: Annotated[
@@ -8866,6 +8964,63 @@ def weight_tuning_report_command(
         console.print(f"weight_candidate_status={recommended.get('status', 'UNKNOWN')}")
     if isinstance(search, dict):
         console.print(f"candidates_evaluated={search.get('candidates_evaluated', 0)}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{markdown_path}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@reports_app.command("weight-tuning-failure")
+def weight_tuning_failure_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新正式 weight tuning failure attribution。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="报告日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    source_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 weight_tuning_failure_summary.json 路径。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 alias 输出目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """从正式 artifact 生成 weight tuning failure attribution 报告 alias。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    json_source = source_path or _resolve_weight_tuning_failure_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_weight_tuning_failure_payload(json_source)
+    issues = validate_weight_tuning_failure_payload(payload)
+    if issues:
+        raise typer.BadParameter(
+            "weight tuning failure JSON 校验失败：" + "; ".join(issues)
+        )
+    try:
+        report_date = weight_tuning_failure_payload_date(payload, json_source)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, markdown_path = write_weight_tuning_failure_report_alias(
+        payload,
+        reports_dir,
+        report_date,
+    )
+    root_cause = payload.get("root_cause", {}) if isinstance(payload, dict) else {}
+    rejection = (
+        payload.get("candidate_rejection_summary", {}) if isinstance(payload, dict) else {}
+    )
+    console.print("[green]Weight tuning failure report：OK[/green]")
+    if isinstance(root_cause, dict):
+        console.print(f"root_cause_category={root_cause.get('category', 'mixed')}")
+    if isinstance(rejection, dict):
+        console.print(f"total_candidates={rejection.get('total_candidates', 0)}")
     console.print(f"JSON：{json_path}")
     console.print(f"Markdown：{markdown_path}")
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
@@ -16375,6 +16530,16 @@ def _resolve_weight_tuning_path(*, latest: bool, as_of: str | None) -> Path:
             raise typer.BadParameter(f"未找到 weight tuning artifact：{root}")
         return latest_path
     return root / _parse_date(as_of).isoformat() / "weight_tuning_summary.json"
+
+
+def _resolve_weight_tuning_failure_path(*, latest: bool, as_of: str | None) -> Path:
+    root = PROJECT_ROOT / "artifacts" / "weight_tuning_failure"
+    if latest or as_of is None:
+        latest_path = latest_weight_tuning_failure_path(root)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 weight tuning failure artifact：{root}")
+        return latest_path
+    return root / _parse_date(as_of).isoformat() / "weight_tuning_failure_summary.json"
 
 
 def _print_portfolio_tracking_window_progress(

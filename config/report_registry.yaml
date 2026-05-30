@@ -511,6 +511,25 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: weight_tuning_failure
+    title: Weight Tuning Failure Attribution
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits reports weight-tuning-failure --latest
+    artifact_globs:
+      - artifacts/weight_tuning_failure/*/weight_tuning_failure_summary.json
+      - artifacts/weight_tuning_failure/*/weight_tuning_failure_summary.md
+      - artifacts/weight_tuning_failure/*/weight_tuning_failure_candidates_debug.json
+      - outputs/reports/weight_tuning_failure_*.json
+      - outputs/reports/weight_tuning_failure_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Failure attribution should be refreshed after every NO_CANDIDATE restricted weight tuning run before changing search space, signals, or guardrails.
+    owner_action: review_weight_tuning_failure_root_cause_before_any_next_tuning_task
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: market_data_freshness
     title: Market Data Freshness
     group: data_quality

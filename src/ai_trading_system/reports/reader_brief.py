@@ -962,6 +962,26 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "weight_tuning_non_worse_walk_forward_ratio",
                         parameter_shadow.get("weight_tuning_non_worse_walk_forward_ratio"),
                     ),
+                    (
+                        "weight_tuning_failure_status",
+                        parameter_shadow.get("weight_tuning_failure_status"),
+                    ),
+                    (
+                        "weight_tuning_failure_summary",
+                        parameter_shadow.get("weight_tuning_failure_summary"),
+                    ),
+                    (
+                        "weight_tuning_failure_root_cause",
+                        parameter_shadow.get("weight_tuning_failure_root_cause"),
+                    ),
+                    (
+                        "weight_tuning_failure_top_reason",
+                        parameter_shadow.get("weight_tuning_failure_top_reason"),
+                    ),
+                    (
+                        "weight_tuning_failure_next_action",
+                        parameter_shadow.get("weight_tuning_failure_next_action"),
+                    ),
                     ("manual_review_required", parameter_shadow.get("manual_review_required")),
                     ("risk", parameter_shadow.get("risk")),
                     ("diagnostic_report", parameter_shadow.get("diagnostic_report")),
@@ -1827,6 +1847,7 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
     candidate_tracking_summary = _portfolio_candidate_tracking_summary(as_of)
     tracking_review_summary = _portfolio_tracking_review_summary(as_of)
     weight_tuning_summary = _weight_tuning_review_summary(as_of)
+    weight_tuning_failure_summary = _weight_tuning_failure_review_summary(as_of)
     path = (
         PROJECT_ROOT
         / "artifacts"
@@ -2042,6 +2063,26 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
                 "non_worse_walk_forward_ratio",
                 "",
             ),
+            "weight_tuning_failure_status": weight_tuning_failure_summary.get(
+                "status",
+                "MISSING",
+            ),
+            "weight_tuning_failure_summary": weight_tuning_failure_summary.get(
+                "summary_sentence",
+                "",
+            ),
+            "weight_tuning_failure_root_cause": weight_tuning_failure_summary.get(
+                "root_cause_category",
+                "MISSING",
+            ),
+            "weight_tuning_failure_top_reason": weight_tuning_failure_summary.get(
+                "top_failure_reason",
+                "",
+            ),
+            "weight_tuning_failure_next_action": weight_tuning_failure_summary.get(
+                "recommended_next_action",
+                "",
+            ),
             "manual_review_required": True,
             "risk": "Shadow parameter backtest artifact missing; Reader Brief does not run it.",
             "diagnostic_report": str(diagnostic_path) if diagnostic_path.exists() else "",
@@ -2244,6 +2285,26 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
         ),
         "weight_tuning_non_worse_walk_forward_ratio": weight_tuning_summary.get(
             "non_worse_walk_forward_ratio",
+            "",
+        ),
+        "weight_tuning_failure_status": weight_tuning_failure_summary.get(
+            "status",
+            "MISSING",
+        ),
+        "weight_tuning_failure_summary": weight_tuning_failure_summary.get(
+            "summary_sentence",
+            "",
+        ),
+        "weight_tuning_failure_root_cause": weight_tuning_failure_summary.get(
+            "root_cause_category",
+            "MISSING",
+        ),
+        "weight_tuning_failure_top_reason": weight_tuning_failure_summary.get(
+            "top_failure_reason",
+            "",
+        ),
+        "weight_tuning_failure_next_action": weight_tuning_failure_summary.get(
+            "recommended_next_action",
             "",
         ),
         "manual_review_required": metadata.get("manual_review_required") is True,
@@ -2930,6 +2991,87 @@ def _weight_tuning_review_summary(as_of: date) -> dict[str, Any]:
     }
 
 
+def _weight_tuning_failure_review_summary(as_of: date) -> dict[str, Any]:
+    path = _latest_weight_tuning_failure_path(as_of)
+    if path is None:
+        return {
+            "status": "MISSING",
+            "root_cause_category": "MISSING",
+            "top_failure_reason": "",
+            "recommended_next_action": "",
+            "summary_sentence": (
+                "Weight tuning failure attribution is missing; Reader Brief cannot explain "
+                "the latest NO_CANDIDATE result."
+            ),
+        }
+    payload = _read_optional_json(path)
+    if not payload:
+        return {
+            "status": "MISSING",
+            "root_cause_category": "MISSING",
+            "top_failure_reason": "",
+            "recommended_next_action": "",
+            "summary_sentence": (
+                "Weight tuning failure attribution is unreadable; production parameters "
+                "remain unchanged."
+            ),
+        }
+    metadata = _mapping(payload.get("metadata"))
+    root_cause = _mapping(payload.get("root_cause"))
+    next_action = _mapping(payload.get("recommended_next_action"))
+    ranking = _records(payload.get("failure_ranking"))
+    category = _text(root_cause.get("category"), "mixed")
+    top_reason = _text(ranking[0].get("reason"), "") if ranking else ""
+    action = _text(next_action.get("action"), "")
+    if metadata.get("status") == "BLOCKED":
+        sentence = (
+            "Weight tuning returned NO_CANDIDATE, but failure attribution is blocked "
+            "because required tuning artifacts are missing."
+        )
+    elif category == "portfolio_turnover_too_high":
+        sentence = (
+            "Restricted weight tuning found near-miss candidates, but most failed "
+            "turnover guardrails. The next step is to review portfolio construction "
+            "turnover attribution."
+        )
+    elif category == "drawdown_control_insufficient":
+        sentence = (
+            "Restricted weight tuning improved some metrics but failed drawdown "
+            "guardrails. Risk and valuation signals should be improved before another "
+            "tuning attempt."
+        )
+    elif category == "no_alpha_detected":
+        sentence = (
+            "Restricted weight tuning did not find evidence that current signals improve "
+            "risk-adjusted returns versus baseline."
+        )
+    elif category == "walk_forward_unstable":
+        sentence = (
+            "Restricted weight tuning did not produce a valid shadow candidate because "
+            "candidate improvements were unstable across walk-forward windows."
+        )
+    elif category == "search_space_too_narrow":
+        sentence = (
+            "Restricted weight tuning did not have enough valid candidates after "
+            "constraints; search space expansion should be reviewed without lowering "
+            "guardrails automatically."
+        )
+    else:
+        sentence = (
+            "Restricted weight tuning did not produce a valid shadow candidate. Failure "
+            f"attribution indicates the main blocker is {category}; production parameters "
+            "remain unchanged."
+        )
+    return {
+        "status": _text(metadata.get("status"), "UNKNOWN"),
+        "root_cause_category": category,
+        "top_failure_reason": top_reason,
+        "recommended_next_action": action,
+        "source_artifact": str(path),
+        "summary_sentence": sentence,
+    }
+
+
 def _market_data_freshness_review_summary(as_of: date) -> dict[str, Any]:
     path = _latest_market_data_freshness_path(as_of)
     if path is None:
@@ -3200,6 +3342,21 @@ def _latest_weight_tuning_path(as_of: date) -> Path | None:
     root = PROJECT_ROOT / "artifacts" / "weight_tuning"
     candidates: list[tuple[date, Path]] = []
     for path in root.glob("*/weight_tuning_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _latest_weight_tuning_failure_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "weight_tuning_failure"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/weight_tuning_failure_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
