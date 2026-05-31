@@ -530,6 +530,25 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: portfolio_turnover_attribution
+    title: Portfolio Turnover Attribution
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits reports portfolio-turnover-attribution --latest
+    artifact_globs:
+      - artifacts/portfolio_turnover_attribution/*/portfolio_turnover_attribution_summary.json
+      - artifacts/portfolio_turnover_attribution/*/portfolio_turnover_attribution_summary.md
+      - artifacts/portfolio_turnover_attribution/*/portfolio_turnover_candidates_debug.json
+      - outputs/reports/portfolio_turnover_attribution_*.json
+      - outputs/reports/portfolio_turnover_attribution_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Turnover and cost drag attribution should be reviewed after any NO_CANDIDATE weight tuning failure before changing turnover guardrails, search distance, score smoothing, or transaction-cost assumptions.
+    owner_action: review_turnover_root_cause_before_any_guardrail_or_search_space_change
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: market_data_freshness
     title: Market Data Freshness
     group: data_quality

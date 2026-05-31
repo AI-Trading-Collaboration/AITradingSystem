@@ -825,6 +825,15 @@ from ai_trading_system.trading_engine.portfolio_tracking_review import (
     validate_portfolio_tracking_review_payload,
     write_portfolio_tracking_review_report_alias,
 )
+from ai_trading_system.trading_engine.portfolio_turnover_attribution import (
+    latest_portfolio_turnover_attribution_path,
+    load_portfolio_turnover_attribution_payload,
+    portfolio_turnover_attribution_payload_date,
+    render_portfolio_turnover_attribution_explanation,
+    run_portfolio_turnover_attribution,
+    validate_portfolio_turnover_attribution_payload,
+    write_portfolio_turnover_attribution_report_alias,
+)
 from ai_trading_system.trading_engine.price_cache_reconcile import (
     refresh_backtest_manifest,
     run_price_cache_reconcile,
@@ -7401,6 +7410,100 @@ def portfolio_validate_candidates_command(
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
 
 
+@portfolio_app.command("explain-turnover")
+def portfolio_explain_turnover_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="解释最新正式 weight tuning turnover failure。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="turnover attribution 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    weight_tuning_path: Annotated[
+        Path | None,
+        typer.Option("--weight-tuning", help="显式 weight_tuning_summary.json 路径。"),
+    ] = None,
+    near_miss_only: Annotated[
+        bool,
+        typer.Option(help="只分析 near-miss turnover candidates。"),
+    ] = False,
+    debug: Annotated[
+        bool,
+        typer.Option(help="额外写出候选 debug JSON。"),
+    ] = False,
+) -> None:
+    """生成 TRADING-060 portfolio turnover / cost drag attribution。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    if weight_tuning_path is not None and (latest or as_of):
+        raise typer.BadParameter("--weight-tuning 不能和 --latest/--date 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    run = run_portfolio_turnover_attribution(
+        as_of=run_date,
+        weight_tuning_path=weight_tuning_path,
+        near_miss_only=near_miss_only,
+        debug=debug,
+    )
+    issues = validate_portfolio_turnover_attribution_payload(run.payload)
+    if issues:
+        for issue in issues:
+            console.print(f"[red]- {issue}[/red]")
+        raise typer.Exit(code=1)
+    console.print(render_portfolio_turnover_attribution_explanation(run.payload))
+    console.print(f"JSON：{run.json_path}")
+    console.print(f"Markdown：{run.markdown_path}")
+    if run.debug_path is not None:
+        console.print(f"Debug：{run.debug_path}")
+
+
+@portfolio_app.command("validate-turnover-attribution")
+def portfolio_validate_turnover_attribution_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验最新正式 portfolio turnover attribution artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="turnover attribution 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 portfolio_turnover_attribution_summary.json 路径。"),
+    ] = None,
+) -> None:
+    """校验 TRADING-060 turnover attribution JSON 和 safety 字段。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    source_path = input_path or _resolve_portfolio_turnover_attribution_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_portfolio_turnover_attribution_payload(source_path)
+    issues = validate_portfolio_turnover_attribution_payload(payload)
+    if issues:
+        console.print("[red]Portfolio turnover attribution validation：FAIL[/red]")
+        for issue in issues:
+            console.print(f"- {issue}")
+        raise typer.Exit(code=1)
+    metadata = payload.get("metadata", {}) if isinstance(payload, dict) else {}
+    root_cause = payload.get("root_cause", {}) if isinstance(payload, dict) else {}
+    status = metadata.get("status", "UNKNOWN") if isinstance(metadata, dict) else "UNKNOWN"
+    category = root_cause.get("category", "mixed") if isinstance(root_cause, dict) else "mixed"
+    production_modified = (
+        metadata.get("production_config_modified", "UNKNOWN")
+        if isinstance(metadata, dict)
+        else "UNKNOWN"
+    )
+    console.print("[green]Portfolio turnover attribution validation：PASS[/green]")
+    console.print(f"JSON：{source_path}")
+    console.print(
+        f"status={status}；root_cause_category={category}；"
+        f"production_config_modified={str(production_modified).lower()}"
+    )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
 @portfolio_app.command("review-candidate")
 def portfolio_review_candidate_command(
     latest: Annotated[
@@ -8744,6 +8847,65 @@ def portfolio_candidates_report_command(
         reason = ranking.get("reason")
         if reason:
             console.print(f"reason={reason}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{markdown_path}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@reports_app.command("portfolio-turnover-attribution")
+def portfolio_turnover_attribution_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新正式 portfolio turnover attribution artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="报告日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    source_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 portfolio_turnover_attribution_summary.json 路径。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 alias 输出目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """从正式 artifact 生成 portfolio turnover attribution 报告 alias。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    json_source = source_path or _resolve_portfolio_turnover_attribution_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_portfolio_turnover_attribution_payload(json_source)
+    issues = validate_portfolio_turnover_attribution_payload(payload)
+    if issues:
+        raise typer.BadParameter(
+            "portfolio turnover attribution JSON 校验失败：" + "; ".join(issues)
+        )
+    try:
+        report_date = portfolio_turnover_attribution_payload_date(payload, json_source)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, markdown_path = write_portfolio_turnover_attribution_report_alias(
+        payload,
+        reports_dir,
+        report_date,
+    )
+    root_cause = payload.get("root_cause", {}) if isinstance(payload, dict) else {}
+    candidate_summary = (
+        payload.get("candidate_turnover_summary", {}) if isinstance(payload, dict) else {}
+    )
+    console.print("[green]Portfolio turnover attribution report：OK[/green]")
+    if isinstance(root_cause, dict):
+        console.print(f"root_cause_category={root_cause.get('category', 'mixed')}")
+    if isinstance(candidate_summary, dict):
+        console.print(
+            f"failed_by_turnover={candidate_summary.get('total_failed_by_turnover', 0)}"
+        )
     console.print(f"JSON：{json_path}")
     console.print(f"Markdown：{markdown_path}")
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
@@ -16486,6 +16648,24 @@ def _resolve_portfolio_candidates_path(*, latest: bool, as_of: str | None) -> Pa
             raise typer.BadParameter(f"未找到 portfolio candidates artifact：{root}")
         return latest_path
     return root / _parse_date(as_of).isoformat() / "portfolio_candidates_summary.json"
+
+
+def _resolve_portfolio_turnover_attribution_path(
+    *,
+    latest: bool,
+    as_of: str | None,
+) -> Path:
+    root = PROJECT_ROOT / "artifacts" / "portfolio_turnover_attribution"
+    if latest or as_of is None:
+        latest_path = latest_portfolio_turnover_attribution_path(root)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 portfolio turnover attribution artifact：{root}")
+        return latest_path
+    return (
+        root
+        / _parse_date(as_of).isoformat()
+        / "portfolio_turnover_attribution_summary.json"
+    )
 
 
 def _resolve_portfolio_candidate_review_decision_path(

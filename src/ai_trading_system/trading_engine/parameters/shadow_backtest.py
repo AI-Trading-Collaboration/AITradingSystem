@@ -682,6 +682,9 @@ def _promotion_decision_payload(
     weight_tuning_failure_path = _latest_weight_tuning_failure_supporting_path(as_of)
     if weight_tuning_failure_path is not None:
         supporting["weight_tuning_failure"] = str(weight_tuning_failure_path)
+    turnover_attribution_path = _latest_portfolio_turnover_attribution_supporting_path(as_of)
+    if turnover_attribution_path is not None:
+        supporting["portfolio_turnover_attribution"] = str(turnover_attribution_path)
     freshness_path = _latest_market_data_freshness_supporting_path(as_of)
     if freshness_path is not None:
         supporting["market_data_freshness"] = str(freshness_path)
@@ -848,6 +851,17 @@ def _promotion_decision_payload(
                 f"{failure_root} as the main blocker; production parameters remain unchanged."
             )
             reason = str(payload.get("reason") or "")
+    turnover_details = _portfolio_turnover_attribution_details(turnover_attribution_path)
+    turnover_root = str(turnover_details.get("root_cause_category") or "")
+    if turnover_root:
+        payload["portfolio_turnover_attribution_root_cause"] = turnover_root
+        if "turnover attribution" not in reason.lower():
+            payload["reason"] = (
+                reason.rstrip(".")
+                + ". Portfolio turnover attribution identifies "
+                f"{turnover_root} as the turnover/cost blocker; promotion remains rejected."
+            )
+            reason = str(payload.get("reason") or "")
     freshness_status = _market_data_freshness_status(freshness_path)
     if freshness_status and "market data freshness" not in reason.lower():
         payload["reason"] = (
@@ -995,6 +1009,21 @@ def _latest_weight_tuning_failure_supporting_path(as_of: date) -> Path | None:
     return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
 
 
+def _latest_portfolio_turnover_attribution_supporting_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "portfolio_turnover_attribution"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/portfolio_turnover_attribution_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
 def _latest_market_data_freshness_supporting_path(as_of: date) -> Path | None:
     root = PROJECT_ROOT / "artifacts" / "data_freshness"
     candidates: list[tuple[date, Path]] = []
@@ -1114,6 +1143,25 @@ def _weight_tuning_details(path: Path | None) -> dict[str, object]:
 
 
 def _weight_tuning_failure_details(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    root_cause = (
+        payload.get("root_cause") if isinstance(payload.get("root_cause"), dict) else {}
+    )
+    metadata = payload.get("metadata") if isinstance(payload.get("metadata"), dict) else {}
+    return {
+        "status": str(metadata.get("status") or ""),
+        "root_cause_category": str(root_cause.get("category") or ""),
+    }
+
+
+def _portfolio_turnover_attribution_details(path: Path | None) -> dict[str, object]:
     if path is None:
         return {}
     try:

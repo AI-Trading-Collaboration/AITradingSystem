@@ -982,6 +982,26 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "weight_tuning_failure_next_action",
                         parameter_shadow.get("weight_tuning_failure_next_action"),
                     ),
+                    (
+                        "portfolio_turnover_attribution_status",
+                        parameter_shadow.get("portfolio_turnover_attribution_status"),
+                    ),
+                    (
+                        "portfolio_turnover_attribution_summary",
+                        parameter_shadow.get("portfolio_turnover_attribution_summary"),
+                    ),
+                    (
+                        "portfolio_turnover_attribution_root_cause",
+                        parameter_shadow.get("portfolio_turnover_attribution_root_cause"),
+                    ),
+                    (
+                        "portfolio_turnover_top_assets",
+                        parameter_shadow.get("portfolio_turnover_top_assets"),
+                    ),
+                    (
+                        "portfolio_turnover_next_action",
+                        parameter_shadow.get("portfolio_turnover_next_action"),
+                    ),
                     ("manual_review_required", parameter_shadow.get("manual_review_required")),
                     ("risk", parameter_shadow.get("risk")),
                     ("diagnostic_report", parameter_shadow.get("diagnostic_report")),
@@ -1848,6 +1868,7 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
     tracking_review_summary = _portfolio_tracking_review_summary(as_of)
     weight_tuning_summary = _weight_tuning_review_summary(as_of)
     weight_tuning_failure_summary = _weight_tuning_failure_review_summary(as_of)
+    turnover_attribution_summary = _portfolio_turnover_attribution_review_summary(as_of)
     path = (
         PROJECT_ROOT
         / "artifacts"
@@ -2083,6 +2104,26 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
                 "recommended_next_action",
                 "",
             ),
+            "portfolio_turnover_attribution_status": turnover_attribution_summary.get(
+                "status",
+                "MISSING",
+            ),
+            "portfolio_turnover_attribution_summary": turnover_attribution_summary.get(
+                "summary_sentence",
+                "",
+            ),
+            "portfolio_turnover_attribution_root_cause": turnover_attribution_summary.get(
+                "root_cause_category",
+                "MISSING",
+            ),
+            "portfolio_turnover_top_assets": turnover_attribution_summary.get(
+                "top_turnover_assets",
+                "",
+            ),
+            "portfolio_turnover_next_action": turnover_attribution_summary.get(
+                "recommended_next_action",
+                "",
+            ),
             "manual_review_required": True,
             "risk": "Shadow parameter backtest artifact missing; Reader Brief does not run it.",
             "diagnostic_report": str(diagnostic_path) if diagnostic_path.exists() else "",
@@ -2304,6 +2345,26 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
             "",
         ),
         "weight_tuning_failure_next_action": weight_tuning_failure_summary.get(
+            "recommended_next_action",
+            "",
+        ),
+        "portfolio_turnover_attribution_status": turnover_attribution_summary.get(
+            "status",
+            "MISSING",
+        ),
+        "portfolio_turnover_attribution_summary": turnover_attribution_summary.get(
+            "summary_sentence",
+            "",
+        ),
+        "portfolio_turnover_attribution_root_cause": turnover_attribution_summary.get(
+            "root_cause_category",
+            "MISSING",
+        ),
+        "portfolio_turnover_top_assets": turnover_attribution_summary.get(
+            "top_turnover_assets",
+            "",
+        ),
+        "portfolio_turnover_next_action": turnover_attribution_summary.get(
             "recommended_next_action",
             "",
         ),
@@ -3072,6 +3133,98 @@ def _weight_tuning_failure_review_summary(as_of: date) -> dict[str, Any]:
     }
 
 
+def _portfolio_turnover_attribution_review_summary(as_of: date) -> dict[str, Any]:
+    path = _latest_portfolio_turnover_attribution_path(as_of)
+    if path is None:
+        return {
+            "status": "MISSING",
+            "root_cause_category": "MISSING",
+            "top_turnover_assets": "",
+            "recommended_next_action": "",
+            "summary_sentence": (
+                "Portfolio turnover attribution is missing; Reader Brief cannot yet explain "
+                "which turnover or cost-drag driver blocked weight candidates."
+            ),
+        }
+    payload = _read_optional_json(path)
+    if not payload:
+        return {
+            "status": "MISSING",
+            "root_cause_category": "MISSING",
+            "top_turnover_assets": "",
+            "recommended_next_action": "",
+            "summary_sentence": (
+                "Portfolio turnover attribution is unreadable; production parameters and "
+                "turnover guardrails remain unchanged."
+            ),
+        }
+    metadata = _mapping(payload.get("metadata"))
+    summary = _mapping(payload.get("summary"))
+    root_cause = _mapping(payload.get("root_cause"))
+    next_action = _mapping(payload.get("recommended_next_action"))
+    candidate_summary = _mapping(payload.get("candidate_turnover_summary"))
+    category = _text(root_cause.get("category"), "mixed")
+    top_assets = [
+        _text(item.get("symbol"), "")
+        for item in _records(payload.get("asset_turnover_contribution"))[:3]
+        if item.get("symbol")
+    ]
+    action = _text(next_action.get("action"), "")
+    if metadata.get("status") == "BLOCKED":
+        sentence = (
+            "Portfolio turnover attribution is blocked because required TRADING-059/059A "
+            "artifacts are missing."
+        )
+    elif category == "rebalance_threshold_too_low":
+        sentence = (
+            "Weight tuning failed mainly because candidate portfolios generated excessive "
+            "turnover under the current rebalance threshold. Test turnover-control overlays "
+            "before expanding the weight search space."
+        )
+    elif category == "score_volatility_too_high":
+        sentence = (
+            "Weight tuning failed mainly because candidate weights amplified score volatility "
+            "and caused frequent rebalances."
+        )
+    elif category == "weight_search_too_aggressive":
+        sentence = (
+            "Weight tuning failed mainly because candidate weights moved too far from the "
+            "baseline and increased turnover pressure."
+        )
+    elif category == "asset_rotation_too_frequent":
+        assets = ", ".join(top_assets)
+        sentence = (
+            "Weight tuning failed mainly because turnover is concentrated in a small set of "
+            f"assets: {assets}."
+        )
+    elif category == "cost_model_too_punitive":
+        sentence = (
+            "Weight tuning failed mainly due to cost drag. Cost assumptions should be "
+            "reviewed before changing signal weights or portfolio profiles."
+        )
+    elif category == "insufficient_details":
+        sentence = (
+            "Weight tuning turnover attribution is limited because candidate turnover "
+            "details are insufficient."
+        )
+    else:
+        sentence = (
+            "Weight tuning turnover attribution found mixed turnover and cost drivers; "
+            "production parameters remain unchanged."
+        )
+    return {
+        "status": _text(metadata.get("status"), "UNKNOWN"),
+        "root_cause_category": category,
+        "top_failure_reason": _text(summary.get("top_failure_reason"), ""),
+        "top_turnover_assets": ", ".join(top_assets),
+        "failed_candidate_count": candidate_summary.get("total_failed_by_turnover", 0),
+        "avg_cost_drag_delta": candidate_summary.get("avg_cost_drag_delta", 0.0),
+        "recommended_next_action": action,
+        "source_artifact": str(path),
+        "summary_sentence": sentence,
+    }
+
+
 def _market_data_freshness_review_summary(as_of: date) -> dict[str, Any]:
     path = _latest_market_data_freshness_path(as_of)
     if path is None:
@@ -3357,6 +3510,21 @@ def _latest_weight_tuning_failure_path(as_of: date) -> Path | None:
     root = PROJECT_ROOT / "artifacts" / "weight_tuning_failure"
     candidates: list[tuple[date, Path]] = []
     for path in root.glob("*/weight_tuning_failure_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _latest_portfolio_turnover_attribution_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "portfolio_turnover_attribution"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/portfolio_turnover_attribution_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:

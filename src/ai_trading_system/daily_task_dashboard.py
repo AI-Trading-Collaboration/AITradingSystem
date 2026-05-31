@@ -216,6 +216,7 @@ def build_daily_task_dashboard_payload(
         "portfolio_tracking_review_summary": _portfolio_tracking_review_summary(report),
         "weight_tuning_summary": _weight_tuning_summary(report),
         "weight_tuning_failure_summary": _weight_tuning_failure_summary(report),
+        "portfolio_turnover_attribution_summary": _portfolio_turnover_attribution_summary(report),
         "weight_adjustment_candidates": _weight_adjustment_candidates_summary(report),
         "weight_candidate_evaluation": _weight_candidate_evaluation_summary(report),
         "weight_promotion_gate": _weight_promotion_gate_summary(report),
@@ -381,6 +382,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_portfolio_tracking_review_summary(report),
             _render_weight_tuning_summary(report),
             _render_weight_tuning_failure_summary(report),
+            _render_portfolio_turnover_attribution_summary(report),
             _render_weight_adjustment_candidates(report),
             _render_weight_candidate_evaluation(report),
             _render_weight_promotion_gate(report),
@@ -3192,6 +3194,122 @@ def _latest_weight_tuning_failure_path(report: DailyTaskDashboardReport) -> Path
     root = report.project_root / "artifacts" / "weight_tuning_failure"
     candidates: list[tuple[date, Path]] = []
     for path in root.glob("*/weight_tuning_failure_summary.json"):
+        try:
+            as_of = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if as_of <= report.as_of:
+            candidates.append((as_of, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _portfolio_turnover_attribution_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_portfolio_turnover_attribution_path(report)
+    if path is None:
+        missing_path = (
+            report.project_root
+            / "artifacts"
+            / "portfolio_turnover_attribution"
+            / report.as_of.isoformat()
+            / "portfolio_turnover_attribution_summary.json"
+        )
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(missing_path),
+            "href": _report_href(missing_path, report.reports_dir),
+            "markdown_href": "",
+            "root_cause_category": "MISSING",
+            "top_failure_reason": "",
+            "most_common_guardrail_failure": "",
+            "failed_candidate_count": 0,
+            "near_miss_count": 0,
+            "top_turnover_assets": "",
+            "avg_cost_drag_delta": 0.0,
+            "recommended_next_action": "",
+            "production_effect": ProductionEffect.NONE.value,
+            "risk": "Portfolio turnover attribution 缺失；dashboard 不运行 attribution。",
+        }
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "portfolio_turnover_attribution":
+        return {
+            "status": "UNREADABLE",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "markdown_href": "",
+            "root_cause_category": "UNREADABLE",
+            "top_failure_reason": "",
+            "most_common_guardrail_failure": "",
+            "failed_candidate_count": 0,
+            "near_miss_count": 0,
+            "top_turnover_assets": "",
+            "avg_cost_drag_delta": 0.0,
+            "recommended_next_action": "",
+            "production_effect": ProductionEffect.NONE.value,
+            "risk": "Portfolio turnover attribution JSON 不可读。",
+        }
+    metadata = _mapping_value(payload, "metadata")
+    summary = _mapping_value(payload, "summary")
+    candidate_summary = _mapping_value(payload, "candidate_turnover_summary")
+    root_cause = _mapping_value(payload, "root_cause")
+    next_action = _mapping_value(payload, "recommended_next_action")
+    cost_drag = _mapping_value(payload, "cost_drag_attribution")
+    safety = _mapping_value(payload, "safety")
+    risks: list[str] = []
+    if metadata.get("production_effect") != ProductionEffect.NONE.value:
+        risks.append("turnover attribution production_effect 不是 none。")
+    if metadata.get("auto_promotion") is not False:
+        risks.append("turnover attribution auto_promotion 不是 false。")
+    if safety.get("production_write_allowed") is not False:
+        risks.append("turnover attribution 不应允许写 production。")
+    if safety.get("turnover_guardrail_modified") is not False:
+        risks.append("turnover attribution 不应修改 turnover guardrail。")
+    top_assets = [
+        str(item.get("symbol"))
+        for item in _records(payload.get("asset_turnover_contribution"))[:3]
+        if item.get("symbol")
+    ]
+    markdown_path = path.with_suffix(".md")
+    return {
+        "status": metadata.get("status", "UNKNOWN"),
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "markdown_href": _report_href(markdown_path, report.reports_dir)
+        if markdown_path.exists()
+        else "",
+        "root_cause_category": root_cause.get(
+            "category",
+            summary.get("root_cause_category", "mixed"),
+        ),
+        "top_failure_reason": summary.get("top_failure_reason", ""),
+        "most_common_guardrail_failure": summary.get("most_common_guardrail_failure", ""),
+        "failed_candidate_count": candidate_summary.get("total_failed_by_turnover", 0),
+        "near_miss_count": summary.get("near_miss_candidates", 0),
+        "top_turnover_assets": ", ".join(top_assets),
+        "avg_cost_drag_delta": candidate_summary.get(
+            "avg_cost_drag_delta",
+            cost_drag.get("avg_cost_drag_delta", 0.0),
+        ),
+        "recommended_next_action": next_action.get("action", ""),
+        "production_effect": metadata.get("production_effect", ProductionEffect.NONE.value),
+        "risk": "；".join(risks)
+        or (
+            "Turnover attribution 只解释 rejected candidates，不改 guardrail、"
+            "cost model 或 production 参数。"
+        ),
+    }
+
+
+def _latest_portfolio_turnover_attribution_path(
+    report: DailyTaskDashboardReport,
+) -> Path | None:
+    root = report.project_root / "artifacts" / "portfolio_turnover_attribution"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/portfolio_turnover_attribution_summary.json"):
         try:
             as_of = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -11110,6 +11228,67 @@ def _render_weight_tuning_failure_summary(report: DailyTaskDashboardReport) -> s
             _summary_item("top failure reason", summary.get("top_failure_reason", "")),
             _summary_item("near-miss count", summary.get("near_miss_count", 0)),
             _summary_item("root cause", summary.get("root_cause_category", "MISSING")),
+            _summary_item("next action", summary.get("recommended_next_action", "")),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            markdown_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_portfolio_turnover_attribution_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _portfolio_turnover_attribution_summary(report)
+    href = _string_value(summary.get("href"))
+    markdown_href = _string_value(summary.get("markdown_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(href)}"><span>Portfolio Turnover Attribution</span>'
+        f"<small>{_text(summary.get('root_cause_category', 'UNKNOWN'))}</small></a>"
+        if summary.get("exists")
+        else '<span class="report-link missing"><span>Portfolio Turnover Attribution</span>'
+        "<small>MISSING</small></span>"
+    )
+    markdown_link = (
+        '<a class="report-link" '
+        f'href="{_text(markdown_href)}"><span>Turnover Attribution Markdown</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if markdown_href
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="portfolio-turnover-attribution-summary-title">',
+            '<div class="section-head">',
+            '<h2 id="portfolio-turnover-attribution-summary-title">'
+            "Portfolio Turnover Attribution</h2>",
+            (
+                "<p>TRADING-060 explains turnover / cost drag for rejected weight "
+                "candidates；dashboard 只读 artifact，不调整 guardrail 或 cost model。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("latest status", summary.get("status", "MISSING")),
+            _summary_item("root cause", summary.get("root_cause_category", "MISSING")),
+            _summary_item("top failure reason", summary.get("top_failure_reason", "")),
+            _summary_item(
+                "guardrail failure",
+                summary.get("most_common_guardrail_failure", ""),
+            ),
+            _summary_item("failed candidates", summary.get("failed_candidate_count", 0)),
+            _summary_item("near-miss count", summary.get("near_miss_count", 0)),
+            _summary_item("top turnover assets", summary.get("top_turnover_assets", "")),
+            _summary_item("avg cost drag delta", summary.get("avg_cost_drag_delta", 0.0)),
             _summary_item("next action", summary.get("recommended_next_action", "")),
             _summary_item(
                 "production_effect",
