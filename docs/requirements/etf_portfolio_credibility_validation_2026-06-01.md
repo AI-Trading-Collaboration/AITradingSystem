@@ -25,7 +25,7 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 |TRADING-063B|DONE|Benchmark Suite Hardening|B001~B008 benchmark registry/config、benchmark comparison schema 和测试覆盖|
 |TRADING-063C|DONE|No-Lookahead Validation Framework|形式化 timing contract、校验 helper/module、决策字段 future leakage 防护测试|
 |TRADING-063D|DONE|Toy Portfolio Accounting Tests|手工可验 deterministic toy prices、NAV/weights/cost/next-bar/drawdown/contribution 测试|
-|TRADING-063E|READY|Risk Constraint Validation|asset/sleeve/equity/cash/rebalance/drawdown/volatility constraint tests 与 diagnostics|
+|TRADING-063E|DONE|Risk Constraint Validation|asset/sleeve/equity/cash/rebalance/drawdown/volatility constraint tests 与 diagnostics|
 |TRADING-063F|READY|Allocation Stability Diagnostics|turnover、weight delta、regime transition、constraint hit rate、exposure distribution 等 JSON/Markdown/CLI/report 输出|
 |TRADING-063G|READY|Simulation Ledger Forward-Evaluation Hardening|decision-time record 与 delayed `evaluation_only` future return 字段隔离|
 |TRADING-063H|READY|Backtest Metrics & Summary Report Standardization|统一 metrics schema、monthly table、benchmark excess、edge-case null reason|
@@ -59,6 +59,14 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 - `daily.csv`、`weights.csv` 和 `trades.csv` 输出包含 `execution_date`，benchmark return series 使用同一 signal lag 口径。
 - `max_rebalance_trade_weight`、`max_daily_turnover` 和完整 constraint diagnostics 属于 TRADING-063E 风险约束验收，本阶段不把它们伪装为已完成。
 
+## TRADING-063E 验收标准
+
+- Allocation 执行 `config/etf_portfolio/risk.yaml` 中的 `max_rebalance_trade_weight` 和 `max_daily_turnover`，不能只停留在配置声明。
+- Risk constraint tests 覆盖 asset cap/floor、SMH/SOXX semiconductor sleeve cap、Risk-Off equity/cash exposure、binding cash minimum、single-asset rebalance cap、daily turnover cap、weight sum normalization。
+- `ETFAllocationRecord` / `target_weights.csv` 输出结构化 `constraint_diagnostics`，包含 `constraint_id`、`asset_or_sleeve`、`before_weight`、`after_weight`、`reason` 和 `severity`。
+- Drawdown / volatility 风险惩罚作为 signal risk score 的约束输入进行测试；该惩罚先影响 composite score，不作为 allocation 层后验收益修补。
+- 文档同步说明 `constraint_diagnostics` schema、allocation 约束执行范围和 signal 风险惩罚边界。
+
 ## 进展记录
 
 - 2026-06-01: 新增本需求文档并把 TRADING-063 登记为 `IN_PROGRESS`；开始 TRADING-063A runtime artifact hygiene。
@@ -69,3 +77,5 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 - 2026-06-01: TRADING-063C 完成。新增 `etf_portfolio/no_lookahead.py` timing-contract validation helper；backtest、simulation ledger 和 daily brief 已接入 no-lookahead 校验；simulation delayed evaluation 输出 `evaluation_only=true`；新增测试覆盖 valid `t -> t+1`、same-day execution failure、feature source date failure、decision payload future leakage、simulation marker 和 report decision section 防泄漏。真实 `aits etf backtest run --config config/etf_portfolio/backtest.yaml --fast` smoke 通过；验证通过 `python -m pytest tests -q`（1639 passed）、ruff、compileall 和 diff check。
 - 2026-06-01: TRADING-063D 进入实现。toy accounting 梳理时确认当前 backtest 只有 `signal_date` / `return_date`，但 `execution_price=next_close` 的正确口径应显式拆为 `signal_date=t`、`execution_date=t+1`、`return_date=t+2`；本轮先修正 next-close accounting timing，再用手工可验 fixture 锁定 NAV、成本、贡献、drawdown 和 rebalance delta 行为。
 - 2026-06-01: TRADING-063D 完成。新增 `tests/fixtures/etf_portfolio/toy_prices.csv` 和 toy accounting tests；backtest daily/weights/trades 输出显式 `execution_date`，收益窗口修正为 `execution_date -> return_date`，benchmark series 使用同一 signal lag；新增 `calculate_portfolio_accounting_step` 覆盖 NAV、交易成本、cash return、asset contribution、bad weight sum、same-day execution、return-date timing、drawdown 和 rebalance delta threshold。真实 `aits etf backtest run --config config/etf_portfolio/backtest.yaml --fast` smoke 通过；验证通过 `python -m pytest tests -q`（1645 passed）、ruff、compileall 和 diff check。
+- 2026-06-01: TRADING-063E 进入实现。当前缺口为 `max_rebalance_trade_weight` / `max_daily_turnover` 尚未在 allocation 中执行，且 `constraints_applied` 只有代码列表，缺少包含 before/after/reason/severity 的结构化 diagnostics；本轮补齐约束执行和审计字段。
+- 2026-06-01: TRADING-063E 完成。Allocation 已执行 `max_rebalance_trade_weight` / `max_daily_turnover`，`ETFAllocationRecord` 与 `target_weights.csv` 输出结构化 `constraint_diagnostics`；新增 `tests/test_etf_risk_constraints.py` 覆盖 asset cap、semiconductor sleeve cap、Risk-Off equity/cash、binding cash minimum、single-asset rebalance cap、daily turnover cap、weight sum normalization 和 signal 层 drawdown/volatility risk penalties。真实 `aits etf backtest run --config config/etf_portfolio/backtest.yaml --fast` smoke 通过；全量验证通过 `python -m pytest tests -q`（1652 passed）。

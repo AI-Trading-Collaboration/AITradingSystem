@@ -1622,6 +1622,7 @@ def _allocation_record_from_row(row: pd.Series) -> ETFAllocationRecord:
         config_hash=str(row["config_hash"]),
         data_quality_status=str(row["data_quality_status"]),
         created_at=pd.Timestamp(str(row["created_at"])).to_pydatetime(),
+        constraint_diagnostics=tuple(_json_records(row.get("constraint_diagnostics"))),
     )
 
 
@@ -1645,6 +1646,18 @@ def _json_list(value: object) -> list[str]:
     if not isinstance(parsed, list):
         return [str(parsed)]
     return [str(item) for item in parsed]
+
+
+def _json_records(value: object) -> list[dict[str, object]]:
+    if value is None or pd.isna(value):
+        return []
+    try:
+        parsed = json.loads(str(value))
+    except ValueError:
+        return []
+    if not isinstance(parsed, list):
+        return []
+    return [dict(item) for item in parsed if isinstance(item, dict)]
 
 
 def _p1_quality_metadata(

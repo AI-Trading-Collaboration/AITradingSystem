@@ -680,6 +680,7 @@ class ETFAllocationRecord:
     config_hash: str
     data_quality_status: str
     created_at: datetime
+    constraint_diagnostics: tuple[dict[str, object], ...] = ()
 
     def to_record(self) -> dict[str, object]:
         return {
@@ -692,6 +693,11 @@ class ETFAllocationRecord:
             "regime": self.regime,
             "reason_codes": json.dumps(list(self.reason_codes), ensure_ascii=False),
             "constraints_applied": json.dumps(list(self.constraints_applied), ensure_ascii=False),
+            "constraint_diagnostics": json.dumps(
+                list(self.constraint_diagnostics),
+                ensure_ascii=False,
+                sort_keys=True,
+            ),
             "model_version": self.model_version,
             "config_hash": self.config_hash,
             "data_quality_status": self.data_quality_status,

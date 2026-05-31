@@ -155,6 +155,13 @@ regime 日期范围。主要产物路径：
 - `reports/etf_portfolio/backtests/<run_id>/summary.md`
 - `reports/etf_portfolio/backtests/<run_id>/metrics.json`
 
+`target_weights.csv` 输出 `constraints_applied` 和结构化
+`constraint_diagnostics` JSON。正式 allocation 会执行 asset cap/floor、risk group /
+semiconductor sleeve cap、regime equity cap、cash floor、`min_rebalance_delta`、
+`max_rebalance_trade_weight` 和 `max_daily_turnover`，每条诊断记录包含约束 ID、资产或
+sleeve、before/after 权重、原因和 severity。drawdown / volatility penalty 属于 signal
+risk score 层，会在 composite score 进入 allocation 前体现，不作为后验仓位修补。
+
 ETF no-lookahead timing contract 固定为：raw market data date = `t`、feature snapshot
 date = `t`、signal date = `t`、allocation decision date = `t`、最早执行日为 `t` 之后的
 下一交易日。`src/ai_trading_system/etf_portfolio/no_lookahead.py` 会校验
