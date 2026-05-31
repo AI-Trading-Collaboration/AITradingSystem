@@ -21,6 +21,7 @@ backtest:
     - QQQ
     - SMH
     - SOXX
+  primary_benchmark_id: B001
   baselines:
     - buy_and_hold_spy
     - buy_and_hold_qqq

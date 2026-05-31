@@ -28,7 +28,7 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 |TRADING-063E|DONE|Risk Constraint Validation|asset/sleeve/equity/cash/rebalance/drawdown/volatility constraint tests 与 diagnostics|
 |TRADING-063F|DONE|Allocation Stability Diagnostics|turnover、weight delta、regime transition、constraint hit rate、exposure distribution 等 JSON/Markdown/CLI/report 输出|
 |TRADING-063G|DONE|Simulation Ledger Forward-Evaluation Hardening|decision-time record 与 delayed `evaluation_only` future return 字段隔离|
-|TRADING-063H|READY|Backtest Metrics & Summary Report Standardization|统一 metrics schema、monthly table、benchmark excess、edge-case null reason|
+|TRADING-063H|DONE|Backtest Metrics & Summary Report Standardization|统一 metrics schema、monthly table、benchmark excess、edge-case null reason|
 |TRADING-063I|READY|ETF Daily Brief Explainability Upgrade|安全 banner、regime、weights/deltas、driver explanations、constraints、benchmark context 和 future field 防护|
 |TRADING-063J|READY|Parameter Governance & Candidate Promotion Policy|model state、promotion gates、governance summary 和 unsafe candidate blocking tests|
 |TRADING-063K|READY|End-to-End Credibility Gate|聚合 063A~J、P2/live safety、JSON/Markdown 输出和 fail-closed tests|
@@ -82,6 +82,15 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 - Duplicate date/model/symbol handling deterministic；重复 record 不复制 decision row，同一 as-of evaluation 可重复生成但只保留一组 evaluation rows。
 - Simulation report / daily brief summary 明确区分 decision-time 样本数和 evaluation 样本数。
 
+## TRADING-063H 验收标准
+
+- Backtest `summary.json` / `metrics.json` / `summary.md` 输出统一 `standardized_metrics` schema，至少包含 `start_date`、`end_date`、`trading_days`、`initial_nav`、`final_nav`、`total_return`、`CAGR`、`annualized_volatility`、`max_drawdown`、`Sharpe`、`Sortino`、`Calmar`、`best_month`、`worst_month`、`positive_month_ratio`、`turnover`、`average_equity_exposure`、`average_cash_weight`、`benchmark_excess_return` 和 `benchmark_drawdown_reduction`。
+- 无法计算的指标必须输出 `null`，并在 `metric_null_reasons` 中记录原因；不得用 0 伪装 Sharpe、Sortino、Calmar、monthly 或 benchmark 缺失结果。
+- 可行时输出 `monthly_returns` 表，包含 `month`、`strategy_return`、`benchmark_return`、`excess_return`、`max_drawdown_in_month` 和 `average_equity_exposure`。
+- Benchmark excess / drawdown reduction 使用 primary benchmark 口径，并在 schema 中披露 benchmark id；primary benchmark 缺失时 fail visible。
+- ETF backtest report / Reader Brief 可见层展示标准化摘要，并保留 report registry / report index 下钻入口。
+- 测试覆盖 metric schema stability、CAGR、max drawdown、Sharpe zero-vol guard、Sortino no-downside guard、Calmar zero-drawdown guard、monthly aggregation、benchmark excess 和 Reader Brief/report visibility。
+
 ## 进展记录
 
 - 2026-06-01: 新增本需求文档并把 TRADING-063 登记为 `IN_PROGRESS`；开始 TRADING-063A runtime artifact hygiene。
@@ -98,3 +107,5 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 - 2026-06-01: TRADING-063F 完成。新增 `etf_portfolio/stability.py`，backtest summary / metrics / Markdown 集成 `allocation_stability_diagnostics`，`write_backtest_run` 写出 `stability_diagnostics.json/md`，新增 `aits etf backtest diagnostics --latest` 从既有 run 重新生成 stability 摘要；测试覆盖 turnover、weight delta、regime transition、constraint hit rate、cash distribution、exposure time、holding-period schema 和 CLI artifact 写出。真实 `aits etf backtest run --config config/etf_portfolio/backtest.yaml --fast` 与 `aits etf backtest diagnostics --latest` smoke 通过；全量验证通过 `python -m pytest tests -q`（1656 passed）。
 - 2026-06-01: TRADING-063G 进入实现。当前缺口为 `evaluate_simulation_ledger` 会把原 decision rows 直接改为 `evaluation_only=true`，不能保留纯 decision-time record；本轮改为 decision/evaluation record 分层并补 schema/report 测试。
 - 2026-06-01: TRADING-063G 完成。Simulation ledger 已区分 `record_type=decision` 与 `record_type=evaluation`；decision rows 保留 config/snapshot hash、asset scores、target/previous/delta JSON、observe-only 和 production-effect 边界且不承载 future values；evaluation rows 按 `evaluation_as_of_date` deterministic upsert 并固定 `evaluation_only=true`；simulation report / daily brief summary 区分 decision/evaluation 样本。测试覆盖 decision creation 无 future value、forward updater delayed fill、evaluation marker、duplicate handling、config hash change 和 report separation；全量验证通过 `python -m pytest tests -q`（1657 passed）。
+- 2026-06-01: TRADING-063H 进入实现。当前缺口为 ETF backtest 指标分散在 strategy metrics / extended metrics / benchmark comparisons 中，缺少稳定的跨策略比较 schema、月度收益表、null reason 语义和 Reader Brief 摘要可见性；本轮统一输出并补边界测试。
+- 2026-06-01: TRADING-063H 完成。新增 `etf_portfolio/backtest_metrics.py`，backtest `summary.json` / `metrics.json` / `summary.md` 输出 `standardized_metrics`、`monthly_returns` 和 `metric_null_reasons`；`config/etf_portfolio/backtest.yaml` 显式配置 `primary_benchmark_id=B001`；Reader Brief 只读展示 ETF Backtest Summary 摘要；测试覆盖 schema、CAGR、max drawdown、Sharpe zero-vol、Sortino no-downside、Calmar zero-drawdown、insufficient volatility sample、monthly aggregation、benchmark excess 和 Reader Brief 可见性。真实 `aits etf backtest run --config config/etf_portfolio/backtest.yaml --fast` 与 `aits reports index --as-of 2026-05-31` smoke 通过；全量验证通过 `python -m pytest tests -q`（1664 passed）、ruff、compileall 和 diff check。

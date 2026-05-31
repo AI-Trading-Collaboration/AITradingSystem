@@ -264,6 +264,13 @@ class ETFBacktestSettings(BaseModel):
     benchmark_assets: list[str] = Field(min_length=1)
     baselines: list[str] = Field(min_length=1)
     benchmarks: dict[str, ETFBenchmarkConfig] = Field(default_factory=dict)
+    primary_benchmark_id: str = Field(default="B001", min_length=1)
+
+    @model_validator(mode="after")
+    def validate_primary_benchmark(self) -> Self:
+        if self.benchmarks and self.primary_benchmark_id not in self.benchmarks:
+            raise ValueError("primary_benchmark_id must reference a configured benchmark")
+        return self
 
 
 class ETFBenchmarkConfig(BaseModel):

@@ -14,6 +14,11 @@ from ai_trading_system.etf_portfolio.allocation import (
     allocate_portfolio,
     weights_from_records,
 )
+from ai_trading_system.etf_portfolio.backtest_metrics import (
+    benchmark_weights_for_monthly_table,
+    build_monthly_return_table,
+    build_standardized_backtest_metrics,
+)
 from ai_trading_system.etf_portfolio.features import build_feature_store
 from ai_trading_system.etf_portfolio.models import (
     ETFBenchmarkConfig,
@@ -255,6 +260,7 @@ def run_portfolio_backtest(
         requested_end=run_end,
         first_signal_date=effective_start,
         last_signal_date=effective_end,
+        daily=daily,
         strategy_metrics=strategy_metrics,
         strategy_returns=strategy_returns,
         benchmark_metrics=benchmark_metrics,
@@ -375,6 +381,14 @@ def render_backtest_summary(run: ETFBacktestRun) -> str:
         "",
         _extended_metric_line(run.summary["strategy_extended_metrics"]),
         "",
+        "## Standardized Backtest Metrics",
+        "",
+        *_standardized_metric_lines(run.summary["standardized_metrics"]),
+        "",
+        "## Monthly Returns",
+        "",
+        *_monthly_return_lines(run.summary["monthly_returns"]),
+        "",
         "## Allocation Stability Diagnostics",
         "",
         *_stability_lines(run.summary["allocation_stability_diagnostics"]),
@@ -405,7 +419,10 @@ def render_backtest_summary(run: ETFBacktestRun) -> str:
             ),
             "- `weights.csv`：逐日目标权重历史。",
             "- `trades.csv`：逐日调仓 delta、turnover 和交易成本审计。",
-            "- `metrics.json`：strategy / benchmark 指标摘要，便于实验 registry 读取。",
+            (
+                "- `metrics.json`：standardized / monthly / strategy / benchmark 指标摘要，"
+                "便于实验 registry 读取。"
+            ),
             "- `stability_diagnostics.json/md`：allocation stability 诊断摘要。",
             "",
             "## Correctness Notes",
@@ -473,6 +490,7 @@ def _summary_payload(
     requested_end: date,
     first_signal_date: date,
     last_signal_date: date,
+    daily: pd.DataFrame,
     strategy_metrics: BacktestMetrics,
     benchmark_metrics: dict[str, ETFBenchmarkResult],
     strategy_returns: list[float],
@@ -482,7 +500,28 @@ def _summary_payload(
     fast: bool,
 ) -> dict[str, object]:
     strategy_payload = _metrics_payload(strategy_metrics)
+    strategy_extended_metrics = _extended_metrics(strategy_returns, weights)
     benchmark_payload = _benchmark_metrics_payload(benchmark_metrics)
+    primary_benchmark_id = config.backtest.backtest.primary_benchmark_id
+    primary_benchmark = benchmark_registry(config).get(primary_benchmark_id)
+    monthly_returns = build_monthly_return_table(
+        daily,
+        benchmark_weights=(
+            None
+            if primary_benchmark is None
+            else benchmark_weights_for_monthly_table(primary_benchmark)
+        ),
+    )
+    standardized_metrics = build_standardized_backtest_metrics(
+        daily,
+        initial_nav=config.backtest.backtest.initial_capital,
+        strategy_metrics=strategy_metrics,
+        strategy_returns=strategy_returns,
+        annualized_volatility=strategy_extended_metrics.get("annualized_volatility"),
+        benchmark_metrics=benchmark_payload,
+        primary_benchmark_id=primary_benchmark_id,
+        monthly_returns=monthly_returns,
+    )
     return {
         "market_regime": config.backtest.backtest.regime,
         "requested_start": requested_start.isoformat(),
@@ -496,7 +535,9 @@ def _summary_payload(
         "model_version": config.strategy.model.version,
         "config_hash": config.config_hash,
         "strategy_metrics": strategy_payload,
-        "strategy_extended_metrics": _extended_metrics(strategy_returns, weights),
+        "strategy_extended_metrics": strategy_extended_metrics,
+        "standardized_metrics": standardized_metrics,
+        "monthly_returns": monthly_returns,
         "allocation_stability_diagnostics": allocation_stability_diagnostics,
         "benchmark_metrics": benchmark_payload,
         "benchmark_relative_return": {
@@ -532,6 +573,8 @@ def _metrics_document(summary: dict[str, object]) -> dict[str, object]:
         "config_hash": summary["config_hash"],
         "strategy_metrics": summary["strategy_metrics"],
         "strategy_extended_metrics": summary["strategy_extended_metrics"],
+        "standardized_metrics": summary["standardized_metrics"],
+        "monthly_returns": summary["monthly_returns"],
         "allocation_stability_diagnostics": summary["allocation_stability_diagnostics"],
         "benchmark_metrics": summary["benchmark_metrics"],
         "benchmark_relative_return": summary["benchmark_relative_return"],
@@ -889,6 +932,84 @@ def _extended_metric_line(metrics: object) -> str:
     )
 
 
+def _standardized_metric_lines(payload: object) -> list[str]:
+    if not isinstance(payload, dict):
+        return ["- Standardized metrics unavailable."]
+    lines = [
+        (
+            f"- Primary Benchmark：{payload.get('primary_benchmark_id', 'UNKNOWN')}；"
+            f"Trading Days：{payload.get('trading_days', 'n/a')}；"
+            f"Range：{payload.get('start_date', 'n/a')} 至 {payload.get('end_date', 'n/a')}"
+        ),
+        (
+            f"- NAV：{_fmt_optional_number(payload.get('initial_nav'))} -> "
+            f"{_fmt_optional_number(payload.get('final_nav'))}"
+        ),
+        (
+            f"- Total Return：{_fmt_optional_pct(payload.get('total_return'))}；"
+            f"CAGR：{_fmt_optional_pct(payload.get('CAGR'))}；"
+            f"Annualized Volatility："
+            f"{_fmt_optional_pct(payload.get('annualized_volatility'))}"
+        ),
+        (
+            f"- Max Drawdown：{_fmt_optional_pct(payload.get('max_drawdown'))}；"
+            f"Sharpe：{_fmt_optional(payload.get('Sharpe'))}；"
+            f"Sortino：{_fmt_optional(payload.get('Sortino'))}；"
+            f"Calmar：{_fmt_optional(payload.get('Calmar'))}"
+        ),
+        (
+            f"- Best Month：{_month_metric_text(payload.get('best_month'))}；"
+            f"Worst Month：{_month_metric_text(payload.get('worst_month'))}；"
+            f"Positive Month Ratio："
+            f"{_fmt_optional_pct(payload.get('positive_month_ratio'))}"
+        ),
+        (
+            f"- Turnover：{_fmt_optional(payload.get('turnover'))}；"
+            f"Average Equity Exposure："
+            f"{_fmt_optional_pct(payload.get('average_equity_exposure'))}；"
+            f"Average Cash Weight：{_fmt_optional_pct(payload.get('average_cash_weight'))}"
+        ),
+        (
+            f"- Benchmark Excess Return："
+            f"{_fmt_optional_pct(payload.get('benchmark_excess_return'))}；"
+            f"Benchmark Drawdown Reduction："
+            f"{_fmt_optional_pct(payload.get('benchmark_drawdown_reduction'))}"
+        ),
+    ]
+    reasons = payload.get("metric_null_reasons")
+    if isinstance(reasons, dict) and reasons:
+        lines.extend(["", "| Metric | Null Reason |", "|---|---|"])
+        for metric, reason in sorted(reasons.items()):
+            lines.append(f"| {metric} | {reason} |")
+    return lines
+
+
+def _monthly_return_lines(payload: object) -> list[str]:
+    rows = payload if isinstance(payload, list) else []
+    if not rows:
+        return ["- Monthly return table unavailable."]
+    lines = [
+        (
+            "| Month | Strategy Return | Benchmark Return | Excess Return | "
+            "Max Drawdown | Avg Equity Exposure |"
+        ),
+        "|---|---:|---:|---:|---:|---:|",
+    ]
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        lines.append(
+            "| "
+            f"{row.get('month', 'n/a')} | "
+            f"{_fmt_optional_pct(row.get('strategy_return'))} | "
+            f"{_fmt_optional_pct(row.get('benchmark_return'))} | "
+            f"{_fmt_optional_pct(row.get('excess_return'))} | "
+            f"{_fmt_optional_pct(row.get('max_drawdown_in_month'))} | "
+            f"{_fmt_optional_pct(row.get('average_equity_exposure'))} |"
+        )
+    return lines
+
+
 def _stability_lines(payload: object) -> list[str]:
     if not isinstance(payload, dict):
         return ["- Allocation stability diagnostics unavailable."]
@@ -937,3 +1058,15 @@ def _fmt_optional_pct(value: object) -> str:
     if value is None:
         return "n/a"
     return f"{float(value):.2%}"
+
+
+def _fmt_optional_number(value: object) -> str:
+    if value is None:
+        return "n/a"
+    return f"{float(value):,.2f}"
+
+
+def _month_metric_text(value: object) -> str:
+    if not isinstance(value, dict):
+        return "n/a"
+    return f"{value.get('month', 'n/a')} ({_fmt_optional_pct(value.get('strategy_return'))})"

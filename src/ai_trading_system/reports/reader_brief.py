@@ -167,6 +167,7 @@ def build_reader_brief_payload(
         research_governance_summary=research_governance_summary,
     )
     parameter_shadow_review = _parameter_shadow_review(as_of)
+    etf_backtest_summary = _etf_backtest_review_summary(as_of)
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -281,6 +282,7 @@ def build_reader_brief_payload(
         "data_quality_pit_safety": data_quality_pit_safety,
         "backtest_shadow_governance": governance_summary,
         "parameter_shadow_review": parameter_shadow_review,
+        "etf_backtest_summary": etf_backtest_summary,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -527,6 +529,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     quality = _mapping(payload.get("data_quality_pit_safety"))
     governance = _mapping(payload.get("backtest_shadow_governance"))
     parameter_shadow = _mapping(payload.get("parameter_shadow_review"))
+    etf_backtest = _mapping(payload.get("etf_backtest_summary"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -726,6 +729,35 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
         _section("Binding Gate Ladder", _gate_ladder_html(gates)),
         _section("Data Quality & PIT Safety", _definition_table(list(quality.items()))),
         _section("Backtest / Shadow / Governance", _definition_table(list(governance.items()))),
+        _section(
+            "ETF Backtest Summary",
+            _definition_table(
+                [
+                    ("availability", etf_backtest.get("availability")),
+                    ("status", etf_backtest.get("status")),
+                    ("summary", etf_backtest.get("summary_sentence")),
+                    ("run_id", etf_backtest.get("run_id")),
+                    ("start_date", etf_backtest.get("start_date")),
+                    ("end_date", etf_backtest.get("end_date")),
+                    ("trading_days", etf_backtest.get("trading_days")),
+                    ("primary_benchmark_id", etf_backtest.get("primary_benchmark_id")),
+                    ("total_return", etf_backtest.get("total_return")),
+                    ("CAGR", etf_backtest.get("CAGR")),
+                    ("max_drawdown", etf_backtest.get("max_drawdown")),
+                    ("Sharpe", etf_backtest.get("Sharpe")),
+                    ("benchmark_excess_return", etf_backtest.get("benchmark_excess_return")),
+                    (
+                        "benchmark_drawdown_reduction",
+                        etf_backtest.get("benchmark_drawdown_reduction"),
+                    ),
+                    ("monthly_rows", etf_backtest.get("monthly_rows")),
+                    ("null_reason_count", etf_backtest.get("null_reason_count")),
+                    ("data_quality_status", etf_backtest.get("data_quality_status")),
+                    ("production_effect", etf_backtest.get("production_effect")),
+                    ("source_artifact", etf_backtest.get("source_artifact")),
+                ]
+            ),
+        ),
         _section(
             "Parameter Shadow Review",
             _definition_table(
@@ -1903,6 +1935,70 @@ def _backtest_shadow_governance(
         "shadow_summary": "; ".join(item for item in shadow_conclusions if item) or "MISSING",
         "production_effect": PRODUCTION_EFFECT,
         "limitation": "完整 research governance summary 将由 REPORT-051 统一生成。",
+    }
+
+
+def _etf_backtest_review_summary(as_of: date) -> dict[str, Any]:
+    path = _latest_etf_backtest_summary_path(as_of)
+    if path is None:
+        return {
+            "availability": "MISSING",
+            "status": "MISSING",
+            "summary_sentence": (
+                "ETF backtest summary is missing; Reader Brief does not run ETF backtest."
+            ),
+            "run_id": "",
+            "start_date": "",
+            "end_date": "",
+            "trading_days": 0,
+            "primary_benchmark_id": "",
+            "total_return": "UNKNOWN",
+            "CAGR": "UNKNOWN",
+            "max_drawdown": "UNKNOWN",
+            "Sharpe": "UNKNOWN",
+            "benchmark_excess_return": "UNKNOWN",
+            "benchmark_drawdown_reduction": "UNKNOWN",
+            "monthly_rows": 0,
+            "null_reason_count": 0,
+            "data_quality_status": "MISSING",
+            "production_effect": PRODUCTION_EFFECT,
+            "source_artifact": "",
+        }
+    payload = _read_optional_json(path)
+    metrics = _mapping(payload.get("standardized_metrics"))
+    monthly_returns = _records(payload.get("monthly_returns"))
+    null_reasons = _mapping(metrics.get("metric_null_reasons"))
+    status = "AVAILABLE" if metrics else "LIMITED"
+    total_return = _format_number(metrics.get("total_return"), digits=4)
+    benchmark_excess = _format_number(metrics.get("benchmark_excess_return"), digits=4)
+    summary_sentence = (
+        f"ETF backtest standardized metrics are {status}: total_return={total_return}, "
+        f"benchmark_excess_return={benchmark_excess}, monthly_rows={len(monthly_returns)}; "
+        "production_effect=none."
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "summary_sentence": summary_sentence,
+        "run_id": path.parent.name,
+        "start_date": _text(metrics.get("start_date"), _text(payload.get("first_signal_date"))),
+        "end_date": _text(metrics.get("end_date"), _text(payload.get("last_signal_date"))),
+        "trading_days": metrics.get("trading_days", payload.get("row_count", 0)),
+        "primary_benchmark_id": _text(metrics.get("primary_benchmark_id")),
+        "total_return": total_return,
+        "CAGR": _format_number(metrics.get("CAGR"), digits=4),
+        "max_drawdown": _format_number(metrics.get("max_drawdown"), digits=4),
+        "Sharpe": _format_number(metrics.get("Sharpe"), digits=4),
+        "benchmark_excess_return": benchmark_excess,
+        "benchmark_drawdown_reduction": _format_number(
+            metrics.get("benchmark_drawdown_reduction"),
+            digits=4,
+        ),
+        "monthly_rows": len(monthly_returns),
+        "null_reason_count": len(null_reasons),
+        "data_quality_status": _text(payload.get("data_quality_status"), "UNKNOWN"),
+        "production_effect": PRODUCTION_EFFECT,
+        "source_artifact": str(path),
     }
 
 
@@ -3663,6 +3759,31 @@ def _latest_price_cache_reconcile_path(as_of: date) -> Path | None:
     if not candidates:
         return None
     return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _latest_etf_backtest_summary_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "reports" / "etf_portfolio" / "backtests"
+    if not root.exists():
+        return None
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/summary.json"):
+        run_date = _etf_backtest_run_date(path.parent.name)
+        if path.is_file() and run_date is not None and run_date <= as_of:
+            candidates.append((run_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[0], item[1].stat().st_mtime))[1]
+
+
+def _etf_backtest_run_date(run_id: str) -> date | None:
+    prefix = "etf-backtest-"
+    if not run_id.startswith(prefix):
+        return None
+    stamp = run_id.removeprefix(prefix)
+    try:
+        return date.fromisoformat(f"{stamp[0:4]}-{stamp[4:6]}-{stamp[6:8]}")
+    except ValueError:
+        return None
 
 
 def _latest_signal_calibration_path(as_of: date) -> Path | None:

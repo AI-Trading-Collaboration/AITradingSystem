@@ -225,7 +225,7 @@ reports:
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
   - report_id: etf_backtest_summary
-    title: ETF Portfolio Backtest Summary
+    title: ETF Portfolio Backtest Summary & Standardized Metrics
     group: backtest
     cadence: ad_hoc
     audience: reviewer
@@ -235,7 +235,7 @@ reports:
       - reports/etf_portfolio/backtests/*/summary.md
       - reports/etf_portfolio/backtests/*/summary.json
     freshness_sla_days: 30
-    freshness_rationale: ETF portfolio backtest evidence should be refreshed after ETF strategy, risk, allocation, or config changes.
+    freshness_rationale: ETF portfolio backtest evidence, standardized metrics, monthly returns, benchmark excess, and null reason semantics should be refreshed after ETF strategy, risk, allocation, or config changes.
     owner_action: rerun_etf_backtest_after_etf_config_or_signal_change
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false

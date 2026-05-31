@@ -76,6 +76,7 @@ def test_etf_config_loads_and_default_weights_sum_to_one() -> None:
     assert abs(sum(asset.default_weight for asset in config.assets.assets.values()) - 1.0) < 1e-6
     assert config.backtest.backtest.regime == "ai_after_chatgpt"
     assert config.backtest.backtest.start_date == date(2022, 12, 1)
+    assert config.backtest.backtest.primary_benchmark_id == "B001"
     assert config.p2 is not None
     assert not config.p2.live_interface.broker_routing_allowed
 
@@ -337,6 +338,20 @@ def test_backtest_runs_with_one_day_execution_lag(tmp_path: Path) -> None:
     assert stability["schema_version"] == 1
     assert stability["status"] in {"STABLE", "TOO_JUMPY"}
     assert "daily_turnover" in stability
+    standardized = result.summary["standardized_metrics"]
+    assert standardized["primary_benchmark_id"] == "B001"
+    assert standardized["trading_days"] == len(result.daily)
+    assert standardized["metric_keys"][0] == "start_date"
+    assert "metric_null_reasons" in standardized
+    assert result.summary["monthly_returns"]
+    assert {
+        "month",
+        "strategy_return",
+        "benchmark_return",
+        "excess_return",
+        "max_drawdown_in_month",
+        "average_equity_exposure",
+    }.issubset(result.summary["monthly_returns"][0])
 
     paths = write_backtest_run(result, tmp_path)
     for path in paths:
@@ -346,6 +361,12 @@ def test_backtest_runs_with_one_day_execution_lag(tmp_path: Path) -> None:
     assert (tmp_path / result.run_id / "metrics.json").exists()
     assert (tmp_path / result.run_id / "stability_diagnostics.json").exists()
     assert (tmp_path / result.run_id / "stability_diagnostics.md").exists()
+    summary_markdown = (tmp_path / result.run_id / "summary.md").read_text(encoding="utf-8")
+    metrics_payload = json.loads((tmp_path / result.run_id / "metrics.json").read_text())
+    assert "Standardized Backtest Metrics" in summary_markdown
+    assert "Monthly Returns" in summary_markdown
+    assert metrics_payload["standardized_metrics"]["primary_benchmark_id"] == "B001"
+    assert metrics_payload["monthly_returns"]
 
 
 def test_benchmark_registry_loads_required_ids_and_static_weights_sum_to_one() -> None:
