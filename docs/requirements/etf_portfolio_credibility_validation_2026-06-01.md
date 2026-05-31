@@ -26,7 +26,7 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 |TRADING-063C|DONE|No-Lookahead Validation Framework|形式化 timing contract、校验 helper/module、决策字段 future leakage 防护测试|
 |TRADING-063D|DONE|Toy Portfolio Accounting Tests|手工可验 deterministic toy prices、NAV/weights/cost/next-bar/drawdown/contribution 测试|
 |TRADING-063E|DONE|Risk Constraint Validation|asset/sleeve/equity/cash/rebalance/drawdown/volatility constraint tests 与 diagnostics|
-|TRADING-063F|READY|Allocation Stability Diagnostics|turnover、weight delta、regime transition、constraint hit rate、exposure distribution 等 JSON/Markdown/CLI/report 输出|
+|TRADING-063F|DONE|Allocation Stability Diagnostics|turnover、weight delta、regime transition、constraint hit rate、exposure distribution 等 JSON/Markdown/CLI/report 输出|
 |TRADING-063G|READY|Simulation Ledger Forward-Evaluation Hardening|decision-time record 与 delayed `evaluation_only` future return 字段隔离|
 |TRADING-063H|READY|Backtest Metrics & Summary Report Standardization|统一 metrics schema、monthly table、benchmark excess、edge-case null reason|
 |TRADING-063I|READY|ETF Daily Brief Explainability Upgrade|安全 banner、regime、weights/deltas、driver explanations、constraints、benchmark context 和 future field 防护|
@@ -67,6 +67,13 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 - Drawdown / volatility 风险惩罚作为 signal risk score 的约束输入进行测试；该惩罚先影响 composite score，不作为 allocation 层后验收益修补。
 - 文档同步说明 `constraint_diagnostics` schema、allocation 约束执行范围和 signal 风险惩罚边界。
 
+## TRADING-063F 验收标准
+
+- 新增 allocation stability diagnostics，覆盖 `daily_turnover`、absolute weight delta、rebalance count/frequency、regime transition count、constraint hit rate、cash/equity/semiconductor exposure、asset exposure time 和可行的 average holding period。
+- Diagnostics 同时进入 backtest `summary.json` / `summary.md`，并可通过 CLI 从既有 backtest run 重新生成 JSON/Markdown。
+- Stability status 使用 ETF risk config 中的 `max_daily_turnover` 和 `max_rebalance_trade_weight` 作为 policy reference；首日从全现金建仓与后续 rebalance policy check 分开披露。
+- Tests 覆盖 turnover、weight delta、regime transition、constraint hit rate、cash distribution、exposure time 和 schema stability。
+
 ## 进展记录
 
 - 2026-06-01: 新增本需求文档并把 TRADING-063 登记为 `IN_PROGRESS`；开始 TRADING-063A runtime artifact hygiene。
@@ -79,3 +86,5 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 - 2026-06-01: TRADING-063D 完成。新增 `tests/fixtures/etf_portfolio/toy_prices.csv` 和 toy accounting tests；backtest daily/weights/trades 输出显式 `execution_date`，收益窗口修正为 `execution_date -> return_date`，benchmark series 使用同一 signal lag；新增 `calculate_portfolio_accounting_step` 覆盖 NAV、交易成本、cash return、asset contribution、bad weight sum、same-day execution、return-date timing、drawdown 和 rebalance delta threshold。真实 `aits etf backtest run --config config/etf_portfolio/backtest.yaml --fast` smoke 通过；验证通过 `python -m pytest tests -q`（1645 passed）、ruff、compileall 和 diff check。
 - 2026-06-01: TRADING-063E 进入实现。当前缺口为 `max_rebalance_trade_weight` / `max_daily_turnover` 尚未在 allocation 中执行，且 `constraints_applied` 只有代码列表，缺少包含 before/after/reason/severity 的结构化 diagnostics；本轮补齐约束执行和审计字段。
 - 2026-06-01: TRADING-063E 完成。Allocation 已执行 `max_rebalance_trade_weight` / `max_daily_turnover`，`ETFAllocationRecord` 与 `target_weights.csv` 输出结构化 `constraint_diagnostics`；新增 `tests/test_etf_risk_constraints.py` 覆盖 asset cap、semiconductor sleeve cap、Risk-Off equity/cash、binding cash minimum、single-asset rebalance cap、daily turnover cap、weight sum normalization 和 signal 层 drawdown/volatility risk penalties。真实 `aits etf backtest run --config config/etf_portfolio/backtest.yaml --fast` smoke 通过；全量验证通过 `python -m pytest tests -q`（1652 passed）。
+- 2026-06-01: TRADING-063F 进入实现。当前缺口为 backtest 只有 strategy turnover / weights / trades 原始表，缺少可直接复核 allocation 是否过度跳动的 stability JSON/Markdown/CLI 摘要；本轮新增 diagnostics 模块并接入 backtest summary。
+- 2026-06-01: TRADING-063F 完成。新增 `etf_portfolio/stability.py`，backtest summary / metrics / Markdown 集成 `allocation_stability_diagnostics`，`write_backtest_run` 写出 `stability_diagnostics.json/md`，新增 `aits etf backtest diagnostics --latest` 从既有 run 重新生成 stability 摘要；测试覆盖 turnover、weight delta、regime transition、constraint hit rate、cash distribution、exposure time、holding-period schema 和 CLI artifact 写出。真实 `aits etf backtest run --config config/etf_portfolio/backtest.yaml --fast` 与 `aits etf backtest diagnostics --latest` smoke 通过；全量验证通过 `python -m pytest tests -q`（1656 passed）。

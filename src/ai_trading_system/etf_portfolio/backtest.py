@@ -26,6 +26,10 @@ from ai_trading_system.etf_portfolio.no_lookahead import (
 )
 from ai_trading_system.etf_portfolio.regime import generate_regime_for_date
 from ai_trading_system.etf_portfolio.signals import generate_signals_for_date, signals_to_frame
+from ai_trading_system.etf_portfolio.stability import (
+    build_allocation_stability_diagnostics,
+    write_allocation_stability_diagnostics,
+)
 
 
 @dataclass(frozen=True)
@@ -238,6 +242,12 @@ def run_portfolio_backtest(
     benchmark_metrics = _benchmark_metrics(close_pivot, trading_dates, config, fast=fast)
     effective_start = date.fromisoformat(str(daily.iloc[0]["signal_date"]))
     effective_end = date.fromisoformat(str(daily.iloc[-1]["signal_date"]))
+    allocation_stability_diagnostics = build_allocation_stability_diagnostics(
+        daily,
+        weights,
+        max_daily_turnover=config.risk.portfolio_constraints.max_daily_turnover,
+        max_rebalance_trade_weight=config.risk.portfolio_constraints.max_rebalance_trade_weight,
+    )
     summary = _summary_payload(
         config=config,
         quality_report=quality_report,
@@ -249,6 +259,7 @@ def run_portfolio_backtest(
         strategy_returns=strategy_returns,
         benchmark_metrics=benchmark_metrics,
         weights=weights,
+        allocation_stability_diagnostics=allocation_stability_diagnostics,
         row_count=len(daily),
         fast=fast,
     )
@@ -268,7 +279,7 @@ def run_portfolio_backtest(
 def write_backtest_run(
     run: ETFBacktestRun,
     output_root: Path,
-) -> tuple[Path, Path, Path, Path, Path, Path]:
+) -> tuple[Path, Path, Path, Path, Path, Path, Path, Path]:
     run_dir = output_root / run.run_id
     run_dir.mkdir(parents=True, exist_ok=True)
     daily_path = run_dir / "daily.csv"
@@ -277,6 +288,8 @@ def write_backtest_run(
     summary_json_path = run_dir / "summary.json"
     metrics_json_path = run_dir / "metrics.json"
     summary_md_path = run_dir / "summary.md"
+    stability_json_path = run_dir / "stability_diagnostics.json"
+    stability_md_path = run_dir / "stability_diagnostics.md"
     run.daily.to_csv(daily_path, index=False)
     run.weights.to_csv(weights_path, index=False)
     run.trades.to_csv(trades_path, index=False)
@@ -289,6 +302,11 @@ def write_backtest_run(
         encoding="utf-8",
     )
     summary_md_path.write_text(render_backtest_summary(run), encoding="utf-8")
+    write_allocation_stability_diagnostics(
+        dict(run.summary["allocation_stability_diagnostics"]),
+        stability_json_path,
+        stability_md_path,
+    )
     return (
         daily_path,
         weights_path,
@@ -296,6 +314,8 @@ def write_backtest_run(
         summary_json_path,
         metrics_json_path,
         summary_md_path,
+        stability_json_path,
+        stability_md_path,
     )
 
 
@@ -355,6 +375,10 @@ def render_backtest_summary(run: ETFBacktestRun) -> str:
         "",
         _extended_metric_line(run.summary["strategy_extended_metrics"]),
         "",
+        "## Allocation Stability Diagnostics",
+        "",
+        *_stability_lines(run.summary["allocation_stability_diagnostics"]),
+        "",
         "## Benchmarks",
         "",
         "| ID | Benchmark | Total Return | CAGR | Max Drawdown | Sharpe |",
@@ -382,6 +406,7 @@ def render_backtest_summary(run: ETFBacktestRun) -> str:
             "- `weights.csv`：逐日目标权重历史。",
             "- `trades.csv`：逐日调仓 delta、turnover 和交易成本审计。",
             "- `metrics.json`：strategy / benchmark 指标摘要，便于实验 registry 读取。",
+            "- `stability_diagnostics.json/md`：allocation stability 诊断摘要。",
             "",
             "## Correctness Notes",
             "",
@@ -452,6 +477,7 @@ def _summary_payload(
     benchmark_metrics: dict[str, ETFBenchmarkResult],
     strategy_returns: list[float],
     weights: pd.DataFrame,
+    allocation_stability_diagnostics: dict[str, object],
     row_count: int,
     fast: bool,
 ) -> dict[str, object]:
@@ -471,6 +497,7 @@ def _summary_payload(
         "config_hash": config.config_hash,
         "strategy_metrics": strategy_payload,
         "strategy_extended_metrics": _extended_metrics(strategy_returns, weights),
+        "allocation_stability_diagnostics": allocation_stability_diagnostics,
         "benchmark_metrics": benchmark_payload,
         "benchmark_relative_return": {
             name: strategy_payload["total_return"] - item["total_return"]
@@ -505,6 +532,7 @@ def _metrics_document(summary: dict[str, object]) -> dict[str, object]:
         "config_hash": summary["config_hash"],
         "strategy_metrics": summary["strategy_metrics"],
         "strategy_extended_metrics": summary["strategy_extended_metrics"],
+        "allocation_stability_diagnostics": summary["allocation_stability_diagnostics"],
         "benchmark_metrics": summary["benchmark_metrics"],
         "benchmark_relative_return": summary["benchmark_relative_return"],
         "benchmark_comparisons": summary["benchmark_comparisons"],
@@ -861,6 +889,27 @@ def _extended_metric_line(metrics: object) -> str:
     )
 
 
+def _stability_lines(payload: object) -> list[str]:
+    if not isinstance(payload, dict):
+        return ["- Allocation stability diagnostics unavailable."]
+    return [
+        f"- Stability Status：{payload.get('status', 'UNKNOWN')}",
+        f"- Rebalance Frequency：{_fmt_optional_pct(payload.get('rebalance_frequency'))}",
+        f"- Average Daily Turnover：{_fmt_optional_pct(payload.get('daily_turnover_average'))}",
+        f"- Max Rebalance Turnover：{_fmt_optional_pct(payload.get('max_rebalance_turnover'))}",
+        (
+            "- Max Single-Day Weight Delta After Initial："
+            f"{_fmt_optional_pct(payload.get('max_single_day_weight_delta_after_initial'))}"
+        ),
+        f"- Constraint Hit Rate：{_fmt_optional_pct(payload.get('constraint_hit_rate'))}",
+        f"- Cash Weight Average：{_fmt_optional_pct(payload.get('cash_weight_average'))}",
+        (
+            "- Semiconductor Exposure Average："
+            f"{_fmt_optional_pct(payload.get('semiconductor_exposure_average'))}"
+        ),
+    ]
+
+
 def _annualized_volatility(returns: list[float], periods_per_year: int = 252) -> float:
     if len(returns) < 2:
         return 0.0
@@ -882,3 +931,9 @@ def _fmt_optional(value: object) -> str:
     if value is None:
         return "n/a"
     return f"{float(value):.2f}"
+
+
+def _fmt_optional_pct(value: object) -> str:
+    if value is None:
+        return "n/a"
+    return f"{float(value):.2%}"

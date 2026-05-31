@@ -98,6 +98,10 @@ from ai_trading_system.etf_portfolio.simulation import (
     summarize_simulation_for_brief,
     write_simulation_report,
 )
+from ai_trading_system.etf_portfolio.stability import (
+    build_allocation_stability_diagnostics,
+    write_allocation_stability_diagnostics,
+)
 
 etf_app = typer.Typer(help="ETF 主仓组合配置、信号、回测和模拟舱。", no_args_is_help=True)
 data_app = typer.Typer(help="ETF price ingest and validation。", no_args_is_help=True)
@@ -1296,9 +1300,16 @@ def backtest_run_command(
         end=_resolve_date(end, prices=prices) if end else None,
         fast=fast,
     )
-    daily_path, weights_path, trades_path, summary_json, metrics_json, summary_md = (
-        write_backtest_run(run, output_dir)
-    )
+    (
+        daily_path,
+        weights_path,
+        trades_path,
+        summary_json,
+        metrics_json,
+        summary_md,
+        stability_json,
+        stability_md,
+    ) = write_backtest_run(run, output_dir)
     typer.echo(f"ETF backtest 完成：{run.run_id}")
     typer.echo(f"Daily：{daily_path}")
     typer.echo(f"Weights：{weights_path}")
@@ -1306,6 +1317,8 @@ def backtest_run_command(
     typer.echo(f"Summary JSON：{summary_json}")
     typer.echo(f"Metrics JSON：{metrics_json}")
     typer.echo(f"Summary Markdown：{summary_md}")
+    typer.echo(f"Stability JSON：{stability_json}")
+    typer.echo(f"Stability Markdown：{stability_md}")
 
 
 @backtest_app.command("report")
@@ -1318,6 +1331,39 @@ def backtest_report_command(
     if not summary.exists():
         raise typer.BadParameter(f"未找到 ETF backtest summary：{summary}")
     typer.echo(str(summary))
+
+
+@backtest_app.command("diagnostics")
+def backtest_diagnostics_command(
+    run_id: Annotated[str | None, typer.Option(help="回测 run_id；省略时使用 latest。")] = None,
+    latest: Annotated[bool, typer.Option("--latest", help="读取最新 backtest run。")] = False,
+    output_dir: Annotated[Path, typer.Option(help="回测输出根目录。")] = DEFAULT_ETF_BACKTEST_DIR,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="ETF backtest config YAML 路径。"),
+    ] = DEFAULT_ETF_BACKTEST_CONFIG_PATH,
+) -> None:
+    """从已生成 backtest run 计算 allocation stability diagnostics。"""
+    selected_run_dir = _resolve_backtest_run_dir(output_dir, run_id=run_id, latest=latest)
+    daily_path = selected_run_dir / "daily.csv"
+    weights_path = selected_run_dir / "weights.csv"
+    if not daily_path.exists() or not weights_path.exists():
+        raise typer.BadParameter(f"backtest run 缺少 daily.csv 或 weights.csv：{selected_run_dir}")
+    config = load_etf_config_bundle(backtest_path=config_path)
+    payload = build_allocation_stability_diagnostics(
+        pd.read_csv(daily_path),
+        pd.read_csv(weights_path),
+        max_daily_turnover=config.risk.portfolio_constraints.max_daily_turnover,
+        max_rebalance_trade_weight=config.risk.portfolio_constraints.max_rebalance_trade_weight,
+    )
+    json_path, markdown_path = write_allocation_stability_diagnostics(
+        payload,
+        selected_run_dir / "stability_diagnostics.json",
+        selected_run_dir / "stability_diagnostics.md",
+    )
+    typer.echo(f"ETF allocation stability status：{payload['status']}")
+    typer.echo(f"JSON：{json_path}")
+    typer.echo(f"Markdown：{markdown_path}")
 
 
 @simulation_app.command("record")
@@ -1559,6 +1605,26 @@ def _resolve_frame_date(value: str | None, frame: pd.DataFrame, column: str = "d
     if parsed.empty:
         raise typer.BadParameter(f"{column} 没有可用日期")
     return parsed.max().date()
+
+
+def _resolve_backtest_run_dir(output_dir: Path, *, run_id: str | None, latest: bool) -> Path:
+    if run_id is not None and latest:
+        raise typer.BadParameter("run_id 和 --latest 只能选择一个")
+    if run_id is not None:
+        run_dir = output_dir / run_id
+        if not run_dir.exists():
+            raise typer.BadParameter(f"未找到 ETF backtest run：{run_dir}")
+        return run_dir
+    if not output_dir.exists():
+        raise typer.BadParameter(f"ETF backtest 输出目录不存在：{output_dir}")
+    candidates = [
+        item
+        for item in output_dir.iterdir()
+        if item.is_dir() and (item / "summary.json").exists()
+    ]
+    if not candidates:
+        raise typer.BadParameter(f"未找到 ETF backtest run：{output_dir}")
+    return max(candidates, key=lambda item: (item / "summary.json").stat().st_mtime)
 
 
 def _select_frame_date(

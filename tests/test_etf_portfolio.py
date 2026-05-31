@@ -303,6 +303,10 @@ def test_backtest_runs_with_one_day_execution_lag(tmp_path: Path) -> None:
         "benchmark_turnover",
     }.issubset(comparison)
     assert "annualized_volatility" in result.summary["strategy_extended_metrics"]
+    stability = result.summary["allocation_stability_diagnostics"]
+    assert stability["schema_version"] == 1
+    assert stability["status"] in {"STABLE", "TOO_JUMPY"}
+    assert "daily_turnover" in stability
 
     paths = write_backtest_run(result, tmp_path)
     for path in paths:
@@ -310,6 +314,8 @@ def test_backtest_runs_with_one_day_execution_lag(tmp_path: Path) -> None:
     assert (tmp_path / result.run_id / "weights.csv").exists()
     assert (tmp_path / result.run_id / "trades.csv").exists()
     assert (tmp_path / result.run_id / "metrics.json").exists()
+    assert (tmp_path / result.run_id / "stability_diagnostics.json").exists()
+    assert (tmp_path / result.run_id / "stability_diagnostics.md").exists()
 
 
 def test_benchmark_registry_loads_required_ids_and_static_weights_sum_to_one() -> None:
