@@ -15,7 +15,11 @@ from ai_trading_system.etf_portfolio.allocation import (
     weights_from_records,
 )
 from ai_trading_system.etf_portfolio.features import build_feature_store
-from ai_trading_system.etf_portfolio.models import ETFConfigBundle, ETFQualityReport
+from ai_trading_system.etf_portfolio.models import (
+    ETFBenchmarkConfig,
+    ETFConfigBundle,
+    ETFQualityReport,
+)
 from ai_trading_system.etf_portfolio.regime import generate_regime_for_date
 from ai_trading_system.etf_portfolio.signals import generate_signals_for_date, signals_to_frame
 
@@ -30,6 +34,13 @@ class ETFBacktestRun:
     weights: pd.DataFrame
     trades: pd.DataFrame
     summary: dict[str, object]
+
+
+@dataclass(frozen=True)
+class ETFBenchmarkResult:
+    benchmark_id: str
+    benchmark: ETFBenchmarkConfig
+    metrics: BacktestMetrics
 
 
 def run_portfolio_backtest(
@@ -251,6 +262,33 @@ def write_backtest_run(
     )
 
 
+def benchmark_registry(config: ETFConfigBundle) -> dict[str, ETFBenchmarkConfig]:
+    settings = config.backtest.backtest
+    configured = dict(settings.benchmarks)
+    if not configured:
+        configured = _legacy_benchmark_registry(config)
+    active = set(settings.baselines)
+    return {
+        benchmark_id: benchmark
+        for benchmark_id, benchmark in configured.items()
+        if benchmark_id in active or benchmark.name in active
+    }
+
+
+def benchmark_weights_for_date(
+    *,
+    config: ETFConfigBundle,
+    benchmark_id: str,
+    prices: pd.DataFrame,
+    signal_date: date,
+) -> dict[str, float]:
+    registry = benchmark_registry(config)
+    if benchmark_id not in registry:
+        raise ValueError(f"unknown ETF benchmark id: {benchmark_id}")
+    close_pivot = _price_pivot(prices, config.backtest.backtest.price_field)
+    return _benchmark_weights_for_signal_date(registry[benchmark_id], close_pivot, signal_date)
+
+
 def render_backtest_summary(run: ETFBacktestRun) -> str:
     metrics = run.summary["strategy_metrics"]
     benchmark_rows = run.summary["benchmark_metrics"]
@@ -282,13 +320,14 @@ def render_backtest_summary(run: ETFBacktestRun) -> str:
         "",
         "## Benchmarks",
         "",
-        "| Benchmark | Total Return | CAGR | Max Drawdown | Sharpe |",
-        "|---|---:|---:|---:|---:|",
+        "| ID | Benchmark | Total Return | CAGR | Max Drawdown | Sharpe |",
+        "|---|---|---:|---:|---:|---:|",
     ]
-    for name, item in benchmark_rows.items():
+    for benchmark_id, item in benchmark_rows.items():
         lines.append(
             "| "
-            f"{name} | "
+            f"{benchmark_id} | "
+            f"{item['benchmark_name']} | "
             f"{item['total_return']:.2%} | "
             f"{item['cagr']:.2%} | "
             f"{item['max_drawdown']:.2%} | "
@@ -327,16 +366,14 @@ def _summary_payload(
     first_signal_date: date,
     last_signal_date: date,
     strategy_metrics: BacktestMetrics,
-    benchmark_metrics: dict[str, BacktestMetrics],
+    benchmark_metrics: dict[str, ETFBenchmarkResult],
     strategy_returns: list[float],
     weights: pd.DataFrame,
     row_count: int,
     fast: bool,
 ) -> dict[str, object]:
     strategy_payload = _metrics_payload(strategy_metrics)
-    benchmark_payload = {
-        name: _metrics_payload(metrics) for name, metrics in benchmark_metrics.items()
-    }
+    benchmark_payload = _benchmark_metrics_payload(benchmark_metrics)
     return {
         "market_regime": config.backtest.backtest.regime,
         "requested_start": requested_start.isoformat(),
@@ -356,6 +393,7 @@ def _summary_payload(
             name: strategy_payload["total_return"] - item["total_return"]
             for name, item in benchmark_payload.items()
         },
+        "benchmark_comparisons": _benchmark_comparisons(strategy_payload, benchmark_payload),
     }
 
 
@@ -386,7 +424,56 @@ def _metrics_document(summary: dict[str, object]) -> dict[str, object]:
         "strategy_extended_metrics": summary["strategy_extended_metrics"],
         "benchmark_metrics": summary["benchmark_metrics"],
         "benchmark_relative_return": summary["benchmark_relative_return"],
+        "benchmark_comparisons": summary["benchmark_comparisons"],
     }
+
+
+def _benchmark_metrics_payload(
+    benchmark_results: dict[str, ETFBenchmarkResult],
+) -> dict[str, dict[str, object]]:
+    payload: dict[str, dict[str, object]] = {}
+    for benchmark_id, result in benchmark_results.items():
+        metrics = _metrics_payload(result.metrics)
+        payload[benchmark_id] = {
+            "benchmark_id": benchmark_id,
+            "benchmark_name": result.benchmark.name,
+            "benchmark_type": result.benchmark.benchmark_type,
+            **metrics,
+        }
+    return payload
+
+
+def _benchmark_comparisons(
+    strategy_payload: dict[str, float | None],
+    benchmark_payload: dict[str, dict[str, object]],
+) -> list[dict[str, object]]:
+    comparisons: list[dict[str, object]] = []
+    strategy_cagr = float(strategy_payload["cagr"] or 0.0)
+    strategy_max_drawdown = float(strategy_payload["max_drawdown"] or 0.0)
+    strategy_turnover = float(strategy_payload["turnover"] or 0.0)
+    for benchmark_id, benchmark in benchmark_payload.items():
+        benchmark_cagr = float(benchmark["cagr"] or 0.0)
+        benchmark_max_drawdown = float(benchmark["max_drawdown"] or 0.0)
+        comparisons.append(
+            {
+                "benchmark_id": benchmark_id,
+                "benchmark_name": benchmark["benchmark_name"],
+                "strategy_cagr": strategy_payload["cagr"],
+                "benchmark_cagr": benchmark["cagr"],
+                "excess_cagr": strategy_cagr - benchmark_cagr,
+                "strategy_max_drawdown": strategy_payload["max_drawdown"],
+                "benchmark_max_drawdown": benchmark["max_drawdown"],
+                "drawdown_reduction": abs(benchmark_max_drawdown) - abs(strategy_max_drawdown),
+                "strategy_sharpe": strategy_payload["sharpe"],
+                "benchmark_sharpe": benchmark["sharpe"],
+                "strategy_calmar": strategy_payload["calmar"],
+                "benchmark_calmar": benchmark["calmar"],
+                "strategy_turnover": strategy_payload["turnover"],
+                "benchmark_turnover": benchmark["turnover"],
+                "turnover_difference": strategy_turnover - float(benchmark["turnover"] or 0.0),
+            }
+        )
+    return comparisons
 
 
 def _extended_metrics(strategy_returns: list[float], weights: pd.DataFrame) -> dict[str, object]:
@@ -416,51 +503,103 @@ def _benchmark_metrics(
     config: ETFConfigBundle,
     *,
     fast: bool,
-) -> dict[str, BacktestMetrics]:
-    metrics: dict[str, BacktestMetrics] = {}
+) -> dict[str, ETFBenchmarkResult]:
+    metrics: dict[str, ETFBenchmarkResult] = {}
     benchmark_dates = trading_dates[-90:] if fast else trading_dates
-    configured_baselines = set(config.backtest.backtest.baselines)
-    for symbol in config.backtest.backtest.benchmark_assets:
-        baseline_name = f"buy_and_hold_{symbol.lower()}"
-        if baseline_name not in configured_baselines:
+    for benchmark_id, benchmark in benchmark_registry(config).items():
+        returns, exposures, turnovers = _benchmark_return_series(
+            benchmark,
+            close_pivot,
+            benchmark_dates,
+        )
+        if not returns:
             continue
-        returns = [
-            _period_returns(close_pivot, left, right).get(symbol, 0.0)
-            for left, right in zip(benchmark_dates[:-1], benchmark_dates[1:], strict=True)
-        ]
-        metrics[baseline_name] = summarize_long_only_backtest(
-            returns,
-            [1.0] * len(returns),
-            [0.0] * len(returns),
-        )
-
-    if "static_default_portfolio" in configured_baselines:
-        static_returns: list[float] = []
-        default_weights = {
-            symbol: asset.default_weight for symbol, asset in config.assets.assets.items()
-        }
-        for left, right in zip(benchmark_dates[:-1], benchmark_dates[1:], strict=True):
-            returns = _period_returns(close_pivot, left, right)
-            static_returns.append(
-                sum(
-                    default_weights.get(symbol, 0.0) * returns.get(symbol, 0.0)
-                    for symbol in default_weights
-                )
-            )
-        metrics["static_default_portfolio"] = summarize_long_only_backtest(
-            static_returns,
-            [1.0 - default_weights.get("CASH", 0.0)] * len(static_returns),
-            [0.0] * len(static_returns),
-        )
-
-    if "ma_50_200_qqq" in configured_baselines:
-        ma_returns, ma_exposures = _ma_50_200_qqq_returns(close_pivot, benchmark_dates)
-        metrics["ma_50_200_qqq"] = summarize_long_only_backtest(
-            ma_returns,
-            ma_exposures,
-            [0.0] * len(ma_returns),
+        metrics[benchmark_id] = ETFBenchmarkResult(
+            benchmark_id=benchmark_id,
+            benchmark=benchmark,
+            metrics=summarize_long_only_backtest(returns, exposures, turnovers),
         )
     return metrics
+
+
+def _legacy_benchmark_registry(config: ETFConfigBundle) -> dict[str, ETFBenchmarkConfig]:
+    registry: dict[str, ETFBenchmarkConfig] = {}
+    for index, symbol in enumerate(config.backtest.backtest.benchmark_assets, start=1):
+        registry[f"LEGACY{index:03d}"] = ETFBenchmarkConfig(
+            name=f"buy_and_hold_{symbol.lower()}",
+            benchmark_type="buy_and_hold",
+            symbol=symbol,
+        )
+    if "static_default_portfolio" in config.backtest.backtest.baselines:
+        registry["LEGACY_STATIC_DEFAULT"] = ETFBenchmarkConfig(
+            name="static_default_portfolio",
+            benchmark_type="static_portfolio",
+            weights={
+                symbol: asset.default_weight for symbol, asset in config.assets.assets.items()
+            },
+        )
+    if "ma_50_200_qqq" in config.backtest.backtest.baselines:
+        registry["LEGACY_MA_QQQ"] = ETFBenchmarkConfig(
+            name="ma_50_200_qqq",
+            benchmark_type="moving_average",
+            symbol="QQQ",
+            short_window=50,
+            long_window=200,
+        )
+    return registry
+
+
+def _benchmark_return_series(
+    benchmark: ETFBenchmarkConfig,
+    close_pivot: pd.DataFrame,
+    benchmark_dates: list[date],
+) -> tuple[list[float], list[float], list[float]]:
+    returns: list[float] = []
+    exposures: list[float] = []
+    turnovers: list[float] = []
+    previous_weights: dict[str, float] | None = None
+    for left, right in zip(benchmark_dates[:-1], benchmark_dates[1:], strict=True):
+        weights = _benchmark_weights_for_signal_date(benchmark, close_pivot, left)
+        period_returns = _period_returns(close_pivot, left, right)
+        returns.append(
+            sum(weights.get(symbol, 0.0) * period_returns.get(symbol, 0.0) for symbol in weights)
+        )
+        exposures.append(1.0 - weights.get(benchmark.cash_symbol, 0.0))
+        turnovers.append(0.0 if previous_weights is None else _turnover(weights, previous_weights))
+        previous_weights = weights
+    return returns, exposures, turnovers
+
+
+def _benchmark_weights_for_signal_date(
+    benchmark: ETFBenchmarkConfig,
+    close_pivot: pd.DataFrame,
+    signal_date: date,
+) -> dict[str, float]:
+    cash_symbol = benchmark.cash_symbol
+    if benchmark.benchmark_type == "buy_and_hold":
+        return {str(benchmark.symbol): 1.0}
+    if benchmark.benchmark_type == "static_portfolio":
+        return {symbol: float(weight) for symbol, weight in benchmark.weights.items()}
+    if benchmark.benchmark_type == "moving_average":
+        if _moving_average_signal_is_on(
+            close_pivot,
+            str(benchmark.symbol),
+            signal_date,
+            int(benchmark.short_window or 0),
+            int(benchmark.long_window or 0),
+        ):
+            return {str(benchmark.symbol): 1.0}
+        return {cash_symbol: 1.0}
+    if benchmark.benchmark_type == "risk_off_cash_switch":
+        if _price_above_moving_average(
+            close_pivot,
+            str(benchmark.signal_symbol),
+            signal_date,
+            int(benchmark.long_window or 0),
+        ):
+            return {str(benchmark.symbol): 1.0}
+        return {cash_symbol: 1.0}
+    raise ValueError(f"unsupported ETF benchmark type: {benchmark.benchmark_type}")
 
 
 def _price_pivot(prices: pd.DataFrame, price_field: str) -> pd.DataFrame:
@@ -523,6 +662,45 @@ def _ma_50_200_qqq_returns(
         qqq_return = _period_returns(close_pivot, left, right).get("QQQ", 0.0)
         returns.append(qqq_return if invested else 0.0)
     return returns, exposures
+
+
+def _moving_average_signal_is_on(
+    close_pivot: pd.DataFrame,
+    symbol: str,
+    signal_date: date,
+    short_window: int,
+    long_window: int,
+) -> bool:
+    return _price_above_moving_average(
+        close_pivot,
+        symbol,
+        signal_date,
+        short_window,
+    ) and _price_above_moving_average(
+        close_pivot,
+        symbol,
+        signal_date,
+        long_window,
+    )
+
+
+def _price_above_moving_average(
+    close_pivot: pd.DataFrame,
+    symbol: str,
+    signal_date: date,
+    window: int,
+) -> bool:
+    if symbol not in close_pivot.columns or window <= 0:
+        return False
+    series = pd.to_numeric(close_pivot[symbol], errors="coerce")
+    moving_average = series.rolling(window, min_periods=window).mean()
+    signal_ts = pd.Timestamp(signal_date)
+    return (
+        signal_ts in series.index
+        and pd.notna(series.loc[signal_ts])
+        and pd.notna(moving_average.loc[signal_ts])
+        and float(series.loc[signal_ts]) > float(moving_average.loc[signal_ts])
+    )
 
 
 def _turnover(

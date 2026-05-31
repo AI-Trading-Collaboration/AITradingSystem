@@ -157,8 +157,10 @@ regime 日期范围。主要产物路径：
 
 ETF backtest 使用 signal date 到 return date 的一交易日 execution lag，输出
 `asset_returns_json`、`asset_contributions_json`、权重历史、交易 delta、成本和 benchmark
-比较。默认 benchmark 包含 buy-and-hold `SPY` / `QQQ` / `SMH`、static default portfolio
-和 `ma_50_200_qqq`，用于审计，不是收益承诺。
+比较。默认 benchmark registry 为 B001-B008：buy-and-hold `SPY` / `QQQ` / `SMH` /
+`SOXX`、`static_growth_balanced`、`static_ai_growth`、`ma_50_200_qqq` 和
+`risk_off_cash_switch`。summary / metrics 会输出 `benchmark_comparisons` common schema，
+用于审计，不是收益承诺。
 
 `aits etf simulation evaluate` 会在 forward window 足够时补充 `forward_return_20d`、
 `relative_return_vs_spy_20d`、`relative_return_vs_qqq_20d`、

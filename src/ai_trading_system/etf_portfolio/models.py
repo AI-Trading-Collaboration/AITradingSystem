@@ -263,6 +263,48 @@ class ETFBacktestSettings(BaseModel):
     rebalance_frequency: Literal["daily"]
     benchmark_assets: list[str] = Field(min_length=1)
     baselines: list[str] = Field(min_length=1)
+    benchmarks: dict[str, ETFBenchmarkConfig] = Field(default_factory=dict)
+
+
+class ETFBenchmarkConfig(BaseModel):
+    name: str = Field(min_length=1)
+    benchmark_type: Literal[
+        "buy_and_hold",
+        "static_portfolio",
+        "moving_average",
+        "risk_off_cash_switch",
+    ]
+    symbol: str | None = None
+    signal_symbol: str | None = None
+    cash_symbol: str = "CASH"
+    weights: dict[str, float] = Field(default_factory=dict)
+    short_window: int | None = Field(default=None, gt=0)
+    long_window: int | None = Field(default=None, gt=0)
+    description: str = ""
+
+    @model_validator(mode="after")
+    def validate_benchmark_definition(self) -> Self:
+        if self.benchmark_type == "buy_and_hold" and not self.symbol:
+            raise ValueError("buy_and_hold benchmark requires symbol")
+        if self.benchmark_type == "static_portfolio":
+            if not self.weights:
+                raise ValueError("static_portfolio benchmark requires weights")
+            total_weight = sum(float(value) for value in self.weights.values())
+            if abs(total_weight - 1.0) > 1e-6:
+                raise ValueError("static_portfolio benchmark weights must sum to 1.0")
+        if self.benchmark_type == "moving_average":
+            if not self.symbol:
+                raise ValueError("moving_average benchmark requires symbol")
+            if self.short_window is None or self.long_window is None:
+                raise ValueError("moving_average benchmark requires short_window and long_window")
+            if self.short_window >= self.long_window:
+                raise ValueError("moving_average short_window must be below long_window")
+        if self.benchmark_type == "risk_off_cash_switch":
+            if not self.symbol or not self.signal_symbol:
+                raise ValueError("risk_off_cash_switch benchmark requires symbol and signal_symbol")
+            if self.long_window is None:
+                raise ValueError("risk_off_cash_switch benchmark requires long_window")
+        return self
 
 
 class ETFBacktestConfig(BaseModel):

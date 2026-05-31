@@ -10,6 +10,8 @@ from typer.testing import CliRunner
 from ai_trading_system.cli import app
 from ai_trading_system.etf_portfolio.allocation import allocate_portfolio, weights_from_records
 from ai_trading_system.etf_portfolio.backtest import (
+    benchmark_registry,
+    benchmark_weights_for_date,
     run_portfolio_backtest,
     toy_portfolio_return,
     write_backtest_run,
@@ -266,7 +268,33 @@ def test_backtest_runs_with_one_day_execution_lag(tmp_path: Path) -> None:
         "model_version",
         "config_hash",
     }.issubset(result.weights.columns)
-    assert "ma_50_200_qqq" in result.summary["benchmark_metrics"]
+    assert set(result.summary["benchmark_metrics"]) == {
+        "B001",
+        "B002",
+        "B003",
+        "B004",
+        "B005",
+        "B006",
+        "B007",
+        "B008",
+    }
+    assert result.summary["benchmark_metrics"]["B007"]["benchmark_name"] == "ma_50_200_qqq"
+    comparison = result.summary["benchmark_comparisons"][0]
+    assert {
+        "benchmark_name",
+        "strategy_cagr",
+        "benchmark_cagr",
+        "excess_cagr",
+        "strategy_max_drawdown",
+        "benchmark_max_drawdown",
+        "drawdown_reduction",
+        "strategy_sharpe",
+        "benchmark_sharpe",
+        "strategy_calmar",
+        "benchmark_calmar",
+        "strategy_turnover",
+        "benchmark_turnover",
+    }.issubset(comparison)
     assert "annualized_volatility" in result.summary["strategy_extended_metrics"]
 
     paths = write_backtest_run(result, tmp_path)
@@ -275,6 +303,71 @@ def test_backtest_runs_with_one_day_execution_lag(tmp_path: Path) -> None:
     assert (tmp_path / result.run_id / "weights.csv").exists()
     assert (tmp_path / result.run_id / "trades.csv").exists()
     assert (tmp_path / result.run_id / "metrics.json").exists()
+
+
+def test_benchmark_registry_loads_required_ids_and_static_weights_sum_to_one() -> None:
+    config = load_etf_config_bundle()
+    registry = benchmark_registry(config)
+
+    assert set(registry) == {"B001", "B002", "B003", "B004", "B005", "B006", "B007", "B008"}
+    assert registry["B004"].symbol == "SOXX"
+    assert registry["B005"].name == "static_growth_balanced"
+    assert registry["B006"].name == "static_ai_growth"
+    assert abs(sum(registry["B005"].weights.values()) - 1.0) < 1e-8
+    assert abs(sum(registry["B006"].weights.values()) - 1.0) < 1e-8
+
+
+def test_benchmark_weight_policies_are_deterministic_and_no_early_ma_trade() -> None:
+    config = load_etf_config_bundle()
+    raw = _make_prices(days=260, mode="up")
+    prices, _ = standardize_price_frame(raw, assets=config.assets, source_name="fixture")
+    dates = [item.date() for item in pd.bdate_range("2022-01-03", periods=260)]
+
+    buy_hold = benchmark_weights_for_date(
+        config=config,
+        benchmark_id="B001",
+        prices=prices,
+        signal_date=dates[-1],
+    )
+    static_growth = benchmark_weights_for_date(
+        config=config,
+        benchmark_id="B005",
+        prices=prices,
+        signal_date=dates[-1],
+    )
+    early_ma = benchmark_weights_for_date(
+        config=config,
+        benchmark_id="B007",
+        prices=prices,
+        signal_date=dates[100],
+    )
+
+    assert buy_hold == {"SPY": 1.0}
+    assert static_growth == {"SPY": 0.30, "QQQ": 0.50, "CASH": 0.20}
+    assert early_ma == {"CASH": 1.0}
+
+
+def test_risk_off_cash_switch_uses_signal_date_not_future_prices() -> None:
+    config = load_etf_config_bundle()
+    raw = _make_risk_switch_prices(days=230)
+    prices, _ = standardize_price_frame(raw, assets=config.assets, source_name="fixture")
+    dates = [item.date() for item in pd.bdate_range("2022-01-03", periods=230)]
+
+    before_drop = benchmark_weights_for_date(
+        config=config,
+        benchmark_id="B008",
+        prices=prices,
+        signal_date=dates[209],
+    )
+    after_drop = benchmark_weights_for_date(
+        config=config,
+        benchmark_id="B008",
+        prices=prices,
+        signal_date=dates[220],
+    )
+
+    assert before_drop == {"QQQ": 1.0}
+    assert after_drop == {"CASH": 1.0}
 
 
 def test_no_lookahead_future_price_changes_do_not_change_signal_or_weights() -> None:
@@ -1695,6 +1788,32 @@ def _make_prices(days: int, mode: str, symbols: list[str] | None = None) -> pd.D
                     "volume": 1_000_000,
                     "source": "fixture",
                     "created_at": "2026-05-31T00:00:00+00:00",
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def _make_risk_switch_prices(days: int) -> pd.DataFrame:
+    dates = pd.bdate_range("2022-01-03", periods=days)
+    rows = []
+    for symbol in ["SPY", "QQQ", "SMH", "SOXX"]:
+        for index, current_date in enumerate(dates):
+            if symbol == "SPY" and index >= 215:
+                price = 80.0
+            else:
+                price = 100.0 + index * 0.10
+            rows.append(
+                {
+                    "date": current_date.date().isoformat(),
+                    "symbol": symbol,
+                    "open": price,
+                    "high": price * 1.01,
+                    "low": price * 0.99,
+                    "close": price,
+                    "adj_close": price,
+                    "volume": 1_000_000,
+                    "source": "fixture",
+                    "created_at": "2026-06-01T00:00:00+00:00",
                 }
             )
     return pd.DataFrame(rows)

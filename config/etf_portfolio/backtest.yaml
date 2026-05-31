@@ -20,9 +20,67 @@ backtest:
     - SPY
     - QQQ
     - SMH
+    - SOXX
   baselines:
     - buy_and_hold_spy
     - buy_and_hold_qqq
     - buy_and_hold_smh
+    - buy_and_hold_soxx
     - static_default_portfolio
+    - static_growth_balanced
+    - static_ai_growth
     - ma_50_200_qqq
+    - risk_off_cash_switch
+  benchmarks:
+    B001:
+      name: buy_and_hold_spy
+      benchmark_type: buy_and_hold
+      symbol: SPY
+      description: "Buy and hold SPY baseline."
+    B002:
+      name: buy_and_hold_qqq
+      benchmark_type: buy_and_hold
+      symbol: QQQ
+      description: "Buy and hold QQQ growth baseline."
+    B003:
+      name: buy_and_hold_smh
+      benchmark_type: buy_and_hold
+      symbol: SMH
+      description: "Buy and hold SMH semiconductor baseline."
+    B004:
+      name: buy_and_hold_soxx
+      benchmark_type: buy_and_hold
+      symbol: SOXX
+      description: "Buy and hold SOXX semiconductor baseline."
+    B005:
+      name: static_growth_balanced
+      benchmark_type: static_portfolio
+      weights:
+        SPY: 0.30
+        QQQ: 0.50
+        CASH: 0.20
+      description: "Static QQQ/SPY/CASH portfolio from TRADING-063B benchmark policy."
+    B006:
+      name: static_ai_growth
+      benchmark_type: static_portfolio
+      weights:
+        SPY: 0.25
+        QQQ: 0.50
+        SMH: 0.15
+        CASH: 0.10
+      description: "Static QQQ/SPY/SMH/CASH AI-growth portfolio from TRADING-063B benchmark policy."
+    B007:
+      name: ma_50_200_qqq
+      benchmark_type: moving_average
+      symbol: QQQ
+      short_window: 50
+      long_window: 200
+      description: "QQQ 50/200 moving-average baseline; stays in CASH until both windows are available."
+    B008:
+      name: risk_off_cash_switch
+      benchmark_type: risk_off_cash_switch
+      symbol: QQQ
+      signal_symbol: SPY
+      cash_symbol: CASH
+      long_window: 200
+      description: "Risk-off switch baseline; holds QQQ only when SPY closes above its 200-day moving average, otherwise CASH."
