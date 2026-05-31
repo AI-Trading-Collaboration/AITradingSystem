@@ -27,6 +27,8 @@ data/processed/*
 data/external/*
 !data/external/.gitkeep
 data/trading_engine/*
+data/etf_portfolio/
+data/simulation/
 outputs/backtests/*
 !outputs/backtests/.gitkeep
 outputs/reports/*
@@ -43,7 +45,7 @@ outputs/runs/*
 !outputs/runs/.gitkeep
 outputs/shadow_iterations/*
 !outputs/shadow_iterations/.gitkeep
-reports/trading_daily/*
+reports/
 
 # Notebooks
 .ipynb_checkpoints/

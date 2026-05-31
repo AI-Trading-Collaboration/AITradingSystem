@@ -4,6 +4,12 @@
 
 如果需要理解输入数据如何计算成输出数据，先读 `docs/calculation_logic.md`；字段级含义见 `docs/schema/fields.yaml`。该 YAML 先覆盖 `scores_daily.csv`、decision snapshot、trace bundle、prediction ledger 和 shadow parameter search 的核心字段。
 
+## ETF Portfolio runtime artifact policy
+
+`data/etf_portfolio/`、`data/simulation/` 和 `reports/` 是本地运行产物目录，默认由 ETF daily run、simulation、backtest、P1/P2 observe-only reports 或 report integration 命令生成，并通过 `.gitignore` 排除在源码提交之外。它们可以作为本机审计证据和人工复核输入，但不是 source artifacts。
+
+ETF deterministic test fixtures 只能提交到 `tests/fixtures/etf_portfolio/`。不要把测试 fixture 放进 `data/` 或 `reports/`，也不要把 daily run 生成的 report 复制成源码 fixture，除非另行建立明确的最小化、脱敏、确定性 fixture。
+
 ## Production / advisory 主链路
 
 | Artifact | 由谁生成 | 上游输入 | 关键字段或内容 | 下游使用 | 是否影响 production | 常见误解 |
