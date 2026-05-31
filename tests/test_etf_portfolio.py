@@ -253,6 +253,12 @@ def test_backtest_runs_with_one_day_execution_lag(tmp_path: Path) -> None:
     assert "asset_returns_json" in result.daily.columns
     assert "asset_contributions_json" in result.daily.columns
     first_daily = result.daily.iloc[0]
+    assert date.fromisoformat(str(first_daily["signal_date"])) < date.fromisoformat(
+        str(first_daily["execution_date"])
+    )
+    assert date.fromisoformat(str(first_daily["execution_date"])) < date.fromisoformat(
+        str(first_daily["return_date"])
+    )
     contributions = json.loads(str(first_daily["asset_contributions_json"]))
     assert round(sum(float(value) for value in contributions.values()), 12) == round(
         float(first_daily["gross_return"]),
@@ -260,6 +266,7 @@ def test_backtest_runs_with_one_day_execution_lag(tmp_path: Path) -> None:
     )
     assert {
         "signal_date",
+        "execution_date",
         "return_date",
         "symbol",
         "current_weight",

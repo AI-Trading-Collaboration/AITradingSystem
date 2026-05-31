@@ -24,7 +24,7 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 |TRADING-063A|DONE|Runtime Artifact Hygiene & Fixture Policy|忽略 `data/etf_portfolio/`、`data/simulation/`、`reports/`，建立 `tests/fixtures/etf_portfolio/`，文档区分 runtime artifacts 与 committed fixtures|
 |TRADING-063B|DONE|Benchmark Suite Hardening|B001~B008 benchmark registry/config、benchmark comparison schema 和测试覆盖|
 |TRADING-063C|DONE|No-Lookahead Validation Framework|形式化 timing contract、校验 helper/module、决策字段 future leakage 防护测试|
-|TRADING-063D|READY|Toy Portfolio Accounting Tests|手工可验 deterministic toy prices、NAV/weights/cost/next-bar/drawdown/contribution 测试|
+|TRADING-063D|DONE|Toy Portfolio Accounting Tests|手工可验 deterministic toy prices、NAV/weights/cost/next-bar/drawdown/contribution 测试|
 |TRADING-063E|READY|Risk Constraint Validation|asset/sleeve/equity/cash/rebalance/drawdown/volatility constraint tests 与 diagnostics|
 |TRADING-063F|READY|Allocation Stability Diagnostics|turnover、weight delta、regime transition、constraint hit rate、exposure distribution 等 JSON/Markdown/CLI/report 输出|
 |TRADING-063G|READY|Simulation Ledger Forward-Evaluation Hardening|decision-time record 与 delayed `evaluation_only` future return 字段隔离|
@@ -50,6 +50,15 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 - Simulation delayed evaluation 字段必须通过 `evaluation_only=true` 标记；decision-time record 不得因空 future 字段产生后验结论。
 - 测试覆盖有效 `t -> t+1`、same-day execution failure、feature date after signal failure、decision payload future field failure、simulation delayed evaluation marker 和 report decision block 防泄漏。
 
+## TRADING-063D 验收标准
+
+- `tests/fixtures/etf_portfolio/toy_prices.csv` 提供手工可验 SPY / QQQ / CASH 价格。
+- Backtest accounting 显式拆分 `signal_date < execution_date < return_date`；`execution_price=next_close` 时，信号日后第一段收益应从 execution date 到后续 return date 计算。
+- Toy tests 覆盖 single-asset NAV、two-asset rebalance、cash return、target weight sum、transaction cost deduction、next-bar/next-close execution、portfolio drawdown、asset contribution 和 rebalance delta threshold 行为。
+- 同步校验 no-lookahead helper 对 `return_date <= execution_date` fail closed。
+- `daily.csv`、`weights.csv` 和 `trades.csv` 输出包含 `execution_date`，benchmark return series 使用同一 signal lag 口径。
+- `max_rebalance_trade_weight`、`max_daily_turnover` 和完整 constraint diagnostics 属于 TRADING-063E 风险约束验收，本阶段不把它们伪装为已完成。
+
 ## 进展记录
 
 - 2026-06-01: 新增本需求文档并把 TRADING-063 登记为 `IN_PROGRESS`；开始 TRADING-063A runtime artifact hygiene。
@@ -58,3 +67,5 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 - 2026-06-01: TRADING-063B 完成。`config/etf_portfolio/backtest.yaml` 已登记 B001-B008；backtest summary / metrics 输出 `benchmark_metrics` 和 `benchmark_comparisons`；真实 `aits etf backtest run --config config/etf_portfolio/backtest.yaml --fast` smoke 通过。验证通过 `python -m pytest tests -q`（1633 passed）、ruff、compileall 和 diff check。
 - 2026-06-01: TRADING-063C 进入实现。当前缺口为 ETF timing contract 的统一校验 helper、`execution_date > signal_date` / `feature_source_date <= signal_date` / decision payload future-field 防护、simulation delayed evaluation 标记，以及 daily brief decision section 的 evaluation-only 字段隔离测试。
 - 2026-06-01: TRADING-063C 完成。新增 `etf_portfolio/no_lookahead.py` timing-contract validation helper；backtest、simulation ledger 和 daily brief 已接入 no-lookahead 校验；simulation delayed evaluation 输出 `evaluation_only=true`；新增测试覆盖 valid `t -> t+1`、same-day execution failure、feature source date failure、decision payload future leakage、simulation marker 和 report decision section 防泄漏。真实 `aits etf backtest run --config config/etf_portfolio/backtest.yaml --fast` smoke 通过；验证通过 `python -m pytest tests -q`（1639 passed）、ruff、compileall 和 diff check。
+- 2026-06-01: TRADING-063D 进入实现。toy accounting 梳理时确认当前 backtest 只有 `signal_date` / `return_date`，但 `execution_price=next_close` 的正确口径应显式拆为 `signal_date=t`、`execution_date=t+1`、`return_date=t+2`；本轮先修正 next-close accounting timing，再用手工可验 fixture 锁定 NAV、成本、贡献、drawdown 和 rebalance delta 行为。
+- 2026-06-01: TRADING-063D 完成。新增 `tests/fixtures/etf_portfolio/toy_prices.csv` 和 toy accounting tests；backtest daily/weights/trades 输出显式 `execution_date`，收益窗口修正为 `execution_date -> return_date`，benchmark series 使用同一 signal lag；新增 `calculate_portfolio_accounting_step` 覆盖 NAV、交易成本、cash return、asset contribution、bad weight sum、same-day execution、return-date timing、drawdown 和 rebalance delta threshold。真实 `aits etf backtest run --config config/etf_portfolio/backtest.yaml --fast` smoke 通过；验证通过 `python -m pytest tests -q`（1645 passed）、ruff、compileall 和 diff check。

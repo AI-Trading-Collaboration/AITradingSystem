@@ -35,6 +35,7 @@ def test_no_lookahead_contract_allows_valid_next_trading_day_execution() -> None
             {
                 "signal_date": "2026-05-29",
                 "execution_date": "2026-06-01",
+                "return_date": "2026-06-02",
                 "symbol": "QQQ",
             }
         ],
@@ -57,6 +58,22 @@ def test_no_lookahead_contract_rejects_same_day_execution() -> None:
 
     assert not result.passed
     assert "execution_date_not_after_signal_date" in _issue_codes(result)
+
+
+def test_no_lookahead_contract_rejects_return_date_not_after_execution() -> None:
+    result = validate_no_lookahead_records(
+        trade_records=[
+            {
+                "signal_date": "2026-05-29",
+                "execution_date": "2026-06-01",
+                "return_date": "2026-06-01",
+                "symbol": "QQQ",
+            }
+        ]
+    )
+
+    assert not result.passed
+    assert "return_date_not_after_execution_date" in _issue_codes(result)
 
 
 def test_no_lookahead_contract_rejects_feature_source_after_signal_date() -> None:

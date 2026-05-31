@@ -47,6 +47,20 @@ class ETFBenchmarkResult:
     metrics: BacktestMetrics
 
 
+@dataclass(frozen=True)
+class ETFAccountingStep:
+    signal_date: date
+    execution_date: date
+    return_date: date
+    period_returns: dict[str, float]
+    asset_contributions: dict[str, float]
+    turnover: float
+    gross_return: float
+    transaction_cost: float
+    strategy_return: float
+    ending_equity: float
+
+
 def run_portfolio_backtest(
     prices: pd.DataFrame,
     *,
@@ -77,8 +91,9 @@ def run_portfolio_backtest(
     ]
     if fast:
         trading_dates = trading_dates[-90:]
-    if len(trading_dates) < 2:
-        raise ValueError("ETF backtest has fewer than two trading dates")
+    minimum_trading_dates = int(settings.signal_lag_days) + 2
+    if len(trading_dates) < minimum_trading_dates:
+        raise ValueError("ETF backtest has too few trading dates for configured signal lag")
 
     previous_weights: dict[str, float] | None = None
     previous_regime: str | None = None
@@ -86,8 +101,14 @@ def run_portfolio_backtest(
     weight_rows: list[dict[str, object]] = []
     trade_rows: list[dict[str, object]] = []
     portfolio_equity = 1.0
-    for index, signal_date in enumerate(trading_dates[:-1]):
-        return_date = trading_dates[index + 1]
+    signal_lag_days = int(settings.signal_lag_days)
+    for index, signal_date in enumerate(trading_dates):
+        execution_index = index + signal_lag_days
+        return_index = execution_index + 1
+        if return_index >= len(trading_dates):
+            break
+        execution_date = trading_dates[execution_index]
+        return_date = trading_dates[return_index]
         signal_records = generate_signals_for_date(
             features,
             strategy=config.strategy,
@@ -114,33 +135,37 @@ def run_portfolio_backtest(
             previous_weights=previous_weights,
         )
         target_weights = weights_from_records(allocation_records)
-        period_returns = _period_returns(close_pivot, signal_date, return_date)
-        asset_contributions = _asset_contributions(target_weights, period_returns, config)
-        turnover = _turnover(target_weights, previous_weights)
-        gross_return = sum(
-            asset_contributions.get(symbol, 0.0) for symbol in config.assets.assets
+        accounting = calculate_portfolio_accounting_step(
+            close_pivot,
+            signal_date=signal_date,
+            execution_date=execution_date,
+            return_date=return_date,
+            target_weights=target_weights,
+            previous_weights=previous_weights,
+            asset_symbols=tuple(config.assets.assets),
+            total_cost_bps=_total_cost_bps(config),
+            starting_equity=portfolio_equity,
         )
-        transaction_cost = turnover * _total_cost_bps(config) / 10_000.0
-        strategy_return = gross_return - transaction_cost
-        portfolio_equity *= 1.0 + strategy_return
+        portfolio_equity = accounting.ending_equity
         rows.append(
             {
                 "signal_date": signal_date.isoformat(),
+                "execution_date": execution_date.isoformat(),
                 "return_date": return_date.isoformat(),
                 "market_regime": settings.regime,
                 "regime": regime_record.regime,
-                "gross_return": gross_return,
-                "turnover": turnover,
-                "transaction_cost": transaction_cost,
-                "strategy_return": strategy_return,
+                "gross_return": accounting.gross_return,
+                "turnover": accounting.turnover,
+                "transaction_cost": accounting.transaction_cost,
+                "strategy_return": accounting.strategy_return,
                 "portfolio_value": settings.initial_capital * portfolio_equity,
                 "asset_returns_json": json.dumps(
-                    period_returns,
+                    accounting.period_returns,
                     ensure_ascii=False,
                     sort_keys=True,
                 ),
                 "asset_contributions_json": json.dumps(
-                    asset_contributions,
+                    accounting.asset_contributions,
                     ensure_ascii=False,
                     sort_keys=True,
                 ),
@@ -161,6 +186,7 @@ def run_portfolio_backtest(
             trade_delta = target_weights.get(record.symbol, 0.0) - current_weight
             common = {
                 "signal_date": signal_date.isoformat(),
+                "execution_date": execution_date.isoformat(),
                 "return_date": return_date.isoformat(),
                 "symbol": record.symbol,
                 "current_weight": current_weight,
@@ -185,8 +211,8 @@ def run_portfolio_backtest(
                     **common,
                     "trade_required": abs(trade_delta)
                     >= config.strategy.model.min_rebalance_delta,
-                    "turnover": turnover,
-                    "transaction_cost": transaction_cost,
+                    "turnover": accounting.turnover,
+                    "transaction_cost": accounting.transaction_cost,
                 }
             )
         previous_weights = target_weights
@@ -349,19 +375,65 @@ def render_backtest_summary(run: ETFBacktestRun) -> str:
             "",
             "## Generated Artifacts",
             "",
-            "- `daily.csv`：逐日组合收益、资产收益 JSON、资产收益贡献 JSON 和目标权重 JSON。",
+            (
+                "- `daily.csv`：逐日 signal/execution/return date、组合收益、"
+                "资产收益 JSON、资产收益贡献 JSON 和目标权重 JSON。"
+            ),
             "- `weights.csv`：逐日目标权重历史。",
             "- `trades.csv`：逐日调仓 delta、turnover 和交易成本审计。",
             "- `metrics.json`：strategy / benchmark 指标摘要，便于实验 registry 读取。",
             "",
             "## Correctness Notes",
             "",
-            "- 信号使用 signal_date 当日及之前可见数据，目标权重从下一交易日 return_date 执行。",
+            (
+                "- 信号使用 signal_date 当日及之前可见数据，目标权重在下一交易日 "
+                "execution_date 执行，收益窗口为 execution_date 到 return_date。"
+            ),
             "- 交易成本按 turnover * (commission_bps + slippage_bps) 扣除。",
             "- 2022-12-01 前历史只作为 warm-up，不作为默认 AI regime 主结论窗口。",
         ]
     )
     return "\n".join(lines) + "\n"
+
+
+def calculate_portfolio_accounting_step(
+    close_pivot: pd.DataFrame,
+    *,
+    signal_date: date,
+    execution_date: date,
+    return_date: date,
+    target_weights: dict[str, float],
+    previous_weights: dict[str, float] | None,
+    asset_symbols: tuple[str, ...],
+    total_cost_bps: float,
+    starting_equity: float = 1.0,
+) -> ETFAccountingStep:
+    if execution_date <= signal_date:
+        raise ValueError("ETF execution_date must be after signal_date")
+    if return_date <= execution_date:
+        raise ValueError("ETF return_date must be after execution_date")
+    _assert_accounting_weights_sum_to_one(target_weights)
+    period_returns = _period_returns(close_pivot, execution_date, return_date)
+    asset_contributions = {
+        symbol: target_weights.get(symbol, 0.0) * period_returns.get(symbol, 0.0)
+        for symbol in asset_symbols
+    }
+    turnover = _turnover(target_weights, previous_weights)
+    gross_return = sum(asset_contributions.get(symbol, 0.0) for symbol in asset_symbols)
+    transaction_cost = turnover * total_cost_bps / 10_000.0
+    strategy_return = gross_return - transaction_cost
+    return ETFAccountingStep(
+        signal_date=signal_date,
+        execution_date=execution_date,
+        return_date=return_date,
+        period_returns=period_returns,
+        asset_contributions=asset_contributions,
+        turnover=turnover,
+        gross_return=gross_return,
+        transaction_cost=transaction_cost,
+        strategy_return=strategy_return,
+        ending_equity=starting_equity * (1.0 + strategy_return),
+    )
 
 
 def toy_portfolio_return(weight: float, asset_return: float) -> float:
@@ -517,11 +589,13 @@ def _benchmark_metrics(
 ) -> dict[str, ETFBenchmarkResult]:
     metrics: dict[str, ETFBenchmarkResult] = {}
     benchmark_dates = trading_dates[-90:] if fast else trading_dates
+    signal_lag_days = int(config.backtest.backtest.signal_lag_days)
     for benchmark_id, benchmark in benchmark_registry(config).items():
         returns, exposures, turnovers = _benchmark_return_series(
             benchmark,
             close_pivot,
             benchmark_dates,
+            signal_lag_days=signal_lag_days,
         )
         if not returns:
             continue
@@ -564,14 +638,22 @@ def _benchmark_return_series(
     benchmark: ETFBenchmarkConfig,
     close_pivot: pd.DataFrame,
     benchmark_dates: list[date],
+    *,
+    signal_lag_days: int,
 ) -> tuple[list[float], list[float], list[float]]:
     returns: list[float] = []
     exposures: list[float] = []
     turnovers: list[float] = []
     previous_weights: dict[str, float] | None = None
-    for left, right in zip(benchmark_dates[:-1], benchmark_dates[1:], strict=True):
-        weights = _benchmark_weights_for_signal_date(benchmark, close_pivot, left)
-        period_returns = _period_returns(close_pivot, left, right)
+    for index, signal_date in enumerate(benchmark_dates):
+        execution_index = index + signal_lag_days
+        return_index = execution_index + 1
+        if return_index >= len(benchmark_dates):
+            break
+        execution_date = benchmark_dates[execution_index]
+        return_date = benchmark_dates[return_index]
+        weights = _benchmark_weights_for_signal_date(benchmark, close_pivot, signal_date)
+        period_returns = _period_returns(close_pivot, execution_date, return_date)
         returns.append(
             sum(weights.get(symbol, 0.0) * period_returns.get(symbol, 0.0) for symbol in weights)
         )
@@ -644,6 +726,12 @@ def _asset_contributions(
         symbol: target_weights.get(symbol, 0.0) * period_returns.get(symbol, 0.0)
         for symbol in config.assets.assets
     }
+
+
+def _assert_accounting_weights_sum_to_one(target_weights: dict[str, float]) -> None:
+    total = sum(float(value) for value in target_weights.values())
+    if abs(total - 1.0) > 1e-6:
+        raise ValueError(f"ETF accounting weights must sum to 1.0, got {total:.8f}")
 
 
 def _ma_50_200_qqq_returns(

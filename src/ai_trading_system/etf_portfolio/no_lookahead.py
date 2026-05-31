@@ -15,7 +15,7 @@ TIMING_CONTRACT: dict[str, str] = {
     "signal_date": "t",
     "allocation_decision_date": "t",
     "earliest_execution_date": "next trading date after t",
-    "portfolio_return_window": "prices strictly after execution date",
+    "portfolio_return_window": "execution_date to a later return_date",
     "future_evaluation_fields": "evaluation_only=true",
 }
 
@@ -168,6 +168,24 @@ def _validate_record_set(scope: str, records: RecordInput) -> list[NoLookaheadIs
                         scope=scope,
                         row=row_number,
                         field="execution_date",
+                    )
+                )
+        explicit_execution_date = _date_from_record(record, "execution_date")
+        return_date = _date_from_record(record, "return_date")
+        if explicit_execution_date is not None and return_date is not None:
+            if return_date <= explicit_execution_date:
+                issues.append(
+                    NoLookaheadIssue(
+                        severity="ERROR",
+                        code="return_date_not_after_execution_date",
+                        message=(
+                            "ETF return date must be strictly after execution date "
+                            f"({return_date.isoformat()} <= "
+                            f"{explicit_execution_date.isoformat()})."
+                        ),
+                        scope=scope,
+                        row=row_number,
+                        field="return_date",
                     )
                 )
 
