@@ -1,0 +1,174 @@
+metadata:
+  version: "weight-tuning-v0.2-stability"
+  owner: "system"
+  status: "pilot_baseline"
+  description: "Stable shadow weight tuning profile after TRADING-060 turnover attribution."
+  production_effect: none
+  manual_review_required: true
+  auto_promotion: false
+  rationale: >
+    TRADING-060 found that TRADING-059 candidates were too aggressive and were
+    rejected by turnover / cost drag guardrails. This profile keeps the same
+    guardrails and production safety boundary, but requires candidate weights to
+    remain close to the production baseline before backtesting.
+  intended_effect: >
+    Produce advisory stable shadow weight candidates for manual review only.
+    This profile must not lower turnover guardrails, change the cost model,
+    modify production parameters, or enable automatic promotion.
+  validation_evidence: >
+    Tests cover stability config loading, baseline L1 distance, single-signal
+    delta rejection, trend/sector cap rejection, turnover prefilter rejection,
+    turnover and cost drag objective penalties, summary/report output,
+    Dashboard/Reader Brief display, shadow backtest supporting-artifact
+    references, and safety fields.
+  review_condition: >
+    Review before any stable candidate is promoted to a new tracking workflow,
+    and expire this pilot when signal quality leaves LIMITED or a stronger
+    valuation / macro / earnings / event data source changes the signal set.
+
+market_regime:
+  id: "ai_after_chatgpt"
+  anchor_event: "ChatGPT public launch"
+  anchor_date: "2022-11-30"
+  default_backtest_start: "2022-12-01"
+
+inputs:
+  baseline_parameters: "config/parameters/production/current.yaml"
+  shadow_backtest_config: "config/parameters/shadow/shadow_backtest.yaml"
+  portfolio_candidate_profiles: "config/portfolio/portfolio_candidate_profiles.yaml"
+  default_portfolio_profile: "lower_rebalance_threshold_2pct"
+  require_data_gate: OK
+  require_freshness_status: OK
+  allow_signal_snapshot_status:
+    - LIMITED
+    - OK
+
+tuning_scope:
+  tunable_weights:
+    trend_momentum:
+      min: 0.20
+      max: 0.45
+      step: 0.05
+      quality_required:
+        - price_derived
+        - OK
+    sector_strength:
+      min: 0.15
+      max: 0.35
+      step: 0.05
+      quality_required:
+        - price_derived
+        - OK
+    macro_liquidity:
+      min: 0.10
+      max: 0.25
+      step: 0.05
+      quality_required:
+        - proxy
+        - LIMITED
+  fixed_weights:
+    earnings_quality:
+      value: 0.05
+      reason: "neutral fallback signal; not eligible for free tuning"
+    event_risk:
+      value: 0.05
+      reason: "neutral fallback signal; not eligible for free tuning"
+  capped_weights:
+    valuation_risk:
+      min: 0.05
+      max: 0.15
+      step: 0.05
+      reason: "limited or fallback signal; capped until stronger data source exists"
+
+constraints:
+  total_weight_sum: 1.0
+  normalize_after_search: true
+  min_single_weight: 0.05
+  max_single_weight: 0.55
+  max_total_l1_distance_from_baseline: 0.50
+  forbid_negative_weights: true
+  forbid_free_fallback_weight_tuning: true
+
+stability_constraints:
+  max_single_signal_delta_from_baseline: 0.10
+  max_total_l1_distance_from_baseline: 0.25
+  max_combined_trend_sector_weight: 0.65
+  max_trend_momentum_weight: 0.45
+  max_sector_strength_weight: 0.35
+  min_macro_liquidity_weight: 0.10
+  fallback_signals:
+    earnings_quality:
+      fixed: true
+      value: 0.05
+    event_risk:
+      fixed: true
+      value: 0.05
+  valuation_risk:
+    min: 0.05
+    max: 0.15
+
+turnover_controls:
+  prefilter_candidates_by_estimated_turnover: true
+  max_estimated_turnover_relative_increase: 0.25
+  turnover_penalty_weight: 0.20
+  cost_drag_penalty_weight: 0.20
+  estimated_turnover_method: "candidate_weight_l1_distance_proxy"
+  rationale: >
+    The prefilter uses candidate-vs-baseline L1 distance as a conservative
+    turnover-risk proxy before expensive walk-forward simulation. Actual
+    turnover guardrails remain unchanged and are still enforced after backtest.
+
+walk_forward:
+  enabled: true
+  train_window_days: 756
+  validation_window_days: 126
+  step_days: 63
+  min_history_days: 1008
+
+search:
+  method: "stable_restricted_grid_search"
+  max_candidates: 240
+  candidate_selection: "stability_filtered_l1_nearest_grid_cap"
+  rationale: >
+    The v0.2 stability profile keeps deterministic grid search but prefilters
+    candidates by baseline proximity and estimated turnover risk before
+    walk-forward backtesting.
+
+objective:
+  ranking_weights:
+    sharpe_improvement: 0.30
+    max_drawdown_improvement: 0.25
+    annualized_return_improvement: 0.20
+    turnover_penalty: 0.15
+    cost_drag_penalty: 0.10
+
+candidate_status_policy:
+  rationale: >
+    These pilot thresholds classify advisory shadow candidates only. They do
+    not authorize production promotion and must be revisited when signal
+    quality leaves LIMITED.
+  watch_objective_score_min: 0.0
+  shadow_candidate_min_sharpe_delta: 0.05
+  shadow_candidate_min_annualized_return_delta: 0.01
+  shadow_candidate_min_non_worse_ratio: 0.60
+
+guardrails:
+  max_drawdown_worse_limit: 0.02
+  annualized_return_underperformance_limit: 0.01
+  turnover_relative_increase_limit: 0.30
+  min_non_worse_walk_forward_ratio: 0.60
+  min_validation_windows: 3
+
+safety:
+  production_effect: none
+  manual_review_required: true
+  auto_promotion: false
+  forbid_production_write: true
+  forbid_auto_candidate_promotion: true
+  forbid_turnover_guardrail_modification: true
+  forbid_cost_model_modification: true
+  forbid_free_fallback_weight_tuning: true
+
+output:
+  weight_stability_dir: "artifacts/weight_stability"
+  report_alias_dir: "outputs/reports"

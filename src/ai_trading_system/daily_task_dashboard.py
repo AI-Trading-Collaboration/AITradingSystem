@@ -216,6 +216,7 @@ def build_daily_task_dashboard_payload(
         "portfolio_tracking_review_summary": _portfolio_tracking_review_summary(report),
         "weight_tuning_summary": _weight_tuning_summary(report),
         "weight_tuning_failure_summary": _weight_tuning_failure_summary(report),
+        "weight_stability_summary": _weight_stability_summary(report),
         "portfolio_turnover_attribution_summary": _portfolio_turnover_attribution_summary(report),
         "weight_adjustment_candidates": _weight_adjustment_candidates_summary(report),
         "weight_candidate_evaluation": _weight_candidate_evaluation_summary(report),
@@ -382,6 +383,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_portfolio_tracking_review_summary(report),
             _render_weight_tuning_summary(report),
             _render_weight_tuning_failure_summary(report),
+            _render_weight_stability_summary(report),
             _render_portfolio_turnover_attribution_summary(report),
             _render_weight_adjustment_candidates(report),
             _render_weight_candidate_evaluation(report),
@@ -3194,6 +3196,109 @@ def _latest_weight_tuning_failure_path(report: DailyTaskDashboardReport) -> Path
     root = report.project_root / "artifacts" / "weight_tuning_failure"
     candidates: list[tuple[date, Path]] = []
     for path in root.glob("*/weight_tuning_failure_summary.json"):
+        try:
+            as_of = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if as_of <= report.as_of:
+            candidates.append((as_of, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _weight_stability_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_weight_stability_path(report)
+    if path is None:
+        missing_path = (
+            report.project_root
+            / "artifacts"
+            / "weight_stability"
+            / report.as_of.isoformat()
+            / "weight_stability_summary.json"
+        )
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(missing_path),
+            "href": _report_href(missing_path, report.reports_dir),
+            "markdown_href": "",
+            "previous_root_cause": "MISSING",
+            "candidates_generated": 0,
+            "rejected_by_stability": 0,
+            "rejected_by_turnover_prefilter": 0,
+            "candidates_backtested": 0,
+            "recommended_status": "MISSING",
+            "turnover_failures_reduced": False,
+            "production_effect": ProductionEffect.NONE.value,
+            "risk": "Weight stability summary 缺失；dashboard 不运行稳定调参。",
+        }
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "weight_stability":
+        return {
+            "status": "UNREADABLE",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "markdown_href": "",
+            "previous_root_cause": "UNREADABLE",
+            "candidates_generated": 0,
+            "rejected_by_stability": 0,
+            "rejected_by_turnover_prefilter": 0,
+            "candidates_backtested": 0,
+            "recommended_status": "UNREADABLE",
+            "turnover_failures_reduced": False,
+            "production_effect": ProductionEffect.NONE.value,
+            "risk": "Weight stability summary JSON 不可读。",
+        }
+    metadata = _mapping_value(payload, "metadata")
+    context = _mapping_value(payload, "input_context")
+    search = _mapping_value(payload, "search_summary")
+    recommended = _mapping_value(payload, "recommended_candidate")
+    comparison = _mapping_value(payload, "comparison_to_trading_059")
+    safety = _mapping_value(payload, "safety")
+    risks: list[str] = []
+    if metadata.get("production_effect") != ProductionEffect.NONE.value:
+        risks.append("weight stability production_effect 不是 none。")
+    if metadata.get("auto_promotion") is not False:
+        risks.append("weight stability auto_promotion 不是 false。")
+    if safety.get("production_write_allowed") is not False:
+        risks.append("weight stability 不应允许写 production。")
+    if safety.get("turnover_guardrail_modified") is not False:
+        risks.append("weight stability 不应修改 turnover guardrail。")
+    if safety.get("cost_model_modified") is not False:
+        risks.append("weight stability 不应修改 cost model。")
+    if safety.get("fallback_signals_free_tuned") is not False:
+        risks.append("fallback signals 不应自由调参。")
+    markdown_path = path.with_suffix(".md")
+    return {
+        "status": metadata.get("status", "UNKNOWN"),
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "markdown_href": _report_href(markdown_path, report.reports_dir)
+        if markdown_path.exists()
+        else "",
+        "previous_root_cause": context.get("previous_failure_root_cause", ""),
+        "candidates_generated": search.get("candidates_generated", 0),
+        "rejected_by_stability": search.get("candidates_rejected_by_stability", 0),
+        "rejected_by_turnover_prefilter": search.get(
+            "candidates_rejected_by_turnover_prefilter",
+            0,
+        ),
+        "candidates_backtested": search.get("candidates_backtested", 0),
+        "recommended_status": recommended.get("status", "UNKNOWN"),
+        "turnover_failures_reduced": comparison.get("turnover_failures_reduced", False),
+        "production_effect": metadata.get("production_effect", ProductionEffect.NONE.value),
+        "risk": "；".join(risks)
+        or "Weight stability 只收敛 shadow search，不降低 guardrail、不写 production。",
+    }
+
+
+def _latest_weight_stability_path(report: DailyTaskDashboardReport) -> Path | None:
+    root = report.project_root / "artifacts" / "weight_stability"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/weight_stability_summary.json"):
         try:
             as_of = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -11229,6 +11334,68 @@ def _render_weight_tuning_failure_summary(report: DailyTaskDashboardReport) -> s
             _summary_item("near-miss count", summary.get("near_miss_count", 0)),
             _summary_item("root cause", summary.get("root_cause_category", "MISSING")),
             _summary_item("next action", summary.get("recommended_next_action", "")),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            markdown_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_weight_stability_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _weight_stability_summary(report)
+    href = _string_value(summary.get("href"))
+    markdown_href = _string_value(summary.get("markdown_href"))
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(href)}"><span>Weight Search Stability</span>'
+        f"<small>{_text(summary.get('recommended_status', 'UNKNOWN'))}</small></a>"
+        if summary.get("exists")
+        else '<span class="report-link missing"><span>Weight Search Stability</span>'
+        "<small>MISSING</small></span>"
+    )
+    markdown_link = (
+        '<a class="report-link" '
+        f'href="{_text(markdown_href)}"><span>Weight Stability Markdown</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if markdown_href
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="weight-stability-summary-title">',
+            '<div class="section-head">',
+            '<h2 id="weight-stability-summary-title">Weight Search Stability</h2>',
+            (
+                "<p>TRADING-061 stable weight search；dashboard 只读 stability "
+                "artifact，不降低 turnover guardrail、不修改 cost model 或 production。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("latest status", summary.get("status", "MISSING")),
+            _summary_item("previous root cause", summary.get("previous_root_cause", "")),
+            _summary_item("candidates generated", summary.get("candidates_generated", 0)),
+            _summary_item("rejected by stability", summary.get("rejected_by_stability", 0)),
+            _summary_item(
+                "rejected by turnover prefilter",
+                summary.get("rejected_by_turnover_prefilter", 0),
+            ),
+            _summary_item("candidates backtested", summary.get("candidates_backtested", 0)),
+            _summary_item("recommended status", summary.get("recommended_status", "MISSING")),
+            _summary_item(
+                "turnover failures reduced",
+                summary.get("turnover_failures_reduced", False),
+            ),
             _summary_item(
                 "production_effect",
                 summary.get("production_effect", ProductionEffect.NONE.value),

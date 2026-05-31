@@ -385,11 +385,13 @@ def build_weight_tuning_payload(
         )
 
     selected_signals = _selected_signals(config, signals)
-    candidates, rejected_by_constraints = generate_restricted_grid_candidates(
+    generation = generate_restricted_grid_candidate_diagnostics(
         config,
         baseline.weights,
         selected_signals=selected_signals,
     )
+    candidates = _records(generation.get("accepted_candidates"))
+    rejected_by_constraints = _int_value(generation.get("candidates_rejected_by_constraints"))
     signal_frames = signal_snapshot_frames(signal_snapshot_payload)
     trading_dates = shadow_backtest_module._trading_dates(prices, baseline, resolved_as_of)
     walk_forward_config = WalkForwardConfig.model_validate(_mapping(config.get("walk_forward")))
@@ -427,7 +429,9 @@ def build_weight_tuning_payload(
             "candidates_rejected_by_constraints": rejected_by_constraints,
             "candidates_rejected_by_guardrails": 0,
             "candidates_generated": len(candidates),
+            **_stable_search_counts(generation),
         }
+        _attach_stability_payload(payload, config, generation)
         payload["recommended_candidate"] = _no_candidate_payload(
             dict(baseline.weights),
             "needs_more_data",
@@ -533,12 +537,16 @@ def build_weight_tuning_payload(
         "metrics": _metrics_payload(baseline_full),
     }
     payload["search"] = {
-        "method": "restricted_grid_search",
+        "method": str(_mapping(config.get("search")).get("method") or "restricted_grid_search"),
         "candidates_evaluated": len(evaluated),
         "candidates_rejected_by_constraints": rejected_by_constraints,
         "candidates_rejected_by_guardrails": guardrail_rejections,
-        "candidates_generated": len(candidates),
+        "candidates_generated": _int_value(
+            generation.get("candidates_generated"),
+            default=len(candidates),
+        ),
         "selected_signals": list(selected_signals),
+        **_stable_search_counts(generation),
     }
     summary_limit = int(config.get("summary_candidate_limit", 10))
     payload["candidate_ranking"] = [
@@ -554,6 +562,7 @@ def build_weight_tuning_payload(
         if isinstance(recommended, dict)
         else 0.0,
     }
+    _attach_stability_payload(payload, config, generation)
     candidates_payload = _candidates_payload(payload, ranked)
     return payload, candidates_payload
 
@@ -564,6 +573,23 @@ def generate_restricted_grid_candidates(
     *,
     selected_signals: Sequence[str] | None = None,
 ) -> tuple[list[dict[str, Any]], int]:
+    generation = generate_restricted_grid_candidate_diagnostics(
+        config,
+        baseline_weights,
+        selected_signals=selected_signals,
+    )
+    return (
+        _records(generation.get("accepted_candidates")),
+        _int_value(generation.get("candidates_rejected_by_constraints")),
+    )
+
+
+def generate_restricted_grid_candidate_diagnostics(
+    config: Mapping[str, Any],
+    baseline_weights: Mapping[str, float],
+    *,
+    selected_signals: Sequence[str] | None = None,
+) -> dict[str, Any]:
     scope = _mapping(config.get("tuning_scope"))
     tunable = _mapping(scope.get("tunable_weights"))
     capped = _mapping(scope.get("capped_weights"))
@@ -589,6 +615,11 @@ def generate_restricted_grid_candidates(
     seen: set[tuple[tuple[str, float], ...]] = set()
     target_sum = _float_value(constraints.get("total_weight_sum"), default=1.0)
     max_l1 = _float_value(constraints.get("max_total_l1_distance_from_baseline"), default=2.0)
+    candidate_diagnostics: list[dict[str, Any]] = []
+    stability_rejections = 0
+    turnover_prefilter_rejections = 0
+    base_constraint_rejections = 0
+    candidate_prefix = "wts" if _has_stability_constraints(config) else "wt"
     for index, values in enumerate(product(*(ranges[name] for name in variable_names)), start=1):
         raw = {name: float(value) for name, value in zip(variable_names, values, strict=True)}
         weights = _normalize_preserving_fixed(
@@ -597,30 +628,61 @@ def generate_restricted_grid_candidates(
             target_sum=target_sum,
             normalize=bool(constraints.get("normalize_after_search", True)),
         )
+        candidate_id = f"{candidate_prefix}-{len(candidate_diagnostics) + 1:04d}"
+        stability = calculate_weight_stability(weights, baseline_weights, config)
+        turnover_prefilter = estimate_turnover_prefilter(weights, baseline_weights, config)
+        base_rejection_reasons: list[str] = []
         if not _candidate_within_constraints(weights, config):
             rejected += 1
-            continue
-        l1_distance = sum(
-            abs(weights.get(name, 0.0) - float(baseline_weights.get(name, 0.0)))
-            for name in set(weights) | set(baseline_weights)
-        )
-        if l1_distance > max_l1 + 1e-12:
+            base_constraint_rejections += 1
+            base_rejection_reasons.append("base_constraints_failed")
+        l1_distance = _float_value(stability.get("l1_distance_from_baseline"))
+        if not base_rejection_reasons and l1_distance > max_l1 + 1e-12:
             rejected += 1
+            base_constraint_rejections += 1
+            base_rejection_reasons.append("l1_distance_above_base_constraint")
+        stability_failed = stability.get("stability_status") == "FAIL"
+        turnover_failed = turnover_prefilter.get("status") == "FAIL"
+        if stability_failed and not base_rejection_reasons:
+            rejected += 1
+            stability_rejections += 1
+        if turnover_failed and not base_rejection_reasons and not stability_failed:
+            rejected += 1
+            turnover_prefilter_rejections += 1
+        if base_rejection_reasons or stability_failed or turnover_failed:
+            candidate_diagnostics.append(
+                _candidate_generation_record(
+                    candidate_id=candidate_id,
+                    source_grid_index=index,
+                    weights=weights,
+                    raw=raw,
+                    stability=stability,
+                    turnover_prefilter=turnover_prefilter,
+                    status="rejected",
+                    rejection_reasons=[
+                        *base_rejection_reasons,
+                        *_strings(stability.get("rejection_reasons")),
+                        *_strings(turnover_prefilter.get("rejection_reasons")),
+                    ],
+                )
+            )
             continue
         key = tuple(sorted((name, round(value, 12)) for name, value in weights.items()))
         if key in seen:
             continue
         seen.add(key)
-        candidates.append(
-            {
-                "candidate_id": f"wt-{len(candidates) + 1:04d}",
-                "source_grid_index": index,
-                "weights": weights,
-                "l1_distance_from_baseline": round(l1_distance, 12),
-                "fallback_signals_free_tuned": False,
-                "raw_search_values": raw,
-            }
+        accepted = _candidate_generation_record(
+            candidate_id=candidate_id,
+            source_grid_index=index,
+            weights=weights,
+            raw=raw,
+            stability=stability,
+            turnover_prefilter=turnover_prefilter,
+            status="accepted_for_backtest",
+            rejection_reasons=[],
         )
+        candidates.append(accepted)
+        candidate_diagnostics.append(accepted)
     max_candidates = _int_value(_mapping(config.get("search")).get("max_candidates"), default=0)
     if max_candidates > 0 and len(candidates) > max_candidates:
         candidates = sorted(
@@ -630,9 +692,165 @@ def generate_restricted_grid_candidates(
                 str(item.get("candidate_id")),
             ),
         )
-        rejected += len(candidates) - max_candidates
+        overflow = candidates[max_candidates:]
+        rejected += len(overflow)
+        base_constraint_rejections += len(overflow)
+        overflow_ids = {str(item.get("candidate_id")) for item in overflow}
+        for record in candidate_diagnostics:
+            if str(record.get("candidate_id")) not in overflow_ids:
+                continue
+            record["status"] = "rejected"
+            record["rejection_reasons"] = [
+                *_strings(record.get("rejection_reasons")),
+                "max_candidates_cap",
+            ]
         candidates = candidates[:max_candidates]
-    return candidates, rejected
+    return {
+        "accepted_candidates": candidates,
+        "candidate_diagnostics": candidate_diagnostics,
+        "candidates_generated": len(candidate_diagnostics),
+        "candidates_rejected_by_constraints": rejected,
+        "candidates_rejected_by_base_constraints": base_constraint_rejections,
+        "candidates_rejected_by_stability": stability_rejections,
+        "candidates_rejected_by_turnover_prefilter": turnover_prefilter_rejections,
+    }
+
+
+def calculate_weight_stability(
+    weights: Mapping[str, float],
+    baseline_weights: Mapping[str, float],
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    stability = _mapping(config.get("stability_constraints"))
+    l1_distance = sum(
+        abs(float(weights.get(name, 0.0)) - float(baseline_weights.get(name, 0.0)))
+        for name in set(weights) | set(baseline_weights)
+    )
+    max_single_delta = max(
+        (
+            abs(float(weights.get(name, 0.0)) - float(baseline_weights.get(name, 0.0)))
+            for name in set(weights) | set(baseline_weights)
+        ),
+        default=0.0,
+    )
+    trend_weight = float(weights.get("trend_momentum", 0.0))
+    sector_weight = float(weights.get("sector_strength", 0.0))
+    macro_weight = float(weights.get("macro_liquidity", 0.0))
+    valuation_weight = float(weights.get("valuation_risk", 0.0))
+    trend_sector_weight = trend_weight + sector_weight
+    reasons: list[str] = []
+    if stability:
+        if max_single_delta > _float_value(
+            stability.get("max_single_signal_delta_from_baseline"),
+            default=2.0,
+        ) + 1e-12:
+            reasons.append("single_signal_delta_too_high")
+        if l1_distance > _float_value(
+            stability.get("max_total_l1_distance_from_baseline"),
+            default=2.0,
+        ) + 1e-12:
+            reasons.append("l1_distance_too_high")
+        if trend_sector_weight > _float_value(
+            stability.get("max_combined_trend_sector_weight"),
+            default=2.0,
+        ) + 1e-12:
+            reasons.append("trend_sector_combined_weight_too_high")
+        if trend_weight > _float_value(
+            stability.get("max_trend_momentum_weight"),
+            default=2.0,
+        ) + 1e-12:
+            reasons.append("trend_momentum_weight_too_high")
+        if sector_weight > _float_value(
+            stability.get("max_sector_strength_weight"),
+            default=2.0,
+        ) + 1e-12:
+            reasons.append("sector_strength_weight_too_high")
+        if macro_weight < _float_value(
+            stability.get("min_macro_liquidity_weight"),
+            default=0.0,
+        ) - 1e-12:
+            reasons.append("macro_liquidity_weight_too_low")
+        valuation = _mapping(stability.get("valuation_risk"))
+        if valuation and (
+            valuation_weight < _float_value(valuation.get("min"), default=0.0) - 1e-12
+            or valuation_weight > _float_value(valuation.get("max"), default=2.0) + 1e-12
+        ):
+            reasons.append("valuation_risk_outside_allowed_range")
+        for signal, rule in _mapping(stability.get("fallback_signals")).items():
+            rule_map = _mapping(rule)
+            if rule_map.get("fixed") is not True:
+                continue
+            expected = _float_value(rule_map.get("value"))
+            if abs(float(weights.get(signal, 0.0)) - expected) > 1e-12:
+                reasons.append(f"{signal}_fallback_not_fixed")
+    return {
+        "l1_distance_from_baseline": _round_float(l1_distance),
+        "max_single_signal_delta": _round_float(max_single_delta),
+        "trend_sector_combined_weight": _round_float(trend_sector_weight),
+        "trend_momentum_weight": _round_float(trend_weight),
+        "sector_strength_weight": _round_float(sector_weight),
+        "macro_liquidity_weight": _round_float(macro_weight),
+        "valuation_risk_weight": _round_float(valuation_weight),
+        "stability_status": "FAIL" if reasons else "PASS",
+        "rejection_reasons": sorted(dict.fromkeys(reasons)),
+    }
+
+
+def estimate_turnover_prefilter(
+    weights: Mapping[str, float],
+    baseline_weights: Mapping[str, float],
+    config: Mapping[str, Any],
+) -> dict[str, Any]:
+    controls = _mapping(config.get("turnover_controls"))
+    l1_distance = sum(
+        abs(float(weights.get(name, 0.0)) - float(baseline_weights.get(name, 0.0)))
+        for name in set(weights) | set(baseline_weights)
+    )
+    enabled = bool(controls.get("prefilter_candidates_by_estimated_turnover", False))
+    threshold = _float_value(
+        controls.get("max_estimated_turnover_relative_increase"),
+        default=2.0,
+    )
+    reasons: list[str] = []
+    if enabled and l1_distance > threshold + 1e-12:
+        reasons.append("estimated_turnover_too_high")
+    return {
+        "estimated_turnover_relative_increase": _round_float(l1_distance),
+        "method": str(
+            controls.get("estimated_turnover_method")
+            or "candidate_weight_l1_distance_proxy"
+        ),
+        "threshold": _round_float(threshold),
+        "status": "FAIL" if reasons else "PASS",
+        "rejection_reasons": reasons,
+    }
+
+
+def _candidate_generation_record(
+    *,
+    candidate_id: str,
+    source_grid_index: int,
+    weights: Mapping[str, float],
+    raw: Mapping[str, float],
+    stability: Mapping[str, Any],
+    turnover_prefilter: Mapping[str, Any],
+    status: str,
+    rejection_reasons: Sequence[str],
+) -> dict[str, Any]:
+    return {
+        "candidate_id": candidate_id,
+        "source_grid_index": source_grid_index,
+        "weights": dict(weights),
+        "l1_distance_from_baseline": stability.get("l1_distance_from_baseline", 0.0),
+        "max_single_signal_delta": stability.get("max_single_signal_delta", 0.0),
+        "fallback_signals_free_tuned": False,
+        "raw_search_values": dict(raw),
+        "stability": dict(stability),
+        "turnover_prefilter": dict(turnover_prefilter),
+        "constraint_status": "PASS" if not rejection_reasons else "FAIL",
+        "status": status,
+        "rejection_reasons": sorted(dict.fromkeys(str(item) for item in rejection_reasons)),
+    }
 
 
 def write_weight_tuning_summary(
@@ -1196,7 +1414,7 @@ def _evaluate_candidate(
     return {
         "candidate_id": candidate["candidate_id"],
         "weights": weights,
-        "constraint_status": "PASS",
+        "constraint_status": candidate.get("constraint_status", "PASS"),
         "metrics": _metrics_payload(candidate_full),
         "relative_metrics": relative,
         "objective_breakdown": objective,
@@ -1212,6 +1430,9 @@ def _evaluate_candidate(
             _mapping(config.get("guardrails")),
         ),
         "l1_distance_from_baseline": candidate.get("l1_distance_from_baseline", 0.0),
+        "max_single_signal_delta": candidate.get("max_single_signal_delta", 0.0),
+        "stability": _mapping(candidate.get("stability")),
+        "turnover_prefilter": _mapping(candidate.get("turnover_prefilter")),
         "fallback_signals_free_tuned": False,
     }
 
@@ -1277,14 +1498,20 @@ def _objective_breakdown(
         candidate_metrics.get("turnover", 0.0) - baseline_metrics.get("turnover", 0.0),
         0.0,
     )
+    cost_drag = max(
+        candidate_metrics.get("estimated_cost_drag", 0.0)
+        - baseline_metrics.get("estimated_cost_drag", 0.0),
+        0.0,
+    )
     objective = (
-        _float_value(weights.get("sharpe_improvement"), default=0.35) * sharpe
-        + _float_value(weights.get("max_drawdown_improvement"), default=0.25) * drawdown
-        + _float_value(weights.get("annualized_return_improvement"), default=0.20)
+        _float_value(weights.get("sharpe_improvement"), default=0.0) * sharpe
+        + _float_value(weights.get("max_drawdown_improvement"), default=0.0) * drawdown
+        + _float_value(weights.get("annualized_return_improvement"), default=0.0)
         * annualized
-        + _float_value(weights.get("signal_transmission_improvement"), default=0.10)
+        + _float_value(weights.get("signal_transmission_improvement"), default=0.0)
         * transmission
-        - _float_value(weights.get("turnover_penalty"), default=0.10) * turnover
+        - _float_value(weights.get("turnover_penalty"), default=0.0) * turnover
+        - _float_value(weights.get("cost_drag_penalty"), default=0.0) * cost_drag
     )
     return {
         "sharpe_improvement_score": _round_float(sharpe),
@@ -1292,6 +1519,7 @@ def _objective_breakdown(
         "return_improvement_score": _round_float(annualized),
         "signal_transmission_score": _round_float(transmission),
         "turnover_penalty_score": _round_float(turnover),
+        "cost_drag_penalty_score": _round_float(cost_drag),
         "objective_score": _round_float(objective),
     }
 
@@ -1307,6 +1535,7 @@ def _average_objective_breakdown(
             "return_improvement_score": 0.0,
             "signal_transmission_score": 0.0,
             "turnover_penalty_score": 0.0,
+            "cost_drag_penalty_score": 0.0,
             "objective_score": 0.0,
         }
     averaged = {
@@ -1319,19 +1548,22 @@ def _average_objective_breakdown(
             "return_improvement_score",
             "signal_transmission_score",
             "turnover_penalty_score",
+            "cost_drag_penalty_score",
         )
     }
     averaged["objective_score"] = _round_float(
-        _float_value(weights.get("sharpe_improvement"), default=0.35)
+        _float_value(weights.get("sharpe_improvement"), default=0.0)
         * averaged["sharpe_improvement_score"]
-        + _float_value(weights.get("max_drawdown_improvement"), default=0.25)
+        + _float_value(weights.get("max_drawdown_improvement"), default=0.0)
         * averaged["drawdown_improvement_score"]
-        + _float_value(weights.get("annualized_return_improvement"), default=0.20)
+        + _float_value(weights.get("annualized_return_improvement"), default=0.0)
         * averaged["return_improvement_score"]
-        + _float_value(weights.get("signal_transmission_improvement"), default=0.10)
+        + _float_value(weights.get("signal_transmission_improvement"), default=0.0)
         * averaged["signal_transmission_score"]
-        - _float_value(weights.get("turnover_penalty"), default=0.10)
+        - _float_value(weights.get("turnover_penalty"), default=0.0)
         * averaged["turnover_penalty_score"]
+        - _float_value(weights.get("cost_drag_penalty"), default=0.0)
+        * averaged["cost_drag_penalty_score"]
     )
     return averaged
 
@@ -1644,6 +1876,29 @@ def _base_payload(
     }
 
 
+def _attach_stability_payload(
+    payload: dict[str, Any],
+    config: Mapping[str, Any],
+    generation: Mapping[str, Any],
+) -> None:
+    if not _has_stability_constraints(config):
+        return
+    payload["stability_constraints"] = _mapping(config.get("stability_constraints"))
+    payload["turnover_controls"] = _mapping(config.get("turnover_controls"))
+    payload["candidate_diagnostics"] = _records(generation.get("candidate_diagnostics"))
+
+
+def _stable_search_counts(generation: Mapping[str, Any]) -> dict[str, int]:
+    return {
+        "candidates_rejected_by_stability": _int_value(
+            generation.get("candidates_rejected_by_stability")
+        ),
+        "candidates_rejected_by_turnover_prefilter": _int_value(
+            generation.get("candidates_rejected_by_turnover_prefilter")
+        ),
+    }
+
+
 def _blocked_payload_pair(
     *,
     as_of: date,
@@ -1712,7 +1967,7 @@ def _candidates_payload(
     candidates: Sequence[Mapping[str, Any]],
 ) -> dict[str, Any]:
     metadata = _mapping(summary_payload.get("metadata"))
-    return {
+    payload = {
         "schema_version": WEIGHT_TUNING_SCHEMA_VERSION,
         "report_type": "weight_tuning_candidates",
         "metadata": {
@@ -1730,6 +1985,11 @@ def _candidates_payload(
         "candidates": [dict(candidate) for candidate in candidates],
         "safety": _safety_payload(),
     }
+    diagnostics = _records(summary_payload.get("candidate_diagnostics"))
+    if diagnostics:
+        payload["candidate_diagnostics"] = diagnostics
+        payload["candidate_diagnostic_count"] = len(diagnostics)
+    return payload
 
 
 def _candidate_ranking_row(row: Mapping[str, Any]) -> dict[str, Any]:
@@ -1744,6 +2004,8 @@ def _candidate_ranking_row(row: Mapping[str, Any]) -> dict[str, Any]:
         "relative_metrics": row.get("relative_metrics", {}),
         "walk_forward_summary": row.get("walk_forward_summary", {}),
         "weights": row.get("weights", {}),
+        "stability": row.get("stability", {}),
+        "turnover_prefilter": row.get("turnover_prefilter", {}),
         "reason": row.get("reason", ""),
     }
 
@@ -1764,6 +2026,7 @@ def _no_candidate_payload(
             "return_improvement_score": 0.0,
             "signal_transmission_score": 0.0,
             "turnover_penalty_score": 0.0,
+            "cost_drag_penalty_score": 0.0,
             "objective_score": 0.0,
         },
         "guardrail_status": "FAIL",
@@ -1909,6 +2172,10 @@ def _turnover_relative_increase(relative: Mapping[str, Any]) -> float:
     if baseline_turnover <= 1e-12:
         return 0.0 if baseline_turnover_delta <= 1e-12 else 1.0
     return max(baseline_turnover_delta / abs(baseline_turnover), 0.0)
+
+
+def _has_stability_constraints(config: Mapping[str, Any]) -> bool:
+    return bool(_mapping(config.get("stability_constraints")))
 
 
 def _portfolio_profile_config(config: Mapping[str, Any], profile_name: str) -> dict[str, Any]:
@@ -2069,6 +2336,18 @@ def _validate_weight_tuning_config(payload: Mapping[str, Any]) -> None:
         raise ValueError("weight tuning must forbid free fallback tuning")
     if not _mapping(payload.get("guardrails")):
         raise ValueError("weight tuning config missing guardrails")
+    stability = _mapping(payload.get("stability_constraints"))
+    if stability:
+        for key in (
+            "max_single_signal_delta_from_baseline",
+            "max_total_l1_distance_from_baseline",
+            "max_combined_trend_sector_weight",
+        ):
+            if key not in stability:
+                raise ValueError(f"weight stability config missing {key}")
+        controls = _mapping(payload.get("turnover_controls"))
+        if controls.get("prefilter_candidates_by_estimated_turnover") is not True:
+            raise ValueError("weight stability must enable turnover prefilter")
 
 
 def _sequence(value: object) -> tuple[object, ...]:

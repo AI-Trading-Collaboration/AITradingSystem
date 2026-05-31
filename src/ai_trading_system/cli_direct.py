@@ -254,6 +254,35 @@ def _dispatch(args: list[str]) -> None:
             input_path=_optional_path(args, "--input-path"),
         )
         return
+    if args[:2] == ["parameters", "tune-weights-stable"]:
+        cli.parameters_tune_weights_stable_command(
+            ctx=SimpleNamespace(args=[]),
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            config_path=_path_option_with_default(
+                args,
+                "--config",
+                cli.DEFAULT_WEIGHT_STABILITY_CONFIG_PATH,
+            ),
+            portfolio_profile=_option(args, "--portfolio-profile"),
+            signals=_values_after_option(args, "--signals"),
+            dry_run=_flag(args, "--dry-run"),
+        )
+        return
+    if args[:2] == ["parameters", "validate-weight-stability"]:
+        cli.validate_weight_stability_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            input_path=_optional_path(args, "--input-path"),
+        )
+        return
+    if args[:2] == ["parameters", "explain-weight-stability"]:
+        cli.explain_weight_stability_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            input_path=_optional_path(args, "--input-path"),
+        )
+        return
     if args[:2] == ["reports", "shadow-parameter-backtest"]:
         cli.shadow_parameter_backtest_report_command(
             latest=_flag(args, "--latest"),
@@ -263,6 +292,13 @@ def _dispatch(args: list[str]) -> None:
         return
     if args[:2] == ["reports", "parameter-promotion"]:
         cli.parameter_promotion_report_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            source_path=_optional_path(args, "--source-path"),
+        )
+        return
+    if args[:2] == ["reports", "weight-stability"]:
+        cli.weight_stability_report_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             source_path=_optional_path(args, "--source-path"),

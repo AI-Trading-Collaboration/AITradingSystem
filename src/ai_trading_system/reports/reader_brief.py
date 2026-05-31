@@ -983,6 +983,36 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         parameter_shadow.get("weight_tuning_failure_next_action"),
                     ),
                     (
+                        "weight_stability_status",
+                        parameter_shadow.get("weight_stability_status"),
+                    ),
+                    (
+                        "weight_stability_summary",
+                        parameter_shadow.get("weight_stability_summary"),
+                    ),
+                    (
+                        "weight_stability_candidate_status",
+                        parameter_shadow.get("weight_stability_candidate_status"),
+                    ),
+                    (
+                        "weight_stability_candidates_generated",
+                        parameter_shadow.get("weight_stability_candidates_generated"),
+                    ),
+                    (
+                        "weight_stability_rejected_by_stability",
+                        parameter_shadow.get("weight_stability_rejected_by_stability"),
+                    ),
+                    (
+                        "weight_stability_rejected_by_turnover_prefilter",
+                        parameter_shadow.get(
+                            "weight_stability_rejected_by_turnover_prefilter"
+                        ),
+                    ),
+                    (
+                        "weight_stability_turnover_failures_reduced",
+                        parameter_shadow.get("weight_stability_turnover_failures_reduced"),
+                    ),
+                    (
                         "portfolio_turnover_attribution_status",
                         parameter_shadow.get("portfolio_turnover_attribution_status"),
                     ),
@@ -1868,6 +1898,7 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
     tracking_review_summary = _portfolio_tracking_review_summary(as_of)
     weight_tuning_summary = _weight_tuning_review_summary(as_of)
     weight_tuning_failure_summary = _weight_tuning_failure_review_summary(as_of)
+    weight_stability_summary = _weight_stability_review_summary(as_of)
     turnover_attribution_summary = _portfolio_turnover_attribution_review_summary(as_of)
     path = (
         PROJECT_ROOT
@@ -2103,6 +2134,28 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
             "weight_tuning_failure_next_action": weight_tuning_failure_summary.get(
                 "recommended_next_action",
                 "",
+            ),
+            "weight_stability_status": weight_stability_summary.get("status", "MISSING"),
+            "weight_stability_summary": weight_stability_summary.get("summary_sentence", ""),
+            "weight_stability_candidate_status": weight_stability_summary.get(
+                "candidate_status",
+                "MISSING",
+            ),
+            "weight_stability_candidates_generated": weight_stability_summary.get(
+                "candidates_generated",
+                0,
+            ),
+            "weight_stability_rejected_by_stability": weight_stability_summary.get(
+                "rejected_by_stability",
+                0,
+            ),
+            "weight_stability_rejected_by_turnover_prefilter": weight_stability_summary.get(
+                "rejected_by_turnover_prefilter",
+                0,
+            ),
+            "weight_stability_turnover_failures_reduced": weight_stability_summary.get(
+                "turnover_failures_reduced",
+                False,
             ),
             "portfolio_turnover_attribution_status": turnover_attribution_summary.get(
                 "status",
@@ -2347,6 +2400,28 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
         "weight_tuning_failure_next_action": weight_tuning_failure_summary.get(
             "recommended_next_action",
             "",
+        ),
+        "weight_stability_status": weight_stability_summary.get("status", "MISSING"),
+        "weight_stability_summary": weight_stability_summary.get("summary_sentence", ""),
+        "weight_stability_candidate_status": weight_stability_summary.get(
+            "candidate_status",
+            "MISSING",
+        ),
+        "weight_stability_candidates_generated": weight_stability_summary.get(
+            "candidates_generated",
+            0,
+        ),
+        "weight_stability_rejected_by_stability": weight_stability_summary.get(
+            "rejected_by_stability",
+            0,
+        ),
+        "weight_stability_rejected_by_turnover_prefilter": weight_stability_summary.get(
+            "rejected_by_turnover_prefilter",
+            0,
+        ),
+        "weight_stability_turnover_failures_reduced": weight_stability_summary.get(
+            "turnover_failures_reduced",
+            False,
         ),
         "portfolio_turnover_attribution_status": turnover_attribution_summary.get(
             "status",
@@ -3133,6 +3208,78 @@ def _weight_tuning_failure_review_summary(as_of: date) -> dict[str, Any]:
     }
 
 
+def _weight_stability_review_summary(as_of: date) -> dict[str, Any]:
+    path = _latest_weight_stability_path(as_of)
+    if path is None:
+        return {
+            "status": "MISSING",
+            "candidate_status": "MISSING",
+            "candidates_generated": 0,
+            "rejected_by_stability": 0,
+            "rejected_by_turnover_prefilter": 0,
+            "turnover_failures_reduced": False,
+            "summary_sentence": (
+                "Weight search stability artifact is missing; Reader Brief does not run "
+                "stable weight tuning."
+            ),
+        }
+    payload = _read_optional_json(path)
+    if not payload:
+        return {
+            "status": "MISSING",
+            "candidate_status": "MISSING",
+            "candidates_generated": 0,
+            "rejected_by_stability": 0,
+            "rejected_by_turnover_prefilter": 0,
+            "turnover_failures_reduced": False,
+            "summary_sentence": (
+                "Weight search stability artifact is unreadable; production parameters "
+                "remain unchanged."
+            ),
+        }
+    metadata = _mapping(payload.get("metadata"))
+    search = _mapping(payload.get("search_summary"))
+    recommended = _mapping(payload.get("recommended_candidate"))
+    comparison = _mapping(payload.get("comparison_to_trading_059"))
+    status = _text(metadata.get("status"), "UNKNOWN")
+    candidate_status = _text(recommended.get("status"), "UNKNOWN")
+    if status in {"INSUFFICIENT_DATA", "FAILED"}:
+        sentence = (
+            "Stable weight tuning could not run because data readiness or signal snapshot "
+            "requirements were not met."
+        )
+    elif candidate_status in {"watch", "shadow_candidate_only"}:
+        sentence = (
+            "Stable weight tuning found a shadow-only candidate after adding L1 distance "
+            "and turnover-aware constraints. Production promotion remains disabled "
+            "because signal quality is LIMITED."
+        )
+    elif candidate_status == "no_candidate":
+        sentence = (
+            "Stable weight tuning reduced aggressive candidates but still did not find a "
+            "guardrail-passing weight candidate. This suggests current real signals may "
+            "not provide enough stable improvement over baseline."
+        )
+    else:
+        sentence = (
+            f"Stable weight tuning status is `{status}` with candidate "
+            f"`{candidate_status}`. Production parameters remain unchanged."
+        )
+    return {
+        "status": status,
+        "candidate_status": candidate_status,
+        "candidates_generated": search.get("candidates_generated", 0),
+        "rejected_by_stability": search.get("candidates_rejected_by_stability", 0),
+        "rejected_by_turnover_prefilter": search.get(
+            "candidates_rejected_by_turnover_prefilter",
+            0,
+        ),
+        "turnover_failures_reduced": comparison.get("turnover_failures_reduced", False),
+        "source_artifact": str(path),
+        "summary_sentence": sentence,
+    }
+
+
 def _portfolio_turnover_attribution_review_summary(as_of: date) -> dict[str, Any]:
     path = _latest_portfolio_turnover_attribution_path(as_of)
     if path is None:
@@ -3510,6 +3657,21 @@ def _latest_weight_tuning_failure_path(as_of: date) -> Path | None:
     root = PROJECT_ROOT / "artifacts" / "weight_tuning_failure"
     candidates: list[tuple[date, Path]] = []
     for path in root.glob("*/weight_tuning_failure_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _latest_weight_stability_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "weight_stability"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/weight_stability_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:

@@ -760,6 +760,16 @@ from ai_trading_system.trading_engine.parameters import (
     DEFAULT_SIGNAL_ABLATION_CONFIG_PATH,
     run_shadow_parameter_backtest,
 )
+from ai_trading_system.trading_engine.parameters.weight_stability import (
+    DEFAULT_WEIGHT_STABILITY_CONFIG_PATH,
+    latest_weight_stability_path,
+    load_weight_stability_payload,
+    render_weight_stability_explanation,
+    run_weight_stability,
+    validate_weight_stability_payload,
+    weight_stability_payload_date,
+    write_weight_stability_report_alias,
+)
 from ai_trading_system.trading_engine.parameters.weight_tuning import (
     DEFAULT_WEIGHT_TUNING_CONFIG_PATH,
     latest_weight_tuning_path,
@@ -8262,6 +8272,146 @@ def validate_weight_tuning_command(
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
 
 
+@parameters_app.command(
+    "tune-weights-stable",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def parameters_tune_weights_stable_command(
+    ctx: typer.Context,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用 latest valid backtest input manifest 对应日期。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="稳定调参日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="weight stability 配置路径。"),
+    ] = DEFAULT_WEIGHT_STABILITY_CONFIG_PATH,
+    portfolio_profile: Annotated[
+        str | None,
+        typer.Option("--portfolio-profile", help="portfolio candidate profile 名称。"),
+    ] = None,
+    signals: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--signals",
+            help="指定可调 signal，可重复；也兼容 `--signals a b c`。",
+        ),
+    ] = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="写入 outputs/dry_runs/weight_stability，不写正式 artifacts。"),
+    ] = False,
+) -> None:
+    """运行 TRADING-061 stable shadow signal weight tuning。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    requested_signals = tuple([*(signals or []), *[str(item) for item in ctx.args]])
+    try:
+        run = run_weight_stability(
+            as_of=run_date,
+            config_path=config_path,
+            portfolio_profile=portfolio_profile,
+            signals=requested_signals or None,
+            dry_run=dry_run,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    metadata = run.payload.get("metadata", {})
+    recommended = run.payload.get("recommended_candidate", {})
+    search = run.payload.get("search_summary", {})
+    status = metadata.get("status", "UNKNOWN") if isinstance(metadata, dict) else "UNKNOWN"
+    candidate_status = (
+        recommended.get("status", "UNKNOWN") if isinstance(recommended, dict) else "UNKNOWN"
+    )
+    style = "green" if candidate_status in {"watch", "shadow_candidate_only"} else "yellow"
+    console.print(f"[{style}]Stable weight tuning：{status}[/{style}]")
+    console.print(
+        f"as_of={run.as_of.isoformat()}；candidate_status={candidate_status}；"
+        f"candidates_backtested={search.get('candidates_backtested', 0)}；"
+        "rejected_by_stability="
+        f"{search.get('candidates_rejected_by_stability', 0)}"
+    )
+    console.print(f"JSON：{run.json_path}")
+    console.print(f"Markdown：{run.markdown_path}")
+    console.print(f"Candidates：{run.candidates_path}")
+    if run.recommended_weights_path is not None:
+        console.print(f"Recommended stable shadow weights：{run.recommended_weights_path}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@parameters_app.command("validate-weight-stability")
+def validate_weight_stability_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验最新正式 weight stability JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="校验日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 weight_stability_summary.json 路径。"),
+    ] = None,
+) -> None:
+    """校验 TRADING-061 stable weight tuning JSON 和只读安全字段。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    source_path = input_path or _resolve_weight_stability_path(latest=latest, as_of=as_of)
+    payload = load_weight_stability_payload(source_path)
+    issues = validate_weight_stability_payload(payload)
+    if issues:
+        console.print("[red]Weight stability validation：FAIL[/red]")
+        for issue in issues:
+            console.print(f"- {issue}")
+        raise typer.Exit(code=1)
+    metadata = payload.get("metadata", {}) if isinstance(payload, dict) else {}
+    safety = payload.get("safety", {}) if isinstance(payload, dict) else {}
+    search = payload.get("search_summary", {}) if isinstance(payload, dict) else {}
+    console.print("[green]Weight stability validation：PASS[/green]")
+    console.print(f"JSON：{source_path}")
+    console.print(
+        f"status={metadata.get('status', 'UNKNOWN')}；"
+        f"candidates_backtested={search.get('candidates_backtested', 0)}；"
+        "production_config_modified="
+        f"{str(safety.get('production_config_modified', 'UNKNOWN')).lower()}"
+    )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@parameters_app.command("explain-weight-stability")
+def explain_weight_stability_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="解释最新正式 weight stability JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="解释日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 weight_stability_summary.json 路径。"),
+    ] = None,
+) -> None:
+    """输出 stable weight tuning 摘要。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    source_path = input_path or _resolve_weight_stability_path(latest=latest, as_of=as_of)
+    payload = load_weight_stability_payload(source_path)
+    issues = validate_weight_stability_payload(payload)
+    if issues:
+        for issue in issues:
+            console.print(f"[red]- {issue}[/red]")
+        raise typer.Exit(code=1)
+    console.print(render_weight_stability_explanation(payload))
+
+
 @parameters_app.command("explain-weight-tuning")
 def explain_weight_tuning_command(
     latest: Annotated[
@@ -9126,6 +9276,59 @@ def weight_tuning_report_command(
         console.print(f"weight_candidate_status={recommended.get('status', 'UNKNOWN')}")
     if isinstance(search, dict):
         console.print(f"candidates_evaluated={search.get('candidates_evaluated', 0)}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{markdown_path}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@reports_app.command("weight-stability")
+def weight_stability_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新正式 weight stability summary。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="报告日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    source_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 weight_stability_summary.json 路径。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 alias 输出目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """从正式 artifact 生成 weight stability 报告 alias。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    json_source = source_path or _resolve_weight_stability_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_weight_stability_payload(json_source)
+    issues = validate_weight_stability_payload(payload)
+    if issues:
+        raise typer.BadParameter("weight stability JSON 校验失败：" + "; ".join(issues))
+    try:
+        report_date = weight_stability_payload_date(payload, json_source)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, markdown_path = write_weight_stability_report_alias(
+        payload,
+        reports_dir,
+        report_date,
+    )
+    recommended = payload.get("recommended_candidate", {}) if isinstance(payload, dict) else {}
+    search = payload.get("search_summary", {}) if isinstance(payload, dict) else {}
+    console.print("[green]Weight stability report：OK[/green]")
+    if isinstance(recommended, dict):
+        console.print(f"stable_candidate_status={recommended.get('status', 'UNKNOWN')}")
+    if isinstance(search, dict):
+        console.print(f"candidates_backtested={search.get('candidates_backtested', 0)}")
     console.print(f"JSON：{json_path}")
     console.print(f"Markdown：{markdown_path}")
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
@@ -16720,6 +16923,16 @@ def _resolve_weight_tuning_failure_path(*, latest: bool, as_of: str | None) -> P
             raise typer.BadParameter(f"未找到 weight tuning failure artifact：{root}")
         return latest_path
     return root / _parse_date(as_of).isoformat() / "weight_tuning_failure_summary.json"
+
+
+def _resolve_weight_stability_path(*, latest: bool, as_of: str | None) -> Path:
+    root = PROJECT_ROOT / "artifacts" / "weight_stability"
+    if latest or as_of is None:
+        latest_path = latest_weight_stability_path(root)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 weight stability artifact：{root}")
+        return latest_path
+    return root / _parse_date(as_of).isoformat() / "weight_stability_summary.json"
 
 
 def _print_portfolio_tracking_window_progress(

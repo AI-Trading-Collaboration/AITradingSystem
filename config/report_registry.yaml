@@ -530,6 +530,26 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: weight_stability
+    title: Weight Search Stability
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits reports weight-stability --latest
+    artifact_globs:
+      - artifacts/weight_stability/*/weight_stability_summary.json
+      - artifacts/weight_stability/*/weight_stability_summary.md
+      - artifacts/weight_stability/*/stable_weight_candidates.json
+      - artifacts/weight_stability/*/recommended_stable_shadow_weights.yaml
+      - outputs/reports/weight_stability_*.json
+      - outputs/reports/weight_stability_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Stable weight search should be refreshed after any turnover-attribution result that points to aggressive weight search before changing search distance, trend/sector caps, or turnover-aware objective policy.
+    owner_action: review_stability_constraints_before_any_new_weight_search_or_candidate_tracking_step
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: portfolio_turnover_attribution
     title: Portfolio Turnover Attribution
     group: research

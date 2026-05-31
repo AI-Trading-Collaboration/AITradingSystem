@@ -682,6 +682,9 @@ def _promotion_decision_payload(
     weight_tuning_failure_path = _latest_weight_tuning_failure_supporting_path(as_of)
     if weight_tuning_failure_path is not None:
         supporting["weight_tuning_failure"] = str(weight_tuning_failure_path)
+    weight_stability_path = _latest_weight_stability_supporting_path(as_of)
+    if weight_stability_path is not None:
+        supporting["weight_stability"] = str(weight_stability_path)
     turnover_attribution_path = _latest_portfolio_turnover_attribution_supporting_path(as_of)
     if turnover_attribution_path is not None:
         supporting["portfolio_turnover_attribution"] = str(turnover_attribution_path)
@@ -851,6 +854,30 @@ def _promotion_decision_payload(
                 f"{failure_root} as the main blocker; production parameters remain unchanged."
             )
             reason = str(payload.get("reason") or "")
+    stability_details = _weight_stability_details(weight_stability_path)
+    stability_status = str(stability_details.get("status") or "")
+    if stability_status:
+        payload["weight_stability_status"] = stability_status
+        payload["weight_stability_candidate_status"] = stability_details.get(
+            "candidate_status",
+            "",
+        )
+        if "weight stability" not in reason.lower():
+            if stability_details.get("candidate_status") in {
+                "watch",
+                "shadow_candidate_only",
+            }:
+                stability_reason = (
+                    "Weight stability found a shadow-only candidate, but promotion "
+                    "remains disabled pending manual review and signal quality improvement."
+                )
+            else:
+                stability_reason = (
+                    "Weight stability applies baseline-proximity and turnover prefilters; "
+                    "it is supporting evidence only and cannot enable production promotion."
+                )
+            payload["reason"] = reason.rstrip(".") + ". " + stability_reason
+            reason = str(payload.get("reason") or "")
     turnover_details = _portfolio_turnover_attribution_details(turnover_attribution_path)
     turnover_root = str(turnover_details.get("root_cause_category") or "")
     if turnover_root:
@@ -998,6 +1025,21 @@ def _latest_weight_tuning_failure_supporting_path(as_of: date) -> Path | None:
     root = PROJECT_ROOT / "artifacts" / "weight_tuning_failure"
     candidates: list[tuple[date, Path]] = []
     for path in root.glob("*/weight_tuning_failure_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _latest_weight_stability_supporting_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "weight_stability"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/weight_stability_summary.json"):
         try:
             candidate_date = date.fromisoformat(path.parent.name)
         except ValueError:
@@ -1158,6 +1200,27 @@ def _weight_tuning_failure_details(path: Path | None) -> dict[str, object]:
     return {
         "status": str(metadata.get("status") or ""),
         "root_cause_category": str(root_cause.get("category") or ""),
+    }
+
+
+def _weight_stability_details(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    metadata = payload.get("metadata") if isinstance(payload.get("metadata"), dict) else {}
+    recommended = (
+        payload.get("recommended_candidate")
+        if isinstance(payload.get("recommended_candidate"), dict)
+        else {}
+    )
+    return {
+        "status": str(metadata.get("status") or ""),
+        "candidate_status": str(recommended.get("status") or ""),
     }
 
 
