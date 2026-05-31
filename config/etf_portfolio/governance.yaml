@@ -1,0 +1,39 @@
+policy_metadata:
+  version: etf_parameter_governance_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: "TRADING-063J ETF 参数候选晋级基线；只允许进入人工复核，不自动替换 baseline。"
+  validation: "由 ETF parameter governance tests 覆盖缺 benchmark、样本不足、turnover、no-lookahead、P2/live 边界和 schema stability。"
+  review_condition: "P0 credibility gate 完成后结合 shadow 样本与 owner review 重新校准。"
+
+model_states:
+  production_baseline: "当前官方 baseline；production_effect 仍为 none，不代表实盘交易。"
+  candidate: "候选参数或模型版本；只能被评估，不得替换 baseline。"
+  shadow: "已进入 shadow observation 的候选；仍需人工复核。"
+  rejected: "未通过治理 gate 或人工复核的候选。"
+  archived: "停止观察或被 superseded 的历史候选。"
+
+promotion_rules:
+  allowed_candidate_states:
+    - candidate
+    - shadow
+  eligible_status: ELIGIBLE_FOR_MANUAL_REVIEW
+  blocked_status: BLOCKED
+  no_candidate_status: NO_CANDIDATE
+  min_sample_trading_days: 120
+  max_average_turnover: 0.30
+  allow_justified_drawdown_worsening: true
+  require_all_tests_passed: true
+  require_shadow_mode: true
+  require_benchmark_comparison: true
+  require_no_lookahead_pass: true
+  reject_risk_increase_only: true
+  manual_review_required: true
+  production_effect: none
+  p2_live_self_promotion_blocked: true
+  p2_self_promotion_sources:
+    - p2_ml_ranking
+    - p2_weight_optimizer
+    - p2_ensemble
+    - p2_live_interface
+    - live_interface

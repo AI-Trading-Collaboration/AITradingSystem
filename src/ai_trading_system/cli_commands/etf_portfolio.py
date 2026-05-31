@@ -31,6 +31,13 @@ from ai_trading_system.etf_portfolio.features import (
     load_feature_store,
     write_feature_store,
 )
+from ai_trading_system.etf_portfolio.governance import (
+    DEFAULT_ETF_PARAMETER_GOVERNANCE_CONFIG_PATH,
+    evaluate_parameter_candidate,
+    load_parameter_governance_policy,
+    read_parameter_candidate,
+    write_parameter_governance_summary,
+)
 from ai_trading_system.etf_portfolio.models import (
     DEFAULT_ETF_BACKTEST_CONFIG_PATH,
     DEFAULT_ETF_BACKTEST_DIR,
@@ -406,6 +413,44 @@ def governance_status_command(
     md_path = output_dir / f"{run_date.isoformat()}_governance_status.md"
     write_frame_and_report(status, csv_path, md_path, "ETF Weight Governance Status")
     typer.echo(f"ETF governance status：{md_path}")
+
+
+@governance_app.command("summary")
+def governance_summary_command(
+    candidate_path: Annotated[
+        Path | None,
+        typer.Option("--candidate", help="候选参数 JSON；缺省时输出 NO_CANDIDATE。"),
+    ] = None,
+    date_option: Annotated[str | None, typer.Option("--date", help="报告日期。")] = None,
+    policy_path: Annotated[
+        Path,
+        typer.Option(help="ETF 参数治理 policy。"),
+    ] = DEFAULT_ETF_PARAMETER_GOVERNANCE_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="输出目录。"),
+    ] = DEFAULT_ETF_REPORT_DIR / "governance",
+) -> None:
+    """生成 ETF parameter governance summary；只允许人工复核，不自动 promotion。"""
+    config = load_etf_config_bundle()
+    if candidate_path is not None and not candidate_path.exists():
+        raise typer.BadParameter(f"候选参数 JSON 不存在：{candidate_path}")
+    run_date = _parse_date(date_option) if date_option and date_option != "latest" else date.today()
+    policy = load_parameter_governance_policy(policy_path)
+    candidate = read_parameter_candidate(candidate_path)
+    payload = evaluate_parameter_candidate(
+        config=config,
+        policy=policy,
+        candidate=candidate,
+        candidate_path=candidate_path,
+        policy_config_path=policy_path,
+    )
+    json_path = output_dir / f"{run_date.isoformat()}_parameter_governance.json"
+    md_path = output_dir / f"{run_date.isoformat()}_parameter_governance.md"
+    write_parameter_governance_summary(payload, json_path=json_path, markdown_path=md_path)
+    typer.echo(f"ETF parameter governance：{md_path}")
+    typer.echo(f"promotion_status={payload['promotion_status']}")
+    typer.echo(f"production_effect={payload['production_effect']}")
 
 
 @experiments_app.command("register")

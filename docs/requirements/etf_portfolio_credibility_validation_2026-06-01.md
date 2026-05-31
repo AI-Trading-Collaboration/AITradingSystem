@@ -30,7 +30,7 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 |TRADING-063G|DONE|Simulation Ledger Forward-Evaluation Hardening|decision-time record 与 delayed `evaluation_only` future return 字段隔离|
 |TRADING-063H|DONE|Backtest Metrics & Summary Report Standardization|统一 metrics schema、monthly table、benchmark excess、edge-case null reason|
 |TRADING-063I|DONE|ETF Daily Brief Explainability Upgrade|安全 banner、regime、weights/deltas、driver explanations、constraints、benchmark context 和 future field 防护|
-|TRADING-063J|READY|Parameter Governance & Candidate Promotion Policy|model state、promotion gates、governance summary 和 unsafe candidate blocking tests|
+|TRADING-063J|DONE|Parameter Governance & Candidate Promotion Policy|model state、promotion gates、governance summary 和 unsafe candidate blocking tests|
 |TRADING-063K|READY|End-to-End Credibility Gate|聚合 063A~J、P2/live safety、JSON/Markdown 输出和 fail-closed tests|
 
 ## TRADING-063A 验收标准
@@ -103,6 +103,15 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 - Reader Brief navigation 继续可用；daily brief report registry 契约不退化。
 - 测试覆盖 safety banner、regime、target/previous/delta、constraints、driver explanations、benchmark context、simulation status、future evaluation field exclusion 和 Reader Brief navigation。
 
+## TRADING-063J 验收标准
+
+- 参数治理 policy 必须定义 `production_baseline`、`candidate`、`shadow`、`rejected`、`archived` model states，并声明当前 `production_effect=none`。
+- Candidate promotion gate 必须 fail closed 检查 tests passed、shadow mode、最小样本、benchmark comparison、turnover、drawdown justification、no-lookahead validation、manual review required 和 production effect 边界。
+- Governance summary 必须输出稳定 schema：`current_model_version`、`candidate_model_version`、`config_hash`、`sample_period`、`benchmark_comparison`、`turnover_comparison`、`drawdown_comparison`、`promotion_status`、`promotion_blockers` 和 `manual_review_required`。
+- 通过所有 gate 时只能输出 `ELIGIBLE_FOR_MANUAL_REVIEW`，不得写 production baseline、target weights 或 broker/trading action。
+- P2/live candidates 不得 self-promote；任何 production effect 请求都必须成为 blocker。
+- 测试覆盖缺 benchmark、样本不足、turnover 过高、no-lookahead 未通过、全部 gate 通过、P2/live self-promotion blocked 和 schema stability。
+
 ## 进展记录
 
 - 2026-06-01: 新增本需求文档并把 TRADING-063 登记为 `IN_PROGRESS`；开始 TRADING-063A runtime artifact hygiene。
@@ -123,3 +132,5 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 - 2026-06-01: TRADING-063H 完成。新增 `etf_portfolio/backtest_metrics.py`，backtest `summary.json` / `metrics.json` / `summary.md` 输出 `standardized_metrics`、`monthly_returns` 和 `metric_null_reasons`；`config/etf_portfolio/backtest.yaml` 显式配置 `primary_benchmark_id=B001`；Reader Brief 只读展示 ETF Backtest Summary 摘要；测试覆盖 schema、CAGR、max drawdown、Sharpe zero-vol、Sortino no-downside、Calmar zero-drawdown、insufficient volatility sample、monthly aggregation、benchmark excess 和 Reader Brief 可见性。真实 `aits etf backtest run --config config/etf_portfolio/backtest.yaml --fast` 与 `aits reports index --as-of 2026-05-31` smoke 通过；全量验证通过 `python -m pytest tests -q`（1664 passed）、ruff、compileall 和 diff check。
 - 2026-06-01: TRADING-063I 进入实现。当前 daily brief 已有 summary、signal dashboard、target weights、risk constraints 和 simulation summary，但缺少显式 safety banner、结构化正负 driver、benchmark context、actionability/P2-live 边界小节，以及对 decision section future-field 泄漏的更细测试。
 - 2026-06-01: TRADING-063I 完成。ETF daily brief 已新增 safety banner、AI regime/range、asset score reason codes、target/previous/delta、Weight Change Explanation、top positive/negative drivers、constraint diagnostics、benchmark context、simulation status、P2/live candidate-only note 和 actionability note；旧 target weights artifact 若缺结构化 constraint diagnostics 会显式标记 unavailable，不默认为 none；decision sections 继续调用 no-lookahead guard，测试用附加 `forward_return_20d` / `evaluation_only` 列验证不泄漏。真实 `aits etf report daily --date latest` smoke 通过；全量验证通过 `python -m pytest tests -q`（1664 passed）、`python -m ruff check config src tests scripts docs`、`python -m compileall -q src tests scripts` 和 `git diff --check`。
+- 2026-06-01: TRADING-063J 进入实现。当前 ETF P0/P1/P2 已有 observe-only 边界和 backtest artifacts，但缺少专门的参数治理 policy、候选 promotion gate、固定 governance summary schema，以及对缺 benchmark、样本不足、turnover 过高、no-lookahead 失败和 P2/live self-promotion 的 fail-closed 测试。
+- 2026-06-01: TRADING-063J 完成。新增 `config/etf_portfolio/governance.yaml`、`etf_portfolio/governance.py` 和 `aits etf governance summary`，输出稳定 `etf_parameter_governance` JSON/Markdown schema；promotion gate 覆盖 tests/shadow/sample/benchmark/turnover/drawdown/no-lookahead/manual-review/production-effect/P2-live self-promotion，全部通过时仅返回 `ELIGIBLE_FOR_MANUAL_REVIEW`。报告已登记到 report registry、artifact catalog 和 system flow；目标测试覆盖 required blockers、pass case 和 schema stability；`aits etf governance summary --date 2026-06-01` smoke 输出 `NO_CANDIDATE` 且 `production_effect=none`。

@@ -157,6 +157,8 @@ regime 日期范围。主要产物路径：
 - `reports/etf_portfolio/backtests/<run_id>/metrics.json`
 - `reports/etf_portfolio/backtests/<run_id>/stability_diagnostics.json`
 - `reports/etf_portfolio/backtests/<run_id>/stability_diagnostics.md`
+- `reports/etf_portfolio/governance/YYYY-MM-DD_parameter_governance.json`
+- `reports/etf_portfolio/governance/YYYY-MM-DD_parameter_governance.md`
 
 `target_weights.csv` 输出 `constraints_applied` 和结构化
 `constraint_diagnostics` JSON。正式 allocation 会执行 asset cap/floor、risk group /
@@ -219,6 +221,13 @@ observe-only 入口包括 `aits etf p2 edgar-text`、`derive-edgar-events`、
 `derive-options-risk`、`normalize-options-risk`、`options-risk`、`normalize-holdings`、
 `holdings-lookthrough`、`advanced-risk`、`walk-forward`、`ml-ranking`、
 `weight-optimizer`、`ensemble` 和 `live-preflight`。
+
+`aits etf governance summary --candidate <candidate.json>` 使用
+`config/etf_portfolio/governance.yaml` 的参数治理 policy 输出候选晋级摘要，固定
+`production_effect=none` 且 `manual_review_required=true`。候选必须先通过测试、shadow
+mode、最小样本、benchmark comparison、turnover、drawdown/no-lookahead 和 P2/live
+self-promotion gate；通过时仅进入 `ELIGIBLE_FOR_MANUAL_REVIEW`，不会自动替换
+`production_baseline`。
 
 ETF brief 与 ETF backtest summary 已登记到 report registry / Reader Brief navigation，
 Reader Brief 还会只读摘录最新 ETF backtest standardized metrics 摘要，便于人工下钻，但该

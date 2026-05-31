@@ -209,6 +209,22 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: etf_parameter_governance
+    title: ETF Parameter Governance
+    group: governance
+    cadence: ad_hoc
+    audience: operator
+    owner: system
+    command: aits etf governance summary --candidate candidate.json
+    artifact_globs:
+      - reports/etf_portfolio/governance/*_parameter_governance.json
+      - reports/etf_portfolio/governance/*_parameter_governance.md
+    freshness_sla_days: 30
+    freshness_rationale: ETF candidate promotion evidence is generated ad hoc and should be reviewed with the candidate package.
+    owner_action: run_aits_etf_governance_summary_for_candidate_before_manual_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: etf_data_quality
     title: ETF Data Quality Report
     group: data_quality
