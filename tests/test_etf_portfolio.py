@@ -798,6 +798,65 @@ def test_daily_report_contains_required_sections() -> None:
         config_hash=config.config_hash,
         data_quality_report=report,
     )
+    allocation_frame = pd.DataFrame([record.to_record() for record in allocation])
+    previous_allocation = allocation_frame[["symbol", "target_weight"]].copy()
+    shifted_symbol = next(
+        symbol
+        for symbol in allocation_frame["symbol"]
+        if symbol != "CASH"
+        and float(
+            allocation_frame.loc[
+                allocation_frame["symbol"] == symbol,
+                "target_weight",
+            ].iloc[0]
+        )
+        > 0.0
+    )
+    shift = min(
+        0.05,
+        float(
+            allocation_frame.loc[
+                allocation_frame["symbol"] == shifted_symbol,
+                "target_weight",
+            ].iloc[0]
+        ),
+    )
+    previous_allocation.loc[
+        previous_allocation["symbol"] == shifted_symbol,
+        "target_weight",
+    ] -= shift
+    previous_allocation.loc[previous_allocation["symbol"] == "CASH", "target_weight"] += shift
+    previous_weights = dict(
+        zip(
+            previous_allocation["symbol"].astype(str),
+            previous_allocation["target_weight"].astype(float),
+            strict=True,
+        )
+    )
+    allocation_frame["previous_weight"] = allocation_frame["symbol"].map(previous_weights)
+    allocation_frame["trade_delta"] = (
+        allocation_frame["target_weight"].astype(float)
+        - allocation_frame["previous_weight"].astype(float)
+    )
+    allocation_frame["constraints_applied"] = json.dumps(
+        ["MAX_DAILY_TURNOVER"],
+        ensure_ascii=False,
+    )
+    allocation_frame["constraint_diagnostics"] = json.dumps(
+        [
+            {
+                "constraint_id": "max_daily_turnover",
+                "asset_or_sleeve": "portfolio",
+                "before_weight": 0.42,
+                "after_weight": 0.30,
+                "reason": "Test daily turnover cap applied.",
+                "severity": "info",
+            }
+        ],
+        ensure_ascii=False,
+    )
+    allocation_frame["forward_return_20d"] = 0.10
+    allocation_frame["evaluation_only"] = True
 
     markdown = render_daily_brief(
         run_date=run_date,
@@ -805,13 +864,37 @@ def test_daily_report_contains_required_sections() -> None:
         quality_report=report,
         signals=signals,
         regime=pd.Series(regime.to_record()),
-        allocation=pd.DataFrame([record.to_record() for record in allocation]),
+        allocation=allocation_frame,
+        previous_allocation=previous_allocation,
     )
 
+    assert "## Safety Banner" in markdown
+    assert "observe_only = true" in markdown
+    assert "production_effect = none" in markdown
+    assert "manual_review_only = true" in markdown
+    assert "no broker action" in markdown
     assert "## 1. Executive Summary" in markdown
+    assert "Current regime" in markdown
+    assert "AI Regime Start: 2022-12-01" in markdown
     assert "## 3. ETF Signal Dashboard" in markdown
     assert "## 4. Target Weights" in markdown
+    assert "Previous Target" in markdown
+    assert "Delta" in markdown
+    assert "## Weight Change Explanation" in markdown
+    assert "Top Positive Drivers" in markdown
+    assert "Top Negative Drivers" in markdown
+    assert "Constraints applied: MAX_DAILY_TURNOVER" in markdown
+    assert "## Benchmark Context" in markdown
+    assert "Primary Benchmark: B001" in markdown
+    assert "Simulation status" in markdown
+    assert "## P2/Live Candidate-Only Note" in markdown
+    assert "candidate_only = true" in markdown
+    assert "broker_routing_allowed: false" in markdown
+    assert "## Actionability Note" in markdown
+    assert "max_daily_turnover" in markdown
     assert "Data Quality: PASS" in markdown
+    assert "forward_return_20d" not in markdown
+    assert "evaluation_only" not in markdown
 
 
 def test_p1_relative_strength_includes_confirmation_and_satellite_pairs() -> None:

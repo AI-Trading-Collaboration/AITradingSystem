@@ -29,7 +29,7 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 |TRADING-063F|DONE|Allocation Stability Diagnostics|turnover、weight delta、regime transition、constraint hit rate、exposure distribution 等 JSON/Markdown/CLI/report 输出|
 |TRADING-063G|DONE|Simulation Ledger Forward-Evaluation Hardening|decision-time record 与 delayed `evaluation_only` future return 字段隔离|
 |TRADING-063H|DONE|Backtest Metrics & Summary Report Standardization|统一 metrics schema、monthly table、benchmark excess、edge-case null reason|
-|TRADING-063I|READY|ETF Daily Brief Explainability Upgrade|安全 banner、regime、weights/deltas、driver explanations、constraints、benchmark context 和 future field 防护|
+|TRADING-063I|DONE|ETF Daily Brief Explainability Upgrade|安全 banner、regime、weights/deltas、driver explanations、constraints、benchmark context 和 future field 防护|
 |TRADING-063J|READY|Parameter Governance & Candidate Promotion Policy|model state、promotion gates、governance summary 和 unsafe candidate blocking tests|
 |TRADING-063K|READY|End-to-End Credibility Gate|聚合 063A~J、P2/live safety、JSON/Markdown 输出和 fail-closed tests|
 
@@ -91,6 +91,18 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 - ETF backtest report / Reader Brief 可见层展示标准化摘要，并保留 report registry / report index 下钻入口。
 - 测试覆盖 metric schema stability、CAGR、max drawdown、Sharpe zero-vol guard、Sortino no-downside guard、Calmar zero-drawdown guard、monthly aggregation、benchmark excess 和 Reader Brief/report visibility。
 
+## TRADING-063I 验收标准
+
+- ETF daily brief 必须包含明显安全 banner：`observe_only=true`、`production_effect=none`、`manual_review_only=true`、no broker action。
+- Brief 必须展示当前 market regime、`ai_after_chatgpt` regime window、requested date、data quality、model version 和 config hash。
+- Brief 必须包含 asset-level scores、target weights、previous target weights、weight deltas，并解释每个主要变动或未变动的原因。
+- Driver explanations 必须结构化展示 top positive drivers 与 top negative drivers，至少覆盖 composite score、trend / momentum / relative strength / risk score、regime、constraint impact 和 rebalance threshold 语义。
+- Risk constraints 必须展示配置 cap/min、已触发约束和结构化 constraint diagnostics；无触发时也要明确为 none。
+- Benchmark context、simulation status、P2/live candidate-only note 和 actionability note 必须可见；报告不得被误读为交易指令或生产权重变更。
+- Future evaluation fields（例如 `forward_return_*`、`relative_return_vs_*`、`evaluation_only`、`signal_hit_*`）不得泄漏到 decision sections；只允许在 Simulation Performance 摘要中作为已隔离 evaluation 结果出现。
+- Reader Brief navigation 继续可用；daily brief report registry 契约不退化。
+- 测试覆盖 safety banner、regime、target/previous/delta、constraints、driver explanations、benchmark context、simulation status、future evaluation field exclusion 和 Reader Brief navigation。
+
 ## 进展记录
 
 - 2026-06-01: 新增本需求文档并把 TRADING-063 登记为 `IN_PROGRESS`；开始 TRADING-063A runtime artifact hygiene。
@@ -109,3 +121,5 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 - 2026-06-01: TRADING-063G 完成。Simulation ledger 已区分 `record_type=decision` 与 `record_type=evaluation`；decision rows 保留 config/snapshot hash、asset scores、target/previous/delta JSON、observe-only 和 production-effect 边界且不承载 future values；evaluation rows 按 `evaluation_as_of_date` deterministic upsert 并固定 `evaluation_only=true`；simulation report / daily brief summary 区分 decision/evaluation 样本。测试覆盖 decision creation 无 future value、forward updater delayed fill、evaluation marker、duplicate handling、config hash change 和 report separation；全量验证通过 `python -m pytest tests -q`（1657 passed）。
 - 2026-06-01: TRADING-063H 进入实现。当前缺口为 ETF backtest 指标分散在 strategy metrics / extended metrics / benchmark comparisons 中，缺少稳定的跨策略比较 schema、月度收益表、null reason 语义和 Reader Brief 摘要可见性；本轮统一输出并补边界测试。
 - 2026-06-01: TRADING-063H 完成。新增 `etf_portfolio/backtest_metrics.py`，backtest `summary.json` / `metrics.json` / `summary.md` 输出 `standardized_metrics`、`monthly_returns` 和 `metric_null_reasons`；`config/etf_portfolio/backtest.yaml` 显式配置 `primary_benchmark_id=B001`；Reader Brief 只读展示 ETF Backtest Summary 摘要；测试覆盖 schema、CAGR、max drawdown、Sharpe zero-vol、Sortino no-downside、Calmar zero-drawdown、insufficient volatility sample、monthly aggregation、benchmark excess 和 Reader Brief 可见性。真实 `aits etf backtest run --config config/etf_portfolio/backtest.yaml --fast` 与 `aits reports index --as-of 2026-05-31` smoke 通过；全量验证通过 `python -m pytest tests -q`（1664 passed）、ruff、compileall 和 diff check。
+- 2026-06-01: TRADING-063I 进入实现。当前 daily brief 已有 summary、signal dashboard、target weights、risk constraints 和 simulation summary，但缺少显式 safety banner、结构化正负 driver、benchmark context、actionability/P2-live 边界小节，以及对 decision section future-field 泄漏的更细测试。
+- 2026-06-01: TRADING-063I 完成。ETF daily brief 已新增 safety banner、AI regime/range、asset score reason codes、target/previous/delta、Weight Change Explanation、top positive/negative drivers、constraint diagnostics、benchmark context、simulation status、P2/live candidate-only note 和 actionability note；旧 target weights artifact 若缺结构化 constraint diagnostics 会显式标记 unavailable，不默认为 none；decision sections 继续调用 no-lookahead guard，测试用附加 `forward_return_20d` / `evaluation_only` 列验证不泄漏。真实 `aits etf report daily --date latest` smoke 通过；全量验证通过 `python -m pytest tests -q`（1664 passed）、`python -m ruff check config src tests scripts docs`、`python -m compileall -q src tests scripts` 和 `git diff --check`。
