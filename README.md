@@ -186,10 +186,15 @@ weight delta、regime transition、constraint hit rate、cash/equity/semiconduct
 `aits etf simulation evaluate` 会在 forward window 足够时补充 `forward_return_20d`、
 `relative_return_vs_spy_20d`、`relative_return_vs_qqq_20d`、
 `weight_contribution_20d` 和组合级 portfolio-vs-benchmark 字段；窗口不足或 benchmark
-缺失时保持 null。所有 delayed evaluation 行会标记 `evaluation_only=true`。
+缺失时保持 null。Simulation ledger 使用 `record_type=decision` / `record_type=evaluation`
+分层：decision rows 固定 `evaluation_only=false`、`observe_only=true`、`production_effect=none`
+并保留 decision/config/snapshot hash、asset score、target weight、previous weight 和 delta JSON；
+evaluation rows 才承载 future/forward return、`evaluation_as_of_date` 和 portfolio-vs-benchmark
+outcome，且固定 `evaluation_only=true`。
 `aits etf simulation report` 会按 `model_version` 汇总 20d hit rate 和 portfolio vs
 SPY/QQQ 表现；`aits etf report daily` 的 Simulation Performance 小节会读取同一 ledger
-摘要。该信息用于人工复核，不构成自动 promotion 或交易指令。
+摘要，并区分 decision records 与 evaluation records。该信息用于人工复核，不构成自动
+promotion 或交易指令。
 
 P1 observe-only 入口包括 `aits etf relative-strength report`、`aits etf confirmation
 report`、`aits etf satellite evaluate`、`aits etf attribution report`、`aits etf events

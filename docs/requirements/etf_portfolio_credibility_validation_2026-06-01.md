@@ -27,7 +27,7 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 |TRADING-063D|DONE|Toy Portfolio Accounting Tests|手工可验 deterministic toy prices、NAV/weights/cost/next-bar/drawdown/contribution 测试|
 |TRADING-063E|DONE|Risk Constraint Validation|asset/sleeve/equity/cash/rebalance/drawdown/volatility constraint tests 与 diagnostics|
 |TRADING-063F|DONE|Allocation Stability Diagnostics|turnover、weight delta、regime transition、constraint hit rate、exposure distribution 等 JSON/Markdown/CLI/report 输出|
-|TRADING-063G|READY|Simulation Ledger Forward-Evaluation Hardening|decision-time record 与 delayed `evaluation_only` future return 字段隔离|
+|TRADING-063G|DONE|Simulation Ledger Forward-Evaluation Hardening|decision-time record 与 delayed `evaluation_only` future return 字段隔离|
 |TRADING-063H|READY|Backtest Metrics & Summary Report Standardization|统一 metrics schema、monthly table、benchmark excess、edge-case null reason|
 |TRADING-063I|READY|ETF Daily Brief Explainability Upgrade|安全 banner、regime、weights/deltas、driver explanations、constraints、benchmark context 和 future field 防护|
 |TRADING-063J|READY|Parameter Governance & Candidate Promotion Policy|model state、promotion gates、governance summary 和 unsafe candidate blocking tests|
@@ -74,6 +74,14 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 - Stability status 使用 ETF risk config 中的 `max_daily_turnover` 和 `max_rebalance_trade_weight` 作为 policy reference；首日从全现金建仓与后续 rebalance policy check 分开披露。
 - Tests 覆盖 turnover、weight delta、regime transition、constraint hit rate、cash distribution、exposure time 和 schema stability。
 
+## TRADING-063G 验收标准
+
+- Simulation ledger 区分 `record_type=decision` 与 `record_type=evaluation`；decision rows 固定 `evaluation_only=false` 且不承载 forward return / benchmark outcome。
+- Forward evaluation updater 只基于 decision rows 生成或更新 delayed evaluation rows，包含 `evaluation_as_of_date`、future return/drawdown、relative return、weight contribution 和 portfolio-vs-benchmark 字段，且 `evaluation_only=true`。
+- Ledger decision rows 包含 decision date、model/config hash、feature/signal snapshot hash、asset score/target/previous/delta JSON、constraints、reason、`observe_only=true` 和 `production_effect=none`。
+- Duplicate date/model/symbol handling deterministic；重复 record 不复制 decision row，同一 as-of evaluation 可重复生成但只保留一组 evaluation rows。
+- Simulation report / daily brief summary 明确区分 decision-time 样本数和 evaluation 样本数。
+
 ## 进展记录
 
 - 2026-06-01: 新增本需求文档并把 TRADING-063 登记为 `IN_PROGRESS`；开始 TRADING-063A runtime artifact hygiene。
@@ -88,3 +96,5 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 - 2026-06-01: TRADING-063E 完成。Allocation 已执行 `max_rebalance_trade_weight` / `max_daily_turnover`，`ETFAllocationRecord` 与 `target_weights.csv` 输出结构化 `constraint_diagnostics`；新增 `tests/test_etf_risk_constraints.py` 覆盖 asset cap、semiconductor sleeve cap、Risk-Off equity/cash、binding cash minimum、single-asset rebalance cap、daily turnover cap、weight sum normalization 和 signal 层 drawdown/volatility risk penalties。真实 `aits etf backtest run --config config/etf_portfolio/backtest.yaml --fast` smoke 通过；全量验证通过 `python -m pytest tests -q`（1652 passed）。
 - 2026-06-01: TRADING-063F 进入实现。当前缺口为 backtest 只有 strategy turnover / weights / trades 原始表，缺少可直接复核 allocation 是否过度跳动的 stability JSON/Markdown/CLI 摘要；本轮新增 diagnostics 模块并接入 backtest summary。
 - 2026-06-01: TRADING-063F 完成。新增 `etf_portfolio/stability.py`，backtest summary / metrics / Markdown 集成 `allocation_stability_diagnostics`，`write_backtest_run` 写出 `stability_diagnostics.json/md`，新增 `aits etf backtest diagnostics --latest` 从既有 run 重新生成 stability 摘要；测试覆盖 turnover、weight delta、regime transition、constraint hit rate、cash distribution、exposure time、holding-period schema 和 CLI artifact 写出。真实 `aits etf backtest run --config config/etf_portfolio/backtest.yaml --fast` 与 `aits etf backtest diagnostics --latest` smoke 通过；全量验证通过 `python -m pytest tests -q`（1656 passed）。
+- 2026-06-01: TRADING-063G 进入实现。当前缺口为 `evaluate_simulation_ledger` 会把原 decision rows 直接改为 `evaluation_only=true`，不能保留纯 decision-time record；本轮改为 decision/evaluation record 分层并补 schema/report 测试。
+- 2026-06-01: TRADING-063G 完成。Simulation ledger 已区分 `record_type=decision` 与 `record_type=evaluation`；decision rows 保留 config/snapshot hash、asset scores、target/previous/delta JSON、observe-only 和 production-effect 边界且不承载 future values；evaluation rows 按 `evaluation_as_of_date` deterministic upsert 并固定 `evaluation_only=true`；simulation report / daily brief summary 区分 decision/evaluation 样本。测试覆盖 decision creation 无 future value、forward updater delayed fill、evaluation marker、duplicate handling、config hash change 和 report separation；全量验证通过 `python -m pytest tests -q`（1657 passed）。

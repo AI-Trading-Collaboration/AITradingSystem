@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 from datetime import date
+from hashlib import sha256
 from pathlib import Path
 
 import pandas as pd
@@ -14,6 +16,25 @@ from ai_trading_system.etf_portfolio.no_lookahead import (
 )
 
 FORWARD_WINDOWS = (1, 5, 20, 60)
+SIMULATION_LEDGER_SCHEMA_VERSION = 2
+DECISION_RECORD_TYPE = "decision"
+EVALUATION_RECORD_TYPE = "evaluation"
+FORWARD_RETURN_COLUMNS = tuple(f"forward_return_{window}d" for window in FORWARD_WINDOWS)
+FUTURE_RETURN_COLUMNS = tuple(f"future_{window}d_return" for window in FORWARD_WINDOWS)
+EVALUATION_COLUMNS = (
+    *FORWARD_RETURN_COLUMNS,
+    *FUTURE_RETURN_COLUMNS,
+    "max_drawdown_next_20d",
+    "max_drawdown_next_60d",
+    "relative_return_vs_spy_20d",
+    "relative_return_vs_qqq_20d",
+    "weight_contribution_20d",
+    "portfolio_return_20d",
+    "portfolio_relative_return_vs_spy_20d",
+    "portfolio_relative_return_vs_qqq_20d",
+    "signal_hit_20d",
+    "evaluation_as_of_date",
+)
 
 
 def record_simulation_snapshot(
@@ -23,24 +44,25 @@ def record_simulation_snapshot(
     report_path: Path | None = None,
 ) -> Path:
     new_rows = allocation_to_frame(allocation_records)
-    new_rows["evaluation_only"] = False
+    new_rows = _enrich_decision_rows(new_rows, report_path=report_path)
     if report_path is not None:
         new_rows["report_path"] = str(report_path)
     if ledger_path.exists():
-        existing = pd.read_csv(ledger_path)
-        if "evaluation_only" not in existing.columns:
-            existing["evaluation_only"] = _evaluation_value_mask(existing)
+        existing = _normalize_ledger_schema(pd.read_csv(ledger_path))
         key_cols = ["date", "model_version", "symbol"]
         existing_keys = {
             tuple(row[column] for column in key_cols) for _, row in new_rows.iterrows()
         }
         existing = existing.loc[
-            ~existing[key_cols].apply(lambda row: tuple(row), axis=1).isin(existing_keys)
+            ~(
+                (existing["record_type"] == DECISION_RECORD_TYPE)
+                & existing[key_cols].apply(lambda row: tuple(row), axis=1).isin(existing_keys)
+            )
         ]
         output = pd.concat([existing, new_rows], ignore_index=True)
     else:
         output = new_rows
-    output = output.sort_values(["date", "model_version", "symbol"]).reset_index(drop=True)
+    output = _sort_ledger(output)
     raise_for_no_lookahead_violations(
         validate_no_lookahead_records(simulation_records=output)
     )
@@ -62,12 +84,18 @@ def evaluate_simulation_ledger(
         ledger.to_csv(ledger_path, index=False)
         return ledger_path
     close_pivot = _price_pivot(prices)
-    evaluated = ledger.copy()
+    ledger = _normalize_ledger_schema(ledger)
+    decisions = _decision_rows(ledger)
+    if decisions.empty:
+        ledger.to_csv(ledger_path, index=False)
+        return ledger_path
+    evaluated = decisions.copy()
     for window in FORWARD_WINDOWS:
         evaluated[f"forward_return_{window}d"] = evaluated.apply(
             lambda row, period=window: _forward_return(close_pivot, row, as_of, period),
             axis=1,
         )
+        evaluated[f"future_{window}d_return"] = evaluated[f"forward_return_{window}d"]
     for window in (20, 60):
         evaluated[f"max_drawdown_next_{window}d"] = evaluated.apply(
             lambda row, period=window: _forward_drawdown(close_pivot, row, as_of, period),
@@ -84,44 +112,73 @@ def evaluate_simulation_ledger(
     evaluated["weight_contribution_20d"] = evaluated.apply(_weight_contribution_20d, axis=1)
     evaluated = _add_portfolio_benchmark_columns(evaluated)
     evaluated["signal_hit_20d"] = evaluated.apply(_signal_hit_20d, axis=1)
+    evaluated["record_type"] = EVALUATION_RECORD_TYPE
     evaluated["evaluation_only"] = True
+    evaluated["evaluation_as_of_date"] = as_of.isoformat()
+    evaluated["schema_version"] = SIMULATION_LEDGER_SCHEMA_VERSION
+    evaluated["decision_record_id"] = evaluated.apply(_decision_record_id_from_row, axis=1)
+    key_cols = ["date", "model_version", "symbol", "evaluation_as_of_date"]
+    evaluation_keys = {
+        tuple(row[column] for column in key_cols) for _, row in evaluated.iterrows()
+    }
+    retained = ledger.loc[
+        ~(
+            (ledger["record_type"] == EVALUATION_RECORD_TYPE)
+            & ledger[key_cols].apply(lambda row: tuple(row), axis=1).isin(evaluation_keys)
+        )
+    ]
+    output = _sort_ledger(pd.concat([retained, evaluated], ignore_index=True))
     raise_for_no_lookahead_violations(
-        validate_no_lookahead_records(simulation_records=evaluated)
+        validate_no_lookahead_records(simulation_records=output)
     )
-    evaluated.to_csv(ledger_path, index=False)
+    output.to_csv(ledger_path, index=False)
     return ledger_path
 
 
 def render_simulation_report(ledger_path: Path, window: str = "60d") -> str:
     if not ledger_path.exists():
         raise FileNotFoundError(f"ETF simulation ledger does not exist: {ledger_path}")
-    ledger = pd.read_csv(ledger_path)
+    ledger = _normalize_ledger_schema(pd.read_csv(ledger_path))
+    decision_rows = _decision_rows(ledger)
+    evaluation_rows = _evaluation_rows(ledger)
     lines = [
         f"# ETF Simulation Report - {window}",
         "",
         f"- Ledger：`{ledger_path}`",
         f"- Records：{len(ledger)}",
+        f"- Decision Records：{len(decision_rows)}",
+        f"- Evaluation Records：{len(evaluation_rows)}",
         "",
         "## Model Versions",
         "",
     ]
-    if ledger.empty:
+    if decision_rows.empty:
         lines.append("暂无模拟舱记录。")
     else:
-        for version, group in ledger.groupby("model_version", sort=True):
-            hit_rate = _hit_rate(group)
+        for version, group in decision_rows.groupby("model_version", sort=True):
+            evaluation_group = evaluation_rows.loc[evaluation_rows["model_version"] == version]
+            hit_rate = _hit_rate(evaluation_group)
             lines.append(
-                f"- {version}：records={len(group)}；"
+                f"- {version}：decision_records={len(group)}；"
+                f"evaluation_records={len(evaluation_group)}；"
                 f"20d hit rate={hit_rate if hit_rate is not None else 'n/a'}"
             )
     lines.extend(["", "## Portfolio vs Benchmarks", ""])
-    if ledger.empty:
+    if evaluation_rows.empty:
         lines.append("暂无 portfolio-vs-benchmark 样本。")
     else:
-        for version, group in ledger.groupby("model_version", sort=True):
+        for version, group in evaluation_rows.groupby("model_version", sort=True):
             summary = _portfolio_vs_benchmark_summary(group)
             lines.append(f"- {version}：{summary}")
-    lines.extend(["", "## Notes", "", "- forward return 不足窗口时保持 null，不填 0。"])
+    lines.extend(
+        [
+            "",
+            "## Notes",
+            "",
+            "- decision rows 只记录决策时可见信息，evaluation rows 才承载 forward return。",
+            "- forward return 不足窗口时保持 null，不填 0。",
+        ]
+    )
     return "\n".join(lines) + "\n"
 
 
@@ -132,7 +189,7 @@ def summarize_simulation_for_brief(
 ) -> str:
     if not ledger_path.exists():
         return f"模拟舱暂无记录：未找到 ledger `{ledger_path}`。"
-    ledger = pd.read_csv(ledger_path)
+    ledger = _normalize_ledger_schema(pd.read_csv(ledger_path))
     if ledger.empty:
         return f"模拟舱暂无记录：ledger `{ledger_path}` 为空。"
     selected = ledger.copy()
@@ -141,21 +198,27 @@ def summarize_simulation_for_brief(
         selected = selected.loc[parsed_dates <= pd.Timestamp(as_of)].copy()
     if selected.empty:
         return f"模拟舱暂无截至 {as_of.isoformat() if as_of else 'n/a'} 的记录。"
+    decision_rows = _decision_rows(selected)
+    evaluation_rows = _evaluation_rows(selected)
 
     lines = [
         f"- Ledger: `{ledger_path}`",
         f"- Records: {len(selected)}",
+        f"- Decision records: {len(decision_rows)}",
+        f"- Evaluation records: {len(evaluation_rows)}",
     ]
-    for version, group in selected.groupby("model_version", sort=True):
+    for version, group in decision_rows.groupby("model_version", sort=True):
         latest_date = pd.to_datetime(group["date"], errors="coerce").max()
         latest_label = (
             latest_date.date().isoformat() if pd.notna(latest_date) else "n/a"
         )
-        hit_rate = _hit_rate(group)
+        evaluation_group = evaluation_rows.loc[evaluation_rows["model_version"] == version]
+        hit_rate = _hit_rate(evaluation_group)
         lines.append(
-            f"- {version}：records={len(group)}；latest_snapshot={latest_label}；"
+            f"- {version}：decision_records={len(group)}；"
+            f"evaluation_records={len(evaluation_group)}；latest_snapshot={latest_label}；"
             f"20d hit rate={hit_rate if hit_rate is not None else 'n/a'}；"
-            f"{_portfolio_vs_benchmark_summary(group)}"
+            f"{_portfolio_vs_benchmark_summary(evaluation_group)}"
         )
     return "\n".join(lines)
 
@@ -171,6 +234,89 @@ def _price_pivot(prices: pd.DataFrame) -> pd.DataFrame:
     frame["_date"] = pd.to_datetime(frame["date"], errors="coerce")
     frame["_price"] = pd.to_numeric(frame["adj_close"], errors="coerce")
     return frame.pivot(index="_date", columns="symbol", values="_price").sort_index()
+
+
+def _enrich_decision_rows(frame: pd.DataFrame, *, report_path: Path | None) -> pd.DataFrame:
+    output = frame.copy()
+    output["schema_version"] = SIMULATION_LEDGER_SCHEMA_VERSION
+    output["record_type"] = DECISION_RECORD_TYPE
+    output["decision_date"] = output["date"]
+    output["evaluation_only"] = False
+    output["evaluation_as_of_date"] = None
+    output["observe_only"] = True
+    output["production_effect"] = "none"
+    if report_path is not None:
+        output["report_path"] = str(report_path)
+    for column in EVALUATION_COLUMNS:
+        if column not in output:
+            output[column] = None
+    for _, group in output.groupby(["date", "model_version"], sort=False):
+        index = group.index
+        output.loc[index, "asset_scores"] = _json_map(group, "composite_score")
+        output.loc[index, "target_weights"] = _json_map(group, "target_weight")
+        output.loc[index, "previous_target_weights"] = _json_map(group, "previous_weight")
+        output.loc[index, "weight_deltas"] = _json_map(group, "trade_delta")
+        output.loc[index, "signal_snapshot_hash"] = _snapshot_hash(
+            group,
+            ["date", "symbol", "composite_score", "reason_codes", "model_version"],
+        )
+        output.loc[index, "feature_snapshot_hash"] = _snapshot_hash(
+            group,
+            ["date", "symbol", "model_version", "config_hash", "data_quality_status"],
+        )
+    output["decision_record_id"] = output.apply(_decision_record_id_from_row, axis=1)
+    return output
+
+
+def _normalize_ledger_schema(frame: pd.DataFrame) -> pd.DataFrame:
+    output = frame.copy()
+    if "evaluation_only" not in output.columns:
+        output["evaluation_only"] = _evaluation_value_mask(output)
+    if "record_type" not in output.columns:
+        output["record_type"] = [
+            EVALUATION_RECORD_TYPE if _truthy(value) else DECISION_RECORD_TYPE
+            for value in output["evaluation_only"]
+        ]
+    if "schema_version" not in output.columns:
+        output["schema_version"] = SIMULATION_LEDGER_SCHEMA_VERSION
+    if "decision_date" not in output.columns and "date" in output.columns:
+        output["decision_date"] = output["date"]
+    if "evaluation_as_of_date" not in output.columns:
+        output["evaluation_as_of_date"] = None
+    if "observe_only" not in output.columns:
+        output["observe_only"] = True
+    if "production_effect" not in output.columns:
+        output["production_effect"] = "none"
+    for column in EVALUATION_COLUMNS:
+        if column not in output.columns:
+            output[column] = None
+    if "decision_record_id" not in output.columns and {"date", "model_version", "symbol"}.issubset(
+        output.columns
+    ):
+        output["decision_record_id"] = output.apply(_decision_record_id_from_row, axis=1)
+    return output
+
+
+def _sort_ledger(frame: pd.DataFrame) -> pd.DataFrame:
+    output = _normalize_ledger_schema(frame)
+    sort_columns = [
+        column
+        for column in ("date", "model_version", "symbol", "record_type", "evaluation_as_of_date")
+        if column in output.columns
+    ]
+    return output.sort_values(sort_columns).reset_index(drop=True)
+
+
+def _decision_rows(frame: pd.DataFrame) -> pd.DataFrame:
+    if "record_type" not in frame.columns:
+        return frame.iloc[0:0].copy()
+    return frame.loc[frame["record_type"] == DECISION_RECORD_TYPE].copy()
+
+
+def _evaluation_rows(frame: pd.DataFrame) -> pd.DataFrame:
+    if "record_type" not in frame.columns:
+        return frame.iloc[0:0].copy()
+    return frame.loc[frame["record_type"] == EVALUATION_RECORD_TYPE].copy()
 
 
 def _evaluation_value_mask(frame: pd.DataFrame) -> list[bool]:
@@ -313,6 +459,8 @@ def _hit_rate(group: pd.DataFrame) -> str | None:
 
 
 def _portfolio_vs_benchmark_summary(group: pd.DataFrame) -> str:
+    if group.empty:
+        return "avg 20d portfolio return=n/a; avg relative vs SPY=n/a; avg relative vs QQQ=n/a"
     summary_rows = group.drop_duplicates(subset=["date", "model_version"]).copy()
     portfolio_return = _mean_percent(summary_rows.get("portfolio_return_20d"))
     spy_relative = _mean_percent(summary_rows.get("portfolio_relative_return_vs_spy_20d"))
@@ -331,3 +479,53 @@ def _mean_percent(values: pd.Series | None) -> str:
     if numeric.empty:
         return "n/a"
     return f"{float(numeric.mean()):.1%}"
+
+
+def _json_map(group: pd.DataFrame, value_column: str) -> str:
+    payload: dict[str, object] = {}
+    if value_column not in group.columns:
+        return "{}"
+    for _, row in group.sort_values("symbol").iterrows():
+        value = row.get(value_column)
+        if pd.isna(value):
+            continue
+        payload[str(row["symbol"])] = _json_scalar(value)
+    return json.dumps(payload, ensure_ascii=False, sort_keys=True)
+
+
+def _snapshot_hash(group: pd.DataFrame, columns: list[str]) -> str:
+    records: list[dict[str, object]] = []
+    available_columns = [column for column in columns if column in group.columns]
+    for _, row in group.sort_values("symbol").iterrows():
+        records.append(
+            {column: _json_scalar(row.get(column)) for column in available_columns}
+        )
+    encoded = json.dumps(records, ensure_ascii=False, sort_keys=True, default=str)
+    return sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def _decision_record_id_from_row(row: pd.Series) -> str:
+    payload = {
+        "date": str(row.get("date", "")),
+        "model_version": str(row.get("model_version", "")),
+        "symbol": str(row.get("symbol", "")),
+        "config_hash": str(row.get("config_hash", "")),
+    }
+    encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True)
+    return sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def _json_scalar(value: object) -> object:
+    if pd.isna(value):
+        return None
+    if isinstance(value, bool | int | float | str):
+        return value
+    return str(value)
+
+
+def _truthy(value: object) -> bool:
+    if isinstance(value, bool):
+        return value
+    if pd.isna(value):
+        return False
+    return str(value).strip().lower() in {"1", "true", "yes", "y"}

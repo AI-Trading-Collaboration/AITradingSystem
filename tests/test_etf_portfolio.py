@@ -19,6 +19,12 @@ from ai_trading_system.etf_portfolio.backtest import (
 from ai_trading_system.etf_portfolio.data import standardize_price_frame, validate_price_data
 from ai_trading_system.etf_portfolio.features import build_feature_store, select_features_for_date
 from ai_trading_system.etf_portfolio.models import (
+    DEFAULT_ETF_ASSETS_CONFIG_PATH,
+    DEFAULT_ETF_BACKTEST_CONFIG_PATH,
+    DEFAULT_ETF_P1_CONFIG_PATH,
+    DEFAULT_ETF_P2_CONFIG_PATH,
+    DEFAULT_ETF_RISK_CONFIG_PATH,
+    DEFAULT_ETF_STRATEGY_CONFIG_PATH,
     ETFAllocationRecord,
     load_etf_config_bundle,
 )
@@ -72,6 +78,30 @@ def test_etf_config_loads_and_default_weights_sum_to_one() -> None:
     assert config.backtest.backtest.start_date == date(2022, 12, 1)
     assert config.p2 is not None
     assert not config.p2.live_interface.broker_routing_allowed
+
+
+def test_etf_config_hash_changes_when_risk_config_changes(tmp_path: Path) -> None:
+    baseline = load_etf_config_bundle()
+    modified_risk = tmp_path / "risk.yaml"
+    modified_risk.write_text(
+        DEFAULT_ETF_RISK_CONFIG_PATH.read_text(encoding="utf-8").replace(
+            "min_cash_weight: 0.00",
+            "min_cash_weight: 0.01",
+        ),
+        encoding="utf-8",
+    )
+
+    changed = load_etf_config_bundle(
+        assets_path=DEFAULT_ETF_ASSETS_CONFIG_PATH,
+        strategy_path=DEFAULT_ETF_STRATEGY_CONFIG_PATH,
+        risk_path=modified_risk,
+        backtest_path=DEFAULT_ETF_BACKTEST_CONFIG_PATH,
+        p1_path=DEFAULT_ETF_P1_CONFIG_PATH,
+        p2_path=DEFAULT_ETF_P2_CONFIG_PATH,
+    )
+
+    assert changed.config_hash != baseline.config_hash
+    assert changed.risk.portfolio_constraints.min_cash_weight == 0.01
 
 
 def test_etf_price_validation_passes_standardized_toy_data() -> None:
@@ -453,13 +483,25 @@ def test_simulation_ledger_upserts_and_keeps_unavailable_forward_returns_null(
     record_simulation_snapshot(allocation_records=allocation, ledger_path=ledger_path)
     record_simulation_snapshot(allocation_records=allocation, ledger_path=ledger_path)
     evaluate_simulation_ledger(ledger_path=ledger_path, prices=prices, as_of=run_date)
+    evaluate_simulation_ledger(ledger_path=ledger_path, prices=prices, as_of=run_date)
     ledger = pd.read_csv(ledger_path)
+    decision_rows = ledger.loc[ledger["record_type"] == "decision"]
+    evaluation_rows = ledger.loc[ledger["record_type"] == "evaluation"]
 
-    assert len(ledger) == 1
-    assert set(ledger["evaluation_only"]) == {True}
-    assert pd.isna(ledger.iloc[0]["forward_return_20d"])
-    assert pd.isna(ledger.iloc[0]["relative_return_vs_spy_20d"])
-    assert pd.isna(ledger.iloc[0]["weight_contribution_20d"])
+    assert len(decision_rows) == 1
+    assert len(evaluation_rows) == 1
+    assert set(decision_rows["evaluation_only"]) == {False}
+    assert set(evaluation_rows["evaluation_only"]) == {True}
+    assert pd.isna(decision_rows.iloc[0]["forward_return_20d"])
+    assert pd.isna(decision_rows.iloc[0]["relative_return_vs_spy_20d"])
+    assert pd.isna(decision_rows.iloc[0]["weight_contribution_20d"])
+    assert pd.isna(evaluation_rows.iloc[0]["forward_return_20d"])
+    assert pd.isna(evaluation_rows.iloc[0]["relative_return_vs_spy_20d"])
+    assert pd.isna(evaluation_rows.iloc[0]["weight_contribution_20d"])
+    assert bool(decision_rows.iloc[0]["observe_only"]) is True
+    assert decision_rows.iloc[0]["production_effect"] == "none"
+    assert str(decision_rows.iloc[0]["feature_snapshot_hash"])
+    assert str(decision_rows.iloc[0]["signal_snapshot_hash"])
 
 
 def test_simulation_record_cli_selects_latest_and_explicit_date(tmp_path: Path) -> None:
@@ -621,23 +663,30 @@ def test_simulation_ledger_adds_benchmark_relative_and_weight_contribution(
     record_simulation_snapshot(allocation_records=allocation, ledger_path=ledger_path)
     evaluate_simulation_ledger(ledger_path=ledger_path, prices=prices, as_of=as_of)
     ledger = pd.read_csv(ledger_path)
-    spy_row = ledger.loc[ledger["symbol"] == "SPY"].iloc[0]
-    qqq_row = ledger.loc[ledger["symbol"] == "QQQ"].iloc[0]
-    portfolio_return = float(ledger["portfolio_return_20d"].dropna().iloc[0])
+    decision_rows = ledger.loc[ledger["record_type"] == "decision"]
+    evaluation_rows = ledger.loc[ledger["record_type"] == "evaluation"]
+    spy_row = evaluation_rows.loc[evaluation_rows["symbol"] == "SPY"].iloc[0]
+    qqq_row = evaluation_rows.loc[evaluation_rows["symbol"] == "QQQ"].iloc[0]
+    portfolio_return = float(evaluation_rows["portfolio_return_20d"].dropna().iloc[0])
     markdown = render_simulation_report(ledger_path)
 
     assert "relative_return_vs_spy_20d" in ledger.columns
     assert "relative_return_vs_qqq_20d" in ledger.columns
     assert "weight_contribution_20d" in ledger.columns
-    assert set(ledger["evaluation_only"]) == {True}
+    assert set(decision_rows["evaluation_only"]) == {False}
+    assert set(evaluation_rows["evaluation_only"]) == {True}
+    assert pd.isna(decision_rows["forward_return_20d"]).all()
+    assert set(evaluation_rows["evaluation_as_of_date"]) == {as_of.isoformat()}
     assert abs(float(spy_row["relative_return_vs_spy_20d"])) < 1e-12
     assert not pd.isna(qqq_row["relative_return_vs_spy_20d"])
     assert round(float(spy_row["weight_contribution_20d"]), 10) == round(
         0.5 * float(spy_row["forward_return_20d"]),
         10,
     )
-    assert portfolio_return == float(ledger["weight_contribution_20d"].sum())
+    assert portfolio_return == float(evaluation_rows["weight_contribution_20d"].sum())
     assert "## Portfolio vs Benchmarks" in markdown
+    assert "Decision Records" in markdown
+    assert "Evaluation Records" in markdown
     assert "avg relative vs SPY" in markdown
 
 
