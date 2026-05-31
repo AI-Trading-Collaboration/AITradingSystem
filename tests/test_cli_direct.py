@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import shlex
+
 from ai_trading_system import cli_direct
+from ai_trading_system.scheduled_tasks import load_scheduled_tasks_config
 
 
 def test_cli_direct_score_daily_maps_skip_openai_precheck(monkeypatch) -> None:
@@ -283,3 +286,131 @@ def test_cli_direct_dispatches_research_governance_date_and_latest(monkeypatch) 
         {"as_of": "2026-05-13", "latest": False},
         {"as_of": None, "latest": True},
     ]
+
+
+def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
+    calls: list[str] = []
+
+    def recorder(name: str):
+        def _fake(**kwargs: object) -> None:
+            calls.append(name)
+
+        return _fake
+
+    monkeypatch.setattr(cli_direct.cli, "download_data", recorder("download_data"))
+    monkeypatch.setattr(cli_direct.cli, "validate_data", recorder("validate_data"))
+    monkeypatch.setattr(
+        cli_direct.cli,
+        "fetch_fmp_forward_pit_command",
+        recorder("pit_snapshots_fetch_fmp_forward"),
+    )
+    monkeypatch.setattr(
+        cli_direct.cli,
+        "build_pit_snapshot_manifest_command",
+        recorder("pit_snapshots_build_manifest"),
+    )
+    monkeypatch.setattr(
+        cli_direct.cli,
+        "validate_pit_snapshots_command",
+        recorder("pit_snapshots_validate"),
+    )
+    monkeypatch.setattr(
+        cli_direct.cli,
+        "download_sec_companyfacts_command",
+        recorder("sec_companyfacts"),
+    )
+    monkeypatch.setattr(cli_direct.cli, "extract_sec_metrics_command", recorder("sec_metrics"))
+    monkeypatch.setattr(
+        cli_direct.cli,
+        "merge_tsm_ir_sec_metrics",
+        recorder("tsm_ir_sec_metrics_merge"),
+    )
+    monkeypatch.setattr(
+        cli_direct.cli,
+        "validate_sec_metrics_command",
+        recorder("sec_metrics_validation"),
+    )
+    monkeypatch.setattr(cli_direct.cli, "fetch_fmp_valuations", recorder("valuation_snapshots"))
+    monkeypatch.setattr(cli_direct.cli, "score_daily", recorder("score_daily"))
+    monkeypatch.setattr(
+        cli_direct.cli,
+        "evidence_dashboard_command",
+        recorder("reports_dashboard"),
+    )
+    monkeypatch.setattr(
+        cli_direct.sec_pit_cli,
+        "shadow_observe_command",
+        recorder("sec_pit_shadow_observe"),
+    )
+    monkeypatch.setattr(
+        cli_direct.sec_pit_cli,
+        "shadow_monitor_command",
+        recorder("sec_pit_shadow_monitor"),
+    )
+    monkeypatch.setattr(
+        cli_direct.cli,
+        "score_change_attribution_command",
+        recorder("score_change_attribution"),
+    )
+    monkeypatch.setattr(cli_direct.cli, "market_panel_command", recorder("market_panel"))
+    monkeypatch.setattr(
+        cli_direct.cli,
+        "data_freshness_command",
+        recorder("market_data_freshness"),
+    )
+    monkeypatch.setattr(
+        cli_direct.cli,
+        "data_recover_freshness_command",
+        recorder("market_data_recover_freshness"),
+    )
+    monkeypatch.setattr(
+        cli_direct.cli,
+        "portfolio_track_candidate_command",
+        recorder("portfolio_candidate_tracking"),
+    )
+    monkeypatch.setattr(
+        cli_direct.cli,
+        "portfolio_review_tracking_command",
+        recorder("portfolio_tracking_review"),
+    )
+    monkeypatch.setattr(
+        cli_direct.cli,
+        "portfolio_tracking_review_report_command",
+        recorder("portfolio_tracking_review_report"),
+    )
+    monkeypatch.setattr(cli_direct.cli, "report_index_command", recorder("report_index"))
+    monkeypatch.setattr(
+        cli_direct.docs_cli,
+        "documentation_contract_command",
+        recorder("documentation_contract"),
+    )
+    monkeypatch.setattr(
+        cli_direct.cli,
+        "research_governance_summary_command",
+        recorder("research_governance_summary"),
+    )
+    monkeypatch.setattr(cli_direct.cli, "reader_brief_command", recorder("reader_brief"))
+    monkeypatch.setattr(
+        cli_direct.cli,
+        "validate_reader_brief_command",
+        recorder("validate_reader_brief"),
+    )
+    monkeypatch.setattr(cli_direct.cli, "pipeline_health_command", recorder("pipeline_health"))
+    monkeypatch.setattr(cli_direct.cli, "security_scan_secrets_command", recorder("secret_hygiene"))
+
+    tasks = load_scheduled_tasks_config().daily_tasks()
+    for task in tasks:
+        args = _daily_command_args(task.command)
+        assert args[0] == "aits"
+        assert cli_direct.main(args[1:]) == 0, task.daily_plan_step_id
+
+    assert calls == [task.daily_plan_step_id for task in tasks]
+
+
+def _daily_command_args(command: str) -> list[str]:
+    rendered = (
+        command.replace("{download_start}", "2018-01-01")
+        .replace("{download_end}", "2026-05-29")
+        .replace("{as_of}", "2026-05-29")
+    )
+    return shlex.split(rendered)

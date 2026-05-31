@@ -59,6 +59,35 @@ def _dispatch(args: list[str]) -> None:
             fmp_api_key_env=_option(args, "--fmp-api-key-env", "FMP_API_KEY") or "FMP_API_KEY",
         )
         return
+    if args[:2] == ["data", "freshness"]:
+        cli.data_freshness_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            market=_option(args, "--market", "US") or "US",
+            config_path=_path_option_with_default(
+                args,
+                "--config",
+                cli.DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH,
+            ),
+            dry_run=_flag(args, "--dry-run"),
+        )
+        return
+    if args[:2] == ["data", "recover-freshness"]:
+        cli.data_recover_freshness_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            refresh_config_path=_path_option_with_default(
+                args,
+                "--refresh-config",
+                cli.DEFAULT_MARKET_DATA_REFRESH_CONFIG_PATH,
+            ),
+            freshness_config_path=_path_option_with_default(
+                args,
+                "--freshness-config",
+                cli.DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH,
+            ),
+        )
+        return
     if args[:2] == ["signals", "build-snapshot"]:
         cli.signals_build_snapshot_command(
             latest=_flag(args, "--latest"),
@@ -182,6 +211,34 @@ def _dispatch(args: list[str]) -> None:
     if args[:2] == ["reports", "calculation-explainers"]:
         cli.calculation_explainers_command(as_of=_option(args, "--as-of"))
         return
+    if args[:2] == ["portfolio", "track-candidate"]:
+        cli.portfolio_track_candidate_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            review_path=_optional_path(args, "--review"),
+            config_path=_path_option_with_default(
+                args,
+                "--config",
+                cli.DEFAULT_PORTFOLIO_CANDIDATE_TRACKING_CONFIG_PATH,
+            ),
+            dry_run=_flag(args, "--dry-run"),
+        )
+        return
+    if args[:2] == ["portfolio", "review-tracking"]:
+        cli.portfolio_review_tracking_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            candidate_profile=_option(args, "--candidate"),
+            window=_option(args, "--window"),
+            show_window_progress=_flag(args, "--show-window-progress"),
+            config_path=_path_option_with_default(
+                args,
+                "--config",
+                cli.DEFAULT_PORTFOLIO_TRACKING_REVIEW_CONFIG_PATH,
+            ),
+            dry_run=_flag(args, "--dry-run"),
+        )
+        return
     if args[:2] == ["parameters", "shadow-backtest"]:
         cli.parameters_shadow_backtest_command(
             latest=_flag(args, "--latest"),
@@ -262,6 +319,13 @@ def _dispatch(args: list[str]) -> None:
             latest=_flag(args, "--latest"),
         )
         return
+    if args[:2] == ["reports", "portfolio-tracking-review"]:
+        cli.portfolio_tracking_review_report_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            source_path=_optional_path(args, "--source-path"),
+        )
+        return
     if args[:2] == ["reports", "index"]:
         cli.report_index_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),
@@ -309,6 +373,11 @@ def _flag(args: Sequence[str], name: str) -> bool:
 def _path_option(args: Sequence[str], name: str):
     value = _option(args, name)
     return cli.DEFAULT_SHADOW_BACKTEST_CONFIG_PATH if value is None else Path(value)
+
+
+def _path_option_with_default(args: Sequence[str], name: str, default: Path):
+    value = _option(args, name)
+    return default if value is None else Path(value)
 
 
 def _optional_path(args: Sequence[str], name: str):
