@@ -159,6 +159,8 @@ regime 日期范围。主要产物路径：
 - `reports/etf_portfolio/backtests/<run_id>/stability_diagnostics.md`
 - `reports/etf_portfolio/governance/YYYY-MM-DD_parameter_governance.json`
 - `reports/etf_portfolio/governance/YYYY-MM-DD_parameter_governance.md`
+- `reports/etf_portfolio/credibility/YYYY-MM-DD_credibility_gate.json`
+- `reports/etf_portfolio/credibility/YYYY-MM-DD_credibility_gate.md`
 
 `target_weights.csv` 输出 `constraints_applied` 和结构化
 `constraint_diagnostics` JSON。正式 allocation 会执行 asset cap/floor、risk group /
@@ -228,6 +230,12 @@ observe-only 入口包括 `aits etf p2 edgar-text`、`derive-edgar-events`、
 mode、最小样本、benchmark comparison、turnover、drawdown/no-lookahead 和 P2/live
 self-promotion gate；通过时仅进入 `ELIGIBLE_FOR_MANUAL_REVIEW`，不会自动替换
 `production_baseline`。
+`aits etf credibility validate` 聚合 TRADING-063A~J credibility checks，输出单一
+PASS/FAIL JSON/Markdown gate，覆盖 runtime artifact hygiene、benchmark suite、
+no-lookahead、toy accounting、risk constraints、allocation stability、simulation schema、
+backtest metrics、daily brief explainability、parameter governance 和 P2/live safety；PASS
+只表示可继续 shadow evaluation，仍固定 `production_effect=none`、manual review required、
+no broker action。
 
 ETF brief 与 ETF backtest summary 已登记到 report registry / Reader Brief navigation，
 Reader Brief 还会只读摘录最新 ETF backtest standardized metrics 摘要，便于人工下钻，但该

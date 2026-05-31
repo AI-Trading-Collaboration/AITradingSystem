@@ -31,7 +31,7 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 |TRADING-063H|DONE|Backtest Metrics & Summary Report Standardization|统一 metrics schema、monthly table、benchmark excess、edge-case null reason|
 |TRADING-063I|DONE|ETF Daily Brief Explainability Upgrade|安全 banner、regime、weights/deltas、driver explanations、constraints、benchmark context 和 future field 防护|
 |TRADING-063J|DONE|Parameter Governance & Candidate Promotion Policy|model state、promotion gates、governance summary 和 unsafe candidate blocking tests|
-|TRADING-063K|READY|End-to-End Credibility Gate|聚合 063A~J、P2/live safety、JSON/Markdown 输出和 fail-closed tests|
+|TRADING-063K|DONE|End-to-End Credibility Gate|聚合 063A~J、P2/live safety、JSON/Markdown 输出和 fail-closed tests|
 
 ## TRADING-063A 验收标准
 
@@ -112,6 +112,13 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 - P2/live candidates 不得 self-promote；任何 production effect 请求都必须成为 blocker。
 - 测试覆盖缺 benchmark、样本不足、turnover 过高、no-lookahead 未通过、全部 gate 通过、P2/live self-promotion blocked 和 schema stability。
 
+## TRADING-063K 验收标准
+
+- `aits etf credibility validate` 必须输出单一 JSON/Markdown gate，包含 `task=TRADING-063K`、overall `status`、11 项 subcheck status/details、`production_effect=none`、`manual_review_required=true` 和 no broker action。
+- Gate 必须聚合 runtime artifact hygiene、benchmark suite、no-lookahead、toy accounting、risk constraints、allocation stability、simulation ledger schema、backtest metrics、daily brief explainability、parameter governance 和 P2/live safety。
+- 任一关键检查失败必须 fail closed 并把 blocker 写入 `check_details`；PASS 只表示可继续 shadow evaluation，不代表 production approval。
+- 测试覆盖 all-pass、no-lookahead failure、P2/live safety violation、benchmark suite missing、simulation schema invalid 和 JSON/Markdown output。
+
 ## 进展记录
 
 - 2026-06-01: 新增本需求文档并把 TRADING-063 登记为 `IN_PROGRESS`；开始 TRADING-063A runtime artifact hygiene。
@@ -134,3 +141,5 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 - 2026-06-01: TRADING-063I 完成。ETF daily brief 已新增 safety banner、AI regime/range、asset score reason codes、target/previous/delta、Weight Change Explanation、top positive/negative drivers、constraint diagnostics、benchmark context、simulation status、P2/live candidate-only note 和 actionability note；旧 target weights artifact 若缺结构化 constraint diagnostics 会显式标记 unavailable，不默认为 none；decision sections 继续调用 no-lookahead guard，测试用附加 `forward_return_20d` / `evaluation_only` 列验证不泄漏。真实 `aits etf report daily --date latest` smoke 通过；全量验证通过 `python -m pytest tests -q`（1664 passed）、`python -m ruff check config src tests scripts docs`、`python -m compileall -q src tests scripts` 和 `git diff --check`。
 - 2026-06-01: TRADING-063J 进入实现。当前 ETF P0/P1/P2 已有 observe-only 边界和 backtest artifacts，但缺少专门的参数治理 policy、候选 promotion gate、固定 governance summary schema，以及对缺 benchmark、样本不足、turnover 过高、no-lookahead 失败和 P2/live self-promotion 的 fail-closed 测试。
 - 2026-06-01: TRADING-063J 完成。新增 `config/etf_portfolio/governance.yaml`、`etf_portfolio/governance.py` 和 `aits etf governance summary`，输出稳定 `etf_parameter_governance` JSON/Markdown schema；promotion gate 覆盖 tests/shadow/sample/benchmark/turnover/drawdown/no-lookahead/manual-review/production-effect/P2-live self-promotion，全部通过时仅返回 `ELIGIBLE_FOR_MANUAL_REVIEW`。报告已登记到 report registry、artifact catalog 和 system flow；目标测试覆盖 required blockers、pass case 和 schema stability；`aits etf governance summary --date 2026-06-01` smoke 输出 `NO_CANDIDATE` 且 `production_effect=none`。
+- 2026-06-01: TRADING-063K 进入实现。需要新增单一 credibility gate 聚合 runtime artifact hygiene、benchmark suite、no-lookahead、toy accounting、risk constraints、allocation stability、simulation schema、backtest metrics、brief explainability、parameter governance 和 P2/live safety，并输出 fail-closed JSON/Markdown 摘要。
+- 2026-06-01: TRADING-063K 完成。新增 `etf_portfolio/credibility.py` 与 `aits etf credibility validate`，输出 `TRADING-063K` JSON/Markdown gate，聚合 11 项 subcheck、per-check source/blockers、`production_effect=none`、`manual_review_required=true` 和 `broker_action=none`。测试覆盖 all-pass、no-lookahead failure、P2/live safety violation、benchmark missing、simulation schema invalid 和 JSON/Markdown 输出；真实 `aits etf credibility validate --date 2026-06-01` smoke 为 PASS。

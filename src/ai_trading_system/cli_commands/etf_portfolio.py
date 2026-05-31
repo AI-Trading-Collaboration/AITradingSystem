@@ -16,6 +16,11 @@ from ai_trading_system.etf_portfolio.allocation import (
     write_allocation,
 )
 from ai_trading_system.etf_portfolio.backtest import run_portfolio_backtest, write_backtest_run
+from ai_trading_system.etf_portfolio.credibility import (
+    DEFAULT_ETF_CREDIBILITY_DIR,
+    build_credibility_gate,
+    write_credibility_gate,
+)
 from ai_trading_system.etf_portfolio.data import (
     ingest_yfinance_prices,
     latest_price_date,
@@ -128,6 +133,7 @@ experiments_app = typer.Typer(help="ETF P1 experiment registry。", no_args_is_h
 governance_app = typer.Typer(help="ETF P1 weight governance。", no_args_is_help=True)
 events_app = typer.Typer(help="ETF P1 event risk flags。", no_args_is_help=True)
 p2_app = typer.Typer(help="ETF P2 observe-only contracts。", no_args_is_help=True)
+credibility_app = typer.Typer(help="ETF credibility validation gate。", no_args_is_help=True)
 
 etf_app.add_typer(data_app, name="data")
 etf_app.add_typer(features_app, name="features")
@@ -146,6 +152,7 @@ etf_app.add_typer(experiments_app, name="experiments")
 etf_app.add_typer(governance_app, name="governance")
 etf_app.add_typer(events_app, name="events")
 etf_app.add_typer(p2_app, name="p2")
+etf_app.add_typer(credibility_app, name="credibility")
 
 
 @etf_app.command("validate-config")
@@ -451,6 +458,29 @@ def governance_summary_command(
     typer.echo(f"ETF parameter governance：{md_path}")
     typer.echo(f"promotion_status={payload['promotion_status']}")
     typer.echo(f"production_effect={payload['production_effect']}")
+
+
+@credibility_app.command("validate")
+def credibility_validate_command(
+    date_option: Annotated[str | None, typer.Option("--date", help="报告日期。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="输出目录。"),
+    ] = DEFAULT_ETF_CREDIBILITY_DIR,
+) -> None:
+    """聚合 TRADING-063A~J credibility checks；fail closed。"""
+    config = load_etf_config_bundle()
+    run_date = _parse_date(date_option) if date_option and date_option != "latest" else date.today()
+    payload = build_credibility_gate(config=config)
+    json_path = output_dir / f"{run_date.isoformat()}_credibility_gate.json"
+    md_path = output_dir / f"{run_date.isoformat()}_credibility_gate.md"
+    write_credibility_gate(payload, json_path=json_path, markdown_path=md_path)
+    typer.echo(f"ETF credibility gate：{md_path}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"production_effect={payload['production_effect']}")
+    typer.echo(f"broker_action={payload['broker_action']}")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
 
 
 @experiments_app.command("register")

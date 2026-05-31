@@ -225,6 +225,22 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: etf_credibility_gate
+    title: ETF Credibility Gate
+    group: governance
+    cadence: ad_hoc
+    audience: operator
+    owner: system
+    command: aits etf credibility validate
+    artifact_globs:
+      - reports/etf_portfolio/credibility/*_credibility_gate.json
+      - reports/etf_portfolio/credibility/*_credibility_gate.md
+    freshness_sla_days: 30
+    freshness_rationale: ETF credibility gate is generated at the end of TRADING-063 or before shadow-evaluation review.
+    owner_action: run_aits_etf_credibility_validate_after_063_subchecks_pass
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: etf_data_quality
     title: ETF Data Quality Report
     group: data_quality
