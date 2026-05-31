@@ -1000,6 +1000,8 @@ def _signal_snapshot_dirs(raw_config: dict[str, Any], as_of: date) -> list[Path]
     for directory in dirs:
         dated_dirs.append(directory)
         dated_dirs.append(directory / as_of.isoformat())
+    if dated_dirs:
+        return dated_dirs
     default_root = PROJECT_ROOT / "artifacts" / "signal_snapshots"
     dated_dirs.extend([default_root, default_root / as_of.isoformat()])
     return dated_dirs

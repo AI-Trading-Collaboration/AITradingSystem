@@ -1013,6 +1013,26 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         parameter_shadow.get("weight_stability_turnover_failures_reduced"),
                     ),
                     (
+                        "weight_stability_readiness_status",
+                        parameter_shadow.get("weight_stability_readiness_status"),
+                    ),
+                    (
+                        "weight_stability_readiness_summary",
+                        parameter_shadow.get("weight_stability_readiness_summary"),
+                    ),
+                    (
+                        "weight_stability_readiness_can_run",
+                        parameter_shadow.get("weight_stability_readiness_can_run"),
+                    ),
+                    (
+                        "weight_stability_readiness_blocking_checks",
+                        parameter_shadow.get("weight_stability_readiness_blocking_checks"),
+                    ),
+                    (
+                        "weight_stability_readiness_next_action",
+                        parameter_shadow.get("weight_stability_readiness_next_action"),
+                    ),
+                    (
                         "portfolio_turnover_attribution_status",
                         parameter_shadow.get("portfolio_turnover_attribution_status"),
                     ),
@@ -1899,6 +1919,7 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
     weight_tuning_summary = _weight_tuning_review_summary(as_of)
     weight_tuning_failure_summary = _weight_tuning_failure_review_summary(as_of)
     weight_stability_summary = _weight_stability_review_summary(as_of)
+    weight_stability_readiness_summary = _weight_stability_readiness_review_summary(as_of)
     turnover_attribution_summary = _portfolio_turnover_attribution_review_summary(as_of)
     path = (
         PROJECT_ROOT
@@ -2156,6 +2177,24 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
             "weight_stability_turnover_failures_reduced": weight_stability_summary.get(
                 "turnover_failures_reduced",
                 False,
+            ),
+            "weight_stability_readiness_status": weight_stability_readiness_summary.get(
+                "status",
+                "MISSING",
+            ),
+            "weight_stability_readiness_summary": (
+                weight_stability_readiness_summary.get("summary_sentence", "")
+            ),
+            "weight_stability_readiness_can_run": weight_stability_readiness_summary.get(
+                "can_run",
+                False,
+            ),
+            "weight_stability_readiness_blocking_checks": (
+                weight_stability_readiness_summary.get("blocking_checks", [])
+            ),
+            "weight_stability_readiness_next_action": weight_stability_readiness_summary.get(
+                "next_action",
+                "",
             ),
             "portfolio_turnover_attribution_status": turnover_attribution_summary.get(
                 "status",
@@ -2422,6 +2461,26 @@ def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
         "weight_stability_turnover_failures_reduced": weight_stability_summary.get(
             "turnover_failures_reduced",
             False,
+        ),
+        "weight_stability_readiness_status": weight_stability_readiness_summary.get(
+            "status",
+            "MISSING",
+        ),
+        "weight_stability_readiness_summary": weight_stability_readiness_summary.get(
+            "summary_sentence",
+            "",
+        ),
+        "weight_stability_readiness_can_run": weight_stability_readiness_summary.get(
+            "can_run",
+            False,
+        ),
+        "weight_stability_readiness_blocking_checks": weight_stability_readiness_summary.get(
+            "blocking_checks",
+            [],
+        ),
+        "weight_stability_readiness_next_action": weight_stability_readiness_summary.get(
+            "next_action",
+            "",
         ),
         "portfolio_turnover_attribution_status": turnover_attribution_summary.get(
             "status",
@@ -3280,6 +3339,67 @@ def _weight_stability_review_summary(as_of: date) -> dict[str, Any]:
     }
 
 
+def _weight_stability_readiness_review_summary(as_of: date) -> dict[str, Any]:
+    path = _latest_weight_stability_readiness_path(as_of)
+    if path is None:
+        return {
+            "status": "MISSING",
+            "can_run": False,
+            "blocking_checks": [],
+            "next_action": "aits parameters diagnose-weight-stability-inputs --latest",
+            "summary_sentence": (
+                "Stable weight tuning readiness artifact is missing; Reader Brief does "
+                "not run readiness diagnostics."
+            ),
+        }
+    payload = _read_optional_json(path)
+    if not payload:
+        return {
+            "status": "MISSING",
+            "can_run": False,
+            "blocking_checks": [],
+            "next_action": "inspect readiness JSON",
+            "summary_sentence": (
+                "Stable weight tuning readiness artifact is unreadable; production "
+                "parameters remain unchanged."
+            ),
+        }
+    metadata = _mapping(payload.get("metadata"))
+    eligibility = _mapping(payload.get("stable_tuning_eligibility"))
+    recovery_plan = _records(payload.get("recovery_plan"))
+    status = _text(metadata.get("status") or eligibility.get("status"), "UNKNOWN")
+    can_run = eligibility.get("can_run") is True
+    blocking_checks = [
+        _text(item, "")
+        for item in eligibility.get("blocking_checks", [])
+        if _text(item, "")
+    ]
+    next_action = ""
+    if recovery_plan:
+        first_step = recovery_plan[0]
+        next_action = _text(first_step.get("command") or first_step.get("action"), "")
+    summary_sentence = _text(payload.get("reader_brief"), "")
+    if not summary_sentence:
+        if can_run:
+            summary_sentence = (
+                "Stable weight tuning input readiness is restored; the next run can "
+                "enter candidate backtesting while promotion remains disabled."
+            )
+        else:
+            summary_sentence = (
+                "Stable weight tuning remains blocked before backtest; inspect readiness "
+                "blockers before interpreting TRADING-061."
+            )
+    return {
+        "status": status,
+        "can_run": can_run,
+        "blocking_checks": blocking_checks,
+        "next_action": next_action,
+        "source_artifact": str(path),
+        "summary_sentence": summary_sentence,
+    }
+
+
 def _portfolio_turnover_attribution_review_summary(as_of: date) -> dict[str, Any]:
     path = _latest_portfolio_turnover_attribution_path(as_of)
     if path is None:
@@ -3681,6 +3801,24 @@ def _latest_weight_stability_path(as_of: date) -> Path | None:
     if not candidates:
         return None
     return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _latest_weight_stability_readiness_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "weight_stability_readiness"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/weight_stability_readiness_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if candidates:
+        return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+    latest_candidates = sorted(root.glob("*/weight_stability_readiness_summary.json"))
+    if not latest_candidates:
+        return None
+    return max(latest_candidates, key=lambda path: path.stat().st_mtime)
 
 
 def _latest_portfolio_turnover_attribution_path(as_of: date) -> Path | None:

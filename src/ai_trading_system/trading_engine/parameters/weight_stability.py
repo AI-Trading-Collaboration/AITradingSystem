@@ -12,6 +12,11 @@ import yaml
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.shadow.lineage import sha256_file
 from ai_trading_system.trading_engine.parameters.parameter_loader import resolve_project_path
+from ai_trading_system.trading_engine.parameters.weight_stability_readiness import (
+    latest_weight_stability_readiness_path_on_or_before,
+    load_weight_stability_readiness_payload,
+    run_weight_stability_readiness,
+)
 from ai_trading_system.trading_engine.parameters.weight_tuning import (
     build_weight_tuning_payload,
     calculate_weight_stability,
@@ -39,6 +44,7 @@ class WeightStabilityRun:
     markdown_path: Path
     candidates_path: Path
     recommended_weights_path: Path | None = None
+    readiness_path: Path | None = None
 
 
 def default_weight_stability_root() -> Path:
@@ -125,6 +131,12 @@ def run_weight_stability(
 ) -> WeightStabilityRun:
     config = load_weight_stability_config(config_path)
     root = _output_root(config, dry_run=dry_run)
+    readiness_run = run_weight_stability_readiness(
+        as_of=as_of,
+        config_path=config_path,
+        dry_run=dry_run,
+        generated_at=generated_at,
+    )
     payload, candidates_payload = build_weight_stability_payload(
         as_of=as_of,
         config_path=config_path,
@@ -133,6 +145,8 @@ def run_weight_stability(
         dry_run=dry_run,
         generated_at=generated_at,
         output_root=root,
+        input_readiness_payload=readiness_run.payload,
+        input_readiness_path=readiness_run.json_path,
     )
     resolved_as_of = weight_stability_payload_date(
         payload,
@@ -155,6 +169,7 @@ def run_weight_stability(
         markdown_path=markdown_path,
         candidates_path=candidates_path,
         recommended_weights_path=recommended_path,
+        readiness_path=readiness_run.json_path,
     )
 
 
@@ -167,6 +182,8 @@ def build_weight_stability_payload(
     dry_run: bool = False,
     generated_at: datetime | None = None,
     output_root: Path | None = None,
+    input_readiness_payload: Mapping[str, Any] | None = None,
+    input_readiness_path: Path | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     resolved_config_path = resolve_project_path(str(config_path))
     config = load_weight_stability_config(resolved_config_path)
@@ -187,6 +204,8 @@ def build_weight_stability_payload(
         config_path=resolved_config_path,
         output_root=root,
         dry_run=dry_run,
+        input_readiness_payload=input_readiness_payload,
+        input_readiness_path=input_readiness_path,
     )
     candidates = _stable_candidates_payload(summary, tuning_payload, tuning_candidates)
     return summary, candidates
@@ -340,9 +359,11 @@ def render_weight_stability_explanation(payload: Mapping[str, Any]) -> str:
     search = _mapping(payload.get("search_summary"))
     recommended = _mapping(payload.get("recommended_candidate"))
     comparison = _mapping(payload.get("comparison_to_trading_059"))
+    readiness = _mapping(payload.get("input_readiness"))
     return "\n".join(
         [
             f"status={metadata.get('status', 'UNKNOWN')}",
+            f"reason={metadata.get('reason', '')}",
             f"recommended_status={recommended.get('status', 'UNKNOWN')}",
             f"candidates_generated={search.get('candidates_generated', 0)}",
             f"candidates_rejected_by_stability={search.get('candidates_rejected_by_stability', 0)}",
@@ -351,6 +372,9 @@ def render_weight_stability_explanation(payload: Mapping[str, Any]) -> str:
             f"candidates_backtested={search.get('candidates_backtested', 0)}",
             f"candidates_passed_guardrails={search.get('candidates_passed_guardrails', 0)}",
             f"turnover_failures_reduced={comparison.get('turnover_failures_reduced', False)}",
+            f"input_readiness_status={readiness.get('status', 'UNKNOWN')}",
+            f"input_readiness_reason={readiness.get('reason', '')}",
+            f"input_readiness_report={readiness.get('report', '')}",
             "production_effect=none",
             "manual_review_required=true",
             "auto_promotion=false",
@@ -367,18 +391,22 @@ def render_weight_stability_markdown(payload: Mapping[str, Any]) -> str:
     stability = _mapping(payload.get("stability_constraints"))
     turnover = _mapping(payload.get("turnover_controls"))
     promotion_impact = _mapping(payload.get("promotion_impact"))
+    readiness = _mapping(payload.get("input_readiness"))
     lines = [
         "# Weight Search Stability Summary",
         "",
         "## 1. 执行摘要",
         "",
         f"- run_id: `{metadata.get('run_id', 'UNKNOWN')}`",
-        f"- status: `{metadata.get('status', 'UNKNOWN')}`",
-        f"- production_effect: `{metadata.get('production_effect', 'none')}`",
+            f"- status: `{metadata.get('status', 'UNKNOWN')}`",
+            f"- reason: `{metadata.get('reason', '')}`",
+            f"- production_effect: `{metadata.get('production_effect', 'none')}`",
         f"- manual_review_required: `{metadata.get('manual_review_required', True)}`",
         f"- auto_promotion: `{metadata.get('auto_promotion', False)}`",
         f"- recommended_status: `{recommended.get('status', 'UNKNOWN')}`",
-        f"- reason: {recommended.get('reason', '')}",
+            f"- reason: {recommended.get('reason', '')}",
+            f"- input_readiness_status: `{readiness.get('status', 'UNKNOWN')}`",
+            f"- input_readiness_report: `{readiness.get('report', '')}`",
         "",
         "## 2. TRADING-060 输入背景",
         "",
@@ -416,6 +444,16 @@ def render_weight_stability_markdown(payload: Mapping[str, Any]) -> str:
             f"`{search.get('candidates_rejected_by_turnover_prefilter', 0)}`",
             f"- candidates_backtested: `{search.get('candidates_backtested', 0)}`",
             f"- candidates_passed_guardrails: `{search.get('candidates_passed_guardrails', 0)}`",
+            f"- reason: `{search.get('reason', '')}`",
+            "",
+            "## 5A. Input Readiness",
+            "",
+            f"- status: `{readiness.get('status', 'UNKNOWN')}`",
+            f"- can_run: `{readiness.get('can_run', '')}`",
+            f"- candidates_backtest_allowed: `{readiness.get('candidates_backtest_allowed', '')}`",
+            f"- blocking_checks: `{', '.join(_strings(readiness.get('blocking_checks')))}`",
+            f"- reason: `{readiness.get('reason', '')}`",
+            f"- report: `{readiness.get('report', '')}`",
             "",
             "## 6. Recommended Candidate",
             "",
@@ -465,6 +503,8 @@ def _stability_summary_from_tuning(
     config_path: Path,
     output_root: Path,
     dry_run: bool,
+    input_readiness_payload: Mapping[str, Any] | None = None,
+    input_readiness_path: Path | None = None,
 ) -> dict[str, Any]:
     as_of = weight_tuning_payload_date(
         tuning_payload,
@@ -495,6 +535,15 @@ def _stability_summary_from_tuning(
     )
     candidate_found = _candidate_found(recommended)
     status = _stability_status(metadata, signal_quality, candidate_found)
+    input_readiness = _input_readiness_context(
+        input_readiness_payload,
+        input_readiness_path,
+        as_of,
+    )
+    input_readiness_blocked = input_readiness.get("can_run") is False
+    reason = str(metadata.get("reason") or "")
+    if status == "INSUFFICIENT_DATA" and input_readiness_blocked:
+        reason = "input_readiness_blocked"
     data_ready = status not in {"INSUFFICIENT_DATA", "FAILED"}
     output_artifacts = {
         "weight_stability_summary_json": str(
@@ -518,6 +567,7 @@ def _stability_summary_from_tuning(
             "run_id": f"weight-stability-{as_of.isoformat()}",
             "generated_at": metadata.get("generated_at", datetime.now(tz=UTC).isoformat()),
             "status": status,
+            "reason": reason,
             "production_effect": "none",
             "manual_review_required": True,
             "auto_promotion": False,
@@ -537,6 +587,7 @@ def _stability_summary_from_tuning(
         "inputs": _mapping(tuning_payload.get("inputs")),
         "input_artifacts": _mapping(tuning_payload.get("input_artifacts")),
         "input_context": context,
+        "input_readiness": input_readiness,
         "output_artifacts": output_artifacts,
         "data_quality": _mapping(tuning_payload.get("data_quality")),
         "freshness": _mapping(tuning_payload.get("freshness")),
@@ -566,9 +617,14 @@ def _stability_summary_from_tuning(
                 0,
             ),
             "candidates_passed_guardrails": passed_guardrails,
+            "reason": reason,
         },
         "candidate_ranking": tuning_payload.get("candidate_ranking", []),
-        "recommended_candidate": _stable_recommended_candidate(recommended, candidate_found),
+        "recommended_candidate": _stable_recommended_candidate(
+            recommended,
+            candidate_found,
+            input_readiness_blocked=input_readiness_blocked,
+        ),
         "comparison_to_trading_059": {
             "turnover_failures_reduced": (
                 data_ready and previous_failed > 0 and current_turnover_failures < previous_failed
@@ -581,11 +637,17 @@ def _stability_summary_from_tuning(
         "promotion_impact": {
             "can_support_candidate_promotion": False,
             "reason": (
-                "Stable weight tuning remains shadow-only because signal quality is "
-                "LIMITED and manual review is required."
+                "Stable weight tuning has not entered valid backtest because input "
+                "readiness is blocked."
+                if input_readiness_blocked
+                else "Stable weight tuning remains shadow-only because signal quality "
+                "is LIMITED and manual review is required."
             ),
         },
-        "reader_brief": _reader_brief_sentence(candidate_found),
+        "reader_brief": _reader_brief_sentence(
+            candidate_found,
+            input_readiness_blocked=input_readiness_blocked,
+        ),
         "source_weight_tuning_payload": tuning_payload,
         "warnings": _strings(tuning_payload.get("warnings")),
         "safety": _safety_payload(),
@@ -640,14 +702,20 @@ def _stable_candidates_payload(
 def _stable_recommended_candidate(
     recommended: Mapping[str, Any],
     candidate_found: bool,
+    *,
+    input_readiness_blocked: bool = False,
 ) -> dict[str, Any]:
     payload = dict(recommended)
     if candidate_found:
         return payload
     payload["status"] = "no_candidate"
-    payload["reason"] = str(
-        recommended.get("reason")
-        or "Stable weight tuning did not find a guardrail-passing candidate."
+    payload["reason"] = (
+        "input_readiness_blocked"
+        if input_readiness_blocked
+        else str(
+            recommended.get("reason")
+            or "Stable weight tuning did not find a guardrail-passing candidate."
+        )
     )
     payload.setdefault("weights", {})
     payload.setdefault("stability", {})
@@ -723,7 +791,17 @@ def _stability_status(
     return "NO_CANDIDATE"
 
 
-def _reader_brief_sentence(candidate_found: bool) -> str:
+def _reader_brief_sentence(
+    candidate_found: bool,
+    *,
+    input_readiness_blocked: bool = False,
+) -> str:
+    if input_readiness_blocked:
+        return (
+            "Stable weight tuning remains blocked before candidate backtest because "
+            "input readiness is not satisfied. This is not evidence that stability "
+            "constraints failed to find a candidate."
+        )
     if candidate_found:
         return (
             "Stable weight tuning found a shadow-only candidate after adding L1 "
@@ -735,6 +813,39 @@ def _reader_brief_sentence(candidate_found: bool) -> str:
         "guardrail-passing weight candidate. This suggests current real signals may "
         "not provide enough stable improvement over baseline."
     )
+
+
+def _input_readiness_context(
+    payload: Mapping[str, Any] | None,
+    source_path: Path | None,
+    as_of: date,
+) -> dict[str, Any]:
+    resolved_payload: Mapping[str, Any] | None = payload
+    resolved_path = source_path
+    if resolved_payload is None:
+        resolved_path = latest_weight_stability_readiness_path_on_or_before(as_of)
+        if resolved_path is not None:
+            resolved_payload = load_weight_stability_readiness_payload(resolved_path)
+    if not resolved_payload:
+        return {
+            "status": "MISSING",
+            "can_run": None,
+            "candidates_backtest_allowed": None,
+            "blocking_checks": [],
+            "reason": "",
+            "report": "" if resolved_path is None else str(resolved_path),
+        }
+    metadata = _mapping(resolved_payload.get("metadata"))
+    eligibility = _mapping(resolved_payload.get("stable_tuning_eligibility"))
+    return {
+        "status": str(metadata.get("status") or eligibility.get("status") or "UNKNOWN"),
+        "can_run": eligibility.get("can_run"),
+        "candidates_backtest_allowed": eligibility.get("candidates_backtest_allowed"),
+        "blocking_checks": _strings(eligibility.get("blocking_checks")),
+        "reason": str(eligibility.get("reason") or metadata.get("reason") or ""),
+        "report": "" if resolved_path is None else str(resolved_path),
+        "summary": str(resolved_payload.get("reader_brief") or ""),
+    }
 
 
 def _safety_payload() -> dict[str, Any]:

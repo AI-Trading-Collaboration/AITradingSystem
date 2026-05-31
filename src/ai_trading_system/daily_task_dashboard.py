@@ -217,6 +217,7 @@ def build_daily_task_dashboard_payload(
         "weight_tuning_summary": _weight_tuning_summary(report),
         "weight_tuning_failure_summary": _weight_tuning_failure_summary(report),
         "weight_stability_summary": _weight_stability_summary(report),
+        "weight_stability_readiness_summary": _weight_stability_readiness_summary(report),
         "portfolio_turnover_attribution_summary": _portfolio_turnover_attribution_summary(report),
         "weight_adjustment_candidates": _weight_adjustment_candidates_summary(report),
         "weight_candidate_evaluation": _weight_candidate_evaluation_summary(report),
@@ -384,6 +385,7 @@ def render_daily_task_dashboard(report: DailyTaskDashboardReport) -> str:
             _render_weight_tuning_summary(report),
             _render_weight_tuning_failure_summary(report),
             _render_weight_stability_summary(report),
+            _render_weight_stability_readiness_summary(report),
             _render_portfolio_turnover_attribution_summary(report),
             _render_weight_adjustment_candidates(report),
             _render_weight_candidate_evaluation(report),
@@ -3308,6 +3310,119 @@ def _latest_weight_stability_path(report: DailyTaskDashboardReport) -> Path | No
     if not candidates:
         return None
     return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+
+
+def _weight_stability_readiness_summary(report: DailyTaskDashboardReport) -> TraceRecord:
+    path = _latest_weight_stability_readiness_path(report)
+    if path is None:
+        missing_path = (
+            report.project_root
+            / "artifacts"
+            / "weight_stability_readiness"
+            / report.as_of.isoformat()
+            / "weight_stability_readiness_summary.json"
+        )
+        return {
+            "status": "MISSING",
+            "exists": False,
+            "path": str(missing_path),
+            "href": _report_href(missing_path, report.reports_dir),
+            "markdown_href": "",
+            "can_run": False,
+            "previous_candidates_backtested": 0,
+            "freshness_status": "MISSING",
+            "signal_snapshot_status": "MISSING",
+            "backtest_manifest_status": "MISSING",
+            "price_coverage_status": "MISSING",
+            "blocking_checks": [],
+            "next_action": "aits parameters diagnose-weight-stability-inputs --latest",
+            "production_effect": ProductionEffect.NONE.value,
+            "risk": "Stable weight tuning readiness 缺失；dashboard 不运行诊断或调参。",
+        }
+    payload = _read_json_object(path)
+    if payload.get("report_type") != "weight_stability_readiness":
+        return {
+            "status": "UNREADABLE",
+            "exists": False,
+            "path": str(path),
+            "href": _report_href(path, report.reports_dir),
+            "markdown_href": "",
+            "can_run": False,
+            "previous_candidates_backtested": 0,
+            "freshness_status": "UNREADABLE",
+            "signal_snapshot_status": "UNREADABLE",
+            "backtest_manifest_status": "UNREADABLE",
+            "price_coverage_status": "UNREADABLE",
+            "blocking_checks": [],
+            "next_action": "inspect readiness JSON",
+            "production_effect": ProductionEffect.NONE.value,
+            "risk": "Weight stability readiness JSON 不可读。",
+        }
+    metadata = _mapping_value(payload, "metadata")
+    context = _mapping_value(payload, "input_context")
+    checks = _mapping_value(payload, "readiness_checks")
+    eligibility = _mapping_value(payload, "stable_tuning_eligibility")
+    recovery_plan = _records(payload.get("recovery_plan"))
+    freshness = _mapping_value(checks, "freshness")
+    signal = _mapping_value(checks, "signal_snapshot")
+    manifest = _mapping_value(checks, "backtest_manifest")
+    price = _mapping_value(checks, "price_coverage")
+    safety = _mapping_value(payload, "safety")
+    risks: list[str] = []
+    if metadata.get("production_effect") != ProductionEffect.NONE.value:
+        risks.append("readiness production_effect 不是 none。")
+    if metadata.get("auto_promotion") is not False:
+        risks.append("readiness auto_promotion 不是 false。")
+    if safety.get("data_quality_gate_lowered") is not False:
+        risks.append("readiness 不应降低 data quality gate。")
+    if safety.get("synthetic_price_history_generated") is not False:
+        risks.append("readiness 不应生成 synthetic price history。")
+    markdown_path = path.with_suffix(".md")
+    next_action = ""
+    if recovery_plan:
+        first_step = recovery_plan[0]
+        next_action = str(first_step.get("command") or first_step.get("action") or "")
+    return {
+        "status": metadata.get("status", "UNKNOWN"),
+        "exists": True,
+        "path": str(path),
+        "href": _report_href(path, report.reports_dir),
+        "markdown_href": _report_href(markdown_path, report.reports_dir)
+        if markdown_path.exists()
+        else "",
+        "can_run": eligibility.get("can_run", False),
+        "previous_candidates_backtested": context.get("previous_candidates_backtested", 0),
+        "freshness_status": freshness.get("status", "UNKNOWN"),
+        "signal_snapshot_status": signal.get("status", "UNKNOWN"),
+        "backtest_manifest_status": manifest.get("status", "UNKNOWN"),
+        "price_coverage_status": price.get("status", "UNKNOWN"),
+        "blocking_checks": eligibility.get("blocking_checks", []),
+        "next_action": next_action,
+        "production_effect": metadata.get("production_effect", ProductionEffect.NONE.value),
+        "risk": "；".join(risks)
+        or str(
+            eligibility.get("reason")
+            or "Stable tuning readiness 只读展示，不运行恢复或调参。"
+        ),
+    }
+
+
+def _latest_weight_stability_readiness_path(report: DailyTaskDashboardReport) -> Path | None:
+    root = report.project_root / "artifacts" / "weight_stability_readiness"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/weight_stability_readiness_summary.json"):
+        try:
+            as_of = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if as_of <= report.as_of:
+            candidates.append((as_of, path))
+    if candidates:
+        return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+    latest_candidates = sorted(root.glob("*/weight_stability_readiness_summary.json"))
+    if not latest_candidates:
+        return None
+    return max(latest_candidates, key=lambda path: path.stat().st_mtime)
 
 
 def _portfolio_turnover_attribution_summary(report: DailyTaskDashboardReport) -> TraceRecord:
@@ -11396,6 +11511,77 @@ def _render_weight_stability_summary(report: DailyTaskDashboardReport) -> str:
                 "turnover failures reduced",
                 summary.get("turnover_failures_reduced", False),
             ),
+            _summary_item(
+                "production_effect",
+                summary.get("production_effect", ProductionEffect.NONE.value),
+            ),
+            "</div>",
+            (
+                '<p class="risk-line"><strong>重点风险：</strong>'
+                f"{_text(summary.get('risk', ''))}</p>"
+            ),
+            '<div class="report-link-list">',
+            report_link,
+            markdown_link,
+            "</div>",
+            "</section>",
+        ]
+    )
+
+
+def _render_weight_stability_readiness_summary(report: DailyTaskDashboardReport) -> str:
+    summary = _weight_stability_readiness_summary(report)
+    href = _string_value(summary.get("href"))
+    markdown_href = _string_value(summary.get("markdown_href"))
+    blocking_checks = summary.get("blocking_checks", [])
+    if isinstance(blocking_checks, list):
+        blocking_text = ", ".join(str(item) for item in blocking_checks if str(item))
+    else:
+        blocking_text = str(blocking_checks or "")
+    report_link = (
+        '<a class="report-link" '
+        f'href="{_text(href)}"><span>Weight Stability Readiness</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if summary.get("exists")
+        else '<span class="report-link missing"><span>Weight Stability Readiness</span>'
+        "<small>MISSING</small></span>"
+    )
+    markdown_link = (
+        '<a class="report-link" '
+        f'href="{_text(markdown_href)}"><span>Readiness Markdown</span>'
+        f"<small>{_text(summary.get('status', 'UNKNOWN'))}</small></a>"
+        if markdown_href
+        else ""
+    )
+    return "\n".join(
+        [
+            '<section aria-labelledby="weight-stability-readiness-title">',
+            '<div class="section-head">',
+            '<h2 id="weight-stability-readiness-title">Stable Weight Tuning Readiness</h2>',
+            (
+                "<p>TRADING-061A input readiness；dashboard 只读展示 freshness、"
+                "snapshot、manifest 和 price coverage blocker，不运行恢复。</p>"
+            ),
+            "</div>",
+            '<div class="summary-grid">',
+            _summary_item("latest status", summary.get("status", "MISSING")),
+            _summary_item("can run stable tuning", summary.get("can_run", False)),
+            _summary_item(
+                "previous candidates backtested",
+                summary.get("previous_candidates_backtested", 0),
+            ),
+            _summary_item("freshness", summary.get("freshness_status", "MISSING")),
+            _summary_item(
+                "signal snapshot",
+                summary.get("signal_snapshot_status", "MISSING"),
+            ),
+            _summary_item(
+                "backtest manifest",
+                summary.get("backtest_manifest_status", "MISSING"),
+            ),
+            _summary_item("price coverage", summary.get("price_coverage_status", "MISSING")),
+            _summary_item("blocking checks", blocking_text or "none"),
+            _summary_item("next action", summary.get("next_action", "")),
             _summary_item(
                 "production_effect",
                 summary.get("production_effect", ProductionEffect.NONE.value),

@@ -269,6 +269,37 @@ def _dispatch(args: list[str]) -> None:
             dry_run=_flag(args, "--dry-run"),
         )
         return
+    if args[:2] == ["parameters", "diagnose-weight-stability-inputs"]:
+        cli.diagnose_weight_stability_inputs_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            config_path=_path_option_with_default(
+                args,
+                "--config",
+                cli.DEFAULT_WEIGHT_STABILITY_READINESS_CONFIG_PATH,
+            ),
+            dry_run=_flag(args, "--dry-run"),
+        )
+        return
+    if args[:2] == ["parameters", "recover-weight-stability-inputs"]:
+        cli.recover_weight_stability_inputs_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            config_path=_path_option_with_default(
+                args,
+                "--config",
+                cli.DEFAULT_WEIGHT_STABILITY_READINESS_CONFIG_PATH,
+            ),
+            dry_run=_flag(args, "--dry-run"),
+        )
+        return
+    if args[:2] == ["parameters", "validate-weight-stability-readiness"]:
+        cli.validate_weight_stability_readiness_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            input_path=_optional_path(args, "--input-path"),
+        )
+        return
     if args[:2] == ["parameters", "validate-weight-stability"]:
         cli.validate_weight_stability_command(
             latest=_flag(args, "--latest"),
@@ -299,6 +330,13 @@ def _dispatch(args: list[str]) -> None:
         return
     if args[:2] == ["reports", "weight-stability"]:
         cli.weight_stability_report_command(
+            latest=_flag(args, "--latest"),
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            source_path=_optional_path(args, "--source-path"),
+        )
+        return
+    if args[:2] == ["reports", "weight-stability-readiness"]:
+        cli.weight_stability_readiness_report_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             source_path=_optional_path(args, "--source-path"),

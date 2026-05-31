@@ -685,6 +685,9 @@ def _promotion_decision_payload(
     weight_stability_path = _latest_weight_stability_supporting_path(as_of)
     if weight_stability_path is not None:
         supporting["weight_stability"] = str(weight_stability_path)
+    weight_stability_readiness_path = _latest_weight_stability_readiness_supporting_path(as_of)
+    if weight_stability_readiness_path is not None:
+        supporting["weight_stability_readiness"] = str(weight_stability_readiness_path)
     turnover_attribution_path = _latest_portfolio_turnover_attribution_supporting_path(as_of)
     if turnover_attribution_path is not None:
         supporting["portfolio_turnover_attribution"] = str(turnover_attribution_path)
@@ -878,6 +881,22 @@ def _promotion_decision_payload(
                 )
             payload["reason"] = reason.rstrip(".") + ". " + stability_reason
             reason = str(payload.get("reason") or "")
+    readiness_details = _weight_stability_readiness_details(weight_stability_readiness_path)
+    readiness_status = str(readiness_details.get("status") or "")
+    if readiness_status:
+        payload["weight_stability_readiness_status"] = readiness_status
+        payload["weight_stability_readiness_can_run"] = readiness_details.get("can_run", False)
+        payload["weight_stability_readiness_blocking_checks"] = readiness_details.get(
+            "blocking_checks",
+            [],
+        )
+        if readiness_details.get("can_run") is False and "input readiness" not in reason.lower():
+            payload["reason"] = (
+                reason.rstrip(".")
+                + ". Stable weight tuning has not entered valid backtest because input "
+                "readiness is blocked; production parameters remain unchanged."
+            )
+            reason = str(payload.get("reason") or "")
     turnover_details = _portfolio_turnover_attribution_details(turnover_attribution_path)
     turnover_root = str(turnover_details.get("root_cause_category") or "")
     if turnover_root:
@@ -1051,6 +1070,24 @@ def _latest_weight_stability_supporting_path(as_of: date) -> Path | None:
     return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
 
 
+def _latest_weight_stability_readiness_supporting_path(as_of: date) -> Path | None:
+    root = PROJECT_ROOT / "artifacts" / "weight_stability_readiness"
+    candidates: list[tuple[date, Path]] = []
+    for path in root.glob("*/weight_stability_readiness_summary.json"):
+        try:
+            candidate_date = date.fromisoformat(path.parent.name)
+        except ValueError:
+            continue
+        if candidate_date <= as_of:
+            candidates.append((candidate_date, path))
+    if candidates:
+        return max(candidates, key=lambda item: (item[1].stat().st_mtime, item[0]))[1]
+    latest_candidates = sorted(root.glob("*/weight_stability_readiness_summary.json"))
+    if not latest_candidates:
+        return None
+    return max(latest_candidates, key=lambda path: path.stat().st_mtime)
+
+
 def _latest_portfolio_turnover_attribution_supporting_path(as_of: date) -> Path | None:
     root = PROJECT_ROOT / "artifacts" / "portfolio_turnover_attribution"
     candidates: list[tuple[date, Path]] = []
@@ -1221,6 +1258,35 @@ def _weight_stability_details(path: Path | None) -> dict[str, object]:
     return {
         "status": str(metadata.get("status") or ""),
         "candidate_status": str(recommended.get("status") or ""),
+    }
+
+
+def _weight_stability_readiness_details(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(payload, dict):
+        return {}
+    metadata = payload.get("metadata") if isinstance(payload.get("metadata"), dict) else {}
+    eligibility = (
+        payload.get("stable_tuning_eligibility")
+        if isinstance(payload.get("stable_tuning_eligibility"), dict)
+        else {}
+    )
+    return {
+        "status": str(metadata.get("status") or eligibility.get("status") or ""),
+        "can_run": eligibility.get("can_run") is True,
+        "blocking_checks": [
+            str(item)
+            for item in eligibility.get("blocking_checks", [])
+            if str(item)
+        ]
+        if isinstance(eligibility.get("blocking_checks"), list)
+        else [],
+        "reason": str(eligibility.get("reason") or metadata.get("reason") or ""),
     }
 
 

@@ -770,6 +770,16 @@ from ai_trading_system.trading_engine.parameters.weight_stability import (
     weight_stability_payload_date,
     write_weight_stability_report_alias,
 )
+from ai_trading_system.trading_engine.parameters.weight_stability_readiness import (
+    DEFAULT_WEIGHT_STABILITY_READINESS_CONFIG_PATH,
+    latest_weight_stability_readiness_path,
+    load_weight_stability_readiness_payload,
+    render_weight_stability_readiness_explanation,
+    run_weight_stability_readiness,
+    validate_weight_stability_readiness_payload,
+    weight_stability_readiness_payload_date,
+    write_weight_stability_readiness_report_alias,
+)
 from ai_trading_system.trading_engine.parameters.weight_tuning import (
     DEFAULT_WEIGHT_TUNING_CONFIG_PATH,
     latest_weight_tuning_path,
@@ -8339,9 +8349,122 @@ def parameters_tune_weights_stable_command(
     console.print(f"JSON：{run.json_path}")
     console.print(f"Markdown：{run.markdown_path}")
     console.print(f"Candidates：{run.candidates_path}")
+    if run.readiness_path is not None:
+        readiness = run.payload.get("input_readiness", {})
+        run_reason = metadata.get("reason", "") if isinstance(metadata, dict) else ""
+        readiness_reason = readiness.get("reason", "") if isinstance(readiness, dict) else ""
+        console.print(f"Input readiness：{run.readiness_path}")
+        if run_reason:
+            console.print(f"reason={run_reason}")
+        if readiness_reason:
+            console.print(f"input_readiness_reason={readiness_reason}")
     if run.recommended_weights_path is not None:
         console.print(f"Recommended stable shadow weights：{run.recommended_weights_path}")
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@parameters_app.command("diagnose-weight-stability-inputs")
+def diagnose_weight_stability_inputs_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="诊断最新 stable weight tuning 输入 readiness。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="诊断日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="weight stability 配置路径。"),
+    ] = DEFAULT_WEIGHT_STABILITY_READINESS_CONFIG_PATH,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="写入 outputs/dry_runs/weight_stability_readiness。"),
+    ] = False,
+) -> None:
+    """生成 TRADING-061A stable weight tuning input readiness 诊断。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    try:
+        run = run_weight_stability_readiness(
+            as_of=run_date,
+            config_path=config_path,
+            dry_run=dry_run,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    _print_weight_stability_readiness_run(run)
+
+
+@parameters_app.command("recover-weight-stability-inputs")
+def recover_weight_stability_inputs_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="为最新 stable weight tuning 输入生成恢复计划。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="恢复计划日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="weight stability 配置路径。"),
+    ] = DEFAULT_WEIGHT_STABILITY_READINESS_CONFIG_PATH,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="计划模式；不修改 cache 或 manifest。"),
+    ] = False,
+) -> None:
+    """生成 stable weight tuning input recovery 计划；第一版不自动改 cache。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    try:
+        run = run_weight_stability_readiness(
+            as_of=run_date,
+            config_path=config_path,
+            dry_run=dry_run,
+            recovery_mode=True,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    _print_weight_stability_readiness_run(run)
+    console.print("recovery_auto_executed=false")
+
+
+@parameters_app.command("validate-weight-stability-readiness")
+def validate_weight_stability_readiness_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验最新正式 weight stability readiness JSON。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="校验日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 weight_stability_readiness_summary.json 路径。"),
+    ] = None,
+) -> None:
+    """校验 TRADING-061A input readiness JSON 和只读安全字段。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    source_path = input_path or _resolve_weight_stability_readiness_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_weight_stability_readiness_payload(source_path)
+    issues = validate_weight_stability_readiness_payload(payload)
+    if issues:
+        console.print("[red]Weight stability readiness validation：FAIL[/red]")
+        for issue in issues:
+            console.print(f"- {issue}")
+        raise typer.Exit(code=1)
+    console.print("[green]Weight stability readiness validation：PASS[/green]")
+    console.print(f"JSON：{source_path}")
+    console.print(render_weight_stability_readiness_explanation(payload))
 
 
 @parameters_app.command("validate-weight-stability")
@@ -9329,6 +9452,61 @@ def weight_stability_report_command(
         console.print(f"stable_candidate_status={recommended.get('status', 'UNKNOWN')}")
     if isinstance(search, dict):
         console.print(f"candidates_backtested={search.get('candidates_backtested', 0)}")
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{markdown_path}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@reports_app.command("weight-stability-readiness")
+def weight_stability_readiness_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="读取最新正式 weight stability readiness summary。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="报告日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    source_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 weight_stability_readiness_summary.json 路径。"),
+    ] = None,
+    reports_dir: Annotated[
+        Path,
+        typer.Option(help="报告 alias 输出目录。"),
+    ] = PROJECT_ROOT
+    / "outputs"
+    / "reports",
+) -> None:
+    """从正式 artifact 生成 weight stability readiness 报告 alias。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    json_source = source_path or _resolve_weight_stability_readiness_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_weight_stability_readiness_payload(json_source)
+    issues = validate_weight_stability_readiness_payload(payload)
+    if issues:
+        raise typer.BadParameter(
+            "weight stability readiness JSON 校验失败：" + "; ".join(issues)
+        )
+    try:
+        report_date = weight_stability_readiness_payload_date(payload, json_source)
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    json_path, markdown_path = write_weight_stability_readiness_report_alias(
+        payload,
+        reports_dir,
+        report_date,
+    )
+    eligibility = payload.get("stable_tuning_eligibility", {})
+    console.print("[green]Weight stability readiness report：OK[/green]")
+    if isinstance(eligibility, dict):
+        console.print(
+            f"readiness_status={eligibility.get('status', 'UNKNOWN')}；"
+            f"can_run={str(eligibility.get('can_run', False)).lower()}"
+        )
     console.print(f"JSON：{json_path}")
     console.print(f"Markdown：{markdown_path}")
     console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
@@ -16933,6 +17111,62 @@ def _resolve_weight_stability_path(*, latest: bool, as_of: str | None) -> Path:
             raise typer.BadParameter(f"未找到 weight stability artifact：{root}")
         return latest_path
     return root / _parse_date(as_of).isoformat() / "weight_stability_summary.json"
+
+
+def _resolve_weight_stability_readiness_path(*, latest: bool, as_of: str | None) -> Path:
+    root = PROJECT_ROOT / "artifacts" / "weight_stability_readiness"
+    if latest or as_of is None:
+        latest_path = latest_weight_stability_readiness_path(root)
+        if latest_path is None:
+            raise typer.BadParameter(f"未找到 weight stability readiness artifact：{root}")
+        return latest_path
+    return (
+        root
+        / _parse_date(as_of).isoformat()
+        / "weight_stability_readiness_summary.json"
+    )
+
+
+def _print_weight_stability_readiness_run(run: object) -> None:
+    payload = getattr(run, "payload", {})
+    metadata = payload.get("metadata", {}) if isinstance(payload, dict) else {}
+    eligibility = (
+        payload.get("stable_tuning_eligibility", {}) if isinstance(payload, dict) else {}
+    )
+    checks = payload.get("readiness_checks", {}) if isinstance(payload, dict) else {}
+    status = metadata.get("status", "UNKNOWN") if isinstance(metadata, dict) else "UNKNOWN"
+    can_run = eligibility.get("can_run", False) if isinstance(eligibility, dict) else False
+    blocking = (
+        ", ".join(str(item) for item in eligibility.get("blocking_checks", []))
+        if isinstance(eligibility, dict)
+        else ""
+    )
+    style = "green" if can_run else "yellow"
+    console.print(f"[{style}]Weight stability readiness：{status}[/{style}]")
+    run_as_of = run.as_of  # type: ignore[attr-defined]
+    json_path = run.json_path  # type: ignore[attr-defined]
+    markdown_path = run.markdown_path  # type: ignore[attr-defined]
+    console.print(
+        f"as_of={run_as_of.isoformat()}；"
+        f"can_run={str(can_run).lower()}；blocking_checks={blocking or 'none'}"
+    )
+    if isinstance(eligibility, dict):
+        console.print(f"reason={eligibility.get('reason', '')}")
+    if isinstance(checks, dict):
+        freshness = checks.get("freshness", {})
+        signal = checks.get("signal_snapshot", {})
+        manifest = checks.get("backtest_manifest", {})
+        price = checks.get("price_coverage", {})
+        if all(isinstance(item, dict) for item in (freshness, signal, manifest, price)):
+            console.print(
+                f"freshness={freshness.get('status', 'UNKNOWN')}；"
+                f"signal_snapshot={signal.get('status', 'UNKNOWN')}；"
+                f"backtest_manifest={manifest.get('status', 'UNKNOWN')}；"
+                f"price_coverage={price.get('status', 'UNKNOWN')}"
+            )
+    console.print(f"JSON：{json_path}")
+    console.print(f"Markdown：{markdown_path}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
 
 
 def _print_portfolio_tracking_window_progress(

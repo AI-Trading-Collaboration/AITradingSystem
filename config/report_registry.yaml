@@ -550,6 +550,24 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: weight_stability_readiness
+    title: Weight Search Stability Input Readiness
+    group: data_quality
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits reports weight-stability-readiness --latest
+    artifact_globs:
+      - artifacts/weight_stability_readiness/*/weight_stability_readiness_summary.json
+      - artifacts/weight_stability_readiness/*/weight_stability_readiness_summary.md
+      - outputs/reports/weight_stability_readiness_*.json
+      - outputs/reports/weight_stability_readiness_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Stable tuning readiness should be regenerated whenever tune-weights-stable returns INSUFFICIENT_DATA before interpreting TRADING-061 business results.
+    owner_action: restore_freshness_signal_snapshot_manifest_and_price_coverage_before_rerunning_stable_tuning
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: portfolio_turnover_attribution
     title: Portfolio Turnover Attribution
     group: research
