@@ -10,6 +10,8 @@
 
 ETF deterministic test fixtures 只能提交到 `tests/fixtures/etf_portfolio/`。不要把测试 fixture 放进 `data/` 或 `reports/`，也不要把 daily run 生成的 report 复制成源码 fixture，除非另行建立明确的最小化、脱敏、确定性 fixture。
 
+ETF no-lookahead artifacts 遵守统一 timing contract：raw market data / feature snapshot / signal / allocation decision 使用同一 `t`，最早 execution date 是 `t` 之后的下一交易日。`data/simulation/etf_ledger.csv` 中的 `forward_return_*`、`relative_return_vs_*`、`max_drawdown_next_*`、`weight_contribution_*`、portfolio-vs-benchmark 和 `signal_hit_*` 字段属于 delayed evaluation，只能在 `evaluation_only=true` 记录中承载；ETF daily brief 的 decision sections 不得引用这些字段。
+
 ## Production / advisory 主链路
 
 | Artifact | 由谁生成 | 上游输入 | 关键字段或内容 | 下游使用 | 是否影响 production | 常见误解 |

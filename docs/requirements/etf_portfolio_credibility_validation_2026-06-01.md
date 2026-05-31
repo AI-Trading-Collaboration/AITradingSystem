@@ -23,7 +23,7 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 |---|---|---|---|
 |TRADING-063A|DONE|Runtime Artifact Hygiene & Fixture Policy|忽略 `data/etf_portfolio/`、`data/simulation/`、`reports/`，建立 `tests/fixtures/etf_portfolio/`，文档区分 runtime artifacts 与 committed fixtures|
 |TRADING-063B|DONE|Benchmark Suite Hardening|B001~B008 benchmark registry/config、benchmark comparison schema 和测试覆盖|
-|TRADING-063C|READY|No-Lookahead Validation Framework|形式化 timing contract、校验 helper/module、决策字段 future leakage 防护测试|
+|TRADING-063C|DONE|No-Lookahead Validation Framework|形式化 timing contract、校验 helper/module、决策字段 future leakage 防护测试|
 |TRADING-063D|READY|Toy Portfolio Accounting Tests|手工可验 deterministic toy prices、NAV/weights/cost/next-bar/drawdown/contribution 测试|
 |TRADING-063E|READY|Risk Constraint Validation|asset/sleeve/equity/cash/rebalance/drawdown/volatility constraint tests 与 diagnostics|
 |TRADING-063F|READY|Allocation Stability Diagnostics|turnover、weight delta、regime transition、constraint hit rate、exposure distribution 等 JSON/Markdown/CLI/report 输出|
@@ -42,9 +42,19 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline。本阶段不新
 - `git status --short` 不再把现有 local ETF runtime outputs 显示为 source changes。
 - 目标验证通过：`git diff --check`、`python -m pytest tests -q`、`python -m ruff check config src tests scripts docs`。
 
+## TRADING-063C 验收标准
+
+- ETF timing contract 文档化：raw market data date = `t`、feature snapshot date = `t`、signal date = `t`、allocation decision date = `t`、最早 execution date 为 `t` 之后下一交易日，portfolio return 使用 execution 之后价格。
+- 新增 no-lookahead validation helper/module，覆盖 feature snapshots、signal records、allocation records、trade execution records、simulation ledger records 和 report decision sections。
+- 校验能 fail closed 检出 `execution_date <= signal_date`、`feature_source_date > signal_date`、decision payload 中的 future/evaluation 字段，以及 daily brief decision section 中的 evaluation-only 字段。
+- Simulation delayed evaluation 字段必须通过 `evaluation_only=true` 标记；decision-time record 不得因空 future 字段产生后验结论。
+- 测试覆盖有效 `t -> t+1`、same-day execution failure、feature date after signal failure、decision payload future field failure、simulation delayed evaluation marker 和 report decision block 防泄漏。
+
 ## 进展记录
 
 - 2026-06-01: 新增本需求文档并把 TRADING-063 登记为 `IN_PROGRESS`；开始 TRADING-063A runtime artifact hygiene。
 - 2026-06-01: TRADING-063A 完成。`.gitignore` 已忽略 `data/etf_portfolio/`、`data/simulation/` 和 `reports/`；新增 `tests/fixtures/etf_portfolio/.gitkeep`；`docs/artifact_catalog.md` 与 `docs/system_flow.md` 已说明 runtime artifact / fixture policy。验证通过 `git diff --check`、`python -m pytest tests -q`（1630 passed）和 `python -m ruff check config src tests scripts docs`。
 - 2026-06-01: TRADING-063B 进入实现。当前缺口为 B004 / B005 / B006 / B008 benchmark、B001~B008 registry ID、config-driven static portfolio/risk-off policy，以及 `benchmark_comparisons` common metric schema。
 - 2026-06-01: TRADING-063B 完成。`config/etf_portfolio/backtest.yaml` 已登记 B001-B008；backtest summary / metrics 输出 `benchmark_metrics` 和 `benchmark_comparisons`；真实 `aits etf backtest run --config config/etf_portfolio/backtest.yaml --fast` smoke 通过。验证通过 `python -m pytest tests -q`（1633 passed）、ruff、compileall 和 diff check。
+- 2026-06-01: TRADING-063C 进入实现。当前缺口为 ETF timing contract 的统一校验 helper、`execution_date > signal_date` / `feature_source_date <= signal_date` / decision payload future-field 防护、simulation delayed evaluation 标记，以及 daily brief decision section 的 evaluation-only 字段隔离测试。
+- 2026-06-01: TRADING-063C 完成。新增 `etf_portfolio/no_lookahead.py` timing-contract validation helper；backtest、simulation ledger 和 daily brief 已接入 no-lookahead 校验；simulation delayed evaluation 输出 `evaluation_only=true`；新增测试覆盖 valid `t -> t+1`、same-day execution failure、feature source date failure、decision payload future leakage、simulation marker 和 report decision section 防泄漏。真实 `aits etf backtest run --config config/etf_portfolio/backtest.yaml --fast` smoke 通过；验证通过 `python -m pytest tests -q`（1639 passed）、ruff、compileall 和 diff check。

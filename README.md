@@ -155,6 +155,13 @@ regime 日期范围。主要产物路径：
 - `reports/etf_portfolio/backtests/<run_id>/summary.md`
 - `reports/etf_portfolio/backtests/<run_id>/metrics.json`
 
+ETF no-lookahead timing contract 固定为：raw market data date = `t`、feature snapshot
+date = `t`、signal date = `t`、allocation decision date = `t`、最早执行日为 `t` 之后的
+下一交易日。`src/ai_trading_system/etf_portfolio/no_lookahead.py` 会校验
+`execution_date > signal_date`、`feature_source_date <= signal_date`、decision payload
+不得包含 future/evaluation 字段，且 ETF daily brief 的 decision sections 不得泄漏
+evaluation-only 字段。
+
 ETF backtest 使用 signal date 到 return date 的一交易日 execution lag，输出
 `asset_returns_json`、`asset_contributions_json`、权重历史、交易 delta、成本和 benchmark
 比较。默认 benchmark registry 为 B001-B008：buy-and-hold `SPY` / `QQQ` / `SMH` /
@@ -165,9 +172,10 @@ ETF backtest 使用 signal date 到 return date 的一交易日 execution lag，
 `aits etf simulation evaluate` 会在 forward window 足够时补充 `forward_return_20d`、
 `relative_return_vs_spy_20d`、`relative_return_vs_qqq_20d`、
 `weight_contribution_20d` 和组合级 portfolio-vs-benchmark 字段；窗口不足或 benchmark
-缺失时保持 null。`aits etf simulation report` 会按 `model_version` 汇总 20d hit rate
-和 portfolio vs SPY/QQQ 表现；`aits etf report daily` 的 Simulation Performance 小节会读取
-同一 ledger 摘要。该信息用于人工复核，不构成自动 promotion 或交易指令。
+缺失时保持 null。所有 delayed evaluation 行会标记 `evaluation_only=true`。
+`aits etf simulation report` 会按 `model_version` 汇总 20d hit rate 和 portfolio vs
+SPY/QQQ 表现；`aits etf report daily` 的 Simulation Performance 小节会读取同一 ledger
+摘要。该信息用于人工复核，不构成自动 promotion 或交易指令。
 
 P1 observe-only 入口包括 `aits etf relative-strength report`、`aits etf confirmation
 report`、`aits etf satellite evaluate`、`aits etf attribution report`、`aits etf events

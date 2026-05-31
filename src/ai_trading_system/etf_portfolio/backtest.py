@@ -20,6 +20,10 @@ from ai_trading_system.etf_portfolio.models import (
     ETFConfigBundle,
     ETFQualityReport,
 )
+from ai_trading_system.etf_portfolio.no_lookahead import (
+    raise_for_no_lookahead_violations,
+    validate_no_lookahead_records,
+)
 from ai_trading_system.etf_portfolio.regime import generate_regime_for_date
 from ai_trading_system.etf_portfolio.signals import generate_signals_for_date, signals_to_frame
 
@@ -191,6 +195,13 @@ def run_portfolio_backtest(
     daily = pd.DataFrame(rows)
     weights = pd.DataFrame(weight_rows)
     trades = pd.DataFrame(trade_rows)
+    raise_for_no_lookahead_violations(
+        validate_no_lookahead_records(
+            backtest_records=daily,
+            allocation_records=weights,
+            trade_records=trades,
+        )
+    )
     strategy_returns = [float(value) for value in daily["strategy_return"]]
     turnovers = [float(value) for value in daily["turnover"]]
     exposures = [

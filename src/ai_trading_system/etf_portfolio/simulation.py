@@ -7,6 +7,11 @@ import pandas as pd
 
 from ai_trading_system.etf_portfolio.allocation import allocation_to_frame
 from ai_trading_system.etf_portfolio.models import ETFAllocationRecord
+from ai_trading_system.etf_portfolio.no_lookahead import (
+    evaluation_only_columns,
+    raise_for_no_lookahead_violations,
+    validate_no_lookahead_records,
+)
 
 FORWARD_WINDOWS = (1, 5, 20, 60)
 
@@ -18,10 +23,13 @@ def record_simulation_snapshot(
     report_path: Path | None = None,
 ) -> Path:
     new_rows = allocation_to_frame(allocation_records)
+    new_rows["evaluation_only"] = False
     if report_path is not None:
         new_rows["report_path"] = str(report_path)
     if ledger_path.exists():
         existing = pd.read_csv(ledger_path)
+        if "evaluation_only" not in existing.columns:
+            existing["evaluation_only"] = _evaluation_value_mask(existing)
         key_cols = ["date", "model_version", "symbol"]
         existing_keys = {
             tuple(row[column] for column in key_cols) for _, row in new_rows.iterrows()
@@ -33,6 +41,9 @@ def record_simulation_snapshot(
     else:
         output = new_rows
     output = output.sort_values(["date", "model_version", "symbol"]).reset_index(drop=True)
+    raise_for_no_lookahead_violations(
+        validate_no_lookahead_records(simulation_records=output)
+    )
     ledger_path.parent.mkdir(parents=True, exist_ok=True)
     output.to_csv(ledger_path, index=False)
     return ledger_path
@@ -73,6 +84,10 @@ def evaluate_simulation_ledger(
     evaluated["weight_contribution_20d"] = evaluated.apply(_weight_contribution_20d, axis=1)
     evaluated = _add_portfolio_benchmark_columns(evaluated)
     evaluated["signal_hit_20d"] = evaluated.apply(_signal_hit_20d, axis=1)
+    evaluated["evaluation_only"] = True
+    raise_for_no_lookahead_violations(
+        validate_no_lookahead_records(simulation_records=evaluated)
+    )
     evaluated.to_csv(ledger_path, index=False)
     return ledger_path
 
@@ -156,6 +171,13 @@ def _price_pivot(prices: pd.DataFrame) -> pd.DataFrame:
     frame["_date"] = pd.to_datetime(frame["date"], errors="coerce")
     frame["_price"] = pd.to_numeric(frame["adj_close"], errors="coerce")
     return frame.pivot(index="_date", columns="symbol", values="_price").sort_index()
+
+
+def _evaluation_value_mask(frame: pd.DataFrame) -> list[bool]:
+    columns = evaluation_only_columns(frame.columns)
+    if not columns:
+        return [False] * len(frame)
+    return frame[list(columns)].notna().any(axis=1).astype(bool).tolist()
 
 
 def _forward_return(

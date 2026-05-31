@@ -7,6 +7,10 @@ from pathlib import Path
 import pandas as pd
 
 from ai_trading_system.etf_portfolio.models import ETFConfigBundle, ETFQualityReport
+from ai_trading_system.etf_portfolio.no_lookahead import (
+    raise_for_no_lookahead_violations,
+    validate_daily_brief_no_lookahead,
+)
 
 
 def render_daily_brief(
@@ -112,7 +116,9 @@ def render_daily_brief(
             "- Observe-only notes: 本报告为 decision-support output，不是自动实盘下单指令。",
         ]
     )
-    return "\n".join(lines) + "\n"
+    markdown = "\n".join(lines) + "\n"
+    raise_for_no_lookahead_violations(validate_daily_brief_no_lookahead(markdown))
+    return markdown
 
 
 def write_daily_brief(markdown: str, output_path: Path) -> Path:

@@ -443,6 +443,7 @@ def test_simulation_ledger_upserts_and_keeps_unavailable_forward_returns_null(
     ledger = pd.read_csv(ledger_path)
 
     assert len(ledger) == 1
+    assert set(ledger["evaluation_only"]) == {True}
     assert pd.isna(ledger.iloc[0]["forward_return_20d"])
     assert pd.isna(ledger.iloc[0]["relative_return_vs_spy_20d"])
     assert pd.isna(ledger.iloc[0]["weight_contribution_20d"])
@@ -615,6 +616,7 @@ def test_simulation_ledger_adds_benchmark_relative_and_weight_contribution(
     assert "relative_return_vs_spy_20d" in ledger.columns
     assert "relative_return_vs_qqq_20d" in ledger.columns
     assert "weight_contribution_20d" in ledger.columns
+    assert set(ledger["evaluation_only"]) == {True}
     assert abs(float(spy_row["relative_return_vs_spy_20d"])) < 1e-12
     assert not pd.isna(qqq_row["relative_return_vs_spy_20d"])
     assert round(float(spy_row["weight_contribution_20d"]), 10) == round(
