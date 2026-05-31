@@ -8,6 +8,115 @@
 
 daily-run 会触达的核心 YAML 配置和估值/风险/thesis 输入，在进入 PyYAML 解析前先读取为稳定 UTF-8 文本快照，并通过项目统一安全 YAML loader（优先 `CSafeLoader`）解析；文件读取、解码或解析失败仍进入各自既有 fail-closed 校验路径。
 
+## ETF Portfolio P0 Baseline
+
+`TRADING-062` 新增隔离的 ETF 主仓组合闭环。该闭环不修改现有 production 参数、shadow promotion、broker 或真实交易动作；默认命令入口统一为 `aits etf ...`。
+为兼容开发文档中的无前缀 CLI 示例，P0/P1 workflow 同步提供根级 compatibility alias：`aits data ingest/validate`、`aits features build`、`aits signals generate`、`aits regime generate`、`aits portfolio allocate`、`aits simulation record/evaluate/report`、`aits report daily`、`aits run daily` 和 `aits experiments run/compare/register`。根级 `aits backtest` 已由主系统每日评分回测占用，因此 ETF 回测继续使用 `aits etf backtest run/report`，避免混淆两套投资解释链路。
+
+新增关键配置：
+
+- `config/etf_portfolio/assets.yaml`：SPY / QQQ / SMH / SOXX / CASH 资产、默认权重、asset cap 和 risk group cap。
+- `config/etf_portfolio/strategy.yaml`：ETF signal model、feature window、score 权重、score mapping、rebalance delta 和数据质量阈值。
+- `config/etf_portfolio/risk.yaml`：Risk-On / Neutral / Risk-Off / Shock-Recovery / Overheated 的 cash/equity/semiconductor 约束、交易成本和 regime 规则阈值。
+- `config/etf_portfolio/backtest.yaml`：默认 `ai_after_chatgpt` 回测窗口、warm-up、next-close execution lag、benchmark 和 baseline。
+- `config/etf_portfolio/p1.yaml`：P1 observe-only 扩展配置，包括 satellite stocks、AI/semiconductor confirmation pairs、event calendar 和 manual-review-only weight governance。
+
+新增数据流：
+
+```mermaid
+flowchart TD
+    ETFP["data/raw/prices_daily.csv 或 data/etf_portfolio/prices.csv<br/>SPY/QQQ/SMH/SOXX OHLCV"] --> ETFDQ["aits etf data validate<br/>ETF price schema + duplicate + non-positive + return threshold gate"]
+    ETFDQ --> ETFF["aits etf features build<br/>data/etf_portfolio/features.csv"]
+    ETFF --> ETFS["aits etf signals generate<br/>data/etf_portfolio/signals.csv"]
+    ETFF --> ETFR["aits etf regime generate<br/>data/etf_portfolio/regimes.csv"]
+    ETFS --> ETFA["aits etf portfolio allocate<br/>data/etf_portfolio/target_weights.csv"]
+    ETFR --> ETFA
+    ETFA --> ETFL["aits etf simulation record/evaluate<br/>data/simulation/etf_ledger.csv<br/>20d forward / SPY-QQQ relative / contribution fields"]
+    ETFL --> ETFSIMR["aits etf simulation report<br/>model-version hit rate + portfolio vs SPY/QQQ"]
+    ETFA --> ETFB["aits etf report daily<br/>reports/etf_portfolio/YYYY-MM-DD_portfolio_brief.md"]
+    ETFL --> ETFB
+    ETFF --> ETBT["aits etf backtest run<br/>daily / weights / trades / metrics / summary<br/>reports/etf_portfolio/backtests/<run_id>/"]
+    ETFS --> ETBT
+    ETFR --> ETBT
+    ETFB --> ETFRIDX["config/report_registry.yaml + aits reports index<br/>ETF brief / data quality / backtest / P2 readiness visibility"]
+    ETBT --> ETFRIDX
+    ETFRIDX --> ETFREAD["aits reports reader-brief<br/>Report Navigation / Task Cadence Calendar 只读下钻 ETF artifacts"]
+```
+
+ETF P0 outputs 必须披露 `data_quality_status`、`model_version`、`config_hash`、`market_regime=ai_after_chatgpt` 和实际请求/生效日期范围。Signals 与 target weights 保持分离；target weights 必须合计为 1，`CASH` 吸收未分配权重。Simulation ledger 在 forward window 足够后记录 20d return、相对 `SPY` / `QQQ` return、权重贡献和组合级 benchmark 对比；窗口不足或 benchmark 缺失时保持 null，不得补 0。Backtest execution 使用从 signal date 到 return date 的一交易日滞后，并输出 daily return、asset contribution、weights、trades、summary 和 metrics artifacts；benchmark set 包含 buy-and-hold SPY/QQQ/SMH、static default portfolio 和 `ma_50_200_qqq`。Compatibility aliases 只复用同一 ETF 命令实现，不新增数据流或 production surface。ETF brief、ETF data quality、ETF backtest summary 和 ETF P2 walk-forward readiness 已登记到 `config/report_registry.yaml`，由 `aits reports index` 和 Reader Brief 只读显示 freshness / navigation；该可见性层不运行 ETF 上游命令、不写 production weights、不触发 broker 或 trading action。
+
+## ETF Portfolio P1 Observe-Only Baseline
+
+`TRADING-062` P1 扩展保持 `production_effect=none`，只生成研究、归因和治理 artifacts；不得修改 P0 target weights、现有 production 参数、broker 或真实交易状态。P1 使用 `config/etf_portfolio/p1.yaml` 中的人工复核边界，`auto_promotion=false`。
+
+```mermaid
+flowchart TD
+    P1P["data/raw/prices_daily.csv<br/>ETF + optional NVDA/AVGO/MSFT/GOOGL OHLCV"] --> P1DQ["aits etf features build --include-satellites<br/>复用 ETF price quality gate"]
+    P1DQ --> P1F["data/etf_portfolio/features.csv<br/>含 satellite rs_vs_SPY/QQQ/SMH features"]
+    P1F --> P1RS["aits etf relative-strength report<br/>reports/etf_portfolio/p1/*_relative_strength.md/csv"]
+    P1RS --> P1CONF["aits etf confirmation report<br/>AIConfirmationScore / SemiconductorLeadershipScore / MegaCapConfirmationScore"]
+    P1F --> P1SIG["aits etf signals generate<br/>data/etf_portfolio/signals.csv"]
+    P0R["data/etf_portfolio/regimes.csv"] --> P1SAT
+    P1SIG --> P1SAT["aits etf satellite evaluate<br/>observe-only satellite candidates"]
+    P0W["data/etf_portfolio/target_weights.csv"] --> P1ATTR["aits etf attribution report<br/>portfolio contribution report"]
+    P1P --> P1ATTR
+    P1CFG["config/etf_portfolio/p1.yaml"] --> P1EVT["aits etf events risk-flag<br/>event calendar flags"]
+    P1CFG --> P1GOV["aits etf governance status<br/>manual_review_required=true / auto_promotion=false"]
+    P1CFG --> P1EXP["aits etf experiments run/register/compare<br/>candidate config hash + parameter diff + optional backtest metrics<br/>reports/etf_portfolio/experiments/registry.jsonl + comparison report"]
+```
+
+P1 reports must state `production_effect=none` and remain separated from P0 allocation. Reports that read cached market data rerun the ETF price quality gate and include `data_quality_status` plus the generated quality report path. Satellite candidate weights are suggestions only; actual ETF target weights continue to come from `aits etf portfolio allocate` until owner review and a later promotion task explicitly changes that boundary.
+Experiment run/compare commands are registry and comparison operations only: they read candidate YAML and optional already-generated backtest summaries, record candidate hashes and parameter diffs, and output observe-only comparison deltas. They do not mutate `config/etf_portfolio/*.yaml`, do not write `target_weights.csv`, and do not promote a model version.
+
+## ETF Portfolio P2 Observe-Only Contracts
+
+`TRADING-062` P2 扩展先实现可审计 contract/report 底座，不接入未批准 provider，不伪造 EDGAR/news/options/holdings/live broker 数据。所有 P2 命令固定 `production_effect=none`；ML ranking 和 ensemble 只能输出 `candidate_only`；live interface 只做 read-only preflight，默认 `broker_routing_allowed=false`。
+
+```mermaid
+flowchart TD
+    P2CFG["config/etf_portfolio/p2.yaml<br/>P2 source contracts、PIT timestamp columns、advanced risk/walk-forward/ML/ensemble/live safety policy"] --> P2EDGDER["aits etf p2 derive-edgar-events<br/>SEC filing timeline -> edgar_text_events.csv"]
+    P2CFG --> P2EDGTXT["aits etf p2 fetch-edgar-text<br/>bounded official SEC filing text fetch/cache"]
+    P2CFG --> P2EDGTOP["aits etf p2 edgar-topics<br/>governed keyword topic audit; no sentiment"]
+    P2CFG --> P2EDG["aits etf p2 edgar-text<br/>reports/etf_portfolio/p2/*_edgar_text.md/csv"]
+    P2CFG --> P2NEWSN["aits etf p2 normalize-news<br/>vendor/manual news CSV -> news_theme_events.csv"]
+    P2CFG --> P2NEWS["aits etf p2 news-themes<br/>source contract or symbol/theme tracking report"]
+    P2CFG --> P2OPTDER["aits etf p2 derive-options-risk<br/>^VIX local market cache -> options_iv_skew.csv"]
+    P2CFG --> P2OPTN["aits etf p2 normalize-options-risk<br/>vendor/manual IV/VXN/skew CSV -> options_iv_skew.csv"]
+    P2CFG --> P2OPT["aits etf p2 options-risk<br/>reports/etf_portfolio/p2/*_options_iv_skew.md/csv"]
+    P2CFG --> P2HOLDN["aits etf p2 normalize-holdings<br/>issuer/vendor/manual holdings CSV -> etf_holdings.csv"]
+    P2CFG --> P2HOLD["aits etf p2 holdings-lookthrough<br/>reports/etf_portfolio/p2/*_holdings_lookthrough.md/csv"]
+    P2SECTL["data/processed/sec_edgar/filing_timeline.csv<br/>SEC PIT acceptance / available_for_signal_date / checksum"] --> P2EDGDER
+    P2SECTL --> P2EDGTXT
+    P2EDGDER --> P2EXT
+    P2EDGTXT --> P2DOCS["data/etf_portfolio/p2/edgar_text_documents.csv + edgar_text_documents/*.txt<br/>official text cache index + document checksum"]
+    P2DOCS --> P2EDGTOP
+    P2VIX["data/raw/prices_daily.csv<br/>^VIX close series + ETF data quality gate"] --> P2OPTDER
+    P2OPTDER --> P2EXT
+    P2RAW["外部下载或人工审计 CSV/Parquet<br/>EDGAR/news/options/holdings 原始结构化输入"] --> P2IMP["aits etf p2 import-source<br/>校验 p2.yaml required_columns；写 canonical CSV + source_manifest.csv"]
+    P2IMP --> P2EXT["data/etf_portfolio/p2/*.csv<br/>canonical P2 inputs + source_manifest.csv：provider/source_url/downloaded_at/row_count/checksum"]
+    P2DOCS --> P2EXT
+    P2NEWSN --> P2EXT
+    P2OPTN --> P2EXT
+    P2HOLDN --> P2EXT
+    P2EXT --> P2EDG
+    P2EXT --> P2NEWS
+    P2EXT --> P2OPT
+    P2EXT --> P2HOLD
+    P2PRICE["data/raw/prices_daily.csv<br/>ETF cached prices"] --> P2DQ["ETF price quality gate"]
+    P2DQ --> P2RISK["aits etf p2 advanced-risk<br/>covariance/concentration/correlation diagnostics"]
+    P0W2["data/etf_portfolio/target_weights.csv"] --> P2RISK
+    P0S2["data/etf_portfolio/signals.csv"] --> P2ML["aits etf p2 ml-ranking<br/>candidate_only ranking"]
+    P2ML --> P2ENS["aits etf p2 ensemble<br/>candidate_only ensemble score"]
+    P2CFG --> P2WF["aits etf p2 walk-forward<br/>backtest/model-version readiness"]
+    P2BT["reports/etf_portfolio/backtests/*/summary.json"] --> P2WF
+    P2CFG --> P2WOPT["aits etf p2 weight-optimizer<br/>candidate-only optimizer weights; no target_weights write"]
+    P0S2 --> P2WOPT
+    P2DQ --> P2WOPT
+    P2CFG --> P2LIVE["aits etf p2 live-preflight<br/>read_only / no broker route"]
+```
+
+P2 EDGAR metadata 可以从既有 SEC PIT filing timeline 派生；该 feed 只表示 filing 元数据，`sentiment_score=0.0`，不是文本解释模型。P2 EDGAR filing text cache 只能从同一 timeline 中按 as-of / availability gate 选择有限候选，HTTP 获取要求 SEC User-Agent，输出 document index、text cache、checksum 和 source manifest；该缓存仍不是财报解释模型，不产生 sentiment 或投资结论。P2 EDGAR topic audit 只读取已缓存 official filing text，关键词主题由 `p2.yaml` 治理，输出 topic counts 和 matched keywords；该报告仍不得生成 sentiment、财务结论、权重或交易建议。P2 weight optimizer 复用 ETF price data quality gate 和 P0 signals，只输出 candidate-only 权重、component score、config hash 和 limitation；不得写入 `target_weights.csv`，不得替代正式 allocation。P2 news themes 可以规范化 vendor/manual CSV；缺少显式 sentiment 时只使用 `p2.yaml` 的中性默认并在 limitation 中披露，不调用 LLM 推断新闻情绪；有 canonical input 时，`news-themes` 输出 symbol/theme event count、weighted sentiment、avg relevance、latest summary 和 source limitation，缺输入时仍为明确 report state。P2 options risk 可以从本地 `^VIX` cache 派生 IV-rank proxy，但报告必须披露 VXN 和 skew vendor 字段缺失，不能把该 proxy 当成完整期权数据；若 owner/vendor 提供本地审计 CSV，`normalize-options-risk` 可规范化 IV rank、skew z-score 和 VXN level，记录 provider、source URL、downloaded_at、checksum 和 source manifest，仍保持 observe-only。P2 holdings 可以把 issuer/vendor/manual CSV 规范化为 canonical holdings，并用 `downloaded_at` 执行 PIT gate；历史 as-of 若使用未来接收的 holdings，`holdings-lookthrough` 必须失败。P2 source reports 校验 required columns 和 PIT availability metadata。缺失外部数据是明确 report state，不是通过条件，也不能推导为市场结论。P2 reports 可供后续 owner review 使用，但不得写入 production weights、active shadow weights、broker orders、approved overlays 或 trading actions。
+
 ![AI Trading System 数据流总览](assets/system_flow_overview.svg)
 
 ## 维护边界

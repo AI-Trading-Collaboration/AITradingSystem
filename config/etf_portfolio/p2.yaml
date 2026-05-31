@@ -1,0 +1,152 @@
+policy_metadata:
+  version: etf_p2_v0_1
+  status: observe_only_contracts
+  owner: system
+  rationale: "P2 高级输入先形成可审计 contract/report，不接入未批准 provider，不修改 production。"
+  validation: "由 ETF P2 tests 覆盖 schema、缺失输入、candidate-only 和 no-broker 边界。"
+  review_condition: "owner 明确 provider/API/PIT policy、P1 forward simulation 样本稳定后再接入真实来源。"
+
+sources:
+  edgar_text:
+    provider_status: manual_input
+    source_level: primary_filing_local_pit_cache
+    input_path: data/etf_portfolio/p2/edgar_text_events.csv
+    as_of_column: as_of
+    available_time_column: available_at
+    required_columns:
+      - as_of
+      - symbol
+      - source_provider
+      - source_url
+      - filing_type
+      - filed_at
+      - available_at
+      - topic
+      - sentiment_score
+      - summary
+      - checksum
+  news_themes:
+    provider_status: manual_input
+    source_level: external_vendor_or_manual_news_theme_audit
+    input_path: data/etf_portfolio/p2/news_theme_events.csv
+    as_of_column: as_of
+    available_time_column: available_at
+    required_columns:
+      - as_of
+      - symbol
+      - source_provider
+      - source_url
+      - published_at
+      - available_at
+      - theme
+      - sentiment_score
+      - relevance_score
+      - summary
+      - checksum
+  options_iv_skew:
+    provider_status: manual_input
+    source_level: vendor_manual_or_local_vix_proxy_options_risk
+    input_path: data/etf_portfolio/p2/options_iv_skew.csv
+    as_of_column: as_of
+    available_time_column: available_at
+    required_columns:
+      - as_of
+      - symbol
+      - source_provider
+      - available_at
+      - iv_rank
+      - skew_zscore
+      - vxn_level
+      - risk_flag
+      - checksum
+  etf_holdings:
+    provider_status: manual_input
+    source_level: issuer_vendor_or_manual_holdings
+    input_path: data/etf_portfolio/p2/etf_holdings.csv
+    as_of_column: as_of
+    available_time_column: downloaded_at
+    required_columns:
+      - as_of
+      - etf_symbol
+      - holding_symbol
+      - holding_weight
+      - source_provider
+      - source_url
+      - downloaded_at
+      - checksum
+
+advanced_risk:
+  covariance_window: 60
+  concentration_warning_weight: 0.45
+  volatility_warning: 0.30
+  correlation_warning: 0.80
+
+options_risk:
+  source_symbol: "^VIX"
+  lookback_days: 252
+  min_history_days: 60
+  elevated_iv_rank: 0.80
+  stress_iv_rank: 0.95
+
+news_themes:
+  neutral_sentiment_score: 0.0
+  default_relevance_score: 1.0
+  require_explicit_sentiment: false
+  tracking_lookback_days: 14
+  max_report_rows: 25
+  candidate_only: true
+  auto_promotion: false
+
+edgar_text_analysis:
+  min_text_characters: 1000
+  candidate_only: true
+  auto_promotion: false
+  topic_keywords:
+    ai_demand:
+      - artificial intelligence
+      - accelerated computing
+      - generative ai
+    export_controls:
+      - export controls
+      - license requirements
+    supply_constraints:
+      - supply constraints
+      - supply availability
+    capex_investment:
+      - capital expenditures
+      - property and equipment
+
+walk_forward:
+  min_completed_runs: 3
+  min_distinct_model_versions: 2
+
+ml_ranking:
+  composite_weight: 0.60
+  relative_strength_weight: 0.25
+  risk_weight: 0.15
+  candidate_only: true
+  auto_promotion: false
+
+weight_optimizer:
+  lookback_days: 60
+  min_history_days: 40
+  signal_score_weight: 0.50
+  risk_adjusted_return_weight: 0.30
+  inverse_volatility_weight: 0.20
+  max_candidate_weight: 0.45
+  min_cash_weight: 0.10
+  candidate_only: true
+  auto_promotion: false
+
+ensemble:
+  p0_signal_weight: 0.70
+  ml_candidate_weight: 0.30
+  candidate_only: true
+  auto_promotion: false
+
+live_interface:
+  enabled: false
+  paper_only: true
+  read_only: true
+  broker_routing_allowed: false
+  multi_account_enabled: false

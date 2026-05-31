@@ -1,0 +1,60 @@
+policy_metadata:
+  version: etf_risk_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: "P0 regime 与组合约束 baseline；所有投资解释阈值集中在配置中，避免硬编码。"
+  validation: "由 ETF regime、allocation 和 backtest tests 覆盖。"
+  review_condition: "P0 回测和模拟舱结果稳定后复核。"
+
+regime_constraints:
+  Risk-On:
+    equity_cap: 1.00
+    cash_min: 0.00
+    semiconductor_cap: 0.35
+    satellite_cap: 0.20
+
+  Neutral:
+    equity_cap: 0.85
+    cash_min: 0.10
+    semiconductor_cap: 0.25
+    satellite_cap: 0.10
+
+  Risk-Off:
+    equity_cap: 0.40
+    cash_min: 0.60
+    semiconductor_cap: 0.05
+    satellite_cap: 0.00
+
+  Shock-Recovery:
+    equity_cap: 0.65
+    cash_min: 0.25
+    semiconductor_cap: 0.15
+    satellite_cap: 0.05
+
+  Overheated:
+    equity_cap: 0.85
+    cash_min: 0.10
+    semiconductor_cap: 0.20
+    satellite_cap: 0.10
+
+portfolio_constraints:
+  max_single_asset_weight: 0.65
+  max_daily_turnover: 0.30
+  max_rebalance_trade_weight: 0.15
+  min_cash_weight: 0.00
+  long_only: true
+  allow_leverage: false
+
+transaction_costs:
+  commission_bps: 0.0
+  slippage_bps: 2.0
+
+regime_rules:
+  risk_off_spy_drawdown_63d: -0.10
+  risk_off_qqq_drawdown_63d: -0.12
+  risk_on_qqq_trend_min: 60.0
+  risk_on_spy_trend_min: 55.0
+  overheated_qqq_ret_20d: 0.10
+  overheated_qqq_distance_ma_50: 0.08
+  overheated_smh_ret_20d: 0.15
+  overheated_smh_drawdown_63d_min: -0.03

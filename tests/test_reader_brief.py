@@ -118,6 +118,12 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     assert any(item["artifact_id"] == "daily_report" for item in payload["appendix_links"])
     assert any(item["artifact_id"] == "trace_bundle" for item in payload["appendix_links"])
     assert any(item["artifact_id"] == "artifact_catalog" for item in payload["report_navigation"])
+    assert any(
+        item["artifact_id"] == "etf_portfolio_brief"
+        and item["freshness_status"] == "FRESH"
+        and item["navigation_source"] == "report_index_runtime"
+        for item in payload["report_navigation"]
+    )
     core_items = payload["report_navigation_groups"]["groups"][0]["items"]
     daily_summary_rows = [
         item for item in core_items if item["artifact_id"] == "daily_decision_summary"
@@ -492,6 +498,13 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
         "# AI 产业链日报\n\n- 生产影响：advisory only\n",
         encoding="utf-8",
     )
+    etf_brief_path = tmp_path / "reports" / "etf_portfolio" / "2026-05-04_portfolio_brief.md"
+    etf_brief_path.parent.mkdir(parents=True)
+    etf_brief_path.write_text(
+        "# AITradingSystem Daily Portfolio Brief - 2026-05-04\n\n"
+        "- Data Quality: PASS\n- production_effect: none\n",
+        encoding="utf-8",
+    )
     trace_bundle_path = tmp_path / "daily_score_2026-05-04_trace.json"
     trace_bundle_path.write_text(
         json.dumps(
@@ -709,8 +722,8 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                 "status": "PASS_WITH_WARNINGS",
                 "production_effect": "none",
                 "summary": {
-                    "report_count": 3,
-                    "available_count": 2,
+                    "report_count": 4,
+                    "available_count": 3,
                     "missing_count": 1,
                     "stale_count": 0,
                     "required_missing_count": 1,
@@ -752,6 +765,19 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                         "latest_artifact_path": str(daily_decision_summary_path),
                         "exists": True,
                         "owner_action": "regenerate_daily_tasks_if_missing",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_portfolio_brief",
+                        "title": "ETF Portfolio Brief",
+                        "cadence": "daily",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "AVAILABLE",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(etf_brief_path),
+                        "exists": True,
+                        "owner_action": "run_aits_etf_run_daily_after_etf_data_quality_passes",
                         "production_effect": "none",
                     },
                 ],

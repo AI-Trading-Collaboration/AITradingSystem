@@ -1,0 +1,77 @@
+policy_metadata:
+  version: etf_assets_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: "P0 ETF 主仓组合 baseline；数值来自 ETF 组合开发文档的初始默认参数。"
+  validation: "由 tests/test_etf_portfolio_config.py 覆盖；后续权重变化必须通过回测和模拟舱治理。"
+  review_condition: "P0 全流程稳定后进入 P1 权重治理与候选参数评估。"
+
+assets:
+  SPY:
+    name: SPDR S&P 500 ETF Trust
+    asset_type: ETF
+    sleeve: core_market
+    role: broad_us_equity_core
+    benchmark: SPY
+    tradeable: true
+    min_weight: 0.00
+    max_weight: 0.60
+    default_weight: 0.30
+    risk_group: us_equity
+
+  QQQ:
+    name: Invesco QQQ Trust
+    asset_type: ETF
+    sleeve: growth
+    role: technology_growth_core
+    benchmark: QQQ
+    tradeable: true
+    min_weight: 0.00
+    max_weight: 0.65
+    default_weight: 0.40
+    risk_group: us_growth
+
+  SMH:
+    name: VanEck Semiconductor ETF
+    asset_type: ETF
+    sleeve: ai_semiconductor
+    role: semiconductor_enhancement
+    benchmark: SMH
+    tradeable: true
+    min_weight: 0.00
+    max_weight: 0.30
+    default_weight: 0.15
+    risk_group: semiconductor
+
+  SOXX:
+    name: iShares Semiconductor ETF
+    asset_type: ETF
+    sleeve: ai_semiconductor
+    role: semiconductor_enhancement
+    benchmark: SOXX
+    tradeable: true
+    min_weight: 0.00
+    max_weight: 0.20
+    default_weight: 0.00
+    risk_group: semiconductor
+
+  CASH:
+    name: Cash
+    asset_type: CASH
+    sleeve: defense
+    role: risk_control
+    tradeable: false
+    min_weight: 0.00
+    max_weight: 1.00
+    default_weight: 0.15
+    risk_group: cash
+
+risk_groups:
+  us_equity:
+    max_weight: 0.80
+  us_growth:
+    max_weight: 0.70
+  semiconductor:
+    max_weight: 0.35
+  cash:
+    max_weight: 1.00

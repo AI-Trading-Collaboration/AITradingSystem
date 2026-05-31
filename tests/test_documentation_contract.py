@@ -72,6 +72,8 @@ def test_default_documentation_contract_covers_current_report_registry() -> None
     assert payload["summary"]["missing_catalog_count"] == 0
     assert payload["summary"]["error_count"] == 0
     assert any(report["report_id"] == "documentation_contract" for report in payload["reports"])
+    assert any(report["report_id"] == "etf_portfolio_brief" for report in payload["reports"])
+    assert any(report["report_id"] == "etf_backtest_summary" for report in payload["reports"])
 
 
 def test_docs_report_contract_cli_writes_outputs_and_fails_on_contract_error(

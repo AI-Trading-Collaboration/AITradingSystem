@@ -1,0 +1,28 @@
+policy_metadata:
+  version: etf_backtest_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: "默认结论窗口使用 ai_after_chatgpt regime；2022-12-01 之前历史只用于 warm-up 或对照。"
+  validation: "由 ETF portfolio backtest、toy return 和 no-lookahead tests 覆盖。"
+  review_condition: "P0 全流程稳定后增加 robustness 与 walk-forward。"
+
+backtest:
+  regime: ai_after_chatgpt
+  start_date: "2022-12-01"
+  end_date: null
+  warmup_start_date: "2015-01-01"
+  initial_capital: 100000
+  price_field: adj_close
+  execution_price: next_close
+  signal_lag_days: 1
+  rebalance_frequency: daily
+  benchmark_assets:
+    - SPY
+    - QQQ
+    - SMH
+  baselines:
+    - buy_and_hold_spy
+    - buy_and_hold_qqq
+    - buy_and_hold_smh
+    - static_default_portfolio
+    - ma_50_200_qqq

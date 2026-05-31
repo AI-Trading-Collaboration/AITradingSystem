@@ -1,0 +1,78 @@
+policy_metadata:
+  version: etf_strategy_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: "P0 ETF signal baseline；阈值来自开发文档，用于形成可测试闭环，不作为长期校准结论。"
+  validation: "由 ETF portfolio signal、allocation、backtest 和 no-lookahead 测试覆盖。"
+  review_condition: "模拟舱和 ai_after_chatgpt 回测积累后重新校准。"
+
+model:
+  name: etf_portfolio_allocator
+  version: 0.1.0
+  signal_execution_lag_days: 1
+  rebalance_frequency: daily
+  min_rebalance_delta: 0.02
+
+scores:
+  trend:
+    weight: 0.35
+  momentum:
+    weight: 0.25
+  relative_strength:
+    weight: 0.25
+  risk:
+    weight: 0.15
+
+trend_features:
+  ma_windows: [20, 50, 100, 200]
+  slope_window: 20
+
+momentum_features:
+  return_windows: [20, 60, 120]
+
+risk_features:
+  vol_windows: [20, 60]
+  drawdown_windows: [63, 126, 252]
+
+relative_strength:
+  method: ratio_momentum
+  windows: [20, 60, 120]
+  pairs:
+    - numerator: QQQ
+      denominator: SPY
+      meaning: growth_vs_market
+    - numerator: SMH
+      denominator: QQQ
+      meaning: semiconductor_vs_growth
+    - numerator: SOXX
+      denominator: QQQ
+      meaning: semiconductor_alt_vs_growth
+    - numerator: SMH
+      denominator: SPY
+      meaning: semiconductor_vs_market
+    - numerator: SOXX
+      denominator: SMH
+      meaning: semiconductor_alt_vs_smh
+
+score_mapping:
+  return_score_floor: -0.10
+  return_score_ceiling: 0.10
+  vol_low: 0.20
+  vol_high: 0.60
+  vol_max_penalty: 30.0
+  drawdown_low: -0.05
+  drawdown_high: -0.20
+  drawdown_max_penalty: 30.0
+  below_ma_200_penalty: 20.0
+
+allocation:
+  score_multipliers:
+    very_bearish: 0.20
+    bearish: 0.50
+    neutral: 1.00
+    bullish: 1.10
+    very_bullish: 1.25
+
+data_quality:
+  suspicious_daily_return_abs: 0.20
+  extreme_daily_return_abs: 0.50

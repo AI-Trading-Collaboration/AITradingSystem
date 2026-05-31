@@ -194,6 +194,68 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: etf_portfolio_brief
+    title: ETF Portfolio Brief
+    group: daily
+    cadence: daily
+    audience: investor
+    owner: system
+    command: aits etf report daily --date YYYY-MM-DD
+    artifact_globs:
+      - reports/etf_portfolio/*_portfolio_brief.md
+    freshness_sla_days: 1
+    freshness_rationale: ETF portfolio decision-support brief should align with the latest ETF price cache date after ETF data quality passes.
+    owner_action: run_aits_etf_run_daily_after_etf_data_quality_passes
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: etf_data_quality
+    title: ETF Data Quality Report
+    group: data_quality
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits etf data validate
+    artifact_globs:
+      - reports/etf_portfolio/data_quality_*.md
+    freshness_sla_days: 1
+    freshness_rationale: ETF cached-data-dependent reports must disclose ETF-specific data quality before features, signals, allocation, backtests, and briefs are interpreted.
+    owner_action: stop_etf_data_dependent_workflow_if_missing_or_failed
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: etf_backtest_summary
+    title: ETF Portfolio Backtest Summary
+    group: backtest
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf backtest run
+    artifact_globs:
+      - reports/etf_portfolio/backtests/*/summary.md
+      - reports/etf_portfolio/backtests/*/summary.json
+    freshness_sla_days: 30
+    freshness_rationale: ETF portfolio backtest evidence should be refreshed after ETF strategy, risk, allocation, or config changes.
+    owner_action: rerun_etf_backtest_after_etf_config_or_signal_change
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: etf_p2_walk_forward
+    title: ETF P2 Walk Forward Readiness
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf p2 walk-forward --date YYYY-MM-DD
+    artifact_globs:
+      - reports/etf_portfolio/p2/*_walk_forward.md
+      - reports/etf_portfolio/p2/*_walk_forward.csv
+    freshness_sla_days: 30
+    freshness_rationale: ETF P2 readiness should be visible before interpreting observe-only P2 candidates or claiming readiness for production promotion.
+    owner_action: review_p2_not_ready_reason_before_promotion_or_live_interface_discussion
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: research_governance_summary
     title: Research Governance Summary
     group: governance

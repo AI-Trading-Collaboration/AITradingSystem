@@ -311,9 +311,14 @@ def _glob_paths(pattern: str) -> list[Path]:
 
 
 def _date_from_path(path: Path) -> date | None:
-    matches = re.findall(r"\d{4}-\d{2}-\d{2}", path.name)
+    search_text = " ".join([path.name, path.parent.name])
+    matches = re.findall(r"\d{4}-\d{2}-\d{2}", search_text)
     if not matches:
-        return None
+        compact_matches = re.findall(r"(?<!\d)(\d{8})(?:T\d{6}Z?)?(?!\d)", search_text)
+        if not compact_matches:
+            return None
+        value = compact_matches[-1]
+        matches = [f"{value[:4]}-{value[4:6]}-{value[6:]}"]
     try:
         return date.fromisoformat(matches[-1])
     except ValueError:

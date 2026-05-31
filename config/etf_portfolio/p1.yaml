@@ -1,0 +1,58 @@
+policy_metadata:
+  version: etf_p1_v0_1
+  status: observe_only_baseline
+  owner: system
+  rationale: "P1 扩展只生成研究和治理 artifacts，不修改 P0 target weights 或 production 参数。"
+  validation: "由 ETF P1 tests 覆盖；promotion 仍需人工复核和模拟舱样本。"
+  review_condition: "P0/P1 forward simulation 样本达到最低门槛后再评估 production integration。"
+
+satellite_stocks:
+  NVDA:
+    benchmark_etf: SMH
+    max_weight: 0.08
+    group: semiconductor
+  AVGO:
+    benchmark_etf: SMH
+    max_weight: 0.06
+    group: semiconductor
+  MSFT:
+    benchmark_etf: QQQ
+    max_weight: 0.05
+    group: mega_cap_software
+  GOOGL:
+    benchmark_etf: QQQ
+    max_weight: 0.05
+    group: mega_cap_software
+
+satellite_rules:
+  trend_score_min: 60.0
+  relative_strength_score_min: 60.0
+  risk_score_min: 50.0
+  total_satellite_cap: 0.20
+  default_substitution_weight: 0.05
+
+confirmation:
+  semiconductor_pairs:
+    - SMH/QQQ
+    - SOXX/QQQ
+    - SMH/SPY
+    - NVDA/SMH
+    - AVGO/SMH
+  mega_cap_pairs:
+    - MSFT/QQQ
+    - GOOGL/QQQ
+  score_positive_min: 60.0
+
+event_calendar:
+  warning_window_days: 3
+  events: []
+
+governance:
+  allowed_model_states:
+    - candidate
+    - shadow
+    - production
+    - retired
+  min_shadow_observations: 20
+  manual_review_required: true
+  auto_promotion: false

@@ -23,6 +23,8 @@ def test_default_report_registry_loads() -> None:
     assert registry["schema_version"] == 1
     assert registry["policy_version"] == "report_registry_v1"
     assert any(item["report_id"] == "reader_brief" for item in registry["reports"])
+    assert any(item["report_id"] == "etf_portfolio_brief" for item in registry["reports"])
+    assert any(item["report_id"] == "etf_backtest_summary" for item in registry["reports"])
     assert all("freshness_rationale" in item for item in registry["reports"])
 
 
@@ -56,7 +58,7 @@ def test_report_index_classifies_latest_artifacts_and_freshness(tmp_path: Path) 
 
     assert payload["status"] == "PASS_WITH_WARNINGS"
     assert payload["production_effect"] == "none"
-    assert payload["summary"]["report_count"] == 4
+    assert payload["summary"]["report_count"] == 5
     assert reports["daily_score"]["freshness_status"] == "FRESH"
     assert reports["evidence_dashboard"]["freshness_status"] == "STALE"
     assert reports["missing_required"]["freshness_status"] == "MISSING"
@@ -104,7 +106,31 @@ def test_reports_index_cli_writes_html_and_json(tmp_path: Path) -> None:
     assert json_output_path.exists()
     payload = json.loads(json_output_path.read_text(encoding="utf-8"))
     assert payload["report_type"] == "report_index"
-    assert payload["summary"]["report_count"] == 4
+    assert payload["summary"]["report_count"] == 5
+
+
+def test_report_index_extracts_date_from_etf_backtest_run_directory(tmp_path: Path) -> None:
+    registry_path = _write_registry(tmp_path)
+    backtest_dir = (
+        tmp_path
+        / "reports"
+        / "etf_portfolio"
+        / "backtests"
+        / "etf-backtest-20260531T124140Z"
+    )
+    backtest_dir.mkdir(parents=True)
+    (backtest_dir / "summary.md").write_text("# ETF Backtest\n", encoding="utf-8")
+
+    payload = build_report_index_payload(
+        as_of=date(2026, 5, 31),
+        project_root=tmp_path,
+        registry_path=registry_path,
+    )
+    reports = {item["report_id"]: item for item in payload["reports"]}
+
+    assert reports["etf_backtest_summary"]["artifact_date"] == "2026-05-31"
+    assert reports["etf_backtest_summary"]["freshness_status"] == "FRESH"
+    assert reports["etf_backtest_summary"]["latest_artifact_name"] == "summary.md"
 
 
 def _write_registry(tmp_path: Path) -> Path:
@@ -150,6 +176,12 @@ def _write_registry(tmp_path: Path) -> Path:
                 "Backtest Daily",
                 "outputs/backtests/backtest_*.md",
                 freshness_sla_days=90,
+            ),
+            _registry_entry(
+                "etf_backtest_summary",
+                "ETF Backtest Summary",
+                "reports/etf_portfolio/backtests/*/summary.md",
+                freshness_sla_days=30,
             ),
         ],
     }

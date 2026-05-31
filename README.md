@@ -104,6 +104,88 @@ aits validate-data
 质量报告默认写入 `outputs/reports/data_quality_YYYY-MM-DD.md`。如果校验出现错误，命令会返回非零退出码，后续评分和回测流程不应继续使用这批数据。
 当 `data/raw/prices_marketstack_daily.csv` 存在或默认生产路径要求第二来源时，质量门禁会校验 Marketstack 缓存 schema、覆盖、新鲜度、重复键、异常值，并比较主价格缓存和 Marketstack 的 raw `close` 价差。`aits validate-data` 会同步写出 `data_quality_YYYY-MM-DD_marketstack_reconciliation.csv`：能证明为指数 volume 不适用、已知拆股复权跳变、Marketstack 第二源自身坏点，或 raw `close` 已对齐但 adjusted close 分红复权口径不同的，会以 `INFO` 记录规则、证据和主/二源数值；不能解释的 raw close/OHLC 冲突仍作为 warning/error 保留，不会自动平滑或修正任何价格。
 
+## ETF 主仓组合配置系统
+
+ETF 主仓组合配置系统位于 `src/ai_trading_system/etf_portfolio/`，配置在
+`config/etf_portfolio/`。它围绕 `SPY`、`QQQ`、`SMH`、`SOXX` 和 `CASH`
+生成 ETF 特征、信号、市场状态、目标权重、组合级回测、模拟舱记录和
+Markdown portfolio brief。默认研究窗口是 `ai_after_chatgpt`，回测默认从
+2022-12-01 开始；更早数据只用于 warm-up、压力测试或 regime 对照。
+
+默认入口使用隔离命名空间 `aits etf ...`：
+
+```powershell
+aits etf validate-config
+aits etf data validate --date latest
+aits etf features build
+aits etf signals generate --date latest
+aits etf regime generate --date latest
+aits etf portfolio allocate --date latest
+aits etf simulation record --date latest
+aits etf simulation evaluate --as-of latest
+aits etf simulation report
+aits etf report daily --date latest
+aits etf run daily --date latest --dry-run
+aits etf backtest run --fast
+```
+
+为兼容 ETF 开发文档里的短路径示例，根级 CLI 也提供等价 alias：
+`aits data ingest/validate`、`aits features build`、`aits signals generate`、
+`aits regime generate`、`aits portfolio allocate`、`aits simulation
+record/evaluate/report`、`aits report daily`、`aits run daily` 和 `aits experiments
+run/compare/register`。根级
+`aits backtest` 已属于现有主系统每日评分回测，ETF 回测继续使用
+`aits etf backtest run/report`，避免混淆两套投资解释链路。
+`aits features build --end latest` 可按价格缓存最新日期构建特征；`aits etf backtest
+run --config config/etf_portfolio/backtest.yaml` 可显式指定 ETF backtest policy。
+
+ETF 数据依赖命令会先运行 ETF price quality gate，失败时停止；报告必须披露
+`data_quality_status`、质量报告路径、`model_version`、`config_hash`、实际请求日期和
+regime 日期范围。主要产物路径：
+
+- `data/etf_portfolio/features.csv`
+- `data/etf_portfolio/signals.csv`
+- `data/etf_portfolio/regimes.csv`
+- `data/etf_portfolio/target_weights.csv`
+- `data/simulation/etf_ledger.csv`
+- `reports/etf_portfolio/YYYY-MM-DD_portfolio_brief.md`
+- `reports/etf_portfolio/backtests/<run_id>/daily.csv`
+- `reports/etf_portfolio/backtests/<run_id>/weights.csv`
+- `reports/etf_portfolio/backtests/<run_id>/trades.csv`
+- `reports/etf_portfolio/backtests/<run_id>/summary.md`
+- `reports/etf_portfolio/backtests/<run_id>/metrics.json`
+
+ETF backtest 使用 signal date 到 return date 的一交易日 execution lag，输出
+`asset_returns_json`、`asset_contributions_json`、权重历史、交易 delta、成本和 benchmark
+比较。默认 benchmark 包含 buy-and-hold `SPY` / `QQQ` / `SMH`、static default portfolio
+和 `ma_50_200_qqq`，用于审计，不是收益承诺。
+
+`aits etf simulation evaluate` 会在 forward window 足够时补充 `forward_return_20d`、
+`relative_return_vs_spy_20d`、`relative_return_vs_qqq_20d`、
+`weight_contribution_20d` 和组合级 portfolio-vs-benchmark 字段；窗口不足或 benchmark
+缺失时保持 null。`aits etf simulation report` 会按 `model_version` 汇总 20d hit rate
+和 portfolio vs SPY/QQQ 表现；`aits etf report daily` 的 Simulation Performance 小节会读取
+同一 ledger 摘要。该信息用于人工复核，不构成自动 promotion 或交易指令。
+
+P1 observe-only 入口包括 `aits etf relative-strength report`、`aits etf confirmation
+report`、`aits etf satellite evaluate`、`aits etf attribution report`、`aits etf events
+risk-flag`、`aits etf governance status`、`aits etf experiments register`、`aits etf
+experiments run --config <candidate.yaml>` 和 `aits etf experiments compare --baseline
+production`。P2
+observe-only 入口包括 `aits etf p2 edgar-text`、`derive-edgar-events`、
+`fetch-edgar-text`、`edgar-topics`、`normalize-news`、`news-themes`、
+`derive-options-risk`、`normalize-options-risk`、`options-risk`、`normalize-holdings`、
+`holdings-lookthrough`、`advanced-risk`、`walk-forward`、`ml-ranking`、
+`weight-optimizer`、`ensemble` 和 `live-preflight`。
+
+ETF brief 已登记到 report registry / Reader Brief navigation，便于人工下钻，但该
+可见性层只读扫描已有 artifact，不运行 ETF 上游、不写 production weights、不触发
+broker 或 trading action。P1/P2 当前均固定 `production_effect=none`；EDGAR 文本层只做
+官方 filing cache 和受治理 topic count，不做自动财报解释；news/options/holdings
+只接受本地审计输入或显式 proxy，live news vendor feed、LLM sentiment、真实 VXN/skew
+vendor feed、实时 issuer holdings API 和多账户/实盘接口仍需要 owner/provider/API/PIT
+policy 决策后才能升级。
+
 当质量报告显示 Marketstack 第二源自身坏行时，可运行只读诊断复查：
 
 ```powershell
