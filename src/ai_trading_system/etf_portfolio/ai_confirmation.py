@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable, Mapping
+from datetime import date
 from hashlib import sha256
 from pathlib import Path
 from typing import Any, Literal, Self
 
+import numpy as np
+import pandas as pd
 from pydantic import BaseModel, Field, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
@@ -15,6 +18,17 @@ from ai_trading_system.yaml_loader import safe_load_yaml_path
 DEFAULT_AI_CONFIRMATION_UNIVERSE_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "ai_confirmation_universe.yaml"
 )
+DEFAULT_AI_CONFIRMATION_REPORT_DIR = (
+    PROJECT_ROOT / "reports" / "etf_portfolio" / "ai_confirmation"
+)
+DEFAULT_AI_CONFIRMATION_FEATURE_DIR = DEFAULT_AI_CONFIRMATION_REPORT_DIR / "features"
+
+AI_CONFIRMATION_BREADTH_FEATURE_VERSION = "ai_confirmation_breadth_v0_1"
+AI_CONFIRMATION_EVENT_GROUP_ID = "event_risk_symbols_or_calendar_refs"
+
+# TRADING-066B explicitly requires these price-derived confirmation horizons.
+BREADTH_MA_WINDOWS = (20, 50, 100, 200)
+BREADTH_RETURN_WINDOWS = (20, 60)
 
 AI_CONFIRMATION_SAFETY = {
     "observe_only": True,
@@ -156,15 +170,38 @@ def all_enabled_tickers(config: AIConfirmationUniverseConfig) -> tuple[str, ...]
     return tuple(sorted(tickers))
 
 
+def ai_confirmation_price_group_ids(config: AIConfirmationUniverseConfig) -> tuple[str, ...]:
+    return tuple(
+        group_id
+        for group_id in sorted(config.ai_confirmation_universe)
+        if group_id != AI_CONFIRMATION_EVENT_GROUP_ID
+        and config.ai_confirmation_universe[group_id].enabled
+    )
+
+
+def all_enabled_price_tickers(config: AIConfirmationUniverseConfig) -> tuple[str, ...]:
+    tickers: set[str] = set()
+    for group_id in ai_confirmation_price_group_ids(config):
+        tickers.update(symbol.ticker for symbol in enabled_symbols_for_group(config, group_id))
+    return tuple(sorted(tickers))
+
+
 def validate_ai_confirmation_data_availability(
     config: AIConfirmationUniverseConfig,
     available_symbols: Iterable[str],
+    *,
+    group_ids: Iterable[str] | None = None,
 ) -> dict[str, Any]:
     available = {symbol.strip().upper() for symbol in available_symbols}
+    selected_group_ids = tuple(group_ids) if group_ids is not None else tuple(
+        sorted(config.ai_confirmation_universe)
+    )
     group_reports: list[dict[str, Any]] = []
     errors: list[str] = []
     warnings: list[str] = []
-    for group_id in sorted(config.ai_confirmation_universe):
+    for group_id in sorted(selected_group_ids):
+        if group_id not in config.ai_confirmation_universe:
+            raise KeyError(f"unknown AI confirmation group: {group_id}")
         group = config.ai_confirmation_universe[group_id]
         enabled_symbols = enabled_symbols_for_group(config, group_id)
         present = [symbol.ticker for symbol in enabled_symbols if symbol.ticker in available]
@@ -213,6 +250,107 @@ def validate_ai_confirmation_data_availability(
     }
 
 
+def build_ai_confirmation_breadth_features(
+    prices: pd.DataFrame,
+    *,
+    config: AIConfirmationUniverseConfig,
+    run_date: date,
+    group_ids: Iterable[str] | None = None,
+) -> list[dict[str, Any]]:
+    frame = _prepare_ai_price_history(prices, run_date)
+    selected_group_ids = (
+        tuple(group_ids) if group_ids is not None else ai_confirmation_price_group_ids(config)
+    )
+    available_symbols = set(frame["symbol"].dropna().astype(str))
+    availability = validate_ai_confirmation_data_availability(
+        config,
+        available_symbols,
+        group_ids=selected_group_ids,
+    )
+    availability_by_group = {
+        str(item["group_id"]): item for item in availability["group_reports"]
+    }
+    records: list[dict[str, Any]] = []
+    for group_id in sorted(selected_group_ids):
+        group = config.ai_confirmation_universe.get(group_id)
+        if group is None:
+            raise KeyError(f"unknown AI confirmation group: {group_id}")
+        symbols = enabled_symbols_for_group(config, group_id)
+        symbol_tickers = [symbol.ticker for symbol in symbols]
+        symbol_stats = [
+            _symbol_breadth_stats(frame, ticker)
+            for ticker in symbol_tickers
+            if ticker in available_symbols
+        ]
+        warnings = _group_availability_warnings(availability_by_group[group_id])
+        warnings.extend(_insufficient_history_warnings(group_id, symbol_stats))
+        feature_values = _group_breadth_values(frame, symbol_tickers, symbol_stats)
+        records.append(
+            {
+                "date": run_date.isoformat(),
+                "group_id": group_id,
+                "feature_version": AI_CONFIRMATION_BREADTH_FEATURE_VERSION,
+                "feature_values": feature_values,
+                "symbol_count": len(symbol_tickers),
+                "valid_symbol_count": len(symbol_stats),
+                "data_coverage_ratio": _safe_ratio(len(symbol_stats), len(symbol_tickers)),
+                "warnings": sorted(set(warnings)),
+                **AI_CONFIRMATION_SAFETY,
+            }
+        )
+    return records
+
+
+def ai_confirmation_breadth_records_to_frame(records: list[dict[str, Any]]) -> pd.DataFrame:
+    rows: list[dict[str, Any]] = []
+    for record in records:
+        feature_values = dict(record.get("feature_values") or {})
+        warnings = list(record.get("warnings") or [])
+        row = {
+            key: value
+            for key, value in record.items()
+            if key not in {"feature_values", "warnings"}
+        }
+        row.update(feature_values)
+        row["feature_values_json"] = json.dumps(
+            feature_values,
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+        row["warnings_json"] = json.dumps(warnings, ensure_ascii=False, sort_keys=True)
+        rows.append(row)
+    return pd.DataFrame(rows).sort_values(["date", "group_id"]).reset_index(drop=True)
+
+
+def write_ai_confirmation_breadth_features(
+    records: list[dict[str, Any]],
+    *,
+    output_dir: Path,
+    run_date: date,
+    data_quality_status: str,
+    data_quality_report: str | None = None,
+) -> dict[str, Path]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    stem = f"ai_confirmation_features_{run_date.isoformat()}"
+    payload = {
+        "report_type": "ai_confirmation_breadth_features",
+        "date": run_date.isoformat(),
+        "feature_version": AI_CONFIRMATION_BREADTH_FEATURE_VERSION,
+        "data_quality_status": data_quality_status,
+        "data_quality_report": data_quality_report,
+        "records": records,
+        **AI_CONFIRMATION_SAFETY,
+    }
+    json_path = output_dir / f"{stem}.json"
+    csv_path = output_dir / f"{stem}.csv"
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    ai_confirmation_breadth_records_to_frame(records).to_csv(csv_path, index=False)
+    return {"json": json_path, "csv": csv_path}
+
+
 def _dedupe_symbols(
     symbols: Iterable[AIConfirmationSymbolConfig],
 ) -> list[AIConfirmationSymbolConfig]:
@@ -230,3 +368,199 @@ def _dedupe_symbols(
 def _config_hash(payload: Mapping[str, Any]) -> str:
     normalized = json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str)
     return sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def _prepare_ai_price_history(prices: pd.DataFrame, run_date: date) -> pd.DataFrame:
+    required = {"date", "symbol", "adj_close"}
+    missing = sorted(required - set(prices.columns))
+    if missing:
+        raise ValueError(f"AI confirmation prices missing columns: {', '.join(missing)}")
+    frame = prices.copy()
+    frame["symbol"] = frame["symbol"].astype(str).str.strip().str.upper()
+    frame["_date"] = pd.to_datetime(frame["date"], errors="coerce")
+    frame["_adj_close"] = pd.to_numeric(frame["adj_close"], errors="coerce")
+    frame = frame.loc[
+        frame["_date"].notna()
+        & (frame["_date"] <= pd.Timestamp(run_date))
+        & frame["_adj_close"].notna()
+        & (frame["_adj_close"] > 0)
+    ].copy()
+    return frame.sort_values(["symbol", "_date"]).reset_index(drop=True)
+
+
+def _symbol_breadth_stats(frame: pd.DataFrame, ticker: str) -> dict[str, Any]:
+    history = frame.loc[frame["symbol"] == ticker].sort_values("_date").reset_index(drop=True)
+    closes = history["_adj_close"].astype(float)
+    current = float(closes.iloc[-1])
+    stats: dict[str, Any] = {
+        "ticker": ticker,
+        "latest_date": pd.Timestamp(history["_date"].iloc[-1]).date().isoformat(),
+        "adj_close": current,
+    }
+    for window in BREADTH_MA_WINDOWS:
+        if len(closes) < window:
+            stats[f"above_{window}d_ma"] = None
+            continue
+        moving_average = float(closes.rolling(window=window, min_periods=window).mean().iloc[-1])
+        stats[f"above_{window}d_ma"] = bool(current > moving_average)
+    for window in BREADTH_RETURN_WINDOWS:
+        if len(closes) <= window:
+            stats[f"return_{window}d"] = None
+            continue
+        stats[f"return_{window}d"] = float(current / float(closes.iloc[-window - 1]) - 1.0)
+    stats["return_1d"] = (
+        float(current / float(closes.iloc[-2]) - 1.0) if len(closes) > 1 else None
+    )
+    return stats
+
+
+def _group_breadth_values(
+    frame: pd.DataFrame,
+    symbol_tickers: list[str],
+    symbol_stats: list[dict[str, Any]],
+) -> dict[str, Any]:
+    values: dict[str, Any] = {}
+    for window in BREADTH_MA_WINDOWS:
+        values[f"percent_above_{window}d_ma"] = _share_true(
+            stat.get(f"above_{window}d_ma") for stat in symbol_stats
+        )
+    for window in BREADTH_RETURN_WINDOWS:
+        returns = [
+            float(stat[f"return_{window}d"])
+            for stat in symbol_stats
+            if _is_finite_number(stat.get(f"return_{window}d"))
+        ]
+        values[f"percent_positive_{window}d_return"] = _share_positive(returns)
+        values[f"median_{window}d_return"] = _safe_float(np.median(returns)) if returns else None
+        values[f"equal_weight_group_return_{window}d"] = (
+            _safe_float(np.mean(returns)) if returns else None
+        )
+    values["group_drawdown_from_60d_high"] = _group_drawdown_from_high(
+        frame,
+        symbol_tickers,
+        window=60,
+    )
+    values["group_realized_vol_20d"] = _group_realized_vol(frame, symbol_tickers, window=20)
+    values["advancing_declining_ratio"] = _advancing_declining_ratio(symbol_stats)
+    return values
+
+
+def _group_drawdown_from_high(
+    frame: pd.DataFrame,
+    symbol_tickers: list[str],
+    *,
+    window: int,
+) -> float | None:
+    group_index = _equal_weight_group_index(frame, symbol_tickers)
+    if len(group_index) < window:
+        return None
+    recent = group_index.tail(window)
+    high = recent.max()
+    if not _is_finite_number(high) or high <= 0:
+        return None
+    return _safe_float(recent.iloc[-1] / high - 1.0)
+
+
+def _group_realized_vol(
+    frame: pd.DataFrame,
+    symbol_tickers: list[str],
+    *,
+    window: int,
+) -> float | None:
+    group_index = _equal_weight_group_index(frame, symbol_tickers)
+    if len(group_index) <= window:
+        return None
+    returns = group_index.pct_change().dropna().tail(window)
+    if returns.empty:
+        return None
+    return _safe_float(returns.std() * np.sqrt(252))
+
+
+def _equal_weight_group_index(frame: pd.DataFrame, symbol_tickers: list[str]) -> pd.Series:
+    if not symbol_tickers:
+        return pd.Series(dtype=float)
+    selected = frame.loc[frame["symbol"].isin(symbol_tickers)].copy()
+    if selected.empty:
+        return pd.Series(dtype=float)
+    pivot = selected.pivot_table(
+        index="_date",
+        columns="symbol",
+        values="_adj_close",
+        aggfunc="last",
+    ).sort_index()
+    pivot = pivot.ffill()
+    returns = pivot.pct_change()
+    group_returns = returns.mean(axis=1, skipna=True).fillna(0.0)
+    return (1.0 + group_returns).cumprod()
+
+
+def _group_availability_warnings(group_report: Mapping[str, Any]) -> list[str]:
+    group_id = str(group_report["group_id"])
+    warnings: list[str] = []
+    for ticker in group_report.get("missing_required", []):
+        warnings.append(f"{group_id}:missing_required:{ticker}")
+    for ticker in group_report.get("missing_optional", []):
+        warnings.append(f"{group_id}:missing_optional:{ticker}")
+    return warnings
+
+
+def _insufficient_history_warnings(
+    group_id: str,
+    symbol_stats: list[dict[str, Any]],
+) -> list[str]:
+    warnings: list[str] = []
+    for window in BREADTH_MA_WINDOWS:
+        if symbol_stats and all(stat.get(f"above_{window}d_ma") is None for stat in symbol_stats):
+            warnings.append(f"{group_id}:insufficient_history:ma_{window}d")
+    for window in BREADTH_RETURN_WINDOWS:
+        if symbol_stats and all(stat.get(f"return_{window}d") is None for stat in symbol_stats):
+            warnings.append(f"{group_id}:insufficient_history:return_{window}d")
+    return warnings
+
+
+def _advancing_declining_ratio(symbol_stats: list[dict[str, Any]]) -> float | None:
+    returns = [
+        float(stat["return_1d"])
+        for stat in symbol_stats
+        if _is_finite_number(stat.get("return_1d"))
+    ]
+    if not returns:
+        return None
+    advancing = sum(1 for value in returns if value > 0)
+    declining = sum(1 for value in returns if value < 0)
+    return _safe_float(advancing / max(declining, 1))
+
+
+def _share_true(values: Iterable[Any]) -> float | None:
+    booleans = [value for value in values if isinstance(value, bool)]
+    if not booleans:
+        return None
+    return _safe_ratio(sum(1 for value in booleans if value), len(booleans))
+
+
+def _share_positive(values: Iterable[float]) -> float | None:
+    numbers = [float(value) for value in values if _is_finite_number(value)]
+    if not numbers:
+        return None
+    return _safe_ratio(sum(1 for value in numbers if value > 0), len(numbers))
+
+
+def _safe_ratio(numerator: int | float, denominator: int | float) -> float | None:
+    if denominator == 0:
+        return None
+    return _safe_float(float(numerator) / float(denominator))
+
+
+def _safe_float(value: Any) -> float | None:
+    if not _is_finite_number(value):
+        return None
+    return float(value)
+
+
+def _is_finite_number(value: Any) -> bool:
+    if value is None:
+        return False
+    try:
+        return bool(np.isfinite(float(value)))
+    except (TypeError, ValueError):
+        return False

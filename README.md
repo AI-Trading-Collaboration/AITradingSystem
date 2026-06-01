@@ -183,7 +183,11 @@ TRADING-066 AI confirmation overlay 从
 `config/etf_portfolio/ai_confirmation_universe.yaml` 读取 universe membership。该
 source config 定义 mega-cap AI、semiconductor hardware、cloud AI platform、AI ETF
 proxy 和 event-risk reference groups，并区分 required 与 optional symbols。TRADING-066
-后续 breadth、score、report、shadow overlay、Reader Brief 和 validation gate 必须固定
+的 breadth feature baseline 可用 `aits etf ai-confirmation features --date YYYY-MM-DD`
+生成，输出 `reports/etf_portfolio/ai_confirmation/features/ai_confirmation_features_YYYY-MM-DD.json/csv`。
+该命令先执行 ETF price quality gate，只使用 `date <= score_date` 的价格，strict required
+AI universe data 缺失时 fail closed。后续 score、report、shadow overlay、Reader Brief
+和 validation gate 必须固定
 `observe_only=true`、`candidate_only=true`、`production_effect=none`、
 `broker_action=none`、`manual_review_required=true`；overlay-adjusted weights 只能作为
 candidate/shadow/hypothetical weights，不写 official ETF target weights。
@@ -245,6 +249,8 @@ regime 日期范围。主要产物路径：
 - `reports/etf_portfolio/forward/weekly_reviews/weekly_review_YYYY-MM-DD.json`
 - `reports/etf_portfolio/forward/watchlist/forward_watchlist_YYYY-MM-DD.json`
 - `reports/etf_portfolio/forward/validation/forward_validation_YYYY-MM-DD.json`
+- `reports/etf_portfolio/ai_confirmation/features/ai_confirmation_features_YYYY-MM-DD.json`
+- `reports/etf_portfolio/ai_confirmation/features/ai_confirmation_features_YYYY-MM-DD.csv`
 
 `target_weights.csv` 输出 `constraints_applied` 和结构化
 `constraint_diagnostics` JSON。正式 allocation 会执行 asset cap/floor、risk group /

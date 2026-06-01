@@ -9,6 +9,16 @@ import pandas as pd
 import typer
 
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.etf_portfolio.ai_confirmation import (
+    DEFAULT_AI_CONFIRMATION_FEATURE_DIR,
+    DEFAULT_AI_CONFIRMATION_UNIVERSE_CONFIG_PATH,
+    ai_confirmation_price_group_ids,
+    all_enabled_price_tickers,
+    build_ai_confirmation_breadth_features,
+    load_ai_confirmation_universe_config,
+    validate_ai_confirmation_data_availability,
+    write_ai_confirmation_breadth_features,
+)
 from ai_trading_system.etf_portfolio.allocation import (
     allocate_portfolio,
     latest_weights_from_file,
@@ -160,6 +170,10 @@ satellite_app = typer.Typer(help="ETF P1 satellite candidates。", no_args_is_he
 attribution_app = typer.Typer(help="ETF P1 attribution。", no_args_is_help=True)
 experiments_app = typer.Typer(help="ETF P1 experiment registry。", no_args_is_help=True)
 forward_app = typer.Typer(help="ETF forward shadow simulation review。", no_args_is_help=True)
+ai_confirmation_app = typer.Typer(
+    help="ETF AI confirmation overlay calibration。",
+    no_args_is_help=True,
+)
 governance_app = typer.Typer(help="ETF P1 weight governance。", no_args_is_help=True)
 events_app = typer.Typer(help="ETF P1 event risk flags。", no_args_is_help=True)
 p2_app = typer.Typer(help="ETF P2 observe-only contracts。", no_args_is_help=True)
@@ -180,6 +194,7 @@ etf_app.add_typer(satellite_app, name="satellite")
 etf_app.add_typer(attribution_app, name="attribution")
 etf_app.add_typer(experiments_app, name="experiments")
 etf_app.add_typer(forward_app, name="forward")
+etf_app.add_typer(ai_confirmation_app, name="ai-confirmation")
 etf_app.add_typer(governance_app, name="governance")
 etf_app.add_typer(events_app, name="events")
 etf_app.add_typer(p2_app, name="p2")
@@ -346,6 +361,62 @@ def confirmation_report_command(
         metadata=quality_metadata,
     )
     typer.echo(f"ETF confirmation scores：{md_path}")
+
+
+@ai_confirmation_app.command("features")
+def ai_confirmation_features_command(
+    prices_path: Annotated[Path, typer.Option(help="ETF / AI 标准价格 CSV/Parquet 路径。")] = (
+        DEFAULT_ETF_PRICE_PATH
+    ),
+    date_option: Annotated[str | None, typer.Option("--date", help="日期或 latest。")] = None,
+    output_dir: Annotated[Path, typer.Option(help="输出目录。")] = (
+        DEFAULT_AI_CONFIRMATION_FEATURE_DIR
+    ),
+    universe_path: Annotated[Path, typer.Option(help="AI confirmation universe config。")] = (
+        DEFAULT_AI_CONFIRMATION_UNIVERSE_CONFIG_PATH
+    ),
+) -> None:
+    """生成 TRADING-066B AI / semiconductor breadth features。"""
+    config = load_etf_config_bundle()
+    ai_config = load_ai_confirmation_universe_config(universe_path)
+    extra_symbols = set(all_enabled_price_tickers(ai_config)) - set(config.assets.assets)
+    prices, quality_report = load_standard_prices(
+        prices_path,
+        config.assets,
+        config.strategy,
+        extra_symbols=extra_symbols,
+    )
+    if not quality_report.passed:
+        typer.echo(f"ETF 数据质量状态：{quality_report.status}，已停止 AI confirmation features。")
+        raise typer.Exit(code=1)
+    run_date = _resolve_date(date_option, prices=prices)
+    availability = validate_ai_confirmation_data_availability(
+        ai_config,
+        _available_price_symbols(prices, run_date),
+        group_ids=ai_confirmation_price_group_ids(ai_config),
+    )
+    if availability["status"] == "FAIL":
+        typer.echo("AI confirmation 数据覆盖状态：FAIL，已停止 feature build。")
+        for error in availability["errors"]:
+            typer.echo(f"- {error}")
+        raise typer.Exit(code=1)
+    report_metadata = _quality_metadata(quality_report)
+    records = build_ai_confirmation_breadth_features(
+        prices,
+        config=ai_config,
+        run_date=run_date,
+    )
+    paths = write_ai_confirmation_breadth_features(
+        records,
+        output_dir=output_dir,
+        run_date=run_date,
+        data_quality_status=quality_report.status,
+        data_quality_report=str(report_metadata["data_quality_report"]).strip("`"),
+    )
+    typer.echo(f"AI confirmation features JSON：{paths['json']}")
+    typer.echo(f"AI confirmation features CSV：{paths['csv']}")
+    typer.echo(f"data_quality_status={quality_report.status}")
+    typer.echo(f"ai_data_availability_status={availability['status']}")
 
 
 @satellite_app.command("evaluate")
@@ -2430,3 +2501,12 @@ def _satellite_symbols(config) -> set[str]:
     if config.p1 is None:
         return set()
     return set(config.p1.satellite_stocks)
+
+
+def _available_price_symbols(prices: pd.DataFrame, run_date: date) -> set[str]:
+    frame = prices.copy()
+    if "date" not in frame.columns or "symbol" not in frame.columns:
+        return set()
+    parsed_dates = pd.to_datetime(frame["date"], errors="coerce")
+    selected = frame.loc[parsed_dates.notna() & (parsed_dates <= pd.Timestamp(run_date))]
+    return {str(symbol).strip().upper() for symbol in selected["symbol"].dropna()}
