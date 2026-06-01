@@ -31,6 +31,25 @@ DEFAULT_ETF_EXPERIMENT_PACKS_CONFIG_PATH = (
 )
 DEFAULT_ETF_EXPERIMENT_RUN_DIR = DEFAULT_ETF_REPORT_DIR / "experiments"
 EXPERIMENT_METRIC_SCHEMA_VERSION = "etf_experiment_metrics_v1"
+EXPERIMENT_COMPARISON_SCHEMA_KEYS = (
+    "schema_version",
+    "report_type",
+    "run_metadata",
+    "experiment_list",
+    "baseline_comparison",
+    "benchmark_comparison",
+    "metrics_table",
+    "risk_metrics_table",
+    "turnover_stability_table",
+    "constraint_hit_summary",
+    "warning_summary",
+    "top_candidates_by_ranking_policy",
+    "ranking_policy_status",
+    "observe_only",
+    "production_effect",
+    "broker_action",
+    "manual_review_required",
+)
 
 # Schema keys only. These names define the controlled TRADING-064 override surface,
 # not investment thresholds.
@@ -434,6 +453,183 @@ def run_experiment_batch(
     )
 
 
+def find_latest_experiment_run_dir(
+    output_root: Path = DEFAULT_ETF_EXPERIMENT_RUN_DIR,
+) -> Path:
+    if not output_root.exists():
+        raise FileNotFoundError(f"ETF experiment output root does not exist: {output_root}")
+    candidates = [
+        item
+        for item in output_root.iterdir()
+        if item.is_dir() and (item / "run_manifest.json").exists()
+    ]
+    if not candidates:
+        raise FileNotFoundError(f"no ETF experiment runs found under: {output_root}")
+    return max(candidates, key=lambda item: (item / "run_manifest.json").stat().st_mtime)
+
+
+def build_experiment_comparison_report(run_dir: Path) -> dict[str, Any]:
+    documents = _load_batch_run_documents(run_dir)
+    manifest = documents["run_manifest"]
+    experiment_results = documents["experiment_results"]
+    benchmark_results = documents["benchmark_results"]
+    metrics_summary = documents["metrics_summary"]
+    diagnostics_summary = documents["diagnostics_summary"]
+    metrics_by_id = {
+        str(item.get("experiment_id")): item
+        for item in metrics_summary.get("metrics", [])
+        if isinstance(item, Mapping)
+    }
+    results = [
+        item
+        for item in experiment_results.get("results", [])
+        if isinstance(item, Mapping)
+    ]
+    baseline = _baseline_context(metrics_summary)
+    metrics_rows = [
+        _comparison_metric_row(
+            result,
+            metrics_by_id.get(str(result.get("experiment_id")), {}),
+            benchmark_results.get("benchmarks", {}),
+            baseline,
+        )
+        for result in results
+    ]
+    warning_summary = _comparison_warnings(
+        metrics_rows,
+        diagnostics_summary=diagnostics_summary,
+        baseline=baseline,
+    )
+    payload = {
+        "schema_version": 1,
+        "report_type": "etf_experiment_comparison",
+        "run_metadata": manifest,
+        "experiment_list": [
+            {
+                "experiment_id": result.get("experiment_id"),
+                "status": result.get("status"),
+                "family": result.get("family"),
+                "experiment_version": result.get("experiment_version"),
+            }
+            for result in results
+        ],
+        "baseline_comparison": baseline,
+        "benchmark_comparison": _benchmark_context(benchmark_results),
+        "metrics_table": metrics_rows,
+        "risk_metrics_table": _select_table(
+            metrics_rows,
+            [
+                "experiment_id",
+                "max_drawdown",
+                "Sharpe",
+                "Sortino",
+                "Calmar",
+                "drawdown_reduction_vs_baseline",
+                "drawdown_reduction_vs_QQQ",
+                "candidate_status",
+            ],
+        ),
+        "turnover_stability_table": _select_table(
+            metrics_rows,
+            [
+                "experiment_id",
+                "turnover",
+                "average_equity_exposure",
+                "average_cash_weight",
+                "constraint_hit_rate",
+                "regime_transition_count",
+                "candidate_status",
+            ],
+        ),
+        "constraint_hit_summary": _constraint_hit_summary(metrics_rows),
+        "warning_summary": warning_summary,
+        "top_candidates_by_ranking_policy": [],
+        "ranking_policy_status": "PENDING_TRADING_064E_RISK_ADJUSTED_V1",
+        "observe_only": True,
+        "production_effect": "none",
+        "broker_action": "none",
+        "manual_review_required": True,
+    }
+    return {key: payload[key] for key in EXPERIMENT_COMPARISON_SCHEMA_KEYS}
+
+
+def write_experiment_comparison_report(
+    payload: Mapping[str, Any],
+    *,
+    json_path: Path,
+    markdown_path: Path,
+) -> tuple[Path, Path]:
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.write_text(render_experiment_comparison_report(payload), encoding="utf-8")
+    return json_path, markdown_path
+
+
+def render_experiment_comparison_report(payload: Mapping[str, Any]) -> str:
+    metadata = _mapping(payload.get("run_metadata"))
+    rows = [row for row in payload.get("metrics_table", []) if isinstance(row, Mapping)]
+    warnings = payload.get("warning_summary")
+    warning_lines = ["- none"]
+    if isinstance(warnings, list) and warnings:
+        warning_lines = [f"- {item}" for item in warnings]
+    lines = [
+        "# ETF Experiment Comparison Report",
+        "",
+        f"- Run ID: {metadata.get('run_id')}",
+        f"- Pack ID: {metadata.get('pack_id')}",
+        f"- Date Range: {metadata.get('start_date')} to {metadata.get('end_date')}",
+        f"- Data Quality: {metadata.get('data_quality_status')}",
+        f"- Metric Schema: {metadata.get('metric_schema_version')}",
+        "- Safety: observe_only=true, production_effect=none, broker_action=none",
+        f"- Ranking Policy Status: {payload.get('ranking_policy_status')}",
+        "",
+        "## Baseline Context",
+        "",
+        f"- Status: {_mapping(payload.get('baseline_comparison')).get('status')}",
+        "",
+        "## Metrics Table",
+        "",
+        (
+            "| Experiment | Status | Total Return | CAGR | Max Drawdown | Sharpe | "
+            "Turnover | Excess vs QQQ | Constraint Hit Rate |"
+        ),
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|",
+    ]
+    for row in rows:
+        lines.append(
+            "| "
+            f"{row.get('experiment_id')} | "
+            f"{row.get('candidate_status')} | "
+            f"{_fmt_pct(row.get('total_return'))} | "
+            f"{_fmt_pct(row.get('CAGR'))} | "
+            f"{_fmt_pct(row.get('max_drawdown'))} | "
+            f"{_fmt_number(row.get('Sharpe'))} | "
+            f"{_fmt_number(row.get('turnover'))} | "
+            f"{_fmt_pct(row.get('excess_return_vs_QQQ'))} | "
+            f"{_fmt_pct(row.get('constraint_hit_rate'))} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Warnings",
+            "",
+            *warning_lines,
+            "",
+            "## Ranking",
+            "",
+            (
+                "- Ranking is intentionally pending TRADING-064E. This report does not "
+                "rank candidates by return only."
+            ),
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
 def _raise_if_experiment_is_unsafe(
     pack_id: str,
     experiment: ETFExperimentConfig,
@@ -511,6 +707,218 @@ def _batch_run_id(
     selected = pack_id or experiment_id or "unknown"
     timestamp = generated_at.strftime("%Y%m%dT%H%M%SZ")
     return f"etf-experiments-{selected}-{timestamp}"
+
+
+def _load_batch_run_documents(run_dir: Path) -> dict[str, Any]:
+    names = {
+        "run_manifest": "run_manifest.json",
+        "experiment_results": "experiment_results.json",
+        "benchmark_results": "benchmark_results.json",
+        "metrics_summary": "metrics_summary.json",
+        "diagnostics_summary": "diagnostics_summary.json",
+    }
+    documents: dict[str, Any] = {}
+    for key, name in names.items():
+        path = run_dir / name
+        if not path.exists():
+            raise FileNotFoundError(f"ETF experiment run missing {name}: {run_dir}")
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            raise ValueError(f"ETF experiment run document must be an object: {path}")
+        documents[key] = payload
+    return documents
+
+
+def _baseline_context(metrics_summary: Mapping[str, Any]) -> dict[str, Any]:
+    baseline = metrics_summary.get("baseline_metrics")
+    if isinstance(baseline, Mapping):
+        return {
+            "status": "AVAILABLE",
+            "metrics": dict(baseline),
+            "null_reason": None,
+        }
+    return {
+        "status": "MISSING_BASELINE_METRICS",
+        "metrics": {},
+        "null_reason": "Batch run output does not include baseline metrics yet.",
+    }
+
+
+def _comparison_metric_row(
+    result: Mapping[str, Any],
+    metrics_item: Mapping[str, Any],
+    benchmarks_by_experiment: Mapping[str, Any],
+    baseline: Mapping[str, Any],
+) -> dict[str, Any]:
+    experiment_id = str(result.get("experiment_id"))
+    standardized = _mapping(metrics_item.get("standardized_metrics"))
+    stability = _mapping(metrics_item.get("allocation_stability_diagnostics"))
+    benchmark_metrics = _mapping(benchmarks_by_experiment.get(experiment_id))
+    qqq_metrics = _mapping(benchmark_metrics.get("B002"))
+    null_reasons: dict[str, str] = {}
+    total_return = _metric(standardized, "total_return", null_reasons, experiment_id)
+    cagr = _metric(standardized, "CAGR", null_reasons, experiment_id)
+    max_drawdown = _metric(standardized, "max_drawdown", null_reasons, experiment_id)
+    qqq_total_return = _optional_float(qqq_metrics.get("total_return"))
+    qqq_max_drawdown = _optional_float(qqq_metrics.get("max_drawdown"))
+    baseline_metrics = _mapping(baseline.get("metrics"))
+    baseline_total_return = _optional_float(baseline_metrics.get("total_return"))
+    baseline_max_drawdown = _optional_float(baseline_metrics.get("max_drawdown"))
+    if baseline.get("status") != "AVAILABLE":
+        null_reasons["baseline_comparison"] = str(baseline.get("null_reason"))
+    row = {
+        "experiment_id": experiment_id,
+        "total_return": total_return,
+        "CAGR": cagr,
+        "max_drawdown": max_drawdown,
+        "Sharpe": _metric(standardized, "Sharpe", null_reasons, experiment_id),
+        "Sortino": _metric(standardized, "Sortino", null_reasons, experiment_id),
+        "Calmar": _metric(standardized, "Calmar", null_reasons, experiment_id),
+        "turnover": _metric(standardized, "turnover", null_reasons, experiment_id),
+        "average_equity_exposure": _metric(
+            standardized,
+            "average_equity_exposure",
+            null_reasons,
+            experiment_id,
+        ),
+        "average_cash_weight": _metric(
+            standardized,
+            "average_cash_weight",
+            null_reasons,
+            experiment_id,
+        ),
+        "excess_return_vs_baseline": _subtract_or_none(total_return, baseline_total_return),
+        "drawdown_reduction_vs_baseline": _drawdown_reduction_or_none(
+            max_drawdown,
+            baseline_max_drawdown,
+        ),
+        "excess_return_vs_QQQ": _subtract_or_none(total_return, qqq_total_return),
+        "drawdown_reduction_vs_QQQ": _drawdown_reduction_or_none(
+            max_drawdown,
+            qqq_max_drawdown,
+        ),
+        "constraint_hit_rate": _optional_float(stability.get("constraint_hit_rate")),
+        "regime_transition_count": stability.get("regime_transition_count"),
+        "candidate_status": _candidate_status(result),
+        "metric_null_reasons": null_reasons,
+    }
+    if row["excess_return_vs_QQQ"] is None:
+        null_reasons["excess_return_vs_QQQ"] = "QQQ benchmark metrics missing"
+    if row["drawdown_reduction_vs_QQQ"] is None:
+        null_reasons["drawdown_reduction_vs_QQQ"] = "QQQ benchmark drawdown missing"
+    return row
+
+
+def _benchmark_context(benchmark_results: Mapping[str, Any]) -> dict[str, Any]:
+    benchmarks = benchmark_results.get("benchmarks")
+    if not isinstance(benchmarks, Mapping) or not benchmarks:
+        return {"status": "MISSING_BENCHMARKS", "benchmark_ids": []}
+    ids: set[str] = set()
+    for value in benchmarks.values():
+        if isinstance(value, Mapping):
+            ids.update(str(key) for key in value)
+    return {"status": "AVAILABLE", "benchmark_ids": sorted(ids)}
+
+
+def _select_table(rows: list[dict[str, Any]], keys: list[str]) -> list[dict[str, Any]]:
+    return [{key: row.get(key) for key in keys} for row in rows]
+
+
+def _constraint_hit_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    rates = [
+        value
+        for value in (_optional_float(row.get("constraint_hit_rate")) for row in rows)
+        if value is not None
+    ]
+    return {
+        "experiment_count": len(rows),
+        "max_constraint_hit_rate": max(rates) if rates else None,
+        "experiments_with_constraint_hits": [
+            row["experiment_id"]
+            for row in rows
+            if (_optional_float(row.get("constraint_hit_rate")) or 0.0) > 0.0
+        ],
+    }
+
+
+def _comparison_warnings(
+    rows: list[dict[str, Any]],
+    *,
+    diagnostics_summary: Mapping[str, Any],
+    baseline: Mapping[str, Any],
+) -> list[str]:
+    warnings: list[str] = []
+    if baseline.get("status") != "AVAILABLE":
+        warnings.append("BASELINE_METRICS_MISSING")
+    if diagnostics_summary.get("status") != "PASS":
+        warnings.append(f"RUN_STATUS_{diagnostics_summary.get('status')}")
+    for row in rows:
+        if row.get("candidate_status") == "failed":
+            warnings.append(f"FAILED_EXPERIMENT:{row.get('experiment_id')}")
+        if row.get("metric_null_reasons"):
+            warnings.append(f"MISSING_METRICS:{row.get('experiment_id')}")
+    return sorted(set(warnings))
+
+
+def _candidate_status(result: Mapping[str, Any]) -> str:
+    if result.get("status") == "FAILED":
+        return "failed"
+    return "needs_ranking_policy"
+
+
+def _metric(
+    payload: Mapping[str, Any],
+    key: str,
+    null_reasons: dict[str, str],
+    experiment_id: str,
+) -> float | None:
+    value = _optional_float(payload.get(key))
+    if value is None:
+        null_reasons[key] = f"{experiment_id} missing metric {key}"
+    return value
+
+
+def _mapping(value: Any) -> dict[str, Any]:
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def _subtract_or_none(left: float | None, right: float | None) -> float | None:
+    if left is None or right is None:
+        return None
+    return left - right
+
+
+def _drawdown_reduction_or_none(
+    candidate_drawdown: float | None,
+    reference_drawdown: float | None,
+) -> float | None:
+    if candidate_drawdown is None or reference_drawdown is None:
+        return None
+    return abs(reference_drawdown) - abs(candidate_drawdown)
+
+
+def _optional_float(value: Any) -> float | None:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return None
+    if pd.isna(parsed):
+        return None
+    return parsed
+
+
+def _fmt_pct(value: Any) -> str:
+    parsed = _optional_float(value)
+    if parsed is None:
+        return "n/a"
+    return f"{parsed:.2%}"
+
+
+def _fmt_number(value: Any) -> str:
+    parsed = _optional_float(value)
+    if parsed is None:
+        return "n/a"
+    return f"{parsed:.2f}"
 
 
 def _git_commit() -> str:

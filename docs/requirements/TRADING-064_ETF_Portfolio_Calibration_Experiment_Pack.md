@@ -26,7 +26,7 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline，TRADING-063 已
 |TRADING-064A|DONE|Experiment Config Registry|
 |TRADING-064B|DONE|Baseline Parameter Grid Definition|
 |TRADING-064C|DONE|Batch Backtest Runner|
-|TRADING-064D|READY|Experiment Comparison Report|
+|TRADING-064D|DONE|Experiment Comparison Report|
 |TRADING-064E|READY|Risk/Return/Turnover Ranking|
 |TRADING-064F|READY|Candidate Selection Gate|
 |TRADING-064G|READY|Shadow Portfolio Enrollment|
@@ -54,3 +54,5 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline，TRADING-063 已
 - 2026-06-01: TRADING-064B 进入实现。目标是新增 `config/etf_portfolio/experiment_packs.yaml`、pack loader/validator 和测试，确保 `etf_calibration_v1` 只引用 registry 中的安全 experiment，不允许重复 experiment、不允许缺 ranking/promotion policy，也不引入 uncontrolled combinatorial search。
 - 2026-06-01: TRADING-064B 完成。新增 `etf_calibration_v1` pack，包含 base allocation、regime multiplier、semiconductor cap、rebalance threshold 和 relative strength weight 五个 family 的 16 个受控实验；pack 声明 `risk_adjusted_v1` ranking policy 和 `shadow_only_manual_review` promotion policy，并固定 `observe_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`。测试覆盖 pack load、experiment ref、重复 experiment、unsafe experiment、missing ranking policy 和 missing promotion policy。下一步进入 TRADING-064C batch backtest runner。
 - 2026-06-01: TRADING-064C 完成。`aits etf experiments run` 保留旧 `--config` candidate registry 行为，并新增 `--pack/--experiment --start --end` batch backtest path；batch runner 复用 ETF data quality gate 和 backtest engine，按 run directory 写出 `run_manifest.json`、`experiment_results.json`、`benchmark_results.json`、`metrics_summary.json` 和 `diagnostics_summary.json`。单个 experiment failure 进入 diagnostics，不被静默吞掉；unsafe experiment/pack 在运行前 fail closed。测试覆盖单实验运行、pack run、manifest/schema 文件、失败隔离、unsafe blocking 和 CLI smoke。下一步进入 TRADING-064D comparison report。
+- 2026-06-01: TRADING-064D 进入实现。目标是在 `aits etf experiments compare --run-id <run_id>` / `--latest` 上读取 064C run output，生成 JSON/Markdown comparison report，包含 run metadata、experiment list、baseline/benchmark context、metrics/risk/turnover/stability/constraint hit summary、warning/rejection summary 和 ranking policy 待实现状态；不得按 return-only 排序。
+- 2026-06-01: TRADING-064D 完成。新增 batch run comparison builder、JSON/Markdown renderer 和 CLI `aits etf experiments compare --run-id/--latest`；comparison report 包含 run metadata、experiment list、baseline context、benchmark context、metrics table、risk table、turnover/stability table、constraint hit summary、warning summary 和 `PENDING_TRADING_064E_RISK_ADJUSTED_V1` ranking 状态。缺 baseline 或失败 experiment 的指标保持 null 并输出 reason，不按 total return 排名。测试覆盖 run output load、baseline/benchmark context、Markdown/JSON 输出、missing metrics null reason、schema stability 和 CLI latest smoke。下一步进入 TRADING-064E ranking policy。

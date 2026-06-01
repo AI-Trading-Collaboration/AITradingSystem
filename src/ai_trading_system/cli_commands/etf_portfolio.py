@@ -32,9 +32,12 @@ from ai_trading_system.etf_portfolio.data import (
 )
 from ai_trading_system.etf_portfolio.experiments import (
     DEFAULT_ETF_EXPERIMENT_RUN_DIR,
+    build_experiment_comparison_report,
+    find_latest_experiment_run_dir,
     load_experiment_pack_registry,
     load_experiment_registry,
     run_experiment_batch,
+    write_experiment_comparison_report,
 )
 from ai_trading_system.etf_portfolio.features import (
     build_feature_store,
@@ -609,6 +612,14 @@ def experiments_run_command(
 
 @experiments_app.command("compare")
 def experiments_compare_command(
+    run_id: Annotated[
+        str | None,
+        typer.Option("--run-id", help="TRADING-064 experiment batch run id。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="读取最新 TRADING-064 experiment batch run。"),
+    ] = False,
     baseline: Annotated[str, typer.Option(help="比较基准，默认 production。")] = "production",
     baseline_metrics_path: Annotated[
         Path | None,
@@ -621,7 +632,23 @@ def experiments_compare_command(
         DEFAULT_ETF_REPORT_DIR / "experiments"
     ),
 ) -> None:
-    """只读比较 ETF experiment registry；不自动 promotion。"""
+    """只读比较 ETF experiment registry 或 TRADING-064 batch run；不自动 promotion。"""
+    if run_id is not None or latest:
+        if run_id is not None and latest:
+            raise typer.BadParameter("--run-id and --latest cannot be combined")
+        run_dir = (
+            find_latest_experiment_run_dir(output_dir)
+            if latest
+            else output_dir / str(run_id)
+        )
+        payload = build_experiment_comparison_report(run_dir)
+        json_path = run_dir / "comparison_report.json"
+        md_path = run_dir / "comparison_report.md"
+        write_experiment_comparison_report(payload, json_path=json_path, markdown_path=md_path)
+        typer.echo(f"ETF experiment comparison report：{md_path}")
+        typer.echo(f"run_id={payload['run_metadata']['run_id']}")
+        typer.echo(f"production_effect={payload['production_effect']}")
+        return
     frame = build_experiment_comparison(
         registry_path=registry_path,
         baseline=baseline,

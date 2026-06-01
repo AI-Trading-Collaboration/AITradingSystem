@@ -11,13 +11,16 @@ from typer.testing import CliRunner
 from ai_trading_system.cli import app
 from ai_trading_system.etf_portfolio.data import standardize_price_frame, validate_price_data
 from ai_trading_system.etf_portfolio.experiments import (
+    EXPERIMENT_COMPARISON_SCHEMA_KEYS,
     ETFExperimentPackRegistry,
     ETFExperimentRegistry,
+    build_experiment_comparison_report,
     build_experiment_config_bundle,
     load_experiment_pack_registry,
     load_experiment_registry,
     run_experiment_batch,
     validate_experiment_pack_registry,
+    write_experiment_comparison_report,
 )
 from ai_trading_system.etf_portfolio.models import load_etf_config_bundle
 
@@ -315,6 +318,111 @@ def test_etf_experiment_batch_cli_smoke(tmp_path: Path) -> None:
     assert list(output_dir.glob("*/run_manifest.json"))
 
 
+def test_etf_experiment_comparison_loads_run_output_and_includes_context(tmp_path: Path) -> None:
+    batch = _single_batch(tmp_path)
+
+    report = build_experiment_comparison_report(batch.run_dir)
+
+    assert tuple(report) == EXPERIMENT_COMPARISON_SCHEMA_KEYS
+    assert report["run_metadata"]["run_id"] == batch.run_id
+    assert report["experiment_list"][0]["experiment_id"] == "rebalance_05"
+    assert report["baseline_comparison"]["status"] == "MISSING_BASELINE_METRICS"
+    assert "B002" in report["benchmark_comparison"]["benchmark_ids"]
+    assert report["metrics_table"][0]["candidate_status"] == "needs_ranking_policy"
+    assert report["top_candidates_by_ranking_policy"] == []
+    assert report["ranking_policy_status"] == "PENDING_TRADING_064E_RISK_ADJUSTED_V1"
+    assert report["production_effect"] == "none"
+
+
+def test_etf_experiment_comparison_writes_json_and_markdown(tmp_path: Path) -> None:
+    batch = _single_batch(tmp_path)
+    report = build_experiment_comparison_report(batch.run_dir)
+    json_path = batch.run_dir / "comparison_report.json"
+    md_path = batch.run_dir / "comparison_report.md"
+
+    write_experiment_comparison_report(report, json_path=json_path, markdown_path=md_path)
+
+    assert json_path.exists()
+    assert md_path.exists()
+    assert "ETF Experiment Comparison Report" in md_path.read_text(encoding="utf-8")
+    assert "does not rank candidates by return only" in md_path.read_text(encoding="utf-8")
+
+
+def test_etf_experiment_comparison_keeps_missing_metrics_null_with_reason(
+    tmp_path: Path,
+) -> None:
+    base_config, prices, quality_report = _batch_inputs()
+    registry = load_experiment_registry()
+    registry.experiments["regime_mild"].overrides = {"base_weights": {"MISSING": 1.0}}
+    pack_registry = _mini_pack_registry(["regime_mild", "rebalance_05"])
+    batch = run_experiment_batch(
+        prices,
+        base_config=base_config,
+        quality_report=quality_report,
+        experiment_registry=registry,
+        pack_registry=pack_registry,
+        pack_id="mini_pack",
+        start=date(2022, 12, 1),
+        end=date(2022, 12, 20),
+        output_root=tmp_path,
+        generated_at=datetime(2026, 6, 1, tzinfo=UTC),
+    )
+
+    report = build_experiment_comparison_report(batch.run_dir)
+    failed_row = next(
+        row for row in report["metrics_table"] if row["experiment_id"] == "regime_mild"
+    )
+
+    assert failed_row["total_return"] is None
+    assert "total_return" in failed_row["metric_null_reasons"]
+    assert "FAILED_EXPERIMENT:regime_mild" in report["warning_summary"]
+
+
+def test_etf_experiment_compare_cli_latest_smoke(tmp_path: Path) -> None:
+    prices_path = tmp_path / "prices.csv"
+    output_dir = tmp_path / "experiment_runs"
+    _make_prices(days=360).to_csv(prices_path, index=False)
+    runner = CliRunner()
+    run_result = runner.invoke(
+        app,
+        [
+            "etf",
+            "experiments",
+            "run",
+            "--experiment",
+            "rebalance_05",
+            "--start",
+            "2022-12-01",
+            "--end",
+            "2022-12-20",
+            "--prices-path",
+            str(prices_path),
+            "--output-dir",
+            str(output_dir),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+    compare_result = runner.invoke(
+        app,
+        [
+            "etf",
+            "experiments",
+            "compare",
+            "--latest",
+            "--output-dir",
+            str(output_dir),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert run_result.exit_code == 0, run_result.output
+    assert compare_result.exit_code == 0, compare_result.output
+    assert "ETF experiment comparison report" in compare_result.output
+    assert list(output_dir.glob("*/comparison_report.json"))
+
+
 def _registry_raw() -> dict[str, object]:
     return deepcopy(load_experiment_registry().model_dump(mode="json"))
 
@@ -348,6 +456,21 @@ def _batch_inputs():
     )
     assert quality_report.passed
     return config, prices, quality_report
+
+
+def _single_batch(tmp_path: Path):
+    base_config, prices, quality_report = _batch_inputs()
+    return run_experiment_batch(
+        prices,
+        base_config=base_config,
+        quality_report=quality_report,
+        experiment_registry=load_experiment_registry(),
+        experiment_id="rebalance_05",
+        start=date(2022, 12, 1),
+        end=date(2022, 12, 20),
+        output_root=tmp_path,
+        generated_at=datetime(2026, 6, 1, tzinfo=UTC),
+    )
 
 
 def _make_prices(days: int) -> pd.DataFrame:
