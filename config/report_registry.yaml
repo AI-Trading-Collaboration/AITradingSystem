@@ -350,6 +350,22 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: etf_experiment_validation
+    title: ETF Experiment Validation Gate
+    group: research
+    cadence: on_change
+    audience: reviewer
+    owner: system
+    command: aits etf experiments validate --pack etf_calibration_v1
+    artifact_globs:
+      - reports/etf_portfolio/experiments/validation/*_experiment_validation.json
+      - reports/etf_portfolio/experiments/validation/*_experiment_validation.md
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-064 final validation should be refreshed after experiment infrastructure changes.
+    owner_action: run_aits_etf_experiments_validate_before_marking_TRADING_064_done
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: etf_p2_walk_forward
     title: ETF P2 Walk Forward Readiness
     group: research

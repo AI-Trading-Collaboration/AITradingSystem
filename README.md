@@ -157,6 +157,10 @@ artifact，Reader Brief 的 `ETF Calibration Experiments` 区块会只读展示 
 candidate、rejected/blocked count、active shadow candidates、weekly review action、
 safety status 和 detail report。缺失 artifact 时显示 `MISSING`，不会自动运行 experiment、
 backtest、shadow enrollment 或 weekly review。
+最终门禁使用 `aits etf experiments validate --pack etf_calibration_v1`，输出
+`reports/etf_portfolio/experiments/validation/*_experiment_validation.json/md`，验证
+registry、pack、runner、comparison/ranking、candidate gate、shadow/weekly review、
+report integration、P2/live safety 和 no-production/no-broker 边界。
 
 TRADING-064 controlled calibration experiments 从
 `config/etf_portfolio/experiments.yaml` 和
@@ -208,6 +212,7 @@ regime 日期范围。主要产物路径：
 - `reports/etf_portfolio/experiments/<run_id>/candidate_selection_report.json`
 - `data/simulation/etf_shadow_candidates.json`
 - `reports/etf_portfolio/experiments/weekly_reviews/weekly_review_YYYY-MM-DD.json`
+- `reports/etf_portfolio/experiments/validation/YYYY-MM-DD_etf_calibration_v1_experiment_validation.json`
 
 `target_weights.csv` 输出 `constraints_applied` 和结构化
 `constraint_diagnostics` JSON。正式 allocation 会执行 asset cap/floor、risk group /

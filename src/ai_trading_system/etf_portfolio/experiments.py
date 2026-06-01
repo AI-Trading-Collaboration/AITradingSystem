@@ -20,6 +20,7 @@ from ai_trading_system.etf_portfolio.models import (
     ETFQualityReport,
     PolicyMetadata,
     dataframe_checksum,
+    load_etf_config_bundle,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -72,6 +73,17 @@ EXPERIMENT_CANDIDATE_SELECTION_SCHEMA_KEYS = (
     "broker_action",
     "manual_review_required",
     "production_promotion_allowed",
+)
+EXPERIMENT_VALIDATION_SCHEMA_VERSION = "etf_experiment_validation_v1"
+EXPERIMENT_VALIDATION_REQUIRED_REPORT_IDS = frozenset(
+    {
+        "etf_experiment_run_manifest",
+        "etf_experiment_comparison",
+        "etf_experiment_candidate_selection",
+        "etf_shadow_candidates",
+        "etf_experiment_weekly_review",
+        "etf_experiment_validation",
+    }
 )
 
 # Schema keys only. These names define the controlled TRADING-064 override surface,
@@ -791,6 +803,200 @@ def write_weekly_experiment_review_report(
     return json_path, markdown_path
 
 
+def build_experiment_validation_report(
+    *,
+    pack_id: str = "etf_calibration_v1",
+    experiment_registry: ETFExperimentRegistry | None = None,
+    pack_registry: ETFExperimentPackRegistry | None = None,
+    base_config: ETFConfigBundle | None = None,
+    report_registry_path: Path = PROJECT_ROOT / "config" / "report_registry.yaml",
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    checks: list[dict[str, Any]] = []
+    registry = experiment_registry
+    packs = pack_registry
+    config = base_config
+
+    try:
+        registry = registry or load_experiment_registry()
+        ETFExperimentRegistry.model_validate(registry.model_dump(mode="json"))
+        _append_validation_check(
+            checks,
+            "experiment_registry_valid",
+            "PASS",
+            "Experiment registry schema and safety invariants are valid.",
+            details={
+                "experiment_count": len(registry.experiments),
+                "config_hash": registry.config_hash,
+            },
+        )
+    except Exception as exc:  # noqa: BLE001 - validation report must fail closed.
+        _append_validation_check(
+            checks,
+            "experiment_registry_valid",
+            "FAIL",
+            "Experiment registry validation failed.",
+            blockers=[_exception_blocker(exc)],
+        )
+
+    try:
+        packs = packs or load_experiment_pack_registry(
+            experiment_registry=registry or load_experiment_registry()
+        )
+        ETFExperimentPackRegistry.model_validate(packs.model_dump(mode="json"))
+        if registry is None:
+            raise ValueError("experiment registry unavailable")
+        validate_experiment_pack_registry(packs, experiment_registry=registry)
+        pack = packs.experiment_packs.get(pack_id)
+        if pack is None:
+            raise ValueError(f"unknown ETF experiment pack: {pack_id}")
+        _append_validation_check(
+            checks,
+            "experiment_pack_valid",
+            "PASS",
+            "Experiment pack references known safe experiments.",
+            details={
+                "pack_id": pack.pack_id,
+                "experiment_count": len(pack.experiment_ids),
+                "ranking_policy": pack.ranking_policy,
+                "promotion_policy": pack.promotion_policy,
+                "config_hash": packs.config_hash,
+            },
+        )
+    except Exception as exc:  # noqa: BLE001 - validation report must fail closed.
+        _append_validation_check(
+            checks,
+            "experiment_pack_valid",
+            "FAIL",
+            "Experiment pack validation failed.",
+            blockers=[_exception_blocker(exc)],
+        )
+
+    pack = packs.experiment_packs.get(pack_id) if packs is not None else None
+    _append_validation_check(
+        checks,
+        "batch_runner_available",
+        "PASS" if callable(run_experiment_batch) and pack is not None else "FAIL",
+        "Batch experiment runner is importable and pack selection is available.",
+        details={
+            "runner": "run_experiment_batch",
+            "selected_experiment_count": 0 if pack is None else len(pack.experiment_ids),
+        },
+        blockers=[] if pack is not None else ["PACK_UNAVAILABLE"],
+    )
+    _append_validation_check(
+        checks,
+        "comparison_report_available",
+        (
+            "PASS"
+            if callable(build_experiment_comparison_report)
+            and callable(write_experiment_comparison_report)
+            and {"production_effect", "broker_action", "manual_review_required"}.issubset(
+                set(EXPERIMENT_COMPARISON_SCHEMA_KEYS)
+            )
+            else "FAIL"
+        ),
+        "Comparison report builder, writer, and safety schema keys are available.",
+        details={"schema_keys": list(EXPERIMENT_COMPARISON_SCHEMA_KEYS)},
+    )
+    _append_validation_check(
+        checks,
+        "ranking_policy_available",
+        *(_ranking_policy_validation(pack, packs)),
+    )
+    _append_validation_check(
+        checks,
+        "candidate_gate_available",
+        *(_candidate_gate_validation(pack, packs)),
+    )
+    _append_validation_check(
+        checks,
+        "shadow_enrollment_safety",
+        (
+            "PASS"
+            if callable(enroll_shadow_candidates)
+            and "data/simulation" in DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH.as_posix()
+            else "FAIL"
+        ),
+        "Shadow enrollment writes observe-only runtime state outside source artifacts.",
+        details={"registry_path": str(DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH)},
+    )
+    _append_validation_check(
+        checks,
+        "weekly_review_available",
+        *(_weekly_review_validation(packs)),
+    )
+    _append_validation_check(
+        checks,
+        "reports_integration_available",
+        *_report_integration_validation(report_registry_path),
+    )
+    _append_validation_check(
+        checks,
+        "safety_fields_locked",
+        *_experiment_safety_validation(pack, registry, packs),
+    )
+    try:
+        config = config or load_etf_config_bundle()
+        _append_validation_check(
+            checks,
+            "p2_live_production_input_blocked",
+            *_p2_live_block_validation(config),
+        )
+    except Exception as exc:  # noqa: BLE001 - validation report must fail closed.
+        _append_validation_check(
+            checks,
+            "p2_live_production_input_blocked",
+            "FAIL",
+            "P2/live safety configuration could not be validated.",
+            blockers=[_exception_blocker(exc)],
+        )
+
+    failed = [check for check in checks if check["status"] != "PASS"]
+    status = "PASS" if not failed else "FAIL"
+    return {
+        "schema_version": EXPERIMENT_VALIDATION_SCHEMA_VERSION,
+        "report_type": "etf_experiment_validation",
+        "task": "TRADING-064J",
+        "status": status,
+        "pack_id": pack_id,
+        "generated_at": generated.isoformat(),
+        "summary": {
+            "check_count": len(checks),
+            "passed_count": len(checks) - len(failed),
+            "failed_count": len(failed),
+            "blockers": [
+                blocker
+                for check in failed
+                for blocker in check.get("blockers", [])
+            ],
+        },
+        "checks": checks,
+        "safe_for_shadow_observation": status == "PASS",
+        "production_effect": "none",
+        "broker_action": "none",
+        "manual_review_required": True,
+        "production_promotion_allowed": False,
+    }
+
+
+def write_experiment_validation_report(
+    payload: Mapping[str, Any],
+    *,
+    json_path: Path,
+    markdown_path: Path,
+) -> tuple[Path, Path]:
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.write_text(render_experiment_validation_report(payload), encoding="utf-8")
+    return json_path, markdown_path
+
+
 def apply_ranking_policy_to_comparison_report(
     payload: Mapping[str, Any],
     *,
@@ -1097,6 +1303,329 @@ def render_weekly_experiment_review_report(payload: Mapping[str, Any]) -> str:
         ]
     )
     return "\n".join(lines) + "\n"
+
+
+def render_experiment_validation_report(payload: Mapping[str, Any]) -> str:
+    checks = [check for check in payload.get("checks", []) if isinstance(check, Mapping)]
+    lines = [
+        "# ETF Experiment Validation Gate",
+        "",
+        f"- Task: {payload.get('task')}",
+        f"- Pack: {payload.get('pack_id')}",
+        f"- Status: {payload.get('status')}",
+        "- Safety: observe_only=true, production_effect=none, broker_action=none",
+        "- Production Promotion Allowed: false",
+        "",
+        "## Checks",
+        "",
+        "| Check | Status | Summary | Blockers |",
+        "|---|---|---|---|",
+    ]
+    for check in checks:
+        blockers = check.get("blockers")
+        blocker_text = (
+            ", ".join(str(blocker) for blocker in blockers)
+            if isinstance(blockers, list) and blockers
+            else "none"
+        )
+        lines.append(
+            "| "
+            f"{check.get('check_id')} | "
+            f"{check.get('status')} | "
+            f"{check.get('summary')} | "
+            f"{blocker_text} |"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def _append_validation_check(
+    checks: list[dict[str, Any]],
+    check_id: str,
+    status: str,
+    summary: str,
+    details: Mapping[str, Any] | None = None,
+    blockers: list[str] | None = None,
+) -> None:
+    checks.append(
+        {
+            "check_id": check_id,
+            "status": status,
+            "summary": summary,
+            "details": dict(details or {}),
+            "blockers": list(blockers or []),
+        }
+    )
+
+
+def _ranking_policy_validation(
+    pack: ETFExperimentPackConfig | None,
+    pack_registry: ETFExperimentPackRegistry | None,
+) -> tuple[str, str, dict[str, Any], list[str]]:
+    if pack is None or pack_registry is None:
+        return (
+            "FAIL",
+            "Ranking policy cannot be validated because the pack is unavailable.",
+            {},
+            ["PACK_UNAVAILABLE"],
+        )
+    policy = pack_registry.ranking_policies.get(pack.ranking_policy)
+    if policy is None:
+        return (
+            "FAIL",
+            "Pack ranking policy is missing.",
+            {"ranking_policy": pack.ranking_policy},
+            [f"RANKING_POLICY_MISSING:{pack.ranking_policy}"],
+        )
+    blockers: list[str] = []
+    if not policy.component_weights:
+        blockers.append("RANKING_COMPONENT_WEIGHTS_MISSING")
+    if not policy.hard_rejection_rules:
+        blockers.append("RANKING_HARD_REJECTION_RULES_MISSING")
+    if policy.production_promotion_allowed:
+        blockers.append("RANKING_POLICY_ALLOWS_PRODUCTION_PROMOTION")
+    return (
+        "PASS" if not blockers else "FAIL",
+        "Risk-adjusted ranking policy is configured and production promotion is disabled.",
+        {
+            "ranking_policy": pack.ranking_policy,
+            "policy_status": policy.policy_status,
+            "component_weights": dict(policy.component_weights),
+            "hard_rejection_rules": list(policy.hard_rejection_rules),
+        },
+        blockers,
+    )
+
+
+def _candidate_gate_validation(
+    pack: ETFExperimentPackConfig | None,
+    pack_registry: ETFExperimentPackRegistry | None,
+) -> tuple[str, str, dict[str, Any], list[str]]:
+    if pack is None or pack_registry is None:
+        return (
+            "FAIL",
+            "Candidate gate cannot be validated because the pack is unavailable.",
+            {},
+            ["PACK_UNAVAILABLE"],
+        )
+    policy = pack_registry.promotion_policies.get(pack.promotion_policy)
+    if policy is None:
+        return (
+            "FAIL",
+            "Pack candidate gate policy is missing.",
+            {"promotion_policy": pack.promotion_policy},
+            [f"CANDIDATE_GATE_MISSING:{pack.promotion_policy}"],
+        )
+    blockers: list[str] = []
+    if "min_candidate_score" not in policy.thresholds:
+        blockers.append("MIN_CANDIDATE_SCORE_MISSING")
+    if not policy.shadow_observation_allowed:
+        blockers.append("SHADOW_OBSERVATION_DISABLED")
+    if policy.production_promotion_allowed:
+        blockers.append("CANDIDATE_GATE_ALLOWS_PRODUCTION_PROMOTION")
+    return (
+        "PASS" if not blockers else "FAIL",
+        "Shadow-only manual-review candidate gate is configured.",
+        {
+            "promotion_policy": pack.promotion_policy,
+            "policy_status": policy.policy_status,
+            "thresholds": dict(policy.thresholds),
+            "blocked_hard_rejection_rules": list(policy.blocked_hard_rejection_rules),
+            "rejected_hard_rejection_rules": list(policy.rejected_hard_rejection_rules),
+        },
+        blockers,
+    )
+
+
+def _weekly_review_validation(
+    pack_registry: ETFExperimentPackRegistry | None,
+) -> tuple[str, str, dict[str, Any], list[str]]:
+    if pack_registry is None:
+        return (
+            "FAIL",
+            "Weekly review policy cannot be validated because pack registry is unavailable.",
+            {},
+            ["PACK_REGISTRY_UNAVAILABLE"],
+        )
+    policy = pack_registry.review_policies.get("weekly_shadow_review_v1")
+    if policy is None:
+        return (
+            "FAIL",
+            "Weekly shadow review policy is missing.",
+            {},
+            ["WEEKLY_REVIEW_POLICY_MISSING:weekly_shadow_review_v1"],
+        )
+    blockers: list[str] = []
+    if "min_review_days" not in policy.thresholds:
+        blockers.append("MIN_REVIEW_DAYS_MISSING")
+    if policy.production_promotion_allowed:
+        blockers.append("WEEKLY_REVIEW_ALLOWS_PRODUCTION_PROMOTION")
+    if not callable(build_weekly_experiment_review) or not callable(
+        write_weekly_experiment_review_report
+    ):
+        blockers.append("WEEKLY_REVIEW_BUILDER_UNAVAILABLE")
+    return (
+        "PASS" if not blockers else "FAIL",
+        "Weekly observe-only shadow review is configured.",
+        {
+            "review_policy": "weekly_shadow_review_v1",
+            "policy_status": policy.policy_status,
+            "thresholds": dict(policy.thresholds),
+        },
+        blockers,
+    )
+
+
+def _report_integration_validation(
+    report_registry_path: Path,
+) -> tuple[str, str, dict[str, Any], list[str]]:
+    try:
+        raw = safe_load_yaml_path(report_registry_path)
+    except Exception as exc:  # noqa: BLE001 - validation report must fail closed.
+        return (
+            "FAIL",
+            "Report registry could not be loaded.",
+            {"report_registry_path": str(report_registry_path)},
+            [_exception_blocker(exc)],
+        )
+    reports = raw.get("reports") if isinstance(raw, Mapping) else None
+    if not isinstance(reports, list):
+        return (
+            "FAIL",
+            "Report registry does not contain a reports list.",
+            {"report_registry_path": str(report_registry_path)},
+            ["REPORT_REGISTRY_REPORTS_MISSING"],
+        )
+    ids = {
+        str(item.get("report_id"))
+        for item in reports
+        if isinstance(item, Mapping) and item.get("report_id")
+    }
+    missing = sorted(EXPERIMENT_VALIDATION_REQUIRED_REPORT_IDS - ids)
+    reader_brief_missing = sorted(
+        report_id
+        for report_id in EXPERIMENT_VALIDATION_REQUIRED_REPORT_IDS
+        for item in reports
+        if isinstance(item, Mapping)
+        and item.get("report_id") == report_id
+        and item.get("include_in_reader_brief") is not True
+    )
+    blockers = [f"REPORT_ID_MISSING:{report_id}" for report_id in missing]
+    blockers.extend(
+        f"REPORT_ID_NOT_IN_READER_BRIEF:{report_id}" for report_id in reader_brief_missing
+    )
+    return (
+        "PASS" if not blockers else "FAIL",
+        "Report registry exposes ETF experiment artifacts to report index and Reader Brief.",
+        {
+            "report_registry_path": str(report_registry_path),
+            "required_report_ids": sorted(EXPERIMENT_VALIDATION_REQUIRED_REPORT_IDS),
+        },
+        blockers,
+    )
+
+
+def _experiment_safety_validation(
+    pack: ETFExperimentPackConfig | None,
+    experiment_registry: ETFExperimentRegistry | None,
+    pack_registry: ETFExperimentPackRegistry | None,
+) -> tuple[str, str, dict[str, Any], list[str]]:
+    if pack is None or experiment_registry is None or pack_registry is None:
+        return (
+            "FAIL",
+            "Safety fields cannot be validated because registry inputs are unavailable.",
+            {},
+            ["REGISTRY_INPUT_UNAVAILABLE"],
+        )
+    blockers: list[str] = []
+    if not pack.observe_only:
+        blockers.append("PACK_OBSERVE_ONLY_DISABLED")
+    if pack.production_effect != "none":
+        blockers.append("PACK_PRODUCTION_EFFECT_UNSAFE")
+    if pack.broker_action != "none":
+        blockers.append("PACK_BROKER_ACTION_UNSAFE")
+    if not pack.manual_review_required:
+        blockers.append("PACK_MANUAL_REVIEW_NOT_REQUIRED")
+    for experiment_id in pack.experiment_ids:
+        experiment = experiment_registry.experiments.get(experiment_id)
+        if experiment is None:
+            blockers.append(f"EXPERIMENT_MISSING:{experiment_id}")
+            continue
+        if not experiment.observe_only:
+            blockers.append(f"EXPERIMENT_OBSERVE_ONLY_DISABLED:{experiment_id}")
+        if experiment.production_effect != "none":
+            blockers.append(f"EXPERIMENT_PRODUCTION_EFFECT_UNSAFE:{experiment_id}")
+        if experiment.broker_action != "none":
+            blockers.append(f"EXPERIMENT_BROKER_ACTION_UNSAFE:{experiment_id}")
+        if not experiment.manual_review_required:
+            blockers.append(f"EXPERIMENT_MANUAL_REVIEW_NOT_REQUIRED:{experiment_id}")
+    policies = [
+        *pack_registry.ranking_policies.values(),
+        *pack_registry.promotion_policies.values(),
+        *pack_registry.review_policies.values(),
+    ]
+    if any(policy.production_promotion_allowed for policy in policies):
+        blockers.append("POLICY_PRODUCTION_PROMOTION_ALLOWED")
+    return (
+        "PASS" if not blockers else "FAIL",
+        "All selected experiments and policies keep observe-only/no-production safety fields.",
+        {
+            "pack_id": pack.pack_id,
+            "experiment_count": len(pack.experiment_ids),
+            "production_effect": pack.production_effect,
+            "broker_action": pack.broker_action,
+            "manual_review_required": pack.manual_review_required,
+        },
+        sorted(set(blockers)),
+    )
+
+
+def _p2_live_block_validation(
+    config: ETFConfigBundle,
+) -> tuple[str, str, dict[str, Any], list[str]]:
+    p2 = config.p2
+    if p2 is None:
+        return (
+            "FAIL",
+            "P2 safety config is missing.",
+            {},
+            ["P2_CONFIG_MISSING"],
+        )
+    live = p2.live_interface
+    blockers: list[str] = []
+    if not p2.ml_ranking.candidate_only or p2.ml_ranking.auto_promotion:
+        blockers.append("P2_ML_RANKING_NOT_CANDIDATE_ONLY")
+    if not p2.weight_optimizer.candidate_only or p2.weight_optimizer.auto_promotion:
+        blockers.append("P2_WEIGHT_OPTIMIZER_NOT_CANDIDATE_ONLY")
+    if not p2.ensemble.candidate_only or p2.ensemble.auto_promotion:
+        blockers.append("P2_ENSEMBLE_NOT_CANDIDATE_ONLY")
+    if live.enabled:
+        blockers.append("LIVE_INTERFACE_ENABLED")
+    if not live.paper_only:
+        blockers.append("LIVE_INTERFACE_NOT_PAPER_ONLY")
+    if not live.read_only:
+        blockers.append("LIVE_INTERFACE_NOT_READ_ONLY")
+    if live.broker_routing_allowed:
+        blockers.append("LIVE_BROKER_ROUTING_ALLOWED")
+    if live.multi_account_enabled:
+        blockers.append("LIVE_MULTI_ACCOUNT_ENABLED")
+    return (
+        "PASS" if not blockers else "FAIL",
+        "P2/live inputs remain candidate-only/read-only and cannot route broker actions.",
+        {
+            "p2_policy_version": p2.policy_metadata.version,
+            "ml_ranking_candidate_only": p2.ml_ranking.candidate_only,
+            "weight_optimizer_candidate_only": p2.weight_optimizer.candidate_only,
+            "ensemble_candidate_only": p2.ensemble.candidate_only,
+            "live_enabled": live.enabled,
+            "live_read_only": live.read_only,
+            "broker_routing_allowed": live.broker_routing_allowed,
+        },
+        blockers,
+    )
+
+
+def _exception_blocker(exc: Exception) -> str:
+    return f"{type(exc).__name__}:{exc}"
 
 
 def _raise_if_experiment_is_unsafe(

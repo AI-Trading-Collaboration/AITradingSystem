@@ -15,12 +15,14 @@ from ai_trading_system.etf_portfolio.experiments import (
     DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH,
     EXPERIMENT_CANDIDATE_SELECTION_SCHEMA_KEYS,
     EXPERIMENT_COMPARISON_SCHEMA_KEYS,
+    EXPERIMENT_VALIDATION_SCHEMA_VERSION,
     ETFExperimentPackRegistry,
     ETFExperimentRegistry,
     apply_ranking_policy_to_comparison_report,
     build_candidate_selection_report,
     build_experiment_comparison_report,
     build_experiment_config_bundle,
+    build_experiment_validation_report,
     build_weekly_experiment_review,
     enroll_shadow_candidates,
     load_experiment_pack_registry,
@@ -31,6 +33,7 @@ from ai_trading_system.etf_portfolio.experiments import (
     validate_experiment_pack_registry,
     write_candidate_selection_report,
     write_experiment_comparison_report,
+    write_experiment_validation_report,
     write_weekly_experiment_review_report,
 )
 from ai_trading_system.etf_portfolio.models import load_etf_config_bundle
@@ -870,6 +873,127 @@ def test_etf_weekly_review_cli_smoke(tmp_path: Path) -> None:
     assert "ETF experiment weekly review" in result.output
     assert "production_promotion_allowed=false" in result.output
     assert (output_dir / "weekly_review_2022-12-20.json").exists()
+
+
+def test_etf_experiment_validation_passes_with_valid_pack() -> None:
+    report = build_experiment_validation_report(
+        pack_id="etf_calibration_v1",
+        generated_at=datetime(2026, 6, 1, tzinfo=UTC),
+    )
+
+    assert report["schema_version"] == EXPERIMENT_VALIDATION_SCHEMA_VERSION
+    assert report["status"] == "PASS"
+    assert report["safe_for_shadow_observation"] is True
+    assert report["production_effect"] == "none"
+    assert report["broker_action"] == "none"
+    assert report["manual_review_required"] is True
+    assert {check["status"] for check in report["checks"]} == {"PASS"}
+
+
+def test_etf_experiment_validation_fails_with_unsafe_experiment() -> None:
+    registry = load_experiment_registry()
+    registry.experiments["regime_mild"].production_effect = "target_weights"
+    report = build_experiment_validation_report(
+        pack_id="etf_calibration_v1",
+        experiment_registry=registry,
+        pack_registry=load_experiment_pack_registry(),
+        generated_at=datetime(2026, 6, 1, tzinfo=UTC),
+    )
+
+    assert report["status"] == "FAIL"
+    assert any(
+        "production_effect=none" in blocker or "unsafe experiment" in blocker
+        for blocker in report["summary"]["blockers"]
+    )
+
+
+def test_etf_experiment_validation_fails_when_ranking_policy_missing() -> None:
+    pack_registry = load_experiment_pack_registry()
+    del pack_registry.ranking_policies["risk_adjusted_v1"]
+
+    report = build_experiment_validation_report(
+        pack_id="etf_calibration_v1",
+        pack_registry=pack_registry,
+        generated_at=datetime(2026, 6, 1, tzinfo=UTC),
+    )
+
+    assert report["status"] == "FAIL"
+    assert "RANKING_POLICY_MISSING:risk_adjusted_v1" in report["summary"]["blockers"]
+
+
+def test_etf_experiment_validation_fails_when_candidate_gate_missing() -> None:
+    pack_registry = load_experiment_pack_registry()
+    del pack_registry.promotion_policies["shadow_only_manual_review"]
+
+    report = build_experiment_validation_report(
+        pack_id="etf_calibration_v1",
+        pack_registry=pack_registry,
+        generated_at=datetime(2026, 6, 1, tzinfo=UTC),
+    )
+
+    assert report["status"] == "FAIL"
+    assert "CANDIDATE_GATE_MISSING:shadow_only_manual_review" in (
+        report["summary"]["blockers"]
+    )
+
+
+def test_etf_experiment_validation_fails_when_pack_production_effect_is_unsafe() -> None:
+    pack_registry = load_experiment_pack_registry()
+    pack_registry.experiment_packs["etf_calibration_v1"].production_effect = "target_weights"
+
+    report = build_experiment_validation_report(
+        pack_id="etf_calibration_v1",
+        pack_registry=pack_registry,
+        generated_at=datetime(2026, 6, 1, tzinfo=UTC),
+    )
+
+    assert report["status"] == "FAIL"
+    assert any(
+        blocker == "PACK_PRODUCTION_EFFECT_UNSAFE" or "production_effect=none" in blocker
+        for blocker in report["summary"]["blockers"]
+    )
+
+
+def test_etf_experiment_validation_writes_json_and_markdown(tmp_path: Path) -> None:
+    report = build_experiment_validation_report(
+        pack_id="etf_calibration_v1",
+        generated_at=datetime(2026, 6, 1, tzinfo=UTC),
+    )
+    json_path = tmp_path / "experiment_validation.json"
+    md_path = tmp_path / "experiment_validation.md"
+
+    write_experiment_validation_report(report, json_path=json_path, markdown_path=md_path)
+
+    assert json_path.exists()
+    assert md_path.exists()
+    text = md_path.read_text(encoding="utf-8")
+    assert "ETF Experiment Validation Gate" in text
+    assert "Status: PASS" in text
+
+
+def test_etf_experiment_validation_cli_smoke(tmp_path: Path) -> None:
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "etf",
+            "experiments",
+            "validate",
+            "--pack",
+            "etf_calibration_v1",
+            "--output-dir",
+            str(tmp_path),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "ETF experiment validation gate" in result.output
+    assert "status=PASS" in result.output
+    assert "production_effect=none" in result.output
+    assert list(tmp_path.glob("*_experiment_validation.json"))
 
 
 def _registry_raw() -> dict[str, object]:

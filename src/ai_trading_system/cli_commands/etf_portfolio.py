@@ -37,6 +37,7 @@ from ai_trading_system.etf_portfolio.experiments import (
     apply_ranking_policy_to_comparison_report,
     build_candidate_selection_report,
     build_experiment_comparison_report,
+    build_experiment_validation_report,
     build_weekly_experiment_review,
     enroll_shadow_candidates,
     find_latest_experiment_run_dir,
@@ -45,6 +46,7 @@ from ai_trading_system.etf_portfolio.experiments import (
     run_experiment_batch,
     write_candidate_selection_report,
     write_experiment_comparison_report,
+    write_experiment_validation_report,
     write_weekly_experiment_review_report,
 )
 from ai_trading_system.etf_portfolio.features import (
@@ -842,6 +844,40 @@ def experiments_weekly_review_command(
     typer.echo(f"candidate_count={payload['summary']['candidate_count']}")
     typer.echo("production_promotion_allowed=false")
     typer.echo(f"production_effect={payload['production_effect']}")
+
+
+@experiments_app.command("validate")
+def experiments_validate_command(
+    pack: Annotated[
+        str,
+        typer.Option("--pack", help="TRADING-064 experiment pack id。"),
+    ] = "etf_calibration_v1",
+    output_dir: Annotated[Path, typer.Option(help="validation report 输出目录。")] = (
+        DEFAULT_ETF_EXPERIMENT_RUN_DIR / "validation"
+    ),
+    report_registry_path: Annotated[
+        Path,
+        typer.Option(help="report registry config path。"),
+    ] = PROJECT_ROOT / "config" / "report_registry.yaml",
+) -> None:
+    """生成 TRADING-064 final experiment validation gate；失败时 fail closed。"""
+    generated = datetime.now(UTC)
+    payload = build_experiment_validation_report(
+        pack_id=pack,
+        report_registry_path=report_registry_path,
+        generated_at=generated,
+    )
+    safe_pack = pack.replace("/", "_").replace("\\", "_")
+    stem = f"{generated.date().isoformat()}_{safe_pack}_experiment_validation"
+    json_path = output_dir / f"{stem}.json"
+    md_path = output_dir / f"{stem}.md"
+    write_experiment_validation_report(payload, json_path=json_path, markdown_path=md_path)
+    typer.echo(f"ETF experiment validation gate：{md_path}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
 
 
 @p2_app.command("edgar-text")
