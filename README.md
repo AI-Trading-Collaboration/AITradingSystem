@@ -179,6 +179,15 @@ validate` 是 TRADING-065 final gate。所有 forward 输出固定
 watchlist；Reader Brief 的 `ETF Forward Simulation` 区块只读摘录 report index 指向的
 latest artifacts，缺失时显示 no active / missing 状态，不补造 forward 结论。
 
+TRADING-066 AI confirmation overlay 从
+`config/etf_portfolio/ai_confirmation_universe.yaml` 读取 universe membership。该
+source config 定义 mega-cap AI、semiconductor hardware、cloud AI platform、AI ETF
+proxy 和 event-risk reference groups，并区分 required 与 optional symbols。TRADING-066
+后续 breadth、score、report、shadow overlay、Reader Brief 和 validation gate 必须固定
+`observe_only=true`、`candidate_only=true`、`production_effect=none`、
+`broker_action=none`、`manual_review_required=true`；overlay-adjusted weights 只能作为
+candidate/shadow/hypothetical weights，不写 official ETF target weights。
+
 TRADING-064 controlled calibration experiments 从
 `config/etf_portfolio/experiments.yaml` 和
 `config/etf_portfolio/experiment_packs.yaml` 读取。experiment registry 定义允许观察的

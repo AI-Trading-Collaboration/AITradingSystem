@@ -1,0 +1,512 @@
+policy_metadata:
+  version: ai_confirmation_universe_v0_1
+  status: observe_only_baseline
+  owner: system
+  rationale: >
+    TRADING-066A baseline AI / semiconductor confirmation universe. Membership is
+    used for observe-only confirmation scoring and shadow overlay calibration, not
+    for production ETF allocation.
+  validation: >
+    Loader and validation tests cover required metadata, benchmark references,
+    duplicate handling, disabled symbols, and required versus optional data
+    semantics.
+  review_condition: >
+    Review after TRADING-066 validation gate and before any later task proposes
+    production use of AI confirmation evidence.
+
+safety:
+  observe_only: true
+  candidate_only: true
+  production_effect: none
+  broker_action: none
+  manual_review_required: true
+
+allowed_benchmarks:
+  - SPY
+  - QQQ
+  - SMH
+  - SOXX
+  - CASH
+  - XLK
+  - IGV
+  - BOTZ
+  - AIQ
+  - CHAT
+
+ai_confirmation_universe:
+  mega_cap_ai:
+    group_id: mega_cap_ai
+    description: "Mega-cap AI leaders used to confirm QQQ / technology strength."
+    default_weighting_method: equal_weight
+    benchmark: QQQ
+    enabled: true
+    required_data_level: strict
+    symbols:
+      - ticker: NVDA
+        name: NVIDIA Corp
+        group: mega_cap_ai
+        role: ai_accelerator_leader
+        enabled: true
+        weight_cap: 0.20
+        benchmark: SMH
+        data_required: true
+        optional: false
+      - ticker: AVGO
+        name: Broadcom Inc
+        group: mega_cap_ai
+        role: ai_accelerator_connectivity
+        enabled: true
+        weight_cap: 0.15
+        benchmark: SMH
+        data_required: true
+        optional: false
+      - ticker: AMD
+        name: Advanced Micro Devices Inc
+        group: mega_cap_ai
+        role: ai_accelerator_challenger
+        enabled: true
+        weight_cap: 0.10
+        benchmark: SMH
+        data_required: true
+        optional: false
+      - ticker: MSFT
+        name: Microsoft Corp
+        group: mega_cap_ai
+        role: cloud_ai_platform
+        enabled: true
+        weight_cap: 0.15
+        benchmark: QQQ
+        data_required: true
+        optional: false
+      - ticker: GOOGL
+        name: Alphabet Inc
+        group: mega_cap_ai
+        role: cloud_ai_platform
+        enabled: true
+        weight_cap: 0.10
+        benchmark: QQQ
+        data_required: true
+        optional: false
+      - ticker: AMZN
+        name: Amazon.com Inc
+        group: mega_cap_ai
+        role: cloud_ai_platform
+        enabled: true
+        weight_cap: 0.10
+        benchmark: QQQ
+        data_required: true
+        optional: false
+      - ticker: META
+        name: Meta Platforms Inc
+        group: mega_cap_ai
+        role: ai_application_platform
+        enabled: true
+        weight_cap: 0.10
+        benchmark: QQQ
+        data_required: true
+        optional: false
+      - ticker: AAPL
+        name: Apple Inc
+        group: mega_cap_ai
+        role: ai_device_platform
+        enabled: true
+        weight_cap: 0.05
+        benchmark: QQQ
+        data_required: true
+        optional: false
+      - ticker: TSM
+        name: Taiwan Semiconductor Manufacturing Co Ltd ADR
+        group: mega_cap_ai
+        role: leading_ai_foundry
+        enabled: true
+        weight_cap: 0.05
+        benchmark: SMH
+        data_required: true
+        optional: false
+
+  semiconductor_hardware:
+    group_id: semiconductor_hardware
+    description: "AI hardware and semiconductor supply-chain breadth universe."
+    default_weighting_method: equal_weight
+    benchmark: SMH
+    enabled: true
+    required_data_level: warning
+    symbols:
+      - ticker: NVDA
+        name: NVIDIA Corp
+        group: semiconductor_hardware
+        role: ai_accelerator_leader
+        enabled: true
+        weight_cap: 0.18
+        benchmark: SMH
+        data_required: true
+        optional: false
+      - ticker: AVGO
+        name: Broadcom Inc
+        group: semiconductor_hardware
+        role: ai_networking_asic
+        enabled: true
+        weight_cap: 0.14
+        benchmark: SMH
+        data_required: true
+        optional: false
+      - ticker: AMD
+        name: Advanced Micro Devices Inc
+        group: semiconductor_hardware
+        role: ai_accelerator_challenger
+        enabled: true
+        weight_cap: 0.10
+        benchmark: SMH
+        data_required: true
+        optional: false
+      - ticker: TSM
+        name: Taiwan Semiconductor Manufacturing Co Ltd ADR
+        group: semiconductor_hardware
+        role: foundry_leader
+        enabled: true
+        weight_cap: 0.10
+        benchmark: SMH
+        data_required: true
+        optional: false
+      - ticker: ASML
+        name: ASML Holding NV ADR
+        group: semiconductor_hardware
+        role: lithography_equipment
+        enabled: true
+        weight_cap: 0.08
+        benchmark: SMH
+        data_required: false
+        optional: true
+      - ticker: AMAT
+        name: Applied Materials Inc
+        group: semiconductor_hardware
+        role: semiconductor_equipment
+        enabled: true
+        weight_cap: 0.08
+        benchmark: SMH
+        data_required: true
+        optional: false
+      - ticker: LRCX
+        name: Lam Research Corp
+        group: semiconductor_hardware
+        role: semiconductor_equipment
+        enabled: true
+        weight_cap: 0.08
+        benchmark: SMH
+        data_required: true
+        optional: false
+      - ticker: MU
+        name: Micron Technology Inc
+        group: semiconductor_hardware
+        role: memory
+        enabled: true
+        weight_cap: 0.06
+        benchmark: SMH
+        data_required: true
+        optional: false
+      - ticker: MRVL
+        name: Marvell Technology Inc
+        group: semiconductor_hardware
+        role: ai_networking
+        enabled: true
+        weight_cap: 0.06
+        benchmark: SMH
+        data_required: true
+        optional: false
+      - ticker: ARM
+        name: Arm Holdings plc ADR
+        group: semiconductor_hardware
+        role: ai_compute_ip
+        enabled: true
+        weight_cap: 0.05
+        benchmark: SMH
+        data_required: false
+        optional: true
+      - ticker: QCOM
+        name: Qualcomm Inc
+        group: semiconductor_hardware
+        role: edge_ai_compute
+        enabled: true
+        weight_cap: 0.04
+        benchmark: SMH
+        data_required: true
+        optional: false
+      - ticker: INTC
+        name: Intel Corp
+        group: semiconductor_hardware
+        role: foundry_and_cpu_turnaround
+        enabled: true
+        weight_cap: 0.03
+        benchmark: SMH
+        data_required: true
+        optional: false
+
+  cloud_ai_platform:
+    group_id: cloud_ai_platform
+    description: "Cloud and enterprise software platforms with AI monetization exposure."
+    default_weighting_method: equal_weight
+    benchmark: QQQ
+    enabled: true
+    required_data_level: warning
+    symbols:
+      - ticker: MSFT
+        name: Microsoft Corp
+        group: cloud_ai_platform
+        role: hyperscaler_ai_platform
+        enabled: true
+        weight_cap: 0.20
+        benchmark: QQQ
+        data_required: true
+        optional: false
+      - ticker: GOOGL
+        name: Alphabet Inc
+        group: cloud_ai_platform
+        role: hyperscaler_ai_platform
+        enabled: true
+        weight_cap: 0.18
+        benchmark: QQQ
+        data_required: true
+        optional: false
+      - ticker: AMZN
+        name: Amazon.com Inc
+        group: cloud_ai_platform
+        role: hyperscaler_ai_platform
+        enabled: true
+        weight_cap: 0.18
+        benchmark: QQQ
+        data_required: true
+        optional: false
+      - ticker: META
+        name: Meta Platforms Inc
+        group: cloud_ai_platform
+        role: ai_application_platform
+        enabled: true
+        weight_cap: 0.14
+        benchmark: QQQ
+        data_required: true
+        optional: false
+      - ticker: ORCL
+        name: Oracle Corp
+        group: cloud_ai_platform
+        role: cloud_ai_infrastructure
+        enabled: true
+        weight_cap: 0.10
+        benchmark: QQQ
+        data_required: false
+        optional: true
+      - ticker: SNOW
+        name: Snowflake Inc
+        group: cloud_ai_platform
+        role: ai_data_platform
+        enabled: true
+        weight_cap: 0.07
+        benchmark: QQQ
+        data_required: false
+        optional: true
+      - ticker: NOW
+        name: ServiceNow Inc
+        group: cloud_ai_platform
+        role: enterprise_ai_workflow
+        enabled: true
+        weight_cap: 0.07
+        benchmark: QQQ
+        data_required: false
+        optional: true
+      - ticker: CRM
+        name: Salesforce Inc
+        group: cloud_ai_platform
+        role: enterprise_ai_application
+        enabled: true
+        weight_cap: 0.06
+        benchmark: QQQ
+        data_required: false
+        optional: true
+
+  ai_etf_proxies:
+    group_id: ai_etf_proxies
+    description: "ETF-level AI and semiconductor proxy relationships."
+    default_weighting_method: equal_weight
+    benchmark: QQQ
+    enabled: true
+    required_data_level: warning
+    symbols:
+      - ticker: QQQ
+        name: Invesco QQQ Trust
+        group: ai_etf_proxies
+        role: growth_benchmark
+        enabled: true
+        weight_cap: 0.25
+        benchmark: SPY
+        data_required: true
+        optional: false
+      - ticker: SPY
+        name: SPDR S&P 500 ETF Trust
+        group: ai_etf_proxies
+        role: market_benchmark
+        enabled: true
+        weight_cap: 0.25
+        benchmark: SPY
+        data_required: true
+        optional: false
+      - ticker: SMH
+        name: VanEck Semiconductor ETF
+        group: ai_etf_proxies
+        role: semiconductor_proxy
+        enabled: true
+        weight_cap: 0.20
+        benchmark: QQQ
+        data_required: true
+        optional: false
+      - ticker: SOXX
+        name: iShares Semiconductor ETF
+        group: ai_etf_proxies
+        role: semiconductor_proxy
+        enabled: true
+        weight_cap: 0.15
+        benchmark: QQQ
+        data_required: true
+        optional: false
+      - ticker: XLK
+        name: Technology Select Sector SPDR Fund
+        group: ai_etf_proxies
+        role: technology_sector_proxy
+        enabled: true
+        weight_cap: 0.05
+        benchmark: SPY
+        data_required: false
+        optional: true
+      - ticker: IGV
+        name: iShares Expanded Tech-Software Sector ETF
+        group: ai_etf_proxies
+        role: software_proxy
+        enabled: true
+        weight_cap: 0.04
+        benchmark: QQQ
+        data_required: false
+        optional: true
+      - ticker: BOTZ
+        name: Global X Robotics & Artificial Intelligence ETF
+        group: ai_etf_proxies
+        role: robotics_ai_proxy
+        enabled: true
+        weight_cap: 0.03
+        benchmark: QQQ
+        data_required: false
+        optional: true
+      - ticker: AIQ
+        name: Global X Artificial Intelligence & Technology ETF
+        group: ai_etf_proxies
+        role: ai_theme_proxy
+        enabled: true
+        weight_cap: 0.02
+        benchmark: QQQ
+        data_required: false
+        optional: true
+      - ticker: CHAT
+        name: Roundhill Generative AI & Technology ETF
+        group: ai_etf_proxies
+        role: generative_ai_theme_proxy
+        enabled: true
+        weight_cap: 0.01
+        benchmark: QQQ
+        data_required: false
+        optional: true
+
+  event_risk_symbols_or_calendar_refs:
+    group_id: event_risk_symbols_or_calendar_refs
+    description: "Symbols and calendar references used by the candidate-only event risk overlay."
+    default_weighting_method: equal_weight
+    benchmark: QQQ
+    enabled: true
+    required_data_level: optional
+    symbols:
+      - ticker: FOMC
+        name: Federal Open Market Committee
+        group: event_risk_symbols_or_calendar_refs
+        role: macro_policy_calendar_ref
+        enabled: true
+        weight_cap: 0.10
+        benchmark: SPY
+        data_required: false
+        optional: true
+      - ticker: CPI
+        name: Consumer Price Index
+        group: event_risk_symbols_or_calendar_refs
+        role: macro_inflation_calendar_ref
+        enabled: true
+        weight_cap: 0.10
+        benchmark: SPY
+        data_required: false
+        optional: true
+      - ticker: PCE
+        name: Personal Consumption Expenditures Price Index
+        group: event_risk_symbols_or_calendar_refs
+        role: macro_inflation_calendar_ref
+        enabled: true
+        weight_cap: 0.10
+        benchmark: SPY
+        data_required: false
+        optional: true
+      - ticker: NVDA
+        name: NVIDIA Corp earnings
+        group: event_risk_symbols_or_calendar_refs
+        role: major_ai_earnings
+        enabled: true
+        weight_cap: 0.10
+        benchmark: SMH
+        data_required: false
+        optional: true
+      - ticker: MSFT
+        name: Microsoft Corp earnings
+        group: event_risk_symbols_or_calendar_refs
+        role: major_ai_earnings
+        enabled: true
+        weight_cap: 0.10
+        benchmark: QQQ
+        data_required: false
+        optional: true
+      - ticker: GOOGL
+        name: Alphabet Inc earnings
+        group: event_risk_symbols_or_calendar_refs
+        role: major_ai_earnings
+        enabled: true
+        weight_cap: 0.10
+        benchmark: QQQ
+        data_required: false
+        optional: true
+      - ticker: AMZN
+        name: Amazon.com Inc earnings
+        group: event_risk_symbols_or_calendar_refs
+        role: major_ai_earnings
+        enabled: true
+        weight_cap: 0.10
+        benchmark: QQQ
+        data_required: false
+        optional: true
+      - ticker: META
+        name: Meta Platforms Inc earnings
+        group: event_risk_symbols_or_calendar_refs
+        role: major_ai_earnings
+        enabled: true
+        weight_cap: 0.10
+        benchmark: QQQ
+        data_required: false
+        optional: true
+      - ticker: AAPL
+        name: Apple Inc earnings
+        group: event_risk_symbols_or_calendar_refs
+        role: major_ai_earnings
+        enabled: true
+        weight_cap: 0.10
+        benchmark: QQQ
+        data_required: false
+        optional: true
+      - ticker: TSM
+        name: Taiwan Semiconductor Manufacturing Co Ltd earnings
+        group: event_risk_symbols_or_calendar_refs
+        role: major_semiconductor_earnings
+        enabled: true
+        weight_cap: 0.10
+        benchmark: SMH
+        data_required: false
+        optional: true
