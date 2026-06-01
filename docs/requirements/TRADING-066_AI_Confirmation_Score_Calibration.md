@@ -52,7 +52,7 @@ AI confirmation layer 不写 `data/etf_portfolio/target_weights.csv`，不替换
 |---|---|---|
 |TRADING-066A AI Confirmation Universe Config|DONE|universe YAML、loader、validation、required/optional data semantics|
 |TRADING-066B Semiconductor / AI Breadth Features|DONE|group breadth features、coverage、no-lookahead timing|
-|TRADING-066C Mega-Cap AI Confirmation Score|READY|MegaCapAIScore 0-100、components、drivers、safety fields|
+|TRADING-066C Mega-Cap AI Confirmation Score|DONE|MegaCapAIScore 0-100、components、drivers、safety fields|
 |TRADING-066D AI ETF / Semiconductor Relative Strength Score|READY|ETF relative pairs、optional ETF handling、score bands|
 |TRADING-066E Event Risk Overlay|READY|config/calendar-driven risk score and active/upcoming/recent events|
 |TRADING-066F AI Confirmation Composite Score|READY|AIConfirmationScore, action_hint, reason_codes, safety fields|
@@ -87,3 +87,7 @@ AI confirmation layer 不写 `data/etf_portfolio/target_weights.csv`，不替换
   builder、`aits etf ai-confirmation features` CLI、JSON/CSV runtime output、coverage/warning
   schema 和 tests；feature timing 只使用 `date <= score_date`，strict required data 缺失时
   fail closed，optional missing data 只降低 coverage 并记录 warning。
+- 2026-06-01: TRADING-066C 完成。新增
+  `config/etf_portfolio/ai_confirmation_policy.yaml`、policy loader、score band mapping 和
+  MegaCapAIScore builder；score 输出 component_scores、drivers、coverage、policy hash 和
+  safety fields，仍只作为 observe-only / candidate-only payload。

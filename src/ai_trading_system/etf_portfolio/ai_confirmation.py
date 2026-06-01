@@ -18,6 +18,9 @@ from ai_trading_system.yaml_loader import safe_load_yaml_path
 DEFAULT_AI_CONFIRMATION_UNIVERSE_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "ai_confirmation_universe.yaml"
 )
+DEFAULT_AI_CONFIRMATION_POLICY_CONFIG_PATH = (
+    PROJECT_ROOT / "config" / "etf_portfolio" / "ai_confirmation_policy.yaml"
+)
 DEFAULT_AI_CONFIRMATION_REPORT_DIR = (
     PROJECT_ROOT / "reports" / "etf_portfolio" / "ai_confirmation"
 )
@@ -141,6 +144,48 @@ class AIConfirmationUniverseConfig(BaseModel):
         return _config_hash(self.model_dump(mode="json"))
 
 
+class AIScoreBandConfig(BaseModel):
+    min_score: float = Field(ge=0, le=100)
+
+
+class MegaCapAIScorePolicy(BaseModel):
+    group_id: str = Field(min_length=1)
+    component_weights: dict[str, float] = Field(min_length=1)
+    relative_strength_full_scale_return: float = Field(gt=0)
+    drawdown_full_penalty: float = Field(lt=0)
+    coverage_warning_min: float = Field(ge=0, le=1)
+    driver_positive_min: float = Field(ge=0, le=100)
+    driver_negative_max: float = Field(ge=0, le=100)
+
+    @model_validator(mode="after")
+    def validate_weights(self) -> Self:
+        total = sum(self.component_weights.values())
+        if abs(total - 1.0) > 1e-6:
+            raise ValueError(f"mega-cap AI component weights must sum to 1.0: {total}")
+        if any(weight < 0 for weight in self.component_weights.values()):
+            raise ValueError("mega-cap AI component weights must be non-negative")
+        return self
+
+
+class AIConfirmationPolicyConfig(BaseModel):
+    policy_metadata: PolicyMetadata
+    safety: AIConfirmationSafetyConfig
+    score_bands: dict[str, AIScoreBandConfig] = Field(min_length=1)
+    mega_cap_ai_score: MegaCapAIScorePolicy
+
+    @model_validator(mode="after")
+    def validate_score_bands(self) -> Self:
+        if "negative" not in self.score_bands:
+            raise ValueError("AI confirmation score bands must include negative")
+        if self.score_bands["negative"].min_score != 0:
+            raise ValueError("negative score band must start at 0")
+        return self
+
+    @property
+    def config_hash(self) -> str:
+        return _config_hash(self.model_dump(mode="json"))
+
+
 def load_ai_confirmation_universe_config(
     path: Path | str = DEFAULT_AI_CONFIRMATION_UNIVERSE_CONFIG_PATH,
 ) -> AIConfirmationUniverseConfig:
@@ -148,6 +193,15 @@ def load_ai_confirmation_universe_config(
     if not isinstance(raw, dict):
         raise ValueError(f"AI confirmation universe config must be a YAML mapping: {path}")
     return AIConfirmationUniverseConfig.model_validate(raw)
+
+
+def load_ai_confirmation_policy_config(
+    path: Path | str = DEFAULT_AI_CONFIRMATION_POLICY_CONFIG_PATH,
+) -> AIConfirmationPolicyConfig:
+    raw = safe_load_yaml_path(Path(path))
+    if not isinstance(raw, dict):
+        raise ValueError(f"AI confirmation policy config must be a YAML mapping: {path}")
+    return AIConfirmationPolicyConfig.model_validate(raw)
 
 
 def enabled_symbols_for_group(
@@ -349,6 +403,106 @@ def write_ai_confirmation_breadth_features(
     )
     ai_confirmation_breadth_records_to_frame(records).to_csv(csv_path, index=False)
     return {"json": json_path, "csv": csv_path}
+
+
+def build_mega_cap_ai_confirmation_score(
+    prices: pd.DataFrame,
+    *,
+    breadth_records: list[dict[str, Any]],
+    universe_config: AIConfirmationUniverseConfig,
+    policy_config: AIConfirmationPolicyConfig,
+    run_date: date,
+) -> dict[str, Any]:
+    policy = policy_config.mega_cap_ai_score
+    group_id = policy.group_id
+    if group_id not in universe_config.ai_confirmation_universe:
+        raise KeyError(f"unknown AI confirmation group: {group_id}")
+    breadth_record = _breadth_record_for_group(breadth_records, group_id)
+    feature_values = dict(breadth_record.get("feature_values") or {})
+    frame = _prepare_ai_price_history(prices, run_date)
+    tickers = [symbol.ticker for symbol in enabled_symbols_for_group(universe_config, group_id)]
+    warnings = list(breadth_record.get("warnings") or [])
+    data_coverage_ratio = _safe_float(breadth_record.get("data_coverage_ratio")) or 0.0
+
+    component_scores = {
+        "mega_cap_trend_score": _average_score(
+            feature_values.get("percent_above_50d_ma"),
+            feature_values.get("percent_above_200d_ma"),
+        ),
+        "mega_cap_momentum_score": _average_score(
+            feature_values.get("percent_positive_20d_return"),
+            feature_values.get("percent_positive_60d_return"),
+        ),
+        "mega_cap_breadth_score": _average_score(
+            feature_values.get("percent_above_20d_ma"),
+            feature_values.get("percent_above_50d_ma"),
+            feature_values.get("percent_above_100d_ma"),
+            feature_values.get("percent_above_200d_ma"),
+        ),
+        "mega_cap_relative_strength_vs_QQQ": _relative_strength_component(
+            frame,
+            tickers,
+            "QQQ",
+            policy,
+        ),
+        "mega_cap_relative_strength_vs_SPY": _relative_strength_component(
+            frame,
+            tickers,
+            "SPY",
+            policy,
+        ),
+        "mega_cap_drawdown_penalty": _drawdown_component(
+            feature_values.get("group_drawdown_from_60d_high"),
+            policy,
+        ),
+        "data_coverage_penalty": _clamp_score(data_coverage_ratio * 100.0),
+    }
+    for component, score in component_scores.items():
+        if score is None:
+            warnings.append(f"{group_id}:component_unavailable:{component}")
+            component_scores[component] = 50.0
+    if data_coverage_ratio < policy.coverage_warning_min:
+        warnings.append(f"{group_id}:low_data_coverage:{data_coverage_ratio:.2f}")
+    weighted_score = sum(
+        component_scores[component] * policy.component_weights[component]
+        for component in policy.component_weights
+    )
+    score_value = round(_clamp_score(weighted_score), 2)
+    return {
+        "date": run_date.isoformat(),
+        "score_name": "MegaCapAIScore",
+        "score_value": score_value,
+        "score_band": score_band(score_value, policy_config),
+        "component_scores": {
+            component: round(float(score), 2) for component, score in component_scores.items()
+        },
+        "top_positive_drivers": _driver_list(
+            component_scores,
+            positive=True,
+            threshold=policy.driver_positive_min,
+        ),
+        "top_negative_drivers": _driver_list(
+            component_scores,
+            positive=False,
+            threshold=policy.driver_negative_max,
+        ),
+        "data_coverage_ratio": data_coverage_ratio,
+        "warnings": sorted(set(warnings)),
+        "policy_version": policy_config.policy_metadata.version,
+        "policy_config_hash": policy_config.config_hash,
+        **AI_CONFIRMATION_SAFETY,
+    }
+
+
+def score_band(score: float, policy_config: AIConfirmationPolicyConfig) -> str:
+    for band, config in sorted(
+        policy_config.score_bands.items(),
+        key=lambda item: item[1].min_score,
+        reverse=True,
+    ):
+        if score >= config.min_score:
+            return band
+    return "negative"
 
 
 def _dedupe_symbols(
@@ -564,3 +718,92 @@ def _is_finite_number(value: Any) -> bool:
         return bool(np.isfinite(float(value)))
     except (TypeError, ValueError):
         return False
+
+
+def _breadth_record_for_group(
+    breadth_records: list[dict[str, Any]],
+    group_id: str,
+) -> dict[str, Any]:
+    for record in breadth_records:
+        if record.get("group_id") == group_id:
+            return record
+    raise KeyError(f"missing breadth record for AI confirmation group: {group_id}")
+
+
+def _average_score(*fractions: Any) -> float | None:
+    values = [float(value) * 100.0 for value in fractions if _is_finite_number(value)]
+    if not values:
+        return None
+    return _clamp_score(float(np.mean(values)))
+
+
+def _relative_strength_component(
+    frame: pd.DataFrame,
+    tickers: list[str],
+    benchmark: str,
+    policy: MegaCapAIScorePolicy,
+) -> float | None:
+    group_return = _group_return(frame, tickers, window=60)
+    benchmark_return = _symbol_return(frame, benchmark, window=60)
+    if group_return is None or benchmark_return is None:
+        return None
+    relative_return = group_return - benchmark_return
+    normalized = 50.0 + (relative_return / policy.relative_strength_full_scale_return) * 50.0
+    return _clamp_score(normalized)
+
+
+def _drawdown_component(value: Any, policy: MegaCapAIScorePolicy) -> float | None:
+    if not _is_finite_number(value):
+        return None
+    drawdown = float(value)
+    if drawdown >= 0:
+        return 100.0
+    capped_penalty = min(abs(drawdown), abs(policy.drawdown_full_penalty))
+    normalized = 100.0 * (1.0 - capped_penalty / abs(policy.drawdown_full_penalty))
+    return _clamp_score(normalized)
+
+
+def _group_return(frame: pd.DataFrame, tickers: list[str], *, window: int) -> float | None:
+    returns: list[float] = []
+    for ticker in tickers:
+        value = _symbol_return(frame, ticker, window=window)
+        if value is not None:
+            returns.append(value)
+    if not returns:
+        return None
+    return _safe_float(np.mean(returns))
+
+
+def _symbol_return(frame: pd.DataFrame, ticker: str, *, window: int) -> float | None:
+    history = frame.loc[frame["symbol"] == ticker].sort_values("_date")
+    if len(history) <= window:
+        return None
+    closes = history["_adj_close"].astype(float).reset_index(drop=True)
+    return _safe_float(closes.iloc[-1] / closes.iloc[-window - 1] - 1.0)
+
+
+def _driver_list(
+    component_scores: Mapping[str, float],
+    *,
+    positive: bool,
+    threshold: float,
+) -> list[str]:
+    if positive:
+        selected = [
+            (component, score)
+            for component, score in component_scores.items()
+            if score >= threshold
+        ]
+        selected.sort(key=lambda item: item[1], reverse=True)
+    else:
+        selected = [
+            (component, score)
+            for component, score in component_scores.items()
+            if score <= threshold
+        ]
+        selected.sort(key=lambda item: item[1])
+    return [f"{component}={score:.2f}" for component, score in selected[:3]]
+
+
+def _clamp_score(value: float) -> float:
+    return min(100.0, max(0.0, float(value)))

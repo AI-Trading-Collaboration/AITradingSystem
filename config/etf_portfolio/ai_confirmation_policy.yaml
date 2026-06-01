@@ -1,0 +1,50 @@
+policy_metadata:
+  version: ai_confirmation_policy_v0_1
+  status: observe_only_baseline
+  owner: system
+  rationale: >
+    TRADING-066 baseline policy for candidate-only AI confirmation scoring. The
+    policy governs score bands, component weights, and score normalization for
+    observe-only calibration; it does not authorize production ETF allocation
+    changes.
+  validation: >
+    Unit tests use deterministic toy prices to verify band mapping, component
+    behavior, data coverage penalties, drawdown penalties, and safety fields.
+  review_condition: >
+    Review after TRADING-066 validation gate and before any AI confirmation score
+    is considered for production allocation policy.
+
+safety:
+  observe_only: true
+  candidate_only: true
+  production_effect: none
+  broker_action: none
+  manual_review_required: true
+
+score_bands:
+  strong_confirm:
+    min_score: 80.0
+  confirm:
+    min_score: 65.0
+  neutral:
+    min_score: 45.0
+  weak:
+    min_score: 30.0
+  negative:
+    min_score: 0.0
+
+mega_cap_ai_score:
+  group_id: mega_cap_ai
+  component_weights:
+    mega_cap_trend_score: 0.20
+    mega_cap_momentum_score: 0.20
+    mega_cap_breadth_score: 0.20
+    mega_cap_relative_strength_vs_QQQ: 0.15
+    mega_cap_relative_strength_vs_SPY: 0.10
+    mega_cap_drawdown_penalty: 0.10
+    data_coverage_penalty: 0.05
+  relative_strength_full_scale_return: 0.10
+  drawdown_full_penalty: -0.20
+  coverage_warning_min: 0.80
+  driver_positive_min: 65.0
+  driver_negative_max: 40.0

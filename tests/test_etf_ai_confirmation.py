@@ -15,8 +15,11 @@ from ai_trading_system.etf_portfolio.ai_confirmation import (
     ai_confirmation_breadth_records_to_frame,
     all_enabled_tickers,
     build_ai_confirmation_breadth_features,
+    build_mega_cap_ai_confirmation_score,
     enabled_symbols_for_group,
+    load_ai_confirmation_policy_config,
     load_ai_confirmation_universe_config,
+    score_band,
     validate_ai_confirmation_data_availability,
 )
 from ai_trading_system.etf_portfolio.data import standardize_price_frame
@@ -385,6 +388,77 @@ def test_ai_confirmation_features_cli_writes_json_and_csv(tmp_path: Path) -> Non
     assert payload["records"]
 
 
+def test_ai_confirmation_policy_loads_and_score_bands_map() -> None:
+    policy = load_ai_confirmation_policy_config()
+
+    assert policy.policy_metadata.version == "ai_confirmation_policy_v0_1"
+    assert policy.safety.observe_only is True
+    assert policy.safety.candidate_only is True
+    assert score_band(85.0, policy) == "strong_confirm"
+    assert score_band(70.0, policy) == "confirm"
+    assert score_band(50.0, policy) == "neutral"
+    assert score_band(35.0, policy) == "weak"
+    assert score_band(20.0, policy) == "negative"
+
+
+def test_mega_cap_ai_score_increases_when_leaders_trend_above_ma() -> None:
+    strong_score = _mega_score({"NVDA": 1.0, "MSFT": 0.8, "AMD": 0.7, "QQQ": 0.2, "SPY": 0.1})
+    weak_score = _mega_score(
+        {"NVDA": -0.6, "MSFT": -0.5, "AMD": -0.4, "QQQ": 0.2, "SPY": 0.1}
+    )
+
+    assert strong_score["score_value"] > weak_score["score_value"]
+    assert strong_score["component_scores"]["mega_cap_trend_score"] > weak_score[
+        "component_scores"
+    ]["mega_cap_trend_score"]
+    assert strong_score["component_scores"]["mega_cap_momentum_score"] > weak_score[
+        "component_scores"
+    ]["mega_cap_momentum_score"]
+
+
+def test_mega_cap_ai_score_relative_strength_vs_qqq_affects_score() -> None:
+    outperforming = _mega_score(
+        {"NVDA": 1.0, "MSFT": 0.9, "AMD": 0.8, "QQQ": 0.1, "SPY": 0.1}
+    )
+    underperforming = _mega_score(
+        {"NVDA": 0.1, "MSFT": 0.1, "AMD": 0.1, "QQQ": 1.0, "SPY": 0.1}
+    )
+
+    assert outperforming["component_scores"]["mega_cap_relative_strength_vs_QQQ"] > (
+        underperforming["component_scores"]["mega_cap_relative_strength_vs_QQQ"]
+    )
+    assert outperforming["score_value"] > underperforming["score_value"]
+
+
+def test_mega_cap_ai_score_drawdown_penalty_reduces_score() -> None:
+    steady = _mega_score({"NVDA": 0.7, "MSFT": 0.7, "AMD": 0.7, "QQQ": 0.2, "SPY": 0.1})
+    drawdown_prices = _make_drawdown_price_frame(["NVDA", "MSFT", "AMD", "QQQ", "SPY"])
+    drawdown = _mega_score_from_prices(drawdown_prices)
+
+    assert drawdown["component_scores"]["mega_cap_drawdown_penalty"] < steady[
+        "component_scores"
+    ]["mega_cap_drawdown_penalty"]
+    assert drawdown["score_value"] < steady["score_value"]
+
+
+def test_mega_cap_ai_score_data_coverage_penalty_and_safety_fields() -> None:
+    score = _mega_score({"NVDA": 1.0, "MSFT": 1.0, "QQQ": 0.2, "SPY": 0.1})
+
+    assert score["component_scores"]["data_coverage_penalty"] == pytest.approx(
+        2 / 3 * 100,
+        abs=0.01,
+    )
+    assert score["data_coverage_ratio"] == pytest.approx(2 / 3)
+    assert any("low_data_coverage" in warning for warning in score["warnings"])
+    assert score["observe_only"] is True
+    assert score["candidate_only"] is True
+    assert score["production_effect"] == "none"
+    assert score["broker_action"] == "none"
+    assert score["manual_review_required"] is True
+    assert score["top_positive_drivers"]
+    assert isinstance(score["top_negative_drivers"], list)
+
+
 def _raw_config() -> dict[str, object]:
     return deepcopy(load_ai_confirmation_universe_config().model_dump(mode="json"))
 
@@ -420,6 +494,58 @@ def _make_ai_price_frame(
                     "open": price,
                     "high": price * 1.01,
                     "low": price * 0.99,
+                    "close": price,
+                    "adj_close": price,
+                    "volume": 1_000_000 + day_index,
+                    "source": "fixture",
+                    "created_at": "2026-01-01T00:00:00Z",
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def _mega_score(slopes: dict[str, float]) -> dict[str, object]:
+    return _mega_score_from_prices(_make_ai_price_frame(slopes))
+
+
+def _mega_score_from_prices(prices: pd.DataFrame) -> dict[str, object]:
+    config = _single_group_config("mega_cap_ai", ["NVDA", "MSFT", "AMD"])
+    policy = load_ai_confirmation_policy_config()
+    run_date = date.fromisoformat(str(prices["date"].max()))
+    breadth_records = build_ai_confirmation_breadth_features(
+        prices,
+        config=config,
+        run_date=run_date,
+        group_ids=["mega_cap_ai"],
+    )
+    return build_mega_cap_ai_confirmation_score(
+        prices,
+        breadth_records=breadth_records,
+        universe_config=config,
+        policy_config=policy,
+        run_date=run_date,
+    )
+
+
+def _make_drawdown_price_frame(symbols: list[str]) -> pd.DataFrame:
+    rows: list[dict[str, object]] = []
+    start = date(2025, 1, 1)
+    for day_index in range(260):
+        current_date = start + timedelta(days=day_index)
+        for symbol in symbols:
+            if symbol in {"QQQ", "SPY"}:
+                price = 100.0 + 0.1 * day_index
+            elif day_index < 200:
+                price = 100.0 + 1.0 * day_index
+            else:
+                price = 300.0 - 2.0 * (day_index - 200)
+            rows.append(
+                {
+                    "date": current_date.isoformat(),
+                    "symbol": symbol,
+                    "open": price,
+                    "high": price,
+                    "low": price,
                     "close": price,
                     "adj_close": price,
                     "volume": 1_000_000 + day_index,
