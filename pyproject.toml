@@ -36,6 +36,7 @@ dashboard = [
 dev = [
   "black>=24.0",
   "mypy>=1.10",
+  "pyarrow>=13.0.0",
   "pytest>=8.2",
   "ruff>=0.5",
   "pandas-stubs>=2.2",

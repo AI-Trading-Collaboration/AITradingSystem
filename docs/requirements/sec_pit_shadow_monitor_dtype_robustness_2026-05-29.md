@@ -2,7 +2,7 @@
 
 任务 ID：`TRADING-048`
 
-最后更新：2026-05-29
+最后更新：2026-06-01
 
 ## 背景
 
@@ -63,3 +63,8 @@ NotImplementedError: eq not implemented for <class 'pandas.StringDtype'>
   `tests/trading_engine/test_sec_pit_shadow_observe.py`、相关 ruff/Black/diff check，
   以及真实 `aits ops daily-run` as-of 2026-05-28；`sec_pit_shadow_monitor`
   在最终 run 中 PASS。
+- 2026-06-01：GitHub Actions 只安装 `.[dev]`，CI-like 本地环境复现
+  `test_top_rank_label_delta_handles_arrow_string_columns` 在构造
+  `string[pyarrow]` fixture 时因缺少 `pyarrow` 失败。已将 `pyarrow>=13.0.0`
+  加入 dev extra，保留 Arrow string 覆盖而不是跳过测试；该变更只影响开发/CI
+  验证环境，不改变 shadow monitor 运行逻辑、阈值或生产配置。
