@@ -50,6 +50,23 @@ EXPERIMENT_COMPARISON_SCHEMA_KEYS = (
     "broker_action",
     "manual_review_required",
 )
+EXPERIMENT_CANDIDATE_SELECTION_SCHEMA_VERSION = "etf_experiment_candidate_selection_v1"
+EXPERIMENT_CANDIDATE_SELECTION_SCHEMA_KEYS = (
+    "schema_version",
+    "report_type",
+    "run_metadata",
+    "ranking_policy_status",
+    "promotion_policy_status",
+    "promotion_policy_id",
+    "selection_thresholds",
+    "selection_summary",
+    "candidates",
+    "observe_only",
+    "production_effect",
+    "broker_action",
+    "manual_review_required",
+    "production_promotion_allowed",
+)
 
 # Schema keys only. These names define the controlled TRADING-064 override surface,
 # not investment thresholds.
@@ -160,6 +177,10 @@ class ETFExperimentPolicyRef(BaseModel):
     component_scales: dict[str, float] = Field(default_factory=dict)
     thresholds: dict[str, float] = Field(default_factory=dict)
     hard_rejection_rules: list[str] = Field(default_factory=list)
+    blocked_hard_rejection_rules: list[str] = Field(default_factory=list)
+    rejected_hard_rejection_rules: list[str] = Field(default_factory=list)
+    shadow_observation_allowed: bool = False
+    production_promotion_allowed: bool = False
 
     @model_validator(mode="after")
     def validate_policy_numbers(self) -> Self:
@@ -173,6 +194,25 @@ class ETFExperimentPolicyRef(BaseModel):
         for key, value in self.thresholds.items():
             if float(value) < 0.0:
                 raise ValueError(f"ETF experiment threshold must be non-negative: {key}")
+        if self.production_promotion_allowed:
+            raise ValueError("ETF experiment policies must keep production_promotion_allowed=false")
+        _validate_unique_policy_rules("hard_rejection_rules", self.hard_rejection_rules)
+        _validate_unique_policy_rules(
+            "blocked_hard_rejection_rules",
+            self.blocked_hard_rejection_rules,
+        )
+        _validate_unique_policy_rules(
+            "rejected_hard_rejection_rules",
+            self.rejected_hard_rejection_rules,
+        )
+        overlap = set(self.blocked_hard_rejection_rules) & set(
+            self.rejected_hard_rejection_rules
+        )
+        if overlap:
+            raise ValueError(
+                "ETF experiment promotion policy cannot classify the same hard "
+                f"rejection rule as both blocked and rejected: {', '.join(sorted(overlap))}"
+            )
         return self
 
 
@@ -587,6 +627,22 @@ def write_experiment_comparison_report(
     return json_path, markdown_path
 
 
+def write_candidate_selection_report(
+    payload: Mapping[str, Any],
+    *,
+    json_path: Path,
+    markdown_path: Path,
+) -> tuple[Path, Path]:
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.write_text(render_candidate_selection_report(payload), encoding="utf-8")
+    return json_path, markdown_path
+
+
 def apply_ranking_policy_to_comparison_report(
     payload: Mapping[str, Any],
     *,
@@ -598,6 +654,58 @@ def apply_ranking_policy_to_comparison_report(
     updated["top_candidates_by_ranking_policy"] = ranked
     updated["ranking_policy_status"] = f"APPLIED:{ranking_policy_id}"
     return {key: updated[key] for key in EXPERIMENT_COMPARISON_SCHEMA_KEYS}
+
+
+def build_candidate_selection_report(
+    comparison_report: Mapping[str, Any],
+    *,
+    promotion_policy: ETFExperimentPolicyRef,
+    promotion_policy_id: str,
+) -> dict[str, Any]:
+    min_candidate_score = _required_policy_threshold(
+        promotion_policy,
+        "min_candidate_score",
+    )
+    ranked_candidates = [
+        item
+        for item in comparison_report.get("top_candidates_by_ranking_policy", [])
+        if isinstance(item, Mapping)
+    ]
+    candidates = [
+        _candidate_selection_row(
+            candidate,
+            rank=rank,
+            promotion_policy=promotion_policy,
+            min_candidate_score=min_candidate_score,
+        )
+        for rank, candidate in enumerate(ranked_candidates, start=1)
+    ]
+    summary = _candidate_selection_summary(candidates)
+    payload = {
+        "schema_version": EXPERIMENT_CANDIDATE_SELECTION_SCHEMA_VERSION,
+        "report_type": "etf_experiment_candidate_selection",
+        "run_metadata": dict(_mapping(comparison_report.get("run_metadata"))),
+        "ranking_policy_status": comparison_report.get("ranking_policy_status"),
+        "promotion_policy_status": promotion_policy.policy_status,
+        "promotion_policy_id": promotion_policy_id,
+        "selection_thresholds": {
+            "min_candidate_score": min_candidate_score,
+            "blocked_hard_rejection_rules": list(
+                promotion_policy.blocked_hard_rejection_rules
+            ),
+            "rejected_hard_rejection_rules": list(
+                promotion_policy.rejected_hard_rejection_rules
+            ),
+        },
+        "selection_summary": summary,
+        "candidates": candidates,
+        "observe_only": True,
+        "production_effect": "none",
+        "broker_action": "none",
+        "manual_review_required": True,
+        "production_promotion_allowed": False,
+    }
+    return {key: payload[key] for key in EXPERIMENT_CANDIDATE_SELECTION_SCHEMA_KEYS}
 
 
 def rank_experiment_candidates(
@@ -713,6 +821,69 @@ def render_experiment_comparison_report(payload: Mapping[str, Any]) -> str:
             "## Ranking",
             "",
             *_ranking_lines(payload),
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def render_candidate_selection_report(payload: Mapping[str, Any]) -> str:
+    metadata = _mapping(payload.get("run_metadata"))
+    summary = _mapping(payload.get("selection_summary"))
+    rows = [row for row in payload.get("candidates", []) if isinstance(row, Mapping)]
+    lines = [
+        "# ETF Experiment Candidate Selection Gate",
+        "",
+        f"- Run ID: {metadata.get('run_id')}",
+        f"- Pack ID: {metadata.get('pack_id')}",
+        f"- Date Range: {metadata.get('start_date')} to {metadata.get('end_date')}",
+        f"- Ranking Policy Status: {payload.get('ranking_policy_status')}",
+        f"- Promotion Policy: {payload.get('promotion_policy_id')}",
+        f"- Promotion Policy Status: {payload.get('promotion_policy_status')}",
+        f"- Gate Status: {summary.get('status')}",
+        "- Safety: observe_only=true, production_effect=none, broker_action=none",
+        "- Production Promotion Allowed: false",
+        "",
+        "## Candidate Gate",
+        "",
+        (
+            "| Rank | Experiment | Score | Selection Status | Shadow Allowed | "
+            "Production Promotion | Blockers |"
+        ),
+        "|---:|---|---:|---|---|---|---|",
+    ]
+    for row in rows:
+        blockers = row.get("blockers")
+        blocker_text = (
+            ", ".join(str(blocker) for blocker in blockers)
+            if isinstance(blockers, list) and blockers
+            else "none"
+        )
+        lines.append(
+            "| "
+            f"{row.get('rank')} | "
+            f"{row.get('experiment_id')} | "
+            f"{_fmt_number(row.get('candidate_score'))} | "
+            f"{row.get('selection_status')} | "
+            f"{str(row.get('shadow_observation_allowed')).lower()} | "
+            f"{str(row.get('production_promotion_allowed')).lower()} | "
+            f"{blocker_text} |"
+        )
+    if not rows:
+        lines.extend(
+            [
+                "| - | no ranked candidates | - | blocked | false | false | "
+                "RANKING_POLICY_NOT_APPLIED |"
+            ]
+        )
+    lines.extend(
+        [
+            "",
+            "## Summary",
+            "",
+            f"- Eligible for shadow: {summary.get('eligible_for_shadow_count')}",
+            f"- Needs more data: {summary.get('needs_more_data_count')}",
+            f"- Rejected: {summary.get('rejected_count')}",
+            f"- Blocked: {summary.get('blocked_count')}",
         ]
     )
     return "\n".join(lines) + "\n"
@@ -1059,6 +1230,130 @@ def _ranking_lines(payload: Mapping[str, Any]) -> list[str]:
     return lines
 
 
+def _candidate_selection_row(
+    candidate: Mapping[str, Any],
+    *,
+    rank: int,
+    promotion_policy: ETFExperimentPolicyRef,
+    min_candidate_score: float,
+) -> dict[str, Any]:
+    score = _optional_float(candidate.get("candidate_score")) or 0.0
+    hard_flags = _string_list(candidate.get("hard_rejection_flags"))
+    blocked_rules = set(promotion_policy.blocked_hard_rejection_rules)
+    rejected_rules = set(promotion_policy.rejected_hard_rejection_rules)
+    blockers = sorted(flag for flag in hard_flags if flag in blocked_rules)
+    rejected_flags = sorted(flag for flag in hard_flags if flag in rejected_rules)
+    unclassified_flags = sorted(
+        flag for flag in hard_flags if flag not in blocked_rules and flag not in rejected_rules
+    )
+    blockers.extend(f"UNCLASSIFIED_HARD_REJECTION:{flag}" for flag in unclassified_flags)
+    if candidate.get("observe_only") is False:
+        blockers.append("OBSERVE_ONLY_DISABLED")
+    if candidate.get("production_effect") not in (None, "none"):
+        blockers.append("UNSAFE_PRODUCTION_EFFECT")
+    if candidate.get("broker_action") not in (None, "none"):
+        blockers.append("BROKER_ACTION_NOT_NONE")
+    if candidate.get("manual_review_required") is False:
+        blockers.append("MISSING_MANUAL_REVIEW")
+    if candidate.get("candidate_status") == "rejected" and not hard_flags:
+        blockers.append("RANKING_REJECTED_WITHOUT_FLAGS")
+    if blockers:
+        selection_status = "blocked"
+        shadow_allowed = False
+        reasons = [f"blocked:{blocker}" for blocker in sorted(set(blockers))]
+    elif rejected_flags:
+        selection_status = "rejected"
+        shadow_allowed = False
+        reasons = [f"hard_rejected:{flag}" for flag in rejected_flags]
+    elif score < min_candidate_score:
+        selection_status = "needs_more_data"
+        shadow_allowed = False
+        reasons = [f"candidate_score_below_min:{score:.4f}<{min_candidate_score:.4f}"]
+    elif not promotion_policy.shadow_observation_allowed:
+        selection_status = "blocked"
+        shadow_allowed = False
+        reasons = ["blocked:SHADOW_OBSERVATION_POLICY_DISABLED"]
+        blockers.append("SHADOW_OBSERVATION_POLICY_DISABLED")
+    else:
+        selection_status = "eligible_for_shadow"
+        shadow_allowed = True
+        reasons = [
+            "candidate_score_meets_min",
+            "manual_review_required_before_shadow",
+        ]
+    return {
+        "rank": rank,
+        "experiment_id": candidate.get("experiment_id"),
+        "candidate_score": round(score, 10),
+        "ranking_candidate_status": candidate.get("candidate_status"),
+        "hard_rejection_flags": hard_flags,
+        "selection_status": selection_status,
+        "selection_reasons": reasons,
+        "blockers": sorted(set(blockers)),
+        "shadow_observation_allowed": shadow_allowed,
+        "production_promotion_allowed": False,
+        "observe_only": True,
+        "production_effect": "none",
+        "broker_action": "none",
+        "manual_review_required": True,
+    }
+
+
+def _candidate_selection_summary(candidates: list[dict[str, Any]]) -> dict[str, Any]:
+    counts = {
+        "eligible_for_shadow_count": 0,
+        "needs_more_data_count": 0,
+        "rejected_count": 0,
+        "blocked_count": 0,
+    }
+    for candidate in candidates:
+        status = candidate.get("selection_status")
+        if status == "eligible_for_shadow":
+            counts["eligible_for_shadow_count"] += 1
+        elif status == "needs_more_data":
+            counts["needs_more_data_count"] += 1
+        elif status == "rejected":
+            counts["rejected_count"] += 1
+        elif status == "blocked":
+            counts["blocked_count"] += 1
+    if not candidates:
+        status = "BLOCKED_NO_RANKED_CANDIDATES"
+        blockers = ["RANKING_POLICY_NOT_APPLIED"]
+    elif counts["eligible_for_shadow_count"] > 0:
+        status = "PASS"
+        blockers = []
+    elif counts["blocked_count"] > 0:
+        status = "BLOCKED"
+        blockers = sorted(
+            {
+                str(blocker)
+                for candidate in candidates
+                for blocker in candidate.get("blockers", [])
+            }
+        )
+    else:
+        status = "NO_ELIGIBLE_CANDIDATE"
+        blockers = []
+    return {
+        "status": status,
+        "candidate_count": len(candidates),
+        **counts,
+        "blockers": blockers,
+        "production_promotion_allowed": False,
+    }
+
+
+def _required_policy_threshold(
+    policy: ETFExperimentPolicyRef,
+    threshold_name: str,
+) -> float:
+    if threshold_name not in policy.thresholds:
+        raise ValueError(
+            f"ETF experiment promotion policy missing required threshold: {threshold_name}"
+        )
+    return float(policy.thresholds[threshold_name])
+
+
 def _metric(
     payload: Mapping[str, Any],
     key: str,
@@ -1073,6 +1368,12 @@ def _metric(
 
 def _mapping(value: Any) -> dict[str, Any]:
     return dict(value) if isinstance(value, Mapping) else {}
+
+
+def _string_list(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item) for item in value]
 
 
 def _subtract_or_none(left: float | None, right: float | None) -> float | None:
@@ -1191,6 +1492,14 @@ def _apply_relative_strength_weight(config: ETFConfigBundle, overrides: Mapping[
     for key, weight in existing.items():
         config.strategy.scores[key].weight = remaining * weight / existing_total
     config.strategy.scores["relative_strength"].weight = target
+
+
+def _validate_unique_policy_rules(field_name: str, rules: list[str]) -> None:
+    normalized = [str(rule).strip() for rule in rules]
+    if any(not rule for rule in normalized):
+        raise ValueError(f"ETF experiment policy {field_name} must not contain blank rules")
+    if len(normalized) != len(set(normalized)):
+        raise ValueError(f"ETF experiment policy {field_name} must not contain duplicates")
 
 
 def _validate_base_weights(

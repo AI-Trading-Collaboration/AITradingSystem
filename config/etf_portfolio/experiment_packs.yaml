@@ -36,7 +36,20 @@ ranking_policies:
 promotion_policies:
   shadow_only_manual_review:
     description: "Candidates can only enter shadow observation after manual-review gate; no automatic production promotion."
-    policy_status: planned
+    policy_status: pilot_baseline
+    thresholds:
+      min_candidate_score: 0.50
+    blocked_hard_rejection_rules:
+      - NO_BENCHMARK_COMPARISON
+      - CREDIBILITY_GATE_FAILED
+      - UNSAFE_PRODUCTION_EFFECT
+      - MISSING_MANUAL_REVIEW
+    rejected_hard_rejection_rules:
+      - TURNOVER_TOO_HIGH
+      - DRAWDOWN_TOO_HIGH
+      - CONSTRAINT_VIOLATION
+    shadow_observation_allowed: true
+    production_promotion_allowed: false
 
 experiment_packs:
   etf_calibration_v1:

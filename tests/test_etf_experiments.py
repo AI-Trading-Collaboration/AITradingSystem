@@ -11,10 +11,12 @@ from typer.testing import CliRunner
 from ai_trading_system.cli import app
 from ai_trading_system.etf_portfolio.data import standardize_price_frame, validate_price_data
 from ai_trading_system.etf_portfolio.experiments import (
+    EXPERIMENT_CANDIDATE_SELECTION_SCHEMA_KEYS,
     EXPERIMENT_COMPARISON_SCHEMA_KEYS,
     ETFExperimentPackRegistry,
     ETFExperimentRegistry,
     apply_ranking_policy_to_comparison_report,
+    build_candidate_selection_report,
     build_experiment_comparison_report,
     build_experiment_config_bundle,
     load_experiment_pack_registry,
@@ -22,6 +24,7 @@ from ai_trading_system.etf_portfolio.experiments import (
     rank_experiment_candidates,
     run_experiment_batch,
     validate_experiment_pack_registry,
+    write_candidate_selection_report,
     write_experiment_comparison_report,
 )
 from ai_trading_system.etf_portfolio.models import load_etf_config_bundle
@@ -100,12 +103,16 @@ def test_etf_experiment_registry_rejects_bad_base_weight_sum() -> None:
 def test_etf_experiment_pack_loads_default_pack() -> None:
     pack_registry = load_experiment_pack_registry()
     pack = pack_registry.experiment_packs["etf_calibration_v1"]
+    promotion_policy = pack_registry.promotion_policies["shadow_only_manual_review"]
 
     assert pack.pack_id == "etf_calibration_v1"
     assert pack.created_for_task == "TRADING-064"
     assert len(pack.experiment_ids) == 16
     assert pack.ranking_policy == "risk_adjusted_v1"
     assert pack.promotion_policy == "shadow_only_manual_review"
+    assert promotion_policy.thresholds["min_candidate_score"] == 0.50
+    assert promotion_policy.production_promotion_allowed is False
+    assert promotion_policy.shadow_observation_allowed is True
     assert pack_registry.config_hash
 
 
@@ -513,6 +520,134 @@ def test_etf_experiment_comparison_can_apply_ranking_policy() -> None:
     )
 
 
+def test_etf_experiment_candidate_selection_marks_eligible_shadow_candidate() -> None:
+    ranked_report = apply_ranking_policy_to_comparison_report(
+        _ranking_report([_ranking_row("candidate_a")]),
+        ranking_policy=_ranking_policy(),
+        ranking_policy_id="risk_adjusted_v1",
+    )
+
+    selection = build_candidate_selection_report(
+        ranked_report,
+        promotion_policy=_promotion_policy(),
+        promotion_policy_id="shadow_only_manual_review",
+    )
+
+    candidate = selection["candidates"][0]
+    assert tuple(selection) == EXPERIMENT_CANDIDATE_SELECTION_SCHEMA_KEYS
+    assert selection["selection_summary"]["status"] == "PASS"
+    assert candidate["selection_status"] == "eligible_for_shadow"
+    assert candidate["shadow_observation_allowed"] is True
+    assert candidate["production_promotion_allowed"] is False
+    assert selection["production_promotion_allowed"] is False
+
+
+def test_etf_experiment_candidate_selection_needs_more_data_below_policy_score() -> None:
+    selection = build_candidate_selection_report(
+        _selection_report([_ranked_candidate("low_score", score=0.20)]),
+        promotion_policy=_promotion_policy(),
+        promotion_policy_id="shadow_only_manual_review",
+    )
+
+    candidate = selection["candidates"][0]
+    assert selection["selection_summary"]["status"] == "NO_ELIGIBLE_CANDIDATE"
+    assert candidate["selection_status"] == "needs_more_data"
+    assert candidate["shadow_observation_allowed"] is False
+
+
+def test_etf_experiment_candidate_selection_blocks_missing_benchmark() -> None:
+    ranked_report = apply_ranking_policy_to_comparison_report(
+        _ranking_report([_ranking_row("missing_benchmark", excess_return_vs_qqq=None)]),
+        ranking_policy=_ranking_policy(),
+        ranking_policy_id="risk_adjusted_v1",
+    )
+
+    selection = build_candidate_selection_report(
+        ranked_report,
+        promotion_policy=_promotion_policy(),
+        promotion_policy_id="shadow_only_manual_review",
+    )
+
+    candidate = selection["candidates"][0]
+    assert candidate["selection_status"] == "blocked"
+    assert "NO_BENCHMARK_COMPARISON" in candidate["blockers"]
+    assert candidate["shadow_observation_allowed"] is False
+
+
+def test_etf_experiment_candidate_selection_rejects_high_turnover() -> None:
+    ranked_report = apply_ranking_policy_to_comparison_report(
+        _ranking_report([_ranking_row("high_turnover", turnover=0.60)]),
+        ranking_policy=_ranking_policy(),
+        ranking_policy_id="risk_adjusted_v1",
+    )
+
+    selection = build_candidate_selection_report(
+        ranked_report,
+        promotion_policy=_promotion_policy(),
+        promotion_policy_id="shadow_only_manual_review",
+    )
+
+    candidate = selection["candidates"][0]
+    assert candidate["selection_status"] == "rejected"
+    assert "TURNOVER_TOO_HIGH" not in candidate["blockers"]
+    assert candidate["shadow_observation_allowed"] is False
+
+
+def test_etf_experiment_candidate_selection_blocks_without_ranking_policy() -> None:
+    selection = build_candidate_selection_report(
+        _ranking_report([_ranking_row("candidate_a")]),
+        promotion_policy=_promotion_policy(),
+        promotion_policy_id="shadow_only_manual_review",
+    )
+
+    assert selection["selection_summary"]["status"] == "BLOCKED_NO_RANKED_CANDIDATES"
+    assert selection["selection_summary"]["blockers"] == ["RANKING_POLICY_NOT_APPLIED"]
+    assert selection["candidates"] == []
+
+
+def test_etf_experiment_candidate_selection_writes_json_and_markdown(tmp_path: Path) -> None:
+    selection = build_candidate_selection_report(
+        _selection_report([_ranked_candidate("candidate_a", score=0.70)]),
+        promotion_policy=_promotion_policy(),
+        promotion_policy_id="shadow_only_manual_review",
+    )
+    json_path = tmp_path / "candidate_selection_report.json"
+    md_path = tmp_path / "candidate_selection_report.md"
+
+    write_candidate_selection_report(selection, json_path=json_path, markdown_path=md_path)
+
+    assert json_path.exists()
+    assert md_path.exists()
+    text = md_path.read_text(encoding="utf-8")
+    assert "ETF Experiment Candidate Selection Gate" in text
+    assert "eligible_for_shadow" in text
+    assert "Production Promotion Allowed: false" in text
+
+
+def test_etf_experiment_select_candidates_cli_smoke(tmp_path: Path) -> None:
+    _single_batch(tmp_path)
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "etf",
+            "experiments",
+            "select-candidates",
+            "--latest",
+            "--output-dir",
+            str(tmp_path),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "ETF experiment candidate selection gate" in result.output
+    assert "production_promotion_allowed=false" in result.output
+    assert list(tmp_path.glob("*/candidate_selection_report.json"))
+
+
 def _registry_raw() -> dict[str, object]:
     return deepcopy(load_experiment_registry().model_dump(mode="json"))
 
@@ -590,6 +725,10 @@ def _ranking_policy():
     return load_experiment_pack_registry().ranking_policies["risk_adjusted_v1"]
 
 
+def _promotion_policy():
+    return load_experiment_pack_registry().promotion_policies["shadow_only_manual_review"]
+
+
 def _ranking_report(rows: list[dict[str, object]]) -> dict[str, object]:
     return {
         "schema_version": 1,
@@ -605,6 +744,39 @@ def _ranking_report(rows: list[dict[str, object]]) -> dict[str, object]:
         "warning_summary": [],
         "top_candidates_by_ranking_policy": [],
         "ranking_policy_status": "PENDING_TRADING_064E_RISK_ADJUSTED_V1",
+        "observe_only": True,
+        "production_effect": "none",
+        "broker_action": "none",
+        "manual_review_required": True,
+    }
+
+
+def _selection_report(candidates: list[dict[str, object]]) -> dict[str, object]:
+    rows = [_ranking_row(str(candidate["experiment_id"])) for candidate in candidates]
+    report = _ranking_report(rows)
+    report["top_candidates_by_ranking_policy"] = candidates
+    report["ranking_policy_status"] = "APPLIED:risk_adjusted_v1"
+    return report
+
+
+def _ranked_candidate(
+    experiment_id: str,
+    *,
+    score: float,
+    hard_rejection_flags: list[str] | None = None,
+) -> dict[str, object]:
+    hard_flags = hard_rejection_flags or []
+    return {
+        "experiment_id": experiment_id,
+        "candidate_score": score,
+        "benchmark_excess_return_score": score,
+        "drawdown_reduction_score": score,
+        "risk_adjusted_return_score": score,
+        "turnover_penalty_score": score,
+        "stability_score": score,
+        "hard_rejection_flags": hard_flags,
+        "candidate_status": "rejected" if hard_flags else "ranked",
+        "ranking_reason": [],
         "observe_only": True,
         "production_effect": "none",
         "broker_action": "none",

@@ -33,11 +33,13 @@ from ai_trading_system.etf_portfolio.data import (
 from ai_trading_system.etf_portfolio.experiments import (
     DEFAULT_ETF_EXPERIMENT_RUN_DIR,
     apply_ranking_policy_to_comparison_report,
+    build_candidate_selection_report,
     build_experiment_comparison_report,
     find_latest_experiment_run_dir,
     load_experiment_pack_registry,
     load_experiment_registry,
     run_experiment_batch,
+    write_candidate_selection_report,
     write_experiment_comparison_report,
 )
 from ai_trading_system.etf_portfolio.features import (
@@ -684,6 +686,63 @@ def experiments_compare_command(
     )
     typer.echo(f"ETF experiment comparison：{md_path}")
     typer.echo("production_effect=none")
+
+
+@experiments_app.command("select-candidates")
+def experiments_select_candidates_command(
+    run_id: Annotated[
+        str | None,
+        typer.Option("--run-id", help="TRADING-064 experiment batch run id。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="读取最新 TRADING-064 experiment batch run。"),
+    ] = False,
+    promotion_policy: Annotated[
+        str | None,
+        typer.Option("--promotion-policy", help="覆盖默认 pack promotion policy。"),
+    ] = None,
+    output_dir: Annotated[Path, typer.Option(help="experiment run 输出目录。")] = (
+        DEFAULT_ETF_EXPERIMENT_RUN_DIR
+    ),
+) -> None:
+    """生成 TRADING-064 candidate selection gate；只允许 shadow-only/manual-review。"""
+    if run_id is None and not latest:
+        raise typer.BadParameter("--run-id or --latest is required")
+    if run_id is not None and latest:
+        raise typer.BadParameter("--run-id and --latest cannot be combined")
+    run_dir = find_latest_experiment_run_dir(output_dir) if latest else output_dir / str(run_id)
+    payload = build_experiment_comparison_report(run_dir)
+    pack_registry = load_experiment_pack_registry()
+    pack_id = payload["run_metadata"].get("pack_id")
+    policy_id = promotion_policy or "shadow_only_manual_review"
+    if pack_id:
+        pack_config = pack_registry.experiment_packs.get(str(pack_id))
+        if pack_config is not None:
+            payload = apply_ranking_policy_to_comparison_report(
+                payload,
+                ranking_policy=pack_registry.ranking_policies[pack_config.ranking_policy],
+                ranking_policy_id=pack_config.ranking_policy,
+            )
+            policy_id = promotion_policy or pack_config.promotion_policy
+    policy = pack_registry.promotion_policies.get(policy_id)
+    if policy is None:
+        raise typer.BadParameter(f"unknown promotion policy: {policy_id}")
+    selection = build_candidate_selection_report(
+        payload,
+        promotion_policy=policy,
+        promotion_policy_id=policy_id,
+    )
+    json_path = run_dir / "candidate_selection_report.json"
+    md_path = run_dir / "candidate_selection_report.md"
+    write_candidate_selection_report(selection, json_path=json_path, markdown_path=md_path)
+    summary = selection["selection_summary"]
+    typer.echo(f"ETF experiment candidate selection gate：{md_path}")
+    typer.echo(f"run_id={selection['run_metadata'].get('run_id')}")
+    typer.echo(f"status={summary['status']}")
+    typer.echo(f"eligible_for_shadow={summary['eligible_for_shadow_count']}")
+    typer.echo("production_promotion_allowed=false")
+    typer.echo(f"production_effect={selection['production_effect']}")
 
 
 @p2_app.command("edgar-text")
