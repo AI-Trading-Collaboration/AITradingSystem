@@ -272,6 +272,9 @@ def test_daily_ops_plan_generates_reader_brief_chain_after_score_daily() -> None
         "portfolio_candidate_tracking",
         "portfolio_tracking_review",
         "portfolio_tracking_review_report",
+        "etf_forward_update",
+        "etf_forward_dashboard",
+        "etf_forward_watchlist",
         "report_index",
         "documentation_contract",
         "research_governance_summary",
@@ -305,6 +308,13 @@ def test_daily_ops_plan_generates_reader_brief_chain_after_score_daily() -> None
         "review-tracking",
         "--latest",
         "--show-window-progress",
+    )
+    assert next(step for step in plan.steps if step.step_id == "etf_forward_update").command == (
+        "aits",
+        "etf",
+        "forward",
+        "update",
+        "--latest",
     )
     assert next(step for step in plan.steps if step.step_id == "report_index").command == (
         "aits",

@@ -169,6 +169,7 @@ def build_reader_brief_payload(
     parameter_shadow_review = _parameter_shadow_review(as_of)
     etf_backtest_summary = _etf_backtest_review_summary(as_of)
     etf_calibration_experiments = _etf_calibration_experiment_summary(report_index)
+    etf_forward_simulation = _etf_forward_simulation_summary(report_index)
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -285,6 +286,7 @@ def build_reader_brief_payload(
         "parameter_shadow_review": parameter_shadow_review,
         "etf_backtest_summary": etf_backtest_summary,
         "etf_calibration_experiments": etf_calibration_experiments,
+        "etf_forward_simulation": etf_forward_simulation,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -533,6 +535,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     parameter_shadow = _mapping(payload.get("parameter_shadow_review"))
     etf_backtest = _mapping(payload.get("etf_backtest_summary"))
     etf_calibration = _mapping(payload.get("etf_calibration_experiments"))
+    etf_forward = _mapping(payload.get("etf_forward_simulation"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -775,6 +778,27 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("safety_status", etf_calibration.get("safety_status")),
                     ("detail_report", etf_calibration.get("detail_report")),
                     ("production_effect", etf_calibration.get("production_effect")),
+                ]
+            ),
+        ),
+        _section(
+            "ETF Forward Simulation",
+            _definition_table(
+                [
+                    ("availability", etf_forward.get("availability")),
+                    ("status", etf_forward.get("status")),
+                    ("summary", etf_forward.get("summary_sentence")),
+                    ("active_shadow_candidates", etf_forward.get("active_shadow_candidates")),
+                    ("best_candidate_since_enrollment", etf_forward.get("best_candidate")),
+                    ("weakest_candidate_since_enrollment", etf_forward.get("weakest_candidate")),
+                    ("needs_more_data_count", etf_forward.get("needs_more_data_count")),
+                    ("watch_count", etf_forward.get("watch_count")),
+                    ("reject_pending_review_count", etf_forward.get("reject_pending_review_count")),
+                    ("watchlist_attention_count", etf_forward.get("watchlist_attention_count")),
+                    ("safety_status", etf_forward.get("safety_status")),
+                    ("decision_input_usage", etf_forward.get("decision_input_usage")),
+                    ("detail_report", etf_forward.get("detail_report")),
+                    ("production_effect", etf_forward.get("production_effect")),
                 ]
             ),
         ),
@@ -2141,6 +2165,153 @@ def _etf_calibration_safety_status(*payloads: Mapping[str, Any]) -> str:
         "observe_only=true; production_effect=none; broker_action=none"
         if safe
         else "SAFETY_REVIEW_REQUIRED"
+    )
+
+
+def _etf_forward_simulation_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_forward_simulation_summary()
+    dashboard_path = _report_index_artifact_path(report_index, "etf_forward_dashboard")
+    watchlist_path = _report_index_artifact_path(report_index, "etf_forward_watchlist")
+    dashboard = _read_optional_json(dashboard_path)
+    watchlist = _read_optional_json(watchlist_path)
+    if not dashboard:
+        return _missing_etf_forward_simulation_summary()
+    rows = _records(dashboard.get("candidate_summary_table"))
+    status_summary = _mapping(dashboard.get("status_summary"))
+    safety_status = _etf_forward_safety_status(dashboard, watchlist)
+    detail_report = _first_existing_path(dashboard_path, watchlist_path)
+    watchlist_summary = _mapping(watchlist.get("summary"))
+    if not rows:
+        return {
+            "availability": "AVAILABLE",
+            "status": _text(dashboard.get("status"), "NO_ACTIVE_SHADOW_CANDIDATES"),
+            "active_shadow_candidates": 0,
+            "best_candidate": "MISSING",
+            "weakest_candidate": "MISSING",
+            "needs_more_data_count": 0,
+            "watch_count": 0,
+            "reject_pending_review_count": 0,
+            "watchlist_attention_count": int(watchlist_summary.get("item_count") or 0),
+            "safety_status": safety_status,
+            "detail_report": "" if detail_report is None else str(detail_report),
+            "dashboard_report": "" if dashboard_path is None else str(dashboard_path),
+            "watchlist_report": "" if watchlist_path is None else str(watchlist_path),
+            "decision_input_usage": "none; forward metrics are evaluation-only",
+            "production_effect": PRODUCTION_EFFECT,
+            "summary_sentence": (
+                "ETF Forward Simulation: no active shadow candidates. "
+                "Run experiment enrollment first."
+            ),
+        }
+    best = _best_forward_candidate(rows)
+    weakest = _weakest_forward_candidate(rows)
+    return {
+        "availability": "AVAILABLE",
+        "status": _text(dashboard.get("status"), "AVAILABLE"),
+        "active_shadow_candidates": int(
+            status_summary.get("active_candidate_count") or len(rows)
+        ),
+        "best_candidate": best,
+        "weakest_candidate": weakest,
+        "needs_more_data_count": int(status_summary.get("needs_more_data_count") or 0),
+        "watch_count": int(status_summary.get("watch_count") or 0),
+        "reject_pending_review_count": int(
+            status_summary.get("reject_pending_review_count") or 0
+        ),
+        "watchlist_attention_count": int(watchlist_summary.get("item_count") or 0),
+        "safety_status": safety_status,
+        "detail_report": "" if detail_report is None else str(detail_report),
+        "dashboard_report": "" if dashboard_path is None else str(dashboard_path),
+        "watchlist_report": "" if watchlist_path is None else str(watchlist_path),
+        "decision_input_usage": "none; forward metrics are evaluation-only",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            f"ETF Forward Simulation: active_shadow_candidates={len(rows)}; "
+            f"best_candidate={best}; weakest_candidate={weakest}; safety={safety_status}."
+        ),
+    }
+
+
+def _missing_etf_forward_simulation_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "active_shadow_candidates": 0,
+        "best_candidate": "MISSING",
+        "weakest_candidate": "MISSING",
+        "needs_more_data_count": 0,
+        "watch_count": 0,
+        "reject_pending_review_count": 0,
+        "watchlist_attention_count": 0,
+        "safety_status": "MISSING",
+        "detail_report": "",
+        "decision_input_usage": "none; Reader Brief does not run forward update",
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            "ETF Forward Simulation: no active shadow candidates. "
+            "Run experiment enrollment first."
+        ),
+        "limitation": (
+            "ETF forward dashboard artifact is missing; Reader Brief does not run "
+            "forward simulation."
+        ),
+    }
+
+
+def _etf_forward_safety_status(*payloads: Mapping[str, Any]) -> str:
+    material = [payload for payload in payloads if payload]
+    if not material:
+        return "MISSING"
+    safe = all(
+        payload.get("observe_only") in (None, True)
+        and _text(payload.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
+        and payload.get("broker_action") in (None, "none")
+        and payload.get("manual_review_required") in (None, True)
+        and payload.get("production_promotion_allowed") in (None, False)
+        for payload in material
+    )
+    return (
+        "observe_only=true; production_effect=none; broker_action=none; "
+        "manual_review_required=true"
+        if safe
+        else "SAFETY_REVIEW_REQUIRED"
+    )
+
+
+def _best_forward_candidate(rows: list[dict[str, Any]]) -> str:
+    available = [
+        row
+        for row in rows
+        if _float_or_none(row.get("excess_return_vs_baseline")) is not None
+    ]
+    if not available:
+        return "MISSING"
+    row = max(
+        available,
+        key=lambda item: _float_or_none(item.get("excess_return_vs_baseline")) or 0.0,
+    )
+    return (
+        f"{_text(row.get('candidate_id'), 'MISSING')} "
+        f"({_format_percent(row.get('excess_return_vs_baseline'))} vs baseline)"
+    )
+
+
+def _weakest_forward_candidate(rows: list[dict[str, Any]]) -> str:
+    available = [
+        row
+        for row in rows
+        if _float_or_none(row.get("excess_return_vs_baseline")) is not None
+    ]
+    if not available:
+        return "MISSING"
+    row = min(
+        available,
+        key=lambda item: _float_or_none(item.get("excess_return_vs_baseline")) or 0.0,
+    )
+    return (
+        f"{_text(row.get('candidate_id'), 'MISSING')} "
+        f"({_format_percent(row.get('excess_return_vs_baseline'))} vs baseline)"
     )
 
 

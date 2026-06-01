@@ -1,0 +1,77 @@
+policy_metadata:
+  version: etf_forward_simulation_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: >
+    TRADING-065 observe-only forward simulation policy for ETF experiment shadow
+    candidates after historical calibration selection.
+  validation: >
+    Unit tests and the `aits etf forward validate` gate cover schema, safety,
+    rolling metrics, lifecycle status rules, reports, and no-lookahead separation.
+  review_condition: >
+    Review after enough active shadow candidates accumulate at least 60 valid
+    forward trading days.
+
+safety:
+  observe_only: true
+  production_effect: none
+  broker_action: none
+  manual_review_required: true
+  production_promotion_allowed: false
+  automatic_baseline_replacement_allowed: false
+
+input:
+  shadow_candidate_registry_path: data/simulation/etf_shadow_candidates.json
+  decision_ledger_path: data/simulation/etf_forward_decisions.csv
+  prices_path: data/raw/prices_daily.csv
+  experiment_run_dir: reports/etf_portfolio/experiments
+
+output:
+  forward_report_dir: reports/etf_portfolio/forward
+
+benchmarks:
+  baseline_id: production_baseline
+  benchmark_symbols:
+    - QQQ
+    - SPY
+    - SMH
+
+rolling_windows:
+  - 5
+  - 20
+  - 60
+
+lifecycle_thresholds:
+  minimum_forward_days: 20
+  watch_excess_return_vs_baseline: -0.02
+  reject_excess_return_vs_baseline: -0.05
+  reject_drawdown_worse_than_baseline: 0.05
+  max_turnover_since_enrollment: 2.0
+  max_constraint_hit_rate: 0.50
+  missing_data_days_for_watch: 5
+
+allowed_statuses:
+  - active
+  - needs_more_data
+  - watch
+  - reject_pending_review
+  - rejected
+  - archived
+
+allowed_recommended_actions:
+  - continue_shadow
+  - needs_more_data
+  - watch
+  - reject_pending_review
+  - archive_after_review
+
+watchlist:
+  allowed_severities:
+    - info
+    - warning
+    - critical
+  allowed_actions:
+    - continue_observation
+    - needs_manual_review
+    - consider_rejection_after_review
+    - fix_data_gap

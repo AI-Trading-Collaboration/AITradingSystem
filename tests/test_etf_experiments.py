@@ -680,13 +680,13 @@ def test_etf_shadow_enrollment_creates_observe_only_record(tmp_path: Path) -> No
     assert record["candidate_id"] == "unit:candidate_a"
     assert record["experiment_id"] == "candidate_a"
     assert record["source_run_id"] == "unit"
-    assert record["status"] == "active_shadow_observation"
+    assert record["status"] == "active"
     assert record["observe_only"] is True
     assert record["production_effect"] == "none"
     assert record["broker_action"] == "none"
     assert record["manual_review_required"] is True
     assert record["production_promotion_allowed"] is False
-    assert record["evaluation_schedule"]["weekly_review_task"] == "TRADING-064H"
+    assert record["evaluation_schedule"]["weekly_review_task"] == "TRADING-065F"
 
 
 def test_etf_shadow_enrollment_duplicate_is_deterministic(tmp_path: Path) -> None:

@@ -10,6 +10,7 @@ import typer
 
 from ai_trading_system import cli
 from ai_trading_system.cli_commands import docs as docs_cli
+from ai_trading_system.cli_commands import etf_portfolio as etf_cli
 from ai_trading_system.cli_commands import sec_pit as sec_pit_cli
 
 
@@ -237,6 +238,74 @@ def _dispatch(args: list[str]) -> None:
                 cli.DEFAULT_PORTFOLIO_TRACKING_REVIEW_CONFIG_PATH,
             ),
             dry_run=_flag(args, "--dry-run"),
+        )
+        return
+    if args[:3] == ["etf", "forward", "update"]:
+        etf_cli.forward_update_command(
+            date_option=_option(args, "--as-of") or _option(args, "--date"),
+            latest=_flag(args, "--latest"),
+            config_path=_path_option_with_default(
+                args,
+                "--config-path",
+                etf_cli.DEFAULT_ETF_FORWARD_CONFIG_PATH,
+            ),
+            registry_path=_path_option_with_default(
+                args,
+                "--registry-path",
+                etf_cli.DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH,
+            ),
+            decision_ledger_path=_path_option_with_default(
+                args,
+                "--decision-ledger-path",
+                etf_cli.DEFAULT_ETF_FORWARD_DECISION_LEDGER_PATH,
+            ),
+            prices_path=_path_option_with_default(
+                args,
+                "--prices-path",
+                etf_cli.DEFAULT_ETF_PRICE_PATH,
+            ),
+            output_dir=_path_option_with_default(
+                args,
+                "--output-dir",
+                etf_cli.DEFAULT_ETF_FORWARD_REPORT_DIR / "updates",
+            ),
+        )
+        return
+    if args[:3] == ["etf", "forward", "dashboard"]:
+        etf_cli.forward_dashboard_command(
+            date_option=_option(args, "--as-of") or _option(args, "--date"),
+            latest=_flag(args, "--latest"),
+            registry_path=_path_option_with_default(
+                args,
+                "--registry-path",
+                etf_cli.DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH,
+            ),
+            update_dir=_path_option_with_default(
+                args,
+                "--update-dir",
+                etf_cli.DEFAULT_ETF_FORWARD_REPORT_DIR / "updates",
+            ),
+            output_dir=_path_option_with_default(
+                args,
+                "--output-dir",
+                etf_cli.DEFAULT_ETF_FORWARD_REPORT_DIR / "dashboard",
+            ),
+        )
+        return
+    if args[:3] == ["etf", "forward", "watchlist"]:
+        etf_cli.forward_watchlist_command(
+            date_option=_option(args, "--as-of") or _option(args, "--date"),
+            latest=_flag(args, "--latest"),
+            dashboard_dir=_path_option_with_default(
+                args,
+                "--dashboard-dir",
+                etf_cli.DEFAULT_ETF_FORWARD_REPORT_DIR / "dashboard",
+            ),
+            output_dir=_path_option_with_default(
+                args,
+                "--output-dir",
+                etf_cli.DEFAULT_ETF_FORWARD_REPORT_DIR / "watchlist",
+            ),
         )
         return
     if args[:2] == ["parameters", "shadow-backtest"]:

@@ -378,6 +378,21 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
         "portfolio_tracking_review_report_command",
         recorder("portfolio_tracking_review_report"),
     )
+    monkeypatch.setattr(
+        cli_direct.etf_cli,
+        "forward_update_command",
+        recorder("etf_forward_update"),
+    )
+    monkeypatch.setattr(
+        cli_direct.etf_cli,
+        "forward_dashboard_command",
+        recorder("etf_forward_dashboard"),
+    )
+    monkeypatch.setattr(
+        cli_direct.etf_cli,
+        "forward_watchlist_command",
+        recorder("etf_forward_watchlist"),
+    )
     monkeypatch.setattr(cli_direct.cli, "report_index_command", recorder("report_index"))
     monkeypatch.setattr(
         cli_direct.docs_cli,

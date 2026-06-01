@@ -534,6 +534,21 @@ def build_daily_ops_plan(
     portfolio_tracking_review_alias_json, portfolio_tracking_review_alias_md = (
         portfolio_tracking_review_report_alias_paths(reports_dir, as_of)
     )
+    etf_forward_root = project_root / "reports" / "etf_portfolio" / "forward"
+    etf_forward_update_json = etf_forward_root / "updates" / f"forward_update_{as_of_text}.json"
+    etf_forward_update_md = etf_forward_root / "updates" / f"forward_update_{as_of_text}.md"
+    etf_forward_dashboard_json = (
+        etf_forward_root / "dashboard" / f"forward_dashboard_{as_of_text}.json"
+    )
+    etf_forward_dashboard_md = (
+        etf_forward_root / "dashboard" / f"forward_dashboard_{as_of_text}.md"
+    )
+    etf_forward_watchlist_json = (
+        etf_forward_root / "watchlist" / f"forward_watchlist_{as_of_text}.json"
+    )
+    etf_forward_watchlist_md = (
+        etf_forward_root / "watchlist" / f"forward_watchlist_{as_of_text}.md"
+    )
     report_index_html = default_report_index_html_path(reports_dir, as_of)
     report_index_json = default_report_index_json_path(reports_dir, as_of)
     documentation_contract_report = default_documentation_contract_report_path(reports_dir, as_of)
@@ -1116,6 +1131,63 @@ def build_daily_ops_plan(
                 quality_gate=(
                     "只读读取 tracking review artifact 并写 reports alias；不运行上游 "
                     "candidate tracking 或修改 production。"
+                ),
+                blocks_downstream=True,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
+                step_id="etf_forward_update",
+                title="更新 ETF forward shadow simulation",
+                command=(
+                    ("aits", "etf", "forward", "update", "--latest")
+                    if dashboard_enabled
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(etf_forward_update_json, etf_forward_update_md),
+                quality_gate=(
+                    "在全局 validate-data 通过后读取 ETF price cache 和 shadow registry；"
+                    "只写 evaluation-only forward update，不修改 production weights。"
+                ),
+                blocks_downstream=True,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="local_or_readonly",
+            ),
+            DailyOpsStep(
+                step_id="etf_forward_dashboard",
+                title="生成 ETF forward simulation dashboard",
+                command=(
+                    ("aits", "etf", "forward", "dashboard", "--latest")
+                    if dashboard_enabled
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(etf_forward_dashboard_json, etf_forward_dashboard_md),
+                quality_gate=(
+                    "只读 latest forward update 和 shadow registry；输出 candidate、baseline "
+                    "和 benchmark 对比，不触发 broker action。"
+                ),
+                blocks_downstream=True,
+                enabled=dashboard_enabled,
+                skip_reason=scoring_artifact_skip_reason,
+                input_visibility="readonly",
+            ),
+            DailyOpsStep(
+                step_id="etf_forward_watchlist",
+                title="生成 ETF forward simulation watchlist",
+                command=(
+                    ("aits", "etf", "forward", "watchlist", "--latest")
+                    if dashboard_enabled
+                    else ()
+                ),
+                required_env_vars=(),
+                produced_paths=(etf_forward_watchlist_json, etf_forward_watchlist_md),
+                quality_gate=(
+                    "只读 dashboard 生成本地 attention summary；allowed actions "
+                    "限定为 manual review / observation，不发送外部 alert。"
                 ),
                 blocks_downstream=True,
                 enabled=dashboard_enabled,

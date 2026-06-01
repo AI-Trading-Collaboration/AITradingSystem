@@ -162,6 +162,23 @@ backtest、shadow enrollment 或 weekly review。
 registry、pack、runner、comparison/ranking、candidate gate、shadow/weekly review、
 report integration、P2/live safety 和 no-production/no-broker 边界。
 
+TRADING-065 forward simulation 使用已登记的 shadow candidates 做真实 forward
+observation，不改变 ETF production allocation。`aits etf forward update --date
+YYYY-MM-DD` 或 `--latest` 读取 `data/simulation/etf_shadow_candidates.json`、ETF price
+cache、baseline allocation 和 `QQQ` / `SPY` / `SMH` benchmark，写入 evaluation-only
+forward update 和 `data/simulation/etf_forward_decisions.csv` decision-time ledger；
+forward return 字段不会写入 decision rows。`aits etf forward dashboard --latest`
+生成 candidate vs baseline vs benchmark dashboard；`aits etf forward weekly-review
+--latest` 汇总 rolling metrics、risk/turnover/constraint hit 和 allowed next actions；
+`aits etf forward watchlist --latest` 只生成本地 watchlist summary；`aits etf forward
+validate` 是 TRADING-065 final gate。所有 forward 输出固定
+`observe_only=true`、`production_effect=none`、`broker_action=none`、
+`manual_review_required=true` 和 `production_promotion_allowed=false`，allowed actions
+不包含 production promotion 或 broker action。Daily ops 会在 `aits ops daily-run`
+中、report index 和 Reader Brief 之前尝试刷新 forward update / dashboard /
+watchlist；Reader Brief 的 `ETF Forward Simulation` 区块只读摘录 report index 指向的
+latest artifacts，缺失时显示 no active / missing 状态，不补造 forward 结论。
+
 TRADING-064 controlled calibration experiments 从
 `config/etf_portfolio/experiments.yaml` 和
 `config/etf_portfolio/experiment_packs.yaml` 读取。experiment registry 定义允许观察的
@@ -213,6 +230,12 @@ regime 日期范围。主要产物路径：
 - `data/simulation/etf_shadow_candidates.json`
 - `reports/etf_portfolio/experiments/weekly_reviews/weekly_review_YYYY-MM-DD.json`
 - `reports/etf_portfolio/experiments/validation/YYYY-MM-DD_etf_calibration_v1_experiment_validation.json`
+- `data/simulation/etf_forward_decisions.csv`
+- `reports/etf_portfolio/forward/updates/forward_update_YYYY-MM-DD.json`
+- `reports/etf_portfolio/forward/dashboard/forward_dashboard_YYYY-MM-DD.json`
+- `reports/etf_portfolio/forward/weekly_reviews/weekly_review_YYYY-MM-DD.json`
+- `reports/etf_portfolio/forward/watchlist/forward_watchlist_YYYY-MM-DD.json`
+- `reports/etf_portfolio/forward/validation/forward_validation_YYYY-MM-DD.json`
 
 `target_weights.csv` 输出 `constraints_applied` 和结构化
 `constraint_diagnostics` JSON。正式 allocation 会执行 asset cap/floor、risk group /

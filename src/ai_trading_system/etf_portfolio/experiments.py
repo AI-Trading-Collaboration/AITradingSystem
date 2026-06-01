@@ -14,6 +14,17 @@ from pydantic import BaseModel, Field, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.etf_portfolio.backtest import run_portfolio_backtest
+from ai_trading_system.etf_portfolio.forward_state import (
+    DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH,
+    OPEN_SHADOW_STATUSES,
+    SHADOW_CANDIDATE_REGISTRY_SCHEMA_VERSION,
+)
+from ai_trading_system.etf_portfolio.forward_state import (
+    load_shadow_candidate_registry as _load_hardened_shadow_candidate_registry,
+)
+from ai_trading_system.etf_portfolio.forward_state import (
+    write_shadow_candidate_registry as _write_hardened_shadow_candidate_registry,
+)
 from ai_trading_system.etf_portfolio.models import (
     DEFAULT_ETF_REPORT_DIR,
     ETFConfigBundle,
@@ -31,12 +42,8 @@ DEFAULT_ETF_EXPERIMENT_PACKS_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "experiment_packs.yaml"
 )
 DEFAULT_ETF_EXPERIMENT_RUN_DIR = DEFAULT_ETF_REPORT_DIR / "experiments"
-DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH = (
-    PROJECT_ROOT / "data" / "simulation" / "etf_shadow_candidates.json"
-)
 DEFAULT_ETF_EXPERIMENT_WEEKLY_REVIEW_DIR = DEFAULT_ETF_EXPERIMENT_RUN_DIR / "weekly_reviews"
 EXPERIMENT_METRIC_SCHEMA_VERSION = "etf_experiment_metrics_v1"
-SHADOW_CANDIDATE_REGISTRY_SCHEMA_VERSION = "etf_shadow_candidate_registry_v1"
 EXPERIMENT_WEEKLY_REVIEW_SCHEMA_VERSION = "etf_experiment_weekly_review_v1"
 EXPERIMENT_COMPARISON_SCHEMA_KEYS = (
     "schema_version",
@@ -665,15 +672,7 @@ def write_candidate_selection_report(
 def load_shadow_candidate_registry(
     path: Path = DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH,
 ) -> dict[str, Any]:
-    if not path.exists():
-        return _empty_shadow_candidate_registry()
-    payload = json.loads(path.read_text(encoding="utf-8"))
-    if not isinstance(payload, dict):
-        raise ValueError(f"ETF shadow candidate registry must be a JSON object: {path}")
-    candidates = payload.get("candidates")
-    if not isinstance(candidates, list):
-        raise ValueError(f"ETF shadow candidate registry missing candidates list: {path}")
-    return dict(payload)
+    return _load_hardened_shadow_candidate_registry(path)
 
 
 def enroll_shadow_candidates(
@@ -723,12 +722,7 @@ def enroll_shadow_candidates(
         "manual_review_required": True,
         "production_promotion_allowed": False,
     }
-    registry_path.parent.mkdir(parents=True, exist_ok=True)
-    registry_path.write_text(
-        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
-    return payload
+    return _write_hardened_shadow_candidate_registry(payload, registry_path)
 
 
 def build_weekly_experiment_review(
@@ -744,7 +738,7 @@ def build_weekly_experiment_review(
         dict(candidate)
         for candidate in registry.get("candidates", [])
         if isinstance(candidate, Mapping)
-        and candidate.get("status") == "active_shadow_observation"
+        and str(candidate.get("status")) in OPEN_SHADOW_STATUSES
     ]
     rows = [
         _weekly_review_candidate_row(
@@ -771,7 +765,7 @@ def build_weekly_experiment_review(
                 "candidate_id": candidate.get("candidate_id"),
                 "experiment_id": candidate.get("experiment_id"),
                 "source_run_id": candidate.get("source_run_id"),
-                "start_date": candidate.get("start_date"),
+                "start_date": _shadow_candidate_review_start_date(candidate),
                 "status": candidate.get("status"),
             }
             for candidate in candidates
@@ -2099,7 +2093,8 @@ def _weekly_review_candidate_row(
     review_policy: ETFExperimentPolicyRef,
 ) -> dict[str, Any]:
     notes: list[str] = []
-    start = _date_from_text(candidate.get("start_date"))
+    review_start_date = _shadow_candidate_review_start_date(candidate)
+    start = _date_from_text(review_start_date)
     review_days = max(0, (as_of - start).days + 1) if start is not None else 0
     experiment_id = str(candidate.get("experiment_id") or "")
     source_run_id = str(candidate.get("source_run_id") or "")
@@ -2144,7 +2139,7 @@ def _weekly_review_candidate_row(
         "experiment_id": experiment_id,
         "source_run_id": source_run_id,
         "review_period": {
-            "start_date": candidate.get("start_date"),
+            "start_date": review_start_date,
             "as_of": as_of.isoformat(),
             "review_days": review_days,
         },
@@ -2175,6 +2170,16 @@ def _weekly_review_candidate_row(
         "manual_review_required": True,
         "production_promotion_allowed": False,
     }
+
+
+def _shadow_candidate_review_start_date(candidate: Mapping[str, Any]) -> str:
+    schedule = _mapping(candidate.get("evaluation_schedule"))
+    return str(
+        candidate.get("start_date")
+        or schedule.get("start_date")
+        or candidate.get("enrollment_date")
+        or ""
+    )
 
 
 def _weekly_review_action(
@@ -2340,13 +2345,22 @@ def _shadow_candidate_record(
         "candidate_id": candidate_id,
         "experiment_id": experiment_id,
         "source_run_id": source_run_id,
+        "source_pack_id": str(metadata.get("pack_id") or "unknown_pack"),
         "enrolled_at": enrolled_at,
+        "enrollment_date": enrolled_at[:10],
         "model_version": _required_candidate_text(candidate, "model_version"),
         "config_hash": _required_candidate_text(candidate, "config_hash"),
+        "data_hash": str(metadata.get("data_hash") or "unknown_data_hash"),
         "start_date": start_date,
-        "status": "active_shadow_observation",
-        "candidate_score": candidate.get("candidate_score"),
-        "selection_status": candidate.get("selection_status"),
+        "ranking_score": candidate.get("candidate_score"),
+        "ranking_summary": {
+            "ranking_candidate_status": candidate.get("ranking_candidate_status"),
+            "hard_rejection_flags": _string_list(candidate.get("hard_rejection_flags")),
+            "selection_reasons": _string_list(candidate.get("selection_reasons")),
+            "blockers": _string_list(candidate.get("blockers")),
+        },
+        "selection_gate_status": candidate.get("selection_status"),
+        "status": "active",
         "observe_only": True,
         "production_effect": "none",
         "broker_action": "none",
@@ -2355,8 +2369,11 @@ def _shadow_candidate_record(
         "evaluation_schedule": {
             "cadence": "daily",
             "start_date": start_date,
-            "weekly_review_task": "TRADING-064H",
+            "weekly_review_task": "TRADING-065F",
         },
+        "last_evaluated_at": None,
+        "last_evaluated_date": None,
+        "notes": [],
     }
 
 

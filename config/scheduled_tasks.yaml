@@ -270,6 +270,48 @@ cadences:
         production_weight_write: false
         active_shadow_weight_write: false
         broker_action: false
+      - task_id: daily_etf_forward_update
+        daily_plan_step_id: etf_forward_update
+        title: Update ETF forward shadow simulation
+        command: aits etf forward update --latest
+        command_contains:
+          - etf
+          - forward
+          - update
+          - --latest
+        closed_market_behavior: skip_score_artifacts
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
+      - task_id: daily_etf_forward_dashboard
+        daily_plan_step_id: etf_forward_dashboard
+        title: Build ETF forward simulation dashboard
+        command: aits etf forward dashboard --latest
+        command_contains:
+          - etf
+          - forward
+          - dashboard
+          - --latest
+        closed_market_behavior: skip_score_artifacts
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
+      - task_id: daily_etf_forward_watchlist
+        daily_plan_step_id: etf_forward_watchlist
+        title: Build ETF forward simulation watchlist
+        command: aits etf forward watchlist --latest
+        command_contains:
+          - etf
+          - forward
+          - watchlist
+          - --latest
+        closed_market_behavior: skip_score_artifacts
+        production_effect: none
+        production_weight_write: false
+        active_shadow_weight_write: false
+        broker_action: false
       - task_id: daily_report_index
         daily_plan_step_id: report_index
         title: Build report index
@@ -387,6 +429,10 @@ cadences:
       - task_id: weekly_research_governance_summary_review
         title: Research governance summary review
         command: aits reports research-governance-summary --latest
+        production_effect: none
+      - task_id: weekly_etf_forward_review
+        title: ETF forward simulation weekly review
+        command: aits etf forward weekly-review --latest
         production_effect: none
   biweekly:
     description: Biweekly manual review cadence; registered but not part of daily-run.

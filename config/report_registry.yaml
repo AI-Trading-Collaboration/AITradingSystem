@@ -366,6 +366,86 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: etf_forward_update
+    title: ETF Forward Simulation Daily Update
+    group: research
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits etf forward update --latest
+    artifact_globs:
+      - reports/etf_portfolio/forward/updates/forward_update_*.json
+      - reports/etf_portfolio/forward/updates/forward_update_*.md
+    freshness_sla_days: 3
+    freshness_rationale: Active ETF shadow candidates should be evaluated against available forward market data after daily price cache updates.
+    owner_action: run_aits_etf_forward_update_after_shadow_enrollment_and_price_refresh
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_forward_dashboard
+    title: ETF Forward Simulation Dashboard
+    group: research
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits etf forward dashboard --latest
+    artifact_globs:
+      - reports/etf_portfolio/forward/dashboard/forward_dashboard_*.json
+      - reports/etf_portfolio/forward/dashboard/forward_dashboard_*.md
+    freshness_sla_days: 3
+    freshness_rationale: Reader Brief and review workflows need the latest candidate-vs-baseline-vs-benchmark forward dashboard.
+    owner_action: run_aits_etf_forward_dashboard_after_forward_update
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_forward_weekly_review
+    title: ETF Forward Simulation Weekly Review
+    group: research
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf forward weekly-review --latest
+    artifact_globs:
+      - reports/etf_portfolio/forward/weekly_reviews/weekly_review_*.json
+      - reports/etf_portfolio/forward/weekly_reviews/weekly_review_*.md
+    freshness_sla_days: 14
+    freshness_rationale: Weekly observe-only forward reviews should summarize lifecycle status, rolling metrics, and manual review notes.
+    owner_action: run_aits_etf_forward_weekly_review_for_active_shadow_candidates
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: etf_forward_watchlist
+    title: ETF Forward Simulation Watchlist
+    group: research
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits etf forward watchlist --latest
+    artifact_globs:
+      - reports/etf_portfolio/forward/watchlist/forward_watchlist_*.json
+      - reports/etf_portfolio/forward/watchlist/forward_watchlist_*.md
+    freshness_sla_days: 3
+    freshness_rationale: Watchlist artifacts focus manual review on shadow candidates with weak forward performance, missing data, high turnover, drawdown, or constraint issues.
+    owner_action: review_etf_forward_watchlist_before_weekly_shadow_review
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_forward_validation
+    title: ETF Forward Simulation Validation Gate
+    group: governance
+    cadence: on_change
+    audience: reviewer
+    owner: system
+    command: aits etf forward validate
+    artifact_globs:
+      - reports/etf_portfolio/forward/validation/forward_validation_*.json
+      - reports/etf_portfolio/forward/validation/forward_validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-065 final validation confirms the forward dashboard workflow is complete, observe-only, and separated from decision-time records.
+    owner_action: run_aits_etf_forward_validate_before_marking_TRADING_065_baseline_done
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: etf_p2_walk_forward
     title: ETF P2 Walk Forward Readiness
     group: research

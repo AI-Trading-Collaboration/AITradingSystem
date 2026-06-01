@@ -198,7 +198,7 @@ def test_daily_run_executes_reader_brief_chain_after_score_daily(tmp_path: Path)
             "--skip-risk-event-openai-precheck",
         )
     )
-    assert calls[score_index + 1 : score_index + 16] == [
+    assert calls[score_index + 1 : score_index + 19] == [
         ("reports", "dashboard", "--as-of", "2026-05-06"),
         ("sec-pit", "shadow-observe", "--latest"),
         ("sec-pit", "shadow-monitor", "--latest"),
@@ -209,6 +209,9 @@ def test_daily_run_executes_reader_brief_chain_after_score_daily(tmp_path: Path)
         ("portfolio", "track-candidate", "--latest"),
         ("portfolio", "review-tracking", "--latest", "--show-window-progress"),
         ("reports", "portfolio-tracking-review", "--latest"),
+        ("etf", "forward", "update", "--latest"),
+        ("etf", "forward", "dashboard", "--latest"),
+        ("etf", "forward", "watchlist", "--latest"),
         ("reports", "index", "--latest"),
         ("docs", "report-contract", "--latest"),
         ("reports", "research-governance-summary", "--latest"),

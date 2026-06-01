@@ -134,6 +134,17 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     assert calibration["safety_status"] == (
         "observe_only=true; production_effect=none; broker_action=none"
     )
+    forward = payload["etf_forward_simulation"]
+    assert forward["availability"] == "AVAILABLE"
+    assert forward["active_shadow_candidates"] == 1
+    assert forward["watch_count"] == 1
+    assert forward["watchlist_attention_count"] == 1
+    assert forward["best_candidate"].startswith("etf-exp-20260504T000000Z:base_ai_growth")
+    assert forward["safety_status"] == (
+        "observe_only=true; production_effect=none; broker_action=none; "
+        "manual_review_required=true"
+    )
+    assert forward["decision_input_usage"] == "none; forward metrics are evaluation-only"
     core_items = payload["report_navigation_groups"]["groups"][0]["items"]
     daily_summary_rows = [
         item for item in core_items if item["artifact_id"] == "daily_decision_summary"
@@ -186,6 +197,7 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
     )
     html = render_reader_brief_html(payload)
     assert "ETF Calibration Experiments" in html
+    assert "ETF Forward Simulation" in html
     assert 'safety_status</th><td><span class="status-badge status-missing">MISSING</span>' in html
     assert "impact-group impact-important" in html
     assert "status-badge status-important" in html
@@ -644,6 +656,76 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
         ),
         encoding="utf-8",
     )
+    forward_dashboard_dir = tmp_path / "reports" / "etf_portfolio" / "forward" / "dashboard"
+    forward_dashboard_dir.mkdir(parents=True)
+    forward_dashboard_path = forward_dashboard_dir / "forward_dashboard_2026-05-04.json"
+    forward_dashboard_path.write_text(
+        json.dumps(
+            {
+                "report_type": "etf_forward_dashboard",
+                "status": "WATCH",
+                "as_of": "2026-05-04",
+                "candidate_summary_table": [
+                    {
+                        "candidate_id": "etf-exp-20260504T000000Z:base_ai_growth",
+                        "status": "watch",
+                        "days_since_enrollment": 44,
+                        "return_since_enrollment": 0.012,
+                        "excess_return_vs_baseline": 0.018,
+                        "excess_return_vs_QQQ": 0.006,
+                        "excess_return_vs_SPY": 0.022,
+                        "excess_return_vs_SMH": -0.004,
+                        "max_drawdown_since_enrollment": -0.035,
+                        "turnover_since_enrollment": 0.28,
+                        "constraint_hits_since_enrollment": 0,
+                        "last_evaluated_date": "2026-05-04",
+                        "recommended_action": "watch",
+                    }
+                ],
+                "status_summary": {
+                    "active_candidate_count": 1,
+                    "needs_more_data_count": 0,
+                    "watch_count": 1,
+                    "reject_pending_review_count": 0,
+                },
+                "observe_only": True,
+                "production_effect": "none",
+                "broker_action": "none",
+                "manual_review_required": True,
+                "production_promotion_allowed": False,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    forward_watchlist_dir = tmp_path / "reports" / "etf_portfolio" / "forward" / "watchlist"
+    forward_watchlist_dir.mkdir(parents=True)
+    forward_watchlist_path = forward_watchlist_dir / "forward_watchlist_2026-05-04.json"
+    forward_watchlist_path.write_text(
+        json.dumps(
+            {
+                "report_type": "etf_forward_watchlist",
+                "status": "ATTENTION_REQUIRED",
+                "as_of": "2026-05-04",
+                "summary": {"item_count": 1},
+                "attention_required": [
+                    {
+                        "candidate_id": "etf-exp-20260504T000000Z:base_ai_growth",
+                        "issue": "candidate moved to watch",
+                        "severity": "warning",
+                        "recommended_action": "needs_manual_review",
+                    }
+                ],
+                "observe_only": True,
+                "production_effect": "none",
+                "broker_action": "none",
+                "manual_review_required": True,
+                "production_promotion_allowed": False,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     trace_bundle_path = tmp_path / "daily_score_2026-05-04_trace.json"
     trace_bundle_path.write_text(
         json.dumps(
@@ -982,6 +1064,32 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                         "latest_artifact_path": str(weekly_review_path),
                         "exists": True,
                         "owner_action": "review_weekly_experiment_report",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_forward_dashboard",
+                        "title": "ETF Forward Simulation Dashboard",
+                        "cadence": "daily",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "WATCH",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(forward_dashboard_path),
+                        "exists": True,
+                        "owner_action": "review_forward_dashboard",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_forward_watchlist",
+                        "title": "ETF Forward Simulation Watchlist",
+                        "cadence": "daily",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "ATTENTION_REQUIRED",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(forward_watchlist_path),
+                        "exists": True,
+                        "owner_action": "review_forward_watchlist",
                         "production_effect": "none",
                     },
                 ],
