@@ -170,6 +170,7 @@ def build_reader_brief_payload(
     etf_backtest_summary = _etf_backtest_review_summary(as_of)
     etf_calibration_experiments = _etf_calibration_experiment_summary(report_index)
     etf_forward_simulation = _etf_forward_simulation_summary(report_index)
+    etf_ai_confirmation = _etf_ai_confirmation_summary(report_index)
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -287,6 +288,7 @@ def build_reader_brief_payload(
         "etf_backtest_summary": etf_backtest_summary,
         "etf_calibration_experiments": etf_calibration_experiments,
         "etf_forward_simulation": etf_forward_simulation,
+        "etf_ai_confirmation": etf_ai_confirmation,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -536,6 +538,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_backtest = _mapping(payload.get("etf_backtest_summary"))
     etf_calibration = _mapping(payload.get("etf_calibration_experiments"))
     etf_forward = _mapping(payload.get("etf_forward_simulation"))
+    etf_ai_confirmation = _mapping(payload.get("etf_ai_confirmation"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -799,6 +802,32 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("decision_input_usage", etf_forward.get("decision_input_usage")),
                     ("detail_report", etf_forward.get("detail_report")),
                     ("production_effect", etf_forward.get("production_effect")),
+                ]
+            ),
+        ),
+        _section(
+            "AI Confirmation",
+            _definition_table(
+                [
+                    ("availability", etf_ai_confirmation.get("availability")),
+                    ("status", etf_ai_confirmation.get("status")),
+                    ("AIConfirmationScore", etf_ai_confirmation.get("AIConfirmationScore")),
+                    ("score_band", etf_ai_confirmation.get("score_band")),
+                    (
+                        "semiconductor_breadth",
+                        etf_ai_confirmation.get("semiconductor_breadth"),
+                    ),
+                    ("mega_cap_ai_score", etf_ai_confirmation.get("mega_cap_ai_score")),
+                    (
+                        "ai_relative_strength",
+                        etf_ai_confirmation.get("ai_relative_strength"),
+                    ),
+                    ("event_risk", etf_ai_confirmation.get("event_risk")),
+                    ("interpretation", etf_ai_confirmation.get("interpretation")),
+                    ("safety_status", etf_ai_confirmation.get("safety_status")),
+                    ("detail_report", etf_ai_confirmation.get("detail_report")),
+                    ("production_effect", etf_ai_confirmation.get("production_effect")),
+                    ("broker_action", etf_ai_confirmation.get("broker_action")),
                 ]
             ),
         ),
@@ -2274,6 +2303,114 @@ def _etf_forward_safety_status(*payloads: Mapping[str, Any]) -> str:
     return (
         "observe_only=true; production_effect=none; broker_action=none; "
         "manual_review_required=true"
+        if safe
+        else "SAFETY_REVIEW_REQUIRED"
+    )
+
+
+def _etf_ai_confirmation_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_ai_confirmation_summary()
+    report_path = _report_index_artifact_path(report_index, "etf_ai_confirmation_report")
+    report = _read_optional_json(report_path)
+    if not report:
+        return _missing_etf_ai_confirmation_summary()
+    score = _mapping(report.get("AIConfirmationScore"))
+    components = _mapping(report.get("component_scores"))
+    event_risk = _mapping(report.get("event_risk_overlay"))
+    action_hint = _text(score.get("action_hint"), "insufficient_data")
+    coverage = _float_or_none(score.get("data_coverage_ratio"))
+    safety_status = _etf_ai_confirmation_safety_status(report, score)
+    insufficient = action_hint == "insufficient_data"
+    interpretation = (
+        "AI Confirmation: insufficient data coverage. No overlay recommendation."
+        if insufficient
+        else (
+            "AI confirmation supports current QQQ / SMH candidate exposure, "
+            "but no production weights are changed."
+        )
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": _text(report.get("status"), _text(score.get("score_band"), "AVAILABLE")),
+        "AIConfirmationScore": _format_number(score.get("score_value"), digits=2),
+        "score_band": _text(score.get("score_band"), "MISSING"),
+        "action_hint": action_hint,
+        "semiconductor_breadth": _format_number(
+            components.get("semiconductor_breadth"),
+            digits=2,
+        ),
+        "mega_cap_ai_score": _format_number(components.get("mega_cap_ai"), digits=2),
+        "ai_relative_strength": _format_number(
+            components.get("ai_relative_strength"),
+            digits=2,
+        ),
+        "event_risk": _text(event_risk.get("risk_band"), "MISSING"),
+        "event_risk_score": _format_number(event_risk.get("event_risk_score"), digits=2),
+        "data_coverage_ratio": _format_number(coverage, digits=2),
+        "interpretation": interpretation,
+        "safety_status": safety_status,
+        "detail_report": "" if report_path is None else str(report_path),
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "summary_sentence": (
+            "AI Confirmation: insufficient data coverage. No overlay recommendation."
+            if insufficient
+            else (
+                f"AIConfirmationScore={_format_number(score.get('score_value'), digits=2)} "
+                f"/ {_text(score.get('score_band'), 'MISSING')}; event_risk="
+                f"{_text(event_risk.get('risk_band'), 'MISSING')}; "
+                "production_effect=none."
+            )
+        ),
+    }
+
+
+def _missing_etf_ai_confirmation_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "AIConfirmationScore": "MISSING",
+        "score_band": "MISSING",
+        "action_hint": "insufficient_data",
+        "semiconductor_breadth": "MISSING",
+        "mega_cap_ai_score": "MISSING",
+        "ai_relative_strength": "MISSING",
+        "event_risk": "MISSING",
+        "event_risk_score": "MISSING",
+        "data_coverage_ratio": "MISSING",
+        "interpretation": (
+            "AI Confirmation: insufficient data coverage. No overlay recommendation."
+        ),
+        "safety_status": "MISSING",
+        "detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "summary_sentence": (
+            "AI Confirmation: insufficient data coverage. No overlay recommendation."
+        ),
+        "limitation": (
+            "AI confirmation report artifact is missing; Reader Brief does not run "
+            "AI confirmation scoring."
+        ),
+    }
+
+
+def _etf_ai_confirmation_safety_status(*payloads: Mapping[str, Any]) -> str:
+    material = [payload for payload in payloads if payload]
+    if not material:
+        return "MISSING"
+    safe = all(
+        payload.get("observe_only") in (None, True)
+        and payload.get("candidate_only") in (None, True)
+        and _text(payload.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
+        and payload.get("broker_action") in (None, "none")
+        and payload.get("manual_review_required") in (None, True)
+        for payload in material
+    )
+    return (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true"
         if safe
         else "SAFETY_REVIEW_REQUIRED"
     )

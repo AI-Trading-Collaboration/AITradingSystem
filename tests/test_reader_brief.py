@@ -145,6 +145,22 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
         "manual_review_required=true"
     )
     assert forward["decision_input_usage"] == "none; forward metrics are evaluation-only"
+    ai_confirmation = payload["etf_ai_confirmation"]
+    assert ai_confirmation["availability"] == "AVAILABLE"
+    assert ai_confirmation["AIConfirmationScore"] == "74.00"
+    assert ai_confirmation["score_band"] == "confirm"
+    assert ai_confirmation["semiconductor_breadth"] == "68.00"
+    assert ai_confirmation["mega_cap_ai_score"] == "81.00"
+    assert ai_confirmation["ai_relative_strength"] == "72.00"
+    assert ai_confirmation["event_risk"] == "medium"
+    assert "no production weights are changed" in ai_confirmation["interpretation"]
+    assert ai_confirmation["safety_status"] == (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true"
+    )
+    assert ai_confirmation["detail_report"].endswith("ai_confirmation_report_2026-05-04.json")
+    assert ai_confirmation["production_effect"] == "none"
+    assert ai_confirmation["broker_action"] == "none"
     core_items = payload["report_navigation_groups"]["groups"][0]["items"]
     daily_summary_rows = [
         item for item in core_items if item["artifact_id"] == "daily_decision_summary"
@@ -181,6 +197,10 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
     assert payload["backtest_shadow_governance"]["availability"] == "LIMITED"
     assert payload["etf_calibration_experiments"]["availability"] == "MISSING"
     assert payload["etf_calibration_experiments"]["safety_status"] == "MISSING"
+    assert payload["etf_ai_confirmation"]["availability"] == "MISSING"
+    assert payload["etf_ai_confirmation"]["interpretation"] == (
+        "AI Confirmation: insufficient data coverage. No overlay recommendation."
+    )
     assert payload["report_index_summary"]["availability"] == "MISSING"
     assert payload["documentation_contract_summary"]["availability"] == "MISSING"
     assert payload["task_cadence_calendar"]["availability"] == "REGISTRY_FALLBACK"
@@ -198,6 +218,7 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
     html = render_reader_brief_html(payload)
     assert "ETF Calibration Experiments" in html
     assert "ETF Forward Simulation" in html
+    assert "AI Confirmation" in html
     assert 'safety_status</th><td><span class="status-badge status-missing">MISSING</span>' in html
     assert "impact-group impact-important" in html
     assert "status-badge status-important" in html
@@ -726,6 +747,50 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
         ),
         encoding="utf-8",
     )
+    ai_confirmation_dir = (
+        tmp_path / "reports" / "etf_portfolio" / "ai_confirmation" / "reports"
+    )
+    ai_confirmation_dir.mkdir(parents=True)
+    ai_confirmation_path = ai_confirmation_dir / "ai_confirmation_report_2026-05-04.json"
+    ai_confirmation_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "ai_confirmation_report_v1",
+                "report_type": "ai_confirmation_report",
+                "date": "2026-05-04",
+                "AIConfirmationScore": {
+                    "score_name": "AIConfirmationScore",
+                    "score_value": 74.0,
+                    "score_band": "confirm",
+                    "action_hint": "supports_neutral_ai_exposure",
+                    "data_coverage_ratio": 0.92,
+                    "observe_only": True,
+                    "candidate_only": True,
+                    "production_effect": "none",
+                    "broker_action": "none",
+                    "manual_review_required": True,
+                },
+                "component_scores": {
+                    "semiconductor_breadth": 68.0,
+                    "mega_cap_ai": 81.0,
+                    "ai_relative_strength": 72.0,
+                    "event_risk_adjustment": 75.0,
+                    "data_coverage": 92.0,
+                },
+                "event_risk_overlay": {
+                    "event_risk_score": 25.0,
+                    "risk_band": "medium",
+                },
+                "observe_only": True,
+                "candidate_only": True,
+                "production_effect": "none",
+                "broker_action": "none",
+                "manual_review_required": True,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     trace_bundle_path = tmp_path / "daily_score_2026-05-04_trace.json"
     trace_bundle_path.write_text(
         json.dumps(
@@ -1090,6 +1155,19 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                         "latest_artifact_path": str(forward_watchlist_path),
                         "exists": True,
                         "owner_action": "review_forward_watchlist",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_ai_confirmation_report",
+                        "title": "ETF AI Confirmation Report",
+                        "cadence": "daily",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "confirm",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(ai_confirmation_path),
+                        "exists": True,
+                        "owner_action": "review_ai_confirmation_report",
                         "production_effect": "none",
                     },
                 ],

@@ -58,7 +58,7 @@ AI confirmation layer 不写 `data/etf_portfolio/target_weights.csv`，不替换
 |TRADING-066F AI Confirmation Composite Score|DONE|AIConfirmationScore, action_hint, reason_codes, safety fields|
 |TRADING-066G AI Confirmation Report|DONE|JSON/Markdown standalone report with safety banner and components|
 |TRADING-066H Shadow Candidate Overlay Experiment|DONE|bounded candidate-only hypothetical weights, no production mutation|
-|TRADING-066I Reader Brief AI Confirmation Section|READY|daily Reader Brief summary and detailed report link|
+|TRADING-066I Reader Brief AI Confirmation Section|DONE|daily Reader Brief summary and detailed report link|
 |TRADING-066J AI Confirmation Validation Gate|READY|fail-closed final gate and CLI validation output|
 
 ## 验收标准
@@ -113,3 +113,8 @@ AI confirmation layer 不写 `data/etf_portfolio/target_weights.csv`，不替换
   `candidate_weights`、`shadow_weights`、`hypothetical_weights`，high event risk 阻断新增
   overweight，且不写 official target weights。验证通过 `python -m pytest tests -q`
   （1788 passed）、ruff、compileall 和 diff check。
+- 2026-06-01: TRADING-066I 完成。Reader Brief 新增 `AI Confirmation` 区块，只从
+  report index 指向的 latest AI confirmation report 摘录 AIConfirmationScore、score_band、
+  component scores、event risk、interpretation、safety_status 和 detail_report；缺失或
+  insufficient data 时显示 no overlay recommendation，不运行上游 scoring/overlay。验证通过
+  `python -m pytest tests -q`（1788 passed）、ruff、compileall 和 diff check。
