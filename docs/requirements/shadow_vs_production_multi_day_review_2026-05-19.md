@@ -1,5 +1,7 @@
 # TRADING-018C2：Multi-day Shadow vs Production Review
 
+最后更新：2026-05-20
+
 关联任务：`TRADING-018C2`
 
 状态：`DONE`

@@ -1,5 +1,7 @@
 # TRADING-044: SEC PIT Observe-Only Shadow Lane
 
+最后更新：2026-05-27
+
 ## 背景
 
 TRADING-039 至 TRADING-043 已完成 SEC reconstructed PIT backfill、cognitive evaluation、baseline comparison、real-run diagnostics 和 candidate review。最新真实 review 将 `capex_intensity` 标记为 `READY_FOR_MANUAL_REVIEW`，但同时暴露 mixed regime dependency 和 ticker-level 差异。

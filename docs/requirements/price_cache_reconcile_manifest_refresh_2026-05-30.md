@@ -1,5 +1,7 @@
 # TRADING-053B Price Cache Reconcile & Backtest Manifest Refresh
 
+最后更新：2026-05-30
+
 ## 状态
 
 - task id: `TRADING-053B`

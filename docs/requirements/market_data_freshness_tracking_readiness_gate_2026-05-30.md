@@ -1,5 +1,7 @@
 # TRADING-057 Market Data Freshness & Tracking Readiness Gate
 
+最后更新：2026-05-30
+
 ## 背景
 
 TRADING-056 已完成 shadow candidate tracking 和 daily roll-forward。真实 latest 结果为：

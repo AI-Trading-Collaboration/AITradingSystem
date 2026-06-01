@@ -1,5 +1,7 @@
 # TRADING-029: Daily Operator Brief Scheduler Template Validation
 
+最后更新：2026-05-24
+
 关联任务：`TRADING-029`
 
 状态：`DONE`

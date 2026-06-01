@@ -1,5 +1,7 @@
 # TRADING-046A: Shadow Monitor State Normalization
 
+最后更新：2026-05-28
+
 ## 背景
 
 TRADING-046 的真实 latest run 已经显示：

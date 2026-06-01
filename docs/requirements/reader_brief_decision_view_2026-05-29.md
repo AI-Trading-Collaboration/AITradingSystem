@@ -1,5 +1,7 @@
 # REPORT-058: Reader Brief Decision View
 
+最后更新：2026-05-29
+
 ## 背景
 
 2026-05-29 真实 `reader_brief_2026-05-28.html` 已经覆盖 daily score、market panel、

@@ -1,5 +1,7 @@
 # TRADING-041: SEC PIT Baseline Comparison & Decision Impact Report
 
+最后更新：2026-05-27
+
 ## 背景
 
 TRADING-039 已建立 SEC EDGAR reconstructed filing-time PIT 基本面数据底座，

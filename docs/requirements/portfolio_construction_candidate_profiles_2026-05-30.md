@@ -1,5 +1,7 @@
 # TRADING-054 Portfolio Construction Candidate Profiles
 
+最后更新：2026-05-30
+
 ## 状态
 
 - task id: `TRADING-054`

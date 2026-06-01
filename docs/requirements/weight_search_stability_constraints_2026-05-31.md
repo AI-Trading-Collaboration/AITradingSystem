@@ -1,5 +1,7 @@
 # TRADING-061 Weight Search Stability Constraints
 
+最后更新：2026-05-31
+
 ## 背景
 
 TRADING-060 已把 TRADING-059 的 latest failure 收敛为：

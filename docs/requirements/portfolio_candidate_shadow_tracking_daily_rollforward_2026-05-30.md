@@ -1,5 +1,7 @@
 # TRADING-056 Shadow Candidate Tracking & Daily Roll-forward
 
+最后更新：2026-05-30
+
 ## 背景
 
 TRADING-055 已完成 portfolio candidate manual review workflow，真实 latest review decision

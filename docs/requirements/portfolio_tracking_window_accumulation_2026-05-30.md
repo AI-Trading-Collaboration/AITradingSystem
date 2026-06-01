@@ -1,5 +1,7 @@
 # TRADING-058A Tracking Window Accumulation & Scheduled Review
 
+最后更新：2026-05-30
+
 ## 背景
 
 TRADING-058 已完成 Shadow Candidate Performance Review 的工程闭环，但真实

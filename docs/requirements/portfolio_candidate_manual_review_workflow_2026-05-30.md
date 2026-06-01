@@ -1,5 +1,7 @@
 # TRADING-055 Portfolio Candidate Manual Review Workflow
 
+最后更新：2026-05-30
+
 ## 背景
 
 TRADING-054 已完成 portfolio construction candidate profile evaluation，并在

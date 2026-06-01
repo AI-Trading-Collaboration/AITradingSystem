@@ -1,5 +1,7 @@
 # TRADING-037 Retry Candidate Queue / Manual Approval Gate
 
+最后更新：2026-05-26
+
 ## 背景
 
 TRADING-036 已在 TRADING-035 notification delivery audit summary 之上生成 failure classification / retry readiness，可以输出失败类别、`safe_to_retry`、`requires_manual_review`、`retry_blockers` 和 `recommended_actions`。当前缺口是系统还没有把 retryable failure 转换为稳定、可审查、可追踪的 retry candidate queue。

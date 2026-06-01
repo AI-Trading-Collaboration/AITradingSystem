@@ -1,5 +1,7 @@
 # OPS-059: Unified Scheduled Task Orchestration Review
 
+最后更新：2026-05-29
+
 ## 背景
 
 当前系统已经具备 daily scoring、Reader Brief、SEC PIT shadow observe / monitor、research governance、backtest、parameter governance、documentation contract 和 report registry 产物。原有 `aits ops daily-plan` / `aits ops daily-run` 仍以早期 dashboard 与反馈复盘链路为中心，缺少一份统一、可审计的调度计划，容易在新增报告链时遗漏 Reader Brief 上游、SEC PIT shadow monitor 或 weekly weight/backtest governance。

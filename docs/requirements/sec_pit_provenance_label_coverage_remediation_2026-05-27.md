@@ -1,5 +1,7 @@
 # TRADING-042A: SEC PIT Provenance and Label Coverage Remediation
 
+最后更新：2026-05-27
+
 ## 背景
 
 TRADING-042 已新增 `aits sec-pit diagnose-run`，真实 `--latest` 诊断显示：

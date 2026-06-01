@@ -1,5 +1,7 @@
 # REPORT-056: Research Governance Summary Aggregator
 
+最后更新：2026-05-29
+
 ## 背景
 
 `REPORT-055` 已把 score change attribution 和 market panel 接入 Reader Brief。

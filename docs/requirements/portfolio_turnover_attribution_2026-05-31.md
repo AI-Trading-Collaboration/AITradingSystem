@@ -1,5 +1,7 @@
 # TRADING-060 Portfolio Turnover & Cost Drag Attribution for Weight Candidates
 
+最后更新：2026-05-31
+
 ## 背景
 
 TRADING-059A 已把 latest weight tuning failure 解释为：

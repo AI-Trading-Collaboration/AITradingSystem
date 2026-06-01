@@ -1,5 +1,7 @@
 # TRADING-034 Operator Brief Notification Draft Dispatch
 
+最后更新：2026-05-25
+
 ## 背景
 
 TRADING-030 已生成只读通知草稿，TRADING-031 已做 delivery preflight，

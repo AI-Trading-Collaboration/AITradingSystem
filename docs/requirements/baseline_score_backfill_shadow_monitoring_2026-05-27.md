@@ -1,5 +1,7 @@
 # TRADING-045: Historical Baseline Score Backfill and Shadow Monitoring Coverage
 
+最后更新：2026-05-27
+
 ## 背景
 
 TRADING-044 的 SEC PIT observe-only shadow lane 已能为 `capex_intensity` 生成隔离观察产物，且真实运行没有修改 production scoring、production weights、active shadow weights 或交易行为。

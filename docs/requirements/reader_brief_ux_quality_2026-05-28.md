@@ -1,5 +1,7 @@
 # Reader Brief UX Quality & Missing Artifact Impact Layer
 
+最后更新：2026-05-28
+
 ## 背景
 
 `REPORT-053` 已把 Reader Brief 做成统一 HTML/JSON 阅读入口。真实

@@ -1,5 +1,7 @@
 # TRADING-039 SEC EDGAR Reconstructed PIT Backfill
 
+最后更新：2026-05-26
+
 关联任务：`TRADING-039`
 
 ## 背景

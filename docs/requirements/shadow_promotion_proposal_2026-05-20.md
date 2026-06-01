@@ -1,5 +1,7 @@
 # TRADING-018D：Manual Shadow-to-Production Promotion Proposal Gate
 
+最后更新：2026-05-20
+
 关联任务：`TRADING-018D`
 
 状态：`DONE`

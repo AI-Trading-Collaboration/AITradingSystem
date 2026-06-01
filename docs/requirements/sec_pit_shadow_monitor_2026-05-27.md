@@ -1,5 +1,7 @@
 # TRADING-046: SEC PIT Shadow Observe Rolling Monitor
 
+最后更新：2026-05-27
+
 ## 背景
 
 TRADING-044/045 已经把 `capex_intensity` 放入隔离的 SEC PIT observe-only lane，并修正了

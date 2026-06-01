@@ -1,5 +1,7 @@
 # TRADING-057A Market Data Refresh & Freshness Recovery Workflow
 
+最后更新：2026-05-30
+
 ## 背景
 
 TRADING-057 已完成 market data freshness/readiness gate。真实 latest 结果显示：

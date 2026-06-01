@@ -1,5 +1,7 @@
 # TRADING-036 Notification Delivery Failure Classification / Retry Readiness
 
+最后更新：2026-05-26
+
 ## 背景
 
 TRADING-035 已生成只读 `Notification Delivery Audit Summary`，可以回答通知链路审计状态是否为 `PASS`、`INCOMPLETE`、`MISMATCH`、`SAFETY_BLOCKED` 或异常状态。当前缺口是审计状态还没有转化为可行动的失败分类、重试准备度和人工复核要求。

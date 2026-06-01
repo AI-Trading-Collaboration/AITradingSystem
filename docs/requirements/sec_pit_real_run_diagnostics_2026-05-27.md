@@ -1,5 +1,7 @@
 # TRADING-042: SEC PIT Real Run Diagnostics & Data Coverage Improvement
 
+最后更新：2026-05-27
+
 ## 背景
 
 TRADING-039 已建立 SEC EDGAR reconstructed PIT backfill，TRADING-040 已建立 SEC PIT cognitive evaluation，TRADING-041 已建立 SEC PIT baseline comparison。2026-05-26 小规模 AI / semiconductor universe 真实端到端运行完成，但结果不具备 shadow promotion 条件：没有 `PROMOTE_TO_SHADOW` feature，shadow candidate weights 全为 0，`incremental_alpha_20d=0.0`，promotion / downgrade bucket 和 `action_changed` 均为空，约 51,972 行缺少 SEC provenance，`data_quality_score` 仅约 0.46-0.48，`coverage_ratio` 出现大于 1，drawdown label 在 comparison 输出中为 NaN，并且 `GOOGL` 因 SEC company config 仅有 `GOOG` 被拒绝。

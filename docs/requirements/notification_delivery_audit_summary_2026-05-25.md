@@ -1,5 +1,7 @@
 # TRADING-035 Notification Delivery Audit Summary
 
+最后更新：2026-05-25
+
 ## 背景
 
 TRADING-030 已生成 operator brief notification draft，TRADING-031 已完成 delivery preflight，TRADING-034 已生成只读 draft dispatch artifact。当前缺口是缺少统一审计摘要，把 draft、preflight、draft dispatch 和 latest 指针串成可追溯生命周期记录。

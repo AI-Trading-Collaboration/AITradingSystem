@@ -1,5 +1,7 @@
 # TRADING-058 Shadow Candidate Performance Review
 
+最后更新：2026-05-30
+
 ## 背景
 
 TRADING-057A 已把 market freshness 恢复到 `OK`，并使

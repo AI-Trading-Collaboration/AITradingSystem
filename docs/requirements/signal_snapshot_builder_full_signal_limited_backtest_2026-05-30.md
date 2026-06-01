@@ -1,5 +1,7 @@
 # TRADING-050: Signal Snapshot Builder & Full-signal-limited Shadow Backtest
 
+最后更新：2026-05-30
+
 ## 背景
 
 `TRADING-049` 已完成 price history repair、`BRK.B -> BRK-B` provider symbol mapping、

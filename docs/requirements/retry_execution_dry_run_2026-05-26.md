@@ -1,5 +1,7 @@
 # TRADING-038 Manual Approval Record / Retry Execution Dry Run
 
+最后更新：2026-05-26
+
 ## 背景
 
 TRADING-037 已能把 TRADING-036 的 retryable notification delivery failure 转换成

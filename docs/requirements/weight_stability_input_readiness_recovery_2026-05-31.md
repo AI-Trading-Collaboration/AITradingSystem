@@ -1,5 +1,7 @@
 # TRADING-061A Stable Weight Tuning Input Readiness Recovery
 
+最后更新：2026-05-31
+
 ## 背景
 
 TRADING-061 的工程实现已经完成并推送，但最新真实运行结果为：

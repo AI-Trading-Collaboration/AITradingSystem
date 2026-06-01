@@ -1,5 +1,7 @@
 # TRADING-028: Daily Operator Brief Scheduler Configuration Templates
 
+最后更新：2026-05-24
+
 关联任务：`TRADING-028`
 
 状态：`DONE`

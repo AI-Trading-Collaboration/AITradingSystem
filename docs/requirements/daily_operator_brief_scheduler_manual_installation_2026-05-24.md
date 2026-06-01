@@ -1,5 +1,7 @@
 # TRADING-027: Daily Operator Brief Scheduler Runbook and Manual Installation Guide
 
+最后更新：2026-05-24
+
 关联任务：`TRADING-027`
 
 状态：`DONE`

@@ -1,5 +1,7 @@
 # TRADING-043: SEC PIT Shadow Candidate Review & Evidence Pack
 
+最后更新：2026-05-27
+
 ## 背景
 
 TRADING-039 建立 SEC EDGAR reconstructed PIT backfill，TRADING-040 建立 SEC PIT

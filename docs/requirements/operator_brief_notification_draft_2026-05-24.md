@@ -1,5 +1,7 @@
 # TRADING-030: Operator Brief Notification Draft
 
+最后更新：2026-05-24
+
 关联任务：`TRADING-030`
 
 状态：`DONE`

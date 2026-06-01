@@ -1,5 +1,7 @@
 # TRADING-026: Daily Operator Brief Scheduler Dry Run
 
+最后更新：2026-05-24
+
 关联任务：`TRADING-026`
 
 状态：`DONE`

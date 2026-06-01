@@ -1,5 +1,7 @@
 # TRADING-040 SEC PIT Cognitive Evaluation Loop
 
+最后更新：2026-05-26
+
 关联任务：`TRADING-040`
 
 状态：`VALIDATING`

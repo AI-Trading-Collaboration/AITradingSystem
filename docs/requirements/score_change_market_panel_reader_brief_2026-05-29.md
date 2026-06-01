@@ -1,5 +1,7 @@
 # REPORT-055: Score Change Attribution & Market Panel for Reader Brief
 
+最后更新：2026-05-29
+
 ## 背景
 
 `REPORT-054` 已把 Reader Brief 做成更清晰的每日阅读入口，但仍有两个读者高价值上下文不完整：
