@@ -140,12 +140,14 @@ run/compare/register`。根级
 run --config config/etf_portfolio/backtest.yaml` 可显式指定 ETF backtest policy。
 
 TRADING-064 controlled calibration experiments 从
-`config/etf_portfolio/experiments.yaml` 读取。该 registry 定义允许观察的
+`config/etf_portfolio/experiments.yaml` 和
+`config/etf_portfolio/experiment_packs.yaml` 读取。experiment registry 定义允许观察的
 base allocation、regime multiplier、semiconductor cap、rebalance threshold 和
-relative strength weight 实验，每个 experiment 必须包含 `observe_only=true`、
-`production_effect=none`、`broker_action=none` 和 `manual_review_required=true`。新增实验
-时只能使用 registry 支持的 override key，并先通过 loader/测试校验；registry 本身不运行
-回测、不写正式 target weights、不触发 broker action。
+relative strength weight 实验；`etf_calibration_v1` pack 只引用这 16 个受控实验，不做
+uncontrolled combinatorial search。每个 experiment 和 pack 必须包含 `observe_only=true`、
+`production_effect=none`、`broker_action=none` 和 `manual_review_required=true`。新增实验或
+pack 时只能使用 registry 支持的 override key，并先通过 loader/测试校验；这些 config 本身
+不运行回测、不写正式 target weights、不触发 broker action。
 
 ETF 数据依赖命令会先运行 ETF price quality gate，失败时停止；报告必须披露
 `data_quality_status`、质量报告路径、`model_version`、`config_hash`、实际请求日期和

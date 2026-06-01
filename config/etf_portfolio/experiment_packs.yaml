@@ -1,0 +1,47 @@
+policy_metadata:
+  version: etf_experiment_packs_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: "TRADING-064B controlled first ETF calibration pack; avoids uncontrolled combinatorial search."
+  validation: "Pack integrity and safety invariants are covered by ETF experiment pack tests."
+  review_condition: "Review after batch runner, comparison report, ranking, candidate gate, and final validation are implemented."
+
+ranking_policies:
+  risk_adjusted_v1:
+    description: "Risk-adjusted ranking policy planned for TRADING-064E."
+    policy_status: planned
+
+promotion_policies:
+  shadow_only_manual_review:
+    description: "Candidates can only enter shadow observation after manual-review gate; no automatic production promotion."
+    policy_status: planned
+
+experiment_packs:
+  etf_calibration_v1:
+    pack_id: etf_calibration_v1
+    description: "First controlled ETF allocation calibration pack after TRADING-063 credibility validation."
+    created_for_task: TRADING-064
+    experiment_ids:
+      - base_conservative
+      - base_balanced_growth
+      - base_ai_growth
+      - base_semiconductor_aggressive
+      - regime_mild
+      - regime_standard
+      - regime_defensive
+      - semicap_15
+      - semicap_25
+      - semicap_35
+      - rebalance_02
+      - rebalance_05
+      - rebalance_10
+      - rs_weight_10
+      - rs_weight_20
+      - rs_weight_30
+    benchmark_set: standard_etf
+    ranking_policy: risk_adjusted_v1
+    promotion_policy: shadow_only_manual_review
+    observe_only: true
+    production_effect: none
+    broker_action: none
+    manual_review_required: true

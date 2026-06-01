@@ -15,6 +15,9 @@ from ai_trading_system.yaml_loader import safe_load_yaml_path
 DEFAULT_ETF_EXPERIMENTS_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "experiments.yaml"
 )
+DEFAULT_ETF_EXPERIMENT_PACKS_CONFIG_PATH = (
+    PROJECT_ROOT / "config" / "etf_portfolio" / "experiment_packs.yaml"
+)
 
 # Schema keys only. These names define the controlled TRADING-064 override surface,
 # not investment thresholds.
@@ -118,6 +121,69 @@ class ETFExperimentRegistry(BaseModel):
         return _config_hash(self.model_dump(mode="json"))
 
 
+class ETFExperimentPolicyRef(BaseModel):
+    description: str = Field(min_length=1)
+    policy_status: str = Field(min_length=1)
+
+
+class ETFExperimentPackConfig(BaseModel):
+    pack_id: str = Field(min_length=1)
+    description: str = Field(min_length=1)
+    created_for_task: str = Field(min_length=1)
+    experiment_ids: list[str] = Field(min_length=1)
+    benchmark_set: str = Field(min_length=1)
+    ranking_policy: str = Field(min_length=1)
+    promotion_policy: str = Field(min_length=1)
+    observe_only: bool
+    production_effect: str = Field(min_length=1)
+    broker_action: str = Field(min_length=1)
+    manual_review_required: bool
+
+    @model_validator(mode="after")
+    def validate_pack_safety_and_scope(self) -> Self:
+        if not self.observe_only:
+            raise ValueError("ETF experiment packs must keep observe_only=true")
+        if self.production_effect != "none":
+            raise ValueError("ETF experiment packs must keep production_effect=none")
+        if self.broker_action != "none":
+            raise ValueError("ETF experiment packs must keep broker_action=none")
+        if not self.manual_review_required:
+            raise ValueError("ETF experiment packs must require manual review")
+        if len(self.experiment_ids) != len(set(self.experiment_ids)):
+            raise ValueError("ETF experiment packs must not contain duplicate experiments")
+        return self
+
+
+class ETFExperimentPackRegistry(BaseModel):
+    policy_metadata: PolicyMetadata
+    ranking_policies: dict[str, ETFExperimentPolicyRef] = Field(min_length=1)
+    promotion_policies: dict[str, ETFExperimentPolicyRef] = Field(min_length=1)
+    experiment_packs: dict[str, ETFExperimentPackConfig] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_pack_registry(self) -> Self:
+        for key, pack in self.experiment_packs.items():
+            if pack.pack_id != key:
+                raise ValueError(
+                    f"ETF experiment pack mapping key must match pack_id: {key} != {pack.pack_id}"
+                )
+            if pack.ranking_policy not in self.ranking_policies:
+                raise ValueError(
+                    f"ETF experiment pack references unknown ranking_policy: "
+                    f"{pack.ranking_policy}"
+                )
+            if pack.promotion_policy not in self.promotion_policies:
+                raise ValueError(
+                    f"ETF experiment pack references unknown promotion_policy: "
+                    f"{pack.promotion_policy}"
+                )
+        return self
+
+    @property
+    def config_hash(self) -> str:
+        return _config_hash(self.model_dump(mode="json"))
+
+
 def load_experiment_registry(
     path: Path = DEFAULT_ETF_EXPERIMENTS_CONFIG_PATH,
 ) -> ETFExperimentRegistry:
@@ -125,6 +191,59 @@ def load_experiment_registry(
     if not isinstance(raw, dict):
         raise ValueError(f"ETF experiment registry must be a YAML mapping: {path}")
     return ETFExperimentRegistry.model_validate(raw)
+
+
+def load_experiment_pack_registry(
+    path: Path = DEFAULT_ETF_EXPERIMENT_PACKS_CONFIG_PATH,
+    *,
+    experiment_registry: ETFExperimentRegistry | None = None,
+) -> ETFExperimentPackRegistry:
+    raw = safe_load_yaml_path(path)
+    if not isinstance(raw, dict):
+        raise ValueError(f"ETF experiment pack registry must be a YAML mapping: {path}")
+    pack_registry = ETFExperimentPackRegistry.model_validate(raw)
+    validate_experiment_pack_registry(
+        pack_registry,
+        experiment_registry=experiment_registry or load_experiment_registry(),
+    )
+    return pack_registry
+
+
+def validate_experiment_pack_registry(
+    pack_registry: ETFExperimentPackRegistry,
+    *,
+    experiment_registry: ETFExperimentRegistry,
+) -> None:
+    for pack in pack_registry.experiment_packs.values():
+        for experiment_id in pack.experiment_ids:
+            experiment = experiment_registry.experiments.get(experiment_id)
+            if experiment is None:
+                raise ValueError(
+                    f"ETF experiment pack {pack.pack_id} references unknown experiment_id: "
+                    f"{experiment_id}"
+                )
+            if experiment.benchmark_set != pack.benchmark_set:
+                raise ValueError(
+                    f"ETF experiment pack {pack.pack_id} benchmark_set mismatch for "
+                    f"{experiment_id}"
+                )
+            _raise_if_experiment_is_unsafe(pack.pack_id, experiment)
+
+
+def _raise_if_experiment_is_unsafe(
+    pack_id: str,
+    experiment: ETFExperimentConfig,
+) -> None:
+    if (
+        not experiment.observe_only
+        or experiment.production_effect != "none"
+        or experiment.broker_action != "none"
+        or not experiment.manual_review_required
+    ):
+        raise ValueError(
+            f"ETF experiment pack {pack_id} includes unsafe experiment: "
+            f"{experiment.experiment_id}"
+        )
 
 
 def _validate_base_weights(
