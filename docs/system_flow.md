@@ -72,11 +72,13 @@ flowchart TD
     P1CFG --> P1EXP["aits etf experiments run/register/compare<br/>candidate config hash + parameter diff + optional backtest metrics<br/>reports/etf_portfolio/experiments/registry.jsonl + comparison report"]
     T064CFG["config/etf_portfolio/experiments.yaml<br/>TRADING-064 controlled experiment registry"] --> P1EXP
     T064PACK["config/etf_portfolio/experiment_packs.yaml<br/>etf_calibration_v1 controlled pack"] --> P1EXP
+    T064CFG --> T064RUN["aits etf experiments run --pack/--experiment --start --end<br/>run_manifest / experiment_results / benchmark_results / metrics_summary / diagnostics_summary<br/>reports/etf_portfolio/experiments/<run_id>/"]
+    T064PACK --> T064RUN
 ```
 
 P1 reports must state `production_effect=none` and remain separated from P0 allocation. Reports that read cached market data rerun the ETF price quality gate and include `data_quality_status` plus the generated quality report path. Satellite candidate weights are suggestions only; actual ETF target weights continue to come from `aits etf portfolio allocate` until owner review and a later promotion task explicitly changes that boundary.
 Experiment run/compare commands are registry and comparison operations only: they read candidate YAML and optional already-generated backtest summaries, record candidate hashes and parameter diffs, and output observe-only comparison deltas. They do not mutate `config/etf_portfolio/*.yaml`, do not write `target_weights.csv`, and do not promote a model version.
-TRADING-064 的 `experiments.yaml` 和 `experiment_packs.yaml` 是后续 batch runner / comparison / ranking / candidate gate 的 config source-of-truth；当前 registry validation 只确认受控 experiment / pack 定义、安全字段、base config 引用、override surface、policy 引用和 pack 引用完整性，不运行回测、不生成 runtime artifacts、不改变 P0 allocation。
+TRADING-064 的 `experiments.yaml` 和 `experiment_packs.yaml` 是后续 comparison / ranking / candidate gate 的 config source-of-truth；batch runner 通过 `aits etf experiments run --pack etf_calibration_v1 --start YYYY-MM-DD --end YYYY-MM-DD` 或 `--experiment <id>` 执行受控 backtest，并在 `reports/etf_portfolio/experiments/<run_id>/` 写出 manifest、experiment results、benchmark results、metrics summary 和 diagnostics summary。Batch runner 复用 ETF price quality gate 和 backtest execution path；单个 experiment 失败会写入 diagnostics，不会被静默吞掉；unsafe experiment/pack 在运行前 fail closed。所有输出固定 `observe_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`，不改变 P0 allocation。
 
 ## ETF Portfolio P2 Observe-Only Contracts
 

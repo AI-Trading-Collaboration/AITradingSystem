@@ -30,6 +30,12 @@ from ai_trading_system.etf_portfolio.data import (
     validate_price_data,
     write_quality_report,
 )
+from ai_trading_system.etf_portfolio.experiments import (
+    DEFAULT_ETF_EXPERIMENT_RUN_DIR,
+    load_experiment_pack_registry,
+    load_experiment_registry,
+    run_experiment_batch,
+)
 from ai_trading_system.etf_portfolio.features import (
     build_feature_store,
     latest_feature_date,
@@ -512,9 +518,30 @@ def experiments_register_command(
 @experiments_app.command("run")
 def experiments_run_command(
     config_path: Annotated[
+        Path | None,
+        typer.Option("--config", help="候选 ETF strategy/config YAML；旧 P1 registry 路径。"),
+    ] = None,
+    pack: Annotated[
+        str | None,
+        typer.Option("--pack", help="TRADING-064 experiment pack id。"),
+    ] = None,
+    experiment: Annotated[
+        str | None,
+        typer.Option("--experiment", help="TRADING-064 single experiment id。"),
+    ] = None,
+    start: Annotated[
+        str | None,
+        typer.Option("--start", help="TRADING-064 batch backtest start YYYY-MM-DD。"),
+    ] = None,
+    end: Annotated[
+        str | None,
+        typer.Option("--end", help="TRADING-064 batch backtest end YYYY-MM-DD。"),
+    ] = None,
+    prices_path: Annotated[Path, typer.Option(help="价格缓存路径。")] = DEFAULT_ETF_PRICE_PATH,
+    output_dir: Annotated[
         Path,
-        typer.Option("--config", help="候选 ETF strategy/config YAML。"),
-    ],
+        typer.Option(help="TRADING-064 batch run 输出目录。"),
+    ] = DEFAULT_ETF_EXPERIMENT_RUN_DIR,
     metrics_path: Annotated[
         Path | None,
         typer.Option("--backtest-summary-path", help="可选：候选回测 summary.json。"),
@@ -532,8 +559,41 @@ def experiments_run_command(
         DEFAULT_ETF_REPORT_DIR / "experiments" / "registry.jsonl"
     ),
 ) -> None:
-    """记录 ETF candidate experiment run；不写正式配置或 target weights。"""
+    """记录 P1 candidate run，或执行 TRADING-064 controlled experiment batch。"""
     config = load_etf_config_bundle()
+    if pack is not None or experiment is not None:
+        if config_path is not None:
+            raise typer.BadParameter("--config cannot be combined with --pack/--experiment")
+        if start is None or end is None:
+            raise typer.BadParameter("--start and --end are required for batch experiments")
+        prices, quality_report = load_standard_prices(prices_path, config.assets, config.strategy)
+        if not quality_report.passed:
+            typer.echo(f"ETF 数据质量状态：{quality_report.status}，已停止 experiment batch。")
+            raise typer.Exit(code=1)
+        experiment_registry = load_experiment_registry()
+        pack_registry = load_experiment_pack_registry(experiment_registry=experiment_registry)
+        batch = run_experiment_batch(
+            prices,
+            base_config=config,
+            quality_report=quality_report,
+            experiment_registry=experiment_registry,
+            pack_registry=pack_registry,
+            pack_id=pack,
+            experiment_id=experiment,
+            start=_parse_date(start),
+            end=_parse_date(end),
+            output_root=output_dir,
+        )
+        typer.echo(f"ETF experiment batch 完成：{batch.run_id}")
+        typer.echo(f"Run dir：{batch.run_dir}")
+        typer.echo(f"status={batch.diagnostics_summary['status']}")
+        typer.echo("production_effect=none")
+        typer.echo("broker_action=none")
+        if batch.diagnostics_summary["status"] != "PASS":
+            raise typer.Exit(code=1)
+        return
+    if config_path is None:
+        raise typer.BadParameter("--config or --pack/--experiment is required")
     append_experiment_run(
         registry_path=registry_path,
         candidate_config_path=config_path,

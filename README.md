@@ -138,6 +138,12 @@ run/compare/register`。根级
 `aits etf backtest run/report`，避免混淆两套投资解释链路。
 `aits features build --end latest` 可按价格缓存最新日期构建特征；`aits etf backtest
 run --config config/etf_portfolio/backtest.yaml` 可显式指定 ETF backtest policy。
+TRADING-064 batch experiments 使用
+`aits etf experiments run --pack etf_calibration_v1 --start YYYY-MM-DD --end YYYY-MM-DD`
+或 `aits etf experiments run --experiment <experiment_id> --start YYYY-MM-DD --end YYYY-MM-DD`。
+输出写入 ignored runtime 目录 `reports/etf_portfolio/experiments/<run_id>/`，包含
+`run_manifest.json`、`experiment_results.json`、`benchmark_results.json`、
+`metrics_summary.json` 和 `diagnostics_summary.json`。
 
 TRADING-064 controlled calibration experiments 从
 `config/etf_portfolio/experiments.yaml` 和

@@ -25,7 +25,7 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline，TRADING-063 已
 |---|---|---|
 |TRADING-064A|DONE|Experiment Config Registry|
 |TRADING-064B|DONE|Baseline Parameter Grid Definition|
-|TRADING-064C|READY|Batch Backtest Runner|
+|TRADING-064C|DONE|Batch Backtest Runner|
 |TRADING-064D|READY|Experiment Comparison Report|
 |TRADING-064E|READY|Risk/Return/Turnover Ranking|
 |TRADING-064F|READY|Candidate Selection Gate|
@@ -53,3 +53,4 @@ TRADING-062 已完成 ETF Portfolio Allocation System baseline，TRADING-063 已
 - 2026-06-01: TRADING-064A 完成。新增 `config/etf_portfolio/experiments.yaml`、`src/ai_trading_system/etf_portfolio/experiments.py` 和 `tests/test_etf_experiments.py`；registry 覆盖 16 个 first-matrix experiment，强制 experiment id 唯一、base weights 合计为 1、base config ref 可解析、override key 受控，以及 `observe_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`。文档同步到 README、artifact catalog 和 system flow。下一步进入 TRADING-064B `etf_calibration_v1` pack definition。
 - 2026-06-01: TRADING-064B 进入实现。目标是新增 `config/etf_portfolio/experiment_packs.yaml`、pack loader/validator 和测试，确保 `etf_calibration_v1` 只引用 registry 中的安全 experiment，不允许重复 experiment、不允许缺 ranking/promotion policy，也不引入 uncontrolled combinatorial search。
 - 2026-06-01: TRADING-064B 完成。新增 `etf_calibration_v1` pack，包含 base allocation、regime multiplier、semiconductor cap、rebalance threshold 和 relative strength weight 五个 family 的 16 个受控实验；pack 声明 `risk_adjusted_v1` ranking policy 和 `shadow_only_manual_review` promotion policy，并固定 `observe_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`。测试覆盖 pack load、experiment ref、重复 experiment、unsafe experiment、missing ranking policy 和 missing promotion policy。下一步进入 TRADING-064C batch backtest runner。
+- 2026-06-01: TRADING-064C 完成。`aits etf experiments run` 保留旧 `--config` candidate registry 行为，并新增 `--pack/--experiment --start --end` batch backtest path；batch runner 复用 ETF data quality gate 和 backtest engine，按 run directory 写出 `run_manifest.json`、`experiment_results.json`、`benchmark_results.json`、`metrics_summary.json` 和 `diagnostics_summary.json`。单个 experiment failure 进入 diagnostics，不被静默吞掉；unsafe experiment/pack 在运行前 fail closed。测试覆盖单实验运行、pack run、manifest/schema 文件、失败隔离、unsafe blocking 和 CLI smoke。下一步进入 TRADING-064D comparison report。
