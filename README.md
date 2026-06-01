@@ -150,7 +150,10 @@ TRADING-064 controlled calibration experiments 从
 `config/etf_portfolio/experiment_packs.yaml` 读取。experiment registry 定义允许观察的
 base allocation、regime multiplier、semiconductor cap、rebalance threshold 和
 relative strength weight 实验；`etf_calibration_v1` pack 只引用这 16 个受控实验，不做
-uncontrolled combinatorial search。每个 experiment 和 pack 必须包含 `observe_only=true`、
+uncontrolled combinatorial search。`risk_adjusted_v1` ranking policy 的 component weights、
+component scales、turnover/drawdown thresholds 和 hard rejection rules 也在 pack config 中治理；
+comparison report 只有在该 policy 可用时才输出 candidate scores，且 high-return candidate
+仍会被 turnover、drawdown、missing benchmark 或 unsafe safety flags 拒绝。每个 experiment 和 pack 必须包含 `observe_only=true`、
 `production_effect=none`、`broker_action=none` 和 `manual_review_required=true`。新增实验或
 pack 时只能使用 registry 支持的 override key，并先通过 loader/测试校验；这些 config 本身
 不运行回测、不写正式 target weights、不触发 broker action。

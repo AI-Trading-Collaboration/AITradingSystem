@@ -156,6 +156,24 @@ class ETFExperimentRegistry(BaseModel):
 class ETFExperimentPolicyRef(BaseModel):
     description: str = Field(min_length=1)
     policy_status: str = Field(min_length=1)
+    component_weights: dict[str, float] = Field(default_factory=dict)
+    component_scales: dict[str, float] = Field(default_factory=dict)
+    thresholds: dict[str, float] = Field(default_factory=dict)
+    hard_rejection_rules: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_policy_numbers(self) -> Self:
+        if self.component_weights:
+            total = sum(float(value) for value in self.component_weights.values())
+            if abs(total - 1.0) > 1e-6:
+                raise ValueError("ETF experiment ranking component weights must sum to 1.0")
+        for key, value in self.component_scales.items():
+            if float(value) <= 0.0:
+                raise ValueError(f"ETF experiment component scale must be positive: {key}")
+        for key, value in self.thresholds.items():
+            if float(value) < 0.0:
+                raise ValueError(f"ETF experiment threshold must be non-negative: {key}")
+        return self
 
 
 class ETFExperimentPackConfig(BaseModel):
@@ -569,6 +587,79 @@ def write_experiment_comparison_report(
     return json_path, markdown_path
 
 
+def apply_ranking_policy_to_comparison_report(
+    payload: Mapping[str, Any],
+    *,
+    ranking_policy: ETFExperimentPolicyRef,
+    ranking_policy_id: str,
+) -> dict[str, Any]:
+    updated = dict(payload)
+    ranked = rank_experiment_candidates(payload, ranking_policy=ranking_policy)
+    updated["top_candidates_by_ranking_policy"] = ranked
+    updated["ranking_policy_status"] = f"APPLIED:{ranking_policy_id}"
+    return {key: updated[key] for key in EXPERIMENT_COMPARISON_SCHEMA_KEYS}
+
+
+def rank_experiment_candidates(
+    comparison_report: Mapping[str, Any],
+    *,
+    ranking_policy: ETFExperimentPolicyRef,
+) -> list[dict[str, Any]]:
+    weights = ranking_policy.component_weights
+    scales = ranking_policy.component_scales
+    thresholds = ranking_policy.thresholds
+    ranked: list[dict[str, Any]] = []
+    for row in comparison_report.get("metrics_table", []):
+        if not isinstance(row, Mapping):
+            continue
+        component_scores = {
+            "benchmark_excess_return_score": _positive_score(
+                row.get("excess_return_vs_QQQ"),
+                scales["excess_return_reference"],
+            ),
+            "drawdown_reduction_score": _positive_score(
+                row.get("drawdown_reduction_vs_QQQ"),
+                scales["drawdown_reduction_reference"],
+            ),
+            "risk_adjusted_return_score": _risk_adjusted_score(
+                row,
+                scales["risk_adjusted_return_reference"],
+            ),
+            "turnover_penalty_score": _inverse_score(
+                row.get("turnover"),
+                scales["turnover_reference"],
+            ),
+            "stability_score": _inverse_score(
+                row.get("constraint_hit_rate"),
+                scales["constraint_hit_rate_reference"],
+            ),
+        }
+        hard_rejection_flags = _hard_rejection_flags(row, thresholds)
+        candidate_score = sum(
+            component_scores[key] * float(weights[key]) for key in component_scores
+        )
+        if hard_rejection_flags:
+            candidate_score = 0.0
+        ranked.append(
+            {
+                "experiment_id": row.get("experiment_id"),
+                "candidate_score": round(candidate_score, 10),
+                **component_scores,
+                "hard_rejection_flags": hard_rejection_flags,
+                "candidate_status": "rejected" if hard_rejection_flags else "ranked",
+                "ranking_reason": _ranking_reason(component_scores, hard_rejection_flags),
+                "observe_only": True,
+                "production_effect": "none",
+                "broker_action": "none",
+                "manual_review_required": True,
+            }
+        )
+    return sorted(
+        ranked,
+        key=lambda item: (-float(item["candidate_score"]), str(item["experiment_id"])),
+    )
+
+
 def render_experiment_comparison_report(payload: Mapping[str, Any]) -> str:
     metadata = _mapping(payload.get("run_metadata"))
     rows = [row for row in payload.get("metrics_table", []) if isinstance(row, Mapping)]
@@ -621,10 +712,7 @@ def render_experiment_comparison_report(payload: Mapping[str, Any]) -> str:
             "",
             "## Ranking",
             "",
-            (
-                "- Ranking is intentionally pending TRADING-064E. This report does not "
-                "rank candidates by return only."
-            ),
+            *_ranking_lines(payload),
         ]
     )
     return "\n".join(lines) + "\n"
@@ -864,6 +952,111 @@ def _candidate_status(result: Mapping[str, Any]) -> str:
     if result.get("status") == "FAILED":
         return "failed"
     return "needs_ranking_policy"
+
+
+def _hard_rejection_flags(
+    row: Mapping[str, Any],
+    thresholds: Mapping[str, float],
+) -> list[str]:
+    flags: list[str] = []
+    if row.get("candidate_status") == "failed":
+        flags.append("CREDIBILITY_GATE_FAILED")
+    if row.get("excess_return_vs_QQQ") is None or row.get(
+        "excess_return_vs_baseline"
+    ) is None:
+        flags.append("NO_BENCHMARK_COMPARISON")
+    turnover = _optional_float(row.get("turnover"))
+    max_turnover = float(thresholds["max_turnover"])
+    if turnover is None or turnover > max_turnover:
+        flags.append("TURNOVER_TOO_HIGH")
+    drawdown_reduction_vs_baseline = _optional_float(
+        row.get("drawdown_reduction_vs_baseline")
+    )
+    max_worsening = float(thresholds["max_drawdown_worsening_vs_baseline"])
+    if (
+        drawdown_reduction_vs_baseline is None
+        or drawdown_reduction_vs_baseline < -max_worsening
+    ):
+        flags.append("DRAWDOWN_TOO_HIGH")
+    constraint_hit_rate = _optional_float(row.get("constraint_hit_rate")) or 0.0
+    if constraint_hit_rate > 1.0:
+        flags.append("CONSTRAINT_VIOLATION")
+    if row.get("production_effect") not in (None, "none"):
+        flags.append("UNSAFE_PRODUCTION_EFFECT")
+    if row.get("manual_review_required") is False:
+        flags.append("MISSING_MANUAL_REVIEW")
+    return sorted(set(flags))
+
+
+def _positive_score(value: Any, reference: float) -> float:
+    parsed = _optional_float(value)
+    if parsed is None:
+        return 0.0
+    return max(0.0, min(1.0, parsed / reference))
+
+
+def _inverse_score(value: Any, reference: float) -> float:
+    parsed = _optional_float(value)
+    if parsed is None:
+        return 0.0
+    return max(0.0, min(1.0, 1.0 - parsed / reference))
+
+
+def _risk_adjusted_score(row: Mapping[str, Any], reference: float) -> float:
+    values = [
+        value
+        for value in (
+            _optional_float(row.get("Sharpe")),
+            _optional_float(row.get("Sortino")),
+            _optional_float(row.get("Calmar")),
+        )
+        if value is not None
+    ]
+    if not values:
+        return 0.0
+    return max(0.0, min(1.0, (sum(values) / len(values)) / reference))
+
+
+def _ranking_reason(
+    component_scores: Mapping[str, float],
+    hard_rejection_flags: list[str],
+) -> list[str]:
+    if hard_rejection_flags:
+        return [f"hard_rejected:{flag}" for flag in hard_rejection_flags]
+    strongest = max(component_scores, key=lambda key: component_scores[key])
+    weakest = min(component_scores, key=lambda key: component_scores[key])
+    return [f"strongest_component:{strongest}", f"weakest_component:{weakest}"]
+
+
+def _ranking_lines(payload: Mapping[str, Any]) -> list[str]:
+    ranked = [
+        item
+        for item in payload.get("top_candidates_by_ranking_policy", [])
+        if isinstance(item, Mapping)
+    ]
+    if not ranked:
+        return [
+            (
+                "- Ranking is intentionally pending TRADING-064E. This report does not "
+                "rank candidates by return only."
+            )
+        ]
+    lines = [
+        "| Rank | Experiment | Candidate Score | Status | Hard Rejections |",
+        "|---:|---|---:|---|---|",
+    ]
+    for index, item in enumerate(ranked, start=1):
+        flags = item.get("hard_rejection_flags")
+        flag_text = ", ".join(str(flag) for flag in flags) if isinstance(flags, list) else ""
+        lines.append(
+            "| "
+            f"{index} | "
+            f"{item.get('experiment_id')} | "
+            f"{_fmt_number(item.get('candidate_score'))} | "
+            f"{item.get('candidate_status')} | "
+            f"{flag_text or 'none'} |"
+        )
+    return lines
 
 
 def _metric(

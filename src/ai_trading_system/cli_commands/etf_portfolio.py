@@ -32,6 +32,7 @@ from ai_trading_system.etf_portfolio.data import (
 )
 from ai_trading_system.etf_portfolio.experiments import (
     DEFAULT_ETF_EXPERIMENT_RUN_DIR,
+    apply_ranking_policy_to_comparison_report,
     build_experiment_comparison_report,
     find_latest_experiment_run_dir,
     load_experiment_pack_registry,
@@ -642,6 +643,18 @@ def experiments_compare_command(
             else output_dir / str(run_id)
         )
         payload = build_experiment_comparison_report(run_dir)
+        pack_id = payload["run_metadata"].get("pack_id")
+        if pack_id:
+            pack_registry = load_experiment_pack_registry()
+            pack_config = pack_registry.experiment_packs.get(str(pack_id))
+            if pack_config is not None:
+                payload = apply_ranking_policy_to_comparison_report(
+                    payload,
+                    ranking_policy=pack_registry.ranking_policies[
+                        pack_config.ranking_policy
+                    ],
+                    ranking_policy_id=pack_config.ranking_policy,
+                )
         json_path = run_dir / "comparison_report.json"
         md_path = run_dir / "comparison_report.md"
         write_experiment_comparison_report(payload, json_path=json_path, markdown_path=md_path)

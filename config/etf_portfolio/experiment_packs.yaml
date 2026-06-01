@@ -9,7 +9,29 @@ policy_metadata:
 ranking_policies:
   risk_adjusted_v1:
     description: "Risk-adjusted ranking policy planned for TRADING-064E."
-    policy_status: planned
+    policy_status: pilot_baseline
+    component_weights:
+      benchmark_excess_return_score: 0.30
+      drawdown_reduction_score: 0.25
+      risk_adjusted_return_score: 0.20
+      turnover_penalty_score: 0.15
+      stability_score: 0.10
+    component_scales:
+      excess_return_reference: 0.10
+      drawdown_reduction_reference: 0.10
+      risk_adjusted_return_reference: 2.00
+      turnover_reference: 0.30
+      constraint_hit_rate_reference: 0.30
+    thresholds:
+      max_turnover: 0.30
+      max_drawdown_worsening_vs_baseline: 0.00
+    hard_rejection_rules:
+      - NO_BENCHMARK_COMPARISON
+      - TURNOVER_TOO_HIGH
+      - DRAWDOWN_TOO_HIGH
+      - CONSTRAINT_VIOLATION
+      - UNSAFE_PRODUCTION_EFFECT
+      - MISSING_MANUAL_REVIEW
 
 promotion_policies:
   shadow_only_manual_review:

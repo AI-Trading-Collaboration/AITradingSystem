@@ -14,10 +14,12 @@ from ai_trading_system.etf_portfolio.experiments import (
     EXPERIMENT_COMPARISON_SCHEMA_KEYS,
     ETFExperimentPackRegistry,
     ETFExperimentRegistry,
+    apply_ranking_policy_to_comparison_report,
     build_experiment_comparison_report,
     build_experiment_config_bundle,
     load_experiment_pack_registry,
     load_experiment_registry,
+    rank_experiment_candidates,
     run_experiment_batch,
     validate_experiment_pack_registry,
     write_experiment_comparison_report,
@@ -423,6 +425,94 @@ def test_etf_experiment_compare_cli_latest_smoke(tmp_path: Path) -> None:
     assert list(output_dir.glob("*/comparison_report.json"))
 
 
+def test_etf_experiment_ranking_computes_component_scores() -> None:
+    ranked = rank_experiment_candidates(
+        _ranking_report([_ranking_row("candidate_a")]),
+        ranking_policy=_ranking_policy(),
+    )
+
+    row = ranked[0]
+    assert row["candidate_score"] > 0
+    assert "benchmark_excess_return_score" in row
+    assert "drawdown_reduction_score" in row
+    assert "risk_adjusted_return_score" in row
+    assert "turnover_penalty_score" in row
+    assert "stability_score" in row
+    assert row["hard_rejection_flags"] == []
+
+
+def test_etf_experiment_ranking_rewards_drawdown_reduction() -> None:
+    stronger = _ranking_row("stronger", drawdown_reduction_vs_qqq=0.08)
+    weaker = _ranking_row("weaker", drawdown_reduction_vs_qqq=0.01)
+
+    ranked = rank_experiment_candidates(
+        _ranking_report([weaker, stronger]),
+        ranking_policy=_ranking_policy(),
+    )
+
+    assert ranked[0]["experiment_id"] == "stronger"
+
+
+def test_etf_experiment_ranking_rejects_excessive_turnover_despite_return() -> None:
+    row = _ranking_row("high_return_high_turnover", total_return=0.80, turnover=0.60)
+
+    ranked = rank_experiment_candidates(
+        _ranking_report([row]),
+        ranking_policy=_ranking_policy(),
+    )
+
+    assert ranked[0]["candidate_score"] == 0
+    assert ranked[0]["candidate_status"] == "rejected"
+    assert "TURNOVER_TOO_HIGH" in ranked[0]["hard_rejection_flags"]
+
+
+def test_etf_experiment_ranking_rejects_missing_benchmark_comparison() -> None:
+    row = _ranking_row("missing_benchmark", excess_return_vs_qqq=None)
+
+    ranked = rank_experiment_candidates(
+        _ranking_report([row]),
+        ranking_policy=_ranking_policy(),
+    )
+
+    assert "NO_BENCHMARK_COMPARISON" in ranked[0]["hard_rejection_flags"]
+
+
+def test_etf_experiment_ranking_rejects_unsafe_production_effect() -> None:
+    row = _ranking_row("unsafe")
+    row["production_effect"] = "target_weights"
+
+    ranked = rank_experiment_candidates(
+        _ranking_report([row]),
+        ranking_policy=_ranking_policy(),
+    )
+
+    assert "UNSAFE_PRODUCTION_EFFECT" in ranked[0]["hard_rejection_flags"]
+
+
+def test_etf_experiment_ranking_is_deterministic() -> None:
+    report = _ranking_report([_ranking_row("b"), _ranking_row("a")])
+    policy = _ranking_policy()
+
+    assert rank_experiment_candidates(report, ranking_policy=policy) == (
+        rank_experiment_candidates(report, ranking_policy=policy)
+    )
+
+
+def test_etf_experiment_comparison_can_apply_ranking_policy() -> None:
+    report = _ranking_report([_ranking_row("candidate_a")])
+
+    ranked_report = apply_ranking_policy_to_comparison_report(
+        report,
+        ranking_policy=_ranking_policy(),
+        ranking_policy_id="risk_adjusted_v1",
+    )
+
+    assert ranked_report["ranking_policy_status"] == "APPLIED:risk_adjusted_v1"
+    assert ranked_report["top_candidates_by_ranking_policy"][0]["experiment_id"] == (
+        "candidate_a"
+    )
+
+
 def _registry_raw() -> dict[str, object]:
     return deepcopy(load_experiment_registry().model_dump(mode="json"))
 
@@ -494,3 +584,63 @@ def _make_prices(days: int) -> pd.DataFrame:
                 }
             )
     return pd.DataFrame(rows)
+
+
+def _ranking_policy():
+    return load_experiment_pack_registry().ranking_policies["risk_adjusted_v1"]
+
+
+def _ranking_report(rows: list[dict[str, object]]) -> dict[str, object]:
+    return {
+        "schema_version": 1,
+        "report_type": "etf_experiment_comparison",
+        "run_metadata": {"run_id": "unit"},
+        "experiment_list": [{"experiment_id": row["experiment_id"]} for row in rows],
+        "baseline_comparison": {"status": "AVAILABLE", "metrics": {}},
+        "benchmark_comparison": {"status": "AVAILABLE", "benchmark_ids": ["B002"]},
+        "metrics_table": rows,
+        "risk_metrics_table": [],
+        "turnover_stability_table": [],
+        "constraint_hit_summary": {},
+        "warning_summary": [],
+        "top_candidates_by_ranking_policy": [],
+        "ranking_policy_status": "PENDING_TRADING_064E_RISK_ADJUSTED_V1",
+        "observe_only": True,
+        "production_effect": "none",
+        "broker_action": "none",
+        "manual_review_required": True,
+    }
+
+
+def _ranking_row(
+    experiment_id: str,
+    *,
+    total_return: float = 0.20,
+    excess_return_vs_qqq: float | None = 0.05,
+    drawdown_reduction_vs_qqq: float = 0.04,
+    turnover: float = 0.10,
+) -> dict[str, object]:
+    return {
+        "experiment_id": experiment_id,
+        "total_return": total_return,
+        "CAGR": 0.12,
+        "max_drawdown": -0.08,
+        "Sharpe": 1.2,
+        "Sortino": 1.4,
+        "Calmar": 1.5,
+        "turnover": turnover,
+        "average_equity_exposure": 0.85,
+        "average_cash_weight": 0.15,
+        "excess_return_vs_baseline": 0.03,
+        "drawdown_reduction_vs_baseline": 0.02,
+        "excess_return_vs_QQQ": excess_return_vs_qqq,
+        "drawdown_reduction_vs_QQQ": drawdown_reduction_vs_qqq,
+        "constraint_hit_rate": 0.05,
+        "regime_transition_count": 3,
+        "candidate_status": "needs_ranking_policy",
+        "metric_null_reasons": {},
+        "observe_only": True,
+        "production_effect": "none",
+        "broker_action": "none",
+        "manual_review_required": True,
+    }
