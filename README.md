@@ -184,8 +184,8 @@ TRADING-066 AI confirmation overlay 从
 source config 定义 mega-cap AI、semiconductor hardware、cloud AI platform、AI ETF
 proxy 和 event-risk reference groups，并区分 required 与 optional symbols。
 `config/etf_portfolio/ai_confirmation_policy.yaml` 治理 score bands、MegaCapAIScore
-component weights、relative-strength normalization、drawdown penalty 和 coverage warning
-floor。TRADING-066
+component weights、relative-strength normalization、drawdown penalty、event-risk
+adjustment、composite component weights 和 coverage warning floor。TRADING-066
 的 breadth feature baseline 可用 `aits etf ai-confirmation features --date YYYY-MM-DD`
 生成，输出 `reports/etf_portfolio/ai_confirmation/features/ai_confirmation_features_YYYY-MM-DD.json/csv`。
 该命令先执行 ETF price quality gate，只使用 `date <= score_date` 的价格，strict required
@@ -195,8 +195,10 @@ AISemiconductorRelativeStrengthScore 从 `QQQ/SPY`、`SMH/QQQ`、`SOXX/QQQ`、
 `SMH/SPY`、`SOXX/SPY` 和 optional AI ETF proxy pairs 计算 ETF-level confirmation，
 AI event risk overlay 只按 FOMC/CPI/PCE、major AI earnings、semiconductor earnings、
 export-control window 等日历事件输出 active/upcoming/recent risk flags，不预测事件方向。
-这些输出先作为后续 report/composite 的 candidate-only payload。后续 report、shadow overlay、
-Reader Brief 和 validation gate 必须固定
+`AIConfirmationScore` composite 将 semiconductor breadth、MegaCapAIScore、
+AISemiconductorRelativeStrengthScore 和 event risk adjustment 合成为 0-100 candidate-only
+score，并输出 `action_hint`、`reason_codes`、data coverage 和 safety fields。后续 report、
+shadow overlay、Reader Brief 和 validation gate 必须固定
 `observe_only=true`、`candidate_only=true`、`production_effect=none`、
 `broker_action=none`、`manual_review_required=true`；overlay-adjusted weights 只能作为
 candidate/shadow/hypothetical weights，不写 official ETF target weights。

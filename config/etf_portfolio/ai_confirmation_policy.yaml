@@ -107,3 +107,14 @@ event_risk_overlay:
       max_score: 100.0
   multiple_event_increment: 5.0
   maximum_event_risk_score: 100.0
+
+ai_confirmation_composite_score:
+  component_weights:
+    semiconductor_breadth: 0.30
+    mega_cap_ai: 0.30
+    ai_relative_strength: 0.25
+    event_risk_adjustment: 0.15
+  insufficient_data_coverage_min: 0.60
+  supports_overweight_min: 80.0
+  supports_neutral_min: 45.0
+  event_risk_high_min: 75.0

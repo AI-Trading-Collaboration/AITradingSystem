@@ -230,6 +230,23 @@ class EventRiskOverlayPolicy(BaseModel):
         return self
 
 
+class AIConfirmationCompositePolicy(BaseModel):
+    component_weights: dict[str, float] = Field(min_length=1)
+    insufficient_data_coverage_min: float = Field(ge=0, le=1)
+    supports_overweight_min: float = Field(ge=0, le=100)
+    supports_neutral_min: float = Field(ge=0, le=100)
+    event_risk_high_min: float = Field(ge=0, le=100)
+
+    @model_validator(mode="after")
+    def validate_composite_weights(self) -> Self:
+        total = sum(self.component_weights.values())
+        if abs(total - 1.0) > 1e-6:
+            raise ValueError(f"AI confirmation composite weights must sum to 1.0: {total}")
+        if any(weight < 0 for weight in self.component_weights.values()):
+            raise ValueError("AI confirmation composite weights must be non-negative")
+        return self
+
+
 class AIConfirmationPolicyConfig(BaseModel):
     policy_metadata: PolicyMetadata
     safety: AIConfirmationSafetyConfig
@@ -237,6 +254,7 @@ class AIConfirmationPolicyConfig(BaseModel):
     mega_cap_ai_score: MegaCapAIScorePolicy
     ai_semiconductor_relative_strength_score: AISemiconductorRelativeStrengthPolicy
     event_risk_overlay: EventRiskOverlayPolicy
+    ai_confirmation_composite_score: AIConfirmationCompositePolicy
 
     @model_validator(mode="after")
     def validate_score_bands(self) -> Self:
@@ -671,6 +689,55 @@ def build_ai_event_risk_overlay(
         "affected_groups": affected_groups,
         "risk_band": event_risk_band(score, policy_config),
         "reason_codes": reason_codes,
+        **AI_CONFIRMATION_SAFETY,
+    }
+
+
+def build_ai_confirmation_composite_score(
+    *,
+    breadth_records: list[dict[str, Any]],
+    mega_cap_score: Mapping[str, Any],
+    relative_strength_score: Mapping[str, Any],
+    event_risk_overlay: Mapping[str, Any],
+    policy_config: AIConfirmationPolicyConfig,
+    run_date: date,
+) -> dict[str, Any]:
+    policy = policy_config.ai_confirmation_composite_score
+    semiconductor_breadth = _semiconductor_breadth_score(breadth_records)
+    data_coverage = _composite_data_coverage(breadth_records, mega_cap_score)
+    event_risk_score = _safe_float(event_risk_overlay.get("event_risk_score")) or 0.0
+    component_scores = {
+        "semiconductor_breadth": semiconductor_breadth,
+        "mega_cap_ai": float(mega_cap_score["score_value"]),
+        "ai_relative_strength": float(relative_strength_score["score_value"]),
+        "event_risk_adjustment": _clamp_score(100.0 - event_risk_score),
+        "data_coverage": _clamp_score(data_coverage * 100.0),
+    }
+    weighted_score = sum(
+        component_scores[component] * policy.component_weights[component]
+        for component in policy.component_weights
+    )
+    score_value = round(_clamp_score(weighted_score), 2)
+    reason_codes = _composite_reason_codes(
+        component_scores,
+        data_coverage,
+        event_risk_score,
+        policy,
+    )
+    return {
+        "date": run_date.isoformat(),
+        "score_name": "AIConfirmationScore",
+        "AIConfirmationScore": score_value,
+        "score_value": score_value,
+        "component_scores": {
+            key: round(float(value), 2) for key, value in component_scores.items()
+        },
+        "score_band": score_band(score_value, policy_config),
+        "action_hint": _composite_action_hint(score_value, data_coverage, event_risk_score, policy),
+        "reason_codes": reason_codes,
+        "data_coverage_ratio": data_coverage,
+        "policy_version": policy_config.policy_metadata.version,
+        "policy_config_hash": policy_config.config_hash,
         **AI_CONFIRMATION_SAFETY,
     }
 
@@ -1169,3 +1236,73 @@ def _event_output(event: Mapping[str, Any]) -> dict[str, Any]:
         "confidence": event["confidence"],
         "optional": event["optional"],
     }
+
+
+def _semiconductor_breadth_score(breadth_records: list[dict[str, Any]]) -> float:
+    try:
+        record = _breadth_record_for_group(breadth_records, "semiconductor_hardware")
+    except KeyError:
+        return 50.0
+    values = dict(record.get("feature_values") or {})
+    fractions = [
+        values.get("percent_above_20d_ma"),
+        values.get("percent_above_50d_ma"),
+        values.get("percent_above_100d_ma"),
+        values.get("percent_above_200d_ma"),
+        values.get("percent_positive_20d_return"),
+        values.get("percent_positive_60d_return"),
+    ]
+    return _average_score(*fractions) or 50.0
+
+
+def _composite_data_coverage(
+    breadth_records: list[dict[str, Any]],
+    mega_cap_score: Mapping[str, Any],
+) -> float:
+    coverages = [
+        float(record["data_coverage_ratio"])
+        for record in breadth_records
+        if _is_finite_number(record.get("data_coverage_ratio"))
+    ]
+    if _is_finite_number(mega_cap_score.get("data_coverage_ratio")):
+        coverages.append(float(mega_cap_score["data_coverage_ratio"]))
+    if not coverages:
+        return 0.0
+    return _safe_float(np.mean(coverages)) or 0.0
+
+
+def _composite_action_hint(
+    score_value: float,
+    data_coverage: float,
+    event_risk_score: float,
+    policy: AIConfirmationCompositePolicy,
+) -> str:
+    if data_coverage < policy.insufficient_data_coverage_min:
+        return "insufficient_data"
+    if event_risk_score >= policy.event_risk_high_min:
+        return "warns_against_ai_overweight"
+    if score_value >= policy.supports_overweight_min:
+        return "supports_ai_overweight_candidate"
+    if score_value >= policy.supports_neutral_min:
+        return "supports_neutral_ai_exposure"
+    return "warns_against_ai_overweight"
+
+
+def _composite_reason_codes(
+    component_scores: Mapping[str, float],
+    data_coverage: float,
+    event_risk_score: float,
+    policy: AIConfirmationCompositePolicy,
+) -> list[str]:
+    reasons = [
+        f"semiconductor_breadth={component_scores['semiconductor_breadth']:.2f}",
+        f"mega_cap_ai={component_scores['mega_cap_ai']:.2f}",
+        f"ai_relative_strength={component_scores['ai_relative_strength']:.2f}",
+        f"event_risk_score={event_risk_score:.2f}",
+        f"data_coverage={data_coverage:.2f}",
+    ]
+    if data_coverage < policy.insufficient_data_coverage_min:
+        reasons.append("insufficient_data_coverage")
+    if event_risk_score >= policy.event_risk_high_min:
+        reasons.append("high_event_risk")
+    return reasons

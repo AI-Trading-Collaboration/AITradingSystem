@@ -55,7 +55,7 @@ AI confirmation layer 不写 `data/etf_portfolio/target_weights.csv`，不替换
 |TRADING-066C Mega-Cap AI Confirmation Score|DONE|MegaCapAIScore 0-100、components、drivers、safety fields|
 |TRADING-066D AI ETF / Semiconductor Relative Strength Score|DONE|ETF relative pairs、optional ETF handling、score bands|
 |TRADING-066E Event Risk Overlay|DONE|config/calendar-driven risk score and active/upcoming/recent events|
-|TRADING-066F AI Confirmation Composite Score|READY|AIConfirmationScore, action_hint, reason_codes, safety fields|
+|TRADING-066F AI Confirmation Composite Score|DONE|AIConfirmationScore, action_hint, reason_codes, safety fields|
 |TRADING-066G AI Confirmation Report|READY|JSON/Markdown standalone report with safety banner and components|
 |TRADING-066H Shadow Candidate Overlay Experiment|READY|bounded candidate-only hypothetical weights, no production mutation|
 |TRADING-066I Reader Brief AI Confirmation Section|READY|daily Reader Brief summary and detailed report link|
@@ -97,3 +97,7 @@ AI confirmation layer 不写 `data/etf_portfolio/target_weights.csv`，不替换
 - 2026-06-01: TRADING-066E 完成。新增 event risk overlay，按事件窗口输出
   active/upcoming/recent events、affected_groups、risk_band 和 reason_codes；它仅作为风险旗标，
   不预测事件方向、不修改 production weights。
+- 2026-06-01: TRADING-066F 完成。新增 AIConfirmationScore composite，按 policy 权重合成
+  semiconductor breadth、MegaCapAIScore、AISemiconductorRelativeStrengthScore 和 event risk
+  adjustment，输出 component_scores、action_hint、reason_codes、coverage、policy hash 和 safety
+  fields；验证通过 `python -m pytest tests -q`（1779 passed）、ruff、compileall 和 diff check。

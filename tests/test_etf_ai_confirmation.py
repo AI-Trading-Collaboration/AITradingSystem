@@ -15,6 +15,7 @@ from ai_trading_system.etf_portfolio.ai_confirmation import (
     ai_confirmation_breadth_records_to_frame,
     all_enabled_tickers,
     build_ai_confirmation_breadth_features,
+    build_ai_confirmation_composite_score,
     build_ai_event_risk_overlay,
     build_ai_semiconductor_relative_strength_score,
     build_mega_cap_ai_confirmation_score,
@@ -611,6 +612,63 @@ def test_ai_event_risk_optional_missing_source_is_safe() -> None:
     assert event_risk_band(100, load_ai_confirmation_policy_config()) == "critical"
 
 
+def test_ai_confirmation_composite_combines_components_and_safety_fields() -> None:
+    composite = _composite_score(
+        mega_score=82.0,
+        relative_score=74.0,
+        event_risk=20.0,
+        semiconductor_breadth=0.8,
+        coverage=1.0,
+    )
+
+    assert composite["AIConfirmationScore"] > 70
+    assert composite["score_band"] in {"confirm", "strong_confirm"}
+    assert composite["action_hint"] in {
+        "supports_ai_overweight_candidate",
+        "supports_neutral_ai_exposure",
+    }
+    assert composite["component_scores"]["event_risk_adjustment"] == 80.0
+    assert composite["observe_only"] is True
+    assert composite["candidate_only"] is True
+    assert composite["production_effect"] == "none"
+    assert composite["broker_action"] == "none"
+    assert composite["manual_review_required"] is True
+
+
+def test_ai_confirmation_composite_event_risk_reduces_or_flags_score() -> None:
+    low_event = _composite_score(
+        mega_score=85.0,
+        relative_score=80.0,
+        event_risk=10.0,
+        semiconductor_breadth=0.9,
+        coverage=1.0,
+    )
+    high_event = _composite_score(
+        mega_score=85.0,
+        relative_score=80.0,
+        event_risk=90.0,
+        semiconductor_breadth=0.9,
+        coverage=1.0,
+    )
+
+    assert high_event["AIConfirmationScore"] < low_event["AIConfirmationScore"]
+    assert high_event["action_hint"] == "warns_against_ai_overweight"
+    assert "high_event_risk" in high_event["reason_codes"]
+
+
+def test_ai_confirmation_composite_low_coverage_is_insufficient_data() -> None:
+    composite = _composite_score(
+        mega_score=85.0,
+        relative_score=80.0,
+        event_risk=10.0,
+        semiconductor_breadth=0.9,
+        coverage=0.4,
+    )
+
+    assert composite["action_hint"] == "insufficient_data"
+    assert "insufficient_data_coverage" in composite["reason_codes"]
+
+
 def _raw_config() -> dict[str, object]:
     return deepcopy(load_ai_confirmation_universe_config().model_dump(mode="json"))
 
@@ -779,3 +837,41 @@ def _event(
         "confidence": "high",
         "optional": True,
     }
+
+
+def _composite_score(
+    *,
+    mega_score: float,
+    relative_score: float,
+    event_risk: float,
+    semiconductor_breadth: float,
+    coverage: float,
+) -> dict[str, object]:
+    run_date = date(2026, 6, 1)
+    breadth_records = [
+        {
+            "date": run_date.isoformat(),
+            "group_id": "semiconductor_hardware",
+            "feature_values": {
+                "percent_above_20d_ma": semiconductor_breadth,
+                "percent_above_50d_ma": semiconductor_breadth,
+                "percent_above_100d_ma": semiconductor_breadth,
+                "percent_above_200d_ma": semiconductor_breadth,
+                "percent_positive_20d_return": semiconductor_breadth,
+                "percent_positive_60d_return": semiconductor_breadth,
+            },
+            "data_coverage_ratio": coverage,
+            "warnings": [],
+        }
+    ]
+    return build_ai_confirmation_composite_score(
+        breadth_records=breadth_records,
+        mega_cap_score={
+            "score_value": mega_score,
+            "data_coverage_ratio": coverage,
+        },
+        relative_strength_score={"score_value": relative_score},
+        event_risk_overlay={"event_risk_score": event_risk},
+        policy_config=load_ai_confirmation_policy_config(),
+        run_date=run_date,
+    )
