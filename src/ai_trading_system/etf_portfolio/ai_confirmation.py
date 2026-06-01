@@ -26,6 +26,7 @@ DEFAULT_AI_CONFIRMATION_REPORT_DIR = (
 )
 DEFAULT_AI_CONFIRMATION_FEATURE_DIR = DEFAULT_AI_CONFIRMATION_REPORT_DIR / "features"
 DEFAULT_AI_CONFIRMATION_STANDALONE_REPORT_DIR = DEFAULT_AI_CONFIRMATION_REPORT_DIR / "reports"
+DEFAULT_AI_CONFIRMATION_OVERLAY_DIR = DEFAULT_AI_CONFIRMATION_REPORT_DIR / "overlays"
 
 AI_CONFIRMATION_BREADTH_FEATURE_VERSION = "ai_confirmation_breadth_v0_1"
 AI_CONFIRMATION_REPORT_SCHEMA_VERSION = "ai_confirmation_report_v1"
@@ -249,6 +250,41 @@ class AIConfirmationCompositePolicy(BaseModel):
         return self
 
 
+class AIConfirmationShadowOverlayPolicy(BaseModel):
+    overlay_policy_id: str = Field(min_length=1)
+    semiconductor_symbols: list[str] = Field(min_length=1)
+    funding_symbols: list[str] = Field(min_length=1)
+    cash_symbol: str = Field(min_length=1)
+    strong_confirm_min: float = Field(ge=0, le=100)
+    confirm_min: float = Field(ge=0, le=100)
+    neutral_min: float = Field(ge=0, le=100)
+    weak_min: float = Field(ge=0, le=100)
+    high_event_risk_min: float = Field(ge=0, le=100)
+    strong_confirm_increment: float = Field(ge=0, le=1)
+    confirm_increment: float = Field(ge=0, le=1)
+    weak_decrement: float = Field(ge=0, le=1)
+    negative_decrement: float = Field(ge=0, le=1)
+    max_semiconductor_sleeve: float = Field(ge=0, le=1)
+    min_cash_weight: float = Field(ge=0, le=1)
+
+    @model_validator(mode="after")
+    def normalize_and_validate_overlay_policy(self) -> Self:
+        self.semiconductor_symbols = [
+            symbol.strip().upper() for symbol in self.semiconductor_symbols
+        ]
+        self.funding_symbols = [symbol.strip().upper() for symbol in self.funding_symbols]
+        self.cash_symbol = self.cash_symbol.strip().upper()
+        if (
+            self.strong_confirm_min < self.confirm_min
+            or self.confirm_min < self.neutral_min
+            or self.neutral_min < self.weak_min
+        ):
+            raise ValueError("AI confirmation overlay thresholds must be descending")
+        if self.min_cash_weight > 1.0 - self.max_semiconductor_sleeve:
+            raise ValueError("AI confirmation overlay cash floor conflicts with semiconductor cap")
+        return self
+
+
 class AIConfirmationPolicyConfig(BaseModel):
     policy_metadata: PolicyMetadata
     safety: AIConfirmationSafetyConfig
@@ -257,6 +293,7 @@ class AIConfirmationPolicyConfig(BaseModel):
     ai_semiconductor_relative_strength_score: AISemiconductorRelativeStrengthPolicy
     event_risk_overlay: EventRiskOverlayPolicy
     ai_confirmation_composite_score: AIConfirmationCompositePolicy
+    ai_confirmation_shadow_overlay: AIConfirmationShadowOverlayPolicy
 
     @model_validator(mode="after")
     def validate_score_bands(self) -> Self:
@@ -879,6 +916,195 @@ def load_ai_confirmation_events(path: Path | None) -> list[dict[str, Any]]:
     return frame.to_dict(orient="records")
 
 
+def load_ai_confirmation_base_weights(path: Path) -> dict[str, float]:
+    if not path.exists():
+        raise FileNotFoundError(f"AI confirmation base weights file does not exist: {path}")
+    if path.suffix.lower() in {".yaml", ".yml"}:
+        payload = safe_load_yaml_path(path)
+    elif path.suffix.lower() == ".json":
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    else:
+        frame = pd.read_csv(path)
+        if {"symbol", "target_weight"}.issubset(frame.columns):
+            return {
+                str(row["symbol"]): float(row["target_weight"])
+                for _, row in frame.iterrows()
+                if pd.notna(row.get("target_weight"))
+            }
+        if {"symbol", "weight"}.issubset(frame.columns):
+            return {
+                str(row["symbol"]): float(row["weight"])
+                for _, row in frame.iterrows()
+                if pd.notna(row.get("weight"))
+            }
+        raise ValueError("AI confirmation base weights CSV must contain symbol + weight column")
+    if isinstance(payload, Mapping) and "weights" in payload:
+        payload = payload["weights"]
+    if not isinstance(payload, Mapping):
+        raise ValueError("AI confirmation base weights JSON/YAML must be a mapping")
+    return {str(symbol): float(weight) for symbol, weight in payload.items()}
+
+
+def latest_ai_confirmation_report_path(
+    output_dir: Path = DEFAULT_AI_CONFIRMATION_STANDALONE_REPORT_DIR,
+    *,
+    as_of: date | None = None,
+) -> Path | None:
+    candidates: list[tuple[date, Path]] = []
+    for path in output_dir.glob("ai_confirmation_report_*.json"):
+        raw_date = path.stem.removeprefix("ai_confirmation_report_")
+        try:
+            artifact_date = date.fromisoformat(raw_date)
+        except ValueError:
+            continue
+        if as_of is None or artifact_date <= as_of:
+            candidates.append((artifact_date, path))
+    if not candidates:
+        return None
+    return max(candidates, key=lambda item: (item[0], item[1].stat().st_mtime))[1]
+
+
+def build_ai_confirmation_shadow_overlay_experiment(
+    *,
+    base_weights: Mapping[str, float],
+    ai_confirmation_payload: Mapping[str, Any],
+    policy_config: AIConfirmationPolicyConfig,
+    run_date: date,
+    base_candidate_id: str,
+    overlay_experiment_id: str | None = None,
+) -> dict[str, Any]:
+    policy = policy_config.ai_confirmation_shadow_overlay
+    score_payload = _extract_ai_confirmation_score_payload(ai_confirmation_payload)
+    _assert_ai_confirmation_score_safe(score_payload)
+    before_weights = _normalize_weight_mapping(base_weights)
+    score_value = _safe_float(
+        score_payload.get("AIConfirmationScore", score_payload.get("score_value"))
+    )
+    if score_value is None:
+        raise ValueError("AI confirmation overlay requires a numeric AIConfirmationScore")
+    component_scores = _mapping(score_payload.get("component_scores"))
+    event_risk_score = _event_risk_from_score_payload(score_payload)
+    direction, requested_delta = _overlay_requested_delta(score_value, policy)
+    blocked_by_event_risk = event_risk_score >= policy.high_event_risk_min and requested_delta > 0
+    if blocked_by_event_risk:
+        direction = "blocked_overweight"
+        requested_delta = 0.0
+    after_weights, applied_delta, constraints_applied = _apply_overlay_weight_delta(
+        before_weights,
+        requested_delta,
+        policy,
+    )
+    reason_codes = [
+        f"AIConfirmationScore={score_value:.2f}",
+        f"score_band={score_payload.get('score_band', '')}",
+        f"event_risk_score={event_risk_score:.2f}",
+        f"overlay_direction={direction}",
+        f"requested_delta={requested_delta:.4f}",
+        f"applied_delta={applied_delta:.4f}",
+    ]
+    if blocked_by_event_risk:
+        reason_codes.append("high_event_risk_blocks_overweight")
+    reason_codes.extend(str(item) for item in score_payload.get("reason_codes", [])[:5])
+    output_weights = {symbol: round(float(weight), 8) for symbol, weight in after_weights.items()}
+    return {
+        "schema_version": "ai_confirmation_shadow_overlay_v1",
+        "report_type": "ai_confirmation_shadow_overlay",
+        "date": run_date.isoformat(),
+        "overlay_experiment_id": overlay_experiment_id
+        or f"{policy.overlay_policy_id}_{run_date.isoformat()}_{base_candidate_id}",
+        "overlay_policy_id": policy.overlay_policy_id,
+        "base_candidate_id": base_candidate_id,
+        "AIConfirmationScore": round(float(score_value), 2),
+        "score_band": score_payload.get("score_band"),
+        "component_scores": dict(component_scores),
+        "event_risk_score": round(float(event_risk_score), 2),
+        "overlay_adjustment": {
+            "direction": direction,
+            "requested_delta": round(float(requested_delta), 8),
+            "applied_delta": round(float(applied_delta), 8),
+            "blocked_by_event_risk": blocked_by_event_risk,
+        },
+        "before_weights": {
+            symbol: round(float(weight), 8) for symbol, weight in before_weights.items()
+        },
+        "after_candidate_weights": output_weights,
+        "candidate_weights": dict(output_weights),
+        "shadow_weights": dict(output_weights),
+        "hypothetical_weights": dict(output_weights),
+        "constraints_applied": constraints_applied,
+        "reason_codes": reason_codes,
+        **AI_CONFIRMATION_SAFETY,
+    }
+
+
+def write_ai_confirmation_shadow_overlay(
+    payload: Mapping[str, Any],
+    *,
+    json_path: Path,
+    markdown_path: Path,
+) -> tuple[Path, Path]:
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    markdown_path.write_text(
+        render_ai_confirmation_shadow_overlay_markdown(payload),
+        encoding="utf-8",
+    )
+    return json_path, markdown_path
+
+
+def render_ai_confirmation_shadow_overlay_markdown(payload: Mapping[str, Any]) -> str:
+    adjustment = _mapping(payload.get("overlay_adjustment"))
+    before = _mapping(payload.get("before_weights"))
+    after = _mapping(payload.get("after_candidate_weights"))
+    lines = [
+        "# AI Confirmation Shadow Overlay",
+        "",
+        f"- Date: {payload.get('date')}",
+        f"- Overlay Experiment: {payload.get('overlay_experiment_id')}",
+        f"- Base Candidate: {payload.get('base_candidate_id')}",
+        f"- AIConfirmationScore: {_fmt_number(payload.get('AIConfirmationScore'))}",
+        f"- Score Band: {payload.get('score_band')}",
+        f"- Event Risk Score: {_fmt_number(payload.get('event_risk_score'))}",
+        "- Safety: observe_only=true, candidate_only=true, production_effect=none, "
+        "broker_action=none, manual_review_required=true",
+        "",
+        "## Overlay Adjustment",
+        "",
+        f"- Direction: {adjustment.get('direction')}",
+        f"- Requested Delta: {_fmt_pct(adjustment.get('requested_delta'))}",
+        f"- Applied Delta: {_fmt_pct(adjustment.get('applied_delta'))}",
+        f"- Blocked By Event Risk: {adjustment.get('blocked_by_event_risk')}",
+        "",
+        "## Candidate Weights",
+        "",
+        "| Symbol | Before | After Candidate |",
+        "|---|---:|---:|",
+    ]
+    for symbol in sorted(set(before) | set(after)):
+        lines.append(
+            "| "
+            f"{symbol} | "
+            f"{_fmt_pct(before.get(symbol))} | "
+            f"{_fmt_pct(after.get(symbol))} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Constraints",
+            "",
+            f"- Constraints Applied: {_join_list(payload.get('constraints_applied'))}",
+            f"- Reason Codes: {_join_list(payload.get('reason_codes'))}",
+            "",
+            "Candidate-only output: no production ETF target weights are changed.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
 def render_ai_confirmation_report_markdown(payload: Mapping[str, Any]) -> str:
     score = _mapping(payload.get("AIConfirmationScore"))
     components = _mapping(payload.get("component_scores"))
@@ -1038,6 +1264,192 @@ def _ai_confirmation_safety_banner() -> str:
         "observe_only=true; candidate_only=true; production_effect=none; "
         "broker_action=none; manual_review_required=true"
     )
+
+
+def _extract_ai_confirmation_score_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
+    if isinstance(payload.get("AIConfirmationScore"), Mapping):
+        score_payload = dict(payload["AIConfirmationScore"])
+        event_overlay = _mapping(payload.get("event_risk_overlay"))
+        if _is_finite_number(event_overlay.get("event_risk_score")):
+            score_payload["_event_risk_score"] = float(event_overlay["event_risk_score"])
+        return score_payload
+    return dict(payload)
+
+
+def _assert_ai_confirmation_score_safe(score_payload: Mapping[str, Any]) -> None:
+    for key, expected in AI_CONFIRMATION_SAFETY.items():
+        actual = score_payload.get(key)
+        if actual != expected:
+            raise ValueError(
+                f"unsafe AI confirmation score payload: {key}={actual!r}, "
+                f"expected {expected!r}"
+            )
+
+
+def _normalize_weight_mapping(weights: Mapping[str, float]) -> dict[str, float]:
+    normalized = {str(symbol).strip().upper(): float(weight) for symbol, weight in weights.items()}
+    if not normalized:
+        raise ValueError("AI confirmation overlay requires non-empty base weights")
+    if any(weight < 0 for weight in normalized.values()):
+        raise ValueError("AI confirmation overlay base weights must be non-negative")
+    total = sum(normalized.values())
+    if abs(total - 1.0) > 1e-6:
+        raise ValueError(f"AI confirmation overlay base weights must sum to 1.0: {total:.8f}")
+    return normalized
+
+
+def _event_risk_from_score_payload(score_payload: Mapping[str, Any]) -> float:
+    if _is_finite_number(score_payload.get("_event_risk_score")):
+        return _clamp_score(float(score_payload["_event_risk_score"]))
+    if _is_finite_number(score_payload.get("event_risk_score")):
+        return _clamp_score(float(score_payload["event_risk_score"]))
+    component_scores = _mapping(score_payload.get("component_scores"))
+    adjustment = component_scores.get("event_risk_adjustment")
+    if _is_finite_number(adjustment):
+        return _clamp_score(100.0 - float(adjustment))
+    return 0.0
+
+
+def _overlay_requested_delta(
+    score_value: float,
+    policy: AIConfirmationShadowOverlayPolicy,
+) -> tuple[str, float]:
+    if score_value >= policy.strong_confirm_min:
+        return "increase_semiconductor_sleeve", policy.strong_confirm_increment
+    if score_value >= policy.confirm_min:
+        return "support_current_semiconductor_sleeve", policy.confirm_increment
+    if score_value >= policy.neutral_min:
+        return "neutral", 0.0
+    if score_value >= policy.weak_min:
+        return "reduce_semiconductor_sleeve", -policy.weak_decrement
+    return "reduce_semiconductor_sleeve", -policy.negative_decrement
+
+
+def _apply_overlay_weight_delta(
+    before_weights: Mapping[str, float],
+    requested_delta: float,
+    policy: AIConfirmationShadowOverlayPolicy,
+) -> tuple[dict[str, float], float, list[str]]:
+    weights = dict(before_weights)
+    constraints: list[str] = []
+    weights.setdefault(policy.cash_symbol, 0.0)
+    if requested_delta > 0:
+        applied_delta = _increase_semiconductor_sleeve(
+            weights,
+            requested_delta,
+            policy,
+            constraints,
+        )
+    elif requested_delta < 0:
+        applied_delta = _decrease_semiconductor_sleeve(
+            weights,
+            abs(requested_delta),
+            policy,
+            constraints,
+        )
+    else:
+        applied_delta = 0.0
+        constraints.append("no_overlay_delta")
+    _rebalance_rounding_to_cash(weights, policy.cash_symbol)
+    if weights.get(policy.cash_symbol, 0.0) < policy.min_cash_weight - 1e-8:
+        constraints.append("min_cash_weight_floor")
+        shortfall = policy.min_cash_weight - weights.get(policy.cash_symbol, 0.0)
+        removed = _remove_from_symbols(weights, policy.semiconductor_symbols, shortfall)
+        weights[policy.cash_symbol] = weights.get(policy.cash_symbol, 0.0) + removed
+    _rebalance_rounding_to_cash(weights, policy.cash_symbol)
+    return weights, applied_delta, sorted(set(constraints))
+
+
+def _increase_semiconductor_sleeve(
+    weights: dict[str, float],
+    requested_delta: float,
+    policy: AIConfirmationShadowOverlayPolicy,
+    constraints: list[str],
+) -> float:
+    current_sleeve = sum(weights.get(symbol, 0.0) for symbol in policy.semiconductor_symbols)
+    capacity = max(0.0, policy.max_semiconductor_sleeve - current_sleeve)
+    if capacity < requested_delta:
+        constraints.append("max_semiconductor_sleeve_cap")
+    available_funding = sum(weights.get(symbol, 0.0) for symbol in policy.funding_symbols)
+    if available_funding < requested_delta:
+        constraints.append("funding_symbols_available_weight")
+    applied_delta = min(requested_delta, capacity, available_funding)
+    if applied_delta <= 0:
+        constraints.append("overlay_increase_blocked")
+        return 0.0
+    removed = _remove_from_symbols(weights, policy.funding_symbols, applied_delta)
+    _add_to_symbols(weights, policy.semiconductor_symbols, removed)
+    return removed
+
+
+def _decrease_semiconductor_sleeve(
+    weights: dict[str, float],
+    requested_delta: float,
+    policy: AIConfirmationShadowOverlayPolicy,
+    constraints: list[str],
+) -> float:
+    current_sleeve = sum(weights.get(symbol, 0.0) for symbol in policy.semiconductor_symbols)
+    applied_delta = min(requested_delta, current_sleeve)
+    if applied_delta < requested_delta:
+        constraints.append("semiconductor_sleeve_available_weight")
+    if applied_delta <= 0:
+        constraints.append("overlay_decrease_blocked")
+        return 0.0
+    removed = _remove_from_symbols(weights, policy.semiconductor_symbols, applied_delta)
+    weights[policy.cash_symbol] = weights.get(policy.cash_symbol, 0.0) + removed
+    return -removed
+
+
+def _remove_from_symbols(
+    weights: dict[str, float],
+    symbols: Iterable[str],
+    amount: float,
+) -> float:
+    remaining = amount
+    removed = 0.0
+    ordered_symbols = [symbol for symbol in symbols if weights.get(symbol, 0.0) > 0]
+    while remaining > 1e-12 and ordered_symbols:
+        total = sum(weights.get(symbol, 0.0) for symbol in ordered_symbols)
+        if total <= 0:
+            break
+        next_symbols: list[str] = []
+        for symbol in ordered_symbols:
+            share = weights.get(symbol, 0.0) / total
+            draw = min(weights.get(symbol, 0.0), remaining * share)
+            weights[symbol] = weights.get(symbol, 0.0) - draw
+            removed += draw
+            if weights.get(symbol, 0.0) > 1e-12:
+                next_symbols.append(symbol)
+        remaining = amount - removed
+        ordered_symbols = next_symbols
+    return removed
+
+
+def _add_to_symbols(
+    weights: dict[str, float],
+    symbols: Iterable[str],
+    amount: float,
+) -> None:
+    eligible = list(symbols)
+    if not eligible:
+        return
+    existing_total = sum(weights.get(symbol, 0.0) for symbol in eligible)
+    for symbol in eligible:
+        share = (
+            weights.get(symbol, 0.0) / existing_total
+            if existing_total > 0
+            else 1.0 / len(eligible)
+        )
+        weights[symbol] = weights.get(symbol, 0.0) + amount * share
+
+
+def _rebalance_rounding_to_cash(weights: dict[str, float], cash_symbol: str) -> None:
+    total = sum(weights.values())
+    if abs(total - 1.0) > 1e-10:
+        weights[cash_symbol] = weights.get(cash_symbol, 0.0) + (1.0 - total)
+    for symbol, value in list(weights.items()):
+        if abs(value) < 1e-12:
+            weights[symbol] = 0.0
 
 
 def _dedupe_symbols(

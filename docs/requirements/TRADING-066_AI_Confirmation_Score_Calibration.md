@@ -57,7 +57,7 @@ AI confirmation layer 不写 `data/etf_portfolio/target_weights.csv`，不替换
 |TRADING-066E Event Risk Overlay|DONE|config/calendar-driven risk score and active/upcoming/recent events|
 |TRADING-066F AI Confirmation Composite Score|DONE|AIConfirmationScore, action_hint, reason_codes, safety fields|
 |TRADING-066G AI Confirmation Report|DONE|JSON/Markdown standalone report with safety banner and components|
-|TRADING-066H Shadow Candidate Overlay Experiment|READY|bounded candidate-only hypothetical weights, no production mutation|
+|TRADING-066H Shadow Candidate Overlay Experiment|DONE|bounded candidate-only hypothetical weights, no production mutation|
 |TRADING-066I Reader Brief AI Confirmation Section|READY|daily Reader Brief summary and detailed report link|
 |TRADING-066J AI Confirmation Validation Gate|READY|fail-closed final gate and CLI validation output|
 
@@ -107,3 +107,9 @@ AI confirmation layer 不写 `data/etf_portfolio/target_weights.csv`，不替换
   component table、breadth、mega-cap、relative strength、event risk、coverage、drivers 和
   candidate-only/shadow usage note。验证通过 `python -m pytest tests -q`（1782 passed）、ruff、
   compileall 和 diff check。
+- 2026-06-01: TRADING-066H 完成。新增 AI confirmation shadow overlay policy、builder、
+  Markdown/JSON writer、`aits etf ai-confirmation overlay` CLI 和 report registry entry；overlay
+  只读取显式 base weights 和 AI confirmation report，输出 bounded `after_candidate_weights`、
+  `candidate_weights`、`shadow_weights`、`hypothetical_weights`，high event risk 阻断新增
+  overweight，且不写 official target weights。验证通过 `python -m pytest tests -q`
+  （1788 passed）、ruff、compileall 和 diff check。

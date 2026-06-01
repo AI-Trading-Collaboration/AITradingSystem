@@ -462,6 +462,22 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_ai_confirmation_overlay
+    title: ETF AI Confirmation Shadow Overlay
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf ai-confirmation overlay --date YYYY-MM-DD --candidate <candidate_id>
+    artifact_globs:
+      - reports/etf_portfolio/ai_confirmation/overlays/ai_confirmation_overlay_*.json
+      - reports/etf_portfolio/ai_confirmation/overlays/ai_confirmation_overlay_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Shadow overlay artifacts should remain discoverable while comparing AI-confirmed candidate weights against the ETF baseline.
+    owner_action: review_ai_confirmation_overlay_before_any_candidate_promotion_discussion
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_p2_walk_forward
     title: ETF P2 Walk Forward Readiness
     group: research

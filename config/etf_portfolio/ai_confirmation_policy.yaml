@@ -118,3 +118,24 @@ ai_confirmation_composite_score:
   supports_overweight_min: 80.0
   supports_neutral_min: 45.0
   event_risk_high_min: 75.0
+
+ai_confirmation_shadow_overlay:
+  overlay_policy_id: ai_confirmation_overlay_v1
+  semiconductor_symbols:
+    - SMH
+    - SOXX
+  funding_symbols:
+    - SPY
+    - QQQ
+  cash_symbol: CASH
+  strong_confirm_min: 80.0
+  confirm_min: 65.0
+  neutral_min: 45.0
+  weak_min: 30.0
+  high_event_risk_min: 75.0
+  strong_confirm_increment: 0.05
+  confirm_increment: 0.02
+  weak_decrement: 0.03
+  negative_decrement: 0.05
+  max_semiconductor_sleeve: 0.35
+  min_cash_weight: 0.05

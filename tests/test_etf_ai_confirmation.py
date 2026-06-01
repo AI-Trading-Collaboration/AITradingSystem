@@ -17,6 +17,7 @@ from ai_trading_system.etf_portfolio.ai_confirmation import (
     build_ai_confirmation_breadth_features,
     build_ai_confirmation_composite_score,
     build_ai_confirmation_report,
+    build_ai_confirmation_shadow_overlay_experiment,
     build_ai_event_risk_overlay,
     build_ai_semiconductor_relative_strength_score,
     build_mega_cap_ai_confirmation_score,
@@ -25,9 +26,11 @@ from ai_trading_system.etf_portfolio.ai_confirmation import (
     load_ai_confirmation_policy_config,
     load_ai_confirmation_universe_config,
     render_ai_confirmation_report_markdown,
+    render_ai_confirmation_shadow_overlay_markdown,
     score_band,
     validate_ai_confirmation_data_availability,
     write_ai_confirmation_report,
+    write_ai_confirmation_shadow_overlay,
 )
 from ai_trading_system.etf_portfolio.data import standardize_price_frame
 from ai_trading_system.etf_portfolio.models import load_etf_config_bundle
@@ -786,6 +789,120 @@ def test_ai_confirmation_report_cli_writes_json_and_markdown(tmp_path: Path) -> 
     assert "production_effect=none" in markdown_path.read_text(encoding="utf-8")
 
 
+def test_ai_confirmation_overlay_high_score_increases_semiconductor_within_caps() -> None:
+    before = _base_candidate_weights(smh=0.20, soxx=0.00)
+    overlay = _overlay(before, score=86.0, event_risk=10.0)
+
+    after = overlay["after_candidate_weights"]
+    assert after["SMH"] + after["SOXX"] > before["SMH"] + before["SOXX"]
+    assert after["SMH"] + after["SOXX"] <= 0.35
+    assert overlay["overlay_adjustment"]["direction"] == "increase_semiconductor_sleeve"
+    assert overlay["candidate_only"] is True
+    assert overlay["production_effect"] == "none"
+    assert overlay["broker_action"] == "none"
+    assert overlay["manual_review_required"] is True
+
+
+def test_ai_confirmation_overlay_low_score_reduces_semiconductor_sleeve() -> None:
+    before = _base_candidate_weights(smh=0.28, soxx=0.02)
+    overlay = _overlay(before, score=38.0, event_risk=10.0)
+
+    after = overlay["after_candidate_weights"]
+    assert after["SMH"] + after["SOXX"] < before["SMH"] + before["SOXX"]
+    assert after["CASH"] > before["CASH"]
+    assert overlay["overlay_adjustment"]["direction"] == "reduce_semiconductor_sleeve"
+
+
+def test_ai_confirmation_overlay_high_event_risk_blocks_overweight() -> None:
+    before = _base_candidate_weights(smh=0.20, soxx=0.00)
+    overlay = _overlay(before, score=90.0, event_risk=90.0)
+
+    assert overlay["after_candidate_weights"] == overlay["before_weights"]
+    assert overlay["overlay_adjustment"]["direction"] == "blocked_overweight"
+    assert overlay["overlay_adjustment"]["blocked_by_event_risk"] is True
+    assert "high_event_risk_blocks_overweight" in overlay["reason_codes"]
+
+
+def test_ai_confirmation_overlay_constraints_and_no_production_mutation() -> None:
+    before = _base_candidate_weights(smh=0.34, soxx=0.00)
+    original = dict(before)
+    overlay = _overlay(before, score=90.0, event_risk=10.0)
+
+    assert before == original
+    assert "max_semiconductor_sleeve_cap" in overlay["constraints_applied"]
+    assert overlay["after_candidate_weights"]["SMH"] <= 0.35
+    assert "target_weights" not in overlay
+    assert overlay["candidate_weights"] == overlay["after_candidate_weights"]
+    assert overlay["shadow_weights"] == overlay["after_candidate_weights"]
+    assert overlay["hypothetical_weights"] == overlay["after_candidate_weights"]
+
+
+def test_ai_confirmation_overlay_rejects_unsafe_score_payload() -> None:
+    unsafe = _score_payload(score=90.0, event_risk=10.0)
+    unsafe["production_effect"] = "target_weights"
+
+    with pytest.raises(ValueError, match="unsafe AI confirmation score payload"):
+        build_ai_confirmation_shadow_overlay_experiment(
+            base_weights=_base_candidate_weights(),
+            ai_confirmation_payload=unsafe,
+            policy_config=load_ai_confirmation_policy_config(),
+            run_date=date(2026, 6, 1),
+            base_candidate_id="base_ai_growth",
+        )
+
+
+def test_ai_confirmation_overlay_writer_and_cli(tmp_path: Path) -> None:
+    overlay = _overlay(_base_candidate_weights(), score=86.0, event_risk=10.0)
+    json_path = tmp_path / "overlay.json"
+    markdown_path = tmp_path / "overlay.md"
+    write_ai_confirmation_shadow_overlay(
+        overlay,
+        json_path=json_path,
+        markdown_path=markdown_path,
+    )
+
+    assert json.loads(json_path.read_text(encoding="utf-8"))["candidate_only"] is True
+    markdown = render_ai_confirmation_shadow_overlay_markdown(overlay)
+    assert "# AI Confirmation Shadow Overlay" in markdown
+    assert "Candidate-only output" in markdown
+
+    report_path = tmp_path / "ai_confirmation_report_2026-06-01.json"
+    report_path.write_text(
+        json.dumps({"date": "2026-06-01", "AIConfirmationScore": _score_payload(86.0, 10.0)}),
+        encoding="utf-8",
+    )
+    weights_path = tmp_path / "base_weights.json"
+    weights_path.write_text(json.dumps(_base_candidate_weights()), encoding="utf-8")
+    output_dir = tmp_path / "overlays"
+
+    result = CliRunner().invoke(
+        app,
+        [
+            "etf",
+            "ai-confirmation",
+            "overlay",
+            "--candidate",
+            "base_ai_growth",
+            "--base-weights-path",
+            str(weights_path),
+            "--ai-confirmation-report-path",
+            str(report_path),
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert (output_dir / "ai_confirmation_overlay_2026-06-01_base_ai_growth.json").exists()
+    cli_payload = json.loads(
+        (output_dir / "ai_confirmation_overlay_2026-06-01_base_ai_growth.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert cli_payload["base_candidate_id"] == "base_ai_growth"
+    assert cli_payload["candidate_only"] is True
+
+
 def _raw_config() -> dict[str, object]:
     return deepcopy(load_ai_confirmation_universe_config().model_dump(mode="json"))
 
@@ -1027,3 +1144,52 @@ def _composite_score(
         policy_config=load_ai_confirmation_policy_config(),
         run_date=run_date,
     )
+
+
+def _overlay(
+    base_weights: dict[str, float],
+    *,
+    score: float,
+    event_risk: float,
+) -> dict[str, object]:
+    return build_ai_confirmation_shadow_overlay_experiment(
+        base_weights=base_weights,
+        ai_confirmation_payload=_score_payload(score, event_risk),
+        policy_config=load_ai_confirmation_policy_config(),
+        run_date=date(2026, 6, 1),
+        base_candidate_id="base_ai_growth",
+    )
+
+
+def _score_payload(score: float, event_risk: float) -> dict[str, object]:
+    return {
+        "date": "2026-06-01",
+        "score_name": "AIConfirmationScore",
+        "AIConfirmationScore": score,
+        "score_value": score,
+        "score_band": "strong_confirm" if score >= 80 else "weak",
+        "component_scores": {
+            "semiconductor_breadth": score,
+            "mega_cap_ai": score,
+            "ai_relative_strength": score,
+            "event_risk_adjustment": 100.0 - event_risk,
+            "data_coverage": 100.0,
+        },
+        "reason_codes": ["test_score_payload"],
+        "data_coverage_ratio": 1.0,
+        "observe_only": True,
+        "candidate_only": True,
+        "production_effect": "none",
+        "broker_action": "none",
+        "manual_review_required": True,
+    }
+
+
+def _base_candidate_weights(*, smh: float = 0.25, soxx: float = 0.0) -> dict[str, float]:
+    return {
+        "SPY": 0.15,
+        "QQQ": round(0.50 + (0.25 - smh) - soxx, 8),
+        "SMH": smh,
+        "SOXX": soxx,
+        "CASH": 0.10,
+    }

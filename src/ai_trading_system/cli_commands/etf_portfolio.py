@@ -11,6 +11,7 @@ import typer
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.etf_portfolio.ai_confirmation import (
     DEFAULT_AI_CONFIRMATION_FEATURE_DIR,
+    DEFAULT_AI_CONFIRMATION_OVERLAY_DIR,
     DEFAULT_AI_CONFIRMATION_POLICY_CONFIG_PATH,
     DEFAULT_AI_CONFIRMATION_STANDALONE_REPORT_DIR,
     DEFAULT_AI_CONFIRMATION_UNIVERSE_CONFIG_PATH,
@@ -18,12 +19,16 @@ from ai_trading_system.etf_portfolio.ai_confirmation import (
     all_enabled_price_tickers,
     build_ai_confirmation_breadth_features,
     build_ai_confirmation_report,
+    build_ai_confirmation_shadow_overlay_experiment,
+    latest_ai_confirmation_report_path,
+    load_ai_confirmation_base_weights,
     load_ai_confirmation_events,
     load_ai_confirmation_policy_config,
     load_ai_confirmation_universe_config,
     validate_ai_confirmation_data_availability,
     write_ai_confirmation_breadth_features,
     write_ai_confirmation_report,
+    write_ai_confirmation_shadow_overlay,
 )
 from ai_trading_system.etf_portfolio.allocation import (
     allocate_portfolio,
@@ -491,6 +496,64 @@ def ai_confirmation_report_command(
     typer.echo(f"AI confirmation report Markdown：{markdown_path}")
     typer.echo(f"AIConfirmationScore={payload['AIConfirmationScore']['score_value']}")
     typer.echo(f"score_band={payload['AIConfirmationScore']['score_band']}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+
+
+@ai_confirmation_app.command("overlay")
+def ai_confirmation_overlay_command(
+    candidate_id: Annotated[
+        str,
+        typer.Option("--candidate", help="Base candidate id for the shadow overlay output."),
+    ],
+    base_weights_path: Annotated[
+        Path,
+        typer.Option(help="JSON/YAML/CSV base candidate weights; read-only input."),
+    ],
+    date_option: Annotated[str | None, typer.Option("--date", help="日期或 latest。")] = None,
+    ai_confirmation_report_path: Annotated[
+        Path | None,
+        typer.Option(help="AI confirmation report JSON；缺省读取 latest report。"),
+    ] = None,
+    report_dir: Annotated[Path, typer.Option(help="AI confirmation report 查找目录。")] = (
+        DEFAULT_AI_CONFIRMATION_STANDALONE_REPORT_DIR
+    ),
+    output_dir: Annotated[Path, typer.Option(help="shadow overlay 输出目录。")] = (
+        DEFAULT_AI_CONFIRMATION_OVERLAY_DIR
+    ),
+    policy_path: Annotated[Path, typer.Option(help="AI confirmation scoring policy config。")] = (
+        DEFAULT_AI_CONFIRMATION_POLICY_CONFIG_PATH
+    ),
+) -> None:
+    """生成 TRADING-066H candidate-only shadow overlay；不写 production weights。"""
+    run_date = _parse_date(date_option) if date_option and date_option != "latest" else date.today()
+    report_path = ai_confirmation_report_path or latest_ai_confirmation_report_path(
+        report_dir,
+        as_of=run_date if date_option else None,
+    )
+    if report_path is None:
+        typer.echo("AI confirmation report not found; run report before overlay.")
+        raise typer.Exit(code=1)
+    report_payload = json.loads(report_path.read_text(encoding="utf-8"))
+    if isinstance(report_payload, dict) and report_payload.get("date"):
+        run_date = date.fromisoformat(str(report_payload["date"]))
+    overlay = build_ai_confirmation_shadow_overlay_experiment(
+        base_weights=load_ai_confirmation_base_weights(base_weights_path),
+        ai_confirmation_payload=report_payload,
+        policy_config=load_ai_confirmation_policy_config(policy_path),
+        run_date=run_date,
+        base_candidate_id=candidate_id,
+    )
+    stem = f"ai_confirmation_overlay_{run_date.isoformat()}_{candidate_id}"
+    json_path = output_dir / f"{stem}.json"
+    markdown_path = output_dir / f"{stem}.md"
+    write_ai_confirmation_shadow_overlay(overlay, json_path=json_path, markdown_path=markdown_path)
+    typer.echo(f"AI confirmation shadow overlay JSON：{json_path}")
+    typer.echo(f"AI confirmation shadow overlay Markdown：{markdown_path}")
+    typer.echo(f"AIConfirmationScore={overlay['AIConfirmationScore']}")
+    typer.echo(f"overlay_direction={overlay['overlay_adjustment']['direction']}")
     typer.echo("observe_only=true")
     typer.echo("candidate_only=true")
     typer.echo("production_effect=none")
