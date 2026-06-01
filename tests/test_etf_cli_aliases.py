@@ -83,14 +83,16 @@ def test_etf_cli_exposes_documented_option_compatibility() -> None:
     features = runner.invoke(
         app,
         ["features", "build", "--help"],
-        env={"COLUMNS": "160"},
-        terminal_width=160,
+        env={"COLUMNS": "240", "NO_COLOR": "1", "TERM": "dumb"},
+        terminal_width=240,
+        color=False,
     )
     backtest = runner.invoke(
         app,
         ["etf", "backtest", "run", "--help"],
-        env={"COLUMNS": "160"},
-        terminal_width=160,
+        env={"COLUMNS": "240", "NO_COLOR": "1", "TERM": "dumb"},
+        terminal_width=240,
+        color=False,
     )
 
     assert features.exit_code == 0, features.output

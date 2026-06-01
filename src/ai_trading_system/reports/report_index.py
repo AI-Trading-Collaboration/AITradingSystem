@@ -5,6 +5,7 @@ import json
 import re
 from collections.abc import Mapping, Sequence
 from datetime import UTC, date, datetime
+from glob import glob
 from pathlib import Path
 from typing import Any
 
@@ -303,11 +304,7 @@ def _latest_artifact(
 
 
 def _glob_paths(pattern: str) -> list[Path]:
-    if re.match(r"^[A-Za-z]:", pattern):
-        drive = Path(pattern[:3])
-        rest = pattern[3:]
-        return list(drive.glob(rest))
-    return list(Path().glob(pattern))
+    return [Path(item) for item in glob(pattern)]
 
 
 def _date_from_path(path: Path) -> date | None:

@@ -107,6 +107,9 @@ def test_backfill_cli_blocks_production_scores_path_without_confirmation() -> No
             "--output-path",
             "data/processed/scores_daily.csv",
         ],
+        env={"COLUMNS": "240", "NO_COLOR": "1", "TERM": "dumb"},
+        terminal_width=240,
+        color=False,
     )
 
     assert result.exit_code != 0
