@@ -124,6 +124,16 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
         and item["navigation_source"] == "report_index_runtime"
         for item in payload["report_navigation"]
     )
+    calibration = payload["etf_calibration_experiments"]
+    assert calibration["availability"] == "AVAILABLE"
+    assert calibration["latest_experiment_pack"] == "etf_calibration_v1"
+    assert calibration["top_candidate"] == "etf-exp-20260504T000000Z:base_ai_growth"
+    assert calibration["rejected_count"] == 2
+    assert calibration["active_shadow_candidates"] == 1
+    assert calibration["weekly_review_action"] == "promote_to_longer_observation"
+    assert calibration["safety_status"] == (
+        "observe_only=true; production_effect=none; broker_action=none"
+    )
     core_items = payload["report_navigation_groups"]["groups"][0]["items"]
     daily_summary_rows = [
         item for item in core_items if item["artifact_id"] == "daily_decision_summary"
@@ -158,6 +168,8 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
     assert payload["executive_decision"]["binding_gate_id"] == "valuation"
     assert payload["component_score_explainability"]["status"] == "AVAILABLE"
     assert payload["backtest_shadow_governance"]["availability"] == "LIMITED"
+    assert payload["etf_calibration_experiments"]["availability"] == "MISSING"
+    assert payload["etf_calibration_experiments"]["safety_status"] == "MISSING"
     assert payload["report_index_summary"]["availability"] == "MISSING"
     assert payload["documentation_contract_summary"]["availability"] == "MISSING"
     assert payload["task_cadence_calendar"]["availability"] == "REGISTRY_FALLBACK"
@@ -173,6 +185,8 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
         for item in payload["missing_limited_artifact_impact"]["items"]
     )
     html = render_reader_brief_html(payload)
+    assert "ETF Calibration Experiments" in html
+    assert 'safety_status</th><td><span class="status-badge status-missing">MISSING</span>' in html
     assert "impact-group impact-important" in html
     assert "status-badge status-important" in html
 
@@ -260,6 +274,7 @@ def test_reports_reader_brief_cli_writes_html_and_json(tmp_path: Path) -> None:
     assert "Market Movement" in html
     assert "Manual Review" in html
     assert "production_effect=none" in html
+    assert "observe_only=true; production_effect=none; broker_action=none" in html
     assert "status-badge status-limited-reader-context" in html
     assert "status-badge status-not-promotable" in html
     assert 'class="market-card-grid"' in html
@@ -503,6 +518,130 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
     etf_brief_path.write_text(
         "# AITradingSystem Daily Portfolio Brief - 2026-05-04\n\n"
         "- Data Quality: PASS\n- production_effect: none\n",
+        encoding="utf-8",
+    )
+    experiment_run_dir = (
+        tmp_path
+        / "reports"
+        / "etf_portfolio"
+        / "experiments"
+        / "etf-exp-20260504T000000Z"
+    )
+    experiment_run_dir.mkdir(parents=True)
+    experiment_manifest_path = experiment_run_dir / "run_manifest.json"
+    experiment_manifest_path.write_text(
+        json.dumps(
+            {
+                "run_id": "etf-exp-20260504T000000Z",
+                "pack_id": "etf_calibration_v1",
+                "start_date": "2022-12-01",
+                "end_date": "2026-05-04",
+                "observe_only": True,
+                "production_effect": "none",
+                "broker_action": "none",
+                "manual_review_required": True,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    experiment_comparison_path = experiment_run_dir / "comparison_report.json"
+    experiment_comparison_path.write_text(
+        json.dumps(
+            {
+                "report_type": "etf_experiment_comparison",
+                "run_metadata": {
+                    "run_id": "etf-exp-20260504T000000Z",
+                    "pack_id": "etf_calibration_v1",
+                },
+                "ranking_policy_status": "APPLIED:risk_adjusted_v1",
+                "observe_only": True,
+                "production_effect": "none",
+                "broker_action": "none",
+                "manual_review_required": True,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    candidate_selection_path = experiment_run_dir / "candidate_selection_report.json"
+    candidate_selection_path.write_text(
+        json.dumps(
+            {
+                "report_type": "etf_experiment_candidate_selection",
+                "run_metadata": {
+                    "run_id": "etf-exp-20260504T000000Z",
+                    "pack_id": "etf_calibration_v1",
+                },
+                "selection_summary": {
+                    "status": "PASS",
+                    "rejected_count": 1,
+                    "blocked_count": 1,
+                },
+                "candidates": [
+                    {
+                        "candidate_id": "etf-exp-20260504T000000Z:base_ai_growth",
+                        "experiment_id": "base_ai_growth",
+                        "selection_status": "eligible_for_shadow",
+                    }
+                ],
+                "observe_only": True,
+                "production_effect": "none",
+                "broker_action": "none",
+                "manual_review_required": True,
+                "production_promotion_allowed": False,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    shadow_registry_path = tmp_path / "data" / "simulation" / "etf_shadow_candidates.json"
+    shadow_registry_path.parent.mkdir(parents=True)
+    shadow_registry_path.write_text(
+        json.dumps(
+            {
+                "registry_type": "etf_shadow_candidates",
+                "candidate_count": 1,
+                "candidates": [
+                    {
+                        "candidate_id": "etf-exp-20260504T000000Z:base_ai_growth",
+                        "experiment_id": "base_ai_growth",
+                        "status": "active_shadow_observation",
+                    }
+                ],
+                "observe_only": True,
+                "production_effect": "none",
+                "broker_action": "none",
+                "manual_review_required": True,
+                "production_promotion_allowed": False,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    weekly_review_dir = experiment_run_dir.parent / "weekly_reviews"
+    weekly_review_dir.mkdir(parents=True)
+    weekly_review_path = weekly_review_dir / "weekly_review_2026-05-04.json"
+    weekly_review_path.write_text(
+        json.dumps(
+            {
+                "report_type": "etf_experiment_weekly_review",
+                "review_period": {"as_of": "2026-05-04"},
+                "summary": {"status": "READY_FOR_LONGER_OBSERVATION_REVIEW"},
+                "candidate_reviews": [
+                    {
+                        "candidate_id": "etf-exp-20260504T000000Z:base_ai_growth",
+                        "recommended_action": "promote_to_longer_observation",
+                    }
+                ],
+                "observe_only": True,
+                "production_effect": "none",
+                "broker_action": "none",
+                "manual_review_required": True,
+                "production_promotion_allowed": False,
+            },
+            ensure_ascii=False,
+        ),
         encoding="utf-8",
     )
     trace_bundle_path = tmp_path / "daily_score_2026-05-04_trace.json"
@@ -778,6 +917,71 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                         "latest_artifact_path": str(etf_brief_path),
                         "exists": True,
                         "owner_action": "run_aits_etf_run_daily_after_etf_data_quality_passes",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_experiment_run_manifest",
+                        "title": "ETF Experiment Run Manifest",
+                        "cadence": "ad_hoc",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "AVAILABLE",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(experiment_manifest_path),
+                        "exists": True,
+                        "owner_action": "review_experiment_manifest",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_experiment_comparison",
+                        "title": "ETF Experiment Comparison",
+                        "cadence": "ad_hoc",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "AVAILABLE",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(experiment_comparison_path),
+                        "exists": True,
+                        "owner_action": "review_experiment_comparison",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_experiment_candidate_selection",
+                        "title": "ETF Experiment Candidate Selection",
+                        "cadence": "ad_hoc",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "PASS",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(candidate_selection_path),
+                        "exists": True,
+                        "owner_action": "review_candidate_selection",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_shadow_candidates",
+                        "title": "ETF Shadow Candidate Registry",
+                        "cadence": "ad_hoc",
+                        "owner": "system",
+                        "freshness_status": "AVAILABLE_DATE_UNKNOWN",
+                        "artifact_status": "AVAILABLE",
+                        "artifact_date": "",
+                        "latest_artifact_path": str(shadow_registry_path),
+                        "exists": True,
+                        "owner_action": "review_shadow_candidates",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_experiment_weekly_review",
+                        "title": "ETF Experiment Weekly Review",
+                        "cadence": "weekly",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "READY_FOR_LONGER_OBSERVATION_REVIEW",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(weekly_review_path),
+                        "exists": True,
+                        "owner_action": "review_weekly_experiment_report",
                         "production_effect": "none",
                     },
                 ],

@@ -25,6 +25,12 @@ def test_default_report_registry_loads() -> None:
     assert any(item["report_id"] == "reader_brief" for item in registry["reports"])
     assert any(item["report_id"] == "etf_portfolio_brief" for item in registry["reports"])
     assert any(item["report_id"] == "etf_backtest_summary" for item in registry["reports"])
+    assert any(item["report_id"] == "etf_experiment_comparison" for item in registry["reports"])
+    assert any(
+        item["report_id"] == "etf_experiment_candidate_selection"
+        for item in registry["reports"]
+    )
+    assert any(item["report_id"] == "etf_experiment_weekly_review" for item in registry["reports"])
     assert all("freshness_rationale" in item for item in registry["reports"])
 
 

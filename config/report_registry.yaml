@@ -272,6 +272,84 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: etf_experiment_run_manifest
+    title: ETF Experiment Run Manifest
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf experiments run --pack etf_calibration_v1
+    artifact_globs:
+      - reports/etf_portfolio/experiments/*/run_manifest.json
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-064 experiment run manifest should remain discoverable for calibration audit.
+    owner_action: rerun_etf_experiments_pack_when_calibration_inputs_change
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: etf_experiment_comparison
+    title: ETF Experiment Comparison
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf experiments compare --latest
+    artifact_globs:
+      - reports/etf_portfolio/experiments/*/comparison_report.json
+      - reports/etf_portfolio/experiments/*/comparison_report.md
+    freshness_sla_days: 30
+    freshness_rationale: Experiment comparison is required before interpreting ranking or selection results.
+    owner_action: run_aits_etf_experiments_compare_after_batch_run
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: etf_experiment_candidate_selection
+    title: ETF Experiment Candidate Selection
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf experiments select-candidates --latest
+    artifact_globs:
+      - reports/etf_portfolio/experiments/*/candidate_selection_report.json
+      - reports/etf_portfolio/experiments/*/candidate_selection_report.md
+    freshness_sla_days: 30
+    freshness_rationale: Candidate gate output is required before any shadow enrollment.
+    owner_action: run_candidate_selection_before_shadow_enrollment
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: etf_shadow_candidates
+    title: ETF Shadow Candidate Registry
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf experiments enroll-shadow --latest --top N
+    artifact_globs:
+      - data/simulation/etf_shadow_candidates.json
+    freshness_sla_days:
+    freshness_rationale: Shadow registry is runtime state; presence matters more than filename date.
+    owner_action: enroll_eligible_etf_experiment_candidate_for_shadow_observation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
+  - report_id: etf_experiment_weekly_review
+    title: ETF Experiment Weekly Review
+    group: research
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf experiments weekly-review --latest
+    artifact_globs:
+      - reports/etf_portfolio/experiments/weekly_reviews/weekly_review_*.json
+      - reports/etf_portfolio/experiments/weekly_reviews/weekly_review_*.md
+    freshness_sla_days: 14
+    freshness_rationale: Weekly review should be refreshed during active shadow observation.
+    owner_action: run_weekly_review_for_active_etf_shadow_candidates
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: false
+    required_for_daily_reading: false
   - report_id: etf_p2_walk_forward
     title: ETF P2 Walk Forward Readiness
     group: research

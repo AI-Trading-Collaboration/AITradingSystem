@@ -168,6 +168,7 @@ def build_reader_brief_payload(
     )
     parameter_shadow_review = _parameter_shadow_review(as_of)
     etf_backtest_summary = _etf_backtest_review_summary(as_of)
+    etf_calibration_experiments = _etf_calibration_experiment_summary(report_index)
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -283,6 +284,7 @@ def build_reader_brief_payload(
         "backtest_shadow_governance": governance_summary,
         "parameter_shadow_review": parameter_shadow_review,
         "etf_backtest_summary": etf_backtest_summary,
+        "etf_calibration_experiments": etf_calibration_experiments,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -530,6 +532,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     governance = _mapping(payload.get("backtest_shadow_governance"))
     parameter_shadow = _mapping(payload.get("parameter_shadow_review"))
     etf_backtest = _mapping(payload.get("etf_backtest_summary"))
+    etf_calibration = _mapping(payload.get("etf_calibration_experiments"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -755,6 +758,23 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("data_quality_status", etf_backtest.get("data_quality_status")),
                     ("production_effect", etf_backtest.get("production_effect")),
                     ("source_artifact", etf_backtest.get("source_artifact")),
+                ]
+            ),
+        ),
+        _section(
+            "ETF Calibration Experiments",
+            _definition_table(
+                [
+                    ("availability", etf_calibration.get("availability")),
+                    ("status", etf_calibration.get("status")),
+                    ("latest_experiment_pack", etf_calibration.get("latest_experiment_pack")),
+                    ("top_candidate", etf_calibration.get("top_candidate")),
+                    ("rejected_count", etf_calibration.get("rejected_count")),
+                    ("active_shadow_candidates", etf_calibration.get("active_shadow_candidates")),
+                    ("weekly_review_action", etf_calibration.get("weekly_review_action")),
+                    ("safety_status", etf_calibration.get("safety_status")),
+                    ("detail_report", etf_calibration.get("detail_report")),
+                    ("production_effect", etf_calibration.get("production_effect")),
                 ]
             ),
         ),
@@ -2000,6 +2020,128 @@ def _etf_backtest_review_summary(as_of: date) -> dict[str, Any]:
         "production_effect": PRODUCTION_EFFECT,
         "source_artifact": str(path),
     }
+
+
+def _etf_calibration_experiment_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_calibration_summary()
+    selection_path = _report_index_artifact_path(
+        report_index,
+        "etf_experiment_candidate_selection",
+    )
+    comparison_path = _report_index_artifact_path(
+        report_index,
+        "etf_experiment_comparison",
+    )
+    shadow_path = _report_index_artifact_path(
+        report_index,
+        "etf_shadow_candidates",
+    )
+    weekly_path = _report_index_artifact_path(
+        report_index,
+        "etf_experiment_weekly_review",
+    )
+    selection = _read_optional_json(selection_path)
+    comparison = _read_optional_json(comparison_path)
+    shadow = _read_optional_json(shadow_path)
+    weekly = _read_optional_json(weekly_path)
+    if not any((selection, comparison, shadow, weekly)):
+        return _missing_etf_calibration_summary()
+    selection_summary = _mapping(selection.get("selection_summary"))
+    weekly_summary = _mapping(weekly.get("summary"))
+    top_candidate = _top_etf_experiment_candidate(selection)
+    latest_pack = (
+        _text(_mapping(selection.get("run_metadata")).get("pack_id"))
+        or _text(_mapping(comparison.get("run_metadata")).get("pack_id"))
+        or "MISSING"
+    )
+    safety_status = _etf_calibration_safety_status(selection, comparison, shadow, weekly)
+    detail_report = _first_existing_path(weekly_path, selection_path, comparison_path)
+    return {
+        "availability": "AVAILABLE",
+        "status": (
+            _text(weekly_summary.get("status"))
+            or _text(selection_summary.get("status"))
+            or _text(comparison.get("ranking_policy_status"), "AVAILABLE")
+        ),
+        "latest_experiment_pack": latest_pack,
+        "top_candidate": top_candidate,
+        "rejected_count": int(selection_summary.get("rejected_count") or 0)
+        + int(selection_summary.get("blocked_count") or 0),
+        "active_shadow_candidates": int(shadow.get("candidate_count") or 0),
+        "weekly_review_action": _weekly_review_action_summary(weekly),
+        "safety_status": safety_status,
+        "detail_report": "" if detail_report is None else str(detail_report),
+        "candidate_selection_report": "" if selection_path is None else str(selection_path),
+        "comparison_report": "" if comparison_path is None else str(comparison_path),
+        "shadow_registry": "" if shadow_path is None else str(shadow_path),
+        "weekly_review_report": "" if weekly_path is None else str(weekly_path),
+        "production_effect": PRODUCTION_EFFECT,
+        "summary_sentence": (
+            f"ETF calibration pack={latest_pack}; top_candidate={top_candidate}; "
+            f"active_shadow_candidates={int(shadow.get('candidate_count') or 0)}; "
+            f"safety={safety_status}."
+        ),
+    }
+
+
+def _top_etf_experiment_candidate(selection: Mapping[str, Any]) -> str:
+    candidates = _records(selection.get("candidates"))
+    if not candidates:
+        return "MISSING"
+    eligible = [
+        candidate
+        for candidate in candidates
+        if _text(candidate.get("selection_status")) == "eligible_for_shadow"
+    ]
+    candidate = (eligible or candidates)[0]
+    return _text(candidate.get("candidate_id")) or _text(candidate.get("experiment_id"), "MISSING")
+
+
+def _missing_etf_calibration_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "latest_experiment_pack": "MISSING",
+        "top_candidate": "MISSING",
+        "rejected_count": 0,
+        "active_shadow_candidates": 0,
+        "weekly_review_action": "MISSING",
+        "safety_status": "MISSING",
+        "detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "limitation": (
+            "ETF calibration experiment artifacts are missing; Reader Brief does not "
+            "run experiments."
+        ),
+    }
+
+
+def _weekly_review_action_summary(weekly: Mapping[str, Any]) -> str:
+    reviews = _records(weekly.get("candidate_reviews"))
+    if not reviews:
+        return "MISSING"
+    return ", ".join(
+        sorted({_text(item.get("recommended_action"), "UNKNOWN") for item in reviews})
+    )
+
+
+def _etf_calibration_safety_status(*payloads: Mapping[str, Any]) -> str:
+    material = [payload for payload in payloads if payload]
+    if not material:
+        return "MISSING"
+    safe = all(
+        payload.get("observe_only") in (None, True)
+        and _text(payload.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
+        and payload.get("broker_action") in (None, "none")
+        and payload.get("production_promotion_allowed") in (None, False)
+        for payload in material
+    )
+    return (
+        "observe_only=true; production_effect=none; broker_action=none"
+        if safe
+        else "SAFETY_REVIEW_REQUIRED"
+    )
 
 
 def _parameter_shadow_review(as_of: date) -> dict[str, Any]:
@@ -3773,6 +3915,30 @@ def _latest_etf_backtest_summary_path(as_of: date) -> Path | None:
     if not candidates:
         return None
     return max(candidates, key=lambda item: (item[0], item[1].stat().st_mtime))[1]
+
+
+def _report_index_artifact_path(payload: Mapping[str, Any], report_id: str) -> Path | None:
+    for report in _records(payload.get("reports")):
+        if _text(report.get("report_id")) != report_id:
+            continue
+        raw_path = _text(report.get("latest_artifact_path"))
+        if not raw_path or raw_path == "MISSING":
+            return None
+        path = Path(raw_path)
+        if path.suffix != ".json":
+            json_sibling = path.with_suffix(".json")
+            if json_sibling.exists():
+                return json_sibling
+        if path.exists():
+            return path
+    return None
+
+
+def _first_existing_path(*paths: Path | None) -> Path | None:
+    for path in paths:
+        if path is not None and path.exists():
+            return path
+    return None
 
 
 def _etf_backtest_run_date(run_id: str) -> date | None:
