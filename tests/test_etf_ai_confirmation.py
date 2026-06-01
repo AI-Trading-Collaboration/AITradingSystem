@@ -10,6 +10,7 @@ import pytest
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
+from ai_trading_system.etf_portfolio import ai_confirmation as ai_confirmation_module
 from ai_trading_system.etf_portfolio.ai_confirmation import (
     AIConfirmationUniverseConfig,
     ai_confirmation_breadth_records_to_frame,
@@ -18,6 +19,7 @@ from ai_trading_system.etf_portfolio.ai_confirmation import (
     build_ai_confirmation_composite_score,
     build_ai_confirmation_report,
     build_ai_confirmation_shadow_overlay_experiment,
+    build_ai_confirmation_validation_report,
     build_ai_event_risk_overlay,
     build_ai_semiconductor_relative_strength_score,
     build_mega_cap_ai_confirmation_score,
@@ -27,13 +29,19 @@ from ai_trading_system.etf_portfolio.ai_confirmation import (
     load_ai_confirmation_universe_config,
     render_ai_confirmation_report_markdown,
     render_ai_confirmation_shadow_overlay_markdown,
+    render_ai_confirmation_validation_markdown,
     score_band,
     validate_ai_confirmation_data_availability,
     write_ai_confirmation_report,
     write_ai_confirmation_shadow_overlay,
+    write_ai_confirmation_validation_report,
 )
 from ai_trading_system.etf_portfolio.data import standardize_price_frame
 from ai_trading_system.etf_portfolio.models import load_etf_config_bundle
+from ai_trading_system.reports.report_index import (
+    DEFAULT_REPORT_REGISTRY_PATH,
+    load_report_registry,
+)
 
 
 def test_ai_confirmation_universe_config_loads() -> None:
@@ -901,6 +909,149 @@ def test_ai_confirmation_overlay_writer_and_cli(tmp_path: Path) -> None:
     )
     assert cli_payload["base_candidate_id"] == "base_ai_growth"
     assert cli_payload["candidate_only"] is True
+
+
+def test_ai_confirmation_validation_gate_passes_and_writes_reports(tmp_path: Path) -> None:
+    validation = build_ai_confirmation_validation_report(
+        universe_config=load_ai_confirmation_universe_config(),
+        policy_config=load_ai_confirmation_policy_config(),
+        report_registry=load_report_registry(DEFAULT_REPORT_REGISTRY_PATH),
+        reader_brief_available=True,
+        generated_at="2026-06-01T00:00:00+00:00",
+    )
+
+    assert validation["status"] == "PASS"
+    assert validation["safe_for_shadow_overlay"] is True
+    assert validation["production_weights_mutated"] is False
+    assert validation["observe_only"] is True
+    assert validation["candidate_only"] is True
+    assert validation["production_effect"] == "none"
+    assert validation["broker_action"] == "none"
+    assert validation["manual_review_required"] is True
+    assert {check["check_id"] for check in validation["checks"]} >= {
+        "universe_config",
+        "breadth_features_available",
+        "composite_score_available",
+        "report_available",
+        "shadow_overlay_available",
+        "reader_brief_section_available",
+        "report_registry_integration",
+    }
+
+    json_path = tmp_path / "validation.json"
+    markdown_path = tmp_path / "validation.md"
+    write_ai_confirmation_validation_report(
+        validation,
+        json_path=json_path,
+        markdown_path=markdown_path,
+    )
+    assert json.loads(json_path.read_text(encoding="utf-8"))["status"] == "PASS"
+    markdown = render_ai_confirmation_validation_markdown(validation)
+    assert "# AI Confirmation Validation Gate" in markdown
+    assert "production_effect=none" in markdown
+
+
+def test_ai_confirmation_validation_fails_missing_registry_or_reader_brief() -> None:
+    missing_registry = build_ai_confirmation_validation_report(
+        universe_config=load_ai_confirmation_universe_config(),
+        policy_config=load_ai_confirmation_policy_config(),
+        report_registry={"reports": []},
+        reader_brief_available=True,
+    )
+    missing_reader = build_ai_confirmation_validation_report(
+        universe_config=load_ai_confirmation_universe_config(),
+        policy_config=load_ai_confirmation_policy_config(),
+        report_registry=load_report_registry(DEFAULT_REPORT_REGISTRY_PATH),
+        reader_brief_available=False,
+    )
+
+    assert missing_registry["status"] == "FAIL"
+    assert any("REPORT_REGISTRY_MISSING" in blocker for blocker in missing_registry["blockers"])
+    assert missing_reader["status"] == "FAIL"
+    assert "READER_BRIEF_AI_CONFIRMATION_SECTION_UNAVAILABLE" in missing_reader["blockers"]
+
+
+def test_ai_confirmation_validation_fails_unsafe_score_and_overlay_payload(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def _safe_payload() -> dict[str, object]:
+        return {
+            "observe_only": True,
+            "candidate_only": True,
+            "production_effect": "none",
+            "broker_action": "none",
+            "manual_review_required": True,
+        }
+
+    unsafe_report = {
+        "schema_version": "ai_confirmation_report_v1",
+        "mega_cap_ai_confirmation": _safe_payload(),
+        "ai_semiconductor_relative_strength": _safe_payload(),
+        "event_risk_overlay": {**_safe_payload(), "broker_action": "submit_order"},
+        "AIConfirmationScore": {**_safe_payload(), "production_effect": "target_weights"},
+    }
+    unsafe_overlay = {
+        **_safe_payload(),
+        "schema_version": "ai_confirmation_shadow_overlay_v1",
+        "after_candidate_weights": {"QQQ": 1.0},
+        "candidate_weights": {"QQQ": 1.0},
+        "shadow_weights": {"QQQ": 1.0},
+        "hypothetical_weights": {"QQQ": 1.0},
+        "target_weights": {"QQQ": 1.0},
+    }
+    monkeypatch.setattr(
+        ai_confirmation_module,
+        "build_ai_confirmation_report",
+        lambda **_: unsafe_report,
+    )
+    monkeypatch.setattr(
+        ai_confirmation_module,
+        "build_ai_confirmation_shadow_overlay_experiment",
+        lambda **_: unsafe_overlay,
+    )
+
+    validation = build_ai_confirmation_validation_report(
+        universe_config=load_ai_confirmation_universe_config(),
+        policy_config=load_ai_confirmation_policy_config(),
+        report_registry=load_report_registry(DEFAULT_REPORT_REGISTRY_PATH),
+        reader_brief_available=True,
+    )
+
+    assert validation["status"] == "FAIL"
+    assert any(blocker.endswith("UNSAFE_PRODUCTION_EFFECT") for blocker in validation["blockers"])
+    assert any(blocker.endswith("UNSAFE_BROKER_ACTION") for blocker in validation["blockers"])
+    assert "SHADOW_OVERLAY_MUTATES_TARGET_WEIGHTS" in validation["blockers"]
+
+
+def test_ai_confirmation_validation_rejects_unsafe_universe_config() -> None:
+    raw = _raw_config()
+    raw["safety"]["production_effect"] = "target_weights"
+
+    with pytest.raises(ValueError, match="AI confirmation safety"):
+        AIConfirmationUniverseConfig.model_validate(raw)
+
+
+def test_ai_confirmation_validation_cli_outputs_json_and_markdown(tmp_path: Path) -> None:
+    result = CliRunner().invoke(
+        app,
+        [
+            "etf",
+            "ai-confirmation",
+            "validate",
+            "--output-dir",
+            str(tmp_path),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "status=PASS" in result.output
+    json_files = list(tmp_path.glob("ai_confirmation_validation_*.json"))
+    markdown_files = list(tmp_path.glob("ai_confirmation_validation_*.md"))
+    assert len(json_files) == 1
+    assert len(markdown_files) == 1
+    payload = json.loads(json_files[0].read_text(encoding="utf-8"))
+    assert payload["status"] == "PASS"
+    assert payload["candidate_only"] is True
 
 
 def _raw_config() -> dict[str, object]:

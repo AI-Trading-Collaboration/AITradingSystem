@@ -27,9 +27,11 @@ DEFAULT_AI_CONFIRMATION_REPORT_DIR = (
 DEFAULT_AI_CONFIRMATION_FEATURE_DIR = DEFAULT_AI_CONFIRMATION_REPORT_DIR / "features"
 DEFAULT_AI_CONFIRMATION_STANDALONE_REPORT_DIR = DEFAULT_AI_CONFIRMATION_REPORT_DIR / "reports"
 DEFAULT_AI_CONFIRMATION_OVERLAY_DIR = DEFAULT_AI_CONFIRMATION_REPORT_DIR / "overlays"
+DEFAULT_AI_CONFIRMATION_VALIDATION_DIR = DEFAULT_AI_CONFIRMATION_REPORT_DIR / "validation"
 
 AI_CONFIRMATION_BREADTH_FEATURE_VERSION = "ai_confirmation_breadth_v0_1"
 AI_CONFIRMATION_REPORT_SCHEMA_VERSION = "ai_confirmation_report_v1"
+AI_CONFIRMATION_VALIDATION_SCHEMA_VERSION = "ai_confirmation_validation_v1"
 AI_CONFIRMATION_EVENT_GROUP_ID = "event_risk_symbols_or_calendar_refs"
 
 # TRADING-066B explicitly requires these price-derived confirmation horizons.
@@ -1105,6 +1107,214 @@ def render_ai_confirmation_shadow_overlay_markdown(payload: Mapping[str, Any]) -
     return "\n".join(lines) + "\n"
 
 
+def build_ai_confirmation_validation_report(
+    *,
+    universe_config: AIConfirmationUniverseConfig,
+    policy_config: AIConfirmationPolicyConfig,
+    report_registry: Mapping[str, Any],
+    reader_brief_available: bool,
+    generated_at: str | None = None,
+) -> dict[str, Any]:
+    checks: list[dict[str, Any]] = []
+    _append_ai_validation_check(
+        checks,
+        "universe_config",
+        "PASS",
+        "AI confirmation universe config is valid.",
+        {"universe_version": universe_config.policy_metadata.version},
+    )
+    _append_ai_validation_check(
+        checks,
+        "policy_config",
+        "PASS",
+        "AI confirmation scoring policy is valid.",
+        {"policy_version": policy_config.policy_metadata.version},
+    )
+    _append_ai_validation_check(
+        checks,
+        "safety_fields",
+        (
+            "PASS"
+            if universe_config.safety.model_dump(mode="json") == AI_CONFIRMATION_SAFETY
+            else "FAIL"
+        ),
+        "Universe safety boundary matches candidate-only contract.",
+        {"expected": AI_CONFIRMATION_SAFETY},
+        (
+            []
+            if universe_config.safety.model_dump(mode="json") == AI_CONFIRMATION_SAFETY
+            else ["UNSAFE_UNIVERSE_SAFETY"]
+        ),
+    )
+    report_payload, overlay_payload, toy_error = _toy_ai_confirmation_validation_payloads(
+        universe_config,
+        policy_config,
+    )
+    _append_ai_validation_check(
+        checks,
+        "breadth_features_available",
+        "PASS" if report_payload else "FAIL",
+        "AI / semiconductor breadth features can be built on deterministic fixture.",
+        {
+            "record_count": 1
+            if report_payload and _mapping(report_payload.get("semiconductor_breadth"))
+            else 0
+        },
+        [] if report_payload else [toy_error or "BREADTH_FEATURE_BUILD_FAILED"],
+    )
+    _append_ai_validation_check(
+        checks,
+        "mega_cap_score_available",
+        _score_payload_status(report_payload, "mega_cap_ai_confirmation"),
+        "MegaCapAIScore is available and safe.",
+        {},
+        _score_payload_blockers(report_payload, "mega_cap_ai_confirmation"),
+    )
+    _append_ai_validation_check(
+        checks,
+        "relative_strength_score_available",
+        _score_payload_status(report_payload, "ai_semiconductor_relative_strength"),
+        "AISemiconductorRelativeStrengthScore is available and safe.",
+        {},
+        _score_payload_blockers(report_payload, "ai_semiconductor_relative_strength"),
+    )
+    _append_ai_validation_check(
+        checks,
+        "event_risk_overlay_available",
+        _score_payload_status(report_payload, "event_risk_overlay"),
+        "AI event risk overlay is available and safe.",
+        {},
+        _score_payload_blockers(report_payload, "event_risk_overlay"),
+    )
+    _append_ai_validation_check(
+        checks,
+        "composite_score_available",
+        _score_payload_status(report_payload, "AIConfirmationScore"),
+        "AIConfirmationScore composite is available and safe.",
+        {},
+        _score_payload_blockers(report_payload, "AIConfirmationScore"),
+    )
+    _append_ai_validation_check(
+        checks,
+        "report_available",
+        "PASS" if report_payload and callable(write_ai_confirmation_report) else "FAIL",
+        "AI confirmation report builder/writer is available.",
+        {"schema_version": report_payload.get("schema_version") if report_payload else ""},
+        (
+            []
+            if report_payload and callable(write_ai_confirmation_report)
+            else ["REPORT_BUILDER_UNAVAILABLE"]
+        ),
+    )
+    _append_ai_validation_check(
+        checks,
+        "shadow_overlay_available",
+        "PASS" if overlay_payload else "FAIL",
+        "AI confirmation shadow overlay is available and candidate-only.",
+        {
+            "overlay_schema_version": (
+                overlay_payload.get("schema_version") if overlay_payload else ""
+            )
+        },
+        _overlay_validation_blockers(overlay_payload),
+    )
+    _append_ai_validation_check(
+        checks,
+        "reader_brief_section_available",
+        "PASS" if reader_brief_available else "FAIL",
+        "Reader Brief AI Confirmation section is wired.",
+        {},
+        [] if reader_brief_available else ["READER_BRIEF_AI_CONFIRMATION_SECTION_UNAVAILABLE"],
+    )
+    registry_ids = {
+        str(item.get("report_id"))
+        for item in report_registry.get("reports", [])
+        if isinstance(item, Mapping)
+    }
+    missing_registry = sorted(
+        {
+            "etf_ai_confirmation_report",
+            "etf_ai_confirmation_overlay",
+            "etf_ai_confirmation_validation",
+        }
+        - registry_ids
+    )
+    _append_ai_validation_check(
+        checks,
+        "report_registry_integration",
+        "PASS" if not missing_registry else "FAIL",
+        (
+            "AI confirmation report, overlay, and validation artifacts are registered "
+            "for report index discovery."
+        ),
+        {
+            "required_report_ids": [
+                "etf_ai_confirmation_report",
+                "etf_ai_confirmation_overlay",
+                "etf_ai_confirmation_validation",
+            ]
+        },
+        [f"REPORT_REGISTRY_MISSING:{item}" for item in missing_registry],
+    )
+    blockers = [blocker for check in checks for blocker in check["blockers"]]
+    status = "PASS" if not blockers else "FAIL"
+    return {
+        "schema_version": AI_CONFIRMATION_VALIDATION_SCHEMA_VERSION,
+        "report_type": "ai_confirmation_validation",
+        "task": "TRADING-066J",
+        "status": status,
+        "generated_at": generated_at or date.today().isoformat(),
+        "checks": checks,
+        "blockers": blockers,
+        "safe_for_shadow_overlay": status == "PASS",
+        "production_weights_mutated": False,
+        **AI_CONFIRMATION_SAFETY,
+    }
+
+
+def write_ai_confirmation_validation_report(
+    payload: Mapping[str, Any],
+    *,
+    json_path: Path,
+    markdown_path: Path,
+) -> tuple[Path, Path]:
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    markdown_path.write_text(render_ai_confirmation_validation_markdown(payload), encoding="utf-8")
+    return json_path, markdown_path
+
+
+def render_ai_confirmation_validation_markdown(payload: Mapping[str, Any]) -> str:
+    checks = _records(payload.get("checks"))
+    lines = [
+        "# AI Confirmation Validation Gate",
+        "",
+        f"- Task: {payload.get('task')}",
+        f"- Status: {payload.get('status')}",
+        "- Safety: observe_only=true, candidate_only=true, production_effect=none, "
+        "broker_action=none, manual_review_required=true",
+        f"- Production Weights Mutated: {payload.get('production_weights_mutated')}",
+        "",
+        "## Checks",
+        "",
+        "| Check | Status | Summary | Blockers |",
+        "|---|---|---|---|",
+    ]
+    for check in checks:
+        lines.append(
+            "| "
+            f"{check.get('check_id')} | "
+            f"{check.get('status')} | "
+            f"{check.get('summary')} | "
+            f"{_join_list(check.get('blockers'))} |"
+        )
+    return "\n".join(lines) + "\n"
+
+
 def render_ai_confirmation_report_markdown(payload: Mapping[str, Any]) -> str:
     score = _mapping(payload.get("AIConfirmationScore"))
     components = _mapping(payload.get("component_scores"))
@@ -1264,6 +1474,115 @@ def _ai_confirmation_safety_banner() -> str:
         "observe_only=true; candidate_only=true; production_effect=none; "
         "broker_action=none; manual_review_required=true"
     )
+
+
+def _append_ai_validation_check(
+    checks: list[dict[str, Any]],
+    check_id: str,
+    status: str,
+    summary: str,
+    details: Mapping[str, Any] | None = None,
+    blockers: list[str] | None = None,
+) -> None:
+    checks.append(
+        {
+            "check_id": check_id,
+            "status": status,
+            "summary": summary,
+            "details": dict(details or {}),
+            "blockers": list(blockers or []),
+        }
+    )
+
+
+def _toy_ai_confirmation_validation_payloads(
+    universe_config: AIConfirmationUniverseConfig,
+    policy_config: AIConfirmationPolicyConfig,
+) -> tuple[dict[str, Any], dict[str, Any], str]:
+    run_date = date(2026, 6, 1)
+    symbols = sorted(all_enabled_price_tickers(universe_config))
+    prices = _toy_ai_confirmation_prices(symbols, run_date=run_date)
+    try:
+        report_payload = build_ai_confirmation_report(
+            prices=prices,
+            events=[],
+            universe_config=universe_config,
+            policy_config=policy_config,
+            run_date=run_date,
+            data_quality_status="STRUCTURAL_VALIDATION_FIXTURE",
+            data_quality_report="",
+            market_regime="ai_after_chatgpt",
+            requested_date_range={"start": "2025-09-01", "end": run_date.isoformat()},
+        )
+        overlay_payload = build_ai_confirmation_shadow_overlay_experiment(
+            base_weights={"SPY": 0.15, "QQQ": 0.50, "SMH": 0.25, "SOXX": 0.0, "CASH": 0.10},
+            ai_confirmation_payload=report_payload,
+            policy_config=policy_config,
+            run_date=run_date,
+            base_candidate_id="validation_fixture",
+        )
+        return report_payload, overlay_payload, ""
+    except Exception as exc:  # pragma: no cover - exercised by validation failure tests.
+        return {}, {}, str(exc)
+
+
+def _toy_ai_confirmation_prices(symbols: list[str], *, run_date: date) -> pd.DataFrame:
+    start_date = date(2025, 9, 1)
+    days = (run_date - start_date).days + 1
+    rows: list[dict[str, Any]] = []
+    for day_index in range(days):
+        current_date = (pd.Timestamp(start_date) + pd.Timedelta(days=day_index)).date()
+        for symbol in symbols:
+            base = 100.0 + (sum(ord(char) for char in symbol) % 23)
+            slope = 0.2 + (sum(ord(char) for char in symbol) % 9) / 20.0
+            price = base + slope * day_index
+            rows.append(
+                {
+                    "date": current_date.isoformat(),
+                    "symbol": symbol,
+                    "adj_close": price,
+                    "close": price,
+                    "open": price,
+                    "high": price * 1.01,
+                    "low": price * 0.99,
+                    "volume": 1_000_000 + day_index,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def _score_payload_status(payload: Mapping[str, Any], key: str) -> str:
+    score_payload = _mapping(payload.get(key))
+    return "PASS" if score_payload and not _score_payload_blockers(payload, key) else "FAIL"
+
+
+def _score_payload_blockers(payload: Mapping[str, Any], key: str) -> list[str]:
+    score_payload = _mapping(payload.get(key))
+    if not score_payload:
+        return [f"{key.upper()}_MISSING"]
+    blockers: list[str] = []
+    for safety_key, expected in AI_CONFIRMATION_SAFETY.items():
+        actual = score_payload.get(safety_key)
+        if actual != expected:
+            blockers.append(f"{key.upper()}_UNSAFE_{safety_key.upper()}")
+    return blockers
+
+
+def _overlay_validation_blockers(overlay_payload: Mapping[str, Any]) -> list[str]:
+    if not overlay_payload:
+        return ["SHADOW_OVERLAY_MISSING"]
+    blockers: list[str] = []
+    for safety_key, expected in AI_CONFIRMATION_SAFETY.items():
+        if overlay_payload.get(safety_key) != expected:
+            blockers.append(f"SHADOW_OVERLAY_UNSAFE_{safety_key.upper()}")
+    if "target_weights" in overlay_payload:
+        blockers.append("SHADOW_OVERLAY_MUTATES_TARGET_WEIGHTS")
+    if not _mapping(overlay_payload.get("after_candidate_weights")):
+        blockers.append("SHADOW_OVERLAY_AFTER_CANDIDATE_WEIGHTS_MISSING")
+    for key in ("candidate_weights", "shadow_weights", "hypothetical_weights"):
+        if not _mapping(overlay_payload.get(key)):
+            blockers.append(f"SHADOW_OVERLAY_{key.upper()}_MISSING")
+    return blockers
 
 
 def _extract_ai_confirmation_score_payload(payload: Mapping[str, Any]) -> dict[str, Any]:

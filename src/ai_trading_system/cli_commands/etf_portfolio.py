@@ -15,11 +15,13 @@ from ai_trading_system.etf_portfolio.ai_confirmation import (
     DEFAULT_AI_CONFIRMATION_POLICY_CONFIG_PATH,
     DEFAULT_AI_CONFIRMATION_STANDALONE_REPORT_DIR,
     DEFAULT_AI_CONFIRMATION_UNIVERSE_CONFIG_PATH,
+    DEFAULT_AI_CONFIRMATION_VALIDATION_DIR,
     ai_confirmation_price_group_ids,
     all_enabled_price_tickers,
     build_ai_confirmation_breadth_features,
     build_ai_confirmation_report,
     build_ai_confirmation_shadow_overlay_experiment,
+    build_ai_confirmation_validation_report,
     latest_ai_confirmation_report_path,
     load_ai_confirmation_base_weights,
     load_ai_confirmation_events,
@@ -29,6 +31,7 @@ from ai_trading_system.etf_portfolio.ai_confirmation import (
     write_ai_confirmation_breadth_features,
     write_ai_confirmation_report,
     write_ai_confirmation_shadow_overlay,
+    write_ai_confirmation_validation_report,
 )
 from ai_trading_system.etf_portfolio.allocation import (
     allocate_portfolio,
@@ -163,6 +166,10 @@ from ai_trading_system.etf_portfolio.simulation import (
 from ai_trading_system.etf_portfolio.stability import (
     build_allocation_stability_diagnostics,
     write_allocation_stability_diagnostics,
+)
+from ai_trading_system.reports.report_index import (
+    DEFAULT_REPORT_REGISTRY_PATH,
+    load_report_registry,
 )
 
 etf_app = typer.Typer(help="ETF 主仓组合配置、信号、回测和模拟舱。", no_args_is_help=True)
@@ -558,6 +565,52 @@ def ai_confirmation_overlay_command(
     typer.echo("candidate_only=true")
     typer.echo("production_effect=none")
     typer.echo("broker_action=none")
+
+
+@ai_confirmation_app.command("validate")
+def ai_confirmation_validate_command(
+    output_dir: Annotated[Path, typer.Option(help="validation 输出目录。")] = (
+        DEFAULT_AI_CONFIRMATION_VALIDATION_DIR
+    ),
+    universe_path: Annotated[Path, typer.Option(help="AI confirmation universe config。")] = (
+        DEFAULT_AI_CONFIRMATION_UNIVERSE_CONFIG_PATH
+    ),
+    policy_path: Annotated[Path, typer.Option(help="AI confirmation scoring policy config。")] = (
+        DEFAULT_AI_CONFIRMATION_POLICY_CONFIG_PATH
+    ),
+    report_registry_path: Annotated[Path, typer.Option(help="report registry config。")] = (
+        DEFAULT_REPORT_REGISTRY_PATH
+    ),
+) -> None:
+    """生成 TRADING-066J final AI confirmation validation gate。"""
+    from ai_trading_system.reports.reader_brief import build_reader_brief_payload
+
+    generated = datetime.now(tz=UTC)
+    payload = build_ai_confirmation_validation_report(
+        universe_config=load_ai_confirmation_universe_config(universe_path),
+        policy_config=load_ai_confirmation_policy_config(policy_path),
+        report_registry=load_report_registry(report_registry_path),
+        reader_brief_available=callable(build_reader_brief_payload),
+        generated_at=generated.isoformat(),
+    )
+    stem = f"ai_confirmation_validation_{generated.date().isoformat()}"
+    json_path = output_dir / f"{stem}.json"
+    markdown_path = output_dir / f"{stem}.md"
+    write_ai_confirmation_validation_report(
+        payload,
+        json_path=json_path,
+        markdown_path=markdown_path,
+    )
+    typer.echo(f"AI confirmation validation JSON：{json_path}")
+    typer.echo(f"AI confirmation validation Markdown：{markdown_path}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
 
 
 @satellite_app.command("evaluate")

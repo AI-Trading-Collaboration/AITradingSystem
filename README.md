@@ -210,7 +210,10 @@ base candidate weights 和 AI confirmation report，输出 bounded
 Reader Brief 的 `AI Confirmation` 区块只读摘录 report index 指向的最新 AI confirmation
 report，展示 score、band、component scores、event risk、safety 和 detail report link；缺失或
 insufficient data 时显示 no overlay recommendation，不运行上游 scoring。后续 validation gate
-必须固定
+`aits etf ai-confirmation validate` 会 fail-closed 检查 universe config、score policy、report、
+overlay、Reader Brief、report registry 和 safety fields，并输出
+`reports/etf_portfolio/ai_confirmation/validation/ai_confirmation_validation_YYYY-MM-DD.json/md`。
+所有 AI confirmation 输出必须固定
 `observe_only=true`、`candidate_only=true`、`production_effect=none`、
 `broker_action=none`、`manual_review_required=true`；overlay-adjusted weights 只能作为
 candidate/shadow/hypothetical weights，不写 official ETF target weights。

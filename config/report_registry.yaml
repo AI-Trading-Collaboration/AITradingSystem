@@ -478,6 +478,22 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_ai_confirmation_validation
+    title: ETF AI Confirmation Validation Gate
+    group: governance
+    cadence: on_change
+    audience: reviewer
+    owner: system
+    command: aits etf ai-confirmation validate
+    artifact_globs:
+      - reports/etf_portfolio/ai_confirmation/validation/ai_confirmation_validation_*.json
+      - reports/etf_portfolio/ai_confirmation/validation/ai_confirmation_validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-066 final validation confirms the AI confirmation layer is complete, safe, and candidate-only.
+    owner_action: run_aits_etf_ai_confirmation_validate_before_marking_TRADING_066_done
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_p2_walk_forward
     title: ETF P2 Walk Forward Readiness
     group: research
