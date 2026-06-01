@@ -494,6 +494,70 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_satellite_features
+    title: ETF Satellite Relative Strength Features
+    group: research
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits etf satellite features --date YYYY-MM-DD
+    artifact_globs:
+      - reports/etf_portfolio/satellite/features/satellite_features_*.json
+      - reports/etf_portfolio/satellite/features/satellite_features_*.csv
+    freshness_sla_days: 3
+    freshness_rationale: Satellite replacement features should align with the latest ETF price quality gate before candidate scores are interpreted.
+    owner_action: run_satellite_features_after_etf_data_quality_passes
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_satellite_replacement_report
+    title: ETF Satellite Replacement Report
+    group: research
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits etf satellite report --date YYYY-MM-DD
+    artifact_globs:
+      - reports/etf_portfolio/satellite/reports/satellite_replacement_report_*.json
+      - reports/etf_portfolio/satellite/reports/satellite_replacement_report_*.md
+    freshness_sla_days: 3
+    freshness_rationale: Satellite replacement should be visible when reviewing whether ETF exposure remains preferred versus candidate-only stock replacement.
+    owner_action: review_satellite_replacement_report_before_any_manual_replacement_decision
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_satellite_shadow_experiment
+    title: ETF Satellite Shadow Experiment
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf satellite experiment --date YYYY-MM-DD
+    artifact_globs:
+      - reports/etf_portfolio/satellite/experiments/satellite_shadow_experiment_*.json
+      - reports/etf_portfolio/satellite/experiments/satellite_shadow_experiment_*.md
+    freshness_sla_days: 30
+    freshness_rationale: Shadow experiment artifacts compare ETF baseline weights with candidate-only satellite replacement weights.
+    owner_action: review_satellite_shadow_experiment_before_forward_attribution
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_satellite_validation
+    title: ETF Satellite Policy Validation Gate
+    group: governance
+    cadence: on_change
+    audience: reviewer
+    owner: system
+    command: aits etf satellite validate
+    artifact_globs:
+      - reports/etf_portfolio/satellite/validation/satellite_validation_*.json
+      - reports/etf_portfolio/satellite/validation/satellite_validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-067 final validation confirms the satellite replacement policy is complete, safe, ETF-first, and candidate-only.
+    owner_action: run_aits_etf_satellite_validate_before_marking_TRADING_067_done
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_p2_walk_forward
     title: ETF P2 Walk Forward Readiness
     group: research

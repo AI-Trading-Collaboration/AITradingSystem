@@ -277,6 +277,10 @@ regime 日期范围。主要产物路径：
 - `reports/etf_portfolio/forward/validation/forward_validation_YYYY-MM-DD.json`
 - `reports/etf_portfolio/ai_confirmation/features/ai_confirmation_features_YYYY-MM-DD.json`
 - `reports/etf_portfolio/ai_confirmation/features/ai_confirmation_features_YYYY-MM-DD.csv`
+- `reports/etf_portfolio/satellite/features/satellite_features_YYYY-MM-DD.json`
+- `reports/etf_portfolio/satellite/reports/satellite_replacement_report_YYYY-MM-DD.json`
+- `reports/etf_portfolio/satellite/experiments/satellite_shadow_experiment_YYYY-MM-DD.json`
+- `reports/etf_portfolio/satellite/validation/satellite_validation_YYYY-MM-DD.json`
 
 `target_weights.csv` 输出 `constraints_applied` 和结构化
 `constraint_diagnostics` JSON。正式 allocation 会执行 asset cap/floor、risk group /
@@ -330,15 +334,28 @@ SPY/QQQ 表现；`aits etf report daily` 的 Simulation Performance 小节会读
 promotion 或交易指令。
 
 P1 observe-only 入口包括 `aits etf relative-strength report`、`aits etf confirmation
-report`、`aits etf satellite evaluate`、`aits etf attribution report`、`aits etf events
-risk-flag`、`aits etf governance status`、`aits etf experiments register`、`aits etf
-experiments run --config <candidate.yaml>` 和 `aits etf experiments compare --baseline
-production`。P2
+report`、`aits etf satellite evaluate`、`aits etf satellite features`、`aits etf satellite
+report`、`aits etf satellite run`、`aits etf satellite experiment`、`aits etf satellite
+validate`、`aits etf attribution report`、`aits etf events risk-flag`、`aits etf governance
+status`、`aits etf experiments register`、`aits etf experiments run --config <candidate.yaml>`
+和 `aits etf experiments compare --baseline production`。P2
 observe-only 入口包括 `aits etf p2 edgar-text`、`derive-edgar-events`、
 `fetch-edgar-text`、`edgar-topics`、`normalize-news`、`news-themes`、
 `derive-options-risk`、`normalize-options-risk`、`options-risk`、`normalize-holdings`、
 `holdings-lookthrough`、`advanced-risk`、`walk-forward`、`ml-ranking`、
 `weight-optimizer`、`ensemble` 和 `live-preflight`。
+
+TRADING-067 satellite stock replacement policy 从
+`config/etf_portfolio/satellite_universe.yaml` 和
+`config/etf_portfolio/satellite_policy.yaml` 读取。它把 AI / semiconductor 个股映射到
+`QQQ`、`SMH` 或 `SOXX` benchmark ETF，计算 stock-vs-ETF relative strength、趋势、
+momentum、drawdown、volatility、coverage 和 AI confirmation support，输出
+replacement eligibility gate、candidate-only replacement plan、shadow experiment 和
+standalone JSON/Markdown report。默认保持 ETF first；数据不足、gate 未通过或风险约束触发时
+输出 `fallback_to_etf=true`。所有 satellite 输出固定 `observe_only=true`、
+`candidate_only=true`、`production_effect=none`、`broker_action=none`、
+`manual_review_required=true`，只允许 `candidate_weights`、`shadow_weights`、
+`hypothetical_weights` 或 `replacement_plan`，不写 official ETF target weights。
 
 `aits etf governance summary --candidate <candidate.json>` 使用
 `config/etf_portfolio/governance.yaml` 的参数治理 policy 输出候选晋级摘要，固定
@@ -354,7 +371,8 @@ backtest metrics、daily brief explainability、parameter governance 和 P2/live
 no broker action。
 
 ETF brief 与 ETF backtest summary 已登记到 report registry / Reader Brief navigation，
-Reader Brief 还会只读摘录最新 ETF backtest standardized metrics 摘要，便于人工下钻，但该
+Reader Brief 还会只读摘录最新 ETF backtest standardized metrics、AI confirmation 和
+satellite replacement 摘要，便于人工下钻，但该
 可见性层只读扫描已有 artifact，不运行 ETF 上游、不写 production weights、不触发
 broker 或 trading action。P1/P2 当前均固定 `production_effect=none`；EDGAR 文本层只做
 官方 filing cache 和受治理 topic count，不做自动财报解释；news/options/holdings

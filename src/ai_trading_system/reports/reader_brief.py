@@ -171,6 +171,7 @@ def build_reader_brief_payload(
     etf_calibration_experiments = _etf_calibration_experiment_summary(report_index)
     etf_forward_simulation = _etf_forward_simulation_summary(report_index)
     etf_ai_confirmation = _etf_ai_confirmation_summary(report_index)
+    etf_satellite_replacement = _etf_satellite_replacement_summary(report_index)
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -289,6 +290,7 @@ def build_reader_brief_payload(
         "etf_calibration_experiments": etf_calibration_experiments,
         "etf_forward_simulation": etf_forward_simulation,
         "etf_ai_confirmation": etf_ai_confirmation,
+        "etf_satellite_replacement": etf_satellite_replacement,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -539,6 +541,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_calibration = _mapping(payload.get("etf_calibration_experiments"))
     etf_forward = _mapping(payload.get("etf_forward_simulation"))
     etf_ai_confirmation = _mapping(payload.get("etf_ai_confirmation"))
+    etf_satellite = _mapping(payload.get("etf_satellite_replacement"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -828,6 +831,29 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("detail_report", etf_ai_confirmation.get("detail_report")),
                     ("production_effect", etf_ai_confirmation.get("production_effect")),
                     ("broker_action", etf_ai_confirmation.get("broker_action")),
+                ]
+            ),
+        ),
+        _section(
+            "Satellite Replacement",
+            _definition_table(
+                [
+                    ("availability", etf_satellite.get("availability")),
+                    ("status", etf_satellite.get("status")),
+                    ("summary", etf_satellite.get("summary_sentence")),
+                    ("eligible_stocks", etf_satellite.get("eligible_stocks")),
+                    ("watchlist", etf_satellite.get("watchlist")),
+                    ("fallback_to_etf", etf_satellite.get("fallback_to_etf")),
+                    (
+                        "proposed_candidate_replacement",
+                        etf_satellite.get("proposed_candidate_replacement"),
+                    ),
+                    ("main_reason", etf_satellite.get("main_reason")),
+                    ("main_blocker", etf_satellite.get("main_blocker")),
+                    ("safety_status", etf_satellite.get("safety_status")),
+                    ("detail_report", etf_satellite.get("detail_report")),
+                    ("production_effect", etf_satellite.get("production_effect")),
+                    ("broker_action", etf_satellite.get("broker_action")),
                 ]
             ),
         ),
@@ -2414,6 +2440,136 @@ def _etf_ai_confirmation_safety_status(*payloads: Mapping[str, Any]) -> str:
         if safe
         else "SAFETY_REVIEW_REQUIRED"
     )
+
+
+def _etf_satellite_replacement_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_satellite_replacement_summary()
+    report_path = _report_index_artifact_path(report_index, "etf_satellite_replacement_report")
+    report = _read_optional_json(report_path)
+    if not report:
+        return _missing_etf_satellite_replacement_summary()
+    plan = _mapping(report.get("replacement_plan"))
+    allocations = _records(plan.get("satellite_allocations"))
+    eligibility = _records(report.get("replacement_eligibility"))
+    eligible = _texts(report.get("eligible_stocks"))
+    watchlist = _texts(report.get("watchlist"))
+    fallback = _texts(report.get("fallback_to_etf_stocks"))
+    proposed = _satellite_replacement_delta_text(plan)
+    main_reason = _satellite_main_reason(report, allocations)
+    main_blocker = _satellite_main_blocker(eligibility)
+    safety_status = _etf_satellite_safety_status(report, plan)
+    no_eligible = not eligible
+    summary_sentence = (
+        "Satellite Replacement: no eligible stock replacement. Default ETF exposure "
+        "remains preferred."
+        if no_eligible
+        else (
+            f"Satellite Replacement: eligible stocks {_format_english_list(eligible)}; "
+            f"candidate-only replacement {proposed}; production_effect=none."
+        )
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": "NO_ELIGIBLE" if no_eligible else "CANDIDATE_REPLACEMENT_AVAILABLE",
+        "summary_sentence": summary_sentence,
+        "eligible_stocks": _format_english_list(eligible) or "none",
+        "watchlist": _format_english_list(watchlist) or "none",
+        "fallback_to_etf": _format_english_list(fallback) or "none",
+        "proposed_candidate_replacement": proposed,
+        "main_reason": main_reason,
+        "main_blocker": main_blocker,
+        "safety_status": safety_status,
+        "detail_report": "" if report_path is None else str(report_path),
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+    }
+
+
+def _missing_etf_satellite_replacement_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "summary_sentence": (
+            "Satellite Replacement: no eligible stock replacement. Default ETF exposure "
+            "remains preferred."
+        ),
+        "eligible_stocks": "none",
+        "watchlist": "none",
+        "fallback_to_etf": "unknown",
+        "proposed_candidate_replacement": "none",
+        "main_reason": "satellite replacement report artifact is missing",
+        "main_blocker": "SATELLITE_REPORT_MISSING",
+        "safety_status": "MISSING",
+        "detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "limitation": (
+            "Satellite replacement report artifact is missing; Reader Brief does not "
+            "run satellite scoring."
+        ),
+    }
+
+
+def _etf_satellite_safety_status(*payloads: Mapping[str, Any]) -> str:
+    material = [payload for payload in payloads if payload]
+    if not material:
+        return "MISSING"
+    safe = all(
+        payload.get("observe_only") in (None, True)
+        and payload.get("candidate_only") in (None, True)
+        and _text(payload.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
+        and payload.get("broker_action") in (None, "none")
+        and payload.get("manual_review_required") in (None, True)
+        for payload in material
+    )
+    return (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true"
+        if safe
+        else "SAFETY_REVIEW_REQUIRED"
+    )
+
+
+def _satellite_replacement_delta_text(plan: Mapping[str, Any]) -> str:
+    allocations = _records(plan.get("satellite_allocations"))
+    if not allocations:
+        return "none"
+    pieces: list[str] = []
+    replaced = _mapping(plan.get("replaced_etf"))
+    for etf, weight in replaced.items():
+        parsed = _float_or_none(weight)
+        if parsed is not None and parsed > 0:
+            pieces.append(f"{etf} -{_format_percent(parsed)}")
+    for allocation in allocations:
+        pieces.append(
+            f"{_text(allocation.get('ticker'))} +"
+            f"{_format_percent(allocation.get('allocation'))}"
+        )
+    return ", ".join(pieces) if pieces else "none"
+
+
+def _satellite_main_reason(
+    report: Mapping[str, Any],
+    allocations: list[dict[str, Any]],
+) -> str:
+    if allocations:
+        return (
+            "eligible stocks passed relative-strength, trend, risk, AI confirmation, "
+            "and replacement-cap checks"
+        )
+    drivers = _texts(report.get("top_positive_drivers"))
+    return drivers[0] if drivers else "no eligible replacement driver"
+
+
+def _satellite_main_blocker(eligibility: list[dict[str, Any]]) -> str:
+    blockers: list[str] = []
+    for row in eligibility:
+        blockers.extend(_texts(row.get("blockers")))
+    if not blockers:
+        return "none"
+    counts = {blocker: blockers.count(blocker) for blocker in set(blockers)}
+    return max(sorted(counts), key=lambda item: counts[item])
 
 
 def _best_forward_candidate(rows: list[dict[str, Any]]) -> str:

@@ -1,0 +1,249 @@
+policy_metadata:
+  version: satellite_universe_v0_1
+  status: observe_only_baseline
+  owner: system
+  rationale: >
+    TRADING-067 baseline satellite stock universe. Membership defines which
+    individual AI / semiconductor stocks may be evaluated as candidate-only ETF
+    sleeve replacements; it does not authorize production allocation changes.
+  validation: >
+    Loader and validation tests cover required metadata, benchmark references,
+    duplicate handling, disabled symbols, optional data handling, and mapping
+    determinism.
+  review_condition: >
+    Review after TRADING-067 validation gate and before any later task proposes
+    production use of satellite replacement evidence.
+
+safety:
+  observe_only: true
+  candidate_only: true
+  production_effect: none
+  broker_action: none
+  manual_review_required: true
+
+allowed_benchmarks:
+  - QQQ
+  - SMH
+  - SOXX
+
+satellite_universe:
+  - ticker: NVDA
+    name: NVIDIA Corp
+    group: ai_accelerator_compute
+    role: ai_accelerator
+    enabled: true
+    optional: false
+    benchmark_etf: SMH
+    sleeve: ai_semiconductor
+    max_single_name_weight: 0.05
+    min_data_coverage: 0.90
+    event_risk_group: major_ai_earnings
+  - ticker: AMD
+    name: Advanced Micro Devices Inc
+    group: ai_accelerator_compute
+    role: ai_accelerator
+    enabled: true
+    optional: false
+    benchmark_etf: SMH
+    sleeve: ai_semiconductor
+    max_single_name_weight: 0.04
+    min_data_coverage: 0.90
+    event_risk_group: major_ai_earnings
+  - ticker: AVGO
+    name: Broadcom Inc
+    group: ai_accelerator_compute
+    role: ai_networking_asic
+    enabled: true
+    optional: false
+    benchmark_etf: SMH
+    sleeve: ai_semiconductor
+    max_single_name_weight: 0.04
+    min_data_coverage: 0.90
+    event_risk_group: major_ai_earnings
+  - ticker: TSM
+    name: Taiwan Semiconductor Manufacturing Co Ltd ADR
+    group: semiconductor_manufacturing_equipment
+    role: foundry
+    enabled: true
+    optional: false
+    benchmark_etf: SMH
+    sleeve: ai_semiconductor
+    max_single_name_weight: 0.04
+    min_data_coverage: 0.90
+    event_risk_group: major_semiconductor_earnings
+  - ticker: ASML
+    name: ASML Holding NV ADR
+    group: semiconductor_manufacturing_equipment
+    role: equipment
+    enabled: true
+    optional: true
+    benchmark_etf: SMH
+    sleeve: ai_semiconductor
+    max_single_name_weight: 0.03
+    min_data_coverage: 0.80
+    event_risk_group: major_semiconductor_earnings
+  - ticker: AMAT
+    name: Applied Materials Inc
+    group: semiconductor_manufacturing_equipment
+    role: equipment
+    enabled: true
+    optional: false
+    benchmark_etf: SMH
+    sleeve: ai_semiconductor
+    max_single_name_weight: 0.03
+    min_data_coverage: 0.90
+    event_risk_group: major_semiconductor_earnings
+  - ticker: LRCX
+    name: Lam Research Corp
+    group: semiconductor_manufacturing_equipment
+    role: equipment
+    enabled: true
+    optional: false
+    benchmark_etf: SMH
+    sleeve: ai_semiconductor
+    max_single_name_weight: 0.03
+    min_data_coverage: 0.90
+    event_risk_group: major_semiconductor_earnings
+  - ticker: MU
+    name: Micron Technology Inc
+    group: memory_networking_infrastructure
+    role: memory
+    enabled: true
+    optional: false
+    benchmark_etf: SMH
+    sleeve: ai_semiconductor
+    max_single_name_weight: 0.03
+    min_data_coverage: 0.90
+    event_risk_group: major_semiconductor_earnings
+  - ticker: MRVL
+    name: Marvell Technology Inc
+    group: memory_networking_infrastructure
+    role: networking
+    enabled: true
+    optional: false
+    benchmark_etf: SMH
+    sleeve: ai_semiconductor
+    max_single_name_weight: 0.03
+    min_data_coverage: 0.90
+    event_risk_group: major_semiconductor_earnings
+  - ticker: ARM
+    name: Arm Holdings plc ADR
+    group: memory_networking_infrastructure
+    role: ai_compute_ip
+    enabled: true
+    optional: true
+    benchmark_etf: SMH
+    sleeve: ai_semiconductor
+    max_single_name_weight: 0.02
+    min_data_coverage: 0.70
+    event_risk_group: major_semiconductor_earnings
+  - ticker: QCOM
+    name: Qualcomm Inc
+    group: memory_networking_infrastructure
+    role: edge_ai_compute
+    enabled: true
+    optional: false
+    benchmark_etf: SMH
+    sleeve: ai_semiconductor
+    max_single_name_weight: 0.02
+    min_data_coverage: 0.90
+    event_risk_group: major_semiconductor_earnings
+  - ticker: MSFT
+    name: Microsoft Corp
+    group: cloud_ai_platform
+    role: cloud_ai_platform
+    enabled: true
+    optional: false
+    benchmark_etf: QQQ
+    sleeve: mega_cap_ai
+    max_single_name_weight: 0.04
+    min_data_coverage: 0.90
+    event_risk_group: major_ai_earnings
+  - ticker: GOOGL
+    name: Alphabet Inc
+    group: cloud_ai_platform
+    role: cloud_ai_platform
+    enabled: true
+    optional: false
+    benchmark_etf: QQQ
+    sleeve: mega_cap_ai
+    max_single_name_weight: 0.04
+    min_data_coverage: 0.90
+    event_risk_group: major_ai_earnings
+  - ticker: AMZN
+    name: Amazon.com Inc
+    group: cloud_ai_platform
+    role: cloud_ai_platform
+    enabled: true
+    optional: false
+    benchmark_etf: QQQ
+    sleeve: mega_cap_ai
+    max_single_name_weight: 0.04
+    min_data_coverage: 0.90
+    event_risk_group: major_ai_earnings
+  - ticker: META
+    name: Meta Platforms Inc
+    group: cloud_ai_platform
+    role: ai_application_platform
+    enabled: true
+    optional: false
+    benchmark_etf: QQQ
+    sleeve: mega_cap_ai
+    max_single_name_weight: 0.04
+    min_data_coverage: 0.90
+    event_risk_group: major_ai_earnings
+  - ticker: ORCL
+    name: Oracle Corp
+    group: cloud_ai_platform
+    role: cloud_ai_infrastructure
+    enabled: true
+    optional: true
+    benchmark_etf: QQQ
+    sleeve: mega_cap_ai
+    max_single_name_weight: 0.03
+    min_data_coverage: 0.80
+    event_risk_group: major_ai_earnings
+  - ticker: AAPL
+    name: Apple Inc
+    group: optional_broad_tech
+    role: ai_device_platform
+    enabled: true
+    optional: true
+    benchmark_etf: QQQ
+    sleeve: mega_cap_ai
+    max_single_name_weight: 0.03
+    min_data_coverage: 0.80
+    event_risk_group: major_ai_earnings
+  - ticker: CRM
+    name: Salesforce Inc
+    group: optional_broad_tech
+    role: enterprise_ai_application
+    enabled: true
+    optional: true
+    benchmark_etf: QQQ
+    sleeve: mega_cap_ai
+    max_single_name_weight: 0.02
+    min_data_coverage: 0.70
+    event_risk_group: major_ai_earnings
+  - ticker: NOW
+    name: ServiceNow Inc
+    group: optional_broad_tech
+    role: enterprise_ai_workflow
+    enabled: true
+    optional: true
+    benchmark_etf: QQQ
+    sleeve: mega_cap_ai
+    max_single_name_weight: 0.02
+    min_data_coverage: 0.70
+    event_risk_group: major_ai_earnings
+  - ticker: SNOW
+    name: Snowflake Inc
+    group: optional_broad_tech
+    role: ai_data_platform
+    enabled: true
+    optional: true
+    benchmark_etf: QQQ
+    sleeve: mega_cap_ai
+    max_single_name_weight: 0.02
+    min_data_coverage: 0.70
+    event_risk_group: major_ai_earnings
