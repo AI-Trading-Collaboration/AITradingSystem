@@ -446,6 +446,22 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: false
     required_for_daily_reading: false
+  - report_id: etf_ai_confirmation_report
+    title: ETF AI Confirmation Report
+    group: research
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits etf ai-confirmation report --date YYYY-MM-DD
+    artifact_globs:
+      - reports/etf_portfolio/ai_confirmation/reports/ai_confirmation_report_*.json
+      - reports/etf_portfolio/ai_confirmation/reports/ai_confirmation_report_*.md
+    freshness_sla_days: 3
+    freshness_rationale: AI confirmation should be visible when reviewing QQQ/SMH candidate exposure and shadow overlay evidence.
+    owner_action: run_ai_confirmation_report_after_etf_data_quality_passes
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_p2_walk_forward
     title: ETF P2 Walk Forward Readiness
     group: research

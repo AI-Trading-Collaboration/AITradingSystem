@@ -197,7 +197,11 @@ AI event risk overlay 只按 FOMC/CPI/PCE、major AI earnings、semiconductor ea
 export-control window 等日历事件输出 active/upcoming/recent risk flags，不预测事件方向。
 `AIConfirmationScore` composite 将 semiconductor breadth、MegaCapAIScore、
 AISemiconductorRelativeStrengthScore 和 event risk adjustment 合成为 0-100 candidate-only
-score，并输出 `action_hint`、`reason_codes`、data coverage 和 safety fields。后续 report、
+score，并输出 `action_hint`、`reason_codes`、data coverage 和 safety fields。
+`aits etf ai-confirmation report --date YYYY-MM-DD` 在 ETF price quality gate 通过后生成
+standalone JSON/Markdown report，路径为
+`reports/etf_portfolio/ai_confirmation/reports/ai_confirmation_report_YYYY-MM-DD.json/md`，
+并已登记到 `config/report_registry.yaml` 供 `aits reports index` 只读发现。后续
 shadow overlay、Reader Brief 和 validation gate 必须固定
 `observe_only=true`、`candidate_only=true`、`production_effect=none`、
 `broker_action=none`、`manual_review_required=true`；overlay-adjusted weights 只能作为

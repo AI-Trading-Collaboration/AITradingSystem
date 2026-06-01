@@ -25,8 +25,10 @@ DEFAULT_AI_CONFIRMATION_REPORT_DIR = (
     PROJECT_ROOT / "reports" / "etf_portfolio" / "ai_confirmation"
 )
 DEFAULT_AI_CONFIRMATION_FEATURE_DIR = DEFAULT_AI_CONFIRMATION_REPORT_DIR / "features"
+DEFAULT_AI_CONFIRMATION_STANDALONE_REPORT_DIR = DEFAULT_AI_CONFIRMATION_REPORT_DIR / "reports"
 
 AI_CONFIRMATION_BREADTH_FEATURE_VERSION = "ai_confirmation_breadth_v0_1"
+AI_CONFIRMATION_REPORT_SCHEMA_VERSION = "ai_confirmation_report_v1"
 AI_CONFIRMATION_EVENT_GROUP_ID = "event_risk_symbols_or_calendar_refs"
 
 # TRADING-066B explicitly requires these price-derived confirmation horizons.
@@ -742,6 +744,220 @@ def build_ai_confirmation_composite_score(
     }
 
 
+def build_ai_confirmation_report(
+    *,
+    prices: pd.DataFrame,
+    events: Iterable[Mapping[str, Any]],
+    universe_config: AIConfirmationUniverseConfig,
+    policy_config: AIConfirmationPolicyConfig,
+    run_date: date,
+    data_quality_status: str,
+    data_quality_report: str | None = None,
+    market_regime: str | None = None,
+    requested_date_range: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    breadth_records = build_ai_confirmation_breadth_features(
+        prices,
+        config=universe_config,
+        run_date=run_date,
+    )
+    mega_cap_score = build_mega_cap_ai_confirmation_score(
+        prices,
+        breadth_records=breadth_records,
+        universe_config=universe_config,
+        policy_config=policy_config,
+        run_date=run_date,
+    )
+    relative_strength_score = build_ai_semiconductor_relative_strength_score(
+        prices,
+        policy_config=policy_config,
+        run_date=run_date,
+    )
+    event_risk_overlay = build_ai_event_risk_overlay(
+        events,
+        universe_config=universe_config,
+        policy_config=policy_config,
+        run_date=run_date,
+    )
+    composite_score = build_ai_confirmation_composite_score(
+        breadth_records=breadth_records,
+        mega_cap_score=mega_cap_score,
+        relative_strength_score=relative_strength_score,
+        event_risk_overlay=event_risk_overlay,
+        policy_config=policy_config,
+        run_date=run_date,
+    )
+    return {
+        "schema_version": AI_CONFIRMATION_REPORT_SCHEMA_VERSION,
+        "report_type": "ai_confirmation_report",
+        "date": run_date.isoformat(),
+        "market_regime": market_regime or "",
+        "requested_date_range": dict(
+            requested_date_range or {"start": "", "end": run_date.isoformat()}
+        ),
+        "safety_banner": _ai_confirmation_safety_banner(),
+        "data_quality": {
+            "status": data_quality_status,
+            "report_path": data_quality_report or "",
+        },
+        "policy": {
+            "universe_version": universe_config.policy_metadata.version,
+            "universe_config_hash": universe_config.config_hash,
+            "score_policy_version": policy_config.policy_metadata.version,
+            "score_policy_hash": policy_config.config_hash,
+        },
+        "AIConfirmationScore": composite_score,
+        "component_scores": {
+            "semiconductor_breadth": composite_score["component_scores"]["semiconductor_breadth"],
+            "mega_cap_ai": mega_cap_score["score_value"],
+            "ai_relative_strength": relative_strength_score["score_value"],
+            "event_risk_adjustment": composite_score["component_scores"]["event_risk_adjustment"],
+            "data_coverage": composite_score["component_scores"]["data_coverage"],
+        },
+        "semiconductor_breadth": _breadth_record_or_empty(
+            breadth_records,
+            "semiconductor_hardware",
+        ),
+        "mega_cap_ai_confirmation": mega_cap_score,
+        "ai_semiconductor_relative_strength": relative_strength_score,
+        "event_risk_overlay": event_risk_overlay,
+        "data_coverage": _report_data_coverage(
+            breadth_records,
+            mega_cap_score,
+            composite_score,
+        ),
+        "top_positive_drivers": _report_drivers(
+            mega_cap_score,
+            relative_strength_score,
+            positive=True,
+        ),
+        "top_negative_drivers": _report_drivers(
+            mega_cap_score,
+            relative_strength_score,
+            positive=False,
+        ),
+        "candidate_only_usage_note": (
+            "AI confirmation is observe-only and candidate-only; it must not mutate "
+            "official ETF target weights or trigger broker action."
+        ),
+        "recommended_shadow_experiment_usage": (
+            "Use AIConfirmationScore only as a bounded shadow overlay input after "
+            "manual review; compare candidate/shadow/hypothetical weights against "
+            "the ETF baseline."
+        ),
+        **AI_CONFIRMATION_SAFETY,
+    }
+
+
+def write_ai_confirmation_report(
+    payload: Mapping[str, Any],
+    *,
+    json_path: Path,
+    markdown_path: Path,
+) -> tuple[Path, Path]:
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    markdown_path.write_text(render_ai_confirmation_report_markdown(payload), encoding="utf-8")
+    return json_path, markdown_path
+
+
+def load_ai_confirmation_events(path: Path | None) -> list[dict[str, Any]]:
+    if path is None or not path.exists():
+        return []
+    if path.suffix.lower() == ".json":
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(payload, Mapping):
+            payload = payload.get("events", [])
+        if not isinstance(payload, list):
+            raise ValueError(f"AI confirmation event JSON must be a list or events mapping: {path}")
+        return [dict(item) for item in payload if isinstance(item, Mapping)]
+    frame = pd.read_csv(path)
+    return frame.to_dict(orient="records")
+
+
+def render_ai_confirmation_report_markdown(payload: Mapping[str, Any]) -> str:
+    score = _mapping(payload.get("AIConfirmationScore"))
+    components = _mapping(payload.get("component_scores"))
+    data_coverage = _mapping(payload.get("data_coverage"))
+    event_risk = _mapping(payload.get("event_risk_overlay"))
+    mega_cap = _mapping(payload.get("mega_cap_ai_confirmation"))
+    relative_strength = _mapping(payload.get("ai_semiconductor_relative_strength"))
+    breadth = _mapping(payload.get("semiconductor_breadth"))
+    feature_values = _mapping(breadth.get("feature_values"))
+    lines = [
+        "# AI Confirmation Report",
+        "",
+        f"- Date: {payload.get('date')}",
+        f"- Market Regime: {payload.get('market_regime') or 'unspecified'}",
+        f"- Safety: {payload.get('safety_banner')}",
+        f"- Candidate-only usage: {payload.get('candidate_only_usage_note')}",
+        f"- Data Quality: {_mapping(payload.get('data_quality')).get('status')}",
+        "",
+        "## AIConfirmationScore Summary",
+        "",
+        f"- AIConfirmationScore: {_fmt_number(score.get('score_value'))}",
+        f"- Score Band: {score.get('score_band')}",
+        f"- Action Hint: {score.get('action_hint')}",
+        f"- Manual Review Required: {payload.get('manual_review_required')}",
+        "",
+        "## Component Scores",
+        "",
+        "| Component | Score |",
+        "|---|---:|",
+    ]
+    for component, value in components.items():
+        lines.append(f"| {component} | {_fmt_number(value)} |")
+    lines.extend(
+        [
+            "",
+            "## Semiconductor Breadth",
+            "",
+            f"- Symbol Count: {breadth.get('symbol_count', 0)}",
+            f"- Valid Symbol Count: {breadth.get('valid_symbol_count', 0)}",
+            f"- Data Coverage: {_fmt_pct(breadth.get('data_coverage_ratio'))}",
+            f"- Above 50D MA: {_fmt_pct(feature_values.get('percent_above_50d_ma'))}",
+            f"- Above 200D MA: {_fmt_pct(feature_values.get('percent_above_200d_ma'))}",
+            "",
+            "## Mega-Cap AI Confirmation",
+            "",
+            f"- Score: {_fmt_number(mega_cap.get('score_value'))}",
+            f"- Band: {mega_cap.get('score_band')}",
+            f"- Data Coverage: {_fmt_pct(mega_cap.get('data_coverage_ratio'))}",
+            "",
+            "## AI / Semiconductor Relative Strength",
+            "",
+            f"- Score: {_fmt_number(relative_strength.get('score_value'))}",
+            f"- Band: {relative_strength.get('score_band')}",
+            f"- Pair Count: {len(_records(relative_strength.get('pair_features')))}",
+            "",
+            "## Event Risk Overlay",
+            "",
+            f"- Event Risk Score: {_fmt_number(event_risk.get('event_risk_score'))}",
+            f"- Risk Band: {event_risk.get('risk_band')}",
+            f"- Active Events: {len(_records(event_risk.get('active_events')))}",
+            "",
+            "## Data Coverage",
+            "",
+            f"- Composite Coverage: {_fmt_pct(data_coverage.get('composite_data_coverage_ratio'))}",
+            f"- Breadth Groups: {data_coverage.get('breadth_group_count')}",
+            "",
+            "## Drivers",
+            "",
+            f"- Top Positive Drivers: {_join_list(payload.get('top_positive_drivers'))}",
+            f"- Top Negative Drivers: {_join_list(payload.get('top_negative_drivers'))}",
+            "",
+            "## Candidate-Only Usage",
+            "",
+            str(payload.get("recommended_shadow_experiment_usage")),
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
 def event_risk_band(score: float, policy_config: AIConfirmationPolicyConfig) -> str:
     for band, config in sorted(
         policy_config.event_risk_overlay.risk_bands.items(),
@@ -761,6 +977,67 @@ def score_band(score: float, policy_config: AIConfirmationPolicyConfig) -> str:
         if score >= config.min_score:
             return band
     return "negative"
+
+
+def _breadth_record_or_empty(
+    breadth_records: list[dict[str, Any]],
+    group_id: str,
+) -> dict[str, Any]:
+    try:
+        return _breadth_record_for_group(breadth_records, group_id)
+    except KeyError:
+        return {
+            "group_id": group_id,
+            "feature_values": {},
+            "symbol_count": 0,
+            "valid_symbol_count": 0,
+            "data_coverage_ratio": 0.0,
+            "warnings": [f"{group_id}:missing_breadth_record"],
+            **AI_CONFIRMATION_SAFETY,
+        }
+
+
+def _report_data_coverage(
+    breadth_records: list[dict[str, Any]],
+    mega_cap_score: Mapping[str, Any],
+    composite_score: Mapping[str, Any],
+) -> dict[str, Any]:
+    group_coverages = {
+        str(record.get("group_id")): float(record["data_coverage_ratio"])
+        for record in breadth_records
+        if _is_finite_number(record.get("data_coverage_ratio"))
+    }
+    return {
+        "composite_data_coverage_ratio": composite_score.get("data_coverage_ratio"),
+        "mega_cap_data_coverage_ratio": mega_cap_score.get("data_coverage_ratio"),
+        "breadth_group_count": len(breadth_records),
+        "group_data_coverage": group_coverages,
+    }
+
+
+def _report_drivers(
+    mega_cap_score: Mapping[str, Any],
+    relative_strength_score: Mapping[str, Any],
+    *,
+    positive: bool,
+) -> list[str]:
+    key = "top_positive_drivers" if positive else "top_negative_drivers"
+    drivers = [
+        f"MegaCapAIScore:{driver}"
+        for driver in _string_list(mega_cap_score.get(key))
+    ]
+    drivers.extend(
+        f"AISemiconductorRelativeStrengthScore:{driver}"
+        for driver in _string_list(relative_strength_score.get(key))
+    )
+    return drivers or ["none"]
+
+
+def _ai_confirmation_safety_banner() -> str:
+    return (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true"
+    )
 
 
 def _dedupe_symbols(
@@ -967,6 +1244,43 @@ def _safe_float(value: Any) -> float | None:
     if not _is_finite_number(value):
         return None
     return float(value)
+
+
+def _mapping(value: Any) -> Mapping[str, Any]:
+    return value if isinstance(value, Mapping) else {}
+
+
+def _records(value: Any) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        return []
+    return [dict(item) for item in value if isinstance(item, Mapping)]
+
+
+def _string_list(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, list | tuple | set):
+        return [str(item) for item in value]
+    return [str(value)]
+
+
+def _fmt_number(value: Any) -> str:
+    parsed = _safe_float(value)
+    if parsed is None:
+        return "-"
+    return f"{parsed:.2f}"
+
+
+def _fmt_pct(value: Any) -> str:
+    parsed = _safe_float(value)
+    if parsed is None:
+        return "-"
+    return f"{parsed:.1%}"
+
+
+def _join_list(value: Any) -> str:
+    values = _string_list(value)
+    return ", ".join(values) if values else "none"
 
 
 def _is_finite_number(value: Any) -> bool:

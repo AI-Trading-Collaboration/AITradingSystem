@@ -16,6 +16,7 @@ from ai_trading_system.etf_portfolio.ai_confirmation import (
     all_enabled_tickers,
     build_ai_confirmation_breadth_features,
     build_ai_confirmation_composite_score,
+    build_ai_confirmation_report,
     build_ai_event_risk_overlay,
     build_ai_semiconductor_relative_strength_score,
     build_mega_cap_ai_confirmation_score,
@@ -23,8 +24,10 @@ from ai_trading_system.etf_portfolio.ai_confirmation import (
     event_risk_band,
     load_ai_confirmation_policy_config,
     load_ai_confirmation_universe_config,
+    render_ai_confirmation_report_markdown,
     score_band,
     validate_ai_confirmation_data_availability,
+    write_ai_confirmation_report,
 )
 from ai_trading_system.etf_portfolio.data import standardize_price_frame
 from ai_trading_system.etf_portfolio.models import load_etf_config_bundle
@@ -669,8 +672,157 @@ def test_ai_confirmation_composite_low_coverage_is_insufficient_data() -> None:
     assert "insufficient_data_coverage" in composite["reason_codes"]
 
 
+def test_ai_confirmation_report_json_and_markdown_include_required_sections(
+    tmp_path: Path,
+) -> None:
+    run_date = date(2026, 6, 1)
+    prices = _standardized_report_prices()
+    report = build_ai_confirmation_report(
+        prices=prices,
+        events=[
+            _event(
+                event_id="nvda_earnings",
+                event_date=run_date + timedelta(days=1),
+                event_type="NVDA earnings",
+                related_symbols=["NVDA"],
+                severity="medium",
+                lookahead_window_days=3,
+            )
+        ],
+        universe_config=load_ai_confirmation_universe_config(),
+        policy_config=load_ai_confirmation_policy_config(),
+        run_date=run_date,
+        data_quality_status="PASS",
+        data_quality_report="outputs/reports/data_quality_2026-06-01.md",
+        market_regime="ai_after_chatgpt",
+        requested_date_range={"start": "2025-10-15", "end": "2026-06-01"},
+    )
+
+    json_path = tmp_path / "ai_confirmation_report_2026-06-01.json"
+    markdown_path = tmp_path / "ai_confirmation_report_2026-06-01.md"
+    write_ai_confirmation_report(report, json_path=json_path, markdown_path=markdown_path)
+
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+    markdown = markdown_path.read_text(encoding="utf-8")
+    assert payload["schema_version"] == "ai_confirmation_report_v1"
+    assert payload["AIConfirmationScore"]["score_name"] == "AIConfirmationScore"
+    assert "semiconductor_breadth" in payload["component_scores"]
+    assert payload["event_risk_overlay"]["risk_band"] in {"medium", "high"}
+    assert payload["data_coverage"]["composite_data_coverage_ratio"] > 0
+    assert payload["candidate_only_usage_note"]
+    assert payload["observe_only"] is True
+    assert payload["candidate_only"] is True
+    assert payload["production_effect"] == "none"
+    assert payload["broker_action"] == "none"
+    assert payload["manual_review_required"] is True
+    assert "# AI Confirmation Report" in markdown
+    assert "## Component Scores" in markdown
+    assert "## Event Risk Overlay" in markdown
+    assert "candidate-only" in markdown
+    assert "observe_only=true" in markdown
+
+
+def test_ai_confirmation_report_markdown_is_stable() -> None:
+    report = build_ai_confirmation_report(
+        prices=_standardized_report_prices(),
+        events=[],
+        universe_config=load_ai_confirmation_universe_config(),
+        policy_config=load_ai_confirmation_policy_config(),
+        run_date=date(2026, 6, 1),
+        data_quality_status="PASS",
+        data_quality_report="outputs/reports/data_quality_2026-06-01.md",
+        market_regime="ai_after_chatgpt",
+        requested_date_range={"start": "2025-10-15", "end": "2026-06-01"},
+    )
+
+    markdown = render_ai_confirmation_report_markdown(report)
+
+    assert "- AIConfirmationScore:" in markdown
+    assert "| semiconductor_breadth |" in markdown
+    assert "- Data Coverage:" in markdown
+    assert "- Event Risk Score:" in markdown
+    assert "Use AIConfirmationScore only as a bounded shadow overlay input" in markdown
+
+
+def test_ai_confirmation_report_cli_writes_json_and_markdown(tmp_path: Path) -> None:
+    runner = CliRunner()
+    prices = _standardized_report_prices()
+    prices_path = tmp_path / "prices.csv"
+    prices.to_csv(prices_path, index=False)
+    output_dir = tmp_path / "reports"
+    universe_path = tmp_path / "ai_universe.yaml"
+    universe_path.write_text(
+        Path("config/etf_portfolio/ai_confirmation_universe.yaml").read_text(encoding="utf-8")
+        .replace("required_data_level: strict", "required_data_level: warning", 1),
+        encoding="utf-8",
+    )
+
+    result = runner.invoke(
+        app,
+        [
+            "etf",
+            "ai-confirmation",
+            "report",
+            "--prices-path",
+            str(prices_path),
+            "--date",
+            "2026-06-01",
+            "--output-dir",
+            str(output_dir),
+            "--universe-path",
+            str(universe_path),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    json_path = output_dir / "ai_confirmation_report_2026-06-01.json"
+    markdown_path = output_dir / "ai_confirmation_report_2026-06-01.md"
+    assert json_path.exists()
+    assert markdown_path.exists()
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+    assert payload["report_type"] == "ai_confirmation_report"
+    assert payload["data_quality"]["status"] == "PASS"
+    assert payload["AIConfirmationScore"]["candidate_only"] is True
+    assert "production_effect=none" in markdown_path.read_text(encoding="utf-8")
+
+
 def _raw_config() -> dict[str, object]:
     return deepcopy(load_ai_confirmation_universe_config().model_dump(mode="json"))
+
+
+def _standardized_report_prices() -> pd.DataFrame:
+    symbols = {
+        "SPY": 0.20,
+        "QQQ": 0.35,
+        "SMH": 0.75,
+        "SOXX": 0.70,
+        "NVDA": 0.95,
+        "AVGO": 0.80,
+        "AMD": 0.65,
+        "MSFT": 0.45,
+        "GOOGL": 0.40,
+        "AMZN": 0.42,
+        "META": 0.50,
+        "AAPL": 0.25,
+        "TSM": 0.70,
+        "ASML": 0.62,
+        "AMAT": 0.58,
+        "LRCX": 0.55,
+        "MU": 0.50,
+        "MRVL": 0.48,
+        "ARM": 0.52,
+        "QCOM": 0.28,
+        "INTC": 0.10,
+    }
+    raw = _make_ai_price_frame(symbols, days=275, start=date(2025, 9, 1))
+    etf_config = load_etf_config_bundle()
+    prices, _ = standardize_price_frame(
+        raw,
+        assets=etf_config.assets,
+        source_name="fixture",
+        extra_symbols=set(symbols),
+    )
+    return prices
 
 
 def _single_group_config(group_id: str, tickers: list[str]) -> AIConfirmationUniverseConfig:
