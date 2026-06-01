@@ -21,6 +21,7 @@ from ai_trading_system.etf_portfolio.experiments import (
     build_candidate_selection_report,
     build_experiment_comparison_report,
     build_experiment_config_bundle,
+    build_weekly_experiment_review,
     enroll_shadow_candidates,
     load_experiment_pack_registry,
     load_experiment_registry,
@@ -30,6 +31,7 @@ from ai_trading_system.etf_portfolio.experiments import (
     validate_experiment_pack_registry,
     write_candidate_selection_report,
     write_experiment_comparison_report,
+    write_weekly_experiment_review_report,
 )
 from ai_trading_system.etf_portfolio.models import load_etf_config_bundle
 
@@ -108,6 +110,7 @@ def test_etf_experiment_pack_loads_default_pack() -> None:
     pack_registry = load_experiment_pack_registry()
     pack = pack_registry.experiment_packs["etf_calibration_v1"]
     promotion_policy = pack_registry.promotion_policies["shadow_only_manual_review"]
+    review_policy = pack_registry.review_policies["weekly_shadow_review_v1"]
 
     assert pack.pack_id == "etf_calibration_v1"
     assert pack.created_for_task == "TRADING-064"
@@ -117,6 +120,8 @@ def test_etf_experiment_pack_loads_default_pack() -> None:
     assert promotion_policy.thresholds["min_candidate_score"] == 0.50
     assert promotion_policy.production_promotion_allowed is False
     assert promotion_policy.shadow_observation_allowed is True
+    assert review_policy.thresholds["min_review_days"] == 5
+    assert review_policy.production_promotion_allowed is False
     assert pack_registry.config_hash
 
 
@@ -775,6 +780,98 @@ def test_etf_shadow_enrollment_cli_smoke(tmp_path: Path) -> None:
     assert json.loads(registry_path.read_text(encoding="utf-8"))["candidate_count"] == 1
 
 
+def test_etf_weekly_review_loads_shadow_candidates_and_metrics(tmp_path: Path) -> None:
+    registry_path = _enrolled_shadow_registry(tmp_path)
+
+    review = build_weekly_experiment_review(
+        as_of=date(2022, 12, 20),
+        shadow_registry_path=registry_path,
+        run_root=tmp_path,
+        review_policy=_review_policy(),
+        review_policy_id="weekly_shadow_review_v1",
+    )
+
+    row = review["candidate_reviews"][0]
+    assert review["review_period"]["active_candidate_count"] == 1
+    assert row["candidate_forward_return"] == 0.20
+    assert row["baseline_forward_return"] == 0.15
+    assert row["benchmark_forward_returns"]["QQQ"] == 0.10
+    assert row["drawdown_during_review_period"] == -0.08
+    assert row["turnover_during_review_period"] == 0.10
+    assert row["constraint_hits"]["constraint_hit_rate"] == 0.05
+    assert row["recommended_action"] == "promote_to_longer_observation"
+    assert review["production_promotion_allowed"] is False
+
+
+def test_etf_weekly_review_marks_short_window_needs_more_data(tmp_path: Path) -> None:
+    registry_path = _enrolled_shadow_registry(tmp_path)
+
+    review = build_weekly_experiment_review(
+        as_of=date(2022, 12, 2),
+        shadow_registry_path=registry_path,
+        run_root=tmp_path,
+        review_policy=_review_policy(),
+        review_policy_id="weekly_shadow_review_v1",
+    )
+
+    row = review["candidate_reviews"][0]
+    assert row["review_days"] == 2
+    assert row["recommended_action"] == "needs_more_data"
+    assert "promote_to_production_effect" not in json.dumps(review)
+
+
+def test_etf_weekly_review_writes_json_and_markdown(tmp_path: Path) -> None:
+    registry_path = _enrolled_shadow_registry(tmp_path)
+    review = build_weekly_experiment_review(
+        as_of=date(2022, 12, 20),
+        shadow_registry_path=registry_path,
+        run_root=tmp_path,
+        review_policy=_review_policy(),
+        review_policy_id="weekly_shadow_review_v1",
+    )
+    json_path = tmp_path / "weekly_review.json"
+    md_path = tmp_path / "weekly_review.md"
+
+    write_weekly_experiment_review_report(review, json_path=json_path, markdown_path=md_path)
+
+    assert json_path.exists()
+    assert md_path.exists()
+    text = md_path.read_text(encoding="utf-8")
+    assert "ETF Experiment Weekly Review" in text
+    assert "promote_to_longer_observation" in text
+    assert "Production Promotion Allowed: false" in text
+
+
+def test_etf_weekly_review_cli_smoke(tmp_path: Path) -> None:
+    registry_path = _enrolled_shadow_registry(tmp_path)
+    output_dir = tmp_path / "weekly_reviews"
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "etf",
+            "experiments",
+            "weekly-review",
+            "--as-of",
+            "2022-12-20",
+            "--registry-path",
+            str(registry_path),
+            "--run-root",
+            str(tmp_path),
+            "--output-dir",
+            str(output_dir),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "ETF experiment weekly review" in result.output
+    assert "production_promotion_allowed=false" in result.output
+    assert (output_dir / "weekly_review_2022-12-20.json").exists()
+
+
 def _registry_raw() -> dict[str, object]:
     return deepcopy(load_experiment_registry().model_dump(mode="json"))
 
@@ -899,6 +996,28 @@ def _write_eligible_experiment_run(tmp_path: Path) -> Path:
     return run_dir
 
 
+def _enrolled_shadow_registry(tmp_path: Path) -> Path:
+    run_dir = _write_eligible_experiment_run(tmp_path)
+    comparison = build_experiment_comparison_report(run_dir)
+    ranked = apply_ranking_policy_to_comparison_report(
+        comparison,
+        ranking_policy=_ranking_policy(),
+        ranking_policy_id="risk_adjusted_v1",
+    )
+    selection = build_candidate_selection_report(
+        ranked,
+        promotion_policy=_promotion_policy(),
+        promotion_policy_id="shadow_only_manual_review",
+    )
+    registry_path = tmp_path / "etf_shadow_candidates.json"
+    enroll_shadow_candidates(
+        selection,
+        registry_path=registry_path,
+        enrolled_at=datetime(2026, 6, 1, tzinfo=UTC),
+    )
+    return registry_path
+
+
 def _make_prices(days: int) -> pd.DataFrame:
     dates = pd.bdate_range("2022-01-03", periods=days)
     rows = []
@@ -928,6 +1047,10 @@ def _ranking_policy():
 
 def _promotion_policy():
     return load_experiment_pack_registry().promotion_policies["shadow_only_manual_review"]
+
+
+def _review_policy():
+    return load_experiment_pack_registry().review_policies["weekly_shadow_review_v1"]
 
 
 def _ranking_report(rows: list[dict[str, object]]) -> dict[str, object]:

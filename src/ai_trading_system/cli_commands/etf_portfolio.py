@@ -32,10 +32,12 @@ from ai_trading_system.etf_portfolio.data import (
 )
 from ai_trading_system.etf_portfolio.experiments import (
     DEFAULT_ETF_EXPERIMENT_RUN_DIR,
+    DEFAULT_ETF_EXPERIMENT_WEEKLY_REVIEW_DIR,
     DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH,
     apply_ranking_policy_to_comparison_report,
     build_candidate_selection_report,
     build_experiment_comparison_report,
+    build_weekly_experiment_review,
     enroll_shadow_candidates,
     find_latest_experiment_run_dir,
     load_experiment_pack_registry,
@@ -43,6 +45,7 @@ from ai_trading_system.etf_portfolio.experiments import (
     run_experiment_batch,
     write_candidate_selection_report,
     write_experiment_comparison_report,
+    write_weekly_experiment_review_report,
 )
 from ai_trading_system.etf_portfolio.features import (
     build_feature_store,
@@ -789,6 +792,56 @@ def experiments_enroll_shadow_command(
     typer.echo(f"candidate_count={registry['candidate_count']}")
     typer.echo("production_effect=none")
     typer.echo("broker_action=none")
+
+
+@experiments_app.command("weekly-review")
+def experiments_weekly_review_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="周度复核日期 YYYY-MM-DD。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="使用当前日期生成 latest weekly review。"),
+    ] = False,
+    registry_path: Annotated[
+        Path,
+        typer.Option(help="shadow candidate registry 路径。"),
+    ] = DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH,
+    run_root: Annotated[Path, typer.Option(help="experiment run 根目录。")] = (
+        DEFAULT_ETF_EXPERIMENT_RUN_DIR
+    ),
+    output_dir: Annotated[Path, typer.Option(help="weekly review 输出目录。")] = (
+        DEFAULT_ETF_EXPERIMENT_WEEKLY_REVIEW_DIR
+    ),
+    review_policy: Annotated[
+        str,
+        typer.Option("--review-policy", help="weekly review policy id。"),
+    ] = "weekly_shadow_review_v1",
+) -> None:
+    """生成 observe-only ETF experiment weekly review；不允许 production promotion。"""
+    if latest and as_of is not None:
+        raise typer.BadParameter("--latest and --as-of cannot be combined")
+    review_date = date.today() if latest else _parse_date(as_of)
+    pack_registry = load_experiment_pack_registry()
+    policy = pack_registry.review_policies.get(review_policy)
+    if policy is None:
+        raise typer.BadParameter(f"unknown review policy: {review_policy}")
+    payload = build_weekly_experiment_review(
+        as_of=review_date,
+        shadow_registry_path=registry_path,
+        run_root=run_root,
+        review_policy=policy,
+        review_policy_id=review_policy,
+    )
+    json_path = output_dir / f"weekly_review_{review_date.isoformat()}.json"
+    md_path = output_dir / f"weekly_review_{review_date.isoformat()}.md"
+    write_weekly_experiment_review_report(payload, json_path=json_path, markdown_path=md_path)
+    typer.echo(f"ETF experiment weekly review：{md_path}")
+    typer.echo(f"status={payload['summary']['status']}")
+    typer.echo(f"candidate_count={payload['summary']['candidate_count']}")
+    typer.echo("production_promotion_allowed=false")
+    typer.echo(f"production_effect={payload['production_effect']}")
 
 
 @p2_app.command("edgar-text")

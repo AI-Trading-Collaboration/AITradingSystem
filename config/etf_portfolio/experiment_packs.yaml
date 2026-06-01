@@ -51,6 +51,17 @@ promotion_policies:
     shadow_observation_allowed: true
     production_promotion_allowed: false
 
+review_policies:
+  weekly_shadow_review_v1:
+    description: "Weekly observe-only review for enrolled ETF calibration shadow candidates."
+    policy_status: pilot_baseline
+    thresholds:
+      min_review_days: 5
+      min_excess_return_for_longer_observation: 0.02
+      max_drawdown_abs_for_continue: 0.20
+      max_turnover_for_continue: 0.30
+    production_promotion_allowed: false
+
 experiment_packs:
   etf_calibration_v1:
     pack_id: etf_calibration_v1

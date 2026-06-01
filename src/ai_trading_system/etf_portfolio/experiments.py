@@ -33,8 +33,10 @@ DEFAULT_ETF_EXPERIMENT_RUN_DIR = DEFAULT_ETF_REPORT_DIR / "experiments"
 DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH = (
     PROJECT_ROOT / "data" / "simulation" / "etf_shadow_candidates.json"
 )
+DEFAULT_ETF_EXPERIMENT_WEEKLY_REVIEW_DIR = DEFAULT_ETF_EXPERIMENT_RUN_DIR / "weekly_reviews"
 EXPERIMENT_METRIC_SCHEMA_VERSION = "etf_experiment_metrics_v1"
 SHADOW_CANDIDATE_REGISTRY_SCHEMA_VERSION = "etf_shadow_candidate_registry_v1"
+EXPERIMENT_WEEKLY_REVIEW_SCHEMA_VERSION = "etf_experiment_weekly_review_v1"
 EXPERIMENT_COMPARISON_SCHEMA_KEYS = (
     "schema_version",
     "report_type",
@@ -252,6 +254,7 @@ class ETFExperimentPackRegistry(BaseModel):
     policy_metadata: PolicyMetadata
     ranking_policies: dict[str, ETFExperimentPolicyRef] = Field(min_length=1)
     promotion_policies: dict[str, ETFExperimentPolicyRef] = Field(min_length=1)
+    review_policies: dict[str, ETFExperimentPolicyRef] = Field(default_factory=dict)
     experiment_packs: dict[str, ETFExperimentPackConfig] = Field(min_length=1)
 
     @model_validator(mode="after")
@@ -716,6 +719,78 @@ def enroll_shadow_candidates(
     return payload
 
 
+def build_weekly_experiment_review(
+    *,
+    as_of: date,
+    shadow_registry_path: Path = DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH,
+    run_root: Path = DEFAULT_ETF_EXPERIMENT_RUN_DIR,
+    review_policy: ETFExperimentPolicyRef,
+    review_policy_id: str,
+) -> dict[str, Any]:
+    registry = load_shadow_candidate_registry(shadow_registry_path)
+    candidates = [
+        dict(candidate)
+        for candidate in registry.get("candidates", [])
+        if isinstance(candidate, Mapping)
+        and candidate.get("status") == "active_shadow_observation"
+    ]
+    rows = [
+        _weekly_review_candidate_row(
+            candidate,
+            as_of=as_of,
+            run_root=run_root,
+            review_policy=review_policy,
+        )
+        for candidate in candidates
+    ]
+    payload = {
+        "schema_version": EXPERIMENT_WEEKLY_REVIEW_SCHEMA_VERSION,
+        "report_type": "etf_experiment_weekly_review",
+        "review_policy_id": review_policy_id,
+        "review_policy_status": review_policy.policy_status,
+        "review_period": {
+            "as_of": as_of.isoformat(),
+            "active_candidate_count": len(candidates),
+            "min_review_days": int(review_policy.thresholds["min_review_days"]),
+        },
+        "active_shadow_candidates": [
+            {
+                "shadow_id": candidate.get("shadow_id"),
+                "candidate_id": candidate.get("candidate_id"),
+                "experiment_id": candidate.get("experiment_id"),
+                "source_run_id": candidate.get("source_run_id"),
+                "start_date": candidate.get("start_date"),
+                "status": candidate.get("status"),
+            }
+            for candidate in candidates
+        ],
+        "candidate_reviews": rows,
+        "summary": _weekly_review_summary(rows),
+        "observe_only": True,
+        "production_effect": "none",
+        "broker_action": "none",
+        "manual_review_required": True,
+        "production_promotion_allowed": False,
+    }
+    return payload
+
+
+def write_weekly_experiment_review_report(
+    payload: Mapping[str, Any],
+    *,
+    json_path: Path,
+    markdown_path: Path,
+) -> tuple[Path, Path]:
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.write_text(render_weekly_experiment_review_report(payload), encoding="utf-8")
+    return json_path, markdown_path
+
+
 def apply_ranking_policy_to_comparison_report(
     payload: Mapping[str, Any],
     *,
@@ -965,6 +1040,60 @@ def render_candidate_selection_report(payload: Mapping[str, Any]) -> str:
             f"- Needs more data: {summary.get('needs_more_data_count')}",
             f"- Rejected: {summary.get('rejected_count')}",
             f"- Blocked: {summary.get('blocked_count')}",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def render_weekly_experiment_review_report(payload: Mapping[str, Any]) -> str:
+    period = _mapping(payload.get("review_period"))
+    summary = _mapping(payload.get("summary"))
+    rows = [row for row in payload.get("candidate_reviews", []) if isinstance(row, Mapping)]
+    lines = [
+        "# ETF Experiment Weekly Review",
+        "",
+        f"- As Of: {period.get('as_of')}",
+        f"- Review Policy: {payload.get('review_policy_id')}",
+        f"- Active Shadow Candidates: {period.get('active_candidate_count')}",
+        f"- Status: {summary.get('status')}",
+        "- Safety: observe_only=true, production_effect=none, broker_action=none",
+        "- Production Promotion Allowed: false",
+        "",
+        "## Candidate Reviews",
+        "",
+        (
+            "| Candidate | Review Days | Candidate Return | Baseline Return | "
+            "QQQ Return | Drawdown | Turnover | Constraint Hit Rate | Action |"
+        ),
+        "|---|---:|---:|---:|---:|---:|---:|---:|---|",
+    ]
+    for row in rows:
+        lines.append(
+            "| "
+            f"{row.get('candidate_id')} | "
+            f"{row.get('review_days')} | "
+            f"{_fmt_pct(row.get('candidate_forward_return'))} | "
+            f"{_fmt_pct(row.get('baseline_forward_return'))} | "
+            f"{_fmt_pct(_mapping(row.get('benchmark_forward_returns')).get('QQQ'))} | "
+            f"{_fmt_pct(row.get('drawdown_during_review_period'))} | "
+            f"{_fmt_number(row.get('turnover_during_review_period'))} | "
+            f"{_fmt_pct(_mapping(row.get('constraint_hits')).get('constraint_hit_rate'))} | "
+            f"{row.get('recommended_action')} |"
+        )
+    if not rows:
+        lines.append("| none | 0 | - | - | - | - | - | - | needs_more_data |")
+    lines.extend(
+        [
+            "",
+            "## Summary",
+            "",
+            f"- Continue shadow: {summary.get('continue_shadow_count')}",
+            f"- Needs more data: {summary.get('needs_more_data_count')}",
+            f"- Reject candidate: {summary.get('reject_candidate_count')}",
+            (
+                "- Promote to longer observation: "
+                f"{summary.get('promote_to_longer_observation_count')}"
+            ),
         ]
     )
     return "\n".join(lines) + "\n"
@@ -1433,6 +1562,176 @@ def _candidate_selection_summary(candidates: list[dict[str, Any]]) -> dict[str, 
     }
 
 
+def _weekly_review_candidate_row(
+    candidate: Mapping[str, Any],
+    *,
+    as_of: date,
+    run_root: Path,
+    review_policy: ETFExperimentPolicyRef,
+) -> dict[str, Any]:
+    notes: list[str] = []
+    start = _date_from_text(candidate.get("start_date"))
+    review_days = max(0, (as_of - start).days + 1) if start is not None else 0
+    experiment_id = str(candidate.get("experiment_id") or "")
+    source_run_id = str(candidate.get("source_run_id") or "")
+    metrics_row: dict[str, Any] = {}
+    baseline_return: float | None = None
+    benchmark_returns: dict[str, float | None] = {"QQQ": None}
+    if not source_run_id:
+        notes.append("source_run_id_missing")
+    else:
+        run_dir = run_root / source_run_id
+        try:
+            comparison = build_experiment_comparison_report(run_dir)
+        except (FileNotFoundError, ValueError, json.JSONDecodeError) as exc:
+            notes.append(f"source_run_metrics_missing:{type(exc).__name__}")
+        else:
+            metrics_row = _comparison_row_for_experiment(comparison, experiment_id)
+            baseline_context = _mapping(comparison.get("baseline_comparison"))
+            baseline_metrics = _mapping(baseline_context.get("metrics"))
+            baseline_return = _optional_float(baseline_metrics.get("total_return"))
+            candidate_return = _optional_float(metrics_row.get("total_return"))
+            excess_vs_qqq = _optional_float(metrics_row.get("excess_return_vs_QQQ"))
+            if candidate_return is not None and excess_vs_qqq is not None:
+                benchmark_returns["QQQ"] = candidate_return - excess_vs_qqq
+    candidate_return = _optional_float(metrics_row.get("total_return"))
+    drawdown = _optional_float(metrics_row.get("max_drawdown"))
+    turnover = _optional_float(metrics_row.get("turnover"))
+    constraint_hit_rate = _optional_float(metrics_row.get("constraint_hit_rate"))
+    action = _weekly_review_action(
+        review_days=review_days,
+        candidate_return=candidate_return,
+        baseline_return=baseline_return,
+        benchmark_returns=benchmark_returns,
+        drawdown=drawdown,
+        turnover=turnover,
+        constraint_hit_rate=constraint_hit_rate,
+        review_policy=review_policy,
+        notes=notes,
+    )
+    return {
+        "shadow_id": candidate.get("shadow_id"),
+        "candidate_id": candidate.get("candidate_id"),
+        "experiment_id": experiment_id,
+        "source_run_id": source_run_id,
+        "review_period": {
+            "start_date": candidate.get("start_date"),
+            "as_of": as_of.isoformat(),
+            "review_days": review_days,
+        },
+        "review_days": review_days,
+        "candidate_forward_return": candidate_return,
+        "baseline_forward_return": baseline_return,
+        "benchmark_forward_returns": benchmark_returns,
+        "drawdown_during_review_period": drawdown,
+        "turnover_during_review_period": turnover,
+        "weight_stability": {
+            "constraint_hit_rate": constraint_hit_rate,
+            "regime_transition_count": metrics_row.get("regime_transition_count"),
+        },
+        "constraint_hits": {
+            "constraint_hit_rate": constraint_hit_rate,
+            "status": "unknown" if constraint_hit_rate is None else "measured",
+        },
+        "candidate_status_changes": {
+            "from_status": candidate.get("status"),
+            "recommended_action": action,
+            "state_mutation": "none",
+        },
+        "recommended_action": action,
+        "manual_review_notes": notes or ["review_metrics_available"],
+        "observe_only": True,
+        "production_effect": "none",
+        "broker_action": "none",
+        "manual_review_required": True,
+        "production_promotion_allowed": False,
+    }
+
+
+def _weekly_review_action(
+    *,
+    review_days: int,
+    candidate_return: float | None,
+    baseline_return: float | None,
+    benchmark_returns: Mapping[str, float | None],
+    drawdown: float | None,
+    turnover: float | None,
+    constraint_hit_rate: float | None,
+    review_policy: ETFExperimentPolicyRef,
+    notes: list[str],
+) -> str:
+    min_days = int(_required_policy_threshold(review_policy, "min_review_days"))
+    min_excess = _required_policy_threshold(
+        review_policy,
+        "min_excess_return_for_longer_observation",
+    )
+    max_drawdown_abs = _required_policy_threshold(
+        review_policy,
+        "max_drawdown_abs_for_continue",
+    )
+    max_turnover = _required_policy_threshold(review_policy, "max_turnover_for_continue")
+    if review_days < min_days:
+        notes.append(f"insufficient_review_days:{review_days}<{min_days}")
+        return "needs_more_data"
+    if candidate_return is None or baseline_return is None or benchmark_returns.get("QQQ") is None:
+        notes.append("forward_return_comparison_missing")
+        return "needs_more_data"
+    if drawdown is None or abs(drawdown) > max_drawdown_abs:
+        notes.append("drawdown_over_policy")
+        return "reject_candidate"
+    if turnover is None or turnover > max_turnover:
+        notes.append("turnover_over_policy")
+        return "reject_candidate"
+    if constraint_hit_rate is not None and constraint_hit_rate > 1.0:
+        notes.append("constraint_hit_rate_invalid")
+        return "reject_candidate"
+    excess_vs_baseline = candidate_return - baseline_return
+    excess_vs_qqq = candidate_return - float(benchmark_returns["QQQ"])
+    if excess_vs_baseline >= min_excess and excess_vs_qqq >= min_excess:
+        notes.append("meets_longer_observation_threshold")
+        return "promote_to_longer_observation"
+    notes.append("continue_shadow_observation")
+    return "continue_shadow"
+
+
+def _weekly_review_summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    actions = [str(row.get("recommended_action")) for row in rows]
+    counts = {
+        "continue_shadow_count": actions.count("continue_shadow"),
+        "needs_more_data_count": actions.count("needs_more_data"),
+        "reject_candidate_count": actions.count("reject_candidate"),
+        "promote_to_longer_observation_count": actions.count(
+            "promote_to_longer_observation"
+        ),
+    }
+    if not rows:
+        status = "NO_ACTIVE_SHADOW_CANDIDATES"
+    elif counts["reject_candidate_count"] > 0:
+        status = "ACTION_REQUIRED"
+    elif counts["promote_to_longer_observation_count"] > 0:
+        status = "READY_FOR_LONGER_OBSERVATION_REVIEW"
+    elif counts["needs_more_data_count"] > 0:
+        status = "NEEDS_MORE_DATA"
+    else:
+        status = "PASS"
+    return {
+        "status": status,
+        "candidate_count": len(rows),
+        **counts,
+        "production_promotion_allowed": False,
+    }
+
+
+def _comparison_row_for_experiment(
+    comparison: Mapping[str, Any],
+    experiment_id: str,
+) -> dict[str, Any]:
+    for row in comparison.get("metrics_table", []):
+        if isinstance(row, Mapping) and str(row.get("experiment_id")) == experiment_id:
+            return dict(row)
+    return {}
+
+
 def _selected_shadow_candidates(
     selection_report: Mapping[str, Any],
     *,
@@ -1598,6 +1897,15 @@ def _string_list(value: Any) -> list[str]:
     if not isinstance(value, list):
         return []
     return [str(item) for item in value]
+
+
+def _date_from_text(value: Any) -> date | None:
+    if value is None:
+        return None
+    try:
+        return date.fromisoformat(str(value))
+    except ValueError:
+        return None
 
 
 def _subtract_or_none(left: float | None, right: float | None) -> float | None:

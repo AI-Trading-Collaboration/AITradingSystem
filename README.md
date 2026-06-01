@@ -148,7 +148,9 @@ TRADING-064 batch experiments 使用
 再用 `aits etf experiments select-candidates --run-id <run_id>` / `--latest` 生成
 shadow-only candidate selection gate。只有 `eligible_for_shadow` candidate 可以继续用
 `aits etf experiments enroll-shadow --run-id <run_id> --candidate <candidate_id>` 或
-`--latest --top N` 登记到 `data/simulation/etf_shadow_candidates.json`。
+`--latest --top N` 登记到 `data/simulation/etf_shadow_candidates.json`。登记后可用
+`aits etf experiments weekly-review --as-of YYYY-MM-DD` 生成
+`reports/etf_portfolio/experiments/weekly_reviews/weekly_review_YYYY-MM-DD.json/md`。
 
 TRADING-064 controlled calibration experiments 从
 `config/etf_portfolio/experiments.yaml` 和
@@ -165,7 +167,10 @@ selection gate 只输出 `eligible_for_shadow`、`needs_more_data`、`rejected` 
 不会把 ranking 结果升级为 production change。Shadow enrollment registry 只保存
 `shadow_id`、`candidate_id`、`experiment_id`、source run、model/config hash、start date、
 status 和 evaluation schedule，路径在 ignored runtime 目录；重复登记同一 candidate
-不会追加重复记录。每个 experiment 和 pack 必须包含 `observe_only=true`、
+不会追加重复记录。`weekly_shadow_review_v1` review policy 的最小观察天数、longer
+observation excess return、drawdown 和 turnover 阈值同样在 pack config 中治理；weekly
+review 只能建议 `continue_shadow`、`needs_more_data`、`reject_candidate` 或
+`promote_to_longer_observation`，不得输出 production promotion 动作。每个 experiment 和 pack 必须包含 `observe_only=true`、
 `production_effect=none`、`broker_action=none` 和 `manual_review_required=true`。新增实验或
 pack 时只能使用 registry 支持的 override key，并先通过 loader/测试校验；这些 config 本身
 不运行回测、不写正式 target weights、不触发 broker action。
