@@ -1,0 +1,285 @@
+policy_metadata:
+  version: etf_experiment_registry_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: "TRADING-064A controlled ETF calibration experiment registry; definitions are observe-only and do not mutate the production baseline."
+  validation: "Registry schema and safety invariants are covered by ETF experiment registry tests."
+  review_condition: "Review after TRADING-064 final experiment validation gate and shadow observation evidence."
+
+base_configs:
+  default:
+    assets_config: assets.yaml
+    strategy_config: strategy.yaml
+    risk_config: risk.yaml
+    backtest_config: backtest.yaml
+    asset_symbols: [SPY, QQQ, SMH, SOXX, CASH]
+
+experiments:
+  base_conservative:
+    experiment_id: base_conservative
+    experiment_version: trading_064_v1
+    description: "Conservative base ETF allocation with higher SPY and CASH weight."
+    family: base_allocation
+    base_config_ref: default
+    overrides:
+      base_weights:
+        SPY: 0.40
+        QQQ: 0.35
+        SMH: 0.10
+        SOXX: 0.00
+        CASH: 0.15
+    benchmark_set: standard_etf
+    expected_risk_profile: conservative_growth
+    observe_only: true
+    production_effect: none
+    broker_action: none
+    manual_review_required: true
+
+  base_balanced_growth:
+    experiment_id: base_balanced_growth
+    experiment_version: trading_064_v1
+    description: "Balanced growth base ETF allocation."
+    family: base_allocation
+    base_config_ref: default
+    overrides:
+      base_weights:
+        SPY: 0.25
+        QQQ: 0.50
+        SMH: 0.15
+        SOXX: 0.00
+        CASH: 0.10
+    benchmark_set: standard_etf
+    expected_risk_profile: medium_growth
+    observe_only: true
+    production_effect: none
+    broker_action: none
+    manual_review_required: true
+
+  base_ai_growth:
+    experiment_id: base_ai_growth
+    experiment_version: trading_064_v1
+    description: "AI growth base ETF allocation with higher semiconductor exposure."
+    family: base_allocation
+    base_config_ref: default
+    overrides:
+      base_weights:
+        SPY: 0.15
+        QQQ: 0.50
+        SMH: 0.25
+        SOXX: 0.00
+        CASH: 0.10
+    benchmark_set: standard_etf
+    expected_risk_profile: ai_growth
+    observe_only: true
+    production_effect: none
+    broker_action: none
+    manual_review_required: true
+
+  base_semiconductor_aggressive:
+    experiment_id: base_semiconductor_aggressive
+    experiment_version: trading_064_v1
+    description: "Aggressive semiconductor-tilted ETF allocation."
+    family: base_allocation
+    base_config_ref: default
+    overrides:
+      base_weights:
+        SPY: 0.10
+        QQQ: 0.45
+        SMH: 0.35
+        SOXX: 0.00
+        CASH: 0.10
+    benchmark_set: standard_etf
+    expected_risk_profile: semiconductor_aggressive
+    observe_only: true
+    production_effect: none
+    broker_action: none
+    manual_review_required: true
+
+  regime_mild:
+    experiment_id: regime_mild
+    experiment_version: trading_064_v1
+    description: "Mild regime multiplier experiment with less defensive scaling."
+    family: regime_multiplier
+    base_config_ref: default
+    overrides:
+      regime_multipliers:
+        risk_on: 1.00
+        neutral: 0.75
+        risk_off: 0.40
+    benchmark_set: standard_etf
+    expected_risk_profile: growth_tolerant
+    observe_only: true
+    production_effect: none
+    broker_action: none
+    manual_review_required: true
+
+  regime_standard:
+    experiment_id: regime_standard
+    experiment_version: trading_064_v1
+    description: "Standard regime multiplier experiment aligned to current defensive posture."
+    family: regime_multiplier
+    base_config_ref: default
+    overrides:
+      regime_multipliers:
+        risk_on: 1.00
+        neutral: 0.60
+        risk_off: 0.20
+    benchmark_set: standard_etf
+    expected_risk_profile: balanced_cycle
+    observe_only: true
+    production_effect: none
+    broker_action: none
+    manual_review_required: true
+
+  regime_defensive:
+    experiment_id: regime_defensive
+    experiment_version: trading_064_v1
+    description: "Defensive regime multiplier experiment with lower risk-off exposure."
+    family: regime_multiplier
+    base_config_ref: default
+    overrides:
+      regime_multipliers:
+        risk_on: 0.90
+        neutral: 0.50
+        risk_off: 0.05
+    benchmark_set: standard_etf
+    expected_risk_profile: defensive_cycle
+    observe_only: true
+    production_effect: none
+    broker_action: none
+    manual_review_required: true
+
+  semicap_15:
+    experiment_id: semicap_15
+    experiment_version: trading_064_v1
+    description: "Semiconductor sleeve cap at 15%."
+    family: semiconductor_cap
+    base_config_ref: default
+    overrides:
+      semiconductor_sleeve_max_weight: 0.15
+    benchmark_set: standard_etf
+    expected_risk_profile: semiconductor_limited
+    observe_only: true
+    production_effect: none
+    broker_action: none
+    manual_review_required: true
+
+  semicap_25:
+    experiment_id: semicap_25
+    experiment_version: trading_064_v1
+    description: "Semiconductor sleeve cap at 25%."
+    family: semiconductor_cap
+    base_config_ref: default
+    overrides:
+      semiconductor_sleeve_max_weight: 0.25
+    benchmark_set: standard_etf
+    expected_risk_profile: semiconductor_balanced
+    observe_only: true
+    production_effect: none
+    broker_action: none
+    manual_review_required: true
+
+  semicap_35:
+    experiment_id: semicap_35
+    experiment_version: trading_064_v1
+    description: "Semiconductor sleeve cap at 35%."
+    family: semiconductor_cap
+    base_config_ref: default
+    overrides:
+      semiconductor_sleeve_max_weight: 0.35
+    benchmark_set: standard_etf
+    expected_risk_profile: semiconductor_growth
+    observe_only: true
+    production_effect: none
+    broker_action: none
+    manual_review_required: true
+
+  rebalance_02:
+    experiment_id: rebalance_02
+    experiment_version: trading_064_v1
+    description: "Minimum rebalance delta at 2%."
+    family: rebalance_threshold
+    base_config_ref: default
+    overrides:
+      min_rebalance_delta: 0.02
+    benchmark_set: standard_etf
+    expected_risk_profile: higher_turnover
+    observe_only: true
+    production_effect: none
+    broker_action: none
+    manual_review_required: true
+
+  rebalance_05:
+    experiment_id: rebalance_05
+    experiment_version: trading_064_v1
+    description: "Minimum rebalance delta at 5%."
+    family: rebalance_threshold
+    base_config_ref: default
+    overrides:
+      min_rebalance_delta: 0.05
+    benchmark_set: standard_etf
+    expected_risk_profile: balanced_turnover
+    observe_only: true
+    production_effect: none
+    broker_action: none
+    manual_review_required: true
+
+  rebalance_10:
+    experiment_id: rebalance_10
+    experiment_version: trading_064_v1
+    description: "Minimum rebalance delta at 10%."
+    family: rebalance_threshold
+    base_config_ref: default
+    overrides:
+      min_rebalance_delta: 0.10
+    benchmark_set: standard_etf
+    expected_risk_profile: lower_turnover
+    observe_only: true
+    production_effect: none
+    broker_action: none
+    manual_review_required: true
+
+  rs_weight_10:
+    experiment_id: rs_weight_10
+    experiment_version: trading_064_v1
+    description: "Relative strength score weight at 10%."
+    family: relative_strength_weight
+    base_config_ref: default
+    overrides:
+      relative_strength_weight: 0.10
+    benchmark_set: standard_etf
+    expected_risk_profile: lower_rs_dependency
+    observe_only: true
+    production_effect: none
+    broker_action: none
+    manual_review_required: true
+
+  rs_weight_20:
+    experiment_id: rs_weight_20
+    experiment_version: trading_064_v1
+    description: "Relative strength score weight at 20%."
+    family: relative_strength_weight
+    base_config_ref: default
+    overrides:
+      relative_strength_weight: 0.20
+    benchmark_set: standard_etf
+    expected_risk_profile: moderate_rs_dependency
+    observe_only: true
+    production_effect: none
+    broker_action: none
+    manual_review_required: true
+
+  rs_weight_30:
+    experiment_id: rs_weight_30
+    experiment_version: trading_064_v1
+    description: "Relative strength score weight at 30%."
+    family: relative_strength_weight
+    base_config_ref: default
+    overrides:
+      relative_strength_weight: 0.30
+    benchmark_set: standard_etf
+    expected_risk_profile: higher_rs_dependency
+    observe_only: true
+    production_effect: none
+    broker_action: none
+    manual_review_required: true
