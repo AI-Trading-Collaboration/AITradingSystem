@@ -20,4 +20,53 @@ jobs:
       - name: Docs freshness
         run: python -m ai_trading_system.cli docs validate-freshness
       - name: Test
-        run: python -m pytest
+        id: pytest
+        run: python -m pytest --junitxml=pytest-results.xml
+      - name: Test failure annotations
+        if: ${{ failure() && steps.pytest.conclusion == 'failure' }}
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          report_path = Path("pytest-results.xml")
+
+          def escape_data(value: str) -> str:
+              return value.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+          def escape_property(value: str) -> str:
+              return escape_data(value).replace(":", "%3A").replace(",", "%2C")
+
+          if not report_path.exists():
+              print("::error title=pytest failure::pytest failed before writing pytest-results.xml")
+              raise SystemExit(0)
+
+          root = ET.parse(report_path).getroot()
+          emitted = 0
+          for testcase in root.iter("testcase"):
+              failures = list(testcase.findall("failure")) + list(testcase.findall("error"))
+              if not failures:
+                  continue
+              file_name = testcase.get("file") or ""
+              line = testcase.get("line") or "1"
+              class_name = testcase.get("classname") or ""
+              test_name = testcase.get("name") or ""
+              nodeid = f"{class_name}.{test_name}".strip(".") or "pytest failure"
+              for failure in failures:
+                  message = (failure.get("message") or failure.text or "").strip()
+                  detail = f"{nodeid}: {message}" if message else nodeid
+                  print(
+                      "::error "
+                      f"file={escape_property(file_name)},"
+                      f"line={escape_property(line)},"
+                      "title=pytest failure::"
+                      f"{escape_data(detail[:8000])}"
+                  )
+                  emitted += 1
+
+          if emitted == 0:
+              print(
+                  "::error title=pytest failure::"
+                  "pytest failed but pytest-results.xml did not include failure or error cases"
+              )
+          PY
