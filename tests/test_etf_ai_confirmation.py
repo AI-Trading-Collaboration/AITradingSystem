@@ -15,9 +15,11 @@ from ai_trading_system.etf_portfolio.ai_confirmation import (
     ai_confirmation_breadth_records_to_frame,
     all_enabled_tickers,
     build_ai_confirmation_breadth_features,
+    build_ai_event_risk_overlay,
     build_ai_semiconductor_relative_strength_score,
     build_mega_cap_ai_confirmation_score,
     enabled_symbols_for_group,
+    event_risk_band,
     load_ai_confirmation_policy_config,
     load_ai_confirmation_universe_config,
     score_band,
@@ -522,6 +524,93 @@ def test_ai_semiconductor_relative_strength_score_band_and_pair_schema() -> None
     assert all("relative_return_60d" in pair for pair in score["pair_features"])
 
 
+def test_ai_event_risk_inside_lookahead_window_increases_risk() -> None:
+    overlay = _event_overlay(
+        [
+            _event(
+                event_id="nvda_earnings",
+                event_date="2026-06-03",
+                event_type="NVDA earnings",
+                related_symbols=["NVDA"],
+                severity="high",
+                lookahead_window_days=3,
+            )
+        ],
+        run_date=date(2026, 6, 1),
+    )
+
+    assert overlay["event_risk_score"] >= 75
+    assert overlay["risk_band"] == "high"
+    assert overlay["active_events"]
+    assert overlay["upcoming_events"]
+    assert "mega_cap_ai" in overlay["affected_groups"]
+    assert "semiconductor_hardware" in overlay["affected_groups"]
+
+
+def test_ai_event_risk_outside_window_does_not_increase_risk() -> None:
+    overlay = _event_overlay(
+        [
+            _event(
+                event_id="old_cpi",
+                event_date="2026-05-01",
+                event_type="CPI",
+                related_symbols=[],
+                severity="critical",
+                lookback_window_days=2,
+                lookahead_window_days=2,
+            )
+        ],
+        run_date=date(2026, 6, 1),
+    )
+
+    assert overlay["event_risk_score"] == 0
+    assert overlay["risk_band"] == "low"
+    assert overlay["active_events"] == []
+    assert overlay["reason_codes"] == ["no_active_ai_event_risk"]
+
+
+def test_ai_event_risk_multiple_events_aggregate_and_map_macro_groups() -> None:
+    overlay = _event_overlay(
+        [
+            _event(
+                event_id="fomc",
+                event_date="2026-06-01",
+                event_type="FOMC",
+                related_symbols=[],
+                severity="medium",
+            ),
+            _event(
+                event_id="tsm_earnings",
+                event_date="2026-06-02",
+                event_type="TSM earnings",
+                related_symbols=["TSM"],
+                severity="medium",
+                lookahead_window_days=2,
+            ),
+        ],
+        run_date=date(2026, 6, 1),
+    )
+
+    assert overlay["event_risk_score"] == pytest.approx(50.0)
+    assert overlay["risk_band"] == "high"
+    assert {"mega_cap_ai", "semiconductor_hardware", "cloud_ai_platform"} <= set(
+        overlay["affected_groups"]
+    )
+
+
+def test_ai_event_risk_optional_missing_source_is_safe() -> None:
+    overlay = _event_overlay([], run_date=date(2026, 6, 1))
+
+    assert overlay["event_risk_score"] == 0
+    assert overlay["active_events"] == []
+    assert overlay["observe_only"] is True
+    assert overlay["candidate_only"] is True
+    assert overlay["production_effect"] == "none"
+    assert overlay["broker_action"] == "none"
+    assert overlay["manual_review_required"] is True
+    assert event_risk_band(100, load_ai_confirmation_policy_config()) == "critical"
+
+
 def _raw_config() -> dict[str, object]:
     return deepcopy(load_ai_confirmation_universe_config().model_dump(mode="json"))
 
@@ -657,3 +746,36 @@ def _make_relative_drawdown_prices() -> pd.DataFrame:
                 }
             )
     return pd.DataFrame(rows)
+
+
+def _event_overlay(events: list[dict[str, object]], *, run_date: date) -> dict[str, object]:
+    return build_ai_event_risk_overlay(
+        events,
+        universe_config=load_ai_confirmation_universe_config(),
+        policy_config=load_ai_confirmation_policy_config(),
+        run_date=run_date,
+    )
+
+
+def _event(
+    *,
+    event_id: str,
+    event_date: str,
+    event_type: str,
+    related_symbols: list[str],
+    severity: str,
+    lookback_window_days: int = 1,
+    lookahead_window_days: int = 1,
+) -> dict[str, object]:
+    return {
+        "event_id": event_id,
+        "event_date": event_date,
+        "event_type": event_type,
+        "related_symbols": related_symbols,
+        "severity": severity,
+        "lookback_window_days": lookback_window_days,
+        "lookahead_window_days": lookahead_window_days,
+        "source": "fixture",
+        "confidence": "high",
+        "optional": True,
+    }

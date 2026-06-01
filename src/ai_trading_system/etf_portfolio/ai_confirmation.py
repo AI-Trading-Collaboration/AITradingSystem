@@ -209,12 +209,34 @@ class AISemiconductorRelativeStrengthPolicy(BaseModel):
         return self
 
 
+class EventRiskBandConfig(BaseModel):
+    max_score: float = Field(ge=0, le=100)
+
+
+class EventRiskOverlayPolicy(BaseModel):
+    severity_scores: dict[str, float] = Field(min_length=1)
+    risk_bands: dict[str, EventRiskBandConfig] = Field(min_length=1)
+    multiple_event_increment: float = Field(ge=0)
+    maximum_event_risk_score: float = Field(ge=0, le=100)
+
+    @model_validator(mode="after")
+    def validate_event_policy(self) -> Self:
+        required = {"low", "medium", "high", "critical"}
+        missing = required - set(self.severity_scores)
+        if missing:
+            raise ValueError(f"event risk severity scores missing: {sorted(missing)}")
+        if missing_bands := (required - set(self.risk_bands)):
+            raise ValueError(f"event risk bands missing: {sorted(missing_bands)}")
+        return self
+
+
 class AIConfirmationPolicyConfig(BaseModel):
     policy_metadata: PolicyMetadata
     safety: AIConfirmationSafetyConfig
     score_bands: dict[str, AIScoreBandConfig] = Field(min_length=1)
     mega_cap_ai_score: MegaCapAIScorePolicy
     ai_semiconductor_relative_strength_score: AISemiconductorRelativeStrengthPolicy
+    event_risk_overlay: EventRiskOverlayPolicy
 
     @model_validator(mode="after")
     def validate_score_bands(self) -> Self:
@@ -610,6 +632,57 @@ def build_ai_semiconductor_relative_strength_score(
         "policy_config_hash": policy_config.config_hash,
         **AI_CONFIRMATION_SAFETY,
     }
+
+
+def build_ai_event_risk_overlay(
+    events: Iterable[Mapping[str, Any]],
+    *,
+    universe_config: AIConfirmationUniverseConfig,
+    policy_config: AIConfirmationPolicyConfig,
+    run_date: date,
+) -> dict[str, Any]:
+    policy = policy_config.event_risk_overlay
+    normalized_events = [_normalize_event(event) for event in events]
+    active_events: list[dict[str, Any]] = []
+    upcoming_events: list[dict[str, Any]] = []
+    recent_events: list[dict[str, Any]] = []
+    for event in normalized_events:
+        event_date = event["event_date"]
+        lookahead_start = event_date - pd.Timedelta(days=event["lookahead_window_days"])
+        lookback_end = event_date + pd.Timedelta(days=event["lookback_window_days"])
+        run_timestamp = pd.Timestamp(run_date)
+        if lookahead_start <= run_timestamp <= lookback_end:
+            active_events.append(event)
+        if lookahead_start <= run_timestamp < event_date:
+            upcoming_events.append(event)
+        if event_date < run_timestamp <= lookback_end:
+            recent_events.append(event)
+    score = _event_risk_score(active_events, policy)
+    affected_groups = _affected_event_groups(active_events, universe_config)
+    reason_codes = [
+        f"{event['event_type']}:{event['severity']}" for event in active_events
+    ] or ["no_active_ai_event_risk"]
+    return {
+        "date": run_date.isoformat(),
+        "event_risk_score": score,
+        "active_events": [_event_output(event) for event in active_events],
+        "upcoming_events": [_event_output(event) for event in upcoming_events],
+        "recent_events": [_event_output(event) for event in recent_events],
+        "affected_groups": affected_groups,
+        "risk_band": event_risk_band(score, policy_config),
+        "reason_codes": reason_codes,
+        **AI_CONFIRMATION_SAFETY,
+    }
+
+
+def event_risk_band(score: float, policy_config: AIConfirmationPolicyConfig) -> str:
+    for band, config in sorted(
+        policy_config.event_risk_overlay.risk_bands.items(),
+        key=lambda item: item[1].max_score,
+    ):
+        if score <= config.max_score:
+            return band
+    return "critical"
 
 
 def score_band(score: float, policy_config: AIConfirmationPolicyConfig) -> str:
@@ -1022,3 +1095,77 @@ def _relative_drawdown_component(
         capped = min(abs(drawdown), abs(policy.relative_drawdown_full_penalty))
         penalties.append(100.0 * (1.0 - capped / abs(policy.relative_drawdown_full_penalty)))
     return _clamp_score(float(np.mean(penalties)))
+
+
+def _normalize_event(event: Mapping[str, Any]) -> dict[str, Any]:
+    event_date = pd.Timestamp(str(event["event_date"]))
+    related_symbols = event.get("related_symbols") or []
+    return {
+        "event_id": str(event["event_id"]),
+        "event_date": event_date,
+        "event_type": str(event["event_type"]),
+        "related_symbols": [str(symbol).strip().upper() for symbol in related_symbols],
+        "severity": str(event.get("severity", "low")).strip().lower(),
+        "lookback_window_days": int(event.get("lookback_window_days", 0)),
+        "lookahead_window_days": int(event.get("lookahead_window_days", 0)),
+        "source": str(event.get("source", "unknown")),
+        "confidence": str(event.get("confidence", "unknown")),
+        "optional": bool(event.get("optional", False)),
+    }
+
+
+def _event_risk_score(
+    active_events: list[dict[str, Any]],
+    policy: EventRiskOverlayPolicy,
+) -> float:
+    if not active_events:
+        return 0.0
+    base = max(
+        policy.severity_scores.get(event["severity"], policy.severity_scores["low"])
+        for event in active_events
+    )
+    increment = max(0, len(active_events) - 1) * policy.multiple_event_increment
+    return round(min(policy.maximum_event_risk_score, base + increment), 2)
+
+
+def _affected_event_groups(
+    active_events: list[dict[str, Any]],
+    universe_config: AIConfirmationUniverseConfig,
+) -> list[str]:
+    if not active_events:
+        return []
+    affected: set[str] = set()
+    macro_types = {"FOMC", "CPI", "PCE", "major_macro_event", "export_control_window"}
+    for event in active_events:
+        related_symbols = set(event["related_symbols"])
+        if event["event_type"] in macro_types or not related_symbols:
+            affected.update(
+                group_id
+                for group_id, group in universe_config.ai_confirmation_universe.items()
+                if group.enabled and group_id != AI_CONFIRMATION_EVENT_GROUP_ID
+            )
+            continue
+        for group_id, group in universe_config.ai_confirmation_universe.items():
+            if not group.enabled or group_id == AI_CONFIRMATION_EVENT_GROUP_ID:
+                continue
+            group_symbols = {symbol.ticker for symbol in enabled_symbols_for_group(
+                universe_config, group_id
+            )}
+            if related_symbols & group_symbols:
+                affected.add(group_id)
+    return sorted(affected)
+
+
+def _event_output(event: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "event_id": event["event_id"],
+        "event_date": pd.Timestamp(event["event_date"]).date().isoformat(),
+        "event_type": event["event_type"],
+        "related_symbols": event["related_symbols"],
+        "severity": event["severity"],
+        "lookback_window_days": event["lookback_window_days"],
+        "lookahead_window_days": event["lookahead_window_days"],
+        "source": event["source"],
+        "confidence": event["confidence"],
+        "optional": event["optional"],
+    }

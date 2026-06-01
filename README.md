@@ -193,7 +193,9 @@ AI universe data 缺失时 fail closed。MegaCapAIScore 从 mega-cap breadth、r
 strength vs `QQQ` / `SPY`、drawdown penalty 和 coverage penalty 计算 0-100 score，
 AISemiconductorRelativeStrengthScore 从 `QQQ/SPY`、`SMH/QQQ`、`SOXX/QQQ`、
 `SMH/SPY`、`SOXX/SPY` 和 optional AI ETF proxy pairs 计算 ETF-level confirmation，
-二者先作为后续 report/composite 的 candidate-only payload。后续 report、shadow overlay、
+AI event risk overlay 只按 FOMC/CPI/PCE、major AI earnings、semiconductor earnings、
+export-control window 等日历事件输出 active/upcoming/recent risk flags，不预测事件方向。
+这些输出先作为后续 report/composite 的 candidate-only payload。后续 report、shadow overlay、
 Reader Brief 和 validation gate 必须固定
 `observe_only=true`、`candidate_only=true`、`production_effect=none`、
 `broker_action=none`、`manual_review_required=true`；overlay-adjusted weights 只能作为

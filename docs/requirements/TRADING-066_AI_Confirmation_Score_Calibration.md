@@ -54,7 +54,7 @@ AI confirmation layer 不写 `data/etf_portfolio/target_weights.csv`，不替换
 |TRADING-066B Semiconductor / AI Breadth Features|DONE|group breadth features、coverage、no-lookahead timing|
 |TRADING-066C Mega-Cap AI Confirmation Score|DONE|MegaCapAIScore 0-100、components、drivers、safety fields|
 |TRADING-066D AI ETF / Semiconductor Relative Strength Score|DONE|ETF relative pairs、optional ETF handling、score bands|
-|TRADING-066E Event Risk Overlay|READY|config/calendar-driven risk score and active/upcoming/recent events|
+|TRADING-066E Event Risk Overlay|DONE|config/calendar-driven risk score and active/upcoming/recent events|
 |TRADING-066F AI Confirmation Composite Score|READY|AIConfirmationScore, action_hint, reason_codes, safety fields|
 |TRADING-066G AI Confirmation Report|READY|JSON/Markdown standalone report with safety banner and components|
 |TRADING-066H Shadow Candidate Overlay Experiment|READY|bounded candidate-only hypothetical weights, no production mutation|
@@ -94,3 +94,6 @@ AI confirmation layer 不写 `data/etf_portfolio/target_weights.csv`，不替换
 - 2026-06-01: TRADING-066D 完成。新增 AISemiconductorRelativeStrengthScore builder 和
   policy-governed ETF pair definitions；覆盖 `QQQ/SPY`、`SMH/QQQ`、`SOXX/QQQ`、
   `SMH/SPY`、`SOXX/SPY`，optional proxy 缺失只记录 warning，不阻断 baseline。
+- 2026-06-01: TRADING-066E 完成。新增 event risk overlay，按事件窗口输出
+  active/upcoming/recent events、affected_groups、risk_band 和 reason_codes；它仅作为风险旗标，
+  不预测事件方向、不修改 production weights。
