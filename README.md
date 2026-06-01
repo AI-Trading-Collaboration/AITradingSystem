@@ -191,7 +191,9 @@ floor。TRADING-066
 该命令先执行 ETF price quality gate，只使用 `date <= score_date` 的价格，strict required
 AI universe data 缺失时 fail closed。MegaCapAIScore 从 mega-cap breadth、relative
 strength vs `QQQ` / `SPY`、drawdown penalty 和 coverage penalty 计算 0-100 score，
-先作为后续 report/composite 的 candidate-only payload。后续 report、shadow overlay、
+AISemiconductorRelativeStrengthScore 从 `QQQ/SPY`、`SMH/QQQ`、`SOXX/QQQ`、
+`SMH/SPY`、`SOXX/SPY` 和 optional AI ETF proxy pairs 计算 ETF-level confirmation，
+二者先作为后续 report/composite 的 candidate-only payload。后续 report、shadow overlay、
 Reader Brief 和 validation gate 必须固定
 `observe_only=true`、`candidate_only=true`、`production_effect=none`、
 `broker_action=none`、`manual_review_required=true`；overlay-adjusted weights 只能作为

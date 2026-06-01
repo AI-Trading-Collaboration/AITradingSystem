@@ -167,11 +167,54 @@ class MegaCapAIScorePolicy(BaseModel):
         return self
 
 
+class RelativeStrengthPairPolicy(BaseModel):
+    numerator: str = Field(min_length=1)
+    denominator: str = Field(min_length=1)
+    component: str = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def normalize_pair(self) -> Self:
+        self.numerator = self.numerator.strip().upper()
+        self.denominator = self.denominator.strip().upper()
+        self.component = self.component.strip()
+        if self.numerator == self.denominator:
+            raise ValueError("relative strength pair numerator and denominator must differ")
+        return self
+
+
+class AISemiconductorRelativeStrengthPolicy(BaseModel):
+    required_pairs: list[RelativeStrengthPairPolicy] = Field(min_length=1)
+    optional_pairs: list[RelativeStrengthPairPolicy] = Field(default_factory=list)
+    component_weights: dict[str, float] = Field(min_length=1)
+    relative_return_full_scale: float = Field(gt=0)
+    relative_drawdown_full_penalty: float = Field(lt=0)
+    driver_positive_min: float = Field(ge=0, le=100)
+    driver_negative_max: float = Field(ge=0, le=100)
+
+    @model_validator(mode="after")
+    def validate_weights_and_components(self) -> Self:
+        total = sum(self.component_weights.values())
+        if abs(total - 1.0) > 1e-6:
+            raise ValueError(
+                f"AI semiconductor relative strength weights must sum to 1.0: {total}"
+            )
+        if any(weight < 0 for weight in self.component_weights.values()):
+            raise ValueError("AI semiconductor relative strength weights must be non-negative")
+        pair_components = {pair.component for pair in [*self.required_pairs, *self.optional_pairs]}
+        missing = sorted(
+            pair_components - set(self.component_weights) - {"relative_drawdown_penalty"}
+        )
+        if missing:
+            raise ValueError(f"relative strength pair components missing weights: {missing}")
+        return self
+
+
 class AIConfirmationPolicyConfig(BaseModel):
     policy_metadata: PolicyMetadata
     safety: AIConfirmationSafetyConfig
     score_bands: dict[str, AIScoreBandConfig] = Field(min_length=1)
     mega_cap_ai_score: MegaCapAIScorePolicy
+    ai_semiconductor_relative_strength_score: AISemiconductorRelativeStrengthPolicy
 
     @model_validator(mode="after")
     def validate_score_bands(self) -> Self:
@@ -494,6 +537,81 @@ def build_mega_cap_ai_confirmation_score(
     }
 
 
+def build_ai_semiconductor_relative_strength_score(
+    prices: pd.DataFrame,
+    *,
+    policy_config: AIConfirmationPolicyConfig,
+    run_date: date,
+) -> dict[str, Any]:
+    policy = policy_config.ai_semiconductor_relative_strength_score
+    frame = _prepare_ai_price_history(prices, run_date)
+    pair_features: list[dict[str, Any]] = []
+    warnings: list[str] = []
+    for pair in policy.required_pairs:
+        features = _relative_strength_pair_features(frame, pair, policy)
+        if features is None:
+            warnings.append(
+                f"required_pair_missing:{pair.numerator}/{pair.denominator}"
+            )
+            continue
+        features["optional"] = False
+        pair_features.append(features)
+    for pair in policy.optional_pairs:
+        features = _relative_strength_pair_features(frame, pair, policy)
+        if features is None:
+            warnings.append(f"optional_pair_missing:{pair.numerator}/{pair.denominator}")
+            continue
+        features["optional"] = True
+        pair_features.append(features)
+
+    component_scores: dict[str, float] = {}
+    for component in policy.component_weights:
+        if component == "relative_drawdown_penalty":
+            component_scores[component] = _relative_drawdown_component(pair_features, policy)
+            continue
+        scores = [
+            float(pair["relative_momentum_score"])
+            for pair in pair_features
+            if pair["component"] == component
+            and _is_finite_number(pair.get("relative_momentum_score"))
+        ]
+        if scores:
+            component_scores[component] = _clamp_score(float(np.mean(scores)))
+        else:
+            component_scores[component] = 50.0
+            warnings.append(f"component_unavailable:{component}")
+
+    weighted_score = sum(
+        component_scores[component] * policy.component_weights[component]
+        for component in policy.component_weights
+    )
+    score_value = round(_clamp_score(weighted_score), 2)
+    return {
+        "date": run_date.isoformat(),
+        "score_name": "AISemiconductorRelativeStrengthScore",
+        "score_value": score_value,
+        "score_band": score_band(score_value, policy_config),
+        "component_scores": {
+            component: round(float(score), 2) for component, score in component_scores.items()
+        },
+        "pair_features": pair_features,
+        "top_positive_drivers": _driver_list(
+            component_scores,
+            positive=True,
+            threshold=policy.driver_positive_min,
+        ),
+        "top_negative_drivers": _driver_list(
+            component_scores,
+            positive=False,
+            threshold=policy.driver_negative_max,
+        ),
+        "warnings": sorted(set(warnings)),
+        "policy_version": policy_config.policy_metadata.version,
+        "policy_config_hash": policy_config.config_hash,
+        **AI_CONFIRMATION_SAFETY,
+    }
+
+
 def score_band(score: float, policy_config: AIConfirmationPolicyConfig) -> str:
     for band, config in sorted(
         policy_config.score_bands.items(),
@@ -807,3 +925,100 @@ def _driver_list(
 
 def _clamp_score(value: float) -> float:
     return min(100.0, max(0.0, float(value)))
+
+
+def _relative_strength_pair_features(
+    frame: pd.DataFrame,
+    pair: RelativeStrengthPairPolicy,
+    policy: AISemiconductorRelativeStrengthPolicy,
+) -> dict[str, Any] | None:
+    ratio = _relative_price_ratio(frame, pair.numerator, pair.denominator)
+    if ratio is None or len(ratio) <= 120:
+        return None
+    features: dict[str, Any] = {
+        "pair": f"{pair.numerator}/{pair.denominator}",
+        "numerator": pair.numerator,
+        "denominator": pair.denominator,
+        "component": pair.component,
+    }
+    returns_for_score: list[float] = []
+    for window in (20, 60, 120):
+        relative_return = _series_return(ratio, window=window)
+        features[f"relative_return_{window}d"] = relative_return
+        if relative_return is not None:
+            returns_for_score.append(relative_return)
+    for window in (50, 200):
+        moving_average = ratio.rolling(window=window, min_periods=window).mean().iloc[-1]
+        features[f"relative_price_above_{window}d_ma"] = (
+            bool(ratio.iloc[-1] > moving_average)
+            if _is_finite_number(moving_average)
+            else None
+        )
+    relative_drawdown = _series_drawdown(ratio, window=60)
+    features["relative_drawdown"] = relative_drawdown
+    if returns_for_score:
+        average_relative_return = float(np.mean(returns_for_score))
+        normalized = 50.0 + (
+            average_relative_return / policy.relative_return_full_scale
+        ) * 50.0
+        features["relative_momentum_score"] = _clamp_score(normalized)
+    else:
+        features["relative_momentum_score"] = None
+    return features
+
+
+def _relative_price_ratio(
+    frame: pd.DataFrame,
+    numerator: str,
+    denominator: str,
+) -> pd.Series | None:
+    selected = frame.loc[frame["symbol"].isin({numerator, denominator})]
+    if selected.empty:
+        return None
+    pivot = selected.pivot_table(
+        index="_date",
+        columns="symbol",
+        values="_adj_close",
+        aggfunc="last",
+    ).sort_index()
+    if numerator not in pivot.columns or denominator not in pivot.columns:
+        return None
+    ratio = (pivot[numerator] / pivot[denominator]).replace([np.inf, -np.inf], np.nan)
+    return ratio.dropna()
+
+
+def _series_return(series: pd.Series, *, window: int) -> float | None:
+    if len(series) <= window:
+        return None
+    return _safe_float(series.iloc[-1] / series.iloc[-window - 1] - 1.0)
+
+
+def _series_drawdown(series: pd.Series, *, window: int) -> float | None:
+    if len(series) < window:
+        return None
+    recent = series.tail(window)
+    high = recent.max()
+    if not _is_finite_number(high) or high <= 0:
+        return None
+    return _safe_float(recent.iloc[-1] / high - 1.0)
+
+
+def _relative_drawdown_component(
+    pair_features: list[dict[str, Any]],
+    policy: AISemiconductorRelativeStrengthPolicy,
+) -> float:
+    drawdowns = [
+        float(pair["relative_drawdown"])
+        for pair in pair_features
+        if _is_finite_number(pair.get("relative_drawdown"))
+    ]
+    if not drawdowns:
+        return 50.0
+    penalties = []
+    for drawdown in drawdowns:
+        if drawdown >= 0:
+            penalties.append(100.0)
+            continue
+        capped = min(abs(drawdown), abs(policy.relative_drawdown_full_penalty))
+        penalties.append(100.0 * (1.0 - capped / abs(policy.relative_drawdown_full_penalty)))
+    return _clamp_score(float(np.mean(penalties)))

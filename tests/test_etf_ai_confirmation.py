@@ -15,6 +15,7 @@ from ai_trading_system.etf_portfolio.ai_confirmation import (
     ai_confirmation_breadth_records_to_frame,
     all_enabled_tickers,
     build_ai_confirmation_breadth_features,
+    build_ai_semiconductor_relative_strength_score,
     build_mega_cap_ai_confirmation_score,
     enabled_symbols_for_group,
     load_ai_confirmation_policy_config,
@@ -459,6 +460,68 @@ def test_mega_cap_ai_score_data_coverage_penalty_and_safety_fields() -> None:
     assert isinstance(score["top_negative_drivers"], list)
 
 
+def test_ai_semiconductor_relative_strength_score_rewards_smh_vs_qqq() -> None:
+    strong = _relative_strength_score({"SPY": 0.2, "QQQ": 0.4, "SMH": 1.0, "SOXX": 0.9})
+    weak = _relative_strength_score({"SPY": 0.2, "QQQ": 0.9, "SMH": 0.1, "SOXX": 0.1})
+
+    assert strong["score_value"] > weak["score_value"]
+    assert strong["component_scores"]["semiconductor_vs_growth"] > weak[
+        "component_scores"
+    ]["semiconductor_vs_growth"]
+
+
+def test_ai_semiconductor_relative_strength_growth_vs_market_component() -> None:
+    growth_leads = _relative_strength_score({"SPY": 0.1, "QQQ": 1.0, "SMH": 0.9, "SOXX": 0.8})
+    growth_lags = _relative_strength_score({"SPY": 1.0, "QQQ": 0.1, "SMH": 0.2, "SOXX": 0.2})
+
+    assert growth_leads["component_scores"]["growth_vs_market"] > growth_lags[
+        "component_scores"
+    ]["growth_vs_market"]
+
+
+def test_ai_semiconductor_relative_strength_optional_pairs_do_not_block() -> None:
+    score = _relative_strength_score({"SPY": 0.2, "QQQ": 0.4, "SMH": 0.8, "SOXX": 0.7})
+
+    assert score["score_name"] == "AISemiconductorRelativeStrengthScore"
+    assert score["score_value"] > 0
+    assert any("optional_pair_missing" in warning for warning in score["warnings"])
+    assert score["observe_only"] is True
+    assert score["candidate_only"] is True
+    assert score["production_effect"] == "none"
+    assert score["broker_action"] == "none"
+
+
+def test_ai_semiconductor_relative_strength_drawdown_penalty_works() -> None:
+    steady = _relative_strength_score({"SPY": 0.2, "QQQ": 0.4, "SMH": 0.8, "SOXX": 0.8})
+    drawdown_prices = _make_relative_drawdown_prices()
+    drawdown = build_ai_semiconductor_relative_strength_score(
+        drawdown_prices,
+        policy_config=load_ai_confirmation_policy_config(),
+        run_date=date.fromisoformat(str(drawdown_prices["date"].max())),
+    )
+
+    assert drawdown["component_scores"]["relative_drawdown_penalty"] < steady[
+        "component_scores"
+    ]["relative_drawdown_penalty"]
+
+
+def test_ai_semiconductor_relative_strength_score_band_and_pair_schema() -> None:
+    score = _relative_strength_score(
+        {"SPY": 0.05, "QQQ": 1.0, "SMH": 1.5, "SOXX": 1.4, "XLK": 0.9, "IGV": 1.1}
+    )
+
+    assert score["score_band"] in {
+        "strong_confirm",
+        "confirm",
+        "neutral",
+        "weak",
+        "negative",
+    }
+    required_pairs = {pair["pair"] for pair in score["pair_features"] if not pair["optional"]}
+    assert {"QQQ/SPY", "SMH/QQQ", "SOXX/QQQ", "SMH/SPY", "SOXX/SPY"} <= required_pairs
+    assert all("relative_return_60d" in pair for pair in score["pair_features"])
+
+
 def _raw_config() -> dict[str, object]:
     return deepcopy(load_ai_confirmation_universe_config().model_dump(mode="json"))
 
@@ -535,6 +598,46 @@ def _make_drawdown_price_frame(symbols: list[str]) -> pd.DataFrame:
         for symbol in symbols:
             if symbol in {"QQQ", "SPY"}:
                 price = 100.0 + 0.1 * day_index
+            elif day_index < 200:
+                price = 100.0 + 1.0 * day_index
+            else:
+                price = 300.0 - 2.0 * (day_index - 200)
+            rows.append(
+                {
+                    "date": current_date.isoformat(),
+                    "symbol": symbol,
+                    "open": price,
+                    "high": price,
+                    "low": price,
+                    "close": price,
+                    "adj_close": price,
+                    "volume": 1_000_000 + day_index,
+                    "source": "fixture",
+                    "created_at": "2026-01-01T00:00:00Z",
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def _relative_strength_score(slopes: dict[str, float]) -> dict[str, object]:
+    prices = _make_ai_price_frame(slopes, days=260)
+    return build_ai_semiconductor_relative_strength_score(
+        prices,
+        policy_config=load_ai_confirmation_policy_config(),
+        run_date=date.fromisoformat(str(prices["date"].max())),
+    )
+
+
+def _make_relative_drawdown_prices() -> pd.DataFrame:
+    rows: list[dict[str, object]] = []
+    start = date(2025, 1, 1)
+    for day_index in range(260):
+        current_date = start + timedelta(days=day_index)
+        for symbol in ["SPY", "QQQ", "SMH", "SOXX"]:
+            if symbol == "SPY":
+                price = 100.0 + 0.1 * day_index
+            elif symbol == "QQQ":
+                price = 100.0 + 0.2 * day_index
             elif day_index < 200:
                 price = 100.0 + 1.0 * day_index
             else:

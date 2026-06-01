@@ -48,3 +48,44 @@ mega_cap_ai_score:
   coverage_warning_min: 0.80
   driver_positive_min: 65.0
   driver_negative_max: 40.0
+
+ai_semiconductor_relative_strength_score:
+  required_pairs:
+    - numerator: QQQ
+      denominator: SPY
+      component: growth_vs_market
+    - numerator: SMH
+      denominator: QQQ
+      component: semiconductor_vs_growth
+    - numerator: SOXX
+      denominator: QQQ
+      component: semiconductor_vs_growth
+    - numerator: SMH
+      denominator: SPY
+      component: semiconductor_vs_market
+    - numerator: SOXX
+      denominator: SPY
+      component: semiconductor_vs_market
+  optional_pairs:
+    - numerator: XLK
+      denominator: SPY
+      component: growth_vs_market
+    - numerator: IGV
+      denominator: QQQ
+      component: ai_proxy_vs_growth
+    - numerator: AIQ
+      denominator: QQQ
+      component: ai_proxy_vs_growth
+    - numerator: BOTZ
+      denominator: QQQ
+      component: ai_proxy_vs_growth
+  component_weights:
+    growth_vs_market: 0.25
+    semiconductor_vs_growth: 0.30
+    semiconductor_vs_market: 0.25
+    ai_proxy_vs_growth: 0.10
+    relative_drawdown_penalty: 0.10
+  relative_return_full_scale: 0.10
+  relative_drawdown_full_penalty: -0.15
+  driver_positive_min: 65.0
+  driver_negative_max: 40.0
