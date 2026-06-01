@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from copy import deepcopy
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -11,6 +12,7 @@ from typer.testing import CliRunner
 from ai_trading_system.cli import app
 from ai_trading_system.etf_portfolio.data import standardize_price_frame, validate_price_data
 from ai_trading_system.etf_portfolio.experiments import (
+    DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH,
     EXPERIMENT_CANDIDATE_SELECTION_SCHEMA_KEYS,
     EXPERIMENT_COMPARISON_SCHEMA_KEYS,
     ETFExperimentPackRegistry,
@@ -19,8 +21,10 @@ from ai_trading_system.etf_portfolio.experiments import (
     build_candidate_selection_report,
     build_experiment_comparison_report,
     build_experiment_config_bundle,
+    enroll_shadow_candidates,
     load_experiment_pack_registry,
     load_experiment_registry,
+    load_shadow_candidate_registry,
     rank_experiment_candidates,
     run_experiment_batch,
     validate_experiment_pack_registry,
@@ -648,6 +652,129 @@ def test_etf_experiment_select_candidates_cli_smoke(tmp_path: Path) -> None:
     assert list(tmp_path.glob("*/candidate_selection_report.json"))
 
 
+def test_etf_shadow_enrollment_creates_observe_only_record(tmp_path: Path) -> None:
+    selection = build_candidate_selection_report(
+        _selection_report([_ranked_candidate("candidate_a", score=0.70)]),
+        promotion_policy=_promotion_policy(),
+        promotion_policy_id="shadow_only_manual_review",
+    )
+    registry_path = tmp_path / "etf_shadow_candidates.json"
+
+    registry = enroll_shadow_candidates(
+        selection,
+        registry_path=registry_path,
+        enrolled_at=datetime(2026, 6, 1, tzinfo=UTC),
+    )
+
+    record = registry["candidates"][0]
+    assert registry_path.exists()
+    assert registry["candidate_count"] == 1
+    assert record["candidate_id"] == "unit:candidate_a"
+    assert record["experiment_id"] == "candidate_a"
+    assert record["source_run_id"] == "unit"
+    assert record["status"] == "active_shadow_observation"
+    assert record["observe_only"] is True
+    assert record["production_effect"] == "none"
+    assert record["broker_action"] == "none"
+    assert record["manual_review_required"] is True
+    assert record["production_promotion_allowed"] is False
+    assert record["evaluation_schedule"]["weekly_review_task"] == "TRADING-064H"
+
+
+def test_etf_shadow_enrollment_duplicate_is_deterministic(tmp_path: Path) -> None:
+    selection = build_candidate_selection_report(
+        _selection_report([_ranked_candidate("candidate_a", score=0.70)]),
+        promotion_policy=_promotion_policy(),
+        promotion_policy_id="shadow_only_manual_review",
+    )
+    registry_path = tmp_path / "etf_shadow_candidates.json"
+
+    enroll_shadow_candidates(
+        selection,
+        registry_path=registry_path,
+        enrolled_at=datetime(2026, 6, 1, tzinfo=UTC),
+    )
+    first = registry_path.read_text(encoding="utf-8")
+    enroll_shadow_candidates(
+        selection,
+        registry_path=registry_path,
+        enrolled_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    second = registry_path.read_text(encoding="utf-8")
+
+    assert first == second
+    assert load_shadow_candidate_registry(registry_path)["candidate_count"] == 1
+
+
+def test_etf_shadow_enrollment_rejects_unsafe_candidate(tmp_path: Path) -> None:
+    selection = build_candidate_selection_report(
+        _selection_report([_ranked_candidate("candidate_a", score=0.70)]),
+        promotion_policy=_promotion_policy(),
+        promotion_policy_id="shadow_only_manual_review",
+    )
+    selection["candidates"][0]["production_effect"] = "target_weights"
+
+    with pytest.raises(ValueError, match="production_effect=none"):
+        enroll_shadow_candidates(
+            selection,
+            registry_path=tmp_path / "etf_shadow_candidates.json",
+            enrolled_at=datetime(2026, 6, 1, tzinfo=UTC),
+        )
+
+
+def test_etf_shadow_enrollment_blocks_noneligible_candidate(tmp_path: Path) -> None:
+    selection = build_candidate_selection_report(
+        _selection_report([_ranked_candidate("low_score", score=0.20)]),
+        promotion_policy=_promotion_policy(),
+        promotion_policy_id="shadow_only_manual_review",
+    )
+
+    with pytest.raises(ValueError, match="no eligible"):
+        enroll_shadow_candidates(
+            selection,
+            registry_path=tmp_path / "etf_shadow_candidates.json",
+            enrolled_at=datetime(2026, 6, 1, tzinfo=UTC),
+        )
+
+
+def test_etf_shadow_enrollment_runtime_path_is_ignored() -> None:
+    ignored_path = DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH
+    ignore_text = (Path.cwd() / ".gitignore").read_text(encoding="utf-8")
+
+    assert ignored_path.as_posix().endswith("data/simulation/etf_shadow_candidates.json")
+    assert "data/simulation/" in ignore_text
+
+
+def test_etf_shadow_enrollment_cli_smoke(tmp_path: Path) -> None:
+    run_dir = _write_eligible_experiment_run(tmp_path)
+    registry_path = tmp_path / "state" / "etf_shadow_candidates.json"
+    runner = CliRunner()
+
+    result = runner.invoke(
+        app,
+        [
+            "etf",
+            "experiments",
+            "enroll-shadow",
+            "--run-id",
+            run_dir.name,
+            "--output-dir",
+            str(tmp_path),
+            "--top",
+            "1",
+            "--registry-path",
+            str(registry_path),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "ETF shadow candidates registry" in result.output
+    assert "production_effect=none" in result.output
+    assert json.loads(registry_path.read_text(encoding="utf-8"))["candidate_count"] == 1
+
+
 def _registry_raw() -> dict[str, object]:
     return deepcopy(load_experiment_registry().model_dump(mode="json"))
 
@@ -698,6 +825,80 @@ def _single_batch(tmp_path: Path):
     )
 
 
+def _write_eligible_experiment_run(tmp_path: Path) -> Path:
+    run_dir = tmp_path / "eligible_run"
+    run_dir.mkdir(parents=True)
+    documents = {
+        "run_manifest.json": {
+            "run_id": "eligible_run",
+            "pack_id": "etf_calibration_v1",
+            "start_date": "2022-12-01",
+            "end_date": "2022-12-20",
+            "data_quality_status": "PASS",
+            "metric_schema_version": "etf_experiment_metrics_v1",
+            "observe_only": True,
+            "production_effect": "none",
+            "broker_action": "none",
+            "manual_review_required": True,
+        },
+        "experiment_results.json": {
+            "results": [
+                {
+                    "experiment_id": "base_ai_growth",
+                    "status": "PASS",
+                    "experiment_version": "v0_1",
+                    "family": "base_allocation",
+                    "config_hash": "config_hash_base_ai_growth",
+                    "model_version": "etf_model_base_ai_growth",
+                    "first_signal_date": "2022-12-01",
+                    "last_signal_date": "2022-12-20",
+                    "observe_only": True,
+                    "production_effect": "none",
+                    "broker_action": "none",
+                    "manual_review_required": True,
+                }
+            ]
+        },
+        "benchmark_results.json": {
+            "benchmarks": {
+                "base_ai_growth": {
+                    "B002": {"total_return": 0.10, "max_drawdown": -0.12}
+                }
+            }
+        },
+        "metrics_summary.json": {
+            "baseline_metrics": {"total_return": 0.15, "max_drawdown": -0.10},
+            "metrics": [
+                {
+                    "experiment_id": "base_ai_growth",
+                    "standardized_metrics": {
+                        "total_return": 0.20,
+                        "CAGR": 0.12,
+                        "max_drawdown": -0.08,
+                        "Sharpe": 1.2,
+                        "Sortino": 1.4,
+                        "Calmar": 1.5,
+                        "turnover": 0.10,
+                        "average_equity_exposure": 0.85,
+                        "average_cash_weight": 0.15,
+                    },
+                    "allocation_stability_diagnostics": {
+                        "constraint_hit_rate": 0.05,
+                        "regime_transition_count": 3,
+                    },
+                }
+            ],
+        },
+        "diagnostics_summary.json": {"status": "PASS", "failed_experiment_ids": []},
+    }
+    for filename, payload in documents.items():
+        (run_dir / filename).write_text(
+            json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+    return run_dir
+
+
 def _make_prices(days: int) -> pd.DataFrame:
     dates = pd.bdate_range("2022-01-03", periods=days)
     rows = []
@@ -733,7 +934,12 @@ def _ranking_report(rows: list[dict[str, object]]) -> dict[str, object]:
     return {
         "schema_version": 1,
         "report_type": "etf_experiment_comparison",
-        "run_metadata": {"run_id": "unit"},
+        "run_metadata": {
+            "run_id": "unit",
+            "pack_id": "etf_calibration_v1",
+            "start_date": "2022-12-01",
+            "end_date": "2022-12-20",
+        },
         "experiment_list": [{"experiment_id": row["experiment_id"]} for row in rows],
         "baseline_comparison": {"status": "AVAILABLE", "metrics": {}},
         "benchmark_comparison": {"status": "AVAILABLE", "benchmark_ids": ["B002"]},
@@ -767,7 +973,12 @@ def _ranked_candidate(
 ) -> dict[str, object]:
     hard_flags = hard_rejection_flags or []
     return {
+        "candidate_id": f"unit:{experiment_id}",
         "experiment_id": experiment_id,
+        "source_run_id": "unit",
+        "model_version": "etf_model_unit",
+        "config_hash": f"config_hash_{experiment_id}",
+        "start_date": "2022-12-01",
         "candidate_score": score,
         "benchmark_excess_return_score": score,
         "drawdown_reduction_score": score,
@@ -811,6 +1022,10 @@ def _ranking_row(
         "regime_transition_count": 3,
         "candidate_status": "needs_ranking_policy",
         "metric_null_reasons": {},
+        "model_version": f"etf_model_{experiment_id}",
+        "config_hash": f"config_hash_{experiment_id}",
+        "first_signal_date": "2022-12-01",
+        "last_signal_date": "2022-12-20",
         "observe_only": True,
         "production_effect": "none",
         "broker_action": "none",

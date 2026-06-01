@@ -32,9 +32,11 @@ from ai_trading_system.etf_portfolio.data import (
 )
 from ai_trading_system.etf_portfolio.experiments import (
     DEFAULT_ETF_EXPERIMENT_RUN_DIR,
+    DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH,
     apply_ranking_policy_to_comparison_report,
     build_candidate_selection_report,
     build_experiment_comparison_report,
+    enroll_shadow_candidates,
     find_latest_experiment_run_dir,
     load_experiment_pack_registry,
     load_experiment_registry,
@@ -712,26 +714,9 @@ def experiments_select_candidates_command(
     if run_id is not None and latest:
         raise typer.BadParameter("--run-id and --latest cannot be combined")
     run_dir = find_latest_experiment_run_dir(output_dir) if latest else output_dir / str(run_id)
-    payload = build_experiment_comparison_report(run_dir)
-    pack_registry = load_experiment_pack_registry()
-    pack_id = payload["run_metadata"].get("pack_id")
-    policy_id = promotion_policy or "shadow_only_manual_review"
-    if pack_id:
-        pack_config = pack_registry.experiment_packs.get(str(pack_id))
-        if pack_config is not None:
-            payload = apply_ranking_policy_to_comparison_report(
-                payload,
-                ranking_policy=pack_registry.ranking_policies[pack_config.ranking_policy],
-                ranking_policy_id=pack_config.ranking_policy,
-            )
-            policy_id = promotion_policy or pack_config.promotion_policy
-    policy = pack_registry.promotion_policies.get(policy_id)
-    if policy is None:
-        raise typer.BadParameter(f"unknown promotion policy: {policy_id}")
-    selection = build_candidate_selection_report(
-        payload,
-        promotion_policy=policy,
-        promotion_policy_id=policy_id,
+    selection = _build_experiment_candidate_selection(
+        run_dir,
+        promotion_policy_override=promotion_policy,
     )
     json_path = run_dir / "candidate_selection_report.json"
     md_path = run_dir / "candidate_selection_report.md"
@@ -743,6 +728,67 @@ def experiments_select_candidates_command(
     typer.echo(f"eligible_for_shadow={summary['eligible_for_shadow_count']}")
     typer.echo("production_promotion_allowed=false")
     typer.echo(f"production_effect={selection['production_effect']}")
+
+
+@experiments_app.command("enroll-shadow")
+def experiments_enroll_shadow_command(
+    run_id: Annotated[
+        str | None,
+        typer.Option("--run-id", help="TRADING-064 experiment batch run id。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="读取最新 TRADING-064 experiment batch run。"),
+    ] = False,
+    candidate: Annotated[
+        list[str] | None,
+        typer.Option("--candidate", help="candidate_id 或 experiment_id，可重复。"),
+    ] = None,
+    top: Annotated[
+        int | None,
+        typer.Option("--top", help="登记前 N 个 eligible_for_shadow candidates。"),
+    ] = None,
+    promotion_policy: Annotated[
+        str | None,
+        typer.Option("--promotion-policy", help="覆盖默认 pack promotion policy。"),
+    ] = None,
+    output_dir: Annotated[Path, typer.Option(help="experiment run 输出目录。")] = (
+        DEFAULT_ETF_EXPERIMENT_RUN_DIR
+    ),
+    registry_path: Annotated[
+        Path,
+        typer.Option(help="shadow candidate registry 输出路径。"),
+    ] = DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH,
+) -> None:
+    """把 eligible ETF experiment candidate 登记到 observe-only shadow registry。"""
+    if run_id is None and not latest:
+        raise typer.BadParameter("--run-id or --latest is required")
+    if run_id is not None and latest:
+        raise typer.BadParameter("--run-id and --latest cannot be combined")
+    run_dir = find_latest_experiment_run_dir(output_dir) if latest else output_dir / str(run_id)
+    selection = _build_experiment_candidate_selection(
+        run_dir,
+        promotion_policy_override=promotion_policy,
+    )
+    write_candidate_selection_report(
+        selection,
+        json_path=run_dir / "candidate_selection_report.json",
+        markdown_path=run_dir / "candidate_selection_report.md",
+    )
+    try:
+        registry = enroll_shadow_candidates(
+            selection,
+            registry_path=registry_path,
+            candidate_ids=candidate,
+            top=top,
+        )
+    except ValueError as exc:
+        typer.echo(f"ETF shadow enrollment blocked: {exc}")
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"ETF shadow candidates registry：{registry_path}")
+    typer.echo(f"candidate_count={registry['candidate_count']}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
 
 
 @p2_app.command("edgar-text")
@@ -1805,6 +1851,34 @@ def _generate_daily_report(
         ),
     )
     return write_daily_brief(markdown, report_path)
+
+
+def _build_experiment_candidate_selection(
+    run_dir: Path,
+    *,
+    promotion_policy_override: str | None,
+) -> dict[str, object]:
+    payload = build_experiment_comparison_report(run_dir)
+    pack_registry = load_experiment_pack_registry()
+    pack_id = payload["run_metadata"].get("pack_id")
+    policy_id = promotion_policy_override or "shadow_only_manual_review"
+    if pack_id:
+        pack_config = pack_registry.experiment_packs.get(str(pack_id))
+        if pack_config is not None:
+            payload = apply_ranking_policy_to_comparison_report(
+                payload,
+                ranking_policy=pack_registry.ranking_policies[pack_config.ranking_policy],
+                ranking_policy_id=pack_config.ranking_policy,
+            )
+            policy_id = promotion_policy_override or pack_config.promotion_policy
+    policy = pack_registry.promotion_policies.get(policy_id)
+    if policy is None:
+        raise typer.BadParameter(f"unknown promotion policy: {policy_id}")
+    return build_candidate_selection_report(
+        payload,
+        promotion_policy=policy,
+        promotion_policy_id=policy_id,
+    )
 
 
 def _resolve_date(

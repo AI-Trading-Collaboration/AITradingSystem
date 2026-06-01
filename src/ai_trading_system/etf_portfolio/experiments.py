@@ -30,7 +30,11 @@ DEFAULT_ETF_EXPERIMENT_PACKS_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "experiment_packs.yaml"
 )
 DEFAULT_ETF_EXPERIMENT_RUN_DIR = DEFAULT_ETF_REPORT_DIR / "experiments"
+DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH = (
+    PROJECT_ROOT / "data" / "simulation" / "etf_shadow_candidates.json"
+)
 EXPERIMENT_METRIC_SCHEMA_VERSION = "etf_experiment_metrics_v1"
+SHADOW_CANDIDATE_REGISTRY_SCHEMA_VERSION = "etf_shadow_candidate_registry_v1"
 EXPERIMENT_COMPARISON_SCHEMA_KEYS = (
     "schema_version",
     "report_type",
@@ -643,6 +647,75 @@ def write_candidate_selection_report(
     return json_path, markdown_path
 
 
+def load_shadow_candidate_registry(
+    path: Path = DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH,
+) -> dict[str, Any]:
+    if not path.exists():
+        return _empty_shadow_candidate_registry()
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"ETF shadow candidate registry must be a JSON object: {path}")
+    candidates = payload.get("candidates")
+    if not isinstance(candidates, list):
+        raise ValueError(f"ETF shadow candidate registry missing candidates list: {path}")
+    return dict(payload)
+
+
+def enroll_shadow_candidates(
+    selection_report: Mapping[str, Any],
+    *,
+    registry_path: Path = DEFAULT_ETF_SHADOW_CANDIDATE_REGISTRY_PATH,
+    candidate_ids: list[str] | None = None,
+    top: int | None = None,
+    enrolled_at: datetime | None = None,
+) -> dict[str, Any]:
+    selected = _selected_shadow_candidates(selection_report, candidate_ids=candidate_ids)
+    if top is not None:
+        if top <= 0:
+            raise ValueError("ETF shadow enrollment --top must be positive")
+        selected = selected[:top]
+    if not selected:
+        raise ValueError("no eligible ETF experiment candidates selected for shadow enrollment")
+    timestamp = (enrolled_at or datetime.now(tz=UTC)).isoformat()
+    registry = load_shadow_candidate_registry(registry_path)
+    existing = {
+        str(candidate.get("shadow_id")): dict(candidate)
+        for candidate in registry.get("candidates", [])
+        if isinstance(candidate, Mapping) and candidate.get("shadow_id")
+    }
+    changed = False
+    for candidate in selected:
+        record = _shadow_candidate_record(
+            selection_report=selection_report,
+            candidate=candidate,
+            enrolled_at=timestamp,
+        )
+        shadow_id = str(record["shadow_id"])
+        if shadow_id in existing:
+            continue
+        existing[shadow_id] = record
+        changed = True
+    candidates = sorted(existing.values(), key=lambda item: str(item["shadow_id"]))
+    payload = {
+        "schema_version": SHADOW_CANDIDATE_REGISTRY_SCHEMA_VERSION,
+        "registry_type": "etf_shadow_candidates",
+        "updated_at": timestamp if changed else registry.get("updated_at"),
+        "candidate_count": len(candidates),
+        "candidates": candidates,
+        "observe_only": True,
+        "production_effect": "none",
+        "broker_action": "none",
+        "manual_review_required": True,
+        "production_promotion_allowed": False,
+    }
+    registry_path.parent.mkdir(parents=True, exist_ok=True)
+    registry_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return payload
+
+
 def apply_ranking_policy_to_comparison_report(
     payload: Mapping[str, Any],
     *,
@@ -716,10 +789,13 @@ def rank_experiment_candidates(
     weights = ranking_policy.component_weights
     scales = ranking_policy.component_scales
     thresholds = ranking_policy.thresholds
+    metadata = _mapping(comparison_report.get("run_metadata"))
+    source_run_id = str(metadata.get("run_id") or "")
     ranked: list[dict[str, Any]] = []
     for row in comparison_report.get("metrics_table", []):
         if not isinstance(row, Mapping):
             continue
+        experiment_id = row.get("experiment_id")
         component_scores = {
             "benchmark_excess_return_score": _positive_score(
                 row.get("excess_return_vs_QQQ"),
@@ -750,7 +826,12 @@ def rank_experiment_candidates(
             candidate_score = 0.0
         ranked.append(
             {
-                "experiment_id": row.get("experiment_id"),
+                "candidate_id": _shadow_candidate_id(source_run_id, experiment_id),
+                "experiment_id": experiment_id,
+                "source_run_id": source_run_id,
+                "model_version": row.get("model_version"),
+                "config_hash": row.get("config_hash"),
+                "start_date": row.get("first_signal_date") or metadata.get("start_date"),
                 "candidate_score": round(candidate_score, 10),
                 **component_scores,
                 "hard_rejection_flags": hard_rejection_flags,
@@ -1060,6 +1141,10 @@ def _comparison_metric_row(
         "regime_transition_count": stability.get("regime_transition_count"),
         "candidate_status": _candidate_status(result),
         "metric_null_reasons": null_reasons,
+        "model_version": result.get("model_version"),
+        "config_hash": result.get("config_hash"),
+        "first_signal_date": result.get("first_signal_date"),
+        "last_signal_date": result.get("last_signal_date"),
     }
     if row["excess_return_vs_QQQ"] is None:
         null_reasons["excess_return_vs_QQQ"] = "QQQ benchmark metrics missing"
@@ -1283,7 +1368,12 @@ def _candidate_selection_row(
         ]
     return {
         "rank": rank,
+        "candidate_id": candidate.get("candidate_id"),
         "experiment_id": candidate.get("experiment_id"),
+        "source_run_id": candidate.get("source_run_id"),
+        "model_version": candidate.get("model_version"),
+        "config_hash": candidate.get("config_hash"),
+        "start_date": candidate.get("start_date"),
         "candidate_score": round(score, 10),
         "ranking_candidate_status": candidate.get("candidate_status"),
         "hard_rejection_flags": hard_flags,
@@ -1341,6 +1431,140 @@ def _candidate_selection_summary(candidates: list[dict[str, Any]]) -> dict[str, 
         "blockers": blockers,
         "production_promotion_allowed": False,
     }
+
+
+def _selected_shadow_candidates(
+    selection_report: Mapping[str, Any],
+    *,
+    candidate_ids: list[str] | None,
+) -> list[Mapping[str, Any]]:
+    requested = {str(candidate_id) for candidate_id in candidate_ids or []}
+    unmatched = set(requested)
+    selected: list[Mapping[str, Any]] = []
+    for candidate in selection_report.get("candidates", []):
+        if not isinstance(candidate, Mapping):
+            continue
+        candidate_id = str(candidate.get("candidate_id") or "")
+        experiment_id = str(candidate.get("experiment_id") or "")
+        if requested and candidate_id not in requested and experiment_id not in requested:
+            continue
+        unmatched.discard(candidate_id)
+        unmatched.discard(experiment_id)
+        if candidate.get("selection_status") != "eligible_for_shadow":
+            if requested:
+                raise ValueError(
+                    "ETF shadow enrollment candidate is not eligible_for_shadow: "
+                    f"{candidate_id or experiment_id}"
+                )
+            continue
+        _raise_if_shadow_candidate_unsafe(candidate)
+        selected.append(candidate)
+    if unmatched:
+        raise ValueError(
+            "ETF shadow enrollment requested unknown candidate(s): "
+            f"{', '.join(sorted(unmatched))}"
+        )
+    return selected
+
+
+def _raise_if_shadow_candidate_unsafe(candidate: Mapping[str, Any]) -> None:
+    candidate_id = candidate.get("candidate_id") or candidate.get("experiment_id")
+    if candidate.get("shadow_observation_allowed") is not True:
+        raise ValueError(f"ETF shadow candidate is not shadow eligible: {candidate_id}")
+    if candidate.get("observe_only") is not True:
+        raise ValueError(f"ETF shadow candidate must keep observe_only=true: {candidate_id}")
+    if candidate.get("production_effect") != "none":
+        raise ValueError(
+            f"ETF shadow candidate must keep production_effect=none: {candidate_id}"
+        )
+    if candidate.get("broker_action") != "none":
+        raise ValueError(f"ETF shadow candidate must keep broker_action=none: {candidate_id}")
+    if candidate.get("manual_review_required") is not True:
+        raise ValueError(
+            f"ETF shadow candidate must keep manual_review_required=true: {candidate_id}"
+        )
+    if candidate.get("production_promotion_allowed") is not False:
+        raise ValueError(
+            "ETF shadow candidate must keep production_promotion_allowed=false: "
+            f"{candidate_id}"
+        )
+
+
+def _shadow_candidate_record(
+    *,
+    selection_report: Mapping[str, Any],
+    candidate: Mapping[str, Any],
+    enrolled_at: str,
+) -> dict[str, Any]:
+    metadata = _mapping(selection_report.get("run_metadata"))
+    experiment_id = _required_candidate_text(candidate, "experiment_id")
+    source_run_id = str(candidate.get("source_run_id") or metadata.get("run_id") or "")
+    if not source_run_id:
+        raise ValueError(f"ETF shadow candidate missing source_run_id: {experiment_id}")
+    candidate_id = str(
+        candidate.get("candidate_id") or _shadow_candidate_id(source_run_id, experiment_id)
+    )
+    start_date = str(candidate.get("start_date") or metadata.get("start_date") or "")
+    if not start_date:
+        raise ValueError(f"ETF shadow candidate missing start_date: {candidate_id}")
+    return {
+        "shadow_id": _shadow_id(candidate_id),
+        "candidate_id": candidate_id,
+        "experiment_id": experiment_id,
+        "source_run_id": source_run_id,
+        "enrolled_at": enrolled_at,
+        "model_version": _required_candidate_text(candidate, "model_version"),
+        "config_hash": _required_candidate_text(candidate, "config_hash"),
+        "start_date": start_date,
+        "status": "active_shadow_observation",
+        "candidate_score": candidate.get("candidate_score"),
+        "selection_status": candidate.get("selection_status"),
+        "observe_only": True,
+        "production_effect": "none",
+        "broker_action": "none",
+        "manual_review_required": True,
+        "production_promotion_allowed": False,
+        "evaluation_schedule": {
+            "cadence": "daily",
+            "start_date": start_date,
+            "weekly_review_task": "TRADING-064H",
+        },
+    }
+
+
+def _empty_shadow_candidate_registry() -> dict[str, Any]:
+    return {
+        "schema_version": SHADOW_CANDIDATE_REGISTRY_SCHEMA_VERSION,
+        "registry_type": "etf_shadow_candidates",
+        "updated_at": None,
+        "candidate_count": 0,
+        "candidates": [],
+        "observe_only": True,
+        "production_effect": "none",
+        "broker_action": "none",
+        "manual_review_required": True,
+        "production_promotion_allowed": False,
+    }
+
+
+def _shadow_candidate_id(source_run_id: Any, experiment_id: Any) -> str:
+    run = str(source_run_id or "unknown_run")
+    experiment = str(experiment_id or "unknown_experiment")
+    return f"{run}:{experiment}"
+
+
+def _shadow_id(candidate_id: str) -> str:
+    return f"etf_shadow_{sha256(candidate_id.encode('utf-8')).hexdigest()[:16]}"
+
+
+def _required_candidate_text(candidate: Mapping[str, Any], key: str) -> str:
+    value = candidate.get(key)
+    if value is None or str(value) == "":
+        raise ValueError(
+            f"ETF shadow candidate missing required field {key}: "
+            f"{candidate.get('candidate_id') or candidate.get('experiment_id')}"
+        )
+    return str(value)
 
 
 def _required_policy_threshold(
