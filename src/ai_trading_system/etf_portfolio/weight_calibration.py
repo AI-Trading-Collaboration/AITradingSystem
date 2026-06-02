@@ -5,7 +5,9 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, date, datetime
 from hashlib import sha256
+from math import prod, sqrt
 from pathlib import Path
+from statistics import mean, pstdev
 from typing import Any, Self
 
 import pandas as pd
@@ -413,9 +415,11 @@ def run_historical_weight_search(
         end=run_end,
     )
     objective = registry.objective_policies[search.objective_policy]
+    baseline_daily = baseline["daily"]
     ranked_rows = []
     candidate_weight_sets = []
     metrics_rows = []
+    robustness_payloads = []
     for index, weights in enumerate(candidates, start=1):
         candidate_id = f"weight_set_{index:04d}"
         backtest = _run_static_weight_backtest(
@@ -424,6 +428,15 @@ def run_historical_weight_search(
             config=etf_config,
             start=run_start,
             end=run_end,
+        )
+        robustness = build_weight_robustness_evaluation(
+            candidate_id=candidate_id,
+            candidate_daily=backtest["daily"],
+            baseline_daily=baseline_daily,
+            weights=weights,
+            search=search,
+            etf_config=etf_config,
+            objective=objective,
         )
         metric_row = _candidate_metric_row(
             candidate_id=candidate_id,
@@ -435,11 +448,15 @@ def run_historical_weight_search(
             search=search,
             semiconductor_symbols=_semiconductor_symbols(etf_config, search.universe),
             baseline_weights=baseline_weights,
+            robustness_score=float(robustness["summary"]["stability_score"]),
+            robustness_summary=robustness["summary"],
         )
+        robustness_payloads.append(robustness)
         candidate_weight_sets.append(
             {
                 "candidate_id": candidate_id,
                 "weights": weights,
+                "robustness_summary": robustness["summary"],
                 "safety": dict(WEIGHT_CALIBRATION_SAFETY),
                 **WEIGHT_CALIBRATION_SAFETY,
             }
@@ -515,6 +532,21 @@ def run_historical_weight_search(
         "metrics": metrics_rows,
         "ranking": ranking,
         "blocked_candidates": blocked_candidates,
+        "robustness_evaluation": {
+            "schema_version": "etf_weight_robustness_v1",
+            "evaluation_modes": [
+                "full_period",
+                "walk_forward_windows",
+                "risk_on_periods",
+                "neutral_periods",
+                "risk_off_periods",
+                "high_volatility_periods",
+                "semiconductor_leadership_periods",
+                "growth_underperformance_periods",
+            ],
+            "candidate_evaluations": robustness_payloads,
+            "summary": _robustness_run_summary(robustness_payloads),
+        },
         "production_weights_mutated": False,
         "applied_weight_set": None,
         "safety": dict(WEIGHT_CALIBRATION_SAFETY),
@@ -569,6 +601,7 @@ def write_weight_search_run(
     summary_md = report_dir / "summary.md"
     metrics_csv = report_dir / "metrics.csv"
     ranking_json = report_dir / "ranking.json"
+    robustness_json = report_dir / "robustness.json"
     candidates_json = data_dir / "candidate_weight_sets.json"
     candidates_csv = data_dir / "candidate_weight_sets.csv"
     summary_json.write_text(
@@ -580,6 +613,16 @@ def write_weight_search_run(
     metrics_frame.to_csv(metrics_csv, index=False)
     ranking_json.write_text(
         json.dumps(payload["ranking"], ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    robustness_json.write_text(
+        json.dumps(
+            payload["robustness_evaluation"],
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
         encoding="utf-8",
     )
     candidates_json.write_text(
@@ -617,6 +660,7 @@ def write_weight_search_run(
         "summary_md": summary_md,
         "metrics_csv": metrics_csv,
         "ranking_json": ranking_json,
+        "robustness_json": robustness_json,
         "candidates_json": candidates_json,
         "candidates_csv": candidates_csv,
     }
@@ -697,6 +741,7 @@ def render_weight_search_run_markdown(payload: Mapping[str, Any]) -> str:
             "- `summary.json` / `summary.md`: historical search run payload.",
             "- `metrics.csv`: candidate scoring and risk metrics.",
             "- `ranking.json`: deterministic candidate ranking.",
+            "- `robustness.json`: walk-forward and regime-slice robustness diagnostics.",
             "- `candidate_weight_sets.json/csv`: candidate-only weight sets.",
         ]
     )
@@ -708,6 +753,125 @@ def weight_search_config_to_json(registry: ETFWeightSearchRegistry) -> str:
         json.dumps(registry.model_dump(mode="json"), ensure_ascii=False, indent=2, sort_keys=True)
         + "\n"
     )
+
+
+def build_weight_robustness_evaluation(
+    *,
+    candidate_id: str,
+    candidate_daily: pd.DataFrame,
+    baseline_daily: pd.DataFrame,
+    weights: Mapping[str, float],
+    search: ETFWeightSearchDefinition,
+    etf_config: ETFConfigBundle,
+    objective: ETFWeightObjectivePolicy,
+) -> dict[str, Any]:
+    semiconductor_symbols = _semiconductor_symbols(etf_config, search.universe)
+    slice_definitions = _robustness_slice_definitions(
+        candidate_daily,
+        search=search,
+    )
+    slice_metrics = [
+        _metrics_for_slice(
+            candidate_daily,
+            baseline_daily=baseline_daily,
+            weights=weights,
+            semiconductor_symbols=semiconductor_symbols,
+            slice_definition=slice_definition,
+        )
+        for slice_definition in slice_definitions
+    ]
+    summary = summarize_weight_robustness(
+        slice_metrics,
+        objective=objective,
+    )
+    return {
+        "candidate_id": candidate_id,
+        "schema_version": "etf_weight_candidate_robustness_v1",
+        "slice_method": "price_derived_regime_proxy_v1",
+        "slice_metrics": slice_metrics,
+        "summary": summary,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+
+
+def summarize_weight_robustness(
+    slice_metrics: list[dict[str, Any]],
+    *,
+    objective: ETFWeightObjectivePolicy,
+) -> dict[str, Any]:
+    valid = [
+        item
+        for item in slice_metrics
+        if item.get("status") == "AVAILABLE" and item.get("slice_type") != "full_period"
+    ]
+    if not valid:
+        return {
+            "status": "INSUFFICIENT_DATA",
+            "evaluated_slice_count": 0,
+            "positive_excess_slice_count": 0,
+            "weak_slice_count": 0,
+            "insufficient_slice_count": len(slice_metrics),
+            "stability_score": 0.0,
+            "weakest_slice_id": None,
+            "reason_codes": ["NO_AVAILABLE_ROBUSTNESS_SLICES"],
+        }
+    thresholds = objective.hard_blocker_thresholds
+    drawdown_tolerance = float(thresholds.get("slice_drawdown_worsening_tolerance", 0.02))
+    dispersion_scale = float(thresholds.get("robustness_dispersion_scale", 0.10))
+    positive_excess = [
+        item for item in valid if float(item.get("excess_return_vs_baseline") or 0.0) >= 0.0
+    ]
+    weak_slices = [
+        item
+        for item in valid
+        if float(item.get("excess_return_vs_baseline") or 0.0) < 0.0
+        or float(item.get("drawdown_reduction_vs_baseline") or 0.0) < -drawdown_tolerance
+    ]
+    excess_values = [float(item.get("excess_return_vs_baseline") or 0.0) for item in valid]
+    dispersion = pstdev(excess_values) if len(excess_values) > 1 else 0.0
+    positive_ratio = len(positive_excess) / len(valid)
+    drawdown_ok_ratio = 1.0 - sum(
+        1
+        for item in valid
+        if float(item.get("drawdown_reduction_vs_baseline") or 0.0) < -drawdown_tolerance
+    ) / len(valid)
+    dispersion_score = _penalty_score(dispersion, dispersion_scale)
+    stability_score = (
+        0.50 * positive_ratio
+        + 0.30 * drawdown_ok_ratio
+        + 0.20 * dispersion_score
+    )
+    weakest = min(
+        valid,
+        key=lambda item: (
+            float(item.get("excess_return_vs_baseline") or 0.0),
+            float(item.get("drawdown_reduction_vs_baseline") or 0.0),
+            str(item.get("slice_id")),
+        ),
+    )
+    reason_codes = []
+    if weak_slices:
+        reason_codes.append("WEAK_ROBUSTNESS_SLICES_PRESENT")
+    if dispersion > dispersion_scale:
+        reason_codes.append("HIGH_EXCESS_RETURN_DISPERSION")
+    if not reason_codes:
+        reason_codes.append("ROBUSTNESS_SLICES_ACCEPTABLE")
+    return {
+        "status": "AVAILABLE",
+        "evaluated_slice_count": len(valid),
+        "positive_excess_slice_count": len(positive_excess),
+        "weak_slice_count": len(weak_slices),
+        "insufficient_slice_count": sum(
+            1 for item in slice_metrics if item.get("status") != "AVAILABLE"
+        ),
+        "stability_score": round(max(0.0, min(1.0, stability_score)), 6),
+        "positive_excess_ratio": round(positive_ratio, 6),
+        "drawdown_ok_ratio": round(drawdown_ok_ratio, 6),
+        "excess_return_dispersion": dispersion,
+        "weakest_slice_id": weakest.get("slice_id"),
+        "reason_codes": reason_codes,
+    }
 
 
 def _normalized_unique_symbols(values: list[str], field_name: str) -> list[str]:
@@ -869,6 +1033,8 @@ def _candidate_metric_row(
     search: ETFWeightSearchDefinition,
     semiconductor_symbols: set[str],
     baseline_weights: Mapping[str, float],
+    robustness_score: float,
+    robustness_summary: Mapping[str, Any],
 ) -> dict[str, Any]:
     benchmark_comparison = _benchmark_comparison(candidate_metrics, benchmark_results)
     turnover_vs_baseline = sum(
@@ -886,6 +1052,7 @@ def _candidate_metric_row(
         turnover_vs_baseline=turnover_vs_baseline,
         weights=weights,
         objective=objective,
+        robustness_score=robustness_score,
     )
     hard_blockers = _candidate_hard_blockers(
         weights=weights,
@@ -923,6 +1090,8 @@ def _candidate_metric_row(
         "drawdown_reduction_vs_baseline": drawdown_reduction,
         "benchmark_comparison": benchmark_comparison,
         "component_scores": component_scores,
+        "robustness_summary": dict(robustness_summary),
+        "regime_robustness_score": robustness_score,
         "hard_blockers": hard_blockers,
         "ranking_reason": _ranking_reasons(component_scores, hard_blockers),
         "weights": dict(weights),
@@ -942,6 +1111,7 @@ def _historical_component_scores(
     turnover_vs_baseline: float,
     weights: Mapping[str, float],
     objective: ETFWeightObjectivePolicy,
+    robustness_score: float,
 ) -> dict[str, float]:
     scales = objective.component_scales
     sharpe = candidate_metrics.sharpe or 0.0
@@ -964,8 +1134,156 @@ def _historical_component_scores(
             turnover_vs_baseline,
             scales.get("turnover", 1.0),
         ),
-        "regime_robustness_score": 0.5,
+        "regime_robustness_score": max(0.0, min(1.0, robustness_score)),
         "simplicity_score": max(0.0, min(1.0, simplicity)),
+    }
+
+
+def _robustness_slice_definitions(
+    daily: pd.DataFrame,
+    *,
+    search: ETFWeightSearchDefinition,
+) -> list[dict[str, Any]]:
+    frame = _daily_with_slice_features(daily)
+    definitions: list[dict[str, Any]] = [
+        {
+            "slice_id": "full_period",
+            "slice_type": "full_period",
+            "description": "Full requested historical period.",
+            "mask": pd.Series([True] * len(frame), index=frame.index),
+        }
+    ]
+    for window in search.walk_forward_windows:
+        signal_dates = pd.to_datetime(frame["signal_date"], errors="coerce")
+        definitions.append(
+            {
+                "slice_id": window.window_id,
+                "slice_type": "walk_forward_window",
+                "description": window.description,
+                "start_date": window.start_date.isoformat(),
+                "end_date": window.end_date.isoformat(),
+                "mask": (
+                    (signal_dates >= pd.Timestamp(window.start_date))
+                    & (signal_dates <= pd.Timestamp(window.end_date))
+                ),
+            }
+        )
+    regime_masks = {
+        "risk_on_periods": frame["_risk_proxy"] == "risk_on",
+        "neutral_periods": frame["_risk_proxy"] == "neutral",
+        "risk_off_periods": frame["_risk_proxy"] == "risk_off",
+        "high_volatility_periods": frame["_high_volatility"],
+        "semiconductor_leadership_periods": frame["_semiconductor_leadership"],
+        "growth_underperformance_periods": frame["_growth_underperformance"],
+    }
+    for split_id, split in search.regime_splits.items():
+        definitions.append(
+            {
+                "slice_id": split_id,
+                "slice_type": "regime_slice",
+                "description": split.description,
+                "regime_label": split.regime_label,
+                "signal": split.signal,
+                "mask": regime_masks.get(
+                    split_id,
+                    pd.Series([False] * len(frame), index=frame.index),
+                ),
+            }
+        )
+    return definitions
+
+
+def _metrics_for_slice(
+    daily: pd.DataFrame,
+    *,
+    baseline_daily: pd.DataFrame,
+    weights: Mapping[str, float],
+    semiconductor_symbols: set[str],
+    slice_definition: Mapping[str, Any],
+) -> dict[str, Any]:
+    mask = slice_definition.get("mask")
+    if not isinstance(mask, pd.Series):
+        selected = daily.iloc[0:0].copy()
+    else:
+        selected = daily.loc[mask.reindex(daily.index, fill_value=False)].copy()
+    common = {
+        "slice_id": slice_definition.get("slice_id"),
+        "slice_type": slice_definition.get("slice_type"),
+        "description": slice_definition.get("description", ""),
+        "row_count": int(len(selected)),
+    }
+    if len(selected) < 2:
+        return {
+            **common,
+            "status": "INSUFFICIENT_DATA",
+            "return": None,
+            "excess_return_vs_baseline": None,
+            "max_drawdown": None,
+            "volatility": None,
+            "Sharpe": None,
+            "Sortino": None,
+            "Calmar": None,
+            "turnover": None,
+            "cash_exposure": float(weights.get("CASH", 0.0)),
+            "semiconductor_exposure": sum(
+                float(weights.get(symbol, 0.0)) for symbol in semiconductor_symbols
+            ),
+            "constraint_hit_rate": None,
+            "metric_null_reasons": {
+                "slice": "insufficient rows for robustness slice metrics"
+            },
+        }
+    returns = [
+        float(value)
+        for value in pd.to_numeric(selected["strategy_return"], errors="coerce")
+        if pd.notna(value)
+    ]
+    turnovers = [
+        float(value)
+        for value in pd.to_numeric(selected["turnover"], errors="coerce")
+        if pd.notna(value)
+    ]
+    if len(turnovers) != len(returns):
+        turnovers = [0.0] * len(returns)
+    exposure = 1.0 - float(weights.get("CASH", 0.0))
+    metrics = summarize_long_only_backtest(
+        returns,
+        [exposure] * len(returns),
+        turnovers,
+    )
+    baseline_returns = _matching_baseline_returns(selected, baseline_daily)
+    baseline_return = _compound_returns(baseline_returns) if baseline_returns else None
+    candidate_return = metrics.total_return
+    drawdown_reduction = None
+    if baseline_returns:
+        baseline_metrics = summarize_long_only_backtest(
+            baseline_returns,
+            [exposure] * len(baseline_returns),
+            [0.0] * len(baseline_returns),
+        )
+        drawdown_reduction = abs(baseline_metrics.max_drawdown) - abs(metrics.max_drawdown)
+    volatility = pstdev(returns) * sqrt(252) if len(returns) > 1 else None
+    return {
+        **common,
+        "status": "AVAILABLE",
+        "return": candidate_return,
+        "baseline_return": baseline_return,
+        "excess_return_vs_baseline": (
+            None if baseline_return is None else candidate_return - baseline_return
+        ),
+        "max_drawdown": metrics.max_drawdown,
+        "drawdown_reduction_vs_baseline": drawdown_reduction,
+        "volatility": volatility,
+        "Sharpe": metrics.sharpe,
+        "Sortino": metrics.sortino,
+        "Calmar": metrics.calmar,
+        "turnover": metrics.turnover,
+        "cash_exposure": float(weights.get("CASH", 0.0)),
+        "semiconductor_exposure": sum(
+            float(weights.get(symbol, 0.0)) for symbol in semiconductor_symbols
+        ),
+        "constraint_hit_rate": 0.0,
+        "metric_null_reasons": {},
     }
 
 
@@ -1000,6 +1318,91 @@ def _candidate_hard_blockers(
     if search.safety.broker_action != "none":
         blockers.append("BROKER_ACTION_NOT_NONE")
     return [item for item in blockers if item in objective.hard_blockers or item.startswith("NO_")]
+
+
+def _daily_with_slice_features(daily: pd.DataFrame) -> pd.DataFrame:
+    frame = daily.copy()
+    asset_returns = [_json_float_mapping(value) for value in frame["asset_returns_json"]]
+    spy = [item.get("SPY", 0.0) for item in asset_returns]
+    qqq = [item.get("QQQ", 0.0) for item in asset_returns]
+    smh = [item.get("SMH", 0.0) for item in asset_returns]
+    soxx = [item.get("SOXX", 0.0) for item in asset_returns]
+    broad = [(left + right) / 2.0 for left, right in zip(spy, qqq, strict=True)]
+    semiconductor = [
+        (left + right) / 2.0 for left, right in zip(smh, soxx, strict=True)
+    ]
+    abs_broad = [abs(value) for value in broad]
+    vol_cutoff = _median(abs_broad)
+    risk_proxy = []
+    for spy_return, qqq_return in zip(spy, qqq, strict=True):
+        if spy_return > 0 and qqq_return > 0:
+            risk_proxy.append("risk_on")
+        elif spy_return < 0 and qqq_return < 0:
+            risk_proxy.append("risk_off")
+        else:
+            risk_proxy.append("neutral")
+    frame["_risk_proxy"] = risk_proxy
+    frame["_high_volatility"] = [value >= vol_cutoff and value > 0 for value in abs_broad]
+    frame["_semiconductor_leadership"] = [
+        semi_return > broad_return
+        for semi_return, broad_return in zip(semiconductor, broad, strict=True)
+    ]
+    frame["_growth_underperformance"] = [
+        qqq_return < spy_return for qqq_return, spy_return in zip(qqq, spy, strict=True)
+    ]
+    return frame
+
+
+def _matching_baseline_returns(
+    selected: pd.DataFrame,
+    baseline_daily: pd.DataFrame,
+) -> list[float]:
+    if selected.empty or baseline_daily.empty:
+        return []
+    baseline_by_signal = {
+        str(row["signal_date"]): float(row["strategy_return"])
+        for _, row in baseline_daily.iterrows()
+    }
+    returns = []
+    for _, row in selected.iterrows():
+        value = baseline_by_signal.get(str(row["signal_date"]))
+        if value is not None:
+            returns.append(value)
+    return returns
+
+
+def _compound_returns(returns: list[float]) -> float:
+    if not returns:
+        return 0.0
+    return prod(1.0 + value for value in returns) - 1.0
+
+
+def _robustness_run_summary(robustness_payloads: list[dict[str, Any]]) -> dict[str, Any]:
+    summaries = [_mapping(payload.get("summary")) for payload in robustness_payloads]
+    available = [item for item in summaries if item.get("status") == "AVAILABLE"]
+    if not available:
+        return {
+            "status": "INSUFFICIENT_DATA",
+            "candidate_count": len(summaries),
+            "average_stability_score": 0.0,
+            "weak_candidate_count": 0,
+            "weakest_candidate_id": None,
+        }
+    scores = [float(item.get("stability_score") or 0.0) for item in available]
+    weakest_payload = min(
+        robustness_payloads,
+        key=lambda payload: (
+            float(_mapping(payload.get("summary")).get("stability_score") or 0.0),
+            str(payload.get("candidate_id")),
+        ),
+    )
+    return {
+        "status": "AVAILABLE",
+        "candidate_count": len(summaries),
+        "average_stability_score": mean(scores),
+        "weak_candidate_count": sum(1 for score in scores if score < 0.5),
+        "weakest_candidate_id": weakest_payload.get("candidate_id"),
+    }
 
 
 def _benchmark_comparison(
@@ -1153,6 +1556,31 @@ def _float_or_none(value: object) -> float | None:
     if parsed != parsed:
         return None
     return parsed
+
+
+def _json_float_mapping(value: object) -> dict[str, float]:
+    try:
+        parsed = json.loads(str(value))
+    except (TypeError, json.JSONDecodeError):
+        return {}
+    if not isinstance(parsed, Mapping):
+        return {}
+    result = {}
+    for key, item in parsed.items():
+        parsed_value = _float_or_none(item)
+        if parsed_value is not None:
+            result[str(key)] = parsed_value
+    return result
+
+
+def _median(values: list[float]) -> float:
+    if not values:
+        return 0.0
+    ordered = sorted(values)
+    middle = len(ordered) // 2
+    if len(ordered) % 2:
+        return ordered[middle]
+    return (ordered[middle - 1] + ordered[middle]) / 2.0
 
 
 def _mapping(value: object) -> Mapping[str, Any]:

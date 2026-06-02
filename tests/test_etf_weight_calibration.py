@@ -20,6 +20,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     load_weight_search_definition,
     load_weight_search_registry,
     run_historical_weight_search,
+    summarize_weight_robustness,
     validate_weight_search_registry,
     write_weight_search_run,
 )
@@ -204,6 +205,77 @@ def test_historical_weight_search_runs_candidate_backtests() -> None:
     assert payload["broker_action"] == "none"
 
 
+def test_weight_search_includes_walk_forward_and_regime_robustness() -> None:
+    config, prices, quality_report = _search_inputs()
+    registry = load_weight_search_registry(etf_config=config)
+
+    payload = run_historical_weight_search(
+        prices,
+        etf_config=config,
+        quality_report=quality_report,
+        registry=registry,
+        search_id="etf_initial_weight_search_v1",
+        start=date(2022, 12, 1),
+        end=date(2022, 12, 20),
+        max_candidates=4,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    ).payload
+
+    robustness = payload["robustness_evaluation"]
+    assert set(robustness["evaluation_modes"]) >= {
+        "full_period",
+        "walk_forward_windows",
+        "risk_on_periods",
+        "neutral_periods",
+        "risk_off_periods",
+        "high_volatility_periods",
+        "semiconductor_leadership_periods",
+        "growth_underperformance_periods",
+    }
+    candidate = robustness["candidate_evaluations"][0]
+    slice_by_id = {row["slice_id"]: row for row in candidate["slice_metrics"]}
+    assert slice_by_id["full_period"]["status"] == "AVAILABLE"
+    assert slice_by_id["full_period"]["return"] is not None
+    assert slice_by_id["full_period"]["volatility"] is not None
+    assert slice_by_id["full_period"]["cash_exposure"] is not None
+    assert slice_by_id["full_period"]["semiconductor_exposure"] is not None
+    assert slice_by_id["full_period"]["constraint_hit_rate"] == 0.0
+    assert "ai_after_chatgpt_initial" in slice_by_id
+    assert slice_by_id["ai_after_chatgpt_recent"]["status"] == "INSUFFICIENT_DATA"
+    assert "risk_on_periods" in slice_by_id
+    assert "growth_underperformance_periods" in slice_by_id
+    metric_row = payload["metrics"][0]
+    assert metric_row["robustness_summary"]["stability_score"] == (
+        metric_row["component_scores"]["regime_robustness_score"]
+    )
+    assert payload["robustness_evaluation"]["summary"]["candidate_count"] == 4
+
+
+def test_weight_robustness_penalizes_unstable_slices() -> None:
+    objective = load_weight_search_registry().objective_policies["robust_risk_adjusted_v1"]
+    stable = summarize_weight_robustness(
+        [
+            _slice_metric("risk_on_periods", 0.03, 0.01),
+            _slice_metric("neutral_periods", 0.02, 0.00),
+            _slice_metric("high_volatility_periods", 0.01, -0.01),
+        ],
+        objective=objective,
+    )
+    unstable = summarize_weight_robustness(
+        [
+            _slice_metric("risk_on_periods", 0.05, 0.02),
+            _slice_metric("neutral_periods", -0.04, -0.05),
+            _slice_metric("risk_off_periods", -0.03, -0.04),
+        ],
+        objective=objective,
+    )
+
+    assert stable["stability_score"] > unstable["stability_score"]
+    assert stable["weak_slice_count"] == 0
+    assert unstable["weak_slice_count"] == 2
+    assert "WEAK_ROBUSTNESS_SLICES_PRESENT" in unstable["reason_codes"]
+
+
 def test_historical_weight_search_ranking_is_deterministic() -> None:
     config, prices, quality_report = _search_inputs()
     registry = load_weight_search_registry(etf_config=config)
@@ -251,6 +323,7 @@ def test_weight_search_runtime_output_schema_is_stable(tmp_path: Path) -> None:
     assert paths["summary_md"].exists()
     assert paths["metrics_csv"].exists()
     assert paths["ranking_json"].exists()
+    assert paths["robustness_json"].exists()
     assert paths["candidates_json"].exists()
     assert paths["candidates_csv"].exists()
     written = json.loads(paths["summary_json"].read_text(encoding="utf-8"))
@@ -348,3 +421,17 @@ def _make_prices(days: int) -> pd.DataFrame:
                 }
             )
     return pd.DataFrame(rows)
+
+
+def _slice_metric(
+    slice_id: str,
+    excess_return: float,
+    drawdown_reduction: float,
+) -> dict[str, object]:
+    return {
+        "slice_id": slice_id,
+        "slice_type": "regime_slice",
+        "status": "AVAILABLE",
+        "excess_return_vs_baseline": excess_return,
+        "drawdown_reduction_vs_baseline": drawdown_reduction,
+    }

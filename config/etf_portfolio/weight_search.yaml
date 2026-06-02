@@ -33,6 +33,8 @@ objective_policies:
     hard_blocker_thresholds:
       max_drawdown_abs: 0.35
       max_turnover_vs_baseline: 0.80
+      slice_drawdown_worsening_tolerance: 0.02
+      robustness_dispersion_scale: 0.10
     hard_blockers:
       - NO_BENCHMARK_COMPARISON
       - MAX_DRAWDOWN_TOO_HIGH

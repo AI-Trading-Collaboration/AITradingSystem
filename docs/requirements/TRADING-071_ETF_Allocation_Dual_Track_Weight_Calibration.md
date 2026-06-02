@@ -65,8 +65,8 @@ not the primary AI-cycle conclusion window.
 |---|---|---|---|
 |TRADING-071A|Historical Weight Search Config|DONE|Config exists, bounded search constraints validate, safety fields are mandatory, invalid configs fail fast|
 |TRADING-071B|Historical Weight Iteration Engine|DONE|Bounded candidates are generated, backtested, scored, ranked, persisted, and never applied|
-|TRADING-071C|Walk-Forward / Regime Robustness Evaluation|IN_PROGRESS|Candidates are evaluated across full period, walk-forward windows, and regime slices|
-|TRADING-071D|Candidate Initial Weight Set Registry|READY|Selected candidate weights are stored as candidate-only records with safe statuses|
+|TRADING-071C|Walk-Forward / Regime Robustness Evaluation|DONE|Candidates are evaluated across full period, walk-forward windows, and regime slices|
+|TRADING-071D|Candidate Initial Weight Set Registry|IN_PROGRESS|Selected candidate weights are stored as candidate-only records with safe statuses|
 |TRADING-071E|Dual-Track Forward Enrollment|READY|Selected safe candidates can be explicitly enrolled into forward observation|
 |TRADING-071F|Backtest vs Forward Evidence Aggregator|READY|Historical expectation and real forward evidence are linked and gap metrics are computed|
 |TRADING-071G|Overfit Risk and Stability Diagnostics|READY|High-return but unstable candidates receive explainable overfit risk bands|
@@ -127,3 +127,8 @@ command.
   regime、requested date range、baseline/benchmark comparison、`production_weights_mutated=false`
   和 `applied_weight_set=null`。TRADING-071C 进入 `IN_PROGRESS`，下一步扩展 walk-forward
   和 regime robustness evaluation。
+- 2026-06-02: TRADING-071C 完成。Search payload 新增 `robustness_evaluation`、
+  `robustness.json`、full-period/walk-forward/regime-slice metrics、insufficient-slice
+  handling 和 stability score；HistoricalWeightScore 的 `regime_robustness_score`
+  现在来自 slice stability summary。TRADING-071D 进入 `IN_PROGRESS`，下一步实现
+  candidate initial weight set registry。
