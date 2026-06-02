@@ -66,8 +66,8 @@ not the primary AI-cycle conclusion window.
 |TRADING-071A|Historical Weight Search Config|DONE|Config exists, bounded search constraints validate, safety fields are mandatory, invalid configs fail fast|
 |TRADING-071B|Historical Weight Iteration Engine|DONE|Bounded candidates are generated, backtested, scored, ranked, persisted, and never applied|
 |TRADING-071C|Walk-Forward / Regime Robustness Evaluation|DONE|Candidates are evaluated across full period, walk-forward windows, and regime slices|
-|TRADING-071D|Candidate Initial Weight Set Registry|IN_PROGRESS|Selected candidate weights are stored as candidate-only records with safe statuses|
-|TRADING-071E|Dual-Track Forward Enrollment|READY|Selected safe candidates can be explicitly enrolled into forward observation|
+|TRADING-071D|Candidate Initial Weight Set Registry|DONE|Selected candidate weights are stored as candidate-only records with safe statuses|
+|TRADING-071E|Dual-Track Forward Enrollment|IN_PROGRESS|Selected safe candidates can be explicitly enrolled into forward observation|
 |TRADING-071F|Backtest vs Forward Evidence Aggregator|READY|Historical expectation and real forward evidence are linked and gap metrics are computed|
 |TRADING-071G|Overfit Risk and Stability Diagnostics|READY|High-return but unstable candidates receive explainable overfit risk bands|
 |TRADING-071H|Candidate Weight Proposal Generator|READY|Only evidence-linked proposal/review actions are generated; unsafe proposal types are rejected|
@@ -132,3 +132,8 @@ command.
   handling 和 stability score；HistoricalWeightScore 的 `regime_robustness_score`
   现在来自 slice stability summary。TRADING-071D 进入 `IN_PROGRESS`，下一步实现
   candidate initial weight set registry。
+- 2026-06-02: TRADING-071D 完成。新增 candidate initial weight registry schema、
+  validator、idempotent registration、status update validation、`aits etf
+  weight-calibration register-candidates` 和 focused tests；blocked/rejected records
+  cannot become `shadow_ready`，所有 registry records 保持 candidate-only safety fields。
+  TRADING-071E 进入 `IN_PROGRESS`，下一步实现 dual-track forward enrollment。

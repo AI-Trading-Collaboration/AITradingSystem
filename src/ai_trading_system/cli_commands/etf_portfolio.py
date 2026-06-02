@@ -233,11 +233,15 @@ from ai_trading_system.etf_portfolio.weekly_review import (
     write_weekly_review_validation_report,
 )
 from ai_trading_system.etf_portfolio.weight_calibration import (
+    DEFAULT_CANDIDATE_WEIGHT_REGISTRY_PATH,
     DEFAULT_ETF_WEIGHT_CALIBRATION_DATA_DIR,
     DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR,
     DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
+    find_latest_weight_search_run_dir,
     load_weight_search_definition,
     load_weight_search_registry,
+    read_weight_search_run_payload,
+    register_candidate_weight_sets,
     run_historical_weight_search,
     write_weight_search_run,
 )
@@ -2521,6 +2525,58 @@ def weight_calibration_search_command(
     typer.echo(f"total_valid_candidate_count={generation['total_valid_candidate_count']}")
     typer.echo(f"blocked_candidate_count={len(run.payload['blocked_candidates'])}")
     typer.echo(f"data_quality_status={run.payload['data_quality_status']}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+
+
+@weight_calibration_app.command("register-candidates")
+def weight_calibration_register_candidates_command(
+    run_id: Annotated[
+        str | None,
+        typer.Option("--run-id", help="historical weight search run id。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="读取最新 historical weight search run。"),
+    ] = False,
+    top: Annotated[
+        int | None,
+        typer.Option("--top", help="登记 ranking 前 N 个 candidates。"),
+    ] = None,
+    weight_set: Annotated[
+        list[str] | None,
+        typer.Option("--weight-set", help="candidate_id 或 weight_set_id，可重复。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="weight calibration report 输出目录。"),
+    ] = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR,
+    registry_path: Annotated[
+        Path,
+        typer.Option(help="candidate initial weight set registry path。"),
+    ] = DEFAULT_CANDIDATE_WEIGHT_REGISTRY_PATH,
+) -> None:
+    """登记 TRADING-071D candidate-only initial weight sets。"""
+    if run_id is not None and latest:
+        raise typer.BadParameter("--run-id and --latest cannot be combined")
+    if weight_set and top is not None:
+        raise typer.BadParameter("--weight-set cannot be combined with --top")
+    if run_id is None and not latest:
+        raise typer.BadParameter("--run-id or --latest is required")
+    run_dir = find_latest_weight_search_run_dir(output_dir) if latest else output_dir / str(run_id)
+    payload = read_weight_search_run_payload(run_dir)
+    registry = register_candidate_weight_sets(
+        payload,
+        registry_path=registry_path,
+        top=None if weight_set else (top or 3),
+        weight_set_ids=weight_set,
+    )
+    typer.echo(f"ETF candidate weight registry：{registry_path}")
+    typer.echo(f"source_search_run_id={payload['search_run_id']}")
+    typer.echo(f"candidate_count={registry['candidate_count']}")
     typer.echo("observe_only=true")
     typer.echo("candidate_only=true")
     typer.echo("production_effect=none")

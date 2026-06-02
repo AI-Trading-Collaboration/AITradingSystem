@@ -33,9 +33,13 @@ DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR = (
 DEFAULT_ETF_WEIGHT_CALIBRATION_DATA_DIR = (
     PROJECT_ROOT / "data" / "etf_portfolio" / "weight_calibration"
 )
+DEFAULT_CANDIDATE_WEIGHT_REGISTRY_PATH = (
+    DEFAULT_ETF_WEIGHT_CALIBRATION_DATA_DIR / "candidate_weight_registry.json"
+)
 
 WEIGHT_SEARCH_SCHEMA_VERSION = "etf_weight_search_v1"
 WEIGHT_SEARCH_RUN_SCHEMA_VERSION = "etf_weight_search_run_v1"
+CANDIDATE_WEIGHT_REGISTRY_SCHEMA_VERSION = "etf_candidate_weight_registry_v1"
 
 WEIGHT_CALIBRATION_SAFETY = {
     "observe_only": True,
@@ -44,6 +48,10 @@ WEIGHT_CALIBRATION_SAFETY = {
     "broker_action": "none",
     "manual_review_required": True,
 }
+
+ALLOWED_CANDIDATE_WEIGHT_STATUSES = frozenset(
+    {"candidate", "shadow_ready", "blocked", "rejected", "needs_more_data"}
+)
 
 
 class WeightCalibrationError(ValueError):
@@ -666,6 +674,183 @@ def write_weight_search_run(
     }
 
 
+def find_latest_weight_search_run_dir(output_root: Path) -> Path:
+    if not output_root.exists():
+        raise WeightCalibrationError(f"ETF weight search output dir does not exist: {output_root}")
+    candidates = [
+        item for item in output_root.iterdir() if item.is_dir() and (item / "summary.json").exists()
+    ]
+    if not candidates:
+        raise WeightCalibrationError(f"no ETF weight search runs found under {output_root}")
+    return max(candidates, key=lambda item: (item / "summary.json").stat().st_mtime)
+
+
+def read_weight_search_run_payload(run_dir: Path) -> dict[str, Any]:
+    path = run_dir / "summary.json"
+    if not path.exists():
+        raise WeightCalibrationError(f"ETF weight search summary not found: {path}")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise WeightCalibrationError(f"ETF weight search summary must be a JSON object: {path}")
+    validate_weight_search_run_payload(payload)
+    return payload
+
+
+def load_candidate_weight_registry(
+    path: Path = DEFAULT_CANDIDATE_WEIGHT_REGISTRY_PATH,
+) -> dict[str, Any]:
+    if not path.exists():
+        return _empty_candidate_weight_registry()
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise WeightCalibrationError(f"candidate weight registry must be a JSON object: {path}")
+    validate_candidate_weight_registry(payload)
+    return payload
+
+
+def write_candidate_weight_registry(
+    registry: Mapping[str, Any],
+    path: Path = DEFAULT_CANDIDATE_WEIGHT_REGISTRY_PATH,
+) -> Path:
+    validate_candidate_weight_registry(registry)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(registry, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def register_candidate_weight_sets(
+    search_payload: Mapping[str, Any],
+    *,
+    registry_path: Path = DEFAULT_CANDIDATE_WEIGHT_REGISTRY_PATH,
+    top: int | None = None,
+    weight_set_ids: list[str] | None = None,
+    created_at: datetime | None = None,
+) -> dict[str, Any]:
+    validate_weight_search_run_payload(search_payload)
+    registry = load_candidate_weight_registry(registry_path)
+    selected = _selected_ranked_candidates(
+        search_payload,
+        top=top,
+        weight_set_ids=weight_set_ids,
+    )
+    existing = {
+        str(record.get("weight_set_id")): record
+        for record in _records(registry.get("weight_sets"))
+    }
+    generated = created_at or datetime.now(UTC)
+    for ranked in selected:
+        record = _candidate_weight_record_from_search(
+            search_payload,
+            ranked,
+            created_at=generated,
+        )
+        existing[record["weight_set_id"]] = record
+    weight_sets = sorted(existing.values(), key=lambda item: str(item.get("weight_set_id")))
+    registry = {
+        "schema_version": CANDIDATE_WEIGHT_REGISTRY_SCHEMA_VERSION,
+        "registry_type": "etf_candidate_weight_sets",
+        "updated_at": generated.isoformat(),
+        "candidate_count": len(weight_sets),
+        "weight_sets": weight_sets,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_candidate_weight_registry(registry)
+    write_candidate_weight_registry(registry, registry_path)
+    return registry
+
+
+def validate_candidate_weight_registry(registry: Mapping[str, Any]) -> None:
+    issues = []
+    if registry.get("schema_version") != CANDIDATE_WEIGHT_REGISTRY_SCHEMA_VERSION:
+        issues.append("schema_version")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if registry.get(field) != expected:
+            issues.append(field)
+    seen = set()
+    for record in _records(registry.get("weight_sets")):
+        weight_set_id = str(record.get("weight_set_id") or "")
+        if not weight_set_id:
+            issues.append("weight_set_id")
+        if weight_set_id in seen:
+            issues.append(f"duplicate_weight_set_id:{weight_set_id}")
+        seen.add(weight_set_id)
+        try:
+            validate_candidate_weight_record(record)
+        except WeightCalibrationError as exc:
+            issues.append(f"{weight_set_id}:{exc}")
+    if issues:
+        raise WeightCalibrationError(
+            "ETF candidate weight registry validation failed: " + ", ".join(issues)
+        )
+
+
+def validate_candidate_weight_record(record: Mapping[str, Any]) -> None:
+    required = (
+        "weight_set_id",
+        "source_search_run_id",
+        "rank",
+        "status",
+        "weights",
+        "metrics_summary",
+        "robustness_summary",
+        "blockers",
+        "selection_reason",
+        "config_hash",
+        "created_at",
+        "safety",
+    )
+    issues = [field for field in required if field not in record]
+    status = str(record.get("status") or "")
+    if status not in ALLOWED_CANDIDATE_WEIGHT_STATUSES:
+        issues.append("status")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if record.get(field) != expected:
+            issues.append(field)
+    safety = _mapping(record.get("safety"))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if safety.get(field) != expected:
+            issues.append(f"safety.{field}")
+    weights = _mapping(record.get("weights"))
+    if abs(sum(float(value) for value in weights.values()) - 1.0) > 1e-6:
+        issues.append("weights_sum")
+    blockers = [str(item) for item in record.get("blockers") or []]
+    if status == "shadow_ready" and blockers:
+        issues.append("blocked_candidate_cannot_be_shadow_ready")
+    if issues:
+        raise WeightCalibrationError("; ".join(issues))
+
+
+def update_candidate_weight_status(
+    registry: Mapping[str, Any],
+    *,
+    weight_set_id: str,
+    status: str,
+    updated_at: datetime | None = None,
+) -> dict[str, Any]:
+    if status not in ALLOWED_CANDIDATE_WEIGHT_STATUSES:
+        raise WeightCalibrationError(f"unsupported candidate weight status: {status}")
+    payload = json.loads(json.dumps(registry, default=str))
+    records = _records(payload.get("weight_sets"))
+    matched = False
+    for record in records:
+        if str(record.get("weight_set_id")) != weight_set_id:
+            continue
+        record["status"] = status
+        record["updated_at"] = (updated_at or datetime.now(UTC)).isoformat()
+        validate_candidate_weight_record(record)
+        matched = True
+    if not matched:
+        raise WeightCalibrationError(f"unknown candidate weight_set_id: {weight_set_id}")
+    payload["weight_sets"] = records
+    payload["updated_at"] = (updated_at or datetime.now(UTC)).isoformat()
+    validate_candidate_weight_registry(payload)
+    return payload
+
+
 def render_weight_search_run_markdown(payload: Mapping[str, Any]) -> str:
     generation = _mapping(payload.get("candidate_generation"))
     baseline = _mapping(payload.get("baseline_weight_set"))
@@ -1101,6 +1286,129 @@ def _candidate_metric_row(
         "broker_action": "none",
         "manual_review_required": True,
     }
+
+
+def _empty_candidate_weight_registry() -> dict[str, Any]:
+    return {
+        "schema_version": CANDIDATE_WEIGHT_REGISTRY_SCHEMA_VERSION,
+        "registry_type": "etf_candidate_weight_sets",
+        "updated_at": None,
+        "candidate_count": 0,
+        "weight_sets": [],
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+
+
+def _selected_ranked_candidates(
+    search_payload: Mapping[str, Any],
+    *,
+    top: int | None,
+    weight_set_ids: list[str] | None,
+) -> list[dict[str, Any]]:
+    ranking = _records(search_payload.get("ranking"))
+    requested = {str(item) for item in weight_set_ids or []}
+    if requested:
+        selected = [
+            row
+            for row in ranking
+            if str(row.get("candidate_id")) in requested
+            or _weight_set_id(search_payload, row) in requested
+        ]
+        matched = {
+            str(row.get("candidate_id")) for row in selected
+        } | {_weight_set_id(search_payload, row) for row in selected}
+        missing = sorted(requested - matched)
+        if missing:
+            raise WeightCalibrationError(
+                "unknown candidate weight set id(s): " + ", ".join(missing)
+            )
+        return selected
+    limit = top or 1
+    if limit <= 0:
+        raise WeightCalibrationError("top must be positive")
+    return ranking[:limit]
+
+
+def _candidate_weight_record_from_search(
+    search_payload: Mapping[str, Any],
+    ranked: Mapping[str, Any],
+    *,
+    created_at: datetime,
+) -> dict[str, Any]:
+    candidate_id = str(ranked.get("candidate_id"))
+    candidate = _candidate_weight_set(search_payload, candidate_id)
+    metrics = _candidate_metrics(search_payload, candidate_id)
+    blockers = [str(item) for item in ranked.get("hard_blockers") or []]
+    candidate_status = str(ranked.get("candidate_status"))
+    if blockers:
+        status = "blocked" if candidate_status == "blocked" else "rejected"
+    elif _mapping(metrics.get("robustness_summary")).get("status") == "INSUFFICIENT_DATA":
+        status = "needs_more_data"
+    else:
+        status = "candidate"
+    record = {
+        "weight_set_id": _weight_set_id(search_payload, ranked),
+        "source_search_run_id": search_payload.get("search_run_id"),
+        "source_candidate_id": candidate_id,
+        "rank": int(ranked.get("rank")),
+        "status": status,
+        "weights": dict(candidate.get("weights") or ranked.get("weights") or {}),
+        "metrics_summary": {
+            "candidate_score": ranked.get("candidate_score"),
+            "candidate_status": ranked.get("candidate_status"),
+            "total_return": metrics.get("total_return"),
+            "excess_return_vs_baseline": metrics.get("excess_return_vs_baseline"),
+            "max_drawdown": metrics.get("max_drawdown"),
+            "turnover_vs_baseline": metrics.get("turnover_vs_baseline"),
+            "component_scores": metrics.get("component_scores"),
+        },
+        "robustness_summary": dict(
+            _mapping(
+                candidate.get("robustness_summary")
+                or metrics.get("robustness_summary")
+            )
+        ),
+        "blockers": blockers,
+        "selection_reason": (
+            "top_historical_weight_search_rank"
+            if not blockers
+            else "historical_search_candidate_blocked"
+        ),
+        "config_hash": search_payload.get("search_config_hash"),
+        "created_at": created_at.isoformat(),
+        "source_report_path": "",
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_candidate_weight_record(record)
+    return record
+
+
+def _candidate_weight_set(
+    search_payload: Mapping[str, Any],
+    candidate_id: str,
+) -> dict[str, Any]:
+    for candidate in _records(search_payload.get("candidate_weight_sets")):
+        if str(candidate.get("candidate_id")) == candidate_id:
+            return candidate
+    raise WeightCalibrationError(
+        f"candidate weight set missing from search payload: {candidate_id}"
+    )
+
+
+def _candidate_metrics(
+    search_payload: Mapping[str, Any],
+    candidate_id: str,
+) -> dict[str, Any]:
+    for row in _records(search_payload.get("metrics")):
+        if str(row.get("candidate_id")) == candidate_id:
+            return row
+    raise WeightCalibrationError(f"candidate metrics missing from search payload: {candidate_id}")
+
+
+def _weight_set_id(search_payload: Mapping[str, Any], ranked: Mapping[str, Any]) -> str:
+    return f"{search_payload.get('search_run_id')}:{ranked.get('candidate_id')}"
 
 
 def _historical_component_scores(

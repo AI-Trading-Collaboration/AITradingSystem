@@ -17,10 +17,14 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     ETFWeightSearchRegistry,
     WeightCalibrationError,
     generate_weight_candidates,
+    load_candidate_weight_registry,
     load_weight_search_definition,
     load_weight_search_registry,
+    register_candidate_weight_sets,
     run_historical_weight_search,
     summarize_weight_robustness,
+    update_candidate_weight_status,
+    validate_candidate_weight_record,
     validate_weight_search_registry,
     write_weight_search_run,
 )
@@ -376,6 +380,125 @@ def test_weight_search_cli_search_writes_outputs(tmp_path: Path) -> None:
     assert list(data_dir.glob("*/candidate_weight_sets.json"))
 
 
+def test_candidate_weight_registry_writes_candidate_records(tmp_path: Path) -> None:
+    run = _small_search_run()
+    registry_path = tmp_path / "candidate_weight_registry.json"
+
+    registry = register_candidate_weight_sets(
+        run.payload,
+        registry_path=registry_path,
+        top=2,
+        created_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert registry_path.exists()
+    assert registry["candidate_count"] == 2
+    record = registry["weight_sets"][0]
+    assert record["weight_set_id"].startswith(run.run_id)
+    assert record["source_search_run_id"] == run.run_id
+    assert record["rank"] in {1, 2}
+    assert record["status"] in {"candidate", "needs_more_data", "blocked", "rejected"}
+    assert round(sum(record["weights"].values()), 10) == 1.0
+    assert record["metrics_summary"]["candidate_score"] is not None
+    assert record["robustness_summary"]["stability_score"] is not None
+    assert record["production_effect"] == "none"
+    assert record["broker_action"] == "none"
+
+
+def test_candidate_weight_registry_duplicate_weight_set_is_idempotent(tmp_path: Path) -> None:
+    run = _small_search_run()
+    registry_path = tmp_path / "candidate_weight_registry.json"
+
+    first = register_candidate_weight_sets(run.payload, registry_path=registry_path, top=1)
+    second = register_candidate_weight_sets(run.payload, registry_path=registry_path, top=1)
+
+    assert first["candidate_count"] == 1
+    assert second["candidate_count"] == 1
+    assert load_candidate_weight_registry(registry_path)["candidate_count"] == 1
+
+
+def test_candidate_weight_registry_rejects_unsafe_status(tmp_path: Path) -> None:
+    record = _candidate_weight_record(tmp_path)
+    record["status"] = "production"
+
+    with pytest.raises(WeightCalibrationError, match="status"):
+        validate_candidate_weight_record(record)
+
+
+def test_candidate_weight_registry_requires_production_effect_none(tmp_path: Path) -> None:
+    record = _candidate_weight_record(tmp_path)
+    record["production_effect"] = "apply_weights"
+
+    with pytest.raises(WeightCalibrationError, match="production_effect"):
+        validate_candidate_weight_record(record)
+
+
+def test_candidate_weight_registry_requires_weights_sum_to_one(tmp_path: Path) -> None:
+    record = _candidate_weight_record(tmp_path)
+    record["weights"]["CASH"] = 0.42
+
+    with pytest.raises(WeightCalibrationError, match="weights_sum"):
+        validate_candidate_weight_record(record)
+
+
+def test_blocked_candidate_weight_cannot_be_shadow_ready(tmp_path: Path) -> None:
+    record = _candidate_weight_record(tmp_path)
+    record["blockers"] = ["TURNOVER_TOO_HIGH"]
+    record["status"] = "shadow_ready"
+
+    with pytest.raises(WeightCalibrationError, match="blocked_candidate_cannot"):
+        validate_candidate_weight_record(record)
+
+
+def test_candidate_weight_status_update_blocks_shadow_ready_for_blocked_record(
+    tmp_path: Path,
+) -> None:
+    run = _small_search_run()
+    registry_path = tmp_path / "candidate_weight_registry.json"
+    registry = register_candidate_weight_sets(run.payload, registry_path=registry_path, top=1)
+    record = registry["weight_sets"][0]
+    record["blockers"] = ["TURNOVER_TOO_HIGH"]
+
+    with pytest.raises(WeightCalibrationError, match="blocked_candidate_cannot"):
+        update_candidate_weight_status(
+            registry,
+            weight_set_id=record["weight_set_id"],
+            status="shadow_ready",
+        )
+
+
+def test_weight_calibration_register_candidates_cli(tmp_path: Path) -> None:
+    run = _small_search_run()
+    report_root = tmp_path / "reports"
+    data_root = tmp_path / "data"
+    registry_path = tmp_path / "candidate_weight_registry.json"
+    write_weight_search_run(run, report_root=report_root, data_root=data_root)
+
+    result = CliRunner().invoke(
+        etf_app,
+        [
+            "weight-calibration",
+            "register-candidates",
+            "--run-id",
+            run.run_id,
+            "--output-dir",
+            str(report_root),
+            "--registry-path",
+            str(registry_path),
+            "--top",
+            "2",
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "ETF candidate weight registry" in result.output
+    assert "candidate_count=2" in result.output
+    assert "production_effect=none" in result.output
+    assert load_candidate_weight_registry(registry_path)["candidate_count"] == 2
+
+
 def _raw_registry() -> dict[str, object]:
     raw = safe_load_yaml_path(DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH)
     assert isinstance(raw, dict)
@@ -398,6 +521,32 @@ def _search_inputs():
     )
     assert quality_report.passed
     return config, prices, quality_report
+
+
+def _small_search_run():
+    config, prices, quality_report = _search_inputs()
+    registry = load_weight_search_registry(etf_config=config)
+    return run_historical_weight_search(
+        prices,
+        etf_config=config,
+        quality_report=quality_report,
+        registry=registry,
+        search_id="etf_initial_weight_search_v1",
+        start=date(2022, 12, 1),
+        end=date(2022, 12, 20),
+        max_candidates=4,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+
+def _candidate_weight_record(tmp_path: Path) -> dict[str, object]:
+    registry = register_candidate_weight_sets(
+        _small_search_run().payload,
+        registry_path=tmp_path / "candidate_weight_registry.json",
+        top=1,
+        created_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    return deepcopy(registry["weight_sets"][0])
 
 
 def _make_prices(days: int) -> pd.DataFrame:
