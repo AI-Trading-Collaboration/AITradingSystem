@@ -19,6 +19,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     WeightCalibrationError,
     build_backtest_forward_evidence_aggregation,
     build_candidate_weight_proposals,
+    build_dual_track_weight_calibration_report,
     build_weight_overfit_diagnostics,
     enroll_candidate_weights_forward,
     generate_weight_candidates,
@@ -33,10 +34,12 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     validate_backtest_forward_evidence_record,
     validate_candidate_weight_proposal,
     validate_candidate_weight_record,
+    validate_dual_track_weight_calibration_report,
     validate_weight_forward_enrollment_record,
     validate_weight_search_registry,
     weight_overfit_risk_band,
     write_backtest_forward_evidence_aggregation,
+    write_dual_track_weight_calibration_report,
     write_weight_search_run,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
@@ -1078,6 +1081,145 @@ def test_weight_calibration_generate_proposals_cli(tmp_path: Path) -> None:
     assert list((tmp_path / "proposals").glob("candidate_weight_proposals_*.json"))
 
 
+def test_dual_track_calibration_report_includes_required_sections(tmp_path: Path) -> None:
+    inputs = _dual_track_report_inputs(tmp_path, return_delta=0.05, overfit_band="low")
+
+    payload = build_dual_track_weight_calibration_report(
+        as_of=date(2026, 6, 2),
+        candidate_registry=inputs["registry"],
+        forward_enrollments=inputs["enrollments"],
+        search_payload=inputs["search_payload"],
+        evidence_payload=inputs["evidence"],
+        overfit_payload=inputs["overfit"],
+        proposals_payload=inputs["proposals"],
+        source_paths={"historical_search": "reports/search/summary.json"},
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert payload["report_type"] == "etf_weight_dual_track_calibration_report"
+    assert payload["status"] == "manual_review_ready"
+    assert payload["search_configuration"]["market_regime"] == "ai_after_chatgpt"
+    assert payload["top_historical_candidates"]
+    assert payload["walk_forward_regime_robustness"]["status"] == "available"
+    assert payload["overfit_diagnostics"]["risk_counts"]["low"] == 1
+    assert payload["forward_evidence_comparison"]["status"] == "forward_better_than_backtest"
+    assert payload["candidate_registry_status"]["candidate_count"] == 1
+    proposal_counts = payload["proposal_scorecard"]["proposal_type_counts"]
+    assert proposal_counts["propose_manual_baseline_review"] == 1
+    assert payload["manual_review_package"]["candidate_shortlist"][0]["weight_set_id"]
+    assert payload["production_effect"] == "none"
+
+    paths = write_dual_track_weight_calibration_report(payload, output_dir=tmp_path / "reports")
+    markdown = paths["markdown"].read_text(encoding="utf-8")
+    assert "## Safety Banner" in markdown
+    assert "## Walk-Forward / Regime Robustness" in markdown
+    assert "## Proposal Scorecard" in markdown
+    assert "production_effect = none" in markdown
+
+
+def test_dual_track_calibration_report_missing_forward_data_needs_more_data(
+    tmp_path: Path,
+) -> None:
+    run = _small_search_run()
+    registry = register_candidate_weight_sets(
+        run.payload,
+        registry_path=tmp_path / "candidate_weight_registry.json",
+        top=1,
+        created_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    payload = build_dual_track_weight_calibration_report(
+        as_of=date(2026, 6, 2),
+        candidate_registry=registry,
+        search_payload=run.payload,
+    )
+
+    assert payload["status"] == "needs_more_forward_data"
+    assert payload["forward_evidence_comparison"]["status"] == "missing"
+    assert payload["proposal_scorecard"]["status"] == "missing"
+    assert payload["manual_review_package"]["application_allowed"] is False
+
+
+def test_dual_track_calibration_report_rejects_unsafe_proposal_payload(
+    tmp_path: Path,
+) -> None:
+    inputs = _dual_track_report_inputs(tmp_path, return_delta=0.05, overfit_band="low")
+    payload = build_dual_track_weight_calibration_report(
+        as_of=date(2026, 6, 2),
+        candidate_registry=inputs["registry"],
+        forward_enrollments=inputs["enrollments"],
+        search_payload=inputs["search_payload"],
+        evidence_payload=inputs["evidence"],
+        overfit_payload=inputs["overfit"],
+        proposals_payload=inputs["proposals"],
+    )
+    payload["proposal_scorecard"]["proposals"][0]["proposal_type"] = "apply_weight_set"
+
+    with pytest.raises(WeightCalibrationError, match="unsafe_proposal_type"):
+        validate_dual_track_weight_calibration_report(payload)
+
+
+def test_weight_calibration_report_cli_writes_json_and_markdown(tmp_path: Path) -> None:
+    inputs = _dual_track_report_inputs(tmp_path, return_delta=0.05, overfit_band="low")
+    run = inputs["run"]
+    search_paths = write_weight_search_run(
+        run,
+        report_root=tmp_path / "search_reports",
+        data_root=tmp_path / "search_data",
+    )
+    registry_path = tmp_path / "candidate_weight_registry.json"
+    registry_path.write_text(json.dumps(inputs["registry"], indent=2) + "\n", encoding="utf-8")
+    enrollment_path = tmp_path / "forward_enrollments.json"
+    enrollment_path.write_text(
+        json.dumps(inputs["enrollments"], indent=2) + "\n",
+        encoding="utf-8",
+    )
+    evidence_path = tmp_path / "evidence.json"
+    evidence_path.write_text(json.dumps(inputs["evidence"], indent=2) + "\n", encoding="utf-8")
+    overfit_path = tmp_path / "overfit.json"
+    overfit_path.write_text(json.dumps(inputs["overfit"], indent=2) + "\n", encoding="utf-8")
+    proposals_path = tmp_path / "proposals.json"
+    proposals_path.write_text(
+        json.dumps(inputs["proposals"], indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(
+        etf_app,
+        [
+            "weight-calibration",
+            "report",
+            "--as-of",
+            "2026-06-02",
+            "--search-run-id",
+            run.run_id,
+            "--search-output-dir",
+            str(search_paths["report_dir"].parent),
+            "--candidate-registry-path",
+            str(registry_path),
+            "--enrollment-path",
+            str(enrollment_path),
+            "--evidence-path",
+            str(evidence_path),
+            "--overfit-path",
+            str(overfit_path),
+            "--proposals-path",
+            str(proposals_path),
+            "--output-dir",
+            str(tmp_path / "reports"),
+        ],
+        env={"COLUMNS": "180"},
+        terminal_width=180,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "ETF weight dual-track calibration report" in result.output
+    assert "status=manual_review_ready" in result.output
+    assert "production_effect=none" in result.output
+    assert (tmp_path / "reports" / "dual_track_calibration_2026-06-02.json").exists()
+    assert (tmp_path / "reports" / "dual_track_calibration_2026-06-02.md").exists()
+
+
 def _raw_registry() -> dict[str, object]:
     raw = safe_load_yaml_path(DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH)
     assert isinstance(raw, dict)
@@ -1254,6 +1396,59 @@ def _overfit_payload_with_band(
         "overfit_risk_band": band,
     }
     return payload
+
+
+def _dual_track_report_inputs(
+    tmp_path: Path,
+    *,
+    return_delta: float,
+    overfit_band: str,
+) -> dict[str, object]:
+    run = _small_search_run()
+    registry = register_candidate_weight_sets(
+        run.payload,
+        registry_path=tmp_path / "candidate_weight_registry.json",
+        top=1,
+        created_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    registry["weight_sets"][0]["metrics_summary"]["candidate_score"] = 0.90
+    enrollments = enroll_candidate_weights_forward(
+        registry,
+        enrollment_path=tmp_path / "forward_enrollments.json",
+        top=1,
+    )
+    dashboard = _forward_dashboard_payload(
+        registry,
+        enrollments,
+        return_delta=return_delta,
+    )
+    evidence = build_backtest_forward_evidence_aggregation(
+        as_of=date(2026, 6, 2),
+        candidate_registry=registry,
+        forward_enrollments=enrollments,
+        search_payload=run.payload,
+        forward_dashboard=dashboard,
+    )
+    overfit = _overfit_payload_with_band(
+        registry,
+        band=overfit_band,
+        score=0.10 if overfit_band == "low" else 0.70,
+    )
+    proposals = build_candidate_weight_proposals(
+        candidate_registry=registry,
+        evidence_payload=evidence,
+        overfit_payload=overfit,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    return {
+        "run": run,
+        "search_payload": run.payload,
+        "registry": registry,
+        "enrollments": enrollments,
+        "evidence": evidence,
+        "overfit": overfit,
+        "proposals": proposals,
+    }
 
 
 def _make_prices(days: int) -> pd.DataFrame:

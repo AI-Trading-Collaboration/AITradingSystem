@@ -237,12 +237,14 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     DEFAULT_ETF_WEIGHT_CALIBRATION_DATA_DIR,
     DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR,
     DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
+    DEFAULT_WEIGHT_DUAL_TRACK_REPORT_DIR,
     DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
     DEFAULT_WEIGHT_FORWARD_EVIDENCE_DIR,
     DEFAULT_WEIGHT_OVERFIT_DIAGNOSTICS_DIR,
     DEFAULT_WEIGHT_PROPOSAL_DIR,
     build_backtest_forward_evidence_aggregation,
     build_candidate_weight_proposals,
+    build_dual_track_weight_calibration_report,
     build_weight_overfit_diagnostics,
     enroll_candidate_weights_forward,
     find_latest_weight_search_run_dir,
@@ -255,6 +257,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     run_historical_weight_search,
     write_backtest_forward_evidence_aggregation,
     write_candidate_weight_proposals,
+    write_dual_track_weight_calibration_report,
     write_weight_overfit_diagnostics,
     write_weight_search_run,
 )
@@ -2837,6 +2840,115 @@ def weight_calibration_generate_proposals_command(
     typer.echo("manual_review_required=true")
 
 
+@weight_calibration_app.command("report")
+def weight_calibration_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option(
+            "--latest",
+            help="读取最新 historical/evidence/diagnostics/proposal artifacts。",
+        ),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option(help="报告日期；默认使用今天。"),
+    ] = None,
+    search_run_id: Annotated[
+        str | None,
+        typer.Option("--search-run-id", help="historical weight search run id。"),
+    ] = None,
+    search_output_dir: Annotated[
+        Path,
+        typer.Option(help="weight calibration search report 输出目录。"),
+    ] = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR,
+    candidate_registry_path: Annotated[
+        Path,
+        typer.Option(help="candidate initial weight set registry path。"),
+    ] = DEFAULT_CANDIDATE_WEIGHT_REGISTRY_PATH,
+    enrollment_path: Annotated[
+        Path,
+        typer.Option(help="weight calibration forward enrollment ledger path。"),
+    ] = DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
+    evidence_path: Annotated[
+        Path | None,
+        typer.Option(help="TRADING-071F evidence JSON path；`--latest` 时可省略。"),
+    ] = None,
+    overfit_path: Annotated[
+        Path | None,
+        typer.Option(help="TRADING-071G overfit diagnostics JSON path；`--latest` 时可省略。"),
+    ] = None,
+    proposals_path: Annotated[
+        Path | None,
+        typer.Option(help="TRADING-071H proposal JSON path；`--latest` 时可省略。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="dual-track calibration report 输出目录。"),
+    ] = DEFAULT_WEIGHT_DUAL_TRACK_REPORT_DIR,
+) -> None:
+    """生成 TRADING-071I dual-track calibration JSON/Markdown report。"""
+    if search_run_id is not None and latest:
+        raise typer.BadParameter("--search-run-id and --latest cannot be combined")
+    report_date = _parse_date(as_of) if as_of else date.today()
+    source_paths: dict[str, str] = {
+        "candidate_registry": str(candidate_registry_path),
+        "forward_enrollment": str(enrollment_path),
+    }
+    search_payload = None
+    if search_run_id is not None or latest:
+        run_dir = (
+            find_latest_weight_search_run_dir(search_output_dir)
+            if latest
+            else search_output_dir / str(search_run_id)
+        )
+        search_payload = read_weight_search_run_payload(run_dir)
+        source_paths["historical_search"] = str(run_dir / "summary.json")
+
+    resolved_evidence_path = evidence_path or (
+        _latest_json_file(DEFAULT_WEIGHT_FORWARD_EVIDENCE_DIR, "backtest_forward_evidence_*.json")
+        if latest
+        else None
+    )
+    resolved_overfit_path = overfit_path or (
+        _latest_json_file(DEFAULT_WEIGHT_OVERFIT_DIAGNOSTICS_DIR, "overfit_diagnostics_*.json")
+        if latest
+        else None
+    )
+    resolved_proposals_path = proposals_path or (
+        _latest_json_file(DEFAULT_WEIGHT_PROPOSAL_DIR, "candidate_weight_proposals_*.json")
+        if latest
+        else None
+    )
+    for key, path in {
+        "backtest_forward_evidence": resolved_evidence_path,
+        "overfit_diagnostics": resolved_overfit_path,
+        "candidate_weight_proposals": resolved_proposals_path,
+    }.items():
+        if path is not None:
+            source_paths[key] = str(path)
+
+    payload = build_dual_track_weight_calibration_report(
+        as_of=report_date,
+        candidate_registry=load_candidate_weight_registry(candidate_registry_path),
+        forward_enrollments=load_weight_forward_enrollments(enrollment_path),
+        search_payload=search_payload,
+        evidence_payload=_load_optional_json_payload(resolved_evidence_path),
+        overfit_payload=_load_optional_json_payload(resolved_overfit_path),
+        proposals_payload=_load_optional_json_payload(resolved_proposals_path),
+        source_paths=source_paths,
+    )
+    paths = write_dual_track_weight_calibration_report(payload, output_dir=output_dir)
+    typer.echo(f"ETF weight dual-track calibration report：{paths['markdown']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"candidate_count={payload['summary']['candidate_count']}")
+    typer.echo(f"proposal_count={payload['summary']['proposal_count']}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+
+
 @p2_app.command("edgar-text")
 def p2_edgar_text_command(
     input_path: Annotated[Path | None, typer.Option(help="EDGAR/text audit input CSV。")] = None,
@@ -4150,6 +4262,15 @@ def _load_optional_json_payload(path: Path | None) -> dict[str, object]:
     if not isinstance(payload, dict):
         raise typer.BadParameter(f"JSON artifact root 必须是 object：{path}")
     return payload
+
+
+def _latest_json_file(directory: Path, pattern: str) -> Path | None:
+    if not directory.exists():
+        return None
+    candidates = [path for path in directory.glob(pattern) if path.is_file()]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda path: path.stat().st_mtime)
 
 
 def _allocation_record_from_row(row: pd.Series) -> ETFAllocationRecord:

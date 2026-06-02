@@ -71,8 +71,8 @@ not the primary AI-cycle conclusion window.
 |TRADING-071F|Backtest vs Forward Evidence Aggregator|DONE|Historical expectation and real forward evidence are linked and gap metrics are computed|
 |TRADING-071G|Overfit Risk and Stability Diagnostics|DONE|High-return but unstable candidates receive explainable overfit risk bands|
 |TRADING-071H|Candidate Weight Proposal Generator|DONE|Only evidence-linked proposal/review actions are generated; unsafe proposal types are rejected|
-|TRADING-071I|Dual-Track Calibration Report|IN_PROGRESS|JSON/Markdown report summarizes search, robustness, forward comparison, overfit diagnostics, proposals, and source links|
-|TRADING-071J|Reader Brief Dual-Track Calibration Section|READY|Reader Brief surfaces top candidate, forward status, overfit risk, candidate status, safety, and report link|
+|TRADING-071I|Dual-Track Calibration Report|DONE|JSON/Markdown report summarizes search, robustness, forward comparison, overfit diagnostics, proposals, and source links|
+|TRADING-071J|Reader Brief Dual-Track Calibration Section|IN_PROGRESS|Reader Brief surfaces top candidate, forward status, overfit risk, candidate status, safety, and report link|
 |TRADING-071K|Dual-Track Calibration Validation Gate|READY|Final gate fails closed on unsafe states, unbounded search, unsafe proposals, or missing workflow pieces|
 
 ## Acceptance Criteria
@@ -161,3 +161,10 @@ command.
   evidence creates `propose_manual_baseline_review`，insufficient forward evidence defers，
   high overfit risk 或 bad forward evidence rejects，unsafe proposal types fail closed。
   TRADING-071I 进入 `IN_PROGRESS`，下一步实现 dual-track calibration report。
+- 2026-06-02: TRADING-071I 完成。新增 dual-track calibration report schema、
+  safety validation、JSON/Markdown writer、`aits etf weight-calibration report --latest`
+  / explicit artifact path CLI 和 focused tests；report 汇总 search configuration、top
+  historical candidates、walk-forward/regime robustness、overfit diagnostics、forward
+  evidence comparison、candidate registry status、proposal scorecard、manual review package、
+  source report links 和 next steps。TRADING-071J 进入 `IN_PROGRESS`，下一步把 latest
+  report 摘录到 Reader Brief。

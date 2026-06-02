@@ -46,6 +46,7 @@ DEFAULT_WEIGHT_OVERFIT_DIAGNOSTICS_DIR = (
     DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "overfit_diagnostics"
 )
 DEFAULT_WEIGHT_PROPOSAL_DIR = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "proposals"
+DEFAULT_WEIGHT_DUAL_TRACK_REPORT_DIR = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "reports"
 
 WEIGHT_SEARCH_SCHEMA_VERSION = "etf_weight_search_v1"
 WEIGHT_SEARCH_RUN_SCHEMA_VERSION = "etf_weight_search_run_v1"
@@ -56,6 +57,7 @@ WEIGHT_BACKTEST_FORWARD_EVIDENCE_SCHEMA_VERSION = (
 )
 WEIGHT_OVERFIT_DIAGNOSTICS_SCHEMA_VERSION = "etf_weight_overfit_diagnostics_v1"
 WEIGHT_PROPOSAL_SCHEMA_VERSION = "etf_weight_candidate_proposals_v1"
+WEIGHT_DUAL_TRACK_REPORT_SCHEMA_VERSION = "etf_weight_dual_track_calibration_report_v1"
 
 WEIGHT_CALIBRATION_SAFETY = {
     "observe_only": True,
@@ -1741,6 +1743,285 @@ def render_candidate_weight_proposals_markdown(payload: Mapping[str, Any]) -> st
     return "\n".join(lines) + "\n"
 
 
+def build_dual_track_weight_calibration_report(
+    *,
+    as_of: date,
+    candidate_registry: Mapping[str, Any],
+    forward_enrollments: Mapping[str, Any] | None = None,
+    search_payload: Mapping[str, Any] | None = None,
+    evidence_payload: Mapping[str, Any] | None = None,
+    overfit_payload: Mapping[str, Any] | None = None,
+    proposals_payload: Mapping[str, Any] | None = None,
+    source_paths: Mapping[str, str] | None = None,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    validate_candidate_weight_registry(candidate_registry)
+    if forward_enrollments:
+        validate_weight_forward_enrollment_registry(forward_enrollments)
+    if search_payload:
+        validate_weight_search_run_payload(search_payload)
+    if evidence_payload:
+        validate_backtest_forward_evidence_payload(evidence_payload)
+    if overfit_payload:
+        validate_weight_overfit_diagnostics_payload(overfit_payload)
+    if proposals_payload:
+        validate_candidate_weight_proposals_payload(proposals_payload)
+    generated = generated_at or datetime.now(UTC)
+    payload = {
+        "schema_version": WEIGHT_DUAL_TRACK_REPORT_SCHEMA_VERSION,
+        "report_type": "etf_weight_dual_track_calibration_report",
+        "report_id": f"etf-weight-dual-track-calibration-{as_of.isoformat()}",
+        "as_of": as_of.isoformat(),
+        "generated_at": generated.isoformat(),
+        "status": _dual_track_report_status(
+            candidate_registry=candidate_registry,
+            evidence_payload=evidence_payload or {},
+            proposals_payload=proposals_payload or {},
+        ),
+        "summary": _dual_track_report_summary(
+            candidate_registry=candidate_registry,
+            forward_enrollments=forward_enrollments or {},
+            evidence_payload=evidence_payload or {},
+            overfit_payload=overfit_payload or {},
+            proposals_payload=proposals_payload or {},
+        ),
+        "search_configuration": _dual_track_search_configuration(search_payload or {}),
+        "top_historical_candidates": _dual_track_top_candidates(
+            candidate_registry=candidate_registry,
+            search_payload=search_payload or {},
+        ),
+        "walk_forward_regime_robustness": _dual_track_robustness(search_payload or {}),
+        "overfit_diagnostics": _dual_track_overfit(overfit_payload or {}),
+        "forward_evidence_comparison": _dual_track_forward_evidence(evidence_payload or {}),
+        "candidate_registry_status": _dual_track_registry_status(
+            candidate_registry,
+            forward_enrollments=forward_enrollments or {},
+        ),
+        "proposal_scorecard": _dual_track_proposal_scorecard(proposals_payload or {}),
+        "manual_review_package": _dual_track_manual_review_package(
+            candidate_registry=candidate_registry,
+            evidence_payload=evidence_payload or {},
+            overfit_payload=overfit_payload or {},
+            proposals_payload=proposals_payload or {},
+        ),
+        "source_report_links": _dual_track_source_links(source_paths or {}),
+        "next_steps": _dual_track_next_steps(
+            candidate_registry=candidate_registry,
+            evidence_payload=evidence_payload or {},
+            proposals_payload=proposals_payload or {},
+        ),
+        "production_weights_mutated": False,
+        "applied_weight_set": None,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_dual_track_weight_calibration_report(payload)
+    return payload
+
+
+def validate_dual_track_weight_calibration_report(payload: Mapping[str, Any]) -> None:
+    issues = []
+    if payload.get("schema_version") != WEIGHT_DUAL_TRACK_REPORT_SCHEMA_VERSION:
+        issues.append("schema_version")
+    if payload.get("report_type") != "etf_weight_dual_track_calibration_report":
+        issues.append("report_type")
+    if payload.get("status") not in {
+        "manual_review_ready",
+        "observe_only",
+        "needs_more_forward_data",
+        "blocked",
+        "needs_more_data",
+    }:
+        issues.append("status")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if payload.get(field) != expected:
+            issues.append(field)
+    safety = _mapping(payload.get("safety"))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if safety.get(field) != expected:
+            issues.append(f"safety.{field}")
+    if payload.get("production_weights_mutated") is not False:
+        issues.append("production_weights_mutated")
+    if payload.get("applied_weight_set") is not None:
+        issues.append("applied_weight_set")
+    scorecard = _mapping(payload.get("proposal_scorecard"))
+    for proposal in _records(scorecard.get("proposals")):
+        try:
+            validate_candidate_weight_proposal(proposal)
+        except WeightCalibrationError as exc:
+            issues.append(f"proposal_scorecard.{proposal.get('proposal_id')}:{exc}")
+    manual_review = _mapping(payload.get("manual_review_package"))
+    if manual_review.get("manual_review_required") is not True:
+        issues.append("manual_review_package.manual_review_required")
+    if manual_review.get("application_allowed") is not False:
+        issues.append("manual_review_package.application_allowed")
+    if issues:
+        raise WeightCalibrationError(
+            "ETF dual-track calibration report validation failed: "
+            + ", ".join(str(issue) for issue in issues)
+        )
+
+
+def write_dual_track_weight_calibration_report(
+    payload: Mapping[str, Any],
+    *,
+    output_dir: Path = DEFAULT_WEIGHT_DUAL_TRACK_REPORT_DIR,
+) -> dict[str, Path]:
+    validate_dual_track_weight_calibration_report(payload)
+    as_of = str(payload.get("as_of") or "unknown")
+    stem = f"dual_track_calibration_{as_of}"
+    json_path = output_dir / f"{stem}.json"
+    markdown_path = output_dir / f"{stem}.md"
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.write_text(
+        render_dual_track_weight_calibration_report_markdown(payload),
+        encoding="utf-8",
+    )
+    return {"json": json_path, "markdown": markdown_path}
+
+
+def render_dual_track_weight_calibration_report_markdown(payload: Mapping[str, Any]) -> str:
+    summary = _mapping(payload.get("summary"))
+    search = _mapping(payload.get("search_configuration"))
+    robustness = _mapping(payload.get("walk_forward_regime_robustness"))
+    overfit = _mapping(payload.get("overfit_diagnostics"))
+    forward = _mapping(payload.get("forward_evidence_comparison"))
+    registry = _mapping(payload.get("candidate_registry_status"))
+    proposals = _mapping(payload.get("proposal_scorecard"))
+    manual = _mapping(payload.get("manual_review_package"))
+    lines = [
+        "# ETF Weight Dual-Track Calibration Report",
+        "",
+        "## Safety Banner",
+        "",
+        "- observe_only = true",
+        "- candidate_only = true",
+        "- production_effect = none",
+        "- broker_action = none",
+        "- manual_review_required = true",
+        "- 本报告只生成 candidate initial weight review package，不应用权重。",
+        "",
+        "## Summary",
+        "",
+        f"- Status: {payload.get('status')}",
+        f"- As Of: {payload.get('as_of')}",
+        f"- Candidate Count: {summary.get('candidate_count')}",
+        f"- Enrolled Count: {summary.get('enrolled_count')}",
+        f"- Top Candidate: {summary.get('top_candidate_id')}",
+        f"- Forward Evidence Status: {summary.get('dominant_forward_evidence_status')}",
+        f"- Highest Overfit Risk: {summary.get('highest_overfit_risk_band')}",
+        f"- Manual Review Proposals: {summary.get('manual_review_proposal_count')}",
+        "",
+        "## Search Configuration",
+        "",
+        f"- Search ID: {search.get('search_id')}",
+        f"- Search Config Hash: `{search.get('search_config_hash')}`",
+        f"- Market Regime: {search.get('market_regime')}",
+        (
+            "- Requested Date Range: "
+            f"{_mapping(search.get('requested_date_range')).get('start')} to "
+            f"{_mapping(search.get('requested_date_range')).get('end')}"
+        ),
+        f"- Data Quality Status: {search.get('data_quality_status')}",
+        f"- Candidate Generation: {search.get('candidate_generation')}",
+        "",
+        "## Top Historical Candidates",
+        "",
+        "| Rank | Weight Set | Candidate | Score | Status | Weights |",
+        "|---:|---|---|---:|---|---|",
+    ]
+    for candidate in _records(payload.get("top_historical_candidates")):
+        lines.append(
+            f"| {candidate.get('rank')} | {candidate.get('weight_set_id')} | "
+            f"{candidate.get('source_candidate_id')} | "
+            f"{_fmt_number(candidate.get('candidate_score'))} | "
+            f"{candidate.get('status')} | {candidate.get('weights')} |"
+        )
+    if not _records(payload.get("top_historical_candidates")):
+        lines.append("| n/a | n/a | n/a | n/a | needs_more_data | n/a |")
+    lines.extend(
+        [
+            "",
+            "## Walk-Forward / Regime Robustness",
+            "",
+            f"- Status: {robustness.get('status')}",
+            f"- Run Summary: {robustness.get('summary')}",
+            "",
+            "## Overfit Diagnostics",
+            "",
+            f"- Status: {overfit.get('status')}",
+            f"- Risk Counts: {overfit.get('risk_counts')}",
+            f"- Highest Risk Candidate: {overfit.get('highest_risk_candidate')}",
+            "",
+            "## Forward Evidence Comparison",
+            "",
+            f"- Status: {forward.get('status')}",
+            f"- Status Counts: {forward.get('status_counts')}",
+            f"- Evidence Record Count: {forward.get('evidence_record_count')}",
+            "",
+            "## Candidate Registry Status",
+            "",
+            f"- Candidate Count: {registry.get('candidate_count')}",
+            f"- Status Counts: {registry.get('status_counts')}",
+            f"- Enrollment Count: {registry.get('enrollment_count')}",
+            "",
+            "## Proposal Scorecard",
+            "",
+            f"- Status: {proposals.get('status')}",
+            f"- Proposal Type Counts: {proposals.get('proposal_type_counts')}",
+            "",
+            "| Weight Set | Proposal Type | Forward Status | Overfit Risk |",
+            "|---|---|---|---|",
+        ]
+    )
+    for proposal in _records(proposals.get("proposals")):
+        risk = _mapping(proposal.get("overfit_risk"))
+        lines.append(
+            f"| {proposal.get('weight_set_id')} | {proposal.get('proposal_type')} | "
+            f"{proposal.get('forward_evidence_status')} | "
+            f"{risk.get('overfit_risk_band')} |"
+        )
+    if not _records(proposals.get("proposals")):
+        lines.append("| n/a | defer_until_more_forward_data | needs_more_data | n/a |")
+    lines.extend(
+        [
+            "",
+            "## Manual Review Package",
+            "",
+            f"- Manual Review Required: {manual.get('manual_review_required')}",
+            f"- Application Allowed: {manual.get('application_allowed')}",
+            f"- Candidate Shortlist: {manual.get('candidate_shortlist')}",
+            f"- Blocking Notes: {manual.get('blocking_notes')}",
+            "",
+            "## Source Report Links",
+            "",
+            "| Source | Path | Exists |",
+            "|---|---|---|",
+        ]
+    )
+    for source in _records(payload.get("source_report_links")):
+        lines.append(
+            f"| {source.get('source_type')} | `{source.get('path')}` | "
+            f"{source.get('exists')} |"
+        )
+    if not _records(payload.get("source_report_links")):
+        lines.append("| none | n/a | false |")
+    lines.extend(
+        [
+            "",
+            "## Next Steps",
+            "",
+        ]
+    )
+    for step in payload.get("next_steps") or []:
+        lines.append(f"- {step}")
+    return "\n".join(lines) + "\n"
+
+
 def render_weight_search_run_markdown(payload: Mapping[str, Any]) -> str:
     generation = _mapping(payload.get("candidate_generation"))
     baseline = _mapping(payload.get("baseline_weight_set"))
@@ -3110,6 +3391,358 @@ def _proposal_type_counts(proposals: list[Mapping[str, Any]]) -> dict[str, int]:
 def _stable_proposal_id(weight_set_id: str, generated_at: datetime) -> str:
     basis = f"{weight_set_id}|{generated_at.isoformat()}"
     return "etf-weight-proposal-" + sha256(basis.encode("utf-8")).hexdigest()[:12]
+
+
+def _dual_track_report_status(
+    *,
+    candidate_registry: Mapping[str, Any],
+    evidence_payload: Mapping[str, Any],
+    proposals_payload: Mapping[str, Any],
+) -> str:
+    proposal_counts = _mapping(proposals_payload.get("proposal_type_counts"))
+    candidate_count = len(_records(candidate_registry.get("weight_sets")))
+    if candidate_count == 0:
+        return "needs_more_data"
+    if int(proposal_counts.get("propose_manual_baseline_review") or 0) > 0:
+        return "manual_review_ready"
+    if int(proposal_counts.get("defer_until_more_forward_data") or 0) > 0:
+        return "needs_more_forward_data"
+    if int(proposal_counts.get("reject_weight_set") or 0) == candidate_count:
+        return "blocked"
+    evidence_status = str(evidence_payload.get("status") or "")
+    if evidence_status == "needs_more_forward_data" or not evidence_payload:
+        return "needs_more_forward_data"
+    return "observe_only"
+
+
+def _dual_track_report_summary(
+    *,
+    candidate_registry: Mapping[str, Any],
+    forward_enrollments: Mapping[str, Any],
+    evidence_payload: Mapping[str, Any],
+    overfit_payload: Mapping[str, Any],
+    proposals_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    candidates = _records(candidate_registry.get("weight_sets"))
+    proposals = _records(proposals_payload.get("proposals"))
+    top = min(
+        candidates,
+        key=lambda item: (int(item.get("rank") or 999_999), str(item.get("weight_set_id"))),
+        default={},
+    )
+    highest = _mapping(overfit_payload.get("highest_risk_candidate"))
+    return {
+        "candidate_count": len(candidates),
+        "enrolled_count": len(_records(forward_enrollments.get("enrollments"))),
+        "evidence_record_count": int(evidence_payload.get("evidence_record_count") or 0),
+        "proposal_count": len(proposals),
+        "manual_review_proposal_count": sum(
+            1
+            for proposal in proposals
+            if proposal.get("proposal_type") == "propose_manual_baseline_review"
+        ),
+        "top_candidate_id": top.get("weight_set_id"),
+        "dominant_forward_evidence_status": evidence_payload.get("status", "needs_more_data"),
+        "highest_overfit_risk_band": highest.get("overfit_risk_band"),
+        "proposal_type_counts": dict(_mapping(proposals_payload.get("proposal_type_counts"))),
+    }
+
+
+def _dual_track_search_configuration(search_payload: Mapping[str, Any]) -> dict[str, Any]:
+    if not search_payload:
+        return {
+            "status": "missing",
+            "search_id": None,
+            "search_config_hash": None,
+            "market_regime": None,
+            "requested_date_range": {"start": None, "end": None},
+            "data_quality_status": "missing",
+            "candidate_generation": {},
+        }
+    return {
+        "status": "available",
+        "search_id": search_payload.get("search_id"),
+        "search_run_id": search_payload.get("search_run_id"),
+        "search_config_hash": search_payload.get("search_config_hash"),
+        "market_regime": search_payload.get("market_regime"),
+        "requested_date_range": dict(_mapping(search_payload.get("requested_date_range"))),
+        "data_quality_status": search_payload.get("data_quality_status"),
+        "candidate_generation": dict(_mapping(search_payload.get("candidate_generation"))),
+        "objective_policy": dict(_mapping(search_payload.get("objective_policy"))),
+        "benchmark_set": dict(_mapping(search_payload.get("benchmark_set"))),
+    }
+
+
+def _dual_track_top_candidates(
+    *,
+    candidate_registry: Mapping[str, Any],
+    search_payload: Mapping[str, Any],
+    top: int = 5,
+) -> list[dict[str, Any]]:
+    registry_by_source = {
+        str(record.get("source_candidate_id")): record
+        for record in _records(candidate_registry.get("weight_sets"))
+    }
+    rows: list[dict[str, Any]] = []
+    if search_payload:
+        weights_by_candidate = {
+            str(record.get("candidate_id")): record
+            for record in _records(search_payload.get("candidate_weight_sets"))
+        }
+        metrics_by_candidate = {
+            str(record.get("candidate_id")): record
+            for record in _records(search_payload.get("metrics"))
+        }
+        for ranked in _records(search_payload.get("ranking"))[:top]:
+            candidate_id = str(ranked.get("candidate_id"))
+            registry_record = registry_by_source.get(candidate_id, {})
+            weights_record = weights_by_candidate.get(candidate_id, {})
+            metrics = metrics_by_candidate.get(candidate_id, {})
+            rows.append(
+                {
+                    "rank": ranked.get("rank"),
+                    "weight_set_id": registry_record.get(
+                        "weight_set_id",
+                        _weight_set_id(search_payload, ranked),
+                    ),
+                    "source_candidate_id": candidate_id,
+                    "candidate_score": ranked.get("candidate_score"),
+                    "status": registry_record.get("status", ranked.get("candidate_status")),
+                    "weights": dict(_mapping(weights_record.get("weights"))),
+                    "metrics_summary": dict(metrics),
+                    "blockers": list(ranked.get("hard_blockers") or []),
+                }
+            )
+        return rows
+    for record in sorted(
+        _records(candidate_registry.get("weight_sets")),
+        key=lambda item: (int(item.get("rank") or 999_999), str(item.get("weight_set_id"))),
+    )[:top]:
+        rows.append(
+            {
+                "rank": record.get("rank"),
+                "weight_set_id": record.get("weight_set_id"),
+                "source_candidate_id": record.get("source_candidate_id"),
+                "candidate_score": _mapping(record.get("metrics_summary")).get("candidate_score"),
+                "status": record.get("status"),
+                "weights": dict(_mapping(record.get("weights"))),
+                "metrics_summary": dict(_mapping(record.get("metrics_summary"))),
+                "blockers": list(record.get("blockers") or []),
+            }
+        )
+    return rows
+
+
+def _dual_track_robustness(search_payload: Mapping[str, Any]) -> dict[str, Any]:
+    robustness = _mapping(search_payload.get("robustness_evaluation"))
+    if not robustness:
+        return {
+            "status": "missing",
+            "summary": {},
+            "candidate_summaries": [],
+        }
+    candidate_summaries = []
+    for evaluation in _records(robustness.get("candidate_evaluations"))[:10]:
+        candidate_summaries.append(
+            {
+                "candidate_id": evaluation.get("candidate_id"),
+                "summary": dict(_mapping(evaluation.get("summary"))),
+                "slice_count": len(_records(evaluation.get("slice_metrics"))),
+                "weakest_slice_id": _mapping(evaluation.get("summary")).get("weakest_slice_id"),
+            }
+        )
+    return {
+        "status": "available",
+        "evaluation_modes": list(robustness.get("evaluation_modes") or []),
+        "summary": dict(_mapping(robustness.get("summary"))),
+        "candidate_summaries": candidate_summaries,
+    }
+
+
+def _dual_track_overfit(overfit_payload: Mapping[str, Any]) -> dict[str, Any]:
+    if not overfit_payload:
+        return {
+            "status": "missing",
+            "risk_counts": {},
+            "highest_risk_candidate": None,
+            "candidate_diagnostics": [],
+        }
+    return {
+        "status": overfit_payload.get("status", "available"),
+        "risk_counts": dict(_mapping(overfit_payload.get("risk_counts"))),
+        "highest_risk_candidate": overfit_payload.get("highest_risk_candidate"),
+        "candidate_diagnostics": _records(overfit_payload.get("candidate_diagnostics"))[:10],
+    }
+
+
+def _dual_track_forward_evidence(evidence_payload: Mapping[str, Any]) -> dict[str, Any]:
+    if not evidence_payload:
+        return {
+            "status": "missing",
+            "status_counts": {},
+            "evidence_record_count": 0,
+            "evidence_records": [],
+        }
+    return {
+        "status": evidence_payload.get("status"),
+        "reason": evidence_payload.get("reason"),
+        "status_counts": dict(_mapping(evidence_payload.get("status_counts"))),
+        "evidence_record_count": evidence_payload.get("evidence_record_count"),
+        "evidence_records": _records(evidence_payload.get("evidence_records"))[:10],
+    }
+
+
+def _dual_track_registry_status(
+    candidate_registry: Mapping[str, Any],
+    *,
+    forward_enrollments: Mapping[str, Any],
+) -> dict[str, Any]:
+    candidates = _records(candidate_registry.get("weight_sets"))
+    status_counts = _value_counts(candidates, "status")
+    return {
+        "candidate_count": len(candidates),
+        "status_counts": status_counts,
+        "enrollment_count": len(_records(forward_enrollments.get("enrollments"))),
+        "registry_updated_at": candidate_registry.get("updated_at"),
+        "enrollment_updated_at": forward_enrollments.get("updated_at"),
+    }
+
+
+def _dual_track_proposal_scorecard(proposals_payload: Mapping[str, Any]) -> dict[str, Any]:
+    if not proposals_payload:
+        return {
+            "status": "missing",
+            "proposal_count": 0,
+            "proposal_type_counts": {},
+            "proposals": [],
+        }
+    return {
+        "status": proposals_payload.get("status"),
+        "proposal_count": proposals_payload.get("proposal_count"),
+        "proposal_type_counts": dict(_mapping(proposals_payload.get("proposal_type_counts"))),
+        "proposals": _records(proposals_payload.get("proposals")),
+    }
+
+
+def _dual_track_manual_review_package(
+    *,
+    candidate_registry: Mapping[str, Any],
+    evidence_payload: Mapping[str, Any],
+    overfit_payload: Mapping[str, Any],
+    proposals_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    shortlist = []
+    proposals = _records(proposals_payload.get("proposals"))
+    selected_proposals = [
+        proposal
+        for proposal in proposals
+        if proposal.get("proposal_type")
+        in {
+            "propose_manual_baseline_review",
+            "propose_extended_shadow",
+            "continue_forward_observation",
+        }
+    ]
+    if not selected_proposals:
+        selected_proposals = proposals[:3]
+    for proposal in selected_proposals[:5]:
+        weight_set_id = str(proposal.get("weight_set_id"))
+        candidate = _candidate_record_for_weight_set(candidate_registry, weight_set_id)
+        evidence = _evidence_record_for_weight_set(evidence_payload, weight_set_id)
+        overfit = _overfit_record_for_weight_set(overfit_payload, weight_set_id)
+        shortlist.append(
+            {
+                "weight_set_id": weight_set_id,
+                "proposal_type": proposal.get("proposal_type"),
+                "weights": dict(_mapping(candidate.get("weights"))),
+                "historical_score": proposal.get("historical_score"),
+                "forward_evidence_status": proposal.get("forward_evidence_status"),
+                "overfit_risk_band": _mapping(proposal.get("overfit_risk")).get(
+                    "overfit_risk_band"
+                ),
+                "expectation_gap": evidence.get("expectation_gap"),
+                "overfit_reason_codes": list(overfit.get("reason_codes") or []),
+            }
+        )
+    blocking_notes = [
+        {
+            "weight_set_id": proposal.get("weight_set_id"),
+            "blocking_evidence": proposal.get("blocking_evidence"),
+        }
+        for proposal in proposals
+        if proposal.get("blocking_evidence")
+    ]
+    return {
+        "manual_review_required": True,
+        "application_allowed": False,
+        "production_weights_mutated": False,
+        "applied_weight_set": None,
+        "candidate_shortlist": shortlist,
+        "blocking_notes": blocking_notes,
+        "review_questions": [
+            "historical candidate 是否在 forward evidence 中保持一致？",
+            "overfit risk 是否低到足以进入 extended shadow 或 manual baseline review？",
+            "是否需要继续收集 forward data 而不是应用权重？",
+        ],
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+
+
+def _dual_track_source_links(source_paths: Mapping[str, str]) -> list[dict[str, Any]]:
+    links = []
+    for source_type, path_text in sorted(source_paths.items()):
+        path = Path(str(path_text))
+        links.append(
+            {
+                "source_type": source_type,
+                "path": str(path),
+                "exists": path.exists(),
+            }
+        )
+    return links
+
+
+def _dual_track_next_steps(
+    *,
+    candidate_registry: Mapping[str, Any],
+    evidence_payload: Mapping[str, Any],
+    proposals_payload: Mapping[str, Any],
+) -> list[str]:
+    if not _records(candidate_registry.get("weight_sets")):
+        return ["Run historical search and register candidate initial weight sets."]
+    proposal_counts = _mapping(proposals_payload.get("proposal_type_counts"))
+    if int(proposal_counts.get("propose_manual_baseline_review") or 0) > 0:
+        return [
+            "人工复核 proposal package；确认是否继续 extended shadow，不得自动替换 baseline。",
+            "继续收集 forward evidence，并把 owner review 写入 decision journal。",
+        ]
+    if int(proposal_counts.get("defer_until_more_forward_data") or 0) > 0:
+        return [
+            "继续 forward observation，等待足够 forward days 后重新运行 aggregate-evidence。",
+            "不要用 historical score 单独推动 baseline review。",
+        ]
+    if evidence_payload.get("status") == "forward_worse_than_backtest":
+        return ["复核 forward underperformance 和 overfit diagnostics，优先考虑 reject or defer。"]
+    return ["继续 observe-only tracking，并在下一次 weekly review 中复核 candidate shortlist。"]
+
+
+def _candidate_record_for_weight_set(
+    candidate_registry: Mapping[str, Any],
+    weight_set_id: str,
+) -> dict[str, Any]:
+    for record in _records(candidate_registry.get("weight_sets")):
+        if str(record.get("weight_set_id")) == weight_set_id:
+            return record
+    return {}
+
+
+def _value_counts(records: list[Mapping[str, Any]], field: str) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for record in records:
+        key = str(record.get(field) or "missing")
+        counts[key] = counts.get(key, 0) + 1
+    return counts
 
 
 def _selected_ranked_candidates(

@@ -448,9 +448,14 @@ evidence 和 optional TRADING-071G diagnostics，输出
 proposal type 只允许 `continue_forward_observation`、`reject_weight_set`、
 `defer_until_more_forward_data`、`propose_extended_shadow` 和
 `propose_manual_baseline_review`，并 fail closed 阻断 `apply_weight_set`、
-`promote_to_production`、`enable_broker_action`。当前 TRADING-071H 仍是
-candidate-only / observe-only proposal 层，后续 TRADING-071I-K 才会补 report、
-Reader Brief 和 validation gate。
+`promote_to_production`、`enable_broker_action`。`aits etf weight-calibration report
+--latest` 或显式 artifact path 生成
+`reports/etf_portfolio/weight_calibration/reports/dual_track_calibration_YYYY-MM-DD.json/md`，
+汇总 search configuration、top historical candidates、walk-forward/regime robustness、
+overfit diagnostics、forward evidence comparison、candidate registry status、proposal
+scorecard、manual review package、source report links 和 next steps。当前 TRADING-071I
+仍是 candidate-only / observe-only report 层，后续 TRADING-071J-K 才会补 Reader Brief
+和 validation gate。
 所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、
 `broker_action=none`、`manual_review_required=true`，不写 official target weights、不改
 baseline config、不写 shared experiment shadow registry、不触发 broker。
