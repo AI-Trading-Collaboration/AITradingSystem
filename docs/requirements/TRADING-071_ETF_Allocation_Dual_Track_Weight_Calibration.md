@@ -72,8 +72,8 @@ not the primary AI-cycle conclusion window.
 |TRADING-071G|Overfit Risk and Stability Diagnostics|DONE|High-return but unstable candidates receive explainable overfit risk bands|
 |TRADING-071H|Candidate Weight Proposal Generator|DONE|Only evidence-linked proposal/review actions are generated; unsafe proposal types are rejected|
 |TRADING-071I|Dual-Track Calibration Report|DONE|JSON/Markdown report summarizes search, robustness, forward comparison, overfit diagnostics, proposals, and source links|
-|TRADING-071J|Reader Brief Dual-Track Calibration Section|IN_PROGRESS|Reader Brief surfaces top candidate, forward status, overfit risk, candidate status, safety, and report link|
-|TRADING-071K|Dual-Track Calibration Validation Gate|READY|Final gate fails closed on unsafe states, unbounded search, unsafe proposals, or missing workflow pieces|
+|TRADING-071J|Reader Brief Dual-Track Calibration Section|DONE|Reader Brief surfaces top candidate, forward status, overfit risk, candidate status, safety, and report link|
+|TRADING-071K|Dual-Track Calibration Validation Gate|IN_PROGRESS|Final gate fails closed on unsafe states, unbounded search, unsafe proposals, or missing workflow pieces|
 
 ## Acceptance Criteria
 
@@ -168,3 +168,9 @@ command.
   evidence comparison、candidate registry status、proposal scorecard、manual review package、
   source report links 和 next steps。TRADING-071J 进入 `IN_PROGRESS`，下一步把 latest
   report 摘录到 Reader Brief。
+- 2026-06-02: TRADING-071J 完成。`config/report_registry.yaml` 新增
+  `etf_weight_dual_track_calibration_report`，Reader Brief 新增 `ETF Weight Calibration`
+  区块，只读 latest dual-track report，展示 search pack、top historical candidate、
+  forward evidence status、overfit risk、candidate status、manual review proposal count、
+  safety posture 和 detail link；缺失 report 时显示 `MISSING`，不运行 weight-calibration
+  上游命令。TRADING-071K 进入 `IN_PROGRESS`，下一步实现 final validation gate。

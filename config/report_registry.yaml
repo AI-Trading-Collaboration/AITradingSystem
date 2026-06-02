@@ -655,6 +655,22 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_weight_dual_track_calibration_report
+    title: ETF Weight Dual-Track Calibration Report
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf weight-calibration report --latest
+    artifact_globs:
+      - reports/etf_portfolio/weight_calibration/reports/dual_track_calibration_*.json
+      - reports/etf_portfolio/weight_calibration/reports/dual_track_calibration_*.md
+    freshness_sla_days: 14
+    freshness_rationale: TRADING-071 dual-track report should summarize historical search, forward evidence, overfit diagnostics and proposal-only recommendations before manual review.
+    owner_action: run_aits_etf_weight_calibration_report_after_search_evidence_overfit_and_proposals
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_p2_walk_forward
     title: ETF P2 Walk Forward Readiness
     group: research

@@ -453,9 +453,12 @@ proposal type 只允许 `continue_forward_observation`、`reject_weight_set`、
 `reports/etf_portfolio/weight_calibration/reports/dual_track_calibration_YYYY-MM-DD.json/md`，
 汇总 search configuration、top historical candidates、walk-forward/regime robustness、
 overfit diagnostics、forward evidence comparison、candidate registry status、proposal
-scorecard、manual review package、source report links 和 next steps。当前 TRADING-071I
-仍是 candidate-only / observe-only report 层，后续 TRADING-071J-K 才会补 Reader Brief
-和 validation gate。
+scorecard、manual review package、source report links 和 next steps。Report registry 新增
+`etf_weight_dual_track_calibration_report`；Reader Brief 的 `ETF Weight Calibration`
+区块只读 latest report，展示 search pack、top historical candidate、forward evidence
+status、overfit risk、candidate status、manual review proposal count、safety posture 和
+detail link，缺失 report 时显示 `MISSING` 且不运行上游。当前 TRADING-071J 仍是
+candidate-only / observe-only visibility 层，后续 TRADING-071K 才会补 validation gate。
 所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、
 `broker_action=none`、`manual_review_required=true`，不写 official target weights、不改
 baseline config、不写 shared experiment shadow registry、不触发 broker。

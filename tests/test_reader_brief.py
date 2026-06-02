@@ -176,6 +176,21 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     )
     assert parameter_review["production_effect"] == "none"
     assert parameter_review["broker_action"] == "none"
+    weight_calibration = payload["etf_weight_calibration"]
+    assert weight_calibration["availability"] == "AVAILABLE"
+    assert weight_calibration["search_pack"] == "etf_initial_weight_search_v1"
+    assert weight_calibration["top_historical_candidate"] == "weight_set_003"
+    assert weight_calibration["forward_evidence_status"] == "needs_more_forward_data"
+    assert weight_calibration["overfit_risk"] == "medium"
+    assert weight_calibration["candidate_status"] == "candidate"
+    assert weight_calibration["manual_review_proposals"] == 0
+    assert weight_calibration["detail_report"].endswith("dual_track_calibration_2026-05-04.json")
+    assert weight_calibration["safety_status"] == (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true"
+    )
+    assert weight_calibration["production_effect"] == "none"
+    assert weight_calibration["broker_action"] == "none"
     core_items = payload["report_navigation_groups"]["groups"][0]["items"]
     daily_summary_rows = [
         item for item in core_items if item["artifact_id"] == "daily_decision_summary"
@@ -220,6 +235,10 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
     assert payload["etf_parameter_review"]["main_reason"] == "PARAMETER_REVIEW_REPORT_MISSING"
     assert payload["etf_parameter_review"]["production_effect"] == "none"
     assert payload["etf_parameter_review"]["broker_action"] == "none"
+    assert payload["etf_weight_calibration"]["availability"] == "MISSING"
+    assert payload["etf_weight_calibration"]["forward_evidence_status"] == "MISSING"
+    assert payload["etf_weight_calibration"]["production_effect"] == "none"
+    assert payload["etf_weight_calibration"]["broker_action"] == "none"
     assert payload["report_index_summary"]["availability"] == "MISSING"
     assert payload["documentation_contract_summary"]["availability"] == "MISSING"
     assert payload["task_cadence_calendar"]["availability"] == "REGISTRY_FALLBACK"
@@ -239,6 +258,7 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
     assert "ETF Forward Simulation" in html
     assert "AI Confirmation" in html
     assert "ETF Parameter Review" in html
+    assert "ETF Weight Calibration" in html
     assert 'safety_status</th><td><span class="status-badge status-missing">MISSING</span>' in html
     assert "impact-group impact-important" in html
     assert "status-badge status-important" in html
@@ -315,6 +335,9 @@ def test_reports_reader_brief_cli_writes_html_and_json(tmp_path: Path) -> None:
     assert "ETF Parameter Review" in html
     assert "eligible_for_manual_review" in html
     assert "parameter_review_2026-05-04.json" in html
+    assert "ETF Weight Calibration" in html
+    assert "weight_set_003" in html
+    assert "dual_track_calibration_2026-05-04.json" in html
     assert "Report Navigation" in html
     assert "Top 3 Review Items Today" in html
     assert "影响今日结论" in html
@@ -867,6 +890,89 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
         ),
         encoding="utf-8",
     )
+    weight_calibration_dir = (
+        tmp_path / "reports" / "etf_portfolio" / "weight_calibration" / "reports"
+    )
+    weight_calibration_dir.mkdir(parents=True)
+    weight_calibration_path = weight_calibration_dir / "dual_track_calibration_2026-05-04.json"
+    weight_calibration_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "etf_weight_dual_track_calibration_report_v1",
+                "report_type": "etf_weight_dual_track_calibration_report",
+                "report_id": "etf-weight-dual-track-calibration-2026-05-04",
+                "status": "needs_more_forward_data",
+                "as_of": "2026-05-04",
+                "summary": {
+                    "candidate_count": 3,
+                    "enrolled_count": 1,
+                    "evidence_record_count": 1,
+                    "proposal_count": 3,
+                    "manual_review_proposal_count": 0,
+                    "top_candidate_id": "weight_set_003",
+                    "dominant_forward_evidence_status": "needs_more_forward_data",
+                    "highest_overfit_risk_band": "medium",
+                    "proposal_type_counts": {
+                        "continue_forward_observation": 1,
+                        "defer_until_more_forward_data": 2,
+                        "propose_manual_baseline_review": 0,
+                        "propose_extended_shadow": 0,
+                        "reject_weight_set": 0,
+                    },
+                },
+                "search_configuration": {
+                    "search_id": "etf_initial_weight_search_v1",
+                    "market_regime": "ai_after_chatgpt",
+                    "requested_date_range": {"start": "2022-12-01", "end": "2026-05-04"},
+                },
+                "top_historical_candidates": [
+                    {
+                        "weight_set_id": "weight_set_003",
+                        "source_candidate_id": "etf-weight-candidate-003",
+                        "rank": 1,
+                        "status": "candidate",
+                        "candidate_score": 0.72,
+                    }
+                ],
+                "forward_evidence_comparison": {
+                    "status": "needs_more_forward_data",
+                    "status_counts": {"needs_more_forward_data": 3},
+                    "evidence_record_count": 1,
+                },
+                "overfit_diagnostics": {
+                    "status": "available",
+                    "risk_counts": {"low": 1, "medium": 2, "high": 0, "critical": 0},
+                    "highest_risk_candidate": {
+                        "weight_set_id": "weight_set_003",
+                        "overfit_risk_band": "medium",
+                    },
+                },
+                "proposal_scorecard": {
+                    "status": "available",
+                    "proposal_count": 3,
+                    "proposal_type_counts": {
+                        "continue_forward_observation": 1,
+                        "defer_until_more_forward_data": 2,
+                        "propose_manual_baseline_review": 0,
+                        "propose_extended_shadow": 0,
+                        "reject_weight_set": 0,
+                    },
+                    "proposals": [],
+                },
+                "manual_review_package": {
+                    "manual_review_required": True,
+                    "application_allowed": False,
+                },
+                "observe_only": True,
+                "candidate_only": True,
+                "production_effect": "none",
+                "broker_action": "none",
+                "manual_review_required": True,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     trace_bundle_path = tmp_path / "daily_score_2026-05-04_trace.json"
     trace_bundle_path.write_text(
         json.dumps(
@@ -1257,6 +1363,19 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                         "latest_artifact_path": str(parameter_review_path),
                         "exists": True,
                         "owner_action": "review_parameter_review_report",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_weight_dual_track_calibration_report",
+                        "title": "ETF Weight Dual-Track Calibration Report",
+                        "cadence": "weekly",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "needs_more_forward_data",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(weight_calibration_path),
+                        "exists": True,
+                        "owner_action": "review_weight_calibration_report",
                         "production_effect": "none",
                     },
                 ],

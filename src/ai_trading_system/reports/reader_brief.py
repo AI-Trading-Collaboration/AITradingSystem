@@ -175,6 +175,7 @@ def build_reader_brief_payload(
     etf_weekly_review = _etf_weekly_review_summary(report_index)
     etf_decision_journal = _etf_decision_journal_summary(report_index)
     etf_parameter_review = _etf_parameter_review_summary(report_index)
+    etf_weight_calibration = _etf_weight_calibration_summary(report_index)
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -297,6 +298,7 @@ def build_reader_brief_payload(
         "etf_weekly_review": etf_weekly_review,
         "etf_decision_journal": etf_decision_journal,
         "etf_parameter_review": etf_parameter_review,
+        "etf_weight_calibration": etf_weight_calibration,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -551,6 +553,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_weekly_review = _mapping(payload.get("etf_weekly_review"))
     etf_decision_journal = _mapping(payload.get("etf_decision_journal"))
     etf_parameter_review = _mapping(payload.get("etf_parameter_review"))
+    etf_weight_calibration = _mapping(payload.get("etf_weight_calibration"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -846,6 +849,32 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("detailed_report", etf_parameter_review.get("detail_report")),
                     ("production_effect", etf_parameter_review.get("production_effect")),
                     ("broker_action", etf_parameter_review.get("broker_action")),
+                ]
+            ),
+        ),
+        _section(
+            "ETF Weight Calibration",
+            _definition_table(
+                [
+                    ("availability", etf_weight_calibration.get("availability")),
+                    ("status", etf_weight_calibration.get("status")),
+                    ("summary", etf_weight_calibration.get("summary_sentence")),
+                    ("search_pack", etf_weight_calibration.get("search_pack")),
+                    (
+                        "top_historical_candidate",
+                        etf_weight_calibration.get("top_historical_candidate"),
+                    ),
+                    (
+                        "forward_evidence_status",
+                        etf_weight_calibration.get("forward_evidence_status"),
+                    ),
+                    ("overfit_risk", etf_weight_calibration.get("overfit_risk")),
+                    ("candidate_status", etf_weight_calibration.get("candidate_status")),
+                    ("manual_review_proposals", etf_weight_calibration.get("manual_review_proposals")),
+                    ("safety_status", etf_weight_calibration.get("safety_status")),
+                    ("detailed_report", etf_weight_calibration.get("detail_report")),
+                    ("production_effect", etf_weight_calibration.get("production_effect")),
+                    ("broker_action", etf_weight_calibration.get("broker_action")),
                 ]
             ),
         ),
@@ -2408,6 +2437,100 @@ def _missing_etf_parameter_review_summary() -> dict[str, Any]:
 
 
 def _etf_parameter_review_safety_status(payload: Mapping[str, Any]) -> str:
+    safe = (
+        payload.get("observe_only") is True
+        and payload.get("candidate_only") is True
+        and _text(payload.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
+        and payload.get("broker_action") == "none"
+        and payload.get("manual_review_required") is True
+    )
+    return (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true"
+        if safe
+        else "SAFETY_REVIEW_REQUIRED"
+    )
+
+
+def _etf_weight_calibration_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_weight_calibration_summary()
+    report_path = _report_index_artifact_path(
+        report_index,
+        "etf_weight_dual_track_calibration_report",
+    )
+    report = _read_optional_json(report_path)
+    if not report:
+        return _missing_etf_weight_calibration_summary()
+    summary = _mapping(report.get("summary"))
+    search = _mapping(report.get("search_configuration"))
+    proposals = _mapping(report.get("proposal_scorecard"))
+    proposal_counts = _mapping(proposals.get("proposal_type_counts"))
+    top_candidates = _records(report.get("top_historical_candidates"))
+    top_candidate = top_candidates[0] if top_candidates else {}
+    safety_status = _etf_weight_calibration_safety_status(report)
+    top_candidate_id = _text(
+        summary.get("top_candidate_id"),
+        _text(top_candidate.get("weight_set_id"), "MISSING"),
+    )
+    forward_status = _text(
+        summary.get("dominant_forward_evidence_status"),
+        _text(_mapping(report.get("forward_evidence_comparison")).get("status"), "MISSING"),
+    )
+    overfit_risk = _text(summary.get("highest_overfit_risk_band"), "MISSING")
+    manual_review_count = _int(summary.get("manual_review_proposal_count"))
+    if manual_review_count == 0:
+        manual_review_count = _int(proposal_counts.get("propose_manual_baseline_review"))
+    return {
+        "availability": "AVAILABLE",
+        "status": _text(report.get("status"), "UNKNOWN"),
+        "summary_sentence": (
+            f"ETF Weight Calibration: search_pack={_text(search.get('search_id'), 'MISSING')}; "
+            f"top_candidate={top_candidate_id}; forward={forward_status}; "
+            f"overfit_risk={overfit_risk}; safety={safety_status}."
+        ),
+        "search_pack": _text(search.get("search_id"), "MISSING"),
+        "top_historical_candidate": top_candidate_id,
+        "forward_evidence_status": forward_status,
+        "overfit_risk": overfit_risk,
+        "candidate_status": _text(top_candidate.get("status"), _text(report.get("status"))),
+        "manual_review_proposals": manual_review_count,
+        "proposal_type_counts": dict(proposal_counts),
+        "candidate_count": _int(summary.get("candidate_count")),
+        "detail_report": "" if report_path is None else str(report_path),
+        "safety_status": safety_status,
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+    }
+
+
+def _missing_etf_weight_calibration_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "summary_sentence": "ETF Weight Calibration: no latest dual-track report found.",
+        "search_pack": "MISSING",
+        "top_historical_candidate": "MISSING",
+        "forward_evidence_status": "MISSING",
+        "overfit_risk": "MISSING",
+        "candidate_status": "MISSING",
+        "manual_review_proposals": 0,
+        "proposal_type_counts": {},
+        "candidate_count": 0,
+        "detail_report": "",
+        "safety_status": "MISSING",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "limitation": (
+            "ETF weight calibration artifact is missing; Reader Brief does not run "
+            "weight-calibration CLI."
+        ),
+    }
+
+
+def _etf_weight_calibration_safety_status(payload: Mapping[str, Any]) -> str:
     safe = (
         payload.get("observe_only") is True
         and payload.get("candidate_only") is True
