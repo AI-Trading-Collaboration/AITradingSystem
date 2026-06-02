@@ -12,12 +12,14 @@ from ai_trading_system.etf_portfolio.operations import (
     DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH,
     OPERATIONS_COMMAND_GRAPH_SCHEMA_VERSION,
     OPERATIONS_FAILURE_POLICY_SCHEMA_VERSION,
+    OPERATIONS_OWNER_REVIEW_CHECKLIST_SCHEMA_VERSION,
     OPERATIONS_SCHEDULE_SCHEMA_VERSION,
     ETFOperationsScheduleConfig,
     OperationsCommandGraphError,
     build_biweekly_operations_command_graph,
     build_daily_operations_command_graph,
     build_monthly_operations_command_graph,
+    build_operations_owner_review_checklist,
     build_weekly_operations_command_graph,
     check_operations_artifact_freshness,
     evaluate_operations_failure_policy,
@@ -895,6 +897,212 @@ def test_operations_failure_policy_serialization_is_stable(tmp_path: Path) -> No
     assert first_report.model_dump(mode="json") == second_report.model_dump(mode="json")
 
 
+def test_operations_owner_review_checklist_daily_uses_manual_review_step(
+    tmp_path: Path,
+) -> None:
+    graph = build_daily_operations_command_graph()
+    freshness = check_operations_artifact_freshness(
+        graph,
+        as_of="2026-06-03",
+        root_path=tmp_path,
+    )
+    failure_report = evaluate_operations_failure_policy(
+        freshness,
+        evaluated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+
+    checklist = build_operations_owner_review_checklist(
+        cadence="daily",
+        as_of="2026-06-03",
+        failure_report=failure_report,
+        generated_at=datetime(2026, 6, 3, 12, 5, tzinfo=UTC),
+    )
+
+    assert checklist.schema_version == OPERATIONS_OWNER_REVIEW_CHECKLIST_SCHEMA_VERSION
+    assert checklist.checklist_step_id == "daily_owner_review"
+    assert checklist.checklist_command == "manual_review:daily_quick_check"
+    assert checklist.checklist_dependencies == ["operations_health_check"]
+    assert checklist.checklist_expected_outputs == [
+        "manual_review_checklist:daily_quick_check"
+    ]
+    assert checklist.checklist_status == "blocked"
+    assert checklist.source_pipeline_status == "blocked"
+    assert checklist.read_only is True
+    assert checklist.commands_executed is False
+    assert _checklist_item_by_id(
+        checklist,
+        "safety:operations_boundary",
+    ).owner_action == "confirm_no_production_or_broker_action"
+
+
+def test_operations_owner_review_checklist_includes_blocking_failure_event(
+    tmp_path: Path,
+) -> None:
+    graph = build_daily_operations_command_graph()
+    freshness = check_operations_artifact_freshness(
+        graph,
+        as_of="2026-06-03",
+        root_path=tmp_path,
+    )
+    failure_report = evaluate_operations_failure_policy(freshness)
+    event = _failure_event_by_artifact(failure_report, "data_freshness_check:1")
+
+    checklist = build_operations_owner_review_checklist(
+        cadence="daily",
+        as_of="2026-06-03",
+        failure_report=failure_report,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+    item = _checklist_item_by_id(checklist, f"event:{event.event_id}")
+
+    assert item.category == "blocking_event"
+    assert item.blocking is True
+    assert item.required is True
+    assert item.source_step == "data_freshness_check"
+    assert item.related_artifact_ids == ["data_freshness_check:1"]
+    assert item.owner_action == "stop_pipeline_until_artifact_recovers"
+    assert item.item_id in checklist.blocking_items
+
+
+def test_operations_owner_review_checklist_includes_optional_warning_event(
+    tmp_path: Path,
+) -> None:
+    graph = build_daily_operations_command_graph()
+    _write_text_artifact(
+        tmp_path,
+        "outputs/reports/data_quality_2026-06-03.md",
+        "\n".join(
+            [
+                "generated_at: 2026-06-03T09:30:00+00:00",
+                "as_of_date: 2026-06-03",
+            ]
+        ),
+    )
+    _write_json_artifact(
+        tmp_path,
+        "reports/etf_portfolio/ai_confirmation/reports/"
+        "ai_confirmation_report_2026-06-03.json",
+        {
+            "generated_at": "2026-06-03T10:30:00+00:00",
+            "as_of_date": "2026-06-03",
+        },
+    )
+    freshness = check_operations_artifact_freshness(
+        graph,
+        as_of="2026-06-03",
+        root_path=tmp_path,
+    )
+    failure_report = evaluate_operations_failure_policy(freshness)
+    event = _failure_event_by_artifact(failure_report, "ai_attribution_update:1")
+
+    checklist = build_operations_owner_review_checklist(
+        cadence="daily",
+        as_of="2026-06-03",
+        failure_report=failure_report,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+    item = _checklist_item_by_id(checklist, f"event:{event.event_id}")
+
+    assert item.category == "warning_event"
+    assert item.blocking is False
+    assert item.required is True
+    assert item.source_step == "ai_attribution_update"
+    assert item.owner_action == "skip_optional_step_and_warn"
+    assert item.item_id in checklist.warning_items
+
+
+def test_operations_owner_review_checklist_weekly_manual_review_event(
+    tmp_path: Path,
+) -> None:
+    graph = build_weekly_operations_command_graph()
+    freshness = check_operations_artifact_freshness(
+        graph,
+        as_of="2026-06-03",
+        root_path=tmp_path,
+    )
+    failure_report = evaluate_operations_failure_policy(freshness)
+    event = _failure_event_by_artifact(
+        failure_report,
+        "decision_journal_review_prompt:1",
+    )
+
+    checklist = build_operations_owner_review_checklist(
+        cadence="weekly",
+        as_of="2026-06-03",
+        failure_report=failure_report,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+    item = _checklist_item_by_id(checklist, f"event:{event.event_id}")
+
+    assert checklist.checklist_step_id == "weekly_owner_review"
+    assert item.category == "manual_review_event"
+    assert item.blocking is False
+    assert item.owner_action == "request_owner_manual_review"
+    assert item.item_id in checklist.manual_review_items
+
+
+def test_operations_owner_review_checklist_monthly_template_without_failure_report() -> None:
+    checklist = build_operations_owner_review_checklist(
+        cadence="monthly",
+        as_of="2026-06-03",
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+
+    assert checklist.checklist_step_id == "monthly_owner_review"
+    assert checklist.checklist_command == "manual_review:monthly_parameter_review"
+    assert checklist.checklist_status == "ready"
+    assert checklist.source_pipeline_status is None
+    assert checklist.source_event_count == 0
+    assert _checklist_item_by_id(
+        checklist,
+        "cadence:monthly:entry_gate",
+    ).owner_action == "confirm_monthly_governance_and_slow_cadence_scope"
+
+
+def test_operations_owner_review_checklist_incident_template_is_stable() -> None:
+    generated_at = datetime(2026, 6, 3, 12, tzinfo=UTC)
+
+    first_checklist = build_operations_owner_review_checklist(
+        cadence="incident",
+        as_of="2026-06-03",
+        generated_at=generated_at,
+    )
+    second_checklist = build_operations_owner_review_checklist(
+        cadence="incident",
+        as_of="2026-06-03",
+        generated_at=generated_at,
+    )
+
+    assert first_checklist.checklist_step_id == "incident_review"
+    assert first_checklist.checklist_status == "manual_review_required"
+    assert _checklist_item_by_id(
+        first_checklist,
+        "cadence:incident:entry_gate",
+    ).owner_action == "confirm_incident_scope_and_recovery_boundary"
+    assert first_checklist.model_dump(mode="json") == second_checklist.model_dump(
+        mode="json"
+    )
+
+
+def test_operations_owner_review_checklist_rejects_cadence_mismatch(
+    tmp_path: Path,
+) -> None:
+    graph = build_daily_operations_command_graph()
+    freshness = check_operations_artifact_freshness(
+        graph,
+        as_of="2026-06-03",
+        root_path=tmp_path,
+    )
+    failure_report = evaluate_operations_failure_policy(freshness)
+
+    with pytest.raises(OperationsCommandGraphError, match="cadence must match"):
+        build_operations_owner_review_checklist(
+            cadence="weekly",
+            as_of="2026-06-03",
+            failure_report=failure_report,
+        )
+
+
 def _raw_schedule() -> dict[str, object]:
     raw = safe_load_yaml_path(DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH)
     assert isinstance(raw, dict)
@@ -921,3 +1129,7 @@ def _artifact_by_id(report: Any, artifact_id: str) -> Any:
 
 def _failure_event_by_artifact(report: Any, artifact_id: str) -> Any:
     return next(event for event in report.events if event.artifact_id == artifact_id)
+
+
+def _checklist_item_by_id(checklist: Any, item_id: str) -> Any:
+    return next(item for item in checklist.items if item.item_id == item_id)

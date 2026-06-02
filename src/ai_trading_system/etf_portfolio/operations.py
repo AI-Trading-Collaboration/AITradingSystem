@@ -49,6 +49,21 @@ OperationsPipelineStatus = Literal[
     "manual_review_required",
     "blocked",
 ]
+OperationsOwnerReviewCadence = Literal["daily", "weekly", "monthly", "incident"]
+OperationsOwnerChecklistStatus = Literal[
+    "ready",
+    "manual_review_required",
+    "blocked",
+]
+OperationsOwnerChecklistItemCategory = Literal[
+    "safety_boundary",
+    "cadence_gate",
+    "summary_review",
+    "blocking_event",
+    "warning_event",
+    "manual_review_event",
+    "owner_signoff",
+]
 OperationsRuntimeClass = Literal["fast", "medium", "slow"]
 OperationsGraphCadence = Literal["daily", "weekly", "biweekly", "monthly"]
 OperationsArtifactFreshnessStatus = Literal[
@@ -82,6 +97,9 @@ _GRAPH_PIPELINE_FIELD_BY_CADENCE: dict[OperationsGraphCadence, str] = {
 OPERATIONS_COMMAND_GRAPH_SCHEMA_VERSION = "etf_operations_command_graph_v1"
 OPERATIONS_ARTIFACT_FRESHNESS_SCHEMA_VERSION = "etf_operations_artifact_freshness_v1"
 OPERATIONS_FAILURE_POLICY_SCHEMA_VERSION = "etf_operations_failure_policy_v1"
+OPERATIONS_OWNER_REVIEW_CHECKLIST_SCHEMA_VERSION = (
+    "etf_operations_owner_review_checklist_v1"
+)
 _ARTIFACT_PLACEHOLDER_RE = re.compile(r"\{[^}]+\}")
 _ARTIFACT_DATE_RE = re.compile(r"(?P<date>\d{4}[-_]\d{2}[-_]\d{2})")
 _TEXT_GENERATED_AT_RE = re.compile(
@@ -472,6 +490,70 @@ class ETFOperationsFailurePolicyReport(BaseModel):
         return self
 
 
+class ETFOperationsOwnerReviewChecklistItem(BaseModel):
+    item_id: str = Field(min_length=1)
+    category: OperationsOwnerChecklistItemCategory
+    title: str = Field(min_length=1)
+    description: str = Field(min_length=1)
+    required: bool
+    blocking: bool
+    owner_action: str = Field(min_length=1)
+    source_step: str | None = None
+    related_event_ids: list[str] = Field(default_factory=list)
+    related_artifact_ids: list[str] = Field(default_factory=list)
+    evidence_paths: list[str] = Field(default_factory=list)
+
+
+class ETFOperationsOwnerReviewChecklist(BaseModel):
+    schema_version: Literal["etf_operations_owner_review_checklist_v1"] = (
+        OPERATIONS_OWNER_REVIEW_CHECKLIST_SCHEMA_VERSION
+    )
+    cadence: OperationsOwnerReviewCadence
+    as_of_date: date
+    generated_at: datetime
+    read_only: bool = True
+    commands_executed: bool = False
+    safety: ETFOperationsScheduleSafety
+    checklist_step_id: str = Field(min_length=1)
+    checklist_command: str = Field(min_length=1)
+    checklist_dependencies: list[str] = Field(default_factory=list)
+    checklist_expected_outputs: list[str] = Field(default_factory=list)
+    checklist_status: OperationsOwnerChecklistStatus
+    signoff_required: bool = True
+    source_failure_policy_schema_version: str | None = None
+    source_pipeline_status: OperationsPipelineStatus | None = None
+    source_event_count: int = Field(ge=0)
+    items: list[ETFOperationsOwnerReviewChecklistItem] = Field(min_length=1)
+    required_items: list[str] = Field(default_factory=list)
+    blocking_items: list[str] = Field(default_factory=list)
+    warning_items: list[str] = Field(default_factory=list)
+    manual_review_items: list[str] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_checklist_safety(self) -> Self:
+        if self.commands_executed:
+            raise ValueError("ETF operations owner review checklist must not execute commands")
+        if not self.signoff_required:
+            raise ValueError("ETF operations owner review checklist requires owner signoff")
+        for field, expected in OPERATIONS_SCHEDULE_SAFETY.items():
+            if getattr(self.safety, field) != expected:
+                raise ValueError(
+                    "ETF operations owner review checklist safety "
+                    f"{field} must be {expected!r}"
+                )
+        item_ids = [item.item_id for item in self.items]
+        duplicate_item_ids = sorted(
+            {item_id for item_id in item_ids if item_ids.count(item_id) > 1}
+        )
+        if duplicate_item_ids:
+            duplicates = ", ".join(duplicate_item_ids)
+            raise ValueError(
+                "ETF operations owner review checklist item IDs must be unique: "
+                f"{duplicates}"
+            )
+        return self
+
+
 def load_operations_schedule_config(
     path: Path | str = DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH,
 ) -> ETFOperationsScheduleConfig:
@@ -707,6 +789,66 @@ def evaluate_operations_failure_policy(
                 "manual_review_required",
             ),
         ),
+    )
+
+
+def build_operations_owner_review_checklist(
+    *,
+    cadence: OperationsOwnerReviewCadence,
+    as_of: date | datetime | str,
+    failure_report: ETFOperationsFailurePolicyReport | None = None,
+    config: ETFOperationsScheduleConfig | None = None,
+    generated_at: datetime | None = None,
+) -> ETFOperationsOwnerReviewChecklist:
+    schedule = config or load_operations_schedule_config()
+    requested_as_of = _coerce_date(as_of)
+    generated = _coerce_datetime(generated_at or datetime.now(tz=UTC))
+    _validate_owner_checklist_failure_report(
+        cadence=cadence,
+        as_of_date=requested_as_of,
+        failure_report=failure_report,
+    )
+    checklist_step = _owner_review_step_for_cadence(schedule, cadence)
+    safety = failure_report.safety if failure_report is not None else schedule.safety
+
+    items = [
+        _owner_review_safety_item(),
+        _owner_review_cadence_item(cadence),
+        _owner_review_summary_item(failure_report),
+    ]
+    if failure_report is not None:
+        items.extend(_owner_review_failure_event_item(event) for event in failure_report.events)
+    items.append(_owner_review_signoff_item(cadence, failure_report))
+
+    return ETFOperationsOwnerReviewChecklist(
+        cadence=cadence,
+        as_of_date=requested_as_of,
+        generated_at=generated,
+        read_only=True,
+        commands_executed=False,
+        safety=safety,
+        checklist_step_id=checklist_step.step_id,
+        checklist_command=checklist_step.command,
+        checklist_dependencies=list(checklist_step.dependencies),
+        checklist_expected_outputs=list(checklist_step.expected_outputs),
+        checklist_status=_owner_review_checklist_status(cadence, failure_report),
+        signoff_required=True,
+        source_failure_policy_schema_version=(
+            failure_report.schema_version if failure_report is not None else None
+        ),
+        source_pipeline_status=(
+            failure_report.pipeline_status if failure_report is not None else None
+        ),
+        source_event_count=len(failure_report.events) if failure_report is not None else 0,
+        items=items,
+        required_items=[item.item_id for item in items if item.required],
+        blocking_items=[item.item_id for item in items if item.blocking],
+        warning_items=[
+            item.item_id for item in items if item.category == "warning_event"
+        ],
+        manual_review_items=[
+            item.item_id for item in items if item.category == "manual_review_event"
+        ],
     )
 
 
@@ -1044,6 +1186,212 @@ def _failure_policy_pipeline_status(
     if any(event.severity in {"warning", "error"} for event in events):
         return "warning"
     return "pass"
+
+
+def _validate_owner_checklist_failure_report(
+    *,
+    cadence: OperationsOwnerReviewCadence,
+    as_of_date: date,
+    failure_report: ETFOperationsFailurePolicyReport | None,
+) -> None:
+    if failure_report is None:
+        return
+    if failure_report.as_of_date != as_of_date:
+        raise OperationsCommandGraphError(
+            "ETF operations owner review checklist as_of date must match "
+            "failure report as_of date"
+        )
+    if cadence != "incident" and failure_report.cadence != cadence:
+        raise OperationsCommandGraphError(
+            "ETF operations owner review checklist cadence must match "
+            "failure report cadence"
+        )
+
+
+def _owner_review_step_for_cadence(
+    schedule: ETFOperationsScheduleConfig,
+    cadence: OperationsOwnerReviewCadence,
+) -> ETFOperationsScheduleStep:
+    matching_steps = [
+        step for step in schedule.manual_review_steps if step.cadence == cadence
+    ]
+    if len(matching_steps) != 1:
+        raise OperationsCommandGraphError(
+            "ETF operations schedule must define exactly one owner review step "
+            f"for cadence: {cadence}"
+        )
+    return matching_steps[0]
+
+
+def _owner_review_safety_item() -> ETFOperationsOwnerReviewChecklistItem:
+    return ETFOperationsOwnerReviewChecklistItem(
+        item_id="safety:operations_boundary",
+        category="safety_boundary",
+        title="Confirm observe-only operations boundary",
+        description=(
+            "Confirm observe_only=true, candidate_only=true, production_effect=none, "
+            "broker_action=none, and manual_review_required=true before using outputs."
+        ),
+        required=True,
+        blocking=False,
+        owner_action="confirm_no_production_or_broker_action",
+    )
+
+
+def _owner_review_cadence_item(
+    cadence: OperationsOwnerReviewCadence,
+) -> ETFOperationsOwnerReviewChecklistItem:
+    guidance = {
+        "daily": (
+            "Confirm daily data quality and report readiness",
+            "Review daily data quality, report index, Reader Brief, and operations health "
+            "before treating daily outputs as reviewable.",
+            "confirm_daily_quality_gate_and_report_readiness",
+        ),
+        "weekly": (
+            "Confirm weekly review prerequisites",
+            "Review daily upstream artifacts, weekly review package, decision journal, "
+            "parameter review, watchlist, and weekly operations report.",
+            "confirm_weekly_prerequisites_and_owner_review_scope",
+        ),
+        "monthly": (
+            "Confirm monthly governance prerequisites",
+            "Review monthly data quality audit, bounded weight calibration, parameter "
+            "governance, strategy evidence dashboard, and monthly operations report.",
+            "confirm_monthly_governance_and_slow_cadence_scope",
+        ),
+        "incident": (
+            "Confirm incident review scope",
+            "Review the critical blocker, impacted dependent steps, operator notes, "
+            "and recovery evidence without applying production changes.",
+            "confirm_incident_scope_and_recovery_boundary",
+        ),
+    }[cadence]
+    return ETFOperationsOwnerReviewChecklistItem(
+        item_id=f"cadence:{cadence}:entry_gate",
+        category="cadence_gate",
+        title=guidance[0],
+        description=guidance[1],
+        required=True,
+        blocking=False,
+        owner_action=guidance[2],
+    )
+
+
+def _owner_review_summary_item(
+    failure_report: ETFOperationsFailurePolicyReport | None,
+) -> ETFOperationsOwnerReviewChecklistItem:
+    if failure_report is None:
+        description = (
+            "No failure policy report was attached; review latest operations artifacts "
+            "and record the source evidence before signoff."
+        )
+        owner_action = "review_latest_operations_artifacts_before_signoff"
+    else:
+        description = (
+            "Review failure policy summary with pipeline_status="
+            f"{failure_report.pipeline_status}, blocking_events="
+            f"{len(failure_report.blocking_events)}, warning_events="
+            f"{len(failure_report.warning_events)}, manual_review_events="
+            f"{len(failure_report.manual_review_events)}."
+        )
+        owner_action = "review_failure_policy_summary"
+    return ETFOperationsOwnerReviewChecklistItem(
+        item_id="summary:failure_policy",
+        category="summary_review",
+        title="Review operations failure summary",
+        description=description,
+        required=True,
+        blocking=False,
+        owner_action=owner_action,
+    )
+
+
+def _owner_review_failure_event_item(
+    event: ETFOperationsFailurePolicyEvent,
+) -> ETFOperationsOwnerReviewChecklistItem:
+    category = _owner_review_event_category(event)
+    return ETFOperationsOwnerReviewChecklistItem(
+        item_id=f"event:{event.event_id}",
+        category=category,
+        title=f"Review {event.source_step} {event.event_type}",
+        description=(
+            f"Artifact {event.artifact_id} has freshness_status="
+            f"{event.freshness_status}, severity={event.severity}, "
+            f"failure_policy={event.failure_policy}."
+        ),
+        required=True,
+        blocking=event.blocks_pipeline or event.blocks_dependent_steps,
+        owner_action=event.recommended_action,
+        source_step=event.source_step,
+        related_event_ids=[event.event_id],
+        related_artifact_ids=[event.artifact_id],
+        evidence_paths=[event.path],
+    )
+
+
+def _owner_review_event_category(
+    event: ETFOperationsFailurePolicyEvent,
+) -> OperationsOwnerChecklistItemCategory:
+    if event.blocks_pipeline or event.blocks_dependent_steps:
+        return "blocking_event"
+    if event.requires_manual_review:
+        return "manual_review_event"
+    if event.severity == "warning":
+        return "warning_event"
+    return "summary_review"
+
+
+def _owner_review_signoff_item(
+    cadence: OperationsOwnerReviewCadence,
+    failure_report: ETFOperationsFailurePolicyReport | None,
+) -> ETFOperationsOwnerReviewChecklistItem:
+    blocking = (
+        failure_report is not None
+        and failure_report.pipeline_status == "blocked"
+    )
+    if blocking:
+        owner_action = "record_blocker_and_do_not_approve_dependent_outputs"
+        description = (
+            "Pipeline or dependent-step blockers remain open; owner must record the "
+            "blocker and recovery condition before any downstream interpretation."
+        )
+    elif (
+        failure_report is not None
+        and failure_report.pipeline_status == "manual_review_required"
+    ):
+        owner_action = "complete_manual_review_before_downstream_interpretation"
+        description = (
+            "Manual review is required before downstream interpretation or report use."
+        )
+    else:
+        owner_action = "record_owner_signoff_or_limitations"
+        description = (
+            "Record owner signoff, warning acknowledgements, limitations, and next "
+            "responsible party for this cadence."
+        )
+    return ETFOperationsOwnerReviewChecklistItem(
+        item_id=f"signoff:{cadence}:owner",
+        category="owner_signoff",
+        title="Record owner signoff",
+        description=description,
+        required=True,
+        blocking=blocking,
+        owner_action=owner_action,
+    )
+
+
+def _owner_review_checklist_status(
+    cadence: OperationsOwnerReviewCadence,
+    failure_report: ETFOperationsFailurePolicyReport | None,
+) -> OperationsOwnerChecklistStatus:
+    if failure_report is None:
+        return "manual_review_required" if cadence == "incident" else "ready"
+    if failure_report.pipeline_status == "blocked":
+        return "blocked"
+    if failure_report.pipeline_status == "manual_review_required":
+        return "manual_review_required"
+    return "ready"
 
 
 def _artifact_source_step_order(graph: ETFOperationsCommandGraph) -> tuple[str, ...]:
