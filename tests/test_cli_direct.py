@@ -231,6 +231,83 @@ def test_cli_direct_etf_ops_report_writes_json_and_markdown(tmp_path: Path) -> N
     assert "## Source Artifacts / Source Artifacts" in markdown
 
 
+def test_cli_direct_dispatches_etf_ops_validate(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_ops_validate_command(**kwargs: object) -> None:
+        captured.update(kwargs)
+
+    monkeypatch.setattr(
+        cli_direct.etf_cli,
+        "ops_validate_command",
+        fake_ops_validate_command,
+    )
+
+    exit_code = cli_direct.main(
+        [
+            "etf",
+            "ops",
+            "validate",
+            "--as-of",
+            "2026-06-03",
+            "--root-path",
+            str(tmp_path),
+            "--config-path",
+            str(tmp_path / "operations_schedule.yaml"),
+            "--output-dir",
+            str(tmp_path / "validation"),
+            "--json-path",
+            str(tmp_path / "operations_validation.json"),
+            "--markdown-path",
+            str(tmp_path / "operations_validation.md"),
+        ]
+    )
+
+    assert exit_code == 0
+    assert captured["as_of"] == "2026-06-03"
+    assert captured["root_path"] == tmp_path
+    assert captured["config_path"] == tmp_path / "operations_schedule.yaml"
+    assert captured["output_dir"] == tmp_path / "validation"
+    assert captured["json_path"] == tmp_path / "operations_validation.json"
+    assert captured["markdown_path"] == tmp_path / "operations_validation.md"
+
+
+def test_cli_direct_etf_ops_validate_writes_json_and_markdown(tmp_path: Path) -> None:
+    json_path = tmp_path / "operations_validation.json"
+    markdown_path = tmp_path / "operations_validation.md"
+
+    exit_code = cli_direct.main(
+        [
+            "etf",
+            "ops",
+            "validate",
+            "--as-of",
+            "2026-06-03",
+            "--root-path",
+            str(tmp_path),
+            "--json-path",
+            str(json_path),
+            "--markdown-path",
+            str(markdown_path),
+        ]
+    )
+
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+    markdown = markdown_path.read_text(encoding="utf-8")
+    assert exit_code == 0
+    assert payload["schema_version"] == "etf_operations_validation_v1"
+    assert payload["status"] == "PASS"
+    assert payload["commands_executed"] is False
+    assert payload["production_state_mutated"] is False
+    assert payload["production_effect"] == "none"
+    assert payload["broker_action"] == "none"
+    assert payload["manual_review_required"] is True
+    assert "## Checks / 校验项" in markdown
+
+
 def test_cli_direct_dispatches_daily_feedback_reports(monkeypatch) -> None:
     calls: list[tuple[str, dict[str, object]]] = []
 

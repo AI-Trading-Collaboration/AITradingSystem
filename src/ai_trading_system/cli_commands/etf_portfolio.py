@@ -146,11 +146,14 @@ from ai_trading_system.etf_portfolio.models import (
     load_etf_config_bundle,
 )
 from ai_trading_system.etf_portfolio.operations import (
+    DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH,
     OperationsGraphCadence,
     build_operations_health_report,
     build_operations_scheduler_dry_run,
+    build_operations_validation_report,
     write_operations_health_report,
     write_operations_scheduler_dry_run,
+    write_operations_validation_report,
 )
 from ai_trading_system.etf_portfolio.p1 import (
     append_experiment_registry,
@@ -382,6 +385,7 @@ DEFAULT_ETF_OPERATIONS_DRY_RUN_DIR = (
 DEFAULT_ETF_OPERATIONS_REPORT_DIR = (
     PROJECT_ROOT / "reports" / "etf_portfolio" / "operations"
 )
+DEFAULT_ETF_OPERATIONS_VALIDATION_DIR = DEFAULT_ETF_OPERATIONS_REPORT_DIR / "validation"
 
 
 @etf_app.command("validate-config")
@@ -528,6 +532,69 @@ def ops_report_command(
     typer.echo("production_effect=none")
     typer.echo("broker_action=none")
     typer.echo("manual_review_required=true")
+
+
+@ops_app.command("validate")
+def ops_validate_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="评估日期 YYYY-MM-DD；省略时使用今天。"),
+    ] = None,
+    root_path: Annotated[
+        Path,
+        typer.Option("--root-path", help="扫描既有 artifacts 的根目录。"),
+    ] = PROJECT_ROOT,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", "--config", help="operations schedule config path。"),
+    ] = DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="operations validation 输出目录。"),
+    ] = DEFAULT_ETF_OPERATIONS_VALIDATION_DIR,
+    json_path: Annotated[
+        Path | None,
+        typer.Option("--json-path", help="显式 JSON 输出路径。"),
+    ] = None,
+    markdown_path: Annotated[
+        Path | None,
+        typer.Option("--markdown-path", help="显式 Markdown 输出路径。"),
+    ] = None,
+) -> None:
+    """校验 ETF operations workflow 完整性和安全边界；失败时 exit 1。"""
+    requested_as_of = as_of or date.today().isoformat()
+    report = build_operations_validation_report(
+        as_of=requested_as_of,
+        root_path=root_path,
+        config_path=config_path,
+    )
+    json_output = json_path or (
+        output_dir / f"operations_validation_{report.as_of_date.isoformat()}.json"
+    )
+    markdown_output = markdown_path or (
+        output_dir / f"operations_validation_{report.as_of_date.isoformat()}.md"
+    )
+    paths = write_operations_validation_report(
+        report,
+        json_path=json_output,
+        markdown_path=markdown_output,
+    )
+    typer.echo(f"ETF operations validation JSON：{paths['json']}")
+    typer.echo(f"ETF operations validation Markdown：{paths['markdown']}")
+    typer.echo(f"report_id={report.report_id}")
+    typer.echo(f"as_of_date={report.as_of_date.isoformat()}")
+    typer.echo(f"status={report.status}")
+    typer.echo(f"failed_check_count={report.failed_check_count}")
+    typer.echo(f"warning_check_count={report.warning_check_count}")
+    typer.echo("commands_executed=false")
+    typer.echo("production_state_mutated=false")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+    if report.status != "PASS":
+        raise typer.Exit(code=1)
 
 
 @data_app.command("ingest")

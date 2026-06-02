@@ -318,6 +318,24 @@ def _dispatch(args: list[str]) -> None:
             no_write=_flag(args, "--no-write"),
         )
         return
+    if args[:3] == ["etf", "ops", "validate"]:
+        etf_cli.ops_validate_command(
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            root_path=_path_option_with_default(args, "--root-path", etf_cli.PROJECT_ROOT),
+            config_path=(
+                _optional_path(args, "--config-path")
+                or _optional_path(args, "--config")
+                or etf_cli.DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH
+            ),
+            output_dir=_path_option_with_default(
+                args,
+                "--output-dir",
+                etf_cli.DEFAULT_ETF_OPERATIONS_VALIDATION_DIR,
+            ),
+            json_path=_optional_path(args, "--json-path"),
+            markdown_path=_optional_path(args, "--markdown-path"),
+        )
+        return
     if args[:3] == ["etf", "ops", "report"]:
         etf_cli.ops_report_command(
             cadence=_option(args, "--cadence", "daily") or "daily",

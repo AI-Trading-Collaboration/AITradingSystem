@@ -766,6 +766,22 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_operations_validation
+    title: ETF Operations Validation Gate
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf ops validate --as-of YYYY-MM-DD
+    artifact_globs:
+      - reports/etf_portfolio/operations/validation/operations_validation_*.json
+      - reports/etf_portfolio/operations/validation/operations_validation_*.md
+    freshness_sla_days: 14
+    freshness_rationale: TRADING-074 final validation gate should confirm schedule, graph, freshness, failure policy, owner checklist, dry-run, operations report, Reader Brief integration and safety boundaries before marking the workflow validating.
+    owner_action: run_aits_etf_ops_validate_before_marking_TRADING_074_validating_or_done
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_p2_walk_forward
     title: ETF P2 Walk Forward Readiness
     group: research

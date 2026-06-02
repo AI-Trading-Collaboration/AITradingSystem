@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+import yaml
 
 from ai_trading_system.etf_portfolio.operations import (
     DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH,
@@ -16,6 +17,7 @@ from ai_trading_system.etf_portfolio.operations import (
     OPERATIONS_OWNER_REVIEW_CHECKLIST_SCHEMA_VERSION,
     OPERATIONS_SCHEDULE_SCHEMA_VERSION,
     OPERATIONS_SCHEDULER_DRY_RUN_SCHEMA_VERSION,
+    OPERATIONS_VALIDATION_SCHEMA_VERSION,
     ETFOperationsScheduleConfig,
     OperationsCommandGraphError,
     build_biweekly_operations_command_graph,
@@ -24,6 +26,7 @@ from ai_trading_system.etf_portfolio.operations import (
     build_operations_health_report,
     build_operations_owner_review_checklist,
     build_operations_scheduler_dry_run,
+    build_operations_validation_report,
     build_weekly_operations_command_graph,
     check_operations_artifact_freshness,
     evaluate_operations_failure_policy,
@@ -31,7 +34,9 @@ from ai_trading_system.etf_portfolio.operations import (
     operations_schedule_required_step_ids,
     operations_schedule_step_ids,
     render_operations_health_report_markdown,
+    render_operations_validation_report_markdown,
     write_operations_health_report,
+    write_operations_validation_report,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -1429,10 +1434,200 @@ def test_operations_health_report_markdown_is_stable(tmp_path: Path) -> None:
     )
 
 
+def test_operations_validation_report_passes_when_workflow_complete(
+    tmp_path: Path,
+) -> None:
+    generated_at = datetime(2026, 6, 3, 12, tzinfo=UTC)
+
+    report = build_operations_validation_report(
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        generated_at=generated_at,
+    )
+
+    assert report.schema_version == OPERATIONS_VALIDATION_SCHEMA_VERSION
+    assert report.status == "PASS"
+    assert report.failed_check_count == 0
+    assert report.commands_executed is False
+    assert report.production_state_mutated is False
+    assert report.production_effect == "none"
+    assert report.broker_action == "none"
+    assert report.manual_review_required is True
+    checks = {check.check_id: check for check in report.checks}
+    assert checks["daily_graph_valid"].status == "PASS"
+    assert checks["weekly_graph_valid"].status == "PASS"
+    assert checks["monthly_graph_valid"].status == "PASS"
+    assert checks["freshness_checker_available"].status == "PASS"
+    assert checks["required_missing_blocks"].status == "PASS"
+    assert checks["optional_missing_warns"].status == "PASS"
+    assert checks["reader_brief_integration_available"].status == "PASS"
+
+
+def test_operations_validation_fails_when_schedule_invalid(tmp_path: Path) -> None:
+    raw = _raw_schedule()
+    raw["weekly_pipeline"][0]["dependencies"] = ["missing_daily_gate"]
+    config_path = _write_schedule_yaml(tmp_path, raw)
+
+    report = build_operations_validation_report(
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        config_path=config_path,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+
+    check = _validation_check_by_id(report, "schedule_spec_valid")
+    assert report.status == "FAIL"
+    assert check.status == "FAIL"
+    assert "dependencies reference unknown steps" in check.evidence["error"]
+
+
+def test_operations_validation_fails_when_required_step_missing(
+    tmp_path: Path,
+) -> None:
+    raw = _raw_schedule()
+    raw["daily_pipeline"] = [
+        step
+        for step in raw["daily_pipeline"]
+        if step["step_id"] != "operations_health_check"
+    ]
+    for field_name in (
+        "weekly_pipeline",
+        "biweekly_pipeline",
+        "monthly_pipeline",
+        "manual_review_steps",
+    ):
+        for step in raw[field_name]:
+            step["dependencies"] = [
+                dependency
+                for dependency in step["dependencies"]
+                if dependency != "operations_health_check"
+            ]
+    config = ETFOperationsScheduleConfig.model_validate(raw)
+
+    report = build_operations_validation_report(
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        config=config,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+
+    assert report.status == "FAIL"
+    assert _validation_check_by_id(report, "required_steps_present").status == "FAIL"
+    assert _validation_check_by_id(report, "daily_graph_valid").status == "FAIL"
+
+
+def test_operations_validation_fails_when_dependency_cycle_exists(
+    tmp_path: Path,
+) -> None:
+    raw = _raw_schedule()
+    raw["daily_pipeline"][0]["dependencies"] = ["operations_health_check"]
+    config = ETFOperationsScheduleConfig.model_validate(raw)
+
+    report = build_operations_validation_report(
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        config=config,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+
+    check = _validation_check_by_id(report, "daily_graph_valid")
+    assert report.status == "FAIL"
+    assert check.status == "FAIL"
+    assert "dependency cycle detected" in check.evidence["error"]
+
+
+def test_operations_validation_fails_when_production_effect_unsafe(
+    tmp_path: Path,
+) -> None:
+    raw = _raw_schedule()
+    raw["safety"]["production_effect"] = "apply_weights"
+    config_path = _write_schedule_yaml(tmp_path, raw)
+
+    report = build_operations_validation_report(
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        config_path=config_path,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+
+    check = _validation_check_by_id(report, "schedule_spec_valid")
+    assert report.status == "FAIL"
+    assert check.status == "FAIL"
+    assert "production_effect" in check.evidence["error"]
+
+
+def test_operations_validation_fails_when_broker_action_unsafe(
+    tmp_path: Path,
+) -> None:
+    raw = _raw_schedule()
+    raw["safety"]["broker_action"] = "submit_order"
+    config_path = _write_schedule_yaml(tmp_path, raw)
+
+    report = build_operations_validation_report(
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        config_path=config_path,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+
+    check = _validation_check_by_id(report, "schedule_spec_valid")
+    assert report.status == "FAIL"
+    assert check.status == "FAIL"
+    assert "broker_action" in check.evidence["error"]
+
+
+def test_operations_validation_fails_when_manual_review_required_missing(
+    tmp_path: Path,
+) -> None:
+    raw = _raw_schedule()
+    del raw["safety"]["manual_review_required"]
+    config_path = _write_schedule_yaml(tmp_path, raw)
+
+    report = build_operations_validation_report(
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        config_path=config_path,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+
+    check = _validation_check_by_id(report, "schedule_spec_valid")
+    assert report.status == "FAIL"
+    assert check.status == "FAIL"
+    assert "manual_review_required" in check.evidence["error"]
+
+
+def test_operations_validation_writes_json_and_markdown(tmp_path: Path) -> None:
+    report = build_operations_validation_report(
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+
+    paths = write_operations_validation_report(
+        report,
+        json_path=tmp_path / "operations_validation.json",
+        markdown_path=tmp_path / "operations_validation.md",
+    )
+
+    payload = json.loads(paths["json"].read_text(encoding="utf-8"))
+    markdown = paths["markdown"].read_text(encoding="utf-8")
+    assert payload["schema_version"] == OPERATIONS_VALIDATION_SCHEMA_VERSION
+    assert payload["status"] == "PASS"
+    assert "# ETF Operations Validation Gate" in markdown
+    assert "## Checks / 校验项" in markdown
+    assert render_operations_validation_report_markdown(report) == markdown
+
+
 def _raw_schedule() -> dict[str, object]:
     raw = safe_load_yaml_path(DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH)
     assert isinstance(raw, dict)
     return deepcopy(raw)
+
+
+def _write_schedule_yaml(tmp_path: Path, raw: dict[str, object]) -> Path:
+    path = tmp_path / "operations_schedule.yaml"
+    path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    return path
 
 
 def _write_json_artifact(root: Path, relative_path: str, payload: dict[str, object]) -> Path:
@@ -1463,3 +1658,7 @@ def _checklist_item_by_id(checklist: Any, item_id: str) -> Any:
 
 def _dry_run_step_by_id(dry_run: Any, step_id: str) -> Any:
     return next(step for step in dry_run.planned_steps if step.step_id == step_id)
+
+
+def _validation_check_by_id(report: Any, check_id: str) -> Any:
+    return next(check for check in report.checks if check.check_id == check_id)

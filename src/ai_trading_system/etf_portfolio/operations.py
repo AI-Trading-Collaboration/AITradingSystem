@@ -5,6 +5,7 @@ import re
 from datetime import UTC, date, datetime
 from glob import glob
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, Literal, Self, cast
 
 import yaml
@@ -12,6 +13,10 @@ from pydantic import BaseModel, Field, model_validator
 
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.etf_portfolio.models import PolicyMetadata
+from ai_trading_system.reports.report_index import (
+    DEFAULT_REPORT_REGISTRY_PATH,
+    load_report_registry,
+)
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH = (
@@ -76,6 +81,8 @@ OperationsHealthReportStatus = Literal[
     "manual_review_required",
     "blocked",
 ]
+OperationsValidationStatus = Literal["PASS", "FAIL"]
+OperationsValidationCheckStatus = Literal["PASS", "FAIL", "WARNING"]
 OperationsDryRunStepStatus = Literal[
     "planned",
     "warning",
@@ -120,6 +127,10 @@ OPERATIONS_OWNER_REVIEW_CHECKLIST_SCHEMA_VERSION = (
 )
 OPERATIONS_SCHEDULER_DRY_RUN_SCHEMA_VERSION = "etf_operations_scheduler_dry_run_v1"
 OPERATIONS_HEALTH_REPORT_SCHEMA_VERSION = "etf_operations_health_report_v1"
+OPERATIONS_VALIDATION_SCHEMA_VERSION = "etf_operations_validation_v1"
+OPERATIONS_VALIDATION_REPORT_TYPE = "etf_operations_validation"
+OPERATIONS_VALIDATION_REPORT_ID = "etf_operations_validation"
+OPERATIONS_HEALTH_REPORT_REGISTRY_ID = "etf_operations_health_report"
 _ARTIFACT_PLACEHOLDER_RE = re.compile(r"\{[^}]+\}")
 _ARTIFACT_DATE_RE = re.compile(r"(?P<date>\d{4}[-_]\d{2}[-_]\d{2})")
 _TEXT_GENERATED_AT_RE = re.compile(
@@ -714,6 +725,80 @@ class ETFOperationsHealthReport(BaseModel):
             OPERATIONS_SCHEDULER_DRY_RUN_SCHEMA_VERSION
         ):
             raise ValueError("ETF operations health report must link dry-run schema")
+        return self
+
+
+class ETFOperationsValidationCheck(BaseModel):
+    check_id: str = Field(min_length=1)
+    status: OperationsValidationCheckStatus
+    message: str = Field(min_length=1)
+    evidence: dict[str, Any] = Field(default_factory=dict)
+
+
+class ETFOperationsValidationReport(BaseModel):
+    schema_version: Literal["etf_operations_validation_v1"] = (
+        OPERATIONS_VALIDATION_SCHEMA_VERSION
+    )
+    report_type: Literal["etf_operations_validation"] = (
+        OPERATIONS_VALIDATION_REPORT_TYPE
+    )
+    report_id: str = Field(min_length=1)
+    as_of_date: date
+    generated_at: datetime
+    status: OperationsValidationStatus
+    checks: list[ETFOperationsValidationCheck] = Field(min_length=1)
+    failed_check_count: int = Field(ge=0)
+    warning_check_count: int = Field(ge=0)
+    source_schema_versions: dict[str, str] = Field(default_factory=dict)
+    safety_banner: dict[str, Any]
+    read_only: bool = True
+    commands_executed: bool = False
+    production_state_mutated: bool = False
+    production_effect: str = "none"
+    broker_action: str = "none"
+    manual_review_required: bool = True
+
+    @model_validator(mode="after")
+    def validate_report_safety(self) -> Self:
+        if not self.read_only:
+            raise ValueError("ETF operations validation report must remain read_only")
+        if self.commands_executed:
+            raise ValueError("ETF operations validation report must not execute commands")
+        if self.production_state_mutated:
+            raise ValueError(
+                "ETF operations validation report must not mutate production state"
+            )
+        if self.production_effect != "none":
+            raise ValueError("ETF operations validation report production_effect must be none")
+        if self.broker_action != "none":
+            raise ValueError("ETF operations validation report broker_action must be none")
+        if not self.manual_review_required:
+            raise ValueError(
+                "ETF operations validation report must require manual review"
+            )
+        for field, expected in OPERATIONS_SCHEDULE_SAFETY.items():
+            if self.safety_banner.get(field) != expected:
+                raise ValueError(
+                    "ETF operations validation report safety banner "
+                    f"{field} must be {expected!r}"
+                )
+
+        check_ids = [check.check_id for check in self.checks]
+        duplicates = sorted({check_id for check_id in check_ids if check_ids.count(check_id) > 1})
+        if duplicates:
+            raise ValueError(
+                "ETF operations validation check IDs must be unique: "
+                f"{', '.join(duplicates)}"
+            )
+        actual_failed = len([check for check in self.checks if check.status == "FAIL"])
+        actual_warnings = len([check for check in self.checks if check.status == "WARNING"])
+        if self.failed_check_count != actual_failed:
+            raise ValueError("ETF operations validation failed_check_count mismatch")
+        if self.warning_check_count != actual_warnings:
+            raise ValueError("ETF operations validation warning_check_count mismatch")
+        expected_status: OperationsValidationStatus = "FAIL" if actual_failed else "PASS"
+        if self.status != expected_status:
+            raise ValueError("ETF operations validation status must match failed checks")
         return self
 
 
@@ -1366,6 +1451,820 @@ def write_operations_health_report(
         encoding="utf-8",
     )
     return {"json": json_output, "markdown": markdown_output}
+
+
+def build_operations_validation_report(
+    *,
+    as_of: date | datetime | str,
+    root_path: Path | str = PROJECT_ROOT,
+    config_path: Path | str = DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH,
+    report_registry_path: Path | str = DEFAULT_REPORT_REGISTRY_PATH,
+    config: ETFOperationsScheduleConfig | None = None,
+    generated_at: datetime | None = None,
+) -> ETFOperationsValidationReport:
+    requested_as_of = _coerce_date(as_of)
+    generated = _coerce_datetime(generated_at or datetime.now(tz=UTC))
+    checks: list[ETFOperationsValidationCheck] = []
+    source_schema_versions = _operations_validation_source_schema_versions()
+
+    try:
+        schedule = config or load_operations_schedule_config(config_path)
+    except Exception as exc:  # noqa: BLE001 - validation gates must fail closed.
+        checks.append(
+            _operations_validation_check(
+                "schedule_spec_valid",
+                "FAIL",
+                "operations schedule spec failed validation",
+                evidence={
+                    "config_path": str(config_path),
+                    "error_type": type(exc).__name__,
+                    "error": str(exc),
+                },
+            )
+        )
+        return _operations_validation_report(
+            as_of_date=requested_as_of,
+            generated_at=generated,
+            checks=checks,
+            source_schema_versions=source_schema_versions,
+        )
+
+    source_schema_versions["schedule"] = schedule.schema_version
+    checks.append(
+        _operations_validation_check(
+            "schedule_spec_valid",
+            "PASS",
+            "operations schedule spec loaded and validated",
+            evidence={
+                "config_path": str(config_path),
+                "schema_version": schedule.schema_version,
+                "step_count": len(schedule.steps()),
+            },
+        )
+    )
+    checks.append(
+        _operations_validation_check(
+            "schedule_safety_boundary",
+            "PASS" if _operations_safety_matches(schedule.safety) else "FAIL",
+            "schedule safety boundary matches observe-only policy"
+            if _operations_safety_matches(schedule.safety)
+            else "schedule safety boundary is unsafe",
+            evidence=_operations_safety_banner(schedule.safety),
+        )
+    )
+
+    missing_required_by_cadence = _operations_validation_missing_required_nodes(schedule)
+    checks.append(
+        _operations_validation_check(
+            "required_steps_present",
+            "PASS" if not missing_required_by_cadence else "FAIL",
+            "required operations steps are present for every cadence"
+            if not missing_required_by_cadence
+            else "one or more required operations steps are missing",
+            evidence={"missing_required_by_cadence": missing_required_by_cadence},
+        )
+    )
+
+    graphs: dict[OperationsGraphCadence, ETFOperationsCommandGraph] = {}
+    for cadence in _operations_validation_cadences():
+        check_id = f"{cadence}_graph_valid"
+        try:
+            graph = _build_operations_command_graph(
+                schedule,
+                cadence=cadence,
+                include_optional=True,
+                skipped_optional_step_ids=None,
+            )
+        except Exception as exc:  # noqa: BLE001 - collect all gate failures.
+            checks.append(
+                _operations_validation_check(
+                    check_id,
+                    "FAIL",
+                    f"{cadence} operations command graph failed validation",
+                    evidence={
+                        "cadence": cadence,
+                        "error_type": type(exc).__name__,
+                        "error": str(exc),
+                    },
+                )
+            )
+            continue
+
+        graphs[cadence] = graph
+        source_schema_versions[f"{cadence}_graph"] = graph.schema_version
+        missing_graph_nodes = sorted(
+            _REQUIRED_OPERATION_NODE_IDS_BY_CADENCE[cadence]
+            - set(graph.execution_order)
+        )
+        graph_safe = (
+            graph.schema_version == OPERATIONS_COMMAND_GRAPH_SCHEMA_VERSION
+            and graph.dry_run_only
+            and not graph.commands_executed
+            and _operations_safety_matches(graph.safety)
+            and not missing_graph_nodes
+        )
+        checks.append(
+            _operations_validation_check(
+                check_id,
+                "PASS" if graph_safe else "FAIL",
+                f"{cadence} operations command graph is valid"
+                if graph_safe
+                else f"{cadence} operations command graph is unsafe or incomplete",
+                evidence={
+                    "cadence": cadence,
+                    "schema_version": graph.schema_version,
+                    "dry_run_only": graph.dry_run_only,
+                    "commands_executed": graph.commands_executed,
+                    "node_count": len(graph.nodes),
+                    "missing_required_nodes": missing_graph_nodes,
+                },
+            )
+        )
+
+    daily_graph = graphs.get("daily")
+    missing_freshness: ETFOperationsArtifactFreshnessReport | None = None
+    optional_freshness: ETFOperationsArtifactFreshnessReport | None = None
+    failure_report: ETFOperationsFailurePolicyReport | None = None
+    owner_checklist: ETFOperationsOwnerReviewChecklist | None = None
+    dry_run: ETFOperationsSchedulerDryRunReport | None = None
+    health_report: ETFOperationsHealthReport | None = None
+
+    if daily_graph is None:
+        for check_id in (
+            "freshness_checker_available",
+            "required_missing_blocks",
+            "optional_missing_warns",
+            "failure_policy_available",
+            "owner_checklist_available",
+            "dry_run_available",
+            "ops_report_generator_available",
+        ):
+            checks.append(
+                _operations_validation_check(
+                    check_id,
+                    "FAIL",
+                    "daily graph is unavailable; dependent operations validation skipped",
+                    evidence={"required_graph": "daily"},
+                )
+            )
+    else:
+        with TemporaryDirectory(prefix="aits_ops_validate_missing_") as missing_root:
+            try:
+                missing_freshness = check_operations_artifact_freshness(
+                    daily_graph,
+                    as_of=requested_as_of,
+                    root_path=missing_root,
+                    checked_at=generated,
+                    config=schedule,
+                )
+                source_schema_versions["freshness"] = missing_freshness.schema_version
+                freshness_safe = (
+                    missing_freshness.schema_version
+                    == OPERATIONS_ARTIFACT_FRESHNESS_SCHEMA_VERSION
+                    and missing_freshness.read_only
+                    and not missing_freshness.commands_executed
+                    and _operations_safety_matches(missing_freshness.safety)
+                )
+                checks.append(
+                    _operations_validation_check(
+                        "freshness_checker_available",
+                        "PASS" if freshness_safe else "FAIL",
+                        "freshness checker is available and read-only"
+                        if freshness_safe
+                        else "freshness checker produced unsafe output",
+                        evidence={
+                            "schema_version": missing_freshness.schema_version,
+                            "artifact_count": len(missing_freshness.artifacts),
+                            "blocking_artifact_count": len(
+                                missing_freshness.blocking_artifacts
+                            ),
+                        },
+                    )
+                )
+                required_missing_blocks = [
+                    artifact.artifact_id
+                    for artifact in missing_freshness.artifacts
+                    if artifact.required
+                    and artifact.freshness_status == "missing"
+                    and artifact.dependency_status == "blocking"
+                ]
+                checks.append(
+                    _operations_validation_check(
+                        "required_missing_blocks",
+                        "PASS" if required_missing_blocks else "FAIL",
+                        "required missing artifacts block dependent operations"
+                        if required_missing_blocks
+                        else "required missing artifacts did not block dependent operations",
+                        evidence={
+                            "required_missing_blocking_artifacts": required_missing_blocks
+                        },
+                    )
+                )
+            except Exception as exc:  # noqa: BLE001 - collect gate failure.
+                checks.append(
+                    _operations_validation_check(
+                        "freshness_checker_available",
+                        "FAIL",
+                        "freshness checker failed validation",
+                        evidence={
+                            "error_type": type(exc).__name__,
+                            "error": str(exc),
+                        },
+                    )
+                )
+                checks.append(
+                    _operations_validation_check(
+                        "required_missing_blocks",
+                        "FAIL",
+                        "required missing artifact blocking could not be evaluated",
+                        evidence={"error_type": type(exc).__name__, "error": str(exc)},
+                    )
+                )
+
+        with TemporaryDirectory(prefix="aits_ops_validate_optional_") as optional_root:
+            try:
+                _write_operations_validation_required_artifacts(
+                    root_path=Path(optional_root),
+                    graph=daily_graph,
+                    config=schedule,
+                    as_of_date=requested_as_of,
+                    generated_at=generated,
+                )
+                optional_freshness = check_operations_artifact_freshness(
+                    daily_graph,
+                    as_of=requested_as_of,
+                    root_path=optional_root,
+                    checked_at=generated,
+                    config=schedule,
+                )
+                optional_warning_artifacts = [
+                    artifact.artifact_id
+                    for artifact in optional_freshness.artifacts
+                    if not artifact.required
+                    and artifact.freshness_status == "missing"
+                    and artifact.dependency_status == "warning"
+                ]
+                required_blockers = [
+                    artifact.artifact_id
+                    for artifact in optional_freshness.artifacts
+                    if artifact.required and artifact.dependency_status == "blocking"
+                ]
+                optional_warning_ok = (
+                    bool(optional_warning_artifacts) and not required_blockers
+                )
+                checks.append(
+                    _operations_validation_check(
+                        "optional_missing_warns",
+                        "PASS" if optional_warning_ok else "FAIL",
+                        "optional missing artifacts warn without blocking required flow"
+                        if optional_warning_ok
+                        else "optional missing artifacts did not warn cleanly",
+                        evidence={
+                            "optional_warning_artifacts": optional_warning_artifacts,
+                            "required_blockers": required_blockers,
+                        },
+                    )
+                )
+            except Exception as exc:  # noqa: BLE001 - collect gate failure.
+                checks.append(
+                    _operations_validation_check(
+                        "optional_missing_warns",
+                        "FAIL",
+                        "optional missing artifact warning behavior failed validation",
+                        evidence={"error_type": type(exc).__name__, "error": str(exc)},
+                    )
+                )
+
+        if missing_freshness is None:
+            checks.append(
+                _operations_validation_check(
+                    "failure_policy_available",
+                    "FAIL",
+                    "failure policy could not be evaluated without freshness report",
+                    evidence={"required_source": "freshness"},
+                )
+            )
+        else:
+            try:
+                failure_report = evaluate_operations_failure_policy(
+                    missing_freshness,
+                    config=schedule,
+                    evaluated_at=generated,
+                )
+                source_schema_versions["failure_policy"] = failure_report.schema_version
+                failure_policy_available = (
+                    failure_report.schema_version
+                    == OPERATIONS_FAILURE_POLICY_SCHEMA_VERSION
+                    and failure_report.read_only
+                    and not failure_report.commands_executed
+                    and failure_report.pipeline_status == "blocked"
+                    and bool(failure_report.blocking_events)
+                    and _operations_safety_matches(failure_report.safety)
+                )
+                checks.append(
+                    _operations_validation_check(
+                        "failure_policy_available",
+                        "PASS" if failure_policy_available else "FAIL",
+                        "failure policy is available and blocks unsafe missing inputs"
+                        if failure_policy_available
+                        else "failure policy did not block unsafe missing inputs",
+                        evidence={
+                            "schema_version": failure_report.schema_version,
+                            "pipeline_status": failure_report.pipeline_status,
+                            "blocking_event_count": len(failure_report.blocking_events),
+                            "warning_event_count": len(failure_report.warning_events),
+                        },
+                    )
+                )
+            except Exception as exc:  # noqa: BLE001 - collect gate failure.
+                checks.append(
+                    _operations_validation_check(
+                        "failure_policy_available",
+                        "FAIL",
+                        "failure policy evaluator failed validation",
+                        evidence={"error_type": type(exc).__name__, "error": str(exc)},
+                    )
+                )
+
+        if failure_report is None:
+            checks.append(
+                _operations_validation_check(
+                    "owner_checklist_available",
+                    "FAIL",
+                    "owner checklist could not be evaluated without failure policy",
+                    evidence={"required_source": "failure_policy"},
+                )
+            )
+        else:
+            try:
+                owner_checklist = build_operations_owner_review_checklist(
+                    cadence="daily",
+                    as_of=requested_as_of,
+                    failure_report=failure_report,
+                    config=schedule,
+                    generated_at=generated,
+                )
+                source_schema_versions["owner_checklist"] = owner_checklist.schema_version
+                checklist_available = (
+                    owner_checklist.schema_version
+                    == OPERATIONS_OWNER_REVIEW_CHECKLIST_SCHEMA_VERSION
+                    and owner_checklist.read_only
+                    and not owner_checklist.commands_executed
+                    and owner_checklist.signoff_required
+                    and owner_checklist.checklist_status == "blocked"
+                    and _operations_safety_matches(owner_checklist.safety)
+                )
+                checks.append(
+                    _operations_validation_check(
+                        "owner_checklist_available",
+                        "PASS" if checklist_available else "FAIL",
+                        "owner checklist is available and requires signoff"
+                        if checklist_available
+                        else "owner checklist did not enforce signoff",
+                        evidence={
+                            "schema_version": owner_checklist.schema_version,
+                            "checklist_status": owner_checklist.checklist_status,
+                            "signoff_required": owner_checklist.signoff_required,
+                            "item_count": len(owner_checklist.items),
+                        },
+                    )
+                )
+            except Exception as exc:  # noqa: BLE001 - collect gate failure.
+                checks.append(
+                    _operations_validation_check(
+                        "owner_checklist_available",
+                        "FAIL",
+                        "owner checklist builder failed validation",
+                        evidence={"error_type": type(exc).__name__, "error": str(exc)},
+                    )
+                )
+
+        try:
+            dry_run = build_operations_scheduler_dry_run(
+                cadence="daily",
+                as_of=requested_as_of,
+                root_path=root_path,
+                config=schedule,
+                generated_at=generated,
+            )
+            source_schema_versions["dry_run"] = dry_run.schema_version
+            dry_run_available = (
+                dry_run.schema_version == OPERATIONS_SCHEDULER_DRY_RUN_SCHEMA_VERSION
+                and dry_run.read_only
+                and dry_run.dry_run_only
+                and not dry_run.commands_executed
+                and not dry_run.production_state_mutated
+                and _operations_safety_matches(dry_run.safety)
+            )
+            checks.append(
+                _operations_validation_check(
+                    "dry_run_available",
+                    "PASS" if dry_run_available else "FAIL",
+                    "scheduler dry-run is available and non-executing"
+                    if dry_run_available
+                    else "scheduler dry-run output is unsafe or incomplete",
+                    evidence={
+                        "root_path": str(Path(root_path)),
+                        "schema_version": dry_run.schema_version,
+                        "status": dry_run.status,
+                        "planned_step_count": len(dry_run.planned_steps),
+                        "commands_executed": dry_run.commands_executed,
+                        "production_state_mutated": dry_run.production_state_mutated,
+                    },
+                )
+            )
+        except Exception as exc:  # noqa: BLE001 - collect gate failure.
+            checks.append(
+                _operations_validation_check(
+                    "dry_run_available",
+                    "FAIL",
+                    "scheduler dry-run builder failed validation",
+                    evidence={"error_type": type(exc).__name__, "error": str(exc)},
+                )
+            )
+
+        try:
+            health_report = build_operations_health_report(
+                cadence="daily",
+                as_of=requested_as_of,
+                root_path=root_path,
+                config=schedule,
+                generated_at=generated,
+            )
+            source_schema_versions["health_report"] = health_report.schema_version
+            report_available = (
+                health_report.schema_version == OPERATIONS_HEALTH_REPORT_SCHEMA_VERSION
+                and health_report.read_only
+                and not health_report.commands_executed
+                and not health_report.production_state_mutated
+                and _operations_safety_matches(health_report.safety)
+            )
+            checks.append(
+                _operations_validation_check(
+                    "ops_report_generator_available",
+                    "PASS" if report_available else "FAIL",
+                    "operations health report generator is available"
+                    if report_available
+                    else "operations health report output is unsafe or incomplete",
+                    evidence={
+                        "root_path": str(Path(root_path)),
+                        "schema_version": health_report.schema_version,
+                        "status": health_report.status,
+                        "source_dry_run_status": health_report.source_dry_run_status,
+                        "commands_executed": health_report.commands_executed,
+                        "production_state_mutated": health_report.production_state_mutated,
+                    },
+                )
+            )
+        except Exception as exc:  # noqa: BLE001 - collect gate failure.
+            checks.append(
+                _operations_validation_check(
+                    "ops_report_generator_available",
+                    "FAIL",
+                    "operations health report builder failed validation",
+                    evidence={"error_type": type(exc).__name__, "error": str(exc)},
+                )
+            )
+
+    try:
+        registry = load_report_registry(Path(report_registry_path))
+        source_schema_versions["report_registry"] = str(registry.get("policy_version"))
+        entry = next(
+            (
+                item
+                for item in registry["reports"]
+                if item.get("report_id") == OPERATIONS_HEALTH_REPORT_REGISTRY_ID
+            ),
+            None,
+        )
+        artifact_globs = list(entry.get("artifact_globs", [])) if entry else []
+        command = str(entry.get("command", "")) if entry else ""
+        reader_brief_integration_ok = (
+            entry is not None
+            and entry.get("include_in_reader_brief") is True
+            and command.startswith("aits etf ops report")
+            and any("operations_health_" in artifact_glob for artifact_glob in artifact_globs)
+        )
+        checks.append(
+            _operations_validation_check(
+                "reader_brief_integration_available",
+                "PASS" if reader_brief_integration_ok else "FAIL",
+                "Reader Brief operations health registry integration is available"
+                if reader_brief_integration_ok
+                else "Reader Brief operations health registry integration is missing",
+                evidence={
+                    "report_registry_path": str(report_registry_path),
+                    "report_id": OPERATIONS_HEALTH_REPORT_REGISTRY_ID,
+                    "include_in_reader_brief": (
+                        entry.get("include_in_reader_brief") if entry else None
+                    ),
+                    "command": command,
+                    "artifact_globs": artifact_globs,
+                },
+            )
+        )
+    except Exception as exc:  # noqa: BLE001 - collect gate failure.
+        checks.append(
+            _operations_validation_check(
+                "reader_brief_integration_available",
+                "FAIL",
+                "Reader Brief operations health registry integration failed validation",
+                evidence={"error_type": type(exc).__name__, "error": str(exc)},
+            )
+        )
+
+    safety_components: dict[str, Any] = {"schedule": schedule}
+    safety_components.update({f"{cadence}_graph": graph for cadence, graph in graphs.items()})
+    for name, component in (
+        ("freshness", missing_freshness),
+        ("optional_freshness", optional_freshness),
+        ("failure_policy", failure_report),
+        ("owner_checklist", owner_checklist),
+        ("dry_run", dry_run),
+        ("health_report", health_report),
+    ):
+        if component is not None:
+            safety_components[name] = component
+    unsafe_components = _operations_validation_unsafe_components(safety_components)
+    checks.append(
+        _operations_validation_check(
+            "safety_fields_intact",
+            "PASS" if not unsafe_components else "FAIL",
+            "all operations validation components preserve safety boundary"
+            if not unsafe_components
+            else "one or more operations validation components are unsafe",
+            evidence={
+                "unsafe_components": unsafe_components,
+                "required_safety": dict(OPERATIONS_SCHEDULE_SAFETY),
+            },
+        )
+    )
+
+    return _operations_validation_report(
+        as_of_date=requested_as_of,
+        generated_at=generated,
+        checks=checks,
+        source_schema_versions=source_schema_versions,
+    )
+
+
+def render_operations_validation_report_markdown(
+    report: ETFOperationsValidationReport,
+) -> str:
+    lines: list[str] = [
+        "# ETF Operations Validation Gate",
+        "",
+        "## Summary / 摘要",
+        "",
+        "| Field | Value |",
+        "|---|---|",
+        f"| report_id | `{report.report_id}` |",
+        f"| as_of_date | `{report.as_of_date.isoformat()}` |",
+        f"| generated_at | `{report.generated_at.isoformat()}` |",
+        f"| status | `{report.status}` |",
+        f"| failed_check_count | {report.failed_check_count} |",
+        f"| warning_check_count | {report.warning_check_count} |",
+        f"| production_effect | `{report.production_effect}` |",
+        f"| broker_action | `{report.broker_action}` |",
+        f"| manual_review_required | {_markdown_value(report.manual_review_required)} |",
+        "",
+        "## Safety Banner / 安全边界",
+        "",
+        "| Field | Value |",
+        "|---|---|",
+    ]
+    for field in OPERATIONS_SCHEDULE_SAFETY:
+        lines.append(f"| {field} | {_markdown_value(report.safety_banner[field])} |")
+
+    lines.extend(
+        [
+            "",
+            "## Checks / 校验项",
+            "",
+            "| Check | Status | Message | Evidence |",
+            "|---|---|---|---|",
+        ]
+    )
+    for check in report.checks:
+        lines.append(
+            f"| `{check.check_id}` | `{check.status}` | "
+            f"{check.message} | `{_json_for_markdown(check.evidence)}` |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Source Schema Versions / Source Schema Versions",
+            "",
+            "| Source | Schema Version |",
+            "|---|---|",
+        ]
+    )
+    for source, schema_version in report.source_schema_versions.items():
+        lines.append(f"| {source} | `{schema_version}` |")
+    return "\n".join(lines) + "\n"
+
+
+def write_operations_validation_report(
+    report: ETFOperationsValidationReport,
+    *,
+    json_path: Path | str,
+    markdown_path: Path | str,
+) -> dict[str, Path]:
+    json_output = Path(json_path)
+    markdown_output = Path(markdown_path)
+    json_output.parent.mkdir(parents=True, exist_ok=True)
+    markdown_output.parent.mkdir(parents=True, exist_ok=True)
+    json_output.write_text(report.model_dump_json(indent=2), encoding="utf-8")
+    markdown_output.write_text(
+        render_operations_validation_report_markdown(report),
+        encoding="utf-8",
+    )
+    return {"json": json_output, "markdown": markdown_output}
+
+
+def _operations_validation_cadences() -> tuple[OperationsGraphCadence, ...]:
+    return ("daily", "weekly", "biweekly", "monthly")
+
+
+def _operations_validation_source_schema_versions() -> dict[str, str]:
+    source_schema_versions = {
+        "schedule": "not_checked",
+        "freshness": "not_checked",
+        "failure_policy": "not_checked",
+        "owner_checklist": "not_checked",
+        "dry_run": "not_checked",
+        "health_report": "not_checked",
+        "report_registry": "not_checked",
+    }
+    for cadence in _operations_validation_cadences():
+        source_schema_versions[f"{cadence}_graph"] = "not_checked"
+    return source_schema_versions
+
+
+def _operations_validation_report_id(
+    *,
+    as_of_date: date,
+    generated_at: datetime,
+) -> str:
+    timestamp = generated_at.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
+    return f"operations_validation:{as_of_date.isoformat()}:{timestamp}"
+
+
+def _operations_validation_report(
+    *,
+    as_of_date: date,
+    generated_at: datetime,
+    checks: list[ETFOperationsValidationCheck],
+    source_schema_versions: dict[str, str],
+) -> ETFOperationsValidationReport:
+    failed_check_count = len([check for check in checks if check.status == "FAIL"])
+    warning_check_count = len([check for check in checks if check.status == "WARNING"])
+    return ETFOperationsValidationReport(
+        report_id=_operations_validation_report_id(
+            as_of_date=as_of_date,
+            generated_at=generated_at,
+        ),
+        as_of_date=as_of_date,
+        generated_at=generated_at,
+        status="FAIL" if failed_check_count else "PASS",
+        checks=checks,
+        failed_check_count=failed_check_count,
+        warning_check_count=warning_check_count,
+        source_schema_versions=source_schema_versions,
+        safety_banner=dict(OPERATIONS_SCHEDULE_SAFETY),
+        read_only=True,
+        commands_executed=False,
+        production_state_mutated=False,
+        production_effect="none",
+        broker_action="none",
+        manual_review_required=True,
+    )
+
+
+def _operations_validation_check(
+    check_id: str,
+    status: OperationsValidationCheckStatus,
+    message: str,
+    *,
+    evidence: dict[str, Any] | None = None,
+) -> ETFOperationsValidationCheck:
+    return ETFOperationsValidationCheck(
+        check_id=check_id,
+        status=status,
+        message=message,
+        evidence=evidence or {},
+    )
+
+
+def _operations_validation_missing_required_nodes(
+    schedule: ETFOperationsScheduleConfig,
+) -> dict[str, list[str]]:
+    missing_by_cadence: dict[str, list[str]] = {}
+    for cadence, required_node_ids in _REQUIRED_OPERATION_NODE_IDS_BY_CADENCE.items():
+        pipeline_field = _GRAPH_PIPELINE_FIELD_BY_CADENCE[cadence]
+        configured_node_ids = {step.step_id for step in getattr(schedule, pipeline_field)}
+        missing = sorted(required_node_ids - configured_node_ids)
+        if missing:
+            missing_by_cadence[cadence] = missing
+    return missing_by_cadence
+
+
+def _operations_validation_unsafe_components(
+    components: dict[str, Any],
+) -> dict[str, dict[str, Any]]:
+    unsafe_components: dict[str, dict[str, Any]] = {}
+    for name, component in components.items():
+        safety = getattr(component, "safety", None)
+        if safety is None:
+            continue
+        if _operations_safety_matches(safety):
+            continue
+        unsafe_components[name] = _operations_safety_banner(safety)
+
+    for name, component in components.items():
+        executed = getattr(component, "commands_executed", False)
+        production_mutated = getattr(component, "production_state_mutated", False)
+        if executed or production_mutated:
+            unsafe_components.setdefault(name, {})
+            unsafe_components[name].update(
+                {
+                    "commands_executed": executed,
+                    "production_state_mutated": production_mutated,
+                }
+            )
+    return unsafe_components
+
+
+def _operations_safety_matches(safety: ETFOperationsScheduleSafety) -> bool:
+    return all(
+        getattr(safety, field) == expected
+        for field, expected in OPERATIONS_SCHEDULE_SAFETY.items()
+    )
+
+
+def _write_operations_validation_required_artifacts(
+    *,
+    root_path: Path,
+    graph: ETFOperationsCommandGraph,
+    config: ETFOperationsScheduleConfig,
+    as_of_date: date,
+    generated_at: datetime,
+) -> None:
+    step_by_id = config.step_by_id()
+    for node in graph.nodes:
+        step = step_by_id[node.node_id]
+        if not step.required:
+            continue
+        for output_template in step.expected_outputs:
+            if output_template.startswith("manual_review_checklist:"):
+                continue
+            output_path = _operations_validation_artifact_path(
+                root_path=root_path,
+                output_template=output_template,
+                as_of_date=as_of_date,
+            )
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            if output_path.suffix.lower() == ".json":
+                output_path.write_text(
+                    json.dumps(
+                        {
+                            "generated_at": generated_at.isoformat(),
+                            "as_of_date": as_of_date.isoformat(),
+                            "status": "PASS",
+                            "production_effect": "none",
+                        },
+                        ensure_ascii=False,
+                    ),
+                    encoding="utf-8",
+                )
+            else:
+                output_path.write_text(
+                    "\n".join(
+                        [
+                            f"generated_at: {generated_at.isoformat()}",
+                            f"as_of_date: {as_of_date.isoformat()}",
+                            "status: PASS",
+                            "production_effect: none",
+                            "",
+                        ]
+                    ),
+                    encoding="utf-8",
+                )
+
+
+def _operations_validation_artifact_path(
+    *,
+    root_path: Path,
+    output_template: str,
+    as_of_date: date,
+) -> Path:
+    rendered = output_template.replace("{as_of}", as_of_date.isoformat())
+    rendered = _ARTIFACT_PLACEHOLDER_RE.sub("validation", rendered)
+    rendered_path = Path(rendered)
+    if rendered_path.is_absolute():
+        return rendered_path
+    return root_path / rendered_path
 
 
 def _build_operations_command_graph(
@@ -2254,6 +3153,10 @@ def _markdown_value(value: Any) -> str:
     if isinstance(value, dict):
         return f"`{json.dumps(value, sort_keys=True, ensure_ascii=False)}`"
     return f"`{value}`"
+
+
+def _json_for_markdown(value: Any) -> str:
+    return json.dumps(value, sort_keys=True, ensure_ascii=False).replace("`", "'")
 
 
 def _markdown_list(values: list[Any]) -> str:

@@ -529,10 +529,10 @@ daily / weekly / biweekly / monthly / manual-review workflow 记录为 source co
 包含 step id、command、dependencies、expected outputs、max allowed age、failure policy
 和 owner review requirement，并固定 `observe_only=true`、`candidate_only=true`、
 `production_effect=none`、`broker_action=none`、`manual_review_required=true`。
-当前 TRADING-074A/B/C/D/E/F/G/H/I/J 提供 loader/validator、配置校验、daily / weekly /
+当前 TRADING-074A/B/C/D/E/F/G/H/I/J/K 提供 loader/validator、配置校验、daily / weekly /
 biweekly / monthly operations command graph、只读 artifact freshness checker、failure
 policy evaluator、owner checklist builder、scheduler dry-run、operations health report 和
-Reader Brief operations health section。
+Reader Brief operations health section 以及 final operations validation gate。
 `build_daily_operations_command_graph` 会生成 topological `execution_order`、required /
 optional 节点、输入/输出、failure policy、estimated runtime class 和 safety fields；optional
 attribution 节点可跳过，required 节点不可跳过，cycle 或 missing required node 会 fail
@@ -574,9 +574,13 @@ summary、dependency status、failures / warnings、owner review checklist、exp
 Reader Brief 的 `Operations Health` 区块只读 report index 指向的 latest
 `etf_operations_health_report_v1`，展示 status、blocking failures、warnings、stale/missing
 artifacts、next owner review、safety posture 和 detailed report link；缺失 health report
-时只显示 section-level `MISSING`，不运行上游、不补造状态。后续 `aits etf ops validate`
-会复用该配置、freshness report、failure policy report、owner checklist、dry-run report、
-operations health report 和 Reader Brief section。
+时只显示 section-level `MISSING`，不运行上游、不补造状态。`aits etf ops validate --as-of ...`
+会生成 `etf_operations_validation_v1` JSON / Markdown，默认写入
+`reports/etf_portfolio/operations/validation/operations_validation_<date>.json/md`，复用该
+配置、daily/weekly/biweekly/monthly graph、deterministic freshness probes、failure policy
+report、owner checklist、dry-run report、operations health report 和 Reader Brief registry
+integration，fail-closed 校验 required step missing、dependency cycle、unsafe
+`production_effect` / `broker_action` / missing `manual_review_required` 和固定安全边界。
 
 `aits etf governance summary --candidate <candidate.json>` 使用
 `config/etf_portfolio/governance.yaml` 的参数治理 policy 输出候选晋级摘要，固定
