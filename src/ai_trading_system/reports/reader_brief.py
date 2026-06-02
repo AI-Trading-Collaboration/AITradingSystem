@@ -178,6 +178,7 @@ def build_reader_brief_payload(
     etf_decision_journal = _etf_decision_journal_summary(report_index)
     etf_parameter_review = _etf_parameter_review_summary(report_index)
     etf_weight_calibration = _etf_weight_calibration_summary(report_index)
+    etf_operations_health = _etf_operations_health_summary(report_index)
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -303,6 +304,7 @@ def build_reader_brief_payload(
         "etf_decision_journal": etf_decision_journal,
         "etf_parameter_review": etf_parameter_review,
         "etf_weight_calibration": etf_weight_calibration,
+        "etf_operations_health": etf_operations_health,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -560,6 +562,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_decision_journal = _mapping(payload.get("etf_decision_journal"))
     etf_parameter_review = _mapping(payload.get("etf_parameter_review"))
     etf_weight_calibration = _mapping(payload.get("etf_weight_calibration"))
+    etf_operations_health = _mapping(payload.get("etf_operations_health"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -729,6 +732,33 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                 ]
             )
             + _cadence_calendar_tables(cadence_calendar),
+        ),
+        _section(
+            "Operations Health",
+            _definition_table(
+                [
+                    ("availability", etf_operations_health.get("availability")),
+                    ("status", etf_operations_health.get("status")),
+                    ("summary", etf_operations_health.get("summary_sentence")),
+                    ("cadence", etf_operations_health.get("cadence")),
+                    ("pipeline_status", etf_operations_health.get("pipeline_status")),
+                    (
+                        "blocking_failures",
+                        etf_operations_health.get("blocking_failure_count"),
+                    ),
+                    ("warnings", etf_operations_health.get("warning_count")),
+                    ("stale_artifacts", etf_operations_health.get("stale_artifacts")),
+                    ("missing_artifacts", etf_operations_health.get("missing_artifacts")),
+                    (
+                        "next_owner_review",
+                        etf_operations_health.get("next_owner_review"),
+                    ),
+                    ("safety_status", etf_operations_health.get("safety_status")),
+                    ("detailed_report", etf_operations_health.get("detail_report")),
+                    ("production_effect", etf_operations_health.get("production_effect")),
+                    ("broker_action", etf_operations_health.get("broker_action")),
+                ]
+            ),
         ),
         _section(
             "Contribution Summary",
@@ -2588,6 +2618,150 @@ def _etf_weight_calibration_safety_status(payload: Mapping[str, Any]) -> str:
     return (
         "observe_only=true; candidate_only=true; production_effect=none; "
         "broker_action=none; manual_review_required=true"
+        if safe
+        else "SAFETY_REVIEW_REQUIRED"
+    )
+
+
+def _etf_operations_health_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_operations_health_summary()
+    report_path = _report_index_artifact_path(
+        report_index,
+        "etf_operations_health_report",
+    )
+    report = _read_optional_json(report_path)
+    if not report:
+        return _missing_etf_operations_health_summary()
+
+    source_artifacts = _records(report.get("source_artifacts"))
+    failures = _records(report.get("failures"))
+    warnings = _records(report.get("warnings"))
+    run_metadata = _mapping(report.get("run_metadata"))
+    freshness_summary = _mapping(report.get("artifact_freshness_summary"))
+    freshness_counts = _mapping(freshness_summary.get("freshness_summary"))
+    dependency_status = _mapping(report.get("dependency_status"))
+    owner_review = _mapping(report.get("owner_review_checklist"))
+    safety_banner = _mapping(report.get("safety_banner"))
+
+    stale_artifacts = [
+        item for item in source_artifacts if _text(item.get("freshness_status")).lower() == "stale"
+    ]
+    missing_artifacts = [
+        item
+        for item in source_artifacts
+        if _text(item.get("freshness_status")).lower() == "missing"
+    ]
+    blocking_failure_count = len(failures) or _int(run_metadata.get("blocking_failure_count"))
+    warning_count = len(warnings) or _int(run_metadata.get("warning_count"))
+    stale_artifact_count = len(stale_artifacts) or _int(freshness_counts.get("stale"))
+    missing_artifact_count = len(missing_artifacts) or _int(freshness_counts.get("missing"))
+    cadence = _text(report.get("cadence"), "UNKNOWN")
+    status = _text(report.get("status"), _text(report.get("source_dry_run_status"), "UNKNOWN"))
+    safety_status = _etf_operations_health_safety_status(report)
+    next_owner_review = _etf_operations_health_owner_review(owner_review)
+
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "summary_sentence": (
+            f"Operations Health: cadence={cadence}; status={status}; "
+            f"blocking_failures={blocking_failure_count}; warnings={warning_count}; "
+            f"stale_artifacts={stale_artifact_count}; "
+            f"missing_artifacts={missing_artifact_count}; safety={safety_status}."
+        ),
+        "cadence": cadence,
+        "pipeline_status": f"{cadence}:{status}",
+        "blocking_failure_count": blocking_failure_count,
+        "warning_count": warning_count,
+        "stale_artifact_count": stale_artifact_count,
+        "missing_artifact_count": missing_artifact_count,
+        "stale_artifacts": _etf_operations_health_artifact_list(stale_artifacts),
+        "missing_artifacts": _etf_operations_health_artifact_list(missing_artifacts),
+        "blocking_artifacts": _texts(dependency_status.get("blocking_artifacts")),
+        "warning_artifacts": _texts(dependency_status.get("warning_artifacts")),
+        "next_owner_review": next_owner_review,
+        "owner_checklist_status": _text(owner_review.get("checklist_status"), "MISSING"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "safety_status": safety_status,
+        "production_effect": _text(safety_banner.get("production_effect"), PRODUCTION_EFFECT),
+        "broker_action": _text(safety_banner.get("broker_action"), "none"),
+        "manual_review_required": safety_banner.get("manual_review_required") is True,
+        "commands_executed": report.get("commands_executed") is True,
+        "production_state_mutated": report.get("production_state_mutated") is True,
+    }
+
+
+def _missing_etf_operations_health_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "summary_sentence": "Operations Health: no latest operations health report found.",
+        "cadence": "MISSING",
+        "pipeline_status": "MISSING",
+        "blocking_failure_count": 0,
+        "warning_count": 1,
+        "stale_artifact_count": 0,
+        "missing_artifact_count": 1,
+        "stale_artifacts": "none",
+        "missing_artifacts": "etf_operations_health_report",
+        "blocking_artifacts": [],
+        "warning_artifacts": ["etf_operations_health_report"],
+        "next_owner_review": "MISSING",
+        "owner_checklist_status": "MISSING",
+        "detail_report": "",
+        "safety_status": "MISSING",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "commands_executed": False,
+        "production_state_mutated": False,
+        "limitation": (
+            "Operations health artifact is missing; Reader Brief does not run etf ops report CLI."
+        ),
+    }
+
+
+def _etf_operations_health_artifact_list(records: list[dict[str, Any]]) -> str:
+    if not records:
+        return "none"
+    labels: list[str] = []
+    for record in records[:5]:
+        labels.append(
+            f"{_text(record.get('artifact_id'), 'UNKNOWN')} "
+            f"({_text(record.get('source_step'), 'UNKNOWN')}; "
+            f"freshness={_text(record.get('freshness_status'), 'UNKNOWN')}; "
+            f"dependency={_text(record.get('dependency_status'), 'UNKNOWN')})"
+        )
+    if len(records) > 5:
+        labels.append(f"+{len(records) - 5} more")
+    return "; ".join(labels)
+
+
+def _etf_operations_health_owner_review(payload: Mapping[str, Any]) -> str:
+    if not payload:
+        return "MISSING"
+    step_id = _text(payload.get("checklist_step_id"), "MISSING")
+    status = _text(payload.get("checklist_status"), "MISSING")
+    signoff_required = payload.get("signoff_required")
+    return f"{step_id}:{status}; signoff_required={signoff_required is True}"
+
+
+def _etf_operations_health_safety_status(payload: Mapping[str, Any]) -> str:
+    safety_banner = _mapping(payload.get("safety_banner"))
+    safe = (
+        safety_banner.get("observe_only") is True
+        and safety_banner.get("candidate_only") is True
+        and _text(safety_banner.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
+        and safety_banner.get("broker_action") == "none"
+        and safety_banner.get("manual_review_required") is True
+        and payload.get("commands_executed") is False
+        and payload.get("production_state_mutated") is False
+    )
+    return (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true; "
+        "commands_executed=false; production_state_mutated=false"
         if safe
         else "SAFETY_REVIEW_REQUIRED"
     )

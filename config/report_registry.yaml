@@ -751,6 +751,21 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_operations_health_report
+    title: ETF Operations Health Report
+    group: governance
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits etf ops report --cadence daily --as-of YYYY-MM-DD
+    artifact_globs:
+      - reports/etf_portfolio/operations/*/operations_health_*.json
+    freshness_sla_days: 1
+    freshness_rationale: TRADING-074 operations health should summarize scheduler dry-run, artifact freshness, failure policy, owner review, safety posture and source artifacts before Reader Brief interpretation.
+    owner_action: run_aits_etf_ops_report_after_report_index_and_reader_brief_inputs
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_p2_walk_forward
     title: ETF P2 Walk Forward Readiness
     group: research

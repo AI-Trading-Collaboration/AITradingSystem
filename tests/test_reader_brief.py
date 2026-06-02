@@ -3,10 +3,12 @@ from __future__ import annotations
 import json
 from datetime import date
 from pathlib import Path
+from typing import Any
 
 from typer.testing import CliRunner
 
 from ai_trading_system.cli import app
+from ai_trading_system.reports import reader_brief
 from ai_trading_system.reports.calculation_explainers import (
     build_calculation_explainers_payload,
     write_calculation_explainers_json,
@@ -219,6 +221,27 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     )
     assert weight_calibration["production_effect"] == "none"
     assert weight_calibration["broker_action"] == "none"
+    operations_health = payload["etf_operations_health"]
+    assert operations_health["availability"] == "AVAILABLE"
+    assert operations_health["status"] == "warning"
+    assert operations_health["pipeline_status"] == "daily:warning"
+    assert operations_health["blocking_failure_count"] == 0
+    assert operations_health["warning_count"] == 2
+    assert operations_health["stale_artifact_count"] == 1
+    assert operations_health["missing_artifact_count"] == 1
+    assert "ai_attribution_update:1" in operations_health["stale_artifacts"]
+    assert "satellite_attribution_update:1" in operations_health["missing_artifacts"]
+    assert operations_health["next_owner_review"] == (
+        "daily_owner_review:manual_review_required; signoff_required=True"
+    )
+    assert operations_health["detail_report"].endswith("operations_health_2026-05-04.json")
+    assert operations_health["safety_status"] == (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true; "
+        "commands_executed=false; production_state_mutated=false"
+    )
+    assert operations_health["production_effect"] == "none"
+    assert operations_health["broker_action"] == "none"
     core_items = payload["report_navigation_groups"]["groups"][0]["items"]
     daily_summary_rows = [
         item for item in core_items if item["artifact_id"] == "daily_decision_summary"
@@ -227,6 +250,94 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     assert daily_summary_rows[0]["status"] == "limited"
     assert len(daily_summary_rows[0]["navigation_sources"]) == 2
     assert payload["report_navigation_groups"]["groups"][0]["purpose"] == "Core decision artifacts"
+
+
+def test_reader_brief_operations_health_summary_shows_pass_and_blocked_status(
+    tmp_path: Path,
+) -> None:
+    pass_path = _write_operations_health_fixture(
+        tmp_path,
+        status="pass",
+        path=tmp_path / "reports" / "etf_portfolio" / "operations" / "daily" / "pass.json",
+        source_artifacts=[
+            {
+                "artifact_id": "data_freshness_check:1",
+                "path": str(tmp_path / "outputs" / "reports" / "data_quality_2026-05-04.md"),
+                "artifact_type": "text",
+                "source_step": "data_freshness_check",
+                "required": True,
+                "freshness_status": "fresh",
+                "dependency_status": "ok",
+                "age_days": 0,
+            }
+        ],
+    )
+    pass_summary = reader_brief._etf_operations_health_summary(
+        {
+            "reports": [
+                {
+                    "report_id": "etf_operations_health_report",
+                    "latest_artifact_path": str(pass_path),
+                }
+            ]
+        }
+    )
+
+    assert pass_summary["status"] == "pass"
+    assert pass_summary["pipeline_status"] == "daily:pass"
+    assert "status=pass" in pass_summary["summary_sentence"]
+    assert pass_summary["blocking_failure_count"] == 0
+
+    blocked_path = _write_operations_health_fixture(
+        tmp_path,
+        status="blocked",
+        path=tmp_path / "reports" / "etf_portfolio" / "operations" / "daily" / "blocked.json",
+        failures=[
+            {
+                "event_id": "data_freshness_check:1:artifact_missing",
+                "event_type": "artifact_missing",
+                "severity": "critical",
+                "source_step": "data_freshness_check",
+                "artifact_id": "data_freshness_check:1",
+                "path": str(tmp_path / "outputs" / "reports" / "data_quality_2026-05-04.md"),
+                "freshness_status": "missing",
+                "dependency_status": "blocking",
+                "required": True,
+                "failure_policy": "fail_pipeline",
+                "blocks_pipeline": True,
+                "blocks_dependent_steps": True,
+                "requires_manual_review": True,
+                "recommended_action": "run_validate_data",
+            }
+        ],
+        source_artifacts=[
+            {
+                "artifact_id": "data_freshness_check:1",
+                "path": str(tmp_path / "outputs" / "reports" / "data_quality_2026-05-04.md"),
+                "artifact_type": "text",
+                "source_step": "data_freshness_check",
+                "required": True,
+                "freshness_status": "missing",
+                "dependency_status": "blocking",
+                "age_days": None,
+            }
+        ],
+    )
+    blocked_summary = reader_brief._etf_operations_health_summary(
+        {
+            "reports": [
+                {
+                    "report_id": "etf_operations_health_report",
+                    "latest_artifact_path": str(blocked_path),
+                }
+            ]
+        }
+    )
+
+    assert blocked_summary["status"] == "blocked"
+    assert blocked_summary["pipeline_status"] == "daily:blocked"
+    assert blocked_summary["blocking_failure_count"] == 1
+    assert "data_freshness_check:1" in blocked_summary["missing_artifacts"]
 
 
 def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: Path) -> None:
@@ -273,6 +384,12 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
     assert payload["etf_weight_calibration"]["forward_evidence_status"] == "MISSING"
     assert payload["etf_weight_calibration"]["production_effect"] == "none"
     assert payload["etf_weight_calibration"]["broker_action"] == "none"
+    assert payload["etf_operations_health"]["availability"] == "MISSING"
+    assert payload["etf_operations_health"]["status"] == "MISSING"
+    assert payload["etf_operations_health"]["warning_count"] == 1
+    assert payload["etf_operations_health"]["missing_artifacts"] == ("etf_operations_health_report")
+    assert payload["etf_operations_health"]["production_effect"] == "none"
+    assert payload["etf_operations_health"]["broker_action"] == "none"
     assert payload["report_index_summary"]["availability"] == "MISSING"
     assert payload["documentation_contract_summary"]["availability"] == "MISSING"
     assert payload["task_cadence_calendar"]["availability"] == "REGISTRY_FALLBACK"
@@ -295,6 +412,8 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
     assert "Satellite Attribution Review" in html
     assert "ETF Parameter Review" in html
     assert "ETF Weight Calibration" in html
+    assert "Operations Health" in html
+    assert "etf_operations_health_report" in html
     assert 'safety_status</th><td><span class="status-badge status-missing">MISSING</span>' in html
     assert "impact-group impact-important" in html
     assert "status-badge status-important" in html
@@ -375,6 +494,10 @@ def test_reports_reader_brief_cli_writes_html_and_json(tmp_path: Path) -> None:
     assert "ETF Weight Calibration" in html
     assert "weight_set_003" in html
     assert "dual_track_calibration_2026-05-04.json" in html
+    assert "Operations Health" in html
+    assert "operations_health_2026-05-04.json" in html
+    assert "daily:warning" in html
+    assert "ai_attribution_update:1" in html
     assert "Report Navigation" in html
     assert "Top 3 Review Items Today" in html
     assert "影响今日结论" in html
@@ -1141,6 +1264,70 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
         ),
         encoding="utf-8",
     )
+    operations_health_path = _write_operations_health_fixture(
+        tmp_path,
+        status="warning",
+        warnings=[
+            {
+                "event_id": "ai_attribution_update:1:artifact_stale",
+                "event_type": "artifact_stale",
+                "severity": "warning",
+                "source_step": "ai_attribution_update",
+                "artifact_id": "ai_attribution_update:1",
+                "path": str(ai_attribution_path),
+                "freshness_status": "stale",
+                "dependency_status": "warning",
+                "required": False,
+                "failure_policy": "skip_optional_step",
+                "blocks_pipeline": False,
+                "blocks_dependent_steps": False,
+                "requires_manual_review": True,
+                "recommended_action": "review_ai_attribution_report",
+            },
+            {
+                "event_id": "satellite_attribution_update:1:artifact_missing",
+                "event_type": "artifact_missing",
+                "severity": "warning",
+                "source_step": "satellite_attribution_update",
+                "artifact_id": "satellite_attribution_update:1",
+                "path": str(satellite_attribution_path),
+                "freshness_status": "missing",
+                "dependency_status": "warning",
+                "required": False,
+                "failure_policy": "skip_optional_step",
+                "blocks_pipeline": False,
+                "blocks_dependent_steps": False,
+                "requires_manual_review": True,
+                "recommended_action": "review_satellite_attribution_report",
+            },
+        ],
+        source_artifacts=[
+            {
+                "artifact_id": "ai_attribution_update:1",
+                "path": str(ai_attribution_path),
+                "artifact_type": "json",
+                "source_step": "ai_attribution_update",
+                "required": False,
+                "freshness_status": "stale",
+                "dependency_status": "warning",
+                "generated_at": "2026-04-28T12:00:00+00:00",
+                "as_of_date": "2026-04-28",
+                "age_days": 6,
+            },
+            {
+                "artifact_id": "satellite_attribution_update:1",
+                "path": str(satellite_attribution_path),
+                "artifact_type": "json",
+                "source_step": "satellite_attribution_update",
+                "required": False,
+                "freshness_status": "missing",
+                "dependency_status": "warning",
+                "generated_at": None,
+                "as_of_date": None,
+                "age_days": None,
+            },
+        ],
+    )
     trace_bundle_path = tmp_path / "daily_score_2026-05-04_trace.json"
     trace_bundle_path.write_text(
         json.dumps(
@@ -1572,6 +1759,19 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                         "owner_action": "review_weight_calibration_report",
                         "production_effect": "none",
                     },
+                    {
+                        "report_id": "etf_operations_health_report",
+                        "title": "ETF Operations Health Report",
+                        "cadence": "daily",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "warning",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(operations_health_path),
+                        "exists": True,
+                        "owner_action": "review_operations_health_report",
+                        "production_effect": "none",
+                    },
                 ],
             },
             ensure_ascii=False,
@@ -1616,6 +1816,181 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
         "report_index": report_index_path,
         "documentation_contract": documentation_contract_path,
     }
+
+
+def _write_operations_health_fixture(
+    tmp_path: Path,
+    *,
+    status: str,
+    path: Path | None = None,
+    failures: list[dict[str, Any]] | None = None,
+    warnings: list[dict[str, Any]] | None = None,
+    source_artifacts: list[dict[str, Any]] | None = None,
+) -> Path:
+    report_path = path or (
+        tmp_path
+        / "reports"
+        / "etf_portfolio"
+        / "operations"
+        / "daily"
+        / "operations_health_2026-05-04.json"
+    )
+    report_path.parent.mkdir(parents=True, exist_ok=True)
+    failure_rows = list(failures or [])
+    warning_rows = list(warnings or [])
+    artifact_rows = list(
+        source_artifacts
+        or [
+            {
+                "artifact_id": "data_freshness_check:1",
+                "path": str(tmp_path / "outputs" / "reports" / "data_quality_2026-05-04.md"),
+                "artifact_type": "text",
+                "source_step": "data_freshness_check",
+                "required": True,
+                "freshness_status": "fresh",
+                "dependency_status": "ok",
+                "generated_at": "2026-05-04T12:00:00+00:00",
+                "as_of_date": "2026-05-04",
+                "age_days": 0,
+            }
+        ]
+    )
+    stale_count = sum(
+        1 for item in artifact_rows if str(item.get("freshness_status")).lower() == "stale"
+    )
+    missing_count = sum(
+        1 for item in artifact_rows if str(item.get("freshness_status")).lower() == "missing"
+    )
+    fresh_count = sum(
+        1 for item in artifact_rows if str(item.get("freshness_status")).lower() == "fresh"
+    )
+    safety = {
+        "observe_only": True,
+        "candidate_only": True,
+        "production_effect": "none",
+        "broker_action": "none",
+        "manual_review_required": True,
+    }
+    report_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "etf_operations_health_report_v1",
+                "report_id": "operations_health:daily:2026-05-04:20260504T120000Z",
+                "cadence": "daily",
+                "as_of_date": "2026-05-04",
+                "generated_at": "2026-05-04T12:00:00+00:00",
+                "read_only": True,
+                "commands_executed": False,
+                "production_state_mutated": False,
+                "safety": safety,
+                "status": status,
+                "safety_banner": safety,
+                "run_metadata": {
+                    "root_path": str(tmp_path),
+                    "dry_run_id": "ops-dry-run-daily-2026-05-04",
+                    "dry_run_status": status,
+                    "planned_step_count": 2,
+                    "blocking_failure_count": len(failure_rows),
+                    "warning_count": len(warning_rows),
+                    "owner_checklist_status": "manual_review_required",
+                    "dry_run_only": True,
+                    "commands_executed": False,
+                    "production_state_mutated": False,
+                    "external_dependency_count": 0,
+                },
+                "pipeline_schedule": [
+                    {
+                        "step_id": "data_freshness_check",
+                        "command": "aits validate-data",
+                        "required": True,
+                        "status": "pass" if status == "pass" else status,
+                        "dependencies": [],
+                        "external_dependencies": [],
+                        "expected_outputs": ["outputs/reports/data_quality_2026-05-04.md"],
+                        "failure_policy": "fail_pipeline",
+                        "estimated_runtime_class": "fast",
+                        "owner_review_required": True,
+                    }
+                ],
+                "command_graph_summary": {
+                    "schema_version": "etf_operations_command_graph_v1",
+                    "cadence": "daily",
+                    "node_count": 1,
+                    "required_step_count": 1,
+                    "optional_step_count": 0,
+                    "owner_review_required_step_count": 1,
+                    "execution_order": ["data_freshness_check"],
+                    "skipped_optional_steps": [],
+                    "external_dependencies": [],
+                    "dry_run_only": True,
+                    "commands_executed": False,
+                },
+                "artifact_freshness_summary": {
+                    "schema_version": "etf_operations_artifact_freshness_v1",
+                    "artifact_count": len(artifact_rows),
+                    "blocking_artifact_count": len(failure_rows),
+                    "warning_artifact_count": len(warning_rows),
+                    "optional_artifact_count": sum(
+                        1 for item in artifact_rows if item.get("required") is False
+                    ),
+                    "freshness_summary": {
+                        "fresh": fresh_count,
+                        "stale": stale_count,
+                        "missing": missing_count,
+                    },
+                },
+                "dependency_status": {
+                    "dependency_summary": {
+                        "ok": fresh_count,
+                        "warning": len(warning_rows),
+                        "blocking": len(failure_rows),
+                    },
+                    "blocking_artifacts": [
+                        item.get("artifact_id") for item in failure_rows if item.get("artifact_id")
+                    ],
+                    "warning_artifacts": [
+                        item.get("artifact_id") for item in warning_rows if item.get("artifact_id")
+                    ],
+                    "external_dependencies": [],
+                },
+                "failures": failure_rows,
+                "warnings": warning_rows,
+                "owner_review_checklist": {
+                    "schema_version": "etf_operations_owner_review_checklist_v1",
+                    "checklist_step_id": "daily_owner_review",
+                    "checklist_command": "review daily operations health",
+                    "checklist_status": "manual_review_required",
+                    "signoff_required": True,
+                    "required_items": ["safety_boundary", "failure_review"],
+                    "blocking_items": [item.get("event_id") for item in failure_rows],
+                    "warning_items": [item.get("event_id") for item in warning_rows],
+                    "manual_review_items": ["owner_signoff"],
+                    "items": [],
+                },
+                "expected_next_run": {
+                    "cadence": "daily",
+                    "rule": "next unified daily scheduler trigger",
+                    "source": "docs/operations/operations_runbook.md",
+                    "production_scheduler_entry": "aits ops daily-run",
+                    "separate_external_scheduler_entry": False,
+                },
+                "source_artifacts": artifact_rows,
+                "source_schema_versions": {
+                    "schedule": "etf_operations_schedule_v1",
+                    "graph": "etf_operations_command_graph_v1",
+                    "freshness": "etf_operations_artifact_freshness_v1",
+                    "failure_policy": "etf_operations_failure_policy_v1",
+                    "owner_checklist": "etf_operations_owner_review_checklist_v1",
+                    "dry_run": "etf_operations_scheduler_dry_run_v1",
+                },
+                "source_dry_run_id": "ops-dry-run-daily-2026-05-04",
+                "source_dry_run_status": status,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    return report_path
 
 
 def _write_decision_snapshot(tmp_path: Path) -> Path:

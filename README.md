@@ -529,9 +529,10 @@ daily / weekly / biweekly / monthly / manual-review workflow 记录为 source co
 包含 step id、command、dependencies、expected outputs、max allowed age、failure policy
 和 owner review requirement，并固定 `observe_only=true`、`candidate_only=true`、
 `production_effect=none`、`broker_action=none`、`manual_review_required=true`。
-当前 TRADING-074A/B/C/D/E/F/G/H/I 提供 loader/validator、配置校验、daily / weekly /
+当前 TRADING-074A/B/C/D/E/F/G/H/I/J 提供 loader/validator、配置校验、daily / weekly /
 biweekly / monthly operations command graph、只读 artifact freshness checker、failure
-policy evaluator、owner checklist builder、scheduler dry-run 和 operations health report。
+policy evaluator、owner checklist builder、scheduler dry-run、operations health report 和
+Reader Brief operations health section。
 `build_daily_operations_command_graph` 会生成 topological `execution_order`、required /
 optional 节点、输入/输出、failure policy、estimated runtime class 和 safety fields；optional
 attribution 节点可跳过，required 节点不可跳过，cycle 或 missing required node 会 fail
@@ -570,8 +571,12 @@ safety banner、run metadata、pipeline schedule、command graph summary、artif
 summary、dependency status、failures / warnings、owner review checklist、expected next run
 和 source artifacts；report 固定 `commands_executed=false`、
 `production_state_mutated=false`，只把 dry-run/freshness/failure/checklist 状态变成可读报告。
-后续 Reader Brief operations health 和 `aits etf ops validate` 会复用该配置、freshness
-report、failure policy report、owner checklist、dry-run report 和 operations health report。
+Reader Brief 的 `Operations Health` 区块只读 report index 指向的 latest
+`etf_operations_health_report_v1`，展示 status、blocking failures、warnings、stale/missing
+artifacts、next owner review、safety posture 和 detailed report link；缺失 health report
+时只显示 section-level `MISSING`，不运行上游、不补造状态。后续 `aits etf ops validate`
+会复用该配置、freshness report、failure policy report、owner checklist、dry-run report、
+operations health report 和 Reader Brief section。
 
 `aits etf governance summary --candidate <candidate.json>` 使用
 `config/etf_portfolio/governance.yaml` 的参数治理 policy 输出候选晋级摘要，固定

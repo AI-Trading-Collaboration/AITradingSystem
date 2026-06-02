@@ -27,8 +27,7 @@ def test_default_report_registry_loads() -> None:
     assert any(item["report_id"] == "etf_backtest_summary" for item in registry["reports"])
     assert any(item["report_id"] == "etf_experiment_comparison" for item in registry["reports"])
     assert any(
-        item["report_id"] == "etf_experiment_candidate_selection"
-        for item in registry["reports"]
+        item["report_id"] == "etf_experiment_candidate_selection" for item in registry["reports"]
     )
     assert any(item["report_id"] == "etf_experiment_weekly_review" for item in registry["reports"])
     assert any(item["report_id"] == "etf_experiment_validation" for item in registry["reports"])
@@ -41,6 +40,7 @@ def test_default_report_registry_loads() -> None:
         item["report_id"] == "etf_weight_dual_track_calibration_report"
         for item in registry["reports"]
     )
+    assert any(item["report_id"] == "etf_operations_health_report" for item in registry["reports"])
     assert all("freshness_rationale" in item for item in registry["reports"])
 
 
@@ -128,11 +128,7 @@ def test_reports_index_cli_writes_html_and_json(tmp_path: Path) -> None:
 def test_report_index_extracts_date_from_etf_backtest_run_directory(tmp_path: Path) -> None:
     registry_path = _write_registry(tmp_path)
     backtest_dir = (
-        tmp_path
-        / "reports"
-        / "etf_portfolio"
-        / "backtests"
-        / "etf-backtest-20260531T124140Z"
+        tmp_path / "reports" / "etf_portfolio" / "backtests" / "etf-backtest-20260531T124140Z"
     )
     backtest_dir.mkdir(parents=True)
     (backtest_dir / "summary.md").write_text("# ETF Backtest\n", encoding="utf-8")
