@@ -413,6 +413,28 @@ parameter-review validate` 生成
 scorecard、report generator、Reader Brief visibility、source links 和 unsafe action blocking
 完整，失败时 fail closed。
 
+TRADING-071 ETF weight calibration 建立 dual-track 初始权重候选流程。`aits etf
+weight-calibration search --search etf_initial_weight_search_v1` 先通过 ETF price quality gate，
+再按 `config/etf_portfolio/weight_search.yaml` 的 SPY/QQQ/SMH/SOXX/CASH bounded grid、
+candidate cap、objective policy、benchmark set、walk-forward windows 和 regime splits 生成
+historical candidate initial weights，输出
+`reports/etf_portfolio/weight_calibration/<run_id>/summary.json/md`、`metrics.csv`、
+`ranking.json`、`robustness.json` 和
+`data/etf_portfolio/weight_calibration/<run_id>/candidate_weight_sets.json/csv`。
+`aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
+historical candidates 写入 ignored
+`data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf
+weight-calibration enroll-forward --weight-set <id>` 或 `--latest --top N` 只把 safe
+candidate 登记到
+`data/etf_portfolio/weight_calibration/forward_enrollments.json`，包含 `shadow_id`、
+`weight_set_id`、source search linkage、tracking state 和 `forward_tracking_link`；blocked、
+rejected 或 `needs_more_data` candidate 会 fail closed。当前 TRADING-071E 仍是
+candidate-only / observe-only 阶段，后续 TRADING-071F-K 才会补 backtest-vs-forward
+aggregation、overfit diagnostics、proposal、report、Reader Brief 和 validation gate。
+所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、
+`broker_action=none`、`manual_review_required=true`，不写 official target weights、不改
+baseline config、不写 shared experiment shadow registry、不触发 broker。
+
 `aits etf governance summary --candidate <candidate.json>` 使用
 `config/etf_portfolio/governance.yaml` 的参数治理 policy 输出候选晋级摘要，固定
 `production_effect=none` 且 `manual_review_required=true`。候选必须先通过测试、shadow

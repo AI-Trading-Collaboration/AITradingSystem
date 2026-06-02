@@ -67,8 +67,8 @@ not the primary AI-cycle conclusion window.
 |TRADING-071B|Historical Weight Iteration Engine|DONE|Bounded candidates are generated, backtested, scored, ranked, persisted, and never applied|
 |TRADING-071C|Walk-Forward / Regime Robustness Evaluation|DONE|Candidates are evaluated across full period, walk-forward windows, and regime slices|
 |TRADING-071D|Candidate Initial Weight Set Registry|DONE|Selected candidate weights are stored as candidate-only records with safe statuses|
-|TRADING-071E|Dual-Track Forward Enrollment|IN_PROGRESS|Selected safe candidates can be explicitly enrolled into forward observation|
-|TRADING-071F|Backtest vs Forward Evidence Aggregator|READY|Historical expectation and real forward evidence are linked and gap metrics are computed|
+|TRADING-071E|Dual-Track Forward Enrollment|DONE|Selected safe candidates can be explicitly enrolled into forward observation|
+|TRADING-071F|Backtest vs Forward Evidence Aggregator|IN_PROGRESS|Historical expectation and real forward evidence are linked and gap metrics are computed|
 |TRADING-071G|Overfit Risk and Stability Diagnostics|READY|High-return but unstable candidates receive explainable overfit risk bands|
 |TRADING-071H|Candidate Weight Proposal Generator|READY|Only evidence-linked proposal/review actions are generated; unsafe proposal types are rejected|
 |TRADING-071I|Dual-Track Calibration Report|READY|JSON/Markdown report summarizes search, robustness, forward comparison, overfit diagnostics, proposals, and source links|
@@ -137,3 +137,9 @@ command.
   weight-calibration register-candidates` 和 focused tests；blocked/rejected records
   cannot become `shadow_ready`，所有 registry records 保持 candidate-only safety fields。
   TRADING-071E 进入 `IN_PROGRESS`，下一步实现 dual-track forward enrollment。
+- 2026-06-02: TRADING-071E 完成。新增 `data/etf_portfolio/weight_calibration/forward_enrollments.json`
+  dual-track enrollment registry、shadow-style enrollment record、`weight_set_id` /
+  source search linkage、forward tracking link、idempotent enrollment、blocked-candidate
+  refusal、`aits etf weight-calibration enroll-forward` 和 focused tests；该 ledger
+  不写 shared experiment shadow registry、official target weights 或 baseline config。
+  TRADING-071F 进入 `IN_PROGRESS`，下一步实现 backtest vs forward evidence aggregator。

@@ -14,10 +14,13 @@ from ai_trading_system.etf_portfolio.data import standardize_price_frame, valida
 from ai_trading_system.etf_portfolio.models import load_etf_config_bundle
 from ai_trading_system.etf_portfolio.weight_calibration import (
     DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
+    DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
     ETFWeightSearchRegistry,
     WeightCalibrationError,
+    enroll_candidate_weights_forward,
     generate_weight_candidates,
     load_candidate_weight_registry,
+    load_weight_forward_enrollments,
     load_weight_search_definition,
     load_weight_search_registry,
     register_candidate_weight_sets,
@@ -25,6 +28,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     summarize_weight_robustness,
     update_candidate_weight_status,
     validate_candidate_weight_record,
+    validate_weight_forward_enrollment_record,
     validate_weight_search_registry,
     write_weight_search_run,
 )
@@ -499,6 +503,125 @@ def test_weight_calibration_register_candidates_cli(tmp_path: Path) -> None:
     assert load_candidate_weight_registry(registry_path)["candidate_count"] == 2
 
 
+def test_forward_enrollment_enrolls_candidate_weight_set(tmp_path: Path) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=2)
+    enrollment_path = tmp_path / "forward_enrollments.json"
+
+    enrollment = enroll_candidate_weights_forward(
+        registry,
+        enrollment_path=enrollment_path,
+        top=1,
+        enrolled_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert enrollment_path.exists()
+    assert enrollment["schema_version"] == "etf_weight_forward_enrollment_v1"
+    assert enrollment["enrollment_count"] == 1
+    record = enrollment["enrollments"][0]
+    assert record["weight_set_id"] == registry["weight_sets"][0]["weight_set_id"]
+    assert record["status"] == "active"
+    assert record["tracking_state"]["tracking_status"] == "active"
+    assert record["tracking_state"]["evidence_status"] == "needs_more_forward_data"
+    assert record["production_effect"] == "none"
+    assert record["broker_action"] == "none"
+    assert record["production_weights_mutated"] is False
+
+
+def test_forward_enrollment_blocks_blocked_candidate(tmp_path: Path) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    registry["weight_sets"][0]["status"] = "blocked"
+    registry["weight_sets"][0]["blockers"] = ["TURNOVER_TOO_HIGH"]
+
+    with pytest.raises(WeightCalibrationError, match="cannot enroll forward"):
+        enroll_candidate_weights_forward(
+            registry,
+            enrollment_path=tmp_path / "forward_enrollments.json",
+            top=1,
+        )
+
+
+def test_forward_enrollment_shadow_record_includes_weight_set_id(
+    tmp_path: Path,
+) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=1)
+
+    enrollment = enroll_candidate_weights_forward(
+        registry,
+        enrollment_path=tmp_path / DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH.name,
+        top=1,
+        enrolled_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    record = enrollment["enrollments"][0]
+    shadow = record["shadow_record"]
+    assert shadow["record_type"] == "etf_weight_calibration_shadow_candidate"
+    assert shadow["weight_set_id"] == record["weight_set_id"]
+    assert shadow["shadow_id"] == record["shadow_id"]
+    assert record["forward_tracking_link"].endswith(f"#{record['shadow_id']}")
+    validate_weight_forward_enrollment_record(record)
+
+
+def test_forward_enrollment_preserves_safety_fields(tmp_path: Path) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=1)
+
+    enrollment = enroll_candidate_weights_forward(
+        registry,
+        enrollment_path=tmp_path / "forward_enrollments.json",
+        top=1,
+    )
+
+    record = enrollment["enrollments"][0]
+    for payload in (enrollment, record, record["shadow_record"]):
+        assert payload["observe_only"] is True
+        assert payload["candidate_only"] is True
+        assert payload["production_effect"] == "none"
+        assert payload["broker_action"] == "none"
+        assert payload["manual_review_required"] is True
+
+
+def test_forward_enrollment_is_idempotent_by_weight_set_id(tmp_path: Path) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    enrollment_path = tmp_path / "forward_enrollments.json"
+
+    first = enroll_candidate_weights_forward(registry, enrollment_path=enrollment_path, top=1)
+    second = enroll_candidate_weights_forward(registry, enrollment_path=enrollment_path, top=1)
+
+    assert first["enrollment_count"] == 1
+    assert second["enrollment_count"] == 1
+    assert load_weight_forward_enrollments(enrollment_path)["enrollment_count"] == 1
+
+
+def test_weight_calibration_enroll_forward_cli(tmp_path: Path) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=2)
+    registry_path = tmp_path / "candidate_weight_registry.json"
+    enrollment_path = tmp_path / "forward_enrollments.json"
+    weight_set_id = registry["weight_sets"][0]["weight_set_id"]
+
+    result = CliRunner().invoke(
+        etf_app,
+        [
+            "weight-calibration",
+            "enroll-forward",
+            "--weight-set",
+            weight_set_id,
+            "--registry-path",
+            str(registry_path),
+            "--enrollment-path",
+            str(enrollment_path),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "ETF weight calibration forward enrollment" in result.output
+    assert "enrollment_count=1" in result.output
+    assert "shared_shadow_registry_mutated=false" in result.output
+    assert "production_weights_mutated=false" in result.output
+    assert "production_effect=none" in result.output
+    assert load_weight_forward_enrollments(enrollment_path)["enrollment_count"] == 1
+
+
 def _raw_registry() -> dict[str, object]:
     raw = safe_load_yaml_path(DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH)
     assert isinstance(raw, dict)
@@ -547,6 +670,15 @@ def _candidate_weight_record(tmp_path: Path) -> dict[str, object]:
         created_at=datetime(2026, 6, 2, tzinfo=UTC),
     )
     return deepcopy(registry["weight_sets"][0])
+
+
+def _candidate_weight_registry(tmp_path: Path, *, top: int) -> dict[str, object]:
+    return register_candidate_weight_sets(
+        _small_search_run().payload,
+        registry_path=tmp_path / "candidate_weight_registry.json",
+        top=top,
+        created_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
 
 
 def _make_prices(days: int) -> pd.DataFrame:

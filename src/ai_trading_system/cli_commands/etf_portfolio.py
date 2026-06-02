@@ -237,7 +237,10 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     DEFAULT_ETF_WEIGHT_CALIBRATION_DATA_DIR,
     DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR,
     DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
+    DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
+    enroll_candidate_weights_forward,
     find_latest_weight_search_run_dir,
+    load_candidate_weight_registry,
     load_weight_search_definition,
     load_weight_search_registry,
     read_weight_search_run_payload,
@@ -2577,6 +2580,60 @@ def weight_calibration_register_candidates_command(
     typer.echo(f"ETF candidate weight registry：{registry_path}")
     typer.echo(f"source_search_run_id={payload['search_run_id']}")
     typer.echo(f"candidate_count={registry['candidate_count']}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+
+
+@weight_calibration_app.command("enroll-forward")
+def weight_calibration_enroll_forward_command(
+    latest: Annotated[
+        bool,
+        typer.Option(
+            "--latest",
+            help="使用当前 candidate weight registry；未指定 --top 时默认登记前三名。",
+        ),
+    ] = False,
+    top: Annotated[
+        int | None,
+        typer.Option("--top", help="按 registry rank 登记前 N 个 candidates。"),
+    ] = None,
+    weight_set: Annotated[
+        list[str] | None,
+        typer.Option("--weight-set", help="weight_set_id 或 source_candidate_id，可重复。"),
+    ] = None,
+    registry_path: Annotated[
+        Path,
+        typer.Option(help="candidate initial weight set registry path。"),
+    ] = DEFAULT_CANDIDATE_WEIGHT_REGISTRY_PATH,
+    enrollment_path: Annotated[
+        Path,
+        typer.Option(help="dual-track forward enrollment registry path。"),
+    ] = DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
+) -> None:
+    """登记 TRADING-071E dual-track forward observation candidates。"""
+    if weight_set and top is not None:
+        raise typer.BadParameter("--weight-set cannot be combined with --top")
+    if not weight_set and top is None and not latest:
+        raise typer.BadParameter("--weight-set or --latest/--top is required")
+    registry = load_candidate_weight_registry(registry_path)
+    enrollment = enroll_candidate_weights_forward(
+        registry,
+        enrollment_path=enrollment_path,
+        top=None if weight_set else (top or 3),
+        weight_set_ids=weight_set,
+    )
+    latest_selection = enrollment.get("latest_selection", {})
+    typer.echo(f"ETF weight calibration forward enrollment：{enrollment_path}")
+    typer.echo(f"enrollment_count={enrollment['enrollment_count']}")
+    typer.echo(
+        "selected_weight_set_count="
+        f"{len(latest_selection.get('weight_set_ids') or [])}"
+    )
+    typer.echo("shared_shadow_registry_mutated=false")
+    typer.echo("production_weights_mutated=false")
     typer.echo("observe_only=true")
     typer.echo("candidate_only=true")
     typer.echo("production_effect=none")

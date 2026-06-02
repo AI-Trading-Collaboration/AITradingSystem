@@ -36,10 +36,14 @@ DEFAULT_ETF_WEIGHT_CALIBRATION_DATA_DIR = (
 DEFAULT_CANDIDATE_WEIGHT_REGISTRY_PATH = (
     DEFAULT_ETF_WEIGHT_CALIBRATION_DATA_DIR / "candidate_weight_registry.json"
 )
+DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH = (
+    DEFAULT_ETF_WEIGHT_CALIBRATION_DATA_DIR / "forward_enrollments.json"
+)
 
 WEIGHT_SEARCH_SCHEMA_VERSION = "etf_weight_search_v1"
 WEIGHT_SEARCH_RUN_SCHEMA_VERSION = "etf_weight_search_run_v1"
 CANDIDATE_WEIGHT_REGISTRY_SCHEMA_VERSION = "etf_candidate_weight_registry_v1"
+WEIGHT_FORWARD_ENROLLMENT_SCHEMA_VERSION = "etf_weight_forward_enrollment_v1"
 
 WEIGHT_CALIBRATION_SAFETY = {
     "observe_only": True,
@@ -51,6 +55,10 @@ WEIGHT_CALIBRATION_SAFETY = {
 
 ALLOWED_CANDIDATE_WEIGHT_STATUSES = frozenset(
     {"candidate", "shadow_ready", "blocked", "rejected", "needs_more_data"}
+)
+FORWARD_ENROLLABLE_CANDIDATE_STATUSES = frozenset({"candidate", "shadow_ready"})
+ALLOWED_WEIGHT_FORWARD_ENROLLMENT_STATUSES = frozenset(
+    {"active", "needs_more_forward_data", "paused", "archived"}
 )
 
 
@@ -851,6 +859,206 @@ def update_candidate_weight_status(
     return payload
 
 
+def load_weight_forward_enrollments(
+    path: Path = DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
+) -> dict[str, Any]:
+    if not path.exists():
+        return _empty_weight_forward_enrollment_registry()
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise WeightCalibrationError(
+            f"ETF weight forward enrollment registry must be a JSON object: {path}"
+        )
+    validate_weight_forward_enrollment_registry(payload)
+    return payload
+
+
+def write_weight_forward_enrollments(
+    registry: Mapping[str, Any],
+    path: Path = DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
+) -> Path:
+    validate_weight_forward_enrollment_registry(registry)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(registry, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def enroll_candidate_weights_forward(
+    candidate_registry: Mapping[str, Any],
+    *,
+    enrollment_path: Path = DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
+    top: int | None = None,
+    weight_set_ids: list[str] | None = None,
+    enrolled_at: datetime | None = None,
+) -> dict[str, Any]:
+    validate_candidate_weight_registry(candidate_registry)
+    selected = _selected_candidate_weight_records(
+        candidate_registry,
+        top=top,
+        weight_set_ids=weight_set_ids,
+    )
+    if not selected:
+        raise WeightCalibrationError("no ETF candidate weight sets selected for enrollment")
+    for record in selected:
+        _raise_if_candidate_weight_forward_enrollable(record)
+    existing_registry = load_weight_forward_enrollments(enrollment_path)
+    existing = {
+        str(record.get("weight_set_id")): record
+        for record in _records(existing_registry.get("enrollments"))
+    }
+    generated = enrolled_at or datetime.now(UTC)
+    changed = False
+    selected_ids = [str(record.get("weight_set_id")) for record in selected]
+    for candidate in selected:
+        weight_set_id = str(candidate.get("weight_set_id"))
+        if weight_set_id in existing:
+            continue
+        enrollment = _weight_forward_enrollment_record(
+            candidate,
+            enrollment_path=enrollment_path,
+            enrolled_at=generated,
+        )
+        existing[weight_set_id] = enrollment
+        changed = True
+    enrollments = sorted(
+        existing.values(),
+        key=lambda item: (int(item.get("rank") or 999_999), str(item.get("weight_set_id"))),
+    )
+    registry = {
+        "schema_version": WEIGHT_FORWARD_ENROLLMENT_SCHEMA_VERSION,
+        "registry_type": "etf_weight_forward_enrollments",
+        "updated_at": generated.isoformat() if changed else existing_registry.get("updated_at"),
+        "enrollment_count": len(enrollments),
+        "enrollments": enrollments,
+        "latest_selection": {
+            "selected_at": generated.isoformat(),
+            "weight_set_ids": selected_ids,
+        },
+        "shared_shadow_registry_mutated": False,
+        "production_weights_mutated": False,
+        "applied_weight_set": None,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_weight_forward_enrollment_registry(registry)
+    write_weight_forward_enrollments(registry, enrollment_path)
+    return registry
+
+
+def validate_weight_forward_enrollment_registry(registry: Mapping[str, Any]) -> None:
+    issues = []
+    if registry.get("schema_version") != WEIGHT_FORWARD_ENROLLMENT_SCHEMA_VERSION:
+        issues.append("schema_version")
+    if registry.get("registry_type") != "etf_weight_forward_enrollments":
+        issues.append("registry_type")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if registry.get(field) != expected:
+            issues.append(field)
+    safety = _mapping(registry.get("safety"))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if safety.get(field) != expected:
+            issues.append(f"safety.{field}")
+    if registry.get("shared_shadow_registry_mutated") is not False:
+        issues.append("shared_shadow_registry_mutated")
+    if registry.get("production_weights_mutated") is not False:
+        issues.append("production_weights_mutated")
+    if registry.get("applied_weight_set") is not None:
+        issues.append("applied_weight_set")
+    seen_weight_sets: set[str] = set()
+    seen_shadow_ids: set[str] = set()
+    enrollments = _records(registry.get("enrollments"))
+    for record in enrollments:
+        weight_set_id = str(record.get("weight_set_id") or "")
+        shadow_id = str(record.get("shadow_id") or "")
+        if weight_set_id in seen_weight_sets:
+            issues.append(f"duplicate_weight_set_id:{weight_set_id}")
+        if shadow_id in seen_shadow_ids:
+            issues.append(f"duplicate_shadow_id:{shadow_id}")
+        seen_weight_sets.add(weight_set_id)
+        seen_shadow_ids.add(shadow_id)
+        try:
+            validate_weight_forward_enrollment_record(record)
+        except WeightCalibrationError as exc:
+            issues.append(f"{weight_set_id}:{exc}")
+    if int(registry.get("enrollment_count") or 0) != len(enrollments):
+        issues.append("enrollment_count")
+    if issues:
+        raise WeightCalibrationError(
+            "ETF weight forward enrollment validation failed: "
+            + ", ".join(str(issue) for issue in issues)
+        )
+
+
+def validate_weight_forward_enrollment_record(record: Mapping[str, Any]) -> None:
+    required = (
+        "shadow_id",
+        "weight_set_id",
+        "source_search_run_id",
+        "source_candidate_id",
+        "rank",
+        "status",
+        "weights",
+        "metrics_summary",
+        "robustness_summary",
+        "blockers",
+        "selection_reason",
+        "config_hash",
+        "enrolled_at",
+        "enrollment_date",
+        "forward_tracking_link",
+        "tracking_state",
+        "shadow_record",
+        "shared_shadow_registry_mutated",
+        "production_weights_mutated",
+        "applied_weight_set",
+        "production_promotion_allowed",
+        "safety",
+    )
+    issues = [field for field in required if field not in record]
+    status = str(record.get("status") or "")
+    if status not in ALLOWED_WEIGHT_FORWARD_ENROLLMENT_STATUSES:
+        issues.append("status")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if record.get(field) != expected:
+            issues.append(field)
+    safety = _mapping(record.get("safety"))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if safety.get(field) != expected:
+            issues.append(f"safety.{field}")
+    if record.get("production_weights_mutated") is not False:
+        issues.append("production_weights_mutated")
+    if record.get("applied_weight_set") is not None:
+        issues.append("applied_weight_set")
+    if record.get("production_promotion_allowed") is not False:
+        issues.append("production_promotion_allowed")
+    weights = _mapping(record.get("weights"))
+    if abs(sum(float(value) for value in weights.values()) - 1.0) > 1e-6:
+        issues.append("weights_sum")
+    blockers = [str(item) for item in record.get("blockers") or []]
+    if blockers:
+        issues.append("blocked_candidate_cannot_enroll_forward")
+    shadow = _mapping(record.get("shadow_record"))
+    if shadow.get("weight_set_id") != record.get("weight_set_id"):
+        issues.append("shadow_record.weight_set_id")
+    if shadow.get("shadow_id") != record.get("shadow_id"):
+        issues.append("shadow_record.shadow_id")
+    if shadow.get("status") != "active":
+        issues.append("shadow_record.status")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if shadow.get(field) != expected:
+            issues.append(f"shadow_record.{field}")
+    tracking = _mapping(record.get("tracking_state"))
+    if tracking.get("tracking_status") != "active":
+        issues.append("tracking_state.tracking_status")
+    if not str(record.get("forward_tracking_link") or ""):
+        issues.append("forward_tracking_link")
+    if issues:
+        raise WeightCalibrationError("; ".join(issues))
+
+
 def render_weight_search_run_markdown(payload: Mapping[str, Any]) -> str:
     generation = _mapping(payload.get("candidate_generation"))
     baseline = _mapping(payload.get("baseline_weight_set"))
@@ -1298,6 +1506,153 @@ def _empty_candidate_weight_registry() -> dict[str, Any]:
         "safety": dict(WEIGHT_CALIBRATION_SAFETY),
         **WEIGHT_CALIBRATION_SAFETY,
     }
+
+
+def _empty_weight_forward_enrollment_registry() -> dict[str, Any]:
+    return {
+        "schema_version": WEIGHT_FORWARD_ENROLLMENT_SCHEMA_VERSION,
+        "registry_type": "etf_weight_forward_enrollments",
+        "updated_at": None,
+        "enrollment_count": 0,
+        "enrollments": [],
+        "latest_selection": {"selected_at": None, "weight_set_ids": []},
+        "shared_shadow_registry_mutated": False,
+        "production_weights_mutated": False,
+        "applied_weight_set": None,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+
+
+def _selected_candidate_weight_records(
+    registry: Mapping[str, Any],
+    *,
+    top: int | None,
+    weight_set_ids: list[str] | None,
+) -> list[dict[str, Any]]:
+    records = sorted(
+        _records(registry.get("weight_sets")),
+        key=lambda item: (int(item.get("rank") or 999_999), str(item.get("weight_set_id"))),
+    )
+    requested = {str(item) for item in weight_set_ids or []}
+    if requested:
+        selected = [
+            record
+            for record in records
+            if str(record.get("weight_set_id")) in requested
+            or str(record.get("source_candidate_id")) in requested
+        ]
+        matched = {
+            str(record.get("weight_set_id")) for record in selected
+        } | {str(record.get("source_candidate_id")) for record in selected}
+        missing = sorted(requested - matched)
+        if missing:
+            raise WeightCalibrationError(
+                "unknown candidate weight set id(s): " + ", ".join(missing)
+            )
+        return selected
+    limit = top or 1
+    if limit <= 0:
+        raise WeightCalibrationError("top must be positive")
+    return records[:limit]
+
+
+def _raise_if_candidate_weight_forward_enrollable(record: Mapping[str, Any]) -> None:
+    validate_candidate_weight_record(record)
+    weight_set_id = str(record.get("weight_set_id"))
+    status = str(record.get("status"))
+    if status not in FORWARD_ENROLLABLE_CANDIDATE_STATUSES:
+        raise WeightCalibrationError(
+            "candidate weight set cannot enroll forward unless status is "
+            f"candidate/shadow_ready: {weight_set_id}"
+        )
+    if record.get("blockers"):
+        raise WeightCalibrationError(
+            f"blocked candidate weight set cannot enroll forward: {weight_set_id}"
+        )
+
+
+def _weight_forward_enrollment_record(
+    candidate: Mapping[str, Any],
+    *,
+    enrollment_path: Path,
+    enrolled_at: datetime,
+) -> dict[str, Any]:
+    timestamp = enrolled_at.isoformat()
+    enrollment_date = enrolled_at.date().isoformat()
+    weight_set_id = str(candidate.get("weight_set_id"))
+    shadow_id = _weight_forward_shadow_id(weight_set_id)
+    tracking_link = f"{enrollment_path}#{shadow_id}"
+    tracking_state = {
+        "tracking_status": "active",
+        "tracking_started_at": timestamp,
+        "tracking_start_date": enrollment_date,
+        "cadence": "daily",
+        "evidence_status": "needs_more_forward_data",
+        "forward_tracking_link": tracking_link,
+        "weekly_review_task": "TRADING-068",
+        "decision_journal_task": "TRADING-069",
+        "parameter_review_task": "TRADING-070",
+        "calibration_task": "TRADING-071E",
+    }
+    shadow_record = {
+        "record_type": "etf_weight_calibration_shadow_candidate",
+        "shadow_id": shadow_id,
+        "candidate_id": str(candidate.get("source_candidate_id") or weight_set_id),
+        "weight_set_id": weight_set_id,
+        "source_search_run_id": candidate.get("source_search_run_id"),
+        "source_candidate_id": candidate.get("source_candidate_id"),
+        "rank": candidate.get("rank"),
+        "weights": dict(_mapping(candidate.get("weights"))),
+        "status": "active",
+        "enrolled_at": timestamp,
+        "enrollment_date": enrollment_date,
+        "evaluation_schedule": {
+            "cadence": "daily",
+            "start_date": enrollment_date,
+            "weekly_review_task": "TRADING-068",
+        },
+        "tracking_state": dict(tracking_state),
+        "observe_only": True,
+        "candidate_only": True,
+        "production_effect": "none",
+        "broker_action": "none",
+        "manual_review_required": True,
+        "production_promotion_allowed": False,
+        "production_weights_mutated": False,
+        "applied_weight_set": None,
+    }
+    record = {
+        "shadow_id": shadow_id,
+        "weight_set_id": weight_set_id,
+        "source_search_run_id": candidate.get("source_search_run_id"),
+        "source_candidate_id": candidate.get("source_candidate_id"),
+        "rank": int(candidate.get("rank") or 0),
+        "status": "active",
+        "weights": dict(_mapping(candidate.get("weights"))),
+        "metrics_summary": dict(_mapping(candidate.get("metrics_summary"))),
+        "robustness_summary": dict(_mapping(candidate.get("robustness_summary"))),
+        "blockers": [str(item) for item in candidate.get("blockers") or []],
+        "selection_reason": candidate.get("selection_reason"),
+        "config_hash": candidate.get("config_hash"),
+        "enrolled_at": timestamp,
+        "enrollment_date": enrollment_date,
+        "forward_tracking_link": tracking_link,
+        "tracking_state": tracking_state,
+        "shadow_record": shadow_record,
+        "shared_shadow_registry_mutated": False,
+        "production_weights_mutated": False,
+        "applied_weight_set": None,
+        "production_promotion_allowed": False,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_weight_forward_enrollment_record(record)
+    return record
+
+
+def _weight_forward_shadow_id(weight_set_id: str) -> str:
+    return f"etf_weight_shadow_{sha256(weight_set_id.encode('utf-8')).hexdigest()[:16]}"
 
 
 def _selected_ranked_candidates(
