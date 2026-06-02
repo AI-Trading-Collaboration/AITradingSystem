@@ -1,0 +1,126 @@
+schema_version: etf_weight_search_v1
+
+policy_metadata:
+  version: etf_weight_search_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: "TRADING-071A bounded historical ETF initial weight search config."
+  validation: "Focused config validation tests cover safety, grid bounds, references, and benchmark sets."
+  review_condition: "Review after TRADING-071 historical search and forward evidence validation produce real candidate records."
+
+objective_policies:
+  robust_risk_adjusted_v1:
+    description: "Historical ETF candidate weight scoring that prioritizes robustness over raw return."
+    policy_status: pilot_baseline
+    owner: system
+    rationale: "Avoid selecting a candidate initial weight set by historical return alone."
+    intended_effect: "Rank candidate-only ETF weight sets using return, drawdown, risk-adjusted return, turnover, robustness, and simplicity."
+    validation_evidence: "TRADING-071B/G focused deterministic tests and final validation gate."
+    review_condition: "Revisit after real forward evidence and owner manual review of candidate promotion packages."
+    component_weights:
+      excess_return_vs_baseline_score: 0.25
+      drawdown_reduction_score: 0.25
+      risk_adjusted_return_score: 0.20
+      turnover_penalty_score: 0.15
+      regime_robustness_score: 0.10
+      simplicity_score: 0.05
+    component_scales:
+      excess_return_vs_baseline: 0.10
+      drawdown_reduction: 0.10
+      sharpe: 2.00
+      turnover: 1.00
+      regime_stability: 1.00
+    hard_blockers:
+      - NO_BENCHMARK_COMPARISON
+      - MAX_DRAWDOWN_TOO_HIGH
+      - TURNOVER_TOO_HIGH
+      - SEMICONDUCTOR_CAP_VIOLATED
+      - CASH_CONSTRAINT_VIOLATED
+      - NO_LOOKAHEAD_FAILED
+      - CREDIBILITY_GATE_FAILED
+      - UNSAFE_PRODUCTION_EFFECT
+      - BROKER_ACTION_NOT_NONE
+
+benchmark_sets:
+  standard_etf:
+    description: "TRADING-063 standard ETF benchmark suite for candidate initial weight search."
+    benchmark_ids:
+      - B001
+      - B002
+      - B003
+      - B004
+      - B005
+      - B006
+      - B007
+      - B008
+
+weight_searches:
+  etf_initial_weight_search_v1:
+    search_id: etf_initial_weight_search_v1
+    description: "Bounded ETF initial weight search for SPY/QQQ/SMH/SOXX/CASH."
+    universe:
+      - SPY
+      - QQQ
+      - SMH
+      - SOXX
+      - CASH
+    weight_constraints:
+      SPY:
+        min: 0.00
+        max: 0.60
+      QQQ:
+        min: 0.00
+        max: 0.70
+      SMH:
+        min: 0.00
+        max: 0.35
+      SOXX:
+        min: 0.00
+        max: 0.25
+      CASH:
+        min: 0.00
+        max: 0.50
+    sleeve_constraints:
+      equity_total_max: 1.00
+      semiconductor_total_max: 0.35
+      cash_min_when_risk_off: 0.30
+    grid_step: 0.05
+    max_candidate_count: 1000
+    objective_policy: robust_risk_adjusted_v1
+    benchmark_set: standard_etf
+    backtest_start_date: "2022-12-01"
+    backtest_end_date: null
+    walk_forward_windows:
+      - window_id: ai_after_chatgpt_initial
+        start_date: "2022-12-01"
+        end_date: "2023-12-29"
+        description: "First full AI-after-ChatGPT yearly window."
+      - window_id: ai_after_chatgpt_recent
+        start_date: "2024-01-02"
+        end_date: "2026-06-02"
+        description: "Recent AI-cycle continuation window."
+    regime_splits:
+      risk_on_periods:
+        description: "Periods labeled Risk-On by the ETF regime engine."
+        regime_label: Risk-On
+      neutral_periods:
+        description: "Periods labeled Neutral by the ETF regime engine."
+        regime_label: Neutral
+      risk_off_periods:
+        description: "Periods labeled Risk-Off by the ETF regime engine."
+        regime_label: Risk-Off
+      high_volatility_periods:
+        description: "High realized-volatility periods identified from candidate evaluation inputs."
+        signal: high_volatility
+      semiconductor_leadership_periods:
+        description: "Periods when semiconductor ETFs lead QQQ/SPY benchmarks."
+        signal: semiconductor_leadership
+      growth_underperformance_periods:
+        description: "Periods when QQQ underperforms SPY or broad market benchmarks."
+        signal: growth_underperformance
+    safety:
+      observe_only: true
+      candidate_only: true
+      production_effect: none
+      broker_action: none
+      manual_review_required: true

@@ -232,6 +232,11 @@ from ai_trading_system.etf_portfolio.weekly_review import (
     write_weekly_review_report,
     write_weekly_review_validation_report,
 )
+from ai_trading_system.etf_portfolio.weight_calibration import (
+    DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
+    load_weight_search_definition,
+    load_weight_search_registry,
+)
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     load_report_registry,
@@ -266,6 +271,10 @@ parameter_review_app = typer.Typer(
     help="ETF allocation parameter review from forward evidence。",
     no_args_is_help=True,
 )
+weight_calibration_app = typer.Typer(
+    help="ETF dual-track weight calibration。",
+    no_args_is_help=True,
+)
 governance_app = typer.Typer(help="ETF P1 weight governance。", no_args_is_help=True)
 events_app = typer.Typer(help="ETF P1 event risk flags。", no_args_is_help=True)
 p2_app = typer.Typer(help="ETF P2 observe-only contracts。", no_args_is_help=True)
@@ -290,6 +299,7 @@ etf_app.add_typer(ai_confirmation_app, name="ai-confirmation")
 etf_app.add_typer(weekly_review_app, name="weekly-review")
 etf_app.add_typer(decision_journal_app, name="decision-journal")
 etf_app.add_typer(parameter_review_app, name="parameter-review")
+etf_app.add_typer(weight_calibration_app, name="weight-calibration")
 etf_app.add_typer(governance_app, name="governance")
 etf_app.add_typer(events_app, name="events")
 etf_app.add_typer(p2_app, name="p2")
@@ -2403,6 +2413,39 @@ def _run_parameter_review_report_command(
         "eligible_for_manual_review_count="
         f"{payload['summary']['eligible_for_manual_review_count']}"
     )
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+
+
+@weight_calibration_app.command("validate-config")
+def weight_calibration_validate_config_command(
+    search: Annotated[
+        str,
+        typer.Option("--search", "--config", help="weight search id。"),
+    ] = "etf_initial_weight_search_v1",
+    config_path: Annotated[
+        Path,
+        typer.Option(help="weight search config path。"),
+    ] = DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
+) -> None:
+    """校验 TRADING-071A historical weight search config。"""
+    registry = load_weight_search_registry(config_path)
+    definition = load_weight_search_definition(search, config_path)
+    objective = registry.objective_policies[definition.objective_policy]
+    benchmark_set = registry.benchmark_sets[definition.benchmark_set]
+    typer.echo("ETF weight calibration config 校验通过。")
+    typer.echo(f"search_id={definition.search_id}")
+    typer.echo(f"config_hash={registry.config_hash}")
+    typer.echo(f"universe={','.join(definition.universe)}")
+    typer.echo(f"grid_step={definition.grid_step:.4f}")
+    typer.echo(f"max_candidate_count={definition.max_candidate_count}")
+    typer.echo(f"objective_policy={definition.objective_policy}")
+    typer.echo(f"objective_policy_status={objective.policy_status}")
+    typer.echo(f"benchmark_set={definition.benchmark_set}")
+    typer.echo(f"benchmark_ids={','.join(benchmark_set.benchmark_ids)}")
     typer.echo("observe_only=true")
     typer.echo("candidate_only=true")
     typer.echo("production_effect=none")
