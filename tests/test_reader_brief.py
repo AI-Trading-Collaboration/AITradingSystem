@@ -173,6 +173,22 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     )
     assert ai_attribution["production_effect"] == "none"
     assert ai_attribution["broker_action"] == "none"
+    satellite_attribution = payload["etf_satellite_attribution"]
+    assert satellite_attribution["availability"] == "AVAILABLE"
+    assert satellite_attribution["overall_status"] == "ETF_first_fallback_validated"
+    assert satellite_attribution["eligible_evidence"] == "mixed"
+    assert "saved_loss_rate" in satellite_attribution["fallback_evidence"]
+    assert "best_role=ai_accelerator" in satellite_attribution["role_evidence"]
+    assert "risk_adjusted_alpha" in satellite_attribution["risk_note"]
+    assert satellite_attribution["detail_report"].endswith(
+        "satellite_attribution_report_2026-05-04.json"
+    )
+    assert satellite_attribution["safety_status"] == (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true"
+    )
+    assert satellite_attribution["production_effect"] == "none"
+    assert satellite_attribution["broker_action"] == "none"
     parameter_review = payload["etf_parameter_review"]
     assert parameter_review["availability"] == "AVAILABLE"
     assert parameter_review["status"] == "needs_more_data"
@@ -246,6 +262,9 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
     assert payload["etf_ai_attribution"]["availability"] == "MISSING"
     assert payload["etf_ai_attribution"]["production_effect"] == "none"
     assert payload["etf_ai_attribution"]["broker_action"] == "none"
+    assert payload["etf_satellite_attribution"]["availability"] == "MISSING"
+    assert payload["etf_satellite_attribution"]["production_effect"] == "none"
+    assert payload["etf_satellite_attribution"]["broker_action"] == "none"
     assert payload["etf_parameter_review"]["availability"] == "MISSING"
     assert payload["etf_parameter_review"]["main_reason"] == "PARAMETER_REVIEW_REPORT_MISSING"
     assert payload["etf_parameter_review"]["production_effect"] == "none"
@@ -273,6 +292,7 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
     assert "ETF Forward Simulation" in html
     assert "AI Confirmation" in html
     assert "AI Attribution Review" in html
+    assert "Satellite Attribution Review" in html
     assert "ETF Parameter Review" in html
     assert "ETF Weight Calibration" in html
     assert 'safety_status</th><td><span class="status-badge status-missing">MISSING</span>' in html
@@ -915,6 +935,76 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
         ),
         encoding="utf-8",
     )
+    satellite_attribution_dir = (
+        tmp_path / "reports" / "etf_portfolio" / "satellite_attribution" / "reports"
+    )
+    satellite_attribution_dir.mkdir(parents=True)
+    satellite_attribution_path = (
+        satellite_attribution_dir / "satellite_attribution_report_2026-05-04.json"
+    )
+    satellite_attribution_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "satellite_attribution_report_v1",
+                "report_type": "satellite_attribution_report",
+                "task": "TRADING-073J",
+                "as_of_date": "2026-05-04",
+                "market_regime": "ai_after_chatgpt",
+                "requested_date_range": {"start": "2022-12-01", "end": "2026-05-04"},
+                "dataset_coverage": {
+                    "record_count": 12,
+                    "available_sample_count": 6,
+                    "forward_windows": ["1D", "5D", "20D", "60D"],
+                    "source_report_count": 2,
+                },
+                "fallback_attribution": {
+                    "fallback_sample_count": 4,
+                    "fallback_saved_loss_rate": 0.75,
+                    "fallback_missed_gain_rate": 0.25,
+                    "mean_saved_drawdown": 0.03,
+                    "mean_missed_upside": 0.01,
+                },
+                "risk_attribution": {
+                    "risk_adjusted_alpha": 0.004,
+                    "drawdown_added_by_eligible_replacement": 0.01,
+                    "high_volatility_failure_rate": 0.0,
+                },
+                "role_group_attribution": {
+                    "best_role": "ai_accelerator",
+                    "worst_role": "cloud_ai_platform",
+                },
+                "evidence_scorecard": {
+                    "overall_status": "ETF_first_fallback_validated",
+                    "dimension_scores": {
+                        "eligible_outperformance_evidence": "mixed",
+                        "fallback_protection_evidence": "positive",
+                        "score_ranking_evidence": "mixed",
+                        "risk_adjusted_evidence": "mixed",
+                        "role_group_evidence": "mixed",
+                        "AI_interaction_evidence": "unknown",
+                        "sample_quality": "sufficient",
+                        "data_coverage": "PASS",
+                    },
+                    "manual_review_recommendation": (
+                        "Fallback appears protective; continue ETF-first fallback."
+                    ),
+                    "observe_only": True,
+                    "candidate_only": True,
+                    "production_effect": "none",
+                    "broker_action": "none",
+                    "manual_review_required": True,
+                },
+                "observe_only": True,
+                "candidate_only": True,
+                "production_effect": "none",
+                "broker_action": "none",
+                "manual_review_required": True,
+                "evaluation_only": True,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     parameter_review_dir = (
         tmp_path / "reports" / "etf_portfolio" / "parameter_review" / "reports"
     )
@@ -1441,6 +1531,19 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                         "latest_artifact_path": str(ai_attribution_path),
                         "exists": True,
                         "owner_action": "review_ai_attribution_report",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_satellite_attribution_report",
+                        "title": "ETF Satellite Replacement Forward Attribution Review",
+                        "cadence": "weekly",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "ETF_first_fallback_validated",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(satellite_attribution_path),
+                        "exists": True,
+                        "owner_action": "review_satellite_attribution_report",
                         "production_effect": "none",
                     },
                     {

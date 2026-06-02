@@ -173,6 +173,7 @@ def build_reader_brief_payload(
     etf_ai_confirmation = _etf_ai_confirmation_summary(report_index)
     etf_ai_attribution = _etf_ai_attribution_summary(report_index)
     etf_satellite_replacement = _etf_satellite_replacement_summary(report_index)
+    etf_satellite_attribution = _etf_satellite_attribution_summary(report_index)
     etf_weekly_review = _etf_weekly_review_summary(report_index)
     etf_decision_journal = _etf_decision_journal_summary(report_index)
     etf_parameter_review = _etf_parameter_review_summary(report_index)
@@ -297,6 +298,7 @@ def build_reader_brief_payload(
         "etf_ai_confirmation": etf_ai_confirmation,
         "etf_ai_attribution": etf_ai_attribution,
         "etf_satellite_replacement": etf_satellite_replacement,
+        "etf_satellite_attribution": etf_satellite_attribution,
         "etf_weekly_review": etf_weekly_review,
         "etf_decision_journal": etf_decision_journal,
         "etf_parameter_review": etf_parameter_review,
@@ -553,6 +555,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_ai_confirmation = _mapping(payload.get("etf_ai_confirmation"))
     etf_ai_attribution = _mapping(payload.get("etf_ai_attribution"))
     etf_satellite = _mapping(payload.get("etf_satellite_replacement"))
+    etf_satellite_attribution = _mapping(payload.get("etf_satellite_attribution"))
     etf_weekly_review = _mapping(payload.get("etf_weekly_review"))
     etf_decision_journal = _mapping(payload.get("etf_decision_journal"))
     etf_parameter_review = _mapping(payload.get("etf_parameter_review"))
@@ -986,6 +989,26 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("detail_report", etf_satellite.get("detail_report")),
                     ("production_effect", etf_satellite.get("production_effect")),
                     ("broker_action", etf_satellite.get("broker_action")),
+                ]
+            ),
+        ),
+        _section(
+            "Satellite Attribution Review",
+            _definition_table(
+                [
+                    ("availability", etf_satellite_attribution.get("availability")),
+                    ("status", etf_satellite_attribution.get("status")),
+                    ("overall_status", etf_satellite_attribution.get("overall_status")),
+                    ("eligible_evidence", etf_satellite_attribution.get("eligible_evidence")),
+                    ("fallback_evidence", etf_satellite_attribution.get("fallback_evidence")),
+                    ("role_evidence", etf_satellite_attribution.get("role_evidence")),
+                    ("risk_note", etf_satellite_attribution.get("risk_note")),
+                    ("weak_evidence", etf_satellite_attribution.get("weak_evidence")),
+                    ("manual_review", etf_satellite_attribution.get("manual_review")),
+                    ("safety_status", etf_satellite_attribution.get("safety_status")),
+                    ("detailed_report", etf_satellite_attribution.get("detail_report")),
+                    ("production_effect", etf_satellite_attribution.get("production_effect")),
+                    ("broker_action", etf_satellite_attribution.get("broker_action")),
                 ]
             ),
         ),
@@ -3028,6 +3051,114 @@ def _ai_attribution_weak_evidence(dimensions: Mapping[str, Any]) -> str:
         return "MISSING"
     name, value = min(scored, key=lambda item: item[1])
     return f"{name}={_format_number(value, digits=2)}"
+
+
+def _etf_satellite_attribution_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_satellite_attribution_summary()
+    report_path = _report_index_artifact_path(
+        report_index,
+        "etf_satellite_attribution_report",
+    )
+    report = _read_optional_json(report_path)
+    if not report:
+        return _missing_etf_satellite_attribution_summary()
+    scorecard = _mapping(report.get("evidence_scorecard"))
+    dimensions = _mapping(scorecard.get("dimension_scores"))
+    fallback = _mapping(report.get("fallback_attribution"))
+    risk = _mapping(report.get("risk_attribution"))
+    role = _mapping(report.get("role_group_attribution"))
+    safety_status = _etf_satellite_safety_status(report, scorecard)
+    overall_status = _text(scorecard.get("overall_status"), _text(report.get("status"), "UNKNOWN"))
+    eligible_evidence = _text(
+        dimensions.get("eligible_outperformance_evidence"),
+        "unknown",
+    )
+    fallback_evidence = (
+        f"{_text(dimensions.get('fallback_protection_evidence'), 'unknown')}; "
+        f"saved_loss_rate={_format_number(fallback.get('fallback_saved_loss_rate'), digits=2)}; "
+        f"missed_gain_rate={_format_number(fallback.get('fallback_missed_gain_rate'), digits=2)}"
+    )
+    role_evidence = (
+        f"best_role={_text(role.get('best_role'), 'unknown')}; "
+        f"worst_role={_text(role.get('worst_role'), 'unknown')}; "
+        f"status={_text(dimensions.get('role_group_evidence'), 'unknown')}"
+    )
+    risk_note = (
+        f"risk_adjusted_alpha={_format_number(risk.get('risk_adjusted_alpha'), digits=4)}; "
+        "eligible_drawdown_added="
+        f"{_format_number(risk.get('drawdown_added_by_eligible_replacement'), digits=4)}"
+    )
+    weak_evidence = _satellite_attribution_weak_evidence(dimensions)
+    manual_review = _text(
+        scorecard.get("manual_review_recommendation"),
+        "继续 observe-only；不得自动提高 satellite replacement 权重。",
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": _text(report.get("status"), overall_status),
+        "overall_status": overall_status,
+        "eligible_evidence": eligible_evidence,
+        "fallback_evidence": fallback_evidence,
+        "role_evidence": role_evidence,
+        "risk_note": risk_note,
+        "weak_evidence": weak_evidence,
+        "manual_review": manual_review,
+        "detail_report": "" if report_path is None else str(report_path),
+        "safety_status": safety_status,
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "summary_sentence": (
+            f"Satellite Attribution Review: status={overall_status}; "
+            f"eligible={eligible_evidence}; fallback={fallback_evidence}; "
+            f"risk={risk_note}; safety={safety_status}."
+        ),
+    }
+
+
+def _missing_etf_satellite_attribution_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "overall_status": "MISSING",
+        "eligible_evidence": "MISSING",
+        "fallback_evidence": "MISSING",
+        "role_evidence": "MISSING",
+        "risk_note": "satellite attribution report artifact is missing",
+        "weak_evidence": "satellite attribution report artifact is missing",
+        "manual_review": "继续 observe-only；Reader Brief 不运行 satellite attribution CLI。",
+        "detail_report": "",
+        "safety_status": "MISSING",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "summary_sentence": "Satellite Attribution Review: no latest attribution report found.",
+        "limitation": (
+            "Satellite attribution report artifact is missing; Reader Brief does not run "
+            "satellite attribution."
+        ),
+    }
+
+
+def _satellite_attribution_weak_evidence(dimensions: Mapping[str, Any]) -> str:
+    if not dimensions:
+        return "MISSING"
+    priority = [
+        ("sample_quality", dimensions.get("sample_quality")),
+        ("data_coverage", dimensions.get("data_coverage")),
+        ("eligible_outperformance_evidence", dimensions.get("eligible_outperformance_evidence")),
+        ("fallback_protection_evidence", dimensions.get("fallback_protection_evidence")),
+        ("score_ranking_evidence", dimensions.get("score_ranking_evidence")),
+        ("risk_adjusted_evidence", dimensions.get("risk_adjusted_evidence")),
+        ("AI_interaction_evidence", dimensions.get("AI_interaction_evidence")),
+    ]
+    weak_values = {"insufficient", "negative", "weak", "unknown", "FAIL"}
+    for name, value in priority:
+        text = _text(value)
+        if text in weak_values:
+            return f"{name}={text}"
+    return "none"
 
 
 def _etf_satellite_replacement_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:

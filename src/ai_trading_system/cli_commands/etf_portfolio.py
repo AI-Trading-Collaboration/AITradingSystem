@@ -216,6 +216,19 @@ from ai_trading_system.etf_portfolio.satellite import (
     write_satellite_replacement_report,
     write_satellite_shadow_experiment,
 )
+from ai_trading_system.etf_portfolio.satellite_attribution import (
+    DEFAULT_SATELLITE_ATTRIBUTION_DATASET_DIR,
+    DEFAULT_SATELLITE_ATTRIBUTION_REVIEW_DIR,
+    DEFAULT_SATELLITE_ATTRIBUTION_VALIDATION_DIR,
+    build_satellite_attribution_dataset,
+    build_satellite_attribution_report,
+    build_satellite_attribution_validation_report,
+    load_ai_confirmation_report_payloads_for_satellite,
+    load_satellite_replacement_report_payloads,
+    write_satellite_attribution_dataset,
+    write_satellite_attribution_report,
+    write_satellite_attribution_validation_report,
+)
 from ai_trading_system.etf_portfolio.signals import (
     generate_signals_for_date,
     load_signals,
@@ -294,6 +307,10 @@ run_app = typer.Typer(help="ETF portfolio full workflow。", no_args_is_help=Tru
 relative_strength_app = typer.Typer(help="ETF P1 relative strength。", no_args_is_help=True)
 confirmation_app = typer.Typer(help="ETF P1 confirmation scores。", no_args_is_help=True)
 satellite_app = typer.Typer(help="ETF P1 satellite candidates。", no_args_is_help=True)
+satellite_attribution_app = typer.Typer(
+    help="ETF satellite replacement forward attribution review。",
+    no_args_is_help=True,
+)
 attribution_app = typer.Typer(help="ETF P1 attribution。", no_args_is_help=True)
 experiments_app = typer.Typer(help="ETF P1 experiment registry。", no_args_is_help=True)
 forward_app = typer.Typer(help="ETF forward shadow simulation review。", no_args_is_help=True)
@@ -335,6 +352,7 @@ etf_app.add_typer(run_app, name="run")
 etf_app.add_typer(relative_strength_app, name="relative-strength")
 etf_app.add_typer(confirmation_app, name="confirmation")
 etf_app.add_typer(satellite_app, name="satellite")
+etf_app.add_typer(satellite_attribution_app, name="satellite-attribution")
 etf_app.add_typer(attribution_app, name="attribution")
 etf_app.add_typer(experiments_app, name="experiments")
 etf_app.add_typer(forward_app, name="forward")
@@ -1170,6 +1188,218 @@ def satellite_validate_command(
     typer.echo(f"Satellite validation JSON：{json_path}")
     typer.echo(f"Satellite validation Markdown：{markdown_path}")
     typer.echo(f"status={payload['status']}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@satellite_attribution_app.command("build")
+def satellite_attribution_build_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option(help="ETF / satellite 标准价格 CSV/Parquet 路径。"),
+    ] = DEFAULT_ETF_PRICE_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of", help="评估日期或 latest。")] = None,
+    start: Annotated[
+        str,
+        typer.Option(help="attribution 起始日期，默认 AI regime start。"),
+    ] = "2022-12-01",
+    satellite_report_dir: Annotated[
+        Path,
+        typer.Option(help="既有 satellite replacement report JSON 目录。"),
+    ] = DEFAULT_SATELLITE_STANDALONE_REPORT_DIR,
+    ai_confirmation_report_dir: Annotated[
+        Path,
+        typer.Option(help="可选 AI confirmation report JSON 目录。"),
+    ] = DEFAULT_AI_CONFIRMATION_STANDALONE_REPORT_DIR,
+    universe_path: Annotated[Path, typer.Option(help="satellite universe config。")] = (
+        DEFAULT_SATELLITE_UNIVERSE_CONFIG_PATH
+    ),
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="satellite attribution dataset 输出目录。"),
+    ] = DEFAULT_SATELLITE_ATTRIBUTION_DATASET_DIR,
+) -> None:
+    """生成 TRADING-073A satellite replacement forward attribution dataset。"""
+    config = load_etf_config_bundle()
+    satellite_config = load_satellite_universe_config(universe_path)
+    extra_symbols = set(satellite_price_symbols(satellite_config)) - set(config.assets.assets)
+    prices, quality_report = load_standard_prices(
+        prices_path,
+        config.assets,
+        config.strategy,
+        extra_symbols=extra_symbols,
+    )
+    if not quality_report.passed:
+        typer.echo(
+            f"ETF 数据质量状态：{quality_report.status}，"
+            "已停止 satellite attribution build。"
+        )
+        raise typer.Exit(code=1)
+    run_date = _resolve_date(as_of, prices=prices)
+    start_date = _parse_date(start)
+    report_metadata = _quality_metadata(quality_report)
+    satellite_reports = load_satellite_replacement_report_payloads(
+        satellite_report_dir,
+        as_of=run_date,
+        start=start_date,
+    )
+    ai_reports = load_ai_confirmation_report_payloads_for_satellite(
+        ai_confirmation_report_dir,
+        as_of=run_date,
+        start=start_date,
+    )
+    payload = build_satellite_attribution_dataset(
+        satellite_reports=satellite_reports,
+        prices=prices,
+        evaluation_as_of_date=run_date,
+        universe_config=satellite_config,
+        ai_confirmation_reports=ai_reports,
+        start=start_date,
+        data_quality_status=quality_report.status,
+        data_quality_report=str(report_metadata["data_quality_report"]).strip("`"),
+        market_regime=config.backtest.backtest.regime,
+        requested_date_range={"start": start_date.isoformat(), "end": run_date.isoformat()},
+    )
+    paths = write_satellite_attribution_dataset(payload, output_dir=output_dir)
+    typer.echo(f"Satellite attribution dataset JSON：{paths['json']}")
+    typer.echo(f"Satellite attribution dataset CSV：{paths['csv']}")
+    typer.echo(f"record_count={payload['record_count']}")
+    typer.echo(f"available_sample_count={payload['available_sample_count']}")
+    typer.echo(f"data_quality_status={quality_report.status}")
+    typer.echo("evaluation_only=true")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+
+
+@satellite_attribution_app.command("report")
+def satellite_attribution_report_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option(help="ETF / satellite 标准价格 CSV/Parquet 路径。"),
+    ] = DEFAULT_ETF_PRICE_PATH,
+    as_of: Annotated[str | None, typer.Option("--as-of", help="评估日期或 latest。")] = None,
+    start: Annotated[
+        str,
+        typer.Option(help="attribution 起始日期，默认 AI regime start。"),
+    ] = "2022-12-01",
+    satellite_report_dir: Annotated[
+        Path,
+        typer.Option(help="既有 satellite replacement report JSON 目录。"),
+    ] = DEFAULT_SATELLITE_STANDALONE_REPORT_DIR,
+    ai_confirmation_report_dir: Annotated[
+        Path,
+        typer.Option(help="可选 AI confirmation report JSON 目录。"),
+    ] = DEFAULT_AI_CONFIRMATION_STANDALONE_REPORT_DIR,
+    universe_path: Annotated[Path, typer.Option(help="satellite universe config。")] = (
+        DEFAULT_SATELLITE_UNIVERSE_CONFIG_PATH
+    ),
+    dataset_output_dir: Annotated[
+        Path,
+        typer.Option(help="同步写出的 satellite attribution dataset 目录。"),
+    ] = DEFAULT_SATELLITE_ATTRIBUTION_DATASET_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="satellite attribution report 输出目录。"),
+    ] = DEFAULT_SATELLITE_ATTRIBUTION_REVIEW_DIR,
+) -> None:
+    """生成 TRADING-073J satellite replacement forward attribution report。"""
+    config = load_etf_config_bundle()
+    satellite_config = load_satellite_universe_config(universe_path)
+    extra_symbols = set(satellite_price_symbols(satellite_config)) - set(config.assets.assets)
+    prices, quality_report = load_standard_prices(
+        prices_path,
+        config.assets,
+        config.strategy,
+        extra_symbols=extra_symbols,
+    )
+    if not quality_report.passed:
+        typer.echo(
+            f"ETF 数据质量状态：{quality_report.status}，"
+            "已停止 satellite attribution report。"
+        )
+        raise typer.Exit(code=1)
+    run_date = _resolve_date(as_of, prices=prices)
+    start_date = _parse_date(start)
+    report_metadata = _quality_metadata(quality_report)
+    satellite_reports = load_satellite_replacement_report_payloads(
+        satellite_report_dir,
+        as_of=run_date,
+        start=start_date,
+    )
+    ai_reports = load_ai_confirmation_report_payloads_for_satellite(
+        ai_confirmation_report_dir,
+        as_of=run_date,
+        start=start_date,
+    )
+    dataset = build_satellite_attribution_dataset(
+        satellite_reports=satellite_reports,
+        prices=prices,
+        evaluation_as_of_date=run_date,
+        universe_config=satellite_config,
+        ai_confirmation_reports=ai_reports,
+        start=start_date,
+        data_quality_status=quality_report.status,
+        data_quality_report=str(report_metadata["data_quality_report"]).strip("`"),
+        market_regime=config.backtest.backtest.regime,
+        requested_date_range={"start": start_date.isoformat(), "end": run_date.isoformat()},
+    )
+    dataset_paths = write_satellite_attribution_dataset(
+        dataset,
+        output_dir=dataset_output_dir,
+    )
+    payload = build_satellite_attribution_report(dataset)
+    paths = write_satellite_attribution_report(payload, output_dir=output_dir)
+    typer.echo(f"Satellite attribution report JSON：{paths['json']}")
+    typer.echo(f"Satellite attribution report Markdown：{paths['markdown']}")
+    typer.echo(f"Satellite attribution dataset JSON：{dataset_paths['json']}")
+    typer.echo(f"overall_status={payload['evidence_scorecard']['overall_status']}")
+    typer.echo(f"available_sample_count={dataset['available_sample_count']}")
+    typer.echo("evaluation_only=true")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+
+
+@satellite_attribution_app.command("validate")
+def satellite_attribution_validate_command(
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="satellite attribution validation 输出目录。"),
+    ] = DEFAULT_SATELLITE_ATTRIBUTION_VALIDATION_DIR,
+    report_registry_path: Annotated[
+        Path,
+        typer.Option(help="report registry YAML path。"),
+    ] = DEFAULT_REPORT_REGISTRY_PATH,
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="optional TRADING-073J attribution report JSON path。"),
+    ] = None,
+) -> None:
+    """执行 TRADING-073L satellite attribution validation gate。"""
+    from ai_trading_system.reports.reader_brief import build_reader_brief_payload
+
+    payload = build_satellite_attribution_validation_report(
+        report_registry=load_report_registry(report_registry_path),
+        reader_brief_available=callable(build_reader_brief_payload),
+        report_payload=(
+            _load_optional_json_payload(report_path) if report_path is not None else None
+        ),
+    )
+    paths = write_satellite_attribution_validation_report(payload, output_dir=output_dir)
+    typer.echo(f"Satellite attribution validation gate：{paths['markdown']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("evaluation_only=true")
     typer.echo("observe_only=true")
     typer.echo("candidate_only=true")
     typer.echo("production_effect=none")

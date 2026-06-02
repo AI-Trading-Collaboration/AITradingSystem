@@ -243,6 +243,35 @@ safety fields。所有 AI attribution 输出固定 `observe_only=true`、`candid
 `production_effect=none`、`broker_action=none`、`manual_review_required=true`，不得写
 production weights、不得自动 promotion、不得触发 broker action。
 
+TRADING-073 satellite replacement forward attribution review 只验证
+satellite replacement / fallback decisions 是否相对 ETF-first exposure 具备 forward
+attribution value，不改变任何生产权重。`aits etf satellite-attribution build --as-of
+YYYY-MM-DD` 只读既有
+`reports/etf_portfolio/satellite/reports/satellite_replacement_report_*.json`、可选
+AI confirmation reports 和 ETF / satellite price cache，先通过 ETF price quality gate，再生成
+`reports/etf_portfolio/satellite_attribution/datasets/satellite_attribution_dataset_YYYY-MM-DD.json/csv/md`。
+每条 row 固定 `decision_date`、`eligibility_date`、`replacement_plan_date`、
+`forward_window`、`evaluation_as_of_date`、`evaluation_only=true`、ticker、benchmark ETF、
+role/group、eligibility status、SatelliteCandidateScore、component scores、fallback flag、
+replacement weight、stock-vs-benchmark forward returns、replacement-vs-ETF impact、
+drawdown/volatility、event flag、sample availability、source report path 和 safety fields；
+forward returns 只能用于 attribution/evaluation。`aits etf satellite-attribution report
+--as-of YYYY-MM-DD` 生成
+`reports/etf_portfolio/satellite_attribution/reports/satellite_attribution_report_YYYY-MM-DD.json/md`，
+包含 eligibility bucket analysis、stock-vs-benchmark attribution、fallback-to-ETF
+attribution、score attribution、risk attribution、role/group attribution、AI confirmation
+interaction attribution、evidence scorecard、manual review recommendation 和 source links。
+Reader Brief 的 `Satellite Attribution Review` 区块只读摘录 latest attribution report，
+展示 overall status、eligible/fallback/role/risk evidence、weak evidence、manual review 和
+detail report；缺失时显示 `MISSING`，不运行上游。`aits etf satellite-attribution
+validate` 输出
+`reports/etf_portfolio/satellite_attribution/validation/satellite_attribution_validation_YYYY-MM-DD.json/md`，
+校验 A-L workflow、Reader Brief/report registry visibility、evaluation-only separation、
+forbidden production/trading output keys 和 safety fields。所有 satellite attribution 输出固定
+`observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、
+`manual_review_required=true`，不得写 production weights、不得自动 promotion、不得触发
+broker action。
+
 TRADING-064 controlled calibration experiments 从
 `config/etf_portfolio/experiments.yaml` 和
 `config/etf_portfolio/experiment_packs.yaml` 读取。experiment registry 定义允许观察的
