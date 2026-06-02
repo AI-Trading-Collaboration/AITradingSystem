@@ -6,8 +6,11 @@ import pytest
 
 from ai_trading_system.etf_portfolio.operations import (
     DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH,
+    OPERATIONS_COMMAND_GRAPH_SCHEMA_VERSION,
     OPERATIONS_SCHEDULE_SCHEMA_VERSION,
     ETFOperationsScheduleConfig,
+    OperationsCommandGraphError,
+    build_daily_operations_command_graph,
     load_operations_schedule_config,
     operations_schedule_required_step_ids,
     operations_schedule_step_ids,
@@ -146,6 +149,111 @@ def test_operations_schedule_weight_search_is_not_daily() -> None:
     monthly_ids = {step.step_id for step in config.monthly_pipeline}
     assert "weight_calibration_search" not in daily_ids
     assert "weight_calibration_search" in monthly_ids
+
+
+def test_daily_operations_command_graph_builds() -> None:
+    graph = build_daily_operations_command_graph()
+
+    assert graph.schema_version == OPERATIONS_COMMAND_GRAPH_SCHEMA_VERSION
+    assert graph.cadence == "daily"
+    assert graph.dry_run_only is True
+    assert graph.commands_executed is False
+    assert graph.execution_order == [node.node_id for node in graph.nodes]
+    assert {
+        "data_freshness_check",
+        "etf_daily_run",
+        "forward_update",
+        "ai_confirmation_run",
+        "satellite_replacement_run",
+        "ai_attribution_update",
+        "satellite_attribution_update",
+        "reader_brief_generate",
+        "report_registry_update",
+        "operations_health_check",
+    }.issubset(set(graph.execution_order))
+
+
+def test_daily_operations_command_graph_nodes_expose_required_fields() -> None:
+    graph = build_daily_operations_command_graph()
+
+    by_id = {node.node_id: node for node in graph.nodes}
+    node = by_id["satellite_replacement_run"]
+    assert node.command == "aits etf satellite report --date {as_of}"
+    assert node.dependencies == ["data_freshness_check", "ai_confirmation_run"]
+    assert node.inputs
+    assert node.outputs == [
+        "reports/etf_portfolio/satellite/reports/satellite_replacement_report_{as_of}.json"
+    ]
+    assert node.required is True
+    assert node.failure_policy == "block_dependent_steps"
+    assert node.estimated_runtime_class == "medium"
+
+
+def test_daily_operations_command_graph_dependencies_topologically_sorted() -> None:
+    graph = build_daily_operations_command_graph()
+    position = {node_id: index for index, node_id in enumerate(graph.execution_order)}
+
+    for node in graph.nodes:
+        for dependency in node.dependencies:
+            assert position[dependency] < position[node.node_id]
+
+
+def test_daily_operations_command_graph_allows_optional_nodes_to_skip() -> None:
+    graph = build_daily_operations_command_graph(include_optional=False)
+
+    node_ids = {node.node_id for node in graph.nodes}
+    assert "ai_attribution_update" not in node_ids
+    assert "satellite_attribution_update" not in node_ids
+    assert set(graph.skipped_optional_steps) == {
+        "ai_attribution_update",
+        "satellite_attribution_update",
+    }
+    report_registry = next(node for node in graph.nodes if node.node_id == "report_registry_update")
+    assert "ai_attribution_update" not in report_registry.dependencies
+    assert "satellite_attribution_update" not in report_registry.dependencies
+
+
+def test_daily_operations_command_graph_refuses_to_skip_required_node() -> None:
+    with pytest.raises(OperationsCommandGraphError, match="cannot skip required nodes"):
+        build_daily_operations_command_graph(skipped_optional_step_ids={"etf_daily_run"})
+
+
+def test_daily_operations_command_graph_missing_required_node_fails() -> None:
+    raw = _raw_schedule()
+    raw["daily_pipeline"] = [
+        step for step in raw["daily_pipeline"] if step["step_id"] != "etf_daily_run"
+    ]
+    for step in raw["daily_pipeline"]:
+        step["dependencies"] = [
+            dependency
+            for dependency in step["dependencies"]
+            if dependency != "etf_daily_run"
+        ]
+    config = ETFOperationsScheduleConfig.model_validate(raw)
+
+    with pytest.raises(OperationsCommandGraphError, match="missing required nodes"):
+        build_daily_operations_command_graph(config)
+
+
+def test_daily_operations_command_graph_cycle_detection_works() -> None:
+    raw = _raw_schedule()
+    raw["daily_pipeline"][0]["dependencies"] = ["operations_health_check"]
+    config = ETFOperationsScheduleConfig.model_validate(raw)
+
+    with pytest.raises(OperationsCommandGraphError, match="cycle detected"):
+        build_daily_operations_command_graph(config)
+
+
+def test_daily_operations_command_graph_safety_flags_included() -> None:
+    graph = build_daily_operations_command_graph()
+
+    assert graph.safety.observe_only is True
+    assert graph.safety.candidate_only is True
+    assert graph.safety.production_effect == "none"
+    assert graph.safety.broker_action == "none"
+    assert graph.safety.manual_review_required is True
+    assert all(node.safety.production_effect == "none" for node in graph.nodes)
+    assert all(node.safety.broker_action == "none" for node in graph.nodes)
 
 
 def _raw_schedule() -> dict[str, object]:

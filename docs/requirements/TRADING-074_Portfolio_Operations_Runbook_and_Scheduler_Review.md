@@ -38,7 +38,7 @@ paid data provider dependency
 |阶段|标题|状态|验收摘要|
 |---|---|---|---|
 |TRADING-074A|Operations Schedule Spec|DONE|新增 `config/etf_portfolio/operations_schedule.yaml`，并用 loader/validator 校验 cadence、步骤、依赖、expected outputs 和安全字段。|
-|TRADING-074B|Daily Pipeline Command Graph|READY|从 schedule spec 构建 daily dependency-aware command graph，可 dry-run，不执行命令。|
+|TRADING-074B|Daily Pipeline Command Graph|DONE|从 schedule spec 构建 daily dependency-aware command graph，可 dry-run，不执行命令。|
 |TRADING-074C|Weekly Pipeline Command Graph|READY|建立 weekly review command graph，并标记人工复核 checkpoint。|
 |TRADING-074D|Monthly / Biweekly Review Pipeline|READY|建立 slower cadence pipelines，确保 heavy historical search 不进入 daily 默认链路。|
 |TRADING-074E|Artifact Freshness and Dependency Checks|READY|校验 required / optional artifacts 的 freshness、missing 和 dependency status。|
@@ -61,3 +61,4 @@ paid data provider dependency
 
 - 2026-06-03: TRADING-074 新增并进入 IN_PROGRESS。当前实现范围从 TRADING-074A 开始，先建立 config-driven operations schedule spec 和 focused validation tests。
 - 2026-06-03: TRADING-074A 完成。新增 `config/etf_portfolio/operations_schedule.yaml`、`src/ai_trading_system/etf_portfolio/operations.py` 和 `tests/test_etf_operations.py`，覆盖 schedule load、cadence sections、required daily nodes、unique step IDs、non-empty commands、dependency references、required expected outputs、safety field requirement、unsafe `production_effect` fail-closed 和 weight search not daily。
+- 2026-06-03: TRADING-074B 完成。新增 `build_daily_operations_command_graph`、daily graph node/payload schema、required daily node validation、topological ordering、optional attribution node skipping、cycle detection、dry-run-only flags 和 safety propagation；专项测试覆盖 graph build、required fields、topological order、optional skip、required skip refusal、missing required node、cycle detection 和 safety fields。

@@ -529,9 +529,13 @@ daily / weekly / biweekly / monthly / manual-review workflow 记录为 source co
 包含 step id、command、dependencies、expected outputs、max allowed age、failure policy
 和 owner review requirement，并固定 `observe_only=true`、`candidate_only=true`、
 `production_effect=none`、`broker_action=none`、`manual_review_required=true`。
-当前 TRADING-074A 只提供 loader/validator 和配置校验；它不执行命令、不自动调度
-weekly/monthly 任务、不替代 `aits ops daily-run` 的统一外部入口。后续 dry-run、
-operations report、Reader Brief operations health 和 `aits etf ops validate` 会复用该配置。
+当前 TRADING-074A/B 提供 loader/validator、配置校验和 daily operations command graph。
+`build_daily_operations_command_graph` 会生成 topological `execution_order`、required /
+optional 节点、输入/输出、failure policy、estimated runtime class 和 safety fields；optional
+attribution 节点可跳过，required 节点不可跳过，cycle 或 missing required node 会 fail
+closed。它不执行命令、不自动调度 weekly/monthly 任务、不替代 `aits ops daily-run` 的统一
+外部入口。后续 weekly/monthly graph、freshness check、dry-run、operations report、Reader
+Brief operations health 和 `aits etf ops validate` 会复用该配置。
 
 `aits etf governance summary --candidate <candidate.json>` 使用
 `config/etf_portfolio/governance.yaml` 的参数治理 policy 输出候选晋级摘要，固定
