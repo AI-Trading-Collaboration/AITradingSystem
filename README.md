@@ -458,8 +458,14 @@ scorecard、manual review package、source report links 和 next steps。Report 
 区块只读 latest report，展示 search pack、top historical candidate、forward evidence
 status、overfit risk、candidate status、manual review proposal count、safety posture 和
 detail link，缺失 report 时显示 `MISSING` 且不运行上游。当前 TRADING-071J 仍是
-candidate-only / observe-only visibility 层，后续 TRADING-071K 才会补 validation gate。
-所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、
+candidate-only / observe-only visibility 层。`aits etf weight-calibration validate`
+生成
+`reports/etf_portfolio/weight_calibration/validation/weight_calibration_validation_*.json/md`，
+校验 weight search config、bounded search、sample historical search、walk-forward/regime
+robustness、candidate registry、forward enrollment、backtest-forward aggregator、overfit
+diagnostics、proposal generator、report generator、Reader Brief/report-registry visibility、
+unsafe proposal type blockers、evidence-linked proposals 和 proposal-only safety fields；
+失败时 fail closed。所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、
 `broker_action=none`、`manual_review_required=true`，不写 official target weights、不改
 baseline config、不写 shared experiment shadow registry、不触发 broker。
 

@@ -237,6 +237,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     DEFAULT_ETF_WEIGHT_CALIBRATION_DATA_DIR,
     DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR,
     DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
+    DEFAULT_WEIGHT_CALIBRATION_VALIDATION_DIR,
     DEFAULT_WEIGHT_DUAL_TRACK_REPORT_DIR,
     DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
     DEFAULT_WEIGHT_FORWARD_EVIDENCE_DIR,
@@ -245,6 +246,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     build_backtest_forward_evidence_aggregation,
     build_candidate_weight_proposals,
     build_dual_track_weight_calibration_report,
+    build_dual_track_weight_calibration_validation_report,
     build_weight_overfit_diagnostics,
     enroll_candidate_weights_forward,
     find_latest_weight_search_run_dir,
@@ -258,6 +260,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     write_backtest_forward_evidence_aggregation,
     write_candidate_weight_proposals,
     write_dual_track_weight_calibration_report,
+    write_dual_track_weight_calibration_validation_report,
     write_weight_overfit_diagnostics,
     write_weight_search_run,
 )
@@ -2947,6 +2950,56 @@ def weight_calibration_report_command(
     typer.echo("production_effect=none")
     typer.echo("broker_action=none")
     typer.echo("manual_review_required=true")
+
+
+@weight_calibration_app.command("validate")
+def weight_calibration_validate_command(
+    search_config_path: Annotated[
+        Path,
+        typer.Option(help="weight search config YAML path。"),
+    ] = DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
+    report_registry_path: Annotated[
+        Path,
+        typer.Option(help="report registry YAML path。"),
+    ] = DEFAULT_REPORT_REGISTRY_PATH,
+    proposals_path: Annotated[
+        Path | None,
+        typer.Option(help="optional TRADING-071H proposal JSON path。"),
+    ] = None,
+    report_path: Annotated[
+        Path | None,
+        typer.Option(help="optional TRADING-071I dual-track calibration report JSON path。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="dual-track calibration validation 输出目录。"),
+    ] = DEFAULT_WEIGHT_CALIBRATION_VALIDATION_DIR,
+) -> None:
+    """执行 TRADING-071K dual-track calibration validation gate。"""
+    payload = build_dual_track_weight_calibration_validation_report(
+        search_config_path=search_config_path,
+        report_registry_path=report_registry_path,
+        proposals_payload=(
+            _load_optional_json_payload(proposals_path) if proposals_path is not None else None
+        ),
+        report_payload=(
+            _load_optional_json_payload(report_path) if report_path is not None else None
+        ),
+    )
+    paths = write_dual_track_weight_calibration_validation_report(
+        payload,
+        output_dir=output_dir,
+    )
+    typer.echo(f"ETF weight dual-track calibration validation gate：{paths['markdown']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
 
 
 @p2_app.command("edgar-text")

@@ -73,7 +73,7 @@ not the primary AI-cycle conclusion window.
 |TRADING-071H|Candidate Weight Proposal Generator|DONE|Only evidence-linked proposal/review actions are generated; unsafe proposal types are rejected|
 |TRADING-071I|Dual-Track Calibration Report|DONE|JSON/Markdown report summarizes search, robustness, forward comparison, overfit diagnostics, proposals, and source links|
 |TRADING-071J|Reader Brief Dual-Track Calibration Section|DONE|Reader Brief surfaces top candidate, forward status, overfit risk, candidate status, safety, and report link|
-|TRADING-071K|Dual-Track Calibration Validation Gate|IN_PROGRESS|Final gate fails closed on unsafe states, unbounded search, unsafe proposals, or missing workflow pieces|
+|TRADING-071K|Dual-Track Calibration Validation Gate|DONE|Final gate fails closed on unsafe states, unbounded search, unsafe proposals, or missing workflow pieces|
 
 ## Acceptance Criteria
 
@@ -174,3 +174,14 @@ command.
   forward evidence status、overfit risk、candidate status、manual review proposal count、
   safety posture 和 detail link；缺失 report 时显示 `MISSING`，不运行 weight-calibration
   上游命令。TRADING-071K 进入 `IN_PROGRESS`，下一步实现 final validation gate。
+- 2026-06-02: TRADING-071K 完成。新增 `aits etf weight-calibration validate`、
+  `etf_weight_dual_track_validation_v1` schema、deterministic in-memory validation
+  sample、JSON/Markdown writer、report registry entry 和 focused tests；validation gate
+  校验 weight search config、bounded grid/candidate cap、sample historical search、
+  walk-forward/regime robustness、candidate registry、forward enrollment、
+  backtest-forward aggregator、overfit diagnostics、proposal generator、report generator、
+  Reader Brief/report-registry visibility、unsafe proposal type blockers、
+  evidence-linked proposals、`production_effect=none`、`broker_action=none` 和
+  `manual_review_required=true`。TRADING-071A-K baseline workflow 完成，父任务进入
+  `VALIDATING`，原因：candidate initial weights 仍需真实 forward evidence 滚动观察和
+  owner manual review，不能自动改 baseline。

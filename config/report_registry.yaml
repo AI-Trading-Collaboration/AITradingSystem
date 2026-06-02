@@ -671,6 +671,22 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_weight_dual_track_calibration_validation
+    title: ETF Weight Dual-Track Calibration Validation
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf weight-calibration validate
+    artifact_globs:
+      - reports/etf_portfolio/weight_calibration/validation/weight_calibration_validation_*.json
+      - reports/etf_portfolio/weight_calibration/validation/weight_calibration_validation_*.md
+    freshness_sla_days: 14
+    freshness_rationale: TRADING-071 validation confirms the dual-track weight calibration workflow remains bounded, proposal-only, evidence-linked, and safe before treating the baseline implementation as complete.
+    owner_action: run_aits_etf_weight_calibration_validate_before_marking_TRADING_071_baseline_done_or_validating
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_p2_walk_forward
     title: ETF P2 Walk Forward Readiness
     group: research

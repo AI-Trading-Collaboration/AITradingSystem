@@ -20,6 +20,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     build_backtest_forward_evidence_aggregation,
     build_candidate_weight_proposals,
     build_dual_track_weight_calibration_report,
+    build_dual_track_weight_calibration_validation_report,
     build_weight_overfit_diagnostics,
     enroll_candidate_weights_forward,
     generate_weight_candidates,
@@ -35,11 +36,13 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     validate_candidate_weight_proposal,
     validate_candidate_weight_record,
     validate_dual_track_weight_calibration_report,
+    validate_dual_track_weight_calibration_validation_report,
     validate_weight_forward_enrollment_record,
     validate_weight_search_registry,
     weight_overfit_risk_band,
     write_backtest_forward_evidence_aggregation,
     write_dual_track_weight_calibration_report,
+    write_dual_track_weight_calibration_validation_report,
     write_weight_search_run,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
@@ -1218,6 +1221,183 @@ def test_weight_calibration_report_cli_writes_json_and_markdown(tmp_path: Path) 
     assert "production_effect=none" in result.output
     assert (tmp_path / "reports" / "dual_track_calibration_2026-06-02.json").exists()
     assert (tmp_path / "reports" / "dual_track_calibration_2026-06-02.md").exists()
+
+
+def test_weight_calibration_validation_gate_passes_complete_workflow(tmp_path: Path) -> None:
+    inputs = _dual_track_report_inputs(tmp_path, return_delta=0.05, overfit_band="low")
+    report = build_dual_track_weight_calibration_report(
+        as_of=date(2026, 6, 2),
+        candidate_registry=inputs["registry"],
+        forward_enrollments=inputs["enrollments"],
+        search_payload=inputs["search_payload"],
+        evidence_payload=inputs["evidence"],
+        overfit_payload=inputs["overfit"],
+        proposals_payload=inputs["proposals"],
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    payload = build_dual_track_weight_calibration_validation_report(
+        proposals_payload=inputs["proposals"],
+        report_payload=report,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert payload["status"] == "PASS"
+    assert payload["failed_check_count"] == 0
+    assert payload["production_effect"] == "none"
+    assert payload["broker_action"] == "none"
+    check_ids = {check["check_id"] for check in payload["checks"]}
+    assert {
+        "weight_search_config_valid",
+        "weight_search_bounded",
+        "historical_search_engine_available",
+        "walk_forward_regime_robustness_available",
+        "candidate_weight_registry_available",
+        "forward_enrollment_available",
+        "backtest_forward_aggregator_available",
+        "overfit_diagnostics_available",
+        "proposal_generator_available",
+        "report_generator_available",
+        "reader_brief_integration_available",
+        "unsafe_proposal_types_blocked",
+        "proposals_evidence_linked",
+        "proposal_only_behavior",
+    }.issubset(check_ids)
+    validate_dual_track_weight_calibration_validation_report(payload)
+
+    paths = write_dual_track_weight_calibration_validation_report(
+        payload,
+        output_dir=tmp_path / "validation",
+    )
+    assert paths["json"].exists()
+    markdown = paths["markdown"].read_text(encoding="utf-8")
+    assert "ETF Weight Dual-Track Calibration Validation Gate" in markdown
+    assert "production_effect=none" in markdown
+
+
+def test_weight_calibration_validation_fails_unsafe_proposal_payload(
+    tmp_path: Path,
+) -> None:
+    inputs = _dual_track_report_inputs(tmp_path, return_delta=0.05, overfit_band="low")
+    report = build_dual_track_weight_calibration_report(
+        as_of=date(2026, 6, 2),
+        candidate_registry=inputs["registry"],
+        forward_enrollments=inputs["enrollments"],
+        search_payload=inputs["search_payload"],
+        evidence_payload=inputs["evidence"],
+        overfit_payload=inputs["overfit"],
+        proposals_payload=inputs["proposals"],
+    )
+    proposals = deepcopy(inputs["proposals"])
+    proposals["proposals"][0]["proposal_type"] = "apply_weight_set"
+
+    payload = build_dual_track_weight_calibration_validation_report(
+        proposals_payload=proposals,
+        report_payload=report,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert payload["status"] == "FAIL"
+    failed = {check["check_id"] for check in payload["checks"] if check["status"] == "FAIL"}
+    assert "proposal_payload_schema_valid" in failed
+    assert "unsafe_proposal_types_absent" in failed
+
+
+def test_weight_calibration_validation_fails_unsafe_report_payload(
+    tmp_path: Path,
+) -> None:
+    inputs = _dual_track_report_inputs(tmp_path, return_delta=0.05, overfit_band="low")
+    report = build_dual_track_weight_calibration_report(
+        as_of=date(2026, 6, 2),
+        candidate_registry=inputs["registry"],
+        forward_enrollments=inputs["enrollments"],
+        search_payload=inputs["search_payload"],
+        evidence_payload=inputs["evidence"],
+        overfit_payload=inputs["overfit"],
+        proposals_payload=inputs["proposals"],
+    )
+    report["production_effect"] = "apply_weights"
+
+    payload = build_dual_track_weight_calibration_validation_report(
+        proposals_payload=inputs["proposals"],
+        report_payload=report,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert payload["status"] == "FAIL"
+    failed = {check["check_id"] for check in payload["checks"] if check["status"] == "FAIL"}
+    assert "report_payload_schema_valid" in failed
+    assert "report_payload_production_effect_none" in failed
+
+
+def test_weight_calibration_validation_fails_when_safety_missing(
+    tmp_path: Path,
+) -> None:
+    inputs = _dual_track_report_inputs(tmp_path, return_delta=0.05, overfit_band="low")
+    report = build_dual_track_weight_calibration_report(
+        as_of=date(2026, 6, 2),
+        candidate_registry=inputs["registry"],
+        forward_enrollments=inputs["enrollments"],
+        search_payload=inputs["search_payload"],
+        evidence_payload=inputs["evidence"],
+        overfit_payload=inputs["overfit"],
+        proposals_payload=inputs["proposals"],
+    )
+    del report["manual_review_required"]
+
+    payload = build_dual_track_weight_calibration_validation_report(
+        proposals_payload=inputs["proposals"],
+        report_payload=report,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert payload["status"] == "FAIL"
+    failed = {check["check_id"] for check in payload["checks"] if check["status"] == "FAIL"}
+    assert "report_payload_schema_valid" in failed
+    assert "report_payload_manual_review_required_true" in failed
+
+
+def test_weight_calibration_validation_fails_when_search_unbounded(
+    tmp_path: Path,
+) -> None:
+    raw = _raw_registry()
+    raw["weight_searches"]["etf_initial_weight_search_v1"]["grid_step"] = 0.005
+    config_path = tmp_path / "unbounded_weight_search.yaml"
+    config_path.write_text(json.dumps(raw, indent=2) + "\n", encoding="utf-8")
+
+    payload = build_dual_track_weight_calibration_validation_report(
+        search_config_path=config_path,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert payload["status"] == "FAIL"
+    bounded_check = next(
+        check for check in payload["checks"] if check["check_id"] == "weight_search_bounded"
+    )
+    assert bounded_check["status"] == "FAIL"
+    assert "grid_step_too_fine" in bounded_check["message"]
+
+
+def test_weight_calibration_validate_cli_writes_json_and_markdown(tmp_path: Path) -> None:
+    result = CliRunner().invoke(
+        etf_app,
+        [
+            "weight-calibration",
+            "validate",
+            "--output-dir",
+            str(tmp_path / "validation"),
+        ],
+        env={"COLUMNS": "180"},
+        terminal_width=180,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "ETF weight dual-track calibration validation gate" in result.output
+    assert "status=PASS" in result.output
+    assert "failed_check_count=0" in result.output
+    assert "production_effect=none" in result.output
+    assert list((tmp_path / "validation").glob("weight_calibration_validation_*.json"))
+    assert list((tmp_path / "validation").glob("weight_calibration_validation_*.md"))
 
 
 def _raw_registry() -> dict[str, object]:

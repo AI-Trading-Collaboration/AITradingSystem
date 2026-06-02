@@ -8,6 +8,7 @@ from hashlib import sha256
 from math import prod, sqrt
 from pathlib import Path
 from statistics import mean, pstdev
+from tempfile import TemporaryDirectory
 from typing import Any, Self
 
 import pandas as pd
@@ -16,11 +17,16 @@ from pydantic import BaseModel, Field, model_validator
 from ai_trading_system.backtest.engine import BacktestMetrics, summarize_long_only_backtest
 from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.etf_portfolio.backtest import calculate_portfolio_accounting_step
+from ai_trading_system.etf_portfolio.data import standardize_price_frame, validate_price_data
 from ai_trading_system.etf_portfolio.models import (
     ETFConfigBundle,
     ETFQualityReport,
     PolicyMetadata,
     load_etf_config_bundle,
+)
+from ai_trading_system.reports.report_index import (
+    DEFAULT_REPORT_REGISTRY_PATH,
+    load_report_registry,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -47,6 +53,9 @@ DEFAULT_WEIGHT_OVERFIT_DIAGNOSTICS_DIR = (
 )
 DEFAULT_WEIGHT_PROPOSAL_DIR = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "proposals"
 DEFAULT_WEIGHT_DUAL_TRACK_REPORT_DIR = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "reports"
+DEFAULT_WEIGHT_CALIBRATION_VALIDATION_DIR = (
+    DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "validation"
+)
 
 WEIGHT_SEARCH_SCHEMA_VERSION = "etf_weight_search_v1"
 WEIGHT_SEARCH_RUN_SCHEMA_VERSION = "etf_weight_search_run_v1"
@@ -58,6 +67,7 @@ WEIGHT_BACKTEST_FORWARD_EVIDENCE_SCHEMA_VERSION = (
 WEIGHT_OVERFIT_DIAGNOSTICS_SCHEMA_VERSION = "etf_weight_overfit_diagnostics_v1"
 WEIGHT_PROPOSAL_SCHEMA_VERSION = "etf_weight_candidate_proposals_v1"
 WEIGHT_DUAL_TRACK_REPORT_SCHEMA_VERSION = "etf_weight_dual_track_calibration_report_v1"
+WEIGHT_CALIBRATION_VALIDATION_SCHEMA_VERSION = "etf_weight_dual_track_validation_v1"
 
 WEIGHT_CALIBRATION_SAFETY = {
     "observe_only": True,
@@ -145,6 +155,11 @@ ALLOWED_WEIGHT_PROPOSAL_TYPES = frozenset(
 DISALLOWED_WEIGHT_PROPOSAL_TYPES = frozenset(
     {"apply_weight_set", "promote_to_production", "enable_broker_action"}
 )
+
+# Operational fail-closed bounds for TRADING-071K. These do not rank candidates;
+# they only reject search definitions that are too broad to audit as a validation gate.
+MIN_BOUNDED_WEIGHT_SEARCH_GRID_STEP = 0.01
+MAX_BOUNDED_WEIGHT_SEARCH_CANDIDATES = 10_000
 
 # Pilot proposal policy for TRADING-071H. It only routes candidate-only review
 # actions and cannot apply weights or approve production changes.
@@ -2020,6 +2035,728 @@ def render_dual_track_weight_calibration_report_markdown(payload: Mapping[str, A
     for step in payload.get("next_steps") or []:
         lines.append(f"- {step}")
     return "\n".join(lines) + "\n"
+
+
+def build_dual_track_weight_calibration_validation_report(
+    *,
+    search_config_path: Path = DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
+    report_registry_path: Path = DEFAULT_REPORT_REGISTRY_PATH,
+    proposals_payload: Mapping[str, Any] | None = None,
+    report_payload: Mapping[str, Any] | None = None,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(tz=UTC)
+    checks: list[dict[str, Any]] = []
+    search_registry: ETFWeightSearchRegistry | None = None
+    config_error = ""
+    try:
+        search_registry = load_weight_search_registry(search_config_path)
+    except WeightCalibrationError as exc:
+        config_error = str(exc)
+
+    _append_weight_calibration_validation_check(
+        checks,
+        "weight_search_config_valid",
+        search_registry is not None,
+        (
+            "Weight search config loads with mandatory safety fields."
+            if search_registry is not None
+            else f"Weight search config failed validation: {config_error}"
+        ),
+        {"search_config_path": str(search_config_path)},
+    )
+    bounded_pass, bounded_message, bounded_details = _weight_search_registry_bounded_check(
+        search_registry
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "weight_search_bounded",
+        bounded_pass,
+        bounded_message,
+        bounded_details,
+    )
+
+    sample_pipeline: dict[str, Any] = {}
+    sample_error = ""
+    if search_registry is None or not bounded_pass:
+        sample_error = (
+            "Sample pipeline skipped because the weight search config is invalid "
+            "or unbounded."
+        )
+    else:
+        try:
+            sample_pipeline = _weight_calibration_validation_sample_pipeline(
+                generated,
+                search_config_path=search_config_path,
+            )
+        except WeightCalibrationError as exc:
+            sample_error = str(exc)
+
+    _append_weight_calibration_validation_check(
+        checks,
+        "historical_search_engine_available",
+        bool(sample_pipeline.get("search_run")) and not sample_error,
+        (
+            "Sample bounded historical search run validates."
+            if not sample_error
+            else f"Sample historical search failed: {sample_error}"
+        ),
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "walk_forward_regime_robustness_available",
+        _sample_pipeline_has_robustness(sample_pipeline) and not sample_error,
+        (
+            "Sample search run includes walk-forward and regime robustness slices."
+            if not sample_error
+            else f"Robustness sample failed: {sample_error}"
+        ),
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "candidate_weight_registry_available",
+        bool(sample_pipeline.get("candidate_registry")) and not sample_error,
+        (
+            "Candidate weight registry validates sample candidate-only records."
+            if not sample_error
+            else f"Candidate registry sample failed: {sample_error}"
+        ),
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "forward_enrollment_available",
+        bool(sample_pipeline.get("forward_enrollments")) and not sample_error,
+        (
+            "Forward enrollment validates sample shadow observation records."
+            if not sample_error
+            else f"Forward enrollment sample failed: {sample_error}"
+        ),
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "backtest_forward_aggregator_available",
+        bool(sample_pipeline.get("evidence")) and not sample_error,
+        (
+            "Backtest-vs-forward evidence aggregation validates sample gaps."
+            if not sample_error
+            else f"Evidence aggregation sample failed: {sample_error}"
+        ),
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "overfit_diagnostics_available",
+        bool(sample_pipeline.get("overfit")) and not sample_error,
+        (
+            "Overfit diagnostics validate sample stability and risk bands."
+            if not sample_error
+            else f"Overfit diagnostics sample failed: {sample_error}"
+        ),
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "proposal_generator_available",
+        bool(sample_pipeline.get("proposals")) and not sample_error,
+        (
+            "Candidate weight proposal generator validates proposal-only actions."
+            if not sample_error
+            else f"Proposal generator sample failed: {sample_error}"
+        ),
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "report_generator_available",
+        bool(sample_pipeline.get("report")) and not sample_error,
+        (
+            "Dual-track calibration report validates sample manual review package."
+            if not sample_error
+            else f"Report generator sample failed: {sample_error}"
+        ),
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "reader_brief_integration_available",
+        *_weight_calibration_reader_brief_registry_check(report_registry_path),
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "unsafe_proposal_types_blocked",
+        _unsafe_weight_calibration_proposal_type_is_blocked(),
+        "Unsafe weight proposal types are rejected by proposal validation.",
+    )
+
+    proposal_payload_to_validate = (
+        _mapping(sample_pipeline.get("proposals"))
+        if proposals_payload is None
+        else proposals_payload
+    )
+    report_payload_to_validate = (
+        _mapping(sample_pipeline.get("report")) if report_payload is None else report_payload
+    )
+    checks.extend(
+        _weight_calibration_proposal_payload_validation_checks(proposal_payload_to_validate)
+    )
+    checks.extend(_weight_calibration_report_payload_validation_checks(report_payload_to_validate))
+
+    status = "PASS" if all(check.get("status") == "PASS" for check in checks) else "FAIL"
+    payload = {
+        "schema_version": WEIGHT_CALIBRATION_VALIDATION_SCHEMA_VERSION,
+        "report_type": "etf_weight_dual_track_validation",
+        "status": status,
+        "generated_at": generated.isoformat(),
+        "validation_mode": "config_sample_pipeline_and_payload_checks",
+        "search_config_path": str(search_config_path),
+        "report_registry_path": str(report_registry_path),
+        "check_count": len(checks),
+        "failed_check_count": sum(1 for check in checks if check.get("status") != "PASS"),
+        "checks": checks,
+        "production_weights_mutated": False,
+        "baseline_config_mutated": False,
+        "broker_actions_created": False,
+        "proposal_only": True,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_dual_track_weight_calibration_validation_report(payload)
+    return payload
+
+
+def validate_dual_track_weight_calibration_validation_report(payload: Mapping[str, Any]) -> None:
+    issues = []
+    if payload.get("schema_version") != WEIGHT_CALIBRATION_VALIDATION_SCHEMA_VERSION:
+        issues.append("schema_version")
+    if payload.get("report_type") != "etf_weight_dual_track_validation":
+        issues.append("report_type")
+    if payload.get("status") not in {"PASS", "FAIL"}:
+        issues.append("status")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if payload.get(field) != expected:
+            issues.append(field)
+    safety = _mapping(payload.get("safety"))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if safety.get(field) != expected:
+            issues.append(f"safety.{field}")
+    if payload.get("production_weights_mutated") is not False:
+        issues.append("production_weights_mutated")
+    if payload.get("baseline_config_mutated") is not False:
+        issues.append("baseline_config_mutated")
+    if payload.get("broker_actions_created") is not False:
+        issues.append("broker_actions_created")
+    if payload.get("proposal_only") is not True:
+        issues.append("proposal_only")
+    checks = _records(payload.get("checks"))
+    if int(payload.get("check_count") or 0) != len(checks):
+        issues.append("check_count")
+    failed_count = sum(1 for check in checks if check.get("status") != "PASS")
+    if int(payload.get("failed_check_count") or 0) != failed_count:
+        issues.append("failed_check_count")
+    for check in checks:
+        if check.get("status") not in {"PASS", "FAIL"}:
+            issues.append(f"{check.get('check_id')}.status")
+        if not _text(check.get("check_id")):
+            issues.append("check_id")
+    if issues:
+        raise WeightCalibrationError(
+            "ETF dual-track weight calibration validation failed: "
+            + ", ".join(str(issue) for issue in issues)
+        )
+
+
+def write_dual_track_weight_calibration_validation_report(
+    payload: Mapping[str, Any],
+    *,
+    output_dir: Path = DEFAULT_WEIGHT_CALIBRATION_VALIDATION_DIR,
+) -> dict[str, Path]:
+    validate_dual_track_weight_calibration_validation_report(payload)
+    timestamp = str(payload.get("generated_at", "unknown")).replace(":", "").replace("+", "")
+    stem = f"weight_calibration_validation_{timestamp[:15]}"
+    json_path = output_dir / f"{stem}.json"
+    markdown_path = output_dir / f"{stem}.md"
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.write_text(
+        render_dual_track_weight_calibration_validation_markdown(payload),
+        encoding="utf-8",
+    )
+    return {"json": json_path, "markdown": markdown_path}
+
+
+def render_dual_track_weight_calibration_validation_markdown(
+    payload: Mapping[str, Any],
+) -> str:
+    lines = [
+        "# ETF Weight Dual-Track Calibration Validation Gate",
+        "",
+        f"- Status: {payload.get('status')}",
+        f"- Generated At: {payload.get('generated_at')}",
+        "- Safety: observe_only=true, candidate_only=true, production_effect=none, "
+        "broker_action=none, manual_review_required=true",
+        "- 本 gate 只校验 TRADING-071 candidate-only workflow，不应用 ETF weights。",
+        "",
+        "| Check | Status | Message |",
+        "|---|---|---|",
+    ]
+    for check in _records(payload.get("checks")):
+        lines.append(
+            f"| {check.get('check_id')} | {check.get('status')} | "
+            f"{check.get('message')} |"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def _append_weight_calibration_validation_check(
+    checks: list[dict[str, Any]],
+    check_id: str,
+    passed: bool,
+    message: str,
+    details: Mapping[str, Any] | None = None,
+) -> None:
+    checks.append(
+        {
+            "check_id": check_id,
+            "status": "PASS" if passed else "FAIL",
+            "message": message,
+            "details": dict(details or {}),
+        }
+    )
+
+
+def _weight_search_registry_bounded_check(
+    registry: ETFWeightSearchRegistry | None,
+) -> tuple[bool, str, dict[str, Any]]:
+    if registry is None:
+        return False, "Weight search registry is unavailable, so bounds cannot be confirmed.", {}
+    issues = []
+    details: dict[str, Any] = {}
+    for search_id, search in registry.weight_searches.items():
+        details[search_id] = {
+            "grid_step": search.grid_step,
+            "max_candidate_count": search.max_candidate_count,
+            "universe": list(search.universe),
+        }
+        if search.grid_step < MIN_BOUNDED_WEIGHT_SEARCH_GRID_STEP:
+            issues.append(f"{search_id}.grid_step_too_fine")
+        if search.max_candidate_count <= 0:
+            issues.append(f"{search_id}.max_candidate_count")
+        if search.max_candidate_count > MAX_BOUNDED_WEIGHT_SEARCH_CANDIDATES:
+            issues.append(f"{search_id}.max_candidate_count_unbounded")
+        if not search.universe or "CASH" not in search.universe:
+            issues.append(f"{search_id}.universe")
+        if set(search.weight_constraints) != set(search.universe):
+            issues.append(f"{search_id}.weight_constraints")
+    return (
+        not issues,
+        (
+            "Weight search definitions are bounded by grid_step, universe, constraints, "
+            "and candidate cap."
+            if not issues
+            else "Weight search definitions are not bounded: " + ", ".join(issues)
+        ),
+        details,
+    )
+
+
+def _weight_calibration_validation_sample_pipeline(
+    generated_at: datetime,
+    *,
+    search_config_path: Path,
+) -> dict[str, Any]:
+    config = load_etf_config_bundle()
+    search_registry = load_weight_search_registry(search_config_path, etf_config=config)
+    prices, metadata_issues = standardize_price_frame(
+        _weight_calibration_validation_prices(),
+        assets=config.assets,
+        source_name="validation_fixture",
+    )
+    quality_report = validate_price_data(
+        prices,
+        assets=config.assets,
+        strategy=config.strategy,
+        as_of=date.fromisoformat(str(prices["date"].max())),
+        extra_issues=metadata_issues,
+    )
+    if not quality_report.passed:
+        raise WeightCalibrationError(
+            "ETF weight calibration validation sample price quality failed: "
+            + quality_report.status
+        )
+    run = run_historical_weight_search(
+        prices,
+        etf_config=config,
+        quality_report=quality_report,
+        registry=search_registry,
+        search_id="etf_initial_weight_search_v1",
+        start=date(2022, 12, 1),
+        end=date(2022, 12, 20),
+        max_candidates=4,
+        generated_at=generated_at,
+    )
+    with TemporaryDirectory(prefix="etf_weight_calibration_validation_") as tmp:
+        tmp_root = Path(tmp)
+        candidate_registry = register_candidate_weight_sets(
+            run.payload,
+            registry_path=tmp_root / "candidate_weight_registry.json",
+            top=1,
+            created_at=generated_at,
+        )
+        forward_enrollments = enroll_candidate_weights_forward(
+            candidate_registry,
+            enrollment_path=tmp_root / "forward_enrollments.json",
+            top=1,
+            enrolled_at=generated_at,
+        )
+    forward_dashboard = _weight_calibration_validation_forward_dashboard(
+        candidate_registry,
+        forward_enrollments,
+    )
+    evidence = build_backtest_forward_evidence_aggregation(
+        as_of=generated_at.date(),
+        candidate_registry=candidate_registry,
+        forward_enrollments=forward_enrollments,
+        search_payload=run.payload,
+        forward_dashboard=forward_dashboard,
+        source_paths={
+            "historical_search": "validation://weight_search_summary.json",
+            "candidate_registry": "validation://candidate_weight_registry.json",
+            "forward_enrollment": "validation://forward_enrollments.json",
+            "forward_dashboard": "validation://forward_dashboard.json",
+        },
+        generated_at=generated_at,
+    )
+    overfit = build_weight_overfit_diagnostics(
+        candidate_registry=candidate_registry,
+        search_payload=run.payload,
+        evidence_payload=evidence,
+        generated_at=generated_at,
+    )
+    proposals = build_candidate_weight_proposals(
+        candidate_registry=candidate_registry,
+        evidence_payload=evidence,
+        overfit_payload=overfit,
+        generated_at=generated_at,
+    )
+    report = build_dual_track_weight_calibration_report(
+        as_of=generated_at.date(),
+        candidate_registry=candidate_registry,
+        forward_enrollments=forward_enrollments,
+        search_payload=run.payload,
+        evidence_payload=evidence,
+        overfit_payload=overfit,
+        proposals_payload=proposals,
+        source_paths={
+            "historical_search": "validation://weight_search_summary.json",
+            "candidate_registry": "validation://candidate_weight_registry.json",
+            "forward_enrollment": "validation://forward_enrollments.json",
+            "backtest_forward_evidence": "validation://backtest_forward_evidence.json",
+            "overfit_diagnostics": "validation://overfit_diagnostics.json",
+            "candidate_weight_proposals": "validation://candidate_weight_proposals.json",
+        },
+        generated_at=generated_at,
+    )
+    return {
+        "search_run": run.payload,
+        "candidate_registry": candidate_registry,
+        "forward_enrollments": forward_enrollments,
+        "forward_dashboard": forward_dashboard,
+        "evidence": evidence,
+        "overfit": overfit,
+        "proposals": proposals,
+        "report": report,
+    }
+
+
+def _weight_calibration_validation_prices(days: int = 360) -> pd.DataFrame:
+    dates = pd.bdate_range("2022-01-03", periods=days)
+    rows = []
+    for symbol_index, symbol in enumerate(["SPY", "QQQ", "SMH", "SOXX"]):
+        for index, current_date in enumerate(dates):
+            price = 100.0 + index * (80.0 / max(days - 1, 1)) + symbol_index
+            rows.append(
+                {
+                    "date": current_date.date().isoformat(),
+                    "symbol": symbol,
+                    "open": price,
+                    "high": price * 1.01,
+                    "low": price * 0.99,
+                    "close": price,
+                    "adj_close": price,
+                    "volume": 1_000_000,
+                    "source": "validation_fixture",
+                    "created_at": "2026-06-02T00:00:00+00:00",
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def _weight_calibration_validation_forward_dashboard(
+    candidate_registry: Mapping[str, Any],
+    forward_enrollments: Mapping[str, Any],
+) -> dict[str, Any]:
+    candidate = _records(candidate_registry.get("weight_sets"))[0]
+    enrollment = _records(forward_enrollments.get("enrollments"))[0]
+    metrics = _mapping(candidate.get("metrics_summary"))
+    robustness = _mapping(candidate.get("robustness_summary"))
+    expected_return = float(metrics.get("total_return") or 0.0)
+    expected_drawdown = float(metrics.get("max_drawdown") or 0.0)
+    expected_turnover = float(metrics.get("turnover_vs_baseline") or 0.0)
+    expected_stability = float(robustness.get("stability_score") or 0.0)
+    return {
+        "schema_version": "etf_forward_dashboard_v1",
+        "report_type": "etf_forward_dashboard",
+        "status": "AVAILABLE",
+        "as_of": "2026-06-02",
+        "candidate_summary_table": [
+            {
+                "weight_set_id": candidate.get("weight_set_id"),
+                "shadow_id": enrollment.get("shadow_id"),
+                "candidate_id": candidate.get("source_candidate_id"),
+                "days_since_enrollment": 25,
+                "return_since_enrollment": expected_return + 0.02,
+                "max_drawdown_since_enrollment": expected_drawdown,
+                "turnover_since_enrollment": expected_turnover,
+                "weight_stability_score": expected_stability,
+                "metric_null_reasons": {},
+            }
+        ],
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+
+
+def _sample_pipeline_has_robustness(sample_pipeline: Mapping[str, Any]) -> bool:
+    search_payload = _mapping(sample_pipeline.get("search_run"))
+    robustness = _mapping(search_payload.get("robustness_evaluation"))
+    evaluations = _records(robustness.get("candidate_evaluations"))
+    if not evaluations:
+        return False
+    return any(_records(item.get("slice_metrics")) for item in evaluations)
+
+
+def _weight_calibration_reader_brief_registry_check(
+    report_registry_path: Path,
+) -> tuple[bool, str, dict[str, Any]]:
+    try:
+        registry = load_report_registry(report_registry_path)
+    except (FileNotFoundError, ValueError) as exc:
+        return False, f"Report registry unavailable: {exc}", {}
+    for report in _records(registry.get("reports")):
+        if _text(report.get("report_id")) != "etf_weight_dual_track_calibration_report":
+            continue
+        visible = report.get("include_in_reader_brief") is True
+        has_command = "weight-calibration report" in _text(report.get("command"))
+        passed = visible and has_command
+        return (
+            passed,
+            (
+                "etf_weight_dual_track_calibration_report is visible to Reader Brief."
+                if passed
+                else (
+                    "etf_weight_dual_track_calibration_report is missing Reader Brief "
+                    "visibility metadata."
+                )
+            ),
+            {
+                "include_in_reader_brief": report.get("include_in_reader_brief"),
+                "command": report.get("command"),
+            },
+        )
+    return False, "etf_weight_dual_track_calibration_report is missing from report registry.", {}
+
+
+def _unsafe_weight_calibration_proposal_type_is_blocked() -> bool:
+    try:
+        validate_candidate_weight_proposal(_unsafe_weight_calibration_proposal())
+    except WeightCalibrationError:
+        return True
+    return False
+
+
+def _unsafe_weight_calibration_proposal() -> dict[str, Any]:
+    return {
+        "proposal_id": "unsafe-weight-calibration-proposal",
+        "weight_set_id": "unsafe_weight_set",
+        "proposal_type": "apply_weight_set",
+        "supporting_evidence": [],
+        "blocking_evidence": ["unsafe proposal type must be blocked"],
+        "historical_score": 1.0,
+        "forward_evidence_status": "consistent",
+        "overfit_risk": {
+            "overfit_risk_score": 0.0,
+            "overfit_risk_band": "low",
+        },
+        "manual_review_required": True,
+        "application_allowed": False,
+        "production_weights_mutated": False,
+        "applied_weight_set": None,
+        "created_at": datetime(2026, 6, 2, tzinfo=UTC).isoformat(),
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+
+
+def _weight_calibration_proposal_payload_validation_checks(
+    proposals_payload: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    checks: list[dict[str, Any]] = []
+    try:
+        validate_candidate_weight_proposals_payload(proposals_payload)
+        _append_weight_calibration_validation_check(
+            checks,
+            "proposal_payload_schema_valid",
+            True,
+            "Candidate weight proposal payload schema and safety fields are valid.",
+        )
+    except WeightCalibrationError as exc:
+        _append_weight_calibration_validation_check(
+            checks,
+            "proposal_payload_schema_valid",
+            False,
+            f"Candidate weight proposal payload failed validation: {exc}",
+        )
+    safety = _mapping(proposals_payload.get("safety"))
+    proposals = _records(proposals_payload.get("proposals"))
+    _append_weight_calibration_validation_check(
+        checks,
+        "proposal_payload_production_effect_none",
+        _text(proposals_payload.get("production_effect")) == "none"
+        and _text(safety.get("production_effect")) == "none"
+        and _all_weight_proposals_match(proposals, "production_effect", "none"),
+        "Proposal payload and proposals keep production_effect=none.",
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "proposal_payload_broker_action_none",
+        _text(proposals_payload.get("broker_action")) == "none"
+        and _text(safety.get("broker_action")) == "none"
+        and _all_weight_proposals_match(proposals, "broker_action", "none"),
+        "Proposal payload and proposals keep broker_action=none.",
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "proposal_payload_manual_review_required_true",
+        proposals_payload.get("manual_review_required") is True
+        and safety.get("manual_review_required") is True
+        and _all_weight_proposals_match(proposals, "manual_review_required", True),
+        "Proposal payload and proposals keep manual_review_required=true.",
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "unsafe_proposal_types_absent",
+        not _weight_payload_contains_unsafe_proposal_type(proposals),
+        "Proposal payload does not contain unsafe proposal types.",
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "proposals_evidence_linked",
+        _weight_proposals_evidence_linked(proposals),
+        "Each proposal has supporting or blocking evidence.",
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "proposal_only_behavior",
+        proposals_payload.get("production_weights_mutated") is False
+        and proposals_payload.get("applied_weight_set") is None
+        and all(proposal.get("application_allowed") is False for proposal in proposals)
+        and all(proposal.get("production_weights_mutated") is False for proposal in proposals)
+        and all(proposal.get("applied_weight_set") is None for proposal in proposals),
+        "Proposal payload does not apply weights or mutate production state.",
+    )
+    return checks
+
+
+def _weight_calibration_report_payload_validation_checks(
+    report_payload: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    checks: list[dict[str, Any]] = []
+    try:
+        validate_dual_track_weight_calibration_report(report_payload)
+        _append_weight_calibration_validation_check(
+            checks,
+            "report_payload_schema_valid",
+            True,
+            "Dual-track calibration report schema and safety fields are valid.",
+        )
+    except WeightCalibrationError as exc:
+        _append_weight_calibration_validation_check(
+            checks,
+            "report_payload_schema_valid",
+            False,
+            f"Dual-track calibration report payload failed validation: {exc}",
+        )
+    safety = _mapping(report_payload.get("safety"))
+    proposals = _weight_report_proposals(report_payload)
+    manual_review = _mapping(report_payload.get("manual_review_package"))
+    _append_weight_calibration_validation_check(
+        checks,
+        "report_payload_production_effect_none",
+        _text(report_payload.get("production_effect")) == "none"
+        and _text(safety.get("production_effect")) == "none"
+        and _all_weight_proposals_match(proposals, "production_effect", "none"),
+        "Report payload and embedded proposals keep production_effect=none.",
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "report_payload_broker_action_none",
+        _text(report_payload.get("broker_action")) == "none"
+        and _text(safety.get("broker_action")) == "none"
+        and _all_weight_proposals_match(proposals, "broker_action", "none"),
+        "Report payload and embedded proposals keep broker_action=none.",
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "report_payload_manual_review_required_true",
+        report_payload.get("manual_review_required") is True
+        and safety.get("manual_review_required") is True
+        and manual_review.get("manual_review_required") is True
+        and _all_weight_proposals_match(proposals, "manual_review_required", True),
+        "Report payload keeps manual_review_required=true.",
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "report_payload_unsafe_proposal_types_absent",
+        not _weight_payload_contains_unsafe_proposal_type(proposals),
+        "Report payload does not contain unsafe proposal types.",
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "report_payload_proposal_only_behavior",
+        report_payload.get("production_weights_mutated") is False
+        and report_payload.get("applied_weight_set") is None
+        and manual_review.get("application_allowed") is False
+        and all(proposal.get("application_allowed") is False for proposal in proposals),
+        "Report payload remains proposal-only and does not apply candidate weights.",
+    )
+    return checks
+
+
+def _all_weight_proposals_match(
+    proposals: list[Mapping[str, Any]],
+    field: str,
+    expected: object,
+) -> bool:
+    return all(proposal.get(field) == expected for proposal in proposals)
+
+
+def _weight_payload_contains_unsafe_proposal_type(proposals: list[Mapping[str, Any]]) -> bool:
+    return any(
+        _text(proposal.get("proposal_type")) in DISALLOWED_WEIGHT_PROPOSAL_TYPES
+        for proposal in proposals
+    )
+
+
+def _weight_report_proposals(report_payload: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    return _records(_mapping(report_payload.get("proposal_scorecard")).get("proposals"))
+
+
+def _weight_proposals_evidence_linked(proposals: list[Mapping[str, Any]]) -> bool:
+    if not proposals:
+        return False
+    return all(
+        bool(proposal.get("supporting_evidence") or proposal.get("blocking_evidence"))
+        for proposal in proposals
+    )
 
 
 def render_weight_search_run_markdown(payload: Mapping[str, Any]) -> str:
@@ -4346,6 +5083,10 @@ def _median(values: list[float]) -> float:
 
 def _mapping(value: object) -> Mapping[str, Any]:
     return value if isinstance(value, Mapping) else {}
+
+
+def _text(value: object) -> str:
+    return "" if value is None else str(value)
 
 
 def _records(value: object) -> list[dict[str, Any]]:
