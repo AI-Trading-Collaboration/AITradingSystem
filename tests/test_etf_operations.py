@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import json
 from copy import deepcopy
+from datetime import UTC, date, datetime
+from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -14,6 +18,7 @@ from ai_trading_system.etf_portfolio.operations import (
     build_daily_operations_command_graph,
     build_monthly_operations_command_graph,
     build_weekly_operations_command_graph,
+    check_operations_artifact_freshness,
     load_operations_schedule_config,
     operations_schedule_required_step_ids,
     operations_schedule_step_ids,
@@ -551,7 +556,178 @@ def test_biweekly_operations_command_graph_cycle_detection_works() -> None:
         build_biweekly_operations_command_graph(config)
 
 
+def test_operations_artifact_freshness_fresh_artifact_passes_and_parses_dates(
+    tmp_path: Path,
+) -> None:
+    graph = build_daily_operations_command_graph()
+    _write_text_artifact(
+        tmp_path,
+        "outputs/reports/data_quality_2026-06-03.md",
+        "\n".join(
+            [
+                "generated_at: 2026-06-03T09:30:00+00:00",
+                "as_of_date: 2026-06-03",
+            ]
+        ),
+    )
+    _write_json_artifact(
+        tmp_path,
+        "reports/etf_portfolio/forward/updates/forward_update_2026-06-03.json",
+        {
+            "generated_at": "2026-06-03T10:30:00+00:00",
+            "as_of_date": "2026-06-03",
+        },
+    )
+
+    report = check_operations_artifact_freshness(
+        graph,
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        checked_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+    artifact = _artifact_by_id(report, "forward_update:1")
+
+    assert artifact.freshness_status == "fresh"
+    assert artifact.dependency_status == "optional"
+    assert artifact.as_of_date == date(2026, 6, 3)
+    assert artifact.generated_at == datetime(2026, 6, 3, 10, 30, tzinfo=UTC)
+    assert artifact.age_days == 0
+
+
+def test_operations_artifact_freshness_stale_required_artifact_blocks(
+    tmp_path: Path,
+) -> None:
+    graph = build_daily_operations_command_graph()
+    _write_json_artifact(
+        tmp_path,
+        "reports/etf_portfolio/forward/updates/forward_update_2026-06-03.json",
+        {
+            "generated_at": "2026-05-30T10:30:00+00:00",
+            "as_of_date": "2026-05-30",
+        },
+    )
+
+    report = check_operations_artifact_freshness(
+        graph,
+        as_of="2026-06-03",
+        root_path=tmp_path,
+    )
+    artifact = _artifact_by_id(report, "forward_update:1")
+
+    assert artifact.freshness_status == "stale"
+    assert artifact.dependency_status == "blocking"
+    assert artifact.age_days == 4
+    assert "forward_update:1" in report.blocking_artifacts
+
+
+def test_operations_artifact_freshness_missing_required_artifact_blocks(
+    tmp_path: Path,
+) -> None:
+    graph = build_daily_operations_command_graph()
+
+    report = check_operations_artifact_freshness(
+        graph,
+        as_of="2026-06-03",
+        root_path=tmp_path,
+    )
+    artifact = _artifact_by_id(report, "data_freshness_check:1")
+
+    assert artifact.freshness_status == "missing"
+    assert artifact.dependency_status == "blocking"
+    assert "data_freshness_check:1" in report.blocking_artifacts
+
+
+def test_operations_artifact_freshness_missing_optional_artifact_warns(
+    tmp_path: Path,
+) -> None:
+    graph = build_daily_operations_command_graph()
+
+    report = check_operations_artifact_freshness(
+        graph,
+        as_of="2026-06-03",
+        root_path=tmp_path,
+    )
+    artifact = _artifact_by_id(report, "ai_attribution_update:1")
+
+    assert artifact.required is False
+    assert artifact.freshness_status == "missing"
+    assert artifact.dependency_status == "warning"
+    assert "ai_attribution_update:1" in report.warning_artifacts
+
+
+def test_operations_artifact_freshness_dependency_chain_status_computed(
+    tmp_path: Path,
+) -> None:
+    graph = build_daily_operations_command_graph()
+    _write_text_artifact(
+        tmp_path,
+        "reports/etf_portfolio/2026-06-03_portfolio_brief.md",
+        "\n".join(
+            [
+                "generated_at: 2026-06-03T10:30:00+00:00",
+                "as_of_date: 2026-06-03",
+            ]
+        ),
+    )
+
+    report = check_operations_artifact_freshness(
+        graph,
+        as_of="2026-06-03",
+        root_path=tmp_path,
+    )
+    artifact = _artifact_by_id(report, "etf_daily_run:1")
+
+    assert artifact.freshness_status == "fresh"
+    assert artifact.dependency_status == "blocking"
+    assert artifact.blocking_dependencies == ["data_freshness_check"]
+    assert "etf_daily_run:1" in report.blocking_artifacts
+
+
+def test_operations_artifact_freshness_resolves_dynamic_run_id_glob(
+    tmp_path: Path,
+) -> None:
+    graph = build_monthly_operations_command_graph()
+    _write_json_artifact(
+        tmp_path,
+        "reports/etf_portfolio/weight_calibration/run_123/summary.json",
+        {
+            "generated_at": "2026-06-03T10:30:00+00:00",
+            "as_of_date": "2026-06-03",
+        },
+    )
+
+    report = check_operations_artifact_freshness(
+        graph,
+        as_of="2026-06-03",
+        root_path=tmp_path,
+    )
+    artifact = _artifact_by_id(report, "weight_calibration_search:1")
+
+    assert artifact.freshness_status == "fresh"
+    assert Path(artifact.path).as_posix().endswith(
+        "reports/etf_portfolio/weight_calibration/run_123/summary.json"
+    )
+
+
 def _raw_schedule() -> dict[str, object]:
     raw = safe_load_yaml_path(DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH)
     assert isinstance(raw, dict)
     return deepcopy(raw)
+
+
+def _write_json_artifact(root: Path, relative_path: str, payload: dict[str, object]) -> Path:
+    path = root / relative_path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    return path
+
+
+def _write_text_artifact(root: Path, relative_path: str, text: str) -> Path:
+    path = root / relative_path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
+def _artifact_by_id(report: Any, artifact_id: str) -> Any:
+    return next(artifact for artifact in report.artifacts if artifact.artifact_id == artifact_id)

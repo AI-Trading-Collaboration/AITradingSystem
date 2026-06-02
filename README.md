@@ -530,7 +530,7 @@ daily / weekly / biweekly / monthly / manual-review workflow 记录为 source co
 和 owner review requirement，并固定 `observe_only=true`、`candidate_only=true`、
 `production_effect=none`、`broker_action=none`、`manual_review_required=true`。
 当前 TRADING-074A/B/C/D 提供 loader/validator、配置校验、daily / weekly /
-biweekly / monthly operations command graph。
+biweekly / monthly operations command graph 和只读 artifact freshness checker。
 `build_daily_operations_command_graph` 会生成 topological `execution_order`、required /
 optional 节点、输入/输出、failure policy、estimated runtime class 和 safety fields；optional
 attribution 节点可跳过，required 节点不可跳过，cycle 或 missing required node 会 fail
@@ -544,8 +544,12 @@ journal、parameter review、watchlist、operations report 和 Reader Brief week
 weight calibration evidence update；`build_monthly_operations_command_graph` 会规划 data quality
 audit、bounded historical weight search、dual-track calibration report、parameter governance、
 strategy dashboard 和 monthly operations report，并把 weight search 标记为 `slow` runtime
-class。后续 freshness check、dry-run、operations report、Reader Brief operations health 和
-`aits etf ops validate` 会复用该配置。
+class。`check_operations_artifact_freshness` 会从 command graph 和 schedule spec 生成
+artifact metadata，解析 JSON / text / filename 中的 `generated_at` / `as_of_date`，对
+`{run_id}` 这类动态占位符执行 glob resolution，并把 required stale/missing artifacts 标记为
+blocking、optional missing artifacts 标记为 warning，同时把 upstream blocking 状态传播到
+dependent steps。后续 failure policy、owner checklist、dry-run、operations report、Reader
+Brief operations health 和 `aits etf ops validate` 会复用该配置。
 
 `aits etf governance summary --candidate <candidate.json>` 使用
 `config/etf_portfolio/governance.yaml` 的参数治理 policy 输出候选晋级摘要，固定

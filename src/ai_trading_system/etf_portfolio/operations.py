@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import json
+import re
+from datetime import UTC, date, datetime
+from glob import glob
 from pathlib import Path
-from typing import Literal, Self
+from typing import Any, Literal, Self
 
 import yaml
 from pydantic import BaseModel, Field, model_validator
@@ -34,6 +38,14 @@ OperationsFailurePolicy = Literal[
 ]
 OperationsRuntimeClass = Literal["fast", "medium", "slow"]
 OperationsGraphCadence = Literal["daily", "weekly", "biweekly", "monthly"]
+OperationsArtifactFreshnessStatus = Literal[
+    "fresh",
+    "stale",
+    "missing",
+    "not_applicable",
+    "unknown",
+]
+OperationsArtifactDependencyStatus = Literal["blocking", "warning", "optional"]
 
 _PIPELINE_FIELDS = (
     "daily_pipeline",
@@ -55,6 +67,17 @@ _GRAPH_PIPELINE_FIELD_BY_CADENCE: dict[OperationsGraphCadence, str] = {
     "monthly": "monthly_pipeline",
 }
 OPERATIONS_COMMAND_GRAPH_SCHEMA_VERSION = "etf_operations_command_graph_v1"
+OPERATIONS_ARTIFACT_FRESHNESS_SCHEMA_VERSION = "etf_operations_artifact_freshness_v1"
+_ARTIFACT_PLACEHOLDER_RE = re.compile(r"\{[^}]+\}")
+_ARTIFACT_DATE_RE = re.compile(r"(?P<date>\d{4}[-_]\d{2}[-_]\d{2})")
+_TEXT_GENERATED_AT_RE = re.compile(
+    r"(?:generated_at|generated at)\s*[:=]\s*(?P<value>[^\r\n]+)",
+    re.IGNORECASE,
+)
+_TEXT_AS_OF_RE = re.compile(
+    r"(?:as_of_date|as_of|as of|date)\s*[:=]\s*(?P<value>\d{4}[-_]\d{2}[-_]\d{2})",
+    re.IGNORECASE,
+)
 REQUIRED_DAILY_OPERATION_NODE_IDS = frozenset(
     {
         "data_freshness_check",
@@ -340,6 +363,52 @@ class ETFOperationsCommandGraph(BaseModel):
         return self
 
 
+class ETFOperationsArtifactStatus(BaseModel):
+    artifact_id: str = Field(min_length=1)
+    path: str = Field(min_length=1)
+    artifact_type: str = Field(min_length=1)
+    source_step: str = Field(min_length=1)
+    as_of_date: date | None = None
+    generated_at: datetime | None = None
+    max_allowed_age: int = Field(ge=0)
+    required: bool
+    freshness_status: OperationsArtifactFreshnessStatus
+    dependency_status: OperationsArtifactDependencyStatus
+    dependency_steps: list[str] = Field(default_factory=list)
+    blocking_dependencies: list[str] = Field(default_factory=list)
+    age_days: int | None = None
+
+
+class ETFOperationsArtifactFreshnessReport(BaseModel):
+    schema_version: Literal["etf_operations_artifact_freshness_v1"] = (
+        OPERATIONS_ARTIFACT_FRESHNESS_SCHEMA_VERSION
+    )
+    cadence: OperationsGraphCadence
+    as_of_date: date
+    checked_at: datetime
+    read_only: bool = True
+    commands_executed: bool = False
+    safety: ETFOperationsScheduleSafety
+    artifacts: list[ETFOperationsArtifactStatus] = Field(default_factory=list)
+    blocking_artifacts: list[str] = Field(default_factory=list)
+    warning_artifacts: list[str] = Field(default_factory=list)
+    optional_artifacts: list[str] = Field(default_factory=list)
+    freshness_summary: dict[str, int] = Field(default_factory=dict)
+    dependency_summary: dict[str, int] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_report_safety(self) -> Self:
+        if self.commands_executed:
+            raise ValueError("ETF operations artifact freshness report must not execute commands")
+        for field, expected in OPERATIONS_SCHEDULE_SAFETY.items():
+            if getattr(self.safety, field) != expected:
+                raise ValueError(
+                    "ETF operations artifact freshness report safety "
+                    f"{field} must be {expected!r}"
+                )
+        return self
+
+
 def load_operations_schedule_config(
     path: Path | str = DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH,
 ) -> ETFOperationsScheduleConfig:
@@ -427,6 +496,96 @@ def build_monthly_operations_command_graph(
         cadence="monthly",
         include_optional=include_optional,
         skipped_optional_step_ids=skipped_optional_step_ids,
+    )
+
+
+def check_operations_artifact_freshness(
+    graph: ETFOperationsCommandGraph,
+    *,
+    as_of: date | datetime | str,
+    root_path: Path | str = PROJECT_ROOT,
+    checked_at: datetime | None = None,
+    config: ETFOperationsScheduleConfig | None = None,
+) -> ETFOperationsArtifactFreshnessReport:
+    requested_as_of = _coerce_date(as_of)
+    checked = _coerce_datetime(checked_at or datetime.now(tz=UTC))
+    schedule = config or load_operations_schedule_config()
+    all_step_by_id = schedule.step_by_id()
+    source_step_ids = _artifact_source_step_order(graph)
+    dependency_steps_by_id = _artifact_dependency_steps_by_id(graph)
+
+    artifacts: list[ETFOperationsArtifactStatus] = []
+    artifacts_by_step: dict[str, list[ETFOperationsArtifactStatus]] = {}
+    for step_id in source_step_ids:
+        step = all_step_by_id.get(step_id)
+        if step is None:
+            raise OperationsCommandGraphError(
+                f"{graph.cadence} operations artifact freshness references unknown "
+                f"step: {step_id}"
+            )
+        dependency_steps = dependency_steps_by_id.get(step_id, ())
+        step_artifacts = [
+            _artifact_status_for_output(
+                step,
+                output_template=output_template,
+                output_index=output_index,
+                root_path=Path(root_path),
+                requested_as_of=requested_as_of,
+                dependency_steps=dependency_steps,
+            )
+            for output_index, output_template in enumerate(step.expected_outputs, start=1)
+        ]
+        artifacts.extend(step_artifacts)
+        artifacts_by_step[step_id] = step_artifacts
+
+    blocking_steps = {
+        step_id
+        for step_id, step_artifacts in artifacts_by_step.items()
+        if any(_artifact_has_own_blocking_status(artifact) for artifact in step_artifacts)
+    }
+    for node in graph.nodes:
+        blocking_dependencies = sorted(
+            dependency_id
+            for dependency_id in [*node.dependencies, *node.external_dependencies]
+            if dependency_id in blocking_steps
+        )
+        if not blocking_dependencies:
+            continue
+        node_artifacts = artifacts_by_step.get(node.node_id, [])
+        for artifact in node_artifacts:
+            artifact.blocking_dependencies = blocking_dependencies
+            artifact.dependency_status = "blocking" if artifact.required else "warning"
+        blocking_steps.add(node.node_id)
+
+    return ETFOperationsArtifactFreshnessReport(
+        cadence=graph.cadence,
+        as_of_date=requested_as_of,
+        checked_at=checked,
+        read_only=True,
+        commands_executed=False,
+        safety=graph.safety,
+        artifacts=artifacts,
+        blocking_artifacts=[
+            artifact.artifact_id
+            for artifact in artifacts
+            if artifact.dependency_status == "blocking"
+        ],
+        warning_artifacts=[
+            artifact.artifact_id
+            for artifact in artifacts
+            if artifact.dependency_status == "warning"
+        ],
+        optional_artifacts=[
+            artifact.artifact_id
+            for artifact in artifacts
+            if artifact.dependency_status == "optional"
+        ],
+        freshness_summary=_status_counts(
+            artifact.freshness_status for artifact in artifacts
+        ),
+        dependency_summary=_status_counts(
+            artifact.dependency_status for artifact in artifacts
+        ),
     )
 
 
@@ -659,3 +818,270 @@ def _runtime_class(
     if step.command.startswith("manual_review:"):
         return "fast"
     return "medium"
+
+
+def _artifact_source_step_order(graph: ETFOperationsCommandGraph) -> tuple[str, ...]:
+    ordered: list[str] = []
+    for step_id in [*graph.external_dependencies, *graph.execution_order]:
+        if step_id not in ordered:
+            ordered.append(step_id)
+    return tuple(ordered)
+
+
+def _artifact_dependency_steps_by_id(
+    graph: ETFOperationsCommandGraph,
+) -> dict[str, tuple[str, ...]]:
+    return {
+        node.node_id: tuple([*node.dependencies, *node.external_dependencies])
+        for node in graph.nodes
+    }
+
+
+def _artifact_status_for_output(
+    step: ETFOperationsScheduleStep,
+    *,
+    output_template: str,
+    output_index: int,
+    root_path: Path,
+    requested_as_of: date,
+    dependency_steps: tuple[str, ...],
+) -> ETFOperationsArtifactStatus:
+    artifact_id = f"{step.step_id}:{output_index}"
+    if output_template.startswith("manual_review_checklist:"):
+        return ETFOperationsArtifactStatus(
+            artifact_id=artifact_id,
+            path=output_template,
+            artifact_type="manual_review_checklist",
+            source_step=step.step_id,
+            as_of_date=None,
+            generated_at=None,
+            max_allowed_age=step.max_allowed_age,
+            required=step.required,
+            freshness_status="not_applicable",
+            dependency_status="optional",
+            dependency_steps=list(dependency_steps),
+            blocking_dependencies=[],
+            age_days=None,
+        )
+
+    artifact_path = _resolve_artifact_path(
+        output_template,
+        requested_as_of=requested_as_of,
+        root_path=root_path,
+    )
+    exists = artifact_path.exists()
+    generated_at = _artifact_generated_at(artifact_path) if exists else None
+    artifact_as_of = _artifact_as_of_date(artifact_path) if exists else None
+    freshness_status, age_days = _artifact_freshness_status(
+        exists=exists,
+        requested_as_of=requested_as_of,
+        artifact_as_of=artifact_as_of,
+        generated_at=generated_at,
+        max_allowed_age=step.max_allowed_age,
+    )
+    return ETFOperationsArtifactStatus(
+        artifact_id=artifact_id,
+        path=str(artifact_path),
+        artifact_type=_artifact_type(artifact_path),
+        source_step=step.step_id,
+        as_of_date=artifact_as_of,
+        generated_at=generated_at,
+        max_allowed_age=step.max_allowed_age,
+        required=step.required,
+        freshness_status=freshness_status,
+        dependency_status=_artifact_dependency_status(
+            required=step.required,
+            freshness_status=freshness_status,
+        ),
+        dependency_steps=list(dependency_steps),
+        blocking_dependencies=[],
+        age_days=age_days,
+    )
+
+
+def _resolve_artifact_path(
+    output_template: str,
+    *,
+    requested_as_of: date,
+    root_path: Path,
+) -> Path:
+    rendered = output_template.replace("{as_of}", requested_as_of.isoformat())
+    pattern = _ARTIFACT_PLACEHOLDER_RE.sub("*", rendered)
+    pattern_path = Path(pattern)
+    if not pattern_path.is_absolute():
+        pattern_path = root_path / pattern_path
+    if "*" not in str(pattern_path):
+        return pattern_path
+    matches = [Path(match) for match in glob(str(pattern_path))]
+    if not matches:
+        return pattern_path
+    return max(matches, key=lambda candidate: candidate.stat().st_mtime)
+
+
+def _artifact_generated_at(path: Path) -> datetime | None:
+    payload = _artifact_json_payload(path)
+    if payload is not None:
+        for field_name in ("generated_at", "created_at", "updated_at"):
+            parsed = _parse_datetime_value(payload.get(field_name))
+            if parsed is not None:
+                return parsed
+
+    text = _artifact_text(path)
+    if text is not None:
+        match = _TEXT_GENERATED_AT_RE.search(text)
+        if match is not None:
+            parsed = _parse_datetime_value(match.group("value"))
+            if parsed is not None:
+                return parsed
+
+    try:
+        return datetime.fromtimestamp(path.stat().st_mtime, tz=UTC)
+    except OSError:
+        return None
+
+
+def _artifact_as_of_date(path: Path) -> date | None:
+    payload = _artifact_json_payload(path)
+    if payload is not None:
+        for field_name in ("as_of_date", "as_of", "date", "requested_as_of"):
+            parsed = _parse_date_value(payload.get(field_name))
+            if parsed is not None:
+                return parsed
+
+    text = _artifact_text(path)
+    if text is not None:
+        match = _TEXT_AS_OF_RE.search(text)
+        if match is not None:
+            parsed = _parse_date_value(match.group("value"))
+            if parsed is not None:
+                return parsed
+
+    match = _ARTIFACT_DATE_RE.search(path.name)
+    if match is not None:
+        return _parse_date_value(match.group("date"))
+    return None
+
+
+def _artifact_json_payload(path: Path) -> dict[str, Any] | None:
+    if path.suffix.lower() != ".json":
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _artifact_text(path: Path) -> str | None:
+    if path.suffix.lower() == ".json":
+        return None
+    try:
+        return path.read_text(encoding="utf-8")
+    except (OSError, UnicodeDecodeError):
+        return None
+
+
+def _artifact_freshness_status(
+    *,
+    exists: bool,
+    requested_as_of: date,
+    artifact_as_of: date | None,
+    generated_at: datetime | None,
+    max_allowed_age: int,
+) -> tuple[OperationsArtifactFreshnessStatus, int | None]:
+    if not exists:
+        return "missing", None
+    reference_date = artifact_as_of or (generated_at.date() if generated_at else None)
+    if reference_date is None:
+        return "unknown", None
+    age_days = (requested_as_of - reference_date).days
+    if age_days < 0:
+        return "unknown", age_days
+    if age_days <= max_allowed_age:
+        return "fresh", age_days
+    return "stale", age_days
+
+
+def _artifact_dependency_status(
+    *,
+    required: bool,
+    freshness_status: OperationsArtifactFreshnessStatus,
+) -> OperationsArtifactDependencyStatus:
+    if freshness_status in {"fresh", "not_applicable"}:
+        return "optional"
+    if required:
+        return "blocking"
+    return "warning"
+
+
+def _artifact_has_own_blocking_status(artifact: ETFOperationsArtifactStatus) -> bool:
+    return artifact.required and artifact.freshness_status in {
+        "missing",
+        "stale",
+        "unknown",
+    }
+
+
+def _artifact_type(path: Path) -> str:
+    suffix = path.suffix.lower().lstrip(".")
+    return suffix or "unknown"
+
+
+def _coerce_date(value: date | datetime | str) -> date:
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    parsed = _parse_date_value(value)
+    if parsed is None:
+        raise OperationsCommandGraphError(f"invalid operations as_of date: {value!r}")
+    return parsed
+
+
+def _coerce_datetime(value: datetime) -> datetime:
+    if value.tzinfo is None:
+        return value.replace(tzinfo=UTC)
+    return value.astimezone(UTC)
+
+
+def _parse_date_value(value: Any) -> date | None:
+    if isinstance(value, datetime):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    if not isinstance(value, str):
+        return None
+    clean_value = value.strip().replace("_", "-")
+    if not clean_value:
+        return None
+    try:
+        return datetime.fromisoformat(clean_value).date()
+    except ValueError:
+        try:
+            return date.fromisoformat(clean_value[:10])
+        except ValueError:
+            return None
+
+
+def _parse_datetime_value(value: Any) -> datetime | None:
+    if isinstance(value, datetime):
+        return _coerce_datetime(value)
+    if isinstance(value, date):
+        return datetime.combine(value, datetime.min.time(), tzinfo=UTC)
+    if not isinstance(value, str):
+        return None
+    clean_value = value.strip().replace("Z", "+00:00")
+    if not clean_value:
+        return None
+    try:
+        parsed = datetime.fromisoformat(clean_value)
+    except ValueError:
+        return None
+    return _coerce_datetime(parsed)
+
+
+def _status_counts(statuses: Any) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for status in statuses:
+        counts[str(status)] = counts.get(str(status), 0) + 1
+    return counts
