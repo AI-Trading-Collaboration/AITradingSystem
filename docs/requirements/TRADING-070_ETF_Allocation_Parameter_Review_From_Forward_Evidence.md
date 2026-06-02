@@ -66,7 +66,7 @@ reason=INSUFFICIENT_FORWARD_EVIDENCE
 |TRADING-070A|Parameter Review Evidence Schema|DONE|Evidence schema validates required fields, date range, nullable metrics with reasons, source links and safety fields|
 |TRADING-070B|Forward Evidence Aggregator|DONE|`aits etf parameter-review aggregate --as-of YYYY-MM-DD` 生成 JSON/Markdown evidence package and preserves source paths|
 |TRADING-070C|Baseline vs Candidate Evidence Comparison|DONE|Forward evidence compares candidate vs baseline, QQQ, SPY, SMH, backtest expectation, weekly status and journal outcome|
-|TRADING-070D|Decision Journal Evidence Linker|READY|Journal decisions become structured candidate evidence with support/conflict status and traceable links|
+|TRADING-070D|Decision Journal Evidence Linker|DONE|Journal decisions become structured candidate evidence with support/conflict status and traceable links|
 |TRADING-070E|Parameter Change Proposal Generator|READY|Only proposal/review actions are generated; unsafe proposal types are rejected|
 |TRADING-070F|Proposal Scoring and Governance Gate|READY|Proposal scorecard is deterministic and fail-closed on insufficient/unsafe/under-evidenced proposals|
 |TRADING-070G|Parameter Review Report Generator|READY|JSON/Markdown report includes safety banner, source summary, comparisons, journal evidence, scorecard and proposals|
@@ -119,3 +119,8 @@ reason=INSUFFICIENT_FORWARD_EVIDENCE
   `needs_more_data`、`mixed_evidence` 或 `blocked_by_governance`。比较 policy 是
   TRADING-070 observe-only pilot baseline，后续由 TRADING-070F governance gate 接管正式
   blocker/scorecard。
+- 2026-06-02：TRADING-070D 完成。新增 decision journal evidence linker，把 journal
+  entries、human decisions、rationale、confidence、follow-up tasks 和 conflict flags
+  聚合为 candidate-level evidence，输出 `supportive`、`neutral`、`conflicted`、
+  `negative` 或 `insufficient_review`；只读 journal report，不修改 journal state、shadow
+  registry、baseline config、production weights 或 broker state。

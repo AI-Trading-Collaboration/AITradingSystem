@@ -13,6 +13,7 @@ from ai_trading_system.etf_portfolio.parameter_review import (
     build_parameter_review_aggregation,
     build_parameter_review_evidence_record,
     compare_parameter_review_evidence,
+    link_decision_journal_evidence,
     parameter_review_evidence_to_json,
     validate_parameter_review_evidence_record,
 )
@@ -308,6 +309,97 @@ def test_parameter_review_comparison_journal_support_affects_summary(tmp_path) -
     assert "JOURNAL_SUPPORT_CONFLICTS_WITH_FORWARD" in item["reason_codes"]
 
 
+def test_parameter_review_journal_linker_entries_link_to_candidate(tmp_path) -> None:
+    payload = _aggregation_payload(tmp_path)
+
+    linkage = link_decision_journal_evidence(
+        payload,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    item = linkage["candidate_journal_evidence"][0]
+
+    assert item["candidate_id"] == "unit_run:base_ai_growth"
+    assert item["linked_journal_entries"][0]["decision_id"] == "decision-1"
+    assert item["linked_journal_entries"][0]["linked_candidate"] == "unit_run:base_ai_growth"
+    assert linkage["linked_journal_entry_count"] == 1
+
+
+def test_parameter_review_journal_linker_accepted_decisions_increase_support(
+    tmp_path,
+) -> None:
+    payload = _aggregation_payload(tmp_path, decision_status="accept_recommendation")
+
+    linkage = link_decision_journal_evidence(
+        payload,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    item = linkage["candidate_journal_evidence"][0]
+
+    assert item["human_support_status"] == "supportive"
+    assert item["manual_confidence_score"] == 0.8
+    assert item["journal_summary"]["accepted_count"] == 1
+
+
+def test_parameter_review_journal_linker_rejected_decisions_reduce_support(tmp_path) -> None:
+    payload = _aggregation_payload(tmp_path, decision_status="reject_recommendation")
+
+    linkage = link_decision_journal_evidence(
+        payload,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    item = linkage["candidate_journal_evidence"][0]
+
+    assert item["human_support_status"] == "negative"
+    assert item["journal_summary"]["rejected_count"] == 1
+
+
+def test_parameter_review_journal_linker_deferred_decisions_create_neutral_status(
+    tmp_path,
+) -> None:
+    payload = _aggregation_payload(tmp_path, decision_status="defer_decision")
+
+    linkage = link_decision_journal_evidence(
+        payload,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    item = linkage["candidate_journal_evidence"][0]
+
+    assert item["human_support_status"] == "neutral"
+    assert item["journal_summary"]["deferred_count"] == 1
+
+
+def test_parameter_review_journal_linker_conflicting_decisions_create_conflict(
+    tmp_path,
+) -> None:
+    payload = _aggregation_payload(
+        tmp_path,
+        decision_status=["accept_recommendation", "reject_recommendation"],
+    )
+
+    linkage = link_decision_journal_evidence(
+        payload,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    item = linkage["candidate_journal_evidence"][0]
+
+    assert item["human_support_status"] == "conflicted"
+    assert "CONFLICTING_HUMAN_DECISIONS" in item["decision_conflict_flags"]
+
+
+def test_parameter_review_journal_linker_missing_entries_handled(tmp_path) -> None:
+    payload = _aggregation_payload(tmp_path, decision_status=None)
+
+    linkage = link_decision_journal_evidence(
+        payload,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    item = linkage["candidate_journal_evidence"][0]
+
+    assert item["human_support_status"] == "insufficient_review"
+    assert item["linked_journal_entries"] == []
+    assert "NO_JOURNAL_ENTRIES" in item["decision_conflict_flags"]
+
+
 def _evidence_record(
     *,
     review_start_date: date = date(2026, 5, 1),
@@ -386,7 +478,7 @@ def _aggregation_context(
     include_forward_dashboard: bool = True,
     include_watchlist: bool = False,
     forward_overrides: dict[str, object] | None = None,
-    decision_status: str = "accept_recommendation",
+    decision_status: str | list[str] | None = "accept_recommendation",
 ) -> dict[str, object]:
     records = []
     if include_forward_dashboard:
@@ -424,7 +516,7 @@ def _aggregation_payload(
     *,
     include_forward_dashboard: bool = True,
     forward_overrides: dict[str, object] | None = None,
-    decision_status: str = "accept_recommendation",
+    decision_status: str | list[str] | None = "accept_recommendation",
 ) -> dict[str, object]:
     context = _aggregation_context(
         tmp_path,
@@ -512,20 +604,34 @@ def _weekly_review_payload() -> dict[str, object]:
     }
 
 
-def _decision_journal_report_payload(decision_status: str) -> dict[str, object]:
+def _decision_journal_report_payload(
+    decision_status: str | list[str] | None,
+) -> dict[str, object]:
+    statuses = []
+    if isinstance(decision_status, str):
+        statuses = [decision_status]
+    elif decision_status is not None:
+        statuses = list(decision_status)
     return {
         "schema_version": "etf_portfolio_decision_journal_report_v1",
         "report_type": "etf_portfolio_decision_journal_report",
         "source_journal_path": "journal.json",
         "entries": [
             {
-                "decision_id": "decision-1",
+                "review_id": "weekly-review-1",
+                "review_date": "2026-06-01",
+                "decision_id": f"decision-{index + 1}",
+                "action_item_id": f"action-{index + 1}",
                 "linked_candidate": "unit_run:base_ai_growth",
-                "decision_status": decision_status,
+                "decision_status": status,
+                "human_decision": f"human decision {index + 1}",
+                "rationale": f"rationale {index + 1}",
                 "confidence": 0.8,
+                "follow_up_task": f"follow up {index + 1}",
                 "source_weekly_review": "weekly_review_2026-06-01.json",
                 "linked_report": "decision_journal_2026-06-01.json",
             }
+            for index, status in enumerate(statuses)
         ],
         "observe_only": True,
         "candidate_only": True,

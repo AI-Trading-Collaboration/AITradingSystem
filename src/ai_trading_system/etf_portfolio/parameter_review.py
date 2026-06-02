@@ -16,6 +16,9 @@ from ai_trading_system.reports.report_index import (
 PARAMETER_REVIEW_EVIDENCE_SCHEMA_VERSION = "etf_parameter_review_evidence_v1"
 PARAMETER_REVIEW_AGGREGATION_SCHEMA_VERSION = "etf_parameter_review_aggregation_v1"
 PARAMETER_REVIEW_COMPARISON_SCHEMA_VERSION = "etf_parameter_review_candidate_comparison_v1"
+PARAMETER_REVIEW_JOURNAL_LINKAGE_SCHEMA_VERSION = (
+    "etf_parameter_review_journal_linkage_v1"
+)
 
 DEFAULT_PARAMETER_REVIEW_REPORT_DIR = (
     PROJECT_ROOT / "reports" / "etf_portfolio" / "parameter_review"
@@ -138,6 +141,18 @@ PARAMETER_REVIEW_COMPARISON_STATUSES = frozenset(
         "mixed_evidence",
         "blocked_by_governance",
     }
+)
+
+PARAMETER_REVIEW_HUMAN_SUPPORT_STATUSES = frozenset(
+    {"supportive", "neutral", "conflicted", "negative", "insufficient_review"}
+)
+
+SUPPORTIVE_DECISION_STATUSES = frozenset({"accept_recommendation", "continue_observation"})
+NEGATIVE_DECISION_STATUSES = frozenset(
+    {"reject_recommendation", "archive_candidate_after_review"}
+)
+NEUTRAL_DECISION_STATUSES = frozenset(
+    {"defer_decision", "mark_watch", "request_more_data", "start_new_experiment"}
 )
 
 
@@ -544,6 +559,90 @@ def validate_parameter_review_comparison(payload: Mapping[str, Any]) -> list[dic
     return issues
 
 
+def link_decision_journal_evidence(
+    aggregation_payload: Mapping[str, Any],
+    *,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    validate_parameter_review_aggregation(aggregation_payload)
+    generated = generated_at or datetime.now(tz=UTC)
+    source_payloads = _mapping(aggregation_payload.get("source_payloads"))
+    journal_report = _mapping(source_payloads.get("etf_decision_journal_report"))
+    candidates = [
+        _candidate_journal_linkage(
+            record,
+            journal_report=journal_report,
+        )
+        for record in _records(aggregation_payload.get("evidence_records"))
+    ]
+    payload = {
+        "schema_version": PARAMETER_REVIEW_JOURNAL_LINKAGE_SCHEMA_VERSION,
+        "report_type": "etf_parameter_review_journal_linkage",
+        "linkage_id": _stable_id(
+            "etf-parameter-review-journal-linkage",
+            aggregation_payload.get("parameter_review_id"),
+            generated.isoformat(),
+        ),
+        "parameter_review_id": aggregation_payload.get("parameter_review_id"),
+        "source_review_id": aggregation_payload.get("review_id"),
+        "status": "needs_more_data" if not candidates else "available",
+        "reason": "INSUFFICIENT_FORWARD_EVIDENCE" if not candidates else "",
+        "as_of": aggregation_payload.get("as_of"),
+        "generated_at": generated.isoformat(),
+        "candidate_count": len(candidates),
+        "linked_journal_entry_count": sum(
+            len(_records(item.get("linked_journal_entries"))) for item in candidates
+        ),
+        "support_status_counts": _support_status_counts(candidates),
+        "candidate_journal_evidence": candidates,
+        "safety": dict(PARAMETER_REVIEW_SAFETY),
+        **PARAMETER_REVIEW_SAFETY,
+    }
+    validate_decision_journal_evidence_links(payload)
+    return payload
+
+
+def validate_decision_journal_evidence_links(
+    payload: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
+    if _text(payload.get("schema_version")) != PARAMETER_REVIEW_JOURNAL_LINKAGE_SCHEMA_VERSION:
+        issues.append(
+            _issue(
+                "schema_version",
+                f"schema_version must be {PARAMETER_REVIEW_JOURNAL_LINKAGE_SCHEMA_VERSION}",
+            )
+        )
+    issues.extend(_safety_issues(payload, owner_id="parameter_review_journal_linkage"))
+    issues.extend(
+        _safety_issues(
+            _mapping(payload.get("safety")),
+            owner_id="parameter_review_journal_linkage.safety",
+        )
+    )
+    for index, item in enumerate(_records(payload.get("candidate_journal_evidence"))):
+        status = _text(item.get("human_support_status"))
+        if status not in PARAMETER_REVIEW_HUMAN_SUPPORT_STATUSES:
+            issues.append(
+                _issue(
+                    f"candidate_journal_evidence[{index}].human_support_status",
+                    f"unsupported human_support_status: {status}",
+                )
+            )
+        issues.extend(_safety_issues(item, owner_id=f"journal_linkage[{index}]"))
+        for entry_index, entry in enumerate(_records(item.get("linked_journal_entries"))):
+            if not _text(entry.get("decision_id")):
+                issues.append(
+                    _issue(
+                        f"candidate_journal_evidence[{index}].entries[{entry_index}]",
+                        "linked journal entry decision_id is required",
+                    )
+                )
+    if issues:
+        raise ParameterReviewError(_format_issues(issues))
+    return issues
+
+
 def _candidate_evidence_comparison(
     record: Mapping[str, Any],
     *,
@@ -743,6 +842,179 @@ def _journal_outcome_summary(record: Mapping[str, Any]) -> dict[str, Any]:
         "human_support_status": support_status,
         "latest_human_note": latest_note,
     }
+
+
+def _candidate_journal_linkage(
+    record: Mapping[str, Any],
+    *,
+    journal_report: Mapping[str, Any],
+) -> dict[str, Any]:
+    candidate_id = _text(record.get("candidate_id"))
+    experiment_id = _text(record.get("experiment_id"))
+    entries = _journal_entries_for_candidate(
+        journal_report,
+        candidate_id=candidate_id,
+        experiment_id=experiment_id,
+    )
+    linked_entries = [_journal_entry_evidence(entry, journal_report) for entry in entries]
+    status_counts = _decision_status_counts(entries)
+    support_status = _human_support_status(status_counts)
+    conflict_flags = _decision_conflict_flags(status_counts, entries)
+    confidence_summary = _confidence_distribution(entries)
+    return {
+        "candidate_id": candidate_id,
+        "experiment_id": experiment_id,
+        "linked_journal_entries": linked_entries,
+        "human_decisions": [
+            {
+                "decision_id": entry.get("decision_id"),
+                "decision_status": entry.get("decision_status"),
+                "human_decision": entry.get("human_decision"),
+                "confidence": entry.get("confidence"),
+            }
+            for entry in linked_entries
+        ],
+        "human_support_status": support_status,
+        "manual_confidence_score": confidence_summary.get("average_confidence"),
+        "decision_conflict_flags": conflict_flags,
+        "journal_summary": {
+            "rationale_summary": _rationale_summary(entries),
+            "confidence_distribution": confidence_summary,
+            "follow_up_tasks": [
+                _text(entry.get("follow_up_task")) for entry in entries if _text(
+                    entry.get("follow_up_task")
+                )
+            ],
+            "accepted_count": int(status_counts.get("accept_recommendation", 0)),
+            "rejected_count": int(status_counts.get("reject_recommendation", 0)),
+            "deferred_count": int(status_counts.get("defer_decision", 0)),
+            "supportive_count": _supportive_count(status_counts),
+            "negative_count": _negative_count(status_counts),
+            "neutral_count": _neutral_count(status_counts),
+            "latest_human_note": _latest_human_note(entries),
+        },
+        "safety": dict(PARAMETER_REVIEW_SAFETY),
+        **PARAMETER_REVIEW_SAFETY,
+    }
+
+
+def _journal_entry_evidence(
+    entry: Mapping[str, Any],
+    journal_report: Mapping[str, Any],
+) -> dict[str, Any]:
+    source_path = _text(entry.get("linked_report")) or _text(
+        journal_report.get("source_journal_path")
+    )
+    return {
+        "decision_id": entry.get("decision_id"),
+        "review_id": entry.get("review_id"),
+        "review_date": entry.get("review_date"),
+        "action_item_id": entry.get("action_item_id"),
+        "linked_candidate": entry.get("linked_candidate"),
+        "linked_report": entry.get("linked_report"),
+        "source_weekly_review": entry.get("source_weekly_review"),
+        "decision_status": entry.get("decision_status"),
+        "human_decision": entry.get("human_decision"),
+        "rationale": entry.get("rationale"),
+        "confidence": entry.get("confidence"),
+        "follow_up_task": entry.get("follow_up_task"),
+        "source_report_path": source_path,
+    }
+
+
+def _human_support_status(status_counts: Mapping[str, int]) -> str:
+    supportive = _supportive_count(status_counts)
+    negative = _negative_count(status_counts)
+    neutral = _neutral_count(status_counts)
+    if supportive > 0 and negative > 0:
+        return "conflicted"
+    if supportive > 0:
+        return "supportive"
+    if negative > 0:
+        return "negative"
+    if neutral > 0:
+        return "neutral"
+    return "insufficient_review"
+
+
+def _decision_conflict_flags(
+    status_counts: Mapping[str, int],
+    entries: Sequence[Mapping[str, Any]],
+) -> list[str]:
+    flags: list[str] = []
+    if not entries:
+        flags.append("NO_JOURNAL_ENTRIES")
+    if _supportive_count(status_counts) > 0 and _negative_count(status_counts) > 0:
+        flags.append("CONFLICTING_HUMAN_DECISIONS")
+    if any(not _text(entry.get("linked_report")) for entry in entries):
+        flags.append("MISSING_LINKED_REPORT")
+    if any(_float_or_none(entry.get("confidence")) is None for entry in entries):
+        flags.append("MISSING_CONFIDENCE")
+    return flags
+
+
+def _decision_status_counts(entries: Sequence[Mapping[str, Any]]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for entry in entries:
+        status = _text(entry.get("decision_status"), "unknown")
+        counts[status] = counts.get(status, 0) + 1
+    return counts
+
+
+def _supportive_count(status_counts: Mapping[str, int]) -> int:
+    return sum(int(status_counts.get(status, 0)) for status in SUPPORTIVE_DECISION_STATUSES)
+
+
+def _negative_count(status_counts: Mapping[str, int]) -> int:
+    return sum(int(status_counts.get(status, 0)) for status in NEGATIVE_DECISION_STATUSES)
+
+
+def _neutral_count(status_counts: Mapping[str, int]) -> int:
+    return sum(int(status_counts.get(status, 0)) for status in NEUTRAL_DECISION_STATUSES)
+
+
+def _confidence_distribution(entries: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    values = [
+        value
+        for value in (_float_or_none(entry.get("confidence")) for entry in entries)
+        if value is not None
+    ]
+    return {
+        "count": len(values),
+        "average_confidence": None if not values else round(sum(values) / len(values), 6),
+        "min_confidence": None if not values else min(values),
+        "max_confidence": None if not values else max(values),
+        "values": values,
+    }
+
+
+def _rationale_summary(entries: Sequence[Mapping[str, Any]]) -> str:
+    rationales = [_text(entry.get("rationale")) for entry in entries if _text(
+        entry.get("rationale")
+    )]
+    return "; ".join(rationales)
+
+
+def _latest_human_note(entries: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    if not entries:
+        return {}
+    latest = entries[-1]
+    return {
+        "decision_id": latest.get("decision_id"),
+        "decision_status": latest.get("decision_status"),
+        "rationale": latest.get("rationale"),
+        "confidence": latest.get("confidence"),
+        "follow_up_task": latest.get("follow_up_task"),
+    }
+
+
+def _support_status_counts(candidates: Sequence[Mapping[str, Any]]) -> dict[str, int]:
+    counts = {status: 0 for status in sorted(PARAMETER_REVIEW_HUMAN_SUPPORT_STATUSES)}
+    for item in candidates:
+        status = _text(item.get("human_support_status"))
+        if status in counts:
+            counts[status] += 1
+    return counts
 
 
 def _weekly_review_status(record: Mapping[str, Any]) -> dict[str, Any]:

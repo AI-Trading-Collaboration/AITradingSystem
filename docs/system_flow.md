@@ -148,6 +148,7 @@ flowchart TD
     T068VAL --> T070AGG
     T069VAL --> T070AGG
     T070AGG --> T070CMP["parameter review comparison module<br/>candidate vs baseline/QQQ/SPY/SMH/backtest/weekly/journal<br/>outperforming / risky / underperforming / mixed / needs_more_data"]
+    T070AGG --> T070JLINK["parameter review journal linker<br/>journal entries + rationale + confidence + follow-up tasks<br/>supportive / neutral / conflicted / negative / insufficient_review"]
     T064RUN --> T064RIDX["config/report_registry.yaml + aits reports index<br/>experiment manifest / comparison / candidate selection / shadow registry / weekly review visibility"]
     T064CMP --> T064RIDX
     T064SEL --> T064RIDX
@@ -188,6 +189,8 @@ TRADING-069 新增 `aits etf decision-journal add/update/list/remove/report/anal
 TRADING-070B 新增 `aits etf parameter-review aggregate --as-of YYYY-MM-DD`，从 report index / report registry 指向的 latest forward dashboard、forward weekly review、watchlist、TRADING-068 weekly review、TRADING-069 decision journal、experiment comparison、candidate selection 和 validation gates 生成 `reports/etf_portfolio/parameter_review/aggregation/parameter_review_evidence_YYYY-MM-DD.json/md`。该聚合包只建立 evidence record 和 source link；缺少 forward dashboard 或 candidate forward rows 时输出 `needs_more_data` / `INSUFFICIENT_FORWARD_EVIDENCE`，缺失可选 source 只作为 warning 或 candidate-level partial evidence，不补跑上游、不写 production weights、不替换 baseline config、不触发 broker action。
 
 TRADING-070C 新增 parameter review comparison module，消费 TRADING-070B evidence aggregation，在内存 payload 中比较 candidate vs current ETF baseline、QQQ、SPY、SMH、historical experiment expectation、weekly review status 和 human journal outcome。Comparison status 只用于后续 proposal/report/manual review 输入，允许 `outperforming_with_acceptable_risk`、`outperforming_but_risky`、`underperforming`、`needs_more_data`、`mixed_evidence` 和 `blocked_by_governance`；不写 production weights、不修改 baseline config、不触发 broker action。
+
+TRADING-070D 新增 decision journal evidence linker，消费 TRADING-070B aggregation 中的 latest decision journal report，把 linked journal entries、human decisions、rationale、confidence、follow-up tasks 和 conflict flags 转为 candidate-level evidence。Human support status 只作为 parameter review evidence，不修改 journal state、shadow registry、baseline config、production weights 或 broker state。
 
 ## ETF Portfolio P2 Observe-Only Contracts
 
