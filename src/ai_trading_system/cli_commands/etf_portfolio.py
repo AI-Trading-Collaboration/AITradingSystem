@@ -239,7 +239,9 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
     DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
     DEFAULT_WEIGHT_FORWARD_EVIDENCE_DIR,
+    DEFAULT_WEIGHT_OVERFIT_DIAGNOSTICS_DIR,
     build_backtest_forward_evidence_aggregation,
+    build_weight_overfit_diagnostics,
     enroll_candidate_weights_forward,
     find_latest_weight_search_run_dir,
     load_candidate_weight_registry,
@@ -250,6 +252,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     register_candidate_weight_sets,
     run_historical_weight_search,
     write_backtest_forward_evidence_aggregation,
+    write_weight_overfit_diagnostics,
     write_weight_search_run,
 )
 from ai_trading_system.reports.report_index import (
@@ -2732,6 +2735,61 @@ def weight_calibration_aggregate_evidence_command(
     typer.echo(f"ETF weight backtest-forward evidence：{paths['markdown']}")
     typer.echo(f"status={payload['status']}")
     typer.echo(f"evidence_record_count={payload['evidence_record_count']}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+
+
+@weight_calibration_app.command("overfit-diagnostics")
+def weight_calibration_overfit_diagnostics_command(
+    latest_search: Annotated[
+        bool,
+        typer.Option("--latest-search", help="读取最新 historical weight search run。"),
+    ] = False,
+    search_run_id: Annotated[
+        str | None,
+        typer.Option("--search-run-id", help="historical weight search run id。"),
+    ] = None,
+    search_output_dir: Annotated[
+        Path,
+        typer.Option(help="weight calibration search report 输出目录。"),
+    ] = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR,
+    candidate_registry_path: Annotated[
+        Path,
+        typer.Option(help="candidate initial weight set registry path。"),
+    ] = DEFAULT_CANDIDATE_WEIGHT_REGISTRY_PATH,
+    evidence_path: Annotated[
+        Path | None,
+        typer.Option(help="optional TRADING-071F evidence JSON path。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="overfit diagnostics 输出目录。"),
+    ] = DEFAULT_WEIGHT_OVERFIT_DIAGNOSTICS_DIR,
+) -> None:
+    """生成 TRADING-071G overfit risk and stability diagnostics。"""
+    if search_run_id is not None and latest_search:
+        raise typer.BadParameter("--search-run-id and --latest-search cannot be combined")
+    search_payload = None
+    if search_run_id is not None or latest_search:
+        run_dir = (
+            find_latest_weight_search_run_dir(search_output_dir)
+            if latest_search
+            else search_output_dir / str(search_run_id)
+        )
+        search_payload = read_weight_search_run_payload(run_dir)
+    payload = build_weight_overfit_diagnostics(
+        candidate_registry=load_candidate_weight_registry(candidate_registry_path),
+        search_payload=search_payload,
+        evidence_payload=_load_optional_json_payload(evidence_path),
+    )
+    paths = write_weight_overfit_diagnostics(payload, output_dir=output_dir)
+    typer.echo(f"ETF weight overfit diagnostics：{paths['markdown']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"candidate_count={payload['candidate_count']}")
+    typer.echo(f"risk_counts={payload['risk_counts']}")
     typer.echo("observe_only=true")
     typer.echo("candidate_only=true")
     typer.echo("production_effect=none")

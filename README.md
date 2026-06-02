@@ -435,9 +435,15 @@ JSON，生成
 `reports/etf_portfolio/weight_calibration/evidence/backtest_forward_evidence_YYYY-MM-DD.json/md`，
 比较 historical expected return/drawdown/turnover/stability 与 forward realized metrics，
 输出 `expectation_gap`、`drawdown_gap`、`turnover_gap`、`stability_gap` 和 evidence status。
-缺少 forward row 或 forward days 不足时保持 `needs_more_forward_data`，不补造结论。当前
-TRADING-071F 仍是 candidate-only / observe-only 证据层，后续 TRADING-071G-K 才会补
-overfit diagnostics、proposal、report、Reader Brief 和 validation gate。
+缺少 forward row 或 forward days 不足时保持 `needs_more_forward_data`，不补造结论。`aits etf
+weight-calibration overfit-diagnostics` 读取 candidate registry、optional search summary 和
+optional TRADING-071F evidence，输出
+`reports/etf_portfolio/weight_calibration/overfit_diagnostics/overfit_diagnostics_*.json/md`，
+按 performance concentration、single-period dependency、regime fragility、turnover
+instability、constraint hit instability、weight extremeness、benchmark dependency 和
+forward/backtest divergence 给出 low/medium/high/critical risk bands。当前 TRADING-071G
+仍是 candidate-only / observe-only 证据层，后续 TRADING-071H-K 才会补 proposal、report、
+Reader Brief 和 validation gate。
 所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、
 `broker_action=none`、`manual_review_required=true`，不写 official target weights、不改
 baseline config、不写 shared experiment shadow registry、不触发 broker。

@@ -42,6 +42,9 @@ DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH = (
 DEFAULT_WEIGHT_FORWARD_EVIDENCE_DIR = (
     DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "evidence"
 )
+DEFAULT_WEIGHT_OVERFIT_DIAGNOSTICS_DIR = (
+    DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "overfit_diagnostics"
+)
 
 WEIGHT_SEARCH_SCHEMA_VERSION = "etf_weight_search_v1"
 WEIGHT_SEARCH_RUN_SCHEMA_VERSION = "etf_weight_search_run_v1"
@@ -50,6 +53,7 @@ WEIGHT_FORWARD_ENROLLMENT_SCHEMA_VERSION = "etf_weight_forward_enrollment_v1"
 WEIGHT_BACKTEST_FORWARD_EVIDENCE_SCHEMA_VERSION = (
     "etf_weight_backtest_forward_evidence_v1"
 )
+WEIGHT_OVERFIT_DIAGNOSTICS_SCHEMA_VERSION = "etf_weight_overfit_diagnostics_v1"
 
 WEIGHT_CALIBRATION_SAFETY = {
     "observe_only": True,
@@ -92,6 +96,37 @@ WEIGHT_FORWARD_EVIDENCE_POLICY = {
     "drawdown_gap_tolerance": 0.02,
     "turnover_gap_tolerance": 0.25,
     "stability_gap_tolerance": 0.10,
+}
+
+# Pilot diagnostics policy for TRADING-071G. Scores are explainability/risk triage
+# inputs only and cannot promote or apply ETF weights.
+WEIGHT_OVERFIT_DIAGNOSTICS_POLICY = {
+    "policy_id": "etf_weight_overfit_diagnostics_v1",
+    "owner": "TRADING-071G",
+    "status": "pilot_baseline",
+    "rationale": (
+        "Flag historically attractive ETF weight candidates that may be unstable, "
+        "over-concentrated, benchmark-dependent, or diverging forward."
+    ),
+    "component_weights": {
+        "performance_concentration": 0.15,
+        "single_period_dependency": 0.15,
+        "regime_fragility": 0.15,
+        "turnover_instability": 0.10,
+        "constraint_hit_instability": 0.10,
+        "weight_extremeness": 0.10,
+        "benchmark_dependency": 0.10,
+        "forward_backtest_divergence": 0.15,
+    },
+    "risk_band_thresholds": {
+        "medium": 0.25,
+        "high": 0.50,
+        "critical": 0.75,
+    },
+    "turnover_reference": 1.0,
+    "constraint_hit_reference": 0.25,
+    "performance_concentration_reference": 0.70,
+    "weight_extremeness_reference": 0.70,
 }
 
 
@@ -1335,6 +1370,180 @@ def render_backtest_forward_evidence_markdown(payload: Mapping[str, Any]) -> str
     return "\n".join(lines) + "\n"
 
 
+def build_weight_overfit_diagnostics(
+    *,
+    candidate_registry: Mapping[str, Any],
+    search_payload: Mapping[str, Any] | None = None,
+    evidence_payload: Mapping[str, Any] | None = None,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    validate_candidate_weight_registry(candidate_registry)
+    if search_payload:
+        validate_weight_search_run_payload(search_payload)
+    if evidence_payload:
+        validate_backtest_forward_evidence_payload(evidence_payload)
+    generated = generated_at or datetime.now(UTC)
+    candidate_diagnostics = [
+        _weight_overfit_candidate_diagnostics(
+            candidate,
+            search_payload=search_payload or {},
+            evidence_payload=evidence_payload or {},
+        )
+        for candidate in _records(candidate_registry.get("weight_sets"))
+    ]
+    risk_counts = _risk_band_counts(candidate_diagnostics)
+    payload = {
+        "schema_version": WEIGHT_OVERFIT_DIAGNOSTICS_SCHEMA_VERSION,
+        "report_type": "etf_weight_overfit_diagnostics",
+        "status": "available" if candidate_diagnostics else "needs_more_data",
+        "generated_at": generated.isoformat(),
+        "policy": dict(WEIGHT_OVERFIT_DIAGNOSTICS_POLICY),
+        "candidate_count": len(candidate_diagnostics),
+        "risk_counts": risk_counts,
+        "highest_risk_candidate": _highest_risk_candidate(candidate_diagnostics),
+        "candidate_diagnostics": candidate_diagnostics,
+        "production_weights_mutated": False,
+        "applied_weight_set": None,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_weight_overfit_diagnostics_payload(payload)
+    return payload
+
+
+def validate_weight_overfit_diagnostics_payload(payload: Mapping[str, Any]) -> None:
+    issues = []
+    if payload.get("schema_version") != WEIGHT_OVERFIT_DIAGNOSTICS_SCHEMA_VERSION:
+        issues.append("schema_version")
+    if payload.get("report_type") != "etf_weight_overfit_diagnostics":
+        issues.append("report_type")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if payload.get(field) != expected:
+            issues.append(field)
+    safety = _mapping(payload.get("safety"))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if safety.get(field) != expected:
+            issues.append(f"safety.{field}")
+    if payload.get("production_weights_mutated") is not False:
+        issues.append("production_weights_mutated")
+    if payload.get("applied_weight_set") is not None:
+        issues.append("applied_weight_set")
+    records = _records(payload.get("candidate_diagnostics"))
+    if int(payload.get("candidate_count") or 0) != len(records):
+        issues.append("candidate_count")
+    for record in records:
+        try:
+            validate_weight_overfit_candidate_diagnostics(record)
+        except WeightCalibrationError as exc:
+            issues.append(f"{record.get('weight_set_id')}:{exc}")
+    if issues:
+        raise WeightCalibrationError(
+            "ETF weight overfit diagnostics validation failed: "
+            + ", ".join(str(issue) for issue in issues)
+        )
+
+
+def validate_weight_overfit_candidate_diagnostics(record: Mapping[str, Any]) -> None:
+    required = (
+        "weight_set_id",
+        "source_search_run_id",
+        "source_candidate_id",
+        "rank",
+        "overfit_risk_score",
+        "overfit_risk_band",
+        "component_diagnostics",
+        "reason_codes",
+        "safety",
+    )
+    issues = [field for field in required if field not in record]
+    band = str(record.get("overfit_risk_band") or "")
+    if band not in {"low", "medium", "high", "critical"}:
+        issues.append("overfit_risk_band")
+    score = _float_or_none(record.get("overfit_risk_score"))
+    if score is None or score < 0.0 or score > 1.0:
+        issues.append("overfit_risk_score")
+    components = _mapping(record.get("component_diagnostics"))
+    expected = set(WEIGHT_OVERFIT_DIAGNOSTICS_POLICY["component_weights"])
+    if set(components) != expected:
+        issues.append("component_diagnostics")
+    for field, expected_value in WEIGHT_CALIBRATION_SAFETY.items():
+        if record.get(field) != expected_value:
+            issues.append(field)
+    safety = _mapping(record.get("safety"))
+    for field, expected_value in WEIGHT_CALIBRATION_SAFETY.items():
+        if safety.get(field) != expected_value:
+            issues.append(f"safety.{field}")
+    if issues:
+        raise WeightCalibrationError("; ".join(issues))
+
+
+def write_weight_overfit_diagnostics(
+    payload: Mapping[str, Any],
+    *,
+    output_dir: Path = DEFAULT_WEIGHT_OVERFIT_DIAGNOSTICS_DIR,
+) -> dict[str, Path]:
+    validate_weight_overfit_diagnostics_payload(payload)
+    timestamp = str(payload.get("generated_at", "unknown")).replace(":", "").replace("+", "")
+    stem = f"overfit_diagnostics_{timestamp[:15]}"
+    json_path = output_dir / f"{stem}.json"
+    markdown_path = output_dir / f"{stem}.md"
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.write_text(render_weight_overfit_diagnostics_markdown(payload), encoding="utf-8")
+    return {"json": json_path, "markdown": markdown_path}
+
+
+def render_weight_overfit_diagnostics_markdown(payload: Mapping[str, Any]) -> str:
+    lines = [
+        "# ETF Weight Overfit Diagnostics",
+        "",
+        "## Safety Banner",
+        "",
+        "- observe_only = true",
+        "- candidate_only = true",
+        "- production_effect = none",
+        "- broker_action = none",
+        "- manual_review_required = true",
+        "- 本报告只标记 overfit/stability risk，不应用权重。",
+        "",
+        "## Summary",
+        "",
+        f"- Status: {payload.get('status')}",
+        f"- Candidate Count: {payload.get('candidate_count')}",
+        f"- Risk Counts: {payload.get('risk_counts')}",
+        f"- Highest Risk Candidate: {payload.get('highest_risk_candidate')}",
+        "",
+        "## Candidate Diagnostics",
+        "",
+        "| Weight Set | Rank | Risk Score | Risk Band | Reasons |",
+        "|---|---:|---:|---|---|",
+    ]
+    for record in _records(payload.get("candidate_diagnostics")):
+        lines.append(
+            f"| {record.get('weight_set_id')} | {record.get('rank')} | "
+            f"{_fmt_number(record.get('overfit_risk_score'))} | "
+            f"{record.get('overfit_risk_band')} | "
+            f"{', '.join(str(item) for item in record.get('reason_codes') or [])} |"
+        )
+    if not _records(payload.get("candidate_diagnostics")):
+        lines.append("| none | 0 | n/a | needs_more_data | no candidate registry records |")
+    return "\n".join(lines) + "\n"
+
+
+def weight_overfit_risk_band(score: float) -> str:
+    thresholds = _mapping(WEIGHT_OVERFIT_DIAGNOSTICS_POLICY["risk_band_thresholds"])
+    if score >= float(thresholds["critical"]):
+        return "critical"
+    if score >= float(thresholds["high"]):
+        return "high"
+    if score >= float(thresholds["medium"]):
+        return "medium"
+    return "low"
+
+
 def render_weight_search_run_markdown(payload: Mapping[str, Any]) -> str:
     generation = _mapping(payload.get("candidate_generation"))
     baseline = _mapping(payload.get("baseline_weight_set"))
@@ -2256,6 +2465,299 @@ def _optional_candidate_weight_set(
 def _stable_evidence_id(weight_set_id: str, as_of: date) -> str:
     basis = f"{weight_set_id}|{as_of.isoformat()}"
     return "etf-weight-evidence-" + sha256(basis.encode("utf-8")).hexdigest()[:12]
+
+
+def _weight_overfit_candidate_diagnostics(
+    candidate: Mapping[str, Any],
+    *,
+    search_payload: Mapping[str, Any],
+    evidence_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    component_diagnostics = {
+        "performance_concentration": _performance_concentration_diagnostic(
+            candidate,
+            search_payload,
+        ),
+        "single_period_dependency": _single_period_dependency_diagnostic(
+            candidate,
+            search_payload,
+        ),
+        "regime_fragility": _regime_fragility_diagnostic(candidate),
+        "turnover_instability": _turnover_instability_diagnostic(candidate),
+        "constraint_hit_instability": _constraint_hit_instability_diagnostic(
+            candidate,
+            search_payload,
+        ),
+        "weight_extremeness": _weight_extremeness_diagnostic(candidate),
+        "benchmark_dependency": _benchmark_dependency_diagnostic(candidate),
+        "forward_backtest_divergence": _forward_backtest_divergence_diagnostic(
+            candidate,
+            evidence_payload,
+        ),
+    }
+    weights = _mapping(WEIGHT_OVERFIT_DIAGNOSTICS_POLICY["component_weights"])
+    risk_score = sum(
+        float(weights[key]) * float(component_diagnostics[key]["risk_score"])
+        for key in weights
+    )
+    risk_score = round(max(0.0, min(1.0, risk_score)), 6)
+    reason_codes = [
+        reason
+        for diagnostic in component_diagnostics.values()
+        for reason in diagnostic.get("reason_codes", [])
+    ]
+    return {
+        "weight_set_id": candidate.get("weight_set_id"),
+        "source_search_run_id": candidate.get("source_search_run_id"),
+        "source_candidate_id": candidate.get("source_candidate_id"),
+        "rank": int(candidate.get("rank") or 0),
+        "overfit_risk_score": risk_score,
+        "overfit_risk_band": weight_overfit_risk_band(risk_score),
+        "component_diagnostics": component_diagnostics,
+        "reason_codes": sorted(set(reason_codes)) or ["NO_OVERFIT_RISK_FLAGS"],
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+
+
+def _performance_concentration_diagnostic(
+    candidate: Mapping[str, Any],
+    search_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    returns = _available_slice_values(candidate, search_payload, "excess_return_vs_baseline")
+    positives = [max(0.0, value) for value in returns]
+    total_positive = sum(positives)
+    concentration = 0.0 if total_positive <= 0 else max(positives) / total_positive
+    reference = float(WEIGHT_OVERFIT_DIAGNOSTICS_POLICY["performance_concentration_reference"])
+    score = _positive_scaled(concentration - 0.30, reference - 0.30)
+    return _component_result(
+        "performance_concentration",
+        score,
+        {"positive_slice_concentration": concentration, "available_slice_count": len(returns)},
+        ["PERFORMANCE_CONCENTRATED_IN_FEW_SLICES"] if score >= 0.5 else [],
+    )
+
+
+def _single_period_dependency_diagnostic(
+    candidate: Mapping[str, Any],
+    search_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    values = _available_slice_values(candidate, search_payload, "return")
+    if len(values) < 2:
+        score = 0.0
+        metrics = {"available_slice_count": len(values), "dispersion": 0.0}
+    else:
+        average_abs = sum(abs(value) for value in values) / len(values)
+        dispersion = 0.0 if average_abs == 0 else (max(values) - min(values)) / average_abs
+        score = max(0.0, min(1.0, dispersion / 4.0))
+        metrics = {"available_slice_count": len(values), "dispersion": dispersion}
+    return _component_result(
+        "single_period_dependency",
+        score,
+        metrics,
+        ["SINGLE_PERIOD_DEPENDENCY"] if score >= 0.5 else [],
+    )
+
+
+def _regime_fragility_diagnostic(candidate: Mapping[str, Any]) -> dict[str, Any]:
+    robustness = _mapping(candidate.get("robustness_summary"))
+    stability = _float_or_none(robustness.get("stability_score"))
+    weak_count = int(_float_or_none(robustness.get("weak_slice_count")) or 0)
+    score = max(0.0, min(1.0, 1.0 - (stability if stability is not None else 0.0)))
+    if weak_count:
+        score = max(score, min(1.0, weak_count / 4.0))
+    return _component_result(
+        "regime_fragility",
+        score,
+        {"stability_score": stability, "weak_slice_count": weak_count},
+        ["REGIME_FRAGILITY"] if score >= 0.5 else [],
+    )
+
+
+def _turnover_instability_diagnostic(candidate: Mapping[str, Any]) -> dict[str, Any]:
+    metrics = _mapping(candidate.get("metrics_summary"))
+    turnover = _float_or_none(metrics.get("turnover_vs_baseline")) or 0.0
+    reference = float(WEIGHT_OVERFIT_DIAGNOSTICS_POLICY["turnover_reference"])
+    score = max(0.0, min(1.0, turnover / reference))
+    return _component_result(
+        "turnover_instability",
+        score,
+        {"turnover_vs_baseline": turnover},
+        ["HIGH_TURNOVER_INSTABILITY"] if score >= 0.5 else [],
+    )
+
+
+def _constraint_hit_instability_diagnostic(
+    candidate: Mapping[str, Any],
+    search_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    rates = _available_slice_values(candidate, search_payload, "constraint_hit_rate")
+    max_rate = max(rates) if rates else 0.0
+    reference = float(WEIGHT_OVERFIT_DIAGNOSTICS_POLICY["constraint_hit_reference"])
+    score = max(0.0, min(1.0, max_rate / reference)) if reference > 0 else 0.0
+    return _component_result(
+        "constraint_hit_instability",
+        score,
+        {"max_constraint_hit_rate": max_rate, "available_slice_count": len(rates)},
+        ["CONSTRAINT_HIT_INSTABILITY"] if score >= 0.5 else [],
+    )
+
+
+def _weight_extremeness_diagnostic(candidate: Mapping[str, Any]) -> dict[str, Any]:
+    weights = {key: float(value) for key, value in _mapping(candidate.get("weights")).items()}
+    max_weight = max(weights.values()) if weights else 0.0
+    herfindahl = sum(value * value for value in weights.values())
+    reference = float(WEIGHT_OVERFIT_DIAGNOSTICS_POLICY["weight_extremeness_reference"])
+    max_score = max(0.0, min(1.0, max_weight / reference))
+    herfindahl_score = max(0.0, min(1.0, (herfindahl - 0.20) / 0.80))
+    score = max(max_score, herfindahl_score)
+    return _component_result(
+        "weight_extremeness",
+        score,
+        {"max_weight": max_weight, "herfindahl": herfindahl},
+        ["EXTREME_WEIGHT_CONCENTRATION"] if score >= 0.75 else [],
+    )
+
+
+def _benchmark_dependency_diagnostic(candidate: Mapping[str, Any]) -> dict[str, Any]:
+    metrics = _mapping(candidate.get("metrics_summary"))
+    benchmark = _mapping(metrics.get("benchmark_comparison"))
+    if not benchmark:
+        return _component_result(
+            "benchmark_dependency",
+            1.0,
+            {"available_benchmark_count": 0, "non_positive_excess_count": 0},
+            ["NO_BENCHMARK_COMPARISON"],
+        )
+    excess_values = [
+        _float_or_none(_mapping(row).get("excess_return"))
+        for row in benchmark.values()
+        if isinstance(row, Mapping)
+    ]
+    excess_values = [value for value in excess_values if value is not None]
+    if not excess_values:
+        score = 1.0
+    else:
+        score = sum(1 for value in excess_values if value <= 0) / len(excess_values)
+    return _component_result(
+        "benchmark_dependency",
+        score,
+        {
+            "available_benchmark_count": len(excess_values),
+            "non_positive_excess_count": sum(1 for value in excess_values if value <= 0),
+        },
+        ["BENCHMARK_DEPENDENCY"] if score >= 0.5 else [],
+    )
+
+
+def _forward_backtest_divergence_diagnostic(
+    candidate: Mapping[str, Any],
+    evidence_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    record = _evidence_record_for_weight_set(
+        evidence_payload,
+        str(candidate.get("weight_set_id")),
+    )
+    if not record:
+        return _component_result(
+            "forward_backtest_divergence",
+            0.25,
+            {"evidence_status": "missing"},
+            ["FORWARD_EVIDENCE_MISSING"],
+        )
+    status = str(record.get("evidence_status"))
+    gap = abs(_float_or_none(record.get("expectation_gap")) or 0.0)
+    drawdown_gap = max(0.0, _float_or_none(record.get("drawdown_gap")) or 0.0)
+    base_score = {
+        "consistent": 0.0,
+        "forward_better_than_backtest": 0.10,
+        "needs_more_forward_data": 0.25,
+        "mixed": 0.60,
+        "forward_worse_than_backtest": 0.85,
+        "blocked": 1.0,
+    }.get(status, 0.25)
+    score = max(base_score, min(1.0, gap / 0.10), min(1.0, drawdown_gap / 0.10))
+    return _component_result(
+        "forward_backtest_divergence",
+        score,
+        {
+            "evidence_status": status,
+            "expectation_gap_abs": gap,
+            "drawdown_gap": drawdown_gap,
+        },
+        ["FORWARD_BACKTEST_DIVERGENCE"] if score >= 0.5 else [],
+    )
+
+
+def _available_slice_values(
+    candidate: Mapping[str, Any],
+    search_payload: Mapping[str, Any],
+    field: str,
+) -> list[float]:
+    source_candidate_id = str(candidate.get("source_candidate_id"))
+    robustness = _mapping(search_payload.get("robustness_evaluation"))
+    for payload in _records(robustness.get("candidate_evaluations")):
+        if str(payload.get("candidate_id")) != source_candidate_id:
+            continue
+        values = [
+            _float_or_none(slice_metric.get(field))
+            for slice_metric in _records(payload.get("slice_metrics"))
+            if slice_metric.get("status") == "AVAILABLE"
+        ]
+        return [value for value in values if value is not None]
+    return []
+
+
+def _component_result(
+    diagnostic_id: str,
+    score: float,
+    metrics: Mapping[str, Any],
+    reason_codes: list[str],
+) -> dict[str, Any]:
+    normalized = round(max(0.0, min(1.0, float(score))), 6)
+    return {
+        "diagnostic_id": diagnostic_id,
+        "risk_score": normalized,
+        "risk_band": weight_overfit_risk_band(normalized),
+        "metrics": dict(metrics),
+        "reason_codes": reason_codes,
+    }
+
+
+def _risk_band_counts(records: list[Mapping[str, Any]]) -> dict[str, int]:
+    counts = {"low": 0, "medium": 0, "high": 0, "critical": 0}
+    for record in records:
+        band = str(record.get("overfit_risk_band"))
+        if band in counts:
+            counts[band] += 1
+    return counts
+
+
+def _highest_risk_candidate(records: list[Mapping[str, Any]]) -> dict[str, Any] | None:
+    if not records:
+        return None
+    selected = max(
+        records,
+        key=lambda record: (
+            float(record.get("overfit_risk_score") or 0.0),
+            str(record.get("weight_set_id")),
+        ),
+    )
+    return {
+        "weight_set_id": selected.get("weight_set_id"),
+        "overfit_risk_score": selected.get("overfit_risk_score"),
+        "overfit_risk_band": selected.get("overfit_risk_band"),
+    }
+
+
+def _evidence_record_for_weight_set(
+    evidence_payload: Mapping[str, Any],
+    weight_set_id: str,
+) -> dict[str, Any]:
+    for record in _records(evidence_payload.get("evidence_records")):
+        if str(record.get("weight_set_id")) == weight_set_id:
+            return record
+    return {}
 
 
 def _selected_ranked_candidates(

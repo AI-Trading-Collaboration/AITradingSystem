@@ -18,6 +18,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     ETFWeightSearchRegistry,
     WeightCalibrationError,
     build_backtest_forward_evidence_aggregation,
+    build_weight_overfit_diagnostics,
     enroll_candidate_weights_forward,
     generate_weight_candidates,
     load_candidate_weight_registry,
@@ -32,6 +33,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     validate_candidate_weight_record,
     validate_weight_forward_enrollment_record,
     validate_weight_search_registry,
+    weight_overfit_risk_band,
     write_backtest_forward_evidence_aggregation,
     write_weight_search_run,
 )
@@ -819,6 +821,141 @@ def test_weight_calibration_aggregate_evidence_cli(tmp_path: Path) -> None:
     assert list((tmp_path / "evidence").glob("backtest_forward_evidence_*.json"))
 
 
+def test_overfit_diagnostics_flags_concentrated_performance(tmp_path: Path) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    run = _small_search_run()
+    concentrated = _search_payload_with_slice_values(
+        run.payload,
+        "excess_return_vs_baseline",
+        [0.20, 0.01, 0.00],
+    )
+    balanced = _search_payload_with_slice_values(
+        run.payload,
+        "excess_return_vs_baseline",
+        [0.05, 0.05, 0.05],
+    )
+
+    concentrated_payload = build_weight_overfit_diagnostics(
+        candidate_registry=registry,
+        search_payload=concentrated,
+    )
+    balanced_payload = build_weight_overfit_diagnostics(
+        candidate_registry=registry,
+        search_payload=balanced,
+    )
+
+    concentrated_score = _component_score(concentrated_payload, "performance_concentration")
+    balanced_score = _component_score(balanced_payload, "performance_concentration")
+    assert concentrated_score > balanced_score
+    assert "PERFORMANCE_CONCENTRATED_IN_FEW_SLICES" in (
+        concentrated_payload["candidate_diagnostics"][0]["reason_codes"]
+    )
+
+
+def test_overfit_diagnostics_flags_bad_walk_forward_consistency(tmp_path: Path) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    registry["weight_sets"][0]["robustness_summary"]["stability_score"] = 0.20
+    registry["weight_sets"][0]["robustness_summary"]["weak_slice_count"] = 3
+
+    payload = build_weight_overfit_diagnostics(candidate_registry=registry)
+
+    diagnostic = payload["candidate_diagnostics"][0]
+    assert diagnostic["component_diagnostics"]["regime_fragility"]["risk_score"] >= 0.75
+    assert "REGIME_FRAGILITY" in diagnostic["reason_codes"]
+
+
+def test_overfit_diagnostics_flags_high_turnover(tmp_path: Path) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    registry["weight_sets"][0]["metrics_summary"]["turnover_vs_baseline"] = 1.5
+
+    payload = build_weight_overfit_diagnostics(candidate_registry=registry)
+
+    diagnostic = payload["candidate_diagnostics"][0]
+    assert diagnostic["component_diagnostics"]["turnover_instability"]["risk_score"] == 1.0
+    assert "HIGH_TURNOVER_INSTABILITY" in diagnostic["reason_codes"]
+
+
+def test_overfit_diagnostics_flags_extreme_weights(tmp_path: Path) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    registry["weight_sets"][0]["weights"] = {
+        "SPY": 0.0,
+        "QQQ": 1.0,
+        "SMH": 0.0,
+        "SOXX": 0.0,
+        "CASH": 0.0,
+    }
+
+    payload = build_weight_overfit_diagnostics(candidate_registry=registry)
+
+    diagnostic = payload["candidate_diagnostics"][0]
+    assert diagnostic["component_diagnostics"]["weight_extremeness"]["risk_score"] == 1.0
+    assert "EXTREME_WEIGHT_CONCENTRATION" in diagnostic["reason_codes"]
+
+
+def test_overfit_diagnostics_flags_forward_divergence(tmp_path: Path) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    evidence = _backtest_forward_evidence_payload(tmp_path, registry, return_delta=-0.08)
+
+    payload = build_weight_overfit_diagnostics(
+        candidate_registry=registry,
+        evidence_payload=evidence,
+    )
+
+    diagnostic = payload["candidate_diagnostics"][0]
+    assert diagnostic["component_diagnostics"]["forward_backtest_divergence"][
+        "risk_score"
+    ] >= 0.8
+    assert "FORWARD_BACKTEST_DIVERGENCE" in diagnostic["reason_codes"]
+
+
+def test_overfit_risk_band_mapping() -> None:
+    assert weight_overfit_risk_band(0.10) == "low"
+    assert weight_overfit_risk_band(0.25) == "medium"
+    assert weight_overfit_risk_band(0.50) == "high"
+    assert weight_overfit_risk_band(0.75) == "critical"
+
+
+def test_weight_calibration_overfit_diagnostics_cli(tmp_path: Path) -> None:
+    run = _small_search_run()
+    report_root = tmp_path / "reports"
+    data_root = tmp_path / "data"
+    paths = write_weight_search_run(run, report_root=report_root, data_root=data_root)
+    registry = register_candidate_weight_sets(
+        run.payload,
+        registry_path=tmp_path / "candidate_weight_registry.json",
+        top=1,
+    )
+    evidence = _backtest_forward_evidence_payload(tmp_path, registry)
+    evidence_path = tmp_path / "evidence.json"
+    evidence_path.write_text(json.dumps(evidence, indent=2) + "\n", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        etf_app,
+        [
+            "weight-calibration",
+            "overfit-diagnostics",
+            "--search-run-id",
+            run.run_id,
+            "--search-output-dir",
+            str(paths["report_dir"].parent),
+            "--candidate-registry-path",
+            str(tmp_path / "candidate_weight_registry.json"),
+            "--evidence-path",
+            str(evidence_path),
+            "--output-dir",
+            str(tmp_path / "overfit"),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "ETF weight overfit diagnostics" in result.output
+    assert "candidate_count=1" in result.output
+    assert "production_effect=none" in result.output
+    assert list((tmp_path / "overfit").glob("overfit_diagnostics_*.json"))
+
+
 def _raw_registry() -> dict[str, object]:
     raw = safe_load_yaml_path(DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH)
     assert isinstance(raw, dict)
@@ -917,6 +1054,63 @@ def _forward_dashboard_payload(
         "broker_action": "none",
         "manual_review_required": True,
     }
+
+
+def _search_payload_with_slice_values(
+    search_payload: dict[str, object],
+    field: str,
+    values: list[float],
+) -> dict[str, object]:
+    payload = deepcopy(search_payload)
+    candidate_id = payload["candidate_weight_sets"][0]["candidate_id"]
+    for candidate in payload["robustness_evaluation"]["candidate_evaluations"]:
+        if candidate["candidate_id"] != candidate_id:
+            continue
+        candidate["slice_metrics"] = [
+            {
+                "slice_id": f"slice_{index}",
+                "slice_type": "walk_forward_window",
+                "status": "AVAILABLE",
+                "return": value if field == "return" else value / 2.0,
+                "excess_return_vs_baseline": (
+                    value if field == "excess_return_vs_baseline" else value / 2.0
+                ),
+                "constraint_hit_rate": value if field == "constraint_hit_rate" else 0.0,
+            }
+            for index, value in enumerate(values, start=1)
+        ]
+        break
+    return payload
+
+
+def _component_score(payload: dict[str, object], component_id: str) -> float:
+    diagnostics = payload["candidate_diagnostics"][0]["component_diagnostics"]
+    return float(diagnostics[component_id]["risk_score"])
+
+
+def _backtest_forward_evidence_payload(
+    tmp_path: Path,
+    registry: dict[str, object],
+    *,
+    return_delta: float = 0.0,
+) -> dict[str, object]:
+    enrollments = enroll_candidate_weights_forward(
+        registry,
+        enrollment_path=tmp_path / "forward_enrollments.json",
+        top=1,
+    )
+    dashboard = _forward_dashboard_payload(
+        registry,
+        enrollments,
+        return_delta=return_delta,
+        drawdown_delta=-0.05 if return_delta < 0 else 0.0,
+    )
+    return build_backtest_forward_evidence_aggregation(
+        as_of=date(2026, 6, 2),
+        candidate_registry=registry,
+        forward_enrollments=enrollments,
+        forward_dashboard=dashboard,
+    )
 
 
 def _make_prices(days: int) -> pd.DataFrame:

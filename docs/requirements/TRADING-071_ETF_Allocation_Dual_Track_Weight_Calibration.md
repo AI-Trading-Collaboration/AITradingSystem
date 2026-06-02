@@ -69,8 +69,8 @@ not the primary AI-cycle conclusion window.
 |TRADING-071D|Candidate Initial Weight Set Registry|DONE|Selected candidate weights are stored as candidate-only records with safe statuses|
 |TRADING-071E|Dual-Track Forward Enrollment|DONE|Selected safe candidates can be explicitly enrolled into forward observation|
 |TRADING-071F|Backtest vs Forward Evidence Aggregator|DONE|Historical expectation and real forward evidence are linked and gap metrics are computed|
-|TRADING-071G|Overfit Risk and Stability Diagnostics|IN_PROGRESS|High-return but unstable candidates receive explainable overfit risk bands|
-|TRADING-071H|Candidate Weight Proposal Generator|READY|Only evidence-linked proposal/review actions are generated; unsafe proposal types are rejected|
+|TRADING-071G|Overfit Risk and Stability Diagnostics|DONE|High-return but unstable candidates receive explainable overfit risk bands|
+|TRADING-071H|Candidate Weight Proposal Generator|IN_PROGRESS|Only evidence-linked proposal/review actions are generated; unsafe proposal types are rejected|
 |TRADING-071I|Dual-Track Calibration Report|READY|JSON/Markdown report summarizes search, robustness, forward comparison, overfit diagnostics, proposals, and source links|
 |TRADING-071J|Reader Brief Dual-Track Calibration Section|READY|Reader Brief surfaces top candidate, forward status, overfit risk, candidate status, safety, and report link|
 |TRADING-071K|Dual-Track Calibration Validation Gate|READY|Final gate fails closed on unsafe states, unbounded search, unsafe proposals, or missing workflow pieces|
@@ -149,3 +149,9 @@ command.
   weight-calibration aggregate-evidence` 和 focused tests；缺少 forward row 或 forward
   days 不足时输出 `needs_more_forward_data`，不补造 forward conclusion。TRADING-071G
   进入 `IN_PROGRESS`，下一步实现 overfit risk and stability diagnostics。
+- 2026-06-02: TRADING-071G 完成。新增 overfit diagnostics schema、component diagnostics
+  for performance concentration、single-period dependency、regime fragility、turnover
+  instability、constraint hit instability、weight extremeness、benchmark dependency 和
+  forward/backtest divergence、low/medium/high/critical risk band mapping、JSON/Markdown
+  writer、`aits etf weight-calibration overfit-diagnostics` 和 focused tests。TRADING-071H
+  进入 `IN_PROGRESS`，下一步实现 candidate weight proposal generator。
