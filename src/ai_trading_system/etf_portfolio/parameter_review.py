@@ -15,6 +15,7 @@ from ai_trading_system.reports.report_index import (
 
 PARAMETER_REVIEW_EVIDENCE_SCHEMA_VERSION = "etf_parameter_review_evidence_v1"
 PARAMETER_REVIEW_AGGREGATION_SCHEMA_VERSION = "etf_parameter_review_aggregation_v1"
+PARAMETER_REVIEW_COMPARISON_SCHEMA_VERSION = "etf_parameter_review_candidate_comparison_v1"
 
 DEFAULT_PARAMETER_REVIEW_REPORT_DIR = (
     PROJECT_ROOT / "reports" / "etf_portfolio" / "parameter_review"
@@ -100,6 +101,44 @@ SOURCE_REPORT_TYPES = {
 
 AGGREGATION_SOURCE_REPORT_IDS: tuple[str, ...] = tuple(SOURCE_REPORT_TYPES)
 REQUIRED_AGGREGATION_REPORT_IDS = frozenset({"etf_forward_dashboard"})
+
+# Pilot comparison policy for observe-only TRADING-070 evidence triage. These values do not
+# approve production changes; TRADING-070F owns the later fail-closed governance gate.
+PARAMETER_REVIEW_COMPARISON_POLICY = {
+    "policy_id": "etf_parameter_review_comparison_v1",
+    "owner": "TRADING-070",
+    "status": "pilot_baseline",
+    "rationale": (
+        "Classify candidate-only forward evidence before manual review without mutating "
+        "production ETF allocation."
+    ),
+    "intended_effect": (
+        "Separate outperforming, risky, underperforming, mixed, blocked and "
+        "needs-more-data candidates."
+    ),
+    "validation_evidence": "Focused deterministic TRADING-070C tests.",
+    "review_condition": (
+        "Revisit after TRADING-070F governance scoring and real weekly owner review evidence."
+    ),
+    "min_forward_days": 20,
+    "min_data_coverage_ratio": 0.8,
+    "high_turnover_since_enrollment": 1.0,
+    "high_turnover_delta_vs_baseline": 0.5,
+    "high_drawdown_worsening_vs_baseline": -0.02,
+    "high_constraint_hit_rate": 0.25,
+    "backtest_gap_warning_abs": 0.05,
+}
+
+PARAMETER_REVIEW_COMPARISON_STATUSES = frozenset(
+    {
+        "outperforming_with_acceptable_risk",
+        "outperforming_but_risky",
+        "underperforming",
+        "needs_more_data",
+        "mixed_evidence",
+        "blocked_by_governance",
+    }
+)
 
 
 class ParameterReviewError(ValueError):
@@ -421,6 +460,370 @@ def render_parameter_review_aggregation_markdown(payload: Mapping[str, Any]) -> 
     return "\n".join(lines) + "\n"
 
 
+def compare_parameter_review_evidence(
+    aggregation_payload: Mapping[str, Any],
+    *,
+    generated_at: datetime | None = None,
+    policy: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    validate_parameter_review_aggregation(aggregation_payload)
+    generated = generated_at or datetime.now(tz=UTC)
+    comparison_policy = _comparison_policy(policy)
+    source_payloads = _mapping(aggregation_payload.get("source_payloads"))
+    comparisons = [
+        _candidate_evidence_comparison(
+            record,
+            source_payloads=source_payloads,
+            policy=comparison_policy,
+        )
+        for record in _records(aggregation_payload.get("evidence_records"))
+    ]
+    if _text(aggregation_payload.get("status")) == "needs_more_data" and not comparisons:
+        status = "needs_more_data"
+        reason = _text(aggregation_payload.get("reason"), "INSUFFICIENT_FORWARD_EVIDENCE")
+    else:
+        status = "available"
+        reason = ""
+    payload = {
+        "schema_version": PARAMETER_REVIEW_COMPARISON_SCHEMA_VERSION,
+        "report_type": "etf_parameter_review_candidate_comparison",
+        "comparison_id": _stable_id(
+            "etf-parameter-review-comparison",
+            aggregation_payload.get("parameter_review_id"),
+            generated.isoformat(),
+        ),
+        "parameter_review_id": aggregation_payload.get("parameter_review_id"),
+        "source_review_id": aggregation_payload.get("review_id"),
+        "status": status,
+        "reason": reason,
+        "as_of": aggregation_payload.get("as_of"),
+        "generated_at": generated.isoformat(),
+        "policy": comparison_policy,
+        "summary": _comparison_summary(comparisons),
+        "comparisons": comparisons,
+        "safety": dict(PARAMETER_REVIEW_SAFETY),
+        **PARAMETER_REVIEW_SAFETY,
+    }
+    validate_parameter_review_comparison(payload)
+    return payload
+
+
+def validate_parameter_review_comparison(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
+    if _text(payload.get("schema_version")) != PARAMETER_REVIEW_COMPARISON_SCHEMA_VERSION:
+        issues.append(
+            _issue(
+                "schema_version",
+                f"schema_version must be {PARAMETER_REVIEW_COMPARISON_SCHEMA_VERSION}",
+            )
+        )
+    issues.extend(_safety_issues(payload, owner_id="parameter_review_comparison"))
+    issues.extend(
+        _safety_issues(
+            _mapping(payload.get("safety")),
+            owner_id="parameter_review_comparison.safety",
+        )
+    )
+    for index, item in enumerate(_records(payload.get("comparisons"))):
+        status = _text(item.get("status"))
+        if status not in PARAMETER_REVIEW_COMPARISON_STATUSES:
+            issues.append(
+                _issue(
+                    f"comparisons[{index}].status",
+                    f"unsupported comparison status: {status}",
+                )
+            )
+        issues.extend(_safety_issues(item, owner_id=f"comparison[{index}]"))
+    if _text(payload.get("status")) == "available" and not isinstance(
+        payload.get("comparisons"),
+        list,
+    ):
+        issues.append(_issue("comparisons", "comparisons must be a list"))
+    if issues:
+        raise ParameterReviewError(_format_issues(issues))
+    return issues
+
+
+def _candidate_evidence_comparison(
+    record: Mapping[str, Any],
+    *,
+    source_payloads: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    metrics = _mapping(record.get("metrics"))
+    experiment_id = _text(record.get("experiment_id"))
+    experiment_row = _experiment_metrics_row(
+        _mapping(source_payloads.get("etf_experiment_comparison")),
+        experiment_id=experiment_id,
+    )
+    comparison_metrics = _comparison_metrics(metrics, experiment_row)
+    journal_outcome = _journal_outcome_summary(record)
+    weekly_status = _weekly_review_status(record)
+    status, reason_codes = _classify_candidate_comparison(
+        record,
+        comparison_metrics=comparison_metrics,
+        journal_outcome=journal_outcome,
+        weekly_status=weekly_status,
+        policy=policy,
+    )
+    return {
+        "candidate_id": record.get("candidate_id"),
+        "experiment_id": experiment_id,
+        "status": status,
+        "reason_codes": reason_codes,
+        "comparison_metrics": comparison_metrics,
+        "baseline_comparison": {
+            "excess_return": comparison_metrics.get("excess_return"),
+            "drawdown_reduction": comparison_metrics.get("drawdown_reduction"),
+            "status": _comparison_direction(comparison_metrics.get("excess_return")),
+        },
+        "benchmark_comparison": {
+            "QQQ": {
+                "excess_return": _float_or_none(metrics.get("excess_return_vs_QQQ")),
+                "status": _comparison_direction(metrics.get("excess_return_vs_QQQ")),
+            },
+            "SPY": {
+                "excess_return": _float_or_none(metrics.get("excess_return_vs_SPY")),
+                "status": _comparison_direction(metrics.get("excess_return_vs_SPY")),
+            },
+            "SMH": {
+                "excess_return": _float_or_none(metrics.get("excess_return_vs_SMH")),
+                "status": _comparison_direction(metrics.get("excess_return_vs_SMH")),
+            },
+        },
+        "backtest_expectation": {
+            "experiment_metric_status": "available" if experiment_row else "missing_data",
+            "expected_excess_return_vs_baseline": _float_or_none(
+                experiment_row.get("excess_return_vs_baseline")
+            ),
+            "forward_vs_backtest_gap": comparison_metrics.get("forward_vs_backtest_gap"),
+        },
+        "weekly_review_status": weekly_status,
+        "human_decision_outcomes": journal_outcome,
+        "evidence_source_count": len(_records(record.get("evidence_sources"))),
+        "source_review_id": record.get("review_id"),
+        "safety": dict(PARAMETER_REVIEW_SAFETY),
+        **PARAMETER_REVIEW_SAFETY,
+    }
+
+
+def _comparison_metrics(
+    metrics: Mapping[str, Any],
+    experiment_row: Mapping[str, Any],
+) -> dict[str, Any]:
+    excess_return = _float_or_none(metrics.get("excess_return_vs_baseline"))
+    expected_excess = _float_or_none(experiment_row.get("excess_return_vs_baseline"))
+    return {
+        "excess_return": excess_return,
+        "drawdown_reduction": _float_or_none(metrics.get("drawdown_delta_vs_baseline")),
+        "turnover_delta": _float_or_none(metrics.get("turnover_delta_vs_baseline")),
+        "turnover_since_enrollment": _float_or_none(metrics.get("turnover_since_enrollment")),
+        "stability_delta": _float_or_none(metrics.get("weight_stability_score")),
+        "constraint_hit_delta": _float_or_none(metrics.get("constraint_hit_rate")),
+        "regime_behavior": _regime_behavior(metrics.get("regime_transition_count")),
+        "forward_vs_backtest_gap": _subtract_optional(excess_return, expected_excess),
+        "journal_support_ratio": _journal_support_ratio(metrics),
+        "data_coverage_ratio": _float_or_none(metrics.get("data_coverage_ratio")),
+    }
+
+
+def _classify_candidate_comparison(
+    record: Mapping[str, Any],
+    *,
+    comparison_metrics: Mapping[str, Any],
+    journal_outcome: Mapping[str, Any],
+    weekly_status: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> tuple[str, list[str]]:
+    reason_codes: list[str] = []
+    if _safety_issues(record, owner_id=_text(record.get("candidate_id"), "record")):
+        return "blocked_by_governance", ["UNSAFE_PARAMETER_REVIEW_RECORD"]
+    validation = _mapping(record.get("validation_status"))
+    validation_status = _text(validation.get("status"), "available")
+    if validation_status == "blocked":
+        return "blocked_by_governance", ["VALIDATION_GATE_BLOCKED"]
+    forward_days = _int_or_default(record.get("forward_days"), 0)
+    min_days = int(policy["min_forward_days"])
+    if forward_days < min_days:
+        reason_codes.append(f"INSUFFICIENT_FORWARD_DAYS:{forward_days}<{min_days}")
+    if validation_status in ALLOWED_INCOMPLETE_STATUSES:
+        reason_codes.append("PARTIAL_EVIDENCE")
+    if comparison_metrics.get("excess_return") is None:
+        reason_codes.append("NO_BASELINE_COMPARISON")
+    coverage = comparison_metrics.get("data_coverage_ratio")
+    min_coverage = float(policy["min_data_coverage_ratio"])
+    if coverage is None or coverage < min_coverage:
+        reason_codes.append(f"LOW_DATA_COVERAGE:{_fmt_number(coverage)}<{min_coverage:.4f}")
+    if reason_codes:
+        return "needs_more_data", reason_codes
+    risk_flags = _risk_reason_codes(comparison_metrics, policy)
+    reason_codes.extend(risk_flags)
+    excess = float(comparison_metrics["excess_return"])
+    backtest_gap = comparison_metrics.get("forward_vs_backtest_gap")
+    gap_limit = float(policy["backtest_gap_warning_abs"])
+    if backtest_gap is not None and backtest_gap <= -gap_limit:
+        reason_codes.append("FORWARD_UNDERPERFORMED_BACKTEST_EXPECTATION")
+    weekly_action = _text(weekly_status.get("latest_recommended_action"))
+    if weekly_action in {"reject_candidate", "reject_pending_review", "archive_after_review"}:
+        reason_codes.append("WEEKLY_REVIEW_NEGATIVE")
+    support_status = _text(journal_outcome.get("human_support_status"))
+    if excess > 0:
+        if risk_flags:
+            return "outperforming_but_risky", reason_codes
+        if support_status in {"negative", "conflicted"} or "WEEKLY_REVIEW_NEGATIVE" in reason_codes:
+            reason_codes.append("FORWARD_EVIDENCE_CONFLICTS_WITH_HUMAN_OR_WEEKLY_REVIEW")
+            return "mixed_evidence", reason_codes
+        return "outperforming_with_acceptable_risk", reason_codes or ["FORWARD_OUTPERFORMANCE"]
+    if support_status == "supportive":
+        reason_codes.append("JOURNAL_SUPPORT_CONFLICTS_WITH_FORWARD")
+        return "mixed_evidence", reason_codes
+    if backtest_gap is not None and backtest_gap > gap_limit:
+        reason_codes.append("FORWARD_EXCEEDED_BACKTEST_BUT_BASELINE_EXCESS_NONPOSITIVE")
+        return "mixed_evidence", reason_codes
+    reason_codes.append("FORWARD_UNDERPERFORMED_BASELINE")
+    return "underperforming", reason_codes
+
+
+def _risk_reason_codes(
+    metrics: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> list[str]:
+    reasons: list[str] = []
+    turnover_delta = _float_or_none(metrics.get("turnover_delta"))
+    turnover = _float_or_none(metrics.get("turnover_since_enrollment"))
+    if (
+        turnover_delta is not None
+        and turnover_delta > float(policy["high_turnover_delta_vs_baseline"])
+    ) or (
+        turnover is not None and turnover > float(policy["high_turnover_since_enrollment"])
+    ):
+        reasons.append("HIGH_TURNOVER")
+    drawdown_reduction = _float_or_none(metrics.get("drawdown_reduction"))
+    if (
+        drawdown_reduction is not None
+        and drawdown_reduction < float(policy["high_drawdown_worsening_vs_baseline"])
+    ):
+        reasons.append("HIGH_DRAWDOWN")
+    constraint_hit_rate = _float_or_none(metrics.get("constraint_hit_delta"))
+    if (
+        constraint_hit_rate is not None
+        and constraint_hit_rate > float(policy["high_constraint_hit_rate"])
+    ):
+        reasons.append("HIGH_CONSTRAINT_HITS")
+    return reasons
+
+
+def _journal_outcome_summary(record: Mapping[str, Any]) -> dict[str, Any]:
+    metrics = _mapping(record.get("metrics"))
+    accepted = _int_or_default(metrics.get("accepted_review_count"), 0)
+    rejected = _int_or_default(metrics.get("rejected_review_count"), 0)
+    deferred = _int_or_default(metrics.get("deferred_review_count"), 0)
+    manual_count = _int_or_default(metrics.get("manual_review_count"), 0)
+    if accepted > 0 and rejected > 0:
+        support_status = "conflicted"
+    elif accepted > 0:
+        support_status = "supportive"
+    elif rejected > 0:
+        support_status = "negative"
+    elif deferred > 0 or manual_count > 0:
+        support_status = "neutral"
+    else:
+        support_status = "insufficient_review"
+    latest_note = ""
+    links = _records(record.get("journal_links"))
+    if links:
+        latest = links[-1]
+        latest_note = _text(latest.get("decision_status"))
+    return {
+        "manual_review_count": manual_count,
+        "accepted_count": accepted,
+        "rejected_count": rejected,
+        "deferred_count": deferred,
+        "journal_support_ratio": _journal_support_ratio(metrics),
+        "human_support_status": support_status,
+        "latest_human_note": latest_note,
+    }
+
+
+def _weekly_review_status(record: Mapping[str, Any]) -> dict[str, Any]:
+    links = _records(record.get("weekly_review_links"))
+    latest_action = ""
+    if links:
+        latest_action = _text(links[-1].get("recommended_observation_action"))
+    return {
+        "linked_weekly_review_count": len(links),
+        "latest_recommended_action": latest_action or "missing_data",
+    }
+
+
+def _experiment_metrics_row(
+    experiment_report: Mapping[str, Any],
+    *,
+    experiment_id: str,
+) -> dict[str, Any]:
+    for key in ("metrics_table", "ranking_table", "comparison_table"):
+        for row in _records(experiment_report.get(key)):
+            if _text(row.get("experiment_id")) == experiment_id:
+                return row
+    return {}
+
+
+def _comparison_summary(comparisons: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    counts = {status: 0 for status in sorted(PARAMETER_REVIEW_COMPARISON_STATUSES)}
+    for item in comparisons:
+        status = _text(item.get("status"))
+        if status in counts:
+            counts[status] += 1
+    return {
+        "candidate_count": len(comparisons),
+        "status_counts": counts,
+        "eligible_manual_review_candidate_count": counts[
+            "outperforming_with_acceptable_risk"
+        ],
+        "risky_outperformer_count": counts["outperforming_but_risky"],
+        "needs_more_data_count": counts["needs_more_data"],
+        "underperforming_count": counts["underperforming"],
+        "mixed_evidence_count": counts["mixed_evidence"],
+        "blocked_by_governance_count": counts["blocked_by_governance"],
+    }
+
+
+def _comparison_policy(policy: Mapping[str, Any] | None) -> dict[str, Any]:
+    merged = dict(PARAMETER_REVIEW_COMPARISON_POLICY)
+    merged.update(dict(policy or {}))
+    merged["safety"] = dict(PARAMETER_REVIEW_SAFETY)
+    merged.update(PARAMETER_REVIEW_SAFETY)
+    return merged
+
+
+def _comparison_direction(value: object) -> str:
+    parsed = _float_or_none(value)
+    if parsed is None:
+        return "needs_more_data"
+    if parsed > 0:
+        return "outperforming"
+    if parsed < 0:
+        return "underperforming"
+    return "flat"
+
+
+def _journal_support_ratio(metrics: Mapping[str, Any]) -> float | None:
+    manual_count = _int_or_default(metrics.get("manual_review_count"), 0)
+    if manual_count <= 0:
+        return None
+    accepted = _int_or_default(metrics.get("accepted_review_count"), 0)
+    return round(accepted / manual_count, 6)
+
+
+def _regime_behavior(value: object) -> str:
+    transitions = _float_or_none(value)
+    if transitions is None:
+        return "unavailable"
+    if transitions > 0:
+        return "regime_transitions_observed"
+    return "single_regime_observed"
+
+
 def _load_or_build_report_index(
     *,
     as_of: date,
@@ -611,8 +1014,23 @@ def _metrics_from_forward_row(
         hits = _float_or_none(row.get("constraint_hits_since_enrollment"))
         if hits is not None and forward_days > 0:
             constraint_hit_rate = hits / forward_days
+    drawdown_delta = _float_or_none(row.get("drawdown_delta_vs_baseline"))
+    if drawdown_delta is None:
+        drawdown_delta = _drawdown_reduction_from_values(
+            row.get("max_drawdown_since_enrollment"),
+            row.get("baseline_max_drawdown_since_enrollment"),
+        )
+    turnover_delta = _float_or_none(row.get("turnover_delta_vs_baseline"))
+    if turnover_delta is None:
+        turnover_delta = _subtract_optional(
+            row.get("turnover_since_enrollment"),
+            row.get("baseline_turnover_since_enrollment"),
+        )
     metrics = {
         "return_since_enrollment": _float_or_none(row.get("return_since_enrollment")),
+        "baseline_return_since_enrollment": _float_or_none(
+            row.get("baseline_return_since_enrollment")
+        ),
         "excess_return_vs_baseline": _float_or_none(row.get("excess_return_vs_baseline")),
         "excess_return_vs_QQQ": _float_or_none(row.get("excess_return_vs_QQQ")),
         "excess_return_vs_SPY": _float_or_none(row.get("excess_return_vs_SPY")),
@@ -620,9 +1038,15 @@ def _metrics_from_forward_row(
         "max_drawdown_since_enrollment": _float_or_none(
             row.get("max_drawdown_since_enrollment")
         ),
-        "drawdown_delta_vs_baseline": _float_or_none(row.get("drawdown_delta_vs_baseline")),
+        "baseline_max_drawdown_since_enrollment": _float_or_none(
+            row.get("baseline_max_drawdown_since_enrollment")
+        ),
+        "drawdown_delta_vs_baseline": drawdown_delta,
         "turnover_since_enrollment": _float_or_none(row.get("turnover_since_enrollment")),
-        "turnover_delta_vs_baseline": _float_or_none(row.get("turnover_delta_vs_baseline")),
+        "baseline_turnover_since_enrollment": _float_or_none(
+            row.get("baseline_turnover_since_enrollment")
+        ),
+        "turnover_delta_vs_baseline": turnover_delta,
         "constraint_hit_rate": constraint_hit_rate,
         "regime_transition_count": _float_or_none(row.get("regime_transition_count")),
         "weight_stability_score": _float_or_none(row.get("weight_stability_score")),
@@ -1017,6 +1441,25 @@ def _float_or_none(value: object) -> float | None:
     if parsed != parsed:
         return None
     return parsed
+
+
+def _subtract_optional(left: object, right: object) -> float | None:
+    left_value = _float_or_none(left)
+    right_value = _float_or_none(right)
+    if left_value is None or right_value is None:
+        return None
+    return left_value - right_value
+
+
+def _drawdown_reduction_from_values(
+    candidate_drawdown: object,
+    baseline_drawdown: object,
+) -> float | None:
+    candidate = _float_or_none(candidate_drawdown)
+    baseline = _float_or_none(baseline_drawdown)
+    if candidate is None or baseline is None:
+        return None
+    return abs(baseline) - abs(candidate)
 
 
 def _int_or_default(value: object, default: int) -> int:

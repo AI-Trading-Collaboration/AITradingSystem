@@ -65,7 +65,7 @@ reason=INSUFFICIENT_FORWARD_EVIDENCE
 |---|---|---|---|
 |TRADING-070A|Parameter Review Evidence Schema|DONE|Evidence schema validates required fields, date range, nullable metrics with reasons, source links and safety fields|
 |TRADING-070B|Forward Evidence Aggregator|DONE|`aits etf parameter-review aggregate --as-of YYYY-MM-DD` 生成 JSON/Markdown evidence package and preserves source paths|
-|TRADING-070C|Baseline vs Candidate Evidence Comparison|READY|Forward evidence compares candidate vs baseline, QQQ, SPY, SMH, backtest expectation, weekly status and journal outcome|
+|TRADING-070C|Baseline vs Candidate Evidence Comparison|DONE|Forward evidence compares candidate vs baseline, QQQ, SPY, SMH, backtest expectation, weekly status and journal outcome|
 |TRADING-070D|Decision Journal Evidence Linker|READY|Journal decisions become structured candidate evidence with support/conflict status and traceable links|
 |TRADING-070E|Parameter Change Proposal Generator|READY|Only proposal/review actions are generated; unsafe proposal types are rejected|
 |TRADING-070F|Proposal Scoring and Governance Gate|READY|Proposal scorecard is deterministic and fail-closed on insufficient/unsafe/under-evidenced proposals|
@@ -112,3 +112,10 @@ reason=INSUFFICIENT_FORWARD_EVIDENCE
   缺少 required forward evidence 时输出 `needs_more_data` /
   `INSUFFICIENT_FORWARD_EVIDENCE`，缺失 optional source 保留 warning，不写 production weights
   或 broker state。
+- 2026-06-02：TRADING-070C 完成。新增 candidate evidence comparison payload，比较
+  candidate vs ETF baseline、QQQ、SPY、SMH、historical experiment expectation、weekly
+  review status 和 decision journal outcome，输出
+  `outperforming_with_acceptable_risk`、`outperforming_but_risky`、`underperforming`、
+  `needs_more_data`、`mixed_evidence` 或 `blocked_by_governance`。比较 policy 是
+  TRADING-070 observe-only pilot baseline，后续由 TRADING-070F governance gate 接管正式
+  blocker/scorecard。

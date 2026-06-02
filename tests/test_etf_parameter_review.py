@@ -12,6 +12,7 @@ from ai_trading_system.etf_portfolio.parameter_review import (
     ParameterReviewError,
     build_parameter_review_aggregation,
     build_parameter_review_evidence_record,
+    compare_parameter_review_evidence,
     parameter_review_evidence_to_json,
     validate_parameter_review_evidence_record,
 )
@@ -201,6 +202,112 @@ def test_parameter_review_cli_aggregate_writes_outputs(tmp_path) -> None:
     assert "production_effect=none" in result.output
 
 
+def test_parameter_review_comparison_outperforming_baseline_classified_correctly(
+    tmp_path,
+) -> None:
+    payload = _aggregation_payload(tmp_path)
+
+    comparison = compare_parameter_review_evidence(
+        payload,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    item = comparison["comparisons"][0]
+
+    assert item["status"] == "outperforming_with_acceptable_risk"
+    assert item["comparison_metrics"]["excess_return"] == 0.02
+    assert item["comparison_metrics"]["drawdown_reduction"] == pytest.approx(0.02)
+    assert item["benchmark_comparison"]["QQQ"]["status"] == "outperforming"
+    assert comparison["summary"]["eligible_manual_review_candidate_count"] == 1
+
+
+def test_parameter_review_comparison_underperforming_classified_correctly(tmp_path) -> None:
+    payload = _aggregation_payload(
+        tmp_path,
+        forward_overrides={
+            "return_since_enrollment": -0.01,
+            "excess_return_vs_baseline": -0.03,
+            "excess_return_vs_QQQ": -0.02,
+            "excess_return_vs_SPY": -0.01,
+        },
+        decision_status="reject_recommendation",
+    )
+
+    comparison = compare_parameter_review_evidence(
+        payload,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert comparison["comparisons"][0]["status"] == "underperforming"
+    assert "FORWARD_UNDERPERFORMED_BASELINE" in comparison["comparisons"][0]["reason_codes"]
+
+
+def test_parameter_review_comparison_high_turnover_changes_status(tmp_path) -> None:
+    payload = _aggregation_payload(
+        tmp_path,
+        forward_overrides={"turnover_since_enrollment": 1.4},
+    )
+
+    comparison = compare_parameter_review_evidence(
+        payload,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    item = comparison["comparisons"][0]
+
+    assert item["status"] == "outperforming_but_risky"
+    assert "HIGH_TURNOVER" in item["reason_codes"]
+
+
+def test_parameter_review_comparison_high_drawdown_changes_status(tmp_path) -> None:
+    payload = _aggregation_payload(
+        tmp_path,
+        forward_overrides={
+            "max_drawdown_since_enrollment": -0.12,
+            "baseline_max_drawdown_since_enrollment": -0.05,
+        },
+    )
+
+    comparison = compare_parameter_review_evidence(
+        payload,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    item = comparison["comparisons"][0]
+
+    assert item["status"] == "outperforming_but_risky"
+    assert "HIGH_DRAWDOWN" in item["reason_codes"]
+
+
+def test_parameter_review_comparison_insufficient_forward_evidence_handled(tmp_path) -> None:
+    payload = _aggregation_payload(tmp_path, include_forward_dashboard=False)
+
+    comparison = compare_parameter_review_evidence(
+        payload,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert comparison["status"] == "needs_more_data"
+    assert comparison["reason"] == "INSUFFICIENT_FORWARD_EVIDENCE"
+    assert comparison["comparisons"] == []
+
+
+def test_parameter_review_comparison_journal_support_affects_summary(tmp_path) -> None:
+    payload = _aggregation_payload(
+        tmp_path,
+        forward_overrides={"excess_return_vs_baseline": -0.01},
+        decision_status="accept_recommendation",
+    )
+
+    comparison = compare_parameter_review_evidence(
+        payload,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    item = comparison["comparisons"][0]
+
+    assert item["status"] == "mixed_evidence"
+    assert item["human_decision_outcomes"]["human_support_status"] == "supportive"
+    assert item["comparison_metrics"]["journal_support_ratio"] == 1.0
+    assert "JOURNAL_SUPPORT_CONFLICTS_WITH_FORWARD" in item["reason_codes"]
+
+
 def _evidence_record(
     *,
     review_start_date: date = date(2026, 5, 1),
@@ -278,11 +385,13 @@ def _aggregation_context(
     *,
     include_forward_dashboard: bool = True,
     include_watchlist: bool = False,
+    forward_overrides: dict[str, object] | None = None,
+    decision_status: str = "accept_recommendation",
 ) -> dict[str, object]:
     records = []
     if include_forward_dashboard:
         forward_path = tmp_path / "forward_dashboard_2026-06-01.json"
-        _write_json(forward_path, _forward_dashboard_payload())
+        _write_json(forward_path, _forward_dashboard_payload(forward_overrides))
         records.append(_report_index_record("etf_forward_dashboard", forward_path))
     weekly_path = tmp_path / "weekly_review_2026-06-01.json"
     journal_path = tmp_path / "decision_journal_2026-06-01.json"
@@ -290,7 +399,7 @@ def _aggregation_context(
     selection_path = tmp_path / "candidate_selection_report.json"
     validation_path = tmp_path / "forward_validation_2026-06-01.json"
     _write_json(weekly_path, _weekly_review_payload())
-    _write_json(journal_path, _decision_journal_report_payload())
+    _write_json(journal_path, _decision_journal_report_payload(decision_status))
     _write_json(comparison_path, _experiment_comparison_payload())
     _write_json(selection_path, _candidate_selection_payload())
     _write_json(validation_path, _validation_payload("etf_forward_validation"))
@@ -310,6 +419,26 @@ def _aggregation_context(
     return {"report_index": {"status": "PASS", "reports": records}}
 
 
+def _aggregation_payload(
+    tmp_path,
+    *,
+    include_forward_dashboard: bool = True,
+    forward_overrides: dict[str, object] | None = None,
+    decision_status: str = "accept_recommendation",
+) -> dict[str, object]:
+    context = _aggregation_context(
+        tmp_path,
+        include_forward_dashboard=include_forward_dashboard,
+        forward_overrides=forward_overrides,
+        decision_status=decision_status,
+    )
+    return build_parameter_review_aggregation(
+        as_of=date(2026, 6, 1),
+        report_index_payload=context["report_index"],
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+
 def _report_index_record(report_id: str, path) -> dict[str, object]:
     return {
         "report_id": report_id,
@@ -321,32 +450,35 @@ def _report_index_record(report_id: str, path) -> dict[str, object]:
     }
 
 
-def _forward_dashboard_payload() -> dict[str, object]:
+def _forward_dashboard_payload(overrides: dict[str, object] | None = None) -> dict[str, object]:
+    row = {
+        "shadow_id": "shadow-1",
+        "candidate_id": "unit_run:base_ai_growth",
+        "experiment_id": "base_ai_growth",
+        "status": "active",
+        "days_since_enrollment": 22,
+        "return_since_enrollment": 0.04,
+        "baseline_return_since_enrollment": 0.02,
+        "excess_return_vs_baseline": 0.02,
+        "excess_return_vs_QQQ": 0.01,
+        "excess_return_vs_SPY": 0.03,
+        "excess_return_vs_SMH": -0.01,
+        "max_drawdown_since_enrollment": -0.05,
+        "baseline_max_drawdown_since_enrollment": -0.07,
+        "turnover_since_enrollment": 0.2,
+        "baseline_turnover_since_enrollment": 0.1,
+        "constraint_hits_since_enrollment": 0,
+        "last_evaluated_date": "2026-06-01",
+        "metric_null_reasons": {},
+    }
+    row.update(overrides or {})
     return {
         "schema_version": "etf_forward_dashboard_v1",
         "report_type": "etf_forward_dashboard",
         "status": "AVAILABLE",
         "as_of": "2026-06-01",
         "baseline_config_hash": "baseline_hash",
-        "candidate_summary_table": [
-            {
-                "shadow_id": "shadow-1",
-                "candidate_id": "unit_run:base_ai_growth",
-                "experiment_id": "base_ai_growth",
-                "status": "active",
-                "days_since_enrollment": 22,
-                "return_since_enrollment": 0.04,
-                "excess_return_vs_baseline": 0.02,
-                "excess_return_vs_QQQ": 0.01,
-                "excess_return_vs_SPY": 0.03,
-                "excess_return_vs_SMH": -0.01,
-                "max_drawdown_since_enrollment": -0.05,
-                "turnover_since_enrollment": 0.2,
-                "constraint_hits_since_enrollment": 0,
-                "last_evaluated_date": "2026-06-01",
-                "metric_null_reasons": {},
-            }
-        ],
+        "candidate_summary_table": [row],
         "observe_only": True,
         "production_effect": "none",
         "broker_action": "none",
@@ -380,7 +512,7 @@ def _weekly_review_payload() -> dict[str, object]:
     }
 
 
-def _decision_journal_report_payload() -> dict[str, object]:
+def _decision_journal_report_payload(decision_status: str) -> dict[str, object]:
     return {
         "schema_version": "etf_portfolio_decision_journal_report_v1",
         "report_type": "etf_portfolio_decision_journal_report",
@@ -389,7 +521,7 @@ def _decision_journal_report_payload() -> dict[str, object]:
             {
                 "decision_id": "decision-1",
                 "linked_candidate": "unit_run:base_ai_growth",
-                "decision_status": "accept_recommendation",
+                "decision_status": decision_status,
                 "confidence": 0.8,
                 "source_weekly_review": "weekly_review_2026-06-01.json",
                 "linked_report": "decision_journal_2026-06-01.json",
@@ -412,7 +544,15 @@ def _experiment_comparison_payload() -> dict[str, object]:
             "pack_id": "etf_calibration_v1",
             "config_hash": "baseline_hash",
         },
-        "metrics_table": [{"experiment_id": "base_ai_growth", "total_return": 0.1}],
+        "metrics_table": [
+            {
+                "experiment_id": "base_ai_growth",
+                "total_return": 0.1,
+                "excess_return_vs_baseline": 0.03,
+                "drawdown_reduction_vs_baseline": 0.01,
+                "turnover": 0.4,
+            }
+        ],
         "observe_only": True,
         "production_effect": "none",
         "broker_action": "none",
