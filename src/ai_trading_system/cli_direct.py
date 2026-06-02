@@ -308,6 +308,16 @@ def _dispatch(args: list[str]) -> None:
             ),
         )
         return
+    if args[:3] == ["etf", "ops", "dry-run"]:
+        etf_cli.ops_dry_run_command(
+            cadence=_option(args, "--cadence", "daily") or "daily",
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            root_path=_path_option_with_default(args, "--root-path", etf_cli.PROJECT_ROOT),
+            output_path=_optional_path(args, "--output-path"),
+            include_optional=not _flag(args, "--skip-optional"),
+            no_write=_flag(args, "--no-write"),
+        )
+        return
     if args[:2] == ["parameters", "shadow-backtest"]:
         cli.parameters_shadow_backtest_command(
             latest=_flag(args, "--latest"),

@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from datetime import UTC, date, datetime
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, cast
 
 import pandas as pd
 import typer
@@ -144,6 +144,11 @@ from ai_trading_system.etf_portfolio.models import (
     DEFAULT_ETF_TARGET_PATH,
     ETFAllocationRecord,
     load_etf_config_bundle,
+)
+from ai_trading_system.etf_portfolio.operations import (
+    OperationsGraphCadence,
+    build_operations_scheduler_dry_run,
+    write_operations_scheduler_dry_run,
 )
 from ai_trading_system.etf_portfolio.p1 import (
     append_experiment_registry,
@@ -335,6 +340,7 @@ weight_calibration_app = typer.Typer(
     help="ETF dual-track weight calibration。",
     no_args_is_help=True,
 )
+ops_app = typer.Typer(help="ETF operations workflow planning。", no_args_is_help=True)
 governance_app = typer.Typer(help="ETF P1 weight governance。", no_args_is_help=True)
 events_app = typer.Typer(help="ETF P1 event risk flags。", no_args_is_help=True)
 p2_app = typer.Typer(help="ETF P2 observe-only contracts。", no_args_is_help=True)
@@ -362,10 +368,15 @@ etf_app.add_typer(weekly_review_app, name="weekly-review")
 etf_app.add_typer(decision_journal_app, name="decision-journal")
 etf_app.add_typer(parameter_review_app, name="parameter-review")
 etf_app.add_typer(weight_calibration_app, name="weight-calibration")
+etf_app.add_typer(ops_app, name="ops")
 etf_app.add_typer(governance_app, name="governance")
 etf_app.add_typer(events_app, name="events")
 etf_app.add_typer(p2_app, name="p2")
 etf_app.add_typer(credibility_app, name="credibility")
+
+DEFAULT_ETF_OPERATIONS_DRY_RUN_DIR = (
+    PROJECT_ROOT / "outputs" / "dry_runs" / "etf_operations"
+)
 
 
 @etf_app.command("validate-config")
@@ -376,6 +387,70 @@ def validate_config_command() -> None:
     typer.echo(f"model_version={config.strategy.model.version}")
     typer.echo(f"config_hash={config.config_hash}")
     typer.echo(f"assets={', '.join(config.assets.assets)}")
+
+
+@ops_app.command("dry-run")
+def ops_dry_run_command(
+    cadence: Annotated[
+        str,
+        typer.Option("--cadence", help="Operations cadence: daily/weekly/biweekly/monthly。"),
+    ],
+    as_of: Annotated[
+        str,
+        typer.Option("--as-of", "--date", help="评估日期 YYYY-MM-DD。"),
+    ],
+    root_path: Annotated[
+        Path,
+        typer.Option("--root-path", help="扫描既有 artifacts 的根目录。"),
+    ] = PROJECT_ROOT,
+    output_path: Annotated[
+        Path | None,
+        typer.Option("--output-path", help="dry-run JSON 输出路径。"),
+    ] = None,
+    include_optional: Annotated[
+        bool,
+        typer.Option(
+            "--include-optional/--skip-optional",
+            help="是否把 optional steps 纳入计划。",
+        ),
+    ] = True,
+    no_write: Annotated[
+        bool,
+        typer.Option("--no-write", help="只打印 dry-run 摘要，不写 JSON artifact。"),
+    ] = False,
+) -> None:
+    """只规划 ETF operations cadence，不执行命令、不写 production state。"""
+    requested_cadence = _parse_operations_graph_cadence(cadence)
+    report = build_operations_scheduler_dry_run(
+        cadence=requested_cadence,
+        as_of=as_of,
+        root_path=root_path,
+        include_optional=include_optional,
+    )
+    output = output_path or (
+        DEFAULT_ETF_OPERATIONS_DRY_RUN_DIR
+        / f"operations_dry_run_{report.cadence}_{report.as_of_date.isoformat()}.json"
+    )
+    if not no_write:
+        write_operations_scheduler_dry_run(report, output)
+        typer.echo(f"ETF operations dry-run JSON：{output}")
+    else:
+        typer.echo("ETF operations dry-run JSON：not_written")
+    typer.echo(f"dry_run_id={report.dry_run_id}")
+    typer.echo(f"cadence={report.cadence}")
+    typer.echo(f"as_of_date={report.as_of_date.isoformat()}")
+    typer.echo(f"status={report.status}")
+    typer.echo(f"planned_step_count={len(report.planned_steps)}")
+    typer.echo(f"blocking_failure_count={len(report.blocking_failures)}")
+    typer.echo(f"warning_count={len(report.warnings)}")
+    typer.echo("dry_run_only=true")
+    typer.echo("commands_executed=false")
+    typer.echo("production_state_mutated=false")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
 
 
 @data_app.command("ingest")
@@ -4562,6 +4637,14 @@ def _weekly_review_date(*, as_of: str | None, latest: bool) -> date:
     if latest and as_of is not None:
         raise typer.BadParameter("--latest and --as-of cannot be combined")
     return date.today() if latest or as_of is None else _parse_date(as_of)
+
+
+def _parse_operations_graph_cadence(value: str) -> OperationsGraphCadence:
+    if value not in {"daily", "weekly", "biweekly", "monthly"}:
+        raise typer.BadParameter(
+            "--cadence must be one of: daily, weekly, biweekly, monthly"
+        )
+    return cast(OperationsGraphCadence, value)
 
 
 def _run_weekly_review_generate(

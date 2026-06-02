@@ -5,7 +5,7 @@ import re
 from datetime import UTC, date, datetime
 from glob import glob
 from pathlib import Path
-from typing import Any, Literal, Self
+from typing import Any, Literal, Self, cast
 
 import yaml
 from pydantic import BaseModel, Field, model_validator
@@ -64,6 +64,18 @@ OperationsOwnerChecklistItemCategory = Literal[
     "manual_review_event",
     "owner_signoff",
 ]
+OperationsSchedulerDryRunStatus = Literal[
+    "ready",
+    "warning",
+    "manual_review_required",
+    "blocked",
+]
+OperationsDryRunStepStatus = Literal[
+    "planned",
+    "warning",
+    "manual_review_required",
+    "blocked",
+]
 OperationsRuntimeClass = Literal["fast", "medium", "slow"]
 OperationsGraphCadence = Literal["daily", "weekly", "biweekly", "monthly"]
 OperationsArtifactFreshnessStatus = Literal[
@@ -100,6 +112,7 @@ OPERATIONS_FAILURE_POLICY_SCHEMA_VERSION = "etf_operations_failure_policy_v1"
 OPERATIONS_OWNER_REVIEW_CHECKLIST_SCHEMA_VERSION = (
     "etf_operations_owner_review_checklist_v1"
 )
+OPERATIONS_SCHEDULER_DRY_RUN_SCHEMA_VERSION = "etf_operations_scheduler_dry_run_v1"
 _ARTIFACT_PLACEHOLDER_RE = re.compile(r"\{[^}]+\}")
 _ARTIFACT_DATE_RE = re.compile(r"(?P<date>\d{4}[-_]\d{2}[-_]\d{2})")
 _TEXT_GENERATED_AT_RE = re.compile(
@@ -554,6 +567,80 @@ class ETFOperationsOwnerReviewChecklist(BaseModel):
         return self
 
 
+class ETFOperationsDryRunStep(BaseModel):
+    step_id: str = Field(min_length=1)
+    command: str = Field(min_length=1)
+    status: OperationsDryRunStepStatus
+    dependencies: list[str] = Field(default_factory=list)
+    external_dependencies: list[str] = Field(default_factory=list)
+    required: bool
+    failure_policy: OperationsFailurePolicy
+    estimated_runtime_class: OperationsRuntimeClass
+    owner_review_required: bool
+    expected_outputs: list[str] = Field(default_factory=list)
+    related_artifact_ids: list[str] = Field(default_factory=list)
+    blocking_event_ids: list[str] = Field(default_factory=list)
+    warning_event_ids: list[str] = Field(default_factory=list)
+    manual_review_event_ids: list[str] = Field(default_factory=list)
+    command_would_execute: bool = True
+    command_executed: bool = False
+
+
+class ETFOperationsSchedulerDryRunReport(BaseModel):
+    schema_version: Literal["etf_operations_scheduler_dry_run_v1"] = (
+        OPERATIONS_SCHEDULER_DRY_RUN_SCHEMA_VERSION
+    )
+    dry_run_id: str = Field(min_length=1)
+    cadence: OperationsGraphCadence
+    as_of_date: date
+    generated_at: datetime
+    read_only: bool = True
+    dry_run_only: bool = True
+    commands_executed: bool = False
+    production_state_mutated: bool = False
+    safety: ETFOperationsScheduleSafety
+    status: OperationsSchedulerDryRunStatus
+    planned_steps: list[ETFOperationsDryRunStep] = Field(min_length=1)
+    execution_order: list[str] = Field(default_factory=list)
+    skipped_optional_steps: list[str] = Field(default_factory=list)
+    blocking_failures: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    expected_outputs: list[str] = Field(default_factory=list)
+    source_graph_schema_version: str
+    source_freshness_schema_version: str
+    source_failure_policy_schema_version: str
+    owner_checklist_schema_version: str | None = None
+    owner_checklist_status: OperationsOwnerChecklistStatus | None = None
+    owner_checklist_item_count: int = Field(ge=0)
+
+    @model_validator(mode="after")
+    def validate_dry_run_safety(self) -> Self:
+        if not self.dry_run_only:
+            raise ValueError("ETF operations scheduler dry-run must remain dry_run_only")
+        if self.commands_executed:
+            raise ValueError("ETF operations scheduler dry-run must not execute commands")
+        if self.production_state_mutated:
+            raise ValueError(
+                "ETF operations scheduler dry-run must not mutate production state"
+            )
+        if [step.step_id for step in self.planned_steps] != self.execution_order:
+            raise ValueError(
+                "ETF operations scheduler dry-run planned steps must match execution_order"
+            )
+        for step in self.planned_steps:
+            if step.command_executed:
+                raise ValueError(
+                    "ETF operations scheduler dry-run planned steps must not execute commands"
+                )
+        for field, expected in OPERATIONS_SCHEDULE_SAFETY.items():
+            if getattr(self.safety, field) != expected:
+                raise ValueError(
+                    "ETF operations scheduler dry-run safety "
+                    f"{field} must be {expected!r}"
+                )
+        return self
+
+
 def load_operations_schedule_config(
     path: Path | str = DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH,
 ) -> ETFOperationsScheduleConfig:
@@ -850,6 +937,103 @@ def build_operations_owner_review_checklist(
             item.item_id for item in items if item.category == "manual_review_event"
         ],
     )
+
+
+def build_operations_scheduler_dry_run(
+    *,
+    cadence: OperationsGraphCadence,
+    as_of: date | datetime | str,
+    root_path: Path | str = PROJECT_ROOT,
+    config: ETFOperationsScheduleConfig | None = None,
+    include_optional: bool = True,
+    skipped_optional_step_ids: set[str] | None = None,
+    generated_at: datetime | None = None,
+) -> ETFOperationsSchedulerDryRunReport:
+    schedule = config or load_operations_schedule_config()
+    requested_cadence = _coerce_graph_cadence(cadence)
+    requested_as_of = _coerce_date(as_of)
+    generated = _coerce_datetime(generated_at or datetime.now(tz=UTC))
+    graph = _build_operations_command_graph(
+        schedule,
+        cadence=requested_cadence,
+        include_optional=include_optional,
+        skipped_optional_step_ids=skipped_optional_step_ids,
+    )
+    freshness = check_operations_artifact_freshness(
+        graph,
+        as_of=requested_as_of,
+        root_path=root_path,
+        checked_at=generated,
+        config=schedule,
+    )
+    failure_report = evaluate_operations_failure_policy(
+        freshness,
+        config=schedule,
+        evaluated_at=generated,
+    )
+    owner_checklist = _dry_run_owner_checklist(
+        cadence=requested_cadence,
+        as_of_date=requested_as_of,
+        failure_report=failure_report,
+        config=schedule,
+        generated_at=generated,
+    )
+    planned_steps = _dry_run_planned_steps(
+        graph=graph,
+        freshness_report=freshness,
+        failure_report=failure_report,
+    )
+
+    return ETFOperationsSchedulerDryRunReport(
+        dry_run_id=_operations_dry_run_id(
+            cadence=requested_cadence,
+            as_of_date=requested_as_of,
+            generated_at=generated,
+        ),
+        cadence=requested_cadence,
+        as_of_date=requested_as_of,
+        generated_at=generated,
+        read_only=True,
+        dry_run_only=True,
+        commands_executed=False,
+        production_state_mutated=False,
+        safety=graph.safety,
+        status=_operations_dry_run_status(
+            failure_report=failure_report,
+            owner_checklist=owner_checklist,
+        ),
+        planned_steps=planned_steps,
+        execution_order=list(graph.execution_order),
+        skipped_optional_steps=list(graph.skipped_optional_steps),
+        blocking_failures=list(failure_report.blocking_events),
+        warnings=list(failure_report.warning_events),
+        expected_outputs=_normalized_unique_values(
+            [output for node in graph.nodes for output in node.outputs],
+            field_name="operations_scheduler_dry_run.expected_outputs",
+        ),
+        source_graph_schema_version=graph.schema_version,
+        source_freshness_schema_version=freshness.schema_version,
+        source_failure_policy_schema_version=failure_report.schema_version,
+        owner_checklist_schema_version=(
+            owner_checklist.schema_version if owner_checklist is not None else None
+        ),
+        owner_checklist_status=(
+            owner_checklist.checklist_status if owner_checklist is not None else None
+        ),
+        owner_checklist_item_count=(
+            len(owner_checklist.items) if owner_checklist is not None else 0
+        ),
+    )
+
+
+def write_operations_scheduler_dry_run(
+    report: ETFOperationsSchedulerDryRunReport,
+    path: Path | str,
+) -> Path:
+    output_path = Path(path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(report.model_dump_json(indent=2), encoding="utf-8")
+    return output_path
 
 
 def _build_operations_command_graph(
@@ -1392,6 +1576,137 @@ def _owner_review_checklist_status(
     if failure_report.pipeline_status == "manual_review_required":
         return "manual_review_required"
     return "ready"
+
+
+def _coerce_graph_cadence(cadence: str) -> OperationsGraphCadence:
+    if cadence not in _GRAPH_PIPELINE_FIELD_BY_CADENCE:
+        valid = ", ".join(sorted(_GRAPH_PIPELINE_FIELD_BY_CADENCE))
+        raise OperationsCommandGraphError(
+            f"invalid operations graph cadence: {cadence!r}; expected one of {valid}"
+        )
+    return cast(OperationsGraphCadence, cadence)
+
+
+def _operations_dry_run_id(
+    *,
+    cadence: OperationsGraphCadence,
+    as_of_date: date,
+    generated_at: datetime,
+) -> str:
+    timestamp = generated_at.strftime("%Y%m%dT%H%M%SZ")
+    return f"{cadence}:{as_of_date.isoformat()}:{timestamp}"
+
+
+def _dry_run_owner_checklist(
+    *,
+    cadence: OperationsGraphCadence,
+    as_of_date: date,
+    failure_report: ETFOperationsFailurePolicyReport,
+    config: ETFOperationsScheduleConfig,
+    generated_at: datetime,
+) -> ETFOperationsOwnerReviewChecklist | None:
+    if cadence not in {"daily", "weekly", "monthly"}:
+        return None
+    return build_operations_owner_review_checklist(
+        cadence=cadence,
+        as_of=as_of_date,
+        failure_report=failure_report,
+        config=config,
+        generated_at=generated_at,
+    )
+
+
+def _operations_dry_run_status(
+    *,
+    failure_report: ETFOperationsFailurePolicyReport,
+    owner_checklist: ETFOperationsOwnerReviewChecklist | None,
+) -> OperationsSchedulerDryRunStatus:
+    if failure_report.pipeline_status == "blocked":
+        return "blocked"
+    if (
+        owner_checklist is not None
+        and owner_checklist.checklist_status == "blocked"
+    ):
+        return "blocked"
+    if failure_report.pipeline_status == "manual_review_required":
+        return "manual_review_required"
+    if (
+        owner_checklist is not None
+        and owner_checklist.checklist_status == "manual_review_required"
+    ):
+        return "manual_review_required"
+    if failure_report.pipeline_status == "warning":
+        return "warning"
+    return "ready"
+
+
+def _dry_run_planned_steps(
+    *,
+    graph: ETFOperationsCommandGraph,
+    freshness_report: ETFOperationsArtifactFreshnessReport,
+    failure_report: ETFOperationsFailurePolicyReport,
+) -> list[ETFOperationsDryRunStep]:
+    artifacts_by_step: dict[str, list[ETFOperationsArtifactStatus]] = {}
+    for artifact in freshness_report.artifacts:
+        artifacts_by_step.setdefault(artifact.source_step, []).append(artifact)
+    events_by_step: dict[str, list[ETFOperationsFailurePolicyEvent]] = {}
+    for event in failure_report.events:
+        events_by_step.setdefault(event.source_step, []).append(event)
+
+    return [
+        _dry_run_planned_step(
+            node,
+            artifacts=artifacts_by_step.get(node.node_id, []),
+            events=events_by_step.get(node.node_id, []),
+        )
+        for node in graph.nodes
+    ]
+
+
+def _dry_run_planned_step(
+    node: ETFOperationsCommandGraphNode,
+    *,
+    artifacts: list[ETFOperationsArtifactStatus],
+    events: list[ETFOperationsFailurePolicyEvent],
+) -> ETFOperationsDryRunStep:
+    return ETFOperationsDryRunStep(
+        step_id=node.node_id,
+        command=node.command,
+        status=_dry_run_step_status(events),
+        dependencies=list(node.dependencies),
+        external_dependencies=list(node.external_dependencies),
+        required=node.required,
+        failure_policy=node.failure_policy,
+        estimated_runtime_class=node.estimated_runtime_class,
+        owner_review_required=node.owner_review_required,
+        expected_outputs=list(node.outputs),
+        related_artifact_ids=[artifact.artifact_id for artifact in artifacts],
+        blocking_event_ids=[
+            event.event_id
+            for event in events
+            if event.blocks_pipeline or event.blocks_dependent_steps
+        ],
+        warning_event_ids=[
+            event.event_id for event in events if event.severity == "warning"
+        ],
+        manual_review_event_ids=[
+            event.event_id for event in events if event.requires_manual_review
+        ],
+        command_would_execute=True,
+        command_executed=False,
+    )
+
+
+def _dry_run_step_status(
+    events: list[ETFOperationsFailurePolicyEvent],
+) -> OperationsDryRunStepStatus:
+    if any(event.blocks_pipeline or event.blocks_dependent_steps for event in events):
+        return "blocked"
+    if any(event.requires_manual_review for event in events):
+        return "manual_review_required"
+    if any(event.severity == "warning" for event in events):
+        return "warning"
+    return "planned"
 
 
 def _artifact_source_step_order(graph: ETFOperationsCommandGraph) -> tuple[str, ...]:

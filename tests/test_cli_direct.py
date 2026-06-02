@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import shlex
+from pathlib import Path
 
 from ai_trading_system import cli_direct
 from ai_trading_system.scheduled_tasks import load_scheduled_tasks_config
@@ -77,6 +79,77 @@ def test_cli_direct_score_daily_threads_llm_request_profile(monkeypatch) -> None
 
     assert exit_code == 0
     assert captured["llm_request_profile"] == "risk_event_triaged_official_candidates"
+
+
+def test_cli_direct_dispatches_etf_ops_dry_run(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    captured: dict[str, object] = {}
+
+    def fake_ops_dry_run_command(**kwargs: object) -> None:
+        captured.update(kwargs)
+
+    monkeypatch.setattr(
+        cli_direct.etf_cli,
+        "ops_dry_run_command",
+        fake_ops_dry_run_command,
+    )
+
+    exit_code = cli_direct.main(
+        [
+            "etf",
+            "ops",
+            "dry-run",
+            "--cadence",
+            "weekly",
+            "--as-of",
+            "2026-06-03",
+            "--root-path",
+            str(tmp_path),
+            "--output-path",
+            str(tmp_path / "dry_run.json"),
+            "--skip-optional",
+            "--no-write",
+        ]
+    )
+
+    assert exit_code == 0
+    assert captured["cadence"] == "weekly"
+    assert captured["as_of"] == "2026-06-03"
+    assert captured["root_path"] == tmp_path
+    assert captured["output_path"] == tmp_path / "dry_run.json"
+    assert captured["include_optional"] is False
+    assert captured["no_write"] is True
+
+
+def test_cli_direct_etf_ops_dry_run_writes_non_executing_json(tmp_path: Path) -> None:
+    output_path = tmp_path / "operations_dry_run.json"
+
+    exit_code = cli_direct.main(
+        [
+            "etf",
+            "ops",
+            "dry-run",
+            "--cadence",
+            "daily",
+            "--as-of",
+            "2026-06-03",
+            "--root-path",
+            str(tmp_path),
+            "--output-path",
+            str(output_path),
+        ]
+    )
+
+    payload = json.loads(output_path.read_text(encoding="utf-8"))
+    assert exit_code == 0
+    assert payload["schema_version"] == "etf_operations_scheduler_dry_run_v1"
+    assert payload["cadence"] == "daily"
+    assert payload["dry_run_only"] is True
+    assert payload["commands_executed"] is False
+    assert payload["production_state_mutated"] is False
+    assert payload["planned_steps"]
 
 
 def test_cli_direct_dispatches_daily_feedback_reports(monkeypatch) -> None:

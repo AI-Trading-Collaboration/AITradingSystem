@@ -14,12 +14,14 @@ from ai_trading_system.etf_portfolio.operations import (
     OPERATIONS_FAILURE_POLICY_SCHEMA_VERSION,
     OPERATIONS_OWNER_REVIEW_CHECKLIST_SCHEMA_VERSION,
     OPERATIONS_SCHEDULE_SCHEMA_VERSION,
+    OPERATIONS_SCHEDULER_DRY_RUN_SCHEMA_VERSION,
     ETFOperationsScheduleConfig,
     OperationsCommandGraphError,
     build_biweekly_operations_command_graph,
     build_daily_operations_command_graph,
     build_monthly_operations_command_graph,
     build_operations_owner_review_checklist,
+    build_operations_scheduler_dry_run,
     build_weekly_operations_command_graph,
     check_operations_artifact_freshness,
     evaluate_operations_failure_policy,
@@ -1103,6 +1105,177 @@ def test_operations_owner_review_checklist_rejects_cadence_mismatch(
         )
 
 
+def test_operations_scheduler_dry_run_daily_reports_plan_and_blockers(
+    tmp_path: Path,
+) -> None:
+    dry_run = build_operations_scheduler_dry_run(
+        cadence="daily",
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+
+    assert dry_run.schema_version == OPERATIONS_SCHEDULER_DRY_RUN_SCHEMA_VERSION
+    assert dry_run.dry_run_id == "daily:2026-06-03:20260603T120000Z"
+    assert dry_run.cadence == "daily"
+    assert dry_run.status == "blocked"
+    assert dry_run.dry_run_only is True
+    assert dry_run.commands_executed is False
+    assert dry_run.production_state_mutated is False
+    assert dry_run.execution_order == [step.step_id for step in dry_run.planned_steps]
+    assert dry_run.execution_order[0] == "data_freshness_check"
+    assert "data_freshness_check:1:artifact_missing" in dry_run.blocking_failures
+    assert dry_run.owner_checklist_status == "blocked"
+    assert dry_run.owner_checklist_item_count > 0
+
+
+def test_operations_scheduler_dry_run_weekly_preserves_dependency_order(
+    tmp_path: Path,
+) -> None:
+    dry_run = build_operations_scheduler_dry_run(
+        cadence="weekly",
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+    position = {step_id: index for index, step_id in enumerate(dry_run.execution_order)}
+
+    assert dry_run.cadence == "weekly"
+    assert dry_run.execution_order[0] == "weekly_review_aggregate"
+    assert position["weekly_review_aggregate"] < position["weekly_review_generate"]
+    assert position["weekly_review_generate"] < position["operations_report"]
+    assert dry_run.owner_checklist_status == "blocked"
+    assert all(step.command_executed is False for step in dry_run.planned_steps)
+
+
+def test_operations_scheduler_dry_run_monthly_includes_expected_outputs(
+    tmp_path: Path,
+) -> None:
+    dry_run = build_operations_scheduler_dry_run(
+        cadence="monthly",
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+
+    assert dry_run.cadence == "monthly"
+    assert "outputs/reports/data_quality_{as_of}.md" in dry_run.expected_outputs
+    assert (
+        "reports/etf_portfolio/operations/monthly/operations_health_{as_of}.json"
+        in dry_run.expected_outputs
+    )
+    assert "weight_calibration_search" in dry_run.execution_order
+    assert dry_run.owner_checklist_status == "blocked"
+
+
+def test_operations_scheduler_dry_run_missing_required_artifact_blocks(
+    tmp_path: Path,
+) -> None:
+    dry_run = build_operations_scheduler_dry_run(
+        cadence="daily",
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+    data_gate = _dry_run_step_by_id(dry_run, "data_freshness_check")
+
+    assert data_gate.status == "blocked"
+    assert data_gate.blocking_event_ids == [
+        "data_freshness_check:1:artifact_missing"
+    ]
+    assert "data_freshness_check:1:artifact_missing" in dry_run.blocking_failures
+
+
+def test_operations_scheduler_dry_run_optional_missing_artifact_warns(
+    tmp_path: Path,
+) -> None:
+    _write_text_artifact(
+        tmp_path,
+        "outputs/reports/data_quality_2026-06-03.md",
+        "\n".join(
+            [
+                "generated_at: 2026-06-03T09:30:00+00:00",
+                "as_of_date: 2026-06-03",
+            ]
+        ),
+    )
+    _write_json_artifact(
+        tmp_path,
+        "reports/etf_portfolio/ai_confirmation/reports/"
+        "ai_confirmation_report_2026-06-03.json",
+        {
+            "generated_at": "2026-06-03T10:30:00+00:00",
+            "as_of_date": "2026-06-03",
+        },
+    )
+
+    dry_run = build_operations_scheduler_dry_run(
+        cadence="daily",
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+    attribution = _dry_run_step_by_id(dry_run, "ai_attribution_update")
+
+    assert attribution.status == "warning"
+    assert attribution.warning_event_ids == [
+        "ai_attribution_update:1:artifact_missing"
+    ]
+    assert "ai_attribution_update:1:artifact_missing" in dry_run.warnings
+
+
+def test_operations_scheduler_dry_run_skip_optional_steps(tmp_path: Path) -> None:
+    dry_run = build_operations_scheduler_dry_run(
+        cadence="daily",
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        include_optional=False,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+
+    assert set(dry_run.skipped_optional_steps) == {
+        "ai_attribution_update",
+        "satellite_attribution_update",
+    }
+    assert "ai_attribution_update" not in dry_run.execution_order
+    assert all(step.command_executed is False for step in dry_run.planned_steps)
+
+
+def test_operations_scheduler_dry_run_biweekly_has_no_owner_checklist(
+    tmp_path: Path,
+) -> None:
+    dry_run = build_operations_scheduler_dry_run(
+        cadence="biweekly",
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+
+    assert dry_run.cadence == "biweekly"
+    assert dry_run.owner_checklist_schema_version is None
+    assert dry_run.owner_checklist_status is None
+    assert dry_run.owner_checklist_item_count == 0
+
+
+def test_operations_scheduler_dry_run_serialization_is_stable(tmp_path: Path) -> None:
+    generated_at = datetime(2026, 6, 3, 12, tzinfo=UTC)
+
+    first_run = build_operations_scheduler_dry_run(
+        cadence="daily",
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        generated_at=generated_at,
+    )
+    second_run = build_operations_scheduler_dry_run(
+        cadence="daily",
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        generated_at=generated_at,
+    )
+
+    assert first_run.model_dump(mode="json") == second_run.model_dump(mode="json")
+
+
 def _raw_schedule() -> dict[str, object]:
     raw = safe_load_yaml_path(DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH)
     assert isinstance(raw, dict)
@@ -1133,3 +1306,7 @@ def _failure_event_by_artifact(report: Any, artifact_id: str) -> Any:
 
 def _checklist_item_by_id(checklist: Any, item_id: str) -> Any:
     return next(item for item in checklist.items if item.item_id == item_id)
+
+
+def _dry_run_step_by_id(dry_run: Any, step_id: str) -> Any:
+    return next(step for step in dry_run.planned_steps if step.step_id == step_id)
