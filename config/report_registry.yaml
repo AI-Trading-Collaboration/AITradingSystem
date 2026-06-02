@@ -558,6 +558,38 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_weekly_review
+    title: ETF Weekly Portfolio Review
+    group: research
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf weekly-review generate --as-of YYYY-MM-DD
+    artifact_globs:
+      - reports/etf_portfolio/weekly_review/weekly_review_*.json
+      - reports/etf_portfolio/weekly_review/weekly_review_*.md
+    freshness_sla_days: 14
+    freshness_rationale: Weekly portfolio review should summarize ETF baseline, forward shadow candidates, AI confirmation, satellite replacement, risk/watchlist and validation evidence before manual review.
+    owner_action: run_aits_etf_weekly_review_generate_after_weekly_forward_ai_satellite_artifacts_are_available
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_weekly_review_validation
+    title: ETF Weekly Review Validation Gate
+    group: governance
+    cadence: on_change
+    audience: reviewer
+    owner: system
+    command: aits etf weekly-review validate
+    artifact_globs:
+      - reports/etf_portfolio/weekly_review/validation/weekly_review_validation_*.json
+      - reports/etf_portfolio/weekly_review/validation/weekly_review_validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-068 final validation confirms the weekly review workflow is complete, safe, source-traceable, and manual-review-only.
+    owner_action: run_aits_etf_weekly_review_validate_before_marking_TRADING_068_done
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_p2_walk_forward
     title: ETF P2 Walk Forward Readiness
     group: research

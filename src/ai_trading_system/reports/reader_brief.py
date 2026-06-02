@@ -172,6 +172,7 @@ def build_reader_brief_payload(
     etf_forward_simulation = _etf_forward_simulation_summary(report_index)
     etf_ai_confirmation = _etf_ai_confirmation_summary(report_index)
     etf_satellite_replacement = _etf_satellite_replacement_summary(report_index)
+    etf_weekly_review = _etf_weekly_review_summary(report_index)
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -291,6 +292,7 @@ def build_reader_brief_payload(
         "etf_forward_simulation": etf_forward_simulation,
         "etf_ai_confirmation": etf_ai_confirmation,
         "etf_satellite_replacement": etf_satellite_replacement,
+        "etf_weekly_review": etf_weekly_review,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -542,6 +544,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_forward = _mapping(payload.get("etf_forward_simulation"))
     etf_ai_confirmation = _mapping(payload.get("etf_ai_confirmation"))
     etf_satellite = _mapping(payload.get("etf_satellite_replacement"))
+    etf_weekly_review = _mapping(payload.get("etf_weekly_review"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -767,6 +770,34 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("data_quality_status", etf_backtest.get("data_quality_status")),
                     ("production_effect", etf_backtest.get("production_effect")),
                     ("source_artifact", etf_backtest.get("source_artifact")),
+                ]
+            ),
+        ),
+        _section(
+            "Weekly Portfolio Review",
+            _definition_table(
+                [
+                    ("availability", etf_weekly_review.get("availability")),
+                    ("status", etf_weekly_review.get("status")),
+                    ("summary", etf_weekly_review.get("summary_sentence")),
+                    (
+                        "active_shadow_candidates",
+                        etf_weekly_review.get("active_shadow_candidates"),
+                    ),
+                    (
+                        "candidates_requiring_review",
+                        etf_weekly_review.get("candidates_requiring_review"),
+                    ),
+                    ("AI confirmation", etf_weekly_review.get("ai_confirmation")),
+                    ("satellite replacement", etf_weekly_review.get("satellite_replacement")),
+                    ("critical_warnings", etf_weekly_review.get("critical_warnings")),
+                    (
+                        "manual_review_actions",
+                        etf_weekly_review.get("manual_review_actions"),
+                    ),
+                    ("safety_status", etf_weekly_review.get("safety_status")),
+                    ("detailed_weekly_review", etf_weekly_review.get("detail_report")),
+                    ("production_effect", etf_weekly_review.get("production_effect")),
                 ]
             ),
         ),
@@ -2099,6 +2130,83 @@ def _etf_backtest_review_summary(as_of: date) -> dict[str, Any]:
         "production_effect": PRODUCTION_EFFECT,
         "source_artifact": str(path),
     }
+
+
+def _etf_weekly_review_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_weekly_review_summary()
+    report_path = _report_index_artifact_path(report_index, "etf_weekly_review")
+    report = _read_optional_json(report_path)
+    if not report:
+        return _missing_etf_weekly_review_summary()
+    sections = _mapping(report.get("sections"))
+    shadow = _mapping(sections.get("shadow_candidate_review"))
+    ai = _mapping(sections.get("ai_confirmation_review"))
+    satellite = _mapping(sections.get("satellite_replacement_review"))
+    risk = _mapping(sections.get("risk_watchlist_constraints"))
+    shadow_summary = _mapping(shadow.get("summary"))
+    severity = _mapping(risk.get("severity_counts"))
+    status = _text(report.get("status"), "AVAILABLE")
+    manual_count = len(_records(report.get("manual_review_actions")))
+    active_count = int(shadow_summary.get("active_candidate_count") or 0)
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "summary_sentence": (
+            f"Weekly Portfolio Review: status={status}; "
+            f"active_shadow_candidates={active_count}; "
+            f"manual_review_actions={manual_count}."
+        ),
+        "active_shadow_candidates": active_count,
+        "candidates_requiring_review": int(
+            shadow_summary.get("candidate_requiring_review_count") or 0
+        ),
+        "ai_confirmation": _text(ai.get("section_status"), "MISSING"),
+        "satellite_replacement": _text(satellite.get("section_status"), "MISSING"),
+        "critical_warnings": int(severity.get("critical") or 0),
+        "manual_review_actions": manual_count,
+        "safety_status": _etf_weekly_review_safety_status(report),
+        "detail_report": "" if report_path is None else str(report_path),
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+    }
+
+
+def _missing_etf_weekly_review_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "summary_sentence": "Weekly Portfolio Review: no latest weekly review report found.",
+        "active_shadow_candidates": 0,
+        "candidates_requiring_review": 0,
+        "ai_confirmation": "MISSING",
+        "satellite_replacement": "MISSING",
+        "critical_warnings": 0,
+        "manual_review_actions": 0,
+        "safety_status": "MISSING",
+        "detail_report": "",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "limitation": (
+            "ETF weekly review artifact is missing; Reader Brief does not run weekly review."
+        ),
+    }
+
+
+def _etf_weekly_review_safety_status(payload: Mapping[str, Any]) -> str:
+    safe = (
+        payload.get("observe_only") is True
+        and payload.get("candidate_only") is True
+        and _text(payload.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
+        and payload.get("broker_action") == "none"
+        and payload.get("manual_review_required") is True
+    )
+    return (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true"
+        if safe
+        else "SAFETY_REVIEW_REQUIRED"
+    )
 
 
 def _etf_calibration_experiment_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
