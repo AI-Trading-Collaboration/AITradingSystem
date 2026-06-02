@@ -218,6 +218,31 @@ overlay、Reader Brief、report registry 和 safety fields，并输出
 `broker_action=none`、`manual_review_required=true`；overlay-adjusted weights 只能作为
 candidate/shadow/hypothetical weights，不写 official ETF target weights。
 
+TRADING-072 AI confirmation forward attribution review 只验证
+`AIConfirmationScore` 与 component scores 是否对未来 ETF / semiconductor / satellite
+表现具备 attribution / explanatory value，不改变任何生产权重。`aits etf
+ai-attribution build --as-of YYYY-MM-DD` 只读既有
+`reports/etf_portfolio/ai_confirmation/reports/ai_confirmation_report_*.json` 和 ETF price
+cache，先通过 ETF price quality gate，再生成
+`reports/etf_portfolio/ai_attribution/datasets/ai_attribution_dataset_YYYY-MM-DD.json/csv/md`。
+每条 row 固定 `score_date`、`forward_window`、`evaluation_as_of_date`、
+`evaluation_only=true`、component scores、regime、QQQ/SPY/SMH/SOXX forward returns、
+relative returns、forward drawdown/volatility、sample availability、source report path 和
+safety fields；forward returns 只能用于 attribution/evaluation。`aits etf
+ai-attribution report --as-of YYYY-MM-DD` 生成
+`reports/etf_portfolio/ai_attribution/reports/ai_attribution_report_YYYY-MM-DD.json/md`，
+包含 score bucket analysis、component-level attribution、regime-conditional attribution、
+event-risk attribution、redundancy diagnostics、evidence scorecard、manual review
+recommendation 和 source links。Reader Brief 的 `AI Attribution Review` 区块只读摘录
+latest attribution report，展示 overall status、best/weak evidence、redundancy、manual
+review 和 detail report；缺失时显示 `MISSING`，不运行上游。`aits etf ai-attribution
+validate` 输出
+`reports/etf_portfolio/ai_attribution/validation/ai_attribution_validation_YYYY-MM-DD.json/md`，
+校验 A-J workflow、Reader Brief/report registry visibility、evaluation-only separation 和
+safety fields。所有 AI attribution 输出固定 `observe_only=true`、`candidate_only=true`、
+`production_effect=none`、`broker_action=none`、`manual_review_required=true`，不得写
+production weights、不得自动 promotion、不得触发 broker action。
+
 TRADING-064 controlled calibration experiments 从
 `config/etf_portfolio/experiments.yaml` 和
 `config/etf_portfolio/experiment_packs.yaml` 读取。experiment registry 定义允许观察的

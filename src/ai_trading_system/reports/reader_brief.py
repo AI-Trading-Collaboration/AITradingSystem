@@ -171,6 +171,7 @@ def build_reader_brief_payload(
     etf_calibration_experiments = _etf_calibration_experiment_summary(report_index)
     etf_forward_simulation = _etf_forward_simulation_summary(report_index)
     etf_ai_confirmation = _etf_ai_confirmation_summary(report_index)
+    etf_ai_attribution = _etf_ai_attribution_summary(report_index)
     etf_satellite_replacement = _etf_satellite_replacement_summary(report_index)
     etf_weekly_review = _etf_weekly_review_summary(report_index)
     etf_decision_journal = _etf_decision_journal_summary(report_index)
@@ -294,6 +295,7 @@ def build_reader_brief_payload(
         "etf_calibration_experiments": etf_calibration_experiments,
         "etf_forward_simulation": etf_forward_simulation,
         "etf_ai_confirmation": etf_ai_confirmation,
+        "etf_ai_attribution": etf_ai_attribution,
         "etf_satellite_replacement": etf_satellite_replacement,
         "etf_weekly_review": etf_weekly_review,
         "etf_decision_journal": etf_decision_journal,
@@ -549,6 +551,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_calibration = _mapping(payload.get("etf_calibration_experiments"))
     etf_forward = _mapping(payload.get("etf_forward_simulation"))
     etf_ai_confirmation = _mapping(payload.get("etf_ai_confirmation"))
+    etf_ai_attribution = _mapping(payload.get("etf_ai_attribution"))
     etf_satellite = _mapping(payload.get("etf_satellite_replacement"))
     etf_weekly_review = _mapping(payload.get("etf_weekly_review"))
     etf_decision_journal = _mapping(payload.get("etf_decision_journal"))
@@ -870,7 +873,10 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     ("overfit_risk", etf_weight_calibration.get("overfit_risk")),
                     ("candidate_status", etf_weight_calibration.get("candidate_status")),
-                    ("manual_review_proposals", etf_weight_calibration.get("manual_review_proposals")),
+                    (
+                        "manual_review_proposals",
+                        etf_weight_calibration.get("manual_review_proposals"),
+                    ),
                     ("safety_status", etf_weight_calibration.get("safety_status")),
                     ("detailed_report", etf_weight_calibration.get("detail_report")),
                     ("production_effect", etf_weight_calibration.get("production_effect")),
@@ -939,6 +945,24 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("detail_report", etf_ai_confirmation.get("detail_report")),
                     ("production_effect", etf_ai_confirmation.get("production_effect")),
                     ("broker_action", etf_ai_confirmation.get("broker_action")),
+                ]
+            ),
+        ),
+        _section(
+            "AI Attribution Review",
+            _definition_table(
+                [
+                    ("availability", etf_ai_attribution.get("availability")),
+                    ("status", etf_ai_attribution.get("status")),
+                    ("overall_status", etf_ai_attribution.get("overall_status")),
+                    ("best_evidence", etf_ai_attribution.get("best_evidence")),
+                    ("weak_evidence", etf_ai_attribution.get("weak_evidence")),
+                    ("redundancy_status", etf_ai_attribution.get("redundancy_status")),
+                    ("manual_review", etf_ai_attribution.get("manual_review")),
+                    ("safety_status", etf_ai_attribution.get("safety_status")),
+                    ("detailed_report", etf_ai_attribution.get("detail_report")),
+                    ("production_effect", etf_ai_attribution.get("production_effect")),
+                    ("broker_action", etf_ai_attribution.get("broker_action")),
                 ]
             ),
         ),
@@ -2885,6 +2909,125 @@ def _etf_ai_confirmation_safety_status(*payloads: Mapping[str, Any]) -> str:
         if safe
         else "SAFETY_REVIEW_REQUIRED"
     )
+
+
+def _etf_ai_attribution_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_ai_attribution_summary()
+    report_path = _report_index_artifact_path(report_index, "etf_ai_attribution_report")
+    report = _read_optional_json(report_path)
+    if not report:
+        return _missing_etf_ai_attribution_summary()
+    scorecard = _mapping(report.get("evidence_scorecard"))
+    dimensions = _mapping(scorecard.get("dimension_scores"))
+    redundancy = _mapping(report.get("redundancy_diagnostics"))
+    safety_status = _etf_ai_attribution_safety_status(report, scorecard)
+    best_evidence = _ai_attribution_best_evidence(dimensions)
+    weak_evidence = _ai_attribution_weak_evidence(dimensions)
+    overall_status = _text(scorecard.get("overall_status"), _text(report.get("status"), "UNKNOWN"))
+    redundancy_status = _text(redundancy.get("redundancy_band"), "unknown")
+    manual_review = _text(
+        scorecard.get("manual_review_recommendation"),
+        "继续 observe-only；不得自动提高 AI overlay 权重。",
+    )
+    return {
+        "availability": "AVAILABLE",
+        "status": _text(report.get("status"), overall_status),
+        "overall_status": overall_status,
+        "best_evidence": best_evidence,
+        "weak_evidence": weak_evidence,
+        "redundancy_status": redundancy_status,
+        "manual_review": manual_review,
+        "detail_report": "" if report_path is None else str(report_path),
+        "safety_status": safety_status,
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "summary_sentence": (
+            f"AI Attribution Review: status={overall_status}; best={best_evidence}; "
+            f"weak={weak_evidence}; redundancy={redundancy_status}; safety={safety_status}."
+        ),
+    }
+
+
+def _missing_etf_ai_attribution_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "overall_status": "MISSING",
+        "best_evidence": "MISSING",
+        "weak_evidence": "AI attribution report artifact is missing",
+        "redundancy_status": "MISSING",
+        "manual_review": "继续 observe-only；Reader Brief 不运行 AI attribution CLI。",
+        "detail_report": "",
+        "safety_status": "MISSING",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "summary_sentence": "AI Attribution Review: no latest attribution report found.",
+        "limitation": (
+            "AI attribution report artifact is missing; Reader Brief does not run "
+            "AI attribution."
+        ),
+    }
+
+
+def _etf_ai_attribution_safety_status(*payloads: Mapping[str, Any]) -> str:
+    material = [payload for payload in payloads if payload]
+    if not material:
+        return "MISSING"
+    safe = all(
+        payload.get("observe_only") in (None, True)
+        and payload.get("candidate_only") in (None, True)
+        and _text(payload.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
+        and payload.get("broker_action") in (None, "none")
+        and payload.get("manual_review_required") in (None, True)
+        for payload in material
+    )
+    return (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true"
+        if safe
+        else "SAFETY_REVIEW_REQUIRED"
+    )
+
+
+def _ai_attribution_best_evidence(dimensions: Mapping[str, Any]) -> str:
+    if not dimensions:
+        return "MISSING"
+    candidates = [
+        ("forward_return_evidence", dimensions.get("forward_return_evidence")),
+        ("semiconductor_relative_evidence", dimensions.get("semiconductor_relative_evidence")),
+        ("mega_cap_growth_evidence", dimensions.get("mega_cap_growth_evidence")),
+        ("event_risk_evidence", dimensions.get("event_risk_evidence")),
+        ("regime_stability_evidence", dimensions.get("regime_stability_evidence")),
+    ]
+    scored = [(name, _float_or_none(value)) for name, value in candidates]
+    scored = [(name, value) for name, value in scored if value is not None]
+    if not scored:
+        return "MISSING"
+    name, value = max(scored, key=lambda item: item[1])
+    return f"{name}={_format_number(value, digits=2)}"
+
+
+def _ai_attribution_weak_evidence(dimensions: Mapping[str, Any]) -> str:
+    if not dimensions:
+        return "MISSING"
+    candidates = [
+        ("forward_return_evidence", dimensions.get("forward_return_evidence")),
+        ("semiconductor_relative_evidence", dimensions.get("semiconductor_relative_evidence")),
+        ("mega_cap_growth_evidence", dimensions.get("mega_cap_growth_evidence")),
+        ("event_risk_evidence", dimensions.get("event_risk_evidence")),
+        ("regime_stability_evidence", dimensions.get("regime_stability_evidence")),
+        ("sample_quality", dimensions.get("sample_quality")),
+        ("data_coverage", dimensions.get("data_coverage")),
+    ]
+    scored = [(name, _float_or_none(value)) for name, value in candidates]
+    scored = [(name, value) for name, value in scored if value is not None]
+    if not scored:
+        return "MISSING"
+    name, value = min(scored, key=lambda item: item[1])
+    return f"{name}={_format_number(value, digits=2)}"
 
 
 def _etf_satellite_replacement_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:

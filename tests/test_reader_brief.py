@@ -161,6 +161,18 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     assert ai_confirmation["detail_report"].endswith("ai_confirmation_report_2026-05-04.json")
     assert ai_confirmation["production_effect"] == "none"
     assert ai_confirmation["broker_action"] == "none"
+    ai_attribution = payload["etf_ai_attribution"]
+    assert ai_attribution["availability"] == "AVAILABLE"
+    assert ai_attribution["overall_status"] == "needs_more_data"
+    assert "forward_return_evidence" in ai_attribution["best_evidence"]
+    assert ai_attribution["redundancy_status"] == "medium"
+    assert ai_attribution["detail_report"].endswith("ai_attribution_report_2026-05-04.json")
+    assert ai_attribution["safety_status"] == (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true"
+    )
+    assert ai_attribution["production_effect"] == "none"
+    assert ai_attribution["broker_action"] == "none"
     parameter_review = payload["etf_parameter_review"]
     assert parameter_review["availability"] == "AVAILABLE"
     assert parameter_review["status"] == "needs_more_data"
@@ -231,6 +243,9 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
     assert payload["etf_ai_confirmation"]["interpretation"] == (
         "AI Confirmation: insufficient data coverage. No overlay recommendation."
     )
+    assert payload["etf_ai_attribution"]["availability"] == "MISSING"
+    assert payload["etf_ai_attribution"]["production_effect"] == "none"
+    assert payload["etf_ai_attribution"]["broker_action"] == "none"
     assert payload["etf_parameter_review"]["availability"] == "MISSING"
     assert payload["etf_parameter_review"]["main_reason"] == "PARAMETER_REVIEW_REPORT_MISSING"
     assert payload["etf_parameter_review"]["production_effect"] == "none"
@@ -257,6 +272,7 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
     assert "ETF Calibration Experiments" in html
     assert "ETF Forward Simulation" in html
     assert "AI Confirmation" in html
+    assert "AI Attribution Review" in html
     assert "ETF Parameter Review" in html
     assert "ETF Weight Calibration" in html
     assert 'safety_status</th><td><span class="status-badge status-missing">MISSING</span>' in html
@@ -333,6 +349,7 @@ def test_reports_reader_brief_cli_writes_html_and_json(tmp_path: Path) -> None:
     assert "Report Index Freshness" in html
     assert "Task Cadence Calendar" in html
     assert "ETF Parameter Review" in html
+    assert "AI Attribution Review" in html
     assert "eligible_for_manual_review" in html
     assert "parameter_review_2026-05-04.json" in html
     assert "ETF Weight Calibration" in html
@@ -832,6 +849,67 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                 "production_effect": "none",
                 "broker_action": "none",
                 "manual_review_required": True,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    ai_attribution_dir = (
+        tmp_path / "reports" / "etf_portfolio" / "ai_attribution" / "reports"
+    )
+    ai_attribution_dir.mkdir(parents=True)
+    ai_attribution_path = ai_attribution_dir / "ai_attribution_report_2026-05-04.json"
+    ai_attribution_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "ai_attribution_report_v1",
+                "report_type": "ai_attribution_report",
+                "task": "TRADING-072H",
+                "as_of_date": "2026-05-04",
+                "status": "needs_more_data",
+                "review_metadata": {
+                    "market_regime": "ai_after_chatgpt",
+                    "requested_date_range": {"start": "2022-12-01", "end": "2026-05-04"},
+                    "evaluation_as_of_date": "2026-05-04",
+                    "production_effect": "none",
+                    "broker_action": "none",
+                },
+                "dataset_coverage": {
+                    "record_count": 8,
+                    "available_sample_count": 3,
+                    "forward_windows": ["1D", "5D", "20D", "60D"],
+                    "data_quality": {"status": "PASS"},
+                },
+                "redundancy_diagnostics": {
+                    "redundancy_band": "medium",
+                },
+                "evidence_scorecard": {
+                    "overall_status": "needs_more_data",
+                    "dimension_scores": {
+                        "forward_return_evidence": 60.0,
+                        "semiconductor_relative_evidence": 55.0,
+                        "mega_cap_growth_evidence": 50.0,
+                        "event_risk_evidence": 40.0,
+                        "regime_stability_evidence": 50.0,
+                        "redundancy_penalty": 65.0,
+                        "sample_quality": 30.0,
+                        "data_coverage": 95.0,
+                    },
+                    "manual_review_recommendation": (
+                        "继续 observe-only 积累样本；不得把当前结果写成交易结论。"
+                    ),
+                    "observe_only": True,
+                    "candidate_only": True,
+                    "production_effect": "none",
+                    "broker_action": "none",
+                    "manual_review_required": True,
+                },
+                "observe_only": True,
+                "candidate_only": True,
+                "production_effect": "none",
+                "broker_action": "none",
+                "manual_review_required": True,
+                "evaluation_only": True,
             },
             ensure_ascii=False,
         ),
@@ -1350,6 +1428,19 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                         "latest_artifact_path": str(ai_confirmation_path),
                         "exists": True,
                         "owner_action": "review_ai_confirmation_report",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_ai_attribution_report",
+                        "title": "ETF AI Confirmation Forward Attribution Review",
+                        "cadence": "weekly",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "needs_more_data",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(ai_attribution_path),
+                        "exists": True,
+                        "owner_action": "review_ai_attribution_report",
                         "production_effect": "none",
                     },
                     {
