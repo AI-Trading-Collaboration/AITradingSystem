@@ -529,12 +529,18 @@ daily / weekly / biweekly / monthly / manual-review workflow 记录为 source co
 包含 step id、command、dependencies、expected outputs、max allowed age、failure policy
 和 owner review requirement，并固定 `observe_only=true`、`candidate_only=true`、
 `production_effect=none`、`broker_action=none`、`manual_review_required=true`。
-当前 TRADING-074A/B 提供 loader/validator、配置校验和 daily operations command graph。
+当前 TRADING-074A/B/C 提供 loader/validator、配置校验、daily operations command
+graph 和 weekly operations command graph。
 `build_daily_operations_command_graph` 会生成 topological `execution_order`、required /
 optional 节点、输入/输出、failure policy、estimated runtime class 和 safety fields；optional
 attribution 节点可跳过，required 节点不可跳过，cycle 或 missing required node 会 fail
-closed。它不执行命令、不自动调度 weekly/monthly 任务、不替代 `aits ops daily-run` 的统一
-外部入口。后续 weekly/monthly graph、freshness check、dry-run、operations report、Reader
+closed。`build_weekly_operations_command_graph` 会从 weekly schedule 生成同样
+dry-run-only 的 dependency-aware graph，保留 `operations_health_check` /
+`forward_update` 等 daily 上游为 `external_dependencies`，并标记 weekly review、decision
+journal、parameter review、watchlist、operations report 和 Reader Brief weekly navigation
+的 manual-review checkpoints；pilot config 可把 parameter review 节点标成 optional 后跳过。
+这些 graph 不执行命令、不自动调度 weekly/monthly 任务、不替代 `aits ops daily-run` 的统一
+外部入口。后续 monthly/biweekly graph、freshness check、dry-run、operations report、Reader
 Brief operations health 和 `aits etf ops validate` 会复用该配置。
 
 `aits etf governance summary --candidate <candidate.json>` 使用

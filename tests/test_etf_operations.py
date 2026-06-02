@@ -11,6 +11,7 @@ from ai_trading_system.etf_portfolio.operations import (
     ETFOperationsScheduleConfig,
     OperationsCommandGraphError,
     build_daily_operations_command_graph,
+    build_weekly_operations_command_graph,
     load_operations_schedule_config,
     operations_schedule_required_step_ids,
     operations_schedule_step_ids,
@@ -154,12 +155,7 @@ def test_operations_schedule_weight_search_is_not_daily() -> None:
 def test_daily_operations_command_graph_builds() -> None:
     graph = build_daily_operations_command_graph()
 
-    assert graph.schema_version == OPERATIONS_COMMAND_GRAPH_SCHEMA_VERSION
-    assert graph.cadence == "daily"
-    assert graph.dry_run_only is True
-    assert graph.commands_executed is False
-    assert graph.execution_order == [node.node_id for node in graph.nodes]
-    assert {
+    expected_nodes = {
         "data_freshness_check",
         "etf_daily_run",
         "forward_update",
@@ -170,7 +166,13 @@ def test_daily_operations_command_graph_builds() -> None:
         "reader_brief_generate",
         "report_registry_update",
         "operations_health_check",
-    }.issubset(set(graph.execution_order))
+    }
+    assert graph.schema_version == OPERATIONS_COMMAND_GRAPH_SCHEMA_VERSION
+    assert graph.cadence == "daily"
+    assert graph.dry_run_only is True
+    assert graph.commands_executed is False
+    assert graph.execution_order == [node.node_id for node in graph.nodes]
+    assert set(graph.execution_order) == expected_nodes
 
 
 def test_daily_operations_command_graph_nodes_expose_required_fields() -> None:
@@ -246,6 +248,147 @@ def test_daily_operations_command_graph_cycle_detection_works() -> None:
 
 def test_daily_operations_command_graph_safety_flags_included() -> None:
     graph = build_daily_operations_command_graph()
+
+    assert graph.safety.observe_only is True
+    assert graph.safety.candidate_only is True
+    assert graph.safety.production_effect == "none"
+    assert graph.safety.broker_action == "none"
+    assert graph.safety.manual_review_required is True
+    assert all(node.safety.production_effect == "none" for node in graph.nodes)
+    assert all(node.safety.broker_action == "none" for node in graph.nodes)
+
+
+def test_weekly_operations_command_graph_builds() -> None:
+    graph = build_weekly_operations_command_graph()
+
+    expected_nodes = {
+        "weekly_review_aggregate",
+        "weekly_review_generate",
+        "forward_weekly_review",
+        "decision_journal_review_prompt",
+        "parameter_review_aggregate",
+        "parameter_review_report",
+        "watchlist_review",
+        "operations_report",
+        "reader_brief_weekly_navigation",
+    }
+    assert graph.schema_version == OPERATIONS_COMMAND_GRAPH_SCHEMA_VERSION
+    assert graph.cadence == "weekly"
+    assert graph.dry_run_only is True
+    assert graph.commands_executed is False
+    assert graph.execution_order == [node.node_id for node in graph.nodes]
+    assert set(graph.external_dependencies) == {
+        "forward_update",
+        "operations_health_check",
+    }
+    assert set(graph.execution_order) == expected_nodes
+
+
+def test_weekly_operations_command_graph_preserves_external_daily_inputs() -> None:
+    graph = build_weekly_operations_command_graph()
+    by_id = {node.node_id: node for node in graph.nodes}
+
+    weekly_aggregate = by_id["weekly_review_aggregate"]
+    forward_review = by_id["forward_weekly_review"]
+    assert weekly_aggregate.dependencies == []
+    assert weekly_aggregate.external_dependencies == ["operations_health_check"]
+    assert weekly_aggregate.inputs == [
+        "reports/etf_portfolio/operations/daily/operations_health_{as_of}.json",
+        "reports/etf_portfolio/operations/daily/operations_health_{as_of}.md",
+    ]
+    assert forward_review.dependencies == []
+    assert forward_review.external_dependencies == ["forward_update"]
+    assert forward_review.inputs == [
+        "reports/etf_portfolio/forward/updates/forward_update_{as_of}.json"
+    ]
+
+
+def test_weekly_operations_command_graph_dependencies_topologically_sorted() -> None:
+    graph = build_weekly_operations_command_graph()
+    position = {node_id: index for index, node_id in enumerate(graph.execution_order)}
+
+    for node in graph.nodes:
+        for dependency in node.dependencies:
+            assert position[dependency] < position[node.node_id]
+
+
+def test_weekly_operations_command_graph_manual_review_nodes_flagged() -> None:
+    graph = build_weekly_operations_command_graph()
+    by_id = {node.node_id: node for node in graph.nodes}
+
+    manual_review_nodes = {
+        "weekly_review_generate",
+        "decision_journal_review_prompt",
+        "parameter_review_report",
+        "watchlist_review",
+        "operations_report",
+        "reader_brief_weekly_navigation",
+    }
+    assert all(by_id[node_id].owner_review_required for node_id in manual_review_nodes)
+    assert by_id["weekly_review_generate"].failure_policy == "manual_review_required"
+    assert by_id["operations_report"].failure_policy == "manual_review_required"
+
+
+def test_weekly_operations_command_graph_allows_optional_parameter_review_to_skip() -> None:
+    raw = _raw_schedule()
+    for step in raw["weekly_pipeline"]:
+        if step["step_id"] in {"parameter_review_aggregate", "parameter_review_report"}:
+            step["required"] = False
+            step["failure_policy"] = "skip_optional_step"
+    config = ETFOperationsScheduleConfig.model_validate(raw)
+
+    graph = build_weekly_operations_command_graph(
+        config,
+        skipped_optional_step_ids={
+            "parameter_review_aggregate",
+            "parameter_review_report",
+        },
+    )
+
+    node_ids = {node.node_id for node in graph.nodes}
+    assert "parameter_review_aggregate" not in node_ids
+    assert "parameter_review_report" not in node_ids
+    assert set(graph.skipped_optional_steps) == {
+        "parameter_review_aggregate",
+        "parameter_review_report",
+    }
+    operations_report = next(node for node in graph.nodes if node.node_id == "operations_report")
+    assert operations_report.dependencies == [
+        "weekly_review_generate",
+        "watchlist_review",
+    ]
+
+
+def test_weekly_operations_command_graph_missing_weekly_review_blocks_dependents() -> None:
+    raw = _raw_schedule()
+    raw["weekly_pipeline"] = [
+        step
+        for step in raw["weekly_pipeline"]
+        if step["step_id"] != "weekly_review_generate"
+    ]
+    for step in raw["weekly_pipeline"]:
+        step["dependencies"] = [
+            dependency
+            for dependency in step["dependencies"]
+            if dependency != "weekly_review_generate"
+        ]
+    config = ETFOperationsScheduleConfig.model_validate(raw)
+
+    with pytest.raises(OperationsCommandGraphError, match="missing required nodes"):
+        build_weekly_operations_command_graph(config)
+
+
+def test_weekly_operations_command_graph_cycle_detection_works() -> None:
+    raw = _raw_schedule()
+    raw["weekly_pipeline"][0]["dependencies"].append("reader_brief_weekly_navigation")
+    config = ETFOperationsScheduleConfig.model_validate(raw)
+
+    with pytest.raises(OperationsCommandGraphError, match="cycle detected"):
+        build_weekly_operations_command_graph(config)
+
+
+def test_weekly_operations_command_graph_safety_flags_included() -> None:
+    graph = build_weekly_operations_command_graph()
 
     assert graph.safety.observe_only is True
     assert graph.safety.candidate_only is True

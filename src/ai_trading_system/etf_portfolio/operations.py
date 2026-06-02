@@ -33,6 +33,7 @@ OperationsFailurePolicy = Literal[
     "manual_review_required",
 ]
 OperationsRuntimeClass = Literal["fast", "medium", "slow"]
+OperationsGraphCadence = Literal["daily", "weekly"]
 
 _PIPELINE_FIELDS = (
     "daily_pipeline",
@@ -46,6 +47,10 @@ _PIPELINE_CADENCE = {
     "weekly_pipeline": "weekly",
     "biweekly_pipeline": "biweekly",
     "monthly_pipeline": "monthly",
+}
+_GRAPH_PIPELINE_FIELD_BY_CADENCE: dict[OperationsGraphCadence, str] = {
+    "daily": "daily_pipeline",
+    "weekly": "weekly_pipeline",
 }
 OPERATIONS_COMMAND_GRAPH_SCHEMA_VERSION = "etf_operations_command_graph_v1"
 REQUIRED_DAILY_OPERATION_NODE_IDS = frozenset(
@@ -66,6 +71,25 @@ OPTIONAL_DAILY_OPERATION_NODE_IDS = frozenset(
         "satellite_attribution_update",
     }
 )
+REQUIRED_WEEKLY_OPERATION_NODE_IDS = frozenset(
+    {
+        "weekly_review_aggregate",
+        "weekly_review_generate",
+        "forward_weekly_review",
+        "decision_journal_review_prompt",
+        "parameter_review_aggregate",
+        "parameter_review_report",
+        "watchlist_review",
+        "operations_report",
+        "reader_brief_weekly_navigation",
+    }
+)
+OPTIONAL_WEEKLY_OPERATION_NODE_IDS = frozenset(
+    {
+        "parameter_review_aggregate",
+        "parameter_review_report",
+    }
+)
 
 _DAILY_RUNTIME_CLASS_BY_STEP_ID: dict[str, OperationsRuntimeClass] = {
     "data_freshness_check": "medium",
@@ -78,6 +102,29 @@ _DAILY_RUNTIME_CLASS_BY_STEP_ID: dict[str, OperationsRuntimeClass] = {
     "report_registry_update": "fast",
     "reader_brief_generate": "fast",
     "operations_health_check": "fast",
+}
+_WEEKLY_RUNTIME_CLASS_BY_STEP_ID: dict[str, OperationsRuntimeClass] = {
+    "weekly_review_aggregate": "fast",
+    "weekly_review_generate": "medium",
+    "forward_weekly_review": "medium",
+    "decision_journal_review_prompt": "fast",
+    "parameter_review_aggregate": "medium",
+    "parameter_review_report": "medium",
+    "watchlist_review": "fast",
+    "operations_report": "fast",
+    "reader_brief_weekly_navigation": "fast",
+}
+_REQUIRED_OPERATION_NODE_IDS_BY_CADENCE: dict[OperationsGraphCadence, frozenset[str]] = {
+    "daily": REQUIRED_DAILY_OPERATION_NODE_IDS,
+    "weekly": REQUIRED_WEEKLY_OPERATION_NODE_IDS,
+}
+_OPTIONAL_OPERATION_NODE_IDS_BY_CADENCE: dict[OperationsGraphCadence, frozenset[str]] = {
+    "daily": OPTIONAL_DAILY_OPERATION_NODE_IDS,
+    "weekly": OPTIONAL_WEEKLY_OPERATION_NODE_IDS,
+}
+_RUNTIME_CLASS_BY_CADENCE: dict[OperationsGraphCadence, dict[str, OperationsRuntimeClass]] = {
+    "daily": _DAILY_RUNTIME_CLASS_BY_STEP_ID,
+    "weekly": _WEEKLY_RUNTIME_CLASS_BY_STEP_ID,
 }
 
 
@@ -207,6 +254,7 @@ class ETFOperationsCommandGraphNode(BaseModel):
     inputs: list[str] = Field(default_factory=list)
     outputs: list[str] = Field(default_factory=list)
     dependencies: list[str] = Field(default_factory=list)
+    external_dependencies: list[str] = Field(default_factory=list)
     required: bool
     failure_policy: OperationsFailurePolicy
     estimated_runtime_class: OperationsRuntimeClass
@@ -218,11 +266,12 @@ class ETFOperationsCommandGraph(BaseModel):
     schema_version: Literal["etf_operations_command_graph_v1"] = (
         OPERATIONS_COMMAND_GRAPH_SCHEMA_VERSION
     )
-    cadence: Literal["daily"]
+    cadence: OperationsGraphCadence
     dry_run_only: bool = True
     commands_executed: bool = False
     execution_order: list[str] = Field(default_factory=list)
     skipped_optional_steps: list[str] = Field(default_factory=list)
+    external_dependencies: list[str] = Field(default_factory=list)
     safety: ETFOperationsScheduleSafety
     nodes: list[ETFOperationsCommandGraphNode] = Field(min_length=1)
 
@@ -291,61 +340,117 @@ def build_daily_operations_command_graph(
     include_optional: bool = True,
     skipped_optional_step_ids: set[str] | None = None,
 ) -> ETFOperationsCommandGraph:
-    schedule = config or load_operations_schedule_config()
-    daily_steps = tuple(schedule.daily_pipeline)
-    daily_step_by_id = {step.step_id: step for step in daily_steps}
-    daily_ids = set(daily_step_by_id)
+    return _build_operations_command_graph(
+        config,
+        cadence="daily",
+        include_optional=include_optional,
+        skipped_optional_step_ids=skipped_optional_step_ids,
+    )
 
-    missing_required = sorted(REQUIRED_DAILY_OPERATION_NODE_IDS - daily_ids)
+
+def build_weekly_operations_command_graph(
+    config: ETFOperationsScheduleConfig | None = None,
+    *,
+    include_optional: bool = True,
+    skipped_optional_step_ids: set[str] | None = None,
+) -> ETFOperationsCommandGraph:
+    return _build_operations_command_graph(
+        config,
+        cadence="weekly",
+        include_optional=include_optional,
+        skipped_optional_step_ids=skipped_optional_step_ids,
+    )
+
+
+def _build_operations_command_graph(
+    config: ETFOperationsScheduleConfig | None,
+    *,
+    cadence: OperationsGraphCadence,
+    include_optional: bool,
+    skipped_optional_step_ids: set[str] | None,
+) -> ETFOperationsCommandGraph:
+    schedule = config or load_operations_schedule_config()
+    pipeline_field = _GRAPH_PIPELINE_FIELD_BY_CADENCE[cadence]
+    cadence_steps = tuple(getattr(schedule, pipeline_field))
+    cadence_step_by_id = {step.step_id: step for step in cadence_steps}
+    cadence_ids = set(cadence_step_by_id)
+    all_step_by_id = schedule.step_by_id()
+
+    required_node_ids = _REQUIRED_OPERATION_NODE_IDS_BY_CADENCE[cadence]
+    missing_required = sorted(required_node_ids - cadence_ids)
     if missing_required:
         missing = ", ".join(missing_required)
         raise OperationsCommandGraphError(
-            f"daily operations graph missing required nodes: {missing}"
+            f"{cadence} operations graph missing required nodes: {missing}"
         )
 
+    optional_node_ids = _OPTIONAL_OPERATION_NODE_IDS_BY_CADENCE[cadence]
+    must_be_required_node_ids = required_node_ids - optional_node_ids
     unexpected_required = sorted(
         step_id
-        for step_id in REQUIRED_DAILY_OPERATION_NODE_IDS
-        if not daily_step_by_id[step_id].required
+        for step_id in must_be_required_node_ids
+        if not cadence_step_by_id[step_id].required
     )
     if unexpected_required:
         unexpected = ", ".join(unexpected_required)
         raise OperationsCommandGraphError(
-            f"daily operations graph required nodes must be marked required: {unexpected}"
+            f"{cadence} operations graph required nodes must be marked required: "
+            f"{unexpected}"
         )
 
     skipped = set(skipped_optional_step_ids or set())
     if not include_optional:
-        skipped.update(step.step_id for step in daily_steps if not step.required)
-    _validate_optional_skips(skipped=skipped, daily_step_by_id=daily_step_by_id)
+        skipped.update(step.step_id for step in cadence_steps if not step.required)
+    _validate_optional_skips(
+        skipped=skipped,
+        step_by_id=cadence_step_by_id,
+        cadence=cadence,
+    )
 
-    selected_steps = tuple(step for step in daily_steps if step.step_id not in skipped)
+    selected_steps = tuple(step for step in cadence_steps if step.step_id not in skipped)
     selected_ids = {step.step_id for step in selected_steps}
     dependencies_by_id: dict[str, tuple[str, ...]] = {}
+    external_dependencies_by_id: dict[str, tuple[str, ...]] = {}
     for step in selected_steps:
-        dependencies_by_id[step.step_id] = _daily_graph_dependencies(
+        dependencies, external_dependencies = _graph_dependencies(
             step,
             selected_ids=selected_ids,
             skipped_ids=skipped,
-            daily_step_by_id=daily_step_by_id,
+            selected_step_by_id=cadence_step_by_id,
+            all_step_by_id=all_step_by_id,
+            cadence=cadence,
         )
-    execution_order = _topological_order(selected_steps, dependencies_by_id)
-    ordered_steps = [daily_step_by_id[step_id] for step_id in execution_order]
+        dependencies_by_id[step.step_id] = dependencies
+        external_dependencies_by_id[step.step_id] = external_dependencies
+
+    execution_order = _topological_order(selected_steps, dependencies_by_id, cadence=cadence)
+    ordered_steps = [cadence_step_by_id[step_id] for step_id in execution_order]
+    runtime_class_by_step_id = _RUNTIME_CLASS_BY_CADENCE[cadence]
     nodes = [
-        _daily_graph_node(
+        _graph_node(
             step,
             dependencies=dependencies_by_id[step.step_id],
-            daily_step_by_id=daily_step_by_id,
+            external_dependencies=external_dependencies_by_id[step.step_id],
+            all_step_by_id=all_step_by_id,
+            runtime_class_by_step_id=runtime_class_by_step_id,
             safety=schedule.safety,
         )
         for step in ordered_steps
     ]
+    external_dependencies = sorted(
+        {
+            dependency_id
+            for dependencies in external_dependencies_by_id.values()
+            for dependency_id in dependencies
+        }
+    )
     return ETFOperationsCommandGraph(
-        cadence="daily",
+        cadence=cadence,
         dry_run_only=True,
         commands_executed=False,
         execution_order=execution_order,
         skipped_optional_steps=sorted(skipped),
+        external_dependencies=external_dependencies,
         safety=schedule.safety,
         nodes=nodes,
     )
@@ -365,52 +470,62 @@ def _normalized_unique_values(values: list[str], *, field_name: str) -> list[str
 def _validate_optional_skips(
     *,
     skipped: set[str],
-    daily_step_by_id: dict[str, ETFOperationsScheduleStep],
+    step_by_id: dict[str, ETFOperationsScheduleStep],
+    cadence: OperationsGraphCadence,
 ) -> None:
-    unknown = sorted(skipped - set(daily_step_by_id))
+    unknown = sorted(skipped - set(step_by_id))
     if unknown:
         raise OperationsCommandGraphError(
-            "daily operations graph cannot skip unknown optional nodes: "
+            f"{cadence} operations graph cannot skip unknown optional nodes: "
             f"{', '.join(unknown)}"
         )
-    required_skips = sorted(step_id for step_id in skipped if daily_step_by_id[step_id].required)
+    required_skips = sorted(step_id for step_id in skipped if step_by_id[step_id].required)
     if required_skips:
         raise OperationsCommandGraphError(
-            "daily operations graph cannot skip required nodes: "
+            f"{cadence} operations graph cannot skip required nodes: "
             f"{', '.join(required_skips)}"
         )
 
 
-def _daily_graph_dependencies(
+def _graph_dependencies(
     step: ETFOperationsScheduleStep,
     *,
     selected_ids: set[str],
     skipped_ids: set[str],
-    daily_step_by_id: dict[str, ETFOperationsScheduleStep],
-) -> tuple[str, ...]:
+    selected_step_by_id: dict[str, ETFOperationsScheduleStep],
+    all_step_by_id: dict[str, ETFOperationsScheduleStep],
+    cadence: OperationsGraphCadence,
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
     dependencies: list[str] = []
+    external_dependencies: list[str] = []
     for dependency_id in step.dependencies:
-        dependency = daily_step_by_id.get(dependency_id)
+        dependency = all_step_by_id.get(dependency_id)
         if dependency is None:
             raise OperationsCommandGraphError(
-                f"daily operations graph node {step.step_id} references non-daily "
+                f"{cadence} operations graph node {step.step_id} references unknown "
                 f"dependency: {dependency_id}"
             )
         if dependency_id in selected_ids:
             dependencies.append(dependency_id)
             continue
-        if dependency_id in skipped_ids and not dependency.required:
+        if dependency_id in skipped_ids and dependency_id in selected_step_by_id:
+            if not dependency.required:
+                continue
+        if dependency_id not in selected_step_by_id:
+            external_dependencies.append(dependency_id)
             continue
         raise OperationsCommandGraphError(
-            f"daily operations graph node {step.step_id} has unavailable dependency: "
+            f"{cadence} operations graph node {step.step_id} has unavailable dependency: "
             f"{dependency_id}"
         )
-    return tuple(dependencies)
+    return tuple(dependencies), tuple(external_dependencies)
 
 
 def _topological_order(
     steps: tuple[ETFOperationsScheduleStep, ...],
     dependencies_by_id: dict[str, tuple[str, ...]],
+    *,
+    cadence: OperationsGraphCadence,
 ) -> list[str]:
     remaining = {step.step_id for step in steps}
     ordered: list[str] = []
@@ -424,39 +539,51 @@ def _topological_order(
         if not ready:
             cycle_nodes = ", ".join(sorted(remaining))
             raise OperationsCommandGraphError(
-                f"daily operations graph dependency cycle detected: {cycle_nodes}"
+                f"{cadence} operations graph dependency cycle detected: {cycle_nodes}"
             )
         ordered.extend(ready)
         remaining.difference_update(ready)
     return ordered
 
 
-def _daily_graph_node(
+def _graph_node(
     step: ETFOperationsScheduleStep,
     *,
     dependencies: tuple[str, ...],
-    daily_step_by_id: dict[str, ETFOperationsScheduleStep],
+    external_dependencies: tuple[str, ...],
+    all_step_by_id: dict[str, ETFOperationsScheduleStep],
+    runtime_class_by_step_id: dict[str, OperationsRuntimeClass],
     safety: ETFOperationsScheduleSafety,
 ) -> ETFOperationsCommandGraphNode:
     inputs: list[str] = []
+    for dependency_id in external_dependencies:
+        inputs.extend(all_step_by_id[dependency_id].expected_outputs)
     for dependency_id in dependencies:
-        inputs.extend(daily_step_by_id[dependency_id].expected_outputs)
+        inputs.extend(all_step_by_id[dependency_id].expected_outputs)
     return ETFOperationsCommandGraphNode(
         node_id=step.step_id,
         command=step.command,
         inputs=_normalized_unique_values(inputs, field_name=f"{step.step_id}.inputs"),
         outputs=list(step.expected_outputs),
         dependencies=list(dependencies),
+        external_dependencies=list(external_dependencies),
         required=step.required,
         failure_policy=step.failure_policy,
-        estimated_runtime_class=_daily_runtime_class(step),
+        estimated_runtime_class=_runtime_class(
+            step,
+            runtime_class_by_step_id=runtime_class_by_step_id,
+        ),
         owner_review_required=step.owner_review_required,
         safety=safety,
     )
 
 
-def _daily_runtime_class(step: ETFOperationsScheduleStep) -> OperationsRuntimeClass:
-    configured = _DAILY_RUNTIME_CLASS_BY_STEP_ID.get(step.step_id)
+def _runtime_class(
+    step: ETFOperationsScheduleStep,
+    *,
+    runtime_class_by_step_id: dict[str, OperationsRuntimeClass],
+) -> OperationsRuntimeClass:
+    configured = runtime_class_by_step_id.get(step.step_id)
     if configured is not None:
         return configured
     if "weight-calibration search" in step.command:
