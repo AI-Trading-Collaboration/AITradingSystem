@@ -11,6 +11,7 @@ import pytest
 from ai_trading_system.etf_portfolio.operations import (
     DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH,
     OPERATIONS_COMMAND_GRAPH_SCHEMA_VERSION,
+    OPERATIONS_FAILURE_POLICY_SCHEMA_VERSION,
     OPERATIONS_SCHEDULE_SCHEMA_VERSION,
     ETFOperationsScheduleConfig,
     OperationsCommandGraphError,
@@ -19,6 +20,7 @@ from ai_trading_system.etf_portfolio.operations import (
     build_monthly_operations_command_graph,
     build_weekly_operations_command_graph,
     check_operations_artifact_freshness,
+    evaluate_operations_failure_policy,
     load_operations_schedule_config,
     operations_schedule_required_step_ids,
     operations_schedule_step_ids,
@@ -709,6 +711,190 @@ def test_operations_artifact_freshness_resolves_dynamic_run_id_glob(
     )
 
 
+def test_operations_failure_policy_maps_failure_to_severity(tmp_path: Path) -> None:
+    graph = build_daily_operations_command_graph()
+    freshness = check_operations_artifact_freshness(
+        graph,
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        checked_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+
+    report = evaluate_operations_failure_policy(
+        freshness,
+        evaluated_at=datetime(2026, 6, 3, 12, 5, tzinfo=UTC),
+    )
+    validation_event = _failure_event_by_artifact(report, "data_freshness_check:1")
+    optional_event = _failure_event_by_artifact(report, "ai_attribution_update:1")
+
+    assert validation_event.failure_policy == "fail_pipeline"
+    assert validation_event.severity == "critical"
+    assert optional_event.failure_policy == "skip_optional_step"
+    assert optional_event.severity == "warning"
+    assert report.severity_summary["critical"] >= 1
+    assert report.severity_summary["warning"] >= 1
+
+
+def test_operations_failure_policy_critical_validation_failure_blocks(
+    tmp_path: Path,
+) -> None:
+    graph = build_daily_operations_command_graph()
+    freshness = check_operations_artifact_freshness(
+        graph,
+        as_of="2026-06-03",
+        root_path=tmp_path,
+    )
+
+    report = evaluate_operations_failure_policy(
+        freshness,
+        evaluated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+    event = _failure_event_by_artifact(report, "data_freshness_check:1")
+
+    assert report.pipeline_status == "blocked"
+    assert event.event_type == "artifact_missing"
+    assert event.severity == "critical"
+    assert event.blocks_pipeline is True
+    assert event.blocks_dependent_steps is True
+    assert event.recommended_action == "stop_pipeline_until_artifact_recovers"
+    assert event.event_id in report.blocking_events
+
+
+def test_operations_failure_policy_optional_missing_artifact_warns(
+    tmp_path: Path,
+) -> None:
+    graph = build_daily_operations_command_graph()
+    _write_text_artifact(
+        tmp_path,
+        "outputs/reports/data_quality_2026-06-03.md",
+        "\n".join(
+            [
+                "generated_at: 2026-06-03T09:30:00+00:00",
+                "as_of_date: 2026-06-03",
+            ]
+        ),
+    )
+    _write_json_artifact(
+        tmp_path,
+        "reports/etf_portfolio/ai_confirmation/reports/"
+        "ai_confirmation_report_2026-06-03.json",
+        {
+            "generated_at": "2026-06-03T10:30:00+00:00",
+            "as_of_date": "2026-06-03",
+        },
+    )
+    freshness = check_operations_artifact_freshness(
+        graph,
+        as_of="2026-06-03",
+        root_path=tmp_path,
+    )
+
+    report = evaluate_operations_failure_policy(
+        freshness,
+        evaluated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+    event = _failure_event_by_artifact(report, "ai_attribution_update:1")
+
+    assert event.event_type == "artifact_missing"
+    assert event.severity == "warning"
+    assert event.blocks_pipeline is False
+    assert event.blocks_dependent_steps is False
+    assert event.requires_manual_review is False
+    assert event.recommended_action == "skip_optional_step_and_warn"
+    assert event.event_id in report.warning_events
+
+
+def test_operations_failure_policy_required_stale_artifact_blocks(
+    tmp_path: Path,
+) -> None:
+    graph = build_daily_operations_command_graph()
+    _write_text_artifact(
+        tmp_path,
+        "outputs/reports/data_quality_2026-06-03.md",
+        "\n".join(
+            [
+                "generated_at: 2026-06-03T09:30:00+00:00",
+                "as_of_date: 2026-06-03",
+            ]
+        ),
+    )
+    _write_json_artifact(
+        tmp_path,
+        "reports/etf_portfolio/forward/updates/forward_update_2026-06-03.json",
+        {
+            "generated_at": "2026-05-30T10:30:00+00:00",
+            "as_of_date": "2026-05-30",
+        },
+    )
+    freshness = check_operations_artifact_freshness(
+        graph,
+        as_of="2026-06-03",
+        root_path=tmp_path,
+    )
+
+    report = evaluate_operations_failure_policy(
+        freshness,
+        evaluated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+    event = _failure_event_by_artifact(report, "forward_update:1")
+
+    assert report.pipeline_status == "blocked"
+    assert event.event_type == "artifact_stale"
+    assert event.failure_policy == "block_dependent_steps"
+    assert event.severity == "error"
+    assert event.blocks_pipeline is False
+    assert event.blocks_dependent_steps is True
+    assert event.recommended_action == "block_dependent_steps_until_artifact_recovers"
+
+
+def test_operations_failure_policy_manual_review_failure_requires_owner_review(
+    tmp_path: Path,
+) -> None:
+    graph = build_weekly_operations_command_graph()
+    freshness = check_operations_artifact_freshness(
+        graph,
+        as_of="2026-06-03",
+        root_path=tmp_path,
+    )
+
+    report = evaluate_operations_failure_policy(
+        freshness,
+        evaluated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+    event = _failure_event_by_artifact(report, "decision_journal_review_prompt:1")
+
+    assert event.failure_policy == "manual_review_required"
+    assert event.severity == "error"
+    assert event.requires_manual_review is True
+    assert event.blocks_pipeline is False
+    assert event.blocks_dependent_steps is False
+    assert event.recommended_action == "request_owner_manual_review"
+    assert event.event_id in report.manual_review_events
+
+
+def test_operations_failure_policy_serialization_is_stable(tmp_path: Path) -> None:
+    graph = build_daily_operations_command_graph()
+    freshness = check_operations_artifact_freshness(
+        graph,
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        checked_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+    evaluated_at = datetime(2026, 6, 3, 12, 5, tzinfo=UTC)
+
+    first_report = evaluate_operations_failure_policy(
+        freshness,
+        evaluated_at=evaluated_at,
+    )
+    second_report = evaluate_operations_failure_policy(
+        freshness,
+        evaluated_at=evaluated_at,
+    )
+
+    assert first_report.schema_version == OPERATIONS_FAILURE_POLICY_SCHEMA_VERSION
+    assert first_report.model_dump(mode="json") == second_report.model_dump(mode="json")
+
+
 def _raw_schedule() -> dict[str, object]:
     raw = safe_load_yaml_path(DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH)
     assert isinstance(raw, dict)
@@ -731,3 +917,7 @@ def _write_text_artifact(root: Path, relative_path: str, text: str) -> Path:
 
 def _artifact_by_id(report: Any, artifact_id: str) -> Any:
     return next(artifact for artifact in report.artifacts if artifact.artifact_id == artifact_id)
+
+
+def _failure_event_by_artifact(report: Any, artifact_id: str) -> Any:
+    return next(event for event in report.events if event.artifact_id == artifact_id)

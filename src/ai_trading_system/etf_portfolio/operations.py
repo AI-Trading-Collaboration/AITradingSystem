@@ -36,6 +36,19 @@ OperationsFailurePolicy = Literal[
     "fail_pipeline",
     "manual_review_required",
 ]
+OperationsFailureSeverity = Literal["info", "warning", "error", "critical"]
+OperationsFailureEventType = Literal[
+    "artifact_missing",
+    "artifact_stale",
+    "artifact_unknown",
+    "dependency_blocked",
+]
+OperationsPipelineStatus = Literal[
+    "pass",
+    "warning",
+    "manual_review_required",
+    "blocked",
+]
 OperationsRuntimeClass = Literal["fast", "medium", "slow"]
 OperationsGraphCadence = Literal["daily", "weekly", "biweekly", "monthly"]
 OperationsArtifactFreshnessStatus = Literal[
@@ -68,6 +81,7 @@ _GRAPH_PIPELINE_FIELD_BY_CADENCE: dict[OperationsGraphCadence, str] = {
 }
 OPERATIONS_COMMAND_GRAPH_SCHEMA_VERSION = "etf_operations_command_graph_v1"
 OPERATIONS_ARTIFACT_FRESHNESS_SCHEMA_VERSION = "etf_operations_artifact_freshness_v1"
+OPERATIONS_FAILURE_POLICY_SCHEMA_VERSION = "etf_operations_failure_policy_v1"
 _ARTIFACT_PLACEHOLDER_RE = re.compile(r"\{[^}]+\}")
 _ARTIFACT_DATE_RE = re.compile(r"(?P<date>\d{4}[-_]\d{2}[-_]\d{2})")
 _TEXT_GENERATED_AT_RE = re.compile(
@@ -409,6 +423,55 @@ class ETFOperationsArtifactFreshnessReport(BaseModel):
         return self
 
 
+class ETFOperationsFailurePolicyEvent(BaseModel):
+    event_id: str = Field(min_length=1)
+    event_type: OperationsFailureEventType
+    source_step: str = Field(min_length=1)
+    artifact_id: str = Field(min_length=1)
+    path: str = Field(min_length=1)
+    freshness_status: OperationsArtifactFreshnessStatus
+    dependency_status: OperationsArtifactDependencyStatus
+    required: bool
+    failure_policy: OperationsFailurePolicy
+    severity: OperationsFailureSeverity
+    blocks_pipeline: bool
+    blocks_dependent_steps: bool
+    requires_manual_review: bool
+    blocking_dependencies: list[str] = Field(default_factory=list)
+    recommended_action: str = Field(min_length=1)
+
+
+class ETFOperationsFailurePolicyReport(BaseModel):
+    schema_version: Literal["etf_operations_failure_policy_v1"] = (
+        OPERATIONS_FAILURE_POLICY_SCHEMA_VERSION
+    )
+    cadence: OperationsGraphCadence
+    as_of_date: date
+    evaluated_at: datetime
+    read_only: bool = True
+    commands_executed: bool = False
+    safety: ETFOperationsScheduleSafety
+    pipeline_status: OperationsPipelineStatus
+    events: list[ETFOperationsFailurePolicyEvent] = Field(default_factory=list)
+    blocking_events: list[str] = Field(default_factory=list)
+    warning_events: list[str] = Field(default_factory=list)
+    manual_review_events: list[str] = Field(default_factory=list)
+    severity_summary: dict[str, int] = Field(default_factory=dict)
+    failure_policy_summary: dict[str, int] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def validate_report_safety(self) -> Self:
+        if self.commands_executed:
+            raise ValueError("ETF operations failure policy report must not execute commands")
+        for field, expected in OPERATIONS_SCHEDULE_SAFETY.items():
+            if getattr(self.safety, field) != expected:
+                raise ValueError(
+                    "ETF operations failure policy report safety "
+                    f"{field} must be {expected!r}"
+                )
+        return self
+
+
 def load_operations_schedule_config(
     path: Path | str = DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH,
 ) -> ETFOperationsScheduleConfig:
@@ -585,6 +648,64 @@ def check_operations_artifact_freshness(
         ),
         dependency_summary=_status_counts(
             artifact.dependency_status for artifact in artifacts
+        ),
+    )
+
+
+def evaluate_operations_failure_policy(
+    freshness_report: ETFOperationsArtifactFreshnessReport,
+    *,
+    config: ETFOperationsScheduleConfig | None = None,
+    evaluated_at: datetime | None = None,
+) -> ETFOperationsFailurePolicyReport:
+    schedule = config or load_operations_schedule_config()
+    step_by_id = schedule.step_by_id()
+    evaluated = _coerce_datetime(evaluated_at or datetime.now(tz=UTC))
+
+    events: list[ETFOperationsFailurePolicyEvent] = []
+    for artifact in freshness_report.artifacts:
+        event = _failure_policy_event_for_artifact(
+            artifact,
+            step_by_id=step_by_id,
+        )
+        if event is not None:
+            events.append(event)
+    events.sort(key=lambda event: (event.source_step, event.artifact_id, event.event_type))
+
+    return ETFOperationsFailurePolicyReport(
+        cadence=freshness_report.cadence,
+        as_of_date=freshness_report.as_of_date,
+        evaluated_at=evaluated,
+        read_only=True,
+        commands_executed=False,
+        safety=freshness_report.safety,
+        pipeline_status=_failure_policy_pipeline_status(events),
+        events=events,
+        blocking_events=[
+            event.event_id
+            for event in events
+            if event.blocks_pipeline or event.blocks_dependent_steps
+        ],
+        warning_events=[
+            event.event_id for event in events if event.severity == "warning"
+        ],
+        manual_review_events=[
+            event.event_id for event in events if event.requires_manual_review
+        ],
+        severity_summary=_status_counts_with_defaults(
+            (event.severity for event in events),
+            allowed=("info", "warning", "error", "critical"),
+        ),
+        failure_policy_summary=_status_counts_with_defaults(
+            (event.failure_policy for event in events),
+            allowed=(
+                "continue",
+                "continue_with_warning",
+                "skip_optional_step",
+                "block_dependent_steps",
+                "fail_pipeline",
+                "manual_review_required",
+            ),
         ),
     )
 
@@ -818,6 +939,111 @@ def _runtime_class(
     if step.command.startswith("manual_review:"):
         return "fast"
     return "medium"
+
+
+def _failure_policy_event_for_artifact(
+    artifact: ETFOperationsArtifactStatus,
+    *,
+    step_by_id: dict[str, ETFOperationsScheduleStep],
+) -> ETFOperationsFailurePolicyEvent | None:
+    event_type = _failure_event_type(artifact)
+    if event_type is None:
+        return None
+
+    step = step_by_id.get(artifact.source_step)
+    if step is None:
+        raise OperationsCommandGraphError(
+            "ETF operations failure policy references unknown source step: "
+            f"{artifact.source_step}"
+        )
+    severity = _failure_event_severity(
+        artifact=artifact,
+        failure_policy=step.failure_policy,
+    )
+    return ETFOperationsFailurePolicyEvent(
+        event_id=f"{artifact.artifact_id}:{event_type}",
+        event_type=event_type,
+        source_step=artifact.source_step,
+        artifact_id=artifact.artifact_id,
+        path=artifact.path,
+        freshness_status=artifact.freshness_status,
+        dependency_status=artifact.dependency_status,
+        required=artifact.required,
+        failure_policy=step.failure_policy,
+        severity=severity,
+        blocks_pipeline=_failure_event_blocks_pipeline(step.failure_policy),
+        blocks_dependent_steps=_failure_event_blocks_dependent_steps(step.failure_policy),
+        requires_manual_review=step.failure_policy == "manual_review_required",
+        blocking_dependencies=list(artifact.blocking_dependencies),
+        recommended_action=_failure_event_recommended_action(step.failure_policy),
+    )
+
+
+def _failure_event_type(
+    artifact: ETFOperationsArtifactStatus,
+) -> OperationsFailureEventType | None:
+    if artifact.blocking_dependencies:
+        return "dependency_blocked"
+    if artifact.freshness_status == "missing":
+        return "artifact_missing"
+    if artifact.freshness_status == "stale":
+        return "artifact_stale"
+    if artifact.freshness_status == "unknown":
+        return "artifact_unknown"
+    return None
+
+
+def _failure_event_severity(
+    *,
+    artifact: ETFOperationsArtifactStatus,
+    failure_policy: OperationsFailurePolicy,
+) -> OperationsFailureSeverity:
+    if failure_policy == "fail_pipeline":
+        return "critical"
+    if failure_policy in {"block_dependent_steps", "manual_review_required"}:
+        return "error"
+    if failure_policy in {"continue_with_warning", "skip_optional_step"}:
+        return "warning"
+    if not artifact.required:
+        return "warning"
+    return "info"
+
+
+def _failure_event_blocks_pipeline(
+    failure_policy: OperationsFailurePolicy,
+) -> bool:
+    return failure_policy == "fail_pipeline"
+
+
+def _failure_event_blocks_dependent_steps(
+    failure_policy: OperationsFailurePolicy,
+) -> bool:
+    return failure_policy in {"fail_pipeline", "block_dependent_steps"}
+
+
+def _failure_event_recommended_action(
+    failure_policy: OperationsFailurePolicy,
+) -> str:
+    return {
+        "continue": "continue",
+        "continue_with_warning": "continue_with_warning",
+        "skip_optional_step": "skip_optional_step_and_warn",
+        "block_dependent_steps": "block_dependent_steps_until_artifact_recovers",
+        "fail_pipeline": "stop_pipeline_until_artifact_recovers",
+        "manual_review_required": "request_owner_manual_review",
+    }[failure_policy]
+
+
+def _failure_policy_pipeline_status(
+    events: list[ETFOperationsFailurePolicyEvent],
+) -> OperationsPipelineStatus:
+    if any(event.blocks_pipeline or event.blocks_dependent_steps for event in events):
+        return "blocked"
+    if any(event.requires_manual_review for event in events):
+        return "manual_review_required"
+    if any(event.severity in {"warning", "error"} for event in events):
+        return "warning"
+    return "pass"
 
 
 def _artifact_source_step_order(graph: ETFOperationsCommandGraph) -> tuple[str, ...]:
@@ -1084,4 +1310,12 @@ def _status_counts(statuses: Any) -> dict[str, int]:
     counts: dict[str, int] = {}
     for status in statuses:
         counts[str(status)] = counts.get(str(status), 0) + 1
+    return counts
+
+
+def _status_counts_with_defaults(statuses: Any, *, allowed: tuple[str, ...]) -> dict[str, int]:
+    counts = {status: 0 for status in allowed}
+    for status in statuses:
+        status_key = str(status)
+        counts[status_key] = counts.get(status_key, 0) + 1
     return counts
