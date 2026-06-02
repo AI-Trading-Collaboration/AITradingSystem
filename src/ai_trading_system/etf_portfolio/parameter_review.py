@@ -11,6 +11,7 @@ from ai_trading_system.config import PROJECT_ROOT
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     build_report_index_payload,
+    load_report_registry,
 )
 
 PARAMETER_REVIEW_EVIDENCE_SCHEMA_VERSION = "etf_parameter_review_evidence_v1"
@@ -24,6 +25,7 @@ PARAMETER_REVIEW_GOVERNANCE_SCHEMA_VERSION = (
     "etf_parameter_review_governance_scorecard_v1"
 )
 PARAMETER_REVIEW_REPORT_SCHEMA_VERSION = "etf_parameter_review_report_v1"
+PARAMETER_REVIEW_VALIDATION_SCHEMA_VERSION = "etf_parameter_review_validation_v1"
 
 DEFAULT_PARAMETER_REVIEW_REPORT_DIR = (
     PROJECT_ROOT / "reports" / "etf_portfolio" / "parameter_review"
@@ -1016,6 +1018,159 @@ def write_parameter_review_report(
     return json_path, markdown_path
 
 
+def build_parameter_review_validation_report(
+    *,
+    report_payload: Mapping[str, Any] | None = None,
+    report_registry_path: Path = DEFAULT_REPORT_REGISTRY_PATH,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(tz=UTC)
+    checks: list[dict[str, Any]] = []
+    sample_pipeline: dict[str, Any] = {}
+    sample_error = ""
+    try:
+        sample_pipeline = _parameter_review_validation_sample_pipeline(generated)
+    except ParameterReviewError as exc:
+        sample_error = str(exc)
+
+    _append_parameter_review_validation_check(
+        checks,
+        "evidence_schema_valid",
+        bool(sample_pipeline.get("evidence_record")) and not sample_error,
+        (
+            "Evidence schema accepts a complete parameter review record."
+            if not sample_error
+            else f"Evidence schema validation failed: {sample_error}"
+        ),
+    )
+    _append_parameter_review_validation_check(
+        checks,
+        "aggregator_available",
+        bool(sample_pipeline.get("aggregation")) and not sample_error,
+        (
+            "Aggregation payload validates with required source links."
+            if not sample_error
+            else f"Aggregation validation failed: {sample_error}"
+        ),
+    )
+    _append_parameter_review_validation_check(
+        checks,
+        "comparison_module_available",
+        bool(sample_pipeline.get("comparison")) and not sample_error,
+        (
+            "Candidate comparison module validates sample forward evidence."
+            if not sample_error
+            else f"Comparison validation failed: {sample_error}"
+        ),
+    )
+    _append_parameter_review_validation_check(
+        checks,
+        "decision_journal_linker_available",
+        bool(sample_pipeline.get("journal_linkage")) and not sample_error,
+        (
+            "Decision journal linker validates sample human review evidence."
+            if not sample_error
+            else f"Decision journal linker validation failed: {sample_error}"
+        ),
+    )
+    _append_parameter_review_validation_check(
+        checks,
+        "proposal_generator_available",
+        bool(sample_pipeline.get("proposals")) and not sample_error,
+        (
+            "Proposal generator validates allowed proposal-only actions."
+            if not sample_error
+            else f"Proposal generator validation failed: {sample_error}"
+        ),
+    )
+    _append_parameter_review_validation_check(
+        checks,
+        "governance_gate_available",
+        bool(sample_pipeline.get("scorecard")) and not sample_error,
+        (
+            "Governance scorecard validates deterministic proposal scoring."
+            if not sample_error
+            else f"Governance scorecard validation failed: {sample_error}"
+        ),
+    )
+    _append_parameter_review_validation_check(
+        checks,
+        "report_generator_available",
+        bool(sample_pipeline.get("report")) and not sample_error,
+        (
+            "Parameter review report payload validates with safety fields."
+            if not sample_error
+            else f"Report generator validation failed: {sample_error}"
+        ),
+    )
+    _append_parameter_review_validation_check(
+        checks,
+        "reader_brief_integration_available",
+        *_parameter_review_reader_brief_registry_check(report_registry_path),
+    )
+    _append_parameter_review_validation_check(
+        checks,
+        "unsafe_proposal_types_blocked",
+        _unsafe_parameter_review_proposal_type_is_blocked(),
+        "Unsafe proposal types are rejected by proposal validation.",
+    )
+
+    payload_to_validate = report_payload or _mapping(sample_pipeline.get("report"))
+    checks.extend(_parameter_review_payload_validation_checks(payload_to_validate))
+
+    status = "PASS" if all(check.get("status") == "PASS" for check in checks) else "FAIL"
+    return {
+        "schema_version": PARAMETER_REVIEW_VALIDATION_SCHEMA_VERSION,
+        "report_type": "etf_parameter_review_validation",
+        "status": status,
+        "generated_at": generated.isoformat(),
+        "validation_mode": "sample_and_report_payload_checks",
+        "check_count": len(checks),
+        "failed_check_count": sum(1 for check in checks if check.get("status") != "PASS"),
+        "checks": checks,
+        "production_weights_mutated": False,
+        "baseline_config_mutated": False,
+        "broker_actions_created": False,
+        "safety": dict(PARAMETER_REVIEW_SAFETY),
+        **PARAMETER_REVIEW_SAFETY,
+    }
+
+
+def render_parameter_review_validation_markdown(payload: Mapping[str, Any]) -> str:
+    lines = [
+        "# ETF Parameter Review Validation Gate",
+        "",
+        f"- Status: {payload.get('status')}",
+        f"- Generated At: {payload.get('generated_at')}",
+        "- Safety: observe_only=true, candidate_only=true, production_effect=none, "
+        "broker_action=none, manual_review_required=true",
+        "- 本 gate 校验 TRADING-070 proposal-only workflow，不应用 parameter change。",
+        "",
+        "| Check | Status | Message |",
+        "|---|---|---|",
+    ]
+    for check in _records(payload.get("checks")):
+        lines.append(
+            f"| {check.get('check_id')} | {check.get('status')} | {check.get('message')} |"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def write_parameter_review_validation_report(
+    payload: Mapping[str, Any],
+    *,
+    json_path: Path,
+    markdown_path: Path,
+) -> tuple[Path, Path]:
+    _write_json(payload, json_path)
+    markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    markdown_path.write_text(
+        render_parameter_review_validation_markdown(payload),
+        encoding="utf-8",
+    )
+    return json_path, markdown_path
+
+
 def render_parameter_review_report_markdown(payload: Mapping[str, Any]) -> str:
     aggregation = _mapping(payload.get("evidence_aggregation"))
     comparison = _mapping(payload.get("candidate_comparison"))
@@ -1083,6 +1238,400 @@ def render_parameter_review_report_markdown(payload: Mapping[str, Any]) -> str:
     for source in _records(payload.get("source_report_links")):
         lines.append(f"- {source.get('report_id')}: {source.get('source_report_path')}")
     return "\n".join(lines) + "\n"
+
+
+def _append_parameter_review_validation_check(
+    checks: list[dict[str, Any]],
+    check_id: str,
+    passed: bool,
+    message: str,
+    details: Mapping[str, Any] | None = None,
+) -> None:
+    checks.append(
+        {
+            "check_id": check_id,
+            "status": "PASS" if passed else "FAIL",
+            "message": message,
+            "details": dict(details or {}),
+        }
+    )
+
+
+def _parameter_review_validation_sample_pipeline(generated_at: datetime) -> dict[str, Any]:
+    record = _parameter_review_validation_evidence_record(generated_at)
+    aggregation = _parameter_review_validation_aggregation(record, generated_at)
+    comparison = compare_parameter_review_evidence(aggregation, generated_at=generated_at)
+    journal_linkage = link_decision_journal_evidence(aggregation, generated_at=generated_at)
+    proposals = generate_parameter_change_proposals(
+        aggregation,
+        comparison_payload=comparison,
+        journal_linkage_payload=journal_linkage,
+        generated_at=generated_at,
+    )
+    scorecard = score_parameter_review_proposals(proposals, generated_at=generated_at)
+    report = {
+        "schema_version": PARAMETER_REVIEW_REPORT_SCHEMA_VERSION,
+        "report_type": "etf_parameter_review_report",
+        "review_report_id": "etf-parameter-review-validation-sample-report",
+        "parameter_review_id": aggregation.get("parameter_review_id"),
+        "status": _parameter_review_report_status(aggregation, scorecard),
+        "reason": "",
+        "as_of": "2026-06-02",
+        "generated_at": generated_at.isoformat(),
+        "summary": _parameter_review_report_summary(
+            aggregation=aggregation,
+            scorecard=scorecard,
+            proposals=proposals,
+        ),
+        "evidence_aggregation": aggregation,
+        "candidate_comparison": comparison,
+        "decision_journal_evidence": journal_linkage,
+        "proposal_package": proposals,
+        "proposal_scorecard": scorecard,
+        "manual_review_requirements": _manual_review_requirements(scorecard, proposals),
+        "next_steps": _parameter_review_next_steps(scorecard),
+        "source_report_links": [
+            _source_report_public(source) for source in _records(aggregation.get("source_reports"))
+        ],
+        "safety": dict(PARAMETER_REVIEW_SAFETY),
+        **PARAMETER_REVIEW_SAFETY,
+    }
+    validate_parameter_review_report(report)
+    return {
+        "evidence_record": record,
+        "aggregation": aggregation,
+        "comparison": comparison,
+        "journal_linkage": journal_linkage,
+        "proposals": proposals,
+        "scorecard": scorecard,
+        "report": report,
+    }
+
+
+def _parameter_review_validation_evidence_record(generated_at: datetime) -> dict[str, Any]:
+    candidate_id = "validation_run:base_ai_growth"
+    evidence_sources = [
+        _parameter_review_validation_evidence_source(
+            "etf_forward_dashboard",
+            "forward_dashboard",
+        ),
+        _parameter_review_validation_evidence_source("etf_weekly_review", "weekly_review"),
+        _parameter_review_validation_evidence_source(
+            "etf_decision_journal_report",
+            "decision_journal",
+        ),
+        _parameter_review_validation_evidence_source(
+            "etf_experiment_comparison",
+            "experiment_report",
+        ),
+        _parameter_review_validation_evidence_source(
+            "etf_experiment_candidate_selection",
+            "candidate_gate",
+        ),
+        _parameter_review_validation_evidence_source(
+            "etf_forward_validation",
+            "validation_gate",
+        ),
+    ]
+    metrics = {
+        "return_since_enrollment": 0.06,
+        "excess_return_vs_baseline": 0.03,
+        "excess_return_vs_QQQ": 0.02,
+        "excess_return_vs_SPY": 0.025,
+        "excess_return_vs_SMH": 0.01,
+        "max_drawdown_since_enrollment": -0.03,
+        "drawdown_delta_vs_baseline": 0.02,
+        "turnover_since_enrollment": 0.25,
+        "turnover_delta_vs_baseline": 0.05,
+        "constraint_hit_rate": 0.02,
+        "regime_transition_count": 1,
+        "weight_stability_score": 0.9,
+        "data_coverage_ratio": 1.0,
+        "manual_review_count": 1,
+        "accepted_review_count": 1,
+        "rejected_review_count": 0,
+        "deferred_review_count": 0,
+        "metric_null_reasons": {},
+    }
+    return build_parameter_review_evidence_record(
+        candidate_id=candidate_id,
+        experiment_id="base_ai_growth",
+        source_pack_id="etf_calibration_v1",
+        source_run_id="validation_run",
+        baseline_config_hash="baseline-validation-hash",
+        candidate_config_hash="candidate-validation-hash",
+        review_start_date="2026-05-01",
+        review_end_date="2026-06-02",
+        forward_days=32,
+        evidence_sources=evidence_sources,
+        metrics=metrics,
+        journal_links=[
+            {
+                "decision_id": "validation-decision-1",
+                "candidate_id": candidate_id,
+                "decision_status": "accept_recommendation",
+                "human_decision": "accept",
+                "confidence": 0.85,
+                "rationale": "Validation sample supports manual review path.",
+                "follow_up_task": "manual_review_required_before_any_parameter_change",
+                "source_report_path": "validation://etf_decision_journal_report.json",
+            }
+        ],
+        weekly_review_links=[
+            {
+                "review_id": "validation-weekly-review-1",
+                "candidate_id": candidate_id,
+                "recommended_action": "continue_observation",
+                "source_report_path": "validation://etf_weekly_review.json",
+            }
+        ],
+        validation_status={"status": "available", "validation_gate": "PASS"},
+        generated_at=generated_at,
+        review_id="etf-parameter-review-validation-sample-record",
+        parameter_review_id="etf-parameter-review-validation-sample",
+        extra_fields={
+            "parameter_delta": {
+                "candidate_profile": "base_ai_growth",
+                "production_weights_mutated": False,
+            }
+        },
+    )
+
+
+def _parameter_review_validation_evidence_source(
+    report_id: str,
+    source_type: str,
+) -> dict[str, Any]:
+    return {
+        "source_type": source_type,
+        "report_id": report_id,
+        "source_report_path": f"validation://{report_id}.json",
+        "status": "loaded",
+        "reason_code": "VALIDATION_SAMPLE",
+    }
+
+
+def _parameter_review_validation_aggregation(
+    evidence_record: Mapping[str, Any],
+    generated_at: datetime,
+) -> dict[str, Any]:
+    source_reports = [
+        _parameter_review_validation_source_report("etf_forward_dashboard", "forward_dashboard"),
+        _parameter_review_validation_source_report("etf_weekly_review", "weekly_review"),
+        _parameter_review_validation_source_report(
+            "etf_decision_journal_report",
+            "decision_journal",
+        ),
+        _parameter_review_validation_source_report(
+            "etf_experiment_comparison",
+            "experiment_report",
+        ),
+        _parameter_review_validation_source_report(
+            "etf_experiment_candidate_selection",
+            "candidate_gate",
+        ),
+        _parameter_review_validation_source_report("etf_forward_validation", "validation_gate"),
+    ]
+    payload = {
+        "schema_version": PARAMETER_REVIEW_AGGREGATION_SCHEMA_VERSION,
+        "report_type": "etf_parameter_review_aggregation",
+        "parameter_review_id": "etf-parameter-review-validation-sample",
+        "as_of": "2026-06-02",
+        "generated_at": generated_at.isoformat(),
+        "status": "available",
+        "reason": "",
+        "candidate_count": 1,
+        "evidence_record_count": 1,
+        "source_reports": source_reports,
+        "source_report_links": [_source_report_public(source) for source in source_reports],
+        "source_payloads": {},
+        "missing_required_sources": [],
+        "warnings": [],
+        "evidence_records": [dict(evidence_record)],
+        "safety": dict(PARAMETER_REVIEW_SAFETY),
+        **PARAMETER_REVIEW_SAFETY,
+    }
+    validate_parameter_review_aggregation(payload)
+    return payload
+
+
+def _parameter_review_validation_source_report(report_id: str, source_type: str) -> dict[str, Any]:
+    return {
+        "report_id": report_id,
+        "source_type": source_type,
+        "title": report_id,
+        "status": "loaded",
+        "reason_code": "VALIDATION_SAMPLE",
+        "required": source_type == "forward_dashboard",
+        "loaded": True,
+        "source_report_path": f"validation://{report_id}.json",
+        "artifact_status": "PASS",
+        "freshness_status": "FRESH",
+        "source_metric": source_type,
+        "time_window": {"artifact_date": "2026-06-02"},
+    }
+
+
+def _parameter_review_reader_brief_registry_check(
+    report_registry_path: Path,
+) -> tuple[bool, str, dict[str, Any]]:
+    try:
+        registry = load_report_registry(report_registry_path)
+    except (FileNotFoundError, ValueError) as exc:
+        return False, f"Report registry unavailable: {exc}", {}
+    for report in _records(registry.get("reports")):
+        if _text(report.get("report_id")) != "etf_parameter_review_report":
+            continue
+        visible = report.get("include_in_reader_brief") is True
+        has_command = "parameter-review report" in _text(report.get("command"))
+        passed = visible and has_command
+        return (
+            passed,
+            (
+                "etf_parameter_review_report is visible to Reader Brief."
+                if passed
+                else "etf_parameter_review_report is missing Reader Brief visibility metadata."
+            ),
+            {
+                "include_in_reader_brief": report.get("include_in_reader_brief"),
+                "command": report.get("command"),
+            },
+        )
+    return False, "etf_parameter_review_report is missing from report registry.", {}
+
+
+def _unsafe_parameter_review_proposal_type_is_blocked() -> bool:
+    proposal = _parameter_review_validation_unsafe_proposal()
+    try:
+        validate_parameter_change_proposals(
+            {
+                "schema_version": PARAMETER_REVIEW_PROPOSAL_SCHEMA_VERSION,
+                "report_type": "etf_parameter_change_proposals",
+                "generated_at": datetime(2026, 6, 2, tzinfo=UTC).isoformat(),
+                "status": "blocked",
+                "proposal_count": 1,
+                "proposal_type_counts": {"apply_baseline_change": 1},
+                "proposals": [proposal],
+                "safety": dict(PARAMETER_REVIEW_SAFETY),
+                **PARAMETER_REVIEW_SAFETY,
+            }
+        )
+    except ParameterReviewError:
+        return True
+    return False
+
+
+def _parameter_review_validation_unsafe_proposal() -> dict[str, Any]:
+    return {
+        "proposal_id": "unsafe-parameter-review-proposal",
+        "candidate_id": "unsafe_candidate",
+        "proposal_type": "apply_baseline_change",
+        "current_baseline_config_hash": "baseline",
+        "candidate_config_hash": "candidate",
+        "proposed_parameter_delta": {"mutation_allowed": True},
+        "supporting_evidence": [],
+        "blocking_evidence": [],
+        "risk_summary": {"risk_level": "unsafe"},
+        "manual_review_required": True,
+        "production_effect": "none",
+        "broker_action": "none",
+        "created_at": datetime(2026, 6, 2, tzinfo=UTC).isoformat(),
+        "safety": dict(PARAMETER_REVIEW_SAFETY),
+        **PARAMETER_REVIEW_SAFETY,
+    }
+
+
+def _parameter_review_payload_validation_checks(
+    report_payload: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    checks: list[dict[str, Any]] = []
+    try:
+        validate_parameter_review_report(report_payload)
+        _append_parameter_review_validation_check(
+            checks,
+            "report_payload_schema_valid",
+            True,
+            "Parameter review report payload schema and safety fields are valid.",
+        )
+    except ParameterReviewError as exc:
+        _append_parameter_review_validation_check(
+            checks,
+            "report_payload_schema_valid",
+            False,
+            f"Parameter review report payload failed validation: {exc}",
+        )
+    safety = _mapping(report_payload.get("safety"))
+    _append_parameter_review_validation_check(
+        checks,
+        "production_effect_none",
+        _text(report_payload.get("production_effect")) == "none"
+        and _text(safety.get("production_effect")) == "none"
+        and _all_proposals_match(report_payload, "production_effect", "none"),
+        "Report and proposals keep production_effect=none.",
+    )
+    _append_parameter_review_validation_check(
+        checks,
+        "broker_action_none",
+        _text(report_payload.get("broker_action")) == "none"
+        and _text(safety.get("broker_action")) == "none"
+        and _all_proposals_match(report_payload, "broker_action", "none"),
+        "Report and proposals keep broker_action=none.",
+    )
+    _append_parameter_review_validation_check(
+        checks,
+        "manual_review_required_true",
+        report_payload.get("manual_review_required") is True
+        and safety.get("manual_review_required") is True
+        and _all_proposals_match(report_payload, "manual_review_required", True),
+        "Report and proposals keep manual_review_required=true.",
+    )
+    _append_parameter_review_validation_check(
+        checks,
+        "unsafe_proposal_types_absent",
+        not _payload_contains_unsafe_proposal_type(report_payload),
+        "Report payload does not contain unsafe proposal types.",
+    )
+    _append_parameter_review_validation_check(
+        checks,
+        "evidence_source_links_present",
+        _parameter_review_report_has_evidence_source_links(report_payload),
+        "Report payload contains required evidence source links or explicit needs_more_data.",
+    )
+    return checks
+
+
+def _all_proposals_match(
+    report_payload: Mapping[str, Any],
+    field: str,
+    expected: object,
+) -> bool:
+    proposals = _records(_mapping(report_payload.get("proposal_package")).get("proposals"))
+    return all(proposal.get(field) == expected for proposal in proposals)
+
+
+def _payload_contains_unsafe_proposal_type(report_payload: Mapping[str, Any]) -> bool:
+    proposals = _records(_mapping(report_payload.get("proposal_package")).get("proposals"))
+    return any(
+        _text(proposal.get("proposal_type")) in DISALLOWED_PARAMETER_REVIEW_PROPOSAL_TYPES
+        for proposal in proposals
+    )
+
+
+def _parameter_review_report_has_evidence_source_links(report_payload: Mapping[str, Any]) -> bool:
+    aggregation = _mapping(report_payload.get("evidence_aggregation"))
+    evidence_records = _records(aggregation.get("evidence_records"))
+    if not evidence_records and _text(report_payload.get("status")) == "needs_more_data":
+        return True
+    source_links = _records(report_payload.get("source_report_links"))
+    if not source_links:
+        return False
+    for record in evidence_records:
+        source_types = {
+            _text(source.get("source_type")) for source in _records(record.get("evidence_sources"))
+        }
+        if not REQUIRED_EVIDENCE_SOURCE_TYPES.issubset(source_types):
+            return False
+    return True
 
 
 def _candidate_evidence_comparison(

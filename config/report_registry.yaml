@@ -639,6 +639,22 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_parameter_review_validation
+    title: ETF Allocation Parameter Review Validation
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf parameter-review validate
+    artifact_globs:
+      - reports/etf_portfolio/parameter_review/validation/parameter_review_validation_*.json
+      - reports/etf_portfolio/parameter_review/validation/parameter_review_validation_*.md
+    freshness_sla_days: 14
+    freshness_rationale: TRADING-070 validation confirms parameter review remains proposal-only, evidence-linked, and safe before marking the workflow complete.
+    owner_action: run_aits_etf_parameter_review_validate_before_marking_TRADING_070_done
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_p2_walk_forward
     title: ETF P2 Walk Forward Readiness
     group: research

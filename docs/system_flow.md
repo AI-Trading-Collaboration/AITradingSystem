@@ -153,6 +153,7 @@ flowchart TD
     T070JLINK --> T070PROP
     T070PROP --> T070GOV["parameter review governance scorecard<br/>weighted evidence score + hard blockers<br/>eligible / needs_more_data / blocked / rejected / continue_shadow"]
     T070GOV --> T070REP["aits etf parameter-review report/run --as-of YYYY-MM-DD<br/>parameter_review_YYYY-MM-DD.json/md<br/>manual review package + source links"]
+    T070REP --> T070VAL["aits etf parameter-review validate<br/>parameter_review_validation_YYYY-MM-DD.json/md<br/>proposal-only workflow + unsafe action blockers"]
     T064RUN --> T064RIDX["config/report_registry.yaml + aits reports index<br/>experiment manifest / comparison / candidate selection / shadow registry / weekly review visibility"]
     T064CMP --> T064RIDX
     T064SEL --> T064RIDX
@@ -173,6 +174,7 @@ flowchart TD
     T069REP --> T064RIDX
     T069VAL --> T064RIDX
     T070REP --> T064RIDX
+    T070VAL --> T064RIDX
     T064RIDX --> T064READ["aits reports reader-brief<br/>Weekly Portfolio Review + Portfolio Decision Journal + ETF Parameter Review + ETF Calibration + ETF Forward + AI Confirmation + Satellite Replacement<br/>latest artifacts / safety status / detail links"]
     T064CFG --> T064VAL["aits etf experiments validate --pack etf_calibration_v1<br/>TRADING-064 final validation gate<br/>registry / pack / runner / reports / P2-live safety"]
     T064PACK --> T064VAL
@@ -204,6 +206,8 @@ TRADING-070F 新增 proposal scoring and governance gate，按 forward excess re
 TRADING-070G 新增 `aits etf parameter-review report/run --as-of YYYY-MM-DD`，生成 `reports/etf_portfolio/parameter_review/reports/parameter_review_YYYY-MM-DD.json/md`，包含 safety banner、review metadata、evidence source summary、candidate comparison、forward evidence summary、decision journal summary、proposal scorecard、generated/blocked/rejected proposals、manual review requirements、next steps 和 source report links。该 report 已登记到 report registry；报告只展示 proposal/manual-review evidence，不输出或执行 production mutation。
 
 TRADING-070H 新增 Reader Brief `ETF Parameter Review` 区块，只读 report index 指向的 latest `etf_parameter_review_report`，展示 status、candidate/proposal counts、main reason、safety posture 和 detail report link。缺失 parameter review report 时显示 `MISSING`，不运行 TRADING-070 上游命令、不写 production weights、不触发 broker action。
+
+TRADING-070I 新增 `aits etf parameter-review validate`，生成 `reports/etf_portfolio/parameter_review/validation/parameter_review_validation_YYYY-MM-DD.json/md`，校验 evidence schema、aggregator、comparison、decision journal linker、proposal generator、governance gate、report generator、Reader Brief registry visibility、unsafe proposal type blocking、source links 和固定 safety fields。Validation gate 只确认 TRADING-070 proposal-only workflow 完整；PASS 不应用参数变更、不代表 production promotion。
 
 ## ETF Portfolio P2 Observe-Only Contracts
 

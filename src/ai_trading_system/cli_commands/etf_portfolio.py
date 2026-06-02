@@ -168,10 +168,13 @@ from ai_trading_system.etf_portfolio.p2 import (
 from ai_trading_system.etf_portfolio.parameter_review import (
     DEFAULT_PARAMETER_REVIEW_AGGREGATION_DIR,
     DEFAULT_PARAMETER_REVIEW_REVIEW_DIR,
+    DEFAULT_PARAMETER_REVIEW_VALIDATION_DIR,
     build_parameter_review_aggregation,
     build_parameter_review_report,
+    build_parameter_review_validation_report,
     write_parameter_review_aggregation,
     write_parameter_review_report,
+    write_parameter_review_validation_report,
 )
 from ai_trading_system.etf_portfolio.regime import (
     generate_regime_for_date,
@@ -2338,6 +2341,42 @@ def parameter_review_run_command(
         report_registry_path=report_registry_path,
         output_dir=output_dir,
     )
+
+
+@parameter_review_app.command("validate")
+def parameter_review_validate_command(
+    report_registry_path: Annotated[
+        Path,
+        typer.Option(help="report registry config path。"),
+    ] = DEFAULT_REPORT_REGISTRY_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="parameter review validation 输出目录。"),
+    ] = DEFAULT_PARAMETER_REVIEW_VALIDATION_DIR,
+) -> None:
+    """生成 TRADING-070 parameter review validation gate；失败时 fail closed。"""
+    generated = datetime.now(UTC)
+    payload = build_parameter_review_validation_report(
+        report_registry_path=report_registry_path,
+        generated_at=generated,
+    )
+    stem = f"parameter_review_validation_{generated.date().isoformat()}"
+    json_path = output_dir / f"{stem}.json"
+    md_path = output_dir / f"{stem}.md"
+    write_parameter_review_validation_report(
+        payload,
+        json_path=json_path,
+        markdown_path=md_path,
+    )
+    typer.echo(f"ETF parameter review validation gate：{md_path}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
 
 
 def _run_parameter_review_report_command(

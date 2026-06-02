@@ -13,6 +13,7 @@ from ai_trading_system.etf_portfolio.parameter_review import (
     build_parameter_review_aggregation,
     build_parameter_review_evidence_record,
     build_parameter_review_report,
+    build_parameter_review_validation_report,
     compare_parameter_review_evidence,
     generate_parameter_change_proposals,
     link_decision_journal_evidence,
@@ -21,6 +22,7 @@ from ai_trading_system.etf_portfolio.parameter_review import (
     validate_parameter_change_proposals,
     validate_parameter_review_evidence_record,
     write_parameter_review_report,
+    write_parameter_review_validation_report,
 )
 
 
@@ -673,6 +675,138 @@ def test_parameter_review_cli_report_writes_outputs(tmp_path) -> None:
     assert (output_dir / "parameter_review_2026-06-01.json").exists()
     assert (output_dir / "parameter_review_2026-06-01.md").exists()
     assert "production_effect=none" in result.output
+
+
+def test_parameter_review_validation_passes_when_workflow_complete() -> None:
+    payload = build_parameter_review_validation_report(
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert payload["status"] == "PASS"
+    assert payload["production_effect"] == "none"
+    assert payload["broker_action"] == "none"
+    assert payload["manual_review_required"] is True
+    assert {check["check_id"] for check in payload["checks"]} >= {
+        "evidence_schema_valid",
+        "aggregator_available",
+        "comparison_module_available",
+        "decision_journal_linker_available",
+        "proposal_generator_available",
+        "governance_gate_available",
+        "report_generator_available",
+        "reader_brief_integration_available",
+        "unsafe_proposal_types_blocked",
+    }
+
+
+def test_parameter_review_validation_fails_if_production_effect_unsafe(tmp_path) -> None:
+    report = _report_payload(tmp_path)
+    report["production_effect"] = "change_weights"
+
+    payload = build_parameter_review_validation_report(
+        report_payload=report,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert payload["status"] == "FAIL"
+    assert _check_status(payload, "production_effect_none") == "FAIL"
+    assert _check_status(payload, "report_payload_schema_valid") == "FAIL"
+
+
+def test_parameter_review_validation_fails_if_broker_action_unsafe(tmp_path) -> None:
+    report = _report_payload(tmp_path)
+    report["broker_action"] = "place_order"
+
+    payload = build_parameter_review_validation_report(
+        report_payload=report,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert payload["status"] == "FAIL"
+    assert _check_status(payload, "broker_action_none") == "FAIL"
+    assert _check_status(payload, "report_payload_schema_valid") == "FAIL"
+
+
+def test_parameter_review_validation_fails_if_proposal_applies_production_change(
+    tmp_path,
+) -> None:
+    report = _report_payload(tmp_path)
+    report["proposal_package"]["proposals"][0]["proposal_type"] = "apply_baseline_change"
+
+    payload = build_parameter_review_validation_report(
+        report_payload=report,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert payload["status"] == "FAIL"
+    assert _check_status(payload, "unsafe_proposal_types_absent") == "FAIL"
+
+
+def test_parameter_review_validation_fails_if_evidence_source_links_missing(
+    tmp_path,
+) -> None:
+    report = _report_payload(tmp_path)
+    report["source_report_links"] = []
+
+    payload = build_parameter_review_validation_report(
+        report_payload=report,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert payload["status"] == "FAIL"
+    assert _check_status(payload, "evidence_source_links_present") == "FAIL"
+
+
+def test_parameter_review_validation_writes_json_and_markdown(tmp_path) -> None:
+    payload = build_parameter_review_validation_report(
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    json_path = tmp_path / "parameter_review_validation.json"
+    markdown_path = tmp_path / "parameter_review_validation.md"
+
+    write_parameter_review_validation_report(
+        payload,
+        json_path=json_path,
+        markdown_path=markdown_path,
+    )
+
+    written = json.loads(json_path.read_text(encoding="utf-8"))
+    markdown = markdown_path.read_text(encoding="utf-8")
+    assert written["report_type"] == "etf_parameter_review_validation"
+    assert written["status"] == "PASS"
+    assert "# ETF Parameter Review Validation Gate" in markdown
+    assert "unsafe_proposal_types_blocked" in markdown
+
+
+def test_parameter_review_cli_validate_writes_outputs(tmp_path) -> None:
+    output_dir = tmp_path / "validation"
+
+    result = CliRunner().invoke(
+        etf_app,
+        ["parameter-review", "validate", "--output-dir", str(output_dir)],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert list(output_dir.glob("parameter_review_validation_*.json"))
+    assert list(output_dir.glob("parameter_review_validation_*.md"))
+    assert "status=PASS" in result.output
+    assert "production_effect=none" in result.output
+
+
+def _report_payload(tmp_path) -> dict[str, object]:
+    context = _aggregation_context(tmp_path)
+    return build_parameter_review_report(
+        as_of=date(2026, 6, 1),
+        report_index_payload=context["report_index"],
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+
+def _check_status(payload: dict[str, object], check_id: str) -> str:
+    for check in payload["checks"]:
+        if check["check_id"] == check_id:
+            return str(check["status"])
+    raise AssertionError(f"missing validation check: {check_id}")
 
 
 def _evidence_record(

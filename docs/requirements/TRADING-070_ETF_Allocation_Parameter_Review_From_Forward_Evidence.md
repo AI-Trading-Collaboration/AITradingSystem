@@ -1,6 +1,6 @@
 # TRADING-070 ETF Allocation Parameter Review from Forward Evidence
 
-状态：IN_PROGRESS
+状态：VALIDATING
 
 最后更新：2026-06-02
 
@@ -71,7 +71,7 @@ reason=INSUFFICIENT_FORWARD_EVIDENCE
 |TRADING-070F|Proposal Scoring and Governance Gate|DONE|Proposal scorecard is deterministic and fail-closed on insufficient/unsafe/under-evidenced proposals|
 |TRADING-070G|Parameter Review Report Generator|DONE|JSON/Markdown report includes safety banner, source summary, comparisons, journal evidence, scorecard and proposals|
 |TRADING-070H|Reader Brief Parameter Review Section|DONE|Reader Brief exposes parameter review status, counts, safety posture and detailed report link|
-|TRADING-070I|Parameter Review Validation Gate|READY|`aits etf parameter-review validate` confirms proposal-only behavior and fails closed on unsafe states|
+|TRADING-070I|Parameter Review Validation Gate|DONE|`aits etf parameter-review validate` confirms proposal-only behavior and fails closed on unsafe states|
 
 ## 验收标准
 
@@ -148,3 +148,10 @@ reason=INSUFFICIENT_FORWARD_EVIDENCE
   candidate count、eligible/continue/rejected/needs-more-data/blocked counts、main reason、
   safety posture 和 detailed report link；缺失 report 时显示 `MISSING`，不运行
   parameter-review CLI、不写 production weights 或 broker state。
+- 2026-06-02：TRADING-070I 完成。新增 `aits etf parameter-review validate`，生成
+  `reports/etf_portfolio/parameter_review/validation/parameter_review_validation_YYYY-MM-DD.json/md`；
+  validation gate 使用 deterministic sample 校验 evidence schema、aggregator、comparison、
+  decision journal linker、proposal generator、governance scorecard、report generator、Reader
+  Brief registry visibility、source links 和 unsafe action blocking；固定安全字段，失败时
+  fail closed，不应用参数变更。TRADING-070 父任务进入 `VALIDATING`，等待真实 forward
+  evidence 和 owner manual review 继续滚动验证。
