@@ -70,7 +70,7 @@ reason=INSUFFICIENT_FORWARD_EVIDENCE
 |TRADING-070E|Parameter Change Proposal Generator|DONE|Only proposal/review actions are generated; unsafe proposal types are rejected|
 |TRADING-070F|Proposal Scoring and Governance Gate|DONE|Proposal scorecard is deterministic and fail-closed on insufficient/unsafe/under-evidenced proposals|
 |TRADING-070G|Parameter Review Report Generator|DONE|JSON/Markdown report includes safety banner, source summary, comparisons, journal evidence, scorecard and proposals|
-|TRADING-070H|Reader Brief Parameter Review Section|READY|Reader Brief exposes parameter review status, counts, safety posture and detailed report link|
+|TRADING-070H|Reader Brief Parameter Review Section|DONE|Reader Brief exposes parameter review status, counts, safety posture and detailed report link|
 |TRADING-070I|Parameter Review Validation Gate|READY|`aits etf parameter-review validate` confirms proposal-only behavior and fails closed on unsafe states|
 
 ## 验收标准
@@ -143,3 +143,8 @@ reason=INSUFFICIENT_FORWARD_EVIDENCE
   evidence summary、decision journal summary、proposal scorecard、generated/blocked/rejected
   proposals、manual review requirements、next steps 和 source report links，并登记为
   `etf_parameter_review_report`。
+- 2026-06-02：TRADING-070H 完成。Reader Brief 新增 `ETF Parameter Review` 区块，只读
+  report index 指向的 latest `etf_parameter_review_report`，展示 status、reviewed
+  candidate count、eligible/continue/rejected/needs-more-data/blocked counts、main reason、
+  safety posture 和 detailed report link；缺失 report 时显示 `MISSING`，不运行
+  parameter-review CLI、不写 production weights 或 broker state。

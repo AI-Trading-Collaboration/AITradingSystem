@@ -173,7 +173,7 @@ flowchart TD
     T069REP --> T064RIDX
     T069VAL --> T064RIDX
     T070REP --> T064RIDX
-    T064RIDX --> T064READ["aits reports reader-brief<br/>Weekly Portfolio Review + Portfolio Decision Journal + ETF Calibration + ETF Forward + AI Confirmation + Satellite Replacement<br/>latest artifacts / safety status / detail links"]
+    T064RIDX --> T064READ["aits reports reader-brief<br/>Weekly Portfolio Review + Portfolio Decision Journal + ETF Parameter Review + ETF Calibration + ETF Forward + AI Confirmation + Satellite Replacement<br/>latest artifacts / safety status / detail links"]
     T064CFG --> T064VAL["aits etf experiments validate --pack etf_calibration_v1<br/>TRADING-064 final validation gate<br/>registry / pack / runner / reports / P2-live safety"]
     T064PACK --> T064VAL
     T064VAL --> T064RIDX
@@ -202,6 +202,8 @@ TRADING-070E 新增 parameter change proposal generator，消费 comparison 和 
 TRADING-070F 新增 proposal scoring and governance gate，按 forward excess return、drawdown improvement、stability、turnover penalty、journal support 和 data quality 生成 deterministic scorecard，并对 insufficient forward days、missing baseline comparison、missing journal link、failed validation、unsafe production effect、broker action、high turnover 和 high drawdown fail closed。Scorecard 只决定是否 `eligible_for_manual_review`、`needs_more_data`、`blocked`、`rejected` 或 `continue_shadow`，不应用参数变更。
 
 TRADING-070G 新增 `aits etf parameter-review report/run --as-of YYYY-MM-DD`，生成 `reports/etf_portfolio/parameter_review/reports/parameter_review_YYYY-MM-DD.json/md`，包含 safety banner、review metadata、evidence source summary、candidate comparison、forward evidence summary、decision journal summary、proposal scorecard、generated/blocked/rejected proposals、manual review requirements、next steps 和 source report links。该 report 已登记到 report registry；报告只展示 proposal/manual-review evidence，不输出或执行 production mutation。
+
+TRADING-070H 新增 Reader Brief `ETF Parameter Review` 区块，只读 report index 指向的 latest `etf_parameter_review_report`，展示 status、candidate/proposal counts、main reason、safety posture 和 detail report link。缺失 parameter review report 时显示 `MISSING`，不运行 TRADING-070 上游命令、不写 production weights、不触发 broker action。
 
 ## ETF Portfolio P2 Observe-Only Contracts
 

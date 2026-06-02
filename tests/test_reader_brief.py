@@ -161,6 +161,21 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     assert ai_confirmation["detail_report"].endswith("ai_confirmation_report_2026-05-04.json")
     assert ai_confirmation["production_effect"] == "none"
     assert ai_confirmation["broker_action"] == "none"
+    parameter_review = payload["etf_parameter_review"]
+    assert parameter_review["availability"] == "AVAILABLE"
+    assert parameter_review["status"] == "needs_more_data"
+    assert parameter_review["candidate_count"] == 3
+    assert parameter_review["eligible_for_manual_review_count"] == 0
+    assert parameter_review["continue_shadow_count"] == 2
+    assert parameter_review["rejected_count"] == 1
+    assert parameter_review["main_reason"] == "insufficient forward days and mixed evidence"
+    assert parameter_review["detail_report"].endswith("parameter_review_2026-05-04.json")
+    assert parameter_review["safety_status"] == (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true"
+    )
+    assert parameter_review["production_effect"] == "none"
+    assert parameter_review["broker_action"] == "none"
     core_items = payload["report_navigation_groups"]["groups"][0]["items"]
     daily_summary_rows = [
         item for item in core_items if item["artifact_id"] == "daily_decision_summary"
@@ -201,6 +216,10 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
     assert payload["etf_ai_confirmation"]["interpretation"] == (
         "AI Confirmation: insufficient data coverage. No overlay recommendation."
     )
+    assert payload["etf_parameter_review"]["availability"] == "MISSING"
+    assert payload["etf_parameter_review"]["main_reason"] == "PARAMETER_REVIEW_REPORT_MISSING"
+    assert payload["etf_parameter_review"]["production_effect"] == "none"
+    assert payload["etf_parameter_review"]["broker_action"] == "none"
     assert payload["report_index_summary"]["availability"] == "MISSING"
     assert payload["documentation_contract_summary"]["availability"] == "MISSING"
     assert payload["task_cadence_calendar"]["availability"] == "REGISTRY_FALLBACK"
@@ -219,6 +238,7 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
     assert "ETF Calibration Experiments" in html
     assert "ETF Forward Simulation" in html
     assert "AI Confirmation" in html
+    assert "ETF Parameter Review" in html
     assert 'safety_status</th><td><span class="status-badge status-missing">MISSING</span>' in html
     assert "impact-group impact-important" in html
     assert "status-badge status-important" in html
@@ -292,6 +312,9 @@ def test_reports_reader_brief_cli_writes_html_and_json(tmp_path: Path) -> None:
     assert "Score Change Attribution" in html
     assert "Report Index Freshness" in html
     assert "Task Cadence Calendar" in html
+    assert "ETF Parameter Review" in html
+    assert "eligible_for_manual_review" in html
+    assert "parameter_review_2026-05-04.json" in html
     assert "Report Navigation" in html
     assert "Top 3 Review Items Today" in html
     assert "影响今日结论" in html
@@ -791,6 +814,59 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
         ),
         encoding="utf-8",
     )
+    parameter_review_dir = (
+        tmp_path / "reports" / "etf_portfolio" / "parameter_review" / "reports"
+    )
+    parameter_review_dir.mkdir(parents=True)
+    parameter_review_path = parameter_review_dir / "parameter_review_2026-05-04.json"
+    parameter_review_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "etf_parameter_review_report_v1",
+                "report_type": "etf_parameter_review_report",
+                "review_report_id": "etf-parameter-review-report-2026-05-04",
+                "parameter_review_id": "etf-parameter-review-2026-05-04",
+                "status": "needs_more_data",
+                "reason": "INSUFFICIENT_FORWARD_EVIDENCE",
+                "as_of": "2026-05-04",
+                "summary": {
+                    "candidate_count": 3,
+                    "evidence_record_count": 3,
+                    "proposal_count": 3,
+                    "eligible_for_manual_review_count": 0,
+                    "continue_shadow_count": 2,
+                    "needs_more_data_count": 0,
+                    "blocked_count": 0,
+                    "rejected_count": 1,
+                    "main_reason": "insufficient forward days and mixed evidence",
+                    "safety_status": "observe_only/candidate_only/manual_review_required",
+                },
+                "proposal_scorecard": {
+                    "status": "needs_more_data",
+                    "status_counts": {
+                        "eligible_for_manual_review": 0,
+                        "continue_shadow": 2,
+                        "needs_more_data": 0,
+                        "blocked": 0,
+                        "rejected": 1,
+                    },
+                },
+                "source_report_links": [
+                    {
+                        "report_id": "etf_forward_dashboard",
+                        "source_report_path": str(forward_dashboard_path),
+                    }
+                ],
+                "observe_only": True,
+                "candidate_only": True,
+                "production_effect": "none",
+                "broker_action": "none",
+                "manual_review_required": True,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     trace_bundle_path = tmp_path / "daily_score_2026-05-04_trace.json"
     trace_bundle_path.write_text(
         json.dumps(
@@ -1168,6 +1244,19 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                         "latest_artifact_path": str(ai_confirmation_path),
                         "exists": True,
                         "owner_action": "review_ai_confirmation_report",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_parameter_review_report",
+                        "title": "ETF Allocation Parameter Review",
+                        "cadence": "weekly",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "needs_more_data",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(parameter_review_path),
+                        "exists": True,
+                        "owner_action": "review_parameter_review_report",
                         "production_effect": "none",
                     },
                 ],

@@ -404,7 +404,9 @@ partial evidence，不补造结论。`aits etf parameter-review report --as-of Y
 manual review requirements、next steps 和 source report links。所有输出固定
 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、
 `manual_review_required=true`，不写 official target weights、不改 baseline config、不触发
-broker，也不自动 promotion。
+broker，也不自动 promotion。Reader Brief 的 `ETF Parameter Review` 区块只读摘录 latest
+parameter review report 的 status、candidate/proposal counts、main reason、safety posture 和
+detail report link；缺失时显示 `MISSING`，不运行 parameter-review CLI。
 
 `aits etf governance summary --candidate <candidate.json>` 使用
 `config/etf_portfolio/governance.yaml` 的参数治理 policy 输出候选晋级摘要，固定
