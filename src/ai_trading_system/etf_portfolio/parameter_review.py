@@ -19,6 +19,7 @@ PARAMETER_REVIEW_COMPARISON_SCHEMA_VERSION = "etf_parameter_review_candidate_com
 PARAMETER_REVIEW_JOURNAL_LINKAGE_SCHEMA_VERSION = (
     "etf_parameter_review_journal_linkage_v1"
 )
+PARAMETER_REVIEW_PROPOSAL_SCHEMA_VERSION = "etf_parameter_review_proposals_v1"
 
 DEFAULT_PARAMETER_REVIEW_REPORT_DIR = (
     PROJECT_ROOT / "reports" / "etf_portfolio" / "parameter_review"
@@ -153,6 +154,20 @@ NEGATIVE_DECISION_STATUSES = frozenset(
 )
 NEUTRAL_DECISION_STATUSES = frozenset(
     {"defer_decision", "mark_watch", "request_more_data", "start_new_experiment"}
+)
+
+ALLOWED_PARAMETER_REVIEW_PROPOSAL_TYPES = frozenset(
+    {
+        "continue_observation",
+        "defer_parameter_change",
+        "reject_candidate",
+        "propose_candidate_for_extended_shadow",
+        "propose_baseline_parameter_review",
+    }
+)
+
+DISALLOWED_PARAMETER_REVIEW_PROPOSAL_TYPES = frozenset(
+    {"apply_baseline_change", "promote_to_production", "enable_broker_action"}
 )
 
 
@@ -643,6 +658,130 @@ def validate_decision_journal_evidence_links(
     return issues
 
 
+def generate_parameter_change_proposals(
+    aggregation_payload: Mapping[str, Any],
+    *,
+    comparison_payload: Mapping[str, Any] | None = None,
+    journal_linkage_payload: Mapping[str, Any] | None = None,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    validate_parameter_review_aggregation(aggregation_payload)
+    generated = generated_at or datetime.now(tz=UTC)
+    comparison = comparison_payload or compare_parameter_review_evidence(
+        aggregation_payload,
+        generated_at=generated,
+    )
+    journal_linkage = journal_linkage_payload or link_decision_journal_evidence(
+        aggregation_payload,
+        generated_at=generated,
+    )
+    validate_parameter_review_comparison(comparison)
+    validate_decision_journal_evidence_links(journal_linkage)
+    evidence_by_candidate = {
+        _text(record.get("candidate_id")): record
+        for record in _records(aggregation_payload.get("evidence_records"))
+    }
+    journal_by_candidate = {
+        _text(item.get("candidate_id")): item
+        for item in _records(journal_linkage.get("candidate_journal_evidence"))
+    }
+    proposals = [
+        _parameter_change_proposal(
+            comparison_item,
+            evidence_record=evidence_by_candidate.get(
+                _text(comparison_item.get("candidate_id")),
+                {},
+            ),
+            journal_evidence=journal_by_candidate.get(
+                _text(comparison_item.get("candidate_id")),
+                {},
+            ),
+            created_at=generated,
+        )
+        for comparison_item in _records(comparison.get("comparisons"))
+    ]
+    if not proposals and _text(aggregation_payload.get("status")) == "needs_more_data":
+        status = "needs_more_data"
+        reason = _text(aggregation_payload.get("reason"), "INSUFFICIENT_FORWARD_EVIDENCE")
+    else:
+        status = "available"
+        reason = ""
+    payload = {
+        "schema_version": PARAMETER_REVIEW_PROPOSAL_SCHEMA_VERSION,
+        "report_type": "etf_parameter_review_proposals",
+        "proposal_batch_id": _stable_id(
+            "etf-parameter-review-proposals",
+            aggregation_payload.get("parameter_review_id"),
+            generated.isoformat(),
+        ),
+        "parameter_review_id": aggregation_payload.get("parameter_review_id"),
+        "source_review_id": aggregation_payload.get("review_id"),
+        "status": status,
+        "reason": reason,
+        "as_of": aggregation_payload.get("as_of"),
+        "created_at": generated.isoformat(),
+        "proposal_count": len(proposals),
+        "proposal_type_counts": _proposal_type_counts(proposals),
+        "proposals": proposals,
+        "safety": dict(PARAMETER_REVIEW_SAFETY),
+        **PARAMETER_REVIEW_SAFETY,
+    }
+    validate_parameter_change_proposals(payload)
+    return payload
+
+
+def validate_parameter_change_proposals(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
+    if _text(payload.get("schema_version")) != PARAMETER_REVIEW_PROPOSAL_SCHEMA_VERSION:
+        issues.append(
+            _issue(
+                "schema_version",
+                f"schema_version must be {PARAMETER_REVIEW_PROPOSAL_SCHEMA_VERSION}",
+            )
+        )
+    issues.extend(_safety_issues(payload, owner_id="parameter_review_proposals"))
+    issues.extend(
+        _safety_issues(
+            _mapping(payload.get("safety")),
+            owner_id="parameter_review_proposals.safety",
+        )
+    )
+    for index, proposal in enumerate(_records(payload.get("proposals"))):
+        proposal_type = _text(proposal.get("proposal_type"))
+        if proposal_type not in ALLOWED_PARAMETER_REVIEW_PROPOSAL_TYPES:
+            issues.append(
+                _issue(
+                    f"proposals[{index}].proposal_type",
+                    f"unsupported proposal_type: {proposal_type}",
+                )
+            )
+        if proposal_type in DISALLOWED_PARAMETER_REVIEW_PROPOSAL_TYPES:
+            issues.append(
+                _issue(
+                    f"proposals[{index}].proposal_type",
+                    f"disallowed proposal_type: {proposal_type}",
+                )
+            )
+        issues.extend(_safety_issues(proposal, owner_id=f"proposal[{index}]"))
+        if proposal.get("production_effect") != "none":
+            issues.append(
+                _issue(
+                    f"proposals[{index}].production_effect",
+                    "proposal production_effect must remain none",
+                )
+            )
+        if proposal.get("broker_action") != "none":
+            issues.append(
+                _issue(
+                    f"proposals[{index}].broker_action",
+                    "proposal broker_action must remain none",
+                )
+            )
+    if issues:
+        raise ParameterReviewError(_format_issues(issues))
+    return issues
+
+
 def _candidate_evidence_comparison(
     record: Mapping[str, Any],
     *,
@@ -896,6 +1035,166 @@ def _candidate_journal_linkage(
         "safety": dict(PARAMETER_REVIEW_SAFETY),
         **PARAMETER_REVIEW_SAFETY,
     }
+
+
+def _parameter_change_proposal(
+    comparison_item: Mapping[str, Any],
+    *,
+    evidence_record: Mapping[str, Any],
+    journal_evidence: Mapping[str, Any],
+    created_at: datetime,
+) -> dict[str, Any]:
+    proposal_type = _proposal_type_for_evidence(comparison_item, journal_evidence)
+    candidate_id = _text(comparison_item.get("candidate_id"))
+    risk_summary = _proposal_risk_summary(comparison_item)
+    return {
+        "proposal_id": _stable_id(
+            "etf-parameter-change-proposal",
+            candidate_id,
+            proposal_type,
+            created_at.isoformat(),
+        ),
+        "candidate_id": candidate_id,
+        "experiment_id": comparison_item.get("experiment_id"),
+        "proposal_type": proposal_type,
+        "current_baseline_config_hash": evidence_record.get("baseline_config_hash"),
+        "candidate_config_hash": evidence_record.get("candidate_config_hash"),
+        "proposed_parameter_delta": _proposed_parameter_delta(evidence_record),
+        "supporting_evidence": _supporting_evidence(
+            comparison_item,
+            evidence_record=evidence_record,
+            journal_evidence=journal_evidence,
+        ),
+        "blocking_evidence": _blocking_evidence(
+            comparison_item,
+            journal_evidence=journal_evidence,
+        ),
+        "risk_summary": risk_summary,
+        "comparison_status": comparison_item.get("status"),
+        "human_support_status": journal_evidence.get("human_support_status"),
+        "manual_review_required": True,
+        "production_effect": "none",
+        "broker_action": "none",
+        "created_at": created_at.isoformat(),
+        "safety": dict(PARAMETER_REVIEW_SAFETY),
+        **PARAMETER_REVIEW_SAFETY,
+    }
+
+
+def _proposal_type_for_evidence(
+    comparison_item: Mapping[str, Any],
+    journal_evidence: Mapping[str, Any],
+) -> str:
+    status = _text(comparison_item.get("status"))
+    human_status = _text(journal_evidence.get("human_support_status"), "insufficient_review")
+    conflict_flags = {
+        _text(item) for item in journal_evidence.get("decision_conflict_flags") or []
+    }
+    if status == "outperforming_with_acceptable_risk":
+        if human_status == "supportive" and "CONFLICTING_HUMAN_DECISIONS" not in conflict_flags:
+            return "propose_baseline_parameter_review"
+        return "propose_candidate_for_extended_shadow"
+    if status == "outperforming_but_risky":
+        return "propose_candidate_for_extended_shadow"
+    if status == "underperforming":
+        return "reject_candidate"
+    if status == "needs_more_data":
+        return "continue_observation"
+    if status in {"mixed_evidence", "blocked_by_governance"}:
+        return "defer_parameter_change"
+    return "defer_parameter_change"
+
+
+def _proposed_parameter_delta(evidence_record: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "delta_status": "manual_review_required",
+        "baseline_config_hash": evidence_record.get("baseline_config_hash"),
+        "candidate_config_hash": evidence_record.get("candidate_config_hash"),
+        "parameter_delta": evidence_record.get("parameter_delta", {}),
+        "mutation_allowed": False,
+        "automatic_application_allowed": False,
+        "production_weights_mutated": False,
+    }
+
+
+def _supporting_evidence(
+    comparison_item: Mapping[str, Any],
+    *,
+    evidence_record: Mapping[str, Any],
+    journal_evidence: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    sources = [
+        {
+            "evidence_type": "comparison_status",
+            "status": comparison_item.get("status"),
+            "reason_codes": comparison_item.get("reason_codes"),
+            "source_review_id": comparison_item.get("source_review_id"),
+        },
+        {
+            "evidence_type": "journal_support",
+            "human_support_status": journal_evidence.get("human_support_status"),
+            "linked_journal_entry_count": len(
+                _records(journal_evidence.get("linked_journal_entries"))
+            ),
+        },
+    ]
+    sources.extend(
+        {
+            "evidence_type": "source_report",
+            "source_type": source.get("source_type"),
+            "source_module": source.get("source_module"),
+            "source_report_path": source.get("source_report_path"),
+            "source_metric": source.get("source_metric"),
+        }
+        for source in _records(evidence_record.get("evidence_sources"))
+    )
+    return sources
+
+
+def _blocking_evidence(
+    comparison_item: Mapping[str, Any],
+    *,
+    journal_evidence: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    items = []
+    for reason in comparison_item.get("reason_codes") or []:
+        reason_text = _text(reason)
+        if reason_text and reason_text != "FORWARD_OUTPERFORMANCE":
+            items.append({"evidence_type": "comparison_reason", "reason_code": reason_text})
+    for flag in journal_evidence.get("decision_conflict_flags") or []:
+        flag_text = _text(flag)
+        if flag_text:
+            items.append({"evidence_type": "journal_conflict", "reason_code": flag_text})
+    return items
+
+
+def _proposal_risk_summary(comparison_item: Mapping[str, Any]) -> dict[str, Any]:
+    metrics = _mapping(comparison_item.get("comparison_metrics"))
+    reason_codes = [_text(item) for item in comparison_item.get("reason_codes") or []]
+    risk_flags = [
+        reason for reason in reason_codes if reason in {
+            "HIGH_TURNOVER",
+            "HIGH_DRAWDOWN",
+            "HIGH_CONSTRAINT_HITS",
+        }
+    ]
+    return {
+        "risk_flags": risk_flags,
+        "turnover_delta": metrics.get("turnover_delta"),
+        "turnover_since_enrollment": metrics.get("turnover_since_enrollment"),
+        "drawdown_reduction": metrics.get("drawdown_reduction"),
+        "constraint_hit_delta": metrics.get("constraint_hit_delta"),
+        "data_coverage_ratio": metrics.get("data_coverage_ratio"),
+    }
+
+
+def _proposal_type_counts(proposals: Sequence[Mapping[str, Any]]) -> dict[str, int]:
+    counts = {proposal_type: 0 for proposal_type in sorted(ALLOWED_PARAMETER_REVIEW_PROPOSAL_TYPES)}
+    for proposal in proposals:
+        proposal_type = _text(proposal.get("proposal_type"))
+        if proposal_type in counts:
+            counts[proposal_type] += 1
+    return counts
 
 
 def _journal_entry_evidence(

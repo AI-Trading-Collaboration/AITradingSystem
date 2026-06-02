@@ -13,8 +13,10 @@ from ai_trading_system.etf_portfolio.parameter_review import (
     build_parameter_review_aggregation,
     build_parameter_review_evidence_record,
     compare_parameter_review_evidence,
+    generate_parameter_change_proposals,
     link_decision_journal_evidence,
     parameter_review_evidence_to_json,
+    validate_parameter_change_proposals,
     validate_parameter_review_evidence_record,
 )
 
@@ -398,6 +400,101 @@ def test_parameter_review_journal_linker_missing_entries_handled(tmp_path) -> No
     assert item["human_support_status"] == "insufficient_review"
     assert item["linked_journal_entries"] == []
     assert "NO_JOURNAL_ENTRIES" in item["decision_conflict_flags"]
+
+
+def test_parameter_review_proposal_generator_strong_evidence_produces_review_proposal(
+    tmp_path,
+) -> None:
+    payload = _aggregation_payload(tmp_path, decision_status="accept_recommendation")
+
+    proposals = generate_parameter_change_proposals(
+        payload,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    proposal = proposals["proposals"][0]
+
+    assert proposal["proposal_type"] == "propose_baseline_parameter_review"
+    assert proposal["current_baseline_config_hash"] == "baseline_hash"
+    assert proposal["candidate_config_hash"] == "candidate_hash"
+    assert proposal["manual_review_required"] is True
+    assert proposal["production_effect"] == "none"
+    assert proposal["broker_action"] == "none"
+
+
+def test_parameter_review_proposal_generator_weak_evidence_produces_defer(tmp_path) -> None:
+    payload = _aggregation_payload(
+        tmp_path,
+        forward_overrides={"excess_return_vs_baseline": -0.01},
+        decision_status="accept_recommendation",
+    )
+
+    proposals = generate_parameter_change_proposals(
+        payload,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert proposals["proposals"][0]["proposal_type"] == "defer_parameter_change"
+
+
+def test_parameter_review_proposal_generator_bad_evidence_rejects_candidate(tmp_path) -> None:
+    payload = _aggregation_payload(
+        tmp_path,
+        forward_overrides={"excess_return_vs_baseline": -0.03},
+        decision_status="reject_recommendation",
+    )
+
+    proposals = generate_parameter_change_proposals(
+        payload,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert proposals["proposals"][0]["proposal_type"] == "reject_candidate"
+
+
+def test_parameter_review_proposal_generator_insufficient_evidence_continues_observation(
+    tmp_path,
+) -> None:
+    payload = _aggregation_payload(
+        tmp_path,
+        forward_overrides={"days_since_enrollment": 5},
+    )
+
+    proposals = generate_parameter_change_proposals(
+        payload,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert proposals["proposals"][0]["proposal_type"] == "continue_observation"
+    assert proposals["proposals"][0]["comparison_status"] == "needs_more_data"
+
+
+def test_parameter_review_proposal_generator_unsafe_proposal_type_rejected(tmp_path) -> None:
+    payload = _aggregation_payload(tmp_path)
+    proposals = generate_parameter_change_proposals(
+        payload,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    unsafe = json.loads(json.dumps(proposals))
+    unsafe["proposals"][0]["proposal_type"] = "promote_to_production"
+
+    with pytest.raises(ParameterReviewError, match="unsupported proposal_type"):
+        validate_parameter_change_proposals(unsafe)
+
+
+def test_parameter_review_proposal_generator_preserves_no_broker_no_production(
+    tmp_path,
+) -> None:
+    payload = _aggregation_payload(tmp_path)
+
+    proposals = generate_parameter_change_proposals(
+        payload,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    for proposal in proposals["proposals"]:
+        assert proposal["production_effect"] == "none"
+        assert proposal["broker_action"] == "none"
+        assert proposal["proposed_parameter_delta"]["mutation_allowed"] is False
 
 
 def _evidence_record(

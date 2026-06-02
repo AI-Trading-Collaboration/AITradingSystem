@@ -67,7 +67,7 @@ reason=INSUFFICIENT_FORWARD_EVIDENCE
 |TRADING-070B|Forward Evidence Aggregator|DONE|`aits etf parameter-review aggregate --as-of YYYY-MM-DD` 生成 JSON/Markdown evidence package and preserves source paths|
 |TRADING-070C|Baseline vs Candidate Evidence Comparison|DONE|Forward evidence compares candidate vs baseline, QQQ, SPY, SMH, backtest expectation, weekly status and journal outcome|
 |TRADING-070D|Decision Journal Evidence Linker|DONE|Journal decisions become structured candidate evidence with support/conflict status and traceable links|
-|TRADING-070E|Parameter Change Proposal Generator|READY|Only proposal/review actions are generated; unsafe proposal types are rejected|
+|TRADING-070E|Parameter Change Proposal Generator|DONE|Only proposal/review actions are generated; unsafe proposal types are rejected|
 |TRADING-070F|Proposal Scoring and Governance Gate|READY|Proposal scorecard is deterministic and fail-closed on insufficient/unsafe/under-evidenced proposals|
 |TRADING-070G|Parameter Review Report Generator|READY|JSON/Markdown report includes safety banner, source summary, comparisons, journal evidence, scorecard and proposals|
 |TRADING-070H|Reader Brief Parameter Review Section|READY|Reader Brief exposes parameter review status, counts, safety posture and detailed report link|
@@ -124,3 +124,9 @@ reason=INSUFFICIENT_FORWARD_EVIDENCE
   聚合为 candidate-level evidence，输出 `supportive`、`neutral`、`conflicted`、
   `negative` 或 `insufficient_review`；只读 journal report，不修改 journal state、shadow
   registry、baseline config、production weights 或 broker state。
+- 2026-06-02：TRADING-070E 完成。新增 parameter change proposal generator，只允许
+  `continue_observation`、`defer_parameter_change`、`reject_candidate`、
+  `propose_candidate_for_extended_shadow` 和 `propose_baseline_parameter_review`；每个
+  proposal 包含 current/candidate config hash、parameter delta placeholder、supporting
+  evidence、blocking evidence、risk summary 和 safety fields，并阻断 unsafe proposal type、
+  `production_effect != none` 与 `broker_action != none`。
