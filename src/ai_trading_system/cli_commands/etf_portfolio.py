@@ -147,7 +147,9 @@ from ai_trading_system.etf_portfolio.models import (
 )
 from ai_trading_system.etf_portfolio.operations import (
     OperationsGraphCadence,
+    build_operations_health_report,
     build_operations_scheduler_dry_run,
+    write_operations_health_report,
     write_operations_scheduler_dry_run,
 )
 from ai_trading_system.etf_portfolio.p1 import (
@@ -377,6 +379,9 @@ etf_app.add_typer(credibility_app, name="credibility")
 DEFAULT_ETF_OPERATIONS_DRY_RUN_DIR = (
     PROJECT_ROOT / "outputs" / "dry_runs" / "etf_operations"
 )
+DEFAULT_ETF_OPERATIONS_REPORT_DIR = (
+    PROJECT_ROOT / "reports" / "etf_portfolio" / "operations"
+)
 
 
 @etf_app.command("validate-config")
@@ -444,6 +449,78 @@ def ops_dry_run_command(
     typer.echo(f"blocking_failure_count={len(report.blocking_failures)}")
     typer.echo(f"warning_count={len(report.warnings)}")
     typer.echo("dry_run_only=true")
+    typer.echo("commands_executed=false")
+    typer.echo("production_state_mutated=false")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+
+
+@ops_app.command("report")
+def ops_report_command(
+    cadence: Annotated[
+        str,
+        typer.Option("--cadence", help="Operations cadence: daily/weekly/biweekly/monthly。"),
+    ],
+    as_of: Annotated[
+        str,
+        typer.Option("--as-of", "--date", help="评估日期 YYYY-MM-DD。"),
+    ],
+    root_path: Annotated[
+        Path,
+        typer.Option("--root-path", help="扫描既有 artifacts 的根目录。"),
+    ] = PROJECT_ROOT,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="operations report 输出目录。"),
+    ] = DEFAULT_ETF_OPERATIONS_REPORT_DIR,
+    json_path: Annotated[
+        Path | None,
+        typer.Option("--json-path", help="显式 JSON 输出路径。"),
+    ] = None,
+    markdown_path: Annotated[
+        Path | None,
+        typer.Option("--markdown-path", help="显式 Markdown 输出路径。"),
+    ] = None,
+    include_optional: Annotated[
+        bool,
+        typer.Option(
+            "--include-optional/--skip-optional",
+            help="是否把 optional steps 纳入 report plan。",
+        ),
+    ] = True,
+) -> None:
+    """生成 ETF operations health JSON / Markdown report；不执行计划命令。"""
+    requested_cadence = _parse_operations_graph_cadence(cadence)
+    report = build_operations_health_report(
+        cadence=requested_cadence,
+        as_of=as_of,
+        root_path=root_path,
+        include_optional=include_optional,
+    )
+    cadence_dir = output_dir / report.cadence
+    json_output = json_path or (
+        cadence_dir / f"operations_health_{report.as_of_date.isoformat()}.json"
+    )
+    markdown_output = markdown_path or (
+        cadence_dir / f"operations_health_{report.as_of_date.isoformat()}.md"
+    )
+    paths = write_operations_health_report(
+        report,
+        json_path=json_output,
+        markdown_path=markdown_output,
+    )
+    typer.echo(f"ETF operations health JSON：{paths['json']}")
+    typer.echo(f"ETF operations health Markdown：{paths['markdown']}")
+    typer.echo(f"report_id={report.report_id}")
+    typer.echo(f"cadence={report.cadence}")
+    typer.echo(f"as_of_date={report.as_of_date.isoformat()}")
+    typer.echo(f"status={report.status}")
+    typer.echo(f"planned_step_count={len(report.pipeline_schedule)}")
+    typer.echo(f"blocking_failure_count={len(report.failures)}")
+    typer.echo(f"warning_count={len(report.warnings)}")
     typer.echo("commands_executed=false")
     typer.echo("production_state_mutated=false")
     typer.echo("observe_only=true")

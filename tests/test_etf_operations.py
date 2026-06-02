@@ -12,6 +12,7 @@ from ai_trading_system.etf_portfolio.operations import (
     DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH,
     OPERATIONS_COMMAND_GRAPH_SCHEMA_VERSION,
     OPERATIONS_FAILURE_POLICY_SCHEMA_VERSION,
+    OPERATIONS_HEALTH_REPORT_SCHEMA_VERSION,
     OPERATIONS_OWNER_REVIEW_CHECKLIST_SCHEMA_VERSION,
     OPERATIONS_SCHEDULE_SCHEMA_VERSION,
     OPERATIONS_SCHEDULER_DRY_RUN_SCHEMA_VERSION,
@@ -20,6 +21,7 @@ from ai_trading_system.etf_portfolio.operations import (
     build_biweekly_operations_command_graph,
     build_daily_operations_command_graph,
     build_monthly_operations_command_graph,
+    build_operations_health_report,
     build_operations_owner_review_checklist,
     build_operations_scheduler_dry_run,
     build_weekly_operations_command_graph,
@@ -28,6 +30,8 @@ from ai_trading_system.etf_portfolio.operations import (
     load_operations_schedule_config,
     operations_schedule_required_step_ids,
     operations_schedule_step_ids,
+    render_operations_health_report_markdown,
+    write_operations_health_report,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -1274,6 +1278,155 @@ def test_operations_scheduler_dry_run_serialization_is_stable(tmp_path: Path) ->
     )
 
     assert first_run.model_dump(mode="json") == second_run.model_dump(mode="json")
+
+
+def test_operations_health_report_daily_includes_required_sections(
+    tmp_path: Path,
+) -> None:
+    report = build_operations_health_report(
+        cadence="daily",
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+
+    assert report.schema_version == OPERATIONS_HEALTH_REPORT_SCHEMA_VERSION
+    assert report.report_id == "operations_health:daily:2026-06-03:20260603T120000Z"
+    assert report.status == "blocked"
+    assert report.commands_executed is False
+    assert report.production_state_mutated is False
+    assert report.safety_banner == {
+        "observe_only": True,
+        "candidate_only": True,
+        "production_effect": "none",
+        "broker_action": "none",
+        "manual_review_required": True,
+    }
+    assert report.pipeline_schedule[0]["step_id"] == "data_freshness_check"
+    assert report.pipeline_schedule[0]["status"] == "blocked"
+    assert report.command_graph_summary["node_count"] == len(report.pipeline_schedule)
+    assert report.artifact_freshness_summary["blocking_artifact_count"] > 0
+    assert "data_freshness_check:1" in report.dependency_status["blocking_artifacts"]
+    assert any(
+        failure["event_id"] == "data_freshness_check:1:artifact_missing"
+        for failure in report.failures
+    )
+    assert report.owner_review_checklist is not None
+    assert report.owner_review_checklist["checklist_status"] == "blocked"
+    assert report.expected_next_run["production_scheduler_entry"] == "aits ops daily-run"
+    assert report.source_artifacts
+    assert report.source_schema_versions["dry_run"] == (
+        OPERATIONS_SCHEDULER_DRY_RUN_SCHEMA_VERSION
+    )
+
+
+def test_operations_health_report_tracks_optional_warning(
+    tmp_path: Path,
+) -> None:
+    _write_text_artifact(
+        tmp_path,
+        "outputs/reports/data_quality_2026-06-03.md",
+        "\n".join(
+            [
+                "generated_at: 2026-06-03T09:30:00+00:00",
+                "as_of_date: 2026-06-03",
+            ]
+        ),
+    )
+    _write_json_artifact(
+        tmp_path,
+        "reports/etf_portfolio/ai_confirmation/reports/"
+        "ai_confirmation_report_2026-06-03.json",
+        {
+            "generated_at": "2026-06-03T10:30:00+00:00",
+            "as_of_date": "2026-06-03",
+        },
+    )
+
+    report = build_operations_health_report(
+        cadence="daily",
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+
+    assert any(
+        warning["event_id"] == "ai_attribution_update:1:artifact_missing"
+        for warning in report.warnings
+    )
+    attribution_step = next(
+        step for step in report.pipeline_schedule if step["step_id"] == "ai_attribution_update"
+    )
+    assert attribution_step["status"] == "warning"
+
+
+def test_operations_health_report_weekly_includes_owner_checklist(
+    tmp_path: Path,
+) -> None:
+    report = build_operations_health_report(
+        cadence="weekly",
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+
+    assert report.cadence == "weekly"
+    assert report.command_graph_summary["execution_order"][0] == "weekly_review_aggregate"
+    assert report.owner_review_checklist is not None
+    assert report.owner_review_checklist["checklist_step_id"] == "weekly_owner_review"
+    assert report.expected_next_run["source"] == "docs/operations/operations_runbook.md"
+    assert any(
+        artifact.source_step == "weekly_review_generate"
+        for artifact in report.source_artifacts
+    )
+
+
+def test_operations_health_report_writes_json_and_markdown(
+    tmp_path: Path,
+) -> None:
+    report = build_operations_health_report(
+        cadence="daily",
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        generated_at=datetime(2026, 6, 3, 12, tzinfo=UTC),
+    )
+    paths = write_operations_health_report(
+        report,
+        json_path=tmp_path / "operations_health.json",
+        markdown_path=tmp_path / "operations_health.md",
+    )
+    payload = json.loads(paths["json"].read_text(encoding="utf-8"))
+    markdown = paths["markdown"].read_text(encoding="utf-8")
+
+    assert payload["schema_version"] == OPERATIONS_HEALTH_REPORT_SCHEMA_VERSION
+    assert payload["commands_executed"] is False
+    assert payload["production_state_mutated"] is False
+    assert "## Safety Banner / 安全边界" in markdown
+    assert "| observe_only | true |" in markdown
+    assert "## Command Graph Summary / Command Graph 摘要" in markdown
+    assert "## Artifact Freshness Summary / Artifact Freshness 摘要" in markdown
+    assert "## Owner Review Checklist / Owner Review Checklist" in markdown
+    assert "## Source Artifacts / Source Artifacts" in markdown
+
+
+def test_operations_health_report_markdown_is_stable(tmp_path: Path) -> None:
+    generated_at = datetime(2026, 6, 3, 12, tzinfo=UTC)
+    first_report = build_operations_health_report(
+        cadence="monthly",
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        generated_at=generated_at,
+    )
+    second_report = build_operations_health_report(
+        cadence="monthly",
+        as_of="2026-06-03",
+        root_path=tmp_path,
+        generated_at=generated_at,
+    )
+
+    assert render_operations_health_report_markdown(first_report) == (
+        render_operations_health_report_markdown(second_report)
+    )
 
 
 def _raw_schedule() -> dict[str, object]:

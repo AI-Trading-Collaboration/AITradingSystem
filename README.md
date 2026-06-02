@@ -529,9 +529,9 @@ daily / weekly / biweekly / monthly / manual-review workflow 记录为 source co
 包含 step id、command、dependencies、expected outputs、max allowed age、failure policy
 和 owner review requirement，并固定 `observe_only=true`、`candidate_only=true`、
 `production_effect=none`、`broker_action=none`、`manual_review_required=true`。
-当前 TRADING-074A/B/C/D/E/F/G/H 提供 loader/validator、配置校验、daily / weekly /
+当前 TRADING-074A/B/C/D/E/F/G/H/I 提供 loader/validator、配置校验、daily / weekly /
 biweekly / monthly operations command graph、只读 artifact freshness checker、failure
-policy evaluator、owner checklist builder 和 scheduler dry-run。
+policy evaluator、owner checklist builder、scheduler dry-run 和 operations health report。
 `build_daily_operations_command_graph` 会生成 topological `execution_order`、required /
 optional 节点、输入/输出、failure policy、estimated runtime class 和 safety fields；optional
 attribution 节点可跳过，required 节点不可跳过，cycle 或 missing required node 会 fail
@@ -562,9 +562,16 @@ monthly / incident owner review template。`aits etf ops dry-run --cadence ... -
 会生成 `etf_operations_scheduler_dry_run_v1` 只读 JSON，汇总 planned steps、execution order、
 skipped optional steps、blocking failures、warnings、expected outputs、owner checklist status
 和 safety；它固定 `dry_run_only=true`、`commands_executed=false`、
-`production_state_mutated=false`，不执行 planned commands、不写 production state。后续
-operations report、Reader Brief operations health 和 `aits etf ops validate` 会复用该配置、
-freshness report、failure policy report、owner checklist 和 dry-run report。
+`production_state_mutated=false`，不执行 planned commands、不写 production state。
+`aits etf ops report --cadence ... --as-of ...` 会生成
+`etf_operations_health_report_v1` JSON / Markdown，默认写入
+`reports/etf_portfolio/operations/<cadence>/operations_health_<date>.json/md`，展示
+safety banner、run metadata、pipeline schedule、command graph summary、artifact freshness
+summary、dependency status、failures / warnings、owner review checklist、expected next run
+和 source artifacts；report 固定 `commands_executed=false`、
+`production_state_mutated=false`，只把 dry-run/freshness/failure/checklist 状态变成可读报告。
+后续 Reader Brief operations health 和 `aits etf ops validate` 会复用该配置、freshness
+report、failure policy report、owner checklist、dry-run report 和 operations health report。
 
 `aits etf governance summary --candidate <candidate.json>` 使用
 `config/etf_portfolio/governance.yaml` 的参数治理 policy 输出候选晋级摘要，固定

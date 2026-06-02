@@ -70,6 +70,12 @@ OperationsSchedulerDryRunStatus = Literal[
     "manual_review_required",
     "blocked",
 ]
+OperationsHealthReportStatus = Literal[
+    "pass",
+    "warning",
+    "manual_review_required",
+    "blocked",
+]
 OperationsDryRunStepStatus = Literal[
     "planned",
     "warning",
@@ -113,6 +119,7 @@ OPERATIONS_OWNER_REVIEW_CHECKLIST_SCHEMA_VERSION = (
     "etf_operations_owner_review_checklist_v1"
 )
 OPERATIONS_SCHEDULER_DRY_RUN_SCHEMA_VERSION = "etf_operations_scheduler_dry_run_v1"
+OPERATIONS_HEALTH_REPORT_SCHEMA_VERSION = "etf_operations_health_report_v1"
 _ARTIFACT_PLACEHOLDER_RE = re.compile(r"\{[^}]+\}")
 _ARTIFACT_DATE_RE = re.compile(r"(?P<date>\d{4}[-_]\d{2}[-_]\d{2})")
 _TEXT_GENERATED_AT_RE = re.compile(
@@ -641,6 +648,75 @@ class ETFOperationsSchedulerDryRunReport(BaseModel):
         return self
 
 
+class ETFOperationsHealthSourceArtifact(BaseModel):
+    artifact_id: str = Field(min_length=1)
+    path: str = Field(min_length=1)
+    artifact_type: str = Field(min_length=1)
+    source_step: str = Field(min_length=1)
+    required: bool
+    freshness_status: OperationsArtifactFreshnessStatus
+    dependency_status: OperationsArtifactDependencyStatus
+    generated_at: datetime | None = None
+    as_of_date: date | None = None
+    age_days: int | None = None
+
+
+class ETFOperationsHealthReport(BaseModel):
+    schema_version: Literal["etf_operations_health_report_v1"] = (
+        OPERATIONS_HEALTH_REPORT_SCHEMA_VERSION
+    )
+    report_id: str = Field(min_length=1)
+    cadence: OperationsGraphCadence
+    as_of_date: date
+    generated_at: datetime
+    read_only: bool = True
+    commands_executed: bool = False
+    production_state_mutated: bool = False
+    safety: ETFOperationsScheduleSafety
+    status: OperationsHealthReportStatus
+    safety_banner: dict[str, Any]
+    run_metadata: dict[str, Any]
+    pipeline_schedule: list[dict[str, Any]] = Field(default_factory=list)
+    command_graph_summary: dict[str, Any]
+    artifact_freshness_summary: dict[str, Any]
+    dependency_status: dict[str, Any]
+    failures: list[dict[str, Any]] = Field(default_factory=list)
+    warnings: list[dict[str, Any]] = Field(default_factory=list)
+    owner_review_checklist: dict[str, Any] | None = None
+    expected_next_run: dict[str, Any]
+    source_artifacts: list[ETFOperationsHealthSourceArtifact] = Field(
+        default_factory=list
+    )
+    source_schema_versions: dict[str, str]
+    source_dry_run_id: str = Field(min_length=1)
+    source_dry_run_status: OperationsSchedulerDryRunStatus
+
+    @model_validator(mode="after")
+    def validate_report_safety(self) -> Self:
+        if self.commands_executed:
+            raise ValueError("ETF operations health report must not execute commands")
+        if self.production_state_mutated:
+            raise ValueError(
+                "ETF operations health report must not mutate production state"
+            )
+        for field, expected in OPERATIONS_SCHEDULE_SAFETY.items():
+            if getattr(self.safety, field) != expected:
+                raise ValueError(
+                    "ETF operations health report safety "
+                    f"{field} must be {expected!r}"
+                )
+            if self.safety_banner.get(field) != expected:
+                raise ValueError(
+                    "ETF operations health report safety banner "
+                    f"{field} must be {expected!r}"
+                )
+        if self.source_schema_versions.get("dry_run") != (
+            OPERATIONS_SCHEDULER_DRY_RUN_SCHEMA_VERSION
+        ):
+            raise ValueError("ETF operations health report must link dry-run schema")
+        return self
+
+
 def load_operations_schedule_config(
     path: Path | str = DEFAULT_ETF_OPERATIONS_SCHEDULE_CONFIG_PATH,
 ) -> ETFOperationsScheduleConfig:
@@ -978,51 +1054,14 @@ def build_operations_scheduler_dry_run(
         config=schedule,
         generated_at=generated,
     )
-    planned_steps = _dry_run_planned_steps(
-        graph=graph,
-        freshness_report=freshness,
-        failure_report=failure_report,
-    )
-
-    return ETFOperationsSchedulerDryRunReport(
-        dry_run_id=_operations_dry_run_id(
-            cadence=requested_cadence,
-            as_of_date=requested_as_of,
-            generated_at=generated,
-        ),
+    return _operations_dry_run_report_from_components(
         cadence=requested_cadence,
         as_of_date=requested_as_of,
         generated_at=generated,
-        read_only=True,
-        dry_run_only=True,
-        commands_executed=False,
-        production_state_mutated=False,
-        safety=graph.safety,
-        status=_operations_dry_run_status(
-            failure_report=failure_report,
-            owner_checklist=owner_checklist,
-        ),
-        planned_steps=planned_steps,
-        execution_order=list(graph.execution_order),
-        skipped_optional_steps=list(graph.skipped_optional_steps),
-        blocking_failures=list(failure_report.blocking_events),
-        warnings=list(failure_report.warning_events),
-        expected_outputs=_normalized_unique_values(
-            [output for node in graph.nodes for output in node.outputs],
-            field_name="operations_scheduler_dry_run.expected_outputs",
-        ),
-        source_graph_schema_version=graph.schema_version,
-        source_freshness_schema_version=freshness.schema_version,
-        source_failure_policy_schema_version=failure_report.schema_version,
-        owner_checklist_schema_version=(
-            owner_checklist.schema_version if owner_checklist is not None else None
-        ),
-        owner_checklist_status=(
-            owner_checklist.checklist_status if owner_checklist is not None else None
-        ),
-        owner_checklist_item_count=(
-            len(owner_checklist.items) if owner_checklist is not None else 0
-        ),
+        graph=graph,
+        freshness=freshness,
+        failure_report=failure_report,
+        owner_checklist=owner_checklist,
     )
 
 
@@ -1034,6 +1073,299 @@ def write_operations_scheduler_dry_run(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(report.model_dump_json(indent=2), encoding="utf-8")
     return output_path
+
+
+def build_operations_health_report(
+    *,
+    cadence: OperationsGraphCadence,
+    as_of: date | datetime | str,
+    root_path: Path | str = PROJECT_ROOT,
+    config: ETFOperationsScheduleConfig | None = None,
+    include_optional: bool = True,
+    skipped_optional_step_ids: set[str] | None = None,
+    generated_at: datetime | None = None,
+) -> ETFOperationsHealthReport:
+    schedule = config or load_operations_schedule_config()
+    requested_cadence = _coerce_graph_cadence(cadence)
+    requested_as_of = _coerce_date(as_of)
+    generated = _coerce_datetime(generated_at or datetime.now(tz=UTC))
+    graph = _build_operations_command_graph(
+        schedule,
+        cadence=requested_cadence,
+        include_optional=include_optional,
+        skipped_optional_step_ids=skipped_optional_step_ids,
+    )
+    freshness = check_operations_artifact_freshness(
+        graph,
+        as_of=requested_as_of,
+        root_path=root_path,
+        checked_at=generated,
+        config=schedule,
+    )
+    failure_report = evaluate_operations_failure_policy(
+        freshness,
+        config=schedule,
+        evaluated_at=generated,
+    )
+    owner_checklist = _dry_run_owner_checklist(
+        cadence=requested_cadence,
+        as_of_date=requested_as_of,
+        failure_report=failure_report,
+        config=schedule,
+        generated_at=generated,
+    )
+    dry_run = _operations_dry_run_report_from_components(
+        cadence=requested_cadence,
+        as_of_date=requested_as_of,
+        generated_at=generated,
+        graph=graph,
+        freshness=freshness,
+        failure_report=failure_report,
+        owner_checklist=owner_checklist,
+    )
+
+    return ETFOperationsHealthReport(
+        report_id=_operations_health_report_id(
+            cadence=requested_cadence,
+            as_of_date=requested_as_of,
+            generated_at=generated,
+        ),
+        cadence=requested_cadence,
+        as_of_date=requested_as_of,
+        generated_at=generated,
+        read_only=True,
+        commands_executed=False,
+        production_state_mutated=False,
+        safety=graph.safety,
+        status=_operations_health_status(dry_run.status),
+        safety_banner=_operations_safety_banner(graph.safety),
+        run_metadata=_operations_report_run_metadata(
+            graph=graph,
+            dry_run=dry_run,
+            root_path=root_path,
+        ),
+        pipeline_schedule=_operations_report_pipeline_schedule(graph, dry_run),
+        command_graph_summary=_operations_report_command_graph_summary(graph),
+        artifact_freshness_summary=_operations_report_artifact_summary(freshness),
+        dependency_status=_operations_report_dependency_status(freshness, graph),
+        failures=_operations_report_failure_rows(
+            failure_report,
+            include_warning=False,
+        ),
+        warnings=_operations_report_failure_rows(
+            failure_report,
+            include_warning=True,
+        ),
+        owner_review_checklist=_operations_report_owner_checklist(owner_checklist),
+        expected_next_run=_operations_expected_next_run(requested_cadence),
+        source_artifacts=_operations_report_source_artifacts(freshness),
+        source_schema_versions={
+            "schedule": schedule.schema_version,
+            "graph": graph.schema_version,
+            "freshness": freshness.schema_version,
+            "failure_policy": failure_report.schema_version,
+            "owner_checklist": (
+                owner_checklist.schema_version if owner_checklist is not None else "none"
+            ),
+            "dry_run": dry_run.schema_version,
+        },
+        source_dry_run_id=dry_run.dry_run_id,
+        source_dry_run_status=dry_run.status,
+    )
+
+
+def render_operations_health_report_markdown(
+    report: ETFOperationsHealthReport,
+) -> str:
+    lines: list[str] = [
+        "# ETF Operations Health Report",
+        "",
+        "## Safety Banner / 安全边界",
+        "",
+        "| Field | Value |",
+        "|---|---|",
+    ]
+    for field in OPERATIONS_SCHEDULE_SAFETY:
+        value = report.safety_banner[field]
+        lines.append(f"| {field} | {_markdown_value(value)} |")
+
+    lines.extend(
+        [
+            "",
+            "## Run Metadata / 运行元数据",
+            "",
+            "| Field | Value |",
+            "|---|---|",
+            f"| report_id | `{report.report_id}` |",
+            f"| cadence | `{report.cadence}` |",
+            f"| as_of_date | `{report.as_of_date.isoformat()}` |",
+            f"| generated_at | `{report.generated_at.isoformat()}` |",
+            f"| status | `{report.status}` |",
+            f"| source_dry_run_id | `{report.source_dry_run_id}` |",
+            f"| source_dry_run_status | `{report.source_dry_run_status}` |",
+            "",
+            "## Pipeline Schedule / Pipeline 计划",
+            "",
+            "| Step | Required | Status | Runtime | Dependencies | Command |",
+            "|---|---:|---|---|---|---|",
+        ]
+    )
+    for step in report.pipeline_schedule:
+        dependencies = _markdown_list(step["dependencies"])
+        lines.append(
+            f"| {step['step_id']} | {_markdown_value(step['required'])} | "
+            f"{step['status']} | {step['estimated_runtime_class']} | "
+            f"{dependencies} | `{step['command']}` |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Command Graph Summary / Command Graph 摘要",
+            "",
+            "| Field | Value |",
+            "|---|---|",
+        ]
+    )
+    for field, value in report.command_graph_summary.items():
+        lines.append(f"| {field} | {_markdown_value(value)} |")
+
+    lines.extend(
+        [
+            "",
+            "## Artifact Freshness Summary / Artifact Freshness 摘要",
+            "",
+            "| Field | Value |",
+            "|---|---|",
+        ]
+    )
+    for field, value in report.artifact_freshness_summary.items():
+        lines.append(f"| {field} | {_markdown_value(value)} |")
+
+    lines.extend(
+        [
+            "",
+            "## Dependency Status / Dependency 状态",
+            "",
+            "| Field | Value |",
+            "|---|---|",
+        ]
+    )
+    for field, value in report.dependency_status.items():
+        lines.append(f"| {field} | {_markdown_value(value)} |")
+
+    lines.extend(
+        [
+            "",
+            "## Failures And Warnings / 失败与警告",
+            "",
+            "| Type | Event | Severity | Step | Artifact | Action |",
+            "|---|---|---|---|---|---|",
+        ]
+    )
+    rows = [("failure", row) for row in report.failures] + [
+        ("warning", row) for row in report.warnings
+    ]
+    if rows:
+        for row_type, row in rows:
+            lines.append(
+                f"| {row_type} | `{row['event_id']}` | {row['severity']} | "
+                f"{row['source_step']} | `{row['artifact_id']}` | "
+                f"{row['recommended_action']} |"
+            )
+    else:
+        lines.append("| none | none | none | none | none | no_action_required |")
+
+    lines.extend(
+        [
+            "",
+            "## Owner Review Checklist / Owner Review Checklist",
+            "",
+        ]
+    )
+    if report.owner_review_checklist is None:
+        lines.append("No owner review checklist is defined for this cadence.")
+    else:
+        checklist = report.owner_review_checklist
+        lines.extend(
+            [
+                f"- checklist_step_id: `{checklist['checklist_step_id']}`",
+                f"- checklist_status: `{checklist['checklist_status']}`",
+                f"- signoff_required: `{_markdown_value(checklist['signoff_required'])}`",
+                "",
+                "| Item | Category | Required | Blocking | Owner Action |",
+                "|---|---|---:|---:|---|",
+            ]
+        )
+        for item in checklist["items"]:
+            lines.append(
+                "| {item_id} | {category} | {required} | {blocking} | {owner_action} |".format(
+                    item_id=item["item_id"],
+                    category=item["category"],
+                    required=_markdown_value(item["required"]),
+                    blocking=_markdown_value(item["blocking"]),
+                    owner_action=item["owner_action"],
+                )
+            )
+
+    lines.extend(
+        [
+            "",
+            "## Expected Next Run / 预计下一次运行",
+            "",
+            "| Field | Value |",
+            "|---|---|",
+        ]
+    )
+    for field, value in report.expected_next_run.items():
+        lines.append(f"| {field} | {_markdown_value(value)} |")
+
+    lines.extend(
+        [
+            "",
+            "## Source Artifacts / Source Artifacts",
+            "",
+            "| Artifact | Step | Required | Freshness | Dependency | Path |",
+            "|---|---|---:|---|---|---|",
+        ]
+    )
+    for artifact in report.source_artifacts:
+        lines.append(
+            f"| {artifact.artifact_id} | {artifact.source_step} | "
+            f"{_markdown_value(artifact.required)} | {artifact.freshness_status} | "
+            f"{artifact.dependency_status} | `{artifact.path}` |"
+        )
+
+    lines.extend(
+        [
+            "",
+            "## Source Schema Versions / Source Schema Versions",
+            "",
+            "| Source | Schema Version |",
+            "|---|---|",
+        ]
+    )
+    for source, schema_version in report.source_schema_versions.items():
+        lines.append(f"| {source} | `{schema_version}` |")
+    return "\n".join(lines) + "\n"
+
+
+def write_operations_health_report(
+    report: ETFOperationsHealthReport,
+    *,
+    json_path: Path | str,
+    markdown_path: Path | str,
+) -> dict[str, Path]:
+    json_output = Path(json_path)
+    markdown_output = Path(markdown_path)
+    json_output.parent.mkdir(parents=True, exist_ok=True)
+    markdown_output.parent.mkdir(parents=True, exist_ok=True)
+    json_output.write_text(report.model_dump_json(indent=2), encoding="utf-8")
+    markdown_output.write_text(
+        render_operations_health_report_markdown(report),
+        encoding="utf-8",
+    )
+    return {"json": json_output, "markdown": markdown_output}
 
 
 def _build_operations_command_graph(
@@ -1616,6 +1948,63 @@ def _dry_run_owner_checklist(
     )
 
 
+def _operations_dry_run_report_from_components(
+    *,
+    cadence: OperationsGraphCadence,
+    as_of_date: date,
+    generated_at: datetime,
+    graph: ETFOperationsCommandGraph,
+    freshness: ETFOperationsArtifactFreshnessReport,
+    failure_report: ETFOperationsFailurePolicyReport,
+    owner_checklist: ETFOperationsOwnerReviewChecklist | None,
+) -> ETFOperationsSchedulerDryRunReport:
+    planned_steps = _dry_run_planned_steps(
+        graph=graph,
+        freshness_report=freshness,
+        failure_report=failure_report,
+    )
+    return ETFOperationsSchedulerDryRunReport(
+        dry_run_id=_operations_dry_run_id(
+            cadence=cadence,
+            as_of_date=as_of_date,
+            generated_at=generated_at,
+        ),
+        cadence=cadence,
+        as_of_date=as_of_date,
+        generated_at=generated_at,
+        read_only=True,
+        dry_run_only=True,
+        commands_executed=False,
+        production_state_mutated=False,
+        safety=graph.safety,
+        status=_operations_dry_run_status(
+            failure_report=failure_report,
+            owner_checklist=owner_checklist,
+        ),
+        planned_steps=planned_steps,
+        execution_order=list(graph.execution_order),
+        skipped_optional_steps=list(graph.skipped_optional_steps),
+        blocking_failures=list(failure_report.blocking_events),
+        warnings=list(failure_report.warning_events),
+        expected_outputs=_normalized_unique_values(
+            [output for node in graph.nodes for output in node.outputs],
+            field_name="operations_scheduler_dry_run.expected_outputs",
+        ),
+        source_graph_schema_version=graph.schema_version,
+        source_freshness_schema_version=freshness.schema_version,
+        source_failure_policy_schema_version=failure_report.schema_version,
+        owner_checklist_schema_version=(
+            owner_checklist.schema_version if owner_checklist is not None else None
+        ),
+        owner_checklist_status=(
+            owner_checklist.checklist_status if owner_checklist is not None else None
+        ),
+        owner_checklist_item_count=(
+            len(owner_checklist.items) if owner_checklist is not None else 0
+        ),
+    )
+
+
 def _operations_dry_run_status(
     *,
     failure_report: ETFOperationsFailurePolicyReport,
@@ -1638,6 +2027,239 @@ def _operations_dry_run_status(
     if failure_report.pipeline_status == "warning":
         return "warning"
     return "ready"
+
+
+def _operations_health_report_id(
+    *,
+    cadence: OperationsGraphCadence,
+    as_of_date: date,
+    generated_at: datetime,
+) -> str:
+    timestamp = generated_at.astimezone(UTC).strftime("%Y%m%dT%H%M%SZ")
+    return f"operations_health:{cadence}:{as_of_date.isoformat()}:{timestamp}"
+
+
+def _operations_health_status(
+    dry_run_status: OperationsSchedulerDryRunStatus,
+) -> OperationsHealthReportStatus:
+    if dry_run_status == "ready":
+        return "pass"
+    return dry_run_status
+
+
+def _operations_safety_banner(
+    safety: ETFOperationsScheduleSafety,
+) -> dict[str, Any]:
+    return {field: getattr(safety, field) for field in OPERATIONS_SCHEDULE_SAFETY}
+
+
+def _operations_report_run_metadata(
+    *,
+    graph: ETFOperationsCommandGraph,
+    dry_run: ETFOperationsSchedulerDryRunReport,
+    root_path: Path | str,
+) -> dict[str, Any]:
+    return {
+        "root_path": str(Path(root_path)),
+        "dry_run_id": dry_run.dry_run_id,
+        "dry_run_status": dry_run.status,
+        "planned_step_count": len(dry_run.planned_steps),
+        "blocking_failure_count": len(dry_run.blocking_failures),
+        "warning_count": len(dry_run.warnings),
+        "owner_checklist_status": dry_run.owner_checklist_status,
+        "dry_run_only": dry_run.dry_run_only,
+        "commands_executed": dry_run.commands_executed,
+        "production_state_mutated": dry_run.production_state_mutated,
+        "external_dependency_count": len(graph.external_dependencies),
+    }
+
+
+def _operations_report_pipeline_schedule(
+    graph: ETFOperationsCommandGraph,
+    dry_run: ETFOperationsSchedulerDryRunReport,
+) -> list[dict[str, Any]]:
+    step_status_by_id = {step.step_id: step.status for step in dry_run.planned_steps}
+    return [
+        {
+            "step_id": node.node_id,
+            "command": node.command,
+            "required": node.required,
+            "status": step_status_by_id.get(node.node_id, "planned"),
+            "dependencies": list(node.dependencies),
+            "external_dependencies": list(node.external_dependencies),
+            "expected_outputs": list(node.outputs),
+            "failure_policy": node.failure_policy,
+            "estimated_runtime_class": node.estimated_runtime_class,
+            "owner_review_required": node.owner_review_required,
+        }
+        for node in graph.nodes
+    ]
+
+
+def _operations_report_command_graph_summary(
+    graph: ETFOperationsCommandGraph,
+) -> dict[str, Any]:
+    return {
+        "schema_version": graph.schema_version,
+        "cadence": graph.cadence,
+        "node_count": len(graph.nodes),
+        "required_step_count": sum(1 for node in graph.nodes if node.required),
+        "optional_step_count": sum(1 for node in graph.nodes if not node.required),
+        "owner_review_required_step_count": sum(
+            1 for node in graph.nodes if node.owner_review_required
+        ),
+        "execution_order": list(graph.execution_order),
+        "skipped_optional_steps": list(graph.skipped_optional_steps),
+        "external_dependencies": list(graph.external_dependencies),
+        "dry_run_only": graph.dry_run_only,
+        "commands_executed": graph.commands_executed,
+    }
+
+
+def _operations_report_artifact_summary(
+    freshness: ETFOperationsArtifactFreshnessReport,
+) -> dict[str, Any]:
+    return {
+        "schema_version": freshness.schema_version,
+        "artifact_count": len(freshness.artifacts),
+        "blocking_artifact_count": len(freshness.blocking_artifacts),
+        "warning_artifact_count": len(freshness.warning_artifacts),
+        "optional_artifact_count": len(freshness.optional_artifacts),
+        "freshness_summary": dict(freshness.freshness_summary),
+    }
+
+
+def _operations_report_dependency_status(
+    freshness: ETFOperationsArtifactFreshnessReport,
+    graph: ETFOperationsCommandGraph,
+) -> dict[str, Any]:
+    return {
+        "dependency_summary": dict(freshness.dependency_summary),
+        "blocking_artifacts": list(freshness.blocking_artifacts),
+        "warning_artifacts": list(freshness.warning_artifacts),
+        "external_dependencies": list(graph.external_dependencies),
+    }
+
+
+def _operations_report_failure_rows(
+    failure_report: ETFOperationsFailurePolicyReport,
+    *,
+    include_warning: bool,
+) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for event in failure_report.events:
+        if include_warning and event.severity != "warning":
+            continue
+        if not include_warning and event.severity == "warning":
+            continue
+        rows.append(
+            {
+                "event_id": event.event_id,
+                "event_type": event.event_type,
+                "severity": event.severity,
+                "source_step": event.source_step,
+                "artifact_id": event.artifact_id,
+                "path": event.path,
+                "freshness_status": event.freshness_status,
+                "dependency_status": event.dependency_status,
+                "required": event.required,
+                "failure_policy": event.failure_policy,
+                "blocks_pipeline": event.blocks_pipeline,
+                "blocks_dependent_steps": event.blocks_dependent_steps,
+                "requires_manual_review": event.requires_manual_review,
+                "recommended_action": event.recommended_action,
+            }
+        )
+    return rows
+
+
+def _operations_report_owner_checklist(
+    owner_checklist: ETFOperationsOwnerReviewChecklist | None,
+) -> dict[str, Any] | None:
+    if owner_checklist is None:
+        return None
+    return {
+        "schema_version": owner_checklist.schema_version,
+        "checklist_step_id": owner_checklist.checklist_step_id,
+        "checklist_command": owner_checklist.checklist_command,
+        "checklist_status": owner_checklist.checklist_status,
+        "signoff_required": owner_checklist.signoff_required,
+        "required_items": list(owner_checklist.required_items),
+        "blocking_items": list(owner_checklist.blocking_items),
+        "warning_items": list(owner_checklist.warning_items),
+        "manual_review_items": list(owner_checklist.manual_review_items),
+        "items": [
+            {
+                "item_id": item.item_id,
+                "category": item.category,
+                "title": item.title,
+                "required": item.required,
+                "blocking": item.blocking,
+                "owner_action": item.owner_action,
+                "source_step": item.source_step,
+                "related_event_ids": list(item.related_event_ids),
+                "related_artifact_ids": list(item.related_artifact_ids),
+                "evidence_paths": list(item.evidence_paths),
+            }
+            for item in owner_checklist.items
+        ],
+    }
+
+
+def _operations_expected_next_run(
+    cadence: OperationsGraphCadence,
+) -> dict[str, Any]:
+    rules = {
+        "daily": "next unified daily scheduler trigger after the next completed U.S. trading day",
+        "weekly": "weekly operator review after documented due-cadence condition is met",
+        "biweekly": "biweekly owner review through the documented operations runbook path",
+        "monthly": "monthly governance review after month-end due-cadence condition is met",
+    }
+    return {
+        "cadence": cadence,
+        "rule": rules[cadence],
+        "source": "docs/operations/operations_runbook.md",
+        "production_scheduler_entry": "aits ops daily-run",
+        "separate_external_scheduler_entry": False,
+    }
+
+
+def _operations_report_source_artifacts(
+    freshness: ETFOperationsArtifactFreshnessReport,
+) -> list[ETFOperationsHealthSourceArtifact]:
+    return [
+        ETFOperationsHealthSourceArtifact(
+            artifact_id=artifact.artifact_id,
+            path=artifact.path,
+            artifact_type=artifact.artifact_type,
+            source_step=artifact.source_step,
+            required=artifact.required,
+            freshness_status=artifact.freshness_status,
+            dependency_status=artifact.dependency_status,
+            generated_at=artifact.generated_at,
+            as_of_date=artifact.as_of_date,
+            age_days=artifact.age_days,
+        )
+        for artifact in freshness.artifacts
+    ]
+
+
+def _markdown_value(value: Any) -> str:
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if value is None:
+        return "none"
+    if isinstance(value, list):
+        return _markdown_list(value)
+    if isinstance(value, dict):
+        return f"`{json.dumps(value, sort_keys=True, ensure_ascii=False)}`"
+    return f"`{value}`"
+
+
+def _markdown_list(values: list[Any]) -> str:
+    if not values:
+        return "none"
+    return ", ".join(f"`{value}`" for value in values)
 
 
 def _dry_run_planned_steps(

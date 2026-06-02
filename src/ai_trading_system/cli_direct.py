@@ -318,6 +318,21 @@ def _dispatch(args: list[str]) -> None:
             no_write=_flag(args, "--no-write"),
         )
         return
+    if args[:3] == ["etf", "ops", "report"]:
+        etf_cli.ops_report_command(
+            cadence=_option(args, "--cadence", "daily") or "daily",
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            root_path=_path_option_with_default(args, "--root-path", etf_cli.PROJECT_ROOT),
+            output_dir=_path_option_with_default(
+                args,
+                "--output-dir",
+                etf_cli.DEFAULT_ETF_OPERATIONS_REPORT_DIR,
+            ),
+            json_path=_optional_path(args, "--json-path"),
+            markdown_path=_optional_path(args, "--markdown-path"),
+            include_optional=not _flag(args, "--skip-optional"),
+        )
+        return
     if args[:2] == ["parameters", "shadow-backtest"]:
         cli.parameters_shadow_backtest_command(
             latest=_flag(args, "--latest"),
