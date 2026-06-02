@@ -10,7 +10,9 @@ from ai_trading_system.etf_portfolio.operations import (
     OPERATIONS_SCHEDULE_SCHEMA_VERSION,
     ETFOperationsScheduleConfig,
     OperationsCommandGraphError,
+    build_biweekly_operations_command_graph,
     build_daily_operations_command_graph,
+    build_monthly_operations_command_graph,
     build_weekly_operations_command_graph,
     load_operations_schedule_config,
     operations_schedule_required_step_ids,
@@ -147,8 +149,12 @@ def test_operations_schedule_weight_search_is_not_daily() -> None:
     config = load_operations_schedule_config()
 
     daily_ids = {step.step_id for step in config.daily_pipeline}
+    weekly_ids = {step.step_id for step in config.weekly_pipeline}
+    biweekly_ids = {step.step_id for step in config.biweekly_pipeline}
     monthly_ids = {step.step_id for step in config.monthly_pipeline}
     assert "weight_calibration_search" not in daily_ids
+    assert "weight_calibration_search" not in weekly_ids
+    assert "weight_calibration_search" not in biweekly_ids
     assert "weight_calibration_search" in monthly_ids
 
 
@@ -397,6 +403,152 @@ def test_weekly_operations_command_graph_safety_flags_included() -> None:
     assert graph.safety.manual_review_required is True
     assert all(node.safety.production_effect == "none" for node in graph.nodes)
     assert all(node.safety.broker_action == "none" for node in graph.nodes)
+
+
+def test_biweekly_operations_command_graph_builds() -> None:
+    graph = build_biweekly_operations_command_graph()
+
+    expected_nodes = {
+        "ai_attribution_scorecard_review",
+        "satellite_attribution_scorecard_review",
+        "weight_calibration_evidence_update",
+        "operations_report_biweekly",
+    }
+    assert graph.schema_version == OPERATIONS_COMMAND_GRAPH_SCHEMA_VERSION
+    assert graph.cadence == "biweekly"
+    assert graph.dry_run_only is True
+    assert graph.commands_executed is False
+    assert graph.execution_order == [node.node_id for node in graph.nodes]
+    assert set(graph.execution_order) == expected_nodes
+    assert set(graph.external_dependencies) == {
+        "ai_attribution_update",
+        "forward_weekly_review",
+        "parameter_review_report",
+        "satellite_attribution_update",
+    }
+
+
+def test_biweekly_operations_command_graph_dependencies_topologically_sorted() -> None:
+    graph = build_biweekly_operations_command_graph()
+    position = {node_id: index for index, node_id in enumerate(graph.execution_order)}
+
+    for node in graph.nodes:
+        for dependency in node.dependencies:
+            assert position[dependency] < position[node.node_id]
+
+
+def test_biweekly_operations_command_graph_preserves_external_inputs() -> None:
+    graph = build_biweekly_operations_command_graph()
+    by_id = {node.node_id: node for node in graph.nodes}
+
+    weight_evidence = by_id["weight_calibration_evidence_update"]
+    assert weight_evidence.dependencies == []
+    assert weight_evidence.external_dependencies == [
+        "forward_weekly_review",
+        "parameter_review_report",
+    ]
+    assert weight_evidence.inputs == [
+        "reports/etf_portfolio/forward/weekly_reviews/weekly_review_{as_of}.json",
+        "reports/etf_portfolio/forward/weekly_reviews/weekly_review_{as_of}.md",
+        "reports/etf_portfolio/parameter_review/reports/parameter_review_{as_of}.json",
+        "reports/etf_portfolio/parameter_review/reports/parameter_review_{as_of}.md",
+    ]
+
+
+def test_monthly_operations_command_graph_builds() -> None:
+    graph = build_monthly_operations_command_graph()
+
+    expected_nodes = {
+        "data_quality_audit",
+        "weight_calibration_search",
+        "weight_calibration_report",
+        "parameter_review_governance",
+        "strategy_evidence_dashboard_update",
+        "operations_report_monthly",
+    }
+    assert graph.schema_version == OPERATIONS_COMMAND_GRAPH_SCHEMA_VERSION
+    assert graph.cadence == "monthly"
+    assert graph.dry_run_only is True
+    assert graph.commands_executed is False
+    assert graph.execution_order == [node.node_id for node in graph.nodes]
+    assert set(graph.execution_order) == expected_nodes
+    assert set(graph.external_dependencies) == {
+        "parameter_review_report",
+        "weight_calibration_evidence_update",
+    }
+
+
+def test_monthly_operations_command_graph_dependencies_topologically_sorted() -> None:
+    graph = build_monthly_operations_command_graph()
+    position = {node_id: index for index, node_id in enumerate(graph.execution_order)}
+
+    for node in graph.nodes:
+        for dependency in node.dependencies:
+            assert position[dependency] < position[node.node_id]
+
+
+def test_monthly_operations_command_graph_marks_heavy_search_slow_cadence() -> None:
+    graph = build_monthly_operations_command_graph()
+    by_id = {node.node_id: node for node in graph.nodes}
+
+    weight_search = by_id["weight_calibration_search"]
+    assert weight_search.command == (
+        "aits etf weight-calibration search --search etf_initial_weight_search_v1"
+    )
+    assert weight_search.dependencies == ["data_quality_audit"]
+    assert weight_search.estimated_runtime_class == "slow"
+    assert weight_search.owner_review_required is True
+    assert "weight_calibration_search" not in build_daily_operations_command_graph().execution_order
+    assert (
+        "weight_calibration_search"
+        not in build_weekly_operations_command_graph().execution_order
+    )
+    assert (
+        "weight_calibration_search"
+        not in build_biweekly_operations_command_graph().execution_order
+    )
+
+
+def test_monthly_operations_command_graph_manual_review_for_parameter_proposals() -> None:
+    graph = build_monthly_operations_command_graph()
+    by_id = {node.node_id: node for node in graph.nodes}
+
+    parameter_governance = by_id["parameter_review_governance"]
+    weight_report = by_id["weight_calibration_report"]
+    assert parameter_governance.external_dependencies == ["parameter_review_report"]
+    assert parameter_governance.failure_policy == "manual_review_required"
+    assert parameter_governance.owner_review_required is True
+    assert weight_report.external_dependencies == ["weight_calibration_evidence_update"]
+    assert weight_report.failure_policy == "manual_review_required"
+    assert weight_report.owner_review_required is True
+
+
+def test_monthly_operations_command_graph_missing_required_node_fails() -> None:
+    raw = _raw_schedule()
+    raw["monthly_pipeline"] = [
+        step
+        for step in raw["monthly_pipeline"]
+        if step["step_id"] != "weight_calibration_search"
+    ]
+    for step in raw["monthly_pipeline"]:
+        step["dependencies"] = [
+            dependency
+            for dependency in step["dependencies"]
+            if dependency != "weight_calibration_search"
+        ]
+    config = ETFOperationsScheduleConfig.model_validate(raw)
+
+    with pytest.raises(OperationsCommandGraphError, match="missing required nodes"):
+        build_monthly_operations_command_graph(config)
+
+
+def test_biweekly_operations_command_graph_cycle_detection_works() -> None:
+    raw = _raw_schedule()
+    raw["biweekly_pipeline"][0]["dependencies"].append("operations_report_biweekly")
+    config = ETFOperationsScheduleConfig.model_validate(raw)
+
+    with pytest.raises(OperationsCommandGraphError, match="cycle detected"):
+        build_biweekly_operations_command_graph(config)
 
 
 def _raw_schedule() -> dict[str, object]:

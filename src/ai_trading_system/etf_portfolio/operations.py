@@ -33,7 +33,7 @@ OperationsFailurePolicy = Literal[
     "manual_review_required",
 ]
 OperationsRuntimeClass = Literal["fast", "medium", "slow"]
-OperationsGraphCadence = Literal["daily", "weekly"]
+OperationsGraphCadence = Literal["daily", "weekly", "biweekly", "monthly"]
 
 _PIPELINE_FIELDS = (
     "daily_pipeline",
@@ -51,6 +51,8 @@ _PIPELINE_CADENCE = {
 _GRAPH_PIPELINE_FIELD_BY_CADENCE: dict[OperationsGraphCadence, str] = {
     "daily": "daily_pipeline",
     "weekly": "weekly_pipeline",
+    "biweekly": "biweekly_pipeline",
+    "monthly": "monthly_pipeline",
 }
 OPERATIONS_COMMAND_GRAPH_SCHEMA_VERSION = "etf_operations_command_graph_v1"
 REQUIRED_DAILY_OPERATION_NODE_IDS = frozenset(
@@ -90,6 +92,24 @@ OPTIONAL_WEEKLY_OPERATION_NODE_IDS = frozenset(
         "parameter_review_report",
     }
 )
+REQUIRED_BIWEEKLY_OPERATION_NODE_IDS = frozenset(
+    {
+        "ai_attribution_scorecard_review",
+        "satellite_attribution_scorecard_review",
+        "weight_calibration_evidence_update",
+        "operations_report_biweekly",
+    }
+)
+REQUIRED_MONTHLY_OPERATION_NODE_IDS = frozenset(
+    {
+        "data_quality_audit",
+        "weight_calibration_search",
+        "weight_calibration_report",
+        "parameter_review_governance",
+        "strategy_evidence_dashboard_update",
+        "operations_report_monthly",
+    }
+)
 
 _DAILY_RUNTIME_CLASS_BY_STEP_ID: dict[str, OperationsRuntimeClass] = {
     "data_freshness_check": "medium",
@@ -114,17 +134,37 @@ _WEEKLY_RUNTIME_CLASS_BY_STEP_ID: dict[str, OperationsRuntimeClass] = {
     "operations_report": "fast",
     "reader_brief_weekly_navigation": "fast",
 }
+_BIWEEKLY_RUNTIME_CLASS_BY_STEP_ID: dict[str, OperationsRuntimeClass] = {
+    "ai_attribution_scorecard_review": "medium",
+    "satellite_attribution_scorecard_review": "medium",
+    "weight_calibration_evidence_update": "medium",
+    "operations_report_biweekly": "fast",
+}
+_MONTHLY_RUNTIME_CLASS_BY_STEP_ID: dict[str, OperationsRuntimeClass] = {
+    "data_quality_audit": "medium",
+    "weight_calibration_search": "slow",
+    "weight_calibration_report": "medium",
+    "parameter_review_governance": "fast",
+    "strategy_evidence_dashboard_update": "medium",
+    "operations_report_monthly": "fast",
+}
 _REQUIRED_OPERATION_NODE_IDS_BY_CADENCE: dict[OperationsGraphCadence, frozenset[str]] = {
     "daily": REQUIRED_DAILY_OPERATION_NODE_IDS,
     "weekly": REQUIRED_WEEKLY_OPERATION_NODE_IDS,
+    "biweekly": REQUIRED_BIWEEKLY_OPERATION_NODE_IDS,
+    "monthly": REQUIRED_MONTHLY_OPERATION_NODE_IDS,
 }
 _OPTIONAL_OPERATION_NODE_IDS_BY_CADENCE: dict[OperationsGraphCadence, frozenset[str]] = {
     "daily": OPTIONAL_DAILY_OPERATION_NODE_IDS,
     "weekly": OPTIONAL_WEEKLY_OPERATION_NODE_IDS,
+    "biweekly": frozenset(),
+    "monthly": frozenset(),
 }
 _RUNTIME_CLASS_BY_CADENCE: dict[OperationsGraphCadence, dict[str, OperationsRuntimeClass]] = {
     "daily": _DAILY_RUNTIME_CLASS_BY_STEP_ID,
     "weekly": _WEEKLY_RUNTIME_CLASS_BY_STEP_ID,
+    "biweekly": _BIWEEKLY_RUNTIME_CLASS_BY_STEP_ID,
+    "monthly": _MONTHLY_RUNTIME_CLASS_BY_STEP_ID,
 }
 
 
@@ -357,6 +397,34 @@ def build_weekly_operations_command_graph(
     return _build_operations_command_graph(
         config,
         cadence="weekly",
+        include_optional=include_optional,
+        skipped_optional_step_ids=skipped_optional_step_ids,
+    )
+
+
+def build_biweekly_operations_command_graph(
+    config: ETFOperationsScheduleConfig | None = None,
+    *,
+    include_optional: bool = True,
+    skipped_optional_step_ids: set[str] | None = None,
+) -> ETFOperationsCommandGraph:
+    return _build_operations_command_graph(
+        config,
+        cadence="biweekly",
+        include_optional=include_optional,
+        skipped_optional_step_ids=skipped_optional_step_ids,
+    )
+
+
+def build_monthly_operations_command_graph(
+    config: ETFOperationsScheduleConfig | None = None,
+    *,
+    include_optional: bool = True,
+    skipped_optional_step_ids: set[str] | None = None,
+) -> ETFOperationsCommandGraph:
+    return _build_operations_command_graph(
+        config,
+        cadence="monthly",
         include_optional=include_optional,
         skipped_optional_step_ids=skipped_optional_step_ids,
     )
