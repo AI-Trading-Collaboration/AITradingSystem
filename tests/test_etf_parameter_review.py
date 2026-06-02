@@ -16,6 +16,7 @@ from ai_trading_system.etf_portfolio.parameter_review import (
     generate_parameter_change_proposals,
     link_decision_journal_evidence,
     parameter_review_evidence_to_json,
+    score_parameter_review_proposals,
     validate_parameter_change_proposals,
     validate_parameter_review_evidence_record,
 )
@@ -497,6 +498,126 @@ def test_parameter_review_proposal_generator_preserves_no_broker_no_production(
         assert proposal["proposed_parameter_delta"]["mutation_allowed"] is False
 
 
+def test_parameter_review_governance_scoring_is_deterministic(tmp_path) -> None:
+    payload = _aggregation_payload(tmp_path)
+    proposals = generate_parameter_change_proposals(
+        payload,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    first = score_parameter_review_proposals(
+        proposals,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    second = score_parameter_review_proposals(
+        proposals,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert first["scorecards"][0]["proposal_score"] == second["scorecards"][0][
+        "proposal_score"
+    ]
+    assert first["scorecards"][0]["governance_status"] == "eligible_for_manual_review"
+
+
+def test_parameter_review_governance_insufficient_data_blocks(tmp_path) -> None:
+    payload = _aggregation_payload(tmp_path, forward_overrides={"days_since_enrollment": 5})
+    proposals = generate_parameter_change_proposals(
+        payload,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    scorecard = score_parameter_review_proposals(
+        proposals,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )["scorecards"][0]
+
+    assert scorecard["governance_status"] == "needs_more_data"
+    assert "INSUFFICIENT_FORWARD_DAYS" in scorecard["hard_blockers"]
+
+
+def test_parameter_review_governance_unsafe_production_effect_blocks(tmp_path) -> None:
+    proposals = _proposal_payload(tmp_path)
+    unsafe = json.loads(json.dumps(proposals))
+    unsafe["proposals"][0]["production_effect"] = "change_weights"
+
+    scorecard = score_parameter_review_proposals(
+        unsafe,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )["scorecards"][0]
+
+    assert scorecard["governance_status"] == "blocked"
+    assert "UNSAFE_PRODUCTION_EFFECT" in scorecard["hard_blockers"]
+
+
+def test_parameter_review_governance_broker_action_blocks(tmp_path) -> None:
+    proposals = _proposal_payload(tmp_path)
+    unsafe = json.loads(json.dumps(proposals))
+    unsafe["proposals"][0]["broker_action"] = "place_order"
+
+    scorecard = score_parameter_review_proposals(
+        unsafe,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )["scorecards"][0]
+
+    assert scorecard["governance_status"] == "blocked"
+    assert "BROKER_ACTION_NOT_NONE" in scorecard["hard_blockers"]
+
+
+def test_parameter_review_governance_missing_journal_link_blocks_or_warns(
+    tmp_path,
+) -> None:
+    proposals = _proposal_payload(tmp_path, decision_status=None)
+
+    blocked = score_parameter_review_proposals(
+        proposals,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )["scorecards"][0]
+    warned = score_parameter_review_proposals(
+        proposals,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+        policy={"missing_journal_link_mode": "warn"},
+    )["scorecards"][0]
+
+    assert blocked["governance_status"] == "blocked"
+    assert "NO_JOURNAL_LINK" in blocked["hard_blockers"]
+    assert warned["governance_status"] == "continue_shadow"
+    assert "NO_JOURNAL_LINK" in warned["warnings"]
+
+
+def test_parameter_review_governance_high_turnover_blocks(tmp_path) -> None:
+    proposals = _proposal_payload(
+        tmp_path,
+        forward_overrides={"turnover_since_enrollment": 1.4},
+    )
+
+    scorecard = score_parameter_review_proposals(
+        proposals,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )["scorecards"][0]
+
+    assert scorecard["governance_status"] == "blocked"
+    assert "HIGH_TURNOVER" in scorecard["hard_blockers"]
+
+
+def test_parameter_review_governance_high_drawdown_blocks(tmp_path) -> None:
+    proposals = _proposal_payload(
+        tmp_path,
+        forward_overrides={
+            "max_drawdown_since_enrollment": -0.12,
+            "baseline_max_drawdown_since_enrollment": -0.05,
+        },
+    )
+
+    scorecard = score_parameter_review_proposals(
+        proposals,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )["scorecards"][0]
+
+    assert scorecard["governance_status"] == "blocked"
+    assert "HIGH_DRAWDOWN" in scorecard["hard_blockers"]
+
+
 def _evidence_record(
     *,
     review_start_date: date = date(2026, 5, 1),
@@ -624,6 +745,22 @@ def _aggregation_payload(
     return build_parameter_review_aggregation(
         as_of=date(2026, 6, 1),
         report_index_payload=context["report_index"],
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+
+def _proposal_payload(
+    tmp_path,
+    *,
+    forward_overrides: dict[str, object] | None = None,
+    decision_status: str | list[str] | None = "accept_recommendation",
+) -> dict[str, object]:
+    return generate_parameter_change_proposals(
+        _aggregation_payload(
+            tmp_path,
+            forward_overrides=forward_overrides,
+            decision_status=decision_status,
+        ),
         generated_at=datetime(2026, 6, 2, tzinfo=UTC),
     )
 

@@ -151,6 +151,7 @@ flowchart TD
     T070AGG --> T070JLINK["parameter review journal linker<br/>journal entries + rationale + confidence + follow-up tasks<br/>supportive / neutral / conflicted / negative / insufficient_review"]
     T070CMP --> T070PROP["parameter review proposal generator<br/>continue / defer / reject / extended shadow / baseline parameter review proposal<br/>proposal-only; no production mutation"]
     T070JLINK --> T070PROP
+    T070PROP --> T070GOV["parameter review governance scorecard<br/>weighted evidence score + hard blockers<br/>eligible / needs_more_data / blocked / rejected / continue_shadow"]
     T064RUN --> T064RIDX["config/report_registry.yaml + aits reports index<br/>experiment manifest / comparison / candidate selection / shadow registry / weekly review visibility"]
     T064CMP --> T064RIDX
     T064SEL --> T064RIDX
@@ -195,6 +196,8 @@ TRADING-070C 新增 parameter review comparison module，消费 TRADING-070B evi
 TRADING-070D 新增 decision journal evidence linker，消费 TRADING-070B aggregation 中的 latest decision journal report，把 linked journal entries、human decisions、rationale、confidence、follow-up tasks 和 conflict flags 转为 candidate-level evidence。Human support status 只作为 parameter review evidence，不修改 journal state、shadow registry、baseline config、production weights 或 broker state。
 
 TRADING-070E 新增 parameter change proposal generator，消费 comparison 和 journal linkage，只允许 `continue_observation`、`defer_parameter_change`、`reject_candidate`、`propose_candidate_for_extended_shadow` 和 `propose_baseline_parameter_review`。Proposal payload 必须携带 supporting/blocking evidence、risk summary 和 safety fields；不得输出 `apply_baseline_change`、`promote_to_production` 或 `enable_broker_action`，也不得修改 production weights、baseline config、shadow registry 或 broker state。
+
+TRADING-070F 新增 proposal scoring and governance gate，按 forward excess return、drawdown improvement、stability、turnover penalty、journal support 和 data quality 生成 deterministic scorecard，并对 insufficient forward days、missing baseline comparison、missing journal link、failed validation、unsafe production effect、broker action、high turnover 和 high drawdown fail closed。Scorecard 只决定是否 `eligible_for_manual_review`、`needs_more_data`、`blocked`、`rejected` 或 `continue_shadow`，不应用参数变更。
 
 ## ETF Portfolio P2 Observe-Only Contracts
 

@@ -68,7 +68,7 @@ reason=INSUFFICIENT_FORWARD_EVIDENCE
 |TRADING-070C|Baseline vs Candidate Evidence Comparison|DONE|Forward evidence compares candidate vs baseline, QQQ, SPY, SMH, backtest expectation, weekly status and journal outcome|
 |TRADING-070D|Decision Journal Evidence Linker|DONE|Journal decisions become structured candidate evidence with support/conflict status and traceable links|
 |TRADING-070E|Parameter Change Proposal Generator|DONE|Only proposal/review actions are generated; unsafe proposal types are rejected|
-|TRADING-070F|Proposal Scoring and Governance Gate|READY|Proposal scorecard is deterministic and fail-closed on insufficient/unsafe/under-evidenced proposals|
+|TRADING-070F|Proposal Scoring and Governance Gate|DONE|Proposal scorecard is deterministic and fail-closed on insufficient/unsafe/under-evidenced proposals|
 |TRADING-070G|Parameter Review Report Generator|READY|JSON/Markdown report includes safety banner, source summary, comparisons, journal evidence, scorecard and proposals|
 |TRADING-070H|Reader Brief Parameter Review Section|READY|Reader Brief exposes parameter review status, counts, safety posture and detailed report link|
 |TRADING-070I|Parameter Review Validation Gate|READY|`aits etf parameter-review validate` confirms proposal-only behavior and fails closed on unsafe states|
@@ -130,3 +130,9 @@ reason=INSUFFICIENT_FORWARD_EVIDENCE
   proposal 包含 current/candidate config hash、parameter delta placeholder、supporting
   evidence、blocking evidence、risk summary 和 safety fields，并阻断 unsafe proposal type、
   `production_effect != none` 与 `broker_action != none`。
+- 2026-06-02：TRADING-070F 完成。新增 deterministic proposal scorecard 和 fail-closed
+  governance gate，按 forward excess return、drawdown improvement、stability、turnover
+  penalty、journal support 和 data quality 加权评分，并阻断 insufficient forward days、missing
+  baseline comparison、missing journal link、unsafe production effect、broker action、high
+  turnover 和 high drawdown。Scorecard status 只输出 `eligible_for_manual_review`、
+  `needs_more_data`、`blocked`、`rejected` 或 `continue_shadow`，不应用参数变更。

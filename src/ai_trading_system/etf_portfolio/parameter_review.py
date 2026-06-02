@@ -20,6 +20,9 @@ PARAMETER_REVIEW_JOURNAL_LINKAGE_SCHEMA_VERSION = (
     "etf_parameter_review_journal_linkage_v1"
 )
 PARAMETER_REVIEW_PROPOSAL_SCHEMA_VERSION = "etf_parameter_review_proposals_v1"
+PARAMETER_REVIEW_GOVERNANCE_SCHEMA_VERSION = (
+    "etf_parameter_review_governance_scorecard_v1"
+)
 
 DEFAULT_PARAMETER_REVIEW_REPORT_DIR = (
     PROJECT_ROOT / "reports" / "etf_portfolio" / "parameter_review"
@@ -168,6 +171,56 @@ ALLOWED_PARAMETER_REVIEW_PROPOSAL_TYPES = frozenset(
 
 DISALLOWED_PARAMETER_REVIEW_PROPOSAL_TYPES = frozenset(
     {"apply_baseline_change", "promote_to_production", "enable_broker_action"}
+)
+
+PARAMETER_REVIEW_GOVERNANCE_POLICY = {
+    "policy_id": "etf_parameter_review_governance_v1",
+    "owner": "TRADING-070",
+    "status": "pilot_baseline",
+    "rationale": (
+        "Score proposal-only parameter review candidates and fail closed before manual review."
+    ),
+    "intended_effect": (
+        "Prevent under-evidenced or unsafe parameter proposals from being misread as "
+        "production changes."
+    ),
+    "validation_evidence": "Focused deterministic TRADING-070F tests.",
+    "review_condition": "Revisit after real forward evidence and owner review of scorecards.",
+    "weights": {
+        "forward_excess_return_score": 0.25,
+        "drawdown_improvement_score": 0.20,
+        "stability_score": 0.20,
+        "turnover_penalty_score": 0.15,
+        "journal_support_score": 0.10,
+        "data_quality_score": 0.10,
+    },
+    "score_references": {
+        "forward_excess_return": 0.05,
+        "drawdown_improvement": 0.05,
+        "turnover_since_enrollment": 1.0,
+    },
+    "eligible_manual_review_min_score": 0.55,
+    "missing_journal_link_mode": "block",
+}
+
+PARAMETER_REVIEW_GOVERNANCE_STATUSES = frozenset(
+    {"eligible_for_manual_review", "needs_more_data", "blocked", "rejected", "continue_shadow"}
+)
+
+PARAMETER_REVIEW_HARD_BLOCKERS = frozenset(
+    {
+        "INSUFFICIENT_FORWARD_DAYS",
+        "NO_BASELINE_COMPARISON",
+        "NO_JOURNAL_LINK",
+        "CREDIBILITY_GATE_FAILED",
+        "FORWARD_VALIDATION_FAILED",
+        "WEEKLY_REVIEW_VALIDATION_FAILED",
+        "UNSAFE_PRODUCTION_EFFECT",
+        "BROKER_ACTION_NOT_NONE",
+        "HIGH_TURNOVER",
+        "HIGH_DRAWDOWN",
+        "UNSAFE_PROPOSAL_TYPE",
+    }
 )
 
 
@@ -782,6 +835,83 @@ def validate_parameter_change_proposals(payload: Mapping[str, Any]) -> list[dict
     return issues
 
 
+def score_parameter_review_proposals(
+    proposal_payload: Mapping[str, Any],
+    *,
+    generated_at: datetime | None = None,
+    policy: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(tz=UTC)
+    governance_policy = _governance_policy(policy)
+    scorecards = [
+        _proposal_scorecard(proposal, policy=governance_policy)
+        for proposal in _records(proposal_payload.get("proposals"))
+    ]
+    payload = {
+        "schema_version": PARAMETER_REVIEW_GOVERNANCE_SCHEMA_VERSION,
+        "report_type": "etf_parameter_review_governance_scorecard",
+        "scorecard_batch_id": _stable_id(
+            "etf-parameter-review-governance",
+            proposal_payload.get("proposal_batch_id"),
+            generated.isoformat(),
+        ),
+        "parameter_review_id": proposal_payload.get("parameter_review_id"),
+        "source_proposal_batch_id": proposal_payload.get("proposal_batch_id"),
+        "status": _scorecard_batch_status(scorecards),
+        "as_of": proposal_payload.get("as_of"),
+        "generated_at": generated.isoformat(),
+        "policy": governance_policy,
+        "scorecard_count": len(scorecards),
+        "status_counts": _governance_status_counts(scorecards),
+        "scorecards": scorecards,
+        "safety": dict(PARAMETER_REVIEW_SAFETY),
+        **PARAMETER_REVIEW_SAFETY,
+    }
+    validate_parameter_review_governance_scorecard(payload)
+    return payload
+
+
+def validate_parameter_review_governance_scorecard(
+    payload: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
+    if _text(payload.get("schema_version")) != PARAMETER_REVIEW_GOVERNANCE_SCHEMA_VERSION:
+        issues.append(
+            _issue(
+                "schema_version",
+                f"schema_version must be {PARAMETER_REVIEW_GOVERNANCE_SCHEMA_VERSION}",
+            )
+        )
+    issues.extend(_safety_issues(payload, owner_id="parameter_review_governance"))
+    issues.extend(
+        _safety_issues(
+            _mapping(payload.get("safety")),
+            owner_id="parameter_review_governance.safety",
+        )
+    )
+    for index, scorecard in enumerate(_records(payload.get("scorecards"))):
+        status = _text(scorecard.get("governance_status"))
+        if status not in PARAMETER_REVIEW_GOVERNANCE_STATUSES:
+            issues.append(
+                _issue(
+                    f"scorecards[{index}].governance_status",
+                    f"unsupported governance_status: {status}",
+                )
+            )
+        issues.extend(_safety_issues(scorecard, owner_id=f"scorecard[{index}]"))
+        for blocker in scorecard.get("hard_blockers") or []:
+            if _text(blocker) not in PARAMETER_REVIEW_HARD_BLOCKERS:
+                issues.append(
+                    _issue(
+                        f"scorecards[{index}].hard_blockers",
+                        f"unsupported hard blocker: {blocker}",
+                    )
+                )
+    if issues:
+        raise ParameterReviewError(_format_issues(issues))
+    return issues
+
+
 def _candidate_evidence_comparison(
     record: Mapping[str, Any],
     *,
@@ -1070,6 +1200,7 @@ def _parameter_change_proposal(
             journal_evidence=journal_evidence,
         ),
         "risk_summary": risk_summary,
+        "comparison_metrics": dict(_mapping(comparison_item.get("comparison_metrics"))),
         "comparison_status": comparison_item.get("status"),
         "human_support_status": journal_evidence.get("human_support_status"),
         "manual_review_required": True,
@@ -1195,6 +1326,212 @@ def _proposal_type_counts(proposals: Sequence[Mapping[str, Any]]) -> dict[str, i
         if proposal_type in counts:
             counts[proposal_type] += 1
     return counts
+
+
+def _proposal_scorecard(
+    proposal: Mapping[str, Any],
+    *,
+    policy: Mapping[str, Any],
+) -> dict[str, Any]:
+    component_scores = _proposal_component_scores(proposal, policy)
+    proposal_score = _weighted_proposal_score(component_scores, policy)
+    hard_blockers, warnings = _proposal_hard_blockers(proposal, policy)
+    status = _proposal_governance_status(
+        proposal,
+        proposal_score=proposal_score,
+        hard_blockers=hard_blockers,
+        policy=policy,
+    )
+    return {
+        "proposal_id": proposal.get("proposal_id"),
+        "candidate_id": proposal.get("candidate_id"),
+        "proposal_type": proposal.get("proposal_type"),
+        "proposal_score": proposal_score,
+        "component_scores": component_scores,
+        "hard_blockers": hard_blockers,
+        "warnings": warnings,
+        "governance_status": status,
+        "manual_review_required": True,
+        "production_effect": "none",
+        "broker_action": "none",
+        "safety": dict(PARAMETER_REVIEW_SAFETY),
+        **PARAMETER_REVIEW_SAFETY,
+    }
+
+
+def _proposal_component_scores(
+    proposal: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> dict[str, float]:
+    metrics = _mapping(proposal.get("comparison_metrics"))
+    risk = _mapping(proposal.get("risk_summary"))
+    references = _mapping(policy.get("score_references"))
+    return {
+        "forward_excess_return_score": _positive_score(
+            metrics.get("excess_return"),
+            float(references["forward_excess_return"]),
+        ),
+        "drawdown_improvement_score": _positive_score(
+            risk.get("drawdown_reduction"),
+            float(references["drawdown_improvement"]),
+        ),
+        "stability_score": _bounded_score(metrics.get("stability_delta"), default=0.5),
+        "turnover_penalty_score": _turnover_penalty_score(
+            risk.get("turnover_since_enrollment"),
+            float(references["turnover_since_enrollment"]),
+        ),
+        "journal_support_score": _bounded_score(
+            metrics.get("journal_support_ratio"),
+            default=0.0,
+        ),
+        "data_quality_score": _bounded_score(metrics.get("data_coverage_ratio"), default=0.0),
+    }
+
+
+def _weighted_proposal_score(
+    component_scores: Mapping[str, float],
+    policy: Mapping[str, Any],
+) -> float:
+    weights = _mapping(policy.get("weights"))
+    score = sum(
+        float(weights.get(component, 0.0)) * float(value)
+        for component, value in component_scores.items()
+    )
+    return round(score, 6)
+
+
+def _proposal_hard_blockers(
+    proposal: Mapping[str, Any],
+    policy: Mapping[str, Any],
+) -> tuple[list[str], list[str]]:
+    blockers: set[str] = set()
+    warnings: list[str] = []
+    proposal_type = _text(proposal.get("proposal_type"))
+    if proposal_type not in ALLOWED_PARAMETER_REVIEW_PROPOSAL_TYPES:
+        blockers.add("UNSAFE_PROPOSAL_TYPE")
+    if proposal.get("production_effect") != "none":
+        blockers.add("UNSAFE_PRODUCTION_EFFECT")
+    if proposal.get("broker_action") != "none":
+        blockers.add("BROKER_ACTION_NOT_NONE")
+    reason_codes = {
+        _text(item.get("reason_code"))
+        for item in _records(proposal.get("blocking_evidence"))
+    }
+    for reason in reason_codes:
+        if reason.startswith("INSUFFICIENT_FORWARD_DAYS"):
+            blockers.add("INSUFFICIENT_FORWARD_DAYS")
+        elif reason == "NO_BASELINE_COMPARISON":
+            blockers.add("NO_BASELINE_COMPARISON")
+        elif reason == "HIGH_TURNOVER":
+            blockers.add("HIGH_TURNOVER")
+        elif reason == "HIGH_DRAWDOWN":
+            blockers.add("HIGH_DRAWDOWN")
+        elif reason == "VALIDATION_GATE_BLOCKED":
+            blockers.add("FORWARD_VALIDATION_FAILED")
+    risk_flags = {
+        _text(item)
+        for item in _mapping(proposal.get("risk_summary")).get("risk_flags") or []
+    }
+    if "HIGH_TURNOVER" in risk_flags:
+        blockers.add("HIGH_TURNOVER")
+    if "HIGH_DRAWDOWN" in risk_flags:
+        blockers.add("HIGH_DRAWDOWN")
+    linked_count = _journal_link_count_from_supporting_evidence(proposal)
+    if linked_count == 0:
+        if _text(policy.get("missing_journal_link_mode"), "block") == "warn":
+            warnings.append("NO_JOURNAL_LINK")
+        else:
+            blockers.add("NO_JOURNAL_LINK")
+    return sorted(blockers), sorted(warnings)
+
+
+def _proposal_governance_status(
+    proposal: Mapping[str, Any],
+    *,
+    proposal_score: float,
+    hard_blockers: Sequence[str],
+    policy: Mapping[str, Any],
+) -> str:
+    if proposal.get("proposal_type") == "reject_candidate":
+        return "rejected"
+    if "INSUFFICIENT_FORWARD_DAYS" in hard_blockers or "NO_BASELINE_COMPARISON" in hard_blockers:
+        return "needs_more_data"
+    if hard_blockers:
+        return "blocked"
+    proposal_type = _text(proposal.get("proposal_type"))
+    threshold = float(policy["eligible_manual_review_min_score"])
+    if proposal_type == "propose_baseline_parameter_review" and proposal_score >= threshold:
+        return "eligible_for_manual_review"
+    if proposal_type == "continue_observation":
+        return "needs_more_data"
+    return "continue_shadow"
+
+
+def _journal_link_count_from_supporting_evidence(proposal: Mapping[str, Any]) -> int:
+    for item in _records(proposal.get("supporting_evidence")):
+        if _text(item.get("evidence_type")) == "journal_support":
+            return _int_or_default(item.get("linked_journal_entry_count"), 0)
+    return 0
+
+
+def _governance_policy(policy: Mapping[str, Any] | None) -> dict[str, Any]:
+    merged = dict(PARAMETER_REVIEW_GOVERNANCE_POLICY)
+    if policy:
+        for key, value in policy.items():
+            if isinstance(value, Mapping) and isinstance(merged.get(key), Mapping):
+                nested = dict(_mapping(merged.get(key)))
+                nested.update(dict(value))
+                merged[key] = nested
+            else:
+                merged[key] = value
+    merged["safety"] = dict(PARAMETER_REVIEW_SAFETY)
+    merged.update(PARAMETER_REVIEW_SAFETY)
+    return merged
+
+
+def _scorecard_batch_status(scorecards: Sequence[Mapping[str, Any]]) -> str:
+    if not scorecards:
+        return "needs_more_data"
+    statuses = {_text(item.get("governance_status")) for item in scorecards}
+    if "eligible_for_manual_review" in statuses:
+        return "eligible_for_manual_review"
+    if "blocked" in statuses:
+        return "blocked"
+    if statuses == {"rejected"}:
+        return "rejected"
+    if "needs_more_data" in statuses:
+        return "needs_more_data"
+    return "continue_shadow"
+
+
+def _governance_status_counts(scorecards: Sequence[Mapping[str, Any]]) -> dict[str, int]:
+    counts = {status: 0 for status in sorted(PARAMETER_REVIEW_GOVERNANCE_STATUSES)}
+    for item in scorecards:
+        status = _text(item.get("governance_status"))
+        if status in counts:
+            counts[status] += 1
+    return counts
+
+
+def _bounded_score(value: object, *, default: float) -> float:
+    parsed = _float_or_none(value)
+    if parsed is None:
+        return default
+    return round(max(0.0, min(1.0, parsed)), 6)
+
+
+def _positive_score(value: object, reference: float) -> float:
+    parsed = _float_or_none(value)
+    if parsed is None or reference <= 0:
+        return 0.0
+    return round(max(0.0, min(1.0, parsed / reference)), 6)
+
+
+def _turnover_penalty_score(value: object, reference: float) -> float:
+    parsed = _float_or_none(value)
+    if parsed is None or reference <= 0:
+        return 0.0
+    return round(max(0.0, min(1.0, 1.0 - parsed / reference)), 6)
 
 
 def _journal_entry_evidence(
