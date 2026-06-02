@@ -23,11 +23,13 @@ PARAMETER_REVIEW_PROPOSAL_SCHEMA_VERSION = "etf_parameter_review_proposals_v1"
 PARAMETER_REVIEW_GOVERNANCE_SCHEMA_VERSION = (
     "etf_parameter_review_governance_scorecard_v1"
 )
+PARAMETER_REVIEW_REPORT_SCHEMA_VERSION = "etf_parameter_review_report_v1"
 
 DEFAULT_PARAMETER_REVIEW_REPORT_DIR = (
     PROJECT_ROOT / "reports" / "etf_portfolio" / "parameter_review"
 )
 DEFAULT_PARAMETER_REVIEW_AGGREGATION_DIR = DEFAULT_PARAMETER_REVIEW_REPORT_DIR / "aggregation"
+DEFAULT_PARAMETER_REVIEW_REVIEW_DIR = DEFAULT_PARAMETER_REVIEW_REPORT_DIR / "reports"
 DEFAULT_PARAMETER_REVIEW_VALIDATION_DIR = DEFAULT_PARAMETER_REVIEW_REPORT_DIR / "validation"
 
 PARAMETER_REVIEW_SAFETY = {
@@ -912,6 +914,177 @@ def validate_parameter_review_governance_scorecard(
     return issues
 
 
+def build_parameter_review_report(
+    *,
+    as_of: date,
+    report_index_payload: Mapping[str, Any] | None = None,
+    report_index_path: Path | None = None,
+    report_registry_path: Path = DEFAULT_REPORT_REGISTRY_PATH,
+    project_root: Path = PROJECT_ROOT,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(tz=UTC)
+    aggregation = build_parameter_review_aggregation(
+        as_of=as_of,
+        report_index_payload=report_index_payload,
+        report_index_path=report_index_path,
+        report_registry_path=report_registry_path,
+        project_root=project_root,
+        generated_at=generated,
+    )
+    comparison = compare_parameter_review_evidence(aggregation, generated_at=generated)
+    journal_linkage = link_decision_journal_evidence(aggregation, generated_at=generated)
+    proposals = generate_parameter_change_proposals(
+        aggregation,
+        comparison_payload=comparison,
+        journal_linkage_payload=journal_linkage,
+        generated_at=generated,
+    )
+    scorecard = score_parameter_review_proposals(proposals, generated_at=generated)
+    payload = {
+        "schema_version": PARAMETER_REVIEW_REPORT_SCHEMA_VERSION,
+        "report_type": "etf_parameter_review_report",
+        "review_report_id": f"etf-parameter-review-report-{as_of.isoformat()}",
+        "parameter_review_id": aggregation.get("parameter_review_id"),
+        "status": _parameter_review_report_status(aggregation, scorecard),
+        "reason": (
+            aggregation.get("reason") if aggregation.get("status") == "needs_more_data" else ""
+        ),
+        "as_of": as_of.isoformat(),
+        "generated_at": generated.isoformat(),
+        "summary": _parameter_review_report_summary(
+            aggregation=aggregation,
+            scorecard=scorecard,
+            proposals=proposals,
+        ),
+        "evidence_aggregation": aggregation,
+        "candidate_comparison": comparison,
+        "decision_journal_evidence": journal_linkage,
+        "proposal_package": proposals,
+        "proposal_scorecard": scorecard,
+        "manual_review_requirements": _manual_review_requirements(scorecard, proposals),
+        "next_steps": _parameter_review_next_steps(scorecard),
+        "source_report_links": [_source_report_public(source) for source in _records(
+            aggregation.get("source_reports")
+        )],
+        "safety": dict(PARAMETER_REVIEW_SAFETY),
+        **PARAMETER_REVIEW_SAFETY,
+    }
+    validate_parameter_review_report(payload)
+    return payload
+
+
+def validate_parameter_review_report(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
+    if _text(payload.get("schema_version")) != PARAMETER_REVIEW_REPORT_SCHEMA_VERSION:
+        issues.append(
+            _issue(
+                "schema_version",
+                f"schema_version must be {PARAMETER_REVIEW_REPORT_SCHEMA_VERSION}",
+            )
+        )
+    issues.extend(_safety_issues(payload, owner_id="parameter_review_report"))
+    issues.extend(
+        _safety_issues(
+            _mapping(payload.get("safety")),
+            owner_id="parameter_review_report.safety",
+        )
+    )
+    for proposal in _records(_mapping(payload.get("proposal_package")).get("proposals")):
+        if proposal.get("production_effect") != "none" or proposal.get("broker_action") != "none":
+            issues.append(
+                _issue(
+                    "proposal_package",
+                    "all parameter review proposals must keep production_effect/broker_action none",
+                )
+            )
+    if issues:
+        raise ParameterReviewError(_format_issues(issues))
+    return issues
+
+
+def write_parameter_review_report(
+    payload: Mapping[str, Any],
+    *,
+    json_path: Path,
+    markdown_path: Path,
+) -> tuple[Path, Path]:
+    validate_parameter_review_report(payload)
+    _write_json(payload, json_path)
+    markdown_path.parent.mkdir(parents=True, exist_ok=True)
+    markdown_path.write_text(render_parameter_review_report_markdown(payload), encoding="utf-8")
+    return json_path, markdown_path
+
+
+def render_parameter_review_report_markdown(payload: Mapping[str, Any]) -> str:
+    aggregation = _mapping(payload.get("evidence_aggregation"))
+    comparison = _mapping(payload.get("candidate_comparison"))
+    journal = _mapping(payload.get("decision_journal_evidence"))
+    proposals = _mapping(payload.get("proposal_package"))
+    scorecard = _mapping(payload.get("proposal_scorecard"))
+    summary = _mapping(payload.get("summary"))
+    lines = [
+        "# ETF Parameter Review",
+        "",
+        "## Safety Banner",
+        "",
+        "- observe_only = true",
+        "- candidate_only = true",
+        "- production_effect = none",
+        "- broker_action = none",
+        "- manual_review_required = true",
+        "- 本报告只生成 evidence-linked proposal 和 manual review package，不修改参数或权重。",
+        "",
+        "## Review Metadata",
+        "",
+        f"- Status: {payload.get('status')}",
+        f"- Reason: {_text(payload.get('reason'), 'none')}",
+        f"- As Of: {payload.get('as_of')}",
+        f"- Candidates Reviewed: {summary.get('candidate_count')}",
+        f"- Eligible For Manual Review: {summary.get('eligible_for_manual_review_count')}",
+        "",
+        "## Evidence Source Summary",
+        "",
+        "| Source | Type | Status | Path |",
+        "|---|---|---|---|",
+    ]
+    for source in _records(aggregation.get("source_reports")):
+        lines.append(
+            f"| {source.get('report_id')} | {source.get('source_type')} | "
+            f"{source.get('status')} | {source.get('source_report_path')} |"
+        )
+    lines.extend(["", "## Candidate Comparison Table", ""])
+    lines.extend(_candidate_comparison_markdown_rows(comparison))
+    lines.extend(["", "## Forward Evidence Summary", ""])
+    lines.append(
+        f"- Evidence records: {aggregation.get('evidence_record_count')}；"
+        f" warnings: {len(_records(aggregation.get('warnings')))}"
+    )
+    lines.extend(["", "## Decision Journal Summary", ""])
+    lines.extend(_journal_markdown_rows(journal))
+    lines.extend(["", "## Proposal Scorecard", ""])
+    lines.extend(_scorecard_markdown_rows(scorecard))
+    lines.extend(["", "## Generated Proposals", ""])
+    lines.extend(_proposal_markdown_rows(proposals, include_blocked=False))
+    lines.extend(["", "## Blocked / Rejected Proposals", ""])
+    lines.extend(_proposal_markdown_rows(proposals, include_blocked=True, scorecard=scorecard))
+    lines.extend(["", "## Manual Review Requirements", ""])
+    requirements = _records(payload.get("manual_review_requirements"))
+    if requirements:
+        lines.extend(
+            f"- {item.get('candidate_id')}: {item.get('requirement')}" for item in requirements
+        )
+    else:
+        lines.append("- none")
+    lines.extend(["", "## Next Steps", ""])
+    for item in _records(payload.get("next_steps")):
+        lines.append(f"- {item.get('next_step')}: {item.get('reason')}")
+    lines.extend(["", "## Source Report Links", ""])
+    for source in _records(payload.get("source_report_links")):
+        lines.append(f"- {source.get('report_id')}: {source.get('source_report_path')}")
+    return "\n".join(lines) + "\n"
+
+
 def _candidate_evidence_comparison(
     record: Mapping[str, Any],
     *,
@@ -1357,6 +1530,202 @@ def _proposal_scorecard(
         "safety": dict(PARAMETER_REVIEW_SAFETY),
         **PARAMETER_REVIEW_SAFETY,
     }
+
+
+def _parameter_review_report_status(
+    aggregation: Mapping[str, Any],
+    scorecard: Mapping[str, Any],
+) -> str:
+    if _text(aggregation.get("status")) == "needs_more_data":
+        return "needs_more_data"
+    return _text(scorecard.get("status"), "needs_more_data")
+
+
+def _parameter_review_report_summary(
+    *,
+    aggregation: Mapping[str, Any],
+    scorecard: Mapping[str, Any],
+    proposals: Mapping[str, Any],
+) -> dict[str, Any]:
+    status_counts = _mapping(scorecard.get("status_counts"))
+    proposal_counts = _mapping(proposals.get("proposal_type_counts"))
+    candidate_count = _int_or_default(aggregation.get("candidate_count"), 0)
+    main_reason = _text(aggregation.get("reason"))
+    if not main_reason:
+        main_reason = _main_scorecard_reason(scorecard)
+    return {
+        "candidate_count": candidate_count,
+        "evidence_record_count": aggregation.get("evidence_record_count"),
+        "proposal_count": proposals.get("proposal_count"),
+        "eligible_for_manual_review_count": status_counts.get("eligible_for_manual_review", 0),
+        "continue_shadow_count": status_counts.get("continue_shadow", 0),
+        "needs_more_data_count": status_counts.get("needs_more_data", 0),
+        "blocked_count": status_counts.get("blocked", 0),
+        "rejected_count": status_counts.get("rejected", 0),
+        "proposal_type_counts": dict(proposal_counts),
+        "main_reason": main_reason or "none",
+        "safety_status": "observe_only/candidate_only/manual_review_required",
+    }
+
+
+def _manual_review_requirements(
+    scorecard: Mapping[str, Any],
+    proposals: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    proposals_by_id = {
+        _text(proposal.get("proposal_id")): proposal for proposal in _records(
+            proposals.get("proposals")
+        )
+    }
+    requirements = []
+    for item in _records(scorecard.get("scorecards")):
+        status = _text(item.get("governance_status"))
+        proposal = proposals_by_id.get(_text(item.get("proposal_id")), {})
+        if status == "eligible_for_manual_review":
+            requirement = "manual review required before any future baseline parameter decision"
+        elif status in {"blocked", "needs_more_data"}:
+            requirement = "resolve blockers or collect more forward evidence before proposal review"
+        elif status == "rejected":
+            requirement = "manual confirmation required before archival or candidate rejection"
+        else:
+            requirement = "continue shadow observation and include in next review"
+        requirements.append(
+            {
+                "candidate_id": item.get("candidate_id"),
+                "proposal_id": item.get("proposal_id"),
+                "proposal_type": proposal.get("proposal_type"),
+                "governance_status": status,
+                "requirement": requirement,
+            }
+        )
+    return requirements
+
+
+def _parameter_review_next_steps(scorecard: Mapping[str, Any]) -> list[dict[str, Any]]:
+    status = _text(scorecard.get("status"), "needs_more_data")
+    if status == "eligible_for_manual_review":
+        return [
+            {
+                "next_step": "manual_review",
+                "reason": "At least one proposal is eligible for manual review only.",
+            }
+        ]
+    if status == "needs_more_data":
+        return [
+            {
+                "next_step": "continue_forward_observation",
+                "reason": "Forward evidence or source links remain insufficient.",
+            }
+        ]
+    if status == "blocked":
+        return [
+            {
+                "next_step": "resolve_governance_blockers",
+                "reason": "One or more proposals failed hard governance blockers.",
+            }
+        ]
+    if status == "rejected":
+        return [{"next_step": "review_rejections", "reason": "Candidate proposals were rejected."}]
+    return [{"next_step": "continue_shadow", "reason": "No baseline review proposal is ready."}]
+
+
+def _main_scorecard_reason(scorecard: Mapping[str, Any]) -> str:
+    blockers = []
+    for item in _records(scorecard.get("scorecards")):
+        blockers.extend(_text(blocker) for blocker in item.get("hard_blockers") or [])
+    if blockers:
+        return ", ".join(sorted(set(blockers)))
+    status = _text(scorecard.get("status"))
+    return status or "none"
+
+
+def _candidate_comparison_markdown_rows(comparison: Mapping[str, Any]) -> list[str]:
+    lines = [
+        "| Candidate | Status | Excess vs Baseline | Excess vs QQQ | Journal Support |",
+        "|---|---|---:|---:|---|",
+    ]
+    rows = _records(comparison.get("comparisons"))
+    if not rows:
+        lines.append("| none | needs_more_data | n/a | n/a | insufficient_review |")
+        return lines
+    for item in rows:
+        metrics = _mapping(item.get("comparison_metrics"))
+        qqq = _mapping(_mapping(item.get("benchmark_comparison")).get("QQQ"))
+        journal = _mapping(item.get("human_decision_outcomes"))
+        lines.append(
+            f"| {item.get('candidate_id')} | {item.get('status')} | "
+            f"{_fmt_number(metrics.get('excess_return'))} | "
+            f"{_fmt_number(qqq.get('excess_return'))} | "
+            f"{journal.get('human_support_status')} |"
+        )
+    return lines
+
+
+def _journal_markdown_rows(journal: Mapping[str, Any]) -> list[str]:
+    lines = [
+        "| Candidate | Support | Entries | Confidence | Flags |",
+        "|---|---|---:|---:|---|",
+    ]
+    rows = _records(journal.get("candidate_journal_evidence"))
+    if not rows:
+        lines.append("| none | insufficient_review | 0 | n/a | NO_JOURNAL_ENTRIES |")
+        return lines
+    for item in rows:
+        lines.append(
+            f"| {item.get('candidate_id')} | {item.get('human_support_status')} | "
+            f"{len(_records(item.get('linked_journal_entries')))} | "
+            f"{_fmt_number(item.get('manual_confidence_score'))} | "
+            f"{', '.join(item.get('decision_conflict_flags') or []) or 'none'} |"
+        )
+    return lines
+
+
+def _scorecard_markdown_rows(scorecard: Mapping[str, Any]) -> list[str]:
+    lines = [
+        "| Candidate | Proposal | Score | Governance Status | Hard Blockers |",
+        "|---|---|---:|---|---|",
+    ]
+    rows = _records(scorecard.get("scorecards"))
+    if not rows:
+        lines.append("| none | none | n/a | needs_more_data | INSUFFICIENT_FORWARD_EVIDENCE |")
+        return lines
+    for item in rows:
+        lines.append(
+            f"| {item.get('candidate_id')} | {item.get('proposal_type')} | "
+            f"{_fmt_number(item.get('proposal_score'))} | "
+            f"{item.get('governance_status')} | "
+            f"{', '.join(item.get('hard_blockers') or []) or 'none'} |"
+        )
+    return lines
+
+
+def _proposal_markdown_rows(
+    proposals: Mapping[str, Any],
+    *,
+    include_blocked: bool,
+    scorecard: Mapping[str, Any] | None = None,
+) -> list[str]:
+    score_by_id = {
+        _text(item.get("proposal_id")): item for item in _records(
+            _mapping(scorecard).get("scorecards")
+        )
+    }
+    lines = ["| Candidate | Proposal Type | Status |", "|---|---|---|"]
+    rows = []
+    for proposal in _records(proposals.get("proposals")):
+        score = score_by_id.get(_text(proposal.get("proposal_id")), {})
+        status = _text(score.get("governance_status"), "pending_score")
+        blocked = status in {"blocked", "rejected"}
+        if blocked == include_blocked:
+            rows.append((proposal, status))
+    if not rows:
+        lines.append("| none | none | none |")
+        return lines
+    for proposal, status in rows:
+        lines.append(
+            f"| {proposal.get('candidate_id')} | {proposal.get('proposal_type')} | {status} |"
+        )
+    return lines
 
 
 def _proposal_component_scores(

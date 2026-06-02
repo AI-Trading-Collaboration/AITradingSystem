@@ -12,6 +12,7 @@ from ai_trading_system.etf_portfolio.parameter_review import (
     ParameterReviewError,
     build_parameter_review_aggregation,
     build_parameter_review_evidence_record,
+    build_parameter_review_report,
     compare_parameter_review_evidence,
     generate_parameter_change_proposals,
     link_decision_journal_evidence,
@@ -19,6 +20,7 @@ from ai_trading_system.etf_portfolio.parameter_review import (
     score_parameter_review_proposals,
     validate_parameter_change_proposals,
     validate_parameter_review_evidence_record,
+    write_parameter_review_report,
 )
 
 
@@ -616,6 +618,61 @@ def test_parameter_review_governance_high_drawdown_blocks(tmp_path) -> None:
 
     assert scorecard["governance_status"] == "blocked"
     assert "HIGH_DRAWDOWN" in scorecard["hard_blockers"]
+
+
+def test_parameter_review_report_generator_writes_json_and_markdown(tmp_path) -> None:
+    context = _aggregation_context(tmp_path)
+    payload = build_parameter_review_report(
+        as_of=date(2026, 6, 1),
+        report_index_payload=context["report_index"],
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    json_path = tmp_path / "parameter_review.json"
+    markdown_path = tmp_path / "parameter_review.md"
+
+    write_parameter_review_report(payload, json_path=json_path, markdown_path=markdown_path)
+    markdown = markdown_path.read_text(encoding="utf-8")
+    written = json.loads(json_path.read_text(encoding="utf-8"))
+
+    assert written["report_type"] == "etf_parameter_review_report"
+    assert markdown_path.exists()
+    assert "## Safety Banner" in markdown
+    assert "## Candidate Comparison Table" in markdown
+    assert "## Decision Journal Summary" in markdown
+    assert "## Proposal Scorecard" in markdown
+    assert "forward_dashboard_2026-06-01.json" in markdown
+    assert payload["candidate_comparison"]["comparisons"]
+    assert payload["decision_journal_evidence"]["candidate_journal_evidence"]
+    assert payload["proposal_scorecard"]["scorecards"]
+    assert "apply_baseline_change" not in markdown
+    assert "promote_to_production" not in markdown
+    assert "enable_broker_action" not in markdown
+
+
+def test_parameter_review_cli_report_writes_outputs(tmp_path) -> None:
+    context = _aggregation_context(tmp_path)
+    report_index_path = tmp_path / "report_index_2026-06-01.json"
+    _write_json(report_index_path, context["report_index"])
+    output_dir = tmp_path / "parameter_review_report"
+
+    result = CliRunner().invoke(
+        etf_app,
+        [
+            "parameter-review",
+            "report",
+            "--as-of",
+            "2026-06-01",
+            "--report-index-path",
+            str(report_index_path),
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert (output_dir / "parameter_review_2026-06-01.json").exists()
+    assert (output_dir / "parameter_review_2026-06-01.md").exists()
+    assert "production_effect=none" in result.output
 
 
 def _evidence_record(

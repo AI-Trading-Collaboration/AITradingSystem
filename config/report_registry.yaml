@@ -623,6 +623,22 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_parameter_review_report
+    title: ETF Allocation Parameter Review
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf parameter-review report --as-of YYYY-MM-DD
+    artifact_globs:
+      - reports/etf_portfolio/parameter_review/reports/parameter_review_*.json
+      - reports/etf_portfolio/parameter_review/reports/parameter_review_*.md
+    freshness_sla_days: 14
+    freshness_rationale: Parameter review reports should connect forward evidence, weekly review, journal outcomes, proposals and governance scorecards before manual review.
+    owner_action: run_aits_etf_parameter_review_report_after_weekly_review_and_decision_journal
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_p2_walk_forward
     title: ETF P2 Walk Forward Readiness
     group: research

@@ -152,6 +152,7 @@ flowchart TD
     T070CMP --> T070PROP["parameter review proposal generator<br/>continue / defer / reject / extended shadow / baseline parameter review proposal<br/>proposal-only; no production mutation"]
     T070JLINK --> T070PROP
     T070PROP --> T070GOV["parameter review governance scorecard<br/>weighted evidence score + hard blockers<br/>eligible / needs_more_data / blocked / rejected / continue_shadow"]
+    T070GOV --> T070REP["aits etf parameter-review report/run --as-of YYYY-MM-DD<br/>parameter_review_YYYY-MM-DD.json/md<br/>manual review package + source links"]
     T064RUN --> T064RIDX["config/report_registry.yaml + aits reports index<br/>experiment manifest / comparison / candidate selection / shadow registry / weekly review visibility"]
     T064CMP --> T064RIDX
     T064SEL --> T064RIDX
@@ -171,6 +172,7 @@ flowchart TD
     T068VAL --> T064RIDX
     T069REP --> T064RIDX
     T069VAL --> T064RIDX
+    T070REP --> T064RIDX
     T064RIDX --> T064READ["aits reports reader-brief<br/>Weekly Portfolio Review + Portfolio Decision Journal + ETF Calibration + ETF Forward + AI Confirmation + Satellite Replacement<br/>latest artifacts / safety status / detail links"]
     T064CFG --> T064VAL["aits etf experiments validate --pack etf_calibration_v1<br/>TRADING-064 final validation gate<br/>registry / pack / runner / reports / P2-live safety"]
     T064PACK --> T064VAL
@@ -198,6 +200,8 @@ TRADING-070D 新增 decision journal evidence linker，消费 TRADING-070B aggre
 TRADING-070E 新增 parameter change proposal generator，消费 comparison 和 journal linkage，只允许 `continue_observation`、`defer_parameter_change`、`reject_candidate`、`propose_candidate_for_extended_shadow` 和 `propose_baseline_parameter_review`。Proposal payload 必须携带 supporting/blocking evidence、risk summary 和 safety fields；不得输出 `apply_baseline_change`、`promote_to_production` 或 `enable_broker_action`，也不得修改 production weights、baseline config、shadow registry 或 broker state。
 
 TRADING-070F 新增 proposal scoring and governance gate，按 forward excess return、drawdown improvement、stability、turnover penalty、journal support 和 data quality 生成 deterministic scorecard，并对 insufficient forward days、missing baseline comparison、missing journal link、failed validation、unsafe production effect、broker action、high turnover 和 high drawdown fail closed。Scorecard 只决定是否 `eligible_for_manual_review`、`needs_more_data`、`blocked`、`rejected` 或 `continue_shadow`，不应用参数变更。
+
+TRADING-070G 新增 `aits etf parameter-review report/run --as-of YYYY-MM-DD`，生成 `reports/etf_portfolio/parameter_review/reports/parameter_review_YYYY-MM-DD.json/md`，包含 safety banner、review metadata、evidence source summary、candidate comparison、forward evidence summary、decision journal summary、proposal scorecard、generated/blocked/rejected proposals、manual review requirements、next steps 和 source report links。该 report 已登记到 report registry；报告只展示 proposal/manual-review evidence，不输出或执行 production mutation。
 
 ## ETF Portfolio P2 Observe-Only Contracts
 

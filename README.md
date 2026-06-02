@@ -397,9 +397,14 @@ parameter-review aggregate --as-of YYYY-MM-DD` 生成
 显式保留 source report paths、candidate evidence records、missing source warnings 和 safety
 banner。缺少 forward dashboard 或 forward candidate rows 时输出 `status=needs_more_data` /
 `reason=INSUFFICIENT_FORWARD_EVIDENCE`；缺失可选 source 只作为 warning 或 candidate-level
-partial evidence，不补造结论。所有输出固定 `observe_only=true`、`candidate_only=true`、
-`production_effect=none`、`broker_action=none`、`manual_review_required=true`，不写 official
-target weights、不改 baseline config、不触发 broker，也不自动 promotion。
+partial evidence，不补造结论。`aits etf parameter-review report --as-of YYYY-MM-DD` 和 `run`
+生成
+`reports/etf_portfolio/parameter_review/reports/parameter_review_YYYY-MM-DD.json/md`，
+汇总 candidate comparison、decision journal evidence、proposal package、governance scorecard、
+manual review requirements、next steps 和 source report links。所有输出固定
+`observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、
+`manual_review_required=true`，不写 official target weights、不改 baseline config、不触发
+broker，也不自动 promotion。
 
 `aits etf governance summary --candidate <candidate.json>` 使用
 `config/etf_portfolio/governance.yaml` 的参数治理 policy 输出候选晋级摘要，固定
