@@ -17,6 +17,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
     ETFWeightSearchRegistry,
     WeightCalibrationError,
+    build_backtest_forward_evidence_aggregation,
     enroll_candidate_weights_forward,
     generate_weight_candidates,
     load_candidate_weight_registry,
@@ -27,9 +28,11 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     run_historical_weight_search,
     summarize_weight_robustness,
     update_candidate_weight_status,
+    validate_backtest_forward_evidence_record,
     validate_candidate_weight_record,
     validate_weight_forward_enrollment_record,
     validate_weight_search_registry,
+    write_backtest_forward_evidence_aggregation,
     write_weight_search_run,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
@@ -622,6 +625,200 @@ def test_weight_calibration_enroll_forward_cli(tmp_path: Path) -> None:
     assert load_weight_forward_enrollments(enrollment_path)["enrollment_count"] == 1
 
 
+def test_backtest_forward_evidence_links_records(tmp_path: Path) -> None:
+    run = _small_search_run()
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    enrollments = enroll_candidate_weights_forward(
+        registry,
+        enrollment_path=tmp_path / "forward_enrollments.json",
+        top=1,
+        enrolled_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    dashboard = _forward_dashboard_payload(registry, enrollments, return_delta=0.0)
+
+    payload = build_backtest_forward_evidence_aggregation(
+        as_of=date(2026, 6, 2),
+        candidate_registry=registry,
+        forward_enrollments=enrollments,
+        search_payload=run.payload,
+        forward_dashboard=dashboard,
+        source_paths={
+            "historical_search": "summary.json",
+            "candidate_registry": "candidate_weight_registry.json",
+            "forward_enrollment": "forward_enrollments.json",
+            "forward_dashboard": "forward_dashboard.json",
+        },
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    record = payload["evidence_records"][0]
+    assert payload["schema_version"] == "etf_weight_backtest_forward_evidence_v1"
+    assert record["weight_set_id"] == registry["weight_sets"][0]["weight_set_id"]
+    assert record["source_search_run_id"] == run.run_id
+    assert record["shadow_id"] == enrollments["enrollments"][0]["shadow_id"]
+    assert record["source_links"]["forward_row_found"] is True
+    assert record["production_weights_mutated"] is False
+
+
+def test_backtest_forward_evidence_computes_expectation_gap(tmp_path: Path) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    enrollments = enroll_candidate_weights_forward(
+        registry,
+        enrollment_path=tmp_path / "forward_enrollments.json",
+        top=1,
+    )
+    dashboard = _forward_dashboard_payload(registry, enrollments, return_delta=0.05)
+
+    payload = build_backtest_forward_evidence_aggregation(
+        as_of=date(2026, 6, 2),
+        candidate_registry=registry,
+        forward_enrollments=enrollments,
+        forward_dashboard=dashboard,
+    )
+
+    record = payload["evidence_records"][0]
+    assert record["expectation_gap"] == pytest.approx(0.05)
+    assert record["evidence_status"] == "forward_better_than_backtest"
+    validate_backtest_forward_evidence_record(record)
+
+
+def test_backtest_forward_evidence_insufficient_forward_data(tmp_path: Path) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    enrollments = enroll_candidate_weights_forward(
+        registry,
+        enrollment_path=tmp_path / "forward_enrollments.json",
+        top=1,
+    )
+
+    payload = build_backtest_forward_evidence_aggregation(
+        as_of=date(2026, 6, 2),
+        candidate_registry=registry,
+        forward_enrollments=enrollments,
+        forward_dashboard={},
+    )
+
+    assert payload["status"] == "needs_more_forward_data"
+    record = payload["evidence_records"][0]
+    assert record["evidence_status"] == "needs_more_forward_data"
+    assert record["expectation_gap"] is None
+    assert "forward_evidence_not_found" in record["status_reasons"]
+
+
+def test_backtest_forward_evidence_detects_forward_worse(tmp_path: Path) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    enrollments = enroll_candidate_weights_forward(
+        registry,
+        enrollment_path=tmp_path / "forward_enrollments.json",
+        top=1,
+    )
+    dashboard = _forward_dashboard_payload(
+        registry,
+        enrollments,
+        return_delta=-0.08,
+        drawdown_delta=-0.05,
+    )
+
+    payload = build_backtest_forward_evidence_aggregation(
+        as_of=date(2026, 6, 2),
+        candidate_registry=registry,
+        forward_enrollments=enrollments,
+        forward_dashboard=dashboard,
+    )
+
+    record = payload["evidence_records"][0]
+    assert record["evidence_status"] == "forward_worse_than_backtest"
+    assert record["expectation_gap"] == pytest.approx(-0.08)
+    assert record["drawdown_gap"] > 0.02
+
+
+def test_backtest_forward_evidence_schema_output_is_stable(tmp_path: Path) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    enrollments = enroll_candidate_weights_forward(
+        registry,
+        enrollment_path=tmp_path / "forward_enrollments.json",
+        top=1,
+    )
+    payload = build_backtest_forward_evidence_aggregation(
+        as_of=date(2026, 6, 2),
+        candidate_registry=registry,
+        forward_enrollments=enrollments,
+        forward_dashboard=_forward_dashboard_payload(registry, enrollments),
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    paths = write_backtest_forward_evidence_aggregation(
+        payload,
+        output_dir=tmp_path / "evidence",
+    )
+
+    assert paths["json"].exists()
+    assert paths["markdown"].exists()
+    written = json.loads(paths["json"].read_text(encoding="utf-8"))
+    assert tuple(written)[:6] == (
+        "applied_weight_set",
+        "as_of",
+        "broker_action",
+        "candidate_count",
+        "candidate_only",
+        "enrollment_count",
+    )
+    assert "ETF Weight Backtest vs Forward Evidence" in paths["markdown"].read_text(
+        encoding="utf-8"
+    )
+
+
+def test_weight_calibration_aggregate_evidence_cli(tmp_path: Path) -> None:
+    run = _small_search_run()
+    report_root = tmp_path / "reports"
+    data_root = tmp_path / "data"
+    paths = write_weight_search_run(run, report_root=report_root, data_root=data_root)
+    registry = register_candidate_weight_sets(
+        run.payload,
+        registry_path=tmp_path / "candidate_weight_registry.json",
+        top=1,
+    )
+    enrollments = enroll_candidate_weights_forward(
+        registry,
+        enrollment_path=tmp_path / "forward_enrollments.json",
+        top=1,
+    )
+    dashboard_path = tmp_path / "forward_dashboard.json"
+    dashboard_path.write_text(
+        json.dumps(_forward_dashboard_payload(registry, enrollments), indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(
+        etf_app,
+        [
+            "weight-calibration",
+            "aggregate-evidence",
+            "--as-of",
+            "2026-06-02",
+            "--search-run-id",
+            run.run_id,
+            "--search-output-dir",
+            str(paths["report_dir"].parent),
+            "--candidate-registry-path",
+            str(tmp_path / "candidate_weight_registry.json"),
+            "--enrollment-path",
+            str(tmp_path / "forward_enrollments.json"),
+            "--forward-dashboard-path",
+            str(dashboard_path),
+            "--output-dir",
+            str(tmp_path / "evidence"),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "ETF weight backtest-forward evidence" in result.output
+    assert "evidence_record_count=1" in result.output
+    assert "production_effect=none" in result.output
+    assert list((tmp_path / "evidence").glob("backtest_forward_evidence_*.json"))
+
+
 def _raw_registry() -> dict[str, object]:
     raw = safe_load_yaml_path(DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH)
     assert isinstance(raw, dict)
@@ -679,6 +876,47 @@ def _candidate_weight_registry(tmp_path: Path, *, top: int) -> dict[str, object]
         top=top,
         created_at=datetime(2026, 6, 2, tzinfo=UTC),
     )
+
+
+def _forward_dashboard_payload(
+    registry: dict[str, object],
+    enrollments: dict[str, object],
+    *,
+    return_delta: float = 0.0,
+    drawdown_delta: float = 0.0,
+) -> dict[str, object]:
+    candidate = registry["weight_sets"][0]
+    enrollment = enrollments["enrollments"][0]
+    metrics = candidate["metrics_summary"]
+    robustness = candidate["robustness_summary"]
+    expected_return = float(metrics["total_return"])
+    expected_drawdown = float(metrics["max_drawdown"] or 0.0)
+    expected_turnover = float(metrics["turnover_vs_baseline"] or 0.0)
+    expected_stability = float(robustness["stability_score"])
+    return {
+        "schema_version": "etf_forward_dashboard_v1",
+        "report_type": "etf_forward_dashboard",
+        "status": "AVAILABLE",
+        "as_of": "2026-06-02",
+        "candidate_summary_table": [
+            {
+                "weight_set_id": candidate["weight_set_id"],
+                "shadow_id": enrollment["shadow_id"],
+                "candidate_id": candidate["source_candidate_id"],
+                "days_since_enrollment": 25,
+                "return_since_enrollment": expected_return + return_delta,
+                "max_drawdown_since_enrollment": expected_drawdown + drawdown_delta,
+                "turnover_since_enrollment": expected_turnover,
+                "weight_stability_score": expected_stability,
+                "metric_null_reasons": {},
+            }
+        ],
+        "observe_only": True,
+        "candidate_only": True,
+        "production_effect": "none",
+        "broker_action": "none",
+        "manual_review_required": True,
+    }
 
 
 def _make_prices(days: int) -> pd.DataFrame:

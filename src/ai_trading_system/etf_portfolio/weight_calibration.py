@@ -39,11 +39,17 @@ DEFAULT_CANDIDATE_WEIGHT_REGISTRY_PATH = (
 DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH = (
     DEFAULT_ETF_WEIGHT_CALIBRATION_DATA_DIR / "forward_enrollments.json"
 )
+DEFAULT_WEIGHT_FORWARD_EVIDENCE_DIR = (
+    DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "evidence"
+)
 
 WEIGHT_SEARCH_SCHEMA_VERSION = "etf_weight_search_v1"
 WEIGHT_SEARCH_RUN_SCHEMA_VERSION = "etf_weight_search_run_v1"
 CANDIDATE_WEIGHT_REGISTRY_SCHEMA_VERSION = "etf_candidate_weight_registry_v1"
 WEIGHT_FORWARD_ENROLLMENT_SCHEMA_VERSION = "etf_weight_forward_enrollment_v1"
+WEIGHT_BACKTEST_FORWARD_EVIDENCE_SCHEMA_VERSION = (
+    "etf_weight_backtest_forward_evidence_v1"
+)
 
 WEIGHT_CALIBRATION_SAFETY = {
     "observe_only": True,
@@ -60,6 +66,33 @@ FORWARD_ENROLLABLE_CANDIDATE_STATUSES = frozenset({"candidate", "shadow_ready"})
 ALLOWED_WEIGHT_FORWARD_ENROLLMENT_STATUSES = frozenset(
     {"active", "needs_more_forward_data", "paused", "archived"}
 )
+WEIGHT_FORWARD_EVIDENCE_STATUSES = frozenset(
+    {
+        "consistent",
+        "forward_better_than_backtest",
+        "forward_worse_than_backtest",
+        "needs_more_forward_data",
+        "mixed",
+        "blocked",
+    }
+)
+
+# Pilot comparison policy for TRADING-071F evidence triage only. These thresholds do
+# not approve baseline changes; TRADING-071G/H/K add later risk/proposal gates.
+WEIGHT_FORWARD_EVIDENCE_POLICY = {
+    "policy_id": "etf_weight_backtest_forward_evidence_v1",
+    "owner": "TRADING-071F",
+    "status": "pilot_baseline",
+    "rationale": (
+        "Compare historical expectations with real forward evidence without treating "
+        "either side as production approval."
+    ),
+    "min_forward_days": 20,
+    "return_gap_tolerance": 0.02,
+    "drawdown_gap_tolerance": 0.02,
+    "turnover_gap_tolerance": 0.25,
+    "stability_gap_tolerance": 0.10,
+}
 
 
 class WeightCalibrationError(ValueError):
@@ -1059,6 +1092,249 @@ def validate_weight_forward_enrollment_record(record: Mapping[str, Any]) -> None
         raise WeightCalibrationError("; ".join(issues))
 
 
+def build_backtest_forward_evidence_aggregation(
+    *,
+    as_of: date,
+    candidate_registry: Mapping[str, Any],
+    forward_enrollments: Mapping[str, Any],
+    search_payload: Mapping[str, Any] | None = None,
+    forward_dashboard: Mapping[str, Any] | None = None,
+    weekly_review: Mapping[str, Any] | None = None,
+    decision_journal: Mapping[str, Any] | None = None,
+    parameter_review: Mapping[str, Any] | None = None,
+    generated_at: datetime | None = None,
+    source_paths: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    validate_candidate_weight_registry(candidate_registry)
+    validate_weight_forward_enrollment_registry(forward_enrollments)
+    if search_payload:
+        validate_weight_search_run_payload(search_payload)
+    generated = generated_at or datetime.now(UTC)
+    records = [
+        _backtest_forward_evidence_record(
+            enrollment,
+            as_of=as_of,
+            candidate_registry=candidate_registry,
+            search_payload=search_payload or {},
+            forward_dashboard=forward_dashboard or {},
+            weekly_review=weekly_review or {},
+            decision_journal=decision_journal or {},
+            parameter_review=parameter_review or {},
+            generated_at=generated,
+            source_paths=source_paths or {},
+        )
+        for enrollment in _records(forward_enrollments.get("enrollments"))
+    ]
+    status_counts = _status_counts(records)
+    if not records:
+        status = "needs_more_forward_data"
+        reason = "NO_FORWARD_ENROLLMENTS"
+    elif status_counts.get("blocked"):
+        status = "blocked"
+        reason = "BLOCKED_CANDIDATE_EVIDENCE"
+    elif status_counts.get("forward_worse_than_backtest"):
+        status = "forward_worse_than_backtest"
+        reason = "FORWARD_UNDERPERFORMANCE_PRESENT"
+    elif status_counts.get("mixed"):
+        status = "mixed"
+        reason = "MIXED_FORWARD_EVIDENCE"
+    elif status_counts.get("needs_more_forward_data") == len(records):
+        status = "needs_more_forward_data"
+        reason = "INSUFFICIENT_FORWARD_EVIDENCE"
+    elif status_counts.get("forward_better_than_backtest"):
+        status = "forward_better_than_backtest"
+        reason = "FORWARD_OUTPERFORMANCE_PRESENT"
+    else:
+        status = "consistent"
+        reason = "FORWARD_EVIDENCE_WITHIN_TOLERANCE"
+    payload = {
+        "schema_version": WEIGHT_BACKTEST_FORWARD_EVIDENCE_SCHEMA_VERSION,
+        "report_type": "etf_weight_backtest_forward_evidence",
+        "as_of": as_of.isoformat(),
+        "generated_at": generated.isoformat(),
+        "status": status,
+        "reason": reason,
+        "policy": dict(WEIGHT_FORWARD_EVIDENCE_POLICY),
+        "candidate_count": len(_records(candidate_registry.get("weight_sets"))),
+        "enrollment_count": len(_records(forward_enrollments.get("enrollments"))),
+        "evidence_record_count": len(records),
+        "status_counts": status_counts,
+        "source_paths": dict(source_paths or {}),
+        "evidence_records": records,
+        "production_weights_mutated": False,
+        "applied_weight_set": None,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_backtest_forward_evidence_payload(payload)
+    return payload
+
+
+def validate_backtest_forward_evidence_payload(payload: Mapping[str, Any]) -> None:
+    issues = []
+    if payload.get("schema_version") != WEIGHT_BACKTEST_FORWARD_EVIDENCE_SCHEMA_VERSION:
+        issues.append("schema_version")
+    if payload.get("report_type") != "etf_weight_backtest_forward_evidence":
+        issues.append("report_type")
+    status = str(payload.get("status") or "")
+    if status not in WEIGHT_FORWARD_EVIDENCE_STATUSES:
+        issues.append("status")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if payload.get(field) != expected:
+            issues.append(field)
+    safety = _mapping(payload.get("safety"))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if safety.get(field) != expected:
+            issues.append(f"safety.{field}")
+    if payload.get("production_weights_mutated") is not False:
+        issues.append("production_weights_mutated")
+    if payload.get("applied_weight_set") is not None:
+        issues.append("applied_weight_set")
+    records = _records(payload.get("evidence_records"))
+    if int(payload.get("evidence_record_count") or 0) != len(records):
+        issues.append("evidence_record_count")
+    for record in records:
+        try:
+            validate_backtest_forward_evidence_record(record)
+        except WeightCalibrationError as exc:
+            issues.append(f"{record.get('weight_set_id')}:{exc}")
+    if issues:
+        raise WeightCalibrationError(
+            "ETF weight backtest-forward evidence validation failed: "
+            + ", ".join(str(issue) for issue in issues)
+        )
+
+
+def validate_backtest_forward_evidence_record(record: Mapping[str, Any]) -> None:
+    required = (
+        "evidence_id",
+        "weight_set_id",
+        "shadow_id",
+        "source_search_run_id",
+        "source_candidate_id",
+        "rank",
+        "forward_days",
+        "backtest_expected_return",
+        "forward_realized_return",
+        "expectation_gap",
+        "backtest_expected_drawdown",
+        "forward_realized_drawdown",
+        "drawdown_gap",
+        "backtest_expected_turnover",
+        "forward_realized_turnover",
+        "turnover_gap",
+        "backtest_expected_stability",
+        "forward_realized_stability",
+        "stability_gap",
+        "evidence_status",
+        "status_reasons",
+        "source_links",
+        "safety",
+    )
+    issues = [field for field in required if field not in record]
+    status = str(record.get("evidence_status") or "")
+    if status not in WEIGHT_FORWARD_EVIDENCE_STATUSES:
+        issues.append("evidence_status")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if record.get(field) != expected:
+            issues.append(field)
+    safety = _mapping(record.get("safety"))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if safety.get(field) != expected:
+            issues.append(f"safety.{field}")
+    if record.get("production_weights_mutated") is not False:
+        issues.append("production_weights_mutated")
+    if record.get("applied_weight_set") is not None:
+        issues.append("applied_weight_set")
+    if not isinstance(record.get("status_reasons"), list):
+        issues.append("status_reasons")
+    if not isinstance(record.get("source_links"), Mapping):
+        issues.append("source_links")
+    if status not in {"needs_more_forward_data", "blocked"}:
+        for field in (
+            "forward_realized_return",
+            "expectation_gap",
+            "forward_realized_drawdown",
+            "drawdown_gap",
+        ):
+            if record.get(field) is None:
+                issues.append(field)
+    if issues:
+        raise WeightCalibrationError("; ".join(issues))
+
+
+def write_backtest_forward_evidence_aggregation(
+    payload: Mapping[str, Any],
+    *,
+    output_dir: Path = DEFAULT_WEIGHT_FORWARD_EVIDENCE_DIR,
+) -> dict[str, Path]:
+    validate_backtest_forward_evidence_payload(payload)
+    as_of = str(payload.get("as_of"))
+    json_path = output_dir / f"backtest_forward_evidence_{as_of}.json"
+    markdown_path = output_dir / f"backtest_forward_evidence_{as_of}.md"
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.write_text(
+        render_backtest_forward_evidence_markdown(payload),
+        encoding="utf-8",
+    )
+    return {"json": json_path, "markdown": markdown_path}
+
+
+def render_backtest_forward_evidence_markdown(payload: Mapping[str, Any]) -> str:
+    lines = [
+        "# ETF Weight Backtest vs Forward Evidence",
+        "",
+        "## Safety Banner",
+        "",
+        "- observe_only = true",
+        "- candidate_only = true",
+        "- production_effect = none",
+        "- broker_action = none",
+        "- manual_review_required = true",
+        "- 本报告只比较 historical expectation 与 forward evidence，不应用权重。",
+        "",
+        "## Summary",
+        "",
+        f"- Status: {payload.get('status')}",
+        f"- Reason: {payload.get('reason')}",
+        f"- As Of: {payload.get('as_of')}",
+        f"- Evidence Records: {payload.get('evidence_record_count')}",
+        f"- Status Counts: {payload.get('status_counts')}",
+        "",
+        "## Candidate Evidence",
+        "",
+        (
+            "| Weight Set | Forward Days | Expected Return | Forward Return | "
+            "Gap | Expected MDD | Forward MDD | Evidence Status |"
+        ),
+        "|---|---:|---:|---:|---:|---:|---:|---|",
+    ]
+    for record in _records(payload.get("evidence_records")):
+        lines.append(
+            f"| {record.get('weight_set_id')} | {record.get('forward_days')} | "
+            f"{_fmt_pct(record.get('backtest_expected_return'))} | "
+            f"{_fmt_pct(record.get('forward_realized_return'))} | "
+            f"{_fmt_pct(record.get('expectation_gap'))} | "
+            f"{_fmt_pct(record.get('backtest_expected_drawdown'))} | "
+            f"{_fmt_pct(record.get('forward_realized_drawdown'))} | "
+            f"{record.get('evidence_status')} |"
+        )
+    if not _records(payload.get("evidence_records")):
+        lines.append("| none | 0 | n/a | n/a | n/a | n/a | n/a | needs_more_forward_data |")
+    lines.extend(["", "## Source Links", ""])
+    source_paths = _mapping(payload.get("source_paths"))
+    if source_paths:
+        for key, value in sorted(source_paths.items()):
+            lines.append(f"- {key}: `{value}`")
+    else:
+        lines.append("- no explicit source paths supplied")
+    return "\n".join(lines) + "\n"
+
+
 def render_weight_search_run_markdown(payload: Mapping[str, Any]) -> str:
     generation = _mapping(payload.get("candidate_generation"))
     baseline = _mapping(payload.get("baseline_weight_set"))
@@ -1655,6 +1931,333 @@ def _weight_forward_shadow_id(weight_set_id: str) -> str:
     return f"etf_weight_shadow_{sha256(weight_set_id.encode('utf-8')).hexdigest()[:16]}"
 
 
+def _backtest_forward_evidence_record(
+    enrollment: Mapping[str, Any],
+    *,
+    as_of: date,
+    candidate_registry: Mapping[str, Any],
+    search_payload: Mapping[str, Any],
+    forward_dashboard: Mapping[str, Any],
+    weekly_review: Mapping[str, Any],
+    decision_journal: Mapping[str, Any],
+    parameter_review: Mapping[str, Any],
+    generated_at: datetime,
+    source_paths: Mapping[str, str],
+) -> dict[str, Any]:
+    weight_set_id = str(enrollment.get("weight_set_id"))
+    candidate = _candidate_weight_record_for_id(candidate_registry, weight_set_id)
+    historical = _historical_expectation_for_candidate(
+        candidate,
+        search_payload=search_payload,
+    )
+    forward_row = _forward_row_for_enrollment(enrollment, forward_dashboard)
+    forward = _forward_realized_metrics(forward_row)
+    gaps = _evidence_gaps(historical, forward)
+    source_links = _evidence_source_links(
+        enrollment,
+        forward_row=forward_row,
+        weekly_review=weekly_review,
+        decision_journal=decision_journal,
+        parameter_review=parameter_review,
+        source_paths=source_paths,
+    )
+    status, reasons = _forward_evidence_status(
+        candidate=candidate,
+        enrollment=enrollment,
+        forward_row=forward_row,
+        gaps=gaps,
+    )
+    record = {
+        "evidence_id": _stable_evidence_id(weight_set_id, as_of),
+        "weight_set_id": weight_set_id,
+        "shadow_id": enrollment.get("shadow_id"),
+        "source_search_run_id": enrollment.get("source_search_run_id"),
+        "source_candidate_id": enrollment.get("source_candidate_id"),
+        "rank": int(enrollment.get("rank") or 0),
+        "generated_at": generated_at.isoformat(),
+        "as_of": as_of.isoformat(),
+        "candidate_status": candidate.get("status"),
+        "enrollment_status": enrollment.get("status"),
+        "forward_days": int(forward.get("forward_days") or 0),
+        "backtest_expected_return": historical["return"],
+        "forward_realized_return": forward["return"],
+        "expectation_gap": gaps["return_gap"],
+        "backtest_expected_drawdown": historical["drawdown"],
+        "forward_realized_drawdown": forward["drawdown"],
+        "drawdown_gap": gaps["drawdown_gap"],
+        "backtest_expected_turnover": historical["turnover"],
+        "forward_realized_turnover": forward["turnover"],
+        "turnover_gap": gaps["turnover_gap"],
+        "backtest_expected_stability": historical["stability"],
+        "forward_realized_stability": forward["stability"],
+        "stability_gap": gaps["stability_gap"],
+        "evidence_status": status,
+        "status_reasons": reasons,
+        "metric_null_reasons": forward.get("metric_null_reasons", {}),
+        "source_links": source_links,
+        "production_weights_mutated": False,
+        "applied_weight_set": None,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_backtest_forward_evidence_record(record)
+    return record
+
+
+def _candidate_weight_record_for_id(
+    registry: Mapping[str, Any],
+    weight_set_id: str,
+) -> dict[str, Any]:
+    for record in _records(registry.get("weight_sets")):
+        if str(record.get("weight_set_id")) == weight_set_id:
+            return record
+    raise WeightCalibrationError(f"candidate weight_set_id not found: {weight_set_id}")
+
+
+def _historical_expectation_for_candidate(
+    candidate: Mapping[str, Any],
+    *,
+    search_payload: Mapping[str, Any],
+) -> dict[str, float | None]:
+    metrics = dict(_mapping(candidate.get("metrics_summary")))
+    source_candidate_id = str(candidate.get("source_candidate_id") or "")
+    if search_payload:
+        search_metrics = _optional_candidate_metrics(search_payload, source_candidate_id)
+        if search_metrics:
+            metrics.update(search_metrics)
+    robustness = _mapping(candidate.get("robustness_summary"))
+    if search_payload:
+        candidate_payload = _optional_candidate_weight_set(search_payload, source_candidate_id)
+        robustness = _mapping(candidate_payload.get("robustness_summary")) or robustness
+    return {
+        "return": _float_or_none(metrics.get("total_return")),
+        "drawdown": _float_or_none(metrics.get("max_drawdown")),
+        "turnover": _float_or_none(metrics.get("turnover_vs_baseline")),
+        "stability": _float_or_none(robustness.get("stability_score")),
+    }
+
+
+def _forward_realized_metrics(row: Mapping[str, Any] | None) -> dict[str, Any]:
+    if not row:
+        return {
+            "forward_days": 0,
+            "return": None,
+            "drawdown": None,
+            "turnover": None,
+            "stability": None,
+            "metric_null_reasons": {"forward_row": "FORWARD_EVIDENCE_NOT_FOUND"},
+        }
+    days = int(_float_or_none(row.get("days_since_enrollment")) or 0)
+    metric_null_reasons = dict(_mapping(row.get("metric_null_reasons")))
+    metrics = {
+        "forward_days": days,
+        "return": _float_or_none(row.get("return_since_enrollment")),
+        "drawdown": _float_or_none(row.get("max_drawdown_since_enrollment")),
+        "turnover": _float_or_none(row.get("turnover_since_enrollment")),
+        "stability": _float_or_none(row.get("weight_stability_score")),
+        "metric_null_reasons": metric_null_reasons,
+    }
+    for field, value in metrics.items():
+        if field in {"forward_days", "metric_null_reasons"}:
+            continue
+        if value is None:
+            metric_null_reasons.setdefault(field, f"{field} unavailable in forward evidence")
+    return metrics
+
+
+def _evidence_gaps(
+    historical: Mapping[str, float | None],
+    forward: Mapping[str, Any],
+) -> dict[str, float | None]:
+    historical_drawdown = _float_or_none(historical.get("drawdown"))
+    forward_drawdown = _float_or_none(forward.get("drawdown"))
+    drawdown_gap = None
+    if historical_drawdown is not None and forward_drawdown is not None:
+        drawdown_gap = abs(forward_drawdown) - abs(historical_drawdown)
+    return {
+        "return_gap": _subtract_optional(forward.get("return"), historical.get("return")),
+        "drawdown_gap": drawdown_gap,
+        "turnover_gap": _subtract_optional(forward.get("turnover"), historical.get("turnover")),
+        "stability_gap": _subtract_optional(forward.get("stability"), historical.get("stability")),
+    }
+
+
+def _forward_evidence_status(
+    *,
+    candidate: Mapping[str, Any],
+    enrollment: Mapping[str, Any],
+    forward_row: Mapping[str, Any] | None,
+    gaps: Mapping[str, float | None],
+) -> tuple[str, list[str]]:
+    if str(candidate.get("status")) in {"blocked", "rejected"} or candidate.get("blockers"):
+        return "blocked", ["candidate_weight_set_blocked"]
+    if str(enrollment.get("status")) not in {"active", "needs_more_forward_data"}:
+        return "blocked", [f"enrollment_status_not_active:{enrollment.get('status')}"]
+    if not forward_row:
+        return "needs_more_forward_data", ["forward_evidence_not_found"]
+    minimum_days = int(WEIGHT_FORWARD_EVIDENCE_POLICY["min_forward_days"])
+    days = int(_float_or_none(forward_row.get("days_since_enrollment")) or 0)
+    if days < minimum_days:
+        return "needs_more_forward_data", [f"forward_days_below_minimum:{days}<{minimum_days}"]
+    if gaps.get("return_gap") is None or gaps.get("drawdown_gap") is None:
+        return "needs_more_forward_data", ["required_forward_gap_metric_missing"]
+    return_gap = float(gaps["return_gap"])
+    drawdown_gap = float(gaps["drawdown_gap"])
+    turnover_gap = _float_or_none(gaps.get("turnover_gap")) or 0.0
+    stability_gap = _float_or_none(gaps.get("stability_gap")) or 0.0
+    return_tolerance = float(WEIGHT_FORWARD_EVIDENCE_POLICY["return_gap_tolerance"])
+    drawdown_tolerance = float(WEIGHT_FORWARD_EVIDENCE_POLICY["drawdown_gap_tolerance"])
+    turnover_tolerance = float(WEIGHT_FORWARD_EVIDENCE_POLICY["turnover_gap_tolerance"])
+    stability_tolerance = float(WEIGHT_FORWARD_EVIDENCE_POLICY["stability_gap_tolerance"])
+    better = return_gap >= return_tolerance
+    worse = return_gap <= -return_tolerance
+    risk_worse = (
+        drawdown_gap > drawdown_tolerance
+        or turnover_gap > turnover_tolerance
+        or stability_gap < -stability_tolerance
+    )
+    risk_better = (
+        drawdown_gap < -drawdown_tolerance
+        or turnover_gap < -turnover_tolerance
+        or stability_gap > stability_tolerance
+    )
+    reasons = [
+        f"return_gap={return_gap:.4f}",
+        f"drawdown_gap={drawdown_gap:.4f}",
+        f"turnover_gap={turnover_gap:.4f}",
+        f"stability_gap={stability_gap:.4f}",
+    ]
+    if better and risk_worse:
+        return "mixed", [*reasons, "return_better_but_risk_worse"]
+    if worse or risk_worse:
+        return "forward_worse_than_backtest", reasons
+    if better and not risk_worse:
+        return "forward_better_than_backtest", reasons
+    if risk_better:
+        return "forward_better_than_backtest", reasons
+    return "consistent", reasons
+
+
+def _forward_row_for_enrollment(
+    enrollment: Mapping[str, Any],
+    forward_dashboard: Mapping[str, Any],
+) -> dict[str, Any] | None:
+    identifiers = {
+        str(enrollment.get("weight_set_id")),
+        str(enrollment.get("shadow_id")),
+        str(enrollment.get("source_candidate_id")),
+        str(_mapping(enrollment.get("shadow_record")).get("candidate_id")),
+    }
+    identifiers = {item for item in identifiers if item and item != "None"}
+    for row in _records(forward_dashboard.get("candidate_summary_table")):
+        row_ids = {
+            str(row.get("weight_set_id")),
+            str(row.get("shadow_id")),
+            str(row.get("candidate_id")),
+            str(row.get("source_candidate_id")),
+        }
+        if identifiers & {item for item in row_ids if item and item != "None"}:
+            return row
+    return None
+
+
+def _evidence_source_links(
+    enrollment: Mapping[str, Any],
+    *,
+    forward_row: Mapping[str, Any] | None,
+    weekly_review: Mapping[str, Any],
+    decision_journal: Mapping[str, Any],
+    parameter_review: Mapping[str, Any],
+    source_paths: Mapping[str, str],
+) -> dict[str, Any]:
+    weight_set_id = str(enrollment.get("weight_set_id"))
+    source_candidate_id = str(enrollment.get("source_candidate_id"))
+    return {
+        "historical_search": source_paths.get("historical_search", ""),
+        "candidate_registry": source_paths.get("candidate_registry", ""),
+        "forward_enrollment": source_paths.get("forward_enrollment", ""),
+        "forward_dashboard": source_paths.get("forward_dashboard", ""),
+        "weekly_review": source_paths.get("weekly_review", ""),
+        "decision_journal": source_paths.get("decision_journal", ""),
+        "parameter_review": source_paths.get("parameter_review", ""),
+        "forward_row_found": forward_row is not None,
+        "weekly_review_links": _records_matching_candidate(
+            weekly_review,
+            candidate_ids={weight_set_id, source_candidate_id, str(enrollment.get("shadow_id"))},
+        ),
+        "decision_journal_links": _records_matching_candidate(
+            decision_journal,
+            candidate_ids={weight_set_id, source_candidate_id},
+        ),
+        "parameter_review_links": _records_matching_candidate(
+            parameter_review,
+            candidate_ids={weight_set_id, source_candidate_id},
+        ),
+    }
+
+
+def _records_matching_candidate(
+    payload: Mapping[str, Any],
+    *,
+    candidate_ids: set[str],
+) -> list[dict[str, Any]]:
+    ids = {item for item in candidate_ids if item and item != "None"}
+    if not payload or not ids:
+        return []
+    matches: list[dict[str, Any]] = []
+    for key in (
+        "candidate_summary_table",
+        "active_candidates",
+        "manual_review_actions",
+        "entries",
+        "evidence_records",
+    ):
+        for row in _records(payload.get(key)):
+            row_text = json.dumps(row, ensure_ascii=False, sort_keys=True)
+            if any(candidate_id in row_text for candidate_id in ids):
+                matches.append(row)
+    sections = _mapping(payload.get("sections"))
+    for section in sections.values():
+        if isinstance(section, Mapping):
+            matches.extend(_records_matching_candidate(section, candidate_ids=ids))
+    return matches
+
+
+def _status_counts(records: list[Mapping[str, Any]]) -> dict[str, int]:
+    counts = {status: 0 for status in sorted(WEIGHT_FORWARD_EVIDENCE_STATUSES)}
+    for record in records:
+        status = str(record.get("evidence_status") or "needs_more_forward_data")
+        if status not in counts:
+            counts[status] = 0
+        counts[status] += 1
+    return counts
+
+
+def _optional_candidate_metrics(
+    search_payload: Mapping[str, Any],
+    candidate_id: str,
+) -> dict[str, Any]:
+    for row in _records(search_payload.get("metrics")):
+        if str(row.get("candidate_id")) == candidate_id:
+            return row
+    return {}
+
+
+def _optional_candidate_weight_set(
+    search_payload: Mapping[str, Any],
+    candidate_id: str,
+) -> dict[str, Any]:
+    for row in _records(search_payload.get("candidate_weight_sets")):
+        if str(row.get("candidate_id")) == candidate_id:
+            return row
+    return {}
+
+
+def _stable_evidence_id(weight_set_id: str, as_of: date) -> str:
+    basis = f"{weight_set_id}|{as_of.isoformat()}"
+    return "etf-weight-evidence-" + sha256(basis.encode("utf-8")).hexdigest()[:12]
+
+
 def _selected_ranked_candidates(
     search_payload: Mapping[str, Any],
     *,
@@ -2219,6 +2822,14 @@ def _float_or_none(value: object) -> float | None:
     if parsed != parsed:
         return None
     return parsed
+
+
+def _subtract_optional(left: object, right: object) -> float | None:
+    left_value = _float_or_none(left)
+    right_value = _float_or_none(right)
+    if left_value is None or right_value is None:
+        return None
+    return left_value - right_value
 
 
 def _json_float_mapping(value: object) -> dict[str, float]:

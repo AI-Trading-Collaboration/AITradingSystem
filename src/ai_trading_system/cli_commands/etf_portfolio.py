@@ -238,14 +238,18 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR,
     DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
     DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
+    DEFAULT_WEIGHT_FORWARD_EVIDENCE_DIR,
+    build_backtest_forward_evidence_aggregation,
     enroll_candidate_weights_forward,
     find_latest_weight_search_run_dir,
     load_candidate_weight_registry,
+    load_weight_forward_enrollments,
     load_weight_search_definition,
     load_weight_search_registry,
     read_weight_search_run_payload,
     register_candidate_weight_sets,
     run_historical_weight_search,
+    write_backtest_forward_evidence_aggregation,
     write_weight_search_run,
 )
 from ai_trading_system.reports.report_index import (
@@ -2641,6 +2645,100 @@ def weight_calibration_enroll_forward_command(
     typer.echo("manual_review_required=true")
 
 
+@weight_calibration_app.command("aggregate-evidence")
+def weight_calibration_aggregate_evidence_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="evidence aggregation date YYYY-MM-DD。"),
+    ] = None,
+    latest_search: Annotated[
+        bool,
+        typer.Option("--latest-search", help="读取最新 historical weight search run。"),
+    ] = False,
+    search_run_id: Annotated[
+        str | None,
+        typer.Option("--search-run-id", help="historical weight search run id。"),
+    ] = None,
+    search_output_dir: Annotated[
+        Path,
+        typer.Option(help="weight calibration search report 输出目录。"),
+    ] = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR,
+    candidate_registry_path: Annotated[
+        Path,
+        typer.Option(help="candidate initial weight set registry path。"),
+    ] = DEFAULT_CANDIDATE_WEIGHT_REGISTRY_PATH,
+    enrollment_path: Annotated[
+        Path,
+        typer.Option(help="dual-track forward enrollment registry path。"),
+    ] = DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
+    forward_dashboard_path: Annotated[
+        Path | None,
+        typer.Option(help="optional ETF forward dashboard JSON path。"),
+    ] = None,
+    weekly_review_path: Annotated[
+        Path | None,
+        typer.Option(help="optional ETF weekly review JSON path。"),
+    ] = None,
+    decision_journal_path: Annotated[
+        Path | None,
+        typer.Option(help="optional ETF decision journal report JSON path。"),
+    ] = None,
+    parameter_review_path: Annotated[
+        Path | None,
+        typer.Option(help="optional ETF parameter review evidence/report JSON path。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="backtest-vs-forward evidence 输出目录。"),
+    ] = DEFAULT_WEIGHT_FORWARD_EVIDENCE_DIR,
+) -> None:
+    """聚合 TRADING-071F backtest expectation vs forward evidence。"""
+    if search_run_id is not None and latest_search:
+        raise typer.BadParameter("--search-run-id and --latest-search cannot be combined")
+    run_date = _parse_date(as_of) if as_of else date.today()
+    search_payload = None
+    source_paths: dict[str, str] = {
+        "candidate_registry": str(candidate_registry_path),
+        "forward_enrollment": str(enrollment_path),
+    }
+    if search_run_id is not None or latest_search:
+        run_dir = (
+            find_latest_weight_search_run_dir(search_output_dir)
+            if latest_search
+            else search_output_dir / str(search_run_id)
+        )
+        search_payload = read_weight_search_run_payload(run_dir)
+        source_paths["historical_search"] = str(run_dir / "summary.json")
+    for key, path in {
+        "forward_dashboard": forward_dashboard_path,
+        "weekly_review": weekly_review_path,
+        "decision_journal": decision_journal_path,
+        "parameter_review": parameter_review_path,
+    }.items():
+        if path is not None:
+            source_paths[key] = str(path)
+    payload = build_backtest_forward_evidence_aggregation(
+        as_of=run_date,
+        candidate_registry=load_candidate_weight_registry(candidate_registry_path),
+        forward_enrollments=load_weight_forward_enrollments(enrollment_path),
+        search_payload=search_payload,
+        forward_dashboard=_load_optional_json_payload(forward_dashboard_path),
+        weekly_review=_load_optional_json_payload(weekly_review_path),
+        decision_journal=_load_optional_json_payload(decision_journal_path),
+        parameter_review=_load_optional_json_payload(parameter_review_path),
+        source_paths=source_paths,
+    )
+    paths = write_backtest_forward_evidence_aggregation(payload, output_dir=output_dir)
+    typer.echo(f"ETF weight backtest-forward evidence：{paths['markdown']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"evidence_record_count={payload['evidence_record_count']}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+
+
 @p2_app.command("edgar-text")
 def p2_edgar_text_command(
     input_path: Annotated[Path | None, typer.Option(help="EDGAR/text audit input CSV。")] = None,
@@ -3940,6 +4038,20 @@ def _parse_datetime(value: str) -> datetime:
     if parsed.tzinfo is None:
         parsed = parsed.replace(tzinfo=UTC)
     return parsed
+
+
+def _load_optional_json_payload(path: Path | None) -> dict[str, object]:
+    if path is None:
+        return {}
+    if not path.exists():
+        raise typer.BadParameter(f"JSON artifact 不存在：{path}")
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise typer.BadParameter(f"JSON artifact 解析失败：{path}") from exc
+    if not isinstance(payload, dict):
+        raise typer.BadParameter(f"JSON artifact root 必须是 object：{path}")
+    return payload
 
 
 def _allocation_record_from_row(row: pd.Series) -> ETFAllocationRecord:

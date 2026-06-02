@@ -68,8 +68,8 @@ not the primary AI-cycle conclusion window.
 |TRADING-071C|Walk-Forward / Regime Robustness Evaluation|DONE|Candidates are evaluated across full period, walk-forward windows, and regime slices|
 |TRADING-071D|Candidate Initial Weight Set Registry|DONE|Selected candidate weights are stored as candidate-only records with safe statuses|
 |TRADING-071E|Dual-Track Forward Enrollment|DONE|Selected safe candidates can be explicitly enrolled into forward observation|
-|TRADING-071F|Backtest vs Forward Evidence Aggregator|IN_PROGRESS|Historical expectation and real forward evidence are linked and gap metrics are computed|
-|TRADING-071G|Overfit Risk and Stability Diagnostics|READY|High-return but unstable candidates receive explainable overfit risk bands|
+|TRADING-071F|Backtest vs Forward Evidence Aggregator|DONE|Historical expectation and real forward evidence are linked and gap metrics are computed|
+|TRADING-071G|Overfit Risk and Stability Diagnostics|IN_PROGRESS|High-return but unstable candidates receive explainable overfit risk bands|
 |TRADING-071H|Candidate Weight Proposal Generator|READY|Only evidence-linked proposal/review actions are generated; unsafe proposal types are rejected|
 |TRADING-071I|Dual-Track Calibration Report|READY|JSON/Markdown report summarizes search, robustness, forward comparison, overfit diagnostics, proposals, and source links|
 |TRADING-071J|Reader Brief Dual-Track Calibration Section|READY|Reader Brief surfaces top candidate, forward status, overfit risk, candidate status, safety, and report link|
@@ -143,3 +143,9 @@ command.
   refusal、`aits etf weight-calibration enroll-forward` 和 focused tests；该 ledger
   不写 shared experiment shadow registry、official target weights 或 baseline config。
   TRADING-071F 进入 `IN_PROGRESS`，下一步实现 backtest vs forward evidence aggregator。
+- 2026-06-02: TRADING-071F 完成。新增 backtest-vs-forward evidence aggregation schema、
+  expectation/realized return gap、drawdown gap、turnover gap、stability gap、evidence
+  status classification、source link capture、JSON/Markdown writer、`aits etf
+  weight-calibration aggregate-evidence` 和 focused tests；缺少 forward row 或 forward
+  days 不足时输出 `needs_more_forward_data`，不补造 forward conclusion。TRADING-071G
+  进入 `IN_PROGRESS`，下一步实现 overfit risk and stability diagnostics。
