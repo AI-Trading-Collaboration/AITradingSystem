@@ -95,9 +95,9 @@ present.
 |阶段|范围|状态|验收|
 |---|---|---|---|
 |TRADING-069A|Decision Journal Schema|DONE|Schema validates required fields, decision_status enum, confidence, safety fields and disallowed actions|
-|TRADING-069B|Manual Review Notes CLI|IN_PROGRESS|`aits etf decision-journal add/update/list/remove` can persist and edit local journal entries without production mutation|
-|TRADING-069C|Weekly Review Action Linking|READY|Each entry references an existing TRADING-068 weekly review and action item, including source section and evidence|
-|TRADING-069D|Candidate Decision State Update Proposal|READY|Journal can generate candidate state proposals without mutating shadow registry or production state|
+|TRADING-069B|Manual Review Notes CLI|DONE|`aits etf decision-journal add/update/list/remove` can persist and edit local journal entries without production mutation|
+|TRADING-069C|Weekly Review Action Linking|DONE|Each entry references an existing TRADING-068 weekly review and action item, including source section and evidence|
+|TRADING-069D|Candidate Decision State Update Proposal|IN_PROGRESS|Journal can generate candidate state proposals without mutating shadow registry or production state|
 |TRADING-069E|Journal Report Generator|READY|Generate JSON/Markdown/HTML journal summary with metadata, decisions, links, rationale, follow-ups and audit trail|
 |TRADING-069F|Reader Brief Decision Journal Summary|READY|Reader Brief displays key decision counts/statuses and links to journal report|
 |TRADING-069G|Review Outcome Analytics|READY|Analytics summarize decision status distribution, confidence and follow-up workload from journal entries|
@@ -133,4 +133,10 @@ present.
   `src/ai_trading_system/etf_portfolio/decision_journal.py` 基础 schema、
   safety constants、decision_status enum、disallowed action blocking、journal
   load/write 验证和 schema tests。验证通过 `python -m pytest
+  tests/test_etf_decision_journal.py -q`、目标 ruff 和 `git diff --check`。
+- 2026-06-02：TRADING-069B/C 完成。新增 `aits etf decision-journal
+  add/update/list/remove`，journal entry 从 TRADING-068 weekly review JSON 和
+  `manual_review_actions[].action_id` 构建，保留 source section、action type、
+  action snapshot、source evidence 和 audit trail；remove 只从 active entries
+  移到 `removed_entries`，不静默删除审计记录。验证通过 `python -m pytest
   tests/test_etf_decision_journal.py -q`、目标 ruff 和 `git diff --check`。

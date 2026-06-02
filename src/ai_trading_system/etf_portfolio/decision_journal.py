@@ -181,6 +181,231 @@ def write_decision_journal(
     return path
 
 
+def build_decision_entry_from_weekly_review(
+    *,
+    weekly_review_path: Path,
+    action_item_id: str,
+    human_decision: str,
+    decision_status: str,
+    rationale: str,
+    confidence: float,
+    follow_up_task: str,
+    linked_candidate: str,
+    linked_report: Path | None = None,
+    created_at: datetime | None = None,
+    decision_id: str | None = None,
+) -> dict[str, Any]:
+    weekly_review = load_weekly_review_report(weekly_review_path)
+    action_item = find_weekly_review_action(weekly_review, action_item_id)
+    review_date = _text(
+        weekly_review.get("review_end_date"),
+        _text(_mapping(weekly_review.get("requested_date_range")).get("end")),
+    )
+    report_path = linked_report or weekly_review_path
+    source_evidence = _records(action_item.get("evidence"))
+    entry = build_decision_entry(
+        review_id=_text(weekly_review.get("review_id")),
+        review_date=review_date,
+        source_weekly_review=weekly_review_path,
+        action_item_id=action_item_id,
+        human_decision=human_decision,
+        decision_status=decision_status,
+        rationale=rationale,
+        confidence=confidence,
+        follow_up_task=follow_up_task,
+        linked_candidate=linked_candidate,
+        linked_report=report_path,
+        created_at=created_at,
+        decision_id=decision_id,
+        extra_fields={
+            "source_section": _source_section_for_action(action_item),
+            "source_action_type": _text(action_item.get("action_type")),
+            "source_action_status": _text(action_item.get("status"), "open"),
+            "source_action_priority": _text(action_item.get("priority")),
+            "source_recommended_reason": _text(action_item.get("recommended_reason")),
+            "action_item_snapshot": dict(action_item),
+            "source_evidence": source_evidence,
+        },
+    )
+    validate_decision_entry_links(entry)
+    return entry
+
+
+def add_decision_entry(
+    journal: Mapping[str, Any],
+    entry: Mapping[str, Any],
+    *,
+    updated_at: datetime | None = None,
+) -> dict[str, Any]:
+    result = dict(journal)
+    result.setdefault("schema_version", DECISION_JOURNAL_SCHEMA_VERSION)
+    result.setdefault("journal_type", "etf_portfolio_decision_journal")
+    result.setdefault("created_at", (updated_at or datetime.now(tz=UTC)).isoformat())
+    result.setdefault("removed_entries", [])
+    result.update(DECISION_JOURNAL_SAFETY)
+    entries = _records(result.get("entries"))
+    decision_id = _text(entry.get("decision_id"))
+    if any(_text(item.get("decision_id")) == decision_id for item in entries):
+        raise DecisionJournalError(f"duplicate decision_id: {decision_id}")
+    new_entry = dict(entry)
+    validate_decision_entry(new_entry)
+    validate_decision_entry_links(new_entry)
+    entries.append(new_entry)
+    result["entries"] = entries
+    result["updated_at"] = (updated_at or datetime.now(tz=UTC)).isoformat()
+    validate_decision_journal_schema(result)
+    return result
+
+
+def update_decision_entry(
+    journal: Mapping[str, Any],
+    *,
+    decision_id: str,
+    updates: Mapping[str, Any],
+    updated_at: datetime | None = None,
+) -> dict[str, Any]:
+    result = dict(journal)
+    entries = _records(result.get("entries"))
+    timestamp = (updated_at or datetime.now(tz=UTC)).isoformat()
+    changed = False
+    allowed_update_fields = {
+        "human_decision",
+        "decision_status",
+        "rationale",
+        "confidence",
+        "follow_up_task",
+        "linked_candidate",
+        "linked_report",
+    }
+    for entry in entries:
+        if _text(entry.get("decision_id")) != decision_id:
+            continue
+        changed_fields: dict[str, Any] = {}
+        for field, value in updates.items():
+            if field not in allowed_update_fields or value is None:
+                continue
+            old_value = entry.get(field)
+            entry[field] = float(value) if field == "confidence" else str(value)
+            if old_value != entry[field]:
+                changed_fields[field] = {"old": old_value, "new": entry[field]}
+        if not changed_fields:
+            raise DecisionJournalError("no journal fields changed")
+        entry["updated_at"] = timestamp
+        audit = _records(entry.get("audit_trail"))
+        audit.append(
+            {
+                "event": "updated",
+                "timestamp": timestamp,
+                "changed_fields": changed_fields,
+            }
+        )
+        entry["audit_trail"] = audit
+        validate_decision_entry(entry)
+        validate_decision_entry_links(entry)
+        changed = True
+        break
+    if not changed:
+        raise DecisionJournalError(f"decision_id not found: {decision_id}")
+    result["entries"] = entries
+    result["updated_at"] = timestamp
+    validate_decision_journal_schema(result)
+    return result
+
+
+def remove_decision_entry(
+    journal: Mapping[str, Any],
+    *,
+    decision_id: str,
+    reason: str,
+    removed_at: datetime | None = None,
+) -> dict[str, Any]:
+    if not _text(reason):
+        raise DecisionJournalError("remove requires a reason")
+    result = dict(journal)
+    entries = _records(result.get("entries"))
+    removed_entries = _records(result.get("removed_entries"))
+    timestamp = (removed_at or datetime.now(tz=UTC)).isoformat()
+    kept: list[dict[str, Any]] = []
+    removed: dict[str, Any] | None = None
+    for entry in entries:
+        if _text(entry.get("decision_id")) == decision_id:
+            removed = dict(entry)
+            continue
+        kept.append(entry)
+    if removed is None:
+        raise DecisionJournalError(f"decision_id not found: {decision_id}")
+    audit = _records(removed.get("audit_trail"))
+    audit.append({"event": "removed", "timestamp": timestamp, "reason": reason})
+    removed["audit_trail"] = audit
+    removed["removed_at"] = timestamp
+    removed["removal_reason"] = reason
+    removed_entries.append(removed)
+    result["entries"] = kept
+    result["removed_entries"] = removed_entries
+    result["updated_at"] = timestamp
+    validate_decision_journal_schema(result)
+    return result
+
+
+def decision_entries(journal: Mapping[str, Any]) -> list[dict[str, Any]]:
+    validate_decision_journal_schema(journal)
+    return _records(journal.get("entries"))
+
+
+def load_weekly_review_report(path: Path) -> dict[str, Any]:
+    payload = _read_json_object(path)
+    if _text(payload.get("report_type")) != "etf_weekly_review":
+        raise DecisionJournalError(f"source weekly review is not etf_weekly_review: {path}")
+    _validate_source_weekly_review_safety(payload)
+    if not _records(payload.get("manual_review_actions")):
+        raise DecisionJournalError("source weekly review has no manual_review_actions")
+    return payload
+
+
+def find_weekly_review_action(
+    weekly_review_payload: Mapping[str, Any],
+    action_item_id: str,
+) -> dict[str, Any]:
+    for action in _records(weekly_review_payload.get("manual_review_actions")):
+        if _text(action.get("action_id")) == action_item_id:
+            if action.get("requires_manual_review") is not True:
+                raise DecisionJournalError("source action item must require manual review")
+            if not _records(action.get("evidence")):
+                raise DecisionJournalError("source action item must include evidence")
+            return action
+    raise DecisionJournalError(f"action_item_id not found in weekly review: {action_item_id}")
+
+
+def validate_decision_entry_links(entry: Mapping[str, Any]) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
+    weekly_path = Path(_text(entry.get("source_weekly_review")))
+    linked_path = Path(_text(entry.get("linked_report")))
+    if not weekly_path.exists():
+        issues.append(_issue("source_weekly_review", "FAIL", f"missing {weekly_path}"))
+    if not linked_path.exists():
+        issues.append(_issue("linked_report", "FAIL", f"missing {linked_path}"))
+    if issues:
+        raise DecisionJournalError(_format_issues(issues))
+    weekly_review = load_weekly_review_report(weekly_path)
+    review_id = _text(weekly_review.get("review_id"))
+    if _text(entry.get("review_id")) != review_id:
+        issues.append(
+            _issue("review_id", "FAIL", f"review_id does not match weekly review: {review_id}")
+        )
+    try:
+        action = find_weekly_review_action(weekly_review, _text(entry.get("action_item_id")))
+    except DecisionJournalError as exc:
+        issues.append(_issue("action_item_id", "FAIL", str(exc)))
+    else:
+        if _text(entry.get("source_action_type")) and _text(
+            entry.get("source_action_type")
+        ) != _text(action.get("action_type")):
+            issues.append(_issue("source_action_type", "FAIL", "source action type mismatch"))
+    if issues:
+        raise DecisionJournalError(_format_issues(issues))
+    return issues
+
+
 def validate_decision_journal_schema(journal: Mapping[str, Any]) -> list[dict[str, Any]]:
     issues: list[dict[str, Any]] = []
     if _text(journal.get("schema_version")) != DECISION_JOURNAL_SCHEMA_VERSION:
@@ -270,6 +495,28 @@ def _safety_issues(payload: Mapping[str, Any], *, owner_id: str) -> list[dict[st
     return issues
 
 
+def _validate_source_weekly_review_safety(payload: Mapping[str, Any]) -> None:
+    for field, expected in DECISION_JOURNAL_SAFETY.items():
+        if payload.get(field) != expected:
+            raise DecisionJournalError(
+                f"source weekly review safety field {field} must be {expected!r}"
+            )
+
+
+def _source_section_for_action(action: Mapping[str, Any]) -> str:
+    source_module = _text(action.get("source_module"))
+    action_type = _text(action.get("action_type"))
+    if source_module == "etf_forward_dashboard" or "candidate" in action_type:
+        return "shadow_candidate_review"
+    if source_module == "ai_confirmation":
+        return "ai_confirmation_review"
+    if source_module == "satellite_replacement":
+        return "satellite_replacement_review"
+    if source_module in {"risk_watchlist", "weekly_review"}:
+        return "risk_watchlist_constraints"
+    return source_module or "weekly_review"
+
+
 def _contains_disallowed_action(value: object) -> bool:
     text = _text(value).lower().replace("-", "_").replace(" ", "_")
     return any(action in text for action in DISALLOWED_DECISION_ACTIONS)
@@ -296,6 +543,22 @@ def _float_or_none(value: object) -> float | None:
     except (TypeError, ValueError):
         return None
     return parsed
+
+
+def _mapping(value: object) -> Mapping[str, Any]:
+    return value if isinstance(value, Mapping) else {}
+
+
+def _read_json_object(path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError as exc:
+        raise DecisionJournalError(f"missing JSON file: {path}") from exc
+    except json.JSONDecodeError as exc:
+        raise DecisionJournalError(f"invalid JSON file: {path}") from exc
+    if not isinstance(payload, Mapping):
+        raise DecisionJournalError(f"JSON root must be an object: {path}")
+    return dict(payload)
 
 
 def _issue(check_id: str, status: str, message: str) -> dict[str, Any]:

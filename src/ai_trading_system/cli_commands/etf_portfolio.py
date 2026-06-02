@@ -54,6 +54,17 @@ from ai_trading_system.etf_portfolio.data import (
     validate_price_data,
     write_quality_report,
 )
+from ai_trading_system.etf_portfolio.decision_journal import (
+    DEFAULT_DECISION_JOURNAL_PATH,
+    DecisionJournalError,
+    add_decision_entry,
+    build_decision_entry_from_weekly_review,
+    decision_entries,
+    load_decision_journal,
+    remove_decision_entry,
+    update_decision_entry,
+    write_decision_journal,
+)
 from ai_trading_system.etf_portfolio.experiments import (
     DEFAULT_ETF_EXPERIMENT_RUN_DIR,
     DEFAULT_ETF_EXPERIMENT_WEEKLY_REVIEW_DIR,
@@ -225,6 +236,10 @@ ai_confirmation_app = typer.Typer(
     no_args_is_help=True,
 )
 weekly_review_app = typer.Typer(help="ETF weekly portfolio review package。", no_args_is_help=True)
+decision_journal_app = typer.Typer(
+    help="ETF portfolio decision journal and human review notes。",
+    no_args_is_help=True,
+)
 governance_app = typer.Typer(help="ETF P1 weight governance。", no_args_is_help=True)
 events_app = typer.Typer(help="ETF P1 event risk flags。", no_args_is_help=True)
 p2_app = typer.Typer(help="ETF P2 observe-only contracts。", no_args_is_help=True)
@@ -247,6 +262,7 @@ etf_app.add_typer(experiments_app, name="experiments")
 etf_app.add_typer(forward_app, name="forward")
 etf_app.add_typer(ai_confirmation_app, name="ai-confirmation")
 etf_app.add_typer(weekly_review_app, name="weekly-review")
+etf_app.add_typer(decision_journal_app, name="decision-journal")
 etf_app.add_typer(governance_app, name="governance")
 etf_app.add_typer(events_app, name="events")
 etf_app.add_typer(p2_app, name="p2")
@@ -1806,6 +1822,225 @@ def weekly_review_validate_command(
     typer.echo("manual_review_required=true")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)
+
+
+@decision_journal_app.command("add")
+def decision_journal_add_command(
+    weekly_review_path: Annotated[
+        Path,
+        typer.Option(help="TRADING-068 weekly review JSON path。"),
+    ],
+    action_item_id: Annotated[
+        str,
+        typer.Option(help="weekly review manual_review_actions[].action_id。"),
+    ],
+    human_decision: Annotated[
+        str,
+        typer.Option(help="人工决策摘要。"),
+    ],
+    decision_status: Annotated[
+        str,
+        typer.Option(help="decision_status enum value。"),
+    ],
+    rationale: Annotated[
+        str,
+        typer.Option(help="人工决策依据。"),
+    ],
+    confidence: Annotated[
+        float,
+        typer.Option(help="人工信心 0.0-1.0。"),
+    ],
+    follow_up_task: Annotated[
+        str,
+        typer.Option(help="后续人工任务。"),
+    ],
+    linked_candidate: Annotated[
+        str,
+        typer.Option(help="关联 candidate / portfolio review target。"),
+    ],
+    linked_report: Annotated[
+        Path | None,
+        typer.Option(help="可选关联报告；默认使用 weekly review JSON。"),
+    ] = None,
+    journal_path: Annotated[
+        Path,
+        typer.Option(help="decision journal state path。"),
+    ] = DEFAULT_DECISION_JOURNAL_PATH,
+) -> None:
+    """追加人工 portfolio decision journal entry。"""
+    try:
+        journal = load_decision_journal(journal_path)
+        entry = build_decision_entry_from_weekly_review(
+            weekly_review_path=weekly_review_path,
+            action_item_id=action_item_id,
+            human_decision=human_decision,
+            decision_status=decision_status,
+            rationale=rationale,
+            confidence=confidence,
+            follow_up_task=follow_up_task,
+            linked_candidate=linked_candidate,
+            linked_report=linked_report,
+        )
+        updated = add_decision_entry(journal, entry)
+        write_decision_journal(updated, journal_path)
+    except DecisionJournalError as exc:
+        typer.echo(f"ETF decision journal blocked：{exc}")
+        typer.echo("production_effect=none")
+        typer.echo("broker_action=none")
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"ETF decision journal entry added：{journal_path}")
+    typer.echo(f"decision_id={entry['decision_id']}")
+    typer.echo(f"review_id={entry['review_id']}")
+    typer.echo(f"action_item_id={entry['action_item_id']}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+
+
+@decision_journal_app.command("update")
+def decision_journal_update_command(
+    decision_id: Annotated[
+        str,
+        typer.Option(help="decision_id to update。"),
+    ],
+    journal_path: Annotated[
+        Path,
+        typer.Option(help="decision journal state path。"),
+    ] = DEFAULT_DECISION_JOURNAL_PATH,
+    human_decision: Annotated[
+        str | None,
+        typer.Option(help="更新人工决策摘要。"),
+    ] = None,
+    decision_status: Annotated[
+        str | None,
+        typer.Option(help="更新 decision_status enum value。"),
+    ] = None,
+    rationale: Annotated[
+        str | None,
+        typer.Option(help="更新 rationale。"),
+    ] = None,
+    confidence: Annotated[
+        float | None,
+        typer.Option(help="更新 confidence 0.0-1.0。"),
+    ] = None,
+    follow_up_task: Annotated[
+        str | None,
+        typer.Option(help="更新 follow-up task。"),
+    ] = None,
+    linked_candidate: Annotated[
+        str | None,
+        typer.Option(help="更新 linked candidate。"),
+    ] = None,
+    linked_report: Annotated[
+        Path | None,
+        typer.Option(help="更新 linked report。"),
+    ] = None,
+) -> None:
+    """更新人工 portfolio decision journal entry。"""
+    updates = {
+        "human_decision": human_decision,
+        "decision_status": decision_status,
+        "rationale": rationale,
+        "confidence": confidence,
+        "follow_up_task": follow_up_task,
+        "linked_candidate": linked_candidate,
+        "linked_report": None if linked_report is None else str(linked_report),
+    }
+    try:
+        if not any(value is not None for value in updates.values()):
+            raise DecisionJournalError("update requires at least one field")
+        journal = load_decision_journal(journal_path)
+        updated = update_decision_entry(journal, decision_id=decision_id, updates=updates)
+        write_decision_journal(updated, journal_path)
+    except DecisionJournalError as exc:
+        typer.echo(f"ETF decision journal blocked：{exc}")
+        typer.echo("production_effect=none")
+        typer.echo("broker_action=none")
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"ETF decision journal entry updated：{journal_path}")
+    typer.echo(f"decision_id={decision_id}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+
+
+@decision_journal_app.command("list")
+def decision_journal_list_command(
+    journal_path: Annotated[
+        Path,
+        typer.Option(help="decision journal state path。"),
+    ] = DEFAULT_DECISION_JOURNAL_PATH,
+    as_json: Annotated[
+        bool,
+        typer.Option("--json", help="输出 JSON payload。"),
+    ] = False,
+) -> None:
+    """列出 active portfolio decision journal entries。"""
+    try:
+        journal = load_decision_journal(journal_path)
+        entries = decision_entries(journal)
+    except DecisionJournalError as exc:
+        typer.echo(f"ETF decision journal blocked：{exc}")
+        raise typer.Exit(code=1) from exc
+    if as_json:
+        typer.echo(
+            json.dumps(
+                {"journal_path": str(journal_path), "entries": entries},
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return
+    typer.echo(f"ETF decision journal entries：{len(entries)}")
+    for entry in entries:
+        typer.echo(
+            " | ".join(
+                [
+                    str(entry.get("decision_id")),
+                    str(entry.get("review_date")),
+                    str(entry.get("decision_status")),
+                    str(entry.get("action_item_id")),
+                    str(entry.get("linked_candidate")),
+                ]
+            )
+        )
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+
+
+@decision_journal_app.command("remove")
+def decision_journal_remove_command(
+    decision_id: Annotated[
+        str,
+        typer.Option(help="decision_id to remove from active entries。"),
+    ],
+    reason: Annotated[
+        str,
+        typer.Option(help="remove reason；entry is moved to removed_entries audit trail。"),
+    ],
+    journal_path: Annotated[
+        Path,
+        typer.Option(help="decision journal state path。"),
+    ] = DEFAULT_DECISION_JOURNAL_PATH,
+) -> None:
+    """从 active journal 移除 entry，并保留 removed_entries audit trail。"""
+    try:
+        journal = load_decision_journal(journal_path)
+        updated = remove_decision_entry(journal, decision_id=decision_id, reason=reason)
+        write_decision_journal(updated, journal_path)
+    except DecisionJournalError as exc:
+        typer.echo(f"ETF decision journal blocked：{exc}")
+        typer.echo("production_effect=none")
+        typer.echo("broker_action=none")
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"ETF decision journal entry removed：{journal_path}")
+    typer.echo(f"decision_id={decision_id}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
 
 
 @p2_app.command("edgar-text")
