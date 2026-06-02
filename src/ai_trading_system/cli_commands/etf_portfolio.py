@@ -165,6 +165,11 @@ from ai_trading_system.etf_portfolio.p2 import (
     normalize_options_risk_source,
     p2_metadata,
 )
+from ai_trading_system.etf_portfolio.parameter_review import (
+    DEFAULT_PARAMETER_REVIEW_AGGREGATION_DIR,
+    build_parameter_review_aggregation,
+    write_parameter_review_aggregation,
+)
 from ai_trading_system.etf_portfolio.regime import (
     generate_regime_for_date,
     load_regimes,
@@ -251,6 +256,10 @@ decision_journal_app = typer.Typer(
     help="ETF portfolio decision journal and human review notes。",
     no_args_is_help=True,
 )
+parameter_review_app = typer.Typer(
+    help="ETF allocation parameter review from forward evidence。",
+    no_args_is_help=True,
+)
 governance_app = typer.Typer(help="ETF P1 weight governance。", no_args_is_help=True)
 events_app = typer.Typer(help="ETF P1 event risk flags。", no_args_is_help=True)
 p2_app = typer.Typer(help="ETF P2 observe-only contracts。", no_args_is_help=True)
@@ -274,6 +283,7 @@ etf_app.add_typer(forward_app, name="forward")
 etf_app.add_typer(ai_confirmation_app, name="ai-confirmation")
 etf_app.add_typer(weekly_review_app, name="weekly-review")
 etf_app.add_typer(decision_journal_app, name="decision-journal")
+etf_app.add_typer(parameter_review_app, name="parameter-review")
 etf_app.add_typer(governance_app, name="governance")
 etf_app.add_typer(events_app, name="events")
 etf_app.add_typer(p2_app, name="p2")
@@ -2215,6 +2225,50 @@ def decision_journal_validate_command(
     typer.echo("manual_review_required=true")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)
+
+
+@parameter_review_app.command("aggregate")
+def parameter_review_aggregate_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="parameter review aggregation 日期 YYYY-MM-DD。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="使用当前日期扫描 latest artifacts。"),
+    ] = False,
+    report_index_path: Annotated[
+        Path | None,
+        typer.Option(help="既有 report_index JSON；不传时只读扫描 report registry。"),
+    ] = None,
+    report_registry_path: Annotated[
+        Path,
+        typer.Option(help="report registry config path。"),
+    ] = DEFAULT_REPORT_REGISTRY_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="parameter review evidence 输出目录。"),
+    ] = DEFAULT_PARAMETER_REVIEW_AGGREGATION_DIR,
+) -> None:
+    """聚合 TRADING-070 ETF parameter review forward evidence。"""
+    run_date = _weekly_review_date(as_of=as_of, latest=latest)
+    payload = build_parameter_review_aggregation(
+        as_of=run_date,
+        report_index_path=report_index_path,
+        report_registry_path=report_registry_path,
+    )
+    json_path = output_dir / f"parameter_review_evidence_{run_date.isoformat()}.json"
+    md_path = output_dir / f"parameter_review_evidence_{run_date.isoformat()}.md"
+    write_parameter_review_aggregation(payload, json_path=json_path, markdown_path=md_path)
+    typer.echo(f"ETF parameter review evidence：{md_path}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"candidate_count={payload['candidate_count']}")
+    typer.echo(f"evidence_record_count={payload['evidence_record_count']}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
 
 
 @p2_app.command("edgar-text")

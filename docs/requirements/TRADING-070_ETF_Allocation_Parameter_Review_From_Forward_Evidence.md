@@ -64,7 +64,7 @@ reason=INSUFFICIENT_FORWARD_EVIDENCE
 |阶段|范围|状态|验收|
 |---|---|---|---|
 |TRADING-070A|Parameter Review Evidence Schema|DONE|Evidence schema validates required fields, date range, nullable metrics with reasons, source links and safety fields|
-|TRADING-070B|Forward Evidence Aggregator|READY|`aits etf parameter-review aggregate --as-of YYYY-MM-DD` 生成 JSON/Markdown evidence package and preserves source paths|
+|TRADING-070B|Forward Evidence Aggregator|DONE|`aits etf parameter-review aggregate --as-of YYYY-MM-DD` 生成 JSON/Markdown evidence package and preserves source paths|
 |TRADING-070C|Baseline vs Candidate Evidence Comparison|READY|Forward evidence compares candidate vs baseline, QQQ, SPY, SMH, backtest expectation, weekly status and journal outcome|
 |TRADING-070D|Decision Journal Evidence Linker|READY|Journal decisions become structured candidate evidence with support/conflict status and traceable links|
 |TRADING-070E|Parameter Change Proposal Generator|READY|Only proposal/review actions are generated; unsafe proposal types are rejected|
@@ -104,3 +104,11 @@ reason=INSUFFICIENT_FORWARD_EVIDENCE
   required fields、required source links、nullable metric reason validation、date range
   validation 和 safety field enforcement；验证通过 `python -m pytest
   tests/test_etf_parameter_review.py -q`、目标 ruff 和 `git diff --check`。
+- 2026-06-02：TRADING-070B 完成。新增
+  `aits etf parameter-review aggregate --as-of YYYY-MM-DD`，只读聚合 forward dashboard、
+  weekly review、decision journal、experiment comparison、candidate selection、watchlist 和
+  validation gates，输出
+  `reports/etf_portfolio/parameter_review/aggregation/parameter_review_evidence_YYYY-MM-DD.json/md`；
+  缺少 required forward evidence 时输出 `needs_more_data` /
+  `INSUFFICIENT_FORWARD_EVIDENCE`，缺失 optional source 保留 warning，不写 production weights
+  或 broker state。
