@@ -45,6 +45,7 @@ DEFAULT_WEIGHT_FORWARD_EVIDENCE_DIR = (
 DEFAULT_WEIGHT_OVERFIT_DIAGNOSTICS_DIR = (
     DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "overfit_diagnostics"
 )
+DEFAULT_WEIGHT_PROPOSAL_DIR = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "proposals"
 
 WEIGHT_SEARCH_SCHEMA_VERSION = "etf_weight_search_v1"
 WEIGHT_SEARCH_RUN_SCHEMA_VERSION = "etf_weight_search_run_v1"
@@ -54,6 +55,7 @@ WEIGHT_BACKTEST_FORWARD_EVIDENCE_SCHEMA_VERSION = (
     "etf_weight_backtest_forward_evidence_v1"
 )
 WEIGHT_OVERFIT_DIAGNOSTICS_SCHEMA_VERSION = "etf_weight_overfit_diagnostics_v1"
+WEIGHT_PROPOSAL_SCHEMA_VERSION = "etf_weight_candidate_proposals_v1"
 
 WEIGHT_CALIBRATION_SAFETY = {
     "observe_only": True,
@@ -127,6 +129,29 @@ WEIGHT_OVERFIT_DIAGNOSTICS_POLICY = {
     "constraint_hit_reference": 0.25,
     "performance_concentration_reference": 0.70,
     "weight_extremeness_reference": 0.70,
+}
+
+ALLOWED_WEIGHT_PROPOSAL_TYPES = frozenset(
+    {
+        "continue_forward_observation",
+        "reject_weight_set",
+        "defer_until_more_forward_data",
+        "propose_extended_shadow",
+        "propose_manual_baseline_review",
+    }
+)
+DISALLOWED_WEIGHT_PROPOSAL_TYPES = frozenset(
+    {"apply_weight_set", "promote_to_production", "enable_broker_action"}
+)
+
+# Pilot proposal policy for TRADING-071H. It only routes candidate-only review
+# actions and cannot apply weights or approve production changes.
+WEIGHT_PROPOSAL_POLICY = {
+    "policy_id": "etf_weight_candidate_proposals_v1",
+    "owner": "TRADING-071H",
+    "status": "pilot_baseline",
+    "historical_score_manual_review_floor": 0.55,
+    "high_overfit_bands": ["high", "critical"],
 }
 
 
@@ -1544,6 +1569,178 @@ def weight_overfit_risk_band(score: float) -> str:
     return "low"
 
 
+def build_candidate_weight_proposals(
+    *,
+    candidate_registry: Mapping[str, Any],
+    evidence_payload: Mapping[str, Any] | None = None,
+    overfit_payload: Mapping[str, Any] | None = None,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    validate_candidate_weight_registry(candidate_registry)
+    if evidence_payload:
+        validate_backtest_forward_evidence_payload(evidence_payload)
+    if overfit_payload:
+        validate_weight_overfit_diagnostics_payload(overfit_payload)
+    generated = generated_at or datetime.now(UTC)
+    proposals = [
+        _candidate_weight_proposal(
+            candidate,
+            evidence_payload=evidence_payload or {},
+            overfit_payload=overfit_payload or {},
+            generated_at=generated,
+        )
+        for candidate in _records(candidate_registry.get("weight_sets"))
+    ]
+    payload = {
+        "schema_version": WEIGHT_PROPOSAL_SCHEMA_VERSION,
+        "report_type": "etf_weight_candidate_proposals",
+        "status": "available" if proposals else "needs_more_data",
+        "generated_at": generated.isoformat(),
+        "policy": dict(WEIGHT_PROPOSAL_POLICY),
+        "proposal_count": len(proposals),
+        "proposal_type_counts": _proposal_type_counts(proposals),
+        "proposals": proposals,
+        "disallowed_proposal_types": sorted(DISALLOWED_WEIGHT_PROPOSAL_TYPES),
+        "production_weights_mutated": False,
+        "applied_weight_set": None,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_candidate_weight_proposals_payload(payload)
+    return payload
+
+
+def validate_candidate_weight_proposals_payload(payload: Mapping[str, Any]) -> None:
+    issues = []
+    if payload.get("schema_version") != WEIGHT_PROPOSAL_SCHEMA_VERSION:
+        issues.append("schema_version")
+    if payload.get("report_type") != "etf_weight_candidate_proposals":
+        issues.append("report_type")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if payload.get(field) != expected:
+            issues.append(field)
+    safety = _mapping(payload.get("safety"))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if safety.get(field) != expected:
+            issues.append(f"safety.{field}")
+    if payload.get("production_weights_mutated") is not False:
+        issues.append("production_weights_mutated")
+    if payload.get("applied_weight_set") is not None:
+        issues.append("applied_weight_set")
+    proposals = _records(payload.get("proposals"))
+    if int(payload.get("proposal_count") or 0) != len(proposals):
+        issues.append("proposal_count")
+    for proposal in proposals:
+        try:
+            validate_candidate_weight_proposal(proposal)
+        except WeightCalibrationError as exc:
+            issues.append(f"{proposal.get('proposal_id')}:{exc}")
+    if issues:
+        raise WeightCalibrationError(
+            "ETF weight candidate proposal validation failed: "
+            + ", ".join(str(issue) for issue in issues)
+        )
+
+
+def validate_candidate_weight_proposal(proposal: Mapping[str, Any]) -> None:
+    required = (
+        "proposal_id",
+        "weight_set_id",
+        "proposal_type",
+        "supporting_evidence",
+        "blocking_evidence",
+        "historical_score",
+        "forward_evidence_status",
+        "overfit_risk",
+        "manual_review_required",
+        "safety",
+    )
+    issues = [field for field in required if field not in proposal]
+    proposal_type = str(proposal.get("proposal_type") or "")
+    if proposal_type in DISALLOWED_WEIGHT_PROPOSAL_TYPES:
+        issues.append("unsafe_proposal_type")
+    if proposal_type not in ALLOWED_WEIGHT_PROPOSAL_TYPES:
+        issues.append("proposal_type")
+    if not isinstance(proposal.get("supporting_evidence"), list):
+        issues.append("supporting_evidence")
+    if not isinstance(proposal.get("blocking_evidence"), list):
+        issues.append("blocking_evidence")
+    if not isinstance(proposal.get("overfit_risk"), Mapping):
+        issues.append("overfit_risk")
+    if proposal.get("manual_review_required") is not True:
+        issues.append("manual_review_required")
+    if proposal.get("application_allowed") is not False:
+        issues.append("application_allowed")
+    if proposal.get("production_weights_mutated") is not False:
+        issues.append("production_weights_mutated")
+    if proposal.get("applied_weight_set") is not None:
+        issues.append("applied_weight_set")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if proposal.get(field) != expected:
+            issues.append(field)
+    safety = _mapping(proposal.get("safety"))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if safety.get(field) != expected:
+            issues.append(f"safety.{field}")
+    if issues:
+        raise WeightCalibrationError("; ".join(issues))
+
+
+def write_candidate_weight_proposals(
+    payload: Mapping[str, Any],
+    *,
+    output_dir: Path = DEFAULT_WEIGHT_PROPOSAL_DIR,
+) -> dict[str, Path]:
+    validate_candidate_weight_proposals_payload(payload)
+    timestamp = str(payload.get("generated_at", "unknown")).replace(":", "").replace("+", "")
+    stem = f"candidate_weight_proposals_{timestamp[:15]}"
+    json_path = output_dir / f"{stem}.json"
+    markdown_path = output_dir / f"{stem}.md"
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.write_text(render_candidate_weight_proposals_markdown(payload), encoding="utf-8")
+    return {"json": json_path, "markdown": markdown_path}
+
+
+def render_candidate_weight_proposals_markdown(payload: Mapping[str, Any]) -> str:
+    lines = [
+        "# ETF Weight Candidate Proposals",
+        "",
+        "## Safety Banner",
+        "",
+        "- observe_only = true",
+        "- candidate_only = true",
+        "- production_effect = none",
+        "- broker_action = none",
+        "- manual_review_required = true",
+        "- 本报告只生成 proposal-only recommendation，不应用权重。",
+        "",
+        "## Summary",
+        "",
+        f"- Status: {payload.get('status')}",
+        f"- Proposal Count: {payload.get('proposal_count')}",
+        f"- Proposal Type Counts: {payload.get('proposal_type_counts')}",
+        "",
+        "| Proposal | Weight Set | Type | Historical Score | Forward Status | Overfit Risk |",
+        "|---|---|---|---:|---|---|",
+    ]
+    for proposal in _records(payload.get("proposals")):
+        risk = _mapping(proposal.get("overfit_risk"))
+        lines.append(
+            f"| {proposal.get('proposal_id')} | {proposal.get('weight_set_id')} | "
+            f"{proposal.get('proposal_type')} | "
+            f"{_fmt_number(proposal.get('historical_score'))} | "
+            f"{proposal.get('forward_evidence_status')} | "
+            f"{risk.get('overfit_risk_band')} |"
+        )
+    if not _records(payload.get("proposals")):
+        lines.append("| none | none | defer_until_more_forward_data | n/a | n/a | n/a |")
+    return "\n".join(lines) + "\n"
+
+
 def render_weight_search_run_markdown(payload: Mapping[str, Any]) -> str:
     generation = _mapping(payload.get("candidate_generation"))
     baseline = _mapping(payload.get("baseline_weight_set"))
@@ -2758,6 +2955,161 @@ def _evidence_record_for_weight_set(
         if str(record.get("weight_set_id")) == weight_set_id:
             return record
     return {}
+
+
+def _candidate_weight_proposal(
+    candidate: Mapping[str, Any],
+    *,
+    evidence_payload: Mapping[str, Any],
+    overfit_payload: Mapping[str, Any],
+    generated_at: datetime,
+) -> dict[str, Any]:
+    weight_set_id = str(candidate.get("weight_set_id"))
+    evidence_record = _evidence_record_for_weight_set(evidence_payload, weight_set_id)
+    overfit_record = _overfit_record_for_weight_set(overfit_payload, weight_set_id)
+    candidate_metrics = _mapping(candidate.get("metrics_summary"))
+    historical_score = _float_or_none(candidate_metrics.get("candidate_score"))
+    forward_status = str(evidence_record.get("evidence_status") or "needs_more_forward_data")
+    risk_band = str(overfit_record.get("overfit_risk_band") or "medium")
+    risk_score = _float_or_none(overfit_record.get("overfit_risk_score"))
+    proposal_type, supporting, blocking = _proposal_type_and_evidence(
+        candidate=candidate,
+        historical_score=historical_score,
+        forward_status=forward_status,
+        overfit_record=overfit_record,
+    )
+    proposal = {
+        "proposal_id": _stable_proposal_id(weight_set_id, generated_at),
+        "weight_set_id": weight_set_id,
+        "proposal_type": proposal_type,
+        "supporting_evidence": supporting,
+        "blocking_evidence": blocking,
+        "historical_score": historical_score,
+        "forward_evidence_status": forward_status,
+        "overfit_risk": {
+            "overfit_risk_score": risk_score,
+            "overfit_risk_band": risk_band,
+            "reason_codes": overfit_record.get("reason_codes", []),
+        },
+        "manual_review_required": True,
+        "application_allowed": False,
+        "production_weights_mutated": False,
+        "applied_weight_set": None,
+        "source_search_run_id": candidate.get("source_search_run_id"),
+        "source_candidate_id": candidate.get("source_candidate_id"),
+        "generated_at": generated_at.isoformat(),
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_candidate_weight_proposal(proposal)
+    return proposal
+
+
+def _proposal_type_and_evidence(
+    *,
+    candidate: Mapping[str, Any],
+    historical_score: float | None,
+    forward_status: str,
+    overfit_record: Mapping[str, Any],
+) -> tuple[str, list[dict[str, Any]], list[dict[str, Any]]]:
+    supporting = []
+    blocking = []
+    weight_set_id = str(candidate.get("weight_set_id"))
+    blockers = [str(item) for item in candidate.get("blockers") or []]
+    if historical_score is not None:
+        supporting.append(
+            {
+                "evidence_type": "historical_score",
+                "value": historical_score,
+                "reason_code": "HISTORICAL_SCORE_AVAILABLE",
+            }
+        )
+    risk_band = str(overfit_record.get("overfit_risk_band") or "medium")
+    if overfit_record:
+        supporting.append(
+            {
+                "evidence_type": "overfit_diagnostics",
+                "value": risk_band,
+                "reason_code": "OVERFIT_DIAGNOSTICS_AVAILABLE",
+            }
+        )
+    if blockers or str(candidate.get("status")) in {"blocked", "rejected"}:
+        blocking.append(
+            {
+                "evidence_type": "candidate_registry",
+                "value": blockers or [candidate.get("status")],
+                "reason_code": "CANDIDATE_REGISTRY_BLOCKED",
+            }
+        )
+        return "reject_weight_set", supporting, blocking
+    if risk_band in WEIGHT_PROPOSAL_POLICY["high_overfit_bands"]:
+        blocking.append(
+            {
+                "evidence_type": "overfit_risk",
+                "value": risk_band,
+                "reason_code": "HIGH_OVERFIT_RISK",
+            }
+        )
+        return "reject_weight_set", supporting, blocking
+    if forward_status in {"blocked", "forward_worse_than_backtest"}:
+        blocking.append(
+            {
+                "evidence_type": "forward_evidence",
+                "value": forward_status,
+                "reason_code": "FORWARD_EVIDENCE_NEGATIVE",
+            }
+        )
+        return "reject_weight_set", supporting, blocking
+    if forward_status == "needs_more_forward_data":
+        blocking.append(
+            {
+                "evidence_type": "forward_evidence",
+                "value": forward_status,
+                "reason_code": "INSUFFICIENT_FORWARD_EVIDENCE",
+            }
+        )
+        return "defer_until_more_forward_data", supporting, blocking
+    if forward_status == "mixed":
+        return "propose_extended_shadow", supporting, blocking
+    score_floor = float(WEIGHT_PROPOSAL_POLICY["historical_score_manual_review_floor"])
+    if (
+        historical_score is not None
+        and historical_score >= score_floor
+        and forward_status in {"consistent", "forward_better_than_backtest"}
+        and risk_band in {"low", "medium"}
+    ):
+        supporting.append(
+            {
+                "evidence_type": "manual_review_readiness",
+                "value": weight_set_id,
+                "reason_code": "HISTORICAL_AND_FORWARD_EVIDENCE_SUPPORT_REVIEW",
+            }
+        )
+        return "propose_manual_baseline_review", supporting, blocking
+    return "continue_forward_observation", supporting, blocking
+
+
+def _overfit_record_for_weight_set(
+    overfit_payload: Mapping[str, Any],
+    weight_set_id: str,
+) -> dict[str, Any]:
+    for record in _records(overfit_payload.get("candidate_diagnostics")):
+        if str(record.get("weight_set_id")) == weight_set_id:
+            return record
+    return {}
+
+
+def _proposal_type_counts(proposals: list[Mapping[str, Any]]) -> dict[str, int]:
+    counts = {proposal_type: 0 for proposal_type in sorted(ALLOWED_WEIGHT_PROPOSAL_TYPES)}
+    for proposal in proposals:
+        proposal_type = str(proposal.get("proposal_type"))
+        counts[proposal_type] = counts.get(proposal_type, 0) + 1
+    return counts
+
+
+def _stable_proposal_id(weight_set_id: str, generated_at: datetime) -> str:
+    basis = f"{weight_set_id}|{generated_at.isoformat()}"
+    return "etf-weight-proposal-" + sha256(basis.encode("utf-8")).hexdigest()[:12]
 
 
 def _selected_ranked_candidates(

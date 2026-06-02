@@ -240,7 +240,9 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
     DEFAULT_WEIGHT_FORWARD_EVIDENCE_DIR,
     DEFAULT_WEIGHT_OVERFIT_DIAGNOSTICS_DIR,
+    DEFAULT_WEIGHT_PROPOSAL_DIR,
     build_backtest_forward_evidence_aggregation,
+    build_candidate_weight_proposals,
     build_weight_overfit_diagnostics,
     enroll_candidate_weights_forward,
     find_latest_weight_search_run_dir,
@@ -252,6 +254,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     register_candidate_weight_sets,
     run_historical_weight_search,
     write_backtest_forward_evidence_aggregation,
+    write_candidate_weight_proposals,
     write_weight_overfit_diagnostics,
     write_weight_search_run,
 )
@@ -2790,6 +2793,43 @@ def weight_calibration_overfit_diagnostics_command(
     typer.echo(f"status={payload['status']}")
     typer.echo(f"candidate_count={payload['candidate_count']}")
     typer.echo(f"risk_counts={payload['risk_counts']}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+
+
+@weight_calibration_app.command("generate-proposals")
+def weight_calibration_generate_proposals_command(
+    candidate_registry_path: Annotated[
+        Path,
+        typer.Option(help="candidate initial weight set registry path。"),
+    ] = DEFAULT_CANDIDATE_WEIGHT_REGISTRY_PATH,
+    evidence_path: Annotated[
+        Path | None,
+        typer.Option(help="optional TRADING-071F evidence JSON path。"),
+    ] = None,
+    overfit_path: Annotated[
+        Path | None,
+        typer.Option(help="optional TRADING-071G overfit diagnostics JSON path。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="candidate weight proposal 输出目录。"),
+    ] = DEFAULT_WEIGHT_PROPOSAL_DIR,
+) -> None:
+    """生成 TRADING-071H candidate weight proposal-only recommendations。"""
+    payload = build_candidate_weight_proposals(
+        candidate_registry=load_candidate_weight_registry(candidate_registry_path),
+        evidence_payload=_load_optional_json_payload(evidence_path),
+        overfit_payload=_load_optional_json_payload(overfit_path),
+    )
+    paths = write_candidate_weight_proposals(payload, output_dir=output_dir)
+    typer.echo(f"ETF weight candidate proposals：{paths['markdown']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"proposal_count={payload['proposal_count']}")
+    typer.echo(f"proposal_type_counts={payload['proposal_type_counts']}")
     typer.echo("observe_only=true")
     typer.echo("candidate_only=true")
     typer.echo("production_effect=none")

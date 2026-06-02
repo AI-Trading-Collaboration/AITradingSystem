@@ -70,8 +70,8 @@ not the primary AI-cycle conclusion window.
 |TRADING-071E|Dual-Track Forward Enrollment|DONE|Selected safe candidates can be explicitly enrolled into forward observation|
 |TRADING-071F|Backtest vs Forward Evidence Aggregator|DONE|Historical expectation and real forward evidence are linked and gap metrics are computed|
 |TRADING-071G|Overfit Risk and Stability Diagnostics|DONE|High-return but unstable candidates receive explainable overfit risk bands|
-|TRADING-071H|Candidate Weight Proposal Generator|IN_PROGRESS|Only evidence-linked proposal/review actions are generated; unsafe proposal types are rejected|
-|TRADING-071I|Dual-Track Calibration Report|READY|JSON/Markdown report summarizes search, robustness, forward comparison, overfit diagnostics, proposals, and source links|
+|TRADING-071H|Candidate Weight Proposal Generator|DONE|Only evidence-linked proposal/review actions are generated; unsafe proposal types are rejected|
+|TRADING-071I|Dual-Track Calibration Report|IN_PROGRESS|JSON/Markdown report summarizes search, robustness, forward comparison, overfit diagnostics, proposals, and source links|
 |TRADING-071J|Reader Brief Dual-Track Calibration Section|READY|Reader Brief surfaces top candidate, forward status, overfit risk, candidate status, safety, and report link|
 |TRADING-071K|Dual-Track Calibration Validation Gate|READY|Final gate fails closed on unsafe states, unbounded search, unsafe proposals, or missing workflow pieces|
 
@@ -155,3 +155,9 @@ command.
   forward/backtest divergence、low/medium/high/critical risk band mapping、JSON/Markdown
   writer、`aits etf weight-calibration overfit-diagnostics` 和 focused tests。TRADING-071H
   进入 `IN_PROGRESS`，下一步实现 candidate weight proposal generator。
+- 2026-06-02: TRADING-071H 完成。新增 candidate weight proposal schema、allowed/disallowed
+  proposal type validation、evidence-linked proposal routing、JSON/Markdown writer、`aits etf
+  weight-calibration generate-proposals` 和 focused tests；strong historical + forward
+  evidence creates `propose_manual_baseline_review`，insufficient forward evidence defers，
+  high overfit risk 或 bad forward evidence rejects，unsafe proposal types fail closed。
+  TRADING-071I 进入 `IN_PROGRESS`，下一步实现 dual-track calibration report。

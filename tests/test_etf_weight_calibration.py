@@ -18,6 +18,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     ETFWeightSearchRegistry,
     WeightCalibrationError,
     build_backtest_forward_evidence_aggregation,
+    build_candidate_weight_proposals,
     build_weight_overfit_diagnostics,
     enroll_candidate_weights_forward,
     generate_weight_candidates,
@@ -30,6 +31,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     summarize_weight_robustness,
     update_candidate_weight_status,
     validate_backtest_forward_evidence_record,
+    validate_candidate_weight_proposal,
     validate_candidate_weight_record,
     validate_weight_forward_enrollment_record,
     validate_weight_search_registry,
@@ -956,6 +958,126 @@ def test_weight_calibration_overfit_diagnostics_cli(tmp_path: Path) -> None:
     assert list((tmp_path / "overfit").glob("overfit_diagnostics_*.json"))
 
 
+def test_candidate_weight_proposal_manual_review_when_evidence_is_strong(
+    tmp_path: Path,
+) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    registry["weight_sets"][0]["metrics_summary"]["candidate_score"] = 0.90
+    evidence = _backtest_forward_evidence_payload(tmp_path, registry, return_delta=0.05)
+    overfit = _overfit_payload_with_band(registry, band="low", score=0.10)
+
+    payload = build_candidate_weight_proposals(
+        candidate_registry=registry,
+        evidence_payload=evidence,
+        overfit_payload=overfit,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    proposal = payload["proposals"][0]
+    assert proposal["proposal_type"] == "propose_manual_baseline_review"
+    assert proposal["manual_review_required"] is True
+    assert proposal["application_allowed"] is False
+    assert proposal["production_effect"] == "none"
+
+
+def test_candidate_weight_proposal_defers_when_forward_data_insufficient(
+    tmp_path: Path,
+) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    registry["weight_sets"][0]["metrics_summary"]["candidate_score"] = 0.90
+    overfit = _overfit_payload_with_band(registry, band="low", score=0.10)
+
+    payload = build_candidate_weight_proposals(
+        candidate_registry=registry,
+        evidence_payload={},
+        overfit_payload=overfit,
+    )
+
+    proposal = payload["proposals"][0]
+    assert proposal["proposal_type"] == "defer_until_more_forward_data"
+    assert proposal["forward_evidence_status"] == "needs_more_forward_data"
+
+
+def test_candidate_weight_proposal_rejects_high_overfit_risk(tmp_path: Path) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    registry["weight_sets"][0]["metrics_summary"]["candidate_score"] = 0.90
+    evidence = _backtest_forward_evidence_payload(tmp_path, registry, return_delta=0.05)
+    overfit = _overfit_payload_with_band(registry, band="high", score=0.70)
+
+    payload = build_candidate_weight_proposals(
+        candidate_registry=registry,
+        evidence_payload=evidence,
+        overfit_payload=overfit,
+    )
+
+    proposal = payload["proposals"][0]
+    assert proposal["proposal_type"] == "reject_weight_set"
+    assert any(item["reason_code"] == "HIGH_OVERFIT_RISK" for item in proposal["blocking_evidence"])
+
+
+def test_candidate_weight_proposal_rejects_bad_forward_evidence(tmp_path: Path) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    registry["weight_sets"][0]["metrics_summary"]["candidate_score"] = 0.90
+    evidence = _backtest_forward_evidence_payload(tmp_path, registry, return_delta=-0.08)
+    overfit = _overfit_payload_with_band(registry, band="low", score=0.10)
+
+    payload = build_candidate_weight_proposals(
+        candidate_registry=registry,
+        evidence_payload=evidence,
+        overfit_payload=overfit,
+    )
+
+    proposal = payload["proposals"][0]
+    assert proposal["proposal_type"] == "reject_weight_set"
+    assert proposal["forward_evidence_status"] == "forward_worse_than_backtest"
+
+
+def test_candidate_weight_proposal_rejects_unsafe_type(tmp_path: Path) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    proposal = build_candidate_weight_proposals(candidate_registry=registry)["proposals"][0]
+    proposal["proposal_type"] = "apply_weight_set"
+
+    with pytest.raises(WeightCalibrationError, match="unsafe_proposal_type"):
+        validate_candidate_weight_proposal(proposal)
+
+
+def test_weight_calibration_generate_proposals_cli(tmp_path: Path) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    registry["weight_sets"][0]["metrics_summary"]["candidate_score"] = 0.90
+    registry_path = tmp_path / "candidate_weight_registry.json"
+    registry_path.write_text(json.dumps(registry, indent=2) + "\n", encoding="utf-8")
+    evidence = _backtest_forward_evidence_payload(tmp_path, registry, return_delta=0.05)
+    evidence_path = tmp_path / "evidence.json"
+    evidence_path.write_text(json.dumps(evidence, indent=2) + "\n", encoding="utf-8")
+    overfit = _overfit_payload_with_band(registry, band="low", score=0.10)
+    overfit_path = tmp_path / "overfit.json"
+    overfit_path.write_text(json.dumps(overfit, indent=2) + "\n", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        etf_app,
+        [
+            "weight-calibration",
+            "generate-proposals",
+            "--candidate-registry-path",
+            str(registry_path),
+            "--evidence-path",
+            str(evidence_path),
+            "--overfit-path",
+            str(overfit_path),
+            "--output-dir",
+            str(tmp_path / "proposals"),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "ETF weight candidate proposals" in result.output
+    assert "proposal_count=1" in result.output
+    assert "production_effect=none" in result.output
+    assert list((tmp_path / "proposals").glob("candidate_weight_proposals_*.json"))
+
+
 def _raw_registry() -> dict[str, object]:
     raw = safe_load_yaml_path(DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH)
     assert isinstance(raw, dict)
@@ -1111,6 +1233,27 @@ def _backtest_forward_evidence_payload(
         forward_enrollments=enrollments,
         forward_dashboard=dashboard,
     )
+
+
+def _overfit_payload_with_band(
+    registry: dict[str, object],
+    *,
+    band: str,
+    score: float,
+) -> dict[str, object]:
+    payload = build_weight_overfit_diagnostics(candidate_registry=registry)
+    diagnostic = payload["candidate_diagnostics"][0]
+    diagnostic["overfit_risk_band"] = band
+    diagnostic["overfit_risk_score"] = score
+    diagnostic["reason_codes"] = [f"TEST_{band.upper()}_RISK"]
+    payload["risk_counts"] = {"low": 0, "medium": 0, "high": 0, "critical": 0}
+    payload["risk_counts"][band] = 1
+    payload["highest_risk_candidate"] = {
+        "weight_set_id": diagnostic["weight_set_id"],
+        "overfit_risk_score": score,
+        "overfit_risk_band": band,
+    }
+    return payload
 
 
 def _make_prices(days: int) -> pd.DataFrame:

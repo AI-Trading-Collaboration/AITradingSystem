@@ -441,8 +441,15 @@ optional TRADING-071F evidence，输出
 `reports/etf_portfolio/weight_calibration/overfit_diagnostics/overfit_diagnostics_*.json/md`，
 按 performance concentration、single-period dependency、regime fragility、turnover
 instability、constraint hit instability、weight extremeness、benchmark dependency 和
-forward/backtest divergence 给出 low/medium/high/critical risk bands。当前 TRADING-071G
-仍是 candidate-only / observe-only 证据层，后续 TRADING-071H-K 才会补 proposal、report、
+forward/backtest divergence 给出 low/medium/high/critical risk bands。`aits etf
+weight-calibration generate-proposals` 读取 candidate registry、optional TRADING-071F
+evidence 和 optional TRADING-071G diagnostics，输出
+`reports/etf_portfolio/weight_calibration/proposals/candidate_weight_proposals_*.json/md`；
+proposal type 只允许 `continue_forward_observation`、`reject_weight_set`、
+`defer_until_more_forward_data`、`propose_extended_shadow` 和
+`propose_manual_baseline_review`，并 fail closed 阻断 `apply_weight_set`、
+`promote_to_production`、`enable_broker_action`。当前 TRADING-071H 仍是
+candidate-only / observe-only proposal 层，后续 TRADING-071I-K 才会补 report、
 Reader Brief 和 validation gate。
 所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、
 `broker_action=none`、`manual_review_required=true`，不写 official target weights、不改
