@@ -30,6 +30,9 @@ objective_policies:
       sharpe: 2.00
       turnover: 1.00
       regime_stability: 1.00
+    hard_blocker_thresholds:
+      max_drawdown_abs: 0.35
+      max_turnover_vs_baseline: 0.80
     hard_blockers:
       - NO_BENCHMARK_COMPARISON
       - MAX_DRAWDOWN_TOO_HIGH

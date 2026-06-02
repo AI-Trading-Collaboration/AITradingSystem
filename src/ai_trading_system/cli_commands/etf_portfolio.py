@@ -233,9 +233,13 @@ from ai_trading_system.etf_portfolio.weekly_review import (
     write_weekly_review_validation_report,
 )
 from ai_trading_system.etf_portfolio.weight_calibration import (
+    DEFAULT_ETF_WEIGHT_CALIBRATION_DATA_DIR,
+    DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR,
     DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
     load_weight_search_definition,
     load_weight_search_registry,
+    run_historical_weight_search,
+    write_weight_search_run,
 )
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
@@ -2446,6 +2450,77 @@ def weight_calibration_validate_config_command(
     typer.echo(f"objective_policy_status={objective.policy_status}")
     typer.echo(f"benchmark_set={definition.benchmark_set}")
     typer.echo(f"benchmark_ids={','.join(benchmark_set.benchmark_ids)}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+
+
+@weight_calibration_app.command("search")
+def weight_calibration_search_command(
+    search: Annotated[
+        str,
+        typer.Option("--search", "--config", help="weight search id。"),
+    ] = "etf_initial_weight_search_v1",
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", help="weight search config YAML path。"),
+    ] = DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
+    prices_path: Annotated[Path, typer.Option(help="ETF 标准价格缓存路径。")] = (
+        DEFAULT_ETF_PRICE_PATH
+    ),
+    start: Annotated[
+        str | None,
+        typer.Option("--start", help="historical search start YYYY-MM-DD。"),
+    ] = None,
+    end: Annotated[
+        str | None,
+        typer.Option("--end", help="historical search end YYYY-MM-DD。"),
+    ] = None,
+    max_candidates: Annotated[
+        int | None,
+        typer.Option("--max-candidates", help="lower-than-config candidate evaluation cap。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="weight calibration report 输出目录。"),
+    ] = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR,
+    data_output_dir: Annotated[
+        Path,
+        typer.Option(help="weight calibration runtime data 输出目录。"),
+    ] = DEFAULT_ETF_WEIGHT_CALIBRATION_DATA_DIR,
+) -> None:
+    """执行 TRADING-071B bounded historical ETF weight search。"""
+    config = load_etf_config_bundle()
+    registry = load_weight_search_registry(config_path, etf_config=config)
+    prices, quality_report = load_standard_prices(prices_path, config.assets, config.strategy)
+    if not quality_report.passed:
+        typer.echo(f"ETF 数据质量状态：{quality_report.status}，已停止 weight search。")
+        raise typer.Exit(code=1)
+    run = run_historical_weight_search(
+        prices,
+        etf_config=config,
+        quality_report=quality_report,
+        registry=registry,
+        search_id=search,
+        start=_parse_date(start) if start else None,
+        end=_parse_date(end) if end else None,
+        max_candidates=max_candidates,
+    )
+    paths = write_weight_search_run(
+        run,
+        report_root=output_dir,
+        data_root=data_output_dir,
+    )
+    generation = run.payload["candidate_generation"]
+    typer.echo(f"ETF weight calibration search 完成：{run.run_id}")
+    typer.echo(f"report={paths['summary_md']}")
+    typer.echo(f"data_dir={paths['data_dir']}")
+    typer.echo(f"evaluated_candidate_count={generation['evaluated_candidate_count']}")
+    typer.echo(f"total_valid_candidate_count={generation['total_valid_candidate_count']}")
+    typer.echo(f"blocked_candidate_count={len(run.payload['blocked_candidates'])}")
+    typer.echo(f"data_quality_status={run.payload['data_quality_status']}")
     typer.echo("observe_only=true")
     typer.echo("candidate_only=true")
     typer.echo("production_effect=none")

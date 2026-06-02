@@ -64,8 +64,8 @@ not the primary AI-cycle conclusion window.
 |ID|Name|Status|Acceptance|
 |---|---|---|---|
 |TRADING-071A|Historical Weight Search Config|DONE|Config exists, bounded search constraints validate, safety fields are mandatory, invalid configs fail fast|
-|TRADING-071B|Historical Weight Iteration Engine|IN_PROGRESS|Bounded candidates are generated, backtested, scored, ranked, persisted, and never applied|
-|TRADING-071C|Walk-Forward / Regime Robustness Evaluation|READY|Candidates are evaluated across full period, walk-forward windows, and regime slices|
+|TRADING-071B|Historical Weight Iteration Engine|DONE|Bounded candidates are generated, backtested, scored, ranked, persisted, and never applied|
+|TRADING-071C|Walk-Forward / Regime Robustness Evaluation|IN_PROGRESS|Candidates are evaluated across full period, walk-forward windows, and regime slices|
 |TRADING-071D|Candidate Initial Weight Set Registry|READY|Selected candidate weights are stored as candidate-only records with safe statuses|
 |TRADING-071E|Dual-Track Forward Enrollment|READY|Selected safe candidates can be explicitly enrolled into forward observation|
 |TRADING-071F|Backtest vs Forward Evidence Aggregator|READY|Historical expectation and real forward evidence are linked and gap metrics are computed|
@@ -120,3 +120,10 @@ command.
   weight-calibration validate-config` 和 focused tests；验证通过 full pytest、ruff、
   compileall、diff check 和 config CLI。TRADING-071B 进入 `IN_PROGRESS`，下一步实现
   bounded historical candidate generation/backtest/scoring engine。
+- 2026-06-02: TRADING-071B 完成。新增 bounded grid candidate generator、static
+  candidate historical backtest engine、HistoricalWeightScore component scoring、hard
+  blockers、deterministic ranking、search run JSON/Markdown/CSV writers、`aits etf
+  weight-calibration search` 和 focused tests；outputs 明示 candidate cap、market
+  regime、requested date range、baseline/benchmark comparison、`production_weights_mutated=false`
+  和 `applied_weight_set=null`。TRADING-071C 进入 `IN_PROGRESS`，下一步扩展 walk-forward
+  和 regime robustness evaluation。

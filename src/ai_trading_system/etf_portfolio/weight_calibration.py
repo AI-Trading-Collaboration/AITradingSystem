@@ -1,16 +1,22 @@
 from __future__ import annotations
 
 import json
-from datetime import date
+from collections.abc import Mapping
+from dataclasses import dataclass
+from datetime import UTC, date, datetime
 from hashlib import sha256
 from pathlib import Path
 from typing import Any, Self
 
+import pandas as pd
 from pydantic import BaseModel, Field, model_validator
 
+from ai_trading_system.backtest.engine import BacktestMetrics, summarize_long_only_backtest
 from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.etf_portfolio.backtest import calculate_portfolio_accounting_step
 from ai_trading_system.etf_portfolio.models import (
     ETFConfigBundle,
+    ETFQualityReport,
     PolicyMetadata,
     load_etf_config_bundle,
 )
@@ -19,8 +25,15 @@ from ai_trading_system.yaml_loader import safe_load_yaml_path
 DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "weight_search.yaml"
 )
+DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR = (
+    PROJECT_ROOT / "reports" / "etf_portfolio" / "weight_calibration"
+)
+DEFAULT_ETF_WEIGHT_CALIBRATION_DATA_DIR = (
+    PROJECT_ROOT / "data" / "etf_portfolio" / "weight_calibration"
+)
 
 WEIGHT_SEARCH_SCHEMA_VERSION = "etf_weight_search_v1"
+WEIGHT_SEARCH_RUN_SCHEMA_VERSION = "etf_weight_search_run_v1"
 
 WEIGHT_CALIBRATION_SAFETY = {
     "observe_only": True,
@@ -33,6 +46,12 @@ WEIGHT_CALIBRATION_SAFETY = {
 
 class WeightCalibrationError(ValueError):
     """Raised when ETF weight calibration config violates governance requirements."""
+
+
+@dataclass(frozen=True)
+class ETFWeightSearchRun:
+    run_id: str
+    payload: dict[str, Any]
 
 
 class ETFWeightCalibrationSafety(BaseModel):
@@ -77,6 +96,7 @@ class ETFWeightObjectivePolicy(BaseModel):
     review_condition: str = Field(min_length=1)
     component_weights: dict[str, float] = Field(min_length=1)
     component_scales: dict[str, float] = Field(default_factory=dict)
+    hard_blocker_thresholds: dict[str, float] = Field(default_factory=dict)
     hard_blockers: list[str] = Field(default_factory=list)
 
     @model_validator(mode="after")
@@ -87,6 +107,11 @@ class ETFWeightObjectivePolicy(BaseModel):
         for key, value in self.component_scales.items():
             if float(value) <= 0:
                 raise ValueError(f"ETF weight objective component scale must be positive: {key}")
+        for key, value in self.hard_blocker_thresholds.items():
+            if float(value) < 0:
+                raise ValueError(
+                    f"ETF weight objective hard blocker threshold must be non-negative: {key}"
+                )
         normalized_blockers = [str(item).strip() for item in self.hard_blockers]
         if any(not item for item in normalized_blockers):
             raise ValueError("ETF weight objective hard_blockers must not contain blanks")
@@ -270,6 +295,414 @@ def validate_weight_search_registry(
         raise WeightCalibrationError("; ".join(issues))
 
 
+def generate_weight_candidates(
+    search: ETFWeightSearchDefinition,
+    *,
+    etf_config: ETFConfigBundle,
+    max_candidates: int | None = None,
+) -> tuple[list[dict[str, float]], dict[str, Any]]:
+    candidate_limit = int(max_candidates or search.max_candidate_count)
+    if candidate_limit <= 0:
+        raise WeightCalibrationError("ETF weight search max_candidates must be positive")
+    if candidate_limit > search.max_candidate_count:
+        raise WeightCalibrationError(
+            "ETF weight search max_candidates cannot exceed config max_candidate_count"
+        )
+    units = int(round(1.0 / search.grid_step))
+    constraints = {
+        symbol: (
+            int(round(search.weight_constraints[symbol].min * units)),
+            int(round(search.weight_constraints[symbol].max * units)),
+        )
+        for symbol in search.universe
+    }
+    non_cash_symbols = [symbol for symbol in search.universe if symbol != "CASH"]
+    semiconductor_symbols = {
+        symbol
+        for symbol in non_cash_symbols
+        if etf_config.assets.assets[symbol].risk_group == "semiconductor"
+    }
+    valid_candidates: list[dict[str, float]] = []
+
+    def visit(index: int, current: dict[str, int]) -> None:
+        if index == len(non_cash_symbols):
+            cash_units = units - sum(current.values())
+            cash_min, cash_max = constraints["CASH"]
+            if cash_units < cash_min or cash_units > cash_max:
+                return
+            candidate_units = {**current, "CASH": cash_units}
+            candidate = {
+                symbol: round(candidate_units[symbol] / units, 10)
+                for symbol in search.universe
+            }
+            if not _candidate_satisfies_sleeves(
+                candidate,
+                search=search,
+                semiconductor_symbols=semiconductor_symbols,
+            ):
+                return
+            valid_candidates.append(candidate)
+            return
+        symbol = non_cash_symbols[index]
+        min_units, max_units = constraints[symbol]
+        for value in range(min_units, max_units + 1):
+            current[symbol] = value
+            if sum(current.values()) <= units:
+                visit(index + 1, current)
+        current.pop(symbol, None)
+
+    visit(0, {})
+    baseline_weights = _default_weights(etf_config, search.universe)
+    valid_candidates.sort(key=lambda weights: _candidate_selection_key(weights, baseline_weights))
+    selected = valid_candidates[:candidate_limit]
+    return selected, {
+        "selection_method": "deterministic_bounded_grid_baseline_proximity_v1",
+        "grid_step": search.grid_step,
+        "total_valid_candidate_count": len(valid_candidates),
+        "evaluated_candidate_count": len(selected),
+        "max_candidate_count": search.max_candidate_count,
+        "effective_candidate_limit": candidate_limit,
+        "truncated_by_candidate_limit": len(valid_candidates) > len(selected),
+    }
+
+
+def run_historical_weight_search(
+    prices: pd.DataFrame,
+    *,
+    etf_config: ETFConfigBundle,
+    quality_report: ETFQualityReport,
+    registry: ETFWeightSearchRegistry,
+    search_id: str,
+    start: date | None = None,
+    end: date | None = None,
+    max_candidates: int | None = None,
+    generated_at: datetime | None = None,
+) -> ETFWeightSearchRun:
+    if not quality_report.passed:
+        raise WeightCalibrationError(
+            f"ETF weight calibration requires passed data quality gate: {quality_report.status}"
+        )
+    try:
+        search = registry.weight_searches[search_id]
+    except KeyError as exc:
+        raise WeightCalibrationError(f"unknown ETF weight search: {search_id}") from exc
+    generated = generated_at or datetime.now(UTC)
+    run_start = start or search.backtest_start_date
+    run_end = end or search.backtest_end_date or _latest_price_date(prices)
+    if run_start >= run_end:
+        raise WeightCalibrationError("ETF weight search start date must be before end date")
+    candidates, generation = generate_weight_candidates(
+        search,
+        etf_config=etf_config,
+        max_candidates=max_candidates,
+    )
+    baseline_weights = _default_weights(etf_config, search.universe)
+    baseline = _run_static_weight_backtest(
+        prices,
+        weights=baseline_weights,
+        config=etf_config,
+        start=run_start,
+        end=run_end,
+    )
+    benchmark_results = _run_benchmark_set_backtests(
+        prices,
+        config=etf_config,
+        registry=registry,
+        search=search,
+        start=run_start,
+        end=run_end,
+    )
+    objective = registry.objective_policies[search.objective_policy]
+    ranked_rows = []
+    candidate_weight_sets = []
+    metrics_rows = []
+    for index, weights in enumerate(candidates, start=1):
+        candidate_id = f"weight_set_{index:04d}"
+        backtest = _run_static_weight_backtest(
+            prices,
+            weights=weights,
+            config=etf_config,
+            start=run_start,
+            end=run_end,
+        )
+        metric_row = _candidate_metric_row(
+            candidate_id=candidate_id,
+            weights=weights,
+            candidate_metrics=backtest["metrics"],
+            baseline_metrics=baseline["metrics"],
+            benchmark_results=benchmark_results,
+            objective=objective,
+            search=search,
+            semiconductor_symbols=_semiconductor_symbols(etf_config, search.universe),
+            baseline_weights=baseline_weights,
+        )
+        candidate_weight_sets.append(
+            {
+                "candidate_id": candidate_id,
+                "weights": weights,
+                "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+                **WEIGHT_CALIBRATION_SAFETY,
+            }
+        )
+        metrics_rows.append(metric_row)
+        ranked_rows.append(
+            {
+                "candidate_id": candidate_id,
+                "candidate_score": metric_row["candidate_score"],
+                "candidate_status": metric_row["candidate_status"],
+                "hard_blockers": metric_row["hard_blockers"],
+                "ranking_reason": metric_row["ranking_reason"],
+                "weights": weights,
+                "observe_only": True,
+                "candidate_only": True,
+                "production_effect": "none",
+                "broker_action": "none",
+                "manual_review_required": True,
+            }
+        )
+    ranking = sorted(
+        ranked_rows,
+        key=lambda row: (
+            0 if row["candidate_status"] == "ranked" else 1,
+            -float(row["candidate_score"]),
+            str(row["candidate_id"]),
+        ),
+    )
+    for rank, row in enumerate(ranking, start=1):
+        row["rank"] = rank
+    rank_by_candidate = {row["candidate_id"]: row["rank"] for row in ranking}
+    for row in candidate_weight_sets:
+        row["rank"] = rank_by_candidate[row["candidate_id"]]
+    for row in metrics_rows:
+        row["rank"] = rank_by_candidate[row["candidate_id"]]
+    blocked_candidates = [
+        row for row in ranking if row["candidate_status"] in {"blocked", "rejected"}
+    ]
+    run_id = f"etf-weight-search-{generated.strftime('%Y%m%dT%H%M%SZ')}"
+    payload = {
+        "schema_version": WEIGHT_SEARCH_RUN_SCHEMA_VERSION,
+        "report_type": "etf_weight_search_run",
+        "search_run_id": run_id,
+        "search_id": search.search_id,
+        "search_config_hash": registry.config_hash,
+        "generated_at": generated.isoformat(),
+        "market_regime": etf_config.backtest.backtest.regime,
+        "requested_date_range": {
+            "start": run_start.isoformat(),
+            "end": run_end.isoformat(),
+        },
+        "data_quality_status": quality_report.status,
+        "baseline_weight_set": {
+            "weight_set_id": "current_default_weights",
+            "weights": baseline_weights,
+            "metrics": _metrics_payload(baseline["metrics"]),
+        },
+        "candidate_generation": generation,
+        "objective_policy": {
+            "policy_id": search.objective_policy,
+            "policy_status": objective.policy_status,
+            "component_weights": dict(objective.component_weights),
+            "component_scales": dict(objective.component_scales),
+            "hard_blocker_thresholds": dict(objective.hard_blocker_thresholds),
+            "hard_blockers": list(objective.hard_blockers),
+        },
+        "benchmark_set": {
+            "benchmark_set_id": search.benchmark_set,
+            "benchmark_ids": list(registry.benchmark_sets[search.benchmark_set].benchmark_ids),
+            "benchmark_metrics": benchmark_results,
+        },
+        "candidate_weight_sets": candidate_weight_sets,
+        "metrics": metrics_rows,
+        "ranking": ranking,
+        "blocked_candidates": blocked_candidates,
+        "production_weights_mutated": False,
+        "applied_weight_set": None,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_weight_search_run_payload(payload)
+    return ETFWeightSearchRun(run_id=run_id, payload=payload)
+
+
+def validate_weight_search_run_payload(payload: Mapping[str, Any]) -> None:
+    issues = []
+    if payload.get("schema_version") != WEIGHT_SEARCH_RUN_SCHEMA_VERSION:
+        issues.append("schema_version")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if payload.get(field) != expected:
+            issues.append(field)
+    if payload.get("production_weights_mutated") is not False:
+        issues.append("production_weights_mutated")
+    if payload.get("applied_weight_set") is not None:
+        issues.append("applied_weight_set")
+    generation = _mapping(payload.get("candidate_generation"))
+    if int(generation.get("evaluated_candidate_count", 0)) <= 0:
+        issues.append("candidate_generation.evaluated_candidate_count")
+    for candidate in _records(payload.get("candidate_weight_sets")):
+        weights = _mapping(candidate.get("weights"))
+        if abs(sum(float(value) for value in weights.values()) - 1.0) > 1e-6:
+            issues.append(f"{candidate.get('candidate_id')}.weights_sum")
+        for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+            if candidate.get(field) != expected:
+                issues.append(f"{candidate.get('candidate_id')}.{field}")
+    if not _records(payload.get("ranking")):
+        issues.append("ranking")
+    if issues:
+        raise WeightCalibrationError(
+            "ETF weight search run payload validation failed: " + ", ".join(issues)
+        )
+
+
+def write_weight_search_run(
+    run: ETFWeightSearchRun,
+    *,
+    report_root: Path = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR,
+    data_root: Path = DEFAULT_ETF_WEIGHT_CALIBRATION_DATA_DIR,
+) -> dict[str, Path]:
+    payload = run.payload
+    validate_weight_search_run_payload(payload)
+    report_dir = report_root / run.run_id
+    data_dir = data_root / run.run_id
+    report_dir.mkdir(parents=True, exist_ok=True)
+    data_dir.mkdir(parents=True, exist_ok=True)
+    summary_json = report_dir / "summary.json"
+    summary_md = report_dir / "summary.md"
+    metrics_csv = report_dir / "metrics.csv"
+    ranking_json = report_dir / "ranking.json"
+    candidates_json = data_dir / "candidate_weight_sets.json"
+    candidates_csv = data_dir / "candidate_weight_sets.csv"
+    summary_json.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    summary_md.write_text(render_weight_search_run_markdown(payload), encoding="utf-8")
+    metrics_frame = pd.DataFrame(payload["metrics"])
+    metrics_frame.to_csv(metrics_csv, index=False)
+    ranking_json.write_text(
+        json.dumps(payload["ranking"], ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    candidates_json.write_text(
+        json.dumps(
+            payload["candidate_weight_sets"],
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    pd.DataFrame(
+        [
+            {
+                "candidate_id": candidate["candidate_id"],
+                "rank": candidate["rank"],
+                **{
+                    f"weight_{symbol}": weight
+                    for symbol, weight in dict(candidate["weights"]).items()
+                },
+                "observe_only": True,
+                "candidate_only": True,
+                "production_effect": "none",
+                "broker_action": "none",
+                "manual_review_required": True,
+            }
+            for candidate in payload["candidate_weight_sets"]
+        ]
+    ).to_csv(candidates_csv, index=False)
+    return {
+        "report_dir": report_dir,
+        "data_dir": data_dir,
+        "summary_json": summary_json,
+        "summary_md": summary_md,
+        "metrics_csv": metrics_csv,
+        "ranking_json": ranking_json,
+        "candidates_json": candidates_json,
+        "candidates_csv": candidates_csv,
+    }
+
+
+def render_weight_search_run_markdown(payload: Mapping[str, Any]) -> str:
+    generation = _mapping(payload.get("candidate_generation"))
+    baseline = _mapping(payload.get("baseline_weight_set"))
+    baseline_metrics = _mapping(baseline.get("metrics"))
+    lines = [
+        f"# ETF Weight Calibration Search - {payload.get('search_run_id')}",
+        "",
+        "## Safety Banner",
+        "",
+        "- observe_only = true",
+        "- candidate_only = true",
+        "- production_effect = none",
+        "- broker_action = none",
+        "- manual_review_required = true",
+        "- 本报告只生成 candidate initial weights，不修改 production baseline weights。",
+        "",
+        "## Search Configuration",
+        "",
+        f"- Search ID: {payload.get('search_id')}",
+        f"- Search Config Hash: `{payload.get('search_config_hash')}`",
+        f"- Market Regime: {payload.get('market_regime')}",
+        (
+            "- Requested Date Range: "
+            f"{_mapping(payload.get('requested_date_range')).get('start')} to "
+            f"{_mapping(payload.get('requested_date_range')).get('end')}"
+        ),
+        f"- Data Quality Status: {payload.get('data_quality_status')}",
+        (
+            "- Candidate Grid: "
+            f"{generation.get('evaluated_candidate_count')} evaluated / "
+            f"{generation.get('total_valid_candidate_count')} valid; "
+            f"method={generation.get('selection_method')}"
+        ),
+        "",
+        "## Baseline",
+        "",
+        f"- Baseline Weight Set: {baseline.get('weight_set_id')}",
+        (
+            "- Baseline Metrics: "
+            f"total_return={_fmt_pct(baseline_metrics.get('total_return'))}; "
+            f"max_drawdown={_fmt_pct(baseline_metrics.get('max_drawdown'))}; "
+            f"Sharpe={_fmt_number(baseline_metrics.get('sharpe'))}"
+        ),
+        "",
+        "## Top Historical Candidates",
+        "",
+        (
+            "| Rank | Candidate | Score | Status | Total Return | Excess vs Baseline | "
+            "Max Drawdown | Turnover vs Baseline | Blockers |"
+        ),
+        "|---:|---|---:|---|---:|---:|---:|---:|---|",
+    ]
+    metrics_by_id = {row["candidate_id"]: row for row in _records(payload.get("metrics"))}
+    for row in _records(payload.get("ranking"))[:10]:
+        metrics = metrics_by_id.get(str(row.get("candidate_id")), {})
+        lines.append(
+            "| "
+            f"{row.get('rank')} | "
+            f"{row.get('candidate_id')} | "
+            f"{_fmt_number(row.get('candidate_score'))} | "
+            f"{row.get('candidate_status')} | "
+            f"{_fmt_pct(metrics.get('total_return'))} | "
+            f"{_fmt_pct(metrics.get('excess_return_vs_baseline'))} | "
+            f"{_fmt_pct(metrics.get('max_drawdown'))} | "
+            f"{_fmt_number(metrics.get('turnover_vs_baseline'))} | "
+            f"{', '.join(row.get('hard_blockers') or []) or 'none'} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Runtime Outputs",
+            "",
+            "- `summary.json` / `summary.md`: historical search run payload.",
+            "- `metrics.csv`: candidate scoring and risk metrics.",
+            "- `ranking.json`: deterministic candidate ranking.",
+            "- `candidate_weight_sets.json/csv`: candidate-only weight sets.",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
 def weight_search_config_to_json(registry: ETFWeightSearchRegistry) -> str:
     return (
         json.dumps(registry.model_dump(mode="json"), ensure_ascii=False, indent=2, sort_keys=True)
@@ -295,3 +728,448 @@ def _raise_if_invalid_grid_step(grid_step: float) -> None:
 def _config_hash(payload: dict[str, Any]) -> str:
     normalized = json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str)
     return sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def _run_static_weight_backtest(
+    prices: pd.DataFrame,
+    *,
+    weights: Mapping[str, float],
+    config: ETFConfigBundle,
+    start: date,
+    end: date,
+) -> dict[str, Any]:
+    close_pivot = _price_pivot(prices, config.backtest.backtest.price_field)
+    trading_dates = [
+        item.date()
+        for item in close_pivot.index
+        if start <= item.date() <= end
+    ]
+    signal_lag_days = int(config.backtest.backtest.signal_lag_days)
+    if len(trading_dates) < signal_lag_days + 2:
+        raise WeightCalibrationError("ETF weight search has too few trading dates")
+    rows: list[dict[str, Any]] = []
+    returns: list[float] = []
+    turnovers: list[float] = []
+    exposures: list[float] = []
+    previous_weights: dict[str, float] | None = None
+    equity = 1.0
+    clean_weights = {str(symbol): float(value) for symbol, value in weights.items()}
+    for index, signal_date in enumerate(trading_dates):
+        execution_index = index + signal_lag_days
+        return_index = execution_index + 1
+        if return_index >= len(trading_dates):
+            break
+        execution_date = trading_dates[execution_index]
+        return_date = trading_dates[return_index]
+        accounting = calculate_portfolio_accounting_step(
+            close_pivot,
+            signal_date=signal_date,
+            execution_date=execution_date,
+            return_date=return_date,
+            target_weights=clean_weights,
+            previous_weights=previous_weights,
+            asset_symbols=tuple(config.assets.assets),
+            total_cost_bps=_total_cost_bps(config),
+            starting_equity=equity,
+        )
+        equity = accounting.ending_equity
+        returns.append(accounting.strategy_return)
+        turnovers.append(accounting.turnover)
+        exposures.append(1.0 - clean_weights.get("CASH", 0.0))
+        rows.append(
+            {
+                "signal_date": signal_date.isoformat(),
+                "execution_date": execution_date.isoformat(),
+                "return_date": return_date.isoformat(),
+                "strategy_return": accounting.strategy_return,
+                "gross_return": accounting.gross_return,
+                "turnover": accounting.turnover,
+                "transaction_cost": accounting.transaction_cost,
+                "portfolio_equity": equity,
+                "target_weights_json": json.dumps(
+                    clean_weights,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                ),
+                "asset_returns_json": json.dumps(
+                    accounting.period_returns,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                ),
+                "asset_contributions_json": json.dumps(
+                    accounting.asset_contributions,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                ),
+            }
+        )
+        previous_weights = clean_weights
+    metrics = summarize_long_only_backtest(returns, exposures, turnovers)
+    return {
+        "daily": pd.DataFrame(rows),
+        "metrics": metrics,
+        "first_signal_date": rows[0]["signal_date"],
+        "last_signal_date": rows[-1]["signal_date"],
+        "row_count": len(rows),
+    }
+
+
+def _run_benchmark_set_backtests(
+    prices: pd.DataFrame,
+    *,
+    config: ETFConfigBundle,
+    registry: ETFWeightSearchRegistry,
+    search: ETFWeightSearchDefinition,
+    start: date,
+    end: date,
+) -> dict[str, dict[str, Any]]:
+    benchmark_set = registry.benchmark_sets[search.benchmark_set]
+    benchmark_results: dict[str, dict[str, Any]] = {}
+    for benchmark_id in benchmark_set.benchmark_ids:
+        benchmark = config.backtest.backtest.benchmarks.get(benchmark_id)
+        if benchmark is None:
+            benchmark_results[benchmark_id] = {
+                "status": "MISSING",
+                "metric_null_reasons": {"benchmark": "benchmark_id_missing"},
+            }
+            continue
+        try:
+            weights = _benchmark_static_weights(benchmark)
+            result = _run_static_weight_backtest(
+                prices,
+                weights=weights,
+                config=config,
+                start=start,
+                end=end,
+            )
+        except WeightCalibrationError as exc:
+            benchmark_results[benchmark_id] = {
+                "status": "MISSING",
+                "benchmark_name": benchmark.name,
+                "metric_null_reasons": {"benchmark": str(exc)},
+            }
+            continue
+        benchmark_results[benchmark_id] = {
+            "status": "AVAILABLE",
+            "benchmark_name": benchmark.name,
+            "benchmark_type": benchmark.benchmark_type,
+            **_metrics_payload(result["metrics"]),
+        }
+    return benchmark_results
+
+
+def _candidate_metric_row(
+    *,
+    candidate_id: str,
+    weights: Mapping[str, float],
+    candidate_metrics: BacktestMetrics,
+    baseline_metrics: BacktestMetrics,
+    benchmark_results: Mapping[str, Mapping[str, Any]],
+    objective: ETFWeightObjectivePolicy,
+    search: ETFWeightSearchDefinition,
+    semiconductor_symbols: set[str],
+    baseline_weights: Mapping[str, float],
+) -> dict[str, Any]:
+    benchmark_comparison = _benchmark_comparison(candidate_metrics, benchmark_results)
+    turnover_vs_baseline = sum(
+        abs(float(weights.get(symbol, 0.0)) - float(baseline_weights.get(symbol, 0.0)))
+        for symbol in set(weights) | set(baseline_weights)
+    )
+    excess_return = candidate_metrics.total_return - baseline_metrics.total_return
+    drawdown_reduction = abs(baseline_metrics.max_drawdown) - abs(
+        candidate_metrics.max_drawdown
+    )
+    component_scores = _historical_component_scores(
+        candidate_metrics=candidate_metrics,
+        excess_return=excess_return,
+        drawdown_reduction=drawdown_reduction,
+        turnover_vs_baseline=turnover_vs_baseline,
+        weights=weights,
+        objective=objective,
+    )
+    hard_blockers = _candidate_hard_blockers(
+        weights=weights,
+        candidate_metrics=candidate_metrics,
+        benchmark_comparison=benchmark_comparison,
+        turnover_vs_baseline=turnover_vs_baseline,
+        objective=objective,
+        search=search,
+        semiconductor_symbols=semiconductor_symbols,
+    )
+    candidate_score = (
+        0.0
+        if hard_blockers
+        else sum(
+            float(objective.component_weights[name]) * float(component_scores[name])
+            for name in objective.component_weights
+        )
+    )
+    status = "ranked"
+    if hard_blockers:
+        status = "blocked" if _blocking_safety_issue(hard_blockers) else "rejected"
+    return {
+        "candidate_id": candidate_id,
+        "candidate_status": status,
+        "candidate_score": round(candidate_score, 6),
+        "total_return": candidate_metrics.total_return,
+        "CAGR": candidate_metrics.cagr,
+        "max_drawdown": candidate_metrics.max_drawdown,
+        "Sharpe": candidate_metrics.sharpe,
+        "Sortino": candidate_metrics.sortino,
+        "Calmar": candidate_metrics.calmar,
+        "turnover": candidate_metrics.turnover,
+        "turnover_vs_baseline": turnover_vs_baseline,
+        "excess_return_vs_baseline": excess_return,
+        "drawdown_reduction_vs_baseline": drawdown_reduction,
+        "benchmark_comparison": benchmark_comparison,
+        "component_scores": component_scores,
+        "hard_blockers": hard_blockers,
+        "ranking_reason": _ranking_reasons(component_scores, hard_blockers),
+        "weights": dict(weights),
+        "observe_only": True,
+        "candidate_only": True,
+        "production_effect": "none",
+        "broker_action": "none",
+        "manual_review_required": True,
+    }
+
+
+def _historical_component_scores(
+    *,
+    candidate_metrics: BacktestMetrics,
+    excess_return: float,
+    drawdown_reduction: float,
+    turnover_vs_baseline: float,
+    weights: Mapping[str, float],
+    objective: ETFWeightObjectivePolicy,
+) -> dict[str, float]:
+    scales = objective.component_scales
+    sharpe = candidate_metrics.sharpe or 0.0
+    nonzero_weights = sum(1 for value in weights.values() if float(value) > 1e-9)
+    simplicity = 1.0 - max(0.0, (nonzero_weights - 1) / max(len(weights) - 1, 1))
+    return {
+        "excess_return_vs_baseline_score": _positive_scaled(
+            excess_return,
+            scales.get("excess_return_vs_baseline", 0.10),
+        ),
+        "drawdown_reduction_score": _positive_scaled(
+            drawdown_reduction,
+            scales.get("drawdown_reduction", 0.10),
+        ),
+        "risk_adjusted_return_score": _positive_scaled(
+            sharpe,
+            scales.get("sharpe", 2.0),
+        ),
+        "turnover_penalty_score": _penalty_score(
+            turnover_vs_baseline,
+            scales.get("turnover", 1.0),
+        ),
+        "regime_robustness_score": 0.5,
+        "simplicity_score": max(0.0, min(1.0, simplicity)),
+    }
+
+
+def _candidate_hard_blockers(
+    *,
+    weights: Mapping[str, float],
+    candidate_metrics: BacktestMetrics,
+    benchmark_comparison: Mapping[str, Any],
+    turnover_vs_baseline: float,
+    objective: ETFWeightObjectivePolicy,
+    search: ETFWeightSearchDefinition,
+    semiconductor_symbols: set[str],
+) -> list[str]:
+    thresholds = objective.hard_blocker_thresholds
+    blockers = []
+    if not benchmark_comparison:
+        blockers.append("NO_BENCHMARK_COMPARISON")
+    max_drawdown_abs = float(thresholds.get("max_drawdown_abs", 0.35))
+    if abs(candidate_metrics.max_drawdown) > max_drawdown_abs:
+        blockers.append("MAX_DRAWDOWN_TOO_HIGH")
+    max_turnover = float(thresholds.get("max_turnover_vs_baseline", 0.80))
+    if turnover_vs_baseline > max_turnover:
+        blockers.append("TURNOVER_TOO_HIGH")
+    semiconductor_total = sum(float(weights.get(symbol, 0.0)) for symbol in semiconductor_symbols)
+    if semiconductor_total > search.sleeve_constraints.semiconductor_total_max + 1e-8:
+        blockers.append("SEMICONDUCTOR_CAP_VIOLATED")
+    cash_weight = float(weights.get("CASH", 0.0))
+    if cash_weight < search.weight_constraints["CASH"].min - 1e-8:
+        blockers.append("CASH_CONSTRAINT_VIOLATED")
+    if search.safety.production_effect != "none":
+        blockers.append("UNSAFE_PRODUCTION_EFFECT")
+    if search.safety.broker_action != "none":
+        blockers.append("BROKER_ACTION_NOT_NONE")
+    return [item for item in blockers if item in objective.hard_blockers or item.startswith("NO_")]
+
+
+def _benchmark_comparison(
+    candidate_metrics: BacktestMetrics,
+    benchmark_results: Mapping[str, Mapping[str, Any]],
+) -> dict[str, Any]:
+    comparison = {}
+    for benchmark_id, benchmark in benchmark_results.items():
+        if benchmark.get("status") != "AVAILABLE":
+            continue
+        benchmark_return = _float_or_none(benchmark.get("total_return"))
+        benchmark_drawdown = _float_or_none(benchmark.get("max_drawdown"))
+        if benchmark_return is None or benchmark_drawdown is None:
+            continue
+        comparison[benchmark_id] = {
+            "benchmark_name": benchmark.get("benchmark_name"),
+            "excess_return": candidate_metrics.total_return - benchmark_return,
+            "drawdown_reduction": abs(benchmark_drawdown) - abs(
+                candidate_metrics.max_drawdown
+            ),
+        }
+    return comparison
+
+
+def _benchmark_static_weights(benchmark: Any) -> dict[str, float]:
+    benchmark_type = str(benchmark.benchmark_type)
+    if benchmark_type == "buy_and_hold":
+        return {str(benchmark.symbol): 1.0}
+    if benchmark_type == "static_portfolio":
+        return {str(symbol): float(weight) for symbol, weight in benchmark.weights.items()}
+    raise WeightCalibrationError(
+        f"benchmark_type {benchmark_type} is not available for TRADING-071B static search"
+    )
+
+
+def _candidate_satisfies_sleeves(
+    weights: Mapping[str, float],
+    *,
+    search: ETFWeightSearchDefinition,
+    semiconductor_symbols: set[str],
+) -> bool:
+    non_cash_total = sum(float(value) for symbol, value in weights.items() if symbol != "CASH")
+    if non_cash_total > search.sleeve_constraints.equity_total_max + 1e-8:
+        return False
+    semiconductor_total = sum(float(weights.get(symbol, 0.0)) for symbol in semiconductor_symbols)
+    return semiconductor_total <= search.sleeve_constraints.semiconductor_total_max + 1e-8
+
+
+def _candidate_selection_key(
+    weights: Mapping[str, float],
+    baseline_weights: Mapping[str, float],
+) -> tuple[float, float, float, tuple[tuple[str, float], ...]]:
+    baseline_distance = sum(
+        abs(float(weights.get(symbol, 0.0)) - float(baseline_weights.get(symbol, 0.0)))
+        for symbol in set(weights) | set(baseline_weights)
+    )
+    concentration = max(float(value) for value in weights.values())
+    cash_distance = abs(float(weights.get("CASH", 0.0)) - float(baseline_weights.get("CASH", 0.0)))
+    return (
+        round(baseline_distance, 10),
+        round(concentration, 10),
+        round(cash_distance, 10),
+        tuple(sorted((str(symbol), float(weight)) for symbol, weight in weights.items())),
+    )
+
+
+def _default_weights(config: ETFConfigBundle, universe: list[str]) -> dict[str, float]:
+    weights = {
+        symbol: float(config.assets.assets[symbol].default_weight)
+        for symbol in universe
+    }
+    total = sum(weights.values())
+    if abs(total - 1.0) > 1e-6:
+        raise WeightCalibrationError("ETF default weights must sum to 1.0 for search universe")
+    return weights
+
+
+def _semiconductor_symbols(config: ETFConfigBundle, universe: list[str]) -> set[str]:
+    return {
+        symbol
+        for symbol in universe
+        if symbol in config.assets.assets
+        and config.assets.assets[symbol].risk_group == "semiconductor"
+    }
+
+
+def _metrics_payload(metrics: BacktestMetrics) -> dict[str, float | None]:
+    return {
+        "total_return": metrics.total_return,
+        "CAGR": metrics.cagr,
+        "max_drawdown": metrics.max_drawdown,
+        "sharpe": metrics.sharpe,
+        "sortino": metrics.sortino,
+        "calmar": metrics.calmar,
+        "time_in_market": metrics.time_in_market,
+        "turnover": metrics.turnover,
+    }
+
+
+def _ranking_reasons(
+    component_scores: Mapping[str, float],
+    hard_blockers: list[str],
+) -> list[str]:
+    if hard_blockers:
+        return [f"HARD_BLOCKER:{blocker}" for blocker in hard_blockers]
+    ordered = sorted(component_scores.items(), key=lambda item: (-float(item[1]), item[0]))
+    return [f"{key}={value:.3f}" for key, value in ordered[:3]]
+
+
+def _blocking_safety_issue(blockers: list[str]) -> bool:
+    return any(blocker.startswith(("UNSAFE_", "BROKER_", "NO_")) for blocker in blockers)
+
+
+def _positive_scaled(value: float, scale: float) -> float:
+    if scale <= 0:
+        return 0.0
+    return max(0.0, min(1.0, float(value) / float(scale)))
+
+
+def _penalty_score(value: float, scale: float) -> float:
+    if scale <= 0:
+        return 0.0
+    return max(0.0, min(1.0, 1.0 - float(value) / float(scale)))
+
+
+def _price_pivot(prices: pd.DataFrame, price_field: str) -> pd.DataFrame:
+    frame = prices.copy()
+    frame["_date"] = pd.to_datetime(frame["date"], errors="coerce")
+    frame["_price"] = pd.to_numeric(frame[price_field], errors="coerce")
+    pivot = frame.pivot(index="_date", columns="symbol", values="_price").sort_index()
+    return pivot.dropna(how="all")
+
+
+def _latest_price_date(prices: pd.DataFrame) -> date:
+    parsed = pd.to_datetime(prices["date"], errors="coerce").dropna()
+    if parsed.empty:
+        raise WeightCalibrationError("ETF weight search price data has no valid dates")
+    return parsed.max().date()
+
+
+def _total_cost_bps(config: ETFConfigBundle) -> float:
+    costs = config.risk.transaction_costs
+    return costs.commission_bps + costs.slippage_bps
+
+
+def _float_or_none(value: object) -> float | None:
+    try:
+        parsed = float(value)
+    except (TypeError, ValueError):
+        return None
+    if parsed != parsed:
+        return None
+    return parsed
+
+
+def _mapping(value: object) -> Mapping[str, Any]:
+    return value if isinstance(value, Mapping) else {}
+
+
+def _records(value: object) -> list[dict[str, Any]]:
+    if not isinstance(value, list):
+        return []
+    return [dict(item) for item in value if isinstance(item, Mapping)]
+
+
+def _fmt_pct(value: object) -> str:
+    parsed = _float_or_none(value)
+    return "n/a" if parsed is None else f"{parsed:.2%}"
+
+
+def _fmt_number(value: object) -> str:
+    parsed = _float_or_none(value)
+    return "n/a" if parsed is None else f"{parsed:.3f}"
