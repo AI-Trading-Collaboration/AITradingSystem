@@ -1,0 +1,455 @@
+schema_version: etf_operations_schedule_v1
+
+policy_metadata:
+  version: etf_operations_schedule_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: "TRADING-074A config-driven operations schedule for ETF portfolio research workflows."
+  validation: "Focused schedule validation tests cover safety fields, unique step IDs, command presence, dependency references, and required expected outputs."
+  review_condition: "Review whenever ETF portfolio CLI commands, report outputs, cadence rules, freshness policy, or operations validation gates change."
+
+safety:
+  observe_only: true
+  candidate_only: true
+  production_effect: none
+  broker_action: none
+  manual_review_required: true
+
+daily_pipeline:
+  - step_id: data_freshness_check
+    description: "Run the required cached market and macro data quality gate before data-dependent ETF reports."
+    command: "aits validate-data --as-of {as_of}"
+    cadence: daily
+    required: true
+    dependencies: []
+    expected_outputs:
+      - "outputs/reports/data_quality_{as_of}.md"
+    max_allowed_age: 1
+    failure_policy: fail_pipeline
+    owner_review_required: false
+  - step_id: etf_daily_run
+    description: "Generate the daily ETF portfolio decision-support bundle after data validation passes."
+    command: "aits etf run daily --date {as_of}"
+    cadence: daily
+    required: true
+    dependencies:
+      - data_freshness_check
+    expected_outputs:
+      - "reports/etf_portfolio/{as_of}_portfolio_brief.md"
+    max_allowed_age: 1
+    failure_policy: fail_pipeline
+    owner_review_required: false
+  - step_id: forward_update
+    description: "Refresh ETF forward shadow observation and dashboard inputs."
+    command: "aits etf forward update --date {as_of}"
+    cadence: daily
+    required: true
+    dependencies:
+      - data_freshness_check
+    expected_outputs:
+      - "reports/etf_portfolio/forward/updates/forward_update_{as_of}.json"
+    max_allowed_age: 1
+    failure_policy: block_dependent_steps
+    owner_review_required: false
+  - step_id: ai_confirmation_run
+    description: "Build the AI confirmation report used by ETF review and attribution workflows."
+    command: "aits etf ai-confirmation report --date {as_of}"
+    cadence: daily
+    required: true
+    dependencies:
+      - data_freshness_check
+    expected_outputs:
+      - "reports/etf_portfolio/ai_confirmation/reports/ai_confirmation_report_{as_of}.json"
+    max_allowed_age: 1
+    failure_policy: block_dependent_steps
+    owner_review_required: false
+  - step_id: satellite_replacement_run
+    description: "Build the ETF-first satellite replacement report without applying replacement weights."
+    command: "aits etf satellite report --date {as_of}"
+    cadence: daily
+    required: true
+    dependencies:
+      - data_freshness_check
+      - ai_confirmation_run
+    expected_outputs:
+      - "reports/etf_portfolio/satellite/reports/satellite_replacement_report_{as_of}.json"
+    max_allowed_age: 1
+    failure_policy: block_dependent_steps
+    owner_review_required: false
+  - step_id: ai_attribution_update
+    description: "Update AI confirmation forward attribution when enough forward samples exist."
+    command: "aits etf ai-attribution report --as-of {as_of}"
+    cadence: daily
+    required: false
+    dependencies:
+      - ai_confirmation_run
+    expected_outputs:
+      - "reports/etf_portfolio/ai_attribution/reports/ai_attribution_report_{as_of}.json"
+    max_allowed_age: 7
+    failure_policy: skip_optional_step
+    owner_review_required: false
+  - step_id: satellite_attribution_update
+    description: "Update satellite replacement forward attribution when enough forward samples exist."
+    command: "aits etf satellite-attribution report --as-of {as_of}"
+    cadence: daily
+    required: false
+    dependencies:
+      - ai_confirmation_run
+      - satellite_replacement_run
+    expected_outputs:
+      - "reports/etf_portfolio/satellite_attribution/reports/satellite_attribution_report_{as_of}.json"
+    max_allowed_age: 7
+    failure_policy: skip_optional_step
+    owner_review_required: false
+  - step_id: report_registry_update
+    description: "Refresh the read-only report index so Reader Brief links current artifacts."
+    command: "aits reports index --as-of {as_of}"
+    cadence: daily
+    required: true
+    dependencies:
+      - etf_daily_run
+      - forward_update
+      - ai_confirmation_run
+      - satellite_replacement_run
+      - ai_attribution_update
+      - satellite_attribution_update
+    expected_outputs:
+      - "outputs/reports/report_index_{as_of}.json"
+    max_allowed_age: 1
+    failure_policy: block_dependent_steps
+    owner_review_required: false
+  - step_id: reader_brief_generate
+    description: "Generate Reader Brief using existing report artifacts and the refreshed report index."
+    command: "aits reports reader-brief --date {as_of}"
+    cadence: daily
+    required: true
+    dependencies:
+      - report_registry_update
+    expected_outputs:
+      - "outputs/reports/reader_brief_{as_of}.json"
+      - "outputs/reports/reader_brief_{as_of}.html"
+    max_allowed_age: 1
+    failure_policy: block_dependent_steps
+    owner_review_required: false
+  - step_id: operations_health_check
+    description: "Summarize daily operations health, blocking failures, warnings, and safety posture."
+    command: "aits etf ops report --cadence daily --as-of {as_of}"
+    cadence: daily
+    required: true
+    dependencies:
+      - reader_brief_generate
+    expected_outputs:
+      - "reports/etf_portfolio/operations/daily/operations_health_{as_of}.json"
+      - "reports/etf_portfolio/operations/daily/operations_health_{as_of}.md"
+    max_allowed_age: 1
+    failure_policy: manual_review_required
+    owner_review_required: true
+
+weekly_pipeline:
+  - step_id: weekly_review_aggregate
+    description: "Aggregate latest ETF source artifacts for weekly portfolio review."
+    command: "aits etf weekly-review aggregate --as-of {as_of}"
+    cadence: weekly
+    required: true
+    dependencies:
+      - operations_health_check
+    expected_outputs:
+      - "reports/etf_portfolio/weekly_review/aggregation/weekly_review_aggregation_{as_of}.json"
+    max_allowed_age: 7
+    failure_policy: block_dependent_steps
+    owner_review_required: false
+  - step_id: weekly_review_generate
+    description: "Generate the weekly ETF portfolio review package."
+    command: "aits etf weekly-review generate --as-of {as_of}"
+    cadence: weekly
+    required: true
+    dependencies:
+      - weekly_review_aggregate
+    expected_outputs:
+      - "reports/etf_portfolio/weekly_review/weekly_review_{as_of}.json"
+      - "reports/etf_portfolio/weekly_review/weekly_review_{as_of}.md"
+    max_allowed_age: 7
+    failure_policy: manual_review_required
+    owner_review_required: true
+  - step_id: forward_weekly_review
+    description: "Review forward shadow candidate performance over weekly windows."
+    command: "aits etf forward weekly-review --as-of {as_of}"
+    cadence: weekly
+    required: true
+    dependencies:
+      - forward_update
+    expected_outputs:
+      - "reports/etf_portfolio/forward/weekly_reviews/weekly_review_{as_of}.json"
+      - "reports/etf_portfolio/forward/weekly_reviews/weekly_review_{as_of}.md"
+    max_allowed_age: 7
+    failure_policy: block_dependent_steps
+    owner_review_required: false
+  - step_id: decision_journal_review_prompt
+    description: "Produce the decision journal review package after the weekly review is generated."
+    command: "aits etf decision-journal report --as-of {as_of}"
+    cadence: weekly
+    required: true
+    dependencies:
+      - weekly_review_generate
+    expected_outputs:
+      - "reports/etf_portfolio/decision_journal/decision_journal_{as_of}.json"
+      - "reports/etf_portfolio/decision_journal/decision_journal_{as_of}.md"
+    max_allowed_age: 7
+    failure_policy: manual_review_required
+    owner_review_required: true
+  - step_id: parameter_review_aggregate
+    description: "Aggregate forward, weekly, experiment, and journal evidence for parameter review."
+    command: "aits etf parameter-review aggregate --as-of {as_of}"
+    cadence: weekly
+    required: true
+    dependencies:
+      - forward_weekly_review
+      - weekly_review_generate
+      - decision_journal_review_prompt
+    expected_outputs:
+      - "reports/etf_portfolio/parameter_review/aggregation/parameter_review_evidence_{as_of}.json"
+      - "reports/etf_portfolio/parameter_review/aggregation/parameter_review_evidence_{as_of}.md"
+    max_allowed_age: 7
+    failure_policy: block_dependent_steps
+    owner_review_required: false
+  - step_id: parameter_review_report
+    description: "Generate the proposal-only parameter review report."
+    command: "aits etf parameter-review report --as-of {as_of}"
+    cadence: weekly
+    required: true
+    dependencies:
+      - parameter_review_aggregate
+    expected_outputs:
+      - "reports/etf_portfolio/parameter_review/reports/parameter_review_{as_of}.json"
+      - "reports/etf_portfolio/parameter_review/reports/parameter_review_{as_of}.md"
+    max_allowed_age: 7
+    failure_policy: manual_review_required
+    owner_review_required: true
+  - step_id: watchlist_review
+    description: "Refresh ETF forward watchlist items for weekly owner review."
+    command: "aits etf forward watchlist --as-of {as_of}"
+    cadence: weekly
+    required: true
+    dependencies:
+      - forward_weekly_review
+    expected_outputs:
+      - "reports/etf_portfolio/forward/watchlist/forward_watchlist_{as_of}.json"
+      - "reports/etf_portfolio/forward/watchlist/forward_watchlist_{as_of}.md"
+    max_allowed_age: 7
+    failure_policy: manual_review_required
+    owner_review_required: true
+  - step_id: operations_report
+    description: "Generate weekly operations health report and manual-review checklist summary."
+    command: "aits etf ops report --cadence weekly --as-of {as_of}"
+    cadence: weekly
+    required: true
+    dependencies:
+      - weekly_review_generate
+      - parameter_review_report
+      - watchlist_review
+    expected_outputs:
+      - "reports/etf_portfolio/operations/weekly/operations_health_{as_of}.json"
+      - "reports/etf_portfolio/operations/weekly/operations_health_{as_of}.md"
+    max_allowed_age: 7
+    failure_policy: manual_review_required
+    owner_review_required: true
+  - step_id: reader_brief_weekly_navigation
+    description: "Ensure Reader Brief links the latest weekly review, parameter review, and operations report."
+    command: "aits reports reader-brief --date {as_of}"
+    cadence: weekly
+    required: true
+    dependencies:
+      - operations_report
+    expected_outputs:
+      - "outputs/reports/reader_brief_{as_of}.json"
+    max_allowed_age: 7
+    failure_policy: continue_with_warning
+    owner_review_required: true
+
+biweekly_pipeline:
+  - step_id: ai_attribution_scorecard_review
+    description: "Review AI confirmation forward attribution scorecard at slower cadence."
+    command: "aits etf ai-attribution report --as-of {as_of}"
+    cadence: biweekly
+    required: true
+    dependencies:
+      - ai_attribution_update
+    expected_outputs:
+      - "reports/etf_portfolio/ai_attribution/reports/ai_attribution_report_{as_of}.json"
+    max_allowed_age: 14
+    failure_policy: manual_review_required
+    owner_review_required: true
+  - step_id: satellite_attribution_scorecard_review
+    description: "Review satellite replacement forward attribution scorecard at slower cadence."
+    command: "aits etf satellite-attribution report --as-of {as_of}"
+    cadence: biweekly
+    required: true
+    dependencies:
+      - satellite_attribution_update
+    expected_outputs:
+      - "reports/etf_portfolio/satellite_attribution/reports/satellite_attribution_report_{as_of}.json"
+    max_allowed_age: 14
+    failure_policy: manual_review_required
+    owner_review_required: true
+  - step_id: weight_calibration_evidence_update
+    description: "Aggregate dual-track weight calibration evidence without changing baseline weights."
+    command: "aits etf weight-calibration aggregate-evidence --as-of {as_of}"
+    cadence: biweekly
+    required: true
+    dependencies:
+      - forward_weekly_review
+      - parameter_review_report
+    expected_outputs:
+      - "reports/etf_portfolio/weight_calibration/evidence/backtest_forward_evidence_{as_of}.json"
+      - "reports/etf_portfolio/weight_calibration/evidence/backtest_forward_evidence_{as_of}.md"
+    max_allowed_age: 14
+    failure_policy: manual_review_required
+    owner_review_required: true
+  - step_id: operations_report_biweekly
+    description: "Summarize biweekly attribution and weight-calibration operations health."
+    command: "aits etf ops report --cadence biweekly --as-of {as_of}"
+    cadence: biweekly
+    required: true
+    dependencies:
+      - ai_attribution_scorecard_review
+      - satellite_attribution_scorecard_review
+      - weight_calibration_evidence_update
+    expected_outputs:
+      - "reports/etf_portfolio/operations/biweekly/operations_health_{as_of}.json"
+      - "reports/etf_portfolio/operations/biweekly/operations_health_{as_of}.md"
+    max_allowed_age: 14
+    failure_policy: manual_review_required
+    owner_review_required: true
+
+monthly_pipeline:
+  - step_id: data_quality_audit
+    description: "Run monthly data quality and staleness audit before heavier evidence reviews."
+    command: "aits validate-data --as-of {as_of}"
+    cadence: monthly
+    required: true
+    dependencies: []
+    expected_outputs:
+      - "outputs/reports/data_quality_{as_of}.md"
+    max_allowed_age: 31
+    failure_policy: fail_pipeline
+    owner_review_required: true
+  - step_id: weight_calibration_search
+    description: "Run bounded historical ETF weight search only on slower cadence, never as daily default."
+    command: "aits etf weight-calibration search --search etf_initial_weight_search_v1"
+    cadence: monthly
+    required: true
+    dependencies:
+      - data_quality_audit
+    expected_outputs:
+      - "reports/etf_portfolio/weight_calibration/{run_id}/summary.json"
+      - "reports/etf_portfolio/weight_calibration/{run_id}/summary.md"
+    max_allowed_age: 31
+    failure_policy: manual_review_required
+    owner_review_required: true
+  - step_id: weight_calibration_report
+    description: "Generate the dual-track calibration report from existing evidence and proposal artifacts."
+    command: "aits etf weight-calibration report --latest"
+    cadence: monthly
+    required: true
+    dependencies:
+      - weight_calibration_search
+      - weight_calibration_evidence_update
+    expected_outputs:
+      - "reports/etf_portfolio/weight_calibration/reports/dual_track_calibration_{as_of}.json"
+      - "reports/etf_portfolio/weight_calibration/reports/dual_track_calibration_{as_of}.md"
+    max_allowed_age: 31
+    failure_policy: manual_review_required
+    owner_review_required: true
+  - step_id: parameter_review_governance
+    description: "Review proposal-only parameter governance evidence and manual review requirements."
+    command: "aits etf parameter-review validate"
+    cadence: monthly
+    required: true
+    dependencies:
+      - parameter_review_report
+    expected_outputs:
+      - "reports/etf_portfolio/parameter_review/validation/parameter_review_validation_{as_of}.json"
+      - "reports/etf_portfolio/parameter_review/validation/parameter_review_validation_{as_of}.md"
+    max_allowed_age: 31
+    failure_policy: manual_review_required
+    owner_review_required: true
+  - step_id: strategy_evidence_dashboard_update
+    description: "Refresh strategy evidence dashboard for monthly governance review."
+    command: "aits reports dashboard --as-of {as_of}"
+    cadence: monthly
+    required: true
+    dependencies:
+      - data_quality_audit
+      - parameter_review_governance
+      - weight_calibration_report
+    expected_outputs:
+      - "outputs/reports/evidence_dashboard_{as_of}.json"
+      - "outputs/reports/evidence_dashboard_{as_of}.html"
+    max_allowed_age: 31
+    failure_policy: continue_with_warning
+    owner_review_required: true
+  - step_id: operations_report_monthly
+    description: "Generate monthly operations health and governance checklist summary."
+    command: "aits etf ops report --cadence monthly --as-of {as_of}"
+    cadence: monthly
+    required: true
+    dependencies:
+      - data_quality_audit
+      - weight_calibration_report
+      - parameter_review_governance
+      - strategy_evidence_dashboard_update
+    expected_outputs:
+      - "reports/etf_portfolio/operations/monthly/operations_health_{as_of}.json"
+      - "reports/etf_portfolio/operations/monthly/operations_health_{as_of}.md"
+    max_allowed_age: 31
+    failure_policy: manual_review_required
+    owner_review_required: true
+
+manual_review_steps:
+  - step_id: daily_owner_review
+    description: "Owner/operator reviews daily blockers, warnings, stale artifacts, and safety banner."
+    command: "manual_review:daily_quick_check"
+    cadence: daily
+    required: true
+    dependencies:
+      - operations_health_check
+    expected_outputs:
+      - "manual_review_checklist:daily_quick_check"
+    max_allowed_age: 1
+    failure_policy: manual_review_required
+    owner_review_required: true
+  - step_id: weekly_owner_review
+    description: "Owner reviews weekly portfolio review, decision journal, parameter review, and action items."
+    command: "manual_review:weekly_portfolio_review"
+    cadence: weekly
+    required: true
+    dependencies:
+      - operations_report
+    expected_outputs:
+      - "manual_review_checklist:weekly_portfolio_review"
+    max_allowed_age: 7
+    failure_policy: manual_review_required
+    owner_review_required: true
+  - step_id: monthly_owner_review
+    description: "Owner reviews monthly calibration, attribution, data quality, and governance evidence."
+    command: "manual_review:monthly_parameter_review"
+    cadence: monthly
+    required: true
+    dependencies:
+      - operations_report_monthly
+    expected_outputs:
+      - "manual_review_checklist:monthly_parameter_review"
+    max_allowed_age: 31
+    failure_policy: manual_review_required
+    owner_review_required: true
+  - step_id: incident_review
+    description: "Owner reviews any critical operations blocker, unsafe state, or failed data quality gate."
+    command: "manual_review:incident_review"
+    cadence: incident
+    required: true
+    dependencies: []
+    expected_outputs:
+      - "manual_review_checklist:incident_review"
+    max_allowed_age: 0
+    failure_policy: manual_review_required
+    owner_review_required: true

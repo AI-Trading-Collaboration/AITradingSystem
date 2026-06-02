@@ -1,0 +1,63 @@
+# TRADING-074 Portfolio Operations Runbook and Scheduler Review
+
+## 背景
+
+TRADING-062 至 TRADING-073 已建立 ETF allocation baseline、credibility validation、experiment packs、forward simulation、weekly review、decision journal、parameter review、dual-track weight calibration、AI confirmation / attribution 和 satellite replacement / attribution。
+
+TRADING-074 的目标不是新增交易策略，而是把这些模块组织成可审计、可 dry-run、可验证的运营 workflow，回答：
+
+```text
+Can the full ETF portfolio research system be operated reliably on a daily / weekly / monthly schedule?
+```
+
+## 安全边界
+
+所有 TRADING-074 输出必须固定：
+
+```text
+observe_only=true
+candidate_only=true
+production_effect=none
+broker_action=none
+manual_review_required=true
+```
+
+禁止事项：
+
+```text
+broker execution
+production weight mutation
+automatic promotion
+automatic candidate rejection without manual review
+cloud scheduler deployment requiring secrets
+paid data provider dependency
+```
+
+## 阶段拆解
+
+|阶段|标题|状态|验收摘要|
+|---|---|---|---|
+|TRADING-074A|Operations Schedule Spec|DONE|新增 `config/etf_portfolio/operations_schedule.yaml`，并用 loader/validator 校验 cadence、步骤、依赖、expected outputs 和安全字段。|
+|TRADING-074B|Daily Pipeline Command Graph|READY|从 schedule spec 构建 daily dependency-aware command graph，可 dry-run，不执行命令。|
+|TRADING-074C|Weekly Pipeline Command Graph|READY|建立 weekly review command graph，并标记人工复核 checkpoint。|
+|TRADING-074D|Monthly / Biweekly Review Pipeline|READY|建立 slower cadence pipelines，确保 heavy historical search 不进入 daily 默认链路。|
+|TRADING-074E|Artifact Freshness and Dependency Checks|READY|校验 required / optional artifacts 的 freshness、missing 和 dependency status。|
+|TRADING-074F|Failure Severity and Blocking Policy|READY|定义 deterministic severity / failure policy，阻止静默使用 stale required artifacts。|
+|TRADING-074G|Owner Review Checklist|READY|提供 daily / weekly / monthly / incident owner checklist template。|
+|TRADING-074H|Scheduler Dry-Run / Simulation|READY|新增 `aits etf ops dry-run --cadence ...`，只规划不执行、不写 production state。|
+|TRADING-074I|Operations Report Generator|READY|生成 JSON / Markdown operations health report。|
+|TRADING-074J|Reader Brief Operations Health Section|READY|Reader Brief 只读展示 operations health，链接 detailed ops report。|
+|TRADING-074K|Operations Validation Gate|READY|新增 `aits etf ops validate`，fail-closed 校验 A-J 完整性和安全边界。|
+
+## 设计约束
+
+- `docs/operations/operations_runbook.md` 是周期性任务入口；任何 scheduler / cadence 解释必须与该 runbook 保持一致。
+- daily scheduler trigger 仍是统一外部入口；TRADING-074 不把 weekly / monthly 任务散落成新的外部 scheduler entries。
+- `aits validate-data` 或同一路径 data quality gate 必须在 cached-data-dependent workflow 前可见。
+- default market regime 为 `ai_after_chatgpt`，默认结论窗口从 2022-12-01 开始。
+- runtime artifacts 继续写入 ignored `reports/`、`outputs/` 或 `data/` 目录；确定性 fixtures 放入 `tests/fixtures/etf_portfolio/`。
+
+## 进展记录
+
+- 2026-06-03: TRADING-074 新增并进入 IN_PROGRESS。当前实现范围从 TRADING-074A 开始，先建立 config-driven operations schedule spec 和 focused validation tests。
+- 2026-06-03: TRADING-074A 完成。新增 `config/etf_portfolio/operations_schedule.yaml`、`src/ai_trading_system/etf_portfolio/operations.py` 和 `tests/test_etf_operations.py`，覆盖 schedule load、cadence sections、required daily nodes、unique step IDs、non-empty commands、dependency references、required expected outputs、safety field requirement、unsafe `production_effect` fail-closed 和 weight search not daily。

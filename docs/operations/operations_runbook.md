@@ -4,9 +4,10 @@
 
 本文是 AITradingSystem 周期性任务的总入口。执行任何 daily、weekly、biweekly、monthly、governance、scheduler validation 或 artifact catalog consistency 任务前，先读取本文，再进入对应的细分 runbook、配置或报告。
 
-本文不替代 `config/scheduled_tasks.yaml`、`docs/runbooks/scheduled_task_orchestration.md`、`docs/runbook_daily_ops.md`、`docs/artifact_catalog.md` 或 `docs/system_flow.md`。其中：
+本文不替代 `config/scheduled_tasks.yaml`、`config/etf_portfolio/operations_schedule.yaml`、`docs/runbooks/scheduled_task_orchestration.md`、`docs/runbook_daily_ops.md`、`docs/artifact_catalog.md` 或 `docs/system_flow.md`。其中：
 
 - `config/scheduled_tasks.yaml` 是调度 cadence 和命令登记的配置源。
+- `config/etf_portfolio/operations_schedule.yaml` 是 TRADING-074 ETF portfolio operations schedule source config，用于描述 ETF research daily / weekly / biweekly / monthly / manual-review command plan、dependencies、expected outputs 和 safety boundary；它不是外部 scheduler entry。
 - `docs/runbooks/scheduled_task_orchestration.md` 说明 daily chain、非 daily cadence 隔离和 scheduler safety checklist。
 - `docs/runbook_daily_ops.md` 说明人工交接、失败排查和运行归档。
 - `docs/artifact_catalog.md` 说明关键 artifact 的生成者、上游、下游、production effect 和常见误解。
@@ -17,6 +18,7 @@
 - 每日 scheduler trigger 是统一外部入口。Windows Task Scheduler、cron、GitHub Actions 或云调度器默认只应调用 `aits ops daily-run`，不要把 weekly / biweekly / monthly / governance 命令直接散落成多个未审计系统任务。
 - 更长周期任务可以由同一个每日 scheduler 入口根据日期和条件触发，但必须通过受控编排实现：检查交易日、cadence due 状态、上游 daily artifacts、数据质量、production safety 和人工审批条件。
 - 当前 baseline 中，`aits ops daily-run` 只执行 `daily_trading_day` 链路；weekly / biweekly / monthly / ad hoc research 任务已在 `config/scheduled_tasks.yaml` 登记，但不会自动进入 daily-run。自动 due-cadence 执行实现前，非 daily 任务由 operator 按本文手动运行或由后续受控 scheduler 执行。
+- TRADING-074A 的 ETF operations schedule spec 只用于规划和校验 ETF portfolio research workflow；在 TRADING-074H/K dry-run 和 validation gate 完成前，它不执行命令、不自动 dispatch cadence、不改变 `aits ops daily-run` 的统一入口。
 - 所有依赖 cached market / macro data 的评分、回测、技术特征、报告或治理任务必须先通过 `aits validate-data` 或同一路径的数据质量门禁，并在下游输出中可见。
 - 默认市场 regime 为 `ai_after_chatgpt`，anchor event 为 ChatGPT public launch on 2022-11-30，默认回测结论窗口从 2022-12-01 开始。任何回测、weekly review 或 monthly governance 报告都必须写明实际日期范围。
 - Reader Brief、dashboard、report index、documentation contract、research governance、SEC PIT shadow monitor、weight feedback 和 scheduler validation 默认 `production_effect=none`。它们不得写 production weights、active shadow weights、broker action 或 trading action。
