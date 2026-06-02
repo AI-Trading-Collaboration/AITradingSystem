@@ -1,6 +1,6 @@
 # TRADING-069 Portfolio Decision Journal and Human Review Notes
 
-状态：IN_PROGRESS
+状态：VALIDATING
 
 最后更新：2026-06-02
 
@@ -97,11 +97,11 @@ present.
 |TRADING-069A|Decision Journal Schema|DONE|Schema validates required fields, decision_status enum, confidence, safety fields and disallowed actions|
 |TRADING-069B|Manual Review Notes CLI|DONE|`aits etf decision-journal add/update/list/remove` can persist and edit local journal entries without production mutation|
 |TRADING-069C|Weekly Review Action Linking|DONE|Each entry references an existing TRADING-068 weekly review and action item, including source section and evidence|
-|TRADING-069D|Candidate Decision State Update Proposal|IN_PROGRESS|Journal can generate candidate state proposals without mutating shadow registry or production state|
-|TRADING-069E|Journal Report Generator|READY|Generate JSON/Markdown/HTML journal summary with metadata, decisions, links, rationale, follow-ups and audit trail|
-|TRADING-069F|Reader Brief Decision Journal Summary|READY|Reader Brief displays key decision counts/statuses and links to journal report|
-|TRADING-069G|Review Outcome Analytics|READY|Analytics summarize decision status distribution, confidence and follow-up workload from journal entries|
-|TRADING-069H|Decision Journal Validation Gate|READY|`aits etf decision-journal validate` fail-closed checks links, action items, safety fields and disallowed actions|
+|TRADING-069D|Candidate Decision State Update Proposal|DONE|Journal can generate candidate state proposals without mutating shadow registry or production state|
+|TRADING-069E|Journal Report Generator|DONE|Generate JSON/Markdown/HTML journal summary with metadata, decisions, links, rationale, follow-ups and audit trail|
+|TRADING-069F|Reader Brief Decision Journal Summary|DONE|Reader Brief displays key decision counts/statuses and links to journal report|
+|TRADING-069G|Review Outcome Analytics|DONE|Analytics summarize decision status distribution, confidence and follow-up workload from journal entries|
+|TRADING-069H|Decision Journal Validation Gate|DONE|`aits etf decision-journal validate` fail-closed checks links, action items, safety fields and disallowed actions|
 
 ## 验收标准
 
@@ -140,3 +140,14 @@ present.
   action snapshot、source evidence 和 audit trail；remove 只从 active entries
   移到 `removed_entries`，不静默删除审计记录。验证通过 `python -m pytest
   tests/test_etf_decision_journal.py -q`、目标 ruff 和 `git diff --check`。
+- 2026-06-02：TRADING-069D-H 完成并转入 `VALIDATING`。新增 candidate state
+  proposal、journal report JSON/Markdown/HTML、analytics JSON、Reader Brief
+  `Portfolio Decision Journal` 摘要、report registry、artifact catalog、system
+  flow、operations runbook 和 validation gate。验证通过 `python -m pytest
+  tests/test_etf_decision_journal.py tests/test_documentation_contract.py
+  tests/test_reader_brief.py -q`、`python -m pytest tests/test_report_index.py
+  tests/test_docs_freshness.py -q`、`python -m ruff check config src tests scripts
+  docs`、`git diff --check` 和 `python -m ai_trading_system.cli etf
+  decision-journal validate`（PASS）。所有 outputs 保持 observe-only /
+  candidate-only / manual-review-only，不写 production weights、不触发 broker
+  action、不自动修改 candidate state。

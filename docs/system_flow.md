@@ -133,6 +133,9 @@ flowchart TD
     P0W --> T068AGG
     T068AGG --> T068REP["aits etf weekly-review generate/run --as-of YYYY-MM-DD<br/>weekly_review_YYYY-MM-DD.json/md<br/>portfolio summary + shadow/AI/satellite/risk/manual actions"]
     T068REP --> T068VAL["aits etf weekly-review validate<br/>TRADING-068 final validation gate<br/>source traceability + unsafe action block + safety"]
+    T068REP --> T069JRN["aits etf decision-journal add/update/list/remove<br/>data/simulation/etf_portfolio_decision_journal.json<br/>human decisions + rationale + follow-up audit trail"]
+    T069JRN --> T069REP["aits etf decision-journal report/analytics/propose-state-updates<br/>decision_journal_YYYY-MM-DD.json/md/html<br/>review outcome analytics + candidate state proposal only"]
+    T069JRN --> T069VAL["aits etf decision-journal validate<br/>TRADING-069 validation gate<br/>weekly review links + action item links + safety"]
     T064RUN --> T064RIDX["config/report_registry.yaml + aits reports index<br/>experiment manifest / comparison / candidate selection / shadow registry / weekly review visibility"]
     T064CMP --> T064RIDX
     T064SEL --> T064RIDX
@@ -150,7 +153,9 @@ flowchart TD
     T067VAL --> T064RIDX
     T068REP --> T064RIDX
     T068VAL --> T064RIDX
-    T064RIDX --> T064READ["aits reports reader-brief<br/>Weekly Portfolio Review + ETF Calibration + ETF Forward + AI Confirmation + Satellite Replacement<br/>latest artifacts / safety status / detail links"]
+    T069REP --> T064RIDX
+    T069VAL --> T064RIDX
+    T064RIDX --> T064READ["aits reports reader-brief<br/>Weekly Portfolio Review + Portfolio Decision Journal + ETF Calibration + ETF Forward + AI Confirmation + Satellite Replacement<br/>latest artifacts / safety status / detail links"]
     T064CFG --> T064VAL["aits etf experiments validate --pack etf_calibration_v1<br/>TRADING-064 final validation gate<br/>registry / pack / runner / reports / P2-live safety"]
     T064PACK --> T064VAL
     T064VAL --> T064RIDX
@@ -165,6 +170,8 @@ TRADING-064 的 `experiments.yaml` 和 `experiment_packs.yaml` 是后续 candida
 TRADING-067 新增 `aits etf satellite features/report/run/experiment/validate`，从 `satellite_universe.yaml` 和 `satellite_policy.yaml` 读取个股 universe、benchmark ETF mapping、score/gate/risk policy，生成 stock-vs-ETF relative strength features、SatelliteCandidateScore、replacement eligibility gate、candidate-only replacement plan、shadow experiment、standalone report 和 validation gate；Reader Brief 的 `Satellite Replacement` 区块只读摘录 latest `etf_satellite_replacement_report`，缺失时显示 no satellite replacement artifact，不补跑上游。Satellite replacement 默认 ETF first；数据不足、gate fail 或风险约束触发时输出 `fallback_to_etf=true`，只允许 `candidate_weights`、`shadow_weights`、`hypothetical_weights` 和 `replacement_plan`，不得写 official ETF target weights。所有输出固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、`manual_review_required=true`，不改变 P0 allocation。
 
 TRADING-068 新增 `aits etf weekly-review aggregate/generate/run/validate`，把 ETF baseline state、forward shadow candidates、experiment candidate status、AI confirmation、satellite replacement、risk/watchlist、validation gates 和 manual review action items 汇总为周度复核包。该 workflow 只读 existing artifacts，不运行上游 experiment / forward / AI / satellite 命令；Reader Brief 的 `Weekly Portfolio Review` 区块只读摘录 latest weekly review status、active shadow candidates、AI/satellite status、critical warnings、manual review action count 和 detail report link。Weekly review 不是 trading automation workflow；不得自动 promotion/rejection、不得写 official target weights、不得触发 broker action。
+
+TRADING-069 新增 `aits etf decision-journal add/update/list/remove/report/analytics/propose-state-updates/validate`，把 TRADING-068 weekly review action item 的人工决定持久化为 `data/simulation/etf_portfolio_decision_journal.json`，并生成 decision journal report、review outcome analytics、candidate state update proposals 和 validation gate。Journal entries 必须链接 source weekly review 和 `manual_review_actions[].action_id`；proposal 只描述人工后续状态建议，不修改 shadow registry、official target weights、production config 或 broker state。Reader Brief 的 `Portfolio Decision Journal` 区块只读摘录 latest journal report，不运行 journal CLI。
 
 ## ETF Portfolio P2 Observe-Only Contracts
 

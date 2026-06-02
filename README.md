@@ -374,6 +374,22 @@ experiment、forward、AI 或 satellite 命令，不补造缺失结论，不写 
 weekly review 的 status、active shadow candidates、AI/satellite/risk/manual action 摘要和
 detail report link；缺失时显示 no latest weekly review report found。
 
+TRADING-069 portfolio decision journal 把 TRADING-068 weekly review 的人工结论持久化到
+ignored runtime state `data/simulation/etf_portfolio_decision_journal.json`。`aits etf
+decision-journal add --weekly-review-path <weekly_review.json> --action-item-id
+<weekly-action-id> ...` 会校验 source weekly review、action item、source evidence 和安全字段；
+`update/list/remove` 只维护 journal active/removed entries 和 audit trail，remove 会移入
+`removed_entries` 而不是静默删除。`report --as-of YYYY-MM-DD` 生成
+`reports/etf_portfolio/decision_journal/decision_journal_YYYY-MM-DD.json/md/html`；
+`analytics` 输出 review outcome 计数和 confidence/follow-up 摘要；`propose-state-updates`
+只生成 candidate state update proposal，不修改 shadow registry；`validate` 检查 weekly review
+link、action item、disallowed actions 和 safety fields。所有 journal 输出固定
+`observe_only=true`、`candidate_only=true`、`production_effect=none`、`broker_action=none`、
+`manual_review_required=true`，并阻断 `place_order`、`enable_broker_action` 和
+`promote_to_production_without_governance`。Reader Brief 的 `Portfolio Decision Journal` 区块只读
+摘录 latest journal report 的 entry count、decision status counts、follow-up count、confidence 和
+detail report link，不运行 journal CLI。
+
 `aits etf governance summary --candidate <candidate.json>` 使用
 `config/etf_portfolio/governance.yaml` 的参数治理 policy 输出候选晋级摘要，固定
 `production_effect=none` 且 `manual_review_required=true`。候选必须先通过测试、shadow

@@ -56,14 +56,25 @@ from ai_trading_system.etf_portfolio.data import (
 )
 from ai_trading_system.etf_portfolio.decision_journal import (
     DEFAULT_DECISION_JOURNAL_PATH,
+    DEFAULT_DECISION_JOURNAL_PROPOSAL_DIR,
+    DEFAULT_DECISION_JOURNAL_REPORT_DIR,
+    DEFAULT_DECISION_JOURNAL_VALIDATION_DIR,
     DecisionJournalError,
     add_decision_entry,
+    build_candidate_state_update_proposals,
     build_decision_entry_from_weekly_review,
+    build_decision_journal_analytics,
+    build_decision_journal_report,
+    build_decision_journal_validation_report,
     decision_entries,
     load_decision_journal,
     remove_decision_entry,
     update_decision_entry,
     write_decision_journal,
+    write_decision_journal_analytics,
+    write_decision_journal_report,
+    write_decision_journal_validation_report,
+    write_decision_state_update_proposals,
 )
 from ai_trading_system.etf_portfolio.experiments import (
     DEFAULT_ETF_EXPERIMENT_RUN_DIR,
@@ -2041,6 +2052,169 @@ def decision_journal_remove_command(
     typer.echo("production_effect=none")
     typer.echo("broker_action=none")
     typer.echo("manual_review_required=true")
+
+
+@decision_journal_app.command("report")
+def decision_journal_report_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="decision journal report 日期 YYYY-MM-DD。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="使用当前日期生成 decision journal report。"),
+    ] = False,
+    journal_path: Annotated[
+        Path,
+        typer.Option(help="decision journal state path。"),
+    ] = DEFAULT_DECISION_JOURNAL_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="decision journal report 输出目录。"),
+    ] = DEFAULT_DECISION_JOURNAL_REPORT_DIR,
+) -> None:
+    """生成 portfolio decision journal JSON/Markdown/HTML summary。"""
+    run_date = _weekly_review_date(as_of=as_of, latest=latest)
+    try:
+        journal = load_decision_journal(journal_path)
+        payload = build_decision_journal_report(
+            journal,
+            as_of=run_date,
+            journal_path=journal_path,
+        )
+        json_path = output_dir / f"decision_journal_{run_date.isoformat()}.json"
+        md_path = output_dir / f"decision_journal_{run_date.isoformat()}.md"
+        html_path = output_dir / f"decision_journal_{run_date.isoformat()}.html"
+        write_decision_journal_report(
+            payload,
+            json_path=json_path,
+            markdown_path=md_path,
+            html_path=html_path,
+        )
+    except DecisionJournalError as exc:
+        typer.echo(f"ETF decision journal report blocked：{exc}")
+        typer.echo("production_effect=none")
+        typer.echo("broker_action=none")
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"ETF decision journal report：{md_path}")
+    typer.echo(f"json={json_path}")
+    typer.echo(f"html={html_path}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+
+
+@decision_journal_app.command("analytics")
+def decision_journal_analytics_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="decision journal analytics 日期 YYYY-MM-DD。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="使用当前日期生成 analytics。"),
+    ] = False,
+    journal_path: Annotated[
+        Path,
+        typer.Option(help="decision journal state path。"),
+    ] = DEFAULT_DECISION_JOURNAL_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="decision journal analytics 输出目录。"),
+    ] = DEFAULT_DECISION_JOURNAL_REPORT_DIR,
+) -> None:
+    """生成 portfolio decision journal outcome analytics JSON。"""
+    run_date = _weekly_review_date(as_of=as_of, latest=latest)
+    try:
+        journal = load_decision_journal(journal_path)
+        payload = build_decision_journal_analytics(journal)
+        output_path = output_dir / f"decision_journal_analytics_{run_date.isoformat()}.json"
+        write_decision_journal_analytics(payload, output_path)
+    except DecisionJournalError as exc:
+        typer.echo(f"ETF decision journal analytics blocked：{exc}")
+        typer.echo("production_effect=none")
+        typer.echo("broker_action=none")
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"ETF decision journal analytics：{output_path}")
+    typer.echo(f"entry_count={payload['entry_count']}")
+    typer.echo(f"follow_up_task_count={payload['follow_up_task_count']}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+
+
+@decision_journal_app.command("propose-state-updates")
+def decision_journal_propose_state_updates_command(
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", "--date", help="proposal 日期 YYYY-MM-DD。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="使用当前日期生成 proposal。"),
+    ] = False,
+    journal_path: Annotated[
+        Path,
+        typer.Option(help="decision journal state path。"),
+    ] = DEFAULT_DECISION_JOURNAL_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="decision state proposal 输出目录。"),
+    ] = DEFAULT_DECISION_JOURNAL_PROPOSAL_DIR,
+) -> None:
+    """生成 candidate state update proposal；不修改 candidate registry。"""
+    run_date = _weekly_review_date(as_of=as_of, latest=latest)
+    try:
+        journal = load_decision_journal(journal_path)
+        payload = build_candidate_state_update_proposals(journal)
+        json_path = output_dir / f"decision_state_update_proposals_{run_date.isoformat()}.json"
+        md_path = output_dir / f"decision_state_update_proposals_{run_date.isoformat()}.md"
+        write_decision_state_update_proposals(
+            payload,
+            json_path=json_path,
+            markdown_path=md_path,
+        )
+    except DecisionJournalError as exc:
+        typer.echo(f"ETF decision state proposal blocked：{exc}")
+        typer.echo("production_effect=none")
+        typer.echo("broker_action=none")
+        raise typer.Exit(code=1) from exc
+    typer.echo(f"ETF decision state update proposal：{md_path}")
+    typer.echo(f"proposal_count={payload['proposal_count']}")
+    typer.echo("state_mutation_performed=false")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+
+
+@decision_journal_app.command("validate")
+def decision_journal_validate_command(
+    journal_path: Annotated[
+        Path,
+        typer.Option(help="decision journal state path。"),
+    ] = DEFAULT_DECISION_JOURNAL_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="decision journal validation 输出目录。"),
+    ] = DEFAULT_DECISION_JOURNAL_VALIDATION_DIR,
+) -> None:
+    """生成 TRADING-069 decision journal validation gate；失败时 fail closed。"""
+    generated = datetime.now(UTC)
+    payload = build_decision_journal_validation_report(
+        journal_path=journal_path,
+        generated_at=generated,
+    )
+    stem = f"decision_journal_validation_{generated.date().isoformat()}"
+    json_path = output_dir / f"{stem}.json"
+    md_path = output_dir / f"{stem}.md"
+    write_decision_journal_validation_report(payload, json_path=json_path, markdown_path=md_path)
+    typer.echo(f"ETF decision journal validation gate：{md_path}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
 
 
 @p2_app.command("edgar-text")

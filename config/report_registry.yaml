@@ -590,6 +590,39 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_decision_journal_report
+    title: ETF Portfolio Decision Journal
+    group: research
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf decision-journal report --as-of YYYY-MM-DD
+    artifact_globs:
+      - reports/etf_portfolio/decision_journal/decision_journal_*.json
+      - reports/etf_portfolio/decision_journal/decision_journal_*.md
+      - reports/etf_portfolio/decision_journal/decision_journal_*.html
+    freshness_sla_days: 14
+    freshness_rationale: Decision journal reports should summarize human weekly review outcomes before the next weekly portfolio review.
+    owner_action: record_weekly_review_human_decisions_then_run_decision_journal_report
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_decision_journal_validation
+    title: ETF Decision Journal Validation Gate
+    group: governance
+    cadence: on_change
+    audience: reviewer
+    owner: system
+    command: aits etf decision-journal validate
+    artifact_globs:
+      - reports/etf_portfolio/decision_journal/validation/decision_journal_validation_*.json
+      - reports/etf_portfolio/decision_journal/validation/decision_journal_validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: TRADING-069 validation confirms decision journal entries are source-linked, safe, and manual-review-only.
+    owner_action: run_aits_etf_decision_journal_validate_after_journal_entry_changes
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_p2_walk_forward
     title: ETF P2 Walk Forward Readiness
     group: research

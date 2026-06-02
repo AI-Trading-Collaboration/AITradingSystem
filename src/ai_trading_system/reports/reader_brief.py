@@ -173,6 +173,7 @@ def build_reader_brief_payload(
     etf_ai_confirmation = _etf_ai_confirmation_summary(report_index)
     etf_satellite_replacement = _etf_satellite_replacement_summary(report_index)
     etf_weekly_review = _etf_weekly_review_summary(report_index)
+    etf_decision_journal = _etf_decision_journal_summary(report_index)
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -293,6 +294,7 @@ def build_reader_brief_payload(
         "etf_ai_confirmation": etf_ai_confirmation,
         "etf_satellite_replacement": etf_satellite_replacement,
         "etf_weekly_review": etf_weekly_review,
+        "etf_decision_journal": etf_decision_journal,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -545,6 +547,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_ai_confirmation = _mapping(payload.get("etf_ai_confirmation"))
     etf_satellite = _mapping(payload.get("etf_satellite_replacement"))
     etf_weekly_review = _mapping(payload.get("etf_weekly_review"))
+    etf_decision_journal = _mapping(payload.get("etf_decision_journal"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -798,6 +801,24 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("safety_status", etf_weekly_review.get("safety_status")),
                     ("detailed_weekly_review", etf_weekly_review.get("detail_report")),
                     ("production_effect", etf_weekly_review.get("production_effect")),
+                ]
+            ),
+        ),
+        _section(
+            "Portfolio Decision Journal",
+            _definition_table(
+                [
+                    ("availability", etf_decision_journal.get("availability")),
+                    ("status", etf_decision_journal.get("status")),
+                    ("summary", etf_decision_journal.get("summary_sentence")),
+                    ("entry_count", etf_decision_journal.get("entry_count")),
+                    ("removed_entry_count", etf_decision_journal.get("removed_entry_count")),
+                    ("follow_up_task_count", etf_decision_journal.get("follow_up_task_count")),
+                    ("decision_status_counts", etf_decision_journal.get("decision_status_counts")),
+                    ("average_confidence", etf_decision_journal.get("average_confidence")),
+                    ("latest_journal_report", etf_decision_journal.get("detail_report")),
+                    ("safety_status", etf_decision_journal.get("safety_status")),
+                    ("production_effect", etf_decision_journal.get("production_effect")),
                 ]
             ),
         ),
@@ -2194,6 +2215,74 @@ def _missing_etf_weekly_review_summary() -> dict[str, Any]:
 
 
 def _etf_weekly_review_safety_status(payload: Mapping[str, Any]) -> str:
+    safe = (
+        payload.get("observe_only") is True
+        and payload.get("candidate_only") is True
+        and _text(payload.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
+        and payload.get("broker_action") == "none"
+        and payload.get("manual_review_required") is True
+    )
+    return (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true"
+        if safe
+        else "SAFETY_REVIEW_REQUIRED"
+    )
+
+
+def _etf_decision_journal_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_decision_journal_summary()
+    report_path = _report_index_artifact_path(report_index, "etf_decision_journal_report")
+    report = _read_optional_json(report_path)
+    if not report:
+        return _missing_etf_decision_journal_summary()
+    metadata = _mapping(report.get("review_metadata"))
+    summary = _mapping(report.get("human_decision_summary"))
+    status_counts = _mapping(summary.get("decision_status_counts"))
+    entry_count = int(metadata.get("entry_count") or summary.get("entry_count") or 0)
+    follow_up_count = int(summary.get("follow_up_task_count") or 0)
+    safety_status = _etf_decision_journal_safety_status(report)
+    return {
+        "availability": "AVAILABLE",
+        "status": "AVAILABLE" if entry_count else "NO_ACTIVE_DECISIONS",
+        "summary_sentence": (
+            f"Portfolio Decision Journal: active_entries={entry_count}; "
+            f"follow_up_tasks={follow_up_count}; safety={safety_status}."
+        ),
+        "entry_count": entry_count,
+        "removed_entry_count": int(metadata.get("removed_entry_count") or 0),
+        "follow_up_task_count": follow_up_count,
+        "decision_status_counts": dict(status_counts),
+        "average_confidence": summary.get("average_confidence"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "safety_status": safety_status,
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+    }
+
+
+def _missing_etf_decision_journal_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "summary_sentence": "Portfolio Decision Journal: no latest journal report found.",
+        "entry_count": 0,
+        "removed_entry_count": 0,
+        "follow_up_task_count": 0,
+        "decision_status_counts": {},
+        "average_confidence": None,
+        "detail_report": "",
+        "safety_status": "MISSING",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "limitation": (
+            "ETF decision journal artifact is missing; Reader Brief does not run journal CLI."
+        ),
+    }
+
+
+def _etf_decision_journal_safety_status(payload: Mapping[str, Any]) -> str:
     safe = (
         payload.get("observe_only") is True
         and payload.get("candidate_only") is True

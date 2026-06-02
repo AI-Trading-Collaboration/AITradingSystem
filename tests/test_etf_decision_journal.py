@@ -14,6 +14,7 @@ from ai_trading_system.etf_portfolio.decision_journal import (
     add_decision_entry,
     build_decision_entry,
     build_decision_entry_from_weekly_review,
+    build_decision_journal_report,
     empty_decision_journal,
     load_decision_journal,
     remove_decision_entry,
@@ -23,6 +24,7 @@ from ai_trading_system.etf_portfolio.decision_journal import (
     validate_decision_journal_schema,
     write_decision_journal,
 )
+from ai_trading_system.reports.reader_brief import _etf_decision_journal_summary
 
 
 def test_decision_journal_schema_accepts_safe_entry(tmp_path: Path) -> None:
@@ -200,6 +202,146 @@ def test_decision_journal_cli_add_update_list_remove(tmp_path: Path) -> None:
     )
     assert removed.exit_code == 0, removed.output
     assert load_decision_journal(journal_path)["entries"] == []
+
+
+def test_decision_journal_cli_report_analytics_proposal_validate(tmp_path: Path) -> None:
+    weekly_path = _weekly_review_path(tmp_path)
+    journal_path = tmp_path / "journal.json"
+    entry = build_decision_entry_from_weekly_review(
+        weekly_review_path=weekly_path,
+        action_item_id="weekly-action-1",
+        human_decision="continue observation",
+        decision_status="continue_observation",
+        rationale="Forward window is not mature enough.",
+        confidence=0.7,
+        follow_up_task="Review next week.",
+        linked_candidate="shadow_base_ai_growth",
+        created_at=datetime(2026, 6, 2, tzinfo=UTC),
+        decision_id="decision-report-1",
+    )
+    journal = add_decision_entry(empty_decision_journal(), entry)
+    write_decision_journal(journal, journal_path)
+    output_dir = tmp_path / "reports"
+    proposal_dir = tmp_path / "proposals"
+    validation_dir = tmp_path / "validation"
+    runner = CliRunner()
+
+    report = runner.invoke(
+        etf_app,
+        [
+            "decision-journal",
+            "report",
+            "--as-of",
+            "2026-06-02",
+            "--journal-path",
+            str(journal_path),
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+    assert report.exit_code == 0, report.output
+    assert (output_dir / "decision_journal_2026-06-02.json").exists()
+    assert (output_dir / "decision_journal_2026-06-02.md").exists()
+    assert (output_dir / "decision_journal_2026-06-02.html").exists()
+
+    analytics = runner.invoke(
+        etf_app,
+        [
+            "decision-journal",
+            "analytics",
+            "--as-of",
+            "2026-06-02",
+            "--journal-path",
+            str(journal_path),
+            "--output-dir",
+            str(output_dir),
+        ],
+    )
+    assert analytics.exit_code == 0, analytics.output
+    analytics_payload = json.loads(
+        (output_dir / "decision_journal_analytics_2026-06-02.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert analytics_payload["decision_status_counts"]["continue_observation"] == 1
+
+    proposal = runner.invoke(
+        etf_app,
+        [
+            "decision-journal",
+            "propose-state-updates",
+            "--as-of",
+            "2026-06-02",
+            "--journal-path",
+            str(journal_path),
+            "--output-dir",
+            str(proposal_dir),
+        ],
+    )
+    assert proposal.exit_code == 0, proposal.output
+    proposal_payload = json.loads(
+        (proposal_dir / "decision_state_update_proposals_2026-06-02.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert proposal_payload["state_mutation_performed"] is False
+    assert proposal_payload["proposals"][0]["proposed_state_action"] == "continue_observation"
+
+    validation = runner.invoke(
+        etf_app,
+        [
+            "decision-journal",
+            "validate",
+            "--journal-path",
+            str(journal_path),
+            "--output-dir",
+            str(validation_dir),
+        ],
+    )
+    assert validation.exit_code == 0, validation.output
+    validation_payload = json.loads(next(validation_dir.glob("*.json")).read_text(encoding="utf-8"))
+    assert validation_payload["status"] == "PASS"
+
+
+def test_reader_brief_decision_journal_summary_reads_latest_report(tmp_path: Path) -> None:
+    weekly_path = _weekly_review_path(tmp_path)
+    entry = build_decision_entry_from_weekly_review(
+        weekly_review_path=weekly_path,
+        action_item_id="weekly-action-1",
+        human_decision="continue observation",
+        decision_status="continue_observation",
+        rationale="Forward window is not mature enough.",
+        confidence=0.7,
+        follow_up_task="Review next week.",
+        linked_candidate="shadow_base_ai_growth",
+        created_at=datetime(2026, 6, 2, tzinfo=UTC),
+        decision_id="decision-reader-1",
+    )
+    journal = add_decision_entry(empty_decision_journal(), entry)
+    report_payload = build_decision_journal_report(
+        journal,
+        as_of=date(2026, 6, 2),
+        journal_path=tmp_path / "journal.json",
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+    report_path = tmp_path / "decision_journal_2026-06-02.json"
+    report_path.write_text(json.dumps(report_payload, indent=2, sort_keys=True), encoding="utf-8")
+
+    summary = _etf_decision_journal_summary(
+        {
+            "reports": [
+                {
+                    "report_id": "etf_decision_journal_report",
+                    "latest_artifact_path": str(report_path),
+                }
+            ]
+        }
+    )
+
+    assert summary["availability"] == "AVAILABLE"
+    assert summary["entry_count"] == 1
+    assert summary["follow_up_task_count"] == 1
+    assert "observe_only=true" in summary["safety_status"]
 
 
 def _entry(tmp_path: Path) -> dict[str, object]:
