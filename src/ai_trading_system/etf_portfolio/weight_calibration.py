@@ -60,6 +60,9 @@ DEFAULT_WEIGHT_TOP_CANDIDATE_EXPORT_DIR = (
 DEFAULT_WEIGHT_CANDIDATE_COMPARISON_DIR = (
     DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "comparison"
 )
+DEFAULT_WEIGHT_REGIME_ROBUSTNESS_DIR = (
+    DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "regime_robustness"
+)
 DEFAULT_WEIGHT_PROPOSAL_DIR = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "proposals"
 DEFAULT_WEIGHT_DUAL_TRACK_REPORT_DIR = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "reports"
 DEFAULT_WEIGHT_CALIBRATION_VALIDATION_DIR = (
@@ -77,6 +80,7 @@ WEIGHT_BACKTEST_FORWARD_EVIDENCE_SCHEMA_VERSION = (
 WEIGHT_OVERFIT_DIAGNOSTICS_SCHEMA_VERSION = "etf_weight_overfit_diagnostics_v1"
 WEIGHT_TOP_CANDIDATE_EXPORT_SCHEMA_VERSION = "etf_weight_top_candidate_export_v1"
 WEIGHT_CANDIDATE_COMPARISON_SCHEMA_VERSION = "etf_weight_candidate_comparison_v1"
+WEIGHT_REGIME_ROBUSTNESS_SCHEMA_VERSION = "etf_weight_regime_robustness_v1"
 WEIGHT_PROPOSAL_SCHEMA_VERSION = "etf_weight_candidate_proposals_v1"
 WEIGHT_DUAL_TRACK_REPORT_SCHEMA_VERSION = "etf_weight_dual_track_calibration_report_v1"
 WEIGHT_CALIBRATION_VALIDATION_SCHEMA_VERSION = "etf_weight_dual_track_validation_v1"
@@ -1409,6 +1413,181 @@ def render_weight_candidate_comparison_markdown(payload: Mapping[str, Any]) -> s
             f"{_fmt_pct(row.get('excess_return_vs_baseline'))} | "
             f"{_fmt_pct(row.get('excess_return_vs_QQQ'))} | "
             f"{row.get('forward_readiness_status')} |"
+        )
+    return "\n".join(lines) + "\n"
+
+
+def build_weight_regime_robustness_heatmap(
+    search_payload: Mapping[str, Any],
+    *,
+    top_export_payload: Mapping[str, Any] | None = None,
+    top: int = 10,
+    source_paths: Mapping[str, str] | None = None,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    validate_weight_search_run_payload(search_payload)
+    if top_export_payload:
+        validate_weight_top_candidate_export(top_export_payload)
+    generated = generated_at or datetime.now(UTC)
+    top_export = top_export_payload or build_weight_top_candidate_export(
+        search_payload,
+        top=top,
+        generated_at=generated,
+    )
+    matrix = _weight_regime_robustness_matrix(search_payload, top_export)
+    payload = {
+        "schema_version": WEIGHT_REGIME_ROBUSTNESS_SCHEMA_VERSION,
+        "report_type": "etf_weight_regime_robustness_heatmap",
+        "heatmap_id": f"etf-weight-regime-robustness-{search_payload.get('search_run_id')}",
+        "search_run_id": search_payload.get("search_run_id"),
+        "search_id": search_payload.get("search_id"),
+        "search_config_hash": search_payload.get("search_config_hash"),
+        "generated_at": generated.isoformat(),
+        "market_regime": search_payload.get("market_regime"),
+        "historical_range_preset": dict(_mapping(search_payload.get("historical_range_preset"))),
+        "requested_date_range": dict(_mapping(search_payload.get("requested_date_range"))),
+        "regimes": list(_required_heatmap_regimes()),
+        "candidate_count": len(_records(top_export.get("candidates"))),
+        "matrix_row_count": len(matrix),
+        "matrix": matrix,
+        "source_paths": dict(source_paths or {}),
+        "production_weights_mutated": False,
+        "applied_weight_set": None,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_weight_regime_robustness_heatmap(payload)
+    return payload
+
+
+def validate_weight_regime_robustness_heatmap(payload: Mapping[str, Any]) -> None:
+    issues = []
+    if payload.get("schema_version") != WEIGHT_REGIME_ROBUSTNESS_SCHEMA_VERSION:
+        issues.append("schema_version")
+    if payload.get("report_type") != "etf_weight_regime_robustness_heatmap":
+        issues.append("report_type")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if payload.get(field) != expected:
+            issues.append(field)
+    safety = _mapping(payload.get("safety"))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if safety.get(field) != expected:
+            issues.append(f"safety.{field}")
+    matrix = _records(payload.get("matrix"))
+    if int(payload.get("matrix_row_count") or 0) != len(matrix):
+        issues.append("matrix_row_count")
+    expected_rows = int(payload.get("candidate_count") or 0) * len(_required_heatmap_regimes())
+    if len(matrix) != expected_rows:
+        issues.append("candidate_regime_matrix_complete")
+    for row in matrix:
+        validate_weight_regime_robustness_row(row)
+    if payload.get("production_weights_mutated") is not False:
+        issues.append("production_weights_mutated")
+    if payload.get("applied_weight_set") is not None:
+        issues.append("applied_weight_set")
+    if issues:
+        raise WeightCalibrationError(
+            "ETF regime robustness heatmap validation failed: "
+            + ", ".join(str(issue) for issue in issues)
+        )
+
+
+def validate_weight_regime_robustness_row(row: Mapping[str, Any]) -> None:
+    issues = []
+    required = {
+        "candidate_id",
+        "weight_set_id",
+        "regime",
+        "return",
+        "excess_return_vs_baseline",
+        "max_drawdown",
+        "volatility",
+        "Sharpe",
+        "turnover",
+        "constraint_hit_rate",
+        "sample_count",
+        "confidence_warning",
+        "safety",
+    }
+    missing = sorted(required - set(row))
+    if missing:
+        issues.extend(missing)
+    if row.get("regime") not in set(_required_heatmap_regimes()):
+        issues.append("regime")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if row.get(field) != expected:
+            issues.append(field)
+    safety = _mapping(row.get("safety"))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if safety.get(field) != expected:
+            issues.append(f"safety.{field}")
+    if issues:
+        raise WeightCalibrationError(
+            "ETF regime robustness heatmap row validation failed: "
+            + ", ".join(str(issue) for issue in issues)
+        )
+
+
+def write_weight_regime_robustness_heatmap(
+    payload: Mapping[str, Any],
+    *,
+    output_dir: Path = DEFAULT_WEIGHT_REGIME_ROBUSTNESS_DIR,
+) -> dict[str, Path]:
+    validate_weight_regime_robustness_heatmap(payload)
+    run_id = _artifact_stem(str(payload.get("search_run_id") or "unknown"))
+    stem = f"regime_robustness_heatmap_{run_id}"
+    json_path = output_dir / f"{stem}.json"
+    csv_path = output_dir / f"{stem}.csv"
+    markdown_path = output_dir / f"{stem}.md"
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    pd.DataFrame(_weight_regime_robustness_csv_rows(payload)).to_csv(
+        csv_path,
+        index=False,
+    )
+    markdown_path.write_text(
+        render_weight_regime_robustness_markdown(payload),
+        encoding="utf-8",
+    )
+    return {"json": json_path, "csv": csv_path, "markdown": markdown_path}
+
+
+def render_weight_regime_robustness_markdown(payload: Mapping[str, Any]) -> str:
+    table_header = (
+        "| Candidate | Regime | Return | Excess vs Baseline | Max DD | "
+        "Volatility | Sharpe | Turnover | Samples | Warning |"
+    )
+    lines = [
+        "# ETF Weight Regime Robustness Heatmap Data",
+        "",
+        "## Safety Banner",
+        "",
+        "- observe_only = true",
+        "- candidate_only = true",
+        "- production_effect = none",
+        "- broker_action = none",
+        "- manual_review_required = true",
+        "- 本 heatmap 数据只用于 robustness review，不应用权重。",
+        "",
+        f"- Search Run ID: {payload.get('search_run_id')}",
+        f"- Matrix Rows: {payload.get('matrix_row_count')}",
+        "",
+        table_header,
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|---|",
+    ]
+    for row in _records(payload.get("matrix")):
+        lines.append(
+            f"| {row.get('weight_set_id')} | {row.get('regime')} | "
+            f"{_fmt_pct(row.get('return'))} | "
+            f"{_fmt_pct(row.get('excess_return_vs_baseline'))} | "
+            f"{_fmt_pct(row.get('max_drawdown'))} | "
+            f"{_fmt_pct(row.get('volatility'))} | "
+            f"{_fmt_number(row.get('Sharpe'))} | "
+            f"{_fmt_number(row.get('turnover'))} | "
+            f"{row.get('sample_count')} | {row.get('confidence_warning')} |"
         )
     return "\n".join(lines) + "\n"
 
@@ -5605,6 +5784,112 @@ def _weight_candidate_comparison_csv_rows(payload: Mapping[str, Any]) -> list[di
     for row in _records(payload.get("comparison_rows")):
         flat = dict(row)
         flat["weights"] = json.dumps(row.get("weights") or {}, ensure_ascii=False, sort_keys=True)
+        flat["metric_null_reasons"] = json.dumps(
+            row.get("metric_null_reasons") or {},
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+        flat.pop("safety", None)
+        rows.append(flat)
+    return rows
+
+
+def _required_heatmap_regimes() -> tuple[str, ...]:
+    return (
+        "risk_on",
+        "neutral",
+        "risk_off",
+        "growth_leadership",
+        "semiconductor_leadership",
+        "high_volatility",
+        "growth_underperformance",
+    )
+
+
+def _weight_regime_robustness_matrix(
+    search_payload: Mapping[str, Any],
+    top_export_payload: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    evaluations = {
+        str(item.get("candidate_id")): item
+        for item in _records(
+            _mapping(search_payload.get("robustness_evaluation")).get("candidate_evaluations")
+        )
+    }
+    rows = []
+    for candidate in _records(top_export_payload.get("candidates")):
+        candidate_id = str(candidate.get("source_candidate_id"))
+        evaluation = _mapping(evaluations.get(candidate_id))
+        slices = {
+            _heatmap_regime_for_slice(str(item.get("slice_id"))): item
+            for item in _records(evaluation.get("slice_metrics"))
+            if _heatmap_regime_for_slice(str(item.get("slice_id")))
+        }
+        for regime in _required_heatmap_regimes():
+            rows.append(
+                _weight_regime_robustness_row(
+                    candidate,
+                    regime=regime,
+                    slice_metrics=_mapping(slices.get(regime)),
+                )
+            )
+    return rows
+
+
+def _heatmap_regime_for_slice(slice_id: str) -> str:
+    mapping = {
+        "risk_on_periods": "risk_on",
+        "neutral_periods": "neutral",
+        "risk_off_periods": "risk_off",
+        "growth_leadership_periods": "growth_leadership",
+        "semiconductor_leadership_periods": "semiconductor_leadership",
+        "high_volatility_periods": "high_volatility",
+        "growth_underperformance_periods": "growth_underperformance",
+    }
+    return mapping.get(slice_id, "")
+
+
+def _weight_regime_robustness_row(
+    candidate: Mapping[str, Any],
+    *,
+    regime: str,
+    slice_metrics: Mapping[str, Any],
+) -> dict[str, Any]:
+    status = str(slice_metrics.get("status") or "MISSING")
+    warning = ""
+    if not slice_metrics:
+        warning = "REGIME_SLICE_MISSING"
+    elif status != "AVAILABLE":
+        warning = status
+    row = {
+        "candidate_id": candidate.get("source_candidate_id"),
+        "weight_set_id": candidate.get("weight_set_id"),
+        "rank": candidate.get("rank"),
+        "regime": regime,
+        "status": status,
+        "return": _float_or_none(slice_metrics.get("return")),
+        "excess_return_vs_baseline": _float_or_none(
+            slice_metrics.get("excess_return_vs_baseline")
+        ),
+        "max_drawdown": _float_or_none(slice_metrics.get("max_drawdown")),
+        "volatility": _float_or_none(slice_metrics.get("volatility")),
+        "Sharpe": _float_or_none(slice_metrics.get("Sharpe")),
+        "turnover": _float_or_none(slice_metrics.get("turnover")),
+        "constraint_hit_rate": _float_or_none(slice_metrics.get("constraint_hit_rate")),
+        "sample_count": int(_float_or_none(slice_metrics.get("row_count")) or 0),
+        "confidence_warning": warning,
+        "metric_null_reasons": dict(_mapping(slice_metrics.get("metric_null_reasons"))),
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_weight_regime_robustness_row(row)
+    return row
+
+
+def _weight_regime_robustness_csv_rows(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
+    rows = []
+    for row in _records(payload.get("matrix")):
+        flat = dict(row)
         flat["metric_null_reasons"] = json.dumps(
             row.get("metric_null_reasons") or {},
             ensure_ascii=False,

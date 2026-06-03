@@ -325,6 +325,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     DEFAULT_WEIGHT_FORWARD_EVIDENCE_DIR,
     DEFAULT_WEIGHT_OVERFIT_DIAGNOSTICS_DIR,
     DEFAULT_WEIGHT_PROPOSAL_DIR,
+    DEFAULT_WEIGHT_REGIME_ROBUSTNESS_DIR,
     DEFAULT_WEIGHT_TOP_CANDIDATE_EXPORT_DIR,
     build_backtest_forward_evidence_aggregation,
     build_candidate_weight_proposals,
@@ -332,6 +333,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     build_dual_track_weight_calibration_validation_report,
     build_weight_candidate_comparison_table,
     build_weight_overfit_diagnostics,
+    build_weight_regime_robustness_heatmap,
     build_weight_top_candidate_export,
     enroll_candidate_weights_forward,
     find_latest_weight_search_run_dir,
@@ -350,6 +352,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     write_dual_track_weight_calibration_validation_report,
     write_weight_candidate_comparison_table,
     write_weight_overfit_diagnostics,
+    write_weight_regime_robustness_heatmap,
     write_weight_search_run,
     write_weight_top_candidate_export,
 )
@@ -4257,6 +4260,65 @@ def weight_calibration_comparison_command(
     typer.echo(f"json={paths['json']}")
     typer.echo(f"csv={paths['csv']}")
     typer.echo(f"row_count={payload['row_count']}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+
+
+@weight_calibration_app.command("regime-robustness")
+def weight_calibration_regime_robustness_command(
+    run_id: Annotated[
+        str | None,
+        typer.Option("--run-id", help="historical weight search run id。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="读取最新 historical weight search run。"),
+    ] = False,
+    top: Annotated[
+        int,
+        typer.Option("--top", help="包含 ranking 前 N 个 candidates。"),
+    ] = 10,
+    search_output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weight calibration search report 输出目录。"),
+    ] = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR,
+    top_export_path: Annotated[
+        Path | None,
+        typer.Option(help="optional TRADING-078B Top-N JSON path。"),
+    ] = None,
+    heatmap_dir: Annotated[
+        Path,
+        typer.Option("--heatmap-dir", help="regime robustness heatmap 输出目录。"),
+    ] = DEFAULT_WEIGHT_REGIME_ROBUSTNESS_DIR,
+) -> None:
+    """生成 TRADING-078D regime robustness heatmap-ready data。"""
+    if run_id is not None and latest:
+        raise typer.BadParameter("--run-id and --latest cannot be combined")
+    if run_id is None and not latest:
+        raise typer.BadParameter("--run-id or --latest is required")
+    run_dir = (
+        find_latest_weight_search_run_dir(search_output_dir)
+        if latest
+        else search_output_dir / str(run_id)
+    )
+    search_payload = read_weight_search_run_payload(run_dir)
+    source_paths = {"historical_search": str(run_dir / "summary.json")}
+    if top_export_path is not None:
+        source_paths["top_candidate_export"] = str(top_export_path)
+    payload = build_weight_regime_robustness_heatmap(
+        search_payload,
+        top_export_payload=_load_optional_json_payload(top_export_path),
+        top=top,
+        source_paths=source_paths,
+    )
+    paths = write_weight_regime_robustness_heatmap(payload, output_dir=heatmap_dir)
+    typer.echo(f"ETF weight regime robustness heatmap：{paths['markdown']}")
+    typer.echo(f"json={paths['json']}")
+    typer.echo(f"csv={paths['csv']}")
+    typer.echo(f"matrix_row_count={payload['matrix_row_count']}")
     typer.echo("observe_only=true")
     typer.echo("candidate_only=true")
     typer.echo("production_effect=none")

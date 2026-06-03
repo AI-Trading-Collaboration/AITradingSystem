@@ -25,6 +25,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     build_dual_track_weight_calibration_validation_report,
     build_weight_candidate_comparison_table,
     build_weight_overfit_diagnostics,
+    build_weight_regime_robustness_heatmap,
     build_weight_top_candidate_export,
     enroll_candidate_weights_forward,
     generate_weight_candidates,
@@ -46,6 +47,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     validate_dual_track_weight_calibration_validation_report,
     validate_weight_candidate_comparison_table,
     validate_weight_forward_enrollment_record,
+    validate_weight_regime_robustness_heatmap,
     validate_weight_search_registry,
     validate_weight_top_candidate_export,
     weight_overfit_risk_band,
@@ -53,6 +55,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     write_dual_track_weight_calibration_report,
     write_dual_track_weight_calibration_validation_report,
     write_weight_candidate_comparison_table,
+    write_weight_regime_robustness_heatmap,
     write_weight_search_run,
     write_weight_top_candidate_export,
 )
@@ -737,6 +740,95 @@ def test_weight_candidate_comparison_cli_writes_outputs(tmp_path: Path) -> None:
     assert list((tmp_path / "comparison").glob("*.json"))
     assert list((tmp_path / "comparison").glob("*.csv"))
     assert list((tmp_path / "comparison").glob("*.md"))
+
+
+def test_weight_regime_robustness_heatmap_generates_complete_matrix() -> None:
+    run = _small_search_run()
+
+    payload = build_weight_regime_robustness_heatmap(
+        run.payload,
+        top=2,
+        generated_at=datetime(2026, 6, 3, tzinfo=UTC),
+    )
+
+    assert payload["schema_version"] == "etf_weight_regime_robustness_v1"
+    assert payload["candidate_count"] == 2
+    assert payload["matrix_row_count"] == 14
+    regimes = {row["regime"] for row in payload["matrix"]}
+    assert regimes == {
+        "risk_on",
+        "neutral",
+        "risk_off",
+        "growth_leadership",
+        "semiconductor_leadership",
+        "high_volatility",
+        "growth_underperformance",
+    }
+    first = payload["matrix"][0]
+    assert "sample_count" in first
+    assert "constraint_hit_rate" in first
+    assert payload["production_effect"] == "none"
+    validate_weight_regime_robustness_heatmap(payload)
+
+
+def test_weight_regime_robustness_heatmap_warns_missing_regime() -> None:
+    payload = build_weight_regime_robustness_heatmap(_small_search_run().payload, top=1)
+
+    growth = next(row for row in payload["matrix"] if row["regime"] == "growth_leadership")
+
+    assert growth["status"] == "MISSING"
+    assert growth["confidence_warning"] == "REGIME_SLICE_MISSING"
+    assert growth["sample_count"] == 0
+
+
+def test_weight_regime_robustness_heatmap_writes_json_csv_markdown(
+    tmp_path: Path,
+) -> None:
+    payload = build_weight_regime_robustness_heatmap(_small_search_run().payload, top=1)
+
+    paths = write_weight_regime_robustness_heatmap(
+        payload,
+        output_dir=tmp_path / "heatmap",
+    )
+
+    assert paths["json"].exists()
+    assert paths["csv"].exists()
+    assert paths["markdown"].exists()
+    assert "ETF Weight Regime Robustness Heatmap Data" in paths["markdown"].read_text(
+        encoding="utf-8"
+    )
+    assert "growth_leadership" in paths["csv"].read_text(encoding="utf-8")
+
+
+def test_weight_regime_robustness_heatmap_cli_writes_outputs(tmp_path: Path) -> None:
+    run = _small_search_run()
+    report_root = tmp_path / "reports"
+    data_root = tmp_path / "data"
+    write_weight_search_run(run, report_root=report_root, data_root=data_root)
+
+    result = CliRunner().invoke(
+        etf_app,
+        [
+            "weight-calibration",
+            "regime-robustness",
+            "--latest",
+            "--top",
+            "2",
+            "--output-dir",
+            str(report_root),
+            "--heatmap-dir",
+            str(tmp_path / "heatmap"),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "matrix_row_count=14" in result.output
+    assert "production_effect=none" in result.output
+    assert list((tmp_path / "heatmap").glob("*.json"))
+    assert list((tmp_path / "heatmap").glob("*.csv"))
+    assert list((tmp_path / "heatmap").glob("*.md"))
 
 
 def test_candidate_weight_registry_writes_candidate_records(tmp_path: Path) -> None:
