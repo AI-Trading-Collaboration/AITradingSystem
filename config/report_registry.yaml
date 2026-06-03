@@ -814,6 +814,38 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_strategy_evidence_dashboard
+    title: ETF Strategy Evidence Dashboard
+    group: governance
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits etf evidence-dashboard report --as-of YYYY-MM-DD
+    artifact_globs:
+      - reports/etf_portfolio/evidence_dashboard/strategy_evidence_dashboard_*.json
+      - reports/etf_portfolio/evidence_dashboard/strategy_evidence_dashboard_*.md
+    freshness_sla_days: 3
+    freshness_rationale: TRADING-076 dashboard should summarize current strategy evidence, blockers, conflicts, data-quality context, and owner review priorities from existing ETF research artifacts.
+    owner_action: run_aits_etf_evidence_dashboard_report_after_report_index_data_quality_and_operations_health_are_available
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_strategy_evidence_dashboard_validation
+    title: ETF Strategy Evidence Dashboard Validation Gate
+    group: governance
+    cadence: on_change
+    audience: reviewer
+    owner: system
+    command: aits etf evidence-dashboard validate --as-of YYYY-MM-DD
+    artifact_globs:
+      - reports/etf_portfolio/evidence_dashboard/validation/strategy_evidence_validation_*.json
+      - reports/etf_portfolio/evidence_dashboard/validation/strategy_evidence_validation_*.md
+    freshness_sla_days: 14
+    freshness_rationale: TRADING-076 final validation confirms schema, source registry, aggregator, cards, ranking, conflicts, manual queue, report generator, Reader Brief integration, traceability, and safety boundary.
+    owner_action: run_aits_etf_evidence_dashboard_validate_before_marking_TRADING_076_validating_or_baseline_done
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_p2_walk_forward
     title: ETF P2 Walk Forward Readiness
     group: research

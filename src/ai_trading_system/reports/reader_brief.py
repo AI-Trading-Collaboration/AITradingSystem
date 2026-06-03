@@ -180,6 +180,7 @@ def build_reader_brief_payload(
     etf_weight_calibration = _etf_weight_calibration_summary(report_index)
     etf_operations_health = _etf_operations_health_summary(report_index)
     etf_data_quality_governance = _etf_data_quality_governance_summary(report_index)
+    etf_strategy_evidence = _etf_strategy_evidence_summary(report_index)
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -307,6 +308,7 @@ def build_reader_brief_payload(
         "etf_weight_calibration": etf_weight_calibration,
         "etf_operations_health": etf_operations_health,
         "etf_data_quality_governance": etf_data_quality_governance,
+        "etf_strategy_evidence": etf_strategy_evidence,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -566,6 +568,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_weight_calibration = _mapping(payload.get("etf_weight_calibration"))
     etf_operations_health = _mapping(payload.get("etf_operations_health"))
     etf_data_quality_governance = _mapping(payload.get("etf_data_quality_governance"))
+    etf_strategy_evidence = _mapping(payload.get("etf_strategy_evidence"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -808,6 +811,28 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("safety_status", etf_data_quality_governance.get("safety_status")),
                     ("production_effect", etf_data_quality_governance.get("production_effect")),
                     ("broker_action", etf_data_quality_governance.get("broker_action")),
+                ]
+            ),
+        ),
+        _section(
+            "Strategy Evidence Dashboard",
+            _definition_table(
+                [
+                    ("availability", etf_strategy_evidence.get("availability")),
+                    ("overall_status", etf_strategy_evidence.get("overall_status")),
+                    ("summary", etf_strategy_evidence.get("summary_sentence")),
+                    ("strongest_evidence", etf_strategy_evidence.get("strongest_evidence")),
+                    ("weakest_evidence", etf_strategy_evidence.get("weakest_evidence")),
+                    ("blocking_issues", etf_strategy_evidence.get("blocking_issues")),
+                    (
+                        "manual_review_priorities",
+                        etf_strategy_evidence.get("manual_review_priority_count"),
+                    ),
+                    ("data_quality_status", etf_strategy_evidence.get("data_quality_status")),
+                    ("detailed_dashboard", etf_strategy_evidence.get("detail_report")),
+                    ("safety_status", etf_strategy_evidence.get("safety_status")),
+                    ("production_effect", etf_strategy_evidence.get("production_effect")),
+                    ("broker_action", etf_strategy_evidence.get("broker_action")),
                 ]
             ),
         ),
@@ -2930,6 +2955,137 @@ def _etf_data_quality_governance_safety_status(payload: Mapping[str, Any]) -> st
         and _text(safety_banner.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
         and safety_banner.get("broker_action") == "none"
         and safety_banner.get("manual_review_required") is True
+        and payload.get("commands_executed") is False
+        and payload.get("production_state_mutated") is False
+    )
+    return (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true; "
+        "commands_executed=false; production_state_mutated=false"
+        if safe
+        else "SAFETY_REVIEW_REQUIRED"
+    )
+
+
+def _etf_strategy_evidence_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_strategy_evidence_summary()
+    report_path = _report_index_artifact_path(
+        report_index,
+        "etf_strategy_evidence_dashboard",
+    )
+    report = _read_optional_json(report_path)
+    if not report:
+        return _missing_etf_strategy_evidence_summary()
+
+    cards = _records(report.get("evidence_cards"))
+    priorities = _records(report.get("manual_review_priorities"))
+    conflicts = _records(report.get("conflicts"))
+    data_quality_overlay = _mapping(report.get("data_quality_overlay"))
+    overall_status = _text(report.get("overall_status"), "UNKNOWN")
+    strongest = _strategy_evidence_card_list(cards, strongest=True)
+    weakest = _strategy_evidence_card_list(cards, strongest=False)
+    blocking_cards = [
+        _text(card.get("category"), "UNKNOWN")
+        for card in cards
+        if _text(card.get("status")) in {"blocked", "invalid", "stale"}
+    ]
+    safety_status = _etf_strategy_evidence_safety_status(report)
+    safety = _mapping(report.get("safety"))
+    return {
+        "availability": "AVAILABLE",
+        "overall_status": overall_status,
+        "status": overall_status,
+        "summary_sentence": (
+            f"Strategy Evidence Dashboard: overall_status={overall_status}; "
+            f"strongest={strongest}; weakest={weakest}; "
+            f"blocking_issues={len(blocking_cards)}; "
+            f"manual_review_priorities={len(priorities)}; "
+            f"data_quality={_text(data_quality_overlay.get('status'), 'unknown')}; "
+            f"safety={safety_status}."
+        ),
+        "strongest_evidence": strongest,
+        "weakest_evidence": weakest,
+        "blocking_issues": "none" if not blocking_cards else ", ".join(blocking_cards[:5]),
+        "manual_review_priority_count": len(priorities),
+        "conflict_count": len(conflicts),
+        "data_quality_status": _text(data_quality_overlay.get("status"), "unknown"),
+        "detail_report": "" if report_path is None else str(report_path),
+        "safety_status": safety_status,
+        "production_effect": _text(safety.get("production_effect"), PRODUCTION_EFFECT),
+        "broker_action": _text(safety.get("broker_action"), "none"),
+        "manual_review_required": safety.get("manual_review_required") is True,
+        "commands_executed": report.get("commands_executed") is True,
+        "production_state_mutated": report.get("production_state_mutated") is True,
+    }
+
+
+def _missing_etf_strategy_evidence_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "overall_status": "MISSING",
+        "status": "MISSING",
+        "summary_sentence": "Strategy Evidence Dashboard: no latest dashboard report found.",
+        "strongest_evidence": "MISSING",
+        "weakest_evidence": "MISSING",
+        "blocking_issues": "MISSING",
+        "manual_review_priority_count": 0,
+        "conflict_count": 0,
+        "data_quality_status": "MISSING",
+        "detail_report": "",
+        "safety_status": "MISSING",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "commands_executed": False,
+        "production_state_mutated": False,
+        "limitation": (
+            "Strategy evidence dashboard artifact is missing; Reader Brief does not run "
+            "etf evidence-dashboard report CLI."
+        ),
+    }
+
+
+def _strategy_evidence_card_list(cards: list[dict[str, Any]], *, strongest: bool) -> str:
+    if not cards:
+        return "none"
+    ordered = sorted(
+        cards,
+        key=lambda card: (
+            -_strategy_evidence_status_rank(_text(card.get("status")))
+            if strongest
+            else _strategy_evidence_status_rank(_text(card.get("status"))),
+            _text(card.get("category")),
+        ),
+    )
+    labels = [
+        f"{_text(card.get('category'), 'UNKNOWN')}={_text(card.get('status'), 'UNKNOWN')}"
+        for card in ordered[:3]
+    ]
+    return ", ".join(labels)
+
+
+def _strategy_evidence_status_rank(status: str) -> int:
+    return {
+        "strong_support": 7,
+        "supportive": 6,
+        "mixed": 5,
+        "needs_more_data": 4,
+        "weak": 3,
+        "stale": 2,
+        "blocked": 1,
+        "invalid": 0,
+    }.get(status, 0)
+
+
+def _etf_strategy_evidence_safety_status(payload: Mapping[str, Any]) -> str:
+    safety = _mapping(payload.get("safety"))
+    safe = (
+        safety.get("observe_only") is True
+        and safety.get("candidate_only") is True
+        and _text(safety.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
+        and safety.get("broker_action") == "none"
+        and safety.get("manual_review_required") is True
         and payload.get("commands_executed") is False
         and payload.get("production_state_mutated") is False
     )

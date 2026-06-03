@@ -602,6 +602,30 @@ Brief/report-registry integration 和 safety boundary；该 gate 不因为本地
 `production_effect=none`、`broker_action=none`、`manual_review_required=true`，不写
 official target weights、不改 baseline config、不触发 broker。
 
+TRADING-076 strategy evidence dashboard registry 位于
+`config/etf_portfolio/evidence_dashboard.yaml`。`aits etf evidence-dashboard aggregate
+--as-of YYYY-MM-DD` 只读扫描 report index 和既有 ETF research artifacts，输出
+loaded / missing / stale / blocked source aggregation；`aits etf evidence-dashboard report
+--as-of YYYY-MM-DD` 生成
+`reports/etf_portfolio/evidence_dashboard/strategy_evidence_dashboard_YYYY-MM-DD.json/md`，
+把 ETF baseline、weight calibration、forward simulation、AI confirmation / attribution、
+satellite replacement / attribution、parameter review、weekly review、decision journal、
+data quality、operations health 和 validation gates 汇总为 evidence cards、candidate
+ranking、conflicts、data-quality overlay 和 manual review priority queue。每个 card 都保留
+source module、source report path、source metric、as-of date、freshness、data quality、
+validation status 和 sample count；缺失、stale、blocked 或 optional missing evidence
+必须显式显示。Reader Brief 的 `Strategy Evidence Dashboard` 区块只读 latest
+`etf_strategy_evidence_dashboard`，展示 overall status、strongest / weakest evidence、
+blocking issues、manual review priority count、data quality status 和 detailed link；缺失时
+显示 `MISSING`，不运行上游、不补造结论。`aits etf evidence-dashboard validate --as-of
+YYYY-MM-DD` 生成
+`reports/etf_portfolio/evidence_dashboard/validation/strategy_evidence_validation_YYYY-MM-DD.json/md`，
+fail-closed 校验 schema、registry、aggregator、cards、ranking、conflict overlay、manual
+queue、report generator、Reader Brief integration、traceability 和 safety boundary。所有
+TRADING-076 输出固定 `observe_only=true`、`candidate_only=true`、
+`production_effect=none`、`broker_action=none`、`manual_review_required=true`，不自动
+promotion、不改 baseline / production weights、不触发 broker。
+
 `aits etf governance summary --candidate <candidate.json>` 使用
 `config/etf_portfolio/governance.yaml` 的参数治理 policy 输出候选晋级摘要，固定
 `production_effect=none` 且 `manual_review_required=true`。候选必须先通过测试、shadow

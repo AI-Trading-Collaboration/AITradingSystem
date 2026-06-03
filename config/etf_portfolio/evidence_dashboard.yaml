@@ -1,0 +1,378 @@
+schema_version: etf_strategy_evidence_dashboard_registry_v1
+
+policy_metadata:
+  version: etf_strategy_evidence_dashboard_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: >
+    TRADING-076 aggregates existing ETF portfolio research, data-quality,
+    operations, attribution, parameter-review, and validation-gate artifacts
+    into a single observe-only strategy evidence dashboard.
+  validation: >
+    Focused tests cover schema safety, source registry loading, aggregation,
+    evidence cards, candidate ranking, conflicts, manual review priorities,
+    report generation, Reader Brief integration, and final validation gate.
+  review_condition: >
+    Review whenever ETF report IDs, freshness SLAs, evidence categories,
+    dashboard conclusions, manual review actions, or validation gate semantics
+    change.
+
+safety:
+  observe_only: true
+  candidate_only: true
+  production_effect: none
+  broker_action: none
+  manual_review_required: true
+
+categories:
+  baseline_allocation:
+    title: ETF Baseline Allocation
+    required: true
+    default_manual_review_action: continue_observation
+  weight_calibration:
+    title: Weight Calibration Candidates
+    required: true
+    default_manual_review_action: review_candidate
+  forward_simulation:
+    title: Forward Simulation Candidates
+    required: true
+    default_manual_review_action: continue_observation
+  ai_confirmation:
+    title: AI Confirmation
+    required: true
+    default_manual_review_action: continue_observation
+  ai_attribution:
+    title: AI Attribution
+    required: false
+    default_manual_review_action: request_more_data
+  satellite_replacement:
+    title: Satellite Replacement
+    required: true
+    default_manual_review_action: continue_observation
+  satellite_attribution:
+    title: Satellite Attribution
+    required: false
+    default_manual_review_action: request_more_data
+  parameter_review:
+    title: Parameter Review
+    required: true
+    default_manual_review_action: review_candidate
+  weekly_review:
+    title: Weekly Review
+    required: true
+    default_manual_review_action: review_candidate
+  decision_journal:
+    title: Decision Journal
+    required: true
+    default_manual_review_action: review_candidate
+  data_quality:
+    title: Data Quality
+    required: true
+    default_manual_review_action: review_blocker
+  operations_health:
+    title: Operations Health
+    required: true
+    default_manual_review_action: review_blocker
+  validation_gates:
+    title: Validation Gates
+    required: true
+    default_manual_review_action: review_blocker
+
+freshness_requirements:
+  max_age_days: 14
+  stale_required_blocks: true
+
+quality_requirements:
+  require_data_quality_context: true
+  require_validation_context: true
+  require_source_links: true
+  minimum_sample_count_default: 1
+
+manual_review_priority_rules:
+  critical_statuses:
+    - blocked
+    - invalid
+  stale_gate_priority: high
+  conflict_priority: high
+  needs_more_data_priority: medium
+  optional_missing_priority: low
+
+sources:
+  etf_baseline_brief:
+    category: baseline_allocation
+    title: ETF Baseline Allocation
+    source_module: etf_portfolio.reporting
+    report_id: etf_portfolio_brief
+    required: true
+    max_age_days: 3
+    source_metric_paths:
+      - data_quality_status
+      - market_regime
+      - status
+    sample_count_paths: []
+    validation_report_id: etf_data_quality
+    expected_artifact_globs:
+      - reports/etf_portfolio/*_portfolio_brief.md
+    manual_review_action: continue_observation
+    minimum_sample_count: 0
+  weight_calibration_report:
+    category: weight_calibration
+    title: Weight Calibration Candidates
+    source_module: etf_portfolio.weight_calibration
+    report_id: etf_weight_dual_track_calibration_report
+    required: true
+    max_age_days: 14
+    source_metric_paths:
+      - status
+      - overall_status
+      - proposal_summary.status
+      - evidence_status
+    sample_count_paths:
+      - candidate_count
+      - proposal_summary.candidate_count
+      - top_historical_candidates.0.rank
+    validation_report_id: etf_weight_dual_track_calibration_validation
+    expected_artifact_globs:
+      - reports/etf_portfolio/weight_calibration/reports/dual_track_calibration_*.json
+      - reports/etf_portfolio/weight_calibration/reports/dual_track_calibration_*.md
+    manual_review_action: review_candidate
+    minimum_sample_count: 1
+  forward_dashboard:
+    category: forward_simulation
+    title: Forward Simulation Candidates
+    source_module: etf_portfolio.forward
+    report_id: etf_forward_dashboard
+    required: true
+    max_age_days: 3
+    source_metric_paths:
+      - status
+      - summary.status
+      - candidate_summary.status
+      - dashboard_status
+    sample_count_paths:
+      - summary.sample_count
+      - candidate_count
+      - active_candidate_count
+    validation_report_id: etf_forward_validation
+    expected_artifact_globs:
+      - reports/etf_portfolio/forward/dashboard/forward_dashboard_*.json
+      - reports/etf_portfolio/forward/dashboard/forward_dashboard_*.md
+    manual_review_action: continue_observation
+    minimum_sample_count: 1
+  ai_confirmation_report:
+    category: ai_confirmation
+    title: AI Confirmation
+    source_module: etf_portfolio.ai_confirmation
+    report_id: etf_ai_confirmation_report
+    required: true
+    max_age_days: 3
+    source_metric_paths:
+      - status
+      - AIConfirmationScore.score_band
+      - AIConfirmationScore.action_hint
+      - data_quality_status
+    sample_count_paths:
+      - universe_coverage.required_symbol_count
+      - coverage_summary.required_symbol_count
+    validation_report_id: etf_ai_confirmation_validation
+    expected_artifact_globs:
+      - reports/etf_portfolio/ai_confirmation/reports/ai_confirmation_report_*.json
+      - reports/etf_portfolio/ai_confirmation/reports/ai_confirmation_report_*.md
+    manual_review_action: continue_observation
+    minimum_sample_count: 1
+  ai_attribution_report:
+    category: ai_attribution
+    title: AI Attribution
+    source_module: etf_portfolio.ai_attribution
+    report_id: etf_ai_attribution_report
+    required: false
+    max_age_days: 14
+    source_metric_paths:
+      - status
+      - evidence_scorecard.status
+      - evidence_scorecard.redundancy_band
+      - evidence_scorecard.manual_review_recommendation
+    sample_count_paths:
+      - evidence_scorecard.sample_count
+      - available_sample_count
+      - record_count
+    validation_report_id: etf_ai_attribution_validation
+    expected_artifact_globs:
+      - reports/etf_portfolio/ai_attribution/reports/ai_attribution_report_*.json
+      - reports/etf_portfolio/ai_attribution/reports/ai_attribution_report_*.md
+    manual_review_action: request_more_data
+    minimum_sample_count: 1
+  satellite_replacement_report:
+    category: satellite_replacement
+    title: Satellite Replacement
+    source_module: etf_portfolio.satellite
+    report_id: etf_satellite_replacement_report
+    required: true
+    max_age_days: 3
+    source_metric_paths:
+      - status
+      - replacement_plan.status
+      - replacement_plan.fallback_to_etf
+      - data_quality_status
+    sample_count_paths:
+      - candidate_count
+      - universe_coverage.required_symbol_count
+      - replacement_plan.candidate_count
+    validation_report_id: etf_satellite_validation
+    expected_artifact_globs:
+      - reports/etf_portfolio/satellite/reports/satellite_replacement_report_*.json
+      - reports/etf_portfolio/satellite/reports/satellite_replacement_report_*.md
+    manual_review_action: continue_observation
+    minimum_sample_count: 1
+  satellite_attribution_report:
+    category: satellite_attribution
+    title: Satellite Attribution
+    source_module: etf_portfolio.satellite_attribution
+    report_id: etf_satellite_attribution_report
+    required: false
+    max_age_days: 14
+    source_metric_paths:
+      - status
+      - evidence_scorecard.status
+      - evidence_scorecard.manual_review_recommendation
+      - evidence_scorecard.risk_status
+    sample_count_paths:
+      - evidence_scorecard.sample_count
+      - available_sample_count
+      - record_count
+    validation_report_id: etf_satellite_attribution_validation
+    expected_artifact_globs:
+      - reports/etf_portfolio/satellite_attribution/reports/satellite_attribution_report_*.json
+      - reports/etf_portfolio/satellite_attribution/reports/satellite_attribution_report_*.md
+    manual_review_action: request_more_data
+    minimum_sample_count: 1
+  parameter_review_report:
+    category: parameter_review
+    title: Parameter Review
+    source_module: etf_portfolio.parameter_review
+    report_id: etf_parameter_review_report
+    required: true
+    max_age_days: 14
+    source_metric_paths:
+      - status
+      - proposal_summary.status
+      - manual_review_summary.status
+      - candidate_summary.status
+    sample_count_paths:
+      - candidate_count
+      - proposal_summary.candidate_count
+      - reviewed_candidate_count
+    validation_report_id: etf_parameter_review_validation
+    expected_artifact_globs:
+      - reports/etf_portfolio/parameter_review/reports/parameter_review_*.json
+      - reports/etf_portfolio/parameter_review/reports/parameter_review_*.md
+    manual_review_action: review_candidate
+    minimum_sample_count: 1
+  weekly_review_report:
+    category: weekly_review
+    title: Weekly Review
+    source_module: etf_portfolio.weekly_review
+    report_id: etf_weekly_review
+    required: true
+    max_age_days: 14
+    source_metric_paths:
+      - status
+      - conclusion.status
+      - validation_status
+      - manual_review_status
+    sample_count_paths:
+      - manual_review_action_count
+      - source_report_count
+      - candidate_count
+    validation_report_id: etf_weekly_review_validation
+    expected_artifact_globs:
+      - reports/etf_portfolio/weekly_review/weekly_review_*.json
+      - reports/etf_portfolio/weekly_review/weekly_review_*.md
+    manual_review_action: review_candidate
+    minimum_sample_count: 1
+  decision_journal_report:
+    category: decision_journal
+    title: Decision Journal
+    source_module: etf_portfolio.decision_journal
+    report_id: etf_decision_journal_report
+    required: true
+    max_age_days: 14
+    source_metric_paths:
+      - status
+      - journal_status
+      - summary.status
+      - follow_up_status
+    sample_count_paths:
+      - entry_count
+      - follow_up_task_count
+      - active_entry_count
+    validation_report_id: etf_decision_journal_validation
+    expected_artifact_globs:
+      - reports/etf_portfolio/decision_journal/decision_journal_*.json
+      - reports/etf_portfolio/decision_journal/decision_journal_*.md
+    manual_review_action: review_candidate
+    minimum_sample_count: 0
+  data_quality_governance_report:
+    category: data_quality
+    title: Data Quality
+    source_module: etf_portfolio.data_quality
+    report_id: etf_data_quality_governance_report
+    required: true
+    max_age_days: 3
+    source_metric_paths:
+      - status
+      - price_freshness.summary.blocking_count
+      - evidence_completeness.summary.blocking_count
+      - validation_gate_freshness.summary.blocking_count
+    sample_count_paths:
+      - summary.record_count
+      - source_link_count
+    validation_report_id: etf_data_quality_validation
+    expected_artifact_globs:
+      - reports/etf_portfolio/data_quality/governance/data_quality_report_*.json
+      - reports/etf_portfolio/data_quality/governance/data_quality_report_*.md
+    manual_review_action: review_blocker
+    minimum_sample_count: 0
+  operations_health_report:
+    category: operations_health
+    title: Operations Health
+    source_module: etf_portfolio.operations
+    report_id: etf_operations_health_report
+    required: true
+    max_age_days: 3
+    source_metric_paths:
+      - status
+      - pipeline_status
+      - run_metadata.blocking_failure_count
+      - run_metadata.warning_count
+    sample_count_paths:
+      - run_metadata.planned_step_count
+      - command_graph_summary.node_count
+      - source_artifact_count
+    validation_report_id: etf_operations_validation
+    expected_artifact_globs:
+      - reports/etf_portfolio/operations/daily/operations_health_*.json
+      - reports/etf_portfolio/operations/daily/operations_health_*.md
+    manual_review_action: review_blocker
+    minimum_sample_count: 0
+  validation_gates:
+    category: validation_gates
+    title: Validation Gates
+    source_module: etf_portfolio.validation
+    report_id: etf_operations_validation
+    required: true
+    max_age_days: 14
+    source_metric_paths:
+      - status
+      - failed_check_count
+      - warning_check_count
+      - production_effect
+    sample_count_paths:
+      - failed_check_count
+      - warning_check_count
+    validation_report_id: etf_data_quality_validation
+    expected_artifact_globs:
+      - reports/etf_portfolio/operations/validation/operations_validation_*.json
+      - reports/etf_portfolio/operations/validation/operations_validation_*.md
+    manual_review_action: review_blocker
+    minimum_sample_count: 0

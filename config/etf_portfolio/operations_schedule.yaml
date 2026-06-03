@@ -389,7 +389,7 @@ monthly_pipeline:
     owner_review_required: true
   - step_id: strategy_evidence_dashboard_update
     description: "Refresh strategy evidence dashboard for monthly governance review."
-    command: "aits reports dashboard --as-of {as_of}"
+    command: "aits etf evidence-dashboard report --as-of {as_of}"
     cadence: monthly
     required: true
     dependencies:
@@ -397,8 +397,8 @@ monthly_pipeline:
       - parameter_review_governance
       - weight_calibration_report
     expected_outputs:
-      - "outputs/reports/evidence_dashboard_{as_of}.json"
-      - "outputs/reports/evidence_dashboard_{as_of}.html"
+      - "reports/etf_portfolio/evidence_dashboard/strategy_evidence_dashboard_{as_of}.json"
+      - "reports/etf_portfolio/evidence_dashboard/strategy_evidence_dashboard_{as_of}.md"
     max_allowed_age: 31
     failure_policy: continue_with_warning
     owner_review_required: true

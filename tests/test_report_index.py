@@ -42,6 +42,13 @@ def test_default_report_registry_loads() -> None:
     )
     assert any(item["report_id"] == "etf_operations_health_report" for item in registry["reports"])
     assert any(item["report_id"] == "etf_operations_validation" for item in registry["reports"])
+    assert any(
+        item["report_id"] == "etf_strategy_evidence_dashboard" for item in registry["reports"]
+    )
+    assert any(
+        item["report_id"] == "etf_strategy_evidence_dashboard_validation"
+        for item in registry["reports"]
+    )
     assert all("freshness_rationale" in item for item in registry["reports"])
 
 
