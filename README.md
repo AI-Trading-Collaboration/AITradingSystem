@@ -626,6 +626,25 @@ TRADING-076 输出固定 `observe_only=true`、`candidate_only=true`、
 `production_effect=none`、`broker_action=none`、`manual_review_required=true`，不自动
 promotion、不改 baseline / production weights、不触发 broker。
 
+TRADING-077 baseline candidate review policy 位于
+`config/etf_portfolio/baseline_review.yaml`。`aits etf baseline-review eligibility
+--candidate <candidate_id>` 和 `matrix` 只读 strategy evidence dashboard、weight
+calibration、forward evidence、parameter review、decision journal、data quality、
+operations health、validation gates、AI / satellite attribution 和 source links，判断
+candidate 是否可进入 owner baseline review；critical data quality、blocked evidence
+dashboard、failed / stale gates、forward sample too small、missing required journal link、
+parameter review blocked、unsafe production effect 或 broker action 都会 fail closed。
+`aits etf baseline-review package --candidate <candidate_id>` 生成 manual review package；
+`capture-decision` 捕获 owner decision；`proposal-draft` 只在
+`approve_for_proposal_draft` 且 journal linkage 存在后生成 proposal-only draft；
+`outcome` 追踪 review cycle；`validate` 是 final safety gate。Reader Brief 的
+`Baseline Candidate Review` 区块只读 latest package / decision / proposal / outcome，
+展示 eligible / needs-more / blocked counts、latest decision、proposal draft count、
+safety posture 和 detail link；缺失时显示 `MISSING`，不运行上游。TRADING-077 全部输出
+固定 `observe_only=true`、`candidate_only=true`、`production_effect=none`、
+`broker_action=none`、`manual_review_required=true`，不写 `target_weights.csv`、不改
+baseline config、不自动 promotion、不触发 broker。
+
 `aits etf governance summary --candidate <candidate.json>` 使用
 `config/etf_portfolio/governance.yaml` 的参数治理 policy 输出候选晋级摘要，固定
 `production_effect=none` 且 `manual_review_required=true`。候选必须先通过测试、shadow

@@ -1,0 +1,277 @@
+schema_version: etf_baseline_review_policy_v1
+
+policy_metadata:
+  version: etf_baseline_review_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: >
+    TRADING-077 defines the manual review playbook for deciding whether an
+    ETF allocation candidate has enough evidence to enter owner baseline review.
+  validation: >
+    Focused tests cover config safety, eligibility blockers, evidence matrix,
+    review package generation, decision capture, decision journal linkage,
+    proposal draft preconditions, outcome tracking, Reader Brief visibility,
+    and final validation gate safety.
+  review_condition: >
+    Review whenever eligibility thresholds, evidence requirements, blocking
+    conditions, owner decision options, proposal draft rules, or safety
+    semantics change.
+
+safety:
+  observe_only: true
+  candidate_only: true
+  production_effect: none
+  broker_action: none
+  manual_review_required: true
+
+candidate_types:
+  - weight_calibration_candidate
+  - forward_shadow_candidate
+  - parameter_review_candidate
+  - AI_overlay_candidate
+  - satellite_adjusted_candidate
+
+eligibility_thresholds:
+  minimum_forward_days: 20
+  minimum_weekly_reviews: 2
+  minimum_decision_journal_entries: 1
+  max_allowed_turnover_delta: 0.25
+  max_allowed_drawdown_delta: 0.05
+  max_validation_gate_age_days: 14
+  require_data_quality_pass: true
+  require_ops_validation_pass: true
+  require_evidence_dashboard_not_blocked: true
+  require_decision_journal_link: true
+  require_parameter_review_not_blocked: true
+
+required_evidence:
+  historical_backtest:
+    title: Historical backtest robustness
+    source_category: weight_calibration
+    source_report_id: etf_weight_dual_track_calibration_report
+    required: true
+    max_age_days: 14
+    minimum_sample_count: 1
+    blocking_if_missing: true
+  walk_forward_robustness:
+    title: Walk-forward robustness
+    source_category: weight_calibration
+    source_report_id: etf_weight_dual_track_calibration_report
+    required: true
+    max_age_days: 14
+    minimum_sample_count: 1
+    blocking_if_missing: true
+  forward_performance:
+    title: Forward performance
+    source_category: forward_simulation
+    source_report_id: etf_forward_dashboard
+    required: true
+    max_age_days: 3
+    minimum_sample_count: 20
+    blocking_if_missing: true
+  drawdown_control:
+    title: Drawdown control
+    source_category: forward_simulation
+    source_report_id: etf_forward_dashboard
+    required: true
+    max_age_days: 3
+    minimum_sample_count: 1
+    blocking_if_missing: true
+  turnover_control:
+    title: Turnover control
+    source_category: weight_calibration
+    source_report_id: etf_weight_dual_track_calibration_report
+    required: true
+    max_age_days: 14
+    minimum_sample_count: 1
+    blocking_if_missing: true
+  AI_attribution:
+    title: AI attribution context
+    source_category: ai_attribution
+    source_report_id: etf_ai_attribution_report
+    required: false
+    max_age_days: 14
+    minimum_sample_count: 1
+    blocking_if_missing: false
+  satellite_attribution:
+    title: Satellite attribution context
+    source_category: satellite_attribution
+    source_report_id: etf_satellite_attribution_report
+    required: false
+    max_age_days: 14
+    minimum_sample_count: 1
+    blocking_if_missing: false
+  parameter_review:
+    title: Parameter review support
+    source_category: parameter_review
+    source_report_id: etf_parameter_review_report
+    required: true
+    max_age_days: 14
+    minimum_sample_count: 1
+    blocking_if_missing: true
+  weekly_review:
+    title: Weekly review support
+    source_category: weekly_review
+    source_report_id: etf_weekly_review
+    required: true
+    max_age_days: 14
+    minimum_sample_count: 2
+    blocking_if_missing: true
+  decision_journal:
+    title: Decision journal support
+    source_category: decision_journal
+    source_report_id: etf_decision_journal_report
+    required: true
+    max_age_days: 14
+    minimum_sample_count: 1
+    blocking_if_missing: true
+  data_quality:
+    title: Data quality
+    source_category: data_quality
+    source_report_id: etf_data_quality_governance_report
+    required: true
+    max_age_days: 3
+    minimum_sample_count: 0
+    blocking_if_missing: true
+  ops_health:
+    title: Operations health
+    source_category: operations_health
+    source_report_id: etf_operations_health_report
+    required: true
+    max_age_days: 3
+    minimum_sample_count: 0
+    blocking_if_missing: true
+  validation_gates:
+    title: Validation gates
+    source_category: validation_gates
+    source_report_id: etf_operations_validation
+    required: true
+    max_age_days: 14
+    minimum_sample_count: 0
+    blocking_if_missing: true
+
+blocking_conditions:
+  EVIDENCE_DASHBOARD_BLOCKED:
+    severity: critical
+    blocks_review: true
+    description: Strategy evidence dashboard is blocked or invalid.
+  DATA_QUALITY_CRITICAL:
+    severity: critical
+    blocks_review: true
+    description: ETF data quality governance has critical or failed status.
+  OPS_VALIDATION_FAILED:
+    severity: critical
+    blocks_review: true
+    description: Operations health or validation gate failed.
+  FORWARD_SAMPLE_TOO_SMALL:
+    severity: blocking
+    blocks_review: true
+    description: Forward evidence does not meet minimum observation days.
+  HIGH_DRAWDOWN:
+    severity: blocking
+    blocks_review: true
+    description: Candidate drawdown delta exceeds policy threshold.
+  HIGH_TURNOVER:
+    severity: blocking
+    blocks_review: true
+    description: Candidate turnover delta exceeds policy threshold.
+  CONFIG_DRIFT:
+    severity: blocking
+    blocks_review: true
+    description: Candidate evidence references config drift that requires owner review.
+  VALIDATION_GATE_STALE:
+    severity: blocking
+    blocks_review: true
+    description: Required validation gate is stale or missing.
+  NO_DECISION_JOURNAL_LINK:
+    severity: blocking
+    blocks_review: true
+    description: Candidate lacks required decision journal linkage.
+  PARAMETER_REVIEW_BLOCKED:
+    severity: blocking
+    blocks_review: true
+    description: Parameter review evidence is blocked or rejected.
+  REQUIRED_EVIDENCE_MISSING:
+    severity: blocking
+    blocks_review: true
+    description: Required evidence row is missing, stale, blocked, or insufficient.
+  CANDIDATE_NOT_FOUND:
+    severity: blocking
+    blocks_review: true
+    description: Candidate ID was not found in reviewable evidence.
+  UNSUPPORTED_CANDIDATE_TYPE:
+    severity: blocking
+    blocks_review: true
+    description: Candidate type is not supported by this playbook.
+  UNSAFE_PRODUCTION_EFFECT:
+    severity: critical
+    blocks_review: true
+    description: Evidence or requested output has production_effect other than none.
+  BROKER_ACTION_NOT_NONE:
+    severity: critical
+    blocks_review: true
+    description: Evidence or requested output includes broker action.
+
+review_checklist:
+  - checklist_id: confirm_safety_boundary
+    title: Confirm safety boundary
+    required: true
+    prompt: Confirm observe-only, candidate-only, production_effect=none, broker_action=none.
+  - checklist_id: review_historical_vs_forward
+    title: Review historical versus forward evidence
+    required: true
+    prompt: Check that historical evidence is supported by forward observation.
+  - checklist_id: review_risk_behavior
+    title: Review drawdown and turnover behavior
+    required: true
+    prompt: Confirm drawdown and turnover deltas are acceptable.
+  - checklist_id: review_data_and_ops_gates
+    title: Review data quality and operations gates
+    required: true
+    prompt: Confirm data quality, operations health, and validation gates are fresh.
+  - checklist_id: review_attribution_context
+    title: Review attribution context
+    required: false
+    prompt: Review AI and satellite attribution context when relevant.
+  - checklist_id: record_owner_decision
+    title: Record owner decision
+    required: true
+    prompt: Capture approve, continue shadow, needs more data, reject, defer, or new experiment.
+
+decision_capture_policy:
+  allowed_decisions:
+    - approve_for_proposal_draft
+    - continue_shadow
+    - needs_more_data
+    - reject_candidate
+    - defer_review
+    - request_new_experiment
+  rationale_required_for:
+    - approve_for_proposal_draft
+    - reject_candidate
+  disallowed_decisions:
+    - apply_to_production
+    - place_order
+    - enable_broker_action
+
+proposal_draft_policy:
+  require_owner_decision: true
+  required_owner_decision: approve_for_proposal_draft
+  require_review_package: true
+  require_eligibility_pass: true
+  require_decision_journal_link: true
+  proposal_is_draft_only: true
+  production_config_mutation_allowed: false
+  target_weight_mutation_allowed: false
+  broker_action_allowed: false
+
+outcome_tracking_policy:
+  allowed_statuses:
+    - review_pending
+    - proposal_drafted
+    - continue_shadow
+    - needs_more_data
+    - rejected
+    - deferred
+    - archived
+  default_next_review_days: 14

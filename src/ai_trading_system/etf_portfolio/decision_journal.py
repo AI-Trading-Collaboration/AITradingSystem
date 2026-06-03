@@ -720,6 +720,8 @@ def find_weekly_review_action(
 
 
 def validate_decision_entry_links(entry: Mapping[str, Any]) -> list[dict[str, Any]]:
+    if _text(entry.get("source_section")) == "baseline_review":
+        return _validate_baseline_review_entry_links(entry)
     issues: list[dict[str, Any]] = []
     weekly_path = Path(_text(entry.get("source_weekly_review")))
     linked_path = Path(_text(entry.get("linked_report")))
@@ -744,6 +746,39 @@ def validate_decision_entry_links(entry: Mapping[str, Any]) -> list[dict[str, An
             entry.get("source_action_type")
         ) != _text(action.get("action_type")):
             issues.append(_issue("source_action_type", "FAIL", "source action type mismatch"))
+    if issues:
+        raise DecisionJournalError(_format_issues(issues))
+    return issues
+
+
+def _validate_baseline_review_entry_links(entry: Mapping[str, Any]) -> list[dict[str, Any]]:
+    issues: list[dict[str, Any]] = []
+    source_text = _text(entry.get("source_baseline_review_package"))
+    if not source_text:
+        source_text = _text(entry.get("source_weekly_review"))
+    source_path = Path(source_text)
+    linked_path = Path(_text(entry.get("linked_report")))
+    if not source_path.exists():
+        issues.append(_issue("source_baseline_review_package", "FAIL", f"missing {source_path}"))
+    if not linked_path.exists():
+        issues.append(_issue("linked_report", "FAIL", f"missing {linked_path}"))
+    if issues:
+        raise DecisionJournalError(_format_issues(issues))
+    package = _read_json_object(source_path)
+    if _text(package.get("report_type")) != "etf_baseline_review_package":
+        issues.append(
+            _issue(
+                "source_baseline_review_package",
+                "FAIL",
+                "source package must be etf_baseline_review_package",
+            )
+        )
+    if _text(package.get("review_package_id")) != _text(entry.get("review_id")):
+        issues.append(_issue("review_id", "FAIL", "review_id does not match package ID"))
+    if _text(package.get("candidate_id")) != _text(entry.get("linked_candidate")):
+        issues.append(
+            _issue("linked_candidate", "FAIL", "linked_candidate does not match package")
+        )
     if issues:
         raise DecisionJournalError(_format_issues(issues))
     return issues

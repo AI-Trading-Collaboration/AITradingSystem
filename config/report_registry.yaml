@@ -846,6 +846,86 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_baseline_review_package
+    title: ETF Baseline Candidate Review Package
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf baseline-review package --candidate CANDIDATE_ID --as-of YYYY-MM-DD
+    artifact_globs:
+      - reports/etf_portfolio/baseline_review/packages/baseline_review_package_*.json
+      - reports/etf_portfolio/baseline_review/packages/baseline_review_package_*.md
+    freshness_sla_days: 14
+    freshness_rationale: TRADING-077 review packages should be refreshed before owner baseline review and must link eligibility, evidence matrix, blockers, checklist and source reports.
+    owner_action: review_package_manually_before_any_baseline_change_proposal
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_baseline_review_decision
+    title: ETF Baseline Review Owner Decision
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf baseline-review capture-decision --review-package-path PACKAGE.json
+    artifact_globs:
+      - reports/etf_portfolio/baseline_review/decisions/*.json
+      - reports/etf_portfolio/baseline_review/decisions/*.md
+    freshness_sla_days: 14
+    freshness_rationale: Owner decisions should be visible after manual review and before any proposal-only draft is generated.
+    owner_action: capture_owner_decision_and_link_decision_journal
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_baseline_change_proposal_draft
+    title: ETF Baseline Change Proposal Draft
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf baseline-review proposal-draft --review-package-path PACKAGE.json --decision-path DECISION.json
+    artifact_globs:
+      - reports/etf_portfolio/baseline_review/proposals/*.json
+      - reports/etf_portfolio/baseline_review/proposals/*.md
+    freshness_sla_days: 30
+    freshness_rationale: Proposal drafts are only generated after explicit owner approval for draft creation and remain production_effect=none.
+    owner_action: review_proposal_draft_manually_before_any_separate_production_change_task
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_baseline_review_outcome
+    title: ETF Baseline Review Outcome Tracker
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf baseline-review outcome --candidate CANDIDATE_ID
+    artifact_globs:
+      - reports/etf_portfolio/baseline_review/outcomes/*.json
+      - reports/etf_portfolio/baseline_review/outcomes/*.md
+    freshness_sla_days: 14
+    freshness_rationale: Outcome tracker preserves latest manual review status, decision/proposal links, history, follow-up tasks and next review due.
+    owner_action: continue_shadow_or_follow_up_based_on_latest_outcome_status
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_baseline_review_validation
+    title: ETF Baseline Review Playbook Validation Gate
+    group: governance
+    cadence: on_change
+    audience: reviewer
+    owner: system
+    command: aits etf baseline-review validate --as-of YYYY-MM-DD
+    artifact_globs:
+      - reports/etf_portfolio/baseline_review/validation/baseline_review_validation_*.json
+      - reports/etf_portfolio/baseline_review/validation/baseline_review_validation_*.md
+    freshness_sla_days: 14
+    freshness_rationale: TRADING-077 validation confirms policy, eligibility, matrix, package, decision capture, journal linkage, proposal draft, outcome tracking, Reader Brief visibility and safety boundary.
+    owner_action: run_aits_etf_baseline_review_validate_before_marking_TRADING_077_validating_or_baseline_done
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_p2_walk_forward
     title: ETF P2 Walk Forward Readiness
     group: research
