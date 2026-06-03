@@ -770,6 +770,25 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_weight_calibration_usability_validation
+    title: ETF Weight Calibration Usability Validation
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf weight-calibration usability-validate
+    artifact_globs:
+      - reports/etf_portfolio/weight_calibration/validation/historical_calibration_usability_validation_*.json
+      - reports/etf_portfolio/weight_calibration/validation/historical_calibration_usability_validation_*.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-078I validation confirms historical calibration usability artifacts
+      are available, bounded, Reader Brief-visible, candidate-only, and safe before
+      marking the usability workflow complete.
+    owner_action: run_aits_etf_weight_calibration_usability_validate_before_marking_TRADING_078_baseline_done
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_operations_health_report
     title: ETF Operations Health Report
     group: governance

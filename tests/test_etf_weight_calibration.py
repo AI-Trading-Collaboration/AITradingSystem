@@ -23,6 +23,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     build_candidate_weight_proposals,
     build_dual_track_weight_calibration_report,
     build_dual_track_weight_calibration_validation_report,
+    build_historical_weight_calibration_usability_validation_report,
     build_weight_candidate_comparison_table,
     build_weight_initial_recommendation_report,
     build_weight_overfit_diagnostics,
@@ -48,6 +49,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     validate_candidate_weight_record,
     validate_dual_track_weight_calibration_report,
     validate_dual_track_weight_calibration_validation_report,
+    validate_historical_weight_calibration_usability_validation_report,
     validate_weight_candidate_comparison_table,
     validate_weight_forward_enrollment_record,
     validate_weight_initial_recommendation_report,
@@ -59,6 +61,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     write_backtest_forward_evidence_aggregation,
     write_dual_track_weight_calibration_report,
     write_dual_track_weight_calibration_validation_report,
+    write_historical_weight_calibration_usability_validation_report,
     write_weight_candidate_comparison_table,
     write_weight_initial_recommendation_report,
     write_weight_overfit_explanations,
@@ -2260,6 +2263,166 @@ def test_weight_calibration_validate_cli_writes_json_and_markdown(tmp_path: Path
     assert list((tmp_path / "validation").glob("weight_calibration_validation_*.md"))
 
 
+def test_weight_calibration_usability_validation_gate_passes_complete_workflow(
+    tmp_path: Path,
+) -> None:
+    payload = build_historical_weight_calibration_usability_validation_report(
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert payload["status"] == "PASS"
+    assert payload["failed_check_count"] == 0
+    assert payload["production_effect"] == "none"
+    assert payload["broker_action"] == "none"
+    check_ids = {check["check_id"] for check in payload["checks"]}
+    assert {
+        "historical_range_presets_valid",
+        "weight_search_bounded",
+        "top_n_export_available",
+        "comparison_table_available",
+        "regime_heatmap_available",
+        "overfit_explanation_available",
+        "shadow_enrollment_workflow_available",
+        "recommendation_report_available",
+        "reader_brief_weight_candidate_section_available",
+        "recommendation_top_candidates_benchmark_compared",
+        "recommendation_top_candidates_have_overfit_explanations",
+        "shadow_enrollment_no_production_mutation",
+    }.issubset(check_ids)
+    validate_historical_weight_calibration_usability_validation_report(payload)
+
+    paths = write_historical_weight_calibration_usability_validation_report(
+        payload,
+        output_dir=tmp_path / "validation",
+    )
+    assert paths["json"].exists()
+    markdown = paths["markdown"].read_text(encoding="utf-8")
+    assert "ETF Historical Weight Calibration Usability Validation Gate" in markdown
+    assert "production_effect=none" in markdown
+
+
+def test_weight_calibration_usability_validation_fails_invalid_preset(
+    tmp_path: Path,
+) -> None:
+    raw = _raw_presets()
+    raw["presets"]["ai_cycle_recent"]["safety"]["production_effect"] = "apply_weights"
+    preset_path = _write_presets_config(raw, tmp_path / "unsafe_presets.yaml")
+
+    payload = build_historical_weight_calibration_usability_validation_report(
+        preset_config_path=preset_path,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert payload["status"] == "FAIL"
+    preset_check = next(
+        check
+        for check in payload["checks"]
+        if check["check_id"] == "historical_range_presets_valid"
+    )
+    assert preset_check["status"] == "FAIL"
+
+
+def test_weight_calibration_usability_validation_fails_when_search_unbounded(
+    tmp_path: Path,
+) -> None:
+    raw = _raw_registry()
+    raw["weight_searches"]["etf_initial_weight_search_v1"]["grid_step"] = 0.005
+    config_path = tmp_path / "unbounded_weight_search.yaml"
+    config_path.write_text(json.dumps(raw, indent=2) + "\n", encoding="utf-8")
+
+    payload = build_historical_weight_calibration_usability_validation_report(
+        search_config_path=config_path,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert payload["status"] == "FAIL"
+    bounded_check = next(
+        check for check in payload["checks"] if check["check_id"] == "weight_search_bounded"
+    )
+    assert bounded_check["status"] == "FAIL"
+    assert "grid_step_too_fine" in bounded_check["message"]
+
+
+def test_weight_calibration_usability_validation_fails_unsafe_production_effect() -> None:
+    recommendation = _usability_recommendation_payload()
+    recommendation["production_effect"] = "apply_weights"
+
+    payload = build_historical_weight_calibration_usability_validation_report(
+        recommendation_payload=recommendation,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert payload["status"] == "FAIL"
+    failed = {check["check_id"] for check in payload["checks"] if check["status"] == "FAIL"}
+    assert "recommendation_report_schema_valid" in failed
+    assert "recommendation_report_production_effect_none" in failed
+
+
+def test_weight_calibration_usability_validation_fails_unsafe_broker_action() -> None:
+    recommendation = _usability_recommendation_payload()
+    recommendation["broker_action"] = "place_order"
+
+    payload = build_historical_weight_calibration_usability_validation_report(
+        recommendation_payload=recommendation,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert payload["status"] == "FAIL"
+    failed = {check["check_id"] for check in payload["checks"] if check["status"] == "FAIL"}
+    assert "recommendation_report_schema_valid" in failed
+    assert "recommendation_report_broker_action_none" in failed
+
+
+def test_weight_calibration_usability_validation_fails_if_enrollment_mutates_production(
+    tmp_path: Path,
+) -> None:
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    enrollment = enroll_candidate_weights_forward(
+        registry,
+        enrollment_path=tmp_path / "forward_enrollments.json",
+        top=1,
+    )
+    enrollment["production_weights_mutated"] = True
+
+    payload = build_historical_weight_calibration_usability_validation_report(
+        enrollment_payload=enrollment,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
+
+    assert payload["status"] == "FAIL"
+    failed = {check["check_id"] for check in payload["checks"] if check["status"] == "FAIL"}
+    assert "shadow_enrollment_payload_schema_valid" in failed
+    assert "shadow_enrollment_no_production_mutation" in failed
+
+
+def test_weight_calibration_usability_validate_cli_writes_json_and_markdown(
+    tmp_path: Path,
+) -> None:
+    result = CliRunner().invoke(
+        etf_app,
+        [
+            "weight-calibration",
+            "usability-validate",
+            "--output-dir",
+            str(tmp_path / "validation"),
+        ],
+        env={"COLUMNS": "180"},
+        terminal_width=180,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "ETF historical weight calibration usability validation gate" in result.output
+    assert "status=PASS" in result.output
+    assert "failed_check_count=0" in result.output
+    assert "production_effect=none" in result.output
+    assert list(
+        (tmp_path / "validation").glob("historical_calibration_usability_validation_*.json")
+    )
+    assert list(
+        (tmp_path / "validation").glob("historical_calibration_usability_validation_*.md")
+    )
+
+
 def _raw_registry() -> dict[str, object]:
     raw = safe_load_yaml_path(DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH)
     assert isinstance(raw, dict)
@@ -2501,6 +2664,14 @@ def _dual_track_report_inputs(
         "overfit": overfit,
         "proposals": proposals,
     }
+
+
+def _usability_recommendation_payload() -> dict[str, object]:
+    return build_weight_initial_recommendation_report(
+        _small_search_run().payload,
+        top=1,
+        generated_at=datetime(2026, 6, 2, tzinfo=UTC),
+    )
 
 
 def _make_prices(days: int) -> pd.DataFrame:

@@ -199,10 +199,12 @@ flowchart TD
     T078CMP --> T078REC
     T078HEAT --> T078REC
     T078EXPL --> T078REC
+    T078REC --> T078VAL["aits etf weight-calibration usability-validate<br/>historical_calibration_usability_validation_*.json/md<br/>A-H workflow + bounded search + safety gate"]
     T071SEARCH --> T071REG["aits etf weight-calibration register-candidates --run-id/--latest<br/>candidate_weight_registry.json<br/>weight_set_id + metrics + robustness + blockers"]
     T071REG --> T071ENR["aits etf weight-calibration enroll-forward / enroll-top / enroll<br/>forward_enrollments.json<br/>shadow-style record + source links; no production mutation"]
     T078TOP --> T071ENR
     T078CMP --> T071ENR
+    T071ENR --> T078VAL
     T071ENR --> T071EV["aits etf weight-calibration aggregate-evidence --as-of YYYY-MM-DD<br/>backtest_forward_evidence_YYYY-MM-DD.json/md<br/>expectation gaps + needs_more_forward_data handling"]
     T065DASH --> T071EV
     T065WEEK --> T071EV
@@ -220,6 +222,7 @@ flowchart TD
     T071OVER --> T071REP
     T071REP --> T071VAL["aits etf weight-calibration validate<br/>weight_calibration_validation_*.json/md<br/>bounded workflow + proposal-only unsafe action blockers"]
     T078REC --> T064RIDX
+    T078VAL --> T064RIDX
     T077CFG["config/etf_portfolio/baseline_review.yaml<br/>baseline review evidence + blocker + checklist policy"] --> T077ELIG["aits etf baseline-review eligibility/matrix --candidate<br/>fail-closed owner review readiness gate"]
     T071REP --> T077ELIG
     T070REP --> T077ELIG
@@ -307,6 +310,8 @@ TRADING-078F 新增 `aits etf weight-calibration enroll-top --latest/--run-id --
 TRADING-078G 新增 `aits etf weight-calibration recommendation --latest/--run-id --top N`，写出 `reports/etf_portfolio/weight_calibration/recommendations/initial_weight_recommendation_<run_id>.json/md`。该报告汇总 search metadata、data range/preset、bounded search constraints、Top-N candidates、benchmark comparison、regime robustness、overfit explanation、forward readiness、shadow enrollment recommendation、manual review notes、source artifacts 和 next steps；报告只建议 candidate-only forward shadow review，不调用 enrollment、不应用 weights、不修改 production state。
 
 TRADING-078H 在 Reader Brief 新增 `ETF Initial Weight Candidates` 区块。该区块只读 `report_index` 指向的 latest `etf_initial_weight_recommendation_report`，展示 latest preset、top candidate、suggested action、overfit risk、best robustness、blocked candidate count、safety status 和 detail link；缺失 recommendation artifact 时显示 `MISSING`，不运行 `weight-calibration recommendation`、search、enrollment 或任何上游命令。
+
+TRADING-078I 新增 `aits etf weight-calibration usability-validate`，写出 `reports/etf_portfolio/weight_calibration/validation/historical_calibration_usability_validation_*.json/md`。该 gate 使用 deterministic sample pipeline 校验 historical presets、bounded search、Top-N export、comparison table、regime heatmap、overfit explanation、shadow enrollment、recommendation report、Reader Brief registry visibility、benchmark comparison、overfit explanation coverage 和固定 safety boundary；unsafe `production_effect` / `broker_action`、缺失 `manual_review_required`、unbounded search 或 enrollment production mutation 必须 fail closed。
 
 TRADING-077A-J 新增 `config/etf_portfolio/baseline_review.yaml`、`aits etf baseline-review eligibility --candidate <id>`、`matrix`、`package`、`capture-decision`、`proposal-draft`、`outcome` 和 `validate`。Eligibility gate 消费 latest strategy evidence dashboard、weight calibration report、forward dashboard、parameter review、weekly review、decision journal、data quality、operations health、validation gates、AI / satellite attribution 和 source links，输出 candidate-level `eligible_for_owner_review`、`needs_more_data`、`defer_review`、`blocked`、`rejected_by_policy` 或 `ready_for_proposal_draft`。Evidence requirement matrix 是人工 checklist，不补跑 source artifact；missing required、stale gate、critical data quality、blocked dashboard、unsafe production effect 和 broker action 都 fail closed。Review package 只生成 JSON / Markdown 人工复核包；owner decision capture 只允许 `approve_for_proposal_draft`、`continue_shadow`、`needs_more_data`、`reject_candidate`、`defer_review` 和 `request_new_experiment`，并可把 baseline review decision 链接到 decision journal。Proposal draft 只有 explicit owner approval、review package、eligibility pass、evidence matrix 和 journal link 都存在时才生成，且固定 `production_effect=none`、`broker_action=none`、`production_state_mutated=false`、`baseline_config_mutated=false`。Outcome tracker 记录 `review_pending`、`proposal_drafted`、`continue_shadow`、`needs_more_data`、`rejected`、`deferred` 或 `archived`，用于后续人工 review cycle；Reader Brief 的 `Baseline Candidate Review` 区块只读 latest package/decision/proposal/outcome，不运行 baseline-review CLI，不暗示自动 approval。
 

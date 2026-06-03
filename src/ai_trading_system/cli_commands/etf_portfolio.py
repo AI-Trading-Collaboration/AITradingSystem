@@ -334,6 +334,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     build_candidate_weight_proposals,
     build_dual_track_weight_calibration_report,
     build_dual_track_weight_calibration_validation_report,
+    build_historical_weight_calibration_usability_validation_report,
     build_weight_candidate_comparison_table,
     build_weight_initial_recommendation_report,
     build_weight_overfit_diagnostics,
@@ -356,6 +357,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     write_candidate_weight_proposals,
     write_dual_track_weight_calibration_report,
     write_dual_track_weight_calibration_validation_report,
+    write_historical_weight_calibration_usability_validation_report,
     write_weight_candidate_comparison_table,
     write_weight_initial_recommendation_report,
     write_weight_overfit_diagnostics,
@@ -4994,6 +4996,64 @@ def weight_calibration_validate_command(
         output_dir=output_dir,
     )
     typer.echo(f"ETF weight dual-track calibration validation gate：{paths['markdown']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@weight_calibration_app.command("usability-validate")
+def weight_calibration_usability_validate_command(
+    search_config_path: Annotated[
+        Path,
+        typer.Option(help="weight search config YAML path。"),
+    ] = DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
+    preset_config_path: Annotated[
+        Path,
+        typer.Option(help="historical range preset config YAML path。"),
+    ] = DEFAULT_WEIGHT_CALIBRATION_PRESET_CONFIG_PATH,
+    report_registry_path: Annotated[
+        Path,
+        typer.Option(help="report registry YAML path。"),
+    ] = DEFAULT_REPORT_REGISTRY_PATH,
+    recommendation_path: Annotated[
+        Path | None,
+        typer.Option(help="optional TRADING-078G recommendation report JSON path。"),
+    ] = None,
+    enrollment_path: Annotated[
+        Path | None,
+        typer.Option(help="optional TRADING-078F forward enrollment registry JSON path。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="historical calibration usability validation 输出目录。"),
+    ] = DEFAULT_WEIGHT_CALIBRATION_VALIDATION_DIR,
+) -> None:
+    """执行 TRADING-078I historical calibration usability validation gate。"""
+    payload = build_historical_weight_calibration_usability_validation_report(
+        search_config_path=search_config_path,
+        preset_config_path=preset_config_path,
+        report_registry_path=report_registry_path,
+        recommendation_payload=(
+            _load_optional_json_payload(recommendation_path)
+            if recommendation_path is not None
+            else None
+        ),
+        enrollment_payload=(
+            _load_optional_json_payload(enrollment_path) if enrollment_path is not None else None
+        ),
+    )
+    paths = write_historical_weight_calibration_usability_validation_report(
+        payload,
+        output_dir=output_dir,
+    )
+    typer.echo(f"ETF historical weight calibration usability validation gate：{paths['markdown']}")
+    typer.echo(f"json={paths['json']}")
     typer.echo(f"status={payload['status']}")
     typer.echo(f"failed_check_count={payload['failed_check_count']}")
     typer.echo("observe_only=true")

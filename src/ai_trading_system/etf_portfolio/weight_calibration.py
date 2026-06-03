@@ -94,6 +94,9 @@ WEIGHT_INITIAL_RECOMMENDATION_SCHEMA_VERSION = (
 WEIGHT_PROPOSAL_SCHEMA_VERSION = "etf_weight_candidate_proposals_v1"
 WEIGHT_DUAL_TRACK_REPORT_SCHEMA_VERSION = "etf_weight_dual_track_calibration_report_v1"
 WEIGHT_CALIBRATION_VALIDATION_SCHEMA_VERSION = "etf_weight_dual_track_validation_v1"
+WEIGHT_CALIBRATION_USABILITY_VALIDATION_SCHEMA_VERSION = (
+    "etf_weight_calibration_usability_validation_v1"
+)
 
 WEIGHT_CALIBRATION_SAFETY = {
     "observe_only": True,
@@ -3651,6 +3654,302 @@ def render_dual_track_weight_calibration_validation_markdown(
     return "\n".join(lines) + "\n"
 
 
+def build_historical_weight_calibration_usability_validation_report(
+    *,
+    search_config_path: Path = DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
+    preset_config_path: Path = DEFAULT_WEIGHT_CALIBRATION_PRESET_CONFIG_PATH,
+    report_registry_path: Path = DEFAULT_REPORT_REGISTRY_PATH,
+    recommendation_payload: Mapping[str, Any] | None = None,
+    enrollment_payload: Mapping[str, Any] | None = None,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(tz=UTC)
+    checks: list[dict[str, Any]] = []
+    config = load_etf_config_bundle()
+    search_registry: ETFWeightSearchRegistry | None = None
+    preset_registry: ETFWeightCalibrationPresetRegistry | None = None
+
+    search_error = ""
+    try:
+        search_registry = load_weight_search_registry(search_config_path, etf_config=config)
+    except WeightCalibrationError as exc:
+        search_error = str(exc)
+    _append_weight_calibration_validation_check(
+        checks,
+        "weight_search_config_valid",
+        search_registry is not None,
+        (
+            "Weight search config loads with mandatory safety fields."
+            if search_registry is not None
+            else f"Weight search config failed validation: {search_error}"
+        ),
+        {"search_config_path": str(search_config_path)},
+    )
+
+    preset_error = ""
+    try:
+        preset_registry = load_weight_calibration_preset_registry(
+            preset_config_path,
+            etf_config=config,
+            weight_search_registry=search_registry,
+        )
+    except WeightCalibrationError as exc:
+        preset_error = str(exc)
+    preset_pass, preset_message, preset_details = _weight_calibration_presets_check(
+        preset_registry,
+        preset_error=preset_error,
+        preset_config_path=preset_config_path,
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "historical_range_presets_valid",
+        preset_pass,
+        preset_message,
+        preset_details,
+    )
+
+    bounded_pass, bounded_message, bounded_details = _weight_search_registry_bounded_check(
+        search_registry
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "weight_search_bounded",
+        bounded_pass,
+        bounded_message,
+        bounded_details,
+    )
+
+    sample_pipeline: dict[str, Any] = {}
+    sample_error = ""
+    if search_registry is None or preset_registry is None or not bounded_pass:
+        sample_error = (
+            "Sample usability pipeline skipped because config, presets, or search bounds "
+            "failed validation."
+        )
+    else:
+        try:
+            sample_pipeline = _weight_calibration_usability_validation_sample_pipeline(
+                generated,
+                search_config_path=search_config_path,
+                preset_config_path=preset_config_path,
+            )
+        except WeightCalibrationError as exc:
+            sample_error = str(exc)
+
+    _append_weight_calibration_validation_check(
+        checks,
+        "top_n_export_available",
+        bool(sample_pipeline.get("top_export")) and not sample_error,
+        (
+            "Top-N export validates sample historical candidate shortlist."
+            if not sample_error
+            else f"Top-N export sample failed: {sample_error}"
+        ),
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "comparison_table_available",
+        bool(sample_pipeline.get("comparison")) and not sample_error,
+        (
+            "Candidate/benchmark comparison table validates sample rows."
+            if not sample_error
+            else f"Comparison sample failed: {sample_error}"
+        ),
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "regime_heatmap_available",
+        bool(sample_pipeline.get("regime_robustness")) and not sample_error,
+        (
+            "Regime robustness heatmap validates sample candidate/regime matrix."
+            if not sample_error
+            else f"Regime robustness sample failed: {sample_error}"
+        ),
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "overfit_explanation_available",
+        bool(sample_pipeline.get("overfit_explanation")) and not sample_error,
+        (
+            "Overfit explanation validates human-readable sample reasons."
+            if not sample_error
+            else f"Overfit explanation sample failed: {sample_error}"
+        ),
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "shadow_enrollment_workflow_available",
+        bool(sample_pipeline.get("forward_enrollments")) and not sample_error,
+        (
+            "Shadow enrollment workflow validates sample shadow-ready candidate records."
+            if not sample_error
+            else f"Shadow enrollment sample failed: {sample_error}"
+        ),
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "recommendation_report_available",
+        bool(sample_pipeline.get("recommendation")) and not sample_error,
+        (
+            "Initial weight recommendation report validates sample A-H sections."
+            if not sample_error
+            else f"Recommendation report sample failed: {sample_error}"
+        ),
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "reader_brief_weight_candidate_section_available",
+        *_weight_initial_recommendation_reader_brief_registry_check(report_registry_path),
+    )
+
+    recommendation_to_validate = (
+        _mapping(sample_pipeline.get("recommendation"))
+        if recommendation_payload is None
+        else recommendation_payload
+    )
+    enrollment_to_validate = (
+        _mapping(sample_pipeline.get("forward_enrollments"))
+        if enrollment_payload is None
+        else enrollment_payload
+    )
+    checks.extend(
+        _weight_usability_recommendation_payload_validation_checks(
+            recommendation_to_validate
+        )
+    )
+    checks.extend(
+        _weight_usability_enrollment_payload_validation_checks(enrollment_to_validate)
+    )
+
+    status = "PASS" if all(check.get("status") == "PASS" for check in checks) else "FAIL"
+    payload = {
+        "schema_version": WEIGHT_CALIBRATION_USABILITY_VALIDATION_SCHEMA_VERSION,
+        "report_type": "etf_weight_calibration_usability_validation",
+        "status": status,
+        "generated_at": generated.isoformat(),
+        "validation_mode": "TRADING-078_usability_workflow_gate",
+        "search_config_path": str(search_config_path),
+        "preset_config_path": str(preset_config_path),
+        "report_registry_path": str(report_registry_path),
+        "check_count": len(checks),
+        "failed_check_count": sum(1 for check in checks if check.get("status") != "PASS"),
+        "checks": checks,
+        "source_schema_versions": {
+            "presets": WEIGHT_CALIBRATION_PRESET_SCHEMA_VERSION,
+            "search": WEIGHT_SEARCH_RUN_SCHEMA_VERSION,
+            "top_n_export": WEIGHT_TOP_CANDIDATE_EXPORT_SCHEMA_VERSION,
+            "comparison": WEIGHT_CANDIDATE_COMPARISON_SCHEMA_VERSION,
+            "regime_robustness": WEIGHT_REGIME_ROBUSTNESS_SCHEMA_VERSION,
+            "overfit_explanation": WEIGHT_OVERFIT_EXPLANATION_SCHEMA_VERSION,
+            "forward_enrollment": WEIGHT_FORWARD_ENROLLMENT_SCHEMA_VERSION,
+            "recommendation": WEIGHT_INITIAL_RECOMMENDATION_SCHEMA_VERSION,
+        },
+        "production_weights_mutated": False,
+        "baseline_config_mutated": False,
+        "broker_actions_created": False,
+        "enrollment_can_mutate_production": False,
+        "automatic_production_promotion_blocked": True,
+        "candidate_only": True,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_historical_weight_calibration_usability_validation_report(payload)
+    return payload
+
+
+def validate_historical_weight_calibration_usability_validation_report(
+    payload: Mapping[str, Any],
+) -> None:
+    issues = []
+    if payload.get("schema_version") != WEIGHT_CALIBRATION_USABILITY_VALIDATION_SCHEMA_VERSION:
+        issues.append("schema_version")
+    if payload.get("report_type") != "etf_weight_calibration_usability_validation":
+        issues.append("report_type")
+    if payload.get("status") not in {"PASS", "FAIL"}:
+        issues.append("status")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if payload.get(field) != expected:
+            issues.append(field)
+    safety = _mapping(payload.get("safety"))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if safety.get(field) != expected:
+            issues.append(f"safety.{field}")
+    if payload.get("production_weights_mutated") is not False:
+        issues.append("production_weights_mutated")
+    if payload.get("baseline_config_mutated") is not False:
+        issues.append("baseline_config_mutated")
+    if payload.get("broker_actions_created") is not False:
+        issues.append("broker_actions_created")
+    if payload.get("enrollment_can_mutate_production") is not False:
+        issues.append("enrollment_can_mutate_production")
+    if payload.get("automatic_production_promotion_blocked") is not True:
+        issues.append("automatic_production_promotion_blocked")
+    checks = _records(payload.get("checks"))
+    if int(payload.get("check_count") or 0) != len(checks):
+        issues.append("check_count")
+    failed_count = sum(1 for check in checks if check.get("status") != "PASS")
+    if int(payload.get("failed_check_count") or 0) != failed_count:
+        issues.append("failed_check_count")
+    for check in checks:
+        if check.get("status") not in {"PASS", "FAIL"}:
+            issues.append(f"{check.get('check_id')}.status")
+        if not _text(check.get("check_id")):
+            issues.append("check_id")
+    if issues:
+        raise WeightCalibrationError(
+            "ETF historical weight calibration usability validation failed: "
+            + ", ".join(str(issue) for issue in issues)
+        )
+
+
+def write_historical_weight_calibration_usability_validation_report(
+    payload: Mapping[str, Any],
+    *,
+    output_dir: Path = DEFAULT_WEIGHT_CALIBRATION_VALIDATION_DIR,
+) -> dict[str, Path]:
+    validate_historical_weight_calibration_usability_validation_report(payload)
+    timestamp = str(payload.get("generated_at", "unknown")).replace(":", "").replace("+", "")
+    stem = f"historical_calibration_usability_validation_{timestamp[:15]}"
+    json_path = output_dir / f"{stem}.json"
+    markdown_path = output_dir / f"{stem}.md"
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.write_text(
+        render_historical_weight_calibration_usability_validation_markdown(payload),
+        encoding="utf-8",
+    )
+    return {"json": json_path, "markdown": markdown_path}
+
+
+def render_historical_weight_calibration_usability_validation_markdown(
+    payload: Mapping[str, Any],
+) -> str:
+    lines = [
+        "# ETF Historical Weight Calibration Usability Validation Gate",
+        "",
+        f"- Status: {payload.get('status')}",
+        f"- Generated At: {payload.get('generated_at')}",
+        "- Safety: observe_only=true, candidate_only=true, production_effect=none, "
+        "broker_action=none, manual_review_required=true",
+        (
+            "- 本 gate 只校验 TRADING-078 historical calibration usability workflow，"
+            "不应用 ETF weights。"
+        ),
+        "",
+        "| Check | Status | Message |",
+        "|---|---|---|",
+    ]
+    for check in _records(payload.get("checks")):
+        lines.append(
+            f"| {check.get('check_id')} | {check.get('status')} | "
+            f"{check.get('message')} |"
+        )
+    return "\n".join(lines) + "\n"
+
+
 def _append_weight_calibration_validation_check(
     checks: list[dict[str, Any]],
     check_id: str,
@@ -3701,6 +4000,227 @@ def _weight_search_registry_bounded_check(
         ),
         details,
     )
+
+
+def _weight_calibration_presets_check(
+    preset_registry: ETFWeightCalibrationPresetRegistry | None,
+    *,
+    preset_error: str,
+    preset_config_path: Path,
+) -> tuple[bool, str, dict[str, Any]]:
+    required_presets = {
+        "last_2y",
+        "last_3y",
+        "last_5y",
+        "post_2022_bear",
+        "ai_cycle_recent",
+        "full_available",
+    }
+    if preset_registry is None:
+        return (
+            False,
+            f"Historical range presets failed validation: {preset_error}",
+            {"preset_config_path": str(preset_config_path)},
+        )
+    missing = sorted(required_presets - set(preset_registry.presets))
+    unsafe = [
+        preset_id
+        for preset_id, preset in preset_registry.presets.items()
+        if preset.safety.model_dump(mode="json") != WEIGHT_CALIBRATION_SAFETY
+    ]
+    details = {
+        "preset_config_path": str(preset_config_path),
+        "preset_ids": sorted(preset_registry.presets),
+        "missing_required_presets": missing,
+        "unsafe_presets": unsafe,
+    }
+    issues = []
+    if missing:
+        issues.append("missing_required_presets")
+    if unsafe:
+        issues.append("unsafe_presets")
+    return (
+        not issues,
+        (
+            "Historical range presets load with required ids, coverage policy, "
+            "benchmark sets, and safety fields."
+            if not issues
+            else "Historical range presets are incomplete or unsafe: " + ", ".join(issues)
+        ),
+        details,
+    )
+
+
+def _weight_calibration_usability_validation_sample_pipeline(
+    generated_at: datetime,
+    *,
+    search_config_path: Path,
+    preset_config_path: Path,
+) -> dict[str, Any]:
+    config = load_etf_config_bundle()
+    search_registry = load_weight_search_registry(search_config_path, etf_config=config)
+    preset_registry = load_weight_calibration_preset_registry(
+        preset_config_path,
+        etf_config=config,
+        weight_search_registry=search_registry,
+    )
+    prices, metadata_issues = standardize_price_frame(
+        _weight_calibration_validation_prices(),
+        assets=config.assets,
+        source_name="validation_fixture",
+    )
+    quality_report = validate_price_data(
+        prices,
+        assets=config.assets,
+        strategy=config.strategy,
+        as_of=date.fromisoformat(str(prices["date"].max())),
+        extra_issues=metadata_issues,
+    )
+    if not quality_report.passed:
+        raise WeightCalibrationError(
+            "ETF weight calibration usability sample price quality failed: "
+            + quality_report.status
+        )
+    available_dates = pd.to_datetime(prices["date"], errors="coerce").dropna()
+    if available_dates.empty:
+        raise WeightCalibrationError("ETF weight calibration usability sample has no dates")
+    preset_context = resolve_weight_calibration_preset(
+        preset_registry.presets["ai_cycle_recent"],
+        available_start=available_dates.min().date(),
+        available_end=available_dates.max().date(),
+    )
+    run = run_historical_weight_search(
+        prices,
+        etf_config=config,
+        quality_report=quality_report,
+        registry=search_registry,
+        search_id="etf_initial_weight_search_v1",
+        start=preset_context["start_date"],
+        end=preset_context["end_date"],
+        range_preset=preset_context,
+        max_candidates=4,
+        generated_at=generated_at,
+    )
+    with TemporaryDirectory(prefix="etf_weight_calibration_usability_validation_") as tmp:
+        tmp_root = Path(tmp)
+        candidate_registry = register_candidate_weight_sets(
+            run.payload,
+            registry_path=tmp_root / "candidate_weight_registry.json",
+            top=1,
+            created_at=generated_at,
+        )
+        forward_enrollments = enroll_candidate_weights_forward(
+            candidate_registry,
+            enrollment_path=tmp_root / "forward_enrollments.json",
+            top=1,
+            enrolled_at=generated_at,
+        )
+        top_export = build_weight_top_candidate_export(
+            run.payload,
+            top=3,
+            source_paths={"historical_search": "validation://weight_search_summary.json"},
+            generated_at=generated_at,
+        )
+        comparison = build_weight_candidate_comparison_table(
+            run.payload,
+            top_export_payload=top_export,
+            top=3,
+            source_paths={
+                "historical_search": "validation://weight_search_summary.json",
+                "top_candidate_export": "validation://top_weight_candidates.json",
+            },
+            generated_at=generated_at,
+        )
+        regime_robustness = build_weight_regime_robustness_heatmap(
+            run.payload,
+            top_export_payload=top_export,
+            top=3,
+            source_paths={
+                "historical_search": "validation://weight_search_summary.json",
+                "top_candidate_export": "validation://top_weight_candidates.json",
+            },
+            generated_at=generated_at,
+        )
+        forward_enrollments = enroll_top_weight_candidates_forward(
+            run.payload,
+            top_export_payload=top_export,
+            comparison_payload=comparison,
+            source_paths={
+                "historical_search": "validation://weight_search_summary.json",
+                "top_candidate_export": "validation://top_weight_candidates.json",
+                "comparison_table": "validation://candidate_weight_comparison.json",
+            },
+            enrollment_path=tmp_root / "top_forward_enrollments.json",
+            top=1,
+            enrolled_at=generated_at,
+        )
+    forward_dashboard = _weight_calibration_validation_forward_dashboard(
+        candidate_registry,
+        forward_enrollments,
+    )
+    evidence = build_backtest_forward_evidence_aggregation(
+        as_of=generated_at.date(),
+        candidate_registry=candidate_registry,
+        forward_enrollments=forward_enrollments,
+        search_payload=run.payload,
+        forward_dashboard=forward_dashboard,
+        source_paths={
+            "historical_search": "validation://weight_search_summary.json",
+            "candidate_registry": "validation://candidate_weight_registry.json",
+            "forward_enrollment": "validation://forward_enrollments.json",
+            "forward_dashboard": "validation://forward_dashboard.json",
+        },
+        generated_at=generated_at,
+    )
+    overfit = build_weight_overfit_diagnostics(
+        candidate_registry=candidate_registry,
+        search_payload=run.payload,
+        evidence_payload=evidence,
+        generated_at=generated_at,
+    )
+    overfit_explanation = build_weight_overfit_explanations(
+        run.payload,
+        top_export_payload=top_export,
+        overfit_payload=overfit,
+        top=3,
+        source_paths={
+            "historical_search": "validation://weight_search_summary.json",
+            "top_candidate_export": "validation://top_weight_candidates.json",
+            "overfit_diagnostics": "validation://overfit_diagnostics.json",
+        },
+        generated_at=generated_at,
+    )
+    recommendation = build_weight_initial_recommendation_report(
+        run.payload,
+        top_export_payload=top_export,
+        comparison_payload=comparison,
+        regime_robustness_payload=regime_robustness,
+        overfit_explanation_payload=overfit_explanation,
+        enrollment_payload=forward_enrollments,
+        top=3,
+        source_paths={
+            "historical_search": "validation://weight_search_summary.json",
+            "top_candidate_export": "validation://top_weight_candidates.json",
+            "comparison_table": "validation://candidate_weight_comparison.json",
+            "regime_robustness": "validation://regime_robustness_heatmap.json",
+            "overfit_explanation": "validation://overfit_explanations.json",
+            "forward_enrollment": "validation://forward_enrollments.json",
+        },
+        generated_at=generated_at,
+    )
+    return {
+        "search_run": run.payload,
+        "candidate_registry": candidate_registry,
+        "top_export": top_export,
+        "comparison": comparison,
+        "regime_robustness": regime_robustness,
+        "forward_enrollments": forward_enrollments,
+        "forward_dashboard": forward_dashboard,
+        "evidence": evidence,
+        "overfit": overfit,
+        "overfit_explanation": overfit_explanation,
+        "recommendation": recommendation,
+    }
 
 
 def _weight_calibration_validation_sample_pipeline(
@@ -3908,6 +4428,201 @@ def _weight_calibration_reader_brief_registry_check(
             },
         )
     return False, "etf_weight_dual_track_calibration_report is missing from report registry.", {}
+
+
+def _weight_initial_recommendation_reader_brief_registry_check(
+    report_registry_path: Path,
+) -> tuple[bool, str, dict[str, Any]]:
+    try:
+        registry = load_report_registry(report_registry_path)
+    except (FileNotFoundError, ValueError) as exc:
+        return False, f"Report registry unavailable: {exc}", {}
+    for report in _records(registry.get("reports")):
+        if _text(report.get("report_id")) != "etf_initial_weight_recommendation_report":
+            continue
+        visible = report.get("include_in_reader_brief") is True
+        has_command = "weight-calibration recommendation" in _text(report.get("command"))
+        has_glob = any(
+            "weight_calibration/recommendations" in _text(glob)
+            for glob in report.get("artifact_globs") or []
+        )
+        passed = visible and has_command and has_glob
+        return (
+            passed,
+            (
+                "etf_initial_weight_recommendation_report is visible to Reader Brief."
+                if passed
+                else (
+                    "etf_initial_weight_recommendation_report is missing Reader Brief "
+                    "visibility, command, or artifact glob metadata."
+                )
+            ),
+            {
+                "include_in_reader_brief": report.get("include_in_reader_brief"),
+                "command": report.get("command"),
+                "artifact_globs": list(report.get("artifact_globs") or []),
+            },
+        )
+    return False, "etf_initial_weight_recommendation_report is missing from report registry.", {}
+
+
+def _weight_usability_recommendation_payload_validation_checks(
+    recommendation_payload: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    checks: list[dict[str, Any]] = []
+    try:
+        validate_weight_initial_recommendation_report(recommendation_payload)
+        _append_weight_calibration_validation_check(
+            checks,
+            "recommendation_report_schema_valid",
+            True,
+            "Initial weight recommendation report schema and safety fields are valid.",
+        )
+    except WeightCalibrationError as exc:
+        _append_weight_calibration_validation_check(
+            checks,
+            "recommendation_report_schema_valid",
+            False,
+            f"Initial weight recommendation report failed validation: {exc}",
+        )
+
+    safety = _mapping(recommendation_payload.get("safety"))
+    banner = _mapping(recommendation_payload.get("safety_banner"))
+    shadow = _mapping(recommendation_payload.get("shadow_enrollment_recommendations"))
+    _append_weight_calibration_validation_check(
+        checks,
+        "recommendation_report_production_effect_none",
+        _text(recommendation_payload.get("production_effect")) == "none"
+        and _text(safety.get("production_effect")) == "none"
+        and _text(banner.get("production_effect")) == "none"
+        and _text(shadow.get("production_effect")) == "none",
+        "Recommendation report and shadow recommendation keep production_effect=none.",
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "recommendation_report_broker_action_none",
+        _text(recommendation_payload.get("broker_action")) == "none"
+        and _text(safety.get("broker_action")) == "none"
+        and _text(banner.get("broker_action")) == "none"
+        and _text(shadow.get("broker_action")) == "none",
+        "Recommendation report and shadow recommendation keep broker_action=none.",
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "recommendation_report_manual_review_required_true",
+        recommendation_payload.get("manual_review_required") is True
+        and safety.get("manual_review_required") is True
+        and banner.get("manual_review_required") is True
+        and shadow.get("manual_review_required") is True,
+        "Recommendation report keeps manual_review_required=true.",
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "recommendation_report_candidate_only_no_mutation",
+        recommendation_payload.get("production_weights_mutated") is False
+        and recommendation_payload.get("applied_weight_set") is None
+        and _text(recommendation_payload.get("recommendation_mode"))
+        == "candidate_only_shadow_review",
+        "Recommendation report is candidate-only and does not apply weights.",
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "recommendation_top_candidates_benchmark_compared",
+        _recommendation_top_candidates_have_benchmark_context(recommendation_payload),
+        "Top candidates are benchmark-compared against baseline and QQQ/SPY/SMH context.",
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "recommendation_top_candidates_have_overfit_explanations",
+        _recommendation_top_candidates_have_overfit_explanations(recommendation_payload),
+        "Top candidates include overfit risk explanations.",
+    )
+    return checks
+
+
+def _weight_usability_enrollment_payload_validation_checks(
+    enrollment_payload: Mapping[str, Any],
+) -> list[dict[str, Any]]:
+    checks: list[dict[str, Any]] = []
+    try:
+        validate_weight_forward_enrollment_registry(enrollment_payload)
+        _append_weight_calibration_validation_check(
+            checks,
+            "shadow_enrollment_payload_schema_valid",
+            True,
+            "Shadow enrollment registry schema and safety fields are valid.",
+        )
+    except WeightCalibrationError as exc:
+        _append_weight_calibration_validation_check(
+            checks,
+            "shadow_enrollment_payload_schema_valid",
+            False,
+            f"Shadow enrollment registry failed validation: {exc}",
+        )
+    safety = _mapping(enrollment_payload.get("safety"))
+    records = _records(enrollment_payload.get("enrollments"))
+    _append_weight_calibration_validation_check(
+        checks,
+        "shadow_enrollment_production_effect_none",
+        _text(enrollment_payload.get("production_effect")) == "none"
+        and _text(safety.get("production_effect")) == "none"
+        and all(_text(record.get("production_effect")) == "none" for record in records),
+        "Shadow enrollment registry and records keep production_effect=none.",
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "shadow_enrollment_broker_action_none",
+        _text(enrollment_payload.get("broker_action")) == "none"
+        and _text(safety.get("broker_action")) == "none"
+        and all(_text(record.get("broker_action")) == "none" for record in records),
+        "Shadow enrollment registry and records keep broker_action=none.",
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "shadow_enrollment_manual_review_required_true",
+        enrollment_payload.get("manual_review_required") is True
+        and safety.get("manual_review_required") is True
+        and all(record.get("manual_review_required") is True for record in records),
+        "Shadow enrollment registry and records keep manual_review_required=true.",
+    )
+    _append_weight_calibration_validation_check(
+        checks,
+        "shadow_enrollment_no_production_mutation",
+        enrollment_payload.get("production_weights_mutated") is False
+        and all(record.get("production_weights_mutated") is False for record in records),
+        "Shadow enrollment cannot mutate production weights.",
+    )
+    return checks
+
+
+def _recommendation_top_candidates_have_benchmark_context(
+    recommendation_payload: Mapping[str, Any],
+) -> bool:
+    top_ids = {
+        _text(candidate.get("weight_set_id"))
+        for candidate in _records(recommendation_payload.get("top_n_candidates"))
+    }
+    if not top_ids:
+        return False
+    comparison = _mapping(recommendation_payload.get("benchmark_comparison"))
+    rows = _records(comparison.get("rows"))
+    row_ids = {_text(row.get("candidate_id")) for row in rows}
+    required_benchmarks = {"current_baseline", "buy_hold_QQQ", "buy_hold_SPY", "buy_hold_SMH"}
+    return top_ids.issubset(row_ids) and required_benchmarks.issubset(row_ids)
+
+
+def _recommendation_top_candidates_have_overfit_explanations(
+    recommendation_payload: Mapping[str, Any],
+) -> bool:
+    top_ids = {
+        _text(candidate.get("weight_set_id"))
+        for candidate in _records(recommendation_payload.get("top_n_candidates"))
+    }
+    if not top_ids:
+        return False
+    records = _records(_mapping(recommendation_payload.get("overfit_explanations")).get("records"))
+    explained_ids = {_text(record.get("weight_set_id")) for record in records}
+    return top_ids.issubset(explained_ids)
 
 
 def _unsafe_weight_calibration_proposal_type_is_blocked() -> bool:

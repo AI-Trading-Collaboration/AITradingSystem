@@ -517,6 +517,13 @@ index 指向的 latest `etf_initial_weight_recommendation_report`，展示 lates
 candidate、suggested shadow action、overfit risk、best robustness、blocked candidate count、
 safety status 和 detail report link；缺失 recommendation report 时显示 `MISSING`，不运行
 weight-calibration recommendation、search、enrollment 或任何上游命令。
+TRADING-078I 新增 `aits etf weight-calibration usability-validate`，生成
+`reports/etf_portfolio/weight_calibration/validation/historical_calibration_usability_validation_*.json/md`。
+该 gate 使用 deterministic sample pipeline 校验 presets、bounded search、Top-N export、
+comparison table、regime heatmap、overfit explanations、shadow enrollment workflow、
+recommendation report、Reader Brief registry visibility 和安全边界；unsafe
+`production_effect`、`broker_action`、缺失 `manual_review_required`、unbounded search 或
+enrollment production mutation 均 fail closed。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf
