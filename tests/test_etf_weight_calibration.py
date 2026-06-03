@@ -29,6 +29,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     build_weight_regime_robustness_heatmap,
     build_weight_top_candidate_export,
     enroll_candidate_weights_forward,
+    enroll_top_weight_candidates_forward,
     generate_weight_candidates,
     load_candidate_weight_registry,
     load_weight_calibration_preset,
@@ -1220,6 +1221,172 @@ def test_weight_calibration_enroll_forward_cli(tmp_path: Path) -> None:
     assert "production_weights_mutated=false" in result.output
     assert "production_effect=none" in result.output
     assert load_weight_forward_enrollments(enrollment_path)["enrollment_count"] == 1
+
+
+def test_top_weight_shadow_enrollment_enrolls_shadow_ready_candidate(
+    tmp_path: Path,
+) -> None:
+    run = _small_search_run()
+    top_export = build_weight_top_candidate_export(run.payload, top=1)
+    comparison = build_weight_candidate_comparison_table(
+        run.payload,
+        top_export_payload=top_export,
+        top=1,
+    )
+
+    enrollment = enroll_top_weight_candidates_forward(
+        run.payload,
+        top_export_payload=top_export,
+        comparison_payload=comparison,
+        source_paths={
+            "top_candidate_export": "top_candidates.json",
+            "comparison_table": "comparison.json",
+        },
+        enrollment_path=tmp_path / "forward_enrollments.json",
+        top=1,
+        enrolled_at=datetime(2026, 6, 3, tzinfo=UTC),
+    )
+
+    record = enrollment["enrollments"][0]
+    result = enrollment["latest_selection"]["enrollment_results"][0]
+    assert record["enrollment_id"]
+    assert record["shadow_candidate_id"] == record["shadow_id"]
+    assert record["source_links"]["comparison_table"] == "comparison.json"
+    assert result["weight_set_id"] == record["weight_set_id"]
+    assert result["source_links"]["top_candidate_export"] == "top_candidates.json"
+    assert record["production_effect"] == "none"
+    validate_weight_forward_enrollment_record(record)
+
+
+def test_top_weight_shadow_enrollment_blocks_non_shadow_ready_candidate(
+    tmp_path: Path,
+) -> None:
+    run = _small_search_run()
+    top_export = build_weight_top_candidate_export(run.payload, top=1)
+    top_export["candidates"][0]["forward_readiness_status"] = "blocked_by_overfit_risk"
+    top_export["candidates"][0]["blockers"] = ["OVERFIT_RISK_HIGH"]
+
+    with pytest.raises(WeightCalibrationError, match="shadow_ready"):
+        enroll_top_weight_candidates_forward(
+            run.payload,
+            top_export_payload=top_export,
+            enrollment_path=tmp_path / "forward_enrollments.json",
+            top=1,
+        )
+
+
+def test_top_weight_shadow_enrollment_is_idempotent_by_weight_set_id(
+    tmp_path: Path,
+) -> None:
+    run = _small_search_run()
+    top_export = build_weight_top_candidate_export(run.payload, top=1)
+    enrollment_path = tmp_path / "forward_enrollments.json"
+
+    first = enroll_top_weight_candidates_forward(
+        run.payload,
+        top_export_payload=top_export,
+        enrollment_path=enrollment_path,
+        top=1,
+    )
+    second = enroll_top_weight_candidates_forward(
+        run.payload,
+        top_export_payload=top_export,
+        enrollment_path=enrollment_path,
+        top=1,
+    )
+
+    assert first["enrollment_count"] == 1
+    assert second["enrollment_count"] == 1
+    assert load_weight_forward_enrollments(enrollment_path)["enrollment_count"] == 1
+
+
+def test_weight_calibration_enroll_top_cli_writes_shadow_enrollment(
+    tmp_path: Path,
+) -> None:
+    run = _small_search_run()
+    report_root = tmp_path / "reports"
+    data_root = tmp_path / "data"
+    write_weight_search_run(run, report_root=report_root, data_root=data_root)
+    enrollment_path = tmp_path / "forward_enrollments.json"
+
+    result = CliRunner().invoke(
+        etf_app,
+        [
+            "weight-calibration",
+            "enroll-top",
+            "--latest",
+            "--top",
+            "1",
+            "--output-dir",
+            str(report_root),
+            "--enrollment-path",
+            str(enrollment_path),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "ETF weight candidate shadow enrollment" in result.output
+    assert "enrollment_result=" in result.output
+    assert "production_effect=none" in result.output
+    enrollment = load_weight_forward_enrollments(enrollment_path)
+    assert enrollment["enrollment_count"] == 1
+    assert enrollment["enrollments"][0]["source_links"]["historical_search"].endswith(
+        "summary.json"
+    )
+
+
+def test_weight_calibration_enroll_cli_preserves_source_links(
+    tmp_path: Path,
+) -> None:
+    run = _small_search_run()
+    report_root = tmp_path / "reports"
+    data_root = tmp_path / "data"
+    write_weight_search_run(run, report_root=report_root, data_root=data_root)
+    top_export = build_weight_top_candidate_export(run.payload, top=1)
+    top_paths = write_weight_top_candidate_export(
+        top_export,
+        output_dir=tmp_path / "top_candidates",
+    )
+    comparison = build_weight_candidate_comparison_table(
+        run.payload,
+        top_export_payload=top_export,
+        top=1,
+    )
+    comparison_paths = write_weight_candidate_comparison_table(
+        comparison,
+        output_dir=tmp_path / "comparison",
+    )
+    enrollment_path = tmp_path / "forward_enrollments.json"
+
+    result = CliRunner().invoke(
+        etf_app,
+        [
+            "weight-calibration",
+            "enroll",
+            "--latest",
+            "--weight-set",
+            top_export["candidates"][0]["weight_set_id"],
+            "--output-dir",
+            str(report_root),
+            "--top-export-path",
+            str(top_paths["json"]),
+            "--comparison-path",
+            str(comparison_paths["json"]),
+            "--enrollment-path",
+            str(enrollment_path),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert result.exit_code == 0, result.output
+    enrollment = load_weight_forward_enrollments(enrollment_path)
+    links = enrollment["enrollments"][0]["source_links"]
+    assert links["top_candidate_export"] == str(top_paths["json"])
+    assert links["comparison_table"] == str(comparison_paths["json"])
+    assert enrollment["enrollments"][0]["broker_action"] == "none"
 
 
 def test_backtest_forward_evidence_links_records(tmp_path: Path) -> None:

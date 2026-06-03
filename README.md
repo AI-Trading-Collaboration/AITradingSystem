@@ -500,6 +500,12 @@ TRADING-078E 新增 `aits etf weight-calibration overfit-explain --latest --top 
 `reports/etf_portfolio/weight_calibration/overfit_explanations/`，包含 top overfit
 reasons、supporting metrics、blocking metrics、manual review note、forward readiness
 和固定 safety fields。
+TRADING-078F 新增 `aits etf weight-calibration enroll-top --latest --top N` 和
+`aits etf weight-calibration enroll --latest --weight-set <weight_set_id>`，只允许
+`forward_readiness_status=shadow_ready` 且无 blockers 的 Top-N candidates 写入
+`data/etf_portfolio/weight_calibration/forward_enrollments.json`；ledger 保留
+`enrollment_id`、`shadow_candidate_id`、source links、warnings 和 safety fields，不写
+production weights、baseline config 或 broker state。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

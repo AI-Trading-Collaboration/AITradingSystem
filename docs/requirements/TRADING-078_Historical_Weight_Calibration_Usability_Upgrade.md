@@ -37,7 +37,7 @@ that are robust enough to enter forward shadow observation?
 |TRADING-078C Candidate Weight Comparison Table|DONE|生成 candidate + benchmark comparison table，包含 current baseline、QQQ、SPY、SMH、static references、top-N candidates 和 deterministic ordering。|
 |TRADING-078D Regime Robustness Heatmap Data|DONE|生成 candidate/regime matrix JSON / CSV / Markdown，披露 sample count、confidence warning、weak regimes 和 safety。|
 |TRADING-078E Overfit Risk Explanation|DONE|`overfit-explain --latest/--run-id --top N` 输出 human-readable overfit reasons、supporting metrics、blocking metrics 和 manual review note。|
-|TRADING-078F Weight Candidate Shadow Enrollment Workflow|READY|`enroll-top` / `enroll` 只允许 shadow-ready candidates，保留 source links，不修改 production state。|
+|TRADING-078F Weight Candidate Shadow Enrollment Workflow|DONE|`enroll-top` / `enroll` 只允许 shadow-ready candidates，保留 source links，不修改 production state。|
 |TRADING-078G Initial Weight Recommendation Report|READY|生成 JSON / Markdown recommendation report，汇总 safety、run metadata、preset、top-N、comparison、regime robustness、overfit、forward readiness、shadow recommendation 和 next steps。|
 |TRADING-078H Reader Brief Weight Candidate Section|READY|Reader Brief 只读 latest recommendation report，显示 top candidate、suggested action、overfit risk、blocked count、safety 和 detail link。|
 |TRADING-078I Historical Calibration Usability Validation Gate|READY|`aits etf weight-calibration usability-validate` fail-closed 校验 A-H workflow、bounded search、安全字段和无 production mutation。|
@@ -71,3 +71,5 @@ python -m ai_trading_system.cli etf weight-calibration usability-validate
 - 2026-06-03: TRADING-078D 完成。新增 regime robustness heatmap schema/builder/writer/Markdown renderer、`aits etf weight-calibration regime-robustness --latest/--run-id --top N` CLI 和专项测试；candidate/regime matrix 覆盖 required regimes，缺失 slice 显式输出 `MISSING` / `REGIME_SLICE_MISSING`，并保留 sample count、constraint hit rate 和 safety fields。
 - 2026-06-03: TRADING-078E 进入 IN_PROGRESS，原因：在既有 TRADING-071G overfit diagnostics 基础上补充可读解释层，让高收益但脆弱、极端或依赖单一时期的候选权重可被人工复核。
 - 2026-06-03: TRADING-078E 完成。新增 overfit explanation schema/builder/writer/Markdown renderer、`aits etf weight-calibration overfit-explain --latest/--run-id --top N` CLI 和专项测试；输出 top overfit reasons、supporting metrics、blocking metrics、manual review note、readiness/blockers/warnings 和 safety fields。
+- 2026-06-03: TRADING-078F 进入 IN_PROGRESS，原因：在既有 candidate registry / forward enrollment ledger 上补充 Top-N / weight_set_id 驱动的 shadow enrollment workflow，要求只允许 `shadow_ready` 候选并保留 source links。
+- 2026-06-03: TRADING-078F 完成。新增 `enroll_top_weight_candidates_forward`、`aits etf weight-calibration enroll-top --latest/--run-id --top N`、`aits etf weight-calibration enroll --latest/--run-id --weight-set <id>`、source link preserving enrollment results 和专项测试；blocked / non-shadow-ready candidates fail closed，ledger 保持 production_effect=none / broker_action=none。

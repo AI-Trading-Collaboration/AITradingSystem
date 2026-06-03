@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Mapping
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Annotated, cast
@@ -338,6 +339,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     build_weight_regime_robustness_heatmap,
     build_weight_top_candidate_export,
     enroll_candidate_weights_forward,
+    enroll_top_weight_candidates_forward,
     find_latest_weight_search_run_dir,
     load_candidate_weight_registry,
     load_weight_calibration_preset,
@@ -4383,6 +4385,124 @@ def weight_calibration_enroll_forward_command(
     typer.echo("manual_review_required=true")
 
 
+@weight_calibration_app.command("enroll-top")
+def weight_calibration_enroll_top_command(
+    run_id: Annotated[
+        str | None,
+        typer.Option("--run-id", help="historical weight search run id。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="读取最新 historical weight search run。"),
+    ] = False,
+    top: Annotated[
+        int,
+        typer.Option("--top", help="enroll Top-N shadow_ready candidates。"),
+    ] = 3,
+    search_output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weight calibration search report 输出目录。"),
+    ] = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR,
+    top_export_path: Annotated[
+        Path | None,
+        typer.Option(help="optional TRADING-078B Top-N JSON path。"),
+    ] = None,
+    comparison_path: Annotated[
+        Path | None,
+        typer.Option(help="optional TRADING-078C comparison JSON path，保留为 source link。"),
+    ] = None,
+    enrollment_path: Annotated[
+        Path,
+        typer.Option(help="dual-track forward enrollment registry path。"),
+    ] = DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
+) -> None:
+    """从 TRADING-078B Top-N shortlist 登记 shadow-ready weight candidates。"""
+    if run_id is not None and latest:
+        raise typer.BadParameter("--run-id and --latest cannot be combined")
+    if run_id is None and not latest:
+        raise typer.BadParameter("--run-id or --latest is required")
+    run_dir = (
+        find_latest_weight_search_run_dir(search_output_dir)
+        if latest
+        else search_output_dir / str(run_id)
+    )
+    search_payload = read_weight_search_run_payload(run_dir)
+    source_paths = {"historical_search": str(run_dir / "summary.json")}
+    if top_export_path is not None:
+        source_paths["top_candidate_export"] = str(top_export_path)
+    if comparison_path is not None:
+        source_paths["comparison_table"] = str(comparison_path)
+    enrollment = enroll_top_weight_candidates_forward(
+        search_payload,
+        top_export_payload=_load_optional_json_payload(top_export_path),
+        comparison_payload=_load_optional_json_payload(comparison_path),
+        source_paths=source_paths,
+        enrollment_path=enrollment_path,
+        top=top,
+    )
+    _echo_weight_shadow_enrollment_summary(enrollment_path, enrollment)
+
+
+@weight_calibration_app.command("enroll")
+def weight_calibration_enroll_command(
+    weight_set: Annotated[
+        list[str],
+        typer.Option("--weight-set", help="weight_set_id 或 source_candidate_id，可重复。"),
+    ],
+    run_id: Annotated[
+        str | None,
+        typer.Option("--run-id", help="historical weight search run id。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="读取最新 historical weight search run。"),
+    ] = False,
+    search_output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weight calibration search report 输出目录。"),
+    ] = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR,
+    top_export_path: Annotated[
+        Path | None,
+        typer.Option(help="optional TRADING-078B Top-N JSON path。"),
+    ] = None,
+    comparison_path: Annotated[
+        Path | None,
+        typer.Option(help="optional TRADING-078C comparison JSON path，保留为 source link。"),
+    ] = None,
+    enrollment_path: Annotated[
+        Path,
+        typer.Option(help="dual-track forward enrollment registry path。"),
+    ] = DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
+) -> None:
+    """按 weight_set_id 登记单个或多个 shadow-ready weight candidates。"""
+    if run_id is not None and latest:
+        raise typer.BadParameter("--run-id and --latest cannot be combined")
+    if run_id is None and not latest:
+        raise typer.BadParameter("--run-id or --latest is required")
+    if not weight_set:
+        raise typer.BadParameter("--weight-set is required")
+    run_dir = (
+        find_latest_weight_search_run_dir(search_output_dir)
+        if latest
+        else search_output_dir / str(run_id)
+    )
+    search_payload = read_weight_search_run_payload(run_dir)
+    source_paths = {"historical_search": str(run_dir / "summary.json")}
+    if top_export_path is not None:
+        source_paths["top_candidate_export"] = str(top_export_path)
+    if comparison_path is not None:
+        source_paths["comparison_table"] = str(comparison_path)
+    enrollment = enroll_top_weight_candidates_forward(
+        search_payload,
+        top_export_payload=_load_optional_json_payload(top_export_path),
+        comparison_payload=_load_optional_json_payload(comparison_path),
+        source_paths=source_paths,
+        enrollment_path=enrollment_path,
+        weight_set_ids=weight_set,
+    )
+    _echo_weight_shadow_enrollment_summary(enrollment_path, enrollment)
+
+
 @weight_calibration_app.command("aggregate-evidence")
 def weight_calibration_aggregate_evidence_command(
     as_of: Annotated[
@@ -6122,6 +6242,34 @@ def _load_optional_json_payload(path: Path | None) -> dict[str, object]:
     if not isinstance(payload, dict):
         raise typer.BadParameter(f"JSON artifact root 必须是 object：{path}")
     return payload
+
+
+def _echo_weight_shadow_enrollment_summary(
+    enrollment_path: Path,
+    enrollment: Mapping[str, object],
+) -> None:
+    latest_selection = enrollment.get("latest_selection")
+    latest = latest_selection if isinstance(latest_selection, Mapping) else {}
+    raw_results = latest.get("enrollment_results")
+    results = [dict(item) for item in raw_results if isinstance(item, Mapping)] if isinstance(
+        raw_results,
+        list,
+    ) else []
+    typer.echo(f"ETF weight candidate shadow enrollment：{enrollment_path}")
+    typer.echo(f"enrollment_count={enrollment['enrollment_count']}")
+    typer.echo(f"selected_weight_set_count={len(latest.get('weight_set_ids') or [])}")
+    for result in results:
+        typer.echo(
+            "enrollment_result="
+            + json.dumps(result, ensure_ascii=False, sort_keys=True)
+        )
+    typer.echo("shared_shadow_registry_mutated=false")
+    typer.echo("production_weights_mutated=false")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
 
 
 def _latest_json_file(directory: Path, pattern: str) -> Path | None:

@@ -1804,6 +1804,7 @@ def enroll_candidate_weights_forward(
     generated = enrolled_at or datetime.now(UTC)
     changed = False
     selected_ids = [str(record.get("weight_set_id")) for record in selected]
+    selected_by_id = {str(record.get("weight_set_id")): record for record in selected}
     for candidate in selected:
         weight_set_id = str(candidate.get("weight_set_id"))
         if weight_set_id in existing:
@@ -1828,6 +1829,13 @@ def enroll_candidate_weights_forward(
         "latest_selection": {
             "selected_at": generated.isoformat(),
             "weight_set_ids": selected_ids,
+            "enrollment_results": [
+                _weight_forward_enrollment_result(
+                    existing[weight_set_id],
+                    selected_by_id[weight_set_id],
+                )
+                for weight_set_id in selected_ids
+            ],
         },
         "shared_shadow_registry_mutated": False,
         "production_weights_mutated": False,
@@ -1838,6 +1846,65 @@ def enroll_candidate_weights_forward(
     validate_weight_forward_enrollment_registry(registry)
     write_weight_forward_enrollments(registry, enrollment_path)
     return registry
+
+
+def enroll_top_weight_candidates_forward(
+    search_payload: Mapping[str, Any],
+    *,
+    top_export_payload: Mapping[str, Any] | None = None,
+    comparison_payload: Mapping[str, Any] | None = None,
+    source_paths: Mapping[str, str] | None = None,
+    enrollment_path: Path = DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
+    top: int | None = None,
+    weight_set_ids: list[str] | None = None,
+    enrolled_at: datetime | None = None,
+) -> dict[str, Any]:
+    validate_weight_search_run_payload(search_payload)
+    if top_export_payload:
+        validate_weight_top_candidate_export(top_export_payload)
+    if comparison_payload:
+        validate_weight_candidate_comparison_table(comparison_payload)
+    top_payload = dict(top_export_payload or {})
+    generated = enrolled_at or datetime.now(UTC)
+    if not top_payload:
+        top_payload = build_weight_top_candidate_export(
+            search_payload,
+            top=top or 3,
+            generated_at=generated,
+        )
+    selected = _selected_top_export_candidates(
+        top_payload,
+        top=top,
+        weight_set_ids=weight_set_ids,
+    )
+    if not selected:
+        raise WeightCalibrationError("no ETF top weight candidates selected for enrollment")
+    source_links = dict(source_paths or {})
+    records = [
+        _candidate_weight_record_from_shadow_ready_top_candidate(
+            search_payload,
+            candidate,
+            source_links=source_links,
+            created_at=generated,
+        )
+        for candidate in selected
+    ]
+    transient_registry = {
+        "schema_version": CANDIDATE_WEIGHT_REGISTRY_SCHEMA_VERSION,
+        "registry_type": "etf_candidate_weight_sets",
+        "updated_at": generated.isoformat(),
+        "candidate_count": len(records),
+        "weight_sets": records,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_candidate_weight_registry(transient_registry)
+    return enroll_candidate_weights_forward(
+        transient_registry,
+        enrollment_path=enrollment_path,
+        top=len(records),
+        enrolled_at=generated,
+    )
 
 
 def validate_weight_forward_enrollment_registry(registry: Mapping[str, Any]) -> None:
@@ -4328,6 +4395,77 @@ def _selected_candidate_weight_records(
     return records[:limit]
 
 
+def _selected_top_export_candidates(
+    top_export_payload: Mapping[str, Any],
+    *,
+    top: int | None,
+    weight_set_ids: list[str] | None,
+) -> list[dict[str, Any]]:
+    candidates = sorted(
+        _records(top_export_payload.get("candidates")),
+        key=lambda item: (int(item.get("rank") or 999_999), str(item.get("weight_set_id"))),
+    )
+    requested = {str(item) for item in weight_set_ids or []}
+    if requested:
+        selected = [
+            candidate
+            for candidate in candidates
+            if str(candidate.get("weight_set_id")) in requested
+            or str(candidate.get("source_candidate_id")) in requested
+        ]
+        matched = {
+            str(candidate.get("weight_set_id")) for candidate in selected
+        } | {str(candidate.get("source_candidate_id")) for candidate in selected}
+        missing = sorted(requested - matched)
+        if missing:
+            raise WeightCalibrationError(
+                "unknown top candidate weight set id(s): " + ", ".join(missing)
+            )
+        return selected
+    limit = top or 3
+    if limit <= 0:
+        raise WeightCalibrationError("top must be positive")
+    return candidates[:limit]
+
+
+def _candidate_weight_record_from_shadow_ready_top_candidate(
+    search_payload: Mapping[str, Any],
+    top_candidate: Mapping[str, Any],
+    *,
+    source_links: Mapping[str, str],
+    created_at: datetime,
+) -> dict[str, Any]:
+    weight_set_id = str(top_candidate.get("weight_set_id"))
+    readiness = str(top_candidate.get("forward_readiness_status") or "")
+    if readiness != "shadow_ready":
+        raise WeightCalibrationError(
+            "top weight candidate cannot enroll unless forward_readiness_status is "
+            f"shadow_ready: {weight_set_id}"
+        )
+    if top_candidate.get("blockers"):
+        raise WeightCalibrationError(
+            f"blocked top weight candidate cannot enroll: {weight_set_id}"
+        )
+    ranked = _ranked_row_for_top_candidate(search_payload, top_candidate)
+    if not ranked:
+        raise WeightCalibrationError(
+            f"top weight candidate is not linked to search ranking: {weight_set_id}"
+        )
+    record = _candidate_weight_record_from_search(
+        search_payload,
+        ranked,
+        created_at=created_at,
+    )
+    record["status"] = "shadow_ready"
+    record["selection_reason"] = "top_weight_candidate_shadow_enrollment"
+    record["forward_readiness_status"] = readiness
+    record["warnings"] = [str(item) for item in top_candidate.get("warnings") or []]
+    record["source_links"] = dict(source_links)
+    record["source_report_path"] = source_links.get("top_candidate_export", "")
+    validate_candidate_weight_record(record)
+    return record
+
+
 def _raise_if_candidate_weight_forward_enrollable(record: Mapping[str, Any]) -> None:
     validate_candidate_weight_record(record)
     weight_set_id = str(record.get("weight_set_id"))
@@ -4343,6 +4481,28 @@ def _raise_if_candidate_weight_forward_enrollable(record: Mapping[str, Any]) -> 
         )
 
 
+def _weight_forward_enrollment_result(
+    enrollment: Mapping[str, Any],
+    candidate: Mapping[str, Any],
+) -> dict[str, Any]:
+    result = {
+        "enrollment_id": enrollment.get("enrollment_id") or enrollment.get("shadow_id"),
+        "weight_set_id": enrollment.get("weight_set_id"),
+        "shadow_candidate_id": enrollment.get("shadow_candidate_id")
+        or enrollment.get("shadow_id"),
+        "status": enrollment.get("status"),
+        "blockers": [str(item) for item in enrollment.get("blockers") or []],
+        "warnings": [str(item) for item in enrollment.get("warnings") or []],
+        "source_links": dict(
+            _mapping(enrollment.get("source_links"))
+            or _mapping(candidate.get("source_links"))
+        ),
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    return result
+
+
 def _weight_forward_enrollment_record(
     candidate: Mapping[str, Any],
     *,
@@ -4353,7 +4513,11 @@ def _weight_forward_enrollment_record(
     enrollment_date = enrolled_at.date().isoformat()
     weight_set_id = str(candidate.get("weight_set_id"))
     shadow_id = _weight_forward_shadow_id(weight_set_id)
+    enrollment_hash = sha256(weight_set_id.encode("utf-8")).hexdigest()[:16]
+    enrollment_id = f"etf_weight_enrollment_{enrollment_hash}"
     tracking_link = f"{enrollment_path}#{shadow_id}"
+    source_links = dict(_mapping(candidate.get("source_links")))
+    warnings = [str(item) for item in candidate.get("warnings") or []]
     tracking_state = {
         "tracking_status": "active",
         "tracking_started_at": timestamp,
@@ -4369,6 +4533,7 @@ def _weight_forward_enrollment_record(
     shadow_record = {
         "record_type": "etf_weight_calibration_shadow_candidate",
         "shadow_id": shadow_id,
+        "shadow_candidate_id": shadow_id,
         "candidate_id": str(candidate.get("source_candidate_id") or weight_set_id),
         "weight_set_id": weight_set_id,
         "source_search_run_id": candidate.get("source_search_run_id"),
@@ -4384,6 +4549,8 @@ def _weight_forward_enrollment_record(
             "weekly_review_task": "TRADING-068",
         },
         "tracking_state": dict(tracking_state),
+        "source_links": dict(source_links),
+        "warnings": list(warnings),
         "observe_only": True,
         "candidate_only": True,
         "production_effect": "none",
@@ -4394,7 +4561,9 @@ def _weight_forward_enrollment_record(
         "applied_weight_set": None,
     }
     record = {
+        "enrollment_id": enrollment_id,
         "shadow_id": shadow_id,
+        "shadow_candidate_id": shadow_id,
         "weight_set_id": weight_set_id,
         "source_search_run_id": candidate.get("source_search_run_id"),
         "source_candidate_id": candidate.get("source_candidate_id"),
@@ -4404,8 +4573,10 @@ def _weight_forward_enrollment_record(
         "metrics_summary": dict(_mapping(candidate.get("metrics_summary"))),
         "robustness_summary": dict(_mapping(candidate.get("robustness_summary"))),
         "blockers": [str(item) for item in candidate.get("blockers") or []],
+        "warnings": warnings,
         "selection_reason": candidate.get("selection_reason"),
         "config_hash": candidate.get("config_hash"),
+        "source_links": source_links,
         "enrolled_at": timestamp,
         "enrollment_date": enrollment_date,
         "forward_tracking_link": tracking_link,
