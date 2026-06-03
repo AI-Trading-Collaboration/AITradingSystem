@@ -39,7 +39,7 @@ that are robust enough to enter forward shadow observation?
 |TRADING-078E Overfit Risk Explanation|DONE|`overfit-explain --latest/--run-id --top N` 输出 human-readable overfit reasons、supporting metrics、blocking metrics 和 manual review note。|
 |TRADING-078F Weight Candidate Shadow Enrollment Workflow|DONE|`enroll-top` / `enroll` 只允许 shadow-ready candidates，保留 source links，不修改 production state。|
 |TRADING-078G Initial Weight Recommendation Report|DONE|`recommendation --latest/--run-id --top N` 生成 JSON / Markdown recommendation report，汇总 safety、run metadata、preset、top-N、comparison、regime robustness、overfit、forward readiness、shadow recommendation 和 next steps。|
-|TRADING-078H Reader Brief Weight Candidate Section|READY|Reader Brief 只读 latest recommendation report，显示 top candidate、suggested action、overfit risk、blocked count、safety 和 detail link。|
+|TRADING-078H Reader Brief Weight Candidate Section|DONE|Reader Brief 只读 latest recommendation report，显示 top candidate、suggested action、overfit risk、blocked count、safety 和 detail link。|
 |TRADING-078I Historical Calibration Usability Validation Gate|READY|`aits etf weight-calibration usability-validate` fail-closed 校验 A-H workflow、bounded search、安全字段和无 production mutation。|
 
 ## 设计决策
@@ -75,3 +75,5 @@ python -m ai_trading_system.cli etf weight-calibration usability-validate
 - 2026-06-03: TRADING-078F 完成。新增 `enroll_top_weight_candidates_forward`、`aits etf weight-calibration enroll-top --latest/--run-id --top N`、`aits etf weight-calibration enroll --latest/--run-id --weight-set <id>`、source link preserving enrollment results 和专项测试；blocked / non-shadow-ready candidates fail closed，ledger 保持 production_effect=none / broker_action=none。
 - 2026-06-03: TRADING-078G 进入 IN_PROGRESS，原因：需要把 A-F 产物汇总成 candidate-only initial weight recommendation report，给人工 review 提供 top candidates、benchmark comparison、regime robustness、overfit explanation 和 shadow enrollment recommendation。
 - 2026-06-03: TRADING-078G 完成。新增 recommendation report schema/builder/writer/Markdown renderer、`aits etf weight-calibration recommendation --latest/--run-id --top N` CLI 和专项测试；报告汇总 safety、run metadata、preset/date range、search constraints、Top-N、comparison、regime robustness、overfit explanations、forward readiness、shadow enrollment recommendation、source artifacts 和 next steps。
+- 2026-06-03: TRADING-078H 进入 IN_PROGRESS，原因：Reader Brief 需要只读 latest initial recommendation report，展示 Top candidate、shadow recommendation、overfit risk、blocked count、安全字段和 detail link。
+- 2026-06-03: TRADING-078H 完成。新增 Reader Brief `ETF Initial Weight Candidates` payload / HTML section、`etf_initial_weight_recommendation_report` registry entry 和专项测试；区块只读 latest recommendation report，展示 preset、top candidate、suggested action、overfit risk、best robustness、blocked count、safety 和 detail link，缺失时显示 `MISSING` 且不运行上游。

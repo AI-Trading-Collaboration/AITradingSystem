@@ -221,6 +221,24 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     )
     assert weight_calibration["production_effect"] == "none"
     assert weight_calibration["broker_action"] == "none"
+    initial_candidates = payload["etf_initial_weight_candidates"]
+    assert initial_candidates["availability"] == "AVAILABLE"
+    assert initial_candidates["latest_search_preset"] == "last_3y"
+    assert initial_candidates["top_candidate"] == "weight_set_003"
+    assert initial_candidates["suggested_action"] == "enroll_top_shadow_ready"
+    assert initial_candidates["overfit_risk"] == "medium"
+    assert initial_candidates["best_robustness"] == "balanced_growth_ref"
+    assert initial_candidates["blocked_candidate_count"] == 4
+    assert initial_candidates["recommended_weight_set_ids"] == ["weight_set_003"]
+    assert initial_candidates["detail_report"].endswith(
+        "initial_weight_recommendation_2026-05-04.json"
+    )
+    assert initial_candidates["safety_status"] == (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true"
+    )
+    assert initial_candidates["production_effect"] == "none"
+    assert initial_candidates["broker_action"] == "none"
     operations_health = payload["etf_operations_health"]
     assert operations_health["availability"] == "AVAILABLE"
     assert operations_health["status"] == "warning"
@@ -384,6 +402,11 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
     assert payload["etf_weight_calibration"]["forward_evidence_status"] == "MISSING"
     assert payload["etf_weight_calibration"]["production_effect"] == "none"
     assert payload["etf_weight_calibration"]["broker_action"] == "none"
+    assert payload["etf_initial_weight_candidates"]["availability"] == "MISSING"
+    assert payload["etf_initial_weight_candidates"]["top_candidate"] == "MISSING"
+    assert payload["etf_initial_weight_candidates"]["overfit_risk"] == "MISSING"
+    assert payload["etf_initial_weight_candidates"]["production_effect"] == "none"
+    assert payload["etf_initial_weight_candidates"]["broker_action"] == "none"
     assert payload["etf_operations_health"]["availability"] == "MISSING"
     assert payload["etf_operations_health"]["status"] == "MISSING"
     assert payload["etf_operations_health"]["warning_count"] == 1
@@ -412,6 +435,7 @@ def test_reader_brief_missing_optional_artifacts_degrades_to_warnings(tmp_path: 
     assert "Satellite Attribution Review" in html
     assert "ETF Parameter Review" in html
     assert "ETF Weight Calibration" in html
+    assert "ETF Initial Weight Candidates" in html
     assert "Operations Health" in html
     assert "etf_operations_health_report" in html
     assert 'safety_status</th><td><span class="status-badge status-missing">MISSING</span>' in html
@@ -492,8 +516,10 @@ def test_reports_reader_brief_cli_writes_html_and_json(tmp_path: Path) -> None:
     assert "eligible_for_manual_review" in html
     assert "parameter_review_2026-05-04.json" in html
     assert "ETF Weight Calibration" in html
+    assert "ETF Initial Weight Candidates" in html
     assert "weight_set_003" in html
     assert "dual_track_calibration_2026-05-04.json" in html
+    assert "initial_weight_recommendation_2026-05-04.json" in html
     assert "Operations Health" in html
     assert "operations_health_2026-05-04.json" in html
     assert "daily:warning" in html
@@ -1264,6 +1290,87 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
         ),
         encoding="utf-8",
     )
+    weight_recommendation_dir = (
+        tmp_path / "reports" / "etf_portfolio" / "weight_calibration" / "recommendations"
+    )
+    weight_recommendation_dir.mkdir(parents=True)
+    weight_recommendation_path = (
+        weight_recommendation_dir / "initial_weight_recommendation_2026-05-04.json"
+    )
+    weight_recommendation_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "etf_weight_initial_recommendation_report_v1",
+                "report_type": "etf_weight_initial_recommendation_report",
+                "status": "available",
+                "data_range_and_preset": {
+                    "historical_range_preset": {"preset_id": "last_3y"},
+                    "requested_date_range": {
+                        "start": "2022-12-01",
+                        "end": "2026-05-04",
+                    },
+                    "market_regime": "ai_after_chatgpt",
+                    "data_quality_status": "PASS",
+                },
+                "top_n_candidates": [
+                    {
+                        "weight_set_id": "weight_set_003",
+                        "rank": 1,
+                        "overfit_risk": "medium",
+                        "forward_readiness_status": "shadow_ready",
+                        "blockers": [],
+                        "weights": {
+                            "SPY": 0.30,
+                            "QQQ": 0.45,
+                            "SMH": 0.15,
+                            "SOXX": 0.00,
+                            "CASH": 0.10,
+                        },
+                    }
+                ],
+                "regime_robustness": {
+                    "candidate_summary": [
+                        {
+                            "weight_set_id": "balanced_growth_ref",
+                            "available_regime_count": 7,
+                            "missing_regime_count": 0,
+                            "warning_count": 0,
+                            "worst_max_drawdown": -0.08,
+                        },
+                        {
+                            "weight_set_id": "weight_set_003",
+                            "available_regime_count": 6,
+                            "missing_regime_count": 1,
+                            "warning_count": 1,
+                            "worst_max_drawdown": -0.12,
+                        },
+                    ]
+                },
+                "shadow_enrollment_recommendations": {
+                    "suggested_action": "enroll_top_shadow_ready",
+                    "recommended_weight_set_ids": ["weight_set_003"],
+                    "blocked_candidate_count": 4,
+                    "production_effect": "none",
+                    "broker_action": "none",
+                    "manual_review_required": True,
+                },
+                "observe_only": True,
+                "candidate_only": True,
+                "production_effect": "none",
+                "broker_action": "none",
+                "manual_review_required": True,
+                "safety": {
+                    "observe_only": True,
+                    "candidate_only": True,
+                    "production_effect": "none",
+                    "broker_action": "none",
+                    "manual_review_required": True,
+                },
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
     operations_health_path = _write_operations_health_fixture(
         tmp_path,
         status="warning",
@@ -1757,6 +1864,19 @@ def _write_reader_brief_inputs(tmp_path: Path) -> dict[str, Path]:
                         "latest_artifact_path": str(weight_calibration_path),
                         "exists": True,
                         "owner_action": "review_weight_calibration_report",
+                        "production_effect": "none",
+                    },
+                    {
+                        "report_id": "etf_initial_weight_recommendation_report",
+                        "title": "ETF Initial Weight Recommendation Report",
+                        "cadence": "weekly",
+                        "owner": "system",
+                        "freshness_status": "FRESH",
+                        "artifact_status": "available",
+                        "artifact_date": "2026-05-04",
+                        "latest_artifact_path": str(weight_recommendation_path),
+                        "exists": True,
+                        "owner_action": "review_initial_weight_recommendation_report",
                         "production_effect": "none",
                     },
                     {

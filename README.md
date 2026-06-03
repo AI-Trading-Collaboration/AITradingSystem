@@ -512,6 +512,11 @@ TRADING-078G 新增 `aits etf weight-calibration recommendation --latest --top N
 range/preset、search constraints、Top-N candidates、benchmark comparison、regime
 robustness、overfit explanations、forward readiness、shadow enrollment recommendation、
 source artifacts 和 next steps；报告只建议 forward shadow review，不应用权重。
+TRADING-078H 在 Reader Brief 新增 `ETF Initial Weight Candidates` 区块，只读 report
+index 指向的 latest `etf_initial_weight_recommendation_report`，展示 latest preset、top
+candidate、suggested shadow action、overfit risk、best robustness、blocked candidate count、
+safety status 和 detail report link；缺失 recommendation report 时显示 `MISSING`，不运行
+weight-calibration recommendation、search、enrollment 或任何上游命令。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

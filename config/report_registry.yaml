@@ -735,6 +735,25 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_initial_weight_recommendation_report
+    title: ETF Initial Weight Recommendation Report
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf weight-calibration recommendation --latest --top N
+    artifact_globs:
+      - reports/etf_portfolio/weight_calibration/recommendations/initial_weight_recommendation_*.json
+      - reports/etf_portfolio/weight_calibration/recommendations/initial_weight_recommendation_*.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-078G recommendation report should summarize historical candidate
+      weights, benchmark comparison, overfit explanations, and shadow enrollment
+      recommendations before manual review.
+    owner_action: review_initial_weight_recommendation_before_shadow_enrollment
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance
