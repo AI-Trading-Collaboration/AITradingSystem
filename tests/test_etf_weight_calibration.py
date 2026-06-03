@@ -23,6 +23,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     build_candidate_weight_proposals,
     build_dual_track_weight_calibration_report,
     build_dual_track_weight_calibration_validation_report,
+    build_weight_candidate_comparison_table,
     build_weight_overfit_diagnostics,
     build_weight_top_candidate_export,
     enroll_candidate_weights_forward,
@@ -43,6 +44,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     validate_candidate_weight_record,
     validate_dual_track_weight_calibration_report,
     validate_dual_track_weight_calibration_validation_report,
+    validate_weight_candidate_comparison_table,
     validate_weight_forward_enrollment_record,
     validate_weight_search_registry,
     validate_weight_top_candidate_export,
@@ -50,6 +52,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     write_backtest_forward_evidence_aggregation,
     write_dual_track_weight_calibration_report,
     write_dual_track_weight_calibration_validation_report,
+    write_weight_candidate_comparison_table,
     write_weight_search_run,
     write_weight_top_candidate_export,
 )
@@ -636,6 +639,104 @@ def test_weight_top_candidate_export_cli_latest_and_run_id(tmp_path: Path) -> No
 
     assert run_id_result.exit_code == 0, run_id_result.output
     assert "exported_candidate_count=1" in run_id_result.output
+
+
+def test_weight_candidate_comparison_includes_benchmarks_and_top_candidates() -> None:
+    run = _small_search_run()
+    top_export = build_weight_top_candidate_export(run.payload, top=2)
+
+    payload = build_weight_candidate_comparison_table(
+        run.payload,
+        top_export_payload=top_export,
+        top=2,
+        generated_at=datetime(2026, 6, 3, tzinfo=UTC),
+    )
+
+    assert payload["schema_version"] == "etf_weight_candidate_comparison_v1"
+    row_ids = [row["candidate_id"] for row in payload["comparison_rows"]]
+    assert row_ids[:4] == [
+        "current_baseline",
+        "buy_hold_QQQ",
+        "buy_hold_SPY",
+        "buy_hold_SMH",
+    ]
+    assert any(
+        row["row_type"] == "static_reference_candidate"
+        for row in payload["comparison_rows"]
+    )
+    top_rows = [
+        row for row in payload["comparison_rows"] if row["row_type"] == "top_N_weight_candidate"
+    ]
+    assert len(top_rows) == 2
+    assert top_rows[0]["weights"]
+    assert "CASH" in top_rows[0]["weights"]
+    assert "excess_return_vs_QQQ" in top_rows[0]
+    assert top_rows[0]["overfit_risk"] in {"low", "medium", "high", "critical"}
+    assert payload["production_effect"] == "none"
+    validate_weight_candidate_comparison_table(payload)
+
+
+def test_weight_candidate_comparison_handles_missing_metric_with_reason() -> None:
+    run = _small_search_run()
+    payload = deepcopy(run.payload)
+    payload["metrics"][0]["Sharpe"] = None
+
+    comparison = build_weight_candidate_comparison_table(payload, top=1)
+
+    top_row = next(
+        row
+        for row in comparison["comparison_rows"]
+        if row["row_type"] == "top_N_weight_candidate"
+    )
+    assert top_row["Sharpe"] is None
+    assert top_row["metric_null_reasons"]["Sharpe"] == "metric_not_available"
+
+
+def test_weight_candidate_comparison_writes_json_csv_markdown(tmp_path: Path) -> None:
+    payload = build_weight_candidate_comparison_table(_small_search_run().payload, top=2)
+
+    paths = write_weight_candidate_comparison_table(payload, output_dir=tmp_path / "comparison")
+
+    assert paths["json"].exists()
+    assert paths["csv"].exists()
+    assert paths["markdown"].exists()
+    assert "ETF Weight Candidate Comparison Table" in paths["markdown"].read_text(
+        encoding="utf-8"
+    )
+    csv_text = paths["csv"].read_text(encoding="utf-8")
+    assert "current_baseline" in csv_text
+    assert "buy_hold_QQQ" in csv_text
+
+
+def test_weight_candidate_comparison_cli_writes_outputs(tmp_path: Path) -> None:
+    run = _small_search_run()
+    report_root = tmp_path / "reports"
+    data_root = tmp_path / "data"
+    write_weight_search_run(run, report_root=report_root, data_root=data_root)
+
+    result = CliRunner().invoke(
+        etf_app,
+        [
+            "weight-calibration",
+            "comparison",
+            "--latest",
+            "--top",
+            "2",
+            "--output-dir",
+            str(report_root),
+            "--comparison-dir",
+            str(tmp_path / "comparison"),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "row_count=" in result.output
+    assert "production_effect=none" in result.output
+    assert list((tmp_path / "comparison").glob("*.json"))
+    assert list((tmp_path / "comparison").glob("*.csv"))
+    assert list((tmp_path / "comparison").glob("*.md"))
 
 
 def test_candidate_weight_registry_writes_candidate_records(tmp_path: Path) -> None:
