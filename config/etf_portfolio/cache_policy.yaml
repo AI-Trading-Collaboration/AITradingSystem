@@ -1,0 +1,55 @@
+schema_version: etf_weight_calibration_cache_policy_v1
+
+policy_metadata:
+  version: etf_weight_calibration_cache_policy_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: "TRADING-080 cache, resume, parallel runner, and performance-report policy for ETF weight calibration diagnostics."
+  validation: "Focused tests cover policy loading, safety fail-closed behavior, key/manifest validation, worker bounds, and validation gate output."
+  review_condition: "Review after full multi-preset diagnostics demonstrates warm-cache speedup and candidate/regime layer invalidation behavior."
+
+weight_calibration_cache:
+  enabled: true
+  default_mode: read_write
+  cache_root: data/cache/weight_calibration
+  enabled_layers:
+    price_returns_matrix: true
+    candidate_universe: true
+    candidate_backtest: true
+    regime_robustness: true
+    diagnostics_aggregation: true
+  cache_modes:
+    allowed:
+      - read_write
+      - read_only
+      - disabled
+  ttl_policy:
+    price_returns_matrix_days: 7
+    candidate_universe_days: 30
+    candidate_backtest_days: 30
+    regime_robustness_days: 30
+    diagnostics_aggregation_days: 14
+  schema_versions:
+    cache_manifest: etf_weight_calibration_cache_manifest_v1
+    price_returns_matrix: etf_weight_calibration_price_returns_matrix_cache_v1
+    candidate_universe: etf_weight_calibration_candidate_universe_cache_v1
+    candidate_backtest: etf_weight_calibration_candidate_backtest_cache_v1
+    regime_robustness: etf_weight_calibration_regime_robustness_cache_v1
+    diagnostics_aggregation: etf_weight_calibration_diagnostics_aggregation_cache_v1
+    run_manifest: etf_weight_calibration_diagnostics_run_manifest_v1
+    performance_report: etf_weight_calibration_performance_report_v1
+  parallel:
+    default_workers: auto
+    max_workers: 8
+  locking:
+    enabled: true
+    lock_timeout_seconds: 120
+  pruning:
+    enabled: true
+    older_than_days: 30
+  safety:
+    observe_only: true
+    candidate_only: true
+    production_effect: none
+    broker_action: none
+    manual_review_required: true

@@ -153,7 +153,7 @@ def ensure_cash_prices(prices: pd.DataFrame) -> pd.DataFrame:
             str(value)
             for value in prices.loc[prices["symbol"] == "CASH", "date"].dropna().unique()
         )
-    now = datetime.now(UTC).isoformat()
+    synthetic_created_at = _synthetic_cash_created_at(prices)
     cash_rows = [
         {
             "date": item,
@@ -165,7 +165,7 @@ def ensure_cash_prices(prices: pd.DataFrame) -> pd.DataFrame:
             "adj_close": 1.0,
             "volume": 0.0,
             "source": "synthetic_cash",
-            "created_at": now,
+            "created_at": synthetic_created_at,
         }
         for item in dates
         if item not in existing_cash_dates
@@ -173,6 +173,17 @@ def ensure_cash_prices(prices: pd.DataFrame) -> pd.DataFrame:
     if not cash_rows:
         return prices
     return pd.concat([prices, pd.DataFrame(cash_rows)], ignore_index=True)
+
+
+def _synthetic_cash_created_at(prices: pd.DataFrame) -> str:
+    if "created_at" not in prices.columns:
+        return "synthetic_cash_static_v1"
+    values = sorted(
+        str(value).strip()
+        for value in prices["created_at"].dropna().unique()
+        if str(value).strip()
+    )
+    return values[-1] if values else "synthetic_cash_static_v1"
 
 
 def validate_price_data(

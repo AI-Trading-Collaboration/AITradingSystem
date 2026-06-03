@@ -372,6 +372,15 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     write_weight_search_run,
     write_weight_top_candidate_export,
 )
+from ai_trading_system.etf_portfolio.weight_calibration_cache import (
+    DEFAULT_WEIGHT_CALIBRATION_CACHE_POLICY_CONFIG_PATH,
+    DEFAULT_WEIGHT_CALIBRATION_CACHE_VALIDATION_DIR,
+    DEFAULT_WEIGHT_CALIBRATION_PERFORMANCE_REPORT_DIR,
+    build_weight_calibration_cache_parallel_validation_report,
+    load_weight_calibration_cache_policy_config,
+    write_weight_calibration_cache_parallel_validation_report,
+    write_weight_calibration_performance_report,
+)
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     load_report_registry,
@@ -4858,8 +4867,50 @@ def weight_calibration_diagnostics_command(
         Path,
         typer.Option(help="historical weight search diagnostics 输出目录。"),
     ] = DEFAULT_WEIGHT_SEARCH_DIAGNOSTICS_DIR,
+    cache: Annotated[
+        str,
+        typer.Option(
+            "--cache",
+            help="diagnostics cache mode: read-write, read-only, or disabled。",
+        ),
+    ] = "read-write",
+    no_cache: Annotated[
+        bool,
+        typer.Option("--no-cache", help="关闭 diagnostics cache。"),
+    ] = False,
+    force_refresh: Annotated[
+        bool,
+        typer.Option("--force-refresh", help="忽略可用 cache 并重算。"),
+    ] = False,
+    workers: Annotated[
+        str,
+        typer.Option("--workers", help="parallel worker count: auto 或正整数。"),
+    ] = "auto",
+    resume: Annotated[
+        bool,
+        typer.Option("--resume", help="按 run manifest / cache 尝试恢复 diagnostics run。"),
+    ] = False,
+    run_id: Annotated[
+        str | None,
+        typer.Option("--run-id", help="resume 或固定 run manifest id。"),
+    ] = None,
+    include_performance_report: Annotated[
+        bool,
+        typer.Option("--include-performance-report", help="写出 runtime performance report。"),
+    ] = False,
+    cache_policy_path: Annotated[
+        Path,
+        typer.Option(help="weight calibration cache policy YAML path。"),
+    ] = DEFAULT_WEIGHT_CALIBRATION_CACHE_POLICY_CONFIG_PATH,
+    performance_report_dir: Annotated[
+        Path,
+        typer.Option(help="weight calibration performance report 输出目录。"),
+    ] = DEFAULT_WEIGHT_CALIBRATION_PERFORMANCE_REPORT_DIR,
 ) -> None:
     """生成 TRADING-079 historical weight search diagnostics and rescue report。"""
+    if resume and not run_id:
+        typer.echo("--resume requires --run-id for auditable diagnostics resume。")
+        raise typer.Exit(code=2)
     config = load_etf_config_bundle()
     registry = load_weight_search_registry(search_config_path, etf_config=config)
     preset_registry = load_weight_calibration_preset_registry(
@@ -4867,6 +4918,8 @@ def weight_calibration_diagnostics_command(
         etf_config=config,
         weight_search_registry=registry,
     )
+    cache_policy = load_weight_calibration_cache_policy_config(cache_policy_path)
+    cache_mode = "disabled" if no_cache else cache
     prices, quality_report = load_standard_prices(prices_path, config.assets, config.strategy)
     if not quality_report.passed:
         typer.echo(
@@ -4892,27 +4945,90 @@ def weight_calibration_diagnostics_command(
             "weight_search_config": str(search_config_path),
             "weight_calibration_presets": str(preset_config_path),
             "prices": str(prices_path),
+            "cache_policy": str(cache_policy_path),
         },
+        cache_policy=cache_policy,
+        cache_mode=cache_mode,
+        force_refresh=force_refresh,
+        workers=workers,
+        resume_run_id=run_id if resume else None,
+        include_performance_report=include_performance_report,
     )
     paths = write_historical_weight_search_diagnostics_report(
         payload,
         output_dir=output_dir,
     )
+    performance_paths = None
+    if include_performance_report and isinstance(payload.get("performance_report"), dict):
+        performance_paths = write_weight_calibration_performance_report(
+            payload["performance_report"],
+            output_dir=performance_report_dir,
+        )
     criteria = payload["shadow_minimum_criteria"]
+    cache_summary = payload.get("cache_summary") or {}
     typer.echo(f"ETF historical weight search diagnostics：{paths['markdown']}")
     typer.echo(f"json={paths['json']}")
     typer.echo(f"stable_shapes_csv={paths['stable_shapes_csv']}")
     typer.echo(f"near_shadow_csv={paths['near_shadow_csv']}")
+    if performance_paths is not None:
+        typer.echo(f"performance_report={performance_paths['markdown']}")
+        typer.echo(f"performance_json={performance_paths['json']}")
     typer.echo(f"status={payload['status']}")
     typer.echo(f"preset_result_count={payload['preset_result_count']}")
     typer.echo(f"candidate_observation_count={payload['candidate_observation_count']}")
     typer.echo(f"shadow_ready_count={criteria['shadow_ready_count']}")
     typer.echo(f"minimum_criteria_status={criteria['status']}")
+    typer.echo(f"cache_mode={cache_summary.get('cache_mode', cache_mode)}")
+    typer.echo(
+        "price_returns_matrix_cache_status="
+        f"{cache_summary.get('price_returns_matrix_cache_status', 'not_reported')}"
+    )
+    typer.echo(
+        "diagnostics_aggregation_cache_status="
+        f"{cache_summary.get('diagnostics_aggregation_cache_status', 'not_reported')}"
+    )
+    typer.echo(f"cache_hit_count={cache_summary.get('cache_hit_count', 0)}")
+    typer.echo(f"cache_miss_count={cache_summary.get('cache_miss_count', 0)}")
+    typer.echo(f"cache_write_count={cache_summary.get('cache_write_count', 0)}")
+    typer.echo(f"resume_status={cache_summary.get('resume_status', 'not_reported')}")
+    typer.echo(f"worker_count={cache_summary.get('worker_count', workers)}")
     typer.echo("observe_only=true")
     typer.echo("candidate_only=true")
     typer.echo("production_effect=none")
     typer.echo("broker_action=none")
     typer.echo("manual_review_required=true")
+
+
+@weight_calibration_app.command("performance-validate")
+def weight_calibration_performance_validate_command(
+    cache_policy_path: Annotated[
+        Path,
+        typer.Option(help="weight calibration cache policy YAML path。"),
+    ] = DEFAULT_WEIGHT_CALIBRATION_CACHE_POLICY_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="cache / parallel validation report 输出目录。"),
+    ] = DEFAULT_WEIGHT_CALIBRATION_CACHE_VALIDATION_DIR,
+) -> None:
+    """校验 TRADING-080 cache、parallel runner、resume 和 performance safety gate。"""
+    payload = build_weight_calibration_cache_parallel_validation_report(
+        policy_config_path=cache_policy_path,
+    )
+    paths = write_weight_calibration_cache_parallel_validation_report(
+        payload,
+        output_dir=output_dir,
+    )
+    typer.echo(f"ETF weight calibration cache / parallel validation：{paths['markdown']}")
+    typer.echo(f"json={paths['json']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
 
 
 @weight_calibration_app.command("generate-proposals")

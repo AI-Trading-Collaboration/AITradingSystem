@@ -26,6 +26,7 @@ data/processed/*
 !data/processed/.gitkeep
 data/external/*
 !data/external/.gitkeep
+data/cache/
 data/trading_engine/*
 data/etf_portfolio/
 data/simulation/

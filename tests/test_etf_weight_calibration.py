@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 from copy import deepcopy
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -72,6 +73,9 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     write_weight_regime_robustness_heatmap,
     write_weight_search_run,
     write_weight_top_candidate_export,
+)
+from ai_trading_system.etf_portfolio.weight_calibration_cache import (
+    load_weight_calibration_cache_policy_config,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -456,6 +460,140 @@ def test_historical_weight_search_ranking_is_deterministic() -> None:
 
     assert first["ranking"] == second["ranking"]
     assert first["metrics"] == second["metrics"]
+
+
+def test_historical_weight_search_candidate_and_regime_cache_hits(
+    tmp_path: Path,
+) -> None:
+    def without_cache_status(rows: list[dict[str, object]]) -> list[dict[str, object]]:
+        return [
+            {
+                key: value
+                for key, value in row.items()
+                if key
+                not in {
+                    "candidate_backtest_cache_status",
+                    "regime_robustness_cache_status",
+                }
+            }
+            for row in rows
+        ]
+
+    config, prices, quality_report = _search_inputs()
+    registry = load_weight_search_registry(etf_config=config)
+    cache_policy = load_weight_calibration_cache_policy_config()
+    kwargs = {
+        "prices": prices,
+        "etf_config": config,
+        "quality_report": quality_report,
+        "registry": registry,
+        "search_id": "etf_initial_weight_search_v1",
+        "start": date(2022, 12, 1),
+        "end": date(2022, 12, 20),
+        "max_candidates": 4,
+        "generated_at": datetime(2026, 6, 2, tzinfo=UTC),
+        "cache_policy": cache_policy,
+        "cache_mode": "read-write",
+        "cache_root": tmp_path / "cache",
+        "workers": 1,
+    }
+
+    first = run_historical_weight_search(**kwargs).payload
+    second = run_historical_weight_search(**kwargs).payload
+
+    assert {
+        row["candidate_backtest_cache_status"] for row in first["candidate_weight_sets"]
+    } == {"miss_written"}
+    assert {
+        row["regime_robustness_cache_status"] for row in first["candidate_weight_sets"]
+    } == {"miss_written"}
+    assert {
+        row["candidate_backtest_cache_status"] for row in second["candidate_weight_sets"]
+    } == {"hit"}
+    assert {
+        row["regime_robustness_cache_status"] for row in second["candidate_weight_sets"]
+    } == {"hit"}
+    assert without_cache_status(second["ranking"]) == without_cache_status(first["ranking"])
+    assert without_cache_status(second["metrics"]) == without_cache_status(first["metrics"])
+    assert second["runtime_cache"]["cache_hit_count"] == 8
+    assert list((tmp_path / "cache" / "candidate_backtest").glob("*/payload.json"))
+    assert list((tmp_path / "cache" / "regime_robustness").glob("*/payload.json"))
+
+
+def test_historical_weight_search_rebuilds_regime_cache_from_candidate_cache(
+    tmp_path: Path,
+) -> None:
+    def without_cache_status(rows: list[dict[str, object]]) -> list[dict[str, object]]:
+        return [
+            {
+                key: value
+                for key, value in row.items()
+                if key
+                not in {
+                    "candidate_backtest_cache_status",
+                    "regime_robustness_cache_status",
+                }
+            }
+            for row in rows
+        ]
+
+    config, prices, quality_report = _search_inputs()
+    registry = load_weight_search_registry(etf_config=config)
+    cache_policy = load_weight_calibration_cache_policy_config()
+    cache_root = tmp_path / "cache"
+    kwargs = {
+        "prices": prices,
+        "etf_config": config,
+        "quality_report": quality_report,
+        "registry": registry,
+        "search_id": "etf_initial_weight_search_v1",
+        "start": date(2022, 12, 1),
+        "end": date(2022, 12, 20),
+        "max_candidates": 4,
+        "generated_at": datetime(2026, 6, 2, tzinfo=UTC),
+        "cache_policy": cache_policy,
+        "cache_mode": "read-write",
+        "cache_root": cache_root,
+        "workers": 1,
+    }
+
+    first = run_historical_weight_search(**kwargs).payload
+    shutil.rmtree(cache_root / "regime_robustness")
+    second = run_historical_weight_search(**kwargs).payload
+
+    assert {
+        row["candidate_backtest_cache_status"] for row in second["candidate_weight_sets"]
+    } == {"hit"}
+    assert {
+        row["regime_robustness_cache_status"] for row in second["candidate_weight_sets"]
+    } == {"miss_written"}
+    assert without_cache_status(second["ranking"]) == without_cache_status(first["ranking"])
+    assert without_cache_status(second["metrics"]) == without_cache_status(first["metrics"])
+    assert second["robustness_evaluation"] == first["robustness_evaluation"]
+
+
+def test_historical_weight_search_parallel_candidate_runner_matches_sequential() -> None:
+    config, prices, quality_report = _search_inputs()
+    registry = load_weight_search_registry(etf_config=config)
+    kwargs = {
+        "prices": prices,
+        "etf_config": config,
+        "quality_report": quality_report,
+        "registry": registry,
+        "search_id": "etf_initial_weight_search_v1",
+        "start": date(2022, 12, 1),
+        "end": date(2022, 12, 20),
+        "max_candidates": 4,
+        "generated_at": datetime(2026, 6, 2, tzinfo=UTC),
+        "cache_mode": "disabled",
+    }
+
+    sequential = run_historical_weight_search(**kwargs, workers=1).payload
+    parallel = run_historical_weight_search(**kwargs, workers=2).payload
+
+    assert parallel["ranking"] == sequential["ranking"]
+    assert parallel["metrics"] == sequential["metrics"]
+    assert parallel["robustness_evaluation"] == sequential["robustness_evaluation"]
 
 
 def test_weight_search_runtime_output_schema_is_stable(tmp_path: Path) -> None:
@@ -2534,6 +2672,67 @@ def test_historical_weight_search_diagnostics_report_generates_stability_and_res
     assert "cross_preset_stability_score" in paths["stable_shapes_csv"].read_text(
         encoding="utf-8"
     )
+
+
+def test_historical_weight_search_diagnostics_aggregation_cache_hits(
+    tmp_path: Path,
+) -> None:
+    config = load_etf_config_bundle()
+    prices, metadata_issues = standardize_price_frame(
+        _make_prices(days=900),
+        assets=config.assets,
+        source_name="fixture",
+    )
+    quality_report = validate_price_data(
+        prices,
+        assets=config.assets,
+        strategy=config.strategy,
+        as_of=date.fromisoformat(str(prices["date"].max())),
+        extra_issues=metadata_issues,
+    )
+    registry = load_weight_search_registry(etf_config=config)
+    preset_registry = load_weight_calibration_preset_registry(
+        etf_config=config,
+        weight_search_registry=registry,
+    )
+    cache_policy = load_weight_calibration_cache_policy_config()
+    kwargs = {
+        "etf_config": config,
+        "quality_report": quality_report,
+        "registry": registry,
+        "preset_registry": preset_registry,
+        "search_ids": ["etf_initial_weight_search_v1"],
+        "preset_ids": ["ai_cycle_recent", "last_2y"],
+        "top": 3,
+        "max_candidates": 4,
+        "generated_at": datetime(2026, 6, 3, tzinfo=UTC),
+        "cache_policy": cache_policy,
+        "cache_mode": "read-write",
+        "cache_root": tmp_path / "cache",
+        "workers": 1,
+    }
+
+    first = build_historical_weight_search_diagnostics_report(prices, **kwargs)
+    second = build_historical_weight_search_diagnostics_report(prices, **kwargs)
+    resumed = build_historical_weight_search_diagnostics_report(
+        prices,
+        **{**kwargs, "resume_run_id": "trading080-resume-test"},
+    )
+
+    assert first["cache_summary"]["price_returns_matrix_cache_status"] == "miss_written"
+    assert first["cache_summary"]["diagnostics_aggregation_cache_status"] == "miss_written"
+    assert second["cache_summary"]["price_returns_matrix_cache_status"] == "hit"
+    assert second["cache_summary"]["diagnostics_aggregation_cache_status"] == "hit"
+    assert second["cache_summary"]["cache_hit_count"] >= 2
+    assert second["preset_result_count"] == first["preset_result_count"]
+    assert second["candidate_observation_count"] == first["candidate_observation_count"]
+    assert list((tmp_path / "cache" / "price_returns_matrix").glob("*/payload.json"))
+    assert resumed["cache_summary"]["resume_status"] == "resumed"
+    assert resumed["run_manifest"]["run_id"] == "trading080-resume-test"
+    assert (
+        tmp_path / "cache" / "runs" / "trading080-resume-test" / "run_manifest.json"
+    ).exists()
+    validate_historical_weight_search_diagnostics_report(second)
 
 
 def test_weight_calibration_diagnostics_cli_writes_report(tmp_path: Path) -> None:

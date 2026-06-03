@@ -536,6 +536,24 @@ distribution、shadow-ready count、`cross_preset_stability_score`、`rank_consi
 `weight_shape_similarity`、`regime_failure_count`、`near_shadow_candidates`、rescue
 suggestions 和 shadow minimum criteria；rescue suggestion 只提示人工复核方向，例如降低
 semiconductor cap、提高 cash floor 或扩大历史窗口，不 enroll、不注册、不应用权重。
+TRADING-080 新增 `config/etf_portfolio/cache_policy.yaml` 和
+`aits etf weight-calibration diagnostics --cache read-write/read-only --no-cache
+--force-refresh --workers auto --resume --run-id <run_id> --include-performance-report`。
+Diagnostics cache key 使用 deterministic canonical JSON + SHA256，强制纳入
+`source_config_hash`、`data_hash`、`engine_version` 和 layer-specific inputs；cache manifest
+校验 schema、safety、config/data/engine hash。Read-write 模式会为 price/returns matrix、
+candidate backtest、regime robustness 和 diagnostics aggregation 写入 cache；cache miss 的
+per-candidate backtest / robustness 计算可通过 `--workers` 并行执行，run manifest 与
+performance report 记录 cache hit/miss/write、worker count、resume status 和 slowest step。
+CLI 摘要直接输出 price matrix / aggregation cache status 以及 hit/miss/write count。Runtime cache 写入 ignored
+`data/cache/weight_calibration/`，performance report 写入
+`reports/etf_portfolio/weight_calibration/performance/`。`aits etf weight-calibration
+performance-validate` 生成
+`reports/etf_portfolio/weight_calibration/validation/weight_calibration_cache_parallel_validation_*.json/md`，
+fail closed 校验 cache policy、cache key、manifest、price/returns cache payload、
+candidate/regime/aggregation cache behavior、parallel runner、resume manifest、
+performance report 和 safety boundary；该 gate 只证明 cache/parallel research workflow
+可审计，不代表任何 candidate 可上线。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

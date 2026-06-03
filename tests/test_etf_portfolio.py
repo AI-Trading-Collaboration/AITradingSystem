@@ -127,6 +127,19 @@ def test_etf_price_validation_passes_standardized_toy_data() -> None:
     assert "CASH" in report.symbols
 
 
+def test_standardize_price_frame_synthetic_cash_created_at_is_stable() -> None:
+    config = load_etf_config_bundle()
+    raw = _make_prices(days=10, mode="up")
+
+    first, _ = standardize_price_frame(raw, assets=config.assets, source_name="fixture")
+    second, _ = standardize_price_frame(raw, assets=config.assets, source_name="fixture")
+
+    first_cash_created = set(first.loc[first["symbol"] == "CASH", "created_at"])
+    second_cash_created = set(second.loc[second["symbol"] == "CASH", "created_at"])
+    assert first_cash_created == {"2026-05-31T00:00:00+00:00"}
+    assert second_cash_created == first_cash_created
+
+
 def test_etf_price_validation_rejects_duplicates_and_negative_prices() -> None:
     config = load_etf_config_bundle()
     raw = _make_prices(days=260, mode="up")

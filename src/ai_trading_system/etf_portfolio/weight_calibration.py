@@ -9,6 +9,7 @@ from math import prod, sqrt
 from pathlib import Path
 from statistics import mean, pstdev
 from tempfile import TemporaryDirectory
+from time import perf_counter
 from typing import Any, Self
 
 import pandas as pd
@@ -23,6 +24,28 @@ from ai_trading_system.etf_portfolio.models import (
     ETFQualityReport,
     PolicyMetadata,
     load_etf_config_bundle,
+)
+from ai_trading_system.etf_portfolio.weight_calibration_cache import (
+    DEFAULT_WEIGHT_CALIBRATION_CACHE_ROOT,
+    WEIGHT_CALIBRATION_CANDIDATE_BACKTEST_CACHE_SCHEMA_VERSION,
+    WEIGHT_CALIBRATION_PRICE_RETURNS_CACHE_SCHEMA_VERSION,
+    WEIGHT_CALIBRATION_REGIME_ROBUSTNESS_CACHE_SCHEMA_VERSION,
+    WeightCalibrationCachePolicyConfig,
+    build_price_returns_matrix_cache_lookup,
+    build_price_returns_matrix_cache_payload,
+    build_weight_calibration_cache_key,
+    build_weight_calibration_cache_manifest,
+    build_weight_calibration_diagnostics_run_manifest,
+    build_weight_calibration_performance_report,
+    load_weight_calibration_json_cache_entry,
+    normalize_weight_calibration_cache_mode,
+    resolve_weight_calibration_worker_count,
+    run_weight_calibration_parallel_tasks,
+    weight_calibration_dataframe_hash,
+    weight_calibration_input_hash,
+    write_price_returns_matrix_cache_entry,
+    write_weight_calibration_diagnostics_run_manifest,
+    write_weight_calibration_json_cache_entry,
 )
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
@@ -740,6 +763,11 @@ def run_historical_weight_search(
     range_preset: Mapping[str, Any] | None = None,
     max_candidates: int | None = None,
     generated_at: datetime | None = None,
+    cache_policy: WeightCalibrationCachePolicyConfig | None = None,
+    cache_mode: str = "disabled",
+    cache_root: Path | None = None,
+    force_refresh: bool = False,
+    workers: str | int | None = 1,
 ) -> ETFWeightSearchRun:
     if not quality_report.passed:
         raise WeightCalibrationError(
@@ -777,28 +805,258 @@ def run_historical_weight_search(
     )
     objective = registry.objective_policies[search.objective_policy]
     baseline_daily = baseline["daily"]
+    resolved_cache_mode = _resolve_weight_diagnostics_cache_mode(cache_policy, cache_mode)
+    resolved_cache_root = _resolve_weight_diagnostics_cache_root(cache_policy, cache_root)
+    resolved_workers = resolve_weight_calibration_worker_count(workers, policy=cache_policy)
+    cache_read_enabled = resolved_cache_mode in {"read_write", "read_only"} and not force_refresh
+    cache_write_enabled = resolved_cache_mode == "read_write"
+    data_hash = weight_calibration_dataframe_hash(prices)
+    returns_matrix_hash = weight_calibration_input_hash(
+        {
+            "price_field": etf_config.backtest.backtest.price_field,
+            "date_range": {"start": run_start.isoformat(), "end": run_end.isoformat()},
+            "price_data_hash": data_hash,
+        }
+    )
+    source_config_hash = weight_calibration_input_hash(
+        {
+            "weight_search_registry": registry.config_hash,
+            "search_id": search.search_id,
+            "market_regime": etf_config.backtest.backtest.regime,
+        }
+    )
+    transaction_cost_config_hash = weight_calibration_input_hash(
+        etf_config.risk.transaction_costs.model_dump(mode="json")
+    )
+    rebalance_policy_hash = weight_calibration_input_hash(
+        {
+            "price_field": etf_config.backtest.backtest.price_field,
+            "execution_price": etf_config.backtest.backtest.execution_price,
+            "signal_lag_days": etf_config.backtest.backtest.signal_lag_days,
+            "rebalance_frequency": etf_config.backtest.backtest.rebalance_frequency,
+        }
+    )
+    benchmark_set_hash = weight_calibration_input_hash(
+        registry.benchmark_sets[search.benchmark_set].model_dump(mode="json")
+    )
+    regime_definition_hash = weight_calibration_input_hash(
+        {
+            "slice_method": "price_derived_regime_proxy_v1",
+            "walk_forward_windows": [
+                window.model_dump(mode="json") for window in search.walk_forward_windows
+            ],
+            "regime_splits": {
+                key: split.model_dump(mode="json")
+                for key, split in sorted(search.regime_splits.items())
+            },
+            "objective_policy_hash": weight_calibration_input_hash(
+                objective.model_dump(mode="json")
+            ),
+        }
+    )
+    cache_events: list[dict[str, Any]] = []
+    candidate_results: dict[str, dict[str, Any]] = {}
+    miss_tasks: list[dict[str, Any]] = []
     ranked_rows = []
     candidate_weight_sets = []
     metrics_rows = []
     robustness_payloads = []
     for index, weights in enumerate(candidates, start=1):
         candidate_id = f"weight_set_{index:04d}"
-        backtest = _run_static_weight_backtest(
-            prices,
+        cache_keys = _candidate_cache_keys(
             weights=weights,
-            config=etf_config,
-            start=run_start,
-            end=run_end,
+            run_start=run_start,
+            run_end=run_end,
+            source_config_hash=source_config_hash,
+            data_hash=data_hash,
+            returns_matrix_hash=returns_matrix_hash,
+            transaction_cost_config_hash=transaction_cost_config_hash,
+            rebalance_policy_hash=rebalance_policy_hash,
+            benchmark_set_hash=benchmark_set_hash,
+            regime_definition_hash=regime_definition_hash,
         )
-        robustness = build_weight_robustness_evaluation(
-            candidate_id=candidate_id,
-            candidate_daily=backtest["daily"],
-            baseline_daily=baseline_daily,
-            weights=weights,
-            search=search,
-            etf_config=etf_config,
-            objective=objective,
+        cached_backtest = _load_candidate_backtest_cache(
+            cache_root=resolved_cache_root,
+            cache_key=cache_keys["candidate_backtest"],
+            source_config_hash=source_config_hash,
+            data_hash=data_hash,
+            cache_read_enabled=cache_read_enabled
+            and _cache_layer_enabled(cache_policy, "candidate_backtest"),
         )
+        if cached_backtest is None:
+            cache_events.append(
+                _candidate_cache_event(
+                    "candidate_backtest",
+                    "miss" if resolved_cache_mode != "disabled" else "disabled",
+                    cache_keys["candidate_backtest"],
+                    candidate_id,
+                )
+            )
+            miss_tasks.append(
+                {
+                    "candidate_id": candidate_id,
+                    "candidate_position": index,
+                    "weights": dict(weights),
+                    "prices": _frame_records(prices),
+                    "baseline_daily": _frame_records(baseline_daily),
+                    "etf_config": etf_config.model_dump(mode="json"),
+                    "search": search.model_dump(mode="json"),
+                    "objective": objective.model_dump(mode="json"),
+                    "start": run_start.isoformat(),
+                    "end": run_end.isoformat(),
+                    "candidate_backtest_cache_key": cache_keys["candidate_backtest"],
+                    "regime_robustness_cache_key": cache_keys["regime_robustness"],
+                }
+            )
+            continue
+        cache_events.append(
+            _candidate_cache_event(
+                "candidate_backtest",
+                "hit",
+                cache_keys["candidate_backtest"],
+                candidate_id,
+            )
+        )
+        cached_robustness = _load_regime_robustness_cache(
+            cache_root=resolved_cache_root,
+            cache_key=cache_keys["regime_robustness"],
+            source_config_hash=source_config_hash,
+            data_hash=data_hash,
+            cache_read_enabled=cache_read_enabled
+            and _cache_layer_enabled(cache_policy, "regime_robustness"),
+        )
+        if cached_robustness is None:
+            cache_events.append(
+                _candidate_cache_event(
+                    "regime_robustness",
+                    "miss" if resolved_cache_mode != "disabled" else "disabled",
+                    cache_keys["regime_robustness"],
+                    candidate_id,
+                )
+            )
+            robustness = build_weight_robustness_evaluation(
+                candidate_id=candidate_id,
+                candidate_daily=cached_backtest["daily"],
+                baseline_daily=baseline_daily,
+                weights=weights,
+                search=search,
+                etf_config=etf_config,
+                objective=objective,
+            )
+            regime_payload = _regime_robustness_cache_payload(
+                cache_key=cache_keys["regime_robustness"],
+                candidate_id=candidate_id,
+                robustness=robustness,
+                generated_at=generated,
+            )
+            if cache_write_enabled and _cache_layer_enabled(cache_policy, "regime_robustness"):
+                _write_regime_robustness_cache(
+                    cache_root=resolved_cache_root,
+                    payload=regime_payload,
+                    source_config_hash=source_config_hash,
+                    data_hash=data_hash,
+                )
+                cache_events.append(
+                    _candidate_cache_event(
+                        "regime_robustness",
+                        "write",
+                        cache_keys["regime_robustness"],
+                        candidate_id,
+                    )
+                )
+                regime_status = "miss_written"
+            else:
+                regime_status = "miss"
+        else:
+            cache_events.append(
+                _candidate_cache_event(
+                    "regime_robustness",
+                    "hit",
+                    cache_keys["regime_robustness"],
+                    candidate_id,
+                )
+            )
+            robustness = cached_robustness
+            regime_status = "hit"
+        candidate_results[candidate_id] = {
+            "candidate_id": candidate_id,
+            "weights": dict(weights),
+            "backtest": cached_backtest,
+            "robustness": robustness,
+            "candidate_backtest_cache_key": cache_keys["candidate_backtest"],
+            "regime_robustness_cache_key": cache_keys["regime_robustness"],
+            "candidate_backtest_cache_status": "hit",
+            "regime_robustness_cache_status": regime_status,
+        }
+    if miss_tasks:
+        parallel_result = run_weight_calibration_parallel_tasks(
+            miss_tasks,
+            _weight_candidate_backtest_worker,
+            workers=resolved_workers,
+        )
+        if parallel_result["exceptions"]:
+            messages = [
+                f"{item['task_id']}: {item['exception_type']} {item['message']}"
+                for item in parallel_result["exceptions"]
+            ]
+            raise WeightCalibrationError(
+                "ETF weight candidate parallel execution failed: " + "; ".join(messages)
+            )
+        for result in parallel_result["results"]:
+            candidate_id = str(result["candidate_id"])
+            backtest_cache_payload = _mapping(result.get("backtest_cache_payload"))
+            regime_cache_payload = _mapping(result.get("regime_cache_payload"))
+            if cache_write_enabled and _cache_layer_enabled(cache_policy, "candidate_backtest"):
+                _write_candidate_backtest_cache(
+                    cache_root=resolved_cache_root,
+                    payload=backtest_cache_payload,
+                    source_config_hash=source_config_hash,
+                    data_hash=data_hash,
+                )
+                cache_events.append(
+                    _candidate_cache_event(
+                        "candidate_backtest",
+                        "write",
+                        str(result["candidate_backtest_cache_key"]),
+                        candidate_id,
+                    )
+                )
+                backtest_status = "miss_written"
+            else:
+                backtest_status = "miss"
+            if cache_write_enabled and _cache_layer_enabled(cache_policy, "regime_robustness"):
+                _write_regime_robustness_cache(
+                    cache_root=resolved_cache_root,
+                    payload=regime_cache_payload,
+                    source_config_hash=source_config_hash,
+                    data_hash=data_hash,
+                )
+                cache_events.append(
+                    _candidate_cache_event(
+                        "regime_robustness",
+                        "write",
+                        str(result["regime_robustness_cache_key"]),
+                        candidate_id,
+                    )
+                )
+                regime_status = "miss_written"
+            else:
+                regime_status = "miss"
+            candidate_results[candidate_id] = {
+                "candidate_id": candidate_id,
+                "weights": dict(_mapping(result.get("weights"))),
+                "backtest": _backtest_from_cache_payload(backtest_cache_payload),
+                "robustness": dict(_mapping(regime_cache_payload).get("robustness")),
+                "candidate_backtest_cache_key": str(result["candidate_backtest_cache_key"]),
+                "regime_robustness_cache_key": str(result["regime_robustness_cache_key"]),
+                "candidate_backtest_cache_status": backtest_status,
+                "regime_robustness_cache_status": regime_status,
+            }
+    for index, weights in enumerate(candidates, start=1):
+        candidate_id = f"weight_set_{index:04d}"
+        result = candidate_results[candidate_id]
+        backtest = result["backtest"]
+        robustness = result["robustness"]
         metric_row = _candidate_metric_row(
             candidate_id=candidate_id,
             weights=weights,
@@ -812,12 +1070,24 @@ def run_historical_weight_search(
             robustness_score=float(robustness["summary"]["stability_score"]),
             robustness_summary=robustness["summary"],
         )
+        metric_row["candidate_backtest_cache_status"] = result[
+            "candidate_backtest_cache_status"
+        ]
+        metric_row["regime_robustness_cache_status"] = result[
+            "regime_robustness_cache_status"
+        ]
         robustness_payloads.append(robustness)
         candidate_weight_sets.append(
             {
                 "candidate_id": candidate_id,
                 "weights": weights,
                 "robustness_summary": robustness["summary"],
+                "candidate_backtest_cache_status": result[
+                    "candidate_backtest_cache_status"
+                ],
+                "regime_robustness_cache_status": result[
+                    "regime_robustness_cache_status"
+                ],
                 "safety": dict(WEIGHT_CALIBRATION_SAFETY),
                 **WEIGHT_CALIBRATION_SAFETY,
             }
@@ -831,6 +1101,12 @@ def run_historical_weight_search(
                 "hard_blockers": metric_row["hard_blockers"],
                 "ranking_reason": metric_row["ranking_reason"],
                 "weights": weights,
+                "candidate_backtest_cache_status": result[
+                    "candidate_backtest_cache_status"
+                ],
+                "regime_robustness_cache_status": result[
+                    "regime_robustness_cache_status"
+                ],
                 "observe_only": True,
                 "candidate_only": True,
                 "production_effect": "none",
@@ -909,6 +1185,13 @@ def run_historical_weight_search(
             "candidate_evaluations": robustness_payloads,
             "summary": _robustness_run_summary(robustness_payloads),
         },
+        "runtime_cache": _weight_search_runtime_cache_summary(
+            cache_mode=resolved_cache_mode,
+            cache_root=resolved_cache_root,
+            worker_count=resolved_workers,
+            cache_events=cache_events,
+            force_refresh=force_refresh,
+        ),
         "production_weights_mutated": False,
         "applied_weight_set": None,
         "safety": dict(WEIGHT_CALIBRATION_SAFETY),
@@ -2988,7 +3271,17 @@ def build_historical_weight_search_diagnostics_report(
     max_candidates: int | None = None,
     source_paths: Mapping[str, str] | None = None,
     generated_at: datetime | None = None,
+    cache_policy: WeightCalibrationCachePolicyConfig | None = None,
+    cache_mode: str = "disabled",
+    cache_root: Path | None = None,
+    force_refresh: bool = False,
+    workers: str | int | None = 1,
+    resume_run_id: str | None = None,
+    include_performance_report: bool = False,
 ) -> dict[str, Any]:
+    runtime_started = perf_counter()
+    step_runtime_seconds: dict[str, float] = {}
+    cache_events: list[dict[str, Any]] = []
     if not quality_report.passed:
         raise WeightCalibrationError(
             "ETF historical weight search diagnostics requires passed data quality gate: "
@@ -2999,15 +3292,176 @@ def build_historical_weight_search_diagnostics_report(
     generated = generated_at or datetime.now(UTC)
     selected_search_ids = list(search_ids or ["etf_initial_weight_search_v1"])
     selected_preset_ids = list(preset_ids or WEIGHT_SEARCH_DIAGNOSTICS_DEFAULT_PRESETS)
+    resolved_cache_mode = _resolve_weight_diagnostics_cache_mode(cache_policy, cache_mode)
+    resolved_cache_root = _resolve_weight_diagnostics_cache_root(cache_policy, cache_root)
+    resolved_workers = resolve_weight_calibration_worker_count(workers, policy=cache_policy)
     available_dates = pd.to_datetime(prices["date"], errors="coerce").dropna()
     if available_dates.empty:
         raise WeightCalibrationError("prices have no valid date values")
     available_start = available_dates.min().date()
     available_end = available_dates.max().date()
+    data_hash = weight_calibration_dataframe_hash(prices)
+    source_config_hash = weight_calibration_input_hash(
+        {
+            "weight_search_registry": registry.config_hash,
+            "preset_registry": preset_registry.config_hash,
+        }
+    )
+    diagnostics_config_hash = weight_calibration_input_hash(
+        {
+            "search_ids": selected_search_ids,
+            "preset_ids": selected_preset_ids,
+            "top": top,
+            "max_candidates": max_candidates,
+            "market_regime": etf_config.backtest.backtest.regime,
+            "data_quality_status": quality_report.status,
+            "available_date_range": {
+                "start": available_start.isoformat(),
+                "end": available_end.isoformat(),
+            },
+        }
+    )
+    diagnostics_cache_key = build_weight_calibration_cache_key(
+        "diagnostics_aggregation",
+        {
+            "source_config_hash": source_config_hash,
+            "data_hash": data_hash,
+            "engine_version": WEIGHT_SEARCH_DIAGNOSTICS_SCHEMA_VERSION,
+            "diagnostics_config_hash": diagnostics_config_hash,
+            "input_search_run_ids": selected_search_ids,
+            "input_candidate_result_hashes": [
+                data_hash,
+                registry.config_hash,
+                preset_registry.config_hash,
+            ],
+            "aggregation_engine_version": WEIGHT_SEARCH_DIAGNOSTICS_SCHEMA_VERSION,
+        },
+        schema_version=WEIGHT_SEARCH_DIAGNOSTICS_SCHEMA_VERSION,
+    )
+    run_manifest_id = (
+        resume_run_id
+        or f"etf-weight-diagnostics-{generated.strftime('%Y%m%dT%H%M%SZ')}"
+    )
+    planned_steps = [
+        "load_prices",
+        "resolve_presets",
+        "run_searches",
+        "aggregate_diagnostics",
+        "write_outputs",
+    ]
+    cache_summary = {
+        "cache_mode": resolved_cache_mode,
+        "cache_root": str(resolved_cache_root),
+        "price_returns_matrix_cache_key": None,
+        "price_returns_matrix_cache_status": "disabled",
+        "diagnostics_cache_key": diagnostics_cache_key,
+        "diagnostics_aggregation_cache_status": "disabled",
+        "cache_hit_count": 0,
+        "cache_miss_count": 0,
+        "cache_write_count": 0,
+        "force_refresh": force_refresh,
+        "run_id": run_manifest_id,
+        "resume_status": "resumed" if resume_run_id else "not_resumed",
+        "worker_count": resolved_workers,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    price_cache_started = perf_counter()
+    price_cache_status = _prepare_diagnostics_price_returns_matrix_cache(
+        prices,
+        etf_config=etf_config,
+        available_start=available_start,
+        available_end=available_end,
+        source_paths=source_paths,
+        cache_policy=cache_policy,
+        cache_mode=resolved_cache_mode,
+        cache_root=resolved_cache_root,
+        force_refresh=force_refresh,
+        generated_at=generated,
+    )
+    step_runtime_seconds["price_returns_matrix_cache"] = perf_counter() - price_cache_started
+    cache_events.extend(_records(price_cache_status.get("cache_events")))
+    cache_summary.update(
+        {
+            "price_returns_matrix_cache_key": price_cache_status.get("cache_key"),
+            "price_returns_matrix_cache_status": price_cache_status.get("cache_status"),
+        }
+    )
+    if resolved_cache_mode != "disabled" and not force_refresh:
+        cache_lookup_started = perf_counter()
+        cached = load_weight_calibration_json_cache_entry(
+            cache_root=resolved_cache_root,
+            cache_layer="diagnostics_aggregation",
+            cache_key=diagnostics_cache_key,
+            expected_source_config_hash=source_config_hash,
+            expected_data_hash=data_hash,
+            expected_engine_version=WEIGHT_SEARCH_DIAGNOSTICS_SCHEMA_VERSION,
+        )
+        step_runtime_seconds["diagnostics_cache_lookup"] = perf_counter() - cache_lookup_started
+        if cached is not None:
+            cached_payload = dict(cached["payload"])
+            cache_events.append(
+                {
+                    "cache_layer": "diagnostics_aggregation",
+                    "cache_status": "hit",
+                    "cache_key": diagnostics_cache_key,
+                }
+            )
+            cache_summary.update(
+                {
+                    "diagnostics_aggregation_cache_status": "hit",
+                }
+            )
+            cache_summary.update(_weight_diagnostics_cache_event_counts(cache_events))
+            cached_payload["cache_summary"] = cache_summary
+            cached_payload["run_manifest"] = build_weight_calibration_diagnostics_run_manifest(
+                run_id=run_manifest_id,
+                status="resumed" if resume_run_id else "completed",
+                config_hash=diagnostics_config_hash,
+                data_hash=data_hash,
+                planned_steps=planned_steps,
+                completed_steps=planned_steps,
+                cache_summary=cache_summary,
+                started_at=generated,
+                completed_at=generated,
+            )
+            if resolved_cache_mode == "read_write":
+                write_weight_calibration_diagnostics_run_manifest(
+                    cached_payload["run_manifest"],
+                    cache_root=resolved_cache_root,
+                )
+            if include_performance_report:
+                cached_payload["performance_report"] = build_weight_calibration_performance_report(
+                    run_id=run_manifest_id,
+                    total_runtime_seconds=perf_counter() - runtime_started,
+                    step_runtime_seconds=step_runtime_seconds,
+                    worker_count=resolved_workers,
+                    cache_mode=resolved_cache_mode,
+                    cache_events=cache_events,
+                    resume_status=cache_summary["resume_status"],
+                    generated_at=generated,
+                )
+            validate_historical_weight_search_diagnostics_report(cached_payload)
+            return cached_payload
+    if resolved_cache_mode != "disabled":
+        cache_events.append(
+            {
+                "cache_layer": "diagnostics_aggregation",
+                "cache_status": "miss",
+                "cache_key": diagnostics_cache_key,
+            }
+        )
+        cache_summary.update(
+            {
+                "diagnostics_aggregation_cache_status": "miss",
+            }
+        )
+        cache_summary.update(_weight_diagnostics_cache_event_counts(cache_events))
     preset_results: list[dict[str, Any]] = []
     candidate_records: list[dict[str, Any]] = []
     regime_rows: list[dict[str, Any]] = []
     run_index = 0
+    search_started = perf_counter()
     for search_id in selected_search_ids:
         if search_id not in registry.weight_searches:
             raise WeightCalibrationError(f"unknown ETF weight search: {search_id}")
@@ -3036,6 +3490,14 @@ def build_historical_weight_search_diagnostics_report(
                 range_preset=preset_context,
                 max_candidates=max_candidates,
                 generated_at=run_time,
+                cache_policy=cache_policy,
+                cache_mode=resolved_cache_mode,
+                cache_root=resolved_cache_root,
+                force_refresh=force_refresh,
+                workers=resolved_workers,
+            )
+            cache_events.extend(
+                _records(_mapping(run.payload.get("runtime_cache")).get("cache_events"))
             )
             top_payload = build_weight_top_candidate_export(
                 run.payload,
@@ -3074,6 +3536,8 @@ def build_historical_weight_search_diagnostics_report(
                 enriched["search_id"] = search_id
                 enriched["preset_id"] = preset_id
                 regime_rows.append(enriched)
+    step_runtime_seconds["run_searches"] = perf_counter() - search_started
+    aggregation_started = perf_counter()
     stable_shapes = _weight_search_cross_preset_stable_shapes(
         candidate_records,
         regime_rows,
@@ -3086,6 +3550,8 @@ def build_historical_weight_search_diagnostics_report(
         candidate_records,
         stable_shapes=stable_shapes,
     )
+    step_runtime_seconds["aggregate_diagnostics"] = perf_counter() - aggregation_started
+    cache_summary.update(_weight_diagnostics_cache_event_counts(cache_events))
     payload = {
         "schema_version": WEIGHT_SEARCH_DIAGNOSTICS_SCHEMA_VERSION,
         "report_type": "etf_weight_search_diagnostics",
@@ -3107,12 +3573,102 @@ def build_historical_weight_search_diagnostics_report(
         "shadow_minimum_criteria": minimum_criteria,
         "robust_search_pack_ids": list(WEIGHT_ROBUST_SEARCH_PACK_IDS),
         "source_paths": dict(source_paths or {}),
+        "cache_summary": cache_summary,
+        "run_manifest": build_weight_calibration_diagnostics_run_manifest(
+            run_id=run_manifest_id,
+            status="completed",
+            config_hash=diagnostics_config_hash,
+            data_hash=data_hash,
+            planned_steps=planned_steps,
+            completed_steps=planned_steps,
+            cache_summary=cache_summary,
+            started_at=generated,
+            completed_at=generated,
+        ),
         "production_weights_mutated": False,
         "applied_weight_set": None,
         "safety": dict(WEIGHT_CALIBRATION_SAFETY),
         **WEIGHT_CALIBRATION_SAFETY,
     }
+    if include_performance_report:
+        payload["performance_report"] = build_weight_calibration_performance_report(
+            run_id=run_manifest_id,
+            total_runtime_seconds=perf_counter() - runtime_started,
+            step_runtime_seconds=step_runtime_seconds,
+            worker_count=resolved_workers,
+            cache_mode=resolved_cache_mode,
+            cache_events=cache_events,
+            resume_status=cache_summary["resume_status"],
+            generated_at=generated,
+        )
     validate_historical_weight_search_diagnostics_report(payload)
+    if resolved_cache_mode == "read_write":
+        cache_write_started = perf_counter()
+        cache_events.append(
+            {
+                "cache_layer": "diagnostics_aggregation",
+                "cache_status": "write",
+                "cache_key": diagnostics_cache_key,
+            }
+        )
+        cache_summary.update(_weight_diagnostics_cache_event_counts(cache_events))
+        cache_summary["diagnostics_aggregation_cache_status"] = "miss_written"
+        payload["cache_summary"] = cache_summary
+        payload["run_manifest"] = build_weight_calibration_diagnostics_run_manifest(
+            run_id=run_manifest_id,
+            status="completed",
+            config_hash=diagnostics_config_hash,
+            data_hash=data_hash,
+            planned_steps=planned_steps,
+            completed_steps=planned_steps,
+            cache_summary=cache_summary,
+            started_at=generated,
+            completed_at=generated,
+        )
+        manifest = build_weight_calibration_cache_manifest(
+            cache_key=diagnostics_cache_key,
+            cache_layer="diagnostics_aggregation",
+            source_config_hash=source_config_hash,
+            data_hash=data_hash,
+            model_version=WEIGHT_SEARCH_DIAGNOSTICS_SCHEMA_VERSION,
+            engine_version=WEIGHT_SEARCH_DIAGNOSTICS_SCHEMA_VERSION,
+            input_summary={
+                "search_ids": selected_search_ids,
+                "preset_ids": selected_preset_ids,
+                "top": top,
+                "max_candidates": max_candidates,
+            },
+            output_summary={
+                "preset_result_count": len(preset_results),
+                "candidate_observation_count": len(candidate_records),
+                "stable_shape_count": len(stable_shapes),
+                "near_shadow_count": len(near_shadow),
+            },
+        )
+        write_weight_calibration_json_cache_entry(
+            cache_root=resolved_cache_root,
+            cache_layer="diagnostics_aggregation",
+            cache_key=diagnostics_cache_key,
+            payload=payload,
+            manifest=manifest,
+        )
+        write_weight_calibration_diagnostics_run_manifest(
+            payload["run_manifest"],
+            cache_root=resolved_cache_root,
+        )
+        step_runtime_seconds["cache_write"] = perf_counter() - cache_write_started
+        if include_performance_report:
+            payload["performance_report"] = build_weight_calibration_performance_report(
+                run_id=run_manifest_id,
+                total_runtime_seconds=perf_counter() - runtime_started,
+                step_runtime_seconds=step_runtime_seconds,
+                worker_count=resolved_workers,
+                cache_mode=resolved_cache_mode,
+                cache_events=cache_events,
+                resume_status=cache_summary["resume_status"],
+                generated_at=generated,
+            )
+        validate_historical_weight_search_diagnostics_report(payload)
     return payload
 
 
@@ -5515,6 +6071,577 @@ def _range_preset_payload(preset: Mapping[str, Any]) -> dict[str, Any]:
 def _config_hash(payload: dict[str, Any]) -> str:
     normalized = json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str)
     return sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def _prepare_diagnostics_price_returns_matrix_cache(
+    prices: pd.DataFrame,
+    *,
+    etf_config: ETFConfigBundle,
+    available_start: date,
+    available_end: date,
+    source_paths: Mapping[str, str] | None,
+    cache_policy: WeightCalibrationCachePolicyConfig | None,
+    cache_mode: str,
+    cache_root: Path,
+    force_refresh: bool,
+    generated_at: datetime,
+) -> dict[str, Any]:
+    if cache_mode == "disabled" or not _cache_layer_enabled(cache_policy, "price_returns_matrix"):
+        return {"cache_status": "disabled", "cache_key": None, "cache_events": []}
+    source_config_hash = weight_calibration_input_hash(
+        {
+            "etf_config_hash": etf_config.config_hash,
+            "asset_universe": list(etf_config.assets.assets),
+            "price_field": etf_config.backtest.backtest.price_field,
+        }
+    )
+    data_source = str(_mapping(source_paths).get("prices") or "in_memory_prices")
+    lookup = build_price_returns_matrix_cache_lookup(
+        prices,
+        asset_universe=list(etf_config.assets.assets),
+        start=available_start,
+        end=available_end,
+        data_source=data_source,
+        adjusted_price_mode=etf_config.backtest.backtest.price_field,
+        source_config_hash=source_config_hash,
+    )
+    cache_key = str(lookup["cache_key"])
+    cache_events: list[dict[str, Any]] = []
+    if not force_refresh:
+        loaded = load_weight_calibration_json_cache_entry(
+            cache_root=cache_root,
+            cache_layer="price_returns_matrix",
+            cache_key=cache_key,
+            expected_source_config_hash=source_config_hash,
+            expected_data_hash=str(lookup["data_hash"]),
+            expected_engine_version=WEIGHT_CALIBRATION_PRICE_RETURNS_CACHE_SCHEMA_VERSION,
+        )
+        if loaded is not None:
+            cache_events.append(
+                {
+                    "cache_layer": "price_returns_matrix",
+                    "cache_status": "hit",
+                    "cache_key": cache_key,
+                }
+            )
+            return {
+                "cache_status": "hit",
+                "cache_key": cache_key,
+                "cache_events": cache_events,
+            }
+    cache_events.append(
+        {
+            "cache_layer": "price_returns_matrix",
+            "cache_status": "miss",
+            "cache_key": cache_key,
+        }
+    )
+    if cache_mode == "read_write":
+        payload = build_price_returns_matrix_cache_payload(
+            prices,
+            asset_universe=list(etf_config.assets.assets),
+            start=available_start,
+            end=available_end,
+            data_source=data_source,
+            adjusted_price_mode=etf_config.backtest.backtest.price_field,
+            source_config_hash=source_config_hash,
+            generated_at=generated_at,
+        )
+        write_price_returns_matrix_cache_entry(payload, cache_root=cache_root)
+        cache_events.append(
+            {
+                "cache_layer": "price_returns_matrix",
+                "cache_status": "write",
+                "cache_key": cache_key,
+            }
+        )
+        return {
+            "cache_status": "miss_written",
+            "cache_key": cache_key,
+            "cache_events": cache_events,
+        }
+    return {"cache_status": "miss", "cache_key": cache_key, "cache_events": cache_events}
+
+
+def _resolve_weight_diagnostics_cache_mode(
+    cache_policy: WeightCalibrationCachePolicyConfig | None,
+    cache_mode: str,
+) -> str:
+    resolved = normalize_weight_calibration_cache_mode(cache_mode)
+    if cache_policy is None:
+        return resolved
+    settings = cache_policy.weight_calibration_cache
+    if not settings.enabled:
+        return "disabled"
+    if resolved not in settings.cache_modes.allowed:
+        raise WeightCalibrationError(f"cache mode not allowed by policy: {resolved}")
+    return resolved
+
+
+def _resolve_weight_diagnostics_cache_root(
+    cache_policy: WeightCalibrationCachePolicyConfig | None,
+    cache_root: Path | None,
+) -> Path:
+    if cache_root is not None:
+        return Path(cache_root)
+    if cache_policy is None:
+        return DEFAULT_WEIGHT_CALIBRATION_CACHE_ROOT
+    configured = Path(cache_policy.weight_calibration_cache.cache_root)
+    if configured.is_absolute():
+        return configured
+    return PROJECT_ROOT / configured
+
+
+def _cache_layer_enabled(
+    cache_policy: WeightCalibrationCachePolicyConfig | None,
+    layer: str,
+) -> bool:
+    if cache_policy is None:
+        return True
+    enabled_layers = cache_policy.weight_calibration_cache.enabled_layers
+    return bool(getattr(enabled_layers, layer, False))
+
+
+def _candidate_cache_keys(
+    *,
+    weights: Mapping[str, float],
+    run_start: date,
+    run_end: date,
+    source_config_hash: str,
+    data_hash: str,
+    returns_matrix_hash: str,
+    transaction_cost_config_hash: str,
+    rebalance_policy_hash: str,
+    benchmark_set_hash: str,
+    regime_definition_hash: str,
+) -> dict[str, str]:
+    candidate_weights_hash = weight_calibration_input_hash(
+        {str(symbol): float(value) for symbol, value in sorted(weights.items())}
+    )
+    date_range = {"start": run_start.isoformat(), "end": run_end.isoformat()}
+    return {
+        "candidate_backtest": build_weight_calibration_cache_key(
+            "candidate_backtest",
+            {
+                "source_config_hash": source_config_hash,
+                "data_hash": data_hash,
+                "engine_version": WEIGHT_CALIBRATION_CANDIDATE_BACKTEST_CACHE_SCHEMA_VERSION,
+                "candidate_weights_hash": candidate_weights_hash,
+                "date_range": date_range,
+                "returns_matrix_hash": returns_matrix_hash,
+                "backtest_engine_version": "static_weight_backtest_v1",
+                "transaction_cost_config_hash": transaction_cost_config_hash,
+                "rebalance_policy_hash": rebalance_policy_hash,
+                "benchmark_set_hash": benchmark_set_hash,
+            },
+            schema_version=WEIGHT_CALIBRATION_CANDIDATE_BACKTEST_CACHE_SCHEMA_VERSION,
+        ),
+        "regime_robustness": build_weight_calibration_cache_key(
+            "regime_robustness",
+            {
+                "source_config_hash": source_config_hash,
+                "data_hash": data_hash,
+                "engine_version": WEIGHT_CALIBRATION_REGIME_ROBUSTNESS_CACHE_SCHEMA_VERSION,
+                "candidate_weights_hash": candidate_weights_hash,
+                "date_range": date_range,
+                "regime_definition_hash": regime_definition_hash,
+                "returns_matrix_hash": returns_matrix_hash,
+                "metrics_schema_version": "etf_weight_candidate_robustness_v1",
+            },
+            schema_version=WEIGHT_CALIBRATION_REGIME_ROBUSTNESS_CACHE_SCHEMA_VERSION,
+        ),
+    }
+
+
+def _load_candidate_backtest_cache(
+    *,
+    cache_root: Path,
+    cache_key: str,
+    source_config_hash: str,
+    data_hash: str,
+    cache_read_enabled: bool,
+) -> dict[str, Any] | None:
+    if not cache_read_enabled:
+        return None
+    loaded = load_weight_calibration_json_cache_entry(
+        cache_root=cache_root,
+        cache_layer="candidate_backtest",
+        cache_key=cache_key,
+        expected_source_config_hash=source_config_hash,
+        expected_data_hash=data_hash,
+        expected_engine_version=WEIGHT_CALIBRATION_CANDIDATE_BACKTEST_CACHE_SCHEMA_VERSION,
+    )
+    if loaded is None:
+        return None
+    try:
+        return _backtest_from_cache_payload(_mapping(loaded.get("payload")))
+    except WeightCalibrationError:
+        return None
+
+
+def _load_regime_robustness_cache(
+    *,
+    cache_root: Path,
+    cache_key: str,
+    source_config_hash: str,
+    data_hash: str,
+    cache_read_enabled: bool,
+) -> dict[str, Any] | None:
+    if not cache_read_enabled:
+        return None
+    loaded = load_weight_calibration_json_cache_entry(
+        cache_root=cache_root,
+        cache_layer="regime_robustness",
+        cache_key=cache_key,
+        expected_source_config_hash=source_config_hash,
+        expected_data_hash=data_hash,
+        expected_engine_version=WEIGHT_CALIBRATION_REGIME_ROBUSTNESS_CACHE_SCHEMA_VERSION,
+    )
+    if loaded is None:
+        return None
+    try:
+        return _robustness_from_cache_payload(_mapping(loaded.get("payload")))
+    except WeightCalibrationError:
+        return None
+
+
+def _write_candidate_backtest_cache(
+    *,
+    cache_root: Path,
+    payload: Mapping[str, Any],
+    source_config_hash: str,
+    data_hash: str,
+) -> None:
+    cache_key = str(payload.get("cache_key") or "")
+    manifest = build_weight_calibration_cache_manifest(
+        cache_key=cache_key,
+        cache_layer="candidate_backtest",
+        source_config_hash=source_config_hash,
+        data_hash=data_hash,
+        model_version=WEIGHT_CALIBRATION_CANDIDATE_BACKTEST_CACHE_SCHEMA_VERSION,
+        engine_version=WEIGHT_CALIBRATION_CANDIDATE_BACKTEST_CACHE_SCHEMA_VERSION,
+        input_summary={
+            "candidate_id": payload.get("candidate_id"),
+            "weights": payload.get("weights"),
+            "date_range": payload.get("date_range"),
+        },
+        output_summary={
+            "row_count": payload.get("row_count"),
+            "first_signal_date": payload.get("first_signal_date"),
+            "last_signal_date": payload.get("last_signal_date"),
+        },
+    )
+    write_weight_calibration_json_cache_entry(
+        cache_root=cache_root,
+        cache_layer="candidate_backtest",
+        cache_key=cache_key,
+        payload=payload,
+        manifest=manifest,
+    )
+
+
+def _write_regime_robustness_cache(
+    *,
+    cache_root: Path,
+    payload: Mapping[str, Any],
+    source_config_hash: str,
+    data_hash: str,
+) -> None:
+    cache_key = str(payload.get("cache_key") or "")
+    manifest = build_weight_calibration_cache_manifest(
+        cache_key=cache_key,
+        cache_layer="regime_robustness",
+        source_config_hash=source_config_hash,
+        data_hash=data_hash,
+        model_version=WEIGHT_CALIBRATION_REGIME_ROBUSTNESS_CACHE_SCHEMA_VERSION,
+        engine_version=WEIGHT_CALIBRATION_REGIME_ROBUSTNESS_CACHE_SCHEMA_VERSION,
+        input_summary={
+            "candidate_id": payload.get("candidate_id"),
+            "regime_definition_id": payload.get("regime_definition_id"),
+        },
+        output_summary={
+            "regime_failure_count": payload.get("regime_failure_count"),
+            "regime_resilience": payload.get("regime_resilience"),
+        },
+    )
+    write_weight_calibration_json_cache_entry(
+        cache_root=cache_root,
+        cache_layer="regime_robustness",
+        cache_key=cache_key,
+        payload=payload,
+        manifest=manifest,
+    )
+
+
+def _candidate_backtest_cache_payload(
+    *,
+    cache_key: str,
+    candidate_id: str,
+    weights: Mapping[str, float],
+    backtest: Mapping[str, Any],
+    run_start: date,
+    run_end: date,
+    generated_at: datetime,
+) -> dict[str, Any]:
+    payload = {
+        "schema_version": WEIGHT_CALIBRATION_CANDIDATE_BACKTEST_CACHE_SCHEMA_VERSION,
+        "cache_key": cache_key,
+        "cache_layer": "candidate_backtest",
+        "candidate_id": candidate_id,
+        "weights": {str(symbol): float(value) for symbol, value in sorted(weights.items())},
+        "date_range": {"start": run_start.isoformat(), "end": run_end.isoformat()},
+        "generated_at": generated_at.isoformat(),
+        "daily_records": _frame_records(_dataframe(backtest.get("daily"))),
+        "metrics": _backtest_metrics_cache_payload(backtest["metrics"]),
+        "first_signal_date": backtest.get("first_signal_date"),
+        "last_signal_date": backtest.get("last_signal_date"),
+        "row_count": int(backtest.get("row_count") or 0),
+        "benchmark_metrics": {},
+        "drawdown": _mapping(_metrics_payload(backtest["metrics"])).get("max_drawdown"),
+        "turnover": _mapping(_metrics_payload(backtest["metrics"])).get("turnover"),
+        "exposure_summary": {
+            "cash_weight": float(weights.get("CASH", 0.0)),
+            "equity_weight": 1.0 - float(weights.get("CASH", 0.0)),
+        },
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    _backtest_from_cache_payload(payload)
+    return payload
+
+
+def _backtest_from_cache_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
+    issues = []
+    if payload.get("schema_version") != WEIGHT_CALIBRATION_CANDIDATE_BACKTEST_CACHE_SCHEMA_VERSION:
+        issues.append("schema_version")
+    if payload.get("cache_layer") != "candidate_backtest":
+        issues.append("cache_layer")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if payload.get(field) != expected:
+            issues.append(field)
+        if _mapping(payload.get("safety")).get(field) != expected:
+            issues.append(f"safety.{field}")
+    records = _records(payload.get("daily_records"))
+    if not records:
+        issues.append("daily_records")
+    if issues:
+        raise WeightCalibrationError(
+            "ETF weight candidate backtest cache validation failed: "
+            + ", ".join(issues)
+        )
+    return {
+        "daily": pd.DataFrame(records),
+        "metrics": _backtest_metrics_from_cache(_mapping(payload.get("metrics"))),
+        "first_signal_date": payload.get("first_signal_date"),
+        "last_signal_date": payload.get("last_signal_date"),
+        "row_count": int(payload.get("row_count") or len(records)),
+    }
+
+
+def _regime_robustness_cache_payload(
+    *,
+    cache_key: str,
+    candidate_id: str,
+    robustness: Mapping[str, Any],
+    generated_at: datetime,
+) -> dict[str, Any]:
+    summary = _mapping(robustness.get("summary"))
+    payload = {
+        "schema_version": WEIGHT_CALIBRATION_REGIME_ROBUSTNESS_CACHE_SCHEMA_VERSION,
+        "cache_key": cache_key,
+        "cache_layer": "regime_robustness",
+        "candidate_id": candidate_id,
+        "regime_definition_id": str(robustness.get("slice_method") or ""),
+        "generated_at": generated_at.isoformat(),
+        "regime_metrics": _records(robustness.get("slice_metrics")),
+        "regime_failure_count": int(summary.get("weak_slice_count") or 0),
+        "regime_resilience": float(summary.get("stability_score") or 0.0),
+        "robustness": dict(robustness),
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    _robustness_from_cache_payload(payload)
+    return payload
+
+
+def _robustness_from_cache_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
+    issues = []
+    if payload.get("schema_version") != WEIGHT_CALIBRATION_REGIME_ROBUSTNESS_CACHE_SCHEMA_VERSION:
+        issues.append("schema_version")
+    if payload.get("cache_layer") != "regime_robustness":
+        issues.append("cache_layer")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if payload.get(field) != expected:
+            issues.append(field)
+        if _mapping(payload.get("safety")).get(field) != expected:
+            issues.append(f"safety.{field}")
+    robustness = dict(_mapping(payload.get("robustness")))
+    if not robustness or robustness.get("schema_version") != "etf_weight_candidate_robustness_v1":
+        issues.append("robustness")
+    if issues:
+        raise WeightCalibrationError(
+            "ETF weight regime robustness cache validation failed: "
+            + ", ".join(issues)
+        )
+    return robustness
+
+
+def _backtest_metrics_cache_payload(metrics: BacktestMetrics) -> dict[str, float | None]:
+    return {
+        "total_return": metrics.total_return,
+        "cagr": metrics.cagr,
+        "max_drawdown": metrics.max_drawdown,
+        "sharpe": metrics.sharpe,
+        "sortino": metrics.sortino,
+        "calmar": metrics.calmar,
+        "time_in_market": metrics.time_in_market,
+        "turnover": metrics.turnover,
+    }
+
+
+def _backtest_metrics_from_cache(payload: Mapping[str, Any]) -> BacktestMetrics:
+    return BacktestMetrics(
+        total_return=float(payload.get("total_return") or 0.0),
+        cagr=float(payload.get("cagr") or 0.0),
+        max_drawdown=float(payload.get("max_drawdown") or 0.0),
+        sharpe=_float_or_none(payload.get("sharpe")),
+        sortino=_float_or_none(payload.get("sortino")),
+        calmar=_float_or_none(payload.get("calmar")),
+        time_in_market=float(payload.get("time_in_market") or 0.0),
+        turnover=float(payload.get("turnover") or 0.0),
+    )
+
+
+def _weight_candidate_backtest_worker(task: dict[str, Any]) -> dict[str, Any]:
+    prices = pd.DataFrame(task["prices"])
+    baseline_daily = pd.DataFrame(task["baseline_daily"])
+    etf_config = ETFConfigBundle.model_validate(task["etf_config"])
+    search = ETFWeightSearchDefinition.model_validate(task["search"])
+    objective = ETFWeightObjectivePolicy.model_validate(task["objective"])
+    weights = {str(symbol): float(value) for symbol, value in _mapping(task["weights"]).items()}
+    candidate_id = str(task["candidate_id"])
+    run_start = date.fromisoformat(str(task["start"]))
+    run_end = date.fromisoformat(str(task["end"]))
+    backtest = _run_static_weight_backtest(
+        prices,
+        weights=weights,
+        config=etf_config,
+        start=run_start,
+        end=run_end,
+    )
+    robustness = build_weight_robustness_evaluation(
+        candidate_id=candidate_id,
+        candidate_daily=backtest["daily"],
+        baseline_daily=baseline_daily,
+        weights=weights,
+        search=search,
+        etf_config=etf_config,
+        objective=objective,
+    )
+    generated = datetime.now(UTC)
+    backtest_payload = _candidate_backtest_cache_payload(
+        cache_key=str(task["candidate_backtest_cache_key"]),
+        candidate_id=candidate_id,
+        weights=weights,
+        backtest=backtest,
+        run_start=run_start,
+        run_end=run_end,
+        generated_at=generated,
+    )
+    regime_payload = _regime_robustness_cache_payload(
+        cache_key=str(task["regime_robustness_cache_key"]),
+        candidate_id=candidate_id,
+        robustness=robustness,
+        generated_at=generated,
+    )
+    return {
+        "candidate_id": candidate_id,
+        "candidate_position": int(task["candidate_position"]),
+        "weights": weights,
+        "candidate_backtest_cache_key": str(task["candidate_backtest_cache_key"]),
+        "regime_robustness_cache_key": str(task["regime_robustness_cache_key"]),
+        "backtest_cache_payload": backtest_payload,
+        "regime_cache_payload": regime_payload,
+    }
+
+
+def _candidate_cache_event(
+    cache_layer: str,
+    cache_status: str,
+    cache_key: str,
+    candidate_id: str,
+) -> dict[str, Any]:
+    return {
+        "cache_layer": cache_layer,
+        "cache_status": cache_status,
+        "cache_key": cache_key,
+        "candidate_id": candidate_id,
+    }
+
+
+def _weight_search_runtime_cache_summary(
+    *,
+    cache_mode: str,
+    cache_root: Path,
+    worker_count: int,
+    cache_events: list[dict[str, Any]],
+    force_refresh: bool,
+) -> dict[str, Any]:
+    return {
+        "cache_mode": cache_mode,
+        "cache_root": str(cache_root),
+        "worker_count": worker_count,
+        "force_refresh": force_refresh,
+        "cache_hit_count": sum(1 for event in cache_events if event["cache_status"] == "hit"),
+        "cache_miss_count": sum(1 for event in cache_events if event["cache_status"] == "miss"),
+        "cache_write_count": sum(1 for event in cache_events if event["cache_status"] == "write"),
+        "cache_events": cache_events,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+
+
+def _weight_diagnostics_cache_event_counts(
+    cache_events: list[Mapping[str, Any]],
+) -> dict[str, int]:
+    return {
+        "cache_hit_count": sum(1 for event in cache_events if event.get("cache_status") == "hit"),
+        "cache_miss_count": sum(1 for event in cache_events if event.get("cache_status") == "miss"),
+        "cache_write_count": sum(
+            1 for event in cache_events if event.get("cache_status") == "write"
+        ),
+    }
+
+
+def _frame_records(frame: pd.DataFrame) -> list[dict[str, Any]]:
+    return [
+        {str(key): _json_record_value(value) for key, value in row.items()}
+        for row in frame.to_dict(orient="records")
+    ]
+
+
+def _json_record_value(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {str(key): _json_record_value(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_record_value(item) for item in value]
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    try:
+        if pd.isna(value):
+            return None
+    except (TypeError, ValueError):
+        pass
+    if hasattr(value, "item"):
+        try:
+            return value.item()
+        except (TypeError, ValueError):
+            return value
+    return value
+
+
+def _dataframe(value: Any) -> pd.DataFrame:
+    return value if isinstance(value, pd.DataFrame) else pd.DataFrame(value)
 
 
 def _run_static_weight_backtest(
