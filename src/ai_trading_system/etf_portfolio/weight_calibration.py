@@ -54,6 +54,9 @@ DEFAULT_WEIGHT_FORWARD_EVIDENCE_DIR = (
 DEFAULT_WEIGHT_OVERFIT_DIAGNOSTICS_DIR = (
     DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "overfit_diagnostics"
 )
+DEFAULT_WEIGHT_TOP_CANDIDATE_EXPORT_DIR = (
+    DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "top_candidates"
+)
 DEFAULT_WEIGHT_PROPOSAL_DIR = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "proposals"
 DEFAULT_WEIGHT_DUAL_TRACK_REPORT_DIR = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "reports"
 DEFAULT_WEIGHT_CALIBRATION_VALIDATION_DIR = (
@@ -69,6 +72,7 @@ WEIGHT_BACKTEST_FORWARD_EVIDENCE_SCHEMA_VERSION = (
     "etf_weight_backtest_forward_evidence_v1"
 )
 WEIGHT_OVERFIT_DIAGNOSTICS_SCHEMA_VERSION = "etf_weight_overfit_diagnostics_v1"
+WEIGHT_TOP_CANDIDATE_EXPORT_SCHEMA_VERSION = "etf_weight_top_candidate_export_v1"
 WEIGHT_PROPOSAL_SCHEMA_VERSION = "etf_weight_candidate_proposals_v1"
 WEIGHT_DUAL_TRACK_REPORT_SCHEMA_VERSION = "etf_weight_dual_track_calibration_report_v1"
 WEIGHT_CALIBRATION_VALIDATION_SCHEMA_VERSION = "etf_weight_dual_track_validation_v1"
@@ -982,6 +986,214 @@ def read_weight_search_run_payload(run_dir: Path) -> dict[str, Any]:
         raise WeightCalibrationError(f"ETF weight search summary must be a JSON object: {path}")
     validate_weight_search_run_payload(payload)
     return payload
+
+
+def build_weight_top_candidate_export(
+    search_payload: Mapping[str, Any],
+    *,
+    top: int = 10,
+    overfit_payload: Mapping[str, Any] | None = None,
+    source_paths: Mapping[str, str] | None = None,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    validate_weight_search_run_payload(search_payload)
+    if overfit_payload:
+        validate_weight_overfit_diagnostics_payload(overfit_payload)
+    if top <= 0:
+        raise WeightCalibrationError("top must be positive")
+    generated = generated_at or datetime.now(UTC)
+    ranked = sorted(
+        _records(search_payload.get("ranking")),
+        key=lambda row: (int(row.get("rank") or 999_999), str(row.get("candidate_id"))),
+    )[:top]
+    candidates = [
+        _weight_top_candidate_export_record(
+            search_payload,
+            ranked_row,
+            overfit_payload=overfit_payload or {},
+            generated_at=generated,
+        )
+        for ranked_row in ranked
+    ]
+    payload = {
+        "schema_version": WEIGHT_TOP_CANDIDATE_EXPORT_SCHEMA_VERSION,
+        "report_type": "etf_weight_top_candidate_export",
+        "export_id": f"etf-weight-top-candidates-{search_payload.get('search_run_id')}",
+        "search_run_id": search_payload.get("search_run_id"),
+        "search_id": search_payload.get("search_id"),
+        "search_config_hash": search_payload.get("search_config_hash"),
+        "generated_at": generated.isoformat(),
+        "top_n": top,
+        "exported_candidate_count": len(candidates),
+        "market_regime": search_payload.get("market_regime"),
+        "historical_range_preset": dict(_mapping(search_payload.get("historical_range_preset"))),
+        "requested_date_range": dict(_mapping(search_payload.get("requested_date_range"))),
+        "data_quality_status": search_payload.get("data_quality_status"),
+        "benchmark_set": dict(_mapping(search_payload.get("benchmark_set"))),
+        "candidates": candidates,
+        "source_paths": dict(source_paths or {}),
+        "production_weights_mutated": False,
+        "applied_weight_set": None,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_weight_top_candidate_export(payload)
+    return payload
+
+
+def validate_weight_top_candidate_export(payload: Mapping[str, Any]) -> None:
+    issues = []
+    if payload.get("schema_version") != WEIGHT_TOP_CANDIDATE_EXPORT_SCHEMA_VERSION:
+        issues.append("schema_version")
+    if payload.get("report_type") != "etf_weight_top_candidate_export":
+        issues.append("report_type")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if payload.get(field) != expected:
+            issues.append(field)
+    safety = _mapping(payload.get("safety"))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if safety.get(field) != expected:
+            issues.append(f"safety.{field}")
+    if payload.get("production_weights_mutated") is not False:
+        issues.append("production_weights_mutated")
+    if payload.get("applied_weight_set") is not None:
+        issues.append("applied_weight_set")
+    candidates = _records(payload.get("candidates"))
+    if int(payload.get("exported_candidate_count") or 0) != len(candidates):
+        issues.append("exported_candidate_count")
+    for candidate in candidates:
+        validate_weight_top_candidate_export_record(candidate)
+    if issues:
+        raise WeightCalibrationError(
+            "ETF top candidate export validation failed: "
+            + ", ".join(str(issue) for issue in issues)
+        )
+
+
+def validate_weight_top_candidate_export_record(record: Mapping[str, Any]) -> None:
+    issues = []
+    required = {
+        "rank",
+        "weight_set_id",
+        "weights",
+        "historical_score",
+        "cagr",
+        "max_drawdown",
+        "sharpe",
+        "sortino",
+        "calmar",
+        "turnover",
+        "semiconductor_exposure",
+        "cash_exposure",
+        "benchmark_excess_return",
+        "drawdown_reduction_vs_QQQ",
+        "overfit_risk",
+        "forward_readiness_status",
+        "blockers",
+        "warnings",
+        "safety",
+    }
+    missing = sorted(required - set(record))
+    if missing:
+        issues.extend(missing)
+    weights = _json_float_mapping(record.get("weights"))
+    if weights and abs(sum(weights.values()) - 1.0) > 1e-6:
+        issues.append("weights_sum")
+    if record.get("forward_readiness_status") not in {
+        "shadow_ready",
+        "needs_manual_review",
+        "needs_more_historical_validation",
+        "blocked_by_risk",
+        "blocked_by_data_quality",
+        "blocked_by_overfit_risk",
+    }:
+        issues.append("forward_readiness_status")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if record.get(field) != expected:
+            issues.append(field)
+    safety = _mapping(record.get("safety"))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if safety.get(field) != expected:
+            issues.append(f"safety.{field}")
+    if issues:
+        raise WeightCalibrationError(
+            "ETF top candidate export record validation failed: "
+            + ", ".join(str(issue) for issue in issues)
+        )
+
+
+def write_weight_top_candidate_export(
+    payload: Mapping[str, Any],
+    *,
+    output_dir: Path = DEFAULT_WEIGHT_TOP_CANDIDATE_EXPORT_DIR,
+) -> dict[str, Path]:
+    validate_weight_top_candidate_export(payload)
+    run_id = _artifact_stem(str(payload.get("search_run_id") or "unknown"))
+    top_n = int(payload.get("top_n") or len(_records(payload.get("candidates"))))
+    stem = f"top_weight_candidates_{run_id}_top{top_n}"
+    json_path = output_dir / f"{stem}.json"
+    csv_path = output_dir / f"{stem}.csv"
+    markdown_path = output_dir / f"{stem}.md"
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    pd.DataFrame(_weight_top_candidate_export_csv_rows(payload)).to_csv(
+        csv_path,
+        index=False,
+    )
+    markdown_path.write_text(
+        render_weight_top_candidate_export_markdown(payload),
+        encoding="utf-8",
+    )
+    return {"json": json_path, "csv": csv_path, "markdown": markdown_path}
+
+
+def render_weight_top_candidate_export_markdown(payload: Mapping[str, Any]) -> str:
+    requested = _mapping(payload.get("requested_date_range"))
+    lines = [
+        "# ETF Weight Top-N Candidate Export",
+        "",
+        "## Safety Banner",
+        "",
+        "- observe_only = true",
+        "- candidate_only = true",
+        "- production_effect = none",
+        "- broker_action = none",
+        "- manual_review_required = true",
+        "- 本导出只列出 candidate-only historical weights，不应用权重。",
+        "",
+        "## Run Metadata",
+        "",
+        f"- Search Run ID: {payload.get('search_run_id')}",
+        f"- Search ID: {payload.get('search_id')}",
+        f"- Market Regime: {payload.get('market_regime')}",
+        f"- Requested Date Range: {requested.get('start')} to {requested.get('end')}",
+        f"- Data Quality Status: {payload.get('data_quality_status')}",
+        f"- Exported Candidate Count: {payload.get('exported_candidate_count')}",
+        "",
+        "| Rank | Weight Set | Weights | Score | CAGR | Max DD | Sharpe | "
+        "QQQ DD Reduction | Overfit | Readiness | Blockers |",
+        "|---:|---|---|---:|---:|---:|---:|---:|---|---|---|",
+    ]
+    for candidate in _records(payload.get("candidates")):
+        lines.append(
+            f"| {candidate.get('rank')} | {candidate.get('weight_set_id')} | "
+            f"{candidate.get('weights')} | {_fmt_number(candidate.get('historical_score'))} | "
+            f"{_fmt_pct(candidate.get('cagr'))} | {_fmt_pct(candidate.get('max_drawdown'))} | "
+            f"{_fmt_number(candidate.get('sharpe'))} | "
+            f"{_fmt_pct(candidate.get('drawdown_reduction_vs_QQQ'))} | "
+            f"{candidate.get('overfit_risk')} | "
+            f"{candidate.get('forward_readiness_status')} | "
+            f"{', '.join(candidate.get('blockers') or []) or 'none'} |"
+        )
+    if not _records(payload.get("candidates")):
+        lines.append(
+            "| n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | "
+            "needs_more_historical_validation | none |"
+        )
+    return "\n".join(lines) + "\n"
 
 
 def load_candidate_weight_registry(
@@ -4818,6 +5030,178 @@ def _candidate_weight_record_from_search(
     return record
 
 
+def _weight_top_candidate_export_record(
+    search_payload: Mapping[str, Any],
+    ranked: Mapping[str, Any],
+    *,
+    overfit_payload: Mapping[str, Any],
+    generated_at: datetime,
+) -> dict[str, Any]:
+    candidate = _candidate_weight_record_from_search(
+        search_payload,
+        ranked,
+        created_at=generated_at,
+    )
+    candidate_id = str(candidate.get("source_candidate_id"))
+    weight_set_id = str(candidate.get("weight_set_id"))
+    metrics = _candidate_metrics(search_payload, candidate_id)
+    overfit = _overfit_record_for_weight_set(overfit_payload, weight_set_id)
+    if not overfit:
+        overfit = _weight_overfit_candidate_diagnostics(
+            candidate,
+            search_payload=search_payload,
+            evidence_payload={},
+        )
+    weights = _json_float_mapping(candidate.get("weights"))
+    blockers = [str(item) for item in candidate.get("blockers") or []]
+    overfit_band = str(overfit.get("overfit_risk_band") or "medium")
+    if overfit_band in {"high", "critical"}:
+        blockers = sorted(set(blockers + [f"OVERFIT_RISK_{overfit_band.upper()}"]))
+    qqq_comparison = _benchmark_comparison_for_symbol(metrics, "QQQ")
+    warnings = _weight_top_candidate_warnings(
+        ranked,
+        overfit=overfit,
+        qqq_comparison=qqq_comparison,
+    )
+    record = {
+        "rank": int(ranked.get("rank") or 0),
+        "weight_set_id": weight_set_id,
+        "source_search_run_id": candidate.get("source_search_run_id"),
+        "source_candidate_id": candidate_id,
+        "weights": weights,
+        "historical_score": _float_or_none(ranked.get("candidate_score")),
+        "cagr": _float_or_none(metrics.get("CAGR")),
+        "max_drawdown": _float_or_none(metrics.get("max_drawdown")),
+        "sharpe": _float_or_none(metrics.get("Sharpe")),
+        "sortino": _float_or_none(metrics.get("Sortino")),
+        "calmar": _float_or_none(metrics.get("Calmar")),
+        "turnover": _float_or_none(metrics.get("turnover")),
+        "semiconductor_exposure": float(weights.get("SMH", 0.0))
+        + float(weights.get("SOXX", 0.0)),
+        "cash_exposure": float(weights.get("CASH", 0.0)),
+        "benchmark_excess_return": _float_or_none(
+            qqq_comparison.get("excess_return")
+            if qqq_comparison
+            else metrics.get("excess_return_vs_baseline")
+        ),
+        "drawdown_reduction_vs_QQQ": _float_or_none(
+            qqq_comparison.get("drawdown_reduction")
+        ),
+        "overfit_risk": overfit_band,
+        "overfit_risk_score": _float_or_none(overfit.get("overfit_risk_score")),
+        "forward_readiness_status": _weight_forward_readiness_status(
+            candidate,
+            overfit,
+            blockers=blockers,
+        ),
+        "blockers": blockers,
+        "warnings": warnings,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_weight_top_candidate_export_record(record)
+    return record
+
+
+def _weight_top_candidate_warnings(
+    ranked: Mapping[str, Any],
+    *,
+    overfit: Mapping[str, Any],
+    qqq_comparison: Mapping[str, Any],
+) -> list[str]:
+    warnings = [str(item) for item in ranked.get("ranking_reason") or []]
+    reasons = [
+        str(item)
+        for item in overfit.get("reason_codes") or []
+        if str(item) != "NO_OVERFIT_RISK_FLAGS"
+    ]
+    warnings.extend(reasons)
+    if not qqq_comparison:
+        warnings.append("QQQ_BENCHMARK_COMPARISON_MISSING")
+    return sorted(set(item for item in warnings if item))
+
+
+def _weight_forward_readiness_status(
+    candidate: Mapping[str, Any],
+    overfit: Mapping[str, Any],
+    *,
+    blockers: list[str],
+) -> str:
+    status = str(candidate.get("status") or "")
+    if any(
+        "DATA_QUALITY" in blocker
+        or "NO_LOOKAHEAD" in blocker
+        or "CREDIBILITY" in blocker
+        for blocker in blockers
+    ):
+        return "blocked_by_data_quality"
+    if str(overfit.get("overfit_risk_band")) in {"high", "critical"}:
+        return "blocked_by_overfit_risk"
+    if blockers or status in {"blocked", "rejected"}:
+        return "blocked_by_risk"
+    if status == "needs_more_data":
+        return "needs_more_historical_validation"
+    if status in {"candidate", "shadow_ready"}:
+        return "shadow_ready"
+    return "needs_manual_review"
+
+
+def _benchmark_comparison_for_symbol(
+    metrics: Mapping[str, Any],
+    symbol: str,
+) -> dict[str, Any]:
+    target = symbol.upper()
+    comparisons = _mapping(metrics.get("benchmark_comparison"))
+    for benchmark_id, comparison in comparisons.items():
+        row = _mapping(comparison)
+        name = str(row.get("benchmark_name") or benchmark_id).upper()
+        if target in name:
+            return dict(row)
+    return {}
+
+
+def _weight_top_candidate_export_csv_rows(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
+    rows = []
+    for candidate in _records(payload.get("candidates")):
+        row = {
+            key: candidate.get(key)
+            for key in [
+                "rank",
+                "weight_set_id",
+                "source_search_run_id",
+                "source_candidate_id",
+                "historical_score",
+                "cagr",
+                "max_drawdown",
+                "sharpe",
+                "sortino",
+                "calmar",
+                "turnover",
+                "semiconductor_exposure",
+                "cash_exposure",
+                "benchmark_excess_return",
+                "drawdown_reduction_vs_QQQ",
+                "overfit_risk",
+                "overfit_risk_score",
+                "forward_readiness_status",
+                "observe_only",
+                "candidate_only",
+                "production_effect",
+                "broker_action",
+                "manual_review_required",
+            ]
+        }
+        row["weights"] = json.dumps(
+            candidate.get("weights") or {},
+            ensure_ascii=False,
+            sort_keys=True,
+        )
+        row["blockers"] = json.dumps(candidate.get("blockers") or [], ensure_ascii=False)
+        row["warnings"] = json.dumps(candidate.get("warnings") or [], ensure_ascii=False)
+        rows.append(row)
+    return rows
+
+
 def _candidate_weight_set(
     search_payload: Mapping[str, Any],
     candidate_id: str,
@@ -5308,10 +5692,13 @@ def _subtract_optional(left: object, right: object) -> float | None:
 
 
 def _json_float_mapping(value: object) -> dict[str, float]:
-    try:
-        parsed = json.loads(str(value))
-    except (TypeError, json.JSONDecodeError):
-        return {}
+    if isinstance(value, Mapping):
+        parsed = value
+    else:
+        try:
+            parsed = json.loads(str(value))
+        except (TypeError, json.JSONDecodeError):
+            return {}
     if not isinstance(parsed, Mapping):
         return {}
     result = {}
@@ -5338,6 +5725,14 @@ def _mapping(value: object) -> Mapping[str, Any]:
 
 def _text(value: object) -> str:
     return "" if value is None else str(value)
+
+
+def _artifact_stem(value: object) -> str:
+    text = str(value).strip().replace(":", "_").replace("/", "_").replace("\\", "_")
+    return "".join(
+        character if character.isalnum() or character in "._-" else "_"
+        for character in text
+    )
 
 
 def _records(value: object) -> list[dict[str, Any]]:

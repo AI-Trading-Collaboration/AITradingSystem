@@ -478,6 +478,12 @@ historical candidate initial weights，输出
 `reports/etf_portfolio/weight_calibration/<run_id>/summary.json/md`、`metrics.csv`、
 `ranking.json`、`robustness.json` 和
 `data/etf_portfolio/weight_calibration/<run_id>/candidate_weight_sets.json/csv`。
+TRADING-078B 新增 `aits etf weight-calibration export-top --latest --top N` 或
+`--run-id <run_id>`，从 search run 导出 Top-N JSON / CSV / Markdown 到
+`reports/etf_portfolio/weight_calibration/top_candidates/`，字段包括 rank、weight set、
+weights、historical score、CAGR、drawdown、Sharpe/Sortino/Calmar、turnover、cash /
+semiconductor exposure、QQQ benchmark comparison、overfit risk、forward readiness、
+blockers/warnings 和固定 safety fields。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

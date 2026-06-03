@@ -33,7 +33,7 @@ that are robust enough to enter forward shadow observation?
 |子任务|状态|验收标准|
 |---|---|---|
 |TRADING-078A Historical Data Range Presets|DONE|`config/etf_portfolio/weight_calibration_presets.yaml` 存在并可验证；presets 支持 rolling end-date policy、minimum coverage、benchmark set 和 safety fields。|
-|TRADING-078B Weight Search Result Top-N Export|READY|`aits etf weight-calibration export-top --latest/--run-id --top N` 输出 JSON / CSV / Markdown top-N candidates，保留 blockers、warnings、overfit risk、forward readiness 和 safety。|
+|TRADING-078B Weight Search Result Top-N Export|DONE|`aits etf weight-calibration export-top --latest/--run-id --top N` 输出 JSON / CSV / Markdown top-N candidates，保留 blockers、warnings、overfit risk、forward readiness 和 safety。|
 |TRADING-078C Candidate Weight Comparison Table|READY|生成 candidate + benchmark comparison table，包含 current baseline、QQQ、SPY、SMH、static references、top-N candidates 和 deterministic ordering。|
 |TRADING-078D Regime Robustness Heatmap Data|READY|生成 candidate/regime matrix JSON / CSV / Markdown，披露 sample count、confidence warning、weak regimes 和 safety。|
 |TRADING-078E Overfit Risk Explanation|READY|为候选输出 human-readable overfit reasons、supporting metrics、blocking metrics 和 manual review note。|
@@ -66,3 +66,4 @@ python -m ai_trading_system.cli etf weight-calibration usability-validate
 
 - 2026-06-03: 新增任务文档并进入 IN_PROGRESS，原因：owner 提供 TRADING-078 计划，要求把 TRADING-071 historical calibration 结果整理为可复核、可比较、可 shadow enrollment 的 candidate-only workflow；本阶段固定 observe-only / candidate-only / manual-review-only，不应用权重、不触发 broker。
 - 2026-06-03: TRADING-078A 完成。新增 `config/etf_portfolio/weight_calibration_presets.yaml`、preset schema/loader/resolver、`search --preset` CLI 接入和专项测试；search payload 记录 `historical_range_preset` 与 resolved requested date range，安全字段保持 mandatory。
+- 2026-06-03: TRADING-078B 完成。新增 Top-N export schema/builder/writer/Markdown renderer、`aits etf weight-calibration export-top --latest/--run-id --top N` CLI 和专项测试；导出 JSON / CSV / Markdown，保留 overfit risk、forward readiness、blockers/warnings、benchmark context 和 safety fields。

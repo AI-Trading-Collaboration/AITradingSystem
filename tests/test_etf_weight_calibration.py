@@ -24,6 +24,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     build_dual_track_weight_calibration_report,
     build_dual_track_weight_calibration_validation_report,
     build_weight_overfit_diagnostics,
+    build_weight_top_candidate_export,
     enroll_candidate_weights_forward,
     generate_weight_candidates,
     load_candidate_weight_registry,
@@ -44,11 +45,13 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     validate_dual_track_weight_calibration_validation_report,
     validate_weight_forward_enrollment_record,
     validate_weight_search_registry,
+    validate_weight_top_candidate_export,
     weight_overfit_risk_band,
     write_backtest_forward_evidence_aggregation,
     write_dual_track_weight_calibration_report,
     write_dual_track_weight_calibration_validation_report,
     write_weight_search_run,
+    write_weight_top_candidate_export,
 )
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
@@ -522,6 +525,117 @@ def test_weight_search_cli_search_accepts_historical_preset(tmp_path: Path) -> N
     assert written["historical_range_preset"]["preset_id"] == "ai_cycle_recent"
     assert written["requested_date_range"]["start"] == "2022-12-01"
     assert written["historical_range_preset"]["production_effect"] == "none"
+
+
+def test_weight_top_candidate_export_contains_required_fields() -> None:
+    run = _small_search_run()
+
+    payload = build_weight_top_candidate_export(
+        run.payload,
+        top=3,
+        generated_at=datetime(2026, 6, 3, tzinfo=UTC),
+    )
+
+    assert payload["schema_version"] == "etf_weight_top_candidate_export_v1"
+    assert payload["exported_candidate_count"] == 3
+    assert payload["production_effect"] == "none"
+    first = payload["candidates"][0]
+    assert first["rank"] == 1
+    assert first["weight_set_id"].startswith(run.run_id)
+    assert round(sum(first["weights"].values()), 10) == 1.0
+    assert "historical_score" in first
+    assert "benchmark_excess_return" in first
+    assert "drawdown_reduction_vs_QQQ" in first
+    assert first["overfit_risk"] in {"low", "medium", "high", "critical"}
+    assert first["forward_readiness_status"] in {
+        "shadow_ready",
+        "needs_manual_review",
+        "needs_more_historical_validation",
+        "blocked_by_risk",
+        "blocked_by_data_quality",
+        "blocked_by_overfit_risk",
+    }
+    assert first["production_effect"] == "none"
+    validate_weight_top_candidate_export(payload)
+
+
+def test_weight_top_candidate_export_ranking_is_stable() -> None:
+    run = _small_search_run()
+
+    first = build_weight_top_candidate_export(run.payload, top=3)
+    second = build_weight_top_candidate_export(run.payload, top=3)
+
+    assert [row["weight_set_id"] for row in first["candidates"]] == [
+        row["weight_set_id"] for row in second["candidates"]
+    ]
+
+
+def test_weight_top_candidate_export_writes_json_csv_markdown(tmp_path: Path) -> None:
+    payload = build_weight_top_candidate_export(_small_search_run().payload, top=2)
+
+    paths = write_weight_top_candidate_export(payload, output_dir=tmp_path / "top")
+
+    assert paths["json"].exists()
+    assert paths["csv"].exists()
+    assert paths["markdown"].exists()
+    assert "ETF Weight Top-N Candidate Export" in paths["markdown"].read_text(
+        encoding="utf-8"
+    )
+    csv_text = paths["csv"].read_text(encoding="utf-8")
+    assert "forward_readiness_status" in csv_text
+    assert "production_effect" in csv_text
+
+
+def test_weight_top_candidate_export_cli_latest_and_run_id(tmp_path: Path) -> None:
+    run = _small_search_run()
+    report_root = tmp_path / "reports"
+    data_root = tmp_path / "data"
+    write_weight_search_run(run, report_root=report_root, data_root=data_root)
+
+    latest_result = CliRunner().invoke(
+        etf_app,
+        [
+            "weight-calibration",
+            "export-top",
+            "--latest",
+            "--top",
+            "2",
+            "--output-dir",
+            str(report_root),
+            "--export-dir",
+            str(tmp_path / "exports_latest"),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert latest_result.exit_code == 0, latest_result.output
+    assert "exported_candidate_count=2" in latest_result.output
+    assert "production_effect=none" in latest_result.output
+    assert list((tmp_path / "exports_latest").glob("*.json"))
+    assert list((tmp_path / "exports_latest").glob("*.csv"))
+    assert list((tmp_path / "exports_latest").glob("*.md"))
+
+    run_id_result = CliRunner().invoke(
+        etf_app,
+        [
+            "weight-calibration",
+            "export-top",
+            "--run-id",
+            run.run_id,
+            "--top",
+            "1",
+            "--output-dir",
+            str(report_root),
+            "--export-dir",
+            str(tmp_path / "exports_run_id"),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert run_id_result.exit_code == 0, run_id_result.output
+    assert "exported_candidate_count=1" in run_id_result.output
 
 
 def test_candidate_weight_registry_writes_candidate_records(tmp_path: Path) -> None:
