@@ -24,6 +24,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     build_dual_track_weight_calibration_report,
     build_dual_track_weight_calibration_validation_report,
     build_weight_candidate_comparison_table,
+    build_weight_initial_recommendation_report,
     build_weight_overfit_diagnostics,
     build_weight_overfit_explanations,
     build_weight_regime_robustness_heatmap,
@@ -49,6 +50,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     validate_dual_track_weight_calibration_validation_report,
     validate_weight_candidate_comparison_table,
     validate_weight_forward_enrollment_record,
+    validate_weight_initial_recommendation_report,
     validate_weight_overfit_explanations,
     validate_weight_regime_robustness_heatmap,
     validate_weight_search_registry,
@@ -58,6 +60,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     write_dual_track_weight_calibration_report,
     write_dual_track_weight_calibration_validation_report,
     write_weight_candidate_comparison_table,
+    write_weight_initial_recommendation_report,
     write_weight_overfit_explanations,
     write_weight_regime_robustness_heatmap,
     write_weight_search_run,
@@ -1387,6 +1390,109 @@ def test_weight_calibration_enroll_cli_preserves_source_links(
     assert links["top_candidate_export"] == str(top_paths["json"])
     assert links["comparison_table"] == str(comparison_paths["json"])
     assert enrollment["enrollments"][0]["broker_action"] == "none"
+
+
+def test_weight_initial_recommendation_report_includes_required_sections() -> None:
+    run = _small_search_run()
+    top_export = build_weight_top_candidate_export(run.payload, top=2)
+    comparison = build_weight_candidate_comparison_table(
+        run.payload,
+        top_export_payload=top_export,
+        top=2,
+    )
+    regime = build_weight_regime_robustness_heatmap(
+        run.payload,
+        top_export_payload=top_export,
+        top=2,
+    )
+    overfit = build_weight_overfit_explanations(
+        run.payload,
+        top_export_payload=top_export,
+        top=2,
+    )
+
+    payload = build_weight_initial_recommendation_report(
+        run.payload,
+        top_export_payload=top_export,
+        comparison_payload=comparison,
+        regime_robustness_payload=regime,
+        overfit_explanation_payload=overfit,
+        top=2,
+        generated_at=datetime(2026, 6, 3, tzinfo=UTC),
+    )
+
+    assert payload["schema_version"] == "etf_weight_initial_recommendation_report_v1"
+    assert payload["safety_banner"]["production_effect"] == "none"
+    assert payload["top_n_candidates"]
+    assert payload["benchmark_comparison"]["rows"]
+    assert payload["regime_robustness"]["candidate_summary"]
+    assert payload["overfit_explanations"]["records"]
+    assert payload["shadow_enrollment_recommendations"]["production_effect"] == "none"
+    validate_weight_initial_recommendation_report(payload)
+
+
+def test_weight_initial_recommendation_report_recommends_shadow_enrollment() -> None:
+    payload = build_weight_initial_recommendation_report(_small_search_run().payload, top=1)
+
+    shadow = payload["shadow_enrollment_recommendations"]
+
+    assert shadow["suggested_action"] in {
+        "enroll_top_shadow_ready",
+        "needs_manual_review_before_shadow_enrollment",
+    }
+    assert shadow["broker_action"] == "none"
+    assert payload["applied_weight_set"] is None
+
+
+def test_weight_initial_recommendation_report_writes_json_markdown(
+    tmp_path: Path,
+) -> None:
+    payload = build_weight_initial_recommendation_report(_small_search_run().payload, top=1)
+
+    paths = write_weight_initial_recommendation_report(
+        payload,
+        output_dir=tmp_path / "recommendations",
+    )
+
+    assert paths["json"].exists()
+    assert paths["markdown"].exists()
+    markdown = paths["markdown"].read_text(encoding="utf-8")
+    assert "ETF Initial Weight Recommendation Report" in markdown
+    assert "manual_review_required = true" in markdown
+    assert "Shadow Enrollment Recommendation" in markdown
+
+
+def test_weight_initial_recommendation_report_cli_writes_outputs(
+    tmp_path: Path,
+) -> None:
+    run = _small_search_run()
+    report_root = tmp_path / "reports"
+    data_root = tmp_path / "data"
+    write_weight_search_run(run, report_root=report_root, data_root=data_root)
+
+    result = CliRunner().invoke(
+        etf_app,
+        [
+            "weight-calibration",
+            "recommendation",
+            "--latest",
+            "--top",
+            "1",
+            "--output-dir",
+            str(report_root),
+            "--report-dir",
+            str(tmp_path / "recommendations"),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "ETF initial weight recommendation report" in result.output
+    assert "suggested_action=" in result.output
+    assert "production_effect=none" in result.output
+    assert list((tmp_path / "recommendations").glob("*.json"))
+    assert list((tmp_path / "recommendations").glob("*.md"))
 
 
 def test_backtest_forward_evidence_links_records(tmp_path: Path) -> None:

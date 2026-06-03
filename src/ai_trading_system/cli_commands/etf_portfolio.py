@@ -324,6 +324,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     DEFAULT_WEIGHT_DUAL_TRACK_REPORT_DIR,
     DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
     DEFAULT_WEIGHT_FORWARD_EVIDENCE_DIR,
+    DEFAULT_WEIGHT_INITIAL_RECOMMENDATION_DIR,
     DEFAULT_WEIGHT_OVERFIT_DIAGNOSTICS_DIR,
     DEFAULT_WEIGHT_OVERFIT_EXPLANATION_DIR,
     DEFAULT_WEIGHT_PROPOSAL_DIR,
@@ -334,6 +335,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     build_dual_track_weight_calibration_report,
     build_dual_track_weight_calibration_validation_report,
     build_weight_candidate_comparison_table,
+    build_weight_initial_recommendation_report,
     build_weight_overfit_diagnostics,
     build_weight_overfit_explanations,
     build_weight_regime_robustness_heatmap,
@@ -355,6 +357,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     write_dual_track_weight_calibration_report,
     write_dual_track_weight_calibration_validation_report,
     write_weight_candidate_comparison_table,
+    write_weight_initial_recommendation_report,
     write_weight_overfit_diagnostics,
     write_weight_overfit_explanations,
     write_weight_regime_robustness_heatmap,
@@ -4710,6 +4713,95 @@ def weight_calibration_overfit_explain_command(
     typer.echo(f"ETF weight overfit explanation：{paths['markdown']}")
     typer.echo(f"json={paths['json']}")
     typer.echo(f"candidate_count={payload['candidate_count']}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+
+
+@weight_calibration_app.command("recommendation")
+def weight_calibration_recommendation_command(
+    run_id: Annotated[
+        str | None,
+        typer.Option("--run-id", help="historical weight search run id。"),
+    ] = None,
+    latest: Annotated[
+        bool,
+        typer.Option("--latest", help="读取最新 historical weight search run。"),
+    ] = False,
+    top: Annotated[
+        int,
+        typer.Option("--top", help="报告包含 ranking 前 N 个 candidates。"),
+    ] = 10,
+    search_output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="weight calibration search report 输出目录。"),
+    ] = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR,
+    top_export_path: Annotated[
+        Path | None,
+        typer.Option(help="optional TRADING-078B Top-N JSON path。"),
+    ] = None,
+    comparison_path: Annotated[
+        Path | None,
+        typer.Option(help="optional TRADING-078C comparison JSON path。"),
+    ] = None,
+    regime_robustness_path: Annotated[
+        Path | None,
+        typer.Option(help="optional TRADING-078D regime robustness JSON path。"),
+    ] = None,
+    overfit_explanation_path: Annotated[
+        Path | None,
+        typer.Option(help="optional TRADING-078E overfit explanation JSON path。"),
+    ] = None,
+    enrollment_path: Annotated[
+        Path | None,
+        typer.Option(help="optional TRADING-078F forward enrollment registry path。"),
+    ] = None,
+    report_dir: Annotated[
+        Path,
+        typer.Option("--report-dir", help="initial recommendation report 输出目录。"),
+    ] = DEFAULT_WEIGHT_INITIAL_RECOMMENDATION_DIR,
+) -> None:
+    """生成 TRADING-078G initial ETF weight candidate recommendation report。"""
+    if run_id is not None and latest:
+        raise typer.BadParameter("--run-id and --latest cannot be combined")
+    if run_id is None and not latest:
+        raise typer.BadParameter("--run-id or --latest is required")
+    run_dir = (
+        find_latest_weight_search_run_dir(search_output_dir)
+        if latest
+        else search_output_dir / str(run_id)
+    )
+    search_payload = read_weight_search_run_payload(run_dir)
+    source_paths = {"historical_search": str(run_dir / "summary.json")}
+    optional_sources = {
+        "top_candidate_export": top_export_path,
+        "comparison_table": comparison_path,
+        "regime_robustness": regime_robustness_path,
+        "overfit_explanation": overfit_explanation_path,
+        "forward_enrollment": enrollment_path,
+    }
+    for key, path in optional_sources.items():
+        if path is not None:
+            source_paths[key] = str(path)
+    payload = build_weight_initial_recommendation_report(
+        search_payload,
+        top_export_payload=_load_optional_json_payload(top_export_path),
+        comparison_payload=_load_optional_json_payload(comparison_path),
+        regime_robustness_payload=_load_optional_json_payload(regime_robustness_path),
+        overfit_explanation_payload=_load_optional_json_payload(overfit_explanation_path),
+        enrollment_payload=_load_optional_json_payload(enrollment_path),
+        top=top,
+        source_paths=source_paths,
+    )
+    paths = write_weight_initial_recommendation_report(payload, output_dir=report_dir)
+    shadow = payload["shadow_enrollment_recommendations"]
+    typer.echo(f"ETF initial weight recommendation report：{paths['markdown']}")
+    typer.echo(f"json={paths['json']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"suggested_action={shadow['suggested_action']}")
+    typer.echo(f"recommended_weight_set_ids={shadow['recommended_weight_set_ids']}")
     typer.echo("observe_only=true")
     typer.echo("candidate_only=true")
     typer.echo("production_effect=none")

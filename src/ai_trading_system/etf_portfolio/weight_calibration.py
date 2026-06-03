@@ -66,6 +66,9 @@ DEFAULT_WEIGHT_REGIME_ROBUSTNESS_DIR = (
 DEFAULT_WEIGHT_OVERFIT_EXPLANATION_DIR = (
     DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "overfit_explanations"
 )
+DEFAULT_WEIGHT_INITIAL_RECOMMENDATION_DIR = (
+    DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "recommendations"
+)
 DEFAULT_WEIGHT_PROPOSAL_DIR = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "proposals"
 DEFAULT_WEIGHT_DUAL_TRACK_REPORT_DIR = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "reports"
 DEFAULT_WEIGHT_CALIBRATION_VALIDATION_DIR = (
@@ -85,6 +88,9 @@ WEIGHT_TOP_CANDIDATE_EXPORT_SCHEMA_VERSION = "etf_weight_top_candidate_export_v1
 WEIGHT_CANDIDATE_COMPARISON_SCHEMA_VERSION = "etf_weight_candidate_comparison_v1"
 WEIGHT_REGIME_ROBUSTNESS_SCHEMA_VERSION = "etf_weight_regime_robustness_v1"
 WEIGHT_OVERFIT_EXPLANATION_SCHEMA_VERSION = "etf_weight_overfit_explanation_v1"
+WEIGHT_INITIAL_RECOMMENDATION_SCHEMA_VERSION = (
+    "etf_weight_initial_recommendation_report_v1"
+)
 WEIGHT_PROPOSAL_SCHEMA_VERSION = "etf_weight_candidate_proposals_v1"
 WEIGHT_DUAL_TRACK_REPORT_SCHEMA_VERSION = "etf_weight_dual_track_calibration_report_v1"
 WEIGHT_CALIBRATION_VALIDATION_SCHEMA_VERSION = "etf_weight_dual_track_validation_v1"
@@ -2640,6 +2646,288 @@ def render_weight_overfit_explanations_markdown(payload: Mapping[str, Any]) -> s
                 + str(reason_map.get("explanation"))
             )
         lines.append("")
+    return "\n".join(lines) + "\n"
+
+
+def build_weight_initial_recommendation_report(
+    search_payload: Mapping[str, Any],
+    *,
+    top_export_payload: Mapping[str, Any] | None = None,
+    comparison_payload: Mapping[str, Any] | None = None,
+    regime_robustness_payload: Mapping[str, Any] | None = None,
+    overfit_explanation_payload: Mapping[str, Any] | None = None,
+    enrollment_payload: Mapping[str, Any] | None = None,
+    top: int = 10,
+    source_paths: Mapping[str, str] | None = None,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    validate_weight_search_run_payload(search_payload)
+    if top <= 0:
+        raise WeightCalibrationError("top must be positive")
+    generated = generated_at or datetime.now(UTC)
+    top_payload = dict(top_export_payload or {})
+    if top_payload:
+        validate_weight_top_candidate_export(top_payload)
+    else:
+        top_payload = build_weight_top_candidate_export(
+            search_payload,
+            top=top,
+            generated_at=generated,
+        )
+    comparison = dict(comparison_payload or {})
+    if comparison:
+        validate_weight_candidate_comparison_table(comparison)
+    else:
+        comparison = build_weight_candidate_comparison_table(
+            search_payload,
+            top_export_payload=top_payload,
+            top=top,
+            generated_at=generated,
+        )
+    regime = dict(regime_robustness_payload or {})
+    if regime:
+        validate_weight_regime_robustness_heatmap(regime)
+    else:
+        regime = build_weight_regime_robustness_heatmap(
+            search_payload,
+            top_export_payload=top_payload,
+            top=top,
+            generated_at=generated,
+        )
+    overfit = dict(overfit_explanation_payload or {})
+    if overfit:
+        validate_weight_overfit_explanations(overfit)
+    else:
+        overfit = build_weight_overfit_explanations(
+            search_payload,
+            top_export_payload=top_payload,
+            top=top,
+            generated_at=generated,
+        )
+    if enrollment_payload:
+        validate_weight_forward_enrollment_registry(enrollment_payload)
+    candidates = _records(top_payload.get("candidates"))[:top]
+    payload = {
+        "schema_version": WEIGHT_INITIAL_RECOMMENDATION_SCHEMA_VERSION,
+        "report_type": "etf_weight_initial_recommendation_report",
+        "status": "available" if candidates else "needs_more_data",
+        "generated_at": generated.isoformat(),
+        "recommendation_mode": "candidate_only_shadow_review",
+        "safety_banner": dict(WEIGHT_CALIBRATION_SAFETY),
+        "run_metadata": _weight_recommendation_run_metadata(search_payload),
+        "data_range_and_preset": {
+            "market_regime": search_payload.get("market_regime"),
+            "historical_range_preset": dict(
+                _mapping(search_payload.get("historical_range_preset"))
+            ),
+            "requested_date_range": dict(_mapping(search_payload.get("requested_date_range"))),
+            "data_quality_status": search_payload.get("data_quality_status"),
+        },
+        "search_constraints": _weight_recommendation_search_constraints(search_payload),
+        "top_n_candidates": candidates,
+        "benchmark_comparison": _weight_recommendation_benchmark_comparison(comparison),
+        "regime_robustness": _weight_recommendation_regime_robustness(regime),
+        "overfit_explanations": _weight_recommendation_overfit_explanations(overfit),
+        "forward_readiness": _weight_recommendation_forward_readiness(candidates),
+        "shadow_enrollment_recommendations": _weight_shadow_enrollment_recommendations(
+            candidates,
+            enrollment_payload=enrollment_payload or {},
+        ),
+        "manual_review_notes": _weight_initial_recommendation_manual_notes(candidates),
+        "source_artifacts": dict(source_paths or {}),
+        "next_steps": _weight_initial_recommendation_next_steps(candidates),
+        "production_weights_mutated": False,
+        "applied_weight_set": None,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_weight_initial_recommendation_report(payload)
+    return payload
+
+
+def validate_weight_initial_recommendation_report(payload: Mapping[str, Any]) -> None:
+    issues = []
+    if payload.get("schema_version") != WEIGHT_INITIAL_RECOMMENDATION_SCHEMA_VERSION:
+        issues.append("schema_version")
+    if payload.get("report_type") != "etf_weight_initial_recommendation_report":
+        issues.append("report_type")
+    required_sections = {
+        "safety_banner",
+        "run_metadata",
+        "data_range_and_preset",
+        "search_constraints",
+        "top_n_candidates",
+        "benchmark_comparison",
+        "regime_robustness",
+        "overfit_explanations",
+        "forward_readiness",
+        "shadow_enrollment_recommendations",
+        "manual_review_notes",
+        "source_artifacts",
+        "next_steps",
+    }
+    issues.extend(sorted(required_sections - set(payload)))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if payload.get(field) != expected:
+            issues.append(field)
+    safety = _mapping(payload.get("safety"))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if safety.get(field) != expected:
+            issues.append(f"safety.{field}")
+    banner = _mapping(payload.get("safety_banner"))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if banner.get(field) != expected:
+            issues.append(f"safety_banner.{field}")
+    if payload.get("production_weights_mutated") is not False:
+        issues.append("production_weights_mutated")
+    if payload.get("applied_weight_set") is not None:
+        issues.append("applied_weight_set")
+    shadow = _mapping(payload.get("shadow_enrollment_recommendations"))
+    if shadow.get("production_effect") != "none" or shadow.get("broker_action") != "none":
+        issues.append("shadow_enrollment_recommendations.safety")
+    if issues:
+        raise WeightCalibrationError(
+            "ETF weight initial recommendation report validation failed: "
+            + ", ".join(str(issue) for issue in issues)
+        )
+
+
+def write_weight_initial_recommendation_report(
+    payload: Mapping[str, Any],
+    *,
+    output_dir: Path = DEFAULT_WEIGHT_INITIAL_RECOMMENDATION_DIR,
+) -> dict[str, Path]:
+    validate_weight_initial_recommendation_report(payload)
+    run_id = _artifact_stem(str(_mapping(payload.get("run_metadata")).get("search_run_id")))
+    stem = f"initial_weight_recommendation_{run_id}"
+    json_path = output_dir / f"{stem}.json"
+    markdown_path = output_dir / f"{stem}.md"
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.write_text(
+        render_weight_initial_recommendation_markdown(payload),
+        encoding="utf-8",
+    )
+    return {"json": json_path, "markdown": markdown_path}
+
+
+def render_weight_initial_recommendation_markdown(payload: Mapping[str, Any]) -> str:
+    metadata = _mapping(payload.get("run_metadata"))
+    data_range = _mapping(payload.get("data_range_and_preset"))
+    shadow = _mapping(payload.get("shadow_enrollment_recommendations"))
+    lines = [
+        "# ETF Initial Weight Recommendation Report",
+        "",
+        "## Safety Banner",
+        "",
+        "- observe_only = true",
+        "- candidate_only = true",
+        "- production_effect = none",
+        "- broker_action = none",
+        "- manual_review_required = true",
+        "- 本报告只给出 candidate-only shadow observation 建议，不应用 ETF weights。",
+        "",
+        "## Run Metadata",
+        "",
+        f"- Search Run ID: {metadata.get('search_run_id')}",
+        f"- Search Config Hash: `{metadata.get('search_config_hash')}`",
+        f"- Generated At: {payload.get('generated_at')}",
+        "",
+        "## Data Range And Preset",
+        "",
+        f"- Market Regime: {data_range.get('market_regime')}",
+        f"- Preset: {_mapping(data_range.get('historical_range_preset')).get('preset_id')}",
+        f"- Requested Date Range: {data_range.get('requested_date_range')}",
+        f"- Data Quality Status: {data_range.get('data_quality_status')}",
+        "",
+        "## Top-N Candidates",
+        "",
+        "| Rank | Weight Set | Weights | Score | Overfit | Readiness |",
+        "|---:|---|---|---:|---|---|",
+    ]
+    for candidate in _records(payload.get("top_n_candidates")):
+        lines.append(
+            f"| {candidate.get('rank')} | {candidate.get('weight_set_id')} | "
+            f"{json.dumps(candidate.get('weights') or {}, sort_keys=True)} | "
+            f"{_fmt_number(candidate.get('historical_score'))} | "
+            f"{candidate.get('overfit_risk')} | "
+            f"{candidate.get('forward_readiness_status')} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Benchmark Comparison",
+            "",
+            "| Candidate | Type | Total Return | CAGR | Max DD | Excess vs QQQ | Readiness |",
+            "|---|---|---:|---:|---:|---:|---|",
+        ]
+    )
+    for row in _records(_mapping(payload.get("benchmark_comparison")).get("rows"))[:12]:
+        lines.append(
+            f"| {row.get('candidate_id')} | {row.get('row_type')} | "
+            f"{_fmt_pct(row.get('total_return'))} | {_fmt_pct(row.get('CAGR'))} | "
+            f"{_fmt_pct(row.get('max_drawdown'))} | "
+            f"{_fmt_pct(row.get('excess_return_vs_QQQ'))} | "
+            f"{row.get('forward_readiness_status')} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Regime Robustness",
+            "",
+            "| Weight Set | Available | Missing | Warnings | Worst Drawdown |",
+            "|---|---:|---:|---:|---:|",
+        ]
+    )
+    for row in _records(_mapping(payload.get("regime_robustness")).get("candidate_summary")):
+        lines.append(
+            f"| {row.get('weight_set_id')} | {row.get('available_regime_count')} | "
+            f"{row.get('missing_regime_count')} | {row.get('warning_count')} | "
+            f"{_fmt_pct(row.get('worst_max_drawdown'))} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Overfit Risk Explanations",
+            "",
+            "| Weight Set | Risk Band | Top Reasons | Manual Review Note |",
+            "|---|---|---|---|",
+        ]
+    )
+    for record in _records(_mapping(payload.get("overfit_explanations")).get("records")):
+        reasons = [
+            str(_mapping(reason).get("reason_id"))
+            for reason in _records(record.get("top_overfit_reasons"))
+        ]
+        lines.append(
+            f"| {record.get('weight_set_id')} | {record.get('overfit_risk_band')} | "
+            f"{', '.join(reasons)} | {record.get('manual_review_note')} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Shadow Enrollment Recommendation",
+            "",
+            f"- Suggested Action: {shadow.get('suggested_action')}",
+            f"- Recommended Weight Sets: {shadow.get('recommended_weight_set_ids')}",
+            f"- Blocked Candidate Count: {shadow.get('blocked_candidate_count')}",
+            f"- Already Enrolled Count: {shadow.get('already_enrolled_count')}",
+            "",
+            "## Manual Review Notes",
+            "",
+        ]
+    )
+    for note in payload.get("manual_review_notes") or []:
+        lines.append(f"- {note}")
+    lines.extend(["", "## Source Artifacts", ""])
+    for key, value in _mapping(payload.get("source_artifacts")).items():
+        lines.append(f"- {key}: {value}")
+    lines.extend(["", "## Next Steps", ""])
+    for step in payload.get("next_steps") or []:
+        lines.append(f"- {step}")
     return "\n".join(lines) + "\n"
 
 
@@ -6124,6 +6412,203 @@ def _overfit_manual_review_note(
         "未发现明显 overfit 阻断项；该结论只支持 candidate-only forward shadow review，"
         "不支持 production weight replacement。"
     )
+
+
+def _weight_recommendation_run_metadata(search_payload: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "search_run_id": search_payload.get("search_run_id"),
+        "search_id": search_payload.get("search_id"),
+        "search_config_hash": search_payload.get("search_config_hash"),
+        "generated_at": search_payload.get("generated_at"),
+        "candidate_count": len(_records(search_payload.get("candidate_weight_sets"))),
+        "ranking_count": len(_records(search_payload.get("ranking"))),
+        "market_regime": search_payload.get("market_regime"),
+    }
+
+
+def _weight_recommendation_search_constraints(
+    search_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    generation = _mapping(search_payload.get("candidate_generation"))
+    benchmark = _mapping(search_payload.get("benchmark_set"))
+    return {
+        "search_config_hash": search_payload.get("search_config_hash"),
+        "universe": generation.get("universe"),
+        "grid_step": generation.get("grid_step"),
+        "total_valid_candidate_count": generation.get("total_valid_candidate_count"),
+        "evaluated_candidate_count": generation.get("evaluated_candidate_count"),
+        "benchmark_set_id": benchmark.get("benchmark_set_id"),
+        "benchmark_ids": benchmark.get("benchmark_ids"),
+        "bounded_search": True,
+        "production_effect": "none",
+        "broker_action": "none",
+    }
+
+
+def _weight_recommendation_benchmark_comparison(
+    comparison_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    rows = _records(comparison_payload.get("comparison_rows"))
+    return {
+        "schema_version": comparison_payload.get("schema_version"),
+        "row_count": len(rows),
+        "rows": rows,
+    }
+
+
+def _weight_recommendation_regime_robustness(
+    regime_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    matrix = _records(regime_payload.get("matrix"))
+    by_weight_set: dict[str, list[dict[str, Any]]] = {}
+    for row in matrix:
+        by_weight_set.setdefault(str(row.get("weight_set_id")), []).append(row)
+    summary = []
+    for weight_set_id, rows in sorted(by_weight_set.items()):
+        available = [row for row in rows if row.get("status") == "AVAILABLE"]
+        drawdowns = [
+            _float_or_none(row.get("max_drawdown"))
+            for row in available
+            if _float_or_none(row.get("max_drawdown")) is not None
+        ]
+        summary.append(
+            {
+                "weight_set_id": weight_set_id,
+                "available_regime_count": len(available),
+                "missing_regime_count": sum(1 for row in rows if row.get("status") != "AVAILABLE"),
+                "warning_count": sum(1 for row in rows if row.get("confidence_warning")),
+                "worst_max_drawdown": min(drawdowns) if drawdowns else None,
+            }
+        )
+    return {
+        "schema_version": regime_payload.get("schema_version"),
+        "matrix_row_count": len(matrix),
+        "candidate_summary": summary,
+    }
+
+
+def _weight_recommendation_overfit_explanations(
+    overfit_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    records = _records(overfit_payload.get("explanations"))
+    counts: dict[str, int] = {}
+    for record in records:
+        band = str(record.get("overfit_risk_band") or "missing")
+        counts[band] = counts.get(band, 0) + 1
+    return {
+        "schema_version": overfit_payload.get("schema_version"),
+        "record_count": len(records),
+        "risk_counts": counts,
+        "records": records,
+    }
+
+
+def _weight_recommendation_forward_readiness(
+    candidates: list[Mapping[str, Any]],
+) -> dict[str, Any]:
+    counts: dict[str, int] = {}
+    for candidate in candidates:
+        status = str(candidate.get("forward_readiness_status") or "missing")
+        counts[status] = counts.get(status, 0) + 1
+    return {
+        "candidate_count": len(candidates),
+        "status_counts": counts,
+        "shadow_ready_weight_set_ids": [
+            str(candidate.get("weight_set_id"))
+            for candidate in candidates
+            if candidate.get("forward_readiness_status") == "shadow_ready"
+            and not candidate.get("blockers")
+        ],
+    }
+
+
+def _weight_shadow_enrollment_recommendations(
+    candidates: list[Mapping[str, Any]],
+    *,
+    enrollment_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    ready = [
+        candidate
+        for candidate in candidates
+        if candidate.get("forward_readiness_status") == "shadow_ready"
+        and not candidate.get("blockers")
+    ]
+    enrolled_ids = {
+        str(record.get("weight_set_id"))
+        for record in _records(enrollment_payload.get("enrollments"))
+    }
+    recommended_ids = [str(candidate.get("weight_set_id")) for candidate in ready[:3]]
+    return {
+        "suggested_action": (
+            "enroll_top_shadow_ready"
+            if recommended_ids
+            else "needs_manual_review_before_shadow_enrollment"
+        ),
+        "recommended_weight_set_ids": recommended_ids,
+        "already_enrolled_weight_set_ids": [
+            weight_set_id for weight_set_id in recommended_ids if weight_set_id in enrolled_ids
+        ],
+        "already_enrolled_count": sum(1 for item in recommended_ids if item in enrolled_ids),
+        "blocked_candidate_count": sum(
+            1
+            for candidate in candidates
+            if candidate.get("forward_readiness_status") != "shadow_ready"
+            or candidate.get("blockers")
+        ),
+        "command": (
+            "aits etf weight-calibration enroll-top --latest --top "
+            f"{min(3, len(recommended_ids))}"
+            if recommended_ids
+            else None
+        ),
+        "production_effect": "none",
+        "broker_action": "none",
+        "manual_review_required": True,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+    }
+
+
+def _weight_initial_recommendation_manual_notes(
+    candidates: list[Mapping[str, Any]],
+) -> list[str]:
+    if not candidates:
+        return ["缺少 Top-N candidates；需要先运行 historical search / export-top。"]
+    notes = [
+        "本报告不推荐 production replacement；所有候选只可进入 forward shadow observation。",
+        "人工复核时必须同时查看 benchmark comparison、regime robustness 和 overfit explanation。",
+    ]
+    blocked = [
+        str(candidate.get("weight_set_id"))
+        for candidate in candidates
+        if candidate.get("forward_readiness_status") != "shadow_ready"
+        or candidate.get("blockers")
+    ]
+    if blocked:
+        notes.append(
+            "以下候选不可 enroll，需先处理 blockers 或 overfit risk: "
+            + ", ".join(blocked)
+        )
+    return notes
+
+
+def _weight_initial_recommendation_next_steps(
+    candidates: list[Mapping[str, Any]],
+) -> list[str]:
+    ready_count = sum(
+        1
+        for candidate in candidates
+        if candidate.get("forward_readiness_status") == "shadow_ready"
+        and not candidate.get("blockers")
+    )
+    steps = [
+        "人工复核 Top-N 权重、benchmark comparison、regime robustness 和 overfit explanation。",
+    ]
+    if ready_count:
+        steps.append("对 shadow_ready 候选运行 enroll-top / enroll，开始 forward observation。")
+    else:
+        steps.append("暂无 shadow_ready 候选；需要扩大历史验证或处理 blockers。")
+    steps.append("等待 forward evidence 后再进入 baseline review；不得自动 promotion。")
+    return steps
 
 
 def _weight_forward_readiness_status(
