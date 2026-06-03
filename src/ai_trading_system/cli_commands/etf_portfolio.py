@@ -329,12 +329,16 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     DEFAULT_WEIGHT_OVERFIT_EXPLANATION_DIR,
     DEFAULT_WEIGHT_PROPOSAL_DIR,
     DEFAULT_WEIGHT_REGIME_ROBUSTNESS_DIR,
+    DEFAULT_WEIGHT_SEARCH_DIAGNOSTICS_DIR,
     DEFAULT_WEIGHT_TOP_CANDIDATE_EXPORT_DIR,
+    WEIGHT_ROBUST_SEARCH_PACK_IDS,
+    WEIGHT_SEARCH_DIAGNOSTICS_DEFAULT_PRESETS,
     build_backtest_forward_evidence_aggregation,
     build_candidate_weight_proposals,
     build_dual_track_weight_calibration_report,
     build_dual_track_weight_calibration_validation_report,
     build_historical_weight_calibration_usability_validation_report,
+    build_historical_weight_search_diagnostics_report,
     build_weight_candidate_comparison_table,
     build_weight_initial_recommendation_report,
     build_weight_overfit_diagnostics,
@@ -346,6 +350,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     find_latest_weight_search_run_dir,
     load_candidate_weight_registry,
     load_weight_calibration_preset,
+    load_weight_calibration_preset_registry,
     load_weight_forward_enrollments,
     load_weight_search_definition,
     load_weight_search_registry,
@@ -358,6 +363,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     write_dual_track_weight_calibration_report,
     write_dual_track_weight_calibration_validation_report,
     write_historical_weight_calibration_usability_validation_report,
+    write_historical_weight_search_diagnostics_report,
     write_weight_candidate_comparison_table,
     write_weight_initial_recommendation_report,
     write_weight_overfit_diagnostics,
@@ -4804,6 +4810,104 @@ def weight_calibration_recommendation_command(
     typer.echo(f"status={payload['status']}")
     typer.echo(f"suggested_action={shadow['suggested_action']}")
     typer.echo(f"recommended_weight_set_ids={shadow['recommended_weight_set_ids']}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+
+
+@weight_calibration_app.command("diagnostics")
+def weight_calibration_diagnostics_command(
+    search: Annotated[
+        list[str] | None,
+        typer.Option("--search", help="weight search id，可重复。"),
+    ] = None,
+    include_robust_packs: Annotated[
+        bool,
+        typer.Option(
+            "--include-robust-packs",
+            help="同时运行 TRADING-079 bounded robust search packs。",
+        ),
+    ] = False,
+    preset: Annotated[
+        list[str] | None,
+        typer.Option("--preset", help="historical range preset id，可重复。"),
+    ] = None,
+    top: Annotated[
+        int,
+        typer.Option("--top", help="每个 preset/search 保留 ranking 前 N 个 candidates。"),
+    ] = 10,
+    max_candidates: Annotated[
+        int | None,
+        typer.Option("--max-candidates", help="lower-than-config candidate evaluation cap。"),
+    ] = None,
+    search_config_path: Annotated[
+        Path,
+        typer.Option(help="weight search config YAML path。"),
+    ] = DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
+    preset_config_path: Annotated[
+        Path,
+        typer.Option(help="historical range preset config YAML path。"),
+    ] = DEFAULT_WEIGHT_CALIBRATION_PRESET_CONFIG_PATH,
+    prices_path: Annotated[
+        Path,
+        typer.Option(help="ETF 标准价格缓存路径。"),
+    ] = DEFAULT_ETF_PRICE_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="historical weight search diagnostics 输出目录。"),
+    ] = DEFAULT_WEIGHT_SEARCH_DIAGNOSTICS_DIR,
+) -> None:
+    """生成 TRADING-079 historical weight search diagnostics and rescue report。"""
+    config = load_etf_config_bundle()
+    registry = load_weight_search_registry(search_config_path, etf_config=config)
+    preset_registry = load_weight_calibration_preset_registry(
+        preset_config_path,
+        etf_config=config,
+        weight_search_registry=registry,
+    )
+    prices, quality_report = load_standard_prices(prices_path, config.assets, config.strategy)
+    if not quality_report.passed:
+        typer.echo(
+            f"ETF 数据质量状态：{quality_report.status}，已停止 weight diagnostics。"
+        )
+        raise typer.Exit(code=1)
+    selected_searches = list(search or ["etf_initial_weight_search_v1"])
+    if include_robust_packs:
+        selected_searches.extend(WEIGHT_ROBUST_SEARCH_PACK_IDS)
+    selected_searches = list(dict.fromkeys(selected_searches))
+    selected_presets = list(preset or WEIGHT_SEARCH_DIAGNOSTICS_DEFAULT_PRESETS)
+    payload = build_historical_weight_search_diagnostics_report(
+        prices,
+        etf_config=config,
+        quality_report=quality_report,
+        registry=registry,
+        preset_registry=preset_registry,
+        search_ids=selected_searches,
+        preset_ids=selected_presets,
+        top=top,
+        max_candidates=max_candidates,
+        source_paths={
+            "weight_search_config": str(search_config_path),
+            "weight_calibration_presets": str(preset_config_path),
+            "prices": str(prices_path),
+        },
+    )
+    paths = write_historical_weight_search_diagnostics_report(
+        payload,
+        output_dir=output_dir,
+    )
+    criteria = payload["shadow_minimum_criteria"]
+    typer.echo(f"ETF historical weight search diagnostics：{paths['markdown']}")
+    typer.echo(f"json={paths['json']}")
+    typer.echo(f"stable_shapes_csv={paths['stable_shapes_csv']}")
+    typer.echo(f"near_shadow_csv={paths['near_shadow_csv']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"preset_result_count={payload['preset_result_count']}")
+    typer.echo(f"candidate_observation_count={payload['candidate_observation_count']}")
+    typer.echo(f"shadow_ready_count={criteria['shadow_ready_count']}")
+    typer.echo(f"minimum_criteria_status={criteria['status']}")
     typer.echo("observe_only=true")
     typer.echo("candidate_only=true")
     typer.echo("production_effect=none")

@@ -524,6 +524,18 @@ comparison table、regime heatmap、overfit explanations、shadow enrollment wor
 recommendation report、Reader Brief registry visibility 和安全边界；unsafe
 `production_effect`、`broker_action`、缺失 `manual_review_required`、unbounded search 或
 enrollment production mutation 均 fail closed。
+TRADING-079 新增 `aits etf weight-calibration diagnostics --include-robust-packs`，在
+Top-N 全部被 `blocked_by_overfit_risk` 等 gate 阻断时运行多 preset 横向诊断。该命令默认比较
+`last_2y`、`last_3y`、`last_5y`、`post_2022_bear`、`ai_cycle_recent` 和
+`full_available`，可同时运行 `etf_initial_weight_balanced_lower_semiconductor_v1`、
+`etf_initial_weight_defensive_growth_v1` 和 `etf_initial_weight_ai_moderate_v1` 三个
+bounded robust search pack，输出
+`reports/etf_portfolio/weight_calibration/search_diagnostics/historical_weight_search_diagnostics_*.json/md`、
+`*_stable_shapes.csv` 和 `*_near_shadow.csv`。报告包含 per-preset Top-N、overfit risk
+distribution、shadow-ready count、`cross_preset_stability_score`、`rank_consistency`、
+`weight_shape_similarity`、`regime_failure_count`、`near_shadow_candidates`、rescue
+suggestions 和 shadow minimum criteria；rescue suggestion 只提示人工复核方向，例如降低
+semiconductor cap、提高 cash floor 或扩大历史窗口，不 enroll、不注册、不应用权重。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

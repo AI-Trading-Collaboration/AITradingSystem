@@ -754,6 +754,26 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_historical_weight_search_diagnostics
+    title: ETF Historical Weight Search Diagnostics
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf weight-calibration diagnostics --include-robust-packs
+    artifact_globs:
+      - reports/etf_portfolio/weight_calibration/search_diagnostics/historical_weight_search_diagnostics_*.json
+      - reports/etf_portfolio/weight_calibration/search_diagnostics/historical_weight_search_diagnostics_*.md
+      - reports/etf_portfolio/weight_calibration/search_diagnostics/historical_weight_search_diagnostics_*_stable_shapes.csv
+      - reports/etf_portfolio/weight_calibration/search_diagnostics/historical_weight_search_diagnostics_*_near_shadow.csv
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-079 diagnostics should be refreshed after a historical weight search
+      produces no shadow-ready candidates or after robust search-pack changes.
+    owner_action: run_weight_search_diagnostics_before_relaxing_any_shadow_gate
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance

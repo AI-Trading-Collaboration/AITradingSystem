@@ -129,3 +129,213 @@ weight_searches:
       production_effect: none
       broker_action: none
       manual_review_required: true
+
+  etf_initial_weight_balanced_lower_semiconductor_v1:
+    search_id: etf_initial_weight_balanced_lower_semiconductor_v1
+    description: "TRADING-079 bounded balanced search with lower semiconductor exposure."
+    universe:
+      - SPY
+      - QQQ
+      - SMH
+      - SOXX
+      - CASH
+    weight_constraints:
+      SPY:
+        min: 0.30
+        max: 0.45
+      QQQ:
+        min: 0.35
+        max: 0.50
+      SMH:
+        min: 0.05
+        max: 0.15
+      SOXX:
+        min: 0.00
+        max: 0.05
+      CASH:
+        min: 0.10
+        max: 0.20
+    sleeve_constraints:
+      equity_total_max: 1.00
+      semiconductor_total_max: 0.20
+      cash_min_when_risk_off: 0.15
+    grid_step: 0.05
+    max_candidate_count: 1000
+    objective_policy: robust_risk_adjusted_v1
+    benchmark_set: standard_etf
+    backtest_start_date: "2022-12-01"
+    backtest_end_date: null
+    walk_forward_windows:
+      - window_id: ai_after_chatgpt_initial
+        start_date: "2022-12-01"
+        end_date: "2023-12-29"
+        description: "First full AI-after-ChatGPT yearly window."
+      - window_id: ai_after_chatgpt_recent
+        start_date: "2024-01-02"
+        end_date: "2026-06-02"
+        description: "Recent AI-cycle continuation window."
+    regime_splits:
+      risk_on_periods:
+        description: "Periods labeled Risk-On by the ETF regime engine."
+        regime_label: Risk-On
+      neutral_periods:
+        description: "Periods labeled Neutral by the ETF regime engine."
+        regime_label: Neutral
+      risk_off_periods:
+        description: "Periods labeled Risk-Off by the ETF regime engine."
+        regime_label: Risk-Off
+      high_volatility_periods:
+        description: "High realized-volatility periods identified from candidate evaluation inputs."
+        signal: high_volatility
+      semiconductor_leadership_periods:
+        description: "Periods when semiconductor ETFs lead QQQ/SPY benchmarks."
+        signal: semiconductor_leadership
+      growth_underperformance_periods:
+        description: "Periods when QQQ underperforms SPY or broad market benchmarks."
+        signal: growth_underperformance
+    safety:
+      observe_only: true
+      candidate_only: true
+      production_effect: none
+      broker_action: none
+      manual_review_required: true
+
+  etf_initial_weight_defensive_growth_v1:
+    search_id: etf_initial_weight_defensive_growth_v1
+    description: "TRADING-079 bounded defensive growth search with higher SPY and cash exposure."
+    universe:
+      - SPY
+      - QQQ
+      - SMH
+      - SOXX
+      - CASH
+    weight_constraints:
+      SPY:
+        min: 0.40
+        max: 0.55
+      QQQ:
+        min: 0.25
+        max: 0.40
+      SMH:
+        min: 0.05
+        max: 0.10
+      SOXX:
+        min: 0.00
+        max: 0.00
+      CASH:
+        min: 0.10
+        max: 0.25
+    sleeve_constraints:
+      equity_total_max: 1.00
+      semiconductor_total_max: 0.10
+      cash_min_when_risk_off: 0.20
+    grid_step: 0.05
+    max_candidate_count: 1000
+    objective_policy: robust_risk_adjusted_v1
+    benchmark_set: standard_etf
+    backtest_start_date: "2022-12-01"
+    backtest_end_date: null
+    walk_forward_windows:
+      - window_id: ai_after_chatgpt_initial
+        start_date: "2022-12-01"
+        end_date: "2023-12-29"
+        description: "First full AI-after-ChatGPT yearly window."
+      - window_id: ai_after_chatgpt_recent
+        start_date: "2024-01-02"
+        end_date: "2026-06-02"
+        description: "Recent AI-cycle continuation window."
+    regime_splits:
+      risk_on_periods:
+        description: "Periods labeled Risk-On by the ETF regime engine."
+        regime_label: Risk-On
+      neutral_periods:
+        description: "Periods labeled Neutral by the ETF regime engine."
+        regime_label: Neutral
+      risk_off_periods:
+        description: "Periods labeled Risk-Off by the ETF regime engine."
+        regime_label: Risk-Off
+      high_volatility_periods:
+        description: "High realized-volatility periods identified from candidate evaluation inputs."
+        signal: high_volatility
+      semiconductor_leadership_periods:
+        description: "Periods when semiconductor ETFs lead QQQ/SPY benchmarks."
+        signal: semiconductor_leadership
+      growth_underperformance_periods:
+        description: "Periods when QQQ underperforms SPY or broad market benchmarks."
+        signal: growth_underperformance
+    safety:
+      observe_only: true
+      candidate_only: true
+      production_effect: none
+      broker_action: none
+      manual_review_required: true
+
+  etf_initial_weight_ai_moderate_v1:
+    search_id: etf_initial_weight_ai_moderate_v1
+    description: "TRADING-079 bounded moderate AI growth search with semiconductor cap below the original free AI-cycle range."
+    universe:
+      - SPY
+      - QQQ
+      - SMH
+      - SOXX
+      - CASH
+    weight_constraints:
+      SPY:
+        min: 0.25
+        max: 0.35
+      QQQ:
+        min: 0.45
+        max: 0.55
+      SMH:
+        min: 0.10
+        max: 0.15
+      SOXX:
+        min: 0.00
+        max: 0.05
+      CASH:
+        min: 0.10
+        max: 0.15
+    sleeve_constraints:
+      equity_total_max: 1.00
+      semiconductor_total_max: 0.20
+      cash_min_when_risk_off: 0.15
+    grid_step: 0.05
+    max_candidate_count: 1000
+    objective_policy: robust_risk_adjusted_v1
+    benchmark_set: standard_etf
+    backtest_start_date: "2022-12-01"
+    backtest_end_date: null
+    walk_forward_windows:
+      - window_id: ai_after_chatgpt_initial
+        start_date: "2022-12-01"
+        end_date: "2023-12-29"
+        description: "First full AI-after-ChatGPT yearly window."
+      - window_id: ai_after_chatgpt_recent
+        start_date: "2024-01-02"
+        end_date: "2026-06-02"
+        description: "Recent AI-cycle continuation window."
+    regime_splits:
+      risk_on_periods:
+        description: "Periods labeled Risk-On by the ETF regime engine."
+        regime_label: Risk-On
+      neutral_periods:
+        description: "Periods labeled Neutral by the ETF regime engine."
+        regime_label: Neutral
+      risk_off_periods:
+        description: "Periods labeled Risk-Off by the ETF regime engine."
+        regime_label: Risk-Off
+      high_volatility_periods:
+        description: "High realized-volatility periods identified from candidate evaluation inputs."
+        signal: high_volatility
+      semiconductor_leadership_periods:
+        description: "Periods when semiconductor ETFs lead QQQ/SPY benchmarks."
+        signal: semiconductor_leadership
+      growth_underperformance_periods:
+        description: "Periods when QQQ underperforms SPY or broad market benchmarks."
+        signal: growth_underperformance
+    safety:
+      observe_only: true
+      candidate_only: true
+      production_effect: none
+      broker_action: none
+      manual_review_required: true

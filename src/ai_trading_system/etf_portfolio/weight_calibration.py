@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from collections.abc import Mapping
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from hashlib import sha256
 from math import prod, sqrt
 from pathlib import Path
@@ -74,6 +74,9 @@ DEFAULT_WEIGHT_DUAL_TRACK_REPORT_DIR = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR
 DEFAULT_WEIGHT_CALIBRATION_VALIDATION_DIR = (
     DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "validation"
 )
+DEFAULT_WEIGHT_SEARCH_DIAGNOSTICS_DIR = (
+    DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "search_diagnostics"
+)
 
 WEIGHT_SEARCH_SCHEMA_VERSION = "etf_weight_search_v1"
 WEIGHT_CALIBRATION_PRESET_SCHEMA_VERSION = "etf_weight_calibration_presets_v1"
@@ -97,6 +100,7 @@ WEIGHT_CALIBRATION_VALIDATION_SCHEMA_VERSION = "etf_weight_dual_track_validation
 WEIGHT_CALIBRATION_USABILITY_VALIDATION_SCHEMA_VERSION = (
     "etf_weight_calibration_usability_validation_v1"
 )
+WEIGHT_SEARCH_DIAGNOSTICS_SCHEMA_VERSION = "etf_weight_search_diagnostics_v1"
 
 WEIGHT_CALIBRATION_SAFETY = {
     "observe_only": True,
@@ -198,6 +202,43 @@ WEIGHT_PROPOSAL_POLICY = {
     "status": "pilot_baseline",
     "historical_score_manual_review_floor": 0.55,
     "high_overfit_bands": ["high", "critical"],
+}
+
+WEIGHT_SEARCH_DIAGNOSTICS_DEFAULT_PRESETS = (
+    "last_2y",
+    "last_3y",
+    "last_5y",
+    "post_2022_bear",
+    "ai_cycle_recent",
+    "full_available",
+)
+WEIGHT_ROBUST_SEARCH_PACK_IDS = (
+    "etf_initial_weight_balanced_lower_semiconductor_v1",
+    "etf_initial_weight_defensive_growth_v1",
+    "etf_initial_weight_ai_moderate_v1",
+)
+
+# Pilot diagnostics policy for TRADING-079. These thresholds rank diagnostic
+# attention only; they cannot enroll, apply, or promote ETF weights.
+WEIGHT_SEARCH_DIAGNOSTICS_POLICY = {
+    "policy_id": "etf_weight_search_diagnostics_v1",
+    "owner": "TRADING-079",
+    "status": "pilot_baseline",
+    "rationale": (
+        "Explain why historical weight search did not produce shadow-ready "
+        "candidates and identify more stable candidate-only weight shapes."
+    ),
+    "shape_similarity_l1_threshold": 0.10,
+    "near_shadow_overfit_score_ceiling": 0.65,
+    "severe_regime_drawdown_threshold": -0.30,
+    "semiconductor_rescue_threshold": 0.20,
+    "cash_rescue_floor": 0.15,
+    "stability_weights": {
+        "preset_coverage": 0.35,
+        "rank_consistency": 0.25,
+        "weight_shape_similarity": 0.20,
+        "regime_resilience": 0.20,
+    },
 }
 
 
@@ -2931,6 +2972,354 @@ def render_weight_initial_recommendation_markdown(payload: Mapping[str, Any]) ->
     lines.extend(["", "## Next Steps", ""])
     for step in payload.get("next_steps") or []:
         lines.append(f"- {step}")
+    return "\n".join(lines) + "\n"
+
+
+def build_historical_weight_search_diagnostics_report(
+    prices: pd.DataFrame,
+    *,
+    etf_config: ETFConfigBundle,
+    quality_report: ETFQualityReport,
+    registry: ETFWeightSearchRegistry,
+    preset_registry: ETFWeightCalibrationPresetRegistry,
+    search_ids: list[str] | None = None,
+    preset_ids: list[str] | None = None,
+    top: int = 10,
+    max_candidates: int | None = None,
+    source_paths: Mapping[str, str] | None = None,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    if not quality_report.passed:
+        raise WeightCalibrationError(
+            "ETF historical weight search diagnostics requires passed data quality gate: "
+            f"{quality_report.status}"
+        )
+    if top <= 0:
+        raise WeightCalibrationError("top must be positive")
+    generated = generated_at or datetime.now(UTC)
+    selected_search_ids = list(search_ids or ["etf_initial_weight_search_v1"])
+    selected_preset_ids = list(preset_ids or WEIGHT_SEARCH_DIAGNOSTICS_DEFAULT_PRESETS)
+    available_dates = pd.to_datetime(prices["date"], errors="coerce").dropna()
+    if available_dates.empty:
+        raise WeightCalibrationError("prices have no valid date values")
+    available_start = available_dates.min().date()
+    available_end = available_dates.max().date()
+    preset_results: list[dict[str, Any]] = []
+    candidate_records: list[dict[str, Any]] = []
+    regime_rows: list[dict[str, Any]] = []
+    run_index = 0
+    for search_id in selected_search_ids:
+        if search_id not in registry.weight_searches:
+            raise WeightCalibrationError(f"unknown ETF weight search: {search_id}")
+        for preset_id in selected_preset_ids:
+            try:
+                preset = preset_registry.presets[preset_id]
+            except KeyError as exc:
+                raise WeightCalibrationError(
+                    f"unknown ETF weight calibration preset: {preset_id}"
+                ) from exc
+            run_time = generated + timedelta(seconds=run_index)
+            run_index += 1
+            preset_context = resolve_weight_calibration_preset(
+                preset,
+                available_start=available_start,
+                available_end=available_end,
+            )
+            run = run_historical_weight_search(
+                prices,
+                etf_config=etf_config,
+                quality_report=quality_report,
+                registry=registry,
+                search_id=search_id,
+                start=preset_context["start_date"],
+                end=preset_context["end_date"],
+                range_preset=preset_context,
+                max_candidates=max_candidates,
+                generated_at=run_time,
+            )
+            top_payload = build_weight_top_candidate_export(
+                run.payload,
+                top=top,
+                generated_at=run_time,
+            )
+            regime_payload = build_weight_regime_robustness_heatmap(
+                run.payload,
+                top_export_payload=top_payload,
+                top=top,
+                generated_at=run_time,
+            )
+            overfit_payload = build_weight_overfit_explanations(
+                run.payload,
+                top_export_payload=top_payload,
+                top=top,
+                generated_at=run_time,
+            )
+            preset_result = _weight_search_diagnostics_preset_result(
+                run.payload,
+                top_payload=top_payload,
+                regime_payload=regime_payload,
+                overfit_payload=overfit_payload,
+            )
+            preset_results.append(preset_result)
+            for candidate in _records(top_payload.get("candidates")):
+                candidate_records.append(
+                    _weight_search_diagnostics_candidate_record(
+                        run.payload,
+                        candidate,
+                        preset_result=preset_result,
+                    )
+                )
+            for row in _records(regime_payload.get("matrix")):
+                enriched = dict(row)
+                enriched["search_id"] = search_id
+                enriched["preset_id"] = preset_id
+                regime_rows.append(enriched)
+    stable_shapes = _weight_search_cross_preset_stable_shapes(
+        candidate_records,
+        regime_rows,
+        preset_ids=selected_preset_ids,
+        search_ids=selected_search_ids,
+        top=top,
+    )
+    near_shadow = _weight_search_near_shadow_candidates(candidate_records, regime_rows)
+    minimum_criteria = _weight_search_shadow_minimum_criteria(
+        candidate_records,
+        stable_shapes=stable_shapes,
+    )
+    payload = {
+        "schema_version": WEIGHT_SEARCH_DIAGNOSTICS_SCHEMA_VERSION,
+        "report_type": "etf_weight_search_diagnostics",
+        "status": "available" if preset_results else "needs_more_data",
+        "generated_at": generated.isoformat(),
+        "diagnostic_mode": "candidate_only_historical_rescue",
+        "policy": dict(WEIGHT_SEARCH_DIAGNOSTICS_POLICY),
+        "search_ids": selected_search_ids,
+        "preset_ids": selected_preset_ids,
+        "top_n": top,
+        "max_candidates": max_candidates,
+        "market_regime": etf_config.backtest.backtest.regime,
+        "data_quality_status": quality_report.status,
+        "preset_result_count": len(preset_results),
+        "candidate_observation_count": len(candidate_records),
+        "preset_results": preset_results,
+        "cross_preset_stable_shapes": stable_shapes,
+        "near_shadow_candidates": near_shadow,
+        "shadow_minimum_criteria": minimum_criteria,
+        "robust_search_pack_ids": list(WEIGHT_ROBUST_SEARCH_PACK_IDS),
+        "source_paths": dict(source_paths or {}),
+        "production_weights_mutated": False,
+        "applied_weight_set": None,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_historical_weight_search_diagnostics_report(payload)
+    return payload
+
+
+def validate_historical_weight_search_diagnostics_report(
+    payload: Mapping[str, Any],
+) -> None:
+    issues = []
+    if payload.get("schema_version") != WEIGHT_SEARCH_DIAGNOSTICS_SCHEMA_VERSION:
+        issues.append("schema_version")
+    if payload.get("report_type") != "etf_weight_search_diagnostics":
+        issues.append("report_type")
+    required_sections = {
+        "policy",
+        "preset_results",
+        "cross_preset_stable_shapes",
+        "near_shadow_candidates",
+        "shadow_minimum_criteria",
+        "robust_search_pack_ids",
+    }
+    issues.extend(sorted(required_sections - set(payload)))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if payload.get(field) != expected:
+            issues.append(field)
+    safety = _mapping(payload.get("safety"))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if safety.get(field) != expected:
+            issues.append(f"safety.{field}")
+    if payload.get("production_weights_mutated") is not False:
+        issues.append("production_weights_mutated")
+    if payload.get("applied_weight_set") is not None:
+        issues.append("applied_weight_set")
+    if int(payload.get("preset_result_count") or 0) != len(
+        _records(payload.get("preset_results"))
+    ):
+        issues.append("preset_result_count")
+    if int(payload.get("candidate_observation_count") or 0) != sum(
+        int(result.get("top_candidate_count") or 0)
+        for result in _records(payload.get("preset_results"))
+    ):
+        issues.append("candidate_observation_count")
+    criteria = _mapping(payload.get("shadow_minimum_criteria"))
+    if criteria.get("production_effect") != "none" or criteria.get("broker_action") != "none":
+        issues.append("shadow_minimum_criteria.safety")
+    for result in _records(payload.get("preset_results")):
+        if not result.get("search_id") or not result.get("preset_id"):
+            issues.append("preset_result.identifiers")
+        for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+            if result.get(field) != expected:
+                issues.append(f"preset_result.{field}")
+    for shape in _records(payload.get("cross_preset_stable_shapes")):
+        score = _float_or_none(shape.get("cross_preset_stability_score"))
+        if score is None or score < 0.0 or score > 1.0:
+            issues.append("cross_preset_stable_shapes.score")
+        for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+            if shape.get(field) != expected:
+                issues.append(f"cross_preset_stable_shapes.{field}")
+    for candidate in _records(payload.get("near_shadow_candidates")):
+        if candidate.get("forward_readiness_status") == "shadow_ready":
+            issues.append("near_shadow_candidates.shadow_ready")
+        for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+            if candidate.get(field) != expected:
+                issues.append(f"near_shadow_candidates.{field}")
+    if issues:
+        raise WeightCalibrationError(
+            "ETF historical weight search diagnostics validation failed: "
+            + ", ".join(str(issue) for issue in issues)
+        )
+
+
+def write_historical_weight_search_diagnostics_report(
+    payload: Mapping[str, Any],
+    *,
+    output_dir: Path = DEFAULT_WEIGHT_SEARCH_DIAGNOSTICS_DIR,
+) -> dict[str, Path]:
+    validate_historical_weight_search_diagnostics_report(payload)
+    timestamp = _artifact_stem(str(payload.get("generated_at") or datetime.now(UTC).isoformat()))
+    stem = f"historical_weight_search_diagnostics_{timestamp[:19]}"
+    json_path = output_dir / f"{stem}.json"
+    markdown_path = output_dir / f"{stem}.md"
+    stable_shapes_csv = output_dir / f"{stem}_stable_shapes.csv"
+    near_shadow_csv = output_dir / f"{stem}_near_shadow.csv"
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.write_text(
+        render_historical_weight_search_diagnostics_markdown(payload),
+        encoding="utf-8",
+    )
+    pd.DataFrame(_weight_search_stable_shape_csv_rows(payload)).to_csv(
+        stable_shapes_csv,
+        index=False,
+    )
+    pd.DataFrame(_weight_search_near_shadow_csv_rows(payload)).to_csv(
+        near_shadow_csv,
+        index=False,
+    )
+    return {
+        "json": json_path,
+        "markdown": markdown_path,
+        "stable_shapes_csv": stable_shapes_csv,
+        "near_shadow_csv": near_shadow_csv,
+    }
+
+
+def render_historical_weight_search_diagnostics_markdown(
+    payload: Mapping[str, Any],
+) -> str:
+    criteria = _mapping(payload.get("shadow_minimum_criteria"))
+    lines = [
+        "# ETF Historical Weight Search Diagnostics",
+        "",
+        "## Safety Banner",
+        "",
+        "- observe_only = true",
+        "- candidate_only = true",
+        "- production_effect = none",
+        "- broker_action = none",
+        "- manual_review_required = true",
+        (
+            "- 本报告只解释 historical search failures 和 candidate rescue options，"
+            "不 enroll 或应用权重。"
+        ),
+        "",
+        "## Summary",
+        "",
+        f"- Status: {payload.get('status')}",
+        f"- Market Regime: {payload.get('market_regime')}",
+        f"- Search IDs: {', '.join(payload.get('search_ids') or [])}",
+        f"- Presets: {', '.join(payload.get('preset_ids') or [])}",
+        f"- Preset Result Count: {payload.get('preset_result_count')}",
+        f"- Candidate Observations: {payload.get('candidate_observation_count')}",
+        f"- Shadow Ready Count: {criteria.get('shadow_ready_count')}",
+        f"- Minimum Criteria Status: {criteria.get('status')}",
+        "",
+        "## Preset Comparison",
+        "",
+        (
+            "| Search | Preset | Date Range | Top | Shadow Ready | "
+            "Readiness Counts | Overfit Counts | Top Shape |"
+        ),
+        "|---|---|---|---:|---:|---|---|---|",
+    ]
+    for result in _records(payload.get("preset_results")):
+        requested = _mapping(result.get("requested_date_range"))
+        lines.append(
+            f"| {result.get('search_id')} | {result.get('preset_id')} | "
+            f"{requested.get('start')} to {requested.get('end')} | "
+            f"{result.get('top_candidate_count')} | {result.get('shadow_ready_count')} | "
+            f"{result.get('forward_readiness_counts')} | {result.get('overfit_risk_counts')} | "
+            f"{result.get('top_weight_shape_key')} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Cross-Preset Stable Shapes",
+            "",
+            (
+                "| Shape | Score | Presets | Avg Rank | Regime Failures | "
+                "Readiness | Representative Weights |"
+            ),
+            "|---|---:|---:|---:|---:|---|---|",
+        ]
+    )
+    for shape in _records(payload.get("cross_preset_stable_shapes"))[:12]:
+        lines.append(
+            f"| {shape.get('stable_shape_id')} | "
+            f"{_fmt_number(shape.get('cross_preset_stability_score'))} | "
+            f"{shape.get('preset_count')} | {_fmt_number(shape.get('average_rank'))} | "
+            f"{shape.get('regime_failure_count')} | {shape.get('readiness_counts')} | "
+            f"{shape.get('representative_weights')} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Near-Shadow Candidates",
+            "",
+            (
+                "| Candidate | Preset | Shape | Distance | Overfit | Readiness | "
+                "Main Gaps | Rescue Suggestions |"
+            ),
+            "|---|---|---|---:|---|---|---|---|",
+        ]
+    )
+    for candidate in _records(payload.get("near_shadow_candidates"))[:12]:
+        lines.append(
+            f"| {candidate.get('weight_set_id')} | {candidate.get('preset_id')} | "
+            f"{candidate.get('shape_key')} | "
+            f"{_fmt_number(candidate.get('distance_to_shadow_ready'))} | "
+            f"{candidate.get('overfit_risk')} | {candidate.get('forward_readiness_status')} | "
+            f"{', '.join(candidate.get('main_gaps') or [])} | "
+            f"{', '.join(candidate.get('rescue_suggestions') or [])} |"
+        )
+    lines.extend(["", "## Shadow Minimum Criteria", ""])
+    lines.append(f"- Status: {criteria.get('status')}")
+    lines.append(f"- Suggested Action: {criteria.get('suggested_action')}")
+    lines.append(f"- Shadow Ready Count: {criteria.get('shadow_ready_count')}")
+    lines.append(f"- Common Failure Counts: {criteria.get('common_failure_counts')}")
+    lines.append("")
+    lines.append("## Recommended Next Actions")
+    lines.append("")
+    for action in criteria.get("recommended_next_actions") or []:
+        lines.append(f"- {action}")
+    lines.extend(["", "## Source Artifacts", ""])
+    for key, value in _mapping(payload.get("source_paths")).items():
+        lines.append(f"- {key}: {value}")
     return "\n".join(lines) + "\n"
 
 
@@ -6727,6 +7116,272 @@ def _value_counts(records: list[Mapping[str, Any]], field: str) -> dict[str, int
     return counts
 
 
+def _value_counts_by_key(records: list[Mapping[str, Any]], field: str) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for record in records:
+        value = str(record.get(field) or "missing")
+        counts[value] = counts.get(value, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _list_value_counts(records: list[Mapping[str, Any]], field: str) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for record in records:
+        values = record.get(field) or []
+        if isinstance(values, str):
+            values = [values]
+        for value in values:
+            key = str(value)
+            if not key:
+                continue
+            counts[key] = counts.get(key, 0) + 1
+    return dict(sorted(counts.items()))
+
+
+def _weight_shape_key(weights: Mapping[str, Any]) -> str:
+    normalized = _json_float_mapping(weights)
+    if not normalized:
+        return "missing"
+    return "|".join(
+        f"{symbol}={float(normalized.get(symbol, 0.0)):.2f}"
+        for symbol in sorted(normalized)
+    )
+
+
+def _stable_weight_shape_id(index: int, weights: Mapping[str, Any]) -> str:
+    digest = sha256(_weight_shape_key(weights).encode("utf-8")).hexdigest()[:10]
+    return f"weight_shape_{index:03d}_{digest}"
+
+
+def _weight_shape_clusters(
+    candidates: list[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    threshold = float(WEIGHT_SEARCH_DIAGNOSTICS_POLICY["shape_similarity_l1_threshold"])
+    clusters: list[dict[str, Any]] = []
+    ordered = sorted(
+        candidates,
+        key=lambda item: (
+            _weight_shape_key(_mapping(item.get("weights"))),
+            str(item.get("preset_id")),
+            int(item.get("rank") or 999_999),
+        ),
+    )
+    for candidate in ordered:
+        weights = _json_float_mapping(candidate.get("weights"))
+        selected_cluster: dict[str, Any] | None = None
+        for cluster in clusters:
+            if _weight_l1_distance(weights, _mapping(cluster["centroid"])) <= threshold:
+                selected_cluster = cluster
+                break
+        if selected_cluster is None:
+            clusters.append({"centroid": dict(weights), "members": [candidate]})
+            continue
+        selected_cluster["members"].append(candidate)
+        selected_cluster["centroid"] = _mean_weights(
+            [_json_float_mapping(member.get("weights")) for member in selected_cluster["members"]]
+        )
+    return clusters
+
+
+def _mean_weights(weight_rows: list[Mapping[str, float]]) -> dict[str, float]:
+    symbols = sorted({symbol for row in weight_rows for symbol in row})
+    if not weight_rows:
+        return {}
+    return {
+        symbol: round(mean(float(row.get(symbol, 0.0)) for row in weight_rows), 6)
+        for symbol in symbols
+    }
+
+
+def _weight_l1_distance(
+    left: Mapping[str, Any],
+    right: Mapping[str, Any],
+) -> float:
+    left_weights = _json_float_mapping(left)
+    right_weights = _json_float_mapping(right)
+    symbols = set(left_weights) | set(right_weights)
+    return sum(
+        abs(float(left_weights.get(symbol, 0.0)) - float(right_weights.get(symbol, 0.0)))
+        for symbol in symbols
+    )
+
+
+def _cluster_weight_shape_similarity(cluster: Mapping[str, Any]) -> float:
+    centroid = _mapping(cluster.get("centroid"))
+    members = _records(cluster.get("members"))
+    if not members:
+        return 0.0
+    scores = [
+        1.0 - min(1.0, _weight_l1_distance(_mapping(member.get("weights")), centroid) / 2.0)
+        for member in members
+    ]
+    return max(0.0, min(1.0, mean(scores)))
+
+
+def _rank_consistency_score(ranks: list[int], *, top: int) -> float:
+    if not ranks:
+        return 0.0
+    if len(ranks) == 1:
+        return 1.0
+    dispersion = pstdev(float(rank) for rank in ranks)
+    return max(0.0, min(1.0, 1.0 - dispersion / max(float(top), 1.0)))
+
+
+def _weight_search_candidate_regime_failures(
+    candidate: Mapping[str, Any],
+    regime_rows: list[Mapping[str, Any]],
+) -> dict[str, Any]:
+    weight_set_id = str(candidate.get("weight_set_id") or "")
+    preset_id = str(candidate.get("preset_id") or "")
+    search_id = str(candidate.get("search_id") or "")
+    threshold = float(WEIGHT_SEARCH_DIAGNOSTICS_POLICY["severe_regime_drawdown_threshold"])
+    failures = []
+    missing = []
+    for row in regime_rows:
+        if str(row.get("weight_set_id")) != weight_set_id:
+            continue
+        if str(row.get("preset_id") or "") != preset_id:
+            continue
+        if str(row.get("search_id") or "") != search_id:
+            continue
+        regime = str(row.get("regime") or "")
+        status = str(row.get("status") or "")
+        if status == "MISSING":
+            missing.append(regime)
+            continue
+        max_drawdown = _float_or_none(row.get("max_drawdown"))
+        return_value = _float_or_none(row.get("return"))
+        severe_drawdown = max_drawdown is not None and max_drawdown <= threshold
+        weak_critical_regime = (
+            regime in {"risk_off", "growth_underperformance"}
+            and return_value is not None
+            and return_value < 0.0
+        )
+        if severe_drawdown or weak_critical_regime:
+            failures.append(
+                {
+                    "regime": regime,
+                    "status": status,
+                    "return": return_value,
+                    "max_drawdown": max_drawdown,
+                    "sample_count": row.get("sample_count"),
+                    "reason_codes": [
+                        reason
+                        for reason, active in {
+                            "SEVERE_REGIME_DRAWDOWN": severe_drawdown,
+                            "CRITICAL_REGIME_NEGATIVE_RETURN": weak_critical_regime,
+                        }.items()
+                        if active
+                    ],
+                }
+            )
+    return {"failures": failures, "missing_regimes": sorted(set(missing))}
+
+
+def _weight_search_regime_failure_summary(
+    regime_rows: list[Mapping[str, Any]],
+) -> dict[str, Any]:
+    available = [row for row in regime_rows if row.get("status") == "AVAILABLE"]
+    missing = [row for row in regime_rows if row.get("status") == "MISSING"]
+    threshold = float(WEIGHT_SEARCH_DIAGNOSTICS_POLICY["severe_regime_drawdown_threshold"])
+    severe = [
+        row
+        for row in available
+        if (_float_or_none(row.get("max_drawdown")) or 0.0) <= threshold
+    ]
+    by_regime: dict[str, int] = {}
+    for row in severe:
+        regime = str(row.get("regime") or "missing")
+        by_regime[regime] = by_regime.get(regime, 0) + 1
+    return {
+        "available_row_count": len(available),
+        "missing_row_count": len(missing),
+        "severe_regime_failure_count": len(severe),
+        "severe_regime_failure_counts": dict(sorted(by_regime.items())),
+        "missing_regime_counts": _value_counts_by_key(missing, "regime"),
+    }
+
+
+def _distance_to_shadow_ready(
+    candidate: Mapping[str, Any],
+    regime: Mapping[str, Any],
+) -> float:
+    overfit_score = _float_or_none(candidate.get("overfit_risk_score"))
+    overfit_excess = max(0.0, (overfit_score or 0.0) - 0.50)
+    blockers = [str(item) for item in candidate.get("blockers") or []]
+    non_overfit_blockers = [
+        blocker for blocker in blockers if not blocker.startswith("OVERFIT_RISK_")
+    ]
+    regime_failures = len(_records(regime.get("failures")))
+    missing_regimes = len(regime.get("missing_regimes") or [])
+    distance = (
+        0.20 * len(blockers)
+        + 0.40 * len(non_overfit_blockers)
+        + overfit_excess
+        + 0.08 * regime_failures
+        + 0.03 * missing_regimes
+    )
+    if (_float_or_none(candidate.get("drawdown_reduction_vs_QQQ")) or 0.0) > 0.0:
+        distance -= 0.05
+    return max(0.0, distance)
+
+
+def _weight_search_near_shadow_gaps(
+    candidate: Mapping[str, Any],
+    regime: Mapping[str, Any],
+) -> list[str]:
+    gaps = []
+    blockers = [str(item) for item in candidate.get("blockers") or []]
+    warnings = [str(item) for item in candidate.get("warnings") or []]
+    if blockers:
+        gaps.extend(blockers)
+    for warning in (
+        "PERFORMANCE_CONCENTRATED_IN_FEW_SLICES",
+        "REGIME_FRAGILITY",
+        "SINGLE_PERIOD_DEPENDENCY",
+        "FORWARD_EVIDENCE_MISSING",
+        "QQQ_BENCHMARK_COMPARISON_MISSING",
+        "NO_BENCHMARK_COMPARISON",
+    ):
+        if warning in warnings:
+            gaps.append(warning)
+    for failure in _records(regime.get("failures")):
+        gaps.append(f"REGIME_FAILURE:{failure.get('regime')}")
+    for missing in regime.get("missing_regimes") or []:
+        gaps.append(f"REGIME_MISSING:{missing}")
+    return sorted(set(gaps))
+
+
+def _weight_search_rescue_suggestions(
+    candidate: Mapping[str, Any],
+    regime: Mapping[str, Any],
+) -> list[str]:
+    suggestions = []
+    semi = float(_float_or_none(candidate.get("semiconductor_exposure")) or 0.0)
+    cash = float(_float_or_none(candidate.get("cash_exposure")) or 0.0)
+    warnings = {str(item) for item in candidate.get("warnings") or []}
+    failure_regimes = {
+        str(failure.get("regime")) for failure in _records(regime.get("failures"))
+    }
+    if semi >= float(WEIGHT_SEARCH_DIAGNOSTICS_POLICY["semiconductor_rescue_threshold"]):
+        suggestions.append("test_lower_semiconductor_cap_0_15_or_0_20")
+    if cash < float(WEIGHT_SEARCH_DIAGNOSTICS_POLICY["cash_rescue_floor"]):
+        suggestions.append("test_cash_floor_0_15_to_0_20")
+    if failure_regimes & {"risk_off", "growth_underperformance"}:
+        suggestions.append("prefer_defensive_growth_or_balanced_lower_semiconductor_pack")
+    if "PERFORMANCE_CONCENTRATED_IN_FEW_SLICES" in warnings:
+        suggestions.append("require_last_5y_or_full_available_confirmation")
+    if "SINGLE_PERIOD_DEPENDENCY" in warnings:
+        suggestions.append("require_cross_preset_rank_consistency")
+    if "REGIME_FRAGILITY" in warnings:
+        suggestions.append("inspect_regime_robustness_before_shadow")
+    if "NO_BENCHMARK_COMPARISON" in warnings or "QQQ_BENCHMARK_COMPARISON_MISSING" in warnings:
+        suggestions.append("repair_benchmark_context_before_reclassifying_overfit")
+    if not suggestions:
+        suggestions.append("manual_review_required_before_any_shadow_enrollment")
+    return sorted(set(suggestions))
+
+
 def _selected_ranked_candidates(
     search_payload: Mapping[str, Any],
     *,
@@ -6788,6 +7443,7 @@ def _candidate_weight_record_from_search(
             "excess_return_vs_baseline": metrics.get("excess_return_vs_baseline"),
             "max_drawdown": metrics.get("max_drawdown"),
             "turnover_vs_baseline": metrics.get("turnover_vs_baseline"),
+            "benchmark_comparison": metrics.get("benchmark_comparison"),
             "component_scores": metrics.get("component_scores"),
         },
         "robustness_summary": dict(
@@ -7349,6 +8005,442 @@ def _weight_forward_readiness_status(
     if status in {"candidate", "shadow_ready"}:
         return "shadow_ready"
     return "needs_manual_review"
+
+
+def _weight_search_diagnostics_preset_result(
+    search_payload: Mapping[str, Any],
+    *,
+    top_payload: Mapping[str, Any],
+    regime_payload: Mapping[str, Any],
+    overfit_payload: Mapping[str, Any],
+) -> dict[str, Any]:
+    candidates = _records(top_payload.get("candidates"))
+    preset = _mapping(search_payload.get("historical_range_preset"))
+    risk_counts = _value_counts_by_key(candidates, "overfit_risk")
+    readiness_counts = _value_counts_by_key(candidates, "forward_readiness_status")
+    blocker_counts = _list_value_counts(candidates, "blockers")
+    warning_counts = _list_value_counts(candidates, "warnings")
+    top_candidate = candidates[0] if candidates else {}
+    regime_failures = _weight_search_regime_failure_summary(_records(regime_payload.get("matrix")))
+    result = {
+        "search_id": search_payload.get("search_id"),
+        "search_run_id": search_payload.get("search_run_id"),
+        "search_config_hash": search_payload.get("search_config_hash"),
+        "preset_id": preset.get("preset_id"),
+        "historical_range_preset": dict(preset),
+        "requested_date_range": dict(_mapping(search_payload.get("requested_date_range"))),
+        "data_quality_status": search_payload.get("data_quality_status"),
+        "candidate_generation": dict(_mapping(search_payload.get("candidate_generation"))),
+        "top_candidate_count": len(candidates),
+        "shadow_ready_count": int(readiness_counts.get("shadow_ready") or 0),
+        "overfit_risk_counts": risk_counts,
+        "forward_readiness_counts": readiness_counts,
+        "blocker_counts": blocker_counts,
+        "warning_counts": warning_counts,
+        "regime_failure_summary": regime_failures,
+        "top_weight_set_id": top_candidate.get("weight_set_id"),
+        "top_weight_shape_key": _weight_shape_key(_mapping(top_candidate.get("weights"))),
+        "top_candidates": [
+            _weight_search_top_candidate_summary(candidate) for candidate in candidates
+        ],
+        "overfit_explanation_count": int(overfit_payload.get("candidate_count") or 0),
+        "production_weights_mutated": False,
+        "applied_weight_set": None,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    return result
+
+
+def _weight_search_top_candidate_summary(candidate: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "rank": candidate.get("rank"),
+        "weight_set_id": candidate.get("weight_set_id"),
+        "source_candidate_id": candidate.get("source_candidate_id"),
+        "weights": dict(_mapping(candidate.get("weights"))),
+        "shape_key": _weight_shape_key(_mapping(candidate.get("weights"))),
+        "historical_score": candidate.get("historical_score"),
+        "cagr": candidate.get("cagr"),
+        "max_drawdown": candidate.get("max_drawdown"),
+        "semiconductor_exposure": candidate.get("semiconductor_exposure"),
+        "cash_exposure": candidate.get("cash_exposure"),
+        "benchmark_excess_return": candidate.get("benchmark_excess_return"),
+        "drawdown_reduction_vs_QQQ": candidate.get("drawdown_reduction_vs_QQQ"),
+        "overfit_risk": candidate.get("overfit_risk"),
+        "overfit_risk_score": candidate.get("overfit_risk_score"),
+        "forward_readiness_status": candidate.get("forward_readiness_status"),
+        "blockers": [str(item) for item in candidate.get("blockers") or []],
+        "warnings": [str(item) for item in candidate.get("warnings") or []],
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+
+
+def _weight_search_diagnostics_candidate_record(
+    search_payload: Mapping[str, Any],
+    candidate: Mapping[str, Any],
+    *,
+    preset_result: Mapping[str, Any],
+) -> dict[str, Any]:
+    weights = _json_float_mapping(candidate.get("weights"))
+    return {
+        "search_id": search_payload.get("search_id"),
+        "search_run_id": search_payload.get("search_run_id"),
+        "preset_id": preset_result.get("preset_id"),
+        "requested_date_range": dict(_mapping(search_payload.get("requested_date_range"))),
+        "rank": int(candidate.get("rank") or 0),
+        "weight_set_id": candidate.get("weight_set_id"),
+        "source_candidate_id": candidate.get("source_candidate_id"),
+        "shape_key": _weight_shape_key(weights),
+        "weights": weights,
+        "historical_score": _float_or_none(candidate.get("historical_score")),
+        "cagr": _float_or_none(candidate.get("cagr")),
+        "max_drawdown": _float_or_none(candidate.get("max_drawdown")),
+        "turnover": _float_or_none(candidate.get("turnover")),
+        "semiconductor_exposure": _float_or_none(candidate.get("semiconductor_exposure"))
+        or 0.0,
+        "cash_exposure": _float_or_none(candidate.get("cash_exposure")) or 0.0,
+        "benchmark_excess_return": _float_or_none(candidate.get("benchmark_excess_return")),
+        "drawdown_reduction_vs_QQQ": _float_or_none(
+            candidate.get("drawdown_reduction_vs_QQQ")
+        ),
+        "overfit_risk": candidate.get("overfit_risk"),
+        "overfit_risk_score": _float_or_none(candidate.get("overfit_risk_score")),
+        "forward_readiness_status": candidate.get("forward_readiness_status"),
+        "blockers": [str(item) for item in candidate.get("blockers") or []],
+        "warnings": [str(item) for item in candidate.get("warnings") or []],
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+
+
+def _weight_search_cross_preset_stable_shapes(
+    candidates: list[Mapping[str, Any]],
+    regime_rows: list[Mapping[str, Any]],
+    *,
+    preset_ids: list[str],
+    search_ids: list[str],
+    top: int,
+) -> list[dict[str, Any]]:
+    clusters = _weight_shape_clusters(candidates)
+    records = []
+    for cluster_index, cluster in enumerate(clusters, start=1):
+        members = cluster["members"]
+        ranks = [int(member.get("rank") or top) for member in members]
+        preset_set = {str(member.get("preset_id")) for member in members}
+        search_set = {str(member.get("search_id")) for member in members}
+        regime_failure_count = sum(
+            len(_weight_search_candidate_regime_failures(member, regime_rows)["failures"])
+            for member in members
+        )
+        readiness_counts = _value_counts_by_key(members, "forward_readiness_status")
+        risk_counts = _value_counts_by_key(members, "overfit_risk")
+        rank_consistency = _rank_consistency_score(ranks, top=top)
+        shape_similarity = _cluster_weight_shape_similarity(cluster)
+        preset_coverage = len(preset_set) / max(1, len(preset_ids))
+        regime_capacity = max(1, len(members) * 2)
+        regime_resilience = 1.0 - min(1.0, regime_failure_count / regime_capacity)
+        stability_weights = _mapping(WEIGHT_SEARCH_DIAGNOSTICS_POLICY["stability_weights"])
+        stability_score = (
+            float(stability_weights["preset_coverage"]) * preset_coverage
+            + float(stability_weights["rank_consistency"]) * rank_consistency
+            + float(stability_weights["weight_shape_similarity"]) * shape_similarity
+            + float(stability_weights["regime_resilience"]) * regime_resilience
+        )
+        representative = min(
+            members,
+            key=lambda member: (
+                int(member.get("rank") or 999_999),
+                str(member.get("weight_set_id")),
+            ),
+        )
+        representative_weights = _json_float_mapping(representative.get("weights"))
+        stable_shape_id = _stable_weight_shape_id(cluster_index, representative_weights)
+        records.append(
+            {
+                "stable_shape_id": stable_shape_id,
+                "shape_key": _weight_shape_key(representative_weights),
+                "representative_weights": representative_weights,
+                "centroid_weights": cluster["centroid"],
+                "appearance_count": len(members),
+                "preset_count": len(preset_set),
+                "search_count": len(search_set),
+                "preset_ids": sorted(preset_set),
+                "search_ids": sorted(search_set),
+                "average_rank": mean(ranks),
+                "best_rank": min(ranks),
+                "rank_consistency": round(rank_consistency, 6),
+                "weight_shape_similarity": round(shape_similarity, 6),
+                "regime_failure_count": regime_failure_count,
+                "regime_resilience": round(regime_resilience, 6),
+                "cross_preset_stability_score": round(
+                    max(0.0, min(1.0, stability_score)),
+                    6,
+                ),
+                "readiness_counts": readiness_counts,
+                "overfit_risk_counts": risk_counts,
+                "shadow_ready_appearance_count": int(readiness_counts.get("shadow_ready") or 0),
+                "blocked_by_overfit_count": int(
+                    readiness_counts.get("blocked_by_overfit_risk") or 0
+                ),
+                "appearance_examples": [
+                    {
+                        "search_id": member.get("search_id"),
+                        "preset_id": member.get("preset_id"),
+                        "rank": member.get("rank"),
+                        "weight_set_id": member.get("weight_set_id"),
+                        "forward_readiness_status": member.get("forward_readiness_status"),
+                        "overfit_risk": member.get("overfit_risk"),
+                    }
+                    for member in sorted(
+                        members,
+                        key=lambda item: (
+                            str(item.get("preset_id")),
+                            int(item.get("rank") or 999_999),
+                            str(item.get("weight_set_id")),
+                        ),
+                    )[:10]
+                ],
+                "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+                **WEIGHT_CALIBRATION_SAFETY,
+            }
+        )
+    return sorted(
+        records,
+        key=lambda item: (
+            -float(item.get("cross_preset_stability_score") or 0.0),
+            -int(item.get("preset_count") or 0),
+            float(item.get("average_rank") or 999_999),
+            str(item.get("stable_shape_id")),
+        ),
+    )
+
+
+def _weight_search_near_shadow_candidates(
+    candidates: list[Mapping[str, Any]],
+    regime_rows: list[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows = []
+    ceiling = float(WEIGHT_SEARCH_DIAGNOSTICS_POLICY["near_shadow_overfit_score_ceiling"])
+    for candidate in candidates:
+        readiness = str(candidate.get("forward_readiness_status") or "")
+        if readiness == "shadow_ready":
+            continue
+        regime = _weight_search_candidate_regime_failures(candidate, regime_rows)
+        overfit_score = _float_or_none(candidate.get("overfit_risk_score"))
+        blockers = [str(item) for item in candidate.get("blockers") or []]
+        if overfit_score is not None and overfit_score > ceiling and len(blockers) > 1:
+            continue
+        distance = _distance_to_shadow_ready(candidate, regime)
+        row = {
+            "search_id": candidate.get("search_id"),
+            "preset_id": candidate.get("preset_id"),
+            "rank": candidate.get("rank"),
+            "weight_set_id": candidate.get("weight_set_id"),
+            "shape_key": candidate.get("shape_key"),
+            "weights": dict(_mapping(candidate.get("weights"))),
+            "historical_score": candidate.get("historical_score"),
+            "overfit_risk": candidate.get("overfit_risk"),
+            "overfit_risk_score": overfit_score,
+            "forward_readiness_status": readiness,
+            "blockers": blockers,
+            "warnings": [str(item) for item in candidate.get("warnings") or []],
+            "regime_failure_count": len(regime["failures"]),
+            "missing_regime_count": len(regime["missing_regimes"]),
+            "main_gaps": _weight_search_near_shadow_gaps(candidate, regime),
+            "rescue_suggestions": _weight_search_rescue_suggestions(candidate, regime),
+            "distance_to_shadow_ready": round(distance, 6),
+            "production_weights_mutated": False,
+            "applied_weight_set": None,
+            "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+            **WEIGHT_CALIBRATION_SAFETY,
+        }
+        rows.append(row)
+    return sorted(
+        rows,
+        key=lambda item: (
+            float(item.get("distance_to_shadow_ready") or 999.0),
+            int(item.get("rank") or 999_999),
+            str(item.get("preset_id")),
+            str(item.get("weight_set_id")),
+        ),
+    )[:20]
+
+
+def _weight_search_shadow_minimum_criteria(
+    candidates: list[Mapping[str, Any]],
+    *,
+    stable_shapes: list[Mapping[str, Any]],
+) -> dict[str, Any]:
+    readiness_counts = _value_counts_by_key(candidates, "forward_readiness_status")
+    risk_counts = _value_counts_by_key(candidates, "overfit_risk")
+    blocker_counts = _list_value_counts(candidates, "blockers")
+    warning_counts = _list_value_counts(candidates, "warnings")
+    shadow_ready_count = int(readiness_counts.get("shadow_ready") or 0)
+    stable_multi_preset_count = sum(
+        1
+        for shape in stable_shapes
+        if int(shape.get("preset_count") or 0) >= 2
+        and float(shape.get("cross_preset_stability_score") or 0.0) >= 0.50
+    )
+    common_failure_counts = {
+        **{f"blocker:{key}": value for key, value in blocker_counts.items()},
+        **{
+            f"warning:{key}": value
+            for key, value in warning_counts.items()
+            if key
+            in {
+                "PERFORMANCE_CONCENTRATED_IN_FEW_SLICES",
+                "REGIME_FRAGILITY",
+                "SINGLE_PERIOD_DEPENDENCY",
+                "FORWARD_EVIDENCE_MISSING",
+                "QQQ_BENCHMARK_COMPARISON_MISSING",
+                "NO_BENCHMARK_COMPARISON",
+            }
+        },
+    }
+    status = "shadow_ready_available" if shadow_ready_count else "no_shadow_ready_candidates"
+    recommended_actions = _weight_search_minimum_criteria_actions(
+        shadow_ready_count=shadow_ready_count,
+        stable_multi_preset_count=stable_multi_preset_count,
+        blocker_counts=blocker_counts,
+        warning_counts=warning_counts,
+    )
+    return {
+        "status": status,
+        "suggested_action": (
+            "manual_review_shadow_ready_candidates"
+            if shadow_ready_count
+            else "run_robust_search_packs_before_enrollment"
+        ),
+        "candidate_observation_count": len(candidates),
+        "shadow_ready_count": shadow_ready_count,
+        "stable_multi_preset_shape_count": stable_multi_preset_count,
+        "readiness_counts": readiness_counts,
+        "overfit_risk_counts": risk_counts,
+        "common_failure_counts": common_failure_counts,
+        "minimum_criteria": [
+            "forward_readiness_status == shadow_ready",
+            "overfit_risk in low/medium",
+            "blockers is empty",
+            "no severe risk_off or growth_underperformance regime failure",
+            "cross-preset stable shape preferred before shadow enrollment",
+            "manual_review_required == true",
+        ],
+        "recommended_next_actions": recommended_actions,
+        "production_effect": "none",
+        "broker_action": "none",
+        "manual_review_required": True,
+        "production_weights_mutated": False,
+        "applied_weight_set": None,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+
+
+def _weight_search_minimum_criteria_actions(
+    *,
+    shadow_ready_count: int,
+    stable_multi_preset_count: int,
+    blocker_counts: Mapping[str, int],
+    warning_counts: Mapping[str, int],
+) -> list[str]:
+    if shadow_ready_count:
+        return [
+            "人工复核 shadow_ready candidates 的 cross-preset stability 和 regime failures。",
+            "只对无 blocker 且 manual review 接受的候选运行 enroll；不得自动 promotion。",
+        ]
+    actions = [
+        "不要运行 enroll-top；当前没有满足 shadow minimum criteria 的候选。",
+        "运行 robust search packs：balanced lower semiconductor、defensive growth、AI moderate。",
+    ]
+    if int(blocker_counts.get("OVERFIT_RISK_HIGH") or 0) > 0:
+        actions.append("优先寻找 overfit_risk 降到 medium/low 的候选，而不是放宽 overfit gate。")
+    if int(warning_counts.get("REGIME_FRAGILITY") or 0) > 0:
+        actions.append("收窄 semiconductor exposure 或提高 cash floor，重点检查 risk-off 表现。")
+    if int(warning_counts.get("PERFORMANCE_CONCENTRATED_IN_FEW_SLICES") or 0) > 0:
+        actions.append("使用 last_3y/last_5y/full_available 验证候选是否只依赖单一强周期。")
+    if stable_multi_preset_count == 0:
+        actions.append("优先筛选跨 preset 重复出现的权重形状，再考虑 forward shadow observation。")
+    return actions
+
+
+def _weight_search_stable_shape_csv_rows(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
+    rows = []
+    for shape in _records(payload.get("cross_preset_stable_shapes")):
+        rows.append(
+            {
+                "stable_shape_id": shape.get("stable_shape_id"),
+                "shape_key": shape.get("shape_key"),
+                "cross_preset_stability_score": shape.get("cross_preset_stability_score"),
+                "appearance_count": shape.get("appearance_count"),
+                "preset_count": shape.get("preset_count"),
+                "search_count": shape.get("search_count"),
+                "average_rank": shape.get("average_rank"),
+                "rank_consistency": shape.get("rank_consistency"),
+                "weight_shape_similarity": shape.get("weight_shape_similarity"),
+                "regime_failure_count": shape.get("regime_failure_count"),
+                "readiness_counts": json.dumps(
+                    shape.get("readiness_counts") or {},
+                    ensure_ascii=False,
+                    sort_keys=True,
+                ),
+                "overfit_risk_counts": json.dumps(
+                    shape.get("overfit_risk_counts") or {},
+                    ensure_ascii=False,
+                    sort_keys=True,
+                ),
+                "representative_weights": json.dumps(
+                    shape.get("representative_weights") or {},
+                    ensure_ascii=False,
+                    sort_keys=True,
+                ),
+                "observe_only": True,
+                "candidate_only": True,
+                "production_effect": "none",
+                "broker_action": "none",
+                "manual_review_required": True,
+            }
+        )
+    return rows
+
+
+def _weight_search_near_shadow_csv_rows(payload: Mapping[str, Any]) -> list[dict[str, Any]]:
+    rows = []
+    for candidate in _records(payload.get("near_shadow_candidates")):
+        rows.append(
+            {
+                "search_id": candidate.get("search_id"),
+                "preset_id": candidate.get("preset_id"),
+                "rank": candidate.get("rank"),
+                "weight_set_id": candidate.get("weight_set_id"),
+                "shape_key": candidate.get("shape_key"),
+                "historical_score": candidate.get("historical_score"),
+                "overfit_risk": candidate.get("overfit_risk"),
+                "overfit_risk_score": candidate.get("overfit_risk_score"),
+                "forward_readiness_status": candidate.get("forward_readiness_status"),
+                "regime_failure_count": candidate.get("regime_failure_count"),
+                "distance_to_shadow_ready": candidate.get("distance_to_shadow_ready"),
+                "weights": json.dumps(
+                    candidate.get("weights") or {},
+                    ensure_ascii=False,
+                    sort_keys=True,
+                ),
+                "main_gaps": json.dumps(candidate.get("main_gaps") or [], ensure_ascii=False),
+                "rescue_suggestions": json.dumps(
+                    candidate.get("rescue_suggestions") or [],
+                    ensure_ascii=False,
+                ),
+                "blockers": json.dumps(candidate.get("blockers") or [], ensure_ascii=False),
+                "warnings": json.dumps(candidate.get("warnings") or [], ensure_ascii=False),
+                "observe_only": True,
+                "candidate_only": True,
+                "production_effect": "none",
+                "broker_action": "none",
+                "manual_review_required": True,
+            }
+        )
+    return rows
 
 
 def _benchmark_comparison_for_symbol(

@@ -16,6 +16,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
     DEFAULT_WEIGHT_CALIBRATION_PRESET_CONFIG_PATH,
     DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
+    WEIGHT_ROBUST_SEARCH_PACK_IDS,
     ETFWeightCalibrationPresetRegistry,
     ETFWeightSearchRegistry,
     WeightCalibrationError,
@@ -24,6 +25,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     build_dual_track_weight_calibration_report,
     build_dual_track_weight_calibration_validation_report,
     build_historical_weight_calibration_usability_validation_report,
+    build_historical_weight_search_diagnostics_report,
     build_weight_candidate_comparison_table,
     build_weight_initial_recommendation_report,
     build_weight_overfit_diagnostics,
@@ -50,6 +52,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     validate_dual_track_weight_calibration_report,
     validate_dual_track_weight_calibration_validation_report,
     validate_historical_weight_calibration_usability_validation_report,
+    validate_historical_weight_search_diagnostics_report,
     validate_weight_candidate_comparison_table,
     validate_weight_forward_enrollment_record,
     validate_weight_initial_recommendation_report,
@@ -62,6 +65,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     write_dual_track_weight_calibration_report,
     write_dual_track_weight_calibration_validation_report,
     write_historical_weight_calibration_usability_validation_report,
+    write_historical_weight_search_diagnostics_report,
     write_weight_candidate_comparison_table,
     write_weight_initial_recommendation_report,
     write_weight_overfit_explanations,
@@ -291,6 +295,31 @@ def test_weight_search_bounded_grid_generates_valid_candidates() -> None:
         for symbol, weight in weights.items():
             constraint = search.weight_constraints[symbol]
             assert constraint.min <= weight <= constraint.max
+
+
+def test_weight_search_robust_packs_are_bounded_and_lower_semiconductor() -> None:
+    config = load_etf_config_bundle()
+    registry = load_weight_search_registry(etf_config=config)
+
+    for search_id in WEIGHT_ROBUST_SEARCH_PACK_IDS:
+        search = registry.weight_searches[search_id]
+        candidates, generation = generate_weight_candidates(
+            search,
+            etf_config=config,
+            max_candidates=6,
+        )
+
+        assert generation["evaluated_candidate_count"] == 6
+        assert search.sleeve_constraints.semiconductor_total_max <= 0.20
+        assert search.safety.production_effect == "none"
+        assert search.safety.broker_action == "none"
+        for weights in candidates:
+            assert round(sum(weights.values()), 10) == 1.0
+            assert (
+                weights["SMH"] + weights["SOXX"]
+                <= search.sleeve_constraints.semiconductor_total_max
+            )
+            assert 0.10 <= weights["CASH"] <= 0.25
 
 
 def test_weight_search_rejects_candidate_limit_above_config() -> None:
@@ -573,6 +602,14 @@ def test_weight_top_candidate_export_contains_required_fields() -> None:
     }
     assert first["production_effect"] == "none"
     validate_weight_top_candidate_export(payload)
+
+
+def test_weight_top_candidate_export_preserves_benchmark_comparison_evidence() -> None:
+    payload = build_weight_top_candidate_export(_small_search_run().payload, top=1)
+
+    warnings = payload["candidates"][0]["warnings"]
+    assert "NO_BENCHMARK_COMPARISON" not in warnings
+    assert payload["candidates"][0]["benchmark_excess_return"] is not None
 
 
 def test_weight_top_candidate_export_ranking_is_stable() -> None:
@@ -2420,6 +2457,127 @@ def test_weight_calibration_usability_validate_cli_writes_json_and_markdown(
     )
     assert list(
         (tmp_path / "validation").glob("historical_calibration_usability_validation_*.md")
+    )
+
+
+def test_historical_weight_search_diagnostics_report_generates_stability_and_rescue(
+    tmp_path: Path,
+) -> None:
+    config = load_etf_config_bundle()
+    prices, metadata_issues = standardize_price_frame(
+        _make_prices(days=900),
+        assets=config.assets,
+        source_name="fixture",
+    )
+    quality_report = validate_price_data(
+        prices,
+        assets=config.assets,
+        strategy=config.strategy,
+        as_of=date.fromisoformat(str(prices["date"].max())),
+        extra_issues=metadata_issues,
+    )
+    registry = load_weight_search_registry(etf_config=config)
+    preset_registry = load_weight_calibration_preset_registry(
+        etf_config=config,
+        weight_search_registry=registry,
+    )
+
+    payload = build_historical_weight_search_diagnostics_report(
+        prices,
+        etf_config=config,
+        quality_report=quality_report,
+        registry=registry,
+        preset_registry=preset_registry,
+        search_ids=["etf_initial_weight_search_v1"],
+        preset_ids=["ai_cycle_recent", "last_2y"],
+        top=3,
+        max_candidates=4,
+        generated_at=datetime(2026, 6, 3, tzinfo=UTC),
+        source_paths={
+            "requirement": (
+                "docs/requirements/"
+                "TRADING-079_Historical_Weight_Search_Diagnostics_and_"
+                "Robust_Candidate_Discovery.md"
+            ),
+        },
+    )
+
+    assert payload["schema_version"] == "etf_weight_search_diagnostics_v1"
+    assert payload["preset_result_count"] == 2
+    assert payload["candidate_observation_count"] == 6
+    assert payload["production_effect"] == "none"
+    assert payload["broker_action"] == "none"
+    assert payload["cross_preset_stable_shapes"]
+    first_shape = payload["cross_preset_stable_shapes"][0]
+    assert 0.0 <= first_shape["cross_preset_stability_score"] <= 1.0
+    assert "rank_consistency" in first_shape
+    assert "weight_shape_similarity" in first_shape
+    assert "regime_failure_count" in first_shape
+    assert "near_shadow_candidates" in payload
+    criteria = payload["shadow_minimum_criteria"]
+    assert criteria["production_effect"] == "none"
+    assert criteria["broker_action"] == "none"
+    assert criteria["recommended_next_actions"]
+    validate_historical_weight_search_diagnostics_report(payload)
+
+    paths = write_historical_weight_search_diagnostics_report(
+        payload,
+        output_dir=tmp_path / "diagnostics",
+    )
+    assert paths["json"].exists()
+    assert paths["markdown"].exists()
+    assert paths["stable_shapes_csv"].exists()
+    assert paths["near_shadow_csv"].exists()
+    assert "ETF Historical Weight Search Diagnostics" in paths[
+        "markdown"
+    ].read_text(encoding="utf-8")
+    assert "cross_preset_stability_score" in paths["stable_shapes_csv"].read_text(
+        encoding="utf-8"
+    )
+
+
+def test_weight_calibration_diagnostics_cli_writes_report(tmp_path: Path) -> None:
+    prices_path = tmp_path / "prices.csv"
+    _make_prices(days=900).to_csv(prices_path, index=False)
+
+    result = CliRunner().invoke(
+        etf_app,
+        [
+            "weight-calibration",
+            "diagnostics",
+            "--preset",
+            "ai_cycle_recent",
+            "--preset",
+            "last_2y",
+            "--top",
+            "3",
+            "--max-candidates",
+            "4",
+            "--prices-path",
+            str(prices_path),
+            "--output-dir",
+            str(tmp_path / "diagnostics"),
+        ],
+        env={"COLUMNS": "180"},
+        terminal_width=180,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "ETF historical weight search diagnostics" in result.output
+    assert "preset_result_count=2" in result.output
+    assert "production_effect=none" in result.output
+    assert "broker_action=none" in result.output
+    assert list((tmp_path / "diagnostics").glob("historical_weight_search_diagnostics_*.json"))
+    assert list((tmp_path / "diagnostics").glob("historical_weight_search_diagnostics_*.md"))
+    assert list(
+        (tmp_path / "diagnostics").glob(
+            "historical_weight_search_diagnostics_*_stable_shapes.csv"
+        )
+    )
+    assert list(
+        (tmp_path / "diagnostics").glob(
+            "historical_weight_search_diagnostics_*_near_shadow.csv"
+        )
     )
 
 
