@@ -14,7 +14,9 @@ from ai_trading_system.etf_portfolio.data import standardize_price_frame, valida
 from ai_trading_system.etf_portfolio.models import load_etf_config_bundle
 from ai_trading_system.etf_portfolio.weight_calibration import (
     DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
+    DEFAULT_WEIGHT_CALIBRATION_PRESET_CONFIG_PATH,
     DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
+    ETFWeightCalibrationPresetRegistry,
     ETFWeightSearchRegistry,
     WeightCalibrationError,
     build_backtest_forward_evidence_aggregation,
@@ -25,10 +27,13 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     enroll_candidate_weights_forward,
     generate_weight_candidates,
     load_candidate_weight_registry,
+    load_weight_calibration_preset,
+    load_weight_calibration_preset_registry,
     load_weight_forward_enrollments,
     load_weight_search_definition,
     load_weight_search_registry,
     register_candidate_weight_sets,
+    resolve_weight_calibration_preset,
     run_historical_weight_search,
     summarize_weight_robustness,
     update_candidate_weight_status,
@@ -60,6 +65,92 @@ def test_weight_search_config_loads_default() -> None:
     assert search.max_candidate_count == 1000
     assert search.safety.production_effect == "none"
     assert search.safety.broker_action == "none"
+
+
+def test_weight_calibration_presets_load_default() -> None:
+    presets = load_weight_calibration_preset_registry()
+
+    assert presets.schema_version == "etf_weight_calibration_presets_v1"
+    assert set(presets.presets) == {
+        "last_2y",
+        "last_3y",
+        "last_5y",
+        "post_2022_bear",
+        "ai_cycle_recent",
+        "full_available",
+    }
+    assert presets.presets["ai_cycle_recent"].start_date == "2022-12-01"
+    assert presets.presets["ai_cycle_recent"].minimum_coverage_ratio == 0.95
+    assert presets.presets["ai_cycle_recent"].safety.production_effect == "none"
+
+
+def test_weight_calibration_preset_rolling_policy_resolves() -> None:
+    preset = load_weight_calibration_preset("last_3y")
+
+    resolved = resolve_weight_calibration_preset(
+        preset,
+        as_of=date(2026, 6, 3),
+        available_end=date(2026, 6, 2),
+    )
+
+    assert resolved["preset_id"] == "last_3y"
+    assert resolved["start_date"] == date(2023, 6, 2)
+    assert resolved["end_date"] == date(2026, 6, 2)
+    assert resolved["production_effect"] == "none"
+
+
+def test_weight_calibration_preset_full_available_requires_available_start() -> None:
+    preset = load_weight_calibration_preset("full_available")
+
+    with pytest.raises(WeightCalibrationError, match="available_start"):
+        resolve_weight_calibration_preset(
+            preset,
+            available_end=date(2026, 6, 2),
+        )
+
+    resolved = resolve_weight_calibration_preset(
+        preset,
+        available_start=date(2020, 1, 2),
+        available_end=date(2026, 6, 2),
+    )
+
+    assert resolved["start_date"] == date(2020, 1, 2)
+    assert resolved["end_date"] == date(2026, 6, 2)
+
+
+def test_weight_calibration_preset_unknown_required_asset_fails(tmp_path: Path) -> None:
+    raw = _raw_presets()
+    raw["presets"]["ai_cycle_recent"]["minimum_required_assets"].append("MISSING")
+
+    with pytest.raises(WeightCalibrationError, match="unknown symbols"):
+        load_weight_calibration_preset_registry(
+            _write_presets_config(raw, tmp_path / "presets.yaml"),
+        )
+
+
+def test_weight_calibration_preset_coverage_threshold_valid() -> None:
+    raw = _raw_presets()
+    raw["presets"]["ai_cycle_recent"]["minimum_coverage_ratio"] = 1.20
+
+    with pytest.raises(ValueError, match="minimum_coverage_ratio"):
+        ETFWeightCalibrationPresetRegistry.model_validate(raw)
+
+
+def test_weight_calibration_preset_invalid_date_range_fails() -> None:
+    raw = _raw_presets()
+    raw["presets"]["post_2022_bear"]["start_date"] = "2024-01-01"
+    raw["presets"]["post_2022_bear"]["end_date_policy"] = "fixed:2023-10-31"
+
+    with pytest.raises(ValueError, match="invalid range"):
+        ETFWeightCalibrationPresetRegistry.model_validate(raw)
+
+
+def test_weight_calibration_preset_unsafe_safety_fields_fail() -> None:
+    raw = _raw_presets()
+    raw["presets"]["ai_cycle_recent"]["safety"]["broker_action"] = "place_order"
+
+    with pytest.raises(ValueError, match="broker_action"):
+        ETFWeightCalibrationPresetRegistry.model_validate(raw)
 
 
 def test_weight_search_constraints_are_valid() -> None:
@@ -395,6 +486,42 @@ def test_weight_search_cli_search_writes_outputs(tmp_path: Path) -> None:
     assert "production_effect=none" in result.output
     assert list(output_dir.glob("*/summary.json"))
     assert list(data_dir.glob("*/candidate_weight_sets.json"))
+
+
+def test_weight_search_cli_search_accepts_historical_preset(tmp_path: Path) -> None:
+    prices_path = tmp_path / "prices.csv"
+    _make_prices(days=900).to_csv(prices_path, index=False)
+    output_dir = tmp_path / "reports"
+    data_dir = tmp_path / "data"
+
+    result = CliRunner().invoke(
+        etf_app,
+        [
+            "weight-calibration",
+            "search",
+            "--search",
+            "etf_initial_weight_search_v1",
+            "--preset",
+            "ai_cycle_recent",
+            "--prices-path",
+            str(prices_path),
+            "--max-candidates",
+            "4",
+            "--output-dir",
+            str(output_dir),
+            "--data-output-dir",
+            str(data_dir),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "preset_id=ai_cycle_recent" in result.output
+    written = json.loads(next(output_dir.glob("*/summary.json")).read_text(encoding="utf-8"))
+    assert written["historical_range_preset"]["preset_id"] == "ai_cycle_recent"
+    assert written["requested_date_range"]["start"] == "2022-12-01"
+    assert written["historical_range_preset"]["production_effect"] == "none"
 
 
 def test_candidate_weight_registry_writes_candidate_records(tmp_path: Path) -> None:
@@ -1404,6 +1531,18 @@ def _raw_registry() -> dict[str, object]:
     raw = safe_load_yaml_path(DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH)
     assert isinstance(raw, dict)
     return deepcopy(raw)
+
+
+def _raw_presets() -> dict[str, object]:
+    raw = safe_load_yaml_path(DEFAULT_WEIGHT_CALIBRATION_PRESET_CONFIG_PATH)
+    assert isinstance(raw, dict)
+    return deepcopy(raw)
+
+
+def _write_presets_config(raw: dict[str, object], path: Path) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(raw, indent=2) + "\n", encoding="utf-8")
+    return path
 
 
 def _search_inputs():

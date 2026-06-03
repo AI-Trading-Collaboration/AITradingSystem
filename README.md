@@ -468,8 +468,11 @@ scorecard、report generator、Reader Brief visibility、source links 和 unsafe
 完整，失败时 fail closed。
 
 TRADING-071 ETF weight calibration 建立 dual-track 初始权重候选流程。`aits etf
-weight-calibration search --search etf_initial_weight_search_v1` 先通过 ETF price quality gate，
-再按 `config/etf_portfolio/weight_search.yaml` 的 SPY/QQQ/SMH/SOXX/CASH bounded grid、
+weight-calibration search --search etf_initial_weight_search_v1` 先通过 ETF price quality gate；
+TRADING-078A 新增 `config/etf_portfolio/weight_calibration_presets.yaml`，可用
+`--preset last_2y/last_3y/last_5y/post_2022_bear/ai_cycle_recent/full_available`
+解析 historical date range，并把 resolved preset metadata 写入 search payload。Search 再按
+`config/etf_portfolio/weight_search.yaml` 的 SPY/QQQ/SMH/SOXX/CASH bounded grid、
 candidate cap、objective policy、benchmark set、walk-forward windows 和 regime splits 生成
 historical candidate initial weights，输出
 `reports/etf_portfolio/weight_calibration/<run_id>/summary.json/md`、`metrics.csv`、

@@ -317,6 +317,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     DEFAULT_ETF_WEIGHT_CALIBRATION_DATA_DIR,
     DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR,
     DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
+    DEFAULT_WEIGHT_CALIBRATION_PRESET_CONFIG_PATH,
     DEFAULT_WEIGHT_CALIBRATION_VALIDATION_DIR,
     DEFAULT_WEIGHT_DUAL_TRACK_REPORT_DIR,
     DEFAULT_WEIGHT_FORWARD_ENROLLMENT_PATH,
@@ -331,11 +332,13 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     enroll_candidate_weights_forward,
     find_latest_weight_search_run_dir,
     load_candidate_weight_registry,
+    load_weight_calibration_preset,
     load_weight_forward_enrollments,
     load_weight_search_definition,
     load_weight_search_registry,
     read_weight_search_run_payload,
     register_candidate_weight_sets,
+    resolve_weight_calibration_preset,
     run_historical_weight_search,
     write_backtest_forward_evidence_aggregation,
     write_candidate_weight_proposals,
@@ -3987,6 +3990,14 @@ def weight_calibration_search_command(
         Path,
         typer.Option("--config-path", help="weight search config YAML path。"),
     ] = DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
+    preset: Annotated[
+        str | None,
+        typer.Option("--preset", help="historical range preset id。"),
+    ] = None,
+    preset_config_path: Annotated[
+        Path,
+        typer.Option("--preset-config-path", help="historical range preset config YAML path。"),
+    ] = DEFAULT_WEIGHT_CALIBRATION_PRESET_CONFIG_PATH,
     prices_path: Annotated[Path, typer.Option(help="ETF 标准价格缓存路径。")] = (
         DEFAULT_ETF_PRICE_PATH
     ),
@@ -4012,20 +4023,43 @@ def weight_calibration_search_command(
     ] = DEFAULT_ETF_WEIGHT_CALIBRATION_DATA_DIR,
 ) -> None:
     """执行 TRADING-071B bounded historical ETF weight search。"""
+    if preset is not None and (start is not None or end is not None):
+        raise typer.BadParameter("--preset cannot be combined with --start or --end")
     config = load_etf_config_bundle()
     registry = load_weight_search_registry(config_path, etf_config=config)
     prices, quality_report = load_standard_prices(prices_path, config.assets, config.strategy)
     if not quality_report.passed:
         typer.echo(f"ETF 数据质量状态：{quality_report.status}，已停止 weight search。")
         raise typer.Exit(code=1)
+    run_start = _parse_date(start) if start else None
+    run_end = _parse_date(end) if end else None
+    preset_context = None
+    if preset is not None:
+        historical_preset = load_weight_calibration_preset(
+            preset,
+            preset_config_path,
+            etf_config=config,
+            weight_search_registry=registry,
+        )
+        available_dates = pd.to_datetime(prices["date"], errors="coerce").dropna()
+        if available_dates.empty:
+            raise typer.BadParameter("prices_path has no valid date values")
+        preset_context = resolve_weight_calibration_preset(
+            historical_preset,
+            available_start=available_dates.min().date(),
+            available_end=available_dates.max().date(),
+        )
+        run_start = preset_context["start_date"]
+        run_end = preset_context["end_date"]
     run = run_historical_weight_search(
         prices,
         etf_config=config,
         quality_report=quality_report,
         registry=registry,
         search_id=search,
-        start=_parse_date(start) if start else None,
-        end=_parse_date(end) if end else None,
+        start=run_start,
+        end=run_end,
+        range_preset=preset_context,
         max_candidates=max_candidates,
     )
     paths = write_weight_search_run(
@@ -4041,6 +4075,12 @@ def weight_calibration_search_command(
     typer.echo(f"total_valid_candidate_count={generation['total_valid_candidate_count']}")
     typer.echo(f"blocked_candidate_count={len(run.payload['blocked_candidates'])}")
     typer.echo(f"data_quality_status={run.payload['data_quality_status']}")
+    if preset_context is not None:
+        typer.echo(f"preset_id={preset_context['preset_id']}")
+        typer.echo(
+            "resolved_date_range="
+            f"{preset_context['start_date'].isoformat()}:{preset_context['end_date'].isoformat()}"
+        )
     typer.echo("observe_only=true")
     typer.echo("candidate_only=true")
     typer.echo("production_effect=none")

@@ -33,6 +33,9 @@ from ai_trading_system.yaml_loader import safe_load_yaml_path
 DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "weight_search.yaml"
 )
+DEFAULT_WEIGHT_CALIBRATION_PRESET_CONFIG_PATH = (
+    PROJECT_ROOT / "config" / "etf_portfolio" / "weight_calibration_presets.yaml"
+)
 DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR = (
     PROJECT_ROOT / "reports" / "etf_portfolio" / "weight_calibration"
 )
@@ -58,6 +61,7 @@ DEFAULT_WEIGHT_CALIBRATION_VALIDATION_DIR = (
 )
 
 WEIGHT_SEARCH_SCHEMA_VERSION = "etf_weight_search_v1"
+WEIGHT_CALIBRATION_PRESET_SCHEMA_VERSION = "etf_weight_calibration_presets_v1"
 WEIGHT_SEARCH_RUN_SCHEMA_VERSION = "etf_weight_search_run_v1"
 CANDIDATE_WEIGHT_REGISTRY_SCHEMA_VERSION = "etf_candidate_weight_registry_v1"
 WEIGHT_FORWARD_ENROLLMENT_SCHEMA_VERSION = "etf_weight_forward_enrollment_v1"
@@ -365,6 +369,65 @@ class ETFWeightSearchRegistry(BaseModel):
         return _config_hash(self.model_dump(mode="json"))
 
 
+class ETFWeightCalibrationPreset(BaseModel):
+    preset_id: str = Field(min_length=1)
+    description: str = Field(min_length=1)
+    start_date: str = Field(min_length=1)
+    end_date_policy: str = Field(min_length=1)
+    minimum_required_assets: list[str] = Field(min_length=1)
+    minimum_coverage_ratio: float = Field(gt=0, le=1)
+    benchmark_set: str = Field(min_length=1)
+    intended_use: str = Field(min_length=1)
+    safety: ETFWeightCalibrationSafety
+
+    @model_validator(mode="after")
+    def validate_preset(self) -> Self:
+        self.minimum_required_assets = _normalized_unique_symbols(
+            self.minimum_required_assets,
+            "minimum_required_assets",
+        )
+        if not _valid_preset_start_date_policy(self.start_date):
+            raise ValueError(
+                "ETF weight calibration preset start_date must be YYYY-MM-DD, "
+                "rolling_<N>y, or earliest_available"
+            )
+        if not _valid_preset_end_date_policy(self.end_date_policy):
+            raise ValueError(
+                "ETF weight calibration preset end_date_policy must be "
+                "latest_available_or_as_of, as_of, or fixed:YYYY-MM-DD"
+            )
+        if self.end_date_policy.startswith("fixed:"):
+            resolved = resolve_weight_calibration_preset(self)
+            if resolved["start_date"] > resolved["end_date"]:
+                raise ValueError("ETF weight calibration preset start_date must be <= end_date")
+        return self
+
+
+class ETFWeightCalibrationPresetRegistry(BaseModel):
+    schema_version: str = Field(min_length=1)
+    policy_metadata: PolicyMetadata
+    presets: dict[str, ETFWeightCalibrationPreset] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_registry(self) -> Self:
+        if self.schema_version != WEIGHT_CALIBRATION_PRESET_SCHEMA_VERSION:
+            raise ValueError(
+                "ETF weight calibration preset schema_version must be "
+                f"{WEIGHT_CALIBRATION_PRESET_SCHEMA_VERSION}"
+            )
+        for key, preset in self.presets.items():
+            if preset.preset_id != key:
+                raise ValueError(
+                    "ETF weight calibration preset mapping key must match preset_id: "
+                    f"{key} != {preset.preset_id}"
+                )
+        return self
+
+    @property
+    def config_hash(self) -> str:
+        return _config_hash(self.model_dump(mode="json"))
+
+
 def load_weight_search_registry(
     path: Path = DEFAULT_ETF_WEIGHT_SEARCH_CONFIG_PATH,
     *,
@@ -382,6 +445,111 @@ def load_weight_search_registry(
     except ValueError as exc:
         raise WeightCalibrationError(str(exc)) from exc
     return registry
+
+
+def load_weight_calibration_preset_registry(
+    path: Path = DEFAULT_WEIGHT_CALIBRATION_PRESET_CONFIG_PATH,
+    *,
+    etf_config: ETFConfigBundle | None = None,
+    weight_search_registry: ETFWeightSearchRegistry | None = None,
+) -> ETFWeightCalibrationPresetRegistry:
+    raw = safe_load_yaml_path(path)
+    if not isinstance(raw, dict):
+        raise WeightCalibrationError(
+            f"ETF weight calibration presets config must be a YAML mapping: {path}"
+        )
+    try:
+        registry = ETFWeightCalibrationPresetRegistry.model_validate(raw)
+        validate_weight_calibration_preset_registry(
+            registry,
+            etf_config=etf_config or load_etf_config_bundle(),
+            weight_search_registry=weight_search_registry or load_weight_search_registry(),
+        )
+    except ValueError as exc:
+        raise WeightCalibrationError(str(exc)) from exc
+    return registry
+
+
+def load_weight_calibration_preset(
+    preset_id: str,
+    path: Path = DEFAULT_WEIGHT_CALIBRATION_PRESET_CONFIG_PATH,
+    *,
+    etf_config: ETFConfigBundle | None = None,
+    weight_search_registry: ETFWeightSearchRegistry | None = None,
+) -> ETFWeightCalibrationPreset:
+    registry = load_weight_calibration_preset_registry(
+        path,
+        etf_config=etf_config,
+        weight_search_registry=weight_search_registry,
+    )
+    try:
+        return registry.presets[preset_id]
+    except KeyError as exc:
+        raise WeightCalibrationError(
+            f"unknown ETF weight calibration preset: {preset_id}"
+        ) from exc
+
+
+def validate_weight_calibration_preset_registry(
+    registry: ETFWeightCalibrationPresetRegistry,
+    *,
+    etf_config: ETFConfigBundle,
+    weight_search_registry: ETFWeightSearchRegistry,
+) -> None:
+    available_symbols = set(etf_config.assets.assets) | {"CASH"}
+    benchmark_sets = set(weight_search_registry.benchmark_sets)
+    issues = []
+    for preset in registry.presets.values():
+        missing_symbols = sorted(set(preset.minimum_required_assets) - available_symbols)
+        if missing_symbols:
+            issues.append(
+                f"{preset.preset_id} minimum_required_assets references unknown symbols: "
+                f"{', '.join(missing_symbols)}"
+            )
+        if preset.benchmark_set not in benchmark_sets:
+            issues.append(
+                f"{preset.preset_id} references unknown benchmark_set: "
+                f"{preset.benchmark_set}"
+            )
+    if issues:
+        raise WeightCalibrationError("; ".join(issues))
+
+
+def resolve_weight_calibration_preset(
+    preset: ETFWeightCalibrationPreset,
+    *,
+    as_of: date | None = None,
+    available_start: date | None = None,
+    available_end: date | None = None,
+) -> dict[str, Any]:
+    end_date = _resolve_preset_end_date(
+        preset.end_date_policy,
+        as_of=as_of,
+        available_end=available_end,
+    )
+    start_date = _resolve_preset_start_date(
+        preset.start_date,
+        end_date=end_date,
+        available_start=available_start,
+    )
+    if start_date > end_date:
+        raise WeightCalibrationError(
+            f"ETF weight calibration preset {preset.preset_id} resolves to invalid range: "
+            f"{start_date.isoformat()} > {end_date.isoformat()}"
+        )
+    return {
+        "preset_id": preset.preset_id,
+        "description": preset.description,
+        "start_date": start_date,
+        "end_date": end_date,
+        "end_date_policy": preset.end_date_policy,
+        "minimum_required_assets": list(preset.minimum_required_assets),
+        "minimum_coverage_ratio": preset.minimum_coverage_ratio,
+        "benchmark_set": preset.benchmark_set,
+        "intended_use": preset.intended_use,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
 
 
 def load_weight_search_definition(
@@ -503,6 +671,7 @@ def run_historical_weight_search(
     search_id: str,
     start: date | None = None,
     end: date | None = None,
+    range_preset: Mapping[str, Any] | None = None,
     max_candidates: int | None = None,
     generated_at: datetime | None = None,
 ) -> ETFWeightSearchRun:
@@ -630,6 +799,7 @@ def run_historical_weight_search(
         "search_config_hash": registry.config_hash,
         "generated_at": generated.isoformat(),
         "market_regime": etf_config.backtest.backtest.regime,
+        "historical_range_preset": _range_preset_payload(range_preset or {}),
         "requested_date_range": {
             "start": run_start.isoformat(),
             "end": run_end.isoformat(),
@@ -2980,6 +3150,87 @@ def _raise_if_invalid_grid_step(grid_step: float) -> None:
     inverse = 1.0 / float(grid_step)
     if abs(inverse - round(inverse)) > 1e-8:
         raise ValueError("ETF weight search grid_step must divide 1.0 exactly")
+
+
+def _valid_preset_start_date_policy(value: str) -> bool:
+    text = str(value).strip()
+    if text == "earliest_available":
+        return True
+    if text.startswith("rolling_") and text.endswith("y"):
+        years = text.removeprefix("rolling_").removesuffix("y")
+        return years.isdigit() and int(years) > 0
+    try:
+        date.fromisoformat(text)
+    except ValueError:
+        return False
+    return True
+
+
+def _valid_preset_end_date_policy(value: str) -> bool:
+    text = str(value).strip()
+    if text in {"latest_available_or_as_of", "as_of"}:
+        return True
+    if not text.startswith("fixed:"):
+        return False
+    try:
+        date.fromisoformat(text.removeprefix("fixed:"))
+    except ValueError:
+        return False
+    return True
+
+
+def _resolve_preset_end_date(
+    policy: str,
+    *,
+    as_of: date | None,
+    available_end: date | None,
+) -> date:
+    text = str(policy).strip()
+    if text == "latest_available_or_as_of":
+        return available_end or as_of or date.today()
+    if text == "as_of":
+        return as_of or date.today()
+    if text.startswith("fixed:"):
+        return date.fromisoformat(text.removeprefix("fixed:"))
+    raise WeightCalibrationError(f"unsupported ETF weight calibration end_date_policy: {policy}")
+
+
+def _resolve_preset_start_date(
+    policy: str,
+    *,
+    end_date: date,
+    available_start: date | None,
+) -> date:
+    text = str(policy).strip()
+    if text == "earliest_available":
+        if available_start is None:
+            raise WeightCalibrationError(
+                "ETF weight calibration preset earliest_available requires available_start"
+            )
+        return available_start
+    if text.startswith("rolling_") and text.endswith("y"):
+        years = int(text.removeprefix("rolling_").removesuffix("y"))
+        return _shift_years(end_date, -years)
+    return date.fromisoformat(text)
+
+
+def _shift_years(value: date, years: int) -> date:
+    try:
+        return value.replace(year=value.year + years)
+    except ValueError:
+        return value.replace(year=value.year + years, day=28)
+
+
+def _range_preset_payload(preset: Mapping[str, Any]) -> dict[str, Any]:
+    payload: dict[str, Any] = {}
+    for key, value in preset.items():
+        if isinstance(value, date):
+            payload[key] = value.isoformat()
+        elif isinstance(value, Mapping):
+            payload[key] = dict(value)
+        else:
+            payload[key] = value
+    return payload
 
 
 def _config_hash(payload: dict[str, Any]) -> str:

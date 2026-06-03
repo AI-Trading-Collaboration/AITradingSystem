@@ -1,0 +1,136 @@
+schema_version: etf_weight_calibration_presets_v1
+
+policy_metadata:
+  version: etf_weight_calibration_presets_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: "TRADING-078A reusable historical data range presets for ETF weight calibration."
+  validation: "Focused tests cover preset loading, rolling date resolution, minimum assets, coverage thresholds, invalid date ranges, and safety fields."
+  review_condition: "Review after initial TRADING-078 candidate recommendation reports and forward shadow observations."
+
+presets:
+  last_2y:
+    preset_id: last_2y
+    description: "Most recent two-year historical calibration window ending at latest available price date or explicit as-of date."
+    start_date: rolling_2y
+    end_date_policy: latest_available_or_as_of
+    minimum_required_assets:
+      - SPY
+      - QQQ
+      - SMH
+      - SOXX
+      - CASH
+    minimum_coverage_ratio: 0.95
+    benchmark_set: standard_etf
+    intended_use: "Recent regime sanity check before selecting candidate-only initial ETF weights."
+    safety:
+      observe_only: true
+      candidate_only: true
+      production_effect: none
+      broker_action: none
+      manual_review_required: true
+
+  last_3y:
+    preset_id: last_3y
+    description: "Most recent three-year historical calibration window for balanced AI-cycle candidate selection."
+    start_date: rolling_3y
+    end_date_policy: latest_available_or_as_of
+    minimum_required_assets:
+      - SPY
+      - QQQ
+      - SMH
+      - SOXX
+      - CASH
+    minimum_coverage_ratio: 0.95
+    benchmark_set: standard_etf
+    intended_use: "Default usability workflow window when enough post-ChatGPT data is available."
+    safety:
+      observe_only: true
+      candidate_only: true
+      production_effect: none
+      broker_action: none
+      manual_review_required: true
+
+  last_5y:
+    preset_id: last_5y
+    description: "Most recent five-year historical calibration window for stress comparison against pre-AI-cycle context."
+    start_date: rolling_5y
+    end_date_policy: latest_available_or_as_of
+    minimum_required_assets:
+      - SPY
+      - QQQ
+      - SMH
+      - SOXX
+      - CASH
+    minimum_coverage_ratio: 0.95
+    benchmark_set: standard_etf
+    intended_use: "Longer comparison window; reports must not treat pre-2022 history as the default AI-cycle conclusion."
+    safety:
+      observe_only: true
+      candidate_only: true
+      production_effect: none
+      broker_action: none
+      manual_review_required: true
+
+  post_2022_bear:
+    preset_id: post_2022_bear
+    description: "Initial post-ChatGPT bear/recovery stress window from the first full U.S. trading day after launch through 2023-10-31."
+    start_date: "2022-12-01"
+    end_date_policy: fixed:2023-10-31
+    minimum_required_assets:
+      - SPY
+      - QQQ
+      - SMH
+      - SOXX
+      - CASH
+    minimum_coverage_ratio: 0.90
+    benchmark_set: standard_etf
+    intended_use: "Stress-test candidate weights against early AI-cycle drawdown/recovery behavior."
+    safety:
+      observe_only: true
+      candidate_only: true
+      production_effect: none
+      broker_action: none
+      manual_review_required: true
+
+  ai_cycle_recent:
+    preset_id: ai_cycle_recent
+    description: "AI-after-ChatGPT calibration window anchored at 2022-12-01 and ending at latest available price date or explicit as-of date."
+    start_date: "2022-12-01"
+    end_date_policy: latest_available_or_as_of
+    minimum_required_assets:
+      - SPY
+      - QQQ
+      - SMH
+      - SOXX
+      - CASH
+    minimum_coverage_ratio: 0.95
+    benchmark_set: standard_etf
+    intended_use: "Primary AI-cycle historical conclusion window for initial candidate-only ETF weights."
+    safety:
+      observe_only: true
+      candidate_only: true
+      production_effect: none
+      broker_action: none
+      manual_review_required: true
+
+  full_available:
+    preset_id: full_available
+    description: "Full available local price history window for comparison and stress testing."
+    start_date: earliest_available
+    end_date_policy: latest_available_or_as_of
+    minimum_required_assets:
+      - SPY
+      - QQQ
+      - SMH
+      - SOXX
+      - CASH
+    minimum_coverage_ratio: 0.90
+    benchmark_set: standard_etf
+    intended_use: "Stress/comparison window only; primary AI-cycle conclusions must document why older history is relevant."
+    safety:
+      observe_only: true
+      candidate_only: true
+      production_effect: none
+      broker_action: none
+      manual_review_required: true
