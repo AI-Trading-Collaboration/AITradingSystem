@@ -82,6 +82,7 @@ def test_operations_schedule_daily_required_nodes_exist() -> None:
         "satellite_attribution_update",
         "reader_brief_generate",
         "report_registry_update",
+        "data_quality_governance_report",
         "operations_health_check",
     }.issubset(daily_ids)
 
@@ -191,6 +192,7 @@ def test_daily_operations_command_graph_builds() -> None:
         "satellite_attribution_update",
         "reader_brief_generate",
         "report_registry_update",
+        "data_quality_governance_report",
         "operations_health_check",
     }
     assert graph.schema_version == OPERATIONS_COMMAND_GRAPH_SCHEMA_VERSION
@@ -239,6 +241,8 @@ def test_daily_operations_command_graph_allows_optional_nodes_to_skip() -> None:
     report_registry = next(node for node in graph.nodes if node.node_id == "report_registry_update")
     assert "ai_attribution_update" not in report_registry.dependencies
     assert "satellite_attribution_update" not in report_registry.dependencies
+    reader_brief = next(node for node in graph.nodes if node.node_id == "reader_brief_generate")
+    assert reader_brief.dependencies == ["data_quality_governance_report"]
 
 
 def test_daily_operations_command_graph_refuses_to_skip_required_node() -> None:
@@ -1168,7 +1172,14 @@ def test_operations_scheduler_dry_run_monthly_includes_expected_outputs(
     )
 
     assert dry_run.cadence == "monthly"
-    assert "outputs/reports/data_quality_{as_of}.md" in dry_run.expected_outputs
+    assert (
+        "reports/etf_portfolio/data_quality/governance/data_quality_report_{as_of}.json"
+        in dry_run.expected_outputs
+    )
+    assert (
+        "reports/etf_portfolio/data_quality/governance/data_quality_report_{as_of}.md"
+        in dry_run.expected_outputs
+    )
     assert (
         "reports/etf_portfolio/operations/monthly/operations_health_{as_of}.json"
         in dry_run.expected_outputs

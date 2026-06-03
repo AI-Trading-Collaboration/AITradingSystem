@@ -782,6 +782,38 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_data_quality_governance_report
+    title: ETF Data Quality Governance Report
+    group: data_quality
+    cadence: daily
+    audience: operator
+    owner: system
+    command: aits etf data-quality report --as-of YYYY-MM-DD
+    artifact_globs:
+      - reports/etf_portfolio/data_quality/governance/data_quality_report_*.json
+      - reports/etf_portfolio/data_quality/governance/data_quality_report_*.md
+    freshness_sla_days: 1
+    freshness_rationale: TRADING-075 governance report should summarize price freshness, calendar coverage, outliers, config/model drift, evidence completeness, gate freshness, report staleness, Reader Brief links, blockers, warnings, and manual review items before Reader Brief interpretation.
+    owner_action: run_aits_etf_data_quality_report_after_report_index_and_before_reader_brief
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_data_quality_validation
+    title: ETF Data Quality Validation Gate
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf data-quality validate --as-of YYYY-MM-DD
+    artifact_globs:
+      - reports/etf_portfolio/data_quality/validation/data_quality_validation_*.json
+      - reports/etf_portfolio/data_quality/validation/data_quality_validation_*.md
+    freshness_sla_days: 14
+    freshness_rationale: TRADING-075 final validation confirms policy loading, checkers, report generator, Reader Brief integration, and safety boundaries before marking the workflow validating.
+    owner_action: run_aits_etf_data_quality_validate_before_marking_TRADING_075_validating_or_done
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_p2_walk_forward
     title: ETF P2 Walk Forward Readiness
     group: research

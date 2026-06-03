@@ -351,6 +351,56 @@ def _dispatch(args: list[str]) -> None:
             include_optional=not _flag(args, "--skip-optional"),
         )
         return
+    if args[:3] == ["etf", "data-quality", "report"]:
+        etf_cli.data_quality_report_command(
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            prices_path=_path_option_with_default(
+                args,
+                "--prices-path",
+                etf_cli.DEFAULT_ETF_PRICE_PATH,
+            ),
+            config_path=(
+                _optional_path(args, "--config-path")
+                or _optional_path(args, "--config")
+                or etf_cli.DEFAULT_ETF_DATA_QUALITY_POLICY_CONFIG_PATH
+            ),
+            report_registry_path=_path_option_with_default(
+                args,
+                "--report-registry-path",
+                etf_cli.DEFAULT_REPORT_REGISTRY_PATH,
+            ),
+            root_path=_path_option_with_default(args, "--root-path", etf_cli.PROJECT_ROOT),
+            output_dir=_path_option_with_default(
+                args,
+                "--output-dir",
+                etf_cli.DEFAULT_ETF_DATA_QUALITY_REPORT_DIR,
+            ),
+            json_path=_optional_path(args, "--json-path"),
+            markdown_path=_optional_path(args, "--markdown-path"),
+        )
+        return
+    if args[:3] == ["etf", "data-quality", "validate"]:
+        etf_cli.data_quality_validate_command(
+            as_of=_option(args, "--as-of") or _option(args, "--date"),
+            config_path=(
+                _optional_path(args, "--config-path")
+                or _optional_path(args, "--config")
+                or etf_cli.DEFAULT_ETF_DATA_QUALITY_POLICY_CONFIG_PATH
+            ),
+            report_registry_path=_path_option_with_default(
+                args,
+                "--report-registry-path",
+                etf_cli.DEFAULT_REPORT_REGISTRY_PATH,
+            ),
+            output_dir=_path_option_with_default(
+                args,
+                "--output-dir",
+                etf_cli.DEFAULT_ETF_DATA_QUALITY_VALIDATION_DIR,
+            ),
+            json_path=_optional_path(args, "--json-path"),
+            markdown_path=_optional_path(args, "--markdown-path"),
+        )
+        return
     if args[:2] == ["parameters", "shadow-backtest"]:
         cli.parameters_shadow_backtest_command(
             latest=_flag(args, "--latest"),

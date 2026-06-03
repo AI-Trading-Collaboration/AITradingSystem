@@ -118,13 +118,26 @@ daily_pipeline:
     max_allowed_age: 1
     failure_policy: block_dependent_steps
     owner_review_required: false
+  - step_id: data_quality_governance_report
+    description: "Generate TRADING-075 data quality and staleness governance report before Reader Brief links daily artifacts."
+    command: "aits etf data-quality report --as-of {as_of}"
+    cadence: daily
+    required: true
+    dependencies:
+      - report_registry_update
+    expected_outputs:
+      - "reports/etf_portfolio/data_quality/governance/data_quality_report_{as_of}.json"
+      - "reports/etf_portfolio/data_quality/governance/data_quality_report_{as_of}.md"
+    max_allowed_age: 1
+    failure_policy: block_dependent_steps
+    owner_review_required: false
   - step_id: reader_brief_generate
     description: "Generate Reader Brief using existing report artifacts and the refreshed report index."
     command: "aits reports reader-brief --date {as_of}"
     cadence: daily
     required: true
     dependencies:
-      - report_registry_update
+      - data_quality_governance_report
     expected_outputs:
       - "outputs/reports/reader_brief_{as_of}.json"
       - "outputs/reports/reader_brief_{as_of}.html"
@@ -324,12 +337,13 @@ biweekly_pipeline:
 monthly_pipeline:
   - step_id: data_quality_audit
     description: "Run monthly data quality and staleness audit before heavier evidence reviews."
-    command: "aits validate-data --as-of {as_of}"
+    command: "aits etf data-quality report --as-of {as_of}"
     cadence: monthly
     required: true
     dependencies: []
     expected_outputs:
-      - "outputs/reports/data_quality_{as_of}.md"
+      - "reports/etf_portfolio/data_quality/governance/data_quality_report_{as_of}.json"
+      - "reports/etf_portfolio/data_quality/governance/data_quality_report_{as_of}.md"
     max_allowed_age: 31
     failure_policy: fail_pipeline
     owner_review_required: true

@@ -179,6 +179,7 @@ def build_reader_brief_payload(
     etf_parameter_review = _etf_parameter_review_summary(report_index)
     etf_weight_calibration = _etf_weight_calibration_summary(report_index)
     etf_operations_health = _etf_operations_health_summary(report_index)
+    etf_data_quality_governance = _etf_data_quality_governance_summary(report_index)
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -305,6 +306,7 @@ def build_reader_brief_payload(
         "etf_parameter_review": etf_parameter_review,
         "etf_weight_calibration": etf_weight_calibration,
         "etf_operations_health": etf_operations_health,
+        "etf_data_quality_governance": etf_data_quality_governance,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -563,6 +565,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_parameter_review = _mapping(payload.get("etf_parameter_review"))
     etf_weight_calibration = _mapping(payload.get("etf_weight_calibration"))
     etf_operations_health = _mapping(payload.get("etf_operations_health"))
+    etf_data_quality_governance = _mapping(payload.get("etf_data_quality_governance"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -757,6 +760,54 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("detailed_report", etf_operations_health.get("detail_report")),
                     ("production_effect", etf_operations_health.get("production_effect")),
                     ("broker_action", etf_operations_health.get("broker_action")),
+                ]
+            ),
+        ),
+        _section(
+            "ETF Data Quality",
+            _definition_table(
+                [
+                    ("availability", etf_data_quality_governance.get("availability")),
+                    ("status", etf_data_quality_governance.get("status")),
+                    ("summary", etf_data_quality_governance.get("summary_sentence")),
+                    (
+                        "blocking_failures",
+                        etf_data_quality_governance.get("blocking_failure_count"),
+                    ),
+                    ("warnings", etf_data_quality_governance.get("warning_count")),
+                    (
+                        "price_freshness",
+                        etf_data_quality_governance.get("price_freshness_status"),
+                    ),
+                    (
+                        "missing_bars",
+                        etf_data_quality_governance.get("missing_bars_status"),
+                    ),
+                    (
+                        "return_outliers",
+                        etf_data_quality_governance.get("return_outliers_status"),
+                    ),
+                    ("config_drift", etf_data_quality_governance.get("config_drift_status")),
+                    (
+                        "evidence_completeness",
+                        etf_data_quality_governance.get("evidence_completeness_status"),
+                    ),
+                    (
+                        "gate_freshness",
+                        etf_data_quality_governance.get("gate_freshness_status"),
+                    ),
+                    (
+                        "report_staleness",
+                        etf_data_quality_governance.get("report_staleness_status"),
+                    ),
+                    (
+                        "reader_brief_links",
+                        etf_data_quality_governance.get("reader_brief_link_status"),
+                    ),
+                    ("detailed_report", etf_data_quality_governance.get("detail_report")),
+                    ("safety_status", etf_data_quality_governance.get("safety_status")),
+                    ("production_effect", etf_data_quality_governance.get("production_effect")),
+                    ("broker_action", etf_data_quality_governance.get("broker_action")),
                 ]
             ),
         ),
@@ -2748,6 +2799,130 @@ def _etf_operations_health_owner_review(payload: Mapping[str, Any]) -> str:
 
 
 def _etf_operations_health_safety_status(payload: Mapping[str, Any]) -> str:
+    safety_banner = _mapping(payload.get("safety_banner"))
+    safe = (
+        safety_banner.get("observe_only") is True
+        and safety_banner.get("candidate_only") is True
+        and _text(safety_banner.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
+        and safety_banner.get("broker_action") == "none"
+        and safety_banner.get("manual_review_required") is True
+        and payload.get("commands_executed") is False
+        and payload.get("production_state_mutated") is False
+    )
+    return (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true; "
+        "commands_executed=false; production_state_mutated=false"
+        if safe
+        else "SAFETY_REVIEW_REQUIRED"
+    )
+
+
+def _etf_data_quality_governance_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_data_quality_governance_summary()
+    report_path = _report_index_artifact_path(
+        report_index,
+        "etf_data_quality_governance_report",
+    )
+    report = _read_optional_json(report_path)
+    if not report:
+        return _missing_etf_data_quality_governance_summary()
+
+    status = _text(report.get("status"), "UNKNOWN")
+    blocking_failures = _records(report.get("blocking_failures"))
+    warnings = _records(report.get("warnings"))
+    safety_status = _etf_data_quality_governance_safety_status(report)
+    section_status = {
+        "price_freshness_status": _section_blocking_status(report.get("price_freshness")),
+        "missing_bars_status": _section_blocking_status(report.get("missing_bars")),
+        "return_outliers_status": _section_blocking_status(report.get("return_outliers")),
+        "config_drift_status": _section_blocking_status(
+            report.get("config_hash_model_version_drift")
+        ),
+        "evidence_completeness_status": _section_blocking_status(
+            report.get("evidence_completeness")
+        ),
+        "gate_freshness_status": _section_blocking_status(
+            report.get("validation_gate_freshness")
+        ),
+        "report_staleness_status": _section_blocking_status(report.get("report_staleness")),
+        "reader_brief_link_status": _section_blocking_status(report.get("reader_brief_links")),
+    }
+    safety_banner = _mapping(report.get("safety_banner"))
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "summary_sentence": (
+            f"ETF Data Quality: status={status}; "
+            f"blocking_failures={len(blocking_failures)}; warnings={len(warnings)}; "
+            f"price_freshness={section_status['price_freshness_status']}; "
+            f"missing_bars={section_status['missing_bars_status']}; "
+            f"reader_brief_links={section_status['reader_brief_link_status']}; "
+            f"safety={safety_status}."
+        ),
+        "blocking_failure_count": len(blocking_failures),
+        "warning_count": len(warnings),
+        "blocking_failures": [
+            _text(item.get("finding_id"), "UNKNOWN") for item in blocking_failures[:5]
+        ],
+        "warning_findings": [_text(item.get("finding_id"), "UNKNOWN") for item in warnings[:5]],
+        "detail_report": "" if report_path is None else str(report_path),
+        "safety_status": safety_status,
+        "production_effect": _text(safety_banner.get("production_effect"), PRODUCTION_EFFECT),
+        "broker_action": _text(safety_banner.get("broker_action"), "none"),
+        "manual_review_required": safety_banner.get("manual_review_required") is True,
+        "commands_executed": report.get("commands_executed") is True,
+        "production_state_mutated": report.get("production_state_mutated") is True,
+        **section_status,
+    }
+
+
+def _missing_etf_data_quality_governance_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "summary_sentence": "ETF Data Quality: no latest governance report found.",
+        "blocking_failure_count": 0,
+        "warning_count": 1,
+        "blocking_failures": [],
+        "warning_findings": ["etf_data_quality_governance_report"],
+        "detail_report": "",
+        "price_freshness_status": "MISSING",
+        "missing_bars_status": "MISSING",
+        "return_outliers_status": "MISSING",
+        "config_drift_status": "MISSING",
+        "evidence_completeness_status": "MISSING",
+        "gate_freshness_status": "MISSING",
+        "report_staleness_status": "MISSING",
+        "reader_brief_link_status": "MISSING",
+        "safety_status": "MISSING",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "commands_executed": False,
+        "production_state_mutated": False,
+        "limitation": (
+            "ETF data quality governance artifact is missing; Reader Brief does not run "
+            "etf data-quality report CLI."
+        ),
+    }
+
+
+def _section_blocking_status(section: Any) -> str:
+    summary = _mapping(_mapping(section).get("summary"))
+    blocking_count = _int(summary.get("blocking_count"))
+    warning_count = _int(summary.get("warning_count"))
+    if blocking_count > 0:
+        return "BLOCKED"
+    if warning_count > 0:
+        return "WARNING"
+    if summary:
+        return "PASS"
+    return "MISSING"
+
+
+def _etf_data_quality_governance_safety_status(payload: Mapping[str, Any]) -> str:
     safety_banner = _mapping(payload.get("safety_banner"))
     safe = (
         safety_banner.get("observe_only") is True

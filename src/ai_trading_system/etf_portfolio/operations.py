@@ -150,6 +150,7 @@ REQUIRED_DAILY_OPERATION_NODE_IDS = frozenset(
         "satellite_replacement_run",
         "reader_brief_generate",
         "report_registry_update",
+        "data_quality_governance_report",
         "operations_health_check",
     }
 )
@@ -206,6 +207,7 @@ _DAILY_RUNTIME_CLASS_BY_STEP_ID: dict[str, OperationsRuntimeClass] = {
     "ai_attribution_update": "medium",
     "satellite_attribution_update": "medium",
     "report_registry_update": "fast",
+    "data_quality_governance_report": "fast",
     "reader_brief_generate": "fast",
     "operations_health_check": "fast",
 }

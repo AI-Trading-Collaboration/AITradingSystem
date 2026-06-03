@@ -1,0 +1,213 @@
+schema_version: etf_data_quality_policy_v1
+
+policy_metadata:
+  version: etf_data_quality_policy_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: "TRADING-075 config-driven ETF data quality and staleness governance."
+  validation: "Focused tests cover policy loading, safety fields, freshness, coverage, outlier, drift, evidence, gate, report staleness, Reader Brief link, report generation, and validation behavior."
+  review_condition: "Review whenever ETF data-dependent reports, validation gates, report registry entries, model version, config hashes, or Reader Brief link behavior change."
+
+data_quality:
+  price_freshness:
+    required_assets: [SPY, QQQ, SMH, SOXX, CASH]
+    optional_assets: [NVDA, MSFT, AAPL, AMD, AVGO, TSM]
+    max_trading_day_lag: 1
+    severity_on_fail: critical
+    market_holidays:
+      - 2025-01-01
+      - 2025-01-20
+      - 2025-02-17
+      - 2025-04-18
+      - 2025-05-26
+      - 2025-06-19
+      - 2025-07-04
+      - 2025-09-01
+      - 2025-11-27
+      - 2025-12-25
+      - 2026-01-01
+      - 2026-01-19
+      - 2026-02-16
+      - 2026-04-03
+      - 2026-05-25
+      - 2026-06-19
+      - 2026-07-03
+      - 2026-09-07
+      - 2026-11-26
+      - 2026-12-25
+
+  calendar_coverage:
+    lookback_trading_days: 20
+    min_required_coverage_ratio: 1.0
+    min_optional_coverage_ratio: 0.90
+    severity_on_required_gap: critical
+
+  missing_bars:
+    max_missing_required_bars: 0
+    max_missing_optional_bars: 2
+
+  return_outliers:
+    lookback_trading_days: 60
+    daily_abs_return_warning: 0.08
+    daily_abs_return_critical: 0.20
+    severity_on_critical: critical
+
+  corporate_action_sanity:
+    adjacent_day_reversal_abs_return: 0.05
+    allow_known_event_downgrade: true
+    known_events: []
+
+  config_hash_drift:
+    required_report_ids:
+      - etf_portfolio_brief
+      - etf_forward_dashboard
+      - etf_ai_confirmation_report
+    optional_report_ids:
+      - etf_satellite_replacement_report
+      - etf_ai_attribution_report
+      - etf_satellite_attribution_report
+      - etf_weekly_review_report
+      - etf_parameter_review_report
+      - etf_weight_dual_track_calibration_report
+    severity_on_required_drift: critical
+
+  evidence_completeness:
+    evidence_sets:
+      - evidence_type: forward_dashboard
+        report_id: etf_forward_dashboard
+        required: true
+        required_fields: [report_type, status, as_of_date]
+        sample_count_paths: [summary.active_shadow_candidate_count, run_metadata.sample_count, sample_count]
+        minimum_sample_count: 0
+      - evidence_type: weekly_review
+        report_id: etf_weekly_review_report
+        required: true
+        required_fields: [report_id, status, as_of_date]
+        sample_count_paths: [source_summary.source_count, run_metadata.source_count, source_count]
+        minimum_sample_count: 0
+      - evidence_type: decision_journal
+        report_id: etf_decision_journal_report
+        required: false
+        required_fields: [report_id, status, as_of_date]
+        sample_count_paths: [journal_summary.entry_count, entry_count]
+        minimum_sample_count: 0
+      - evidence_type: parameter_review
+        report_id: etf_parameter_review_report
+        required: true
+        required_fields: [report_id, status, as_of_date]
+        sample_count_paths: [evidence_summary.source_count, source_count, sample_count]
+        minimum_sample_count: 0
+      - evidence_type: weight_calibration
+        report_id: etf_weight_dual_track_calibration_report
+        required: false
+        required_fields: [report_id, status]
+        sample_count_paths: [candidate_summary.candidate_count, candidate_count, sample_count]
+        minimum_sample_count: 0
+      - evidence_type: AI_attribution
+        report_id: etf_ai_attribution_report
+        required: false
+        required_fields: [report_id, status, as_of_date]
+        sample_count_paths: [evidence_scorecard.sample_count, sample_count]
+        minimum_sample_count: 0
+      - evidence_type: satellite_attribution
+        report_id: etf_satellite_attribution_report
+        required: false
+        required_fields: [report_id, status, as_of_date]
+        sample_count_paths: [evidence_scorecard.sample_count, sample_count]
+        minimum_sample_count: 0
+
+  validation_gate_freshness:
+    max_age_days: 14
+    stale_required_blocks: true
+    gates:
+      - gate_id: credibility
+        report_id: etf_credibility_gate
+        required: true
+        max_allowed_age_days: 30
+      - gate_id: experiments
+        report_id: etf_experiment_validation
+        required: true
+        max_allowed_age_days: 30
+      - gate_id: forward
+        report_id: etf_forward_validation
+        required: true
+        max_allowed_age_days: 30
+      - gate_id: ai_confirmation
+        report_id: etf_ai_confirmation_validation
+        required: true
+        max_allowed_age_days: 30
+      - gate_id: ai_attribution
+        report_id: etf_ai_attribution_validation
+        required: false
+        max_allowed_age_days: 30
+      - gate_id: satellite
+        report_id: etf_satellite_validation
+        required: true
+        max_allowed_age_days: 30
+      - gate_id: satellite_attribution
+        report_id: etf_satellite_attribution_validation
+        required: false
+        max_allowed_age_days: 30
+      - gate_id: weekly_review
+        report_id: etf_weekly_review_validation
+        required: true
+        max_allowed_age_days: 30
+      - gate_id: decision_journal
+        report_id: etf_decision_journal_validation
+        required: true
+        max_allowed_age_days: 30
+      - gate_id: parameter_review
+        report_id: etf_parameter_review_validation
+        required: true
+        max_allowed_age_days: 30
+      - gate_id: weight_calibration
+        report_id: etf_weight_dual_track_calibration_validation
+        required: true
+        max_allowed_age_days: 30
+      - gate_id: ops
+        report_id: etf_operations_validation
+        required: true
+        max_allowed_age_days: 30
+      - gate_id: data_quality
+        report_id: etf_data_quality_validation
+        required: false
+        max_allowed_age_days: 30
+
+  report_staleness:
+    required_report_ids:
+      - etf_portfolio_brief
+      - etf_forward_dashboard
+      - etf_ai_confirmation_report
+      - etf_operations_health_report
+      - reader_brief
+    optional_report_ids:
+      - etf_satellite_replacement_report
+      - etf_ai_attribution_report
+      - etf_satellite_attribution_report
+      - etf_weekly_review_report
+      - etf_decision_journal_report
+      - etf_parameter_review_report
+      - etf_weight_dual_track_calibration_report
+    max_allowed_age_days: 3
+
+  reader_brief_links:
+    required_report_ids:
+      - etf_data_quality_governance_report
+      - etf_operations_health_report
+      - etf_forward_dashboard
+    optional_report_ids:
+      - etf_ai_attribution_report
+      - etf_satellite_attribution_report
+      - etf_weight_dual_track_calibration_report
+    max_allowed_age_days: 1
+
+  output:
+    report_dir: reports/etf_portfolio/data_quality/governance
+    validation_dir: reports/etf_portfolio/data_quality/validation
+
+  safety:
+    observe_only: true
+    candidate_only: true
+    production_effect: none
+    broker_action: none
+    manual_review_required: true

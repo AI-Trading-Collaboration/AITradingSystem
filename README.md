@@ -582,6 +582,26 @@ report、owner checklist、dry-run report、operations health report 和 Reader 
 integration，fail-closed 校验 required step missing、dependency cycle、unsafe
 `production_effect` / `broker_action` / missing `manual_review_required` 和固定安全边界。
 
+TRADING-075 data quality and staleness governance policy 位于
+`config/etf_portfolio/data_quality.yaml`。`aits etf data-quality report --as-of
+YYYY-MM-DD` 只读读取 ETF price cache、当前 ETF config hash/model version、
+`config/report_registry.yaml` 和既有 artifacts，生成
+`reports/etf_portfolio/data_quality/governance/data_quality_report_YYYY-MM-DD.json/md`，
+覆盖 price freshness、missing bars / calendar coverage、return outliers、
+corporate-action sanity、config/model drift、evidence completeness、validation gate
+freshness、report staleness、Reader Brief links、blocking failures、warnings 和 manual
+review items。Critical required findings 用于阻断 dependent research interpretation；
+optional missing artifacts 只 warning。Reader Brief 的 `ETF Data Quality` 区块只读
+latest `etf_data_quality_governance_report`，展示 overall status、blockers、warnings、
+各 section status、detail link 和 safety posture；缺失 report 时显示 `MISSING`，不运行
+上游、不补造质量结论。`aits etf data-quality validate --as-of YYYY-MM-DD` 生成
+`reports/etf_portfolio/data_quality/validation/data_quality_validation_YYYY-MM-DD.json/md`，
+使用 deterministic probes 校验 policy、checker availability、report generator、Reader
+Brief/report-registry integration 和 safety boundary；该 gate 不因为本地 cache 暂时 stale
+而误判工程实现失败。所有 TRADING-075 输出固定 `observe_only=true`、`candidate_only=true`、
+`production_effect=none`、`broker_action=none`、`manual_review_required=true`，不写
+official target weights、不改 baseline config、不触发 broker。
+
 `aits etf governance summary --candidate <candidate.json>` 使用
 `config/etf_portfolio/governance.yaml` 的参数治理 policy 输出候选晋级摘要，固定
 `production_effect=none` 且 `manual_review_required=true`。候选必须先通过测试、shadow
