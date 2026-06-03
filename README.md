@@ -495,6 +495,11 @@ TRADING-078D 新增 `aits etf weight-calibration regime-robustness --latest --to
 `risk_on`、`neutral`、`risk_off`、`growth_leadership`、`semiconductor_leadership`、
 `high_volatility` 和 `growth_underperformance`，缺失 regime slice 保留 `MISSING` 和
 `confidence_warning`。
+TRADING-078E 新增 `aits etf weight-calibration overfit-explain --latest --top N`，
+把 Top-N candidates 的 TRADING-071G diagnostics 转成 human-readable JSON / Markdown 到
+`reports/etf_portfolio/weight_calibration/overfit_explanations/`，包含 top overfit
+reasons、supporting metrics、blocking metrics、manual review note、forward readiness
+和固定 safety fields。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

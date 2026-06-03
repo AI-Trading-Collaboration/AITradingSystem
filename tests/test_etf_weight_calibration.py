@@ -25,6 +25,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     build_dual_track_weight_calibration_validation_report,
     build_weight_candidate_comparison_table,
     build_weight_overfit_diagnostics,
+    build_weight_overfit_explanations,
     build_weight_regime_robustness_heatmap,
     build_weight_top_candidate_export,
     enroll_candidate_weights_forward,
@@ -47,6 +48,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     validate_dual_track_weight_calibration_validation_report,
     validate_weight_candidate_comparison_table,
     validate_weight_forward_enrollment_record,
+    validate_weight_overfit_explanations,
     validate_weight_regime_robustness_heatmap,
     validate_weight_search_registry,
     validate_weight_top_candidate_export,
@@ -55,6 +57,7 @@ from ai_trading_system.etf_portfolio.weight_calibration import (
     write_dual_track_weight_calibration_report,
     write_dual_track_weight_calibration_validation_report,
     write_weight_candidate_comparison_table,
+    write_weight_overfit_explanations,
     write_weight_regime_robustness_heatmap,
     write_weight_search_run,
     write_weight_top_candidate_export,
@@ -829,6 +832,156 @@ def test_weight_regime_robustness_heatmap_cli_writes_outputs(tmp_path: Path) -> 
     assert list((tmp_path / "heatmap").glob("*.json"))
     assert list((tmp_path / "heatmap").glob("*.csv"))
     assert list((tmp_path / "heatmap").glob("*.md"))
+
+
+def test_weight_overfit_explanations_warn_concentrated_performance() -> None:
+    run = _small_search_run()
+    concentrated = _search_payload_with_slice_values(
+        run.payload,
+        "excess_return_vs_baseline",
+        [0.20, 0.01, 0.00],
+    )
+
+    payload = build_weight_overfit_explanations(
+        concentrated,
+        top=1,
+        generated_at=datetime(2026, 6, 3, tzinfo=UTC),
+    )
+
+    first = payload["explanations"][0]
+    reason_ids = [row["reason_id"] for row in first["top_overfit_reasons"]]
+    assert "performance_concentration" in reason_ids
+    assert (
+        first["supporting_metrics"]["performance_concentration"]["metrics"][
+            "positive_slice_concentration"
+        ]
+        > 0.90
+    )
+    assert "PERFORMANCE_CONCENTRATED_IN_FEW_SLICES" in first["reason_codes"]
+    validate_weight_overfit_explanations(payload)
+
+
+def test_weight_overfit_explanations_warn_extreme_weights(tmp_path: Path) -> None:
+    run = _small_search_run()
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    registry["weight_sets"][0]["weights"] = {
+        "SPY": 0.0,
+        "QQQ": 1.0,
+        "SMH": 0.0,
+        "SOXX": 0.0,
+        "CASH": 0.0,
+    }
+    overfit = build_weight_overfit_diagnostics(candidate_registry=registry)
+
+    payload = build_weight_overfit_explanations(
+        run.payload,
+        overfit_payload=overfit,
+        top=1,
+    )
+
+    first = payload["explanations"][0]
+    blocking_ids = {row["metric_id"] for row in first["blocking_metrics"]}
+    assert "weight_extremeness" in blocking_ids
+    assert "EXTREME_WEIGHT_CONCENTRATION" in first["reason_codes"]
+
+
+def test_weight_overfit_explanations_low_risk_candidate_is_explained(
+    tmp_path: Path,
+) -> None:
+    run = _small_search_run()
+    registry = _candidate_weight_registry(tmp_path, top=1)
+    overfit = build_weight_overfit_diagnostics(candidate_registry=registry)
+    diagnostic = overfit["candidate_diagnostics"][0]
+    diagnostic["overfit_risk_score"] = 0.0
+    diagnostic["overfit_risk_band"] = "low"
+    diagnostic["reason_codes"] = ["NO_OVERFIT_RISK_FLAGS"]
+    for component in diagnostic["component_diagnostics"].values():
+        component["risk_score"] = 0.0
+        component["risk_band"] = "low"
+        component["reason_codes"] = []
+
+    payload = build_weight_overfit_explanations(
+        run.payload,
+        overfit_payload=overfit,
+        top=1,
+    )
+
+    first = payload["explanations"][0]
+    assert first["overfit_risk_band"] == "low"
+    assert first["top_overfit_reasons"][0]["reason_id"] == "NO_MATERIAL_OVERFIT_FLAGS"
+    assert "production weight" in first["manual_review_note"]
+
+
+def test_weight_overfit_explanations_write_markdown(tmp_path: Path) -> None:
+    payload = build_weight_overfit_explanations(_small_search_run().payload, top=1)
+
+    paths = write_weight_overfit_explanations(
+        payload,
+        output_dir=tmp_path / "overfit_explanations",
+    )
+
+    assert paths["json"].exists()
+    assert paths["markdown"].exists()
+    markdown = paths["markdown"].read_text(encoding="utf-8")
+    assert "ETF Weight Overfit Risk Explanation" in markdown
+    assert "manual_review_required = true" in markdown
+
+
+def test_weight_overfit_explanations_schema_keys_are_stable() -> None:
+    payload = build_weight_overfit_explanations(_small_search_run().payload, top=1)
+
+    first = payload["explanations"][0]
+
+    assert set(first) >= {
+        "candidate_id",
+        "weight_set_id",
+        "overfit_risk_band",
+        "top_overfit_reasons",
+        "supporting_metrics",
+        "blocking_metrics",
+        "manual_review_note",
+        "safety",
+    }
+    assert set(first["supporting_metrics"]) == {
+        "performance_concentration",
+        "single_period_dependency",
+        "regime_fragility",
+        "turnover_instability",
+        "constraint_hit_instability",
+        "weight_extremeness",
+        "benchmark_dependency",
+        "forward_backtest_divergence",
+    }
+
+
+def test_weight_overfit_explanations_cli_writes_outputs(tmp_path: Path) -> None:
+    run = _small_search_run()
+    report_root = tmp_path / "reports"
+    data_root = tmp_path / "data"
+    write_weight_search_run(run, report_root=report_root, data_root=data_root)
+
+    result = CliRunner().invoke(
+        etf_app,
+        [
+            "weight-calibration",
+            "overfit-explain",
+            "--latest",
+            "--top",
+            "1",
+            "--output-dir",
+            str(report_root),
+            "--explanation-dir",
+            str(tmp_path / "overfit_explanations"),
+        ],
+        env={"COLUMNS": "160"},
+        terminal_width=160,
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "candidate_count=1" in result.output
+    assert "production_effect=none" in result.output
+    assert list((tmp_path / "overfit_explanations").glob("*.json"))
+    assert list((tmp_path / "overfit_explanations").glob("*.md"))
 
 
 def test_candidate_weight_registry_writes_candidate_records(tmp_path: Path) -> None:

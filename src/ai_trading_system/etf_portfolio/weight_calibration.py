@@ -63,6 +63,9 @@ DEFAULT_WEIGHT_CANDIDATE_COMPARISON_DIR = (
 DEFAULT_WEIGHT_REGIME_ROBUSTNESS_DIR = (
     DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "regime_robustness"
 )
+DEFAULT_WEIGHT_OVERFIT_EXPLANATION_DIR = (
+    DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "overfit_explanations"
+)
 DEFAULT_WEIGHT_PROPOSAL_DIR = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "proposals"
 DEFAULT_WEIGHT_DUAL_TRACK_REPORT_DIR = DEFAULT_ETF_WEIGHT_CALIBRATION_REPORT_DIR / "reports"
 DEFAULT_WEIGHT_CALIBRATION_VALIDATION_DIR = (
@@ -81,6 +84,7 @@ WEIGHT_OVERFIT_DIAGNOSTICS_SCHEMA_VERSION = "etf_weight_overfit_diagnostics_v1"
 WEIGHT_TOP_CANDIDATE_EXPORT_SCHEMA_VERSION = "etf_weight_top_candidate_export_v1"
 WEIGHT_CANDIDATE_COMPARISON_SCHEMA_VERSION = "etf_weight_candidate_comparison_v1"
 WEIGHT_REGIME_ROBUSTNESS_SCHEMA_VERSION = "etf_weight_regime_robustness_v1"
+WEIGHT_OVERFIT_EXPLANATION_SCHEMA_VERSION = "etf_weight_overfit_explanation_v1"
 WEIGHT_PROPOSAL_SCHEMA_VERSION = "etf_weight_candidate_proposals_v1"
 WEIGHT_DUAL_TRACK_REPORT_SCHEMA_VERSION = "etf_weight_dual_track_calibration_report_v1"
 WEIGHT_CALIBRATION_VALIDATION_SCHEMA_VERSION = "etf_weight_dual_track_validation_v1"
@@ -2362,6 +2366,214 @@ def weight_overfit_risk_band(score: float) -> str:
     if score >= float(thresholds["medium"]):
         return "medium"
     return "low"
+
+
+def build_weight_overfit_explanations(
+    search_payload: Mapping[str, Any],
+    *,
+    top_export_payload: Mapping[str, Any] | None = None,
+    overfit_payload: Mapping[str, Any] | None = None,
+    top: int = 10,
+    source_paths: Mapping[str, str] | None = None,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    validate_weight_search_run_payload(search_payload)
+    if top_export_payload:
+        validate_weight_top_candidate_export(top_export_payload)
+    if overfit_payload:
+        validate_weight_overfit_diagnostics_payload(overfit_payload)
+    if top <= 0:
+        raise WeightCalibrationError("top must be positive")
+    generated = generated_at or datetime.now(UTC)
+    top_payload = dict(top_export_payload or {})
+    if not top_payload:
+        top_payload = build_weight_top_candidate_export(
+            search_payload,
+            top=top,
+            overfit_payload=overfit_payload,
+            generated_at=generated,
+        )
+    explanations = [
+        _weight_overfit_explanation_record(
+            search_payload,
+            candidate,
+            overfit_payload=overfit_payload or {},
+            generated_at=generated,
+        )
+        for candidate in _records(top_payload.get("candidates"))[:top]
+    ]
+    payload = {
+        "schema_version": WEIGHT_OVERFIT_EXPLANATION_SCHEMA_VERSION,
+        "report_type": "etf_weight_overfit_explanation",
+        "status": "available" if explanations else "needs_more_data",
+        "generated_at": generated.isoformat(),
+        "search_run_id": search_payload.get("search_run_id"),
+        "search_id": search_payload.get("search_id"),
+        "search_config_hash": search_payload.get("search_config_hash"),
+        "top_n": top,
+        "candidate_count": len(explanations),
+        "market_regime": search_payload.get("market_regime"),
+        "historical_range_preset": dict(_mapping(search_payload.get("historical_range_preset"))),
+        "requested_date_range": dict(_mapping(search_payload.get("requested_date_range"))),
+        "data_quality_status": search_payload.get("data_quality_status"),
+        "policy": dict(WEIGHT_OVERFIT_DIAGNOSTICS_POLICY),
+        "explanations": explanations,
+        "source_paths": dict(source_paths or {}),
+        "production_weights_mutated": False,
+        "applied_weight_set": None,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_weight_overfit_explanations(payload)
+    return payload
+
+
+def validate_weight_overfit_explanations(payload: Mapping[str, Any]) -> None:
+    issues = []
+    if payload.get("schema_version") != WEIGHT_OVERFIT_EXPLANATION_SCHEMA_VERSION:
+        issues.append("schema_version")
+    if payload.get("report_type") != "etf_weight_overfit_explanation":
+        issues.append("report_type")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if payload.get(field) != expected:
+            issues.append(field)
+    safety = _mapping(payload.get("safety"))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if safety.get(field) != expected:
+            issues.append(f"safety.{field}")
+    if payload.get("production_weights_mutated") is not False:
+        issues.append("production_weights_mutated")
+    if payload.get("applied_weight_set") is not None:
+        issues.append("applied_weight_set")
+    records = _records(payload.get("explanations"))
+    if int(payload.get("candidate_count") or 0) != len(records):
+        issues.append("candidate_count")
+    for record in records:
+        try:
+            validate_weight_overfit_explanation_record(record)
+        except WeightCalibrationError as exc:
+            issues.append(f"{record.get('weight_set_id')}:{exc}")
+    if issues:
+        raise WeightCalibrationError(
+            "ETF weight overfit explanation validation failed: "
+            + ", ".join(str(issue) for issue in issues)
+        )
+
+
+def validate_weight_overfit_explanation_record(record: Mapping[str, Any]) -> None:
+    required = {
+        "candidate_id",
+        "weight_set_id",
+        "source_candidate_id",
+        "rank",
+        "overfit_risk_score",
+        "overfit_risk_band",
+        "top_overfit_reasons",
+        "supporting_metrics",
+        "blocking_metrics",
+        "manual_review_note",
+        "safety",
+    }
+    issues = sorted(required - set(record))
+    if record.get("overfit_risk_band") not in {"low", "medium", "high", "critical"}:
+        issues.append("overfit_risk_band")
+    score = _float_or_none(record.get("overfit_risk_score"))
+    if score is None or score < 0.0 or score > 1.0:
+        issues.append("overfit_risk_score")
+    if not _records(record.get("top_overfit_reasons")):
+        issues.append("top_overfit_reasons")
+    if not isinstance(record.get("blocking_metrics"), list):
+        issues.append("blocking_metrics")
+    supporting = _mapping(record.get("supporting_metrics"))
+    expected_components = set(WEIGHT_OVERFIT_DIAGNOSTICS_POLICY["component_weights"])
+    if set(supporting) != expected_components:
+        issues.append("supporting_metrics")
+    if not str(record.get("manual_review_note") or "").strip():
+        issues.append("manual_review_note")
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if record.get(field) != expected:
+            issues.append(field)
+    safety = _mapping(record.get("safety"))
+    for field, expected in WEIGHT_CALIBRATION_SAFETY.items():
+        if safety.get(field) != expected:
+            issues.append(f"safety.{field}")
+    if issues:
+        raise WeightCalibrationError("; ".join(str(issue) for issue in issues))
+
+
+def write_weight_overfit_explanations(
+    payload: Mapping[str, Any],
+    *,
+    output_dir: Path = DEFAULT_WEIGHT_OVERFIT_EXPLANATION_DIR,
+) -> dict[str, Path]:
+    validate_weight_overfit_explanations(payload)
+    run_id = _artifact_stem(str(payload.get("search_run_id") or "unknown"))
+    stem = f"overfit_explanations_{run_id}"
+    json_path = output_dir / f"{stem}.json"
+    markdown_path = output_dir / f"{stem}.md"
+    json_path.parent.mkdir(parents=True, exist_ok=True)
+    json_path.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    markdown_path.write_text(render_weight_overfit_explanations_markdown(payload), encoding="utf-8")
+    return {"json": json_path, "markdown": markdown_path}
+
+
+def render_weight_overfit_explanations_markdown(payload: Mapping[str, Any]) -> str:
+    lines = [
+        "# ETF Weight Overfit Risk Explanation",
+        "",
+        "## Safety Banner",
+        "",
+        "- observe_only = true",
+        "- candidate_only = true",
+        "- production_effect = none",
+        "- broker_action = none",
+        "- manual_review_required = true",
+        "- 本说明只解释 candidate overfit risk，不应用权重。",
+        "",
+        "## Summary",
+        "",
+        f"- Search Run ID: {payload.get('search_run_id')}",
+        f"- Candidate Count: {payload.get('candidate_count')}",
+        f"- Data Quality Status: {payload.get('data_quality_status')}",
+        "",
+        "## Candidate Explanation Table",
+        "",
+        "| Candidate | Rank | Risk Band | Top Reasons | Blocking Metrics | Readiness |",
+        "|---|---:|---|---|---:|---|",
+    ]
+    for record in _records(payload.get("explanations")):
+        reasons = [
+            str(_mapping(reason).get("reason_id"))
+            for reason in _records(record.get("top_overfit_reasons"))
+        ]
+        lines.append(
+            f"| {record.get('weight_set_id')} | {record.get('rank')} | "
+            f"{record.get('overfit_risk_band')} | {', '.join(reasons)} | "
+            f"{len(_records(record.get('blocking_metrics')))} | "
+            f"{record.get('forward_readiness_status')} |"
+        )
+    if not _records(payload.get("explanations")):
+        lines.append("| none | 0 | needs_more_data | none | 0 | needs_more_data |")
+    lines.extend(["", "## Manual Review Notes", ""])
+    for record in _records(payload.get("explanations")):
+        lines.append(f"### {record.get('weight_set_id')}")
+        lines.append("")
+        lines.append(f"- Risk Band: {record.get('overfit_risk_band')}")
+        lines.append(f"- Manual Review Note: {record.get('manual_review_note')}")
+        lines.append("- Top Overfit Reasons:")
+        for reason in _records(record.get("top_overfit_reasons")):
+            reason_map = _mapping(reason)
+            lines.append(
+                "  - "
+                + str(reason_map.get("reason_id"))
+                + ": "
+                + str(reason_map.get("explanation"))
+            )
+        lines.append("")
+    return "\n".join(lines) + "\n"
 
 
 def build_candidate_weight_proposals(
@@ -5515,6 +5727,232 @@ def _weight_top_candidate_warnings(
     if not qqq_comparison:
         warnings.append("QQQ_BENCHMARK_COMPARISON_MISSING")
     return sorted(set(item for item in warnings if item))
+
+
+def _weight_overfit_explanation_record(
+    search_payload: Mapping[str, Any],
+    top_candidate: Mapping[str, Any],
+    *,
+    overfit_payload: Mapping[str, Any],
+    generated_at: datetime,
+) -> dict[str, Any]:
+    weight_set_id = str(top_candidate.get("weight_set_id"))
+    overfit = _overfit_record_for_weight_set(overfit_payload, weight_set_id)
+    if not overfit:
+        ranked = _ranked_row_for_top_candidate(search_payload, top_candidate)
+        candidate = (
+            _candidate_weight_record_from_search(
+                search_payload,
+                ranked,
+                created_at=generated_at,
+            )
+            if ranked
+            else _candidate_record_from_top_candidate(top_candidate)
+        )
+        overfit = _weight_overfit_candidate_diagnostics(
+            candidate,
+            search_payload=search_payload,
+            evidence_payload={},
+        )
+    band = str(overfit.get("overfit_risk_band") or top_candidate.get("overfit_risk") or "medium")
+    record = {
+        "candidate_id": weight_set_id,
+        "weight_set_id": weight_set_id,
+        "source_search_run_id": top_candidate.get("source_search_run_id")
+        or overfit.get("source_search_run_id")
+        or search_payload.get("search_run_id"),
+        "source_candidate_id": top_candidate.get("source_candidate_id")
+        or overfit.get("source_candidate_id"),
+        "rank": int(top_candidate.get("rank") or overfit.get("rank") or 0),
+        "overfit_risk_score": _float_or_none(overfit.get("overfit_risk_score")),
+        "overfit_risk_band": band,
+        "reason_codes": [str(item) for item in overfit.get("reason_codes") or []],
+        "top_overfit_reasons": _top_overfit_reason_explanations(overfit),
+        "supporting_metrics": _overfit_supporting_metrics(overfit),
+        "blocking_metrics": _blocking_overfit_metrics(overfit),
+        "forward_readiness_status": top_candidate.get("forward_readiness_status"),
+        "blockers": [str(item) for item in top_candidate.get("blockers") or []],
+        "warnings": [str(item) for item in top_candidate.get("warnings") or []],
+        "manual_review_note": _overfit_manual_review_note(
+            band,
+            blockers=[str(item) for item in top_candidate.get("blockers") or []],
+        ),
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+    validate_weight_overfit_explanation_record(record)
+    return record
+
+
+def _ranked_row_for_top_candidate(
+    search_payload: Mapping[str, Any],
+    top_candidate: Mapping[str, Any],
+) -> dict[str, Any]:
+    weight_set_id = str(top_candidate.get("weight_set_id") or "")
+    source_candidate_id = str(top_candidate.get("source_candidate_id") or "")
+    for ranked in _records(search_payload.get("ranking")):
+        if str(ranked.get("candidate_id")) == source_candidate_id:
+            return dict(ranked)
+        if _weight_set_id(search_payload, ranked) == weight_set_id:
+            return dict(ranked)
+    return {}
+
+
+def _candidate_record_from_top_candidate(top_candidate: Mapping[str, Any]) -> dict[str, Any]:
+    readiness = str(top_candidate.get("forward_readiness_status") or "")
+    status = "candidate" if readiness == "shadow_ready" else "blocked"
+    return {
+        "weight_set_id": top_candidate.get("weight_set_id"),
+        "source_search_run_id": top_candidate.get("source_search_run_id"),
+        "source_candidate_id": top_candidate.get("source_candidate_id"),
+        "rank": int(top_candidate.get("rank") or 0),
+        "status": status,
+        "weights": _json_float_mapping(top_candidate.get("weights")),
+        "metrics_summary": {
+            "candidate_score": top_candidate.get("historical_score"),
+            "max_drawdown": top_candidate.get("max_drawdown"),
+            "turnover_vs_baseline": top_candidate.get("turnover"),
+            "benchmark_comparison": {},
+        },
+        "robustness_summary": {},
+        "blockers": [str(item) for item in top_candidate.get("blockers") or []],
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+
+
+def _top_overfit_reason_explanations(
+    overfit: Mapping[str, Any],
+    *,
+    limit: int = 3,
+) -> list[dict[str, Any]]:
+    components = [
+        (component_id, _mapping(component))
+        for component_id, component in _mapping(overfit.get("component_diagnostics")).items()
+    ]
+    components.sort(
+        key=lambda item: (-float(item[1].get("risk_score") or 0.0), str(item[0])),
+    )
+    selected = [
+        item
+        for item in components
+        if float(item[1].get("risk_score") or 0.0) >= 0.25
+        or bool(item[1].get("reason_codes") or [])
+    ][:limit]
+    if not selected:
+        return [
+            {
+                "reason_id": "NO_MATERIAL_OVERFIT_FLAGS",
+                "risk_score": 0.0,
+                "risk_band": "low",
+                "reason_codes": ["NO_OVERFIT_RISK_FLAGS"],
+                "explanation": (
+                    "未发现明显的 overfit risk flags；仍需 forward shadow observation，"
+                    "不能直接应用为生产权重。"
+                ),
+                "metrics": {},
+            }
+        ]
+    return [
+        {
+            "reason_id": component_id,
+            "risk_score": _float_or_none(component.get("risk_score")),
+            "risk_band": component.get("risk_band"),
+            "reason_codes": [str(item) for item in component.get("reason_codes") or []],
+            "explanation": _overfit_reason_text(component_id),
+            "metrics": dict(_mapping(component.get("metrics"))),
+        }
+        for component_id, component in selected
+    ]
+
+
+def _overfit_supporting_metrics(overfit: Mapping[str, Any]) -> dict[str, Any]:
+    supporting = {}
+    for component_id in WEIGHT_OVERFIT_DIAGNOSTICS_POLICY["component_weights"]:
+        component = _mapping(_mapping(overfit.get("component_diagnostics")).get(component_id))
+        supporting[component_id] = {
+            "risk_score": _float_or_none(component.get("risk_score")),
+            "risk_band": component.get("risk_band"),
+            "reason_codes": [str(item) for item in component.get("reason_codes") or []],
+            "metrics": dict(_mapping(component.get("metrics"))),
+        }
+    return supporting
+
+
+def _blocking_overfit_metrics(overfit: Mapping[str, Any]) -> list[dict[str, Any]]:
+    blocking = []
+    for component_id, component in _mapping(overfit.get("component_diagnostics")).items():
+        component_map = _mapping(component)
+        risk_score = _float_or_none(component_map.get("risk_score")) or 0.0
+        reason_codes = [str(item) for item in component_map.get("reason_codes") or []]
+        if risk_score < 0.50 and not reason_codes:
+            continue
+        blocking.append(
+            {
+                "metric_id": component_id,
+                "risk_score": risk_score,
+                "risk_band": component_map.get("risk_band"),
+                "reason_codes": reason_codes,
+                "metrics": dict(_mapping(component_map.get("metrics"))),
+            }
+        )
+    return sorted(blocking, key=lambda item: (-float(item["risk_score"]), item["metric_id"]))
+
+
+def _overfit_reason_text(component_id: str) -> str:
+    reason_text = {
+        "performance_concentration": (
+            "历史超额收益集中在少数 robustness slices；需要确认候选不是单一窗口驱动。"
+        ),
+        "single_period_dependency": (
+            "不同历史切片的收益分布差异较大；需要复核是否依赖特定行情阶段。"
+        ),
+        "regime_fragility": (
+            "robustness summary 显示稳定性不足或弱切片较多；需要重点查看弱 regime。"
+        ),
+        "turnover_instability": (
+            "相对 baseline 的 turnover 偏高；可能降低 forward shadow 的可执行性。"
+        ),
+        "constraint_hit_instability": (
+            "历史切片中约束命中率偏高；说明候选可能靠边界条件取得表现。"
+        ),
+        "weight_extremeness": (
+            "权重集中度偏高；需要确认单一 sleeve 或资产暴露没有形成不可接受依赖。"
+        ),
+        "benchmark_dependency": (
+            "相对 required benchmarks 的超额表现不稳定；需要避免只优于单一参照物。"
+        ),
+        "forward_backtest_divergence": (
+            "forward evidence 缺失、不足或与历史预期分歧；进入 shadow 前需要继续观察。"
+        ),
+    }
+    return reason_text.get(component_id, "需要人工复核该 overfit diagnostic component。")
+
+
+def _overfit_manual_review_note(
+    overfit_risk_band: str,
+    *,
+    blockers: list[str],
+) -> str:
+    if overfit_risk_band in {"high", "critical"}:
+        return (
+            "该候选应保持 blocked_by_overfit_risk，除非人工复核能解释高风险组件并补充"
+            " forward shadow validation evidence。"
+        )
+    if blockers:
+        return (
+            "该候选存在 historical blockers，不能静默进入 shadow；需要逐项复核 blockers、"
+            "data quality 和 benchmark comparison。"
+        )
+    if overfit_risk_band == "medium":
+        return (
+            "该候选可作为人工复核对象，但进入 shadow 前应确认主要 overfit reasons、"
+            "weak regimes 和 benchmark excess 是否可接受。"
+        )
+    return (
+        "未发现明显 overfit 阻断项；该结论只支持 candidate-only forward shadow review，"
+        "不支持 production weight replacement。"
+    )
 
 
 def _weight_forward_readiness_status(

@@ -36,7 +36,7 @@ that are robust enough to enter forward shadow observation?
 |TRADING-078B Weight Search Result Top-N Export|DONE|`aits etf weight-calibration export-top --latest/--run-id --top N` 输出 JSON / CSV / Markdown top-N candidates，保留 blockers、warnings、overfit risk、forward readiness 和 safety。|
 |TRADING-078C Candidate Weight Comparison Table|DONE|生成 candidate + benchmark comparison table，包含 current baseline、QQQ、SPY、SMH、static references、top-N candidates 和 deterministic ordering。|
 |TRADING-078D Regime Robustness Heatmap Data|DONE|生成 candidate/regime matrix JSON / CSV / Markdown，披露 sample count、confidence warning、weak regimes 和 safety。|
-|TRADING-078E Overfit Risk Explanation|READY|为候选输出 human-readable overfit reasons、supporting metrics、blocking metrics 和 manual review note。|
+|TRADING-078E Overfit Risk Explanation|DONE|`overfit-explain --latest/--run-id --top N` 输出 human-readable overfit reasons、supporting metrics、blocking metrics 和 manual review note。|
 |TRADING-078F Weight Candidate Shadow Enrollment Workflow|READY|`enroll-top` / `enroll` 只允许 shadow-ready candidates，保留 source links，不修改 production state。|
 |TRADING-078G Initial Weight Recommendation Report|READY|生成 JSON / Markdown recommendation report，汇总 safety、run metadata、preset、top-N、comparison、regime robustness、overfit、forward readiness、shadow recommendation 和 next steps。|
 |TRADING-078H Reader Brief Weight Candidate Section|READY|Reader Brief 只读 latest recommendation report，显示 top candidate、suggested action、overfit risk、blocked count、safety 和 detail link。|
@@ -69,3 +69,5 @@ python -m ai_trading_system.cli etf weight-calibration usability-validate
 - 2026-06-03: TRADING-078B 完成。新增 Top-N export schema/builder/writer/Markdown renderer、`aits etf weight-calibration export-top --latest/--run-id --top N` CLI 和专项测试；导出 JSON / CSV / Markdown，保留 overfit risk、forward readiness、blockers/warnings、benchmark context 和 safety fields。
 - 2026-06-03: TRADING-078C 完成。新增 candidate comparison table schema/builder/writer/Markdown renderer、`aits etf weight-calibration comparison --latest/--run-id --top N` CLI 和专项测试；comparison rows 包含 current baseline、Buy & Hold QQQ/SPY/SMH、static references、Top-N candidates、metric null reasons、overfit/readiness 和 safety fields。
 - 2026-06-03: TRADING-078D 完成。新增 regime robustness heatmap schema/builder/writer/Markdown renderer、`aits etf weight-calibration regime-robustness --latest/--run-id --top N` CLI 和专项测试；candidate/regime matrix 覆盖 required regimes，缺失 slice 显式输出 `MISSING` / `REGIME_SLICE_MISSING`，并保留 sample count、constraint hit rate 和 safety fields。
+- 2026-06-03: TRADING-078E 进入 IN_PROGRESS，原因：在既有 TRADING-071G overfit diagnostics 基础上补充可读解释层，让高收益但脆弱、极端或依赖单一时期的候选权重可被人工复核。
+- 2026-06-03: TRADING-078E 完成。新增 overfit explanation schema/builder/writer/Markdown renderer、`aits etf weight-calibration overfit-explain --latest/--run-id --top N` CLI 和专项测试；输出 top overfit reasons、supporting metrics、blocking metrics、manual review note、readiness/blockers/warnings 和 safety fields。
