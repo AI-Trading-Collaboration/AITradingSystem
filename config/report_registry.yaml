@@ -798,6 +798,80 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_shadow_candidate_review_package
+    title: ETF Shadow Candidate Review Package
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf shadow-review package --latest --top N
+    artifact_globs:
+      - reports/etf_portfolio/shadow_ready_review/packages/*.json
+      - reports/etf_portfolio/shadow_ready_review/packages/*.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-082 review packages should summarize shadow-ready stable shapes,
+      near-shadow context, owner checklist, source diagnostics links, and safety
+      before any forward shadow enrollment decision.
+    owner_action: review_shadow_candidate_package_before_owner_approval
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_shadow_candidate_owner_approval
+    title: ETF Shadow Candidate Owner Approval
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf shadow-review approve --package PACKAGE.json --shape SHAPE_ID
+    artifact_globs:
+      - reports/etf_portfolio/shadow_ready_review/approvals/*.json
+      - reports/etf_portfolio/shadow_ready_review/approvals/*.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      Owner approval records are mandatory before approved-only shadow
+      enrollment and must preserve rationale, selected weight_set_id, and safety.
+    owner_action: capture_owner_approval_before_enroll_approved
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_shadow_candidate_enrollment
+    title: ETF Shadow Candidate Approved Enrollment
+    group: governance
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf shadow-review enroll-approved --approval APPROVAL.json --package PACKAGE.json
+    artifact_globs:
+      - reports/etf_portfolio/shadow_ready_review/enrollments/*.json
+      - reports/etf_portfolio/shadow_ready_review/enrollments/*.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      Approved enrollment records link owner-approved shapes to forward shadow
+      tracking without mutating production weights or broker state.
+    owner_action: review_forward_tracking_link_after_approved_shadow_enrollment
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_shadow_candidate_review_validation
+    title: ETF Shadow Candidate Review Validation Gate
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf shadow-review validate
+    artifact_globs:
+      - reports/etf_portfolio/shadow_ready_review/validation/*.json
+      - reports/etf_portfolio/shadow_ready_review/validation/*.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      TRADING-082 validation confirms policy, loader, aggregator, ranking,
+      near-shadow summary, package, approval, approved-only enrollment, forward
+      tracking linkage, Reader Brief visibility, and safety boundaries.
+    owner_action: run_aits_etf_shadow_review_validate_before_marking_TRADING_082_validating
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance

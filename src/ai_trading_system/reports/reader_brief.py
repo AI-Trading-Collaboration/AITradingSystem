@@ -186,6 +186,7 @@ def build_reader_brief_payload(
     etf_data_quality_governance = _etf_data_quality_governance_summary(report_index)
     etf_strategy_evidence = _etf_strategy_evidence_summary(report_index)
     etf_baseline_review = _etf_baseline_review_summary(report_index)
+    etf_shadow_candidate_review = _etf_shadow_candidate_review_summary(report_index)
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -317,6 +318,7 @@ def build_reader_brief_payload(
         "etf_data_quality_governance": etf_data_quality_governance,
         "etf_strategy_evidence": etf_strategy_evidence,
         "etf_baseline_review": etf_baseline_review,
+        "etf_shadow_candidate_review": etf_shadow_candidate_review,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -582,6 +584,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_data_quality_governance = _mapping(payload.get("etf_data_quality_governance"))
     etf_strategy_evidence = _mapping(payload.get("etf_strategy_evidence"))
     etf_baseline_review = _mapping(payload.get("etf_baseline_review"))
+    etf_shadow_candidate_review = _mapping(payload.get("etf_shadow_candidate_review"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -867,6 +870,34 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("safety_status", etf_baseline_review.get("safety_status")),
                     ("production_effect", etf_baseline_review.get("production_effect")),
                     ("broker_action", etf_baseline_review.get("broker_action")),
+                ]
+            ),
+        ),
+        _section(
+            "Shadow Candidate Review",
+            _definition_table(
+                [
+                    ("availability", etf_shadow_candidate_review.get("availability")),
+                    ("status", etf_shadow_candidate_review.get("status")),
+                    ("summary", etf_shadow_candidate_review.get("summary_sentence")),
+                    ("top_candidate", etf_shadow_candidate_review.get("top_candidate")),
+                    (
+                        "pending_review_candidates",
+                        etf_shadow_candidate_review.get("pending_review_count"),
+                    ),
+                    (
+                        "approved_enrollments",
+                        etf_shadow_candidate_review.get("approved_enrollment_count"),
+                    ),
+                    (
+                        "latest_owner_decision",
+                        etf_shadow_candidate_review.get("latest_owner_decision"),
+                    ),
+                    ("latest_enrollment", etf_shadow_candidate_review.get("latest_enrollment")),
+                    ("detailed_review_package", etf_shadow_candidate_review.get("detail_report")),
+                    ("safety_status", etf_shadow_candidate_review.get("safety_status")),
+                    ("production_effect", etf_shadow_candidate_review.get("production_effect")),
+                    ("broker_action", etf_shadow_candidate_review.get("broker_action")),
                 ]
             ),
         ),
@@ -3439,6 +3470,119 @@ def _missing_etf_baseline_review_summary() -> dict[str, Any]:
 
 
 def _etf_baseline_review_safety_status(payload: Mapping[str, Any]) -> str:
+    safety = _mapping(payload.get("safety"))
+    safe = (
+        safety.get("observe_only") is True
+        and safety.get("candidate_only") is True
+        and _text(safety.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
+        and safety.get("broker_action") == "none"
+        and safety.get("manual_review_required") is True
+        and payload.get("commands_executed") is False
+        and payload.get("production_state_mutated") is False
+    )
+    return (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true; "
+        "commands_executed=false; production_state_mutated=false"
+        if safe
+        else "SAFETY_REVIEW_REQUIRED"
+    )
+
+
+def _etf_shadow_candidate_review_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_shadow_candidate_review_summary()
+    package_path = _report_index_artifact_path(
+        report_index,
+        "etf_shadow_candidate_review_package",
+    )
+    package = _read_optional_json(package_path)
+    if not package:
+        return _missing_etf_shadow_candidate_review_summary()
+    approval_path = _report_index_artifact_path(
+        report_index,
+        "etf_shadow_candidate_owner_approval",
+    )
+    enrollment_path = _report_index_artifact_path(
+        report_index,
+        "etf_shadow_candidate_enrollment",
+    )
+    approval = _read_optional_json(approval_path)
+    enrollment = _read_optional_json(enrollment_path)
+    summary = _mapping(package.get("review_summary"))
+    top_candidates = _records(package.get("top_review_candidates"))
+    top_candidate = _text(
+        summary.get("top_candidate"),
+        _text(top_candidates[0].get("shape_id"), "MISSING") if top_candidates else "MISSING",
+    )
+    approved_count = 1 if enrollment else _int(summary.get("approved_enrollment_count"))
+    latest_decision = _text(
+        approval.get("owner_decision"),
+        "MISSING" if not approval else "",
+    )
+    latest_enrollment = _text(
+        enrollment.get("shadow_candidate_id"),
+        "MISSING" if not enrollment else "",
+    )
+    safety_status = _etf_shadow_candidate_review_safety_status(package)
+    safety = _mapping(package.get("safety"))
+    status = _text(summary.get("owner_approval_status"), _text(package.get("status"), "UNKNOWN"))
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "summary_sentence": (
+            f"Shadow Candidate Review: top={top_candidate}; "
+            f"pending_review={_int(summary.get('pending_review_count'))}; "
+            f"approved_enrollments={approved_count}; "
+            f"latest_decision={latest_decision}; "
+            f"latest_enrollment={latest_enrollment}; safety={safety_status}."
+        ),
+        "top_candidate": top_candidate,
+        "pending_review_count": _int(summary.get("pending_review_count")),
+        "blocked_count": _int(summary.get("blocked_count")),
+        "approved_enrollment_count": approved_count,
+        "latest_owner_decision": latest_decision,
+        "latest_enrollment": latest_enrollment,
+        "detail_report": "" if package_path is None else str(package_path),
+        "approval_report": "" if approval_path is None else str(approval_path),
+        "enrollment_report": "" if enrollment_path is None else str(enrollment_path),
+        "safety_status": safety_status,
+        "production_effect": _text(safety.get("production_effect"), PRODUCTION_EFFECT),
+        "broker_action": _text(safety.get("broker_action"), "none"),
+        "manual_review_required": safety.get("manual_review_required") is True,
+        "commands_executed": package.get("commands_executed") is True,
+        "production_state_mutated": package.get("production_state_mutated") is True,
+    }
+
+
+def _missing_etf_shadow_candidate_review_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "summary_sentence": "Shadow Candidate Review: no latest review package found.",
+        "top_candidate": "MISSING",
+        "pending_review_count": 0,
+        "blocked_count": 0,
+        "approved_enrollment_count": 0,
+        "latest_owner_decision": "MISSING",
+        "latest_enrollment": "MISSING",
+        "detail_report": "",
+        "approval_report": "",
+        "enrollment_report": "",
+        "safety_status": "MISSING",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "commands_executed": False,
+        "production_state_mutated": False,
+        "limitation": (
+            "Shadow candidate review package artifact is missing; Reader Brief does not run "
+            "etf shadow-review package CLI."
+        ),
+    }
+
+
+def _etf_shadow_candidate_review_safety_status(payload: Mapping[str, Any]) -> str:
     safety = _mapping(payload.get("safety"))
     safe = (
         safety.get("observe_only") is True

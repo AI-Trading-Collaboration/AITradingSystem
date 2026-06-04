@@ -1,0 +1,105 @@
+schema_version: etf_shadow_ready_review_policy_v1
+
+policy_metadata:
+  version: etf_shadow_ready_review_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: >
+    TRADING-082 defines an owner-reviewed workflow for turning shadow_ready
+    historical weight-search observations into forward shadow candidates.
+  validation: >
+    Focused tests cover policy safety, diagnostics artifact loading,
+    shape-level aggregation, review ranking, near-shadow summary, review
+    package generation, owner approval capture, approved-only enrollment,
+    Reader Brief visibility, and final validation gate safety.
+  review_condition: >
+    Review whenever ranking weights, thresholds, hard blockers, approval
+    options, enrollment limits, forward tracking semantics, or safety fields
+    change.
+
+safety:
+  observe_only: true
+  candidate_only: true
+  production_effect: none
+  broker_action: none
+  manual_review_required: true
+
+review_thresholds:
+  min_shadow_ready_appearances: 2
+  min_cross_preset_stability_score: 0.70
+  max_regime_failure_count_warning: 30
+  max_regime_failure_count_block: 60
+  min_review_priority_score: 0.70
+  caution_review_priority_score: 0.55
+
+ranking_weights:
+  shadow_ready_appearance_score: 0.25
+  cross_preset_stability_score: 0.20
+  rank_consistency_score: 0.15
+  weight_shape_similarity_score: 0.15
+  low_regime_failure_score: 0.10
+  overfit_medium_ratio_score: 0.10
+  balanced_exposure_score: 0.05
+
+hard_blockers:
+  - NO_SHADOW_READY_APPEARANCE
+  - EVIDENCE_DASHBOARD_BLOCKED
+  - DATA_QUALITY_CRITICAL
+  - OPS_VALIDATION_FAILED
+  - UNSAFE_PRODUCTION_EFFECT
+  - BROKER_ACTION_NOT_NONE
+  - MISSING_DIAGNOSTICS_SOURCE
+  - MISSING_WEIGHT_SET_ID
+
+owner_approval_policy:
+  require_owner_approval: true
+  require_decision_journal_link: true
+  allowed_decisions:
+    - approved_for_shadow
+    - continue_review
+    - needs_more_data
+    - reject_candidate
+    - defer_decision
+  rationale_required_for:
+    - approved_for_shadow
+    - reject_candidate
+  disallowed_decisions:
+    - apply_to_production
+    - promote_to_baseline
+    - place_order
+    - enable_broker_action
+
+enrollment_limits:
+  max_enroll_per_review: 3
+  default_next_review_days: 14
+  require_review_package: true
+  required_owner_decision: approved_for_shadow
+  production_config_mutation_allowed: false
+  target_weight_mutation_allowed: false
+  broker_action_allowed: false
+
+review_checklist:
+  - checklist_id: confirm_safety_boundary
+    title: Confirm safety boundary
+    required: true
+    prompt: Confirm observe-only, candidate-only, production_effect=none, broker_action=none.
+  - checklist_id: verify_diagnostics_source
+    title: Verify diagnostics source
+    required: true
+    prompt: Confirm diagnostics JSON, stable shape evidence, source preset, search, and weight_set_id links.
+  - checklist_id: review_stability_evidence
+    title: Review shape stability
+    required: true
+    prompt: Review shadow_ready appearances, cross-preset stability, rank consistency, and weight-shape similarity.
+  - checklist_id: review_risk_and_overfit
+    title: Review risk and overfit
+    required: true
+    prompt: Review regime failure count, overfit distribution, and exposure balance.
+  - checklist_id: review_near_shadow_context
+    title: Review near-shadow context
+    required: false
+    prompt: Review near-shadow gaps and rescue suggestions without waiving blockers.
+  - checklist_id: record_owner_approval
+    title: Record owner approval
+    required: true
+    prompt: Capture owner decision before any forward shadow enrollment.

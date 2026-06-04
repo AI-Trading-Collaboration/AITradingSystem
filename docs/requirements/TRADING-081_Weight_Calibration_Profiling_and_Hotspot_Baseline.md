@@ -6,7 +6,7 @@
 - 优先级：P0
 - 状态：VALIDATING
 - 下一责任方：系统实现 + 项目 owner 人工复核
-- 当前阶段：profiling baseline 已实现并通过工程验证；下一步运行 production-like cold diagnostics profiling 样本，由 owner 复核 hotspot evidence 后决定 TRADING-082 方向。
+- 当前阶段：production-like cold detailed profiling 样本已生成；下一步由 owner 复核 hotspot evidence，并优先推进 shadow-ready candidate review / enrollment playbook，除非 owner 明确要求继续压缩 cold-run runtime。
 
 ## Context
 
@@ -55,6 +55,40 @@ warm/resume cache_hit_rate = 1.0
 4. Candidate/worker/cache timing 是 diagnostics 旁路 metadata，不改变 ranking、metrics、robustness、overfit gating 或 candidate readiness。
 5. 所有 recommendations 都保持 proposal-only / manual-review-required，不自动注册 candidate、不 enroll shadow、不修改 production weights。
 
+## Production-Like Profiling Evidence
+
+- 2026-06-04 detailed cold profiling rerun：
+  `python -m ai_trading_system.cli etf weight-calibration diagnostics --include-robust-packs --workers auto --cache read-write --force-refresh --profile detailed --include-performance-report --run-id trading081-production-cold-detailed-20260604-rerun`
+- 前置数据门禁：`aits validate-data --as-of 2026-06-03` 返回
+  `PASS_WITH_WARNINGS`，0 error、1 warning，报告为
+  `outputs/reports/data_quality_2026-06-03.md`。
+- 输出 artifacts：
+  `reports/etf_portfolio/weight_calibration/profiling/etf-weight-diagnostics-20260604T113547Z/profiling_report.json`
+  和
+  `reports/etf_portfolio/weight_calibration/performance/weight_calibration_performance_20260604T113547.json`。
+- 运行结果：`status=available`、24 个 preset/search 组合、240 个 top-N
+  candidate observations、39 个 shadow-ready candidates、`worker_count=8`、
+  `cache_miss_count=6464`、`cache_write_count=12926`、`production_effect=none`。
+- Wall/profile runtime 为 970.143s，低于 profiling policy 的
+  `cold_run_profile_trigger_seconds=1200`；`slowest_step=run_searches`
+  为 968.956s。
+- Aggregate candidate timing 显示 `regime_seconds` 约 1218.592s、
+  `backtest_seconds` 约 532.732s、cache write 约 79.764s、serialization
+  约 152.228s。最慢组合集中在
+  `etf_initial_weight_search_v1/full_available`，约 619.934s aggregate
+  candidate time；其次为 `last_5y`、`ai_cycle_recent` 和 `last_3y`。
+- cache timing 不是主瓶颈：candidate backtest cache write 约 67.723s，
+  regime robustness cache write 约 12.041s，diagnostics aggregation write
+  约 0.459s。
+- profiling recommendations 保持 Python/NumPy/precompute/batching 优先：
+  `use_numpy_dot`、`batch_candidates`、`precompute_regime_masks` 和
+  `reduce_serialization_overhead`；`native_extension_needed=false`。
+- 结论：当前 detailed evidence 足以定位 cold-run 主耗时在 per-candidate
+  regime robustness / backtest computation，且 warm/resume 已由 TRADING-080
+  cache 解决。除非 owner 对 cold-run SLA 提出更严格目标，TRADING-082
+  应优先推进 shadow-ready candidate review and enrollment playbook；暂不需要
+  full `cprofile` 或 native numerical kernel rewrite。
+
 ## Acceptance Criteria
 
 - Profiling policy config exists and fails closed on invalid/unsafe fields.
@@ -75,3 +109,4 @@ warm/resume cache_hit_rate = 1.0
 
 - 2026-06-04: 新增并进入 IN_PROGRESS，原因：TRADING-080 生产级 post-fix 证据显示 warm/resume cache 性能优秀，但 cold run 约 1378.7s；需要 profiling baseline 先定位 slowest pipeline steps、functions、candidates、cache overhead、worker imbalance、vectorization opportunities 和 regime slicing cost，再决定 TRADING-082 是否进入 targeted numerical optimization。
 - 2026-06-04: TRADING-081A~K baseline 实现完成并转入 VALIDATING，原因：新增 profiling policy、diagnostics `--profile off/summary/detailed/cprofile`、step/candidate/cache/worker timing、optional cProfile artifacts、vectorization audit、regime mask assessment、profiling report、Reader Brief profiling section、report registry entry 和 `profiling-validate` gate；专项与相关测试 `tests/test_etf_weight_calibration_profiling.py tests/test_etf_weight_calibration.py tests/test_reader_brief.py tests/test_report_index.py` 共 129 passed，`python -m ruff check config src tests scripts docs`、`python -m compileall -q src tests scripts`、`git diff --check` 和 `aits etf weight-calibration profiling-validate` 已通过。下一步需要 production-like cold profiling 样本和 owner manual review 后再决定 TRADING-082 是 shadow-ready review playbook 还是 targeted numerical optimization。
+- 2026-06-04: production-like detailed cold profiling 样本完成，TRADING-081 继续保持 VALIDATING，下一责任方为 owner manual review。`validate-data --as-of 2026-06-03` 为 `PASS_WITH_WARNINGS`；full diagnostics detailed run 成功，runtime 970.143s、`slowest_step=run_searches` 968.956s、24 个 preset/search 组合、240 个 candidate observations、39 个 shadow-ready candidates、`cache_miss_count=6464`、`cache_write_count=12926`。Aggregate candidate timing 显示主要耗时为 regime robustness 和 backtest computation，cache write 不是主瓶颈；vectorization audit 建议先做 Python/NumPy/precompute/batching，不建议 native extension。由于本次 cold runtime 低于 1200s trigger 且 TRADING-080 warm/resume 已解决重复计算，推荐 TRADING-082 优先做 Shadow-Ready Candidate Review and Enrollment Playbook；除非 owner 要求更严格 cold-run SLA，否则不先启动 numerical kernel optimization 或 full cProfile。
