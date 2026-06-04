@@ -774,6 +774,30 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_weight_calibration_profiling_report
+    title: ETF Weight Calibration Profiling Report
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf weight-calibration diagnostics --profile summary
+    artifact_globs:
+      - reports/etf_portfolio/weight_calibration/profiling/*/profiling_report.json
+      - reports/etf_portfolio/weight_calibration/profiling/*/profiling_report.md
+      - reports/etf_portfolio/weight_calibration/profiling/*/candidate_hotspots.json
+      - reports/etf_portfolio/weight_calibration/profiling/*/candidate_hotspots.csv
+      - reports/etf_portfolio/weight_calibration/profiling/*/candidate_hotspots.md
+      - reports/etf_portfolio/weight_calibration/profiling/*/cprofile.stats
+      - reports/etf_portfolio/weight_calibration/profiling/*/cprofile_top_functions.json
+      - reports/etf_portfolio/weight_calibration/profiling/*/cprofile_top_functions.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-081 profiling report should explain cold-run runtime hotspots before
+      considering numerical optimization, native extensions, or broader runner changes.
+    owner_action: review_weight_calibration_profiling_before_TRADING_082_optimization
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance

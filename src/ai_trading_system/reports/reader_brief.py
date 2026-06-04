@@ -179,6 +179,9 @@ def build_reader_brief_payload(
     etf_parameter_review = _etf_parameter_review_summary(report_index)
     etf_weight_calibration = _etf_weight_calibration_summary(report_index)
     etf_initial_weight_candidates = _etf_initial_weight_candidate_summary(report_index)
+    etf_weight_calibration_profiling = _etf_weight_calibration_profiling_summary(
+        report_index,
+    )
     etf_operations_health = _etf_operations_health_summary(report_index)
     etf_data_quality_governance = _etf_data_quality_governance_summary(report_index)
     etf_strategy_evidence = _etf_strategy_evidence_summary(report_index)
@@ -309,6 +312,7 @@ def build_reader_brief_payload(
         "etf_parameter_review": etf_parameter_review,
         "etf_weight_calibration": etf_weight_calibration,
         "etf_initial_weight_candidates": etf_initial_weight_candidates,
+        "etf_weight_calibration_profiling": etf_weight_calibration_profiling,
         "etf_operations_health": etf_operations_health,
         "etf_data_quality_governance": etf_data_quality_governance,
         "etf_strategy_evidence": etf_strategy_evidence,
@@ -571,6 +575,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_parameter_review = _mapping(payload.get("etf_parameter_review"))
     etf_weight_calibration = _mapping(payload.get("etf_weight_calibration"))
     etf_initial_weight_candidates = _mapping(payload.get("etf_initial_weight_candidates"))
+    etf_weight_calibration_profiling = _mapping(
+        payload.get("etf_weight_calibration_profiling")
+    )
     etf_operations_health = _mapping(payload.get("etf_operations_health"))
     etf_data_quality_governance = _mapping(payload.get("etf_data_quality_governance"))
     etf_strategy_evidence = _mapping(payload.get("etf_strategy_evidence"))
@@ -1043,6 +1050,36 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("detailed_report", etf_initial_weight_candidates.get("detail_report")),
                     ("production_effect", etf_initial_weight_candidates.get("production_effect")),
                     ("broker_action", etf_initial_weight_candidates.get("broker_action")),
+                ]
+            ),
+        ),
+        _section(
+            "Weight Calibration Profiling",
+            _definition_table(
+                [
+                    ("availability", etf_weight_calibration_profiling.get("availability")),
+                    ("status", etf_weight_calibration_profiling.get("status")),
+                    ("profile_mode", etf_weight_calibration_profiling.get("profile_mode")),
+                    (
+                        "total_runtime_seconds",
+                        etf_weight_calibration_profiling.get("total_runtime_seconds"),
+                    ),
+                    ("slowest_step", etf_weight_calibration_profiling.get("slowest_step")),
+                    (
+                        "cache_hit_rate",
+                        etf_weight_calibration_profiling.get("cache_hit_rate"),
+                    ),
+                    (
+                        "recommendation",
+                        etf_weight_calibration_profiling.get("next_step_recommendation"),
+                    ),
+                    ("safety_status", etf_weight_calibration_profiling.get("safety_status")),
+                    ("detailed_report", etf_weight_calibration_profiling.get("detail_report")),
+                    (
+                        "production_effect",
+                        etf_weight_calibration_profiling.get("production_effect"),
+                    ),
+                    ("broker_action", etf_weight_calibration_profiling.get("broker_action")),
                 ]
             ),
         ),
@@ -2807,6 +2844,82 @@ def _missing_etf_initial_weight_candidate_summary() -> dict[str, Any]:
             "run weight-calibration recommendation CLI."
         ),
     }
+
+
+def _etf_weight_calibration_profiling_summary(
+    report_index: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_weight_calibration_profiling_summary()
+    report_path = _report_index_artifact_path(
+        report_index,
+        "etf_weight_calibration_profiling_report",
+    )
+    report = _read_optional_json(report_path)
+    if not report:
+        return _missing_etf_weight_calibration_profiling_summary()
+    step_timing = _mapping(report.get("step_timing"))
+    slowest_steps = _records(step_timing.get("slowest_steps"))
+    slowest_step = slowest_steps[0] if slowest_steps else {}
+    cache_hit_rate = _profiling_cache_hit_rate(report)
+    safety_status = _etf_weight_calibration_safety_status(report)
+    return {
+        "availability": "AVAILABLE",
+        "status": _text(report.get("status"), "AVAILABLE"),
+        "profile_mode": _text(report.get("profile_mode"), "UNKNOWN"),
+        "total_runtime_seconds": report.get("total_runtime_seconds"),
+        "slowest_step": _text(slowest_step.get("step_id"), "MISSING"),
+        "slowest_step_seconds": slowest_step.get("duration_seconds"),
+        "cache_hit_rate": cache_hit_rate,
+        "next_step_recommendation": _text(
+            report.get("next_step_recommendation"),
+            "profile_cold_run_before_numerical_optimization",
+        ),
+        "detail_report": "" if report_path is None else str(report_path),
+        "safety_status": safety_status,
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "summary_sentence": (
+            "Weight Calibration Profiling: "
+            f"mode={_text(report.get('profile_mode'), 'UNKNOWN')}; "
+            f"runtime={report.get('total_runtime_seconds')}; "
+            f"slowest={_text(slowest_step.get('step_id'), 'MISSING')}; "
+            f"cache_hit_rate={cache_hit_rate}; safety={safety_status}."
+        ),
+    }
+
+
+def _missing_etf_weight_calibration_profiling_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "profile_mode": "MISSING",
+        "total_runtime_seconds": None,
+        "slowest_step": "MISSING",
+        "slowest_step_seconds": None,
+        "cache_hit_rate": "MISSING",
+        "next_step_recommendation": "profile_cold_run_before_numerical_optimization",
+        "detail_report": "",
+        "safety_status": "MISSING",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "summary_sentence": (
+            "Weight Calibration Profiling: no latest profiling report found; "
+            "Reader Brief does not run diagnostics or cProfile."
+        ),
+    }
+
+
+def _profiling_cache_hit_rate(report: Mapping[str, Any]) -> float | str:
+    cache_layers = _records(_mapping(report.get("cache_timing_breakdown")).get("cache_layers"))
+    hits = sum(_int(layer.get("hit_count")) for layer in cache_layers)
+    misses = sum(_int(layer.get("miss_count")) for layer in cache_layers)
+    reads = hits + misses
+    if reads <= 0:
+        return "MISSING"
+    return round(hits / reads, 6)
 
 
 def _best_initial_weight_robustness_candidate(rows: list[dict[str, Any]]) -> str:

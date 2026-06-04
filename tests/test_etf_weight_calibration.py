@@ -2756,6 +2756,10 @@ def test_weight_calibration_diagnostics_cli_writes_report(tmp_path: Path) -> Non
             str(prices_path),
             "--output-dir",
             str(tmp_path / "diagnostics"),
+            "--profile",
+            "detailed",
+            "--profile-output",
+            str(tmp_path / "profiling"),
         ],
         env={"COLUMNS": "180"},
         terminal_width=180,
@@ -2763,6 +2767,8 @@ def test_weight_calibration_diagnostics_cli_writes_report(tmp_path: Path) -> Non
 
     assert result.exit_code == 0, result.output
     assert "ETF historical weight search diagnostics" in result.output
+    assert "profiling_report=" in result.output
+    assert "candidate_hotspots=" in result.output
     assert "preset_result_count=2" in result.output
     assert "production_effect=none" in result.output
     assert "broker_action=none" in result.output
@@ -2778,6 +2784,8 @@ def test_weight_calibration_diagnostics_cli_writes_report(tmp_path: Path) -> Non
             "historical_weight_search_diagnostics_*_near_shadow.csv"
         )
     )
+    assert (tmp_path / "profiling" / "profiling_report.json").exists()
+    assert (tmp_path / "profiling" / "candidate_hotspots.csv").exists()
 
 
 def _raw_registry() -> dict[str, object]:

@@ -270,6 +270,115 @@ def test_reader_brief_payload_summarizes_daily_decision_inputs(tmp_path: Path) -
     assert payload["report_navigation_groups"]["groups"][0]["purpose"] == "Core decision artifacts"
 
 
+def test_reader_brief_surfaces_weight_calibration_profiling_summary(
+    tmp_path: Path,
+) -> None:
+    inputs = _write_reader_brief_inputs(tmp_path)
+    profiling_path = (
+        tmp_path
+        / "reports"
+        / "etf_portfolio"
+        / "weight_calibration"
+        / "profiling"
+        / "profile-test-run"
+        / "profiling_report.json"
+    )
+    profiling_path.parent.mkdir(parents=True, exist_ok=True)
+    profiling_path.write_text(
+        json.dumps(
+            {
+                "schema_version": "etf_weight_calibration_profiling_report_v1",
+                "report_type": "etf_weight_calibration_profiling",
+                "status": "PASS",
+                "profile_mode": "summary",
+                "total_runtime_seconds": 1378.734,
+                "step_timing": {
+                    "slowest_steps": [
+                        {
+                            "step_id": "candidate_backtest",
+                            "duration_seconds": 1200.0,
+                        }
+                    ]
+                },
+                "cache_timing_breakdown": {
+                    "cache_layers": [
+                        {
+                            "cache_layer": "candidate_backtest",
+                            "hit_count": 10,
+                            "miss_count": 0,
+                            "hit_rate": 1.0,
+                        }
+                    ]
+                },
+                "next_step_recommendation": (
+                    "继续 profile cold run before numerical optimization."
+                ),
+                "safety": {
+                    "observe_only": True,
+                    "candidate_only": True,
+                    "production_effect": "none",
+                    "broker_action": "none",
+                    "manual_review_required": True,
+                },
+                "production_effect": "none",
+                "broker_action": "none",
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    report_index = json.loads(inputs["report_index"].read_text(encoding="utf-8"))
+    report_index["reports"].append(
+        {
+            "report_id": "etf_weight_calibration_profiling_report",
+            "title": "ETF Weight Calibration Profiling Report",
+            "cadence": "ad_hoc",
+            "owner": "system",
+            "freshness_status": "FRESH",
+            "artifact_status": "PASS",
+            "artifact_date": "2026-05-04",
+            "latest_artifact_path": str(profiling_path),
+            "exists": True,
+            "owner_action": "review_weight_calibration_profiling_report",
+            "production_effect": "none",
+        }
+    )
+    inputs["report_index"].write_text(
+        json.dumps(report_index, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    payload = build_reader_brief_payload(
+        as_of=date(2026, 5, 4),
+        reports_dir=tmp_path,
+        decision_snapshot_path=inputs["snapshot"],
+        calculation_explainers_path=inputs["calculation_explainers"],
+        daily_decision_summary_path=inputs["daily_decision_summary"],
+        evidence_dashboard_json_path=inputs["evidence_dashboard"],
+        daily_task_dashboard_json_path=inputs["daily_task_dashboard"],
+        daily_report_path=inputs["daily_report"],
+        trace_bundle_path=inputs["trace_bundle"],
+        score_change_attribution_path=inputs["score_change_attribution"],
+        market_panel_path=inputs["market_panel"],
+        research_governance_summary_path=inputs["research_governance_summary"],
+        report_index_path=inputs["report_index"],
+        documentation_contract_path=inputs["documentation_contract"],
+    )
+
+    profiling = payload["etf_weight_calibration_profiling"]
+    assert profiling["availability"] == "AVAILABLE"
+    assert profiling["status"] == "PASS"
+    assert profiling["profile_mode"] == "summary"
+    assert profiling["slowest_step"] == "candidate_backtest"
+    assert profiling["cache_hit_rate"] == 1.0
+    assert profiling["production_effect"] == "none"
+    assert profiling["broker_action"] == "none"
+    assert profiling["detail_report"].endswith("profiling_report.json")
+    html = render_reader_brief_html(payload)
+    assert "Weight Calibration Profiling" in html
+    assert "candidate_backtest" in html
+
+
 def test_reader_brief_operations_health_summary_shows_pass_and_blocked_status(
     tmp_path: Path,
 ) -> None:

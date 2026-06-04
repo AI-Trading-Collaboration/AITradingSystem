@@ -1,0 +1,55 @@
+schema_version: etf_weight_calibration_profiling_policy_v1
+
+policy_metadata:
+  version: etf_weight_calibration_profiling_policy_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: "TRADING-081 measurement-first profiling policy for ETF weight calibration diagnostics cold-run hotspot analysis."
+  validation: "Focused tests cover policy loading, mode validation, thresholds, top_n, safety fail-closed behavior, and validation gate output."
+  review_condition: "Review after production-like cold-run profiling identifies slowest steps, candidates, cache overhead, worker imbalance, and optimization candidates."
+
+weight_calibration_profiling:
+  default_mode: summary
+  modes:
+    "off":
+      enabled: false
+      step_timing: false
+      cache_timing: false
+      worker_timing: false
+      candidate_timing: false
+      cprofile: false
+    "summary":
+      enabled: true
+      step_timing: true
+      cache_timing: true
+      worker_timing: true
+      candidate_timing: false
+      cprofile: false
+    "detailed":
+      enabled: true
+      step_timing: true
+      cache_timing: true
+      worker_timing: true
+      candidate_timing: true
+      cprofile: false
+    "cprofile":
+      enabled: true
+      step_timing: true
+      cache_timing: true
+      worker_timing: true
+      candidate_timing: true
+      cprofile: true
+  thresholds:
+    slow_step_seconds: 60
+    slow_candidate_seconds: 5
+    cold_run_profile_trigger_seconds: 1200
+    slow_cache_entry_seconds: 1
+    worker_imbalance_ratio: 1.5
+    regime_mask_precompute_reuse_floor: 2
+  top_n: 20
+  safety:
+    observe_only: true
+    candidate_only: true
+    production_effect: none
+    broker_action: none
+    manual_review_required: true

@@ -554,6 +554,19 @@ fail closed 校验 cache policy、cache key、manifest、price/returns cache pay
 candidate/regime/aggregation cache behavior、parallel runner、resume manifest、
 performance report 和 safety boundary；该 gate 只证明 cache/parallel research workflow
 可审计，不代表任何 candidate 可上线。
+TRADING-081 新增 `config/etf_portfolio/profiling_policy.yaml`，并扩展
+`aits etf weight-calibration diagnostics` 支持 `--profile off/summary/detailed/cprofile`、
+`--profile-output <path>` 和 `--profile-top-n N`。默认 `summary` 只记录轻量
+step/cache/worker timing；`detailed` 额外写出 deterministic candidate hotspot
+JSON/CSV/Markdown；`cprofile` 才生成 `cprofile.stats` 和 top functions JSON/Markdown。
+Profiling artifacts 默认写入 ignored
+`reports/etf_portfolio/weight_calibration/profiling/<run_id>/`，包含
+`profiling_report.json/md`、`candidate_hotspots.*`、cache timing breakdown、parallel
+worker timing、vectorization audit、regime mask precomputation assessment 和 optimization
+recommendations。`aits etf weight-calibration profiling-validate` fail closed 校验 policy、
+profiler、report generator、Reader Brief integration 和固定 safety boundary。该 workflow
+只回答 cold run 时间分布，不注册 candidate、不 enroll shadow、不修改 production weights、
+baseline config 或 broker state，也不引入 C/C++/Rust/Numba/Polars rewrite。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

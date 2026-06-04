@@ -381,6 +381,21 @@ from ai_trading_system.etf_portfolio.weight_calibration_cache import (
     write_weight_calibration_cache_parallel_validation_report,
     write_weight_calibration_performance_report,
 )
+from ai_trading_system.etf_portfolio.weight_calibration_profiling import (
+    DEFAULT_WEIGHT_CALIBRATION_PROFILING_POLICY_CONFIG_PATH,
+    DEFAULT_WEIGHT_CALIBRATION_PROFILING_REPORT_DIR,
+    DEFAULT_WEIGHT_CALIBRATION_PROFILING_VALIDATION_DIR,
+    build_weight_calibration_profiling_report,
+    build_weight_calibration_profiling_validation_report,
+    load_weight_calibration_profiling_policy_config,
+    normalize_weight_calibration_profile_mode,
+    profiling_mode_settings,
+    run_with_optional_cprofile,
+    write_cprofile_artifacts,
+    write_weight_calibration_candidate_hotspot_table,
+    write_weight_calibration_profiling_report,
+    write_weight_calibration_profiling_validation_report,
+)
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
     load_report_registry,
@@ -4898,10 +4913,26 @@ def weight_calibration_diagnostics_command(
         bool,
         typer.Option("--include-performance-report", help="写出 runtime performance report。"),
     ] = False,
+    profile: Annotated[
+        str,
+        typer.Option("--profile", help="profiling mode: off, summary, detailed, or cprofile。"),
+    ] = "summary",
+    profile_output: Annotated[
+        Path | None,
+        typer.Option("--profile-output", help="profiling artifacts 输出目录。"),
+    ] = None,
+    profile_top_n: Annotated[
+        int | None,
+        typer.Option("--profile-top-n", help="profiling report Top-N rows。"),
+    ] = None,
     cache_policy_path: Annotated[
         Path,
         typer.Option(help="weight calibration cache policy YAML path。"),
     ] = DEFAULT_WEIGHT_CALIBRATION_CACHE_POLICY_CONFIG_PATH,
+    profiling_policy_path: Annotated[
+        Path,
+        typer.Option(help="weight calibration profiling policy YAML path。"),
+    ] = DEFAULT_WEIGHT_CALIBRATION_PROFILING_POLICY_CONFIG_PATH,
     performance_report_dir: Annotated[
         Path,
         typer.Option(help="weight calibration performance report 输出目录。"),
@@ -4911,6 +4942,8 @@ def weight_calibration_diagnostics_command(
     if resume and not run_id:
         typer.echo("--resume requires --run-id for auditable diagnostics resume。")
         raise typer.Exit(code=2)
+    if profile_top_n is not None and profile_top_n <= 0:
+        raise typer.BadParameter("--profile-top-n must be positive")
     config = load_etf_config_bundle()
     registry = load_weight_search_registry(search_config_path, etf_config=config)
     preset_registry = load_weight_calibration_preset_registry(
@@ -4919,6 +4952,9 @@ def weight_calibration_diagnostics_command(
         weight_search_registry=registry,
     )
     cache_policy = load_weight_calibration_cache_policy_config(cache_policy_path)
+    profiling_policy = load_weight_calibration_profiling_policy_config(profiling_policy_path)
+    profile_mode = normalize_weight_calibration_profile_mode(profile, policy=profiling_policy)
+    profile_settings = profiling_mode_settings(profiling_policy, profile_mode)
     cache_mode = "disabled" if no_cache else cache
     prices, quality_report = load_standard_prices(prices_path, config.assets, config.strategy)
     if not quality_report.passed:
@@ -4931,28 +4967,36 @@ def weight_calibration_diagnostics_command(
         selected_searches.extend(WEIGHT_ROBUST_SEARCH_PACK_IDS)
     selected_searches = list(dict.fromkeys(selected_searches))
     selected_presets = list(preset or WEIGHT_SEARCH_DIAGNOSTICS_DEFAULT_PRESETS)
-    payload = build_historical_weight_search_diagnostics_report(
-        prices,
-        etf_config=config,
-        quality_report=quality_report,
-        registry=registry,
-        preset_registry=preset_registry,
-        search_ids=selected_searches,
-        preset_ids=selected_presets,
-        top=top,
-        max_candidates=max_candidates,
-        source_paths={
+    builder_kwargs = {
+        "etf_config": config,
+        "quality_report": quality_report,
+        "registry": registry,
+        "preset_registry": preset_registry,
+        "search_ids": selected_searches,
+        "preset_ids": selected_presets,
+        "top": top,
+        "max_candidates": max_candidates,
+        "source_paths": {
             "weight_search_config": str(search_config_path),
             "weight_calibration_presets": str(preset_config_path),
             "prices": str(prices_path),
             "cache_policy": str(cache_policy_path),
+            "profiling_policy": str(profiling_policy_path),
         },
-        cache_policy=cache_policy,
-        cache_mode=cache_mode,
-        force_refresh=force_refresh,
-        workers=workers,
-        resume_run_id=run_id if resume else None,
-        include_performance_report=include_performance_report,
+        "cache_policy": cache_policy,
+        "cache_mode": cache_mode,
+        "force_refresh": force_refresh,
+        "workers": workers,
+        "resume_run_id": run_id if resume else None,
+        "include_performance_report": include_performance_report,
+        "profiling_policy": profiling_policy,
+        "profile_mode": profile_mode,
+    }
+    payload, cprofile_profiler = run_with_optional_cprofile(
+        build_historical_weight_search_diagnostics_report,
+        prices,
+        enabled=profile_settings.cprofile,
+        **builder_kwargs,
     )
     paths = write_historical_weight_search_diagnostics_report(
         payload,
@@ -4964,6 +5008,36 @@ def weight_calibration_diagnostics_command(
             payload["performance_report"],
             output_dir=performance_report_dir,
         )
+    profile_paths = None
+    cprofile_paths = None
+    candidate_hotspot_paths = None
+    if profile_settings.enabled:
+        run_manifest = payload.get("run_manifest") or {}
+        profile_dir = profile_output or (
+            DEFAULT_WEIGHT_CALIBRATION_PROFILING_REPORT_DIR
+            / str(run_manifest.get("run_id") or "unknown_run")
+        )
+        if cprofile_profiler is not None:
+            cprofile_paths = write_cprofile_artifacts(
+                cprofile_profiler,
+                output_dir=profile_dir,
+                top_n=profile_top_n or profiling_policy.weight_calibration_profiling.top_n,
+            )
+        profiling_report = build_weight_calibration_profiling_report(
+            payload,
+            policy=profiling_policy,
+            profile_mode=profile_mode,
+            profile_top_n=profile_top_n,
+            cprofile_artifacts=cprofile_paths,
+        )
+        profile_paths = write_weight_calibration_profiling_report(
+            profiling_report,
+            output_dir=profile_dir,
+        )
+        candidate_hotspot_paths = write_weight_calibration_candidate_hotspot_table(
+            profiling_report["candidate_hotspots"],
+            output_dir=profile_dir,
+        )
     criteria = payload["shadow_minimum_criteria"]
     cache_summary = payload.get("cache_summary") or {}
     typer.echo(f"ETF historical weight search diagnostics：{paths['markdown']}")
@@ -4973,6 +5047,13 @@ def weight_calibration_diagnostics_command(
     if performance_paths is not None:
         typer.echo(f"performance_report={performance_paths['markdown']}")
         typer.echo(f"performance_json={performance_paths['json']}")
+    if profile_paths is not None:
+        typer.echo(f"profiling_report={profile_paths['markdown']}")
+        typer.echo(f"profiling_json={profile_paths['json']}")
+        typer.echo(f"candidate_hotspots={candidate_hotspot_paths['markdown']}")
+    if cprofile_paths is not None:
+        typer.echo(f"cprofile_stats={cprofile_paths['stats']}")
+        typer.echo(f"cprofile_top_functions={cprofile_paths['markdown']}")
     typer.echo(f"status={payload['status']}")
     typer.echo(f"preset_result_count={payload['preset_result_count']}")
     typer.echo(f"candidate_observation_count={payload['candidate_observation_count']}")
@@ -5019,6 +5100,43 @@ def weight_calibration_performance_validate_command(
         output_dir=output_dir,
     )
     typer.echo(f"ETF weight calibration cache / parallel validation：{paths['markdown']}")
+    typer.echo(f"json={paths['json']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@weight_calibration_app.command("profiling-validate")
+def weight_calibration_profiling_validate_command(
+    profiling_policy_path: Annotated[
+        Path,
+        typer.Option(help="weight calibration profiling policy YAML path。"),
+    ] = DEFAULT_WEIGHT_CALIBRATION_PROFILING_POLICY_CONFIG_PATH,
+    report_registry_path: Annotated[
+        Path,
+        typer.Option(help="report registry YAML path。"),
+    ] = DEFAULT_REPORT_REGISTRY_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option(help="profiling validation report 输出目录。"),
+    ] = DEFAULT_WEIGHT_CALIBRATION_PROFILING_VALIDATION_DIR,
+) -> None:
+    """校验 TRADING-081 profiling workflow 和 safety boundary。"""
+    payload = build_weight_calibration_profiling_validation_report(
+        policy_config_path=profiling_policy_path,
+        report_registry_path=report_registry_path,
+    )
+    paths = write_weight_calibration_profiling_validation_report(
+        payload,
+        output_dir=output_dir,
+    )
+    typer.echo(f"ETF weight calibration profiling validation：{paths['markdown']}")
     typer.echo(f"json={paths['json']}")
     typer.echo(f"status={payload['status']}")
     typer.echo(f"failed_check_count={payload['failed_check_count']}")

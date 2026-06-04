@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Mapping
+import os
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from hashlib import sha256
@@ -46,6 +47,13 @@ from ai_trading_system.etf_portfolio.weight_calibration_cache import (
     write_price_returns_matrix_cache_entry,
     write_weight_calibration_diagnostics_run_manifest,
     write_weight_calibration_json_cache_entry,
+)
+from ai_trading_system.etf_portfolio.weight_calibration_profiling import (
+    WeightCalibrationProfilingPolicyConfig,
+    build_cache_timing_breakdown,
+    build_worker_timing_breakdown,
+    normalize_weight_calibration_profile_mode,
+    profiling_mode_settings,
 )
 from ai_trading_system.reports.report_index import (
     DEFAULT_REPORT_REGISTRY_PATH,
@@ -768,6 +776,8 @@ def run_historical_weight_search(
     cache_root: Path | None = None,
     force_refresh: bool = False,
     workers: str | int | None = 1,
+    profiling_policy: WeightCalibrationProfilingPolicyConfig | None = None,
+    profile_mode: str | None = None,
 ) -> ETFWeightSearchRun:
     if not quality_report.passed:
         raise WeightCalibrationError(
@@ -855,6 +865,18 @@ def run_historical_weight_search(
         }
     )
     cache_events: list[dict[str, Any]] = []
+    profile_mode_resolved = (
+        normalize_weight_calibration_profile_mode(profile_mode, policy=profiling_policy)
+        if profiling_policy is not None
+        else "off"
+    )
+    profile_settings = (
+        profiling_mode_settings(profiling_policy, profile_mode_resolved)
+        if profiling_policy is not None
+        else None
+    )
+    profile_enabled = bool(profile_settings and profile_settings.enabled)
+    candidate_timing_rows: list[dict[str, Any]] = []
     candidate_results: dict[str, dict[str, Any]] = {}
     miss_tasks: list[dict[str, Any]] = []
     ranked_rows = []
@@ -862,6 +884,7 @@ def run_historical_weight_search(
     metrics_rows = []
     robustness_payloads = []
     for index, weights in enumerate(candidates, start=1):
+        candidate_started = perf_counter()
         candidate_id = f"weight_set_{index:04d}"
         cache_keys = _candidate_cache_keys(
             weights=weights,
@@ -875,6 +898,7 @@ def run_historical_weight_search(
             benchmark_set_hash=benchmark_set_hash,
             regime_definition_hash=regime_definition_hash,
         )
+        backtest_read_started = perf_counter()
         cached_backtest = _load_candidate_backtest_cache(
             cache_root=resolved_cache_root,
             cache_key=cache_keys["candidate_backtest"],
@@ -883,6 +907,7 @@ def run_historical_weight_search(
             cache_read_enabled=cache_read_enabled
             and _cache_layer_enabled(cache_policy, "candidate_backtest"),
         )
+        backtest_read_seconds = perf_counter() - backtest_read_started
         if cached_backtest is None:
             cache_events.append(
                 _candidate_cache_event(
@@ -890,6 +915,7 @@ def run_historical_weight_search(
                     "miss" if resolved_cache_mode != "disabled" else "disabled",
                     cache_keys["candidate_backtest"],
                     candidate_id,
+                    duration_seconds=backtest_read_seconds,
                 )
             )
             miss_tasks.append(
@@ -915,8 +941,10 @@ def run_historical_weight_search(
                 "hit",
                 cache_keys["candidate_backtest"],
                 candidate_id,
+                duration_seconds=backtest_read_seconds,
             )
         )
+        regime_read_started = perf_counter()
         cached_robustness = _load_regime_robustness_cache(
             cache_root=resolved_cache_root,
             cache_key=cache_keys["regime_robustness"],
@@ -925,6 +953,9 @@ def run_historical_weight_search(
             cache_read_enabled=cache_read_enabled
             and _cache_layer_enabled(cache_policy, "regime_robustness"),
         )
+        regime_read_seconds = perf_counter() - regime_read_started
+        regime_compute_seconds = 0.0
+        regime_write_seconds = 0.0
         if cached_robustness is None:
             cache_events.append(
                 _candidate_cache_event(
@@ -932,8 +963,10 @@ def run_historical_weight_search(
                     "miss" if resolved_cache_mode != "disabled" else "disabled",
                     cache_keys["regime_robustness"],
                     candidate_id,
+                    duration_seconds=regime_read_seconds,
                 )
             )
+            regime_compute_started = perf_counter()
             robustness = build_weight_robustness_evaluation(
                 candidate_id=candidate_id,
                 candidate_daily=cached_backtest["daily"],
@@ -943,6 +976,7 @@ def run_historical_weight_search(
                 etf_config=etf_config,
                 objective=objective,
             )
+            regime_compute_seconds = perf_counter() - regime_compute_started
             regime_payload = _regime_robustness_cache_payload(
                 cache_key=cache_keys["regime_robustness"],
                 candidate_id=candidate_id,
@@ -950,18 +984,22 @@ def run_historical_weight_search(
                 generated_at=generated,
             )
             if cache_write_enabled and _cache_layer_enabled(cache_policy, "regime_robustness"):
+                regime_write_started = perf_counter()
                 _write_regime_robustness_cache(
                     cache_root=resolved_cache_root,
                     payload=regime_payload,
                     source_config_hash=source_config_hash,
                     data_hash=data_hash,
                 )
+                regime_write_seconds = perf_counter() - regime_write_started
                 cache_events.append(
                     _candidate_cache_event(
                         "regime_robustness",
                         "write",
                         cache_keys["regime_robustness"],
                         candidate_id,
+                        duration_seconds=regime_write_seconds,
+                        serialization_seconds=regime_write_seconds,
                     )
                 )
                 regime_status = "miss_written"
@@ -974,6 +1012,7 @@ def run_historical_weight_search(
                     "hit",
                     cache_keys["regime_robustness"],
                     candidate_id,
+                    duration_seconds=regime_read_seconds,
                 )
             )
             robustness = cached_robustness
@@ -988,6 +1027,24 @@ def run_historical_weight_search(
             "candidate_backtest_cache_status": "hit",
             "regime_robustness_cache_status": regime_status,
         }
+        if profile_enabled:
+            candidate_timing_rows.append(
+                _weight_candidate_timing_row(
+                    candidate_id=candidate_id,
+                    search_id=search.search_id,
+                    preset_id=_text(_mapping(range_preset).get("preset_id")),
+                    weights=weights,
+                    backtest_seconds=0.0,
+                    regime_seconds=regime_compute_seconds,
+                    cache_read_seconds=backtest_read_seconds + regime_read_seconds,
+                    cache_write_seconds=regime_write_seconds,
+                    serialization_seconds=regime_write_seconds,
+                    total_candidate_seconds=perf_counter() - candidate_started,
+                    cache_status=_combined_candidate_cache_status("hit", regime_status),
+                    worker_id="main",
+                    status="completed",
+                )
+            )
     if miss_tasks:
         parallel_result = run_weight_calibration_parallel_tasks(
             miss_tasks,
@@ -1006,37 +1063,47 @@ def run_historical_weight_search(
             candidate_id = str(result["candidate_id"])
             backtest_cache_payload = _mapping(result.get("backtest_cache_payload"))
             regime_cache_payload = _mapping(result.get("regime_cache_payload"))
+            backtest_write_seconds = 0.0
             if cache_write_enabled and _cache_layer_enabled(cache_policy, "candidate_backtest"):
+                backtest_write_started = perf_counter()
                 _write_candidate_backtest_cache(
                     cache_root=resolved_cache_root,
                     payload=backtest_cache_payload,
                     source_config_hash=source_config_hash,
                     data_hash=data_hash,
                 )
+                backtest_write_seconds = perf_counter() - backtest_write_started
                 cache_events.append(
                     _candidate_cache_event(
                         "candidate_backtest",
                         "write",
                         str(result["candidate_backtest_cache_key"]),
                         candidate_id,
+                        duration_seconds=backtest_write_seconds,
+                        serialization_seconds=backtest_write_seconds,
                     )
                 )
                 backtest_status = "miss_written"
             else:
                 backtest_status = "miss"
+            regime_write_seconds = 0.0
             if cache_write_enabled and _cache_layer_enabled(cache_policy, "regime_robustness"):
+                regime_write_started = perf_counter()
                 _write_regime_robustness_cache(
                     cache_root=resolved_cache_root,
                     payload=regime_cache_payload,
                     source_config_hash=source_config_hash,
                     data_hash=data_hash,
                 )
+                regime_write_seconds = perf_counter() - regime_write_started
                 cache_events.append(
                     _candidate_cache_event(
                         "regime_robustness",
                         "write",
                         str(result["regime_robustness_cache_key"]),
                         candidate_id,
+                        duration_seconds=regime_write_seconds,
+                        serialization_seconds=regime_write_seconds,
                     )
                 )
                 regime_status = "miss_written"
@@ -1052,6 +1119,36 @@ def run_historical_weight_search(
                 "candidate_backtest_cache_status": backtest_status,
                 "regime_robustness_cache_status": regime_status,
             }
+            if profile_enabled:
+                timing = dict(_mapping(result.get("timing")))
+                candidate_timing_rows.append(
+                    _weight_candidate_timing_row(
+                        candidate_id=candidate_id,
+                        search_id=search.search_id,
+                        preset_id=_text(_mapping(range_preset).get("preset_id")),
+                        weights=_mapping(result.get("weights")),
+                        backtest_seconds=_float_or_none(timing.get("backtest_seconds")) or 0.0,
+                        regime_seconds=_float_or_none(timing.get("regime_seconds")) or 0.0,
+                        cache_read_seconds=0.0,
+                        cache_write_seconds=backtest_write_seconds + regime_write_seconds,
+                        serialization_seconds=(
+                            (_float_or_none(timing.get("serialization_seconds")) or 0.0)
+                            + backtest_write_seconds
+                            + regime_write_seconds
+                        ),
+                        total_candidate_seconds=(
+                            (_float_or_none(timing.get("total_candidate_seconds")) or 0.0)
+                            + backtest_write_seconds
+                            + regime_write_seconds
+                        ),
+                        cache_status=_combined_candidate_cache_status(
+                            backtest_status,
+                            regime_status,
+                        ),
+                        worker_id=_text(timing.get("worker_id")) or "worker",
+                        status="completed",
+                    )
+                )
     for index, weights in enumerate(candidates, start=1):
         candidate_id = f"weight_set_{index:04d}"
         result = candidate_results[candidate_id]
@@ -1129,6 +1226,15 @@ def run_historical_weight_search(
         row["rank"] = rank_by_candidate[row["candidate_id"]]
     for row in metrics_rows:
         row["rank"] = rank_by_candidate[row["candidate_id"]]
+    if candidate_timing_rows:
+        rank_by_id = {str(row.get("candidate_id")): row.get("rank") for row in metrics_rows}
+        status_by_id = {
+            str(row.get("candidate_id")): row.get("candidate_status") for row in metrics_rows
+        }
+        for row in candidate_timing_rows:
+            candidate_id = str(row.get("candidate_id"))
+            row["rank"] = rank_by_id.get(candidate_id)
+            row["readiness_status"] = status_by_id.get(candidate_id)
     blocked_candidates = [
         row for row in ranking if row["candidate_status"] in {"blocked", "rejected"}
     ]
@@ -1197,6 +1303,15 @@ def run_historical_weight_search(
         "safety": dict(WEIGHT_CALIBRATION_SAFETY),
         **WEIGHT_CALIBRATION_SAFETY,
     }
+    if profile_enabled:
+        payload["profiling"] = {
+            "profile_mode": profile_mode_resolved,
+            "candidate_timings": candidate_timing_rows,
+            "worker_timing": build_worker_timing_breakdown(candidate_timing_rows),
+            "cache_timing": build_cache_timing_breakdown(cache_events),
+            "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+            **WEIGHT_CALIBRATION_SAFETY,
+        }
     validate_weight_search_run_payload(payload)
     return ETFWeightSearchRun(run_id=run_id, payload=payload)
 
@@ -3278,6 +3393,8 @@ def build_historical_weight_search_diagnostics_report(
     workers: str | int | None = 1,
     resume_run_id: str | None = None,
     include_performance_report: bool = False,
+    profiling_policy: WeightCalibrationProfilingPolicyConfig | None = None,
+    profile_mode: str | None = None,
 ) -> dict[str, Any]:
     runtime_started = perf_counter()
     step_runtime_seconds: dict[str, float] = {}
@@ -3295,6 +3412,18 @@ def build_historical_weight_search_diagnostics_report(
     resolved_cache_mode = _resolve_weight_diagnostics_cache_mode(cache_policy, cache_mode)
     resolved_cache_root = _resolve_weight_diagnostics_cache_root(cache_policy, cache_root)
     resolved_workers = resolve_weight_calibration_worker_count(workers, policy=cache_policy)
+    profile_mode_resolved = (
+        normalize_weight_calibration_profile_mode(profile_mode, policy=profiling_policy)
+        if profiling_policy is not None
+        else "off"
+    )
+    profile_settings = (
+        profiling_mode_settings(profiling_policy, profile_mode_resolved)
+        if profiling_policy is not None
+        else None
+    )
+    profile_enabled = bool(profile_settings and profile_settings.enabled)
+    candidate_timing_rows: list[dict[str, Any]] = []
     available_dates = pd.to_datetime(prices["date"], errors="coerce").dropna()
     if available_dates.empty:
         raise WeightCalibrationError("prices have no valid date values")
@@ -3387,6 +3516,7 @@ def build_historical_weight_search_diagnostics_report(
             "price_returns_matrix_cache_status": price_cache_status.get("cache_status"),
         }
     )
+    diagnostics_cache_lookup_seconds = 0.0
     if resolved_cache_mode != "disabled" and not force_refresh:
         cache_lookup_started = perf_counter()
         cached = load_weight_calibration_json_cache_entry(
@@ -3397,7 +3527,8 @@ def build_historical_weight_search_diagnostics_report(
             expected_data_hash=data_hash,
             expected_engine_version=WEIGHT_SEARCH_DIAGNOSTICS_SCHEMA_VERSION,
         )
-        step_runtime_seconds["diagnostics_cache_lookup"] = perf_counter() - cache_lookup_started
+        diagnostics_cache_lookup_seconds = perf_counter() - cache_lookup_started
+        step_runtime_seconds["diagnostics_cache_lookup"] = diagnostics_cache_lookup_seconds
         if cached is not None:
             cached_payload = dict(cached["payload"])
             cache_events.append(
@@ -3405,6 +3536,8 @@ def build_historical_weight_search_diagnostics_report(
                     "cache_layer": "diagnostics_aggregation",
                     "cache_status": "hit",
                     "cache_key": diagnostics_cache_key,
+                    "duration_seconds": round(diagnostics_cache_lookup_seconds, 6),
+                    "serialization_seconds": round(diagnostics_cache_lookup_seconds, 6),
                 }
             )
             cache_summary.update(
@@ -3441,6 +3574,15 @@ def build_historical_weight_search_diagnostics_report(
                     resume_status=cache_summary["resume_status"],
                     generated_at=generated,
                 )
+            if profile_enabled:
+                cached_payload["profiling"] = _weight_diagnostics_profiling_payload(
+                    profile_mode=profile_mode_resolved,
+                    step_runtime_seconds=step_runtime_seconds,
+                    candidate_timing_rows=[],
+                    cache_events=cache_events,
+                    total_runtime_seconds=perf_counter() - runtime_started,
+                    profiling_policy=profiling_policy,
+                )
             validate_historical_weight_search_diagnostics_report(cached_payload)
             return cached_payload
     if resolved_cache_mode != "disabled":
@@ -3449,6 +3591,7 @@ def build_historical_weight_search_diagnostics_report(
                 "cache_layer": "diagnostics_aggregation",
                 "cache_status": "miss",
                 "cache_key": diagnostics_cache_key,
+                "duration_seconds": round(diagnostics_cache_lookup_seconds, 6),
             }
         )
         cache_summary.update(
@@ -3495,6 +3638,8 @@ def build_historical_weight_search_diagnostics_report(
                 cache_root=resolved_cache_root,
                 force_refresh=force_refresh,
                 workers=resolved_workers,
+                profiling_policy=profiling_policy,
+                profile_mode=profile_mode_resolved,
             )
             cache_events.extend(
                 _records(_mapping(run.payload.get("runtime_cache")).get("cache_events"))
@@ -3516,21 +3661,41 @@ def build_historical_weight_search_diagnostics_report(
                 top=top,
                 generated_at=run_time,
             )
+            if profile_enabled:
+                for timing_row in _records(
+                    _mapping(run.payload.get("profiling")).get("candidate_timings")
+                ):
+                    enriched_timing = dict(timing_row)
+                    enriched_timing["search_id"] = search_id
+                    enriched_timing["preset_id"] = preset_id
+                    candidate_timing_rows.append(enriched_timing)
             preset_result = _weight_search_diagnostics_preset_result(
                 run.payload,
                 top_payload=top_payload,
                 regime_payload=regime_payload,
                 overfit_payload=overfit_payload,
             )
+            timing_by_candidate = {
+                str(row.get("candidate_id")): row
+                for row in candidate_timing_rows
+                if row.get("search_id") == search_id
+                and row.get("preset_id") == preset_result.get("preset_id")
+            }
             preset_results.append(preset_result)
             for candidate in _records(top_payload.get("candidates")):
-                candidate_records.append(
-                    _weight_search_diagnostics_candidate_record(
-                        run.payload,
-                        candidate,
-                        preset_result=preset_result,
-                    )
+                candidate_record = _weight_search_diagnostics_candidate_record(
+                    run.payload,
+                    candidate,
+                    preset_result=preset_result,
                 )
+                candidate_records.append(candidate_record)
+                timing = timing_by_candidate.get(str(candidate.get("source_candidate_id")))
+                if timing is not None:
+                    timing["rank"] = candidate_record.get("rank")
+                    timing["readiness_status"] = candidate_record.get(
+                        "forward_readiness_status"
+                    )
+                    timing["overfit_risk"] = candidate_record.get("overfit_risk")
             for row in _records(regime_payload.get("matrix")):
                 enriched = dict(row)
                 enriched["search_id"] = search_id
@@ -3590,6 +3755,15 @@ def build_historical_weight_search_diagnostics_report(
         "safety": dict(WEIGHT_CALIBRATION_SAFETY),
         **WEIGHT_CALIBRATION_SAFETY,
     }
+    if profile_enabled:
+        payload["profiling"] = _weight_diagnostics_profiling_payload(
+            profile_mode=profile_mode_resolved,
+            step_runtime_seconds=step_runtime_seconds,
+            candidate_timing_rows=candidate_timing_rows,
+            cache_events=cache_events,
+            total_runtime_seconds=perf_counter() - runtime_started,
+            profiling_policy=profiling_policy,
+        )
     if include_performance_report:
         payload["performance_report"] = build_weight_calibration_performance_report(
             run_id=run_manifest_id,
@@ -3657,6 +3831,20 @@ def build_historical_weight_search_diagnostics_report(
             cache_root=resolved_cache_root,
         )
         step_runtime_seconds["cache_write"] = perf_counter() - cache_write_started
+        cache_events[-1]["duration_seconds"] = round(step_runtime_seconds["cache_write"], 6)
+        cache_events[-1]["serialization_seconds"] = round(
+            step_runtime_seconds["cache_write"],
+            6,
+        )
+        if profile_enabled:
+            payload["profiling"] = _weight_diagnostics_profiling_payload(
+                profile_mode=profile_mode_resolved,
+                step_runtime_seconds=step_runtime_seconds,
+                candidate_timing_rows=candidate_timing_rows,
+                cache_events=cache_events,
+                total_runtime_seconds=perf_counter() - runtime_started,
+                profiling_policy=profiling_policy,
+            )
         if include_performance_report:
             payload["performance_report"] = build_weight_calibration_performance_report(
                 run_id=run_manifest_id,
@@ -6108,6 +6296,7 @@ def _prepare_diagnostics_price_returns_matrix_cache(
     cache_key = str(lookup["cache_key"])
     cache_events: list[dict[str, Any]] = []
     if not force_refresh:
+        read_started = perf_counter()
         loaded = load_weight_calibration_json_cache_entry(
             cache_root=cache_root,
             cache_layer="price_returns_matrix",
@@ -6116,12 +6305,15 @@ def _prepare_diagnostics_price_returns_matrix_cache(
             expected_data_hash=str(lookup["data_hash"]),
             expected_engine_version=WEIGHT_CALIBRATION_PRICE_RETURNS_CACHE_SCHEMA_VERSION,
         )
+        read_seconds = perf_counter() - read_started
         if loaded is not None:
             cache_events.append(
                 {
                     "cache_layer": "price_returns_matrix",
                     "cache_status": "hit",
                     "cache_key": cache_key,
+                    "duration_seconds": round(read_seconds, 6),
+                    "serialization_seconds": round(read_seconds, 6),
                 }
             )
             return {
@@ -6129,11 +6321,14 @@ def _prepare_diagnostics_price_returns_matrix_cache(
                 "cache_key": cache_key,
                 "cache_events": cache_events,
             }
+    else:
+        read_seconds = 0.0
     cache_events.append(
         {
             "cache_layer": "price_returns_matrix",
             "cache_status": "miss",
             "cache_key": cache_key,
+            "duration_seconds": round(read_seconds, 6),
         }
     )
     if cache_mode == "read_write":
@@ -6147,12 +6342,16 @@ def _prepare_diagnostics_price_returns_matrix_cache(
             source_config_hash=source_config_hash,
             generated_at=generated_at,
         )
+        write_started = perf_counter()
         write_price_returns_matrix_cache_entry(payload, cache_root=cache_root)
+        write_seconds = perf_counter() - write_started
         cache_events.append(
             {
                 "cache_layer": "price_returns_matrix",
                 "cache_status": "write",
                 "cache_key": cache_key,
+                "duration_seconds": round(write_seconds, 6),
+                "serialization_seconds": round(write_seconds, 6),
             }
         )
         return {
@@ -6513,6 +6712,7 @@ def _backtest_metrics_from_cache(payload: Mapping[str, Any]) -> BacktestMetrics:
 
 
 def _weight_candidate_backtest_worker(task: dict[str, Any]) -> dict[str, Any]:
+    worker_started = perf_counter()
     prices = pd.DataFrame(task["prices"])
     baseline_daily = pd.DataFrame(task["baseline_daily"])
     etf_config = ETFConfigBundle.model_validate(task["etf_config"])
@@ -6522,6 +6722,7 @@ def _weight_candidate_backtest_worker(task: dict[str, Any]) -> dict[str, Any]:
     candidate_id = str(task["candidate_id"])
     run_start = date.fromisoformat(str(task["start"]))
     run_end = date.fromisoformat(str(task["end"]))
+    backtest_started = perf_counter()
     backtest = _run_static_weight_backtest(
         prices,
         weights=weights,
@@ -6529,6 +6730,8 @@ def _weight_candidate_backtest_worker(task: dict[str, Any]) -> dict[str, Any]:
         start=run_start,
         end=run_end,
     )
+    backtest_seconds = perf_counter() - backtest_started
+    regime_started = perf_counter()
     robustness = build_weight_robustness_evaluation(
         candidate_id=candidate_id,
         candidate_daily=backtest["daily"],
@@ -6538,7 +6741,9 @@ def _weight_candidate_backtest_worker(task: dict[str, Any]) -> dict[str, Any]:
         etf_config=etf_config,
         objective=objective,
     )
+    regime_seconds = perf_counter() - regime_started
     generated = datetime.now(UTC)
+    serialization_started = perf_counter()
     backtest_payload = _candidate_backtest_cache_payload(
         cache_key=str(task["candidate_backtest_cache_key"]),
         candidate_id=candidate_id,
@@ -6554,6 +6759,7 @@ def _weight_candidate_backtest_worker(task: dict[str, Any]) -> dict[str, Any]:
         robustness=robustness,
         generated_at=generated,
     )
+    serialization_seconds = perf_counter() - serialization_started
     return {
         "candidate_id": candidate_id,
         "candidate_position": int(task["candidate_position"]),
@@ -6562,6 +6768,13 @@ def _weight_candidate_backtest_worker(task: dict[str, Any]) -> dict[str, Any]:
         "regime_robustness_cache_key": str(task["regime_robustness_cache_key"]),
         "backtest_cache_payload": backtest_payload,
         "regime_cache_payload": regime_payload,
+        "timing": {
+            "worker_id": f"pid:{os.getpid()}",
+            "backtest_seconds": round(backtest_seconds, 6),
+            "regime_seconds": round(regime_seconds, 6),
+            "serialization_seconds": round(serialization_seconds, 6),
+            "total_candidate_seconds": round(perf_counter() - worker_started, 6),
+        },
     }
 
 
@@ -6570,13 +6783,73 @@ def _candidate_cache_event(
     cache_status: str,
     cache_key: str,
     candidate_id: str,
+    *,
+    duration_seconds: float | None = None,
+    validation_seconds: float | None = None,
+    serialization_seconds: float | None = None,
 ) -> dict[str, Any]:
-    return {
+    event = {
         "cache_layer": cache_layer,
         "cache_status": cache_status,
         "cache_key": cache_key,
         "candidate_id": candidate_id,
     }
+    if duration_seconds is not None:
+        event["duration_seconds"] = round(float(duration_seconds), 6)
+    if validation_seconds is not None:
+        event["validation_seconds"] = round(float(validation_seconds), 6)
+    if serialization_seconds is not None:
+        event["serialization_seconds"] = round(float(serialization_seconds), 6)
+    return event
+
+
+def _weight_candidate_timing_row(
+    *,
+    candidate_id: str,
+    search_id: str,
+    preset_id: str,
+    weights: Mapping[str, Any],
+    backtest_seconds: float,
+    regime_seconds: float,
+    cache_read_seconds: float,
+    cache_write_seconds: float,
+    serialization_seconds: float,
+    total_candidate_seconds: float,
+    cache_status: str,
+    worker_id: str,
+    status: str,
+) -> dict[str, Any]:
+    clean_weights = {str(key): float(value) for key, value in _mapping(weights).items()}
+    return {
+        "candidate_id": candidate_id,
+        "search_id": search_id,
+        "preset_id": preset_id,
+        "weights_hash": weight_calibration_input_hash(clean_weights),
+        "weights": clean_weights,
+        "backtest_seconds": round(float(backtest_seconds), 6),
+        "regime_seconds": round(float(regime_seconds), 6),
+        "overfit_seconds": 0.0,
+        "cache_read_seconds": round(float(cache_read_seconds), 6),
+        "cache_write_seconds": round(float(cache_write_seconds), 6),
+        "serialization_seconds": round(float(serialization_seconds), 6),
+        "total_candidate_seconds": round(float(total_candidate_seconds), 6),
+        "cache_status": cache_status,
+        "worker_id": worker_id,
+        "status": status,
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
+    }
+
+
+def _combined_candidate_cache_status(backtest_status: str, regime_status: str) -> str:
+    statuses = [status for status in (backtest_status, regime_status) if status]
+    if not statuses:
+        return "not_reported"
+    if all(status == "hit" for status in statuses):
+        return "hit"
+    if any("miss" in status for status in statuses):
+        return "miss_written" if any("written" in status for status in statuses) else "miss"
+    return "+".join(statuses)
 
 
 def _weight_search_runtime_cache_summary(
@@ -6610,6 +6883,57 @@ def _weight_diagnostics_cache_event_counts(
         "cache_write_count": sum(
             1 for event in cache_events if event.get("cache_status") == "write"
         ),
+    }
+
+
+def _weight_diagnostics_profiling_payload(
+    *,
+    profile_mode: str,
+    step_runtime_seconds: Mapping[str, float],
+    candidate_timing_rows: Sequence[Mapping[str, Any]],
+    cache_events: Sequence[Mapping[str, Any]],
+    total_runtime_seconds: float,
+    profiling_policy: WeightCalibrationProfilingPolicyConfig | None,
+) -> dict[str, Any]:
+    if profiling_policy is None:
+        slow_step_seconds = float("inf")
+        slow_cache_entry_seconds = 1.0
+        candidate_timing_enabled = False
+    else:
+        settings = profiling_mode_settings(profiling_policy, profile_mode)
+        thresholds = profiling_policy.weight_calibration_profiling.thresholds
+        slow_step_seconds = thresholds.slow_step_seconds
+        slow_cache_entry_seconds = thresholds.slow_cache_entry_seconds
+        candidate_timing_enabled = settings.candidate_timing
+    step_timings = [
+        {
+            "step_id": str(step_id),
+            "start_time": None,
+            "end_time": None,
+            "duration_seconds": round(float(duration), 6),
+            "status": "completed",
+            "warning_if_slow": float(duration) >= slow_step_seconds,
+            "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+            **WEIGHT_CALIBRATION_SAFETY,
+        }
+        for step_id, duration in step_runtime_seconds.items()
+    ]
+    candidate_timings = [dict(row) for row in candidate_timing_rows]
+    visible_candidate_timings = candidate_timings if candidate_timing_enabled else []
+    return {
+        "schema_version": "etf_weight_calibration_diagnostics_profiling_v1",
+        "profile_mode": profile_mode,
+        "total_runtime_seconds": round(float(total_runtime_seconds), 6),
+        "step_timings": step_timings,
+        "candidate_timings": visible_candidate_timings,
+        "cache_events": [dict(event) for event in cache_events],
+        "cache_timing": build_cache_timing_breakdown(
+            cache_events,
+            slow_entry_seconds=slow_cache_entry_seconds,
+        ),
+        "worker_timing": build_worker_timing_breakdown(candidate_timings),
+        "safety": dict(WEIGHT_CALIBRATION_SAFETY),
+        **WEIGHT_CALIBRATION_SAFETY,
     }
 
 
