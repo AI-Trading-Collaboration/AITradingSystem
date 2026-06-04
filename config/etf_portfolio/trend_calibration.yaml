@@ -1,0 +1,220 @@
+schema_version: etf_trend_calibration_policy_v1
+
+policy_metadata:
+  version: etf_trend_calibration_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: >
+    TRADING-083 calibrates trend-analysis information weights before any dynamic
+    allocation policy is calibrated. The policy is intentionally bounded and
+    candidate-only so Layer 1 signal quality can be reviewed separately from
+    Layer 2 position sizing.
+  validation: >
+    Focused tests cover policy loading, dataset generation, evaluation-only
+    forward fields, score computation, bounded weight search, bucket
+    attribution, redundancy diagnostics, regime stability, Reader Brief
+    visibility, and validation gate safety.
+  review_condition: >
+    Review whenever signal inputs, preset weights, score bands, attribution
+    windows, redundancy thresholds, regime stability criteria, or safety fields
+    change.
+
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_event: ChatGPT public launch
+  anchor_date: 2022-11-30
+  default_evaluation_start: 2022-12-01
+
+safety:
+  observe_only: true
+  candidate_only: true
+  production_effect: none
+  broker_action: none
+  manual_review_required: true
+  evaluation_only: true
+
+signal_registry:
+  - signal_id: price_trend
+    source_module: ai_trading_system.etf_portfolio.signals.trend_score_for_row
+    required: true
+    direction: positive
+    normalization_method: score_0_100
+    weight_bounds:
+      min_weight: 0.10
+      max_weight: 0.40
+    data_quality_requirement: etf_price_quality_gate_passed
+  - signal_id: momentum
+    source_module: ai_trading_system.etf_portfolio.signals.momentum_score_for_row
+    required: true
+    direction: positive
+    normalization_method: score_0_100
+    weight_bounds:
+      min_weight: 0.05
+      max_weight: 0.35
+    data_quality_requirement: etf_price_quality_gate_passed
+  - signal_id: relative_strength
+    source_module: ai_trading_system.etf_portfolio.signals.relative_strength_score_for_row
+    required: true
+    direction: positive
+    normalization_method: score_0_100
+    weight_bounds:
+      min_weight: 0.05
+      max_weight: 0.35
+    data_quality_requirement: etf_price_quality_gate_passed
+  - signal_id: volatility_risk
+    source_module: ai_trading_system.etf_portfolio.signals.risk_score_for_row
+    required: true
+    direction: positive
+    normalization_method: score_0_100
+    weight_bounds:
+      min_weight: 0.05
+      max_weight: 0.25
+    data_quality_requirement: etf_price_quality_gate_passed
+  - signal_id: drawdown_risk
+    source_module: ai_trading_system.etf_portfolio.signals.risk_score_for_row
+    required: true
+    direction: positive
+    normalization_method: score_0_100
+    weight_bounds:
+      min_weight: 0.05
+      max_weight: 0.25
+    data_quality_requirement: etf_price_quality_gate_passed
+  - signal_id: AIConfirmationScore
+    source_module: ai_trading_system.etf_portfolio.ai_confirmation
+    required: false
+    direction: positive
+    normalization_method: neutral_50_missing
+    weight_bounds:
+      min_weight: 0.00
+      max_weight: 0.20
+    data_quality_requirement: optional_latest_ai_confirmation_report
+  - signal_id: SemiconductorBreadthScore
+    source_module: ai_trading_system.etf_portfolio.ai_confirmation
+    required: false
+    direction: positive
+    normalization_method: score_0_100_or_neutral_50_missing
+    weight_bounds:
+      min_weight: 0.00
+      max_weight: 0.20
+    data_quality_requirement: optional_price_derived_semiconductor_proxy
+  - signal_id: MegaCapAIScore
+    source_module: ai_trading_system.etf_portfolio.ai_confirmation
+    required: false
+    direction: positive
+    normalization_method: neutral_50_missing
+    weight_bounds:
+      min_weight: 0.00
+      max_weight: 0.15
+    data_quality_requirement: optional_latest_ai_confirmation_report
+  - signal_id: EventRiskScore
+    source_module: ai_trading_system.etf_portfolio.ai_confirmation
+    required: false
+    direction: negative
+    normalization_method: neutral_50_missing
+    weight_bounds:
+      min_weight: 0.00
+      max_weight: 0.15
+    data_quality_requirement: optional_event_risk_report
+
+score_bands:
+  - band_id: risk_off
+    min_score: 0
+    max_score: 40
+  - band_id: weak
+    min_score: 40
+    max_score: 55
+  - band_id: neutral
+    min_score: 55
+    max_score: 70
+  - band_id: risk_on
+    min_score: 70
+    max_score: 85
+  - band_id: strong_risk_on
+    min_score: 85
+    max_score: 100
+
+forward_attribution:
+  forward_windows: [5, 20, 60]
+  primary_window: 20
+  bucket_count_min: 3
+  minimum_sample_count: 20
+
+search:
+  search_id: trend_signal_weight_search_v0_1
+  top_n: 5
+  ranking_policy:
+    forward_lift_full_score: 0.05
+    drawdown_improvement_full_score: 0.05
+    coverage_full_score_multiplier: 2.0
+    high_redundancy_penalty: 0.10
+    return_lift_weight: 0.40
+    drawdown_control_weight: 0.20
+    coverage_weight: 0.20
+    regime_stability_weight: 0.20
+  preset_weight_sets:
+    - weight_set_id: trend_balanced_v0_1
+      status: pilot_baseline
+      rationale: Balanced price, momentum, relative strength, and risk mix.
+      weights:
+        price_trend: 0.22
+        momentum: 0.18
+        relative_strength: 0.18
+        volatility_risk: 0.12
+        drawdown_risk: 0.12
+        AIConfirmationScore: 0.08
+        SemiconductorBreadthScore: 0.06
+        MegaCapAIScore: 0.02
+        EventRiskScore: 0.02
+    - weight_set_id: trend_price_momentum_v0_1
+      status: pilot_baseline
+      rationale: Emphasize price trend and momentum while keeping risk controls visible.
+      weights:
+        price_trend: 0.32
+        momentum: 0.24
+        relative_strength: 0.16
+        volatility_risk: 0.10
+        drawdown_risk: 0.10
+        AIConfirmationScore: 0.04
+        SemiconductorBreadthScore: 0.02
+        MegaCapAIScore: 0.01
+        EventRiskScore: 0.01
+    - weight_set_id: trend_leadership_v0_1
+      status: pilot_baseline
+      rationale: Emphasize relative strength and semiconductor leadership without removing risk.
+      weights:
+        price_trend: 0.18
+        momentum: 0.16
+        relative_strength: 0.24
+        volatility_risk: 0.10
+        drawdown_risk: 0.10
+        AIConfirmationScore: 0.08
+        SemiconductorBreadthScore: 0.10
+        MegaCapAIScore: 0.02
+        EventRiskScore: 0.02
+    - weight_set_id: trend_risk_controlled_v0_1
+      status: pilot_baseline
+      rationale: Emphasize drawdown and volatility controls for false risk-on review.
+      weights:
+        price_trend: 0.18
+        momentum: 0.12
+        relative_strength: 0.14
+        volatility_risk: 0.20
+        drawdown_risk: 0.20
+        AIConfirmationScore: 0.06
+        SemiconductorBreadthScore: 0.04
+        MegaCapAIScore: 0.02
+        EventRiskScore: 0.04
+
+redundancy:
+  medium_correlation: 0.60
+  high_correlation: 0.80
+  rank_correlation_warning: 0.75
+
+regime_stability:
+  minimum_regime_sample_count: 5
+  required_regimes:
+    - risk_on
+    - neutral
+    - risk_off
+    - growth_underperformance
+    - semiconductor_leadership

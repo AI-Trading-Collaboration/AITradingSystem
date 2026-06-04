@@ -578,6 +578,18 @@ ignored `reports/etf_portfolio/shadow_ready_review/`；Reader Brief 的
 `Shadow Candidate Review` 区块只读 latest artifacts，展示 top candidate、pending review、
 approved enrollment、latest decision 和 safety。该 workflow 不写 production weights、不改
 baseline config、不自动 promotion、不触发 broker，也不允许未审批 auto-enrollment。
+TRADING-083 新增 `config/etf_portfolio/trend_calibration.yaml` 和
+`aits etf trend-calibration run --start YYYY-MM-DD --end YYYY-MM-DD` / `report --latest` /
+`validate`。Run 命令先执行 `aits validate-data` 等价 cached market / macro data quality
+gate，随后生成 ignored
+`reports/etf_portfolio/trend_calibration/datasets/`、`reports/`、`registry/` 和
+`validation/` artifacts，用于 two-layer dynamic ETF allocation roadmap 的 Layer 1：
+trend-analysis information weight calibration。Report 展示 top candidate signal configs、
+score bucket forward attribution、redundancy risk、regime stability、data quality status、
+`ai_after_chatgpt` regime 和 source links；Reader Brief 的 `Trend Signal Calibration`
+区块只读 latest report。Forward return / drawdown 字段固定 `evaluation_only=true`，只能
+用于 attribution/evaluation；该 workflow 不输出 ETF target weights、不写 baseline config、
+不自动 promotion、不触发 broker。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

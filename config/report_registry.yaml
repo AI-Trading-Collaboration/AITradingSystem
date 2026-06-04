@@ -872,6 +872,48 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_trend_calibration_report
+    title: ETF Trend Signal Calibration Report
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf trend-calibration run --start YYYY-MM-DD --end YYYY-MM-DD
+    artifact_globs:
+      - reports/etf_portfolio/trend_calibration/reports/trend-calibration-report_*.json
+      - reports/etf_portfolio/trend_calibration/reports/trend-calibration-report_*.md
+      - reports/etf_portfolio/trend_calibration/datasets/trend-signal-dataset_*.json
+      - reports/etf_portfolio/trend_calibration/datasets/trend-signal-dataset_*.csv
+      - reports/etf_portfolio/trend_calibration/datasets/trend-signal-dataset_*.md
+      - reports/etf_portfolio/trend_calibration/registry/etf_trend_signal_config_registry.json
+      - reports/etf_portfolio/trend_calibration/registry/etf_trend_signal_config_registry.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-083 trend calibration should be reviewed before Layer 2 dynamic
+      allocation policies consume trend/regime/risk scores.
+    owner_action: review_trend_calibration_before_dynamic_allocation_policy_search
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_trend_calibration_validation
+    title: ETF Trend Calibration Validation Gate
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf trend-calibration validate
+    artifact_globs:
+      - reports/etf_portfolio/trend_calibration/validation/trend-calibration-validation_*.json
+      - reports/etf_portfolio/trend_calibration/validation/trend-calibration-validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-083 validation confirms signal registry, dataset builder, score
+      engine, bounded search, attribution, redundancy, regime stability, report,
+      Reader Brief integration, and observe-only safety boundaries.
+    owner_action: run_aits_etf_trend_calibration_validate_before_marking_TRADING_083_validating
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance
