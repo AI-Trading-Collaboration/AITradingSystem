@@ -27,6 +27,7 @@ PRICE_COLUMNS = (
     "source",
     "created_at",
 )
+MISSING_PRICE_METADATA_CREATED_AT = "price_metadata_missing_v1"
 
 
 def read_price_frame(path: Path) -> pd.DataFrame:
@@ -110,23 +111,26 @@ def standardize_price_frame(
         if "updated_at" in frame.columns:
             frame["created_at"] = frame["updated_at"]
         else:
-            frame["created_at"] = datetime.now(UTC).isoformat()
+            frame["created_at"] = MISSING_PRICE_METADATA_CREATED_AT
         issues.append(
             ETFValidationIssue(
                 "INFO",
                 "price_created_at_added",
-                "价格缓存缺少 created_at 字段，已使用 updated_at 或当前检查时间补齐 metadata。",
+                (
+                    "价格缓存缺少 created_at 字段，已使用 updated_at 或 deterministic metadata "
+                    "placeholder 补齐。"
+                ),
             )
         )
     frame["created_at"] = frame["created_at"].fillna("").astype(str)
     empty_created = frame["created_at"].str.strip() == ""
     if empty_created.any():
-        frame.loc[empty_created, "created_at"] = datetime.now(UTC).isoformat()
+        frame.loc[empty_created, "created_at"] = MISSING_PRICE_METADATA_CREATED_AT
         issues.append(
             ETFValidationIssue(
                 "INFO",
                 "price_created_at_empty_filled",
-                "部分 created_at 为空，已在标准化视图中补齐检查时间。",
+                "部分 created_at 为空，已在标准化视图中补齐 deterministic metadata placeholder。",
                 rows=int(empty_created.sum()),
             )
         )
@@ -177,13 +181,13 @@ def ensure_cash_prices(prices: pd.DataFrame) -> pd.DataFrame:
 
 def _synthetic_cash_created_at(prices: pd.DataFrame) -> str:
     if "created_at" not in prices.columns:
-        return "synthetic_cash_static_v1"
+        return MISSING_PRICE_METADATA_CREATED_AT
     values = sorted(
         str(value).strip()
         for value in prices["created_at"].dropna().unique()
         if str(value).strip()
     )
-    return values[-1] if values else "synthetic_cash_static_v1"
+    return values[-1] if values else MISSING_PRICE_METADATA_CREATED_AT
 
 
 def validate_price_data(

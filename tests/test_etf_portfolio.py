@@ -16,7 +16,11 @@ from ai_trading_system.etf_portfolio.backtest import (
     toy_portfolio_return,
     write_backtest_run,
 )
-from ai_trading_system.etf_portfolio.data import standardize_price_frame, validate_price_data
+from ai_trading_system.etf_portfolio.data import (
+    MISSING_PRICE_METADATA_CREATED_AT,
+    standardize_price_frame,
+    validate_price_data,
+)
 from ai_trading_system.etf_portfolio.features import build_feature_store, select_features_for_date
 from ai_trading_system.etf_portfolio.models import (
     DEFAULT_ETF_ASSETS_CONFIG_PATH,
@@ -138,6 +142,31 @@ def test_standardize_price_frame_synthetic_cash_created_at_is_stable() -> None:
     second_cash_created = set(second.loc[second["symbol"] == "CASH", "created_at"])
     assert first_cash_created == {"2026-05-31T00:00:00+00:00"}
     assert second_cash_created == first_cash_created
+
+
+def test_standardize_price_frame_empty_price_metadata_is_stable() -> None:
+    config = load_etf_config_bundle()
+    raw = _make_prices(days=10, mode="up").drop(columns=["created_at"])
+    raw["updated_at"] = ""
+
+    first, first_issues = standardize_price_frame(
+        raw,
+        assets=config.assets,
+        source_name="production_raw_fixture",
+    )
+    second, second_issues = standardize_price_frame(
+        raw,
+        assets=config.assets,
+        source_name="production_raw_fixture",
+    )
+
+    assert first.equals(second)
+    assert set(first["created_at"]) == {MISSING_PRICE_METADATA_CREATED_AT}
+    assert {issue.code for issue in first_issues} == {
+        "price_created_at_added",
+        "price_created_at_empty_filled",
+    }
+    assert [issue.code for issue in second_issues] == [issue.code for issue in first_issues]
 
 
 def test_etf_price_validation_rejects_duplicates_and_negative_prices() -> None:
