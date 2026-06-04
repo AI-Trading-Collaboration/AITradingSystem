@@ -188,6 +188,7 @@ def build_reader_brief_payload(
     etf_baseline_review = _etf_baseline_review_summary(report_index)
     etf_shadow_candidate_review = _etf_shadow_candidate_review_summary(report_index)
     etf_trend_calibration = _etf_trend_calibration_summary(report_index)
+    etf_dynamic_allocation = _etf_dynamic_allocation_summary(report_index)
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -321,6 +322,7 @@ def build_reader_brief_payload(
         "etf_baseline_review": etf_baseline_review,
         "etf_shadow_candidate_review": etf_shadow_candidate_review,
         "etf_trend_calibration": etf_trend_calibration,
+        "etf_dynamic_allocation": etf_dynamic_allocation,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -588,6 +590,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_baseline_review = _mapping(payload.get("etf_baseline_review"))
     etf_shadow_candidate_review = _mapping(payload.get("etf_shadow_candidate_review"))
     etf_trend_calibration = _mapping(payload.get("etf_trend_calibration"))
+    etf_dynamic_allocation = _mapping(payload.get("etf_dynamic_allocation"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -920,6 +923,33 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("safety_status", etf_trend_calibration.get("safety_status")),
                     ("production_effect", etf_trend_calibration.get("production_effect")),
                     ("broker_action", etf_trend_calibration.get("broker_action")),
+                ]
+            ),
+        ),
+        _section(
+            "Dynamic Allocation Candidate",
+            _definition_table(
+                [
+                    ("availability", etf_dynamic_allocation.get("availability")),
+                    ("status", etf_dynamic_allocation.get("status")),
+                    ("summary", etf_dynamic_allocation.get("summary_sentence")),
+                    ("policy_id", etf_dynamic_allocation.get("policy_id")),
+                    ("selected_regime", etf_dynamic_allocation.get("selected_regime")),
+                    ("rebalance_decision", etf_dynamic_allocation.get("rebalance_decision")),
+                    (
+                        "candidate_target_weights",
+                        etf_dynamic_allocation.get("candidate_target_weights"),
+                    ),
+                    ("constraint_count", etf_dynamic_allocation.get("constraint_count")),
+                    ("data_quality_status", etf_dynamic_allocation.get("data_quality_status")),
+                    ("detailed_report", etf_dynamic_allocation.get("detail_report")),
+                    ("safety_status", etf_dynamic_allocation.get("safety_status")),
+                    ("production_effect", etf_dynamic_allocation.get("production_effect")),
+                    ("broker_action", etf_dynamic_allocation.get("broker_action")),
+                    (
+                        "official_target_weights_mutated",
+                        etf_dynamic_allocation.get("official_target_weights_mutated"),
+                    ),
                 ]
             ),
         ),
@@ -3709,6 +3739,104 @@ def _etf_trend_calibration_safety_status(payload: Mapping[str, Any]) -> str:
         "observe_only=true; candidate_only=true; production_effect=none; "
         "broker_action=none; manual_review_required=true; evaluation_only=true; "
         "commands_executed=false; production_state_mutated=false"
+        if safe
+        else "SAFETY_REVIEW_REQUIRED"
+    )
+
+
+def _etf_dynamic_allocation_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_dynamic_allocation_summary()
+    report_path = _report_index_artifact_path(report_index, "etf_dynamic_allocation_report")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_etf_dynamic_allocation_summary()
+    summary = _mapping(payload.get("summary"))
+    safety = _mapping(payload.get("safety"))
+    safety_status = _etf_dynamic_allocation_safety_status(payload)
+    weights = _mapping(summary.get("candidate_target_weights"))
+    selected_regime = _text(summary.get("selected_regime"), "MISSING")
+    rebalance_decision = _text(summary.get("rebalance_decision"), "MISSING")
+    policy_id = _text(summary.get("policy_id"), "MISSING")
+    data_quality_status = _text(summary.get("data_quality_status"), "UNKNOWN")
+    constraint_count = summary.get("constraint_count", 0)
+    return {
+        "availability": "AVAILABLE",
+        "status": _text(payload.get("status"), "UNKNOWN"),
+        "summary_sentence": (
+            f"Dynamic Allocation Candidate: policy={policy_id}; "
+            f"regime={selected_regime}; rebalance={rebalance_decision}; "
+            f"constraints={constraint_count}; data_quality={data_quality_status}; "
+            f"safety={safety_status}."
+        ),
+        "policy_id": policy_id,
+        "selected_regime": selected_regime,
+        "rebalance_decision": rebalance_decision,
+        "candidate_target_weights": (
+            ", ".join(f"{key}={float(value):.2%}" for key, value in weights.items())
+            if weights
+            else "MISSING"
+        ),
+        "constraint_count": constraint_count,
+        "data_quality_status": data_quality_status,
+        "detail_report": "" if report_path is None else str(report_path),
+        "safety_status": safety_status,
+        "production_effect": _text(safety.get("production_effect"), PRODUCTION_EFFECT),
+        "broker_action": _text(safety.get("broker_action"), "none"),
+        "manual_review_required": safety.get("manual_review_required") is True,
+        "official_target_weights_mutated": payload.get("official_target_weights_mutated") is True,
+        "baseline_config_mutated": payload.get("baseline_config_mutated") is True,
+        "production_state_mutated": payload.get("production_state_mutated") is True,
+    }
+
+
+def _missing_etf_dynamic_allocation_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "summary_sentence": "Dynamic Allocation Candidate: no latest allocation report found.",
+        "policy_id": "MISSING",
+        "selected_regime": "MISSING",
+        "rebalance_decision": "MISSING",
+        "candidate_target_weights": "MISSING",
+        "constraint_count": 0,
+        "data_quality_status": "MISSING",
+        "detail_report": "",
+        "safety_status": "MISSING",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "official_target_weights_mutated": False,
+        "baseline_config_mutated": False,
+        "production_state_mutated": False,
+        "limitation": (
+            "Dynamic allocation report artifact is missing; Reader Brief does not run "
+            "etf dynamic-allocation decide CLI."
+        ),
+    }
+
+
+def _etf_dynamic_allocation_safety_status(payload: Mapping[str, Any]) -> str:
+    safety = _mapping(payload.get("safety"))
+    safe = (
+        safety.get("observe_only") is True
+        and safety.get("candidate_only") is True
+        and _text(safety.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
+        and safety.get("broker_action") == "none"
+        and safety.get("manual_review_required") is True
+        and safety.get("production_state_mutated") is False
+        and safety.get("baseline_config_mutated") is False
+        and safety.get("official_target_weights_mutated") is False
+        and payload.get("commands_executed") is False
+        and payload.get("production_state_mutated") is False
+        and payload.get("baseline_config_mutated") is False
+        and payload.get("official_target_weights_mutated") is False
+    )
+    return (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true; "
+        "official_target_weights_mutated=false; baseline_config_mutated=false; "
+        "production_state_mutated=false; commands_executed=false"
         if safe
         else "SAFETY_REVIEW_REQUIRED"
     )

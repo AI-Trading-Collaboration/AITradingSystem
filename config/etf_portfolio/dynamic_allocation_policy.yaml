@@ -1,0 +1,246 @@
+schema_version: etf_dynamic_allocation_policy_v1
+
+policy_metadata:
+  version: etf_dynamic_allocation_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: >
+    TRADING-084 maps calibrated trend/regime/risk scores into candidate-only
+    dynamic ETF allocation decisions. The policy is deliberately discrete,
+    bounded, and review-only so Layer 2 position sizing can be audited
+    separately from Layer 1 signal calibration.
+  validation: >
+    Focused tests cover config loading, regime mapping, bounded trend overlays,
+    event-risk cash overlay, exposure/turnover constraints, decision records,
+    Reader Brief visibility, and validation gate safety.
+  review_condition: >
+    Review whenever base weights, regime targets, overlay rules, score
+    thresholds, exposure caps, turnover gates, holding period, confirmation
+    windows, or safety fields change.
+
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_event: ChatGPT public launch
+  anchor_date: 2022-11-30
+  default_decision_start: 2022-12-01
+
+safety:
+  observe_only: true
+  candidate_only: true
+  production_effect: none
+  broker_action: none
+  manual_review_required: true
+  production_state_mutated: false
+  baseline_config_mutated: false
+  official_target_weights_mutated: false
+
+default_policy_id: dynamic_regime_overlay_v0_1
+
+base_weights:
+  SPY: 0.35
+  QQQ: 0.35
+  SMH: 0.15
+  SOXX: 0.05
+  CASH: 0.10
+
+regime_weight_targets:
+  risk_on:
+    weights:
+      SPY: 0.25
+      QQQ: 0.45
+      SMH: 0.20
+      SOXX: 0.05
+      CASH: 0.05
+    rationale: Strong trend and risk regime support growth overweight.
+  neutral:
+    weights:
+      SPY: 0.35
+      QQQ: 0.35
+      SMH: 0.15
+      SOXX: 0.05
+      CASH: 0.10
+    rationale: Base candidate from shadow-ready static review context.
+  risk_off:
+    weights:
+      SPY: 0.40
+      QQQ: 0.25
+      SMH: 0.05
+      SOXX: 0.00
+      CASH: 0.30
+    rationale: Reduce growth and semiconductor exposure when risk score weakens.
+  growth_underperformance:
+    weights:
+      SPY: 0.45
+      QQQ: 0.25
+      SMH: 0.05
+      SOXX: 0.00
+      CASH: 0.25
+    rationale: Prefer broad market and cash when growth leadership breaks down.
+  semiconductor_leadership:
+    weights:
+      SPY: 0.25
+      QQQ: 0.40
+      SMH: 0.20
+      SOXX: 0.05
+      CASH: 0.10
+    rationale: Allow semiconductor sleeve at policy cap when leadership is strong.
+  event_risk_high:
+    weights:
+      SPY: 0.40
+      QQQ: 0.25
+      SMH: 0.05
+      SOXX: 0.00
+      CASH: 0.30
+    rationale: Increase defense when event risk is high.
+
+regime_selection_rules:
+  event_risk_high:
+    score_id: EventRiskScore
+    threshold: 70.0
+    rationale: Event risk above this score should dominate allocation state.
+  risk_off:
+    risk_regime_score_max: 42.0
+    composite_trend_score_max: 45.0
+    rationale: Weak trend or weak risk score shifts to defensive state.
+  growth_underperformance:
+    growth_leadership_score_max: 45.0
+    rationale: Growth leadership below this threshold reduces QQQ exposure.
+  semiconductor_leadership:
+    semiconductor_leadership_score_min: 72.0
+    rationale: Semiconductor leadership above this threshold allows sleeve overweight.
+  risk_on:
+    composite_trend_score_min: 70.0
+    risk_regime_score_min: 62.0
+    rationale: Risk-on requires both trend strength and risk-regime confirmation.
+  neutral:
+    rationale: Default state when no stronger risk, growth, semiconductor, or event rule triggers.
+
+trend_overlay_rules:
+  - rule_id: growth_leadership_overweight
+    score_id: GrowthLeadershipScore
+    comparator: ">="
+    threshold: 72.0
+    adjustments:
+      QQQ: 0.05
+      SPY: -0.03
+      CASH: -0.02
+    reason_code: GROWTH_LEADERSHIP_QQQ_OVERWEIGHT
+    rationale: Strong growth leadership can shift a bounded sleeve from SPY/CASH to QQQ.
+  - rule_id: semiconductor_leadership_overweight
+    score_id: SemiconductorLeadershipScore
+    comparator: ">="
+    threshold: 75.0
+    adjustments:
+      SMH: 0.04
+      QQQ: -0.02
+      CASH: -0.02
+    reason_code: SEMICONDUCTOR_LEADERSHIP_SLEEVE_OVERWEIGHT
+    rationale: Strong semiconductor leadership can add bounded SMH exposure.
+  - rule_id: weak_composite_defense
+    score_id: CompositeTrendScore
+    comparator: "<"
+    threshold: 45.0
+    adjustments:
+      CASH: 0.08
+      QQQ: -0.04
+      SMH: -0.03
+      SOXX: -0.01
+    reason_code: WEAK_COMPOSITE_TREND_DEFENSIVE_SHIFT
+    rationale: Weak composite trend raises cash before any production interpretation.
+  - rule_id: risk_regime_defense
+    score_id: RiskRegimeScore
+    comparator: "<"
+    threshold: 45.0
+    adjustments:
+      CASH: 0.06
+      QQQ: -0.03
+      SMH: -0.02
+      SOXX: -0.01
+    reason_code: WEAK_RISK_REGIME_CASH_OVERLAY
+    rationale: Weak risk regime adds a smaller defensive overlay.
+
+event_risk_overlay:
+  enabled: true
+  score_id: EventRiskScore
+  high_threshold: 70.0
+  cash_increase: 0.08
+  reductions:
+    QQQ: 0.04
+    SMH: 0.03
+    SOXX: 0.01
+  reason_code: EVENT_RISK_HIGH_CASH_OVERLAY
+  rationale: High event risk raises cash and reduces growth/semiconductor exposure.
+
+exposure_constraints:
+  asset_caps:
+    SPY: 0.60
+    QQQ: 0.50
+    SMH: 0.25
+    SOXX: 0.10
+    CASH: 0.35
+  asset_floors:
+    SPY: 0.00
+    QQQ: 0.00
+    SMH: 0.00
+    SOXX: 0.00
+    CASH: 0.05
+  semiconductor_sleeve_max: 0.25
+  cash_max: 0.35
+  cash_min: 0.05
+  long_only: true
+  allow_leverage: false
+
+rebalance_policy:
+  score_change_threshold: 5.0
+  regime_confirmation_days: 3
+  minimum_holding_days: 5
+  max_single_rebalance_delta: 0.10
+  weekly_turnover_cap: 0.20
+  min_rebalance_weight_delta: 0.02
+  rationale: >
+    First dynamic policy should avoid overtrading; single-day shifts and weekly
+    turnover are capped, with confirmation and holding-period gates.
+
+sample_score_profiles:
+  risk_on:
+    CompositeTrendScore: 78.0
+    RiskRegimeScore: 70.0
+    GrowthLeadershipScore: 76.0
+    SemiconductorLeadershipScore: 68.0
+    EventRiskAdjustedTrendScore: 76.0
+    EventRiskScore: 35.0
+  neutral:
+    CompositeTrendScore: 62.0
+    RiskRegimeScore: 58.0
+    GrowthLeadershipScore: 56.0
+    SemiconductorLeadershipScore: 55.0
+    EventRiskAdjustedTrendScore: 60.0
+    EventRiskScore: 40.0
+  risk_off:
+    CompositeTrendScore: 38.0
+    RiskRegimeScore: 35.0
+    GrowthLeadershipScore: 42.0
+    SemiconductorLeadershipScore: 35.0
+    EventRiskAdjustedTrendScore: 36.0
+    EventRiskScore: 55.0
+  growth_underperformance:
+    CompositeTrendScore: 58.0
+    RiskRegimeScore: 55.0
+    GrowthLeadershipScore: 38.0
+    SemiconductorLeadershipScore: 42.0
+    EventRiskAdjustedTrendScore: 55.0
+    EventRiskScore: 40.0
+  semiconductor_leadership:
+    CompositeTrendScore: 70.0
+    RiskRegimeScore: 62.0
+    GrowthLeadershipScore: 66.0
+    SemiconductorLeadershipScore: 78.0
+    EventRiskAdjustedTrendScore: 68.0
+    EventRiskScore: 35.0
+  event_risk_high:
+    CompositeTrendScore: 66.0
+    RiskRegimeScore: 58.0
+    GrowthLeadershipScore: 62.0
+    SemiconductorLeadershipScore: 58.0
+    EventRiskAdjustedTrendScore: 52.0
+    EventRiskScore: 78.0

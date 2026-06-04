@@ -914,6 +914,48 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_allocation_report
+    title: ETF Dynamic Allocation Candidate Report
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-allocation decide --date YYYY-MM-DD --score-profile neutral
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_allocation/reports/dynamic-allocation-report_*.json
+      - reports/etf_portfolio/dynamic_allocation/reports/dynamic-allocation-report_*.md
+      - reports/etf_portfolio/dynamic_allocation/decisions/dynamic-allocation-decision_*.json
+      - reports/etf_portfolio/dynamic_allocation/decisions/dynamic-allocation-decision_*.md
+      - reports/etf_portfolio/dynamic_allocation/registry/etf_dynamic_allocation_policy_registry.json
+      - reports/etf_portfolio/dynamic_allocation/registry/etf_dynamic_allocation_policy_registry.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-084 dynamic allocation report should be reviewed before two-layer
+      dynamic candidate batch/cache and robustness workflows consume candidate
+      target weight decisions.
+    owner_action: review_dynamic_allocation_candidate_before_dynamic_batch_search
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_allocation_validation
+    title: ETF Dynamic Allocation Validation Gate
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-allocation validate
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_allocation/validation/dynamic-allocation-validation_*.json
+      - reports/etf_portfolio/dynamic_allocation/validation/dynamic-allocation-validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-084 validation confirms policy config, regime mapping, trend/event
+      overlays, exposure/turnover constraints, decision records, policy registry,
+      Reader Brief integration, and no official target weight mutation.
+    owner_action: run_aits_etf_dynamic_allocation_validate_before_marking_TRADING_084_validating
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance

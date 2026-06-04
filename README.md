@@ -590,6 +590,16 @@ score bucket forward attribution、redundancy risk、regime stability、data qua
 区块只读 latest report。Forward return / drawdown 字段固定 `evaluation_only=true`，只能
 用于 attribution/evaluation；该 workflow 不输出 ETF target weights、不写 baseline config、
 不自动 promotion、不触发 broker。
+TRADING-084 新增 `config/etf_portfolio/dynamic_allocation_policy.yaml` 和
+`aits etf dynamic-allocation decide --date YYYY-MM-DD` / `report --latest` / `validate`。
+Decision engine 按配置化 base weights、regime targets、trend overlays、event-risk cash
+overlay、exposure constraints 和 rebalance gates，把 Layer 1 trend/regime/risk scores
+映射为 candidate-only dynamic allocation decision records。Artifacts 写入 ignored
+`reports/etf_portfolio/dynamic_allocation/decisions/`、`reports/`、`registry/` 和
+`validation/`；Reader Brief 的 `Dynamic Allocation Candidate` 区块只读 latest report。
+本阶段可输出 `candidate_target_weights` 供人工复核和后续 TRADING-085/086 使用，但不写
+official `data/etf_portfolio/target_weights.csv`、不改 baseline config、不自动 promotion、
+不触发 broker。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf
