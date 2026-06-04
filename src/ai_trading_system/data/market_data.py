@@ -38,6 +38,8 @@ CBOE_VIX_DAILY_PRICES_URL = (
     "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv"
 )
 CBOE_VIX_TICKER = "^VIX"
+FRED_PROVIDER_NAME = "Federal Reserve Economic Data"
+FRED_API_FAMILY = "fredgraph_csv"
 
 
 @dataclass(frozen=True)
@@ -562,108 +564,14 @@ class FredRateProvider:
         frames: list[pd.DataFrame] = []
 
         for series_id in request.series_ids:
-            params = {
-                "id": series_id,
-                "cosd": request.start.isoformat(),
-                "coed": request.end.isoformat(),
-            }
-            cache_lookup = lookup_external_request_cache(
-                provider="Federal Reserve Economic Data",
-                api_family="fredgraph_csv",
-                method="GET",
-                url=self.base_url,
-                params=params,
-                cache_dir=None if request_cache_dir is None else Path(request_cache_dir),
-            )
             rows_before_failure = sum(len(frame) for frame in frames)
-            response = None
-            last_exception: Exception | None = None
-            for attempt in range(1, self.max_attempts + 1):
-                try:
-                    response = cached_requests_get(
-                        provider="Federal Reserve Economic Data",
-                        api_family="fredgraph_csv",
-                        url=self.base_url,
-                        params=params,
-                        timeout=self.timeout_seconds,
-                        requests_module=requests,
-                        cache_dir=request_cache_dir,
-                    )
-                    break
-                except Exception as exc:
-                    last_exception = exc
-                    if attempt < self.max_attempts and self.retry_backoff_seconds > 0:
-                        sleep(self.retry_backoff_seconds)
-            if response is None:
-                diagnostic = _fred_diagnostic(
-                    base_url=self.base_url,
-                    params=params,
-                    cache_key=cache_lookup.cache_key,
-                    cache_metadata_path=(
-                        None if request_cache_dir is None else cache_lookup.metadata_path
-                    ),
-                    cache_status="DISABLED" if request_cache_dir is None else "MISS_NO_RESPONSE",
-                    stage="http_request",
-                    row_count_before_failure=rows_before_failure,
-                    exception=last_exception,
-                    attempt_count=self.max_attempts,
-                    max_attempts=self.max_attempts,
-                    timeout_seconds=self.timeout_seconds,
-                )
-                raise ProviderDownloadError(
-                    "FRED request failed before receiving a cacheable response",
-                    diagnostic,
-                ) from last_exception
-            if not response.ok:
-                diagnostic = _fred_diagnostic(
-                    base_url=self.base_url,
-                    params=params,
-                    cache_key=response.cache_key,
-                    cache_metadata_path=response.cache_metadata_path,
-                    cache_status="HIT" if response.from_cache else "MISS_WRITTEN",
-                    stage="http_status",
-                    row_count_before_failure=rows_before_failure,
-                    response=response,
-                    error_code=str(response.status_code),
-                )
-                raise ProviderDownloadError(
-                    f"FRED request failed: http_status={response.status_code}",
-                    diagnostic,
-                )
-            try:
-                frame = pd.read_csv(StringIO(str(response.text)))
-            except Exception as exc:
-                diagnostic = _fred_diagnostic(
-                    base_url=self.base_url,
-                    params=params,
-                    cache_key=response.cache_key,
-                    cache_metadata_path=response.cache_metadata_path,
-                    cache_status="HIT" if response.from_cache else "MISS_WRITTEN",
-                    stage="csv_parse",
-                    row_count_before_failure=rows_before_failure,
-                    response=response,
-                    exception=exc,
-                )
-                raise ProviderDownloadError(
-                    f"FRED response for {series_id} could not be parsed as CSV",
-                    diagnostic,
-                ) from exc
-            if "observation_date" not in frame.columns or series_id not in frame.columns:
-                diagnostic = _fred_diagnostic(
-                    base_url=self.base_url,
-                    params=params,
-                    cache_key=response.cache_key,
-                    cache_metadata_path=response.cache_metadata_path,
-                    cache_status="HIT" if response.from_cache else "MISS_WRITTEN",
-                    stage="schema",
-                    row_count_before_failure=rows_before_failure,
-                    response=response,
-                )
-                raise ProviderDownloadError(
-                    f"FRED response for {series_id} has unexpected columns",
-                    diagnostic,
-                )
-
+            frame = self._download_series_frame(
+                requests=requests,
+                request_cache_dir=request_cache_dir,
+                series_id=series_id,
+                request=request,
+                rows_before_failure=rows_before_failure,
+            )
             series_frame = frame.rename(columns={"observation_date": "date", series_id: "value"})
             series_frame["series"] = series_id
             series_frame["value"] = pd.to_numeric(series_frame["value"], errors="coerce")
@@ -675,6 +583,257 @@ class FredRateProvider:
         rates = pd.concat(frames, ignore_index=True)
         rates["date"] = pd.to_datetime(rates["date"]).dt.strftime("%Y-%m-%d")
         return rates.dropna(subset=["value"]).sort_values(["series", "date"]).reset_index(drop=True)
+
+    def _download_series_frame(
+        self,
+        *,
+        requests: Any,
+        request_cache_dir: Path | str | None,
+        series_id: str,
+        request: RateRequest,
+        rows_before_failure: int,
+    ) -> pd.DataFrame:
+        cached = _latest_compatible_fred_cache_response(
+            base_url=self.base_url,
+            series_id=series_id,
+            start=request.start,
+            end=request.end,
+            cache_dir=None if request_cache_dir is None else Path(request_cache_dir),
+        )
+        if cached is None:
+            params = _fred_request_params(series_id, request.start, request.end)
+            response = self._request_fred_response(
+                requests=requests,
+                request_cache_dir=request_cache_dir,
+                params=params,
+                rows_before_failure=rows_before_failure,
+            )
+            return self._parse_fred_response(
+                response=response,
+                params=params,
+                series_id=series_id,
+                rows_before_failure=rows_before_failure,
+            )
+
+        cached_params, cached_response = cached
+        base_frame = self._parse_fred_response(
+            response=cached_response,
+            params=cached_params,
+            series_id=series_id,
+            rows_before_failure=rows_before_failure,
+        )
+        latest_observation = _latest_fred_observation_date(base_frame, series_id)
+        if latest_observation is None:
+            diagnostic = _fred_diagnostic(
+                base_url=self.base_url,
+                params=cached_params,
+                cache_key=cached_response.cache_key,
+                cache_metadata_path=cached_response.cache_metadata_path,
+                cache_status="HIT",
+                stage="cached_tail_seed",
+                row_count_before_failure=rows_before_failure,
+                response=cached_response,
+            )
+            raise ProviderDownloadError(
+                f"FRED cached response for {series_id} has no valid observations",
+                diagnostic,
+            )
+
+        if latest_observation < request.end:
+            tail_params = _fred_request_params(series_id, latest_observation, request.end)
+            tail_response = self._request_fred_response(
+                requests=requests,
+                request_cache_dir=request_cache_dir,
+                params=tail_params,
+                rows_before_failure=rows_before_failure,
+            )
+            tail_frame = self._parse_fred_response(
+                response=tail_response,
+                params=tail_params,
+                series_id=series_id,
+                rows_before_failure=rows_before_failure,
+            )
+            base_frame = pd.concat([base_frame, tail_frame], ignore_index=True)
+
+        return _filter_fred_frame_to_request(base_frame, request).drop_duplicates(
+            subset=["observation_date"],
+            keep="last",
+        )
+
+    def _request_fred_response(
+        self,
+        *,
+        requests: Any,
+        request_cache_dir: Path | str | None,
+        params: dict[str, str],
+        rows_before_failure: int,
+    ) -> CachedHttpResponse:
+        cache_lookup = lookup_external_request_cache(
+            provider=FRED_PROVIDER_NAME,
+            api_family=FRED_API_FAMILY,
+            method="GET",
+            url=self.base_url,
+            params=params,
+            cache_dir=None if request_cache_dir is None else Path(request_cache_dir),
+        )
+        response = None
+        last_exception: Exception | None = None
+        for attempt in range(1, self.max_attempts + 1):
+            try:
+                response = cached_requests_get(
+                    provider=FRED_PROVIDER_NAME,
+                    api_family=FRED_API_FAMILY,
+                    url=self.base_url,
+                    params=params,
+                    timeout=self.timeout_seconds,
+                    requests_module=requests,
+                    cache_dir=request_cache_dir,
+                )
+                break
+            except Exception as exc:
+                last_exception = exc
+                if attempt < self.max_attempts and self.retry_backoff_seconds > 0:
+                    sleep(self.retry_backoff_seconds)
+        if response is None:
+            diagnostic = _fred_diagnostic(
+                base_url=self.base_url,
+                params=params,
+                cache_key=cache_lookup.cache_key,
+                cache_metadata_path=(
+                    None if request_cache_dir is None else cache_lookup.metadata_path
+                ),
+                cache_status="DISABLED" if request_cache_dir is None else "MISS_NO_RESPONSE",
+                stage="http_request",
+                row_count_before_failure=rows_before_failure,
+                exception=last_exception,
+                attempt_count=self.max_attempts,
+                max_attempts=self.max_attempts,
+                timeout_seconds=self.timeout_seconds,
+            )
+            raise ProviderDownloadError(
+                "FRED request failed before receiving a cacheable response",
+                diagnostic,
+            ) from last_exception
+        return response
+
+    def _parse_fred_response(
+        self,
+        *,
+        response: CachedHttpResponse,
+        params: dict[str, str],
+        series_id: str,
+        rows_before_failure: int,
+    ) -> pd.DataFrame:
+        if not response.ok:
+            diagnostic = _fred_diagnostic(
+                base_url=self.base_url,
+                params=params,
+                cache_key=response.cache_key,
+                cache_metadata_path=response.cache_metadata_path,
+                cache_status="HIT" if response.from_cache else "MISS_WRITTEN",
+                stage="http_status",
+                row_count_before_failure=rows_before_failure,
+                response=response,
+                error_code=str(response.status_code),
+            )
+            raise ProviderDownloadError(
+                f"FRED request failed: http_status={response.status_code}",
+                diagnostic,
+            )
+        try:
+            frame = pd.read_csv(StringIO(str(response.text)))
+        except Exception as exc:
+            diagnostic = _fred_diagnostic(
+                base_url=self.base_url,
+                params=params,
+                cache_key=response.cache_key,
+                cache_metadata_path=response.cache_metadata_path,
+                cache_status="HIT" if response.from_cache else "MISS_WRITTEN",
+                stage="csv_parse",
+                row_count_before_failure=rows_before_failure,
+                response=response,
+                exception=exc,
+            )
+            raise ProviderDownloadError(
+                f"FRED response for {series_id} could not be parsed as CSV",
+                diagnostic,
+            ) from exc
+        if "observation_date" not in frame.columns or series_id not in frame.columns:
+            diagnostic = _fred_diagnostic(
+                base_url=self.base_url,
+                params=params,
+                cache_key=response.cache_key,
+                cache_metadata_path=response.cache_metadata_path,
+                cache_status="HIT" if response.from_cache else "MISS_WRITTEN",
+                stage="schema",
+                row_count_before_failure=rows_before_failure,
+                response=response,
+            )
+            raise ProviderDownloadError(
+                f"FRED response for {series_id} has unexpected columns",
+                diagnostic,
+            )
+        return frame
+
+
+def _fred_request_params(series_id: str, start: date, end: date) -> dict[str, str]:
+    return {
+        "id": series_id,
+        "cosd": start.isoformat(),
+        "coed": end.isoformat(),
+    }
+
+
+def _latest_compatible_fred_cache_response(
+    *,
+    base_url: str,
+    series_id: str,
+    start: date,
+    end: date,
+    cache_dir: Path | None,
+) -> tuple[dict[str, str], CachedHttpResponse] | None:
+    if cache_dir is None:
+        return None
+    fred_cache_root = cache_dir / "Federal_Reserve_Economic_Data" / FRED_API_FAMILY
+    if not fred_cache_root.exists():
+        return None
+
+    probe_end = end
+    while probe_end >= start:
+        params = _fred_request_params(series_id, start, probe_end)
+        lookup = lookup_external_request_cache(
+            provider=FRED_PROVIDER_NAME,
+            api_family=FRED_API_FAMILY,
+            method="GET",
+            url=base_url,
+            params=params,
+            cache_dir=cache_dir,
+        )
+        if lookup.response is not None and lookup.response.ok:
+            return params, lookup.response
+        probe_end -= timedelta(days=1)
+    return None
+
+
+def _latest_fred_observation_date(frame: pd.DataFrame, series_id: str) -> date | None:
+    if "observation_date" not in frame.columns or series_id not in frame.columns:
+        return None
+    working = frame[["observation_date", series_id]].copy()
+    working["observation_date"] = pd.to_datetime(working["observation_date"], errors="coerce")
+    working[series_id] = pd.to_numeric(working[series_id], errors="coerce")
+    working = working.dropna(subset=["observation_date", series_id])
+    if working.empty:
+        return None
+    return cast(pd.Timestamp, working["observation_date"].max()).date()
+
+
+def _filter_fred_frame_to_request(frame: pd.DataFrame, request: RateRequest) -> pd.DataFrame:
+    filtered = frame.copy()
+    parsed_dates = pd.to_datetime(filtered["observation_date"], errors="coerce")
+    mask = (parsed_dates.dt.date >= request.start) & (parsed_dates.dt.date <= request.end)
+    filtered = filtered.loc[mask].copy()
+    filtered["observation_date"] = parsed_dates.loc[mask].dt.strftime("%Y-%m-%d")
+    return filtered
 
 
 def normalize_yfinance_prices(raw: pd.DataFrame, tickers: list[str]) -> pd.DataFrame:

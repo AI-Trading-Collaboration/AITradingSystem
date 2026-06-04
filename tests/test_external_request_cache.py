@@ -17,7 +17,11 @@ from ai_trading_system.data.market_data import (
     RateRequest,
     YFinancePriceProvider,
 )
-from ai_trading_system.external_request_cache import cached_requests_get, safe_response_headers
+from ai_trading_system.external_request_cache import (
+    cached_requests_get,
+    safe_response_headers,
+    write_external_request_cache_response,
+)
 from ai_trading_system.fundamentals.sec_companyfacts import (
     SecCompanyFactsRequest,
     SecEdgarCompanyFactsProvider,
@@ -214,6 +218,43 @@ def test_fred_provider_reports_series_pre_response_failure(tmp_path: Path) -> No
     assert diagnostic.timeout_seconds == 60
     assert len(fake_requests.calls) == 2
     assert not list(tmp_path.rglob("metadata.json"))
+
+
+def test_fred_provider_tail_refreshes_from_latest_cached_observation(tmp_path: Path) -> None:
+    write_external_request_cache_response(
+        provider="Federal Reserve Economic Data",
+        api_family="fredgraph_csv",
+        method="GET",
+        url=FredRateProvider.base_url,
+        params={"id": "DGS2", "cosd": "2018-01-01", "coed": "2026-06-02"},
+        status_code=200,
+        response_headers={"content-type": "text/csv"},
+        content=b"observation_date,DGS2\n2026-06-01,4.05\n2026-06-02,\n",
+        cache_dir=tmp_path,
+    )
+    fake_requests = _FakeRequests(
+        payload={},
+        content=b"observation_date,DGS2\n2026-06-01,4.05\n2026-06-02,4.05\n",
+    )
+    provider = FredRateProvider(requests_module=fake_requests, request_cache_dir=tmp_path)
+    request = RateRequest(
+        series_ids=["DGS2"],
+        start=date(2018, 1, 1),
+        end=date(2026, 6, 3),
+    )
+
+    rates = provider.download_rates(request)
+
+    assert rates.to_dict(orient="records") == [
+        {"date": "2026-06-01", "series": "DGS2", "value": 4.05},
+        {"date": "2026-06-02", "series": "DGS2", "value": 4.05},
+    ]
+    assert len(fake_requests.calls) == 1
+    assert fake_requests.calls[0]["params"] == {
+        "id": "DGS2",
+        "cosd": "2026-06-01",
+        "coed": "2026-06-03",
+    }
 
 
 class _FakeResponse:
