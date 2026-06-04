@@ -73,7 +73,7 @@ aits ops daily-run --as-of YYYY-MM-DD
 |Reader Brief|生成读者入口|`aits reports reader-brief --latest`|只读消费既有 artifact，不重跑 scoring、backtest、SEC PIT、shadow、weight 或 docs 上游。|
 |Reader Brief|校验读者入口质量|`aits reports validate-reader-brief --latest`|质量失败或上下文受限必须在后续输出中可见。|
 
-Daily chain 还包括 `download-data`、`validate-data`、SEC companyfacts / metrics、valuation fetch、SEC PIT shadow observe / monitor、score change attribution、market panel、`ops health` 和 secret scan。休市日模式下，系统不得生成新的 score、decision snapshot、Reader Brief scoring artifacts、tracking review artifacts、prediction ledger 行或执行动作。
+Daily chain 还包括 `download-data`、`validate-data`、SEC companyfacts / metrics、valuation fetch、SEC PIT shadow observe / monitor、score change attribution、market panel、`ops health` 和 secret scan。`aits ops daily-run` 在 finalization 写出 current-run `daily_decision_summary` 和 `daily_task_dashboard` 后，会用同一 run 的 summary 只读刷新最终 Reader Brief / Reader Brief quality mirror；该刷新不得重跑 scoring、PIT、SEC、valuation、backtest、shadow、weight 或 docs 上游。休市日模式下，系统不得生成新的 score、decision snapshot、Reader Brief scoring artifacts、tracking review artifacts、prediction ledger 行或执行动作。
 
 ## Periodic Task Register
 

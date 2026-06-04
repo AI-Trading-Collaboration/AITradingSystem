@@ -127,6 +127,22 @@ def mirror_canonical_daily_ops_outputs_to_legacy(
             paths.reports_dir / f"order_intent_candidates_{as_of_text}.json",
             legacy_reports_dir / f"order_intent_candidates_{as_of_text}.json",
         ),
+        (
+            paths.reports_dir / f"reader_brief_{as_of_text}.html",
+            legacy_reports_dir / f"reader_brief_{as_of_text}.html",
+        ),
+        (
+            paths.reports_dir / f"reader_brief_{as_of_text}.json",
+            legacy_reports_dir / f"reader_brief_{as_of_text}.json",
+        ),
+        (
+            paths.reports_dir / f"reader_brief_quality_{as_of_text}.json",
+            legacy_reports_dir / f"reader_brief_quality_{as_of_text}.json",
+        ),
+        (
+            paths.reports_dir / f"reader_brief_quality_{as_of_text}.md",
+            legacy_reports_dir / f"reader_brief_quality_{as_of_text}.md",
+        ),
     )
     mirrored: list[Path] = []
     for source, destination in pairs:

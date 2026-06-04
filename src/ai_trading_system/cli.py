@@ -10941,6 +10941,61 @@ def daily_ops_plan_command(
         raise typer.Exit(code=1)
 
 
+def _refresh_reader_brief_from_daily_run_summary(
+    *,
+    as_of: date,
+    reports_dir: Path,
+    daily_decision_summary_path: Path,
+    daily_task_dashboard_json_path: Path,
+) -> tuple[Path, ...]:
+    daily_report_path = default_daily_score_report_path(reports_dir, as_of)
+    reader_brief_html_path = default_reader_brief_html_path(reports_dir, as_of)
+    reader_brief_json_path = default_reader_brief_json_path(reports_dir, as_of)
+    reader_brief_quality_json_path = default_reader_brief_quality_json_path(reports_dir, as_of)
+    reader_brief_quality_md_path = default_reader_brief_quality_markdown_path(reports_dir, as_of)
+    payload = build_reader_brief_payload(
+        as_of=as_of,
+        reports_dir=reports_dir,
+        decision_snapshot_path=default_decision_snapshot_path(
+            DEFAULT_DECISION_SNAPSHOT_DIR,
+            as_of,
+        ),
+        calculation_explainers_path=default_calculation_explainers_path(reports_dir, as_of),
+        daily_decision_summary_path=daily_decision_summary_path,
+        evidence_dashboard_json_path=default_evidence_dashboard_json_path(reports_dir, as_of),
+        daily_task_dashboard_json_path=daily_task_dashboard_json_path,
+        daily_report_path=daily_report_path,
+        trace_bundle_path=default_report_trace_bundle_path(daily_report_path),
+        score_change_attribution_path=default_score_change_attribution_json_path(
+            reports_dir,
+            as_of,
+        ),
+        market_panel_path=default_market_panel_json_path(reports_dir, as_of),
+        research_governance_summary_path=default_research_governance_summary_json_path(
+            reports_dir,
+            as_of,
+        ),
+        report_index_path=default_report_index_json_path(reports_dir, as_of),
+        documentation_contract_path=default_documentation_contract_json_path(reports_dir, as_of),
+    )
+    html_path = write_reader_brief_html(payload, reader_brief_html_path)
+    json_path = write_reader_brief_json(payload, reader_brief_json_path)
+    quality_payload = build_reader_brief_quality_payload(
+        reader_brief_payload=payload,
+        reader_brief_json_path=json_path,
+        reader_brief_html_path=html_path,
+    )
+    quality_json_path = write_reader_brief_quality_json(
+        quality_payload,
+        reader_brief_quality_json_path,
+    )
+    quality_md_path = write_reader_brief_quality_markdown(
+        quality_payload,
+        reader_brief_quality_md_path,
+    )
+    return html_path, json_path, quality_json_path, quality_md_path
+
+
 @ops_app.command("daily-run")
 def daily_ops_run_command(
     as_of: Annotated[
@@ -11124,6 +11179,20 @@ def daily_ops_run_command(
         output_path=default_order_intent_candidates_path(run_paths.reports_dir, plan_date),
         project_root=PROJECT_ROOT,
     )
+    reader_brief_step = next(
+        (result for result in run_report.step_results if result.step_id == "reader_brief"),
+        None,
+    )
+    reader_brief_final_paths = (
+        _refresh_reader_brief_from_daily_run_summary(
+            as_of=plan_date,
+            reports_dir=run_paths.reports_dir,
+            daily_decision_summary_path=daily_decision_summary_path,
+            daily_task_dashboard_json_path=daily_task_dashboard_json_path,
+        )
+        if reader_brief_step is not None and reader_brief_step.status == "PASS"
+        else ()
+    )
     if legacy_mode == "mirror":
         legacy_outputs = mirror_canonical_daily_ops_outputs_to_legacy(
             paths=run_paths,
@@ -11163,6 +11232,8 @@ def daily_ops_run_command(
     console.print(f"每日任务 Dashboard JSON：{daily_task_dashboard_json_path}")
     console.print(f"每日决策总线 JSON：{daily_decision_summary_path}")
     console.print(f"Order intent candidates JSON：{order_intent_candidates_path}")
+    if reader_brief_final_paths:
+        console.print(f"Reader Brief final：{reader_brief_final_paths[0]}")
     if run_report.metadata is not None:
         console.print(f"Metadata JSON：{metadata_path}")
         console.print(f"Run manifest：{run_paths.manifest_path}")

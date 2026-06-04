@@ -529,19 +529,30 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
     order_intent_candidates_json = next(
         run_output_root.rglob("reports/order_intent_candidates_2026-05-06.json")
     )
+    reader_brief_json = next(run_output_root.rglob("reports/reader_brief_2026-05-06.json"))
+    reader_brief_quality_json = next(
+        run_output_root.rglob("reports/reader_brief_quality_2026-05-06.json")
+    )
     assert task_dashboard.exists()
     assert task_dashboard_json.exists()
     assert decision_summary_json.exists()
     assert order_intent_candidates_json.exists()
+    assert reader_brief_json.exists()
+    assert reader_brief_quality_json.exists()
     assert "关键结论总览" in task_dashboard.read_text(encoding="utf-8")
     assert (tmp_path / "outputs" / "reports" / "daily_task_dashboard_2026-05-06.html").exists()
     assert (tmp_path / "outputs" / "reports" / "daily_task_dashboard_2026-05-06.json").exists()
     assert (tmp_path / "outputs" / "reports" / "daily_decision_summary_2026-05-06.json").exists()
     assert (tmp_path / "outputs" / "reports" / "order_intent_candidates_2026-05-06.json").exists()
+    assert (tmp_path / "outputs" / "reports" / "reader_brief_2026-05-06.json").exists()
+    assert (tmp_path / "outputs" / "reports" / "reader_brief_quality_2026-05-06.json").exists()
     decision_summary = json.loads(decision_summary_json.read_text(encoding="utf-8"))
     assert decision_summary["production_effect"] == "none"
     assert decision_summary["investment_conclusion"]["availability"] == "missing"
     assert decision_summary["decision_bus_role"]["order_intent_builder_connected"] is False
+    reader_brief = json.loads(reader_brief_json.read_text(encoding="utf-8"))
+    assert reader_brief["run_context"]["run_id"] == "daily_ops_run:2026-05-06:test"
+    assert reader_brief["production_effect"] == "none"
     order_candidates = json.loads(order_intent_candidates_json.read_text(encoding="utf-8"))
     assert order_candidates["production_effect"] == "none"
     assert order_candidates["execution_boundary"] == {
