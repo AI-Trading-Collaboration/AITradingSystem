@@ -600,6 +600,17 @@ overlay、exposure constraints 和 rebalance gates，把 Layer 1 trend/regime/ri
 本阶段可输出 `candidate_target_weights` 供人工复核和后续 TRADING-085/086 使用，但不写
 official `data/etf_portfolio/target_weights.csv`、不改 baseline config、不自动 promotion、
 不触发 broker。
+TRADING-085 新增 `config/etf_portfolio/dynamic_calibration.yaml` 和
+`aits etf dynamic-calibration run --pack dynamic_etf_v1 --cache read-write --workers auto` /
+`report --latest` / `validate`。Batch runner 组合 TRADING-083 trend signal configs 与
+TRADING-084 dynamic allocation policy profiles，生成 two-layer candidate packs、trend score
+cache、allocation path cache、dynamic calibration proxy cache、ranking components 和 batch
+report。Artifacts 写入 ignored `reports/etf_portfolio/dynamic_calibration/` 和
+`data/cache/dynamic_calibration/`；Reader Brief 的 `Dynamic Calibration Batch` 区块只读
+latest report。TRADING-085 的 `dynamic_backtest` cache 是 calibration proxy，用于筛选
+TRADING-086 输入；完整 dynamic robustness、walk-forward、false-signal diagnostics 仍属于
+TRADING-086。该 workflow 不写 official target weights、不改 baseline config、不自动
+promotion、不触发 broker、不做未经 owner approval 的 enrollment。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

@@ -189,6 +189,7 @@ def build_reader_brief_payload(
     etf_shadow_candidate_review = _etf_shadow_candidate_review_summary(report_index)
     etf_trend_calibration = _etf_trend_calibration_summary(report_index)
     etf_dynamic_allocation = _etf_dynamic_allocation_summary(report_index)
+    etf_dynamic_calibration = _etf_dynamic_calibration_summary(report_index)
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -323,6 +324,7 @@ def build_reader_brief_payload(
         "etf_shadow_candidate_review": etf_shadow_candidate_review,
         "etf_trend_calibration": etf_trend_calibration,
         "etf_dynamic_allocation": etf_dynamic_allocation,
+        "etf_dynamic_calibration": etf_dynamic_calibration,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -591,6 +593,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_shadow_candidate_review = _mapping(payload.get("etf_shadow_candidate_review"))
     etf_trend_calibration = _mapping(payload.get("etf_trend_calibration"))
     etf_dynamic_allocation = _mapping(payload.get("etf_dynamic_allocation"))
+    etf_dynamic_calibration = _mapping(payload.get("etf_dynamic_calibration"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -950,6 +953,30 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         "official_target_weights_mutated",
                         etf_dynamic_allocation.get("official_target_weights_mutated"),
                     ),
+                ]
+            ),
+        ),
+        _section(
+            "Dynamic Calibration Batch",
+            _definition_table(
+                [
+                    ("availability", etf_dynamic_calibration.get("availability")),
+                    ("status", etf_dynamic_calibration.get("status")),
+                    ("summary", etf_dynamic_calibration.get("summary_sentence")),
+                    ("pack_id", etf_dynamic_calibration.get("pack_id")),
+                    ("top_candidate", etf_dynamic_calibration.get("top_candidate")),
+                    ("top_ranking_score", etf_dynamic_calibration.get("top_ranking_score")),
+                    ("candidate_pack_count", etf_dynamic_calibration.get("candidate_pack_count")),
+                    ("cache_hit_rate", etf_dynamic_calibration.get("cache_hit_rate")),
+                    ("data_quality_status", etf_dynamic_calibration.get("data_quality_status")),
+                    (
+                        "full_robustness_backtest_required",
+                        etf_dynamic_calibration.get("full_robustness_backtest_required"),
+                    ),
+                    ("detailed_report", etf_dynamic_calibration.get("detail_report")),
+                    ("safety_status", etf_dynamic_calibration.get("safety_status")),
+                    ("production_effect", etf_dynamic_calibration.get("production_effect")),
+                    ("broker_action", etf_dynamic_calibration.get("broker_action")),
                 ]
             ),
         ),
@@ -3837,6 +3864,111 @@ def _etf_dynamic_allocation_safety_status(payload: Mapping[str, Any]) -> str:
         "broker_action=none; manual_review_required=true; "
         "official_target_weights_mutated=false; baseline_config_mutated=false; "
         "production_state_mutated=false; commands_executed=false"
+        if safe
+        else "SAFETY_REVIEW_REQUIRED"
+    )
+
+
+def _etf_dynamic_calibration_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_dynamic_calibration_summary()
+    report_path = _report_index_artifact_path(report_index, "etf_dynamic_calibration_report")
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_etf_dynamic_calibration_summary()
+    summary = _mapping(payload.get("summary"))
+    cache = _mapping(payload.get("cache_summary"))
+    safety = _mapping(payload.get("safety"))
+    safety_status = _etf_dynamic_calibration_safety_status(payload)
+    pack_id = _text(payload.get("requested_pack_id"), "MISSING")
+    top_candidate = _text(summary.get("top_dynamic_candidate_pack_id"), "MISSING")
+    top_score = summary.get("top_ranking_score", "UNKNOWN")
+    candidate_count = payload.get("candidate_pack_count", 0)
+    data_quality_status = _text(summary.get("data_quality_status"), "UNKNOWN")
+    full_backtest_required = summary.get("full_robustness_backtest_required") is True
+    return {
+        "availability": "AVAILABLE",
+        "status": _text(payload.get("status"), "UNKNOWN"),
+        "summary_sentence": (
+            f"Dynamic Calibration Batch: pack={pack_id}; top={top_candidate}; "
+            f"score={top_score}; candidates={candidate_count}; "
+            f"data_quality={data_quality_status}; safety={safety_status}."
+        ),
+        "pack_id": pack_id,
+        "top_candidate": top_candidate,
+        "top_ranking_score": top_score,
+        "candidate_pack_count": candidate_count,
+        "cache_hit_rate": cache.get("cache_hit_rate", "UNKNOWN"),
+        "cache_write_count": cache.get("cache_write_count", "UNKNOWN"),
+        "data_quality_status": data_quality_status,
+        "full_robustness_backtest_required": full_backtest_required,
+        "calibration_proxy": payload.get("calibration_proxy", True),
+        "detail_report": "" if report_path is None else str(report_path),
+        "safety_status": safety_status,
+        "production_effect": _text(safety.get("production_effect"), PRODUCTION_EFFECT),
+        "broker_action": _text(safety.get("broker_action"), "none"),
+        "manual_review_required": safety.get("manual_review_required") is True,
+        "official_target_weights_mutated": payload.get("official_target_weights_mutated") is True,
+        "baseline_config_mutated": payload.get("baseline_config_mutated") is True,
+        "production_state_mutated": payload.get("production_state_mutated") is True,
+    }
+
+
+def _missing_etf_dynamic_calibration_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "summary_sentence": "Dynamic Calibration Batch: no latest batch report found.",
+        "pack_id": "MISSING",
+        "top_candidate": "MISSING",
+        "top_ranking_score": "MISSING",
+        "candidate_pack_count": 0,
+        "cache_hit_rate": "MISSING",
+        "cache_write_count": "MISSING",
+        "data_quality_status": "MISSING",
+        "full_robustness_backtest_required": True,
+        "calibration_proxy": True,
+        "detail_report": "",
+        "safety_status": "MISSING",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "official_target_weights_mutated": False,
+        "baseline_config_mutated": False,
+        "production_state_mutated": False,
+        "limitation": (
+            "Dynamic calibration report artifact is missing; Reader Brief does not run "
+            "etf dynamic-calibration run CLI."
+        ),
+    }
+
+
+def _etf_dynamic_calibration_safety_status(payload: Mapping[str, Any]) -> str:
+    safety = _mapping(payload.get("safety"))
+    safe = (
+        safety.get("observe_only") is True
+        and safety.get("candidate_only") is True
+        and _text(safety.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
+        and safety.get("broker_action") == "none"
+        and safety.get("manual_review_required") is True
+        and safety.get("production_state_mutated") is False
+        and safety.get("baseline_config_mutated") is False
+        and safety.get("official_target_weights_mutated") is False
+        and safety.get("automatic_candidate_promotion") is False
+        and safety.get("auto_enrollment_without_owner_approval") is False
+        and payload.get("commands_executed") is False
+        and payload.get("production_state_mutated") is False
+        and payload.get("baseline_config_mutated") is False
+        and payload.get("official_target_weights_mutated") is False
+        and payload.get("automatic_candidate_promotion") is False
+        and payload.get("auto_enrollment_without_owner_approval") is False
+    )
+    return (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true; "
+        "official_target_weights_mutated=false; baseline_config_mutated=false; "
+        "production_state_mutated=false; automatic_candidate_promotion=false; "
+        "auto_enrollment_without_owner_approval=false; commands_executed=false"
         if safe
         else "SAFETY_REVIEW_REQUIRED"
     )

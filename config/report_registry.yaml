@@ -956,6 +956,46 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_calibration_report
+    title: ETF Dynamic Calibration Batch Report
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-calibration run --pack dynamic_etf_v1 --cache read-write --workers auto
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_calibration/reports/dynamic-calibration-report_*.json
+      - reports/etf_portfolio/dynamic_calibration/reports/dynamic-calibration-report_*.md
+      - reports/etf_portfolio/dynamic_calibration/candidates/dynamic-candidate-packs_*.json
+      - reports/etf_portfolio/dynamic_calibration/candidates/dynamic-candidate-packs_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-085 dynamic calibration report should be reviewed before
+      TRADING-086 robustness and attribution workflows consume two-layer
+      candidate packs.
+    owner_action: review_dynamic_calibration_batch_before_dynamic_robustness
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_calibration_validation
+    title: ETF Dynamic Calibration Validation Gate
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-calibration validate
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_calibration/validation/dynamic-calibration-validation_*.json
+      - reports/etf_portfolio/dynamic_calibration/validation/dynamic-calibration-validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-085 validation confirms candidate pack schema, two-stage search,
+      cache layers, parallel runner visibility, ranking, report/Reader Brief
+      integration, and observe-only safety boundaries.
+    owner_action: run_aits_etf_dynamic_calibration_validate_before_marking_TRADING_085_validating
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance

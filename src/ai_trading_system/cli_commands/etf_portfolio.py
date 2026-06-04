@@ -4,7 +4,7 @@ import json
 from collections.abc import Mapping
 from datetime import UTC, date, datetime
 from pathlib import Path
-from typing import Annotated, cast
+from typing import Annotated, Any, cast
 
 import pandas as pd
 import typer
@@ -153,6 +153,21 @@ from ai_trading_system.etf_portfolio.dynamic_allocation import (
     write_dynamic_allocation_policy_registry,
     write_dynamic_allocation_report,
     write_dynamic_allocation_validation_report,
+)
+from ai_trading_system.etf_portfolio.dynamic_calibration import (
+    DEFAULT_DYNAMIC_CALIBRATION_CANDIDATE_DIR,
+    DEFAULT_DYNAMIC_CALIBRATION_POLICY_CONFIG_PATH,
+    DEFAULT_DYNAMIC_CALIBRATION_REPORT_DIR,
+    DEFAULT_DYNAMIC_CALIBRATION_VALIDATION_DIR,
+    DynamicCalibrationError,
+    build_dynamic_calibration_batch_report,
+    build_dynamic_calibration_validation_report,
+    latest_dynamic_calibration_report_path,
+    load_dynamic_calibration_policy_config,
+    load_latest_trend_report,
+    write_dynamic_calibration_candidate_packs,
+    write_dynamic_calibration_report,
+    write_dynamic_calibration_validation_report,
 )
 from ai_trading_system.etf_portfolio.experiments import (
     DEFAULT_ETF_EXPERIMENT_RUN_DIR,
@@ -536,6 +551,10 @@ dynamic_allocation_app = typer.Typer(
     help="ETF candidate-only dynamic allocation policy workflow。",
     no_args_is_help=True,
 )
+dynamic_calibration_app = typer.Typer(
+    help="ETF two-layer dynamic candidate batch/cache workflow。",
+    no_args_is_help=True,
+)
 governance_app = typer.Typer(help="ETF P1 weight governance。", no_args_is_help=True)
 events_app = typer.Typer(help="ETF P1 event risk flags。", no_args_is_help=True)
 p2_app = typer.Typer(help="ETF P2 observe-only contracts。", no_args_is_help=True)
@@ -570,17 +589,14 @@ etf_app.add_typer(baseline_review_app, name="baseline-review")
 etf_app.add_typer(shadow_review_app, name="shadow-review")
 etf_app.add_typer(trend_calibration_app, name="trend-calibration")
 etf_app.add_typer(dynamic_allocation_app, name="dynamic-allocation")
+etf_app.add_typer(dynamic_calibration_app, name="dynamic-calibration")
 etf_app.add_typer(governance_app, name="governance")
 etf_app.add_typer(events_app, name="events")
 etf_app.add_typer(p2_app, name="p2")
 etf_app.add_typer(credibility_app, name="credibility")
 
-DEFAULT_ETF_OPERATIONS_DRY_RUN_DIR = (
-    PROJECT_ROOT / "outputs" / "dry_runs" / "etf_operations"
-)
-DEFAULT_ETF_OPERATIONS_REPORT_DIR = (
-    PROJECT_ROOT / "reports" / "etf_portfolio" / "operations"
-)
+DEFAULT_ETF_OPERATIONS_DRY_RUN_DIR = PROJECT_ROOT / "outputs" / "dry_runs" / "etf_operations"
+DEFAULT_ETF_OPERATIONS_REPORT_DIR = PROJECT_ROOT / "reports" / "etf_portfolio" / "operations"
 DEFAULT_ETF_OPERATIONS_VALIDATION_DIR = DEFAULT_ETF_OPERATIONS_REPORT_DIR / "validation"
 
 
@@ -1137,9 +1153,7 @@ def baseline_review_outcome_command(
         decision = _load_optional_json_payload(decision_path) if decision_path else None
         proposal = _load_optional_json_payload(proposal_path) if proposal_path else None
         previous = (
-            _load_optional_json_payload(previous_outcome_path)
-            if previous_outcome_path
-            else None
+            _load_optional_json_payload(previous_outcome_path) if previous_outcome_path else None
         )
         payload = build_candidate_review_outcome(
             candidate_id=candidate,
@@ -1902,6 +1916,196 @@ def dynamic_allocation_validate_command(
     typer.echo("production_state_mutated=false")
     typer.echo("baseline_config_mutated=false")
     typer.echo("official_target_weights_mutated=false")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_calibration_app.command("run")
+def dynamic_calibration_run_command(
+    pack: Annotated[
+        str | None,
+        typer.Option("--pack", help="Two-layer dynamic candidate pack id。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", "--config", help="dynamic calibration policy config。"),
+    ] = DEFAULT_DYNAMIC_CALIBRATION_POLICY_CONFIG_PATH,
+    dynamic_allocation_config_path: Annotated[
+        Path,
+        typer.Option(
+            "--dynamic-allocation-config",
+            help="TRADING-084 dynamic allocation policy config。",
+        ),
+    ] = DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH,
+    trend_report_path: Annotated[
+        Path | None,
+        typer.Option("--trend-report-path", help="Explicit TRADING-083 trend report JSON。"),
+    ] = None,
+    latest_trend_report: Annotated[
+        bool,
+        typer.Option(
+            "--latest-trend-report/--no-latest-trend-report",
+            help="没有显式 trend report 时读取 latest TRADING-083 report。",
+        ),
+    ] = True,
+    cache: Annotated[
+        str | None,
+        typer.Option("--cache", help="Cache mode: read-write/read-only/disabled。"),
+    ] = None,
+    cache_root: Annotated[
+        Path | None,
+        typer.Option("--cache-root", help="dynamic calibration cache root。"),
+    ] = None,
+    workers: Annotated[
+        str | None,
+        typer.Option("--workers", help="Worker count or auto。"),
+    ] = None,
+    top: Annotated[
+        int | None,
+        typer.Option("--top", help="Top dynamic candidate packs to show。"),
+    ] = None,
+    candidate_output_dir: Annotated[
+        Path,
+        typer.Option("--candidate-output-dir", help="candidate pack 输出目录。"),
+    ] = DEFAULT_DYNAMIC_CALIBRATION_CANDIDATE_DIR,
+    report_output_dir: Annotated[
+        Path,
+        typer.Option("--report-output-dir", help="dynamic calibration report 输出目录。"),
+    ] = DEFAULT_DYNAMIC_CALIBRATION_REPORT_DIR,
+) -> None:
+    """运行 TRADING-085 two-layer dynamic candidate batch/cache；不写 production weights。"""
+    if cache not in {None, "read-write", "read-only", "disabled"}:
+        raise typer.BadParameter("--cache must be read-write, read-only, or disabled")
+    try:
+        policy = load_dynamic_calibration_policy_config(config_path)
+        dynamic_policy = load_dynamic_allocation_policy_config(dynamic_allocation_config_path)
+        resolved_trend_report_path = trend_report_path
+        trend_payload: dict[str, Any] = {}
+        if latest_trend_report or trend_report_path is not None:
+            resolved_trend_report_path, trend_payload = load_latest_trend_report(trend_report_path)
+        report = build_dynamic_calibration_batch_report(
+            policy=policy,
+            dynamic_policy=dynamic_policy,
+            trend_report=trend_payload,
+            trend_report_path=resolved_trend_report_path,
+            dynamic_policy_path=dynamic_allocation_config_path,
+            pack_id=pack,
+            cache_mode=cache,
+            cache_root=cache_root,
+            workers=workers,
+            top_n=top,
+        )
+    except DynamicCalibrationError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    candidate_paths = write_dynamic_calibration_candidate_packs(
+        report,
+        output_dir=candidate_output_dir,
+    )
+    report_paths = write_dynamic_calibration_report(report, output_dir=report_output_dir)
+    summary = _mapping_obj(report.get("summary"))
+    cache_summary = _mapping_obj(report.get("cache_summary"))
+    typer.echo(f"ETF dynamic calibration candidate packs JSON：{candidate_paths['json']}")
+    typer.echo(f"ETF dynamic calibration report JSON：{report_paths['json']}")
+    typer.echo(f"status={report['status']}")
+    typer.echo(f"candidate_pack_count={report['candidate_pack_count']}")
+    typer.echo(f"top_candidate={summary.get('top_dynamic_candidate_pack_id')}")
+    typer.echo(f"top_ranking_score={summary.get('top_ranking_score')}")
+    typer.echo(f"cache_hit_rate={cache_summary.get('cache_hit_rate')}")
+    typer.echo(f"cache_write_count={cache_summary.get('cache_write_count')}")
+    typer.echo("calibration_proxy=true")
+    typer.echo("full_robustness_backtest_required=true")
+    typer.echo("commands_executed=false")
+    typer.echo("production_state_mutated=false")
+    typer.echo("baseline_config_mutated=false")
+    typer.echo("official_target_weights_mutated=false")
+    typer.echo("automatic_candidate_promotion=false")
+    typer.echo("auto_enrollment_without_owner_approval=false")
+    typer.echo("observe_only=true")
+    typer.echo("candidate_only=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("manual_review_required=true")
+
+
+@dynamic_calibration_app.command("report")
+def dynamic_calibration_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取最新 dynamic calibration report。"),
+    ] = True,
+    report_path: Annotated[
+        Path | None,
+        typer.Option("--report-path", help="显式 report JSON path。"),
+    ] = None,
+    report_dir: Annotated[
+        Path,
+        typer.Option("--report-dir", help="report artifact directory。"),
+    ] = DEFAULT_DYNAMIC_CALIBRATION_REPORT_DIR,
+) -> None:
+    """只读展示 latest TRADING-085 dynamic calibration report 摘要。"""
+    resolved = report_path
+    if resolved is None and latest:
+        resolved = latest_dynamic_calibration_report_path(report_dir)
+    payload = _load_optional_json_payload(resolved)
+    if not payload:
+        raise typer.BadParameter("dynamic calibration report not found")
+    summary = payload.get("summary")
+    if not isinstance(summary, dict):
+        raise typer.BadParameter(f"invalid dynamic calibration report: {resolved}")
+    cache_summary = _mapping_obj(payload.get("cache_summary"))
+    typer.echo(f"dynamic_calibration_report={resolved}")
+    typer.echo(f"status={payload.get('status')}")
+    typer.echo(f"candidate_pack_count={payload.get('candidate_pack_count')}")
+    typer.echo(f"top_candidate={summary.get('top_dynamic_candidate_pack_id')}")
+    typer.echo(f"top_ranking_score={summary.get('top_ranking_score')}")
+    typer.echo(f"data_quality_status={summary.get('data_quality_status')}")
+    typer.echo(f"cache_hit_rate={cache_summary.get('cache_hit_rate')}")
+    typer.echo("calibration_proxy=true")
+    typer.echo("full_robustness_backtest_required=true")
+    typer.echo("production_effect=none")
+    typer.echo("broker_action=none")
+    typer.echo("official_target_weights_mutated=false")
+
+
+@dynamic_calibration_app.command("validate")
+def dynamic_calibration_validate_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config-path", "--config", help="dynamic calibration policy config。"),
+    ] = DEFAULT_DYNAMIC_CALIBRATION_POLICY_CONFIG_PATH,
+    dynamic_allocation_config_path: Annotated[
+        Path,
+        typer.Option(
+            "--dynamic-allocation-config",
+            help="TRADING-084 dynamic allocation policy config。",
+        ),
+    ] = DEFAULT_DYNAMIC_ALLOCATION_POLICY_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="validation report 输出目录。"),
+    ] = DEFAULT_DYNAMIC_CALIBRATION_VALIDATION_DIR,
+) -> None:
+    """校验 TRADING-085 dynamic calibration workflow 和 safety boundary。"""
+    payload = build_dynamic_calibration_validation_report(
+        policy_config_path=config_path,
+        dynamic_policy_path=dynamic_allocation_config_path,
+    )
+    paths = write_dynamic_calibration_validation_report(payload, output_dir=output_dir)
+    typer.echo(f"ETF dynamic calibration validation JSON：{paths['json']}")
+    typer.echo(f"ETF dynamic calibration validation Markdown：{paths['markdown']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("commands_executed=false")
+    typer.echo("production_state_mutated=false")
+    typer.echo("baseline_config_mutated=false")
+    typer.echo("official_target_weights_mutated=false")
+    typer.echo("automatic_candidate_promotion=false")
+    typer.echo("auto_enrollment_without_owner_approval=false")
     typer.echo("observe_only=true")
     typer.echo("candidate_only=true")
     typer.echo("production_effect=none")
@@ -3148,8 +3352,7 @@ def satellite_attribution_build_command(
     )
     if not quality_report.passed:
         typer.echo(
-            f"ETF 数据质量状态：{quality_report.status}，"
-            "已停止 satellite attribution build。"
+            f"ETF 数据质量状态：{quality_report.status}，已停止 satellite attribution build。"
         )
         raise typer.Exit(code=1)
     run_date = _resolve_date(as_of, prices=prices)
@@ -3234,8 +3437,7 @@ def satellite_attribution_report_command(
     )
     if not quality_report.passed:
         typer.echo(
-            f"ETF 数据质量状态：{quality_report.status}，"
-            "已停止 satellite attribution report。"
+            f"ETF 数据质量状态：{quality_report.status}，已停止 satellite attribution report。"
         )
         raise typer.Exit(code=1)
     run_date = _resolve_date(as_of, prices=prices)
@@ -3588,11 +3790,7 @@ def experiments_compare_command(
     if run_id is not None or latest:
         if run_id is not None and latest:
             raise typer.BadParameter("--run-id and --latest cannot be combined")
-        run_dir = (
-            find_latest_experiment_run_dir(output_dir)
-            if latest
-            else output_dir / str(run_id)
-        )
+        run_dir = find_latest_experiment_run_dir(output_dir) if latest else output_dir / str(run_id)
         payload = build_experiment_comparison_report(run_dir)
         pack_id = payload["run_metadata"].get("pack_id")
         if pack_id:
@@ -3601,9 +3799,7 @@ def experiments_compare_command(
             if pack_config is not None:
                 payload = apply_ranking_policy_to_comparison_report(
                     payload,
-                    ranking_policy=pack_registry.ranking_policies[
-                        pack_config.ranking_policy
-                    ],
+                    ranking_policy=pack_registry.ranking_policies[pack_config.ranking_policy],
                     ranking_policy_id=pack_config.ranking_policy,
                 )
         json_path = run_dir / "comparison_report.json"
@@ -4755,8 +4951,7 @@ def _run_parameter_review_report_command(
     typer.echo(f"status={payload['status']}")
     typer.echo(f"candidate_count={payload['summary']['candidate_count']}")
     typer.echo(
-        "eligible_for_manual_review_count="
-        f"{payload['summary']['eligible_for_manual_review_count']}"
+        f"eligible_for_manual_review_count={payload['summary']['eligible_for_manual_review_count']}"
     )
     typer.echo("observe_only=true")
     typer.echo("candidate_only=true")
@@ -5176,10 +5371,7 @@ def weight_calibration_enroll_forward_command(
     latest_selection = enrollment.get("latest_selection", {})
     typer.echo(f"ETF weight calibration forward enrollment：{enrollment_path}")
     typer.echo(f"enrollment_count={enrollment['enrollment_count']}")
-    typer.echo(
-        "selected_weight_set_count="
-        f"{len(latest_selection.get('weight_set_ids') or [])}"
-    )
+    typer.echo(f"selected_weight_set_count={len(latest_selection.get('weight_set_ids') or [])}")
     typer.echo("shared_shadow_registry_mutated=false")
     typer.echo("production_weights_mutated=false")
     typer.echo("observe_only=true")
@@ -5727,9 +5919,7 @@ def weight_calibration_diagnostics_command(
     cache_mode = "disabled" if no_cache else cache
     prices, quality_report = load_standard_prices(prices_path, config.assets, config.strategy)
     if not quality_report.passed:
-        typer.echo(
-            f"ETF 数据质量状态：{quality_report.status}，已停止 weight diagnostics。"
-        )
+        typer.echo(f"ETF 数据质量状态：{quality_report.status}，已停止 weight diagnostics。")
         raise typer.Exit(code=1)
     selected_searches = list(search or ["etf_initial_weight_search_v1"])
     if include_robust_packs:
@@ -6472,9 +6662,7 @@ def p2_normalize_news_command(
     provider: Annotated[str, typer.Option(help="Provider / audit source name。")] = (
         "manual_input"
     ),
-    source_url: Annotated[str, typer.Option(help="Source URL 或人工输入说明。")] = (
-        "manual_input"
-    ),
+    source_url: Annotated[str, typer.Option(help="Source URL 或人工输入说明。")] = ("manual_input"),
     downloaded_at: Annotated[
         str | None,
         typer.Option(help="下载或接收时间 ISO-8601；默认当前 UTC。"),
@@ -6554,9 +6742,7 @@ def p2_normalize_options_risk_command(
     provider: Annotated[str, typer.Option(help="Provider / audit source name。")] = (
         "manual_input"
     ),
-    source_url: Annotated[str, typer.Option(help="Source URL 或人工输入说明。")] = (
-        "manual_input"
-    ),
+    source_url: Annotated[str, typer.Option(help="Source URL 或人工输入说明。")] = ("manual_input"),
     downloaded_at: Annotated[
         str | None,
         typer.Option(help="下载或接收时间 ISO-8601；默认当前 UTC。"),
@@ -7215,8 +7401,7 @@ def _generate_daily_report(
     if allocation.empty:
         raise typer.BadParameter(f"目标权重缺少日期：{run_date.isoformat()}")
     report_path = (
-        output_path
-        or DEFAULT_ETF_REPORT_DIR / f"{run_date.isoformat()}_portfolio_brief.md"
+        output_path or DEFAULT_ETF_REPORT_DIR / f"{run_date.isoformat()}_portfolio_brief.md"
     )
     markdown = render_daily_brief(
         run_date=run_date,
@@ -7330,9 +7515,7 @@ def _weekly_review_date(*, as_of: str | None, latest: bool) -> date:
 
 def _parse_operations_graph_cadence(value: str) -> OperationsGraphCadence:
     if value not in {"daily", "weekly", "biweekly", "monthly"}:
-        raise typer.BadParameter(
-            "--cadence must be one of: daily, weekly, biweekly, monthly"
-        )
+        raise typer.BadParameter("--cadence must be one of: daily, weekly, biweekly, monthly")
     return cast(OperationsGraphCadence, value)
 
 
@@ -7442,9 +7625,7 @@ def _resolve_backtest_run_dir(output_dir: Path, *, run_id: str | None, latest: b
     if not output_dir.exists():
         raise typer.BadParameter(f"ETF backtest 输出目录不存在：{output_dir}")
     candidates = [
-        item
-        for item in output_dir.iterdir()
-        if item.is_dir() and (item / "summary.json").exists()
+        item for item in output_dir.iterdir() if item.is_dir() and (item / "summary.json").exists()
     ]
     if not candidates:
         raise typer.BadParameter(f"未找到 ETF backtest run：{output_dir}")
@@ -7500,8 +7681,7 @@ def _parse_datetime(value: str) -> datetime:
 def _artifact_stem(value: object) -> str:
     text = str(value).strip().replace(":", "_").replace("/", "_").replace("\\", "_")
     return "".join(
-        character if character.isalnum() or character in "._-" else "_"
-        for character in text
+        character if character.isalnum() or character in "._-" else "_" for character in text
     )
 
 
@@ -7526,18 +7706,19 @@ def _echo_weight_shadow_enrollment_summary(
     latest_selection = enrollment.get("latest_selection")
     latest = latest_selection if isinstance(latest_selection, Mapping) else {}
     raw_results = latest.get("enrollment_results")
-    results = [dict(item) for item in raw_results if isinstance(item, Mapping)] if isinstance(
-        raw_results,
-        list,
-    ) else []
+    results = (
+        [dict(item) for item in raw_results if isinstance(item, Mapping)]
+        if isinstance(
+            raw_results,
+            list,
+        )
+        else []
+    )
     typer.echo(f"ETF weight candidate shadow enrollment：{enrollment_path}")
     typer.echo(f"enrollment_count={enrollment['enrollment_count']}")
     typer.echo(f"selected_weight_set_count={len(latest.get('weight_set_ids') or [])}")
     for result in results:
-        typer.echo(
-            "enrollment_result="
-            + json.dumps(result, ensure_ascii=False, sort_keys=True)
-        )
+        typer.echo("enrollment_result=" + json.dumps(result, ensure_ascii=False, sort_keys=True))
     typer.echo("shared_shadow_registry_mutated=false")
     typer.echo("production_weights_mutated=false")
     typer.echo("observe_only=true")

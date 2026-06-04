@@ -1,0 +1,127 @@
+schema_version: etf_dynamic_calibration_policy_v1
+
+policy_metadata:
+  version: etf_dynamic_calibration_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: >
+    TRADING-085 combines TRADING-083 trend signal configs and TRADING-084 dynamic
+    allocation policy candidates into auditable two-layer candidate packs. The
+    first version is bounded, cache-aware, candidate-only, and prepares inputs
+    for TRADING-086 robustness review rather than approving any production
+    weight change.
+  validation: >
+    Focused tests cover policy loading, candidate pack schema, two-stage search
+    protocol metadata, trend score cache, allocation path cache, dynamic
+    calibration proxy cache, ranking, report generation, report registry
+    visibility, Reader Brief summary, and validation gate safety.
+  review_condition: >
+    Review whenever trend config source policy, allocation profiles, cache key
+    schema, ranking weights, calibration proxy scales, worker policy, or safety
+    fields change.
+
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_event: ChatGPT public launch
+  anchor_date: 2022-11-30
+  default_evaluation_start: 2022-12-01
+
+safety:
+  observe_only: true
+  candidate_only: true
+  production_effect: none
+  broker_action: none
+  manual_review_required: true
+  production_state_mutated: false
+  baseline_config_mutated: false
+  official_target_weights_mutated: false
+  automatic_candidate_promotion: false
+  auto_enrollment_without_owner_approval: false
+
+batch:
+  default_pack_id: dynamic_etf_v1
+  data_range_preset: ai_cycle_recent
+  max_trend_configs: 4
+  allocation_score_profiles:
+    - neutral
+    - risk_on
+    - semiconductor_leadership
+    - event_risk_high
+  local_refinement_profiles:
+    - risk_off
+    - growth_underperformance
+  top_n: 5
+  transaction_cost_bps: 5.0
+
+two_stage_search_protocol:
+  stages:
+    - stage_id: stage_1_trend_config_evaluation
+      description: Evaluate trend configs with fixed dynamic allocation policy.
+      output: ranked_trend_config_candidates
+    - stage_id: stage_2_allocation_policy_evaluation
+      description: Evaluate configured allocation score profiles for top trend configs.
+      output: dynamic_candidate_packs
+    - stage_id: stage_3_bounded_local_refinement
+      description: Add bounded local refinement profiles around top packs without unbounded optimization.
+      output: local_refinement_candidates
+
+coarse_to_fine_iteration:
+  coarse_profile_step: profile_templates
+  top_n_for_refinement: 3
+  local_refinement_enabled: true
+  local_refinement_limit: 2
+  max_total_candidate_packs: 24
+
+cache:
+  cache_root: data/cache/dynamic_calibration
+  default_mode: read-write
+  enabled_layers:
+    trend_score: true
+    allocation_path: true
+    dynamic_backtest: true
+    candidate_pack_aggregation: true
+  schema_versions:
+    trend_score: etf_dynamic_calibration_trend_score_cache_v1
+    allocation_path: etf_dynamic_calibration_allocation_path_cache_v1
+    dynamic_backtest: etf_dynamic_calibration_dynamic_backtest_cache_v1
+    candidate_pack_aggregation: etf_dynamic_calibration_candidate_pack_cache_v1
+    cache_manifest: etf_dynamic_calibration_cache_manifest_v1
+
+performance:
+  default_workers: auto
+  max_workers: 4
+  parallel_execution: true
+  resume_supported: true
+  partial_candidate_recompute_supported: true
+  profiling_report_required_before_optimization: true
+
+ranking_policy:
+  min_score_for_robustness_review: 55.0
+  risk_adjusted_return_weight: 0.25
+  drawdown_reduction_weight: 0.20
+  turnover_control_weight: 0.15
+  regime_robustness_weight: 0.15
+  false_signal_penalty_weight: 0.10
+  data_quality_weight: 0.10
+  overfit_risk_weight: 0.05
+
+calibration_proxy:
+  full_robustness_backtest_required: true
+  return_lift_full_score: 0.05
+  drawdown_improvement_full_score: 0.05
+  turnover_full_penalty: 0.20
+  risk_adjusted_return_scale: 100.0
+  semiconductor_return_scale: 0.08
+  growth_return_scale: 0.05
+  cash_drag_scale: 0.02
+  turnover_cost_scale: 0.20
+  max_drawdown_base: 0.22
+  cash_drawdown_relief_scale: 0.25
+  semiconductor_drawdown_penalty_scale: 0.12
+  false_signal_penalty_scale: 0.20
+  overfit_redundancy_penalty: 0.15
+  benchmark_proxy_returns:
+    static_base_candidate: 0.080
+    QQQ: 0.090
+    SPY: 0.060
+    SMH: 0.110
