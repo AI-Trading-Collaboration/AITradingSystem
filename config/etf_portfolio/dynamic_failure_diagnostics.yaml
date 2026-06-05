@@ -1,0 +1,199 @@
+schema_version: etf_dynamic_failure_diagnostics_policy_v1
+
+policy_metadata:
+  version: etf_dynamic_failure_diagnostics_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: >
+    TRADING-088 diagnoses why the TRADING-084 to TRADING-087 two-layer dynamic
+    ETF allocation workflow failed owner approval, then generates bounded
+    candidate-only rescue templates for evidence review. This policy keeps the
+    failure thresholds, attribution buckets, rescue template changes, and safety
+    boundary explicit and reviewable.
+  validation: >
+    Focused tests cover config loading, mandatory safety fields, failure dataset
+    construction, Layer 1/Layer 2 attribution, false signal attribution,
+    turnover/constraint breakdown, rescue template generation, rescue batch
+    comparison, Reader Brief visibility, and final validation gate safety.
+  review_condition: >
+    Review whenever failure thresholds, false signal definitions, attribution
+    bucket boundaries, rescue template weights/gates, improvement requirements,
+    report statuses, or safety fields change.
+
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_event: ChatGPT public launch
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+
+failure_thresholds:
+  max_underperformance_vs_static_pp: -10.0
+  max_false_risk_off_count: 100
+  max_false_on_count: 80
+  max_turnover: 8.0
+  max_constraint_hit_rate: 0.25
+  min_trend_signal_quality_score: 0.05
+  max_signal_redundancy_count: 5
+
+false_signal_definitions:
+  false_risk_off_forward_window_days: 20
+  false_risk_off_min_market_return: 0.0
+  false_risk_on_forward_drawdown_threshold: -0.05
+  cash_overweight_threshold: 0.05
+  growth_underweight_threshold: -0.05
+  growth_overweight_threshold: 0.05
+  event_risk_trigger_score: 70.0
+
+signal_bucket_thresholds:
+  low_score_max: 45.0
+  high_score_min: 70.0
+  weak_score_max: 45.0
+  strong_score_min: 70.0
+  event_risk_high_min: 70.0
+  redundancy_warning_count: 5
+
+turnover_thresholds:
+  max_turnover: 8.0
+  high_regime_switch_count: 100
+  high_single_row_turnover: 0.20
+
+constraint_hit_thresholds:
+  max_constraint_hit_rate: 0.25
+  high_constraint_hit_count: 100
+  top_period_count: 10
+
+allocation_tradeoff:
+  drawdown_improvement_weight: 1.0
+
+improvement_requirements:
+  min_return_vs_static_delta_improvement: 0.02
+  min_false_risk_off_reduction_count: 20
+  min_turnover_reduction: 1.0
+  min_constraint_hit_reduction_count: 10
+  max_drawdown_degradation: 0.02
+
+rescue_policy_templates:
+  - policy_id: dynamic_regime_overlay_v0_2_less_defensive
+    base_policy_id: dynamic_regime_overlay_v0_1
+    template_type: less_defensive
+    expected_failure_target:
+      - HIGH_FALSE_RISK_OFF_COUNT
+      - DYNAMIC_UNDERPERFORMED_STATIC_BASE
+      - RISK_OFF_OPPORTUNITY_COST
+    changes_from_v0_1:
+      description: Risk-off and event-risk targets keep more growth exposure and less CASH.
+      target_weight_overrides:
+        risk_off:
+          SPY: 0.38
+          QQQ: 0.30
+          SMH: 0.08
+          SOXX: 0.02
+          CASH: 0.22
+        growth_underperformance:
+          SPY: 0.42
+          QQQ: 0.30
+          SMH: 0.08
+          SOXX: 0.02
+          CASH: 0.18
+        event_risk_high:
+          SPY: 0.38
+          QQQ: 0.30
+          SMH: 0.08
+          SOXX: 0.02
+          CASH: 0.22
+      event_risk_overlay_overrides:
+        cash_increase: 0.04
+        reductions:
+          QQQ: 0.02
+          SMH: 0.015
+          SOXX: 0.005
+    constraints:
+      candidate_only: true
+      production_config_mutation_allowed: false
+      automatic_approval_allowed: false
+      automatic_enrollment_allowed: false
+  - policy_id: dynamic_regime_overlay_v0_3_slow_switch
+    base_policy_id: dynamic_regime_overlay_v0_1
+    template_type: slow_switch
+    expected_failure_target:
+      - HIGH_TURNOVER
+      - FALSE_SIGNAL_FROM_REGIME_SWITCH
+      - HIGH_CONSTRAINT_HIT_RATE
+    changes_from_v0_1:
+      description: Require slower confirmation and longer holding before regime changes.
+      rebalance_policy_overrides:
+        score_change_threshold: 8.0
+        regime_confirmation_days: 5
+        minimum_holding_days: 10
+        min_rebalance_weight_delta: 0.03
+    constraints:
+      candidate_only: true
+      production_config_mutation_allowed: false
+      automatic_approval_allowed: false
+      automatic_enrollment_allowed: false
+  - policy_id: dynamic_regime_overlay_v0_4_lower_turnover
+    base_policy_id: dynamic_regime_overlay_v0_1
+    template_type: lower_turnover
+    expected_failure_target:
+      - HIGH_TURNOVER
+      - HIGH_CONSTRAINT_HIT_RATE
+      - OVERLAY_SENSITIVITY
+    changes_from_v0_1:
+      description: Reduce overlay amplitude and make each rebalance smaller.
+      rebalance_policy_overrides:
+        score_change_threshold: 7.0
+        max_single_rebalance_delta: 0.06
+        weekly_turnover_cap: 0.12
+        min_rebalance_weight_delta: 0.035
+      trend_overlay_scale: 0.5
+      event_risk_overlay_overrides:
+        cash_increase: 0.04
+        reductions:
+          QQQ: 0.02
+          SMH: 0.015
+          SOXX: 0.005
+    constraints:
+      candidate_only: true
+      production_config_mutation_allowed: false
+      automatic_approval_allowed: false
+      automatic_enrollment_allowed: false
+  - policy_id: dynamic_regime_overlay_v0_5_ai_trend_confirmed_only
+    base_policy_id: dynamic_regime_overlay_v0_1
+    template_type: ai_trend_confirmed_only
+    expected_failure_target:
+      - TREND_SIGNAL_QUALITY_ZERO
+      - HIGH_SIGNAL_REDUNDANCY
+      - FALSE_RISK_ON_FROM_WEAK_CONFIRMATION
+    changes_from_v0_1:
+      description: Make risk-on and semiconductor leadership harder, while requiring clearer weakness before defense dominates.
+      regime_rule_overrides:
+        risk_on:
+          composite_trend_score_min: 76.0
+          risk_regime_score_min: 68.0
+        semiconductor_leadership:
+          semiconductor_leadership_score_min: 80.0
+        risk_off:
+          risk_regime_score_max: 35.0
+          composite_trend_score_max: 38.0
+        growth_underperformance:
+          growth_leadership_score_max: 40.0
+      rebalance_policy_overrides:
+        regime_confirmation_days: 5
+      trend_overlay_scale: 0.6
+    constraints:
+      candidate_only: true
+      production_config_mutation_allowed: false
+      automatic_approval_allowed: false
+      automatic_enrollment_allowed: false
+
+safety:
+  observe_only: true
+  candidate_only: true
+  production_effect: none
+  broker_action: none
+  manual_review_required: true
+  production_state_mutated: false
+  baseline_config_mutated: false
+  official_target_weights_mutated: false
+  automatic_candidate_promotion: false
+  auto_enrollment_without_owner_approval: false

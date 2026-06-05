@@ -639,6 +639,18 @@ needs_more_data、watch、reject_pending_review、rejected 和 archived。Artifa
 `Dynamic Shadow Review` 区块只读 latest artifacts，Strategy Evidence Dashboard 只读 latest
 weekly review。该 workflow 不写 official target weights、不改 baseline config、不自动
 promotion、不触发 broker、不允许未经 owner approval 的 enrollment。
+TRADING-088 新增 `config/etf_portfolio/dynamic_failure_diagnostics.yaml` 和
+`aits etf dynamic-rescue run --base-candidate <candidate_id>` / `--latest-failed-package` /
+`report --latest` / `validate`。`run` 先执行 `aits validate-data` 等价 cached market /
+macro data quality gate，再读取 failed dynamic robustness report 和 optional dynamic shadow
+package，生成 failure diagnostics dataset、Layer 1 trend signal failure attribution、false
+risk-off/on attribution、Layer 2 allocation underperformance attribution、turnover /
+constraint hit breakdown、v0.2-v0.5 bounded rescue templates、rescue candidate comparison 和
+evaluation report。Artifacts 写入 ignored `reports/etf_portfolio/dynamic_rescue/`；Reader
+Brief 的 `Dynamic Strategy Rescue` 区块只读 latest report。该 workflow 只生成
+candidate-only rescue evidence，不修改 `dynamic_allocation_policy.yaml` v0.1 baseline、
+不写 official target weights、不改 production baseline、不自动 approval、不自动 enrollment、
+不触发 broker；`rescue_success_candidate_found` 只表示可进入后续 TRADING-089 深度复核。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

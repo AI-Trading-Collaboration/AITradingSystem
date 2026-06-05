@@ -415,6 +415,10 @@ def build_dynamic_robustness_report(
         "event_risk_overlay_attribution": event_risk,
         "overfit_diagnostics": overfit,
         "daily_path_summary": _daily_path_summary(dynamic_daily),
+        "comparison_daily_paths": {
+            comparison_id: frame.to_dict(orient="records")
+            for comparison_id, frame in comparison_frames.items()
+        },
         "source_artifacts": {
             "prices_path": "" if prices_path is None else str(prices_path),
             "data_quality_report": data_quality_report,
@@ -789,10 +793,12 @@ def _build_dynamic_daily_path(
             last_rebalance_signal_index = signal_index
         rows.append(
             {
+                "decision_id": decision["decision_id"],
                 "candidate_id": candidate_id,
                 "signal_date": signal_date.isoformat(),
                 "execution_date": accounting.execution_date.isoformat(),
                 "return_date": accounting.return_date.isoformat(),
+                "dynamic_policy_id": decision["policy_id"],
                 "selected_regime": regime,
                 "rebalance_decision": rebalance_decision.get("decision"),
                 "strategy_return": accounting.strategy_return,
@@ -801,14 +807,34 @@ def _build_dynamic_daily_path(
                 "turnover": accounting.turnover,
                 "portfolio_equity": accounting.ending_equity,
                 "input_scores_json": json.dumps(scores, ensure_ascii=False, sort_keys=True),
+                "previous_weights_json": json.dumps(
+                    previous_weights, ensure_ascii=False, sort_keys=True
+                ),
                 "target_weights_json": json.dumps(
                     target_weights, ensure_ascii=False, sort_keys=True
+                ),
+                "pre_rebalance_candidate_weights_json": json.dumps(
+                    decision["pre_rebalance_candidate_weights"],
+                    ensure_ascii=False,
+                    sort_keys=True,
+                ),
+                "trade_deltas_json": json.dumps(
+                    decision["trade_deltas"], ensure_ascii=False, sort_keys=True
                 ),
                 "asset_returns_json": json.dumps(
                     accounting.period_returns, ensure_ascii=False, sort_keys=True
                 ),
                 "asset_contributions_json": json.dumps(
                     accounting.asset_contributions, ensure_ascii=False, sort_keys=True
+                ),
+                "constraints_applied_json": json.dumps(
+                    decision["constraints_applied"], ensure_ascii=False, sort_keys=True
+                ),
+                "constraint_diagnostics_json": json.dumps(
+                    decision["constraint_diagnostics"], ensure_ascii=False, sort_keys=True
+                ),
+                "rebalance_decision_json": json.dumps(
+                    rebalance_decision, ensure_ascii=False, sort_keys=True
                 ),
                 "reason_codes_json": json.dumps(
                     decision.get("reason_codes", []), ensure_ascii=False
@@ -1609,6 +1635,7 @@ def _daily_path_summary(dynamic_daily: pd.DataFrame) -> dict[str, Any]:
         ),
         "regime_switch_count": regime_switch_count,
         "constraint_hit_count": constraint_hit_count,
+        "records": records,
         "sample_rows": records[:5] + records[-5:] if len(records) > 10 else records,
         "no_lookahead_timing": "signal_date < execution_date < return_date",
     }

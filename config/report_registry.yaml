@@ -1144,6 +1144,62 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_failure_dataset
+    title: ETF Dynamic Failure Diagnostics Dataset
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-rescue run --latest-failed-package
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_rescue/datasets/dynamic-failure-dataset_*.json
+      - reports/etf_portfolio/dynamic_rescue/datasets/dynamic-failure-dataset_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-088 failure diagnostics dataset must match the latest failed
+      dynamic v0.1 evidence before interpreting Layer 1/Layer 2 rescue findings.
+    owner_action: review_dynamic_failure_dataset_before_rescue_candidate_interpretation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_rescue_evaluation_report
+    title: ETF Dynamic Rescue Evaluation Report
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-rescue run --latest-failed-package
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_rescue/reports/dynamic-rescue-report_*.json
+      - reports/etf_portfolio/dynamic_rescue/reports/dynamic-rescue-report_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-088 rescue evaluation is the candidate-only evidence package for
+      deciding whether any bounded v0.2 policy deserves deeper TRADING-089
+      review after v0.1 failed owner approval.
+    owner_action: review_dynamic_rescue_report_before_any_TRADING_089_handoff
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_rescue_validation
+    title: ETF Dynamic Rescue Validation Gate
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-rescue validate
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_rescue/validation/dynamic-rescue-validation_*.json
+      - reports/etf_portfolio/dynamic_rescue/validation/dynamic-rescue-validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-088 validation confirms failure diagnostics, rescue templates,
+      batch runner, evaluation report, Reader Brief visibility, and no
+      production mutation or automatic enrollment.
+    owner_action: run_aits_etf_dynamic_rescue_validate_before_marking_TRADING_088_validating
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance
