@@ -195,6 +195,7 @@ def build_reader_brief_payload(
     etf_dynamic_rescue = _etf_dynamic_rescue_summary(report_index)
     etf_dynamic_v2_review = _etf_dynamic_v2_review_summary(report_index)
     etf_dynamic_v3_rescue = _etf_dynamic_v3_rescue_summary(report_index)
+    etf_dynamic_v3_real_evaluation = _etf_dynamic_v3_real_evaluation_summary(report_index)
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -335,6 +336,7 @@ def build_reader_brief_payload(
         "etf_dynamic_rescue": etf_dynamic_rescue,
         "etf_dynamic_v2_review": etf_dynamic_v2_review,
         "etf_dynamic_v3_rescue": etf_dynamic_v3_rescue,
+        "etf_dynamic_v3_real_evaluation": etf_dynamic_v3_real_evaluation,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -609,6 +611,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_dynamic_rescue = _mapping(payload.get("etf_dynamic_rescue"))
     etf_dynamic_v2_review = _mapping(payload.get("etf_dynamic_v2_review"))
     etf_dynamic_v3_rescue = _mapping(payload.get("etf_dynamic_v3_rescue"))
+    etf_dynamic_v3_real_evaluation = _mapping(
+        payload.get("etf_dynamic_v3_real_evaluation")
+    )
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -1136,6 +1141,56 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "shadow_enrollment_allowed",
                         etf_dynamic_v3_rescue.get("shadow_enrollment_allowed"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Dynamic v0.3 Real Evaluation",
+            _definition_table(
+                [
+                    ("availability", etf_dynamic_v3_real_evaluation.get("availability")),
+                    ("status", etf_dynamic_v3_real_evaluation.get("status")),
+                    (
+                        "promotion_gate_decision",
+                        etf_dynamic_v3_real_evaluation.get("promotion_gate_decision"),
+                    ),
+                    ("summary", etf_dynamic_v3_real_evaluation.get("summary_sentence")),
+                    ("best_candidate", etf_dynamic_v3_real_evaluation.get("best_candidate")),
+                    (
+                        "constraint_hit_reduction_vs_v0_4",
+                        etf_dynamic_v3_real_evaluation.get(
+                            "constraint_hit_reduction_vs_v0_4"
+                        ),
+                    ),
+                    (
+                        "false_risk_off_delta_vs_v0_4",
+                        etf_dynamic_v3_real_evaluation.get(
+                            "false_risk_off_delta_vs_v0_4"
+                        ),
+                    ),
+                    (
+                        "drawdown_preservation",
+                        etf_dynamic_v3_real_evaluation.get("drawdown_preservation"),
+                    ),
+                    ("static_gap", etf_dynamic_v3_real_evaluation.get("static_gap")),
+                    ("overfit_status", etf_dynamic_v3_real_evaluation.get("overfit_status")),
+                    ("detailed_report", etf_dynamic_v3_real_evaluation.get("detail_report")),
+                    ("safety_status", etf_dynamic_v3_real_evaluation.get("safety_status")),
+                    (
+                        "production_effect",
+                        etf_dynamic_v3_real_evaluation.get("production_effect"),
+                    ),
+                    ("broker_action", etf_dynamic_v3_real_evaluation.get("broker_action")),
+                    (
+                        "automatic_candidate_promotion",
+                        etf_dynamic_v3_real_evaluation.get(
+                            "automatic_candidate_promotion"
+                        ),
+                    ),
+                    (
+                        "shadow_enrollment_allowed",
+                        etf_dynamic_v3_real_evaluation.get("shadow_enrollment_allowed"),
                     ),
                 ]
             ),
@@ -4586,6 +4641,147 @@ def _etf_dynamic_v3_rescue_safety_status(payload: Mapping[str, Any]) -> str:
         and safety.get("official_target_weights_mutated") is False
         and safety.get("automatic_candidate_promotion") is False
         and safety.get("auto_enrollment_without_owner_approval") is False
+        and payload.get("commands_executed") is False
+        and payload.get("production_state_mutated") is False
+        and payload.get("baseline_config_mutated") is False
+        and payload.get("official_target_weights_mutated") is False
+        and payload.get("automatic_candidate_promotion") is False
+        and payload.get("auto_enrollment_without_owner_approval") is False
+        and payload.get("shadow_enrollment_allowed") is False
+        and payload.get("automatic_enrollment_allowed") is False
+        and payload.get("owner_approval_executed") is False
+    )
+    return (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true; "
+        "official_target_weights_mutated=false; baseline_config_mutated=false; "
+        "production_state_mutated=false; automatic_candidate_promotion=false; "
+        "auto_enrollment_without_owner_approval=false; shadow_enrollment_allowed=false; "
+        "automatic_enrollment_allowed=false; owner_approval_executed=false; "
+        "commands_executed=false"
+        if safe
+        else "SAFETY_REVIEW_REQUIRED"
+    )
+
+
+def _etf_dynamic_v3_real_evaluation_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_dynamic_v3_real_evaluation_summary()
+    report_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_real_evaluation_report",
+    )
+    payload = _read_optional_json(report_path)
+    if not payload:
+        return _missing_etf_dynamic_v3_real_evaluation_summary()
+    summary = _mapping(payload.get("summary"))
+    best = _mapping(payload.get("best_candidate"))
+    gate = _mapping(payload.get("promotion_gate"))
+    safety_status = _etf_dynamic_v3_real_evaluation_safety_status(payload)
+    return {
+        "availability": "AVAILABLE",
+        "status": _text(payload.get("status"), "UNKNOWN"),
+        "promotion_gate_decision": _text(
+            payload.get("promotion_gate_decision"),
+            "UNKNOWN",
+        ),
+        "summary_sentence": (
+            "Dynamic v0.3 Real Evaluation: "
+            f"gate={payload.get('promotion_gate_decision', 'UNKNOWN')}; "
+            f"best={best.get('policy_id', summary.get('best_v0_3_candidate', 'MISSING'))}; "
+            f"constraint_reduction={summary.get('constraint_hit_reduction_vs_v0_4')}; "
+            f"static_gap={_format_percent(summary.get('dynamic_vs_static_gap'))}; "
+            "manual review only, production_effect=none."
+        ),
+        "best_candidate": best.get("policy_id", summary.get("best_v0_3_candidate", "MISSING")),
+        "constraint_hit_reduction_vs_v0_4": summary.get(
+            "constraint_hit_reduction_vs_v0_4",
+            "MISSING",
+        ),
+        "false_risk_off_delta_vs_v0_4": summary.get(
+            "false_risk_off_delta_vs_v0_4",
+            "MISSING",
+        ),
+        "drawdown_preservation": summary.get(
+            "max_drawdown_degradation_vs_v0_4",
+            "MISSING",
+        ),
+        "turnover": summary.get("turnover", "MISSING"),
+        "static_gap": summary.get("dynamic_vs_static_gap", "MISSING"),
+        "static_gap_delta_vs_v0_4": summary.get("static_gap_delta_vs_v0_4", "MISSING"),
+        "overfit_status": summary.get("overfit_status", "MISSING"),
+        "blockers": ", ".join(str(item) for item in _texts(gate.get("blocker_ids"))),
+        "detail_report": "" if report_path is None else str(report_path),
+        "safety_status": safety_status,
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "shadow_enrollment_allowed": payload.get("shadow_enrollment_allowed") is True,
+        "automatic_enrollment_allowed": payload.get("automatic_enrollment_allowed") is True,
+        "owner_approval_executed": payload.get("owner_approval_executed") is True,
+        "official_target_weights_mutated": payload.get("official_target_weights_mutated") is True,
+        "baseline_config_mutated": payload.get("baseline_config_mutated") is True,
+        "production_state_mutated": payload.get("production_state_mutated") is True,
+        "automatic_candidate_promotion": payload.get("automatic_candidate_promotion") is True,
+        "auto_enrollment_without_owner_approval": (
+            payload.get("auto_enrollment_without_owner_approval") is True
+        ),
+    }
+
+
+def _missing_etf_dynamic_v3_real_evaluation_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "promotion_gate_decision": "MISSING",
+        "summary_sentence": (
+            "Dynamic v0.3 Real Evaluation: no latest real evaluation report found."
+        ),
+        "best_candidate": "MISSING",
+        "constraint_hit_reduction_vs_v0_4": "MISSING",
+        "false_risk_off_delta_vs_v0_4": "MISSING",
+        "drawdown_preservation": "MISSING",
+        "turnover": "MISSING",
+        "static_gap": "MISSING",
+        "static_gap_delta_vs_v0_4": "MISSING",
+        "overfit_status": "MISSING",
+        "blockers": "MISSING",
+        "detail_report": "",
+        "safety_status": "MISSING",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "shadow_enrollment_allowed": False,
+        "automatic_enrollment_allowed": False,
+        "owner_approval_executed": False,
+        "official_target_weights_mutated": False,
+        "baseline_config_mutated": False,
+        "production_state_mutated": False,
+        "automatic_candidate_promotion": False,
+        "auto_enrollment_without_owner_approval": False,
+        "limitation": (
+            "Dynamic v0.3 real evaluation report artifact is missing; Reader Brief "
+            "does not run etf dynamic-v3-rescue real-evaluate."
+        ),
+    }
+
+
+def _etf_dynamic_v3_real_evaluation_safety_status(payload: Mapping[str, Any]) -> str:
+    safety = _mapping(payload.get("safety"))
+    safe = (
+        safety.get("observe_only") is True
+        and safety.get("candidate_only") is True
+        and _text(safety.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
+        and safety.get("broker_action") == "none"
+        and safety.get("manual_review_required") is True
+        and safety.get("production_state_mutated") is False
+        and safety.get("baseline_config_mutated") is False
+        and safety.get("official_target_weights_mutated") is False
+        and safety.get("automatic_candidate_promotion") is False
+        and safety.get("auto_enrollment_without_owner_approval") is False
+        and safety.get("shadow_enrollment_allowed") is False
+        and safety.get("automatic_enrollment_allowed") is False
+        and safety.get("owner_approval_executed") is False
         and payload.get("commands_executed") is False
         and payload.get("production_state_mutated") is False
         and payload.get("baseline_config_mutated") is False

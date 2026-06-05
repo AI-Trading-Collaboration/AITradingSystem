@@ -1,0 +1,100 @@
+schema_version: etf_dynamic_v3_real_evaluation_policy_v1
+
+policy_metadata:
+  version: etf_dynamic_v3_real_evaluation_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: >
+    TRADING-091 evaluates TRADING-090 dynamic v0.3 constraint-aware rescue
+    candidates with true historical ETF price backtests before any production
+    candidate interpretation. The gate compares v0.3 against baseline v0.1,
+    v0.2, v0.4, static base, current ETF baseline, and market ETF benchmarks.
+  validation: >
+    Focused tests cover config loading, mandatory safety fields, in-memory v0.3
+    policy materialization, price-driven robustness evaluation, promotion gate
+    outcomes, Reader Brief visibility, report registry visibility, and no
+    approval/enrollment/production mutation.
+  review_condition: >
+    Review whenever comparison candidates, materialization controls, promotion
+    thresholds, overfit thresholds, report statuses, or safety fields change.
+
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_event: ChatGPT public launch
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+
+comparison:
+  baseline_policy_id: dynamic_regime_overlay_v0_1_baseline
+  v0_2_policy_id: dynamic_regime_overlay_v0_2_less_defensive
+  v0_4_policy_id: dynamic_regime_overlay_v0_4_lower_turnover
+  static_comparison_ids:
+    - static_base_candidate
+    - current_etf_baseline
+    - QQQ_buy_and_hold
+    - SPY_buy_and_hold
+    - SMH_buy_and_hold
+  required_v0_3_candidate_count: 4
+
+materialization:
+  base_policy_id: dynamic_regime_overlay_v0_4_lower_turnover
+  qqq_target_buffer: 0.02
+  semiconductor_target_buffer: 0.02
+  cash_target_buffer: 0.02
+  soft_penalty_strength: 0.75
+  trend_overlay_scale_with_soft_penalty: 0.85
+  smoothing_max_single_rebalance_delta: 0.05
+  smoothing_weekly_turnover_cap: 0.10
+  smoothing_min_rebalance_weight_delta: 0.035
+  drawdown_guardrail_regimes:
+    - risk_off
+    - growth_underperformance
+    - event_risk_high
+  drawdown_cash_increase_step: 0.08
+  drawdown_semiconductor_reduction_step: 0.05
+  drawdown_qqq_reduction_step: 0.03
+  emergency_event_risk_cash_increase_step: 0.08
+  emergency_event_risk_high_threshold: 70.0
+  emergency_reduction_order:
+    - SMH
+    - SOXX
+    - QQQ
+
+promotion_gate:
+  promote_candidate_status: promote_candidate
+  observe_only_status: observe_only
+  reject_status: reject
+  min_constraint_hit_reduction_vs_v0_4: 1
+  max_constraint_hit_rate: 0.35
+  max_turnover: 8.0
+  max_false_risk_off_delta_vs_v0_4: 30
+  max_drawdown_degradation_vs_v0_4: 0.02
+  max_dynamic_drawdown_delta_vs_static: 0.02
+  min_static_gap_delta_vs_v0_4: -0.10
+  min_dynamic_vs_static_gap: -0.10
+  min_walk_forward_pass_ratio: 0.50
+  max_single_window_return_share: 0.70
+  max_regime_return_concentration: 0.75
+  reject_if_constraint_not_improved: true
+  reject_if_static_gap_worse_than_v0_4: true
+  reject_if_drawdown_materially_worse: true
+  max_promote_blocker_count: 0
+
+reader_brief:
+  section_title: Dynamic v0.3 Real Evaluation
+  summary_prefix: Dynamic v0.3 Real Evaluation
+
+safety:
+  observe_only: true
+  candidate_only: true
+  production_effect: none
+  broker_action: none
+  manual_review_required: true
+  production_state_mutated: false
+  baseline_config_mutated: false
+  official_target_weights_mutated: false
+  automatic_candidate_promotion: false
+  auto_enrollment_without_owner_approval: false
+  shadow_enrollment_allowed: false
+  automatic_enrollment_allowed: false
+  owner_approval_executed: false

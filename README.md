@@ -670,6 +670,18 @@ emergency risk-off 和 v0.3a-v0.3d candidate template comparison。Artifacts 写
 区块只读 latest report。该 workflow 只能给 owner 复核 v0.3 constraint-aware rescue
 candidate，固定 `review_candidate / not_shadow_ready`，不生成 approval、不 enroll shadow、
 不写 official target weights、不修改 baseline 或 production state、不触发 broker。
+TRADING-091 新增 `config/etf_portfolio/dynamic_v3_real_evaluation.yaml` 和
+`aits etf dynamic-v3-rescue real-evaluate` / `real-report --latest` /
+`validate-real`。`real-evaluate` 在读取 cached price / macro data 前先执行 `aits
+validate-data` 等价质量门禁，通过后把 TRADING-090 v0.3a-v0.3d templates
+materialize 为 in-memory DynamicAllocationPolicyConfig，并复用 TRADING-086
+price-driven robustness path 评估 v0.3 vs baseline / v0.2 / v0.4 / static base /
+current ETF baseline / QQQ / SPY / SMH。报告输出 constraint hit、false risk-off、
+drawdown preservation、turnover、static gap 和 overfit / market-window concentration
+综合分析，并给出 `promote_candidate` / `observe_only` / `reject` promotion gate
+判定。该判定只是人工复核候选资格，不自动 approval、不 enroll shadow、不写 official
+target weights、不修改 baseline 或 production state、不触发 broker；Reader Brief 的
+`Dynamic v0.3 Real Evaluation` 区块只读 latest real evaluation report。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

@@ -1276,6 +1276,48 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_real_evaluation_report
+    title: ETF Dynamic v0.3 Rescue Real Evaluation and Promotion Gate
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue real-evaluate
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/real_evaluation/dynamic-v3-real-evaluation-report_*.json
+      - reports/etf_portfolio/dynamic_v3_rescue/real_evaluation/dynamic-v3-real-evaluation-report_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-091 real evaluation runs the cached-data quality gate and true
+      historical ETF price-driven robustness backtests before comparing v0.3
+      rescue candidates with baseline, v0.2, v0.4, static base, current ETF
+      baseline, and ETF benchmarks. The promotion gate only returns
+      promote_candidate / observe_only / reject as manual-review evidence and
+      cannot approve, enroll, mutate production state, or trigger broker action.
+    owner_action: review_dynamic_v3_real_evaluation_before_any_production_candidate_interpretation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_real_evaluation_validation
+    title: ETF Dynamic v0.3 Rescue Real Evaluation Validation Gate
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue validate-real
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/real_validation/dynamic-v3-real-evaluation-validation_*.json
+      - reports/etf_portfolio/dynamic_v3_rescue/real_validation/dynamic-v3-real-evaluation-validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-091 validation confirms real evaluation config, in-memory v0.3
+      policy materialization, price-driven report builder, promotion gate,
+      Reader Brief visibility, report registry visibility, CLI visibility, and
+      the no approval / no enrollment / no production mutation safety boundary.
+    owner_action: run_aits_etf_dynamic_v3_rescue_validate_real_before_marking_TRADING_091_validating
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance
