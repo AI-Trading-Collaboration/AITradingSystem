@@ -996,6 +996,44 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_robustness_report
+    title: ETF Dynamic Robustness Review
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-robustness report --candidate <candidate_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_robustness/reports/dynamic-robustness-report_*.json
+      - reports/etf_portfolio/dynamic_robustness/reports/dynamic-robustness-report_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-086 dynamic robustness review must be current before TRADING-087
+      owner-approved dynamic shadow review or enrollment considers any dynamic
+      candidate.
+    owner_action: review_dynamic_robustness_before_dynamic_shadow_package
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_robustness_validation
+    title: ETF Dynamic Robustness Validation Gate
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-robustness validate
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_robustness/validation/dynamic-robustness-validation_*.json
+      - reports/etf_portfolio/dynamic_robustness/validation/dynamic-robustness-validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-086 validation confirms price-driven dynamic/static comparison,
+      walk-forward robustness, regime attribution, false signal diagnostics,
+      overfit review, Reader Brief visibility, and observe-only safety boundary.
+    owner_action: run_aits_etf_dynamic_robustness_validate_before_marking_TRADING_086_validating
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance

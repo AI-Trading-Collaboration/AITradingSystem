@@ -1,0 +1,121 @@
+schema_version: etf_dynamic_robustness_policy_v1
+
+policy_metadata:
+  version: etf_dynamic_robustness_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: >
+    TRADING-086 evaluates candidate-only dynamic ETF allocations with actual
+    ETF price returns after the ChatGPT launch regime. The policy keeps score
+    construction, false-signal thresholds, walk-forward windows, and sensitivity
+    probes explicit so robustness conclusions remain reviewable.
+  validation: >
+    Focused tests cover config safety, price-driven no-lookahead backtest,
+    benchmark comparison, false risk-on/off diagnostics, Reader Brief
+    integration, and validation gate behavior.
+  review_condition: >
+    Review whenever score mapping bands, benchmark suite, false-signal horizon,
+    walk-forward windows, turnover sensitivity grid, or overfit thresholds
+    change.
+
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_event: ChatGPT public launch
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+
+safety:
+  observe_only: true
+  candidate_only: true
+  production_effect: none
+  broker_action: none
+  manual_review_required: true
+  production_state_mutated: false
+  baseline_config_mutated: false
+  official_target_weights_mutated: false
+  automatic_candidate_promotion: false
+  auto_enrollment_without_owner_approval: false
+
+price_backtest:
+  price_field: adj_close
+  warmup_days: 126
+  signal_lag_days: 1
+  primary_benchmark_symbol: QQQ
+  required_symbols:
+    - SPY
+    - QQQ
+    - SMH
+    - SOXX
+    - CASH
+  comparison_order:
+    - dynamic_candidate
+    - static_base_candidate
+    - current_etf_baseline
+    - QQQ_buy_and_hold
+    - SPY_buy_and_hold
+    - SMH_buy_and_hold
+    - best_static_historical_candidate
+  best_static_historical_source_glob: reports/etf_portfolio/weight_calibration/top_candidates/top_weight_candidates_*.json
+
+score_model:
+  short_momentum_window: 21
+  medium_momentum_window: 63
+  long_momentum_window: 126
+  volatility_window: 21
+  drawdown_window: 63
+  relative_strength_window: 63
+  return_score_floor: -0.08
+  return_score_ceiling: 0.12
+  relative_strength_floor: -0.06
+  relative_strength_ceiling: 0.08
+  volatility_low: 0.12
+  volatility_high: 0.45
+  drawdown_low: -0.05
+  drawdown_high: -0.22
+  event_risk_volatility_weight: 0.45
+  event_risk_drawdown_weight: 0.45
+  event_risk_negative_trend_weight: 0.10
+  event_risk_trend_penalty: 0.25
+
+false_signal:
+  forward_horizon_days: 10
+  market_up_threshold: 0.02
+  forward_drawdown_threshold: -0.04
+  cash_overweight_threshold: 0.05
+  growth_underweight_threshold: -0.05
+  growth_overweight_threshold: 0.05
+  benchmark_symbol: QQQ
+
+walk_forward:
+  window_days: 126
+  step_days: 63
+  min_windows: 3
+  min_pass_ratio: 0.50
+  min_sharpe: 0.0
+  max_drawdown_floor: -0.25
+
+sensitivity:
+  score_change_thresholds:
+    - 3.0
+    - 5.0
+    - 7.0
+  minimum_holding_days:
+    - 3
+    - 5
+    - 10
+  regime_confirmation_days:
+    - 1
+    - 3
+    - 5
+  weekly_turnover_caps:
+    - 0.10
+    - 0.20
+    - 0.30
+
+overfit:
+  max_single_window_return_share: 0.70
+  min_positive_walk_forward_ratio: 0.50
+  max_parameter_sensitivity_return_range: 0.20
+  max_regime_return_concentration: 0.75
+  max_turnover: 8.0
+  max_allocation_path_instability: 0.20
