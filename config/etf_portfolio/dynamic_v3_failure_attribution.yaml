@@ -1,0 +1,90 @@
+schema_version: etf_dynamic_v3_failure_attribution_policy_v1
+
+policy_metadata:
+  version: etf_dynamic_v3_failure_attribution_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: >
+    TRADING-092 attributes the TRADING-091 dynamic v0.3 reject result and
+    reviews whether v0.4 should remain the rescue lead candidate or whether a
+    v0.5 design is required. The policy keeps attribution thresholds,
+    promotion-review labels, v0.5 recommendation labels, and no-production
+    safety fields explicit so the conclusion is auditable.
+  validation: >
+    Focused tests cover config loading, latest real evaluation report
+    validation, in-memory price-driven daily path reconstruction, v0.3 vs v0.4
+    metric deltas, constraint bucket breakdown, v0.4 review, v0.5
+    recommendation, Reader Brief visibility, report registry visibility, and
+    no approval/enrollment/production mutation.
+  review_condition: >
+    Review whenever attribution buckets, concentration thresholds, v0.4 review
+    thresholds, v0.5 recommendation criteria, report statuses, or safety fields
+    change.
+
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_event: ChatGPT public launch
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+
+inputs:
+  real_evaluation_report_glob: reports/etf_portfolio/dynamic_v3_rescue/real_evaluation/dynamic-v3-real-evaluation-report_*.json
+  required_real_evaluation_report_type: etf_dynamic_v3_real_evaluation_report
+  require_real_evaluation_reject: true
+  best_v0_3_source: latest_real_evaluation_best_candidate
+  v0_4_policy_id: dynamic_regime_overlay_v0_4_lower_turnover
+
+constraint_attribution:
+  high_bucket_share: 0.50
+  guard_fixable_bucket_share: 0.60
+  cap_proximity_tolerance: 0.005
+  top_bucket_limit: 8
+  top_event_limit: 10
+  broad_failure_bucket_limit: 4
+  material_hit_count_delta: 10
+
+v0_4_promotion_review:
+  promote_v0_4_status: promote_v0_4
+  observe_v0_4_with_constraint_guard_status: observe_v0_4_with_constraint_guard
+  do_not_promote_v0_4_status: do_not_promote_v0_4
+  max_promotable_constraint_hit_rate: 0.35
+  max_promotable_overfit_failed_findings: 0
+  max_drawdown_degradation_vs_v0_3: 0.02
+  max_false_risk_off_delta_vs_v0_3: 30
+  max_turnover: 8.0
+  min_dynamic_vs_static_gap: -0.10
+  max_dynamic_drawdown_delta_vs_static: 0.02
+  max_static_gap_loss_vs_v0_3_for_path_edge: 0.02
+  require_overfit_pass_for_promote: true
+
+v0_5_design:
+  not_required_status: not_required
+  constraint_guard_status: recommend_v0_5_constraint_guard
+  exposure_redesign_status: recommend_v0_5_exposure_redesign
+  guard_design_summary: >
+    Preserve the v0.4 lower-turnover exposure path, then add a targeted
+    constraint guard before rebalance execution for concentrated cash,
+    semiconductor sleeve, single-delta, and weekly-turnover failures.
+  exposure_redesign_summary: >
+    Design a v0.5 exposure path when constraint hits are broad across regimes
+    or tickers, or when overfit/drawdown risk shows the v0.4 path is not a
+    credible lead candidate.
+
+reader_brief:
+  section_title: Dynamic v0.3 Failure Attribution
+  summary_prefix: Dynamic v0.3 Failure Attribution
+
+safety:
+  observe_only: true
+  candidate_only: true
+  production_effect: none
+  broker_action: none
+  manual_review_required: true
+  production_state_mutated: false
+  baseline_config_mutated: false
+  official_target_weights_mutated: false
+  automatic_candidate_promotion: false
+  auto_enrollment_without_owner_approval: false
+  shadow_enrollment_allowed: false
+  automatic_enrollment_allowed: false
+  owner_approval_executed: false

@@ -1318,6 +1318,52 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_failure_attribution_report
+    title: ETF Dynamic v0.3 Rescue Failure Attribution and v0.4 Promotion Review
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue failure-attribution
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/failure_attribution/dynamic-v3-failure-attribution-report_*.json
+      - reports/etf_portfolio/dynamic_v3_rescue/failure_attribution/dynamic-v3-failure-attribution-report_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-092 reads the latest TRADING-091 real evaluation reject result,
+      reruns the cached-data quality gate, rebuilds price-driven v0.3/v0.4
+      robustness daily paths in memory, and attributes constraint hit, false
+      risk-off, drawdown, turnover, static-gap, and overfit failure structure.
+      The report only produces v0.4 promotion-review and v0.5 design
+      recommendations for owner review; it cannot approve, enroll, mutate
+      production state, write official target weights, or trigger broker
+      action.
+    owner_action: review_TRADING_092_failure_attribution_before_prioritizing_v0_4_guard_or_v0_5_design
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_failure_attribution_validation
+    title: ETF Dynamic v0.3 Failure Attribution Validation Gate
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue validate-attribution
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/failure_attribution_validation/dynamic-v3-failure-attribution-validation_*.json
+      - reports/etf_portfolio/dynamic_v3_rescue/failure_attribution_validation/dynamic-v3-failure-attribution-validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-092 validation confirms failure attribution config, real
+      evaluation input handling, price-driven daily path reconstruction, v0.3
+      vs v0.4 deltas, constraint bucket breakdown, v0.4 review labels, v0.5
+      recommendation labels, Reader Brief visibility, report registry
+      visibility, CLI visibility, and the no approval / no enrollment / no
+      production mutation safety boundary.
+    owner_action: run_aits_etf_dynamic_v3_rescue_validate_attribution_before_marking_TRADING_092_validating
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance

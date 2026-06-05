@@ -682,6 +682,20 @@ drawdown preservation、turnover、static gap 和 overfit / market-window concen
 判定。该判定只是人工复核候选资格，不自动 approval、不 enroll shadow、不写 official
 target weights、不修改 baseline 或 production state、不触发 broker；Reader Brief 的
 `Dynamic v0.3 Real Evaluation` 区块只读 latest real evaluation report。
+TRADING-092 新增 `config/etf_portfolio/dynamic_v3_failure_attribution.yaml` 和
+`aits etf dynamic-v3-rescue failure-attribution` / `failure-attribution-report --latest` /
+`validate-attribution`。`failure-attribution` 只读 TRADING-091 latest real evaluation
+reject 结果，先执行 `aits validate-data` 等价质量门禁，再用相同 source configs 和真实
+ETF price cache 重建 v0.3 / v0.4 robustness daily paths，用于输出 v0.3 rejection
+attribution、v0.3 vs v0.4 metric delta、constraint hit reason/regime/ticker/rebalance
+window bucket、drawdown degradation attribution、overfit `REVIEW_REQUIRED` 解释、v0.4
+promotion review 和 v0.5 design recommendation。当前真实 latest 结论为
+`v0_4_promotion_review=observe_v0_4_with_constraint_guard`、
+`v0_5_design_recommendation=recommend_v0_5_constraint_guard`：v0.4 不能直接 promote，
+但应优先保留 v0.4 exposure path 并设计单独 constraint guard。该判定仍只是人工复核
+证据，不自动 approval、不 enroll shadow、不写 official target weights、不修改 baseline
+或 production state、不触发 broker；Reader Brief 的 `Dynamic v0.3 Failure Attribution`
+区块只读 latest attribution report。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf
