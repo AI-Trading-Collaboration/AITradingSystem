@@ -1237,6 +1237,45 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_rescue_evaluation_report
+    title: ETF Dynamic v0.3 Constraint-Aware Rescue Evaluation Report
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue run --latest-v2-review
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/reports/dynamic-v3-rescue-report_*.json
+      - reports/etf_portfolio/dynamic_v3_rescue/reports/dynamic-v3-rescue-report_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-090 evaluation report compares v0.3 constraint-aware rescue
+      templates against the TRADING-089 v0.4 blockers while preserving no
+      approval, no enrollment, and no production mutation safety fields.
+    owner_action: review_dynamic_v3_rescue_report_before_any_TRADING_091_handoff
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_rescue_validation
+    title: ETF Dynamic v0.3 Rescue Validation Gate
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue validate
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/validation/dynamic-v3-rescue-validation_*.json
+      - reports/etf_portfolio/dynamic_v3_rescue/validation/dynamic-v3-rescue-validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-090 validation confirms config, root-cause loader, normalization,
+      soft penalty/smoothing, drawdown guardrail, emergency risk-off, template
+      generation, batch runner, evaluation report, Reader Brief visibility, and
+      candidate-only safety boundary.
+    owner_action: run_aits_etf_dynamic_v3_rescue_validate_before_marking_TRADING_090_validating
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance

@@ -1,0 +1,162 @@
+schema_version: etf_dynamic_v3_rescue_policy_v1
+
+policy_metadata:
+  version: etf_dynamic_v3_constraint_aware_rescue_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: >
+    TRADING-090 generates candidate-only v0.3 rescue templates for the v0.4
+    lower_turnover policy reviewed in TRADING-089. The policy keeps v0.4's
+    false-risk-off and turnover improvements visible while directly targeting
+    constraint hit worsening and drawdown preservation failure.
+  validation: >
+    Focused tests cover config loading, mandatory safety fields, root-cause
+    loading, pre-constraint normalization, soft penalties, allocation
+    smoothing, drawdown guardrails, emergency risk-off, template generation,
+    candidate comparison, Reader Brief visibility, and final validation gate
+    safety.
+  review_condition: >
+    Review whenever constraint targets, preservation targets, drawdown targets,
+    normalization caps, penalty/smoothing parameters, guardrail triggers,
+    emergency confirmations, candidate templates, evaluation statuses, or
+    safety fields change.
+
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_event: ChatGPT public launch
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+
+base_candidate: dynamic_regime_overlay_v0_4_lower_turnover
+
+constraint_targets:
+  max_constraint_hit_delta_vs_v0_4: -50
+  max_constraint_hit_rate: 0.35
+
+preservation_targets:
+  max_turnover: 8.0
+  max_false_risk_off_vs_v0_4_delta: 30
+  min_static_delta_vs_v0_4_pp: -10.0
+
+drawdown_targets:
+  min_drawdown_preservation_pp: -1.0
+  max_drawdown_delta_vs_static_pp: 0.0
+
+normalization_policy:
+  qqq_max_target: 0.50
+  semiconductor_max_target: 0.25
+  cash_max_target: 0.35
+  cash_min_target: 0.02
+  sum_tolerance: 0.000001
+
+soft_constraint_penalties:
+  interior_buffer: 0.02
+  penalty_strength: 0.75
+
+smoothing_policy:
+  default_smoothing_factor: 0.70
+  max_single_rebalance_delta: 0.05
+
+drawdown_guardrails:
+  enabled: true
+  min_confirmations: 2
+  portfolio_drawdown_threshold: -0.08
+  qqq_drawdown_threshold: -0.10
+  smh_drawdown_threshold: -0.12
+  max_cash_target: 0.35
+  semiconductor_reduction_step: 0.05
+  qqq_reduction_step: 0.03
+
+emergency_risk_off:
+  enabled: true
+  min_independent_confirmations: 3
+  max_cash_target: 0.35
+  cash_increase_step: 0.08
+  bypass_smoothing: true
+  trend_score_max: 35.0
+  risk_regime_score_min: 75.0
+  event_risk_score_min: 70.0
+  drawdown_threshold: -0.08
+
+candidate_templates:
+  - policy_id: dynamic_regime_overlay_v0_3a_constraint_smooth
+    base_policy_id: dynamic_regime_overlay_v0_4_lower_turnover
+    template_type: constraint_smooth
+    expected_failure_targets:
+      - CONSTRAINT_HIT_WORSENED
+    feature_flags:
+      normalization: true
+      soft_penalty: true
+      smoothing: true
+      drawdown_guardrail: false
+      emergency_risk_off: false
+    candidate_only: true
+    production_config_mutation_allowed: false
+    automatic_approval_allowed: false
+    automatic_enrollment_allowed: false
+  - policy_id: dynamic_regime_overlay_v0_3b_drawdown_guarded
+    base_policy_id: dynamic_regime_overlay_v0_4_lower_turnover
+    template_type: drawdown_guarded
+    expected_failure_targets:
+      - DRAWDOWN_PRESERVATION_FAILED
+    feature_flags:
+      normalization: false
+      soft_penalty: false
+      smoothing: false
+      drawdown_guardrail: true
+      emergency_risk_off: false
+    candidate_only: true
+    production_config_mutation_allowed: false
+    automatic_approval_allowed: false
+    automatic_enrollment_allowed: false
+  - policy_id: dynamic_regime_overlay_v0_3c_constraint_smooth_guarded
+    base_policy_id: dynamic_regime_overlay_v0_4_lower_turnover
+    template_type: constraint_smooth_guarded
+    expected_failure_targets:
+      - CONSTRAINT_HIT_WORSENED
+      - DRAWDOWN_PRESERVATION_FAILED
+    feature_flags:
+      normalization: true
+      soft_penalty: true
+      smoothing: true
+      drawdown_guardrail: true
+      emergency_risk_off: false
+    candidate_only: true
+    production_config_mutation_allowed: false
+    automatic_approval_allowed: false
+    automatic_enrollment_allowed: false
+  - policy_id: dynamic_regime_overlay_v0_3d_emergency_only_guarded
+    base_policy_id: dynamic_regime_overlay_v0_4_lower_turnover
+    template_type: emergency_only_guarded
+    expected_failure_targets:
+      - DRAWDOWN_PRESERVATION_FAILED
+      - TRUE_RISK_OFF_PROTECTION_RESTORED
+    feature_flags:
+      normalization: false
+      soft_penalty: false
+      smoothing: false
+      drawdown_guardrail: false
+      emergency_risk_off: true
+    candidate_only: true
+    production_config_mutation_allowed: false
+    automatic_approval_allowed: false
+    automatic_enrollment_allowed: false
+
+evaluation_thresholds:
+  success_status: v0_3_rescue_success_candidate_found
+  partial_status: partial_improvement_needs_more_review
+  constraint_fixed_drawdown_failed_status: constraint_fixed_drawdown_failed
+  drawdown_fixed_constraint_failed_status: drawdown_fixed_constraint_failed
+  failure_status: no_v0_3_rescue_candidate_found
+
+safety:
+  observe_only: true
+  candidate_only: true
+  production_effect: none
+  broker_action: none
+  manual_review_required: true
+  production_state_mutated: false
+  baseline_config_mutated: false
+  official_target_weights_mutated: false
+  automatic_candidate_promotion: false
+  auto_enrollment_without_owner_approval: false
