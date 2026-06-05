@@ -61,6 +61,10 @@ categories:
     title: Weekly Review
     required: true
     default_manual_review_action: review_candidate
+  dynamic_shadow:
+    title: Dynamic Shadow Review
+    required: false
+    default_manual_review_action: review_candidate
   decision_journal:
     title: Decision Journal
     required: true
@@ -290,6 +294,28 @@ sources:
       - reports/etf_portfolio/weekly_review/weekly_review_*.md
     manual_review_action: review_candidate
     minimum_sample_count: 1
+  dynamic_shadow_weekly_review:
+    category: dynamic_shadow
+    title: Dynamic Shadow Review
+    source_module: etf_portfolio.dynamic_shadow
+    report_id: etf_dynamic_shadow_weekly_review
+    required: false
+    max_age_days: 14
+    source_metric_paths:
+      - status
+      - summary.candidate_count
+      - summary.watch_count
+      - summary.reject_pending_review_count
+    sample_count_paths:
+      - summary.candidate_count
+      - summary.active_shadow_count
+      - summary.watch_count
+    validation_report_id: etf_dynamic_shadow_validation
+    expected_artifact_globs:
+      - reports/etf_portfolio/dynamic_shadow/weekly_reviews/dynamic-shadow-weekly-review_*.json
+      - reports/etf_portfolio/dynamic_shadow/weekly_reviews/dynamic-shadow-weekly-review_*.md
+    manual_review_action: review_candidate
+    minimum_sample_count: 0
   decision_journal_report:
     category: decision_journal
     title: Decision Journal

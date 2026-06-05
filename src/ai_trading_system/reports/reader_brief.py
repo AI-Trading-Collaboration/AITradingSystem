@@ -191,6 +191,7 @@ def build_reader_brief_payload(
     etf_dynamic_allocation = _etf_dynamic_allocation_summary(report_index)
     etf_dynamic_calibration = _etf_dynamic_calibration_summary(report_index)
     etf_dynamic_robustness = _etf_dynamic_robustness_summary(report_index)
+    etf_dynamic_shadow = _etf_dynamic_shadow_summary(report_index)
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -327,6 +328,7 @@ def build_reader_brief_payload(
         "etf_dynamic_allocation": etf_dynamic_allocation,
         "etf_dynamic_calibration": etf_dynamic_calibration,
         "etf_dynamic_robustness": etf_dynamic_robustness,
+        "etf_dynamic_shadow": etf_dynamic_shadow,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -597,6 +599,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_dynamic_allocation = _mapping(payload.get("etf_dynamic_allocation"))
     etf_dynamic_calibration = _mapping(payload.get("etf_dynamic_calibration"))
     etf_dynamic_robustness = _mapping(payload.get("etf_dynamic_robustness"))
+    etf_dynamic_shadow = _mapping(payload.get("etf_dynamic_shadow"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -1019,6 +1022,36 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("safety_status", etf_dynamic_robustness.get("safety_status")),
                     ("production_effect", etf_dynamic_robustness.get("production_effect")),
                     ("broker_action", etf_dynamic_robustness.get("broker_action")),
+                ]
+            ),
+        ),
+        _section(
+            "Dynamic Shadow Review",
+            _definition_table(
+                [
+                    ("availability", etf_dynamic_shadow.get("availability")),
+                    ("status", etf_dynamic_shadow.get("status")),
+                    ("summary", etf_dynamic_shadow.get("summary_sentence")),
+                    ("top_candidate", etf_dynamic_shadow.get("top_candidate")),
+                    (
+                        "ready_after_owner_approval_count",
+                        etf_dynamic_shadow.get("ready_after_owner_approval_count"),
+                    ),
+                    ("blocked_count", etf_dynamic_shadow.get("blocked_count")),
+                    ("latest_owner_decision", etf_dynamic_shadow.get("latest_owner_decision")),
+                    ("latest_enrollment", etf_dynamic_shadow.get("latest_enrollment")),
+                    ("active_candidate_count", etf_dynamic_shadow.get("active_candidate_count")),
+                    ("watch_count", etf_dynamic_shadow.get("watch_count")),
+                    (
+                        "reject_pending_review_count",
+                        etf_dynamic_shadow.get("reject_pending_review_count"),
+                    ),
+                    ("tracking_status", etf_dynamic_shadow.get("tracking_status")),
+                    ("package_report", etf_dynamic_shadow.get("package_report")),
+                    ("weekly_review", etf_dynamic_shadow.get("weekly_review")),
+                    ("safety_status", etf_dynamic_shadow.get("safety_status")),
+                    ("production_effect", etf_dynamic_shadow.get("production_effect")),
+                    ("broker_action", etf_dynamic_shadow.get("broker_action")),
                 ]
             ),
         ),
@@ -4124,6 +4157,152 @@ def _etf_dynamic_robustness_safety_status(payload: Mapping[str, Any]) -> str:
         "production_state_mutated=false; automatic_candidate_promotion=false; "
         "auto_enrollment_without_owner_approval=false; shadow_enrollment_allowed=false; "
         "commands_executed=false"
+        if safe
+        else "SAFETY_REVIEW_REQUIRED"
+    )
+
+
+def _etf_dynamic_shadow_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_dynamic_shadow_summary()
+    package_path = _report_index_artifact_path(report_index, "etf_dynamic_shadow_review_package")
+    approval_path = _report_index_artifact_path(report_index, "etf_dynamic_shadow_owner_approval")
+    enrollment_path = _report_index_artifact_path(report_index, "etf_dynamic_shadow_enrollment")
+    update_path = _report_index_artifact_path(report_index, "etf_dynamic_shadow_forward_update")
+    weekly_path = _report_index_artifact_path(report_index, "etf_dynamic_shadow_weekly_review")
+    package = _read_optional_json(package_path)
+    approval = _read_optional_json(approval_path)
+    enrollment = _read_optional_json(enrollment_path)
+    update = _read_optional_json(update_path)
+    weekly = _read_optional_json(weekly_path)
+    payloads = [payload for payload in (package, approval, enrollment, update, weekly) if payload]
+    if not payloads:
+        return _missing_etf_dynamic_shadow_summary()
+    package_summary = _mapping(package.get("review_summary"))
+    update_summary = _mapping(update.get("summary"))
+    weekly_summary = _mapping(weekly.get("summary"))
+    candidate = _text(
+        package_summary.get("top_candidate") or enrollment.get("candidate_id"),
+        "MISSING",
+    )
+    status = _text(
+        weekly.get("status") or update.get("status") or package_summary.get("status"),
+        "MISSING",
+    )
+    safety_status = _etf_dynamic_shadow_safety_status(payloads)
+    return {
+        "availability": "AVAILABLE",
+        "status": status,
+        "summary_sentence": (
+            f"Dynamic Shadow Review: candidate={candidate}; status={status}; "
+            f"owner_decision={approval.get('owner_decision', 'MISSING')}; "
+            f"active={update.get('active_candidate_count', 'MISSING')}; "
+            f"watch={weekly_summary.get('watch_count', 'MISSING')}; "
+            f"safety={safety_status}."
+        ),
+        "top_candidate": candidate,
+        "ready_after_owner_approval_count": package_summary.get(
+            "ready_after_owner_approval_count",
+            "MISSING",
+        ),
+        "blocked_count": package_summary.get("blocked_count", "MISSING"),
+        "latest_owner_decision": approval.get("owner_decision", "MISSING"),
+        "latest_enrollment": enrollment.get("enrollment_id", "MISSING"),
+        "active_candidate_count": update.get(
+            "active_candidate_count",
+            update_summary.get("active_candidate_count", "MISSING"),
+        ),
+        "watch_count": weekly_summary.get("watch_count", "MISSING"),
+        "reject_pending_review_count": weekly_summary.get(
+            "reject_pending_review_count",
+            "MISSING",
+        ),
+        "tracking_status": enrollment.get("tracking_status", "MISSING"),
+        "package_report": "" if package_path is None else str(package_path),
+        "weekly_review": "" if weekly_path is None else str(weekly_path),
+        "safety_status": safety_status,
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "official_target_weights_mutated": any(
+            payload.get("official_target_weights_mutated") is True for payload in payloads
+        ),
+        "baseline_config_mutated": any(
+            payload.get("baseline_config_mutated") is True for payload in payloads
+        ),
+        "production_state_mutated": any(
+            payload.get("production_state_mutated") is True for payload in payloads
+        ),
+        "automatic_candidate_promotion": any(
+            payload.get("automatic_candidate_promotion") is True for payload in payloads
+        ),
+        "auto_enrollment_without_owner_approval": any(
+            payload.get("auto_enrollment_without_owner_approval") is True
+            for payload in payloads
+        ),
+    }
+
+
+def _missing_etf_dynamic_shadow_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "summary_sentence": "Dynamic Shadow Review: no latest dynamic shadow artifacts found.",
+        "top_candidate": "MISSING",
+        "ready_after_owner_approval_count": "MISSING",
+        "blocked_count": "MISSING",
+        "latest_owner_decision": "MISSING",
+        "latest_enrollment": "MISSING",
+        "active_candidate_count": "MISSING",
+        "watch_count": "MISSING",
+        "reject_pending_review_count": "MISSING",
+        "tracking_status": "MISSING",
+        "package_report": "",
+        "weekly_review": "",
+        "safety_status": "MISSING",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "official_target_weights_mutated": False,
+        "baseline_config_mutated": False,
+        "production_state_mutated": False,
+        "automatic_candidate_promotion": False,
+        "auto_enrollment_without_owner_approval": False,
+        "limitation": (
+            "Dynamic shadow artifacts are missing; Reader Brief does not run "
+            "etf dynamic-shadow package/update/weekly-review CLI."
+        ),
+    }
+
+
+def _etf_dynamic_shadow_safety_status(payloads: list[Mapping[str, Any]]) -> str:
+    safe = True
+    for payload in payloads:
+        safety = _mapping(payload.get("safety"))
+        safe = safe and (
+            safety.get("observe_only") is True
+            and safety.get("candidate_only") is True
+            and _text(safety.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
+            and safety.get("broker_action") == "none"
+            and safety.get("manual_review_required") is True
+            and safety.get("production_state_mutated") is False
+            and safety.get("baseline_config_mutated") is False
+            and safety.get("official_target_weights_mutated") is False
+            and safety.get("automatic_candidate_promotion") is False
+            and safety.get("auto_enrollment_without_owner_approval") is False
+            and payload.get("commands_executed") is False
+            and payload.get("production_state_mutated") is False
+            and payload.get("baseline_config_mutated") is False
+            and payload.get("official_target_weights_mutated") is False
+            and payload.get("automatic_candidate_promotion") is False
+            and payload.get("auto_enrollment_without_owner_approval") is False
+        )
+    return (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true; "
+        "official_target_weights_mutated=false; baseline_config_mutated=false; "
+        "production_state_mutated=false; automatic_candidate_promotion=false; "
+        "auto_enrollment_without_owner_approval=false; commands_executed=false"
         if safe
         else "SAFETY_REVIEW_REQUIRED"
     )

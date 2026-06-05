@@ -1,0 +1,109 @@
+schema_version: etf_dynamic_shadow_policy_v1
+
+policy_metadata:
+  version: etf_dynamic_shadow_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: >
+    TRADING-087 turns TRADING-086 dynamic robustness evidence into an
+    owner-approved forward shadow observation workflow. The policy requires
+    validation gates and explicit owner approval before enrollment while keeping
+    all records observe-only and candidate-only.
+  validation: >
+    Focused tests cover policy safety, review-package gating, owner approval
+    capture, approved-only enrollment, forward tracking records, weekly review,
+    Reader Brief visibility, evidence dashboard/report registry visibility, and
+    final validation gate behavior.
+  review_condition: >
+    Review whenever required gates, allowed owner decisions, enrollment limits,
+    forward tracking metrics, review statuses, or weekly watch/reject thresholds
+    change.
+
+safety:
+  observe_only: true
+  candidate_only: true
+  production_effect: none
+  broker_action: none
+  manual_review_required: true
+  production_state_mutated: false
+  baseline_config_mutated: false
+  official_target_weights_mutated: false
+  automatic_candidate_promotion: false
+  auto_enrollment_without_owner_approval: false
+
+required_gates:
+  dynamic_calibration_validation_statuses:
+    - PASS
+  dynamic_robustness_validation_statuses:
+    - PASS
+  data_quality_statuses:
+    - PASS
+    - PASS_WITH_WARNINGS
+  operations_validation_statuses:
+    - PASS
+    - PASS_WITH_WARNINGS
+  allowed_robustness_statuses_for_shadow:
+    - PASS
+    - REVIEW_REQUIRED
+  require_dynamic_robustness_report: true
+  require_dynamic_calibration_report: true
+  require_validation_artifacts: true
+  require_operations_validation: true
+
+owner_approval_policy:
+  require_owner_approval: true
+  require_decision_journal_link_for_approval: true
+  allowed_decisions:
+    - approved_for_dynamic_shadow
+    - continue_review
+    - needs_more_data
+    - reject_candidate
+    - defer_decision
+  rationale_required_for:
+    - approved_for_dynamic_shadow
+    - reject_candidate
+  disallowed_decisions:
+    - apply_to_production
+    - promote_to_baseline
+    - place_order
+    - enable_broker_action
+
+enrollment_limits:
+  max_enroll_per_package: 3
+  default_next_review_days: 7
+  required_owner_decision: approved_for_dynamic_shadow
+  production_config_mutation_allowed: false
+  target_weight_mutation_allowed: false
+  broker_action_allowed: false
+
+forward_tracking:
+  minimum_tracking_days_for_watch: 5
+  minimum_tracking_days_for_review: 20
+  metrics:
+    - dynamic_candidate_return
+    - static_base_return
+    - current_baseline_return
+    - QQQ_return
+    - SPY_return
+    - SMH_return
+    - excess_vs_static
+    - excess_vs_baseline
+    - drawdown
+    - turnover
+    - regime_switch_count
+    - false_signal_count
+    - constraint_hit_count
+
+weekly_review:
+  active_statuses:
+    - active_shadow
+    - needs_more_data
+    - watch
+    - reject_pending_review
+    - rejected
+    - archived
+  watch_drawdown_threshold: -0.15
+  watch_excess_vs_static_threshold: -0.05
+  reject_pending_drawdown_threshold: -0.25
+  reject_pending_false_signal_count: 10
+  max_constraint_hit_ratio: 0.50

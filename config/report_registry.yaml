@@ -1034,6 +1034,116 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_shadow_review_package
+    title: ETF Dynamic Shadow Review Package
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-shadow package --latest --top 3
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_shadow/packages/dynamic-shadow-package_*.json
+      - reports/etf_portfolio/dynamic_shadow/packages/dynamic-shadow-package_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-087 package converts dynamic robustness evidence into an
+      owner-reviewed dynamic shadow candidate package without enrolling or
+      mutating production state.
+    owner_action: review_dynamic_shadow_package_before_owner_approval
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_shadow_owner_approval
+    title: ETF Dynamic Shadow Owner Approval
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: project_owner
+    command: aits etf dynamic-shadow approve --package <package_path> --candidate <candidate_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_shadow/approvals/dynamic-shadow-approval_*.json
+      - reports/etf_portfolio/dynamic_shadow/approvals/dynamic-shadow-approval_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Dynamic candidates may only enter forward shadow observation after owner
+      approval with rationale and decision journal link.
+    owner_action: capture_owner_approval_before_dynamic_shadow_enrollment
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_shadow_enrollment
+    title: ETF Dynamic Shadow Enrollment
+    group: shadow
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-shadow enroll-approved --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_shadow/enrollments/dynamic-shadow-enrollment_*.json
+      - reports/etf_portfolio/dynamic_shadow/enrollments/dynamic-shadow-enrollment_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      Enrollment is the approved-only handoff into forward shadow tracking and
+      must remain isolated from production target weights and broker state.
+    owner_action: confirm_approved_dynamic_shadow_enrollment_and_next_review_due
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_shadow_forward_update
+    title: ETF Dynamic Shadow Forward Update
+    group: shadow
+    cadence: daily
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-shadow update --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_shadow/forward_updates/dynamic-shadow-forward-update_*.json
+      - reports/etf_portfolio/dynamic_shadow/forward_updates/dynamic-shadow-forward-update_*.md
+    freshness_sla_days: 3
+    freshness_rationale: >
+      Forward tracking records compare approved dynamic candidates against
+      static/current/QQQ/SPY/SMH baselines after cached data quality validation.
+    owner_action: review_dynamic_shadow_forward_tracking_records
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_shadow_weekly_review
+    title: ETF Dynamic Shadow Weekly Review
+    group: shadow
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-shadow weekly-review --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_shadow/weekly_reviews/dynamic-shadow-weekly-review_*.json
+      - reports/etf_portfolio/dynamic_shadow/weekly_reviews/dynamic-shadow-weekly-review_*.md
+    freshness_sla_days: 14
+    freshness_rationale: >
+      Weekly dynamic shadow review summarizes active_shadow, needs_more_data,
+      watch, reject_pending_review, rejected, and archived candidate states.
+    owner_action: review_dynamic_shadow_weekly_status_before_any_future_promotion_discussion
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_shadow_validation
+    title: ETF Dynamic Shadow Validation Gate
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-shadow validate
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_shadow/validation/dynamic-shadow-validation_*.json
+      - reports/etf_portfolio/dynamic_shadow/validation/dynamic-shadow-validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-087 validation confirms approved-only enrollment, forward records,
+      weekly review, Reader Brief/evidence dashboard visibility, and no
+      production mutation.
+    owner_action: run_aits_etf_dynamic_shadow_validate_before_marking_TRADING_087_validating
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance

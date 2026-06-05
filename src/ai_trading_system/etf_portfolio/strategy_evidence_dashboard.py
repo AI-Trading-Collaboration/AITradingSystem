@@ -61,6 +61,7 @@ EvidenceCategory = Literal[
     "satellite_attribution",
     "parameter_review",
     "weekly_review",
+    "dynamic_shadow",
     "decision_journal",
     "data_quality",
     "operations_health",
@@ -83,6 +84,7 @@ CandidateType = Literal[
     "AI_overlay_candidate",
     "satellite_replacement_candidate",
     "parameter_review_proposal",
+    "dynamic_shadow_candidate",
 ]
 ConflictSeverity = Literal["critical", "high", "medium", "low"]
 ManualReviewPriorityLevel = Literal["critical", "high", "medium", "low"]
@@ -1942,6 +1944,7 @@ def _category_title(category: str) -> str:
         "satellite_attribution": "Satellite Attribution",
         "parameter_review": "Parameter Review",
         "weekly_review": "Weekly Review",
+        "dynamic_shadow": "Dynamic Shadow Review",
         "decision_journal": "Decision Journal",
         "data_quality": "Data Quality",
         "operations_health": "Operations Health",
@@ -2024,4 +2027,5 @@ _CANDIDATE_CATEGORY_TYPES: dict[EvidenceCategory, CandidateType] = {
     "ai_confirmation": "AI_overlay_candidate",
     "satellite_replacement": "satellite_replacement_candidate",
     "parameter_review": "parameter_review_proposal",
+    "dynamic_shadow": "dynamic_shadow_candidate",
 }

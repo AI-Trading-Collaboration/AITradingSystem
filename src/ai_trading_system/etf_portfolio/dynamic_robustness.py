@@ -1576,6 +1576,29 @@ def _benchmark_daily(
 
 def _daily_path_summary(dynamic_daily: pd.DataFrame) -> dict[str, Any]:
     records = dynamic_daily.to_dict(orient="records")
+    regimes = [
+        str(value)
+        for value in dynamic_daily.get("selected_regime", pd.Series(dtype=object)).tolist()
+    ]
+    regime_switch_count = sum(
+        1 for previous, current in zip(regimes, regimes[1:], strict=False) if current != previous
+    )
+    constraint_hit_count = 0
+    constraint_prefixes = (
+        "MAX_",
+        "MIN_",
+        "WEEKLY_TURNOVER_CAP",
+        "REGIME_CONFIRMATION_WINDOW",
+    )
+    for value in dynamic_daily.get("reason_codes_json", pd.Series(dtype=object)).tolist():
+        try:
+            reason_codes = json.loads(str(value))
+        except (TypeError, ValueError):
+            reason_codes = []
+        if not isinstance(reason_codes, list):
+            continue
+        if any(str(code).startswith(constraint_prefixes) for code in reason_codes):
+            constraint_hit_count += 1
     return {
         "row_count": len(records),
         "first_signal_date": (
@@ -1584,6 +1607,8 @@ def _daily_path_summary(dynamic_daily: pd.DataFrame) -> dict[str, Any]:
         "last_signal_date": (
             "" if dynamic_daily.empty else str(dynamic_daily.iloc[-1]["signal_date"])
         ),
+        "regime_switch_count": regime_switch_count,
+        "constraint_hit_count": constraint_hit_count,
         "sample_rows": records[:5] + records[-5:] if len(records) > 10 else records,
         "no_lookahead_timing": "signal_date < execution_date < return_date",
     }

@@ -625,6 +625,20 @@ contribution、event risk overlay attribution 和 overfit diagnostics。Artifact
 区块只读 latest report。该 workflow 是 TRADING-087 owner-approved dynamic shadow review
 前置证据，不写 official target weights、不改 baseline config、不自动 promotion、不触发
 broker、不做 shadow enrollment。
+TRADING-087 新增 `config/etf_portfolio/dynamic_shadow.yaml` 和
+`aits etf dynamic-shadow package --latest --top 3` / `approve` / `enroll-approved` /
+`update` / `weekly-review` / `validate`。Package 只读 TRADING-086 robustness、
+TRADING-085 calibration、validation 和 operations artifacts，生成 owner review package；
+approval 必须记录 owner rationale 和 decision journal link；enrollment 只接受
+`approved_for_dynamic_shadow` 且无 hard blocker 的 approval。`update` 先执行
+`aits validate-data` 等价 cached market / macro data quality gate，再生成 dynamic/static/
+current/QQQ/SPY/SMH forward tracking metrics；`weekly-review` 汇总 active_shadow、
+needs_more_data、watch、reject_pending_review、rejected 和 archived。Artifacts 写入 ignored
+`reports/etf_portfolio/dynamic_shadow/` 和
+`data/simulation/etf_dynamic_shadow_candidates.json`；Reader Brief 的
+`Dynamic Shadow Review` 区块只读 latest artifacts，Strategy Evidence Dashboard 只读 latest
+weekly review。该 workflow 不写 official target weights、不改 baseline config、不自动
+promotion、不触发 broker、不允许未经 owner approval 的 enrollment。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf
