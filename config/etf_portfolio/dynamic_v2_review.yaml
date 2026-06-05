@@ -1,0 +1,83 @@
+schema_version: etf_dynamic_v2_review_policy_v1
+
+policy_metadata:
+  version: etf_dynamic_v2_review_v0_1
+  status: pilot_baseline
+  owner: system
+  rationale: >
+    TRADING-089 reviews the TRADING-088 v0.4 lower_turnover rescue candidate as
+    review-only evidence. The candidate improved false risk-off, turnover, and
+    dynamic-vs-static performance, but constraint hit deterioration and drawdown
+    preservation failure remain explicit blockers.
+  validation: >
+    Focused tests cover policy loading, evidence loading, improvement
+    attribution, constraint decomposition, drawdown failure review, regime
+    robustness, benchmark comparison, eligibility gate, package generation,
+    Reader Brief visibility, and final validation gate safety.
+  review_condition: >
+    Review whenever positive evidence thresholds, blocking conditions,
+    comparison targets, package policy, status labels, or safety fields change.
+
+market_regime:
+  regime_id: ai_after_chatgpt
+  anchor_event: ChatGPT public launch
+  anchor_date: 2022-11-30
+  default_backtest_start: 2022-12-01
+
+review_thresholds:
+  max_improvement_concentration_share: 0.60
+  top_period_count: 10
+  min_regime_trading_days: 5
+
+positive_evidence_thresholds:
+  min_false_risk_off_reduction: 50
+  max_turnover: 8.0
+  min_static_delta_improvement_pp: 10.0
+  min_static_delta_after_pp: 0.0
+
+blocking_conditions:
+  max_constraint_hit_worsening: 0
+  min_drawdown_preservation_pp: 0.0
+  max_dynamic_drawdown_delta_vs_static_pp: 0.0
+  max_false_risk_on_worsening: 0
+  block_shadow_enrollment: true
+
+comparison_targets:
+  - failed_v0_1
+  - static_base_candidate
+  - current_etf_baseline
+  - QQQ_buy_and_hold
+  - SPY_buy_and_hold
+  - SMH_buy_and_hold
+
+required_regimes:
+  - risk_on
+  - neutral
+  - risk_off
+  - growth_underperformance
+  - semiconductor_leadership
+  - high_volatility
+  - event_risk_high
+
+review_package_policy:
+  default_candidate_policy_id: dynamic_regime_overlay_v0_4_lower_turnover
+  review_status: review_candidate
+  blocked_status: not_shadow_ready
+  owner_review_required: true
+  constraint_review_required: true
+  drawdown_review_required: true
+  output_formats:
+    - json
+    - markdown
+
+safety:
+  observe_only: true
+  candidate_only: true
+  production_effect: none
+  broker_action: none
+  manual_review_required: true
+  production_state_mutated: false
+  baseline_config_mutated: false
+  official_target_weights_mutated: false
+  automatic_candidate_promotion: false
+  auto_enrollment_without_owner_approval: false

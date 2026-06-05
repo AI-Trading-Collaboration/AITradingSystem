@@ -1200,6 +1200,43 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v2_review_package
+    title: ETF Dynamic v0.2 Review Package
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v2-review package --latest-rescue-report
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v2_review/packages/dynamic-v2-review-package_*.json
+      - reports/etf_portfolio/dynamic_v2_review/packages/dynamic-v2-review-package_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-089 review package evaluates the v0.4 lower_turnover rescue candidate
+      for owner review while keeping constraint-hit and drawdown blockers visible.
+    owner_action: review_dynamic_v2_package_before_any_future_shadow_review_decision
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v2_review_validation
+    title: ETF Dynamic v0.2 Review Validation Gate
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v2-review validate
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v2_review/validation/dynamic-v2-review-validation_*.json
+      - reports/etf_portfolio/dynamic_v2_review/validation/dynamic-v2-review-validation_*.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-089 validation confirms policy config, v0.4 evidence loading,
+      improvement attribution, blockers, review package generation, Reader Brief
+      visibility, and no approval/enrollment/production mutation.
+    owner_action: run_aits_etf_dynamic_v2_review_validate_before_marking_TRADING_089_validating
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance

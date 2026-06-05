@@ -1,6 +1,6 @@
 # Daily Ops Runbook
 
-最后更新：2026-05-21
+最后更新：2026-06-05
 
 本文是 `aits ops daily-run` 的人工可交接运行手册。它不替代数据质量门禁、日报、pipeline health、secret hygiene 或 evidence bundle；它只规定什么时候跑、失败时看什么、哪些输出是正式结论、哪些只是审计附录。
 
@@ -17,6 +17,8 @@
 建议盘后运行时间放在美股收盘且数据供应商 EOD 数据稳定后。未显式传入 `--as-of` 时，系统按 `America/New_York` 判断 U.S. equity market 最新已完成交易日：常规交易日美东 16:30 之后使用当日，16:30 前、周末或 NYSE 常规整日休市日使用上一交易日。具体云 VM 时区和时刻由 owner 后续决定；当前不在 GitHub Actions 中配置生产 cron。
 
 市场反馈优化的样本门槛由 `config/feedback_sample_policy.yaml` 控制。当前为 pilot 阶段：少量样本达到 pilot floor 后即可启动因果链、学习队列和候选规则整理；低于 diagnostic / promotion floor 时不得把结果写成正式调权或 production 晋级。若连续周度报告显示候选生成过快或噪声过高，优先调高 `pilot_floor` 或 `review_after_reports`，而不是在代码里改阈值。
+
+TRADING-089 Dynamic v0.2 review 是 owner-requested ad-hoc 复核，不是 daily / weekly / monthly scheduler entry。执行前先确认 latest TRADING-088 dynamic rescue evaluation 和 v0.4 candidate robustness report 存在；若 latest 指向的不是 `dynamic_regime_overlay_v0_4_lower_turnover`，必须显式传入 `--candidate-robustness-report <path>`。命令为 `aits etf dynamic-v2-review package --latest-rescue-report` 或显式 `--rescue-report <path> --candidate-robustness-report <path>`，随后运行 `aits etf dynamic-v2-review validate`。输出只允许作为 review-only owner package；`CONSTRAINT_HIT_WORSENED` 和 `DRAWDOWN_PRESERVATION_FAILED` 未解除时必须保持 `not_shadow_ready`，不得生成 owner approval、shadow enrollment、official target weights、baseline mutation、production mutation 或 broker action。
 
 ## 正式输出
 
@@ -77,6 +79,7 @@ outputs/runs/daily/<executed_at_utc>/
 |报告存在但结论不可用|日报“结论使用等级”、Decision Card 的 Data Gate、人工复核摘要。|
 |OpenAI 预审失败|`risk_event_prereview_openai_YYYY-MM-DD.md` 和本地 request cache，不保存 API key。|
 |SEC PIT feature 需要认知评估|先确认 TRADING-039 `data/processed/sec_edgar/sec_pit_feature_panel.csv` 和数据质量门禁可用，再运行 `aits sec-pit evaluate --start 2023-01-01 --end YYYY-MM-DD --feature-panel data/processed/sec_edgar/sec_pit_feature_panel.csv --universe config/sec_companies.yaml --benchmark QQQ --output-dir outputs/sec_pit_evaluation`；只读取 evaluation artifacts，shadow weight 输出不修改 production。|
+|Dynamic v0.2 review package 需要复核|先确认 latest TRADING-088 rescue evaluation 和 v0.4 candidate robustness report 指向同一 candidate；运行 `aits etf dynamic-v2-review package --latest-rescue-report` 或显式输入路径，再运行 `aits etf dynamic-v2-review validate`。该流程只生成 review-only package，不运行 enrollment、approval、production 或 broker。|
 |通知投递审计失败需要分类|先看 `data/derived/operator_briefs/notifications/delivery_audit/notification_delivery_audit_summary_YYYY-MM-DD.json`，再运行或读取 `outputs/notification_delivery_failure_classification/notification_delivery_failure_classification_YYYY-MM-DD.json`；TRADING-036 只分类和报告，不发送通知、不自动 retry。|
 |通知投递失败需要 retry 候选队列|先看 `outputs/notification_delivery_failure_classification/notification_delivery_failure_classification_YYYY-MM-DD.json`，再运行 `python scripts/run_retry_candidate_queue.py`；如需指定源报告，运行 `python scripts/run_retry_candidate_queue.py --classification-report outputs/notification_delivery_failure_classification/notification_delivery_failure_classification_YYYY-MM-DD.json`。TRADING-037 只生成只读 retry candidate queue / manual approval gate 报告，不执行 retry、不发送 notification、不修改 delivery state 或 approval state。|
 |retry candidate 需要人工 approval dry-run|先由人工创建或编辑 `inputs/manual_retry_approvals/manual_retry_approval_YYYY-MM-DD.json`，再运行 `python scripts/run_retry_execution_dry_run.py`；如需指定输入，运行 `python scripts/run_retry_execution_dry_run.py --queue-report outputs/retry_candidate_queue/retry_candidate_queue_YYYY-MM-DD.json --approval-record inputs/manual_retry_approvals/manual_retry_approval_YYYY-MM-DD.json`。TRADING-038 只读取 approval record 并生成 retry execution dry-run 报告，不执行 retry、不发送 notification、不修改 approval record、delivery state 或 production 参数。|
