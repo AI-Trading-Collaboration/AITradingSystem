@@ -58,10 +58,7 @@ def test_cli_direct_score_daily_keeps_openai_precheck_enabled(monkeypatch) -> No
     assert exit_code == 0
     assert captured["risk_event_openai_precheck"] is True
     assert captured["risk_event_openai_precheck_max_candidates"] == 7
-    assert (
-        captured["risk_event_openai_precheck_visibility_cutoff"]
-        == "2026-05-12T04:10:00+00:00"
-    )
+    assert captured["risk_event_openai_precheck_visibility_cutoff"] == "2026-05-12T04:10:00+00:00"
     assert captured["llm_request_profile"] == "risk_event_daily_official_precheck"
 
 
@@ -646,7 +643,11 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
         recorder("validate_reader_brief"),
     )
     monkeypatch.setattr(cli_direct.cli, "pipeline_health_command", recorder("pipeline_health"))
-    monkeypatch.setattr(cli_direct.cli, "security_scan_secrets_command", recorder("secret_hygiene"))
+    monkeypatch.setattr(
+        cli_direct.security_cli,
+        "security_scan_secrets_command",
+        recorder("secret_hygiene"),
+    )
 
     tasks = load_scheduled_tasks_config().daily_tasks()
     for task in tasks:

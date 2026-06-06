@@ -12,6 +12,7 @@ from ai_trading_system import cli
 from ai_trading_system.cli_commands import docs as docs_cli
 from ai_trading_system.cli_commands import etf_portfolio as etf_cli
 from ai_trading_system.cli_commands import sec_pit as sec_pit_cli
+from ai_trading_system.cli_commands import security as security_cli
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -660,7 +661,7 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:2] == ["security", "scan-secrets"]:
-        cli.security_scan_secrets_command(as_of=_option(args, "--as-of"))
+        security_cli.security_scan_secrets_command(as_of=_option(args, "--as-of"))
         return
     raise typer.BadParameter(f"daily-run direct dispatcher 不支持命令：{' '.join(args)}")
 

@@ -1,8 +1,8 @@
 # 系统设计 Review 采纳计划
 
-状态：BASELINE_DONE
+状态：IN_PROGRESS
 
-最后更新：2026-05-11
+最后更新：2026-06-07
 
 关联任务：`OPS-008`、`RUN-001`、`REPORT-008`、`DOC-002`、`ARCH-001`
 
@@ -34,7 +34,7 @@
 |3. Canonical run bundle|BASELINE_DONE|先实现 `outputs/runs/YYYY-MM-DD/<run_id>/` 基础版；后续 `RUN-002` 已升级为 `outputs/runs/daily/<executed_at_utc>/as_of_<YYYY-MM-DD>__<run_id>/`|`daily-run` 支持 `--run-output-root`、`--run-id`、`--legacy-output-mode`；manifest 记录输入、输出、checksum、legacy mirror、visibility cutoff 和执行时间戳。|
 |4. Decision Card v2|BASELINE_DONE|扩展现有“今日结论卡”|顶部展示 Data Gate、Run ID / Trace、Main Invalidator 和 Next Checks；不改变正式评分、仓位或 execution policy。|
 |5. 文档新鲜度门禁|BASELINE_DONE|新增 `aits docs validate-freshness` 并接入 CI|缺少 `最后更新` 或状态记录日期晚于最后更新时失败；测试覆盖通过和失败样本。|
-|6. CLI 分包路线|BASELINE_DONE|登记 `ARCH-001` 分阶段路线|本批不移动命令函数；后续阶段从低耦合 Typer 子命令组迁移，保持 `ai_trading_system.cli:app` 入口兼容。|
+|6. CLI 分包路线|IN_PROGRESS|登记 `ARCH-001` 分阶段路线，并逐步迁移低耦合 Typer 子命令组|已迁移 `docs` 和 `security` 命令组；保持 `ai_trading_system.cli:app` 入口兼容，命令名、参数和退出码不变；后续继续评估其他低耦合命令组。|
 
 ## 实施边界
 
@@ -55,3 +55,5 @@
 - 2026-05-10：新增本计划并登记 `OPS-008`、`RUN-001`、`REPORT-008`、`DOC-002`、`ARCH-001`。本批采纳 low-risk closure，暂不执行 GitHub Actions 生产 cron、`data/external` 路径迁移或 DuckDB/Parquet 存储迁移。
 - 2026-05-10：基础实现完成：新增 daily ops runbook、`outputs/runs` canonical run bundle、`score-daily --run-id` trace 串联、Decision Card v2、`aits docs validate-freshness` 和 CI 门禁；`ARCH-001` 仍仅登记路线，CLI 大文件拆分留到下一批。
 - 2026-05-11：`RUN-002` 将 daily-run canonical run bundle 从 as-of 优先目录升级为执行时间戳优先目录，保留本文件对 `RUN-001` 基础版的历史记录。
+- 2026-05-17：`ARCH-001` 第一批低耦合命令组迁移完成，`aits docs` 迁入 `src/ai_trading_system/cli_commands/docs.py`，主入口仍通过 `ai_trading_system.cli:app` 注册，`docs validate-freshness` 和 `docs report-contract` 行为保持兼容。
+- 2026-06-07：`ARCH-001` 下一批低耦合命令组迁移完成，`aits security scan-secrets` 迁入 `src/ai_trading_system/cli_commands/security.py`，`cli_direct` 改为调用 `security_cli.security_scan_secrets_command`；命令路径、参数、退出码和 secret hygiene 报告语义保持兼容。

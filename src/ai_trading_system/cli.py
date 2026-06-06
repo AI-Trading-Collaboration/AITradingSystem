@@ -123,6 +123,7 @@ from ai_trading_system.cli_commands import etf_portfolio as etf_cli
 from ai_trading_system.cli_commands.docs import docs_app
 from ai_trading_system.cli_commands.etf_portfolio import etf_app
 from ai_trading_system.cli_commands.sec_pit import sec_pit_app
+from ai_trading_system.cli_commands.security import security_app
 from ai_trading_system.config import (
     DEFAULT_BACKTEST_VALIDATION_POLICY_CONFIG_PATH,
     DEFAULT_CATALYST_CALENDAR_CONFIG_PATH,
@@ -678,11 +679,6 @@ from ai_trading_system.scoring.position_model import (
     PositionBandRule,
     WeightedScoreModel,
 )
-from ai_trading_system.secret_hygiene import (
-    default_secret_scan_report_path,
-    scan_secrets,
-    write_secret_scan_report,
-)
 from ai_trading_system.shadow_iteration import (
     DEFAULT_SHADOW_ITERATION_REGISTRY_PATH,
     DEFAULT_SHADOW_ITERATION_REPORT_DIR,
@@ -986,7 +982,6 @@ parameters_app = typer.Typer(help="生产参数快照、shadow 回测和晋升�
 signals_app = typer.Typer(help="Shadow backtest signal snapshot 构建和校验。", no_args_is_help=True)
 reports_app = typer.Typer(help="投资报告和周期复盘。", no_args_is_help=True)
 ops_app = typer.Typer(help="运行监控和 pipeline health。", no_args_is_help=True)
-security_app = typer.Typer(help="密钥卫生和供应商权限治理。", no_args_is_help=True)
 llm_app = typer.Typer(help="LLM 结构化预审和待复核队列。", no_args_is_help=True)
 pit_snapshots_app = typer.Typer(help="Forward-only PIT raw snapshot 归档。", no_args_is_help=True)
 score_daily_app = typer.Typer(help="每日评分和 research baseline backfill。", no_args_is_help=False)
@@ -11504,42 +11499,6 @@ def historical_replay_window_command(
         failed = window_run.failed_run
         console.print(f"失败日期：{failed.as_of.isoformat()}；status={failed.status}")
     if status not in {"PASS", "PASS_WITH_SKIPS"}:
-        raise typer.Exit(code=1)
-
-
-@security_app.command("scan-secrets")
-def security_scan_secrets_command(
-    as_of: Annotated[
-        str | None,
-        typer.Option(help="扫描日期，格式为 YYYY-MM-DD，默认今天。"),
-    ] = None,
-    scan_paths: Annotated[
-        str,
-        typer.Option(
-            help="逗号分隔的扫描入口；默认扫描 config、docs、outputs 和 download manifest。",
-        ),
-    ] = "config,docs,outputs,data/raw/download_manifest.csv",
-    output_path: Annotated[
-        Path | None,
-        typer.Option(help="Markdown secret hygiene 扫描报告输出路径。"),
-    ] = None,
-) -> None:
-    """扫描可提交或报告文件中的疑似 secret literal。"""
-    scan_date = _parse_date(as_of) if as_of else date.today()
-    selected_paths = tuple(Path(item) for item in _parse_csv_items(scan_paths))
-    report_path = output_path or default_secret_scan_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
-        scan_date,
-    )
-    report = scan_secrets(paths=selected_paths, as_of=scan_date)
-    write_secret_scan_report(report, report_path)
-
-    style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
-    console.print(f"[{style}]Secret hygiene：{report.status}[/{style}]")
-    console.print(f"报告：{report_path}")
-    console.print(f"扫描文件数：{report.scanned_file_count}")
-    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
-    if not report.passed:
         raise typer.Exit(code=1)
 
 
