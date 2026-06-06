@@ -122,6 +122,7 @@ from ai_trading_system.catalyst_calendar import (
 from ai_trading_system.cli_commands import etf_portfolio as etf_cli
 from ai_trading_system.cli_commands.docs import docs_app
 from ai_trading_system.cli_commands.etf_portfolio import etf_app
+from ai_trading_system.cli_commands.scenarios import scenarios_app
 from ai_trading_system.cli_commands.sec_pit import sec_pit_app
 from ai_trading_system.cli_commands.security import security_app
 from ai_trading_system.config import (
@@ -138,7 +139,6 @@ from ai_trading_system.config import (
     DEFAULT_MARKET_REGIMES_CONFIG_PATH,
     DEFAULT_PORTFOLIO_CONFIG_PATH,
     DEFAULT_RISK_EVENTS_CONFIG_PATH,
-    DEFAULT_SCENARIO_LIBRARY_CONFIG_PATH,
     DEFAULT_SCORING_RULES_CONFIG_PATH,
     DEFAULT_SEC_COMPANIES_CONFIG_PATH,
     DEFAULT_WATCHLIST_CONFIG_PATH,
@@ -652,14 +652,6 @@ from ai_trading_system.run_artifacts import (
     validate_legacy_output_mode,
     write_run_manifest,
 )
-from ai_trading_system.scenario_library import (
-    default_scenario_library_report_path,
-    load_scenario_library,
-    lookup_scenario,
-    render_scenario_lookup,
-    validate_scenario_library,
-    write_scenario_library_report,
-)
 from ai_trading_system.scoring.baseline_score_backfill import (
     BASELINE_SCORE_BACKFILL_MODE,
     run_baseline_score_backfill,
@@ -974,7 +966,6 @@ fundamentals_app = typer.Typer(help="基本面数据源下载和审计。", no_a
 trace_app = typer.Typer(help="报告 evidence bundle 反查。", no_args_is_help=True)
 evidence_app = typer.Typer(help="新市场信息 evidence 账本。", no_args_is_help=True)
 feedback_app = typer.Typer(help="决策结果观察、校准和因果链查询。", no_args_is_help=True)
-scenarios_app = typer.Typer(help="AI 产业链情景压力测试库。", no_args_is_help=True)
 catalysts_app = typer.Typer(help="未来催化剂日历和事件前复核。", no_args_is_help=True)
 execution_app = typer.Typer(help="Advisory execution policy 和执行纪律。", no_args_is_help=True)
 portfolio_app = typer.Typer(help="真实组合持仓和暴露解释。", no_args_is_help=True)
@@ -6970,78 +6961,6 @@ def validate_industry_chain(
 
     if not report.passed:
         raise typer.Exit(code=1)
-
-
-@scenarios_app.command("validate")
-def validate_scenarios_command(
-    input_path: Annotated[
-        Path,
-        typer.Option(help="scenario library YAML 路径。"),
-    ] = DEFAULT_SCENARIO_LIBRARY_CONFIG_PATH,
-    industry_chain_path: Annotated[
-        Path,
-        typer.Option(help="产业链配置文件路径，用于校验 affected_nodes。"),
-    ] = DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH,
-    watchlist_path: Annotated[
-        Path,
-        typer.Option(help="观察池配置文件路径，用于校验 affected_tickers。"),
-    ] = DEFAULT_WATCHLIST_CONFIG_PATH,
-    risk_events_path: Annotated[
-        Path,
-        typer.Option(help="风险事件配置路径，用于校验 linked_risk_event_ids。"),
-    ] = DEFAULT_RISK_EVENTS_CONFIG_PATH,
-    as_of: Annotated[
-        str | None,
-        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
-    ] = None,
-    output_path: Annotated[
-        Path | None,
-        typer.Option(help="Markdown 情景库校验报告输出路径。"),
-    ] = None,
-) -> None:
-    """校验 AI 产业链情景压力测试库。"""
-    validation_date = _parse_date(as_of) if as_of else date.today()
-    report = validate_scenario_library(
-        load_scenario_library(input_path),
-        as_of=validation_date,
-        industry_chain=load_industry_chain(industry_chain_path),
-        watchlist=load_watchlist(watchlist_path),
-        risk_events=load_risk_events(risk_events_path),
-    )
-    report_path = output_path or default_scenario_library_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
-        validation_date,
-    )
-    write_scenario_library_report(report, report_path)
-
-    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
-    console.print(f"[{status_style}]情景库状态：{report.status}[/{status_style}]")
-    console.print(f"报告：{report_path}")
-    console.print(f"情景数：{report.scenario_count}；Active：{report.active_count}")
-    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
-    if not report.passed:
-        raise typer.Exit(code=1)
-
-
-@scenarios_app.command("lookup")
-def lookup_scenario_command(
-    scenario_id: Annotated[
-        str,
-        typer.Option("--id", help="scenario id。"),
-    ],
-    input_path: Annotated[
-        Path,
-        typer.Option(help="scenario library YAML 路径。"),
-    ] = DEFAULT_SCENARIO_LIBRARY_CONFIG_PATH,
-) -> None:
-    """按 scenario_id 反查情景定义。"""
-    try:
-        scenario = lookup_scenario(input_path, scenario_id)
-    except FileNotFoundError as exc:
-        raise typer.BadParameter(f"scenario library 不存在：{input_path}") from exc
-    except (KeyError, ValueError) as exc:
-        raise typer.BadParameter(str(exc)) from exc
-    console.print(render_scenario_lookup(scenario))
 
 
 @catalysts_app.command("validate")
