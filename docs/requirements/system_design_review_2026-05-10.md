@@ -34,7 +34,7 @@
 |3. Canonical run bundle|BASELINE_DONE|先实现 `outputs/runs/YYYY-MM-DD/<run_id>/` 基础版；后续 `RUN-002` 已升级为 `outputs/runs/daily/<executed_at_utc>/as_of_<YYYY-MM-DD>__<run_id>/`|`daily-run` 支持 `--run-output-root`、`--run-id`、`--legacy-output-mode`；manifest 记录输入、输出、checksum、legacy mirror、visibility cutoff 和执行时间戳。|
 |4. Decision Card v2|BASELINE_DONE|扩展现有“今日结论卡”|顶部展示 Data Gate、Run ID / Trace、Main Invalidator 和 Next Checks；不改变正式评分、仓位或 execution policy。|
 |5. 文档新鲜度门禁|BASELINE_DONE|新增 `aits docs validate-freshness` 并接入 CI|缺少 `最后更新` 或状态记录日期晚于最后更新时失败；测试覆盖通过和失败样本。|
-|6. CLI 分包路线|IN_PROGRESS|登记 `ARCH-001` 分阶段路线，并逐步迁移低耦合 Typer 子命令组|已迁移 `docs`、`security`、`scenarios`、`catalysts`、`execution`、`watchlist`、`industry-chain`、`trace`、`evidence`、`data-sources`、`thesis`、`valuation`、`pit-snapshots` 和 `llm` 命令组；保持 `ai_trading_system.cli:app` 入口兼容，命令名、参数和退出码不变；后续继续评估其他低耦合命令组。|
+|6. CLI 分包路线|IN_PROGRESS|登记 `ARCH-001` 分阶段路线，并逐步迁移低耦合 Typer 子命令组|已迁移 `docs`、`security`、`scenarios`、`catalysts`、`execution`、`watchlist`、`industry-chain`、`trace`、`evidence`、`data-sources`、`thesis`、`valuation`、`pit-snapshots`、`llm` 和 ETF compatibility alias 命令组；保持 `ai_trading_system.cli:app` 入口兼容，命令名、参数和退出码不变；后续继续评估其他低耦合命令组。|
 
 ## 实施边界
 
@@ -67,3 +67,4 @@
 - 2026-06-07：`ARCH-001` 第十批低耦合命令组迁移完成，`aits valuation fetch-fmp/fetch-fmp-valuation-history/fetch-eodhd-trends/validate-fmp-history/import-csv/list/validate/review` 迁入 `src/ai_trading_system/cli_commands/valuation.py`；主 CLI 只注册 `valuation_app`，score-daily、回测和 PIT manifest 仍复用底层估值 loader/validator/review builder 与 raw cache 默认目录，命令路径、参数、退出码和报告语义保持兼容。
 - 2026-06-07：`ARCH-001` 第十一批低耦合命令组迁移完成，`aits pit-snapshots validate/build-manifest/fetch-fmp-forward` 迁入 `src/ai_trading_system/cli_commands/pit_snapshots.py`；主 CLI 只注册 `pit_snapshots_app`，daily-run direct dispatcher 改为调用 `pit_snapshots_cli`，并同步修复上一批估值迁移后 `valuation fetch-fmp` direct dispatcher 仍指向主 CLI 的漂移；PIT manifest/raw cache、`--continue-on-failure`、命令路径、参数、退出码和报告语义保持兼容。
 - 2026-06-07：`ARCH-001` 第十二批低耦合命令组迁移完成，`aits llm precheck-claims` 迁入 `src/ai_trading_system/cli_commands/llm.py`；主 CLI 只注册 `llm_app`，共享 LLM request profile helper、风险事件 OpenAI 预审、LLM formal assessment 和 `score-daily` 语义未修改；命令路径、参数、退出码、provider LLM permission fail-closed、request cache、中文报告和待复核队列语义保持兼容。
+- 2026-06-07：`ARCH-001` 第十三批低耦合命令组迁移完成，ETF 根级 compatibility alias 注册迁入 `src/ai_trading_system/cli_commands/etf_compat.py`；`features/regime/simulation/report/run/experiments` standalone alias app 从新模块导入，`data ingest/validate`、`signals generate` 和 `portfolio allocate` 仍注册到主 CLI 既有 app；ETF 子命令实现、根级主系统 `backtest` 和投资解释语义未修改。
