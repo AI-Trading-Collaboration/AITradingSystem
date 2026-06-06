@@ -696,6 +696,22 @@ promotion review 和 v0.5 design recommendation。当前真实 latest 结论为
 证据，不自动 approval、不 enroll shadow、不写 official target weights、不修改 baseline
 或 production state、不触发 broker；Reader Brief 的 `Dynamic v0.3 Failure Attribution`
 区块只读 latest attribution report。
+TRADING-093 到 TRADING-100 新增
+`config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_v1.yaml` 和完整参数研究闭环：
+`sweep-config validate/preview`、`sweep run/status/validate/leaderboard/report`、
+`candidate report`、`walk-forward run/report`、`validate-walk-forward`、`robustness
+run/report`、`validate-robustness`、`shadow register/list/report`、
+`validate-shadow-registry`、`artifacts latest/validate/stale`、`promotion review/pack`
+和 `validate-promotion-pack`。Runtime artifacts 写入 ignored
+`reports/etf_portfolio/dynamic_v3_rescue/`，observe-only registry 写入
+`registry/etf_portfolio/dynamic_v3_rescue_shadow_candidates.yaml`。该平台先 hard gate、
+再 soft ranking、再 walk-forward/OOS、robustness、shadow observation 和 promotion
+review pack；tiny fixture mode 只验证 artifact contract，不等于真实 promotion evidence。
+所有输出固定 `production_effect=none`、`broker_action=none`、
+`production_candidate_generated=false`；自动命令最多输出 `promote_candidate +
+manual_review_required`，不得生成 `production_candidate`、approval、shadow enrollment、
+baseline mutation、official target weights mutation 或 broker action。Reader Brief 的
+`Dynamic Rescue Parameter Sweep` 区块只读 latest sweep leaderboard / promotion pack。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

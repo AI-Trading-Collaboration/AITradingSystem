@@ -257,6 +257,41 @@ from ai_trading_system.etf_portfolio.dynamic_v3_failure_attribution import (
 from ai_trading_system.etf_portfolio.dynamic_v3_failure_attribution import (
     load_json_artifact as load_dynamic_v3_failure_attribution_json_artifact,
 )
+from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
+    DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
+    DEFAULT_PROMOTION_DIR,
+    DEFAULT_ROBUSTNESS_DIR,
+    DEFAULT_SHADOW_REGISTRY_PATH,
+    DEFAULT_SHADOW_REPORT_DIR,
+    DEFAULT_SWEEP_OUTPUT_DIR,
+    DEFAULT_WALK_FORWARD_DIR,
+    DynamicV3ParameterResearchError,
+    artifacts_latest_payload,
+    build_promotion_pack,
+    build_sweep_config_validation,
+    build_sweep_leaderboard_payload,
+    build_sweep_report_payload,
+    candidate_report_payload,
+    latest_sweep_id,
+    preview_sweep_candidates,
+    promotion_review_payload,
+    register_shadow_candidate,
+    robustness_report_payload,
+    run_parameter_sweep,
+    run_robustness_diagnostics,
+    run_walk_forward_validation,
+    shadow_list_payload,
+    shadow_report_payload,
+    stale_artifacts_payload,
+    sweep_status_payload,
+    validate_artifacts_payload,
+    validate_promotion_pack,
+    validate_robustness_artifact,
+    validate_shadow_registry,
+    validate_sweep_artifact,
+    validate_walk_forward_artifact,
+    walk_forward_report_payload,
+)
 from ai_trading_system.etf_portfolio.dynamic_v3_real_evaluation import (
     DEFAULT_DYNAMIC_V3_REAL_EVALUATION_POLICY_CONFIG_PATH,
     DEFAULT_DYNAMIC_V3_REAL_EVALUATION_REPORT_DIR,
@@ -684,6 +719,38 @@ dynamic_v3_rescue_app = typer.Typer(
     help="ETF dynamic v0.3 constraint-aware rescue candidate workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_sweep_config_app = typer.Typer(
+    help="Dynamic v3 rescue parameter sweep config workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_sweep_app = typer.Typer(
+    help="Dynamic v3 rescue batch parameter sweep workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_candidate_app = typer.Typer(
+    help="Dynamic v3 rescue candidate report workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_walk_forward_app = typer.Typer(
+    help="Dynamic v3 rescue walk-forward validation workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_robustness_app = typer.Typer(
+    help="Dynamic v3 rescue robustness diagnostics workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_shadow_app = typer.Typer(
+    help="Dynamic v3 rescue observe-only shadow registry workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_artifacts_app = typer.Typer(
+    help="Dynamic v3 rescue artifact latest/validation workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_promotion_app = typer.Typer(
+    help="Dynamic v3 rescue promotion review pack workflow。",
+    no_args_is_help=True,
+)
 dynamic_shadow_app = typer.Typer(
     help="ETF owner-approved dynamic candidate forward shadow workflow。",
     no_args_is_help=True,
@@ -726,6 +793,14 @@ etf_app.add_typer(dynamic_calibration_app, name="dynamic-calibration")
 etf_app.add_typer(dynamic_robustness_app, name="dynamic-robustness")
 etf_app.add_typer(dynamic_rescue_app, name="dynamic-rescue")
 etf_app.add_typer(dynamic_v2_review_app, name="dynamic-v2-review")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_sweep_config_app, name="sweep-config")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_sweep_app, name="sweep")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_candidate_app, name="candidate")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_walk_forward_app, name="walk-forward")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_robustness_app, name="robustness")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_shadow_app, name="shadow")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_artifacts_app, name="artifacts")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_promotion_app, name="promotion")
 etf_app.add_typer(dynamic_v3_rescue_app, name="dynamic-v3-rescue")
 etf_app.add_typer(dynamic_shadow_app, name="dynamic-shadow")
 etf_app.add_typer(governance_app, name="governance")
@@ -942,7 +1017,8 @@ def baseline_review_eligibility_command(
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="eligibility JSON 输出目录。"),
-    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR / "eligibility",
+    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR
+    / "eligibility",
     json_path: Annotated[
         Path | None,
         typer.Option("--json-path", help="显式 JSON 输出路径。"),
@@ -1009,7 +1085,8 @@ def baseline_review_matrix_command(
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="evidence matrix JSON 输出目录。"),
-    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR / "matrix",
+    ] = DEFAULT_BASELINE_REVIEW_REPORT_DIR
+    / "matrix",
     json_path: Annotated[
         Path | None,
         typer.Option("--json-path", help="显式 JSON 输出路径。"),
@@ -1656,7 +1733,10 @@ def trend_calibration_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -2273,7 +2353,10 @@ def dynamic_robustness_report_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -2498,7 +2581,10 @@ def dynamic_rescue_run_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -2581,12 +2667,8 @@ def dynamic_rescue_run_command(
             report_dir=DEFAULT_DYNAMIC_ROBUSTNESS_REPORT_DIR,
         )
         policy = load_dynamic_failure_diagnostics_policy_config(config_path)
-        robustness_policy = load_dynamic_robustness_policy_config(
-            dynamic_robustness_config_path
-        )
-        dynamic_policy = load_dynamic_allocation_policy_config(
-            dynamic_allocation_config_path
-        )
+        robustness_policy = load_dynamic_robustness_policy_config(dynamic_robustness_config_path)
+        dynamic_policy = load_dynamic_allocation_policy_config(dynamic_allocation_config_path)
         etf_config = load_etf_config_bundle()
         prices, etf_quality = load_standard_prices(
             prices_path,
@@ -3037,7 +3119,10 @@ def dynamic_v3_rescue_real_evaluate_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认 today。"),
@@ -3129,9 +3214,7 @@ def dynamic_v3_rescue_real_evaluate_command(
             dynamic_robustness_policy=load_dynamic_robustness_policy_config(
                 dynamic_robustness_config_path
             ),
-            dynamic_policy=load_dynamic_allocation_policy_config(
-                dynamic_allocation_config_path
-            ),
+            dynamic_policy=load_dynamic_allocation_policy_config(dynamic_allocation_config_path),
             failure_policy=load_dynamic_failure_diagnostics_policy_config(
                 failure_diagnostics_config_path
             ),
@@ -3157,8 +3240,7 @@ def dynamic_v3_rescue_real_evaluate_command(
     typer.echo(f"promotion_gate_decision={payload['promotion_gate_decision']}")
     typer.echo(f"best_candidate={best.get('policy_id')}")
     typer.echo(
-        "constraint_hit_reduction_vs_v0_4="
-        f"{summary.get('constraint_hit_reduction_vs_v0_4')}"
+        "constraint_hit_reduction_vs_v0_4=" f"{summary.get('constraint_hit_reduction_vs_v0_4')}"
     )
     typer.echo(f"false_risk_off_delta_vs_v0_4={summary.get('false_risk_off_delta_vs_v0_4')}")
     typer.echo(f"data_quality_status={summary.get('data_quality_status')}")
@@ -3256,7 +3338,10 @@ def dynamic_v3_rescue_failure_attribution_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     as_of: Annotated[
         str | None,
         typer.Option("--as-of", help="数据质量门禁日期，默认使用 real evaluation end date。"),
@@ -3325,17 +3410,13 @@ def dynamic_v3_rescue_failure_attribution_command(
         attribution_policy = load_dynamic_v3_failure_attribution_policy_config(config_path)
         resolved_real_report = (
             real_evaluation_report_path
-            or latest_dynamic_v3_failure_attribution_real_evaluation_path(
-                attribution_policy
-            )
+            or latest_dynamic_v3_failure_attribution_real_evaluation_path(attribution_policy)
         )
         if resolved_real_report is None:
             raise DynamicV3FailureAttributionError(
                 "latest dynamic v0.3 real evaluation report not found"
             )
-        real_report = load_dynamic_v3_failure_attribution_json_artifact(
-            resolved_real_report
-        )
+        real_report = load_dynamic_v3_failure_attribution_json_artifact(resolved_real_report)
     except DynamicV3FailureAttributionError as exc:
         raise typer.BadParameter(str(exc)) from exc
     requested = _mapping_obj(real_report.get("requested_range"))
@@ -3387,18 +3468,12 @@ def dynamic_v3_rescue_failure_attribution_command(
             policy=attribution_policy,
             real_evaluation_report=real_report,
             real_evaluation_report_path=resolved_real_report,
-            real_policy=load_dynamic_v3_real_evaluation_policy_config(
-                real_evaluation_config_path
-            ),
-            v3_rescue_policy=load_dynamic_v3_rescue_policy_config(
-                v3_rescue_config_path
-            ),
+            real_policy=load_dynamic_v3_real_evaluation_policy_config(real_evaluation_config_path),
+            v3_rescue_policy=load_dynamic_v3_rescue_policy_config(v3_rescue_config_path),
             dynamic_robustness_policy=load_dynamic_robustness_policy_config(
                 dynamic_robustness_config_path
             ),
-            dynamic_policy=load_dynamic_allocation_policy_config(
-                dynamic_allocation_config_path
-            ),
+            dynamic_policy=load_dynamic_allocation_policy_config(dynamic_allocation_config_path),
             failure_policy=load_dynamic_failure_diagnostics_policy_config(
                 failure_diagnostics_config_path
             ),
@@ -3464,9 +3539,7 @@ def dynamic_v3_rescue_failure_attribution_report_command(
     summary = _mapping_obj(payload.get("summary"))
     typer.echo(f"dynamic_v3_failure_attribution_report={resolved}")
     typer.echo(f"status={payload.get('status')}")
-    typer.echo(
-        f"v0_3_rejection_primary_reason={summary.get('v0_3_rejection_primary_reason')}"
-    )
+    typer.echo(f"v0_3_rejection_primary_reason={summary.get('v0_3_rejection_primary_reason')}")
     typer.echo(f"v0_4_promotion_review={summary.get('v0_4_promotion_review')}")
     typer.echo(f"v0_5_design_recommendation={summary.get('v0_5_design_recommendation')}")
     typer.echo(f"data_quality_status={summary.get('data_quality_status')}")
@@ -3497,9 +3570,7 @@ def dynamic_v3_rescue_validate_attribution_command(
         output_dir=output_dir,
     )
     typer.echo(f"ETF dynamic v0.3 failure attribution validation JSON：{paths['json']}")
-    typer.echo(
-        f"ETF dynamic v0.3 failure attribution validation Markdown：{paths['markdown']}"
-    )
+    typer.echo(f"ETF dynamic v0.3 failure attribution validation Markdown：{paths['markdown']}")
     typer.echo(f"status={payload['status']}")
     typer.echo(f"failed_check_count={payload['failed_check_count']}")
     typer.echo("shadow_enrollment_allowed=false")
@@ -3518,6 +3589,573 @@ def dynamic_v3_rescue_validate_attribution_command(
     typer.echo("manual_review_required=true")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)
+
+
+@dynamic_v3_sweep_config_app.command("validate")
+def dynamic_v3_sweep_config_validate_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="parameter sweep config。"),
+    ] = DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
+) -> None:
+    """校验 TRADING-093 parameter sweep config contract。"""
+    payload = build_sweep_config_validation(config_path=config_path)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"config_path={config_path}")
+    typer.echo(f"candidate_preview_count={payload.get('candidate_preview_count')}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    typer.echo("production_effect=none")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_sweep_config_app.command("preview")
+def dynamic_v3_sweep_config_preview_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="parameter sweep config。"),
+    ] = DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
+    limit: Annotated[int, typer.Option("--limit", help="preview candidate count。")] = 20,
+) -> None:
+    """预览 TRADING-093 parameter sweep candidates。"""
+    try:
+        payload = preview_sweep_candidates(config_path=config_path, limit=limit)
+    except DynamicV3ParameterResearchError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"candidate_count={payload['candidate_count']}")
+    typer.echo(f"preview_count={payload['preview_count']}")
+    for row in payload["candidates"]:
+        typer.echo(f"{row['candidate_id']} {json.dumps(row['parameters'], sort_keys=True)}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_sweep_app.command("run")
+def dynamic_v3_sweep_run_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="parameter sweep config。"),
+    ] = DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--as-of", help="sweep as-of date。"),
+    ] = None,
+    end: Annotated[
+        str | None,
+        typer.Option("--end", help="sweep end date。"),
+    ] = None,
+    workers: Annotated[
+        int | None,
+        typer.Option("--workers", help="worker count recorded in manifest。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output", "--output-dir", help="sweep artifact root。"),
+    ] = DEFAULT_SWEEP_OUTPUT_DIR,
+    resume: Annotated[
+        str | None,
+        typer.Option("--resume", help="resume sweep_id。"),
+    ] = None,
+) -> None:
+    """运行 TRADING-094 batch parameter sweep；不 promotion。"""
+    try:
+        result = run_parameter_sweep(
+            config_path=config_path,
+            as_of=_parse_date(as_of) if as_of else None,
+            end=_parse_date(end) if end else None,
+            workers=workers,
+            output_dir=output_dir,
+            resume=resume,
+        )
+    except DynamicV3ParameterResearchError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    manifest = result["manifest"]
+    typer.echo(f"sweep_id={result['sweep_id']}")
+    typer.echo(f"sweep_dir={result['sweep_dir']}")
+    typer.echo(f"status={result['status']}")
+    typer.echo(f"completed_count={manifest['completed_count']}")
+    typer.echo(f"failed_count={manifest['failed_count']}")
+    typer.echo(f"observe_only_count={manifest['observe_only_count']}")
+    typer.echo(f"review_required_count={manifest['review_required_count']}")
+    typer.echo(f"rejected_count={manifest['rejected_count']}")
+    typer.echo("production_candidate_generated=false")
+    typer.echo("production_effect=none")
+
+
+@dynamic_v3_sweep_app.command("status")
+def dynamic_v3_sweep_status_command(
+    sweep_id: Annotated[str, typer.Option("--sweep-id", help="sweep id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output", "--output-dir", help="sweep artifact root。"),
+    ] = DEFAULT_SWEEP_OUTPUT_DIR,
+) -> None:
+    """展示 TRADING-094 sweep status。"""
+    try:
+        payload = sweep_status_payload(sweep_id=sweep_id, output_dir=output_dir)
+    except DynamicV3ParameterResearchError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    manifest = payload["manifest"]
+    checkpoint = payload["checkpoint"]
+    typer.echo(f"sweep_id={sweep_id}")
+    typer.echo(f"status={manifest.get('status')}")
+    typer.echo(f"candidate_count={manifest.get('candidate_count')}")
+    typer.echo(f"completed_count={manifest.get('completed_count')}")
+    typer.echo(f"failed_count={manifest.get('failed_count')}")
+    typer.echo(f"last_candidate_index={checkpoint.get('last_candidate_index')}")
+
+
+@dynamic_v3_sweep_app.command("validate")
+def dynamic_v3_sweep_validate_command(
+    sweep_id: Annotated[str, typer.Option("--sweep-id", help="sweep id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output", "--output-dir", help="sweep artifact root。"),
+    ] = DEFAULT_SWEEP_OUTPUT_DIR,
+) -> None:
+    """校验 TRADING-094 sweep artifacts。"""
+    payload = validate_sweep_artifact(sweep_id=sweep_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_sweep_app.command("leaderboard")
+def dynamic_v3_sweep_leaderboard_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest sweep pointer。"),
+    ] = False,
+    sweep_id: Annotated[
+        str | None,
+        typer.Option("--sweep-id", help="sweep id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output", "--output-dir", help="sweep artifact root。"),
+    ] = DEFAULT_SWEEP_OUTPUT_DIR,
+) -> None:
+    """展示 TRADING-095 sweep leaderboard 摘要。"""
+    resolved_sweep_id = _resolve_dynamic_v3_sweep_id(latest=latest, sweep_id=sweep_id)
+    path = output_dir / resolved_sweep_id / "leaderboard.json"
+    payload = _load_optional_json_payload(path) or build_sweep_leaderboard_payload(
+        sweep_dir=output_dir / resolved_sweep_id
+    )
+    typer.echo(f"sweep_id={resolved_sweep_id}")
+    typer.echo(f"status={payload.get('status')}")
+    typer.echo(f"candidate_count={payload.get('candidate_count')}")
+    top = payload.get("top_eligible_candidates") or []
+    if top:
+        first = top[0]
+        typer.echo(f"top_candidate={first.get('candidate_id')}")
+        typer.echo(f"top_gate={first.get('gate')}")
+        typer.echo(f"top_score={first.get('score')}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_sweep_app.command("report")
+def dynamic_v3_sweep_report_command(
+    sweep_id: Annotated[str, typer.Option("--sweep-id", help="sweep id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output", "--output-dir", help="sweep artifact root。"),
+    ] = DEFAULT_SWEEP_OUTPUT_DIR,
+) -> None:
+    """展示 TRADING-095 sweep report 摘要。"""
+    try:
+        payload = build_sweep_report_payload(sweep_dir=output_dir / sweep_id)
+    except DynamicV3ParameterResearchError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    summary = payload["leaderboard_summary"]
+    typer.echo(f"sweep_id={sweep_id}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"top_candidate={summary.get('top_candidate')}")
+    typer.echo(f"sweep_report={output_dir / sweep_id / 'sweep_report.md'}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_candidate_app.command("report")
+def dynamic_v3_candidate_report_command(
+    sweep_id: Annotated[str, typer.Option("--sweep-id", help="sweep id。")],
+    candidate_id: Annotated[str, typer.Option("--candidate-id", help="candidate id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output", "--output-dir", help="sweep artifact root。"),
+    ] = DEFAULT_SWEEP_OUTPUT_DIR,
+) -> None:
+    """生成并展示 TRADING-095 candidate report。"""
+    try:
+        payload = candidate_report_payload(
+            sweep_id=sweep_id,
+            candidate_id=candidate_id,
+            output_dir=output_dir,
+            write=True,
+        )
+    except DynamicV3ParameterResearchError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"candidate_id={candidate_id}")
+    typer.echo(f"source_sweep_id={sweep_id}")
+    typer.echo(f"gate={payload['hard_gate_status']}")
+    typer.echo(f"score={payload['score']}")
+    typer.echo(
+        "candidate_report="
+        f"{output_dir / sweep_id / 'candidates' / candidate_id / 'candidate_report.json'}"
+    )
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_walk_forward_app.command("run")
+def dynamic_v3_walk_forward_run_command(
+    sweep_id: Annotated[str, typer.Option("--sweep-id", help="source sweep id。")],
+    top_n: Annotated[int, typer.Option("--top-n", help="top candidate count。")] = 20,
+    sweep_output_dir: Annotated[
+        Path,
+        typer.Option("--sweep-output-dir", help="sweep artifact root。"),
+    ] = DEFAULT_SWEEP_OUTPUT_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="walk-forward artifact root。"),
+    ] = DEFAULT_WALK_FORWARD_DIR,
+) -> None:
+    """运行 TRADING-096 walk-forward / OOS validation。"""
+    try:
+        result = run_walk_forward_validation(
+            sweep_id=sweep_id,
+            top_n=top_n,
+            sweep_output_dir=sweep_output_dir,
+            output_dir=output_dir,
+        )
+    except DynamicV3ParameterResearchError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"walk_forward_id={result['walk_forward_id']}")
+    typer.echo(f"walk_forward_dir={result['walk_forward_dir']}")
+    typer.echo(f"status={result['report']['status']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_walk_forward_app.command("report")
+def dynamic_v3_walk_forward_report_command(
+    walk_forward_id: Annotated[str, typer.Option("--walk-forward-id", help="walk-forward id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="walk-forward artifact root。"),
+    ] = DEFAULT_WALK_FORWARD_DIR,
+) -> None:
+    """展示 TRADING-096 walk-forward report。"""
+    payload = walk_forward_report_payload(walk_forward_id=walk_forward_id, output_dir=output_dir)
+    typer.echo(f"walk_forward_id={walk_forward_id}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"report_path={payload['report_path']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_rescue_app.command("validate-walk-forward")
+def dynamic_v3_validate_walk_forward_command(
+    walk_forward_id: Annotated[str, typer.Option("--walk-forward-id", help="walk-forward id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="walk-forward artifact root。"),
+    ] = DEFAULT_WALK_FORWARD_DIR,
+) -> None:
+    """校验 TRADING-096 walk-forward artifacts。"""
+    payload = validate_walk_forward_artifact(walk_forward_id=walk_forward_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_robustness_app.command("run")
+def dynamic_v3_robustness_run_command(
+    sweep_id: Annotated[str, typer.Option("--sweep-id", help="source sweep id。")],
+    candidate_id: Annotated[str, typer.Option("--candidate-id", help="candidate id。")],
+    sweep_output_dir: Annotated[
+        Path,
+        typer.Option("--sweep-output-dir", help="sweep artifact root。"),
+    ] = DEFAULT_SWEEP_OUTPUT_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="robustness artifact root。"),
+    ] = DEFAULT_ROBUSTNESS_DIR,
+) -> None:
+    """运行 TRADING-097 robustness diagnostics。"""
+    try:
+        result = run_robustness_diagnostics(
+            sweep_id=sweep_id,
+            candidate_id=candidate_id,
+            sweep_output_dir=sweep_output_dir,
+            output_dir=output_dir,
+        )
+    except DynamicV3ParameterResearchError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    report = result["report"]
+    typer.echo(f"robustness_id={result['robustness_id']}")
+    typer.echo(f"robustness_dir={result['robustness_dir']}")
+    typer.echo(f"status={report['status']}")
+    typer.echo(f"overfit_status={report['overfit_status']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_robustness_app.command("report")
+def dynamic_v3_robustness_report_command(
+    robustness_id: Annotated[str, typer.Option("--robustness-id", help="robustness id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="robustness artifact root。"),
+    ] = DEFAULT_ROBUSTNESS_DIR,
+) -> None:
+    """展示 TRADING-097 robustness report。"""
+    payload = robustness_report_payload(robustness_id=robustness_id, output_dir=output_dir)
+    typer.echo(f"robustness_id={robustness_id}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"report_path={payload['report_path']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_rescue_app.command("validate-robustness")
+def dynamic_v3_validate_robustness_command(
+    robustness_id: Annotated[str, typer.Option("--robustness-id", help="robustness id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="robustness artifact root。"),
+    ] = DEFAULT_ROBUSTNESS_DIR,
+) -> None:
+    """校验 TRADING-097 robustness artifacts。"""
+    payload = validate_robustness_artifact(robustness_id=robustness_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_shadow_app.command("register")
+def dynamic_v3_shadow_register_command(
+    sweep_id: Annotated[str, typer.Option("--sweep-id", help="source sweep id。")],
+    candidate_id: Annotated[str, typer.Option("--candidate-id", help="candidate id。")],
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", "--registry-path", help="shadow registry path。"),
+    ] = DEFAULT_SHADOW_REGISTRY_PATH,
+    sweep_output_dir: Annotated[
+        Path,
+        typer.Option("--sweep-output-dir", help="sweep artifact root。"),
+    ] = DEFAULT_SWEEP_OUTPUT_DIR,
+) -> None:
+    """登记 TRADING-098 observe-only shadow candidate。"""
+    try:
+        payload = register_shadow_candidate(
+            sweep_id=sweep_id,
+            candidate_id=candidate_id,
+            registry_path=registry_path,
+            sweep_output_dir=sweep_output_dir,
+        )
+    except DynamicV3ParameterResearchError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"candidate_id={candidate_id}")
+    typer.echo(f"registry_path={registry_path}")
+    typer.echo("observe_only=true")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_shadow_app.command("list")
+def dynamic_v3_shadow_list_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", "--registry-path", help="shadow registry path。"),
+    ] = DEFAULT_SHADOW_REGISTRY_PATH,
+) -> None:
+    """列出 TRADING-098 shadow candidates。"""
+    payload = shadow_list_payload(registry_path=registry_path)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"registry_path={registry_path}")
+    for row in payload["candidates"]:
+        typer.echo(f"{row.get('candidate_id')} status={row.get('status')}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_shadow_app.command("report")
+def dynamic_v3_shadow_report_command(
+    candidate_id: Annotated[
+        str | None,
+        typer.Option("--candidate-id", help="candidate id。"),
+    ] = None,
+    all_candidates: Annotated[
+        bool,
+        typer.Option("--all/--no-all", help="report all shadow candidates。"),
+    ] = False,
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", "--registry-path", help="shadow registry path。"),
+    ] = DEFAULT_SHADOW_REGISTRY_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shadow report output root。"),
+    ] = DEFAULT_SHADOW_REPORT_DIR,
+) -> None:
+    """生成 TRADING-098 shadow report。"""
+    if not all_candidates and not candidate_id:
+        raise typer.BadParameter("--candidate-id or --all is required")
+    try:
+        payload = shadow_report_payload(
+            candidate_id=candidate_id,
+            all_candidates=all_candidates,
+            registry_path=registry_path,
+            output_dir=output_dir,
+            write=True,
+        )
+    except DynamicV3ParameterResearchError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"candidate_id={payload['candidate_id']}")
+    typer.echo(f"report_count={len(payload['reports'])}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_rescue_app.command("validate-shadow-registry")
+def dynamic_v3_validate_shadow_registry_command(
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", "--registry-path", help="shadow registry path。"),
+    ] = DEFAULT_SHADOW_REGISTRY_PATH,
+    sweep_output_dir: Annotated[
+        Path,
+        typer.Option("--sweep-output-dir", help="sweep artifact root。"),
+    ] = DEFAULT_SWEEP_OUTPUT_DIR,
+) -> None:
+    """校验 TRADING-098 shadow registry。"""
+    payload = validate_shadow_registry(
+        registry_path=registry_path,
+        sweep_output_dir=sweep_output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_artifacts_app.command("latest")
+def dynamic_v3_artifacts_latest_command() -> None:
+    """展示 TRADING-099 latest pointers。"""
+    payload = artifacts_latest_payload()
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"pointer_dir={payload['pointer_dir']}")
+    for name, pointer in payload["pointers"].items():
+        typer.echo(f"{name}={pointer.get('artifact_id')} path={pointer.get('path')}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_artifacts_app.command("validate")
+def dynamic_v3_artifacts_validate_command(
+    family: Annotated[
+        str,
+        typer.Option("--family", help="artifact family。"),
+    ] = "dynamic_v3_rescue",
+) -> None:
+    """校验 TRADING-099 latest pointer targets。"""
+    payload = validate_artifacts_payload(family=family)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_artifacts_app.command("stale")
+def dynamic_v3_artifacts_stale_command(
+    family: Annotated[
+        str,
+        typer.Option("--family", help="artifact family。"),
+    ] = "dynamic_v3_rescue",
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="parameter sweep config。"),
+    ] = DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
+) -> None:
+    """检查 TRADING-099 stale artifacts。"""
+    payload = stale_artifacts_payload(family=family, config_path=config_path)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"stale_after_days={payload['stale_after_days']}")
+    typer.echo(f"stale_count={len(payload['stale_artifacts'])}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_promotion_app.command("review")
+def dynamic_v3_promotion_review_command(
+    candidate_id: Annotated[str, typer.Option("--candidate-id", help="candidate id。")],
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", "--registry-path", help="shadow registry path。"),
+    ] = DEFAULT_SHADOW_REGISTRY_PATH,
+) -> None:
+    """展示 TRADING-100 promotion review readiness。"""
+    payload = promotion_review_payload(candidate_id=candidate_id, registry_path=registry_path)
+    typer.echo(f"candidate_id={candidate_id}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"registry_record_present={payload['registry_record_present']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_promotion_app.command("pack")
+def dynamic_v3_promotion_pack_command(
+    candidate_id: Annotated[str, typer.Option("--candidate-id", help="candidate id。")],
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", "--registry-path", help="shadow registry path。"),
+    ] = DEFAULT_SHADOW_REGISTRY_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="promotion artifact root。"),
+    ] = DEFAULT_PROMOTION_DIR,
+) -> None:
+    """生成 TRADING-100 promotion review pack。"""
+    try:
+        result = build_promotion_pack(
+            candidate_id=candidate_id,
+            registry_path=registry_path,
+            output_dir=output_dir,
+        )
+    except DynamicV3ParameterResearchError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    pack = result["pack"]
+    typer.echo(f"promotion_id={result['promotion_id']}")
+    typer.echo(f"promotion_dir={result['promotion_dir']}")
+    typer.echo(f"status={pack['status']}")
+    typer.echo("manual_review_required=true")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_rescue_app.command("validate-promotion-pack")
+def dynamic_v3_validate_promotion_pack_command(
+    candidate_id: Annotated[str, typer.Option("--candidate-id", help="candidate id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="promotion artifact root。"),
+    ] = DEFAULT_PROMOTION_DIR,
+) -> None:
+    """校验 TRADING-100 promotion pack。"""
+    payload = validate_promotion_pack(candidate_id=candidate_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+def _resolve_dynamic_v3_sweep_id(*, latest: bool, sweep_id: str | None) -> str:
+    if sweep_id:
+        return sweep_id
+    if latest:
+        resolved = latest_sweep_id()
+        if resolved:
+            return resolved
+    raise typer.BadParameter("--sweep-id or --latest is required")
 
 
 @dynamic_shadow_app.command("package")
@@ -3603,15 +4241,21 @@ def dynamic_shadow_package_command(
                 "dynamic_calibration_report": (
                     "" if calibration_path is None else str(calibration_path)
                 ),
-                "dynamic_calibration_validation": ""
-                if resolved_calibration_validation is None
-                else str(resolved_calibration_validation),
-                "dynamic_robustness_validation": ""
-                if resolved_robustness_validation is None
-                else str(resolved_robustness_validation),
-                "operations_validation": ""
-                if resolved_operations_validation is None
-                else str(resolved_operations_validation),
+                "dynamic_calibration_validation": (
+                    ""
+                    if resolved_calibration_validation is None
+                    else str(resolved_calibration_validation)
+                ),
+                "dynamic_robustness_validation": (
+                    ""
+                    if resolved_robustness_validation is None
+                    else str(resolved_robustness_validation)
+                ),
+                "operations_validation": (
+                    ""
+                    if resolved_operations_validation is None
+                    else str(resolved_operations_validation)
+                ),
             },
             policy=load_dynamic_shadow_policy_config(config_path),
             top=top,
@@ -3624,7 +4268,9 @@ def dynamic_shadow_package_command(
     typer.echo(f"ETF dynamic shadow package Markdown：{paths['markdown']}")
     typer.echo(f"status={summary.get('status')}")
     typer.echo(f"top_candidate={summary.get('top_candidate')}")
-    typer.echo(f"ready_after_owner_approval_count={summary.get('ready_after_owner_approval_count')}")
+    typer.echo(
+        f"ready_after_owner_approval_count={summary.get('ready_after_owner_approval_count')}"
+    )
     typer.echo(f"blocked_count={summary.get('blocked_count')}")
     typer.echo("automatic_enrollment_allowed=false")
     typer.echo("commands_executed=false")
@@ -3796,7 +4442,10 @@ def dynamic_shadow_update_command(
     rates_path: Annotated[
         Path,
         typer.Option("--rates-path", help="标准化 FRED rates cache for validate-data gate。"),
-    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
     registry_path: Annotated[
         Path,
         typer.Option("--registry-path", help="dynamic shadow candidate registry path。"),
@@ -5473,7 +6122,8 @@ def governance_summary_command(
     output_dir: Annotated[
         Path,
         typer.Option(help="输出目录。"),
-    ] = DEFAULT_ETF_REPORT_DIR / "governance",
+    ] = DEFAULT_ETF_REPORT_DIR
+    / "governance",
 ) -> None:
     """生成 ETF parameter governance summary；只允许人工复核，不自动 promotion。"""
     config = load_etf_config_bundle()
@@ -5870,7 +6520,9 @@ def experiments_validate_command(
     report_registry_path: Annotated[
         Path,
         typer.Option(help="report registry config path。"),
-    ] = PROJECT_ROOT / "config" / "report_registry.yaml",
+    ] = PROJECT_ROOT
+    / "config"
+    / "report_registry.yaml",
 ) -> None:
     """生成 TRADING-064 final experiment validation gate；失败时 fail closed。"""
     generated = datetime.now(UTC)
@@ -6077,7 +6729,9 @@ def forward_validate_command(
     report_registry_path: Annotated[
         Path,
         typer.Option(help="report registry config path。"),
-    ] = PROJECT_ROOT / "config" / "report_registry.yaml",
+    ] = PROJECT_ROOT
+    / "config"
+    / "report_registry.yaml",
     output_dir: Annotated[Path, typer.Option(help="validation 输出目录。")] = (
         DEFAULT_ETF_FORWARD_REPORT_DIR / "validation"
     ),
@@ -8257,7 +8911,11 @@ def p2_derive_edgar_events_command(
     timeline_path: Annotated[
         Path,
         typer.Option(help="SEC PIT filing timeline CSV/Parquet。"),
-    ] = PROJECT_ROOT / "data" / "processed" / "sec_edgar" / "filing_timeline.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "sec_edgar"
+    / "filing_timeline.csv",
     output_path: Annotated[
         Path | None,
         typer.Option(help="Canonical edgar_text_events 输出路径，默认读取 p2.yaml。"),
@@ -8302,15 +8960,27 @@ def p2_fetch_edgar_text_command(
     timeline_path: Annotated[
         Path,
         typer.Option(help="SEC PIT filing timeline CSV/Parquet。"),
-    ] = PROJECT_ROOT / "data" / "processed" / "sec_edgar" / "filing_timeline.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "processed"
+    / "sec_edgar"
+    / "filing_timeline.csv",
     document_dir: Annotated[
         Path,
         typer.Option(help="SEC filing 文本缓存目录。"),
-    ] = PROJECT_ROOT / "data" / "etf_portfolio" / "p2" / "edgar_text_documents",
+    ] = PROJECT_ROOT
+    / "data"
+    / "etf_portfolio"
+    / "p2"
+    / "edgar_text_documents",
     output_path: Annotated[
         Path,
         typer.Option(help="EDGAR text document index 输出路径。"),
-    ] = PROJECT_ROOT / "data" / "etf_portfolio" / "p2" / "edgar_text_documents.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "etf_portfolio"
+    / "p2"
+    / "edgar_text_documents.csv",
     manifest_path: Annotated[Path, typer.Option(help="P2 source manifest 输出路径。")] = (
         DEFAULT_ETF_P2_MANIFEST_PATH
     ),
@@ -8364,7 +9034,11 @@ def p2_edgar_topics_command(
     input_path: Annotated[
         Path,
         typer.Option(help="EDGAR text document index CSV。"),
-    ] = PROJECT_ROOT / "data" / "etf_portfolio" / "p2" / "edgar_text_documents.csv",
+    ] = PROJECT_ROOT
+    / "data"
+    / "etf_portfolio"
+    / "p2"
+    / "edgar_text_documents.csv",
     date_option: Annotated[str | None, typer.Option("--date", help="日期或 latest。")] = None,
     output_dir: Annotated[Path, typer.Option(help="EDGAR topic audit 输出目录。")] = (
         DEFAULT_ETF_REPORT_DIR / "p2"

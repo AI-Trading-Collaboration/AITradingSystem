@@ -30,6 +30,7 @@ data/cache/
 data/trading_engine/*
 data/etf_portfolio/
 data/simulation/
+registry/etf_portfolio/dynamic_v3_rescue_shadow_candidates.yaml
 outputs/backtests/*
 !outputs/backtests/.gitkeep
 outputs/reports/*

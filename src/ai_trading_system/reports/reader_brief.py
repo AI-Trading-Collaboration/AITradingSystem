@@ -196,9 +196,8 @@ def build_reader_brief_payload(
     etf_dynamic_v2_review = _etf_dynamic_v2_review_summary(report_index)
     etf_dynamic_v3_rescue = _etf_dynamic_v3_rescue_summary(report_index)
     etf_dynamic_v3_real_evaluation = _etf_dynamic_v3_real_evaluation_summary(report_index)
-    etf_dynamic_v3_failure_attribution = _etf_dynamic_v3_failure_attribution_summary(
-        report_index
-    )
+    etf_dynamic_v3_failure_attribution = _etf_dynamic_v3_failure_attribution_summary(report_index)
+    etf_dynamic_v3_parameter_research = _etf_dynamic_v3_parameter_research_summary(report_index)
     manual_review_queue = _manual_review_queue(
         snapshot=snapshot,
         daily_decision_summary=daily_decision_summary,
@@ -341,6 +340,7 @@ def build_reader_brief_payload(
         "etf_dynamic_v3_rescue": etf_dynamic_v3_rescue,
         "etf_dynamic_v3_real_evaluation": etf_dynamic_v3_real_evaluation,
         "etf_dynamic_v3_failure_attribution": etf_dynamic_v3_failure_attribution,
+        "etf_dynamic_v3_parameter_research": etf_dynamic_v3_parameter_research,
         "manual_review_queue": manual_review_queue,
         "executive_summary": _executive_summary(
             run_context=run_context,
@@ -599,9 +599,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_parameter_review = _mapping(payload.get("etf_parameter_review"))
     etf_weight_calibration = _mapping(payload.get("etf_weight_calibration"))
     etf_initial_weight_candidates = _mapping(payload.get("etf_initial_weight_candidates"))
-    etf_weight_calibration_profiling = _mapping(
-        payload.get("etf_weight_calibration_profiling")
-    )
+    etf_weight_calibration_profiling = _mapping(payload.get("etf_weight_calibration_profiling"))
     etf_operations_health = _mapping(payload.get("etf_operations_health"))
     etf_data_quality_governance = _mapping(payload.get("etf_data_quality_governance"))
     etf_strategy_evidence = _mapping(payload.get("etf_strategy_evidence"))
@@ -615,12 +613,9 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
     etf_dynamic_rescue = _mapping(payload.get("etf_dynamic_rescue"))
     etf_dynamic_v2_review = _mapping(payload.get("etf_dynamic_v2_review"))
     etf_dynamic_v3_rescue = _mapping(payload.get("etf_dynamic_v3_rescue"))
-    etf_dynamic_v3_real_evaluation = _mapping(
-        payload.get("etf_dynamic_v3_real_evaluation")
-    )
-    etf_dynamic_v3_failure_attribution = _mapping(
-        payload.get("etf_dynamic_v3_failure_attribution")
-    )
+    etf_dynamic_v3_real_evaluation = _mapping(payload.get("etf_dynamic_v3_real_evaluation"))
+    etf_dynamic_v3_failure_attribution = _mapping(payload.get("etf_dynamic_v3_failure_attribution"))
+    etf_dynamic_v3_parameter_research = _mapping(payload.get("etf_dynamic_v3_parameter_research"))
     manual_review = _mapping(payload.get("manual_review_queue"))
     manual_queue = _records(manual_review.get("items"))
     navigation = _records(payload.get("report_navigation"))
@@ -1166,15 +1161,11 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("best_candidate", etf_dynamic_v3_real_evaluation.get("best_candidate")),
                     (
                         "constraint_hit_reduction_vs_v0_4",
-                        etf_dynamic_v3_real_evaluation.get(
-                            "constraint_hit_reduction_vs_v0_4"
-                        ),
+                        etf_dynamic_v3_real_evaluation.get("constraint_hit_reduction_vs_v0_4"),
                     ),
                     (
                         "false_risk_off_delta_vs_v0_4",
-                        etf_dynamic_v3_real_evaluation.get(
-                            "false_risk_off_delta_vs_v0_4"
-                        ),
+                        etf_dynamic_v3_real_evaluation.get("false_risk_off_delta_vs_v0_4"),
                     ),
                     (
                         "drawdown_preservation",
@@ -1191,9 +1182,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ("broker_action", etf_dynamic_v3_real_evaluation.get("broker_action")),
                     (
                         "automatic_candidate_promotion",
-                        etf_dynamic_v3_real_evaluation.get(
-                            "automatic_candidate_promotion"
-                        ),
+                        etf_dynamic_v3_real_evaluation.get("automatic_candidate_promotion"),
                     ),
                     (
                         "shadow_enrollment_allowed",
@@ -1217,39 +1206,27 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "v0_3_rejection_primary_reason",
-                        etf_dynamic_v3_failure_attribution.get(
-                            "v0_3_rejection_primary_reason"
-                        ),
+                        etf_dynamic_v3_failure_attribution.get("v0_3_rejection_primary_reason"),
                     ),
                     (
                         "v0_4_promotion_review",
-                        etf_dynamic_v3_failure_attribution.get(
-                            "v0_4_promotion_review"
-                        ),
+                        etf_dynamic_v3_failure_attribution.get("v0_4_promotion_review"),
                     ),
                     (
                         "v0_5_design_recommendation",
-                        etf_dynamic_v3_failure_attribution.get(
-                            "v0_5_design_recommendation"
-                        ),
+                        etf_dynamic_v3_failure_attribution.get("v0_5_design_recommendation"),
                     ),
                     (
                         "constraint_hit_reduction_vs_v0_4",
-                        etf_dynamic_v3_failure_attribution.get(
-                            "constraint_hit_reduction_vs_v0_4"
-                        ),
+                        etf_dynamic_v3_failure_attribution.get("constraint_hit_reduction_vs_v0_4"),
                     ),
                     (
                         "v0_3_constraint_hit_rate",
-                        etf_dynamic_v3_failure_attribution.get(
-                            "v0_3_constraint_hit_rate"
-                        ),
+                        etf_dynamic_v3_failure_attribution.get("v0_3_constraint_hit_rate"),
                     ),
                     (
                         "v0_4_constraint_hit_rate",
-                        etf_dynamic_v3_failure_attribution.get(
-                            "v0_4_constraint_hit_rate"
-                        ),
+                        etf_dynamic_v3_failure_attribution.get("v0_4_constraint_hit_rate"),
                     ),
                     (
                         "detailed_report",
@@ -1269,15 +1246,61 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "automatic_candidate_promotion",
-                        etf_dynamic_v3_failure_attribution.get(
-                            "automatic_candidate_promotion"
-                        ),
+                        etf_dynamic_v3_failure_attribution.get("automatic_candidate_promotion"),
                     ),
                     (
                         "shadow_enrollment_allowed",
-                        etf_dynamic_v3_failure_attribution.get(
-                            "shadow_enrollment_allowed"
-                        ),
+                        etf_dynamic_v3_failure_attribution.get("shadow_enrollment_allowed"),
+                    ),
+                ]
+            ),
+        ),
+        _section(
+            "Dynamic Rescue Parameter Sweep",
+            _definition_table(
+                [
+                    (
+                        "availability",
+                        etf_dynamic_v3_parameter_research.get("availability"),
+                    ),
+                    ("status", etf_dynamic_v3_parameter_research.get("status")),
+                    (
+                        "summary",
+                        etf_dynamic_v3_parameter_research.get("summary_sentence"),
+                    ),
+                    (
+                        "candidate_count",
+                        etf_dynamic_v3_parameter_research.get("candidate_count"),
+                    ),
+                    (
+                        "top_candidate",
+                        etf_dynamic_v3_parameter_research.get("top_candidate"),
+                    ),
+                    ("top_gate", etf_dynamic_v3_parameter_research.get("top_gate")),
+                    ("top_score", etf_dynamic_v3_parameter_research.get("top_score")),
+                    (
+                        "common_reject_reasons",
+                        etf_dynamic_v3_parameter_research.get("common_reject_reasons"),
+                    ),
+                    (
+                        "promotion_status",
+                        etf_dynamic_v3_parameter_research.get("promotion_status"),
+                    ),
+                    (
+                        "sweep_leaderboard",
+                        etf_dynamic_v3_parameter_research.get("sweep_leaderboard"),
+                    ),
+                    (
+                        "promotion_manifest",
+                        etf_dynamic_v3_parameter_research.get("promotion_manifest"),
+                    ),
+                    (
+                        "safety_status",
+                        etf_dynamic_v3_parameter_research.get("safety_status"),
+                    ),
+                    (
+                        "production_candidate_generated",
+                        etf_dynamic_v3_parameter_research.get("production_candidate_generated"),
                     ),
                 ]
             ),
@@ -1684,9 +1707,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "signal_calibration_promotion_credit_signal_count",
-                        parameter_shadow.get(
-                            "signal_calibration_promotion_credit_signal_count"
-                        ),
+                        parameter_shadow.get("signal_calibration_promotion_credit_signal_count"),
                     ),
                     (
                         "signal_calibration_neutral_warning",
@@ -1798,9 +1819,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "portfolio_candidate_tracking_effective_data_date",
-                        parameter_shadow.get(
-                            "portfolio_candidate_tracking_effective_data_date"
-                        ),
+                        parameter_shadow.get("portfolio_candidate_tracking_effective_data_date"),
                     ),
                     (
                         "portfolio_candidate_tracking_excess_return",
@@ -1824,9 +1843,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "portfolio_tracking_review_days_until_short_review",
-                        parameter_shadow.get(
-                            "portfolio_tracking_review_days_until_short_review"
-                        ),
+                        parameter_shadow.get("portfolio_tracking_review_days_until_short_review"),
                     ),
                     (
                         "portfolio_tracking_review_days_until_extended_review",
@@ -1898,9 +1915,7 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     (
                         "weight_stability_rejected_by_turnover_prefilter",
-                        parameter_shadow.get(
-                            "weight_stability_rejected_by_turnover_prefilter"
-                        ),
+                        parameter_shadow.get("weight_stability_rejected_by_turnover_prefilter"),
                     ),
                     (
                         "weight_stability_turnover_failures_reduced",
@@ -3534,9 +3549,7 @@ def _etf_data_quality_governance_summary(report_index: Mapping[str, Any]) -> dic
         "evidence_completeness_status": _section_blocking_status(
             report.get("evidence_completeness")
         ),
-        "gate_freshness_status": _section_blocking_status(
-            report.get("validation_gate_freshness")
-        ),
+        "gate_freshness_status": _section_blocking_status(report.get("validation_gate_freshness")),
         "report_staleness_status": _section_blocking_status(report.get("report_staleness")),
         "reader_brief_link_status": _section_blocking_status(report.get("reader_brief_links")),
     }
@@ -3718,9 +3731,11 @@ def _strategy_evidence_card_list(cards: list[dict[str, Any]], *, strongest: bool
     ordered = sorted(
         cards,
         key=lambda card: (
-            -_strategy_evidence_status_rank(_text(card.get("status")))
-            if strongest
-            else _strategy_evidence_status_rank(_text(card.get("status"))),
+            (
+                -_strategy_evidence_status_rank(_text(card.get("status")))
+                if strongest
+                else _strategy_evidence_status_rank(_text(card.get("status")))
+            ),
             _text(card.get("category")),
         ),
     )
@@ -4421,9 +4436,7 @@ def _etf_dynamic_rescue_summary(report_index: Mapping[str, Any]) -> dict[str, An
         "best_status": improvement.get("best_status", "MISSING"),
         "false_risk_off_reduction": best.get("false_risk_off_reduction", "MISSING"),
         "turnover_reduction": best.get("turnover_reduction", "MISSING"),
-        "remaining_blockers": ", ".join(
-            str(item.get("blocker_id")) for item in blockers
-        ),
+        "remaining_blockers": ", ".join(str(item.get("blocker_id")) for item in blockers),
         "detail_report": "" if report_path is None else str(report_path),
         "safety_status": safety_status,
         "production_effect": PRODUCTION_EFFECT,
@@ -4638,9 +4651,7 @@ def _etf_dynamic_v3_rescue_summary(report_index: Mapping[str, Any]) -> dict[str,
     blocker_summary = _mapping(payload.get("v0_4_blocker_summary"))
     safety_status = _etf_dynamic_v3_rescue_safety_status(payload)
     remaining = _records(payload.get("remaining_blockers"))
-    constraint_status = (
-        "improved" if best.get("constraint_fixed") is True else "still_blocked"
-    )
+    constraint_status = "improved" if best.get("constraint_fixed") is True else "still_blocked"
     drawdown_status = "improved" if best.get("drawdown_fixed") is True else "still_blocked"
     return {
         "availability": "AVAILABLE",
@@ -4660,9 +4671,7 @@ def _etf_dynamic_v3_rescue_summary(report_index: Mapping[str, Any]) -> dict[str,
         "constraint_hit_delta_vs_v0_4": best.get("constraint_hit_delta_vs_v0_4", "MISSING"),
         "drawdown_status": drawdown_status,
         "drawdown_preservation": best.get("drawdown_preservation", "MISSING"),
-        "remaining_blockers": ", ".join(
-            str(item.get("blocker_id")) for item in remaining
-        ),
+        "remaining_blockers": ", ".join(str(item.get("blocker_id")) for item in remaining),
         "detail_report": "" if report_path is None else str(report_path),
         "safety_status": safety_status,
         "production_effect": PRODUCTION_EFFECT,
@@ -4931,12 +4940,8 @@ def _etf_dynamic_v3_failure_attribution_summary(
         ),
         "v0_3_constraint_hit_rate": summary.get("v0_3_constraint_hit_rate", "MISSING"),
         "v0_4_constraint_hit_rate": summary.get("v0_4_constraint_hit_rate", "MISSING"),
-        "v0_3_constraint_hit_rate_pct": _format_percent(
-            summary.get("v0_3_constraint_hit_rate")
-        ),
-        "v0_4_constraint_hit_rate_pct": _format_percent(
-            summary.get("v0_4_constraint_hit_rate")
-        ),
+        "v0_3_constraint_hit_rate_pct": _format_percent(summary.get("v0_3_constraint_hit_rate")),
+        "v0_4_constraint_hit_rate_pct": _format_percent(summary.get("v0_4_constraint_hit_rate")),
         "v0_3_overfit_status": summary.get("v0_3_overfit_status", "MISSING"),
         "v0_4_overfit_status": summary.get("v0_4_overfit_status", "MISSING"),
         "detail_report": "" if report_path is None else str(report_path),
@@ -5035,6 +5040,127 @@ def _etf_dynamic_v3_failure_attribution_safety_status(
     )
 
 
+def _etf_dynamic_v3_parameter_research_summary(
+    report_index: Mapping[str, Any],
+) -> dict[str, Any]:
+    if not report_index:
+        return _missing_etf_dynamic_v3_parameter_research_summary()
+    leaderboard_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_parameter_sweep_leaderboard",
+    )
+    promotion_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_promotion_pack",
+    )
+    leaderboard = _read_optional_json(leaderboard_path)
+    if not leaderboard:
+        return _missing_etf_dynamic_v3_parameter_research_summary()
+    top = _records(leaderboard.get("top_eligible_candidates"))
+    first = top[0] if top else {}
+    common_reasons = _records(leaderboard.get("most_common_reject_reasons"))[:5]
+    promotion = _read_optional_json(promotion_path)
+    promotion_status = _text(_mapping(promotion).get("status"), "MISSING")
+    safety_status = _etf_dynamic_v3_parameter_research_safety_status(leaderboard)
+    top_candidate = _text(first.get("candidate_id"), "MISSING")
+    return {
+        "availability": "AVAILABLE",
+        "status": _text(leaderboard.get("status"), "UNKNOWN"),
+        "summary_sentence": (
+            "Dynamic Rescue Parameter Sweep: "
+            f"top={top_candidate}; candidates={leaderboard.get('candidate_count', 0)}; "
+            f"promotion_status={promotion_status}; "
+            "hard gate precedes soft score and production_candidate is manual-only."
+        ),
+        "candidate_count": leaderboard.get("candidate_count", 0),
+        "top_candidate": top_candidate,
+        "top_gate": first.get("gate", "MISSING"),
+        "top_score": first.get("score", "MISSING"),
+        "common_reject_reasons": ", ".join(
+            f"{row.get('reason')}:{row.get('count')}" for row in common_reasons
+        ),
+        "recommended_next_actions": ", ".join(_texts(leaderboard.get("recommended_next_actions"))),
+        "promotion_status": promotion_status,
+        "sweep_leaderboard": "" if leaderboard_path is None else str(leaderboard_path),
+        "promotion_manifest": "" if promotion_path is None else str(promotion_path),
+        "safety_status": safety_status,
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "production_candidate_generated": (
+            leaderboard.get("production_candidate_generated") is True
+            or _mapping(promotion).get("production_candidate_generated") is True
+        ),
+        "automatic_candidate_promotion": (
+            leaderboard.get("automatic_candidate_promotion") is True
+            or _mapping(promotion).get("automatic_candidate_promotion") is True
+        ),
+        "shadow_enrollment_allowed": (
+            leaderboard.get("shadow_enrollment_allowed") is True
+            or _mapping(promotion).get("shadow_enrollment_allowed") is True
+        ),
+    }
+
+
+def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
+    return {
+        "availability": "MISSING",
+        "status": "MISSING",
+        "summary_sentence": ("Dynamic Rescue Parameter Sweep: no latest sweep leaderboard found."),
+        "candidate_count": 0,
+        "top_candidate": "MISSING",
+        "top_gate": "MISSING",
+        "top_score": "MISSING",
+        "common_reject_reasons": "MISSING",
+        "recommended_next_actions": "MISSING",
+        "promotion_status": "MISSING",
+        "sweep_leaderboard": "",
+        "promotion_manifest": "",
+        "safety_status": "MISSING",
+        "production_effect": PRODUCTION_EFFECT,
+        "broker_action": "none",
+        "manual_review_required": True,
+        "production_candidate_generated": False,
+        "automatic_candidate_promotion": False,
+        "shadow_enrollment_allowed": False,
+        "limitation": (
+            "Dynamic rescue parameter sweep artifact is missing; Reader Brief does not "
+            "run etf dynamic-v3-rescue sweep or promotion commands."
+        ),
+    }
+
+
+def _etf_dynamic_v3_parameter_research_safety_status(
+    payload: Mapping[str, Any],
+) -> str:
+    safety = _mapping(payload.get("safety"))
+    safe = (
+        safety.get("observe_only") is True
+        and safety.get("candidate_only") is True
+        and _text(safety.get("production_effect"), PRODUCTION_EFFECT) == PRODUCTION_EFFECT
+        and safety.get("broker_action") == "none"
+        and safety.get("manual_review_required") is True
+        and safety.get("production_state_mutated") is False
+        and safety.get("baseline_config_mutated") is False
+        and safety.get("official_target_weights_mutated") is False
+        and safety.get("automatic_candidate_promotion") is False
+        and safety.get("auto_enrollment_without_owner_approval") is False
+        and safety.get("shadow_enrollment_allowed") is False
+        and safety.get("automatic_enrollment_allowed") is False
+        and safety.get("owner_approval_executed") is False
+        and safety.get("production_candidate_generated") is False
+        and payload.get("production_candidate_generated") is False
+    )
+    return (
+        "observe_only=true; candidate_only=true; production_effect=none; "
+        "broker_action=none; manual_review_required=true; "
+        "production_candidate_generated=false; automatic_candidate_promotion=false; "
+        "shadow_enrollment_allowed=false; owner_approval_executed=false"
+        if safe
+        else "SAFETY_REVIEW_REQUIRED"
+    )
+
+
 def _etf_dynamic_shadow_summary(report_index: Mapping[str, Any]) -> dict[str, Any]:
     if not report_index:
         return _missing_etf_dynamic_shadow_summary()
@@ -5110,8 +5236,7 @@ def _etf_dynamic_shadow_summary(report_index: Mapping[str, Any]) -> dict[str, An
             payload.get("automatic_candidate_promotion") is True for payload in payloads
         ),
         "auto_enrollment_without_owner_approval": any(
-            payload.get("auto_enrollment_without_owner_approval") is True
-            for payload in payloads
+            payload.get("auto_enrollment_without_owner_approval") is True for payload in payloads
         ),
     }
 
@@ -5280,9 +5405,7 @@ def _weekly_review_action_summary(weekly: Mapping[str, Any]) -> str:
     reviews = _records(weekly.get("candidate_reviews"))
     if not reviews:
         return "MISSING"
-    return ", ".join(
-        sorted({_text(item.get("recommended_action"), "UNKNOWN") for item in reviews})
-    )
+    return ", ".join(sorted({_text(item.get("recommended_action"), "UNKNOWN") for item in reviews}))
 
 
 def _etf_calibration_safety_status(*payloads: Mapping[str, Any]) -> str:
@@ -5344,16 +5467,12 @@ def _etf_forward_simulation_summary(report_index: Mapping[str, Any]) -> dict[str
     return {
         "availability": "AVAILABLE",
         "status": _text(dashboard.get("status"), "AVAILABLE"),
-        "active_shadow_candidates": int(
-            status_summary.get("active_candidate_count") or len(rows)
-        ),
+        "active_shadow_candidates": int(status_summary.get("active_candidate_count") or len(rows)),
         "best_candidate": best,
         "weakest_candidate": weakest,
         "needs_more_data_count": int(status_summary.get("needs_more_data_count") or 0),
         "watch_count": int(status_summary.get("watch_count") or 0),
-        "reject_pending_review_count": int(
-            status_summary.get("reject_pending_review_count") or 0
-        ),
+        "reject_pending_review_count": int(status_summary.get("reject_pending_review_count") or 0),
         "watchlist_attention_count": int(watchlist_summary.get("item_count") or 0),
         "safety_status": safety_status,
         "detail_report": "" if detail_report is None else str(detail_report),
@@ -5881,9 +6000,7 @@ def _satellite_main_blocker(eligibility: list[dict[str, Any]]) -> str:
 
 def _best_forward_candidate(rows: list[dict[str, Any]]) -> str:
     available = [
-        row
-        for row in rows
-        if _float_or_none(row.get("excess_return_vs_baseline")) is not None
+        row for row in rows if _float_or_none(row.get("excess_return_vs_baseline")) is not None
     ]
     if not available:
         return "MISSING"
@@ -5899,9 +6016,7 @@ def _best_forward_candidate(rows: list[dict[str, Any]]) -> str:
 
 def _weakest_forward_candidate(rows: list[dict[str, Any]]) -> str:
     available = [
-        row
-        for row in rows
-        if _float_or_none(row.get("excess_return_vs_baseline")) is not None
+        row for row in rows if _float_or_none(row.get("excess_return_vs_baseline")) is not None
     ]
     if not available:
         return "MISSING"
@@ -6541,11 +6656,7 @@ def _signal_snapshot_review_summary(
         if path.endswith("signal_snapshot.json")
     ]
     default_path = (
-        PROJECT_ROOT
-        / "artifacts"
-        / "signal_snapshots"
-        / as_of.isoformat()
-        / "signal_snapshot.json"
+        PROJECT_ROOT / "artifacts" / "signal_snapshots" / as_of.isoformat() / "signal_snapshot.json"
     )
     path = next((candidate for candidate in snapshot_files if candidate.exists()), default_path)
     payload = load_signal_snapshot_payload(path)
@@ -6834,14 +6945,8 @@ def _portfolio_candidates_review_summary(as_of: date) -> dict[str, Any]:
     best_transmission = _mapping(best.get("signal_transmission"))
     baseline_transmission = _mapping(baseline.get("signal_transmission"))
     transmission_delta = (
-        (_float_or_none(best_transmission.get("target_to_actual_weight_effectiveness")) or 0.0)
-        - (
-            _float_or_none(
-                baseline_transmission.get("target_to_actual_weight_effectiveness")
-            )
-            or 0.0
-        )
-    )
+        _float_or_none(best_transmission.get("target_to_actual_weight_effectiveness")) or 0.0
+    ) - (_float_or_none(baseline_transmission.get("target_to_actual_weight_effectiveness")) or 0.0)
     turnover_impact = _float_or_none(best_guardrail.get("turnover_relative_increase")) or 0.0
     status = _text(metadata.get("status"), "UNKNOWN")
     guardrail_status = _text(best_guardrail.get("guardrail_status"), "UNKNOWN")
@@ -7379,9 +7484,7 @@ def _weight_stability_readiness_review_summary(as_of: date) -> dict[str, Any]:
     status = _text(metadata.get("status") or eligibility.get("status"), "UNKNOWN")
     can_run = eligibility.get("can_run") is True
     blocking_checks = [
-        _text(item, "")
-        for item in eligibility.get("blocking_checks", [])
-        if _text(item, "")
+        _text(item, "") for item in eligibility.get("blocking_checks", []) if _text(item, "")
     ]
     next_action = ""
     if recovery_plan:
@@ -7956,9 +8059,7 @@ def _parameter_shadow_data_quality_sentence(
     if normalized_status in {"FAILED", "FAIL", "INSUFFICIENT_DATA"}:
         reasons = diagnostic_summary.get("blocking_reasons")
         reason_items = (
-            [str(reason) for reason in reasons if str(reason)]
-            if isinstance(reasons, list)
-            else []
+            [str(reason) for reason in reasons if str(reason)] if isinstance(reasons, list) else []
         )
         missing_assets = _missing_price_assets_from_reasons(reason_items)
         if missing_assets:
@@ -7967,9 +8068,8 @@ def _parameter_shadow_data_quality_sentence(
                 f"missing for {_format_english_list(missing_assets)}."
             )
         if isinstance(reasons, list) and reasons:
-            return (
-                "Shadow parameter review remains blocked because "
-                + "; ".join(str(reason) for reason in reasons if str(reason))
+            return "Shadow parameter review remains blocked because " + "; ".join(
+                str(reason) for reason in reasons if str(reason)
             )
         return (
             "Shadow parameter review remains rejected because the backtest input data quality "

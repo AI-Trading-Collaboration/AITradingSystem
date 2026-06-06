@@ -1364,6 +1364,101 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_parameter_sweep_leaderboard
+    title: ETF Dynamic v3 Rescue Parameter Sweep Leaderboard
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue sweep leaderboard --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/sweeps/*/leaderboard.json
+      - reports/etf_portfolio/dynamic_v3_rescue/sweeps/*/leaderboard.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-093 to TRADING-095 parameter research uses configured hard gates
+      before soft ranking, exposes reject reasons and metric distributions, and
+      keeps production_candidate as a manual-only status.
+    owner_action: review_sweep_leaderboard_before_walk_forward_or_shadow_registration
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_walk_forward_report
+    title: ETF Dynamic v3 Rescue Walk-forward Report
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue walk-forward report --walk-forward-id <wf_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/walk_forward/*/wf_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/walk_forward/*/wf_leaderboard.json
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-096 validates top sweep candidates across rolling windows and OOS
+      holdout before any robustness, shadow, or promotion interpretation.
+    owner_action: review_walk_forward_report_before_robustness_or_promotion_pack
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_robustness_report
+    title: ETF Dynamic v3 Rescue Robustness Diagnostics
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue robustness report --robustness-id <robustness_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/robustness/*/overfit_diagnostics.json
+      - reports/etf_portfolio/dynamic_v3_rescue/robustness/*/robustness_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-097 checks neighbor sensitivity, stress buckets, regime buckets,
+      and overfit warnings; placeholders must remain REVIEW_REQUIRED and cannot
+      create a PASS for promotion.
+    owner_action: review_robustness_report_before_shadow_or_promotion_pack
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_shadow_report
+    title: ETF Dynamic v3 Rescue Shadow Candidate Report
+    group: shadow
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue shadow report --all
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow/shadow_report_*.json
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow/shadow_report_*.md
+      - registry/etf_portfolio/dynamic_v3_rescue_shadow_candidates.yaml
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-098 observe-only candidates require age, rebalance count, source
+      sweep, walk-forward, robustness, and latest metrics before promotion review.
+    owner_action: review_shadow_report_before_promotion_pack
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_promotion_pack
+    title: ETF Dynamic v3 Rescue Promotion Review Pack
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue promotion pack --candidate-id <candidate_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/promotion/*/*/promotion_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/promotion/*/*/promotion_decision.md
+      - reports/etf_portfolio/dynamic_v3_rescue/promotion/*/*/reader_brief_section.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-100 combines sweep, candidate, walk-forward, robustness, shadow,
+      and latest real-evaluation evidence. It may output promote_candidate plus
+      manual_review_required, but must never generate production_candidate.
+    owner_action: owner_manual_review_required_before_any_production_candidate_status
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_weight_dual_track_calibration_validation
     title: ETF Weight Dual-Track Calibration Validation
     group: governance

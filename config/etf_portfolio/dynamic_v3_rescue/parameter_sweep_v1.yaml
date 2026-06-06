@@ -1,0 +1,127 @@
+schema_version: 1
+
+run:
+  name: dynamic_v3_rescue_parameter_sweep_v1
+  description: "Constrained parameter sweep for dynamic v3 rescue candidates"
+  seed: 42
+  max_candidates: 5000
+  mode: grid
+  allow_resume: true
+
+data:
+  as_of: "2026-06-04"
+  end: "2026-06-04"
+  min_history_days: 756
+  quality_status: PASS
+  manifest_hash: tiny_fixture_dynamic_v3_rescue_v1
+  allow_data_quality:
+    - PASS
+    - PASS_WITH_WARNINGS
+
+baselines:
+  static: static_baseline
+  dynamic_reference:
+    - dynamic_v0_2
+    - dynamic_v0_3
+    - dynamic_v0_4
+
+parameter_space:
+  rescue_intensity:
+    values: [0.25, 0.50, 0.75, 1.00]
+  smooth_window_days:
+    values: [3, 5, 10, 20]
+  constraint_buffer_bps:
+    values: [0, 10, 25, 50]
+  turnover_penalty:
+    values: [0.0, 0.05, 0.10, 0.20]
+  risk_off_confirmation_days:
+    values: [1, 2, 3, 5]
+  rebalance_cooldown_days:
+    values: [0, 3, 5, 10]
+  drawdown_guard:
+    values: [none, soft, hard]
+
+hard_constraints:
+  max_constraint_hit_rate: 0.10
+  max_constraint_hits_delta_vs_reference: 0
+  max_false_risk_off_delta: 0
+  max_turnover: 0.85
+  max_drawdown_degradation_pp: 0.0
+  max_dynamic_vs_static_gap: 0.20
+  require_data_quality_not_fail: true
+  require_no_lookahead: true
+  allow_robustness_status:
+    - PASS
+    - REVIEW_REQUIRED
+  noise_floor_improvement: 0.01
+
+promotion_constraints:
+  require_robustness_status: PASS
+  require_walk_forward_status: PASS
+  require_oos_status: PASS
+  require_stress_bucket_status: PASS
+  max_parameter_sensitivity_status: REVIEW_REQUIRED
+  require_shadow_observation: true
+
+scoring:
+  objective: constrained_weighted_score
+  weights:
+    dynamic_vs_static_gap_improvement: 0.25
+    constraint_hit_reduction: 0.25
+    drawdown_preservation: 0.20
+    turnover_reduction: 0.10
+    false_risk_off_control: 0.10
+    robustness_score: 0.10
+
+walk_forward:
+  enabled: true
+  train_window_months: 36
+  test_window_months: 6
+  step_months: 6
+  min_windows: 5
+  top_n: 20
+
+out_of_sample:
+  enabled: true
+  holdout_start: "2024-01-01"
+  holdout_end: "2026-06-04"
+
+robustness:
+  enabled: true
+  neighbor_grid_steps: 1
+  require_stress_buckets:
+    - high_drawdown
+    - fast_recovery
+    - sideways_choppy
+    - strong_trend
+    - high_volatility
+    - constraint_heavy
+  overfit_status_allow:
+    - LOW_RISK
+    - REVIEW_REQUIRED
+
+shadow:
+  enabled: true
+  promotion_earliest_after_rebalance_count: 3
+  promotion_earliest_after_days: 30
+  required_observation_metrics:
+    - constraint_hits
+    - false_risk_off
+    - turnover
+    - drawdown
+    - dynamic_vs_static_gap
+
+artifact_retention:
+  keep_recent_full_sweeps: 10
+  keep_recent_failed_sweeps: 10
+  keep_all_observe_only: true
+  keep_all_promote_candidate: true
+  keep_all_production_candidate: true
+  stale_after_days: 14
+
+execution:
+  workers: 4
+  checkpoint_every_candidates: 50
+  fail_fast_on_schema_error: true
+  continue_on_candidate_error: true
+  evaluation_mode: tiny_fixture_proxy
