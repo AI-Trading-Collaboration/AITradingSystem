@@ -521,7 +521,7 @@ def test_cli_direct_dispatches_scheduled_task_commands(monkeypatch) -> None:
     def fake_shadow_monitor(**kwargs: object) -> None:
         calls.append(("shadow_monitor", kwargs))
 
-    monkeypatch.setattr(cli_direct.cli, "validate_data", fake_validate_data)
+    monkeypatch.setattr(cli_direct.data_cache_cli, "validate_data", fake_validate_data)
     monkeypatch.setattr(
         cli_direct.pit_snapshots_cli,
         "build_pit_snapshot_manifest_command",
@@ -730,8 +730,8 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
 
         return _fake
 
-    monkeypatch.setattr(cli_direct.cli, "download_data", recorder("download_data"))
-    monkeypatch.setattr(cli_direct.cli, "validate_data", recorder("validate_data"))
+    monkeypatch.setattr(cli_direct.data_cache_cli, "download_data", recorder("download_data"))
+    monkeypatch.setattr(cli_direct.data_cache_cli, "validate_data", recorder("validate_data"))
     monkeypatch.setattr(
         cli_direct.pit_snapshots_cli,
         "fetch_fmp_forward_pit_command",

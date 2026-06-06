@@ -10,6 +10,7 @@ import typer
 
 from ai_trading_system import cli
 from ai_trading_system.cli_commands import data as data_cli
+from ai_trading_system.cli_commands import data_cache as data_cache_cli
 from ai_trading_system.cli_commands import docs as docs_cli
 from ai_trading_system.cli_commands import etf_portfolio as etf_cli
 from ai_trading_system.cli_commands import feedback as feedback_cli
@@ -39,14 +40,14 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 def _dispatch(args: list[str]) -> None:
     if args[:1] == ["download-data"]:
-        cli.download_data(
+        data_cache_cli.download_data(
             start=_option(args, "--start", "2018-01-01"),
             end=_option(args, "--end"),
             full_universe=_flag(args, "--full-universe"),
         )
         return
     if args[:1] == ["validate-data"]:
-        cli.validate_data(
+        data_cache_cli.validate_data(
             as_of=_option(args, "--as-of"),
             full_universe=_flag(args, "--full-universe"),
         )

@@ -7,8 +7,8 @@ from pathlib import Path
 import pandas as pd
 from typer.testing import CliRunner
 
-import ai_trading_system.cli as cli_module
 from ai_trading_system.cli import app
+from ai_trading_system.cli_commands import data_sources as data_sources_cli
 from ai_trading_system.config import (
     configured_price_tickers,
     configured_rate_series,
@@ -141,7 +141,7 @@ def test_yahoo_price_diagnostic_cli_writes_report_without_mutating_caches(
     before_secondary = secondary_path.read_text(encoding="utf-8")
     output_path = tmp_path / "yahoo_diag.md"
     monkeypatch.setattr(
-        cli_module,
+        data_sources_cli,
         "YFinancePriceProvider",
         lambda: FakeYahooProvider({"NVDA": 104.0}),
     )
