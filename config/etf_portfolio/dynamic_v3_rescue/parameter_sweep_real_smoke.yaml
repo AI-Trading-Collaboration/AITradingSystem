@@ -1,19 +1,19 @@
 schema_version: 1
 
 run:
-  name: dynamic_v3_rescue_parameter_sweep_v1
-  description: "Constrained parameter sweep for dynamic v3 rescue candidates"
+  name: dynamic_v3_rescue_parameter_sweep_real_smoke
+  description: "Small real evaluator smoke for dynamic v3 rescue parameter sweep"
   seed: 42
-  max_candidates: 5000
+  max_candidates: 2
   mode: grid
   allow_resume: true
 
 data:
-  as_of: "2026-06-04"
-  end: "2026-06-04"
-  min_history_days: 756
+  as_of: "2026-06-05"
+  end: "2026-06-05"
+  min_history_days: 260
   quality_status: PASS
-  manifest_hash: tiny_fixture_dynamic_v3_rescue_v1
+  manifest_hash: real_dynamic_v3_rescue_smoke_runtime_gate
   allow_data_quality:
     - PASS
     - PASS_WITH_WARNINGS
@@ -27,33 +27,34 @@ baselines:
 
 parameter_space:
   rescue_intensity:
-    values: [0.25, 0.50, 0.75, 1.00]
+    values: [0.50, 0.75]
   smooth_window_days:
-    values: [3, 5, 10, 20]
+    values: [5]
   constraint_buffer_bps:
-    values: [0, 10, 25, 50]
+    values: [25]
   turnover_penalty:
-    values: [0.0, 0.05, 0.10, 0.20]
+    values: [0.10]
   risk_off_confirmation_days:
-    values: [1, 2, 3, 5]
+    values: [2]
   rebalance_cooldown_days:
-    values: [0, 3, 5, 10]
+    values: [3]
   drawdown_guard:
-    values: [none, soft, hard]
+    values: [soft]
 
 hard_constraints:
-  max_constraint_hit_rate: 0.10
+  max_constraint_hit_rate: 0.35
   max_constraint_hits_delta_vs_reference: 0
-  max_false_risk_off_delta: 0
-  max_turnover: 0.85
-  max_drawdown_degradation_pp: 0.0
-  max_dynamic_vs_static_gap: 0.20
+  max_false_risk_off_delta: 30
+  max_turnover: 8.0
+  max_drawdown_degradation_pp: 0.02
+  max_dynamic_vs_static_gap: 1.0
   require_data_quality_not_fail: true
   require_no_lookahead: true
   allow_robustness_status:
     - PASS
     - REVIEW_REQUIRED
-  noise_floor_improvement: 0.01
+    - FAIL
+  noise_floor_improvement: 0.0
 
 promotion_constraints:
   require_robustness_status: PASS
@@ -75,16 +76,16 @@ scoring:
 
 walk_forward:
   enabled: true
-  train_window_months: 36
-  test_window_months: 6
-  step_months: 6
-  min_windows: 5
-  top_n: 20
+  train_window_months: 12
+  test_window_months: 3
+  step_months: 3
+  min_windows: 2
+  top_n: 2
 
 out_of_sample:
   enabled: true
   holdout_start: "2024-01-01"
-  holdout_end: "2026-06-04"
+  holdout_end: "2026-06-05"
 
 robustness:
   enabled: true
@@ -92,10 +93,6 @@ robustness:
   require_stress_buckets:
     - high_drawdown
     - fast_recovery
-    - sideways_choppy
-    - strong_trend
-    - high_volatility
-    - constraint_heavy
   overfit_status_allow:
     - LOW_RISK
     - REVIEW_REQUIRED
@@ -120,8 +117,8 @@ artifact_retention:
   stale_after_days: 14
 
 execution:
-  workers: 4
-  checkpoint_every_candidates: 50
+  workers: 1
+  checkpoint_every_candidates: 1
   fail_fast_on_schema_error: true
   continue_on_candidate_error: true
-  evaluator: tiny_fixture_proxy
+  evaluator: real_dynamic_v3_rescue

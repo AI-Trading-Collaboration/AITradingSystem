@@ -3,11 +3,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pandas as pd
 import pytest
 import yaml
 from typer.testing import CliRunner
 
 from ai_trading_system.cli_commands.etf_portfolio import etf_app
+from ai_trading_system.config import configured_price_tickers, configured_rate_series, load_universe
 from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
     DEFAULT_SHADOW_REGISTRY_PATH,
@@ -77,6 +79,10 @@ def test_tiny_sweep_resume_reports_and_validation(tmp_path: Path) -> None:
     assert results
     assert errors
     assert any(row["gate"] != "reject" for row in results)
+    assert all(row["evaluator_mode"] == "tiny_fixture_proxy" for row in results)
+    assert all(row["metrics_source"] == "tiny_fixture_proxy_formula" for row in results)
+    assert all(row["not_for_investment_decision"] is True for row in results)
+    assert all(row["real_evaluation_artifact_path"] == "" for row in results)
     assert (sweep_dir / "leaderboard.json").exists()
     assert (sweep_dir / "sweep_report.md").exists()
 
@@ -160,7 +166,8 @@ def test_walk_forward_robustness_shadow_artifacts_and_promotion_pack(tmp_path: P
         robustness_dir=tmp_path / "robustness",
         output_dir=tmp_path / "promotion",
     )
-    assert pack["pack"]["status"] in {"review_required", "promote_candidate"}
+    assert pack["pack"]["status"] in {"review_required", "reject"}
+    assert "tiny_fixture_not_for_investment_decision" in pack["pack"]["decision_reasons"]
     assert pack["pack"]["production_candidate_generated"] is False
     assert (
         validate_promotion_pack(
@@ -240,12 +247,54 @@ def test_dynamic_v3_parameter_research_cli_smoke(tmp_path: Path) -> None:
     assert "production_candidate_generated=false" in leaderboard_result.output
 
 
+def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(tmp_path: Path) -> None:
+    prices_path, rates_path, as_of = _write_real_smoke_cache(tmp_path)
+    config_path = _real_smoke_config_path(tmp_path, as_of)
+    output_dir = tmp_path / "real_sweeps"
+
+    result = run_parameter_sweep(
+        config_path=config_path,
+        output_dir=output_dir,
+        workers=1,
+        evaluator_mode="real_dynamic_v3_rescue",
+        prices_path=prices_path,
+        rates_path=rates_path,
+    )
+    sweep_id = result["sweep_id"]
+    sweep_dir = output_dir / sweep_id
+    results = _jsonl(sweep_dir / "candidate_results.jsonl")
+
+    assert result["manifest"]["evaluator_mode"] == "real_dynamic_v3_rescue"
+    assert result["manifest"]["completed_count"] <= 2
+    assert results
+    assert all(row["evaluator_mode"] == "real_dynamic_v3_rescue" for row in results)
+    assert all(row["metrics_source"] == "real_evaluation_artifact" for row in results)
+    assert all(row["not_for_investment_decision"] is False for row in results)
+    assert all(Path(row["real_evaluation_artifact_path"]).exists() for row in results)
+    assert {row["data_quality"]["status"] for row in results} <= {"PASS", "PASS_WITH_WARNINGS"}
+    assert validate_sweep_artifact(sweep_id=sweep_id, output_dir=output_dir)["status"] == "PASS"
+
+    first_artifact = Path(results[0]["real_evaluation_artifact_path"])
+    first_artifact.unlink()
+    validation = validate_sweep_artifact(sweep_id=sweep_id, output_dir=output_dir)
+    assert validation["status"] == "FAIL"
+    assert any(
+        check["check_id"] == "real_evaluation_artifact_paths_exist"
+        and check["passed"] is False
+        for check in validation["checks"]
+    )
+
+
 def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> None:
     leaderboard_path = tmp_path / "leaderboard.json"
     leaderboard_path.write_text(
         json.dumps(
             {
                 "status": "PASS",
+                "evaluator_mode": "tiny_fixture_proxy",
+                "evaluator_version": "tiny_fixture_proxy_v1",
+                "metrics_source": "tiny_fixture_proxy_formula",
+                "not_for_investment_decision": True,
                 "candidate_count": 3,
                 "top_eligible_candidates": [
                     {"candidate_id": "abc123", "gate": "observe_only", "score": 0.42}
@@ -288,6 +337,8 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
     summary = reader_brief._etf_dynamic_v3_parameter_research_summary(report_index)
 
     assert summary["availability"] == "AVAILABLE"
+    assert summary["evaluator_mode"] == "tiny_fixture_proxy"
+    assert summary["not_for_investment_decision"] is True
     assert summary["top_candidate"] == "abc123"
     assert summary["promotion_status"] == "review_required"
     assert summary["production_candidate_generated"] is False
@@ -296,6 +347,37 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
 def _tiny_config_path(tmp_path: Path) -> Path:
     path = tmp_path / "parameter_sweep_tiny.yaml"
     path.write_text(yaml.safe_dump(_tiny_config(), sort_keys=False), encoding="utf-8")
+    return path
+
+
+def _real_smoke_config_path(tmp_path: Path, as_of: str) -> Path:
+    raw = _tiny_config()
+    raw["run"]["max_candidates"] = 2
+    raw["data"]["as_of"] = as_of
+    raw["data"]["end"] = as_of
+    raw["data"]["allow_data_quality"] = ["PASS", "PASS_WITH_WARNINGS"]
+    raw["parameter_space"] = {
+        "rescue_intensity": {"values": [0.50, 0.75]},
+        "smooth_window_days": {"values": [5]},
+        "constraint_buffer_bps": {"values": [25]},
+        "turnover_penalty": {"values": [0.10]},
+        "risk_off_confirmation_days": {"values": [2]},
+        "rebalance_cooldown_days": {"values": [3]},
+        "drawdown_guard": {"values": ["soft"]},
+    }
+    raw["hard_constraints"]["max_constraint_hit_rate"] = 0.35
+    raw["hard_constraints"]["max_false_risk_off_delta"] = 30
+    raw["hard_constraints"]["max_turnover"] = 8.0
+    raw["hard_constraints"]["max_drawdown_degradation_pp"] = 0.02
+    raw["hard_constraints"]["max_dynamic_vs_static_gap"] = 1.0
+    raw["hard_constraints"]["allow_robustness_status"] = ["PASS", "REVIEW_REQUIRED", "FAIL"]
+    raw["hard_constraints"]["noise_floor_improvement"] = 0.0
+    raw["execution"]["workers"] = 1
+    raw["execution"]["checkpoint_every_candidates"] = 1
+    raw["execution"]["evaluator"] = "real_dynamic_v3_rescue"
+    raw["execution"].pop("evaluation_mode", None)
+    path = tmp_path / "parameter_sweep_real_smoke.yaml"
+    path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
     return path
 
 
@@ -319,6 +401,47 @@ def _tiny_config() -> dict[str, object]:
     raw["walk_forward"]["min_windows"] = 2
     raw["walk_forward"]["top_n"] = 3
     return raw
+
+
+def _write_real_smoke_cache(tmp_path: Path) -> tuple[Path, Path, str]:
+    universe = load_universe()
+    tickers = list(dict.fromkeys([*configured_price_tickers(universe), "CASH"]))
+    series_ids = configured_rate_series(universe)
+    dates = pd.bdate_range("2022-01-03", periods=520)
+    price_rows: list[dict[str, object]] = []
+    for ticker_index, ticker in enumerate(tickers):
+        base = 100.0 + ticker_index * 3.0
+        drift = 0.00025 + ticker_index * 0.00001
+        for day_index, row_date in enumerate(dates):
+            close = base * ((1.0 + drift) ** day_index)
+            price_rows.append(
+                {
+                    "date": row_date.date().isoformat(),
+                    "ticker": ticker,
+                    "open": close,
+                    "high": close * 1.001,
+                    "low": close * 0.999,
+                    "close": close,
+                    "adj_close": close,
+                    "volume": 1_000_000 + ticker_index,
+                }
+            )
+    rate_rows: list[dict[str, object]] = []
+    for series_index, series_id in enumerate(series_ids):
+        base = 4.0 + series_index * 0.2
+        for day_index, row_date in enumerate(dates):
+            rate_rows.append(
+                {
+                    "date": row_date.date().isoformat(),
+                    "series": series_id,
+                    "value": base - day_index * 0.0005,
+                }
+            )
+    prices_path = tmp_path / "prices_daily.csv"
+    rates_path = tmp_path / "rates_daily.csv"
+    pd.DataFrame(price_rows).to_csv(prices_path, index=False)
+    pd.DataFrame(rate_rows).to_csv(rates_path, index=False)
+    return prices_path, rates_path, dates[-1].date().isoformat()
 
 
 def _jsonl(path: Path) -> list[dict[str, object]]:

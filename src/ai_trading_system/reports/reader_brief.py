@@ -1265,6 +1265,20 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     ),
                     ("status", etf_dynamic_v3_parameter_research.get("status")),
                     (
+                        "evaluator_mode",
+                        etf_dynamic_v3_parameter_research.get("evaluator_mode"),
+                    ),
+                    (
+                        "metrics_source",
+                        etf_dynamic_v3_parameter_research.get("metrics_source"),
+                    ),
+                    (
+                        "not_for_investment_decision",
+                        etf_dynamic_v3_parameter_research.get(
+                            "not_for_investment_decision"
+                        ),
+                    ),
+                    (
                         "summary",
                         etf_dynamic_v3_parameter_research.get("summary_sentence"),
                     ),
@@ -5063,15 +5077,23 @@ def _etf_dynamic_v3_parameter_research_summary(
     promotion_status = _text(_mapping(promotion).get("status"), "MISSING")
     safety_status = _etf_dynamic_v3_parameter_research_safety_status(leaderboard)
     top_candidate = _text(first.get("candidate_id"), "MISSING")
+    evaluator_mode = _text(leaderboard.get("evaluator_mode"), "UNKNOWN")
+    not_for_investment = leaderboard.get("not_for_investment_decision") is True
     return {
         "availability": "AVAILABLE",
         "status": _text(leaderboard.get("status"), "UNKNOWN"),
         "summary_sentence": (
             "Dynamic Rescue Parameter Sweep: "
             f"top={top_candidate}; candidates={leaderboard.get('candidate_count', 0)}; "
+            f"evaluator={evaluator_mode}; "
             f"promotion_status={promotion_status}; "
             "hard gate precedes soft score and production_candidate is manual-only."
         ),
+        "evaluator_mode": evaluator_mode,
+        "evaluator_version": leaderboard.get("evaluator_version", "MISSING"),
+        "metrics_source": leaderboard.get("metrics_source", "MISSING"),
+        "not_for_investment_decision": not_for_investment,
+        "data_quality": leaderboard.get("data_quality", {}),
         "candidate_count": leaderboard.get("candidate_count", 0),
         "top_candidate": top_candidate,
         "top_gate": first.get("gate", "MISSING"),
@@ -5107,6 +5129,11 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "availability": "MISSING",
         "status": "MISSING",
         "summary_sentence": ("Dynamic Rescue Parameter Sweep: no latest sweep leaderboard found."),
+        "evaluator_mode": "MISSING",
+        "evaluator_version": "MISSING",
+        "metrics_source": "MISSING",
+        "not_for_investment_decision": False,
+        "data_quality": {},
         "candidate_count": 0,
         "top_candidate": "MISSING",
         "top_gate": "MISSING",

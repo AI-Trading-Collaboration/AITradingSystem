@@ -706,12 +706,20 @@ run/report`、`validate-robustness`、`shadow register/list/report`、
 `reports/etf_portfolio/dynamic_v3_rescue/`，observe-only registry 写入
 `registry/etf_portfolio/dynamic_v3_rescue_shadow_candidates.yaml`。该平台先 hard gate、
 再 soft ranking、再 walk-forward/OOS、robustness、shadow observation 和 promotion
-review pack；tiny fixture mode 只验证 artifact contract，不等于真实 promotion evidence。
+review pack。TRADING-101 将 evaluator mode 固定为 `tiny_fixture_proxy` 与
+`real_dynamic_v3_rescue`：默认 CI / focused tests 继续使用 tiny fixture；manual research
+run 可用 `--evaluator real_dynamic_v3_rescue` 或
+`config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_real_smoke.yaml` 接入 TRADING-091
+price-driven real evaluation。Real mode 会先运行 cached data quality gate，每个 candidate
+写入独立 real evaluation artifact，并在 `candidate_results.jsonl` 披露 evaluator mode/version、
+real artifact path、data quality、metrics source；tiny fixture mode 明确
+`not_for_investment_decision=true`，只验证 artifact contract，不等于真实 promotion evidence。
 所有输出固定 `production_effect=none`、`broker_action=none`、
-`production_candidate_generated=false`；自动命令最多输出 `promote_candidate +
-manual_review_required`，不得生成 `production_candidate`、approval、shadow enrollment、
-baseline mutation、official target weights mutation 或 broker action。Reader Brief 的
-`Dynamic Rescue Parameter Sweep` 区块只读 latest sweep leaderboard / promotion pack。
+`production_candidate_generated=false`；tiny promotion pack 不允许进入 `promote_candidate`，
+real leaderboard 最多输出 `promote_candidate + manual_review_required`，不得生成
+`production_candidate`、approval、shadow enrollment、baseline mutation、official target
+weights mutation 或 broker action。Reader Brief 的 `Dynamic Rescue Parameter Sweep` 区块
+只读 latest sweep leaderboard / promotion pack，并显示 evaluator mode 和 fixture-only 限制。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

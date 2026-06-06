@@ -6,20 +6,64 @@ import json
 import subprocess
 from collections import Counter
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from hashlib import sha256
 from itertools import product
 from pathlib import Path
 from typing import Any, Literal, Self
 
+import pandas as pd
 import yaml
 from pydantic import BaseModel, Field, model_validator
 
-from ai_trading_system.config import PROJECT_ROOT
+from ai_trading_system.config import (
+    PROJECT_ROOT,
+    configured_price_tickers,
+    configured_rate_series,
+    load_data_quality,
+    load_universe,
+)
+from ai_trading_system.data.quality import (
+    default_quality_report_path,
+    validate_data_cache,
+    write_data_quality_report,
+)
+from ai_trading_system.etf_portfolio.data import load_standard_prices
+from ai_trading_system.etf_portfolio.dynamic_allocation import (
+    load_dynamic_allocation_policy_config,
+)
+from ai_trading_system.etf_portfolio.dynamic_rescue import (
+    load_dynamic_failure_diagnostics_policy_config,
+)
+from ai_trading_system.etf_portfolio.dynamic_robustness import (
+    load_dynamic_robustness_policy_config,
+)
+from ai_trading_system.etf_portfolio.dynamic_v3_real_evaluation import (
+    DEFAULT_DYNAMIC_V3_REAL_EVALUATION_POLICY_CONFIG_PATH,
+    DynamicV3RealEvaluationPolicyConfig,
+    build_dynamic_v3_real_evaluation_report,
+    load_dynamic_v3_real_evaluation_policy_config,
+    write_dynamic_v3_real_evaluation_report,
+)
+from ai_trading_system.etf_portfolio.dynamic_v3_rescue import (
+    load_dynamic_v3_rescue_policy_config,
+)
+from ai_trading_system.etf_portfolio.models import (
+    DEFAULT_ETF_PRICE_PATH,
+    load_etf_config_bundle,
+)
 from ai_trading_system.yaml_loader import safe_load_yaml_path
 
 STRATEGY_FAMILY = "dynamic_v3_rescue"
 SCHEMA_VERSION = 1
+EVALUATOR_TINY_FIXTURE_PROXY = "tiny_fixture_proxy"
+EVALUATOR_REAL_DYNAMIC_V3_RESCUE = "real_dynamic_v3_rescue"
+EvaluatorMode = Literal["tiny_fixture_proxy", "real_dynamic_v3_rescue"]
+EVALUATOR_VERSIONS: dict[str, str] = {
+    EVALUATOR_TINY_FIXTURE_PROXY: "tiny_fixture_proxy_v1",
+    EVALUATOR_REAL_DYNAMIC_V3_RESCUE: "real_dynamic_v3_rescue_v1",
+}
 
 DEFAULT_PARAMETER_SWEEP_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "dynamic_v3_rescue" / "parameter_sweep_v1.yaml"
@@ -41,6 +85,21 @@ GATE_OBSERVE_ONLY = "observe_only"
 GATE_PROMOTE_CANDIDATE = "promote_candidate"
 FORBIDDEN_GATE = "production_candidate"
 
+# TRADING-101 pilot mapping: sweep axes are bounded inputs to existing
+# TRADING-091 materialization controls. These are research-only transforms, not
+# production thresholds; the requirement doc records the exit condition for
+# replacing this pilot mapping with calibrated policy fields.
+REAL_EVALUATOR_BASE_SMOOTH_WINDOW_DAYS = 5
+REAL_EVALUATOR_MIN_REBALANCE_DELTA_PER_COOLDOWN_DAY = 0.001
+REAL_EVALUATOR_DRAW_DOWN_GUARD_MULTIPLIERS = {
+    "none": 0.20,
+    "soft": 0.60,
+    "hard": 1.00,
+}
+REAL_EVALUATOR_MIN_POSITIVE_MATERIALIZATION_VALUE = 0.001
+REAL_EVALUATOR_MIN_WEEKLY_TURNOVER_CAP = 0.01
+REAL_EVALUATOR_EVENT_RISK_THRESHOLD_PER_CONFIRMATION = 1.0
+
 DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY: dict[str, Any] = {
     "observe_only": True,
     "candidate_only": True,
@@ -61,6 +120,22 @@ DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY: dict[str, Any] = {
 
 class DynamicV3ParameterResearchError(ValueError):
     """Raised when dynamic v3 parameter research inputs or artifacts are invalid."""
+
+
+@dataclass(frozen=True)
+class RealEvaluationContext:
+    prices: pd.DataFrame
+    etf_config: Any
+    real_policy: DynamicV3RealEvaluationPolicyConfig
+    v3_rescue_policy: Any
+    dynamic_robustness_policy: Any
+    dynamic_policy: Any
+    failure_policy: Any
+    data_quality_status: str
+    data_quality_report_path: Path
+    prices_path: Path
+    real_evaluation_output_dir: Path
+    data_manifest_hash: str
 
 
 class SweepRunConfig(BaseModel):
@@ -192,7 +267,20 @@ class ExecutionConfig(BaseModel):
     checkpoint_every_candidates: int = Field(ge=1)
     fail_fast_on_schema_error: bool
     continue_on_candidate_error: bool
-    evaluation_mode: Literal["tiny_fixture_proxy", "real_backtest_adapter"]
+    evaluator: EvaluatorMode = EVALUATOR_TINY_FIXTURE_PROXY
+    evaluation_mode: EvaluatorMode | None = None
+
+    @model_validator(mode="after")
+    def validate_evaluator_alias(self) -> Self:
+        if self.evaluation_mode is not None:
+            if (
+                self.evaluator != EVALUATOR_TINY_FIXTURE_PROXY
+                and self.evaluator != self.evaluation_mode
+            ):
+                raise ValueError("execution.evaluator and execution.evaluation_mode conflict")
+            self.evaluator = self.evaluation_mode
+        self.evaluation_mode = self.evaluator
+        return self
 
 
 class DynamicV3ParameterSweepConfig(BaseModel):
@@ -324,12 +412,22 @@ def build_sweep_config_validation(
         checks.append(_check("schema_valid", False, str(exc)))
         status = "FAIL"
         candidates = []
+        config = None
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_parameter_sweep_config_validation",
         "status": status,
         "config_path": str(config_path),
         "candidate_preview_count": len(candidates),
+        "evaluator_mode": (
+            EVALUATOR_TINY_FIXTURE_PROXY if config is None else config.execution.evaluator
+        ),
+        "evaluator_version": _evaluator_version(
+            EVALUATOR_TINY_FIXTURE_PROXY if config is None else config.execution.evaluator
+        ),
+        "not_for_investment_decision": (
+            True if config is None else config.execution.evaluator == EVALUATOR_TINY_FIXTURE_PROXY
+        ),
         "checks": checks,
         "failed_check_count": sum(1 for check in checks if not check["passed"]),
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
@@ -351,6 +449,11 @@ def preview_sweep_candidates(
         "config_path": str(config_path),
         "candidate_count": len(candidates),
         "preview_count": min(limit, len(candidates)),
+        "evaluator_mode": config.execution.evaluator,
+        "evaluator_version": _evaluator_version(config.execution.evaluator),
+        "not_for_investment_decision": (
+            config.execution.evaluator == EVALUATOR_TINY_FIXTURE_PROXY
+        ),
         "candidates": candidates[:limit],
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
@@ -363,16 +466,26 @@ def run_parameter_sweep(
     as_of: date | None = None,
     end: date | None = None,
     workers: int | None = None,
+    evaluator_mode: EvaluatorMode | None = None,
+    prices_path: Path = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Path = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    data_quality_output_path: Path | None = None,
+    real_evaluation_output_dir: Path | None = None,
     output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
     resume: str | None = None,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
+    real_context: RealEvaluationContext | None = None
     if resume:
         sweep_dir = output_dir / resume
         if not sweep_dir.exists():
             raise DynamicV3ParameterResearchError(f"sweep artifact not found: {resume}")
         config = load_parameter_sweep_config(sweep_dir / "sweep_config.normalized.yaml")
+        if evaluator_mode is not None and evaluator_mode != config.execution.evaluator:
+            raise DynamicV3ParameterResearchError(
+                "resume cannot change evaluator_mode from existing sweep config"
+            )
         manifest = _read_json(sweep_dir / "sweep_manifest.json")
         sweep_id = _text(manifest.get("sweep_id"), resume)
         candidates = _read_jsonl(sweep_dir / "candidates.jsonl")
@@ -381,12 +494,19 @@ def run_parameter_sweep(
             for row in _read_jsonl(sweep_dir / "candidate_results.jsonl")
             if row.get("status") == "completed"
         }
+        if config.execution.evaluator == EVALUATOR_REAL_DYNAMIC_V3_RESCUE:
+            real_context = _prepare_real_evaluation_context(
+                config=config,
+                sweep_dir=sweep_dir,
+                prices_path=prices_path,
+                rates_path=rates_path,
+                data_quality_output_path=data_quality_output_path,
+                real_evaluation_output_dir=real_evaluation_output_dir,
+                expect_manifest_hash=config.data.manifest_hash,
+            )
         status = "resumed"
     else:
         config = load_parameter_sweep_config(config_path)
-        data_status = config.data.quality_status
-        if config.hard_constraints.require_data_quality_not_fail and data_status == "FAIL":
-            raise DynamicV3ParameterResearchError("data_quality=FAIL stops sweep")
         if as_of is not None:
             config = config.model_copy(
                 update={"data": config.data.model_copy(update={"as_of": as_of})}
@@ -397,9 +517,33 @@ def run_parameter_sweep(
             config = config.model_copy(
                 update={"execution": config.execution.model_copy(update={"workers": workers})}
             )
+        if evaluator_mode is not None:
+            config = _with_evaluator_mode(config, evaluator_mode)
+        data_status = config.data.quality_status
+        if config.hard_constraints.require_data_quality_not_fail and data_status == "FAIL":
+            raise DynamicV3ParameterResearchError("data_quality=FAIL stops sweep")
         sweep_id = _sweep_id(config, generated)
         sweep_dir = _unique_dir(output_dir / sweep_id)
         sweep_dir.mkdir(parents=True, exist_ok=False)
+        if config.execution.evaluator == EVALUATOR_REAL_DYNAMIC_V3_RESCUE:
+            real_context = _prepare_real_evaluation_context(
+                config=config,
+                sweep_dir=sweep_dir,
+                prices_path=prices_path,
+                rates_path=rates_path,
+                data_quality_output_path=data_quality_output_path,
+                real_evaluation_output_dir=real_evaluation_output_dir,
+            )
+            config = config.model_copy(
+                update={
+                    "data": config.data.model_copy(
+                        update={
+                            "quality_status": real_context.data_quality_status,
+                            "manifest_hash": real_context.data_manifest_hash,
+                        }
+                    )
+                }
+            )
         candidates = parameter_grid_candidates(config)
         completed = set()
         status = "running"
@@ -427,7 +571,12 @@ def run_parameter_sweep(
             continue
         started = datetime.now(UTC)
         try:
-            result = evaluate_sweep_candidate(candidate, config=config)
+            result = evaluate_sweep_candidate(
+                candidate,
+                config=config,
+                sweep_dir=sweep_dir,
+                real_context=real_context,
+            )
             result["started_at"] = started.isoformat()
             result["completed_at"] = datetime.now(UTC).isoformat()
             _append_jsonl(result_path, result)
@@ -487,18 +636,59 @@ def evaluate_sweep_candidate(
     candidate: Mapping[str, Any],
     *,
     config: DynamicV3ParameterSweepConfig,
+    sweep_dir: Path | None = None,
+    real_context: RealEvaluationContext | None = None,
 ) -> dict[str, Any]:
     parameters = _mapping(candidate.get("parameters"))
-    if (
-        float(parameters.get("rescue_intensity", 0)) >= 1.0
-        and int(parameters.get("smooth_window_days", 0)) <= 3
-        and int(parameters.get("constraint_buffer_bps", 0)) == 0
-    ):
-        raise DynamicV3ParameterResearchError(
-            "fixture candidate intentionally failed for error isolation coverage"
+    evaluator = config.execution.evaluator
+    if evaluator == EVALUATOR_TINY_FIXTURE_PROXY:
+        if (
+            float(parameters.get("rescue_intensity", 0)) >= 1.0
+            and int(parameters.get("smooth_window_days", 0)) <= 3
+            and int(parameters.get("constraint_buffer_bps", 0)) == 0
+        ):
+            raise DynamicV3ParameterResearchError(
+                "fixture candidate intentionally failed for error isolation coverage"
+            )
+        metrics = _fixture_metrics(parameters, config)
+        real_artifact_path = ""
+        metrics_source = "tiny_fixture_proxy_formula"
+        data_quality = _candidate_data_quality(
+            status=config.data.quality_status,
+            report_path="",
+            source="config_fixture",
         )
-    metrics = _fixture_metrics(parameters, config)
+        not_for_investment = True
+    elif evaluator == EVALUATOR_REAL_DYNAMIC_V3_RESCUE:
+        if real_context is None or sweep_dir is None:
+            raise DynamicV3ParameterResearchError(
+                "real_dynamic_v3_rescue evaluator requires prepared real evaluation context"
+            )
+        real_payload, real_paths = _write_real_candidate_evaluation_artifact(
+            candidate=candidate,
+            config=config,
+            sweep_dir=sweep_dir,
+            real_context=real_context,
+        )
+        metrics = _metrics_from_real_evaluation_payload(real_payload, config)
+        real_artifact_path = str(real_paths["json"])
+        metrics_source = "real_evaluation_artifact"
+        data_quality = _candidate_data_quality(
+            status=real_context.data_quality_status,
+            report_path=str(real_context.data_quality_report_path),
+            source="validate_data_cache",
+        )
+        not_for_investment = False
+    else:
+        raise DynamicV3ParameterResearchError(f"unknown evaluator mode: {evaluator}")
     gate, reasons = gate_candidate(metrics, config)
+    if (
+        evaluator == EVALUATOR_REAL_DYNAMIC_V3_RESCUE
+        and gate == GATE_OBSERVE_ONLY
+        and _text(metrics.get("real_promotion_gate_decision")) == GATE_PROMOTE_CANDIDATE
+    ):
+        gate = GATE_PROMOTE_CANDIDATE
+        reasons = ["real_evaluation_promote_candidate_manual_review_required"]
     score, breakdown = score_candidate(metrics, config, gate)
     return {
         "candidate_id": _text(candidate.get("candidate_id")),
@@ -506,10 +696,16 @@ def evaluate_sweep_candidate(
         "gate": gate,
         "gate_reasons": reasons,
         "parameters": dict(parameters),
+        "evaluator_mode": evaluator,
+        "evaluator_version": _evaluator_version(evaluator),
+        "real_evaluation_artifact_path": real_artifact_path,
+        "data_quality": data_quality,
+        "metrics_source": metrics_source,
+        "not_for_investment_decision": not_for_investment,
         "metrics": metrics,
         "score": score,
         "score_breakdown": breakdown,
-        "artifact_paths": [],
+        "artifact_paths": [real_artifact_path] if real_artifact_path else [],
     }
 
 
@@ -655,6 +851,11 @@ def validate_sweep_artifact(
         if (sweep_dir / "candidate_results.jsonl").exists()
         else []
     )
+    manifest = _read_optional_json(sweep_dir / "sweep_manifest.json") or {}
+    evaluator = _text(
+        manifest.get("evaluator_mode"),
+        _text(_mapping(results[0] if results else {}).get("evaluator_mode")),
+    )
     checks.append(
         _check(
             "production_candidate_not_generated",
@@ -662,12 +863,62 @@ def validate_sweep_artifact(
             "sweep results do not contain production_candidate",
         )
     )
+    checks.append(
+        _check(
+            "candidate_results_include_evaluator_fields",
+            all(
+                row.get("evaluator_mode")
+                and row.get("evaluator_version")
+                and "real_evaluation_artifact_path" in row
+                and row.get("data_quality")
+                and row.get("metrics_source")
+                for row in results
+            ),
+            "candidate_results.jsonl contains TRADING-101 evaluator provenance fields",
+        )
+    )
+    if evaluator == EVALUATOR_TINY_FIXTURE_PROXY:
+        checks.append(
+            _check(
+                "tiny_fixture_not_for_investment_decision",
+                all(row.get("not_for_investment_decision") is True for row in results),
+                "tiny fixture results are marked not_for_investment_decision",
+            )
+        )
+        checks.append(
+            _check(
+                "tiny_fixture_cannot_promote_candidate",
+                all(row.get("gate") != GATE_PROMOTE_CANDIDATE for row in results),
+                "tiny fixture results cannot enter promote_candidate",
+            )
+        )
+    if evaluator == EVALUATOR_REAL_DYNAMIC_V3_RESCUE:
+        checks.append(
+            _check(
+                "real_evaluation_artifact_paths_exist",
+                all(
+                    bool(row.get("real_evaluation_artifact_path"))
+                    and Path(str(row.get("real_evaluation_artifact_path"))).exists()
+                    for row in results
+                ),
+                "real evaluator candidate results link to existing real evaluation artifacts",
+            )
+        )
+        checks.append(
+            _check(
+                "real_metrics_from_real_artifacts",
+                all(row.get("metrics_source") == "real_evaluation_artifact" for row in results),
+                "real evaluator metrics are sourced from real evaluation artifacts",
+            )
+        )
     status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_parameter_sweep_validation",
         "sweep_id": sweep_id,
         "status": status,
+        "evaluator_mode": evaluator,
+        "evaluator_version": _evaluator_version(evaluator),
         "checks": checks,
         "failed_check_count": sum(1 for check in checks if not check["passed"]),
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
@@ -687,6 +938,11 @@ def build_sweep_leaderboard_payload(
 ) -> dict[str, Any]:
     results = _read_jsonl(sweep_dir / "candidate_results.jsonl")
     errors = _read_jsonl(sweep_dir / "candidate_errors.jsonl")
+    manifest = _read_optional_json(sweep_dir / "sweep_manifest.json") or {}
+    evaluator = _text(
+        _mapping(manifest).get("evaluator_mode"),
+        config.execution.evaluator if config is not None else _leaderboard_evaluator(results),
+    )
     ranked = sorted(
         [row for row in results if row.get("score") is not None],
         key=lambda row: (float(row.get("score") or 0), _text(row.get("candidate_id"))),
@@ -704,6 +960,11 @@ def build_sweep_leaderboard_payload(
         "sweep_id": sweep_dir.name,
         "generated_at": datetime.now(UTC).isoformat(),
         "status": "PASS",
+        "evaluator_mode": evaluator,
+        "evaluator_version": _evaluator_version(evaluator),
+        "not_for_investment_decision": evaluator == EVALUATOR_TINY_FIXTURE_PROXY,
+        "metrics_source": _leaderboard_metrics_source(results),
+        "data_quality": _leaderboard_data_quality(results, manifest),
         "candidate_count": len(results) + len(errors),
         "completed_count": len(results),
         "failed_count": len(errors),
@@ -713,7 +974,12 @@ def build_sweep_leaderboard_payload(
             {"reason": reason, "count": count} for reason, count in reject_counter.most_common(20)
         ],
         "metric_distributions": _metric_distributions(results),
-        "recommended_next_actions": _leaderboard_next_actions(ranked, rejected, errors),
+        "recommended_next_actions": _leaderboard_next_actions(
+            ranked,
+            rejected,
+            errors,
+            evaluator_mode=evaluator,
+        ),
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
@@ -726,11 +992,17 @@ def build_sweep_report_payload(*, sweep_dir: Path) -> dict[str, Any]:
     manifest = _read_json(sweep_dir / "sweep_manifest.json")
     leaderboard = _read_json(sweep_dir / "leaderboard.json")
     gate_summary = _read_json(sweep_dir / "gate_summary.json")
+    evaluator = _text(leaderboard.get("evaluator_mode"), _text(manifest.get("evaluator_mode")))
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_parameter_sweep_report",
         "sweep_id": sweep_dir.name,
         "status": manifest.get("status", "UNKNOWN"),
+        "evaluator_mode": evaluator,
+        "evaluator_version": _evaluator_version(evaluator),
+        "not_for_investment_decision": evaluator == EVALUATOR_TINY_FIXTURE_PROXY,
+        "data_quality": leaderboard.get("data_quality", manifest.get("data_quality", {})),
+        "metrics_source": leaderboard.get("metrics_source", "UNKNOWN"),
         "manifest": manifest,
         "gate_summary": gate_summary,
         "leaderboard_summary": {
@@ -762,6 +1034,15 @@ def candidate_report_payload(
         "source_sweep_id": sweep_id,
         "status": result.get("gate", "UNKNOWN"),
         "parameters": result.get("parameters", {}),
+        "evaluator_mode": result.get("evaluator_mode", EVALUATOR_TINY_FIXTURE_PROXY),
+        "evaluator_version": result.get(
+            "evaluator_version",
+            _evaluator_version(_text(result.get("evaluator_mode"), EVALUATOR_TINY_FIXTURE_PROXY)),
+        ),
+        "real_evaluation_artifact_path": result.get("real_evaluation_artifact_path", ""),
+        "data_quality": result.get("data_quality", {}),
+        "metrics_source": result.get("metrics_source", "UNKNOWN"),
+        "not_for_investment_decision": result.get("not_for_investment_decision") is True,
         "hard_gate_status": result.get("gate"),
         "gate_reasons": result.get("gate_reasons", []),
         "metrics": result.get("metrics", {}),
@@ -1071,6 +1352,11 @@ def register_shadow_candidate(
         "source_robustness_id": basis.get("source_robustness_id", ""),
         "observation_basis_status": basis.get("status"),
         "parameters": report.get("parameters", {}),
+        "evaluator_mode": report.get("evaluator_mode", EVALUATOR_TINY_FIXTURE_PROXY),
+        "evaluator_version": report.get("evaluator_version", ""),
+        "real_evaluation_artifact_path": report.get("real_evaluation_artifact_path", ""),
+        "metrics_source": report.get("metrics_source", "UNKNOWN"),
+        "not_for_investment_decision": report.get("not_for_investment_decision") is True,
         "registered_at": generated.isoformat(),
         "registered_by": "TRADING-098",
         "promotion_earliest_after_rebalance_count": (
@@ -1301,6 +1587,8 @@ def build_promotion_pack(
         robustness_dir=robustness_dir,
     )
     status, reasons = _promotion_status(evidence)
+    candidate = _mapping(evidence.get("candidate_report"))
+    evaluator = _text(candidate.get("evaluator_mode"), EVALUATOR_TINY_FIXTURE_PROXY)
     promotion_id = _stable_id("promotion", candidate_id, generated.isoformat())
     pack_dir = _unique_dir(output_dir / candidate_id / promotion_id)
     pack_dir.mkdir(parents=True, exist_ok=False)
@@ -1309,6 +1597,11 @@ def build_promotion_pack(
         "candidate_id": candidate_id,
         "status": status,
         "decision_reasons": reasons,
+        "evaluator_mode": evaluator,
+        "evaluator_version": _evaluator_version(evaluator),
+        "not_for_investment_decision": (
+            candidate.get("not_for_investment_decision") is True
+        ),
         "generated_at": generated.isoformat(),
         "manual_review_required": True,
         "production_candidate_generated": False,
@@ -1325,6 +1618,11 @@ def build_promotion_pack(
         "candidate_id": candidate_id,
         "status": status,
         "decision_reasons": reasons,
+        "evaluator_mode": evaluator,
+        "evaluator_version": _evaluator_version(evaluator),
+        "not_for_investment_decision": (
+            candidate.get("not_for_investment_decision") is True
+        ),
         "metric_delta_table": metric_delta,
         "risk_summary": risk_summary,
         "linked_artifacts": linked,
@@ -1400,6 +1698,14 @@ def validate_promotion_pack(
                 "production_candidate is manual-only",
             )
         )
+        if _text(manifest.get("evaluator_mode")) == EVALUATOR_TINY_FIXTURE_PROXY:
+            checks.append(
+                _check(
+                    "tiny_fixture_pack_not_promote_candidate",
+                    manifest.get("status") != GATE_PROMOTE_CANDIDATE,
+                    "tiny fixture promotion pack cannot enter promote_candidate",
+                )
+            )
     else:
         checks.append(_check("latest_promotion_pack_exists", False, "no promotion pack found"))
     status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
@@ -1416,8 +1722,15 @@ def validate_promotion_pack(
 
 
 def render_leaderboard_markdown(payload: Mapping[str, Any]) -> str:
+    not_for_investment = payload.get("not_for_investment_decision") is True
     lines = [
         f"# Dynamic v3 Rescue Sweep Leaderboard {payload.get('sweep_id')}",
+        "",
+        "## Evaluator",
+        f"- evaluator_mode: {payload.get('evaluator_mode')}",
+        f"- evaluator_version: {payload.get('evaluator_version')}",
+        f"- metrics_source: {payload.get('metrics_source')}",
+        f"- not_for_investment_decision: {str(not_for_investment).lower()}",
         "",
         "## Safety",
         "- production_effect=none",
@@ -1449,10 +1762,14 @@ def render_leaderboard_markdown(payload: Mapping[str, Any]) -> str:
 
 def render_sweep_report_markdown(payload: Mapping[str, Any]) -> str:
     summary = _mapping(payload.get("leaderboard_summary"))
+    not_for_investment = payload.get("not_for_investment_decision") is True
     return (
         f"# Dynamic v3 Rescue Sweep Report {payload.get('sweep_id')}\n\n"
         "## Conclusion\n"
         f"- Status: {payload.get('status')}\n"
+        f"- Evaluator Mode: {payload.get('evaluator_mode')}\n"
+        f"- Metrics Source: {payload.get('metrics_source')}\n"
+        f"- not_for_investment_decision: {str(not_for_investment).lower()}\n"
         f"- Top candidate: {summary.get('top_candidate')}\n"
         "- This report ranks candidates only after hard risk gates; it does not approve "
         "production use.\n\n"
@@ -1464,10 +1781,16 @@ def render_sweep_report_markdown(payload: Mapping[str, Any]) -> str:
 
 
 def render_candidate_report_markdown(payload: Mapping[str, Any]) -> str:
+    not_for_investment = payload.get("not_for_investment_decision") is True
     lines = [
         f"# Dynamic v3 Rescue Candidate Report {payload.get('candidate_id')}",
         "",
         f"- Source sweep: {payload.get('source_sweep_id')}",
+        f"- Evaluator mode: {payload.get('evaluator_mode')}",
+        f"- Evaluator version: {payload.get('evaluator_version')}",
+        f"- Metrics source: {payload.get('metrics_source')}",
+        f"- Real evaluation artifact: {payload.get('real_evaluation_artifact_path')}",
+        f"- not_for_investment_decision: {str(not_for_investment).lower()}",
         f"- Gate: {payload.get('hard_gate_status')}",
         f"- Score: {payload.get('score')}",
         f"- Recommendation: {payload.get('recommendation')}",
@@ -1568,6 +1891,9 @@ def render_promotion_decision_markdown(payload: Mapping[str, Any]) -> str:
         f"# Dynamic v3 Rescue Promotion Decision {payload.get('candidate_id')}",
         "",
         f"- Status: {payload.get('status')}",
+        f"- Evaluator mode: {payload.get('evaluator_mode')}",
+        f"- not_for_investment_decision: "
+        f"{str(payload.get('not_for_investment_decision') is True).lower()}",
         "- production_candidate is manual-only and was not generated.",
         "",
         "## Decision Questions",
@@ -1591,6 +1917,408 @@ def render_promotion_reader_brief_section(
         "- production_candidate_generated: false\n"
         "- manual_review_required: true\n"
     )
+
+
+def _with_evaluator_mode(
+    config: DynamicV3ParameterSweepConfig,
+    evaluator_mode: str,
+) -> DynamicV3ParameterSweepConfig:
+    if evaluator_mode not in EVALUATOR_VERSIONS:
+        raise DynamicV3ParameterResearchError(f"unknown evaluator mode: {evaluator_mode}")
+    return config.model_copy(
+        update={
+            "execution": config.execution.model_copy(
+                update={
+                    "evaluator": evaluator_mode,
+                    "evaluation_mode": evaluator_mode,
+                }
+            )
+        }
+    )
+
+
+def _prepare_real_evaluation_context(
+    *,
+    config: DynamicV3ParameterSweepConfig,
+    sweep_dir: Path,
+    prices_path: Path,
+    rates_path: Path,
+    data_quality_output_path: Path | None,
+    real_evaluation_output_dir: Path | None,
+    expect_manifest_hash: str | None = None,
+) -> RealEvaluationContext:
+    quality_output = data_quality_output_path or default_quality_report_path(
+        sweep_dir / "data_quality",
+        config.data.as_of,
+    )
+    universe = load_universe()
+    quality_report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=configured_price_tickers(universe),
+        expected_rate_series=configured_rate_series(universe),
+        quality_config=load_data_quality(),
+        as_of=config.data.as_of,
+        manifest_path=_download_manifest_path(prices_path),
+        secondary_prices_path=_marketstack_prices_path(prices_path),
+        require_secondary_prices=_requires_marketstack_prices(prices_path),
+    )
+    write_data_quality_report(quality_report, quality_output)
+    if not quality_report.passed:
+        raise DynamicV3ParameterResearchError(
+            f"real evaluator data quality gate failed: {quality_report.status}"
+        )
+    if quality_report.status not in config.data.allow_data_quality:
+        raise DynamicV3ParameterResearchError(
+            "real evaluator data quality status is not allowed by sweep config: "
+            f"{quality_report.status}"
+        )
+    data_manifest_hash = _data_quality_manifest_hash(quality_report)
+    if expect_manifest_hash and expect_manifest_hash != data_manifest_hash:
+        raise DynamicV3ParameterResearchError(
+            "resume data manifest hash differs from normalized sweep config"
+        )
+    etf_config = load_etf_config_bundle()
+    prices, etf_quality = load_standard_prices(
+        prices_path,
+        etf_config.assets,
+        etf_config.strategy,
+    )
+    if not etf_quality.passed:
+        raise DynamicV3ParameterResearchError(
+            f"ETF price validation failed before real sweep evaluation: {etf_quality.status}"
+        )
+    return RealEvaluationContext(
+        prices=prices,
+        etf_config=etf_config,
+        real_policy=load_dynamic_v3_real_evaluation_policy_config(
+            DEFAULT_DYNAMIC_V3_REAL_EVALUATION_POLICY_CONFIG_PATH
+        ),
+        v3_rescue_policy=load_dynamic_v3_rescue_policy_config(),
+        dynamic_robustness_policy=load_dynamic_robustness_policy_config(),
+        dynamic_policy=load_dynamic_allocation_policy_config(),
+        failure_policy=load_dynamic_failure_diagnostics_policy_config(),
+        data_quality_status=quality_report.status,
+        data_quality_report_path=quality_output,
+        prices_path=prices_path,
+        real_evaluation_output_dir=real_evaluation_output_dir
+        or sweep_dir
+        / "real_evaluation",
+        data_manifest_hash=data_manifest_hash,
+    )
+
+
+def _write_real_candidate_evaluation_artifact(
+    *,
+    candidate: Mapping[str, Any],
+    config: DynamicV3ParameterSweepConfig,
+    sweep_dir: Path,
+    real_context: RealEvaluationContext,
+) -> tuple[dict[str, Any], dict[str, Path]]:
+    candidate_id = _text(candidate.get("candidate_id"))
+    parameters = _mapping(candidate.get("parameters"))
+    real_policy = _real_policy_for_sweep_candidate(real_context.real_policy, parameters)
+    v3_rescue_policy = _real_rescue_policy_for_sweep_candidate(
+        real_context.v3_rescue_policy,
+        parameters,
+    )
+    payload = build_dynamic_v3_real_evaluation_report(
+        prices=real_context.prices,
+        etf_config=real_context.etf_config,
+        policy=real_policy,
+        v3_rescue_policy=v3_rescue_policy,
+        dynamic_robustness_policy=real_context.dynamic_robustness_policy,
+        dynamic_policy=real_context.dynamic_policy,
+        failure_policy=real_context.failure_policy,
+        start=real_policy.market_regime.default_backtest_start,
+        end=config.data.end,
+        data_quality_status=real_context.data_quality_status,
+        data_quality_report=str(real_context.data_quality_report_path),
+        prices_path=real_context.prices_path,
+    )
+    report_id = (
+        "dynamic-v3-real-evaluation-report_"
+        + _stable_id(
+            "sweep-real",
+            sweep_dir.name,
+            candidate_id,
+            parameters,
+            payload.get("dynamic_v3_real_evaluation_report_id"),
+        )
+    )
+    payload = {
+        **payload,
+        "dynamic_v3_real_evaluation_report_id": report_id,
+        "source_sweep_id": sweep_dir.name,
+        "source_sweep_candidate_id": candidate_id,
+        "candidate_parameters": dict(parameters),
+        "evaluator_mode": EVALUATOR_REAL_DYNAMIC_V3_RESCUE,
+        "evaluator_version": _evaluator_version(EVALUATOR_REAL_DYNAMIC_V3_RESCUE),
+        "metrics_source": "real_evaluation_artifact",
+        "not_for_investment_decision": False,
+    }
+    output_dir = real_context.real_evaluation_output_dir / candidate_id
+    paths = write_dynamic_v3_real_evaluation_report(payload, output_dir=output_dir)
+    readback = _read_json(paths["json"])
+    return readback, paths
+
+
+def _real_policy_for_sweep_candidate(
+    policy: DynamicV3RealEvaluationPolicyConfig,
+    parameters: Mapping[str, Any],
+) -> DynamicV3RealEvaluationPolicyConfig:
+    intensity = _clamp01(float(parameters.get("rescue_intensity", 0.5)))
+    smooth_window = parameters.get("smooth_window_days", REAL_EVALUATOR_BASE_SMOOTH_WINDOW_DAYS)
+    smooth = max(1, int(smooth_window))
+    buffer_weight = max(0.0, float(parameters.get("constraint_buffer_bps", 0))) / 10000.0
+    turnover_penalty = _clamp01(float(parameters.get("turnover_penalty", 0.0)))
+    confirmation_days = max(1, int(parameters.get("risk_off_confirmation_days", 1)))
+    cooldown_days = max(0, int(parameters.get("rebalance_cooldown_days", 0)))
+    guard_multiplier = REAL_EVALUATOR_DRAW_DOWN_GUARD_MULTIPLIERS.get(
+        _text(parameters.get("drawdown_guard"), "none"),
+        REAL_EVALUATOR_DRAW_DOWN_GUARD_MULTIPLIERS["none"],
+    )
+    materialization = policy.materialization
+    smooth_scale = REAL_EVALUATOR_BASE_SMOOTH_WINDOW_DAYS / smooth
+    updated = materialization.model_copy(
+        update={
+            "qqq_target_buffer": min(0.2, buffer_weight),
+            "semiconductor_target_buffer": min(0.2, buffer_weight),
+            "cash_target_buffer": min(0.2, buffer_weight),
+            "soft_penalty_strength": min(
+                1.0,
+                max(
+                    REAL_EVALUATOR_MIN_POSITIVE_MATERIALIZATION_VALUE,
+                    materialization.soft_penalty_strength * intensity,
+                ),
+            ),
+            "trend_overlay_scale_with_soft_penalty": _clamp01(
+                materialization.trend_overlay_scale_with_soft_penalty
+                * (1.0 - turnover_penalty)
+            ),
+            "smoothing_max_single_rebalance_delta": min(
+                1.0,
+                max(
+                    REAL_EVALUATOR_MIN_POSITIVE_MATERIALIZATION_VALUE,
+                    materialization.smoothing_max_single_rebalance_delta * smooth_scale,
+                ),
+            ),
+            "smoothing_weekly_turnover_cap": max(
+                REAL_EVALUATOR_MIN_WEEKLY_TURNOVER_CAP,
+                materialization.smoothing_weekly_turnover_cap * (1.0 - turnover_penalty),
+            ),
+            "smoothing_min_rebalance_weight_delta": min(
+                1.0,
+                materialization.smoothing_min_rebalance_weight_delta
+                + cooldown_days * REAL_EVALUATOR_MIN_REBALANCE_DELTA_PER_COOLDOWN_DAY,
+            ),
+            "drawdown_cash_increase_step": min(
+                1.0,
+                max(
+                    REAL_EVALUATOR_MIN_POSITIVE_MATERIALIZATION_VALUE,
+                    materialization.drawdown_cash_increase_step
+                    * intensity
+                    * guard_multiplier,
+                ),
+            ),
+            "drawdown_semiconductor_reduction_step": min(
+                1.0,
+                max(
+                    REAL_EVALUATOR_MIN_POSITIVE_MATERIALIZATION_VALUE,
+                    materialization.drawdown_semiconductor_reduction_step
+                    * intensity
+                    * guard_multiplier,
+                ),
+            ),
+            "drawdown_qqq_reduction_step": min(
+                1.0,
+                max(
+                    REAL_EVALUATOR_MIN_POSITIVE_MATERIALIZATION_VALUE,
+                    materialization.drawdown_qqq_reduction_step * intensity * guard_multiplier,
+                ),
+            ),
+            "emergency_event_risk_high_threshold": _clamp01(
+                (
+                    materialization.emergency_event_risk_high_threshold
+                    + max(0, confirmation_days - 1)
+                    * REAL_EVALUATOR_EVENT_RISK_THRESHOLD_PER_CONFIRMATION
+                )
+                / 100.0
+            )
+            * 100.0,
+            "emergency_event_risk_cash_increase_step": min(
+                1.0,
+                max(
+                    REAL_EVALUATOR_MIN_POSITIVE_MATERIALIZATION_VALUE,
+                    materialization.emergency_event_risk_cash_increase_step * intensity,
+                ),
+            ),
+        }
+    )
+    return policy.model_copy(
+        deep=True,
+        update={
+            "policy_metadata": policy.policy_metadata.model_copy(
+                update={
+                    "version": (
+                        f"{policy.policy_metadata.version}_sweep_"
+                        f"{_stable_id(parameters)[:8]}"
+                    ),
+                    "status": "pilot_sweep_real_evaluator",
+                }
+            ),
+            "materialization": updated,
+        },
+    )
+
+
+def _real_rescue_policy_for_sweep_candidate(policy: Any, parameters: Mapping[str, Any]) -> Any:
+    buffer_weight = max(0.0, float(parameters.get("constraint_buffer_bps", 0))) / 10000.0
+    turnover_penalty = _clamp01(float(parameters.get("turnover_penalty", 0.0)))
+    smooth_window = parameters.get("smooth_window_days", REAL_EVALUATOR_BASE_SMOOTH_WINDOW_DAYS)
+    smooth = max(1, int(smooth_window))
+    confirmation_days = max(1, int(parameters.get("risk_off_confirmation_days", 1)))
+    smooth_scale = REAL_EVALUATOR_BASE_SMOOTH_WINDOW_DAYS / smooth
+    updated = policy.model_copy(
+        deep=True,
+        update={
+            "soft_constraint_penalties": policy.soft_constraint_penalties.model_copy(
+                update={
+                    "interior_buffer": min(0.1, buffer_weight),
+                    "penalty_strength": min(
+                        1.0,
+                        max(
+                            REAL_EVALUATOR_MIN_POSITIVE_MATERIALIZATION_VALUE,
+                            policy.soft_constraint_penalties.penalty_strength
+                            * (1.0 - turnover_penalty / 2.0),
+                        ),
+                    ),
+                }
+            ),
+            "smoothing_policy": policy.smoothing_policy.model_copy(
+                update={
+                    "max_single_rebalance_delta": min(
+                        1.0,
+                        max(
+                            REAL_EVALUATOR_MIN_POSITIVE_MATERIALIZATION_VALUE,
+                            policy.smoothing_policy.max_single_rebalance_delta
+                            * smooth_scale,
+                        ),
+                    )
+                }
+            ),
+            "drawdown_guardrails": policy.drawdown_guardrails.model_copy(
+                update={"min_confirmations": max(2, confirmation_days)}
+            ),
+            "emergency_risk_off": policy.emergency_risk_off.model_copy(
+                update={"min_independent_confirmations": max(2, confirmation_days)}
+            ),
+        },
+    )
+    return updated
+
+
+def _metrics_from_real_evaluation_payload(
+    payload: Mapping[str, Any],
+    config: DynamicV3ParameterSweepConfig,
+) -> dict[str, Any]:
+    best = _mapping(payload.get("best_candidate"))
+    summary = _mapping(payload.get("summary"))
+    v0_4 = _first_row_by_group(payload.get("comparison_table"), "dynamic_v0_4")
+    best_hit_rate = float(best.get("constraint_hit_rate", 0.0))
+    reference_hit_rate = float(v0_4.get("constraint_hit_rate", best_hit_rate))
+    best_turnover = float(best.get("turnover", 0.0))
+    reference_turnover = float(v0_4.get("turnover", best_turnover))
+    hit_reduction_rate = reference_hit_rate - best_hit_rate
+    hit_reduction_count = int(best.get("constraint_hit_reduction_vs_v0_4") or 0)
+    static_gap_delta = float(best.get("static_gap_delta_vs_v0_4") or 0.0)
+    real_decision = _text(payload.get("promotion_gate_decision"), GATE_REVIEW_REQUIRED)
+    return {
+        "constraint_hits": int(best.get("constraint_hit_count") or 0),
+        "constraint_hit_rate": round(best_hit_rate, 6),
+        "constraint_hits_delta_vs_reference": -hit_reduction_count,
+        "constraint_hit_reduction": round(max(0.0, hit_reduction_rate), 6),
+        "constraint_hit_reduction_count_vs_v0_4": hit_reduction_count,
+        "false_risk_off_delta": int(best.get("false_risk_off_delta_vs_v0_4") or 0),
+        "turnover": round(best_turnover, 6),
+        "turnover_reduction": round(max(0.0, reference_turnover - best_turnover), 6),
+        "dynamic_vs_static_gap": round(float(best.get("dynamic_vs_static_gap") or 0.0), 6),
+        "dynamic_vs_static_gap_improvement": round(max(0.0, static_gap_delta), 6),
+        "drawdown_degradation_pp": round(
+            float(best.get("max_drawdown_degradation_vs_v0_4") or 0.0),
+            6,
+        ),
+        "return_delta": round(static_gap_delta, 6),
+        "robustness_status": _real_robustness_status(real_decision),
+        "overfit_status": _text(best.get("overfit_status"), "REVIEW_REQUIRED"),
+        "parameter_sensitivity_status": "LOW"
+        if _text(best.get("overfit_status")) == "PASS"
+        else "REVIEW_REQUIRED",
+        "stress_bucket_status": "PASS"
+        if _text(best.get("walk_forward_status")) == "PASS"
+        else "MIXED",
+        "data_quality": _text(summary.get("data_quality_status"), config.data.quality_status),
+        "lookahead_status": "PASS",
+        "evaluation_mode": EVALUATOR_REAL_DYNAMIC_V3_RESCUE,
+        "evaluator_mode": EVALUATOR_REAL_DYNAMIC_V3_RESCUE,
+        "metrics_source": "real_evaluation_artifact",
+        "real_evaluation_report_id": payload.get("dynamic_v3_real_evaluation_report_id"),
+        "real_promotion_gate_decision": real_decision,
+        "real_best_candidate_policy_id": best.get("policy_id"),
+        "real_policy_config_hash": payload.get("policy_config_hash"),
+    }
+
+
+def _candidate_data_quality(*, status: str, report_path: str, source: str) -> dict[str, Any]:
+    return {
+        "status": status,
+        "report_path": report_path,
+        "source": source,
+    }
+
+
+def _real_robustness_status(real_decision: str) -> str:
+    if real_decision == GATE_PROMOTE_CANDIDATE:
+        return "PASS"
+    if real_decision == GATE_REJECT:
+        return "FAIL"
+    return "REVIEW_REQUIRED"
+
+
+def _first_row_by_group(rows: Any, group: str) -> dict[str, Any]:
+    return next((row for row in _records(rows) if row.get("group") == group), {})
+
+
+def _data_quality_manifest_hash(report: Any) -> str:
+    secondary = (
+        None if report.secondary_price_summary is None else report.secondary_price_summary.sha256
+    )
+    return _stable_id(
+        "real-data",
+        report.price_summary.sha256,
+        report.rate_summary.sha256,
+        secondary,
+        report.as_of.isoformat(),
+    )
+
+
+def _download_manifest_path(prices_path: Path) -> Path:
+    return prices_path.parent / "download_manifest.csv"
+
+
+def _marketstack_prices_path(prices_path: Path) -> Path:
+    return prices_path.parent / "prices_marketstack_daily.csv"
+
+
+def _requires_marketstack_prices(prices_path: Path) -> bool:
+    try:
+        return prices_path.resolve() == DEFAULT_ETF_PRICE_PATH.resolve()
+    except OSError:
+        return prices_path == DEFAULT_ETF_PRICE_PATH
+
+
+def _evaluator_version(evaluator_mode: str) -> str:
+    return EVALUATOR_VERSIONS.get(evaluator_mode, "unknown_evaluator")
 
 
 def _fixture_metrics(
@@ -1651,7 +2379,9 @@ def _fixture_metrics(
         "stress_bucket_status": stress_status,
         "data_quality": config.data.quality_status,
         "lookahead_status": "PASS",
-        "evaluation_mode": config.execution.evaluation_mode,
+        "evaluation_mode": config.execution.evaluator,
+        "evaluator_mode": config.execution.evaluator,
+        "metrics_source": "tiny_fixture_proxy_formula",
     }
 
 
@@ -1692,6 +2422,20 @@ def _sweep_manifest(
         "started_at": generated_at.isoformat(),
         "completed_at": completed_at.isoformat(),
         "status": status,
+        "evaluator_mode": config.execution.evaluator,
+        "evaluator_version": _evaluator_version(config.execution.evaluator),
+        "not_for_investment_decision": (
+            config.execution.evaluator == EVALUATOR_TINY_FIXTURE_PROXY
+        ),
+        "data_quality": _candidate_data_quality(
+            status=config.data.quality_status,
+            report_path=_first_data_quality_report_path(results),
+            source=(
+                "config_fixture"
+                if config.execution.evaluator == EVALUATOR_TINY_FIXTURE_PROXY
+                else "validate_data_cache"
+            ),
+        ),
         "candidate_count": len(results) + len(errors),
         "completed_count": len(results),
         "failed_count": len(errors),
@@ -1721,7 +2465,12 @@ def _data_manifest(
         "download_timestamp": generated_at.isoformat(),
         "row_count": 0,
         "checksum": config.data.manifest_hash,
-        "evaluation_mode": config.execution.evaluation_mode,
+        "evaluation_mode": config.execution.evaluator,
+        "evaluator_mode": config.execution.evaluator,
+        "evaluator_version": _evaluator_version(config.execution.evaluator),
+        "not_for_investment_decision": (
+            config.execution.evaluator == EVALUATOR_TINY_FIXTURE_PROXY
+        ),
     }
 
 
@@ -1791,8 +2540,14 @@ def _leaderboard_next_actions(
     ranked: Sequence[Mapping[str, Any]],
     rejected: Sequence[Mapping[str, Any]],
     errors: Sequence[Mapping[str, Any]],
+    *,
+    evaluator_mode: str,
 ) -> list[str]:
     actions = []
+    if evaluator_mode == EVALUATOR_TINY_FIXTURE_PROXY:
+        actions.append(
+            "rerun with evaluator=real_dynamic_v3_rescue before investment interpretation"
+        )
     if ranked:
         actions.append("run walk-forward validation for top observe_only candidates")
         actions.append("run robustness diagnostics before any promotion review")
@@ -1805,12 +2560,49 @@ def _leaderboard_next_actions(
     return actions
 
 
+def _leaderboard_evaluator(results: Sequence[Mapping[str, Any]]) -> str:
+    modes = [_text(row.get("evaluator_mode")) for row in results if row.get("evaluator_mode")]
+    return modes[0] if modes else EVALUATOR_TINY_FIXTURE_PROXY
+
+
+def _leaderboard_metrics_source(results: Sequence[Mapping[str, Any]]) -> str:
+    sources = sorted(
+        {
+            _text(row.get("metrics_source"))
+            for row in results
+            if _text(row.get("metrics_source"))
+        }
+    )
+    return ",".join(sources) if sources else "UNKNOWN"
+
+
+def _leaderboard_data_quality(
+    results: Sequence[Mapping[str, Any]],
+    manifest: Mapping[str, Any],
+) -> dict[str, Any]:
+    for row in results:
+        data_quality = _mapping(row.get("data_quality"))
+        if data_quality:
+            return data_quality
+    return _mapping(manifest.get("data_quality"))
+
+
+def _first_data_quality_report_path(results: Sequence[Mapping[str, Any]]) -> str:
+    for row in results:
+        report_path = _text(_mapping(row.get("data_quality")).get("report_path"))
+        if report_path:
+            return report_path
+    return ""
+
+
 def _candidate_recommendation(result: Mapping[str, Any]) -> str:
     gate = _text(result.get("gate"))
     if gate == GATE_REJECT:
         return "reject; do not run walk-forward until hard gate failures are addressed"
     if gate == GATE_REVIEW_REQUIRED:
         return "review_required; run diagnostics and inspect policy sensitivity"
+    if gate == GATE_PROMOTE_CANDIDATE:
+        return "promote_candidate; manual review still required and production_candidate is blocked"
     return "observe_only; eligible for walk-forward and robustness diagnostics"
 
 
@@ -2086,6 +2878,11 @@ def _shadow_candidate_report(row: Mapping[str, Any]) -> dict[str, Any]:
         "source_sweep_id": row.get("source_sweep_id"),
         "source_walk_forward_id": row.get("source_walk_forward_id"),
         "source_robustness_id": row.get("source_robustness_id"),
+        "evaluator_mode": row.get("evaluator_mode", EVALUATOR_TINY_FIXTURE_PROXY),
+        "evaluator_version": row.get("evaluator_version", ""),
+        "real_evaluation_artifact_path": row.get("real_evaluation_artifact_path", ""),
+        "metrics_source": row.get("metrics_source", "UNKNOWN"),
+        "not_for_investment_decision": row.get("not_for_investment_decision") is True,
         "registered_at": row.get("registered_at"),
         "observation_age_days": age_days,
         "rebalance_count": rebalance_count,
@@ -2171,6 +2968,10 @@ def _promotion_status(evidence: Mapping[str, Any]) -> tuple[str, list[str]]:
         return "incomplete", reasons
     if candidate.get("hard_gate_status") == GATE_REJECT:
         return "reject", ["hard_gate_failed"]
+    if _text(candidate.get("evaluator_mode"), EVALUATOR_TINY_FIXTURE_PROXY) == (
+        EVALUATOR_TINY_FIXTURE_PROXY
+    ):
+        return "review_required", ["tiny_fixture_not_for_investment_decision"]
     wf_candidates = _records(_mapping(evidence.get("walk_forward_leaderboard")).get("candidates"))
     wf_row = next(
         (row for row in wf_candidates if row.get("candidate_id") == candidate.get("candidate_id")),
@@ -2248,15 +3049,12 @@ def _promotion_risk_summary(
 
 
 def _promotion_linked_artifacts(evidence: Mapping[str, Any]) -> dict[str, Any]:
+    candidate = _mapping(evidence.get("candidate_report"))
     return {
         "candidate_report": evidence.get("candidate_report_path"),
         "walk_forward_report": evidence.get("walk_forward_report_path"),
         "robustness_report": evidence.get("robustness_report_path"),
-        "latest_real_evaluation": str(
-            DEFAULT_DYNAMIC_V3_RESEARCH_ROOT
-            / "real_evaluation"
-            / "dynamic-v3-real-evaluation-report_922c4bccd3e4dff1.json"
-        ),
+        "real_evaluation_artifact": candidate.get("real_evaluation_artifact_path", ""),
     }
 
 

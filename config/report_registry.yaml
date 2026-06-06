@@ -1376,9 +1376,10 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/sweeps/*/leaderboard.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-093 to TRADING-095 parameter research uses configured hard gates
-      before soft ranking, exposes reject reasons and metric distributions, and
-      keeps production_candidate as a manual-only status.
+      TRADING-093 to TRADING-101 parameter research uses configured hard gates
+      before soft ranking, exposes evaluator mode/version, metrics source, data
+      quality, real_evaluation_artifact_path, reject reasons, and metric
+      distributions, and keeps production_candidate as a manual-only status.
     owner_action: review_sweep_leaderboard_before_walk_forward_or_shadow_registration
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
@@ -1452,9 +1453,11 @@ reports:
       - reports/etf_portfolio/dynamic_v3_rescue/promotion/*/*/reader_brief_section.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-100 combines sweep, candidate, walk-forward, robustness, shadow,
-      and latest real-evaluation evidence. It may output promote_candidate plus
-      manual_review_required, but must never generate production_candidate.
+      TRADING-100 and TRADING-101 combine sweep, candidate, walk-forward,
+      robustness, shadow, evaluator provenance, and linked real-evaluation
+      evidence. Tiny fixture packs are capped at review_required/reject; real
+      evaluator packs may output promote_candidate plus manual_review_required,
+      but must never generate production_candidate.
     owner_action: owner_manual_review_required_before_any_production_candidate_status
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

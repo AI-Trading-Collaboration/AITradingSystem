@@ -3649,6 +3649,35 @@ def dynamic_v3_sweep_run_command(
         int | None,
         typer.Option("--workers", help="worker count recorded in manifest。"),
     ] = None,
+    evaluator: Annotated[
+        str | None,
+        typer.Option(
+            "--evaluator",
+            "--evaluator-mode",
+            help="sweep evaluator：tiny_fixture_proxy 或 real_dynamic_v3_rescue。",
+        ),
+    ] = None,
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="real evaluator 标准化 ETF daily price cache。"),
+    ] = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option(
+            "--rates-path",
+            help="real evaluator FRED rates cache for validate-data gate。",
+        ),
+    ] = PROJECT_ROOT
+    / "data"
+    / "raw"
+    / "rates_daily.csv",
+    data_quality_output_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--data-quality-output-path",
+            help="real evaluator validate-data markdown path。",
+        ),
+    ] = None,
     output_dir: Annotated[
         Path,
         typer.Option("--output", "--output-dir", help="sweep artifact root。"),
@@ -3665,6 +3694,10 @@ def dynamic_v3_sweep_run_command(
             as_of=_parse_date(as_of) if as_of else None,
             end=_parse_date(end) if end else None,
             workers=workers,
+            evaluator_mode=evaluator,
+            prices_path=prices_path,
+            rates_path=rates_path,
+            data_quality_output_path=data_quality_output_path,
             output_dir=output_dir,
             resume=resume,
         )
@@ -3674,6 +3707,10 @@ def dynamic_v3_sweep_run_command(
     typer.echo(f"sweep_id={result['sweep_id']}")
     typer.echo(f"sweep_dir={result['sweep_dir']}")
     typer.echo(f"status={result['status']}")
+    typer.echo(f"evaluator_mode={manifest.get('evaluator_mode')}")
+    typer.echo(f"evaluator_version={manifest.get('evaluator_version')}")
+    data_quality = _mapping_obj(manifest.get("data_quality"))
+    typer.echo(f"data_quality_status={data_quality.get('status')}")
     typer.echo(f"completed_count={manifest['completed_count']}")
     typer.echo(f"failed_count={manifest['failed_count']}")
     typer.echo(f"observe_only_count={manifest['observe_only_count']}")
@@ -3718,6 +3755,7 @@ def dynamic_v3_sweep_validate_command(
     payload = validate_sweep_artifact(sweep_id=sweep_id, output_dir=output_dir)
     typer.echo(f"status={payload['status']}")
     typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo(f"evaluator_mode={payload.get('evaluator_mode')}")
     typer.echo("production_candidate_generated=false")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)
@@ -3746,6 +3784,7 @@ def dynamic_v3_sweep_leaderboard_command(
     )
     typer.echo(f"sweep_id={resolved_sweep_id}")
     typer.echo(f"status={payload.get('status')}")
+    typer.echo(f"evaluator_mode={payload.get('evaluator_mode')}")
     typer.echo(f"candidate_count={payload.get('candidate_count')}")
     top = payload.get("top_eligible_candidates") or []
     if top:
@@ -3798,6 +3837,7 @@ def dynamic_v3_candidate_report_command(
         raise typer.BadParameter(str(exc)) from exc
     typer.echo(f"candidate_id={candidate_id}")
     typer.echo(f"source_sweep_id={sweep_id}")
+    typer.echo(f"evaluator_mode={payload.get('evaluator_mode')}")
     typer.echo(f"gate={payload['hard_gate_status']}")
     typer.echo(f"score={payload['score']}")
     typer.echo(
