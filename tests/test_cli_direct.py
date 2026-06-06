@@ -15,7 +15,7 @@ def test_cli_direct_score_daily_maps_skip_openai_precheck(monkeypatch) -> None:
     def fake_score_daily(**kwargs: object) -> None:
         captured.update(kwargs)
 
-    monkeypatch.setattr(cli_direct.cli, "score_daily", fake_score_daily)
+    monkeypatch.setattr(cli_direct.score_daily_cli, "score_daily", fake_score_daily)
 
     exit_code = cli_direct.main(
         [
@@ -42,7 +42,7 @@ def test_cli_direct_score_daily_keeps_openai_precheck_enabled(monkeypatch) -> No
     def fake_score_daily(**kwargs: object) -> None:
         captured.update(kwargs)
 
-    monkeypatch.setattr(cli_direct.cli, "score_daily", fake_score_daily)
+    monkeypatch.setattr(cli_direct.score_daily_cli, "score_daily", fake_score_daily)
 
     exit_code = cli_direct.main(
         [
@@ -69,7 +69,7 @@ def test_cli_direct_score_daily_threads_llm_request_profile(monkeypatch) -> None
     def fake_score_daily(**kwargs: object) -> None:
         captured.update(kwargs)
 
-    monkeypatch.setattr(cli_direct.cli, "score_daily", fake_score_daily)
+    monkeypatch.setattr(cli_direct.score_daily_cli, "score_daily", fake_score_daily)
 
     exit_code = cli_direct.main(
         [
@@ -772,7 +772,7 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
         "fetch_fmp_valuations",
         recorder("valuation_snapshots"),
     )
-    monkeypatch.setattr(cli_direct.cli, "score_daily", recorder("score_daily"))
+    monkeypatch.setattr(cli_direct.score_daily_cli, "score_daily", recorder("score_daily"))
     monkeypatch.setattr(
         cli_direct.reports_cli,
         "evidence_dashboard_command",

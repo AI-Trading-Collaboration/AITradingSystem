@@ -8,7 +8,6 @@ from types import SimpleNamespace
 
 import typer
 
-from ai_trading_system import cli
 from ai_trading_system.cli_commands import data as data_cli
 from ai_trading_system.cli_commands import data_cache as data_cache_cli
 from ai_trading_system.cli_commands import docs as docs_cli
@@ -20,6 +19,7 @@ from ai_trading_system.cli_commands import parameters as parameters_cli
 from ai_trading_system.cli_commands import pit_snapshots as pit_snapshots_cli
 from ai_trading_system.cli_commands import portfolio as portfolio_cli
 from ai_trading_system.cli_commands import reports as reports_cli
+from ai_trading_system.cli_commands import score_daily as score_daily_cli
 from ai_trading_system.cli_commands import sec_pit as sec_pit_cli
 from ai_trading_system.cli_commands import security as security_cli
 from ai_trading_system.cli_commands import signals as signals_cli
@@ -196,7 +196,7 @@ def _dispatch(args: list[str]) -> None:
         )
     if args[:1] == ["score-daily"]:
         max_candidates = _option(args, "--risk-event-openai-precheck-max-candidates")
-        cli.score_daily(
+        score_daily_cli.score_daily(
             as_of=_option(args, "--as-of"),
             risk_event_openai_precheck_max_candidates=(
                 int(max_candidates) if max_candidates is not None else None
