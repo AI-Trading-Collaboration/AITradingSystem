@@ -120,9 +120,11 @@ from ai_trading_system.cli_commands.catalysts import catalysts_app
 from ai_trading_system.cli_commands.docs import docs_app
 from ai_trading_system.cli_commands.etf_portfolio import etf_app
 from ai_trading_system.cli_commands.execution import execution_app
+from ai_trading_system.cli_commands.industry_chain import industry_chain_app
 from ai_trading_system.cli_commands.scenarios import scenarios_app
 from ai_trading_system.cli_commands.sec_pit import sec_pit_app
 from ai_trading_system.cli_commands.security import security_app
+from ai_trading_system.cli_commands.watchlist import watchlist_app
 from ai_trading_system.config import (
     DEFAULT_BACKTEST_VALIDATION_POLICY_CONFIG_PATH,
     DEFAULT_CATALYST_CALENDAR_CONFIG_PATH,
@@ -375,11 +377,6 @@ from ai_trading_system.historical_replay import (
     default_historical_replay_output_root,
     run_historical_day_replay,
     run_historical_replay_window,
-)
-from ai_trading_system.industry_chain import (
-    default_industry_chain_report_path,
-    validate_industry_chain_config,
-    write_industry_chain_validation_report,
 )
 from ai_trading_system.industry_node_state import (
     build_industry_node_heat_report,
@@ -925,11 +922,6 @@ from ai_trading_system.valuation_sources import (
     write_valuation_csv_import_report,
     write_valuation_snapshots_as_yaml,
 )
-from ai_trading_system.watchlist import (
-    default_watchlist_report_path,
-    validate_watchlist_config,
-    write_watchlist_validation_report,
-)
 from ai_trading_system.watchlist_lifecycle import (
     DEFAULT_WATCHLIST_LIFECYCLE_PATH,
     default_watchlist_lifecycle_report_path,
@@ -951,8 +943,6 @@ from ai_trading_system.weight_calibration import (
 )
 
 app = typer.Typer(help="AI 产业链趋势分析和仓位管理工具。", no_args_is_help=True)
-watchlist_app = typer.Typer(help="观察池和能力圈管理。", no_args_is_help=True)
-industry_chain_app = typer.Typer(help="产业链节点和因果图管理。", no_args_is_help=True)
 thesis_app = typer.Typer(help="交易 thesis 和假设验证管理。", no_args_is_help=True)
 risk_events_app = typer.Typer(help="风险事件分级和动作规则管理。", no_args_is_help=True)
 valuation_app = typer.Typer(help="估值、预期和拥挤度快照管理。", no_args_is_help=True)
@@ -6749,211 +6739,6 @@ def backtest_pit_coverage(
     console.print(f"快照数：{report.snapshot_count}；原始记录数：{report.row_count}")
     console.print(f"覆盖验证报告：{report_output}")
     if not validation_report.passed:
-        raise typer.Exit(code=1)
-
-
-@watchlist_app.command("list")
-def list_watchlist(
-    config_path: Annotated[
-        Path,
-        typer.Option(help="观察池配置文件路径。"),
-    ] = DEFAULT_WATCHLIST_CONFIG_PATH,
-    active_only: Annotated[
-        bool,
-        typer.Option("--active-only/--all", help="只显示活跃标的，或显示全部配置标的。"),
-    ] = True,
-) -> None:
-    """列出观察池和能力圈配置。"""
-    watchlist = load_watchlist(config_path)
-    items = [item for item in watchlist.items if item.active or not active_only]
-
-    table = Table(title="观察池与能力圈")
-    table.add_column("Ticker")
-    table.add_column("公司")
-    table.add_column("类型")
-    table.add_column("阶段")
-    table.add_column("能力圈")
-    table.add_column("风险")
-    table.add_column("Thesis")
-    table.add_column("产业链节点")
-
-    for item in sorted(items, key=lambda value: value.ticker):
-        table.add_row(
-            item.ticker,
-            item.company_name,
-            item.instrument_type,
-            _decision_stage_label(item.decision_stage),
-            f"{item.competence_score:.0f}",
-            _risk_level_label(item.default_risk_level),
-            "需要" if item.thesis_required else "不需要",
-            ", ".join(item.ai_chain_nodes),
-        )
-
-    console.print(table)
-
-
-@watchlist_app.command("validate")
-def validate_watchlist(
-    config_path: Annotated[
-        Path,
-        typer.Option(help="观察池配置文件路径。"),
-    ] = DEFAULT_WATCHLIST_CONFIG_PATH,
-    as_of: Annotated[
-        str | None,
-        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
-    ] = None,
-    output_path: Annotated[
-        Path | None,
-        typer.Option(help="Markdown 观察池校验报告输出路径。"),
-    ] = None,
-) -> None:
-    """校验观察池覆盖、能力圈和 thesis 约束。"""
-    universe = load_universe()
-    watchlist = load_watchlist(config_path)
-    validation_date = _parse_date(as_of) if as_of else date.today()
-    report_path = output_path or default_watchlist_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
-        validation_date,
-    )
-
-    report = validate_watchlist_config(
-        watchlist=watchlist,
-        universe=universe,
-        as_of=validation_date,
-    )
-    write_watchlist_validation_report(report, report_path)
-
-    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
-    console.print(f"[{status_style}]观察池校验状态：{report.status}[/{status_style}]")
-    console.print(f"报告：{report_path}")
-    console.print(f"活跃标的数：{report.active_count}")
-    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
-
-    if not report.passed:
-        raise typer.Exit(code=1)
-
-
-@watchlist_app.command("validate-lifecycle")
-def validate_watchlist_lifecycle_command(
-    input_path: Annotated[
-        Path,
-        typer.Option(help="观察池 lifecycle YAML 配置路径。"),
-    ] = DEFAULT_WATCHLIST_LIFECYCLE_PATH,
-    watchlist_path: Annotated[
-        Path,
-        typer.Option(help="当前观察池配置路径，用于一致性校验。"),
-    ] = DEFAULT_WATCHLIST_CONFIG_PATH,
-    as_of: Annotated[
-        str | None,
-        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
-    ] = None,
-    output_path: Annotated[
-        Path | None,
-        typer.Option(help="Markdown lifecycle 校验报告输出路径。"),
-    ] = None,
-) -> None:
-    """校验观察池 point-in-time 生命周期。"""
-    universe = load_universe()
-    watchlist = load_watchlist(watchlist_path)
-    validation_date = _parse_date(as_of) if as_of else date.today()
-    report_path = output_path or default_watchlist_lifecycle_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
-        validation_date,
-    )
-    report = validate_watchlist_lifecycle(
-        lifecycle=load_watchlist_lifecycle(input_path),
-        input_path=input_path,
-        watchlist=watchlist,
-        universe=universe,
-        as_of=validation_date,
-    )
-    write_watchlist_lifecycle_report(report, report_path)
-
-    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
-    console.print(f"[{status_style}]观察池 lifecycle 校验状态：{report.status}[/{status_style}]")
-    console.print(f"报告：{report_path}")
-    console.print(f"生命周期记录数：{report.entry_count}；当前活跃：{report.active_entry_count}")
-    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
-
-    if not report.passed:
-        raise typer.Exit(code=1)
-
-
-@industry_chain_app.command("list")
-def list_industry_chain(
-    config_path: Annotated[
-        Path,
-        typer.Option(help="产业链配置文件路径。"),
-    ] = DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH,
-) -> None:
-    """列出产业链节点和因果关系。"""
-    industry_chain = load_industry_chain(config_path)
-
-    table = Table(title="产业链因果图")
-    table.add_column("节点")
-    table.add_column("名称")
-    table.add_column("父节点")
-    table.add_column("周期")
-    table.add_column("现金流")
-    table.add_column("情绪")
-    table.add_column("相关标的")
-
-    for node in sorted(industry_chain.nodes, key=lambda value: value.node_id):
-        table.add_row(
-            node.node_id,
-            node.name,
-            ", ".join(node.parent_node_ids) or "无",
-            _horizon_label(node.impact_horizon),
-            _relevance_label(node.cash_flow_relevance),
-            _relevance_label(node.sentiment_relevance),
-            ", ".join(node.related_tickers),
-        )
-
-    console.print(table)
-
-
-@industry_chain_app.command("validate")
-def validate_industry_chain(
-    config_path: Annotated[
-        Path,
-        typer.Option(help="产业链配置文件路径。"),
-    ] = DEFAULT_INDUSTRY_CHAIN_CONFIG_PATH,
-    watchlist_path: Annotated[
-        Path,
-        typer.Option(help="观察池配置文件路径，用于校验节点引用。"),
-    ] = DEFAULT_WATCHLIST_CONFIG_PATH,
-    as_of: Annotated[
-        str | None,
-        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
-    ] = None,
-    output_path: Annotated[
-        Path | None,
-        typer.Option(help="Markdown 产业链校验报告输出路径。"),
-    ] = None,
-) -> None:
-    """校验产业链节点、父子关系和观察池引用。"""
-    industry_chain = load_industry_chain(config_path)
-    watchlist = load_watchlist(watchlist_path)
-    validation_date = _parse_date(as_of) if as_of else date.today()
-    report_path = output_path or default_industry_chain_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
-        validation_date,
-    )
-
-    report = validate_industry_chain_config(
-        industry_chain=industry_chain,
-        watchlist=watchlist,
-        as_of=validation_date,
-    )
-    write_industry_chain_validation_report(report, report_path)
-
-    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
-    console.print(f"[{status_style}]产业链校验状态：{report.status}[/{status_style}]")
-    console.print(f"报告：{report_path}")
-    console.print(f"节点数：{len(report.nodes)}")
-    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
-
-    if not report.passed:
         raise typer.Exit(code=1)
 
 
@@ -17292,38 +17077,6 @@ def _parse_positive_int_csv(value: str, label: str) -> list[int]:
             raise typer.BadParameter(f"{label}必须是正整数。")
         parsed.append(integer)
     return parsed
-
-
-def _risk_level_label(level: str) -> str:
-    return {
-        "low": "低",
-        "medium": "中",
-        "high": "高",
-        "critical": "极高",
-    }.get(level, level)
-
-
-def _decision_stage_label(stage: str) -> str:
-    return {
-        "watch_only": "仅观察",
-        "active_trade": "主动交易",
-    }.get(stage, stage)
-
-
-def _horizon_label(value: str) -> str:
-    return {
-        "short": "短期",
-        "medium": "中期",
-        "long": "长期",
-    }.get(value, value)
-
-
-def _relevance_label(value: str) -> str:
-    return {
-        "low": "低",
-        "medium": "中",
-        "high": "高",
-    }.get(value, value)
 
 
 def _thesis_direction_label(value: str) -> str:

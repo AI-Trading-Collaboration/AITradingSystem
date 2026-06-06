@@ -34,7 +34,7 @@
 |3. Canonical run bundle|BASELINE_DONE|先实现 `outputs/runs/YYYY-MM-DD/<run_id>/` 基础版；后续 `RUN-002` 已升级为 `outputs/runs/daily/<executed_at_utc>/as_of_<YYYY-MM-DD>__<run_id>/`|`daily-run` 支持 `--run-output-root`、`--run-id`、`--legacy-output-mode`；manifest 记录输入、输出、checksum、legacy mirror、visibility cutoff 和执行时间戳。|
 |4. Decision Card v2|BASELINE_DONE|扩展现有“今日结论卡”|顶部展示 Data Gate、Run ID / Trace、Main Invalidator 和 Next Checks；不改变正式评分、仓位或 execution policy。|
 |5. 文档新鲜度门禁|BASELINE_DONE|新增 `aits docs validate-freshness` 并接入 CI|缺少 `最后更新` 或状态记录日期晚于最后更新时失败；测试覆盖通过和失败样本。|
-|6. CLI 分包路线|IN_PROGRESS|登记 `ARCH-001` 分阶段路线，并逐步迁移低耦合 Typer 子命令组|已迁移 `docs`、`security`、`scenarios`、`catalysts` 和 `execution` 命令组；保持 `ai_trading_system.cli:app` 入口兼容，命令名、参数和退出码不变；后续继续评估其他低耦合命令组。|
+|6. CLI 分包路线|IN_PROGRESS|登记 `ARCH-001` 分阶段路线，并逐步迁移低耦合 Typer 子命令组|已迁移 `docs`、`security`、`scenarios`、`catalysts`、`execution`、`watchlist` 和 `industry-chain` 命令组；保持 `ai_trading_system.cli:app` 入口兼容，命令名、参数和退出码不变；后续继续评估其他低耦合命令组。|
 
 ## 实施边界
 
@@ -60,3 +60,4 @@
 - 2026-06-07：`ARCH-001` 第三批低耦合命令组迁移完成，`aits scenarios validate/lookup` 迁入 `src/ai_trading_system/cli_commands/scenarios.py`；主 CLI 只注册 `scenarios_app`，命令路径、参数、退出码和情景库校验/查询语义保持兼容。
 - 2026-06-07：`ARCH-001` 第四批低耦合命令组迁移完成，`aits catalysts validate/upcoming/lookup` 迁入 `src/ai_trading_system/cli_commands/catalysts.py`；主 CLI 只注册 `catalysts_app`，评分路径仍复用底层 catalyst calendar loader/validator，命令路径、参数、退出码和报告/查询语义保持兼容。
 - 2026-06-07：`ARCH-001` 第五批低耦合命令组迁移完成，`aits execution validate/lookup` 迁入 `src/ai_trading_system/cli_commands/execution.py`；主 CLI 只注册 `execution_app`，评分路径仍复用底层 execution policy loader/validator/report writer，命令路径、参数、退出码和报告/查询语义保持兼容。
+- 2026-06-07：`ARCH-001` 第六批低耦合命令组迁移完成，`aits watchlist list/validate/validate-lifecycle` 迁入 `src/ai_trading_system/cli_commands/watchlist.py`，`aits industry-chain list/validate` 迁入 `src/ai_trading_system/cli_commands/industry_chain.py`；主 CLI 只注册对应 Typer app，评分、thesis、risk、valuation 和回测路径仍复用底层 config loader/validator，命令路径、参数、退出码和报告语义保持兼容。
