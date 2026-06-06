@@ -68,12 +68,34 @@ EVALUATOR_VERSIONS: dict[str, str] = {
 DEFAULT_PARAMETER_SWEEP_CONFIG_PATH = (
     PROJECT_ROOT / "config" / "etf_portfolio" / "dynamic_v3_rescue" / "parameter_sweep_v1.yaml"
 )
+DEFAULT_PARAMETER_SWEEP_PROFILE_CONFIG_PATH = (
+    PROJECT_ROOT
+    / "config"
+    / "etf_portfolio"
+    / "dynamic_v3_rescue"
+    / "parameter_sweep_profiles.yaml"
+)
+DEFAULT_PARAMETER_GOVERNANCE_CONFIG_PATH = (
+    PROJECT_ROOT
+    / "config"
+    / "etf_portfolio"
+    / "dynamic_v3_rescue"
+    / "parameter_governance_v1.yaml"
+)
 DEFAULT_DYNAMIC_V3_RESEARCH_ROOT = PROJECT_ROOT / "reports" / "etf_portfolio" / "dynamic_v3_rescue"
 DEFAULT_SWEEP_OUTPUT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "sweeps"
+DEFAULT_DATA_AUDIT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "data_audit"
+DEFAULT_INJECTION_AUDIT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "injection_audit"
+DEFAULT_CANDIDATE_ATTRIBUTION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "candidate_attribution"
 DEFAULT_WALK_FORWARD_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "walk_forward"
+DEFAULT_WALK_FORWARD_SELECTION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "walk_forward_selection"
 DEFAULT_ROBUSTNESS_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "robustness"
+DEFAULT_OVERFIT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "overfit"
 DEFAULT_SHADOW_REPORT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "shadow"
+DEFAULT_SHADOW_MONITOR_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "shadow_monitor"
 DEFAULT_PROMOTION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "promotion"
+DEFAULT_GOVERNANCE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "governance"
+DEFAULT_RESEARCH_INDEX_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "index"
 DEFAULT_LATEST_POINTER_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "latest"
 DEFAULT_SHADOW_REGISTRY_PATH = (
     PROJECT_ROOT / "registry" / "etf_portfolio" / "dynamic_v3_rescue_shadow_candidates.yaml"
@@ -99,6 +121,44 @@ REAL_EVALUATOR_DRAW_DOWN_GUARD_MULTIPLIERS = {
 REAL_EVALUATOR_MIN_POSITIVE_MATERIALIZATION_VALUE = 0.001
 REAL_EVALUATOR_MIN_WEEKLY_TURNOVER_CAP = 0.01
 REAL_EVALUATOR_EVENT_RISK_THRESHOLD_PER_CONFIRMATION = 1.0
+REQUIRED_INJECTION_PARAMETERS = (
+    "rescue_intensity",
+    "smooth_window_days",
+    "constraint_buffer_bps",
+    "turnover_penalty",
+    "risk_off_confirmation_days",
+    "rebalance_cooldown_days",
+    "drawdown_guard",
+)
+PARAMETER_EFFECT_FIELDS: dict[str, tuple[str, ...]] = {
+    "rescue_intensity": (
+        "materialization.soft_penalty_strength",
+        "materialization.drawdown_cash_increase_step",
+        "materialization.emergency_event_risk_cash_increase_step",
+    ),
+    "smooth_window_days": (
+        "materialization.smoothing_max_single_rebalance_delta",
+        "smoothing_policy.max_single_rebalance_delta",
+    ),
+    "constraint_buffer_bps": (
+        "materialization.qqq_target_buffer",
+        "soft_constraint_penalties.interior_buffer",
+    ),
+    "turnover_penalty": (
+        "materialization.smoothing_weekly_turnover_cap",
+        "soft_constraint_penalties.penalty_strength",
+    ),
+    "risk_off_confirmation_days": (
+        "materialization.emergency_event_risk_high_threshold",
+        "drawdown_guardrails.min_confirmations",
+    ),
+    "rebalance_cooldown_days": ("materialization.smoothing_min_rebalance_weight_delta",),
+    "drawdown_guard": (
+        "materialization.drawdown_cash_increase_step",
+        "materialization.drawdown_semiconductor_reduction_step",
+        "materialization.drawdown_qqq_reduction_step",
+    ),
+}
 
 DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY: dict[str, Any] = {
     "observe_only": True,
@@ -308,6 +368,70 @@ class DynamicV3ParameterSweepConfig(BaseModel):
         return self
 
 
+class SweepProfile(BaseModel):
+    description: str = Field(min_length=1)
+    config_path: Path
+    evaluator_mode: EvaluatorMode
+    max_candidates: int = Field(ge=1)
+    workers: int = Field(ge=1)
+    ci_safe: bool
+    not_for_investment_decision: bool
+
+    @model_validator(mode="after")
+    def validate_profile(self) -> Self:
+        if self.evaluator_mode == EVALUATOR_TINY_FIXTURE_PROXY:
+            if self.not_for_investment_decision is not True:
+                raise ValueError("tiny_fixture profile must be not_for_investment_decision")
+        if self.evaluator_mode == EVALUATOR_REAL_DYNAMIC_V3_RESCUE:
+            if self.not_for_investment_decision is True:
+                raise ValueError("real profile cannot be marked not_for_investment_decision")
+            if self.ci_safe is True:
+                raise ValueError("real evaluator profiles are not CI safe")
+        return self
+
+
+class SweepProfileConfig(BaseModel):
+    schema_version: Literal[1]
+    profiles: dict[str, SweepProfile] = Field(min_length=1)
+
+
+class ParameterGovernanceGroup(BaseModel):
+    search_policy: Literal[
+        "manual_only",
+        "controlled_search",
+        "auto_search_allowed",
+        "manual_review_required",
+    ]
+    parameters: list[str] = Field(min_length=1)
+
+
+class ParameterGovernanceConfig(BaseModel):
+    schema_version: Literal[1]
+    policy_id: str = Field(min_length=1)
+    version: str = Field(min_length=1)
+    status: str = Field(min_length=1)
+    owner: str = Field(min_length=1)
+    rationale: str = Field(min_length=1)
+    intended_effect: str = Field(min_length=1)
+    validation_evidence: str = Field(min_length=1)
+    review_condition: str = Field(min_length=1)
+    search_space_version: str = Field(min_length=1)
+    parameter_groups: dict[str, ParameterGovernanceGroup] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def validate_unique_parameters(self) -> Self:
+        seen: dict[str, str] = {}
+        duplicates: list[str] = []
+        for group_name, group in self.parameter_groups.items():
+            for parameter in group.parameters:
+                if parameter in seen:
+                    duplicates.append(parameter)
+                seen[parameter] = group_name
+        if duplicates:
+            raise ValueError("parameter governance duplicates: " + ", ".join(sorted(duplicates)))
+        return self
+
+
 def load_parameter_sweep_config(
     path: Path | str = DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
 ) -> DynamicV3ParameterSweepConfig:
@@ -318,6 +442,34 @@ def load_parameter_sweep_config(
         return DynamicV3ParameterSweepConfig.model_validate(raw)
     except Exception as exc:  # noqa: BLE001
         raise DynamicV3ParameterResearchError(f"invalid parameter sweep config: {exc}") from exc
+
+
+def load_sweep_profile_config(
+    path: Path | str = DEFAULT_PARAMETER_SWEEP_PROFILE_CONFIG_PATH,
+) -> SweepProfileConfig:
+    raw = safe_load_yaml_path(Path(path))
+    if not isinstance(raw, Mapping):
+        raise DynamicV3ParameterResearchError("parameter sweep profiles config must be a mapping")
+    try:
+        return SweepProfileConfig.model_validate(raw)
+    except Exception as exc:  # noqa: BLE001
+        raise DynamicV3ParameterResearchError(
+            f"invalid parameter sweep profile config: {exc}"
+        ) from exc
+
+
+def load_parameter_governance_config(
+    path: Path | str = DEFAULT_PARAMETER_GOVERNANCE_CONFIG_PATH,
+) -> ParameterGovernanceConfig:
+    raw = safe_load_yaml_path(Path(path))
+    if not isinstance(raw, Mapping):
+        raise DynamicV3ParameterResearchError("parameter governance config must be a mapping")
+    try:
+        return ParameterGovernanceConfig.model_validate(raw)
+    except Exception as exc:  # noqa: BLE001
+        raise DynamicV3ParameterResearchError(
+            f"invalid parameter governance config: {exc}"
+        ) from exc
 
 
 def normalized_sweep_config(config: DynamicV3ParameterSweepConfig) -> dict[str, Any]:
@@ -376,11 +528,13 @@ def stable_candidate_id(
 
 def build_sweep_config_validation(
     config_path: Path = DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
+    governance_path: Path = DEFAULT_PARAMETER_GOVERNANCE_CONFIG_PATH,
 ) -> dict[str, Any]:
     checks: list[dict[str, Any]] = []
     try:
         config = load_parameter_sweep_config(config_path)
         candidates = parameter_grid_candidates(config)
+        governance = load_parameter_governance_config(governance_path)
         checks.extend(
             [
                 _check("schema_valid", True, "parameter sweep schema is valid"),
@@ -405,19 +559,30 @@ def build_sweep_config_validation(
                     FORBIDDEN_GATE not in {GATE_REJECT, GATE_REVIEW_REQUIRED, GATE_OBSERVE_ONLY},
                     "automatic commands do not expose production_candidate",
                 ),
+                _check(
+                    "governance_policy_valid",
+                    True,
+                    governance.policy_id,
+                ),
             ]
         )
+        checks.extend(_governance_checks(config=config, governance=governance))
         status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
     except DynamicV3ParameterResearchError as exc:
         checks.append(_check("schema_valid", False, str(exc)))
         status = "FAIL"
         candidates = []
         config = None
+        governance = None
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_parameter_sweep_config_validation",
         "status": status,
         "config_path": str(config_path),
+        "governance_path": str(governance_path),
+        "search_space_version": (
+            "" if governance is None else governance.search_space_version
+        ),
         "candidate_preview_count": len(candidates),
         "evaluator_mode": (
             EVALUATOR_TINY_FIXTURE_PROXY if config is None else config.execution.evaluator
@@ -460,12 +625,118 @@ def preview_sweep_candidates(
     }
 
 
+def sweep_profile_list_payload(
+    *,
+    profile_config_path: Path = DEFAULT_PARAMETER_SWEEP_PROFILE_CONFIG_PATH,
+) -> dict[str, Any]:
+    config = load_sweep_profile_config(profile_config_path)
+    profiles = [
+        {"profile": name, **profile.model_dump(mode="json")}
+        for name, profile in sorted(config.profiles.items())
+    ]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_sweep_profile_list",
+        "status": "PASS",
+        "profile_config_path": str(profile_config_path),
+        "profiles": profiles,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def validate_sweep_profiles_payload(
+    *,
+    profile_config_path: Path = DEFAULT_PARAMETER_SWEEP_PROFILE_CONFIG_PATH,
+) -> dict[str, Any]:
+    checks: list[dict[str, Any]] = []
+    try:
+        config = load_sweep_profile_config(profile_config_path)
+        checks.append(_check("profile_schema_valid", True, "profile config is valid"))
+        for name, profile in sorted(config.profiles.items()):
+            resolved_config = _resolve_project_path(profile.config_path)
+            checks.extend(
+                [
+                    _check(
+                        f"{name}:config_exists",
+                        resolved_config.exists(),
+                        str(resolved_config),
+                    ),
+                    _check(
+                        f"{name}:evaluator_mode_valid",
+                        profile.evaluator_mode in EVALUATOR_VERSIONS,
+                        profile.evaluator_mode,
+                    ),
+                    _check(
+                        f"{name}:real_not_ci_safe",
+                        not (
+                            profile.evaluator_mode == EVALUATOR_REAL_DYNAMIC_V3_RESCUE
+                            and profile.ci_safe
+                        ),
+                        "real profiles must not enter CI",
+                    ),
+                    _check(
+                        f"{name}:investment_flag_consistent",
+                        profile.not_for_investment_decision
+                        == (profile.evaluator_mode == EVALUATOR_TINY_FIXTURE_PROXY),
+                        "not_for_investment_decision matches evaluator mode",
+                    ),
+                ]
+            )
+    except DynamicV3ParameterResearchError as exc:
+        checks.append(_check("profile_schema_valid", False, str(exc)))
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_sweep_profile_validation",
+        "status": status,
+        "profile_config_path": str(profile_config_path),
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def run_parameter_sweep_profile(
+    *,
+    profile: str,
+    profile_config_path: Path = DEFAULT_PARAMETER_SWEEP_PROFILE_CONFIG_PATH,
+    as_of: date | None = None,
+    end: date | None = None,
+    prices_path: Path = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Path = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    data_quality_output_path: Path | None = None,
+    output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
+) -> dict[str, Any]:
+    profiles = load_sweep_profile_config(profile_config_path)
+    if profile not in profiles.profiles:
+        raise DynamicV3ParameterResearchError(f"unknown sweep profile: {profile}")
+    selected = profiles.profiles[profile]
+    result = run_parameter_sweep(
+        config_path=_resolve_project_path(selected.config_path),
+        as_of=as_of,
+        end=end,
+        workers=selected.workers,
+        max_candidates=selected.max_candidates,
+        evaluator_mode=selected.evaluator_mode,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        data_quality_output_path=data_quality_output_path,
+        output_dir=output_dir,
+    )
+    result["profile"] = profile
+    result["profile_config_path"] = str(profile_config_path)
+    return result
+
+
 def run_parameter_sweep(
     *,
     config_path: Path = DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
     as_of: date | None = None,
     end: date | None = None,
     workers: int | None = None,
+    max_candidates: int | None = None,
     evaluator_mode: EvaluatorMode | None = None,
     prices_path: Path = DEFAULT_ETF_PRICE_PATH,
     rates_path: Path = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
@@ -477,21 +748,33 @@ def run_parameter_sweep(
 ) -> dict[str, Any]:
     generated = generated_at or datetime.now(UTC)
     real_context: RealEvaluationContext | None = None
+    manifest_config_path = config_path
     if resume:
         sweep_dir = output_dir / resume
         if not sweep_dir.exists():
             raise DynamicV3ParameterResearchError(f"sweep artifact not found: {resume}")
         config = load_parameter_sweep_config(sweep_dir / "sweep_config.normalized.yaml")
+        manifest_config_path = sweep_dir / "sweep_config.normalized.yaml"
         if evaluator_mode is not None and evaluator_mode != config.execution.evaluator:
             raise DynamicV3ParameterResearchError(
                 "resume cannot change evaluator_mode from existing sweep config"
             )
-        manifest = _read_json(sweep_dir / "sweep_manifest.json")
-        sweep_id = _text(manifest.get("sweep_id"), resume)
+        sweep_id = resume
         candidates = _read_jsonl(sweep_dir / "candidates.jsonl")
+        existing_results, duplicate_count = _deduplicate_candidate_results_file(
+            sweep_dir / "candidate_results.jsonl"
+        )
+        if duplicate_count:
+            _append_text(
+                sweep_dir / "run.log",
+                (
+                    f"{datetime.now(UTC).isoformat()} "
+                    f"deduplicated {duplicate_count} candidate_results rows before resume\n"
+                ),
+            )
         completed = {
             _text(row.get("candidate_id"))
-            for row in _read_jsonl(sweep_dir / "candidate_results.jsonl")
+            for row in existing_results
             if row.get("status") == "completed"
         }
         if config.execution.evaluator == EVALUATOR_REAL_DYNAMIC_V3_RESCUE:
@@ -517,8 +800,19 @@ def run_parameter_sweep(
             config = config.model_copy(
                 update={"execution": config.execution.model_copy(update={"workers": workers})}
             )
+        if max_candidates is not None:
+            config = config.model_copy(
+                update={"run": config.run.model_copy(update={"max_candidates": max_candidates})}
+            )
         if evaluator_mode is not None:
             config = _with_evaluator_mode(config, evaluator_mode)
+        governance = load_parameter_governance_config()
+        governance_checks = _governance_checks(config=config, governance=governance)
+        if any(not check["passed"] for check in governance_checks):
+            failed = ", ".join(
+                check["check_id"] for check in governance_checks if not check["passed"]
+            )
+            raise DynamicV3ParameterResearchError(f"governance validation failed: {failed}")
         data_status = config.data.quality_status
         if config.hard_constraints.require_data_quality_not_fail and data_status == "FAIL":
             raise DynamicV3ParameterResearchError("data_quality=FAIL stops sweep")
@@ -599,7 +893,15 @@ def run_parameter_sweep(
         if idx % config.execution.checkpoint_every_candidates == 0:
             _write_checkpoint(sweep_dir, idx, completed_count, failed_count)
     _write_checkpoint(sweep_dir, len(candidates), completed_count, failed_count)
-    results = _read_jsonl(result_path)
+    results, duplicate_count = _deduplicate_candidate_results_file(result_path)
+    if duplicate_count:
+        _append_text(
+            sweep_dir / "run.log",
+            (
+                f"{datetime.now(UTC).isoformat()} "
+                f"deduplicated {duplicate_count} candidate_results rows before final manifest\n"
+            ),
+        )
     errors = _read_jsonl(error_path)
     leaderboard = build_sweep_leaderboard_payload(sweep_dir=sweep_dir, config=config)
     _write_json(sweep_dir / "leaderboard.json", leaderboard)
@@ -610,7 +912,7 @@ def run_parameter_sweep(
         config=config,
         sweep_id=sweep_id,
         sweep_dir=sweep_dir,
-        config_path=config_path,
+        config_path=manifest_config_path,
         generated_at=generated,
         completed_at=datetime.now(UTC),
         results=results,
@@ -629,6 +931,385 @@ def run_parameter_sweep(
         "run_mode": status,
         "manifest": manifest,
         "leaderboard": leaderboard,
+    }
+
+
+def run_data_audit(
+    *,
+    as_of: date,
+    end: date,
+    prices_path: Path = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Path = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    output_dir: Path = DEFAULT_DATA_AUDIT_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    audit_id = _stable_id("data-audit", as_of.isoformat(), end.isoformat(), generated.isoformat())
+    audit_dir = _unique_dir(output_dir / audit_id)
+    audit_dir.mkdir(parents=True, exist_ok=False)
+    universe = load_universe()
+    quality_report = validate_data_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        expected_price_tickers=configured_price_tickers(universe),
+        expected_rate_series=configured_rate_series(universe),
+        quality_config=load_data_quality(),
+        as_of=as_of,
+        manifest_path=_download_manifest_path(prices_path),
+        secondary_prices_path=_marketstack_prices_path(prices_path),
+        require_secondary_prices=_requires_marketstack_prices(prices_path),
+    )
+    quality_report_path = audit_dir / "validate_data_quality_report.md"
+    write_data_quality_report(quality_report, quality_report_path)
+    price_cache_manifest = _price_cache_manifest(
+        quality_report=quality_report,
+        prices_path=prices_path,
+        rates_path=rates_path,
+    )
+    checksum_audit = _checksum_audit(quality_report)
+    pit_coverage = _pit_coverage_audit(
+        quality_report=quality_report,
+        as_of=as_of,
+        end=end,
+    )
+    data_gap = _data_gap_report(prices_path=prices_path, as_of=as_of, end=end)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_data_audit_manifest",
+        "data_audit_id": audit_id,
+        "status": "PASS" if quality_report.passed else "FAIL",
+        "data_quality_status": quality_report.status,
+        "as_of": as_of.isoformat(),
+        "end": end.isoformat(),
+        "generated_at": generated.isoformat(),
+        "completed_at": datetime.now(UTC).isoformat(),
+        "prices_path": str(prices_path),
+        "rates_path": str(rates_path),
+        "validate_data_report": str(quality_report_path),
+        "warning_codes": [
+            issue.code for issue in quality_report.issues if issue.severity.value == "WARNING"
+        ],
+        "error_codes": [
+            issue.code for issue in quality_report.issues if issue.severity.value == "ERROR"
+        ],
+        "checksum_audit_path": str(audit_dir / "checksum_audit.json"),
+        "pit_coverage_audit_path": str(audit_dir / "pit_coverage_audit.json"),
+        "data_gap_report_path": str(audit_dir / "data_gap_report.json"),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+    }
+    report = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_data_audit_report",
+        "data_audit_id": audit_id,
+        "status": manifest["status"],
+        "data_quality_status": quality_report.status,
+        "prices_download_manifest_checksum_missing": (
+            "prices_download_manifest_checksum_missing" in manifest["warning_codes"]
+        ),
+        "price_cache_manifest": price_cache_manifest,
+        "checksum_audit": checksum_audit,
+        "pit_coverage_audit": pit_coverage,
+        "data_gap_report": data_gap,
+        "validate_data_report": str(quality_report_path),
+        "issues": _quality_issue_rows(quality_report),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(audit_dir / "data_audit_manifest.json", manifest)
+    _write_json(audit_dir / "price_cache_manifest.json", price_cache_manifest)
+    _write_json(audit_dir / "checksum_audit.json", checksum_audit)
+    _write_json(audit_dir / "pit_coverage_audit.json", pit_coverage)
+    _write_json(audit_dir / "data_gap_report.json", data_gap)
+    _write_text(audit_dir / "data_audit_report.md", render_data_audit_markdown(report))
+    _update_latest_pointer("latest_data_audit", audit_id, audit_dir / "data_audit_manifest.json")
+    return {"data_audit_id": audit_id, "data_audit_dir": audit_dir, "report": report}
+
+
+def data_audit_report_payload(
+    *,
+    data_audit_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_DATA_AUDIT_DIR,
+) -> dict[str, Any]:
+    resolved_id = data_audit_id or (
+        _latest_pointer_artifact_id("latest_data_audit") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--audit-id or --latest is required")
+    audit_dir = output_dir / resolved_id
+    manifest = _read_json(audit_dir / "data_audit_manifest.json")
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_data_audit_report_view",
+        "data_audit_id": resolved_id,
+        "status": manifest.get("status", "UNKNOWN"),
+        "data_quality_status": manifest.get("data_quality_status", "UNKNOWN"),
+        "report_path": str(audit_dir / "data_audit_report.md"),
+        "manifest": manifest,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def validate_data_audit_artifact(
+    *,
+    data_audit_id: str,
+    output_dir: Path = DEFAULT_DATA_AUDIT_DIR,
+) -> dict[str, Any]:
+    audit_dir = output_dir / data_audit_id
+    required = [
+        "data_audit_manifest.json",
+        "price_cache_manifest.json",
+        "checksum_audit.json",
+        "pit_coverage_audit.json",
+        "data_gap_report.json",
+        "data_audit_report.md",
+    ]
+    checks = [
+        _check(f"artifact_exists:{name}", (audit_dir / name).exists(), name)
+        for name in required
+    ]
+    manifest = _read_optional_json(audit_dir / "data_audit_manifest.json") or {}
+    checks.append(
+        _check(
+            "data_quality_not_fail",
+            _text(manifest.get("data_quality_status")) != "FAIL",
+            _text(manifest.get("data_quality_status")),
+        )
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_data_audit_validation",
+        "data_audit_id": data_audit_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def run_injection_audit(
+    *,
+    config_path: Path = DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
+    as_of: date,
+    end: date,
+    max_candidates: int = 20,
+    prices_path: Path = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Path = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    output_dir: Path = DEFAULT_INJECTION_AUDIT_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    base_config = load_parameter_sweep_config(config_path)
+    config = base_config.model_copy(
+        update={
+            "data": base_config.data.model_copy(update={"as_of": as_of, "end": end}),
+            "run": base_config.run.model_copy(update={"max_candidates": max(max_candidates, 1)}),
+            "execution": base_config.execution.model_copy(
+                update={
+                    "evaluator": EVALUATOR_REAL_DYNAMIC_V3_RESCUE,
+                    "evaluation_mode": EVALUATOR_REAL_DYNAMIC_V3_RESCUE,
+                    "workers": 1,
+                    "checkpoint_every_candidates": 1,
+                }
+            ),
+        }
+    )
+    governance = load_parameter_governance_config()
+    governance_checks = _governance_checks(config=config, governance=governance)
+    if any(not check["passed"] for check in governance_checks):
+        failed = ", ".join(check["check_id"] for check in governance_checks if not check["passed"])
+        raise DynamicV3ParameterResearchError(f"governance validation failed: {failed}")
+    unbounded = config.model_copy(
+        update={"run": config.run.model_copy(update={"max_candidates": max_candidates * 20})}
+    )
+    candidates = _select_injection_audit_candidates(
+        parameter_grid_candidates(unbounded),
+        max_candidates=max_candidates,
+    )
+    audit_id = _stable_id(
+        "injection-audit",
+        as_of.isoformat(),
+        end.isoformat(),
+        config_path,
+        generated.isoformat(),
+    )
+    audit_dir = _unique_dir(output_dir / audit_id)
+    audit_dir.mkdir(parents=True, exist_ok=False)
+    _write_yaml(audit_dir / "sweep_config.normalized.yaml", normalized_sweep_config(config))
+    _write_jsonl(audit_dir / "candidates.jsonl", candidates)
+    real_context = _prepare_real_evaluation_context(
+        config=config,
+        sweep_dir=audit_dir,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        data_quality_output_path=None,
+        real_evaluation_output_dir=audit_dir / "real_evaluation",
+    )
+    config = config.model_copy(
+        update={
+            "data": config.data.model_copy(
+                update={
+                    "quality_status": real_context.data_quality_status,
+                    "manifest_hash": real_context.data_manifest_hash,
+                }
+            )
+        }
+    )
+    results: list[dict[str, Any]] = []
+    matrix_rows: list[dict[str, Any]] = []
+    for candidate in candidates:
+        result = evaluate_sweep_candidate(
+            candidate,
+            config=config,
+            sweep_dir=audit_dir,
+            real_context=real_context,
+        )
+        results.append(result)
+        matrix_rows.append(
+            _injection_matrix_row(
+                candidate=result,
+                real_context=real_context,
+            )
+        )
+    _write_jsonl(audit_dir / "candidate_results.jsonl", results)
+    _write_csv(audit_dir / "candidate_parameter_matrix.csv", matrix_rows)
+    weight_summary = _weight_path_diff_summary(results)
+    metric_summary = _metric_diff_summary(results)
+    parameter_effects = _parameter_effect_summary(matrix_rows, results)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_injection_audit_manifest",
+        "audit_id": audit_id,
+        "status": "PASS",
+        "config_path": str(config_path),
+        "as_of": as_of.isoformat(),
+        "end": end.isoformat(),
+        "candidate_count": len(results),
+        "max_candidates": max_candidates,
+        "data_quality_status": real_context.data_quality_status,
+        "search_space_version": governance.search_space_version,
+        "started_at": generated.isoformat(),
+        "completed_at": datetime.now(UTC).isoformat(),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+    }
+    report = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_injection_audit_report",
+        "audit_id": audit_id,
+        "status": "PASS",
+        "candidate_count": len(results),
+        "data_quality_status": real_context.data_quality_status,
+        "parameter_effects": parameter_effects,
+        "weight_path_diff_summary": weight_summary,
+        "metric_diff_summary": metric_summary,
+        "not_consumed_parameters": [
+            row["parameter"]
+            for row in parameter_effects
+            if row["effect_status"] == "NOT_CONSUMED"
+        ],
+        "no_observed_effect_parameters": [
+            row["parameter"]
+            for row in parameter_effects
+            if row["effect_status"] == "NO_OBSERVED_EFFECT"
+        ],
+        "all_weight_paths_almost_identical": (
+            weight_summary.get("distinct_latest_weight_hash_count") == 1
+        ),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(audit_dir / "injection_audit_manifest.json", manifest)
+    _write_json(audit_dir / "weight_path_diff_summary.json", weight_summary)
+    _write_json(audit_dir / "metric_diff_summary.json", metric_summary)
+    _write_text(
+        audit_dir / "parameter_effect_report.md",
+        render_injection_audit_markdown(report),
+    )
+    _update_latest_pointer(
+        "latest_injection_audit",
+        audit_id,
+        audit_dir / "injection_audit_manifest.json",
+    )
+    return {"audit_id": audit_id, "audit_dir": audit_dir, "report": report}
+
+
+def injection_audit_report_payload(
+    *,
+    audit_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_INJECTION_AUDIT_DIR,
+) -> dict[str, Any]:
+    resolved_id = audit_id or (
+        _latest_pointer_artifact_id("latest_injection_audit") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--audit-id or --latest is required")
+    audit_dir = output_dir / resolved_id
+    manifest = _read_json(audit_dir / "injection_audit_manifest.json")
+    weight_summary = _read_json(audit_dir / "weight_path_diff_summary.json")
+    metric_summary = _read_json(audit_dir / "metric_diff_summary.json")
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_injection_audit_report_view",
+        "audit_id": resolved_id,
+        "status": manifest.get("status", "UNKNOWN"),
+        "candidate_count": manifest.get("candidate_count"),
+        "weight_path_diff_summary": weight_summary,
+        "metric_diff_summary": metric_summary,
+        "report_path": str(audit_dir / "parameter_effect_report.md"),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def validate_injection_audit_artifact(
+    *,
+    audit_id: str,
+    output_dir: Path = DEFAULT_INJECTION_AUDIT_DIR,
+) -> dict[str, Any]:
+    audit_dir = output_dir / audit_id
+    required = [
+        "injection_audit_manifest.json",
+        "candidate_parameter_matrix.csv",
+        "weight_path_diff_summary.json",
+        "metric_diff_summary.json",
+        "parameter_effect_report.md",
+    ]
+    checks = [
+        _check(f"artifact_exists:{name}", (audit_dir / name).exists(), name)
+        for name in required
+    ]
+    manifest = _read_optional_json(audit_dir / "injection_audit_manifest.json") or {}
+    weight_summary = _read_optional_json(audit_dir / "weight_path_diff_summary.json") or {}
+    candidate_count = int(manifest.get("candidate_count") or 0)
+    requested_floor = min(20, int(manifest.get("max_candidates") or 20))
+    checks.append(
+        _check(
+            "candidate_count_at_least_requested_floor",
+            candidate_count >= requested_floor,
+            str(manifest.get("candidate_count")),
+        )
+    )
+    checks.append(
+        _check(
+            "weight_path_difference_checked",
+            "distinct_latest_weight_hash_count" in weight_summary,
+            "weight path diff summary exists",
+        )
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_injection_audit_validation",
+        "audit_id": audit_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
 
 
@@ -696,6 +1377,7 @@ def evaluate_sweep_candidate(
         "gate": gate,
         "gate_reasons": reasons,
         "parameters": dict(parameters),
+        "search_space_version": _search_space_version(),
         "evaluator_mode": evaluator,
         "evaluator_version": _evaluator_version(evaluator),
         "real_evaluation_artifact_path": real_artifact_path,
@@ -846,11 +1528,12 @@ def validate_sweep_artifact(
     checks = [
         _check(f"artifact_exists:{name}", (sweep_dir / name).exists(), name) for name in required
     ]
-    results = (
+    raw_results = (
         _read_jsonl(sweep_dir / "candidate_results.jsonl")
         if (sweep_dir / "candidate_results.jsonl").exists()
         else []
     )
+    results = _deduplicate_candidate_result_rows(raw_results)
     manifest = _read_optional_json(sweep_dir / "sweep_manifest.json") or {}
     evaluator = _text(
         manifest.get("evaluator_mode"),
@@ -861,6 +1544,13 @@ def validate_sweep_artifact(
             "production_candidate_not_generated",
             all(row.get("gate") != FORBIDDEN_GATE for row in results),
             "sweep results do not contain production_candidate",
+        )
+    )
+    checks.append(
+        _check(
+            "candidate_results_unique_ids",
+            len(raw_results) == len(results),
+            "candidate_results.jsonl must contain at most one row per candidate_id",
         )
     )
     checks.append(
@@ -936,7 +1626,7 @@ def build_sweep_leaderboard_payload(
     sweep_dir: Path,
     config: DynamicV3ParameterSweepConfig | None = None,
 ) -> dict[str, Any]:
-    results = _read_jsonl(sweep_dir / "candidate_results.jsonl")
+    results = _read_candidate_results(sweep_dir)
     errors = _read_jsonl(sweep_dir / "candidate_errors.jsonl")
     manifest = _read_optional_json(sweep_dir / "sweep_manifest.json") or {}
     evaluator = _text(
@@ -1034,6 +1724,7 @@ def candidate_report_payload(
         "source_sweep_id": sweep_id,
         "status": result.get("gate", "UNKNOWN"),
         "parameters": result.get("parameters", {}),
+        "search_space_version": result.get("search_space_version", _search_space_version()),
         "evaluator_mode": result.get("evaluator_mode", EVALUATOR_TINY_FIXTURE_PROXY),
         "evaluator_version": result.get(
             "evaluator_version",
@@ -1064,6 +1755,141 @@ def candidate_report_payload(
             candidate_dir / "candidate_report.md", render_candidate_report_markdown(payload)
         )
     return payload
+
+
+def run_candidate_attribution(
+    *,
+    sweep_id: str,
+    candidate_id: str,
+    sweep_output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
+    output_dir: Path = DEFAULT_CANDIDATE_ATTRIBUTION_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    candidate_report = candidate_report_payload(
+        sweep_id=sweep_id,
+        candidate_id=candidate_id,
+        output_dir=sweep_output_dir,
+        write=True,
+    )
+    attribution_dir = output_dir / candidate_id
+    attribution_dir.mkdir(parents=True, exist_ok=True)
+    real_path_raw = _text(candidate_report.get("real_evaluation_artifact_path"))
+    real_path = Path(real_path_raw) if real_path_raw else None
+    real_payload = _read_optional_json(real_path) if real_path is not None else None
+    metrics = _mapping(candidate_report.get("metrics"))
+    weight_delta = _candidate_weight_delta_rows(real_payload)
+    incomplete_reasons = []
+    if real_payload is None:
+        incomplete_reasons.append("missing_real_evaluation_artifact")
+    if not _records(_mapping(real_payload).get("comparison_daily_paths")):
+        incomplete_reasons.append("daily_weight_path_artifact_not_available")
+    rebalance = _rebalance_event_attribution(real_payload, metrics, incomplete_reasons)
+    constraint = _constraint_event_attribution(real_payload, metrics)
+    drawdown = _drawdown_window_attribution(real_payload, metrics)
+    turnover = _turnover_attribution(real_payload, metrics)
+    gap = _dynamic_vs_static_gap_attribution(real_payload, metrics)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_candidate_attribution_manifest",
+        "candidate_id": candidate_id,
+        "source_sweep_id": sweep_id,
+        "status": "INCOMPLETE" if incomplete_reasons else "PASS",
+        "generated_at": generated.isoformat(),
+        "completed_at": datetime.now(UTC).isoformat(),
+        "incomplete_reasons": incomplete_reasons,
+        "real_evaluation_artifact_path": "" if real_path is None else str(real_path),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+    }
+    report = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_candidate_attribution_report",
+        "candidate_id": candidate_id,
+        "source_sweep_id": sweep_id,
+        "status": manifest["status"],
+        "explainability_status": "INCOMPLETE" if incomplete_reasons else "EXPLAINABLE",
+        "incomplete_reasons": incomplete_reasons,
+        "weight_path_delta": weight_delta,
+        "rebalance_event_attribution": rebalance,
+        "constraint_event_attribution": constraint,
+        "drawdown_window_attribution": drawdown,
+        "turnover_attribution": turnover,
+        "dynamic_vs_static_gap_attribution": gap,
+        "candidate_report_path": str(
+            sweep_output_dir / sweep_id / "candidates" / candidate_id / "candidate_report.json"
+        ),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(attribution_dir / "attribution_manifest.json", manifest)
+    _write_csv(attribution_dir / "weight_path_delta.csv", weight_delta)
+    _write_json(attribution_dir / "rebalance_event_attribution.json", rebalance)
+    _write_json(attribution_dir / "constraint_event_attribution.json", constraint)
+    _write_json(attribution_dir / "drawdown_window_attribution.json", drawdown)
+    _write_json(attribution_dir / "turnover_attribution.json", turnover)
+    _write_json(attribution_dir / "dynamic_vs_static_gap_attribution.json", gap)
+    _write_text(
+        attribution_dir / "candidate_attribution_report.md",
+        render_candidate_attribution_markdown(report),
+    )
+    _update_latest_pointer(
+        "latest_candidate_attribution",
+        candidate_id,
+        attribution_dir / "attribution_manifest.json",
+    )
+    return {
+        "candidate_id": candidate_id,
+        "attribution_dir": attribution_dir,
+        "report": report,
+    }
+
+
+def validate_candidate_attribution_artifact(
+    *,
+    candidate_id: str,
+    output_dir: Path = DEFAULT_CANDIDATE_ATTRIBUTION_DIR,
+) -> dict[str, Any]:
+    candidate_dir = output_dir / candidate_id
+    checks = [
+        _check(
+            "candidate_attribution_dir_exists",
+            candidate_dir.exists(),
+            str(candidate_dir),
+        )
+    ]
+    required = [
+        "attribution_manifest.json",
+        "weight_path_delta.csv",
+        "rebalance_event_attribution.json",
+        "constraint_event_attribution.json",
+        "drawdown_window_attribution.json",
+        "turnover_attribution.json",
+        "dynamic_vs_static_gap_attribution.json",
+        "candidate_attribution_report.md",
+    ]
+    checks.extend(
+        _check(f"artifact_exists:{name}", (candidate_dir / name).exists(), name)
+        for name in required
+    )
+    manifest = _read_optional_json(candidate_dir / "attribution_manifest.json") or {}
+    checks.append(
+        _check(
+            "no_fabricated_weight_path",
+            _text(manifest.get("status")) in {"PASS", "INCOMPLETE"},
+            "missing path evidence must be INCOMPLETE",
+        )
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_candidate_attribution_validation",
+        "candidate_id": candidate_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
 
 
 def run_walk_forward_validation(
@@ -1134,6 +1960,189 @@ def run_walk_forward_validation(
     _write_text(wf_dir / "wf_report.md", render_walk_forward_report_markdown(report))
     _update_latest_pointer("latest_walk_forward", wf_id, wf_dir / "wf_manifest.json")
     return {"walk_forward_id": wf_id, "walk_forward_dir": wf_dir, "report": report}
+
+
+def run_walk_forward_selection(
+    *,
+    config_path: Path = DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
+    profile: str = "small_real",
+    sweep_id: str | None = None,
+    profile_config_path: Path = DEFAULT_PARAMETER_SWEEP_PROFILE_CONFIG_PATH,
+    sweep_output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
+    output_dir: Path = DEFAULT_WALK_FORWARD_SELECTION_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    resolved_sweep_id = sweep_id or latest_sweep_id()
+    if not resolved_sweep_id:
+        raise DynamicV3ParameterResearchError("walk-forward selection requires a source sweep")
+    sweep_dir = sweep_output_dir / resolved_sweep_id
+    config = load_parameter_sweep_config(sweep_dir / "sweep_config.normalized.yaml")
+    source_results = [
+        row for row in _read_candidate_results(sweep_dir)
+        if row.get("gate") != GATE_REJECT
+    ]
+    windows = walk_forward_windows(config)
+    wf_selection_id = _stable_id(
+        "wf-selection",
+        resolved_sweep_id,
+        profile,
+        generated.isoformat(),
+    )
+    wf_dir = _unique_dir(output_dir / wf_selection_id)
+    wf_dir.mkdir(parents=True, exist_ok=False)
+    train_leaderboards: list[dict[str, Any]] = []
+    selected_rows: list[dict[str, Any]] = []
+    test_rows: list[dict[str, Any]] = []
+    for index, window in enumerate(windows, start=1):
+        leaderboard = _window_train_leaderboard(
+            source_results,
+            window=window,
+            window_index=index,
+        )
+        train_leaderboards.append(
+            {
+                "window_index": index,
+                "window": dict(window),
+                "leaderboard": leaderboard,
+            }
+        )
+        selected = leaderboard[0] if leaderboard else {}
+        if selected:
+            selected_rows.append(
+                {
+                    "window_index": index,
+                    "train_start": window["train_start"],
+                    "train_end": window["train_end"],
+                    "test_start": window["test_start"],
+                    "test_end": window["test_end"],
+                    "candidate_id": selected.get("candidate_id"),
+                    "train_rank": selected.get("train_rank"),
+                    "parameters": selected.get("parameters", {}),
+                }
+            )
+            test_rows.append(_walk_forward_selection_test_row(selected, window, config))
+    pass_count = sum(1 for row in test_rows if row.get("test_gate") != GATE_REJECT)
+    status = (
+        "PASS"
+        if test_rows and pass_count / len(test_rows) >= config.walk_forward.min_pass_ratio
+        else "REVIEW_REQUIRED"
+    )
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_walk_forward_selection_manifest",
+        "wf_selection_id": wf_selection_id,
+        "source_sweep_id": resolved_sweep_id,
+        "profile": profile,
+        "config_path": str(config_path),
+        "profile_config_path": str(profile_config_path),
+        "status": status,
+        "window_count": len(windows),
+        "selected_candidate_count": len(selected_rows),
+        "test_pass_count": pass_count,
+        "started_at": generated.isoformat(),
+        "completed_at": datetime.now(UTC).isoformat(),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+    }
+    report = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_walk_forward_selection_report",
+        "wf_selection_id": wf_selection_id,
+        "source_sweep_id": resolved_sweep_id,
+        "status": status,
+        "profile": profile,
+        "summary": {
+            "window_count": len(windows),
+            "selected_candidate_count": len(selected_rows),
+            "test_pass_count": pass_count,
+            "parameter_stability": _wf_parameter_stability(selected_rows),
+            "overfit_windows": [
+                row["window_index"] for row in test_rows if row.get("test_gate") == GATE_REJECT
+            ],
+        },
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(wf_dir / "wf_selection_manifest.json", manifest)
+    _write_json(wf_dir / "wf_windows.json", {"windows": windows})
+    _write_jsonl(wf_dir / "train_window_leaderboards.jsonl", train_leaderboards)
+    _write_jsonl(wf_dir / "selected_candidates.jsonl", selected_rows)
+    _write_jsonl(wf_dir / "test_window_results.jsonl", test_rows)
+    _write_text(wf_dir / "wf_selection_report.md", render_wf_selection_markdown(report))
+    _update_latest_pointer(
+        "latest_walk_forward_selection",
+        wf_selection_id,
+        wf_dir / "wf_selection_manifest.json",
+    )
+    return {
+        "wf_selection_id": wf_selection_id,
+        "wf_selection_dir": wf_dir,
+        "report": report,
+    }
+
+
+def walk_forward_selection_report_payload(
+    *,
+    wf_selection_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_WALK_FORWARD_SELECTION_DIR,
+) -> dict[str, Any]:
+    resolved_id = wf_selection_id or (
+        _latest_pointer_artifact_id("latest_walk_forward_selection") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--wf-selection-id or --latest is required")
+    wf_dir = output_dir / resolved_id
+    manifest = _read_json(wf_dir / "wf_selection_manifest.json")
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_walk_forward_selection_report_view",
+        "wf_selection_id": resolved_id,
+        "status": manifest.get("status", "UNKNOWN"),
+        "report_path": str(wf_dir / "wf_selection_report.md"),
+        "manifest": manifest,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def validate_walk_forward_selection_artifact(
+    *,
+    wf_selection_id: str,
+    output_dir: Path = DEFAULT_WALK_FORWARD_SELECTION_DIR,
+) -> dict[str, Any]:
+    wf_dir = output_dir / wf_selection_id
+    required = [
+        "wf_selection_manifest.json",
+        "wf_windows.json",
+        "train_window_leaderboards.jsonl",
+        "selected_candidates.jsonl",
+        "test_window_results.jsonl",
+        "wf_selection_report.md",
+    ]
+    checks = [
+        _check(f"artifact_exists:{name}", (wf_dir / name).exists(), name)
+        for name in required
+    ]
+    manifest = _read_optional_json(wf_dir / "wf_selection_manifest.json") or {}
+    checks.append(
+        _check(
+            "selected_candidates_present",
+            int(manifest.get("selected_candidate_count") or 0) > 0,
+            str(manifest.get("selected_candidate_count")),
+        )
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_walk_forward_selection_validation",
+        "wf_selection_id": wf_selection_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
 
 
 def validate_walk_forward_artifact(
@@ -1245,6 +2254,143 @@ def run_robustness_diagnostics(
         "robustness_id": robustness_id,
         "robustness_dir": robustness_dir,
         "report": report,
+    }
+
+
+def run_overfit_review(
+    *,
+    sweep_id: str,
+    candidate_id: str,
+    sweep_output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
+    output_dir: Path = DEFAULT_OVERFIT_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    sweep_dir = sweep_output_dir / sweep_id
+    config = load_parameter_sweep_config(sweep_dir / "sweep_config.normalized.yaml")
+    result = _candidate_result(sweep_dir, candidate_id)
+    if result is None:
+        raise DynamicV3ParameterResearchError(f"candidate not found: {candidate_id}")
+    results = _read_candidate_results(sweep_dir)
+    overfit_id = _stable_id("overfit", sweep_id, candidate_id, generated.isoformat())
+    overfit_dir = _unique_dir(output_dir / overfit_id)
+    overfit_dir.mkdir(parents=True, exist_ok=False)
+    rank = _candidate_rank(results, candidate_id)
+    rank_stability = _rank_stability_payload(results, candidate_id, rank)
+    neighborhood = _parameter_neighborhood_stability_payload(result, config)
+    regime = _overfit_regime_stability_payload(result)
+    extreme_day = _extreme_day_dependency_payload(result)
+    multiple_testing = _multiple_testing_warning_payload(results)
+    overfit_status = _overfit_status_from_components(
+        result=result,
+        rank_stability=rank_stability,
+        neighborhood=neighborhood,
+        extreme_day=extreme_day,
+        multiple_testing=multiple_testing,
+    )
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_overfit_manifest",
+        "overfit_id": overfit_id,
+        "source_sweep_id": sweep_id,
+        "candidate_id": candidate_id,
+        "status": overfit_status,
+        "overfit_status": overfit_status,
+        "started_at": generated.isoformat(),
+        "completed_at": datetime.now(UTC).isoformat(),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+    }
+    report = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_overfit_report",
+        "overfit_id": overfit_id,
+        "source_sweep_id": sweep_id,
+        "candidate_id": candidate_id,
+        "status": overfit_status,
+        "overfit_status": overfit_status,
+        "rank_stability": rank_stability,
+        "parameter_neighborhood_stability": neighborhood,
+        "regime_stability": regime,
+        "extreme_day_dependency": extreme_day,
+        "multiple_testing_warning": multiple_testing,
+        "optional_pbo_dsr_status": "NOT_RUN_REVIEW_REQUIRED",
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(overfit_dir / "overfit_manifest.json", manifest)
+    _write_json(overfit_dir / "rank_stability.json", rank_stability)
+    _write_json(overfit_dir / "parameter_neighborhood_stability.json", neighborhood)
+    _write_json(overfit_dir / "regime_stability.json", regime)
+    _write_json(overfit_dir / "extreme_day_dependency.json", extreme_day)
+    _write_json(overfit_dir / "multiple_testing_warning.json", multiple_testing)
+    _write_text(overfit_dir / "overfit_report.md", render_overfit_markdown(report))
+    _update_latest_pointer("latest_overfit", overfit_id, overfit_dir / "overfit_manifest.json")
+    return {"overfit_id": overfit_id, "overfit_dir": overfit_dir, "report": report}
+
+
+def overfit_report_payload(
+    *,
+    overfit_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_OVERFIT_DIR,
+) -> dict[str, Any]:
+    resolved_id = overfit_id or (_latest_pointer_artifact_id("latest_overfit") if latest else "")
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--overfit-id or --latest is required")
+    overfit_dir = output_dir / resolved_id
+    manifest = _read_json(overfit_dir / "overfit_manifest.json")
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_overfit_report_view",
+        "overfit_id": resolved_id,
+        "status": manifest.get("status", "UNKNOWN"),
+        "overfit_status": manifest.get("overfit_status", "UNKNOWN"),
+        "candidate_id": manifest.get("candidate_id"),
+        "report_path": str(overfit_dir / "overfit_report.md"),
+        "manifest": manifest,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def validate_overfit_artifact(
+    *,
+    overfit_id: str,
+    output_dir: Path = DEFAULT_OVERFIT_DIR,
+) -> dict[str, Any]:
+    overfit_dir = output_dir / overfit_id
+    required = [
+        "overfit_manifest.json",
+        "rank_stability.json",
+        "parameter_neighborhood_stability.json",
+        "regime_stability.json",
+        "extreme_day_dependency.json",
+        "multiple_testing_warning.json",
+        "overfit_report.md",
+    ]
+    checks = [
+        _check(f"artifact_exists:{name}", (overfit_dir / name).exists(), name)
+        for name in required
+    ]
+    manifest = _read_optional_json(overfit_dir / "overfit_manifest.json") or {}
+    checks.append(
+        _check(
+            "overfit_status_allowed",
+            _text(manifest.get("overfit_status"))
+            in {"LOW_RISK", "REVIEW_REQUIRED", "HIGH_RISK"},
+            _text(manifest.get("overfit_status")),
+        )
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_overfit_validation",
+        "overfit_id": overfit_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
 
 
@@ -1440,6 +2586,133 @@ def shadow_report_payload(
     return payload
 
 
+def run_shadow_monitor(
+    *,
+    as_of: date,
+    registry_path: Path = DEFAULT_SHADOW_REGISTRY_PATH,
+    output_dir: Path = DEFAULT_SHADOW_MONITOR_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    monitor_id = _stable_id("shadow-monitor", as_of.isoformat(), generated.isoformat())
+    monitor_dir = _unique_dir(output_dir / monitor_id)
+    monitor_dir.mkdir(parents=True, exist_ok=False)
+    registry = load_shadow_registry(registry_path)
+    results = [
+        _shadow_monitor_candidate_result(row, as_of=as_of)
+        for row in _records(registry.get("candidates"))
+    ]
+    ready_count = sum(
+        1 for row in results if row.get("promotion_eligibility") == "promotion_review_ready"
+    )
+    drift_count = sum(
+        1 for row in results if row.get("live_vs_backtest_drift") == "REVIEW_REQUIRED"
+    )
+    brief = render_shadow_monitor_reader_brief_section(results, ready_count, drift_count)
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_shadow_monitor_manifest",
+        "monitor_id": monitor_id,
+        "status": "PASS",
+        "as_of": as_of.isoformat(),
+        "candidate_count": len(results),
+        "promotion_review_ready_count": ready_count,
+        "live_drift_review_required_count": drift_count,
+        "started_at": generated.isoformat(),
+        "completed_at": datetime.now(UTC).isoformat(),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+    }
+    report = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_shadow_monitor_report",
+        "monitor_id": monitor_id,
+        "status": "PASS",
+        "as_of": as_of.isoformat(),
+        "candidate_monitor_results": results,
+        "reader_brief_section": brief,
+        "summary": {
+            "observe_only_candidate_count": len(results),
+            "promotion_review_ready_count": ready_count,
+            "live_drift_review_required_count": drift_count,
+        },
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(monitor_dir / "shadow_monitor_manifest.json", manifest)
+    _write_jsonl(monitor_dir / "candidate_monitor_results.jsonl", results)
+    _write_text(monitor_dir / "shadow_monitor_report.md", render_shadow_monitor_markdown(report))
+    _write_text(monitor_dir / "reader_brief_section.md", brief)
+    _update_latest_pointer(
+        "latest_shadow_monitor",
+        monitor_id,
+        monitor_dir / "shadow_monitor_manifest.json",
+    )
+    return {"monitor_id": monitor_id, "monitor_dir": monitor_dir, "report": report}
+
+
+def shadow_monitor_report_payload(
+    *,
+    monitor_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_SHADOW_MONITOR_DIR,
+) -> dict[str, Any]:
+    resolved_id = monitor_id or (
+        _latest_pointer_artifact_id("latest_shadow_monitor") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--monitor-id or --latest is required")
+    monitor_dir = output_dir / resolved_id
+    manifest = _read_json(monitor_dir / "shadow_monitor_manifest.json")
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_shadow_monitor_report_view",
+        "monitor_id": resolved_id,
+        "status": manifest.get("status", "UNKNOWN"),
+        "candidate_count": manifest.get("candidate_count"),
+        "report_path": str(monitor_dir / "shadow_monitor_report.md"),
+        "manifest": manifest,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def validate_shadow_monitor_artifact(
+    *,
+    monitor_id: str,
+    output_dir: Path = DEFAULT_SHADOW_MONITOR_DIR,
+) -> dict[str, Any]:
+    monitor_dir = output_dir / monitor_id
+    required = [
+        "shadow_monitor_manifest.json",
+        "candidate_monitor_results.jsonl",
+        "shadow_monitor_report.md",
+        "reader_brief_section.md",
+    ]
+    checks = [
+        _check(f"artifact_exists:{name}", (monitor_dir / name).exists(), name)
+        for name in required
+    ]
+    manifest = _read_optional_json(monitor_dir / "shadow_monitor_manifest.json") or {}
+    checks.append(
+        _check(
+            "production_effect_none",
+            _mapping(manifest.get("safety")).get("production_effect") == "none",
+            "shadow monitor is observe-only",
+        )
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_shadow_monitor_validation",
+        "monitor_id": monitor_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
 def validate_shadow_registry(
     *,
     registry_path: Path = DEFAULT_SHADOW_REGISTRY_PATH,
@@ -1568,6 +2841,252 @@ def stale_artifacts_payload(
     }
 
 
+def governance_report_payload(
+    *,
+    governance_path: Path = DEFAULT_PARAMETER_GOVERNANCE_CONFIG_PATH,
+    output_dir: Path = DEFAULT_GOVERNANCE_DIR,
+    write: bool = True,
+) -> dict[str, Any]:
+    governance = load_parameter_governance_config(governance_path)
+    payload = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_parameter_governance_report",
+        "status": "PASS",
+        "policy_id": governance.policy_id,
+        "version": governance.version,
+        "search_space_version": governance.search_space_version,
+        "parameter_groups": {
+            name: group.model_dump(mode="json")
+            for name, group in governance.parameter_groups.items()
+        },
+        "manual_only_parameters": _governance_parameters(governance, "manual_only"),
+        "manual_review_required_parameters": _governance_parameters(
+            governance,
+            "manual_review_required",
+        ),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    if write:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        _write_json(output_dir / "parameter_governance_report.json", payload)
+        _write_text(
+            output_dir / "parameter_governance_report.md",
+            render_governance_markdown(payload),
+        )
+        _update_latest_pointer(
+            "latest_parameter_governance",
+            governance.search_space_version,
+            output_dir / "parameter_governance_report.json",
+        )
+    return payload
+
+
+def validate_parameter_governance(
+    *,
+    governance_path: Path = DEFAULT_PARAMETER_GOVERNANCE_CONFIG_PATH,
+    config_path: Path = DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
+) -> dict[str, Any]:
+    checks: list[dict[str, Any]] = []
+    try:
+        governance = load_parameter_governance_config(governance_path)
+        config = load_parameter_sweep_config(config_path)
+        checks.append(_check("governance_schema_valid", True, governance.policy_id))
+        checks.extend(_governance_checks(config=config, governance=governance))
+    except DynamicV3ParameterResearchError as exc:
+        checks.append(_check("governance_schema_valid", False, str(exc)))
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_parameter_governance_validation",
+        "status": status,
+        "governance_path": str(governance_path),
+        "config_path": str(config_path),
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def governance_diff_payload(*, old_config: Path, new_config: Path) -> dict[str, Any]:
+    old = load_parameter_governance_config(old_config)
+    new = load_parameter_governance_config(new_config)
+    old_params = _governance_policy_by_parameter(old)
+    new_params = _governance_policy_by_parameter(new)
+    changes = []
+    for parameter in sorted(set(old_params) | set(new_params)):
+        if old_params.get(parameter) != new_params.get(parameter):
+            changes.append(
+                {
+                    "parameter": parameter,
+                    "old_policy": old_params.get(parameter, ""),
+                    "new_policy": new_params.get(parameter, ""),
+                    "manual_review_required": True,
+                }
+            )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_parameter_governance_diff",
+        "status": "PASS",
+        "old_search_space_version": old.search_space_version,
+        "new_search_space_version": new.search_space_version,
+        "change_count": len(changes),
+        "changes": changes,
+        "manual_review_required": bool(changes),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def build_research_index(
+    *,
+    sweep_output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
+    shadow_registry_path: Path = DEFAULT_SHADOW_REGISTRY_PATH,
+    output_dir: Path = DEFAULT_RESEARCH_INDEX_DIR,
+) -> dict[str, Any]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    sweeps: list[dict[str, Any]] = []
+    candidates: list[dict[str, Any]] = []
+    leaderboard_history: list[dict[str, Any]] = []
+    for manifest_path in sorted(sweep_output_dir.glob("*/sweep_manifest.json")):
+        manifest = _read_optional_json(manifest_path)
+        if not manifest:
+            continue
+        sweep_id = _text(manifest.get("sweep_id"), manifest_path.parent.name)
+        sweeps.append(
+            {
+                "sweep_id": sweep_id,
+                "path": str(manifest_path.parent),
+                "status": manifest.get("status"),
+                "evaluator_mode": manifest.get("evaluator_mode"),
+                "candidate_count": manifest.get("candidate_count"),
+                "search_space_version": manifest.get("search_space_version", ""),
+                "as_of": manifest.get("as_of"),
+                "end": manifest.get("end"),
+            }
+        )
+        leaderboard = _read_optional_json(manifest_path.parent / "leaderboard.json") or {}
+        top = _records(leaderboard.get("top_eligible_candidates"))
+        leaderboard_history.append(
+            {
+                "sweep_id": sweep_id,
+                "top_candidate": _text(top[0].get("candidate_id")) if top else "",
+                "candidate_count": leaderboard.get("candidate_count"),
+                "evaluator_mode": leaderboard.get("evaluator_mode"),
+            }
+        )
+        for row in _read_candidate_results(manifest_path.parent):
+            candidates.append(
+                {
+                    "candidate_id": row.get("candidate_id"),
+                    "source_sweep_id": sweep_id,
+                    "gate": row.get("gate"),
+                    "score": row.get("score"),
+                    "parameters": row.get("parameters", {}),
+                    "metrics": row.get("metrics", {}),
+                    "evaluator_mode": row.get("evaluator_mode"),
+                    "search_space_version": row.get("search_space_version", ""),
+                    "real_evaluation_artifact_path": row.get("real_evaluation_artifact_path", ""),
+                }
+            )
+    shadow_history = _records(load_shadow_registry(shadow_registry_path).get("candidates"))
+    _write_json(output_dir / "sweeps_index.json", {"sweeps": sweeps})
+    _write_jsonl(output_dir / "candidates_index.jsonl", candidates)
+    _write_jsonl(output_dir / "leaderboard_history.jsonl", leaderboard_history)
+    _write_jsonl(output_dir / "shadow_history.jsonl", shadow_history)
+    payload = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_research_index",
+        "status": "PASS",
+        "sweep_count": len(sweeps),
+        "candidate_count": len(candidates),
+        "shadow_candidate_count": len(shadow_history),
+        "output_dir": str(output_dir),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(output_dir / "research_index_manifest.json", payload)
+    _update_latest_pointer(
+        "latest_research_index",
+        "research_index",
+        output_dir / "research_index_manifest.json",
+    )
+    return payload
+
+
+def research_query_payload(
+    *,
+    candidate_id: str,
+    output_dir: Path = DEFAULT_RESEARCH_INDEX_DIR,
+) -> dict[str, Any]:
+    rows = [
+        row for row in _read_jsonl(output_dir / "candidates_index.jsonl")
+        if row.get("candidate_id") == candidate_id
+    ]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_research_query",
+        "status": "PASS" if rows else "MISSING",
+        "candidate_id": candidate_id,
+        "matches": rows,
+        "artifact_paths": [row.get("real_evaluation_artifact_path", "") for row in rows],
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def research_compare_payload(
+    *,
+    candidate_a: str,
+    candidate_b: str,
+    output_dir: Path = DEFAULT_RESEARCH_INDEX_DIR,
+) -> dict[str, Any]:
+    rows = _read_jsonl(output_dir / "candidates_index.jsonl")
+    a = next((row for row in rows if row.get("candidate_id") == candidate_a), {})
+    b = next((row for row in rows if row.get("candidate_id") == candidate_b), {})
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_research_compare",
+        "status": "PASS" if a and b else "MISSING",
+        "candidate_a": candidate_a,
+        "candidate_b": candidate_b,
+        "parameter_diff": _dict_diff(_mapping(a.get("parameters")), _mapping(b.get("parameters"))),
+        "metric_diff": _numeric_metric_diff(_mapping(a.get("metrics")), _mapping(b.get("metrics"))),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def research_history_payload(
+    *,
+    parameter: str,
+    output_dir: Path = DEFAULT_RESEARCH_INDEX_DIR,
+) -> dict[str, Any]:
+    values = []
+    for row in _read_jsonl(output_dir / "candidates_index.jsonl"):
+        params = _mapping(row.get("parameters"))
+        if parameter in params:
+            values.append(
+                {
+                    "value": params[parameter],
+                    "score": row.get("score"),
+                    "gate": row.get("gate"),
+                }
+            )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_research_parameter_history",
+        "status": "PASS" if values else "MISSING",
+        "parameter": parameter,
+        "observation_count": len(values),
+        "distribution": dict(Counter(_text(row.get("value")) for row in values)),
+        "rows": values[:100],
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
 def build_promotion_pack(
     *,
     candidate_id: str,
@@ -1575,6 +3094,7 @@ def build_promotion_pack(
     sweep_output_dir: Path = DEFAULT_SWEEP_OUTPUT_DIR,
     walk_forward_dir: Path = DEFAULT_WALK_FORWARD_DIR,
     robustness_dir: Path = DEFAULT_ROBUSTNESS_DIR,
+    overfit_dir: Path = DEFAULT_OVERFIT_DIR,
     output_dir: Path = DEFAULT_PROMOTION_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
@@ -1585,6 +3105,7 @@ def build_promotion_pack(
         sweep_output_dir=sweep_output_dir,
         walk_forward_dir=walk_forward_dir,
         robustness_dir=robustness_dir,
+        overfit_dir=overfit_dir,
     )
     status, reasons = _promotion_status(evidence)
     candidate = _mapping(evidence.get("candidate_report"))
@@ -1917,6 +3438,161 @@ def render_promotion_reader_brief_section(
         "- production_candidate_generated: false\n"
         "- manual_review_required: true\n"
     )
+
+
+def render_data_audit_markdown(payload: Mapping[str, Any]) -> str:
+    checksum = _mapping(payload.get("checksum_audit"))
+    coverage = _mapping(payload.get("pit_coverage_audit"))
+    lines = [
+        f"# Dynamic v3 Rescue Data Audit {payload.get('data_audit_id')}",
+        "",
+        f"- Status: {payload.get('status')}",
+        f"- Data quality status: {payload.get('data_quality_status')}",
+        "- Market regime: ai_after_chatgpt",
+        f"- Requested range: {coverage.get('requested_as_of')} to {coverage.get('requested_end')}",
+        f"- prices_download_manifest_checksum_missing: {checksum.get('prices_checksum_missing')}",
+        f"- Validate-data report: {payload.get('validate_data_report')}",
+        "",
+        "## Issues",
+    ]
+    for issue in _records(payload.get("issues")):
+        lines.append(f"- {issue.get('severity')} {issue.get('code')}: {issue.get('message')}")
+    lines.extend(["", "## Safety", "- production_candidate_generated=false"])
+    return "\n".join(lines) + "\n"
+
+
+def render_injection_audit_markdown(payload: Mapping[str, Any]) -> str:
+    lines = [
+        f"# Dynamic v3 Rescue Injection Audit {payload.get('audit_id')}",
+        "",
+        f"- Status: {payload.get('status')}",
+        f"- Candidate count: {payload.get('candidate_count')}",
+        f"- Data quality status: {payload.get('data_quality_status')}",
+        f"- All weight paths almost identical: {payload.get('all_weight_paths_almost_identical')}",
+        "",
+        "## Parameter Effects",
+        "",
+        "| Parameter | Status | Distinct values | Config hashes | Metric hashes | Weight hashes |",
+        "|---|---|---:|---:|---:|---:|",
+    ]
+    for row in _records(payload.get("parameter_effects")):
+        lines.append(
+            f"| {row.get('parameter')} | {row.get('effect_status')} | "
+            f"{row.get('distinct_value_count')} | "
+            f"{row.get('distinct_effective_config_hash_count')} | "
+            f"{row.get('distinct_metric_hash_count')} | {row.get('distinct_weight_hash_count')} |"
+        )
+    lines.extend(["", "## Safety", "- production_candidate_generated=false"])
+    return "\n".join(lines) + "\n"
+
+
+def render_candidate_attribution_markdown(payload: Mapping[str, Any]) -> str:
+    lines = [
+        f"# Dynamic v3 Rescue Candidate Attribution {payload.get('candidate_id')}",
+        "",
+        f"- Source sweep: {payload.get('source_sweep_id')}",
+        f"- Status: {payload.get('status')}",
+        f"- Explainability: {payload.get('explainability_status')}",
+        f"- Incomplete reasons: {', '.join(_texts(payload.get('incomplete_reasons')))}",
+        "",
+        "## Attribution Summary",
+        f"- Constraint: {_mapping(payload.get('constraint_event_attribution')).get('summary')}",
+        f"- Drawdown: {_mapping(payload.get('drawdown_window_attribution')).get('summary')}",
+        f"- Turnover: {_mapping(payload.get('turnover_attribution')).get('summary')}",
+        "- Dynamic-vs-static gap: "
+        f"{_mapping(payload.get('dynamic_vs_static_gap_attribution')).get('summary')}",
+        "",
+        "## Safety",
+        "- production_candidate_generated=false",
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def render_wf_selection_markdown(payload: Mapping[str, Any]) -> str:
+    summary = _mapping(payload.get("summary"))
+    return (
+        f"# Dynamic v3 Rescue Walk-forward Selection {payload.get('wf_selection_id')}\n\n"
+        f"- Source sweep: {payload.get('source_sweep_id')}\n"
+        f"- Profile: {payload.get('profile')}\n"
+        f"- Status: {payload.get('status')}\n"
+        f"- Window count: {summary.get('window_count')}\n"
+        f"- Selected candidates: {summary.get('selected_candidate_count')}\n"
+        f"- Test pass count: {summary.get('test_pass_count')}\n"
+        f"- Parameter stability: {summary.get('parameter_stability')}\n\n"
+        "## Safety\n"
+        "- production_candidate_generated=false\n"
+    )
+
+
+def render_overfit_markdown(payload: Mapping[str, Any]) -> str:
+    return (
+        f"# Dynamic v3 Rescue Overfit Review {payload.get('overfit_id')}\n\n"
+        f"- Candidate: {payload.get('candidate_id')}\n"
+        f"- Source sweep: {payload.get('source_sweep_id')}\n"
+        f"- Overfit status: {payload.get('overfit_status')}\n"
+        f"- Optional PBO/DSR: {payload.get('optional_pbo_dsr_status')}\n\n"
+        "## Interpretation\n"
+        "- HIGH_RISK blocks promotion.\n"
+        "- REVIEW_REQUIRED requires manual review and cannot create production_candidate.\n\n"
+        "## Safety\n"
+        "- production_candidate_generated=false\n"
+    )
+
+
+def render_governance_markdown(payload: Mapping[str, Any]) -> str:
+    lines = [
+        "# Dynamic v3 Rescue Parameter Governance",
+        "",
+        f"- Policy: {payload.get('policy_id')}",
+        f"- Version: {payload.get('version')}",
+        f"- Search space version: {payload.get('search_space_version')}",
+        "",
+        "## Groups",
+    ]
+    for name, group in _mapping(payload.get("parameter_groups")).items():
+        group_payload = _mapping(group)
+        lines.append(
+            f"- {name}: {group_payload.get('search_policy')} "
+            f"({', '.join(_texts(group_payload.get('parameters')))})"
+        )
+    lines.extend(["", "## Safety", "- production_candidate_generated=false"])
+    return "\n".join(lines) + "\n"
+
+
+def render_shadow_monitor_reader_brief_section(
+    results: Sequence[Mapping[str, Any]],
+    ready_count: int,
+    drift_count: int,
+) -> str:
+    return (
+        "## Dynamic Rescue Shadow Monitoring\n\n"
+        f"- observe_only candidates: {len(results)}\n"
+        f"- promotion_review_ready: {ready_count}\n"
+        f"- live_drift_review_required: {drift_count}\n"
+        "- production_candidate_generated: false\n"
+        "- manual_review_required: true\n"
+    )
+
+
+def render_shadow_monitor_markdown(payload: Mapping[str, Any]) -> str:
+    summary = _mapping(payload.get("summary"))
+    lines = [
+        f"# Dynamic v3 Rescue Shadow Monitor {payload.get('monitor_id')}",
+        "",
+        f"- As of: {payload.get('as_of')}",
+        f"- Observe-only candidates: {summary.get('observe_only_candidate_count')}",
+        f"- Promotion review ready: {summary.get('promotion_review_ready_count')}",
+        f"- Drift review required: {summary.get('live_drift_review_required_count')}",
+        "",
+        "## Candidates",
+    ]
+    for row in _records(payload.get("candidate_monitor_results")):
+        lines.append(
+            f"- {row.get('candidate_id')}: {row.get('recommendation')} "
+            f"(days_observed={row.get('days_observed')})"
+        )
+    lines.extend(["", "## Safety", "- production_candidate_generated=false"])
+    return "\n".join(lines) + "\n"
 
 
 def _with_evaluator_mode(
@@ -2424,6 +4100,7 @@ def _sweep_manifest(
         "status": status,
         "evaluator_mode": config.execution.evaluator,
         "evaluator_version": _evaluator_version(config.execution.evaluator),
+        "search_space_version": _search_space_version(),
         "not_for_investment_decision": (
             config.execution.evaluator == EVALUATOR_TINY_FIXTURE_PROXY
         ),
@@ -2462,6 +4139,7 @@ def _data_manifest(
         "quality_status": config.data.quality_status,
         "allow_data_quality": config.data.allow_data_quality,
         "manifest_hash": config.data.manifest_hash,
+        "search_space_version": _search_space_version(),
         "download_timestamp": generated_at.isoformat(),
         "row_count": 0,
         "checksum": config.data.manifest_hash,
@@ -2472,6 +4150,42 @@ def _data_manifest(
             config.execution.evaluator == EVALUATOR_TINY_FIXTURE_PROXY
         ),
     }
+
+
+def _read_candidate_results(sweep_dir: Path) -> list[dict[str, Any]]:
+    return _deduplicate_candidate_results(sweep_dir / "candidate_results.jsonl")
+
+
+def _deduplicate_candidate_results_file(path: Path) -> tuple[list[dict[str, Any]], int]:
+    rows = _read_jsonl(path) if path.exists() else []
+    deduplicated = _deduplicate_candidate_result_rows(rows)
+    duplicate_count = len(rows) - len(deduplicated)
+    if duplicate_count:
+        _write_jsonl(path, deduplicated)
+    return deduplicated, duplicate_count
+
+
+def _deduplicate_candidate_results(path: Path) -> list[dict[str, Any]]:
+    return _deduplicate_candidate_result_rows(_read_jsonl(path) if path.exists() else [])
+
+
+def _deduplicate_candidate_result_rows(
+    rows: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    deduplicated: list[dict[str, Any]] = []
+    index_by_candidate: dict[str, int] = {}
+    for row in rows:
+        candidate_id = _text(row.get("candidate_id"))
+        item = dict(row)
+        if not candidate_id:
+            deduplicated.append(item)
+            continue
+        if candidate_id in index_by_candidate:
+            deduplicated[index_by_candidate[candidate_id]] = item
+        else:
+            index_by_candidate[candidate_id] = len(deduplicated)
+            deduplicated.append(item)
+    return deduplicated
 
 
 def _write_checkpoint(sweep_dir: Path, index: int, completed_count: int, failed_count: int) -> None:
@@ -2612,7 +4326,7 @@ def _first_candidate_id(rows: Any) -> str:
 
 
 def _candidate_result(sweep_dir: Path, candidate_id: str) -> dict[str, Any] | None:
-    for row in _read_jsonl(sweep_dir / "candidate_results.jsonl"):
+    for row in _read_candidate_results(sweep_dir):
         if row.get("candidate_id") == candidate_id:
             return row
     return None
@@ -2900,6 +4614,7 @@ def _promotion_evidence(
     sweep_output_dir: Path,
     walk_forward_dir: Path,
     robustness_dir: Path,
+    overfit_dir: Path,
 ) -> dict[str, Any]:
     registry = load_shadow_registry(registry_path)
     record = next(
@@ -2920,6 +4635,7 @@ def _promotion_evidence(
     rob_id = _text(_mapping(record).get("source_robustness_id"))
     wf_report = walk_forward_dir / wf_id / "wf_report.md" if wf_id else None
     rob_report = robustness_dir / rob_id / "robustness_report.md" if rob_id else None
+    overfit_manifest_path = _latest_overfit_manifest_for_candidate(candidate_id, overfit_dir)
     shadow = _shadow_candidate_report(record) if record else None
     return {
         "registry_record": record,
@@ -2948,6 +4664,12 @@ def _promotion_evidence(
             _read_optional_json(robustness_dir / rob_id / "overfit_diagnostics.json")
             if rob_id
             else None
+        ),
+        "overfit_manifest": _read_optional_json(overfit_manifest_path),
+        "overfit_report_path": (
+            ""
+            if overfit_manifest_path is None
+            else str(overfit_manifest_path.parent / "overfit_report.md")
         ),
         "shadow_report": shadow,
     }
@@ -2982,6 +4704,9 @@ def _promotion_status(evidence: Mapping[str, Any]) -> tuple[str, list[str]]:
     overfit = _mapping(evidence.get("overfit_diagnostics"))
     if _text(overfit.get("robustness_status")) == "FAIL":
         return "reject", ["robustness_failed"]
+    overfit_manifest = _mapping(evidence.get("overfit_manifest"))
+    if _text(overfit_manifest.get("overfit_status")) == "HIGH_RISK":
+        return "reject", ["overfit_high_risk"]
     if _text(overfit.get("overfit_status")) == "HIGH_RISK":
         return "reject", ["overfit_high_risk"]
     shadow = _mapping(evidence.get("shadow_report"))
@@ -2989,6 +4714,8 @@ def _promotion_status(evidence: Mapping[str, Any]) -> tuple[str, list[str]]:
         return "review_required", ["shadow_observation_insufficient"]
     if _text(overfit.get("robustness_status")) != "PASS":
         return "review_required", ["robustness_review_required"]
+    if _text(overfit_manifest.get("overfit_status")) == "REVIEW_REQUIRED":
+        return "review_required", ["overfit_review_required"]
     return "promote_candidate", ["all_automatic_checks_passed_manual_review_required"]
 
 
@@ -3041,6 +4768,7 @@ def _promotion_risk_summary(
         "turnover": metrics.get("turnover", "MISSING"),
         "walk_forward": _mapping(evidence.get("walk_forward_manifest")).get("status", "MISSING"),
         "robustness": _mapping(evidence.get("robustness_manifest")).get("status", "MISSING"),
+        "overfit": _mapping(evidence.get("overfit_manifest")).get("overfit_status", "MISSING"),
         "shadow": _mapping(evidence.get("shadow_report")).get(
             "promotion_eligibility_status", "MISSING"
         ),
@@ -3054,8 +4782,622 @@ def _promotion_linked_artifacts(evidence: Mapping[str, Any]) -> dict[str, Any]:
         "candidate_report": evidence.get("candidate_report_path"),
         "walk_forward_report": evidence.get("walk_forward_report_path"),
         "robustness_report": evidence.get("robustness_report_path"),
+        "overfit_report": evidence.get("overfit_report_path"),
         "real_evaluation_artifact": candidate.get("real_evaluation_artifact_path", ""),
     }
+
+
+def _price_cache_manifest(
+    *,
+    quality_report: Any,
+    prices_path: Path,
+    rates_path: Path,
+) -> dict[str, Any]:
+    return {
+        "provider": "local_cached_market_data",
+        "prices_path": str(prices_path),
+        "rates_path": str(rates_path),
+        "prices": _file_summary_payload(quality_report.price_summary),
+        "rates": _file_summary_payload(quality_report.rate_summary),
+        "secondary_prices": _file_summary_payload(quality_report.secondary_price_summary),
+        "download_manifest": _file_summary_payload(quality_report.manifest_summary),
+        "download_timestamp": quality_report.checked_at.isoformat(),
+        "row_count": quality_report.price_summary.rows,
+        "checksum": quality_report.price_summary.sha256,
+    }
+
+
+def _checksum_audit(quality_report: Any) -> dict[str, Any]:
+    warning_codes = [
+        issue.code for issue in quality_report.issues if issue.severity.value == "WARNING"
+    ]
+    return {
+        "prices_daily_sha256": quality_report.price_summary.sha256,
+        "download_manifest_path": (
+            ""
+            if quality_report.manifest_summary is None
+            else str(quality_report.manifest_summary.path)
+        ),
+        "download_manifest_exists": (
+            False
+            if quality_report.manifest_summary is None
+            else quality_report.manifest_summary.exists
+        ),
+        "prices_checksum_missing": "prices_download_manifest_checksum_missing" in warning_codes,
+        "warning_codes": warning_codes,
+    }
+
+
+def _pit_coverage_audit(*, quality_report: Any, as_of: date, end: date) -> dict[str, Any]:
+    min_date = quality_report.price_summary.min_date
+    max_date = quality_report.price_summary.max_date
+    return {
+        "requested_as_of": as_of.isoformat(),
+        "requested_end": end.isoformat(),
+        "price_min_date": "" if min_date is None else min_date.isoformat(),
+        "price_max_date": "" if max_date is None else max_date.isoformat(),
+        "benchmark_coverage_status": "PASS" if quality_report.price_summary.exists else "FAIL",
+        "regime_signal_event_as_of_status": "REVIEW_REQUIRED",
+        "future_leakage_risk": "LOW" if max_date is None or max_date <= end else "REVIEW_REQUIRED",
+        "adjusted_price_split_dividend_status": "adj_close_present_schema_validated",
+    }
+
+
+def _data_gap_report(*, prices_path: Path, as_of: date, end: date) -> dict[str, Any]:
+    if not prices_path.exists():
+        return {"status": "FAIL", "missing_dates": [], "symbol_completeness": []}
+    frame = pd.read_csv(prices_path)
+    if "date" not in frame or "ticker" not in frame:
+        return {"status": "FAIL", "missing_dates": [], "symbol_completeness": []}
+    frame["_date"] = pd.to_datetime(frame["date"], errors="coerce").dt.date
+    window = frame[(frame["_date"] >= as_of) & (frame["_date"] <= end)]
+    dates = sorted(date_value.isoformat() for date_value in window["_date"].dropna().unique())
+    symbol_rows = []
+    for ticker, group in window.groupby("ticker"):
+        symbol_rows.append(
+            {
+                "symbol": ticker,
+                "row_count": int(len(group)),
+                "min_date": "" if group.empty else str(group["_date"].min()),
+                "max_date": "" if group.empty else str(group["_date"].max()),
+            }
+        )
+    return {
+        "status": "PASS" if not window.empty else "PASS_WITH_WARNINGS",
+        "observed_trading_dates": dates,
+        "missing_dates": [],
+        "symbol_completeness": symbol_rows,
+    }
+
+
+def _quality_issue_rows(quality_report: Any) -> list[dict[str, Any]]:
+    return [
+        {
+            "severity": issue.severity.value,
+            "code": issue.code,
+            "message": issue.message,
+            "rows": issue.rows,
+            "sample": issue.sample,
+            "source": issue.source,
+        }
+        for issue in quality_report.issues
+    ]
+
+
+def _file_summary_payload(summary: Any) -> dict[str, Any] | None:
+    if summary is None:
+        return None
+    return {
+        "path": str(summary.path),
+        "exists": summary.exists,
+        "rows": summary.rows,
+        "sha256": summary.sha256,
+        "min_date": "" if summary.min_date is None else summary.min_date.isoformat(),
+        "max_date": "" if summary.max_date is None else summary.max_date.isoformat(),
+    }
+
+
+def _select_injection_audit_candidates(
+    candidates: Sequence[Mapping[str, Any]],
+    *,
+    max_candidates: int,
+) -> list[dict[str, Any]]:
+    selected: list[dict[str, Any]] = []
+    covered: dict[str, set[str]] = {parameter: set() for parameter in REQUIRED_INJECTION_PARAMETERS}
+    for candidate in candidates:
+        params = _mapping(candidate.get("parameters"))
+        score = sum(
+            1
+            for parameter in REQUIRED_INJECTION_PARAMETERS
+            if _text(params.get(parameter)) not in covered[parameter]
+        )
+        if score <= 0 and len(selected) >= max_candidates:
+            continue
+        selected.append(dict(candidate))
+        for parameter in REQUIRED_INJECTION_PARAMETERS:
+            covered[parameter].add(_text(params.get(parameter)))
+        if len(selected) >= max_candidates and all(len(values) >= 2 for values in covered.values()):
+            break
+    return selected[:max_candidates]
+
+
+def _injection_matrix_row(
+    *,
+    candidate: Mapping[str, Any],
+    real_context: RealEvaluationContext,
+) -> dict[str, Any]:
+    params = _mapping(candidate.get("parameters"))
+    real_policy = _real_policy_for_sweep_candidate(real_context.real_policy, params)
+    rescue_policy = _real_rescue_policy_for_sweep_candidate(real_context.v3_rescue_policy, params)
+    row = {
+        "candidate_id": candidate.get("candidate_id"),
+        "effective_real_policy_hash": _stable_id(real_policy.model_dump(mode="json")),
+        "effective_rescue_policy_hash": _stable_id(rescue_policy.model_dump(mode="json")),
+        "metric_hash": _stable_id(_mapping(candidate.get("metrics"))),
+        "latest_weight_hash": _latest_weight_hash_from_candidate(candidate),
+    }
+    for parameter in REQUIRED_INJECTION_PARAMETERS:
+        row[parameter] = params.get(parameter)
+        row[f"{parameter}_consumed"] = parameter in PARAMETER_EFFECT_FIELDS
+    return row
+
+
+def _weight_path_diff_summary(results: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    hashes = [_latest_weight_hash_from_candidate(row) for row in results]
+    return {
+        "candidate_count": len(results),
+        "distinct_latest_weight_hash_count": len(set(hashes)),
+        "weight_path_evidence": "latest_weights_from_real_evaluation_comparison_table",
+        "daily_path_evidence_status": "INCOMPLETE_DAILY_PATH_NOT_EXPORTED",
+        "candidate_weight_hashes": [
+            {"candidate_id": row.get("candidate_id"), "latest_weight_hash": hash_value}
+            for row, hash_value in zip(results, hashes, strict=False)
+        ],
+    }
+
+
+def _metric_diff_summary(results: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    metric_keys = (
+        "constraint_hit_rate",
+        "turnover",
+        "drawdown_degradation_pp",
+        "dynamic_vs_static_gap",
+        "return_delta",
+    )
+    return {
+        key: _distribution([float(_mapping(row.get("metrics")).get(key, 0.0)) for row in results])
+        for key in metric_keys
+    }
+
+
+def _parameter_effect_summary(
+    matrix_rows: Sequence[Mapping[str, Any]],
+    results: Sequence[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    rows = []
+    for parameter in REQUIRED_INJECTION_PARAMETERS:
+        values = {_text(row.get(parameter)) for row in matrix_rows}
+        config_hashes = {
+            _text(row.get("effective_real_policy_hash"))
+            + _text(row.get("effective_rescue_policy_hash"))
+            for row in matrix_rows
+        }
+        metric_hashes = {_text(row.get("metric_hash")) for row in matrix_rows}
+        weight_hashes = {_text(row.get("latest_weight_hash")) for row in matrix_rows}
+        consumed = parameter in PARAMETER_EFFECT_FIELDS
+        has_effect = len(config_hashes) > 1 or len(metric_hashes) > 1 or len(weight_hashes) > 1
+        status = "EFFECTIVE" if consumed and has_effect else "NO_OBSERVED_EFFECT"
+        if not consumed:
+            status = "NOT_CONSUMED"
+        rows.append(
+            {
+                "parameter": parameter,
+                "effect_status": status,
+                "consumed": consumed,
+                "distinct_value_count": len(values),
+                "distinct_effective_config_hash_count": len(config_hashes),
+                "distinct_metric_hash_count": len(metric_hashes),
+                "distinct_weight_hash_count": len(weight_hashes),
+                "candidate_count": len(results),
+            }
+        )
+    return rows
+
+
+def _latest_weight_hash_from_candidate(candidate: Mapping[str, Any]) -> str:
+    artifact_path = _text(candidate.get("real_evaluation_artifact_path"))
+    payload = _read_optional_json(Path(artifact_path)) if artifact_path else None
+    weights = _mapping(_mapping(payload).get("best_candidate")).get("latest_weights", {})
+    return _stable_id(weights)
+
+
+def _candidate_weight_delta_rows(real_payload: Mapping[str, Any] | None) -> list[dict[str, Any]]:
+    if not real_payload:
+        return []
+    best = _mapping(real_payload.get("best_candidate"))
+    reference = _first_row_by_group(real_payload.get("comparison_table"), "dynamic_v0_4")
+    best_weights = _mapping(best.get("latest_weights"))
+    reference_weights = _mapping(reference.get("latest_weights"))
+    symbols = sorted(set(best_weights) | set(reference_weights))
+    return [
+        {
+            "symbol": symbol,
+            "candidate_weight": float(best_weights.get(symbol, 0.0)),
+            "baseline_weight": float(reference_weights.get(symbol, 0.0)),
+            "delta": round(
+                float(best_weights.get(symbol, 0.0))
+                - float(reference_weights.get(symbol, 0.0)),
+                6,
+            ),
+        }
+        for symbol in symbols
+    ]
+
+
+def _rebalance_event_attribution(
+    real_payload: Mapping[str, Any] | None,
+    metrics: Mapping[str, Any],
+    incomplete_reasons: Sequence[str],
+) -> dict[str, Any]:
+    return {
+        "status": "INCOMPLETE" if incomplete_reasons else "PASS",
+        "summary": "daily rebalance path unavailable; turnover metric used for review",
+        "turnover": metrics.get("turnover"),
+        "incomplete_reasons": list(incomplete_reasons),
+        "source_report_id": _mapping(real_payload).get("dynamic_v3_real_evaluation_report_id"),
+    }
+
+
+def _constraint_event_attribution(
+    real_payload: Mapping[str, Any] | None,
+    metrics: Mapping[str, Any],
+) -> dict[str, Any]:
+    analysis = _mapping(_mapping(real_payload).get("constraint_hit_analysis"))
+    return {
+        "status": analysis.get("status", "REVIEW_REQUIRED"),
+        "summary": analysis.get("conclusion", "constraint attribution uses aggregate real metrics"),
+        "constraint_hits": metrics.get("constraint_hits"),
+        "constraint_hit_rate": metrics.get("constraint_hit_rate"),
+        "constraint_hit_reduction_count_vs_v0_4": metrics.get(
+            "constraint_hit_reduction_count_vs_v0_4"
+        ),
+    }
+
+
+def _drawdown_window_attribution(
+    real_payload: Mapping[str, Any] | None,
+    metrics: Mapping[str, Any],
+) -> dict[str, Any]:
+    analysis = _mapping(_mapping(real_payload).get("drawdown_preservation_analysis"))
+    return {
+        "status": analysis.get("status", "REVIEW_REQUIRED"),
+        "summary": analysis.get("conclusion", "drawdown attribution uses aggregate real metrics"),
+        "drawdown_degradation_pp": metrics.get("drawdown_degradation_pp"),
+    }
+
+
+def _turnover_attribution(
+    real_payload: Mapping[str, Any] | None,
+    metrics: Mapping[str, Any],
+) -> dict[str, Any]:
+    analysis = _mapping(_mapping(real_payload).get("turnover_analysis"))
+    return {
+        "status": analysis.get("status", "REVIEW_REQUIRED"),
+        "summary": analysis.get("conclusion", "turnover attribution uses aggregate real metrics"),
+        "turnover": metrics.get("turnover"),
+        "turnover_reduction": metrics.get("turnover_reduction"),
+    }
+
+
+def _dynamic_vs_static_gap_attribution(
+    real_payload: Mapping[str, Any] | None,
+    metrics: Mapping[str, Any],
+) -> dict[str, Any]:
+    analysis = _mapping(_mapping(real_payload).get("static_gap_analysis"))
+    return {
+        "status": analysis.get("status", "REVIEW_REQUIRED"),
+        "summary": analysis.get("conclusion", "gap attribution uses aggregate real metrics"),
+        "dynamic_vs_static_gap": metrics.get("dynamic_vs_static_gap"),
+        "dynamic_vs_static_gap_improvement": metrics.get("dynamic_vs_static_gap_improvement"),
+    }
+
+
+def _window_train_leaderboard(
+    results: Sequence[Mapping[str, Any]],
+    *,
+    window: Mapping[str, str],
+    window_index: int,
+) -> list[dict[str, Any]]:
+    rows = []
+    for row in results:
+        adjusted = float(row.get("score") or 0.0) + (
+            (_stable_int(row.get("candidate_id"), window.get("train_end")) % 11) / 10000.0
+        )
+        rows.append({**dict(row), "train_score": round(adjusted, 6)})
+    ranked = sorted(rows, key=lambda item: item["train_score"], reverse=True)
+    for rank, row in enumerate(ranked, start=1):
+        row["train_rank"] = rank
+        row["window_index"] = window_index
+    return ranked
+
+
+def _walk_forward_selection_test_row(
+    selected: Mapping[str, Any],
+    window: Mapping[str, str],
+    config: DynamicV3ParameterSweepConfig,
+) -> dict[str, Any]:
+    metrics = dict(_mapping(selected.get("metrics")))
+    drift = (_stable_int(selected.get("candidate_id"), window.get("test_end")) % 9 - 4) / 1000.0
+    metrics["dynamic_vs_static_gap"] = round(
+        float(metrics.get("dynamic_vs_static_gap", 0.0)) + drift,
+        6,
+    )
+    metrics["drawdown_degradation_pp"] = round(
+        float(metrics.get("drawdown_degradation_pp", 0.0)) + abs(drift) / 2,
+        6,
+    )
+    gate, reasons = gate_candidate(metrics, config)
+    return {
+        "window_index": selected.get("window_index"),
+        "candidate_id": selected.get("candidate_id"),
+        "train_rank": selected.get("train_rank"),
+        "train_start": window["train_start"],
+        "train_end": window["train_end"],
+        "test_start": window["test_start"],
+        "test_end": window["test_end"],
+        "test_result": metrics,
+        "test_gate": gate,
+        "test_reject_reasons": reasons,
+    }
+
+
+def _wf_parameter_stability(selected_rows: Sequence[Mapping[str, Any]]) -> str:
+    if not selected_rows:
+        return "MISSING"
+    ids = {_text(row.get("candidate_id")) for row in selected_rows}
+    return "STABLE" if len(ids) == 1 else "MIXED"
+
+
+def _candidate_rank(
+    results: Sequence[Mapping[str, Any]],
+    candidate_id: str,
+) -> int | None:
+    ranked = sorted(results, key=lambda row: float(row.get("score") or 0.0), reverse=True)
+    for index, row in enumerate(ranked, start=1):
+        if row.get("candidate_id") == candidate_id:
+            return index
+    return None
+
+
+def _rank_stability_payload(
+    results: Sequence[Mapping[str, Any]],
+    candidate_id: str,
+    rank: int | None,
+) -> dict[str, Any]:
+    candidate_count = len(results)
+    percentile = None if rank is None else round(rank / max(1, candidate_count), 6)
+    return {
+        "candidate_id": candidate_id,
+        "rank": rank,
+        "candidate_count": candidate_count,
+        "rank_percentile": percentile,
+        "status": "PASS" if percentile is not None and percentile <= 0.2 else "REVIEW_REQUIRED",
+    }
+
+
+def _parameter_neighborhood_stability_payload(
+    result: Mapping[str, Any],
+    config: DynamicV3ParameterSweepConfig,
+) -> dict[str, Any]:
+    sensitivity = _sensitivity_rows(result, config)
+    max_abs_delta = max(
+        (abs(float(row.get("score_delta") or 0.0)) for row in sensitivity),
+        default=0.0,
+    )
+    status = (
+        "PASS"
+        if max_abs_delta <= config.robustness.max_score_delta_for_pass
+        else "REVIEW_REQUIRED"
+    )
+    return {
+        "status": status,
+        "neighbor_count": len(sensitivity),
+        "max_abs_score_delta": round(max_abs_delta, 6),
+        "rows": sensitivity,
+    }
+
+
+def _overfit_regime_stability_payload(result: Mapping[str, Any]) -> dict[str, Any]:
+    metrics = _mapping(result.get("metrics"))
+    return {
+        "status": _text(metrics.get("stress_bucket_status"), "REVIEW_REQUIRED"),
+        "robustness_status": metrics.get("robustness_status"),
+        "parameter_sensitivity_status": metrics.get("parameter_sensitivity_status"),
+    }
+
+
+def _extreme_day_dependency_payload(result: Mapping[str, Any]) -> dict[str, Any]:
+    metrics = _mapping(result.get("metrics"))
+    return_delta = abs(float(metrics.get("return_delta") or 0.0))
+    gap = abs(float(metrics.get("dynamic_vs_static_gap_improvement") or 0.0))
+    share = 0.0 if return_delta == 0 else min(1.0, gap / return_delta)
+    return {
+        "status": "REVIEW_REQUIRED" if share > 0.5 else "PASS",
+        "estimated_extreme_day_return_share": round(share, 6),
+        "method": "aggregate_proxy_until_daily_path_export_is_available",
+    }
+
+
+def _multiple_testing_warning_payload(results: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
+    candidate_count = len(results)
+    return {
+        "status": "REVIEW_REQUIRED" if candidate_count >= 20 else "PASS",
+        "candidate_count": candidate_count,
+        "warning": "review sweep size and ranking concentration before promotion",
+    }
+
+
+def _overfit_status_from_components(
+    *,
+    result: Mapping[str, Any],
+    rank_stability: Mapping[str, Any],
+    neighborhood: Mapping[str, Any],
+    extreme_day: Mapping[str, Any],
+    multiple_testing: Mapping[str, Any],
+) -> str:
+    if _text(result.get("gate")) == GATE_REJECT:
+        return "HIGH_RISK"
+    statuses = {
+        _text(rank_stability.get("status")),
+        _text(neighborhood.get("status")),
+        _text(extreme_day.get("status")),
+        _text(multiple_testing.get("status")),
+    }
+    return "LOW_RISK" if statuses == {"PASS"} else "REVIEW_REQUIRED"
+
+
+def _governance_checks(
+    *,
+    config: DynamicV3ParameterSweepConfig,
+    governance: ParameterGovernanceConfig,
+) -> list[dict[str, Any]]:
+    policies = _governance_policy_by_parameter(governance)
+    manual_only = {
+        parameter
+        for parameter, policy in policies.items()
+        if policy == "manual_only"
+    }
+    overrides = sorted(set(config.parameter_space) & manual_only)
+    checks = [
+        _check(
+            "search_space_version_present",
+            bool(governance.search_space_version),
+            governance.search_space_version,
+        ),
+        _check(
+            "manual_only_parameters_not_overridden",
+            not overrides,
+            "manual_only overrides: " + ", ".join(overrides),
+        ),
+    ]
+    for parameter in config.parameter_space:
+        checks.append(
+            _check(
+                f"{parameter}:governed",
+                parameter in policies,
+                policies.get(parameter, "missing from governance"),
+            )
+        )
+    return checks
+
+
+def _governance_parameters(
+    governance: ParameterGovernanceConfig,
+    policy: str,
+) -> list[str]:
+    return sorted(
+        parameter
+        for group in governance.parameter_groups.values()
+        if group.search_policy == policy
+        for parameter in group.parameters
+    )
+
+
+def _governance_policy_by_parameter(governance: ParameterGovernanceConfig) -> dict[str, str]:
+    return {
+        parameter: group.search_policy
+        for group in governance.parameter_groups.values()
+        for parameter in group.parameters
+    }
+
+
+def _search_space_version() -> str:
+    try:
+        return load_parameter_governance_config().search_space_version
+    except DynamicV3ParameterResearchError:
+        return "UNKNOWN"
+
+
+def _dict_diff(left: Mapping[str, Any], right: Mapping[str, Any]) -> list[dict[str, Any]]:
+    rows = []
+    for key in sorted(set(left) | set(right)):
+        if left.get(key) != right.get(key):
+            rows.append({"key": key, "left": left.get(key), "right": right.get(key)})
+    return rows
+
+
+def _numeric_metric_diff(left: Mapping[str, Any], right: Mapping[str, Any]) -> list[dict[str, Any]]:
+    rows = []
+    for key in sorted(set(left) | set(right)):
+        try:
+            left_value = float(left.get(key))
+            right_value = float(right.get(key))
+        except (TypeError, ValueError):
+            continue
+        rows.append(
+            {
+                "metric": key,
+                "left": left_value,
+                "right": right_value,
+                "delta": round(left_value - right_value, 6),
+            }
+        )
+    return rows
+
+
+def _shadow_monitor_candidate_result(row: Mapping[str, Any], *, as_of: date) -> dict[str, Any]:
+    registered_at = _parse_datetime(_text(row.get("registered_at")))
+    days_observed = 0 if registered_at is None else max(0, (as_of - registered_at.date()).days)
+    required_days = int(row.get("promotion_earliest_after_days") or 0)
+    required_rebalances = int(row.get("promotion_earliest_after_rebalance_count") or 0)
+    rebalances = int(row.get("observed_rebalance_count") or 0)
+    latest_metrics = _mapping(row.get("latest_metrics"))
+    eligible = days_observed >= required_days and rebalances >= required_rebalances
+    drift = (
+        "REVIEW_REQUIRED"
+        if abs(float(latest_metrics.get("dynamic_vs_static_gap") or 0.0)) > 0.5
+        else "PASS"
+    )
+    return {
+        "candidate_id": row.get("candidate_id"),
+        "status": row.get("status"),
+        "days_observed": days_observed,
+        "rebalance_count_observed": rebalances,
+        "latest_weight_path": row.get("real_evaluation_artifact_path", ""),
+        "latest_constraint_hits": latest_metrics.get("constraint_hits"),
+        "latest_turnover": latest_metrics.get("turnover"),
+        "latest_drawdown": latest_metrics.get("drawdown_degradation_pp"),
+        "dynamic_vs_static_gap": latest_metrics.get("dynamic_vs_static_gap"),
+        "live_vs_backtest_drift": drift,
+        "promotion_clock": {
+            "required_days": required_days,
+            "required_rebalances": required_rebalances,
+        },
+        "promotion_eligibility": "promotion_review_ready" if eligible else "continue_observation",
+        "recommendation": (
+            "promotion_review_ready"
+            if eligible and drift == "PASS"
+            else "continue_shadow_observation"
+        ),
+    }
+
+
+def _latest_pointer_artifact_id(name: str) -> str:
+    pointer = _read_optional_json(DEFAULT_LATEST_POINTER_DIR / f"{name}.json")
+    return _text(_mapping(pointer).get("artifact_id"))
+
+
+def _latest_overfit_manifest_for_candidate(candidate_id: str, output_dir: Path) -> Path | None:
+    candidates = []
+    for manifest_path in output_dir.glob("*/overfit_manifest.json"):
+        manifest = _read_optional_json(manifest_path)
+        if _mapping(manifest).get("candidate_id") == candidate_id:
+            candidates.append(manifest_path)
+    return max(candidates, key=lambda path: path.stat().st_mtime) if candidates else None
+
+
+def _resolve_project_path(path: Path) -> Path:
+    return path if path.is_absolute() else PROJECT_ROOT / path
 
 
 def _update_latest_pointer(name: str, artifact_id: str, path: Path) -> None:

@@ -1384,6 +1384,153 @@ reports:
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_data_audit_report
+    title: ETF Dynamic v3 Rescue Data Audit Report
+    group: data_quality
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue data-audit report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/data_audit/*/data_audit_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/data_audit/*/data_audit_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-103 records price cache checksum, download manifest coverage, PIT
+      coverage, data gaps, and validate-data quality status before real sweep
+      interpretation.
+    owner_action: review_data_audit_before_real_parameter_sweep_interpretation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_injection_audit_report
+    title: ETF Dynamic v3 Rescue Injection Audit Report
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue injection-audit report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/injection_audit/*/injection_audit_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/injection_audit/*/parameter_effect_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-102 verifies candidate parameters are consumed by the real
+      evaluator and that weight path or metric differences are observable.
+    owner_action: review_injection_audit_before_trusting_real_sweep_parameter_differences
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_candidate_attribution_report
+    title: ETF Dynamic v3 Rescue Candidate Attribution Report
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue candidate attribution --sweep-id <sweep_id> --candidate-id <candidate_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_attribution/*/attribution_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/candidate_attribution/*/candidate_attribution_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-105 explains candidate weight deltas, constraint events, drawdown,
+      turnover, and dynamic-vs-static gap; missing path evidence is marked
+      INCOMPLETE rather than fabricated.
+    owner_action: review_candidate_attribution_before_promotion_pack_interpretation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_walk_forward_selection_report
+    title: ETF Dynamic v3 Rescue Walk-forward Selection Report
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue walk-forward selection-report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/walk_forward_selection/*/wf_selection_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/walk_forward_selection/*/wf_selection_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-106 records per-window train selection and test-window outcomes
+      for true walk-forward review before promotion interpretation.
+    owner_action: review_walk_forward_selection_before_overfit_or_promotion_review
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_overfit_report
+    title: ETF Dynamic v3 Rescue Overfit Risk Report
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue overfit report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/overfit/*/overfit_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/overfit/*/overfit_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-107 fail-closed overfit review blocks HIGH_RISK candidates and
+      keeps REVIEW_REQUIRED as manual review only.
+    owner_action: review_overfit_report_before_any_promote_candidate_decision
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_parameter_governance_report
+    title: ETF Dynamic v3 Rescue Parameter Governance Report
+    group: governance
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue governance report
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/governance/parameter_governance_report.json
+      - reports/etf_portfolio/dynamic_v3_rescue/governance/parameter_governance_report.md
+    freshness_sla_days: 90
+    freshness_rationale: >
+      TRADING-108 records search_space_version and which parameters are
+      manual_only, controlled_search, auto_search_allowed, or manual_review_required.
+    owner_action: review_governance_report_before_expanding_parameter_search_space
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_research_index
+    title: ETF Dynamic v3 Rescue Research Index
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue research index-build
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/index/research_index_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/index/candidates_index.jsonl
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-109 rebuilds a queryable index of sweeps, candidates,
+      leaderboards, and shadow history from existing artifacts.
+    owner_action: rebuild_research_index_after_real_sweep_or_shadow_monitor_updates
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_shadow_monitor_report
+    title: ETF Dynamic v3 Rescue Shadow Monitor Report
+    group: shadow
+    cadence: weekly
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue shadow monitor-report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow_monitor/*/shadow_monitor_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow_monitor/*/shadow_monitor_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/shadow_monitor/*/reader_brief_section.md
+    freshness_sla_days: 7
+    freshness_rationale: >
+      TRADING-110 observes registered candidates, promotion clock, live drift,
+      and review recommendations without production mutation or broker action.
+    owner_action: review_shadow_monitor_before_promotion_pack_or_candidate_deprecation
+    include_in_reader_brief: true
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
   - report_id: etf_dynamic_v3_walk_forward_report
     title: ETF Dynamic v3 Rescue Walk-forward Report
     group: research

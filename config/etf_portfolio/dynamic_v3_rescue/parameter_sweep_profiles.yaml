@@ -1,0 +1,38 @@
+schema_version: 1
+
+profiles:
+  tiny_fixture:
+    description: "CI-safe tiny fixture sweep for artifact contract validation"
+    config_path: config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_v1.yaml
+    evaluator_mode: tiny_fixture_proxy
+    max_candidates: 20
+    workers: 1
+    ci_safe: true
+    not_for_investment_decision: true
+
+  small_real:
+    description: "Small real evaluator sweep for manual research smoke"
+    config_path: config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_real_smoke.yaml
+    evaluator_mode: real_dynamic_v3_rescue
+    max_candidates: 50
+    workers: 1
+    ci_safe: false
+    not_for_investment_decision: false
+
+  medium_real:
+    description: "Medium real evaluator sweep for manual research"
+    config_path: config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_real_smoke.yaml
+    evaluator_mode: real_dynamic_v3_rescue
+    max_candidates: 500
+    workers: 4
+    ci_safe: false
+    not_for_investment_decision: false
+
+  overnight_real:
+    description: "Overnight real evaluator sweep; not CI safe"
+    config_path: config/etf_portfolio/dynamic_v3_rescue/parameter_sweep_real_smoke.yaml
+    evaluator_mode: real_dynamic_v3_rescue
+    max_candidates: 5000
+    workers: 8
+    ci_safe: false
+    not_for_investment_decision: false

@@ -15,22 +15,39 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_SHADOW_REGISTRY_PATH,
     DynamicV3ParameterResearchError,
     build_promotion_pack,
+    build_research_index,
     build_sweep_config_validation,
     candidate_report_payload,
+    governance_report_payload,
     load_parameter_sweep_config,
     parameter_grid_candidates,
     preview_sweep_candidates,
     register_shadow_candidate,
+    research_query_payload,
+    run_candidate_attribution,
+    run_data_audit,
+    run_injection_audit,
+    run_overfit_review,
     run_parameter_sweep,
     run_robustness_diagnostics,
+    run_shadow_monitor,
+    run_walk_forward_selection,
     run_walk_forward_validation,
     stable_candidate_id,
     validate_artifacts_payload,
+    validate_candidate_attribution_artifact,
+    validate_data_audit_artifact,
+    validate_injection_audit_artifact,
+    validate_overfit_artifact,
+    validate_parameter_governance,
     validate_promotion_pack,
     validate_robustness_artifact,
+    validate_shadow_monitor_artifact,
     validate_shadow_registry,
     validate_sweep_artifact,
+    validate_sweep_profiles_payload,
     validate_walk_forward_artifact,
+    validate_walk_forward_selection_artifact,
 )
 from ai_trading_system.reports import reader_brief
 
@@ -88,6 +105,18 @@ def test_tiny_sweep_resume_reports_and_validation(tmp_path: Path) -> None:
 
     resumed = run_parameter_sweep(config_path=config_path, output_dir=output_dir, resume=sweep_id)
     assert resumed["manifest"]["completed_count"] == len(results)
+    assert len(_jsonl(sweep_dir / "candidate_results.jsonl")) == len(results)
+
+    (sweep_dir / "sweep_manifest.json").unlink()
+    with (sweep_dir / "candidate_results.jsonl").open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(results[0], sort_keys=True) + "\n")
+    resumed_without_final_manifest = run_parameter_sweep(
+        config_path=config_path,
+        output_dir=output_dir,
+        resume=sweep_id,
+    )
+    assert resumed_without_final_manifest["manifest"]["completed_count"] == len(results)
+    assert (sweep_dir / "sweep_manifest.json").exists()
     assert len(_jsonl(sweep_dir / "candidate_results.jsonl")) == len(results)
 
     candidate_id = _top_candidate_id(sweep_dir)
@@ -285,6 +314,141 @@ def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(tmp_path: Path
     )
 
 
+def test_dynamic_v3_stable_real_loop_artifact_contracts(tmp_path: Path) -> None:
+    config_path = _tiny_config_path(tmp_path)
+    profile_path = _profile_config_path(tmp_path, config_path)
+    sweep_output_dir = tmp_path / "sweeps"
+
+    assert validate_sweep_profiles_payload(profile_config_path=profile_path)["status"] == "PASS"
+    assert validate_parameter_governance(config_path=config_path)["status"] == "PASS"
+
+    sweep = run_parameter_sweep(config_path=config_path, output_dir=sweep_output_dir)
+    sweep_id = sweep["sweep_id"]
+    candidate_id = _top_candidate_id(sweep_output_dir / sweep_id)
+
+    attribution = run_candidate_attribution(
+        sweep_id=sweep_id,
+        candidate_id=candidate_id,
+        sweep_output_dir=sweep_output_dir,
+        output_dir=tmp_path / "candidate_attribution",
+    )
+    assert attribution["report"]["status"] == "INCOMPLETE"
+    assert (
+        validate_candidate_attribution_artifact(
+            candidate_id=candidate_id,
+            output_dir=tmp_path / "candidate_attribution",
+        )["status"]
+        == "PASS"
+    )
+
+    wf_selection = run_walk_forward_selection(
+        config_path=config_path,
+        profile="tiny_fixture",
+        sweep_id=sweep_id,
+        profile_config_path=profile_path,
+        sweep_output_dir=sweep_output_dir,
+        output_dir=tmp_path / "walk_forward_selection",
+    )
+    assert (
+        validate_walk_forward_selection_artifact(
+            wf_selection_id=wf_selection["wf_selection_id"],
+            output_dir=tmp_path / "walk_forward_selection",
+        )["status"]
+        == "PASS"
+    )
+
+    overfit = run_overfit_review(
+        sweep_id=sweep_id,
+        candidate_id=candidate_id,
+        sweep_output_dir=sweep_output_dir,
+        output_dir=tmp_path / "overfit",
+    )
+    assert overfit["report"]["overfit_status"] in {
+        "LOW_RISK",
+        "REVIEW_REQUIRED",
+        "HIGH_RISK",
+    }
+    assert (
+        validate_overfit_artifact(
+            overfit_id=overfit["overfit_id"],
+            output_dir=tmp_path / "overfit",
+        )["status"]
+        == "PASS"
+    )
+
+    registry_path = tmp_path / DEFAULT_SHADOW_REGISTRY_PATH.name
+    register_shadow_candidate(
+        sweep_id=sweep_id,
+        candidate_id=candidate_id,
+        registry_path=registry_path,
+        sweep_output_dir=sweep_output_dir,
+    )
+    monitor = run_shadow_monitor(
+        as_of=pd.Timestamp("2026-06-06").date(),
+        registry_path=registry_path,
+        output_dir=tmp_path / "shadow_monitor",
+    )
+    assert "Dynamic Rescue Shadow Monitoring" in monitor["report"]["reader_brief_section"]
+    assert (
+        validate_shadow_monitor_artifact(
+            monitor_id=monitor["monitor_id"],
+            output_dir=tmp_path / "shadow_monitor",
+        )["status"]
+        == "PASS"
+    )
+
+    index = build_research_index(
+        sweep_output_dir=sweep_output_dir,
+        shadow_registry_path=registry_path,
+        output_dir=tmp_path / "index",
+    )
+    assert index["candidate_count"] > 0
+    assert research_query_payload(
+        candidate_id=candidate_id,
+        output_dir=tmp_path / "index",
+    )["status"] == "PASS"
+    assert governance_report_payload(output_dir=tmp_path / "governance")["status"] == "PASS"
+
+
+def test_dynamic_v3_data_and_injection_audit_contracts(tmp_path: Path) -> None:
+    prices_path, rates_path, as_of = _write_real_smoke_cache(tmp_path)
+    config_path = _real_smoke_config_path(tmp_path, as_of)
+
+    data_audit = run_data_audit(
+        as_of=pd.Timestamp(as_of).date(),
+        end=pd.Timestamp(as_of).date(),
+        prices_path=prices_path,
+        rates_path=rates_path,
+        output_dir=tmp_path / "data_audit",
+    )
+    assert data_audit["report"]["data_quality_status"] in {"PASS", "PASS_WITH_WARNINGS"}
+    assert (
+        validate_data_audit_artifact(
+            data_audit_id=data_audit["data_audit_id"],
+            output_dir=tmp_path / "data_audit",
+        )["status"]
+        == "PASS"
+    )
+
+    injection = run_injection_audit(
+        config_path=config_path,
+        as_of=pd.Timestamp(as_of).date(),
+        end=pd.Timestamp(as_of).date(),
+        max_candidates=2,
+        prices_path=prices_path,
+        rates_path=rates_path,
+        output_dir=tmp_path / "injection_audit",
+    )
+    assert injection["report"]["candidate_count"] == 2
+    assert (
+        validate_injection_audit_artifact(
+            audit_id=injection["audit_id"],
+            output_dir=tmp_path / "injection_audit",
+        )["status"]
+        == "PASS"
+    )
+
+
 def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> None:
     leaderboard_path = tmp_path / "leaderboard.json"
     leaderboard_path.write_text(
@@ -378,6 +542,31 @@ def _real_smoke_config_path(tmp_path: Path, as_of: str) -> Path:
     raw["execution"].pop("evaluation_mode", None)
     path = tmp_path / "parameter_sweep_real_smoke.yaml"
     path.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    return path
+
+
+def _profile_config_path(tmp_path: Path, config_path: Path) -> Path:
+    path = tmp_path / "parameter_sweep_profiles.yaml"
+    path.write_text(
+        yaml.safe_dump(
+            {
+                "schema_version": 1,
+                "profiles": {
+                    "tiny_fixture": {
+                        "description": "test tiny fixture profile",
+                        "config_path": str(config_path),
+                        "evaluator_mode": "tiny_fixture_proxy",
+                        "max_candidates": 12,
+                        "workers": 1,
+                        "ci_safe": True,
+                        "not_for_investment_decision": True,
+                    }
+                },
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
     return path
 
 

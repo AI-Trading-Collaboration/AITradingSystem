@@ -1301,12 +1301,34 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         etf_dynamic_v3_parameter_research.get("promotion_status"),
                     ),
                     (
+                        "shadow_monitor_status",
+                        etf_dynamic_v3_parameter_research.get("shadow_monitor_status"),
+                    ),
+                    (
+                        "shadow_observe_only_count",
+                        etf_dynamic_v3_parameter_research.get("shadow_observe_only_count"),
+                    ),
+                    (
+                        "shadow_promotion_ready_count",
+                        etf_dynamic_v3_parameter_research.get("shadow_promotion_ready_count"),
+                    ),
+                    (
+                        "shadow_live_drift_review_required_count",
+                        etf_dynamic_v3_parameter_research.get(
+                            "shadow_live_drift_review_required_count"
+                        ),
+                    ),
+                    (
                         "sweep_leaderboard",
                         etf_dynamic_v3_parameter_research.get("sweep_leaderboard"),
                     ),
                     (
                         "promotion_manifest",
                         etf_dynamic_v3_parameter_research.get("promotion_manifest"),
+                    ),
+                    (
+                        "shadow_monitor_report",
+                        etf_dynamic_v3_parameter_research.get("shadow_monitor_report"),
                     ),
                     (
                         "safety_status",
@@ -5067,6 +5089,10 @@ def _etf_dynamic_v3_parameter_research_summary(
         report_index,
         "etf_dynamic_v3_promotion_pack",
     )
+    shadow_monitor_path = _report_index_artifact_path(
+        report_index,
+        "etf_dynamic_v3_shadow_monitor_report",
+    )
     leaderboard = _read_optional_json(leaderboard_path)
     if not leaderboard:
         return _missing_etf_dynamic_v3_parameter_research_summary()
@@ -5074,6 +5100,8 @@ def _etf_dynamic_v3_parameter_research_summary(
     first = top[0] if top else {}
     common_reasons = _records(leaderboard.get("most_common_reject_reasons"))[:5]
     promotion = _read_optional_json(promotion_path)
+    shadow_monitor = _read_optional_json(shadow_monitor_path)
+    shadow_summary = _mapping(_mapping(shadow_monitor).get("summary"))
     promotion_status = _text(_mapping(promotion).get("status"), "MISSING")
     safety_status = _etf_dynamic_v3_parameter_research_safety_status(leaderboard)
     top_candidate = _text(first.get("candidate_id"), "MISSING")
@@ -5103,8 +5131,18 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "recommended_next_actions": ", ".join(_texts(leaderboard.get("recommended_next_actions"))),
         "promotion_status": promotion_status,
+        "shadow_monitor_status": _text(_mapping(shadow_monitor).get("status"), "MISSING"),
+        "shadow_observe_only_count": shadow_summary.get("observe_only_candidate_count", 0),
+        "shadow_promotion_ready_count": shadow_summary.get("promotion_review_ready_count", 0),
+        "shadow_live_drift_review_required_count": shadow_summary.get(
+            "live_drift_review_required_count",
+            0,
+        ),
         "sweep_leaderboard": "" if leaderboard_path is None else str(leaderboard_path),
         "promotion_manifest": "" if promotion_path is None else str(promotion_path),
+        "shadow_monitor_report": (
+            "" if shadow_monitor_path is None else str(shadow_monitor_path)
+        ),
         "safety_status": safety_status,
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",
@@ -5141,8 +5179,13 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "common_reject_reasons": "MISSING",
         "recommended_next_actions": "MISSING",
         "promotion_status": "MISSING",
+        "shadow_monitor_status": "MISSING",
+        "shadow_observe_only_count": 0,
+        "shadow_promotion_ready_count": 0,
+        "shadow_live_drift_review_required_count": 0,
         "sweep_leaderboard": "",
         "promotion_manifest": "",
+        "shadow_monitor_report": "",
         "safety_status": "MISSING",
         "production_effect": PRODUCTION_EFFECT,
         "broker_action": "none",

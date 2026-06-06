@@ -1,0 +1,47 @@
+schema_version: 1
+policy_id: dynamic_v3_rescue_parameter_governance_v1
+version: "2026-06-06"
+status: reviewed_baseline
+owner: project_owner
+rationale: >
+  Govern dynamic v3 rescue parameter search boundaries before using real evaluator
+  results for manual investment review. This policy blocks manual-only philosophy
+  fields from automatic sweep override and makes subjective ranking changes
+  explicit.
+intended_effect: >
+  Keep automated sweeps limited to bounded behavior and risk-constraint
+  parameters while requiring manual review for investment philosophy or ranking
+  policy changes.
+validation_evidence: "TRADING-102_to_110 small_real artifact and validation chain"
+review_condition: "Review before expanding search space beyond listed parameters or changing promotion gates."
+search_space_version: dynamic_v3_rescue_search_space_v1
+
+parameter_groups:
+  investment_philosophy:
+    search_policy: manual_only
+    parameters:
+      - universe
+      - strategic_max_weight
+      - allow_extreme_risk_off
+
+  risk_constraints:
+    search_policy: controlled_search
+    parameters:
+      - constraint_buffer_bps
+      - drawdown_guard
+
+  behavior_parameters:
+    search_policy: auto_search_allowed
+    parameters:
+      - rescue_intensity
+      - smooth_window_days
+      - risk_off_confirmation_days
+      - rebalance_cooldown_days
+      - turnover_penalty
+
+  ranking_parameters:
+    search_policy: manual_review_required
+    parameters:
+      - scoring.weights
+      - hard_constraints
+      - promotion_constraints

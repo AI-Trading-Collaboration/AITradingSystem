@@ -258,39 +258,76 @@ from ai_trading_system.etf_portfolio.dynamic_v3_failure_attribution import (
     load_json_artifact as load_dynamic_v3_failure_attribution_json_artifact,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
+    DEFAULT_CANDIDATE_ATTRIBUTION_DIR,
+    DEFAULT_DATA_AUDIT_DIR,
+    DEFAULT_GOVERNANCE_DIR,
+    DEFAULT_INJECTION_AUDIT_DIR,
+    DEFAULT_OVERFIT_DIR,
+    DEFAULT_PARAMETER_GOVERNANCE_CONFIG_PATH,
     DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
+    DEFAULT_PARAMETER_SWEEP_PROFILE_CONFIG_PATH,
     DEFAULT_PROMOTION_DIR,
+    DEFAULT_RESEARCH_INDEX_DIR,
     DEFAULT_ROBUSTNESS_DIR,
+    DEFAULT_SHADOW_MONITOR_DIR,
     DEFAULT_SHADOW_REGISTRY_PATH,
     DEFAULT_SHADOW_REPORT_DIR,
     DEFAULT_SWEEP_OUTPUT_DIR,
     DEFAULT_WALK_FORWARD_DIR,
+    DEFAULT_WALK_FORWARD_SELECTION_DIR,
     DynamicV3ParameterResearchError,
     artifacts_latest_payload,
     build_promotion_pack,
+    build_research_index,
     build_sweep_config_validation,
     build_sweep_leaderboard_payload,
     build_sweep_report_payload,
     candidate_report_payload,
+    data_audit_report_payload,
+    governance_diff_payload,
+    governance_report_payload,
+    injection_audit_report_payload,
     latest_sweep_id,
+    overfit_report_payload,
     preview_sweep_candidates,
     promotion_review_payload,
     register_shadow_candidate,
+    research_compare_payload,
+    research_history_payload,
+    research_query_payload,
     robustness_report_payload,
+    run_candidate_attribution,
+    run_data_audit,
+    run_injection_audit,
+    run_overfit_review,
     run_parameter_sweep,
+    run_parameter_sweep_profile,
     run_robustness_diagnostics,
+    run_shadow_monitor,
+    run_walk_forward_selection,
     run_walk_forward_validation,
     shadow_list_payload,
+    shadow_monitor_report_payload,
     shadow_report_payload,
     stale_artifacts_payload,
+    sweep_profile_list_payload,
     sweep_status_payload,
     validate_artifacts_payload,
+    validate_candidate_attribution_artifact,
+    validate_data_audit_artifact,
+    validate_injection_audit_artifact,
+    validate_overfit_artifact,
+    validate_parameter_governance,
     validate_promotion_pack,
     validate_robustness_artifact,
+    validate_shadow_monitor_artifact,
     validate_shadow_registry,
     validate_sweep_artifact,
+    validate_sweep_profiles_payload,
     validate_walk_forward_artifact,
+    validate_walk_forward_selection_artifact,
     walk_forward_report_payload,
+    walk_forward_selection_report_payload,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_real_evaluation import (
     DEFAULT_DYNAMIC_V3_REAL_EVALUATION_POLICY_CONFIG_PATH,
@@ -727,6 +764,14 @@ dynamic_v3_sweep_app = typer.Typer(
     help="Dynamic v3 rescue batch parameter sweep workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_data_audit_app = typer.Typer(
+    help="Dynamic v3 rescue research data audit workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_injection_audit_app = typer.Typer(
+    help="Dynamic v3 rescue parameter injection audit workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_candidate_app = typer.Typer(
     help="Dynamic v3 rescue candidate report workflow。",
     no_args_is_help=True,
@@ -739,6 +784,10 @@ dynamic_v3_robustness_app = typer.Typer(
     help="Dynamic v3 rescue robustness diagnostics workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_overfit_app = typer.Typer(
+    help="Dynamic v3 rescue overfit risk workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_shadow_app = typer.Typer(
     help="Dynamic v3 rescue observe-only shadow registry workflow。",
     no_args_is_help=True,
@@ -749,6 +798,14 @@ dynamic_v3_artifacts_app = typer.Typer(
 )
 dynamic_v3_promotion_app = typer.Typer(
     help="Dynamic v3 rescue promotion review pack workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_governance_app = typer.Typer(
+    help="Dynamic v3 rescue parameter governance workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_research_app = typer.Typer(
+    help="Dynamic v3 rescue research index/query workflow。",
     no_args_is_help=True,
 )
 dynamic_shadow_app = typer.Typer(
@@ -795,12 +852,17 @@ etf_app.add_typer(dynamic_rescue_app, name="dynamic-rescue")
 etf_app.add_typer(dynamic_v2_review_app, name="dynamic-v2-review")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_sweep_config_app, name="sweep-config")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_sweep_app, name="sweep")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_data_audit_app, name="data-audit")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_injection_audit_app, name="injection-audit")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_candidate_app, name="candidate")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_walk_forward_app, name="walk-forward")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_robustness_app, name="robustness")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_overfit_app, name="overfit")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_shadow_app, name="shadow")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_artifacts_app, name="artifacts")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_promotion_app, name="promotion")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_governance_app, name="governance")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_research_app, name="research")
 etf_app.add_typer(dynamic_v3_rescue_app, name="dynamic-v3-rescue")
 etf_app.add_typer(dynamic_shadow_app, name="dynamic-shadow")
 etf_app.add_typer(governance_app, name="governance")
@@ -3631,6 +3693,256 @@ def dynamic_v3_sweep_config_preview_command(
     typer.echo("production_candidate_generated=false")
 
 
+@dynamic_v3_data_audit_app.command("run")
+def dynamic_v3_data_audit_run_command(
+    as_of: Annotated[str, typer.Option("--as-of", help="data audit as-of date。")],
+    end: Annotated[str, typer.Option("--end", help="data audit end date。")],
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="标准化 ETF daily price cache。"),
+    ] = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="标准化 FRED rates cache。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="data audit artifact root。"),
+    ] = DEFAULT_DATA_AUDIT_DIR,
+) -> None:
+    """运行 TRADING-103 research data manifest / PIT coverage audit。"""
+    result = run_data_audit(
+        as_of=_parse_date(as_of),
+        end=_parse_date(end),
+        prices_path=prices_path,
+        rates_path=rates_path,
+        output_dir=output_dir,
+    )
+    report = result["report"]
+    typer.echo(f"data_audit_id={result['data_audit_id']}")
+    typer.echo(f"data_audit_dir={result['data_audit_dir']}")
+    typer.echo(f"status={report['status']}")
+    typer.echo(f"data_quality_status={report['data_quality_status']}")
+    typer.echo(
+        "prices_download_manifest_checksum_missing="
+        f"{str(report['prices_download_manifest_checksum_missing']).lower()}"
+    )
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_data_audit_app.command("report")
+def dynamic_v3_data_audit_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest data audit pointer。"),
+    ] = False,
+    audit_id: Annotated[str | None, typer.Option("--audit-id", help="data audit id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="data audit artifact root。"),
+    ] = DEFAULT_DATA_AUDIT_DIR,
+) -> None:
+    """展示 TRADING-103 data audit 摘要。"""
+    payload = data_audit_report_payload(
+        data_audit_id=audit_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"data_audit_id={payload['data_audit_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"data_quality_status={payload['data_quality_status']}")
+    typer.echo(f"report_path={payload['report_path']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_rescue_app.command("validate-data-audit")
+def dynamic_v3_validate_data_audit_command(
+    audit_id: Annotated[str, typer.Option("--audit-id", help="data audit id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="data audit artifact root。"),
+    ] = DEFAULT_DATA_AUDIT_DIR,
+) -> None:
+    """校验 TRADING-103 data audit artifacts。"""
+    payload = validate_data_audit_artifact(data_audit_id=audit_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_sweep_app.command("profile-list")
+def dynamic_v3_sweep_profile_list_command(
+    profile_config_path: Annotated[
+        Path,
+        typer.Option("--profile-config", help="sweep profile config。"),
+    ] = DEFAULT_PARAMETER_SWEEP_PROFILE_CONFIG_PATH,
+) -> None:
+    """列出 TRADING-104 sweep execution profiles。"""
+    payload = sweep_profile_list_payload(profile_config_path=profile_config_path)
+    typer.echo(f"status={payload['status']}")
+    for row in payload["profiles"]:
+        typer.echo(
+            f"{row['profile']} evaluator_mode={row['evaluator_mode']} "
+            f"max_candidates={row['max_candidates']} ci_safe={str(row['ci_safe']).lower()}"
+        )
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_sweep_app.command("profile-validate")
+def dynamic_v3_sweep_profile_validate_command(
+    profile_config_path: Annotated[
+        Path,
+        typer.Option("--profile-config", help="sweep profile config。"),
+    ] = DEFAULT_PARAMETER_SWEEP_PROFILE_CONFIG_PATH,
+) -> None:
+    """校验 TRADING-104 sweep execution profiles。"""
+    payload = validate_sweep_profiles_payload(profile_config_path=profile_config_path)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_sweep_app.command("run-profile")
+def dynamic_v3_sweep_run_profile_command(
+    profile: Annotated[str, typer.Option("--profile", help="profile name。")],
+    as_of: Annotated[str | None, typer.Option("--as-of", help="sweep as-of date。")] = None,
+    end: Annotated[str | None, typer.Option("--end", help="sweep end date。")] = None,
+    profile_config_path: Annotated[
+        Path,
+        typer.Option("--profile-config", help="sweep profile config。"),
+    ] = DEFAULT_PARAMETER_SWEEP_PROFILE_CONFIG_PATH,
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="real evaluator 标准化 ETF daily price cache。"),
+    ] = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="real evaluator FRED rates cache。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output", "--output-dir", help="sweep artifact root。"),
+    ] = DEFAULT_SWEEP_OUTPUT_DIR,
+) -> None:
+    """按 TRADING-104 profile 运行 sweep。"""
+    try:
+        result = run_parameter_sweep_profile(
+            profile=profile,
+            profile_config_path=profile_config_path,
+            as_of=_parse_date(as_of) if as_of else None,
+            end=_parse_date(end) if end else None,
+            prices_path=prices_path,
+            rates_path=rates_path,
+            output_dir=output_dir,
+        )
+    except DynamicV3ParameterResearchError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    manifest = result["manifest"]
+    data_quality = _mapping_obj(manifest.get("data_quality"))
+    typer.echo(f"sweep_id={result['sweep_id']}")
+    typer.echo(f"sweep_dir={result['sweep_dir']}")
+    typer.echo(f"profile={profile}")
+    typer.echo(f"status={result['status']}")
+    typer.echo(f"evaluator_mode={manifest.get('evaluator_mode')}")
+    typer.echo(f"not_for_investment_decision={manifest.get('not_for_investment_decision')}")
+    typer.echo(f"data_quality_status={data_quality.get('status')}")
+    typer.echo(f"completed_count={manifest['completed_count']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_injection_audit_app.command("run")
+def dynamic_v3_injection_audit_run_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="parameter sweep config。"),
+    ] = DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
+    as_of: Annotated[str, typer.Option("--as-of", help="audit as-of date。")] = "2026-06-04",
+    end: Annotated[str, typer.Option("--end", help="audit end date。")] = "2026-06-04",
+    max_candidates: Annotated[
+        int,
+        typer.Option("--max-candidates", help="audit candidate count。"),
+    ] = 20,
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="real evaluator 标准化 ETF daily price cache。"),
+    ] = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="real evaluator FRED rates cache。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="injection audit artifact root。"),
+    ] = DEFAULT_INJECTION_AUDIT_DIR,
+) -> None:
+    """运行 TRADING-102 parameter injection audit。"""
+    try:
+        result = run_injection_audit(
+            config_path=config_path,
+            as_of=_parse_date(as_of),
+            end=_parse_date(end),
+            max_candidates=max_candidates,
+            prices_path=prices_path,
+            rates_path=rates_path,
+            output_dir=output_dir,
+        )
+    except DynamicV3ParameterResearchError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    report = result["report"]
+    typer.echo(f"audit_id={result['audit_id']}")
+    typer.echo(f"audit_dir={result['audit_dir']}")
+    typer.echo(f"status={report['status']}")
+    typer.echo(f"candidate_count={report['candidate_count']}")
+    typer.echo(f"no_observed_effect_parameters={','.join(report['no_observed_effect_parameters'])}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_injection_audit_app.command("report")
+def dynamic_v3_injection_audit_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest injection audit pointer。"),
+    ] = False,
+    audit_id: Annotated[str | None, typer.Option("--audit-id", help="injection audit id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="injection audit artifact root。"),
+    ] = DEFAULT_INJECTION_AUDIT_DIR,
+) -> None:
+    """展示 TRADING-102 injection audit 摘要。"""
+    payload = injection_audit_report_payload(
+        audit_id=audit_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"audit_id={payload['audit_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"candidate_count={payload['candidate_count']}")
+    typer.echo(f"report_path={payload['report_path']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_rescue_app.command("validate-injection-audit")
+def dynamic_v3_validate_injection_audit_command(
+    audit_id: Annotated[str, typer.Option("--audit-id", help="injection audit id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="injection audit artifact root。"),
+    ] = DEFAULT_INJECTION_AUDIT_DIR,
+) -> None:
+    """校验 TRADING-102 injection audit artifacts。"""
+    payload = validate_injection_audit_artifact(audit_id=audit_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
 @dynamic_v3_sweep_app.command("run")
 def dynamic_v3_sweep_run_command(
     config_path: Annotated[
@@ -3847,6 +4159,57 @@ def dynamic_v3_candidate_report_command(
     typer.echo("production_candidate_generated=false")
 
 
+@dynamic_v3_candidate_app.command("attribution")
+def dynamic_v3_candidate_attribution_command(
+    sweep_id: Annotated[str, typer.Option("--sweep-id", help="source sweep id。")],
+    candidate_id: Annotated[str, typer.Option("--candidate-id", help="candidate id。")],
+    sweep_output_dir: Annotated[
+        Path,
+        typer.Option("--sweep-output-dir", help="sweep artifact root。"),
+    ] = DEFAULT_SWEEP_OUTPUT_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="candidate attribution artifact root。"),
+    ] = DEFAULT_CANDIDATE_ATTRIBUTION_DIR,
+) -> None:
+    """生成 TRADING-105 candidate attribution report。"""
+    try:
+        result = run_candidate_attribution(
+            sweep_id=sweep_id,
+            candidate_id=candidate_id,
+            sweep_output_dir=sweep_output_dir,
+            output_dir=output_dir,
+        )
+    except DynamicV3ParameterResearchError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    report = result["report"]
+    typer.echo(f"candidate_id={candidate_id}")
+    typer.echo(f"attribution_dir={result['attribution_dir']}")
+    typer.echo(f"status={report['status']}")
+    typer.echo(f"explainability_status={report['explainability_status']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_rescue_app.command("validate-candidate-attribution")
+def dynamic_v3_validate_candidate_attribution_command(
+    candidate_id: Annotated[str, typer.Option("--candidate-id", help="candidate id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="candidate attribution artifact root。"),
+    ] = DEFAULT_CANDIDATE_ATTRIBUTION_DIR,
+) -> None:
+    """校验 TRADING-105 candidate attribution artifacts。"""
+    payload = validate_candidate_attribution_artifact(
+        candidate_id=candidate_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
 @dynamic_v3_walk_forward_app.command("run")
 def dynamic_v3_walk_forward_run_command(
     sweep_id: Annotated[str, typer.Option("--sweep-id", help="source sweep id。")],
@@ -3876,6 +4239,91 @@ def dynamic_v3_walk_forward_run_command(
     typer.echo("production_candidate_generated=false")
 
 
+@dynamic_v3_walk_forward_app.command("select-run")
+def dynamic_v3_walk_forward_select_run_command(
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", "--config-path", help="parameter sweep config。"),
+    ] = DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
+    profile: Annotated[str, typer.Option("--profile", help="profile name。")] = "small_real",
+    sweep_id: Annotated[str | None, typer.Option("--sweep-id", help="source sweep id。")] = None,
+    sweep_output_dir: Annotated[
+        Path,
+        typer.Option("--sweep-output-dir", help="sweep artifact root。"),
+    ] = DEFAULT_SWEEP_OUTPUT_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="walk-forward selection artifact root。"),
+    ] = DEFAULT_WALK_FORWARD_SELECTION_DIR,
+) -> None:
+    """运行 TRADING-106 true walk-forward selection。"""
+    try:
+        result = run_walk_forward_selection(
+            config_path=config_path,
+            profile=profile,
+            sweep_id=sweep_id,
+            sweep_output_dir=sweep_output_dir,
+            output_dir=output_dir,
+        )
+    except DynamicV3ParameterResearchError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    report = result["report"]
+    typer.echo(f"wf_selection_id={result['wf_selection_id']}")
+    typer.echo(f"wf_selection_dir={result['wf_selection_dir']}")
+    typer.echo(f"status={report['status']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_walk_forward_app.command("selection-report")
+def dynamic_v3_walk_forward_selection_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest walk-forward selection。"),
+    ] = False,
+    wf_selection_id: Annotated[
+        str | None,
+        typer.Option("--wf-selection-id", help="walk-forward selection id。"),
+    ] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="walk-forward selection artifact root。"),
+    ] = DEFAULT_WALK_FORWARD_SELECTION_DIR,
+) -> None:
+    """展示 TRADING-106 walk-forward selection report。"""
+    payload = walk_forward_selection_report_payload(
+        wf_selection_id=wf_selection_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"wf_selection_id={payload['wf_selection_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"report_path={payload['report_path']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_rescue_app.command("validate-walk-forward-selection")
+def dynamic_v3_validate_walk_forward_selection_command(
+    wf_selection_id: Annotated[
+        str,
+        typer.Option("--wf-selection-id", help="walk-forward selection id。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="walk-forward selection artifact root。"),
+    ] = DEFAULT_WALK_FORWARD_SELECTION_DIR,
+) -> None:
+    """校验 TRADING-106 walk-forward selection artifacts。"""
+    payload = validate_walk_forward_selection_artifact(
+        wf_selection_id=wf_selection_id,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
 @dynamic_v3_walk_forward_app.command("report")
 def dynamic_v3_walk_forward_report_command(
     walk_forward_id: Annotated[str, typer.Option("--walk-forward-id", help="walk-forward id。")],
@@ -3902,6 +4350,75 @@ def dynamic_v3_validate_walk_forward_command(
 ) -> None:
     """校验 TRADING-096 walk-forward artifacts。"""
     payload = validate_walk_forward_artifact(walk_forward_id=walk_forward_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_overfit_app.command("run")
+def dynamic_v3_overfit_run_command(
+    sweep_id: Annotated[str, typer.Option("--sweep-id", help="source sweep id。")],
+    candidate_id: Annotated[str, typer.Option("--candidate-id", help="candidate id。")],
+    sweep_output_dir: Annotated[
+        Path,
+        typer.Option("--sweep-output-dir", help="sweep artifact root。"),
+    ] = DEFAULT_SWEEP_OUTPUT_DIR,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="overfit artifact root。"),
+    ] = DEFAULT_OVERFIT_DIR,
+) -> None:
+    """运行 TRADING-107 overfit risk review。"""
+    try:
+        result = run_overfit_review(
+            sweep_id=sweep_id,
+            candidate_id=candidate_id,
+            sweep_output_dir=sweep_output_dir,
+            output_dir=output_dir,
+        )
+    except DynamicV3ParameterResearchError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    report = result["report"]
+    typer.echo(f"overfit_id={result['overfit_id']}")
+    typer.echo(f"overfit_dir={result['overfit_dir']}")
+    typer.echo(f"status={report['status']}")
+    typer.echo(f"overfit_status={report['overfit_status']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_overfit_app.command("report")
+def dynamic_v3_overfit_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest overfit pointer。"),
+    ] = False,
+    overfit_id: Annotated[str | None, typer.Option("--overfit-id", help="overfit id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="overfit artifact root。"),
+    ] = DEFAULT_OVERFIT_DIR,
+) -> None:
+    """展示 TRADING-107 overfit report。"""
+    payload = overfit_report_payload(overfit_id=overfit_id, latest=latest, output_dir=output_dir)
+    typer.echo(f"overfit_id={payload['overfit_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"overfit_status={payload['overfit_status']}")
+    typer.echo(f"report_path={payload['report_path']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_rescue_app.command("validate-overfit")
+def dynamic_v3_validate_overfit_command(
+    overfit_id: Annotated[str, typer.Option("--overfit-id", help="overfit id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="overfit artifact root。"),
+    ] = DEFAULT_OVERFIT_DIR,
+) -> None:
+    """校验 TRADING-107 overfit artifacts。"""
+    payload = validate_overfit_artifact(overfit_id=overfit_id, output_dir=output_dir)
     typer.echo(f"status={payload['status']}")
     typer.echo(f"failed_check_count={payload['failed_check_count']}")
     typer.echo("production_candidate_generated=false")
@@ -4057,6 +4574,76 @@ def dynamic_v3_shadow_report_command(
     typer.echo("production_candidate_generated=false")
 
 
+@dynamic_v3_shadow_app.command("monitor-run")
+def dynamic_v3_shadow_monitor_run_command(
+    as_of: Annotated[str, typer.Option("--as-of", help="shadow monitor as-of date。")],
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", "--registry-path", help="shadow registry path。"),
+    ] = DEFAULT_SHADOW_REGISTRY_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shadow monitor artifact root。"),
+    ] = DEFAULT_SHADOW_MONITOR_DIR,
+) -> None:
+    """运行 TRADING-110 shadow monitor。"""
+    result = run_shadow_monitor(
+        as_of=_parse_date(as_of),
+        registry_path=registry_path,
+        output_dir=output_dir,
+    )
+    report = result["report"]
+    summary = _mapping_obj(report.get("summary"))
+    typer.echo(f"monitor_id={result['monitor_id']}")
+    typer.echo(f"monitor_dir={result['monitor_dir']}")
+    typer.echo(f"status={report['status']}")
+    typer.echo(f"observe_only_candidate_count={summary.get('observe_only_candidate_count')}")
+    typer.echo(f"promotion_review_ready_count={summary.get('promotion_review_ready_count')}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_shadow_app.command("monitor-report")
+def dynamic_v3_shadow_monitor_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest shadow monitor。"),
+    ] = False,
+    monitor_id: Annotated[str | None, typer.Option("--monitor-id", help="monitor id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shadow monitor artifact root。"),
+    ] = DEFAULT_SHADOW_MONITOR_DIR,
+) -> None:
+    """展示 TRADING-110 shadow monitor report。"""
+    payload = shadow_monitor_report_payload(
+        monitor_id=monitor_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"monitor_id={payload['monitor_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"candidate_count={payload['candidate_count']}")
+    typer.echo(f"report_path={payload['report_path']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_rescue_app.command("validate-shadow-monitor")
+def dynamic_v3_validate_shadow_monitor_command(
+    monitor_id: Annotated[str, typer.Option("--monitor-id", help="monitor id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="shadow monitor artifact root。"),
+    ] = DEFAULT_SHADOW_MONITOR_DIR,
+) -> None:
+    """校验 TRADING-110 shadow monitor artifacts。"""
+    payload = validate_shadow_monitor_artifact(monitor_id=monitor_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
 @dynamic_v3_rescue_app.command("validate-shadow-registry")
 def dynamic_v3_validate_shadow_registry_command(
     registry_path: Annotated[
@@ -4078,6 +4665,151 @@ def dynamic_v3_validate_shadow_registry_command(
     typer.echo("production_candidate_generated=false")
     if payload["status"] != "PASS":
         raise typer.Exit(code=1)
+
+
+@dynamic_v3_governance_app.command("validate")
+def dynamic_v3_governance_validate_command(
+    governance_path: Annotated[
+        Path,
+        typer.Option("--governance", "--config", help="parameter governance config。"),
+    ] = DEFAULT_PARAMETER_GOVERNANCE_CONFIG_PATH,
+    sweep_config_path: Annotated[
+        Path,
+        typer.Option("--sweep-config", help="parameter sweep config。"),
+    ] = DEFAULT_PARAMETER_SWEEP_CONFIG_PATH,
+) -> None:
+    """校验 TRADING-108 parameter governance。"""
+    payload = validate_parameter_governance(
+        governance_path=governance_path,
+        config_path=sweep_config_path,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_governance_app.command("report")
+def dynamic_v3_governance_report_command(
+    governance_path: Annotated[
+        Path,
+        typer.Option("--governance", "--config", help="parameter governance config。"),
+    ] = DEFAULT_PARAMETER_GOVERNANCE_CONFIG_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="governance artifact root。"),
+    ] = DEFAULT_GOVERNANCE_DIR,
+) -> None:
+    """生成 TRADING-108 governance report。"""
+    payload = governance_report_payload(
+        governance_path=governance_path,
+        output_dir=output_dir,
+        write=True,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"policy_id={payload['policy_id']}")
+    typer.echo(f"search_space_version={payload['search_space_version']}")
+    typer.echo(f"governance_report={output_dir / 'parameter_governance_report.json'}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_governance_app.command("diff")
+def dynamic_v3_governance_diff_command(
+    old_config: Annotated[Path, typer.Option("--old-config", help="old governance config。")],
+    new_config: Annotated[Path, typer.Option("--new-config", help="new governance config。")],
+) -> None:
+    """比较 TRADING-108 governance configs。"""
+    payload = governance_diff_payload(old_config=old_config, new_config=new_config)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"change_count={payload['change_count']}")
+    typer.echo(f"manual_review_required={payload['manual_review_required']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_research_app.command("index-build")
+def dynamic_v3_research_index_build_command(
+    sweep_output_dir: Annotated[
+        Path,
+        typer.Option("--sweep-output-dir", help="sweep artifact root。"),
+    ] = DEFAULT_SWEEP_OUTPUT_DIR,
+    registry_path: Annotated[
+        Path,
+        typer.Option("--registry", "--registry-path", help="shadow registry path。"),
+    ] = DEFAULT_SHADOW_REGISTRY_PATH,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="research index output dir。"),
+    ] = DEFAULT_RESEARCH_INDEX_DIR,
+) -> None:
+    """重建 TRADING-109 research result index。"""
+    payload = build_research_index(
+        sweep_output_dir=sweep_output_dir,
+        shadow_registry_path=registry_path,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"index_dir={output_dir}")
+    typer.echo(f"sweep_count={payload['sweep_count']}")
+    typer.echo(f"candidate_count={payload['candidate_count']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_research_app.command("query")
+def dynamic_v3_research_query_command(
+    candidate_id: Annotated[str, typer.Option("--candidate-id", help="candidate id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="research index output dir。"),
+    ] = DEFAULT_RESEARCH_INDEX_DIR,
+) -> None:
+    """查询 TRADING-109 candidate artifacts。"""
+    payload = research_query_payload(candidate_id=candidate_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"candidate_id={candidate_id}")
+    typer.echo(f"match_count={len(payload['matches'])}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_research_app.command("compare")
+def dynamic_v3_research_compare_command(
+    candidate_ids: Annotated[
+        list[str],
+        typer.Option("--candidate-id", help="candidate id；provide exactly two。"),
+    ],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="research index output dir。"),
+    ] = DEFAULT_RESEARCH_INDEX_DIR,
+) -> None:
+    """比较 TRADING-109 two candidates。"""
+    if len(candidate_ids) != 2:
+        raise typer.BadParameter("research compare requires exactly two --candidate-id values")
+    payload = research_compare_payload(
+        candidate_a=candidate_ids[0],
+        candidate_b=candidate_ids[1],
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"parameter_diff_count={len(payload['parameter_diff'])}")
+    typer.echo(f"metric_diff_count={len(payload['metric_diff'])}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_research_app.command("history")
+def dynamic_v3_research_history_command(
+    parameter: Annotated[str, typer.Option("--parameter", help="parameter name。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="research index output dir。"),
+    ] = DEFAULT_RESEARCH_INDEX_DIR,
+) -> None:
+    """查询 TRADING-109 parameter history。"""
+    payload = research_history_payload(parameter=parameter, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"parameter={parameter}")
+    typer.echo(f"observation_count={payload['observation_count']}")
+    typer.echo("production_candidate_generated=false")
 
 
 @dynamic_v3_artifacts_app.command("latest")
