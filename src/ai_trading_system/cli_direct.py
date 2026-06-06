@@ -11,8 +11,10 @@ import typer
 from ai_trading_system import cli
 from ai_trading_system.cli_commands import docs as docs_cli
 from ai_trading_system.cli_commands import etf_portfolio as etf_cli
+from ai_trading_system.cli_commands import pit_snapshots as pit_snapshots_cli
 from ai_trading_system.cli_commands import sec_pit as sec_pit_cli
 from ai_trading_system.cli_commands import security as security_cli
+from ai_trading_system.cli_commands import valuation as valuation_cli
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -143,16 +145,16 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:2] == ["pit-snapshots", "fetch-fmp-forward"]:
-        cli.fetch_fmp_forward_pit_command(
+        pit_snapshots_cli.fetch_fmp_forward_pit_command(
             as_of=_option(args, "--as-of"),
             continue_on_failure=_flag(args, "--continue-on-failure"),
         )
         return
     if args[:2] == ["pit-snapshots", "build-manifest"]:
-        cli.build_pit_snapshot_manifest_command(as_of=_option(args, "--as-of"))
+        pit_snapshots_cli.build_pit_snapshot_manifest_command(as_of=_option(args, "--as-of"))
         return
     if args[:2] == ["pit-snapshots", "validate"]:
-        cli.validate_pit_snapshots_command(as_of=_option(args, "--as-of"))
+        pit_snapshots_cli.validate_pit_snapshots_command(as_of=_option(args, "--as-of"))
         return
     if args[:2] == ["fundamentals", "download-sec-companyfacts"]:
         cli.download_sec_companyfacts_command(
@@ -169,7 +171,7 @@ def _dispatch(args: list[str]) -> None:
         cli.validate_sec_metrics_command(as_of=_option(args, "--as-of"))
         return
     if args[:2] == ["valuation", "fetch-fmp"]:
-        cli.fetch_fmp_valuations(as_of=_option(args, "--as-of"))
+        valuation_cli.fetch_fmp_valuations(as_of=_option(args, "--as-of"))
         return
     if args[:2] == ["score-daily", "backfill-baseline"]:
         raise typer.BadParameter(

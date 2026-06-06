@@ -8,7 +8,7 @@ from typing import Any
 
 from typer.testing import CliRunner
 
-import ai_trading_system.cli as cli_module
+import ai_trading_system.cli_commands.pit_snapshots as pit_snapshots_cli
 from ai_trading_system.cli import app
 from ai_trading_system.config import DataSourceConfig, DataSourcesConfig
 from ai_trading_system.fmp_forward_pit import (
@@ -208,7 +208,7 @@ def test_pit_snapshots_fetch_fmp_forward_cli_writes_outputs(
         )
 
     monkeypatch.setenv("FMP_API_KEY", "test-key")
-    monkeypatch.setattr(cli_module, "fetch_fmp_forward_pit_snapshots", fake_fetch)
+    monkeypatch.setattr(pit_snapshots_cli, "fetch_fmp_forward_pit_snapshots", fake_fetch)
 
     result = CliRunner().invoke(
         app,
@@ -264,7 +264,7 @@ def test_pit_snapshots_fetch_fmp_forward_cli_reports_unhandled_fetch_error(
         )
 
     monkeypatch.setenv("FMP_API_KEY", "test-key")
-    monkeypatch.setattr(cli_module, "fetch_fmp_forward_pit_snapshots", fake_fetch)
+    monkeypatch.setattr(pit_snapshots_cli, "fetch_fmp_forward_pit_snapshots", fake_fetch)
 
     result = CliRunner().invoke(
         app,
@@ -305,7 +305,7 @@ def test_pit_snapshots_fetch_fmp_forward_cli_can_continue_on_failure(
         raise RuntimeError("network timeout")
 
     monkeypatch.setenv("FMP_API_KEY", "test-key")
-    monkeypatch.setattr(cli_module, "fetch_fmp_forward_pit_snapshots", fake_fetch)
+    monkeypatch.setattr(pit_snapshots_cli, "fetch_fmp_forward_pit_snapshots", fake_fetch)
 
     result = CliRunner().invoke(
         app,

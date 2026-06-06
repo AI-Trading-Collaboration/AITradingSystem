@@ -430,8 +430,16 @@ def test_cli_direct_dispatches_scheduled_task_commands(monkeypatch) -> None:
         calls.append(("shadow_monitor", kwargs))
 
     monkeypatch.setattr(cli_direct.cli, "validate_data", fake_validate_data)
-    monkeypatch.setattr(cli_direct.cli, "build_pit_snapshot_manifest_command", fake_build_manifest)
-    monkeypatch.setattr(cli_direct.cli, "validate_pit_snapshots_command", fake_validate_pit)
+    monkeypatch.setattr(
+        cli_direct.pit_snapshots_cli,
+        "build_pit_snapshot_manifest_command",
+        fake_build_manifest,
+    )
+    monkeypatch.setattr(
+        cli_direct.pit_snapshots_cli,
+        "validate_pit_snapshots_command",
+        fake_validate_pit,
+    )
     monkeypatch.setattr(
         cli_direct.docs_cli,
         "documentation_contract_command",
@@ -532,17 +540,17 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
     monkeypatch.setattr(cli_direct.cli, "download_data", recorder("download_data"))
     monkeypatch.setattr(cli_direct.cli, "validate_data", recorder("validate_data"))
     monkeypatch.setattr(
-        cli_direct.cli,
+        cli_direct.pit_snapshots_cli,
         "fetch_fmp_forward_pit_command",
         recorder("pit_snapshots_fetch_fmp_forward"),
     )
     monkeypatch.setattr(
-        cli_direct.cli,
+        cli_direct.pit_snapshots_cli,
         "build_pit_snapshot_manifest_command",
         recorder("pit_snapshots_build_manifest"),
     )
     monkeypatch.setattr(
-        cli_direct.cli,
+        cli_direct.pit_snapshots_cli,
         "validate_pit_snapshots_command",
         recorder("pit_snapshots_validate"),
     )
@@ -562,7 +570,11 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
         "validate_sec_metrics_command",
         recorder("sec_metrics_validation"),
     )
-    monkeypatch.setattr(cli_direct.cli, "fetch_fmp_valuations", recorder("valuation_snapshots"))
+    monkeypatch.setattr(
+        cli_direct.valuation_cli,
+        "fetch_fmp_valuations",
+        recorder("valuation_snapshots"),
+    )
     monkeypatch.setattr(cli_direct.cli, "score_daily", recorder("score_daily"))
     monkeypatch.setattr(
         cli_direct.cli,
