@@ -253,6 +253,13 @@ from ai_trading_system.execution_policy import (
     validate_execution_policy,
     write_execution_policy_report,
 )
+from ai_trading_system.explain import (
+    DEFAULT_ARTIFACT_CATALOG_PATH,
+    DEFAULT_CALCULATION_LOGIC_PATH,
+    DEFAULT_FIELDS_PATH,
+    explain_query,
+    render_explain_result,
+)
 from ai_trading_system.external_request_cache import sanitize_diagnostic_text
 from ai_trading_system.feature_availability import (
     DEFAULT_FEATURE_AVAILABILITY_CONFIG_PATH,
@@ -1027,6 +1034,42 @@ app.add_typer(score_daily_app, name="score-daily")
 app.add_typer(docs_app, name="docs")
 app.add_typer(sec_pit_app, name="sec-pit")
 app.add_typer(etf_app, name="etf")
+
+
+@app.command("explain")
+def explain_command(
+    query: Annotated[str, typer.Argument(help="要解释的字段、gate 或 artifact 名称。")],
+    kind: Annotated[
+        Literal["auto", "field", "artifact", "gate"],
+        typer.Option(help="解释类型；auto 会依次查询字段、gate 和 artifact。"),
+    ] = "auto",
+    fields_path: Annotated[
+        Path,
+        typer.Option(help="字段字典 YAML 路径。"),
+    ] = DEFAULT_FIELDS_PATH,
+    artifact_catalog_path: Annotated[
+        Path,
+        typer.Option(help="artifact catalog Markdown 路径。"),
+    ] = DEFAULT_ARTIFACT_CATALOG_PATH,
+    calculation_logic_path: Annotated[
+        Path,
+        typer.Option(help="计算逻辑文档路径，用于 gate 解释来源标注。"),
+    ] = DEFAULT_CALCULATION_LOGIC_PATH,
+) -> None:
+    """只读解释字段、gate 或 artifact 来源，不运行上游、不重算投资结论。"""
+    try:
+        result = explain_query(
+            query,
+            kind=kind,
+            fields_path=fields_path,
+            artifact_catalog_path=artifact_catalog_path,
+            calculation_logic_path=calculation_logic_path,
+        )
+    except (OSError, ValueError, yaml.YAMLError) as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    console.print(render_explain_result(result))
+    if not result.get("found"):
+        raise typer.Exit(code=1)
 
 
 def _register_etf_compatibility_aliases() -> None:

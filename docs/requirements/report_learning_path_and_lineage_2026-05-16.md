@@ -1,6 +1,6 @@
 # 报告学习链路与产物目录
 
-最后更新：2026-05-16
+最后更新：2026-06-07
 
 ## 背景
 
@@ -89,13 +89,13 @@
 
 ### 阶段 5：解释命令和 dashboard 分层
 
-状态：READY
+状态：VALIDATING
 
 交付：
 
-- 基于字段字典和 trace bundle 增加 `aits explain` 的只读解释入口。
-- Evidence dashboard 进一步分为快速读者、系统理解、审计排障三层读者模式。
-- 评估是否逐步把 `docs/system_flow.md` 拆成 `docs/flows/*` 子流程文档。
+- 基于字段字典、gate explainer 和产物目录增加 `aits explain` 的只读解释入口。
+- Evidence dashboard 进一步分为快速读者、投资复核者、系统审计者三层读者模式。
+- 评估是否逐步把 `docs/system_flow.md` 拆成 `docs/flows/*` 子流程文档；当前继续保留单一 source-of-truth，避免总览和子流程形成双源维护。
 
 验收：
 
@@ -113,3 +113,4 @@
 - 2026-05-16：阶段 1-3 基础实现进入 VALIDATING。新增 `docs/learning_path.md`、`docs/artifact_catalog.md` 和 `docs/schema/fields.yaml`；日报新增 `Data Lineage Card`、`Score-to-Position Funnel`、`Binding Gate Ladder` 和复核五问；shadow parameter search 报告新增 `Trial Card`。同步更新 README 与 `docs/system_flow.md`。验证通过 `tests/test_daily_scoring.py` 26 passed、`tests/test_shadow_weight_profiles.py` 14 passed、`ruff check src tests` 和 `git diff --check`；`docs validate-freshness` 仍因 11 个既有无关需求文档 stale/missing metadata 失败，本任务新增需求文档已含 `最后更新`。
 - 2026-05-16：根据 owner 反馈补充阶段 4，要求面向无金融背景读者说明输入数据到输出数据的计算逻辑、原因和设计思路；范围仍限定为文档学习层，不改变任何 production 计算。
 - 2026-05-16：阶段 4 基础实现进入 VALIDATING。新增 `docs/calculation_logic.md`，并从 README、`docs/learning_path.md`、`docs/artifact_catalog.md` 和 `docs/system_flow.md` 建立入口；验证通过 `tests/test_daily_scoring.py` + `tests/test_shadow_weight_profiles.py` 共 40 passed、`ruff check src tests` 和 `git diff --check`；`docs validate-freshness` 仍因 11 个既有无关需求文档 stale/missing metadata 失败，本任务新增/更新文档不在失败清单中。
+- 2026-06-07：阶段 5 基础实现进入 VALIDATING。新增 `aits explain` 只读解释入口，可从字段字典、gate explainer 和产物目录查询字段、gate 与 artifact 的含义、上游、下游、production_effect 和常见误解；确认 evidence dashboard 已有快速读者、投资复核者、系统审计者三层读者模式；同步 README、学习路径、产物目录和系统流图。`docs/system_flow.md` 暂不拆分，原因是当前作为 source-of-truth 仍比多文件双源维护更安全，后续若拆分需先建立生成或校验机制。

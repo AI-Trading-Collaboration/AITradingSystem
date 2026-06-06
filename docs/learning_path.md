@@ -364,6 +364,7 @@
 
 想确认字段含义：
 
-1. 先查 `docs/schema/fields.yaml`。
+1. 先运行 `aits explain scores_daily.score` 或直接查 `docs/schema/fields.yaml`。
 2. 看 `meaning`、`produced_by`、`upstream_fields`、`downstream_usage`、`production_effect` 和 `common_misunderstanding`。
-3. 再回到对应 artifact 或 trace bundle 复核本次实际值。
+3. 如需解释 gate 或 artifact，用 `aits explain --kind gate "binding gate"`、`aits explain --kind artifact risk_event_prereview_queue`。
+4. 再回到对应 artifact 或 trace bundle 复核本次实际值。

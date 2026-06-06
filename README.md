@@ -1019,7 +1019,7 @@ aits score-daily --as-of 2026-05-01
 ```
 
 命令会先执行市场数据质量门禁，再构建市场特征，并校验 `data/processed/sec_fundamentals_YYYY-MM-DD.csv`、生成 SEC 基本面特征，最后输出 `data/processed/scores_daily.csv` 和 `outputs/reports/daily_score_YYYY-MM-DD.md`。日报会同时汇总交易 thesis、风险事件、估值快照和交易复盘的复核状态；缺少本地手工输入会显示为警告，配置或 YAML 错误会显示为复核失败。SEC 基本面特征通过校验后会进入基本面硬数据评分；估值快照通过校验后会以估值分位和拥挤比例进入手工/审计输入评分，过期快照和 `public_convenience` 来源不会进入自动评分；政策/地缘评分只读取已校验的 `data/external/risk_event_occurrences/*.yaml` 发生记录，没有合格发生记录时显示为数据不足，不把 `config/risk_events.yaml` 的监控规则当作已发生风险或无风险证明。
-如果是第一次阅读系统，先看 `docs/learning_path.md`；如果看到某个 CSV、JSON 或 Markdown 产物不确定用途，先查 `docs/artifact_catalog.md`。日报顶部的 `Data Lineage Card`、`Score-to-Position Funnel` 和 `Binding Gate Ladder` 会把本次运行的输入、输出、分数到仓位路径和最严格 gate 直接列出。
+如果是第一次阅读系统，先看 `docs/learning_path.md`；如果看到某个 CSV、JSON 或 Markdown 产物不确定用途，先查 `docs/artifact_catalog.md`，也可以用 `aits explain scores_daily.score`、`aits explain --kind gate "binding gate"` 或 `aits explain --kind artifact risk_event_prereview_queue` 做只读反查。日报顶部的 `Data Lineage Card`、`Score-to-Position Funnel` 和 `Binding Gate Ladder` 会把本次运行的输入、输出、分数到仓位路径和最严格 gate 直接列出。
 
 日报评分默认启用官方来源 + OpenAI 风险事件预审；如需排查或离线运行，可显式传入 `--skip-risk-event-openai-precheck`：
 
