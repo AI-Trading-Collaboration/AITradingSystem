@@ -434,7 +434,7 @@ def test_cli_direct_dispatches_daily_feedback_reports(monkeypatch) -> None:
         fake_loop_review,
     )
     monkeypatch.setattr(
-        cli_direct.cli,
+        cli_direct.reports_cli,
         "investment_periodic_review_command",
         fake_investment_review,
     )
@@ -472,7 +472,7 @@ def test_cli_direct_dispatches_report_index(monkeypatch) -> None:
     def fake_report_index(**kwargs: object) -> None:
         calls.append(kwargs)
 
-    monkeypatch.setattr(cli_direct.cli, "report_index_command", fake_report_index)
+    monkeypatch.setattr(cli_direct.reports_cli, "report_index_command", fake_report_index)
 
     assert cli_direct.main(["reports", "index", "--as-of", "2026-05-13"]) == 0
     assert cli_direct.main(["reports", "index", "--latest"]) == 0
@@ -489,7 +489,7 @@ def test_cli_direct_dispatches_reader_brief_date_and_latest(monkeypatch) -> None
     def fake_reader_brief(**kwargs: object) -> None:
         calls.append(kwargs)
 
-    monkeypatch.setattr(cli_direct.cli, "reader_brief_command", fake_reader_brief)
+    monkeypatch.setattr(cli_direct.reports_cli, "reader_brief_command", fake_reader_brief)
 
     assert cli_direct.main(["reports", "reader-brief", "--date", "2026-05-13"]) == 0
     assert cli_direct.main(["reports", "reader-brief", "--latest"]) == 0
@@ -660,7 +660,9 @@ def test_cli_direct_dispatches_validate_reader_brief(monkeypatch) -> None:
     def fake_validate_reader_brief(**kwargs: object) -> None:
         calls.append(kwargs)
 
-    monkeypatch.setattr(cli_direct.cli, "validate_reader_brief_command", fake_validate_reader_brief)
+    monkeypatch.setattr(
+        cli_direct.reports_cli, "validate_reader_brief_command", fake_validate_reader_brief
+    )
 
     assert cli_direct.main(["reports", "validate-reader-brief", "--date", "2026-05-13"]) == 0
     assert cli_direct.main(["reports", "validate-reader-brief", "--latest"]) == 0
@@ -680,8 +682,10 @@ def test_cli_direct_dispatches_score_change_and_market_panel_latest(monkeypatch)
     def fake_market_panel(**kwargs: object) -> None:
         calls.append(("market_panel", kwargs))
 
-    monkeypatch.setattr(cli_direct.cli, "score_change_attribution_command", fake_score_change)
-    monkeypatch.setattr(cli_direct.cli, "market_panel_command", fake_market_panel)
+    monkeypatch.setattr(
+        cli_direct.reports_cli, "score_change_attribution_command", fake_score_change
+    )
+    monkeypatch.setattr(cli_direct.reports_cli, "market_panel_command", fake_market_panel)
 
     assert cli_direct.main(["reports", "score-change-attribution", "--date", "2026-05-13"]) == 0
     assert cli_direct.main(["reports", "score-change-attribution", "--latest"]) == 0
@@ -703,7 +707,7 @@ def test_cli_direct_dispatches_research_governance_date_and_latest(monkeypatch) 
         calls.append(kwargs)
 
     monkeypatch.setattr(
-        cli_direct.cli,
+        cli_direct.reports_cli,
         "research_governance_summary_command",
         fake_research_governance,
     )
@@ -770,7 +774,7 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
     )
     monkeypatch.setattr(cli_direct.cli, "score_daily", recorder("score_daily"))
     monkeypatch.setattr(
-        cli_direct.cli,
+        cli_direct.reports_cli,
         "evidence_dashboard_command",
         recorder("reports_dashboard"),
     )
@@ -785,11 +789,11 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
         recorder("sec_pit_shadow_monitor"),
     )
     monkeypatch.setattr(
-        cli_direct.cli,
+        cli_direct.reports_cli,
         "score_change_attribution_command",
         recorder("score_change_attribution"),
     )
-    monkeypatch.setattr(cli_direct.cli, "market_panel_command", recorder("market_panel"))
+    monkeypatch.setattr(cli_direct.reports_cli, "market_panel_command", recorder("market_panel"))
     monkeypatch.setattr(
         cli_direct.data_cli,
         "data_freshness_command",
@@ -811,7 +815,7 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
         recorder("portfolio_tracking_review"),
     )
     monkeypatch.setattr(
-        cli_direct.cli,
+        cli_direct.reports_cli,
         "portfolio_tracking_review_report_command",
         recorder("portfolio_tracking_review_report"),
     )
@@ -830,20 +834,20 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
         "forward_watchlist_command",
         recorder("etf_forward_watchlist"),
     )
-    monkeypatch.setattr(cli_direct.cli, "report_index_command", recorder("report_index"))
+    monkeypatch.setattr(cli_direct.reports_cli, "report_index_command", recorder("report_index"))
     monkeypatch.setattr(
         cli_direct.docs_cli,
         "documentation_contract_command",
         recorder("documentation_contract"),
     )
     monkeypatch.setattr(
-        cli_direct.cli,
+        cli_direct.reports_cli,
         "research_governance_summary_command",
         recorder("research_governance_summary"),
     )
-    monkeypatch.setattr(cli_direct.cli, "reader_brief_command", recorder("reader_brief"))
+    monkeypatch.setattr(cli_direct.reports_cli, "reader_brief_command", recorder("reader_brief"))
     monkeypatch.setattr(
-        cli_direct.cli,
+        cli_direct.reports_cli,
         "validate_reader_brief_command",
         recorder("validate_reader_brief"),
     )

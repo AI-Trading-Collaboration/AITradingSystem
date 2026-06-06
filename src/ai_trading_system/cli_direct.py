@@ -17,6 +17,7 @@ from ai_trading_system.cli_commands import ops as ops_cli
 from ai_trading_system.cli_commands import parameters as parameters_cli
 from ai_trading_system.cli_commands import pit_snapshots as pit_snapshots_cli
 from ai_trading_system.cli_commands import portfolio as portfolio_cli
+from ai_trading_system.cli_commands import reports as reports_cli
 from ai_trading_system.cli_commands import sec_pit as sec_pit_cli
 from ai_trading_system.cli_commands import security as security_cli
 from ai_trading_system.cli_commands import signals as signals_cli
@@ -222,16 +223,16 @@ def _dispatch(args: list[str]) -> None:
         cli.feedback_loop_review_command(as_of=_option(args, "--as-of"))
         return
     if args[:2] == ["reports", "investment-review"]:
-        cli.investment_periodic_review_command(
+        reports_cli.investment_periodic_review_command(
             period=_option(args, "--period", "weekly") or "weekly",
             as_of=_option(args, "--as-of"),
         )
         return
     if args[:2] == ["reports", "dashboard"]:
-        cli.evidence_dashboard_command(as_of=_option(args, "--as-of"))
+        reports_cli.evidence_dashboard_command(as_of=_option(args, "--as-of"))
         return
     if args[:2] == ["reports", "calculation-explainers"]:
-        cli.calculation_explainers_command(as_of=_option(args, "--as-of"))
+        reports_cli.calculation_explainers_command(as_of=_option(args, "--as-of"))
         return
     if args[:2] == ["portfolio", "track-candidate"]:
         portfolio_cli.portfolio_track_candidate_command(
@@ -571,93 +572,93 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:2] == ["reports", "shadow-parameter-backtest"]:
-        cli.shadow_parameter_backtest_report_command(
+        reports_cli.shadow_parameter_backtest_report_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             source_path=_optional_path(args, "--source-path"),
         )
         return
     if args[:2] == ["reports", "parameter-promotion"]:
-        cli.parameter_promotion_report_command(
+        reports_cli.parameter_promotion_report_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             source_path=_optional_path(args, "--source-path"),
         )
         return
     if args[:2] == ["reports", "weight-stability"]:
-        cli.weight_stability_report_command(
+        reports_cli.weight_stability_report_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             source_path=_optional_path(args, "--source-path"),
         )
         return
     if args[:2] == ["reports", "weight-stability-readiness"]:
-        cli.weight_stability_readiness_report_command(
+        reports_cli.weight_stability_readiness_report_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             source_path=_optional_path(args, "--source-path"),
         )
         return
     if args[:2] == ["reports", "signal-snapshot"]:
-        cli.signal_snapshot_report_command(
+        reports_cli.signal_snapshot_report_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             source_path=_optional_path(args, "--source-path"),
         )
         return
     if args[:2] == ["reports", "signal-ablation"]:
-        cli.signal_ablation_report_command(
+        reports_cli.signal_ablation_report_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             source_path=_optional_path(args, "--source-path"),
         )
         return
     if args[:2] == ["reports", "signal-calibration"]:
-        cli.signal_calibration_report_command(
+        reports_cli.signal_calibration_report_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             source_path=_optional_path(args, "--source-path"),
         )
         return
     if args[:2] == ["reports", "reader-brief"]:
-        cli.reader_brief_command(
+        reports_cli.reader_brief_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             latest=_flag(args, "--latest"),
         )
         return
     if args[:2] == ["reports", "validate-reader-brief"]:
-        cli.validate_reader_brief_command(
+        reports_cli.validate_reader_brief_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             latest=_flag(args, "--latest"),
         )
         return
     if args[:2] == ["reports", "score-change-attribution"]:
-        cli.score_change_attribution_command(
+        reports_cli.score_change_attribution_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             latest=_flag(args, "--latest"),
         )
         return
     if args[:2] == ["reports", "market-panel"]:
-        cli.market_panel_command(
+        reports_cli.market_panel_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             latest=_flag(args, "--latest"),
         )
         return
     if args[:2] == ["reports", "research-governance-summary"]:
-        cli.research_governance_summary_command(
+        reports_cli.research_governance_summary_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             latest=_flag(args, "--latest"),
         )
         return
     if args[:2] == ["reports", "portfolio-tracking-review"]:
-        cli.portfolio_tracking_review_report_command(
+        reports_cli.portfolio_tracking_review_report_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             source_path=_optional_path(args, "--source-path"),
         )
         return
     if args[:2] == ["reports", "index"]:
-        cli.report_index_command(
+        reports_cli.report_index_command(
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             latest=_flag(args, "--latest"),
         )
