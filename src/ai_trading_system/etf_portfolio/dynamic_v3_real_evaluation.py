@@ -364,15 +364,20 @@ def build_dynamic_v3_real_evaluation_report(
         for row in [*dynamic_rows, *static_rows]
     ]
     best = _best_v0_3_candidate(comparison_rows, policy)
+    best_robustness_report = robustness_reports[_text(best.get("policy_id"))]
+    best_daily_summary = _mapping(best_robustness_report.get("daily_path_summary"))
     analyses = _comprehensive_analyses(best, v0_4_row, static_rows, policy)
     promotion_gate = _promotion_gate(best, v0_4_row, analyses, policy)
+    requested_start = start or policy.market_regime.default_backtest_start
+    requested_end = end or _mapping(baseline_report.get("summary")).get("requested_end")
     report_id = _stable_id(
         "dynamic-v3-real-evaluation-report",
         best.get("policy_id"),
-        start or policy.market_regime.default_backtest_start,
-        end or _mapping(baseline_report.get("summary")).get("requested_end"),
+        requested_start,
+        requested_end,
         _stable_hash([row.get("policy_id") for row in comparison_rows]),
     )
+    requested_end_text = "" if requested_end is None else str(requested_end)
     payload = {
         "schema_version": DYNAMIC_V3_REAL_EVALUATION_REPORT_SCHEMA_VERSION,
         "report_type": DYNAMIC_V3_REAL_EVALUATION_REPORT_TYPE,
@@ -388,8 +393,25 @@ def build_dynamic_v3_real_evaluation_report(
         "dynamic_robustness_policy_version": dynamic_robustness_policy.policy_metadata.version,
         "market_regime": policy.market_regime.model_dump(mode="json"),
         "requested_range": {
-            "start": (start or policy.market_regime.default_backtest_start).isoformat(),
-            "end": "" if end is None else end.isoformat(),
+            "start": requested_start.isoformat(),
+            "end": requested_end_text,
+        },
+        "backtest_window": {
+            "configured_backtest_start": policy.market_regime.default_backtest_start.isoformat(),
+            "configured_backtest_end": requested_end_text,
+            "requested_start": requested_start.isoformat(),
+            "requested_end": requested_end_text,
+            "actual_evaluation_start": _text(best_daily_summary.get("first_signal_date")),
+            "actual_evaluation_end": _text(best_daily_summary.get("last_signal_date")),
+            "effective_training_start": None,
+            "effective_training_end": None,
+            "effective_validation_start": None,
+            "effective_validation_end": None,
+            "first_rebalance_date": "",
+            "trading_days": _int(best_daily_summary.get("row_count")),
+            "date_range_status": "PENDING_WINDOW_AUDIT",
+            "insufficient_data_reason": None,
+            "window_mismatch_reasons": [],
         },
         "summary": {
             "best_v0_3_candidate": best.get("policy_id"),
@@ -424,6 +446,8 @@ def build_dynamic_v3_real_evaluation_report(
         "overfit_analysis": analyses["overfit_analysis"],
         "promotion_gate": promotion_gate,
         "reader_brief_summary": _reader_brief_summary(best, promotion_gate, analyses),
+        "daily_path_summary": best_daily_summary,
+        "comparison_daily_paths": best_robustness_report.get("comparison_daily_paths", {}),
         "source_artifacts": {
             "prices_path": "" if prices_path is None else str(prices_path),
             "data_quality_report": data_quality_report,

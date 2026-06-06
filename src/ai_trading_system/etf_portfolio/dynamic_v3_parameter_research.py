@@ -85,6 +85,8 @@ DEFAULT_PARAMETER_GOVERNANCE_CONFIG_PATH = (
 DEFAULT_DYNAMIC_V3_RESEARCH_ROOT = PROJECT_ROOT / "reports" / "etf_portfolio" / "dynamic_v3_rescue"
 DEFAULT_SWEEP_OUTPUT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "sweeps"
 DEFAULT_DATA_AUDIT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "data_audit"
+DEFAULT_DATA_PROVENANCE_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "data_provenance"
+DEFAULT_WINDOW_AUDIT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "window_audit"
 DEFAULT_INJECTION_AUDIT_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "injection_audit"
 DEFAULT_CANDIDATE_ATTRIBUTION_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "candidate_attribution"
 DEFAULT_WALK_FORWARD_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "walk_forward"
@@ -100,12 +102,31 @@ DEFAULT_LATEST_POINTER_DIR = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT / "latest"
 DEFAULT_SHADOW_REGISTRY_PATH = (
     PROJECT_ROOT / "registry" / "etf_portfolio" / "dynamic_v3_rescue_shadow_candidates.yaml"
 )
+DEFAULT_RATES_CACHE_PATH = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv"
 
 GATE_REJECT = "reject"
 GATE_REVIEW_REQUIRED = "review_required"
 GATE_OBSERVE_ONLY = "observe_only"
 GATE_PROMOTE_CANDIDATE = "promote_candidate"
 FORBIDDEN_GATE = "production_candidate"
+DATE_RANGE_PASS = "PASS"
+DATE_RANGE_PASS_WITH_WARNINGS = "PASS_WITH_WARNINGS"
+DATE_RANGE_INCOMPLETE = "INCOMPLETE"
+DATE_RANGE_INSUFFICIENT_DATA = "INSUFFICIENT_DATA"
+DATE_RANGE_FAIL = "FAIL"
+WINDOW_PROMOTION_BLOCKING_STATUSES = {
+    DATE_RANGE_INCOMPLETE,
+    DATE_RANGE_INSUFFICIENT_DATA,
+    DATE_RANGE_FAIL,
+}
+WEIGHT_PATH_COMPLETE = "COMPLETE"
+WEIGHT_PATH_PARTIAL = "PARTIAL"
+WEIGHT_PATH_INCOMPLETE = "INCOMPLETE"
+DATA_PROVENANCE_RECONSTRUCTED = "RECONSTRUCTED_MANIFEST"
+
+# TRADING-111 allows a small start-date grace for signal-lag / warm-up mechanics;
+# a larger gap changes investment interpretation and must block promotion.
+WINDOW_AUDIT_ALLOWED_START_DELAY_DAYS = 5
 
 # TRADING-101 pilot mapping: sweep axes are bounded inputs to existing
 # TRADING-091 materialization controls. These are research-only transforms, not
@@ -966,6 +987,13 @@ def run_data_audit(
         prices_path=prices_path,
         rates_path=rates_path,
     )
+    data_provenance = data_provenance_inspect_price_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        manifest_path=_download_manifest_path(prices_path),
+        write=False,
+        generated_at=generated,
+    )
     checksum_audit = _checksum_audit(quality_report)
     pit_coverage = _pit_coverage_audit(
         quality_report=quality_report,
@@ -993,6 +1021,13 @@ def run_data_audit(
             issue.code for issue in quality_report.issues if issue.severity.value == "ERROR"
         ],
         "checksum_audit_path": str(audit_dir / "checksum_audit.json"),
+        "data_provenance_report_path": str(audit_dir / "data_provenance_report.json"),
+        "data_provenance_status": data_provenance.get("status"),
+        "price_cache_sha256": _mapping(data_provenance.get("prices")).get("sha256"),
+        "download_manifest_status": _mapping(data_provenance.get("download_manifest")).get(
+            "status"
+        ),
+        "provenance_status": data_provenance.get("provenance_status"),
         "pit_coverage_audit_path": str(audit_dir / "pit_coverage_audit.json"),
         "data_gap_report_path": str(audit_dir / "data_gap_report.json"),
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
@@ -1006,6 +1041,13 @@ def run_data_audit(
         "prices_download_manifest_checksum_missing": (
             "prices_download_manifest_checksum_missing" in manifest["warning_codes"]
         ),
+        "data_provenance": data_provenance,
+        "price_cache_sha256": _mapping(data_provenance.get("prices")).get("sha256"),
+        "download_manifest_status": _mapping(data_provenance.get("download_manifest")).get(
+            "status"
+        ),
+        "provenance_status": data_provenance.get("provenance_status"),
+        "data_provenance_warnings": data_provenance.get("warnings", []),
         "price_cache_manifest": price_cache_manifest,
         "checksum_audit": checksum_audit,
         "pit_coverage_audit": pit_coverage,
@@ -1017,6 +1059,7 @@ def run_data_audit(
     }
     _write_json(audit_dir / "data_audit_manifest.json", manifest)
     _write_json(audit_dir / "price_cache_manifest.json", price_cache_manifest)
+    _write_json(audit_dir / "data_provenance_report.json", data_provenance)
     _write_json(audit_dir / "checksum_audit.json", checksum_audit)
     _write_json(audit_dir / "pit_coverage_audit.json", pit_coverage)
     _write_json(audit_dir / "data_gap_report.json", data_gap)
@@ -1060,6 +1103,7 @@ def validate_data_audit_artifact(
     required = [
         "data_audit_manifest.json",
         "price_cache_manifest.json",
+        "data_provenance_report.json",
         "checksum_audit.json",
         "pit_coverage_audit.json",
         "data_gap_report.json",
@@ -1082,6 +1126,344 @@ def validate_data_audit_artifact(
         "schema_version": SCHEMA_VERSION,
         "report_type": "etf_dynamic_v3_data_audit_validation",
         "data_audit_id": data_audit_id,
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def data_provenance_inspect_price_cache(
+    *,
+    prices_path: Path = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Path = DEFAULT_RATES_CACHE_PATH,
+    manifest_path: Path | None = None,
+    output_dir: Path = DEFAULT_DATA_PROVENANCE_DIR,
+    write: bool = True,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    resolved_manifest = manifest_path or _download_manifest_path(prices_path)
+    payload = _price_cache_provenance_payload(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        manifest_path=resolved_manifest,
+        generated_at=generated,
+    )
+    if write:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        _write_json(output_dir / "price_cache_provenance_report.json", payload)
+        _write_text(
+            output_dir / "price_cache_provenance_report.md",
+            render_data_provenance_markdown(payload),
+        )
+        _update_latest_pointer(
+            "latest_data_provenance",
+            "price_cache_provenance",
+            output_dir / "price_cache_provenance_report.json",
+        )
+    return payload
+
+
+def data_provenance_repair_price_manifest(
+    *,
+    mode: str = "reconstruct-from-cache",
+    prices_path: Path = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Path = DEFAULT_RATES_CACHE_PATH,
+    manifest_path: Path | None = None,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    if mode != "reconstruct-from-cache":
+        raise DynamicV3ParameterResearchError(
+            "data provenance repair currently supports --mode reconstruct-from-cache"
+        )
+    generated = generated_at or datetime.now(UTC)
+    resolved_manifest = manifest_path or _download_manifest_path(prices_path)
+    files = [
+        _cache_file_inventory(prices_path, file_role="prices"),
+        _cache_file_inventory(rates_path, file_role="rates"),
+    ]
+    secondary = _marketstack_prices_path(prices_path)
+    if secondary.exists():
+        files.append(_cache_file_inventory(secondary, file_role="secondary_prices"))
+    if any(not row["exists"] for row in files):
+        missing = ", ".join(row["path"] for row in files if not row["exists"])
+        raise DynamicV3ParameterResearchError(
+            f"cannot reconstruct manifest; file missing: {missing}"
+        )
+    existing_rows = _download_manifest_records(resolved_manifest)
+    output_paths = {str(row["path"]) for row in files}
+    existing_rows = [
+        row for row in existing_rows if _text(row.get("output_path")) not in output_paths
+    ]
+    reconstructed_rows = [
+        _reconstructed_download_manifest_row(
+            summary=row,
+            generated_at=generated,
+        )
+        for row in files
+    ]
+    all_rows = [*existing_rows, *reconstructed_rows]
+    resolved_manifest.parent.mkdir(parents=True, exist_ok=True)
+    _write_csv(resolved_manifest, all_rows)
+    json_manifest = {
+        "schema_version": 1,
+        "source": "cache_rebuild_from_existing_file",
+        "provenance_status": DATA_PROVENANCE_RECONSTRUCTED,
+        "generated_at": generated.isoformat(),
+        "as_of": _text(files[0].get("end_date")),
+        "download_manifest_csv": str(resolved_manifest),
+        "files": files,
+        "limitations": ["original_download_event_not_available"],
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+    }
+    json_path = prices_path.parent / "download_manifests" / "prices_daily_download_manifest.json"
+    _write_json(json_path, json_manifest)
+    inspect = data_provenance_inspect_price_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        manifest_path=resolved_manifest,
+        write=False,
+        generated_at=generated,
+    )
+    payload = {
+        **inspect,
+        "repair_mode": mode,
+        "reconstructed_manifest_path": str(resolved_manifest),
+        "reconstructed_manifest_json_path": str(json_path),
+        "reconstructed_file_count": len(reconstructed_rows),
+        "provenance_status": DATA_PROVENANCE_RECONSTRUCTED,
+        "limitations": ["original_download_event_not_available"],
+    }
+    return payload
+
+
+def data_provenance_validate(
+    *,
+    prices_path: Path = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Path = DEFAULT_RATES_CACHE_PATH,
+    manifest_path: Path | None = None,
+) -> dict[str, Any]:
+    payload = data_provenance_inspect_price_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        manifest_path=manifest_path,
+        write=False,
+    )
+    checks = [
+        _check("prices_cache_exists", _mapping(payload.get("prices")).get("exists") is True, ""),
+        _check("rates_cache_exists", _mapping(payload.get("rates")).get("exists") is True, ""),
+        _check(
+            "download_manifest_exists",
+            _mapping(payload.get("download_manifest")).get("exists") is True,
+            _text(_mapping(payload.get("download_manifest")).get("path")),
+        ),
+        _check(
+            "prices_checksum_in_manifest",
+            payload.get("prices_checksum_in_manifest") is True,
+            _text(_mapping(payload.get("prices")).get("sha256")),
+        ),
+        _check(
+            "rates_checksum_in_manifest",
+            payload.get("rates_checksum_in_manifest") is True,
+            _text(_mapping(payload.get("rates")).get("sha256")),
+        ),
+    ]
+    status = "FAIL" if any(not check["passed"] for check in checks) else payload["status"]
+    return {
+        **payload,
+        "report_type": "etf_dynamic_v3_data_provenance_validation",
+        "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+    }
+
+
+def run_window_audit(
+    *,
+    as_of: date,
+    end: date,
+    artifact_root: Path = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT,
+    output_dir: Path = DEFAULT_WINDOW_AUDIT_DIR,
+    generated_at: datetime | None = None,
+) -> dict[str, Any]:
+    generated = generated_at or datetime.now(UTC)
+    audit_id = _stable_id("window-audit", as_of.isoformat(), end.isoformat(), generated.isoformat())
+    audit_dir = _unique_dir(output_dir / audit_id)
+    audit_dir.mkdir(parents=True, exist_ok=False)
+    records = _window_audit_inventory(
+        artifact_root=artifact_root,
+        requested_start=as_of,
+        requested_end=end,
+    )
+    mismatch = [
+        row for row in records if _texts(row.get("window_mismatch_reasons"))
+    ]
+    insufficient = [
+        row
+        for row in records
+        if row.get("date_range_status") in {DATE_RANGE_INSUFFICIENT_DATA, DATE_RANGE_FAIL}
+    ]
+    configured_start = _configured_ai_regime_start()
+    earliest_actual = _earliest_actual_evaluation_start(records)
+    blocking = [row for row in records if row.get("promotion_blocking") is True]
+    status = "PASS"
+    if any(row.get("date_range_status") == DATE_RANGE_FAIL for row in records):
+        status = "FAIL"
+    elif blocking:
+        status = DATE_RANGE_INCOMPLETE
+    elif any(row.get("date_range_status") == DATE_RANGE_PASS_WITH_WARNINGS for row in records):
+        status = DATE_RANGE_PASS_WITH_WARNINGS
+    manifest = {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_window_audit_manifest",
+        "window_audit_id": audit_id,
+        "status": status,
+        "configured_backtest_start": configured_start.isoformat(),
+        "requested_start": as_of.isoformat(),
+        "requested_end": end.isoformat(),
+        "earliest_actual_evaluation_start": earliest_actual,
+        "artifact_count": len(records),
+        "promotion_blocking_count": len(blocking),
+        "started_at": generated.isoformat(),
+        "completed_at": datetime.now(UTC).isoformat(),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+    }
+    report = {
+        **manifest,
+        "artifact_window_inventory_path": str(audit_dir / "artifact_window_inventory.jsonl"),
+        "window_mismatch_report_path": str(audit_dir / "window_mismatch_report.json"),
+        "insufficient_data_report_path": str(audit_dir / "insufficient_data_report.json"),
+        "window_mismatch_count": len(mismatch),
+        "insufficient_data_count": len(insufficient),
+        "backtest_window_incomplete_count": len(blocking),
+        "needs_full_window_rerun": bool(blocking),
+        "answers": {
+            "configured_backtest_start": configured_start.isoformat(),
+            "earliest_actual_evaluation_start": earliest_actual,
+            "covers_ai_regime_start": (
+                bool(earliest_actual)
+                and _date_from_any(earliest_actual) is not None
+                and _date_from_any(earliest_actual) <= configured_start
+            ),
+            "contains_2025_05_28_to_2026_05_28_artifact": any(
+                row.get("actual_evaluation_start") == "2025-05-28"
+                and row.get("actual_evaluation_end") == "2026-05-28"
+                for row in records
+            ),
+            "promotion_blocking": bool(blocking),
+        },
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+    _write_json(audit_dir / "window_audit_manifest.json", manifest)
+    _write_jsonl(audit_dir / "artifact_window_inventory.jsonl", records)
+    _write_json(audit_dir / "window_mismatch_report.json", {"artifacts": mismatch})
+    _write_json(audit_dir / "insufficient_data_report.json", {"artifacts": insufficient})
+    _write_text(audit_dir / "window_audit_report.md", render_window_audit_markdown(report))
+    _update_latest_pointer(
+        "latest_window_audit",
+        audit_id,
+        audit_dir / "window_audit_manifest.json",
+    )
+    return {"window_audit_id": audit_id, "window_audit_dir": audit_dir, "report": report}
+
+
+def window_audit_report_payload(
+    *,
+    audit_id: str | None = None,
+    latest: bool = False,
+    output_dir: Path = DEFAULT_WINDOW_AUDIT_DIR,
+) -> dict[str, Any]:
+    resolved_id = audit_id or (
+        _latest_pointer_artifact_id("latest_window_audit") if latest else ""
+    )
+    if not resolved_id:
+        raise DynamicV3ParameterResearchError("--audit-id or --latest is required")
+    audit_dir = output_dir / resolved_id
+    manifest = _read_json(audit_dir / "window_audit_manifest.json")
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_window_audit_report_view",
+        "window_audit_id": resolved_id,
+        "status": manifest.get("status", "UNKNOWN"),
+        "configured_backtest_start": manifest.get("configured_backtest_start"),
+        "earliest_actual_evaluation_start": manifest.get("earliest_actual_evaluation_start"),
+        "promotion_blocking_count": manifest.get("promotion_blocking_count"),
+        "report_path": str(audit_dir / "window_audit_report.md"),
+        "manifest": manifest,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def inspect_window_artifact(
+    *,
+    artifact_path: Path,
+    requested_start: date | None = None,
+    requested_end: date | None = None,
+) -> dict[str, Any]:
+    payload = _read_json(artifact_path)
+    record = _window_record_from_payload(
+        payload=payload,
+        artifact_path=artifact_path,
+        requested_start=requested_start,
+        requested_end=requested_end,
+    )
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_window_artifact_inspection",
+        "status": record["date_range_status"],
+        "record": record,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def validate_window_audit_artifact(
+    *,
+    audit_id: str,
+    output_dir: Path = DEFAULT_WINDOW_AUDIT_DIR,
+) -> dict[str, Any]:
+    audit_dir = output_dir / audit_id
+    required = [
+        "window_audit_manifest.json",
+        "artifact_window_inventory.jsonl",
+        "window_mismatch_report.json",
+        "insufficient_data_report.json",
+        "window_audit_report.md",
+    ]
+    checks = [
+        _check(f"artifact_exists:{name}", (audit_dir / name).exists(), name)
+        for name in required
+    ]
+    rows = (
+        _read_jsonl(audit_dir / "artifact_window_inventory.jsonl")
+        if (audit_dir / "artifact_window_inventory.jsonl").exists()
+        else []
+    )
+    required_fields = {
+        "configured_backtest_start",
+        "requested_start",
+        "requested_end",
+        "actual_evaluation_start",
+        "actual_evaluation_end",
+        "date_range_status",
+        "window_mismatch_reasons",
+    }
+    checks.append(
+        _check(
+            "inventory_required_window_fields",
+            all(required_fields <= set(row) for row in rows),
+            "inventory rows expose required window fields",
+        )
+    )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_window_audit_validation",
+        "window_audit_id": audit_id,
         "status": status,
         "checks": checks,
         "failed_check_count": sum(1 for check in checks if not check["passed"]),
@@ -1352,6 +1734,15 @@ def evaluate_sweep_candidate(
             real_context=real_context,
         )
         metrics = _metrics_from_real_evaluation_payload(real_payload, config)
+        backtest_window = _backtest_window_from_payload(real_payload)
+        weight_path_metadata = _read_optional_json(
+            Path(real_paths["json"]).parent / "weight_path_metadata.json"
+        ) or _missing_weight_path_metadata(
+            candidate_id=_text(candidate.get("candidate_id")),
+            evaluation_id=_text(real_payload.get("dynamic_v3_real_evaluation_report_id")),
+        )
+        metrics["date_range_status"] = backtest_window["date_range_status"]
+        metrics["weight_path_status"] = weight_path_metadata["attribution_completeness"]
         real_artifact_path = str(real_paths["json"])
         metrics_source = "real_evaluation_artifact"
         data_quality = _candidate_data_quality(
@@ -1362,6 +1753,17 @@ def evaluate_sweep_candidate(
         not_for_investment = False
     else:
         raise DynamicV3ParameterResearchError(f"unknown evaluator mode: {evaluator}")
+    if evaluator != EVALUATOR_REAL_DYNAMIC_V3_RESCUE:
+        backtest_window = _empty_backtest_window(
+            configured_start=config.data.as_of,
+            requested_start=config.data.as_of,
+            requested_end=config.data.end,
+            status=DATE_RANGE_PASS,
+        )
+        weight_path_metadata = _missing_weight_path_metadata(
+            candidate_id=_text(candidate.get("candidate_id")),
+            evaluation_id="",
+        )
     gate, reasons = gate_candidate(metrics, config)
     if (
         evaluator == EVALUATOR_REAL_DYNAMIC_V3_RESCUE
@@ -1387,6 +1789,8 @@ def evaluate_sweep_candidate(
         "metrics": metrics,
         "score": score,
         "score_breakdown": breakdown,
+        "backtest_window": backtest_window,
+        "weight_path_metadata": weight_path_metadata,
         "artifact_paths": [real_artifact_path] if real_artifact_path else [],
     }
 
@@ -1440,6 +1844,10 @@ def gate_candidate(
         review_reasons.append("robustness_review_required")
     if _text(metrics.get("overfit_status")) == "REVIEW_REQUIRED":
         review_reasons.append("overfit_review_required")
+    if _text(metrics.get("date_range_status")) in WINDOW_PROMOTION_BLOCKING_STATUSES:
+        review_reasons.append("BACKTEST_WINDOW_INCOMPLETE")
+    if _text(metrics.get("weight_path_status")) == WEIGHT_PATH_INCOMPLETE:
+        review_reasons.append("MISSING_DAILY_WEIGHT_PATH")
     if _text(metrics.get("stress_bucket_status")) == "MIXED":
         review_reasons.append("stress_bucket_mixed")
     if _text(metrics.get("parameter_sensitivity_status")) == "HIGH":
@@ -1739,9 +2147,14 @@ def candidate_report_payload(
         "metrics": result.get("metrics", {}),
         "score": result.get("score"),
         "score_breakdown": result.get("score_breakdown", {}),
+        "backtest_window": result.get("backtest_window", {}),
+        "weight_path_metadata": result.get("weight_path_metadata", {}),
         "artifact_links": {
             "sweep_manifest": str(sweep_dir / "sweep_manifest.json"),
             "leaderboard": str(sweep_dir / "leaderboard.json"),
+            "weight_path_metadata": _text(
+                _mapping(result.get("weight_path_metadata")).get("metadata_path")
+            ),
         },
         "recommendation": _candidate_recommendation(result),
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
@@ -1777,13 +2190,34 @@ def run_candidate_attribution(
     real_path_raw = _text(candidate_report.get("real_evaluation_artifact_path"))
     real_path = Path(real_path_raw) if real_path_raw else None
     real_payload = _read_optional_json(real_path) if real_path is not None else None
+    weight_metadata_path = (
+        real_path.parent / "weight_path_metadata.json"
+        if real_path is not None
+        else None
+    )
+    weight_metadata = (
+        _read_optional_json(weight_metadata_path) if weight_metadata_path is not None else None
+    )
     metrics = _mapping(candidate_report.get("metrics"))
     weight_delta = _candidate_weight_delta_rows(real_payload)
     incomplete_reasons = []
     if real_payload is None:
         incomplete_reasons.append("missing_real_evaluation_artifact")
-    if not _records(_mapping(real_payload).get("comparison_daily_paths")):
-        incomplete_reasons.append("daily_weight_path_artifact_not_available")
+    if not weight_metadata or not weight_metadata.get("has_daily_weights"):
+        incomplete_reasons.append("MISSING_DAILY_WEIGHT_PATH")
+    attribution_completeness = _text(
+        _mapping(weight_metadata).get("attribution_completeness"),
+        WEIGHT_PATH_INCOMPLETE if incomplete_reasons else WEIGHT_PATH_PARTIAL,
+    )
+    if incomplete_reasons:
+        status = WEIGHT_PATH_INCOMPLETE
+        explainability_status = WEIGHT_PATH_INCOMPLETE
+    elif attribution_completeness == WEIGHT_PATH_COMPLETE:
+        status = WEIGHT_PATH_COMPLETE
+        explainability_status = WEIGHT_PATH_COMPLETE
+    else:
+        status = WEIGHT_PATH_PARTIAL
+        explainability_status = WEIGHT_PATH_PARTIAL
     rebalance = _rebalance_event_attribution(real_payload, metrics, incomplete_reasons)
     constraint = _constraint_event_attribution(real_payload, metrics)
     drawdown = _drawdown_window_attribution(real_payload, metrics)
@@ -1794,11 +2228,15 @@ def run_candidate_attribution(
         "report_type": "etf_dynamic_v3_candidate_attribution_manifest",
         "candidate_id": candidate_id,
         "source_sweep_id": sweep_id,
-        "status": "INCOMPLETE" if incomplete_reasons else "PASS",
+        "status": status,
         "generated_at": generated.isoformat(),
         "completed_at": datetime.now(UTC).isoformat(),
         "incomplete_reasons": incomplete_reasons,
         "real_evaluation_artifact_path": "" if real_path is None else str(real_path),
+        "weight_path_metadata_path": ""
+        if weight_metadata_path is None
+        else str(weight_metadata_path),
+        "attribution_completeness": attribution_completeness,
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
     }
     report = {
@@ -1807,7 +2245,9 @@ def run_candidate_attribution(
         "candidate_id": candidate_id,
         "source_sweep_id": sweep_id,
         "status": manifest["status"],
-        "explainability_status": "INCOMPLETE" if incomplete_reasons else "EXPLAINABLE",
+        "explainability_status": explainability_status,
+        "attribution_completeness": attribution_completeness,
+        "weight_path_metadata": weight_metadata or {},
         "incomplete_reasons": incomplete_reasons,
         "weight_path_delta": weight_delta,
         "rebalance_event_attribution": rebalance,
@@ -1818,6 +2258,7 @@ def run_candidate_attribution(
         "candidate_report_path": str(
             sweep_output_dir / sweep_id / "candidates" / candidate_id / "candidate_report.json"
         ),
+        "weight_path_metadata_path": manifest["weight_path_metadata_path"],
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
         **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
     }
@@ -1875,8 +2316,9 @@ def validate_candidate_attribution_artifact(
     checks.append(
         _check(
             "no_fabricated_weight_path",
-            _text(manifest.get("status")) in {"PASS", "INCOMPLETE"},
-            "missing path evidence must be INCOMPLETE",
+            _text(manifest.get("status"))
+            in {WEIGHT_PATH_COMPLETE, WEIGHT_PATH_PARTIAL, WEIGHT_PATH_INCOMPLETE},
+            "missing path evidence must be explicit",
         )
     )
     status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
@@ -1885,6 +2327,95 @@ def validate_candidate_attribution_artifact(
         "report_type": "etf_dynamic_v3_candidate_attribution_validation",
         "candidate_id": candidate_id,
         "status": status,
+        "checks": checks,
+        "failed_check_count": sum(1 for check in checks if not check["passed"]),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def weight_path_report_payload(
+    *,
+    evaluation_id: str,
+    search_root: Path = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT,
+) -> dict[str, Any]:
+    weight_dir = _find_weight_path_dir(evaluation_id, search_root)
+    if weight_dir is None:
+        raise DynamicV3ParameterResearchError(f"weight path artifact not found: {evaluation_id}")
+    metadata = _read_json(weight_dir / "weight_path_metadata.json")
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_weight_path_report_view",
+        "status": metadata.get("attribution_completeness", WEIGHT_PATH_INCOMPLETE),
+        "evaluation_id": evaluation_id,
+        "candidate_id": metadata.get("candidate_id"),
+        "daily_weights_path": str(weight_dir / "daily_weights.csv"),
+        "weight_path_metadata_path": str(weight_dir / "weight_path_metadata.json"),
+        "metadata": metadata,
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def validate_weight_path_artifact(
+    *,
+    evaluation_id: str,
+    search_root: Path = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT,
+) -> dict[str, Any]:
+    weight_dir = _find_weight_path_dir(evaluation_id, search_root)
+    checks = [
+        _check("weight_path_dir_found", weight_dir is not None, evaluation_id),
+    ]
+    metadata: dict[str, Any] = {}
+    if weight_dir is not None:
+        required = [
+            "daily_weights.csv",
+            "rebalance_events.json",
+            "constraint_events.json",
+            "rescue_events.json",
+            "turnover_by_rebalance.csv",
+            "weight_path_metadata.json",
+        ]
+        checks.extend(
+            _check(f"artifact_exists:{name}", (weight_dir / name).exists(), name)
+            for name in required
+        )
+        metadata = _read_optional_json(weight_dir / "weight_path_metadata.json") or {}
+        daily_columns = _csv_columns(weight_dir / "daily_weights.csv")
+        required_columns = {"date", "symbol", "weight", "candidate_id"}
+        checks.append(
+            _check(
+                "daily_weights_required_columns",
+                required_columns <= set(daily_columns),
+                ",".join(daily_columns),
+            )
+        )
+        checks.append(
+            _check(
+                "attribution_completeness_explicit",
+                _text(metadata.get("attribution_completeness"))
+                in {WEIGHT_PATH_COMPLETE, WEIGHT_PATH_PARTIAL, WEIGHT_PATH_INCOMPLETE},
+                _text(metadata.get("attribution_completeness")),
+            )
+        )
+        checks.append(
+            _check(
+                "daily_weight_count_positive",
+                int(metadata.get("daily_weight_count") or 0) > 0,
+                str(metadata.get("daily_weight_count")),
+            )
+        )
+    status = "PASS" if all(check["passed"] for check in checks) else "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_weight_path_validation",
+        "evaluation_id": evaluation_id,
+        "candidate_id": metadata.get("candidate_id", ""),
+        "status": status,
+        "attribution_completeness": metadata.get(
+            "attribution_completeness", WEIGHT_PATH_INCOMPLETE
+        ),
+        "missing_fields": metadata.get("missing_fields", []),
         "checks": checks,
         "failed_check_count": sum(1 for check in checks if not check["passed"]),
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
@@ -3095,6 +3626,8 @@ def build_promotion_pack(
     walk_forward_dir: Path = DEFAULT_WALK_FORWARD_DIR,
     robustness_dir: Path = DEFAULT_ROBUSTNESS_DIR,
     overfit_dir: Path = DEFAULT_OVERFIT_DIR,
+    candidate_attribution_dir: Path = DEFAULT_CANDIDATE_ATTRIBUTION_DIR,
+    data_provenance_dir: Path = DEFAULT_DATA_PROVENANCE_DIR,
     output_dir: Path = DEFAULT_PROMOTION_DIR,
     generated_at: datetime | None = None,
 ) -> dict[str, Any]:
@@ -3106,6 +3639,8 @@ def build_promotion_pack(
         walk_forward_dir=walk_forward_dir,
         robustness_dir=robustness_dir,
         overfit_dir=overfit_dir,
+        candidate_attribution_dir=candidate_attribution_dir,
+        data_provenance_dir=data_provenance_dir,
     )
     status, reasons = _promotion_status(evidence)
     candidate = _mapping(evidence.get("candidate_report"))
@@ -3146,6 +3681,7 @@ def build_promotion_pack(
         ),
         "metric_delta_table": metric_delta,
         "risk_summary": risk_summary,
+        "evidence_summary": _promotion_evidence_summary(evidence),
         "linked_artifacts": linked,
         "reader_brief_section": reader_brief,
         "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
@@ -3155,6 +3691,7 @@ def build_promotion_pack(
     _write_text(pack_dir / "promotion_decision.md", render_promotion_decision_markdown(payload))
     _write_csv(pack_dir / "metric_delta_table.csv", metric_delta)
     _write_json(pack_dir / "risk_summary.json", risk_summary)
+    _write_json(pack_dir / "evidence_summary.json", payload["evidence_summary"])
     _write_json(pack_dir / "linked_artifacts.json", linked)
     _write_text(pack_dir / "reader_brief_section.md", reader_brief)
     _update_latest_pointer(
@@ -3205,6 +3742,7 @@ def validate_promotion_pack(
             "promotion_decision.md",
             "metric_delta_table.csv",
             "risk_summary.json",
+            "evidence_summary.json",
             "linked_artifacts.json",
             "reader_brief_section.md",
         ]
@@ -3212,6 +3750,8 @@ def validate_promotion_pack(
             _check(f"artifact_exists:{name}", (latest / name).exists(), name) for name in required
         )
         manifest = _read_json(latest / "promotion_manifest.json")
+        evidence_summary = _read_optional_json(latest / "evidence_summary.json") or {}
+        pack_status = _text(manifest.get("status"))
         checks.append(
             _check(
                 "production_candidate_not_generated",
@@ -3219,6 +3759,15 @@ def validate_promotion_pack(
                 "production_candidate is manual-only",
             )
         )
+        flags = _texts(evidence_summary.get("promotion_blocking_flags"))
+        if flags:
+            checks.append(
+                _check(
+                    "evidence_blocking_flags_do_not_promote",
+                    pack_status != GATE_PROMOTE_CANDIDATE,
+                    ",".join(flags),
+                )
+            )
         if _text(manifest.get("evaluator_mode")) == EVALUATOR_TINY_FIXTURE_PROXY:
             checks.append(
                 _check(
@@ -3315,6 +3864,10 @@ def render_candidate_report_markdown(payload: Mapping[str, Any]) -> str:
         f"- Gate: {payload.get('hard_gate_status')}",
         f"- Score: {payload.get('score')}",
         f"- Recommendation: {payload.get('recommendation')}",
+        "- Backtest window status: "
+        f"{_mapping(payload.get('backtest_window')).get('date_range_status')}",
+        "- Weight path status: "
+        f"{_mapping(payload.get('weight_path_metadata')).get('attribution_completeness')}",
         "",
         "## Gate Reasons",
     ]
@@ -3394,6 +3947,7 @@ def render_shadow_report_markdown(payload: Mapping[str, Any]) -> str:
 
 def render_promotion_decision_markdown(payload: Mapping[str, Any]) -> str:
     risk = _mapping(payload.get("risk_summary"))
+    evidence = _mapping(payload.get("evidence_summary"))
     questions = [
         ("What problem does this candidate solve?", risk.get("problem_solved", "UNKNOWN")),
         ("Does it improve v0.4?", risk.get("improves_v0_4", "UNKNOWN")),
@@ -3422,6 +3976,20 @@ def render_promotion_decision_markdown(payload: Mapping[str, Any]) -> str:
     lines.extend(
         f"{idx}. {question}: {answer}" for idx, (question, answer) in enumerate(questions, start=1)
     )
+    lines.extend(
+        [
+            "",
+            "## Evidence Gates",
+            f"- data_quality: {evidence.get('data_quality')}",
+            f"- provenance_status: {evidence.get('provenance_status')}",
+            f"- backtest_window_status: {evidence.get('backtest_window_status')}",
+            f"- weight_path_status: {evidence.get('weight_path_status')}",
+            f"- candidate_attribution_status: {evidence.get('candidate_attribution_status')}",
+            f"- overfit_status: {evidence.get('overfit_status')}",
+            "- promotion_blocking_flags: "
+            f"{', '.join(_texts(evidence.get('promotion_blocking_flags')))}",
+        ]
+    )
     lines.extend(["", "## Decision Reasons"])
     lines.extend(f"- {reason}" for reason in _texts(payload.get("decision_reasons")))
     return "\n".join(lines) + "\n"
@@ -3443,6 +4011,7 @@ def render_promotion_reader_brief_section(
 def render_data_audit_markdown(payload: Mapping[str, Any]) -> str:
     checksum = _mapping(payload.get("checksum_audit"))
     coverage = _mapping(payload.get("pit_coverage_audit"))
+    provenance = _mapping(payload.get("data_provenance"))
     lines = [
         f"# Dynamic v3 Rescue Data Audit {payload.get('data_audit_id')}",
         "",
@@ -3451,6 +4020,9 @@ def render_data_audit_markdown(payload: Mapping[str, Any]) -> str:
         "- Market regime: ai_after_chatgpt",
         f"- Requested range: {coverage.get('requested_as_of')} to {coverage.get('requested_end')}",
         f"- prices_download_manifest_checksum_missing: {checksum.get('prices_checksum_missing')}",
+        f"- Price cache sha256: {_mapping(provenance.get('prices')).get('sha256')}",
+        f"- Download manifest status: {payload.get('download_manifest_status')}",
+        f"- Provenance status: {payload.get('provenance_status')}",
         f"- Validate-data report: {payload.get('validate_data_report')}",
         "",
         "## Issues",
@@ -3458,6 +4030,70 @@ def render_data_audit_markdown(payload: Mapping[str, Any]) -> str:
     for issue in _records(payload.get("issues")):
         lines.append(f"- {issue.get('severity')} {issue.get('code')}: {issue.get('message')}")
     lines.extend(["", "## Safety", "- production_candidate_generated=false"])
+    return "\n".join(lines) + "\n"
+
+
+def render_data_provenance_markdown(payload: Mapping[str, Any]) -> str:
+    prices = _mapping(payload.get("prices"))
+    rates = _mapping(payload.get("rates"))
+    manifest = _mapping(payload.get("download_manifest"))
+    lines = [
+        "# Dynamic v3 Rescue Data Provenance",
+        "",
+        f"- Status: {payload.get('status')}",
+        f"- Prices path: {prices.get('path')}",
+        f"- Prices sha256: {prices.get('sha256')}",
+        f"- Prices rows: {prices.get('rows')}",
+        f"- Prices range: {prices.get('start_date')} to {prices.get('end_date')}",
+        f"- Rates path: {rates.get('path')}",
+        f"- Rates sha256: {rates.get('sha256')}",
+        f"- Download manifest: {manifest.get('path')}",
+        f"- Download manifest status: {payload.get('download_manifest_status')}",
+        f"- Provenance status: {payload.get('provenance_status')}",
+        f"- prices_checksum_in_manifest: {payload.get('prices_checksum_in_manifest')}",
+        f"- rates_checksum_in_manifest: {payload.get('rates_checksum_in_manifest')}",
+        "",
+        "## Warnings",
+    ]
+    warnings = _texts(payload.get("warnings"))
+    if warnings:
+        lines.extend(f"- {warning}" for warning in warnings)
+    else:
+        lines.append("- none")
+    lines.extend(["", "## Safety", "- production_candidate_generated=false"])
+    return "\n".join(lines) + "\n"
+
+
+def render_window_audit_markdown(payload: Mapping[str, Any]) -> str:
+    answers = _mapping(payload.get("answers"))
+    lines = [
+        f"# Dynamic v3 Rescue Window Audit {payload.get('window_audit_id')}",
+        "",
+        f"- Status: {payload.get('status')}",
+        "- Market regime: ai_after_chatgpt",
+        f"- configured_backtest_start: {payload.get('configured_backtest_start')}",
+        f"- requested_start: {payload.get('requested_start')}",
+        f"- requested_end: {payload.get('requested_end')}",
+        f"- earliest_actual_evaluation_start: {payload.get('earliest_actual_evaluation_start')}",
+        f"- promotion_blocking_count: {payload.get('promotion_blocking_count')}",
+        f"- needs_full_window_rerun: {payload.get('needs_full_window_rerun')}",
+        "",
+        "## Required Questions",
+        f"- 当前 configured_backtest_start: {answers.get('configured_backtest_start')}",
+        f"- 当前最早 actual_evaluation_start: {answers.get('earliest_actual_evaluation_start')}",
+        f"- 是否覆盖 2022-12-01: {answers.get('covers_ai_regime_start')}",
+        "- 是否存在 2025-05-28 to 2026-05-28 artifact: "
+        f"{answers.get('contains_2025_05_28_to_2026_05_28_artifact')}",
+        f"- 窗口问题是否阻断 promotion: {answers.get('promotion_blocking')}",
+        "",
+        "## Artifact Paths",
+        f"- Inventory: {payload.get('artifact_window_inventory_path')}",
+        f"- Mismatch report: {payload.get('window_mismatch_report_path')}",
+        f"- Insufficient data report: {payload.get('insufficient_data_report_path')}",
+        "",
+        "## Safety",
+        "- production_candidate_generated=false",
+    ]
     return "\n".join(lines) + "\n"
 
 
@@ -3733,9 +4369,18 @@ def _write_real_candidate_evaluation_artifact(
         "metrics_source": "real_evaluation_artifact",
         "not_for_investment_decision": False,
     }
+    payload["backtest_window"] = _backtest_window_from_payload(payload)
     output_dir = real_context.real_evaluation_output_dir / candidate_id
     paths = write_dynamic_v3_real_evaluation_report(payload, output_dir=output_dir)
     readback = _read_json(paths["json"])
+    weight_paths = _export_weight_path_artifacts(
+        payload=readback,
+        output_dir=output_dir,
+        candidate_id=candidate_id,
+        evaluation_id=report_id,
+    )
+    readback["weight_path_artifacts"] = {key: str(path) for key, path in weight_paths.items()}
+    _write_json(paths["json"], readback)
     return readback, paths
 
 
@@ -4112,6 +4757,12 @@ def _sweep_manifest(
                 if config.execution.evaluator == EVALUATOR_TINY_FIXTURE_PROXY
                 else "validate_data_cache"
             ),
+        ),
+        "backtest_window": _aggregate_candidate_backtest_windows(
+            results,
+            configured_start=config.data.as_of,
+            requested_start=config.data.as_of,
+            requested_end=config.data.end,
         ),
         "candidate_count": len(results) + len(errors),
         "completed_count": len(results),
@@ -4615,6 +5266,8 @@ def _promotion_evidence(
     walk_forward_dir: Path,
     robustness_dir: Path,
     overfit_dir: Path,
+    candidate_attribution_dir: Path,
+    data_provenance_dir: Path,
 ) -> dict[str, Any]:
     registry = load_shadow_registry(registry_path)
     record = next(
@@ -4636,12 +5289,22 @@ def _promotion_evidence(
     wf_report = walk_forward_dir / wf_id / "wf_report.md" if wf_id else None
     rob_report = robustness_dir / rob_id / "robustness_report.md" if rob_id else None
     overfit_manifest_path = _latest_overfit_manifest_for_candidate(candidate_id, overfit_dir)
+    candidate_report_payload = (
+        _read_optional_json(candidate_report_path) if candidate_report_path else None
+    )
+    real_eval_path_raw = _text(
+        _mapping(candidate_report_payload).get("real_evaluation_artifact_path")
+    )
+    real_eval_path = Path(real_eval_path_raw) if real_eval_path_raw else None
+    weight_metadata_path = (
+        real_eval_path.parent / "weight_path_metadata.json" if real_eval_path is not None else None
+    )
+    attribution_path = candidate_attribution_dir / candidate_id / "attribution_manifest.json"
+    data_provenance_path = data_provenance_dir / "price_cache_provenance_report.json"
     shadow = _shadow_candidate_report(record) if record else None
     return {
         "registry_record": record,
-        "candidate_report": (
-            _read_optional_json(candidate_report_path) if candidate_report_path else None
-        ),
+        "candidate_report": candidate_report_payload,
         "candidate_report_path": (
             "" if candidate_report_path is None else str(candidate_report_path)
         ),
@@ -4671,6 +5334,14 @@ def _promotion_evidence(
             if overfit_manifest_path is None
             else str(overfit_manifest_path.parent / "overfit_report.md")
         ),
+        "weight_path_metadata": _read_optional_json(weight_metadata_path),
+        "weight_path_metadata_path": (
+            "" if weight_metadata_path is None else str(weight_metadata_path)
+        ),
+        "candidate_attribution": _read_optional_json(attribution_path),
+        "candidate_attribution_path": str(attribution_path),
+        "data_provenance": _read_optional_json(data_provenance_path),
+        "data_provenance_path": str(data_provenance_path),
         "shadow_report": shadow,
     }
 
@@ -4694,6 +5365,28 @@ def _promotion_status(evidence: Mapping[str, Any]) -> tuple[str, list[str]]:
         EVALUATOR_TINY_FIXTURE_PROXY
     ):
         return "review_required", ["tiny_fixture_not_for_investment_decision"]
+    backtest_window = _mapping(candidate.get("backtest_window"))
+    if _text(backtest_window.get("date_range_status")) in WINDOW_PROMOTION_BLOCKING_STATUSES:
+        return "review_required", ["BACKTEST_WINDOW_INCOMPLETE"]
+    weight_metadata = _mapping(evidence.get("weight_path_metadata"))
+    if _text(weight_metadata.get("attribution_completeness")) == WEIGHT_PATH_INCOMPLETE:
+        return "review_required", ["MISSING_DAILY_WEIGHT_PATH"]
+    if not weight_metadata:
+        return "review_required", ["MISSING_DAILY_WEIGHT_PATH"]
+    if _text(weight_metadata.get("attribution_completeness")) == WEIGHT_PATH_PARTIAL:
+        return "review_required", ["WEIGHT_PATH_PARTIAL"]
+    attribution = _mapping(evidence.get("candidate_attribution"))
+    if not attribution:
+        return "review_required", ["ATTRIBUTION_INCOMPLETE"]
+    if _text(attribution.get("status")) != WEIGHT_PATH_COMPLETE:
+        return "review_required", ["ATTRIBUTION_INCOMPLETE"]
+    data_provenance = _mapping(evidence.get("data_provenance"))
+    if not data_provenance:
+        return "review_required", ["DATA_PROVENANCE_INCOMPLETE"]
+    if _text(data_provenance.get("status")) == "FAIL":
+        return "review_required", ["DATA_PROVENANCE_INCOMPLETE"]
+    if _text(data_provenance.get("provenance_status")) == DATA_PROVENANCE_RECONSTRUCTED:
+        return "review_required", ["DATA_PROVENANCE_INCOMPLETE", "provenance_reconstructed"]
     wf_candidates = _records(_mapping(evidence.get("walk_forward_leaderboard")).get("candidates"))
     wf_row = next(
         (row for row in wf_candidates if row.get("candidate_id") == candidate.get("candidate_id")),
@@ -4715,7 +5408,7 @@ def _promotion_status(evidence: Mapping[str, Any]) -> tuple[str, list[str]]:
     if _text(overfit.get("robustness_status")) != "PASS":
         return "review_required", ["robustness_review_required"]
     if _text(overfit_manifest.get("overfit_status")) == "REVIEW_REQUIRED":
-        return "review_required", ["overfit_review_required"]
+        return "review_required", ["OVERFIT_REVIEW_REQUIRED"]
     return "promote_candidate", ["all_automatic_checks_passed_manual_review_required"]
 
 
@@ -4776,6 +5469,58 @@ def _promotion_risk_summary(
     }
 
 
+def _promotion_evidence_summary(evidence: Mapping[str, Any]) -> dict[str, Any]:
+    candidate = _mapping(evidence.get("candidate_report"))
+    data_provenance = _mapping(evidence.get("data_provenance"))
+    weight_path = _mapping(evidence.get("weight_path_metadata"))
+    attribution = _mapping(evidence.get("candidate_attribution"))
+    window = _mapping(candidate.get("backtest_window"))
+    overfit = _mapping(evidence.get("overfit_manifest"))
+    return {
+        "data_quality": _mapping(candidate.get("data_quality")).get("status", "MISSING"),
+        "price_cache_sha256": _mapping(data_provenance.get("prices")).get("sha256", ""),
+        "download_manifest_status": data_provenance.get("download_manifest_status", "MISSING"),
+        "provenance_status": data_provenance.get("provenance_status", "MISSING"),
+        "data_provenance_warnings": data_provenance.get("warnings", []),
+        "backtest_window_status": window.get("date_range_status", "MISSING"),
+        "backtest_window": window,
+        "weight_path_status": weight_path.get("attribution_completeness", "MISSING"),
+        "weight_path_metadata_path": evidence.get("weight_path_metadata_path", ""),
+        "candidate_attribution_status": attribution.get("status", "MISSING"),
+        "candidate_attribution_path": evidence.get("candidate_attribution_path", ""),
+        "overfit_status": overfit.get("overfit_status", "MISSING"),
+        "promotion_blocking_flags": _promotion_blocking_flags(evidence),
+    }
+
+
+def _promotion_blocking_flags(evidence: Mapping[str, Any]) -> list[str]:
+    flags: list[str] = []
+    candidate = _mapping(evidence.get("candidate_report"))
+    window = _mapping(candidate.get("backtest_window"))
+    if _text(window.get("date_range_status")) in WINDOW_PROMOTION_BLOCKING_STATUSES:
+        flags.append("BACKTEST_WINDOW_INCOMPLETE")
+    weight_path = _mapping(evidence.get("weight_path_metadata"))
+    if (
+        not weight_path
+        or _text(weight_path.get("attribution_completeness")) == WEIGHT_PATH_INCOMPLETE
+    ):
+        flags.append("MISSING_DAILY_WEIGHT_PATH")
+    elif _text(weight_path.get("attribution_completeness")) == WEIGHT_PATH_PARTIAL:
+        flags.append("WEIGHT_PATH_PARTIAL")
+    attribution = _mapping(evidence.get("candidate_attribution"))
+    if not attribution or _text(attribution.get("status")) != WEIGHT_PATH_COMPLETE:
+        flags.append("ATTRIBUTION_INCOMPLETE")
+    data = _mapping(evidence.get("data_provenance"))
+    if not data or _text(data.get("status")) == "FAIL":
+        flags.append("DATA_PROVENANCE_INCOMPLETE")
+    elif _text(data.get("provenance_status")) == DATA_PROVENANCE_RECONSTRUCTED:
+        flags.append("DATA_PROVENANCE_INCOMPLETE")
+    overfit = _mapping(evidence.get("overfit_manifest"))
+    if _text(overfit.get("overfit_status")) == "REVIEW_REQUIRED":
+        flags.append("OVERFIT_REVIEW_REQUIRED")
+    return flags
+
+
 def _promotion_linked_artifacts(evidence: Mapping[str, Any]) -> dict[str, Any]:
     candidate = _mapping(evidence.get("candidate_report"))
     return {
@@ -4784,7 +5529,768 @@ def _promotion_linked_artifacts(evidence: Mapping[str, Any]) -> dict[str, Any]:
         "robustness_report": evidence.get("robustness_report_path"),
         "overfit_report": evidence.get("overfit_report_path"),
         "real_evaluation_artifact": candidate.get("real_evaluation_artifact_path", ""),
+        "weight_path_metadata": evidence.get("weight_path_metadata_path", ""),
+        "candidate_attribution": evidence.get("candidate_attribution_path", ""),
+        "data_provenance": evidence.get("data_provenance_path", ""),
     }
+
+
+def _price_cache_provenance_payload(
+    *,
+    prices_path: Path,
+    rates_path: Path,
+    manifest_path: Path,
+    generated_at: datetime,
+) -> dict[str, Any]:
+    prices = _cache_file_inventory(prices_path, file_role="prices")
+    rates = _cache_file_inventory(rates_path, file_role="rates")
+    manifest_records = _download_manifest_records(manifest_path)
+    manifest_exists = manifest_path.exists()
+    manifest_reconstructed = _download_manifest_reconstructed(manifest_records)
+    prices_match = _download_manifest_has_checksum(manifest_records, _text(prices.get("sha256")))
+    rates_match = _download_manifest_has_checksum(manifest_records, _text(rates.get("sha256")))
+    warnings: list[str] = []
+    if manifest_reconstructed:
+        warnings.append("download_manifest_provenance_reconstructed")
+    if not prices_match:
+        warnings.append("prices_download_manifest_checksum_missing")
+    if not rates_match:
+        warnings.append("rates_download_manifest_checksum_missing")
+    status = "PASS"
+    if not manifest_exists or not prices_match or not rates_match:
+        status = "PASS_WITH_WARNINGS"
+    if manifest_exists and manifest_records and manifest_reconstructed:
+        status = "PASS_WITH_WARNINGS"
+    if not prices["exists"] or not rates["exists"]:
+        status = "FAIL"
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "report_type": "etf_dynamic_v3_data_provenance_report",
+        "status": status,
+        "generated_at": generated_at.isoformat(),
+        "prices": prices,
+        "rates": rates,
+        "download_manifest": {
+            "path": str(manifest_path),
+            "exists": manifest_exists,
+            "status": "AVAILABLE" if manifest_exists else "MISSING",
+            "row_count": len(manifest_records),
+            "sha256": _file_sha256_path(manifest_path) if manifest_exists else "",
+        },
+        "prices_checksum_in_manifest": prices_match,
+        "rates_checksum_in_manifest": rates_match,
+        "download_manifest_status": "AVAILABLE" if manifest_exists else "MISSING",
+        "provenance_status": (
+            DATA_PROVENANCE_RECONSTRUCTED if manifest_reconstructed else "ORIGINAL_OR_VENDOR"
+        ),
+        "warnings": warnings,
+        "limitations": (
+            ["original_download_event_not_available"] if manifest_reconstructed else []
+        ),
+        "safety": dict(DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY),
+        **DYNAMIC_V3_PARAMETER_RESEARCH_SAFETY,
+    }
+
+
+def _cache_file_inventory(path: Path, *, file_role: str) -> dict[str, Any]:
+    summary: dict[str, Any] = {
+        "role": file_role,
+        "path": str(path),
+        "exists": path.exists(),
+        "sha256": _file_sha256_path(path) if path.exists() else "",
+        "rows": 0,
+        "symbols": [],
+        "start_date": "",
+        "end_date": "",
+    }
+    if not path.exists():
+        return summary
+    try:
+        frame = pd.read_csv(path)
+    except Exception:  # noqa: BLE001
+        return summary
+    summary["rows"] = int(len(frame))
+    date_column = "date" if "date" in frame else ""
+    symbol_column = (
+        "ticker"
+        if "ticker" in frame
+        else "symbol"
+        if "symbol" in frame
+        else "series"
+        if "series" in frame
+        else ""
+    )
+    if symbol_column:
+        summary["symbols"] = sorted(str(value) for value in frame[symbol_column].dropna().unique())
+    if date_column:
+        dates = pd.to_datetime(frame[date_column], errors="coerce").dropna()
+        if not dates.empty:
+            summary["start_date"] = dates.min().date().isoformat()
+            summary["end_date"] = dates.max().date().isoformat()
+    return summary
+
+
+def _download_manifest_records(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    try:
+        frame = pd.read_csv(path)
+    except Exception:  # noqa: BLE001
+        return []
+    return frame.fillna("").to_dict(orient="records")
+
+
+def _reconstructed_download_manifest_row(
+    *,
+    summary: Mapping[str, Any],
+    generated_at: datetime,
+) -> dict[str, Any]:
+    request_parameters = {
+        "mode": "reconstruct_from_existing_cache",
+        "file_role": summary.get("role"),
+        "provenance_status": DATA_PROVENANCE_RECONSTRUCTED,
+        "original_download_event_available": False,
+        "limitations": ["original_download_event_not_available"],
+    }
+    return {
+        "downloaded_at": generated_at.isoformat(),
+        "source_id": f"reconstructed_{summary.get('role')}",
+        "provider": "cache_rebuild_from_existing_file",
+        "endpoint": "local_cache_file",
+        "request_parameters": json.dumps(request_parameters, sort_keys=True),
+        "output_path": summary.get("path"),
+        "row_count": summary.get("rows", 0),
+        "checksum_sha256": summary.get("sha256", ""),
+    }
+
+
+def _download_manifest_has_checksum(records: Sequence[Mapping[str, Any]], checksum: str) -> bool:
+    if not checksum:
+        return False
+    return any(_text(row.get("checksum_sha256")) == checksum for row in records)
+
+
+def _download_manifest_reconstructed(records: Sequence[Mapping[str, Any]]) -> bool:
+    for row in records:
+        if _text(row.get("provider")) == "cache_rebuild_from_existing_file":
+            return True
+        params = _json_mapping(row.get("request_parameters"))
+        if params.get("provenance_status") == DATA_PROVENANCE_RECONSTRUCTED:
+            return True
+    return False
+
+
+def _export_weight_path_artifacts(
+    *,
+    payload: Mapping[str, Any],
+    output_dir: Path,
+    candidate_id: str,
+    evaluation_id: str,
+) -> dict[str, Path]:
+    daily_paths = _mapping(payload.get("comparison_daily_paths"))
+    dynamic_rows = _records(daily_paths.get("dynamic_candidate"))
+    daily_weight_rows = _daily_weight_rows(dynamic_rows, candidate_id=candidate_id)
+    rebalance_events = _rebalance_events(dynamic_rows, candidate_id=candidate_id)
+    constraint_events = _constraint_events(dynamic_rows, candidate_id=candidate_id)
+    rescue_events = _rescue_events(dynamic_rows, candidate_id=candidate_id)
+    turnover_rows = _turnover_rows(dynamic_rows, candidate_id=candidate_id)
+    missing_fields = [
+        "pre_constraint_weight",
+        "post_rescue_weight",
+        "constraint_limit",
+    ]
+    metadata = {
+        "candidate_id": candidate_id,
+        "evaluation_id": evaluation_id,
+        "weight_path_start": daily_weight_rows[0]["date"] if daily_weight_rows else "",
+        "weight_path_end": daily_weight_rows[-1]["date"] if daily_weight_rows else "",
+        "daily_weight_count": len(daily_weight_rows),
+        "symbol_count": len({row["symbol"] for row in daily_weight_rows}),
+        "has_daily_weights": bool(daily_weight_rows),
+        "has_rebalance_events": True,
+        "has_constraint_events": True,
+        "has_rescue_events": True,
+        "has_turnover_by_rebalance": True,
+        "weight_path_detail_level": "minimal" if daily_weight_rows else "missing",
+        "attribution_completeness": (
+            WEIGHT_PATH_PARTIAL if daily_weight_rows else WEIGHT_PATH_INCOMPLETE
+        ),
+        "missing_fields": missing_fields if daily_weight_rows else ["daily_weights"],
+        "metadata_path": str(output_dir / "weight_path_metadata.json"),
+    }
+    _write_csv(output_dir / "daily_weights.csv", daily_weight_rows)
+    _write_json(output_dir / "rebalance_events.json", {"events": rebalance_events})
+    _write_json(output_dir / "constraint_events.json", {"events": constraint_events})
+    _write_json(output_dir / "rescue_events.json", {"events": rescue_events})
+    _write_csv(output_dir / "turnover_by_rebalance.csv", turnover_rows)
+    _write_json(output_dir / "weight_path_metadata.json", metadata)
+    return {
+        "daily_weights": output_dir / "daily_weights.csv",
+        "rebalance_events": output_dir / "rebalance_events.json",
+        "constraint_events": output_dir / "constraint_events.json",
+        "rescue_events": output_dir / "rescue_events.json",
+        "turnover_by_rebalance": output_dir / "turnover_by_rebalance.csv",
+        "weight_path_metadata": output_dir / "weight_path_metadata.json",
+    }
+
+
+def _daily_weight_rows(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    candidate_id: str,
+) -> list[dict[str, Any]]:
+    output: list[dict[str, Any]] = []
+    for row in rows:
+        weights = _json_mapping(row.get("target_weights_json"))
+        pre_rebalance = _json_mapping(row.get("pre_rebalance_candidate_weights_json"))
+        cash_weight = weights.get("CASH", 0.0)
+        for symbol, weight in sorted(weights.items()):
+            output.append(
+                {
+                    "date": _text(row.get("signal_date")),
+                    "symbol": symbol,
+                    "weight": weight,
+                    "target_weight": weight,
+                    "pre_constraint_weight": "",
+                    "post_constraint_weight": weight,
+                    "post_rescue_weight": "",
+                    "cash_weight": cash_weight,
+                    "risk_bucket": _text(row.get("selected_regime")),
+                    "regime": _text(row.get("selected_regime")),
+                    "candidate_id": candidate_id,
+                    "pre_rebalance_weight": pre_rebalance.get(symbol, ""),
+                }
+            )
+    return output
+
+
+def _rebalance_events(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    candidate_id: str,
+) -> list[dict[str, Any]]:
+    events: list[dict[str, Any]] = []
+    for row in rows:
+        turnover = _float(row.get("turnover"))
+        if _text(row.get("rebalance_decision")) != "rebalance_candidate" and turnover <= 0:
+            continue
+        trade_deltas = _json_mapping(row.get("trade_deltas_json"))
+        changed = sorted(symbol for symbol, value in trade_deltas.items() if abs(_float(value)) > 0)
+        events.append(
+            {
+                "date": _text(row.get("signal_date")),
+                "event_type": "rebalance",
+                "reason": _event_reason(row),
+                "turnover": turnover,
+                "symbols_changed": changed,
+                "candidate_id": candidate_id,
+            }
+        )
+    return events
+
+
+def _constraint_events(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    candidate_id: str,
+) -> list[dict[str, Any]]:
+    events: list[dict[str, Any]] = []
+    for row in rows:
+        reason_codes = _json_list(row.get("reason_codes_json"))
+        constraint_codes = [
+            _text(code)
+            for code in reason_codes
+            if _text(code).startswith(
+                ("MAX_", "MIN_", "WEEKLY_TURNOVER_CAP", "REGIME_CONFIRMATION_WINDOW")
+            )
+        ]
+        diagnostics = _json_mapping(row.get("constraint_diagnostics_json"))
+        for code in constraint_codes:
+            events.append(
+                {
+                    "date": _text(row.get("signal_date")),
+                    "constraint_type": _constraint_type_from_code(code),
+                    "symbol": _constraint_symbol_from_code(code),
+                    "before_weight": "",
+                    "after_weight": "",
+                    "constraint_limit": "",
+                    "reason_code": code,
+                    "diagnostics": diagnostics,
+                    "candidate_id": candidate_id,
+                }
+            )
+    return events
+
+
+def _rescue_events(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    candidate_id: str,
+) -> list[dict[str, Any]]:
+    events: list[dict[str, Any]] = []
+    for row in rows:
+        scores = _json_mapping(row.get("input_scores_json"))
+        reason_codes = [_text(code) for code in _json_list(row.get("reason_codes_json"))]
+        rescue_codes = [
+            code for code in reason_codes if "DRAWDOWN" in code or "RISK" in code
+        ]
+        if not rescue_codes:
+            continue
+        events.append(
+            {
+                "date": _text(row.get("signal_date")),
+                "rescue_trigger": "drawdown"
+                if any("DRAWDOWN" in code for code in rescue_codes)
+                else "regime",
+                "rescue_intensity": scores.get("RiskRegimeScore", 0.0),
+                "affected_symbols": [],
+                "risk_reduction": 0.0,
+                "reason_codes": rescue_codes,
+                "candidate_id": candidate_id,
+            }
+        )
+    return events
+
+
+def _turnover_rows(
+    rows: Sequence[Mapping[str, Any]],
+    *,
+    candidate_id: str,
+) -> list[dict[str, Any]]:
+    output: list[dict[str, Any]] = []
+    for row in rows:
+        trade_deltas = _json_mapping(row.get("trade_deltas_json"))
+        buys = {
+            symbol: _float(value)
+            for symbol, value in trade_deltas.items()
+            if _float(value) > 0
+        }
+        sells = {
+            symbol: abs(_float(value))
+            for symbol, value in trade_deltas.items()
+            if _float(value) < 0
+        }
+        largest_symbol = ""
+        if trade_deltas:
+            largest_symbol = max(
+                trade_deltas,
+                key=lambda symbol: abs(_float(trade_deltas[symbol])),
+            )
+        output.append(
+            {
+                "date": _text(row.get("signal_date")),
+                "candidate_id": candidate_id,
+                "turnover": _float(row.get("turnover")),
+                "gross_buy": round(sum(buys.values()), 6),
+                "gross_sell": round(sum(sells.values()), 6),
+                "largest_symbol_change": largest_symbol,
+                "event_reason": _event_reason(row),
+            }
+        )
+    return output
+
+
+def _missing_weight_path_metadata(*, candidate_id: str, evaluation_id: str) -> dict[str, Any]:
+    return {
+        "candidate_id": candidate_id,
+        "evaluation_id": evaluation_id,
+        "weight_path_start": "",
+        "weight_path_end": "",
+        "daily_weight_count": 0,
+        "symbol_count": 0,
+        "has_daily_weights": False,
+        "has_rebalance_events": False,
+        "has_constraint_events": False,
+        "has_rescue_events": False,
+        "has_turnover_by_rebalance": False,
+        "weight_path_detail_level": "missing",
+        "attribution_completeness": WEIGHT_PATH_INCOMPLETE,
+        "missing_fields": ["daily_weights"],
+        "metadata_path": "",
+    }
+
+
+def _find_weight_path_dir(evaluation_id: str, search_root: Path) -> Path | None:
+    for path in search_root.glob("**/weight_path_metadata.json"):
+        payload = _read_optional_json(path) or {}
+        if (
+            _text(payload.get("evaluation_id")) == evaluation_id
+            or path.parent.name == evaluation_id
+        ):
+            return path.parent
+    return None
+
+
+def _backtest_window_from_payload(payload: Mapping[str, Any]) -> dict[str, Any]:
+    existing = _mapping(payload.get("backtest_window"))
+    requested = _mapping(payload.get("requested_range"))
+    summary = _mapping(payload.get("summary"))
+    daily = _mapping(payload.get("daily_path_summary"))
+    market_regime = _mapping(payload.get("market_regime"))
+    configured_start = _date_from_any(
+        existing.get("configured_backtest_start")
+        or market_regime.get("default_backtest_start")
+        or _configured_ai_regime_start()
+    )
+    requested_start = _date_from_any(
+        existing.get("requested_start")
+        or requested.get("start")
+        or summary.get("requested_start")
+        or configured_start
+    )
+    requested_end = _date_from_any(
+        existing.get("requested_end")
+        or requested.get("end")
+        or summary.get("requested_end")
+        or existing.get("configured_backtest_end")
+    )
+    actual_start = _date_from_any(
+        existing.get("actual_evaluation_start")
+        or summary.get("effective_start")
+        or daily.get("first_signal_date")
+    )
+    actual_end = _date_from_any(
+        existing.get("actual_evaluation_end")
+        or summary.get("effective_end")
+        or daily.get("last_signal_date")
+    )
+    trading_days = int(existing.get("trading_days") or daily.get("row_count") or 0)
+    status, reasons = _date_range_status(
+        configured_start=configured_start,
+        requested_start=requested_start,
+        requested_end=requested_end,
+        actual_start=actual_start,
+        actual_end=actual_end,
+        artifact_status=_text(payload.get("status")),
+    )
+    return {
+        "configured_backtest_start": _date_text(configured_start),
+        "configured_backtest_end": _date_text(requested_end),
+        "requested_start": _date_text(requested_start),
+        "requested_end": _date_text(requested_end),
+        "actual_evaluation_start": _date_text(actual_start),
+        "actual_evaluation_end": _date_text(actual_end),
+        "effective_training_start": existing.get("effective_training_start"),
+        "effective_training_end": existing.get("effective_training_end"),
+        "effective_validation_start": existing.get("effective_validation_start"),
+        "effective_validation_end": existing.get("effective_validation_end"),
+        "first_rebalance_date": existing.get("first_rebalance_date", ""),
+        "trading_days": trading_days,
+        "date_range_status": status,
+        "insufficient_data_reason": (
+            "artifact_marked_insufficient_data"
+            if status == DATE_RANGE_INSUFFICIENT_DATA
+            else existing.get("insufficient_data_reason")
+        ),
+        "window_mismatch_reasons": reasons,
+    }
+
+
+def _empty_backtest_window(
+    *,
+    configured_start: date,
+    requested_start: date,
+    requested_end: date,
+    status: str,
+) -> dict[str, Any]:
+    return {
+        "configured_backtest_start": configured_start.isoformat(),
+        "configured_backtest_end": requested_end.isoformat(),
+        "requested_start": requested_start.isoformat(),
+        "requested_end": requested_end.isoformat(),
+        "actual_evaluation_start": requested_start.isoformat(),
+        "actual_evaluation_end": requested_end.isoformat(),
+        "effective_training_start": None,
+        "effective_training_end": None,
+        "effective_validation_start": None,
+        "effective_validation_end": None,
+        "first_rebalance_date": "",
+        "trading_days": 0,
+        "date_range_status": status,
+        "insufficient_data_reason": None,
+        "window_mismatch_reasons": [],
+    }
+
+
+def _aggregate_candidate_backtest_windows(
+    results: Sequence[Mapping[str, Any]],
+    *,
+    configured_start: date,
+    requested_start: date,
+    requested_end: date,
+) -> dict[str, Any]:
+    windows = [
+        _mapping(row.get("backtest_window"))
+        for row in results
+        if row.get("backtest_window")
+    ]
+    if not windows:
+        return _empty_backtest_window(
+            configured_start=configured_start,
+            requested_start=requested_start,
+            requested_end=requested_end,
+            status=DATE_RANGE_FAIL,
+        )
+    actual_starts = [_date_from_any(row.get("actual_evaluation_start")) for row in windows]
+    actual_ends = [_date_from_any(row.get("actual_evaluation_end")) for row in windows]
+    actual_starts = [item for item in actual_starts if item is not None]
+    actual_ends = [item for item in actual_ends if item is not None]
+    aggregate = {
+        "configured_backtest_start": _date_text(configured_start),
+        "configured_backtest_end": _date_text(requested_end),
+        "requested_start": _date_text(requested_start),
+        "requested_end": _date_text(requested_end),
+        "actual_evaluation_start": _date_text(min(actual_starts) if actual_starts else None),
+        "actual_evaluation_end": _date_text(max(actual_ends) if actual_ends else None),
+        "trading_days": sum(int(row.get("trading_days") or 0) for row in windows),
+    }
+    status, reasons = _date_range_status(
+        configured_start=configured_start,
+        requested_start=requested_start,
+        requested_end=requested_end,
+        actual_start=min(actual_starts) if actual_starts else None,
+        actual_end=max(actual_ends) if actual_ends else None,
+        artifact_status="",
+    )
+    return {
+        **aggregate,
+        "effective_training_start": None,
+        "effective_training_end": None,
+        "effective_validation_start": None,
+        "effective_validation_end": None,
+        "first_rebalance_date": "",
+        "date_range_status": status,
+        "insufficient_data_reason": None,
+        "window_mismatch_reasons": reasons,
+    }
+
+
+def _window_audit_inventory(
+    *,
+    artifact_root: Path,
+    requested_start: date,
+    requested_end: date,
+) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for path in sorted(artifact_root.glob("**/*.json")):
+        if path.name.startswith("latest_") or path.name in {
+            "checkpoint.json",
+            "gate_summary.json",
+            "linked_artifacts.json",
+            "risk_summary.json",
+        }:
+            continue
+        payload = _read_optional_json(path)
+        if not payload or not _window_auditable_payload(payload, path):
+            continue
+        records.append(
+            _window_record_from_payload(
+                payload=payload,
+                artifact_path=path,
+                requested_start=requested_start,
+                requested_end=requested_end,
+            )
+        )
+    return records
+
+
+def _window_record_from_payload(
+    *,
+    payload: Mapping[str, Any],
+    artifact_path: Path,
+    requested_start: date | None,
+    requested_end: date | None,
+) -> dict[str, Any]:
+    window = _backtest_window_from_payload(
+        {
+            **payload,
+            "requested_range": {
+                **_mapping(payload.get("requested_range")),
+                "start": _date_text(requested_start)
+                or _mapping(payload.get("requested_range")).get("start"),
+                "end": _date_text(requested_end)
+                or _mapping(payload.get("requested_range")).get("end"),
+            },
+        }
+    )
+    status = _text(window.get("date_range_status"), DATE_RANGE_FAIL)
+    return {
+        "artifact_path": str(artifact_path),
+        "artifact_type": _artifact_type(artifact_path, payload),
+        **window,
+        "promotion_blocking": status in WINDOW_PROMOTION_BLOCKING_STATUSES,
+    }
+
+
+def _window_auditable_payload(payload: Mapping[str, Any], path: Path) -> bool:
+    report_type = _text(payload.get("report_type"))
+    if payload.get("backtest_window") or payload.get("requested_range"):
+        return True
+    if report_type.startswith("etf_dynamic_v3_"):
+        return any(
+            token in report_type
+            for token in ("sweep", "candidate", "real_evaluation", "walk_forward", "promotion")
+        )
+    return any(part in path.parts for part in ("dynamic_v3_rescue", "dynamic_v3_real_evaluation"))
+
+
+def _artifact_type(path: Path, payload: Mapping[str, Any]) -> str:
+    report_type = _text(payload.get("report_type"))
+    if "sweep" in report_type or path.name == "sweep_manifest.json":
+        return "sweep"
+    if "candidate" in report_type or "candidates" in path.parts:
+        return "candidate"
+    if "real_evaluation" in report_type:
+        return "real_evaluation"
+    if "walk_forward" in report_type:
+        return "walk_forward"
+    if "promotion" in report_type:
+        return "promotion"
+    return "artifact"
+
+
+def _date_range_status(
+    *,
+    configured_start: date | None,
+    requested_start: date | None,
+    requested_end: date | None,
+    actual_start: date | None,
+    actual_end: date | None,
+    artifact_status: str,
+) -> tuple[str, list[str]]:
+    reasons: list[str] = []
+    if artifact_status == DATE_RANGE_INSUFFICIENT_DATA:
+        reasons.append("artifact_marked_insufficient_data")
+        return DATE_RANGE_INSUFFICIENT_DATA, reasons
+    if requested_start is None or requested_end is None:
+        reasons.append("requested_date_range_missing")
+    if configured_start is None:
+        reasons.append("configured_backtest_start_missing")
+    if actual_start is None or actual_end is None:
+        reasons.append("actual_evaluation_range_missing")
+    if reasons:
+        return DATE_RANGE_FAIL, reasons
+    if actual_end < actual_start:
+        return DATE_RANGE_FAIL, ["actual_evaluation_end_before_start"]
+    if actual_end < requested_end:
+        reasons.append("actual_evaluation_end_before_requested_end")
+    if actual_start > configured_start:
+        reasons.append("actual_evaluation_start_after_configured_backtest_start")
+    if actual_start > configured_start + timedelta(days=WINDOW_AUDIT_ALLOWED_START_DELAY_DAYS):
+        return DATE_RANGE_INCOMPLETE, reasons
+    if actual_end < requested_end:
+        return DATE_RANGE_INCOMPLETE, reasons
+    if reasons:
+        return DATE_RANGE_PASS_WITH_WARNINGS, reasons
+    return DATE_RANGE_PASS, []
+
+
+def _earliest_actual_evaluation_start(records: Sequence[Mapping[str, Any]]) -> str:
+    dates = [
+        parsed
+        for parsed in (_date_from_any(row.get("actual_evaluation_start")) for row in records)
+        if parsed is not None
+    ]
+    return "" if not dates else min(dates).isoformat()
+
+
+def _configured_ai_regime_start() -> date:
+    try:
+        return load_dynamic_v3_real_evaluation_policy_config().market_regime.default_backtest_start
+    except Exception:  # noqa: BLE001
+        return date(2022, 12, 1)
+
+
+def _csv_columns(path: Path) -> list[str]:
+    if not path.exists():
+        return []
+    try:
+        return list(pd.read_csv(path, nrows=0).columns)
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def _file_sha256_path(path: Path) -> str:
+    if not path.exists():
+        return ""
+    digest = sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _json_mapping(value: Any) -> dict[str, Any]:
+    if isinstance(value, Mapping):
+        return dict(value)
+    if isinstance(value, str) and value:
+        try:
+            parsed = json.loads(value)
+        except (TypeError, ValueError):
+            return {}
+        return dict(parsed) if isinstance(parsed, Mapping) else {}
+    return {}
+
+
+def _json_list(value: Any) -> list[Any]:
+    if isinstance(value, list):
+        return value
+    if isinstance(value, str) and value:
+        try:
+            parsed = json.loads(value)
+        except (TypeError, ValueError):
+            return []
+        return parsed if isinstance(parsed, list) else []
+    return []
+
+
+def _event_reason(row: Mapping[str, Any]) -> str:
+    reason_codes = [_text(code) for code in _json_list(row.get("reason_codes_json"))]
+    if any("DRAWDOWN" in code for code in reason_codes):
+        return "drawdown_guard"
+    if any("RISK" in code for code in reason_codes):
+        return "regime_change"
+    if any("TURNOVER" in code for code in reason_codes):
+        return "constraint"
+    return "scheduled"
+
+
+def _constraint_type_from_code(code: str) -> str:
+    if code.startswith("MAX_"):
+        return "max_weight"
+    if code.startswith("MIN_"):
+        return "min_weight"
+    if "TURNOVER" in code:
+        return "turnover"
+    if "DRAWDOWN" in code:
+        return "drawdown"
+    return "other"
+
+
+def _constraint_symbol_from_code(code: str) -> str:
+    for symbol in ("QQQ", "SPY", "SMH", "SOXX", "CASH"):
+        if symbol in code:
+            return symbol
+    return ""
+
+
+def _date_from_any(value: Any) -> date | None:
+    if isinstance(value, date) and not isinstance(value, datetime):
+        return value
+    if isinstance(value, datetime):
+        return value.date()
+    text = _text(value)
+    if not text:
+        return None
+    try:
+        return date.fromisoformat(text[:10])
+    except ValueError:
+        return None
+
+
+def _date_text(value: Any) -> str:
+    parsed = _date_from_any(value)
+    return "" if parsed is None else parsed.isoformat()
 
 
 def _price_cache_manifest(
@@ -5582,6 +7088,13 @@ def _fmt_num(value: Any) -> str:
         return f"{float(value):.4f}"
     except Exception:  # noqa: BLE001
         return _text(value, "NA")
+
+
+def _float(value: Any, default: float = 0.0) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
 
 
 def _clamp01(value: float) -> float:

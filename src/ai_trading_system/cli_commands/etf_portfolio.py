@@ -260,6 +260,8 @@ from ai_trading_system.etf_portfolio.dynamic_v3_failure_attribution import (
 from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_CANDIDATE_ATTRIBUTION_DIR,
     DEFAULT_DATA_AUDIT_DIR,
+    DEFAULT_DATA_PROVENANCE_DIR,
+    DEFAULT_DYNAMIC_V3_RESEARCH_ROOT,
     DEFAULT_GOVERNANCE_DIR,
     DEFAULT_INJECTION_AUDIT_DIR,
     DEFAULT_OVERFIT_DIR,
@@ -275,6 +277,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     DEFAULT_SWEEP_OUTPUT_DIR,
     DEFAULT_WALK_FORWARD_DIR,
     DEFAULT_WALK_FORWARD_SELECTION_DIR,
+    DEFAULT_WINDOW_AUDIT_DIR,
     DynamicV3ParameterResearchError,
     artifacts_latest_payload,
     build_promotion_pack,
@@ -284,9 +287,13 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     build_sweep_report_payload,
     candidate_report_payload,
     data_audit_report_payload,
+    data_provenance_inspect_price_cache,
+    data_provenance_repair_price_manifest,
+    data_provenance_validate,
     governance_diff_payload,
     governance_report_payload,
     injection_audit_report_payload,
+    inspect_window_artifact,
     latest_sweep_id,
     overfit_report_payload,
     preview_sweep_candidates,
@@ -306,6 +313,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     run_shadow_monitor,
     run_walk_forward_selection,
     run_walk_forward_validation,
+    run_window_audit,
     shadow_list_payload,
     shadow_monitor_report_payload,
     shadow_report_payload,
@@ -326,8 +334,12 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     validate_sweep_profiles_payload,
     validate_walk_forward_artifact,
     validate_walk_forward_selection_artifact,
+    validate_weight_path_artifact,
+    validate_window_audit_artifact,
     walk_forward_report_payload,
     walk_forward_selection_report_payload,
+    weight_path_report_payload,
+    window_audit_report_payload,
 )
 from ai_trading_system.etf_portfolio.dynamic_v3_real_evaluation import (
     DEFAULT_DYNAMIC_V3_REAL_EVALUATION_POLICY_CONFIG_PATH,
@@ -768,6 +780,18 @@ dynamic_v3_data_audit_app = typer.Typer(
     help="Dynamic v3 rescue research data audit workflow。",
     no_args_is_help=True,
 )
+dynamic_v3_data_provenance_app = typer.Typer(
+    help="Dynamic v3 rescue price cache provenance workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_window_audit_app = typer.Typer(
+    help="Dynamic v3 rescue backtest window audit workflow。",
+    no_args_is_help=True,
+)
+dynamic_v3_weight_path_app = typer.Typer(
+    help="Dynamic v3 rescue real evaluator weight path workflow。",
+    no_args_is_help=True,
+)
 dynamic_v3_injection_audit_app = typer.Typer(
     help="Dynamic v3 rescue parameter injection audit workflow。",
     no_args_is_help=True,
@@ -853,6 +877,9 @@ etf_app.add_typer(dynamic_v2_review_app, name="dynamic-v2-review")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_sweep_config_app, name="sweep-config")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_sweep_app, name="sweep")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_data_audit_app, name="data-audit")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_data_provenance_app, name="data-provenance")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_window_audit_app, name="window-audit")
+dynamic_v3_rescue_app.add_typer(dynamic_v3_weight_path_app, name="weight-path")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_injection_audit_app, name="injection-audit")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_candidate_app, name="candidate")
 dynamic_v3_rescue_app.add_typer(dynamic_v3_walk_forward_app, name="walk-forward")
@@ -3772,6 +3799,225 @@ def dynamic_v3_validate_data_audit_command(
         raise typer.Exit(code=1)
 
 
+@dynamic_v3_data_provenance_app.command("inspect-price-cache")
+def dynamic_v3_data_provenance_inspect_price_cache_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="标准化 ETF daily price cache。"),
+    ] = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="标准化 FRED rates cache。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="data provenance artifact root。"),
+    ] = DEFAULT_DATA_PROVENANCE_DIR,
+) -> None:
+    """检查 TRADING-113 price cache checksum provenance。"""
+    payload = data_provenance_inspect_price_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        output_dir=output_dir,
+    )
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"prices_sha256={_mapping_obj(payload.get('prices')).get('sha256')}")
+    typer.echo(f"download_manifest_status={payload['download_manifest_status']}")
+    typer.echo(f"provenance_status={payload['provenance_status']}")
+    typer.echo(
+        "prices_checksum_in_manifest="
+        f"{str(payload['prices_checksum_in_manifest']).lower()}"
+    )
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_data_provenance_app.command("repair-price-manifest")
+def dynamic_v3_data_provenance_repair_price_manifest_command(
+    mode: Annotated[
+        str,
+        typer.Option("--mode", help="repair mode；当前支持 reconstruct-from-cache。"),
+    ] = "reconstruct-from-cache",
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="标准化 ETF daily price cache。"),
+    ] = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="标准化 FRED rates cache。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+) -> None:
+    """从现有 cache 重建下载 manifest，不伪造原始下载事件。"""
+    try:
+        payload = data_provenance_repair_price_manifest(
+            mode=mode,
+            prices_path=prices_path,
+            rates_path=rates_path,
+        )
+    except DynamicV3ParameterResearchError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"reconstructed_manifest_path={payload['reconstructed_manifest_path']}")
+    typer.echo(f"provenance_status={payload['provenance_status']}")
+    typer.echo("limitations=original_download_event_not_available")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_data_provenance_app.command("validate")
+def dynamic_v3_data_provenance_validate_command(
+    prices_path: Annotated[
+        Path,
+        typer.Option("--prices-path", help="标准化 ETF daily price cache。"),
+    ] = DEFAULT_ETF_PRICE_PATH,
+    rates_path: Annotated[
+        Path,
+        typer.Option("--rates-path", help="标准化 FRED rates cache。"),
+    ] = PROJECT_ROOT / "data" / "raw" / "rates_daily.csv",
+) -> None:
+    """校验 TRADING-113 price cache provenance。"""
+    payload = data_provenance_validate(prices_path=prices_path, rates_path=rates_path)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo(f"provenance_status={payload['provenance_status']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] == "FAIL":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_window_audit_app.command("run")
+def dynamic_v3_window_audit_run_command(
+    as_of: Annotated[str, typer.Option("--as-of", help="requested window start date。")],
+    end: Annotated[str, typer.Option("--end", help="requested window end date。")],
+    artifact_root: Annotated[
+        Path,
+        typer.Option("--artifact-root", help="待扫描 artifact root。"),
+    ] = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="window audit artifact root。"),
+    ] = DEFAULT_WINDOW_AUDIT_DIR,
+) -> None:
+    """运行 TRADING-111 backtest window audit。"""
+    result = run_window_audit(
+        as_of=_parse_date(as_of),
+        end=_parse_date(end),
+        artifact_root=artifact_root,
+        output_dir=output_dir,
+    )
+    report = result["report"]
+    typer.echo(f"window_audit_id={result['window_audit_id']}")
+    typer.echo(f"window_audit_dir={result['window_audit_dir']}")
+    typer.echo(f"status={report['status']}")
+    typer.echo(f"configured_backtest_start={report['configured_backtest_start']}")
+    typer.echo(
+        "earliest_actual_evaluation_start="
+        f"{report['earliest_actual_evaluation_start']}"
+    )
+    typer.echo(f"promotion_blocking_count={report['promotion_blocking_count']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_window_audit_app.command("report")
+def dynamic_v3_window_audit_report_command(
+    latest: Annotated[
+        bool,
+        typer.Option("--latest/--no-latest", help="读取 latest window audit pointer。"),
+    ] = False,
+    audit_id: Annotated[str | None, typer.Option("--audit-id", help="window audit id。")] = None,
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="window audit artifact root。"),
+    ] = DEFAULT_WINDOW_AUDIT_DIR,
+) -> None:
+    """展示 TRADING-111 window audit 摘要。"""
+    payload = window_audit_report_payload(
+        audit_id=audit_id,
+        latest=latest,
+        output_dir=output_dir,
+    )
+    typer.echo(f"window_audit_id={payload['window_audit_id']}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"configured_backtest_start={payload['configured_backtest_start']}")
+    typer.echo(
+        "earliest_actual_evaluation_start="
+        f"{payload['earliest_actual_evaluation_start']}"
+    )
+    typer.echo(f"promotion_blocking_count={payload['promotion_blocking_count']}")
+    typer.echo(f"report_path={payload['report_path']}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_window_audit_app.command("inspect-artifact")
+def dynamic_v3_window_audit_inspect_artifact_command(
+    artifact_path: Annotated[
+        Path,
+        typer.Option("--artifact-path", help="artifact JSON path。"),
+    ],
+) -> None:
+    """检查单个 artifact 的 backtest window 状态。"""
+    payload = inspect_window_artifact(artifact_path=artifact_path)
+    record = _mapping_obj(payload["record"])
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"artifact_type={record.get('artifact_type')}")
+    typer.echo(f"configured_backtest_start={record.get('configured_backtest_start')}")
+    typer.echo(f"actual_evaluation_start={record.get('actual_evaluation_start')}")
+    typer.echo(f"actual_evaluation_end={record.get('actual_evaluation_end')}")
+    typer.echo(f"promotion_blocking={str(record.get('promotion_blocking')).lower()}")
+    typer.echo("production_candidate_generated=false")
+
+
+@dynamic_v3_rescue_app.command("validate-window-audit")
+def dynamic_v3_validate_window_audit_command(
+    audit_id: Annotated[str, typer.Option("--audit-id", help="window audit id。")],
+    output_dir: Annotated[
+        Path,
+        typer.Option("--output-dir", help="window audit artifact root。"),
+    ] = DEFAULT_WINDOW_AUDIT_DIR,
+) -> None:
+    """校验 TRADING-111 window audit artifacts。"""
+    payload = validate_window_audit_artifact(audit_id=audit_id, output_dir=output_dir)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_weight_path_app.command("validate")
+def dynamic_v3_weight_path_validate_command(
+    evaluation_id: Annotated[str, typer.Option("--evaluation-id", help="real evaluation id。")],
+    search_root: Annotated[
+        Path,
+        typer.Option("--search-root", help="weight path 搜索根目录。"),
+    ] = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT,
+) -> None:
+    """校验 TRADING-112 weight path artifacts。"""
+    payload = validate_weight_path_artifact(evaluation_id=evaluation_id, search_root=search_root)
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"attribution_completeness={payload['attribution_completeness']}")
+    typer.echo(f"failed_check_count={payload['failed_check_count']}")
+    typer.echo("production_candidate_generated=false")
+    if payload["status"] != "PASS":
+        raise typer.Exit(code=1)
+
+
+@dynamic_v3_weight_path_app.command("report")
+def dynamic_v3_weight_path_report_command(
+    evaluation_id: Annotated[str, typer.Option("--evaluation-id", help="real evaluation id。")],
+    search_root: Annotated[
+        Path,
+        typer.Option("--search-root", help="weight path 搜索根目录。"),
+    ] = DEFAULT_DYNAMIC_V3_RESEARCH_ROOT,
+) -> None:
+    """展示 TRADING-112 weight path 摘要。"""
+    payload = weight_path_report_payload(evaluation_id=evaluation_id, search_root=search_root)
+    typer.echo(f"evaluation_id={evaluation_id}")
+    typer.echo(f"status={payload['status']}")
+    typer.echo(f"candidate_id={payload['candidate_id']}")
+    typer.echo(f"daily_weights_path={payload['daily_weights_path']}")
+    typer.echo(f"weight_path_metadata_path={payload['weight_path_metadata_path']}")
+    typer.echo("production_candidate_generated=false")
+
+
 @dynamic_v3_sweep_app.command("profile-list")
 def dynamic_v3_sweep_profile_list_command(
     profile_config_path: Annotated[
@@ -4881,6 +5127,14 @@ def dynamic_v3_promotion_pack_command(
         Path,
         typer.Option("--registry", "--registry-path", help="shadow registry path。"),
     ] = DEFAULT_SHADOW_REGISTRY_PATH,
+    candidate_attribution_dir: Annotated[
+        Path,
+        typer.Option("--candidate-attribution-dir", help="candidate attribution artifact root。"),
+    ] = DEFAULT_CANDIDATE_ATTRIBUTION_DIR,
+    data_provenance_dir: Annotated[
+        Path,
+        typer.Option("--data-provenance-dir", help="data provenance artifact root。"),
+    ] = DEFAULT_DATA_PROVENANCE_DIR,
     output_dir: Annotated[
         Path,
         typer.Option("--output-dir", help="promotion artifact root。"),
@@ -4891,6 +5145,8 @@ def dynamic_v3_promotion_pack_command(
         result = build_promotion_pack(
             candidate_id=candidate_id,
             registry_path=registry_path,
+            candidate_attribution_dir=candidate_attribution_dir,
+            data_provenance_dir=data_provenance_dir,
             output_dir=output_dir,
         )
     except DynamicV3ParameterResearchError as exc:

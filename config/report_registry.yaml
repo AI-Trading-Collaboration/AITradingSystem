@@ -1393,13 +1393,53 @@ reports:
     command: aits etf dynamic-v3-rescue data-audit report --latest
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/data_audit/*/data_audit_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/data_audit/*/data_provenance_report.json
       - reports/etf_portfolio/dynamic_v3_rescue/data_audit/*/data_audit_report.md
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-103 records price cache checksum, download manifest coverage, PIT
-      coverage, data gaps, and validate-data quality status before real sweep
-      interpretation.
+      coverage, data gaps, validate-data quality status, and TRADING-113
+      provenance status before real sweep interpretation.
     owner_action: review_data_audit_before_real_parameter_sweep_interpretation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_data_provenance_report
+    title: ETF Dynamic v3 Rescue Price Cache Data Provenance Report
+    group: data_quality
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue data-provenance inspect-price-cache
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/data_provenance/price_cache_provenance_report.json
+      - reports/etf_portfolio/dynamic_v3_rescue/data_provenance/price_cache_provenance_report.md
+      - reports/etf_portfolio/dynamic_v3_rescue/data_audit/*/data_provenance_report.json
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-113 exposes price cache checksum, download manifest checksum
+      coverage, reconstructed-manifest status, row counts, and cache inventory
+      before real evaluator or promotion-pack conclusions are interpreted.
+    owner_action: repair_or_review_price_manifest_before_real_promotion_interpretation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_window_audit_report
+    title: ETF Dynamic v3 Rescue Backtest Window Audit Report
+    group: data_quality
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue window-audit report --latest
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/window_audit/*/window_audit_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/window_audit/*/window_audit_report.md
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-111 records configured, requested, and actual backtest date ranges
+      across real evaluation, candidate, sweep, and promotion artifacts so
+      truncated windows cannot silently pass promotion review.
+    owner_action: resolve_backtest_window_incomplete_before_promotion_pack
     include_in_reader_brief: false
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
@@ -1434,9 +1474,32 @@ reports:
     freshness_sla_days: 30
     freshness_rationale: >
       TRADING-105 explains candidate weight deltas, constraint events, drawdown,
-      turnover, and dynamic-vs-static gap; missing path evidence is marked
+      turnover, and dynamic-vs-static gap; TRADING-112 daily weight path evidence
+      upgrades attribution to PARTIAL/COMPLETE and missing path evidence remains
       INCOMPLETE rather than fabricated.
     owner_action: review_candidate_attribution_before_promotion_pack_interpretation
+    include_in_reader_brief: false
+    include_in_daily_task_dashboard: true
+    required_for_daily_reading: false
+  - report_id: etf_dynamic_v3_weight_path_report
+    title: ETF Dynamic v3 Rescue Real Evaluator Daily Weight Path Report
+    group: research
+    cadence: ad_hoc
+    audience: reviewer
+    owner: system
+    command: aits etf dynamic-v3-rescue weight-path report --evaluation-id <evaluation_id>
+    artifact_globs:
+      - reports/etf_portfolio/dynamic_v3_rescue/sweeps/*/real_evaluation/*/weight_path_metadata.json
+      - reports/etf_portfolio/dynamic_v3_rescue/sweeps/*/real_evaluation/*/daily_weights.csv
+      - reports/etf_portfolio/dynamic_v3_rescue/sweeps/*/real_evaluation/*/rebalance_events.csv
+      - reports/etf_portfolio/dynamic_v3_rescue/sweeps/*/real_evaluation/*/constraint_events.csv
+    freshness_sla_days: 30
+    freshness_rationale: >
+      TRADING-112 exports per-candidate daily weights, rebalance events,
+      constraint events, rescue events, and turnover path metadata from the real
+      evaluator so attribution and promotion review do not rely only on summary
+      metrics.
+    owner_action: review_weight_path_completeness_before_candidate_attribution_or_promotion
     include_in_reader_brief: false
     include_in_daily_task_dashboard: true
     required_for_daily_reading: false
@@ -1596,15 +1659,17 @@ reports:
     command: aits etf dynamic-v3-rescue promotion pack --candidate-id <candidate_id>
     artifact_globs:
       - reports/etf_portfolio/dynamic_v3_rescue/promotion/*/*/promotion_manifest.json
+      - reports/etf_portfolio/dynamic_v3_rescue/promotion/*/*/evidence_summary.json
       - reports/etf_portfolio/dynamic_v3_rescue/promotion/*/*/promotion_decision.md
       - reports/etf_portfolio/dynamic_v3_rescue/promotion/*/*/reader_brief_section.md
     freshness_sla_days: 30
     freshness_rationale: >
-      TRADING-100 and TRADING-101 combine sweep, candidate, walk-forward,
-      robustness, shadow, evaluator provenance, and linked real-evaluation
-      evidence. Tiny fixture packs are capped at review_required/reject; real
-      evaluator packs may output promote_candidate plus manual_review_required,
-      but must never generate production_candidate.
+      TRADING-100, TRADING-101, and TRADING-111 to TRADING-113 combine sweep,
+      candidate, walk-forward, robustness, shadow, evaluator provenance, window
+      audit, weight-path completeness, candidate attribution, and price-cache
+      provenance evidence. Tiny fixture packs are capped at
+      review_required/reject; real evaluator packs may only promote when all
+      evidence gates are complete and manual_review_required remains true.
     owner_action: owner_manual_review_required_before_any_production_candidate_status
     include_in_reader_brief: true
     include_in_daily_task_dashboard: true

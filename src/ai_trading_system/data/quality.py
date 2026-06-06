@@ -447,6 +447,19 @@ def _validate_download_manifest(
         )
         return summary
 
+    if _manifest_is_reconstructed(manifest):
+        issues.append(
+            DataQualityIssue(
+                Severity.WARNING,
+                "download_manifest_provenance_reconstructed",
+                (
+                    "下载审计清单由现有 cache 重建，不能证明原始下载事件；"
+                    "下游报告必须披露该 provenance 限制。"
+                ),
+                source="下载审计清单",
+            )
+        )
+
     _check_manifest_covers_file(manifest, price_summary, "prices", issues)
     _check_manifest_covers_file(manifest, rate_summary, "rates", issues)
     if secondary_price_summary is not None:
@@ -457,6 +470,22 @@ def _validate_download_manifest(
             issues,
         )
     return summary
+
+
+def _manifest_is_reconstructed(manifest: pd.DataFrame) -> bool:
+    provider_matches = manifest.get("provider", pd.Series(dtype=object)).astype(str).eq(
+        "cache_rebuild_from_existing_file"
+    )
+    if provider_matches.any():
+        return True
+    for value in manifest.get("request_parameters", pd.Series(dtype=object)).astype(str):
+        try:
+            parsed = json.loads(value)
+        except (TypeError, ValueError):
+            continue
+        if isinstance(parsed, dict) and parsed.get("provenance_status") == "RECONSTRUCTED_MANIFEST":
+            return True
+    return False
 
 
 def _check_manifest_covers_file(

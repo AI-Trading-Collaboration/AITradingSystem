@@ -724,6 +724,17 @@ real leaderboard 最多输出 `promote_candidate + manual_review_required`，ove
 weights mutation 或 broker action。Reader Brief 的 `Dynamic Rescue Parameter Sweep` 区块
 只读 latest sweep leaderboard / promotion pack / shadow monitor，并显示 evaluator mode、
 fixture-only 限制和 observe-only monitor 状态。
+TRADING-111 到 TRADING-113 为该真实研究闭环补齐证据完整性门禁：`data-provenance
+inspect-price-cache/repair-price-manifest/validate` 显式报告 price cache checksum、
+download manifest checksum coverage 和 `RECONSTRUCTED_MANIFEST` provenance 状态；
+`window-audit run/report/inspect-artifact` 与 `validate-window-audit` 汇总 configured /
+requested / actual backtest window，阻断截断窗口被解释为完整 AI regime 结论；real
+evaluator sweep artifact 额外导出 `weight_path_metadata.json`、`daily_weights.csv`、
+rebalance / constraint / rescue / turnover path CSV，`weight-path validate/report` 和
+candidate attribution 使用这些路径把 explainability 标为 `COMPLETE`、`PARTIAL` 或
+`INCOMPLETE`。Promotion pack 现在写出 `evidence_summary.json`，并在 window、weight
+path、candidate attribution 或 data provenance 不完整时阻断 `promote_candidate`；Reader
+Brief 只读展示这些 evidence status，不补跑上游审计。
 `aits etf weight-calibration register-candidates --run-id/--latest --top N` 把 selected
 historical candidates 写入 ignored
 `data/etf_portfolio/weight_calibration/candidate_weight_registry.json`。`aits etf

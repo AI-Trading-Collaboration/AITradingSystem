@@ -1301,6 +1301,36 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                         etf_dynamic_v3_parameter_research.get("promotion_status"),
                     ),
                     (
+                        "backtest_window_status",
+                        etf_dynamic_v3_parameter_research.get("backtest_window_status"),
+                    ),
+                    (
+                        "weight_path_status",
+                        etf_dynamic_v3_parameter_research.get("weight_path_status"),
+                    ),
+                    (
+                        "candidate_attribution_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "candidate_attribution_status"
+                        ),
+                    ),
+                    (
+                        "data_provenance_status",
+                        etf_dynamic_v3_parameter_research.get("data_provenance_status"),
+                    ),
+                    (
+                        "download_manifest_status",
+                        etf_dynamic_v3_parameter_research.get(
+                            "download_manifest_status"
+                        ),
+                    ),
+                    (
+                        "promotion_blocking_flags",
+                        etf_dynamic_v3_parameter_research.get(
+                            "promotion_blocking_flags"
+                        ),
+                    ),
+                    (
                         "shadow_monitor_status",
                         etf_dynamic_v3_parameter_research.get("shadow_monitor_status"),
                     ),
@@ -1325,6 +1355,10 @@ def render_reader_brief_html(payload: Mapping[str, Any]) -> str:
                     (
                         "promotion_manifest",
                         etf_dynamic_v3_parameter_research.get("promotion_manifest"),
+                    ),
+                    (
+                        "evidence_summary",
+                        etf_dynamic_v3_parameter_research.get("evidence_summary"),
                     ),
                     (
                         "shadow_monitor_report",
@@ -5085,7 +5119,7 @@ def _etf_dynamic_v3_parameter_research_summary(
         report_index,
         "etf_dynamic_v3_parameter_sweep_leaderboard",
     )
-    promotion_path = _report_index_artifact_path(
+    indexed_promotion_path = _report_index_artifact_path(
         report_index,
         "etf_dynamic_v3_promotion_pack",
     )
@@ -5099,10 +5133,36 @@ def _etf_dynamic_v3_parameter_research_summary(
     top = _records(leaderboard.get("top_eligible_candidates"))
     first = top[0] if top else {}
     common_reasons = _records(leaderboard.get("most_common_reject_reasons"))[:5]
+    promotion_path = _promotion_pack_manifest_path(indexed_promotion_path)
+    evidence_path = (
+        indexed_promotion_path
+        if indexed_promotion_path is not None
+        and indexed_promotion_path.name == "evidence_summary.json"
+        else (
+            promotion_path.parent / "evidence_summary.json"
+            if promotion_path is not None
+            else None
+        )
+    )
     promotion = _read_optional_json(promotion_path)
+    evidence = _read_optional_json(evidence_path)
     shadow_monitor = _read_optional_json(shadow_monitor_path)
     shadow_summary = _mapping(_mapping(shadow_monitor).get("summary"))
     promotion_status = _text(_mapping(promotion).get("status"), "MISSING")
+    backtest_window_status = _text(evidence.get("backtest_window_status"), "MISSING")
+    weight_path_status = _text(evidence.get("weight_path_status"), "MISSING")
+    candidate_attribution_status = _text(
+        evidence.get("candidate_attribution_status"),
+        "MISSING",
+    )
+    provenance_status = _text(evidence.get("provenance_status"), "MISSING")
+    download_manifest_status = _text(
+        evidence.get("download_manifest_status"),
+        "MISSING",
+    )
+    promotion_blocking_flags = ", ".join(
+        _texts(evidence.get("promotion_blocking_flags"))
+    ) or "MISSING"
     safety_status = _etf_dynamic_v3_parameter_research_safety_status(leaderboard)
     top_candidate = _text(first.get("candidate_id"), "MISSING")
     evaluator_mode = _text(leaderboard.get("evaluator_mode"), "UNKNOWN")
@@ -5115,6 +5175,9 @@ def _etf_dynamic_v3_parameter_research_summary(
             f"top={top_candidate}; candidates={leaderboard.get('candidate_count', 0)}; "
             f"evaluator={evaluator_mode}; "
             f"promotion_status={promotion_status}; "
+            f"window={backtest_window_status}; "
+            f"weight_path={weight_path_status}; "
+            f"provenance={provenance_status}; "
             "hard gate precedes soft score and production_candidate is manual-only."
         ),
         "evaluator_mode": evaluator_mode,
@@ -5131,6 +5194,12 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "recommended_next_actions": ", ".join(_texts(leaderboard.get("recommended_next_actions"))),
         "promotion_status": promotion_status,
+        "backtest_window_status": backtest_window_status,
+        "weight_path_status": weight_path_status,
+        "candidate_attribution_status": candidate_attribution_status,
+        "data_provenance_status": provenance_status,
+        "download_manifest_status": download_manifest_status,
+        "promotion_blocking_flags": promotion_blocking_flags,
         "shadow_monitor_status": _text(_mapping(shadow_monitor).get("status"), "MISSING"),
         "shadow_observe_only_count": shadow_summary.get("observe_only_candidate_count", 0),
         "shadow_promotion_ready_count": shadow_summary.get("promotion_review_ready_count", 0),
@@ -5140,6 +5209,7 @@ def _etf_dynamic_v3_parameter_research_summary(
         ),
         "sweep_leaderboard": "" if leaderboard_path is None else str(leaderboard_path),
         "promotion_manifest": "" if promotion_path is None else str(promotion_path),
+        "evidence_summary": "" if evidence_path is None else str(evidence_path),
         "shadow_monitor_report": (
             "" if shadow_monitor_path is None else str(shadow_monitor_path)
         ),
@@ -5179,12 +5249,19 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
         "common_reject_reasons": "MISSING",
         "recommended_next_actions": "MISSING",
         "promotion_status": "MISSING",
+        "backtest_window_status": "MISSING",
+        "weight_path_status": "MISSING",
+        "candidate_attribution_status": "MISSING",
+        "data_provenance_status": "MISSING",
+        "download_manifest_status": "MISSING",
+        "promotion_blocking_flags": "MISSING",
         "shadow_monitor_status": "MISSING",
         "shadow_observe_only_count": 0,
         "shadow_promotion_ready_count": 0,
         "shadow_live_drift_review_required_count": 0,
         "sweep_leaderboard": "",
         "promotion_manifest": "",
+        "evidence_summary": "",
         "shadow_monitor_report": "",
         "safety_status": "MISSING",
         "production_effect": PRODUCTION_EFFECT,
@@ -5198,6 +5275,17 @@ def _missing_etf_dynamic_v3_parameter_research_summary() -> dict[str, Any]:
             "run etf dynamic-v3-rescue sweep or promotion commands."
         ),
     }
+
+
+def _promotion_pack_manifest_path(path: Path | None) -> Path | None:
+    if path is None:
+        return None
+    if path.name == "promotion_manifest.json":
+        return path
+    sibling = path.parent / "promotion_manifest.json"
+    if sibling.exists():
+        return sibling
+    return path
 
 
 def _etf_dynamic_v3_parameter_research_safety_status(

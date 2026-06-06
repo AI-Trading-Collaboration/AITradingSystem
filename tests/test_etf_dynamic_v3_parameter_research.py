@@ -18,7 +18,11 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     build_research_index,
     build_sweep_config_validation,
     candidate_report_payload,
+    data_provenance_inspect_price_cache,
+    data_provenance_repair_price_manifest,
+    data_provenance_validate,
     governance_report_payload,
+    inspect_window_artifact,
     load_parameter_sweep_config,
     parameter_grid_candidates,
     preview_sweep_candidates,
@@ -33,6 +37,7 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     run_shadow_monitor,
     run_walk_forward_selection,
     run_walk_forward_validation,
+    run_window_audit,
     stable_candidate_id,
     validate_artifacts_payload,
     validate_candidate_attribution_artifact,
@@ -48,6 +53,10 @@ from ai_trading_system.etf_portfolio.dynamic_v3_parameter_research import (
     validate_sweep_profiles_payload,
     validate_walk_forward_artifact,
     validate_walk_forward_selection_artifact,
+    validate_weight_path_artifact,
+    validate_window_audit_artifact,
+    weight_path_report_payload,
+    window_audit_report_payload,
 )
 from ai_trading_system.reports import reader_brief
 
@@ -304,6 +313,51 @@ def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(tmp_path: Path
     assert validate_sweep_artifact(sweep_id=sweep_id, output_dir=output_dir)["status"] == "PASS"
 
     first_artifact = Path(results[0]["real_evaluation_artifact_path"])
+    real_payload = json.loads(first_artifact.read_text(encoding="utf-8"))
+    evaluation_id = real_payload["dynamic_v3_real_evaluation_report_id"]
+    assert real_payload["backtest_window"]["configured_backtest_start"] == "2022-12-01"
+    assert real_payload["comparison_daily_paths"]["dynamic_candidate"]
+    weight_validation = validate_weight_path_artifact(
+        evaluation_id=evaluation_id,
+        search_root=output_dir,
+    )
+    assert weight_validation["status"] == "PASS"
+    assert weight_validation["attribution_completeness"] == "PARTIAL"
+    weight_report = weight_path_report_payload(evaluation_id=evaluation_id, search_root=output_dir)
+    assert Path(weight_report["daily_weights_path"]).exists()
+    assert Path(weight_report["weight_path_metadata_path"]).exists()
+
+    attribution = run_candidate_attribution(
+        sweep_id=sweep_id,
+        candidate_id=results[0]["candidate_id"],
+        sweep_output_dir=output_dir,
+        output_dir=tmp_path / "candidate_attribution",
+    )
+    assert attribution["report"]["status"] == "PARTIAL"
+    assert attribution["report"]["attribution_completeness"] == "PARTIAL"
+
+    window_audit = run_window_audit(
+        as_of=pd.Timestamp("2022-12-01").date(),
+        end=pd.Timestamp(as_of).date(),
+        artifact_root=output_dir,
+        output_dir=tmp_path / "window_audit",
+    )
+    assert window_audit["report"]["configured_backtest_start"] == "2022-12-01"
+    assert (
+        validate_window_audit_artifact(
+            audit_id=window_audit["window_audit_id"],
+            output_dir=tmp_path / "window_audit",
+        )["status"]
+        == "PASS"
+    )
+    assert (
+        window_audit_report_payload(
+            audit_id=window_audit["window_audit_id"],
+            output_dir=tmp_path / "window_audit",
+        )["configured_backtest_start"]
+        == "2022-12-01"
+    )
+
     first_artifact.unlink()
     validation = validate_sweep_artifact(sweep_id=sweep_id, output_dir=output_dir)
     assert validation["status"] == "FAIL"
@@ -312,6 +366,68 @@ def test_real_dynamic_v3_rescue_sweep_smoke_writes_real_artifacts(tmp_path: Path
         and check["passed"] is False
         for check in validation["checks"]
     )
+
+
+def test_dynamic_v3_data_provenance_repair_and_validate(tmp_path: Path) -> None:
+    prices_path, rates_path, as_of = _write_real_smoke_cache(tmp_path)
+
+    inspect = data_provenance_inspect_price_cache(
+        prices_path=prices_path,
+        rates_path=rates_path,
+        output_dir=tmp_path / "data_provenance",
+    )
+    assert inspect["status"] == "PASS_WITH_WARNINGS"
+    assert inspect["prices_checksum_in_manifest"] is False
+
+    repaired = data_provenance_repair_price_manifest(
+        prices_path=prices_path,
+        rates_path=rates_path,
+    )
+    assert repaired["provenance_status"] == "RECONSTRUCTED_MANIFEST"
+    assert Path(repaired["reconstructed_manifest_path"]).exists()
+
+    validation = data_provenance_validate(prices_path=prices_path, rates_path=rates_path)
+    assert validation["status"] == "PASS_WITH_WARNINGS"
+    assert validation["prices_checksum_in_manifest"] is True
+    assert validation["failed_check_count"] == 0
+
+    data_audit = run_data_audit(
+        as_of=pd.Timestamp(as_of).date(),
+        end=pd.Timestamp(as_of).date(),
+        prices_path=prices_path,
+        rates_path=rates_path,
+        output_dir=tmp_path / "data_audit",
+    )
+    assert data_audit["report"]["prices_download_manifest_checksum_missing"] is False
+    assert data_audit["report"]["provenance_status"] == "RECONSTRUCTED_MANIFEST"
+
+
+def test_window_audit_detects_incomplete_actual_window(tmp_path: Path) -> None:
+    artifact_path = tmp_path / "real_evaluation.json"
+    artifact_path.write_text(
+        json.dumps(
+            {
+                "report_type": "etf_dynamic_v3_real_evaluation_report",
+                "status": "PASS",
+                "market_regime": {"default_backtest_start": "2022-12-01"},
+                "requested_range": {"start": "2022-12-01", "end": "2026-06-04"},
+                "daily_path_summary": {
+                    "first_signal_date": "2025-05-28",
+                    "last_signal_date": "2026-05-28",
+                    "row_count": 252,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    inspected = inspect_window_artifact(artifact_path=artifact_path)
+
+    assert inspected["status"] == "INCOMPLETE"
+    assert inspected["record"]["promotion_blocking"] is True
+    assert "actual_evaluation_start_after_configured_backtest_start" in inspected["record"][
+        "window_mismatch_reasons"
+    ]
 
 
 def test_dynamic_v3_stable_real_loop_artifact_contracts(tmp_path: Path) -> None:
@@ -491,10 +607,27 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
         json.dumps({"status": "review_required", "production_candidate_generated": False}),
         encoding="utf-8",
     )
+    evidence_path = tmp_path / "evidence_summary.json"
+    evidence_path.write_text(
+        json.dumps(
+            {
+                "backtest_window_status": "PASS",
+                "weight_path_status": "PARTIAL",
+                "candidate_attribution_status": "PARTIAL",
+                "provenance_status": "RECONSTRUCTED_MANIFEST",
+                "download_manifest_status": "PASS_WITH_WARNINGS",
+                "promotion_blocking_flags": [
+                    "WEIGHT_PATH_PARTIAL",
+                    "DATA_PROVENANCE_INCOMPLETE",
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
     report_index = {
         "reports": [
             _report_record("etf_dynamic_v3_parameter_sweep_leaderboard", leaderboard_path),
-            _report_record("etf_dynamic_v3_promotion_pack", promotion_path),
+            _report_record("etf_dynamic_v3_promotion_pack", evidence_path),
         ]
     }
 
@@ -505,6 +638,16 @@ def test_reader_brief_dynamic_v3_parameter_research_summary(tmp_path: Path) -> N
     assert summary["not_for_investment_decision"] is True
     assert summary["top_candidate"] == "abc123"
     assert summary["promotion_status"] == "review_required"
+    assert summary["backtest_window_status"] == "PASS"
+    assert summary["weight_path_status"] == "PARTIAL"
+    assert summary["candidate_attribution_status"] == "PARTIAL"
+    assert summary["data_provenance_status"] == "RECONSTRUCTED_MANIFEST"
+    assert summary["download_manifest_status"] == "PASS_WITH_WARNINGS"
+    assert summary["promotion_blocking_flags"] == (
+        "WEIGHT_PATH_PARTIAL, DATA_PROVENANCE_INCOMPLETE"
+    )
+    assert summary["promotion_manifest"] == str(promotion_path)
+    assert summary["evidence_summary"] == str(evidence_path)
     assert summary["production_candidate_generated"] is False
 
 
