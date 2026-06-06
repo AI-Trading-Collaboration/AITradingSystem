@@ -2307,9 +2307,9 @@ def _signal_ablation_summary(report: DailyTaskDashboardReport) -> TraceRecord:
         "exists": True,
         "path": str(path),
         "href": _report_href(path, report.reports_dir),
-        "markdown_href": _report_href(markdown_path, report.reports_dir)
-        if markdown_path.exists()
-        else "",
+        "markdown_href": (
+            _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+        ),
         "backtest_mode": metadata.get("backtest_mode", "UNKNOWN"),
         "positive_signals_count": len(_strings(summary.get("positive_signals"))),
         "negative_signals_count": len(_strings(summary.get("negative_signals"))),
@@ -2320,10 +2320,8 @@ def _signal_ablation_summary(report: DailyTaskDashboardReport) -> TraceRecord:
             "can_support_candidate_promotion",
             False,
         ),
-        "real_signals_used_in_score": diagnostics.get("all_real_signals_used_in_score")
-        is True,
-        "ablation_changed_scores": diagnostics.get("all_ablation_runs_changed_scores")
-        is True,
+        "real_signals_used_in_score": diagnostics.get("all_real_signals_used_in_score") is True,
+        "ablation_changed_scores": diagnostics.get("all_ablation_runs_changed_scores") is True,
         "ablation_changed_portfolio": diagnostics.get("any_score_to_portfolio_disconnect")
         is not True,
         "implementation_warnings_count": len(implementation_warnings),
@@ -2417,9 +2415,9 @@ def _signal_calibration_summary(report: DailyTaskDashboardReport) -> TraceRecord
         "exists": True,
         "path": str(path),
         "href": _report_href(path, report.reports_dir),
-        "markdown_href": _report_href(markdown_path, report.reports_dir)
-        if markdown_path.exists()
-        else "",
+        "markdown_href": (
+            _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+        ),
         "profiles_tested": len(profiles),
         "best_profile": best_profile,
         "current_profile": "baseline_v0_1",
@@ -2529,21 +2527,18 @@ def _portfolio_sensitivity_summary(report: DailyTaskDashboardReport) -> TraceRec
         "exists": True,
         "path": str(path),
         "href": _report_href(path, report.reports_dir),
-        "markdown_href": _report_href(markdown_path, report.reports_dir)
-        if markdown_path.exists()
-        else "",
+        "markdown_href": (
+            _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+        ),
         "profiles_tested": len(profiles),
         "best_profile": best_profile,
         "primary_bottleneck": diagnosis.get("primary_bottleneck", "UNKNOWN"),
-        "portfolio_is_too_insensitive": diagnosis.get("portfolio_is_too_insensitive")
-        is True,
+        "portfolio_is_too_insensitive": diagnosis.get("portfolio_is_too_insensitive") is True,
         "rebalance_suppression_ratio": _optional_float(
             target_to_actual.get("rebalance_suppression_ratio")
         ),
         "constraint_binding_warning": constraint.get("warning", ""),
-        "turnover_delta_vs_baseline": _optional_float(
-            turnover.get("turnover_delta_vs_baseline")
-        ),
+        "turnover_delta_vs_baseline": _optional_float(turnover.get("turnover_delta_vs_baseline")),
         "data_registry_consistency": data_gate.get("data_registry_consistency", "UNKNOWN"),
         "latest_resolution_status": data_gate.get("latest_resolution_status", "UNKNOWN"),
         "price_cache_registry": data_gate.get("price_cache_registry", "UNKNOWN"),
@@ -2624,8 +2619,7 @@ def _portfolio_candidates_summary(report: DailyTaskDashboardReport) -> TraceReco
         _optional_float(best_transmission.get("target_to_actual_weight_effectiveness")) or 0.0
     )
     baseline_effectiveness = (
-        _optional_float(baseline_transmission.get("target_to_actual_weight_effectiveness"))
-        or 0.0
+        _optional_float(baseline_transmission.get("target_to_actual_weight_effectiveness")) or 0.0
     )
     signal_improvement = best_effectiveness - baseline_effectiveness
     guardrail = _mapping_value(best, "risk_guardrails")
@@ -2652,9 +2646,9 @@ def _portfolio_candidates_summary(report: DailyTaskDashboardReport) -> TraceReco
         "exists": True,
         "path": str(path),
         "href": _report_href(path, report.reports_dir),
-        "markdown_href": _report_href(markdown_path, report.reports_dir)
-        if markdown_path.exists()
-        else "",
+        "markdown_href": (
+            _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+        ),
         "profiles_tested": len(profiles),
         "best_profile": best_profile,
         "signal_transmission_improvement": round(signal_improvement, 6),
@@ -2743,12 +2737,14 @@ def _portfolio_candidate_review_summary(report: DailyTaskDashboardReport) -> Tra
         "exists": True,
         "path": str(path),
         "href": _report_href(path, report.reports_dir),
-        "markdown_href": _report_href(markdown_path, report.reports_dir)
-        if markdown_path.exists()
-        else "",
-        "package_href": _report_href(package_markdown_path, report.reports_dir)
-        if package_markdown_path.exists()
-        else _report_href(package_path, report.reports_dir),
+        "markdown_href": (
+            _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+        ),
+        "package_href": (
+            _report_href(package_markdown_path, report.reports_dir)
+            if package_markdown_path.exists()
+            else _report_href(package_path, report.reports_dir)
+        ),
         "candidate_profile": candidate.get("profile_name", ""),
         "reviewer": decision.get("reviewer", ""),
         "reason": decision.get("reason", ""),
@@ -2844,9 +2840,9 @@ def _portfolio_candidate_tracking_summary(report: DailyTaskDashboardReport) -> T
         "exists": True,
         "path": str(path),
         "href": _report_href(path, report.reports_dir),
-        "markdown_href": _report_href(markdown_path, report.reports_dir)
-        if markdown_path.exists()
-        else "",
+        "markdown_href": (
+            _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+        ),
         "candidate_profile": candidate.get("profile_name", ""),
         "review_status": candidate.get("review_status", ""),
         "tracking_status": candidate.get("tracking_status", "UNKNOWN"),
@@ -2956,9 +2952,9 @@ def _portfolio_tracking_review_summary(report: DailyTaskDashboardReport) -> Trac
         "exists": True,
         "path": str(path),
         "href": _report_href(path, report.reports_dir),
-        "markdown_href": _report_href(markdown_path, report.reports_dir)
-        if markdown_path.exists()
-        else "",
+        "markdown_href": (
+            _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+        ),
         "candidate_profile": candidate.get("profile_name", ""),
         "tracking_days": tracking_window.get(
             "tracking_days",
@@ -3078,9 +3074,9 @@ def _weight_tuning_summary(report: DailyTaskDashboardReport) -> TraceRecord:
         "exists": True,
         "path": str(path),
         "href": _report_href(path, report.reports_dir),
-        "markdown_href": _report_href(markdown_path, report.reports_dir)
-        if markdown_path.exists()
-        else "",
+        "markdown_href": (
+            _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+        ),
         "portfolio_profile": inputs.get("portfolio_profile", ""),
         "candidates_evaluated": search.get("candidates_evaluated", 0),
         "recommended_status": recommended.get("status", "UNKNOWN"),
@@ -3177,9 +3173,9 @@ def _weight_tuning_failure_summary(report: DailyTaskDashboardReport) -> TraceRec
         "exists": True,
         "path": str(path),
         "href": _report_href(path, report.reports_dir),
-        "markdown_href": _report_href(markdown_path, report.reports_dir)
-        if markdown_path.exists()
-        else "",
+        "markdown_href": (
+            _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+        ),
         "tuning_result": tuning.get("result", "UNKNOWN"),
         "candidate_status": tuning.get("candidate_status", "UNKNOWN"),
         "guardrail_status": tuning.get("guardrail_status", "UNKNOWN"),
@@ -3278,9 +3274,9 @@ def _weight_stability_summary(report: DailyTaskDashboardReport) -> TraceRecord:
         "exists": True,
         "path": str(path),
         "href": _report_href(path, report.reports_dir),
-        "markdown_href": _report_href(markdown_path, report.reports_dir)
-        if markdown_path.exists()
-        else "",
+        "markdown_href": (
+            _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+        ),
         "previous_root_cause": context.get("previous_failure_root_cause", ""),
         "candidates_generated": search.get("candidates_generated", 0),
         "rejected_by_stability": search.get("candidates_rejected_by_stability", 0),
@@ -3387,9 +3383,9 @@ def _weight_stability_readiness_summary(report: DailyTaskDashboardReport) -> Tra
         "exists": True,
         "path": str(path),
         "href": _report_href(path, report.reports_dir),
-        "markdown_href": _report_href(markdown_path, report.reports_dir)
-        if markdown_path.exists()
-        else "",
+        "markdown_href": (
+            _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+        ),
         "can_run": eligibility.get("can_run", False),
         "previous_candidates_backtested": context.get("previous_candidates_backtested", 0),
         "freshness_status": freshness.get("status", "UNKNOWN"),
@@ -3400,10 +3396,7 @@ def _weight_stability_readiness_summary(report: DailyTaskDashboardReport) -> Tra
         "next_action": next_action,
         "production_effect": metadata.get("production_effect", ProductionEffect.NONE.value),
         "risk": "；".join(risks)
-        or str(
-            eligibility.get("reason")
-            or "Stable tuning readiness 只读展示，不运行恢复或调参。"
-        ),
+        or str(eligibility.get("reason") or "Stable tuning readiness 只读展示，不运行恢复或调参。"),
     }
 
 
@@ -3498,9 +3491,9 @@ def _portfolio_turnover_attribution_summary(report: DailyTaskDashboardReport) ->
         "exists": True,
         "path": str(path),
         "href": _report_href(path, report.reports_dir),
-        "markdown_href": _report_href(markdown_path, report.reports_dir)
-        if markdown_path.exists()
-        else "",
+        "markdown_href": (
+            _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+        ),
         "root_cause_category": root_cause.get(
             "category",
             summary.get("root_cause_category", "mixed"),
@@ -3613,9 +3606,9 @@ def _market_data_freshness_summary(report: DailyTaskDashboardReport) -> TraceRec
         "exists": True,
         "path": str(path),
         "href": _report_href(path, report.reports_dir),
-        "markdown_href": _report_href(markdown_path, report.reports_dir)
-        if markdown_path.exists()
-        else "",
+        "markdown_href": (
+            _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+        ),
         "tracking_date": data_dates.get("tracking_date", ""),
         "effective_data_date": data_dates.get("effective_data_date", ""),
         "freshness_status": freshness.get("status", metadata.get("status", "UNKNOWN")),
@@ -3627,8 +3620,7 @@ def _market_data_freshness_summary(report: DailyTaskDashboardReport) -> TraceRec
         "latest_refresh_status": _latest_market_data_refresh_status(report),
         "suggested_action": actions[0].get("action", "") if actions else "",
         "production_effect": metadata.get("production_effect", ProductionEffect.NONE.value),
-        "risk": "；".join(risks)
-        or "Market data freshness 只读展示；不下载数据、不写 production。",
+        "risk": "；".join(risks) or "Market data freshness 只读展示；不下载数据、不写 production。",
     }
 
 
@@ -3716,9 +3708,9 @@ def _market_data_refresh_summary(report: DailyTaskDashboardReport) -> TraceRecor
         "exists": True,
         "path": str(path),
         "href": _report_href(path, report.reports_dir),
-        "markdown_href": _report_href(markdown_path, report.reports_dir)
-        if markdown_path.exists()
-        else "",
+        "markdown_href": (
+            _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+        ),
         "target_date": actions.get("target_date", ""),
         "source": actions.get("source", ""),
         "before_freshness": before.get("freshness_status", "UNKNOWN"),
@@ -3810,9 +3802,9 @@ def _price_cache_reconcile_summary(report: DailyTaskDashboardReport) -> TraceRec
         "exists": True,
         "path": str(path),
         "href": _report_href(path, report.reports_dir),
-        "markdown_href": _report_href(markdown_path, report.reports_dir)
-        if markdown_path.exists()
-        else "",
+        "markdown_href": (
+            _report_href(markdown_path, report.reports_dir) if markdown_path.exists() else ""
+        ),
         "latest_resolution": after.get("latest_resolution", "UNKNOWN"),
         "manifest_date": after.get("manifest_date", ""),
         "market_data_date": after.get("market_data_date", ""),
@@ -11282,10 +11274,7 @@ def _render_portfolio_tracking_review_summary(report: DailyTaskDashboardReport) 
         [
             '<section aria-labelledby="portfolio-tracking-review-summary-title">',
             '<div class="section-head">',
-            (
-                '<h2 id="portfolio-tracking-review-summary-title">'
-                "Portfolio Tracking Review</h2>"
-            ),
+            ('<h2 id="portfolio-tracking-review-summary-title">' "Portfolio Tracking Review</h2>"),
             (
                 "<p>active shadow candidate 的 rolling performance review；dashboard "
                 "只读 review artifact，不改变 production 参数或 promotion gate。</p>"

@@ -1,6 +1,8 @@
 # TRADING-006：Paper Signal Quality Evaluation
 
-最后更新：2026-05-17
+状态：`VALIDATING`
+
+最后更新：2026-06-07
 
 关联任务：`TRADING-006`
 
@@ -81,3 +83,8 @@ id、version、status、阈值和配置路径。该 policy 是 pilot baseline，
   Black check；`python -m black --check src tests scripts` 在当前 Black 26.5.0 /
   Python 3.14.4 环境下仍报告 125 个既有文件 would reformat，未为通过该命令重排
   无关文件。
+- 2026-06-07：从 `IN_PROGRESS` 改为 `VALIDATING`。原因：本轮用项目 `.venv`
+  Python 3.11 / Black 26.5.0 对 TRADING-006 触达的 dashboard 文件完成机械格式化，
+  目标 paper signal quality tests、dashboard tests、ruff 和目标文件 Black check 通过。
+  全仓 `python -m black --check src tests scripts` 仍受既有无关文件 baseline 阻断，
+  不在本任务中重排无关模块。
