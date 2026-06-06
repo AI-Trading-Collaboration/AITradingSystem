@@ -644,7 +644,8 @@ def test_precheck_triaged_official_candidates_cli_filters_high_priority_bucket(
 
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test")
     monkeypatch.setattr(
-        "ai_trading_system.cli.run_openai_risk_event_prereview_for_official_candidates",
+        "ai_trading_system.cli_commands.risk_events."
+        "run_openai_risk_event_prereview_for_official_candidates",
         fake_run,
     )
 
