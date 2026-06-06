@@ -7,7 +7,7 @@ import shutil
 import subprocess
 import sys
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Any
@@ -1453,10 +1453,19 @@ def run_daily_ops_plan(
             )
             continue
 
+        execution_step = replace(
+            step,
+            command=_daily_ops_step_command_with_visibility_cutoff(
+                step,
+                plan=plan,
+                visibility_cutoff=started_at,
+                latest_completed_trading_day=visibility_completed_trading_day,
+            ),
+        )
         step_started = datetime.now(tz=UTC)
         try:
             completed = runner(
-                _execution_command(step.command, project_root=project_root),
+                _execution_command(execution_step.command, project_root=project_root),
                 cwd=project_root,
                 env=checked_env,
                 text=True,
@@ -1472,7 +1481,7 @@ def run_daily_ops_plan(
             diagnostic_path = None
             if status == "FAIL":
                 diagnostic_path = _write_step_failure_diagnostic(
-                    step=step,
+                    step=execution_step,
                     as_of=plan.as_of,
                     started_at=step_started,
                     ended_at=step_ended,
@@ -1486,7 +1495,7 @@ def run_daily_ops_plan(
             result = DailyOpsStepResult(
                 step_id=step.step_id,
                 title=step.title,
-                command=step.command,
+                command=execution_step.command,
                 status=status,
                 return_code=return_code,
                 started_at=step_started,
@@ -1503,7 +1512,7 @@ def run_daily_ops_plan(
             step_ended = datetime.now(tz=UTC)
             error = f"{type(exc).__name__}: {exc}"
             diagnostic_path = _write_step_failure_diagnostic(
-                step=step,
+                step=execution_step,
                 as_of=plan.as_of,
                 started_at=step_started,
                 ended_at=step_ended,
@@ -1517,7 +1526,7 @@ def run_daily_ops_plan(
             result = DailyOpsStepResult(
                 step_id=step.step_id,
                 title=step.title,
-                command=step.command,
+                command=execution_step.command,
                 status="FAIL",
                 return_code=None,
                 started_at=step_started,
@@ -1969,6 +1978,30 @@ def _join_command(command: tuple[str, ...]) -> str:
     return " ".join(_quote_command_arg(arg) for arg in command)
 
 
+def _daily_ops_step_command_with_visibility_cutoff(
+    step: DailyOpsStep,
+    *,
+    plan: DailyOpsPlan,
+    visibility_cutoff: datetime,
+    latest_completed_trading_day: date | None,
+) -> tuple[str, ...]:
+    command = step.command
+    if (
+        step.step_id != "score_daily"
+        or not command
+        or "--skip-risk-event-openai-precheck" in command
+        or "--risk-event-openai-precheck-visibility-cutoff" in command
+        or latest_completed_trading_day is None
+        or plan.as_of != latest_completed_trading_day
+    ):
+        return command
+    return (
+        *command,
+        "--risk-event-openai-precheck-visibility-cutoff",
+        visibility_cutoff.astimezone(UTC).isoformat(),
+    )
+
+
 def _execution_command(
     command: tuple[str, ...],
     project_root: Path = PROJECT_ROOT,
@@ -2256,6 +2289,7 @@ def _metadata_step_result(result: DailyOpsStepResult) -> Mapping[str, object]:
         "step_id": result.step_id,
         "status": result.status,
         "return_code": result.return_code,
+        "command": _join_command(result.command) if result.command else "",
         "started_at": None if result.started_at is None else result.started_at.isoformat(),
         "ended_at": None if result.ended_at is None else result.ended_at.isoformat(),
         "duration_seconds": result.duration_seconds,

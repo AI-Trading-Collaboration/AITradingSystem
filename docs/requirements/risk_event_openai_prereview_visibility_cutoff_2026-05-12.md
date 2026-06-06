@@ -1,6 +1,6 @@
 # RISK-015 风险事件 OpenAI 预审请求可见时间
 
-状态：IN_PROGRESS
+状态：VALIDATING
 
 最后更新：2026-05-12
 
@@ -30,3 +30,5 @@
 ## 进展
 
 - 2026-05-12：新增任务并进入实现，原因：最新交易日 `daily-run` 已越过 PIT、SEC 和 valuation，但在 `score_daily` 的 `risk_event_prereview_request_in_future` 阻塞；需要区分生产日报的盘后决策时间和历史回放的 as-of 日期。
+- 2026-06-07：继续实现，范围限定为风险事件 OpenAI 预审可见性校验、`score-daily`/`daily-run` cutoff 传递、报告披露和 focused tests；历史 as-of 或未显式生产 cutoff 的路径仍保持 fail closed。
+- 2026-06-07：进入验证，原因：已补 `score-daily --risk-event-openai-precheck-visibility-cutoff`、daily-run latest production 注入、预审报告 request/as_of/cutoff 披露和 focused tests；验证通过相关 pytest、ruff 和 `git diff --check`，尚未执行真实 latest production daily-run。

@@ -15188,6 +15188,16 @@ def score_daily(
         Path | None,
         typer.Option(help="Markdown 风险事件 OpenAI 自动预审报告输出路径。"),
     ] = None,
+    risk_event_openai_precheck_visibility_cutoff: Annotated[
+        str | None,
+        typer.Option(
+            "--risk-event-openai-precheck-visibility-cutoff",
+            help=(
+                "生产日报 OpenAI request timestamp 可见时间上限，ISO datetime；"
+                "仅允许用于最新已完成美股交易日。"
+            ),
+        ),
+    ] = None,
     llm_request_profiles_path: Annotated[
         Path,
         typer.Option(help="LLM request profile 配置路径。"),
@@ -15323,6 +15333,19 @@ def score_daily(
     score_started_at = datetime.now(tz=UTC)
     score_date = _parse_date(as_of) if as_of else resolve_daily_ops_default_as_of(score_started_at)
     production_score_date = resolve_daily_ops_default_as_of(score_started_at)
+    explicit_risk_event_precheck_visibility_cutoff = (
+        _parse_datetime(risk_event_openai_precheck_visibility_cutoff)
+        if risk_event_openai_precheck_visibility_cutoff
+        else None
+    )
+    if (
+        explicit_risk_event_precheck_visibility_cutoff is not None
+        and score_date != production_score_date
+    ):
+        raise typer.BadParameter(
+            "risk_event_openai_precheck_visibility_cutoff 只能用于最新已完成美股交易日；"
+            "历史 as-of 的 OpenAI request timestamp 仍按 as_of 当日 UTC 末尾 fail closed。"
+        )
     benchmark_tickers = tuple(_parse_csv_items(review_benchmarks))
     if not benchmark_tickers:
         raise typer.BadParameter("日报交易复盘至少需要一个归因基准标的。")
@@ -15812,10 +15835,8 @@ def score_daily(
             openai_cache_dir=openai_cache_dir,
             openai_cache_ttl_seconds=effective_openai_cache_ttl_hours * 3600,
             max_retries=llm_profile.max_retries,
-            generated_at=(score_started_at if score_date == production_score_date else None),
-            request_visibility_cutoff=(
-                score_started_at if score_date == production_score_date else None
-            ),
+            generated_at=explicit_risk_event_precheck_visibility_cutoff,
+            request_visibility_cutoff=explicit_risk_event_precheck_visibility_cutoff,
             max_candidates=effective_risk_event_openai_precheck_max_candidates,
         )
         write_risk_event_prereview_import_report(
@@ -16174,6 +16195,7 @@ def score_daily(
                 cache_dir=openai_cache_dir,
                 cache_ttl_hours=effective_openai_cache_ttl_hours,
                 max_candidates=effective_risk_event_openai_precheck_max_candidates,
+                request_visibility_cutoff=explicit_risk_event_precheck_visibility_cutoff,
             )
             if risk_event_openai_precheck
             and official_policy_fetch_report is not None
@@ -16318,7 +16340,18 @@ def _risk_event_openai_precheck_daily_section(
     cache_dir: Path,
     cache_ttl_hours: float,
     max_candidates: int,
+    request_visibility_cutoff: datetime | None,
 ) -> str:
+    as_of_text = (
+        risk_event_prereview_report.as_of.isoformat()
+        if risk_event_prereview_report.as_of is not None
+        else "未记录"
+    )
+    visibility_cutoff_text = (
+        request_visibility_cutoff.astimezone(UTC).isoformat()
+        if request_visibility_cutoff is not None
+        else "未显式传入，request_timestamp 按 as_of 当日 UTC 末尾 fail closed"
+    )
     lines = [
         "## 日报前 OpenAI 风险事件预审",
         "",
@@ -16337,6 +16370,10 @@ def _risk_event_openai_precheck_daily_section(
         f"MISS={risk_event_prereview_report.openai_cache_miss_count} / "
         f"EXPIRED={risk_event_prereview_report.openai_cache_expired_count} / "
         f"DISABLED={risk_event_prereview_report.openai_cache_disabled_count}",
+        (
+            "- request timestamp 可见性："
+            f"as_of={as_of_text}；visibility_cutoff={visibility_cutoff_text}"
+        ),
         f"- 本次候选上限：{max_candidates}",
         f"- LLM claim 数：{risk_event_prereview_report.row_count}",
         f"- 待人工复核队列记录数：{risk_event_prereview_report.record_count}",

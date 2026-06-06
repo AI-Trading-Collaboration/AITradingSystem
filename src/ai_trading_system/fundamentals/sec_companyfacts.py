@@ -248,8 +248,10 @@ def _write_json(
     if raw_payload is not None:
         output_path.write_bytes(raw_payload.rstrip() + b"\n")
         return
+    encoder = json.JSONEncoder(ensure_ascii=False, separators=(",", ":"))
     with output_path.open("w", encoding="utf-8") as file:
-        json.dump(data, file, ensure_ascii=False, separators=(",", ":"))
+        for chunk in encoder.iterencode(data):
+            file.write(chunk)
         file.write("\n")
 
 

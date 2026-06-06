@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -11,6 +12,7 @@ from ai_trading_system.cli import app
 from ai_trading_system.config import SecCompaniesConfig, SecCompanyConfig, load_sec_companies
 from ai_trading_system.fundamentals.sec_companyfacts import (
     SecCompanyFactsRequest,
+    _write_json,
     download_sec_companyfacts,
 )
 
@@ -107,6 +109,24 @@ def test_download_sec_companyfacts_preserves_raw_json_bytes(tmp_path: Path) -> N
     assert raw_text.startswith('{"cik":1045810')
     assert raw_text.endswith("\n")
     assert summary.total_fact_count == 1
+
+
+def test_write_json_streams_compact_valid_json_without_sorting(tmp_path: Path) -> None:
+    output_path = tmp_path / "companyfacts.json"
+    payload = {
+        "z_key": "kept_first",
+        "a_key": "kept_second",
+        "facts": {"us-gaap": {"Revenues": {"units": {"USD": []}}}},
+    }
+
+    _write_json(payload, output_path)
+
+    text = output_path.read_text(encoding="utf-8")
+    assert text == (
+        '{"z_key":"kept_first","a_key":"kept_second",'
+        '"facts":{"us-gaap":{"Revenues":{"units":{"USD":[]}}}}}\n'
+    )
+    assert json.loads(text) == payload
 
 
 def test_download_sec_companyfacts_rejects_unknown_ticker(tmp_path: Path) -> None:

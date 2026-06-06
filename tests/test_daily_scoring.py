@@ -749,6 +749,7 @@ def test_risk_event_openai_daily_section_includes_transport_client() -> None:
         ),
         risk_event_prereview_report=SimpleNamespace(
             status="PASS_WITH_WARNINGS",
+            as_of=date(2026, 5, 11),
             row_count=20,
             record_count=7,
             high_level_candidate_count=6,
@@ -782,12 +783,14 @@ def test_risk_event_openai_daily_section_includes_transport_client() -> None:
         cache_dir=Path("data/processed/agent_request_cache"),
         cache_ttl_hours=24.0,
         max_candidates=20,
+        request_visibility_cutoff=datetime(2026, 5, 12, 4, 10, tzinfo=UTC),
     )
 
     assert "- HTTP client：requests" in section
     assert "- LLM request profile：risk_event_daily_official_precheck" in section
     assert "- OpenAI 请求缓存 TTL：24 小时" in section
     assert "HIT=2 / MISS=18" in section
+    assert "as_of=2026-05-11；visibility_cutoff=2026-05-12T04:10:00+00:00" in section
     assert "- 待人工复核队列记录数：7" in section
     assert "- LLM formal 自动写入：是" in section
     assert "- LLM formal occurrence 数：3" in section

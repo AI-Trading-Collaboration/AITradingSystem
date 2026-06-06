@@ -189,6 +189,10 @@ def _dispatch(args: list[str]) -> None:
             )
             or "risk_event_daily_official_precheck",
             run_id=_option(args, "--run-id"),
+            risk_event_openai_precheck_visibility_cutoff=_option(
+                args,
+                "--risk-event-openai-precheck-visibility-cutoff",
+            ),
         )
         return
     if args[:2] == ["feedback", "optimize-market-feedback"]:

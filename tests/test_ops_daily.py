@@ -172,6 +172,58 @@ def test_daily_ops_plan_threads_run_id_into_score_daily() -> None:
     )
 
 
+def test_daily_ops_run_injects_risk_event_openai_visibility_cutoff(
+    tmp_path: Path,
+) -> None:
+    plan = build_daily_ops_plan(
+        as_of=date(2026, 5, 6),
+        project_root=tmp_path,
+        include_download_data=False,
+        include_pit_snapshots=False,
+        include_sec_fundamentals=False,
+        include_valuation_snapshots=False,
+        include_secret_scan=False,
+        skip_risk_event_openai_precheck=False,
+    )
+    for step in plan.steps:
+        for path in step.produced_paths:
+            if path.suffix.lower() != ".md":
+                continue
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("- 状态：PASS\n", encoding="utf-8")
+
+    calls: list[tuple[str, ...]] = []
+
+    def fake_runner(command: tuple[str, ...], **_: object) -> subprocess.CompletedProcess[str]:
+        calls.append(command)
+        return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
+
+    report = run_daily_ops_plan(
+        plan,
+        project_root=tmp_path,
+        env={
+            "OPENAI_API_KEY": "present",
+            "FMP_API_KEY": "present",
+            "MARKETSTACK_API_KEY": "present",
+        },
+        runner=fake_runner,
+        visibility_check_date=date(2026, 5, 6),
+        visibility_latest_completed_trading_day=date(2026, 5, 6),
+    )
+    score_call = next(command for command in calls if "score-daily" in command)
+    cutoff_index = score_call.index("--risk-event-openai-precheck-visibility-cutoff") + 1
+    cutoff = datetime.fromisoformat(score_call[cutoff_index])
+    score_result = next(result for result in report.step_results if result.step_id == "score_daily")
+    metadata_score_result = next(
+        result for result in report.metadata.step_results if result["step_id"] == "score_daily"
+    )
+
+    assert report.status == "PASS_WITH_SKIPS"
+    assert cutoff.tzinfo is not None
+    assert "--risk-event-openai-precheck-visibility-cutoff" in score_result.command
+    assert "--risk-event-openai-precheck-visibility-cutoff" in metadata_score_result["command"]
+
+
 def test_daily_ops_workflow_step_adapter_preserves_command_and_outputs(tmp_path: Path) -> None:
     output_path = tmp_path / "outputs" / "reports" / "daily_ops_run_2026-05-06.md"
     output_path.parent.mkdir(parents=True)

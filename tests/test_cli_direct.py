@@ -50,12 +50,18 @@ def test_cli_direct_score_daily_keeps_openai_precheck_enabled(monkeypatch) -> No
             "2026-05-11",
             "--risk-event-openai-precheck-max-candidates",
             "7",
+            "--risk-event-openai-precheck-visibility-cutoff",
+            "2026-05-12T04:10:00+00:00",
         ]
     )
 
     assert exit_code == 0
     assert captured["risk_event_openai_precheck"] is True
     assert captured["risk_event_openai_precheck_max_candidates"] == 7
+    assert (
+        captured["risk_event_openai_precheck_visibility_cutoff"]
+        == "2026-05-12T04:10:00+00:00"
+    )
     assert captured["llm_request_profile"] == "risk_event_daily_official_precheck"
 
 

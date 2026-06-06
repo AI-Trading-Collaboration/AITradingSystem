@@ -270,6 +270,8 @@ class RiskEventPreReviewImportReport:
     checksum_sha256: str
     records: tuple[RiskEventPreReviewRecord, ...]
     source_kind: RiskEventPreReviewSourceKind = "csv_import"
+    as_of: date | None = None
+    request_visibility_cutoff: datetime | None = None
     issues: tuple[RiskEventPreReviewIssue, ...] = field(default_factory=tuple)
     openai_request_count: int = 0
     openai_cache_hit_count: int = 0
@@ -339,6 +341,8 @@ def import_risk_event_prereview_csv(
             row_count=0,
             checksum_sha256=checksum,
             records=(),
+            as_of=as_of,
+            request_visibility_cutoff=request_visibility_cutoff,
             issues=tuple(issues),
         )
 
@@ -380,6 +384,8 @@ def import_risk_event_prereview_csv(
         row_count=row_count,
         checksum_sha256=checksum,
         records=tuple(sorted(records, key=lambda item: item.precheck_id)) if not has_error else (),
+        as_of=as_of,
+        request_visibility_cutoff=request_visibility_cutoff,
         issues=tuple(issues),
     )
 
@@ -528,6 +534,8 @@ def run_openai_risk_event_prereview_for_official_candidates(
         checksum_sha256=_official_candidate_batch_checksum(packet_checksums),
         records=tuple(sorted(records, key=lambda item: item.precheck_id)) if not has_error else (),
         source_kind="openai_live",
+        as_of=as_of,
+        request_visibility_cutoff=request_visibility_cutoff,
         issues=tuple(issues),
         openai_request_count=openai_request_count,
         openai_cache_hit_count=openai_cache_hit_count,
@@ -609,6 +617,8 @@ def build_risk_event_prereview_from_llm_claim_report(
             checksum_sha256=_claim_report_checksum(claim_report),
             records=(),
             source_kind="openai_live",
+            as_of=as_of,
+            request_visibility_cutoff=request_visibility_cutoff,
             issues=tuple(issues),
             openai_request_count=claim_report.openai_request_count,
             openai_cache_hit_count=claim_report.openai_cache_hit_count,
@@ -668,6 +678,8 @@ def build_risk_event_prereview_from_llm_claim_report(
         checksum_sha256=_claim_report_checksum(claim_report),
         records=tuple(sorted(records, key=lambda item: item.precheck_id)) if not has_error else (),
         source_kind="openai_live",
+        as_of=as_of,
+        request_visibility_cutoff=request_visibility_cutoff,
         issues=tuple(issues),
         openai_request_count=claim_report.openai_request_count,
         openai_cache_hit_count=claim_report.openai_cache_hit_count,
@@ -700,6 +712,7 @@ def render_risk_event_prereview_import_report(
         f"- OpenAI 缓存写入：{report.openai_cache_write_count}",
         f"- 错误数：{report.error_count}",
         f"- 警告数：{report.warning_count}",
+        *_request_visibility_summary_lines(report),
         "",
         "## 预审队列",
         "",
@@ -707,9 +720,9 @@ def render_risk_event_prereview_import_report(
     if report.records:
         lines.extend(
             [
-                "| Precheck | Source | Model | Reasoning | Request | Cache | Status | Level | "
-                "Risk IDs | Tickers | Nodes | Confidence | Policy |",
-                "|---|---|---|---|---|---|---|---|---|---|---|---:|---|",
+                "| Precheck | Source | Model | Reasoning | Request | Request Timestamp | Cache | "
+                "Status | Level | Risk IDs | Tickers | Nodes | Confidence | Policy |",
+                "|---|---|---|---|---|---|---|---|---|---|---|---|---:|---|",
             ]
         )
         for record in report.records:
@@ -720,6 +733,7 @@ def render_risk_event_prereview_import_report(
                 f"{_escape_markdown_table(record.model)} | "
                 f"{record.reasoning_effort} | "
                 f"{_escape_markdown_table(record.request_id)} | "
+                f"{_as_utc(record.request_timestamp).isoformat()} | "
                 f"{_escape_markdown_table(record.cache_status)} | "
                 f"{_status_suggestion_label(record.status_suggestion)} | "
                 f"{record.level_suggestion} | "
@@ -782,6 +796,35 @@ def render_risk_event_prereview_import_report(
         ]
     )
     return "\n".join(lines) + "\n"
+
+
+def _request_visibility_summary_lines(report: RiskEventPreReviewImportReport) -> list[str]:
+    if report.as_of is None:
+        return []
+    effective_cutoff = _effective_request_visibility_cutoff(
+        report.as_of,
+        report.request_visibility_cutoff,
+    )
+    cutoff_source = (
+        "显式 production visibility_cutoff"
+        if report.request_visibility_cutoff is not None
+        else "as_of 当日 UTC 末尾"
+    )
+    lines = [
+        f"- 预审 as_of：{report.as_of.isoformat()}",
+        f"- request visibility cutoff：{effective_cutoff.isoformat()}（来源：{cutoff_source}）",
+        (
+            "- 可见性关系：`published_at` / `captured_at` 必须不晚于 `as_of`；"
+            "`request_timestamp` 必须不晚于 request visibility cutoff。"
+        ),
+    ]
+    if report.records:
+        request_times = tuple(_as_utc(record.request_timestamp) for record in report.records)
+        lines.append(
+            "- request timestamp 范围："
+            f"{min(request_times).isoformat()} 至 {max(request_times).isoformat()}"
+        )
+    return lines
 
 
 def write_risk_event_prereview_import_report(
@@ -1259,15 +1302,24 @@ def _check_record(
             request_visibility_cutoff,
         )
         if _as_utc(record.request_timestamp) > cutoff:
+            request_timestamp_text = _as_utc(record.request_timestamp).isoformat()
+            cutoff_text = cutoff.isoformat()
             code = (
                 "risk_event_prereview_request_after_visibility_cutoff"
                 if request_visibility_cutoff is not None
                 else "risk_event_prereview_request_in_future"
             )
             message = (
-                "OpenAI 请求时间晚于本次可见时间上限。"
+                "OpenAI 请求时间晚于本次可见时间上限："
+                f"request_timestamp={request_timestamp_text}，"
+                f"as_of={as_of.isoformat()}，visibility_cutoff={cutoff_text}。"
                 if request_visibility_cutoff is not None
-                else "OpenAI 请求时间晚于评估日期。"
+                else (
+                    "OpenAI 请求时间晚于评估日期："
+                    f"request_timestamp={request_timestamp_text}，"
+                    f"as_of={as_of.isoformat()}，"
+                    f"effective_cutoff={cutoff_text}。"
+                )
             )
             issues.append(
                 RiskEventPreReviewIssue(

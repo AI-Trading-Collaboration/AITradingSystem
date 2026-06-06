@@ -2,7 +2,9 @@
 
 任务 ID：`FUND-002`
 
-最后更新：2026-05-17
+状态：`VALIDATING`
+
+最后更新：2026-06-07
 
 ## 背景
 
@@ -42,3 +44,9 @@ ticker 的大 payload，本机 Windows/Python 3.11 出现 access violation。
 
 - 2026-05-12：新增并进入 `IN_PROGRESS`。原因：扩展核心观察池后，SEC companyfacts
   大型 JSON pretty/sorted dumps 在 Windows 本机触发原生崩溃。
+- 2026-06-07：从 `IN_PROGRESS` 改为 `VALIDATING`。原因：SEC provider 路径已优先
+  保存原始 response bytes；非 raw provider 路径改为 `JSONEncoder.iterencode()` chunk
+  写入 compact JSON，不再构造 pretty/sorted 巨型中间字符串；manifest checksum 仍基于
+  实际写入文件计算。验证通过 focused SEC companyfacts tests、ruff、compileall 和
+  `git diff --check`；真实 daily-run 仍需后续观察是否越过 SEC companyfacts 并暴露下一道
+  真实门禁。

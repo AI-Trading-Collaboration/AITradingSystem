@@ -71,7 +71,7 @@ aits ops daily-run --as-of YYYY-MM-DD
 |Daily PIT|抓取 forward-only PIT snapshots|`aits pit-snapshots fetch-fmp-forward --as-of {as_of} --continue-on-failure`|失败快照不得作为可用 PIT 输入；失败必须进入报告或 `ops health`。|
 |Daily PIT|刷新 PIT manifest|`aits pit-snapshots build-manifest --as-of {as_of}`|manifest 缺失、checksum 或 schema 异常时下游不得静默继续。|
 |Daily PIT|验证 PIT manifest|`aits pit-snapshots validate --as-of {as_of}`|严重错误必须 fail closed。|
-|Daily scoring|生成每日评分和决策 artifact|`aits score-daily --as-of {as_of}`|必须先通过 `validate-data`；失败时停止 Reader Brief、dashboard/latest 和下游报告。|
+|Daily scoring|生成每日评分和决策 artifact|`aits score-daily --as-of {as_of}`|必须先通过 `validate-data`；latest production daily-run 会向 `score-daily` 注入风险事件 OpenAI `visibility_cutoff`，历史 as-of 或无 cutoff 的 OpenAI request timestamp 仍按 as-of 当日 UTC 末尾 fail closed；失败时停止 Reader Brief、dashboard/latest 和下游报告。|
 |Dashboard/latest checks|生成 evidence dashboard|`aits reports dashboard --as-of {as_of}`|只读，不替代 `daily_score` 和 trace audit。|
 |Dashboard/latest checks|刷新 report index|`aits reports index --latest`|只读扫描既有报告；`STALE` / `MISSING` 需要进入人工复核。|
 |Dashboard/latest checks|生成 ETF data quality governance report|`aits etf data-quality report --as-of {as_of}`|在 Reader Brief 前检查 ETF price/artifact/gate/report/link staleness；critical required findings 阻断 dependent research interpretation，optional missing 只 warning。|

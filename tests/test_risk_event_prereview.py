@@ -261,7 +261,61 @@ def test_openai_prereview_allows_production_request_after_as_of_with_cutoff(
 
     assert report.status == "PASS_WITH_WARNINGS"
     assert report.record_count == 1
+    assert report.as_of == datetime(2026, 5, 11, tzinfo=UTC).date()
+    assert report.request_visibility_cutoff == request_time
     assert "risk_event_prereview_request_in_future" not in {issue.code for issue in report.issues}
+    markdown = render_risk_event_prereview_import_report(report)
+    assert "request visibility cutoff：2026-05-12T04:10:00+00:00" in markdown
+    assert "request timestamp 范围：2026-05-12T04:10:00+00:00" in markdown
+
+
+def test_openai_prereview_rejects_request_after_visibility_cutoff(
+    tmp_path: Path,
+) -> None:
+    request_time = datetime(2026, 5, 12, 5, 0, tzinfo=UTC)
+    visibility_cutoff = datetime(2026, 5, 12, 4, 10, tzinfo=UTC)
+    packet = _packet(
+        published_at=datetime(2026, 5, 11, tzinfo=UTC).date(),
+        captured_at=datetime(2026, 5, 11, tzinfo=UTC).date(),
+    )
+
+    def fake_post(
+        _url: str,
+        headers: Mapping[str, str],
+        _payload: Mapping[str, Any],
+        _timeout: float,
+    ) -> OpenAIJsonResponse:
+        return _openai_response(request_id=headers["X-Client-Request-Id"])
+
+    report = run_openai_risk_event_prereview(
+        packet,
+        api_key="sk-test",
+        data_sources=DataSourcesConfig(
+            sources=[
+                _source(
+                    source_id="official_policy",
+                    source_type="primary_source",
+                    external_llm_allowed=True,
+                    max_content_sent_level="full_text",
+                )
+            ]
+        ),
+        risk_events=load_risk_events(),
+        input_path=tmp_path / "risk_input.yaml",
+        as_of=datetime(2026, 5, 11, tzinfo=UTC).date(),
+        generated_at=request_time,
+        request_visibility_cutoff=visibility_cutoff,
+        http_post_json=fake_post,
+    )
+
+    issue_codes = {issue.code for issue in report.issues}
+    markdown = render_risk_event_prereview_import_report(report)
+
+    assert report.passed is False
+    assert report.records == ()
+    assert "risk_event_prereview_request_after_visibility_cutoff" in issue_codes
+    assert "request_timestamp=2026-05-12T05:00:00+00:00" in markdown
+    assert "visibility_cutoff=2026-05-12T04:10:00+00:00" in markdown
 
 
 def test_openai_prereview_rejects_request_after_as_of_without_cutoff(
@@ -303,6 +357,9 @@ def test_openai_prereview_rejects_request_after_as_of_without_cutoff(
     assert report.passed is False
     assert report.records == ()
     assert "risk_event_prereview_request_in_future" in {issue.code for issue in report.issues}
+    markdown = render_risk_event_prereview_import_report(report)
+    assert "request_timestamp=2026-05-12T04:10:00+00:00" in markdown
+    assert "effective_cutoff=2026-05-11T23:59:59.999999+00:00" in markdown
 
 
 def test_risk_events_precheck_openai_cli_fails_closed_without_permission(
@@ -695,6 +752,7 @@ def test_score_daily_help_exposes_risk_event_openai_precheck_option() -> None:
     }
     assert "--skip-risk-event-openai-precheck" in option_strings
     assert "--openai-http-client" in option_strings
+    assert "--risk-event-openai-precheck-visibility-cutoff" in option_strings
 
 
 def _write_csv(input_path: Path, rows: list[dict[str, str]]) -> None:
