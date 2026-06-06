@@ -847,7 +847,11 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
         "validate_reader_brief_command",
         recorder("validate_reader_brief"),
     )
-    monkeypatch.setattr(cli_direct.cli, "pipeline_health_command", recorder("pipeline_health"))
+    monkeypatch.setattr(
+        cli_direct.ops_cli,
+        "pipeline_health_command",
+        recorder("pipeline_health"),
+    )
     monkeypatch.setattr(
         cli_direct.security_cli,
         "security_scan_secrets_command",

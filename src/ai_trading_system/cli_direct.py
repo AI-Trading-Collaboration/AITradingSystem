@@ -13,6 +13,7 @@ from ai_trading_system.cli_commands import data as data_cli
 from ai_trading_system.cli_commands import docs as docs_cli
 from ai_trading_system.cli_commands import etf_portfolio as etf_cli
 from ai_trading_system.cli_commands import fundamentals as fundamentals_cli
+from ai_trading_system.cli_commands import ops as ops_cli
 from ai_trading_system.cli_commands import parameters as parameters_cli
 from ai_trading_system.cli_commands import pit_snapshots as pit_snapshots_cli
 from ai_trading_system.cli_commands import portfolio as portfolio_cli
@@ -674,7 +675,7 @@ def _dispatch(args: list[str]) -> None:
         sec_pit_cli.shadow_monitor_command(latest=_flag(args, "--latest"))
         return
     if args[:2] == ["ops", "health"]:
-        cli.pipeline_health_command(
+        ops_cli.pipeline_health_command(
             as_of=_option(args, "--as-of"),
             non_trading_day=_flag(args, "--non-trading-day"),
         )

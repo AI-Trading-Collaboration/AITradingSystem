@@ -7,7 +7,7 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
-import ai_trading_system.cli as cli_module
+import ai_trading_system.cli_commands.ops as ops_cli
 from ai_trading_system.cli import app
 from ai_trading_system.core import ProductionEffect
 from ai_trading_system.ops_daily import (
@@ -85,12 +85,12 @@ def test_daily_ops_default_as_of_uses_latest_completed_us_market_day() -> None:
 
 def test_daily_ops_plan_cli_default_as_of_uses_market_resolver(monkeypatch) -> None:
     monkeypatch.setattr(
-        cli_module,
+        ops_cli,
         "resolve_daily_ops_default_as_of",
         lambda observed_at=None: date(2026, 5, 11),
     )
 
-    plan_date, plan = cli_module._build_daily_ops_plan_from_cli_options(
+    plan_date, plan = ops_cli._build_daily_ops_plan_from_cli_options(
         as_of=None,
         download_start="2018-01-01",
         include_download_data=False,
@@ -544,8 +544,8 @@ def test_daily_ops_run_cli_writes_daily_task_dashboard(
             metadata=metadata,
         )
 
-    monkeypatch.setattr(cli_module, "PROJECT_ROOT", tmp_path)
-    monkeypatch.setattr(cli_module, "run_daily_ops_plan", fake_run_daily_ops_plan)
+    monkeypatch.setattr(ops_cli, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(ops_cli, "run_daily_ops_plan", fake_run_daily_ops_plan)
 
     result = CliRunner().invoke(
         app,
