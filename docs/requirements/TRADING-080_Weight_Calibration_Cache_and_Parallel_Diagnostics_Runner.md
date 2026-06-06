@@ -1,5 +1,7 @@
 # TRADING-080 Weight Calibration Cache and Parallel Diagnostics Runner
 
+最后更新：2026-06-04
+
 ## Status
 
 - 父任务：TRADING-080

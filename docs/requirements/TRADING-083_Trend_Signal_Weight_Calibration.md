@@ -1,5 +1,7 @@
 # TRADING-083 Trend Signal Weight Calibration
 
+最后更新：2026-06-05
+
 - 父任务：TRADING-083
 - 优先级：P0
 - 状态：VALIDATING

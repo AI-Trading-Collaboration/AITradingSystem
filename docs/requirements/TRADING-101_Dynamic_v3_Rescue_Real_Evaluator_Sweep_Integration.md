@@ -1,5 +1,7 @@
 # TRADING-101: Dynamic v3 Rescue Real Evaluator Sweep Integration
 
+最后更新：2026-06-06
+
 ## 背景
 
 TRADING-093 到 TRADING-100 已完成 parameter sweep platform MVP，但默认 evaluator 为

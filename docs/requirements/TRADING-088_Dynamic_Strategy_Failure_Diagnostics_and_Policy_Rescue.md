@@ -1,5 +1,7 @@
 # TRADING-088 Dynamic Strategy Failure Diagnostics and Policy Rescue
 
+最后更新：2026-06-05
+
 - 父任务：TRADING-088
 - 优先级：P0
 - 状态：VALIDATING

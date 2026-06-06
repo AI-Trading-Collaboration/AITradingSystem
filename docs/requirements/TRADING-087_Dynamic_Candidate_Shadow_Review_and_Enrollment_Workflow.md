@@ -1,5 +1,7 @@
 # TRADING-087 Dynamic Candidate Shadow Review and Enrollment Workflow
 
+最后更新：2026-06-05
+
 - 父任务：TRADING-087
 - 优先级：P0
 - 状态：VALIDATING

@@ -1,5 +1,7 @@
 # TRADING-074 Portfolio Operations Runbook and Scheduler Review
 
+最后更新：2026-06-03
+
 ## 背景
 
 TRADING-062 至 TRADING-073 已建立 ETF allocation baseline、credibility validation、experiment packs、forward simulation、weekly review、decision journal、parameter review、dual-track weight calibration、AI confirmation / attribution 和 satellite replacement / attribution。

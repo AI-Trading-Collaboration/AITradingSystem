@@ -1,5 +1,7 @@
 # TRADING-093 to TRADING-100: Dynamic v3 Rescue Parameter Research Platform
 
+最后更新：2026-06-06
+
 ## 背景
 
 TRADING-091 真实评估显示 dynamic v0.3 rescue gate 为 `reject`，constraint hit 改善不足，robustness overfit 为 `REVIEW_REQUIRED`，且 drawdown 相对 v0.4 存在退化。TRADING-092 已完成失败归因和 v0.4 promotion review，结论是不再手工迭代单个 v0.5 / v0.6，而是建设可复现、可审计、可恢复的参数研究与晋级治理平台。

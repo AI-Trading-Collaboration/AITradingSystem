@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import shlex
 from pathlib import Path
+from types import SimpleNamespace
 
 from ai_trading_system import cli_direct
 from ai_trading_system.scheduled_tasks import load_scheduled_tasks_config
@@ -82,6 +83,97 @@ def test_cli_direct_score_daily_threads_llm_request_profile(monkeypatch) -> None
 
     assert exit_code == 0
     assert captured["llm_request_profile"] == "risk_event_triaged_official_candidates"
+
+
+def test_cli_direct_dispatches_signal_commands(monkeypatch) -> None:
+    calls: list[tuple[str, dict[str, object]]] = []
+
+    def recorder(name: str):
+        def _fake(**kwargs: object) -> None:
+            calls.append((name, kwargs))
+
+        return _fake
+
+    monkeypatch.setattr(
+        cli_direct.signals_cli,
+        "signals_build_snapshot_command",
+        recorder("build_snapshot"),
+    )
+    monkeypatch.setattr(
+        cli_direct.signals_cli,
+        "signals_validate_snapshot_command",
+        recorder("validate_snapshot"),
+    )
+    monkeypatch.setattr(
+        cli_direct.signals_cli,
+        "signals_ablation_command",
+        recorder("ablation"),
+    )
+    monkeypatch.setattr(
+        cli_direct.signals_cli,
+        "signals_calibrate_command",
+        recorder("calibrate"),
+    )
+    monkeypatch.setattr(
+        cli_direct.signals_cli,
+        "signals_explain_ablation_command",
+        recorder("explain_ablation"),
+    )
+    monkeypatch.setattr(
+        cli_direct.signals_cli,
+        "signals_validate_ablation_command",
+        recorder("validate_ablation"),
+    )
+
+    assert cli_direct.main(["signals", "build-snapshot", "--latest"]) == 0
+    assert cli_direct.main(["signals", "validate-snapshot", "--date", "2026-05-13"]) == 0
+    assert cli_direct.main(["signals", "ablation", "--as-of", "2026-05-13"]) == 0
+    assert cli_direct.main(["signals", "calibrate", "--latest"]) == 0
+    assert cli_direct.main(["signals", "explain-ablation", "--latest"]) == 0
+    assert cli_direct.main(["signals", "validate-ablation", "--latest"]) == 0
+
+    assert calls == [
+        (
+            "build_snapshot",
+            {
+                "latest": True,
+                "as_of": None,
+                "config_path": cli_direct.cli.DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+                "dry_run": False,
+                "price_derived_only": False,
+            },
+        ),
+        (
+            "validate_snapshot",
+            {"latest": False, "as_of": "2026-05-13", "input_path": None},
+        ),
+        (
+            "ablation",
+            {
+                "ctx": SimpleNamespace(args=[]),
+                "latest": False,
+                "as_of": "2026-05-13",
+                "config_path": cli_direct.signals_cli.DEFAULT_SIGNAL_ABLATION_CONFIG_PATH,
+                "signals": [],
+                "dry_run": False,
+                "debug": False,
+            },
+        ),
+        (
+            "calibrate",
+            {
+                "ctx": SimpleNamespace(args=[]),
+                "latest": True,
+                "as_of": None,
+                "config_path": cli_direct.signals_cli.DEFAULT_SIGNAL_CALIBRATION_PROFILES_PATH,
+                "profile": None,
+                "profiles": [],
+                "dry_run": False,
+            },
+        ),
+        ("explain_ablation", {"latest": True, "as_of": None, "input_path": None}),
+        ("validate_ablation", {"latest": True, "as_of": None, "input_path": None}),
+    ]
 
 
 def test_cli_direct_dispatches_etf_ops_dry_run(

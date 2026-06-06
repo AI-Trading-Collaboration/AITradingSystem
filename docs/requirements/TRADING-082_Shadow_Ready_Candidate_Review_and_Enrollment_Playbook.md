@@ -1,5 +1,7 @@
 # TRADING-082 Shadow-Ready Candidate Review and Enrollment Playbook
 
+最后更新：2026-06-05
+
 - 父任务：TRADING-082
 - 优先级：P0
 - 状态：VALIDATING

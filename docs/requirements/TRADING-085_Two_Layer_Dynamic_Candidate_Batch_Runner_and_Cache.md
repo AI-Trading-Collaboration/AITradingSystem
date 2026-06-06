@@ -1,5 +1,7 @@
 # TRADING-085 Two-Layer Dynamic Candidate Batch Runner and Cache
 
+最后更新：2026-06-05
+
 - 父任务：TRADING-085
 - 优先级：P0
 - 状态：VALIDATING

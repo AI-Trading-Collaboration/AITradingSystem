@@ -1,5 +1,7 @@
 # TRADING-071 ETF Allocation Dual-Track Weight Calibration
 
+最后更新：2026-06-02
+
 ## Context
 
 TRADING-071 builds a dual-track ETF weight calibration workflow:

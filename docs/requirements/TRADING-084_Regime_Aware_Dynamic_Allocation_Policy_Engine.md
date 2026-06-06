@@ -1,5 +1,7 @@
 # TRADING-084 Regime-Aware Dynamic Allocation Policy Engine
 
+最后更新：2026-06-05
+
 - 父任务：TRADING-084
 - 优先级：P0
 - 状态：VALIDATING

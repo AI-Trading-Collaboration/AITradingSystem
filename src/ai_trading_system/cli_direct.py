@@ -14,6 +14,7 @@ from ai_trading_system.cli_commands import etf_portfolio as etf_cli
 from ai_trading_system.cli_commands import pit_snapshots as pit_snapshots_cli
 from ai_trading_system.cli_commands import sec_pit as sec_pit_cli
 from ai_trading_system.cli_commands import security as security_cli
+from ai_trading_system.cli_commands import signals as signals_cli
 from ai_trading_system.cli_commands import valuation as valuation_cli
 
 
@@ -93,7 +94,7 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:2] == ["signals", "build-snapshot"]:
-        cli.signals_build_snapshot_command(
+        signals_cli.signals_build_snapshot_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             config_path=_path_option(args, "--config"),
@@ -102,14 +103,14 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:2] == ["signals", "validate-snapshot"]:
-        cli.signals_validate_snapshot_command(
+        signals_cli.signals_validate_snapshot_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             input_path=_optional_path(args, "--input-path"),
         )
         return
     if args[:2] == ["signals", "ablation"]:
-        cli.signals_ablation_command(
+        signals_cli.signals_ablation_command(
             ctx=SimpleNamespace(args=[]),
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
@@ -120,7 +121,7 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:2] == ["signals", "calibrate"]:
-        cli.signals_calibrate_command(
+        signals_cli.signals_calibrate_command(
             ctx=SimpleNamespace(args=[]),
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
@@ -131,14 +132,14 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:2] == ["signals", "explain-ablation"]:
-        cli.signals_explain_ablation_command(
+        signals_cli.signals_explain_ablation_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             input_path=_optional_path(args, "--input-path"),
         )
         return
     if args[:2] == ["signals", "validate-ablation"]:
-        cli.signals_validate_ablation_command(
+        signals_cli.signals_validate_ablation_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             input_path=_optional_path(args, "--input-path"),
@@ -699,12 +700,12 @@ def _optional_path(args: Sequence[str], name: str):
 
 def _signal_ablation_config_option(args: Sequence[str], name: str):
     value = _option(args, name)
-    return cli.DEFAULT_SIGNAL_ABLATION_CONFIG_PATH if value is None else Path(value)
+    return signals_cli.DEFAULT_SIGNAL_ABLATION_CONFIG_PATH if value is None else Path(value)
 
 
 def _signal_calibration_config_option(args: Sequence[str], name: str):
     value = _option(args, name)
-    return cli.DEFAULT_SIGNAL_CALIBRATION_PROFILES_PATH if value is None else Path(value)
+    return signals_cli.DEFAULT_SIGNAL_CALIBRATION_PROFILES_PATH if value is None else Path(value)
 
 
 def _values_after_option(args: Sequence[str], name: str) -> list[str]:
