@@ -123,6 +123,7 @@ from ai_trading_system.cli_commands.etf_portfolio import etf_app
 from ai_trading_system.cli_commands.evidence import evidence_app
 from ai_trading_system.cli_commands.execution import execution_app
 from ai_trading_system.cli_commands.industry_chain import industry_chain_app
+from ai_trading_system.cli_commands.llm import llm_app
 from ai_trading_system.cli_commands.pit_snapshots import pit_snapshots_app
 from ai_trading_system.cli_commands.scenarios import scenarios_app
 from ai_trading_system.cli_commands.sec_pit import sec_pit_app
@@ -370,11 +371,7 @@ from ai_trading_system.industry_node_state import (
 )
 from ai_trading_system.llm_precheck import (
     DEFAULT_OPENAI_REQUEST_CACHE_DIR,
-    default_llm_claim_precheck_report_path,
     load_llm_claim_precheck_input,
-    run_openai_claim_precheck,
-    write_llm_claim_precheck_report,
-    write_llm_claim_prereview_queue,
 )
 from ai_trading_system.llm_request_profiles import (
     DEFAULT_LLM_REQUEST_PROFILES_CONFIG_PATH,
@@ -888,7 +885,6 @@ parameters_app = typer.Typer(help="生产参数快照、shadow 回测和晋升�
 signals_app = typer.Typer(help="Shadow backtest signal snapshot 构建和校验。", no_args_is_help=True)
 reports_app = typer.Typer(help="投资报告和周期复盘。", no_args_is_help=True)
 ops_app = typer.Typer(help="运行监控和 pipeline health。", no_args_is_help=True)
-llm_app = typer.Typer(help="LLM 结构化预审和待复核队列。", no_args_is_help=True)
 score_daily_app = typer.Typer(help="每日评分和 research baseline backfill。", no_args_is_help=False)
 features_app = typer.Typer(help="ETF feature store compatibility aliases。", no_args_is_help=True)
 regime_app = typer.Typer(help="ETF market regime compatibility aliases。", no_args_is_help=True)
@@ -1038,11 +1034,7 @@ DEFAULT_RISK_EVENT_OCCURRENCES_PATH = PROJECT_ROOT / "data" / "external" / "risk
 DEFAULT_RISK_EVENT_PREREVIEW_QUEUE_PATH = (
     PROJECT_ROOT / "data" / "processed" / "risk_event_prereview_queue.json"
 )
-DEFAULT_LLM_CLAIM_PREREVIEW_QUEUE_PATH = (
-    PROJECT_ROOT / "data" / "processed" / "llm_claim_prereview_queue.json"
-)
 DEFAULT_OPENAI_REQUEST_CACHE_PATH = PROJECT_ROOT / DEFAULT_OPENAI_REQUEST_CACHE_DIR
-DEFAULT_LLM_CLAIM_PREREVIEW_PROFILE = "llm_claim_prereview"
 DEFAULT_RISK_EVENT_SINGLE_PREREVIEW_PROFILE = "risk_event_single_prereview"
 DEFAULT_RISK_EVENT_TRIAGED_PREREVIEW_PROFILE = "risk_event_triaged_official_candidates"
 DEFAULT_RISK_EVENT_DAILY_PREREVIEW_PROFILE = "risk_event_daily_official_precheck"
@@ -1063,131 +1055,6 @@ def _load_llm_request_profile(
 
 def _coalesce_profile_value(value, profile_value):
     return profile_value if value is None else value
-
-
-@llm_app.command("precheck-claims")
-def precheck_llm_claims_command(
-    input_path: Annotated[
-        Path,
-        typer.Option(help="LLM 预审输入 JSON/YAML，包含 source_id 或 source_permission envelope。"),
-    ],
-    queue_path: Annotated[
-        Path,
-        typer.Option(help="写入 LLM claim 待复核队列 JSON 的路径。"),
-    ] = DEFAULT_LLM_CLAIM_PREREVIEW_QUEUE_PATH,
-    data_sources_path: Annotated[
-        Path,
-        typer.Option(help="数据源目录路径，用于解析 provider LLM 权限。"),
-    ] = DEFAULT_DATA_SOURCES_CONFIG_PATH,
-    llm_request_profiles_path: Annotated[
-        Path,
-        typer.Option(help="LLM request profile 配置路径。"),
-    ] = DEFAULT_LLM_REQUEST_PROFILES_CONFIG_PATH,
-    llm_request_profile: Annotated[
-        str,
-        typer.Option(help="本次 LLM 请求使用的 profile_id。"),
-    ] = DEFAULT_LLM_CLAIM_PREREVIEW_PROFILE,
-    as_of: Annotated[
-        str | None,
-        typer.Option(help="报告日期，格式为 YYYY-MM-DD，默认今天。"),
-    ] = None,
-    output_path: Annotated[
-        Path | None,
-        typer.Option(help="Markdown LLM 预审报告输出路径。"),
-    ] = None,
-    api_key_env: Annotated[
-        str,
-        typer.Option(help="读取 OpenAI API key 的环境变量名。"),
-    ] = "OPENAI_API_KEY",
-    model: Annotated[
-        str | None,
-        typer.Option(help="覆盖 profile 中的 OpenAI Responses API 模型。"),
-    ] = None,
-    reasoning_effort: Annotated[
-        str | None,
-        typer.Option(help="覆盖 profile 中的 OpenAI Responses API reasoning.effort。"),
-    ] = None,
-    timeout_seconds: Annotated[
-        float | None,
-        typer.Option(help="覆盖 profile 中的 OpenAI Responses API 请求读超时秒数。"),
-    ] = None,
-    openai_http_client: Annotated[
-        str | None,
-        typer.Option(
-            help="覆盖 profile 中的 OpenAI Responses API HTTP 客户端：requests 或 urllib。"
-        ),
-    ] = None,
-    openai_cache_dir: Annotated[
-        Path,
-        typer.Option(help="OpenAI 请求/响应本地缓存与审计归档目录。"),
-    ] = DEFAULT_OPENAI_REQUEST_CACHE_PATH,
-    openai_cache_ttl_hours: Annotated[
-        float | None,
-        typer.Option(help="覆盖 profile 中完全相同 OpenAI 请求的本地缓存复用时长，单位小时。"),
-    ] = None,
-) -> None:
-    """调用 OpenAI 结构化输出生成 claim 待复核队列。"""
-    profile = _load_llm_request_profile(llm_request_profiles_path, llm_request_profile)
-    effective_model = _coalesce_profile_value(model, profile.model)
-    effective_reasoning_effort = _coalesce_profile_value(
-        reasoning_effort,
-        profile.reasoning_effort,
-    )
-    effective_timeout_seconds = _coalesce_profile_value(
-        timeout_seconds,
-        profile.timeout_seconds,
-    )
-    effective_http_client = _coalesce_profile_value(openai_http_client, profile.http_client)
-    effective_cache_ttl_hours = _coalesce_profile_value(
-        openai_cache_ttl_hours,
-        profile.cache_ttl_hours,
-    )
-    if effective_timeout_seconds <= 0:
-        raise typer.BadParameter("OpenAI 请求超时秒数必须为正数。")
-    if effective_cache_ttl_hours <= 0:
-        raise typer.BadParameter("OpenAI 请求缓存 TTL 小时数必须为正数。")
-    report_date = _parse_date(as_of) if as_of else date.today()
-    report_path = output_path or default_llm_claim_precheck_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
-        report_date,
-    )
-    try:
-        packet = load_llm_claim_precheck_input(input_path)
-    except (OSError, ValueError) as exc:
-        console.print(f"[red]LLM 预审输入无法读取或校验失败：{exc}[/red]")
-        raise typer.Exit(code=1) from exc
-
-    report = run_openai_claim_precheck(
-        packet,
-        api_key=os.getenv(api_key_env, ""),
-        data_sources=load_data_sources(data_sources_path),
-        input_path=input_path,
-        model=effective_model,
-        reasoning_effort=effective_reasoning_effort,
-        endpoint=profile.endpoint,
-        timeout_seconds=effective_timeout_seconds,
-        http_client=effective_http_client,
-        openai_cache_dir=openai_cache_dir,
-        openai_cache_ttl_seconds=effective_cache_ttl_hours * 3600,
-        max_retries=profile.max_retries,
-    )
-    write_llm_claim_precheck_report(report, report_path)
-
-    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
-    console.print(f"[{status_style}]LLM 证据预审状态：{report.status}[/{status_style}]")
-    console.print(f"预审报告：{report_path}")
-    console.print(f"预审记录：{report.record_count}；待复核 claim：{report.pending_review_count}")
-    console.print(
-        f"LLM request profile：{profile.profile_id}；"
-        f"model={effective_model}；reasoning={effective_reasoning_effort}"
-    )
-    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
-    if not report.passed:
-        raise typer.Exit(code=1)
-
-    written_path = write_llm_claim_prereview_queue(report, queue_path)
-    console.print(f"LLM claim 待复核队列：{written_path}")
-    console.print("LLM 输出保持 llm_extracted / pending_review，不进入评分或仓位闸门。")
 
 
 @feedback_app.command("apply-calibration-overlay")
