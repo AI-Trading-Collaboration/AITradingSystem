@@ -9,6 +9,7 @@ from types import SimpleNamespace
 import typer
 
 from ai_trading_system import cli
+from ai_trading_system.cli_commands import data as data_cli
 from ai_trading_system.cli_commands import docs as docs_cli
 from ai_trading_system.cli_commands import etf_portfolio as etf_cli
 from ai_trading_system.cli_commands import fundamentals as fundamentals_cli
@@ -48,18 +49,26 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:2] == ["data", "diagnose-backtest-inputs"]:
-        cli.data_diagnose_backtest_inputs_command(
+        data_cli.data_diagnose_backtest_inputs_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
-            config_path=_path_option(args, "--config"),
+            config_path=_path_option_with_default(
+                args,
+                "--config",
+                data_cli.DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+            ),
         )
         return
     if args[:2] == ["data", "repair-backtest-inputs"]:
-        cli.data_repair_backtest_inputs_command(
+        data_cli.data_repair_backtest_inputs_command(
             ctx=SimpleNamespace(args=[]),
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
-            config_path=_path_option(args, "--config"),
+            config_path=_path_option_with_default(
+                args,
+                "--config",
+                data_cli.DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+            ),
             dry_run=_flag(args, "--dry-run"),
             price_only=_flag(args, "--price-only"),
             symbols=_values_after_option(args, "--symbols"),
@@ -68,31 +77,31 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:2] == ["data", "freshness"]:
-        cli.data_freshness_command(
+        data_cli.data_freshness_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             market=_option(args, "--market", "US") or "US",
             config_path=_path_option_with_default(
                 args,
                 "--config",
-                cli.DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH,
+                data_cli.DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH,
             ),
             dry_run=_flag(args, "--dry-run"),
         )
         return
     if args[:2] == ["data", "recover-freshness"]:
-        cli.data_recover_freshness_command(
+        data_cli.data_recover_freshness_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             refresh_config_path=_path_option_with_default(
                 args,
                 "--refresh-config",
-                cli.DEFAULT_MARKET_DATA_REFRESH_CONFIG_PATH,
+                data_cli.DEFAULT_MARKET_DATA_REFRESH_CONFIG_PATH,
             ),
             freshness_config_path=_path_option_with_default(
                 args,
                 "--freshness-config",
-                cli.DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH,
+                data_cli.DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH,
             ),
         )
         return
@@ -692,7 +701,7 @@ def _flag(args: Sequence[str], name: str) -> bool:
 
 def _path_option(args: Sequence[str], name: str):
     value = _option(args, name)
-    return cli.DEFAULT_SHADOW_BACKTEST_CONFIG_PATH if value is None else Path(value)
+    return signals_cli.DEFAULT_SHADOW_BACKTEST_CONFIG_PATH if value is None else Path(value)
 
 
 def _path_option_with_default(args: Sequence[str], name: str, default: Path):

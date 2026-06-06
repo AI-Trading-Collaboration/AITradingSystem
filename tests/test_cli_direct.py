@@ -138,7 +138,7 @@ def test_cli_direct_dispatches_signal_commands(monkeypatch) -> None:
             {
                 "latest": True,
                 "as_of": None,
-                "config_path": cli_direct.cli.DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+                "config_path": cli_direct.signals_cli.DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
                 "dry_run": False,
                 "price_derived_only": False,
             },
@@ -557,6 +557,103 @@ def test_cli_direct_dispatches_scheduled_task_commands(monkeypatch) -> None:
     ]
 
 
+def test_cli_direct_dispatches_data_commands(monkeypatch) -> None:
+    calls: list[tuple[str, dict[str, object]]] = []
+
+    def recorder(name: str):
+        def _fake(**kwargs: object) -> None:
+            calls.append((name, kwargs))
+
+        return _fake
+
+    monkeypatch.setattr(
+        cli_direct.data_cli,
+        "data_diagnose_backtest_inputs_command",
+        recorder("diagnose"),
+    )
+    monkeypatch.setattr(
+        cli_direct.data_cli,
+        "data_repair_backtest_inputs_command",
+        recorder("repair"),
+    )
+    monkeypatch.setattr(
+        cli_direct.data_cli,
+        "data_freshness_command",
+        recorder("freshness"),
+    )
+    monkeypatch.setattr(
+        cli_direct.data_cli,
+        "data_recover_freshness_command",
+        recorder("recover"),
+    )
+
+    assert cli_direct.main(["data", "diagnose-backtest-inputs", "--latest"]) == 0
+    assert (
+        cli_direct.main(
+            [
+                "data",
+                "repair-backtest-inputs",
+                "--date",
+                "2026-05-13",
+                "--dry-run",
+                "--price-only",
+                "--symbols",
+                "GOOGL",
+                "BRK.B",
+            ]
+        )
+        == 0
+    )
+    assert cli_direct.main(["data", "freshness", "--date", "2026-05-13"]) == 0
+    assert cli_direct.main(["data", "recover-freshness", "--latest"]) == 0
+
+    assert calls == [
+        (
+            "diagnose",
+            {
+                "latest": True,
+                "as_of": None,
+                "config_path": cli_direct.data_cli.DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+            },
+        ),
+        (
+            "repair",
+            {
+                "ctx": SimpleNamespace(args=[]),
+                "latest": False,
+                "as_of": "2026-05-13",
+                "config_path": cli_direct.data_cli.DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+                "dry_run": True,
+                "price_only": True,
+                "symbols": ["GOOGL", "BRK.B"],
+                "price_provider": "fmp",
+                "fmp_api_key_env": "FMP_API_KEY",
+            },
+        ),
+        (
+            "freshness",
+            {
+                "latest": False,
+                "as_of": "2026-05-13",
+                "market": "US",
+                "config_path": cli_direct.data_cli.DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH,
+                "dry_run": False,
+            },
+        ),
+        (
+            "recover",
+            {
+                "latest": True,
+                "as_of": None,
+                "refresh_config_path": cli_direct.data_cli.DEFAULT_MARKET_DATA_REFRESH_CONFIG_PATH,
+                "freshness_config_path": (
+                    cli_direct.data_cli.DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH
+                ),
+            },
+        ),
+    ]
+
+
 def test_cli_direct_dispatches_validate_reader_brief(monkeypatch) -> None:
     calls: list[dict[str, object]] = []
 
@@ -694,12 +791,12 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
     )
     monkeypatch.setattr(cli_direct.cli, "market_panel_command", recorder("market_panel"))
     monkeypatch.setattr(
-        cli_direct.cli,
+        cli_direct.data_cli,
         "data_freshness_command",
         recorder("market_data_freshness"),
     )
     monkeypatch.setattr(
-        cli_direct.cli,
+        cli_direct.data_cli,
         "data_recover_freshness_command",
         recorder("market_data_recover_freshness"),
     )

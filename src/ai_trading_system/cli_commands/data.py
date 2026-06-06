@@ -1,0 +1,755 @@
+from __future__ import annotations
+
+import os
+from pathlib import Path
+from typing import Annotated
+
+import typer
+from rich.console import Console
+
+from ai_trading_system.cli_commands.data_artifacts import (
+    _parse_date,
+    _resolve_market_data_freshness_path,
+    _resolve_market_data_refresh_path,
+)
+from ai_trading_system.trading_engine.backtest_input_diagnostics import (
+    run_backtest_input_diagnostics,
+)
+from ai_trading_system.trading_engine.data.price_history_repair import (
+    build_price_history_repair_provider,
+    repair_backtest_price_history,
+)
+from ai_trading_system.trading_engine.data_registry_consistency import (
+    run_data_registry_consistency,
+    validate_backtest_manifest_consistency,
+)
+from ai_trading_system.trading_engine.market_data_freshness import (
+    DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH,
+    load_market_data_freshness_payload,
+    run_market_data_freshness,
+    validate_market_data_freshness_payload,
+)
+from ai_trading_system.trading_engine.market_data_refresh import (
+    DEFAULT_MARKET_DATA_REFRESH_CONFIG_PATH,
+    load_market_data_refresh_payload,
+    run_market_data_refresh,
+    validate_market_data_refresh_payload,
+)
+from ai_trading_system.trading_engine.parameters import DEFAULT_SHADOW_BACKTEST_CONFIG_PATH
+from ai_trading_system.trading_engine.price_cache_reconcile import (
+    refresh_backtest_manifest,
+    run_price_cache_reconcile,
+)
+
+console = Console()
+data_app = typer.Typer(help="缓存数据诊断和 backtest input repair planning。", no_args_is_help=True)
+
+
+@data_app.command("diagnose-backtest-inputs")
+def data_diagnose_backtest_inputs_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用价格缓存中的最新可用日期。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="诊断日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="shadow backtest 配置路径。"),
+    ] = DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+) -> None:
+    """诊断 shadow backtest 输入数据并生成结构化质量报告。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    run = run_backtest_input_diagnostics(as_of=run_date, config_path=config_path)
+    summary = run.payload.get("summary", {})
+    status = summary.get("overall_status", "UNKNOWN") if isinstance(summary, dict) else "UNKNOWN"
+    style = "green" if status == "OK" else "yellow" if status == "LIMITED" else "red"
+    console.print(f"[{style}]Backtest input diagnostics：{status}[/{style}]")
+    console.print(f"JSON：{run.json_path}")
+    console.print(f"Markdown：{run.markdown_path}")
+    console.print(f"Snapshot manifest：{run.manifest_path}")
+    if isinstance(summary, dict):
+        console.print(
+            f"blocking_errors={summary.get('blocking_errors', 0)}；"
+            f"warnings={summary.get('warnings', 0)}；"
+            f"can_run_shadow_backtest={summary.get('can_run_shadow_backtest', False)}"
+        )
+    console.print("production_effect=none；不修改 production 参数或 promotion 规则")
+
+
+@data_app.command("inspect-registry")
+def data_inspect_registry_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="解析 latest data registry / manifest 状态。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="registry 诊断日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="shadow backtest 配置路径。"),
+    ] = DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+) -> None:
+    """检查 repair、manifest、validate-data 与 portfolio sensitivity 的数据视图一致性。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    run = run_data_registry_consistency(as_of=run_date, config_path=config_path)
+    metadata = run.payload.get("metadata", {})
+    latest_resolution = run.payload.get("latest_resolution", {})
+    path_consistency = run.payload.get("path_consistency", {})
+    status = metadata.get("status", "UNKNOWN") if isinstance(metadata, dict) else "UNKNOWN"
+    style = "green" if status == "OK" else "yellow" if status == "LIMITED" else "red"
+    console.print(f"[{style}]Data registry consistency：{status}[/{style}]")
+    console.print(f"JSON：{run.json_path}")
+    console.print(f"Markdown：{run.markdown_path}")
+    if isinstance(latest_resolution, dict):
+        console.print(
+            "latest_resolution="
+            f"{latest_resolution.get('status', 'UNKNOWN')}；"
+            f"market_data={latest_resolution.get('resolved_market_data_date', '')}；"
+            f"manifest={latest_resolution.get('resolved_backtest_manifest_date', '')}"
+        )
+    if isinstance(path_consistency, dict):
+        console.print(
+            "price_cache_paths="
+            f"{path_consistency.get('status', 'UNKNOWN')}；"
+            f"validate_data_read_path={path_consistency.get('validate_data_read_path', '')}"
+        )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@data_app.command("validate-backtest-manifest")
+def data_validate_backtest_manifest_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验 latest valid backtest input manifest 与价格缓存一致性。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="manifest 校验日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="shadow backtest 配置路径。"),
+    ] = DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+) -> None:
+    """验证 backtest_input_manifest 与实际价格缓存、symbol mapping 是否一致。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    result = validate_backtest_manifest_consistency(as_of=run_date, config_path=config_path)
+    status = str(result.get("status") or "UNKNOWN")
+    style = "green" if status == "OK" else "yellow" if status == "LIMITED" else "red"
+    console.print(f"[{style}]Backtest manifest consistency：{status}[/{style}]")
+    manifest = result.get("backtest_manifest", {})
+    if isinstance(manifest, dict):
+        console.print(f"manifest：{manifest.get('path', '')}")
+        console.print(f"manifest_validation={manifest.get('validation_status', 'UNKNOWN')}")
+    for asset in result.get("asset_registry", []):
+        if not isinstance(asset, dict):
+            continue
+        symbol = asset.get("canonical_symbol", "")
+        source_symbol = asset.get("source_symbol", "")
+        code = asset.get("error_code", "OK")
+        if code == "OK":
+            suffix = f" via {source_symbol}" if source_symbol and source_symbol != symbol else ""
+            console.print(f"{symbol}: OK{suffix}")
+        else:
+            console.print(f"[red]{symbol}: {code}[/red] - {asset.get('diagnosis', '')}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+    if status == "FAILED":
+        raise typer.Exit(code=1)
+
+
+@data_app.command(
+    "reconcile-price-cache",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def data_reconcile_price_cache_command(
+    ctx: typer.Context,
+    latest: Annotated[
+        bool,
+        typer.Option(help="为 latest data registry mismatch 执行或规划 reconcile。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="reconcile 诊断日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="shadow backtest 配置路径。"),
+    ] = DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="只输出修复计划，不改写价格缓存。"),
+    ] = False,
+    refresh_manifest_only: Annotated[
+        bool,
+        typer.Option(help="只刷新 backtest input manifest，不注册 repaired artifacts。"),
+    ] = False,
+    register_repaired_only: Annotated[
+        bool,
+        typer.Option(help="只注册 repaired artifacts，不刷新 backtest input manifest。"),
+    ] = False,
+    symbols: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--symbols",
+            help="指定 reconcile 资产；可重复。也兼容 `--symbols GOOGL BRK.B SGOV`。",
+        ),
+    ] = None,
+) -> None:
+    """执行 price cache / manifest reconcile；dry-run 只输出计划。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    if refresh_manifest_only and register_repaired_only:
+        raise typer.BadParameter("--refresh-manifest-only 不能和 --register-repaired-only 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    requested_symbols = tuple([*(symbols or []), *[str(item) for item in ctx.args]])
+    run = run_price_cache_reconcile(
+        as_of=run_date,
+        config_path=config_path,
+        dry_run=dry_run,
+        refresh_manifest_only=refresh_manifest_only,
+        register_repaired_only=register_repaired_only,
+        symbols=requested_symbols,
+    )
+    result = run.payload
+    metadata = result.get("metadata", {})
+    status = str(result.get("status") or "UNKNOWN")
+    if isinstance(metadata, dict):
+        status = str(metadata.get("status") or status)
+    style = (
+        "green"
+        if status in {"OK", "NOT_REQUIRED"}
+        else (
+            "yellow"
+            if status
+            in {
+                "DRY_RUN",
+                "LIMITED",
+            }
+            else "red"
+        )
+    )
+    console.print(f"[{style}]Price cache reconcile：{status}[/{style}]")
+    if run.json_path is not None:
+        console.print(f"JSON：{run.json_path}")
+    if run.markdown_path is not None:
+        console.print(f"Markdown：{run.markdown_path}")
+    console.print(f"Price cache registry：{run.registry_path}")
+    for step in result.get("planned_actions", []):
+        if not isinstance(step, dict):
+            continue
+        console.print(
+            "- "
+            f"action={step.get('action', '')}；"
+            f"symbols={', '.join(str(item) for item in step.get('symbols', [])) or 'n/a'}"
+        )
+    for item in result.get("repaired_artifact_inspection", []):
+        if not isinstance(item, dict):
+            continue
+        console.print(
+            f"{item.get('canonical_symbol')}: {item.get('status')} "
+            f"via {item.get('source_symbol')} rows={item.get('rows')} "
+            f"error_code={item.get('error_code')}"
+        )
+    after = result.get("after", {})
+    if isinstance(after, dict):
+        console.print(
+            "after="
+            f"latest_resolution={after.get('latest_resolution', 'UNKNOWN')}；"
+            f"market_data={after.get('market_data_date', '')}；"
+            f"manifest={after.get('manifest_date', '')}"
+        )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+    if status == "FAILED":
+        raise typer.Exit(code=1)
+
+
+@data_app.command("refresh-backtest-manifest")
+def data_refresh_backtest_manifest_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="刷新 latest backtest input manifest。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="manifest 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="shadow backtest 配置路径。"),
+    ] = DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="只显示将写入的 manifest，不实际生成。"),
+    ] = False,
+) -> None:
+    """刷新 backtest input manifest；dry-run 不写 artifact。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    run = refresh_backtest_manifest(
+        as_of=run_date,
+        config_path=config_path,
+        dry_run=dry_run,
+    )
+    metadata = run.payload.get("metadata", {})
+    status = str(metadata.get("status") if isinstance(metadata, dict) else "UNKNOWN")
+    style = "green" if status == "OK" else "yellow" if status == "DRY_RUN" else "red"
+    console.print(f"[{style}]Backtest manifest refresh：{status}[/{style}]")
+    console.print(f"target_manifest_date={run.payload.get('target_manifest_date', '')}")
+    if run.diagnostic_run is not None:
+        console.print(f"Diagnostic JSON：{run.diagnostic_run.json_path}")
+        console.print(f"Snapshot manifest：{run.diagnostic_run.manifest_path}")
+    else:
+        console.print(f"would_write_manifest={run.payload.get('would_write_manifest', '')}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+    if status == "FAILED":
+        raise typer.Exit(code=1)
+
+
+@data_app.command("freshness")
+def data_freshness_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用 raw price cache latest date 作为 tracking date。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="freshness tracking 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    market: Annotated[
+        str,
+        typer.Option("--market", help="市场代码；当前支持 US。"),
+    ] = "US",
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="market data freshness 配置路径。"),
+    ] = DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="写入 outputs/dry_runs/data_freshness，不改正式 artifacts。"),
+    ] = False,
+) -> None:
+    """生成 market data freshness 和 tracking readiness 报告。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    try:
+        run = run_market_data_freshness(
+            as_of=run_date,
+            market=market,
+            config_path=config_path,
+            dry_run=dry_run,
+        )
+    except ValueError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+    metadata = run.payload.get("metadata", {}) if isinstance(run.payload, dict) else {}
+    freshness = run.payload.get("freshness", {}) if isinstance(run.payload, dict) else {}
+    data_dates = run.payload.get("data_dates", {}) if isinstance(run.payload, dict) else {}
+    readiness = run.payload.get("tracking_readiness", {}) if isinstance(run.payload, dict) else {}
+    status = freshness.get("status", metadata.get("status", "UNKNOWN"))
+    style = "green" if status in {"OK", "NON_TRADING_DAY"} else "yellow"
+    if status in {"MISSING", "FAILED", "MARKET_CALENDAR_UNKNOWN"}:
+        style = "red"
+    console.print(f"[{style}]Market data freshness：{status}[/{style}]")
+    console.print(f"JSON：{run.json_path}")
+    console.print(f"Markdown：{run.markdown_path}")
+    if isinstance(data_dates, dict):
+        console.print(
+            "data_dates="
+            f"tracking_date={data_dates.get('tracking_date', 'UNKNOWN')}；"
+            f"effective_data_date={data_dates.get('effective_data_date', 'UNKNOWN')}；"
+            f"latest_manifest_date={data_dates.get('latest_manifest_date', 'UNKNOWN')}"
+        )
+    if isinstance(freshness, dict):
+        console.print(
+            "freshness_status="
+            f"{freshness.get('status', 'UNKNOWN')}；"
+            f"lag_trading_days={freshness.get('lag_trading_days', 'UNKNOWN')}；"
+            f"lag_calendar_days={freshness.get('lag_calendar_days', 'UNKNOWN')}"
+        )
+    if isinstance(readiness, dict):
+        console.print(
+            "tracking_readiness="
+            f"{readiness.get('readiness', 'UNKNOWN')}；"
+            f"tracking_status_recommendation="
+            f"{readiness.get('tracking_status_recommendation', 'UNKNOWN')}"
+        )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+
+
+@data_app.command("validate-freshness")
+def data_validate_freshness_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验最新正式 market data freshness artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="freshness 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 market_data_freshness_summary.json 路径。"),
+    ] = None,
+) -> None:
+    """校验 market data freshness report schema、安全字段和 readiness 输出。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    source_path = input_path or _resolve_market_data_freshness_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_market_data_freshness_payload(source_path)
+    issues = validate_market_data_freshness_payload(payload)
+    metadata = payload.get("metadata", {}) if isinstance(payload, dict) else {}
+    freshness = payload.get("freshness", {}) if isinstance(payload, dict) else {}
+    readiness = payload.get("tracking_readiness", {}) if isinstance(payload, dict) else {}
+    status = (
+        freshness.get("status", metadata.get("status", "UNKNOWN"))
+        if isinstance(freshness, dict)
+        else "UNKNOWN"
+    )
+    style = "green" if not issues and status in {"OK", "NON_TRADING_DAY"} else "yellow"
+    if issues or status in {"MISSING", "FAILED", "MARKET_CALENDAR_UNKNOWN"}:
+        style = "red"
+    console.print(f"[{style}]Market data freshness validation：{status}[/{style}]")
+    console.print(f"source：{source_path}")
+    if issues:
+        for issue in issues:
+            console.print(f"[red]- {issue}[/red]")
+        raise typer.Exit(code=1)
+    if isinstance(freshness, dict):
+        console.print(f"freshness_status={freshness.get('status', 'UNKNOWN')}")
+    if isinstance(readiness, dict):
+        console.print(f"tracking_readiness={readiness.get('readiness', 'UNKNOWN')}")
+        console.print(
+            "tracking_status_recommendation="
+            f"{readiness.get('tracking_status_recommendation', 'UNKNOWN')}"
+        )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+    if status in {"FAILED", "MISSING", "MARKET_CALENDAR_UNKNOWN"}:
+        raise typer.Exit(code=1)
+
+
+@data_app.command(
+    "refresh-market",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def data_refresh_market_command(
+    ctx: typer.Context,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用最新 market data freshness report 生成或执行 refresh。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="refresh 目标日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="market data refresh 配置路径。"),
+    ] = DEFAULT_MARKET_DATA_REFRESH_CONFIG_PATH,
+    symbols: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--symbols",
+            help="指定 refresh 资产；可重复。也兼容 `--symbols GOOGL BRK.B SGOV`。",
+        ),
+    ] = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="只生成 refresh plan，不写价格缓存、registry 或 manifest。"),
+    ] = False,
+    plan_only: Annotated[
+        bool,
+        typer.Option(help="只生成 refresh plan，不执行 recovery。"),
+    ] = False,
+) -> None:
+    """刷新 stale market data 并输出 freshness recovery summary。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    requested_symbols = tuple([*(symbols or []), *[str(item) for item in ctx.args]])
+    run = run_market_data_refresh(
+        as_of=run_date,
+        symbols=requested_symbols,
+        config_path=config_path,
+        dry_run=dry_run,
+        plan_only=plan_only,
+    )
+    metadata = run.payload.get("metadata", {}) if isinstance(run.payload, dict) else {}
+    status = str(metadata.get("status") or "UNKNOWN")
+    style = "green" if status in {"OK", "NOT_NEEDED"} else "yellow"
+    if status in {"FAILED", "BLOCKED"}:
+        style = "red"
+    mode = "PLAN" if dry_run or plan_only else "EXECUTE"
+    console.print(f"[{style}]Market data refresh：{status} ({mode})[/{style}]")
+    console.print(f"Plan JSON：{run.plan_path}")
+    if run.json_path is not None:
+        console.print(f"JSON：{run.json_path}")
+    if run.markdown_path is not None:
+        console.print(f"Markdown：{run.markdown_path}")
+    freshness_input = run.payload.get("freshness_input", {})
+    if not isinstance(freshness_input, dict) or not freshness_input:
+        before = run.payload.get("before", {})
+        actions = run.payload.get("actions", {})
+        if isinstance(before, dict) and isinstance(actions, dict):
+            freshness_input = {
+                "freshness_status": before.get("freshness_status", "UNKNOWN"),
+                "required_target_date": actions.get("target_date", ""),
+            }
+    if isinstance(freshness_input, dict):
+        console.print(
+            "freshness_input="
+            f"status={freshness_input.get('freshness_status', 'UNKNOWN')}；"
+            f"target_date={freshness_input.get('required_target_date', '')}"
+        )
+    actions = run.payload.get("actions", {})
+    if isinstance(actions, dict):
+        fetched_assets = (
+            ", ".join(str(item) for item in actions.get("fetched_assets", [])) or "none"
+        )
+        console.print(
+            "actions="
+            f"target_date={actions.get('target_date', '')}；"
+            f"fetched_assets={fetched_assets}；"
+            f"manifest_refreshed={actions.get('refreshed_backtest_manifest', False)}"
+        )
+    after = run.payload.get("after", {})
+    if isinstance(after, dict):
+        console.print(
+            "after="
+            f"freshness_status={after.get('freshness_status', 'UNKNOWN')}；"
+            f"tracking_readiness={after.get('tracking_readiness', 'UNKNOWN')}；"
+            f"candidate_tracking_status={after.get('candidate_tracking_status', 'UNKNOWN')}"
+        )
+    for item in run.payload.get("asset_results", []):
+        if isinstance(item, dict):
+            console.print(
+                f"{item.get('symbol', '')}: {item.get('status', '')} "
+                f"via {item.get('source_symbol', '')} source={item.get('source', '')}"
+            )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+    if status in {"FAILED", "BLOCKED"}:
+        raise typer.Exit(code=1)
+
+
+@data_app.command("validate-refresh")
+def data_validate_refresh_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="校验最新正式 market data refresh artifact。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="refresh 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    input_path: Annotated[
+        Path | None,
+        typer.Option(help="显式 market_data_refresh_summary.json 路径。"),
+    ] = None,
+) -> None:
+    """校验 market data refresh report schema、安全字段和 recovery 输出。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    source_path = input_path or _resolve_market_data_refresh_path(
+        latest=latest,
+        as_of=as_of,
+    )
+    payload = load_market_data_refresh_payload(source_path)
+    issues = validate_market_data_refresh_payload(payload)
+    metadata = payload.get("metadata", {}) if isinstance(payload, dict) else {}
+    status = str(metadata.get("status") or "UNKNOWN")
+    style = "green" if not issues and status in {"OK", "NOT_NEEDED"} else "yellow"
+    if issues or status in {"FAILED", "BLOCKED"}:
+        style = "red"
+    console.print(f"[{style}]Market data refresh validation：{status}[/{style}]")
+    console.print(f"source：{source_path}")
+    if issues:
+        for issue in issues:
+            console.print(f"[red]- {issue}[/red]")
+        raise typer.Exit(code=1)
+    console.print(f"refresh_status={status}")
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+    if status in {"FAILED", "BLOCKED"}:
+        raise typer.Exit(code=1)
+
+
+@data_app.command("recover-freshness")
+def data_recover_freshness_command(
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用 latest freshness/tracking 日期执行 recovery。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="recovery 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    refresh_config_path: Annotated[
+        Path,
+        typer.Option("--refresh-config", help="market data refresh 配置路径。"),
+    ] = DEFAULT_MARKET_DATA_REFRESH_CONFIG_PATH,
+    freshness_config_path: Annotated[
+        Path,
+        typer.Option("--freshness-config", help="market data freshness 配置路径。"),
+    ] = DEFAULT_MARKET_DATA_FRESHNESS_CONFIG_PATH,
+) -> None:
+    """执行 freshness -> refresh -> manifest/freshness/tracking recovery 链路。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    freshness_run = run_market_data_freshness(
+        as_of=run_date,
+        config_path=freshness_config_path,
+        dry_run=False,
+    )
+    freshness = freshness_run.payload.get("freshness", {})
+    freshness_status = (
+        freshness.get("status", "UNKNOWN") if isinstance(freshness, dict) else "UNKNOWN"
+    )
+    console.print(f"freshness_before={freshness_status}；report={freshness_run.json_path}")
+    refresh_run = run_market_data_refresh(
+        as_of=freshness_run.as_of,
+        config_path=refresh_config_path,
+        dry_run=False,
+    )
+    metadata = (
+        refresh_run.payload.get("metadata", {}) if isinstance(refresh_run.payload, dict) else {}
+    )
+    status = str(metadata.get("status") or "UNKNOWN")
+    style = "green" if status in {"OK", "NOT_NEEDED"} else "yellow"
+    if status in {"FAILED", "BLOCKED"}:
+        style = "red"
+    console.print(f"[{style}]Freshness recovery：{status}[/{style}]")
+    console.print(f"Refresh JSON：{refresh_run.json_path}")
+    after = refresh_run.payload.get("after", {})
+    if isinstance(after, dict):
+        console.print(
+            f"freshness_status={after.get('freshness_status', 'UNKNOWN')}；"
+            f"tracking_readiness={after.get('tracking_readiness', 'UNKNOWN')}；"
+            f"tracking_status={after.get('candidate_tracking_status', 'UNKNOWN')}"
+        )
+    console.print("production_effect=none；manual_review_required=true；auto_promotion=false")
+    if status in {"FAILED", "BLOCKED"}:
+        raise typer.Exit(code=1)
+
+
+@data_app.command(
+    "repair-backtest-inputs",
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
+def data_repair_backtest_inputs_command(
+    ctx: typer.Context,
+    latest: Annotated[
+        bool,
+        typer.Option(help="使用价格缓存中的最新可用日期。"),
+    ] = False,
+    as_of: Annotated[
+        str | None,
+        typer.Option("--date", "--as-of", help="repair planning 日期，格式为 YYYY-MM-DD。"),
+    ] = None,
+    config_path: Annotated[
+        Path,
+        typer.Option("--config", help="shadow backtest 配置路径。"),
+    ] = DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+    dry_run: Annotated[
+        bool,
+        typer.Option(help="只输出 repair plan，不下载或改写外部数据。"),
+    ] = False,
+    price_only: Annotated[
+        bool,
+        typer.Option("--price-only", help="只修复价格历史，不尝试生成 signal snapshots。"),
+    ] = False,
+    symbols: Annotated[
+        list[str] | None,
+        typer.Option(
+            "--symbols",
+            help="指定修复资产；可重复。也兼容 `--symbols GOOGL BRK.B SGOV`。",
+        ),
+    ] = None,
+    price_provider: Annotated[
+        str,
+        typer.Option(help="价格 repair provider：fmp 或 yahoo。默认使用 active 主源 fmp。"),
+    ] = "fmp",
+    fmp_api_key_env: Annotated[
+        str,
+        typer.Option(help="读取 FMP API key 的环境变量名。"),
+    ] = "FMP_API_KEY",
+) -> None:
+    """修复 shadow backtest 输入价格历史；dry-run 只输出 repair plan。"""
+    if latest and as_of:
+        raise typer.BadParameter("--latest 不能和 --date/--as-of 同时使用")
+    run_date = None if latest or as_of is None else _parse_date(as_of)
+    extra_symbol_args = [str(item) for item in ctx.args]
+    requested_symbols = tuple([*(symbols or []), *extra_symbol_args])
+    run = run_backtest_input_diagnostics(as_of=run_date, config_path=config_path)
+    repair_plan = run.payload.get("repair_plan", {})
+    status = repair_plan.get("status", "UNKNOWN") if isinstance(repair_plan, dict) else "UNKNOWN"
+    mode = "DRY_RUN" if dry_run else "EXECUTE"
+    style = "green" if status == "NOT_REQUIRED" else "yellow"
+    console.print(f"[{style}]Backtest input repair plan：{status} ({mode})[/{style}]")
+    console.print(f"Diagnostic JSON：{run.json_path}")
+    console.print(f"Diagnostic Markdown：{run.markdown_path}")
+    if isinstance(repair_plan, dict):
+        steps = repair_plan.get("steps", [])
+        if isinstance(steps, list) and steps:
+            for step in steps:
+                if isinstance(step, dict):
+                    console.print(
+                        f"- step {step.get('step')}: {step.get('action')} "
+                        f"required={step.get('required', False)}"
+                    )
+        else:
+            console.print("- repair plan 为空。")
+    if dry_run:
+        console.print("production_effect=none；不修改 production 参数或 promotion 规则")
+        return
+
+    try:
+        provider = build_price_history_repair_provider(
+            provider_name=price_provider,
+            fmp_api_key=os.getenv(fmp_api_key_env, ""),
+        )
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        raise typer.Exit(code=1) from exc
+
+    repair = repair_backtest_price_history(
+        as_of=run_date,
+        config_path=config_path,
+        symbols=requested_symbols,
+        price_provider=provider,
+        provider_name=price_provider,
+        price_only=price_only,
+    )
+    result_style = "green" if repair.status in {"REPAIRED", "NOT_REQUIRED"} else "yellow"
+    console.print(f"[{result_style}]Price history repair：{repair.status}[/{result_style}]")
+    for result in repair.asset_results:
+        console.print(
+            f"- {result.symbol}: {result.status}; source_symbol={result.source_symbol}; "
+            f"rows={result.rows_written}; error={result.error or 'none'}"
+        )
+    final_summary = repair.final_diagnostics.payload.get("summary", {})
+    if isinstance(final_summary, dict):
+        console.print(
+            f"final_status={final_summary.get('overall_status', 'UNKNOWN')}；"
+            f"backtest_mode={final_summary.get('backtest_mode', 'UNKNOWN')}；"
+            f"can_run_shadow_backtest={final_summary.get('can_run_shadow_backtest', False)}；"
+            f"can_promote_candidate={final_summary.get('can_promote_candidate', False)}"
+        )
+    console.print(f"Price cache：{repair.price_cache_path}")
+    console.print(f"Download manifest：{repair.manifest_path}")
+    console.print(f"Final diagnostic JSON：{repair.final_diagnostics.json_path}")
+    console.print(f"Final snapshot manifest：{repair.final_diagnostics.manifest_path}")
+    console.print("production_effect=none；不修改 production 参数或 promotion 规则")

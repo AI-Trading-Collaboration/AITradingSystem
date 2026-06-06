@@ -6,6 +6,7 @@ from datetime import date
 from typer.testing import CliRunner
 
 from ai_trading_system import cli
+from ai_trading_system.cli_commands import data as data_cli
 
 
 def test_recover_freshness_cli_runs_refresh_chain(monkeypatch) -> None:
@@ -42,8 +43,8 @@ def test_recover_freshness_cli_runs_refresh_chain(monkeypatch) -> None:
             }
         )
 
-    monkeypatch.setattr(cli, "run_market_data_freshness", fake_freshness)
-    monkeypatch.setattr(cli, "run_market_data_refresh", fake_refresh)
+    monkeypatch.setattr(data_cli, "run_market_data_freshness", fake_freshness)
+    monkeypatch.setattr(data_cli, "run_market_data_refresh", fake_refresh)
 
     result = CliRunner().invoke(cli.app, ["data", "recover-freshness", "--latest"])
 
