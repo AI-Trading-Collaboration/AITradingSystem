@@ -119,6 +119,7 @@ from ai_trading_system.cli_commands import etf_portfolio as etf_cli
 from ai_trading_system.cli_commands.catalysts import catalysts_app
 from ai_trading_system.cli_commands.docs import docs_app
 from ai_trading_system.cli_commands.etf_portfolio import etf_app
+from ai_trading_system.cli_commands.execution import execution_app
 from ai_trading_system.cli_commands.scenarios import scenarios_app
 from ai_trading_system.cli_commands.sec_pit import sec_pit_app
 from ai_trading_system.cli_commands.security import security_app
@@ -245,8 +246,6 @@ from ai_trading_system.execution_policy import (
     build_execution_advisory,
     default_execution_policy_report_path,
     load_execution_policy,
-    lookup_execution_action,
-    render_execution_action_lookup,
     render_execution_advisory_section,
     validate_execution_policy,
     write_execution_policy_report,
@@ -963,7 +962,6 @@ fundamentals_app = typer.Typer(help="基本面数据源下载和审计。", no_a
 trace_app = typer.Typer(help="报告 evidence bundle 反查。", no_args_is_help=True)
 evidence_app = typer.Typer(help="新市场信息 evidence 账本。", no_args_is_help=True)
 feedback_app = typer.Typer(help="决策结果观察、校准和因果链查询。", no_args_is_help=True)
-execution_app = typer.Typer(help="Advisory execution policy 和执行纪律。", no_args_is_help=True)
 portfolio_app = typer.Typer(help="真实组合持仓和暴露解释。", no_args_is_help=True)
 parameters_app = typer.Typer(help="生产参数快照、shadow 回测和晋升复核。", no_args_is_help=True)
 signals_app = typer.Typer(help="Shadow backtest signal snapshot 构建和校验。", no_args_is_help=True)
@@ -6957,63 +6955,6 @@ def validate_industry_chain(
 
     if not report.passed:
         raise typer.Exit(code=1)
-
-
-@execution_app.command("validate")
-def validate_execution_policy_command(
-    input_path: Annotated[
-        Path,
-        typer.Option(help="execution policy YAML 路径。"),
-    ] = DEFAULT_EXECUTION_POLICY_CONFIG_PATH,
-    as_of: Annotated[
-        str | None,
-        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
-    ] = None,
-    output_path: Annotated[
-        Path | None,
-        typer.Option(help="Markdown execution policy 校验报告输出路径。"),
-    ] = None,
-) -> None:
-    """校验 advisory execution policy 和固定动作词表。"""
-    validation_date = _parse_date(as_of) if as_of else date.today()
-    report = validate_execution_policy(
-        load_execution_policy(input_path),
-        as_of=validation_date,
-    )
-    report_path = output_path or default_execution_policy_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
-        validation_date,
-    )
-    write_execution_policy_report(report, report_path)
-
-    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
-    console.print(f"[{status_style}]执行政策状态：{report.status}[/{status_style}]")
-    console.print(f"报告：{report_path}")
-    console.print(f"动作数：{report.action_count}")
-    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
-    if not report.passed:
-        raise typer.Exit(code=1)
-
-
-@execution_app.command("lookup")
-def lookup_execution_action_command(
-    action_id: Annotated[
-        str,
-        typer.Option("--id", help="execution action id。"),
-    ],
-    input_path: Annotated[
-        Path,
-        typer.Option(help="execution policy YAML 路径。"),
-    ] = DEFAULT_EXECUTION_POLICY_CONFIG_PATH,
-) -> None:
-    """按 execution action id 反查动作定义。"""
-    try:
-        action = lookup_execution_action(input_path, action_id)
-    except FileNotFoundError as exc:
-        raise typer.BadParameter(f"execution policy 不存在：{input_path}") from exc
-    except (KeyError, ValueError) as exc:
-        raise typer.BadParameter(str(exc)) from exc
-    console.print(render_execution_action_lookup(action))
 
 
 @portfolio_app.command("exposure")
