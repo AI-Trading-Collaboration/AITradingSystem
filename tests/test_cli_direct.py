@@ -704,12 +704,12 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
         recorder("market_data_recover_freshness"),
     )
     monkeypatch.setattr(
-        cli_direct.cli,
+        cli_direct.portfolio_cli,
         "portfolio_track_candidate_command",
         recorder("portfolio_candidate_tracking"),
     )
     monkeypatch.setattr(
-        cli_direct.cli,
+        cli_direct.portfolio_cli,
         "portfolio_review_tracking_command",
         recorder("portfolio_tracking_review"),
     )

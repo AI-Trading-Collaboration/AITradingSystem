@@ -13,6 +13,7 @@ from ai_trading_system.cli_commands import docs as docs_cli
 from ai_trading_system.cli_commands import etf_portfolio as etf_cli
 from ai_trading_system.cli_commands import fundamentals as fundamentals_cli
 from ai_trading_system.cli_commands import pit_snapshots as pit_snapshots_cli
+from ai_trading_system.cli_commands import portfolio as portfolio_cli
 from ai_trading_system.cli_commands import sec_pit as sec_pit_cli
 from ai_trading_system.cli_commands import security as security_cli
 from ai_trading_system.cli_commands import signals as signals_cli
@@ -222,20 +223,20 @@ def _dispatch(args: list[str]) -> None:
         cli.calculation_explainers_command(as_of=_option(args, "--as-of"))
         return
     if args[:2] == ["portfolio", "track-candidate"]:
-        cli.portfolio_track_candidate_command(
+        portfolio_cli.portfolio_track_candidate_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             review_path=_optional_path(args, "--review"),
             config_path=_path_option_with_default(
                 args,
                 "--config",
-                cli.DEFAULT_PORTFOLIO_CANDIDATE_TRACKING_CONFIG_PATH,
+                portfolio_cli.DEFAULT_PORTFOLIO_CANDIDATE_TRACKING_CONFIG_PATH,
             ),
             dry_run=_flag(args, "--dry-run"),
         )
         return
     if args[:2] == ["portfolio", "review-tracking"]:
-        cli.portfolio_review_tracking_command(
+        portfolio_cli.portfolio_review_tracking_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             candidate_profile=_option(args, "--candidate"),
@@ -244,7 +245,7 @@ def _dispatch(args: list[str]) -> None:
             config_path=_path_option_with_default(
                 args,
                 "--config",
-                cli.DEFAULT_PORTFOLIO_TRACKING_REVIEW_CONFIG_PATH,
+                portfolio_cli.DEFAULT_PORTFOLIO_TRACKING_REVIEW_CONFIG_PATH,
             ),
             dry_run=_flag(args, "--dry-run"),
         )
