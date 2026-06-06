@@ -8,7 +8,7 @@ from typing import Any
 from pytest import MonkeyPatch, approx
 from typer.testing import CliRunner
 
-import ai_trading_system.cli as cli_module
+import ai_trading_system.cli_commands.valuation as valuation_cli
 from ai_trading_system.cli import app
 from ai_trading_system.config import load_universe, load_watchlist
 from ai_trading_system.fmp_forward_pit import (
@@ -645,7 +645,7 @@ def test_valuation_fetch_fmp_cli_writes_yaml_and_reports(
         )
 
     monkeypatch.setenv("FMP_API_KEY", "test-key")
-    monkeypatch.setattr(cli_module, "fetch_fmp_valuation_snapshots", fake_fetch)
+    monkeypatch.setattr(valuation_cli, "fetch_fmp_valuation_snapshots", fake_fetch)
 
     result = CliRunner().invoke(
         app,
@@ -712,7 +712,7 @@ def test_valuation_fetch_fmp_valuation_history_cli_writes_raw_yaml_and_reports(
         )
 
     monkeypatch.setenv("FMP_API_KEY", "test-key")
-    monkeypatch.setattr(cli_module, "fetch_fmp_historical_valuation_snapshots", fake_fetch)
+    monkeypatch.setattr(valuation_cli, "fetch_fmp_historical_valuation_snapshots", fake_fetch)
 
     result = CliRunner().invoke(
         app,
@@ -850,7 +850,7 @@ def test_valuation_fetch_eodhd_trends_cli_writes_raw_yaml_and_reports(
         )
 
     monkeypatch.setenv("EODHD_API_KEY", "test-token")
-    monkeypatch.setattr(cli_module, "fetch_eodhd_earnings_trend_snapshots", fake_fetch)
+    monkeypatch.setattr(valuation_cli, "fetch_eodhd_earnings_trend_snapshots", fake_fetch)
 
     result = CliRunner().invoke(
         app,
