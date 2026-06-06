@@ -12,6 +12,7 @@ from ai_trading_system import cli
 from ai_trading_system.cli_commands import docs as docs_cli
 from ai_trading_system.cli_commands import etf_portfolio as etf_cli
 from ai_trading_system.cli_commands import fundamentals as fundamentals_cli
+from ai_trading_system.cli_commands import parameters as parameters_cli
 from ai_trading_system.cli_commands import pit_snapshots as pit_snapshots_cli
 from ai_trading_system.cli_commands import portfolio as portfolio_cli
 from ai_trading_system.cli_commands import sec_pit as sec_pit_cli
@@ -481,29 +482,33 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:2] == ["parameters", "shadow-backtest"]:
-        cli.parameters_shadow_backtest_command(
+        parameters_cli.parameters_shadow_backtest_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
-            config_path=_path_option(args, "--config"),
+            config_path=_path_option_with_default(
+                args,
+                "--config",
+                parameters_cli.DEFAULT_SHADOW_BACKTEST_CONFIG_PATH,
+            ),
             dry_run=_flag(args, "--dry-run"),
         )
         return
     if args[:2] == ["parameters", "validate-shadow-backtest"]:
-        cli.validate_shadow_backtest_command(
+        parameters_cli.validate_shadow_backtest_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             input_path=_optional_path(args, "--input-path"),
         )
         return
     if args[:2] == ["parameters", "tune-weights-stable"]:
-        cli.parameters_tune_weights_stable_command(
+        parameters_cli.parameters_tune_weights_stable_command(
             ctx=SimpleNamespace(args=[]),
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             config_path=_path_option_with_default(
                 args,
                 "--config",
-                cli.DEFAULT_WEIGHT_STABILITY_CONFIG_PATH,
+                parameters_cli.DEFAULT_WEIGHT_STABILITY_CONFIG_PATH,
             ),
             portfolio_profile=_option(args, "--portfolio-profile"),
             signals=_values_after_option(args, "--signals"),
@@ -511,45 +516,45 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:2] == ["parameters", "diagnose-weight-stability-inputs"]:
-        cli.diagnose_weight_stability_inputs_command(
+        parameters_cli.diagnose_weight_stability_inputs_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             config_path=_path_option_with_default(
                 args,
                 "--config",
-                cli.DEFAULT_WEIGHT_STABILITY_READINESS_CONFIG_PATH,
+                parameters_cli.DEFAULT_WEIGHT_STABILITY_READINESS_CONFIG_PATH,
             ),
             dry_run=_flag(args, "--dry-run"),
         )
         return
     if args[:2] == ["parameters", "recover-weight-stability-inputs"]:
-        cli.recover_weight_stability_inputs_command(
+        parameters_cli.recover_weight_stability_inputs_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             config_path=_path_option_with_default(
                 args,
                 "--config",
-                cli.DEFAULT_WEIGHT_STABILITY_READINESS_CONFIG_PATH,
+                parameters_cli.DEFAULT_WEIGHT_STABILITY_READINESS_CONFIG_PATH,
             ),
             dry_run=_flag(args, "--dry-run"),
         )
         return
     if args[:2] == ["parameters", "validate-weight-stability-readiness"]:
-        cli.validate_weight_stability_readiness_command(
+        parameters_cli.validate_weight_stability_readiness_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             input_path=_optional_path(args, "--input-path"),
         )
         return
     if args[:2] == ["parameters", "validate-weight-stability"]:
-        cli.validate_weight_stability_command(
+        parameters_cli.validate_weight_stability_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             input_path=_optional_path(args, "--input-path"),
         )
         return
     if args[:2] == ["parameters", "explain-weight-stability"]:
-        cli.explain_weight_stability_command(
+        parameters_cli.explain_weight_stability_command(
             latest=_flag(args, "--latest"),
             as_of=_option(args, "--as-of") or _option(args, "--date"),
             input_path=_optional_path(args, "--input-path"),
