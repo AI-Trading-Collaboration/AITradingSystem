@@ -647,18 +647,22 @@ def test_cli_direct_covers_all_scheduled_daily_commands(monkeypatch) -> None:
         recorder("pit_snapshots_validate"),
     )
     monkeypatch.setattr(
-        cli_direct.cli,
+        cli_direct.fundamentals_cli,
         "download_sec_companyfacts_command",
         recorder("sec_companyfacts"),
     )
-    monkeypatch.setattr(cli_direct.cli, "extract_sec_metrics_command", recorder("sec_metrics"))
     monkeypatch.setattr(
-        cli_direct.cli,
+        cli_direct.fundamentals_cli,
+        "extract_sec_metrics_command",
+        recorder("sec_metrics"),
+    )
+    monkeypatch.setattr(
+        cli_direct.fundamentals_cli,
         "merge_tsm_ir_sec_metrics",
         recorder("tsm_ir_sec_metrics_merge"),
     )
     monkeypatch.setattr(
-        cli_direct.cli,
+        cli_direct.fundamentals_cli,
         "validate_sec_metrics_command",
         recorder("sec_metrics_validation"),
     )

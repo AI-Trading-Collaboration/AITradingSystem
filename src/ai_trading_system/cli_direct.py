@@ -11,6 +11,7 @@ import typer
 from ai_trading_system import cli
 from ai_trading_system.cli_commands import docs as docs_cli
 from ai_trading_system.cli_commands import etf_portfolio as etf_cli
+from ai_trading_system.cli_commands import fundamentals as fundamentals_cli
 from ai_trading_system.cli_commands import pit_snapshots as pit_snapshots_cli
 from ai_trading_system.cli_commands import sec_pit as sec_pit_cli
 from ai_trading_system.cli_commands import security as security_cli
@@ -158,18 +159,18 @@ def _dispatch(args: list[str]) -> None:
         pit_snapshots_cli.validate_pit_snapshots_command(as_of=_option(args, "--as-of"))
         return
     if args[:2] == ["fundamentals", "download-sec-companyfacts"]:
-        cli.download_sec_companyfacts_command(
+        fundamentals_cli.download_sec_companyfacts_command(
             user_agent=_option(args, "--user-agent") or os.getenv("SEC_USER_AGENT")
         )
         return
     if args[:2] == ["fundamentals", "extract-sec-metrics"]:
-        cli.extract_sec_metrics_command(as_of=_option(args, "--as-of"))
+        fundamentals_cli.extract_sec_metrics_command(as_of=_option(args, "--as-of"))
         return
     if args[:2] == ["fundamentals", "merge-tsm-ir-sec-metrics"]:
-        cli.merge_tsm_ir_sec_metrics(as_of=_option(args, "--as-of"))
+        fundamentals_cli.merge_tsm_ir_sec_metrics(as_of=_option(args, "--as-of"))
         return
     if args[:2] == ["fundamentals", "validate-sec-metrics"]:
-        cli.validate_sec_metrics_command(as_of=_option(args, "--as-of"))
+        fundamentals_cli.validate_sec_metrics_command(as_of=_option(args, "--as-of"))
         return
     if args[:2] == ["valuation", "fetch-fmp"]:
         valuation_cli.fetch_fmp_valuations(as_of=_option(args, "--as-of"))
