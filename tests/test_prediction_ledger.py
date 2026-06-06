@@ -293,7 +293,7 @@ def test_feedback_run_parameter_shadow_cli_defaults_to_isolated_validation_ledge
     ledger_path = tmp_path / "prediction_ledger_flow_validation.csv"
     report_path = tmp_path / "parameter_shadow_predictions.md"
     monkeypatch.setattr(
-        "ai_trading_system.cli.DEFAULT_PARAMETER_SHADOW_PREDICTION_LEDGER_PATH",
+        "ai_trading_system.cli_commands.feedback.DEFAULT_PARAMETER_SHADOW_PREDICTION_LEDGER_PATH",
         ledger_path,
     )
     snapshot = _decision_snapshot()

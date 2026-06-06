@@ -12,6 +12,7 @@ from ai_trading_system import cli
 from ai_trading_system.cli_commands import data as data_cli
 from ai_trading_system.cli_commands import docs as docs_cli
 from ai_trading_system.cli_commands import etf_portfolio as etf_cli
+from ai_trading_system.cli_commands import feedback as feedback_cli
 from ai_trading_system.cli_commands import fundamentals as fundamentals_cli
 from ai_trading_system.cli_commands import ops as ops_cli
 from ai_trading_system.cli_commands import parameters as parameters_cli
@@ -214,13 +215,13 @@ def _dispatch(args: list[str]) -> None:
         )
         return
     if args[:2] == ["feedback", "optimize-market-feedback"]:
-        cli.optimize_market_feedback_command(as_of=_option(args, "--as-of"))
+        feedback_cli.optimize_market_feedback_command(as_of=_option(args, "--as-of"))
         return
     if args[:2] == ["feedback", "evaluate-parameter-governance"]:
-        cli.evaluate_parameter_governance_command(as_of=_option(args, "--as-of"))
+        feedback_cli.evaluate_parameter_governance_command(as_of=_option(args, "--as-of"))
         return
     if args[:2] == ["feedback", "loop-review"]:
-        cli.feedback_loop_review_command(as_of=_option(args, "--as-of"))
+        feedback_cli.feedback_loop_review_command(as_of=_option(args, "--as-of"))
         return
     if args[:2] == ["reports", "investment-review"]:
         reports_cli.investment_periodic_review_command(

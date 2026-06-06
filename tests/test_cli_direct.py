@@ -419,17 +419,17 @@ def test_cli_direct_dispatches_daily_feedback_reports(monkeypatch) -> None:
         calls.append(("investment_review", kwargs))
 
     monkeypatch.setattr(
-        cli_direct.cli,
+        cli_direct.feedback_cli,
         "evaluate_parameter_governance_command",
         fake_parameter_governance,
     )
     monkeypatch.setattr(
-        cli_direct.cli,
+        cli_direct.feedback_cli,
         "optimize_market_feedback_command",
         fake_market_feedback,
     )
     monkeypatch.setattr(
-        cli_direct.cli,
+        cli_direct.feedback_cli,
         "feedback_loop_review_command",
         fake_loop_review,
     )
