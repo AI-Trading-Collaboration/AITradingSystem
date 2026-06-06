@@ -119,11 +119,13 @@ from ai_trading_system.cli_commands import etf_portfolio as etf_cli
 from ai_trading_system.cli_commands.catalysts import catalysts_app
 from ai_trading_system.cli_commands.docs import docs_app
 from ai_trading_system.cli_commands.etf_portfolio import etf_app
+from ai_trading_system.cli_commands.evidence import evidence_app
 from ai_trading_system.cli_commands.execution import execution_app
 from ai_trading_system.cli_commands.industry_chain import industry_chain_app
 from ai_trading_system.cli_commands.scenarios import scenarios_app
 from ai_trading_system.cli_commands.sec_pit import sec_pit_app
 from ai_trading_system.cli_commands.security import security_app
+from ai_trading_system.cli_commands.trace import trace_app
 from ai_trading_system.cli_commands.watchlist import watchlist_app
 from ai_trading_system.config import (
     DEFAULT_BACKTEST_VALIDATION_POLICY_CONFIG_PATH,
@@ -395,15 +397,6 @@ from ai_trading_system.llm_request_profiles import (
     LlmRequestProfile,
     load_llm_request_profiles,
 )
-from ai_trading_system.market_evidence import (
-    default_market_evidence_report_path,
-    import_market_evidence_csv,
-    load_market_evidence_store,
-    validate_market_evidence_store,
-    write_market_evidence_import_report,
-    write_market_evidence_validation_report,
-    write_market_evidence_yaml,
-)
 from ai_trading_system.market_feedback_optimization import (
     DEFAULT_MARKET_FEEDBACK_REPLAY_START,
     build_market_feedback_optimization_report,
@@ -516,8 +509,6 @@ from ai_trading_system.report_traceability import (
     build_backtest_trace_bundle,
     build_daily_score_trace_bundle,
     default_report_trace_bundle_path,
-    lookup_trace_record,
-    render_trace_lookup,
     render_traceability_section,
     write_trace_bundle,
 )
@@ -949,8 +940,6 @@ valuation_app = typer.Typer(help="估值、预期和拥挤度快照管理。", n
 data_sources_app = typer.Typer(help="数据源目录和审计规则管理。", no_args_is_help=True)
 data_app = typer.Typer(help="缓存数据诊断和 backtest input repair planning。", no_args_is_help=True)
 fundamentals_app = typer.Typer(help="基本面数据源下载和审计。", no_args_is_help=True)
-trace_app = typer.Typer(help="报告 evidence bundle 反查。", no_args_is_help=True)
-evidence_app = typer.Typer(help="新市场信息 evidence 账本。", no_args_is_help=True)
 feedback_app = typer.Typer(help="决策结果观察、校准和因果链查询。", no_args_is_help=True)
 portfolio_app = typer.Typer(help="真实组合持仓和暴露解释。", no_args_is_help=True)
 parameters_app = typer.Typer(help="生产参数快照、shadow 回测和晋升复核。", no_args_is_help=True)
@@ -1116,7 +1105,6 @@ DEFAULT_LLM_CLAIM_PREREVIEW_PROFILE = "llm_claim_prereview"
 DEFAULT_RISK_EVENT_SINGLE_PREREVIEW_PROFILE = "risk_event_single_prereview"
 DEFAULT_RISK_EVENT_TRIAGED_PREREVIEW_PROFILE = "risk_event_triaged_official_candidates"
 DEFAULT_RISK_EVENT_DAILY_PREREVIEW_PROFILE = "risk_event_daily_official_precheck"
-DEFAULT_MARKET_EVIDENCE_PATH = PROJECT_ROOT / "data" / "external" / "market_evidence"
 DEFAULT_PORTFOLIO_POSITIONS_PATH = (
     PROJECT_ROOT / "data" / "external" / "portfolio_positions" / "current_positions.csv"
 )
@@ -1550,96 +1538,6 @@ def _finish_fmp_forward_pit_failure(
         )
         return
     raise typer.Exit(code=1)
-
-
-@trace_app.command("lookup")
-def trace_lookup(
-    bundle_path: Annotated[
-        Path,
-        typer.Option(help="evidence bundle JSON 路径。"),
-    ],
-    object_id: Annotated[
-        str,
-        typer.Option("--id", help="claim/evidence/dataset/quality/run id。"),
-    ],
-) -> None:
-    """按 ID 反查报告 evidence bundle 中的上下文。"""
-    try:
-        record_type, record = lookup_trace_record(bundle_path, object_id)
-    except FileNotFoundError as exc:
-        raise typer.BadParameter(f"evidence bundle 不存在：{bundle_path}") from exc
-    except KeyError as exc:
-        raise typer.BadParameter(str(exc)) from exc
-    console.print(render_trace_lookup(record_type, record))
-
-
-@evidence_app.command("validate")
-def validate_market_evidence(
-    input_path: Annotated[
-        Path,
-        typer.Option(help="market_evidence YAML 文件或目录路径。"),
-    ] = DEFAULT_MARKET_EVIDENCE_PATH,
-    as_of: Annotated[
-        str | None,
-        typer.Option(help="校验日期，格式为 YYYY-MM-DD，默认今天。"),
-    ] = None,
-    output_path: Annotated[
-        Path | None,
-        typer.Option(help="Markdown evidence 校验报告输出路径。"),
-    ] = None,
-) -> None:
-    """校验新市场信息 evidence 账本。"""
-    validation_date = _parse_date(as_of) if as_of else date.today()
-    report_path = output_path or default_market_evidence_report_path(
-        PROJECT_ROOT / "outputs" / "reports",
-        validation_date,
-    )
-    report = validate_market_evidence_store(
-        load_market_evidence_store(input_path),
-        as_of=validation_date,
-    )
-    write_market_evidence_validation_report(report, report_path)
-
-    status_style = "green" if report.status == "PASS" else "yellow" if report.passed else "red"
-    console.print(f"[{status_style}]Market evidence 状态：{report.status}[/{status_style}]")
-    console.print(f"报告：{report_path}")
-    console.print(f"证据数：{report.evidence_count}；待复核：{report.pending_review_count}")
-    console.print(f"错误数：{report.error_count}；警告数：{report.warning_count}")
-    if not report.passed:
-        raise typer.Exit(code=1)
-
-
-@evidence_app.command("import-csv")
-def import_market_evidence_command(
-    input_path: Annotated[
-        Path,
-        typer.Option(help="人工复核或 LLM 分类后的 market_evidence CSV 路径。"),
-    ],
-    output_dir: Annotated[
-        Path,
-        typer.Option(help="写入 market_evidence YAML 的目录。"),
-    ] = DEFAULT_MARKET_EVIDENCE_PATH,
-    report_path: Annotated[
-        Path | None,
-        typer.Option(help="Markdown 导入报告输出路径。"),
-    ] = None,
-) -> None:
-    """从 CSV 导入 market_evidence YAML。"""
-    import_report = import_market_evidence_csv(input_path)
-    import_report_output = report_path or (
-        PROJECT_ROOT / "outputs" / "reports" / f"market_evidence_import_{date.today()}.md"
-    )
-    write_market_evidence_import_report(import_report, import_report_output)
-    if not import_report.passed:
-        console.print("[red]Market evidence CSV 导入失败，未写入 YAML。[/red]")
-        console.print(f"导入报告：{import_report_output}")
-        raise typer.Exit(code=1)
-
-    written_paths = write_market_evidence_yaml(import_report.evidence, output_dir)
-    console.print("[green]Market evidence 已导入。[/green]")
-    console.print(f"导入报告：{import_report_output}")
-    console.print(f"写入证据数：{len(written_paths)}")
-    console.print(f"输出目录：{output_dir}")
 
 
 @llm_app.command("precheck-claims")
