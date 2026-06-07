@@ -1,6 +1,6 @@
 # TRADING-101: Dynamic v3 Rescue Real Evaluator Sweep Integration
 
-最后更新：2026-06-06
+最后更新：2026-06-07
 
 ## 背景
 
@@ -34,7 +34,7 @@ TRADING-101 将 sweep runner 接入 TRADING-091 的 dynamic v0.3 real evaluation
 |Safety gate|DONE|Tiny fixture 标记 not-for-investment；promotion pack tiny mode 最多 `review_required` / `reject`；real mode 不生成 production candidate。|
 |Validation|DONE|`validate-sweep` 区分 tiny vs real，real mode 缺 artifact path fail closed。|
 |Docs / Reader Brief|DONE|README、runbook、system flow、artifact catalog、report registry、Reader Brief 摘要同步 evaluator fields。|
-|Validation run|VALIDATING|focused tests、ruff、compileall、git diff --check 通过；全量 pytest 已尝试但超时。|
+|Validation run|DONE|focused tests、ruff、compileall、git diff --check 和 `.venv\Scripts\python.exe -m pytest tests -q` 全量验证通过。|
 
 ## 参数注入 Pilot Baseline
 
@@ -75,3 +75,7 @@ production state、owner approval、shadow enrollment approval 或 broker action
   `tests/test_etf_dynamic_v3_parameter_research.py tests/test_etf_dynamic_v3_real_evaluation.py tests/test_reader_brief.py -q`
   （16 passed）、`ruff check .`、`compileall src tests` 和 `git diff --check`。全量
   `pytest tests -q` 已尝试，15 分钟超时且未返回失败明细。
+- 2026-06-07：补跑 `.venv\Scripts\python.exe -m pytest tests -q` 全量验证通过，
+  `2197 passed, 329 warnings in 2266.75s`。同日已修复 `score-daily` CLI 模块化后测试边界引用
+  漂移，并用 focused regression 确认 direct CLI、daily scoring、baseline score backfill 和 risk
+  event help contract 仍通过。
