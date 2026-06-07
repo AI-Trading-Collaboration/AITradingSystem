@@ -1,6 +1,6 @@
 # TRADING-057A Market Data Refresh & Freshness Recovery Workflow
 
-最后更新：2026-05-30
+最后更新：2026-06-07
 
 ## 背景
 
@@ -104,3 +104,7 @@ fail-closed 的 market data refresh 与 freshness recovery 流程。
   --latest` 为 `active_tracking`，`aits parameters shadow-backtest --latest --dry-run`
   仍保持 `promotion_status=rejected`。全量 `pytest`、`ruff`、`compileall` 和
   `git diff --check` 通过，`config/parameters/production/current.yaml` 无 diff。
+- 2026-06-07：从 `VALIDATING` 改为 `DONE`。原因：最新 `aits data validate-refresh
+  --latest` 读取 `artifacts/data_refresh/2026-06-05/market_data_refresh_summary.json`
+  并返回 `refresh_status=OK`、`production_effect=none`、`manual_review_required=true`
+  和 `auto_promotion=false`；refresh/recovery 链路验收已闭合，promotion 仍保持禁用。

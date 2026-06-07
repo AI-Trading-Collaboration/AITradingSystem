@@ -2,7 +2,7 @@
 
 任务 ID：`DATA-020`
 
-最后更新：2026-05-29
+最后更新：2026-06-07
 
 ## 背景
 
@@ -52,3 +52,7 @@ RuntimeError: dictionary keys changed during iteration
   `tests/test_external_request_cache.py`、`tests/test_data_download.py`、`tests/test_ops_daily.py`、
   相关 ruff/Black/diff check，以及真实 `aits ops daily-run` as-of 2026-05-28；
   最终 run 中 `download_data` 和 `validate_data` 均 PASS。
+- 2026-06-07：从 `VALIDATING` 改为 `DONE`。原因：验收证据已满足且无剩余 owner
+  或时间窗口 blocker；真实 daily-run 已证明 `download_data` 和 `validate_data`
+  在该修复后通过，后续 FRED tail refresh 与 latest daily-run 也未再复现
+  `dictionary keys changed during iteration`。

@@ -2,7 +2,7 @@
 
 任务 ID：`TRADING-048`
 
-最后更新：2026-06-01
+最后更新：2026-06-07
 
 ## 背景
 
@@ -68,3 +68,6 @@ NotImplementedError: eq not implemented for <class 'pandas.StringDtype'>
   `string[pyarrow]` fixture 时因缺少 `pyarrow` 失败。已将 `pyarrow>=13.0.0`
   加入 dev extra，保留 Arrow string 覆盖而不是跳过测试；该变更只影响开发/CI
   验证环境，不改变 shadow monitor 运行逻辑、阈值或生产配置。
+- 2026-06-07：从 `VALIDATING` 改为 `DONE`。原因：dtype robustness 修复和 dev
+  依赖补齐已有目标测试、CI-like 验证和真实 daily-run PASS 证据；后续 SEC PIT
+  shadow monitor 未再因 Pandas/Arrow string dtype row lookup 裸 traceback 阻断。

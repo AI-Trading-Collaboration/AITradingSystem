@@ -2,7 +2,7 @@
 
 任务 ID：`TRADING-047`
 
-最后更新：2026-05-29
+最后更新：2026-06-07
 
 ## 背景
 
@@ -61,3 +61,6 @@ valuation 或日报评分问题，而是 `sec-pit shadow-observe --latest` 与
   `tests/trading_engine/test_sec_pit_shadow_monitor.py`、相关 ruff/Black/diff check，
   以及真实 `aits ops daily-run` as-of 2026-05-28；`sec_pit_shadow_observe` 和
   `sec_pit_shadow_monitor` 均 PASS。
+- 2026-06-07：从 `VALIDATING` 改为 `DONE`。原因：默认 baseline contract
+  修复已有目标测试和真实 daily-run PASS 证据，后续 SEC PIT shadow observe/monitor
+  链路未再因 production score fallback drift 阻断。
