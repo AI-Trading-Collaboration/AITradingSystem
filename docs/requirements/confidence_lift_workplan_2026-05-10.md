@@ -67,3 +67,8 @@
   `data_quality_2026-06-05_marketstack_reconciliation.csv` 只覆盖
   QQQ/SMH/SOXX/SPY，未直接复现 NOW/full-universe
   `known_split_raw_close_basis_difference` 证据；不能仅凭该有限样本归档。
+- 2026-06-07：`RISK-013` 收口归档。最新真实 daily-run 的
+  OpenAI 预审、LLM formal occurrence/attestation 写入和日报政策/地缘模块均通过；
+  `policy_geopolitics` 不再因 LLM formal full coverage 触发低置信提示，也未触发
+  position gate。LLM formal 仍不是人工复核，退出条件继续以
+  `docs/requirements/risk_event_llm_formal_assessment_2026-05-10.md` 为准。

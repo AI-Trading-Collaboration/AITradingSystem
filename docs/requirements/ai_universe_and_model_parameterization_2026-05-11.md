@@ -1,8 +1,8 @@
 # AI 产业链核心观察池扩展与模型参数化清单
 
-状态：VALIDATING
+状态：DONE
 
-最后更新：2026-05-11
+最后更新：2026-06-07
 
 关联任务：`UNIV-001`
 
@@ -95,3 +95,9 @@ AI regime 窗口内的 adjusted close 跳变被误判为未知价格异常。
   `ops replay-window --start 2026-05-08 --end 2026-05-10` 为
   `PASS_WITH_SKIPS`（1 个交易日回放、2 个周末跳过）。当前剩余已知
   warning 是 AMZN R&D 指标在 SEC companyfacts 中缺披露口径，暂不阻断。
+- 2026-06-07：收口为 `DONE`。最新真实
+  `aits ops daily-run --as-of 2026-06-05 --run-id codex_20260605_20260607103901`
+  中 expanded universe 的 17 个 ticker 已进入日报、估值、SEC/TSM 基本面、
+  feature 和 dashboard 链路；daily-run 31/31 PASS，特征警告 0。AMZN
+  `research_and_development` 缺披露口径继续作为基本面覆盖 warning 披露，不阻断
+  expanded universe 验收；后续新增 universe 或覆盖治理应新建任务。
